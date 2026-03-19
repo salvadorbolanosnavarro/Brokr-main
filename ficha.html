@@ -47,14 +47,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
 .back-btn:hover{color:#fff;background:rgba(255,255,255,.1)}
 .pb-print-btn{margin-left:auto;display:flex;align-items:center;gap:7px;background:var(--gold);color:var(--navy2);border:none;border-radius:var(--r2);padding:8px 18px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer}
 .pb-print-btn:hover{background:var(--gold2)}
-.ficha-page{width:210mm;min-height:297mm;background:var(--wh);margin:16px auto;box-shadow:0 4px 24px rgba(0,0,0,.12);position:relative}
+.ficha-page{width:210mm;min-height:297mm;background:var(--wh);margin:16px auto;box-shadow:0 4px 24px rgba(0,0,0,.12);position:relative;display:flex;flex-direction:column}
 .ficha-cover{width:100%;height:297mm;display:flex;flex-direction:column;overflow:hidden}
 .cover-hero-wrap{position:relative;width:100%;height:155mm;flex-shrink:0;overflow:hidden;background:var(--navy2)}
 .cover-hero{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .cover-hero-bg-img{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .cover-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(15,24,41,.05) 0%,rgba(15,24,41,.72) 100%)}
-.cover-brand-placeholder{position:absolute;top:16px;left:20px;background:rgba(255,255,255,.1);border:1px dashed rgba(255,255,255,.25);border-radius:5px;padding:4px 10px}
-.cover-brand-placeholder span{font-size:9px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.06em}
+
+
 .cover-tipo{position:absolute;top:16px;right:20px;background:var(--gold);color:var(--navy2);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:4px 11px;border-radius:20px}
 .cover-price-block{position:absolute;bottom:0;left:0;right:0;padding:0 20px 16px}
 .cover-precio{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:#fff;margin-bottom:3px;text-shadow:0 2px 8px rgba(0,0,0,.4)}
@@ -68,7 +68,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
 .spec-lbl{font-size:9px;color:var(--mut);text-transform:uppercase;letter-spacing:.07em}
 .cover-desc-ttl{font-family:'Playfair Display',serif;font-size:12px;color:var(--navy);margin-bottom:5px;padding-bottom:4px;border-bottom:1px solid var(--silver2)}
 .cover-desc{font-size:10.5px;color:#4a5568;line-height:1.6}
-.ficha-content{padding:20px 22px 52px}
+.ficha-content{flex:1;padding:20px 22px 52px}
 .sec-ttl{font-family:'Playfair Display',serif;font-size:16px;color:var(--navy);margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--silver2)}
 .photo-pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
 .photo-pair img{width:100%;height:125mm;object-fit:cover;border-radius:6px;display:block}
@@ -83,7 +83,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
 .contact-name{font-size:14px;font-weight:600;color:#fff}
 .contact-sub{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px}
 .contact-phone{font-size:16px;font-weight:700;color:var(--gold)}
-.ficha-footer{position:absolute;bottom:0;left:0;right:0;height:44px;background:var(--navy2);display:flex;align-items:center;justify-content:center;gap:8px}
+.ficha-footer{width:100%;height:44px;margin-top:auto;background:var(--navy2);display:flex;align-items:center;justify-content:center;gap:8px;flex-shrink:0}
 .ft-txt{font-size:9px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.1em}
 .ft-div{width:1px;height:12px;background:rgba(255,255,255,.15)}
 .ft-id{font-size:9.5px;color:rgba(255,255,255,.22)}
@@ -92,8 +92,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
   #app-ui{display:none!important}
   .print-bar{display:none!important}
   #ficha{display:block!important;padding:0;max-width:none}
-  .ficha-page{box-shadow:none;margin:0;page-break-after:always}
+  .ficha-page{box-shadow:none;margin:0;page-break-after:always;page-break-inside:avoid;width:210mm;min-height:297mm}
   .ficha-page:last-child{page-break-after:avoid}
+  .ficha-footer{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .cover-hero-wrap{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   @page{size:A4;margin:0}
 }
@@ -300,7 +301,7 @@ async function renderFicha(p){
       <div class="cover-hero-wrap">
         ${heroHTML}
         <div class="cover-overlay"></div>
-        <div class="cover-brand-placeholder"><span>Tu logo aquí</span></div>
+        
         <div class="cover-tipo">${tipo_op}</div>
         <div class="cover-price-block">
           <div class="cover-precio">${precio}</div>
