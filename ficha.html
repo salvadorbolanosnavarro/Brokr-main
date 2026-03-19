@@ -54,65 +54,37 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
   box-shadow:0 4px 40px rgba(26,39,68,.18);
 }
 
-/* Cover */
-.ficha-cover{width:100%;height:297mm;display:block;overflow:hidden;background:var(--wh);position:relative}
-.cover-hero-wrap{position:relative;width:100%;height:160mm;overflow:hidden;display:block}
-.cover-hero{width:100%;height:160mm;object-fit:cover;display:block}
-.cover-hero-bg{width:100%;height:160mm;background:linear-gradient(135deg,var(--navy2),var(--navy3));display:flex;align-items:center;justify-content:center}
-.cover-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(15,24,41,.1) 0%,rgba(15,24,41,.65) 100%)}
 
-/* Brand area top-left (agente) */
-.cover-brand-agente{
-  position:absolute;top:22px;left:24px;
-  display:flex;align-items:center;gap:10px;
-}
+
+
+
+
+
+
+
+
 .cover-brand-logo{
   max-height:48px;max-width:140px;object-fit:contain;
   filter:brightness(0) invert(1);opacity:.9;
 }
-/* Placeholder cuando no hay logo */
-.cover-brand-placeholder{
-  height:44px;width:140px;
-  background:rgba(255,255,255,.1);
-  border:1px dashed rgba(255,255,255,.3);
-  border-radius:6px;
-  display:flex;align-items:center;justify-content:center;
-}
-.cover-brand-placeholder span{
-  font-size:10px;color:rgba(255,255,255,.4);
-  letter-spacing:.06em;text-transform:uppercase;
-}
 
-.cover-tipo{
-  position:absolute;top:22px;right:24px;
-  background:var(--gold);color:var(--navy2);
-  font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
-  padding:5px 14px;border-radius:20px;
-}
-.cover-price-block{
-  position:absolute;bottom:46%;left:0;right:0;
-  padding:0 24px 18px;
-}
-.cover-precio{
-  font-family:'Playfair Display',serif;font-size:34px;font-weight:700;
-  color:#fff;margin-bottom:3px;text-shadow:0 2px 10px rgba(0,0,0,.35);
-}
-.cover-titulo{font-size:15px;font-weight:400;color:rgba(255,255,255,.85);margin-bottom:5px}
-.cover-ubicacion{font-size:12.5px;color:rgba(255,255,255,.6);display:flex;align-items:center;gap:4px}
 
-.cover-body{
-  padding:16px 22px 55px;
-  background:var(--wh);
-  height:calc(297mm - 160mm);
-  overflow:hidden;
-}
-.cover-specs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
-.spec-item{text-align:center;padding:12px 6px;background:var(--silver);border-radius:8px}
-.spec-ico{font-size:17px;margin-bottom:3px}
-.spec-val{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;color:var(--navy);line-height:1.1}
-.spec-lbl{font-size:9.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.07em;margin-top:2px}
-.cover-desc-ttl{font-family:'Playfair Display',serif;font-size:15px;color:var(--navy);margin-bottom:7px;padding-bottom:5px;border-bottom:1px solid var(--silver2)}
-.cover-desc{font-size:12px;color:#4a5568;line-height:1.75}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* Content pages */
 .ficha-content{width:100%;min-height:297mm;padding:26px 24px 64px;background:var(--wh);position:relative}
@@ -147,7 +119,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
   padding:18px 22px;display:flex;align-items:center;gap:18px;
   margin-top:14px;
 }
-/* Placeholder foto agente */
+
 .contacto-foto-ph{
   width:62px;height:62px;border-radius:50%;
   background:var(--navy3);border:2px solid var(--gold);
@@ -160,7 +132,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
 .contacto-role{font-size:10px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px}
 .contacto-datos{display:flex;flex-direction:column;gap:3px}
 .contacto-dato{font-size:11.5px;color:rgba(255,255,255,.72);display:flex;align-items:center;gap:5px}
-/* Placeholder nombre/datos */
+
 .contacto-dato.ph{color:rgba(255,255,255,.25);font-style:italic}
 .contacto-logo-ph{
   width:90px;height:36px;
@@ -192,6 +164,115 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
   .ficha-page:last-child{page-break-after:avoid}
   @page{size:A4;margin:0}
 }
+  #app-ui{display:none!important}
+  #ficha{display:block!important}
+  .ficha-page{box-shadow:none;margin:0;page-break-after:always}
+  .ficha-page:last-child{page-break-after:avoid}
+  @page{size:A4;margin:0}
+}
+
+/* ── COVER PAGE ── */
+.ficha-cover {
+  width: 100%;
+  height: 297mm;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+}
+/* Hero image block - fixed height */
+.cover-hero-wrap {
+  position: relative;
+  width: 100%;
+  height: 155mm;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: #0f1829;
+}
+.cover-hero {
+  width: 100%;
+  height: 155mm;
+  object-fit: cover;
+  display: block;
+}
+.cover-hero-bg {
+  width: 100%;
+  height: 155mm;
+  background: linear-gradient(135deg,#0f1829,#243358);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cover-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(15,24,41,.1) 0%, rgba(15,24,41,.7) 100%);
+}
+.cover-brand-placeholder {
+  position: absolute;
+  top: 18px; left: 22px;
+  background: rgba(255,255,255,.12);
+  border: 1px dashed rgba(255,255,255,.3);
+  border-radius: 6px;
+  padding: 5px 12px;
+}
+.cover-brand-placeholder span {
+  font-size: 10px; color: rgba(255,255,255,.4);
+  text-transform: uppercase; letter-spacing: .06em;
+}
+.cover-tipo {
+  position: absolute;
+  top: 18px; right: 22px;
+  background: #c9a96e; color: #0f1829;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase;
+  padding: 4px 12px; border-radius: 20px;
+}
+.cover-price-block {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 0 22px 16px;
+}
+.cover-precio {
+  font-family: 'Playfair Display',serif;
+  font-size: 30px; font-weight: 700; color: #fff;
+  margin-bottom: 3px;
+  text-shadow: 0 2px 8px rgba(0,0,0,.4);
+}
+.cover-titulo { font-size: 14px; color: rgba(255,255,255,.85); margin-bottom: 4px; }
+.cover-ubicacion { font-size: 12px; color: rgba(255,255,255,.6); }
+
+/* Body below hero - fixed remaining height */
+.cover-body {
+  flex: 1;
+  padding: 14px 22px 52px;
+  background: #fff;
+  overflow: hidden;
+}
+.cover-specs {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.spec-item {
+  text-align: center; padding: 10px 4px;
+  background: #f4f6f9; border-radius: 7px;
+}
+.spec-ico { font-size: 15px; margin-bottom: 2px; }
+.spec-val {
+  font-family: 'Playfair Display',serif;
+  font-size: 15px; font-weight: 600; color: #1a2744;
+}
+.spec-lbl { font-size: 9px; color: #6b7a99; text-transform: uppercase; letter-spacing: .07em; }
+.cover-desc-ttl {
+  font-family: 'Playfair Display',serif;
+  font-size: 13px; color: #1a2744;
+  margin-bottom: 6px; padding-bottom: 4px;
+  border-bottom: 1px solid #e8ecf2;
+}
+.cover-desc { font-size: 11px; color: #4a5568; line-height: 1.65; }
+
 </style>
 </head>
 <body>
@@ -394,13 +475,10 @@ async function renderFicha(p){
   let html = `
   <div class="ficha-page">
     <div class="ficha-cover">
-      <!-- HERO WRAP: image + overlay + badges + price, all positioned inside -->
       <div class="cover-hero-wrap">
         ${heroHTML}
         <div class="cover-overlay"></div>
-        <div class="cover-brand-agente">
-          <div class="cover-brand-placeholder"><span>Tu logo aquí</span></div>
-        </div>
+        <div class="cover-brand-placeholder"><span>Tu logo aquí</span></div>
         <div class="cover-tipo">${tipo_op}</div>
         <div class="cover-price-block">
           <div class="cover-precio">${precio}</div>
@@ -408,7 +486,6 @@ async function renderFicha(p){
           <div class="cover-ubicacion">📍 ${ubicacion}</div>
         </div>
       </div>
-      <!-- BODY: normal flow below hero -->
       <div class="cover-body">
         ${specs.length ? `<div class="cover-specs">${specsHTML}</div>` : ''}
         ${descPortada ? `<div class="cover-desc-ttl">Descripción</div><div class="cover-desc">${descPortada}</div>` : ''}
