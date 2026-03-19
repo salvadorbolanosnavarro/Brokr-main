@@ -445,7 +445,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray);color:var(--txt);di
         <div class="frow one">
           <div class="f">
             <label>Costo de adquisición del hoy vendedor (MXN)</label>
-            <input type="number" id="f-compra" placeholder="Ej. 1800000"/>
+            <input type="text" id="f-compra" placeholder="Ej. $1,800,000" oninput="propFmtMoney(this)" autocomplete="off"/>
             <span class="f-note" id="compra-note"></span>
           </div>
         </div>
@@ -467,7 +467,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray);color:var(--txt);di
         <div class="frow one">
           <div class="f">
             <label>Precio de venta de esta operación (MXN)</label>
-            <input type="number" id="f-venta" placeholder="Ej. 3500000"/>
+            <input type="text" id="f-venta" placeholder="Ej. $3,500,000" oninput="propFmtMoney(this)" autocomplete="off"/>
           </div>
         </div>
         <div class="frow">
@@ -501,13 +501,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray);color:var(--txt);di
 
         <div class="sec">Deducciones <span style="font-weight:400;font-style:italic;font-size:11px">(opcionales)</span></div>
         <div class="frow one">
-          <div class="f"><label>Inversiones en construcciones, mejoras y ampliaciones (MXN)</label><input type="number" id="f-mej" placeholder="Ej. 200000"/></div>
+          <div class="f"><label>Inversiones en construcciones, mejoras y ampliaciones (MXN)</label><input type="text" id="f-mej" placeholder="Ej. $200,000" oninput="propFmtMoney(this)" autocomplete="off"/></div>
         </div>
         <div class="frow one">
-          <div class="f"><label>Gastos de escrituración de cuando adquirió el hoy vendedor (MXN)</label><input type="number" id="f-esc" placeholder="Ej. 45000"/></div>
+          <div class="f"><label>Gastos de escrituración de cuando adquirió el hoy vendedor (MXN)</label><input type="text" id="f-esc" placeholder="Ej. $45,000" oninput="propFmtMoney(this)" autocomplete="off"/></div>
         </div>
         <div class="frow one">
-          <div class="f"><label>Comisión del agente que intermedia hoy (MXN)</label><input type="number" id="f-com" placeholder="Ej. 105000"/></div>
+          <div class="f"><label>Comisión del agente que intermedia hoy (MXN)</label><input type="text" id="f-com" placeholder="Ej. $105,000" oninput="propFmtMoney(this)" autocomplete="off"/></div>
         </div>
 
         <div id="sec-casa">
@@ -625,7 +625,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray);color:var(--txt);di
         <div class="pf-row">
           <div class="pf-field">
             <label>Precio *</label>
-            <input type="number" name="precio" placeholder="2500000" required min="0"/>
+            <input type="text" name="precio" id="prop-precio" placeholder="$2,500,000" oninput="propFmtMoney(this)" autocomplete="off" required/>
           </div>
           <div class="pf-field">
             <label>Moneda</label>
@@ -895,15 +895,15 @@ function onAnioChange() {
 // ── ISR CALCULATION (método art. 120 LISR — anualización) ──
 function calcISR() {
   const tipo   = g('f-tipo').value;
-  const venta  = parseFloat(g('f-venta').value) || 0;
-  const compra = parseFloat(g('f-compra').value) || 0;
+  const venta  = getRawNum(g('f-venta').value);
+  const compra = getRawNum(g('f-compra').value);
   const mesC   = parseInt(g('f-mes-c').value);
   const anioC  = parseInt(g('f-anio-c').value) || 2010;
   const mesV   = parseInt(g('f-mes-v').value);
   const anioV  = parseInt(g('f-anio-v').value) || 2025;
-  const mej    = parseFloat(g('f-mej').value) || 0;
-  const com    = parseFloat(g('f-com').value) || 0;
-  const esc    = parseFloat(g('f-esc').value) || 0;
+  const mej    = getRawNum(g('f-mej').value);
+  const com    = getRawNum(g('f-com').value);
+  const esc    = getRawNum(g('f-esc').value);
 
   if (!venta || !compra) { alert('Ingresa el precio de venta y el precio de compra original.'); return; }
   if (!anioC || anioC < 1950 || anioC > 2025) { alert('Ingresa un año de adquisición válido (1950–2025).'); return; }
@@ -1174,7 +1174,7 @@ async function sbFetch(path, method='GET', body=null){
       'apikey': SB_KEY,
       'Authorization': 'Bearer ' + SB_KEY,
       'Content-Type': 'application/json',
-      'Prefer': method==='POST' ? 'return=representation' : 'return=representation',
+      'Prefer': 'return=representation',
     }
   };
   if(body) opts.body = JSON.stringify(body);
@@ -1300,7 +1300,12 @@ function openPropForm(id){
     // Fill form fields
     Object.keys(p).forEach(k => {
       const el = form.elements[k];
-      if(el && p[k] !== null && p[k] !== undefined) el.value = p[k];
+      if(!el || p[k] === null || p[k] === undefined) return;
+      if(k === 'precio'){
+        el.value = p[k] ? '$' + Number(p[k]).toLocaleString('es-MX', {minimumFractionDigits:0}) : '';
+      } else {
+        el.value = p[k];
+      }
     });
     form.elements['fotos_raw'].value = (p.fotos || []).join(', ');
     form.elements['prop_id'].value = id;
@@ -1346,7 +1351,9 @@ async function saveProp(e){
   delete data.fotos_raw;
   data.fotos = fotosRaw.length ? fotosRaw : uploadedFotoUrls;
   // Parse numbers
-  ['precio','m2_construccion','m2_terreno','recamaras','banos','estacionamientos','anio_construccion'].forEach(k => {
+  // Parse price (may have $ and , formatting)
+  if(data['precio']) data['precio'] = getRawNum(String(data['precio']));
+  ['m2_construccion','m2_terreno','recamaras','banos','estacionamientos','anio_construccion'].forEach(k => {
     if(data[k]) data[k] = Number(data[k]);
   });
   data.updated_at = new Date().toISOString();
@@ -1354,9 +1361,9 @@ async function saveProp(e){
   delete data.prop_id;
   try{
     const btn = form.querySelector('.pf-save-btn');
-    btn.textContent = 'Guardando...'; btn.disabled = true;
+    btn.innerHTML = 'Guardando...'; btn.disabled = true;
     if(id){
-      await sbFetch(`propiedades?id=eq.${id}`, 'PATCH', data);
+      await sbFetch('propiedades?id=eq.' + id, 'PATCH', data);
     } else {
       await sbFetch('propiedades', 'POST', data);
     }
@@ -1364,8 +1371,9 @@ async function saveProp(e){
     await loadProps();
   } catch(err){
     alert('Error guardando: ' + err.message);
+  } finally {
     const btn = form.querySelector('.pf-save-btn');
-    btn.textContent = 'Guardar propiedad'; btn.disabled = false;
+    if(btn){ btn.innerHTML = '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.5"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg> Guardar propiedad'; btn.disabled = false; }
   }
 }
 
@@ -1493,6 +1501,19 @@ function openPropDetail(id) {
 function closePropDetail(e) {
   if(e && e.target !== document.getElementById('prop-detail-modal')) return;
   document.getElementById('prop-detail-modal').style.display = 'none';
+}
+
+
+// ══════════════════════════════
+// MONEY FORMATTING (shared)
+// ══════════════════════════════
+function getRawNum(val){
+  return parseFloat((val||'').replace(/[$,]/g,'').trim()) || 0;
+}
+function propFmtMoney(input){
+  const raw = getRawNum(input.value);
+  if(!raw){ input.value = ''; return; }
+  input.value = '$' + raw.toLocaleString('es-MX', {minimumFractionDigits:0, maximumFractionDigits:0});
 }
 
 function toggleVoice(){
