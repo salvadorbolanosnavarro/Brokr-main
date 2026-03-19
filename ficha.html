@@ -450,6 +450,27 @@ function resetFicha(){
   hideError();
   window.scrollTo({top:0,behavior:'smooth'});
 }
+
+// Force base64 on hero image before printing
+async function fixImagesForPrint(){
+  const heroImg = document.querySelector('.cover-hero');
+  if(!heroImg || heroImg.src.startsWith('data:')) return;
+  try {
+    const b64 = await imgToBase64(heroImg.src);
+    if(b64 && b64.startsWith('data:')) heroImg.src = b64;
+  } catch(e){}
+}
+
+window.addEventListener('beforeprint', () => {
+  // Synchronous beforeprint can't await, so we pre-convert on PDF button click
+});
+
+// Override window.print to convert images first
+const _origPrint = window.print.bind(window);
+window.print = async function(){
+  await fixImagesForPrint();
+  _origPrint();
+};
 </script>
 </body>
 </html>
