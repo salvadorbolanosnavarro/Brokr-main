@@ -250,12 +250,20 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
         </div>
         <div class="f">
           <label>Forma de pago</label>
-          <select id="a-forma-pago">
+          <select id="a-forma-pago" onchange="onFormaPagoChange()">
             <option value="efectivo">Efectivo</option>
             <option value="transferencia bancaria">Transferencia bancaria</option>
             <option value="depósito bancario">Depósito bancario</option>
             <option value="cheque">Cheque</option>
           </select>
+        </div>
+      </div>
+      <!-- Cuenta bancaria — solo visible cuando es transferencia o depósito -->
+      <div class="frow one" id="banco-wrap" style="display:none">
+        <div class="f">
+          <label>Datos bancarios para el pago</label>
+          <input type="text" id="a-banco" placeholder="Ej. BBVA / CLABE: 012345678901234567 / Nombre del titular"/>
+          <div class="f-note">Se incluirá en el contrato para que el arrendatario sepa a dónde transferir</div>
         </div>
       </div>
       <div class="frow one">
@@ -450,6 +458,13 @@ let tipoActual = 'arrendamiento';
 })();
 
 // ── Tipo tabs ──
+function onFormaPagoChange(){
+  const v = document.getElementById('a-forma-pago').value;
+  const wrap = document.getElementById('banco-wrap');
+  wrap.style.display = (v === 'transferencia bancaria' || v === 'depósito bancario') ? 'block' : 'none';
+  if(wrap.style.display === 'none') document.getElementById('a-banco').value = '';
+}
+
 function setTipo(tipo){
   tipoActual = tipo;
   document.getElementById('tab-arr').classList.toggle('active', tipo==='arrendamiento');
@@ -539,6 +554,7 @@ async function generarContrato(){
       deposito_garantia:  getMonto('a-deposito'),
       dia_pago:           gv('a-dia-pago') || '1',
       forma_pago:         gv('a-forma-pago'),
+      cuenta_bancaria:    gv('a-banco'),
       pena_retencion:     getMonto('a-pena') || 500,
     };
   } else {

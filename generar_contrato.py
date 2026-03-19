@@ -297,11 +297,15 @@ def generar_arrendamiento(d, output_path):
         f"deberá pagarle a la parte arrendadora, una penalización equivalente a un mes de renta. "
         f"Independientemente de los meses de renta vencidos a la fecha que esto suceda.")
 
+    cuenta_bancaria = d.get('cuenta_bancaria', '').strip()
+    banco_txt = (f" Los pagos deberán realizarse a la siguiente cuenta bancaria: {cuenta_bancaria}."
+                 if cuenta_bancaria else "")
+
     clausula(doc, "CUARTA.-", "PRECIO RENTA",
         f"La parte arrendataria se obliga a pagarle puntualmente, sin requerimiento previo alguno, "
         f"a la parte arrendadora el importe de la renta del inmueble objeto del presente instrumento, "
         f"por la cantidad de: {renta_num} ({renta_letra}) por mes a transcurrir, en esta ciudad de "
-        f"Morelia, Michoacán de Ocampo, mediante {forma_pago}. Pagaderos a más tardar los días "
+        f"Morelia, Michoacán de Ocampo, mediante {forma_pago}.{banco_txt} Pagaderos a más tardar los días "
         f"{dia_pago} de cada mes. Obligándose la parte arrendataria a mantener al corriente los pagos "
         f"de agua, luz e internet, así como cualquier otro adeudo que se derive de la ocupación del "
         f"inmueble objeto de este contrato.\n\n"
