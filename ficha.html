@@ -346,6 +346,40 @@ function footer(id){
   </div>`;
 }
 
+
+// ── IMAGE → BASE64 via Railway proxy ─────────────────
+async function imgToBase64(url) {
+  if(!url) return null;
+  try {
+    const proxyUrl = `https://brokrebapi-production.up.railway.app/img?url=${encodeURIComponent(url)}`;
+    const res = await fetch(proxyUrl);
+    if(!res.ok) return url; // fallback to original URL
+    const blob = await res.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror  = () => resolve(url);
+      reader.readAsDataURL(blob);
+    });
+  } catch(e) {
+    return url; // fallback
+  }
+}
+
+async function convertAllImages(fotos) {
+  const MAX = 30; // cap to avoid memory issues
+  const limited = fotos.slice(0, MAX);
+  const converted = await Promise.all(
+    limited.map(async (f) => {
+      const url = f.url || f.original || null;
+      if(!url) return f;
+      const b64 = await imgToBase64(url);
+      return { ...f, url: b64 || url };
+    })
+  );
+  return converted;
+}
+
 // ── RENDER ──────────────────────────────────────
 function renderFicha(p){
   const id      = p.public_id || p.id || '';
@@ -499,6 +533,12 @@ async function generarFicha(){
       throw new Error(d);
     }
     const p = await res.json();
+    setLoading(false, 'Optimizando imágenes para PDF...');
+    // Convert images to base64 for reliable PDF printing on all devices
+    if(p.property_images && p.property_images.length) {
+      setLoading(true, 'Preparando ' + p.property_images.length + ' fotos...');
+      p.property_images = await convertAllImages(p.property_images);
+    }
     setLoading(false);
     renderFicha(p);
   } catch(e){
