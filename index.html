@@ -342,6 +342,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray);color:var(--txt);di
   .chips{flex-wrap:wrap}
   .chip{font-size:12px;padding:7px 12px}
 }
+
+/* ── MODULE IFRAME PANELS ── */
+.iframe-panel{display:none;width:100%;height:100%;border:none;flex:1;min-height:0}
+#panel-ficha-manual,#panel-ficha,#panel-contratos,#panel-avm{
+  display:none;flex-direction:column;height:100%;overflow:hidden;
+}
 </style>
 </head>
 <body>
@@ -354,10 +360,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray);color:var(--txt);di
   </div>
   <div class="sb-sec">
     <div class="sb-lbl">Módulos</div>
-    <button class="sb-btn" onclick="window.location.href='ficha-manual.html'"><svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>Fichas técnicas manuales</button>
-    <button class="sb-btn" onclick="window.location.href='ficha.html'"><svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>Fichas técnicas</button>
-    <button class="sb-btn" onclick="window.location.href='contratos.html'"><svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Contratos</button>
-    <button class="sb-btn" onclick="window.location.href='avm.html'"><svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Opinión de valor</button>
+    <button class="sb-btn" onclick="setPanel('ficha-manual')"><svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>Fichas técnicas manuales</button>
+    <button class="sb-btn" onclick="setPanel('ficha')"><svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>Fichas técnicas</button>
+    <button class="sb-btn" onclick="setPanel('contratos')"><svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Contratos</button>
+    <button class="sb-btn" onclick="setPanel('avm')"><svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Opinión de valor</button>
     <button class="sb-btn" id="btn-isr" onclick="goISR()"><svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>Calculadora de ISR</button>
     <button class="sb-btn" id="btn-props" onclick="goProps()">
       <svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline stroke-linecap="round" stroke-linejoin="round" points="9 22 9 12 15 12 15 22"/></svg>Mis inmuebles
@@ -751,6 +757,27 @@ body{font-family:'DM Sans',sans-serif;background:var(--gray);color:var(--txt);di
     <div class="prop-modal-body" id="detail-body"></div>
   </div>
 </div>
+
+  <!-- MÓDULO: Fichas manuales -->
+  <div id="panel-ficha-manual" style="display:none;flex-direction:column;height:100%;overflow:hidden">
+    <iframe src="ficha-manual.html" class="iframe-panel" id="iframe-ficha-manual" style="display:block;width:100%;height:100%;border:none;flex:1"></iframe>
+  </div>
+
+  <!-- MÓDULO: Fichas técnicas -->
+  <div id="panel-ficha" style="display:none;flex-direction:column;height:100%;overflow:hidden">
+    <iframe src="ficha.html" class="iframe-panel" id="iframe-ficha" style="display:block;width:100%;height:100%;border:none;flex:1"></iframe>
+  </div>
+
+  <!-- MÓDULO: Contratos -->
+  <div id="panel-contratos" style="display:none;flex-direction:column;height:100%;overflow:hidden">
+    <iframe src="contratos.html" class="iframe-panel" id="iframe-contratos" style="display:block;width:100%;height:100%;border:none;flex:1"></iframe>
+  </div>
+
+  <!-- MÓDULO: AVM -->
+  <div id="panel-avm" style="display:none;flex-direction:column;height:100%;overflow:hidden">
+    <iframe src="avm.html" class="iframe-panel" id="iframe-avm" style="display:block;width:100%;height:100%;border:none;flex:1"></iframe>
+  </div>
+
 </main>
 
 <script>
@@ -1203,20 +1230,38 @@ function goProps(){
 }
 
 function setPanel(name){
-  // Hide all panels
-  ['chat','isr','props'].forEach(p => {
-    const el = document.getElementById(p === 'chat' ? 'chat' : p === 'isr' ? 'isr' : 'props-panel');
+  // All panel IDs
+  const panelIds = {
+    chat:           'chat',
+    isr:            'isr',
+    props:          'props-panel',
+    'ficha-manual': 'panel-ficha-manual',
+    ficha:          'panel-ficha',
+    contratos:      'panel-contratos',
+    avm:            'panel-avm',
+  };
+  // Hide all
+  Object.values(panelIds).forEach(id => {
+    const el = document.getElementById(id);
     if(el) el.style.display = 'none';
   });
   // Show target
-  const target = name === 'props' ? 'props-panel' : name;
-  const el = document.getElementById(target);
+  const targetId = panelIds[name] || name;
+  const el = document.getElementById(targetId);
   if(el) el.style.display = 'flex';
   // Update header label
-  const labels = {chat:'Chat general', isr:'Calculadora ISR', props:'Mis Propiedades'};
+  const labels = {
+    chat:'Chat',
+    isr:'Calculadora de ISR',
+    props:'Mis inmuebles',
+    'ficha-manual':'Fichas técnicas manuales',
+    ficha:'Fichas técnicas',
+    contratos:'Contratos',
+    avm:'Opinión de valor',
+  };
   const lbl = document.getElementById('hlbl');
   if(lbl) lbl.textContent = '— ' + (labels[name] || name);
-  // Update sidebar active
+  // Update sidebar active button
   document.querySelectorAll('.sb-btn').forEach(b => b.classList.remove('on'));
   const btnMap = {chat:'btn-chat', isr:'btn-isr', props:'btn-props'};
   const btn = document.getElementById(btnMap[name]);
