@@ -528,12 +528,9 @@ async function descargarPDF(){
   if(!_propData){ alert('Genera primero la ficha.'); return; }
   const btn = document.getElementById('pdf-btn');
   const txt = document.getElementById('print-bar-txt');
-  const id  = _propData.public_id || _propData.id || 'ficha';
-  const filename = 'BROKR_' + id + '.pdf';
   btn.disabled = true;
   btn.innerHTML = '&#9203; Generando PDF...';
   txt.textContent = 'Preparando tu ficha...';
-  let blob = null;
   try{
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 120000);
@@ -545,47 +542,16 @@ async function descargarPDF(){
     });
     clearTimeout(timeout);
     if(!res.ok) throw new Error('Error servidor: ' + res.status);
-    blob = await res.blob();
+    const data = await res.json();
+    // Open PDF URL directly — Safari shows native PDF viewer with share button
+    const pdfUrl = API + '/ficha-pdf/' + data.token;
+    window.open(pdfUrl, '_blank');
+    txt.textContent = '&#10003; PDF listo — comparte desde el visor';
   } catch(e){
     if(e.name === 'AbortError') alert('Tiempo agotado. Intenta de nuevo.');
-    else alert('Error generando PDF: ' + e.message);
+    else alert('Error: ' + e.message);
     txt.textContent = 'Ficha lista';
-    btn.disabled = false;
-    btn.innerHTML = '&#11015; Descargar / Compartir PDF';
-    return;
-  }
-
-  // PDF ready — now deliver it
-  const file = new File([blob], filename, {type:'application/pdf'});
-  const canShare = navigator.share && navigator.canShare && navigator.canShare({files:[file]});
-
-  if(canShare){
-    // iOS Safari — native share sheet (WhatsApp, Files, Mail, etc.)
-    navigator.share({title:'Ficha ' + id, files:[file]})
-      .then(() => { txt.textContent = '&#10003; Listo'; })
-      .catch((err) => {
-        // User cancelled or share failed — fallback to object URL open
-        if(err.name !== 'AbortError'){
-          const url = URL.createObjectURL(blob);
-          window.open(url, '_blank');
-        }
-        txt.textContent = 'Ficha lista';
-      })
-      .finally(() => {
-        btn.disabled = false;
-        btn.innerHTML = '&#11015; Descargar / Compartir PDF';
-      });
-  } else {
-    // Desktop or browser without share API
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 3000);
-    txt.textContent = '&#10003; PDF descargado';
+  } finally{
     btn.disabled = false;
     btn.innerHTML = '&#11015; Descargar / Compartir PDF';
   }

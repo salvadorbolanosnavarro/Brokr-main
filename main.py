@@ -922,6 +922,10 @@ body{font-family:'DM Sans',sans-serif;background:white;color:#0f1829}
              specs_html, cover_desc_html, footer(), gallery_pages)
 
 
+# In-memory PDF store: token -> (bytes, filename)
+import uuid as _uuid
+_pdf_store: dict = {}
+
 @app.post("/ficha-pdf")
 async def generar_ficha_pdf(p: dict):
     """Generate PDF from property data dict using Playwright."""
@@ -966,9 +970,28 @@ async def generar_ficha_pdf(p: dict):
         )
         await browser.close()
     
+    from fastapi.responses import JSONResponse
+    id_prop = p.get("public_id") or p.get("id") or "ficha"
+    filename = f"BROKR_{id_prop}.pdf"
+    token = str(_uuid.uuid4()).replace("-","")[:16]
+    _pdf_store[token] = (pdf_bytes, filename)
+    # Clean old entries if too many
+    if len(_pdf_store) > 50:
+        oldest = list(_pdf_store.keys())[0]
+        del _pdf_store[oldest]
+    return JSONResponse({"token": token, "filename": filename})
+
+@app.get("/ficha-pdf/{token}")
+async def descargar_ficha_pdf(token: str):
+    """Serve generated PDF by token — opens natively in Safari."""
     from fastapi.responses import Response
+    if token not in _pdf_store:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="PDF no encontrado o expirado")
+    pdf_bytes, filename = _pdf_store[token]
+    # inline so Safari opens it with its native PDF viewer + share button
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={"Content-Disposition": "attachment; filename=ficha.pdf"}
+        headers={"Content-Disposition": f"inline; filename={filename}"}
     )
