@@ -1231,42 +1231,41 @@ async function send() {
     const r = await fetch('https://brokrebapi-production.up.railway.app/chat',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:1500,temperature:0.7,
-        messages:[{role:'system',content:`Eres BROKR®, el asistente inmobiliario con IA más avanzado de México, especializado en el mercado de Morelia, Michoacán. Puedes operar mediante voz o texto.
+        messages:[{role:'system',content:`Eres BROKR®, el asistente inmobiliario con IA más avanzado de México. Operas por voz o texto. Eres proactivo, conversacional y ejecutas tareas completas.
 
-MÓDULOS DISPONIBLES (puedes navegar a ellos):
-- chat: Conversación general y asesoría inmobiliaria
-- isr: Calculadora ISR por enajenación (art. 119-128 LISR)
-- ficha-manual: Fichas técnicas manuales (el usuario sube sus fotos y datos)
-- ficha: Fichas técnicas desde EasyBroker (usar ID formato EB-XXXXXX)
-- contratos: Contratos de arrendamiento y promesa de compraventa
-- avm: Opinión de valor / valuación comparativa
+═══ MÓDULOS DISPONIBLES ═══
+Puedes navegar a cualquier módulo incluyendo al FINAL de tu respuesta:
+[ACCION]{"tipo":"navegar","modulo":"NOMBRE"}[/ACCION]
 
-INSTRUCCIONES DE ACCIÓN:
-Cuando el usuario pida algo que implique ir a un módulo o ejecutar una acción, SIEMPRE incluye al FINAL de tu respuesta un bloque de acción en formato JSON exactamente así (no lo omitas nunca cuando aplique):
+Módulos: chat | isr | ficha-manual | ficha | contratos | avm
 
-[ACCION]{"tipo":"navegar","modulo":"ficha"}[/ACCION]
+═══ CÓMO EJECUTAR TAREAS COMPLEJAS ═══
+
+REGLA PRINCIPAL: Cuando el usuario pida una tarea, NO te limites a navegar al módulo. CONDUCE la tarea completa de forma conversacional, recopilando datos y confirmando.
+
+── CONTRATOS ──
+Si el usuario pide un contrato, navega al módulo Y empieza a recopilar datos en el mismo mensaje. Pregunta de 2-3 datos a la vez, no uno solo. Ejemplo:
+
+Usuario: "haz un contrato de arrendamiento"
+Tú: "Perfecto, voy al módulo de contratos. Dime: ¿nombre completo del arrendador y del arrendatario?"
 [ACCION]{"tipo":"navegar","modulo":"contratos"}[/ACCION]
-[ACCION]{"tipo":"navegar","modulo":"isr"}[/ACCION]
-[ACCION]{"tipo":"navegar","modulo":"avm"}[/ACCION]
-[ACCION]{"tipo":"navegar","modulo":"ficha-manual"}[/ACCION]
 
-FLUJO PARA CONTRATOS (ejemplo):
-Si el usuario dice "haz un contrato de arrendamiento con Juan Pérez como arrendador":
-1. Navega al módulo contratos: [ACCION]{"tipo":"navegar","modulo":"contratos"}[/ACCION]
-2. Pregunta los datos faltantes uno a uno de forma conversacional: arrendatario, inmueble, renta mensual, fecha de inicio, duración, etc.
-3. Cuando tengas todos los datos, confirma el resumen y dile al usuario que ya puede generar el contrato en el módulo.
+Datos necesarios para arrendamiento: arrendador, arrendatario, dirección del inmueble, renta mensual, depósito, fecha de inicio, duración (meses). Cuando tengas todos, di: "Tengo todo. Ingresa estos datos en el formulario del módulo: [lista]" o pide confirmación antes.
 
-FLUJO PARA FICHAS TÉCNICAS:
-Si el usuario menciona un ID de EasyBroker (ej. EB-VL7436):
-1. Navega al módulo fichas: [ACCION]{"tipo":"navegar","modulo":"ficha"}[/ACCION]
-2. Indica al usuario que ingrese ese ID en el campo del módulo.
+── FICHAS TÉCNICAS ──
+Si mencionan un ID EB-XXXXXX: navega a fichas y diles que lo ingresen en el campo.
+Si quieren ficha manual: navega a ficha-manual y guíalos para subir fotos y datos.
 
-FLUJO PARA CALCULADORA ISR:
-Si el usuario da datos de una venta (precio venta, precio compra, año, mejoras):
-1. Navega al módulo ISR: [ACCION]{"tipo":"navegar","modulo":"isr"}[/ACCION]
-2. Puedes calcular directamente en el chat si tienes todos los datos, o invitarle a usar la calculadora.
+── CALCULADORA ISR ──
+Si dan datos de venta (precio venta, precio compra, año, mejoras), calcula directo aquí en el chat sin necesidad de ir al módulo. Solo navega si quieren ver el desglose visual.
 
-Conoces profundamente: LISR, Código Civil, contratos de arrendamiento y compraventa, procesos notariales, SAT, INPC, valuación inmobiliaria y el mercado de Morelia, Michoacán. Responde en español, preciso y profesional. Cita artículos cuando aplique. Respuestas concisas al hablar por voz — sin listas largas.`},...msgs]})
+── OPINIÓN DE VALOR ──
+Pide: colonia/zona, tipo de inmueble, m², recámaras. Da un rango estimado de mercado basado en tu conocimiento de Morelia.
+
+═══ INSTRUCCIONES DE VOZ ═══
+Cuando respondas por voz (respuestas cortas, sin bullet points, sin markdown). Máximo 3 oraciones. Luego el usuario puede pedir más detalle.
+
+Conoces: LISR, Código Civil, contratos, SAT, INPC, mercado de Morelia, Michoacán. Español, preciso y profesional.`},...msgs]})
     });
     rmTyping(tid);
     if (!r.ok){const e=await r.json();addErr(e.error?.message||'Error');msgs.pop();return;}
@@ -1285,7 +1284,10 @@ Conoces profundamente: LISR, Código Civil, contratos de arrendamiento y comprav
     clean = reply.replace(/\[ACCION\].*?\[\/ACCION\]/gs,'').trim();
     msgs.push({role:'assistant',content:clean}); addMsg('a',clean);
     // Speak the reply if voice was used
-    if(window._lastInputWasVoice){ speak(clean); window._lastInputWasVoice = false; }
+    if(window._lastInputWasVoice || window._voiceConversationActive){ 
+      speak(clean); 
+      window._lastInputWasVoice = false; 
+    }
   } catch(e){rmTyping(tid);addErr('No se pudo conectar. Verifica tu clave.');msgs.pop();}
   finally{busy=false;g('snd').disabled=false;inp.focus();}
 }
@@ -1682,7 +1684,14 @@ function toggleVoice(){
     alert('Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.');
     return;
   }
-  if(isListening){ stopVoice(); return; }
+  if(isListening){
+    window._voiceConversationActive = false;
+    stopVoice();
+    return;
+  }
+  // Enable hands-free conversation mode
+  window._voiceConversationActive = true;
+  window._lastInputWasVoice = true;
   startVoice();
 }
 
@@ -1690,20 +1699,16 @@ function startVoice(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   recognition = new SR();
   recognition.lang = 'es-MX';
-  recognition.continuous = true;
+  recognition.continuous = false;    // false = más compatible con Chrome
   recognition.interimResults = true;
 
   const btn = document.getElementById('mic-btn');
   const inp = document.getElementById('txtin');
 
-  recognition.onstart = () => {
-    isListening = true;
-    btn.classList.add('listening');
-    btn.title = 'Escuchando… toca para enviar';
-    if(inp){ inp.placeholder = '🎙 Escuchando…'; inp.value = ''; }
-  };
-
-  let silenceTimer = null;
+  isListening = true;
+  btn.classList.add('listening');
+  btn.title = 'Escuchando… toca para detener';
+  if(inp){ inp.placeholder = '🎙 Escuchando…'; inp.value = ''; }
 
   recognition.onresult = (e) => {
     let final = '', interim = '';
@@ -1711,34 +1716,41 @@ function startVoice(){
       if(e.results[i].isFinal) final += e.results[i][0].transcript;
       else interim += e.results[i][0].transcript;
     }
-    if(inp){ inp.value = final + interim; if(typeof resize==='function') resize(inp); }
-    if(e.results[e.results.length-1].isFinal && final.trim()){
-      clearTimeout(silenceTimer);
-      silenceTimer = setTimeout(() => {
-        window._lastInputWasVoice = true;
-        stopVoice();
-        setTimeout(() => send(), 200);
-      }, 1500);
-    }
+    if(inp){ inp.value = (final || interim).trim(); if(typeof resize==='function') resize(inp); }
   };
 
   recognition.onerror = (e) => {
+    if(e.error === 'not-allowed'){
+      alert('Permiso de micrófono denegado. Habilítalo en la configuración del navegador.');
+    }
     stopVoice();
-    if(e.error !== 'no-speech' && e.error !== 'aborted') console.warn('Voice error:', e.error);
   };
 
+  // onend fires when recognition stops — auto-send if we got text
   recognition.onend = () => {
-    if(isListening){ try{ recognition.start(); }catch(e){ stopVoice(); } }
+    const txt = inp ? inp.value.trim() : '';
+    if(isListening && txt){
+      window._lastInputWasVoice = true;
+      stopVoice();
+      setTimeout(() => send(), 150);
+    } else {
+      stopVoice();
+    }
   };
 
-  recognition.start();
+  try {
+    recognition.start();
+  } catch(e) {
+    stopVoice();
+    console.warn('startVoice error:', e);
+  }
 }
 
 function stopVoice(){
   isListening = false;
   const btn = document.getElementById('mic-btn');
-  if(btn){ btn.classList.remove('listening'); btn.title = 'Hablar'; }
-  if(recognition){ try{ recognition.stop(); }catch(e){} recognition = null; }
+  if(btn){ btn.classList.remove('listening'); btn.title = 'Hablar 🎙'; }
+  if(recognition){ try{ recognition.abort(); }catch(e){} recognition = null; }
   const inp = document.getElementById('txtin');
   if(inp && inp.placeholder === '🎙 Escuchando…') inp.placeholder = 'Escribe o habla…';
 }
@@ -1746,23 +1758,36 @@ function stopVoice(){
 // Speak response aloud (optional — called after AI replies)
 function speak(text){
   if(!('speechSynthesis' in window)) return;
-  // Strip markdown symbols for cleaner speech
-  const clean = text.replace(/[*_#\x60]/g,'').replace(/\n+/g,' ').slice(0,400);
+  // Strip markdown, keep it short for speech
+  const clean = text
+    .replace(/\[ACCION\].*?\[\/ACCION\]/gs,'')
+    .replace(/[*_#\x60]/g,'')
+    .replace(/\n+/g,' ')
+    .replace(/https?:\/\/\S+/g,'')
+    .trim()
+    .slice(0, 500);
+  if(!clean) return;
   window.speechSynthesis.cancel();
   const doSpeak = () => {
     const utt = new SpeechSynthesisUtterance(clean);
     utt.lang = 'es-MX';
-    utt.rate = 1.0;
+    utt.rate = 1.05;
     utt.pitch = 1;
     const voices = window.speechSynthesis.getVoices();
     const esVoice = voices.find(v => v.lang === 'es-MX') ||
+                    voices.find(v => v.lang === 'es-ES') ||
                     voices.find(v => v.lang.startsWith('es')) || null;
     if(esVoice) utt.voice = esVoice;
+    utt.onend = () => {
+      // After speaking, re-activate mic automatically for hands-free conversation
+      if(window._voiceConversationActive){
+        setTimeout(() => startVoice(), 400);
+      }
+    };
     window.speechSynthesis.speak(utt);
   };
-  // Voices may not be ready on first call
   if(window.speechSynthesis.getVoices().length) doSpeak();
-  else window.speechSynthesis.onvoiceschanged = () => { doSpeak(); window.speechSynthesis.onvoiceschanged = null; };
+  else { window.speechSynthesis.onvoiceschanged = () => { doSpeak(); window.speechSynthesis.onvoiceschanged = null; }; }
 }
 
 function toggleSidebar(){
@@ -1899,8 +1924,8 @@ function loadConversation(id) {
   document.getElementById('welcome').style.display = 'none';
   chat.innerHTML = '';
   msgs.forEach(m => {
-    if (m.role === 'user') appendMsg('user', m.content);
-    else if (m.role === 'assistant') appendMsg('bot', m.content);
+    if (m.role === 'user') addMsg('u', m.content, true);
+    else if (m.role === 'assistant') addMsg('a', m.content, true);
   });
   if (window.innerWidth < 768) toggleSidebar();
 }
@@ -1912,15 +1937,7 @@ function clearHistory() {
 }
 
 // Auto-save when assistant responds
-const _origAppendMsg = appendMsg;
-let _lastUserMsg = '';
-window.appendMsg = function(role, text) {
-  _origAppendMsg(role, text);
-  if (role === 'user') _lastUserMsg = text;
-  if (role === 'bot' && _lastUserMsg) {
-    saveConversation(_lastUserMsg, msgs);
-  }
-};
+
 
 // Init on load
 document.addEventListener('DOMContentLoaded', renderHistory);
