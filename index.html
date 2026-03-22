@@ -903,62 +903,38 @@ function hasModule(mod){
 }
 
 function applyUserPermissions(){
-  const ALL = ['chat','isr','ficha-manual','ficha','contratos','avm'];
-
-  // Update sidebar — show/hide buttons based on modules
-  const btnMap = {
-    'ficha-manual': '[onclick*="ficha-manual"]',
-    'ficha':        '[onclick*="setPanel('ficha')"]',
-    'contratos':    '[onclick*="contratos"]',
-    'avm':          '[onclick*="avm"]',
-    'isr':          '#btn-isr',
-    'chat':         null, // chat is always available if user is active
-  };
+  if(!userProfile) return;
 
   // Hide sidebar buttons for modules user doesn't have
   document.querySelectorAll('.sb-btn').forEach(btn => {
-    const onclick = btn.getAttribute('onclick') || '';
+    const oc = btn.getAttribute('onclick') || '';
     let mod = null;
-    if(onclick.includes('ficha-manual')) mod = 'ficha-manual';
-    else if(onclick.includes("setPanel('ficha')")) mod = 'ficha';
-    else if(onclick.includes('contratos')) mod = 'contratos';
-    else if(onclick.includes('avm')) mod = 'avm';
+    if(oc.includes('ficha-manual')) mod = 'ficha-manual';
+    else if(oc.includes("setPanel") && oc.includes("ficha") && !oc.includes("manual")) mod = 'ficha';
+    else if(oc.includes('contratos')) mod = 'contratos';
+    else if(oc.includes('avm')) mod = 'avm';
     else if(btn.id === 'btn-isr') mod = 'isr';
-    else if(btn.id === 'btn-props') mod = null; // always show
-
-    if(mod && !hasModule(mod)){
-      btn.style.display = 'none';
-    }
+    if(mod && !hasModule(mod)) btn.style.display = 'none';
   });
 
-  // Update user display in header
-  if(userProfile.nombre){
-    const lbl = document.getElementById('hlbl');
-    if(lbl && lbl.textContent.includes('Chat')){
-      // Show name in header somehow — add to dot area
-    }
-  }
-
-  // If user has no chat module, redirect to first available module
+  // If no chat access, hide input and go to first module
   if(!hasModule('chat')){
-    const firstMod = (userProfile.modulos || [])[0];
-    if(firstMod) setTimeout(() => setPanel(firstMod), 100);
-    // Hide chat input area
     const inp = document.getElementById('inp-area');
     if(inp) inp.style.display = 'none';
+    const firstMod = (userProfile.modulos || [])[0];
+    if(firstMod) setTimeout(() => setPanel(firstMod), 200);
   }
 
-  // Show admin link if admin
+  // Add admin panel button
   if(userProfile.plan === 'admin'){
-    // Add admin button to sidebar footer
     const foot = document.querySelector('.sb-foot');
     if(foot && !document.getElementById('admin-link-btn')){
-      const adminBtn = document.createElement('button');
-      adminBtn.className = 'sb-btn';
-      adminBtn.id = 'admin-link-btn';
-      adminBtn.onclick = () => window.open('admin.html','_blank');
-      adminBtn.innerHTML = `<svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>Panel Admin`;
-      foot.prepend(adminBtn);
+      const b = document.createElement('button');
+      b.className = 'sb-btn';
+      b.id = 'admin-link-btn';
+      b.onclick = () => window.open('admin.html','_blank');
+      b.innerHTML = '<svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>Panel Admin';
+      foot.prepend(b);
     }
   }
 }
@@ -2075,7 +2051,7 @@ document.addEventListener('DOMContentLoaded', renderHistory);
 
 // ── PWA: SERVICE WORKER + PUSH NOTIFICATIONS ──
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('/sw.js')
+  navigator.serviceWorker.register('/sw.js?v=202603222305')
     .then(reg => {
       console.log('SW registrado:', reg.scope);
       window._swReg = reg;
