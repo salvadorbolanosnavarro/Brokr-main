@@ -81,39 +81,39 @@ async function guardar(){
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span>';
 
-  // Upsert profile
-  const r = await fetch(`${SB_URL}/rest/v1/usuarios?id=eq.${user.id}`, {
-    method: 'PATCH',
+  const isAdmin = user.email === 'salvadorbolanosnavarro@gmail.com';
+  const planDefault = isAdmin ? 'admin' : 'free';
+  const modulosDefault = isAdmin
+    ? ['chat','isr','ficha-manual','ficha','contratos','avm']
+    : ['ficha-manual'];
+
+  // Use UPSERT — single call, handles both insert and update
+  const r = await fetch(`${SB_URL}/rest/v1/usuarios`, {
+    method: 'POST',
     headers:{
       'apikey': SB_KEY,
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
-      'Prefer': 'return=minimal'
+      'Prefer': 'resolution=merge-duplicates,return=minimal'
     },
-    body: JSON.stringify({ nombre, telefono, updated_at: new Date().toISOString() })
+    body: JSON.stringify({
+      id: user.id,
+      email: user.email,
+      nombre,
+      telefono,
+      plan: planDefault,
+      modulos: modulosDefault,
+      updated_at: new Date().toISOString()
+    })
   });
 
   if(!r.ok){
-    // Row may not exist yet — insert
-    const r2 = await fetch(`${SB_URL}/rest/v1/usuarios`, {
-      method: 'POST',
-      headers:{
-        'apikey': SB_KEY,
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify({
-        id: user.id,
-        email: user.email,
-        nombre, telefono,
-        plan: user.email === 'salvadorbolanosnavarro@gmail.com' ? 'admin' : 'free',
-        modulos: user.email === 'salvadorbolanosnavarro@gmail.com'
-          ? ['chat','isr','ficha-manual','ficha','contratos','avm']
-          : ['ficha-manual']
-      })
-    });
-    if(!r2.ok){ showMsg('Error guardando perfil. Intenta de nuevo.'); btn.disabled=false; btn.textContent='Continuar a BROKR®'; return; }
+    const errText = await r.text();
+    console.error('Supabase error:', r.status, errText);
+    showMsg(`Error ${r.status}: ${errText}`);
+    btn.disabled=false;
+    btn.textContent='Continuar a BROKR®';
+    return;
   }
 
   showMsg('Perfil guardado. Cargando BROKR®…', 'ok');
