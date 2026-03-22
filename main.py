@@ -679,15 +679,19 @@ async def generar_contrato(req: ContratoRequest):
     clausulas_redactadas = []
     if req.clausulas_especiales:
         tipo_label = "arrendamiento" if req.tipo == "arrendamiento" else "promesa de compraventa"
-        prompt_clausulas = f"""Eres un abogado especialista en derecho inmobiliario mexicano con 20 años de experiencia redactando contratos conforme al Código Civil Federal y los códigos civiles estatales.
-
-El usuario quiere incluir las siguientes cláusulas especiales en un contrato de {tipo_label}. Para cada una, redacta una cláusula jurídicamente correcta, con lenguaje formal, precisa y ejecutable ante tribunales mexicanos. Usa numeración romana (PRIMERA ESPECIAL, SEGUNDA ESPECIAL, etc.).
-
-No incluyas explicaciones ni comentarios — solo la cláusula redactada lista para insertarse en el contrato.
-
-Cláusulas a redactar:
-""" + "
-".join(f"{i+1}. {c}" for i, c in enumerate(req.clausulas_especiales))
+        lista_clausulas = "\n".join(
+            f"{i+1}. {c}" for i, c in enumerate(req.clausulas_especiales)
+        )
+        prompt_clausulas = (
+            "Eres un abogado especialista en derecho inmobiliario mexicano con 20 años de experiencia "
+            "redactando contratos conforme al Código Civil Federal y los códigos civiles estatales.\n\n"
+            f"El usuario quiere incluir las siguientes cláusulas especiales en un contrato de {tipo_label}. "
+            "Para cada una, redacta una cláusula jurídicamente correcta, con lenguaje formal, precisa y "
+            "ejecutable ante tribunales mexicanos. Usa numeración romana (PRIMERA ESPECIAL, SEGUNDA ESPECIAL, etc.).\n\n"
+            "No incluyas explicaciones ni comentarios — solo la cláusula redactada lista para insertarse en el contrato.\n\n"
+            "Cláusulas a redactar:\n"
+            + lista_clausulas
+        )
 
         try:
             import httpx
