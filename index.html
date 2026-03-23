@@ -363,12 +363,12 @@ html,body{
   <div class="sb-scroll">
     <div class="sb-sec">
     <div class="sb-lbl">Módulos</div>
-    <button class="sb-btn" onclick="setPanel('ficha-manual')"><svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>Fichas técnicas manuales</button>
-    <button class="sb-btn" onclick="setPanel('ficha')"><svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>Fichas técnicas</button>
-    <button class="sb-btn" onclick="setPanel('contratos')"><svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Contratos</button>
-    <button class="sb-btn" onclick="setPanel('avm')"><svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Opinión de valor</button>
-    <button class="sb-btn" id="btn-isr" onclick="goISR()"><svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>Calculadora de ISR</button>
-    <button class="sb-btn" id="btn-props" onclick="goProps()">
+    <button class="sb-btn" onclick="setPanel('ficha-manual')" data-panel="ficha-manual"><svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>Fichas técnicas manuales</button>
+    <button class="sb-btn" onclick="setPanel('ficha')" data-panel="ficha"><svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>Fichas técnicas</button>
+    <button class="sb-btn" onclick="setPanel('contratos')" data-panel="contratos"><svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Contratos</button>
+    <button class="sb-btn" onclick="setPanel('avm')" data-panel="avm"><svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Opinión de valor</button>
+    <button class="sb-btn" id="btn-isr" onclick="goISR()" data-panel="isr"><svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>Calculadora de ISR</button>
+    <button class="sb-btn" id="btn-props" onclick="goProps()" data-panel="props">
       <svg class="sb-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline stroke-linecap="round" stroke-linejoin="round" points="9 22 9 12 15 12 15 22"/></svg>Mis inmuebles
       <span class="pill" id="props-count">0</span>
     </button>
@@ -418,7 +418,7 @@ html,body{
     <!-- DASHBOARD -->
     <div id="dashboard">
 
-      <div class="mod-card card-blue" onclick="setPanel('ficha-manual')">
+      <div class="mod-card card-blue" onclick="setPanel('ficha-manual')" data-panel="ficha-manual">
         <div class="mod-head">
           <div class="mod-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div>
           <div class="mod-arrow"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></div>
@@ -428,7 +428,7 @@ html,body{
         <div class="mod-tag">Presentación</div>
       </div>
 
-      <div class="mod-card card-blue" onclick="setPanel('ficha')">
+      <div class="mod-card card-blue" onclick="setPanel('ficha')" data-panel="ficha">
         <div class="mod-head">
           <div class="mod-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg></div>
           <div class="mod-arrow"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></div>
@@ -438,7 +438,7 @@ html,body{
         <div class="mod-tag">EasyBroker</div>
       </div>
 
-      <div class="mod-card card-amber" onclick="setPanel('contratos')">
+      <div class="mod-card card-amber" onclick="setPanel('contratos')" data-panel="contratos">
         <div class="mod-head">
           <div class="mod-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div>
           <div class="mod-arrow"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></div>
@@ -448,7 +448,7 @@ html,body{
         <div class="mod-tag">Legal</div>
       </div>
 
-      <div class="mod-card card-rose" onclick="setPanel('avm')">
+      <div class="mod-card card-rose" onclick="setPanel('avm')" data-panel="avm">
         <div class="mod-head">
           <div class="mod-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></div>
           <div class="mod-arrow"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></div>
@@ -458,7 +458,7 @@ html,body{
         <div class="mod-tag">Valuación</div>
       </div>
 
-      <div class="mod-card card-violet" onclick="goISR()">
+      <div class="mod-card card-violet" onclick="goISR()" data-panel="isr">
         <div class="mod-head">
           <div class="mod-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg></div>
           <div class="mod-arrow"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></div>
@@ -468,7 +468,7 @@ html,body{
         <div class="mod-tag">Fiscal</div>
       </div>
 
-      <div class="mod-card card-emerald" onclick="goProps()">
+      <div class="mod-card card-emerald" onclick="goProps()" data-panel="props">
         <div class="mod-head">
           <div class="mod-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
           <div class="mod-arrow"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></div>
@@ -1041,8 +1041,6 @@ function applyUserPermissions(){
 
   // If no chat access, hide input and go to first module
   if(!hasModule('chat')){
-    const inp = document.getElementById('inp-area');
-    if(inp) inp.style.display = 'none';
     const firstMod = (userProfile.modulos || [])[0];
     if(firstMod) setTimeout(() => setPanel(firstMod), 200);
   }
@@ -2090,7 +2088,7 @@ function startNewChat(){
 }
 
 // Init
-document.addEventListener('DOMContentLoaded', () => { authInit().then(() => { updateUserDisplay(); }); }); function updateUserDisplay(){ if(!userProfile) return; const n = document.getElementById('user-name-display'); const p = document.getElementById('user-plan-display'); const a = document.getElementById('user-avatar'); if(n) n.textContent = userProfile.nombre || currentUser?.email || '—'; if(p) p.textContent = {free:'Free',modulos:'Módulos',pro:'Pro',admin:'Admin'}[userProfile.plan] || userProfile.plan; if(a) a.textContent = (userProfile.nombre||'?')[0].toUpperCase(); }
+document.addEventListener('DOMContentLoaded', () => { authInit().then(() => { updateUserDisplay(); showDashboard(); }); }); function updateUserDisplay(){ if(!userProfile) return; const n = document.getElementById('user-name-display'); const p = document.getElementById('user-plan-display'); const a = document.getElementById('user-avatar'); if(n) n.textContent = userProfile.nombre || currentUser?.email || '—'; if(p) p.textContent = {free:'Free',modulos:'Módulos',pro:'Pro',admin:'Admin'}[userProfile.plan] || userProfile.plan; if(a) a.textContent = (userProfile.nombre||'?')[0].toUpperCase(); }
 document.addEventListener('DOMContentLoaded', function(){
   _currentChatId = genId();
   renderChatList();
