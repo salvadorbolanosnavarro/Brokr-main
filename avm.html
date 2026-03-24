@@ -3,265 +3,167 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AVM — Comparables de Zona</title>
+  <title>AVM — Opinión de Valor</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #f5f5f0;
-      color: #1a1a1a;
-      min-height: 100vh;
-      padding: 32px 16px;
+      background: #f5f5f0; color: #1a1a1a;
+      min-height: 100vh; padding: 32px 20px;
     }
-
-    .container {
-      max-width: 860px;
-      margin: 0 auto;
-    }
-
-    /* ── Encabezado ── */
-    .header {
-      margin-bottom: 32px;
-    }
-    .header h1 {
-      font-size: 26px;
-      font-weight: 600;
-      color: #111;
-      margin-bottom: 6px;
-    }
-    .header p {
-      font-size: 14px;
-      color: #666;
-    }
+    .container { max-width: 900px; margin: 0 auto; }
     .badge {
-      display: inline-block;
-      background: #e8f5ee;
-      color: #1D9E75;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 3px 10px;
-      border-radius: 20px;
-      margin-bottom: 12px;
-      letter-spacing: .04em;
+      display: inline-block; background: #e8f5ee; color: #1D9E75;
+      font-size: 11px; font-weight: 700; padding: 3px 10px;
+      border-radius: 20px; margin-bottom: 10px; letter-spacing: .06em;
     }
-
-    /* ── Formulario ── */
+    h1 { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
+    .subtitulo { font-size: 14px; color: #666; margin-bottom: 28px; }
     .card {
-      background: #fff;
-      border-radius: 14px;
-      padding: 28px;
-      margin-bottom: 24px;
-      border: 1px solid #e8e8e4;
+      background: #fff; border-radius: 14px; padding: 24px;
+      margin-bottom: 20px; border: 1px solid #e8e8e4;
     }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 20px;
+    .cred-toggle {
+      display: flex; align-items: center; gap: 8px; cursor: pointer;
+      font-size: 13px; font-weight: 600; color: #555; user-select: none;
     }
-    @media (max-width: 560px) {
-      .form-row { grid-template-columns: 1fr; }
+    .cred-toggle .arrow { transition: transform .2s; font-size: 11px; }
+    .cred-toggle.open .arrow { transform: rotate(90deg); }
+    .cred-body {
+      display: none; margin-top: 16px; padding-top: 16px;
+      border-top: 1px solid #f0f0ec;
     }
-
+    .cred-body.visible { display: block; }
+    .cred-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 540px) { .cred-row { grid-template-columns: 1fr; } }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
+    @media (max-width: 540px) { .form-row { grid-template-columns: 1fr; } }
     .field label {
-      display: block;
-      font-size: 12px;
-      font-weight: 600;
-      color: #555;
-      margin-bottom: 6px;
-      letter-spacing: .03em;
-      text-transform: uppercase;
+      display: block; font-size: 11px; font-weight: 700; color: #555;
+      margin-bottom: 6px; letter-spacing: .04em; text-transform: uppercase;
     }
     .field input {
-      width: 100%;
-      padding: 11px 14px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      font-size: 15px;
-      color: #111;
-      background: #fafaf8;
-      outline: none;
-      transition: border-color .2s;
+      width: 100%; padding: 10px 13px; border: 1px solid #ddd;
+      border-radius: 8px; font-size: 14px; color: #111;
+      background: #fafaf8; outline: none; transition: border-color .2s;
     }
-    .field input:focus {
-      border-color: #1D9E75;
-      background: #fff;
+    .field input:focus { border-color: #1D9E75; background: #fff; }
+    .btn-primary {
+      padding: 10px 18px; background: #1D9E75; color: #fff;
+      font-size: 13px; font-weight: 600; border: none;
+      border-radius: 8px; cursor: pointer; transition: background .15s;
     }
-
+    .btn-primary:hover { background: #178a65; }
     .btn-buscar {
-      width: 100%;
-      padding: 13px;
-      background: #1D9E75;
-      color: #fff;
-      font-size: 15px;
-      font-weight: 600;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background .2s, transform .1s;
+      width: 100%; padding: 12px; background: #1D9E75; color: #fff;
+      font-size: 15px; font-weight: 600; border: none;
+      border-radius: 8px; cursor: pointer; transition: background .15s;
     }
-    .btn-buscar:hover  { background: #178a65; }
-    .btn-buscar:active { transform: scale(.99); }
+    .btn-buscar:hover { background: #178a65; }
     .btn-buscar:disabled { background: #aaa; cursor: not-allowed; }
-
-    /* ── Estado de carga ── */
-    .loading {
-      display: none;
-      text-align: center;
-      padding: 40px;
-      color: #666;
-      font-size: 14px;
-    }
+    .aviso { font-size: 11px; color: #aaa; margin-top: 8px; }
+    .loading { display: none; text-align: center; padding: 36px; color: #666; font-size: 14px; }
     .spinner {
-      width: 36px; height: 36px;
-      border: 3px solid #e0e0e0;
-      border-top-color: #1D9E75;
-      border-radius: 50%;
-      margin: 0 auto 16px;
-      animation: spin .8s linear infinite;
+      width: 34px; height: 34px; border: 3px solid #e0e0e0;
+      border-top-color: #1D9E75; border-radius: 50%;
+      margin: 0 auto 14px; animation: spin .8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── Error ── */
     .error-box {
-      display: none;
-      background: #fff3f3;
-      border: 1px solid #f5c0c0;
-      border-radius: 10px;
-      padding: 16px 20px;
-      color: #c0392b;
-      font-size: 14px;
-      margin-bottom: 20px;
+      display: none; background: #fff3f3; border: 1px solid #f5c0c0;
+      border-radius: 10px; padding: 14px 18px; color: #c0392b;
+      font-size: 13px; margin-bottom: 18px; line-height: 1.6;
     }
-
-    /* ── Resumen ── */
     .resumen {
-      display: none;
-      background: #e8f5ee;
-      border-radius: 10px;
-      padding: 14px 20px;
-      margin-bottom: 20px;
-      font-size: 14px;
-      color: #0f6e56;
-      font-weight: 500;
+      display: none; background: #e8f5ee; border-radius: 10px;
+      padding: 12px 18px; margin-bottom: 18px;
+      font-size: 14px; color: #0f6e56; font-weight: 500;
     }
-
-    /* ── Tabla ── */
     .table-wrap {
-      display: none;
-      overflow-x: auto;
-      border-radius: 12px;
-      border: 1px solid #e8e8e4;
-      margin-bottom: 20px;
+      display: none; overflow-x: auto; border-radius: 12px;
+      border: 1px solid #e8e8e4; margin-bottom: 16px;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #fff;
-      font-size: 13px;
-    }
-    thead {
-      background: #f5f5f0;
-    }
+    table { width: 100%; border-collapse: collapse; background: #fff; font-size: 13px; }
+    thead { background: #f5f5f0; }
     th {
-      text-align: left;
-      padding: 11px 14px;
-      font-size: 11px;
-      font-weight: 700;
-      color: #666;
-      letter-spacing: .05em;
-      text-transform: uppercase;
-      border-bottom: 1px solid #e8e8e4;
+      text-align: left; padding: 10px 13px; font-size: 11px;
+      font-weight: 700; color: #666; letter-spacing: .05em;
+      text-transform: uppercase; border-bottom: 1px solid #e8e8e4; white-space: nowrap;
     }
-    td {
-      padding: 12px 14px;
-      border-bottom: 1px solid #f0f0ec;
-      color: #222;
-      vertical-align: top;
-    }
+    td { padding: 11px 13px; border-bottom: 1px solid #f0f0ec; color: #222; vertical-align: top; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: #fafaf8; }
-
     .precio { font-weight: 700; color: #1D9E75; white-space: nowrap; }
     .metros { color: #555; }
     .url-link { color: #1D9E75; text-decoration: none; font-size: 12px; }
     .url-link:hover { text-decoration: underline; }
     .snippet { color: #666; font-size: 12px; line-height: 1.5; }
-    .no-dato { color: #bbb; font-style: italic; }
-
-    /* ── Botón descarga ── */
+    .no-dato { color: #ccc; font-style: italic; }
     .btn-csv {
-      display: none;
-      padding: 10px 20px;
-      background: #fff;
-      border: 1.5px solid #1D9E75;
-      color: #1D9E75;
-      font-size: 14px;
-      font-weight: 600;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background .2s;
+      display: none; padding: 9px 18px; background: #fff;
+      border: 1.5px solid #1D9E75; color: #1D9E75;
+      font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer;
     }
     .btn-csv:hover { background: #e8f5ee; }
-
-    /* ── Nota de configuración ── */
-    .nota {
-      background: #fffbe6;
-      border: 1px solid #f5d76e;
-      border-radius: 10px;
-      padding: 14px 18px;
-      font-size: 13px;
-      color: #7d6608;
-      margin-bottom: 24px;
-      line-height: 1.6;
-    }
-    .nota strong { color: #5a4a05; }
   </style>
 </head>
 <body>
 <div class="container">
 
-  <div class="header">
-    <span class="badge">MÓDULO AVM</span>
-    <h1>Comparables de Zona</h1>
-    <p>Busca propiedades similares en una colonia o fraccionamiento específico.</p>
+  <div>
+    <span class="badge">AVM · OPINIÓN DE VALOR</span>
+    <h1>Comparables de zona</h1>
+    <p class="subtitulo">Busca propiedades en venta dentro de una colonia específica.</p>
   </div>
 
-  <!-- Aviso si el backend no está configurado -->
-  <div class="nota">
-    <strong>⚙️ Nota de configuración:</strong> Este módulo requiere que el archivo
-    <code>avm_api.py</code> esté corriendo en tu servidor. Mientras lo configuras,
-    puedes probar la interfaz — verás un mensaje de error esperado.
+  <!-- Credenciales -->
+  <div class="card">
+    <div class="cred-toggle" id="cred-toggle" onclick="toggleCred()">
+      <span class="arrow">▶</span>
+      <span id="cred-label">⚙️ Configurar credenciales de Google</span>
+    </div>
+    <div class="cred-body" id="cred-body">
+      <div class="cred-row" style="margin-bottom:14px">
+        <div class="field">
+          <label>API Key de Google</label>
+          <input type="password" id="api-key" placeholder="AIzaSy...">
+        </div>
+        <div class="field">
+          <label>Search Engine ID (cx)</label>
+          <input type="text" id="cx" placeholder="a1b2c3...">
+        </div>
+      </div>
+      <button class="btn-primary" onclick="guardarCred()">Guardar en este navegador</button>
+      <p class="aviso">Tus credenciales se guardan solo en tu navegador. Nadie más puede verlas.</p>
+    </div>
   </div>
 
+  <!-- Búsqueda -->
   <div class="card">
     <div class="form-row">
       <div class="field">
         <label>Colonia / Fraccionamiento</label>
-        <input type="text" id="colonia" placeholder="Ej. Fraccionamiento Los Pinos" autocomplete="off">
+        <input type="text" id="colonia" placeholder="Ej. Fraccionamiento Los Pinos">
       </div>
       <div class="field">
         <label>Ciudad</label>
-        <input type="text" id="ciudad" placeholder="Ej. Morelia" autocomplete="off">
+        <input type="text" id="ciudad" placeholder="Ej. Morelia">
       </div>
     </div>
-    <button class="btn-buscar" id="btn-buscar" onclick="buscar()">
-      Buscar comparables
-    </button>
+    <button class="btn-buscar" id="btn-buscar" onclick="buscar()">Buscar comparables</button>
   </div>
 
+  <!-- Estado -->
   <div class="loading" id="loading">
     <div class="spinner"></div>
-    Buscando propiedades en Google… esto toma unos segundos.
+    Consultando Google… esto tarda unos segundos.
   </div>
-
   <div class="error-box" id="error-box"></div>
-  <div class="resumen" id="resumen"></div>
+  <div class="resumen"   id="resumen"></div>
 
+  <!-- Resultados -->
   <div class="table-wrap" id="table-wrap">
-    <table id="tabla-resultados">
+    <table>
       <thead>
         <tr>
           <th>Propiedad</th>
@@ -274,150 +176,182 @@
       <tbody id="tabla-body"></tbody>
     </table>
   </div>
-
-  <button class="btn-csv" id="btn-csv" onclick="descargarCSV()">
-    ⬇ Descargar CSV
-  </button>
+  <button class="btn-csv" id="btn-csv" onclick="descargarCSV()">⬇ Descargar CSV</button>
 
 </div>
 
 <script>
-  // ─────────────────────────────────────────────────────
-  // IMPORTANTE: Cambia esta URL por la de tu servidor
-  // cuando hayas configurado avm_api.py en cPanel.
-  // Ejemplo: 'https://tudominio.com/avm_app/buscar'
-  // ─────────────────────────────────────────────────────
-  const API_URL = 'https://TU_DOMINIO.com/avm_app/buscar';
+// ── Credenciales ──────────────────────────────
+function cargarCred() {
+  const k = localStorage.getItem('avm_api_key') || '';
+  const c = localStorage.getItem('avm_cx') || '';
+  document.getElementById('api-key').value = k;
+  document.getElementById('cx').value = c;
+  if (k && c) document.getElementById('cred-label').textContent = '✅ Credenciales configuradas';
+}
+function guardarCred() {
+  const k = document.getElementById('api-key').value.trim();
+  const c = document.getElementById('cx').value.trim();
+  if (!k || !c) { alert('Ingresa ambas credenciales antes de guardar.'); return; }
+  localStorage.setItem('avm_api_key', k);
+  localStorage.setItem('avm_cx', c);
+  document.getElementById('cred-label').textContent = '✅ Credenciales configuradas';
+  toggleCred();
+}
+function toggleCred() {
+  document.getElementById('cred-body').classList.toggle('visible');
+  document.getElementById('cred-toggle').classList.toggle('open');
+}
 
-  let resultadosGlobales = [];
-
-  async function buscar() {
-    const colonia = document.getElementById('colonia').value.trim();
-    const ciudad  = document.getElementById('ciudad').value.trim();
-
-    if (!colonia || !ciudad) {
-      mostrarError('Por favor ingresa tanto la colonia como la ciudad.');
-      return;
-    }
-
-    // Resetear UI
-    ocultarTodo();
-    document.getElementById('btn-buscar').disabled = true;
-    document.getElementById('loading').style.display = 'block';
-
-    try {
-      const resp = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ colonia, ciudad })
-      });
-
-      if (!resp.ok) throw new Error(`Error del servidor: ${resp.status}`);
-
-      const data = await resp.json();
-      resultadosGlobales = data.comparables || [];
-      mostrarResultados(resultadosGlobales, colonia);
-
-    } catch (err) {
-      mostrarError(
-        `No se pudo conectar con el motor de búsqueda.<br>
-        <small style="opacity:.8">${err.message}</small><br><br>
-        <small>Verifica que <strong>avm_api.py</strong> esté corriendo en tu servidor 
-        y que la URL en este archivo sea correcta.</small>`
-      );
-    } finally {
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('btn-buscar').disabled = false;
+// ── Regex ─────────────────────────────────────
+function limpiarNum(t) {
+  try { return parseFloat(t.replace(/,/g,'').trim()); } catch(e) { return null; }
+}
+function extraerPrecio(texto) {
+  const pats = [/\$\s*([\d,\.]+)/, /([\d,\.]+)\s*millones?/i];
+  for (const p of pats) {
+    const m = texto.match(p);
+    if (m) {
+      let v = limpiarNum(m[1]);
+      if (!v) continue;
+      const ctx = texto.slice(Math.max(0, texto.search(p) - 5), texto.search(p) + 20);
+      if (/millon/i.test(ctx)) return v * 1_000_000;
+      return v < 1000 ? v * 1000 : v;
     }
   }
+  return null;
+}
+function extraerMetros(texto) {
+  let m2t = null, m2c = null;
+  const mt = texto.match(/([\d,\.]+)\s*m[²2]?\s*(?:de\s*)?terreno/i);
+  const mc = texto.match(/([\d,\.]+)\s*m[²2]?\s*(?:de\s*)?(?:construcci[oó]n|construcc?\.?)/i);
+  if (mt) m2t = limpiarNum(mt[1]);
+  if (mc) m2c = limpiarNum(mc[1]);
+  if (!m2t && !m2c) {
+    const mg = texto.match(/([\d,\.]+)\s*m[²2]/i);
+    if (mg) m2t = limpiarNum(mg[1]);
+  }
+  return [m2t, m2c];
+}
 
-  function mostrarResultados(datos, colonia) {
-    if (datos.length === 0) {
-      mostrarError(`No se encontraron propiedades exactas en <strong>${colonia}</strong>. Intenta con otro nombre de zona.`);
-      return;
+// ── Búsqueda ──────────────────────────────────
+let resultadosGlobales = [];
+
+async function buscar() {
+  const colonia = document.getElementById('colonia').value.trim();
+  const ciudad  = document.getElementById('ciudad').value.trim();
+  const apiKey  = localStorage.getItem('avm_api_key') || '';
+  const cx      = localStorage.getItem('avm_cx') || '';
+
+  if (!apiKey || !cx) {
+    mostrarError('Primero configura tus credenciales de Google en la sección de arriba y haz clic en <strong>Guardar</strong>.');
+    return;
+  }
+  if (!colonia || !ciudad) {
+    mostrarError('Ingresa la colonia/fraccionamiento y la ciudad.');
+    return;
+  }
+
+  ocultarTodo();
+  document.getElementById('btn-buscar').disabled = true;
+  document.getElementById('loading').style.display = 'block';
+
+  const query = `"venta" "casa" "${colonia}" "${ciudad}" "$"`;
+  const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}&num=10&lr=lang_es`;
+
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `Error ${resp.status}`);
+    }
+    const data  = await resp.json();
+    const items = data.items || [];
+    resultadosGlobales = [];
+
+    for (const item of items) {
+      const titulo  = item.title   || '';
+      const enlace  = item.link    || '';
+      const snippet = item.snippet || '';
+      const texto   = `${titulo} ${snippet}`;
+      if (!texto.toLowerCase().includes(colonia.toLowerCase())) continue;
+      const precio      = extraerPrecio(texto);
+      const [m2t, m2c] = extraerMetros(texto);
+      resultadosGlobales.push({ titulo, url: enlace, snippet, precio_mxn: precio, m2_terreno: m2t, m2_construccion: m2c });
     }
 
-    // Resumen
-    const res = document.getElementById('resumen');
-    res.innerHTML = `✓ Se encontraron <strong>${datos.length} propiedad${datos.length !== 1 ? 'es' : ''}</strong> validada${datos.length !== 1 ? 's' : ''} en <strong>${colonia}</strong>.`;
-    res.style.display = 'block';
-
-    // Tabla
-    const tbody = document.getElementById('tabla-body');
-    tbody.innerHTML = '';
-
-    datos.forEach(p => {
-      const precio = p.precio_mxn
-        ? `$${Number(p.precio_mxn).toLocaleString('es-MX')} MXN`
-        : '<span class="no-dato">No detectado</span>';
-
-      const terreno = p.m2_terreno
-        ? `${Number(p.m2_terreno).toLocaleString('es-MX')} m²`
-        : '<span class="no-dato">—</span>';
-
-      const constr = p.m2_construccion
-        ? `${Number(p.m2_construccion).toLocaleString('es-MX')} m²`
-        : '<span class="no-dato">—</span>';
-
-      tbody.innerHTML += `
-        <tr>
-          <td>
-            <div style="font-weight:600;margin-bottom:4px">${p.titulo}</div>
-            <div class="snippet">${p.snippet}</div>
-          </td>
-          <td class="precio">${precio}</td>
-          <td class="metros">${terreno}</td>
-          <td class="metros">${constr}</td>
-          <td><a href="${p.url}" target="_blank" class="url-link">Ver anuncio ↗</a></td>
-        </tr>`;
-    });
-
-    document.getElementById('table-wrap').style.display = 'block';
-    document.getElementById('btn-csv').style.display = 'inline-block';
+    mostrarResultados(colonia);
+  } catch(err) {
+    mostrarError(
+      `No se pudo completar la búsqueda.<br><small>${err.message}</small><br><br>
+      <small>Verifica que tu <strong>API Key</strong> y <strong>Search Engine ID</strong> sean correctos
+      y que la API de Custom Search esté activada en tu proyecto de Google.</small>`
+    );
+  } finally {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('btn-buscar').disabled = false;
   }
+}
 
-  function descargarCSV() {
-    if (!resultadosGlobales.length) return;
-
-    const headers = ['titulo','url','precio_mxn','m2_terreno','m2_construccion','snippet'];
-    const filas = [headers.join(',')];
-
-    resultadosGlobales.forEach(p => {
-      const fila = headers.map(h => {
-        const val = p[h] ?? '';
-        return `"${String(val).replace(/"/g, '""')}"`;
-      });
-      filas.push(fila.join(','));
-    });
-
-    const blob = new Blob([filas.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href = url;
-    a.download = `comparables_${Date.now()}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+function mostrarResultados(colonia) {
+  if (!resultadosGlobales.length) {
+    mostrarError(`No se encontraron propiedades en <strong>${colonia}</strong>. Intenta con otro nombre de zona.`);
+    return;
   }
+  const n = resultadosGlobales.length;
+  document.getElementById('resumen').innerHTML =
+    `✓ <strong>${n}</strong> propiedad${n !== 1 ? 'es' : ''} encontrada${n !== 1 ? 's' : ''} en <strong>${colonia}</strong>.`;
+  document.getElementById('resumen').style.display = 'block';
 
-  function mostrarError(msg) {
-    const el = document.getElementById('error-box');
-    el.innerHTML = `⚠️ ${msg}`;
-    el.style.display = 'block';
+  const tbody = document.getElementById('tabla-body');
+  tbody.innerHTML = '';
+  for (const p of resultadosGlobales) {
+    const precio  = p.precio_mxn       ? `$${Number(p.precio_mxn).toLocaleString('es-MX')} MXN` : '<span class="no-dato">No detectado</span>';
+    const terreno = p.m2_terreno       ? `${Number(p.m2_terreno).toLocaleString('es-MX')} m²`   : '<span class="no-dato">—</span>';
+    const constr  = p.m2_construccion  ? `${Number(p.m2_construccion).toLocaleString('es-MX')} m²` : '<span class="no-dato">—</span>';
+    tbody.innerHTML += `
+      <tr>
+        <td><div style="font-weight:600;margin-bottom:4px">${p.titulo}</div><div class="snippet">${p.snippet}</div></td>
+        <td class="precio">${precio}</td>
+        <td class="metros">${terreno}</td>
+        <td class="metros">${constr}</td>
+        <td><a href="${p.url}" target="_blank" class="url-link">Ver anuncio ↗</a></td>
+      </tr>`;
   }
+  document.getElementById('table-wrap').style.display = 'block';
+  document.getElementById('btn-csv').style.display = 'inline-block';
+}
 
-  function ocultarTodo() {
-    document.getElementById('error-box').style.display   = 'none';
-    document.getElementById('resumen').style.display     = 'none';
-    document.getElementById('table-wrap').style.display  = 'none';
-    document.getElementById('btn-csv').style.display     = 'none';
-  }
-
-  // Permitir buscar con Enter
-  ['colonia','ciudad'].forEach(id => {
-    document.getElementById(id).addEventListener('keydown', e => {
-      if (e.key === 'Enter') buscar();
-    });
+// ── CSV ───────────────────────────────────────
+function descargarCSV() {
+  if (!resultadosGlobales.length) return;
+  const headers = ['titulo','url','precio_mxn','m2_terreno','m2_construccion','snippet'];
+  const filas = [headers.join(','), ...resultadosGlobales.map(p =>
+    headers.map(h => `"${String(p[h] ?? '').replace(/"/g,'""')}"`).join(',')
+  )];
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(new Blob([filas.join('\n')], { type: 'text/csv;charset=utf-8;' })),
+    download: `comparables_${Date.now()}.csv`
   });
+  a.click();
+}
+
+// ── UI helpers ────────────────────────────────
+function mostrarError(msg) {
+  const el = document.getElementById('error-box');
+  el.innerHTML = `⚠️ ${msg}`;
+  el.style.display = 'block';
+}
+function ocultarTodo() {
+  ['error-box','resumen','table-wrap'].forEach(id =>
+    document.getElementById(id).style.display = 'none');
+  document.getElementById('btn-csv').style.display = 'none';
+}
+['colonia','ciudad'].forEach(id =>
+  document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') buscar(); })
+);
+
+cargarCred();
 </script>
 </body>
 </html>
