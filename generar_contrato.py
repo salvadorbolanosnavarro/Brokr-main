@@ -431,9 +431,8 @@ def generar_arrendamiento(datos, output_path):
         "La parte arrendadora, en este acto, entrega en arrendamiento a la parte arrendataria "
         "y esta recibe de conformidad, a su entera satisfacción y bajo ese título el inmueble "
         "descrito en la declaración 1.1. En buen estado físico de conservación para servir al "
-        "uso convenido. Incluyendo sus 2 respectivos cajones de estacionamiento y bodega. No "
-        "reservándose la parte arrendataria derecho alguno que hacer valer ni en lo presente "
-        "ni en lo futuro por este caso a la parte arrendadora.")
+        "uso convenido. No reservándose la parte arrendataria derecho alguno que hacer valer ni "
+        "en lo presente ni en lo futuro por este caso a la parte arrendadora.")
 
     titulo('"TERMINO CONTRATO"')
     clausula("SEGUNDA",
