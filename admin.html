@@ -424,6 +424,9 @@ async function saveUser(){
   const activo  = document.getElementById('m-activo').checked;
   const notas   = document.getElementById('m-notas').value.trim();
   let modulos   = getSelectedModules();
+  if(plan === 'free'){
+  modulos = ['ficha-manual'];
+}
 
   // Pro/Admin get all modules
   if(plan === 'pro' || plan === 'admin'){
