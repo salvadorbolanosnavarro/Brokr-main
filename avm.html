@@ -240,8 +240,8 @@ let resultadosGlobales = [];
 async function buscar() {
   const colonia = document.getElementById('colonia').value.trim();
   const ciudad  = document.getElementById('ciudad').value.trim();
-  const apiKey  = localStorage.getItem('avm_api_key') || '';
-  const cx      = localStorage.getItem('avm_cx') || '';
+  const apiKey  = 'AIzaSyAYGD6EWS-C7UurkaJcrEduStZoFZbL1og';
+  const cx      = '632fef4f5a41441d4';
 
   if (!apiKey || !cx) {
     mostrarError('Primero configura tus credenciales de Google en la sección de arriba y haz clic en <strong>Guardar</strong>.');
