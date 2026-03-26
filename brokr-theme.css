@@ -70,13 +70,18 @@
 html { height: 100%; }
 
 body {
-  height: 100%;
+  min-height: 100%;
   background: var(--bg);
   font-family: 'Manrope', sans-serif;
   color: var(--txt);
-  overflow: hidden;
   font-weight: 400;
   letter-spacing: -0.015em;
+}
+
+/* Cuando hay app shell con sidebar, el body no debe hacer scroll */
+body:has(#app) {
+  height: 100%;
+  overflow: hidden;
 }
 
 /* ── APP SHELL ── */
@@ -536,6 +541,8 @@ body {
   #sb { display: none; }
 
   #app  { display: block; height: 100dvh; overflow: hidden; }
+  /* Páginas sin sidebar: permitir scroll */
+  body:not(:has(#app)) { overflow-y: auto; height: auto; }
   #main { height: 100dvh; }
 
   #hdr { padding: 0 16px; height: 52px; }
