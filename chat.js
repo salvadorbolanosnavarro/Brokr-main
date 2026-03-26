@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   BROKR® — Chat flotante con IA
+   Brokr — Chat flotante con IA
    ═══════════════════════════════════════════════════════════
    Este componente es omnipresente — flota sobre toda la app.
    
