@@ -1,0 +1,125 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BROKR® — Guía para aplicar el nuevo diseño
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ARCHIVOS QUE RECIBES
+────────────────────
+• brokr-theme.css     → El tema global. Va en tu servidor junto a las páginas HTML.
+• favicon-brokr.svg   → El nuevo favicon (isotipo navy, fondo transparente).
+
+
+PASO 1 — Sube los archivos a tu servidor
+─────────────────────────────────────────
+Coloca brokr-theme.css y favicon-brokr.svg en la misma carpeta
+donde están tus archivos HTML (ej. la raíz del proyecto).
+
+
+PASO 2 — En CADA página HTML, cambia el <head>
+───────────────────────────────────────────────
+
+Reemplaza las líneas del <head> relacionadas con estilos por esto:
+
+  ┌─── COPIAR ESTO al <head> de cada página ───────────────────────────┐
+  │                                                                      │
+  │  <link rel="icon" type="image/svg+xml" href="favicon-brokr.svg"/>   │
+  │  <link rel="preconnect" href="https://fonts.googleapis.com"/>        │
+  │  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?    │
+  │    family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;      │
+  │    12..96,500;12..96,600;12..96,700;12..96,800                      │
+  │    &family=Manrope:wght@300;400;500;600;700;800&display=swap"/>      │
+  │  <link rel="stylesheet" href="brokr-theme.css"/>                     │
+  │                                                                      │
+  └──────────────────────────────────────────────────────────────────────┘
+
+
+PASO 3 — Limpia el <style> interno de cada página
+──────────────────────────────────────────────────
+
+En el bloque <style> que ya existe dentro de cada HTML, BORRA o comenta
+las secciones que ya están cubiertas por brokr-theme.css:
+
+  ✗ Todo el bloque :root { --bg: ... --navy: ... etc. }
+  ✗ Estilos de #sb, .sb-logo, .sb-nav, .sb-btn, .sb-foot, .sb-user
+  ✗ Estilos de #main, #hdr, .hdr-btn, .hdr-greeting
+  ✗ Estilos de body (font-family, background, overflow)
+  ✗ Variables de color duplicadas
+
+  ✓ CONSERVA los estilos específicos de esa página
+    (ej. la calculadora ISR tiene su grid de resultados → déjalo)
+
+
+PASO 4 — Verifica el HTML del sidebar
+──────────────────────────────────────
+
+El HTML del sidebar debe tener esta estructura exacta:
+
+  <aside id="sb">
+    <div class="sb-logo">
+      <img src="[TU LOGO]" alt="BROKR®"/>
+    </div>
+    <div class="sb-nav">
+      <div class="sb-lbl">Módulos</div>
+      <button class="sb-btn [active si es la página actual]">
+        [icono SVG] [nombre del módulo]
+      </button>
+      <!-- más botones... -->
+    </div>
+    <div class="sb-foot">
+      <div class="sb-user">
+        <div class="sb-avatar">A</div>
+        <div>
+          <div class="sb-user-name">Nombre</div>
+          <div class="sb-user-plan">Plan Pro</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+
+EJEMPLO — Cómo queda el <head> de indexISR.html
+──────────────────────────────────────────────────
+
+ANTES:
+  <link rel="icon" href="icon-192.png"/>
+  <link rel="stylesheet" href="...Syne+DM+Sans..."/>
+  <style>
+    :root { --bg:#0d1525; --teal:#0eb8a0; ... }
+    body { background:var(--bg); font-family:'DM Sans'... }
+    #sb { background:var(--bg2); ... }
+    ...cientos de líneas de sidebar/header...
+  </style>
+
+DESPUÉS:
+  <link rel="icon" type="image/svg+xml" href="favicon-brokr.svg"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Manrope:wght@300;400;500;600;700;800&display=swap"/>
+  <link rel="stylesheet" href="brokr-theme.css"/>
+  <style>
+    /* Solo los estilos ÚNICOS de esta página */
+    .isr-grid { ... }
+    .resultado-card { ... }
+  </style>
+
+
+CAMBIOS VISUALES INCLUIDOS
+────────────────────────────
+
+✓ Fondo general: dark navy  →  gris claro (#F5F6FA)
+✓ Fuente: DM Sans / Syne   →  Manrope / Bricolage Grotesque
+✓ Sidebar: dark             →  azul navy oscuro (#000959)
+✓ Logo del sidebar: +25% más grande (max-height: 100px)
+✓ Favicon: isotipo "B" navy, fondo transparente
+✓ Cards y formularios con el nuevo sistema de colores
+✓ Todos los acentos y badges estandarizados
+
+
+¿TIENES MUCHAS PÁGINAS?
+────────────────────────
+Si tienes 5+ páginas, la forma más rápida es hacer un
+buscar-y-reemplazar en tu editor (VS Code, etc.):
+
+  Buscar:   <link rel="icon" href="icon-192.png"/>
+  Reemplazar: <link rel="icon" type="image/svg+xml" href="favicon-brokr.svg"/>
+              <link rel="stylesheet" href="brokr-theme.css"/>
+
+Y luego eliminar manualmente los :root y estilos de sidebar duplicados.
