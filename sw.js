@@ -1,4 +1,4 @@
-// BROKR® Service Worker — auto-update on every deploy
+// Brokr Service Worker — auto-update on every deploy
 const CACHE_VERSION = 'brokr-' + Date.now(); // changes on every deploy = always fresh
 const OFFLINE_URLS = ['/index.html', '/login.html'];
 
