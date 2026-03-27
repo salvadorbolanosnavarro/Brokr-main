@@ -1344,6 +1344,8 @@ function toggleChatFloat(){
   fab.classList.toggle('open', !isOpen);
   ov.classList.toggle('show', !isOpen);
   if(!isOpen) document.getElementById('txtin')?.focus();
+   const cb = document.getElementById('close-bar');
+  if(cb) cb.style.display = isOpen ? 'block' : 'none';
 }
 function closeChatFloat(){
   document.getElementById('chat-window')?.classList.remove('open');
