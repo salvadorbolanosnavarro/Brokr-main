@@ -2085,7 +2085,16 @@ document.addEventListener('DOMContentLoaded', () => {
   authInit();
   document.getElementById('close-bar').style.display = 'none';
 });
-   // ── CARRUSEL VERTICAL DASHBOARD ──
+   // ── SALUDO DINÁMICO ──
+  window.updateGreeting = function(){
+    const h = new Date().getHours();
+    const periodo = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
+    const nombre = (window.userProfile?.nombre || '').split(' ')[0];
+    const greetEl = document.getElementById('greet-text');
+    if(greetEl) greetEl.textContent = nombre ? `${periodo}, ${nombre}` : periodo;
+  };
+
+  // ── CARRUSEL VERTICAL DASHBOARD ──
 (function(){
   let cur = 0, cards = [], touchY = 0, initialized = false;
   const STEP = 150, S_SIDE = 0.72, O_SIDE = 0.32;
@@ -2167,17 +2176,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   render();
 
-    // Saludo dinámico
-    window.updateGreeting = function updateGreeting(){
-      const h = new Date().getHours();
-      const periodo = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
-      const nombre = (window.userProfile?.nombre || '').split(' ')[0];
-      const greetEl = document.getElementById('greet-text');
-      if(greetEl) greetEl.textContent = nombre ? `${periodo}, ${nombre}` : periodo;
-    }
     updateGreeting();
-    setTimeout(updateGreeting, 2000);
-    setTimeout(updateGreeting, 4000);
   }
 
   function go(idx){
