@@ -1281,45 +1281,23 @@ const PANEL_MAP = {
 };
 
 function setPanel(name) {
-  // Hide dashboard
   const db = document.getElementById('dashboard');
   if(db) db.style.display = 'none';
-
-  // Deactivate all panels
   document.querySelectorAll('.mod-panel').forEach(p => p.classList.remove('active'));
-
-  // Activate target panel
   const pid = PANEL_MAP[name];
   if(pid){
     const el = document.getElementById(pid);
     if(el) el.classList.add('active');
   }
-
-  // Update tab active state
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   const activeTab = document.querySelector(`.nav-tab[data-mod="${name}"]`);
   if(activeTab) activeTab.classList.add('active');
-
-  // Load props when navigating to props
   if(name === 'props') loadProps();
-
   closeDrawer();
-   document.getElementById('close-bar').style.display = 'block';
+  document.getElementById('close-bar').style.display = 'block';
 }
 
 function showDashboard() {
-  // Hide all panels
-  document.querySelectorAll('.mod-panel').forEach(p => p.classList.remove('active'));
-
-  // Show dashboard
-  const db = document.getElementById('dashboard');
-  if(db) db.style.display = 'grid';
-
-  // Deactivate all tabs
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-
-  closeDrawer();
-   function showDashboard() {
   document.querySelectorAll('.mod-panel').forEach(p => p.classList.remove('active'));
   const db = document.getElementById('dashboard');
   if(db) db.style.display = 'grid';
