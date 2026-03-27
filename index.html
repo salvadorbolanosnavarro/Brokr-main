@@ -2173,7 +2173,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const periodo = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
       const nombre = (window.userProfile?.nombre || '').split(' ')[0];
       const greetEl = document.getElementById('greet-text');
-if(greetEl) greetEl.textContent = nombre ? `¡Hola, ${nombre}! You're the best!` : `¡Hola! You're the best!`;    }
+      if(greetEl) greetEl.textContent = nombre ? `${periodo}, ${nombre}` : periodo;
+    }
     updateGreeting();
     setTimeout(updateGreeting, 2000);
     setTimeout(updateGreeting, 4000);
