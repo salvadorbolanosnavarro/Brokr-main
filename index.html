@@ -1509,6 +1509,7 @@ function updateUserDisplay(){
   if(n) n.textContent = userProfile.nombre || currentUser?.email || '—';
   if(p) p.textContent = {free:'Free',modulos:'Módulos',pro:'Pro',admin:'Admin'}[userProfile.plan] || userProfile.plan;
   if(a) a.textContent = (userProfile.nombre || '?')[0].toUpperCase();
+   if(typeof updateGreeting === 'function') updateGreeting();
 }
 
 function logout(){
@@ -2156,14 +2157,15 @@ document.addEventListener('DOMContentLoaded', () => {
   render();
 
     // Saludo dinámico
-    function updateGreeting(){
+    window.updateGreeting = function updateGreeting(){
       const h = new Date().getHours();
       const periodo = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
       const nombre = (window.userProfile?.nombre || '').split(' ')[0];
       const greetEl = document.getElementById('greet-text');
 if(greetEl) greetEl.textContent = nombre ? `¡Hola, ${nombre}! You're the best!` : `¡Hola! You're the best!`;    }
     updateGreeting();
-    setTimeout(updateGreeting, 1500);
+    setTimeout(updateGreeting, 2000);
+    setTimeout(updateGreeting, 4000);
   }
 
   function go(idx){
