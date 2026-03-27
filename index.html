@@ -6,11 +6,11 @@
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<meta name="apple-mobile-web-app-title" content="BROKR®"/>
+<meta name="apple-mobile-web-app-title" content="Brokr"/>
 <link rel="manifest" href="manifest.json"/>
 <link rel="apple-touch-icon" href="icon-192.png"/>
 <meta name="theme-color" content="#0f1923"/>
-<title>BROKR®</title>
+<title>Brokr</title>
 <link rel="icon" href="icon-192.png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1734,7 +1734,7 @@ function descargarPDF(){
   const bkdn  = (g('res-bkdn')||{}).innerHTML || '';
   const nota  = (g('res-nota')||{}).innerHTML || '';
   const meses = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/><title>ISR BROKR</title><style>body{font-family:'Poppins',sans-serif;font-size:12px;color:#1a1a1a;margin:0;padding:28px 32px;max-width:700px}h1{font-size:18px;font-weight:800;margin:0 0 2px}.sub{color:#555;font-size:11px;margin-bottom:16px}h2{font-size:13px;font-weight:700;margin:18px 0 6px;color:#333;border-bottom:1px solid #ddd;padding-bottom:3px}.br{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:12px}.br.tot{font-weight:700;font-size:13px;border-bottom:2px solid #ccc}.br.sub{padding-left:18px;color:#555}.bl{color:#444}.bv{font-weight:600}.nota{background:#fff8e6;border-left:3px solid #f59e0b;padding:10px 14px;font-size:11px;margin-top:14px;border-radius:0 6px 6px 0;line-height:1.6}.footer{font-size:10px;color:#999;margin-top:24px;padding-top:8px;border-top:1px solid #eee;text-align:center}</style></head><body><h1>Cálculo ISR por Enajenación</h1><div class="sub">Generado: ${new Date().toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'})} · ${meses[d.mesV]} ${d.anioV}</div><h2>Desglose</h2>${bkdn}${nota?`<div class="nota">${nota}</div>`:''}<div class="footer">Generado por BROKR® · Uso interno del agente inmobiliario · No sustituye al cálculo notarial definitivo</div></body></html>`;
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/><title>ISR BROKR</title><style>body{font-family:'Poppins',sans-serif;font-size:12px;color:#1a1a1a;margin:0;padding:28px 32px;max-width:700px}h1{font-size:18px;font-weight:800;margin:0 0 2px}.sub{color:#555;font-size:11px;margin-bottom:16px}h2{font-size:13px;font-weight:700;margin:18px 0 6px;color:#333;border-bottom:1px solid #ddd;padding-bottom:3px}.br{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:12px}.br.tot{font-weight:700;font-size:13px;border-bottom:2px solid #ccc}.br.sub{padding-left:18px;color:#555}.bl{color:#444}.bv{font-weight:600}.nota{background:#fff8e6;border-left:3px solid #f59e0b;padding:10px 14px;font-size:11px;margin-top:14px;border-radius:0 6px 6px 0;line-height:1.6}.footer{font-size:10px;color:#999;margin-top:24px;padding-top:8px;border-top:1px solid #eee;text-align:center}</style></head><body><h1>Cálculo ISR por Enajenación</h1><div class="sub">Generado: ${new Date().toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'})} · ${meses[d.mesV]} ${d.anioV}</div><h2>Desglose</h2>${bkdn}${nota?`<div class="nota">${nota}</div>`:''}<div class="footer">Generado por Brokr · Uso interno del agente inmobiliario · No sustituye al cálculo notarial definitivo</div></body></html>`;
   const blob = new Blob([html],{type:'text/html;charset=utf-8'});
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
@@ -1761,7 +1761,7 @@ async function send(){
   inp.value=''; inp.style.height='auto';
   const tid = addTyping(); busy = true; g('snd').disabled = true;
   try{
-    const r = await fetch('https://brokrebapi-production.up.railway.app/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:1500,temperature:0.7,messages:[{role:'system',content:`Eres BROKR®, el asistente inmobiliario con IA más avanzado de México. Cuando el usuario pida navegar a un módulo, incluye al FINAL de tu respuesta: [ACCION]{"tipo":"navegar","modulo":"NOMBRE"}[/ACCION]. Módulos: isr | ficha-manual | ficha | contratos | avm | props. Conoces: LISR, Código Civil, contratos, SAT, INPC, mercado de Morelia. Español, preciso y profesional.`},...msgs]})});
+    const r = await fetch('https://brokrebapi-production.up.railway.app/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:1500,temperature:0.7,messages:[{role:'system',content:`Eres Brokr, el asistente inmobiliario con IA más avanzado de México. Cuando el usuario pida navegar a un módulo, incluye al FINAL de tu respuesta: [ACCION]{"tipo":"navegar","modulo":"NOMBRE"}[/ACCION]. Módulos: isr | ficha-manual | ficha | contratos | avm | props. Conoces: LISR, Código Civil, contratos, SAT, INPC, mercado de Morelia. Español, preciso y profesional.`},...msgs]})});
     rmTyping(tid);
     if(!r.ok){ const e=await r.json(); addErr(e.error?.message||'Error'); msgs.pop(); return; }
     const data = await r.json();
