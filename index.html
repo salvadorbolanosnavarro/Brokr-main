@@ -307,9 +307,8 @@ body{
 }
 
 /* ══════════════════════════════════════════
-   DASHBOARD — colorful card grid
+   DASHBOARD — carrusel vertical centrado
 ══════════════════════════════════════════ */
-/* dashboard: carousel centrado */
 #dashboard{
   display:flex;
   align-items:center;
@@ -320,80 +319,69 @@ body{
   padding:0;
 }
 
-/* Pista de tarjetas */
-#dashboard .carousel-track{
-  display:flex;
-  align-items:center;
-  gap:0;
-  width:100%;
-  height:100%;
-  position:relative;
-}
-
-/* Cada tarjeta en modo carrusel */
+/* Las tarjetas se posicionan por JS */
 #dashboard .mod-card{
   position:absolute;
-  top:50%;
   left:50%;
-  transform:translate(-50%,-50%) translateX(0px) scale(1);
-  width:min(320px, 80vw);
-  transition:transform .45s cubic-bezier(.16,1,.3,1), opacity .45s ease, filter .45s ease;
-  cursor:pointer;
-  will-change:transform,opacity;
+  top:50%;
+  width:min(360px,88vw);
+  will-change:transform,opacity,filter;
 }
 
-/* Flechas de navegación */
-.carousel-arrow{
+/* Flechas arriba/abajo */
+.cv-arrow{
   position:absolute;
-  top:50%;
-  transform:translateY(-50%);
-  z-index:10;
-  background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.13);
-  backdrop-filter:blur(8px);
-  color:rgba(255,255,255,.7);
-  width:44px;height:44px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:20;
+  background:rgba(26,58,110,.7);
+  border:1px solid rgba(255,255,255,.15);
+  backdrop-filter:blur(10px);
+  color:rgba(255,255,255,.8);
+  width:42px;height:42px;
   border-radius:50%;
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;
   transition:all .2s ease;
   user-select:none;
-  flex-shrink:0;
 }
-.carousel-arrow:hover{
-  background:rgba(14,184,160,.18);
-  border-color:rgba(14,184,160,.4);
+.cv-arrow:hover{
+  background:rgba(0,212,184,.2);
+  border-color:rgba(0,212,184,.5);
   color:var(--teal2);
-  box-shadow:0 0 18px rgba(14,184,160,.2);
+  box-shadow:0 0 20px rgba(0,212,184,.3);
 }
-.carousel-arrow.left{ left:16px; }
-.carousel-arrow.right{ right:16px; }
+.cv-arrow.up{ top:16px; }
+.cv-arrow.dn{ bottom:16px; }
 
-/* Dots de posición */
-.carousel-dots{
+/* Dots laterales */
+.cv-dots{
   position:absolute;
-  bottom:22px;
-  left:50%;
-  transform:translateX(-50%);
-  display:flex;gap:7px;
-  z-index:10;
+  right:20px;
+  top:50%;
+  transform:translateY(-50%);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  z-index:20;
 }
-.carousel-dot{
+.cv-dot{
   width:6px;height:6px;border-radius:50%;
   background:rgba(255,255,255,.2);
-  transition:all .3s ease;
   cursor:pointer;
+  transition:all .3s ease;
 }
-.carousel-dot.active{
+.cv-dot.active{
   background:var(--teal2);
   box-shadow:0 0 8px var(--teal);
-  width:18px;
+  height:20px;
   border-radius:3px;
 }
 
 @media(max-width:600px){
-  #dashboard .mod-card{ width:min(290px,82vw); }
-  .carousel-arrow{ width:36px;height:36px; }
+  #dashboard .mod-card{ width:min(300px,86vw); }
+  .cv-arrow{ width:36px;height:36px; }
+  .cv-dots{ right:10px; }
 }
 
 /* ── MODULE CARDS ── */
@@ -1373,7 +1361,7 @@ function setPanel(name) {
 function showDashboard() {
   document.querySelectorAll('.mod-panel').forEach(p => p.classList.remove('active'));
   const db = document.getElementById('dashboard');
-  if(db) db.style.display = 'grid';
+  if(db) db.style.display = 'flex';
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   closeDrawer();
   document.getElementById('close-bar').style.display = 'none';
@@ -2056,90 +2044,76 @@ document.addEventListener('DOMContentLoaded', () => {
   authInit();
   document.getElementById('close-bar').style.display = 'none';
 });
-   // ── CAROUSEL DASHBOARD ──────────────────────────────────────────
+   // ── CARRUSEL VERTICAL DASHBOARD ──
 (function(){
-  let current = 0;
-  let cards = [];
-  let startX = 0;
-  let isDragging = false;
-
-  const GAP = 260; // distancia lateral entre tarjetas (px)
-  const SCALE_SIDE = 0.72;
-  const OPACITY_SIDE = 0.38;
-  const BLUR_SIDE = '2px';
+  let cur = 0, cards = [], touchY = 0, initialized = false;
+  const STEP = 150, S_SIDE = 0.72, O_SIDE = 0.32;
 
   function init(){
     const dash = document.getElementById('dashboard');
-    if(!dash) return;
-
+    if(!dash || initialized) return;
     cards = Array.from(dash.querySelectorAll('.mod-card'));
-    if(cards.length === 0) return;
+    if(!cards.length) return;
+    initialized = true;
 
-    // Inyectar flechas y dots
-    const arrowL = document.createElement('button');
-    arrowL.className = 'carousel-arrow left';
-    arrowL.setAttribute('aria-label','Anterior');
-    arrowL.innerHTML = `<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>`;
-    arrowL.onclick = () => go(current - 1);
-
-    const arrowR = document.createElement('button');
-    arrowR.className = 'carousel-arrow right';
-    arrowR.setAttribute('aria-label','Siguiente');
-    arrowR.innerHTML = `<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>`;
-    arrowR.onclick = () => go(current + 1);
-
-    const dotsWrap = document.createElement('div');
-    dotsWrap.className = 'carousel-dots';
-    cards.forEach((_,i) => {
-      const d = document.createElement('div');
-      d.className = 'carousel-dot' + (i===0?' active':'');
-      d.onclick = () => go(i);
-      dotsWrap.appendChild(d);
-    });
-
-    dash.appendChild(arrowL);
-    dash.appendChild(arrowR);
-    dash.appendChild(dotsWrap);
-
-    // Bloquear click propio de las tarjetas laterales (redirigen al ir a esa tarjeta)
-    cards.forEach((card, i) => {
-      const origClick = card.getAttribute('onclick');
-      card.removeAttribute('onclick');
-      card._origClick = origClick;
-      card.addEventListener('click', function(e){
-        if(i === current){
-          // ejecutar acción original
-          if(this._origClick) { try{ eval(this._origClick); }catch(_){} }
+    // Guardar acción y reemplazar onclick
+    cards.forEach((c, i) => {
+      c._cvAction = c.getAttribute('onclick') || '';
+      c.removeAttribute('onclick');
+      c.addEventListener('click', () => {
+        if(i === cur){
+          if(c._cvAction){ try{ eval(c._cvAction); }catch(e){ console.error(e); } }
         } else {
           go(i);
         }
       });
     });
 
-    // Touch / swipe
-    dash.addEventListener('touchstart', e => { startX = e.touches[0].clientX; isDragging=true; }, {passive:true});
-    dash.addEventListener('touchend', e => {
-      if(!isDragging) return;
-      isDragging=false;
-      const dx = e.changedTouches[0].clientX - startX;
-      if(Math.abs(dx) > 40) go(current + (dx < 0 ? 1 : -1));
+    // Flecha arriba
+    const up = document.createElement('button');
+    up.className = 'cv-arrow up';
+    up.innerHTML = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>';
+    up.onclick = () => go(cur - 1);
+
+    // Flecha abajo
+    const dn = document.createElement('button');
+    dn.className = 'cv-arrow dn';
+    dn.innerHTML = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>';
+    dn.onclick = () => go(cur + 1);
+
+    // Dots
+    const dotsEl = document.createElement('div');
+    dotsEl.className = 'cv-dots';
+    cards.forEach((_, i) => {
+      const d = document.createElement('div');
+      d.className = 'cv-dot' + (i === 0 ? ' active' : '');
+      d.onclick = () => go(i);
+      dotsEl.appendChild(d);
     });
 
-    // Mouse drag (desktop)
-    dash.addEventListener('mousedown', e => { startX = e.clientX; isDragging=true; });
-    dash.addEventListener('mouseup', e => {
-      if(!isDragging) return;
-      isDragging=false;
-      const dx = e.clientX - startX;
-      if(Math.abs(dx) > 50) go(current + (dx < 0 ? 1 : -1));
+    dash.appendChild(up);
+    dash.appendChild(dn);
+    dash.appendChild(dotsEl);
+
+    // Swipe táctil
+    dash.addEventListener('touchstart', e => { touchY = e.touches[0].clientY; }, {passive:true});
+    dash.addEventListener('touchend', e => {
+      const dy = e.changedTouches[0].clientY - touchY;
+      if(Math.abs(dy) > 40) go(cur + (dy < 0 ? 1 : -1));
     });
+
+    // Rueda del ratón
+    dash.addEventListener('wheel', e => {
+      e.preventDefault();
+      go(cur + (e.deltaY > 0 ? 1 : -1));
+    }, {passive:false});
 
     // Teclado
     document.addEventListener('keydown', e => {
-      const dash = document.getElementById('dashboard');
-      if(!dash || dash.style.display==='none') return;
-      if(e.key==='ArrowLeft') go(current-1);
-      if(e.key==='ArrowRight') go(current+1);
+      const d = document.getElementById('dashboard');
+      if(!d || d.style.display === 'none') return;
+      if(e.key === 'ArrowUp')   go(cur - 1);
+      if(e.key === 'ArrowDown') go(cur + 1);
     });
 
     render();
@@ -2147,58 +2121,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function go(idx){
     const n = cards.length;
-    current = ((idx % n) + n) % n;
+    cur = ((idx % n) + n) % n;
     render();
   }
 
   function render(){
     const n = cards.length;
-    cards.forEach((card, i) => {
-      const offset = i - current;
-      // Normalizar para carrusel circular
-      let norm = offset;
-      if(norm > n/2) norm -= n;
-      if(norm < -n/2) norm += n;
-
-      const absOff = Math.abs(norm);
-      const tx = norm * GAP;
-      const scale = absOff === 0 ? 1 : Math.max(SCALE_SIDE, 1 - absOff * 0.15);
-      const opacity = absOff === 0 ? 1 : Math.max(0.15, OPACITY_SIDE - absOff * 0.08);
-      const blur = absOff === 0 ? 'none' : BLUR_SIDE;
-      const zIndex = 10 - absOff;
-      const pointerEvents = absOff === 0 ? 'all' : 'all'; // laterales también clickables para navegar
-
-      card.style.cssText = `
-        position:absolute;top:50%;left:50%;
-        transform:translate(-50%,-50%) translateX(${tx}px) scale(${scale});
-        opacity:${opacity};
-        filter:blur(${blur});
-        z-index:${zIndex};
-        pointer-events:${pointerEvents};
-        transition:transform .45s cubic-bezier(.16,1,.3,1),opacity .45s ease,filter .45s ease;
-        width:min(320px,80vw);
-        cursor:${absOff===0?'default':'pointer'};
+    cards.forEach((c, i) => {
+      let off = i - cur;
+      if(off >  n / 2) off -= n;
+      if(off < -n / 2) off += n;
+      const abs  = Math.abs(off);
+      const ty   = off * STEP;
+      const sc   = abs === 0 ? 1 : Math.max(0.5, S_SIDE - abs * 0.1);
+      const op   = abs === 0 ? 1 : Math.max(0.08, O_SIDE - abs * 0.1);
+      const bl   = abs === 0 ? 'none' : `${abs * 2}px`;
+      const z    = 10 - abs;
+      c.style.cssText = `
+        position:absolute;
+        left:50%; top:50%;
+        transform:translate(-50%,-50%) translateY(${ty}px) scale(${sc});
+        opacity:${op};
+        filter:blur(${bl});
+        z-index:${z};
+        width:min(360px,88vw);
+        transition:transform .42s cubic-bezier(.16,1,.3,1), opacity .42s ease, filter .42s ease;
+        cursor:pointer;
+        animation:none;
       `;
     });
-
-    // Dots
-    const dots = document.querySelectorAll('.carousel-dot');
-    dots.forEach((d,i) => d.classList.toggle('active', i===current));
+    document.querySelectorAll('.cv-dot').forEach((d, i) => d.classList.toggle('active', i === cur));
   }
 
-  // Inicializar cuando el dashboard se muestre
-  // Hookeamos showDashboard para re-init si hace falta
-  const _origShowDash = window.showDashboard;
+  // Hook showDashboard para asegurar display flex y re-renderizar
+  const _orig = window.showDashboard;
   window.showDashboard = function(){
-    if(_origShowDash) _origShowDash.apply(this, arguments);
-    setTimeout(() => {
-      if(cards.length === 0) init();
-      else render();
-    }, 50);
+    if(_orig) _orig.apply(this, arguments);
+    const dash = document.getElementById('dashboard');
+    if(dash) dash.style.display = 'flex';
+    setTimeout(() => { if(!initialized) init(); else render(); }, 60);
   };
 
-  // También init on DOMContentLoaded
-  document.addEventListener('DOMContentLoaded', () => setTimeout(init, 100));
+  document.addEventListener('DOMContentLoaded', () => setTimeout(init, 150));
 })();
 </script>
 </body>
