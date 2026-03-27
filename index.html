@@ -1793,7 +1793,7 @@ async function send(){
   inp.value=''; inp.style.height='auto';
   const tid = addTyping(); busy = true; g('snd').disabled = true;
   try{
-    const r = await fetch('https://brokrebapi-production.up.railway.app/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:1500,temperature:0.7,messages:[{role:'system',content:`Eres Brokr, el asistente inmobiliario con IA más avanzado de México. Cuando el usuario pida navegar a un módulo, incluye al FINAL de tu respuesta: [ACCION]{"tipo":"navegar","modulo":"NOMBRE"}[/ACCION]. Módulos: isr | ficha-manual | ficha | contratos | avm | props. Conoces: LISR, Código Civil, contratos, SAT, INPC, mercado de Morelia. Español, preciso y profesional.`},...msgs]})});
+    const r = await fetch('https://brokrebapi-production.up.railway.app/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:1500,temperature:0.7,messages:[{role:'system',content:`Eres Shaark, el asistente inmobiliario con IA más avanzado de México. Cuando el usuario pida navegar a un módulo, incluye al FINAL de tu respuesta: [ACCION]{"tipo":"navegar","modulo":"NOMBRE"}[/ACCION]. Módulos: isr | ficha-manual | ficha | contratos | avm | props. Conoces: LISR, Código Civil, contratos, SAT, INPC, mercado de Morelia. Español, preciso y profesional.`},...msgs]})});
     rmTyping(tid);
     if(!r.ok){ const e=await r.json(); addErr(e.error?.message||'Error'); msgs.pop(); return; }
     const data = await r.json();
