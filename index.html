@@ -1701,7 +1701,7 @@ async function fetchAnalysis(d){
   if(g('ai-txt')) g('ai-txt').innerHTML = '<span style="color:var(--mut);font-size:13px">Analizando operación…</span>';
   const prompt = `Operación enajenación inmueble México: Tipo: ${d.tipo}, Venta: ${fmt(d.venta)}, Factor INPC: ${d.factor.toFixed(4)}, Ganancia: ${fmt(d.ganTotal)}, ISR total: ${fmt(d.isrTotal)}, Tasa: ${(d.tasaEfec*100).toFixed(2)}%. En 3 oraciones: valida resultado, consideración fiscal principal, recomendación práctica.`;
   try{
-    const r = await fetch('https://brokrebapi-production.up.railway.app/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:280,temperature:0.5,messages:[{role:'system',content:'Eres Shaark, desarrollado por Brkr, experto en fiscalidad y derecho inmobiliarios mexicanos. Responde en español, breve y práctico.'},{role:'user',content:prompt}]})});
+    const r = await fetch('https://brokrebapi-production.up.railway.app/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:280,temperature:0.5,messages:[{role:'system',content:'Tu nombre es Shaark. NO te llamas Brokr. Brokr es tu casa y creador. Experto en fiscalidad y derecho inmobiliarios mexicanos. Responde en español, breve y práctico.'},{role:'user',content:prompt}]})});
     const data = await r.json();
     if(g('ai-txt')) g('ai-txt').innerHTML = fmtMsg(data.choices?.[0]?.message?.content||'');
   } catch(e){ if(g('ai-box')) g('ai-box').style.display = 'none'; }
