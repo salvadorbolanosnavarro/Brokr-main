@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="apple-mobile-web-app-title" content="Brokr"/>
 <link rel="manifest" href="manifest.json"/>
-<link rel="apple-touch-icon" href="icon-192.png"/>
+<link rel="apple-touch-icon" href="apple-touch-icon.png"/>
 <meta name="theme-color" content="#ffffff"/>
 <title>Brokr</title>
-<link rel="icon" href="icon-192.png"/>
+<link rel="icon" href="favicon.png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet"><style>
@@ -1465,9 +1465,9 @@ let currentUser = null;
 let userProfile = null;
 
 async function authInit(){
-  const token = sessionStorage.getItem('sb_token');
+  const token = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
   if(!token){ window.location.href = 'login.html'; return; }
-  const user = JSON.parse(sessionStorage.getItem('sb_user') || '{}');
+  const user = JSON.parse(localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}');
   if(!user.id){ window.location.href = 'login.html'; return; }
   try{
     const r = await fetch(`${SB_URL_AUTH}/rest/v1/usuarios?id=eq.${user.id}&select=*`, {
@@ -1475,6 +1475,7 @@ async function authInit(){
     });
     const data = await r.json();
     if(!data.length || data[0].activo === false){
+      localStorage.clear();
       sessionStorage.clear();
       window.location.href = 'login.html';
       return;
@@ -1522,6 +1523,7 @@ function updateUserDisplay(){
 }
 
 function logout(){
+  localStorage.clear();
   sessionStorage.clear();
   window.location.href = 'login.html';
 }
