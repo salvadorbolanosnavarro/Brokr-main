@@ -1991,8 +1991,11 @@ document.addEventListener('DOMContentLoaded', () => {
   showDashboard();
   authInit();
 });
-   document.addEventListener('DOMContentLoaded', function(){
+   document.addEventListener('DOMContentLoaded', () => {
+  showDashboard();
+  authInit();
   document.getElementById('close-bar').style.display = 'none';
+});
 });
 </script>
 </body>
