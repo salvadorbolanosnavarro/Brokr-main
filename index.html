@@ -1319,6 +1319,13 @@ function showDashboard() {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
 
   closeDrawer();
+   function showDashboard() {
+  document.querySelectorAll('.mod-panel').forEach(p => p.classList.remove('active'));
+  const db = document.getElementById('dashboard');
+  if(db) db.style.display = 'grid';
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  closeDrawer();
+  document.getElementById('close-bar').style.display = 'none';
 }
 
 function goISR()  { setPanel('isr'); }
