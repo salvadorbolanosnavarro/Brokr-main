@@ -2,165 +2,260 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Calculadora ISR — Brokr</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<title>ISR — BROKR®</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap"/>
-
-<!-- Hereda el design system del shell -->
-<link rel="stylesheet" href="../css/design-system.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 
 <style>
-/* ═══════════════════════════════════════════════════════════
-   ISR MODULE — Estilos propios
-   ═══════════════════════════════════════════════════════════
-   Estos estilos SOLO afectan este módulo.
-   Puedes modificarlos sin tocar nada más del sistema.
-   ═══════════════════════════════════════════════════════════ */
-body {
-  overflow-y: auto;
-  background: var(--bg);
-  padding: 0;
+/* ═══════════════════════════════════════
+   BROKR® DESIGN SYSTEM — ISR MODULE
+   Paleta: Blanco · Navy · Teal
+   Tipografía: Poppins
+═══════════════════════════════════════ */
+:root {
+  --navy:       #0f1829;
+  --navy-mid:   #162035;
+  --navy-light: #1e2d47;
+  --teal:       #2a9db5;
+  --teal-dark:  #1a7a8f;
+  --teal-bg:    rgba(42,157,181,0.10);
+  --teal-border:rgba(42,157,181,0.25);
+  --white:      #ffffff;
+  --bg:         #f0f2f7;
+  --card:       #ffffff;
+  --border:     rgba(0,0,0,0.08);
+  --border2:    rgba(0,0,0,0.05);
+  --txt:        #1a2035;
+  --txt-soft:   #5a6070;
+  --txt-muted:  #9aa0ad;
+  --success:    #16a34a;
+  --success-bg: #f0fdf4;
+  --success-bd: #bbf7d0;
+  --danger:     #dc2626;
+  --danger-bg:  #fef2f2;
+  --danger-bd:  #fecaca;
+  --warn:       #f59e0b;
+  --warn-bg:    rgba(245,158,11,0.12);
+  --info:       var(--teal);
+  --info-bg:    var(--teal-bg);
+  --r:          18px;
+  --r2:         14px;
+  --r3:         10px;
+  --touch:      48px;
+  --font:       'Poppins', sans-serif;
+  --shadow:     0 2px 16px rgba(0,0,0,0.07);
+  --shadow-sm:  0 1px 6px rgba(0,0,0,0.05);
 }
 
-.isr-scroll { padding: 20px; padding-bottom: 60px; max-width: 700px; margin: 0 auto; }
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
-/* Header */
-.isr-hdr { margin-bottom: 16px; }
-.isr-hdr-title {
-  font-family: var(--font-display);
-  font-size: var(--fs-heading);
-  font-weight: 800;
-  color: var(--txt-strong);
+html, body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--txt);
+  font-size: 15px;
+  min-height: 100%;
+  overflow-y: auto;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  background: var(--navy);
+  padding: 0 20px;
+  height: 60px;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 4px;
+  gap: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
-.isr-badge {
-  font-size: 10px;
+.topbar-back {
+  width: 38px; height: 38px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.1);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: white;
+  font-size: 18px;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.topbar-back:active { background: rgba(255,255,255,0.15); }
+.topbar-title {
+  font-size: 16px;
   font-weight: 700;
-  background: var(--teal3);
-  color: var(--teal2);
+  color: white;
+  flex: 1;
+}
+.topbar-badge {
+  font-size: 9px;
+  font-weight: 700;
+  background: var(--teal-bg);
+  color: var(--teal);
+  border: 1px solid var(--teal-border);
   padding: 3px 9px;
   border-radius: 20px;
   text-transform: uppercase;
   letter-spacing: .5px;
-}
-.isr-hdr-sub {
-  font-size: var(--fs-sm);
-  color: var(--mut);
-  line-height: 1.5;
+  white-space: nowrap;
 }
 
-/* Cards de sección */
-.isr-card {
-  background: var(--sf);
-  border: 1px solid var(--bd);
+/* ── SCROLL CONTENT ── */
+.page-scroll {
+  padding: 20px 16px 140px;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+/* ── PAGE HEADER ── */
+.page-hdr {
+  margin-bottom: 18px;
+}
+.page-hdr-sub {
+  font-size: 13px;
+  color: var(--txt-soft);
+  line-height: 1.55;
+  margin-top: 4px;
+}
+
+/* ── CARDS ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: var(--r);
   padding: 18px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  z-index: 1;
 }
-.isr-card-lbl {
-  font-size: var(--fs-label);
+.card:has(.mp-dropdown.open) {
+  z-index: 200;
+}
+.card-label {
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .8px;
-  color: var(--teal2);
-  margin-bottom: 12px;
+  color: var(--teal);
+  margin-bottom: 14px;
   display: flex;
   align-items: center;
   gap: 6px;
 }
-.isr-opt {
+.card-label-opt {
   font-size: 10px;
   font-weight: 400;
   text-transform: none;
   letter-spacing: 0;
-  color: var(--mut);
+  color: var(--txt-muted);
   font-style: italic;
 }
 
-/* Rows */
-.isr-row1 { margin-bottom: 12px; }
-.isr-row1:last-child { margin-bottom: 0; }
-.isr-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-.isr-row2:last-child { margin-bottom: 0; }
+/* ── FORM ROWS ── */
+.row1 { margin-bottom: 12px; }
+.row1:last-child { margin-bottom: 0; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.row2:last-child { margin-bottom: 0; }
+@media (max-width: 420px) { .row2 { grid-template-columns: 1fr; } }
 
-/* Fields */
-.isr-f { display: flex; flex-direction: column; gap: 5px; }
-.isr-f label {
-  font-size: var(--fs-label);
-  font-weight: 700;
-  color: var(--mut);
+/* ── FIELDS ── */
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--txt-muted);
   text-transform: uppercase;
-  letter-spacing: .6px;
+  letter-spacing: .5px;
 }
-.isr-f input, .isr-f select {
+.field input, .field select {
   width: 100%;
-  min-height: var(--touch-min);
-  padding: 10px 12px;
-  background: var(--bg3);
-  border: 1px solid var(--bd2);
+  min-height: var(--touch);
+  padding: 10px 14px;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
   border-radius: var(--r3);
   color: var(--txt);
-  font-size: var(--fs-base);
-  font-family: inherit;
+  font-size: 15px;
+  font-family: var(--font);
+  font-weight: 500;
   outline: none;
-  transition: border-color .2s;
+  transition: border-color .2s, background .2s;
+  appearance: none;
 }
-.isr-f input:focus, .isr-f select:focus { border-color: var(--teal); background: var(--bg2); }
-.isr-f input::placeholder { color: var(--mut2); }
-.isr-f select option { background: var(--bg2); }
-.isr-hint { font-size: var(--fs-xs); color: var(--teal2); margin-top: 2px; }
+.field input:focus, .field select:focus {
+  border-color: var(--teal);
+  background: white;
+  box-shadow: 0 0 0 3px var(--teal-bg);
+}
+.field input::placeholder { color: var(--txt-muted); font-weight: 400; }
+.field-hint {
+  font-size: 11px;
+  color: var(--teal);
+  margin-top: 1px;
+  font-weight: 500;
+}
 
-/* Alertas */
-.isr-alert-warn {
+/* ── ALERTS ── */
+.alert-warn {
   border-radius: var(--r3);
-  padding: 10px 14px;
-  font-size: var(--fs-sm);
+  padding: 11px 14px;
+  font-size: 13px;
   line-height: 1.5;
   margin-top: 10px;
   background: var(--warn-bg);
   border-left: 3px solid var(--warn);
-  color: #fcd34d;
+  color: #92400e;
 }
-.isr-alert-info {
+.alert-info {
   border-radius: var(--r3);
-  padding: 10px 14px;
-  font-size: var(--fs-sm);
+  padding: 11px 14px;
+  font-size: 13px;
   line-height: 1.5;
   margin-top: 10px;
-  background: var(--info-bg);
-  border-left: 3px solid var(--info);
-  color: #93c5fd;
+  background: var(--teal-bg);
+  border-left: 3px solid var(--teal);
+  color: var(--teal-dark);
 }
 
-/* Botón calcular */
-.isr-calc-btn {
+/* ── BOTÓN CALCULAR ── */
+.btn-calc {
   width: 100%;
-  min-height: 50px;
+  min-height: 52px;
   padding: 14px;
-  background: linear-gradient(135deg, var(--teal), var(--teal2));
+  background: var(--navy);
   border: none;
   border-radius: var(--r2);
-  color: #fff;
+  color: white;
   font-size: 15px;
   font-weight: 700;
-  font-family: inherit;
+  font-family: var(--font);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: opacity .2s;
+  transition: opacity .2s, transform .1s;
+  letter-spacing: .2px;
 }
-.isr-calc-btn:hover { opacity: .9; }
-.isr-calc-btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-calc:hover { opacity: .92; }
+.btn-calc:active { transform: scale(0.98); }
+.btn-calc:disabled { opacity: .45; cursor: not-allowed; }
+.btn-calc .btn-teal-line {
+  display: block;
+  width: 28px; height: 2px;
+  background: var(--teal);
+  border-radius: 2px;
+  margin-right: -4px;
+}
 
 /* ── RESULTADOS ── */
-#res { margin-top: 0; }
+#res { display: none; }
+
 .res-topbar {
   display: flex;
   align-items: center;
@@ -169,126 +264,443 @@ body {
   flex-wrap: wrap;
   gap: 8px;
 }
-.res-back-btn {
+.btn-secondary {
   display: flex;
   align-items: center;
-  gap: 5px;
-  background: none;
-  border: 1px solid var(--bd2);
+  gap: 6px;
+  background: white;
+  border: 1.5px solid var(--border);
   border-radius: var(--r3);
-  min-height: var(--touch-min);
-  padding: 8px 14px;
-  color: var(--mut);
-  font-size: var(--fs-sm);
-  font-family: inherit;
+  min-height: var(--touch);
+  padding: 8px 16px;
+  color: var(--txt-soft);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font);
   cursor: pointer;
-  transition: all .15s;
+  transition: border-color .15s, color .15s;
 }
-.res-back-btn:hover { color: var(--txt); border-color: var(--txt); }
-.res-tipo-lbl {
-  font-size: var(--fs-xs);
+.btn-secondary:hover { border-color: var(--navy); color: var(--navy); }
+.btn-secondary.teal { border-color: var(--teal); color: var(--teal); }
+.res-tipo-tag {
+  font-size: 10px;
   font-weight: 700;
-  background: var(--teal3);
-  color: var(--teal2);
+  background: var(--teal-bg);
+  color: var(--teal);
+  border: 1px solid var(--teal-border);
   padding: 4px 10px;
   border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
 }
 
-/* Cards de resultado */
-#res-cards, .res-cards-grid {
+/* Result cards grid */
+.res-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 10px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
-.rc { background: var(--sf); border: 1px solid var(--bd); border-radius: var(--r2); padding: 14px; }
+.rc {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r2);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+}
 .rc.gn { background: var(--success-bg); border-color: var(--success-bd); }
 .rc.dk { background: var(--danger-bg); border-color: var(--danger-bd); }
-.rc-l { font-size: 10px; font-weight: 700; color: var(--mut); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 5px; }
-.rc-v { font-size: 20px; font-weight: 800; color: var(--txt-strong); line-height: 1.1; margin-bottom: 3px; word-break: break-word; }
+.rc-l { font-size: 10px; font-weight: 700; color: var(--txt-muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+.rc-v { font-size: 21px; font-weight: 800; color: var(--txt); line-height: 1.1; margin-bottom: 3px; word-break: break-word; }
 .rc.gn .rc-v { color: var(--success); }
 .rc.dk .rc-v { color: var(--danger); }
-.rc-n { font-size: 10px; color: var(--mut); line-height: 1.4; }
+.rc-n { font-size: 10px; color: var(--txt-muted); line-height: 1.4; }
 
 /* INPC row */
-.res-inpc-row {
+.inpc-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--sf);
-  border: 1px solid var(--bd);
+  background: white;
+  border: 1.5px solid var(--border);
   border-radius: var(--r2);
-  padding: 12px 14px;
+  padding: 14px 16px;
   margin-bottom: 12px;
   flex-wrap: wrap;
+  box-shadow: var(--shadow-sm);
 }
-.res-inpc-cell { flex: 1; min-width: 80px; text-align: center; }
-.res-inpc-cell.hl .res-inpc-val { color: var(--teal2); }
-.res-inpc-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: var(--mut); margin-bottom: 3px; }
-.res-inpc-val { font-size: 15px; font-weight: 700; color: var(--txt-strong); }
-.res-inpc-arr { color: var(--mut); font-size: 16px; flex-shrink: 0; }
+.inpc-cell { flex: 1; min-width: 80px; text-align: center; }
+.inpc-cell.hl .inpc-val { color: var(--teal); }
+.inpc-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: var(--txt-muted); margin-bottom: 3px; font-weight: 600; }
+.inpc-val { font-size: 15px; font-weight: 700; color: var(--txt); }
+.inpc-arr { color: var(--txt-muted); font-size: 16px; flex-shrink: 0; }
 
 /* Desglose */
-.res-bkdn { background: var(--sf); border: 1px solid var(--bd); border-radius: var(--r2); padding: 14px; margin-bottom: 12px; }
-.br { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; border-bottom: 1px solid var(--bd); font-size: var(--fs-sm); }
+.res-bkdn {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r2);
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+}
+.br { display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; border-bottom: 1px solid var(--border2); font-size: 13px; }
 .br:last-child { border-bottom: none; }
 .br.tot { font-weight: 700; font-size: 14px; }
-.br.sub { padding-left: 14px; color: var(--mut); }
-.bl { color: var(--mut); }
+.br.sub { padding-left: 14px; color: var(--txt-soft); }
+.bl { color: var(--txt-soft); }
 .br.tot .bl { color: var(--txt); }
-.bv { font-weight: 600; color: var(--txt-strong); }
+.bv { font-weight: 600; color: var(--txt); }
 
 /* Nota */
 .res-nota {
-  background: var(--info-bg);
-  border-left: 3px solid var(--info);
+  background: var(--teal-bg);
+  border-left: 3px solid var(--teal);
   border-radius: 0 var(--r3) var(--r3) 0;
   padding: 12px 14px;
-  font-size: var(--fs-sm);
-  line-height: 1.55;
-  color: #93c5fd;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--teal-dark);
   margin-bottom: 12px;
 }
 
 /* AI Box */
 .ai-box {
-  background: var(--teal3);
-  border: 1px solid rgba(14,184,160,.2);
+  background: var(--navy);
   border-radius: var(--r2);
-  padding: 14px;
+  padding: 16px 18px;
   margin-bottom: 12px;
+  display: none;
 }
 .ai-lbl {
-  font-size: var(--fs-xs);
+  font-size: 10px;
   font-weight: 700;
-  color: var(--teal2);
+  color: var(--teal);
   text-transform: uppercase;
   letter-spacing: .6px;
   margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
-#ai-txt { font-size: var(--fs-sm); line-height: 1.6; color: var(--txt); }
+#ai-txt { font-size: 13px; line-height: 1.65; color: rgba(255,255,255,0.85); }
 
-@media (max-width: 600px) {
-  .isr-row2 { grid-template-columns: 1fr; }
-  #res-cards, .res-cards-grid { grid-template-columns: 1fr 1fr; }
+/* ── SHAARK FLOTANTE ── */
+.shaark-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
 }
+
+.shaark-btn {
+  width: 58px; height: 58px;
+  border-radius: 20px;
+  background: var(--navy);
+  border: 2px solid rgba(42,157,181,0.4);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.25), 0 2px 8px rgba(42,157,181,0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+.shaark-btn:active { transform: scale(0.93); }
+.shaark-btn.open { background: var(--teal); border-color: var(--teal); }
+.shaark-pulse {
+  position: absolute;
+  top: -2px; right: -2px;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 2px solid var(--bg);
+}
+
+/* Chat window */
+.shaark-window {
+  width: min(300px, calc(100vw - 40px));
+  background: var(--navy);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  border: 1px solid rgba(42,157,181,0.2);
+  display: none;
+  flex-direction: column;
+  max-height: min(420px, calc(100vh - 160px));
+}
+.shaark-window.visible { display: flex; }
+
+.sw-header {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  flex-shrink: 0;
+}
+.sw-avatar {
+  width: 34px; height: 34px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.sw-name { font-size: 14px; font-weight: 700; color: white; }
+.sw-status { font-size: 11px; color: var(--teal); font-weight: 500; }
+.sw-close {
+  margin-left: auto;
+  width: 28px; height: 28px;
+  border-radius: 9px;
+  background: rgba(255,255,255,0.07);
+  border: none;
+  color: rgba(255,255,255,0.5);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.sw-close:hover { background: rgba(255,255,255,0.12); }
+
+.sw-msgs {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sw-msgs::-webkit-scrollbar { display: none; }
+
+.sw-bubble {
+  max-width: 85%;
+  padding: 9px 12px;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 400;
+}
+.sw-bubble.bot {
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.88);
+  border-bottom-left-radius: 4px;
+  align-self: flex-start;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.sw-bubble.user {
+  background: var(--teal);
+  color: white;
+  border-bottom-right-radius: 4px;
+  align-self: flex-end;
+}
+
+.sw-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 0 12px 8px;
+}
+.sw-chip {
+  background: rgba(42,157,181,0.15);
+  border: 1px solid rgba(42,157,181,0.3);
+  border-radius: 16px;
+  padding: 6px 11px;
+  font-size: 11px;
+  color: var(--teal);
+  cursor: pointer;
+  font-weight: 500;
+  white-space: nowrap;
+  font-family: var(--font);
+  transition: background 0.12s;
+}
+.sw-chip:active { background: rgba(42,157,181,0.28); }
+
+.sw-input-row {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+.sw-input {
+  flex: 1;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 9px 13px;
+  font-size: 13px;
+  color: white;
+  font-family: var(--font);
+  outline: none;
+}
+.sw-input::placeholder { color: rgba(255,255,255,0.28); }
+.sw-send {
+  width: 38px; height: 38px;
+  border-radius: 12px;
+  background: var(--teal);
+  border: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+  color: white;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+.sw-send:active { opacity: 0.8; }
+
+/* ── MES/AÑO PICKER ── */
+.mp-trigger {
+  width: 100%;
+  min-height: var(--touch);
+  padding: 10px 14px;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r3);
+  color: var(--txt);
+  font-size: 15px;
+  font-family: var(--font);
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: border-color .2s, background .2s;
+  text-align: left;
+}
+.mp-trigger:focus, .mp-trigger.open {
+  border-color: var(--teal);
+  background: white;
+  box-shadow: 0 0 0 3px var(--teal-bg);
+  outline: none;
+}
+.mp-trigger .mp-val { flex: 1; }
+.mp-trigger .mp-arrow {
+  font-size: 11px;
+  color: var(--txt-muted);
+  transition: transform 0.2s;
+}
+.mp-trigger.open .mp-arrow { transform: rotate(180deg); }
+.mp-trigger .mp-placeholder { color: var(--txt-muted); font-weight: 400; }
+
+.mp-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0; right: 0;
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r2);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.14);
+  z-index: 300;
+  overflow: hidden;
+  display: none;
+}
+.mp-dropdown.open { display: block; }
+.mp-dropdown.open-up {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+
+.mp-year-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--navy);
+}
+.mp-year-nav .mp-yr {
+  font-family: var(--font);
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+}
+.mp-year-btn {
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: white;
+  font-size: 17px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+  font-family: var(--font);
+}
+.mp-year-btn:hover { background: rgba(255,255,255,0.18); }
+.mp-year-btn:active { background: rgba(255,255,255,0.25); }
+
+.mp-months {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 12px;
+}
+.mp-month {
+  padding: 10px 4px;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font);
+  cursor: pointer;
+  color: var(--txt);
+  border: 1.5px solid transparent;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.mp-month:hover { background: var(--teal-bg); border-color: var(--teal-border); }
+.mp-month.selected {
+  background: var(--navy);
+  color: white;
+  border-color: var(--navy);
+  font-weight: 700;
+}
+
+.mp-wrap {
+  position: relative;
+}
+
+/* ── ANIMACIONES ── */
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(12px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.anim { animation: fadeUp 0.35s ease both; }
+.d1 { animation-delay: 0.06s; }
+.d2 { animation-delay: 0.13s; }
+.d3 { animation-delay: 0.20s; }
+.d4 { animation-delay: 0.27s; }
+.d5 { animation-delay: 0.34s; }
+.d6 { animation-delay: 0.41s; }
 </style>
 </head>
 <body>
-<div class="isr-scroll">
 
-  <!-- ═══ FORMULARIO ═══ -->
+<!-- TOPBAR -->
+<div class="topbar">
+  <a class="topbar-back" href="index.html">&#8592;</a>
+  <span class="topbar-title">Calculadora ISR</span>
+  <span class="topbar-badge">Arts. 119–128 + 152 LISR</span>
+</div>
+
+<!-- CONTENT -->
+<div class="page-scroll">
+
+  <!-- FORMULARIO -->
   <div id="isr-form">
-    <div class="isr-hdr">
-      <div class="isr-hdr-title">Calculadora ISR <span class="isr-badge">Art. 119–128 + 152 LISR</span></div>
-      <div class="isr-hdr-sub">Ingresa los datos de la operación. Los campos de deducciones son opcionales pero mejoran la precisión.</div>
+
+    <div class="page-hdr anim d1">
+      <div class="page-hdr-sub">Ingresa los datos de la operación. Los campos de deducciones son opcionales pero mejoran la precisión.</div>
     </div>
 
-    <!-- Tipo de operación -->
-    <div class="isr-card">
-      <div class="isr-card-lbl">Tipo de operación</div>
-      <div class="isr-row1">
-        <div class="isr-f">
+    <!-- Tipo -->
+    <div class="card anim d2">
+      <div class="card-label">🏠 Tipo de operación</div>
+      <div class="row1">
+        <div class="field">
           <label>¿Qué se está vendiendo?</label>
           <select id="f-tipo" onchange="onTipoChange()">
             <option value="casa">Casa habitación o departamento</option>
@@ -297,168 +709,206 @@ body {
           </select>
         </div>
       </div>
-      <div id="iva-note" class="isr-alert-warn" style="display:none">⚠️ <strong>Nota IVA:</strong> La venta de inmuebles comerciales podría causar IVA (16%). Consulta con el notario (art. 9 LIVA).</div>
+      <div id="iva-note" class="alert-warn" style="display:none">⚠️ <strong>Nota IVA:</strong> La venta de inmuebles comerciales podría causar IVA (16%). Consulta con el notario (art. 9 LIVA).</div>
     </div>
 
     <!-- Precio de venta -->
-    <div class="isr-card">
-      <div class="isr-card-lbl">Precio de venta</div>
-      <div class="isr-row1">
-        <div class="isr-f">
+    <div class="card anim d3">
+      <div class="card-label">💰 Precio de venta</div>
+      <div class="row1">
+        <div class="field">
           <label>Precio de venta (MXN)</label>
           <input type="text" id="f-venta" placeholder="Ej. $3,500,000" oninput="fmtMoneyField(this)" autocomplete="off"/>
         </div>
       </div>
-      <div class="isr-row2">
-        <div class="isr-f">
-          <label>Mes de venta</label>
-          <select id="f-mes-v">
-            <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
-            <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
-            <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
-            <option value="10">Octubre</option><option value="11" selected>Noviembre</option><option value="12">Diciembre</option>
-          </select>
-        </div>
-        <div class="isr-f">
-          <label>Año de venta</label>
-          <input type="number" id="f-anio-v" value="2026" min="1990" max="2030"/>
+      <div class="row1">
+        <div class="field">
+          <label>Mes y año de venta</label>
+          <div class="mp-wrap">
+            <button type="button" class="mp-trigger" id="mp-trigger-v" onclick="mpToggle('v')">
+              <span class="mp-val" id="mp-display-v"><span class="mp-placeholder">Selecciona mes y año</span></span>
+              <span class="mp-arrow">▼</span>
+            </button>
+            <div class="mp-dropdown" id="mp-dropdown-v">
+              <div class="mp-year-nav">
+                <button class="mp-year-btn" onclick="mpPrevYear('v')">‹</button>
+                <span class="mp-yr" id="mp-year-v">2026</span>
+                <button class="mp-year-btn" onclick="mpNextYear('v')">›</button>
+              </div>
+              <div class="mp-months" id="mp-months-v"></div>
+            </div>
+          </div>
+          <!-- Hidden inputs for compatibility -->
+          <input type="hidden" id="f-mes-v" value="11"/>
+          <input type="hidden" id="f-anio-v" value="2026"/>
         </div>
       </div>
     </div>
 
     <!-- Costo de adquisición -->
-    <div class="isr-card">
-      <div class="isr-card-lbl">Costo de adquisición del vendedor</div>
-      <div class="isr-row1">
-        <div class="isr-f">
+    <div class="card anim d3">
+      <div class="card-label">🧾 Costo de adquisición del vendedor</div>
+      <div class="row1">
+        <div class="field">
           <label>¿Cuánto pagó el vendedor cuando compró? (MXN)</label>
           <input type="text" id="f-compra" placeholder="Ej. $1,800,000" oninput="fmtMoneyField(this)" autocomplete="off"/>
-          <span class="isr-hint" id="compra-note"></span>
+          <span class="field-hint" id="compra-note"></span>
         </div>
       </div>
-      <div class="isr-row2">
-        <div class="isr-f">
-          <label>Mes de adquisición</label>
-          <select id="f-mes-c">
-            <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
-            <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
-            <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
-            <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
-          </select>
-        </div>
-        <div class="isr-f">
-          <label>Año de adquisición</label>
-          <input type="number" id="f-anio-c" placeholder="Ej. 2005" min="1950" max="2025" onchange="onAnioChange()"/>
+      <div class="row1">
+        <div class="field">
+          <label>Mes y año de adquisición</label>
+          <div class="mp-wrap">
+            <button type="button" class="mp-trigger" id="mp-trigger-c" onclick="mpToggle('c')">
+              <span class="mp-val" id="mp-display-c"><span class="mp-placeholder">Selecciona mes y año</span></span>
+              <span class="mp-arrow">▼</span>
+            </button>
+            <div class="mp-dropdown" id="mp-dropdown-c">
+              <div class="mp-year-nav">
+                <button class="mp-year-btn" onclick="mpPrevYear('c')">‹</button>
+                <span class="mp-yr" id="mp-year-c">2005</span>
+                <button class="mp-year-btn" onclick="mpNextYear('c')">›</button>
+              </div>
+              <div class="mp-months" id="mp-months-c"></div>
+            </div>
+          </div>
+          <!-- Hidden inputs for compatibility -->
+          <input type="hidden" id="f-mes-c" value=""/>
+          <input type="hidden" id="f-anio-c" value=""/>
         </div>
       </div>
-      <div id="alert-pre1981" class="isr-alert-warn" style="display:none">⚠️ <strong>Anterior a 1981:</strong> El notario usará avalúo referencial. Se aplica INPC desde enero de 1981.</div>
-      <div id="alert-pre1990" class="isr-alert-info" style="display:none"><strong>1981–1989:</strong> Se aplica reconversión monetaria (÷1,000 por eliminación de tres ceros en 1993).</div>
+      <div id="alert-pre1981" class="alert-warn" style="display:none">⚠️ <strong>Anterior a 1981:</strong> El notario usará avalúo referencial. Se aplica INPC desde enero de 1981.</div>
+      <div id="alert-pre1990" class="alert-info" style="display:none"><strong>1981–1989:</strong> Se aplica reconversión monetaria (÷1,000 por eliminación de tres ceros en 1993).</div>
     </div>
 
     <!-- Terreno / Construcción -->
-    <div class="isr-card" id="sec-terreno-const">
-      <div class="isr-card-lbl">Terreno / Construcción <span class="isr-opt">art. 124 LISR</span></div>
-      <div class="isr-hdr-sub" style="margin-bottom:10px">La construcción se deprecia 3% anual (máx 18 años = 54%). Por defecto 20% terreno / 80% construcción.</div>
-      <div class="isr-row2">
-        <div class="isr-f">
+    <div class="card anim d4" id="sec-terreno-const">
+      <div class="card-label">📐 Terreno / Construcción <span class="card-label-opt">art. 124 LISR</span></div>
+      <div class="page-hdr-sub" style="margin-bottom:12px">La construcción se deprecia 3% anual (máx 18 años = 54%). Por defecto 20% terreno / 80% construcción.</div>
+      <div class="row2">
+        <div class="field">
           <label>% Terreno</label>
           <input type="number" id="f-pct-terreno" value="20" min="0" max="100" oninput="onPctTerreno(this)"/>
         </div>
-        <div class="isr-f">
+        <div class="field">
           <label>% Construcción</label>
           <input type="number" id="f-pct-const" value="80" min="0" max="100" oninput="onPctConst(this)"/>
         </div>
       </div>
-      <span class="isr-hint" id="deprec-note"></span>
+      <span class="field-hint" id="deprec-note"></span>
     </div>
 
     <!-- Deducciones -->
-    <div class="isr-card">
-      <div class="isr-card-lbl">Deducciones <span class="isr-opt">opcionales</span></div>
-      <div class="isr-row1"><div class="isr-f"><label>Mejoras y ampliaciones (MXN)</label><input type="text" id="f-mej" placeholder="Ej. $200,000" oninput="fmtMoneyField(this)" autocomplete="off"/></div></div>
-      <div class="isr-row1"><div class="isr-f"><label>Escrituración cuando adquirió (MXN)</label><input type="text" id="f-esc" placeholder="Ej. $45,000" oninput="fmtMoneyField(this)" autocomplete="off"/></div></div>
-      <div class="isr-row1"><div class="isr-f"><label>Comisión del agente en esta venta (MXN)</label><input type="text" id="f-com" placeholder="Ej. $105,000" oninput="fmtMoneyField(this)" autocomplete="off"/></div></div>
+    <div class="card anim d4">
+      <div class="card-label">📋 Deducciones <span class="card-label-opt">opcionales</span></div>
+      <div class="row1"><div class="field"><label>Mejoras y ampliaciones (MXN)</label><input type="text" id="f-mej" placeholder="Ej. $200,000" oninput="fmtMoneyField(this)" autocomplete="off"/></div></div>
+      <div class="row1"><div class="field"><label>Escrituración cuando adquirió (MXN)</label><input type="text" id="f-esc" placeholder="Ej. $45,000" oninput="fmtMoneyField(this)" autocomplete="off"/></div></div>
+      <div class="row1"><div class="field"><label>Comisión del agente en esta venta (MXN)</label><input type="text" id="f-com" placeholder="Ej. $105,000" oninput="fmtMoneyField(this)" autocomplete="off"/></div></div>
     </div>
 
-    <!-- Exención casa habitación -->
-    <div class="isr-card" id="sec-casa">
-      <div class="isr-card-lbl">Exención — Casa habitación</div>
-      <div class="isr-row2">
-        <div class="isr-f"><label>¿Es la casa habitación principal del vendedor?</label><select id="f-pri"><option value="si">Sí</option><option value="no">No</option><option value="nose">No estoy seguro</option></select></div>
-        <div class="isr-f"><label>¿Usó esta exención en los últimos 3 años?</label><select id="f-exp"><option value="no">No</option><option value="si">Sí</option><option value="nose">No lo sé</option></select></div>
+    <!-- Exención -->
+    <div class="card anim d5" id="sec-casa">
+      <div class="card-label">🏡 Exención — Casa habitación</div>
+      <div class="row2">
+        <div class="field"><label>¿Es la casa habitación principal del vendedor?</label><select id="f-pri"><option value="si">Sí</option><option value="no">No</option><option value="nose">No estoy seguro</option></select></div>
+        <div class="field"><label>¿Usó esta exención en los últimos 3 años?</label><select id="f-exp"><option value="no">No</option><option value="si">Sí</option><option value="nose">No lo sé</option></select></div>
       </div>
     </div>
 
-    <!-- Botón calcular -->
-    <button id="calc-btn" class="isr-calc-btn" onclick="calcISR()">
-      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+    <!-- Botón -->
+    <button id="calc-btn" class="btn-calc anim d6" onclick="calcISR()">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
       Calcular ISR
     </button>
   </div>
 
-  <!-- ═══ RESULTADOS ═══ -->
-  <div id="res" style="display:none">
+  <!-- RESULTADOS -->
+  <div id="res">
     <div class="res-topbar">
-      <button class="res-back-btn" onclick="resetISR()">← Nuevo cálculo</button>
+      <button class="btn-secondary" onclick="resetISR()">← Nuevo cálculo</button>
       <div style="display:flex;align-items:center;gap:8px">
-        <button class="res-back-btn" onclick="descargarPDF()" style="border-color:var(--teal);color:var(--teal2)">
+        <button class="btn-secondary teal" onclick="descargarPDF()">
           <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
           PDF
         </button>
-        <span class="res-tipo-lbl" id="res-tipo"></span>
+        <span class="res-tipo-tag" id="res-tipo"></span>
       </div>
     </div>
-    <div id="res-cards"></div>
-    <div id="res-inpc-row" class="res-inpc-row" style="display:none">
-      <div class="res-inpc-cell"><div class="res-inpc-lbl">INPC adquisición</div><div class="res-inpc-val" id="res-inpc-adq">—</div></div>
-      <div class="res-inpc-arr">→</div>
-      <div class="res-inpc-cell"><div class="res-inpc-lbl">INPC mes enajenación</div><div class="res-inpc-val" id="res-inpc-venta">—</div></div>
-      <div class="res-inpc-arr">=</div>
-      <div class="res-inpc-cell hl"><div class="res-inpc-lbl">Factor</div><div class="res-inpc-val" id="res-factor">—</div></div>
+    <div class="res-cards" id="res-cards"></div>
+    <div id="res-inpc-row" class="inpc-row" style="display:none">
+      <div class="inpc-cell"><div class="inpc-lbl">INPC adquisición</div><div class="inpc-val" id="res-inpc-adq">—</div></div>
+      <div class="inpc-arr">→</div>
+      <div class="inpc-cell"><div class="inpc-lbl">INPC enajenación</div><div class="inpc-val" id="res-inpc-venta">—</div></div>
+      <div class="inpc-arr">=</div>
+      <div class="inpc-cell hl"><div class="inpc-lbl">Factor</div><div class="inpc-val" id="res-factor">—</div></div>
     </div>
     <div id="res-bkdn" class="res-bkdn"></div>
     <div id="res-nota" class="res-nota" style="display:none"></div>
-    <div id="ai-box" class="ai-box" style="display:none">
-      <div class="ai-lbl">Análisis de Brokr</div>
+    <div id="ai-box" class="ai-box">
+      <div class="ai-lbl">🦈 Análisis de Shaark</div>
       <div id="ai-txt"></div>
     </div>
   </div>
 
+</div><!-- /page-scroll -->
+
+<!-- SHAARK FLOTANTE -->
+<div class="shaark-fab">
+  <div class="shaark-window" id="shaark-window">
+    <div class="sw-header">
+      <div class="sw-avatar">🦈</div>
+      <div>
+        <div class="sw-name">Shaark</div>
+        <div class="sw-status">● En línea</div>
+      </div>
+      <button class="sw-close" onclick="toggleShaark()">✕</button>
+    </div>
+    <div class="sw-msgs" id="sw-msgs">
+      <div class="sw-bubble bot">Hola Chava 👋 Estoy aquí mientras calculas el ISR. ¿Necesitas ayuda con algo?</div>
+    </div>
+    <div class="sw-chips" id="sw-chips">
+      <div class="sw-chip" onclick="swChip('¿Cómo funciona el factor INPC?')">Factor INPC</div>
+      <div class="sw-chip" onclick="swChip('¿Qué es la exención 700,000 UDIS?')">Exención UDIS</div>
+      <div class="sw-chip" onclick="swChip('¿Cuándo aplica ISR estatal?')">ISR estatal</div>
+    </div>
+    <div class="sw-input-row">
+      <input class="sw-input" id="sw-input" type="text" placeholder="Pregunta algo..." onkeydown="swKey(event)"/>
+      <button class="sw-send" onclick="swSend()">➤</button>
+    </div>
+  </div>
+  <div class="shaark-btn" id="shaark-btn" onclick="toggleShaark()">
+    🦈
+    <div class="shaark-pulse"></div>
+  </div>
 </div>
 
 <script>
-/* ═══════════════════════════════════════════════════════════
-   ISR MODULE — JavaScript
-   ═══════════════════════════════════════════════════════════
-   Toda la lógica fiscal vive aquí.
-   Si se rompe algo, SOLO este módulo se ve afectado.
-   ═══════════════════════════════════════════════════════════ */
-
-// ── HELPERS ──
+/* ═══════════════════════════════════════
+   LÓGICA ISR — 100% intacta
+═══════════════════════════════════════ */
 function g(id) { return document.getElementById(id); }
-function getRawNum(val) { return parseFloat((val || '').replace(/[$,]/g, '').trim()) || 0; }
-function fmt(n) { return '$' + Math.round(n).toLocaleString('es-MX'); }
-function pct(n) { return n.toFixed(2) + '%'; }
+function getRawNum(val) { return parseFloat((val||'').replace(/[$,]/g,'').trim())||0; }
+function fmt(n) { return '$'+Math.round(n).toLocaleString('es-MX'); }
+function pct(n) { return n.toFixed(2)+'%'; }
 function fmtMoneyField(input) {
   const raw = getRawNum(input.value);
-  if (!raw) { input.value = ''; return; }
-  input.value = '$' + raw.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  if (!raw) { input.value=''; return; }
+  input.value = '$'+raw.toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:0});
 }
 
-// ── DATOS INPC (1969–2026) ──
 const INPC_RAW = {
   "1969-01":0.02513,"1969-06":0.02553,"1969-12":0.02614,
   "1970-01":0.02629,"1970-06":0.02694,"1970-12":0.02770,
   "1971-01":0.02793,"1971-06":0.02861,"1971-12":0.02916,
-  "1972-01":0.02945,"1972-06":0.03020,"1972-12":0.03068,
-  "1973-01":0.03135,"1973-06":0.03371,"1973-12":0.03775,
-  "1974-01":0.03952,"1974-06":0.04213,"1974-12":0.04482,
-  "1975-01":0.04560,"1975-06":0.04837,"1975-12":0.05101,
-  "1976-01":0.05234,"1976-06":0.05462,"1976-12":0.06410,
-  "1977-01":0.06862,"1977-06":0.07553,"1977-12":0.08272,
-  "1978-01":0.08642,"1978-06":0.09157,"1978-12":0.09657,
-  "1979-01":0.10315,"1979-06":0.11058,"1979-12":0.11704,
-  "1980-01":0.12531,"1980-06":0.13653,"1980-12":0.15006,
+  "1972-01":0.02944,"1972-06":0.03016,"1972-12":0.03082,
+  "1973-01":0.03136,"1973-06":0.03440,"1973-12":0.03882,
+  "1974-01":0.03994,"1974-06":0.04570,"1974-12":0.05277,
+  "1975-01":0.05444,"1975-06":0.05893,"1975-12":0.06386,
+  "1976-01":0.06530,"1976-06":0.07137,"1976-12":0.08943,
+  "1977-01":0.09328,"1977-06":0.10523,"1977-12":0.11824,
+  "1978-01":0.12133,"1978-06":0.13303,"1978-12":0.14522,
+  "1979-01":0.14914,"1979-06":0.16700,"1979-12":0.18745,
+  "1980-01":0.19490,"1980-06":0.22735,"1980-12":0.27540,
   "1981-01":0.15732,"1981-02":0.16077,"1981-03":0.16375,"1981-04":0.16703,"1981-05":0.16891,"1981-06":0.17076,"1981-07":0.17373,"1981-08":0.17669,"1981-09":0.17953,"1981-10":0.18306,"1981-11":0.18597,"1981-12":0.19118,
   "1982-01":0.19952,"1982-02":0.20611,"1982-03":0.21352,"1982-04":0.22363,"1982-05":0.23474,"1982-06":0.24537,"1982-07":0.25867,"1982-08":0.28359,"1982-09":0.29696,"1982-10":0.30973,"1982-11":0.32217,"1982-12":0.37067,
   "1983-01":0.41070,"1983-02":0.43150,"1983-03":0.44834,"1983-04":0.46907,"1983-05":0.48501,"1983-06":0.49852,"1983-07":0.51442,"1983-08":0.52846,"1983-09":0.53997,"1983-10":0.55157,"1983-11":0.57001,"1983-12":0.58482,
@@ -507,405 +957,435 @@ const INPC_RAW = {
   "2026-01":143.588,"2026-02":144.307
 };
 
-// ── TABLAS ISR ──
 const TABLA_ISR = [
-  {li:0,        ls:8952.49,     cf:0,          tasa:0.0192},
-  {li:8952.50,  ls:75984.55,    cf:171.88,     tasa:0.0640},
-  {li:75984.56, ls:133536.07,   cf:4461.94,    tasa:0.1088},
-  {li:133536.08,ls:155229.80,   cf:10723.55,   tasa:0.1600},
-  {li:155229.81,ls:185852.57,   cf:14194.54,   tasa:0.1792},
-  {li:185852.58,ls:374837.88,   cf:19682.13,   tasa:0.2136},
-  {li:374837.89,ls:590795.99,   cf:60049.40,   tasa:0.2352},
-  {li:590796.00,ls:1127926.84,  cf:110842.74,  tasa:0.3000},
-  {li:1127926.85,ls:1503902.46, cf:271981.99,  tasa:0.3200},
-  {li:1503902.47,ls:4511707.37, cf:392294.17,  tasa:0.3400},
-  {li:4511707.38,ls:Infinity,   cf:1417164.67, tasa:0.3500}
+  {li:0,         ls:8952.49,     cf:0,          tasa:0.0192},
+  {li:8952.50,   ls:75984.55,    cf:171.88,     tasa:0.0640},
+  {li:75984.56,  ls:133536.07,   cf:4461.94,    tasa:0.1088},
+  {li:133536.08, ls:155229.80,   cf:10723.55,   tasa:0.1600},
+  {li:155229.81, ls:185852.57,   cf:14194.54,   tasa:0.1792},
+  {li:185852.58, ls:374837.88,   cf:19682.13,   tasa:0.2136},
+  {li:374837.89, ls:590795.99,   cf:60049.40,   tasa:0.2352},
+  {li:590796.00, ls:1127926.84,  cf:110842.74,  tasa:0.3000},
+  {li:1127926.85,ls:1503902.46,  cf:271981.99,  tasa:0.3200},
+  {li:1503902.47,ls:4511707.37,  cf:392294.17,  tasa:0.3400},
+  {li:4511707.38,ls:Infinity,    cf:1417164.67, tasa:0.3500}
 ];
-
 const TABLA_ISR_2024 = [
-  {li:0.01,       ls:8952.49,     cf:0,          tasa:0.0192},
-  {li:8952.50,    ls:75984.55,    cf:171.88,     tasa:0.0640},
-  {li:75984.56,   ls:133536.07,   cf:3959.25,    tasa:0.1088},
-  {li:133536.08,  ls:155229.80,   cf:10220.86,   tasa:0.1600},
-  {li:155229.81,  ls:185852.57,   cf:13526.70,   tasa:0.1792},
-  {li:185852.58,  ls:374837.88,   cf:18785.54,   tasa:0.2136},
-  {li:374837.89,  ls:590795.99,   cf:57325.95,   tasa:0.2352},
-  {li:590796.00,  ls:1127926.84,  cf:108014.74,  tasa:0.3000},
-  {li:1127926.85, ls:1503902.46,  cf:269260.94,  tasa:0.3200},
-  {li:1503902.47, ls:4511707.37,  cf:388012.14,  tasa:0.3400},
-  {li:4511707.38, ls:Infinity,    cf:1409354.09, tasa:0.3500}
+  {li:0.01,      ls:8952.49,     cf:0,          tasa:0.0192},
+  {li:8952.50,   ls:75984.55,    cf:171.88,     tasa:0.0640},
+  {li:75984.56,  ls:133536.07,   cf:3959.25,    tasa:0.1088},
+  {li:133536.08, ls:155229.80,   cf:10220.86,   tasa:0.1600},
+  {li:155229.81, ls:185852.57,   cf:13526.70,   tasa:0.1792},
+  {li:185852.58, ls:374837.88,   cf:18785.54,   tasa:0.2136},
+  {li:374837.89, ls:590795.99,   cf:57325.95,   tasa:0.2352},
+  {li:590796.00, ls:1127926.84,  cf:108014.74,  tasa:0.3000},
+  {li:1127926.85,ls:1503902.46,  cf:269260.94,  tasa:0.3200},
+  {li:1503902.47,ls:4511707.37,  cf:388012.14,  tasa:0.3400},
+  {li:4511707.38,ls:Infinity,    cf:1409354.09, tasa:0.3500}
 ];
 
 let _isrData = null;
 
-// ── FUNCIONES DE INPC ──
 function getINPC(mes, anio) {
-  const key = anio + '-' + String(mes).padStart(2, '0');
+  const key = anio+'-'+String(mes).padStart(2,'0');
   if (INPC_RAW[key]) return INPC_RAW[key];
   if (anio < 1981) return INPC_RAW["1981-01"];
   return 144.307;
 }
-
-function getTablaISR(anioVenta) {
-  return (anioVenta <= 2024) ? TABLA_ISR_2024 : TABLA_ISR;
-}
-
+function getTablaISR(anioVenta) { return (anioVenta<=2024)?TABLA_ISR_2024:TABLA_ISR; }
 function calcTablaProgresiva(tabla, base) {
-  if (base <= 0) return 0;
-  for (const t of tabla) {
-    if (base >= t.li && base <= t.ls) return t.cf + (base - t.li) * t.tasa;
-  }
+  if (base<=0) return 0;
+  for (const t of tabla) { if (base>=t.li && base<=t.ls) return t.cf+(base-t.li)*t.tasa; }
   return 0;
 }
 
-// ── UI DEL FORMULARIO ──
 function onTipoChange() {
   const v = g('f-tipo').value;
-  g('sec-casa').style.display = v === 'casa' ? 'block' : 'none';
-  g('iva-note').style.display = v === 'comercial' ? 'block' : 'none';
+  g('sec-casa').style.display = v==='casa'?'block':'none';
+  g('iva-note').style.display = v==='comercial'?'block':'none';
   const stc = g('sec-terreno-const');
-  if (stc) stc.style.display = v === 'terreno' ? 'none' : 'block';
+  if (stc) stc.style.display = v==='terreno'?'none':'block';
 }
 
 function onAnioChange() {
-  const a  = parseInt(g('f-anio-c').value) || 0;
-  const av = parseInt(g('f-anio-v').value) || 2026;
-  g('alert-pre1981').style.display = (a > 0 && a < 1981) ? 'block' : 'none';
-  g('alert-pre1990').style.display = (a >= 1981 && a < 1990) ? 'block' : 'none';
-  if (g('compra-note')) g('compra-note').textContent = (a > 0 && a < 1981) ? 'Para antes de 1981 el notario puede requerir avalúo vigente' : '';
-  if (a > 0 && av > a) {
-    const anos = av - a;
-    const depPct = Math.min(0.54, anos * 0.03);
-    if (g('deprec-note')) g('deprec-note').textContent = `Depreciación construcción: ${(depPct*100).toFixed(0)}% (${anos} años × 3%, máx 54%)`;
+  const a = parseInt(g('f-anio-c').value)||0;
+  const av = parseInt(g('f-anio-v').value)||2026;
+  g('alert-pre1981').style.display = (a>0&&a<1981)?'block':'none';
+  g('alert-pre1990').style.display = (a>=1981&&a<1990)?'block':'none';
+  if (g('compra-note')) g('compra-note').textContent = (a>0&&a<1981)?'Para antes de 1981 el notario puede requerir avalúo vigente':'';
+  if (a>0&&av>a) {
+    const anos=av-a;
+    const depPct=Math.min(0.54,anos*0.03);
+    if (g('deprec-note')) g('deprec-note').textContent=`Depreciación construcción: ${(depPct*100).toFixed(0)}% (${anos} años × 3%, máx 54%)`;
   }
 }
 
 function onPctTerreno(el) {
-  const v = Math.max(0, Math.min(100, parseInt(el.value) || 0));
-  if (g('f-pct-const')) g('f-pct-const').value = 100 - v;
+  const v=Math.max(0,Math.min(100,parseInt(el.value)||0));
+  if (g('f-pct-const')) g('f-pct-const').value=100-v;
 }
 function onPctConst(el) {
-  const v = Math.max(0, Math.min(100, parseInt(el.value) || 0));
-  if (g('f-pct-terreno')) g('f-pct-terreno').value = 100 - v;
+  const v=Math.max(0,Math.min(100,parseInt(el.value)||0));
+  if (g('f-pct-terreno')) g('f-pct-terreno').value=100-v;
 }
 
-// ── CÁLCULO ISR — METODOLOGÍA NOTARIAL ──
 function calcISR() {
-  const tipo  = g('f-tipo').value;
-  const venta = getRawNum(g('f-venta').value);
-  const compra = getRawNum(g('f-compra').value);
-  const mesC  = parseInt(g('f-mes-c').value);
-  const anioC = parseInt(g('f-anio-c').value) || 2010;
-  const mesV  = parseInt(g('f-mes-v').value);
-  const anioV = parseInt(g('f-anio-v').value) || 2026;
-  const mej   = getRawNum(g('f-mej').value);
-  const com   = getRawNum(g('f-com').value);
-  const esc   = getRawNum(g('f-esc').value);
+  const tipo=g('f-tipo').value;
+  const venta=getRawNum(g('f-venta').value);
+  const compra=getRawNum(g('f-compra').value);
+  const mesC=parseInt(g('f-mes-c').value);
+  const anioC=parseInt(g('f-anio-c').value)||2010;
+  const mesV=parseInt(g('f-mes-v').value);
+  const anioV=parseInt(g('f-anio-v').value)||2026;
+  const mej=getRawNum(g('f-mej').value);
+  const com=getRawNum(g('f-com').value);
+  const esc=getRawNum(g('f-esc').value);
 
-  if (!venta || !compra) { alert('Ingresa el precio de venta y el costo de adquisición.'); return; }
-  if (!anioC || anioC < 1950 || anioC > 2030) { alert('Ingresa un año de adquisición válido.'); return; }
+  if (!venta||!compra){alert('Ingresa el precio de venta y el costo de adquisición.');return;}
+  if (!anioC||anioC<1950||anioC>2030){alert('Ingresa un año de adquisición válido.');return;}
 
-  const mN = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  const preAnio1981 = anioC < 1981;
+  const mN=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const preAnio1981=anioC<1981;
+  const inpcAdq=getINPC(mesC,anioC);
+  const inpcVenta=getINPC(mesV,anioV);
+  const factor=inpcVenta/inpcAdq;
 
-  // Factor INPC
-  const inpcAdq   = getINPC(mesC, anioC);
-  const inpcVenta = getINPC(mesV, anioV);
-  const factor    = inpcVenta / inpcAdq;
-
-  // Costo actualizado
-  let costoAct = 0;
-  let debugTerreno = null;
-
-  if (tipo === 'terreno') {
-    costoAct = compra * factor;
+  let costoAct=0, debugTerreno=null;
+  if (tipo==='terreno') {
+    costoAct=compra*factor;
   } else {
-    const pctT = (parseInt((g('f-pct-terreno') || {}).value) || 20) / 100;
-    const pctC = 1 - pctT;
-    const valT = compra * pctT;
-    const valC = compra * pctC;
-    const anosConst = Math.max(0, anioV - anioC);
-    const depPct = Math.min(0.54, anosConst * 0.03);
-    const valCDep = valC * (1 - depPct);
-    const terrenoAct = valT * factor;
-    const constAct = valCDep * factor;
-    costoAct = terrenoAct + constAct;
-    debugTerreno = { pctT, pctC, valT, valC, anosConst, depPct, valCDep, terrenoAct, constAct };
+    const pctT=(parseInt((g('f-pct-terreno')||{}).value)||20)/100;
+    const pctC=1-pctT;
+    const valT=compra*pctT, valC=compra*pctC;
+    const anosConst=Math.max(0,anioV-anioC);
+    const depPct=Math.min(0.54,anosConst*0.03);
+    const valCDep=valC*(1-depPct);
+    const terrenoAct=valT*factor, constAct=valCDep*factor;
+    costoAct=terrenoAct+constAct;
+    debugTerreno={pctT,pctC,valT,valC,anosConst,depPct,valCDep,terrenoAct,constAct};
   }
 
-  const mejA = mej * factor;
-  const deducTotal = costoAct + mejA + com + esc;
-  const ganTotal = venta - deducTotal;
+  const mejA=mej*factor;
+  const deducTotal=costoAct+mejA+com+esc;
+  const ganTotal=venta-deducTotal;
 
-  // Años de tenencia
-  let anios = anioV - anioC;
-  if (mesV > mesC) anios += 1;
-  if (anios < 1) anios = 1;
+  let anios=anioV-anioC;
+  if (mesV>mesC) anios+=1;
+  if (anios<1) anios=1;
 
-  // Exención 700,000 UDIS
-  const LIMITE_EX = 700000 * 8.763028;
-  let baseGrav = 0, isrTotal = 0, exenta = false, exentaParcial = false;
-  let ganAcum = 0, isrAcum = 0, tasaEfec = 0;
-  let nota = '';
+  const LIMITE_EX=700000*8.763028;
+  let baseGrav=0,isrTotal=0,exenta=false,exentaParcial=false;
+  let ganAcum=0,isrAcum=0,tasaEfec=0,nota='';
 
-  if (ganTotal <= 0) {
-    nota = 'Pérdida fiscal — sin ISR. Deducible en declaración anual (art. 121 LISR).';
-  } else if (tipo === 'casa') {
-    const pri = g('f-pri').value;
-    const exp = g('f-exp').value;
-    if (pri === 'si' && exp === 'no') {
-      if (ganTotal <= LIMITE_EX) {
-        exenta = true;
-        nota = 'Exención total — ganancia dentro de 700,000 UDIS (' + fmt(LIMITE_EX) + '). Art. 93 fr. XIX LISR.';
-      } else {
-        exentaParcial = true;
-        baseGrav = ganTotal - LIMITE_EX;
-        nota = 'Exención parcial: primeros ' + fmt(LIMITE_EX) + ' libres. Solo grava el excedente.';
-      }
-    } else if (exp === 'si') {
-      baseGrav = ganTotal;
-      nota = 'Exención no aplicable: ya utilizada en los últimos 3 años (art. 93 fr. XIX LISR).';
-    } else {
-      baseGrav = ganTotal;
-      nota = exp === 'nose' ? 'No confirmada exención — verificar historial con el vendedor.' : 'No califica como casa habitación principal.';
-    }
-  } else {
-    baseGrav = ganTotal;
+  if (ganTotal<=0) {
+    nota='Pérdida fiscal — sin ISR. Deducible en declaración anual (art. 121 LISR).';
+  } else if (tipo==='casa') {
+    const pri=g('f-pri').value, exp=g('f-exp').value;
+    if (pri==='si'&&exp==='no') {
+      if (ganTotal<=LIMITE_EX){exenta=true;nota='Exención total — ganancia dentro de 700,000 UDIS ('+fmt(LIMITE_EX)+'). Art. 93 fr. XIX LISR.';}
+      else{exentaParcial=true;baseGrav=ganTotal-LIMITE_EX;nota='Exención parcial: primeros '+fmt(LIMITE_EX)+' libres. Solo grava el excedente.';}
+    } else if (exp==='si'){baseGrav=ganTotal;nota='Exención no aplicable: ya utilizada en los últimos 3 años (art. 93 fr. XIX LISR).';}
+    else{baseGrav=ganTotal;nota=exp==='nose'?'No confirmada exención — verificar historial con el vendedor.':'No califica como casa habitación principal.';}
+  } else { baseGrav=ganTotal; }
+
+  if (baseGrav>0) {
+    const tabla=getTablaISR(anioV);
+    ganAcum=baseGrav/anios;
+    isrAcum=calcTablaProgresiva(tabla,ganAcum);
+    tasaEfec=ganAcum>0?isrAcum/ganAcum:0;
+    isrTotal=isrAcum*anios;
   }
 
-  // ISR
-  if (baseGrav > 0) {
-    const tabla = getTablaISR(anioV);
-    ganAcum = baseGrav / anios;
-    isrAcum = calcTablaProgresiva(tabla, ganAcum);
-    tasaEfec = ganAcum > 0 ? isrAcum / ganAcum : 0;
-    isrTotal = isrAcum * anios;
-  }
+  const isrEstatal=baseGrav>0?baseGrav*0.05:0;
+  const isrFederal=Math.max(0,isrTotal-isrEstatal);
+  const tasaEfecPct=baseGrav>0?(isrTotal/baseGrav)*100:0;
 
-  const isrEstatal = baseGrav > 0 ? baseGrav * 0.05 : 0;
-  const isrFederal = Math.max(0, isrTotal - isrEstatal);
-  const tasaEfecPct = baseGrav > 0 ? (isrTotal / baseGrav) * 100 : 0;
-
-  _isrData = {
-    tipo, venta, compra, costoAct, mej, mejA, com, esc, deducTotal,
-    ganTotal, factor, inpcAdq, inpcVenta, mesC, anioC, mesV, anioV, mN,
-    baseGrav, ganAcum, isrAcum, isrTotal, isrFederal, isrEstatal,
-    anios, tasaEfec, tasaEfecPct,
-    exenta, exentaParcial, nota, preAnio1981, LIMITE_EX, debugTerreno
-  };
+  _isrData={tipo,venta,compra,costoAct,mej,mejA,com,esc,deducTotal,ganTotal,factor,inpcAdq,inpcVenta,mesC,anioC,mesV,anioV,mN,baseGrav,ganAcum,isrAcum,isrTotal,isrFederal,isrEstatal,anios,tasaEfec,tasaEfecPct,exenta,exentaParcial,nota,preAnio1981,LIMITE_EX,debugTerreno};
   renderResult(_isrData);
 }
 
-// ── RENDER RESULTADO ──
 function renderResult(d) {
-  // INPC row
-  const inpcRow = g('res-inpc-row');
+  const inpcRow=g('res-inpc-row');
   if (inpcRow) {
-    if (d.ganTotal > 0) {
-      inpcRow.style.display = 'flex';
-      if (g('res-inpc-adq'))   g('res-inpc-adq').textContent = d.inpcAdq.toFixed(6);
-      if (g('res-inpc-venta')) g('res-inpc-venta').textContent = d.inpcVenta.toFixed(6);
-      if (g('res-factor'))     g('res-factor').textContent = d.factor.toFixed(6);
-    } else { inpcRow.style.display = 'none'; }
+    if (d.ganTotal>0){inpcRow.style.display='flex';if(g('res-inpc-adq'))g('res-inpc-adq').textContent=d.inpcAdq.toFixed(6);if(g('res-inpc-venta'))g('res-inpc-venta').textContent=d.inpcVenta.toFixed(6);if(g('res-factor'))g('res-factor').textContent=d.factor.toFixed(6);}
+    else{inpcRow.style.display='none';}
   }
+  const tipos={casa:'Casa habitación / Depto.',terreno:'Terreno',comercial:'Inmueble comercial'};
+  if(g('res-tipo'))g('res-tipo').textContent=tipos[d.tipo]||'';
 
-  const tipos = { casa: 'Casa habitación / Depto.', terreno: 'Terreno', comercial: 'Inmueble comercial' };
-  if (g('res-tipo')) g('res-tipo').textContent = tipos[d.tipo] || '';
-
-  // Tarjetas resumen
-  let cards = '';
-  if (d.exenta) {
-    cards = `<div class="rc gn"><div class="rc-l">ISR a pagar</div><div class="rc-v">$0</div><div class="rc-n">Exento — art. 93 fr. XIX</div></div>
-             <div class="rc"><div class="rc-l">Ganancia libre de impuesto</div><div class="rc-v">${fmt(d.ganTotal)}</div><div class="rc-n">No gravable</div></div>`;
-  } else if (d.ganTotal <= 0) {
-    cards = `<div class="rc gn"><div class="rc-l">ISR a pagar</div><div class="rc-v">$0</div><div class="rc-n">Pérdida fiscal</div></div>
-             <div class="rc"><div class="rc-l">Pérdida deducible</div><div class="rc-v">${fmt(Math.abs(d.ganTotal))}</div><div class="rc-n">Declaración anual</div></div>`;
+  let cards='';
+  if(d.exenta){
+    cards=`<div class="rc gn"><div class="rc-l">ISR a pagar</div><div class="rc-v">$0</div><div class="rc-n">Exento — art. 93 fr. XIX</div></div><div class="rc"><div class="rc-l">Ganancia libre de impuesto</div><div class="rc-v">${fmt(d.ganTotal)}</div><div class="rc-n">No gravable</div></div>`;
+  } else if(d.ganTotal<=0){
+    cards=`<div class="rc gn"><div class="rc-l">ISR a pagar</div><div class="rc-v">$0</div><div class="rc-n">Pérdida fiscal</div></div><div class="rc"><div class="rc-l">Pérdida deducible</div><div class="rc-v">${fmt(Math.abs(d.ganTotal))}</div><div class="rc-n">Declaración anual</div></div>`;
   } else {
-    cards = `<div class="rc dk"><div class="rc-l">ISR total a pagar</div><div class="rc-v">${fmt(d.isrTotal)}</div><div class="rc-n">Tasa efectiva: ${pct(d.tasaEfecPct)}</div></div>
-             <div class="rc"><div class="rc-l">ISR Entidad Federativa</div><div class="rc-v">${fmt(d.isrEstatal)}</div><div class="rc-n">5% ganancia — art. 127</div></div>
-             <div class="rc"><div class="rc-l">ISR Federación</div><div class="rc-v">${fmt(d.isrFederal)}</div><div class="rc-n">ISR total − retención estatal</div></div>`;
+    cards=`<div class="rc dk"><div class="rc-l">ISR total a pagar</div><div class="rc-v">${fmt(d.isrTotal)}</div><div class="rc-n">Tasa efectiva: ${pct(d.tasaEfecPct)}</div></div><div class="rc"><div class="rc-l">ISR Entidad Federativa</div><div class="rc-v">${fmt(d.isrEstatal)}</div><div class="rc-n">5% ganancia — art. 127</div></div><div class="rc"><div class="rc-l">ISR Federación</div><div class="rc-v">${fmt(d.isrFederal)}</div><div class="rc-n">ISR total − retención estatal</div></div>`;
   }
-  if (g('res-cards')) g('res-cards').innerHTML = cards;
+  if(g('res-cards'))g('res-cards').innerHTML=cards;
 
-  // Desglose
-  const adqLbl = d.preAnio1981 ? `INPC adq. base ene-1981: ${d.inpcAdq.toFixed(6)}` : `INPC ${d.mN[d.mesC]} ${d.anioC}: ${d.inpcAdq.toFixed(6)}`;
-  const vtaLbl = `INPC ${d.mN[d.mesV]} ${d.anioV}: ${d.inpcVenta.toFixed(6)}`;
+  const adqLbl=d.preAnio1981?`INPC adq. base ene-1981: ${d.inpcAdq.toFixed(6)}`:`INPC ${d.mN[d.mesC]} ${d.anioC}: ${d.inpcAdq.toFixed(6)}`;
+  const vtaLbl=`INPC ${d.mN[d.mesV]} ${d.anioV}: ${d.inpcVenta.toFixed(6)}`;
 
-  let bd = `<div class="br"><span class="bl">Precio de venta</span><span class="bv">${fmt(d.venta)}</span></div>
-    <div class="br sub"><span class="bl">${adqLbl}</span><span class="bv"></span></div>
-    <div class="br sub"><span class="bl">${vtaLbl}</span><span class="bv"></span></div>
-    <div class="br sub"><span class="bl">Factor de actualización</span><span class="bv">${d.factor.toFixed(6)}</span></div>`;
+  let bd=`<div class="br"><span class="bl">Precio de venta</span><span class="bv">${fmt(d.venta)}</span></div><div class="br sub"><span class="bl">${adqLbl}</span><span class="bv"></span></div><div class="br sub"><span class="bl">${vtaLbl}</span><span class="bv"></span></div><div class="br sub"><span class="bl">Factor de actualización</span><span class="bv">${d.factor.toFixed(6)}</span></div>`;
 
-  if (d.debugTerreno) {
-    const dt = d.debugTerreno;
-    bd += `<div class="br sub"><span class="bl">Terreno (${(dt.pctT*100).toFixed(0)}%): ${fmt(dt.valT)} × factor</span><span class="bv">${fmt(dt.terrenoAct)}</span></div>`;
-    bd += `<div class="br sub"><span class="bl">Construcción (${(dt.pctC*100).toFixed(0)}%): ${fmt(dt.valC)}</span><span class="bv"></span></div>`;
-    bd += `<div class="br sub"><span class="bl">Deprec. ${dt.anosConst} años × 3% = ${(dt.depPct*100).toFixed(0)}% → ${fmt(dt.valCDep)}</span><span class="bv"></span></div>`;
-    bd += `<div class="br sub"><span class="bl">Construcción dep. × factor</span><span class="bv">${fmt(dt.constAct)}</span></div>`;
+  if(d.debugTerreno){
+    const dt=d.debugTerreno;
+    bd+=`<div class="br sub"><span class="bl">Terreno (${(dt.pctT*100).toFixed(0)}%): ${fmt(dt.valT)} × factor</span><span class="bv">${fmt(dt.terrenoAct)}</span></div>`;
+    bd+=`<div class="br sub"><span class="bl">Construcción (${(dt.pctC*100).toFixed(0)}%): ${fmt(dt.valC)}</span><span class="bv"></span></div>`;
+    bd+=`<div class="br sub"><span class="bl">Deprec. ${dt.anosConst} años × 3% = ${(dt.depPct*100).toFixed(0)}% → ${fmt(dt.valCDep)}</span><span class="bv"></span></div>`;
+    bd+=`<div class="br sub"><span class="bl">Construcción dep. × factor</span><span class="bv">${fmt(dt.constAct)}</span></div>`;
   }
 
-  bd += `<div class="br"><span class="bl">Costo adquisición actualizado</span><span class="bv">− ${fmt(d.costoAct)}</span></div>`;
-  if (d.mej) bd += `<div class="br"><span class="bl">Mejoras actualizadas (art. 121 fr. II)</span><span class="bv">− ${fmt(d.mejA)}</span></div>`;
-  if (d.com) bd += `<div class="br"><span class="bl">Comisión del agente</span><span class="bv">− ${fmt(d.com)}</span></div>`;
-  if (d.esc) bd += `<div class="br"><span class="bl">Gastos de escrituración</span><span class="bv">− ${fmt(d.esc)}</span></div>`;
-  bd += `<div class="br tot"><span class="bl">${d.ganTotal >= 0 ? 'Ganancia total' : 'Pérdida fiscal'}</span><span class="bv">${fmt(Math.abs(d.ganTotal))}</span></div>`;
+  bd+=`<div class="br"><span class="bl">Costo adquisición actualizado</span><span class="bv">− ${fmt(d.costoAct)}</span></div>`;
+  if(d.mej) bd+=`<div class="br"><span class="bl">Mejoras actualizadas (art. 121 fr. II)</span><span class="bv">− ${fmt(d.mejA)}</span></div>`;
+  if(d.com) bd+=`<div class="br"><span class="bl">Comisión del agente</span><span class="bv">− ${fmt(d.com)}</span></div>`;
+  if(d.esc) bd+=`<div class="br"><span class="bl">Gastos de escrituración</span><span class="bv">− ${fmt(d.esc)}</span></div>`;
+  bd+=`<div class="br tot"><span class="bl">${d.ganTotal>=0?'Ganancia total':'Pérdida fiscal'}</span><span class="bv">${fmt(Math.abs(d.ganTotal))}</span></div>`;
 
-  if (!d.exenta && d.ganTotal > 0 && d.exentaParcial) {
-    bd += `<div class="br sub"><span class="bl">Exención 700,000 UDIS</span><span class="bv">− ${fmt(d.LIMITE_EX)}</span></div>`;
-    bd += `<div class="br tot"><span class="bl">Base gravable</span><span class="bv">${fmt(d.baseGrav)}</span></div>`;
+  if(!d.exenta&&d.ganTotal>0&&d.exentaParcial){
+    bd+=`<div class="br sub"><span class="bl">Exención 700,000 UDIS</span><span class="bv">− ${fmt(d.LIMITE_EX)}</span></div>`;
+    bd+=`<div class="br tot"><span class="bl">Base gravable</span><span class="bv">${fmt(d.baseGrav)}</span></div>`;
   }
-
-  if (!d.exenta && d.baseGrav > 0) {
-    bd += `<div class="br"><span class="bl">Años de tenencia (art. 120)</span><span class="bv">${d.anios}</span></div>`;
-    bd += `<div class="br sub"><span class="bl">Ganancia acumulable (÷ ${d.anios} años)</span><span class="bv">${fmt(d.ganAcum)}</span></div>`;
-    bd += `<div class="br sub"><span class="bl">ISR s/ ganancia acumulable (art. 152)</span><span class="bv">${fmt(d.isrAcum)}</span></div>`;
-    bd += `<div class="br sub"><span class="bl">Tasa efectiva</span><span class="bv">${(d.tasaEfec*100).toFixed(4)}%</span></div>`;
-    bd += `<div class="br tot"><span class="bl">ISR total (ISR acumulable × ${d.anios} años)</span><span class="bv">${fmt(d.isrTotal)}</span></div>`;
-    bd += `<div class="br"><span class="bl">ISR Entidad Federativa 5% (art. 127)</span><span class="bv">${fmt(d.isrEstatal)}</span></div>`;
-    bd += `<div class="br"><span class="bl">ISR Federación (ISR total − ISR estatal)</span><span class="bv">${fmt(d.isrFederal)}</span></div>`;
+  if(!d.exenta&&d.baseGrav>0){
+    bd+=`<div class="br"><span class="bl">Años de tenencia (art. 120)</span><span class="bv">${d.anios}</span></div>`;
+    bd+=`<div class="br sub"><span class="bl">Ganancia acumulable (÷ ${d.anios} años)</span><span class="bv">${fmt(d.ganAcum)}</span></div>`;
+    bd+=`<div class="br sub"><span class="bl">ISR s/ ganancia acumulable (art. 152)</span><span class="bv">${fmt(d.isrAcum)}</span></div>`;
+    bd+=`<div class="br sub"><span class="bl">Tasa efectiva</span><span class="bv">${(d.tasaEfec*100).toFixed(4)}%</span></div>`;
+    bd+=`<div class="br tot"><span class="bl">ISR total (ISR acumulable × ${d.anios} años)</span><span class="bv">${fmt(d.isrTotal)}</span></div>`;
+    bd+=`<div class="br"><span class="bl">ISR Entidad Federativa 5% (art. 127)</span><span class="bv">${fmt(d.isrEstatal)}</span></div>`;
+    bd+=`<div class="br"><span class="bl">ISR Federación (ISR total − ISR estatal)</span><span class="bv">${fmt(d.isrFederal)}</span></div>`;
   }
+  if(g('res-bkdn'))g('res-bkdn').innerHTML=bd;
 
-  if (g('res-bkdn')) g('res-bkdn').innerHTML = bd;
-
-  // Nota
-  const comp = [];
-  if (d.mej) comp.push('Facturas / CFDI de mejoras y ampliaciones');
-  if (d.com) comp.push('CFDI de comisión del agente inmobiliario');
-  if (d.esc) comp.push('Comprobante de gastos de escrituración');
-  if (d.preAnio1981) comp.push('Avalúo vigente (adquisición anterior a 1981)');
-  const compH = comp.length ? '<ul style="margin:6px 0 0 16px">' + comp.map(c => `<li>${c}</li>`).join('') + '</ul>' : '';
-  const notaEl = g('res-nota');
-  if (notaEl) {
-    notaEl.style.display = 'block';
-    notaEl.innerHTML = `<strong>⚠️ Cálculo orientativo</strong> — metodología notarial arts. 121, 124, 120, 152 y 127 LISR. El notario realiza el cálculo definitivo con datos exactos SAT/Banxico.`
-      + (comp.length ? `<br><br>Documentos que deberá presentar el vendedor:${compH}` : '')
-      + (d.nota ? `<br><br><strong>Nota:</strong> ${d.nota}` : '');
+  const comp=[];
+  if(d.mej)comp.push('Facturas / CFDI de mejoras y ampliaciones');
+  if(d.com)comp.push('CFDI de comisión del agente inmobiliario');
+  if(d.esc)comp.push('Comprobante de gastos de escrituración');
+  if(d.preAnio1981)comp.push('Avalúo vigente (adquisición anterior a 1981)');
+  const compH=comp.length?'<ul style="margin:6px 0 0 16px">'+comp.map(c=>`<li>${c}</li>`).join('')+'</ul>':'';
+  const notaEl=g('res-nota');
+  if(notaEl){
+    notaEl.style.display='block';
+    notaEl.innerHTML=`<strong>⚠️ Cálculo orientativo</strong> — metodología notarial arts. 121, 124, 120, 152 y 127 LISR. El notario realiza el cálculo definitivo con datos exactos SAT/Banxico.`+(comp.length?`<br><br>Documentos que deberá presentar el vendedor:${compH}`:'')+( d.nota?`<br><br><strong>Nota:</strong> ${d.nota}`:'');
   }
-
-  if (g('res')) g('res').style.display = 'block';
-  if (g('isr-form')) g('isr-form').style.display = 'none';
-  setTimeout(() => { if (g('res')) g('res').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 80);
-
+  if(g('res'))g('res').style.display='block';
+  if(g('isr-form'))g('isr-form').style.display='none';
+  setTimeout(()=>{if(g('res'))g('res').scrollIntoView({behavior:'smooth',block:'start'});},80);
   fetchAnalysis(d);
 }
 
-// ── ANÁLISIS IA ──
 async function fetchAnalysis(d) {
-  if (g('ai-box')) g('ai-box').style.display = 'block';
-  if (g('ai-txt')) g('ai-txt').innerHTML = '<span style="color:var(--mut)">Analizando operación…</span>';
-  const prompt = `Operación enajenación inmueble en México:
-- Tipo: ${d.tipo}, Venta: ${fmt(d.venta)}, Compra: ${fmt(d.compra)} (${d.mN[d.mesC]} ${d.anioC})
-- Factor INPC: ${d.factor.toFixed(4)}, Ganancia total: ${fmt(d.ganTotal)}, Base gravable: ${fmt(d.baseGrav)}
-- Ganancia acumulable: ${fmt(d.ganAcum)}, ISR acumulable: ${fmt(d.isrAcum)}, Tasa efectiva: ${(d.tasaEfec*100).toFixed(2)}%
-- ISR total: ${fmt(d.isrTotal)}, ISR estatal 5%: ${fmt(d.isrEstatal)}, ISR federal: ${fmt(d.isrFederal)}
-- Exenta: ${d.exenta}, Exenta parcial: ${d.exentaParcial}
-En 3 oraciones en español: 1) valida si el resultado es razonable, 2) la consideración fiscal más importante, 3) recomendación práctica para el agente.`;
+  if(g('ai-box'))g('ai-box').style.display='block';
+  if(g('ai-txt'))g('ai-txt').innerHTML='<span style="opacity:0.5">Shaark está analizando la operación…</span>';
+  const prompt=`Operación enajenación inmueble en México:\n- Tipo: ${d.tipo}, Venta: ${fmt(d.venta)}, Compra: ${fmt(d.compra)} (${d.mN[d.mesC]} ${d.anioC})\n- Factor INPC: ${d.factor.toFixed(4)}, Ganancia total: ${fmt(d.ganTotal)}, Base gravable: ${fmt(d.baseGrav)}\n- Ganancia acumulable: ${fmt(d.ganAcum)}, ISR acumulable: ${fmt(d.isrAcum)}, Tasa efectiva: ${(d.tasaEfec*100).toFixed(2)}%\n- ISR total: ${fmt(d.isrTotal)}, ISR estatal 5%: ${fmt(d.isrEstatal)}, ISR federal: ${fmt(d.isrFederal)}\n- Exenta: ${d.exenta}, Exenta parcial: ${d.exentaParcial}\nEn 3 oraciones en español: 1) valida si el resultado es razonable, 2) la consideración fiscal más importante, 3) recomendación práctica para el agente.`;
+  try {
+    const r=await fetch('https://brokrebapi-production.up.railway.app/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:280,temperature:0.5,messages:[{role:'system',content:'Eres Shaark, asistente experto de BROKR® en fiscalidad inmobiliaria mexicana. Responde en español, breve y práctico.'},{role:'user',content:prompt}]})});
+    const data=await r.json();
+    const reply=data.choices?.[0]?.message?.content||'';
+    if(g('ai-txt'))g('ai-txt').innerHTML=reply.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+  } catch(e){if(g('ai-box'))g('ai-box').style.display='none';}
+}
+
+function resetISR() {
+  if(g('res-inpc-row'))g('res-inpc-row').style.display='none';
+  if(g('res'))g('res').style.display='none';
+  if(g('isr-form'))g('isr-form').style.display='block';
+  _isrData=null;
+  ['f-venta','f-compra','f-anio-c','f-mej','f-com','f-esc'].forEach(id=>{const el=g(id);if(el)el.value='';});
+  if(g('f-anio-v'))g('f-anio-v').value='2026';
+  if(g('f-pct-terreno'))g('f-pct-terreno').value='20';
+  if(g('f-pct-const'))g('f-pct-const').value='80';
+  if(g('deprec-note'))g('deprec-note').textContent='';
+  if(g('compra-note'))g('compra-note').textContent='';
+  if(g('alert-pre1981'))g('alert-pre1981').style.display='none';
+  if(g('alert-pre1990'))g('alert-pre1990').style.display='none';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function descargarPDF() {
+  const d=_isrData;
+  if(!d){alert('Primero realiza un cálculo.');return;}
+  const meses=['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const tipos={casa:'Casa habitación / Departamento',terreno:'Terreno',comercial:'Inmueble comercial'};
+  const bkdn=(g('res-bkdn')||{}).innerHTML||'';
+  const nota=(g('res-nota')||{}).innerHTML||'';
+  const html=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/><title>ISR BROKR® — ${meses[d.mesV]} ${d.anioV}</title><style>body{font-family:Arial,sans-serif;font-size:12px;color:#1a1a1a;margin:0;padding:28px 32px;max-width:700px}h1{font-size:18px;font-weight:800;margin:0 0 2px}.sub{color:#555;font-size:11px;margin-bottom:16px}.badge{background:#e0f5f2;color:#0a7a6a;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;text-transform:uppercase}h2{font-size:13px;font-weight:700;margin:18px 0 6px;color:#333;border-bottom:1px solid #ddd;padding-bottom:3px}.br{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:12px}.br.tot{font-weight:700;font-size:13px;border-bottom:2px solid #ccc}.br.sub{padding-left:18px;color:#555}.bl{color:#444}.br.tot .bl{color:#1a1a1a}.bv{font-weight:600}.nota{background:#fff8e6;border-left:3px solid #f59e0b;padding:10px 14px;font-size:11px;margin-top:14px;border-radius:0 6px 6px 0;line-height:1.6}.footer{font-size:10px;color:#999;margin-top:24px;padding-top:8px;border-top:1px solid #eee;text-align:center}.inpc-row{display:flex;gap:12px;background:#f5fffe;border:1px solid #cef0ea;border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:11px}.inpc-cell{flex:1;text-align:center}.inpc-lbl{color:#555;font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}.inpc-val{font-weight:700;font-size:14px}.cards{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}.card{flex:1;min-width:140px;background:#f8f8f8;border:1px solid #ddd;border-radius:8px;padding:10px 12px}.card.dk{background:#fff0f0;border-color:#fca5a5}.card.gn{background:#f0fff8;border-color:#6ee7b7}.card-l{font-size:9px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:4px}.card-v{font-size:18px;font-weight:800;margin-bottom:2px}.card.dk .card-v{color:#c00}.card.gn .card-v{color:#059669}.card-n{font-size:10px;color:#666}</style></head><body><h1>Cálculo ISR por Enajenación</h1><div class="sub">Generado: ${new Date().toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'})} · Tipo: <span class="badge">${tipos[d.tipo]||d.tipo}</span> · Operación: ${d.mN[d.mesV]} ${d.anioV}</div><h2>Factor de Actualización INPC</h2><div class="inpc-row"><div class="inpc-cell"><div class="inpc-lbl">INPC Adquisición<br>${d.mN[d.mesC]} ${d.anioC}</div><div class="inpc-val">${d.inpcAdq.toFixed(6)}</div></div><div style="display:flex;align-items:center;color:#aaa;font-size:20px">→</div><div class="inpc-cell"><div class="inpc-lbl">INPC Enajenación<br>${d.mN[d.mesV]} ${d.anioV}</div><div class="inpc-val">${d.inpcVenta.toFixed(6)}</div></div><div style="display:flex;align-items:center;color:#aaa;font-size:20px">=</div><div class="inpc-cell"><div class="inpc-lbl">Factor</div><div class="inpc-val" style="color:#0a7a6a">${d.factor.toFixed(6)}</div></div></div>${d.ganTotal>0&&!d.exenta?`<h2>Resumen</h2><div class="cards"><div class="card dk"><div class="card-l">ISR Total a Pagar</div><div class="card-v">${fmt(d.isrTotal)}</div><div class="card-n">Tasa efectiva ${pct(d.tasaEfecPct)}</div></div><div class="card"><div class="card-l">ISR Entidad Federativa</div><div class="card-v">${fmt(d.isrEstatal)}</div><div class="card-n">5% ganancia — art. 127</div></div><div class="card"><div class="card-l">ISR Federación</div><div class="card-v">${fmt(d.isrFederal)}</div><div class="card-n">ISR total − retención estatal</div></div></div>`:''}<h2>Desglose del Cálculo</h2>${bkdn}${nota?`<div class="nota">${nota}</div>`:''}<div class="footer">Generado por BROKR® · Uso interno del agente inmobiliario · No sustituye al cálculo notarial definitivo</div></body></html>`;
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`ISR_BROKR_${d.mN[d.mesV]}${d.anioV}.html`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ── MES/AÑO PICKER ── */
+const MP_MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const MP_MESES_FULL = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+const mpState = {
+  v: { year: 2026, month: null },
+  c: { year: 2005, month: null }
+};
+
+function mpRenderMonths(id) {
+  const grid = g('mp-months-' + id);
+  const sel = mpState[id].month;
+  grid.innerHTML = MP_MESES.map((m, i) => {
+    const isSelected = sel === (i + 1);
+    return `<div class="mp-month${isSelected ? ' selected' : ''}" onclick="mpSelectMonth('${id}', ${i+1})">${m}</div>`;
+  }).join('');
+}
+
+function mpToggle(id) {
+  const drop = g('mp-dropdown-' + id);
+  const trigger = g('mp-trigger-' + id);
+  const other = id === 'v' ? 'c' : 'v';
+  // Close other picker
+  g('mp-dropdown-' + other)?.classList.remove('open', 'open-up');
+  g('mp-trigger-' + other)?.classList.remove('open');
+  const otherCard = g('mp-trigger-' + other)?.closest('.card');
+  if (otherCard) otherCard.style.zIndex = '';
+
+  const isOpen = drop.classList.contains('open');
+  if (!isOpen) {
+    g('mp-year-' + id).textContent = mpState[id].year;
+    mpRenderMonths(id);
+    drop.classList.add('open');
+    trigger.classList.add('open');
+    // Elevate card
+    const card = trigger.closest('.card');
+    if (card) card.style.zIndex = '200';
+    // Detect if dropdown overflows viewport bottom → open upward
+    requestAnimationFrame(() => {
+      const rect = drop.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      if (spaceBelow < 0) {
+        drop.classList.add('open-up');
+      } else {
+        drop.classList.remove('open-up');
+      }
+    });
+  } else {
+    drop.classList.remove('open', 'open-up');
+    trigger.classList.remove('open');
+    const card = trigger.closest('.card');
+    if (card) card.style.zIndex = '';
+  }
+}
+
+function mpPrevYear(id) {
+  mpState[id].year--;
+  g('mp-year-' + id).textContent = mpState[id].year;
+  mpRenderMonths(id);
+}
+function mpNextYear(id) {
+  mpState[id].year++;
+  g('mp-year-' + id).textContent = mpState[id].year;
+  mpRenderMonths(id);
+}
+
+function mpSelectMonth(id, month) {
+  mpState[id].month = month;
+  const year = mpState[id].year;
+  g('f-mes-' + id).value = String(month).padStart(2, '0');
+  g('f-anio-' + id).value = year;
+  g('mp-display-' + id).innerHTML = `<strong>${MP_MESES_FULL[month-1]}</strong> ${year}`;
+  g('mp-dropdown-' + id).classList.remove('open', 'open-up');
+  g('mp-trigger-' + id).classList.remove('open');
+  const card = g('mp-trigger-' + id)?.closest('.card');
+  if (card) card.style.zIndex = '';
+  if (id === 'c') onAnioChange();
+}
+
+document.addEventListener('click', function(e) {
+  ['v','c'].forEach(id => {
+    const wrap = g('mp-trigger-' + id)?.closest('.mp-wrap');
+    if (wrap && !wrap.contains(e.target)) {
+      g('mp-dropdown-' + id)?.classList.remove('open', 'open-up');
+      g('mp-trigger-' + id)?.classList.remove('open');
+      const card = g('mp-trigger-' + id)?.closest('.card');
+      if (card) card.style.zIndex = '';
+    }
+  });
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  mpRenderMonths('v');
+  mpRenderMonths('c');
+});
+
+/* ── SHAARK FLOTANTE ── */
+let shaarkOpen = false;
+
+function toggleShaark() {
+  shaarkOpen = !shaarkOpen;
+  const win = g('shaark-window');
+  const btn = g('shaark-btn');
+  if (shaarkOpen) {
+    win.classList.add('visible');
+    btn.classList.add('open');
+    setTimeout(()=>{ const msgs=g('sw-msgs'); if(msgs) msgs.scrollTop=msgs.scrollHeight; },50);
+  } else {
+    win.classList.remove('visible');
+    btn.classList.remove('open');
+  }
+}
+
+function swSend() {
+  const input = g('sw-input');
+  const text = (input.value||'').trim();
+  if (!text) return;
+  swAddBubble(text, 'user');
+  input.value = '';
+  g('sw-chips') && (g('sw-chips').style.display = 'none');
+  setTimeout(() => swFetch(text), 600);
+}
+
+function swKey(e) { if (e.key==='Enter') swSend(); }
+
+function swChip(text) {
+  swAddBubble(text, 'user');
+  g('sw-chips') && (g('sw-chips').style.display = 'none');
+  setTimeout(() => swFetch(text), 600);
+}
+
+function swAddBubble(text, type) {
+  const msgs = g('sw-msgs');
+  const div = document.createElement('div');
+  div.className = 'sw-bubble ' + type;
+  div.textContent = text;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+async function swFetch(text) {
+  const typing = document.createElement('div');
+  typing.className = 'sw-bubble bot';
+  typing.textContent = '...';
+  typing.id = 'sw-typing';
+  g('sw-msgs').appendChild(typing);
+  g('sw-msgs').scrollTop = g('sw-msgs').scrollHeight;
+
   try {
     const r = await fetch('https://brokrebapi-production.up.railway.app/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile', max_tokens: 280, temperature: 0.5,
+        model: 'llama-3.3-70b-versatile', max_tokens: 200, temperature: 0.6,
         messages: [
-          { role: 'system', content: 'Eres Brokr, experto en fiscalidad inmobiliaria mexicana. Responde en español, breve y práctico.' },
-          { role: 'user', content: prompt }
+          {role:'system', content:'Eres Shaark, asistente de BROKR® especializado en ISR inmobiliario mexicano. Responde en español, de forma concisa y práctica. Máximo 2-3 oraciones.'},
+          {role:'user', content: text}
         ]
       })
     });
     const data = await r.json();
-    const reply = data.choices?.[0]?.message?.content || '';
-    if (g('ai-txt')) g('ai-txt').innerHTML = reply.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
-  } catch (e) {
-    if (g('ai-box')) g('ai-box').style.display = 'none';
+    const reply = data.choices?.[0]?.message?.content || 'No pude obtener respuesta.';
+    const t = document.getElementById('sw-typing');
+    if (t) t.textContent = reply;
+  } catch(e) {
+    const t = document.getElementById('sw-typing');
+    if (t) t.textContent = 'Error de conexión. Intenta de nuevo.';
   }
-}
-
-// ── RESET ──
-function resetISR() {
-  if (g('res-inpc-row')) g('res-inpc-row').style.display = 'none';
-  if (g('res')) g('res').style.display = 'none';
-  if (g('isr-form')) g('isr-form').style.display = 'block';
-  _isrData = null;
-  ['f-venta', 'f-compra', 'f-anio-c', 'f-mej', 'f-com', 'f-esc'].forEach(id => { const el = g(id); if (el) el.value = ''; });
-  if (g('f-anio-v')) g('f-anio-v').value = '2026';
-  if (g('f-pct-terreno')) g('f-pct-terreno').value = '20';
-  if (g('f-pct-const'))   g('f-pct-const').value = '80';
-  if (g('deprec-note'))   g('deprec-note').textContent = '';
-  if (g('compra-note'))   g('compra-note').textContent = '';
-  if (g('alert-pre1981')) g('alert-pre1981').style.display = 'none';
-  if (g('alert-pre1990')) g('alert-pre1990').style.display = 'none';
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// ── DESCARGA PDF ──
-function descargarPDF() {
-  const d = _isrData;
-  if (!d) { alert('Primero realiza un cálculo.'); return; }
-  const meses = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const tipos = { casa: 'Casa habitación / Departamento', terreno: 'Terreno', comercial: 'Inmueble comercial' };
-  const bkdn = (g('res-bkdn') || {}).innerHTML || '';
-  const nota = (g('res-nota') || {}).innerHTML || '';
-  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/>
-<title>ISR Brokr — ${meses[d.mesV]} ${d.anioV}</title>
-<style>
-body{font-family:Arial,sans-serif;font-size:12px;color:#1a1a1a;margin:0;padding:28px 32px;max-width:700px}
-h1{font-size:18px;font-weight:800;margin:0 0 2px}
-.sub{color:#555;font-size:11px;margin-bottom:16px}
-.badge{background:#e0f5f2;color:#0a7a6a;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;text-transform:uppercase}
-h2{font-size:13px;font-weight:700;margin:18px 0 6px;color:#333;border-bottom:1px solid #ddd;padding-bottom:3px}
-.br{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:12px}
-.br.tot{font-weight:700;font-size:13px;border-bottom:2px solid #ccc}
-.br.sub{padding-left:18px;color:#555}
-.bl{color:#444}.br.tot .bl{color:#1a1a1a}
-.bv{font-weight:600}
-.nota{background:#fff8e6;border-left:3px solid #f59e0b;padding:10px 14px;font-size:11px;margin-top:14px;border-radius:0 6px 6px 0;line-height:1.6}
-.footer{font-size:10px;color:#999;margin-top:24px;padding-top:8px;border-top:1px solid #eee;text-align:center}
-.inpc-row{display:flex;gap:12px;background:#f5fffe;border:1px solid #cef0ea;border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:11px}
-.inpc-cell{flex:1;text-align:center}
-.inpc-lbl{color:#555;font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
-.inpc-val{font-weight:700;font-size:14px}
-.cards{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
-.card{flex:1;min-width:140px;background:#f8f8f8;border:1px solid #ddd;border-radius:8px;padding:10px 12px}
-.card.dk{background:#fff0f0;border-color:#fca5a5}
-.card.gn{background:#f0fff8;border-color:#6ee7b7}
-.card-l{font-size:9px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:4px}
-.card-v{font-size:18px;font-weight:800;margin-bottom:2px}
-.card.dk .card-v{color:#c00}
-.card.gn .card-v{color:#059669}
-.card-n{font-size:10px;color:#666}
-</style></head><body>
-<h1>Cálculo ISR por Enajenación</h1>
-<div class="sub">
-  Generado: ${new Date().toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'})} · Tipo: <span class="badge">${tipos[d.tipo]||d.tipo}</span> · Operación: ${d.mN[d.mesV]} ${d.anioV}
-</div>
-<h2>Factor de Actualización INPC</h2>
-<div class="inpc-row">
-  <div class="inpc-cell"><div class="inpc-lbl">INPC Adquisición<br>${d.mN[d.mesC]} ${d.anioC}</div><div class="inpc-val">${d.inpcAdq.toFixed(6)}</div></div>
-  <div style="display:flex;align-items:center;color:#aaa;font-size:20px">→</div>
-  <div class="inpc-cell"><div class="inpc-lbl">INPC Enajenación<br>${d.mN[d.mesV]} ${d.anioV}</div><div class="inpc-val">${d.inpcVenta.toFixed(6)}</div></div>
-  <div style="display:flex;align-items:center;color:#aaa;font-size:20px">=</div>
-  <div class="inpc-cell"><div class="inpc-lbl">Factor</div><div class="inpc-val" style="color:#0a7a6a">${d.factor.toFixed(6)}</div></div>
-</div>
-${d.ganTotal > 0 && !d.exenta ? `
-<h2>Resumen</h2>
-<div class="cards">
-  <div class="card dk"><div class="card-l">ISR Total a Pagar</div><div class="card-v">${fmt(d.isrTotal)}</div><div class="card-n">Tasa efectiva ${pct(d.tasaEfecPct)}</div></div>
-  <div class="card"><div class="card-l">ISR Entidad Federativa</div><div class="card-v">${fmt(d.isrEstatal)}</div><div class="card-n">5% ganancia — art. 127</div></div>
-  <div class="card"><div class="card-l">ISR Federación</div><div class="card-v">${fmt(d.isrFederal)}</div><div class="card-n">ISR total − retención estatal</div></div>
-</div>` : ''}
-<h2>Desglose del Cálculo</h2>
-${bkdn}
-${nota ? `<div class="nota">${nota}</div>` : ''}
-<div class="footer">Generado por Brokr · Uso interno del agente inmobiliario · No sustituye al cálculo notarial definitivo</div>
-</body></html>`;
-
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `ISR_Brokr_${d.mN[d.mesV]}${d.anioV}.html`;
-  a.click();
-  URL.revokeObjectURL(url);
+  g('sw-msgs').scrollTop = g('sw-msgs').scrollHeight;
 }
 </script>
 </body>

@@ -904,7 +904,7 @@ def build_ficha_html(p: dict, images_b64: dict) -> str:
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Poppins',sans-serif;background:white;color:#0f1829}
+body{font-family:'font-family:'Poppins',sans-serif;background:white;color:#0f1829}
 .ficha-page{width:210mm;height:297mm;background:white;display:flex;flex-direction:column;overflow:hidden;page-break-after:always}
 .ficha-page:last-child{page-break-after:avoid}
 .cover-accent{height:4px;background:linear-gradient(90deg,#2a9db5 0%,#4caf7d 100%);flex-shrink:0}
@@ -1022,22 +1022,8 @@ async def generar_ficha_pdf(p: dict):
         await browser.close()
     
     from fastapi.responses import JSONResponse
-    import re as _re2
-    id_prop   = p.get("public_id") or p.get("id") or ""
-    loc       = p.get("location") or {}
-    colonia   = (loc.get("name") or "").strip()
-    tipo_raw  = (p.get("property_type") or "Propiedad").strip()
-    # Sanitize: remove accents and special chars for filename
-    def _slug(s):
-        for a, b in [('á','a'),('é','e'),('í','i'),('ó','o'),('ú','u'),('ü','u'),('ñ','n'),
-                     ('Á','A'),('É','E'),('Í','I'),('Ó','O'),('Ú','U'),('Ñ','N')]:
-            s = s.replace(a, b)
-        return _re2.sub(r'[^A-Za-z0-9_]', '_', s).strip('_')
-    parts = ["Ficha_Brokr"]
-    if colonia:  parts.append(_slug(colonia))
-    if tipo_raw: parts.append(_slug(tipo_raw))
-    if id_prop:  parts.append(_slug(id_prop))
-    filename = "_".join(parts) + ".pdf"
+    id_prop = p.get("public_id") or p.get("id") or "ficha"
+    filename = f"Brokr_{id_prop}.pdf"
     token = str(_uuid.uuid4()).replace("-","")[:16]
     _pdf_store[token] = (pdf_bytes, filename)
     # Clean old entries if too many
@@ -1054,13 +1040,9 @@ async def descargar_ficha_pdf(token: str):
         from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="PDF no encontrado o expirado")
     pdf_bytes, filename = _pdf_store[token]
-    # Use attachment for direct download on all devices including PWA
+    # inline so Safari opens it with its native PDF viewer + share button
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={
-            "Content-Disposition": f'attachment; filename="{filename}"',
-            "Content-Type": "application/pdf",
-            "Cache-Control": "no-store",
-        }
+        headers={"Content-Disposition": f"inline; filename={filename}"}
     )
