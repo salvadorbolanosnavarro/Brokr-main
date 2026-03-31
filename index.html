@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Brokr"/>
 <link rel="manifest" href="manifest.json"/>
 <link rel="apple-touch-icon" href="apple-touch-icon.png"/>
-<meta name="theme-color" content="#0f1829"/>
+<meta name="theme-color" content="#ffffff"/>
 <link rel="icon" href="favicon.png"/>
 <title>Brokr</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -105,7 +105,7 @@ html, body {
 .proto-screen::-webkit-scrollbar { display: none; }
 
 /* ══ HOME SCREEN ══ */
-#screen-home { background: var(--screen-bg); padding-bottom: 90px; }
+#screen-home { background: var(--screen-bg); padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
 
 .home-header {
   background: var(--navy);
@@ -256,7 +256,7 @@ html, body {
 .act-time { margin-left: auto; font-size: 11px; color: var(--gray-400); white-space: nowrap; }
 
 /* ══ MÓDULOS SCREEN ══ */
-#screen-modules { background: var(--screen-bg); padding-bottom: 90px; }
+#screen-modules { background: var(--screen-bg); padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
 
 .modules-header {
   background: var(--navy);
@@ -304,7 +304,7 @@ html, body {
 .cat-purple .cat-mod-icon { background: rgba(139,92,246,0.12); }
 
 /* ══ PERFIL SCREEN ══ */
-#screen-profile { background: var(--screen-bg); padding-bottom: 90px; }
+#screen-profile { background: var(--screen-bg); padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
 
 .profile-header {
   background: var(--navy);
@@ -631,116 +631,63 @@ html, body {
 /* ══ IFRAME PANELS ══ */
 .iframe-panel { width: 100%; height: 100%; border: none; display: block; flex: 1; }
 
-/* ══ SHAARK FAB ══ */
-.shaark-fab {
-  position: fixed;
-  bottom: calc(80px + 12px);
-  right: 16px;
-  z-index: 200;
-  display: flex; flex-direction: column;
-  align-items: flex-end; gap: 10px;
+.shaark-screen {
+  background: var(--navy) !important;
+  display: flex;
+  flex-direction: column;
 }
-.shaark-chat-window {
-  width: min(290px, calc(100vw - 40px));
-  background: var(--navy); border-radius: 20px; overflow: hidden;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.3);
-  border: 1px solid rgba(42,157,181,0.25);
-  display: none; flex-direction: column;
-  max-height: min(380px, calc(100dvh - 200px));
+.shaark-screen-header {
+  background: var(--navy);
+  padding: calc(var(--safe-top) + 16px) 20px 16px;
+  display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  flex-shrink: 0;
 }
-.shaark-chat-window.open { display: flex; animation: popIn .2s cubic-bezier(.16,1,.3,1); }
-@keyframes popIn { from { opacity:0; transform:scale(.88); } to { opacity:1; transform:scale(1); } }
-
-.scw-header {
-  padding: 12px 14px; display: flex; align-items: center; gap: 9px;
-  border-bottom: 1px solid rgba(255,255,255,0.07); flex-shrink: 0;
+.shaark-screen-msgs {
+  flex: 1; overflow-y: auto;
+  padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 10px;
+  background: var(--navy);
 }
-.scw-avatar {
-  width: 32px; height: 32px; border-radius: 10px;
+.shaark-screen-msgs::-webkit-scrollbar { display: none; }
+.shaark-screen-input {
+  display: flex; gap: 10px;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid rgba(255,255,255,0.07);
+  background: var(--navy);
+  flex-shrink: 0;
+}
+.shaark-screen-input .scw-input {
+  flex: 1; padding: 12px 16px; font-size: 14px;
+}
+.shaark-screen-input .scw-send {
+  width: 46px; height: 46px; border-radius: 14px; font-size: 18px;
+}
+/* Shaark nav button special */
+.proto-nav-shaark {
+  font-size: 26px;
+  width: 46px; height: 46px;
   background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+  border-radius: 16px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 15px; flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(42,157,181,0.4);
+  transition: transform 0.15s;
+  margin-bottom: 2px;
 }
-.scw-name { font-size: 13px; font-weight: 700; color: white; }
-.scw-status { font-size: 10px; color: var(--teal); font-weight: 500; }
-.scw-close {
-  margin-left: auto; width: 26px; height: 26px;
-  border-radius: 8px; background: rgba(255,255,255,0.08);
-  border: none; color: rgba(255,255,255,0.5); font-size: 14px;
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-}
-
-.scw-messages {
-  flex: 1; overflow-y: auto; padding: 10px 12px;
-  display: flex; flex-direction: column; gap: 8px;
-}
-.scw-messages::-webkit-scrollbar { display: none; }
-.scw-bubble {
-  max-width: 90%; padding: 8px 11px; border-radius: 13px;
-  font-size: 12px; line-height: 1.45;
-}
-.scw-bubble.bot {
-  background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.88);
-  border-bottom-left-radius: 4px; align-self: flex-start;
-  border: 1px solid rgba(255,255,255,0.08);
-}
-.scw-bubble.user {
-  background: var(--teal); color: white;
-  border-bottom-right-radius: 4px; align-self: flex-end;
-}
-
-.scw-chips {
-  display: flex; gap: 5px; flex-wrap: wrap; padding: 0 12px 6px;
-}
-.scw-chip {
-  background: rgba(42,157,181,0.15); border: 1px solid rgba(42,157,181,0.3);
-  border-radius: 14px; padding: 5px 10px; font-size: 10px;
-  color: var(--teal); cursor: pointer; font-weight: 600;
-  font-family: 'Poppins', sans-serif;
-}
-.scw-chip:active { background: rgba(42,157,181,0.3); }
-
-.scw-input-row {
-  display: flex; gap: 7px; padding: 8px 12px 12px;
-  border-top: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;
-}
-.scw-input {
-  flex: 1; background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
-  padding: 8px 12px; font-size: 12px; color: white;
-  font-family: 'Poppins', sans-serif; outline: none;
-}
-.scw-input::placeholder { color: rgba(255,255,255,0.28); }
-.scw-send {
-  width: 34px; height: 34px; border-radius: 11px;
-  background: var(--teal); border: none; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 14px; color: white; flex-shrink: 0;
-}
-
-.shaark-fab-btn {
-  width: 54px; height: 54px; border-radius: 18px;
-  background: var(--navy); border: 2px solid rgba(42,157,181,0.45);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 26px; cursor: pointer;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.25), 0 2px 8px rgba(42,157,181,0.2);
-  transition: transform 0.15s; position: relative;
-}
-.shaark-fab-btn:active { transform: scale(0.93); }
-.shaark-fab-btn.open { background: var(--teal); border-color: var(--teal); }
-.fab-pulse {
-  position: absolute; top: -2px; right: -2px;
-  width: 12px; height: 12px; border-radius: 50%;
-  background: #22c55e; border: 2px solid var(--screen-bg);
+.proto-nav-item.active .proto-nav-shaark {
+  transform: scale(1.08);
 }
 
 /* ══ BOTTOM NAV ══ */
 .proto-nav {
   position: fixed; bottom: 0; left: 0; right: 0;
-  height: 80px; background: white;
+  height: calc(64px + env(safe-area-inset-bottom, 0px));
+  background: white;
   border-top: 1px solid rgba(0,0,0,0.08);
-  display: flex; align-items: center; justify-content: space-around;
-  padding: 0 8px 12px; z-index: 100;
+  display: flex; align-items: flex-start; justify-content: space-around;
+  padding: 10px 8px 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  z-index: 100;
   box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
 }
 .proto-nav-item {
@@ -755,10 +702,7 @@ html, body {
 .proto-nav-item.active .proto-nav-label { color: var(--teal); }
 
 /* ══ CLOSE BAR (for mod panels) ══ */
-#close-bar {
-  display: none; position: fixed;
-  top: calc(var(--safe-top) + 14px); right: 16px; z-index: 195;
-}
+#close-bar { display: none !important; }
 #close-bar button {
   width: 34px; height: 34px; border-radius: 50%;
   background: var(--navy); border: 1px solid rgba(255,255,255,.15);
@@ -793,6 +737,153 @@ html, body {
   .quick-grid { grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 12px; }
   .cat-grid { grid-template-columns: repeat(3,1fr); gap: 8px; }
 }
+
+/* ══ NOTIF BELL ══ */
+.notif-bell {
+  position: relative; cursor: pointer;
+  width: 38px; height: 38px; border-radius: 13px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+  transition: background 0.15s;
+}
+.notif-bell:active { background: rgba(255,255,255,0.2); }
+.notif-badge {
+  position: absolute; top: -5px; right: -5px;
+  background: #ef4444; color: white;
+  font-size: 9px; font-weight: 700;
+  min-width: 16px; height: 16px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 4px; border: 2px solid var(--navy);
+  font-family: 'Poppins', sans-serif;
+}
+.notif-panel {
+  position: absolute; top: calc(var(--safe-top) + 60px);
+  left: 16px; right: 16px; z-index: 50;
+  background: white; border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  border: 1px solid rgba(0,0,0,0.08);
+  overflow: hidden;
+  animation: fadeInDown 0.2s ease;
+}
+@keyframes fadeInDown {
+  from { opacity:0; transform:translateY(-8px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.notif-panel-hdr {
+  padding: 14px 16px; display: flex;
+  justify-content: space-between; align-items: center;
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+}
+.notif-list { max-height: 280px; overflow-y: auto; }
+.notif-item {
+  padding: 12px 16px; display: flex; gap: 12px; align-items: flex-start;
+  border-bottom: 1px solid rgba(0,0,0,0.05); cursor: pointer;
+  transition: background 0.1s;
+}
+.notif-item:last-child { border-bottom: none; }
+.notif-item:active { background: var(--gray-100); }
+.notif-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--teal); flex-shrink: 0; margin-top: 5px;
+}
+.notif-item-text { font-size: 12px; color: var(--text); line-height: 1.45; }
+.notif-item-time { font-size: 10px; color: var(--gray-400); margin-top: 2px; }
+
+/* ══ PROFILE COMING SOON ══ */
+.pr-coming {
+  font-size: 10px; font-weight: 600;
+  color: var(--gray-400); background: var(--gray-100);
+  padding: 3px 8px; border-radius: 10px;
+}
+
+/* ══ PROFILE EDIT MODAL ══ */
+.profile-edit-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); z-index: 400;
+  align-items: flex-end; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.profile-edit-overlay.open { display: flex; }
+.profile-edit-box {
+  background: white; border-radius: 28px 28px 0 0;
+  width: 100%; max-height: 92dvh;
+  overflow-y: auto; padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+.profile-edit-box::-webkit-scrollbar { display: none; }
+.profile-edit-hdr {
+  padding: 16px 20px 12px;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  position: sticky; top: 0; background: white; z-index: 10;
+}
+.profile-edit-body { padding: 16px 20px 24px; }
+.profile-edit-photo {
+  width: 90px; height: 90px; border-radius: 28px;
+  background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px; font-weight: 800; color: white;
+  margin: 0 auto; cursor: pointer; position: relative;
+  border: 3px solid var(--gray-200); overflow: hidden;
+}
+.profile-edit-photo img { width: 100%; height: 100%; object-fit: cover; }
+.profile-edit-photo-btn {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: rgba(0,0,0,0.45); height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.pe-section {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--teal);
+  margin: 18px 0 10px; padding-left: 2px;
+}
+.pe-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+.pe-field label {
+  font-size: 10px; font-weight: 700; color: var(--gray-400);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.pe-field input {
+  width: 100%; padding: 12px 14px; background: var(--gray-100);
+  border: 1.5px solid transparent; border-radius: 14px;
+  font-size: 14px; font-family: 'Poppins', sans-serif;
+  color: var(--text); outline: none; transition: border-color 0.2s, background 0.2s;
+}
+.pe-field input:focus { border-color: var(--teal); background: white; }
+.pe-toggle-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.07);
+  margin-bottom: 16px;
+}
+.pe-toggle { position: relative; display: inline-block; width: 46px; height: 26px; flex-shrink: 0; }
+.pe-toggle input { opacity: 0; width: 0; height: 0; }
+.pe-toggle-slider {
+  position: absolute; inset: 0; background: var(--gray-200);
+  border-radius: 13px; cursor: pointer; transition: background 0.2s;
+}
+.pe-toggle-slider::before {
+  content: ''; position: absolute;
+  width: 20px; height: 20px; background: white;
+  border-radius: 50%; left: 3px; top: 3px;
+  transition: transform 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.pe-toggle input:checked + .pe-toggle-slider { background: var(--teal); }
+.pe-toggle input:checked + .pe-toggle-slider::before { transform: translateX(20px); }
+.pe-save-btn {
+  width: 100%; padding: 15px; background: var(--navy);
+  border: none; border-radius: 16px; color: white;
+  font-size: 15px; font-weight: 700; font-family: 'Poppins', sans-serif;
+  cursor: pointer; margin-top: 8px; transition: opacity 0.15s;
+}
+.pe-save-btn:active { opacity: 0.85; }
+
+/* ══ SHAARK SCREEN CHIPS FIX ══ */
+#screen-shaark .scw-chips { padding: 0 16px 8px; }
+
+/* ══ VIOLET MODULE ICON FIX ══ */
+.module-card.violet .module-icon { background: rgba(139,92,246,0.12); }
+
 </style>
 </head>
 <body>
@@ -808,7 +899,13 @@ html, body {
             <div class="hello">Buenos días</div>
             <div class="name" id="greet-text">¡Hola!</div>
           </div>
-          <div class="home-avatar" id="user-avatar" onclick="protoGoTo('profile')">?</div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="notif-bell" id="notif-bell" onclick="toggleNotifications()">
+              🔔
+              <span class="notif-badge" id="notif-count" style="display:none">0</span>
+            </div>
+            <div class="home-avatar" id="user-avatar" onclick="protoGoTo('profile')">?</div>
+          </div>
         </div>
         <div class="stats-row">
           <div class="stat-pill"><div class="val">—</div><div class="lbl">Propiedades</div></div>
@@ -817,11 +914,7 @@ html, body {
         </div>
       </div>
 
-      <div class="section-title anim-2">
-        <h3>Accesos rápidos</h3>
-        <a onclick="protoGoTo('modules')">Ver todos →</a>
-      </div>
-      <div class="quick-grid anim-3">
+      <div class="quick-grid anim-2" style="margin-top:18px">
         <div class="module-card teal" onclick="setPanel('ficha-manual')">
           <div class="module-icon">📝</div>
           <div class="mod-name">Fichas técnicas</div>
@@ -842,12 +935,6 @@ html, body {
           <div class="mod-name">Opinión de valor</div>
           <div class="mod-desc">AVM inteligente</div>
         </div>
-      </div>
-
-      <div class="section-title anim-4" style="margin-top:8px">
-        <h3>Más módulos</h3>
-      </div>
-      <div class="quick-grid anim-5" style="margin-bottom:20px">
         <div class="module-card navy" onclick="setPanel('contratos')">
           <div class="module-icon">📄</div>
           <div class="mod-name">Contratos</div>
@@ -858,6 +945,17 @@ html, body {
           <div class="mod-name">Mis inmuebles</div>
           <div class="mod-desc">Gestión completa</div>
         </div>
+
+      <!-- Notificaciones dropdown -->
+      <div class="notif-panel" id="notif-panel" style="display:none">
+        <div class="notif-panel-hdr">
+          <span style="font-size:14px;font-weight:700;color:var(--text)">Notificaciones</span>
+          <button onclick="toggleNotifications()" style="background:none;border:none;color:var(--gray-400);font-size:16px;cursor:pointer">✕</button>
+        </div>
+        <div class="notif-list" id="notif-list">
+          <div style="text-align:center;padding:30px;color:var(--gray-400);font-size:13px">Sin notificaciones</div>
+        </div>
+      </div>
       </div>
     </div>
 
@@ -907,29 +1005,104 @@ html, body {
     <!-- ══ PERFIL ══ -->
     <div class="proto-screen" id="screen-profile">
       <div class="profile-header">
-        <div class="profile-avatar" id="profile-avatar">?</div>
+        <div class="profile-avatar" id="profile-avatar" onclick="openProfileEdit()" style="cursor:pointer;position:relative">
+          <span id="profile-avatar-letter">?</span>
+          <div style="position:absolute;bottom:-4px;right:-4px;width:22px;height:22px;background:var(--teal);border-radius:50%;border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:11px">✏️</div>
+        </div>
         <div class="profile-name" id="profile-name">—</div>
         <div class="profile-sub" id="profile-sub">Agente Inmobiliario · Morelia</div>
         <div class="profile-badge" id="profile-plan">Pro</div>
       </div>
-      <div style="padding-bottom:90px">
+      <div style="padding-bottom:calc(90px + env(safe-area-inset-bottom,0px))">
         <div class="profile-section" style="margin-top:20px">
-          <div class="profile-row"><div class="pr-icon">👤</div><span class="pr-text">Mi perfil</span><span class="pr-arrow">›</span></div>
-          <div class="profile-row"><div class="pr-icon">🔑</div><span class="pr-text">API EasyBroker</span><span class="pr-arrow">›</span></div>
-          <div class="profile-row"><div class="pr-icon">🔔</div><span class="pr-text">Notificaciones</span><span class="pr-arrow">›</span></div>
+          <div class="profile-row" onclick="openProfileEdit()">
+            <div class="pr-icon">👤</div><span class="pr-text">Mi perfil</span><span class="pr-arrow" style="color:var(--teal)">›</span>
+          </div>
+          <div class="profile-row" onclick="showComingSoon('API EasyBroker')">
+            <div class="pr-icon">🔑</div><span class="pr-text">API EasyBroker</span><span class="pr-coming">Próximamente</span>
+          </div>
+          <div class="profile-row" onclick="showComingSoon('Suscripción')">
+            <div class="pr-icon">💳</div><span class="pr-text">Suscripción</span><span class="pr-coming">Próximamente</span>
+          </div>
+          <div class="profile-row" onclick="showComingSoon('Soporte')">
+            <div class="pr-icon">🆘</div><span class="pr-text">Soporte</span><span class="pr-coming">Próximamente</span>
+          </div>
         </div>
         <div class="profile-section">
-          <div class="profile-row"><div class="pr-icon">💳</div><span class="pr-text">Suscripción</span><span class="pr-arrow">›</span></div>
-          <div class="profile-row"><div class="pr-icon">🆘</div><span class="pr-text">Soporte</span><span class="pr-arrow">›</span></div>
+          <div class="profile-row" onclick="logout()">
+            <div class="pr-icon">🚪</div><span class="pr-text" style="color:#e05252">Cerrar sesión</span>
+          </div>
         </div>
-        <div class="profile-section">
-          <div class="profile-row" onclick="logout()"><div class="pr-icon">🚪</div><span class="pr-text" style="color:#e05252">Cerrar sesión</span></div>
+      </div>
+    </div>
+
+    <!-- Modal Mi Perfil -->
+    <div class="profile-edit-overlay" id="profile-edit-modal">
+      <div class="profile-edit-box">
+        <div class="profile-edit-hdr">
+          <span style="font-size:15px;font-weight:700">Mi perfil</span>
+          <button onclick="closeProfileEdit()" style="background:var(--gray-100);border:none;width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:14px">✕</button>
         </div>
+        <div class="profile-edit-body">
+          <div style="text-align:center;margin-bottom:20px">
+            <div class="profile-edit-photo" id="profile-edit-photo" onclick="triggerPhotoUpload()">
+              <span id="profile-edit-photo-letter">?</span>
+              <div class="profile-edit-photo-btn">📷</div>
+            </div>
+            <input type="file" id="photo-upload-input" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)"/>
+            <div style="font-size:11px;color:var(--gray-400);margin-top:8px">Toca para cambiar foto</div>
+          </div>
+          <div class="pe-section">Datos personales</div>
+          <div class="pe-field"><label>Nombre completo</label><input type="text" id="pe-nombre" placeholder="Tu nombre"/></div>
+          <div class="pe-field"><label>Teléfono</label><input type="tel" id="pe-telefono" placeholder="+52 443 000 0000"/></div>
+          <div class="pe-field"><label>Correo electrónico</label><input type="email" id="pe-email" placeholder="tu@correo.com"/></div>
+          <div class="pe-section">Datos de empresa</div>
+          <div class="pe-field"><label>Nombre de empresa o inmobiliaria</label><input type="text" id="pe-empresa" placeholder="Nombre comercial (opcional)"/></div>
+          <div class="pe-field"><label>Ciudad</label><input type="text" id="pe-ciudad" placeholder="Morelia, Michoacán"/></div>
+          <div class="pe-field"><label>Licencia / Cédula profesional</label><input type="text" id="pe-cedula" placeholder="Opcional"/></div>
+          <div class="pe-section">Visibilidad</div>
+          <div class="pe-toggle-row">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--text)">Perfil público</div>
+              <div style="font-size:11px;color:var(--gray-400);margin-top:2px">Tu nombre aparece en fichas técnicas generadas</div>
+            </div>
+            <label class="pe-toggle">
+              <input type="checkbox" id="pe-publico"/>
+              <span class="pe-toggle-slider"></span>
+            </label>
+          </div>
+          <button class="pe-save-btn" onclick="saveProfileEdit()">Guardar cambios</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SHAARK SCREEN ══ -->
+    <div class="proto-screen shaark-screen" id="screen-shaark">
+      <div class="shaark-screen-header">
+        <div class="scw-avatar" style="width:40px;height:40px;font-size:20px;border-radius:14px;background:linear-gradient(135deg,var(--teal),var(--teal-dark));display:flex;align-items:center;justify-content:center;flex-shrink:0">🦈</div>
+        <div>
+          <div style="font-size:16px;font-weight:700;color:white">Shaark</div>
+          <div style="font-size:11px;color:var(--teal);font-weight:500">● En línea</div>
+        </div>
+      </div>
+      <div class="shaark-screen-msgs" id="scw-msgs">
+        <div class="scw-bubble bot">¡Hola! 👋 Soy Shaark, tu asistente BROKR®. ¿En qué te ayudo?</div>
+      </div>
+      <div class="scw-chips" id="scw-chips" style="padding:0 16px 8px">
+        <div class="scw-chip" onclick="shaarkChip('Generar un contrato')">📄 Contrato</div>
+        <div class="scw-chip" onclick="shaarkChip('Calcular ISR')">💰 ISR</div>
+        <div class="scw-chip" onclick="shaarkChip('Crear ficha técnica')">🏷️ Ficha</div>
+        <div class="scw-chip" onclick="shaarkChip('Ver mis propiedades')">🏠 Inmuebles</div>
+      </div>
+      <div class="shaark-screen-input">
+        <input class="scw-input" id="scw-input" type="text" placeholder="Pregunta algo..." onkeydown="if(event.key==='Enter') shaarkFabSend()"/>
+        <button class="scw-send" onclick="shaarkFabSend()">➤</button>
       </div>
     </div>
 
     <!-- ══ MOD PANELS ══ -->
     <div id="panel-isr" class="mod-panel">
+      <div class="panel-topbar"><button class="panel-back" onclick="showDashboard()">←</button><span class="panel-title">Calculadora ISR</span></div>
       <div class="panel-scroll">
         <div id="isr-form">
           <div class="isr-hdr">
@@ -1020,6 +1193,7 @@ html, body {
       </div>
     </div>
     <div id="panel-props" class="mod-panel" style="flex-direction:column">
+      <div class="panel-topbar"><button class="panel-back" onclick="showDashboard()">←</button><span class="panel-title">Mis Inmuebles</span></div>
       <div class="props-toolbar">
         <div class="props-search-wrap">
           <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
@@ -1055,10 +1229,22 @@ html, body {
         <div class="props-empty">Cargando propiedades...</div>
       </div>
     </div>
-    <div id="panel-ficha-manual" class="mod-panel"><iframe src="ficha-manual.html" class="iframe-panel"></iframe></div>
-    <div id="panel-ficha"        class="mod-panel"><iframe src="ficha.html"         class="iframe-panel"></iframe></div>
-    <div id="panel-contratos"    class="mod-panel"><iframe src="contratos.html"     class="iframe-panel"></iframe></div>
-    <div id="panel-avm"          class="mod-panel"><iframe src="avm.html"           class="iframe-panel"></iframe></div>
+    <div id="panel-ficha-manual" class="mod-panel" style="flex-direction:column">
+      <div class="panel-topbar"><button class="panel-back" onclick="showDashboard()">←</button><span class="panel-title">Ficha Técnica Manual</span></div>
+      <iframe src="ficha-manual.html" class="iframe-panel" style="flex:1"></iframe>
+    </div>
+    <div id="panel-ficha" class="mod-panel" style="flex-direction:column">
+      <div class="panel-topbar"><button class="panel-back" onclick="showDashboard()">←</button><span class="panel-title">Ficha EasyBroker</span></div>
+      <iframe src="ficha.html" class="iframe-panel" style="flex:1"></iframe>
+    </div>
+    <div id="panel-contratos" class="mod-panel" style="flex-direction:column">
+      <div class="panel-topbar"><button class="panel-back" onclick="showDashboard()">←</button><span class="panel-title">Contratos</span></div>
+      <iframe src="contratos.html" class="iframe-panel" style="flex:1"></iframe>
+    </div>
+    <div id="panel-avm" class="mod-panel" style="flex-direction:column">
+      <div class="panel-topbar"><button class="panel-back" onclick="showDashboard()">←</button><span class="panel-title">Opinión de Valor</span></div>
+      <iframe src="avm.html" class="iframe-panel" style="flex:1"></iframe>
+    </div>
 
   </div><!-- /screens-container -->
 </div><!-- /app -->
@@ -1141,67 +1327,38 @@ html, body {
   </div>
 </div>
 
-<!-- ══ SHAARK FAB ══ -->
-<div class="shaark-fab">
-  <div class="shaark-chat-window" id="shaark-window">
-    <div class="scw-header">
-      <div class="scw-avatar">🦈</div>
-      <div>
-        <div class="scw-name">Shaark</div>
-        <div class="scw-status">● En línea</div>
-      </div>
-      <button class="scw-close" onclick="closeShaarkWindow()">✕</button>
-    </div>
-    <div class="scw-messages" id="scw-msgs">
-      <div class="scw-bubble bot">¡Hola! 👋 Soy Shaark, tu asistente BROKR®. ¿En qué te ayudo?</div>
-    </div>
-    <div class="scw-chips" id="scw-chips">
-      <div class="scw-chip" onclick="shaarkChip('Generar un contrato')">📄 Contrato</div>
-      <div class="scw-chip" onclick="shaarkChip('Calcular ISR')">💰 ISR</div>
-      <div class="scw-chip" onclick="shaarkChip('Crear ficha técnica')">🏷️ Ficha</div>
-      <div class="scw-chip" onclick="shaarkChip('Ver mis propiedades')">🏠 Inmuebles</div>
-    </div>
-    <div class="scw-input-row">
-      <input class="scw-input" id="scw-input" type="text" placeholder="Pregunta algo..." onkeydown="if(event.key==='Enter') shaarkFabSend()"/>
-      <button class="scw-send" onclick="shaarkFabSend()">➤</button>
-    </div>
-  </div>
-  <div class="shaark-fab-btn" id="shaark-fab-btn" onclick="toggleShaarkWindow()">
-    🦈
-    <div class="fab-pulse"></div>
-  </div>
-</div>
-
 <!-- ══ BOTTOM NAV ══ -->
 <div class="proto-nav">
-  <div class="proto-nav-item active" data-screen="home" onclick="protoGoTo('home')">
-    <div class="proto-nav-icon">⊞</div>
-    <div class="proto-nav-label">Inicio</div>
+  <div class="proto-nav-item active" data-screen="profile" onclick="protoGoTo('profile')">
+    <div class="proto-nav-icon">👤</div>
+    <div class="proto-nav-label">Perfil</div>
   </div>
   <div class="proto-nav-item" data-screen="modules" onclick="protoGoTo('modules')">
     <div class="proto-nav-icon">⊟</div>
     <div class="proto-nav-label">Módulos</div>
   </div>
-  <div class="proto-nav-item" data-screen="profile" onclick="protoGoTo('profile')">
-    <div class="proto-nav-icon">👤</div>
-    <div class="proto-nav-label">Perfil</div>
+  <div class="proto-nav-item" data-screen="shaark" onclick="protoGoTo('shaark')">
+    <div class="proto-nav-shaark">🦈</div>
+    <div class="proto-nav-label">Shaark</div>
   </div>
 </div>
 
 <script>
-// ══ PROTO NAV (home / modules / profile) ══
+// ══ PROTO NAV (home / modules / profile / shaark) ══
 let protoScreen = 'home';
 
 function protoGoTo(name) {
-  // Hide all proto screens
   document.querySelectorAll('.proto-screen').forEach(s => s.classList.remove('active-screen'));
   document.querySelectorAll('.proto-nav-item').forEach(n => n.classList.remove('active'));
-  // Also hide mod panels
   document.querySelectorAll('.mod-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('close-bar').style.display = 'none';
-
+  // Close notif panel if open
+  notifOpen = false;
+  const np = document.getElementById('notif-panel');
+  if (np) np.style.display = 'none';
   protoScreen = name;
-  document.getElementById('screen-' + name).classList.add('active-screen');
+  const screen = document.getElementById('screen-' + name);
+  if (screen) screen.classList.add('active-screen');
   document.querySelector('.proto-nav-item[data-screen="' + name + '"]')?.classList.add('active');
 }
 
@@ -1320,10 +1477,10 @@ function setPanel(name) {
 
 function showDashboard() {
   document.querySelectorAll('.mod-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('screen-home').classList.add('active-screen');
+  document.querySelectorAll('.proto-screen').forEach(s => s.classList.remove('active-screen'));
+  document.getElementById('screen-home')?.classList.add('active-screen');
   document.querySelectorAll('.proto-nav-item').forEach(t => t.classList.remove('active'));
-  document.querySelector('.proto-nav-item[data-screen="home"]')?.classList.add('active');
-  if(typeof closeShaarkWindow === 'function') closeShaarkWindow();
+  document.getElementById('close-bar').style.display = 'none';
 }
 
 function goISR()  { setPanel('isr'); }
@@ -1683,7 +1840,154 @@ function descargarPDF(){
   const bkdn  = (g('res-bkdn')||{}).innerHTML || '';
   const nota  = (g('res-nota')||{}).innerHTML || '';
   const meses = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/><title>ISR BROKR</title><style>body{font-family:'Poppins',sans-serif;font-size:12px;color:#1a1a1a;margin:0;padding:28px 32px;max-width:700px}h1{font-size:18px;font-weight:800;margin:0 0 2px}.sub{color:#555;font-size:11px;margin-bottom:16px}h2{font-size:13px;font-weight:700;margin:18px 0 6px;color:#333;border-bottom:1px solid #ddd;padding-bottom:3px}.br{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:12px}.br.tot{font-weight:700;font-size:13px;border-bottom:2px solid #ccc}.br.sub{padding-left:18px;color:#555}.bl{color:#444}.bv{font-weight:600}.nota{background:#fff8e6;border-left:3px solid #f59e0b;padding:10px 14px;font-size:11px;margin-top:14px;border-radius:0 6px 6px 0;line-height:1.6}.footer{font-size:10px;color:#999;margin-top:24px;padding-top:8px;border-top:1px solid #eee;text-align:center}</style></head><body><h1>Cálculo ISR por Enajenación</h1><div class="sub">Generado: ${new Date().toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'})} · ${meses[d.mesV]} ${d.anioV}</div><h2>Desglose</h2>${bkdn}${nota?`<div class="nota">${nota}</div>`:''}<div class="footer">Generado por Brokr · Uso interno del agente inmobiliario · No sustituye al cálculo notarial definitivo</div></body></html>`;
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/><title>ISR BROKR</title><style>body{font-family:'Poppins',sans-serif;font-size:12px;color:#1a1a1a;margin:0;padding:28px 32px;max-width:700px}h1{font-size:18px;font-weight:800;margin:0 0 2px}.sub{color:#555;font-size:11px;margin-bottom:16px}h2{font-size:13px;font-weight:700;margin:18px 0 6px;color:#333;border-bottom:1px solid #ddd;padding-bottom:3px}.br{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:12px}.br.tot{font-weight:700;font-size:13px;border-bottom:2px solid #ccc}.br.sub{padding-left:18px;color:#555}.bl{color:#444}.bv{font-weight:600}.nota{background:#fff8e6;border-left:3px solid #f59e0b;padding:10px 14px;font-size:11px;margin-top:14px;border-radius:0 6px 6px 0;line-height:1.6}.footer{font-size:10px;color:#999;margin-top:24px;padding-top:8px;border-top:1px solid #eee;text-align:center}
+/* ══ NOTIF BELL ══ */
+.notif-bell {
+  position: relative; cursor: pointer;
+  width: 38px; height: 38px; border-radius: 13px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+  transition: background 0.15s;
+}
+.notif-bell:active { background: rgba(255,255,255,0.2); }
+.notif-badge {
+  position: absolute; top: -5px; right: -5px;
+  background: #ef4444; color: white;
+  font-size: 9px; font-weight: 700;
+  min-width: 16px; height: 16px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 4px; border: 2px solid var(--navy);
+  font-family: 'Poppins', sans-serif;
+}
+.notif-panel {
+  position: absolute; top: calc(var(--safe-top) + 60px);
+  left: 16px; right: 16px; z-index: 50;
+  background: white; border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  border: 1px solid rgba(0,0,0,0.08);
+  overflow: hidden;
+  animation: fadeInDown 0.2s ease;
+}
+@keyframes fadeInDown {
+  from { opacity:0; transform:translateY(-8px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.notif-panel-hdr {
+  padding: 14px 16px; display: flex;
+  justify-content: space-between; align-items: center;
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+}
+.notif-list { max-height: 280px; overflow-y: auto; }
+.notif-item {
+  padding: 12px 16px; display: flex; gap: 12px; align-items: flex-start;
+  border-bottom: 1px solid rgba(0,0,0,0.05); cursor: pointer;
+  transition: background 0.1s;
+}
+.notif-item:last-child { border-bottom: none; }
+.notif-item:active { background: var(--gray-100); }
+.notif-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--teal); flex-shrink: 0; margin-top: 5px;
+}
+.notif-item-text { font-size: 12px; color: var(--text); line-height: 1.45; }
+.notif-item-time { font-size: 10px; color: var(--gray-400); margin-top: 2px; }
+
+/* ══ PROFILE COMING SOON ══ */
+.pr-coming {
+  font-size: 10px; font-weight: 600;
+  color: var(--gray-400); background: var(--gray-100);
+  padding: 3px 8px; border-radius: 10px;
+}
+
+/* ══ PROFILE EDIT MODAL ══ */
+.profile-edit-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); z-index: 400;
+  align-items: flex-end; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.profile-edit-overlay.open { display: flex; }
+.profile-edit-box {
+  background: white; border-radius: 28px 28px 0 0;
+  width: 100%; max-height: 92dvh;
+  overflow-y: auto; padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+.profile-edit-box::-webkit-scrollbar { display: none; }
+.profile-edit-hdr {
+  padding: 16px 20px 12px;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  position: sticky; top: 0; background: white; z-index: 10;
+}
+.profile-edit-body { padding: 16px 20px 24px; }
+.profile-edit-photo {
+  width: 90px; height: 90px; border-radius: 28px;
+  background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px; font-weight: 800; color: white;
+  margin: 0 auto; cursor: pointer; position: relative;
+  border: 3px solid var(--gray-200); overflow: hidden;
+}
+.profile-edit-photo img { width: 100%; height: 100%; object-fit: cover; }
+.profile-edit-photo-btn {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: rgba(0,0,0,0.45); height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.pe-section {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--teal);
+  margin: 18px 0 10px; padding-left: 2px;
+}
+.pe-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+.pe-field label {
+  font-size: 10px; font-weight: 700; color: var(--gray-400);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.pe-field input {
+  width: 100%; padding: 12px 14px; background: var(--gray-100);
+  border: 1.5px solid transparent; border-radius: 14px;
+  font-size: 14px; font-family: 'Poppins', sans-serif;
+  color: var(--text); outline: none; transition: border-color 0.2s, background 0.2s;
+}
+.pe-field input:focus { border-color: var(--teal); background: white; }
+.pe-toggle-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.07);
+  margin-bottom: 16px;
+}
+.pe-toggle { position: relative; display: inline-block; width: 46px; height: 26px; flex-shrink: 0; }
+.pe-toggle input { opacity: 0; width: 0; height: 0; }
+.pe-toggle-slider {
+  position: absolute; inset: 0; background: var(--gray-200);
+  border-radius: 13px; cursor: pointer; transition: background 0.2s;
+}
+.pe-toggle-slider::before {
+  content: ''; position: absolute;
+  width: 20px; height: 20px; background: white;
+  border-radius: 50%; left: 3px; top: 3px;
+  transition: transform 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.pe-toggle input:checked + .pe-toggle-slider { background: var(--teal); }
+.pe-toggle input:checked + .pe-toggle-slider::before { transform: translateX(20px); }
+.pe-save-btn {
+  width: 100%; padding: 15px; background: var(--navy);
+  border: none; border-radius: 16px; color: white;
+  font-size: 15px; font-weight: 700; font-family: 'Poppins', sans-serif;
+  cursor: pointer; margin-top: 8px; transition: opacity 0.15s;
+}
+.pe-save-btn:active { opacity: 0.85; }
+
+/* ══ SHAARK SCREEN CHIPS FIX ══ */
+#screen-shaark .scw-chips { padding: 0 16px 8px; }
+
+/* ══ VIOLET MODULE ICON FIX ══ */
+.module-card.violet .module-icon { background: rgba(139,92,246,0.12); }
+
+</style></head><body><h1>Cálculo ISR por Enajenación</h1><div class="sub">Generado: ${new Date().toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'})} · ${meses[d.mesV]} ${d.anioV}</div><h2>Desglose</h2>${bkdn}${nota?`<div class="nota">${nota}</div>`:''}<div class="footer">Generado por Brokr · Uso interno del agente inmobiliario · No sustituye al cálculo notarial definitivo</div></body></html>`;
   const blob = new Blob([html],{type:'text/html;charset=utf-8'});
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
@@ -1986,6 +2290,112 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('close-bar').style.display = 'none';
   authInit().then(() => { if(typeof updateGreeting === 'function') updateGreeting(); });
 });
+
+// ══ NOTIFICACIONES ══
+let notifOpen = false;
+let notifCount = 0;
+
+function toggleNotifications() {
+  notifOpen = !notifOpen;
+  const panel = document.getElementById('notif-panel');
+  if (panel) panel.style.display = notifOpen ? 'block' : 'none';
+}
+
+function setNotifCount(n) {
+  notifCount = n;
+  const badge = document.getElementById('notif-count');
+  if (!badge) return;
+  if (n <= 0) { badge.style.display = 'none'; return; }
+  badge.style.display = 'flex';
+  badge.textContent = n > 9 ? '9+' : String(n);
+}
+
+// ══ PERFIL EDIT ══
+function openProfileEdit() {
+  const modal = document.getElementById('profile-edit-modal');
+  if (!modal) return;
+  // Pre-fill with current data
+  if (userProfile) {
+    const nombre = userProfile.nombre || '';
+    if (document.getElementById('pe-nombre')) document.getElementById('pe-nombre').value = nombre;
+    if (document.getElementById('pe-ciudad')) document.getElementById('pe-ciudad').value = userProfile.ciudad || 'Morelia, Michoacán';
+    if (document.getElementById('pe-empresa')) document.getElementById('pe-empresa').value = userProfile.empresa || '';
+    if (document.getElementById('pe-telefono')) document.getElementById('pe-telefono').value = userProfile.telefono || '';
+    if (document.getElementById('pe-email')) document.getElementById('pe-email').value = currentUser?.email || '';
+  }
+  modal.classList.add('open');
+}
+
+function closeProfileEdit() {
+  const modal = document.getElementById('profile-edit-modal');
+  if (modal) modal.classList.remove('open');
+}
+
+function triggerPhotoUpload() {
+  document.getElementById('photo-upload-input')?.click();
+}
+
+function handlePhotoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const photoEl = document.getElementById('profile-edit-photo');
+    if (photoEl) {
+      photoEl.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"/>';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveProfileEdit() {
+  const nombre = document.getElementById('pe-nombre')?.value?.trim() || '';
+  // Update display
+  if (nombre) {
+    const nameEl = document.getElementById('profile-name');
+    const avatarEl = document.getElementById('profile-avatar-letter');
+    const homeAvatar = document.getElementById('user-avatar');
+    if (nameEl) nameEl.textContent = nombre;
+    if (avatarEl) avatarEl.textContent = nombre[0].toUpperCase();
+    if (homeAvatar) homeAvatar.textContent = nombre[0].toUpperCase();
+    if (typeof updateGreeting === 'function') updateGreeting();
+  }
+  closeProfileEdit();
+}
+
+function showComingSoon(label) {
+  // Simple toast
+  const toast = document.createElement('div');
+  toast.textContent = label + ' — Próximamente';
+  toast.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--navy);color:white;padding:10px 20px;border-radius:20px;font-size:13px;font-family:Poppins,sans-serif;z-index:999;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,0.3)';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2500);
+}
+
+// ══ FIX updateUserDisplay para nuevo perfil ══
+const _origUpdateUserDisplay = typeof updateUserDisplay === 'function' ? updateUserDisplay : null;
+function updateUserDisplay() {
+  if (_origUpdateUserDisplay) _origUpdateUserDisplay();
+  // Sync profile screen
+  if (userProfile) {
+    const pname = document.getElementById('profile-name');
+    const psub = document.getElementById('profile-sub');
+    const pplan = document.getElementById('profile-plan');
+    const pavatar = document.getElementById('profile-avatar-letter');
+    const homeAvatar = document.getElementById('user-avatar');
+    const nombre = userProfile.nombre || currentUser?.email || '—';
+    if (pname) pname.textContent = nombre;
+    if (pavatar) pavatar.textContent = nombre[0]?.toUpperCase() || '?';
+    if (homeAvatar) homeAvatar.textContent = nombre[0]?.toUpperCase() || '?';
+    const planMap = {free:'Free', modulos:'Módulos', pro:'Pro', admin:'Admin'};
+    if (pplan) pplan.textContent = planMap[userProfile.plan] || userProfile.plan || 'Pro';
+  }
+}
+
+// ══ SHAARK en nav — asegurar que scw-msgs no se duplique ══
+// La pantalla shaark usa los mismos IDs que el fab anterior
+// Redirigir shaarkFabSend a usar scw-msgs de la pantalla
+
 </script>
 </body>
 </html>
