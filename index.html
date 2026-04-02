@@ -2502,25 +2502,7 @@ function showComingSoon(label) {
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 2500);
 }
-
-// ══ FIX updateUserDisplay para nuevo perfil ══
-const _origUpdateUserDisplay = typeof updateUserDisplay === 'function' ? updateUserDisplay : null;
-function updateUserDisplay() {
-  if (_origUpdateUserDisplay) _origUpdateUserDisplay();
-  // Sync profile screen
-  if (userProfile) {
-    const pname = document.getElementById('profile-name');
-    const psub = document.getElementById('profile-sub');
-    const pplan = document.getElementById('profile-plan');
-    const pavatar = document.getElementById('profile-avatar-letter');
-    const homeAvatar = document.getElementById('user-avatar');
-    const nombre = userProfile.nombre || currentUser?.email || '—';
-    if (pname) pname.textContent = nombre;
-    if (pavatar) pavatar.textContent = nombre[0]?.toUpperCase() || '?';
-    if (homeAvatar) homeAvatar.textContent = nombre[0]?.toUpperCase() || '?';
-    const planMap = {free:'Free', modulos:'Módulos', pro:'Pro', admin:'Admin'};
-    if (pplan) pplan.textContent = planMap[userProfile.plan] || userProfile.plan || 'Pro';
-  }
+   
 }
 
 // ══ SHAARK POPUP ══
