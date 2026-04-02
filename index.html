@@ -1629,6 +1629,9 @@ async function authInit(){
     }
     userProfile = data[0];
     currentUser = user;
+    // Sincronizar perfil fresco en localStorage para que cambios de plan sean inmediatos
+    const storage = localStorage.getItem('sb_token') ? localStorage : sessionStorage;
+    storage.setItem('sb_user_profile', JSON.stringify(userProfile));
     applyUserPermissions();
   } catch(e){
     userProfile = { plan:'pro', modulos:['chat','isr','ficha-manual','ficha','contratos','avm'], activo:true };
@@ -1640,7 +1643,7 @@ function applyUserPermissions(){
   if(!userProfile) return;
   updateUserDisplay();
 
-  // Show admin items
+  // Show admin section in profile
   if(userProfile.plan === 'admin'){
     const lbl = document.getElementById('admin-lbl');
     const btn = document.getElementById('admin-link-btn');
@@ -1648,14 +1651,54 @@ function applyUserPermissions(){
     if(btn) btn.style.display = 'flex';
   }
 
-  // Hide tabs for modules user doesn't have
-  if(userProfile.plan !== 'admin' && userProfile.plan !== 'pro'){
-    const mods = userProfile.modulos || [];
-    document.querySelectorAll('.nav-tab').forEach(tab => {
-      const mod = tab.getAttribute('data-mod');
-      if(mod && !mods.includes(mod)) tab.style.display = 'none';
-    });
-  }
+  // Si es admin o pro, todos los módulos visibles — nada que ocultar
+  if(userProfile.plan === 'admin' || userProfile.plan === 'pro') return;
+
+  // Para planes 'modulos' y 'free': ocultar tarjetas sin acceso
+  const mods = userProfile.modulos || [];
+
+  // Mapa: id-de-módulo → onclick que contiene ese módulo
+  const MOD_PANEL_MAP = {
+    'isr':          "setPanel('isr')",
+    'ficha-manual': "setPanel('ficha-manual')",
+    'ficha':        "setPanel('ficha')",
+    'contratos':    "setPanel('contratos')",
+    'avm':          "setPanel('avm')",
+    'props':        "setPanel('props')",
+  };
+
+  // Ocultar tarjetas del home (.module-card)
+  document.querySelectorAll('.module-card').forEach(card => {
+    const oc = card.getAttribute('onclick') || '';
+    for(const [modId, snippet] of Object.entries(MOD_PANEL_MAP)){
+      if(oc.includes(snippet)){
+        if(!mods.includes(modId)) card.style.display = 'none';
+        break;
+      }
+    }
+  });
+
+  // Ocultar tarjetas de la pantalla Módulos (.cat-module)
+  document.querySelectorAll('.cat-module').forEach(card => {
+    const oc = card.getAttribute('onclick') || '';
+    for(const [modId, snippet] of Object.entries(MOD_PANEL_MAP)){
+      if(oc.includes(snippet)){
+        if(!mods.includes(modId)) card.style.display = 'none';
+        break;
+      }
+    }
+  });
+
+  // Bloquear navegación directa al panel si el usuario no tiene acceso
+  const origSetPanel = window._origSetPanel || setPanel;
+  window._origSetPanel = origSetPanel;
+  window.setPanel = function(name){
+    if(MOD_PANEL_MAP[name] && !mods.includes(name)){
+      showComingSoon('Módulo no disponible en tu plan');
+      return;
+    }
+    origSetPanel(name);
+  };
 }
 
 function updateUserDisplay(){
@@ -2401,6 +2444,30 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('screen-home').classList.add('active-screen');
   document.getElementById('close-bar').style.display = 'none';
   authInit().then(() => { if(typeof updateGreeting === 'function') updateGreeting(); });
+
+  // Refresco de plan cada 2 minutos — detecta cambios de suscripcion sin cerrar la app
+  setInterval(async () => {
+    const token = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+    const user  = JSON.parse(localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}');
+    if(!token || !user.id) return;
+    try {
+      const r = await fetch(SB_URL_AUTH + '/rest/v1/usuarios?id=eq.' + user.id + '&select=plan,modulos,activo', {
+        headers:{ 'apikey': SB_KEY_AUTH, 'Authorization': 'Bearer ' + token }
+      });
+      const data = await r.json();
+      if(!data.length) return;
+      if(data[0].activo === false){ localStorage.clear(); sessionStorage.clear(); window.location.href = 'login.html'; return; }
+      const changed = (data[0].plan !== (userProfile && userProfile.plan)) ||
+                      (JSON.stringify(data[0].modulos) !== JSON.stringify(userProfile && userProfile.modulos));
+      if(changed && userProfile){
+        userProfile.plan    = data[0].plan;
+        userProfile.modulos = data[0].modulos;
+        document.querySelectorAll('.module-card, .cat-module').forEach(function(el){ el.style.display = ''; });
+        if(window._origSetPanel) window.setPanel = window._origSetPanel;
+        applyUserPermissions();
+      }
+    } catch(e){}
+  }, 2 * 60 * 1000);
 });
 
 // ══ NOTIFICACIONES ══
