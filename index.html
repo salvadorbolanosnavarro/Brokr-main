@@ -962,8 +962,8 @@ html, body {
       <div class="home-header">
         <div class="greeting-row">
           <div class="greeting-text">
-            <div class="hello">Buenos días</div>
-            <div class="name" id="greet-text">¡Hola!</div>
+           <div class="hello" id="greet-hello">Buenos días</div>
+<div class="name" id="greet-text">¡Hola!</div>
           </div>
           <div style="display:flex;align-items:center;gap:10px">
             <div class="notif-bell" id="notif-bell" onclick="toggleNotifications()">
@@ -2369,6 +2369,20 @@ if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js?v=2026
 // ══════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════
+   // ══ SALUDO DINÁMICO ══
+function updateGreeting() {
+  const h = new Date().getHours();
+  const saludo = h >= 6 && h < 13 ? '¡Buenos días,' :
+                 h >= 13 && h < 20 ? '¡Buenas tardes,' : '¡Buenas noches,';
+  const helloEl = document.getElementById('greet-hello');
+  const nameEl  = document.getElementById('greet-text');
+  if (helloEl) helloEl.textContent = saludo;
+  if (nameEl) {
+    const nombreCompleto = (userProfile && userProfile.nombre) ? userProfile.nombre.trim() : '';
+    const primerNombre = nombreCompleto ? nombreCompleto.split(' ')[0] : '';
+    nameEl.textContent = primerNombre ? primerNombre + '!' : '¡Bienvenido!';
+  }
+}
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('screen-home').classList.add('active-screen');
   document.getElementById('close-bar').style.display = 'none';
