@@ -316,17 +316,18 @@ async function doSignup(){
   setLoading('btn-signup', false);
   if(data.error){ showMsg(data.error_description || data.error); return; }
 if(data.id){
-    // Auto-login after signup
     sessionStorage.setItem('sb_token', data.access_token || '');
     sessionStorage.setItem('sb_user', JSON.stringify(data.user || data));
     showMsg('✅ Cuenta creada. Te enviamos un correo de confirmación. Completando tu perfil…', 'ok');
     setTimeout(() => { window.location.href = 'registro.html'; }, 2500);
- } if else {
+  } else {
     showMsg('✅ Casi listo. Te enviamos un correo de confirmación. Por favor revísalo para activar tu cuenta.', 'ok');
   }
 }
 
 function doGoogle(){
+  window.location.href = `${SB_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(location.origin+'/index.html')}`;
+}
 
 async function doFacebook(){
   window.location.href = `${SB_URL}/auth/v1/authorize?provider=facebook&redirect_to=${encodeURIComponent(location.origin+'/index.html')}`;
