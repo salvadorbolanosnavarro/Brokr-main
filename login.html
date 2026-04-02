@@ -154,13 +154,9 @@ body{overflow-y:auto;}
   </video>
 </div>
 <script>
-  // Ocultar el formulario mientras dura el splash
-  document.querySelector('.wrap').style.visibility = 'hidden';
-
-  const splash = document.getElementById('splash');
+ const splash = document.getElementById('splash');
   setTimeout(() => {
     splash.style.opacity = '0';
-    document.querySelector('.wrap').style.visibility = 'visible';
     setTimeout(() => splash.remove(), 700);
   }, 3000);
 </script>
