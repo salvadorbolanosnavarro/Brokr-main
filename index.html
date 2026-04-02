@@ -152,7 +152,7 @@ html, body {
   border-radius: 16px;
   background: linear-gradient(135deg, var(--teal), var(--teal-dark));
   display: flex; align-items: center; justify-content: center;
-  font-size: 18px; font-weight: 800; color: white;
+  font-size: 18px; font-weight: 700; color: white;
   border: 2px solid rgba(255,255,255,0.15);
   flex-shrink: 0;
   cursor: pointer;
@@ -170,7 +170,7 @@ html, body {
   padding: 10px 12px;
 }
 .stat-pill .val {
-  font-size: 20px; font-weight: 800; color: white;
+  font-size: 20px; font-weight: 600; color: white;
 }
 .stat-pill .lbl {
   font-size: 10px; color: rgba(255,255,255,0.5);
@@ -184,7 +184,7 @@ html, body {
   display: flex; justify-content: space-between; align-items: center;
 }
 .section-title h3 {
-  font-size: 15px; font-weight: 700; color: var(--text);
+  font-size: 15px; font-weight: 600; color: var(--text);
 }
 .section-title a {
   font-size: 12px; color: var(--teal); font-weight: 600;
@@ -226,14 +226,14 @@ html, body {
   display: flex; align-items: center; justify-content: center;
   font-size: 20px; margin-bottom: 12px;
 }
-.module-card.teal  .module-icon { background: rgba(42,157,181,0.12); }
-.module-card.white .module-icon { background: rgba(0,0,0,0.06); }
-.module-card.navy  .module-icon { background: rgba(15,24,41,0.08); }
-.module-card.green .module-icon { background: rgba(61,184,138,0.12); }
+.module-card.teal  .module-icon { background: rgba(42,157,181,0.1); }
+.module-card.white .module-icon { background: var(--gray-100); }
+.module-card.navy  .module-icon { background: var(--gray-100); }
+.module-card.green .module-icon { background: var(--gray-100); }
 .module-card.violet.module-icon { background: rgba(139,92,246,0.12); }
 
 .module-card .mod-name {
-  font-size: 13px; font-weight: 700; color: var(--text); line-height: 1.2;
+  font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.2;
 }
 .module-card .mod-desc {
   font-size: 11px; color: var(--gray-400); margin-top: 4px; font-weight: 400;
@@ -268,7 +268,7 @@ html, body {
   padding: calc(var(--safe-top) + 16px) 24px 24px;
 }
 .modules-header h2 {
-  font-size: 22px; font-weight: 800; color: white; margin-bottom: 14px;
+  font-size: 22px; font-weight: 700; color: white; margin-bottom: 14px;
 }
 .search-bar {
   background: rgba(255,255,255,0.1);
@@ -320,12 +320,12 @@ html, body {
   width: 80px; height: 80px; border-radius: 26px;
   background: linear-gradient(135deg, var(--teal), var(--teal-dark));
   display: flex; align-items: center; justify-content: center;
-  font-size: 30px; font-weight: 800; color: white;
+  font-size: 30px; font-weight: 700; color: white;
   margin: 0 auto 12px;
   border: 3px solid rgba(255,255,255,0.15);
   box-shadow: 0 8px 24px rgba(42,157,181,0.3);
 }
-.profile-name { font-size: 22px; font-weight: 800; color: white; }
+.profile-name { font-size: 22px; font-weight: 600; color: white; }
 .profile-sub { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px; }
 .profile-badge {
   display: inline-block;
@@ -463,7 +463,7 @@ html, body {
 .rc.gn { background: rgba(16,185,129,.08); border-color: rgba(16,185,129,.25); }
 .rc.dk { background: rgba(239,68,68,.08); border-color: rgba(239,68,68,.25); }
 .rc-l { font-size: 10px; font-weight: 700; color: var(--mut); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 5px; }
-.rc-v { font-size: 20px; font-weight: 800; color: var(--navy); line-height: 1.1; margin-bottom: 3px; word-break: break-word; }
+.rc-v { font-size: 20px; font-weight: 600; color: var(--navy); line-height: 1.1; margin-bottom: 3px; word-break: break-word; }
 .rc.gn .rc-v { color: #34d399; } .rc.dk .rc-v { color: #f87171; }
 .rc-n { font-size: 10px; color: var(--mut); line-height: 1.4; }
 .res-inpc-row { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid rgba(0,0,0,0.1); border-radius: var(--r2); padding: 12px 14px; margin-bottom: 12px; flex-wrap: wrap; }
@@ -949,6 +949,22 @@ html, body {
 }
 .pe-save-btn:active { opacity: 0.85; }
 
+/* ══ PROFILE READONLY ROWS ══ */
+.pe-readonly-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+}
+.pe-readonly-label {
+  font-size: 11px; font-weight: 600; color: var(--gray-400);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.pe-readonly-val {
+  font-size: 13px; color: var(--text); font-weight: 500;
+  text-align: right; max-width: 60%;
+  word-break: break-word;
+}
+
 /* ══ SHAARK SCREEN CHIPS FIX ══ */
 #screen-shaark .scw-chips { padding: 0 16px 8px; }
 
@@ -972,7 +988,7 @@ html, body {
           </div>
           <div style="display:flex;align-items:center;gap:10px">
             <div class="notif-bell" id="notif-bell" onclick="toggleNotifications()">
-              🔔
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>
               <span class="notif-badge" id="notif-count" style="display:none">0</span>
             </div>
             <div class="home-avatar" id="user-avatar" onclick="protoGoTo('profile')">?</div>
@@ -987,32 +1003,32 @@ html, body {
 
       <div class="quick-grid anim-2" style="margin-top:18px">
         <div class="module-card teal" onclick="setPanel('ficha-manual')">
-          <div class="module-icon">📝</div>
+          <div class="module-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg></div>
           <div class="mod-name">Fichas técnicas</div>
           <div class="mod-desc">Crea en segundos</div>
         </div>
         <div class="module-card teal" onclick="setPanel('ficha')">
-          <div class="module-icon">🏷️</div>
+          <div class="module-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L9.568 3z"/><path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"/></svg></div>
           <div class="mod-name">Fichas EasyBroker</div>
           <div class="mod-desc">Solo con el ID</div>
         </div>
         <div class="module-card white" onclick="setPanel('isr')">
-          <div class="module-icon">🧮</div>
+          <div class="module-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V13.5zm0 2.25h.008v.008H8.25v-.008zm2.498-4.5h.007v.008h-.007v-.008zm0 2.25h.007v.008h-.007V13.5zm0 2.25h.007v.008h-.007v-.008zm2.246-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V13.5zm0 2.25h.008v.008h-.008v-.008zm2.496-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V13.5zM8.25 6h7.5v2.25h-7.5V6zM12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25z"/></svg></div>
           <div class="mod-name">Calculadora ISR</div>
           <div class="mod-desc">Cálculo exacto</div>
         </div>
         <div class="module-card green" onclick="setPanel('avm')">
-          <div class="module-icon">📊</div>
+          <div class="module-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg></div>
           <div class="mod-name">Opinión de valor</div>
           <div class="mod-desc">AVM inteligente</div>
         </div>
         <div class="module-card navy" onclick="setPanel('contratos')">
-          <div class="module-icon">📄</div>
+          <div class="module-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg></div>
           <div class="mod-name">Contratos</div>
           <div class="mod-desc">En menos de 5 min</div>
         </div>
         <div class="module-card violet" onclick="setPanel('props')">
-          <div class="module-icon">🏘️</div>
+          <div class="module-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg></div>
           <div class="mod-name">Mis inmuebles</div>
           <div class="mod-desc">Gestión completa</div>
         </div>
@@ -1038,35 +1054,35 @@ html, body {
       </div>
       <div style="padding-bottom:90px">
         <div class="category-block">
-          <div class="cat-title">📋 Documentos</div>
+          <div class="cat-title">Documentos</div>
           <div class="cat-grid">
             <div class="cat-module cat-teal" onclick="setPanel('ficha-manual')">
-              <div class="cat-mod-icon">📝</div><div class="cat-mod-name">Ficha Manual</div>
+              <div class="cat-mod-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg></div><div class="cat-mod-name">Ficha Manual</div>
             </div>
             <div class="cat-module cat-teal" onclick="setPanel('ficha')">
-              <div class="cat-mod-icon">🏷️</div><div class="cat-mod-name">Ficha EasyBroker</div>
+              <div class="cat-mod-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L9.568 3z"/><path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"/></svg></div><div class="cat-mod-name">Ficha EasyBroker</div>
             </div>
             <div class="cat-module cat-navy" onclick="setPanel('contratos')">
-              <div class="cat-mod-icon">📄</div><div class="cat-mod-name">Contratos</div>
+              <div class="cat-mod-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg></div><div class="cat-mod-name">Contratos</div>
             </div>
           </div>
         </div>
         <div class="category-block">
-          <div class="cat-title">💰 Finanzas</div>
+          <div class="cat-title">Finanzas</div>
           <div class="cat-grid">
             <div class="cat-module cat-white" onclick="setPanel('isr')">
-              <div class="cat-mod-icon">🧮</div><div class="cat-mod-name">ISR</div>
+              <div class="cat-mod-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V13.5zm0 2.25h.008v.008H8.25v-.008zm2.498-4.5h.007v.008h-.007v-.008zm0 2.25h.007v.008h-.007V13.5zm0 2.25h.007v.008h-.007v-.008zm2.246-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V13.5zm0 2.25h.008v.008h-.008v-.008zm2.496-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V13.5zM8.25 6h7.5v2.25h-7.5V6zM12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25z"/></svg></div><div class="cat-mod-name">ISR</div>
             </div>
           </div>
         </div>
         <div class="category-block">
-          <div class="cat-title">🏠 Propiedades</div>
+          <div class="cat-title">Propiedades</div>
           <div class="cat-grid">
             <div class="cat-module cat-purple" onclick="setPanel('props')">
-              <div class="cat-mod-icon">🏘️</div><div class="cat-mod-name">Mis Inmuebles</div>
+              <div class="cat-mod-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg></div><div class="cat-mod-name">Mis Inmuebles</div>
             </div>
             <div class="cat-module cat-green" onclick="setPanel('avm')">
-              <div class="cat-mod-icon">📊</div><div class="cat-mod-name">AVM</div>
+              <div class="cat-mod-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg></div><div class="cat-mod-name">Opinión de Valor</div>
             </div>
           </div>
         </div>
@@ -1087,30 +1103,30 @@ html, body {
       <div style="padding-bottom:calc(90px + env(safe-area-inset-bottom,0px))">
         <div class="profile-section" style="margin-top:20px">
           <div class="profile-row" onclick="openProfileEdit()">
-            <div class="pr-icon">👤</div><span class="pr-text">Mi perfil</span><span class="pr-arrow" style="color:var(--teal)">›</span>
+            <div class="pr-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg></div><span class="pr-text">Mi perfil</span><span class="pr-arrow" style="color:var(--teal)">›</span>
           </div>
           <div class="profile-row" onclick="showComingSoon('API EasyBroker')">
-            <div class="pr-icon">🔑</div><span class="pr-text">API EasyBroker</span><span class="pr-coming">Próximamente</span>
+            <div class="pr-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"/></svg></div><span class="pr-text">API EasyBroker</span><span class="pr-coming">Próximamente</span>
           </div>
           <div class="profile-row" onclick="showComingSoon('Suscripción')">
-            <div class="pr-icon">💳</div><span class="pr-text">Suscripción</span><span class="pr-coming">Próximamente</span>
+            <div class="pr-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg></div><span class="pr-text">Suscripción</span><span class="pr-coming">Próximamente</span>
           </div>
           <div class="profile-row" onclick="showComingSoon('Soporte')">
-            <div class="pr-icon">🆘</div><span class="pr-text">Soporte</span><span class="pr-coming">Próximamente</span>
+            <div class="pr-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/></svg></div><span class="pr-text">Soporte</span><span class="pr-coming">Próximamente</span>
           </div>
         </div>
         <!-- ADMIN SECTION — solo visible si plan === 'admin' -->
         <div id="admin-lbl" style="display:none;padding:14px 20px 6px;font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px">Administración</div>
         <div class="profile-section" id="admin-link-btn" style="display:none">
           <div class="profile-row" onclick="window.location.href='admin.html'">
-            <div class="pr-icon" style="background:rgba(239,68,68,0.1);font-size:18px">🛡️</div>
+            <div class="pr-icon" style="background:rgba(239,68,68,0.08)"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#e05252" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg></div>
             <span class="pr-text" style="font-weight:700">Panel de administrador</span>
             <span class="pr-arrow" style="color:var(--teal)">›</span>
           </div>
         </div>
         <div class="profile-section">
           <div class="profile-row" onclick="logout()">
-            <div class="pr-icon">🚪</div><span class="pr-text" style="color:#e05252">Cerrar sesión</span>
+            <div class="pr-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#e05252" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/></svg></div><span class="pr-text" style="color:#e05252">Cerrar sesión</span>
           </div>
         </div>
       </div>
@@ -1120,38 +1136,35 @@ html, body {
     <div class="profile-edit-overlay" id="profile-edit-modal">
       <div class="profile-edit-box">
         <div class="profile-edit-hdr">
-          <span style="font-size:15px;font-weight:700">Mi perfil</span>
+          <span style="font-size:15px;font-weight:600">Mi perfil</span>
           <button onclick="closeProfileEdit()" style="background:var(--gray-100);border:none;width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:14px">✕</button>
         </div>
         <div class="profile-edit-body">
-          <div style="text-align:center;margin-bottom:20px">
+          <!-- Foto -->
+          <div style="text-align:center;margin-bottom:24px">
             <div class="profile-edit-photo" id="profile-edit-photo" onclick="triggerPhotoUpload()">
               <span id="profile-edit-photo-letter">?</span>
-              <div class="profile-edit-photo-btn">📷</div>
+              <div class="profile-edit-photo-btn">📷 Cambiar foto</div>
             </div>
             <input type="file" id="photo-upload-input" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)"/>
-            <div style="font-size:11px;color:var(--gray-400);margin-top:8px">Toca para cambiar foto</div>
+            <div style="font-size:11px;color:var(--gray-400);margin-top:8px">Toca la foto para cambiarla</div>
+            <button class="pe-save-btn" id="pe-photo-save-btn" onclick="savePhotoOnly()" style="display:none;margin-top:12px;padding:10px;font-size:13px">Guardar foto</button>
           </div>
-          <div class="pe-section">Datos personales</div>
-          <div class="pe-field"><label>Nombre completo</label><input type="text" id="pe-nombre" placeholder="Tu nombre"/></div>
-          <div class="pe-field"><label>Teléfono</label><input type="tel" id="pe-telefono" placeholder="+52 443 000 0000"/></div>
-          <div class="pe-field"><label>Correo electrónico</label><input type="email" id="pe-email" placeholder="tu@correo.com"/></div>
-          <div class="pe-section">Datos de empresa</div>
-          <div class="pe-field"><label>Nombre de empresa o inmobiliaria</label><input type="text" id="pe-empresa" placeholder="Nombre comercial (opcional)"/></div>
-          <div class="pe-field"><label>Ciudad</label><input type="text" id="pe-ciudad" placeholder="Morelia, Michoacán"/></div>
-          <div class="pe-field"><label>Licencia / Cédula profesional</label><input type="text" id="pe-cedula" placeholder="Opcional"/></div>
-          <div class="pe-section">Visibilidad</div>
-          <div class="pe-toggle-row">
-            <div>
-              <div style="font-size:13px;font-weight:600;color:var(--text)">Perfil público</div>
-              <div style="font-size:11px;color:var(--gray-400);margin-top:2px">Tu nombre aparece en fichas técnicas generadas</div>
-            </div>
-            <label class="pe-toggle">
-              <input type="checkbox" id="pe-publico"/>
-              <span class="pe-toggle-slider"></span>
-            </label>
+          <!-- Datos de solo lectura -->
+          <div class="pe-section">Tus datos</div>
+          <div class="pe-readonly-row">
+            <div class="pe-readonly-label">Nombre</div>
+            <div class="pe-readonly-val" id="pe-ro-nombre">—</div>
           </div>
-          <button class="pe-save-btn" onclick="saveProfileEdit()">Guardar cambios</button>
+          <div class="pe-readonly-row">
+            <div class="pe-readonly-label">Correo</div>
+            <div class="pe-readonly-val" id="pe-ro-email">—</div>
+          </div>
+          <div class="pe-readonly-row" style="border-bottom:none">
+            <div class="pe-readonly-label">Teléfono</div>
+            <div class="pe-readonly-val" id="pe-ro-telefono">—</div>
+          </div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:10px;text-align:center">Para actualizar tus datos contacta al administrador</div>
         </div>
       </div>
     </div>
@@ -1388,7 +1401,7 @@ html, body {
 <!-- ══ SHAARK POPUP ══ -->
 <div class="shaark-popup" id="shaark-popup"><div class="shaark-popup-inner">
     <div class="scw-header">
-      <div class="scw-avatar">🦈</div>
+      <div class="scw-avatar" style="background:var(--navy);border:1.5px solid rgba(42,157,181,0.4);overflow:hidden"><img src="icon-192.png" style="width:100%;height:100%;object-fit:cover;" alt="Shaark"/></div>
       <div>
         <div class="scw-name">Shaark</div>
         <div class="scw-status">● En línea</div>
@@ -1414,15 +1427,15 @@ html, body {
 <!-- ══ BOTTOM NAV ══ -->
 <div class="proto-nav">
   <div class="proto-nav-item active" data-screen="profile" onclick="protoGoTo('profile')">
-    <div class="proto-nav-icon">👤</div>
+    <div class="proto-nav-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg></div>
     <div class="proto-nav-label">Perfil</div>
   </div>
   <div class="proto-nav-item" data-screen="modules" onclick="protoGoTo('modules')">
-    <div class="proto-nav-icon">⊟</div>
+    <div class="proto-nav-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg></div>
     <div class="proto-nav-label">Módulos</div>
   </div>
   <div class="proto-nav-item" id="nav-shaark-btn" onclick="toggleShaarkPopup()">
-    <div class="proto-nav-shaark">🦈</div>
+    <div class="proto-nav-shaark"><img src="icon-192.png" style="width:26px;height:26px;object-fit:contain;filter:brightness(0) invert(1);" alt="Shaark"/></div>
     <div class="proto-nav-label">Shaark</div>
   </div>
 </div>
@@ -1495,7 +1508,15 @@ function addScwBubble(text, type) {
   const msgs = document.getElementById('scw-msgs');
   const div = document.createElement('div');
   div.className = 'scw-bubble ' + type;
-  div.textContent = text;
+  if(type === 'bot'){
+    const ico = document.createElement('img');
+    ico.src = 'icon-192.png';
+    ico.style.cssText = 'width:14px;height:14px;object-fit:contain;margin-right:5px;vertical-align:middle;opacity:0.7;';
+    div.appendChild(ico);
+    div.appendChild(document.createTextNode(text));
+  } else {
+    div.textContent = text;
+  }
   msgs.appendChild(div);
   msgs.scrollTop = msgs.scrollHeight;
 }
@@ -1634,7 +1655,10 @@ async function authInit(){
     storage.setItem('sb_user_profile', JSON.stringify(userProfile));
     applyUserPermissions();
   } catch(e){
-    userProfile = { plan:'pro', modulos:['chat','isr','ficha-manual','ficha','contratos','avm'], activo:true };
+    // Si hay error de red, usar perfil guardado previamente si existe
+    const saved = localStorage.getItem('sb_user_profile') || sessionStorage.getItem('sb_user_profile');
+    if(saved){ try{ userProfile = JSON.parse(saved); }catch(e2){} }
+    if(!userProfile) userProfile = { plan:'free', modulos:['ficha-manual'], activo:true };
     applyUserPermissions();
   }
 }
@@ -1654,8 +1678,10 @@ function applyUserPermissions(){
   // Si es admin o pro, todos los módulos visibles — nada que ocultar
   if(userProfile.plan === 'admin' || userProfile.plan === 'pro') return;
 
-  // Para planes 'modulos' y 'free': ocultar tarjetas sin acceso
-  const mods = userProfile.modulos || [];
+  // Para planes 'personalizado' y 'free': ocultar tarjetas sin acceso
+  // Free incluye ficha-manual por defecto aunque modulos esté vacío
+  let mods = userProfile.modulos || [];
+  if(userProfile.plan === 'free' && mods.length === 0) mods = ['ficha-manual'];
 
   // Mapa: id-de-módulo → onclick que contiene ese módulo
   const MOD_PANEL_MAP = {
@@ -1707,9 +1733,29 @@ function updateUserDisplay(){
   const p = document.getElementById('user-plan-display');
   const a = document.getElementById('user-avatar');
   if(n) n.textContent = userProfile.nombre || currentUser?.email || '—';
-  if(p) p.textContent = {free:'Free',modulos:'Módulos',pro:'Pro',admin:'Admin'}[userProfile.plan] || userProfile.plan;
-  if(a) a.textContent = (userProfile.nombre || '?')[0].toUpperCase();
-   if(typeof updateGreeting === 'function') updateGreeting();
+  if(p) p.textContent = {free:'Free',modulos:'Personalizado',personalizado:'Personalizado',pro:'Pro',admin:'Admin'}[userProfile.plan] || userProfile.plan;
+  // Mostrar foto o inicial
+  if(a){
+    if(userProfile.foto_url){
+      a.innerHTML = '<img src="' + userProfile.foto_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"/>';
+    } else {
+      a.textContent = (userProfile.nombre || '?')[0].toUpperCase();
+    }
+  }
+  // Profile screen avatar
+  const pa = document.getElementById('profile-avatar');
+  const pal = document.getElementById('profile-avatar-letter');
+  if(pa && userProfile.foto_url){
+    pa.innerHTML = '<img src="' + userProfile.foto_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:26px"/><div style="position:absolute;bottom:-4px;right:-4px;width:22px;height:22px;background:var(--teal);border-radius:50%;border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:11px">✏️</div>';
+  } else if(pal){
+    pal.textContent = (userProfile.nombre || '?')[0].toUpperCase();
+  }
+  // Profile screen name & plan badge
+  const pname = document.getElementById('profile-name');
+  const pbadge = document.getElementById('profile-plan');
+  if(pname) pname.textContent = userProfile.nombre || '—';
+  if(pbadge) pbadge.textContent = {free:'Free',modulos:'Personalizado',personalizado:'Personalizado',pro:'Pro',admin:'Admin'}[userProfile.plan] || userProfile.plan;
+  if(typeof updateGreeting === 'function') updateGreeting();
 }
 
 function logout(){
@@ -2109,6 +2155,22 @@ function descargarPDF(){
 }
 .pe-save-btn:active { opacity: 0.85; }
 
+/* ══ PROFILE READONLY ROWS ══ */
+.pe-readonly-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+}
+.pe-readonly-label {
+  font-size: 11px; font-weight: 600; color: var(--gray-400);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.pe-readonly-val {
+  font-size: 13px; color: var(--text); font-weight: 500;
+  text-align: right; max-width: 60%;
+  word-break: break-word;
+}
+
 /* ══ SHAARK SCREEN CHIPS FIX ══ */
 #screen-shaark .scw-chips { padding: 0 16px 8px; }
 
@@ -2493,15 +2555,25 @@ function setNotifCount(n) {
 function openProfileEdit() {
   const modal = document.getElementById('profile-edit-modal');
   if (!modal) return;
-  // Pre-fill with current data
-  if (userProfile) {
-    const nombre = userProfile.nombre || '';
-    if (document.getElementById('pe-nombre')) document.getElementById('pe-nombre').value = nombre;
-    if (document.getElementById('pe-ciudad')) document.getElementById('pe-ciudad').value = userProfile.ciudad || 'Morelia, Michoacán';
-    if (document.getElementById('pe-empresa')) document.getElementById('pe-empresa').value = userProfile.empresa || '';
-    if (document.getElementById('pe-telefono')) document.getElementById('pe-telefono').value = userProfile.telefono || '';
-    if (document.getElementById('pe-email')) document.getElementById('pe-email').value = currentUser?.email || '';
+  // Mostrar foto actual si existe
+  const photoEl = document.getElementById('profile-edit-photo');
+  if(photoEl && userProfile && userProfile.foto_url){
+    photoEl.innerHTML = '<img src="' + userProfile.foto_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"/><div class="profile-edit-photo-btn">📷 Cambiar foto</div>';
+  } else if(photoEl && userProfile){
+    const letra = (userProfile.nombre || '?')[0].toUpperCase();
+    photoEl.innerHTML = '<span id="profile-edit-photo-letter">' + letra + '</span><div class="profile-edit-photo-btn">📷 Cambiar foto</div>';
   }
+  // Datos readonly
+  const roNombre = document.getElementById('pe-ro-nombre');
+  const roEmail  = document.getElementById('pe-ro-email');
+  const roTel    = document.getElementById('pe-ro-telefono');
+  if(roNombre) roNombre.textContent = userProfile?.nombre || '—';
+  if(roEmail)  roEmail.textContent  = currentUser?.email || userProfile?.email || '—';
+  if(roTel)    roTel.textContent    = userProfile?.telefono || '—';
+  // Reset photo save button
+  const photoSaveBtn = document.getElementById('pe-photo-save-btn');
+  if(photoSaveBtn){ photoSaveBtn.style.display = 'none'; photoSaveBtn.textContent = 'Guardar foto'; photoSaveBtn.disabled = false; }
+  window._newPhotoFile = null;
   modal.classList.add('open');
 }
 
@@ -2517,14 +2589,73 @@ function triggerPhotoUpload() {
 function handlePhotoUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
+  window._newPhotoFile = file;
   const reader = new FileReader();
   reader.onload = (e) => {
     const photoEl = document.getElementById('profile-edit-photo');
     if (photoEl) {
-      photoEl.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"/>';
+      photoEl.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"/><div class="profile-edit-photo-btn">📷 Cambiar foto</div>';
     }
+    const btn = document.getElementById('pe-photo-save-btn');
+    if(btn) btn.style.display = 'block';
   };
   reader.readAsDataURL(file);
+}
+
+async function savePhotoOnly() {
+  const file = window._newPhotoFile;
+  if(!file || !currentUser?.id){ return; }
+  const btn = document.getElementById('pe-photo-save-btn');
+  if(btn){ btn.textContent = 'Subiendo...'; btn.disabled = true; }
+  try {
+    const token = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+    const ext = file.name.split('.').pop() || 'jpg';
+    const filename = currentUser.id + '.' + ext;
+    // Upload to Supabase Storage bucket 'avatares'
+    const uploadRes = await fetch(SB_URL_AUTH + '/storage/v1/object/avatares/' + filename, {
+      method: 'POST',
+      headers: {
+        'apikey': SB_KEY_AUTH,
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': file.type,
+        'x-upsert': 'true'
+      },
+      body: file
+    });
+    if(!uploadRes.ok){ const err = await uploadRes.json(); throw new Error(err.error || 'Upload failed'); }
+    const foto_url = SB_URL_AUTH + '/storage/v1/object/public/avatares/' + filename;
+    // Save URL to usuarios table
+    await fetch(SB_URL_AUTH + '/rest/v1/usuarios?id=eq.' + currentUser.id, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SB_KEY_AUTH,
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ foto_url })
+    });
+    // Update local profile
+    if(userProfile) userProfile.foto_url = foto_url;
+    // Update avatar in home and profile screens
+    const avatarEl = document.getElementById('user-avatar');
+    const profileAvEl = document.getElementById('profile-avatar');
+    if(avatarEl){ avatarEl.innerHTML = '<img src="' + foto_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"/>'; }
+    if(profileAvEl){ profileAvEl.innerHTML = '<img src="' + foto_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:26px"/><div style="position:absolute;bottom:-4px;right:-4px;width:22px;height:22px;background:var(--teal);border-radius:50%;border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:11px">✏️</div>'; }
+    showToastIndex('✅ Foto actualizada');
+    closeProfileEdit();
+  } catch(e) {
+    showToastIndex('❌ Error al subir foto: ' + e.message);
+    if(btn){ btn.textContent = 'Guardar foto'; btn.disabled = false; }
+  }
+}
+
+function showToastIndex(msg){
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--navy);color:white;padding:10px 22px;border-radius:20px;font-size:13px;font-family:Poppins,sans-serif;z-index:9999;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,0.3);white-space:nowrap';
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
 }
 
 async function saveProfileEdit() {
