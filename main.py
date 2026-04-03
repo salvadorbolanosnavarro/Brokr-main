@@ -203,6 +203,34 @@ async def chat_claude_proxy(req: ClaudeChatRequest):
         }
 
 
+@app.post("/isr-pdf")
+async def generar_isr_pdf(p: dict):
+    """Recibe HTML del cálculo ISR y lo convierte a PDF con Playwright."""
+    from playwright.async_api import async_playwright
+    html = p.get("html", "")
+    if not html:
+        raise HTTPException(status_code=400, detail="HTML vacío")
+    async with async_playwright() as pw:
+        browser = await pw.chromium.launch(args=["--no-sandbox", "--disable-dev-shm-usage"])
+        page = await browser.new_page()
+        await page.set_content(html, wait_until="domcontentloaded")
+        await page.wait_for_timeout(300)
+        pdf_bytes = await page.pdf(
+            format="A4",
+            print_background=True,
+            margin={"top": "20mm", "right": "20mm", "bottom": "20mm", "left": "20mm"}
+        )
+        await browser.close()
+    token = str(_uuid.uuid4()).replace("-","")[:16]
+    filename = p.get("filename", "ISR_Brokr.pdf")
+    _pdf_store[token] = (pdf_bytes, filename)
+    if len(_pdf_store) > 50:
+        oldest = list(_pdf_store.keys())[0]
+        del _pdf_store[oldest]
+    from fastapi.responses import JSONResponse
+    return JSONResponse({"token": token, "filename": filename})
+
+
 @app.get("/propiedad/{property_id}")
 async def get_propiedad(property_id: str):
     if not EB_API_KEY:
