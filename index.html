@@ -1985,8 +1985,10 @@ async function authInit(){
     });
     const data = await r.json();
     if(!data.length || data[0].activo === false){
+      const _mic1 = localStorage.getItem('mic_granted');
       localStorage.clear();
       sessionStorage.clear();
+      if(_mic1) localStorage.setItem('mic_granted', _mic1);
       window.location.href = 'login.html';
       return;
     }
@@ -2102,8 +2104,10 @@ function updateUserDisplay(){
 }
 
 function logout(){
+  const _mic2 = localStorage.getItem('mic_granted');
   localStorage.clear();
   sessionStorage.clear();
+  if(_mic2) localStorage.setItem('mic_granted', _mic2);
   window.location.href = 'login.html';
 }
 
@@ -2732,7 +2736,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const data = await r.json();
       if(!data.length) return;
-      if(data[0].activo === false){ localStorage.clear(); sessionStorage.clear(); window.location.href = 'login.html'; return; }
+      if(data[0].activo === false){ const _mic3=localStorage.getItem('mic_granted'); localStorage.clear(); sessionStorage.clear(); if(_mic3) localStorage.setItem('mic_granted',_mic3); window.location.href = 'login.html'; return; }
       const changed = (data[0].plan !== (userProfile && userProfile.plan)) ||
                       (JSON.stringify(data[0].modulos) !== JSON.stringify(userProfile && userProfile.modulos));
       if(changed && userProfile){
