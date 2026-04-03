@@ -1621,10 +1621,13 @@ function addScwBubble(text, type) {
 }
 
 async function shaarkFabFetch(text) {
-  const typing = document.createElement('div');
-  typing.className = 'scw-bubble bot'; typing.textContent = '...'; typing.id = 'scw-typing';
   const msgs = document.getElementById('scw-msgs');
-  msgs.appendChild(typing); msgs.scrollTop = msgs.scrollHeight;
+  // Cada llamada crea su propia burbuja — sin ID para no reutilizar
+  const typing = document.createElement('div');
+  typing.className = 'scw-bubble bot';
+  typing.textContent = '...';
+  msgs.appendChild(typing);
+  msgs.scrollTop = msgs.scrollHeight;
   try {
     const r = await fetch('https://brokrebapi-production.up.railway.app/chat-claude', {
       method:'POST', headers:{'Content-Type':'application/json'},
@@ -1632,17 +1635,14 @@ async function shaarkFabFetch(text) {
     });
     const data = await r.json();
     if(!r.ok){
-      const t = document.getElementById('scw-typing');
-      if(t) t.textContent = '⚠️ ' + (data.detail || 'Error del servidor.');
+      typing.textContent = '⚠️ ' + (data.detail || 'Error del servidor.');
       return;
     }
     const reply = data.choices?.[0]?.message?.content;
     if(!reply){
-      const t = document.getElementById('scw-typing');
-      if(t) t.textContent = '⚠️ Respuesta vacía. Intenta de nuevo.';
+      typing.textContent = '⚠️ Respuesta vacía. Intenta de nuevo.';
       return;
     }
-    // Ejecutar acciones
     const accionRe = /\[ACCION\](.*?)\[\/ACCION\]/gs;
     let accionMatch;
     while((accionMatch = accionRe.exec(reply)) !== null) {
@@ -1654,14 +1654,12 @@ async function shaarkFabFetch(text) {
     }
     const clean = reply.replace(/\[ACCION\].*?\[\/ACCION\]/gs,'').trim();
     shaarkMsgs.push({role:'assistant', content:clean});
-    const t = document.getElementById('scw-typing');
-    if(t) t.textContent = clean;
+    typing.textContent = clean;
     if(window._scwLastWasVoice){ speak(clean); window._scwLastWasVoice = false; }
   } catch(e) {
-    const t = document.getElementById('scw-typing');
-    if(t) t.textContent = '⚠️ Sin conexión. Revisa tu internet.';
+    typing.textContent = '⚠️ Sin conexión. Revisa tu internet.';
   }
-  if(msgs) msgs.scrollTop = msgs.scrollHeight;
+  msgs.scrollTop = msgs.scrollHeight;
 }
 
 // Voz para el popup de Shaark — versión robusta
@@ -3162,21 +3160,25 @@ function searchResultTap(i) {
 
 // ══ SHAARK POPUP ══
 let shaarkPopupOpen = false;
-let _micPermissionGranted = false;
+let _micPermissionGranted = localStorage.getItem('mic_granted') === '1';
 
+// Pedir permiso del micrófono una sola vez — al cargar la app
 function preSolicitarMicrofono() {
   if(_micPermissionGranted) return;
   if(!('mediaDevices' in navigator)) return;
   navigator.mediaDevices.getUserMedia({ audio: true })
     .then(stream => {
-      // Permiso concedido — cerrar el stream inmediatamente, solo queríamos el permiso
       stream.getTracks().forEach(t => t.stop());
       _micPermissionGranted = true;
+      localStorage.setItem('mic_granted', '1');
     })
-    .catch(() => {
-      // El usuario negó o no hay micrófono — silencioso
-    });
+    .catch(() => {});
 }
+// Solicitar al primer gesto del usuario (requerido por navegadores)
+document.addEventListener('touchstart', function _firstTouch(){
+  preSolicitarMicrofono();
+  document.removeEventListener('touchstart', _firstTouch);
+}, { once: true });
 
 function toggleShaarkPopup() {
   shaarkPopupOpen = !shaarkPopupOpen;
@@ -3186,8 +3188,6 @@ function toggleShaarkPopup() {
   if (shaarkPopupOpen) {
     popup.classList.add('open');
     navBtn?.classList.add('active');
-    // Pedir permiso de micrófono en segundo plano la primera vez
-    preSolicitarMicrofono();
     setTimeout(() => {
       const msgs = document.getElementById('scw-msgs');
       if (msgs) msgs.scrollTop = msgs.scrollHeight;
@@ -3197,7 +3197,6 @@ function toggleShaarkPopup() {
     navBtn?.classList.remove('active');
   }
 }
-// Legacy compatibility
 function toggleShaarkWindow() { toggleShaarkPopup(); }
 function closeShaarkWindow() {
   shaarkPopupOpen = false;
