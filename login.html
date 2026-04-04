@@ -226,6 +226,20 @@ body{overflow-y:auto;}
 
     <!-- SIGNUP FORM -->
     <div id="form-signup" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field" style="margin-bottom:0">
+          <label>Nombre(s)</label>
+          <input type="text" id="s-nombre" placeholder="Salvador" autocomplete="given-name"/>
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label>Apellidos</label>
+          <input type="text" id="s-apellidos" placeholder="Bolaños" autocomplete="family-name"/>
+        </div>
+      </div>
+      <div class="field" style="margin-top:16px">
+        <label>Teléfono</label>
+        <input type="tel" id="s-telefono" placeholder="443 123 4567" autocomplete="tel"/>
+      </div>
       <div class="field">
         <label>Correo electrónico</label>
         <input type="email" id="s-email" placeholder="tu@correo.com" autocomplete="email"/>
@@ -310,28 +324,34 @@ setLoading('btn-login', true);
   await checkProfileAndRedirect(data.access_token, data.user);
 }
 async function doSignup(){
-  const email = document.getElementById('s-email').value.trim();
-  const pass  = document.getElementById('s-pass').value;
-  const pass2 = document.getElementById('s-pass2').value;
-  if(!email||!pass||!pass2){ showMsg('Completa todos los campos'); return; }
+  const nombre    = document.getElementById('s-nombre').value.trim();
+  const apellidos = document.getElementById('s-apellidos').value.trim();
+  const telefono  = document.getElementById('s-telefono').value.trim();
+  const email     = document.getElementById('s-email').value.trim();
+  const pass      = document.getElementById('s-pass').value;
+  const pass2     = document.getElementById('s-pass2').value;
+  if(!nombre||!apellidos||!email||!pass||!pass2){ showMsg('Completa todos los campos'); return; }
   if(pass !== pass2){ showMsg('Las contraseñas no coinciden'); return; }
   if(pass.length < 8){ showMsg('La contraseña debe tener al menos 8 caracteres'); return; }
   setLoading('btn-signup', true);
   const data = await sbAuth('signup', { email, password: pass });
   setLoading('btn-signup', false);
   if(data.error){ showMsg(data.error_description || data.error); return; }
-if(data.id){
+  // Guardar datos de perfil en sessionStorage para registro.html
+  sessionStorage.setItem('reg_nombre', nombre + ' ' + apellidos);
+  sessionStorage.setItem('reg_telefono', telefono);
+  if(data.id || data.user?.id){
     sessionStorage.setItem('sb_token', data.access_token || '');
     sessionStorage.setItem('sb_user', JSON.stringify(data.user || data));
-    showMsg('✅ Cuenta creada. Te enviamos un correo de confirmación. Completando tu perfil…', 'ok');
-    setTimeout(() => { window.location.href = 'registro.html'; }, 2500);
+    showMsg('✅ Cuenta creada. Completando tu perfil…', 'ok');
+    setTimeout(() => { window.location.href = 'registro.html'; }, 1200);
   } else {
-    showMsg('✅ Casi listo. Te enviamos un correo de confirmación. Por favor revísalo para activar tu cuenta.', 'ok');
+    showMsg('✅ Te enviamos un correo de confirmación. Una vez confirmado, inicia sesión para continuar.', 'ok');
   }
 }
 
 function doGoogle(){
-  window.location.href = `${SB_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(location.origin+'/index.html')}`;
+  window.location.href = `${SB_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(location.origin+'/login.html')}`;
 }
 
 async function doFacebook(){
@@ -384,22 +404,39 @@ async function checkProfileAndRedirect(token, user){
     const user = JSON.parse(localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}');
     if(user.id) await checkProfileAndRedirect(token, user);
   }
-  // Handle OAuth callback (hash fragment)
+  // Handle OAuth / email confirmation callback (hash fragment)
   const hash = location.hash;
   if(hash.includes('access_token=')){
     const params = new URLSearchParams(hash.slice(1));
-    const token = params.get('access_token');
-    if(token){
+    const cbToken = params.get('access_token');
+    const cbRefresh = params.get('refresh_token');
+    const cbType = params.get('type'); // 'signup', 'recovery', 'magiclink'
+    if(cbToken){
       const r = await fetch(`${SB_URL}/auth/v1/user`, {
-        headers:{ 'apikey':SB_KEY, 'Authorization':`Bearer ${token}` }
+        headers:{ 'apikey':SB_KEY, 'Authorization':`Bearer ${cbToken}` }
       });
       const user = await r.json();
-      localStorage.setItem('sb_token', token);
+      localStorage.setItem('sb_token', cbToken);
+      if(cbRefresh) localStorage.setItem('sb_refresh', cbRefresh);
       localStorage.setItem('sb_user', JSON.stringify(user));
-      sessionStorage.setItem('sb_token', token);
+      sessionStorage.setItem('sb_token', cbToken);
       sessionStorage.setItem('sb_user', JSON.stringify(user));
-      await checkProfileAndRedirect(token, user);
+      // Limpiar hash de la URL sin recargar
+      history.replaceState(null, '', location.pathname);
+      if(cbType === 'recovery'){
+        // Contraseña restablecida — ir directo a la app
+        await checkProfileAndRedirect(cbToken, user);
+      } else {
+        // signup (confirmación de correo) o Google OAuth
+        await checkProfileAndRedirect(cbToken, user);
+      }
     }
+  }
+  // Detectar si viene de confirmación de correo sin token (link ya usado o expirado)
+  const urlParams = new URLSearchParams(location.search);
+  if(urlParams.get('type') === 'signup' || urlParams.get('confirmation') === 'true'){
+    showMsg('✅ Correo confirmado. Ahora inicia sesión con tus datos.', 'ok');
+    setTab('login');
   }
 })();
 </script>
