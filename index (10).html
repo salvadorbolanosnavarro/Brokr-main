@@ -1,0 +1,3500 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<link rel="icon" type="image/png" href="favicon.png"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,viewport-fit=cover"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="Brokr"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
+<meta name="theme-color" content="#ffffff"/>
+<title>Brokr</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+/* ══════════════════════════════════════════
+   BROKR® — DESIGN SYSTEM
+   Poppins · Navy / Teal / Blanco
+══════════════════════════════════════════ */
+:root {
+  --navy:       #0f1829;
+  --navy-mid:   #162035;
+  --navy-light: #1e2d47;
+  --teal:       #2a9db5;
+  --teal-dark:  #1a7a8f;
+  --teal-glow:  rgba(42,157,181,0.18);
+  --white:      #ffffff;
+  --gray-100:   #f5f6f8;
+  --gray-200:   #e8eaee;
+  --gray-400:   #9aa0ad;
+  --gray-600:   #5a6070;
+  --text:       #1a2035;
+  --screen-bg:  #f0f2f7;
+  /* Legacy aliases para ISR/props que las usan */
+  --bg:    #f0f2f7;
+  --bg2:   #f5f6f8;
+  --bg3:   #e8eaee;
+  --sf:    #ffffff;
+  --sf2:   #f0f2f7;
+  --bd:    rgba(0,0,0,0.08);
+  --bd2:   rgba(0,0,0,0.13);
+  --txt:   #1a2035;
+  --mut:   #5a6070;
+  --mut2:  #9aa0ad;
+  --r:  18px; --r2: 14px; --r3: 10px;
+  /* Module accent colors (for ISR results) */
+  --amber: #f59e0b; --amber2: #fbbf24;
+  --rose:  #f43f5e; --rose2:  #fb7185;
+  --violet:#8b5cf6; --violet2:#a78bfa;
+  --emerald:#10b981; --emerald2:#34d399;
+  --sky:   #0ea5e9; --sky2:   #38bdf8;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --topbar: 0px;
+}
+@supports (-webkit-touch-callout: none) {
+  @media (display-mode: standalone) {
+    :root { --safe-top: max(env(safe-area-inset-top, 0px), 44px); }
+  }
+}
+
+/* Evitar zoom de iOS al enfocar inputs */
+input, select, textarea {
+  font-size: max(16px, 1em) !important;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body {
+  font-family: 'Poppins', sans-serif;
+  background: var(--screen-bg);
+  color: var(--text);
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ══ APP SHELL ══ */
+#app {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100dvh;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ══ SCREENS LAYER ══ */
+#screens-container {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.proto-screen {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  -webkit-overflow-scrolling: touch;
+}
+.proto-screen.active-screen {
+  opacity: 1;
+  pointer-events: all;
+}
+.proto-screen::-webkit-scrollbar { display: none; }
+
+
+.home-header {
+  background: var(--navy);
+  padding: calc(var(--safe-top) + 20px) 24px 28px;
+  position: relative;
+  overflow: hidden;
+}
+.home-header::before {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 180px; height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(42,157,181,0.25) 0%, transparent 70%);
+}
+
+.greeting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+.greeting-text .hello {
+  font-size: 12px;
+  color: var(--teal);
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: none;
+}
+.greeting-text .name {
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  line-height: 1.1;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+   text-transform: uppercase;
+}
+.home-avatar {
+  width: 46px; height: 46px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 700; color: white;
+  border: 2px solid rgba(255,255,255,0.15);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+.stat-pill {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+.stat-pill .val {
+  font-size: 20px; font-weight: 600; color: white;
+}
+.stat-pill .lbl {
+  font-size: 10px; color: rgba(255,255,255,0.5);
+  margin-top: 1px; font-weight: 500;
+}
+.stat-pill.accent .val { color: var(--teal); }
+
+/* Section titles */
+.section-title {
+  padding: 20px 20px 10px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.section-title h3 {
+  font-size: 15px; font-weight: 600; color: var(--text);
+}
+.section-title a {
+  font-size: 12px; color: var(--teal); font-weight: 600;
+  cursor: pointer; text-decoration: none;
+}
+
+/* Module cards grid */
+.quick-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 0 16px;
+}
+
+.module-card {
+  background: white;
+  border-radius: 20px;
+  padding: 18px 16px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  border: 1px solid rgba(0,0,0,0.05);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  position: relative; overflow: hidden;
+}
+.module-card:active { transform: scale(0.97); }
+.module-card::before {
+  content: ''; position: absolute;
+  top: 0; left: 0; right: 0; height: 3px;
+  border-radius: 20px 20px 0 0;
+}
+.module-card.teal::before  { background: var(--teal); }
+.module-card.white::before { background: rgba(0,0,0,0.12); }
+.module-card.navy::before  { background: var(--navy); }
+.module-card.green::before { background: #3db88a; }
+.module-card.violet::before{ background: #8b5cf6; }
+
+.module-icon {
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 10px;
+  color: var(--navy);
+  opacity: 0.75;
+}
+.module-card.teal  .module-icon { color: var(--teal-dark); opacity: 1; }
+.module-card.white .module-icon { color: var(--navy); }
+.module-card.navy  .module-icon { color: var(--navy); }
+.module-card.green .module-icon { color: #2a9068; opacity: 1; }
+.module-card.violet .module-icon { color: #6d46c9; opacity: 1; }
+
+.module-card .mod-name {
+  font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.2;
+}
+.module-card .mod-desc {
+  font-size: 11px; color: var(--gray-400); margin-top: 4px; font-weight: 400;
+}
+
+/* Activity list */
+.activity-list {
+  padding: 0 16px 20px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.activity-item {
+  background: white; border-radius: 16px;
+  padding: 14px 16px; display: flex; align-items: center; gap: 12px;
+  border: 1px solid rgba(0,0,0,0.04);
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+}
+.act-icon {
+  width: 38px; height: 38px; border-radius: 12px;
+  background: var(--gray-100);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; flex-shrink: 0;
+}
+.act-text .act-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.act-text .act-sub { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+.act-time { margin-left: auto; font-size: 11px; color: var(--gray-400); white-space: nowrap; }
+
+/* ══ MÓDULOS SCREEN ══ */
+#screen-modules { background: var(--screen-bg); padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)); }
+
+.modules-header {
+  background: var(--navy);
+  padding: calc(var(--safe-top) + 16px) 24px 24px;
+}
+.modules-header h2 {
+  font-size: 22px; font-weight: 700; color: white; margin-bottom: 14px;
+}
+.search-bar {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 14px; padding: 12px 16px;
+  display: flex; align-items: center; gap: 10px;
+  color: rgba(255,255,255,0.6); font-size: 13px; cursor: pointer;
+}
+
+.category-block { padding: 18px 16px 0; }
+.cat-title {
+  font-size: 10px; font-weight: 700; color: var(--gray-400);
+  text-transform: uppercase; letter-spacing: 1.2px;
+  margin-bottom: 12px; padding-left: 4px;
+}
+.cat-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 10px; margin-bottom: 4px;
+}
+.cat-module {
+  background: white; border-radius: 18px;
+  padding: 16px 10px 14px; text-align: center; cursor: pointer;
+  transition: transform 0.15s;
+  border: 1px solid rgba(0,0,0,0.05);
+  box-shadow: 0 1px 8px rgba(0,0,0,0.05);
+}
+.cat-module:active { transform: scale(0.95); }
+.cat-mod-icon {
+  width: 46px; height: 46px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 10px;
+}
+.cat-mod-name { font-size: 11px; font-weight: 600; color: var(--text); line-height: 1.3; }
+.cat-teal   .cat-mod-icon { color: var(--navy); }
+.cat-white  .cat-mod-icon { color: var(--navy); }
+.cat-navy   .cat-mod-icon { color: var(--navy); }
+.cat-green  .cat-mod-icon { color: var(--navy); }
+.cat-purple .cat-mod-icon { color: var(--navy); }
+
+/* ══ PERFIL SCREEN ══ */
+#screen-profile { background: var(--screen-bg); padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)); }
+
+.profile-header {
+  background: var(--navy);
+  padding: calc(var(--safe-top) + 20px) 24px 32px;
+  text-align: center; position: relative;
+}
+.profile-avatar {
+  width: 80px; height: 80px; border-radius: 26px;
+  background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px; font-weight: 700; color: white;
+  margin: 0 auto 12px;
+  border: 3px solid rgba(255,255,255,0.15);
+  box-shadow: 0 8px 24px rgba(42,157,181,0.3);
+}
+.profile-name { font-size: 22px; font-weight: 600; color: white; }
+.profile-sub { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+.profile-badge {
+  display: inline-block;
+  background: rgba(42,157,181,0.2); border: 1px solid rgba(42,157,181,0.4);
+  color: var(--teal); font-size: 11px; font-weight: 700;
+  padding: 4px 12px; border-radius: 20px; margin-top: 8px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+.profile-section {
+  margin: 16px 16px 0;
+  background: white; border-radius: 20px; overflow: hidden;
+  border: 1px solid rgba(0,0,0,0.05);
+  box-shadow: 0 1px 8px rgba(0,0,0,0.05);
+}
+.profile-row {
+  display: flex; align-items: center;
+  padding: 16px 18px; gap: 14px; cursor: pointer;
+  transition: background 0.1s;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.profile-row:last-child { border-bottom: none; }
+.profile-row:active { background: var(--gray-100); }
+.pr-icon {
+  width: 38px; height: 38px; border-radius: 12px;
+  background: var(--gray-100);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+}
+.pr-text { font-size: 14px; font-weight: 500; color: var(--text); flex: 1; }
+.pr-arrow { color: var(--gray-400); font-size: 14px; }
+
+/* ══ MOD PANELS (full screen, inside screens-container) ══ */
+.mod-panel {
+  position: absolute; inset: 0;
+  display: none; flex-direction: column;
+  overflow: hidden;
+  background: var(--screen-bg);
+}
+.mod-panel.active { display: flex; }
+
+.panel-scroll {
+  flex: 1; overflow-y: auto;
+  padding: 20px; padding-bottom: 80px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Panel back button */
+.panel-topbar {
+  background: var(--navy);
+  padding: calc(var(--safe-top) + 0px) 16px 0;
+  height: calc(60px + var(--safe-top));
+  display: flex; align-items: flex-end; padding-bottom: 12px;
+  gap: 12px; flex-shrink: 0;
+}
+.panel-back {
+  width: 36px; height: 36px; border-radius: 12px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: white; font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.panel-title {
+  font-size: 16px; font-weight: 700; color: white;
+}
+
+/* ══ ISR STYLES (preservados, actualizados) ══ */
+.isr-hdr { margin-bottom: 16px; }
+.isr-hdr-title {
+  font-size: 17px; font-weight: 800;
+  color: var(--text); display: flex; align-items: center;
+  flex-wrap: wrap; gap: 8px; margin-bottom: 4px;
+}
+.isr-badge {
+  font-size: 9px; font-weight: 700;
+  background: rgba(139,92,246,0.15); color: var(--violet2);
+  padding: 3px 9px; border-radius: 20px;
+  text-transform: uppercase; letter-spacing: .5px;
+}
+.isr-hdr-sub { font-size: 12px; color: var(--mut); line-height: 1.5; }
+.isr-card {
+  background: #fff; border: 1px solid rgba(0,0,0,0.08);
+  border-radius: var(--r); padding: 18px; margin-bottom: 12px;
+}
+.isr-card-lbl {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .8px; color: var(--violet2);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
+}
+.isr-opt { font-size: 9px; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--mut); font-style: italic; }
+.isr-row1 { margin-bottom: 10px; }
+.isr-row1:last-child { margin-bottom: 0; }
+.isr-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.isr-row2:last-child { margin-bottom: 0; }
+.isr-f { display: flex; flex-direction: column; gap: 4px; }
+.isr-f label { font-size: 10px; font-weight: 700; color: var(--mut); text-transform: uppercase; letter-spacing: .6px; }
+.isr-f input, .isr-f select {
+  width: 100%; padding: 9px 11px;
+  background: var(--gray-100); border: 1px solid rgba(0,0,0,0.1);
+  border-radius: var(--r3); color: var(--text);
+  font-size: 13px; font-family: 'Poppins', sans-serif; outline: none; transition: border-color .2s;
+}
+.isr-f input:focus, .isr-f select:focus { border-color: var(--violet); background: #fff; }
+.isr-f input::placeholder { color: var(--mut2); }
+.isr-hint { font-size: 10px; color: var(--violet2); margin-top: 2px; }
+.isr-alert-warn { border-radius: var(--r3); padding: 9px 12px; font-size: 12px; line-height: 1.5; margin-top: 10px; background: rgba(245,158,11,.1); border-left: 3px solid var(--amber); color: var(--amber2); }
+.isr-alert-info { border-radius: var(--r3); padding: 9px 12px; font-size: 12px; line-height: 1.5; margin-top: 10px; background: rgba(59,130,246,.1); border-left: 3px solid #3b82f6; color: #93c5fd; }
+.isr-inpc-status { background: #fff; border: 1px solid rgba(0,0,0,0.1); border-radius: var(--r3); padding: 10px 14px; margin-bottom: 12px; font-size: 12px; }
+.isr-spin { width: 13px; height: 13px; border: 2px solid rgba(0,0,0,0.1); border-top-color: var(--violet); border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.isr-calc-btn {
+  width: 100%; padding: 14px;
+  background: linear-gradient(135deg, var(--violet), #7c3aed);
+  border: none; border-radius: var(--r2); color: #fff;
+  font-size: 14px; font-weight: 700; font-family: 'Poppins', sans-serif;
+  cursor: pointer; display: flex; align-items: center;
+  justify-content: center; gap: 8px; transition: opacity .2s, transform .15s;
+  box-shadow: 0 4px 20px rgba(139,92,246,.4);
+}
+.isr-calc-btn:hover { opacity: .9; transform: translateY(-1px); }
+.isr-calc-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+#res { margin-top: 0; }
+.res-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.res-back-btn {
+  display: flex; align-items: center; gap: 5px;
+  background: none; border: 1px solid rgba(0,0,0,0.15); border-radius: var(--r3);
+  padding: 7px 12px; color: var(--mut); font-size: 12px;
+  font-family: 'Poppins', sans-serif; cursor: pointer; transition: all .15s;
+}
+.res-back-btn:hover { color: var(--text); border-color: var(--text); }
+.res-tipo-lbl { font-size: 11px; font-weight: 700; background: rgba(139,92,246,.15); color: var(--violet2); padding: 4px 10px; border-radius: 20px; }
+#res-cards, .res-cards-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); gap: 10px; margin-bottom: 14px; }
+.rc { background: #fff; border: 1px solid rgba(0,0,0,0.1); border-radius: var(--r2); padding: 14px; }
+.rc.gn { background: rgba(16,185,129,.08); border-color: rgba(16,185,129,.25); }
+.rc.dk { background: rgba(239,68,68,.08); border-color: rgba(239,68,68,.25); }
+.rc-l { font-size: 10px; font-weight: 700; color: var(--mut); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 5px; }
+.rc-v { font-size: 20px; font-weight: 600; color: var(--navy); line-height: 1.1; margin-bottom: 3px; word-break: break-word; }
+.rc.gn .rc-v { color: #34d399; } .rc.dk .rc-v { color: #f87171; }
+.rc-n { font-size: 10px; color: var(--mut); line-height: 1.4; }
+.res-inpc-row { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid rgba(0,0,0,0.1); border-radius: var(--r2); padding: 12px 14px; margin-bottom: 12px; flex-wrap: wrap; }
+.res-inpc-cell { flex: 1; min-width: 80px; text-align: center; }
+.res-inpc-cell.hl .res-inpc-val { color: var(--violet2); }
+.res-inpc-lbl { font-size: 9px; text-transform: uppercase; letter-spacing: .6px; color: var(--mut); margin-bottom: 3px; }
+.res-inpc-val { font-size: 15px; font-weight: 700; color: var(--navy); }
+.res-inpc-arr { color: var(--mut); font-size: 16px; flex-shrink: 0; }
+.res-bkdn { background: #fff; border: 1px solid rgba(0,0,0,0.1); border-radius: var(--r2); padding: 14px; margin-bottom: 12px; }
+.br { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; border-bottom: 1px solid rgba(0,0,0,0.06); font-size: 12px; }
+.br:last-child { border-bottom: none; }
+.br.tot { font-weight: 700; font-size: 13px; }
+.br.sub { padding-left: 14px; color: var(--mut); }
+.bl { color: var(--mut); } .br.tot .bl { color: var(--text); }
+.bv { font-weight: 600; color: var(--navy); }
+.res-nota { background: rgba(59,130,246,.08); border-left: 3px solid #3b82f6; border-radius: 0 var(--r3) var(--r3) 0; padding: 11px 14px; font-size: 12px; line-height: 1.55; color: #3b82f6; margin-bottom: 12px; }
+.ai-box { background: var(--teal-glow); border: 1px solid rgba(42,157,181,.2); border-radius: var(--r2); padding: 14px; margin-bottom: 12px; }
+.ai-lbl { font-size: 11px; font-weight: 700; color: var(--teal); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 8px; }
+#ai-txt { font-size: 12px; line-height: 1.6; color: var(--text); }
+
+/* ══ PROPS STYLES ══ */
+.props-toolbar {
+  padding: 12px 16px; border-bottom: 1px solid rgba(0,0,0,0.08);
+  display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+  background: #fff; flex-wrap: wrap;
+}
+.props-search-wrap {
+  flex: 1; min-width: 180px; position: relative;
+  display: flex; align-items: center;
+  background: var(--gray-100); border: 1px solid rgba(0,0,0,0.1);
+  border-radius: var(--r3); padding: 0 10px 0 32px;
+}
+.props-search-wrap svg { position: absolute; left: 10px; opacity: .4; }
+.props-search-wrap input {
+  flex: 1; background: none; border: none; outline: none;
+  color: var(--text); font-size: 13px; padding: 8px 0; font-family: 'Poppins', sans-serif;
+}
+.props-search-wrap input::placeholder { color: var(--gray-400); }
+.props-toolbar select {
+  padding: 7px 10px; background: var(--gray-100); border: 1px solid rgba(0,0,0,0.1);
+  border-radius: var(--r3); color: var(--mut); font-size: 12px;
+  font-family: 'Poppins', sans-serif; outline: none; cursor: pointer;
+}
+.props-new-btn {
+  padding: 8px 14px; background: var(--emerald); border: none;
+  border-radius: var(--r3); color: #fff; font-size: 12px; font-weight: 600;
+  font-family: 'Poppins', sans-serif; cursor: pointer; white-space: nowrap;
+  display: flex; align-items: center; gap: 5px; transition: background .15s;
+  flex-shrink: 0; box-shadow: 0 2px 12px rgba(16,185,129,.3);
+}
+.props-new-btn:hover { opacity: .9; }
+.props-grid {
+  flex: 1; overflow-y: auto; padding: 14px 16px;
+  display: grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr));
+  gap: 10px; align-content: start;
+}
+.props-empty { grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--mut); }
+.prop-card {
+  background: #fff; border: 1px solid rgba(0,0,0,0.08);
+  border-radius: var(--r); overflow: hidden; cursor: pointer;
+  transition: all .18s; display: flex; flex-direction: column;
+}
+.prop-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,.1); }
+.prop-card-img img, .prop-card-img { width: 100%; height: 140px; object-fit: cover; display: block; background: var(--gray-100); }
+.prop-card-body { padding: 11px 12px; flex: 1; }
+.prop-card-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+.prop-card-title { font-weight: 700; font-size: 12.5px; margin-bottom: 3px; line-height: 1.3; }
+.prop-card-loc { font-size: 11px; color: var(--gray-400); margin-bottom: 5px; }
+.prop-card-price { color: var(--emerald); font-size: 14px; font-weight: 700; margin-bottom: 5px; }
+.prop-card-specs { display: flex; flex-wrap: wrap; gap: 4px; }
+.prop-card-specs span { font-size: 10px; background: var(--gray-100); padding: 2px 6px; border-radius: 4px; color: var(--mut); }
+.prop-card-actions { display: flex; gap: 6px; padding: 0 12px 10px; }
+.prop-act-btn {
+  flex: 1; padding: 6px; border-radius: var(--r3); border: 1px solid rgba(0,0,0,0.1);
+  background: none; color: var(--mut); font-size: 11px; cursor: pointer;
+  font-family: 'Poppins', sans-serif; transition: all .15s; text-align: center;
+}
+.prop-act-del:hover { background: rgba(239,68,68,.1); color: #fca5a5; border-color: rgba(239,68,68,.3); }
+.badge { font-size: 9.5px; font-weight: 700; padding: 2px 7px; border-radius: 20px; letter-spacing: .3px; }
+.badge-venta { background: rgba(42,157,181,.14); color: var(--teal); }
+.badge-renta { background: rgba(14,165,233,.14); color: var(--sky2); }
+.badge-activa { background: rgba(16,185,129,.14); color: var(--emerald2); }
+.badge-vendida { background: rgba(245,158,11,.14); color: var(--amber2); }
+.badge-rentada { background: rgba(139,92,246,.14); color: var(--violet2); }
+.badge-suspendida { background: rgba(0,0,0,.06); color: var(--mut); }
+
+/* ══ MODAL STYLES ══ */
+.prop-modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.6); z-index: 300;
+  align-items: center; justify-content: center; padding: 16px;
+  backdrop-filter: blur(4px);
+}
+.prop-modal-overlay.open { display: flex; }
+.prop-modal-box {
+  background: #fff; border: 1px solid rgba(0,0,0,0.1);
+  border-radius: var(--r); width: 100%; max-width: 540px;
+  max-height: 90vh; overflow-y: auto;
+}
+.prop-modal-hdr {
+  padding: 18px 20px 14px; border-bottom: 1px solid rgba(0,0,0,0.08);
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; background: #fff; z-index: 10;
+}
+.prop-modal-hdr h3 { font-size: 15px; font-weight: 700; }
+.prop-modal-close {
+  width: 28px; height: 28px; background: var(--gray-100);
+  border: 1px solid rgba(0,0,0,0.1); border-radius: 6px; color: var(--mut);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 14px; transition: all .15s;
+}
+.prop-modal-close:hover { background: rgba(239,68,68,.1); color: #e05252; }
+.prop-modal-body { padding: 18px 20px; }
+.pf-section {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .8px; color: var(--teal); margin: 16px 0 10px;
+}
+.pf-section:first-child { margin-top: 0; }
+.pf-row { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 0; }
+.pf-row + .pf-row { margin-top: 10px; }
+.pf-row.cols-2 { grid-template-columns: 1fr 1fr; }
+.pf-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.pf-field { display: flex; flex-direction: column; gap: 4px; }
+.pf-field.full { grid-column: 1/-1; }
+.pf-field label { font-size: 10px; font-weight: 700; color: var(--mut); text-transform: uppercase; letter-spacing: .6px; }
+.pf-field input, .pf-field textarea, .pf-field select {
+  width: 100%; padding: 8px 10px; background: var(--gray-100);
+  border: 1px solid rgba(0,0,0,0.1); border-radius: var(--r3);
+  color: var(--text); font-size: 12.5px; font-family: 'Poppins', sans-serif; outline: none;
+  transition: border-color .2s;
+}
+.pf-field input:focus, .pf-field textarea:focus, .pf-field select:focus { border-color: var(--teal); background: #fff; }
+.pf-field textarea { resize: vertical; min-height: 60px; }
+.pf-actions {
+  display: flex; gap: 8px; justify-content: flex-end;
+  margin-top: 20px; padding-top: 14px; border-top: 1px solid rgba(0,0,0,0.08);
+}
+.pf-cancel-btn {
+  background: none; border: 1px solid rgba(0,0,0,0.15); color: var(--mut);
+  padding: 8px 16px; border-radius: var(--r3); font-size: 13px;
+  cursor: pointer; font-family: 'Poppins', sans-serif; transition: all .15s;
+}
+.pf-save-btn {
+  background: var(--teal); border: none; color: #fff;
+  padding: 8px 20px; border-radius: var(--r3); font-size: 13px;
+  font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif;
+  display: flex; align-items: center; gap: 6px;
+  box-shadow: 0 2px 12px rgba(42,157,181,.3);
+}
+#fotos-preview { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.foto-preview-item { position: relative; }
+.foto-preview-item img { width: 64px; height: 64px; object-fit: cover; border-radius: 6px; display: block; }
+.foto-preview-item button {
+  position: absolute; top: -4px; right: -4px;
+  width: 17px; height: 17px; background: #ef4444;
+  border: none; border-radius: 50%; color: #fff;
+  font-size: 9px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.detail-gallery { display: grid; grid-template-columns: repeat(auto-fill,minmax(120px,1fr)); gap: 6px; margin-bottom: 14px; }
+.detail-gallery img { width: 100%; height: 90px; object-fit: cover; border-radius: 8px; cursor: pointer; }
+.detail-price-hero { font-size: 26px; font-weight: 800; color: var(--emerald); margin-bottom: 4px; }
+.detail-loc { font-size: 12px; color: var(--mut); margin-bottom: 14px; }
+.detail-desc { font-size: 12px; color: var(--mut); line-height: 1.6; padding: 10px; background: var(--gray-100); border-radius: 8px; margin-bottom: 12px; }
+.detail-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+.detail-info-item { background: var(--gray-100); border-radius: 8px; padding: 8px 10px; }
+.detail-info-item label { font-size: 9px; text-transform: uppercase; letter-spacing: .7px; color: var(--mut); display: block; margin-bottom: 2px; }
+.detail-info-item span { font-size: 12.5px; font-weight: 600; }
+
+/* ══ IFRAME PANELS ══ */
+.iframe-panel { width: 100%; height: 100%; border: none; display: block; flex: 1; }
+
+.shaark-popup {
+  display: none;
+  position: fixed;
+  bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+  right: 16px;
+  width: min(340px, calc(100vw - 24px));
+  z-index: 300;
+}
+.shaark-popup.open {
+  display: block;
+  animation: popIn .2s cubic-bezier(.16,1,.3,1);
+}
+.shaark-popup.open .shaark-popup-inner {
+  display: flex;
+  flex-direction: column;
+}
+@keyframes popIn { from { opacity:0; transform:scale(.88) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+.shaark-popup-inner {
+  background: #0f1829;
+  color: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+  border: 1px solid rgba(42,157,181,0.25);
+  max-height: min(420px, calc(100dvh - 160px));
+}
+/* scw- styles used inside popup */
+.shaark-popup .scw-header {
+  padding: 13px 14px; display: flex; align-items: center;
+  gap: 9px; border-bottom: 1px solid rgba(255,255,255,0.07); flex-shrink: 0;
+}
+.shaark-popup .scw-messages {
+  flex: 1; overflow-y: auto; padding: 12px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.shaark-popup .scw-messages::-webkit-scrollbar { display: none; }
+.shaark-popup .scw-chips {
+  display: flex; gap: 6px; flex-wrap: wrap; padding: 0 12px 8px;
+}
+.shaark-popup .scw-input-row {
+  display: flex; gap: 6px; padding: 8px 10px 10px;
+  border-top: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;
+  align-items: center;
+}
+.scw-mic {
+  width: 36px; height: 36px; border-radius: 11px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.6); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: background 0.15s, color 0.15s;
+}
+.scw-mic:active, .scw-mic.listening {
+  background: rgba(239,68,68,0.25);
+  border-color: rgba(239,68,68,0.5);
+  color: #ef4444;
+}
+/* Micrófono solo en móvil */
+@media (hover: hover) and (pointer: fine) {
+  #scw-mic-btn { display: none !important; }
+}
+.scw-avatar {
+  width: 34px; height: 34px; border-radius: 11px;
+  background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; flex-shrink: 0;
+}
+.scw-name { font-size: 14px; font-weight: 700; color: #ffffff !important; }
+.scw-status { font-size: 11px; color: #2a9db5 !important; font-weight: 500; }
+.scw-close {
+  margin-left: auto; width: 28px; height: 28px;
+  border-radius: 9px; background: rgba(255,255,255,0.08);
+  border: none; color: rgba(255,255,255,0.6); font-size: 16px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-family: inherit;
+}
+.scw-close:hover { background: rgba(255,255,255,0.15); color: white; }
+.scw-bubble {
+  max-width: 88%; padding: 9px 12px;
+  border-radius: 14px; font-size: 13px; line-height: 1.45;
+}
+.scw-bubble.bot {
+  background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.88);
+  border-bottom-left-radius: 4px; align-self: flex-start;
+  border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.88) !important;
+}
+.scw-bubble.user {
+  background: var(--teal); color: white;
+  border-bottom-right-radius: 4px; align-self: flex-end;
+}
+.scw-chip {
+  background: rgba(42,157,181,0.15);
+  border: 1px solid rgba(42,157,181,0.3);
+  border-radius: 16px; padding: 6px 11px;
+  font-size: 11px; color: #2a9db5 !important; cursor: pointer;
+  font-weight: 600; font-family: 'Poppins', sans-serif;
+  transition: background 0.15s;
+}
+.scw-chip:active { background: rgba(42,157,181,0.3); }
+.scw-input {
+  flex: 1; min-width: 0; background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px; padding: 9px 10px;
+  font-size: 16px; color: white;
+  font-family: 'Poppins', sans-serif; outline: none;
+}
+.scw-input::placeholder { color: rgba(255,255,255,0.35) !important; }
+.scw-input { color: #ffffff !important; }
+.scw-input:focus { border-color: rgba(42,157,181,0.5); }
+.scw-send {
+  width: 38px; height: 38px; border-radius: 12px;
+  background: var(--teal); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; color: white; flex-shrink: 0; min-width: 38px;
+  box-shadow: 0 2px 8px rgba(42,157,181,0.4);
+}
+
+/* Shaark nav button special */
+.proto-nav-shaark {
+  width: 44px; height: 44px;
+  background: var(--navy);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 3px 12px rgba(15,24,41,0.3);
+  transition: transform 0.15s, box-shadow 0.15s;
+  margin-bottom: 2px;
+  overflow: hidden;
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;
+}
+.proto-nav-item.active .proto-nav-shaark {
+  transform: scale(1.06);
+  box-shadow: 0 4px 14px rgba(42,157,181,0.4);
+}
+.proto-nav-shaark img {
+  width: 80%; height: 80%;
+  object-fit: contain;
+  display: block;
+}
+
+/* ══ BOTTOM NAV ══ */
+.proto-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: white;
+  border-top: 1px solid rgba(0,0,0,0.08);
+  display: flex; align-items: center; justify-content: space-around;
+  padding: 10px 8px;
+  padding-bottom: max(10px, env(safe-area-inset-bottom, 10px));
+  z-index: 100;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+}
+.proto-nav-item {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px; cursor: pointer; padding: 8px 20px;
+  border-radius: 16px; transition: background 0.15s; flex: 1;
+}
+.proto-nav-item:active { background: var(--gray-100); }
+.proto-nav-icon { font-size: 22px; opacity: 0.35; transition: opacity 0.15s, transform 0.15s; }
+.proto-nav-label { font-size: 10px; font-weight: 600; color: var(--gray-400); letter-spacing: 0.3px; transition: color 0.15s; }
+.proto-nav-item.active .proto-nav-icon { opacity: 1; transform: scale(1.1); }
+.proto-nav-item.active .proto-nav-label { color: var(--teal); }
+
+/* ══ CLOSE BAR (for mod panels) ══ */
+#close-bar { display: none !important; }
+#close-bar button {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--navy); border: 1px solid rgba(255,255,255,.15);
+  color: rgba(255,255,255,.75); font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3); transition: all .15s;
+}
+#close-bar button:hover { background: rgba(239,68,68,.4); color: #fff; }
+
+/* Micrófono solo en móvil */
+@media (hover: hover) and (pointer: fine) {
+  #mic-btn { display: none !important; }
+}
+
+/* ══ LOADER ══ */
+.dots span {
+  display: inline-block; width: 5px; height: 5px; border-radius: 50%;
+  background: var(--teal); margin: 0 2px; animation: blink 1.2s ease infinite;
+}
+.dots span:nth-child(2) { animation-delay: .2s; }
+.dots span:nth-child(3) { animation-delay: .4s; }
+@keyframes blink { 0%,80%,100%{opacity:.2} 40%{opacity:1} }
+
+/* ══ ANIMATIONS ══ */
+@keyframes fadeInUp {
+  from { opacity:0; transform:translateY(16px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.anim-1 { animation: fadeInUp .4s ease .05s both; }
+.anim-2 { animation: fadeInUp .4s ease .12s both; }
+.anim-3 { animation: fadeInUp .4s ease .2s both; }
+.anim-4 { animation: fadeInUp .4s ease .28s both; }
+.anim-5 { animation: fadeInUp .4s ease .36s both; }
+
+/* ══ RESPONSIVE ══ */
+@media(max-width:400px) {
+  .quick-grid { grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 12px; }
+  .cat-grid { grid-template-columns: repeat(3,1fr); gap: 8px; }
+}
+
+/* ══ BARRA DE CARGA SUPERIOR ══ */
+#top-loader {
+  position: fixed;
+  top: 0; left: 0;
+  height: 3px;
+  width: 0%;
+  background: linear-gradient(90deg, var(--teal), #5dd4e8);
+  z-index: 9999;
+  transition: width 0.3s ease, opacity 0.4s ease;
+  opacity: 0;
+  border-radius: 0 2px 2px 0;
+  box-shadow: 0 0 8px rgba(42,157,181,0.6);
+}
+#top-loader.loading {
+  opacity: 1;
+}
+
+/* ══ BANNER SIN INTERNET ══ */
+#offline-banner {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  background: #1a2035;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: 'Poppins', sans-serif;
+  text-align: center;
+  padding: env(safe-area-inset-top, 0px) 16px 10px;
+  padding-top: max(env(safe-area-inset-top, 0px), 10px);
+  padding-bottom: 10px;
+  z-index: 9998;
+  transform: translateY(-100%);
+  transition: transform 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-bottom: 1px solid rgba(239,68,68,0.3);
+  letter-spacing: 0.1px;
+}
+#offline-banner.show {
+  transform: translateY(0);
+}
+#offline-banner .offline-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #ef4444;
+  flex-shrink: 0;
+  animation: pulse-red 1.4s ease infinite;
+}
+#offline-banner.back-online {
+  background: #0d2e1e;
+  border-bottom-color: rgba(16,185,129,0.3);
+}
+#offline-banner.back-online .offline-dot {
+  background: #10b981;
+  animation: none;
+}
+@keyframes pulse-red {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.7); }
+}
+
+/* ══ NOTIF BELL ══ */
+.notif-bell {
+  position: relative; cursor: pointer;
+  width: 38px; height: 38px; border-radius: 13px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+  transition: background 0.15s;
+}
+.notif-bell:active { background: rgba(255,255,255,0.2); }
+.notif-badge {
+  position: absolute; top: -5px; right: -5px;
+  background: #ef4444; color: white;
+  font-size: 9px; font-weight: 700;
+  min-width: 16px; height: 16px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 4px; border: 2px solid var(--navy);
+  font-family: 'Poppins', sans-serif;
+}
+.notif-panel {
+  position: absolute; top: calc(var(--safe-top) + 60px);
+  left: 16px; right: 16px; z-index: 50;
+  background: white; border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  border: 1px solid rgba(0,0,0,0.08);
+  overflow: hidden;
+  animation: fadeInDown 0.2s ease;
+}
+@keyframes fadeInDown {
+  from { opacity:0; transform:translateY(-8px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.notif-panel-hdr {
+  padding: 14px 16px; display: flex;
+  justify-content: space-between; align-items: center;
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+}
+.notif-list { max-height: 280px; overflow-y: auto; }
+.notif-item {
+  padding: 12px 16px; display: flex; gap: 12px; align-items: flex-start;
+  border-bottom: 1px solid rgba(0,0,0,0.05); cursor: pointer;
+  transition: background 0.1s;
+}
+.notif-item:last-child { border-bottom: none; }
+.notif-item:active { background: var(--gray-100); }
+.notif-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--teal); flex-shrink: 0; margin-top: 5px;
+}
+.notif-item-text { font-size: 12px; color: var(--text); line-height: 1.45; }
+.notif-item-time { font-size: 10px; color: var(--gray-400); margin-top: 2px; }
+
+/* ══ PROFILE COMING SOON ══ */
+.pr-coming {
+  font-size: 10px; font-weight: 600;
+  color: var(--gray-400); background: var(--gray-100);
+  padding: 3px 8px; border-radius: 10px;
+}
+
+/* ══ PROFILE EDIT MODAL ══ */
+.profile-edit-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); z-index: 400;
+  align-items: flex-end; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.profile-edit-overlay.open { display: flex; }
+.profile-edit-box {
+  background: white; border-radius: 28px 28px 0 0;
+  width: 100%; max-height: 92dvh;
+  overflow-y: auto; padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+.profile-edit-box::-webkit-scrollbar { display: none; }
+.profile-edit-hdr {
+  padding: 16px 20px 12px;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  position: sticky; top: 0; background: white; z-index: 10;
+}
+.profile-edit-body { padding: 16px 20px 24px; }
+.profile-edit-photo {
+  width: 90px; height: 90px; border-radius: 28px;
+  background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px; font-weight: 800; color: white;
+  margin: 0 auto; cursor: pointer; position: relative;
+  border: 3px solid var(--gray-200); overflow: hidden;
+}
+.profile-edit-photo img { width: 100%; height: 100%; object-fit: cover; }
+.profile-edit-photo-btn {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: rgba(0,0,0,0.45); height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.pe-section {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--teal);
+  margin: 18px 0 10px; padding-left: 2px;
+}
+.pe-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+.pe-field label {
+  font-size: 10px; font-weight: 700; color: var(--gray-400);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.pe-field input {
+  width: 100%; padding: 12px 14px; background: var(--gray-100);
+  border: 1.5px solid transparent; border-radius: 14px;
+  font-size: 14px; font-family: 'Poppins', sans-serif;
+  color: var(--text); outline: none; transition: border-color 0.2s, background 0.2s;
+}
+.pe-field input:focus { border-color: var(--teal); background: white; }
+.pe-toggle-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.07);
+  margin-bottom: 16px;
+}
+.pe-toggle { position: relative; display: inline-block; width: 46px; height: 26px; flex-shrink: 0; }
+.pe-toggle input { opacity: 0; width: 0; height: 0; }
+.pe-toggle-slider {
+  position: absolute; inset: 0; background: var(--gray-200);
+  border-radius: 13px; cursor: pointer; transition: background 0.2s;
+}
+.pe-toggle-slider::before {
+  content: ''; position: absolute;
+  width: 20px; height: 20px; background: white;
+  border-radius: 50%; left: 3px; top: 3px;
+  transition: transform 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.pe-toggle input:checked + .pe-toggle-slider { background: var(--teal); }
+.pe-toggle input:checked + .pe-toggle-slider::before { transform: translateX(20px); }
+.pe-save-btn {
+  width: 100%; padding: 15px; background: var(--navy);
+  border: none; border-radius: 16px; color: white;
+  font-size: 15px; font-weight: 700; font-family: 'Poppins', sans-serif;
+  cursor: pointer; margin-top: 8px; transition: opacity 0.15s;
+}
+.pe-save-btn:active { opacity: 0.85; }
+
+/* ══ PROFILE READONLY ROWS ══ */
+.pe-readonly-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+}
+.pe-readonly-label {
+  font-size: 11px; font-weight: 600; color: var(--gray-400);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.pe-readonly-val {
+  font-size: 13px; color: var(--text); font-weight: 500;
+  text-align: right; max-width: 60%;
+  word-break: break-word;
+}
+
+/* ══ SHAARK SCREEN CHIPS FIX ══ */
+#screen-shaark .scw-chips { padding: 0 16px 8px; }
+
+/* ══ NEWS TICKER ══ */
+.news-ticker-wrap {
+  overflow: hidden;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 8px 12px;
+  margin-top: 12px;
+  position: relative;
+}
+.news-ticker-track {
+  display: flex;
+  gap: 0;
+  white-space: nowrap;
+  animation: tickerScroll 18s linear infinite;
+  cursor: pointer;
+}
+.news-ticker-track:hover { animation-play-state: paused; }
+@keyframes tickerScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.news-ticker-item {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 0 28px 0 0;
+  font-size: 10px; color: rgba(255,255,255,0.82);
+  font-weight: 400;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.news-ticker-item::before {
+  content: '·';
+  color: var(--teal);
+  font-size: 16px;
+  margin-right: 4px;
+}
+.news-ticker-item:first-child::before { display: none; }
+.news-ticker-source {
+  font-size: 10px; color: var(--teal);
+  font-weight: 600; flex-shrink: 0;
+  text-transform: uppercase; letter-spacing: 0.4px;
+}
+.news-ticker-loading {
+  font-size: 12px; color: rgba(255,255,255,0.4);
+  font-style: italic;
+}
+
+/* ══ GLOBAL SEARCH ══ */
+.global-search-box {
+  position: absolute;
+  top: calc(var(--safe-top) + 10px);
+  left: 16px; right: 16px;
+  background: rgba(15,24,41,0.97);
+  border: 1px solid rgba(42,157,181,0.4);
+  border-radius: 14px;
+  padding: 10px 14px;
+  display: flex; align-items: center; gap: 10px;
+  z-index: 50;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.global-search-input {
+  flex: 1; background: none; border: none; outline: none;
+  font-size: 14px; color: white;
+  font-family: 'Poppins', sans-serif;
+}
+.global-search-input::placeholder { color: rgba(255,255,255,0.35); }
+.search-results-dropdown {
+  position: absolute;
+  top: calc(100% + 6px); left: 0; right: 0;
+  background: white; border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  overflow: hidden; z-index: 60;
+}
+.search-result-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; cursor: pointer;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  transition: background 0.1s;
+}
+.search-result-item:last-child { border-bottom: none; }
+.search-result-item:active { background: var(--gray-100); }
+.search-result-icon { color: var(--teal); flex-shrink: 0; }
+.search-result-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.search-result-desc { font-size: 11px; color: var(--gray-400); margin-top: 1px; }
+
+
+/* ══ MODALES DE PERFIL (API / SUSCRIPCIÓN / SOPORTE) ══ */
+.prf-modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); z-index: 500;
+  align-items: flex-end; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.prf-modal-overlay.open { display: flex; }
+.prf-modal-box {
+  background: white; border-radius: 28px 28px 0 0;
+  width: 100%; max-height: 88dvh;
+  overflow-y: auto; padding-bottom: env(safe-area-inset-bottom, 16px);
+  animation: slideUp .25s cubic-bezier(.16,1,.3,1);
+}
+@keyframes slideUp { from { transform: translateY(60px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.prf-modal-box::-webkit-scrollbar { display: none; }
+.prf-modal-hdr {
+  padding: 16px 20px 12px;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+  position: sticky; top: 0; background: white; z-index: 10;
+}
+.prf-modal-hdr h3 { font-size: 15px; font-weight: 700; color: var(--text); }
+.prf-modal-close {
+  width: 28px; height: 28px; background: var(--gray-100);
+  border: none; border-radius: 8px; font-size: 15px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  color: var(--gray-600);
+}
+.prf-modal-body { padding: 20px; }
+.prf-section-lbl {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--teal); margin-bottom: 10px;
+}
+.prf-api-input-wrap {
+  position: relative; display: flex; align-items: center;
+  background: var(--gray-100); border: 1.5px solid transparent;
+  border-radius: 14px; transition: border-color 0.2s;
+}
+.prf-api-input-wrap:focus-within { border-color: var(--teal); background: white; }
+.prf-api-input {
+  flex: 1; background: none; border: none; outline: none;
+  padding: 13px 14px; font-size: 14px; font-family: 'Poppins', sans-serif;
+  color: var(--text); letter-spacing: 0.3px;
+}
+.prf-api-toggle {
+  background: none; border: none; padding: 0 14px; cursor: pointer;
+  color: var(--gray-400); font-size: 13px; flex-shrink: 0;
+}
+.prf-api-save-btn {
+  width: 100%; padding: 14px; background: var(--navy);
+  border: none; border-radius: 14px; color: white;
+  font-size: 14px; font-weight: 700; font-family: 'Poppins', sans-serif;
+  cursor: pointer; margin-top: 14px; transition: opacity 0.15s;
+}
+.prf-api-save-btn:active { opacity: 0.85; }
+.prf-api-status {
+  font-size: 12px; margin-top: 10px; padding: 10px 14px;
+  border-radius: 10px; display: none;
+}
+.prf-api-status.ok  { background: rgba(16,185,129,0.1); color: #059669; display: block; }
+.prf-api-status.err { background: rgba(239,68,68,0.1);  color: #dc2626; display: block; }
+.prf-plan-card {
+  background: var(--gray-100); border-radius: 16px;
+  padding: 16px; margin-bottom: 14px;
+  border: 1.5px solid rgba(0,0,0,0.06);
+}
+.prf-plan-name {
+  font-size: 18px; font-weight: 700; color: var(--navy); margin-bottom: 2px;
+}
+.prf-plan-desc { font-size: 12px; color: var(--gray-600); }
+.prf-plan-badge {
+  display: inline-block; background: rgba(42,157,181,0.12);
+  color: var(--teal); font-size: 10px; font-weight: 700;
+  padding: 3px 10px; border-radius: 20px;
+  text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;
+}
+.prf-stripe-btn {
+  width: 100%; padding: 13px; border-radius: 14px;
+  font-size: 14px; font-weight: 600; font-family: 'Poppins', sans-serif;
+  cursor: pointer; border: none; transition: opacity 0.15s; margin-bottom: 10px;
+}
+.prf-stripe-btn.primary { background: var(--navy); color: white; }
+.prf-stripe-btn.secondary {
+  background: none; border: 1.5px solid rgba(0,0,0,0.12);
+  color: var(--gray-600);
+}
+.prf-stripe-btn:active { opacity: 0.8; }
+.prf-coming-note {
+  background: rgba(42,157,181,0.07); border-radius: 12px;
+  padding: 12px 14px; font-size: 12px; color: var(--gray-600);
+  line-height: 1.55; text-align: center; margin-top: 4px;
+}
+.prf-soporte-row {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--gray-100); border-radius: 16px;
+  padding: 16px; margin-bottom: 12px; cursor: pointer;
+  transition: background 0.15s; text-decoration: none;
+}
+.prf-soporte-row:active { background: var(--gray-200); }
+.prf-soporte-icon {
+  width: 44px; height: 44px; border-radius: 14px;
+  background: var(--navy); display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.prf-soporte-text .title { font-size: 14px; font-weight: 600; color: var(--text); }
+.prf-soporte-text .sub   { font-size: 12px; color: var(--gray-400); margin-top: 1px; }
+
+
+</style>
+</head>
+<body>
+
+<!-- ══ BARRA DE CARGA ══ -->
+<div id="top-loader"></div>
+
+<!-- ══ BANNER SIN INTERNET ══ -->
+<div id="offline-banner">
+  <div class="offline-dot"></div>
+  <span id="offline-msg">Sin conexión a internet</span>
+</div>
+
+<div id="app">
+  <div id="screens-container">
+
+    <!-- ══ MÓDULOS (pantalla principal) ══ -->
+    <div class="proto-screen active-screen" id="screen-modules">
+      <!-- Header estilo home -->
+      <div class="home-header" style="position:relative">
+        <div class="greeting-row">
+          <div class="greeting-text">
+            <div class="hello" id="greet-hello">Buenos días</div>
+            <div class="name" id="greet-text">¡Hola!</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <!-- Lupa búsqueda global -->
+            <div class="notif-bell" id="search-btn" onclick="toggleGlobalSearch()" title="Buscar">
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.5" y1="15.5" x2="21" y2="21" stroke-linecap="round"/></svg>
+            </div>
+            <!-- Campana notificaciones -->
+            <div class="notif-bell" id="notif-bell" onclick="toggleNotifications()">
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>
+              <span class="notif-badge" id="notif-count" style="display:none">0</span>
+            </div>
+            <!-- Avatar -->
+            <div class="home-avatar" id="user-avatar" onclick="protoGoTo('profile')">?</div>
+          </div>
+        </div>
+        <!-- Ticker de noticias inmobiliarias -->
+        <div class="news-ticker-wrap">
+          <div class="news-ticker-track" id="news-ticker-track">
+            <span class="news-ticker-loading">Cargando noticias...</span>
+          </div>
+        </div>
+        <!-- Notificaciones dropdown -->
+        <div class="notif-panel" id="notif-panel" style="display:none">
+          <div class="notif-panel-hdr">
+            <span style="font-size:14px;font-weight:600;color:var(--text)">Notificaciones</span>
+            <button onclick="toggleNotifications()" style="background:none;border:none;color:var(--gray-400);font-size:16px;cursor:pointer">✕</button>
+          </div>
+          <div class="notif-list" id="notif-list">
+            <div style="text-align:center;padding:30px;color:var(--gray-400);font-size:13px">Sin notificaciones</div>
+          </div>
+        </div>
+        <!-- Búsqueda global overlay -->
+        <div class="global-search-box" id="global-search-box" style="display:none">
+          <input class="global-search-input" id="global-search-input" type="text" placeholder="Buscar módulo, función..." oninput="doGlobalSearch(this.value)" onkeydown="if(event.key==='Escape')closeGlobalSearch()"/>
+          <button onclick="closeGlobalSearch()" style="background:none;border:none;color:rgba(255,255,255,0.6);font-size:18px;cursor:pointer;padding:4px">✕</button>
+        </div>
+      </div>
+
+      <!-- Módulos -->
+      <div style="padding-bottom:calc(90px + env(safe-area-inset-bottom,0px))">
+        <div class="category-block">
+          <div class="cat-title">Documentos</div>
+          <div class="cat-grid">
+            <div class="cat-module cat-teal" onclick="setPanel('ficha-manual')">
+              <div class="cat-mod-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg></div><div class="cat-mod-name">Fichas técnicas</div>
+            </div>
+            <div class="cat-module cat-teal" onclick="setPanel('ficha')">
+              <div class="cat-mod-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L9.568 3z"/><path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"/></svg></div><div class="cat-mod-name">Fichas EasyBroker</div>
+            </div>
+            <div class="cat-module cat-navy" onclick="setPanel('contratos')">
+              <div class="cat-mod-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg></div><div class="cat-mod-name">Contratos</div>
+            </div>
+          </div>
+        </div>
+        <div class="category-block">
+          <div class="cat-title">Finanzas</div>
+          <div class="cat-grid">
+            <div class="cat-module cat-white" onclick="setPanel('isr')">
+              <div class="cat-mod-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V13.5zm0 2.25h.008v.008H8.25v-.008zm2.498-4.5h.007v.008h-.007v-.008zm0 2.25h.007v.008h-.007V13.5zm0 2.25h.007v.008h-.007v-.008zm2.246-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V13.5zm0 2.25h.008v.008h-.008v-.008zm2.496-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V13.5zM8.25 6h7.5v2.25h-7.5V6zM12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25z"/></svg></div><div class="cat-mod-name">Calculadora ISR</div>
+            </div>
+          </div>
+        </div>
+        <div class="category-block">
+          <div class="cat-title">Propiedades</div>
+          <div class="cat-grid">
+            <div class="cat-module cat-purple" onclick="setPanel('props')">
+              <div class="cat-mod-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg></div><div class="cat-mod-name">Mis Inmuebles</div>
+            </div>
+            <div class="cat-module cat-green" onclick="setPanel('avm')">
+              <div class="cat-mod-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg></div><div class="cat-mod-name">Opinión de Valor</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PERFIL ══ -->
+    <div class="proto-screen" id="screen-profile">
+      <div class="profile-header">
+        <div class="profile-avatar" id="profile-avatar" onclick="openProfileEdit()" style="cursor:pointer;position:relative">
+          <span id="profile-avatar-letter">?</span>
+          <div style="position:absolute;bottom:-4px;right:-4px;width:22px;height:22px;background:var(--teal);border-radius:50%;border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:11px">✏️</div>
+        </div>
+        <div class="profile-name" id="profile-name">—</div>
+        <div class="profile-sub" id="profile-sub">Agente Inmobiliario · Morelia</div>
+        <div class="profile-badge" id="profile-plan">Pro</div>
+      </div>
+      <div style="padding-bottom:calc(90px + env(safe-area-inset-bottom,0px))">
+        <div class="profile-section" style="margin-top:20px">
+          <div class="profile-row" onclick="openProfileEdit()">
+            <div class="pr-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg></div><span class="pr-text">Mi perfil</span><span class="pr-arrow" style="color:var(--teal)">›</span>
+          </div>
+          <div class="profile-row" onclick="openApiModal()">
+            <div class="pr-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"/></svg></div><span class="pr-text">API EasyBroker</span><span class="pr-arrow" style="color:var(--teal)">›</span>
+          </div>
+          <div class="profile-row" onclick="openSuscripcionModal()">
+            <div class="pr-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg></div><span class="pr-text">Suscripción</span><span class="pr-arrow" style="color:var(--teal)">›</span>
+          </div>
+          <div class="profile-row" onclick="openSoporteModal()">
+            <div class="pr-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/></svg></div><span class="pr-text">Soporte</span><span class="pr-arrow" style="color:var(--teal)">›</span>
+          </div>
+        </div>
+        <!-- ADMIN SECTION — solo visible si plan === 'admin' -->
+        <div id="admin-lbl" style="display:none;padding:14px 20px 6px;font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px">Administración</div>
+        <div class="profile-section" id="admin-link-btn" style="display:none">
+          <div class="profile-row" onclick="window.location.href='admin.html'">
+            <div class="pr-icon" style="background:rgba(239,68,68,0.08)"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#e05252" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg></div>
+            <span class="pr-text" style="font-weight:700">Panel de administrador</span>
+            <span class="pr-arrow" style="color:var(--teal)">›</span>
+          </div>
+        </div>
+        <div class="profile-section">
+          <div class="profile-row" onclick="logout()">
+            <div class="pr-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#e05252" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/></svg></div><span class="pr-text" style="color:#e05252">Cerrar sesión</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Mi Perfil -->
+    <div class="profile-edit-overlay" id="profile-edit-modal">
+      <div class="profile-edit-box">
+        <div class="profile-edit-hdr">
+          <span style="font-size:15px;font-weight:600">Mi perfil</span>
+          <button onclick="closeProfileEdit()" style="background:var(--gray-100);border:none;width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:14px">✕</button>
+        </div>
+        <div class="profile-edit-body">
+          <!-- Foto -->
+          <div style="text-align:center;margin-bottom:24px">
+            <div class="profile-edit-photo" id="profile-edit-photo" onclick="triggerPhotoUpload()">
+              <span id="profile-edit-photo-letter">?</span>
+              <div class="profile-edit-photo-btn">📷 Cambiar foto</div>
+            </div>
+            <input type="file" id="photo-upload-input" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)"/>
+            <div style="font-size:11px;color:var(--gray-400);margin-top:8px">Toca la foto para cambiarla</div>
+            <button class="pe-save-btn" id="pe-photo-save-btn" onclick="savePhotoOnly()" style="display:none;margin-top:12px;padding:10px;font-size:13px">Guardar foto</button>
+          </div>
+          <!-- Datos de solo lectura -->
+          <div class="pe-section">Tus datos</div>
+          <div class="pe-readonly-row">
+            <div class="pe-readonly-label">Nombre</div>
+            <div class="pe-readonly-val" id="pe-ro-nombre">—</div>
+          </div>
+          <div class="pe-readonly-row">
+            <div class="pe-readonly-label">Correo</div>
+            <div class="pe-readonly-val" id="pe-ro-email">—</div>
+          </div>
+          <div class="pe-readonly-row" style="border-bottom:none">
+            <div class="pe-readonly-label">Teléfono</div>
+            <div class="pe-readonly-val" id="pe-ro-telefono">—</div>
+          </div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:10px;text-align:center">Para actualizar tus datos contacta al administrador</div>
+        </div>
+      </div>
+    </div>
+
+
+
+    <!-- ══ MOD PANELS ══ -->
+    <div id="panel-isr" class="mod-panel">
+      <div class="panel-topbar"><button class="panel-back" onclick="showDashboard()">←</button><span class="panel-title">Calculadora ISR</span></div>
+      <div class="panel-scroll">
+        <div id="isr-form">
+          <div class="isr-hdr">
+            <div class="isr-hdr-title">Calculadora ISR <span class="isr-badge">Art. 119–128 + 152 LISR</span></div>
+            <div class="isr-hdr-sub">Ingresa los datos de la operación. Los campos de deducciones son opcionales pero mejoran la precisión.</div>
+          </div>
+          <div class="isr-card">
+            <div class="isr-card-lbl">Tipo de operación</div>
+            <div class="isr-row1"><div class="isr-f"><label>¿Qué se está vendiendo?</label><select id="f-tipo" onchange="onTipoChange()"><option value="casa">Casa habitación o departamento</option><option value="terreno">Terreno</option><option value="comercial">Inmueble comercial</option></select></div></div>
+            <div id="iva-note" class="isr-alert-warn" style="display:none">⚠️ <strong>Nota IVA:</strong> La venta de inmuebles comerciales podría causar IVA (16%). Consulta con el notario (art. 9 LIVA).</div>
+          </div>
+          <div class="isr-card">
+            <div class="isr-card-lbl">Precio de venta</div>
+            <div class="isr-row1"><div class="isr-f"><label>Precio de venta (MXN)</label><input type="text" id="f-venta" placeholder="Ej. $3,500,000" oninput="propFmtMoney(this)" autocomplete="off"/></div></div>
+            <div class="isr-row2">
+              <div class="isr-f"><label>Mes de venta</label><select id="f-mes-v"><option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option><option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11" selected>Noviembre</option><option value="12">Diciembre</option></select></div>
+              <div class="isr-f"><label>Año de venta</label><input type="number" id="f-anio-v" value="2026" min="1990" max="2030"/></div>
+            </div>
+          </div>
+          <div class="isr-card">
+            <div class="isr-card-lbl">Costo de adquisición del vendedor</div>
+            <div class="isr-row1"><div class="isr-f"><label>¿Cuánto pagó el vendedor cuando compró? (MXN)</label><input type="text" id="f-compra" placeholder="Ej. $1,800,000" oninput="propFmtMoney(this)" autocomplete="off"/><span class="isr-hint" id="compra-note"></span></div></div>
+            <div class="isr-row2">
+              <div class="isr-f"><label>Mes de adquisición</label><select id="f-mes-c"><option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option><option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select></div>
+              <div class="isr-f"><label>Año de adquisición</label><input type="number" id="f-anio-c" placeholder="Ej. 2005" min="1950" max="2025" onchange="onAnioChange()"/></div>
+            </div>
+            <div id="alert-pre1981" class="isr-alert-warn" style="display:none">⚠️ <strong>Anterior a 1981:</strong> El notario usará avalúo referencial. Se aplica INPC desde enero de 1981.</div>
+            <div id="alert-pre1990" class="isr-alert-info" style="display:none"><strong>1981–1989:</strong> Se aplica reconversión monetaria (÷1,000 por eliminación de tres ceros en 1993).</div>
+          </div>
+          <div class="isr-card" id="sec-terreno-const">
+            <div class="isr-card-lbl">Terreno / Construcción <span class="isr-opt">art. 124 LISR</span></div>
+            <div class="isr-hdr-sub" style="margin-bottom:10px;font-size:11px;color:var(--mut)">La construcción se deprecia 3% anual (máx 18 años = 54%). Por defecto 20% terreno / 80% construcción.</div>
+            <div class="isr-row2">
+              <div class="isr-f"><label>% Terreno</label><input type="number" id="f-pct-terreno" value="20" min="0" max="100" oninput="onPctTerreno(this)"/></div>
+              <div class="isr-f"><label>% Construcción</label><input type="number" id="f-pct-const" value="80" min="0" max="100" oninput="onPctConst(this)"/></div>
+            </div>
+            <span class="isr-hint" id="deprec-note"></span>
+          </div>
+          <div class="isr-card">
+            <div class="isr-card-lbl">Deducciones <span class="isr-opt">opcionales</span></div>
+            <div class="isr-row1"><div class="isr-f"><label>Mejoras y ampliaciones (MXN)</label><input type="text" id="f-mej" placeholder="Ej. $200,000" oninput="propFmtMoney(this)" autocomplete="off"/></div></div>
+            <div class="isr-row1"><div class="isr-f"><label>Escrituración cuando adquirió (MXN)</label><input type="text" id="f-esc" placeholder="Ej. $45,000" oninput="propFmtMoney(this)" autocomplete="off"/></div></div>
+            <div class="isr-row1"><div class="isr-f"><label>Comisión del agente en esta venta (MXN)</label><input type="text" id="f-com" placeholder="Ej. $105,000" oninput="propFmtMoney(this)" autocomplete="off"/></div></div>
+          </div>
+          <div class="isr-card" id="sec-casa">
+            <div class="isr-card-lbl">Exención — Casa habitación</div>
+            <div class="isr-row2">
+              <div class="isr-f"><label>¿Es la casa habitación principal del vendedor?</label><select id="f-pri"><option value="si">Sí</option><option value="no">No</option><option value="nose">No estoy seguro</option></select></div>
+              <div class="isr-f"><label>¿Usó esta exención en los últimos 3 años?</label><select id="f-exp"><option value="no">No</option><option value="si">Sí</option><option value="nose">No lo sé</option></select></div>
+            </div>
+          </div>
+          <div id="inpc-status" class="isr-inpc-status" style="display:none">
+            <div id="inpc-loader" style="display:flex;align-items:center;gap:8px;color:var(--mut)"><div class="isr-spin"></div>Consultando INPC en Banxico…</div>
+            <div id="inpc-ok" style="display:none;color:var(--teal2)">✓ INPC en tiempo real desde Banxico</div>
+            <div id="inpc-err" style="display:none;color:var(--amber2)">⚠️ Sin conexión a Banxico — usando datos locales</div>
+          </div>
+          <button id="calc-btn" class="isr-calc-btn" onclick="calcISR()">
+            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            Calcular ISR
+          </button>
+        </div>
+        <div id="res" style="display:none">
+          <div class="res-topbar">
+            <button class="res-back-btn" onclick="resetISR()">← Nuevo cálculo</button>
+            <div style="display:flex;align-items:center;gap:8px">
+              <button class="res-back-btn" onclick="descargarPDF()" style="border-color:var(--violet);color:var(--violet2)">
+                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                PDF
+              </button>
+              <span class="res-tipo-lbl" id="res-tipo"></span>
+            </div>
+          </div>
+          <div id="res-cards"></div>
+          <div id="res-inpc-row" class="res-inpc-row" style="display:none">
+            <div class="res-inpc-cell"><div class="res-inpc-lbl">INPC adquisición</div><div class="res-inpc-val" id="res-inpc-adq">—</div></div>
+            <div class="res-inpc-arr">→</div>
+            <div class="res-inpc-cell"><div class="res-inpc-lbl">INPC mes enajenación</div><div class="res-inpc-val" id="res-inpc-venta">—</div></div>
+            <div class="res-inpc-arr">=</div>
+            <div class="res-inpc-cell hl"><div class="res-inpc-lbl">Factor</div><div class="res-inpc-val" id="res-factor">—</div></div>
+          </div>
+          <div id="res-bkdn" class="res-bkdn"></div>
+          <div id="res-nota" class="res-nota" style="display:none"></div>
+          <div id="ai-box" class="ai-box" style="display:none">
+            <div class="ai-lbl">Análisis de Brokr</div>
+            <div id="ai-txt"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="panel-props" class="mod-panel" style="flex-direction:column">
+      <div class="panel-topbar"><button class="panel-back" onclick="showDashboard()">←</button><span class="panel-title">Mis Inmuebles</span></div>
+      <div class="props-toolbar">
+        <div class="props-search-wrap">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
+          <input id="props-search" type="text" placeholder="Buscar por colonia, tipo, precio..." oninput="filterProps()"/>
+        </div>
+        <select id="props-filter-op" onchange="filterProps()">
+          <option value="">Todas operaciones</option>
+          <option value="venta">Venta</option>
+          <option value="renta">Renta</option>
+        </select>
+        <select id="props-filter-tipo" onchange="filterProps()">
+          <option value="">Todos los tipos</option>
+          <option value="casa">Casa</option>
+          <option value="departamento">Departamento</option>
+          <option value="terreno">Terreno</option>
+          <option value="local">Local comercial</option>
+          <option value="oficina">Oficina</option>
+          <option value="bodega">Bodega</option>
+        </select>
+        <select id="props-filter-est" onchange="filterProps()">
+          <option value="">Todos los estatus</option>
+          <option value="activa">Activas</option>
+          <option value="vendida">Vendidas</option>
+          <option value="rentada">Rentadas</option>
+          <option value="suspendida">Suspendidas</option>
+        </select>
+        <button class="props-new-btn" onclick="openPropForm(null)">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.5"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
+          Nueva propiedad
+        </button>
+      </div>
+      <div id="props-grid" class="props-grid">
+        <div class="props-empty">Cargando propiedades...</div>
+      </div>
+    </div>
+    <div id="panel-ficha-manual" class="mod-panel" style="flex-direction:column">
+      <div class="panel-topbar"><button class="panel-back" onclick="showDashboard()">←</button><span class="panel-title">Ficha Técnica Manual</span></div>
+      <iframe src="ficha-manual.html" class="iframe-panel" style="flex:1"></iframe>
+    </div>
+    <div id="panel-ficha" class="mod-panel" style="flex-direction:column">
+      <div class="panel-topbar"><button class="panel-back" onclick="showDashboard()">←</button><span class="panel-title">Ficha EasyBroker</span></div>
+      <iframe src="ficha.html" class="iframe-panel" style="flex:1"></iframe>
+    </div>
+    <div id="panel-contratos" class="mod-panel" style="flex-direction:column">
+      <div class="panel-topbar"><button class="panel-back" onclick="showDashboard()">←</button><span class="panel-title">Contratos</span></div>
+      <iframe src="contratos.html" class="iframe-panel" style="flex:1"></iframe>
+    </div>
+    <div id="panel-avm" class="mod-panel" style="flex-direction:column">
+      <div class="panel-topbar"><button class="panel-back" onclick="showDashboard()">←</button><span class="panel-title">Opinión de Valor</span></div>
+      <iframe src="avm.html" class="iframe-panel" style="flex:1"></iframe>
+    </div>
+
+  </div><!-- /screens-container -->
+</div><!-- /app -->
+
+<!-- ══ CLOSE BAR ══ -->
+<div id="close-bar"><button onclick="showDashboard()" title="Cerrar">✕</button></div>
+
+<!-- ══ PROPERTY MODALS ══ -->
+<div id="prop-modal" class="prop-modal-overlay" onclick="closePropModal(event)">
+  <div class="prop-modal-box" onclick="event.stopPropagation()">
+    <div class="prop-modal-hdr">
+      <h3 id="prop-modal-title">Nueva propiedad</h3>
+      <button class="prop-modal-close" onclick="closePropModal()">✕</button>
+    </div>
+    <div class="prop-modal-body">
+      <form id="prop-form" onsubmit="saveProp(event)">
+        <div class="pf-section">Información básica</div>
+        <div class="pf-row"><div class="pf-field full"><label>Título *</label><input type="text" name="titulo" placeholder="Casa en venta en Las Palmas" required/></div></div>
+        <div class="pf-row cols-3">
+          <div class="pf-field"><label>Tipo *</label><select name="tipo" required><option value="">Seleccionar</option><option value="casa">Casa</option><option value="departamento">Departamento</option><option value="terreno">Terreno</option><option value="local">Local comercial</option><option value="oficina">Oficina</option><option value="bodega">Bodega</option></select></div>
+          <div class="pf-field"><label>Operación *</label><select name="operacion" required><option value="">Seleccionar</option><option value="venta">Venta</option><option value="renta">Renta</option></select></div>
+          <div class="pf-field"><label>Estatus</label><select name="estatus"><option value="activa">Activa</option><option value="vendida">Vendida</option><option value="rentada">Rentada</option><option value="suspendida">Suspendida</option></select></div>
+        </div>
+        <div class="pf-row cols-2">
+          <div class="pf-field"><label>Precio *</label><input type="text" name="precio" id="prop-precio" placeholder="$2,500,000" oninput="propFmtMoney(this)" autocomplete="off" required/></div>
+          <div class="pf-field"><label>Moneda</label><select name="moneda"><option value="MXN">MXN</option><option value="USD">USD</option></select></div>
+        </div>
+        <div class="pf-section">Ubicación</div>
+        <div class="pf-row"><div class="pf-field full"><label>Calle y número</label><input type="text" name="calle" placeholder="Av. Madero 123"/></div></div>
+        <div class="pf-row cols-3">
+          <div class="pf-field"><label>Colonia *</label><input type="text" name="colonia" placeholder="Las Palmas" required/></div>
+          <div class="pf-field"><label>Ciudad</label><input type="text" name="ciudad" value="Morelia"/></div>
+          <div class="pf-field"><label>C.P.</label><input type="text" name="cp" placeholder="58070"/></div>
+        </div>
+        <div class="pf-section">Características</div>
+        <div class="pf-row cols-3">
+          <div class="pf-field"><label>M² construcción</label><input type="number" name="m2_construccion" placeholder="180" min="0"/></div>
+          <div class="pf-field"><label>M² terreno</label><input type="number" name="m2_terreno" placeholder="220" min="0"/></div>
+          <div class="pf-field"><label>Recámaras</label><input type="number" name="recamaras" placeholder="3" min="0"/></div>
+        </div>
+        <div class="pf-row cols-3">
+          <div class="pf-field"><label>Baños</label><input type="number" name="banos" placeholder="2.5" min="0" step="0.5"/></div>
+          <div class="pf-field"><label>Estacionamientos</label><input type="number" name="estacionamientos" placeholder="2" min="0"/></div>
+          <div class="pf-field"><label>Año construcción</label><input type="number" name="anio_construccion" placeholder="2010" min="1900" max="2030"/></div>
+        </div>
+        <div class="pf-section">Descripción</div>
+        <div class="pf-row"><div class="pf-field full"><label>Descripción comercial</label><textarea name="descripcion" rows="3" placeholder="Describe la propiedad..."></textarea></div></div>
+        <div class="pf-section">Fotos</div>
+        <div class="pf-row"><div class="pf-field full">
+          <label>Subir fotos</label>
+          <input type="file" id="fotos-upload" accept="image/*" multiple style="padding:8px;border:2px dashed var(--bd2);border-radius:var(--r2);background:var(--gray-100);cursor:pointer;font-size:12px;width:100%"/>
+          <div id="fotos-preview"></div>
+          <div id="fotos-progress" style="font-size:11px;color:var(--mut);margin-top:4px"></div>
+          <input type="hidden" name="fotos_raw" id="fotos-raw-hidden"/>
+        </div></div>
+        <div class="pf-row"><div class="pf-field full"><label>Notas internas</label><textarea name="notas" rows="2" placeholder="Notas privadas sobre esta propiedad..."></textarea></div></div>
+        <input type="hidden" name="prop_id" value=""/>
+        <div class="pf-actions">
+          <button type="button" onclick="closePropModal()" class="pf-cancel-btn">Cancelar</button>
+          <button type="submit" class="pf-save-btn">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.5"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
+            Guardar propiedad
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="prop-detail-modal" class="prop-modal-overlay" onclick="closePropDetail(event)">
+  <div class="prop-modal-box prop-detail-box" onclick="event.stopPropagation()">
+    <div class="prop-modal-hdr">
+      <h3 id="detail-title">Detalle</h3>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="pf-save-btn" style="padding:6px 14px;font-size:12px" id="detail-edit-btn">✏️ Editar</button>
+        <button class="prop-modal-close" onclick="closePropDetail()">✕</button>
+      </div>
+    </div>
+    <div class="prop-modal-body" id="detail-body"></div>
+  </div>
+</div>
+
+<!-- ══ SHAARK POPUP ══ -->
+<div class="shaark-popup" id="shaark-popup"><div class="shaark-popup-inner">
+    <div class="scw-header">
+      <div class="scw-avatar" style="background:var(--navy);border:1.5px solid rgba(42,157,181,0.4);overflow:hidden"><img src="icon-192.png" style="width:100%;height:100%;object-fit:cover;" alt="Shaark"/></div>
+      <div>
+        <div class="scw-name">Shaark</div>
+        <div class="scw-status">● En línea</div>
+      </div>
+      <button class="scw-close" onclick="toggleShaarkPopup()">✕</button>
+    </div>
+    <div class="scw-messages" id="scw-msgs">
+      <div class="scw-bubble bot">¡Hola! Soy Shaark, tan inteligente como un 🦈. ¿Qué puedo hacer por ti?</div>
+    </div>
+    <div class="scw-chips" id="scw-chips">
+      <div class="scw-chip" onclick="shaarkChip('Generar un contrato')">📄 Contratos</div>
+      <div class="scw-chip" onclick="shaarkChip('Calcular ISR')">💰 Calc. ISR</div>
+      <div class="scw-chip" onclick="shaarkChip('Crear ficha técnica')">🏷️ Fichas téc.</div>
+      <div class="scw-chip" onclick="shaarkChip('Ver mis propiedades')">🏠 Mis inmuebles</div>
+    </div>
+    <div class="scw-input-row">
+      <button id="scw-mic-btn" class="scw-mic" onclick="toggleScwVoice()" title="Hablar">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"/></svg>
+      </button>
+      <input class="scw-input" id="scw-input" type="text" placeholder="Pregunta algo..." onkeydown="if(event.key==='Enter') shaarkFabSend()"/>
+      <button class="scw-send" onclick="shaarkFabSend()">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BOTTOM NAV ══ -->
+<div class="proto-nav">
+  <div class="proto-nav-item active" data-screen="modules" onclick="protoGoTo('modules')">
+    <div class="proto-nav-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg></div>
+  </div>
+  <div class="proto-nav-item" id="nav-shaark-btn"
+    onclick="toggleShaarkPopup()"
+    ontouchstart="navShaarkTouchStart(event)"
+    ontouchend="navShaarkTouchEnd(event)"
+    ontouchcancel="navShaarkTouchEnd(event)">
+    <div class="proto-nav-shaark"><img src="icon-192.png" alt="Shaark" draggable="false" oncontextmenu="return false" style="-webkit-user-select:none;user-select:none;pointer-events:none"/></div>
+  </div>
+  <div class="proto-nav-item" data-screen="profile" onclick="protoGoTo('profile')">
+    <div class="proto-nav-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg></div>
+  </div>
+</div>
+
+<script>
+// ══ PROTO NAV (home / modules / profile / shaark) ══
+let protoScreen = 'home';
+
+function protoGoTo(name) {
+  document.querySelectorAll('.proto-screen').forEach(s => s.classList.remove('active-screen'));
+  document.querySelectorAll('.proto-nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.mod-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('close-bar').style.display = 'none';
+  notifOpen = false;
+  const np = document.getElementById('notif-panel');
+  if (np) np.style.display = 'none';
+  // Close shaark popup
+  closeShaarkWindow();
+  protoScreen = name;
+  const screen = document.getElementById('screen-' + name);
+  if (screen) screen.classList.add('active-screen');
+  document.querySelector('.proto-nav-item[data-screen="' + name + '"]')?.classList.add('active');
+}
+
+// ══ SHAARK FAB ══
+let shaarkOpen = false;
+let shaarkMsgs = []; // keep conversation history
+
+function toggleShaarkWindow() {
+  shaarkOpen = !shaarkOpen;
+  const win = document.getElementById('shaark-window');
+  const btn = document.getElementById('shaark-fab-btn');
+  if (shaarkOpen) {
+    win.classList.add('open'); btn.classList.add('open');
+    setTimeout(() => {
+      const m = document.getElementById('scw-msgs');
+      if (m) m.scrollTop = m.scrollHeight;
+      document.getElementById('scw-input')?.focus();
+    }, 50);
+  } else {
+    win.classList.remove('open'); btn.classList.remove('open');
+  }
+}
+
+function closeShaarkWindow() {
+  shaarkOpen = false;
+  document.getElementById('shaark-window').classList.remove('open');
+  document.getElementById('shaark-fab-btn').classList.remove('open');
+}
+
+function shaarkFabSend() {
+  const input = document.getElementById('scw-input');
+  const text = (input.value || '').trim();
+  if (!text) return;
+  addScwBubble(text, 'user');
+  input.value = '';
+  document.getElementById('scw-chips').style.display = 'none';
+  shaarkMsgs.push({role:'user', content:text});
+  shaarkFabFetch(text);
+}
+
+function shaarkChip(text) {
+  addScwBubble(text, 'user');
+  document.getElementById('scw-chips').style.display = 'none';
+  shaarkMsgs.push({role:'user', content:text});
+  shaarkFabFetch(text);
+}
+
+function addScwBubble(text, type) {
+  const msgs = document.getElementById('scw-msgs');
+  const div = document.createElement('div');
+  div.className = 'scw-bubble ' + type;
+  if(type === 'bot'){
+    const ico = document.createElement('img');
+    ico.src = 'icon-192.png';
+    ico.style.cssText = 'width:14px;height:14px;object-fit:contain;margin-right:5px;vertical-align:middle;opacity:0.7;';
+    div.appendChild(ico);
+    div.appendChild(document.createTextNode(text));
+  } else {
+    div.textContent = text;
+  }
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+async function shaarkFabFetch(text) {
+  const msgs = document.getElementById('scw-msgs');
+  // Cada llamada crea su propia burbuja — sin ID para no reutilizar
+  const typing = document.createElement('div');
+  typing.className = 'scw-bubble bot';
+  typing.textContent = '...';
+  msgs.appendChild(typing);
+  msgs.scrollTop = msgs.scrollHeight;
+  try {
+    const r = await fetch('https://brokrebapi-production.up.railway.app/chat-claude', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ max_tokens: 600, messages: shaarkMsgs })
+    });
+    const data = await r.json();
+    if(!r.ok){
+      typing.textContent = '⚠️ ' + (data.detail || 'Error del servidor.');
+      return;
+    }
+    const reply = data.choices?.[0]?.message?.content;
+    if(!reply){
+      typing.textContent = '⚠️ Respuesta vacía. Intenta de nuevo.';
+      return;
+    }
+    const accionRe = /\[ACCION\](.*?)\[\/ACCION\]/gs;
+    let accionMatch;
+    while((accionMatch = accionRe.exec(reply)) !== null) {
+      try {
+        const ac = JSON.parse(accionMatch[1].trim());
+        if(ac.tipo === 'navegar' && ac.modulo) setPanel(ac.modulo);
+        if(ac.tipo === 'llenar_isr') llenarISR(ac);
+      } catch(e){}
+    }
+    const clean = reply.replace(/\[ACCION\].*?\[\/ACCION\]/gs,'').trim();
+    shaarkMsgs.push({role:'assistant', content:clean});
+    typing.textContent = clean;
+    if(window._scwLastWasVoice){ speak(clean); window._scwLastWasVoice = false; }
+  } catch(e) {
+    typing.textContent = '⚠️ Sin conexión. Revisa tu internet.';
+  }
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+// Voz para el popup de Shaark — versión robusta
+let scwRecognition = null, scwListening = false, scwVoiceTimeout = null;
+
+function toggleScwVoice(){
+  if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
+    alert('Usa Chrome para activar la voz.'); return;
+  }
+  if(scwListening){ stopScwVoice(); return; }
+  startScwVoice();
+}
+
+function startScwVoice(){
+  if(scwListening) return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  try { scwRecognition = new SR(); } catch(e){ return; }
+  scwRecognition.lang = 'es-MX';
+  scwRecognition.continuous = false;
+  scwRecognition.interimResults = true;
+  const btn = document.getElementById('scw-mic-btn');
+  const inp = document.getElementById('scw-input');
+  scwListening = true;
+  if(btn) btn.classList.add('listening');
+  if(inp){ inp.placeholder = '🎙 Escuchando…'; inp.value = ''; }
+  // Timeout de seguridad: si en 10s no pasa nada, cancela
+  scwVoiceTimeout = setTimeout(() => stopScwVoice(), 10000);
+  scwRecognition.onresult = (e) => {
+    clearTimeout(scwVoiceTimeout);
+    let final='', interim='';
+    for(let i=0; i<e.results.length; i++){
+      if(e.results[i].isFinal) final += e.results[i][0].transcript;
+      else interim += e.results[i][0].transcript;
+    }
+    if(inp) inp.value = (final || interim).trim();
+  };
+  scwRecognition.onerror = (e) => {
+    clearTimeout(scwVoiceTimeout);
+    stopScwVoice();
+  };
+  scwRecognition.onend = () => {
+    clearTimeout(scwVoiceTimeout);
+    const txt = inp ? inp.value.trim() : '';
+    const wasListening = scwListening;
+    stopScwVoice();
+    if(wasListening && txt){
+      window._scwLastWasVoice = true;
+      setTimeout(() => shaarkFabSend(), 100);
+    }
+  };
+  try{ scwRecognition.start(); } catch(e){ stopScwVoice(); }
+}
+
+function stopScwVoice(){
+  clearTimeout(scwVoiceTimeout);
+  scwListening = false;
+  const btn = document.getElementById('scw-mic-btn');
+  if(btn) btn.classList.remove('listening');
+  if(scwRecognition){
+    try{ scwRecognition.abort(); } catch(e){}
+    scwRecognition = null;
+  }
+  const inp = document.getElementById('scw-input');
+  if(inp && inp.placeholder === '🎙 Escuchando…') inp.placeholder = 'Pregunta algo...';
+}
+
+// ── Push-to-talk en el botón de nav Shaark ──
+let _navPttTimer = null, _navPttActive = false;
+
+function navShaarkTouchStart(e){
+  e.preventDefault(); // evita selección de texto y menús desde el primer toque
+  _navPttActive = false;
+  _navPttTimer = setTimeout(() => {
+    _navPttActive = true;
+    if(!shaarkPopupOpen) toggleShaarkPopup();
+    setTimeout(() => startScwVoice(), 200);
+    const btn = document.getElementById('nav-shaark-btn');
+    if(btn) btn.style.opacity = '0.6';
+  }, 350);
+}
+
+function navShaarkTouchEnd(e){
+  e.preventDefault();
+  e.stopPropagation();
+  clearTimeout(_navPttTimer);
+  const btn = document.getElementById('nav-shaark-btn');
+  if(btn) btn.style.opacity = '';
+  if(_navPttActive){
+    _navPttActive = false;
+    // stop() suave: deja que onend procese la transcripción final
+    if(scwRecognition){
+      try{ scwRecognition.stop(); } catch(err){}
+    }
+  } else {
+    // Toque corto: abrir/cerrar popup
+    toggleShaarkPopup();
+  }
+}
+
+// Pre-llenar calculadora ISR desde Shaark y calcular automáticamente
+function llenarISR(ac){
+  setPanel('isr');
+  setTimeout(() => {
+    try {
+      // Precio de venta
+      if(ac.precio_venta){
+        const el = document.getElementById('f-venta');
+        if(el){ el.value = '$' + Number(ac.precio_venta).toLocaleString('es-MX'); }
+      }
+      // Precio de compra
+      if(ac.precio_compra){
+        const el = document.getElementById('f-compra');
+        if(el){ el.value = '$' + Number(ac.precio_compra).toLocaleString('es-MX'); }
+      }
+      // Año de venta (default año actual)
+      const anioVenta = ac.anio_venta || new Date().getFullYear();
+      const elAnioV = document.getElementById('f-anio-v');
+      if(elAnioV) elAnioV.value = anioVenta;
+      // Mes de venta (default mes actual)
+      if(ac.mes_venta){
+        const elMesV = document.getElementById('f-mes-v');
+        if(elMesV) elMesV.value = String(ac.mes_venta).padStart(2,'0');
+      }
+      // Año de compra
+      if(ac.anio_compra){
+        const elAnioC = document.getElementById('f-anio-c');
+        if(elAnioC) elAnioC.value = ac.anio_compra;
+      }
+      // Mes de compra
+      if(ac.mes_compra){
+        const elMesC = document.getElementById('f-mes-c');
+        if(elMesC) elMesC.value = String(ac.mes_compra).padStart(2,'0');
+      }
+      // Tipo de inmueble
+      if(ac.inmueble){
+        const elTipo = document.getElementById('f-tipo');
+        if(elTipo) elTipo.value = ac.inmueble;
+        if(typeof onTipoChange === 'function') onTipoChange();
+      }
+      // Exención casa habitación (solo aplica a casas)
+      if(ac.exencion){
+        const elExp = document.getElementById('f-exp');
+        if(elExp) elExp.value = ac.exencion; // no | si | nose
+      }
+      // Mejoras, escrituración, comisión
+      if(ac.mejoras){
+        const el = document.getElementById('f-mej');
+        if(el) el.value = '$' + Number(ac.mejoras).toLocaleString('es-MX');
+      }
+      if(ac.escrituracion){
+        const el = document.getElementById('f-esc');
+        if(el) el.value = '$' + Number(ac.escrituracion).toLocaleString('es-MX');
+      }
+      if(ac.comision){
+        const el = document.getElementById('f-com');
+        if(el) el.value = '$' + Number(ac.comision).toLocaleString('es-MX');
+      }
+      // Calcular automáticamente
+      if(typeof calcISR === 'function') calcISR();
+      // Descargar PDF automáticamente después de que el cálculo renderice
+      setTimeout(() => {
+        if(typeof descargarPDF === 'function' && _isrData) descargarPDF();
+      }, 800);
+    } catch(e){ console.error('llenarISR error:', e); }
+  }, 450);
+}
+
+// ══ MAIN APP LOGIC (original) ══
+// ══════════════════════════════════════════
+// PANEL NAVIGATION
+// ══════════════════════════════════════════
+const PANEL_MAP = {
+  'isr':          'panel-isr',
+  'props':        'panel-props',
+  'ficha-manual': 'panel-ficha-manual',
+  'ficha':        'panel-ficha',
+  'contratos':    'panel-contratos',
+  'avm':          'panel-avm',
+};
+
+function setPanel(name) {
+  document.getElementById('screen-modules').classList.remove('active-screen');
+  document.querySelectorAll('.mod-panel').forEach(p => p.classList.remove('active'));
+  const pid = PANEL_MAP[name];
+  if(pid){
+    const el = document.getElementById(pid);
+    if(el) el.classList.add('active');
+  }
+  if(name === 'props') loadProps();
+  document.getElementById('close-bar').style.display = 'block';
+}
+
+function showDashboard() {
+  document.querySelectorAll('.mod-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.proto-screen').forEach(s => s.classList.remove('active-screen'));
+  document.getElementById('screen-modules')?.classList.add('active-screen');
+  document.querySelectorAll('.proto-nav-item').forEach(t => t.classList.remove('active'));
+  document.getElementById('close-bar').style.display = 'none';
+}
+
+function goISR()  { setPanel('isr'); }
+function goProps(){ setPanel('props'); }
+
+// ══════════════════════════════════════════
+// PROFILE DRAWER
+// ══════════════════════════════════════════
+let drawerOpen = false;
+
+function openDrawer() {
+  drawerOpen = true;
+  document.getElementById('profile-drawer')?.classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('show');
+}
+function closeDrawer() {
+  drawerOpen = false;
+  document.getElementById('profile-drawer')?.classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('show');
+}
+function toggleDrawer() {
+  if(drawerOpen) closeDrawer(); else openDrawer();
+}
+
+// Desktop: hover on drawer edge opens it, moving away closes it
+const drawerEl = document.getElementById('profile-drawer');
+if(drawerEl) drawerEl.addEventListener('mouseleave', (e) => {
+  if(!drawerOpen) closeDrawer();
+});
+
+// ══════════════════════════════════════════
+// CHAT FLOAT
+// ══════════════════════════════════════════
+function toggleChatFloat(){ toggleShaarkWindow(); }
+function closeChatFloat(){ closeShaarkWindow(); }
+
+// ══════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════
+const SB_URL_AUTH = 'https://urtgysmtnvoqaljuhntz.supabase.co';
+const SB_KEY_AUTH = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
+
+let currentUser = null;
+let userProfile = null;
+
+async function authInit(){
+  // Renovar token si expiró pero hay refresh_token en localStorage
+  let token = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+  const refresh = localStorage.getItem('sb_refresh');
+  if(!token && refresh){
+    try {
+      const rr = await fetch(`${SB_URL_AUTH}/auth/v1/token?grant_type=refresh_token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY_AUTH },
+        body: JSON.stringify({ refresh_token: refresh })
+      });
+      const rd = await rr.json();
+      if(rd.access_token){
+        token = rd.access_token;
+        localStorage.setItem('sb_token', rd.access_token);
+        if(rd.refresh_token) localStorage.setItem('sb_refresh', rd.refresh_token);
+        localStorage.setItem('sb_user', JSON.stringify(rd.user));
+        sessionStorage.setItem('sb_token', rd.access_token);
+        sessionStorage.setItem('sb_user', JSON.stringify(rd.user));
+      }
+    } catch(e){}
+  }
+  if(!token){ window.location.href = 'login.html'; return; }
+  const user = JSON.parse(localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}');
+  if(!user.id){ window.location.href = 'login.html'; return; }
+  try{
+    const r = await fetch(`${SB_URL_AUTH}/rest/v1/usuarios?id=eq.${user.id}&select=*`, {
+      headers:{ 'apikey': SB_KEY_AUTH, 'Authorization': `Bearer ${token}` }
+    });
+    const data = await r.json();
+    if(!data.length || data[0].activo === false){
+      const _mic1 = localStorage.getItem('mic_granted');
+      localStorage.clear();
+      sessionStorage.clear();
+      if(_mic1) localStorage.setItem('mic_granted', _mic1);
+      window.location.href = 'login.html';
+      return;
+    }
+    userProfile = data[0];
+    currentUser = user;
+    // Sincronizar perfil fresco en localStorage para que cambios de plan sean inmediatos
+    const storage = localStorage.getItem('sb_token') ? localStorage : sessionStorage;
+    storage.setItem('sb_user_profile', JSON.stringify(userProfile));
+    applyUserPermissions();
+  } catch(e){
+    // Si hay error de red, usar perfil guardado previamente si existe
+    const saved = localStorage.getItem('sb_user_profile') || sessionStorage.getItem('sb_user_profile');
+    if(saved){ try{ userProfile = JSON.parse(saved); }catch(e2){} }
+    if(!userProfile) userProfile = { plan:'free', modulos:['ficha-manual'], activo:true };
+    applyUserPermissions();
+  }
+}
+
+function applyUserPermissions(){
+  if(!userProfile) return;
+  updateUserDisplay();
+
+  // Show admin section in profile
+  if(userProfile.plan === 'admin'){
+    const lbl = document.getElementById('admin-lbl');
+    const btn = document.getElementById('admin-link-btn');
+    if(lbl) lbl.style.display = 'block';
+    if(btn) btn.style.display = 'flex';
+  }
+
+  // Si es admin o pro, todos los módulos visibles — nada que ocultar
+  if(userProfile.plan === 'admin' || userProfile.plan === 'pro') return;
+
+  // Para planes 'personalizado' y 'free': ocultar tarjetas sin acceso
+  // Free incluye ficha-manual por defecto aunque modulos esté vacío
+  let mods = userProfile.modulos || [];
+  if(userProfile.plan === 'free' && mods.length === 0) mods = ['ficha-manual'];
+
+  // Mapa: id-de-módulo → onclick que contiene ese módulo
+  const MOD_PANEL_MAP = {
+    'isr':          "setPanel('isr')",
+    'ficha-manual': "setPanel('ficha-manual')",
+    'ficha':        "setPanel('ficha')",
+    'contratos':    "setPanel('contratos')",
+    'avm':          "setPanel('avm')",
+    'props':        "setPanel('props')",
+  };
+
+  // Ocultar tarjetas del home (.module-card)
+  document.querySelectorAll('.module-card').forEach(card => {
+    const oc = card.getAttribute('onclick') || '';
+    for(const [modId, snippet] of Object.entries(MOD_PANEL_MAP)){
+      if(oc.includes(snippet)){
+        if(!mods.includes(modId)) card.style.display = 'none';
+        break;
+      }
+    }
+  });
+
+  // Ocultar tarjetas de la pantalla Módulos (.cat-module)
+  document.querySelectorAll('.cat-module').forEach(card => {
+    const oc = card.getAttribute('onclick') || '';
+    for(const [modId, snippet] of Object.entries(MOD_PANEL_MAP)){
+      if(oc.includes(snippet)){
+        if(!mods.includes(modId)) card.style.display = 'none';
+        break;
+      }
+    }
+  });
+
+  // Bloquear navegación directa al panel si el usuario no tiene acceso
+  const origSetPanel = window._origSetPanel || setPanel;
+  window._origSetPanel = origSetPanel;
+  window.setPanel = function(name){
+    if(MOD_PANEL_MAP[name] && !mods.includes(name)){
+      showComingSoon('Módulo no disponible en tu plan');
+      return;
+    }
+    origSetPanel(name);
+  };
+}
+
+function updateUserDisplay(){
+  if(!userProfile) return;
+  const n = document.getElementById('user-name-display');
+  const p = document.getElementById('user-plan-display');
+  const a = document.getElementById('user-avatar');
+  if(n) n.textContent = userProfile.nombre || currentUser?.email || '—';
+  if(p) p.textContent = {free:'Free',modulos:'Personalizado',personalizado:'Personalizado',pro:'Pro',admin:'Admin'}[userProfile.plan] || userProfile.plan;
+  // Mostrar foto o inicial
+  const fotoUrl = userProfile.foto_url ? userProfile.foto_url + '?t=' + (userProfile._fotoTs || '') : null;
+  if(a){
+    if(fotoUrl){
+      a.innerHTML = '<img src="' + fotoUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"/>';
+    } else {
+      a.textContent = (userProfile.nombre || '?')[0].toUpperCase();
+    }
+  }
+  // Profile screen avatar
+  const pa = document.getElementById('profile-avatar');
+  const pal = document.getElementById('profile-avatar-letter');
+  if(pa && fotoUrl){
+    pa.innerHTML = '<img src="' + fotoUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:26px"/><div style="position:absolute;bottom:-4px;right:-4px;width:22px;height:22px;background:var(--teal);border-radius:50%;border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:11px">✏️</div>';
+  } else if(pal){
+    pal.textContent = (userProfile.nombre || '?')[0].toUpperCase();
+  }
+  // Profile screen name & plan badge
+  const pname = document.getElementById('profile-name');
+  const pbadge = document.getElementById('profile-plan');
+  if(pname) pname.textContent = userProfile.nombre || '—';
+  if(pbadge) pbadge.textContent = {free:'Free',modulos:'Personalizado',personalizado:'Personalizado',pro:'Pro',admin:'Admin'}[userProfile.plan] || userProfile.plan;
+  if(typeof updateGreeting === 'function') updateGreeting();
+}
+
+function logout(){
+  const _mic = localStorage.getItem('mic_granted');
+  localStorage.clear();
+  sessionStorage.clear();
+  if(_mic) localStorage.setItem('mic_granted', _mic);
+  window.location.href = 'login.html';
+}
+
+// ══════════════════════════════════════════
+// INPC DATA (condensed — same as original)
+// ══════════════════════════════════════════
+const INPC_RAW = {
+  "1981-01":0.06562,"1981-02":0.06723,"1981-03":0.06866,"1981-04":0.07021,"1981-05":0.07128,"1981-06":0.07227,"1981-07":0.07354,"1981-08":0.07506,"1981-09":0.07646,"1981-10":0.07815,"1981-11":0.07966,"1981-12":0.0818,
+  "1982-01":0.08587,"1982-02":0.08924,"1982-03":0.0925,"1982-04":0.09751,"1982-05":0.10299,"1982-06":0.10795,"1982-07":0.11352,"1982-08":0.12626,"1982-09":0.133,"1982-10":0.13989,"1982-11":0.14696,"1982-12":0.16266,
+  "1983-01":0.18036,"1983-02":0.19003,"1983-03":0.19923,"1983-04":0.21185,"1983-05":0.22103,"1983-06":0.2294,"1983-07":0.24075,"1983-08":0.25009,"1983-09":0.25779,"1983-10":0.26634,"1983-11":0.28198,"1983-12":0.29405,
+  "1984-01":0.31273,"1984-02":0.32923,"1984-03":0.3433,"1984-04":0.35816,"1984-05":0.37003,"1984-06":0.38342,"1984-07":0.39599,"1984-08":0.40725,"1984-09":0.41938,"1984-10":0.43403,"1984-11":0.44893,"1984-12":0.468,
+  "1985-01":0.50271,"1985-02":0.5236,"1985-03":0.54389,"1985-04":0.56062,"1985-05":0.5739,"1985-06":0.58828,"1985-07":0.60876,"1985-08":0.63538,"1985-09":0.66075,"1985-10":0.68585,"1985-11":0.7175,"1985-12":0.76634,
+  "1986-01":0.83409,"1986-02":0.87117,"1986-03":0.91167,"1986-04":0.95926,"1986-05":1.01257,"1986-06":1.07757,"1986-07":1.13133,"1986-08":1.22153,"1986-09":1.29481,"1986-10":1.36882,"1986-11":1.4613,"1986-12":1.57673,
+  "1987-01":1.7044,"1987-02":1.82739,"1987-03":1.94815,"1987-04":2.11861,"1987-05":2.27833,"1987-06":2.44315,"1987-07":2.64102,"1987-08":2.85687,"1987-09":3.04508,"1987-10":3.29884,"1987-11":3.56051,"1987-12":4.08639,
+  "1988-01":4.71825,"1988-02":5.11178,"1988-03":5.37355,"1988-04":5.53894,"1988-05":5.64611,"1988-06":5.76129,"1988-07":5.85746,"1988-08":5.91134,"1988-09":5.94514,"1988-10":5.99049,"1988-11":6.07065,"1988-12":6.19732,
+  "1989-01":6.34902,"1989-02":6.43518,"1989-03":6.50494,"1989-04":6.60222,"1989-05":6.6931,"1989-06":6.77438,"1989-07":6.84215,"1989-08":6.90733,"1989-09":6.97339,"1989-10":7.07653,"1989-11":7.17586,"1989-12":7.41803,
+  "1990-01":7.77604,"1990-02":7.95212,"1990-03":8.09231,"1990-04":8.21547,"1990-05":8.35884,"1990-06":8.54294,"1990-07":8.69873,"1990-08":8.84695,"1990-09":8.97306,"1990-10":9.10206,"1990-11":9.34372,"1990-12":9.63821,
+  "1991-01":9.88388,"1991-02":10.05642,"1991-03":10.19984,"1991-04":10.30669,"1991-05":10.40744,"1991-06":10.51665,"1991-07":10.60958,"1991-08":10.68342,"1991-09":10.78985,"1991-10":10.91534,"1991-11":11.18637,"1991-12":11.44968,
+  "1992-01":11.65778,"1992-02":11.7959,"1992-03":11.91595,"1992-04":12.02217,"1992-05":12.10144,"1992-06":12.18335,"1992-07":12.26027,"1992-08":12.33559,"1992-09":12.4429,"1992-10":12.53249,"1992-11":12.63662,"1992-12":12.81655,
+  "1993-01":12.97732,"1993-02":13.08335,"1993-03":13.15959,"1993-04":13.23548,"1993-05":13.31114,"1993-06":13.3858,"1993-07":13.45012,"1993-08":13.52211,"1993-09":13.62226,"1993-10":13.67797,"1993-11":13.7383,"1993-12":13.84305,
+  "1994-01":13.95037,"1994-02":14.02212,"1994-03":14.09422,"1994-04":14.16325,"1994-05":14.23168,"1994-06":14.30289,"1994-07":14.36633,"1994-08":14.43329,"1994-09":14.53594,"1994-10":14.61225,"1994-11":14.69036,"1994-12":14.8192,
+  "1995-01":15.37699,"1995-02":16.02871,"1995-03":16.97362,"1995-04":18.32613,"1995-05":19.09209,"1995-06":19.69802,"1995-07":20.09959,"1995-08":20.43298,"1995-09":20.85564,"1995-10":21.28476,"1995-11":21.80961,"1995-12":22.52017,
+  "1996-01":23.32975,"1996-02":23.87426,"1996-03":24.39983,"1996-04":25.09345,"1996-05":25.55084,"1996-06":25.9669,"1996-07":26.33603,"1996-08":26.68607,"1996-09":27.11275,"1996-10":27.45117,"1996-11":27.86708,"1996-12":28.75934,
+  "1997-01":29.49889,"1997-02":29.9946,"1997-03":30.36789,"1997-04":30.69597,"1997-05":30.97612,"1997-06":31.25096,"1997-07":31.52321,"1997-08":31.8035,"1997-09":32.19961,"1997-10":32.45694,"1997-11":32.82004,"1997-12":33.27987,
+  "1998-01":34.00392,"1998-02":34.59924,"1998-03":35.00453,"1998-04":35.33204,"1998-05":35.61348,"1998-06":36.03442,"1998-07":36.38188,"1998-08":36.73163,"1998-09":37.32738,"1998-10":37.86227,"1998-11":38.53279,"1998-12":39.47297,
+  "1999-01":40.46977,"1999-02":41.01364,"1999-03":41.39468,"1999-04":41.77458,"1999-05":42.02588,"1999-06":42.30201,"1999-07":42.58158,"1999-08":42.82126,"1999-09":43.23502,"1999-10":43.50885,"1999-11":43.89578,"1999-12":44.33552,
+  "2000-01":44.93083,"2000-02":45.32938,"2000-03":45.58068,"2000-04":45.84002,"2000-05":46.01138,"2000-06":46.28392,"2000-07":46.46447,"2000-08":46.71979,"2000-09":47.06107,"2000-10":47.38514,"2000-11":47.79029,"2000-12":48.30767,
+  "2001-01":48.57548,"2001-02":48.54333,"2001-03":48.85089,"2001-04":49.09731,"2001-05":49.20997,"2001-06":49.32636,"2001-07":49.1982,"2001-08":49.48969,"2001-09":49.95038,"2001-10":50.17614,"2001-11":50.36515,"2001-12":50.4349,
+  "2002-01":50.90047,"2002-02":50.86775,"2002-03":51.12795,"2002-04":51.40723,"2002-05":51.51143,"2002-06":51.76259,"2002-07":51.91118,"2002-08":52.10856,"2002-09":52.42198,"2002-10":52.65304,"2002-11":53.07888,"2002-12":53.30993,
+  "2003-01":53.52544,"2003-02":53.67412,"2003-03":54.01293,"2003-04":54.10514,"2003-05":53.93056,"2003-06":53.97511,"2003-07":54.05334,"2003-08":54.21549,"2003-09":54.53824,"2003-10":54.73821,"2003-11":55.19254,"2003-12":55.42981,
+  "2004-01":55.77432,"2004-02":56.10794,"2004-03":56.29807,"2004-04":56.38303,"2004-05":56.2416,"2004-06":56.33174,"2004-07":56.47939,"2004-08":56.82804,"2004-09":57.29792,"2004-10":57.69475,"2004-11":58.1869,"2004-12":58.30709,
+  "2005-01":58.30916,"2005-02":58.50343,"2005-03":58.76712,"2005-04":58.97642,"2005-05":58.82825,"2005-06":58.77178,"2005-07":59.0018,"2005-08":59.07226,"2005-09":59.30901,"2005-10":59.45458,"2005-11":59.88249,"2005-12":60.25031,
+  "2006-01":60.60363,"2006-02":60.69636,"2006-03":60.77251,"2006-04":60.86162,"2006-05":60.59067,"2006-06":60.643,"2006-07":60.80929,"2006-08":61.11961,"2006-09":61.73661,"2006-10":62.00652,"2006-11":62.33186,"2006-12":62.69242,
+  "2007-01":63.01621,"2007-02":63.19235,"2007-03":63.32911,"2007-04":63.2913,"2007-05":62.98253,"2007-06":63.05817,"2007-07":63.326,"2007-08":63.584,"2007-09":64.0777,"2007-10":64.32741,"2007-11":64.78122,"2007-12":65.04906,
+  "2008-01":65.35056,"2008-02":65.54483,"2008-03":66.01989,"2008-04":66.17013,"2008-05":66.09864,"2008-06":66.37217,"2008-07":66.74206,"2008-08":67.12749,"2008-09":67.58493,"2008-10":68.04549,"2008-11":68.81894,"2008-12":69.29555,
+  "2009-01":69.45615,"2009-02":69.60949,"2009-03":70.00995,"2009-04":70.25499,"2009-05":70.05036,"2009-06":70.17935,"2009-07":70.37052,"2009-08":70.53888,"2009-09":70.89272,"2009-10":71.10719,"2009-11":71.47605,"2009-12":71.77186,
+  "2010-01":72.55205,"2010-02":72.97167,"2010-03":73.48973,"2010-04":73.25556,"2010-05":72.79398,"2010-06":72.77118,"2010-07":72.92919,"2010-08":73.13175,"2010-09":73.51511,"2010-10":73.96893,"2010-11":74.56158,"2010-12":74.93095,
+  "2011-01":75.29599,"2011-02":75.57846,"2011-03":75.72345,"2011-04":75.71744,"2011-05":75.15926,"2011-06":75.15551,"2011-07":75.51611,"2011-08":75.63556,"2011-09":75.82111,"2011-10":76.33271,"2011-11":77.15833,"2011-12":77.79239,
+  "2012-01":78.34305,"2012-02":78.50231,"2012-03":78.54739,"2012-04":78.30098,"2012-05":78.05382,"2012-06":78.41367,"2012-07":78.8539,"2012-08":79.09054,"2012-09":79.43912,"2012-10":79.84104,"2012-11":80.38344,"2012-12":80.56824,
+  "2013-01":80.89278,"2013-02":81.29094,"2013-03":81.88743,"2013-04":81.94152,"2013-05":81.66882,"2013-06":81.61924,"2013-07":81.59219,"2013-08":81.82433,"2013-09":82.13234,"2013-10":82.52299,"2013-11":83.29227,"2013-12":83.77006,
+  "2014-01":84.51905,"2014-02":84.73316,"2014-03":84.96529,"2014-04":84.80678,"2014-05":84.53558,"2014-06":84.68207,"2014-07":84.91496,"2014-08":85.21997,"2014-09":85.59634,"2014-10":86.06963,"2014-11":86.76378,"2014-12":87.18898,
+  "2015-01":87.1101,"2015-02":87.27538,"2015-03":87.63072,"2015-04":87.40384,"2015-05":86.96737,"2015-06":87.11311,"2015-07":87.24082,"2015-08":87.42488,"2015-09":87.75242,"2015-10":88.20392,"2015-11":88.68547,"2015-12":89.04682,
+  "2016-01":89.38638,"2016-02":89.77778,"2016-03":89.91,"2016-04":89.62528,"2016-05":89.22561,"2016-06":89.32403,"2016-07":89.55691,"2016-08":89.80933,"2016-09":90.35774,"2016-10":90.90615,"2016-11":91.61683,"2016-12":92.03903,
+  "2017-01":93.60388,"2017-02":94.14478,"2017-03":94.72249,"2017-04":94.83893,"2017-05":94.72549,"2017-06":94.96364,"2017-07":95.32274,"2017-08":95.79377,"2017-09":96.09352,"2017-10":96.69827,"2017-11":97.69517,"2017-12":98.27288,
+  "2018-01":98.795,"2018-02":99.17137,"2018-03":99.49216,"2018-04":99.15485,"2018-05":98.99408,"2018-06":99.37646,"2018-07":99.9091,"2018-08":100.492,"2018-09":100.917,"2018-10":101.44,"2018-11":102.303,"2018-12":103.02,
+  "2019-01":103.108,"2019-02":103.079,"2019-03":103.476,"2019-04":103.531,"2019-05":103.233,"2019-06":103.299,"2019-07":103.687,"2019-08":103.67,"2019-09":103.942,"2019-10":104.503,"2019-11":105.346,"2019-12":105.934,
+  "2020-01":106.447,"2020-02":106.889,"2020-03":106.838,"2020-04":105.755,"2020-05":106.162,"2020-06":106.743,"2020-07":107.444,"2020-08":107.867,"2020-09":108.114,"2020-10":108.774,"2020-11":108.856,"2020-12":109.271,
+  "2021-01":110.21,"2021-02":110.907,"2021-03":111.824,"2021-04":112.19,"2021-05":112.419,"2021-06":113.018,"2021-07":113.682,"2021-08":113.899,"2021-09":114.601,"2021-10":115.561,"2021-11":116.884,"2021-12":117.308,
+  "2022-01":118.002,"2022-02":118.981,"2022-03":120.159,"2022-04":120.809,"2022-05":121.022,"2022-06":122.044,"2022-07":122.948,"2022-08":123.803,"2022-09":124.571,"2022-10":125.276,"2022-11":125.997,"2022-12":126.478,
+  "2023-01":127.336,"2023-02":128.046,"2023-03":128.389,"2023-04":128.363,"2023-05":128.084,"2023-06":128.214,"2023-07":128.832,"2023-08":129.545,"2023-09":130.12,"2023-10":130.609,"2023-11":131.445,"2023-12":132.373,
+  "2024-01":133.555,"2024-02":133.681,"2024-03":134.065,"2024-04":134.336,"2024-05":134.087,"2024-06":134.594,"2024-07":136.003,"2024-08":136.013,"2024-09":136.08,"2024-10":136.828,"2024-11":137.424,"2024-12":137.949,
+  "2025-01":138.343,"2025-02":138.726,"2025-03":139.161,"2025-04":139.62,"2025-05":140.012,"2025-06":140.405,"2025-07":140.78,"2025-08":140.867,"2025-09":141.197,"2025-10":141.708,"2025-11":142.645,"2025-12":143.042,
+  "2026-01":143.588,"2026-02":144.307
+};
+
+const TABLA_ISR = [
+  {li:0,ls:8952.49,cf:0,tasa:0.0192},{li:8952.50,ls:75984.55,cf:171.88,tasa:0.0640},
+  {li:75984.56,ls:133536.07,cf:4461.94,tasa:0.1088},{li:133536.08,ls:155229.80,cf:10723.55,tasa:0.1600},
+  {li:155229.81,ls:185852.57,cf:14194.54,tasa:0.1792},{li:185852.58,ls:374837.88,cf:19682.13,tasa:0.2136},
+  {li:374837.89,ls:590795.99,cf:60049.40,tasa:0.2352},{li:590796.00,ls:1127926.84,cf:110842.74,tasa:0.3000},
+  {li:1127926.85,ls:1503902.46,cf:271981.99,tasa:0.3200},{li:1503902.47,ls:4511707.37,cf:392294.17,tasa:0.3400},
+  {li:4511707.38,ls:Infinity,cf:1417164.67,tasa:0.3500}
+];
+const TABLA_ISR_2024 = [
+  {li:0.01,ls:8952.49,cf:0,tasa:0.0192},{li:8952.50,ls:75984.55,cf:171.88,tasa:0.0640},
+  {li:75984.56,ls:133536.07,cf:3959.25,tasa:0.1088},{li:133536.08,ls:155229.80,cf:10220.86,tasa:0.1600},
+  {li:155229.81,ls:185852.57,cf:13526.70,tasa:0.1792},{li:185852.58,ls:374837.88,cf:18785.54,tasa:0.2136},
+  {li:374837.89,ls:590795.99,cf:57325.95,tasa:0.2352},{li:590796.00,ls:1127926.84,cf:108014.74,tasa:0.3000},
+  {li:1127926.85,ls:1503902.46,cf:269260.94,tasa:0.3200},{li:1503902.47,ls:4511707.37,cf:388012.14,tasa:0.3400},
+  {li:4511707.38,ls:Infinity,cf:1409354.09,tasa:0.3500}
+];
+
+let _isrData = null;
+
+function getINPC(mes, anio){
+  const key = anio+'-'+String(mes).padStart(2,'0');
+  if(INPC_RAW[key]) return INPC_RAW[key];
+  if(anio < 1981) return INPC_RAW["1981-01"];
+  return 144.307;
+}
+function getTablaISR(anioVenta){ return (anioVenta <= 2024) ? TABLA_ISR_2024 : TABLA_ISR; }
+function calcTablaProgresiva(tabla, base){
+  if(base <= 0) return 0;
+  for(const t of tabla){ if(base >= t.li && base <= t.ls) return t.cf + (base - t.li) * t.tasa; }
+  return 0;
+}
+function fmt(n){ return '$' + Math.round(n).toLocaleString('es-MX'); }
+function pct(n){ return n.toFixed(2) + '%'; }
+function g(id){ return document.getElementById(id); }
+
+function onTipoChange(){
+  const v = g('f-tipo').value;
+  g('sec-casa').style.display = v === 'casa' ? 'block' : 'none';
+  g('iva-note').style.display = v === 'comercial' ? 'block' : 'none';
+  const stc = g('sec-terreno-const');
+  if(stc) stc.style.display = v === 'terreno' ? 'none' : 'block';
+}
+function onAnioChange(){
+  const a  = parseInt(g('f-anio-c').value) || 0;
+  const av = parseInt(g('f-anio-v').value) || 2026;
+  g('alert-pre1981').style.display = (a > 0 && a < 1981) ? 'block' : 'none';
+  g('alert-pre1990').style.display = (a >= 1981 && a < 1990) ? 'block' : 'none';
+  if(g('compra-note')) g('compra-note').textContent = (a > 0 && a < 1981) ? 'Para antes de 1981 el notario puede requerir avalúo vigente' : '';
+  if(a > 0 && av > a){
+    const anos = av - a;
+    const depPct = Math.min(0.54, anos * 0.03);
+    if(g('deprec-note')) g('deprec-note').textContent = `Depreciación construcción: ${(depPct*100).toFixed(0)}% (${anos} años × 3%, máx 54%)`;
+  }
+}
+function onPctTerreno(el){ const v = Math.max(0, Math.min(100, parseInt(el.value)||0)); if(g('f-pct-const')) g('f-pct-const').value = 100 - v; }
+function onPctConst(el){ const v = Math.max(0, Math.min(100, parseInt(el.value)||0)); if(g('f-pct-terreno')) g('f-pct-terreno').value = 100 - v; }
+
+function calcISR(){
+  const tipo  = g('f-tipo').value;
+  const venta = getRawNum(g('f-venta').value);
+  const compra= getRawNum(g('f-compra').value);
+  const mesC  = parseInt(g('f-mes-c').value);
+  const anioC = parseInt(g('f-anio-c').value) || 2010;
+  const mesV  = parseInt(g('f-mes-v').value);
+  const anioV = parseInt(g('f-anio-v').value) || 2026;
+  const mej   = getRawNum(g('f-mej').value);
+  const com   = getRawNum(g('f-com').value);
+  const esc   = getRawNum(g('f-esc').value);
+
+  if(!venta || !compra){ alert('Ingresa el precio de venta y el costo de adquisición.'); return; }
+  if(!anioC || anioC < 1950 || anioC > 2030){ alert('Ingresa un año de adquisición válido.'); return; }
+
+  const mN = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const preAnio1981 = anioC < 1981;
+  const inpcAdq   = getINPC(mesC, anioC);
+  const inpcVenta = getINPC(mesV, anioV);
+  const factor    = inpcVenta / inpcAdq;
+
+  let costoAct = 0, debugTerreno = null;
+  if(tipo === 'terreno'){
+    costoAct = compra * factor;
+  } else {
+    const pctT  = (parseInt((g('f-pct-terreno')||{}).value) || 20) / 100;
+    const pctC  = 1 - pctT;
+    const valT  = compra * pctT;
+    const valC  = compra * pctC;
+    const anosConst = Math.max(0, anioV - anioC);
+    const depPct    = Math.min(0.54, anosConst * 0.03);
+    const valCDep   = valC * (1 - depPct);
+    costoAct = (valT * factor) + (valCDep * factor);
+    debugTerreno = { pctT, pctC, valT, valC, anosConst, depPct, valCDep, terrenoAct: valT*factor, constAct: valCDep*factor };
+  }
+
+  const mejA       = mej * factor;
+  const deducTotal = costoAct + mejA + com + esc;
+  const ganTotal   = venta - deducTotal;
+
+  let anios = anioV - anioC;
+  if(mesV > mesC) anios += 1;
+  if(anios < 1) anios = 1;
+
+  const LIMITE_EX = 700000 * 8.763028;
+  let baseGrav = 0, isrTotal = 0, exenta = false, exentaParcial = false;
+  let ganAcum = 0, isrAcum = 0, tasaEfec = 0, nota = '';
+
+  if(ganTotal <= 0){
+    nota = 'Pérdida fiscal — sin ISR. Deducible en declaración anual (art. 121 LISR).';
+  } else if(tipo === 'casa'){
+    const pri = g('f-pri').value, exp = g('f-exp').value;
+    if(pri === 'si' && exp === 'no'){
+      if(ganTotal <= LIMITE_EX){ exenta = true; nota = 'Exención total — ganancia dentro de 700,000 UDIS ('+fmt(LIMITE_EX)+'). Art. 93 fr. XIX LISR.'; }
+      else { exentaParcial = true; baseGrav = ganTotal - LIMITE_EX; nota = 'Exención parcial: primeros '+fmt(LIMITE_EX)+' libres. Solo grava el excedente.'; }
+    } else if(exp === 'si'){ baseGrav = ganTotal; nota = 'Exención no aplicable: ya utilizada en los últimos 3 años (art. 93 fr. XIX LISR).'; }
+    else { baseGrav = ganTotal; nota = exp === 'nose' ? 'No confirmada exención — verificar historial con el vendedor.' : 'No califica como casa habitación principal.'; }
+  } else { baseGrav = ganTotal; }
+
+  if(baseGrav > 0){
+    const tabla = getTablaISR(anioV);
+    ganAcum  = baseGrav / anios;
+    isrAcum  = calcTablaProgresiva(tabla, ganAcum);
+    tasaEfec = ganAcum > 0 ? isrAcum / ganAcum : 0;
+    isrTotal = isrAcum * anios;
+  }
+
+  const isrEstatal  = baseGrav > 0 ? baseGrav * 0.05 : 0;
+  const isrFederal  = Math.max(0, isrTotal - isrEstatal);
+  const tasaEfecPct = baseGrav > 0 ? (isrTotal / baseGrav) * 100 : 0;
+
+  _isrData = { tipo, venta, compra, costoAct, mej, mejA, com, esc, deducTotal, ganTotal, factor, inpcAdq, inpcVenta, mesC, anioC, mesV, anioV, mN, baseGrav, ganAcum, isrAcum, isrTotal, isrFederal, isrEstatal, anios, tasaEfec, tasaEfecPct, exenta, exentaParcial, nota, preAnio1981, LIMITE_EX, debugTerreno };
+  renderResult(_isrData);
+}
+
+function renderResult(d){
+  const inpcRow = g('res-inpc-row');
+  if(inpcRow){
+    if(d.ganTotal > 0){ inpcRow.style.display='flex'; if(g('res-inpc-adq')) g('res-inpc-adq').textContent=d.inpcAdq.toFixed(6); if(g('res-inpc-venta')) g('res-inpc-venta').textContent=d.inpcVenta.toFixed(6); if(g('res-factor')) g('res-factor').textContent=d.factor.toFixed(6); }
+    else inpcRow.style.display = 'none';
+  }
+  const tipos = {casa:'Casa habitación / Depto.',terreno:'Terreno',comercial:'Inmueble comercial'};
+  if(g('res-tipo')) g('res-tipo').textContent = tipos[d.tipo]||'';
+
+  let cards = '';
+  if(d.exenta){ cards=`<div class="rc gn"><div class="rc-l">ISR a pagar</div><div class="rc-v">$0</div><div class="rc-n">Exento — art. 93 fr. XIX</div></div><div class="rc"><div class="rc-l">Ganancia libre de impuesto</div><div class="rc-v">${fmt(d.ganTotal)}</div><div class="rc-n">No gravable</div></div>`; }
+  else if(d.ganTotal <= 0){ cards=`<div class="rc gn"><div class="rc-l">ISR a pagar</div><div class="rc-v">$0</div><div class="rc-n">Pérdida fiscal</div></div><div class="rc"><div class="rc-l">Pérdida deducible</div><div class="rc-v">${fmt(Math.abs(d.ganTotal))}</div><div class="rc-n">Declaración anual</div></div>`; }
+  else { cards=`<div class="rc dk"><div class="rc-l">ISR total a pagar</div><div class="rc-v">${fmt(d.isrTotal)}</div><div class="rc-n">Tasa efectiva: ${pct(d.tasaEfecPct)}</div></div><div class="rc"><div class="rc-l">ISR Entidad Federativa</div><div class="rc-v">${fmt(d.isrEstatal)}</div><div class="rc-n">5% ganancia — art. 127</div></div><div class="rc"><div class="rc-l">ISR Federación</div><div class="rc-v">${fmt(d.isrFederal)}</div><div class="rc-n">ISR total − retención estatal</div></div>`; }
+  if(g('res-cards')) g('res-cards').innerHTML = cards;
+
+  const adqLbl = d.preAnio1981 ? `INPC adq. base ene-1981: ${d.inpcAdq.toFixed(6)}` : `INPC ${d.mN[d.mesC]} ${d.anioC}: ${d.inpcAdq.toFixed(6)}`;
+  let bd = `<div class="br"><span class="bl">Precio de venta</span><span class="bv">${fmt(d.venta)}</span></div><div class="br sub"><span class="bl">${adqLbl}</span><span class="bv"></span></div><div class="br sub"><span class="bl">INPC ${d.mN[d.mesV]} ${d.anioV}: ${d.inpcVenta.toFixed(6)}</span><span class="bv"></span></div><div class="br sub"><span class="bl">Factor de actualización</span><span class="bv">${d.factor.toFixed(6)}</span></div>`;
+  if(d.debugTerreno){ const dt=d.debugTerreno; bd+=`<div class="br sub"><span class="bl">Terreno (${(dt.pctT*100).toFixed(0)}%): ${fmt(dt.valT)} × factor</span><span class="bv">${fmt(dt.terrenoAct)}</span></div><div class="br sub"><span class="bl">Construcción dep. × factor</span><span class="bv">${fmt(dt.constAct)}</span></div>`; }
+  bd += `<div class="br"><span class="bl">Costo adquisición actualizado</span><span class="bv">− ${fmt(d.costoAct)}</span></div>`;
+  if(d.mej) bd += `<div class="br"><span class="bl">Mejoras actualizadas</span><span class="bv">− ${fmt(d.mejA)}</span></div>`;
+  if(d.com) bd += `<div class="br"><span class="bl">Comisión del agente</span><span class="bv">− ${fmt(d.com)}</span></div>`;
+  if(d.esc) bd += `<div class="br"><span class="bl">Gastos de escrituración</span><span class="bv">− ${fmt(d.esc)}</span></div>`;
+  bd += `<div class="br tot"><span class="bl">${d.ganTotal >= 0 ? 'Ganancia total' : 'Pérdida fiscal'}</span><span class="bv">${fmt(Math.abs(d.ganTotal))}</span></div>`;
+  if(!d.exenta && d.ganTotal > 0 && d.exentaParcial){ bd+=`<div class="br sub"><span class="bl">Exención 700,000 UDIS</span><span class="bv">− ${fmt(d.LIMITE_EX)}</span></div><div class="br tot"><span class="bl">Base gravable</span><span class="bv">${fmt(d.baseGrav)}</span></div>`; }
+  if(!d.exenta && d.baseGrav > 0){ bd+=`<div class="br"><span class="bl">Años de tenencia (art. 120)</span><span class="bv">${d.anios}</span></div><div class="br sub"><span class="bl">Ganancia acumulable (÷ ${d.anios} años)</span><span class="bv">${fmt(d.ganAcum)}</span></div><div class="br sub"><span class="bl">ISR s/ ganancia acumulable (art. 152)</span><span class="bv">${fmt(d.isrAcum)}</span></div><div class="br sub"><span class="bl">Tasa efectiva</span><span class="bv">${(d.tasaEfec*100).toFixed(4)}%</span></div><div class="br tot"><span class="bl">ISR total</span><span class="bv">${fmt(d.isrTotal)}</span></div><div class="br"><span class="bl">ISR Entidad Federativa 5% (art. 127)</span><span class="bv">${fmt(d.isrEstatal)}</span></div><div class="br"><span class="bl">ISR Federación</span><span class="bv">${fmt(d.isrFederal)}</span></div>`; }
+  if(g('res-bkdn')) g('res-bkdn').innerHTML = bd;
+
+  const notaEl = g('res-nota');
+  if(notaEl){ notaEl.style.display='block'; notaEl.innerHTML=`<strong>⚠️ Cálculo orientativo</strong> — metodología notarial arts. 121, 124, 120, 152 y 127 LISR. El notario realiza el cálculo definitivo.`+(d.nota ? `<br><br><strong>Nota:</strong> ${d.nota}` : ''); }
+  if(g('res')) g('res').style.display = 'block';
+  setTimeout(() => { const panel = document.getElementById('panel-isr'); if(panel){ const scroll = panel.querySelector('.panel-scroll'); if(scroll && g('res')){ g('res').scrollIntoView({behavior:'smooth',block:'start'}); }}}, 80);
+  fetchAnalysis(d);
+}
+
+async function fetchAnalysis(d){
+  if(g('ai-box')) g('ai-box').style.display = 'block';
+  if(g('ai-txt')) g('ai-txt').innerHTML = '<span style="color:var(--mut);font-size:13px">Analizando operación…</span>';
+  const prompt = `Operación enajenación inmueble México: Tipo: ${d.tipo}, Venta: ${fmt(d.venta)}, Factor INPC: ${d.factor.toFixed(4)}, Ganancia: ${fmt(d.ganTotal)}, ISR total: ${fmt(d.isrTotal)}, Tasa: ${(d.tasaEfec*100).toFixed(2)}%. En 3 oraciones: valida resultado, consideración fiscal principal, recomendación práctica.`;
+  try{
+    const r = await fetch('https://brokrebapi-production.up.railway.app/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:280,temperature:0.5,messages:[{role:'system',content:'Tu nombre es Shaark. NO te llamas Brokr. Brokr es tu casa y creador. Experto en fiscalidad y derecho inmobiliarios mexicanos. Responde en español, breve y práctico.'},{role:'user',content:prompt}]})});
+    const data = await r.json();
+    if(g('ai-txt')) g('ai-txt').innerHTML = fmtMsg(data.choices?.[0]?.message?.content||'');
+  } catch(e){ if(g('ai-box')) g('ai-box').style.display = 'none'; }
+}
+
+function resetISR(){
+  if(g('res')) g('res').style.display = 'none';
+  _isrData = null;
+  ['f-venta','f-compra','f-anio-c','f-mej','f-com','f-esc'].forEach(id => { const el=g(id); if(el) el.value=''; });
+  if(g('f-anio-v')) g('f-anio-v').value = '2026';
+  if(g('f-pct-terreno')) g('f-pct-terreno').value = '20';
+  if(g('f-pct-const'))   g('f-pct-const').value   = '80';
+  if(g('deprec-note'))   g('deprec-note').textContent = '';
+  if(g('compra-note'))   g('compra-note').textContent = '';
+  if(g('alert-pre1981')) g('alert-pre1981').style.display = 'none';
+  if(g('alert-pre1990')) g('alert-pre1990').style.display = 'none';
+  const panel = document.getElementById('panel-isr');
+  if(panel){ const s = panel.querySelector('.panel-scroll'); if(s) s.scrollTop = 0; }
+}
+
+function descargarPDF(){
+  const d = _isrData;
+  if(!d){ alert('Primero realiza un cálculo.'); return; }
+  const bkdn = (g('res-bkdn')||{}).innerHTML || '';
+  const nota  = (g('res-nota')||{}).innerHTML || '';
+  const meses = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const html = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/><title>ISR BROKR</title>' +
+    '<style>body{font-family:Arial,sans-serif;font-size:12px;color:#1a1a1a;margin:0;padding:28px 32px;max-width:700px}' +
+    'h1{font-size:18px;font-weight:800;margin:0 0 2px}.sub{color:#555;font-size:11px;margin-bottom:16px}' +
+    'h2{font-size:13px;font-weight:700;margin:18px 0 6px;color:#333;border-bottom:1px solid #ddd;padding-bottom:3px}' +
+    '.br{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:12px}' +
+    '.br.tot{font-weight:700;font-size:13px;border-bottom:2px solid #ccc}' +
+    '.br.sub{padding-left:18px;color:#555}.bl{color:#444}.bv{font-weight:600}' +
+    '.nota{background:#fff8e6;border-left:3px solid #f59e0b;padding:10px 14px;font-size:11px;margin-top:14px;border-radius:0 6px 6px 0;line-height:1.6}' +
+    '.footer{font-size:10px;color:#999;margin-top:24px;padding-top:8px;border-top:1px solid #eee;text-align:center}' +
+    '</style></head><body>' +
+    '<h1>Cálculo ISR por Enajenación</h1>' +
+    '<div class="sub">Generado: ' + new Date().toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'}) + ' · ' + meses[d.mesV] + ' ' + d.anioV + '</div>' +
+    '<h2>Desglose</h2>' + bkdn +
+    (nota ? '<div class="nota">' + nota + '</div>' : '') +
+    '<div class="footer">Generado por Brokr · Uso interno del agente inmobiliario · No sustituye al cálculo notarial definitivo</div>' +
+    '</body></html>';
+  const filename = 'ISR_Brokr_' + meses[d.mesV] + d.anioV + '.pdf';
+  const btn = g('btn-pdf');
+  if(btn){ btn.textContent = 'Generando PDF…'; btn.disabled = true; }
+  fetch('https://brokrebapi-production.up.railway.app/isr-pdf', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ html, filename })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if(!data.token) throw new Error('Sin token');
+    const a = document.createElement('a');
+    a.href = 'https://brokrebapi-production.up.railway.app/ficha-pdf/' + data.token;
+    a.download = filename;
+    a.target = '_blank';
+    a.click();
+    if(btn){ btn.textContent = '⬇ Descargar PDF'; btn.disabled = false; }
+  })
+  .catch(e => {
+    alert('Error generando PDF: ' + e.message);
+    if(btn){ btn.textContent = '⬇ Descargar PDF'; btn.disabled = false; }
+  });
+}
+
+// ══════════════════════════════════════════
+// CHAT
+// ══════════════════════════════════════════
+let msgs = [], busy = false;
+const BAV = `<img src="icon-192.png" style="width:22px;height:22px;border-radius:50%;object-fit:cover;background:#fff;">`;
+function onKey(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();} }
+function resize(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,110)+'px'; }
+
+async function send(){
+  if(busy) return;
+  const inp = g('txtin');
+  const txt = inp.value.trim();
+  if(!txt) return;
+  const wlc = g('welcome'); if(wlc) wlc.remove();
+  addMsg('u', txt); msgs.push({role:'user',content:txt});
+  inp.value=''; inp.style.height='auto';
+  const tid = addTyping(); busy = true; g('snd').disabled = true;
+  try{
+    const r = await fetch('https://brokrebapi-production.up.railway.app/chat-claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:1500,messages:msgs})});
+    rmTyping(tid);
+    if(!r.ok){ const e=await r.json(); addErr(e.error?.message||'Error'); msgs.pop(); return; }
+    const data = await r.json();
+    let reply = data.choices?.[0]?.message?.content||'Sin respuesta.';
+    const accionRe = /\[ACCION\](.*?)\[\/ACCION\]/gs;
+    let clean = reply, accionMatch;
+    while((accionMatch = accionRe.exec(reply)) !== null){
+      try{ const ac = JSON.parse(accionMatch[1].trim()); if(ac.tipo === 'navegar' && ac.modulo) setPanel(ac.modulo); } catch(e){}
+    }
+    clean = reply.replace(/\[ACCION\].*?\[\/ACCION\]/gs,'').trim();
+    msgs.push({role:'assistant',content:clean}); addMsg('a',clean);
+    if(window._lastInputWasVoice){ speak(clean); window._lastInputWasVoice = false; }
+  } catch(e){ rmTyping(tid); addErr('No se pudo conectar.'); msgs.pop(); }
+  finally{ busy=false; g('snd').disabled=false; inp.focus(); }
+}
+
+function addMsg(role,content){
+  const area=g('chat'); const d=document.createElement('div'); d.className='msg '+role;
+  d.innerHTML=`<div class="av">${role==='a'?BAV:'Ag'}</div><div class="bbl">${fmtMsg(content)}</div>`;
+  area.appendChild(d); area.scrollTop=area.scrollHeight;
+}
+function addTyping(){ const area=g('chat'); const id='t'+Date.now(); const d=document.createElement('div'); d.className='msg a'; d.id=id; d.innerHTML=`<div class="av">${BAV}</div><div class="bbl"><div class="dots"><span></span><span></span><span></span></div></div>`; area.appendChild(d); area.scrollTop=area.scrollHeight; return id; }
+function rmTyping(id){ const e=g(id); if(e) e.remove(); }
+function addErr(msg){ const area=g('chat'); const d=document.createElement('div'); d.className='msg a'; d.innerHTML=`<div class="av" style="background:#c00;color:#fff">!</div><div class="bbl" style="background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3)">Error: ${msg}</div>`; area.appendChild(d); area.scrollTop=area.scrollHeight; }
+function fmtMsg(t){ return t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>').replace(/^#{1,3} (.+)$/gm,'<strong style="font-size:14.5px;display:block;margin-top:5px">$1</strong>').replace(/^- (.+)$/gm,'<li>$1</li>').replace(/^(\d+)\. (.+)$/gm,'<li>$2</li>').replace(/(<li>[\s\S]*?<\/li>\n?)+/g,m=>`<ul style="padding-left:16px;margin:5px 0">${m}</ul>`).replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br/>').replace(/^(.+)$/,'<p>$1</p>'); }
+
+// ══════════════════════════════════════════
+// VOICE
+// ══════════════════════════════════════════
+let recognition = null, isListening = false;
+
+function toggleVoice(){
+  if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){ alert('Tu navegador no soporta reconocimiento de voz. Usa Chrome.'); return; }
+  if(isListening){ stopVoice(); return; }
+  startVoice();
+}
+function startVoice(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR(); recognition.lang='es-MX'; recognition.continuous=false; recognition.interimResults=true;
+  const btn=g('mic-btn'), inp=g('txtin');
+  isListening=true; btn.classList.add('listening');
+  if(inp){ inp.placeholder='🎙 Escuchando…'; inp.value=''; }
+  recognition.onresult = (e) => { let final='',interim=''; for(let i=0;i<e.results.length;i++){ if(e.results[i].isFinal) final+=e.results[i][0].transcript; else interim+=e.results[i][0].transcript; } if(inp){ inp.value=(final||interim).trim(); if(typeof resize==='function') resize(inp); } };
+  recognition.onerror = () => stopVoice();
+  recognition.onend = () => { const txt=inp?inp.value.trim():''; if(isListening&&txt){ window._lastInputWasVoice=true; stopVoice(); setTimeout(()=>send(),150); } else stopVoice(); };
+  try{ recognition.start(); } catch(e){ stopVoice(); }
+}
+function stopVoice(){ isListening=false; const btn=g('mic-btn'); if(btn) btn.classList.remove('listening'); if(recognition){ try{ recognition.abort(); }catch(e){} recognition=null; } const inp=g('txtin'); if(inp&&inp.placeholder==='🎙 Escuchando…') inp.placeholder='Pregunta o pide algo…'; }
+function speak(text){ if(!('speechSynthesis' in window)) return; const clean=text.replace(/\[ACCION\].*?\[\/ACCION\]/gs,'').replace(/[*_#`]/g,'').replace(/\n+/g,' ').trim().slice(0,500); if(!clean) return; window.speechSynthesis.cancel(); const doSpeak=()=>{ const utt=new SpeechSynthesisUtterance(clean); utt.lang='es-MX'; utt.rate=1.05; const voices=window.speechSynthesis.getVoices(); const v=voices.find(v=>v.lang==='es-MX')||voices.find(v=>v.lang==='es-ES')||null; if(v) utt.voice=v; window.speechSynthesis.speak(utt); }; if(window.speechSynthesis.getVoices().length) doSpeak(); else { window.speechSynthesis.onvoiceschanged=()=>{ doSpeak(); window.speechSynthesis.onvoiceschanged=null; }; } }
+
+// ══════════════════════════════════════════
+// SUPABASE
+// ══════════════════════════════════════════
+const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
+const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
+
+async function sbFetch(path, method='GET', body=null){
+  const opts = { method, headers:{ 'apikey':SB_KEY, 'Authorization':'Bearer '+SB_KEY, 'Content-Type':'application/json', 'Prefer':'return=representation' } };
+  if(body) opts.body = JSON.stringify(body);
+  const r = await fetch(SB_URL+'/rest/v1/'+path, opts);
+  if(!r.ok){ const e=await r.text(); throw new Error(e); }
+  const txt = await r.text();
+  return txt ? JSON.parse(txt) : [];
+}
+
+// ══════════════════════════════════════════
+// PROPERTIES
+// ══════════════════════════════════════════
+let allProps = [];
+let uploadedFotoUrls = [];
+
+async function loadProps(){
+  const grid = document.getElementById('props-grid');
+  grid.innerHTML = '<div class="props-empty">Cargando propiedades...</div>';
+  try{
+    allProps = await sbFetch('propiedades?order=created_at.desc&limit=200');
+    renderProps(allProps);
+  } catch(e){
+    grid.innerHTML = '<div class="props-empty">Error: '+e.message+'</div>';
+  }
+}
+
+function fmt_precio(p, moneda='MXN'){
+  if(!p) return '—';
+  return (moneda==='USD'?'USD ':'$') + Number(p).toLocaleString('es-MX',{minimumFractionDigits:0});
+}
+
+function renderProps(props){
+  const grid = document.getElementById('props-grid');
+  if(!props.length){
+    grid.innerHTML = '<div class="props-empty"><svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="opacity:.3;margin-bottom:12px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg><p>Sin propiedades. Agrega la primera.</p></div>';
+    return;
+  }
+  grid.innerHTML = props.map(p => {
+    const foto = p.fotos && p.fotos.length
+      ? `<div class="prop-card-img"><img src="${p.fotos[0]}" onerror="this.parentElement.innerHTML='<div style=width:100%;height:140px;background:var(--sf2);display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:12px>Sin foto</div>'"/></div>`
+      : '<div class="prop-card-img" style="background:var(--sf2);height:140px;display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:12px">Sin foto</div>';
+    const specs = [];
+    if(p.recamaras) specs.push(`<span>🛏 ${p.recamaras}</span>`);
+    if(p.banos) specs.push(`<span>🚿 ${p.banos}</span>`);
+    if(p.m2_construccion) specs.push(`<span>📐 ${p.m2_construccion}m²</span>`);
+    return `<div class="prop-card" onclick="openPropDetail('${p.id}')">
+      ${foto}
+      <div class="prop-card-body">
+        <div class="prop-card-badges"><span class="badge badge-${p.operacion}">${p.operacion}</span><span class="badge badge-${p.estatus}">${p.estatus}</span></div>
+        <div class="prop-card-title">${p.titulo}</div>
+        <div class="prop-card-loc">📍 ${p.colonia}${p.ciudad?', '+p.ciudad:''}</div>
+        <div class="prop-card-price">${fmt_precio(p.precio, p.moneda)}</div>
+        <div class="prop-card-specs">${specs.join('')}</div>
+      </div>
+      <div class="prop-card-actions">
+        <button class="prop-act-btn" onclick="event.stopPropagation();openPropForm('${p.id}')">✏️ Editar</button>
+        <button class="prop-act-btn prop-act-del" onclick="event.stopPropagation();deleteProp('${p.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterProps(){
+  const q    = document.getElementById('props-search').value.toLowerCase();
+  const op   = document.getElementById('props-filter-op').value;
+  const tipo = document.getElementById('props-filter-tipo').value;
+  const est  = document.getElementById('props-filter-est').value;
+  renderProps(allProps.filter(p => {
+    const matchQ  = !q || (p.titulo+p.colonia+p.ciudad+p.descripcion+'').toLowerCase().includes(q);
+    return matchQ && (!op||p.operacion===op) && (!tipo||p.tipo===tipo) && (!est||p.estatus===est);
+  }));
+}
+
+function openPropForm(id){
+  uploadedFotoUrls = [];
+  const modal = document.getElementById('prop-modal');
+  const form  = document.getElementById('prop-form');
+  const title = document.getElementById('prop-modal-title');
+  form.reset();
+  document.getElementById('fotos-preview').innerHTML = '';
+  document.getElementById('fotos-progress').textContent = '';
+  document.getElementById('fotos-raw-hidden').value = '';
+
+  if(id){
+    const p = allProps.find(x => x.id === id);
+    if(!p) return;
+    title.textContent = 'Editar propiedad';
+    Object.keys(p).forEach(k => {
+      const el = form.elements[k];
+      if(!el || p[k]===null || p[k]===undefined) return;
+      if(k==='precio') el.value = p[k] ? '$'+Number(p[k]).toLocaleString('es-MX',{minimumFractionDigits:0}) : '';
+      else el.value = p[k];
+    });
+    form.elements['fotos_raw'].value = (p.fotos||[]).join(', ');
+    form.elements['prop_id'].value = id;
+    if(p.fotos && p.fotos.length){
+      uploadedFotoUrls = [...p.fotos];
+      const preview = document.getElementById('fotos-preview');
+      p.fotos.forEach((url, idx) => {
+        const div = document.createElement('div'); div.className='foto-preview-item';
+        div.innerHTML = `<img src="${url}"/><button type="button" onclick="removeFoto(${idx},this.parentElement)" title="Eliminar">✕</button>`;
+        preview.appendChild(div);
+      });
+      document.getElementById('fotos-progress').textContent = `${p.fotos.length} foto(s) existente(s)`;
+    }
+  } else {
+    title.textContent = 'Nueva propiedad';
+    form.elements['prop_id'].value = '';
+  }
+  modal.style.display = 'flex';
+  initFotoUpload();
+}
+
+function closePropModal(e){
+  if(e && e.target !== document.getElementById('prop-modal')) return;
+  document.getElementById('prop-modal').style.display = 'none';
+}
+
+async function saveProp(e){
+  e.preventDefault();
+  const form = e.target;
+  const fd = new FormData(form);
+  const data = {};
+  fd.forEach((v,k) => { if(v !== '') data[k] = v; });
+  const fotosRaw = (data.fotos_raw||'').split(',').map(s=>s.trim()).filter(Boolean);
+  delete data.fotos_raw;
+  data.fotos = fotosRaw.length ? fotosRaw : uploadedFotoUrls;
+  if(data['precio']) data['precio'] = getRawNum(String(data['precio']));
+  ['m2_construccion','m2_terreno','recamaras','banos','estacionamientos','anio_construccion'].forEach(k => { if(data[k]) data[k] = Number(data[k]); });
+  data.updated_at = new Date().toISOString();
+  const id = data.prop_id; delete data.prop_id;
+  try{
+    const btn = form.querySelector('.pf-save-btn');
+    btn.innerHTML='Guardando...'; btn.disabled=true;
+    if(id) await sbFetch('propiedades?id=eq.'+id, 'PATCH', data);
+    else   await sbFetch('propiedades', 'POST', data);
+    document.getElementById('prop-modal').style.display = 'none';
+    await loadProps();
+  } catch(err){ alert('Error guardando: '+err.message); }
+  finally{ const btn=form.querySelector('.pf-save-btn'); if(btn){ btn.innerHTML='<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.5"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg> Guardar propiedad'; btn.disabled=false; } }
+}
+
+async function deleteProp(id){
+  if(!confirm('¿Eliminar esta propiedad?')) return;
+  try{ await sbFetch(`propiedades?id=eq.${id}`, 'DELETE'); await loadProps(); } catch(e){ alert('Error: '+e.message); }
+}
+
+function initFotoUpload(){
+  const input = document.getElementById('fotos-upload');
+  if(!input) return;
+  const clone = input.cloneNode(true);
+  input.parentNode.replaceChild(clone, input);
+  clone.addEventListener('change', handleFotoFiles);
+}
+
+async function handleFotoFiles(e){
+  const files = Array.from(e.target.files);
+  if(!files.length) return;
+  const progress = document.getElementById('fotos-progress');
+  const preview  = document.getElementById('fotos-preview');
+  for(let i=0; i<files.length; i++){
+    const file = files[i];
+    progress.textContent = `Subiendo ${i+1} de ${files.length}: ${file.name}`;
+    try{
+      const ext  = file.name.split('.').pop().toLowerCase();
+      const name = `prop_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const r = await fetch(`https://urtgysmtnvoqaljuhntz.supabase.co/storage/v1/object/fotos-propiedades/${name}`,{ method:'POST', headers:{ 'apikey':SB_KEY, 'Authorization':'Bearer '+SB_KEY, 'Content-Type':file.type, 'x-upsert':'true' }, body:file });
+      if(!r.ok) throw new Error(await r.text());
+      const url = `https://urtgysmtnvoqaljuhntz.supabase.co/storage/v1/object/public/fotos-propiedades/${name}`;
+      uploadedFotoUrls.push(url);
+      const div = document.createElement('div'); div.className='foto-preview-item';
+      const idx = uploadedFotoUrls.length-1;
+      div.innerHTML = `<img src="${url}"/><button type="button" onclick="removeFoto(${idx},this.parentElement)" title="Eliminar">✕</button>`;
+      preview.appendChild(div);
+    } catch(err){ progress.textContent=`Error: ${err.message}`; return; }
+  }
+  progress.textContent = `✓ ${uploadedFotoUrls.length} foto(s) subida(s)`;
+  document.getElementById('fotos-raw-hidden').value = uploadedFotoUrls.join(',');
+}
+
+function removeFoto(idx, el){ uploadedFotoUrls.splice(idx,1); el.remove(); document.getElementById('fotos-raw-hidden').value = uploadedFotoUrls.join(','); }
+
+function openPropDetail(id){
+  const p = allProps.find(x => x.id === id);
+  if(!p) return;
+  document.getElementById('detail-title').textContent = p.titulo;
+  document.getElementById('detail-edit-btn').onclick = () => { closePropDetail(); openPropForm(id); };
+  const fotos = p.fotos && p.fotos.length ? p.fotos : [];
+  const gallery = fotos.length
+    ? `<div class="detail-gallery">${fotos.map(f=>`<img src="${f}" onclick="window.open('${f}','_blank')"/>`).join('')}</div>`
+    : '<div style="height:140px;background:var(--sf);border-radius:var(--r2);display:flex;align-items:center;justify-content:center;color:var(--mut);margin-bottom:14px">Sin fotos</div>';
+  const specs = [{l:'Tipo',v:p.tipo},{l:'Operación',v:p.operacion},{l:'Estatus',v:p.estatus},{l:'M² Construc.',v:p.m2_construccion?p.m2_construccion+'m²':'—'},{l:'M² Terreno',v:p.m2_terreno?p.m2_terreno+'m²':'—'},{l:'Recámaras',v:p.recamaras||'—'},{l:'Baños',v:p.banos||'—'},{l:'Estac.',v:p.estacionamientos||'—'}];
+  document.getElementById('detail-body').innerHTML = `${gallery}<div class="detail-price-hero">${fmt_precio(p.precio,p.moneda)}</div><div class="detail-loc">📍 ${[p.calle,p.colonia,p.ciudad].filter(Boolean).join(', ')}</div>${p.descripcion?`<div class="detail-desc">${p.descripcion}</div>`:''}<div class="detail-info-grid">${specs.map(s=>`<div class="detail-info-item"><label>${s.l}</label><span>${s.v}</span></div>`).join('')}</div>${p.notas?`<div style="background:rgba(245,158,11,.08);border-radius:var(--r2);padding:12px;font-size:12px;color:var(--amber2)"><strong>📝 Notas internas:</strong> ${p.notas}</div>`:''}`;
+  document.getElementById('prop-detail-modal').style.display = 'flex';
+}
+
+function closePropDetail(e){
+  if(e && e.target !== document.getElementById('prop-detail-modal')) return;
+  document.getElementById('prop-detail-modal').style.display = 'none';
+}
+
+// ══════════════════════════════════════════
+// MONEY FORMAT
+// ══════════════════════════════════════════
+function getRawNum(val){ return parseFloat((val||'').replace(/[$,]/g,'').trim()) || 0; }
+function propFmtMoney(input){ const raw=getRawNum(input.value); if(!raw){ input.value=''; return; } input.value='$'+raw.toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:0}); }
+
+// ══════════════════════════════════════════
+// PWA
+// ══════════════════════════════════════════
+if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js?v=202603222305').then(reg=>{ window._swReg=reg; }).catch(()=>{});
+   // ══ BLOQUEAR SWIPE-BACK DEL NAVEGADOR ══
+(function() {
+  let startX = 0;
+  document.addEventListener('touchstart', function(e) {
+    startX = e.touches[0].clientX;
+  }, { passive: true });
+  document.addEventListener('touchmove', function(e) {
+    // Si el toque viene de los primeros 30px del borde izquierdo, cancelar
+    if (startX < 30) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+})();
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+   // ══ SALUDO DINÁMICO ══
+function updateGreeting() {
+  const h = new Date().getHours();
+  const saludo = h >= 6 && h < 13 ? '¡Buenos días,' :
+                 h >= 13 && h < 20 ? '¡Buenas tardes,' : '¡Buenas noches,';
+  const helloEl = document.getElementById('greet-hello');
+  const nameEl  = document.getElementById('greet-text');
+  if (helloEl) helloEl.textContent = saludo;
+  if (nameEl) {
+    const nombreCompleto = (userProfile && userProfile.nombre) ? userProfile.nombre.trim() : '';
+    const primerNombre = nombreCompleto ? nombreCompleto.split(' ')[0] : '';
+    nameEl.textContent = primerNombre ? primerNombre + '!' : '¡Bienvenido!';
+  }
+}
+document.addEventListener('DOMContentLoaded', () => {
+  // Activar pantalla de módulos y marcar su nav item
+  document.getElementById('screen-modules').classList.add('active-screen');
+  document.querySelector('.proto-nav-item[data-screen="modules"]')?.classList.add('active');
+  document.getElementById('close-bar').style.display = 'none';
+  authInit().then(() => { startNewsTicker(); });
+
+  // Refresco de plan cada 2 minutos — detecta cambios de suscripcion sin cerrar la app
+  setInterval(async () => {
+    const token = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+    const user  = JSON.parse(localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}');
+    if(!token || !user.id) return;
+    try {
+      const r = await fetch(SB_URL_AUTH + '/rest/v1/usuarios?id=eq.' + user.id + '&select=plan,modulos,activo', {
+        headers:{ 'apikey': SB_KEY_AUTH, 'Authorization': 'Bearer ' + token }
+      });
+      const data = await r.json();
+      if(!data.length) return;
+      if(data[0].activo === false){ localStorage.clear(); sessionStorage.clear(); window.location.href = 'login.html'; return; }
+      const changed = (data[0].plan !== (userProfile && userProfile.plan)) ||
+                      (JSON.stringify(data[0].modulos) !== JSON.stringify(userProfile && userProfile.modulos));
+      if(changed && userProfile){
+        userProfile.plan    = data[0].plan;
+        userProfile.modulos = data[0].modulos;
+        document.querySelectorAll('.module-card, .cat-module').forEach(function(el){ el.style.display = ''; });
+        if(window._origSetPanel) window.setPanel = window._origSetPanel;
+        applyUserPermissions();
+      }
+    } catch(e){}
+  }, 2 * 60 * 1000);
+});
+
+// ══ NOTIFICACIONES ══
+let notifOpen = false;
+let notifCount = 0;
+
+function toggleNotifications() {
+  notifOpen = !notifOpen;
+  const panel = document.getElementById('notif-panel');
+  if (panel) panel.style.display = notifOpen ? 'block' : 'none';
+}
+
+function setNotifCount(n) {
+  notifCount = n;
+  const badge = document.getElementById('notif-count');
+  if (!badge) return;
+  if (n <= 0) { badge.style.display = 'none'; return; }
+  badge.style.display = 'flex';
+  badge.textContent = n > 9 ? '9+' : String(n);
+}
+
+// ══ PERFIL EDIT ══
+function openProfileEdit() {
+  const modal = document.getElementById('profile-edit-modal');
+  if (!modal) return;
+  // Mostrar foto actual si existe
+  const photoEl = document.getElementById('profile-edit-photo');
+  if(photoEl && userProfile && userProfile.foto_url){
+    photoEl.innerHTML = '<img src="' + userProfile.foto_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"/><div class="profile-edit-photo-btn">📷 Cambiar foto</div>';
+  } else if(photoEl && userProfile){
+    const letra = (userProfile.nombre || '?')[0].toUpperCase();
+    photoEl.innerHTML = '<span id="profile-edit-photo-letter">' + letra + '</span><div class="profile-edit-photo-btn">📷 Cambiar foto</div>';
+  }
+  // Datos readonly
+  const roNombre = document.getElementById('pe-ro-nombre');
+  const roEmail  = document.getElementById('pe-ro-email');
+  const roTel    = document.getElementById('pe-ro-telefono');
+  if(roNombre) roNombre.textContent = userProfile?.nombre || '—';
+  if(roEmail)  roEmail.textContent  = currentUser?.email || userProfile?.email || '—';
+  if(roTel)    roTel.textContent    = userProfile?.telefono || '—';
+  // Reset photo save button
+  const photoSaveBtn = document.getElementById('pe-photo-save-btn');
+  if(photoSaveBtn){ photoSaveBtn.style.display = 'none'; photoSaveBtn.textContent = 'Guardar foto'; photoSaveBtn.disabled = false; }
+  window._newPhotoFile = null;
+  modal.classList.add('open');
+}
+
+function closeProfileEdit() {
+  const modal = document.getElementById('profile-edit-modal');
+  if (modal) modal.classList.remove('open');
+}
+
+function triggerPhotoUpload() {
+  document.getElementById('photo-upload-input')?.click();
+}
+
+function handlePhotoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  window._newPhotoFile = file;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const photoEl = document.getElementById('profile-edit-photo');
+    if (photoEl) {
+      photoEl.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"/><div class="profile-edit-photo-btn">📷 Cambiar foto</div>';
+    }
+    const btn = document.getElementById('pe-photo-save-btn');
+    if(btn) btn.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function savePhotoOnly() {
+  const file = window._newPhotoFile;
+  if(!file || !currentUser || !currentUser.id){ return; }
+  const btn = document.getElementById('pe-photo-save-btn');
+  if(btn){ btn.textContent = 'Subiendo...'; btn.disabled = true; }
+  try {
+    const token = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const filename = currentUser.id + '.' + ext;
+    // Try PUT first (upsert), fallback to POST
+    let uploadRes = await fetch(SB_URL_AUTH + '/storage/v1/object/avatares/' + filename, {
+      method: 'PUT',
+      headers: {
+        'apikey': SB_KEY_AUTH,
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': file.type,
+        'x-upsert': 'true'
+      },
+      body: file
+    });
+    // If PUT not supported, try POST
+    if(!uploadRes.ok && uploadRes.status === 405) {
+      uploadRes = await fetch(SB_URL_AUTH + '/storage/v1/object/avatares/' + filename, {
+        method: 'POST',
+        headers: {
+          'apikey': SB_KEY_AUTH,
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': file.type,
+          'x-upsert': 'true'
+        },
+        body: file
+      });
+    }
+    if(!uploadRes.ok){
+      const errText = await uploadRes.text();
+      let errMsg = 'Error al subir';
+      try { errMsg = JSON.parse(errText).error || errMsg; } catch(e2){}
+      throw new Error(errMsg);
+    }
+    // Add timestamp to bust CDN cache
+    const foto_url = SB_URL_AUTH + '/storage/v1/object/public/avatares/' + filename + '?t=' + Date.now();
+    // Save URL to usuarios table (store without cache-bust for persistence)
+    const foto_url_stored = SB_URL_AUTH + '/storage/v1/object/public/avatares/' + filename;
+    await fetch(SB_URL_AUTH + '/rest/v1/usuarios?id=eq.' + currentUser.id, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SB_KEY_AUTH,
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ foto_url: foto_url_stored })
+    });
+    // Update local profile and saved profile
+    if(userProfile){ userProfile.foto_url = foto_url_stored; userProfile._fotoTs = Date.now(); }
+    const storage = localStorage.getItem('sb_token') ? localStorage : sessionStorage;
+    if(userProfile) storage.setItem('sb_user_profile', JSON.stringify(userProfile));
+    // Update avatar elements with cache-busted URL for immediate display
+    const avatarEl = document.getElementById('user-avatar');
+    const profileAvEl = document.getElementById('profile-avatar');
+    const imgStyle = 'width:100%;height:100%;object-fit:cover;border-radius:inherit';
+    if(avatarEl) avatarEl.innerHTML = '<img src="' + foto_url + '" style="' + imgStyle + '"/>';
+    if(profileAvEl) profileAvEl.innerHTML = '<img src="' + foto_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:26px"/><div style="position:absolute;bottom:-4px;right:-4px;width:22px;height:22px;background:var(--teal);border-radius:50%;border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:11px">✏️</div>';
+    showToastIndex('✅ Foto actualizada');
+    closeProfileEdit();
+  } catch(e) {
+    showToastIndex('❌ ' + e.message);
+    if(btn){ btn.textContent = 'Guardar foto'; btn.disabled = false; }
+  }
+}
+
+function showToastIndex(msg){
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--navy);color:white;padding:10px 22px;border-radius:20px;font-size:13px;font-family:Poppins,sans-serif;z-index:9999;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,0.3);white-space:nowrap';
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+async function saveProfileEdit() {
+  const nombre = document.getElementById('pe-nombre')?.value?.trim() || '';
+  const telefono = document.getElementById('pe-telefono')?.value?.trim() || '';
+  const empresa = document.getElementById('pe-empresa')?.value?.trim() || '';
+  const ciudad = document.getElementById('pe-ciudad')?.value?.trim() || '';
+  const cedula = document.getElementById('pe-cedula')?.value?.trim() || '';
+  const publico = document.getElementById('pe-publico')?.checked || false;
+
+  const btn = document.querySelector('.pe-save-btn');
+  if (btn) { btn.textContent = 'Guardando...'; btn.disabled = true; }
+
+  try {
+    // Save to Supabase if user is logged in
+    if (currentUser?.id) {
+      const token = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+      const updates = { nombre, telefono, empresa, ciudad, cedula, perfil_publico: publico };
+      await fetch(SB_URL_AUTH + '/rest/v1/usuarios?id=eq.' + currentUser.id, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SB_KEY_AUTH,
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(updates)
+      });
+      // Update local profile
+      if (userProfile) Object.assign(userProfile, updates);
+    }
+  } catch(e) {
+    console.warn('No se pudo guardar en Supabase:', e);
+  }
+
+  // Always update DOM
+  if (nombre) {
+    const nameEl = document.getElementById('profile-name');
+    const avatarEl = document.getElementById('profile-avatar-letter');
+    const homeAvatar = document.getElementById('user-avatar');
+    if (nameEl) nameEl.textContent = nombre;
+    if (avatarEl) avatarEl.textContent = nombre[0].toUpperCase();
+    if (homeAvatar) homeAvatar.textContent = nombre[0].toUpperCase();
+    if (typeof updateGreeting === 'function') updateGreeting();
+  }
+
+  if (btn) { btn.textContent = 'Guardar cambios'; btn.disabled = false; }
+  closeProfileEdit();
+}
+
+function showComingSoon(label) {
+  // Simple toast
+  const toast = document.createElement('div');
+  toast.textContent = label + ' — Próximamente';
+  toast.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--navy);color:white;padding:10px 20px;border-radius:20px;font-size:13px;font-family:Poppins,sans-serif;z-index:999;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,0.3)';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2500);
+}
+
+// ══ BARRA DE CARGA SUPERIOR ══
+(function(){
+  const bar = document.getElementById('top-loader');
+  let _prog = 0, _raf = null, _active = 0;
+
+  function setWidth(w){
+    _prog = w;
+    if(bar) bar.style.width = w + '%';
+  }
+
+  function animateTo(target, speed){
+    cancelAnimationFrame(_raf);
+    function step(){
+      if(_prog < target){
+        setWidth(Math.min(_prog + speed, target));
+        _raf = requestAnimationFrame(step);
+      }
+    }
+    step();
+  }
+
+  window.loaderStart = function(){
+    _active++;
+    if(bar){ bar.classList.add('loading'); }
+    setWidth(0);
+    animateTo(80, 0.8);
+  };
+
+  window.loaderDone = function(){
+    _active = Math.max(0, _active - 1);
+    if(_active > 0) return;
+    cancelAnimationFrame(_raf);
+    setWidth(100);
+    setTimeout(() => {
+      if(bar){ bar.classList.remove('loading'); setWidth(0); }
+    }, 380);
+  };
+
+  // Interceptar fetch globalmente
+  const _origFetch = window.fetch;
+  window.fetch = function(){
+    loaderStart();
+    return _origFetch.apply(this, arguments).finally(loaderDone);
+  };
+})();
+
+// ══ DETECTOR DE CONEXIÓN ══
+(function(){
+  const banner = document.getElementById('offline-banner');
+  const msg    = document.getElementById('offline-msg');
+  let _offlineTimer = null;
+
+  function showOffline(){
+    if(!banner) return;
+    banner.classList.remove('back-online');
+    if(msg) msg.textContent = 'Sin conexión a internet';
+    const dot = banner.querySelector('.offline-dot');
+    if(dot){ dot.style.background='#ef4444'; dot.style.animation='pulse-red 1.4s ease infinite'; }
+    banner.classList.add('show');
+    clearTimeout(_offlineTimer);
+  }
+
+  function showBackOnline(){
+    if(!banner) return;
+    banner.classList.add('back-online');
+    if(msg) msg.textContent = 'Conexión restaurada';
+    const dot = banner.querySelector('.offline-dot');
+    if(dot){ dot.style.background='#10b981'; dot.style.animation='none'; }
+    banner.classList.add('show');
+    clearTimeout(_offlineTimer);
+    _offlineTimer = setTimeout(() => { banner.classList.remove('show'); }, 2500);
+  }
+
+  window.addEventListener('offline', showOffline);
+  window.addEventListener('online',  showBackOnline);
+
+  // Verificar estado al cargar
+  if(!navigator.onLine) showOffline();
+})();
+
+// ══ NEWS TICKER ══
+const NEWS_MODULES = [
+  { id:'ficha-manual', name:'Fichas técnicas', desc:'Crea fichas técnicas' },
+  { id:'ficha',        name:'Fichas EasyBroker', desc:'Fichas desde EasyBroker' },
+  { id:'isr',          name:'Calculadora ISR', desc:'Cálculo de impuesto' },
+  { id:'avm',          name:'Opinión de valor', desc:'AVM inteligente' },
+  { id:'contratos',    name:'Contratos', desc:'Genera contratos' },
+  { id:'props',        name:'Mis inmuebles', desc:'Gestión de propiedades' },
+];
+
+async function loadNewsTicker() {
+  const track = document.getElementById('news-ticker-track');
+  if(!track) return;
+
+  const FALLBACK = [
+    { t: 'Tasas hipotecarias en México se estabilizan en 2026', s: 'Expansión', url: 'https://expansion.mx/inmobiliario' },
+    { t: 'Morelia entre las ciudades con mayor plusvalía del país', s: 'El Economista', url: 'https://eleconomista.com.mx/industrias/bienes-raices/' },
+    { t: 'INFONAVIT amplía créditos para vivienda media y residencial', s: 'El Financiero', url: 'https://elfinanciero.com.mx/economia/vivienda/' },
+    { t: 'Michoacán registra crecimiento inmobiliario del 12% anual', s: 'Milenio', url: 'https://milenio.com/negocios/inmobiliario' },
+    { t: 'Nuevas reglas del SAT para declaración de inmuebles 2026', s: 'El Universal', url: 'https://eluniversal.com.mx/cartera/' },
+    { t: 'Inversión extranjera en bienes raíces mexicanos crece 18%', s: 'Forbes MX', url: 'https://forbes.com.mx/negocios/' },
+    { t: 'Desarrollos verticales lideran oferta inmobiliaria en CDMX', s: 'Inmobiliare', url: 'https://inmobiliare.com' },
+    { t: 'Créditos hipotecarios bancarios crecen 9% en el primer trimestre', s: 'El Economista', url: 'https://eleconomista.com.mx' },
+  ];
+
+  function renderTicker(items) {
+    const makeItems = (arr) => arr.map(item =>
+      '<a class="news-ticker-item" href="' + item.url + '" target="_blank" rel="noopener">' +
+      '<span class="news-ticker-source">' + item.s + '</span>' +
+      '<span>' + item.t + '</span></a>'
+    ).join('');
+    track.innerHTML = makeItems(items) + makeItems(items);
+    track.style.cssText = '';
+    const duration = Math.max(18, items.length * 3);
+    track.style.animation = 'tickerScroll ' + duration + 's linear infinite';
+  }
+
+  // Consumir el backend de Railway — noticias reales del RSS de Google News
+  try {
+    const r = await fetch('https://brokrebapi-production.up.railway.app/noticias', {
+      signal: AbortSignal.timeout(8000)
+    });
+    if(!r.ok) throw new Error('status ' + r.status);
+    const data = await r.json();
+    if(data.items && data.items.length >= 3) {
+      const items = data.items.map(n => ({ t: n.title, s: n.source, url: n.url }));
+      renderTicker(items);
+      return;
+    }
+  } catch(e) { /* silencioso */ }
+
+  // Fallback si el backend no responde
+  renderTicker(FALLBACK);
+}
+
+// Reload news every 10 minutes
+function startNewsTicker() {
+  loadNewsTicker();
+  setInterval(loadNewsTicker, 10 * 60 * 1000);
+}
+
+// ══ GLOBAL SEARCH ══
+const SEARCH_INDEX = [
+  { name:'Fichas técnicas',       desc:'Crear ficha técnica sin EasyBroker', action:() => setPanel('ficha-manual') },
+  { name:'Fichas EasyBroker',   desc:'Ficha a partir de ID EasyBroker',    action:() => setPanel('ficha') },
+  { name:'Calculadora ISR',    desc:'Calcular impuesto sobre venta',       action:() => setPanel('isr') },
+  { name:'Opinión de valor',   desc:'AVM — valuación de propiedad',        action:() => setPanel('avm') },
+  { name:'Contratos',          desc:'Generar contrato de compra/renta',    action:() => setPanel('contratos') },
+  { name:'Mis inmuebles',      desc:'Ver y gestionar propiedades',         action:() => setPanel('props') },
+  { name:'Mi perfil',          desc:'Ver y editar perfil',                 action:() => protoGoTo('profile') },
+  { name:'Shaark',             desc:'Abrir asistente de IA',               action:() => toggleShaarkPopup() },
+];
+
+function toggleGlobalSearch() {
+  const box = document.getElementById('global-search-box');
+  if(!box) return;
+  const visible = box.style.display !== 'none';
+  if(visible){ closeGlobalSearch(); return; }
+  box.style.display = 'flex';
+  setTimeout(() => document.getElementById('global-search-input')?.focus(), 50);
+}
+function closeGlobalSearch() {
+  const box = document.getElementById('global-search-box');
+  if(box) box.style.display = 'none';
+  const inp = document.getElementById('global-search-input');
+  if(inp) inp.value = '';
+  const dd = document.getElementById('search-results-dd');
+  if(dd) dd.remove();
+}
+function doGlobalSearch(q) {
+  let dd = document.getElementById('search-results-dd');
+  if(!dd){ dd = document.createElement('div'); dd.id = 'search-results-dd'; dd.className = 'search-results-dropdown'; document.getElementById('global-search-box').appendChild(dd); }
+  if(!q.trim()){ dd.innerHTML = ''; return; }
+  const results = SEARCH_INDEX.filter(item => (item.name + item.desc).toLowerCase().includes(q.toLowerCase()));
+  if(!results.length){ dd.innerHTML = '<div style="padding:14px 16px;font-size:13px;color:var(--gray-400)">Sin resultados</div>'; return; }
+  dd.innerHTML = results.slice(0,5).map(function(r,i){
+    return '<div class="search-result-item" onclick="searchResultTap(' + i + ')">' +
+    '<svg class="search-result-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803a7.5 7.5 0 0010.607 10.607z"/></svg>' +
+    '<div><div class="search-result-name">' + r.name + '</div><div class="search-result-desc">' + r.desc + '</div></div></div>';
+  }).join('');
+  // Store results for tap handler
+  window._searchResults = results;
+}
+function searchResultTap(i) {
+  const results = window._searchResults || [];
+  if(results[i]) results[i].action();
+  closeGlobalSearch();
+}
+
+// ══ SHAARK POPUP ══
+let shaarkPopupOpen = false;
+let _micPermissionGranted = localStorage.getItem('mic_granted') === '1';
+
+// Pedir permiso del micrófono una sola vez — al cargar la app
+function preSolicitarMicrofono() {
+  if(_micPermissionGranted) return;
+  if(!('mediaDevices' in navigator)) return;
+  navigator.mediaDevices.getUserMedia({ audio: true })
+    .then(stream => {
+      stream.getTracks().forEach(t => t.stop());
+      _micPermissionGranted = true;
+      localStorage.setItem('mic_granted', '1');
+    })
+    .catch(() => {});
+}
+// Solicitar al primer gesto del usuario (requerido por navegadores)
+document.addEventListener('touchstart', function _firstTouch(){
+  preSolicitarMicrofono();
+  document.removeEventListener('touchstart', _firstTouch);
+}, { once: true });
+
+function toggleShaarkPopup() {
+  shaarkPopupOpen = !shaarkPopupOpen;
+  const popup = document.getElementById('shaark-popup');
+  const navBtn = document.getElementById('nav-shaark-btn');
+  if (!popup) return;
+  if (shaarkPopupOpen) {
+    popup.classList.add('open');
+    navBtn?.classList.add('active');
+    setTimeout(() => {
+      const msgs = document.getElementById('scw-msgs');
+      if (msgs) msgs.scrollTop = msgs.scrollHeight;
+    }, 50);
+  } else {
+    popup.classList.remove('open');
+    navBtn?.classList.remove('active');
+  }
+}
+function toggleShaarkWindow() { toggleShaarkPopup(); }
+function closeShaarkWindow() {
+  shaarkPopupOpen = false;
+  document.getElementById('shaark-popup')?.classList.remove('open');
+  document.getElementById('nav-shaark-btn')?.classList.remove('active');
+}
+
+// ══ MODAL API EASYBROKER ══
+function openApiModal() {
+  const modal = document.getElementById('api-modal');
+  if (!modal) return;
+  // Cargar key guardada si existe
+  const saved = userProfile?.eb_api_key || localStorage.getItem('eb_api_key') || '';
+  const inp = document.getElementById('api-key-input');
+  if (inp) inp.value = saved;
+  const status = document.getElementById('api-key-status');
+  if (status) { status.className = 'prf-api-status'; status.textContent = ''; }
+  modal.classList.add('open');
+}
+function closeApiModal() {
+  document.getElementById('api-modal')?.classList.remove('open');
+}
+function toggleApiKeyVisibility() {
+  const inp = document.getElementById('api-key-input');
+  const btn = document.getElementById('api-key-toggle');
+  if (!inp) return;
+  if (inp.type === 'password') { inp.type = 'text'; if (btn) btn.textContent = 'Ocultar'; }
+  else { inp.type = 'password'; if (btn) btn.textContent = 'Ver'; }
+}
+async function saveApiKey() {
+  const inp = document.getElementById('api-key-input');
+  const status = document.getElementById('api-key-status');
+  const btn = document.querySelector('#api-modal .prf-api-save-btn');
+  const key = (inp?.value || '').trim();
+  if (!key) { if (status) { status.className = 'prf-api-status err'; status.textContent = 'Ingresa tu API key antes de guardar.'; } return; }
+  if (btn) { btn.textContent = 'Guardando...'; btn.disabled = true; }
+  try {
+    const token = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+    if (currentUser?.id && token) {
+      await fetch(SB_URL_AUTH + '/rest/v1/usuarios?id=eq.' + currentUser.id, {
+        method: 'PATCH',
+        headers: { 'apikey': SB_KEY_AUTH, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ eb_api_key: key })
+      });
+    }
+    localStorage.setItem('eb_api_key', key);
+    if (userProfile) userProfile.eb_api_key = key;
+    if (status) { status.className = 'prf-api-status ok'; status.textContent = '✓ API key guardada correctamente.'; }
+  } catch(e) {
+    if (status) { status.className = 'prf-api-status err'; status.textContent = 'Error al guardar. Intenta de nuevo.'; }
+  }
+  if (btn) { btn.textContent = 'Guardar API Key'; btn.disabled = false; }
+}
+
+// ══ MODAL SUSCRIPCIÓN ══
+function openSuscripcionModal() {
+  const modal = document.getElementById('suscripcion-modal');
+  if (!modal) return;
+  const planMap = { free: 'Free', modulos: 'Personalizado', personalizado: 'Personalizado', pro: 'Pro', admin: 'Admin' };
+  const descMap = {
+    free:          'Acceso al módulo básico de fichas técnicas.',
+    modulos:       'Acceso a los módulos seleccionados en tu plan.',
+    personalizado: 'Acceso a los módulos seleccionados en tu plan.',
+    pro:           'Acceso completo a todos los módulos de Brokr.',
+    admin:         'Acceso total de administrador.'
+  };
+  const plan = userProfile?.plan || 'free';
+  const badge = document.getElementById('sus-plan-badge');
+  const name  = document.getElementById('sus-plan-name');
+  const desc  = document.getElementById('sus-plan-desc');
+  if (badge) badge.textContent = planMap[plan] || plan;
+  if (name)  name.textContent  = 'Plan ' + (planMap[plan] || plan);
+  if (desc)  desc.textContent  = descMap[plan] || '';
+  modal.classList.add('open');
+}
+function closeSuscripcionModal() {
+  document.getElementById('suscripcion-modal')?.classList.remove('open');
+}
+function gestionarStripe() {
+  showToastIndex('Portal de pagos disponible próximamente');
+}
+function cancelarSuscripcion() {
+  showToastIndex('Para cancelar escríbenos a brokr@navarroai.com.mx');
+}
+
+// ══ MODAL SOPORTE ══
+function openSoporteModal() {
+  document.getElementById('soporte-modal')?.classList.add('open');
+}
+function closeSoporteModal() {
+  document.getElementById('soporte-modal')?.classList.remove('open');
+}
+
+// Cerrar modales de perfil al tocar el overlay
+['api-modal','suscripcion-modal','soporte-modal'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('click', function(e) {
+    if (e.target === el) el.classList.remove('open');
+  });
+});
+
+</script>
+
+<!-- ══ MODAL API EASYBROKER ══ -->
+<div class="prf-modal-overlay" id="api-modal">
+  <div class="prf-modal-box">
+    <div class="prf-modal-hdr">
+      <h3>API EasyBroker</h3>
+      <button class="prf-modal-close" onclick="closeApiModal()">✕</button>
+    </div>
+    <div class="prf-modal-body">
+      <p style="font-size:13px;color:var(--gray-600);line-height:1.6;margin-bottom:18px">
+        Conecta tu cuenta de EasyBroker para importar propiedades y generar fichas técnicas automáticamente. Encuentra tu API key en <strong>EasyBroker → Configuración → API</strong>.
+      </p>
+      <div class="prf-section-lbl">Tu API Key</div>
+      <div class="prf-api-input-wrap">
+        <input class="prf-api-input" id="api-key-input" type="password" placeholder="eb_live_xxxxxxxxxxxx" autocomplete="off" spellcheck="false"/>
+        <button class="prf-api-toggle" id="api-key-toggle" onclick="toggleApiKeyVisibility()">Ver</button>
+      </div>
+      <div class="prf-api-status" id="api-key-status"></div>
+      <button class="prf-api-save-btn" onclick="saveApiKey()">Guardar API Key</button>
+      <p style="font-size:11px;color:var(--gray-400);margin-top:14px;text-align:center;line-height:1.5">
+        Tu API key se guarda de forma segura y nunca se comparte con terceros.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL SUSCRIPCIÓN ══ -->
+<div class="prf-modal-overlay" id="suscripcion-modal">
+  <div class="prf-modal-box">
+    <div class="prf-modal-hdr">
+      <h3>Suscripción</h3>
+      <button class="prf-modal-close" onclick="closeSuscripcionModal()">✕</button>
+    </div>
+    <div class="prf-modal-body">
+      <div class="prf-section-lbl">Plan actual</div>
+      <div class="prf-plan-card">
+        <div class="prf-plan-badge" id="sus-plan-badge">Pro</div>
+        <div class="prf-plan-name" id="sus-plan-name">Plan Pro</div>
+        <div class="prf-plan-desc" id="sus-plan-desc">Acceso completo a todos los módulos de Brokr.</div>
+      </div>
+      <button class="prf-stripe-btn primary" onclick="gestionarStripe()">
+        Gestionar suscripción
+      </button>
+      <button class="prf-stripe-btn secondary" onclick="cancelarSuscripcion()">
+        Cancelar membresía
+      </button>
+      <div class="prf-coming-note">
+        La gestión de pagos estará disponible próximamente. Para cambios urgentes escríbenos a <strong>brokr@navarroai.com.mx</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL SOPORTE ══ -->
+<div class="prf-modal-overlay" id="soporte-modal">
+  <div class="prf-modal-box">
+    <div class="prf-modal-hdr">
+      <h3>Soporte</h3>
+      <button class="prf-modal-close" onclick="closeSoporteModal()">✕</button>
+    </div>
+    <div class="prf-modal-body">
+      <p style="font-size:13px;color:var(--gray-600);line-height:1.6;margin-bottom:20px">
+        ¿Tienes dudas, reportes o sugerencias? Estamos para ayudarte.
+      </p>
+      <a class="prf-soporte-row" href="mailto:brokr@navarroai.com.mx?subject=Soporte Brokr">
+        <div class="prf-soporte-icon">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
+        </div>
+        <div class="prf-soporte-text">
+          <div class="title">Correo electrónico</div>
+          <div class="sub">brokr@navarroai.com.mx</div>
+        </div>
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" style="color:var(--gray-400);margin-left:auto;flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+      </a>
+      <p style="font-size:11px;color:var(--gray-400);text-align:center;margin-top:8px;line-height:1.5">
+        Tiempo de respuesta: 24–48 horas hábiles
+      </p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
