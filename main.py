@@ -1304,14 +1304,10 @@ class ComparablesRequest(BaseModel):
 
 
 def construir_url_inmuebles24(tipo: str, colonia: str, ciudad: str, estado: str) -> str:
-    """Construye la URL de búsqueda de Inmuebles24 a partir de los parámetros."""
-    segmento = TIPO_URL.get(tipo, "casas-en-venta")
-    # Normalizar colonia: minúsculas, espacios → guiones
-    col = colonia.lower().strip().replace(" ", "-")
+    segmento = TIPO_URL.get(tipo, "casas")
     ciudad = ciudad.lower().strip().replace(" ", "-")
-    estado = estado.lower().strip().replace(" ", "-")
-    # Ejemplo: https://www.inmuebles24.com/casas-en-venta-en-chapultepec-morelia-michoacan-de-ocampo.html
-    return f"https://www.inmuebles24.com/{segmento}-en-{col}-{ciudad}-{estado}.html"
+    col = colonia.lower().strip().replace(" ", "-")
+    return f"https://www.inmuebles24.com/{segmento}-en-{ciudad}-o-{col}.html"
 
 
 def normalizar_listing(item: dict) -> dict:
