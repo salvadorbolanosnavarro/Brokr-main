@@ -1484,9 +1484,10 @@ async def buscar_colonias(texto: str, ciudad: str = "Morelia"):
             r = await client.get(
                 "https://maps.googleapis.com/maps/api/place/autocomplete/json",
                 params={
-                    "input": f"colonia {texto} Morelia Michoacan",
-                    "types": "(regions)",
+                    "input": f"{texto} {ciudad}",
+                    "types": "geocode",
                     "language": "es",
+                    "components": "country:mx",
                     "key": GOOGLE_PLACES_KEY,
                 }
             )
@@ -1497,12 +1498,17 @@ async def buscar_colonias(texto: str, ciudad: str = "Morelia"):
     colonias = []
     for pred in data.get("predictions", []):
         descripcion = pred.get("description", "")
+        tipos = pred.get("types", [])
 
-        # Filtrar solo resultados que contengan Morelia o Michoacán
-        if "morelia" not in descripcion.lower() and "michoacán" not in descripcion.lower() and "michoacan" not in descripcion.lower():
+        # Solo colonias/barrios — filtrar calles, ciudades, estados
+        if "sublocality" not in tipos and "neighborhood" not in tipos:
             continue
 
-        nombre = descripcion.split(",")[0].strip()
+        # Solo resultados de la ciudad correcta
+        if ciudad.lower() not in descripcion.lower():
+            continue
+
+        nombre = pred.get("structured_formatting", {}).get("main_text", descripcion.split(",")[0]).strip()
         place_id = pred.get("place_id", "")
 
         lat, lon = 0.0, 0.0
@@ -1512,7 +1518,7 @@ async def buscar_colonias(texto: str, ciudad: str = "Morelia"):
                     "https://maps.googleapis.com/maps/api/place/details/json",
                     params={
                         "place_id": place_id,
-                        "fields": "geometry,name",
+                        "fields": "geometry",
                         "key": GOOGLE_PLACES_KEY,
                     }
                 )
