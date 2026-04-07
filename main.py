@@ -1495,7 +1495,7 @@ async def buscar_colonias(texto: str, ciudad: str = "Morelia"):
         except Exception as e:
             return {"colonias": [], "error": str(e)}
 
-   colonias = []
+    colonias = []
     for pred in data.get("predictions", []):
         descripcion = pred.get("description", "")
         tipos = pred.get("types", [])
