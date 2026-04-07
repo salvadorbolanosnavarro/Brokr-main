@@ -1473,51 +1473,86 @@ async def buscar_colonias(texto: str, ciudad: str = "Morelia"):
     if cached:
         return cached
 
-    url = "https://nominatim.openstreetmap.org/search"
-    params = {
-        "q": f"{texto}, {ciudad}, Michoacán, México",
-        "format": "json",
-        "addressdetails": 1,
-        "limit": 8,
-        "featuretype": "settlement",
-    }
     headers = {"User-Agent": "Brokr-AVM/1.0 (contacto@brokr.mx)"}
-
-    async with httpx.AsyncClient(timeout=10) as client:
-        try:
-            r = await client.get(url, params=params, headers=headers)
-            data = r.json()
-        except Exception:
-            return {"colonias": []}
-
     colonias = []
     vistos = set()
-    for item in data:
-        addr = item.get("address", {})
-        nombre = (
-            addr.get("neighbourhood") or
-            addr.get("suburb") or
-            addr.get("quarter") or
-            addr.get("residential") or
-            addr.get("village") or
-            item.get("display_name", "").split(",")[0]
-        ).strip()
-        if not nombre or nombre in vistos:
-            continue
-        vistos.add(nombre)
-        colonias.append({
-            "nombre":   nombre,
-            "display":  item.get("display_name", ""),
-            "latitud":  float(item.get("lat", 0)),
-            "longitud": float(item.get("lon", 0)),
-        })
 
-    resultado = {"colonias": colonias}
-    cache_set(cache_key, resultado, ttl=86400)  # cache 24h
+    # Búsqueda 1: colonias/barrios directamente
+    async with httpx.AsyncClient(timeout=10) as client:
+        for feature in ["neighbourhood", "suburb", "quarter"]:
+            try:
+                r = await client.get(
+                    "https://nominatim.openstreetmap.org/search",
+                    params={
+                        "q": f"{texto}, {ciudad}, Michoacán, México",
+                        "format": "json",
+                        "addressdetails": 1,
+                        "limit": 10,
+                        "featuretype": feature,
+                    },
+                    headers=headers,
+                )
+                for item in r.json():
+                    addr = item.get("address", {})
+                    nombre = (
+                        addr.get("neighbourhood") or
+                        addr.get("suburb") or
+                        addr.get("quarter") or
+                        addr.get("residential") or
+                        item.get("name", "")
+                    ).strip()
+                    if not nombre or nombre in vistos:
+                        continue
+                    # Solo incluir si está en la ciudad correcta
+                    ciudad_item = (addr.get("city") or addr.get("town") or addr.get("county") or "").lower()
+                    if ciudad.lower() not in ciudad_item and ciudad_item not in ciudad.lower():
+                        continue
+                    vistos.add(nombre)
+                    colonias.append({
+                        "nombre":   nombre,
+                        "display":  f"{nombre}, {ciudad}",
+                        "latitud":  float(item.get("lat", 0)),
+                        "longitud": float(item.get("lon", 0)),
+                    })
+            except Exception:
+                pass
+
+        # Búsqueda 2: si no encontró nada, buscar más amplio
+        if not colonias:
+            try:
+                r = await client.get(
+                    "https://nominatim.openstreetmap.org/search",
+                    params={
+                        "q": f"colonia {texto} {ciudad} Michoacan Mexico",
+                        "format": "json",
+                        "addressdetails": 1,
+                        "limit": 8,
+                    },
+                    headers=headers,
+                )
+                for item in r.json():
+                    addr = item.get("address", {})
+                    nombre = (
+                        addr.get("neighbourhood") or
+                        addr.get("suburb") or
+                        addr.get("quarter") or
+                        item.get("name", "")
+                    ).strip()
+                    if not nombre or nombre in vistos:
+                        continue
+                    vistos.add(nombre)
+                    colonias.append({
+                        "nombre":   nombre,
+                        "display":  f"{nombre}, {ciudad}",
+                        "latitud":  float(item.get("lat", 0)),
+                        "longitud": float(item.get("lon", 0)),
+                    })
+            except Exception:
+                pass
+
+    resultado = {"colonias": colonias[:8]}
+    cache_set(cache_key, resultado, ttl=86400)
     return resultado
-
-
-@app.post("/api/comparables-cercanos")
 async def comparables_cercanos(req: CercanosRequest):
     """Busca propiedades cercanas en Supabase usando PostGIS."""
     if not SUPABASE_URL or not SUPABASE_KEY:
