@@ -22,6 +22,7 @@ ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 EB_BASE          = "https://api.easybroker.com/v1"
 GROQ_BASE        = "https://api.groq.com/openai/v1"
 ANTHROPIC_BASE   = "https://api.anthropic.com/v1"
+APIFY_API_KEY = os.environ.get("APIFY_API_KEY", "")
 
 # ── CACHE EN MEMORIA (TTL 6h) ──
 _cache: dict = {}
@@ -1269,3 +1270,158 @@ async def descargar_ficha_pdf(token: str):
         media_type="application/pdf",
         headers={"Content-Disposition": f"inline; filename={filename}"}
     )
+
+# ────────────────────────────────────────────
+# VARIABLE DE ENTORNO — agregar junto a las demás arriba en main.py
+# ────────────────────────────────────────────
+# APIFY_API_KEY = os.environ.get("APIFY_API_KEY", "")
+# (ya tienes el patrón, solo añade esta línea donde están EB_API_KEY, etc.)
+
+
+# ────────────────────────────────────────────
+# AVM — COMPARABLES VÍA APIFY + INMUEBLES24
+# ────────────────────────────────────────────
+
+APIFY_API_KEY = os.environ.get("APIFY_API_KEY", "")
+APIFY_ACTOR   = "azzouzana~inmuebles24-scraper-pro-by-search-url"
+
+# Mapeo de tipo de inmueble a término de búsqueda en Inmuebles24
+TIPO_URL = {
+    "casa":       "casas-en-venta",
+    "departamento": "departamentos-en-venta",
+    "terreno":    "terrenos-en-venta",
+    "local":      "locales-comerciales-en-venta",
+    "oficina":    "oficinas-en-venta",
+    "bodega":     "bodegas-en-venta",
+    "edificio":   "edificios-en-venta",
+}
+
+class ComparablesRequest(BaseModel):
+    colonia: str
+    ciudad: str = "morelia"
+    estado: str = "michoacan-de-ocampo"
+    tipo: str = "casa"          # casa | departamento | terreno | local | oficina | bodega | edificio
+    max_resultados: int = 10    # cuántos comparables traer
+
+
+def construir_url_inmuebles24(tipo: str, colonia: str, ciudad: str, estado: str) -> str:
+    """Construye la URL de búsqueda de Inmuebles24 a partir de los parámetros."""
+    segmento = TIPO_URL.get(tipo, "casas-en-venta")
+    # Normalizar colonia: minúsculas, espacios → guiones
+    col = colonia.lower().strip().replace(" ", "-")
+    ciudad = ciudad.lower().strip().replace(" ", "-")
+    estado = estado.lower().strip().replace(" ", "-")
+    # Ejemplo: https://www.inmuebles24.com/casas-en-venta-en-chapultepec-morelia-michoacan-de-ocampo.html
+    return f"https://www.inmuebles24.com/{segmento}-en-{col}-{ciudad}-{estado}.html"
+
+
+def normalizar_listing(item: dict) -> dict:
+    """Convierte un resultado de Apify al formato que espera el AVM."""
+    precio = item.get("price") or item.get("precio") or 0
+    # Apify puede regresar precio como string "$2,500,000" o como número
+    if isinstance(precio, str):
+        precio = re.sub(r"[^\d]", "", precio)
+        precio = int(precio) if precio else 0
+
+    m2c = item.get("area") or item.get("construction_area") or item.get("m2_construccion") or 0
+    m2t = item.get("lot_area") or item.get("lot_size") or item.get("m2_terreno") or 0
+    recamaras = item.get("bedrooms") or item.get("recamaras") or 0
+    banos = item.get("bathrooms") or item.get("banos") or 0
+    estac = item.get("parking_spaces") or item.get("estacionamiento") or 0
+    edad = item.get("age") or item.get("edad") or 0
+    titulo = item.get("title") or item.get("titulo") or ""
+    url = item.get("url") or item.get("link") or ""
+    imagen = (
+        item.get("main_image") or
+        item.get("image") or
+        (item.get("images", [None])[0] if item.get("images") else None) or
+        ""
+    )
+
+    # Limpiar m2 si vienen como string ("120 m²")
+    def parse_m2(v):
+        if isinstance(v, (int, float)):
+            return float(v)
+        if isinstance(v, str):
+            v = re.sub(r"[^\d.]", "", v)
+            return float(v) if v else 0
+        return 0
+
+    return {
+        "precio": precio,
+        "m2Construccion": parse_m2(m2c),
+        "m2Terreno": parse_m2(m2t),
+        "recamaras": int(recamaras) if recamaras else 0,
+        "banos": float(banos) if banos else 0,
+        "estacionamiento": int(estac) if estac else 0,
+        "edad": int(edad) if edad else 0,
+        "conservacion": "bueno",   # default — Inmuebles24 no siempre lo publica
+        "calidad": "medio",        # default
+        "mismaZona": "si",
+        "titulo": titulo,
+        "url": url,
+        "imagen": imagen,
+    }
+
+
+@app.post("/api/comparables")
+async def buscar_comparables(req: ComparablesRequest):
+    """
+    Llama a Apify (actor de Inmuebles24) y regresa comparables normalizados
+    listos para el AVM.
+    """
+    if not APIFY_API_KEY:
+        raise HTTPException(status_code=500, detail="APIFY_API_KEY no configurada en el servidor")
+
+    url_busqueda = construir_url_inmuebles24(req.tipo, req.colonia, req.ciudad, req.estado)
+
+    # Cache key para no re-scrapear la misma búsqueda en 2 horas
+    cache_key = f"comparables_{req.tipo}_{req.colonia}_{req.ciudad}"
+    cached = cache_get(cache_key)
+    if cached is not None:
+        return cached
+
+    # Llamada a Apify — run-sync-get-dataset-items (espera hasta que termina)
+    apify_url = (
+        f"https://api.apify.com/v2/acts/{APIFY_ACTOR}"
+        f"/run-sync-get-dataset-items?token={APIFY_API_KEY}"
+        f"&timeout=60&memory=256"
+    )
+
+    payload = {
+        "startUrls": [{"url": url_busqueda}],
+        "maxItems": req.max_resultados,
+    }
+
+    async with httpx.AsyncClient(timeout=90) as client:
+        try:
+            r = await client.post(apify_url, json=payload)
+        except httpx.TimeoutException:
+            raise HTTPException(status_code=504, detail="Apify tardó demasiado. Intenta de nuevo.")
+
+        if r.status_code != 200:
+            raise HTTPException(
+                status_code=502,
+                detail=f"Error de Apify: {r.status_code} — {r.text[:300]}"
+            )
+
+        items = r.json()
+
+    if not isinstance(items, list):
+        raise HTTPException(status_code=502, detail="Respuesta inesperada de Apify")
+
+    # Filtrar items con precio y m2 válidos, normalizar
+    comparables = []
+    for item in items:
+        n = normalizar_listing(item)
+        if n["precio"] > 0 and n["m2Construccion"] > 0:
+            comparables.append(n)
+
+    resultado = {
+        "url_busqueda": url_busqueda,
+        "total": len(comparables),
+        "comparables": comparables,
+    }
+
+    cache_set(cache_key, resultado, ttl=7200)  # cache 2 horas
+    return resultado
