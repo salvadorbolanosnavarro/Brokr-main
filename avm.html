@@ -1,35 +1,254 @@
 <!DOCTYPE html>
-
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>Brokr® — Avalúo Digital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #0B1A2B; }
+    :root {
+      --navy:       #0f1829;
+      --navy-mid:   #162035;
+      --navy-light: #1e2d47;
+      --teal:       #2a9db5;
+      --teal-dark:  #1a7a8f;
+      --teal-glow:  rgba(42,157,181,0.18);
+      --white:      #ffffff;
+      --gray-100:   #f5f6f8;
+      --gray-200:   #e8eaee;
+      --gray-400:   #9aa0ad;
+      --gray-600:   #5a6070;
+      --text:       #1a2035;
+      --screen-bg:  #f0f2f7;
+      --amber:      #f59e0b;
+      --emerald:    #10b981;
+      --violet:     #8b5cf6;
+      --rose:       #f43f5e;
+      --safe-top:   env(safe-area-inset-top, 0px);
+    }
+    @supports (-webkit-touch-callout: none) {
+      @media (display-mode: standalone) {
+        :root { --safe-top: max(env(safe-area-inset-top, 0px), 44px); }
+      }
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { font-family: 'Poppins', sans-serif; background: var(--screen-bg); color: var(--text); }
+    input, select, textarea { font-size: max(16px, 1em) !important; font-family: 'Poppins', sans-serif; }
     input[type=number]::-webkit-inner-spin-button,
     input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     input[type=number] { -moz-appearance: textfield; }
+
+    .avm-header {
+      background: var(--navy);
+      padding: calc(var(--safe-top) + 16px) 20px 20px;
+      position: relative; overflow: hidden;
+    }
+    .avm-header::before {
+      content: ''; position: absolute; top: -40px; right: -40px;
+      width: 180px; height: 180px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(42,157,181,0.25) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .avm-header-row { display: flex; align-items: center; justify-content: space-between; }
+    .avm-title { font-size: 20px; font-weight: 800; color: white; letter-spacing: 1px; }
+    .avm-sub { font-size: 11px; color: rgba(255,255,255,0.5); letter-spacing: 0.5px; text-transform: uppercase; margin-top: 2px; }
+
+    .avm-tabs {
+      display: flex; background: var(--navy-mid);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      overflow-x: auto;
+    }
+    .avm-tabs::-webkit-scrollbar { display: none; }
+    .avm-tab {
+      flex: 1; padding: 13px 8px; font-size: 12px; font-weight: 600;
+      font-family: 'Poppins', sans-serif; color: rgba(255,255,255,0.4);
+      background: none; border: none; border-bottom: 2px solid transparent;
+      cursor: pointer; white-space: nowrap; text-align: center; transition: color 0.2s;
+    }
+    .avm-tab.active { color: var(--teal); border-bottom-color: var(--teal); }
+
+    .avm-body { padding: 16px 16px 80px; }
+
+    .avm-card {
+      background: white; border-radius: 18px;
+      border: 1px solid rgba(0,0,0,0.06);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      padding: 18px; margin-bottom: 14px;
+    }
+    .card-label {
+      font-size: 10px; font-weight: 700; color: var(--teal);
+      text-transform: uppercase; letter-spacing: 0.8px;
+      margin-bottom: 14px; display: flex; align-items: center; gap: 6px;
+    }
+
+    .tipo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .tipo-btn {
+      border-radius: 12px; border: 1.5px solid var(--gray-200);
+      background: var(--gray-100); padding: 10px 4px;
+      font-size: 10px; font-weight: 600; color: var(--gray-600);
+      font-family: 'Poppins', sans-serif; cursor: pointer;
+      text-align: center; transition: all 0.15s;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    .tipo-btn .tipo-icon { font-size: 20px; }
+    .tipo-btn:active { transform: scale(0.95); }
+    .tipo-btn.selected { border-color: var(--teal); background: var(--teal-glow); color: var(--teal-dark); font-weight: 700; }
+
+    .field-row { display: flex; gap: 10px; margin-bottom: 10px; }
+    .field-row:last-child { margin-bottom: 0; }
+    .field { flex: 1; min-width: 0; }
+    .field label {
+      font-size: 10px; font-weight: 700; color: var(--gray-600);
+      text-transform: uppercase; letter-spacing: 0.6px;
+      margin-bottom: 5px; display: block;
+    }
+    .field input, .field select {
+      width: 100%; padding: 10px 12px;
+      background: var(--gray-100); border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 10px; color: var(--text); outline: none; transition: border-color 0.2s;
+    }
+    .field input:focus, .field select:focus { border-color: var(--teal); background: white; }
+    .field input::placeholder { color: var(--gray-400); }
+
+    .btn-primary {
+      width: 100%; padding: 14px 20px; background: var(--navy); color: white;
+      border: none; border-radius: 14px; font-size: 14px; font-weight: 700;
+      font-family: 'Poppins', sans-serif; cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-primary:active { transform: scale(0.98); opacity: 0.9; }
+    .btn-primary.teal { background: var(--teal); }
+    .btn-primary.outline { background: transparent; color: var(--gray-600); border: 1px solid var(--gray-200); }
+    .btn-sm {
+      padding: 7px 13px; border-radius: 8px; font-size: 11px; font-weight: 600;
+      font-family: 'Poppins', sans-serif; cursor: pointer; border: none;
+    }
+    .btn-sm.danger { background: rgba(244,63,94,0.1); color: var(--rose); border: 1px solid rgba(244,63,94,0.2); }
+
+    .comp-auto-card {
+      border-radius: 14px; border: 1.5px solid var(--gray-200);
+      background: var(--gray-100); margin-bottom: 10px;
+      overflow: hidden; transition: all 0.15s; cursor: pointer;
+    }
+    .comp-auto-card.selected { border-color: var(--teal); background: white; box-shadow: 0 2px 12px rgba(42,157,181,0.15); }
+    .comp-auto-top { display: flex; gap: 12px; padding: 12px; }
+    .comp-auto-img { width: 72px; height: 56px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: var(--gray-200); }
+    .comp-auto-info { flex: 1; min-width: 0; }
+    .comp-auto-titulo {
+      font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.3; margin-bottom: 4px;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .comp-auto-precio { font-size: 14px; font-weight: 800; color: var(--teal-dark); }
+    .comp-auto-datos { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 12px; }
+    .comp-chip {
+      font-size: 10px; font-weight: 600; background: var(--gray-200);
+      color: var(--gray-600); padding: 3px 8px; border-radius: 20px;
+    }
+    .comp-auto-card.selected .comp-chip { background: var(--teal-glow); color: var(--teal-dark); }
+    .sel-badge {
+      font-size: 10px; font-weight: 700; color: var(--teal);
+      background: var(--teal-glow); border: 1px solid rgba(42,157,181,0.3);
+      padding: 3px 9px; border-radius: 20px; margin-left: auto; flex-shrink: 0; align-self: flex-start;
+    }
+
+    .comp-manual-card {
+      background: white; border-radius: 16px; border: 1.5px solid var(--amber);
+      padding: 16px; margin-bottom: 12px;
+    }
+    .comp-manual-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .comp-num { font-size: 13px; font-weight: 700; color: var(--amber); }
+    .comp-price-m2 {
+      background: rgba(245,158,11,0.08); border-radius: 8px;
+      padding: 8px 12px; margin-top: 10px;
+      display: flex; justify-content: space-between; font-size: 11px; color: var(--gray-600);
+    }
+
+    .result-hero {
+      background: linear-gradient(135deg, var(--navy), var(--navy-mid));
+      border: 2px solid var(--teal); border-radius: 20px;
+      padding: 24px; text-align: center; margin-bottom: 14px;
+      position: relative; overflow: hidden;
+    }
+    .result-hero::before {
+      content: ''; position: absolute; top: -30px; right: -30px;
+      width: 140px; height: 140px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(42,157,181,0.2) 0%, transparent 70%);
+    }
+    .result-lbl { font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+    .result-val { font-size: 34px; font-weight: 800; color: var(--teal); line-height: 1; margin-bottom: 6px; }
+    .result-sub { font-size: 12px; color: rgba(255,255,255,0.4); }
+    .result-range { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 6px; }
+    .result-badge {
+      display: inline-block; margin-top: 12px; font-size: 10px; font-weight: 700;
+      padding: 4px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+
+    .metric-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    .metric-card { background: white; border-radius: 14px; border: 1px solid rgba(0,0,0,0.06); padding: 12px 14px; text-align: center; }
+    .metric-val { font-size: 20px; font-weight: 800; color: var(--text); }
+    .metric-lbl { font-size: 10px; color: var(--gray-400); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .enfoque-card {
+      background: var(--gray-100); border-radius: 14px; padding: 14px 16px;
+      margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .enfoque-lbl { font-size: 10px; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 3px; }
+    .enfoque-val { font-size: 20px; font-weight: 800; }
+    .enfoque-sub { font-size: 10px; color: var(--gray-400); margin-top: 2px; }
+    .enfoque-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+
+    .alert { border-radius: 12px; padding: 10px 14px; font-size: 12px; line-height: 1.5; margin-bottom: 12px; }
+    .alert.warn { background: rgba(245,158,11,0.1); border-left: 3px solid var(--amber); color: #92400e; }
+    .alert.info { background: var(--teal-glow); border-left: 3px solid var(--teal); color: var(--teal-dark); }
+    .alert.success { background: rgba(16,185,129,0.1); border-left: 3px solid var(--emerald); color: #065f46; }
+
+    .spinner {
+      width: 20px; height: 20px; border: 2.5px solid rgba(255,255,255,0.3);
+      border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
   <div id="root"></div>
-
   <script type="text/babel">
-    const { useState, useMemo } = React;
+    const { useState, useMemo, useCallback } = React;
 
-    // ============ CONSTANTS & HELPERS ============
-    const FC = { excelente: 1.0, bueno: 0.919, regular: 0.819, malo: 0.668 };
-    const CONSERV_LABELS = { excelente: "Excelente / Como nuevo", bueno: "Bueno", regular: "Regular / Necesita detalles", malo: "Malo / Necesita remodelación" };
-    const CALIDAD_VRN = { lujo: 18500, bueno: 14000, medio: 11500, economico: 8500 };
-    const CALIDAD_LABELS = { lujo: "Lujo / Residencial plus", bueno: "Bueno / Residencial", medio: "Medio / Estándar", economico: "Económico / Interés social" };
+    const API = "https://brokrebapi-production.up.railway.app";
+
+    const FC          = { excelente: 1.0, bueno: 0.919, regular: 0.819, malo: 0.668 };
+    const CONSERV_OPTS = { excelente: "Excelente / Como nuevo", bueno: "Bueno", regular: "Regular / Necesita detalles", malo: "Malo / Necesita remodelación" };
+    const CALIDAD_VRN  = { lujo: 18500, bueno: 14000, medio: 11500, economico: 8500 };
+    const CALIDAD_OPTS = { lujo: "Lujo / Residencial plus", bueno: "Bueno / Residencial", medio: "Medio / Estándar", economico: "Económico / Interés social" };
+
+    const TIPOS = [
+      { id: "casa",         label: "Casa",     icon: "🏠" },
+      { id: "departamento", label: "Depto",    icon: "🏢" },
+      { id: "terreno",      label: "Terreno",  icon: "🌳" },
+      { id: "local",        label: "Local",    icon: "🏪" },
+      { id: "oficina",      label: "Oficina",  icon: "💼" },
+      { id: "bodega",       label: "Bodega",   icon: "🏭" },
+      { id: "edificio",     label: "Edificio", icon: "🏗️" },
+    ];
+
+    const CAMPOS = {
+      casa:         { terreno: true,  construccion: true,  recamaras: true,  banos: true,  estac: true,  nivel: false, unidades: false, edad: true  },
+      departamento: { terreno: false, construccion: true,  recamaras: true,  banos: true,  estac: true,  nivel: true,  unidades: false, edad: true  },
+      terreno:      { terreno: true,  construccion: false, recamaras: false, banos: false, estac: false, nivel: false, unidades: false, edad: false },
+      local:        { terreno: false, construccion: true,  recamaras: false, banos: true,  estac: true,  nivel: true,  unidades: false, edad: true  },
+      oficina:      { terreno: false, construccion: true,  recamaras: false, banos: true,  estac: true,  nivel: true,  unidades: false, edad: true  },
+      bodega:       { terreno: true,  construccion: true,  recamaras: false, banos: false, estac: true,  nivel: false, unidades: false, edad: true  },
+      edificio:     { terreno: true,  construccion: true,  recamaras: false, banos: false, estac: true,  nivel: false, unidades: true,  edad: true  },
+    };
 
     const fmt = (n) => "$" + Math.round(n || 0).toLocaleString("es-MX");
-    const pf = (v) => parseFloat(v) || 0;
+    const pf  = (v) => parseFloat(v) || 0;
 
     function rossHeidecke(edad, vidaUtil, conservacion) {
       if (!vidaUtil || vidaUtil <= 0) return 1;
@@ -38,85 +257,71 @@
     }
 
     function calcFactors(sujeto, comp) {
-      const s = { m2c: pf(sujeto.m2Construccion), m2t: pf(sujeto.m2Terreno), recamaras: pf(sujeto.recamaras), banos: pf(sujeto.banos), edad: pf(sujeto.edad), estac: pf(sujeto.estacionamiento) };
-      const c = { m2c: pf(comp.m2Construccion), m2t: pf(comp.m2Terreno), recamaras: pf(comp.recamaras), banos: pf(comp.banos), edad: pf(comp.edad), estac: pf(comp.estacionamiento) };
+      const s = { m2c: pf(sujeto.m2Construccion), m2t: pf(sujeto.m2Terreno), edad: pf(sujeto.edad) };
+      const c = { m2c: pf(comp.m2Construccion),   m2t: pf(comp.m2Terreno),   edad: pf(comp.edad)   };
       const fNeg = 0.95;
       let fSup = 1.0;
       if (s.m2c > 0 && c.m2c > 0) { fSup = Math.pow(s.m2c / c.m2c, 0.25); fSup = Math.max(0.80, Math.min(1.25, fSup)); }
       let fTC = 1.0;
-      if (s.m2t > 0 && s.m2c > 0 && c.m2t > 0 && c.m2c > 0) { const rS = s.m2t / s.m2c; const rC = c.m2t / c.m2c; if (rC > 0) { fTC = Math.pow(rS / rC, 0.15); fTC = Math.max(0.85, Math.min(1.20, fTC)); } }
+      if (s.m2t > 0 && s.m2c > 0 && c.m2t > 0 && c.m2c > 0) {
+        const rS = s.m2t / s.m2c, rC = c.m2t / c.m2c;
+        if (rC > 0) { fTC = Math.pow(rS / rC, 0.15); fTC = Math.max(0.85, Math.min(1.20, fTC)); }
+      }
       let fEdad = 1.0;
       if (c.edad > 0 || s.edad > 0) { fEdad = 1 + (c.edad - s.edad) * 0.008; fEdad = Math.max(0.85, Math.min(1.20, fEdad)); }
-      const fZona = comp.mismaZona === "si" ? 1.0 : comp.mismaZona === "similar" ? 1.05 : 1.10;
+      const fZona  = comp.mismaZona === "si" ? 1.0 : comp.mismaZona === "similar" ? 1.05 : 1.10;
       const consOrd = { excelente: 4, bueno: 3, regular: 2, malo: 1 };
-      const fCons = 1 + ((consOrd[comp.conservacion] || 3) - (consOrd[sujeto.conservacion] || 3)) * 0.05;
-      const calOrd = { lujo: 4, bueno: 3, medio: 2, economico: 1 };
-      const fCal = 1 + ((calOrd[comp.calidad] || 2) - (calOrd[sujeto.calidad] || 2)) * 0.08;
-      const fResultante = fNeg * fSup * fTC * fEdad * fZona * fCons * fCal;
-      return { fNeg, fSup, fTC, fEdad, fZona, fCons, fCal, fResultante };
+      const fCons  = 1 + ((consOrd[comp.conservacion] || 3) - (consOrd[sujeto.conservacion] || 3)) * 0.05;
+      const calOrd  = { lujo: 4, bueno: 3, medio: 2, economico: 1 };
+      const fCal   = 1 + ((calOrd[comp.calidad] || 2) - (calOrd[sujeto.calidad] || 2)) * 0.08;
+      return { fNeg, fSup, fTC, fEdad, fZona, fCons, fCal, fResultante: fNeg * fSup * fTC * fEdad * fZona * fCons * fCal };
     }
 
-    // ============ STYLES ============
-    const C = { bg: "#0B1A2B", card: "#122338", accent: "#14B8A6", accentDim: "rgba(20,184,166,0.12)", text: "#E2E8F0", dim: "#94A3B8", border: "#1E3A5F", input: "#0A1628", warn: "#F59E0B", success: "#10B981", purple: "#8B5CF6", danger: "#EF4444" };
+    function F({ label, children, flex = 1 }) {
+      return <div className="field" style={{ flex }}><label>{label}</label>{children}</div>;
+    }
+    function NI({ value, onChange, placeholder }) {
+      return <input type="number" inputMode="decimal" value={value} placeholder={placeholder || ""} onChange={(e) => onChange(e.target.value)} />;
+    }
+    function SI({ value, onChange, options }) {
+      return <select value={value} onChange={(e) => onChange(e.target.value)}>{Object.entries(options).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>;
+    }
 
-    const S = {
-      app: { fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", background: C.bg, color: C.text, minHeight: "100vh", fontSize: 14, paddingBottom: 40 },
-      header: { background: "linear-gradient(135deg, #0B1A2B, #1a3a5c)", padding: "20px 16px", textAlign: "center", borderBottom: `1px solid ${C.border}` },
-      tabs: { display: "flex", background: "#0F1D30", borderBottom: `1px solid ${C.border}`, overflowX: "auto" },
-      tab: (a) => ({ padding: "12px 16px", fontSize: 13, fontWeight: a ? 700 : 500, color: a ? C.accent : C.dim, background: "none", border: "none", borderBottom: a ? `2px solid ${C.accent}` : "2px solid transparent", cursor: "pointer", whiteSpace: "nowrap" }),
-      sec: { padding: 16 },
-      card: { background: C.card, borderRadius: 12, border: `1px solid ${C.border}`, padding: 16, marginBottom: 14 },
-      title: { fontSize: 14, fontWeight: 700, color: C.accent, marginBottom: 12 },
-      label: { fontSize: 11, color: C.dim, fontWeight: 600, marginBottom: 4, display: "block" },
-      input: { background: C.input, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "10px 12px", fontSize: 15, width: "100%", boxSizing: "border-box", outline: "none" },
-      select: { background: C.input, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "10px 12px", fontSize: 15, width: "100%", boxSizing: "border-box", outline: "none", appearance: "auto" },
-      row: { display: "flex", gap: 10, marginBottom: 10 },
-      field: (f = 1) => ({ flex: f, minWidth: 0 }),
-      btn: { padding: "12px 20px", borderRadius: 10, border: "none", background: C.accent, color: "#0B1A2B", fontWeight: 700, fontSize: 14, cursor: "pointer", width: "100%" },
-      btnSm: (v) => ({ padding: "8px 14px", borderRadius: 8, border: v === "danger" ? `1px solid ${C.danger}44` : "none", background: v === "danger" ? `${C.danger}15` : C.accent, color: v === "danger" ? C.danger : "#0B1A2B", fontWeight: 600, fontSize: 12, cursor: "pointer" }),
-      hint: { fontSize: 11, color: C.dim, marginTop: 6, lineHeight: 1.5 },
-      result: (c = C.accent) => ({ background: `${c}12`, border: `1px solid ${c}40`, borderRadius: 12, padding: 20, textAlign: "center", marginBottom: 14 }),
-      bigNum: (c = C.accent) => ({ fontSize: 30, fontWeight: 800, color: c }),
-      divider: { borderTop: `1px solid ${C.border}`, margin: "14px 0" },
-      badge: (c) => ({ display: "inline-block", padding: "3px 8px", borderRadius: 6, fontSize: 10, fontWeight: 700, background: `${c}20`, color: c }),
-    };
-
-    function F({ label, children, flex = 1 }) { return <div style={S.field(flex)}><label style={S.label}>{label}</label>{children}</div>; }
-    function NI({ value, onChange, placeholder }) { return <input type="number" inputMode="decimal" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder || ""} style={S.input} />; }
-    function SI({ value, onChange, options }) { return <select style={S.select} value={value} onChange={(e) => onChange(e.target.value)}>{Object.entries(options).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>; }
-
-    function CompCard({ comp, index, onChange, onRemove, sujeto }) {
-      const vum = pf(comp.m2Construccion) > 0 ? pf(comp.precio) / pf(comp.m2Construccion) : 0;
+    function CompManualCard({ comp, index, onChange, onRemove, sujeto }) {
+      const campos  = CAMPOS[sujeto.tipo] || CAMPOS.casa;
+      const vum     = pf(comp.m2Construccion) > 0 ? pf(comp.precio) / pf(comp.m2Construccion) : 0;
       const factors = calcFactors(sujeto, comp);
-      const vHomol = vum * factors.fResultante;
+      const vHomol  = vum * factors.fResultante;
       return (
-        <div style={{ ...S.card, borderLeft: `3px solid ${C.warn}` }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: C.warn }}>Comparable {index + 1}</span>
-            <button style={S.btnSm("danger")} onClick={onRemove}>Quitar</button>
+        <div className="comp-manual-card">
+          <div className="comp-manual-hdr">
+            <span className="comp-num">Comparable {index + 1}</span>
+            <button className="btn-sm danger" onClick={onRemove}>Quitar</button>
           </div>
-          <div style={S.row}><F label="Precio de venta $" flex={2}><NI value={comp.precio} onChange={(v) => onChange("precio", v)} placeholder="2,500,000" /></F></div>
-          <div style={S.row}>
-            <F label="m² construidos"><NI value={comp.m2Construccion} onChange={(v) => onChange("m2Construccion", v)} placeholder="120" /></F>
-            <F label="m² terreno"><NI value={comp.m2Terreno} onChange={(v) => onChange("m2Terreno", v)} placeholder="150" /></F>
+          <div className="field-row"><F label="Precio $" flex={2}><NI value={comp.precio} onChange={(v) => onChange("precio", v)} placeholder="2,500,000" /></F></div>
+          <div className="field-row">
+            {campos.construccion && <F label="m² construidos"><NI value={comp.m2Construccion} onChange={(v) => onChange("m2Construccion", v)} placeholder="120" /></F>}
+            {campos.terreno      && <F label="m² terreno"><NI value={comp.m2Terreno} onChange={(v) => onChange("m2Terreno", v)} placeholder="150" /></F>}
           </div>
-          <div style={S.row}>
-            <F label="Recámaras"><NI value={comp.recamaras} onChange={(v) => onChange("recamaras", v)} placeholder="3" /></F>
-            <F label="Baños"><NI value={comp.banos} onChange={(v) => onChange("banos", v)} placeholder="2" /></F>
-            <F label="Estac."><NI value={comp.estacionamiento} onChange={(v) => onChange("estacionamiento", v)} placeholder="2" /></F>
+          {(campos.recamaras || campos.banos || campos.estac) && (
+            <div className="field-row">
+              {campos.recamaras && <F label="Recámaras"><NI value={comp.recamaras} onChange={(v) => onChange("recamaras", v)} placeholder="3" /></F>}
+              {campos.banos     && <F label="Baños"><NI value={comp.banos} onChange={(v) => onChange("banos", v)} placeholder="2" /></F>}
+              {campos.estac     && <F label="Estac."><NI value={comp.estacionamiento} onChange={(v) => onChange("estacionamiento", v)} placeholder="2" /></F>}
+            </div>
+          )}
+          <div className="field-row">
+            <F label="Edad (años)"><NI value={comp.edad} onChange={(v) => onChange("edad", v)} placeholder="10" /></F>
+            <F label="Estado"><SI value={comp.conservacion} onChange={(v) => onChange("conservacion", v)} options={CONSERV_OPTS} /></F>
           </div>
-          <div style={S.row}>
-            <F label="Edad aprox. (años)"><NI value={comp.edad} onChange={(v) => onChange("edad", v)} placeholder="10" /></F>
-            <F label="Estado"><SI value={comp.conservacion} onChange={(v) => onChange("conservacion", v)} options={CONSERV_LABELS} /></F>
-          </div>
-          <div style={S.row}>
-            <F label="Acabados"><SI value={comp.calidad} onChange={(v) => onChange("calidad", v)} options={CALIDAD_LABELS} /></F>
-            <F label="¿Misma zona?"><SI value={comp.mismaZona} onChange={(v) => onChange("mismaZona", v)} options={{ si: "Sí, misma colonia", similar: "Cercana", diferente: "Diferente" }} /></F>
+          <div className="field-row">
+            <F label="Acabados"><SI value={comp.calidad} onChange={(v) => onChange("calidad", v)} options={CALIDAD_OPTS} /></F>
+            <F label="¿Misma zona?"><SI value={comp.mismaZona} onChange={(v) => onChange("mismaZona", v)} options={{ si: "Sí", similar: "Cercana", diferente: "Diferente" }} /></F>
           </div>
           {vum > 0 && (
-            <div style={{ background: C.accentDim, borderRadius: 8, padding: 10, marginTop: 8, display: "flex", justifyContent: "space-between", fontSize: 12 }}>
-              <span style={{ color: C.dim }}>Precio/m²: <strong style={{ color: C.text }}>{fmt(vum)}</strong></span>
-              <span style={{ color: C.dim }}>Ajustado: <strong style={{ color: C.warn }}>{fmt(vHomol)}/m²</strong></span>
+            <div className="comp-price-m2">
+              <span>Precio/m²: <strong style={{ color: "var(--text)" }}>{fmt(vum)}</strong></span>
+              <span>Ajustado: <strong style={{ color: "var(--amber)" }}>{fmt(vHomol)}/m²</strong></span>
             </div>
           )}
         </div>
@@ -124,30 +329,73 @@
     }
 
     function AVM() {
-      const [tab, setTab] = useState(0);
-      const [sujeto, setSujeto] = useState({ direccion: "", colonia: "", m2Terreno: "", m2Construccion: "", recamaras: "", banos: "", estacionamiento: "", edad: "", conservacion: "bueno", calidad: "medio" });
-      const [comps, setComps] = useState([]);
+      const [tab,       setTab]       = useState(0);
+      const [sujeto,    setSujeto]    = useState({ tipo: "casa", direccion: "", colonia: "", ciudad: "morelia", m2Terreno: "", m2Construccion: "", recamaras: "", banos: "", estacionamiento: "", nivel: "", unidades: "", edad: "", conservacion: "bueno", calidad: "medio" });
+      const [comps,     setComps]     = useState([]);
+      const [autoComps, setAutoComps] = useState([]);
+      const [autoSel,   setAutoSel]   = useState(new Set());
+      const [loading,   setLoading]   = useState(false);
+      const [error,     setError]     = useState("");
 
-      const u = (k, v) => setSujeto((p) => ({ ...p, [k]: v }));
-      const addComp = () => setComps((p) => [...p, { id: Date.now(), precio: "", m2Construccion: "", m2Terreno: "", recamaras: "", banos: "", estacionamiento: "", edad: "", conservacion: "bueno", calidad: "medio", mismaZona: "si" }]);
+      const u      = (k, v) => setSujeto((p) => ({ ...p, [k]: v }));
+      const campos = CAMPOS[sujeto.tipo] || CAMPOS.casa;
+
+      const addComp    = () => setComps((p) => [...p, { id: Date.now(), precio: "", m2Construccion: "", m2Terreno: "", recamaras: "", banos: "", estacionamiento: "", edad: "", conservacion: "bueno", calidad: "medio", mismaZona: "si" }]);
       const removeComp = (id) => setComps((p) => p.filter((c) => c.id !== id));
       const updateComp = (id, k, v) => setComps((p) => p.map((c) => c.id === id ? { ...c, [k]: v } : c));
 
+      const buscarComparables = useCallback(async () => {
+        if (!sujeto.colonia.trim()) { setError("Escribe la colonia primero."); return; }
+        setError(""); setLoading(true);
+        try {
+          const res = await fetch(`${API}/api/comparables`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ colonia: sujeto.colonia, ciudad: sujeto.ciudad || "morelia", tipo: sujeto.tipo, max_resultados: 15 }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.detail || "Error");
+          setAutoComps(data.comparables || []);
+          setAutoSel(new Set());
+          if (!(data.comparables || []).length) setError("No encontramos propiedades en esa colonia. Prueba con otra o agrega comparables manualmente.");
+        } catch { setError("No se pudo conectar. Intenta más tarde."); }
+        finally { setLoading(false); }
+      }, [sujeto.colonia, sujeto.ciudad, sujeto.tipo]);
+
+      const toggleAutoComp = (i) => setAutoSel((p) => { const n = new Set(p); n.has(i) ? n.delete(i) : n.add(i); return n; });
+
+      const allComps = useMemo(() => {
+        const auto = [...autoSel].map((i) => ({ ...autoComps[i], id: `auto_${i}`, mismaZona: "si" }));
+        return [...auto, ...comps];
+      }, [autoSel, autoComps, comps]);
+
       const result = useMemo(() => {
-        const m2c = pf(sujeto.m2Construccion), m2t = pf(sujeto.m2Terreno), edad = pf(sujeto.edad), vidaUtil = 70;
-        const analyzed = comps.filter((c) => pf(c.precio) > 0 && pf(c.m2Construccion) > 0).map((c) => {
+        const m2c = pf(sujeto.m2Construccion), m2t = pf(sujeto.m2Terreno), edad = pf(sujeto.edad);
+        const esTerreno = sujeto.tipo === "terreno";
+        const vidaUtil  = esTerreno ? 0 : 70;
+
+        const analyzed = allComps.filter((c) => pf(c.precio) > 0 && pf(c.m2Construccion) > 0).map((c) => {
           const vum = pf(c.precio) / pf(c.m2Construccion);
           const factors = calcFactors(sujeto, c);
           return { ...c, vum, factors, vHomol: vum * factors.fResultante };
         });
-        const promHomol = analyzed.length > 0 ? analyzed.reduce((s, c) => s + c.vHomol, 0) / analyzed.length : 0;
-        const valorMercado = promHomol * m2c;
+
+        const analyzedT = esTerreno
+          ? allComps.filter((c) => pf(c.precio) > 0 && pf(c.m2Terreno) > 0).map((c) => ({ ...c, vumT: pf(c.precio) / pf(c.m2Terreno) }))
+          : [];
+
+        const promHomol  = analyzed.length  > 0 ? analyzed.reduce((s, c) => s + c.vHomol, 0)  / analyzed.length  : 0;
+        const promHomolT = analyzedT.length > 0 ? analyzedT.reduce((s, c) => s + c.vumT, 0) / analyzedT.length : 0;
+
+        const valorMercado = esTerreno ? promHomolT * m2t : promHomol * m2c;
         const minH = analyzed.length > 0 ? Math.min(...analyzed.map((c) => c.vHomol)) : 0;
         const maxH = analyzed.length > 0 ? Math.max(...analyzed.map((c) => c.vHomol)) : 0;
         const valorMin = minH * m2c, valorMax = maxH * m2c;
+
         const vrnUnit = CALIDAD_VRN[sujeto.calidad] || 11500;
-        const fec = rossHeidecke(edad, vidaUtil, sujeto.conservacion);
+        const fec     = rossHeidecke(edad, vidaUtil, sujeto.conservacion);
         const vnrTotal = vrnUnit * m2c * fec;
+
         let terrenoUnit = 0;
         if (analyzed.length > 0) {
           const le = analyzed.filter((c) => pf(c.m2Terreno) > 0).map((c) => {
@@ -157,140 +405,274 @@
           if (le.length > 0) terrenoUnit = le.reduce((a, b) => a + b, 0) / le.length;
         }
         if (terrenoUnit <= 0) terrenoUnit = 5000 * ({ lujo: 1.4, bueno: 1.1, medio: 0.85, economico: 0.6 }[sujeto.calidad] || 1);
-        const valorTerreno = terrenoUnit * m2t;
-        const valorFisico = valorTerreno + vnrTotal;
-        const rentaEstUnit = vrnUnit * fec * 0.005;
-        const rentaBruta = rentaEstUnit * m2c;
-        const rentaAnual = rentaBruta * 0.86 * 12;
-        const valorCapitalizacion = rentaAnual / 0.045;
-        const nComps = analyzed.length;
-        let confianza = "baja", confianzaColor = C.danger;
-        if (nComps >= 5) { confianza = "alta"; confianzaColor = C.success; } else if (nComps >= 3) { confianza = "media"; confianzaColor = C.warn; }
-        const dispersion = promHomol > 0 && analyzed.length > 1 ? ((maxH - minH) / promHomol) * 100 : 0;
-        return { analyzed, promHomol, valorMercado, valorMin, valorMax, vrnUnit, fec, vnrTotal, terrenoUnit, valorTerreno, valorFisico, rentaBruta, rentaAnual, valorCapitalizacion, nComps, confianza, confianzaColor, dispersion };
-      }, [sujeto, comps]);
 
+        const valorTerreno        = terrenoUnit * m2t;
+        const valorFisico         = valorTerreno + vnrTotal;
+        const rentaBruta          = vrnUnit * fec * 0.005 * m2c;
+        const valorCapitalizacion = (rentaBruta * 0.86 * 12) / 0.045;
+
+        const nComps = esTerreno ? analyzedT.length : analyzed.length;
+        let confianza = "baja", confianzaColor = "var(--rose)";
+        if (nComps >= 5)      { confianza = "alta";  confianzaColor = "var(--emerald)"; }
+        else if (nComps >= 3) { confianza = "media"; confianzaColor = "var(--amber)"; }
+
+        const dispersion = promHomol > 0 && analyzed.length > 1 ? ((maxH - minH) / promHomol) * 100 : 0;
+
+        return { analyzed, analyzedT, promHomol, promHomolT, valorMercado, valorMin, valorMax, vrnUnit, fec, vnrTotal, terrenoUnit, valorTerreno, valorFisico, rentaBruta, valorCapitalizacion, nComps, confianza, confianzaColor, dispersion };
+      }, [sujeto, allComps]);
+
+      const esTerreno  = sujeto.tipo === "terreno";
       const valorFinal = result.valorMercado > 0 ? Math.round(result.valorMercado / 1000) * 1000 : result.valorFisico > 0 ? Math.round(result.valorFisico / 1000) * 1000 : 0;
-      const tabs = ["Tu propiedad", "Comparables", "Resultado"];
+      const tabs       = ["Propiedad", "Comparables", "Resultado"];
 
       return (
-        <div style={S.app}>
-          <div style={S.header}>
-            <h1 style={{ fontSize: 26, fontWeight: 800, color: C.accent, letterSpacing: 2, margin: 0 }}>BROKR®</h1>
-            <p style={{ fontSize: 10, color: C.dim, letterSpacing: 1, textTransform: "uppercase", marginTop: 4 }}>Avalúo Digital</p>
+        <div style={{ fontFamily: "'Poppins', sans-serif", background: "var(--screen-bg)", minHeight: "100vh" }}>
+
+          {/* HEADER */}
+          <div className="avm-header">
+            <div className="avm-header-row">
+              <div>
+                <div className="avm-title">BROKR®</div>
+                <div className="avm-sub">Avalúo Digital</div>
+              </div>
+              <div style={{ fontSize: 30 }}>{(TIPOS.find((t) => t.id === sujeto.tipo) || TIPOS[0]).icon}</div>
+            </div>
           </div>
-          <div style={S.tabs}>{tabs.map((t, i) => <button key={t} style={S.tab(tab === i)} onClick={() => setTab(i)}>{i === 2 && valorFinal > 0 ? "Resultado ✓" : t}</button>)}</div>
 
+          {/* TABS */}
+          <div className="avm-tabs">
+            {tabs.map((t, i) => (
+              <button key={t} className={`avm-tab${tab === i ? " active" : ""}`} onClick={() => setTab(i)}>
+                {i === 2 && valorFinal > 0 ? "Resultado ✓" : t}
+              </button>
+            ))}
+          </div>
+
+          {/* ═══ TAB 0 — PROPIEDAD ═══ */}
           {tab === 0 && (
-            <div style={S.sec}>
-              <div style={S.card}>
-                <div style={S.title}>¿Qué propiedad quieres valuar?</div>
-                <F label="Dirección"><input style={S.input} value={sujeto.direccion} onChange={(e) => u("direccion", e.target.value)} placeholder="Calle y número" /></F>
-                <div style={{ height: 8 }} />
-                <F label="Colonia"><input style={S.input} value={sujeto.colonia} onChange={(e) => u("colonia", e.target.value)} placeholder="Colonia" /></F>
-                <div style={S.divider} />
-                <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 10 }}>Superficies</div>
-                <div style={S.row}>
-                  <F label="m² de terreno"><NI value={sujeto.m2Terreno} onChange={(v) => u("m2Terreno", v)} placeholder="200" /></F>
-                  <F label="m² construidos"><NI value={sujeto.m2Construccion} onChange={(v) => u("m2Construccion", v)} placeholder="150" /></F>
+            <div className="avm-body">
+
+              <div className="avm-card">
+                <div className="card-label">🏷️ Tipo de inmueble</div>
+                <div className="tipo-grid">
+                  {TIPOS.map((t) => (
+                    <button key={t.id} className={`tipo-btn${sujeto.tipo === t.id ? " selected" : ""}`} onClick={() => u("tipo", t.id)}>
+                      <span className="tipo-icon">{t.icon}</span>{t.label}
+                    </button>
+                  ))}
                 </div>
-                <div style={S.divider} />
-                <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 10 }}>Espacios</div>
-                <div style={S.row}>
-                  <F label="Recámaras"><NI value={sujeto.recamaras} onChange={(v) => u("recamaras", v)} placeholder="3" /></F>
-                  <F label="Baños"><NI value={sujeto.banos} onChange={(v) => u("banos", v)} placeholder="2" /></F>
-                  <F label="Estac."><NI value={sujeto.estacionamiento} onChange={(v) => u("estacionamiento", v)} placeholder="2" /></F>
+              </div>
+
+              <div className="avm-card">
+                <div className="card-label">📍 Ubicación</div>
+                <div className="field-row"><F label="Dirección"><input type="text" value={sujeto.direccion} onChange={(e) => u("direccion", e.target.value)} placeholder="Calle y número" /></F></div>
+                <div className="field-row"><F label="Colonia"><input type="text" value={sujeto.colonia} onChange={(e) => u("colonia", e.target.value)} placeholder="Chapultepec Sur" /></F></div>
+                <div className="field-row"><F label="Ciudad"><input type="text" value={sujeto.ciudad} onChange={(e) => u("ciudad", e.target.value)} placeholder="Morelia" /></F></div>
+              </div>
+
+              <div className="avm-card">
+                <div className="card-label">📐 Superficies</div>
+                <div className="field-row">
+                  {campos.terreno      && <F label="m² terreno"><NI value={sujeto.m2Terreno} onChange={(v) => u("m2Terreno", v)} placeholder="200" /></F>}
+                  {campos.construccion && <F label="m² construidos"><NI value={sujeto.m2Construccion} onChange={(v) => u("m2Construccion", v)} placeholder="150" /></F>}
                 </div>
-                <div style={S.divider} />
-                <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 10 }}>Estado y calidad</div>
-                <div style={S.row}><F label="Edad aproximada (años)"><NI value={sujeto.edad} onChange={(v) => u("edad", v)} placeholder="15" /></F></div>
-                <div style={S.row}><F label="¿Cómo está la propiedad?"><SI value={sujeto.conservacion} onChange={(v) => u("conservacion", v)} options={CONSERV_LABELS} /></F></div>
-                <div style={S.row}><F label="Nivel de acabados"><SI value={sujeto.calidad} onChange={(v) => u("calidad", v)} options={CALIDAD_LABELS} /></F></div>
-                <div style={{ marginTop: 14 }}><button style={S.btn} onClick={() => setTab(1)}>Siguiente → Agregar comparables</button></div>
-              </div>
-            </div>
-          )}
-
-          {tab === 1 && (
-            <div style={S.sec}>
-              <div style={S.card}>
-                <div style={S.title}>Propiedades similares en venta</div>
-                <p style={S.hint}>Busca en Inmuebles24 o Propiedades.com casas parecidas a la tuya en la zona. Copia los datos básicos de cada anuncio. Mínimo 3 para un buen resultado.</p>
-              </div>
-              {comps.map((c, i) => <CompCard key={c.id} comp={c} index={i} sujeto={sujeto} onChange={(k, v) => updateComp(c.id, k, v)} onRemove={() => removeComp(c.id)} />)}
-              <button style={{ ...S.btn, background: comps.length === 0 ? C.accent : `${C.accent}30`, color: comps.length === 0 ? "#0B1A2B" : C.accent, border: `1px solid ${C.accent}`, marginBottom: 14 }} onClick={addComp}>+ Agregar comparable</button>
-              {comps.length > 0 && comps.length < 3 && <div style={{ ...S.result(C.warn), padding: 12 }}><span style={{ fontSize: 12, color: C.warn }}>⚠️ Llevas {comps.length} comparable{comps.length > 1 ? "s" : ""}. Agrega al menos 3.</span></div>}
-              {comps.length > 0 && <button style={S.btn} onClick={() => setTab(2)}>Ver resultado →</button>}
-            </div>
-          )}
-
-          {tab === 2 && (
-            <div style={S.sec}>
-              <div style={{ background: `linear-gradient(135deg, ${C.accent}18, ${C.bg})`, border: `2px solid ${C.accent}`, borderRadius: 14, padding: 24, textAlign: "center", marginBottom: 16 }}>
-                <div style={{ fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: 2, marginBottom: 6 }}>Valor comercial estimado</div>
-                <div style={S.bigNum(C.accent)}>{fmt(valorFinal)}</div>
-                {sujeto.direccion && <div style={{ fontSize: 12, color: C.dim, marginTop: 6 }}>{sujeto.direccion}{sujeto.colonia ? `, ${sujeto.colonia}` : ""}</div>}
-                {result.valorMin > 0 && result.valorMax > 0 && result.nComps > 1 && <div style={{ fontSize: 12, color: C.dim, marginTop: 8 }}>Rango: {fmt(Math.round(result.valorMin / 1000) * 1000)} — {fmt(Math.round(result.valorMax / 1000) * 1000)}</div>}
-                <div style={{ marginTop: 10 }}><span style={S.badge(result.confianzaColor)}>Confianza {result.confianza} · {result.nComps} comparable{result.nComps !== 1 ? "s" : ""}</span></div>
               </div>
 
-              {result.promHomol > 0 && (
-                <div style={S.card}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div><div style={{ fontSize: 11, color: C.dim }}>Precio por m² construido</div><div style={{ fontSize: 22, fontWeight: 700 }}>{fmt(result.promHomol)}</div></div>
-                    <div style={{ textAlign: "right" }}><div style={{ fontSize: 11, color: C.dim }}>Precio por m² terreno</div><div style={{ fontSize: 18, fontWeight: 600, color: C.dim }}>{fmt(result.terrenoUnit)}</div></div>
-                  </div>
-                  {result.dispersion > 0 && <div style={{ marginTop: 8, fontSize: 11, color: result.dispersion < 20 ? C.success : C.warn }}>Dispersión: {result.dispersion.toFixed(1)}%{result.dispersion < 20 ? " — Datos consistentes ✓" : " — Revisar comparables"}</div>}
+              {(campos.recamaras || campos.banos || campos.estac || campos.nivel || campos.unidades) && (
+                <div className="avm-card">
+                  <div className="card-label">🚪 Características</div>
+                  {(campos.recamaras || campos.banos || campos.estac) && (
+                    <div className="field-row">
+                      {campos.recamaras && <F label="Recámaras"><NI value={sujeto.recamaras} onChange={(v) => u("recamaras", v)} placeholder="3" /></F>}
+                      {campos.banos     && <F label="Baños"><NI value={sujeto.banos} onChange={(v) => u("banos", v)} placeholder="2" /></F>}
+                      {campos.estac     && <F label="Estac."><NI value={sujeto.estacionamiento} onChange={(v) => u("estacionamiento", v)} placeholder="2" /></F>}
+                    </div>
+                  )}
+                  {campos.nivel    && <div className="field-row"><F label="Piso / Nivel"><NI value={sujeto.nivel} onChange={(v) => u("nivel", v)} placeholder="3" /></F></div>}
+                  {campos.unidades && <div className="field-row"><F label="Número de unidades"><NI value={sujeto.unidades} onChange={(v) => u("unidades", v)} placeholder="12" /></F></div>}
                 </div>
               )}
 
-              <div style={S.card}>
-                <div style={S.title}>Tres enfoques del avalúo</div>
-                <p style={{ ...S.hint, marginTop: 0, marginBottom: 14 }}>Calculados automáticamente con la metodología de un perito valuador certificado.</p>
-                <div style={{ ...S.result(C.warn), padding: 12 }}>
-                  <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase" }}>Enfoque de mercado</div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: C.warn }}>{fmt(result.valorMercado)}</div>
-                  <div style={{ fontSize: 10, color: C.dim }}>{result.nComps} comparables</div>
+              {campos.edad && (
+                <div className="avm-card">
+                  <div className="card-label">🔧 Estado y calidad</div>
+                  <div className="field-row"><F label="Edad aprox. (años)"><NI value={sujeto.edad} onChange={(v) => u("edad", v)} placeholder="15" /></F></div>
+                  <div className="field-row"><F label="Estado de conservación"><SI value={sujeto.conservacion} onChange={(v) => u("conservacion", v)} options={CONSERV_OPTS} /></F></div>
+                  <div className="field-row"><F label="Nivel de acabados"><SI value={sujeto.calidad} onChange={(v) => u("calidad", v)} options={CALIDAD_OPTS} /></F></div>
                 </div>
-                <div style={{ ...S.result(C.success), padding: 12 }}>
-                  <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase" }}>Enfoque físico</div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: C.success }}>{fmt(result.valorFisico)}</div>
-                  <div style={{ fontSize: 10, color: C.dim }}>Terreno: {fmt(result.valorTerreno)} + Construcción: {fmt(result.vnrTotal)}</div>
+              )}
+
+              <button className="btn-primary teal" onClick={() => setTab(1)}>Siguiente → Buscar comparables</button>
+            </div>
+          )}
+
+          {/* ═══ TAB 1 — COMPARABLES ═══ */}
+          {tab === 1 && (
+            <div className="avm-body">
+
+              <div className="avm-card">
+                <div className="card-label">🔍 Comparables automáticos</div>
+                <p style={{ fontSize: 12, color: "var(--gray-600)", marginBottom: 12, lineHeight: 1.6 }}>
+                  Buscamos propiedades similares en Inmuebles24 según la colonia y tipo que ingresaste. Toca las que quieras incluir.
+                </p>
+                {error && <div className="alert warn">{error}</div>}
+                <button className="btn-primary" onClick={buscarComparables} disabled={loading}>
+                  {loading ? <><div className="spinner" />Buscando en Inmuebles24...</> : "🔍 Buscar en Inmuebles24"}
+                </button>
+              </div>
+
+              {autoComps.length > 0 && (
+                <div className="avm-card">
+                  <div className="card-label">
+                    📋 {autoComps.length} propiedades encontradas
+                    {autoSel.size > 0 && <span style={{ marginLeft: 8, background: "var(--teal-glow)", color: "var(--teal)", padding: "2px 8px", borderRadius: 20, fontSize: 10 }}>{autoSel.size} seleccionadas</span>}
+                  </div>
+                  {autoComps.map((c, i) => {
+                    const sel = autoSel.has(i);
+                    return (
+                      <div key={i} className={`comp-auto-card${sel ? " selected" : ""}`} onClick={() => toggleAutoComp(i)}>
+                        <div className="comp-auto-top">
+                          {c.imagen
+                            ? <img className="comp-auto-img" src={c.imagen} alt="" onError={(e) => { e.target.style.display = "none"; }} />
+                            : <div className="comp-auto-img" style={{ display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>🏠</div>
+                          }
+                          <div className="comp-auto-info">
+                            <div className="comp-auto-titulo">{c.titulo}</div>
+                            <div className="comp-auto-precio">{fmt(c.precio)}</div>
+                          </div>
+                          {sel && <span className="sel-badge">✓</span>}
+                        </div>
+                        <div className="comp-auto-datos">
+                          {c.m2Construccion > 0  && <span className="comp-chip">🏠 {c.m2Construccion} m²</span>}
+                          {c.m2Terreno      > 0  && <span className="comp-chip">🌳 {c.m2Terreno} m² terreno</span>}
+                          {c.recamaras      > 0  && <span className="comp-chip">🛏 {c.recamaras} rec.</span>}
+                          {c.estacionamiento > 0 && <span className="comp-chip">🚗 {c.estacionamiento} est.</span>}
+                          {c.m2Construccion > 0  && <span className="comp-chip" style={{ color: "var(--teal-dark)", background: "var(--teal-glow)" }}>{fmt(c.precio / c.m2Construccion)}/m²</span>}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div style={{ ...S.result(C.purple), padding: 12 }}>
-                  <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase" }}>Enfoque de capitalización</div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: C.purple }}>{fmt(result.valorCapitalizacion)}</div>
-                  <div style={{ fontSize: 10, color: C.dim }}>Renta est.: {fmt(result.rentaBruta)}/mes</div>
+              )}
+
+              <div className="avm-card">
+                <div className="card-label">✏️ Agregar manualmente</div>
+                <p style={{ fontSize: 12, color: "var(--gray-600)", marginBottom: 12, lineHeight: 1.6 }}>
+                  ¿No encontraste lo que buscas? Agrega comparables a mano desde cualquier portal.
+                </p>
+                {comps.map((c, i) => (
+                  <CompManualCard key={c.id} comp={c} index={i} sujeto={sujeto} onChange={(k, v) => updateComp(c.id, k, v)} onRemove={() => removeComp(c.id)} />
+                ))}
+                <button className="btn-primary outline" onClick={addComp}>+ Agregar comparable manual</button>
+              </div>
+
+              {allComps.length === 0 && <div className="alert warn">Selecciona al menos 3 comparables para un resultado confiable.</div>}
+              {allComps.length > 0 && allComps.length < 3 && <div className="alert warn">Llevas {allComps.length} comparable{allComps.length > 1 ? "s" : ""}. Agrega al menos 3.</div>}
+              {allComps.length >= 3 && <div className="alert success">✓ {allComps.length} comparables listos.</div>}
+              {allComps.length > 0 && <button className="btn-primary teal" style={{ marginTop: 4 }} onClick={() => setTab(2)}>Ver resultado →</button>}
+            </div>
+          )}
+
+          {/* ═══ TAB 2 — RESULTADO ═══ */}
+          {tab === 2 && (
+            <div className="avm-body">
+
+              <div className="result-hero">
+                <div className="result-lbl">Valor comercial estimado</div>
+                <div className="result-val">{fmt(valorFinal)}</div>
+                {sujeto.direccion && <div className="result-sub">{sujeto.direccion}{sujeto.colonia ? `, ${sujeto.colonia}` : ""}</div>}
+                {result.valorMin > 0 && result.valorMax > 0 && result.nComps > 1 && (
+                  <div className="result-range">Rango: {fmt(Math.round(result.valorMin / 1000) * 1000)} — {fmt(Math.round(result.valorMax / 1000) * 1000)}</div>
+                )}
+                <span className="result-badge" style={{ background: `${result.confianzaColor}20`, color: result.confianzaColor, border: `1px solid ${result.confianzaColor}40` }}>
+                  Confianza {result.confianza} · {result.nComps} comparable{result.nComps !== 1 ? "s" : ""}
+                </span>
+              </div>
+
+              {(result.promHomol > 0 || result.terrenoUnit > 0) && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+                  {result.promHomol > 0 && (
+                    <div className="metric-card">
+                      <div className="metric-val">{fmt(result.promHomol)}</div>
+                      <div className="metric-lbl">$/m² construcción</div>
+                    </div>
+                  )}
+                  {result.terrenoUnit > 0 && (
+                    <div className="metric-card">
+                      <div className="metric-val">{fmt(result.terrenoUnit)}</div>
+                      <div className="metric-lbl">$/m² terreno</div>
+                    </div>
+                  )}
                 </div>
-                {result.valorMercado > 0 && result.valorFisico > 0 && (() => {
+              )}
+
+              {result.dispersion > 0 && (
+                <div className={`alert ${result.dispersion < 20 ? "success" : "warn"}`} style={{ marginBottom: 14 }}>
+                  Dispersión: {result.dispersion.toFixed(1)}%{result.dispersion < 20 ? " — Datos consistentes ✓" : " — Revisar comparables"}
+                </div>
+              )}
+
+              <div className="avm-card">
+                <div className="card-label">📊 Tres enfoques del avalúo</div>
+                <p style={{ fontSize: 11, color: "var(--gray-400)", marginBottom: 14, lineHeight: 1.5 }}>Metodología de perito valuador certificado.</p>
+
+                <div className="enfoque-card">
+                  <div>
+                    <div className="enfoque-lbl">Enfoque de mercado</div>
+                    <div className="enfoque-val" style={{ color: "var(--amber)" }}>{fmt(result.valorMercado)}</div>
+                    <div className="enfoque-sub">{result.nComps} comparables homologados</div>
+                  </div>
+                  <div className="enfoque-icon" style={{ background: "rgba(245,158,11,0.1)" }}>📈</div>
+                </div>
+
+                {!esTerreno && (
+                  <>
+                    <div className="enfoque-card">
+                      <div>
+                        <div className="enfoque-lbl">Enfoque físico</div>
+                        <div className="enfoque-val" style={{ color: "var(--emerald)" }}>{fmt(result.valorFisico)}</div>
+                        <div className="enfoque-sub">Terreno {fmt(result.valorTerreno)} + Const. {fmt(result.vnrTotal)}</div>
+                      </div>
+                      <div className="enfoque-icon" style={{ background: "rgba(16,185,129,0.1)" }}>🏗️</div>
+                    </div>
+                    <div className="enfoque-card">
+                      <div>
+                        <div className="enfoque-lbl">Enfoque de capitalización</div>
+                        <div className="enfoque-val" style={{ color: "var(--violet)" }}>{fmt(result.valorCapitalizacion)}</div>
+                        <div className="enfoque-sub">Renta est. {fmt(result.rentaBruta)}/mes</div>
+                      </div>
+                      <div className="enfoque-icon" style={{ background: "rgba(139,92,246,0.1)" }}>💰</div>
+                    </div>
+                  </>
+                )}
+
+                {!esTerreno && result.valorMercado > 0 && result.valorFisico > 0 && (() => {
                   const d = ((result.valorMercado - result.valorFisico) / result.valorFisico) * 100;
                   return (
-                    <div style={{ fontSize: 12, color: C.dim, marginTop: 4 }}>
-                      <strong style={{ color: Math.abs(d) < 15 ? C.success : C.warn }}>
-                        {d > 0 ? "+" : ""}{d.toFixed(1)}%
-                      </strong>
-                      {" "}diferencia entre enfoque de mercado y físico
-                      {Math.abs(d) < 15 ? " — Consistente ✓" : " — Revisar datos"}
+                    <div style={{ fontSize: 12, color: "var(--gray-400)", marginTop: 8 }}>
+                      <strong style={{ color: Math.abs(d) < 15 ? "var(--emerald)" : "var(--amber)" }}>{d > 0 ? "+" : ""}{d.toFixed(1)}%</strong>
+                      {" "}diferencia mercado vs físico{Math.abs(d) < 15 ? " — Consistente ✓" : " — Revisar datos"}
                     </div>
                   );
                 })()}
               </div>
 
-              <div style={{ ...S.card, textAlign: "center" }}>
-                <div style={{ fontSize: 11, color: C.dim, marginBottom: 8 }}>Ross-Heidecke · Factor de estado físico</div>
-                <div style={{ fontSize: 24, fontWeight: 800, color: result.fec > 0.7 ? C.success : result.fec > 0.4 ? C.warn : C.danger }}>
-                  {(result.fec * 100).toFixed(1)}%
+              {!esTerreno && (
+                <div className="avm-card" style={{ textAlign: "center", marginBottom: 14 }}>
+                  <div className="card-label" style={{ justifyContent: "center" }}>🔬 Factor Ross-Heidecke</div>
+                  <div style={{ fontSize: 36, fontWeight: 800, color: result.fec > 0.7 ? "var(--emerald)" : result.fec > 0.4 ? "var(--amber)" : "var(--rose)" }}>
+                    {(result.fec * 100).toFixed(1)}%
+                  </div>
+                  <div style={{ fontSize: 11, color: "var(--gray-400)", marginTop: 4 }}>
+                    Vida útil 70 años · Edad: {pf(sujeto.edad)} años · {CONSERV_OPTS[sujeto.conservacion]}
+                  </div>
                 </div>
-                <div style={{ fontSize: 11, color: C.dim, marginTop: 4 }}>
-                  Vida útil estimada: 70 años · Edad: {pf(sujeto.edad)} años
-                </div>
-              </div>
+              )}
 
-              <button style={{ ...S.btn, background: "transparent", border: `1px solid ${C.border}`, color: C.dim, marginTop: 4 }} onClick={() => setTab(0)}>
-                ← Nueva valuación
-              </button>
+              <button className="btn-primary outline" onClick={() => setTab(0)}>← Nueva valuación</button>
             </div>
           )}
+
         </div>
       );
     }
@@ -298,6 +680,5 @@
     const root = ReactDOM.createRoot(document.getElementById("root"));
     root.render(<AVM />);
   </script>
-
 </body>
 </html>
