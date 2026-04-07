@@ -1443,3 +1443,196 @@ async def buscar_comparables(req: ComparablesRequest):
 
     cache_set(cache_key, resultado, ttl=7200)  # cache 2 horas
     return resultado
+
+# ────────────────────────────────────────────
+# AVM — COLONIAS (Nominatim) Y COMPARABLES CERCANOS (Supabase)
+# ────────────────────────────────────────────
+
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+SUPABASE_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
+
+class ColoniasRequest(BaseModel):
+    texto: str
+    ciudad: str = "Morelia"
+
+class CercanosRequest(BaseModel):
+    latitud: float
+    longitud: float
+    tipo: str = "casa"
+    radio_km: float = 2.0
+    max_resultados: int = 15
+
+@app.get("/api/colonias")
+async def buscar_colonias(texto: str, ciudad: str = "Morelia"):
+    """Busca colonias via Nominatim (OpenStreetMap) — autocompletado."""
+    if len(texto) < 3:
+        return {"colonias": []}
+
+    cache_key = f"colonias_{ciudad}_{texto}".lower()
+    cached = cache_get(cache_key)
+    if cached:
+        return cached
+
+    url = "https://nominatim.openstreetmap.org/search"
+    params = {
+        "q": f"{texto}, {ciudad}, Michoacán, México",
+        "format": "json",
+        "addressdetails": 1,
+        "limit": 8,
+        "featuretype": "settlement",
+    }
+    headers = {"User-Agent": "Brokr-AVM/1.0 (contacto@brokr.mx)"}
+
+    async with httpx.AsyncClient(timeout=10) as client:
+        try:
+            r = await client.get(url, params=params, headers=headers)
+            data = r.json()
+        except Exception:
+            return {"colonias": []}
+
+    colonias = []
+    vistos = set()
+    for item in data:
+        addr = item.get("address", {})
+        nombre = (
+            addr.get("neighbourhood") or
+            addr.get("suburb") or
+            addr.get("quarter") or
+            addr.get("residential") or
+            addr.get("village") or
+            item.get("display_name", "").split(",")[0]
+        ).strip()
+        if not nombre or nombre in vistos:
+            continue
+        vistos.add(nombre)
+        colonias.append({
+            "nombre":   nombre,
+            "display":  item.get("display_name", ""),
+            "latitud":  float(item.get("lat", 0)),
+            "longitud": float(item.get("lon", 0)),
+        })
+
+    resultado = {"colonias": colonias}
+    cache_set(cache_key, resultado, ttl=86400)  # cache 24h
+    return resultado
+
+
+@app.post("/api/comparables-cercanos")
+async def comparables_cercanos(req: CercanosRequest):
+    """Busca propiedades cercanas en Supabase usando PostGIS."""
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        raise HTTPException(status_code=500, detail="SUPABASE_URL o SUPABASE_ANON_KEY no configuradas")
+
+    cache_key = f"cercanos_{req.tipo}_{req.latitud:.4f}_{req.longitud:.4f}_{req.radio_km}"
+    cached = cache_get(cache_key)
+    if cached:
+        return cached
+
+    # Mapeo de tipo AVM a tipo en la base de datos
+    TIPO_MAP = {
+        "casa":         ["Casas", "Desarrollos horizontales", "Desarrollos Horizontal/Vertical"],
+        "departamento": ["Departamentos", "Desarrollos verticales"],
+        "terreno":      ["Terrenos"],
+        "local":        ["Locales comerciales", "Locales Comerciales"],
+        "oficina":      ["Oficinas"],
+        "bodega":       ["Bodegas"],
+        "edificio":     ["Edificios"],
+    }
+    tipos_db = TIPO_MAP.get(req.tipo, ["Casas"])
+    tipos_str = ", ".join([f"'{t}'" for t in tipos_db])
+
+    # Query PostGIS: buscar propiedades en radio dado, ordenadas por distancia
+    radio_metros = req.radio_km * 1000
+    query = f"""
+    SELECT
+        id, titulo, precio, moneda, tipo_propiedad,
+        metros_construccion, metros_terreno,
+        recamaras, estacionamientos,
+        colonia, ciudad, url,
+        latitud, longitud,
+        ST_Distance(
+            geom::geography,
+            ST_SetSRID(ST_MakePoint({req.longitud}, {req.latitud}), 4326)::geography
+        ) AS distancia_metros
+    FROM propiedades_avm
+    WHERE
+        geom IS NOT NULL
+        AND precio IS NOT NULL
+        AND precio > 0
+        AND tipo_propiedad IN ({tipos_str})
+        AND ST_DWithin(
+            geom::geography,
+            ST_SetSRID(ST_MakePoint({req.longitud}, {req.latitud}), 4326)::geography,
+            {radio_metros}
+        )
+    ORDER BY distancia_metros ASC
+    LIMIT {req.max_resultados};
+    """
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        r = await client.post(
+            f"{SUPABASE_URL}/rest/v1/rpc/ejecutar_query",
+            headers={
+                "apikey": SUPABASE_KEY,
+                "Authorization": f"Bearer {SUPABASE_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={"query": query},
+        )
+
+        # Supabase REST no permite SQL directo — usamos el endpoint de PostgREST
+        # En su lugar llamamos via SQL con la función RPC
+        if r.status_code not in (200, 201, 204):
+            # Fallback: buscar por ciudad sin PostGIS
+            r2 = await client.get(
+                f"{SUPABASE_URL}/rest/v1/propiedades_avm",
+                headers={
+                    "apikey": SUPABASE_KEY,
+                    "Authorization": f"Bearer {SUPABASE_KEY}",
+                },
+                params={
+                    "ciudad": f"eq.Morelia",
+                    "precio": "gt.0",
+                    "select": "id,titulo,precio,moneda,tipo_propiedad,metros_construccion,metros_terreno,recamaras,estacionamientos,colonia,ciudad,url,latitud,longitud",
+                    "limit": req.max_resultados,
+                    "order": "precio.asc",
+                }
+            )
+            items = r2.json() if r2.status_code == 200 else []
+        else:
+            items = r.json()
+
+    # Normalizar para el AVM
+    comparables = []
+    for item in (items or []):
+        precio = item.get("precio") or 0
+        m2c    = item.get("metros_construccion") or 0
+        if precio <= 0 or m2c <= 0:
+            continue
+        comparables.append({
+            "precio":          int(precio),
+            "m2Construccion":  float(m2c),
+            "m2Terreno":       float(item.get("metros_terreno") or 0),
+            "recamaras":       int(item.get("recamaras") or 0),
+            "estacionamiento": int(item.get("estacionamientos") or 0),
+            "banos":           0,
+            "edad":            0,
+            "conservacion":    "bueno",
+            "calidad":         "medio",
+            "mismaZona":       "si",
+            "titulo":          item.get("titulo") or "",
+            "url":             item.get("url") or "",
+            "imagen":          "",
+            "colonia":         item.get("colonia") or "",
+            "distancia_metros": int(item.get("distancia_metros") or 0),
+        })
+
+    resultado = {
+        "total":       len(comparables),
+        "comparables": comparables,
+        "latitud":     req.latitud,
+        "longitud":    req.longitud,
+        "radio_km":    req.radio_km,
+    }
+    cache_set(cache_key, resultado, ttl=3600)
+    return resultado
