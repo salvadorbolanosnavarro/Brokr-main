@@ -5,6 +5,9 @@ import httpx
 import os
 import time
 import re
+import asyncio
+import base64
+import uuid as _uuid
 from typing import Optional
 from datetime import datetime
 
@@ -26,6 +29,9 @@ APIFY_API_KEY = os.environ.get("APIFY_API_KEY", "")
 GOOGLE_PLACES_KEY = os.environ.get("GOOGLE_PLACES_KEY", "")
 SUPABASE_URL      = os.environ.get("SUPABASE_URL", "")
 SUPABASE_KEY      = os.environ.get("SUPABASE_ANON_KEY", "")
+
+# In-memory PDF store: token → (bytes, filename). Max 50 entradas.
+_pdf_store: dict = {}
 
 # ── CACHE EN MEMORIA (TTL 6h) ──
 _cache: dict = {}
@@ -102,6 +108,7 @@ Eres un experto inmobiliario que conoce a fondo:
 - Código Civil Federal y de Michoacán — contratos de compraventa y arrendamiento
 - SAT: obligaciones fiscales del vendedor y comprador
 - Mercado inmobiliario de Morelia: colonias, plusvalía, precios por zona
+- Avalúos y valuación de inmuebles (método de mercado, hedónico, físico)
 
 PERSONALIDAD:
 - Hablas en español mexicano, natural y cercano
@@ -110,36 +117,117 @@ PERSONALIDAD:
 - Nunca inventes cifras ni datos legales
 
 REGLA DE ORO:
-Cuando el usuario pide realizar una tarea, recopila los datos de UNO EN UNO, de forma conversacional. NUNCA ejecutes la acción con datos incompletos. Cuando tengas todo, di un resumen breve y ejecuta la acción.
+Cuando el usuario pide realizar una tarea, recopila los datos OBLIGATORIOS de UNO EN UNO, de forma conversacional. NUNCA ejecutes la acción con datos incompletos. Cuando tengas todo, di un resumen breve y ejecuta la acción. Los datos opcionales que el usuario no conozca se omiten (usa 0 o "").
 
-═══════════════════════════════════════
-ACCIÓN: CALCULAR ISR
-═══════════════════════════════════════
+══════════════════════════════════════════════════
+ACCIÓN 1: CALCULAR ISR POR ENAJENACIÓN
+══════════════════════════════════════════════════
 Datos OBLIGATORIOS (pregunta uno por uno):
 1. Tipo de inmueble: casa habitación, terreno, o comercial
 2. Precio de venta (MXN)
 3. Mes y año de la venta
 4. Precio de compra original (MXN)
 5. Mes y año de la compra
-6. Si es casa habitación: ¿usó esta exención de ISR en los últimos 3 años? (sí / no / no sabe)
-7. ¿Tiene mejoras o ampliaciones? (monto o "no")
-8. ¿Cuánto pagó de escrituración al comprar? (o "no sabe")
-9. ¿Cuánto es la comisión del agente en esta venta? (o "no aplica")
+6. Si es casa: ¿usó la exención en los últimos 3 años? (sí / no / no sabe)
+7. ¿Mejoras o ampliaciones? (monto o "no")
+8. ¿Escrituración al comprar? (monto o "no sé")
+9. ¿Comisión del agente en esta venta? (monto o "no aplica")
 
-IMPORTANTE: La pregunta 6 solo aplica si el inmueble es casa habitación o departamento. Para terrenos y comerciales, omítela y usa "no" automáticamente.
+La pregunta 6 SOLO aplica a casa/departamento. Para terrenos y comerciales usa "no" automáticamente.
 
-Cuando tengas todo, ejecuta:
+Cuando tengas todo:
 [ACCION]{"tipo":"llenar_isr","precio_venta":NUMERO,"precio_compra":NUMERO,"anio_venta":NUMERO,"mes_venta":NUMERO,"anio_compra":NUMERO,"mes_compra":NUMERO,"inmueble":"casa","exencion":"no","mejoras":NUMERO,"escrituracion":NUMERO,"comision":NUMERO}[/ACCION]
 
-Valores válidos para "inmueble": "casa" | "terreno" | "comercial"
-Valores válidos para "exencion": "no" | "si" | "nose"
-Si el usuario no sabe un dato opcional (mejoras, escrituración, comisión), usa 0.
-mes_venta y mes_compra son números del 1 al 12.
+Valores "inmueble": "casa" | "terreno" | "comercial"
+Valores "exencion": "no" | "si" | "nose"
+mes_venta y mes_compra son números 1-12. Datos opcionales desconocidos = 0.
 
-═══════════════════════════════════════
-NAVEGACIÓN SIMPLE
-═══════════════════════════════════════
-Para ir a un módulo sin datos:
+══════════════════════════════════════════════════
+ACCIÓN 2: OPINIÓN DE VALOR (AVM)
+══════════════════════════════════════════════════
+Cuando el usuario pide valuar, tasar o dar opinión de valor de un inmueble.
+Datos OBLIGATORIOS:
+1. Colonia (barrio/fraccionamiento)
+2. Tipo de inmueble: casa, departamento, terreno, local, oficina, bodega
+3. Operación: venta o renta
+4. m² de construcción (si aplica)
+Datos OPCIONALES: m² de terreno, recámaras, baños, ciudad (default: Morelia)
+
+Cuando tengas colonia + tipo + operación (y m² si los tiene):
+[ACCION]{"tipo":"llenar_avm","colonia":"Chapultepec","tipo_inmueble":"casa","operacion":"venta","m2_construccion":180,"m2_terreno":220,"recamaras":3,"banos":2,"ciudad":"Morelia"}[/ACCION]
+
+Valores "tipo_inmueble": "casa" | "departamento" | "terreno" | "local" | "oficina" | "bodega"
+Valores "operacion": "venta" | "renta"
+Omite los campos opcionales que no tengas. ciudad default "Morelia".
+
+══════════════════════════════════════════════════
+ACCIÓN 3: GENERAR CONTRATO DE ARRENDAMIENTO
+══════════════════════════════════════════════════
+Cuando el usuario pide contrato de renta/arrendamiento.
+Datos OBLIGATORIOS:
+1. Calle del inmueble arrendado
+2. Número exterior
+3. Colonia del inmueble
+4. C.P. (código postal)
+5. Municipio y estado (ej: "Morelia, Michoacán")
+6. Nombre completo del arrendador (dueño) — EN MAYÚSCULAS
+7. Nombre completo del arrendatario (inquilino) — EN MAYÚSCULAS
+8. Renta mensual (MXN)
+9. Depósito en garantía (si no sabe, usa el mismo valor que la renta)
+10. Fecha de inicio (día/mes/año)
+
+Cuando tengas todo:
+[ACCION]{"tipo":"llenar_contrato","subtipo":"arrendamiento","calle_inmueble":"AV. CAMELINAS","num_ext":"123","num_int":"","colonia":"CHAPULTEPEC","cp":"58260","municipio_estado":"MORELIA, MICHOACÁN","arrendador":"SALVADOR BOLAÑOS NAVARRO","arrendatario":"GABRIELA NAVARRO PÉREZ","renta":8500,"deposito":8500,"dia_pago":5,"fecha_inicio":"2026-05-01"}[/ACCION]
+
+dia_pago: día límite del mes para pagar (default 5). fecha_inicio en formato YYYY-MM-DD.
+
+══════════════════════════════════════════════════
+ACCIÓN 4: GENERAR PROMESA DE COMPRAVENTA
+══════════════════════════════════════════════════
+Cuando el usuario pide contrato de compraventa o promesa de venta.
+Datos OBLIGATORIOS:
+1. Dirección del inmueble (calle y número)
+2. Colonia
+3. C.P.
+4. Nombre del vendedor (promitente vendedor)
+5. Nombre del comprador (promitente comprador)
+6. Precio total de venta
+7. Monto de arras/enganche
+8. Fecha límite para escriturar
+
+Cuando tengas todo:
+[ACCION]{"tipo":"llenar_contrato","subtipo":"promesa","dir":"Cipres 167","colonia":"Melchor Ocampo","cp":"58160","vendedor":"JUAN PÉREZ GARCÍA","comprador":"MARÍA LÓPEZ HERNÁNDEZ","precio":2500000,"arras":250000,"fecha_limite":"2026-06-30"}[/ACCION]
+
+fecha_limite en formato YYYY-MM-DD.
+
+══════════════════════════════════════════════════
+ACCIÓN 5: FICHA TÉCNICA DESDE EASYBROKER
+══════════════════════════════════════════════════
+Cuando el usuario quiere hacer una ficha de una propiedad de EasyBroker y da el ID (formato EB-XXXX).
+[ACCION]{"tipo":"crear_ficha","id_easybroker":"EB-KH4322"}[/ACCION]
+
+Si el usuario no da el ID, navega al módulo y pídele el ID:
+[ACCION]{"tipo":"navegar","modulo":"ficha"}[/ACCION]
+
+══════════════════════════════════════════════════
+ACCIÓN 6: FICHA TÉCNICA MANUAL
+══════════════════════════════════════════════════
+Cuando el usuario quiere hacer una ficha técnica sin ID de EasyBroker y da los datos del inmueble.
+Datos mínimos: tipo, operación, precio, colonia.
+[ACCION]{"tipo":"crear_ficha_manual","tipo_inmueble":"casa","operacion":"venta","precio":3500000,"colonia":"Chapultepec","ciudad":"Morelia","calle":"Av. Madero 123","recamaras":3,"banos":2,"m2_construccion":180,"m2_terreno":220,"estacionamientos":2,"descripcion":""}[/ACCION]
+
+Valores "operacion": "venta" | "renta". Omite campos que no tengas.
+
+══════════════════════════════════════════════════
+ACCIÓN 7: BUSCAR PROPIEDAD EN MIS INMUEBLES
+══════════════════════════════════════════════════
+Cuando el usuario pide ver, buscar o encontrar una propiedad en su cartera.
+[ACCION]{"tipo":"buscar_propiedad","query":"Chapultepec"}[/ACCION]
+
+══════════════════════════════════════════════════
+NAVEGACIÓN DIRECTA
+══════════════════════════════════════════════════
+Para ir a un módulo sin datos adicionales:
 [ACCION]{"tipo":"navegar","modulo":"isr"}[/ACCION]
 [ACCION]{"tipo":"navegar","modulo":"ficha-manual"}[/ACCION]
 [ACCION]{"tipo":"navegar","modulo":"ficha"}[/ACCION]
@@ -147,44 +235,57 @@ Para ir a un módulo sin datos:
 [ACCION]{"tipo":"navegar","modulo":"avm"}[/ACCION]
 [ACCION]{"tipo":"navegar","modulo":"props"}[/ACCION]
 
-═══════════════════════════════════════
-EJEMPLO DE CONVERSACIÓN ISR CORRECTA
-═══════════════════════════════════════
-Usuario: "calcula el ISR de una casa que vendí"
-Shaark: "¿En cuánto la vendiste?"
-Usuario: "en 3 millones 200 mil"
-Shaark: "¿En qué mes y año fue la venta?"
-Usuario: "marzo de 2026"
-Shaark: "¿Cuánto pagaste cuando la compraste?"
-Usuario: "un millón"
-Shaark: "¿En qué mes y año la compraste?"
-Usuario: "enero 2015"
-Shaark: "¿Hiciste mejoras o ampliaciones?"
+══════════════════════════════════════════════════
+EJEMPLOS DE CONVERSACIÓN CORRECTA
+══════════════════════════════════════════════════
+
+EJEMPLO ISR:
+Usuario: "calcula el ISR de una casa que vendí en 3.2 millones en marzo 2026, la compré en un millón en enero 2015, comisión 96 mil"
+Shaark: "Perfecto. Venta $3,200,000 en marzo 2026, compra $1,000,000 en enero 2015, comisión $96,000. ¿Usaste la exención de casa habitación en los últimos 3 años?"
 Usuario: "no"
-Shaark: "¿Cuánto pagaste de escrituración al comprar?"
-Usuario: "no sé"
-Shaark: "¿Cuánto es tu comisión como agente?"
-Usuario: "96 mil"
-Shaark: "Perfecto. Venta $3,200,000 en marzo 2026, compra $1,000,000 en enero 2015, comisión $96,000, sin exención previa. Calculando y generando tu PDF ahora."
+Shaark: "Listo. Calculando ISR ahora."
 [ACCION]{"tipo":"llenar_isr","precio_venta":3200000,"precio_compra":1000000,"anio_venta":2026,"mes_venta":3,"anio_compra":2015,"mes_compra":1,"inmueble":"casa","exencion":"no","mejoras":0,"escrituracion":0,"comision":96000}[/ACCION]
 
-Responde siempre en español. Nunca uses markdown en respuestas conversacionales."""
+EJEMPLO CONTRATO DE RENTA:
+Usuario: "dame un contrato de renta para Av. Camelinas 123, Chapultepec, Morelia, el dueño es Salvador Bolaños y el inquilino es Gabriela Navarro, renta de 8,500 al mes"
+Shaark: "¿Cuál es el código postal de Chapultepec?"
+Usuario: "58260"
+Shaark: "¿Desde qué fecha empieza el contrato?"
+Usuario: "1 de mayo de 2026"
+Shaark: "Perfecto. Generando contrato de arrendamiento."
+[ACCION]{"tipo":"llenar_contrato","subtipo":"arrendamiento","calle_inmueble":"AV. CAMELINAS","num_ext":"123","num_int":"","colonia":"CHAPULTEPEC","cp":"58260","municipio_estado":"MORELIA, MICHOACÁN","arrendador":"SALVADOR BOLAÑOS NAVARRO","arrendatario":"GABRIELA NAVARRO PÉREZ","renta":8500,"deposito":8500,"dia_pago":5,"fecha_inicio":"2026-05-01"}[/ACCION]
+
+EJEMPLO AVM:
+Usuario: "valúa una casa de 180m² en venta en Chapultepec, 3 recámaras"
+Shaark: "Dame una opinión de valor para una casa de 180m², 3 recámaras, en venta en Chapultepec, Morelia."
+[ACCION]{"tipo":"llenar_avm","colonia":"Chapultepec","tipo_inmueble":"casa","operacion":"venta","m2_construccion":180,"recamaras":3,"ciudad":"Morelia"}[/ACCION]
+
+EJEMPLO FICHA EB:
+Usuario: "haz la ficha de la propiedad EB-KH4322"
+Shaark: "Generando ficha técnica de EB-KH4322."
+[ACCION]{"tipo":"crear_ficha","id_easybroker":"EB-KH4322"}[/ACCION]
+
+Responde siempre en español. Nunca uses markdown en respuestas conversacionales (sin **, sin #, sin listas con guiones)."""
 
 class ClaudeChatRequest(BaseModel):
     messages: list
-    max_tokens: int = 1024
+    max_tokens: int = 1200
     temperature: float = 0.7
+    context: str = ""  # Módulo/pantalla activa — se inyecta al system prompt
 
 @app.post("/chat-claude")
 async def chat_claude_proxy(req: ClaudeChatRequest):
     if not ANTHROPIC_API_KEY:
         raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY no configurada en el servidor")
 
-    # Separar system messages de los demás
+    # Construir system prompt con contexto dinámico del módulo activo
     system_content = SHAARK_SYSTEM_PROMPT
+    if req.context:
+        system_content += f"\n\n═══════════════════════════════════════\nCONTEXTO ACTUAL DEL USUARIO\n═══════════════════════════════════════\nEl usuario está en: {req.context}\nAdapta tu respuesta y acciones a este módulo cuando sea relevante."
+
     user_messages = [m for m in req.messages if m.get("role") != "system"]
 
-    async with httpx.AsyncClient(timeout=45) as client:
+    async with httpx.AsyncClient(timeout=60) as client:
         r = await client.post(
             f"{ANTHROPIC_BASE}/messages",
             headers={
@@ -193,7 +294,7 @@ async def chat_claude_proxy(req: ClaudeChatRequest):
                 "Content-Type": "application/json",
             },
             json={
-                "model": "claude-sonnet-4-5",
+                "model": "claude-sonnet-4-6",
                 "max_tokens": req.max_tokens,
                 "system": system_content,
                 "messages": user_messages,
@@ -204,7 +305,6 @@ async def chat_claude_proxy(req: ClaudeChatRequest):
                 detail=f"Error Claude: {r.text}")
 
         data = r.json()
-        # Devolver en formato compatible con el frontend (igual que Groq)
         reply_text = data.get("content", [{}])[0].get("text", "Sin respuesta.")
         return {
             "choices": [
@@ -216,7 +316,7 @@ async def chat_claude_proxy(req: ClaudeChatRequest):
 @app.post("/isr-pdf")
 async def generar_isr_pdf(p: dict):
     """Recibe HTML del cálculo ISR y lo convierte a PDF con Playwright."""
-    from playwright.async_api import async_playwright
+    from playwright.async_api import async_playwright  # noqa: re-import ok here (lazy)
     html = p.get("html", "")
     if not html:
         raise HTTPException(status_code=400, detail="HTML vacío")
@@ -595,97 +695,6 @@ def ajuste_hedonico(comp: dict, sujeto: dict) -> dict:
 # AVM ENDPOINT
 # ────────────────────────────────────────────
 
-
-@app.get("/debug-propiedad")
-async def debug_propiedad(id: str = "EB-KH4322"):
-    """Show all fields of a property — focused on date fields."""
-    if not EB_API_KEY:
-        raise HTTPException(status_code=500, detail="EB_API_KEY no configurada")
-    async with httpx.AsyncClient(timeout=15) as client:
-        r = await client.get(f"{EB_BASE}/properties/{id}", headers=eb_headers())
-        if r.status_code != 200:
-            raise HTTPException(status_code=r.status_code, detail="Error")
-        data = r.json()
-        # Show ALL fields — especially any date-related ones
-        date_fields = {k: v for k, v in data.items() if any(
-            word in k.lower() for word in
-            ["date","fecha","created","updated","listed","published","at","time","year"]
-        )}
-        all_keys = list(data.keys())
-        return {
-            "all_field_names": all_keys,
-            "date_related_fields": date_fields,
-            "full_data": data
-        }
-
-@app.get("/debug-colonia")
-async def debug_colonia(colonia: str = "Chapultepec Sur", ciudad: str = "Morelia"):
-    """Show exactly what EB has for a colonia — raw data for debugging."""
-    if not EB_API_KEY:
-        raise HTTPException(status_code=500, detail="EB_API_KEY no configurada")
-
-    def norm(s):
-        for a,b in [("á","a"),("é","e"),("í","i"),("ó","o"),("ú","u"),("ñ","n")]:
-            s = s.lower().replace(a,b)
-        return re.sub(r"[^a-z0-9 ]", "", s).strip()
-
-    col_norm = norm(colonia)
-    ciudad_norm = norm(ciudad)
-    all_results = []
-    page = 1
-
-    async with httpx.AsyncClient(timeout=30) as client:
-        while page <= 10:
-            r = await client.get(
-                f"{EB_BASE}/properties",
-                headers=eb_headers(),
-                params={"limit": 50, "page": page}
-            )
-            if r.status_code != 200:
-                break
-            data = r.json()
-            props = data.get("content", [])
-            if not props:
-                break
-            for p in props:
-                loc = p.get("location","")
-                loc_norm = norm(loc)
-                status = p.get("status","")
-                updated = p.get("updated_at","")[:10] if p.get("updated_at") else ""
-                year = int(updated[:4]) if updated else 0
-                col_match = col_norm in loc_norm
-                city_match = ciudad_norm in loc_norm
-                all_results.append({
-                    "public_id": p.get("public_id"),
-                    "location": loc,
-                    "status": status,
-                    "updated": updated,
-                    "year": year,
-                    "col_match": col_match,
-                    "city_match": city_match,
-                    "tipo": p.get("property_type"),
-                })
-            if not data.get("pagination",{}).get("next_page"):
-                break
-            page += 1
-
-    matching = [r for r in all_results if r["col_match"] and r["city_match"]]
-    matching_2025 = [r for r in matching if r["year"] >= 2025]
-    matching_published = [r for r in matching if r["status"] in ("published","publicada","activa","active","")]
-
-    return {
-        "colonia_buscada": colonia,
-        "total_revisadas": len(all_results),
-        "con_colonia_exacta": len(matching),
-        "con_colonia_y_2025": len(matching_2025),
-        "con_colonia_y_publicada": len(matching_published),
-        "muestra_matching": matching[:10],
-        "status_values_encontrados": list(set(r["status"] for r in all_results[:200])),
-        "year_range": {
-            "min": min((r["year"] for r in all_results if r["year"]>0), default=0),
-            "max": max((r["year"] for r in all_results if r["year"]>0), default=0),
-        }
-    }
 
 @app.post("/avm")
 async def calcular_avm(req: AVMRequest):
@@ -1139,10 +1148,6 @@ body{font-family:'Poppins',sans-serif;background:white;color:#0f1829}
              specs_html, cover_desc_html, footer(), gallery_pages)
 
 
-# In-memory PDF store: token -> (bytes, filename)
-import uuid as _uuid
-_pdf_store: dict = {}
-
 # ────────────────────────────────────────────
 # NOTICIAS INMOBILIARIAS — RSS REAL
 # ────────────────────────────────────────────
@@ -1202,11 +1207,6 @@ async def get_noticias():
     result = {"items": items}
     cache_set("noticias_rss", result, ttl=1800)  # Cache 30 minutos
     return result
-
-
-# In-memory PDF store: token -> (bytes, filename)
-import uuid as _uuid
-_pdf_store: dict = {}
 
 
 @app.post("/ficha-pdf")
@@ -1296,13 +1296,6 @@ async def descargar_ficha_pdf(token: str):
             "Cache-Control": "no-store",
         }
     )
-# ────────────────────────────────────────────
-# VARIABLE DE ENTORNO — agregar junto a las demás arriba en main.py
-# ────────────────────────────────────────────
-# APIFY_API_KEY = os.environ.get("APIFY_API_KEY", "")
-# (ya tienes el patrón, solo añade esta línea donde están EB_API_KEY, etc.)
-
-
 # ────────────────────────────────────────────
 # AVM — COMPARABLES VÍA APIFY + INMUEBLES24
 # ────────────────────────────────────────────
@@ -1473,23 +1466,9 @@ async def buscar_comparables(req: ComparablesRequest):
 # AVM — COLONIAS (Nominatim) Y COMPARABLES CERCANOS (Supabase)
 # ────────────────────────────────────────────
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
-SUPABASE_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
-
 class ColoniasRequest(BaseModel):
     texto: str
     ciudad: str = "Morelia"
-
-class CercanosRequest(BaseModel):
-    latitud: float
-    longitud: float
-    tipo: str = "casa"
-    radio_km: float = 2.0
-    max_resultados: int = 15
-
-GOOGLE_PLACES_KEY = os.environ.get("GOOGLE_PLACES_KEY", "")
-SUPABASE_URL      = os.environ.get("SUPABASE_URL", "")
-SUPABASE_KEY      = os.environ.get("SUPABASE_ANON_KEY", "")
 
 @app.get("/api/colonias")
 async def buscar_colonias(texto: str, ciudad: str = "Morelia"):
@@ -1569,6 +1548,7 @@ async def buscar_colonias(texto: str, ciudad: str = "Morelia"):
 # AVM — COMPARABLES CERCANOS (PostGIS + Supabase)
 # ────────────────────────────────────────────
 
+# CercanosRequest — única definición
 class CercanosRequest(BaseModel):
     latitud: float
     longitud: float
@@ -1576,7 +1556,8 @@ class CercanosRequest(BaseModel):
     radio_km: float = 2.0
     max_resultados: int = 15
 
-TIPO_MAP = {
+# TIPO_MAP_DB — mapeo hacia tipos de Supabase/PostGIS (distinto del TIPO_MAP de EasyBroker arriba)
+TIPO_MAP_DB = {
     "casa":         ["Casas", "Desarrollos horizontales", "Desarrollos Horizontal/Vertical"],
     "departamento": ["Departamentos", "Desarrollos verticales"],
     "terreno":      ["Terrenos"],
@@ -1597,7 +1578,7 @@ async def comparables_cercanos(req: CercanosRequest):
     if cached:
         return cached
 
-    tipos_db = TIPO_MAP.get(req.tipo, ["Casas"])
+    tipos_db = TIPO_MAP_DB.get(req.tipo, ["Casas"])
     radio_metros = int(req.radio_km * 1000)
 
     # Llamar a función RPC en Supabase que ejecuta la query PostGIS

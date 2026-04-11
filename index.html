@@ -1764,6 +1764,7 @@ html, body {
       <div class="scw-chip" onclick="shaarkChip('Crear ficha técnica')">🏷️ Fichas téc.</div>
       <div class="scw-chip" onclick="shaarkChip('Ver mis propiedades')">🏠 Mis inmuebles</div>
     </div>
+    <!-- chips se actualizan dinámicamente con refreshShaarkChips() al abrir el popup -->
     <div class="scw-input-row">
       <button id="scw-mic-btn" class="scw-mic" onclick="toggleScwVoice()" title="Hablar">
         <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"/></svg>
@@ -1794,6 +1795,9 @@ html, body {
 </div>
 
 <script>
+// ══ CONFIGURACIÓN GLOBAL ══
+const API_BASE = 'https://brokrebapi-production.up.railway.app';
+
 // ══ PROTO NAV (home / modules / profile / shaark) ══
 let protoScreen = 'home';
 
@@ -1876,16 +1880,15 @@ function addScwBubble(text, type) {
 
 async function shaarkFabFetch(text) {
   const msgs = document.getElementById('scw-msgs');
-  // Cada llamada crea su propia burbuja — sin ID para no reutilizar
   const typing = document.createElement('div');
   typing.className = 'scw-bubble bot';
   typing.textContent = '...';
   msgs.appendChild(typing);
   msgs.scrollTop = msgs.scrollHeight;
   try {
-    const r = await fetch('https://brokrebapi-production.up.railway.app/chat-claude', {
+    const r = await fetch(API_BASE+'/chat-claude', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ max_tokens: 600, messages: shaarkMsgs })
+      body: JSON.stringify({ max_tokens: 1200, messages: shaarkMsgs, context: getCurrentContext() })
     });
     const data = await r.json();
     if(!r.ok){
@@ -1902,8 +1905,13 @@ async function shaarkFabFetch(text) {
     while((accionMatch = accionRe.exec(reply)) !== null) {
       try {
         const ac = JSON.parse(accionMatch[1].trim());
-        if(ac.tipo === 'navegar' && ac.modulo) setPanel(ac.modulo);
-        if(ac.tipo === 'llenar_isr') llenarISR(ac);
+        if(ac.tipo === 'navegar' && ac.modulo)   setPanel(ac.modulo);
+        if(ac.tipo === 'llenar_isr')             llenarISR(ac);
+        if(ac.tipo === 'llenar_avm')             llenarAVM(ac);
+        if(ac.tipo === 'llenar_contrato')        llenarContrato(ac);
+        if(ac.tipo === 'crear_ficha')            crearFicha(ac);
+        if(ac.tipo === 'crear_ficha_manual')     crearFichaManual(ac);
+        if(ac.tipo === 'buscar_propiedad')       buscarPropiedad(ac);
       } catch(e){}
     }
     const clean = reply.replace(/\[ACCION\].*?\[\/ACCION\]/gs,'').trim();
@@ -2081,6 +2089,113 @@ function llenarISR(ac){
   }, 450);
 }
 
+// Llenar AVM desde Shaark — navega al módulo y envía postMessage al iframe
+function llenarAVM(ac) {
+  setPanel('avm');
+  setTimeout(() => {
+    const iframe = document.querySelector('#panel-avm iframe');
+    if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.postMessage({ tipo: 'llenar_avm', ...ac }, '*');
+    }
+  }, 700);
+}
+
+// Llenar contrato (arrendamiento o promesa) desde Shaark
+function llenarContrato(ac) {
+  setPanel('contratos');
+  setTimeout(() => {
+    const iframe = document.querySelector('#panel-contratos iframe');
+    if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.postMessage({ tipo: 'llenar_contrato', ...ac }, '*');
+    }
+  }, 700);
+}
+
+// Generar ficha EasyBroker desde Shaark
+function crearFicha(ac) {
+  setPanel('ficha');
+  setTimeout(() => {
+    const iframe = document.querySelector('#panel-ficha iframe');
+    if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.postMessage({ tipo: 'crear_ficha', ...ac }, '*');
+    }
+  }, 700);
+}
+
+// Generar ficha manual desde Shaark
+function crearFichaManual(ac) {
+  setPanel('ficha-manual');
+  setTimeout(() => {
+    const iframe = document.querySelector('#panel-ficha-manual iframe');
+    if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.postMessage({ tipo: 'crear_ficha_manual', ...ac }, '*');
+    }
+  }, 700);
+}
+
+// Buscar propiedad en el catálogo desde Shaark
+function buscarPropiedad(ac) {
+  setPanel('props');
+  setTimeout(() => {
+    if (ac.query) {
+      const searchInput = document.getElementById('props-search');
+      if (searchInput) {
+        searchInput.value = ac.query;
+        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }
+  }, 500);
+}
+
+// ══ Chips dinámicos — cambian según el módulo activo ══
+const SHAARK_CHIPS_MAP = {
+  default: [
+    { label: '📄 Contratos', msg: 'Generar un contrato' },
+    { label: '💰 Calc. ISR', msg: 'Calcular ISR' },
+    { label: '🏷️ Fichas téc.', msg: 'Crear ficha técnica' },
+    { label: '🏠 Mis inmuebles', msg: 'Ver mis propiedades' },
+  ],
+  'panel-contratos': [
+    { label: '📝 Arrendamiento', msg: 'Genera un contrato de arrendamiento' },
+    { label: '🤝 Promesa', msg: 'Genera una promesa de compraventa' },
+    { label: '📋 ¿Cómo funciona?', msg: '¿Qué tipos de contrato puedo generar?' },
+  ],
+  'panel-avm': [
+    { label: '📊 Valuación', msg: 'Valúa una casa de 3 recámaras en' },
+    { label: '🔍 ¿Cuánto vale?', msg: '¿Cuánto vale una propiedad en esta colonia?' },
+    { label: '🏘️ Comparables', msg: '¿Cómo agrego comparables?' },
+  ],
+  'panel-isr': [
+    { label: '🧮 Calc. ISR', msg: 'Calcula el ISR para una venta de' },
+    { label: '📄 Descargar PDF', msg: 'Descarga el reporte de ISR' },
+    { label: '❓ Exención', msg: '¿Cuándo aplica la exención de casa habitación?' },
+  ],
+  'panel-ficha': [
+    { label: '🔎 Buscar prop.', msg: 'Genera la ficha para la propiedad EB-' },
+    { label: '📸 Con fotos', msg: '¿Cómo se agregan fotos a la ficha?' },
+  ],
+  'panel-ficha-manual': [
+    { label: '🏡 Nueva ficha', msg: 'Crea una ficha para una casa de 3 recámaras en' },
+    { label: '✏️ Descripción', msg: 'Escribe una descripción atractiva para una propiedad en' },
+  ],
+  'panel-props': [
+    { label: '🔍 Buscar', msg: 'Buscar propiedades en Chapultepec' },
+    { label: '❓ EasyBroker', msg: '¿Cómo conecto mi cuenta de EasyBroker?' },
+  ],
+};
+
+function refreshShaarkChips() {
+  const chipsEl = document.getElementById('scw-chips');
+  if (!chipsEl) return;
+  const activePanel = document.querySelector('.mod-panel.active');
+  const key = activePanel ? activePanel.id : 'default';
+  const chips = SHAARK_CHIPS_MAP[key] || SHAARK_CHIPS_MAP.default;
+  chipsEl.innerHTML = chips.map(c =>
+    `<div class="scw-chip" onclick="shaarkChip('${c.msg.replace(/'/g, "\\'")}')">${c.label}</div>`
+  ).join('');
+  chipsEl.style.display = 'flex';
+}
+
 // ══ MAIN APP LOGIC (original) ══
 // ══════════════════════════════════════════
 // PANEL NAVIGATION
@@ -2116,6 +2231,25 @@ function showDashboard() {
 
 function goISR()  { setPanel('isr'); }
 function goProps(){ setPanel('props'); }
+
+// Detecta qué módulo/pantalla tiene el usuario activo — se envía a Shaark como contexto
+function getCurrentContext() {
+  const activePanel = document.querySelector('.mod-panel.active');
+  if (activePanel) {
+    const idMap = {
+      'panel-isr':         'Calculadora ISR por enajenación de inmuebles',
+      'panel-props':       'Mis Inmuebles — catálogo de propiedades',
+      'panel-ficha-manual':'Ficha Técnica Manual — crear ficha sin EasyBroker',
+      'panel-ficha':       'Ficha EasyBroker — generar ficha técnica desde ID de EasyBroker',
+      'panel-contratos':   'Contratos — arrendamiento y promesa de compraventa',
+      'panel-avm':         'Opinión de Valor AVM — avalúo de mercado automatizado',
+    };
+    return idMap[activePanel.id] || activePanel.id;
+  }
+  const activeScreen = document.querySelector('.proto-screen.active-screen');
+  if (activeScreen && activeScreen.id === 'screen-shaark') return 'Chat completo con Shaark';
+  return 'Dashboard principal — menú de módulos';
+}
 
 // ══════════════════════════════════════════
 // PROFILE DRAWER
@@ -2537,7 +2671,7 @@ async function fetchAnalysis(d){
   if(g('ai-txt')) g('ai-txt').innerHTML = '<span style="color:var(--mut);font-size:13px">Analizando operación…</span>';
   const prompt = `Operación enajenación inmueble México: Tipo: ${d.tipo}, Venta: ${fmt(d.venta)}, Factor INPC: ${d.factor.toFixed(4)}, Ganancia: ${fmt(d.ganTotal)}, ISR total: ${fmt(d.isrTotal)}, Tasa: ${(d.tasaEfec*100).toFixed(2)}%. En 3 oraciones: valida resultado, consideración fiscal principal, recomendación práctica.`;
   try{
-    const r = await fetch('https://brokrebapi-production.up.railway.app/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:280,temperature:0.5,messages:[{role:'system',content:'Tu nombre es Shaark. NO te llamas Brokr. Brokr es tu casa y creador. Experto en fiscalidad y derecho inmobiliarios mexicanos. Responde en español, breve y práctico.'},{role:'user',content:prompt}]})});
+    const r = await fetch(API_BASE+'/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:280,temperature:0.5,messages:[{role:'system',content:'Tu nombre es Shaark. NO te llamas Brokr. Brokr es tu casa y creador. Experto en fiscalidad y derecho inmobiliarios mexicanos. Responde en español, breve y práctico.'},{role:'user',content:prompt}]})});
     const data = await r.json();
     if(g('ai-txt')) g('ai-txt').innerHTML = fmtMsg(data.choices?.[0]?.message?.content||'');
   } catch(e){ if(g('ai-box')) g('ai-box').style.display = 'none'; }
@@ -2583,7 +2717,7 @@ function descargarPDF(){
   const filename = 'ISR_Brokr_' + meses[d.mesV] + d.anioV + '.pdf';
   const btn = g('btn-pdf');
   if(btn){ btn.textContent = 'Generando PDF…'; btn.disabled = true; }
-  fetch('https://brokrebapi-production.up.railway.app/isr-pdf', {
+  fetch(API_BASE+'/isr-pdf', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({ html, filename })
@@ -2592,7 +2726,7 @@ function descargarPDF(){
   .then(data => {
     if(!data.token) throw new Error('Sin token');
     const a = document.createElement('a');
-    a.href = 'https://brokrebapi-production.up.railway.app/ficha-pdf/' + data.token;
+    a.href = API_BASE+'/ficha-pdf/' + data.token;
     a.download = filename;
     a.target = '_blank';
     a.click();
@@ -2622,7 +2756,7 @@ async function send(){
   inp.value=''; inp.style.height='auto';
   const tid = addTyping(); busy = true; g('snd').disabled = true;
   try{
-    const r = await fetch('https://brokrebapi-production.up.railway.app/chat-claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:1500,messages:msgs})});
+    const r = await fetch(API_BASE+'/chat-claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:1500,messages:msgs,context:getCurrentContext()})});
     rmTyping(tid);
     if(!r.ok){ const e=await r.json(); addErr(e.error?.message||'Error'); msgs.pop(); return; }
     const data = await r.json();
@@ -2630,7 +2764,16 @@ async function send(){
     const accionRe = /\[ACCION\](.*?)\[\/ACCION\]/gs;
     let clean = reply, accionMatch;
     while((accionMatch = accionRe.exec(reply)) !== null){
-      try{ const ac = JSON.parse(accionMatch[1].trim()); if(ac.tipo === 'navegar' && ac.modulo) setPanel(ac.modulo); } catch(e){}
+      try{
+        const ac = JSON.parse(accionMatch[1].trim());
+        if(ac.tipo === 'navegar' && ac.modulo)   setPanel(ac.modulo);
+        if(ac.tipo === 'llenar_isr')             llenarISR(ac);
+        if(ac.tipo === 'llenar_avm')             llenarAVM(ac);
+        if(ac.tipo === 'llenar_contrato')        llenarContrato(ac);
+        if(ac.tipo === 'crear_ficha')            crearFicha(ac);
+        if(ac.tipo === 'crear_ficha_manual')     crearFichaManual(ac);
+        if(ac.tipo === 'buscar_propiedad')       buscarPropiedad(ac);
+      } catch(e){}
     }
     clean = reply.replace(/\[ACCION\].*?\[\/ACCION\]/gs,'').trim();
     msgs.push({role:'assistant',content:clean}); addMsg('a',clean);
@@ -3278,7 +3421,7 @@ async function loadNewsTicker() {
 
   // Consumir el backend de Railway — noticias reales del RSS de Google News
   try {
-    const r = await fetch('https://brokrebapi-production.up.railway.app/noticias', {
+    const r = await fetch(API_BASE+'/noticias', {
       signal: AbortSignal.timeout(8000)
     });
     if(!r.ok) throw new Error('status ' + r.status);
@@ -3378,6 +3521,7 @@ function toggleShaarkPopup() {
   if (shaarkPopupOpen) {
     popup.classList.add('open');
     navBtn?.classList.add('active');
+    refreshShaarkChips();
     setTimeout(() => {
       const msgs = document.getElementById('scw-msgs');
       if (msgs) msgs.scrollTop = msgs.scrollHeight;

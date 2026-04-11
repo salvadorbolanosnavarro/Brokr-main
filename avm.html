@@ -442,6 +442,33 @@
       const u      = (k, v) => setSujeto((p) => ({ ...p, [k]: v }));
       const campos = CAMPOS[sujeto.tipo] || CAMPOS.casa;
 
+      // Expone window.__avmFill para que Shaark pueda llenar el formulario vía postMessage
+      useEffect(() => {
+        window.__avmFill = (data) => {
+          if (data.tipo_inmueble) setSujeto((p) => ({ ...p, tipo: data.tipo_inmueble }));
+          if (data.colonia) {
+            setSujeto((p) => ({ ...p, colonia: data.colonia }));
+            setColoniaObj({ nombre: data.colonia, latitud: null, longitud: null });
+          }
+          if (data.ciudad) setSujeto((p) => ({ ...p, ciudad: data.ciudad.toLowerCase() }));
+          if (data.m2_construccion !== undefined) setSujeto((p) => ({ ...p, m2Construccion: String(data.m2_construccion) }));
+          if (data.m2_terreno !== undefined)      setSujeto((p) => ({ ...p, m2Terreno: String(data.m2_terreno) }));
+          if (data.recamaras !== undefined)       setSujeto((p) => ({ ...p, recamaras: String(data.recamaras) }));
+          if (data.banos !== undefined)           setSujeto((p) => ({ ...p, banos: String(data.banos) }));
+          if (data.edad !== undefined)            setSujeto((p) => ({ ...p, edad: String(data.edad) }));
+          if (data.direccion)                     setSujeto((p) => ({ ...p, direccion: data.direccion }));
+          setTab(0);
+        };
+        const onMsg = (e) => {
+          if (e.data && e.data.tipo === 'llenar_avm') window.__avmFill(e.data);
+        };
+        window.addEventListener('message', onMsg);
+        return () => {
+          window.removeEventListener('message', onMsg);
+          delete window.__avmFill;
+        };
+      }, []);
+
       const addComp    = () => setComps((p) => [...p, { id: Date.now(), precio: "", m2Construccion: "", m2Terreno: "", recamaras: "", banos: "", estacionamiento: "", edad: "", conservacion: "bueno", calidad: "medio", mismaZona: "si" }]);
       const removeComp = (id) => setComps((p) => p.filter((c) => c.id !== id));
       const updateComp = (id, k, v) => setComps((p) => p.map((c) => c.id === id ? { ...c, [k]: v } : c));

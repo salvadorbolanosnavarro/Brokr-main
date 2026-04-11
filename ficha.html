@@ -628,6 +628,19 @@ async function generarFicha(){
     showError(e.message||'Error desconocido');
   }
 }
+
+// ══ SHAARK — cargar propiedad vía postMessage ══
+window.addEventListener('message', function(e) {
+  const d = e.data;
+  if (!d || d.tipo !== 'crear_ficha') return;
+  if (d.id_easybroker) {
+    const inp = document.getElementById('prop-id');
+    if (inp) {
+      inp.value = String(d.id_easybroker).toUpperCase();
+      generarFicha();
+    }
+  }
+});
 </script>
 </body>
 </html>

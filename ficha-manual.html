@@ -758,6 +758,43 @@ async function generarFicha(){
     btn.textContent = 'Generar ficha';
   }
 }
+
+// ══ SHAARK — llenar ficha manual vía postMessage ══
+window.addEventListener('message', function(e) {
+  const d = e.data;
+  if (!d || d.tipo !== 'crear_ficha_manual') return;
+
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined && val !== null) el.value = val; };
+
+  if (d.tipo_inmueble) {
+    const el = document.getElementById('d-tipo');
+    if (el) {
+      // Match option value case-insensitively
+      const opt = Array.from(el.options).find(o => o.value.toLowerCase() === String(d.tipo_inmueble).toLowerCase());
+      if (opt) el.value = opt.value;
+    }
+  }
+  if (d.operacion) {
+    const el = document.getElementById('d-op');
+    if (el) {
+      const opt = Array.from(el.options).find(o => o.value.toLowerCase() === String(d.operacion).toLowerCase());
+      if (opt) { el.value = opt.value; if (typeof onOpChange === 'function') onOpChange(); }
+    }
+  }
+  if (d.precio) {
+    const el = document.getElementById('d-precio');
+    if (el) { el.value = Number(d.precio).toLocaleString('es-MX'); }
+  }
+  set('d-colonia', d.colonia);
+  set('d-ciudad',  d.ciudad);
+  set('d-dir',     d.dir);
+  if (d.recamaras !== undefined)       set('d-rec',  d.recamaras);
+  if (d.banos !== undefined)           set('d-ban',  d.banos);
+  if (d.m2_construccion !== undefined) set('d-m2c',  d.m2_construccion);
+  if (d.m2_terreno !== undefined)      set('d-m2t',  d.m2_terreno);
+  if (d.estacionamientos !== undefined)set('d-est',  d.estacionamientos);
+  if (d.descripcion) set('d-desc', d.descripcion);
+});
 </script>
 </body>
 </html>

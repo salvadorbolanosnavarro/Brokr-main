@@ -973,6 +973,76 @@ function onFormaPagoChange(){
   }
 }
 
+// ══ SHAARK — llenar formulario vía postMessage ══
+window.addEventListener('message', function(e) {
+  const d = e.data;
+  if (!d || d.tipo !== 'llenar_contrato') return;
+
+  const set = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && val !== undefined && val !== null) el.value = val;
+  };
+  const setUpper = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && val) el.value = String(val).toUpperCase();
+  };
+
+  if (d.subtipo) setTipo(d.subtipo);
+
+  setTimeout(() => {
+    const esArr = (d.subtipo || tipoActual) === 'arrendamiento';
+    if (esArr) {
+      setUpper('a-arrendador',  d.arrendador);
+      setUpper('a-arrendatario',d.arrendatario);
+      setUpper('a-calle-inm',   d.calle_inmueble);
+      setUpper('a-numext-inm',  d.num_ext);
+      setUpper('a-colonia',     d.colonia);
+      set('a-cp',               d.cp);
+      setUpper('a-mpio-inm',    d.municipio_estado);
+      if (d.renta) {
+        const el = document.getElementById('a-renta');
+        if (el) {
+          el.value = Number(d.renta).toLocaleString('es-MX', { minimumFractionDigits: 2 });
+          if (typeof onRentaChange === 'function') onRentaChange(el);
+        }
+      }
+      if (d.deposito) {
+        const el = document.getElementById('a-deposito');
+        if (el) {
+          el.value = Number(d.deposito).toLocaleString('es-MX', { minimumFractionDigits: 2 });
+          if (typeof fmtMoney === 'function') fmtMoney(el);
+        }
+      }
+      set('a-dia-pago', d.dia_pago);
+      if (d.fecha_inicio) {
+        set('a-inicio', d.fecha_inicio);
+        if (typeof onFechaInicioChange === 'function') onFechaInicioChange();
+      }
+    } else {
+      setUpper('p-dir',      d.dir);
+      setUpper('p-colonia',  d.colonia);
+      set('p-cp',            d.cp);
+      setUpper('p-vendedor', d.vendedor);
+      setUpper('p-comprador',d.comprador);
+      if (d.precio) {
+        const el = document.getElementById('p-precio');
+        if (el) {
+          el.value = Number(d.precio).toLocaleString('es-MX');
+          if (typeof fmtMoney === 'function') fmtMoney(el);
+        }
+      }
+      if (d.arras) {
+        const el = document.getElementById('p-arras');
+        if (el) {
+          el.value = Number(d.arras).toLocaleString('es-MX');
+          if (typeof fmtMoney === 'function') fmtMoney(el);
+        }
+      }
+      set('p-fecha-limite', d.fecha_limite);
+    }
+  }, 350);
+});
+
 </script>
 </body>
 </html>
