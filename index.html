@@ -2883,24 +2883,25 @@ function handleFbRowTap() {
 }
 
 function connectFacebook() {
-  const redirectUri = encodeURIComponent(location.origin + location.pathname + '?fb_callback=1');
+  const redirectUri = encodeURIComponent(location.origin + location.pathname);
   const scope = encodeURIComponent('pages_manage_posts,pages_read_engagement,pages_show_list');
   const url = 'https://www.facebook.com/v18.0/dialog/oauth?client_id=' + FB_APP_ID +
-    '&redirect_uri=' + redirectUri + '&scope=' + scope + '&response_type=code';
+    '&redirect_uri=' + redirectUri + '&scope=' + scope + '&response_type=code&state=fb_oauth';
   window.location.href = url;
 }
 
 async function handleFbCallback() {
   const params = new URLSearchParams(location.search);
-  if (!params.has('fb_callback')) return;
+  // Facebook regresa con ?code=...&state=fb_oauth
+  if (params.get('state') !== 'fb_oauth') return;
   const code = params.get('code');
   const err  = params.get('error');
-  // Clean URL
+  // Limpiar URL
   history.replaceState({}, '', location.pathname);
   if (err || !code) { showToastIndex('Error conectando Facebook: ' + (params.get('error_description') || err)); return; }
   try {
     const r = await fetch(API_BASE + '/facebook/callback?code=' + encodeURIComponent(code) +
-      '&redirect_uri=' + encodeURIComponent(location.origin + location.pathname + '?fb_callback=1'));
+      '&redirect_uri=' + encodeURIComponent(location.origin + location.pathname));
     const data = await r.json();
     if (data.error) throw new Error(data.error);
     _fbPageId    = data.page_id    || '';
