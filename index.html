@@ -1533,6 +1533,53 @@ html, body {
 
 
 
+    <!-- Modal Conectar Facebook (manual token) -->
+    <div class="profile-edit-overlay" id="fb-connect-modal">
+      <div class="profile-edit-box" style="max-width:520px;margin:0 auto;border-radius:28px;max-height:90dvh">
+        <div class="profile-edit-hdr">
+          <span style="font-size:15px;font-weight:600">Conectar Facebook</span>
+          <button onclick="closeFbConnectModal()" style="background:var(--gray-100);border:none;width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:14px">✕</button>
+        </div>
+        <div class="profile-edit-body" style="padding:18px 20px 24px">
+          <div id="fb-auto-status" style="padding:12px;border-radius:12px;background:#e7f3ff;border:1px solid #1877f2;color:#1877f2;font-size:13px;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+            <div class="fb-spin" style="width:16px;height:16px;border:2px solid #1877f2;border-top-color:transparent;border-radius:50%;animation:fbspin 0.8s linear infinite"></div>
+            <span>Intentando conexión automática…</span>
+          </div>
+
+          <div style="font-size:12px;color:var(--gray-500);margin-bottom:14px;line-height:1.5">
+            Si la conexión automática falla (por verificación de negocio pendiente en Facebook), puedes conectar manualmente pegando el token de acceso de tu página.
+          </div>
+
+          <details style="margin-bottom:16px;border:1px solid var(--gray-200);border-radius:12px;padding:10px 14px">
+            <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--teal)">📖 Cómo obtener tu token de página (2 min)</summary>
+            <ol style="margin:12px 0 4px;padding-left:20px;font-size:12px;line-height:1.7;color:var(--gray-600)">
+              <li>Abre <a href="https://developers.facebook.com/tools/explorer/" target="_blank" style="color:var(--teal);text-decoration:underline">Graph API Explorer</a></li>
+              <li>En "Meta App" arriba selecciona <strong>Brokr</strong> (o la app que creaste)</li>
+              <li>Click en "Get Token" → "Get Page Access Token"</li>
+              <li>Autoriza permisos: <code style="background:var(--gray-100);padding:1px 5px;border-radius:4px">pages_manage_posts</code>, <code style="background:var(--gray-100);padding:1px 5px;border-radius:4px">pages_show_list</code></li>
+              <li>Selecciona tu página de bienes raíces</li>
+              <li>Copia el token largo que aparece arriba</li>
+              <li>Para ver el ID de tu página: click "Submit" — aparecerá <code style="background:var(--gray-100);padding:1px 5px;border-radius:4px">id</code> en la respuesta</li>
+            </ol>
+          </details>
+
+          <div style="margin-bottom:14px">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:6px">ID de tu página de Facebook</label>
+            <input type="text" id="fb-manual-page-id" placeholder="Ej. 102345678901234" style="width:100%;padding:12px 14px;border:1.5px solid var(--gray-200);border-radius:12px;font-size:14px;outline:none;box-sizing:border-box" oninput="this.style.borderColor='var(--gray-200)'"/>
+          </div>
+          <div style="margin-bottom:16px">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:6px">Token de acceso de la página</label>
+            <textarea id="fb-manual-page-token" placeholder="EAAx... (token largo)" rows="3" style="width:100%;padding:12px 14px;border:1.5px solid var(--gray-200);border-radius:12px;font-size:12px;outline:none;box-sizing:border-box;font-family:ui-monospace,monospace;resize:vertical"></textarea>
+          </div>
+
+          <div id="fb-manual-error" style="display:none;padding:10px 12px;border-radius:10px;background:#fee;border:1px solid #e05252;color:#c33;font-size:12px;margin-bottom:12px"></div>
+
+          <button id="fb-manual-save-btn" onclick="saveFbManualConnect()" style="width:100%;padding:14px;background:#1877f2;color:white;border:none;border-radius:14px;font-size:14px;font-weight:600;cursor:pointer">Validar y conectar</button>
+        </div>
+      </div>
+    </div>
+    <style>@keyframes fbspin { to { transform: rotate(360deg); } }</style>
+
     <!-- ══ MOD PANELS ══ -->
     <div id="panel-isr" class="mod-panel">
       <div class="panel-topbar"><button class="panel-back" onclick="showDashboard()">←</button><span class="panel-title">Calculadora ISR</span></div>
@@ -2885,33 +2932,121 @@ function handleFbRowTap() {
     localStorage.removeItem('fb_page_token');
     refreshFbRow();
   } else {
-    connectFacebook();
+    openFbConnectModal();
   }
 }
 
-function connectFacebook() {
+function openFbConnectModal() {
+  const modal = document.getElementById('fb-connect-modal');
+  if (!modal) return;
+  document.getElementById('fb-manual-page-id').value = '';
+  document.getElementById('fb-manual-page-token').value = '';
+  document.getElementById('fb-manual-error').style.display = 'none';
+  const statusBox = document.getElementById('fb-auto-status');
+  statusBox.style.display = 'flex';
+  statusBox.style.background = '#e7f3ff';
+  statusBox.style.borderColor = '#1877f2';
+  statusBox.style.color = '#1877f2';
+  statusBox.innerHTML = '<div style="width:16px;height:16px;border:2px solid #1877f2;border-top-color:transparent;border-radius:50%;animation:fbspin 0.8s linear infinite"></div><span>Intentando conexión automática…</span>';
+  modal.classList.add('open');
+  tryAutoFbConnect();
+}
+
+function closeFbConnectModal() {
+  const modal = document.getElementById('fb-connect-modal');
+  if (modal) modal.classList.remove('open');
+}
+
+function tryAutoFbConnect() {
+  const statusBox = document.getElementById('fb-auto-status');
+  const showFail = (msg) => {
+    statusBox.style.background = '#fff7e6';
+    statusBox.style.borderColor = '#f59e0b';
+    statusBox.style.color = '#b45309';
+    statusBox.innerHTML = '<span style="font-size:16px">⚠️</span><span>' + msg + ' Usa el método manual abajo.</span>';
+  };
+
   if (typeof FB === 'undefined') {
-    showToastIndex('SDK de Facebook cargando, intenta en un segundo…');
+    setTimeout(() => {
+      if (typeof FB === 'undefined') showFail('SDK de Facebook no se cargó.');
+      else tryAutoFbConnect();
+    }, 1500);
     return;
   }
-  FB.login(function(resp) {
-    if (!resp.authResponse) { showToastIndex('Login de Facebook cancelado'); return; }
-    FB.api('/me/accounts', { access_token: resp.authResponse.accessToken }, function(data) {
-      if (!data || !data.data || !data.data.length) {
-        alert('No se encontraron páginas de Facebook administradas por esta cuenta. Asegúrate de ser admin de al menos una página.');
+
+  try {
+    FB.login(function(resp) {
+      if (!resp || !resp.authResponse) {
+        showFail('Login automático cancelado o bloqueado.');
         return;
       }
-      const page = data.data[0];
-      _fbPageId    = page.id;
-      _fbPageName  = page.name;
-      _fbPageToken = page.access_token;
-      localStorage.setItem('fb_page_id',    _fbPageId);
-      localStorage.setItem('fb_page_name',  _fbPageName);
-      localStorage.setItem('fb_page_token', _fbPageToken);
-      refreshFbRow();
-      showToastIndex('Facebook conectado: ' + _fbPageName);
-    });
-  }, { scope: 'pages_manage_posts,pages_read_engagement,pages_show_list' });
+      FB.api('/me/accounts', { access_token: resp.authResponse.accessToken }, function(data) {
+        if (!data || data.error) {
+          showFail('Facebook no otorgó permisos de páginas' + (data && data.error ? ': ' + data.error.message : '') + '.');
+          return;
+        }
+        if (!data.data || !data.data.length) {
+          showFail('No se encontraron páginas administradas.');
+          return;
+        }
+        const page = data.data[0];
+        finishFbConnect(page.id, page.name, page.access_token);
+      });
+    }, { scope: 'pages_manage_posts,pages_read_engagement,pages_show_list' });
+  } catch(e) {
+    showFail('Error iniciando login: ' + e.message);
+  }
+}
+
+async function saveFbManualConnect() {
+  const pageId = document.getElementById('fb-manual-page-id').value.trim();
+  const token  = document.getElementById('fb-manual-page-token').value.trim();
+  const errBox = document.getElementById('fb-manual-error');
+  const btn    = document.getElementById('fb-manual-save-btn');
+  errBox.style.display = 'none';
+
+  if (!pageId || !token) {
+    errBox.textContent = 'Por favor completa ambos campos.';
+    errBox.style.display = 'block';
+    return;
+  }
+  if (!/^\d{5,}$/.test(pageId)) {
+    errBox.textContent = 'El ID de página debe ser un número largo (al menos 5 dígitos).';
+    errBox.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Validando…';
+  try {
+    const url = 'https://graph.facebook.com/v18.0/' + encodeURIComponent(pageId) + '?fields=name,id&access_token=' + encodeURIComponent(token);
+    const r = await fetch(url);
+    const data = await r.json();
+    if (!r.ok || data.error) {
+      throw new Error(data.error ? data.error.message : 'Error de validación');
+    }
+    if (data.id !== pageId) {
+      throw new Error('El token no corresponde a esta página.');
+    }
+    finishFbConnect(data.id, data.name || 'Mi página', token);
+  } catch(e) {
+    errBox.textContent = '❌ ' + e.message;
+    errBox.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Validar y conectar';
+  }
+}
+
+function finishFbConnect(pageId, pageName, pageToken) {
+  _fbPageId    = pageId;
+  _fbPageName  = pageName;
+  _fbPageToken = pageToken;
+  localStorage.setItem('fb_page_id',    pageId);
+  localStorage.setItem('fb_page_name',  pageName);
+  localStorage.setItem('fb_page_token', pageToken);
+  refreshFbRow();
+  closeFbConnectModal();
+  showToastIndex('✅ Facebook conectado: ' + pageName);
 }
 
 async function tryPublishToFacebook(propiedad) {
