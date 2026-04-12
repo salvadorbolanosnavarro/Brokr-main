@@ -5,3 +5,6 @@ beautifulsoup4
 pydantic
 python-docx
 playwright
+Pillow
+opencv-python-headless
+python-multipart

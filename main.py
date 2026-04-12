@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, HTTPException, Query, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import httpx
@@ -8,8 +8,27 @@ import re
 import asyncio
 import base64
 import uuid as _uuid
-from typing import Optional
+import io
+import concurrent.futures
+from typing import Optional, List
 from datetime import datetime
+
+# Pillow
+try:
+    from PIL import Image, ImageEnhance
+    PIL_AVAILABLE = True
+except ImportError:
+    PIL_AVAILABLE = False
+
+# OpenCV
+try:
+    import cv2
+    import numpy as np
+    CV2_AVAILABLE = True
+except ImportError:
+    CV2_AVAILABLE = False
+
+_thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=4)
 
 app = FastAPI()
 app.add_middleware(
@@ -1655,3 +1674,163 @@ async def comparables_cercanos(req: CercanosRequest):
     }
     cache_set(cache_key, resultado, ttl=3600)
     return resultado
+
+
+# ─── LIMPIEZA DE IMÁGENES ─────────────────────────────────────────────────────
+
+FB_APP_ID     = os.environ.get("FB_APP_ID", "")
+FB_APP_SECRET = os.environ.get("FB_APP_SECRET", "")
+FRONTEND_URL  = os.environ.get("FRONTEND_URL", "https://brokr.app")
+
+def _process_image_sync(file_bytes: bytes, content_type: str) -> bytes:
+    if not PIL_AVAILABLE:
+        return file_bytes
+    img = Image.open(io.BytesIO(file_bytes)).convert("RGB")
+    if CV2_AVAILABLE:
+        arr = np.array(img)
+        arr_bgr = cv2.cvtColor(arr, cv2.COLOR_RGB2BGR)
+        denoised = cv2.fastNlMeansDenoisingColored(arr_bgr, None, 10, 10, 7, 21)
+        b_ch, g_ch, r_ch = cv2.split(denoised.astype(float))
+        mean_b, mean_g, mean_r = b_ch.mean(), g_ch.mean(), r_ch.mean()
+        mean_gray = (mean_b + mean_g + mean_r) / 3
+        b_ch = np.clip(b_ch * (mean_gray / (mean_b or 1)), 0, 255)
+        g_ch = np.clip(g_ch * (mean_gray / (mean_g or 1)), 0, 255)
+        r_ch = np.clip(r_ch * (mean_gray / (mean_r or 1)), 0, 255)
+        balanced = cv2.merge([b_ch.astype(np.uint8), g_ch.astype(np.uint8), r_ch.astype(np.uint8)])
+        rgb = cv2.cvtColor(balanced, cv2.COLOR_BGR2RGB)
+        img = Image.fromarray(rgb)
+    img = ImageEnhance.Contrast(img).enhance(1.15)
+    img = ImageEnhance.Brightness(img).enhance(1.08)
+    img = ImageEnhance.Sharpness(img).enhance(1.5)
+    out = io.BytesIO()
+    fmt = "JPEG" if (content_type or "").lower() in ("image/jpeg", "image/jpg") else "PNG"
+    img.save(out, format=fmt, quality=90)
+    return out.getvalue()
+
+@app.post("/images/clean")
+async def clean_images(files: List[UploadFile] = File(...)):
+    loop = asyncio.get_event_loop()
+    async def process_one(uf: UploadFile):
+        raw = await uf.read()
+        try:
+            processed = await loop.run_in_executor(
+                _thread_pool, _process_image_sync, raw, uf.content_type or "image/jpeg"
+            )
+            return {
+                "name": uf.filename,
+                "original_b64": base64.b64encode(raw).decode(),
+                "cleaned_b64": base64.b64encode(processed).decode(),
+                "content_type": uf.content_type or "image/jpeg",
+                "error": None,
+            }
+        except Exception as exc:
+            return {
+                "name": uf.filename,
+                "original_b64": base64.b64encode(raw).decode(),
+                "cleaned_b64": None,
+                "content_type": uf.content_type or "image/jpeg",
+                "error": str(exc),
+            }
+    results = await asyncio.gather(*[process_one(f) for f in files])
+    return {"images": list(results)}
+
+
+# ─── FACEBOOK OAUTH ───────────────────────────────────────────────────────────
+
+@app.get("/facebook/callback")
+async def facebook_callback(code: str = Query(...), state: str = Query(None), redirect_uri: str = Query(None)):
+    """Intercambia el code de OAuth por un token de página de Facebook."""
+    redirect_uri = redirect_uri or (FRONTEND_URL + "/facebook/callback")
+    async with httpx.AsyncClient(timeout=15) as client:
+        # 1. Token de usuario (corta duración)
+        r = await client.get(
+            "https://graph.facebook.com/v18.0/oauth/access_token",
+            params={
+                "client_id": FB_APP_ID,
+                "client_secret": FB_APP_SECRET,
+                "redirect_uri": redirect_uri,
+                "code": code,
+            },
+        )
+        if r.status_code != 200:
+            return {"error": r.text}
+        short_token = r.json().get("access_token", "")
+
+        # 2. Token de larga duración
+        r2 = await client.get(
+            "https://graph.facebook.com/v18.0/oauth/access_token",
+            params={
+                "grant_type": "fb_exchange_token",
+                "client_id": FB_APP_ID,
+                "client_secret": FB_APP_SECRET,
+                "fb_exchange_token": short_token,
+            },
+        )
+        long_token = r2.json().get("access_token", short_token)
+
+        # 3. Lista de páginas administradas
+        r3 = await client.get(
+            "https://graph.facebook.com/v18.0/me/accounts",
+            params={"access_token": long_token},
+        )
+        pages = r3.json().get("data", [])
+
+    if not pages:
+        return {"error": "No se encontraron páginas administradas en esta cuenta de Facebook."}
+
+    # Usar la primera página
+    page = pages[0]
+    page_token = page.get("access_token", "")
+    page_id    = page.get("id", "")
+    page_name  = page.get("name", "")
+
+    # Devolver datos para que el frontend los guarde en Supabase
+    return {
+        "ok": True,
+        "page_id": page_id,
+        "page_name": page_name,
+        "page_token": page_token,
+    }
+
+
+class FbPublishRequest(BaseModel):
+    page_id: str
+    page_token: str
+    message: str
+    photo_urls: list[str] = []
+
+@app.post("/facebook/publish")
+async def facebook_publish(req: FbPublishRequest):
+    """Publica una propiedad en la página de Facebook."""
+    photo_ids = []
+    async with httpx.AsyncClient(timeout=30) as client:
+        # Subir fotos como no publicadas
+        for url in req.photo_urls[:10]:
+            r = await client.post(
+                f"https://graph.facebook.com/v18.0/{req.page_id}/photos",
+                params={"access_token": req.page_token},
+                json={"url": url, "published": False},
+            )
+            if r.status_code == 200:
+                pid = r.json().get("id")
+                if pid:
+                    photo_ids.append({"media_fbid": pid})
+
+        # Crear el post
+        payload: dict = {
+            "message": req.message,
+            "access_token": req.page_token,
+        }
+        if photo_ids:
+            payload["attached_media"] = photo_ids
+
+        r_post = await client.post(
+            f"https://graph.facebook.com/v18.0/{req.page_id}/feed",
+            params={"access_token": req.page_token},
+            json=payload,
+        )
+
+    if r_post.status_code not in (200, 201):
+        raise HTTPException(status_code=502, detail=r_post.text)
+
+    return {"ok": True, "post_id": r_post.json().get("id")}

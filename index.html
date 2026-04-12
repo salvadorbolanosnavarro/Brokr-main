@@ -1445,6 +1445,11 @@ html, body {
           <div class="profile-row" onclick="openSoporteModal()">
             <div class="pr-icon"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/></svg></div><span class="pr-text">Soporte</span><span class="pr-arrow" style="color:var(--teal)">›</span>
           </div>
+          <div class="profile-row" id="fb-connect-row" onclick="handleFbRowTap()">
+            <div class="pr-icon" style="background:rgba(24,119,242,.10)"><svg width="18" height="18" viewBox="0 0 24 24" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></div>
+            <span class="pr-text" id="fb-row-text">Conectar Facebook</span>
+            <span class="pr-arrow" id="fb-row-arrow" style="color:var(--teal)">›</span>
+          </div>
         </div>
         <!-- ADMIN SECTION — solo visible si plan === 'admin' -->
         <div id="admin-lbl" style="display:none;padding:14px 20px 6px;font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px">Administración</div>
@@ -2832,6 +2837,103 @@ async function sbFetch(path, method='GET', body=null){
 }
 
 // ══════════════════════════════════════════
+// FACEBOOK INTEGRATION
+// ══════════════════════════════════════════
+const FB_APP_ID = '1263951555691804';
+
+let _fbPageId    = localStorage.getItem('fb_page_id')    || '';
+let _fbPageName  = localStorage.getItem('fb_page_name')  || '';
+let _fbPageToken = localStorage.getItem('fb_page_token') || '';
+
+function refreshFbRow() {
+  const txt   = document.getElementById('fb-row-text');
+  const arrow = document.getElementById('fb-row-arrow');
+  if (!txt) return;
+  if (_fbPageId) {
+    txt.innerHTML = '<span style="color:#1877f2;font-weight:600">Facebook:</span> ' + (_fbPageName || 'Página conectada');
+    arrow.textContent = '✕';
+    arrow.title = 'Desconectar';
+  } else {
+    txt.textContent = 'Conectar Facebook';
+    arrow.textContent = '›';
+    arrow.title = '';
+  }
+}
+
+function handleFbRowTap() {
+  if (_fbPageId) {
+    if (!confirm('¿Desconectar tu página de Facebook?')) return;
+    _fbPageId = _fbPageName = _fbPageToken = '';
+    localStorage.removeItem('fb_page_id');
+    localStorage.removeItem('fb_page_name');
+    localStorage.removeItem('fb_page_token');
+    refreshFbRow();
+  } else {
+    connectFacebook();
+  }
+}
+
+function connectFacebook() {
+  const redirectUri = encodeURIComponent(location.origin + location.pathname + '?fb_callback=1');
+  const scope = encodeURIComponent('pages_manage_posts,pages_read_engagement,pages_show_list');
+  const url = 'https://www.facebook.com/v18.0/dialog/oauth?client_id=' + FB_APP_ID +
+    '&redirect_uri=' + redirectUri + '&scope=' + scope + '&response_type=code';
+  window.location.href = url;
+}
+
+async function handleFbCallback() {
+  const params = new URLSearchParams(location.search);
+  if (!params.has('fb_callback')) return;
+  const code = params.get('code');
+  const err  = params.get('error');
+  // Clean URL
+  history.replaceState({}, '', location.pathname);
+  if (err || !code) { showToastIndex('Error conectando Facebook: ' + (params.get('error_description') || err)); return; }
+  try {
+    const r = await fetch(API_BASE + '/facebook/callback?code=' + encodeURIComponent(code) +
+      '&redirect_uri=' + encodeURIComponent(location.origin + location.pathname + '?fb_callback=1'));
+    const data = await r.json();
+    if (data.error) throw new Error(data.error);
+    _fbPageId    = data.page_id    || '';
+    _fbPageName  = data.page_name  || '';
+    _fbPageToken = data.page_token || '';
+    localStorage.setItem('fb_page_id',    _fbPageId);
+    localStorage.setItem('fb_page_name',  _fbPageName);
+    localStorage.setItem('fb_page_token', _fbPageToken);
+    refreshFbRow();
+    showToastIndex('Facebook conectado: ' + _fbPageName);
+  } catch(e) {
+    alert('Error al conectar Facebook: ' + e.message);
+  }
+}
+
+async function tryPublishToFacebook(propiedad) {
+  if (!_fbPageId || !_fbPageToken) return;
+  try {
+    const fotos = propiedad.fotos || [];
+    const precio = propiedad.precio ? '$' + Number(propiedad.precio).toLocaleString('es-MX') : '';
+    const loc = [propiedad.colonia, propiedad.ciudad].filter(Boolean).join(', ');
+    const msg = [
+      propiedad.titulo || 'Propiedad en venta',
+      precio ? 'Precio: ' + precio : '',
+      loc ? 'Ubicación: ' + loc : '',
+      propiedad.descripcion ? '\n' + propiedad.descripcion.substring(0, 300) : '',
+      '\n#BrokrPro #BienesRaices' + (propiedad.ciudad ? ' #' + propiedad.ciudad.replace(/\s+/g, '') : ''),
+    ].filter(Boolean).join('\n');
+    await fetch(API_BASE + '/facebook/publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ page_id: _fbPageId, page_token: _fbPageToken, message: msg, photo_urls: fotos }),
+    });
+  } catch(e) {
+    console.warn('FB publish failed (non-blocking):', e.message);
+  }
+}
+
+// Check FB callback on page load
+document.addEventListener('DOMContentLoaded', () => { handleFbCallback(); refreshFbRow(); });
+
+// ══════════════════════════════════════════
 // PROPERTIES
 // ══════════════════════════════════════════
 let allProps = [];
@@ -2956,10 +3058,16 @@ async function saveProp(e){
   try{
     const btn = form.querySelector('.pf-save-btn');
     btn.innerHTML='Guardando...'; btn.disabled=true;
-    if(id) await sbFetch('propiedades?id=eq.'+id, 'PATCH', data);
-    else   await sbFetch('propiedades', 'POST', data);
+    let saved;
+    if(id) saved = await sbFetch('propiedades?id=eq.'+id, 'PATCH', data);
+    else   saved = await sbFetch('propiedades', 'POST', data);
     document.getElementById('prop-modal').style.display = 'none';
     await loadProps();
+    // Publicar en Facebook si está conectado (solo propiedades nuevas)
+    if(!id && _fbPageId) {
+      const propData = (Array.isArray(saved) ? saved[0] : saved) || data;
+      tryPublishToFacebook(propData);
+    }
   } catch(err){ alert('Error guardando: '+err.message); }
   finally{ const btn=form.querySelector('.pf-save-btn'); if(btn){ btn.innerHTML='<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.5"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg> Guardar propiedad'; btn.disabled=false; } }
 }

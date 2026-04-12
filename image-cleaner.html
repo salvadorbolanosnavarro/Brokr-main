@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Limpieza de Fotos — Brokr</title>
+<style>
+  :root{
+    --blue:#1e5fcc;--blue-light:#2f74e0;--teal:#0d9488;--teal-light:#14b8a6;
+    --bg:#f0f4ff;--surface:#ffffff;--gray-100:#f3f4f6;--gray-200:#e5e7eb;
+    --gray-400:#9ca3af;--gray-600:#4b5563;--gray-800:#1f2937;
+    --r:14px;--shadow:0 4px 24px rgba(30,95,204,.10);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--gray-800);min-height:100vh}
+
+  /* Header */
+  .hdr{background:var(--surface);border-bottom:1px solid var(--gray-200);padding:0 20px;height:56px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 1px 8px rgba(0,0,0,.06)}
+  .hdr-logo{width:32px;height:32px;background:linear-gradient(135deg,var(--blue),var(--teal));border-radius:8px;display:flex;align-items:center;justify-content:center}
+  .hdr-logo svg{width:20px;height:20px;fill:white}
+  .hdr-title{font-size:16px;font-weight:700;color:var(--gray-800)}
+  .hdr-sub{font-size:12px;color:var(--gray-400);margin-left:auto}
+
+  /* Main layout */
+  .main{max-width:900px;margin:0 auto;padding:24px 16px 80px}
+
+  /* Drop zone */
+  .drop-zone{border:2.5px dashed var(--blue-light);border-radius:var(--r);background:rgba(30,95,204,.04);padding:48px 20px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+  .drop-zone.drag-over{border-color:var(--teal);background:rgba(13,148,136,.06)}
+  .drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+  .drop-icon{width:56px;height:56px;background:linear-gradient(135deg,var(--blue),var(--teal));border-radius:16px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center}
+  .drop-icon svg{width:30px;height:30px;fill:white}
+  .drop-title{font-size:17px;font-weight:700;color:var(--gray-800);margin-bottom:6px}
+  .drop-hint{font-size:13px;color:var(--gray-400)}
+  .drop-types{font-size:11px;color:var(--gray-400);margin-top:6px}
+
+  /* Action bar */
+  .action-bar{display:flex;align-items:center;justify-content:space-between;margin:20px 0 16px;flex-wrap:wrap;gap:10px}
+  .count-badge{font-size:13px;color:var(--gray-600);font-weight:600}
+  .btn-clean{background:linear-gradient(135deg,var(--blue),var(--teal));color:white;border:none;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:opacity .2s;box-shadow:0 2px 12px rgba(30,95,204,.3)}
+  .btn-clean:disabled{opacity:.5;cursor:not-allowed}
+  .btn-clean svg{width:18px;height:18px;fill:white}
+  .btn-dl-all{background:var(--surface);color:var(--teal);border:2px solid var(--teal);border-radius:10px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;display:none;align-items:center;gap:6px;transition:all .2s}
+  .btn-dl-all:hover{background:rgba(13,148,136,.06)}
+  .btn-dl-all svg{width:16px;height:16px;stroke:var(--teal)}
+
+  /* Progress bar */
+  .progress-bar-wrap{background:var(--gray-200);border-radius:99px;height:6px;overflow:hidden;margin-bottom:16px;display:none}
+  .progress-bar{height:100%;background:linear-gradient(90deg,var(--blue),var(--teal));border-radius:99px;width:0;transition:width .3s}
+
+  /* Grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+
+  /* Card */
+  .card{background:var(--surface);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);transition:transform .2s}
+  .card:hover{transform:translateY(-2px)}
+  .card-name{padding:10px 14px;font-size:12px;font-weight:600;color:var(--gray-600);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid var(--gray-100)}
+  .card-imgs{display:grid;grid-template-columns:1fr 1fr;gap:0}
+  .card-img-wrap{position:relative;overflow:hidden;background:var(--gray-100)}
+  .card-img-wrap img{width:100%;height:160px;object-fit:cover;display:block}
+  .card-img-label{position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,.55);color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;letter-spacing:.5px}
+  .card-footer{padding:10px 14px;display:flex;align-items:center;gap:8px}
+  .card-status{font-size:11px;color:var(--gray-400);flex:1}
+  .card-status.ok{color:var(--teal);font-weight:600}
+  .card-status.err{color:#ef4444;font-weight:600}
+  .card-status.loading{color:var(--blue);font-weight:600}
+  .btn-dl-one{background:var(--teal);color:white;border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;display:none;align-items:center;gap:4px;transition:opacity .2s}
+  .btn-dl-one:hover{opacity:.85}
+  .btn-dl-one svg{width:13px;height:13px;stroke:white;fill:none}
+
+  /* Empty state */
+  .empty{display:none;text-align:center;padding:40px 20px;color:var(--gray-400);font-size:14px}
+
+  /* Toast */
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--gray-800);color:white;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;transition:transform .3s;z-index:999;white-space:nowrap}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+
+  @media(max-width:500px){
+    .main{padding:16px 12px 80px}
+    .card-imgs{grid-template-columns:1fr}
+    .card-img-wrap img{height:140px}
+  }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-logo">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+  </div>
+  <span class="hdr-title">Limpieza de Fotos</span>
+  <span class="hdr-sub">Brokr Pro</span>
+</div>
+
+<div class="main">
+
+  <!-- Drop zone -->
+  <div class="drop-zone" id="drop-zone">
+    <input type="file" id="file-input" accept="image/*" multiple>
+    <div class="drop-icon">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    </div>
+    <div class="drop-title">Arrastra tus fotos aquí</div>
+    <div class="drop-hint">o toca para seleccionar desde tu galería</div>
+    <div class="drop-types">JPG, PNG, WEBP · máx. 20 fotos a la vez</div>
+  </div>
+
+  <!-- Action bar -->
+  <div class="action-bar" id="action-bar" style="display:none">
+    <span class="count-badge" id="count-badge">0 fotos seleccionadas</span>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn-dl-all" id="btn-dl-all" onclick="downloadAllZip()">
+        <svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Descargar ZIP
+      </button>
+      <button class="btn-clean" id="btn-clean" onclick="cleanAll()">
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        Limpiar fotos
+      </button>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-bar-wrap" id="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+
+  <!-- Grid -->
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty">No hay fotos aún. Sube imágenes para comenzar.</div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- JSZip CDN for ZIP download -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<script>
+const API_BASE = (()=>{
+  const h = location.hostname;
+  if(h === 'localhost' || h === '127.0.0.1') return 'http://localhost:8000';
+  return 'https://brokr-production.up.railway.app';
+})();
+
+let files = [];         // File objects
+let results = [];       // Processed results from backend
+let cleaned = false;
+
+const dropZone  = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+const grid      = document.getElementById('grid');
+const actionBar = document.getElementById('action-bar');
+const countBadge= document.getElementById('count-badge');
+const btnClean  = document.getElementById('btn-clean');
+const btnDlAll  = document.getElementById('btn-dl-all');
+const progressWrap = document.getElementById('progress-wrap');
+const progressBar  = document.getElementById('progress-bar');
+const empty     = document.getElementById('empty');
+
+// ── Drag & drop ──────────────────────────────────────────────────────────────
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  addFiles(Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')));
+});
+fileInput.addEventListener('change', () => {
+  addFiles(Array.from(fileInput.files));
+  fileInput.value = '';
+});
+
+function addFiles(newFiles) {
+  const combined = [...files, ...newFiles].slice(0, 20);
+  files = combined;
+  results = files.map(() => null);
+  cleaned = false;
+  btnDlAll.style.display = 'none';
+  renderGrid();
+}
+
+function renderGrid() {
+  if (!files.length) {
+    actionBar.style.display = 'none';
+    empty.style.display = 'none';
+    grid.innerHTML = '';
+    return;
+  }
+  actionBar.style.display = 'flex';
+  countBadge.textContent = files.length + (files.length === 1 ? ' foto seleccionada' : ' fotos seleccionadas');
+  grid.innerHTML = files.map((f, i) => {
+    const origUrl = URL.createObjectURL(f);
+    const res = results[i];
+    let cleanedSrc = '';
+    let statusClass = '';
+    let statusText = 'Sin procesar';
+    let dlBtn = '';
+    if (res && res.cleaned_b64) {
+      cleanedSrc = 'data:' + res.content_type + ';base64,' + res.cleaned_b64;
+      statusClass = 'ok';
+      statusText = '✓ Limpiada';
+      dlBtn = `<button class="btn-dl-one" id="dl-btn-${i}" onclick="downloadOne(${i})" style="display:flex">
+        <svg viewBox="0 0 24 24" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Descargar
+      </button>`;
+    } else if (res && res.error) {
+      statusClass = 'err';
+      statusText = 'Error: ' + res.error.substring(0, 40);
+    }
+    const rightSrc = cleanedSrc || origUrl;
+    const rightLabel = cleanedSrc ? 'LIMPIADA' : 'ORIGINAL';
+    return `
+    <div class="card" id="card-${i}">
+      <div class="card-name" title="${f.name}">${f.name}</div>
+      <div class="card-imgs">
+        <div class="card-img-wrap">
+          <img src="${origUrl}" alt="original"/>
+          <span class="card-img-label">ORIGINAL</span>
+        </div>
+        <div class="card-img-wrap" id="right-wrap-${i}">
+          <img src="${rightSrc}" alt="limpiada" id="right-img-${i}"/>
+          <span class="card-img-label">${rightLabel}</span>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="card-status ${statusClass}" id="status-${i}">${statusText}</span>
+        ${dlBtn}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Clean ────────────────────────────────────────────────────────────────────
+async function cleanAll() {
+  if (!files.length) return;
+  btnClean.disabled = true;
+  btnClean.innerHTML = '<svg viewBox="0 0 24 24" fill="white"><path d="M12 2L2 7l10 5 10-5-10-5z"/></svg> Procesando…';
+  progressWrap.style.display = 'block';
+  progressBar.style.width = '0%';
+
+  // Mark all as loading
+  files.forEach((_, i) => {
+    const s = document.getElementById('status-' + i);
+    if (s) { s.className = 'card-status loading'; s.textContent = 'Procesando…'; }
+  });
+
+  const BATCH = 5;
+  let done = 0;
+  for (let start = 0; start < files.length; start += BATCH) {
+    const batch = files.slice(start, start + BATCH);
+    const batchIdx = batch.map((_, j) => start + j);
+    const fd = new FormData();
+    batch.forEach(f => fd.append('files', f));
+    try {
+      const r = await fetch(API_BASE + '/images/clean', { method: 'POST', body: fd });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const data = await r.json();
+      data.images.forEach((res, j) => {
+        const idx = batchIdx[j];
+        results[idx] = res;
+        updateCard(idx, res);
+      });
+    } catch (err) {
+      batchIdx.forEach(idx => {
+        results[idx] = { error: err.message, cleaned_b64: null };
+        const s = document.getElementById('status-' + idx);
+        if (s) { s.className = 'card-status err'; s.textContent = 'Error: ' + err.message.substring(0, 40); }
+      });
+    }
+    done += batch.length;
+    progressBar.style.width = Math.round((done / files.length) * 100) + '%';
+  }
+
+  cleaned = results.some(r => r && r.cleaned_b64);
+  if (cleaned) {
+    btnDlAll.style.display = 'flex';
+    showToast('¡Fotos limpias! Descarga individual o en ZIP.');
+  }
+  btnClean.disabled = false;
+  btnClean.innerHTML = '<svg viewBox="0 0 24 24" fill="white"><path d="M12 2L2 7l10 5 10-5-10-5z"/></svg> Limpiar fotos';
+  setTimeout(() => { progressWrap.style.display = 'none'; }, 800);
+}
+
+function updateCard(i, res) {
+  const s = document.getElementById('status-' + i);
+  const rightImg = document.getElementById('right-img-' + i);
+  const rightWrap = document.getElementById('right-wrap-' + i);
+  const footer = rightWrap ? rightWrap.closest('.card').querySelector('.card-footer') : null;
+  if (res.cleaned_b64) {
+    const src = 'data:' + res.content_type + ';base64,' + res.cleaned_b64;
+    if (rightImg) rightImg.src = src;
+    if (rightWrap) {
+      const lbl = rightWrap.querySelector('.card-img-label');
+      if (lbl) lbl.textContent = 'LIMPIADA';
+    }
+    if (s) { s.className = 'card-status ok'; s.textContent = '✓ Limpiada'; }
+    if (footer) {
+      let dlBtn = footer.querySelector('.btn-dl-one');
+      if (!dlBtn) {
+        dlBtn = document.createElement('button');
+        dlBtn.className = 'btn-dl-one';
+        dlBtn.id = 'dl-btn-' + i;
+        dlBtn.style.display = 'flex';
+        dlBtn.innerHTML = `<svg viewBox="0 0 24 24" stroke-width="2.5" fill="none" stroke="white" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Descargar`;
+        dlBtn.onclick = () => downloadOne(i);
+        footer.appendChild(dlBtn);
+      }
+    }
+  } else if (res.error) {
+    if (s) { s.className = 'card-status err'; s.textContent = 'Error: ' + (res.error || '').substring(0, 40); }
+  }
+}
+
+// ── Downloads ─────────────────────────────────────────────────────────────────
+function downloadOne(i) {
+  const res = results[i];
+  if (!res || !res.cleaned_b64) return;
+  const a = document.createElement('a');
+  a.href = 'data:' + res.content_type + ';base64,' + res.cleaned_b64;
+  const origName = files[i].name;
+  const ext = origName.split('.').pop();
+  const base = origName.substring(0, origName.lastIndexOf('.')) || origName;
+  a.download = base + '_limpia.' + ext;
+  a.click();
+}
+
+async function downloadAllZip() {
+  const cleanedResults = results.filter(r => r && r.cleaned_b64);
+  if (!cleanedResults.length) return;
+  if (typeof JSZip === 'undefined') { showToast('Cargando JSZip…'); return; }
+  btnDlAll.textContent = 'Creando ZIP…';
+  btnDlAll.disabled = true;
+  const zip = new JSZip();
+  results.forEach((res, i) => {
+    if (!res || !res.cleaned_b64) return;
+    const origName = files[i].name;
+    const ext = origName.split('.').pop();
+    const base = origName.substring(0, origName.lastIndexOf('.')) || origName;
+    const fname = base + '_limpia.' + ext;
+    const binaryStr = atob(res.cleaned_b64);
+    const bytes = new Uint8Array(binaryStr.length);
+    for (let j = 0; j < binaryStr.length; j++) bytes[j] = binaryStr.charCodeAt(j);
+    zip.file(fname, bytes);
+  });
+  const blob = await zip.generateAsync({ type: 'blob' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'fotos_limpias.zip';
+  a.click();
+  btnDlAll.innerHTML = `<svg viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="var(--teal)" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Descargar ZIP`;
+  btnDlAll.disabled = false;
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg, duration = 3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+</script>
+</body>
+</html>
