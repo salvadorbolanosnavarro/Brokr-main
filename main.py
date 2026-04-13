@@ -1784,11 +1784,28 @@ async def _process_with_gemini(img_bytes: bytes, content_type: str, prompt: str)
         },
     }
 
-    url = f"{GEMINI_BASE}/models/gemini-2.0-flash-exp-image-generation:generateContent?key={GEMINI_API_KEY}"
+    # Try model names in order (experimental → preview → stable)
+    _gemini_models = [
+        os.environ.get("GEMINI_IMAGE_MODEL", ""),
+        "gemini-2.0-flash-preview-image-generation",
+        "gemini-2.0-flash-exp-image-generation",
+        "gemini-2.0-flash",
+    ]
+    r = None
+    last_error = ""
     async with httpx.AsyncClient(timeout=90) as client:
-        r = await client.post(url, json=payload, headers={"Content-Type": "application/json"})
-        if r.status_code != 200:
-            raise RuntimeError(f"Gemini API error {r.status_code}: {r.text[:300]}")
+        for model_name in _gemini_models:
+            if not model_name:
+                continue
+            url = f"{GEMINI_BASE}/models/{model_name}:generateContent?key={GEMINI_API_KEY}"
+            r = await client.post(url, json=payload, headers={"Content-Type": "application/json"})
+            if r.status_code == 200:
+                break
+            last_error = f"Gemini API error {r.status_code} ({model_name}): {r.text[:300]}"
+            if r.status_code != 404:
+                break  # only retry 404 (model not found), not auth/quota errors
+    if r is None or r.status_code != 200:
+        raise RuntimeError(last_error)
         data = r.json()
 
     # Extrae inline_data de la respuesta
