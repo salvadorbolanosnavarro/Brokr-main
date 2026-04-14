@@ -1747,85 +1747,92 @@ def _process_image_sync(file_bytes: bytes, content_type: str) -> bytes:
 
 
 async def _process_with_gemini(img_bytes: bytes, content_type: str, prompt: str) -> bytes:
-    """Envía la imagen a Gemini Flash imagen para edición guiada por prompt.
-    Devuelve los bytes de la imagen editada, o levanta excepción si falla."""
+    """Edita la imagen con Gemini Flash imagen-generation."""
     if not GEMINI_API_KEY:
         raise RuntimeError("GEMINI_API_KEY no configurada")
 
-    # Resize a máx 1536px lado largo para reducir tokens y costo
+    # Resize a máx 1024px para reducir payload
     if PIL_AVAILABLE:
         pil = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-        max_side = 1536
         w, h = pil.size
-        if max(w, h) > max_side:
-            scale = max_side / max(w, h)
+        if max(w, h) > 1024:
+            scale = 1024 / max(w, h)
             pil = pil.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
         buf = io.BytesIO()
-        pil.save(buf, format="JPEG", quality=90)
+        pil.save(buf, format="JPEG", quality=88)
         img_bytes = buf.getvalue()
         content_type = "image/jpeg"
 
     img_b64 = base64.b64encode(img_bytes).decode()
     full_prompt = (
         "You are a professional real estate photo editor. "
-        "Edit the following photo according to this instruction: " + prompt + ". "
-        "Output ONLY the edited image, with no text, no watermarks, no borders."
+        "Edit this photo following the instruction: " + prompt + ". "
+        "Return only the edited image."
     )
 
+    # responseModalities: solo IMAGE para forzar salida de imagen
     payload = {
         "contents": [{
             "parts": [
                 {"text": full_prompt},
-                {"inline_data": {"mime_type": content_type, "data": img_b64}},
+                {"inline_data": {"mime_type": "image/jpeg", "data": img_b64}},
             ]
         }],
         "generationConfig": {
-            "responseModalities": ["IMAGE", "TEXT"],
+            "responseModalities": ["IMAGE"],
         },
     }
 
-    # Try model names in order (experimental → preview → stable)
-    _gemini_models = [
+    # Modelos a intentar en orden; env var GEMINI_IMAGE_MODEL para forzar uno
+    model_names = [m for m in [
         os.environ.get("GEMINI_IMAGE_MODEL", ""),
         "gemini-2.0-flash-preview-image-generation",
         "gemini-2.0-flash-exp-image-generation",
-        "gemini-2.0-flash",
-    ]
-    r = None
-    last_error = ""
-    async with httpx.AsyncClient(timeout=90) as client:
-        for model_name in _gemini_models:
-            if not model_name:
-                continue
-            url = f"{GEMINI_BASE}/models/{model_name}:generateContent?key={GEMINI_API_KEY}"
-            r = await client.post(url, json=payload, headers={"Content-Type": "application/json"})
-            if r.status_code == 200:
-                break
-            last_error = f"Gemini API error {r.status_code} ({model_name}): {r.text[:300]}"
-            if r.status_code != 404:
-                break  # only retry 404 (model not found), not auth/quota errors
-    if r is None or r.status_code != 200:
-        raise RuntimeError(last_error)
-        data = r.json()
+    ] if m]
 
-    # Extrae inline_data de la respuesta
-    try:
-        parts = data["candidates"][0]["content"]["parts"]
+    last_err = "Sin modelos disponibles"
+    for model_name in model_names:
+        url = f"{GEMINI_BASE}/models/{model_name}:generateContent?key={GEMINI_API_KEY}"
+        try:
+            async with httpx.AsyncClient(timeout=120) as client:
+                r = await client.post(url, json=payload, headers={"Content-Type": "application/json"})
+        except Exception as e:
+            last_err = f"Timeout/red ({model_name}): {e}"
+            continue
+
+        if r.status_code == 404:
+            last_err = f"Modelo no encontrado: {model_name}"
+            continue  # probar siguiente
+
+        if r.status_code != 200:
+            last_err = f"Error {r.status_code} ({model_name}): {r.text[:400]}"
+            break  # error real, no tiene caso probar otros
+
+        # --- Respuesta 200 ---
+        try:
+            data = r.json()
+            parts = data["candidates"][0]["content"]["parts"]
+        except Exception as e:
+            last_err = f"JSON inválido ({model_name}): {e} — raw: {r.text[:200]}"
+            break
+
         for part in parts:
             if "inlineData" in part:
-                raw_b64 = part["inlineData"]["data"]
-                out_mime = part["inlineData"].get("mimeType", "image/png")
-                img_result = base64.b64decode(raw_b64)
-                # Convertir a JPEG si es PNG para consistencia
-                if PIL_AVAILABLE and out_mime == "image/png":
-                    pil2 = Image.open(io.BytesIO(img_result)).convert("RGB")
-                    buf2 = io.BytesIO()
-                    pil2.save(buf2, format="JPEG", quality=92)
-                    img_result = buf2.getvalue()
-                return img_result
-        raise RuntimeError("Gemini no devolvió imagen en la respuesta")
-    except (KeyError, IndexError) as e:
-        raise RuntimeError(f"Respuesta inesperada de Gemini: {e}")
+                raw = base64.b64decode(part["inlineData"]["data"])
+                # Convertir a JPEG siempre para consistencia
+                if PIL_AVAILABLE:
+                    pil2 = Image.open(io.BytesIO(raw)).convert("RGB")
+                    out = io.BytesIO()
+                    pil2.save(out, format="JPEG", quality=92)
+                    return out.getvalue()
+                return raw
+
+        # 200 pero sin imagen en la respuesta — puede haber texto en su lugar
+        text_parts = [p.get("text","") for p in parts if "text" in p]
+        last_err = f"Gemini respondió sin imagen ({model_name}). Texto: {' '.join(text_parts)[:200]}"
+        break
+
+    raise RuntimeError(last_err)
 
 
 from fastapi import Form as _Form

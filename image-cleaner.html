@@ -297,7 +297,10 @@ async function cleanAll() {
     fd.append('prompt', prompt);
     try {
       const r = await fetch(API_BASE + '/images/clean', { method: 'POST', body: fd });
-      if (!r.ok) throw new Error('HTTP ' + r.status);
+      if (!r.ok) {
+        const errText = await r.text().catch(() => 'HTTP ' + r.status);
+        throw new Error('HTTP ' + r.status + ' — ' + errText.substring(0, 120));
+      }
       const data = await r.json();
       data.images.forEach((res, j) => {
         const idx = batchIdx[j];
@@ -308,7 +311,7 @@ async function cleanAll() {
       batchIdx.forEach(idx => {
         results[idx] = { error: err.message, cleaned_b64: null };
         const s = document.getElementById('status-' + idx);
-        if (s) { s.className = 'card-status err'; s.textContent = 'Error: ' + err.message.substring(0, 40); }
+        if (s) { s.className = 'card-status err'; s.textContent = 'Error: ' + err.message.substring(0, 80); }
       });
     }
     done += batch.length;
@@ -352,7 +355,11 @@ function updateCard(i, res) {
       }
     }
   } else if (res.error) {
-    if (s) { s.className = 'card-status err'; s.textContent = 'Error: ' + (res.error || '').substring(0, 40); }
+    if (s) {
+      s.className = 'card-status err';
+      s.title = res.error; // tooltip con error completo
+      s.textContent = 'Error: ' + (res.error || '').substring(0, 120);
+    }
   }
 }
 
