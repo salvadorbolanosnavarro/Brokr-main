@@ -1769,45 +1769,32 @@ async def _process_with_gemini(img_bytes: bytes, content_type: str, prompt: str)
         "Output only the edited image."
     )
 
-    # Variantes de payload (camelCase / snake_case / con y sin imagen de entrada)
+    # Los modelos Nano Banana generan imagen por defecto — NO usar responseModalities
+    # Variantes de payload en orden de preferencia
+    _parts_with_img = [
+        {"text": full_prompt},
+        {"inline_data": {"mime_type": "image/jpeg", "data": img_b64}},
+    ]
+    _parts_text_only = [{"text": full_prompt}]
+
     _payloads = [
-        # 1. Con imagen de entrada, camelCase (formato estándar REST)
-        {
-            "contents": [{"parts": [
-                {"text": full_prompt},
-                {"inline_data": {"mime_type": "image/jpeg", "data": img_b64}},
-            ]}],
-            "generationConfig": {"responseModalities": ["IMAGE"]},
-        },
-        # 2. Con imagen de entrada, snake_case (algunas versiones del API)
-        {
-            "contents": [{"parts": [
-                {"text": full_prompt},
-                {"inline_data": {"mime_type": "image/jpeg", "data": img_b64}},
-            ]}],
-            "generation_config": {"response_modalities": ["IMAGE"]},
-        },
-        # 3. Solo texto (text-to-image, sin imagen de entrada)
-        {
-            "contents": [{"parts": [{"text": full_prompt}]}],
-            "generationConfig": {"responseModalities": ["IMAGE"]},
-        },
-        # 4. Solo texto, snake_case
-        {
-            "contents": [{"parts": [{"text": full_prompt}]}],
-            "generation_config": {"response_modalities": ["IMAGE"]},
-        },
+        # 1. Con imagen de entrada, sin generationConfig (imagen por defecto)
+        {"contents": [{"parts": _parts_with_img}]},
+        # 2. Solo texto (text-to-image)
+        {"contents": [{"parts": _parts_text_only}]},
+        # 3. Con imagen + responseModalities explícito (por si algún modelo lo requiere)
+        {"contents": [{"parts": _parts_with_img}],
+         "generationConfig": {"responseModalities": ["IMAGE"]}},
     ]
 
-    # Modelos a probar: primero env var override, luego lista fija
+    # Modelos disponibles en esta API key (verificados en lista de modelos)
     _model_names = [m for m in [
         os.environ.get("GEMINI_IMAGE_MODEL", ""),
-        "gemini-3.1-flash-image-preview",
-        "gemini-2.0-flash-preview-image-generation",
-        "gemini-2.0-flash-exp-image-generation",
+        "gemini-3.1-flash-image-preview",   # Nano Banana 2
+        "gemini-2.5-flash-image",            # Nano Banana
+        "gemini-3-pro-image-preview",        # Nano Banana Pro
     ] if m]
 
-    # Expandir: cada modelo × cada base_url
     _candidates = []
     for _n in _model_names:
         for _base in ["https://generativelanguage.googleapis.com/v1beta",
