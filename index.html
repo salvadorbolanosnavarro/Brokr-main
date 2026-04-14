@@ -1324,7 +1324,7 @@ html, body {
 <!-- Facebook JS SDK -->
 <script>
   window.fbAsyncInit = function() {
-    FB.init({ appId: '1709238933850389', cookie: true, xfbml: false, version: 'v18.0' });
+    FB.init({ appId: '1709238933850389', cookie: true, xfbml: false, version: 'v21.0' });
   };
 </script>
 <script async defer crossorigin="anonymous" src="https://connect.facebook.net/es_LA/sdk.js"></script>
@@ -1533,48 +1533,60 @@ html, body {
 
 
 
-    <!-- Modal Conectar Facebook (manual token) -->
+    <!-- Modal Conectar Facebook -->
     <div class="profile-edit-overlay" id="fb-connect-modal">
-      <div class="profile-edit-box" style="max-width:520px;margin:0 auto;border-radius:28px;max-height:90dvh">
+      <div class="profile-edit-box" style="max-width:520px;margin:0 auto;border-radius:28px;max-height:92dvh">
         <div class="profile-edit-hdr">
-          <span style="font-size:15px;font-weight:600">Conectar Facebook</span>
+          <span style="font-size:15px;font-weight:600">Conectar página de Facebook</span>
           <button onclick="closeFbConnectModal()" style="background:var(--gray-100);border:none;width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:14px">✕</button>
         </div>
-        <div class="profile-edit-body" style="padding:18px 20px 24px">
-          <div id="fb-auto-status" style="padding:12px;border-radius:12px;background:#e7f3ff;border:1px solid #1877f2;color:#1877f2;font-size:13px;margin-bottom:16px;display:flex;align-items:center;gap:8px">
-            <div class="fb-spin" style="width:16px;height:16px;border:2px solid #1877f2;border-top-color:transparent;border-radius:50%;animation:fbspin 0.8s linear infinite"></div>
-            <span>Intentando conexión automática…</span>
+        <div class="profile-edit-body" style="padding:16px 20px 28px">
+
+          <!-- Método manual PRIMERO -->
+          <div style="background:linear-gradient(135deg,#e7f3ff,#f0f7ff);border:1.5px solid #1877f2;border-radius:14px;padding:14px 16px;margin-bottom:16px">
+            <div style="font-size:13px;font-weight:700;color:#1877f2;margin-bottom:4px">Método recomendado: token directo</div>
+            <div style="font-size:12px;color:#444;line-height:1.5">Funciona siempre, sin depender de ventanas emergentes.</div>
           </div>
 
-          <div style="font-size:12px;color:var(--gray-500);margin-bottom:14px;line-height:1.5">
-            Si la conexión automática falla (por verificación de negocio pendiente en Facebook), puedes conectar manualmente pegando el token de acceso de tu página.
-          </div>
-
-          <details style="margin-bottom:16px;border:1px solid var(--gray-200);border-radius:12px;padding:10px 14px">
-            <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--teal)">📖 Cómo obtener tu token de página (2 min)</summary>
-            <ol style="margin:12px 0 4px;padding-left:20px;font-size:12px;line-height:1.7;color:var(--gray-600)">
-              <li>Abre <a href="https://developers.facebook.com/tools/explorer/" target="_blank" style="color:var(--teal);text-decoration:underline">Graph API Explorer</a></li>
-              <li>En "Meta App" arriba selecciona <strong>Brokr</strong> (o la app que creaste)</li>
-              <li>Click en "Get Token" → "Get Page Access Token"</li>
-              <li>Autoriza permisos: <code style="background:var(--gray-100);padding:1px 5px;border-radius:4px">pages_manage_posts</code>, <code style="background:var(--gray-100);padding:1px 5px;border-radius:4px">pages_show_list</code></li>
-              <li>Selecciona tu página de bienes raíces</li>
-              <li>Copia el token largo que aparece arriba</li>
-              <li>Para ver el ID de tu página: click "Submit" — aparecerá <code style="background:var(--gray-100);padding:1px 5px;border-radius:4px">id</code> en la respuesta</li>
+          <!-- Pasos -->
+          <div style="border:1px solid var(--gray-200);border-radius:12px;padding:12px 14px;margin-bottom:14px">
+            <div style="font-size:12px;font-weight:700;color:var(--gray-700);margin-bottom:10px">Pasos (2 minutos):</div>
+            <ol style="padding-left:18px;font-size:12px;line-height:1.9;color:var(--gray-600);margin:0">
+              <li>Abre <a href="https://developers.facebook.com/tools/explorer/" target="_blank" style="color:#1877f2;font-weight:600;text-decoration:none">developers.facebook.com/tools/explorer</a></li>
+              <li>En <strong>"Meta App"</strong> (esquina superior derecha) elige tu app <strong>Brokr</strong></li>
+              <li>Click en <strong>"Generate Access Token"</strong> (o "Get Token")</li>
+              <li>Selecciona <strong>"Get Page Access Token"</strong> y elige tu página</li>
+              <li>Copia el token que aparece en el campo de texto largo</li>
+              <li>Para el ID: en el campo de consulta escribe <code style="background:#f3f4f6;padding:1px 5px;border-radius:4px">me/accounts</code> y presiona <strong>Submit</strong> — el <code style="background:#f3f4f6;padding:1px 5px;border-radius:4px">id</code> de tu página aparece en la respuesta</li>
             </ol>
-          </details>
+          </div>
 
+          <div style="margin-bottom:12px">
+            <label style="display:block;font-size:12px;font-weight:700;color:var(--gray-700);margin-bottom:6px">ID de tu página de Facebook</label>
+            <input type="text" id="fb-manual-page-id" placeholder="Ej. 102345678901234" style="width:100%;padding:12px 14px;border:1.5px solid var(--gray-200);border-radius:12px;font-size:14px;outline:none;box-sizing:border-box;transition:border-color .2s" onfocus="this.style.borderColor='#1877f2'" onblur="this.style.borderColor='var(--gray-200)'"/>
+          </div>
           <div style="margin-bottom:14px">
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:6px">ID de tu página de Facebook</label>
-            <input type="text" id="fb-manual-page-id" placeholder="Ej. 102345678901234" style="width:100%;padding:12px 14px;border:1.5px solid var(--gray-200);border-radius:12px;font-size:14px;outline:none;box-sizing:border-box" oninput="this.style.borderColor='var(--gray-200)'"/>
-          </div>
-          <div style="margin-bottom:16px">
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:6px">Token de acceso de la página</label>
-            <textarea id="fb-manual-page-token" placeholder="EAAx... (token largo)" rows="3" style="width:100%;padding:12px 14px;border:1.5px solid var(--gray-200);border-radius:12px;font-size:12px;outline:none;box-sizing:border-box;font-family:ui-monospace,monospace;resize:vertical"></textarea>
+            <label style="display:block;font-size:12px;font-weight:700;color:var(--gray-700);margin-bottom:6px">Token de acceso de la página</label>
+            <textarea id="fb-manual-page-token" placeholder="EAAx… (token largo de la página)" rows="3" style="width:100%;padding:12px 14px;border:1.5px solid var(--gray-200);border-radius:12px;font-size:12px;outline:none;box-sizing:border-box;font-family:ui-monospace,monospace;resize:vertical;transition:border-color .2s;line-height:1.4" onfocus="this.style.borderColor='#1877f2'" onblur="this.style.borderColor='var(--gray-200)'"></textarea>
           </div>
 
-          <div id="fb-manual-error" style="display:none;padding:10px 12px;border-radius:10px;background:#fee;border:1px solid #e05252;color:#c33;font-size:12px;margin-bottom:12px"></div>
+          <div id="fb-manual-error" style="display:none;padding:10px 12px;border-radius:10px;background:#fee2e2;border:1px solid #fca5a5;color:#b91c1c;font-size:12px;margin-bottom:12px;line-height:1.5"></div>
 
-          <button id="fb-manual-save-btn" onclick="saveFbManualConnect()" style="width:100%;padding:14px;background:#1877f2;color:white;border:none;border-radius:14px;font-size:14px;font-weight:600;cursor:pointer">Validar y conectar</button>
+          <button id="fb-manual-save-btn" onclick="saveFbManualConnect()" style="width:100%;padding:14px;background:#1877f2;color:white;border:none;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:12px">Validar y conectar</button>
+
+          <!-- Separador -->
+          <div style="display:flex;align-items:center;gap:10px;margin:4px 0 12px">
+            <div style="flex:1;height:1px;background:var(--gray-200)"></div>
+            <span style="font-size:11px;color:var(--gray-400)">o intenta automático</span>
+            <div style="flex:1;height:1px;background:var(--gray-200)"></div>
+          </div>
+
+          <!-- Auto-connect secundario -->
+          <div id="fb-auto-status" style="display:none;padding:10px 12px;border-radius:10px;font-size:12px;margin-bottom:10px;line-height:1.5"></div>
+          <button onclick="tryAutoFbConnect()" style="width:100%;padding:11px;background:white;color:#1877f2;border:1.5px solid #1877f2;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            Conectar con Facebook (automático)
+          </button>
         </div>
       </div>
     </div>
@@ -2942,14 +2954,8 @@ function openFbConnectModal() {
   document.getElementById('fb-manual-page-id').value = '';
   document.getElementById('fb-manual-page-token').value = '';
   document.getElementById('fb-manual-error').style.display = 'none';
-  const statusBox = document.getElementById('fb-auto-status');
-  statusBox.style.display = 'flex';
-  statusBox.style.background = '#e7f3ff';
-  statusBox.style.borderColor = '#1877f2';
-  statusBox.style.color = '#1877f2';
-  statusBox.innerHTML = '<div style="width:16px;height:16px;border:2px solid #1877f2;border-top-color:transparent;border-radius:50%;animation:fbspin 0.8s linear infinite"></div><span>Intentando conexión automática…</span>';
+  document.getElementById('fb-auto-status').style.display = 'none';
   modal.classList.add('open');
-  tryAutoFbConnect();
 }
 
 function closeFbConnectModal() {
@@ -2959,43 +2965,52 @@ function closeFbConnectModal() {
 
 function tryAutoFbConnect() {
   const statusBox = document.getElementById('fb-auto-status');
-  const showFail = (msg) => {
-    statusBox.style.background = '#fff7e6';
-    statusBox.style.borderColor = '#f59e0b';
-    statusBox.style.color = '#b45309';
-    statusBox.innerHTML = '<span style="font-size:16px">⚠️</span><span>' + msg + ' Usa el método manual abajo.</span>';
+  const showStatus = (msg, type) => {
+    statusBox.style.display = 'block';
+    const colors = {
+      info:    { bg:'#e7f3ff', border:'#1877f2', color:'#1877f2' },
+      warning: { bg:'#fff7e6', border:'#f59e0b', color:'#92400e' },
+      error:   { bg:'#fee2e2', border:'#fca5a5', color:'#b91c1c' },
+    };
+    const c = colors[type] || colors.info;
+    statusBox.style.background = c.bg;
+    statusBox.style.border = '1px solid ' + c.border;
+    statusBox.style.color = c.color;
+    statusBox.innerHTML = msg;
   };
 
   if (typeof FB === 'undefined') {
+    showStatus('<div style="display:flex;align-items:center;gap:8px"><div style="width:14px;height:14px;border:2px solid #1877f2;border-top-color:transparent;border-radius:50%;animation:fbspin 0.8s linear infinite"></div><span>Cargando SDK de Facebook…</span></div>', 'info');
     setTimeout(() => {
-      if (typeof FB === 'undefined') showFail('SDK de Facebook no se cargó.');
+      if (typeof FB === 'undefined') showStatus('⚠️ SDK no cargó. Usa el método manual arriba.', 'warning');
       else tryAutoFbConnect();
-    }, 1500);
+    }, 2000);
     return;
   }
+
+  showStatus('<div style="display:flex;align-items:center;gap:8px"><div style="width:14px;height:14px;border:2px solid #1877f2;border-top-color:transparent;border-radius:50%;animation:fbspin 0.8s linear infinite"></div><span>Abriendo ventana de Facebook…</span></div>', 'info');
 
   try {
     FB.login(function(resp) {
       if (!resp || !resp.authResponse) {
-        showFail('Login automático cancelado o bloqueado.');
+        showStatus('⚠️ Login cancelado o bloqueado. Usa el método manual arriba.', 'warning');
         return;
       }
-      FB.api('/me/accounts', { access_token: resp.authResponse.accessToken }, function(data) {
+      showStatus('<div style="display:flex;align-items:center;gap:8px"><div style="width:14px;height:14px;border:2px solid #1877f2;border-top-color:transparent;border-radius:50%;animation:fbspin 0.8s linear infinite"></div><span>Obteniendo páginas…</span></div>', 'info');
+      FB.api('/me/accounts', { fields: 'id,name,access_token' }, function(data) {
         if (!data || data.error) {
-          showFail('Error al obtener páginas' + (data && data.error ? ': ' + data.error.message : '') + '.');
+          showStatus('❌ Error: ' + (data && data.error ? data.error.message : 'sin respuesta') + '. Usa el método manual arriba.', 'error');
           return;
         }
         if (!data.data || !data.data.length) {
-          showFail('Facebook no encontró páginas asociadas a tu cuenta. Asegúrate de ser administrador de al menos una Página (no perfil personal) y que la seleccionaste al autorizar.');
+          showStatus('⚠️ No se encontraron páginas. Si eres admin de una página, usa el método manual arriba con Graph API Explorer.', 'warning');
           return;
         }
-        // Si hay varias páginas tomar la primera; en el futuro se puede mostrar selector
-        const page = data.data[0];
-        finishFbConnect(page.id, page.name, page.access_token);
+        finishFbConnect(data.data[0].id, data.data[0].name, data.data[0].access_token);
       });
     }, { scope: 'pages_show_list' });
   } catch(e) {
-    showFail('Error iniciando login: ' + e.message);
+    showStatus('❌ Error: ' + e.message + '. Usa el método manual arriba.', 'error');
   }
 }
 
@@ -3020,7 +3035,7 @@ async function saveFbManualConnect() {
   btn.disabled = true;
   btn.textContent = 'Validando…';
   try {
-    const url = 'https://graph.facebook.com/v18.0/' + encodeURIComponent(pageId) + '?fields=name,id&access_token=' + encodeURIComponent(token);
+    const url = 'https://graph.facebook.com/v21.0/' + encodeURIComponent(pageId) + '?fields=name,id&access_token=' + encodeURIComponent(token);
     const r = await fetch(url);
     const data = await r.json();
     if (!r.ok || data.error) {
