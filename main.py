@@ -1889,7 +1889,7 @@ async def facebook_callback(code: str = Query(...), state: str = Query(None), re
     async with httpx.AsyncClient(timeout=15) as client:
         # 1. Token de usuario (corta duración)
         r = await client.get(
-            "https://graph.facebook.com/v18.0/oauth/access_token",
+            "https://graph.facebook.com/v21.0/oauth/access_token",
             params={
                 "client_id": FB_APP_ID,
                 "client_secret": FB_APP_SECRET,
@@ -1903,7 +1903,7 @@ async def facebook_callback(code: str = Query(...), state: str = Query(None), re
 
         # 2. Token de larga duración
         r2 = await client.get(
-            "https://graph.facebook.com/v18.0/oauth/access_token",
+            "https://graph.facebook.com/v21.0/oauth/access_token",
             params={
                 "grant_type": "fb_exchange_token",
                 "client_id": FB_APP_ID,
@@ -1915,7 +1915,7 @@ async def facebook_callback(code: str = Query(...), state: str = Query(None), re
 
         # 3. Lista de páginas administradas
         r3 = await client.get(
-            "https://graph.facebook.com/v18.0/me/accounts",
+            "https://graph.facebook.com/v21.0/me/accounts",
             params={"access_token": long_token},
         )
         pages = r3.json().get("data", [])
@@ -1952,7 +1952,7 @@ async def facebook_publish(req: FbPublishRequest):
         # Subir fotos como no publicadas
         for url in req.photo_urls[:10]:
             r = await client.post(
-                f"https://graph.facebook.com/v18.0/{req.page_id}/photos",
+                f"https://graph.facebook.com/v21.0/{req.page_id}/photos",
                 params={"access_token": req.page_token},
                 json={"url": url, "published": False},
             )
