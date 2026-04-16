@@ -302,13 +302,13 @@
     const CALIDAD_OPTS = { lujo: "Lujo / Residencial plus", bueno: "Bueno / Residencial", medio: "Medio / Estándar", economico: "Económico / Interés social" };
 
     const TIPOS = [
-      { id: "casa",         label: "Casa",     icon: "🏠" },
-      { id: "departamento", label: "Depto",    icon: "🏢" },
-      { id: "terreno",      label: "Terreno",  icon: "🌳" },
-      { id: "local",        label: "Local",    icon: "🏪" },
-      { id: "oficina",      label: "Oficina",  icon: "💼" },
-      { id: "bodega",       label: "Bodega",   icon: "🏭" },
-      { id: "edificio",     label: "Edificio", icon: "🏗️" },
+      { id: "casa",         label: "Casa",     icon: "" },
+      { id: "departamento", label: "Depto",    icon: "" },
+      { id: "terreno",      label: "Terreno",  icon: "" },
+      { id: "local",        label: "Local",    icon: "" },
+      { id: "oficina",      label: "Oficina",  icon: "" },
+      { id: "bodega",       label: "Bodega",   icon: "" },
+      { id: "edificio",     label: "Edificio", icon: "" },
     ];
 
     const CAMPOS = {
@@ -440,7 +440,7 @@
       if (value) {
         return (
           <div className="colonia-selected">
-            <span>📍 {value.nombre}</span>
+            <span>{value.nombre}</span>
             <button onClick={() => { onSelect(null); setTexto(""); }}>✕</button>
           </div>
         );
@@ -559,7 +559,7 @@
         if (!resultado) return;
         setPdfLoading(true);
         try {
-          // Paso 1: pedir a Railway que genere el PDF y devuelva el token
+          // Paso 1: generar PDF en Railway
           const r = await fetch(`${API}/avm-pdf`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -568,24 +568,28 @@
           const data = await r.json();
           if (!r.ok) throw new Error(data.detail || "Error generando PDF");
 
-          // Paso 2: descargar los bytes del PDF directamente (resuelve cross-origin en PWA/Chrome)
+          // Paso 2: obtener bytes del PDF
           const pdfResp = await fetch(`${API}/avm-pdf/${data.token}`);
           if (!pdfResp.ok) throw new Error("No se pudo obtener el PDF");
           const blob = await pdfResp.blob();
-          const blobUrl = URL.createObjectURL(blob);
+          const filename = data.filename || "Opinion_Valor.pdf";
 
-          // Paso 3: forzar descarga con blob local (funciona en PWA Chrome Android/iOS)
-          const link = document.createElement("a");
-          link.href = blobUrl;
-          link.download = data.filename || "Opinion_Valor.pdf";
-          document.body.appendChild(link);
-          link.click();
-          setTimeout(() => {
-            document.body.removeChild(link);
-            URL.revokeObjectURL(blobUrl);
-          }, 500);
+          // Paso 3: Web Share API en móvil → abre menú nativo "Guardar / Compartir PDF"
+          // Fallback a blob link en desktop
+          if (navigator.canShare && navigator.canShare({ files: [new File([blob], filename, { type: "application/pdf" })] })) {
+            const file = new File([blob], filename, { type: "application/pdf" });
+            await navigator.share({ files: [file], title: "Opinión de Valor", text: "Opinión de valor generada con BROKR®" });
+          } else {
+            const blobUrl = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = blobUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            setTimeout(() => { document.body.removeChild(link); URL.revokeObjectURL(blobUrl); }, 500);
+          }
         } catch (e) {
-          alert("Error al generar PDF: " + e.message);
+          if (e.name !== "AbortError") alert("Error al generar PDF: " + e.message);
         } finally { setPdfLoading(false); }
       };
 
@@ -597,7 +601,7 @@
       if (estado === "idle" || estado === "error") return (
         <div className="avm-body">
           <div className="avm-card">
-            <div className="card-label">🤖 Análisis con IA y búsqueda en internet</div>
+            <div className="card-label">Análisis con IA y búsqueda en internet</div>
             <p style={{ fontSize: 12, color: "var(--gray-600)", marginBottom: 14, lineHeight: 1.6 }}>
               La IA busca comparables reales en Lamudi, Vivanuncios e Inmuebles24 y genera una opinión de valor fundamentada con datos de mercado actuales.
             </p>
@@ -606,7 +610,7 @@
               <F label="Tipo de inmueble">
                 <select value={form.tipo} onChange={e => u("tipo", e.target.value)}>
                   {TIPOS.map(t => (
-                    <option key={t.id} value={t.id}>{t.icon} {t.label}</option>
+                    <option key={t.id} value={t.id}>{t.label}</option>
                   ))}
                 </select>
               </F>
@@ -619,7 +623,7 @@
           </div>
 
           <div className="avm-card">
-            <div className="card-label">📍 Ubicación</div>
+            <div className="card-label">Ubicación</div>
             <div className="field-row">
               <F label="Colonia / Fraccionamiento *">
                 <input type="text" value={form.colonia}
@@ -637,7 +641,7 @@
           </div>
 
           <div className="avm-card">
-            <div className="card-label">📐 Superficies</div>
+            <div className="card-label">Superficies</div>
             <div className="field-row">
               {(esTerreno || esConstruccion) &&
                 <F label="m² de terreno">
@@ -663,7 +667,7 @@
 
           {esConstruccion && (
             <div className="avm-card">
-              <div className="card-label">🚪 Características</div>
+              <div className="card-label">Características</div>
               <div className="field-row">
                 <F label="Recámaras"><NI value={form.recamaras} onChange={v => u("recamaras",v)} placeholder="3" /></F>
                 <F label="Baños"><NI value={form.banos} onChange={v => u("banos",v)} placeholder="2" /></F>
@@ -673,7 +677,7 @@
           )}
 
           <div className="avm-card">
-            <div className="card-label">💬 Comentarios adicionales (opcional)</div>
+            <div className="card-label">Comentarios adicionales (opcional)</div>
             <textarea value={form.comentarios} onChange={e => u("comentarios", e.target.value)}
               placeholder="Ej: esquina, vista panorámica, con bardas, cerca del campo de golf..."
               style={{ width:"100%", padding:"10px 12px", background:"var(--gray-100)", border:"1px solid rgba(0,0,0,0.1)", borderRadius:10, color:"var(--text)", outline:"none", fontFamily:"'Poppins',sans-serif", fontSize:13, minHeight:72, resize:"vertical" }} />
@@ -729,7 +733,7 @@
             </div>
 
             <div className="avm-card">
-              <div className="card-label">📋 Resumen ejecutivo</div>
+              <div className="card-label">Resumen ejecutivo</div>
               <p style={{ fontSize: 13, color: "var(--gray-600)", lineHeight: 1.7 }}>
                 {resultado.resumen_ejecutivo}
               </p>
@@ -737,7 +741,7 @@
 
             {comparables.length > 0 && (
               <div className="avm-card">
-                <div className="card-label">🏘️ Comparables encontrados en el mercado</div>
+                <div className="card-label">Comparables encontrados en el mercado</div>
                 {comparables.map((c, i) => (
                   <div key={i} className="comp-row">
                     <div className="comp-row-desc">{c.descripcion}</div>
@@ -753,7 +757,7 @@
 
             {factores.length > 0 && (
               <div className="avm-card">
-                <div className="card-label">⚖️ Factores de homologación</div>
+                <div className="card-label">Factores de homologación</div>
                 {factores.map((f, i) => (
                   <div key={i} className="factor-row-ia">
                     <div className="factor-dot" style={{ background: dotColor(f.impacto) }} />
@@ -768,17 +772,17 @@
 
             {resultado.analisis_zona && (
               <div className="avm-card">
-                <div className="card-label">🗺️ Análisis de zona y plusvalía</div>
+                <div className="card-label">Análisis de zona y plusvalía</div>
                 <p style={{ fontSize: 12, color: "var(--gray-600)", lineHeight: 1.7 }}>{resultado.analisis_zona}</p>
               </div>
             )}
 
             {recs.length > 0 && (
               <div className="avm-card">
-                <div className="card-label">💡 Recomendaciones</div>
+                <div className="card-label">Recomendaciones</div>
                 {recs.map((r, i) => (
                   <div key={i} style={{ display:"flex", gap:8, marginBottom:6, fontSize:12, color:"var(--text)", alignItems:"flex-start" }}>
-                    <span style={{ color:"var(--teal)", fontWeight:700, flexShrink:0 }}>→</span>
+                    <span style={{ color:"var(--teal)", fontWeight:700, flexShrink:0 }}> </span>
                     <span style={{ lineHeight:1.5 }}>{r}</span>
                   </div>
                 ))}
@@ -792,12 +796,12 @@
             )}
 
             <button className="btn-pdf" onClick={descargarPDF} disabled={pdfLoading}>
-              {pdfLoading ? <><div className="spinner" />Generando PDF...</> : "⬇️ Descargar opinión de valor en PDF"}
+              {pdfLoading ? <><div className="spinner" />Generando PDF...</> : "Descargar opinión de valor en PDF"}
             </button>
 
             <button className="btn-primary outline" style={{ marginTop: 10 }}
               onClick={() => { setEstado("idle"); setResultado(null); }}>
-              ← Nueva valuación
+              Nueva valuación
             </button>
           </div>
         );
