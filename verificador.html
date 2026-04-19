@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Verificador de Documentos — Brokr</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --navy:#1a2744;--navy2:#0f1829;--navy3:#243358;
+  --teal:#2a9db5;--teal2:#3dbdd6;--tealp:#e8f7fa;
+  --silver:#f4f6f9;--silver2:#e8ecf2;--bdr:#dce2ef;
+  --txt:#1a2744;--mut:#6b7a99;--wh:#ffffff;--r:12px;--r2:8px;
+  --green:#10b981;--greenp:#ecfdf5;--greenb:#a7f3d0;
+  --amber:#f59e0b;--amberp:#fffbeb;--amberb:#fcd34d;
+  --red:#ef4444;--redp:#fef2f2;--redb:#fca5a5;
+  --blue:#3b82f6;--bluep:#eff6ff;--blueb:#93c5fd;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);min-height:100vh}
+
+/* ── HEADER ── */
+.top-header{background:var(--wh);border-bottom:1px solid var(--silver2);padding:16px 20px;position:sticky;top:0;z-index:20}
+.top-header h1{font-family:'Playfair Display',serif;font-size:22px;color:var(--navy);margin-bottom:2px}
+.top-header p{font-size:12px;color:var(--mut);line-height:1.4}
+
+/* ── CONTRACT TYPE SELECTOR ── */
+.tipo-selector{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px 20px 0}
+.tipo-btn{padding:14px 12px;border:2px solid var(--silver2);border-radius:var(--r);background:var(--wh);cursor:pointer;text-align:center;font-family:'DM Sans',sans-serif;transition:all .15s}
+.tipo-btn:hover{border-color:var(--teal);background:var(--tealp)}
+.tipo-btn.active{border-color:var(--navy);background:var(--navy);color:#fff}
+.tipo-ico{font-size:22px;margin-bottom:5px}
+.tipo-lbl{font-size:13px;font-weight:700;display:block;color:var(--navy)}
+.tipo-btn.active .tipo-lbl{color:#fff}
+.tipo-sub{font-size:11px;color:var(--mut);margin-top:2px;display:block}
+.tipo-btn.active .tipo-sub{color:rgba(255,255,255,.65)}
+
+/* ── PROGRESS ── */
+.progress-card{background:var(--wh);border:1.5px solid var(--silver2);border-radius:var(--r);margin:14px 20px 0;padding:14px 18px}
+.progress-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.progress-label{font-size:13px;font-weight:600;color:var(--navy)}
+.progress-counts{display:flex;gap:12px}
+.pc{font-size:11px;font-weight:700;display:flex;align-items:center;gap:4px}
+.pc.ok{color:var(--green)}.pc.warn{color:var(--amber)}.pc.bad{color:var(--red)}.pc.pend{color:var(--mut)}
+.progress-bar-wrap{height:8px;background:var(--silver2);border-radius:4px;overflow:hidden}
+.progress-bar-fill{height:100%;border-radius:4px;background:var(--green);transition:width .4s ease}
+.progress-reset{font-size:11px;color:var(--mut);cursor:pointer;text-decoration:underline;margin-top:8px;display:inline-block}
+.progress-reset:hover{color:var(--red)}
+
+/* ── SECTION GROUP ── */
+.doc-section{margin:14px 20px 0}
+.section-hdr{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.section-hdr-ico{font-size:16px}
+.section-hdr-lbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--mut)}
+.section-hdr-line{flex:1;height:1px;background:var(--silver2)}
+
+/* ── DOCUMENT ITEM ── */
+.doc-item{background:var(--wh);border:1.5px solid var(--silver2);border-radius:var(--r);margin-bottom:8px;overflow:hidden;transition:border .15s}
+.doc-item.approved{border-color:var(--greenb)}
+.doc-item.attention{border-color:var(--amberb)}
+.doc-item.rejected{border-color:var(--redb)}
+.doc-item.manual{border-color:var(--blueb)}
+
+.doc-item-head{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;user-select:none}
+.doc-status-ico{font-size:20px;flex-shrink:0;width:26px;text-align:center;transition:all .2s}
+.doc-status-ico.spin{animation:spinIcon .8s linear infinite;display:inline-block}
+@keyframes spinIcon{to{transform:rotate(360deg)}}
+.doc-head-info{flex:1;min-width:0}
+.doc-head-name{font-size:14px;font-weight:600;color:var(--navy)}
+.doc-head-sub{font-size:11px;color:var(--mut);margin-top:2px}
+.doc-chevron{color:var(--mut);font-size:12px;transition:transform .2s;flex-shrink:0}
+.doc-item.open .doc-chevron{transform:rotate(180deg)}
+.doc-optional-tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;background:var(--silver);color:var(--mut);border-radius:5px;padding:1px 6px;margin-left:6px;vertical-align:middle}
+
+/* ── DOCUMENT BODY (expanded) ── */
+.doc-body{display:none;padding:0 16px 16px;border-top:1px solid var(--silver2)}
+.doc-item.open .doc-body{display:block}
+.doc-desc{font-size:12px;color:var(--mut);line-height:1.55;margin:10px 0 12px;padding:8px 10px;background:var(--silver);border-radius:7px}
+
+/* Upload zone */
+.upload-zone{border:2px dashed var(--silver2);border-radius:var(--r2);padding:22px;text-align:center;cursor:pointer;transition:all .15s;background:var(--silver);margin-bottom:10px;position:relative}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--teal);background:var(--tealp)}
+.upload-zone.has-file{border-color:var(--green);background:var(--greenp);border-style:solid}
+.upload-ico{font-size:28px;margin-bottom:6px}
+.upload-lbl{font-size:13px;font-weight:600;color:var(--navy)}
+.upload-sub{font-size:11px;color:var(--mut);margin-top:3px}
+.upload-file-input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-preview{width:100%;max-height:200px;object-fit:contain;border-radius:8px;margin-bottom:10px;border:1px solid var(--silver2);display:none}
+.upload-preview.show{display:block}
+.upload-change-btn{font-size:11px;color:var(--teal);cursor:pointer;text-decoration:underline;display:block;text-align:center;margin-bottom:8px}
+
+/* Action buttons */
+.doc-actions{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.doc-btn{padding:8px 14px;border-radius:var(--r2);border:none;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s}
+.doc-btn.ai{background:var(--navy);color:#fff}
+.doc-btn.ai:hover{background:var(--navy3)}
+.doc-btn.ai:disabled{background:var(--silver2);color:var(--mut);cursor:not-allowed}
+.doc-btn.manual{background:var(--silver);color:var(--navy);border:1.5px solid var(--bdr)}
+.doc-btn.manual:hover{border-color:var(--teal);background:var(--tealp);color:var(--teal)}
+.doc-btn.clear{background:var(--silver);color:var(--mut);border:1.5px solid var(--bdr)}
+.doc-btn.clear:hover{border-color:var(--red);color:var(--red)}
+
+/* AI analysis result */
+.ai-result{border-radius:var(--r2);padding:12px 14px;font-size:12px;line-height:1.7;white-space:pre-wrap;display:none;margin-top:6px}
+.ai-result.show{display:block}
+.ai-result.approved{background:var(--greenp);border:1px solid var(--greenb);color:#065f46}
+.ai-result.attention{background:var(--amberp);border:1px solid var(--amberb);color:#78350f}
+.ai-result.rejected{background:var(--redp);border:1px solid var(--redb);color:#7f1d1d}
+.ai-result.manual{background:var(--bluep);border:1px solid var(--blueb);color:#1e3a8a}
+.ai-verdict{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+
+/* Status badge on item head */
+.status-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.04em;flex-shrink:0}
+.sb-approved{background:var(--greenp);color:#065f46}
+.sb-attention{background:var(--amberp);color:#78350f}
+.sb-rejected{background:var(--redp);color:#7f1d1d}
+.sb-manual{background:var(--bluep);color:#1e3a8a}
+.sb-reviewing{background:var(--tealp);color:var(--teal)}
+
+/* Spinner for analyze button */
+.btn-spinner{width:12px;height:12px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spinIcon .7s linear infinite;display:inline-block}
+
+/* Bottom padding */
+.bottom-pad{height:60px}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:500;opacity:0;transition:all .25s;z-index:999;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Empty state */
+.tipo-empty{text-align:center;padding:50px 20px;color:var(--mut)}
+.tipo-empty svg{opacity:.2;margin-bottom:14px}
+.tipo-empty p{font-size:14px}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="top-header">
+  <h1>Verificador de Documentos</h1>
+  <p>Revisión con IA de ojo notarial — detecta problemas antes de firmar</p>
+</div>
+
+<!-- CONTRACT TYPE -->
+<div class="tipo-selector">
+  <div class="tipo-btn active" id="btn-tipo-arr" onclick="setTipo('arrendamiento',this)">
+    <div class="tipo-ico">🏠</div>
+    <span class="tipo-lbl">Arrendamiento</span>
+    <span class="tipo-sub">Contrato de renta</span>
+  </div>
+  <div class="tipo-btn" id="btn-tipo-comp" onclick="setTipo('compraventa',this)">
+    <div class="tipo-ico">🏛️</div>
+    <span class="tipo-lbl">Compraventa</span>
+    <span class="tipo-sub">Escrituración</span>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-card">
+  <div class="progress-top">
+    <span class="progress-label" id="progress-label">Documentos revisados</span>
+    <div class="progress-counts">
+      <span class="pc ok" id="cnt-ok">✅ 0</span>
+      <span class="pc warn" id="cnt-warn">⚠️ 0</span>
+      <span class="pc bad" id="cnt-bad">❌ 0</span>
+      <span class="pc pend" id="cnt-pend">⭕ 0</span>
+    </div>
+  </div>
+  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-bar" style="width:0%"></div></div>
+  <span class="progress-reset" onclick="confirmarReset()">Reiniciar verificación</span>
+</div>
+
+<!-- DOCUMENT LIST -->
+<div id="doc-container"></div>
+
+<div class="bottom-pad"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://brokrebapi-production.up.railway.app';
+const LS_KEY = 'brokr_verificador';
+let tipoActual = 'arrendamiento';
+
+// ── Checklists ────────────────────────────────────────────────────────────────
+const CHECKLISTS = {
+  arrendamiento: [
+    {
+      grupo: 'Arrendador (propietario)',
+      ico: '👤',
+      docs: [
+        {
+          id: 'arr_ine',
+          nombre: 'INE / Identificación oficial',
+          desc: 'Identificación vigente del arrendador. Debe ser legible por ambos lados, con foto, nombre completo, CURP, dirección y fecha de vigencia no vencida. El INE debe ser credencial para votar o pasaporte.',
+          tip: 'Frente y reverso en una sola imagen, o subir por separado.',
+          reqs: 'Documento vigente, datos legibles, foto del titular.'
+        },
+        {
+          id: 'arr_escritura',
+          nombre: 'Escritura o título de propiedad',
+          desc: 'Documento que acredita la propiedad del inmueble. Debe contener número de escritura, folio real, datos del notario, nombre del propietario y descripción del inmueble. Es válida la escritura pública registrada o el contrato de fideicomiso.',
+          tip: 'Puede ser copia certificada. Si es extensa, fotografía la portada, los datos principales y el sello del RPP.',
+          reqs: 'Datos del propietario, descripción del inmueble, sello del Registro Público de la Propiedad.'
+        },
+        {
+          id: 'arr_predial',
+          nombre: 'Boleta predial',
+          desc: 'Comprobante del pago del impuesto predial. Debe ser la más reciente o del año en curso, con nombre del propietario, ubicación del inmueble, clave catastral y sello o folio de pago. No debe tener adeudos.',
+          tip: 'Máximo 2 años de antigüedad.',
+          reqs: 'Sin adeudos, clave catastral visible, año en curso o anterior.'
+        },
+        {
+          id: 'arr_agua',
+          nombre: 'Boleta de agua',
+          desc: 'Último recibo de agua pagado. Debe tener dirección del inmueble, número de cuenta, período y sello de pago. Sin adeudos pendientes.',
+          tip: 'Máximo 6 meses de antigüedad.',
+          reqs: 'Dirección coincidente con el inmueble, sin adeudos.'
+        },
+      ]
+    },
+    {
+      grupo: 'Arrendatario (inquilino)',
+      ico: '🙋',
+      docs: [
+        {
+          id: 'arrt_ine',
+          nombre: 'INE / Identificación oficial',
+          desc: 'Identificación vigente del arrendatario (quien renta). Los mismos requisitos que el arrendador: vigente, legible, con foto.',
+          tip: 'Frente y reverso visibles.',
+          reqs: 'Vigente, legible, foto del titular.'
+        },
+        {
+          id: 'arrt_domicilio',
+          nombre: 'Comprobante de domicilio',
+          desc: 'Recibo de servicio (luz, agua, teléfono fijo, gas) a nombre del arrendatario o familiar directo, con antigüedad no mayor a 3 meses.',
+          tip: 'Estado de cuenta bancario también es válido.',
+          reqs: 'Nombre del titular, dirección y fecha reciente (máx. 3 meses).'
+        },
+        {
+          id: 'arrt_ingresos',
+          nombre: 'Comprobante de ingresos',
+          desc: 'Nóminas de los últimos 3 meses, estados de cuenta bancarios de 3 meses, declaración anual de ISR o carta de trabajo con sueldo. Los ingresos deben ser al menos 3 veces la renta mensual.',
+          tip: 'Para independientes: estados de cuenta o declaración de impuestos.',
+          reqs: 'Ingresos comprobables mínimo 3x la renta.'
+        },
+      ]
+    },
+    {
+      grupo: 'Obligado solidario (aval)',
+      ico: '🤝',
+      docs: [
+        {
+          id: 'os_ine',
+          nombre: 'INE / Identificación oficial',
+          desc: 'Identificación vigente del obligado solidario (aval del contrato).',
+          tip: 'Frente y reverso.',
+          reqs: 'Vigente, legible.'
+        },
+        {
+          id: 'os_escritura',
+          nombre: 'Escritura del inmueble en garantía',
+          desc: 'Escritura que acredita que el obligado solidario es propietario de un inmueble libre de gravamen que sirve como garantía del contrato.',
+          tip: 'Debe coincidir el nombre con el INE presentado.',
+          reqs: 'Inmueble libre de gravamen, nombre del OS como propietario.'
+        },
+        {
+          id: 'os_predial',
+          nombre: 'Boleta predial del inmueble en garantía',
+          desc: 'Boleta predial del inmueble que ofrece como garantía el obligado solidario, pagada y al corriente.',
+          tip: 'Máximo 2 años de antigüedad.',
+          reqs: 'Sin adeudos, inmueble coincidente con la escritura.'
+        },
+      ]
+    },
+  ],
+
+  compraventa: [
+    {
+      grupo: 'Documentos del inmueble',
+      ico: '🏛️',
+      docs: [
+        {
+          id: 'cv_escritura',
+          nombre: 'Escritura pública vigente',
+          desc: 'Escritura que acredita la propiedad del vendedor. Debe estar inscrita en el Registro Público de la Propiedad (RPP). Verificar número de escritura, notaría, nombre del propietario, superficie y linderos.',
+          tip: 'Si hay varias escrituras (subdivisión, fusión), incluirlas todas.',
+          reqs: 'Inscrita en RPP, nombre del vendedor, descripción del inmueble.'
+        },
+        {
+          id: 'cv_libertad_gravamen',
+          nombre: 'Certificado de libertad de gravamen',
+          desc: 'Documento expedido por el Registro Público de la Propiedad que certifica que el inmueble no tiene hipotecas, embargos ni gravámenes. Es indispensable para cualquier compraventa.',
+          tip: 'Máximo 3 meses de antigüedad. Obtenerlo en el RPP de la ubicación del inmueble.',
+          reqs: 'Sin gravámenes, expedido por RPP, máx. 3 meses.'
+        },
+        {
+          id: 'cv_predial',
+          nombre: 'Boleta predial al corriente',
+          desc: 'Impuesto predial pagado al día. Debe coincidir la clave catastral y dirección con el inmueble en venta. Sin adeudos.',
+          tip: 'El notario verificará que no existan adeudos antes de escriturar.',
+          reqs: 'Pagado al corriente, clave catastral coincidente.'
+        },
+        {
+          id: 'cv_agua',
+          nombre: 'Boleta de agua al corriente',
+          desc: 'Último recibo de agua pagado del inmueble. Sin adeudos de períodos anteriores.',
+          tip: 'Máx. 6 meses de antigüedad.',
+          reqs: 'Sin adeudos, dirección coincidente.'
+        },
+        {
+          id: 'cv_plano',
+          nombre: 'Plano arquitectónico',
+          desc: 'Plano del inmueble que muestra distribución, superficies y linderos. Útil para verificar que la construcción coincide con lo registrado. Documento opcional pero recomendado.',
+          tip: 'No obligatorio, pero facilita la revisión de superficies.',
+          reqs: 'Superficies y linderos coincidentes con la escritura.',
+          opcional: true
+        },
+      ]
+    },
+    {
+      grupo: 'Documentos del vendedor',
+      ico: '🏷️',
+      docs: [
+        {
+          id: 'vend_ine',
+          nombre: 'INE / Identificación oficial del vendedor',
+          desc: 'Identificación vigente del vendedor tal como aparece en la escritura. Si hay varios propietarios, incluir identificación de todos.',
+          tip: 'El nombre debe coincidir exactamente con la escritura.',
+          reqs: 'Vigente, nombre igual que en escritura.'
+        },
+        {
+          id: 'vend_rfc',
+          nombre: 'Constancia de RFC con homoclave',
+          desc: 'Cédula de identificación fiscal del SAT con RFC y homoclave del vendedor. Necesario para el pago de impuesto por enajenación (ISR).',
+          tip: 'Descargar en el portal del SAT con e.firma.',
+          reqs: 'Con homoclave, nombre coincidente, expedida por SAT.'
+        },
+        {
+          id: 'vend_domicilio',
+          nombre: 'Comprobante de domicilio del vendedor',
+          desc: 'Recibo de servicio o estado de cuenta a nombre del vendedor, con antigüedad máxima de 3 meses.',
+          tip: 'La dirección puede ser distinta al inmueble en venta.',
+          reqs: 'Nombre del vendedor, fecha reciente.'
+        },
+        {
+          id: 'vend_ec',
+          nombre: 'Estado de cuenta bancario (últimos 3 meses)',
+          desc: 'Para acreditar la cuenta donde se recibirá el pago. El notario lo puede requerir para validar la trayectoria patrimonial.',
+          tip: 'Del banco donde recibirá el pago de la operación.',
+          reqs: 'Nombre del titular, CLABE o número de cuenta visible.',
+          opcional: true
+        },
+      ]
+    },
+    {
+      grupo: 'Documentos del comprador',
+      ico: '🙋',
+      docs: [
+        {
+          id: 'comp_ine',
+          nombre: 'INE / Identificación oficial del comprador',
+          desc: 'Identificación vigente del comprador. Si hay varios compradores (copropiedad o matrimonio), incluir identificación de todos.',
+          tip: 'Si es pareja en sociedad conyugal, pueden requerir acta de matrimonio.',
+          reqs: 'Vigente, legible, foto clara.'
+        },
+        {
+          id: 'comp_rfc',
+          nombre: 'Constancia de RFC con homoclave',
+          desc: 'RFC del comprador expedido por el SAT con homoclave. Necesario para el cálculo de ISR y escrituración.',
+          tip: 'Si es extranjero, puede usar su CURP o pasaporte.',
+          reqs: 'Con homoclave, expedido por SAT.'
+        },
+        {
+          id: 'comp_domicilio',
+          nombre: 'Comprobante de domicilio del comprador',
+          desc: 'Recibo de servicio o estado de cuenta a nombre del comprador, máx. 3 meses de antigüedad.',
+          tip: 'Puede ser distinto al inmueble que compra.',
+          reqs: 'Nombre del comprador, fecha reciente.'
+        },
+        {
+          id: 'comp_credito',
+          nombre: 'Carta de crédito hipotecario',
+          desc: 'Si el comprador financia la compra con crédito hipotecario (INFONAVIT, FOVISSSTE, banco), incluir la carta de crédito autorizada con monto, vigencia y condiciones.',
+          tip: 'Solo si hay crédito hipotecario. Si es de contado, omitir.',
+          reqs: 'Monto autorizado, vigencia, institución crediticia.',
+          opcional: true
+        },
+      ]
+    },
+    {
+      grupo: 'Documentos de la operación',
+      ico: '📋',
+      docs: [
+        {
+          id: 'op_avaluo',
+          nombre: 'Avalúo pericial o catastral',
+          desc: 'Avalúo firmado por perito valuador certificado, con descripción del inmueble, valor comercial, fecha y número de cédula del valuador. El notario lo requiere para calcular el ISR y derechos.',
+          tip: 'Solicitar a un perito registrado ante la SAHOP o institución bancaria.',
+          reqs: 'Perito certificado, valor comercial, descripción coincidente con inmueble.'
+        },
+        {
+          id: 'op_instruccion',
+          nombre: 'Carta de instrucción notarial',
+          desc: 'Carta dirigida al notario con las instrucciones de la operación: monto acordado, forma de pago, distribución de gastos y condiciones especiales. Firmada por vendedor y comprador.',
+          tip: 'El propio notario puede elaborarla en base a los acuerdos.',
+          reqs: 'Datos de ambas partes, monto, forma de pago, firmas.'
+        },
+      ]
+    },
+  ],
+};
+
+// ── Estado ────────────────────────────────────────────────────────────────────
+function cargarEstado() {
+  return JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+}
+function guardarEstado(estado) {
+  localStorage.setItem(LS_KEY, JSON.stringify(estado));
+}
+function getDocEstado(docId) {
+  const e = cargarEstado();
+  return e[tipoActual]?.[docId] || { status: 'pending' };
+}
+function setDocEstado(docId, datos) {
+  const e = cargarEstado();
+  if (!e[tipoActual]) e[tipoActual] = {};
+  e[tipoActual][docId] = { ...getDocEstado(docId), ...datos };
+  guardarEstado(e);
+}
+
+// ── Status helpers ────────────────────────────────────────────────────────────
+const STATUS = {
+  pending:   { ico: '⭕', label: '',            cls: '' },
+  reviewing: { ico: '⏳', label: 'Revisando…',  cls: 'sb-reviewing' },
+  approved:  { ico: '✅', label: 'Aprobado',     cls: 'sb-approved' },
+  attention: { ico: '⚠️', label: 'Atención',    cls: 'sb-attention' },
+  rejected:  { ico: '❌', label: 'Rechazado',   cls: 'sb-bad' },
+  manual:    { ico: '☑️', label: 'Revisado',    cls: 'sb-manual' },
+};
+
+function docItemCls(status) {
+  const map = {approved:'approved',attention:'attention',rejected:'rejected',manual:'manual'};
+  return map[status] || '';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+// ── Progress ──────────────────────────────────────────────────────────────────
+function calcularProgreso() {
+  const lista = CHECKLISTS[tipoActual];
+  let total = 0, ok = 0, warn = 0, bad = 0, pend = 0;
+  lista.forEach(grupo => grupo.docs.forEach(doc => {
+    if (doc.opcional) return;
+    total++;
+    const s = getDocEstado(doc.id).status;
+    if (s === 'approved' || s === 'manual') ok++;
+    else if (s === 'attention') warn++;
+    else if (s === 'rejected') bad++;
+    else pend++;
+  }));
+  return { total, ok, warn, bad, pend };
+}
+
+function actualizarProgreso() {
+  const { total, ok, warn, bad, pend } = calcularProgreso();
+  const pct = total > 0 ? Math.round((ok / total) * 100) : 0;
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = `${ok}/${total} documentos aprobados`;
+  document.getElementById('cnt-ok').textContent   = `✅ ${ok}`;
+  document.getElementById('cnt-warn').textContent = `⚠️ ${warn}`;
+  document.getElementById('cnt-bad').textContent  = `❌ ${bad}`;
+  document.getElementById('cnt-pend').textContent = `⭕ ${pend}`;
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function renderLista() {
+  const container = document.getElementById('doc-container');
+  const lista = CHECKLISTS[tipoActual];
+  container.innerHTML = lista.map(grupo => `
+    <div class="doc-section">
+      <div class="section-hdr">
+        <span class="section-hdr-ico">${grupo.ico}</span>
+        <span class="section-hdr-lbl">${grupo.grupo}</span>
+        <div class="section-hdr-line"></div>
+      </div>
+      ${grupo.docs.map(doc => renderDocItem(doc)).join('')}
+    </div>
+  `).join('') + '<div class="bottom-pad"></div>';
+  actualizarProgreso();
+}
+
+function renderDocItem(doc) {
+  const estado = getDocEstado(doc.id);
+  const s = estado.status || 'pending';
+  const st = STATUS[s] || STATUS.pending;
+  const optTag = doc.opcional ? '<span class="doc-optional-tag">opcional</span>' : '';
+  const hasAnalysis = estado.ai_analysis && s !== 'pending';
+  const badgeSb = st.label ? `<span class="status-badge ${st.cls}">${st.label}</span>` : '';
+  const itemCls = docItemCls(s);
+
+  return `<div class="doc-item ${itemCls}" id="item-${doc.id}">
+    <div class="doc-item-head" onclick="toggleDoc('${doc.id}')">
+      <span class="doc-status-ico ${s==='reviewing'?'spin':''}" id="ico-${doc.id}">${st.ico}</span>
+      <div class="doc-head-info">
+        <div class="doc-head-name">${doc.nombre}${optTag}</div>
+        <div class="doc-head-sub" id="sub-${doc.id}">${estado.fecha_rev ? '🔍 Revisado el ' + new Date(estado.fecha_rev).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}) : doc.tip}</div>
+      </div>
+      ${badgeSb}
+      <span class="doc-chevron">▾</span>
+    </div>
+    <div class="doc-body" id="body-${doc.id}">
+      <div class="doc-desc">📌 <strong>Qué necesitas:</strong> ${doc.desc}<br/><br/>✅ <strong>Requisitos clave:</strong> ${doc.reqs}</div>
+
+      <input type="file" accept="image/*,.pdf" id="file-${doc.id}" style="display:none" onchange="onFileSelect('${doc.id}',this)"/>
+      <div class="upload-zone ${estado.has_file?'has-file':''}" id="zone-${doc.id}" onclick="document.getElementById('file-${doc.id}').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="onDrop('${doc.id}',event)">
+        <div class="upload-ico" id="zone-ico-${doc.id}">${estado.has_file ? '📄' : '📎'}</div>
+        <div class="upload-lbl" id="zone-lbl-${doc.id}">${estado.has_file ? (estado.file_name||'Archivo cargado') : 'Toca para cargar documento'}</div>
+        <div class="upload-sub">Foto, escaneo o PDF — arrastra aquí</div>
+      </div>
+
+      <img id="preview-${doc.id}" class="upload-preview" src="" alt="Vista previa"/>
+
+      <div class="doc-actions">
+        <button class="doc-btn ai" id="ai-btn-${doc.id}" onclick="analizarConIA('${doc.id}')" ${!estado.has_file?'disabled':''}>
+          <span id="ai-btn-inner-${doc.id}">✨ Analizar con IA</span>
+        </button>
+        <button class="doc-btn manual" onclick="marcarManual('${doc.id}')">☑️ Marcar como revisado</button>
+        ${s !== 'pending' ? `<button class="doc-btn clear" onclick="limpiarDoc('${doc.id}')">↺ Reiniciar</button>` : ''}
+      </div>
+
+      <div class="ai-result ${s!=='pending'&&s!=='reviewing'&&estado.ai_analysis?'show ':''} ${s==='attention'?'attention':s==='rejected'?'rejected':s==='manual'?'manual':'approved'}" id="result-${doc.id}">
+        ${estado.ai_analysis||''}
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleDoc(id) {
+  const item = document.getElementById('item-' + id);
+  item.classList.toggle('open');
+}
+
+// ── File handling ─────────────────────────────────────────────────────────────
+function onDrop(id, event) {
+  event.preventDefault();
+  document.getElementById('zone-' + id).classList.remove('drag');
+  const file = event.dataTransfer.files[0];
+  if (file) handleFile(id, file);
+}
+
+function onFileSelect(id, input) {
+  const file = input.files[0];
+  if (file) handleFile(id, file);
+}
+
+function handleFile(id, file) {
+  const reader = new FileReader();
+  reader.readAsDataURL(file);
+  reader.onload = () => {
+    const dataUrl = reader.result;
+    // Store file reference in state (not the actual data — too large for localStorage)
+    window['_file_' + id] = { dataUrl, type: file.type, name: file.name };
+    setDocEstado(id, { has_file: true, file_name: file.name, status: getDocEstado(id).status === 'pending' ? 'pending' : getDocEstado(id).status });
+
+    // Update zone
+    const zone = document.getElementById('zone-' + id);
+    zone.classList.add('has-file');
+    document.getElementById('zone-ico-' + id).textContent = '📄';
+    document.getElementById('zone-lbl-' + id).textContent = file.name.length > 30 ? file.name.slice(0,28)+'…' : file.name;
+
+    // Show preview if image
+    const prev = document.getElementById('preview-' + id);
+    if (file.type.startsWith('image/')) {
+      prev.src = dataUrl;
+      prev.classList.add('show');
+    }
+
+    // Enable AI button
+    const aiBtn = document.getElementById('ai-btn-' + id);
+    if (aiBtn) aiBtn.disabled = false;
+  };
+}
+
+// ── AI Analysis ───────────────────────────────────────────────────────────────
+const PROMPTS = {
+  arr_ine:          'INE / Identificación oficial (arrendador - propietario)',
+  arr_escritura:    'Escritura o título de propiedad del inmueble arrendado',
+  arr_predial:      'Boleta predial del inmueble arrendado',
+  arr_agua:         'Boleta de agua del inmueble arrendado',
+  arrt_ine:         'INE / Identificación oficial (arrendatario - inquilino)',
+  arrt_domicilio:   'Comprobante de domicilio del arrendatario',
+  arrt_ingresos:    'Comprobante de ingresos del arrendatario (nómina/estado de cuenta)',
+  os_ine:           'INE / Identificación oficial (obligado solidario)',
+  os_escritura:     'Escritura del inmueble en garantía del obligado solidario',
+  os_predial:       'Boleta predial del inmueble en garantía del obligado solidario',
+  cv_escritura:     'Escritura pública vigente del inmueble en venta',
+  cv_libertad_gravamen: 'Certificado de libertad de gravamen del inmueble',
+  cv_predial:       'Boleta predial del inmueble (compraventa)',
+  cv_agua:          'Boleta de agua del inmueble (compraventa)',
+  cv_plano:         'Plano arquitectónico del inmueble',
+  vend_ine:         'INE / Identificación oficial del vendedor',
+  vend_rfc:         'Constancia de RFC con homoclave del vendedor',
+  vend_domicilio:   'Comprobante de domicilio del vendedor',
+  vend_ec:          'Estado de cuenta bancario del vendedor',
+  comp_ine:         'INE / Identificación oficial del comprador',
+  comp_rfc:         'Constancia de RFC con homoclave del comprador',
+  comp_domicilio:   'Comprobante de domicilio del comprador',
+  comp_credito:     'Carta de crédito hipotecario del comprador',
+  op_avaluo:        'Avalúo pericial o catastral del inmueble',
+  op_instruccion:   'Carta de instrucción notarial',
+};
+
+function buildPrompt(docId) {
+  const nombreDoc = PROMPTS[docId] || docId;
+  const tipoContr = tipoActual === 'arrendamiento' ? 'CONTRATO DE ARRENDAMIENTO' : 'CONTRATO DE COMPRAVENTA / ESCRITURACIÓN';
+  return `Eres un notario público mexicano con 30 años de experiencia en derecho inmobiliario, especializado en contratos de arrendamiento y compraventa. Analiza el documento adjunto con rigor notarial absoluto.
+
+DOCUMENTO ESPERADO: ${nombreDoc}
+TIPO DE CONTRATO: ${tipoContr}
+
+Realiza las siguientes verificaciones y reporta CADA PUNTO:
+
+1. 🔍 IDENTIFICACIÓN: ¿Qué tipo de documento es? ¿Coincide con lo esperado?
+2. 📋 DATOS EXTRAÍDOS: Nombres, fechas, folios, vigencia, montos o números visibles.
+3. ✅ VALIDEZ FORMAL: ¿Tiene sellos, firmas, folios oficiales? ¿Está debidamente autenticado?
+4. ⚠️ PROBLEMAS DETECTADOS: Irregularidades, datos ilegibles, documentos vencidos, discrepancias o datos faltantes.
+5. 📌 RECOMENDACIONES: Pasos específicos para corregir o complementar.
+
+Al final, concluye con EXACTAMENTE UNA de estas palabras solas en una línea:
+APROBADO — el documento es válido y cumple los requisitos.
+ATENCIÓN — el documento tiene observaciones pero es usable con correcciones menores.
+RECHAZADO — el documento presenta problemas graves que impiden su uso.
+
+Sé específico, crítico y útil. Máximo 280 palabras.`;
+}
+
+async function analizarConIA(docId) {
+  const fileRef = window['_file_' + docId];
+  if (!fileRef) { showToast('Primero carga el documento'); return; }
+
+  // UI: loading
+  const btn = document.getElementById('ai-btn-' + docId);
+  const inner = document.getElementById('ai-btn-inner-' + docId);
+  const ico = document.getElementById('ico-' + docId);
+  btn.disabled = true;
+  inner.innerHTML = '<span class="btn-spinner"></span> Analizando…';
+  ico.textContent = '⏳';
+  ico.classList.add('spin');
+  setDocEstado(docId, { status: 'reviewing' });
+
+  const resultado = document.getElementById('result-' + docId);
+  resultado.className = 'ai-result';
+  resultado.textContent = '';
+
+  const prompt = buildPrompt(docId);
+  const mediaType = fileRef.type || 'image/jpeg';
+  const base64Data = fileRef.dataUrl.split(',')[1];
+
+  try {
+    // Try vision API with Claude format
+    const payload = {
+      messages: [{
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: { type: 'base64', media_type: mediaType, data: base64Data }
+          },
+          { type: 'text', text: prompt }
+        ]
+      }],
+      max_tokens: 700,
+      temperature: 0.2
+    };
+
+    const r = await fetch(API + '/chat-claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!r.ok) throw new Error('Error ' + r.status);
+    const data = await r.json();
+    const texto = data.choices?.[0]?.message?.content || data.content || data.text || '';
+    if (!texto) throw new Error('Sin respuesta de la IA');
+
+    procesarRespuestaIA(docId, texto);
+
+  } catch (err) {
+    // Fallback: try /chat with text description + vision in OpenAI format
+    try {
+      const payload2 = {
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image_url', image_url: { url: fileRef.dataUrl } },
+            { type: 'text', text: prompt }
+          ]
+        }],
+        max_tokens: 700,
+        temperature: 0.2
+      };
+      const r2 = await fetch(API + '/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload2)
+      });
+      if (!r2.ok) throw new Error('Error ' + r2.status);
+      const data2 = await r2.json();
+      const texto2 = data2.choices?.[0]?.message?.content || data2.content || data2.text || '';
+      if (!texto2) throw new Error('Sin contenido');
+      procesarRespuestaIA(docId, texto2);
+    } catch (err2) {
+      // Both failed
+      setDocEstado(docId, { status: 'pending' });
+      actualizarItemUI(docId);
+      showToast('Error al analizar: ' + (err2.message||'sin conexión'));
+      btn.disabled = false;
+      inner.textContent = '✨ Analizar con IA';
+    }
+  }
+}
+
+function procesarRespuestaIA(docId, texto) {
+  // Detect verdict from last lines
+  const upper = texto.toUpperCase();
+  let status = 'attention';
+  if (/\bAPROBADO\b/.test(upper)) status = 'approved';
+  else if (/\bRECHAZADO\b/.test(upper)) status = 'rejected';
+  else if (/\bATENCIÓN\b|\bATENCION\b/.test(upper)) status = 'attention';
+
+  setDocEstado(docId, { status, ai_analysis: texto, fecha_rev: new Date().toISOString() });
+  actualizarItemUI(docId);
+  showToast(status === 'approved' ? '✅ Documento aprobado' : status === 'rejected' ? '❌ Documento rechazado' : '⚠️ Requiere atención');
+}
+
+function actualizarItemUI(docId) {
+  // Re-render the single item in place
+  const item = document.getElementById('item-' + docId);
+  if (!item) return;
+  const wasOpen = item.classList.contains('open');
+
+  // Find the doc definition
+  let docDef = null;
+  for (const grupo of CHECKLISTS[tipoActual]) {
+    for (const doc of grupo.docs) {
+      if (doc.id === docId) { docDef = doc; break; }
+    }
+    if (docDef) break;
+  }
+  if (!docDef) return;
+
+  const newHtml = renderDocItem(docDef);
+  const tmp = document.createElement('div');
+  tmp.innerHTML = newHtml;
+  const newItem = tmp.firstElementChild;
+  if (wasOpen) newItem.classList.add('open');
+  item.replaceWith(newItem);
+
+  // Restore file ref UI
+  const fileRef = window['_file_' + docId];
+  if (fileRef) {
+    const zone = document.getElementById('zone-' + docId);
+    if (zone) zone.classList.add('has-file');
+    const prev = document.getElementById('preview-' + docId);
+    if (prev && fileRef.type?.startsWith('image/')) {
+      prev.src = fileRef.dataUrl;
+      prev.classList.add('show');
+    }
+    const aiBtn = document.getElementById('ai-btn-' + docId);
+    if (aiBtn) aiBtn.disabled = false;
+    document.getElementById('zone-lbl-' + docId).textContent = fileRef.name || 'Archivo cargado';
+  }
+
+  actualizarProgreso();
+}
+
+// ── Manual mark ───────────────────────────────────────────────────────────────
+function marcarManual(docId) {
+  setDocEstado(docId, {
+    status: 'manual',
+    ai_analysis: '☑️ Este documento fue revisado y marcado manualmente como válido por el agente.',
+    fecha_rev: new Date().toISOString()
+  });
+  actualizarItemUI(docId);
+  showToast('Documento marcado como revisado ✓');
+}
+
+function limpiarDoc(docId) {
+  const e = cargarEstado();
+  if (e[tipoActual]) delete e[tipoActual][docId];
+  guardarEstado(e);
+  delete window['_file_' + docId];
+  actualizarItemUI(docId);
+  showToast('Documento reiniciado');
+}
+
+// ── Contract type ─────────────────────────────────────────────────────────────
+function setTipo(tipo, btn) {
+  tipoActual = tipo;
+  document.querySelectorAll('.tipo-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderLista();
+}
+
+// ── Reset ─────────────────────────────────────────────────────────────────────
+function confirmarReset() {
+  if (!confirm('¿Reiniciar toda la verificación de ' + (tipoActual === 'arrendamiento' ? 'Arrendamiento' : 'Compraventa') + '? Se perderá el progreso.')) return;
+  const e = cargarEstado();
+  delete e[tipoActual];
+  guardarEstado(e);
+  renderLista();
+  showToast('Verificación reiniciada');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+renderLista();
+</script>
+</body>
+</html>
