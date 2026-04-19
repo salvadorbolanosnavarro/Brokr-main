@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Mis Contactos — Brokr</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --navy:#1a2744;--navy2:#0f1829;--navy3:#243358;
+  --teal:#2a9db5;--teal2:#3dbdd6;--tealp:#e8f7fa;
+  --silver:#f4f6f9;--silver2:#e8ecf2;--bdr:#dce2ef;
+  --txt:#1a2744;--mut:#6b7a99;--wh:#ffffff;--r:12px;--r2:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);min-height:100vh}
+
+/* ── PICKER BANNER ────────────────────────────────────────────── */
+.picker-banner{display:none;background:var(--navy);color:#fff;padding:10px 20px;text-align:center;font-size:13px;font-weight:600;position:sticky;top:0;z-index:20}
+.picker-banner.show{display:block}
+
+/* ── HEADER ───────────────────────────────────────────────────── */
+.header{background:var(--wh);border-bottom:1px solid var(--silver2);padding:16px 20px 0;position:sticky;top:0;z-index:10}
+.picker-banner.show ~ .header{top:38px}
+.header-top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.header-title{font-family:'Playfair Display',serif;font-size:22px;color:var(--navy);flex:1}
+.count-badge{font-size:12px;color:var(--mut);background:var(--silver);border-radius:20px;padding:3px 10px;font-weight:600}
+.add-btn{background:var(--navy);color:#fff;border:none;border-radius:10px;padding:8px 16px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s}
+.add-btn:hover{background:var(--navy3)}
+
+/* ── SEARCH ───────────────────────────────────────────────────── */
+.search-wrap{position:relative;margin-bottom:12px}
+.search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--mut);pointer-events:none}
+.search-input{width:100%;background:var(--silver);border:1.5px solid var(--silver2);border-radius:10px;padding:9px 11px 9px 36px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--txt);outline:none;transition:border .15s}
+.search-input:focus{border-color:var(--teal);background:#fff}
+
+/* ── FILTERS ──────────────────────────────────────────────────── */
+.filter-tabs{display:flex;gap:6px;padding:10px 0 0;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--silver2)}
+.filter-tabs::-webkit-scrollbar{display:none}
+.ftab{flex-shrink:0;padding:6px 14px;border-radius:20px 20px 0 0;border:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:var(--mut);cursor:pointer;transition:all .15s;border-bottom:2px solid transparent;margin-bottom:-1px}
+.ftab.active{color:var(--teal);border-bottom-color:var(--teal)}
+
+/* ── LIST ─────────────────────────────────────────────────────── */
+.list{padding:14px 20px 100px;display:flex;flex-direction:column;gap:10px}
+
+/* ── CONTACT CARD ─────────────────────────────────────────────── */
+.contact-card{background:var(--wh);border:1.5px solid var(--silver2);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:13px;cursor:pointer;transition:all .12s;position:relative}
+.contact-card:active{transform:scale(.98)}
+.contact-card.picker-mode:hover{border-color:var(--teal);background:var(--tealp)}
+
+.avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px}
+.av-1{background:#2a9db5}.av-2{background:#8b5cf6}.av-3{background:#10b981}
+.av-4{background:#f59e0b}.av-5{background:#e11d48}.av-6{background:#0ea5e9}
+.av-7{background:#1a2744}.av-8{background:#059669}
+
+.contact-info{flex:1;min-width:0}
+.contact-name{font-size:15px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.contact-meta{display:flex;align-items:center;gap:7px;margin-top:4px;flex-wrap:wrap}
+.role-badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:10px;white-space:nowrap}
+.contact-sub{font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.quick-acts{display:flex;gap:6px;flex-shrink:0}
+.qa{width:34px;height:34px;border-radius:8px;border:1.5px solid var(--silver2);background:var(--silver);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--mut);transition:all .12s;text-decoration:none;font-size:15px}
+.qa:hover{border-color:var(--teal);background:var(--tealp)}
+
+/* Role badge colors */
+.rb-arrendador{background:#e8f7fa;color:#1a7a8f}
+.rb-arrendatario{background:#eef2ff;color:#4338ca}
+.rb-comprador{background:#fef3c7;color:#92400e}
+.rb-vendedor{background:#f0fdf4;color:#15803d}
+.rb-obligado_solidario{background:#fdf4ff;color:#7e22ce}
+.rb-colega{background:#fff7ed;color:#9a3412}
+.rb-notario{background:#f0f9ff;color:#0369a1}
+.rb-otro{background:#f9fafb;color:#374151}
+
+/* ── EMPTY ────────────────────────────────────────────────────── */
+.empty{text-align:center;padding:60px 20px;color:var(--mut)}
+.empty svg{margin-bottom:16px;opacity:.3}
+.empty strong{display:block;font-size:16px;color:var(--navy);margin-bottom:6px}
+.empty p{font-size:14px;line-height:1.6}
+
+/* ── MODAL (ADD/EDIT) ─────────────────────────────────────────── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:none;align-items:flex-end;justify-content:center}
+.overlay.open{display:flex}
+.sheet{background:var(--wh);border-radius:20px 20px 0 0;width:100%;max-width:780px;max-height:93vh;display:flex;flex-direction:column;animation:slideUp .25s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.handle{width:40px;height:4px;background:var(--silver2);border-radius:2px;margin:12px auto 0;flex-shrink:0}
+.sheet-header{display:flex;align-items:center;padding:14px 20px 12px;border-bottom:1px solid var(--silver2);flex-shrink:0}
+.sheet-title{font-family:'Playfair Display',serif;font-size:18px;color:var(--navy);flex:1}
+.close-btn{width:32px;height:32px;border:none;background:var(--silver);border-radius:8px;cursor:pointer;font-size:16px;color:var(--mut);display:flex;align-items:center;justify-content:center}
+.close-btn:hover{background:var(--silver2)}
+.sheet-body{flex:1;overflow-y:auto;padding:20px}
+.sheet-footer{padding:14px 20px;border-top:1px solid var(--silver2);display:flex;gap:10px;flex-shrink:0;background:var(--wh)}
+
+/* Form */
+.sec-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin:18px 0 10px;display:flex;align-items:center;gap:8px}
+.sec-lbl:first-child{margin-top:0}
+.sec-lbl::after{content:'';flex:1;height:1px;background:var(--silver2)}
+.f{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.f label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+.f input,.f select,.f textarea{background:var(--silver);border:1.5px solid var(--silver2);border-radius:var(--r2);padding:9px 11px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--txt);outline:none;width:100%;transition:border .15s;-webkit-appearance:none}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--teal);background:#fff}
+.f textarea{resize:vertical;min-height:70px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.frow.three{grid-template-columns:1fr 1fr 1fr}
+.col-2{grid-column:1/3}
+
+/* Sexo toggle */
+.sexo-row{display:flex;gap:6px;margin-top:2px}
+.sexo-opt{flex:1;padding:8px;border:1.5px solid var(--bdr);border-radius:8px;background:none;color:var(--mut);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;text-align:center}
+.sexo-opt.active{border-color:var(--teal);background:rgba(42,157,181,.12);color:var(--teal2)}
+
+/* Buttons */
+.btn-primary{flex:1;padding:12px;background:var(--navy);color:#fff;border:none;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s}
+.btn-primary:hover{background:var(--navy3)}
+.btn-del{padding:12px 18px;background:#fff;color:#c00;border:1.5px solid #fcc;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-del:hover{background:#fff5f5}
+
+/* ── DETAIL SHEET ─────────────────────────────────────────────── */
+.det-hero{display:flex;align-items:center;gap:16px;padding:18px 20px 14px;border-bottom:1px solid var(--silver2)}
+.det-av{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:21px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px}
+.det-hero-info .det-name{font-size:18px;font-weight:700;color:var(--navy);margin-bottom:5px}
+.det-body{flex:1;overflow-y:auto;padding:16px 20px 20px}
+.det-row{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--silver2);gap:12px}
+.det-row:last-child{border-bottom:none}
+.det-lbl{font-size:11px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;flex-shrink:0}
+.det-val{font-size:13px;color:var(--navy);text-align:right;line-height:1.4}
+.det-val a{color:var(--teal);text-decoration:none}
+.det-acts{display:flex;gap:8px;padding:12px 20px;border-top:1px solid var(--silver2)}
+.det-btn{flex:1;padding:11px;border:1.5px solid var(--silver2);border-radius:var(--r2);background:var(--silver);color:var(--navy);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .12s}
+.det-btn:hover{border-color:var(--teal);background:var(--tealp);color:var(--teal)}
+.det-btn.navy{background:var(--navy);color:#fff;border-color:var(--navy)}
+.det-btn.navy:hover{background:var(--navy3)}
+.det-btn.red{color:#c00;border-color:#fcc}
+.det-btn.red:hover{background:#fff5f5}
+.nota-box{background:var(--silver);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--txt);line-height:1.55;margin-top:6px}
+.op-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--silver2);align-items:flex-start}
+.op-item:last-child{border-bottom:none}
+.op-ico{width:30px;height:30px;border-radius:8px;background:var(--tealp);color:var(--teal);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.op-desc{font-size:13px;color:var(--navy);font-weight:500}
+.op-date{font-size:11px;color:var(--mut);margin-top:2px}
+
+/* ── TOAST ────────────────────────────────────────────────────── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:500;opacity:0;transition:all .25s;z-index:999;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- PICKER BANNER -->
+<div class="picker-banner" id="picker-banner">
+  Seleccionando contacto — toca el que quieres usar
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div class="header-title">Mis Contactos</div>
+    <span class="count-badge" id="count-badge">0</span>
+    <button class="add-btn" id="add-btn-top" onclick="abrirModal()">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+      Nuevo
+    </button>
+  </div>
+  <div class="search-wrap">
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="search" class="search-input" id="search-input" placeholder="Buscar por nombre, teléfono o correo..." oninput="renderLista()"/>
+  </div>
+  <div class="filter-tabs">
+    <button class="ftab active" onclick="setFiltro('todos',this)">Todos</button>
+    <button class="ftab" onclick="setFiltro('arrendador',this)">Propietarios</button>
+    <button class="ftab" onclick="setFiltro('arrendatario',this)">Inquilinos</button>
+    <button class="ftab" onclick="setFiltro('comprador',this)">Compradores</button>
+    <button class="ftab" onclick="setFiltro('vendedor',this)">Vendedores</button>
+    <button class="ftab" onclick="setFiltro('colega',this)">Colegas</button>
+    <button class="ftab" onclick="setFiltro('notario',this)">Notarios</button>
+    <button class="ftab" onclick="setFiltro('otro',this)">Otros</button>
+  </div>
+</div>
+
+<!-- LIST -->
+<div class="list" id="lista"></div>
+
+<!-- ══ ADD/EDIT MODAL ══ -->
+<div class="overlay" id="modal-ov" onclick="if(event.target===this)cerrarModal()">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title" id="modal-title">Nuevo contacto</div>
+      <button class="close-btn" onclick="cerrarModal()">✕</button>
+    </div>
+    <div class="sheet-body">
+
+      <div class="sec-lbl">Información básica</div>
+      <div class="f">
+        <label>Nombre completo *</label>
+        <input id="m-nombre" type="text" placeholder="Ej. Salvador Bolaños Navarro"/>
+      </div>
+      <div class="frow">
+        <div class="f"><label>Teléfono *</label><input id="m-tel" type="tel" placeholder="443 123 4567"/></div>
+        <div class="f"><label>WhatsApp</label><input id="m-wa" type="tel" placeholder="Si es distinto al teléfono"/></div>
+      </div>
+      <div class="f"><label>Correo electrónico</label><input id="m-email" type="email" placeholder="correo@ejemplo.com"/></div>
+      <div class="frow">
+        <div class="f">
+          <label>Rol / Tipo</label>
+          <select id="m-tipo">
+            <option value="arrendador">Propietario / Arrendador</option>
+            <option value="arrendatario">Inquilino / Arrendatario</option>
+            <option value="comprador">Comprador</option>
+            <option value="vendedor">Vendedor</option>
+            <option value="obligado_solidario">Obligado solidario</option>
+            <option value="colega">Colega / Agente</option>
+            <option value="notario">Notario</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="f">
+          <label>Sexo</label>
+          <div class="sexo-row">
+            <button class="sexo-opt active" data-s="M" onclick="setSexo('M',this)">♂ Masc.</button>
+            <button class="sexo-opt" data-s="F" onclick="setSexo('F',this)">♀ Fem.</button>
+          </div>
+        </div>
+      </div>
+      <div class="f"><label>Empresa / Inmobiliaria</label><input id="m-empresa" type="text" placeholder="Ej. Grupo Inmobiliario XYZ"/></div>
+
+      <div class="sec-lbl">Domicilio</div>
+      <div class="frow three">
+        <div class="f col-2"><label>Calle</label><input id="m-calle" type="text" placeholder="Ej. AV. CAMELINAS" oninput="this.value=this.value.toUpperCase()"/></div>
+        <div class="f"><label>Núm. ext.</label><input id="m-numext" type="text" placeholder="123" oninput="this.value=this.value.toUpperCase()"/></div>
+        <div class="f"><label>Núm. int.</label><input id="m-numint" type="text" placeholder="4-A" oninput="this.value=this.value.toUpperCase()"/></div>
+        <div class="f"><label>C.P.</label><input id="m-cp" type="text" placeholder="58260" maxlength="5" oninput="this.value=this.value.replace(/\D/g,'')"/></div>
+      </div>
+      <div class="frow">
+        <div class="f"><label>Colonia</label><input id="m-colonia" type="text" placeholder="Ej. CHAPULTEPEC" oninput="this.value=this.value.toUpperCase()"/></div>
+        <div class="f"><label>Municipio / Estado</label><input id="m-mpio" type="text" placeholder="MORELIA, MICHOACÁN" oninput="this.value=this.value.toUpperCase()"/></div>
+      </div>
+
+      <div class="sec-lbl">Datos bancarios</div>
+      <div class="frow">
+        <div class="f"><label>Banco</label><input id="m-banco" type="text" placeholder="Ej. BBVA"/></div>
+        <div class="f"><label>Cuenta / CLABE</label><input id="m-cuenta" type="text" placeholder="012345678901234567"/></div>
+      </div>
+
+      <div class="sec-lbl">Notas</div>
+      <div class="f"><label>Observaciones</label><textarea id="m-notas" rows="3" placeholder="Ej. Prefiere WhatsApp. Verificado. Responde rápido."></textarea></div>
+
+    </div>
+    <div class="sheet-footer">
+      <button class="btn-del" id="btn-del" onclick="confirmarEliminar()" style="display:none">Eliminar</button>
+      <button class="btn-primary" onclick="guardarContacto()">Guardar contacto</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DETAIL SHEET ══ -->
+<div class="overlay" id="detail-ov" onclick="if(event.target===this)cerrarDetalle()">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="det-hero">
+      <div class="det-av" id="det-av"></div>
+      <div class="det-hero-info">
+        <div class="det-name" id="det-nombre"></div>
+        <div id="det-badge" style="margin-bottom:4px"></div>
+        <div style="font-size:12px;color:var(--mut)" id="det-empresa"></div>
+      </div>
+      <button class="close-btn" onclick="cerrarDetalle()" style="margin-left:auto;align-self:flex-start">✕</button>
+    </div>
+    <div class="det-body" id="det-body"></div>
+    <div class="det-acts">
+      <a class="det-btn" id="det-wa-btn" href="#" target="_blank">💬 WA</a>
+      <a class="det-btn" id="det-call-btn" href="#">📞 Llamar</a>
+      <a class="det-btn" id="det-mail-btn" href="#">✉️ Email</a>
+      <button class="det-btn navy" onclick="editarDesdeDetalle()">✏️ Editar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const LS_KEY = 'brokr_contactos';
+let sexoActual = 'M';
+let editandoId = null;
+let detContacto = null;
+let filtroActual = 'todos';
+
+// Picker mode (called from another module via iframe)
+const params = new URLSearchParams(location.search);
+const IS_PICKER = params.get('picker') === '1';
+const PICKER_TIPO = params.get('tipo') || '';
+
+if (IS_PICKER) {
+  document.getElementById('picker-banner').classList.add('show');
+  document.getElementById('add-btn-top').style.display = 'none';
+  // Pre-select filter if tipo provided
+  if (PICKER_TIPO) {
+    const tabMap = {arrendador:'Propietarios',arrendatario:'Inquilinos',comprador:'Compradores',vendedor:'Vendedores',colega:'Colegas',notario:'Notarios'};
+    filtroActual = PICKER_TIPO;
+    document.querySelectorAll('.ftab').forEach(b => {
+      b.classList.toggle('active', b.textContent === (tabMap[PICKER_TIPO]||'Todos'));
+    });
+  }
+}
+
+// ── Data ──────────────────────────────────────────────────────────────────────
+function cargar() { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); }
+function guardar(arr) { localStorage.setItem(LS_KEY, JSON.stringify(arr)); }
+function gv(id) { return (document.getElementById(id)?.value || '').trim(); }
+function sv(id, v) { const el = document.getElementById(id); if (el) el.value = v || ''; }
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const ROLES = {
+  arrendador:         { lbl:'Propietario',      cls:'rb-arrendador' },
+  arrendatario:       { lbl:'Inquilino',         cls:'rb-arrendatario' },
+  comprador:          { lbl:'Comprador',         cls:'rb-comprador' },
+  vendedor:           { lbl:'Vendedor',          cls:'rb-vendedor' },
+  obligado_solidario: { lbl:'Oblig. solidario',  cls:'rb-obligado_solidario' },
+  colega:             { lbl:'Colega',            cls:'rb-colega' },
+  notario:            { lbl:'Notario',           cls:'rb-notario' },
+  otro:               { lbl:'Otro',              cls:'rb-otro' },
+};
+
+function rolBadge(tipo) {
+  const r = ROLES[tipo] || ROLES.otro;
+  return `<span class="role-badge ${r.cls}">${r.lbl}</span>`;
+}
+
+function avColor(nombre) {
+  let h = 0;
+  for (let i = 0; i < nombre.length; i++) h = (h * 31 + nombre.charCodeAt(i)) | 0;
+  return `av-${(Math.abs(h) % 8) + 1}`;
+}
+
+function initials(nombre) {
+  const p = nombre.trim().split(/\s+/);
+  return p.length >= 2 ? (p[0][0] + p[1][0]).toUpperCase() : nombre.slice(0,2).toUpperCase();
+}
+
+function domicilio(c) {
+  const parts = [];
+  if (c.calle) parts.push(c.calle + (c.num_ext ? ' No. ' + c.num_ext : '') + (c.num_int ? ' Int. ' + c.num_int : ''));
+  if (c.colonia) parts.push('Col. ' + c.colonia);
+  if (c.cp) parts.push('C.P. ' + c.cp);
+  if (c.mpio) parts.push(c.mpio);
+  return parts.join(', ');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function renderLista() {
+  const todos = cargar();
+  const q = gv('search-input').toLowerCase();
+
+  const filtrados = todos.filter(c => {
+    const okTipo = filtroActual === 'todos' || c.tipo === filtroActual;
+    const okQ = !q || [c.nombre, c.telefono, c.email, c.empresa].some(v => (v||'').toLowerCase().includes(q));
+    return okTipo && okQ;
+  });
+
+  document.getElementById('count-badge').textContent = todos.length;
+
+  const lista = document.getElementById('lista');
+  if (!filtrados.length) {
+    lista.innerHTML = `<div class="empty">
+      <svg width="52" height="52" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.3" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>
+      <strong>${(q || filtroActual !== 'todos') ? 'Sin resultados' : 'Sin contactos aún'}</strong>
+      <p>${(q || filtroActual !== 'todos') ? 'Prueba con otros términos o cambia el filtro.' : 'Agrega tu primer contacto con el botón "Nuevo".'}</p>
+    </div>`;
+    return;
+  }
+
+  lista.innerHTML = filtrados.map(c => {
+    const sub = c.telefono || c.email || c.empresa || '';
+    const pickerCls = IS_PICKER ? ' picker-mode' : '';
+    const clickFn = IS_PICKER ? `seleccionarContacto('${c.id}')` : `abrirDetalle('${c.id}')`;
+    return `<div class="contact-card${pickerCls}" onclick="${clickFn}">
+      <div class="avatar ${avColor(c.nombre)}">${initials(c.nombre)}</div>
+      <div class="contact-info">
+        <div class="contact-name">${c.nombre}</div>
+        <div class="contact-meta">${rolBadge(c.tipo)}<span class="contact-sub">${sub}</span></div>
+      </div>
+      ${!IS_PICKER ? `<div class="quick-acts" onclick="event.stopPropagation()">
+        ${(c.telefono||c.wa) ? `<a class="qa" href="https://wa.me/52${(c.wa||c.telefono).replace(/\D/g,'')}" target="_blank" title="WhatsApp">💬</a>` : ''}
+        ${c.telefono ? `<a class="qa" href="tel:${c.telefono}" title="Llamar">📞</a>` : ''}
+      </div>` : '<div style="color:var(--teal);font-size:13px;font-weight:600">Seleccionar →</div>'}
+    </div>`;
+  }).join('');
+}
+
+// ── Picker mode ───────────────────────────────────────────────────────────────
+function seleccionarContacto(id) {
+  const c = cargar().find(x => x.id === id);
+  if (!c) return;
+  // Send to parent iframe
+  window.parent.postMessage({ tipo: 'brokr_contacto_seleccionado', contacto: c }, '*');
+  // Also try opener
+  if (window.opener) window.opener.postMessage({ tipo: 'brokr_contacto_seleccionado', contacto: c }, '*');
+}
+
+// ── Filters ───────────────────────────────────────────────────────────────────
+function setFiltro(tipo, btn) {
+  filtroActual = tipo;
+  document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderLista();
+}
+
+// ── Sexo ──────────────────────────────────────────────────────────────────────
+function setSexo(s, btn) {
+  sexoActual = s;
+  document.querySelectorAll('.sexo-opt').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+function abrirModal(id = null) {
+  editandoId = id;
+  if (id) {
+    const c = cargar().find(x => x.id === id);
+    if (!c) return;
+    document.getElementById('modal-title').textContent = 'Editar contacto';
+    sv('m-nombre', c.nombre); sv('m-tel', c.telefono); sv('m-wa', c.wa || c.whatsapp);
+    sv('m-email', c.email); sv('m-empresa', c.empresa);
+    sv('m-calle', c.calle); sv('m-numext', c.num_ext); sv('m-numint', c.num_int);
+    sv('m-colonia', c.colonia); sv('m-cp', c.cp); sv('m-mpio', c.mpio);
+    sv('m-banco', c.banco); sv('m-cuenta', c.cuenta); sv('m-notas', c.notas);
+    document.getElementById('m-tipo').value = c.tipo || 'arrendador';
+    const sx = c.sexo || 'M';
+    sexoActual = sx;
+    document.querySelectorAll('.sexo-opt').forEach(b => b.classList.toggle('active', b.dataset.s === sx));
+    document.getElementById('btn-del').style.display = 'block';
+  } else {
+    document.getElementById('modal-title').textContent = 'Nuevo contacto';
+    ['m-nombre','m-tel','m-wa','m-email','m-empresa','m-calle','m-numext','m-numint','m-colonia','m-cp','m-banco','m-cuenta','m-notas'].forEach(i => sv(i,''));
+    sv('m-mpio','MORELIA, MICHOACÁN');
+    document.getElementById('m-tipo').value = 'arrendador';
+    sexoActual = 'M';
+    document.querySelectorAll('.sexo-opt').forEach(b => b.classList.toggle('active', b.dataset.s === 'M'));
+    document.getElementById('btn-del').style.display = 'none';
+  }
+  document.getElementById('modal-ov').classList.add('open');
+  setTimeout(() => document.getElementById('m-nombre').focus(), 100);
+}
+
+function cerrarModal() { document.getElementById('modal-ov').classList.remove('open'); editandoId = null; }
+
+function guardarContacto() {
+  const nombre = gv('m-nombre');
+  const tel    = gv('m-tel');
+  if (!nombre) { alert('El nombre es obligatorio.'); document.getElementById('m-nombre').focus(); return; }
+  if (!tel)    { alert('El teléfono es obligatorio.'); document.getElementById('m-tel').focus(); return; }
+
+  const contactos = cargar();
+  const ahora = new Date().toISOString();
+  const datos = {
+    nombre: nombre.toUpperCase(),
+    telefono: tel,
+    wa: gv('m-wa'),
+    email: gv('m-email').toLowerCase(),
+    tipo: document.getElementById('m-tipo').value,
+    sexo: sexoActual,
+    empresa: gv('m-empresa'),
+    calle: gv('m-calle'),
+    num_ext: gv('m-numext'),
+    num_int: gv('m-numint'),
+    colonia: gv('m-colonia'),
+    cp: gv('m-cp'),
+    mpio: gv('m-mpio'),
+    banco: gv('m-banco'),
+    cuenta: gv('m-cuenta'),
+    notas: gv('m-notas'),
+    updated_at: ahora,
+  };
+
+  if (editandoId) {
+    const idx = contactos.findIndex(c => c.id === editandoId);
+    if (idx >= 0) contactos[idx] = { ...contactos[idx], ...datos };
+  } else {
+    datos.id = 'c_' + Date.now();
+    datos.created_at = ahora;
+    datos.operaciones = [];
+    contactos.unshift(datos);
+  }
+
+  guardar(contactos);
+  cerrarModal();
+  renderLista();
+  showToast(editandoId ? 'Contacto actualizado ✓' : 'Contacto guardado ✓');
+}
+
+function confirmarEliminar() {
+  if (!editandoId) return;
+  if (!confirm('¿Eliminar este contacto? Esta acción no se puede deshacer.')) return;
+  guardar(cargar().filter(c => c.id !== editandoId));
+  cerrarModal();
+  cerrarDetalle();
+  renderLista();
+  showToast('Contacto eliminado');
+}
+
+// ── Detail ────────────────────────────────────────────────────────────────────
+function abrirDetalle(id) {
+  const c = cargar().find(x => x.id === id);
+  if (!c) return;
+  detContacto = c;
+
+  const av = document.getElementById('det-av');
+  av.textContent = initials(c.nombre);
+  av.className = `det-av ${avColor(c.nombre)}`;
+  document.getElementById('det-nombre').textContent = c.nombre;
+  document.getElementById('det-badge').innerHTML = rolBadge(c.tipo);
+  document.getElementById('det-empresa').textContent = c.empresa || '';
+
+  const wa = c.wa || c.telefono;
+  const waBtn = document.getElementById('det-wa-btn');
+  const callBtn = document.getElementById('det-call-btn');
+  const mailBtn = document.getElementById('det-mail-btn');
+  waBtn.href = wa ? `https://wa.me/52${wa.replace(/\D/g,'')}` : '#';
+  callBtn.href = c.telefono ? `tel:${c.telefono}` : '#';
+  mailBtn.href = c.email ? `mailto:${c.email}` : '#';
+  if (!wa) waBtn.style.opacity = '.4';
+  if (!c.telefono) callBtn.style.opacity = '.4';
+  if (!c.email) mailBtn.style.opacity = '.4';
+
+  const rows = [];
+  if (c.telefono) rows.push(['Teléfono', `<a href="tel:${c.telefono}">${c.telefono}</a>`]);
+  if (c.wa)       rows.push(['WhatsApp', `<a href="https://wa.me/52${c.wa.replace(/\D/g,'')}" target="_blank">${c.wa}</a>`]);
+  if (c.email)    rows.push(['Correo', `<a href="mailto:${c.email}">${c.email}</a>`]);
+  const dir = domicilio(c);
+  if (dir) rows.push(['Domicilio', dir]);
+  if (c.banco)   rows.push(['Banco', c.banco]);
+  if (c.cuenta)  rows.push(['Cuenta / CLABE', c.cuenta]);
+  rows.push(['Sexo', c.sexo === 'F' ? 'Femenino' : 'Masculino']);
+  if (c.created_at) rows.push(['Agregado', new Date(c.created_at).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'})]);
+
+  let html = rows.map(([l,v]) => `<div class="det-row"><span class="det-lbl">${l}</span><span class="det-val">${v}</span></div>`).join('');
+  if (c.notas) html += `<div style="margin-top:14px"><div class="det-lbl" style="margin-bottom:6px">Notas</div><div class="nota-box">${c.notas}</div></div>`;
+  if (c.operaciones && c.operaciones.length) {
+    html += `<div style="margin-top:18px"><div class="det-lbl" style="margin-bottom:8px">Historial de operaciones</div>` +
+      c.operaciones.map(op => `<div class="op-item"><div class="op-ico">${op.icono||'📋'}</div><div><div class="op-desc">${op.desc}</div><div class="op-date">${op.fecha}</div></div></div>`).join('') +
+      '</div>';
+  }
+
+  document.getElementById('det-body').innerHTML = html;
+  document.getElementById('detail-ov').classList.add('open');
+}
+
+function cerrarDetalle() { document.getElementById('detail-ov').classList.remove('open'); detContacto = null; }
+
+function editarDesdeDetalle() {
+  if (!detContacto) return;
+  cerrarDetalle();
+  abrirModal(detContacto.id);
+}
+
+// ── Registrar operación desde otro módulo ─────────────────────────────────────
+// Otro módulo puede llamar: postMessage({tipo:'brokr_registrar_op', contacto_id, op:{desc,icono,fecha}})
+window.addEventListener('message', e => {
+  if (!e.data || e.data.tipo !== 'brokr_registrar_op') return;
+  const contactos = cargar();
+  const c = contactos.find(x => x.id === e.data.contacto_id);
+  if (!c) return;
+  if (!c.operaciones) c.operaciones = [];
+  c.operaciones.unshift(e.data.op);
+  guardar(contactos);
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+renderLista();
+</script>
+</body>
+</html>
