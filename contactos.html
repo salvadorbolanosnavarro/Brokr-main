@@ -96,7 +96,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
 .close-btn{width:32px;height:32px;border:none;background:var(--silver);border-radius:8px;cursor:pointer;font-size:16px;color:var(--mut);display:flex;align-items:center;justify-content:center}
 .close-btn:hover{background:var(--silver2)}
 .sheet-body{flex:1;overflow-y:auto;padding:20px}
-.sheet-footer{padding:14px 20px;border-top:1px solid var(--silver2);display:flex;gap:10px;flex-shrink:0;background:var(--wh)}
+.sheet-footer{display:none}
 
 /* Form */
 .sec-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin:18px 0 10px;display:flex;align-items:center;gap:8px}
@@ -252,11 +252,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
       <div class="sec-lbl">Notas</div>
       <div class="f"><label>Observaciones</label><textarea id="m-notas" rows="3" placeholder="Ej. Prefiere WhatsApp. Verificado. Responde rápido."></textarea></div>
 
+      <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--silver2);display:flex;gap:10px">
+        <button class="btn-del" id="btn-del" onclick="confirmarEliminar()" style="display:none">Eliminar</button>
+        <button class="btn-primary" onclick="guardarContacto()">Guardar contacto</button>
+      </div>
+      <div style="height:8px"></div>
+
     </div>
-    <div class="sheet-footer">
-      <button class="btn-del" id="btn-del" onclick="confirmarEliminar()" style="display:none">Eliminar</button>
-      <button class="btn-primary" onclick="guardarContacto()">Guardar contacto</button>
-    </div>
+    <div class="sheet-footer"></div>
   </div>
 </div>
 
