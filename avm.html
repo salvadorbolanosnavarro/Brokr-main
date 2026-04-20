@@ -287,6 +287,57 @@
     .toggle-opt { display: flex; background: var(--gray-100); border-radius: 10px; padding: 3px; margin-bottom: 10px; }
     .toggle-btn { flex: 1; padding: 7px 4px; font-size: 11px; font-weight: 600; font-family: 'Poppins', sans-serif; border: none; border-radius: 8px; cursor: pointer; color: var(--gray-600); background: transparent; transition: all 0.15s; }
     .toggle-btn.active { background: white; color: var(--teal-dark); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+    /* ── OPINIÓN EDITABLE ── */
+    .opinion-page { background: white; max-width: 760px; margin: 0 auto 20px; padding: 28px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .opinion-header-bar { border-bottom: 3px solid var(--navy); padding-bottom: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px; }
+    .opinion-logo { font-size: 20px; font-weight: 800; color: var(--navy); letter-spacing: 1.5px; }
+    .opinion-doc-title { font-size: 13px; font-weight: 700; color: var(--navy); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .opinion-meta { text-align: right; font-size: 11px; color: var(--gray-400); line-height: 2; }
+    .opinion-section { margin-bottom: 20px; }
+    .opinion-section-title { font-size: 10px; font-weight: 700; color: var(--teal); text-transform: uppercase; letter-spacing: 1px; padding-bottom: 5px; border-bottom: 1px solid var(--gray-200); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+    .opinion-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 22px; }
+    .opinion-field-label { font-size: 10px; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+    .opinion-field-value { font-size: 12px; font-weight: 600; color: var(--text); }
+    .opinion-valor-hero { background: linear-gradient(135deg, var(--navy), #1e2d47); border-radius: 14px; padding: 18px 22px; color: white; margin-bottom: 14px; }
+    .opinion-valor-label { font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; }
+    .opinion-valor-num { font-size: 30px; font-weight: 800; color: var(--teal); }
+    .opinion-valor-sub { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 5px; }
+    .opinion-editable {
+      width: 100%; border: 1.5px dashed rgba(42,157,181,0.4); border-radius: 10px;
+      padding: 11px 13px; font-family: 'Poppins', sans-serif; font-size: 12px;
+      color: var(--text); background: rgba(42,157,181,0.02); resize: vertical;
+      outline: none; min-height: 80px; line-height: 1.6;
+    }
+    .opinion-editable:focus { border-color: var(--teal); background: white; }
+    .opinion-input-inline {
+      border: 1.5px dashed rgba(42,157,181,0.4); border-radius: 8px;
+      padding: 5px 10px; font-family: 'Poppins', sans-serif; font-size: 12px;
+      color: var(--text); background: rgba(42,157,181,0.02); outline: none; width: 100%;
+    }
+    .opinion-input-inline:focus { border-color: var(--teal); background: white; }
+    .comp-tabla { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 6px; }
+    .comp-tabla th { background: var(--navy); color: white; padding: 6px 7px; text-align: left; font-weight: 600; }
+    .comp-tabla td { padding: 5px 7px; border-bottom: 1px solid var(--gray-200); color: var(--text); }
+    .comp-tabla tr:nth-child(even) td { background: var(--gray-100); }
+    .opinion-firma { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 6px; }
+    .opinion-firma-label { font-size: 10px; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .btn-print {
+      display: flex; align-items: center; gap: 8px; padding: 12px 20px;
+      background: var(--navy); color: white; border: none; border-radius: 12px;
+      font-size: 13px; font-weight: 700; font-family: 'Poppins', sans-serif;
+      cursor: pointer; transition: opacity 0.15s; white-space: nowrap;
+    }
+    .btn-print:active { opacity: 0.85; }
+    @media print {
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      .no-print { display: none !important; }
+      .avm-body { padding: 0 !important; background: white !important; }
+      body, html { background: white !important; }
+      .opinion-page { box-shadow: none !important; border: none !important; border-radius: 0 !important; padding: 20px !important; max-width: 100% !important; margin: 0 !important; }
+      .opinion-editable, .opinion-input-inline { border: none !important; background: transparent !important; padding: 0 !important; outline: none !important; }
+      .comp-tabla th { background: #0f1829 !important; color: white !important; }
+    }
   </style>
 </head>
 <body>
@@ -488,6 +539,9 @@
       const [resultado, setResultado] = React.useState(null);
       const [errorMsg, setErrorMsg] = React.useState("");
       const [pdfLoading, setPdfLoading] = React.useState(false);
+      const [opinionMode, setOpinionMode] = React.useState(false);
+      const [opFields, setOpFields] = React.useState({ solicitante: "", empresa: "", expediente: "", valuador: "", cedula: "", observaciones: "", resumen: null, analisisZona: null, conclusiones: null });
+      const uof = (k, v) => setOpFields(p => ({ ...p, [k]: v }));
 
       const u = (k, v) => setForm(p => ({ ...p, [k]: v }));
       const esTerreno = form.tipo === "terreno";
@@ -795,14 +849,183 @@
               </div>
             )}
 
-            <button className="btn-pdf" onClick={descargarPDF} disabled={pdfLoading}>
-              {pdfLoading ? <><div className="spinner" />Generando PDF...</> : "Descargar opinión de valor en PDF"}
+            <button className="btn-pdf no-print" onClick={() => { setOpinionMode(true); window.scrollTo(0,0); }}>
+              📄 Ver y editar opinión completa
             </button>
 
-            <button className="btn-primary outline" style={{ marginTop: 10 }}
-              onClick={() => { setEstado("idle"); setResultado(null); }}>
+            <button className="btn-pdf no-print" style={{ background: "var(--navy-mid)", marginTop: 8 }} onClick={descargarPDF} disabled={pdfLoading}>
+              {pdfLoading ? <><div className="spinner" />Generando PDF...</> : "⬇️ Descargar PDF (backend)"}
+            </button>
+
+            <button className="btn-primary outline no-print" style={{ marginTop: 10 }}
+              onClick={() => { setEstado("idle"); setResultado(null); setOpinionMode(false); }}>
               Nueva valuación
             </button>
+
+            {/* ── OPINIÓN DE VALOR EDITABLE ── */}
+            {opinionMode && (() => {
+              const fmtMXN2 = (n) => "$" + Math.round(n || 0).toLocaleString("es-MX");
+              const defaultResumen = resultado.resumen_ejecutivo || "";
+              const defaultAnalisis = resultado.analisis_zona || "";
+              const defaultConclusiones = `Con base en el análisis comparativo realizado mediante búsqueda en tiempo real de portales inmobiliarios, se determina que el valor comercial de ${form.tipo === "terreno" ? "el terreno" : "la propiedad"} ubicada en ${form.colonia}${form.ciudad ? ", " + form.ciudad : ""}, al día de hoy, asciende a la cantidad de ${fmtMXN2(resultado.valor_estimado)} (${Math.round(resultado.valor_estimado || 0).toLocaleString("es-MX")} pesos 00/100 M.N.), con un nivel de confianza ${resultado.nivel_confianza || "media"}.`;
+              return (
+                <div style={{ marginTop: 14 }}>
+                  <div className="no-print avm-card" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 13 }}>📄 Opinión de Valor — edita y descarga</div>
+                      <div style={{ fontSize: 11, color: "var(--gray-400)", marginTop: 2 }}>Los campos con borde punteado son editables. Luego imprime o guarda como PDF.</div>
+                    </div>
+                    <button className="btn-print" onClick={() => window.print()}>🖨️ Imprimir / PDF</button>
+                  </div>
+
+                  <div className="opinion-page">
+
+                    <div className="opinion-header-bar">
+                      <div>
+                        <div className="opinion-logo">BROKR<span style={{ color: "var(--teal)" }}>®</span></div>
+                        <div className="opinion-doc-title">Opinión de Valor</div>
+                      </div>
+                      <div className="opinion-meta">
+                        <div>Fecha: {new Date().toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" })}</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <span>Exp. No.:</span>
+                          <input className="opinion-input-inline" style={{ width: 130 }} value={opFields.expediente} onChange={e => uof("expediente", e.target.value)} placeholder="OV-2024-001" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="opinion-section">
+                      <div className="opinion-section-title">Datos del solicitante</div>
+                      <div className="opinion-grid">
+                        <div><div className="opinion-field-label">Nombre</div><input className="opinion-input-inline" value={opFields.solicitante} onChange={e => uof("solicitante", e.target.value)} placeholder="Nombre del cliente" /></div>
+                        <div><div className="opinion-field-label">Empresa / Institución</div><input className="opinion-input-inline" value={opFields.empresa} onChange={e => uof("empresa", e.target.value)} placeholder="Empresa (opcional)" /></div>
+                      </div>
+                    </div>
+
+                    <div className="opinion-section">
+                      <div className="opinion-section-title">Descripción del inmueble sujeto</div>
+                      <div className="opinion-grid">
+                        <div><div className="opinion-field-label">Tipo de inmueble</div><div className="opinion-field-value">{form.tipo.charAt(0).toUpperCase() + form.tipo.slice(1)}</div></div>
+                        {form.colonia && <div><div className="opinion-field-label">Colonia / Fraccionamiento</div><div className="opinion-field-value">{form.colonia}</div></div>}
+                        {form.ciudad  && <div><div className="opinion-field-label">Ciudad</div><div className="opinion-field-value">{form.ciudad}</div></div>}
+                        {parseFloat(form.m2_terreno) > 0  && <div><div className="opinion-field-label">Superficie terreno</div><div className="opinion-field-value">{form.m2_terreno} m²</div></div>}
+                        {parseFloat(form.m2_construccion) > 0 && <div><div className="opinion-field-label">Superficie construcción</div><div className="opinion-field-value">{form.m2_construccion} m²</div></div>}
+                        {parseInt(form.recamaras) > 0     && <div><div className="opinion-field-label">Recámaras</div><div className="opinion-field-value">{form.recamaras}</div></div>}
+                        {parseFloat(form.banos) > 0       && <div><div className="opinion-field-label">Baños</div><div className="opinion-field-value">{form.banos}</div></div>}
+                        {parseInt(form.estacionamientos) > 0 && <div><div className="opinion-field-label">Estacionamientos</div><div className="opinion-field-value">{form.estacionamientos}</div></div>}
+                        {form.condicion_terreno && form.tipo === "terreno" && <div><div className="opinion-field-label">Condición del terreno</div><div className="opinion-field-value">{form.condicion_terreno}</div></div>}
+                        <div><div className="opinion-field-label">Operación</div><div className="opinion-field-value">{form.operacion === "venta" ? "Venta" : "Renta"}</div></div>
+                      </div>
+                      {form.comentarios && <div style={{ marginTop: 8, fontSize: 12, color: "var(--gray-600)" }}><span style={{ color: "var(--gray-400)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>Comentarios: </span>{form.comentarios}</div>}
+                    </div>
+
+                    <div className="opinion-valor-hero">
+                      <div className="opinion-valor-label">Valor comercial estimado</div>
+                      <div className="opinion-valor-num">{fmtMXN2(resultado.valor_estimado)}</div>
+                      <div className="opinion-valor-sub">
+                        Rango: {fmtMXN2(resultado.valor_minimo)} — {fmtMXN2(resultado.valor_maximo)}
+                        {resultado.valor_por_m2 > 0 && ` · ${fmtMXN2(resultado.valor_por_m2)}/m²`}
+                        {" · "}Confianza: <strong style={{ color: "white" }}>{resultado.nivel_confianza}</strong>
+                      </div>
+                    </div>
+
+                    <div className="opinion-section">
+                      <div className="opinion-section-title">
+                        <span>Resumen ejecutivo</span>
+                        {opFields.resumen !== null && <button className="no-print" onClick={() => uof("resumen", null)} style={{ background: "none", border: "none", fontSize: 10, color: "var(--teal)", cursor: "pointer", fontFamily: "'Poppins',sans-serif" }}>↺ Restaurar</button>}
+                      </div>
+                      <textarea className="opinion-editable" value={opFields.resumen !== null ? opFields.resumen : defaultResumen} onChange={e => uof("resumen", e.target.value)} />
+                    </div>
+
+                    {(resultado.comparables || []).length > 0 && (
+                      <div className="opinion-section">
+                        <div className="opinion-section-title">Comparables encontrados en el mercado ({resultado.comparables.length})</div>
+                        <table className="comp-tabla">
+                          <thead><tr><th>#</th><th>Descripción</th><th>Precio</th><th>Superficie</th><th>$/m²</th><th>Fuente</th></tr></thead>
+                          <tbody>
+                            {resultado.comparables.map((c, i) => (
+                              <tr key={i}>
+                                <td>{i + 1}</td>
+                                <td>{c.descripcion}</td>
+                                <td style={{ fontWeight: 700 }}>{fmtMXN2(c.precio)}</td>
+                                <td>{c.superficie_m2} m²</td>
+                                <td style={{ color: "var(--teal-dark)", fontWeight: 700 }}>{fmtMXN2(c.precio_m2)}</td>
+                                <td style={{ color: "var(--gray-400)", fontStyle: "italic" }}>{c.fuente}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    {(resultado.factores_ajuste || []).length > 0 && (
+                      <div className="opinion-section">
+                        <div className="opinion-section-title">Factores de homologación y ajuste</div>
+                        {resultado.factores_ajuste.map((f, i) => (
+                          <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", padding: "7px 0", borderBottom: "1px solid var(--gray-100)", fontSize: 12 }}>
+                            <div style={{ width: 8, height: 8, borderRadius: "50%", background: f.impacto === "positivo" ? "var(--emerald)" : f.impacto === "negativo" ? "var(--rose)" : "var(--gray-400)", flexShrink: 0, marginTop: 4 }} />
+                            <div><div style={{ fontWeight: 600, color: "var(--text)" }}>{f.factor}</div><div style={{ fontSize: 11, color: "var(--gray-600)", marginTop: 2 }}>{f.descripcion}</div></div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {(defaultAnalisis || opFields.analisisZona !== null) && (
+                      <div className="opinion-section">
+                        <div className="opinion-section-title">
+                          <span>Análisis de zona y plusvalía</span>
+                          {opFields.analisisZona !== null && <button className="no-print" onClick={() => uof("analisisZona", null)} style={{ background: "none", border: "none", fontSize: 10, color: "var(--teal)", cursor: "pointer", fontFamily: "'Poppins',sans-serif" }}>↺ Restaurar</button>}
+                        </div>
+                        <textarea className="opinion-editable" value={opFields.analisisZona !== null ? opFields.analisisZona : defaultAnalisis} onChange={e => uof("analisisZona", e.target.value)} />
+                      </div>
+                    )}
+
+                    {(resultado.recomendaciones || []).length > 0 && (
+                      <div className="opinion-section">
+                        <div className="opinion-section-title">Recomendaciones</div>
+                        {resultado.recomendaciones.map((r, i) => (
+                          <div key={i} style={{ display: "flex", gap: 8, marginBottom: 6, fontSize: 12, color: "var(--text)", alignItems: "flex-start" }}>
+                            <span style={{ color: "var(--teal)", fontWeight: 700, flexShrink: 0 }}>›</span>
+                            <span style={{ lineHeight: 1.5 }}>{r}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {resultado.advertencias && (
+                      <div style={{ background: "rgba(245,158,11,0.08)", borderLeft: "3px solid var(--amber)", borderRadius: 8, padding: "8px 12px", fontSize: 12, color: "#92400e", marginBottom: 14 }}>
+                        <strong>Nota:</strong> {resultado.advertencias}
+                      </div>
+                    )}
+
+                    <div className="opinion-section">
+                      <div className="opinion-section-title">Observaciones adicionales</div>
+                      <textarea className="opinion-editable" value={opFields.observaciones} onChange={e => uof("observaciones", e.target.value)} placeholder="Descripción del entorno, acceso, infraestructura, condiciones específicas del bien, etc." />
+                    </div>
+
+                    <div className="opinion-section">
+                      <div className="opinion-section-title">
+                        <span>Conclusiones y determinación de valor</span>
+                        {opFields.conclusiones !== null && <button className="no-print" onClick={() => uof("conclusiones", null)} style={{ background: "none", border: "none", fontSize: 10, color: "var(--teal)", cursor: "pointer", fontFamily: "'Poppins',sans-serif" }}>↺ Restaurar</button>}
+                      </div>
+                      <textarea className="opinion-editable" style={{ minHeight: 110 }} value={opFields.conclusiones !== null ? opFields.conclusiones : defaultConclusiones} onChange={e => uof("conclusiones", e.target.value)} />
+                    </div>
+
+                    <div className="opinion-section">
+                      <div className="opinion-section-title">Elaboró</div>
+                      <div className="opinion-firma">
+                        <div><div className="opinion-firma-label">Nombre del valuador</div><input className="opinion-input-inline" style={{ marginTop: 4 }} value={opFields.valuador} onChange={e => uof("valuador", e.target.value)} placeholder="Nombre completo" /></div>
+                        <div><div className="opinion-firma-label">Cédula / Registro</div><input className="opinion-input-inline" style={{ marginTop: 4 }} value={opFields.cedula} onChange={e => uof("cedula", e.target.value)} placeholder="No. de cédula o registro" /></div>
+                      </div>
+                      <div style={{ marginTop: 20, fontSize: 10, color: "var(--gray-400)", borderTop: "1px solid var(--gray-200)", paddingTop: 10, lineHeight: 1.6 }}>
+                        Esta opinión de valor es un estimado con fines informativos generado mediante análisis de mercado asistido por inteligencia artificial. No sustituye a un avalúo formal realizado por perito valuador certificado ante la autoridad competente.
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         );
       }
