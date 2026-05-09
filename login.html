@@ -255,10 +255,11 @@ body { overflow-y: auto; }
   transition: opacity .6s var(--ease);
 }
 #splash .mark {
-  font-family: var(--font-display);
-  font-size: 38px; font-weight: 600;
-  letter-spacing: -0.03em; color: var(--ink);
+  width: min(60vw, 320px);
   animation: pulseIn .9s var(--ease);
+}
+#splash .mark img {
+  width: 100%; height: auto; display: block;
 }
 @keyframes pulseIn {
   0% { opacity: 0; transform: translateY(8px); }
@@ -269,14 +270,14 @@ body { overflow-y: auto; }
 <body>
 
 <!-- Splash -->
-<div id="splash"><div class="mark">Broquer<span style="color:var(--mute-2)">.</span></div></div>
+<div id="splash"><div class="mark"><img src="logotipo-broquer.png" alt="Broquer"/></div></div>
 
 <div class="bk-auth">
 
   <!-- HERO (desktop) -->
   <aside class="bk-hero">
     <div class="bk-hero__top">
-      <div class="bk-hero__mark">Broquer<span style="color:rgba(247,245,238,.5)">.</span></div>
+      <div class="bk-hero__mark"><img src="logotipo-broquer.png" alt="Broquer" style="height:28px;width:auto;filter:invert(1);display:block"/></div>
       <div class="bk-hero__nav">v 4.0 — LATAM</div>
     </div>
     <div class="bk-hero__body">

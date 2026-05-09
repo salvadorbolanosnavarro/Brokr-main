@@ -260,19 +260,20 @@
 .bk-bnav__item svg { opacity: .9; }
 .bk-bnav__item.is-active svg { opacity: 1; }
 
-/* Shaark FAB (desktop only — mobile uses bottom-nav center) */
+/* Broquer FAB (desktop only — mobile uses bottom-nav center) */
 .bk-shaark-fab {
   position: fixed; right: 28px; bottom: 28px; z-index: 80;
   width: 60px; height: 60px; border-radius: 50%;
-  background: var(--ink); color: var(--paper);
-  border: none; cursor: pointer;
+  background: var(--bone); color: var(--ink);
+  border: 1px solid var(--line);
+  cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 14px 32px rgba(31,28,22,.28), 0 4px 10px rgba(31,28,22,.16);
-  transition: transform var(--dur) var(--ease);
+  box-shadow: 0 14px 32px rgba(31,28,22,.18), 0 4px 10px rgba(31,28,22,.08);
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
   padding: 0; overflow: hidden;
 }
-.bk-shaark-fab:hover { transform: translateY(-2px); }
-.bk-shaark-fab img { width: 64%; height: 64%; object-fit: contain; filter: brightness(0) invert(1); }
+.bk-shaark-fab:hover { transform: translateY(-2px); box-shadow: 0 18px 36px rgba(31,28,22,.22), 0 6px 12px rgba(31,28,22,.12); }
+.bk-shaark-fab img { width: 70%; height: 70%; object-fit: contain; }
 .bk-shaark-fab__pulse {
   position: absolute; inset: -4px; border-radius: 50%;
   border: 1.5px solid var(--ink); opacity: 0;
@@ -283,7 +284,7 @@
 .bk-wake-dot {
   position: absolute; top: 6px; right: 6px;
   width: 10px; height: 10px; background: #4ade80;
-  border-radius: 50%; border: 2px solid var(--ink);
+  border-radius: 50%; border: 2px solid var(--bone);
   display: none;
 }
 .bk-shaark-fab.wake-on .bk-wake-dot { display: block; }
@@ -501,7 +502,7 @@
     bnav.innerHTML =
       bnavMain.map(m => buildBnavItem(m, activeKey)).join('') +
       `<button class="bk-bnav__item" id="bk-bnav-shaark" type="button" aria-label="Abrir Broquer">
-         <img src="isotipo-broquer.png" alt="" style="width:24px;height:24px;object-fit:contain;filter:brightness(0);opacity:.85"/>
+         <img src="isotipo-broquer.png" alt="" style="width:24px;height:24px;object-fit:contain;opacity:.9"/>
          <span>Broquer</span>
        </button>
        <button class="bk-bnav__item" type="button" onclick="doLogout()" aria-label="Cerrar sesión">${svg('user', 22)}<span>Cuenta</span></button>`;
