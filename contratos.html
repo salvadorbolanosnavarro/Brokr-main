@@ -6,16 +6,16 @@
 <link rel="apple-touch-icon" href="isotipo-broquer.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Broquer — Contratos</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
 <style>
 :root{
-  --navy:#1a2744;--navy2:#0f1829;--navy3:#243358;
-  --teal:#0f1829;--teal2:#162035;--tealp:#f0f2f7;
-  --gold:#c9a96e;--silver:#f4f6f9;--silver2:#e8ecf2;
-  --txt:#1a2744;--mut:#6b7a99;--wh:#ffffff;--r:12px;--r2:8px;
+  --navy:#1F1B17;--navy2:#2D2823;--navy3:#3A332C;
+  --teal:#1F1B17;--teal2:#2D2823;--tealp:#EFEDE5;
+  --gold:#c9a96e;--silver:#F4F1E9;--silver2:#E8E2D2;
+  --txt:#1F1B17;--mut:#6B6B66;--wh:#FBF9F1;--r:12px;--r2:8px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Poppins',sans-serif;background:var(--silver);color:var(--txt);min-height:100vh;padding-bottom:80px}
+body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-height:100vh;padding-bottom:80px;letter-spacing:-0.005em}
 #wrap{max-width:780px;margin:0 auto;padding:32px 20px 60px}
 
 /* Nav */
@@ -25,7 +25,7 @@ body{font-family:'Poppins',sans-serif;background:var(--silver);color:var(--txt);
 .nav a:hover{color:var(--navy)}
 
 /* Page title */
-.pg-ttl{font-family:'Playfair Display',serif;font-size:26px;color:var(--navy);margin-bottom:4px}
+.pg-ttl{font-family:var(--font-display);font-size:26px;color:var(--ink);margin-bottom:4px;letter-spacing:-0.025em;font-weight:600}
 .pg-sub{font-size:13.5px;color:var(--mut);margin-bottom:24px;line-height:1.5}
 
 /* Type selector */
@@ -33,7 +33,8 @@ body{font-family:'Poppins',sans-serif;background:var(--silver);color:var(--txt);
 .tipo-tab{padding:16px;border:2px solid var(--silver2);border-radius:var(--r);background:var(--wh);cursor:pointer;transition:all .15s;text-align:center}
 .tipo-tab:hover{border-color:var(--navy2);background:var(--tealp)}
 .tipo-tab.active{border-color:var(--navy);background:var(--navy)}
-.tipo-tab-ico{font-size:24px;margin-bottom:6px}
+.tipo-tab-ico{margin-bottom:6px;color:var(--ink);display:flex;justify-content:center}
+.tipo-tab.active .tipo-tab-ico{color:#fff}
 .tipo-tab-lbl{font-size:14px;font-weight:600;color:var(--navy)}
 .tipo-tab.active .tipo-tab-lbl{color:#fff}
 .tipo-tab-sub{font-size:11px;color:var(--mut);margin-top:2px}
@@ -49,7 +50,7 @@ body{font-family:'Poppins',sans-serif;background:var(--silver);color:var(--txt);
 .frow.three{grid-template-columns:1fr 1fr 1fr}
 .f{display:flex;flex-direction:column;gap:4px}
 .f label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
-.f input,.f select,.f textarea{background:var(--silver);border:1.5px solid var(--silver2);border-radius:var(--r2);padding:9px 11px;font-family:'Poppins',sans-serif;font-size:14px;color:var(--txt);outline:none;width:100%;transition:border .15s}
+.f input,.f select,.f textarea{background:var(--bone);border:1.5px solid var(--line);border-radius:var(--r2);padding:9px 11px;font-family:inherit;font-size:14px;color:var(--ink);outline:none;width:100%;transition:border .15s}
 .f input:focus,.f select:focus,.f textarea:focus{border-color:var(--navy);background:var(--wh)}
 .f input::placeholder{color:var(--mut)}
 .f-note{font-size:11px;color:var(--mut);margin-top:3px;font-style:italic}
@@ -60,7 +61,7 @@ body{font-family:'Poppins',sans-serif;background:var(--silver);color:var(--txt);
 .money-wrap input{padding-left:22px}
 
 /* Generate button */
-.gen-btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:var(--r2);font-family:'Poppins',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s;margin-top:4px}
+.gen-btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:14px;background:var(--ink);color:var(--paper);border:none;border-radius:999px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s;margin-top:4px}
 .gen-btn:hover{background:var(--navy3)}
 .gen-btn:disabled{background:var(--silver2);color:var(--mut);cursor:not-allowed}
 .gen-btn svg{flex-shrink:0}
@@ -157,7 +158,8 @@ body{font-family:'Poppins',sans-serif;background:var(--silver);color:var(--txt);
 .modo-btn{padding:14px 10px;border:2px solid var(--silver2);border-radius:var(--r);background:var(--wh);cursor:pointer;transition:all .15s;text-align:center;font-family:'DM Sans',sans-serif}
 .modo-btn:hover{border-color:var(--teal);background:var(--tealp)}
 .modo-btn.active{border-color:var(--teal);background:var(--teal);color:#fff}
-.modo-btn-ico{font-size:22px;margin-bottom:5px}
+.modo-btn-ico{margin-bottom:5px;color:var(--ink);display:flex;justify-content:center}
+.modo-btn.active .modo-btn-ico{color:#fff}
 .modo-btn-lbl{font-size:13px;font-weight:600;display:block}
 .modo-btn.active .modo-btn-lbl{color:#fff}
 .modo-btn-sub{font-size:11px;color:var(--mut);margin-top:2px;display:block}
@@ -239,75 +241,21 @@ body{font-family:'Poppins',sans-serif;background:var(--silver);color:var(--txt);
 </style>
 
 <link rel="stylesheet" href="brokr-theme.css"/>
-<style id="__brokr_skin_override">
-:root {
-  --navy: #1F1B17 !important;
-  --navy2: #2D2823 !important;
-  --navy3: #3A332C !important;
-  --teal: #1F1B17 !important;
-  --teal2: #2D2823 !important;
-  --teal-dark: #1F1B17 !important;
-  --silver: #F4F1E9 !important;
-  --silver2: #E8E2D2 !important;
-  --bdr: #E8E2D2 !important;
-  --txt: #1F1B17 !important;
-  --mut: #6B6B66 !important;
-  --wh: #FBF9F1 !important;
-  --gray: #F4F1E9 !important;
-  --gray2: #E8E2D2 !important;
-  --gray-100: #F4F1E9 !important;
-  --gray-600: #6B6B66 !important;
-  --screen-bg: #FBF9F1 !important;
-  --text: #1F1B17 !important;
-  --tealp: #EFEDE5 !important;
-}
-html, body {
-  background: #FBF9F1 !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif !important;
-  color: #1F1B17 !important;
-  letter-spacing: -0.005em !important;
-}
-* { font-family: inherit !important; }
-input, select, textarea, button {
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif !important;
-}
-/* Replace Playfair display with system serif fallback in headings */
-[class*="ttl"], [class*="title"], h1, h2, h3,
-.cover-precio, .cover-desc-ttl, .gallery-header h2, .chars-header h2,
-.pg-ttl, .sheet-title, .header-title, .det-name {
-  font-family: 'New York', 'Iowan Old Style', 'Cambria', Georgia, serif !important;
-  letter-spacing: -0.025em !important;
-  font-weight: 600 !important;
-}
-/* Buttons get the new pill treatment */
-.gen-btn, .btn-primary, .ui-btn, .btn-new-prop {
-  background: #1F1B17 !important;
-  border-radius: 999px !important;
-  letter-spacing: -0.005em !important;
-  font-weight: 600 !important;
-}
-/* Inputs warmed */
-input, select, textarea {
-  background: #F4F1E9 !important;
-  border: 1px solid #E8E2D2 !important;
-  border-radius: 12px !important;
-  color: #1F1B17 !important;
-}
-input:focus, select:focus, textarea:focus {
-  border-color: #1F1B17 !important;
-  background: #FBF9F1 !important;
-  outline: none !important;
-}
-/* Cards */
-.card, .stat-card, .prop-card, .pcard {
-  background: #F4F1E9 !important;
-  border: 1px solid #E8E2D2 !important;
-  border-radius: 16px !important;
-}
-</style>
-
 </head>
-<body>
+<body data-app="contratos">
+
+<!-- shell-replaced-sidebar -->
+<div style="display:none" hidden>
+  <aside class="app-sidebar">
+    <div class="app-sidebar__brand">Broquer<span class="dot">.</span></div>
+    <a class="app-nav-link" href="index.html">Inicio</a>
+    <a class="app-nav-link" href="propiedades.html">Inmuebles</a>
+    <a class="app-nav-link" href="contactos.html">Contactos</a>
+    <a class="app-nav-link is-active" href="contratos.html">Contratos</a>
+    <a class="app-nav-link" href="avm.html">AVM</a>
+  </aside>
+</div>
+
 <div id="wrap">
 
   <!-- Nav --> 
@@ -315,12 +263,12 @@ input:focus, select:focus, textarea:focus {
   <!-- Selector de modo -->
   <div class="modo-selector">
     <button class="modo-btn active" id="modo-brokr" onclick="setModo('brokr')">
-      <div class="modo-btn-ico">📄</div>
+      <div class="modo-btn-ico"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg></div>
       <span class="modo-btn-lbl">Contratos Broquer</span>
       <span class="modo-btn-sub">Arrendamiento · Promesa de compraventa</span>
     </button>
     <button class="modo-btn" id="modo-machote" onclick="setModo('machote')">
-      <div class="modo-btn-ico">📁</div>
+      <div class="modo-btn-ico"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 00-1.883 2.542l.857 6a2.25 2.25 0 002.227 1.932H19.05a2.25 2.25 0 002.227-1.932l.857-6a2.25 2.25 0 00-1.883-2.542m-16.5 0V6A2.25 2.25 0 016 3.75h3.879a1.5 1.5 0 011.06.44l2.122 2.12a1.5 1.5 0 001.06.44H18A2.25 2.25 0 0120.25 9v.776"/></svg></div>
       <span class="modo-btn-lbl">Mi propio machote</span>
       <span class="modo-btn-sub">Sube tu plantilla y Broquer la automatiza</span>
     </button>
@@ -332,11 +280,11 @@ input:focus, select:focus, textarea:focus {
   <!-- Tipo selector -->
   <div class="tipo-tabs">
     <div class="tipo-tab active" id="tab-arr" onclick="setTipo('arrendamiento')">
-      <div class="tipo-tab-ico">🏠</div>
+      <div class="tipo-tab-ico"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.121 0L22.28 12M4.5 9.75v10.125a1.125 1.125 0 001.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125a1.125 1.125 0 001.125-1.125V9.75"/></svg></div>
       <div class="tipo-tab-lbl">Arrendamiento</div>
     </div>
     <div class="tipo-tab" id="tab-pro" onclick="setTipo('promesa')">
-      <div class="tipo-tab-ico">📋</div>
+      <div class="tipo-tab-ico"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg></div>
       <div class="tipo-tab-lbl">Promesa de compraventa</div>
     </div>
   </div>
@@ -380,7 +328,7 @@ input:focus, select:focus, textarea:focus {
 
     <!-- ══ SECCIÓN 2: INMUEBLE ══ -->
     <div class="card">
-      <div class="card-title">🏠 Inmueble arrendado</div>
+      <div class="card-title">Inmueble arrendado</div>
       <button class="pick-btn" onclick="abrirPickerInmueble('arrendamiento')" style="margin-bottom:10px">🏘 Seleccionar de Mis Inmuebles</button>
       <div class="f-note" style="margin-bottom:10px">Esta dirección se usará en múltiples secciones del contrato automáticamente.</div>
 
@@ -434,7 +382,7 @@ input:focus, select:focus, textarea:focus {
 
     <!-- ══ SECCIÓN 3: ARRENDADOR ══ -->
     <div class="card">
-      <div class="card-title">👤 Arrendador (propietario)</div>
+      <div class="card-title">Arrendador (propietario)</div>
       <button class="pick-btn" onclick="abrirPickerContacto('arrendador')">📋 Seleccionar de Mis Contactos</button>
       <div style="height:10px"></div>
       <div class="frow">
@@ -484,7 +432,7 @@ input:focus, select:focus, textarea:focus {
 
     <!-- ══ SECCIÓN 4: ARRENDATARIO ══ -->
     <div class="card">
-      <div class="card-title">👤 Arrendatario (inquilino)</div>
+      <div class="card-title">Arrendatario (inquilino)</div>
       <button class="pick-btn" onclick="abrirPickerContacto('arrendatario')">📋 Seleccionar de Mis Contactos</button>
       <div style="height:10px"></div>
       <div class="frow">
@@ -505,7 +453,7 @@ input:focus, select:focus, textarea:focus {
 
     <!-- ══ SECCIÓN 5: OBLIGADO SOLIDARIO ══ -->
     <div class="card">
-      <div class="card-title">🤝 Obligado solidario</div>
+      <div class="card-title">Obligado solidario</div>
       <button class="pick-btn" onclick="abrirPickerContacto('os')">📋 Seleccionar de Mis Contactos</button>
       <div style="height:10px"></div>
       <div class="frow">
@@ -1873,5 +1821,6 @@ window.addEventListener('message', function(e) {
     <div class="pick-list" id="pick-prop-list"></div>
   </div>
 </div>
+<script src="app-shell.js" defer></script>
 </body>
 </html>

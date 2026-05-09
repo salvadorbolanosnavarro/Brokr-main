@@ -178,7 +178,19 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--txt);min-
 }
 </style>
 </head>
-<body>
+<body data-app="image-cleaner">
+
+<!-- shell-replaced-sidebar -->
+<div style="display:none" hidden>
+  <aside class="app-sidebar">
+    <div class="app-sidebar__brand">Broquer<span class="dot">.</span></div>
+    <a class="app-nav-link" href="index.html">Inicio</a>
+    <a class="app-nav-link" href="propiedades.html">Inmuebles</a>
+    <a class="app-nav-link" href="contactos.html">Contactos</a>
+    <a class="app-nav-link" href="contratos.html">Contratos</a>
+    <a class="app-nav-link" href="avm.html">AVM</a>
+  </aside>
+</div>
 
 <div class="main">
 
@@ -622,5 +634,6 @@ function showToast(msg, duration = 3000) {
   setTimeout(() => t.classList.remove('show'), duration);
 }
 </script>
+<script src="app-shell.js" defer></script>
 </body>
 </html>

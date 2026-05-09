@@ -8,15 +8,13 @@
 <link rel="apple-touch-icon" href="isotipo-broquer.png"/>
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
-html, body { background: var(--paper); height: 100vh; overflow: hidden; }
-body { display: flex; flex-direction: column; }
+/* layout owned by app-shell.js (.bk-page is the scroll container) */
 
 /* ── Page header ─────────────────────────── */
 .props-head {
   padding: 22px 28px 18px;
   background: var(--paper);
   border-bottom: 1px solid var(--line);
-  flex-shrink: 0;
 }
 .props-head__top {
   display: flex; justify-content: space-between; align-items: flex-end;
@@ -88,7 +86,6 @@ body { display: flex; flex-direction: column; }
 
 /* ── Grid ─────────────────────────────────── */
 .props-grid {
-  flex: 1; overflow-y: auto;
   padding: 24px 28px 60px;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -458,11 +455,10 @@ body { display: flex; flex-direction: column; }
 .app-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 </style>
 </head>
-<body>
+<body data-app="props">
 
-<div class="app-shell">
-
-  <!-- Sidebar (desktop) -->
+<!-- shell-replaced-sidebar -->
+<div style="display:none" hidden>
   <aside class="app-sidebar">
     <div class="app-sidebar__brand">Broquer<span class="dot">.</span></div>
     <a class="app-nav-link" href="index.html">
@@ -486,8 +482,7 @@ body { display: flex; flex-direction: column; }
       AVM
     </a>
   </aside>
-
-  <main class="app-content">
+</div>
 
     <!-- HEADER -->
     <div class="props-head">
@@ -533,14 +528,12 @@ body { display: flex; flex-direction: column; }
     </div>
 
     <!-- GRID -->
-    <div id="props-grid" class="props-grid bk-scroll">
+    <div id="props-grid" class="props-grid">
       <div class="props-empty">
         <svg width="42" height="42" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.121 0L22.28 12M4.5 9.75v10.125a1.125 1.125 0 001.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125a1.125 1.125 0 001.125-1.125V9.75"/></svg>
         <h3>Cargando inmuebles…</h3>
       </div>
     </div>
-  </main>
-</div>
 
 <!-- ── MODAL: FORM ─────────────────────────── -->
 <div id="prop-modal" class="prop-modal-overlay" onclick="if(event.target===this)closePropModal()">
@@ -860,7 +853,10 @@ function initFotoUpload() {
 }
 function removeFoto(idx, el) { uploadedFotoUrls.splice(idx,1); el.remove(); g('fotos-raw-hidden').value = uploadedFotoUrls.join(','); }
 
-loadProps();
+/* Wait for shell to authenticate before loading props (shell may redirect to login) */
+if (window.__brokrShellLoaded) { loadProps(); }
+else { window.addEventListener('brokr-shell-ready', loadProps, { once: true }); }
 </script>
+<script src="app-shell.js" defer></script>
 </body>
 </html>

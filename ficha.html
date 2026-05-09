@@ -349,7 +349,19 @@ input:focus, select:focus, textarea:focus {
 </style>
 
 </head>
-<body>
+<body data-app="ficha">
+
+<!-- shell-replaced-sidebar -->
+<div style="display:none" hidden>
+  <aside class="app-sidebar">
+    <div class="app-sidebar__brand">Broquer<span class="dot">.</span></div>
+    <a class="app-nav-link" href="index.html">Inicio</a>
+    <a class="app-nav-link" href="propiedades.html">Inmuebles</a>
+    <a class="app-nav-link" href="contactos.html">Contactos</a>
+    <a class="app-nav-link" href="contratos.html">Contratos</a>
+    <a class="app-nav-link" href="avm.html">AVM</a>
+  </aside>
+</div>
 
 <!-- ═══ APP UI ═══════════════════════════════ -->
 <div id="app-ui">
@@ -713,5 +725,6 @@ window.addEventListener('message', function(e) {
   }
 });
 </script>
+<script src="app-shell.js" defer></script>
 </body>
 </html>

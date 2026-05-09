@@ -1,0 +1,931 @@
+/* ════════════════════════════════════════════════════════════════════
+   BROQUER — App Shell compartido
+   Inyecta: sidebar desktop, topbar, mobile header, bottom nav, Shaark.
+   Conserva 1:1 el flujo de Supabase / OpenAI / Railway del repo original.
+
+   Uso en cada módulo:
+     <body data-app="isr">         ← clave del módulo activo
+        … contenido del módulo …
+     <script src="app-shell.js" defer></script>
+   Claves válidas: home, props, contactos, contratos, avm, ficha,
+                   ficha-manual, isr, legal, image-cleaner, verificador, admin
+   ════════════════════════════════════════════════════════════════════ */
+(function () {
+  if (window.__brokrShellLoaded) return;
+  window.__brokrShellLoaded = true;
+
+  /* ── Config ── */
+  const API_BASE = 'https://brokrebapi-production.up.railway.app';
+  const SB_URL   = 'https://urtgysmtnvoqaljuhntz.supabase.co';
+  const SB_KEY   = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
+  window.API_BASE = API_BASE;
+
+  /* ── Páginas que NO requieren shell ni auth (login/registro/PDF preview) ── */
+  const path = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+  const NOSHELL = ['login.html', 'registro.html', 'ficha-pdf-preview.html'];
+  if (NOSHELL.includes(path)) return;
+
+  /* ── Configuración de módulos ── */
+  const MODS = [
+    { key:'home',         href:'index.html',         label:'Inicio',          group:'main', icon:'home' },
+    { key:'props',        href:'propiedades.html',   label:'Inmuebles',       group:'main', icon:'building' },
+    { key:'contactos',    href:'contactos.html',     label:'Contactos',       group:'main', icon:'users' },
+    { key:'contratos',    href:'contratos.html',     label:'Contratos',       group:'main', icon:'document' },
+    { key:'avm',          href:'avm.html',           label:'AVM Valuación',   group:'tools', icon:'chart' },
+    { key:'ficha',        href:'ficha.html',         label:'Ficha técnica',   group:'tools', icon:'tag' },
+    { key:'ficha-manual', href:'ficha-manual.html',  label:'Ficha manual',    group:'tools', icon:'pencil' },
+    { key:'isr',          href:'isr.html',           label:'ISR',             group:'tools', icon:'calculator' },
+    { key:'image-cleaner',href:'image-cleaner.html', label:'Editor imágenes', group:'tools', icon:'image' },
+    { key:'verificador',  href:'verificador.html',   label:'Verificador',     group:'tools', icon:'shield' },
+    { key:'legal',        href:'legal.html',         label:'Documentos legales', group:'tools', icon:'gavel' },
+    { key:'admin',        href:'admin.html',         label:'Admin',           group:'tools', icon:'cog', adminOnly:true },
+  ];
+
+  const CONTEXT_LABELS = {
+    'home':         'Dashboard principal — menú de módulos',
+    'props':        'Mis Inmuebles — catálogo de propiedades',
+    'contactos':    'Contactos — CRM de prospectos',
+    'contratos':    'Contratos — arrendamiento y promesa de compraventa',
+    'avm':          'Opinión de Valor AVM — avalúo de mercado automatizado',
+    'ficha':        'Ficha EasyBroker — generar ficha técnica desde ID de EasyBroker',
+    'ficha-manual': 'Ficha Técnica Manual — crear ficha sin EasyBroker',
+    'isr':          'Calculadora ISR por enajenación de inmuebles',
+    'image-cleaner':'Editor de imágenes — limpieza con IA',
+    'verificador':  'Verificador de inmuebles',
+    'legal':        'Documentos legales',
+    'admin':        'Panel administrativo',
+  };
+
+  const SHAARK_CHIPS_MAP = {
+    home:         [{l:'📄 Contratos', m:'Generar un contrato'}, {l:'💰 Calc. ISR', m:'Calcular ISR'}, {l:'🏷️ Fichas téc.', m:'Crear ficha técnica'}, {l:'🏠 Mis inmuebles', m:'Ver mis propiedades'}],
+    contratos:    [{l:'📝 Arrendamiento', m:'Genera un contrato de arrendamiento'}, {l:'🤝 Promesa', m:'Genera una promesa de compraventa'}, {l:'📋 ¿Cómo funciona?', m:'¿Qué tipos de contrato puedo generar?'}],
+    avm:          [{l:'📊 Valuación', m:'Valúa una casa de 3 recámaras en'}, {l:'🔍 ¿Cuánto vale?', m:'¿Cuánto vale una propiedad en esta colonia?'}, {l:'🏘️ Comparables', m:'¿Cómo agrego comparables?'}],
+    isr:          [{l:'🧮 Calc. ISR', m:'Calcula el ISR para una venta de'}, {l:'📄 Descargar PDF', m:'Descarga el reporte de ISR'}, {l:'❓ Exención', m:'¿Cuándo aplica la exención de casa habitación?'}],
+    ficha:        [{l:'🔎 Buscar prop.', m:'Genera la ficha para la propiedad EB-'}, {l:'📸 Con fotos', m:'¿Cómo se agregan fotos a la ficha?'}],
+    'ficha-manual':[{l:'🏡 Nueva ficha', m:'Crea una ficha para una casa de 3 recámaras en'}, {l:'✏️ Descripción', m:'Escribe una descripción atractiva para una propiedad en'}],
+    props:        [{l:'🔍 Buscar', m:'Buscar propiedades en Chapultepec'}, {l:'❓ EasyBroker', m:'¿Cómo conecto mi cuenta de EasyBroker?'}],
+  };
+
+  /* ── Iconos (heroicons outline 1.6) ── */
+  const ICONS = {
+    home:       '<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/>',
+    building:   '<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.121 0L22.28 12M4.5 9.75v10.125a1.125 1.125 0 001.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125a1.125 1.125 0 001.125-1.125V9.75"/>',
+    users:      '<path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>',
+    document:   '<path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>',
+    chart:      '<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.306a11.95 11.95 0 015.814-5.518l2.74-1.22m0 0l-5.94-2.281m5.94 2.28l-2.28 5.941"/>',
+    tag:        '<path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"/><path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"/>',
+    pencil:     '<path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"/>',
+    calculator: '<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75l-2.489-2.489m0 0a3.375 3.375 0 10-4.773-4.773 3.375 3.375 0 004.774 4.774zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" style="display:none"/><rect x="4.5" y="3" width="15" height="18" rx="2.25" ry="2.25" stroke-linejoin="round"/><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 6.75h9v3h-9zM8.25 13.5h.008v.008H8.25V13.5zm0 3h.008v.008H8.25V16.5zm3.75-3h.008v.008H12V13.5zm0 3h.008v.008H12V16.5zm3.75-3h.008v.008h-.008V13.5zm0 3h.008v.008h-.008V16.5z"/>',
+    image:      '<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/>',
+    shield:     '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/>',
+    gavel:      '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0012 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 01-2.031.352 5.988 5.988 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 01-2.031.352 5.989 5.989 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971z"/>',
+    cog:        '<path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a6.759 6.759 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.28z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>',
+    bell:       '<path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/>',
+    search:     '<circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/>',
+    plus:       '<path stroke-linecap="round" d="M12 5v14M5 12h14"/>',
+    arrowOut:   '<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/>',
+    user:       '<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>',
+    mic:        '<path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"/>',
+    send:       '<path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/>',
+    close:      '<path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/>',
+  };
+  const svg = (name, size = 18, sw = 1.6) =>
+    `<svg width="${size}" height="${size}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="${sw}">${ICONS[name] || ''}</svg>`;
+
+  /* ════════════════════════════════════════════════════════════════
+     CSS injection
+     ════════════════════════════════════════════════════════════════ */
+  const css = `
+.bk-shell-root { display: flex; height: 100vh; min-height: 100vh; background: var(--paper); }
+.bk-shell-root.bk-narrow .bk-sidebar { display: none; }
+
+/* Sidebar */
+.bk-sidebar {
+  width: 260px; flex-shrink: 0;
+  background: var(--paper);
+  border-right: 1px solid var(--line);
+  padding: 22px 14px;
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+}
+.bk-sidebar::-webkit-scrollbar { width: 0; }
+@media (max-width: 880px) { .bk-sidebar { display: none; } }
+.bk-sidebar__brand {
+  padding: 6px 10px 22px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 14px;
+  display: flex; align-items: center;
+}
+.bk-sidebar__brand a { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+.bk-sidebar__brand img { height: 22px; width: auto; display: block; }
+.bk-sb-section {
+  font-family: var(--font-mono);
+  font-size: 9px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--mute-2);
+  padding: 16px 10px 8px; font-weight: 500;
+}
+.bk-sb-link {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r);
+  font-size: 14px; color: var(--ink-2);
+  cursor: pointer; transition: background var(--dur) var(--ease);
+  font-weight: 500; letter-spacing: -0.005em;
+  text-decoration: none;
+}
+.bk-sb-link:hover { background: var(--paper-2); }
+.bk-sb-link.is-active { background: var(--ink); color: var(--paper); }
+.bk-sb-link svg { flex-shrink: 0; opacity: .82; }
+.bk-sb-foot {
+  margin-top: auto;
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px;
+  border-top: 1px solid var(--line);
+}
+.bk-sb-foot__avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--ink); color: var(--paper);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 600; font-size: 13px; letter-spacing: -0.02em;
+}
+.bk-sb-foot__name { font-size: 13px; font-weight: 500; line-height: 1.2; flex: 1; min-width: 0; }
+.bk-sb-foot__name .role { color: var(--mute); font-size: 11px; font-weight: 400; }
+.bk-sb-foot__logout {
+  background: transparent; border: none; cursor: pointer;
+  color: var(--mute); padding: 6px;
+}
+.bk-sb-foot__logout:hover { color: var(--ink); }
+
+/* Content area */
+.bk-content { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+
+/* Mobile head */
+.bk-mobile-head {
+  display: none;
+  padding: 14px 16px 12px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  align-items: center; justify-content: space-between;
+}
+@media (max-width: 880px) { .bk-mobile-head { display: flex; } }
+.bk-mobile-head a { display:flex; align-items:center; }
+.bk-mobile-head img { height: 22px; width: auto; display: block; }
+.bk-mobile-head__avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--ink); color: var(--paper);
+  font-weight: 600; font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Topbar (desktop) */
+.bk-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px;
+  padding: 18px 36px;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+  flex-shrink: 0;
+}
+@media (max-width: 880px) { .bk-topbar { display: none; } }
+.bk-topbar__title {
+  font-family: var(--font-display); font-size: 18px; font-weight: 600;
+  letter-spacing: -0.02em; color: var(--ink); margin-right: auto;
+}
+.bk-topbar__search {
+  flex: 1; max-width: 420px;
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bone);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-pill);
+  padding: 0 16px; height: 40px;
+}
+.bk-topbar__search input { flex: 1; background: none; border: none; outline: none; font-size: 14px; letter-spacing: -0.005em; }
+.bk-topbar__search input::placeholder { color: var(--mute-2); }
+.bk-topbar__search kbd {
+  font-family: var(--font-mono); font-size: 10px;
+  background: var(--paper-2); padding: 2px 6px;
+  border-radius: 4px; color: var(--mute);
+  border: 1px solid var(--line);
+}
+.bk-topbar__actions { display: flex; gap: 10px; align-items: center; }
+.bk-icon-btn {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--bone);
+  border: 1px solid var(--line-2);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink-2);
+  position: relative;
+  transition: background var(--dur) var(--ease);
+}
+.bk-icon-btn:hover { background: var(--paper-2); }
+.bk-icon-btn .dot {
+  position: absolute; top: 8px; right: 8px;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--forest); border: 2px solid var(--paper);
+}
+
+/* The page's own scroll body */
+.bk-page {
+  flex: 1; overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 100px;
+}
+.bk-page::-webkit-scrollbar { width: 0; }
+
+/* Bottom nav (mobile) */
+.bk-bnav {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--bone);
+  border-top: 1px solid var(--line);
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+  z-index: 60;
+  justify-content: space-around;
+}
+@media (max-width: 880px) { .bk-bnav { display: flex; } }
+.bk-bnav__item {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 8px 4px;
+  font-size: 10px;
+  color: var(--mute);
+  text-decoration: none;
+  font-weight: 500;
+  cursor: pointer;
+  border: none; background: transparent;
+  font-family: inherit;
+  transition: color var(--dur) var(--ease);
+}
+.bk-bnav__item.is-active { color: var(--ink); }
+.bk-bnav__item svg { opacity: .9; }
+.bk-bnav__item.is-active svg { opacity: 1; }
+
+/* Shaark FAB (desktop only — mobile uses bottom-nav center) */
+.bk-shaark-fab {
+  position: fixed; right: 28px; bottom: 28px; z-index: 80;
+  width: 60px; height: 60px; border-radius: 50%;
+  background: var(--ink); color: var(--paper);
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 14px 32px rgba(31,28,22,.28), 0 4px 10px rgba(31,28,22,.16);
+  transition: transform var(--dur) var(--ease);
+  padding: 0; overflow: hidden;
+}
+.bk-shaark-fab:hover { transform: translateY(-2px); }
+.bk-shaark-fab img { width: 64%; height: 64%; object-fit: contain; filter: brightness(0) invert(1); }
+.bk-shaark-fab__pulse {
+  position: absolute; inset: -4px; border-radius: 50%;
+  border: 1.5px solid var(--ink); opacity: 0;
+  animation: bkPulse 2.4s ease-out infinite;
+  pointer-events: none;
+}
+@keyframes bkPulse { 0% { transform: scale(.95); opacity: .35; } 100% { transform: scale(1.25); opacity: 0; } }
+.bk-wake-dot {
+  position: absolute; top: 6px; right: 6px;
+  width: 10px; height: 10px; background: #4ade80;
+  border-radius: 50%; border: 2px solid var(--ink);
+  display: none;
+}
+.bk-shaark-fab.wake-on .bk-wake-dot { display: block; }
+@media (max-width: 880px) { .bk-shaark-fab { display: none; } }
+
+/* Shaark popup */
+.bk-shaark-popup {
+  display: none;
+  position: fixed; right: 28px; bottom: 100px; z-index: 90;
+  width: min(420px, calc(100vw - 32px));
+  max-height: min(600px, calc(100dvh - 140px));
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: 0 24px 64px rgba(31,28,22,.18), 0 8px 16px rgba(31,28,22,.08);
+  flex-direction: column; overflow: hidden;
+  animation: bkShkIn .26s cubic-bezier(.16,1,.3,1);
+}
+.bk-shaark-popup.is-open { display: flex; }
+@keyframes bkShkIn { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (max-width: 880px) {
+  .bk-shaark-popup { right: 12px; left: 12px; bottom: 84px; width: auto; }
+}
+.bk-shk-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; border-bottom: 1px solid var(--line);
+}
+.bk-shk-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--bone); border: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  overflow: hidden;
+}
+.bk-shk-avatar img { width: 70%; height: 70%; object-fit: contain; }
+.bk-shk-name { font-family: var(--font-display); font-size: 14px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); }
+.bk-shk-status { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--mute); font-family: var(--font-mono); letter-spacing: .04em; }
+.bk-shk-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--forest); }
+.bk-shk-wake {
+  background: none; border: 1px solid var(--line-2);
+  border-radius: var(--r-pill);
+  padding: 5px 10px;
+  font-size: 11px; font-weight: 600; color: var(--mute);
+  cursor: pointer; display: flex; align-items: center; gap: 4px;
+  font-family: inherit; transition: color var(--dur), border-color var(--dur);
+}
+.bk-shk-wake:hover { color: var(--ink); }
+.bk-shk-wake.is-on { color: var(--forest); border-color: var(--forest); }
+.bk-shk-close {
+  width: 28px; height: 28px;
+  background: transparent; border: none; cursor: pointer;
+  border-radius: 8px; color: var(--mute);
+  display: flex; align-items: center; justify-content: center;
+}
+.bk-shk-close:hover { background: var(--paper-2); color: var(--ink); }
+.bk-shk-msgs { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.bk-shk-msgs::-webkit-scrollbar { width: 4px; } .bk-shk-msgs::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 4px; }
+.bk-shk-bubble { max-width: 88%; padding: 10px 13px; border-radius: 14px; font-size: 13.5px; line-height: 1.5; letter-spacing: -0.005em; white-space: pre-wrap; }
+.bk-shk-bubble.bot { background: var(--bone); color: var(--ink); border: 1px solid var(--line); border-bottom-left-radius: 5px; align-self: flex-start; }
+.bk-shk-bubble.user { background: var(--ink); color: var(--paper); border-bottom-right-radius: 5px; align-self: flex-end; }
+.bk-shk-bubble.toast { background: transparent; border: none; color: var(--mute); font-size: 12px; padding: 4px 10px; align-self: center; }
+.bk-shk-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px 10px; }
+.bk-shk-chip {
+  background: var(--paper); border: 1px solid var(--line-2);
+  border-radius: var(--r-pill); padding: 7px 12px;
+  font-size: 12px; color: var(--ink-2); cursor: pointer; font-weight: 500;
+  font-family: inherit;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.bk-shk-chip:hover { background: var(--paper-2); border-color: var(--ink); }
+.bk-shk-input-row { display: flex; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--line); align-items: center; }
+.bk-shk-input { flex: 1; min-width: 0; background: var(--bone); border: 1px solid var(--line-2); border-radius: var(--r-pill); padding: 10px 14px; font-size: 14px; outline: none; font-family: inherit; color: var(--ink); }
+.bk-shk-input:focus { border-color: var(--ink); background: var(--paper); }
+.bk-shk-mic, .bk-shk-send {
+  width: 40px; height: 40px; border-radius: 50%;
+  border: none; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.bk-shk-mic { background: var(--paper-2); color: var(--ink-2); border: 1px solid var(--line); }
+.bk-shk-mic:hover { background: var(--ink); color: var(--paper); }
+.bk-shk-mic.listening { background: var(--danger); color: white; border-color: var(--danger); animation: bkMicPulse 1.2s ease-in-out infinite; }
+@keyframes bkMicPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(184,75,63,.5); } 50% { box-shadow: 0 0 0 8px rgba(184,75,63,0); } }
+.bk-shk-send { background: var(--ink); color: var(--paper); }
+.bk-shk-send:hover { opacity: .9; }
+@media (hover: hover) and (pointer: fine) { .bk-shk-mic { display: none; } }
+`;
+  const styleEl = document.createElement('style');
+  styleEl.id = '__brokr-shell-css';
+  styleEl.textContent = css;
+  document.head.appendChild(styleEl);
+
+  /* ════════════════════════════════════════════════════════════════
+     Auth — gate + load profile
+     ════════════════════════════════════════════════════════════════ */
+  function getToken() {
+    return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || null;
+  }
+  async function sbFetch(p) {
+    const tok = getToken() || SB_KEY;
+    const r = await fetch(SB_URL + '/rest/v1/' + p, {
+      headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok },
+    });
+    if (!r.ok) return [];
+    return r.json();
+  }
+  function initials(name) {
+    if (!name) return 'U';
+    const parts = name.trim().split(/\s+/);
+    return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase() || 'U';
+  }
+  function doLogout() {
+    localStorage.removeItem('sb_token');
+    localStorage.removeItem('sb_refresh');
+    localStorage.removeItem('sb_user');
+    localStorage.removeItem('sesion_activa');
+    sessionStorage.clear();
+    location.href = 'login.html';
+  }
+  window.doLogout = doLogout;
+
+  async function authInit() {
+    const tok = getToken();
+    if (!tok) { location.href = 'login.html'; return null; }
+    let user = null;
+    try {
+      user = JSON.parse(localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || 'null');
+    } catch (e) {}
+    if (!user?.id) {
+      try {
+        const r = await fetch(SB_URL + '/auth/v1/user', { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok } });
+        user = await r.json();
+        if (user?.id) sessionStorage.setItem('sb_user', JSON.stringify(user));
+      } catch (e) {}
+    }
+    if (!user?.id) { location.href = 'login.html'; return null; }
+    let profile = [];
+    try { profile = await sbFetch(`usuarios?id=eq.${user.id}&select=nombre,telefono,rol`); } catch (e) {}
+    const fullName = profile[0]?.nombre || user.email?.split('@')[0] || 'Usuario';
+    return { user, fullName, profile: profile[0] || {}, isAdmin: profile[0]?.rol === 'admin' };
+  }
+
+  /* ════════════════════════════════════════════════════════════════
+     DOM injection
+     ════════════════════════════════════════════════════════════════ */
+  const activeKey = (document.body.getAttribute('data-app') || 'home').toLowerCase();
+  const activeMod = MODS.find(m => m.key === activeKey) || MODS[0];
+
+  function buildSidebarLink(m, active) {
+    return `<a href="${m.href}" class="bk-sb-link${m.key === active ? ' is-active' : ''}">${svg(m.icon)} ${m.label}</a>`;
+  }
+  function buildBnavItem(m, active) {
+    return `<a href="${m.href}" class="bk-bnav__item${m.key === active ? ' is-active' : ''}">${svg(m.icon, 22)} <span>${m.label.split(' ')[0]}</span></a>`;
+  }
+
+  function injectShell(profile) {
+    // Wrap existing body content into .bk-page
+    const pageWrap = document.createElement('div');
+    pageWrap.className = 'bk-page';
+    pageWrap.id = 'bk-page';
+    while (document.body.firstChild) pageWrap.appendChild(document.body.firstChild);
+
+    const main = MODS.filter(m => m.group === 'main');
+    const tools = MODS.filter(m => m.group === 'tools' && (!m.adminOnly || profile?.isAdmin));
+
+    const ini = initials(profile?.fullName || '');
+    const shell = document.createElement('div');
+    shell.className = 'bk-shell-root';
+    shell.innerHTML = `
+      <aside class="bk-sidebar" id="bk-sidebar">
+        <div class="bk-sidebar__brand">
+          <a href="index.html" aria-label="Ir al inicio Broquer">
+            <img src="logotipo-broquer.png" alt="Broquer"/>
+          </a>
+        </div>
+        ${main.map(m => buildSidebarLink(m, activeKey)).join('')}
+        <div class="bk-sb-section">Herramientas</div>
+        ${tools.map(m => buildSidebarLink(m, activeKey)).join('')}
+        <div class="bk-sb-foot">
+          <div class="bk-sb-foot__avatar" id="bk-sb-avatar">${ini}</div>
+          <div class="bk-sb-foot__name">
+            <div id="bk-sb-name">${profile?.fullName || ''}</div>
+            <div class="role">${profile?.isAdmin ? 'Admin' : 'Agente'}</div>
+          </div>
+          <button class="bk-sb-foot__logout" onclick="doLogout()" title="Cerrar sesión" aria-label="Cerrar sesión">${svg('arrowOut', 16)}</button>
+        </div>
+      </aside>
+
+      <main class="bk-content">
+        <div class="bk-mobile-head">
+          <a href="index.html" aria-label="Ir al inicio Broquer"><img src="logotipo-broquer.png" alt="Broquer"/></a>
+          <div class="bk-mobile-head__avatar" id="bk-mob-avatar">${ini}</div>
+        </div>
+
+        <div class="bk-topbar">
+          <div class="bk-topbar__title">${activeMod.label}</div>
+          <div class="bk-topbar__search">
+            ${svg('search', 16, 2)}
+            <input type="text" id="bk-search" placeholder="Buscar inmuebles, contactos, contratos…"/>
+            <kbd>⌘K</kbd>
+          </div>
+          <div class="bk-topbar__actions">
+            <button class="bk-icon-btn" aria-label="Notificaciones">${svg('bell')}<span class="dot"></span></button>
+          </div>
+        </div>
+      </main>
+    `;
+    document.body.appendChild(shell);
+
+    // Place page wrap inside content
+    shell.querySelector('.bk-content').appendChild(pageWrap);
+
+    // Bottom nav
+    const bnavMain = MODS.filter(m => ['home','props','contactos','contratos'].includes(m.key));
+    const bnav = document.createElement('nav');
+    bnav.className = 'bk-bnav';
+    bnav.innerHTML =
+      bnavMain.map(m => buildBnavItem(m, activeKey)).join('') +
+      `<button class="bk-bnav__item" id="bk-bnav-shaark" type="button" aria-label="Abrir Shaark">
+         <img src="isotipo-broquer.png" alt="" style="width:24px;height:24px;object-fit:contain;filter:brightness(0);opacity:.85"/>
+         <span>Shaark</span>
+       </button>
+       <button class="bk-bnav__item" type="button" onclick="doLogout()" aria-label="Cerrar sesión">${svg('user', 22)}<span>Cuenta</span></button>`;
+    document.body.appendChild(bnav);
+
+    // Shaark FAB + popup
+    const fab = document.createElement('button');
+    fab.className = 'bk-shaark-fab';
+    fab.id = 'bk-shaark-fab';
+    fab.setAttribute('aria-label', 'Abrir Shaark');
+    fab.innerHTML = `<span class="bk-shaark-fab__pulse"></span><span class="bk-wake-dot" id="bk-wake-dot"></span><img src="isotipo-broquer.png" alt="Shaark"/>`;
+    fab.addEventListener('click', () => toggleShaarkPopup());
+    document.body.appendChild(fab);
+
+    document.getElementById('bk-bnav-shaark').addEventListener('click', () => toggleShaarkPopup());
+
+    const pop = document.createElement('div');
+    pop.className = 'bk-shaark-popup';
+    pop.id = 'bk-shaark-popup';
+    pop.setAttribute('role', 'dialog');
+    pop.setAttribute('aria-label', 'Shaark — asistente');
+    pop.innerHTML = `
+      <div class="bk-shk-head">
+        <div class="bk-shk-avatar"><img src="isotipo-broquer.png" alt=""/></div>
+        <div style="flex:1;min-width:0">
+          <div class="bk-shk-name">Shaark</div>
+          <div class="bk-shk-status">En línea</div>
+        </div>
+        <button class="bk-shk-wake" id="bk-shk-wake" type="button" title='Activar "Oye Shaark"'>${svg('mic', 12, 2.2)} Oye Shaark</button>
+        <button class="bk-shk-close" type="button" aria-label="Cerrar">${svg('close', 14, 2)}</button>
+      </div>
+      <div class="bk-shk-msgs" id="bk-shk-msgs">
+        <div class="bk-shk-bubble bot">¡Hola! Soy Shaark, tan inteligente como un 🦈. ¿Qué puedo hacer por ti?</div>
+      </div>
+      <div class="bk-shk-chips" id="bk-shk-chips"></div>
+      <div class="bk-shk-input-row">
+        <button class="bk-shk-mic" id="bk-shk-mic" type="button" aria-label="Hablar">${svg('mic', 16, 1.8)}</button>
+        <input class="bk-shk-input" id="bk-shk-input" type="text" placeholder="Pregunta lo que necesites…"/>
+        <button class="bk-shk-send" id="bk-shk-send" type="button" aria-label="Enviar">${svg('send', 15, 2)}</button>
+      </div>
+    `;
+    document.body.appendChild(pop);
+
+    // Wire popup events
+    pop.querySelector('.bk-shk-close').addEventListener('click', () => toggleShaarkPopup(false));
+    document.getElementById('bk-shk-send').addEventListener('click', shaarkFabSend);
+    document.getElementById('bk-shk-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') { shaarkFabSend(); }
+    });
+    document.getElementById('bk-shk-mic').addEventListener('click', toggleScwVoice);
+    document.getElementById('bk-shk-wake').addEventListener('click', toggleWakeWord);
+  }
+
+  /* ════════════════════════════════════════════════════════════════
+     Shaark — popup, fetch, voice, wake word
+     ════════════════════════════════════════════════════════════════ */
+  let shaarkOpen = false;
+  let shaarkMsgs = [];
+
+  function toggleShaarkPopup(force) {
+    const p = document.getElementById('bk-shaark-popup');
+    if (!p) return;
+    shaarkOpen = (typeof force === 'boolean') ? force : !shaarkOpen;
+    p.classList.toggle('is-open', shaarkOpen);
+    if (shaarkOpen) {
+      refreshShaarkChips();
+      setTimeout(() => {
+        const m = document.getElementById('bk-shk-msgs');
+        if (m) m.scrollTop = m.scrollHeight;
+        document.getElementById('bk-shk-input')?.focus();
+      }, 60);
+    }
+  }
+  window.toggleShaarkPopup = toggleShaarkPopup;
+
+  function refreshShaarkChips() {
+    const el = document.getElementById('bk-shk-chips');
+    if (!el) return;
+    const chips = SHAARK_CHIPS_MAP[activeKey] || SHAARK_CHIPS_MAP.home;
+    el.innerHTML = chips.map(c => `<button class="bk-shk-chip" type="button" data-msg="${c.m.replace(/"/g, '&quot;')}">${c.l}</button>`).join('');
+    el.querySelectorAll('.bk-shk-chip').forEach(b => b.addEventListener('click', () => shaarkChip(b.dataset.msg)));
+  }
+
+  function addBubble(text, type) {
+    const wrap = document.getElementById('bk-shk-msgs');
+    if (!wrap) return null;
+    const div = document.createElement('div');
+    div.className = 'bk-shk-bubble ' + type;
+    div.textContent = text;
+    wrap.appendChild(div);
+    wrap.scrollTop = wrap.scrollHeight;
+    return div;
+  }
+
+  function shaarkFabSend() {
+    const input = document.getElementById('bk-shk-input');
+    if (!input) return;
+    const text = (input.value || '').trim();
+    if (!text) return;
+    addBubble(text, 'user');
+    input.value = '';
+    document.getElementById('bk-shk-chips').style.display = 'none';
+    shaarkMsgs.push({ role: 'user', content: text });
+    shaarkFabFetch(text);
+  }
+  window.shaarkFabSend = shaarkFabSend;
+
+  function shaarkChip(text) {
+    addBubble(text, 'user');
+    document.getElementById('bk-shk-chips').style.display = 'none';
+    shaarkMsgs.push({ role: 'user', content: text });
+    shaarkFabFetch(text);
+  }
+  window.shaarkChip = shaarkChip;
+
+  async function shaarkFabFetch(text) {
+    const wrap = document.getElementById('bk-shk-msgs');
+    const typing = addBubble('…', 'bot');
+    try {
+      const r = await fetch(API_BASE + '/chat-claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ max_tokens: 1200, messages: shaarkMsgs, context: getCurrentContext() }),
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        typing.textContent = '⚠️ ' + (data.detail || 'Error del servidor.');
+        return;
+      }
+      const reply = data.choices?.[0]?.message?.content;
+      if (!reply) { typing.textContent = '⚠️ Respuesta vacía. Intenta de nuevo.'; return; }
+      // Parse [ACCION]…[/ACCION] payloads
+      const accionRe = /\[ACCION\](.*?)\[\/ACCION\]/gs;
+      let m;
+      while ((m = accionRe.exec(reply)) !== null) {
+        try {
+          const ac = JSON.parse(m[1].trim());
+          handleAccion(ac);
+        } catch (e) { /* malformed payload */ }
+      }
+      const clean = reply.replace(/\[ACCION\].*?\[\/ACCION\]/gs, '').trim();
+      shaarkMsgs.push({ role: 'assistant', content: clean });
+      typing.textContent = clean;
+      if (window._scwLastWasVoice) { speak(clean); window._scwLastWasVoice = false; }
+    } catch (e) {
+      typing.textContent = '⚠️ Sin conexión. Revisa tu internet.';
+    }
+    if (wrap) wrap.scrollTop = wrap.scrollHeight;
+  }
+
+  /* Action dispatch — across-page architecture: stash payload in
+     sessionStorage and navigate; destination page reads on load. */
+  function handleAccion(ac) {
+    if (!ac || !ac.tipo) return;
+    const stash = (key, payload) => sessionStorage.setItem('shaark_' + key, JSON.stringify(payload));
+    switch (ac.tipo) {
+      case 'navegar': {
+        const m = MODS.find(x => x.key === ac.modulo);
+        if (m) location.href = m.href;
+        break;
+      }
+      case 'llenar_isr':         stash('isr', ac);          location.href = 'isr.html'; break;
+      case 'llenar_avm':         stash('avm', ac);          location.href = 'avm.html'; break;
+      case 'llenar_contrato':    stash('contrato', ac);     location.href = 'contratos.html'; break;
+      case 'crear_ficha':        stash('ficha', ac);        location.href = 'ficha.html'; break;
+      case 'crear_ficha_manual': stash('ficha_manual', ac); location.href = 'ficha-manual.html'; break;
+      case 'buscar_propiedad':   stash('buscar_props', ac); location.href = 'propiedades.html'; break;
+    }
+  }
+
+  function getCurrentContext() {
+    return CONTEXT_LABELS[activeKey] || 'Broquer';
+  }
+  window.getCurrentContext = getCurrentContext;
+
+  /* ── Voice (mic) ──────────────────────────────────────────────── */
+  let scwRec = null, scwListening = false, scwTimer = null;
+  let _micGranted = localStorage.getItem('mic_granted') === '1';
+
+  async function ensureMicPermission() {
+    if (navigator.permissions) {
+      try {
+        const status = await navigator.permissions.query({ name: 'microphone' });
+        if (status.state === 'granted') { _micGranted = true; localStorage.setItem('mic_granted','1'); return true; }
+        if (status.state === 'denied')  { _micGranted = false; localStorage.removeItem('mic_granted'); return false; }
+        _micGranted = false; localStorage.removeItem('mic_granted');
+      } catch (e) {}
+    }
+    if (_micGranted) return true;
+    if (!navigator.mediaDevices) return false;
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+      s.getTracks().forEach(t => t.stop());
+      _micGranted = true; localStorage.setItem('mic_granted', '1'); return true;
+    } catch (e) { _micGranted = false; localStorage.removeItem('mic_granted'); return false; }
+  }
+
+  function _addPunctuation(t) {
+    if (!t) return t;
+    if (/[.?!;,]$/.test(t)) return t;
+    if (/\b(qué|que|cómo|como|cuándo|cuando|dónde|donde|cuánto|cuanto|por qué|por que|quién|quien|cuál|cual)\b/i.test(t) || t.trimStart().startsWith('¿')) return t + '?';
+    if (/^(dime|dinos|explica|muéstrame|genera|crea|calcula|busca|abre|cierra|descarga)/i.test(t.trimStart())) return t + '.';
+    return t + '.';
+  }
+
+  function speak(text) {
+    if (!('speechSynthesis' in window)) return;
+    try {
+      const u = new SpeechSynthesisUtterance(text.slice(0, 400));
+      u.lang = 'es-MX';
+      window.speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+
+  function toggleScwVoice() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      showShaarkToast('Tu navegador no soporta voz. Usa Chrome o Safari.'); return;
+    }
+    if (scwListening) { stopScwVoice(); return; }
+    startScwVoice();
+  }
+  window.toggleScwVoice = toggleScwVoice;
+
+  async function startScwVoice() {
+    if (scwListening) return;
+    _wakePaused = true; stopWakeWordListener();
+    const ok = await ensureMicPermission();
+    if (!ok) { _wakePaused = false; _resumeWake(); showShaarkToast('Sin permiso de micrófono'); return; }
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    try { scwRec = new SR(); } catch (e) { _wakePaused = false; _resumeWake(); return; }
+    scwRec.lang = 'es-MX'; scwRec.continuous = false; scwRec.interimResults = true;
+    const btn = document.getElementById('bk-shk-mic');
+    const inp = document.getElementById('bk-shk-input');
+    scwListening = true;
+    btn?.classList.add('listening');
+    if (inp) { inp.placeholder = 'Escuchando…'; inp.value = ''; }
+    scwTimer = setTimeout(() => stopScwVoice(), 12000);
+    scwRec.onresult = e => {
+      clearTimeout(scwTimer);
+      let f = '', i = '';
+      for (let k = 0; k < e.results.length; k++) {
+        if (e.results[k].isFinal) f += e.results[k][0].transcript;
+        else i += e.results[k][0].transcript;
+      }
+      const raw = (f || i).trim();
+      if (inp) inp.value = f ? _addPunctuation(raw) : raw;
+    };
+    scwRec.onerror = ev => {
+      clearTimeout(scwTimer);
+      if (ev.error === 'not-allowed') {
+        _micGranted = false; localStorage.removeItem('mic_granted');
+        showShaarkToast('Sin permiso de micrófono. Activa el micrófono en la configuración del navegador.');
+      }
+      stopScwVoice(); _wakePaused = false; _resumeWake();
+    };
+    scwRec.onend = () => {
+      clearTimeout(scwTimer);
+      const txt = inp ? inp.value.trim() : '';
+      const wasListening = scwListening;
+      stopScwVoice();
+      if (wasListening && txt) {
+        window._scwLastWasVoice = true;
+        setTimeout(() => shaarkFabSend(), 100);
+      }
+      _wakePaused = false; _resumeWake();
+    };
+    try { scwRec.start(); } catch (e) { stopScwVoice(); _wakePaused = false; _resumeWake(); }
+  }
+
+  function stopScwVoice() {
+    clearTimeout(scwTimer);
+    scwListening = false;
+    const btn = document.getElementById('bk-shk-mic');
+    btn?.classList.remove('listening');
+    if (scwRec) { try { scwRec.abort(); } catch (e) {} scwRec = null; }
+    const inp = document.getElementById('bk-shk-input');
+    if (inp && inp.placeholder === 'Escuchando…') inp.placeholder = 'Pregunta lo que necesites…';
+  }
+
+  /* ── Wake word ─────────────────────────────────────────────── */
+  let _wakeRec = null, _wakeActive = false, _wakePaused = false, _wakeRestartT = null;
+  let _wakeEnabled = localStorage.getItem('shaark_wake') === '1';
+  let _wakeSuppressUntil = 0;
+  const WAKE = ['oye shaark','oye shark','shaark','oie shaark','hey shaark','hey shark'];
+
+  function toggleWakeWord() {
+    if (_wakeEnabled) {
+      _wakeEnabled = false; localStorage.setItem('shaark_wake', '0'); stopWakeWordListener();
+    } else {
+      _wakeEnabled = true; localStorage.setItem('shaark_wake', '1');
+      ensureMicPermission().then(ok => {
+        if (ok) startWakeWordListener();
+        else { _wakeEnabled = false; localStorage.setItem('shaark_wake', '0'); showShaarkToast('Sin permiso de micrófono'); _updateWakeUI(); }
+      });
+    }
+    _updateWakeUI();
+  }
+  window.toggleWakeWord = toggleWakeWord;
+
+  function startWakeWordListener() {
+    if (!_wakeEnabled || _wakeActive || _wakePaused || scwListening) return;
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) return;
+    clearTimeout(_wakeRestartT);
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    try { _wakeRec = new SR(); } catch (e) { return; }
+    _wakeRec.lang = 'es-MX'; _wakeRec.continuous = true; _wakeRec.interimResults = true; _wakeRec.maxAlternatives = 3;
+    _wakeActive = true;
+    _wakeRec.onresult = e => {
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        for (let a = 0; a < e.results[i].length; a++) {
+          const t = e.results[i][a].transcript.toLowerCase();
+          if (WAKE.some(w => t.includes(w))) {
+            try { _wakeRec.stop(); } catch (_) {}
+            _wakeActive = false;
+            _onWakeWordDetected();
+            return;
+          }
+        }
+      }
+    };
+    _wakeRec.onerror = ev => {
+      _wakeActive = false;
+      if (ev.error === 'not-allowed') {
+        _wakeEnabled = false; localStorage.setItem('shaark_wake', '0');
+        _micGranted = false; localStorage.removeItem('mic_granted');
+        _updateWakeUI(); return;
+      }
+      if (ev.error !== 'aborted' && _wakeEnabled && !_wakePaused) {
+        _wakeRestartT = setTimeout(startWakeWordListener, 3000);
+      }
+    };
+    _wakeRec.onend = () => {
+      _wakeActive = false;
+      if (_wakeEnabled && !_wakePaused && !scwListening) {
+        _wakeRestartT = setTimeout(startWakeWordListener, 800);
+      }
+    };
+    try { _wakeRec.start(); } catch (e) { _wakeActive = false; _wakeRestartT = setTimeout(startWakeWordListener, 3000); }
+  }
+
+  function stopWakeWordListener() {
+    clearTimeout(_wakeRestartT);
+    _wakeActive = false;
+    if (_wakeRec) { try { _wakeRec.abort(); } catch (e) {} _wakeRec = null; }
+  }
+  function _resumeWake() {
+    if (_wakeEnabled && !_wakePaused) _wakeRestartT = setTimeout(startWakeWordListener, 1200);
+  }
+  function _onWakeWordDetected() {
+    if (Date.now() < _wakeSuppressUntil) { _resumeWake(); return; }
+    if (navigator.vibrate) navigator.vibrate(60);
+    if (!shaarkOpen) toggleShaarkPopup(true);
+    setTimeout(() => startScwVoice(), 350);
+  }
+  function _updateWakeUI() {
+    const btn = document.getElementById('bk-shk-wake');
+    const fab = document.getElementById('bk-shaark-fab');
+    if (btn) {
+      btn.classList.toggle('is-on', _wakeEnabled);
+      btn.title = _wakeEnabled ? 'Siempre escuchando: ON — toca para desactivar' : 'Activar "Oye Shaark"';
+    }
+    if (fab) fab.classList.toggle('wake-on', _wakeEnabled);
+  }
+
+  function showShaarkToast(msg) {
+    const wrap = document.getElementById('bk-shk-msgs'); if (!wrap) return;
+    const el = document.createElement('div');
+    el.className = 'bk-shk-bubble toast';
+    el.textContent = msg;
+    wrap.appendChild(el); wrap.scrollTop = wrap.scrollHeight;
+  }
+  window.showShaarkToast = showShaarkToast;
+
+  /* ── Suppress wake during downloads ── */
+  window.addEventListener('message', e => {
+    if (!e.data || e.data.type !== 'brokr-suppress-wake') return;
+    _wakeSuppressUntil = Date.now() + (e.data.duration || 4000);
+  });
+
+  /* ── Native bridge (for Capacitor / Cordova app shell) ── */
+  window.ShaarkNativeBridge = {
+    onWakeWord() { _onWakeWordDetected(); },
+    submitText(text) {
+      if (!shaarkOpen) toggleShaarkPopup(true);
+      setTimeout(() => {
+        const inp = document.getElementById('bk-shk-input');
+        if (inp) inp.value = text;
+        setTimeout(shaarkFabSend, 100);
+      }, 300);
+    },
+    isWakeEnabled() { return _wakeEnabled; },
+    nativeWakeActivate() { _onWakeWordDetected(); },
+  };
+
+  /* ════════════════════════════════════════════════════════════════
+     Boot
+     ════════════════════════════════════════════════════════════════ */
+  async function boot() {
+    const profile = await authInit();
+    if (!profile) return; // redirected to login
+    injectShell(profile);
+
+    // Wake word: wait for first user gesture before starting (browser policy)
+    _updateWakeUI();
+    if (_wakeEnabled) {
+      const initWake = () => {
+        document.removeEventListener('touchstart', initWake);
+        document.removeEventListener('click', initWake);
+        ensureMicPermission().then(ok => { if (ok) startWakeWordListener(); });
+      };
+      document.addEventListener('touchstart', initWake, { once: true });
+      document.addEventListener('click', initWake, { once: true });
+    }
+
+    // Notify module that shell is ready (so modules can run code that depends
+    // on the .bk-page wrapper or the avatar, e.g. read sessionStorage payloads).
+    window.dispatchEvent(new CustomEvent('brokr-shell-ready', { detail: { profile, activeKey } }));
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+})();

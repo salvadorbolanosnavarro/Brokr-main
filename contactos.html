@@ -12,6 +12,41 @@
 <style>
 html, body { background: var(--paper); }
 
+/* ── Sidebar nav (desktop) — owned by app-shell.js ─ */
+.app-shell { display: flex; height: 100vh; }
+.app-sidebar {
+  width: 240px; flex-shrink: 0;
+  background: var(--paper);
+  border-right: 1px solid var(--line);
+  padding: 22px 14px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+@media (max-width: 880px) { .app-sidebar { display: none; } }
+.app-sidebar__brand {
+  font-family: var(--font-display);
+  font-size: 22px; font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  padding: 6px 10px 22px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.app-sidebar__brand .dot { color: var(--forest); }
+.app-nav-link {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r);
+  font-size: 14px; color: var(--ink-2);
+  cursor: pointer; transition: background var(--dur) var(--ease);
+  font-weight: 500;
+  letter-spacing: -0.005em;
+}
+.app-nav-link:hover { background: var(--paper-2); }
+.app-nav-link.is-active { background: var(--ink); color: var(--paper); }
+.app-nav-link svg { flex-shrink: 0; opacity: .8; }
+.app-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
 /* Top bar */
 .page-head {
   background: var(--paper);
@@ -493,7 +528,19 @@ html, body { background: var(--paper); }
 @media (max-width: 720px) { .add-btn { display: none; } }
 </style>
 </head>
-<body>
+<body data-app="contacts">
+
+<!-- shell-replaced-sidebar -->
+<div style="display:none" hidden>
+  <aside class="app-sidebar">
+    <div class="app-sidebar__brand">Broquer<span class="dot">.</span></div>
+    <a class="app-nav-link" href="index.html">Inicio</a>
+    <a class="app-nav-link" href="propiedades.html">Inmuebles</a>
+    <a class="app-nav-link is-active" href="contactos.html">Contactos</a>
+    <a class="app-nav-link" href="contratos.html">Contratos</a>
+    <a class="app-nav-link" href="avm.html">AVM</a>
+  </aside>
+</div>
 
 <div class="picker-banner" id="picker-banner">
   Seleccionando contacto · toca el que quieres usar
@@ -632,25 +679,7 @@ html, body { background: var(--paper); }
 
 <div class="toast" id="toast"></div>
 
-<!-- Bottom nav -->
-<nav class="bottom-nav">
-  <a class="bn-item" href="index.html">
-    <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/></svg>
-    Inicio
-  </a>
-  <a class="bn-item" href="propiedades.html">
-    <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.121 0L22.28 12M4.5 9.75v10.125a1.125 1.125 0 001.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125a1.125 1.125 0 001.125-1.125V9.75"/></svg>
-    Inmuebles
-  </a>
-  <a class="bn-item is-active" href="contactos.html">
-    <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
-    Contactos
-  </a>
-  <a class="bn-item" href="contratos.html">
-    <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
-    Contratos
-  </a>
-</nav>
+<script src="app-shell.js" defer></script>
 
 <script>
 const LS_KEY = 'brokr_contactos';

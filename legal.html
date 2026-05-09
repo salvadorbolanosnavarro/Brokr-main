@@ -250,7 +250,19 @@ html, body {
 }
 </style>
 </head>
-<body>
+<body data-app="legal">
+
+<!-- shell-replaced-sidebar -->
+<div style="display:none" hidden>
+  <aside class="app-sidebar">
+    <div class="app-sidebar__brand">Broquer<span class="dot">.</span></div>
+    <a class="app-nav-link" href="index.html">Inicio</a>
+    <a class="app-nav-link" href="propiedades.html">Inmuebles</a>
+    <a class="app-nav-link" href="contactos.html">Contactos</a>
+    <a class="app-nav-link" href="contratos.html">Contratos</a>
+    <a class="app-nav-link" href="avm.html">AVM</a>
+  </aside>
+</div>
 
 <div class="legal-header">
   <div class="legal-header-inner">
@@ -576,5 +588,6 @@ function showTab(id) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 </script>
+<script src="app-shell.js" defer></script>
 </body>
 </html>

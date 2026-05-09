@@ -196,7 +196,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
 .tipo-empty p{font-size:14px}
 </style>
 </head>
-<body>
+<body data-app="verificador">
+
+<!-- shell-replaced-sidebar -->
+<div style="display:none" hidden>
+  <aside class="app-sidebar">
+    <div class="app-sidebar__brand">Broquer<span class="dot">.</span></div>
+    <a class="app-nav-link" href="index.html">Inicio</a>
+    <a class="app-nav-link" href="propiedades.html">Inmuebles</a>
+    <a class="app-nav-link" href="contactos.html">Contactos</a>
+    <a class="app-nav-link" href="contratos.html">Contratos</a>
+    <a class="app-nav-link" href="avm.html">AVM</a>
+  </aside>
+</div>
 
 <!-- HEADER -->
 <div class="top-header">
@@ -586,7 +598,7 @@ function renderDocItem(doc) {
         <div class="upload-sub">Foto, escaneo o PDF — arrastra aquí</div>
       </div>
 
-      <img id="preview-${doc.id}" class="upload-preview" src="" alt="Vista previa"/>
+      <img id="preview-${doc.id}" class="upload-preview" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" alt="Vista previa"/>
 
       <div class="doc-actions">
         <button class="doc-btn ai" id="ai-btn-${doc.id}" onclick="analizarConIA('${doc.id}')" ${!estado.has_file?'disabled':''}>
@@ -920,5 +932,6 @@ function confirmarReset() {
 // ── Init ──────────────────────────────────────────────────────────────────────
 renderLista();
 </script>
+<script src="app-shell.js" defer></script>
 </body>
 </html>

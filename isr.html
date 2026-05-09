@@ -77,11 +77,11 @@
    Tipografía: Poppins
 ═══════════════════════════════════════ */
 :root {
-  --navy:       #0f1829;
-  --navy-mid:   #162035;
-  --navy-light: #1e2d47;
-  --teal:       #0f1829;
-  --teal-dark:  #162035;
+  --navy:       var(--ink);
+  --navy-mid:   #2D2823;
+  --navy-light: #3A332C;
+  --teal:       var(--ink);
+  --teal-dark:  #2D2823;
   --teal-bg:    rgba(15,24,41,0.06);
   --teal-border:rgba(15,24,41,0.15);
   --white:      #ffffff;
@@ -741,7 +741,19 @@ html, body {
 .d6 { animation-delay: 0.41s; }
 </style>
 </head>
-<body>
+<body data-app="isr">
+
+<!-- shell-replaced-sidebar -->
+<div style="display:none" hidden>
+  <aside class="app-sidebar">
+    <div class="app-sidebar__brand">Broquer<span class="dot">.</span></div>
+    <a class="app-nav-link" href="index.html">Inicio</a>
+    <a class="app-nav-link" href="propiedades.html">Inmuebles</a>
+    <a class="app-nav-link" href="contactos.html">Contactos</a>
+    <a class="app-nav-link" href="contratos.html">Contratos</a>
+    <a class="app-nav-link" href="avm.html">AVM</a>
+  </aside>
+</div>
 
 <!-- TOPBAR -->
 <div class="topbar">
@@ -1452,5 +1464,6 @@ async function swFetch(text) {
   g('sw-msgs').scrollTop = g('sw-msgs').scrollHeight;
 }
 </script>
+<script src="app-shell.js" defer></script>
 </body>
 </html>

@@ -521,7 +521,10 @@ setTimeout(() => {
     }
   }
   if(token){
-    const user = JSON.parse(localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}');
+    let raw = localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}';
+    if (raw === 'undefined' || raw === 'null') raw = '{}';
+    let user = {};
+    try { user = JSON.parse(raw) || {}; } catch (e) { user = {}; }
     if(user.id) await checkProfileAndRedirect(token, user);
   }
   const hash = location.hash;
