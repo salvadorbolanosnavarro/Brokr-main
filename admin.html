@@ -1,13 +1,76 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<link rel="icon" type="image/png" href="isotipo-broquer.png"/>
+<link rel="apple-touch-icon" href="isotipo-broquer.png"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style id="broquer-skin">
+  html,body{background:var(--paper)!important;color:var(--ink)!important;font-family:var(--font-sans)!important;letter-spacing:-0.01em}
+  *{font-family:var(--font-sans)!important}
+  h1,h2,h3,.title,.heading{font-family:var(--font-display)!important;letter-spacing:-0.02em!important;color:var(--ink)!important}
+  code,pre,.mono,kbd{font-family:var(--font-mono)!important}
+  /* Surfaces */
+  body, .screen, .panel, .container, .wrap, main { background:var(--paper)!important; color:var(--ink)!important; }
+  .card, .ui-card, .box, .module, .pf-card, .stat-pill, .module-card, .cat-module, .profile-section, .activity-item, .news-ticker-wrap, .tile, .section, section, article {
+    background:var(--bone)!important; border:1px solid var(--line)!important; border-radius:var(--r-lg)!important;
+    color:var(--ink)!important; box-shadow:0 1px 2px rgba(10,10,10,.03)!important;
+  }
+  /* Headers/topbars that were navy → ivory */
+  .home-header, .modules-header, .profile-header, .panel-topbar, header, .topbar, .nav-top, .app-header, .hdr, .navbar {
+    background:var(--paper)!important; color:var(--ink)!important; border-bottom:1px solid var(--line)!important;
+  }
+  .home-header *, .modules-header *, .profile-header *, .panel-topbar *, header *, .topbar *, .nav-top *, .app-header *, .hdr *, .navbar * { color:var(--ink)!important; }
+  /* Inputs */
+  input, select, textarea {
+    background:var(--bone)!important; border:1px solid var(--line-2)!important; color:var(--ink)!important;
+    border-radius:var(--r)!important; font-family:var(--font-sans)!important; font-size:14px!important; padding:10px 12px!important;
+    outline:none!important; transition:border-color .2s ease;
+  }
+  input:focus, select:focus, textarea:focus { border-color:var(--ink)!important; }
+  /* Buttons */
+  button, .btn, .ui-btn, .isr-calc-btn, .props-new-btn, .pe-save-btn, .prf-stripe-btn.primary, .pf-save-btn, .btn-pdf, .pe-toggle-slider {
+    font-family:var(--font-sans)!important; letter-spacing:-0.005em!important;
+  }
+  button:not([class]), .btn-primary, .ui-btn, .pf-save-btn, .pe-save-btn, .isr-calc-btn, .props-new-btn, .btn-pdf, .prf-stripe-btn.primary {
+    background:var(--ink)!important; color:var(--paper)!important;
+    border:none!important; border-radius:var(--r)!important;
+    padding:11px 18px!important; font-weight:600!important; cursor:pointer!important;
+    box-shadow:0 1px 2px rgba(10,10,10,.08)!important; font-size:14px!important;
+  }
+  button:not([class]):hover, .btn-primary:hover, .ui-btn:hover, .pf-save-btn:hover, .pe-save-btn:hover, .isr-calc-btn:hover { opacity:.92!important; }
+  /* Badges, chips */
+  .badge, .chip, .pill, .stat-pill .lbl, .res-tipo-lbl, .isr-badge {
+    background:var(--paper-2)!important; color:var(--ink-2)!important; border:1px solid var(--line)!important;
+    border-radius:var(--r-pill)!important; padding:3px 10px!important; font-size:11px!important; font-weight:500!important;
+  }
+  /* Accent text colors that were navy or teal */
+  [class*="navy"], [style*="color:#0f1829"], [style*="color: #0f1829"], [style*="color:#162035"] { color:var(--ink)!important; }
+  /* Links */
+  a { color:var(--ink)!important; text-decoration:none; }
+  a:hover { color:var(--forest)!important; }
+  /* Scrollbars */
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-thumb { background:var(--line-2); border-radius:3px; }
+  /* Drop garish gradients on home-header */
+  .home-header::before, .home-header::after { display:none!important; }
+  /* Misc legacy */
+  .app-sidebar { background:var(--paper)!important; border-right:1px solid var(--line)!important; }
+  .proto-nav, .bottom-nav, .tabbar { background:var(--bone)!important; border-top:1px solid var(--line)!important; }
+  /* Force any greeting "name" or page title light text to be dark */
+  .greeting-text .hello, .greeting-text .name, .profile-name, .profile-sub, .panel-title, .modules-header h2 { color:var(--ink)!important; }
+  /* Avatar-style circles that were translucent on navy → bone */
+  .home-avatar, .profile-avatar, .pr-icon, .act-icon, .scw-avatar, .notif-bell, .stat-pill {
+    background:var(--bone)!important; border:1px solid var(--line)!important; color:var(--ink)!important;
+  }
+</style>
+
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <title>Admin · Broquer</title>
-<link rel="icon" type="image/png" href="isotipo.png">
-<link rel="apple-touch-icon" href="isotipo.png">
+<link rel="icon" type="image/png" href="isotipo-broquer.png">
+<link rel="apple-touch-icon" href="isotipo-broquer.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>

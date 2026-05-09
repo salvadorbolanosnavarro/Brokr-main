@@ -2,260 +2,395 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>Broquer — Acceso</title>
 <link rel="manifest" href="manifest.json"/>
-<link rel="icon" type="image/png" href="isotipo.png">
-<link rel="apple-touch-icon" href="isotipo.png">
-<meta name="theme-color" content="#ffffff"/>
+<link rel="icon" type="image/png" href="isotipo-broquer.png">
+<link rel="apple-touch-icon" href="isotipo-broquer.png">
+<meta name="theme-color" content="#F7F5EE"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+html, body { background: var(--paper); min-height: 100%; }
+body { overflow-y: auto; }
 
-*{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --navy:#0f1829;
-  --navy2:#162035;
-  --white:#ffffff;
-  --muted:#9aa0ad;
-  --border:#e8eaee;
-  --input-bg:#f5f6f8;
-  --err:#E24B4A;
-  --radius:12px;
+/* ── Page shell ─────────────────────────────── */
+.bk-auth {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 980px) {
+  .bk-auth { grid-template-columns: 1fr 1.05fr; }
 }
 
-html,body{min-height:100%;background:#f5f6f8;font-family:'Poppins',sans-serif;color:#0f0f0f;}
-body{overflow-y:auto;}
-
-/* Layout */
-.wrap{
-  min-height:100vh;display:flex;align-items:center;justify-content:center;
-  padding:24px 16px;
+/* ── LEFT: editorial hero (desktop only) ─────── */
+.bk-hero {
+  display: none;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 56px 56px 40px;
+  position: relative;
+  overflow: hidden;
+}
+@media (min-width: 980px) { .bk-hero { display: flex; flex-direction: column; justify-content: space-between; } }
+.bk-hero::after {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 80% 90%, rgba(247,245,238,.06), transparent 50%),
+    radial-gradient(circle at 0% 0%, rgba(247,245,238,.04), transparent 50%);
+  pointer-events: none;
+}
+.bk-hero__top { display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; }
+.bk-hero__mark {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: -0.03em;
+  color: var(--paper);
+}
+.bk-hero__nav {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(247,245,238,.55);
+}
+.bk-hero__body { position: relative; z-index: 1; max-width: 520px; }
+.bk-hero__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(247,245,238,.55);
+  margin-bottom: 20px;
+}
+.bk-hero__hed {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 56px;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  color: var(--paper);
+  margin-bottom: 20px;
+}
+.bk-hero__hed em { font-style: normal; color: rgba(247,245,238,.55); }
+.bk-hero__sub {
+  font-size: 16px;
+  line-height: 1.5;
+  color: rgba(247,245,238,.65);
+  max-width: 440px;
+}
+.bk-hero__foot {
+  position: relative; z-index: 1;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+  padding-top: 32px;
+  border-top: 1px solid rgba(247,245,238,.10);
+}
+.bk-hero__stat .v {
+  font-family: var(--font-display);
+  font-size: 28px; font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--paper);
+}
+.bk-hero__stat .l {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: rgba(247,245,238,.50);
+  margin-top: 4px;
 }
 
-/* Card */
-.card{
-  width:100%;max-width:440px;
-  background:#ffffff;
-  border:1px solid var(--border);
-  border-radius:20px;
-  padding:40px 36px 36px;
-  box-shadow:0 4px 24px rgba(0,0,0,0.08);
-  animation:cardIn .5s cubic-bezier(.16,1,.3,1);
+/* ── RIGHT: form panel ────────────────────────── */
+.bk-form-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px 64px;
+  background: var(--paper);
 }
-@keyframes cardIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
-
-/* Logo */
-.logo-area{text-align:center;margin-bottom:18px}
-.logo-area img{height:56px;width:auto;margin-bottom:4px}
-.logo-area p{font-size:13px;color:var(--muted);margin-top:8px;letter-spacing:.3px}
-
-/* Tabs */
-.tabs{display:flex;background:var(--input-bg);border-radius:10px;padding:3px;margin-bottom:28px;gap:2px}
-.tab{flex:1;padding:9px;border:none;background:none;color:var(--muted);font-size:13px;font-weight:500;border-radius:8px;cursor:pointer;transition:all .2s;font-family:inherit}
-.tab.active{background:#ffffff;color:var(--navy);box-shadow:0 2px 8px rgba(0,0,0,.08)}
-
-/* Form */
-.field{margin-bottom:16px}
-.field label{display:block;font-size:11px;font-weight:600;color:#5a6070;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
-.field input{
-  width:100%;padding:12px 14px;
-  background:var(--input-bg);border:1.5px solid var(--border);
-  border-radius:var(--radius);color:#0f0f0f;font-size:14px;font-family:inherit;
-  transition:border-color .2s,box-shadow .2s;outline:none;
+.bk-form {
+  width: 100%;
+  max-width: 420px;
 }
-.field input:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(15,24,41,.08)}
-.field input::placeholder{color:var(--muted)}
+.bk-form__brand {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 40px;
+}
+.bk-form__brand img { height: 28px; width: auto; }
+.bk-form__brand .tag {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.16em;
+  color: var(--mute); text-transform: uppercase;
+  padding-left: 12px; margin-left: 2px;
+  border-left: 1px solid var(--line-2);
+}
+@media (min-width: 980px) {
+  .bk-form__brand { display: none; }
+}
+
+.bk-form__hed {
+  font-family: var(--font-display);
+  font-size: 38px; font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  margin-bottom: 8px;
+  line-height: 1.05;
+}
+.bk-form__sub {
+  font-size: 15px; color: var(--mute);
+  margin-bottom: 32px;
+}
+
+/* Tabs (segmented) */
+.bk-seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--paper-2);
+  padding: 4px;
+  border-radius: var(--r-pill);
+  margin-bottom: 28px;
+  border: 1px solid var(--line);
+}
+.bk-seg__btn {
+  appearance: none;
+  border: none; background: transparent;
+  height: 38px;
+  border-radius: var(--r-pill);
+  font-size: 13px; font-weight: 500;
+  color: var(--mute);
+  cursor: pointer;
+  transition: all var(--dur) var(--ease);
+  letter-spacing: -0.005em;
+}
+.bk-seg__btn.is-active { background: var(--bone); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(10,10,10,.04); }
+
+/* Field */
+.bk-field { margin-bottom: 16px; }
+.bk-field label { display: block; font-size: 12px; font-weight: 500; color: var(--ink-2); margin-bottom: 6px; letter-spacing: -0.005em; }
+
+/* Forgot row */
+.bk-forgot { font-size: 13px; color: var(--mute); text-align: right; margin: -4px 0 18px; }
+.bk-forgot a { color: var(--ink); font-weight: 500; }
+.bk-forgot a:hover { color: var(--forest); }
 
 /* Buttons */
-.btn-primary{
-  width:100%;padding:14px;border:none;border-radius:var(--radius);
-  background:var(--navy);
-  color:#ffffff;font-size:15px;font-weight:600;font-family:inherit;
-  cursor:pointer;transition:opacity .2s,transform .1s;letter-spacing:.3px;
-  margin-top:8px;
+.bk-submit {
+  width: 100%;
+  height: 52px;
+  border: none;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: var(--r-pill);
+  font-size: 15px; font-weight: 600;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), transform var(--dur) var(--ease);
+  margin-top: 6px;
 }
-.btn-primary:hover{opacity:.85}
-.btn-primary:active{transform:scale(.98)}
-.btn-primary:disabled{opacity:.4;cursor:not-allowed}
+.bk-submit:hover { background: var(--ink-2); }
+.bk-submit:active { transform: scale(.985); }
+.bk-submit:disabled { opacity: .5; cursor: not-allowed; }
 
-.divider{
-  display:flex;align-items:center;gap:12px;
-  margin:22px 0;color:var(--muted);font-size:12px;
+.bk-divider {
+  display: flex; align-items: center; gap: 14px;
+  margin: 26px 0 18px;
+  color: var(--mute-2);
+  font-size: 12px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
 }
-.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
-
-.btn-oauth{
-  width:100%;padding:12px 14px;
-  background:#ffffff;border:1.5px solid var(--border);
-  border-radius:var(--radius);color:#0f0f0f;font-size:13px;font-weight:500;
-  font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;
-  transition:border-color .2s,background .2s;margin-bottom:10px;
+.bk-divider::before, .bk-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--line);
 }
-.btn-oauth:hover{border-color:var(--navy);background:var(--input-bg)}
-.btn-oauth svg{flex-shrink:0}
 
-/* Messages */
-.msg{
-  padding:10px 14px;border-radius:8px;font-size:13px;
-  margin-bottom:14px;display:none;line-height:1.5;
+.bk-oauth {
+  width: 100%; height: 50px;
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px;
+  background: var(--bone); color: var(--ink);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-pill);
+  font-size: 14px; font-weight: 500;
+  cursor: pointer;
+  transition: all var(--dur) var(--ease);
 }
-.msg.err{background:rgba(226,75,74,.08);border:1px solid rgba(226,75,74,.25);color:#c0392b;display:block}
-.msg.ok{background:rgba(29,158,117,.08);border:1px solid rgba(29,158,117,.25);color:#1D9E75;display:block}
+.bk-oauth:hover { background: var(--paper-2); border-color: var(--line-3); }
 
-/* Forgot */
-.forgot{font-size:12px;color:var(--muted);text-align:right;margin-top:-8px;margin-bottom:16px}
-.forgot a{color:var(--navy);text-decoration:none;font-weight:600}
-.forgot a:hover{text-decoration:underline}
+.bk-faceid {
+  text-align: center; font-size: 12px; color: var(--mute);
+  margin-top: 22px;
+  display: flex; justify-content: center; align-items: center; gap: 6px;
+}
 
-/* Face ID hint */
-.faceid-hint{
-  text-align:center;font-size:11px;color:var(--muted);
-  margin-top:18px;display:flex;align-items:center;justify-content:center;gap:6px;
+.bk-msg {
+  padding: 12px 14px; border-radius: var(--r);
+  font-size: 13px; line-height: 1.5;
+  margin-bottom: 16px; display: none;
+  border: 1px solid transparent;
+}
+.bk-msg.is-err { display: block; background: var(--danger-soft); color: var(--danger); border-color: rgba(184,75,63,.20); }
+.bk-msg.is-ok  { display: block; background: var(--success-soft); color: var(--success); border-color: rgba(31,107,74,.20); }
+
+.bk-foot {
+  margin-top: 32px;
+  font-size: 12px;
+  color: var(--mute-2);
+  text-align: center;
+  font-family: var(--font-mono);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
 }
 
 /* Spinner */
-.spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
+.bk-spin { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(247,245,238,.3); border-top-color: var(--paper); border-radius: 50%; animation: bk-spin .7s linear infinite; }
+@keyframes bk-spin { to { transform: rotate(360deg); } }
 
-@media(max-width:480px){
-  .card{padding:28px 20px 24px;border-radius:16px}
+/* Splash */
+#splash {
+  position: fixed; inset: 0;
+  background: var(--paper);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999;
+  transition: opacity .6s var(--ease);
+}
+#splash .mark {
+  font-family: var(--font-display);
+  font-size: 38px; font-weight: 600;
+  letter-spacing: -0.03em; color: var(--ink);
+  animation: pulseIn .9s var(--ease);
+}
+@keyframes pulseIn {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 </style>
 </head>
 <body>
-<!-- SPLASH SCREEN -->
-<div id="splash" style="
-  position:fixed;inset:0;
-  background: #0a1628;;
-  display:flex;align-items:center;justify-content:center;
-  z-index:9999;
-  transition:opacity 0.7s ease;
-">
-  <video id="splash-video" muted playsinline style="max-width:360px;width:80%;mix-blend-mode:screen;">
-    <source src="intro.mp4" type="video/mp4">
-  </video>
-</div>
-<script>
-  const splash = document.getElementById('splash');
-  const splashVideo = document.getElementById('splash-video');
 
-  function hideSplash() {
-    splash.style.opacity = '0';
-    setTimeout(() => { if(splash.parentNode) splash.remove(); }, 700);
-  }
+<!-- Splash -->
+<div id="splash"><div class="mark">Broquer<span style="color:var(--mute-2)">.</span></div></div>
 
-  // Forzar reproducción por JS para evitar que el navegador muestre el botón de play
-  const playPromise = splashVideo.play();
-  if (playPromise !== undefined) {
-    playPromise.catch(() => {
-      // Si el navegador bloquea el autoplay, ocultar el splash de inmediato
-      splash.remove();
-    });
-  }
+<div class="bk-auth">
 
-  // Ocultar cuando el video termine
-  splashVideo.addEventListener('ended', hideSplash);
-
-  // Fallback: ocultar a los 4s por si acaso
-  setTimeout(hideSplash, 4000);
-</script>
-
-<div class="wrap">
-  <div class="card">
-
-    <div class="logo-area">
-      <img src="logotipo.png" alt="Broquer"/>
-      <p>Para profesionales inmobiliarios</p>
+  <!-- HERO (desktop) -->
+  <aside class="bk-hero">
+    <div class="bk-hero__top">
+      <div class="bk-hero__mark">Broquer<span style="color:rgba(247,245,238,.5)">.</span></div>
+      <div class="bk-hero__nav">v 4.0 — LATAM</div>
     </div>
-
-    <!-- Tabs -->
-    <div class="tabs">
-      <button class="tab active" onclick="setTab('login')">Iniciar sesión</button>
-      <button class="tab" onclick="setTab('signup')">Crear cuenta</button>
+    <div class="bk-hero__body">
+      <div class="bk-hero__eyebrow">Para profesionales inmobiliarios</div>
+      <h1 class="bk-hero__hed">Cierra más operaciones. <em>Con menos fricción.</em></h1>
+      <p class="bk-hero__sub">El sistema operativo del agente inmobiliario de LATAM. CRM, contratos, valuación AVM e ISR — un solo lugar.</p>
     </div>
-
-    <!-- Messages -->
-    <div class="msg" id="msg"></div>
-
-    <!-- LOGIN FORM -->
-    <div id="form-login">
-      <div class="field">
-        <label>Correo electrónico</label>
-        <input type="email" id="l-email" placeholder="tu@correo.com" autocomplete="email"/>
-      </div>
-      <div class="field">
-        <label>Contraseña</label>
-        <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(e.key==='Enter')doLogin()"/>
-      </div>
-      <div class="forgot"><a href="#" onclick="doForgot();return false">¿Olvidaste tu contraseña?</a></div>
-      <button type="button" class="btn-primary" id="btn-login" onclick="doLogin()">Entrar</button>
-
-      <div class="divider">o continúa con</div>
-
-      <button class="btn-oauth" onclick="doGoogle()">
-        <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
-        Tu cuenta de Google
-      </button>
-
-      <div class="faceid-hint">
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a9 9 0 01-9 9m0 0a9 9 0 01-9-9 9 9 0 0118 0z"/></svg>
-        Face ID disponible después del primer inicio de sesión
-      </div>
+    <div class="bk-hero__foot">
+      <div class="bk-hero__stat"><div class="v">12,400+</div><div class="l">Agentes activos</div></div>
+      <div class="bk-hero__stat"><div class="v">$2.8B</div><div class="l">En operaciones</div></div>
+      <div class="bk-hero__stat"><div class="v">38</div><div class="l">Ciudades LATAM</div></div>
     </div>
+  </aside>
 
-    <!-- SIGNUP FORM -->
-    <div id="form-signup" style="display:none">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div class="field" style="margin-bottom:0">
-          <label>Nombre(s)</label>
-          <input type="text" id="s-nombre" placeholder="Salvador" autocomplete="given-name"/>
+  <!-- FORM -->
+  <main class="bk-form-wrap">
+    <div class="bk-form">
+
+      <div class="bk-form__brand">
+        <img src="logotipo-broquer.png" alt="Broquer"/>
+        <span class="tag">Para profesionales</span>
+      </div>
+
+      <h2 class="bk-form__hed" id="form-title">Bienvenido</h2>
+      <p class="bk-form__sub" id="form-sub">Inicia sesión para continuar a tu cuenta.</p>
+
+      <div class="bk-seg" role="tablist">
+        <button class="bk-seg__btn is-active" id="seg-login"  onclick="setTab('login')">Iniciar sesión</button>
+        <button class="bk-seg__btn"           id="seg-signup" onclick="setTab('signup')">Crear cuenta</button>
+      </div>
+
+      <div class="bk-msg" id="msg"></div>
+
+      <!-- LOGIN -->
+      <form id="form-login" onsubmit="event.preventDefault();doLogin()">
+        <div class="bk-field">
+          <label for="l-email">Correo electrónico</label>
+          <input class="bk-input" type="email" id="l-email" placeholder="tu@correo.com" autocomplete="email"/>
         </div>
-        <div class="field" style="margin-bottom:0">
-          <label>Apellidos</label>
-          <input type="text" id="s-apellidos" placeholder="Bolaños" autocomplete="family-name"/>
+        <div class="bk-field">
+          <label for="l-pass">Contraseña</label>
+          <input class="bk-input" type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password"/>
         </div>
-      </div>
-      <div class="field" style="margin-top:16px">
-        <label>Teléfono</label>
-        <input type="tel" id="s-telefono" placeholder="443 123 4567" autocomplete="tel"/>
-      </div>
-      <div class="field">
-        <label>Correo electrónico</label>
-        <input type="email" id="s-email" placeholder="tu@correo.com" autocomplete="email"/>
-      </div>
-      <div class="field">
-        <label>Contraseña</label>
-        <input type="password" id="s-pass" placeholder="Mínimo 8 caracteres" autocomplete="new-password"/>
-      </div>
-      <div class="field">
-        <label>Confirmar contraseña</label>
-        <input type="password" id="s-pass2" placeholder="Repite la contraseña"/>
-      </div>
-      <button class="btn-primary" id="btn-signup" onclick="doSignup()">Crear cuenta</button>
+        <div class="bk-forgot"><a href="#" onclick="doForgot();return false">¿Olvidaste tu contraseña?</a></div>
+        <button type="submit" class="bk-submit" id="btn-login">Continuar</button>
 
-      <div class="divider">o regístrate con</div>
+        <div class="bk-divider">o</div>
 
-      <button class="btn-oauth" onclick="doGoogle()">
-        <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
-        Registrarse con Google
-      </button>
+        <button type="button" class="bk-oauth" onclick="doGoogle()">
+          <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
+          Continuar con Google
+        </button>
+
+        <div class="bk-faceid">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a9 9 0 01-9 9m0 0a9 9 0 01-9-9 9 9 0 0118 0z"/></svg>
+          Face ID disponible tras el primer inicio de sesión
+        </div>
+      </form>
+
+      <!-- SIGNUP -->
+      <form id="form-signup" style="display:none" onsubmit="event.preventDefault();doSignup()">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="bk-field" style="margin-bottom:0">
+            <label for="s-nombre">Nombre(s)</label>
+            <input class="bk-input" type="text" id="s-nombre" placeholder="Salvador" autocomplete="given-name"/>
+          </div>
+          <div class="bk-field" style="margin-bottom:0">
+            <label for="s-apellidos">Apellidos</label>
+            <input class="bk-input" type="text" id="s-apellidos" placeholder="Bolaños" autocomplete="family-name"/>
+          </div>
+        </div>
+        <div class="bk-field" style="margin-top:14px">
+          <label for="s-telefono">Teléfono</label>
+          <input class="bk-input" type="tel" id="s-telefono" placeholder="443 123 4567" autocomplete="tel"/>
+        </div>
+        <div class="bk-field">
+          <label for="s-email">Correo electrónico</label>
+          <input class="bk-input" type="email" id="s-email" placeholder="tu@correo.com" autocomplete="email"/>
+        </div>
+        <div class="bk-field">
+          <label for="s-pass">Contraseña</label>
+          <input class="bk-input" type="password" id="s-pass" placeholder="Mínimo 8 caracteres" autocomplete="new-password"/>
+        </div>
+        <div class="bk-field">
+          <label for="s-pass2">Confirmar contraseña</label>
+          <input class="bk-input" type="password" id="s-pass2" placeholder="Repite la contraseña"/>
+        </div>
+        <button type="submit" class="bk-submit" id="btn-signup">Crear cuenta</button>
+
+        <div class="bk-divider">o</div>
+
+        <button type="button" class="bk-oauth" onclick="doGoogle()">
+          <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
+          Registrarse con Google
+        </button>
+      </form>
+
+      <div class="bk-foot">© Broquer · Para profesionales inmobiliarios</div>
     </div>
+  </main>
 
-  </div>
 </div>
 
 <script>
+/* ════════════════════════════════════════════════
+   Auth logic — preserved from original (Supabase).
+   ════════════════════════════════════════════════ */
 const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
 const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
 
-// ── SUPABASE AUTH HELPERS ──
 async function sbAuth(path, body){
   const r = await fetch(`${SB_URL}/auth/v1/${path}`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': SB_KEY,
-    },
+    headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY },
     body: JSON.stringify(body)
   });
   return r.json();
@@ -264,21 +399,26 @@ async function sbAuth(path, body){
 function showMsg(text, type='err'){
   const el = document.getElementById('msg');
   el.textContent = text;
-  el.className = `msg ${type}`;
+  el.className = `bk-msg is-${type}`;
 }
-function clearMsg(){ document.getElementById('msg').className = 'msg'; }
+function clearMsg(){ document.getElementById('msg').className = 'bk-msg'; }
 
 function setTab(tab){
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='signup')));
+  document.getElementById('seg-login').classList.toggle('is-active', tab==='login');
+  document.getElementById('seg-signup').classList.toggle('is-active', tab==='signup');
   document.getElementById('form-login').style.display  = tab==='login'  ? '' : 'none';
   document.getElementById('form-signup').style.display = tab==='signup' ? '' : 'none';
+  document.getElementById('form-title').textContent = tab==='login' ? 'Bienvenido' : 'Crea tu cuenta';
+  document.getElementById('form-sub').textContent   = tab==='login'
+    ? 'Inicia sesión para continuar a tu cuenta.'
+    : 'Tu sistema operativo inmobiliario, en minutos.';
   clearMsg();
 }
 
 function setLoading(btnId, loading){
   const btn = document.getElementById(btnId);
-  if(loading){ btn.disabled=true; btn.innerHTML='<span class="spin"></span>'; }
-  else { btn.disabled=false; btn.textContent = btnId==='btn-login' ? 'Entrar' : 'Crear cuenta'; }
+  if(loading){ btn.disabled = true; btn.innerHTML = '<span class="bk-spin"></span>'; }
+  else { btn.disabled = false; btn.textContent = btnId==='btn-login' ? 'Continuar' : 'Crear cuenta'; }
 }
 
 async function doLogin(){
@@ -286,13 +426,12 @@ async function doLogin(){
   const pass  = document.getElementById('l-pass').value;
   if(!email||!pass){ showMsg('Completa todos los campos'); return; }
 
-setLoading('btn-login', true);
+  setLoading('btn-login', true);
   const data = await sbAuth('token?grant_type=password', { email, password: pass });
   setLoading('btn-login', false);
 
   if(data.error){ showMsg(data.error_description || data.error); return; }
 
-  // Guardar en ambos para máxima compatibilidad
   localStorage.setItem('sb_token', data.access_token);
   localStorage.setItem('sb_refresh', data.refresh_token);
   localStorage.setItem('sb_user', JSON.stringify(data.user));
@@ -302,6 +441,7 @@ setLoading('btn-login', true);
 
   await checkProfileAndRedirect(data.access_token, data.user);
 }
+
 async function doSignup(){
   const nombre    = document.getElementById('s-nombre').value.trim();
   const apellidos = document.getElementById('s-apellidos').value.trim();
@@ -316,25 +456,20 @@ async function doSignup(){
   const data = await sbAuth('signup', { email, password: pass });
   setLoading('btn-signup', false);
   if(data.error){ showMsg(data.error_description || data.error); return; }
-  // Guardar datos de perfil en sessionStorage para registro.html
   sessionStorage.setItem('reg_nombre', nombre + ' ' + apellidos);
   sessionStorage.setItem('reg_telefono', telefono);
   if(data.id || data.user?.id){
     sessionStorage.setItem('sb_token', data.access_token || '');
     sessionStorage.setItem('sb_user', JSON.stringify(data.user || data));
-    showMsg('✅ Cuenta creada. Completando tu perfil…', 'ok');
+    showMsg('Cuenta creada. Completando tu perfil…', 'ok');
     setTimeout(() => { window.location.href = 'registro.html'; }, 1200);
   } else {
-    showMsg('✅ Te enviamos un correo de confirmación. Una vez confirmado, inicia sesión para continuar.', 'ok');
+    showMsg('Te enviamos un correo de confirmación. Una vez confirmado, inicia sesión para continuar.', 'ok');
   }
 }
 
 function doGoogle(){
   window.location.href = `${SB_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(location.origin+'/login.html')}`;
-}
-
-async function doFacebook(){
-  window.location.href = `${SB_URL}/auth/v1/authorize?provider=facebook&redirect_to=${encodeURIComponent(location.origin+'/index.html')}`;
 }
 
 async function doForgot(){
@@ -346,7 +481,6 @@ async function doForgot(){
 }
 
 async function checkProfileAndRedirect(token, user){
-  // Check if user has completed profile
   const r = await fetch(`${SB_URL}/rest/v1/usuarios?id=eq.${user.id}&select=nombre,telefono`, {
     headers:{ 'apikey':SB_KEY, 'Authorization':`Bearer ${token}` }
   });
@@ -358,12 +492,19 @@ async function checkProfileAndRedirect(token, user){
   }
 }
 
-// Check if already logged in
+/* Splash */
+setTimeout(() => {
+  const s = document.getElementById('splash');
+  if (!s) return;
+  s.style.opacity = '0';
+  setTimeout(() => s.remove(), 600);
+}, 800);
+
+/* OAuth/email confirmation callback handling */
 (async () => {
   let token = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
   const refresh = localStorage.getItem('sb_refresh');
   if(!token && refresh){
-    // Renovar sesión con refresh_token
     const r = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
       method:'POST',
       headers:{'Content-Type':'application/json','apikey':SB_KEY},
@@ -383,13 +524,12 @@ async function checkProfileAndRedirect(token, user){
     const user = JSON.parse(localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}');
     if(user.id) await checkProfileAndRedirect(token, user);
   }
-  // Handle OAuth / email confirmation callback (hash fragment)
   const hash = location.hash;
   if(hash.includes('access_token=')){
     const params = new URLSearchParams(hash.slice(1));
     const cbToken = params.get('access_token');
     const cbRefresh = params.get('refresh_token');
-    const cbType = params.get('type'); // 'signup', 'recovery', 'magiclink'
+    const cbType = params.get('type');
     if(cbToken){
       const r = await fetch(`${SB_URL}/auth/v1/user`, {
         headers:{ 'apikey':SB_KEY, 'Authorization':`Bearer ${cbToken}` }
@@ -400,24 +540,20 @@ async function checkProfileAndRedirect(token, user){
       localStorage.setItem('sb_user', JSON.stringify(user));
       sessionStorage.setItem('sb_token', cbToken);
       sessionStorage.setItem('sb_user', JSON.stringify(user));
-      // Limpiar hash de la URL sin recargar
       history.replaceState(null, '', location.pathname);
-      if(cbType === 'recovery'){
-        // Contraseña restablecida — ir directo a la app
-        await checkProfileAndRedirect(cbToken, user);
-      } else {
-        // signup (confirmación de correo) o Google OAuth
-        await checkProfileAndRedirect(cbToken, user);
-      }
+      await checkProfileAndRedirect(cbToken, user);
     }
   }
-  // Detectar si viene de confirmación de correo sin token (link ya usado o expirado)
   const urlParams = new URLSearchParams(location.search);
   if(urlParams.get('type') === 'signup' || urlParams.get('confirmation') === 'true'){
-    showMsg('✅ Correo confirmado. Ahora inicia sesión con tus datos.', 'ok');
+    showMsg('Correo confirmado. Ahora inicia sesión con tus datos.', 'ok');
     setTab('login');
   }
 })();
+
+/* Enter to submit on login pass */
+document.getElementById('l-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 </script>
+
 </body>
 </html>

@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<link rel="icon" type="image/png" href="isotipo.png">
-<link rel="apple-touch-icon" href="isotipo.png">
+<link rel="icon" type="image/png" href="isotipo-broquer.png">
+<link rel="apple-touch-icon" href="isotipo-broquer.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Broquer — Ficha Técnica</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -279,6 +279,75 @@ body{font-family:'Poppins',sans-serif;background:#f0f2f7;color:var(--txt)}
   .cover-specs{grid-template-columns:repeat(2,1fr)}
 }
 </style>
+
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style id="__brokr_skin_override">
+:root {
+  --navy: #1F1B17 !important;
+  --navy2: #2D2823 !important;
+  --navy3: #3A332C !important;
+  --teal: #1F1B17 !important;
+  --teal2: #2D2823 !important;
+  --teal-dark: #1F1B17 !important;
+  --silver: #F4F1E9 !important;
+  --silver2: #E8E2D2 !important;
+  --bdr: #E8E2D2 !important;
+  --txt: #1F1B17 !important;
+  --mut: #6B6B66 !important;
+  --wh: #FBF9F1 !important;
+  --gray: #F4F1E9 !important;
+  --gray2: #E8E2D2 !important;
+  --gray-100: #F4F1E9 !important;
+  --gray-600: #6B6B66 !important;
+  --screen-bg: #FBF9F1 !important;
+  --text: #1F1B17 !important;
+  --tealp: #EFEDE5 !important;
+}
+html, body {
+  background: #FBF9F1 !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif !important;
+  color: #1F1B17 !important;
+  letter-spacing: -0.005em !important;
+}
+* { font-family: inherit !important; }
+input, select, textarea, button {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif !important;
+}
+/* Replace Playfair display with system serif fallback in headings */
+[class*="ttl"], [class*="title"], h1, h2, h3,
+.cover-precio, .cover-desc-ttl, .gallery-header h2, .chars-header h2,
+.pg-ttl, .sheet-title, .header-title, .det-name {
+  font-family: 'New York', 'Iowan Old Style', 'Cambria', Georgia, serif !important;
+  letter-spacing: -0.025em !important;
+  font-weight: 600 !important;
+}
+/* Buttons get the new pill treatment */
+.gen-btn, .btn-primary, .ui-btn, .btn-new-prop {
+  background: #1F1B17 !important;
+  border-radius: 999px !important;
+  letter-spacing: -0.005em !important;
+  font-weight: 600 !important;
+}
+/* Inputs warmed */
+input, select, textarea {
+  background: #F4F1E9 !important;
+  border: 1px solid #E8E2D2 !important;
+  border-radius: 12px !important;
+  color: #1F1B17 !important;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: #1F1B17 !important;
+  background: #FBF9F1 !important;
+  outline: none !important;
+}
+/* Cards */
+.card, .stat-card, .prop-card, .pcard {
+  background: #F4F1E9 !important;
+  border: 1px solid #E8E2D2 !important;
+  border-radius: 16px !important;
+}
+</style>
+
 </head>
 <body>
 
