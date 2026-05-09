@@ -2,18 +2,20 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
+<link rel="icon" type="image/png" href="isotipo.png">
+<link rel="apple-touch-icon" href="isotipo.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Brokr — Contratos</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<title>Broquer — Contratos</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet"/>
 <style>
 :root{
   --navy:#1a2744;--navy2:#0f1829;--navy3:#243358;
-  --teal:#2a9db5;--teal2:#3dbdd6;--tealp:#e8f7fa;
+  --teal:#0f1829;--teal2:#162035;--tealp:#f0f2f7;
   --gold:#c9a96e;--silver:#f4f6f9;--silver2:#e8ecf2;
   --txt:#1a2744;--mut:#6b7a99;--wh:#ffffff;--r:12px;--r2:8px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);min-height:100vh;padding-bottom:80px}
+body{font-family:'Poppins',sans-serif;background:var(--silver);color:var(--txt);min-height:100vh;padding-bottom:80px}
 #wrap{max-width:780px;margin:0 auto;padding:32px 20px 60px}
 
 /* Nav */
@@ -29,7 +31,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
 /* Type selector */
 .tipo-tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
 .tipo-tab{padding:16px;border:2px solid var(--silver2);border-radius:var(--r);background:var(--wh);cursor:pointer;transition:all .15s;text-align:center}
-.tipo-tab:hover{border-color:var(--teal);background:var(--tealp)}
+.tipo-tab:hover{border-color:var(--navy2);background:var(--tealp)}
 .tipo-tab.active{border-color:var(--navy);background:var(--navy)}
 .tipo-tab-ico{font-size:24px;margin-bottom:6px}
 .tipo-tab-lbl{font-size:14px;font-weight:600;color:var(--navy)}
@@ -47,8 +49,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
 .frow.three{grid-template-columns:1fr 1fr 1fr}
 .f{display:flex;flex-direction:column;gap:4px}
 .f label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
-.f input,.f select,.f textarea{background:var(--silver);border:1.5px solid var(--silver2);border-radius:var(--r2);padding:9px 11px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--txt);outline:none;width:100%;transition:border .15s}
-.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--teal);background:var(--wh)}
+.f input,.f select,.f textarea{background:var(--silver);border:1.5px solid var(--silver2);border-radius:var(--r2);padding:9px 11px;font-family:'Poppins',sans-serif;font-size:14px;color:var(--txt);outline:none;width:100%;transition:border .15s}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--navy);background:var(--wh)}
 .f input::placeholder{color:var(--mut)}
 .f-note{font-size:11px;color:var(--mut);margin-top:3px;font-style:italic}
 
@@ -58,15 +60,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
 .money-wrap input{padding-left:22px}
 
 /* Generate button */
-.gen-btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s;margin-top:4px}
+.gen-btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:var(--r2);font-family:'Poppins',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s;margin-top:4px}
 .gen-btn:hover{background:var(--navy3)}
 .gen-btn:disabled{background:var(--silver2);color:var(--mut);cursor:not-allowed}
 .gen-btn svg{flex-shrink:0}
 
 /* Loading */
-.loading{display:none;align-items:center;gap:10px;padding:12px;background:var(--tealp);border-radius:var(--r2);font-size:13px;color:var(--teal);margin-top:10px}
+.loading{display:none;align-items:center;gap:10px;padding:12px;background:#f0f2f7;border-radius:var(--r2);font-size:13px;color:var(--navy);margin-top:10px}
 .loading.show{display:flex}
-.spinner{width:15px;height:15px;border:2px solid var(--teal2);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+.spinner{width:15px;height:15px;border:2px solid var(--navy2);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* Error */
@@ -245,13 +247,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
   <div class="modo-selector">
     <button class="modo-btn active" id="modo-brokr" onclick="setModo('brokr')">
       <div class="modo-btn-ico">📄</div>
-      <span class="modo-btn-lbl">Contratos Brokr</span>
+      <span class="modo-btn-lbl">Contratos Broquer</span>
       <span class="modo-btn-sub">Arrendamiento · Promesa de compraventa</span>
     </button>
     <button class="modo-btn" id="modo-machote" onclick="setModo('machote')">
       <div class="modo-btn-ico">📁</div>
       <span class="modo-btn-lbl">Mi propio machote</span>
-      <span class="modo-btn-sub">Sube tu plantilla y Brokr la automatiza</span>
+      <span class="modo-btn-sub">Sube tu plantilla y Broquer la automatiza</span>
     </button>
   </div>
 
@@ -850,7 +852,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
       <div class="card">
         <div class="card-title">2 — Revisa y edita los campos detectados</div>
         <p style="font-size:13px;color:var(--mut);margin-bottom:14px">
-          Brokr detectó los siguientes campos variables en tu machote. Puedes editar los nombres, cambiar el tipo de dato, agregar o eliminar campos antes de continuar.
+          Broquer detectó los siguientes campos variables en tu machote. Puedes editar los nombres, cambiar el tipo de dato, agregar o eliminar campos antes de continuar.
         </p>
 
         <div class="campos-header">
@@ -1644,7 +1646,7 @@ async function abrirPickerInmueble(contexto) {
   document.getElementById('pick-prop-ov').classList.add('open');
   const token = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
   if (!token) {
-    document.getElementById('pick-prop-list').innerHTML = '<div class="pick-empty">Inicia sesión en Brokr para ver tus inmuebles.</div>';
+    document.getElementById('pick-prop-list').innerHTML = '<div class="pick-empty">Inicia sesión en Broquer para ver tus inmuebles.</div>';
     return;
   }
   try {

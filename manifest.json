@@ -1,6 +1,6 @@
 {
-  "name": "Brokr",
-  "short_name": "Brokr",
+  "name": "Broquer",
+  "short_name": "Broquer",
   "description": "El más potente aliado de IA para el agente inmobiliario de LATAM",
   "start_url": "/",
   "display": "standalone",
@@ -10,25 +10,25 @@
   "lang": "es-MX",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "isotipo.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon-192.png",
+      "src": "isotipo.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "icon-192.png",
+      "src": "isotipo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon-192.png",
+      "src": "isotipo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

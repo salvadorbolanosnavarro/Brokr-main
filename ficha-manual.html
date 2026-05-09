@@ -2,16 +2,18 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
+<link rel="icon" type="image/png" href="isotipo.png">
+<link rel="apple-touch-icon" href="isotipo.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Brokr — Ficha Manual</title>
+<title>Broquer — Ficha Manual</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet"/>
 <style>
 :root{
-  --navy:#0f1829;--navy2:#1e2d47;--teal:#2a9db5;--teal-dark:#1a7a8f;
-  --teal-bg:rgba(42,157,181,0.10);--teal-border:rgba(42,157,181,0.25);
+  --navy:#0f1829;--navy2:#1e2d47;--teal:#0f1829;--teal-dark:#162035;
+  --teal-bg:rgba(15,24,41,0.06);--teal-border:rgba(15,24,41,0.15);
   --white:#ffffff;--gray:#f5f6f8;--gray2:#e8eaee;
-  --txt:#1a2035;--mut:#5a6070;--mut2:#9aa0ad;--r:14px;
+  --txt:#0f0f0f;--mut:#5a6070;--mut2:#9aa0ad;--r:14px;
   --shadow:0 2px 12px rgba(0,0,0,0.07);--font:'Poppins',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -22,7 +24,7 @@ body{font-family:'Poppins',sans-serif;background:#f0f2f7;color:var(--txt)}
 
 
 .ui-card{background:var(--white);border-radius:var(--r);padding:18px 20px;box-shadow:var(--shadow);border:1px solid rgba(0,0,0,0.06);margin-bottom:12px}
-.ui-card h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--teal);margin-bottom:12px}
+.ui-card h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--navy);margin-bottom:12px}
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
 .frow.three{grid-template-columns:1fr 1fr 1fr}
 .frow.single{grid-template-columns:1fr}
@@ -174,7 +176,7 @@ body{font-family:'Poppins',sans-serif;background:#f0f2f7;color:var(--txt)}
   display:flex;align-items:center;justify-content:space-between;
   padding:0 20px;flex-shrink:0;
 }
-.ft-logo img{height:16px;filter:brightness(10)}
+.ft-logo img{height:32px;width:auto}
 .ft-txt{font-size:9px;color:rgba(255,255,255,.35);letter-spacing:.5px}
 
 /* ── PRINT ── */
@@ -616,8 +618,8 @@ async function generarDescripcion(){
 // ── FOOTER ──────────────────────────────────
 function footer(){
   return `<div class="ficha-footer">
-    <div class="ft-logo"><img src="${LOGO_B64}" alt="Brokr"/></div>
-    <div class="ft-txt">BROKR.MX</div>
+    <div class="ft-logo"><img src="logotipo.png" alt="Broquer" style="height: 32px; width: auto;"/></div>
+    <div class="ft-txt">Broquer.mx</div>
   </div>`;
 }
 

@@ -3,41 +3,42 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>BROKR® — Completa tu perfil</title>
-<link rel="apple-touch-icon" href="icon-192.png"/>
+<title>Broquer® — Completa tu perfil</title>
+<link rel="icon" type="image/png" href="isotipo.png">
+<link rel="apple-touch-icon" href="isotipo.png">
 <meta name="theme-color" content="#0a1628"/>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--navy:#0a1628;--navy2:#0f1f3d;--teal:#0d9488;--teal2:#14b8a6;--white:#fff;--muted:#94a3b8;--border:#1e3058;--input-bg:#0d1f3a;--radius:12px}
-html,body{min-height:100%;background:var(--navy);font-family:'DM Sans',sans-serif;color:var(--white)}
-.bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 60% 50% at 20% 20%,rgba(13,148,136,.15) 0%,transparent 60%),radial-gradient(ellipse 50% 40% at 80% 80%,rgba(59,111,212,.12) 0%,transparent 60%),var(--navy)}
+:root{--navy:#0f1829;--navy2:#162035;--white:#fff;--muted:#9aa0ad;--border:#e8eaee;--input-bg:#f5f6f8;--radius:12px}
+html,body{min-height:100%;background:#f5f6f8;font-family:'Poppins',sans-serif;color:#0f0f0f}
+.bg{display:none}
 .wrap{position:relative;z-index:1;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px}
-.card{width:100%;max-width:460px;background:rgba(10,22,40,.85);border:1px solid var(--border);border-radius:20px;padding:40px 36px 36px;backdrop-filter:blur(20px);box-shadow:0 32px 80px rgba(0,0,0,.5);animation:cardIn .5s cubic-bezier(.16,1,.3,1)}
+.card{width:100%;max-width:460px;background:#ffffff;border:1px solid var(--border);border-radius:20px;padding:40px 36px 36px;box-shadow:0 4px 24px rgba(0,0,0,.08);animation:cardIn .5s cubic-bezier(.16,1,.3,1)}
 @keyframes cardIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
 .logo-area{text-align:center;margin-bottom:32px}
 .logo-area img{height:40px}
-.logo-area h2{font-family:'DM Serif Display',serif;font-size:22px;margin-top:12px;color:var(--white)}
+.logo-area h2{font-size:22px;font-weight:700;margin-top:12px;color:#0f0f0f}
 .logo-area p{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.5}
 .field{margin-bottom:16px}
 .field label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
-.field input{width:100%;padding:12px 14px;background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--white);font-size:14px;font-family:inherit;outline:none;transition:border-color .2s,box-shadow .2s}
-.field input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(13,148,136,.15)}
-.field input::placeholder{color:#3d5a80}
+.field input{width:100%;padding:12px 14px;background:var(--input-bg);border:1.5px solid var(--border);border-radius:var(--radius);color:#0f0f0f;font-size:14px;font-family:inherit;outline:none;transition:border-color .2s,box-shadow .2s}
+.field input:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(15,24,41,.08)}
+.field input::placeholder{color:var(--muted)}
 .field .hint{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.4}
-.btn-primary{width:100%;padding:14px;border:none;border-radius:var(--radius);background:linear-gradient(135deg,var(--teal),var(--teal2));color:var(--white);font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;transition:opacity .2s,transform .1s;margin-top:8px}
+.btn-primary{width:100%;padding:14px;border:none;border-radius:var(--radius);background:var(--navy);color:#ffffff;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;transition:opacity .2s,transform .1s;margin-top:8px}
 .btn-primary:hover{opacity:.9}
 .btn-primary:active{transform:scale(.98)}
 .btn-primary:disabled{opacity:.5;cursor:not-allowed}
 .msg{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none;line-height:1.5}
-.msg.err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5;display:block}
-.msg.ok{background:rgba(13,148,136,.1);border:1px solid rgba(13,148,136,.3);color:#5eead4;display:block}
+.msg.err{background:rgba(226,75,74,.08);border:1px solid rgba(226,75,74,.25);color:#c0392b;display:block}
+.msg.ok{background:rgba(29,158,117,.08);border:1px solid rgba(29,158,117,.25);color:#1D9E75;display:block}
 .spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .legal-check-row{display:flex;align-items:flex-start;gap:12px;margin:18px 0 4px;cursor:pointer}
-.legal-check-row input[type=checkbox]{width:18px;height:18px;margin-top:1px;accent-color:var(--teal);cursor:pointer;flex-shrink:0}
+.legal-check-row input[type=checkbox]{width:18px;height:18px;margin-top:1px;accent-color:var(--navy);cursor:pointer;flex-shrink:0}
 .legal-check-row span{font-size:12px;color:var(--muted);line-height:1.6}
-.legal-check-row a{color:var(--teal2);text-decoration:none;font-weight:600}
+.legal-check-row a{color:var(--navy);text-decoration:none;font-weight:600}
 .legal-check-row a:hover{text-decoration:underline}
 </style>
 </head>
@@ -46,7 +47,7 @@ html,body{min-height:100%;background:var(--navy);font-family:'DM Sans',sans-seri
 <div class="wrap">
   <div class="card">
     <div class="logo-area">
-      <img src="icon-192.png" alt="BROKR®"/>
+      <img src="icon-192.png" alt="Broquer®"/>
       <h2>Completa tu perfil</h2>
       <p>Solo necesitamos un par de datos para personalizar tu experiencia.</p>
     </div>
@@ -71,10 +72,10 @@ html,body{min-height:100%;background:var(--navy);font-family:'DM Sans',sans-seri
 
     <label class="legal-check-row">
       <input type="checkbox" id="legal-check" onchange="toggleSaveBtn()"/>
-      <span>He leído y acepto los <a href="legal.html" target="_blank">Términos y condiciones</a>, el <a href="legal.html" target="_blank">Contrato de suscripción</a> y el <a href="legal.html" target="_blank">Aviso de privacidad</a> de Brokr®.</span>
+      <span>He leído y acepto los <a href="legal.html" target="_blank">Términos y condiciones</a>, el <a href="legal.html" target="_blank">Contrato de suscripción</a> y el <a href="legal.html" target="_blank">Aviso de privacidad</a> de Broquer®.</span>
     </label>
 
-    <button class="btn-primary" id="btn-save" onclick="guardar()" disabled>Continuar a BROKR®</button>
+    <button class="btn-primary" id="btn-save" onclick="guardar()" disabled>Continuar a Broquer®</button>
   </div>
 </div>
 

@@ -2,8 +2,10 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
+<link rel="icon" type="image/png" href="isotipo.png">
+<link rel="apple-touch-icon" href="isotipo.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Brokr — Ficha Técnica</title>
+<title>Broquer — Ficha Técnica</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet"/>
 <style>
@@ -11,14 +13,14 @@
 :root{
   --navy:#0f1829;
   --navy2:#1e2d47;
-  --teal:#2a9db5;
-  --teal-dark:#1a7a8f;
-  --teal-bg:rgba(42,157,181,0.10);
-  --teal-border:rgba(42,157,181,0.25);
+  --teal:#0f1829;
+  --teal-dark:#162035;
+  --teal-bg:rgba(15,24,41,0.06);
+  --teal-border:rgba(15,24,41,0.15);
   --white:#ffffff;
   --gray:#f5f6f8;
   --gray2:#e8eaee;
-  --txt:#1a2035;
+  --txt:#0f0f0f;
   --mut:#5a6070;
   --mut2:#9aa0ad;
   --r:14px;
@@ -219,7 +221,7 @@ body{font-family:'Poppins',sans-serif;background:#f0f2f7;color:var(--txt)}
   padding:0 20px;
   flex-shrink:0;
 }
-.ft-logo img{height:16px;filter:brightness(10)}
+.ft-logo img{height:32px;width:auto}
 .ft-id{font-size:9px;color:rgba(255,255,255,.45);letter-spacing:.5px}
 
 /* ─── PRINT ──────────────────────────────────── */
@@ -345,7 +347,7 @@ const LOGO_B64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA7oAAAEGCAYAAABL
 
 function footer(id){
   return `<div class="ficha-footer">
-    <div class="ft-logo"><img src="${LOGO_B64}" alt="Brokr"/></div>
+    <div class="ft-logo"><img src="logotipo.png" alt="Broquer" style="height: 32px; width: auto;"/></div>
     ${id ? `<div class="ft-id">${id}</div>` : ''}
   </div>`;
 }

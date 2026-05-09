@@ -2,6 +2,9 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8"/>
+  <title>Broquer — AVM</title>
+  <link rel="icon" type="image/png" href="isotipo.png">
+  <link rel="apple-touch-icon" href="isotipo.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -14,15 +17,15 @@
       --navy:       #0f1829;
       --navy-mid:   #162035;
       --navy-light: #1e2d47;
-      --teal:       #2a9db5;
-      --teal-dark:  #1a7a8f;
-      --teal-glow:  rgba(42,157,181,0.18);
+      --teal:       #0f1829;
+      --teal-dark:  #162035;
+      --teal-glow:  rgba(15,24,41,0.08);
       --white:      #ffffff;
       --gray-100:   #f5f6f8;
       --gray-200:   #e8eaee;
       --gray-400:   #9aa0ad;
       --gray-600:   #5a6070;
-      --text:       #1a2035;
+      --text:       #0f0f0f;
       --screen-bg:  #f0f2f7;
       --amber:      #f59e0b;
       --emerald:    #10b981;
@@ -617,7 +620,7 @@
           const r = await fetch(`${API}/avm-pdf`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ resultado, agente: "Agente BROKR®" })
+            body: JSON.stringify({ resultado, agente: "Agente Broquer®" })
           });
           const data = await r.json();
           if (!r.ok) throw new Error(data.detail || "Error generando PDF");
@@ -632,7 +635,7 @@
           // Fallback a blob link en desktop
           if (navigator.canShare && navigator.canShare({ files: [new File([blob], filename, { type: "application/pdf" })] })) {
             const file = new File([blob], filename, { type: "application/pdf" });
-            await navigator.share({ files: [file], title: "Opinión de Valor", text: "Opinión de valor generada con BROKR®" });
+            await navigator.share({ files: [file], title: "Opinión de Valor", text: "Opinión de valor generada con Broquer®" });
           } else {
             const blobUrl = URL.createObjectURL(blob);
             const link = document.createElement("a");
@@ -655,9 +658,9 @@
       if (estado === "idle" || estado === "error") return (
         <div className="avm-body">
           <div className="avm-card">
-            <div className="card-label">Brokr AI</div>
+            <div className="card-label">Broquer AI</div>
             <p style={{ fontSize: 12, color: "var(--gray-600)", marginBottom: 14, lineHeight: 1.6 }}>
-              Nuestra IA busca comparables en tiempo real en los mejores portales inmobiliarios y utiliza su criterio entrenado y conocimientos periciales para emitir un resultado fundamentado. Brokr recomienda no reemplazar el avalúo realizado por un perito certificado.
+              Nuestra IA busca comparables en tiempo real en los mejores portales inmobiliarios y utiliza su criterio entrenado y conocimientos periciales para emitir un resultado fundamentado. Broquer recomienda no reemplazar el avalúo realizado por un perito certificado.
             </p>
 
             <div className="field-row" style={{ marginBottom: 14 }}>
@@ -917,7 +920,7 @@
                     </div>
 
                     <div style={{ marginTop: 28, paddingTop: 12, borderTop: "1px solid var(--gray-200)", textAlign: "center", fontSize: 10, color: "var(--gray-400)", letterSpacing: "0.3px" }}>
-                      Powered by Brokr by Grupo Navarro
+                      Powered by Broquer by Grupo Navarro
                     </div>
 
                   </div>

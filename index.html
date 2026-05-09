@@ -2,37 +2,37 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<link rel="icon" type="image/png" href="favicon.png"/>
+<link rel="icon" type="image/png" href="isotipo.png">
 <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,viewport-fit=cover"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
-<meta name="apple-mobile-web-app-title" content="Brokr"/>
+<meta name="apple-mobile-web-app-title" content="Broquer"/>
 <link rel="manifest" href="manifest.json"/>
-<link rel="apple-touch-icon" href="icon-192.png"/>
+<link rel="apple-touch-icon" href="isotipo.png">
 <meta name="theme-color" content="#ffffff"/>
-<title>Brokr</title>
+<title>Broquer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 /* ══════════════════════════════════════════
-   BROKR® — DESIGN SYSTEM
-   Poppins · Navy / Teal / Blanco
+   Broquer — DESIGN SYSTEM
+   Poppins · Navy / Blanco
 ══════════════════════════════════════════ */
 :root {
   --navy:       #0f1829;
   --navy-mid:   #162035;
   --navy-light: #1e2d47;
-  --teal:       #2a9db5;
-  --teal-dark:  #1a7a8f;
-  --teal-glow:  rgba(42,157,181,0.18);
+  --teal:       #0f1829;
+  --teal-dark:  #162035;
+  --teal-glow:  rgba(15,24,41,0.08);
   --white:      #ffffff;
   --gray-100:   #f5f6f8;
   --gray-200:   #e8eaee;
   --gray-400:   #9aa0ad;
   --gray-600:   #5a6070;
-  --text:       #1a2035;
+  --text:       #0f0f0f;
   --screen-bg:  #f0f2f7;
   /* Legacy aliases para ISR/props que las usan */
   --bg:    #f0f2f7;
@@ -42,7 +42,7 @@
   --sf2:   #f0f2f7;
   --bd:    rgba(0,0,0,0.08);
   --bd2:   rgba(0,0,0,0.13);
-  --txt:   #1a2035;
+  --txt:   #0f0f0f;
   --mut:   #5a6070;
   --mut2:  #9aa0ad;
   --r:  18px; --r2: 14px; --r3: 10px;
@@ -1710,7 +1710,7 @@ html, body {
           <div id="res-bkdn" class="res-bkdn"></div>
           <div id="res-nota" class="res-nota" style="display:none"></div>
           <div id="ai-box" class="ai-box" style="display:none">
-            <div class="ai-lbl">Análisis de Brokr</div>
+            <div class="ai-lbl">Análisis de Broquer</div>
             <div id="ai-txt"></div>
           </div>
         </div>
@@ -3282,7 +3282,7 @@ function descargarPDF(){
   const bkdn = (g('res-bkdn')||{}).innerHTML || '';
   const nota  = (g('res-nota')||{}).innerHTML || '';
   const meses = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const html = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/><title>ISR BROKR</title>' +
+  const html = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/><title>ISR Broquer</title>' +
     '<style>body{font-family:Arial,sans-serif;font-size:12px;color:#1a1a1a;margin:0;padding:28px 32px;max-width:700px}' +
     'h1{font-size:18px;font-weight:800;margin:0 0 2px}.sub{color:#555;font-size:11px;margin-bottom:16px}' +
     'h2{font-size:13px;font-weight:700;margin:18px 0 6px;color:#333;border-bottom:1px solid #ddd;padding-bottom:3px}' +
@@ -3296,7 +3296,7 @@ function descargarPDF(){
     '<div class="sub">Generado: ' + new Date().toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'}) + ' · ' + meses[d.mesV] + ' ' + d.anioV + '</div>' +
     '<h2>Desglose</h2>' + bkdn +
     (nota ? '<div class="nota">' + nota + '</div>' : '') +
-    '<div class="footer">Generado por Brokr · Uso interno del agente inmobiliario · No sustituye al cálculo notarial definitivo</div>' +
+    '<div class="footer">Generado por Broquer · Uso interno del agente inmobiliario · No sustituye al cálculo notarial definitivo</div>' +
     '</body></html>';
   const filename = 'ISR_Brokr_' + meses[d.mesV] + d.anioV + '.pdf';
   const btn = g('btn-pdf');
@@ -4774,7 +4774,7 @@ const NEWS_MODULES = [
   { id:'avm',             name:'Opinión de valor',   desc:'AVM inteligente' },
   { id:'contratos',       name:'Contratos',          desc:'Genera contratos' },
   { id:'props',           name:'Mis inmuebles',      desc:'Gestión de propiedades' },
-  { id:'image-cleaner',   name:'Editor de imágenes', desc:'Edita fotos con Brokr AI' },
+  { id:'image-cleaner',   name:'Editor de imágenes', desc:'Edita fotos con Broquer AI' },
 ];
 
 async function loadNewsTicker() {
@@ -4836,7 +4836,7 @@ const SEARCH_INDEX = [
   { name:'Opinión de valor',   desc:'AVM — valuación de propiedad',          action:() => setPanel('avm') },
   { name:'Contratos',          desc:'Generar contrato de compra/renta',      action:() => setPanel('contratos') },
   { name:'Mis inmuebles',      desc:'Ver y gestionar propiedades',           action:() => setPanel('props') },
-  { name:'Editor de imágenes', desc:'Editar y mejorar fotos con Brokr AI',  action:() => setPanel('image-cleaner') },
+  { name:'Editor de imágenes', desc:'Editar y mejorar fotos con Broquer AI',  action:() => setPanel('image-cleaner') },
   { name:'Mi perfil',          desc:'Ver y editar perfil',                   action:() => protoGoTo('profile') },
   { name:'Shaark',             desc:'Abrir asistente de IA',                 action:() => toggleShaarkPopup() },
 ];
@@ -4969,7 +4969,7 @@ function openSuscripcionModal() {
     free:          'Acceso al módulo básico de fichas técnicas.',
     modulos:       'Acceso a los módulos seleccionados en tu plan.',
     personalizado: 'Acceso a los módulos seleccionados en tu plan.',
-    pro:           'Acceso completo a todos los módulos de Brokr.',
+    pro:           'Acceso completo a todos los módulos de Broquer.',
     admin:         'Acceso total de administrador.'
   };
   const plan = userProfile?.plan || 'free';
@@ -5152,7 +5152,7 @@ async function ejecutarEliminarCuenta() {
       <div class="prf-plan-card">
         <div class="prf-plan-badge" id="sus-plan-badge">Pro</div>
         <div class="prf-plan-name" id="sus-plan-name">Plan Pro</div>
-        <div class="prf-plan-desc" id="sus-plan-desc">Acceso completo a todos los módulos de Brokr.</div>
+        <div class="prf-plan-desc" id="sus-plan-desc">Acceso completo a todos los módulos de Broquer.</div>
       </div>
       <button class="prf-stripe-btn primary" onclick="gestionarStripe()">
         Gestionar suscripción
