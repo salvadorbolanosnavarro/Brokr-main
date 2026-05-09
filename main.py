@@ -1398,35 +1398,47 @@ async def generar_avm_pdf(p: dict):
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-  body {{ font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a2035; background: white; font-size: 13px; line-height: 1.5; }}
-  .page {{ padding: 40px 44px; max-width: 720px; margin: 0 auto; }}
+  body {{ font-family: 'Inter', 'Helvetica Neue', sans-serif; color: #1A1814; background: #FBF9F1; font-size: 13px; line-height: 1.55; -webkit-font-smoothing: antialiased; letter-spacing:-0.005em; }}
+  .page {{ padding: 56px 60px 44px; max-width: 760px; margin: 0 auto; }}
 
-  .valor-bloque {{ margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid #e8eaee; }}
-  .valor-lbl {{ font-size: 11px; color: #9aa0ad; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }}
-  .valor-num {{ font-size: 44px; font-weight: 900; color: #0f1829; line-height: 1; margin-bottom: 6px; }}
-  .valor-rango {{ font-size: 13px; color: #5a6070; margin-bottom: 12px; }}
-  .valor-meta {{ display: flex; gap: 24px; }}
-  .meta-item .meta-lbl {{ font-size: 10px; color: #9aa0ad; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 2px; }}
-  .meta-item .meta-val {{ font-size: 13px; font-weight: 600; color: #1a2035; }}
+  .doc-head {{ display:flex; justify-content:space-between; align-items:baseline; padding-bottom:18px; border-bottom:1px solid #E8E2D2; margin-bottom:32px; }}
+  .doc-kicker {{ font-size:9px; color:#7A7065; text-transform:uppercase; letter-spacing:1.8px; font-weight:600; }}
+  .doc-date {{ font-size:10px; color:#7A7065; letter-spacing:0.04em; }}
 
-  .seccion {{ margin-bottom: 24px; }}
-  .sec-titulo {{ font-size: 10px; font-weight: 700; color: #2a9db5; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }}
-  .resumen {{ font-size: 13px; color: #1a2035; line-height: 1.7; }}
+  .valor-bloque {{ margin-bottom: 36px; padding-bottom: 28px; border-bottom: 1px solid #E8E2D2; }}
+  .valor-lbl {{ font-size: 9px; color: #7A7065; text-transform: uppercase; letter-spacing: 1.8px; margin-bottom: 14px; font-weight:600; }}
+  .valor-num {{ font-family:'Fraunces',serif; font-size: 56px; font-weight: 500; color: #1A1814; line-height: 1; margin-bottom: 12px; letter-spacing:-0.02em; }}
+  .valor-rango {{ font-size: 12px; color: #5C544A; margin-bottom: 22px; letter-spacing:0.005em; }}
+  .valor-meta {{ display: grid; grid-template-columns:repeat(4,1fr); gap: 24px; padding-top:14px; border-top:1px dashed #E8E2D2; }}
+  .meta-item .meta-lbl {{ font-size: 8.5px; color: #7A7065; text-transform: uppercase; letter-spacing: 1.4px; margin-bottom: 5px; font-weight:600; }}
+  .meta-item .meta-val {{ font-family:'Fraunces',serif; font-size: 13px; font-weight: 500; color: #1A1814; letter-spacing:-0.005em; }}
 
-  table {{ width: 100%; border-collapse: collapse; font-size: 12px; }}
-  th {{ font-weight: 600; color: #9aa0ad; text-align: left; padding: 6px 0; border-bottom: 1px solid #e8eaee; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }}
-  td {{ padding: 8px 0; border-bottom: 1px solid #f5f6f8; color: #1a2035; vertical-align: top; }}
-  td.r {{ text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }}
-  td.g {{ color: #9aa0ad; font-size: 11px; }}
+  .seccion {{ margin-bottom: 30px; }}
+  .sec-titulo {{ font-family:'Inter',sans-serif; font-size: 9px; font-weight: 600; color: #7A7065; text-transform: uppercase; letter-spacing: 1.8px; margin-bottom: 14px; }}
+  .resumen {{ font-size: 12px; color: #1A1814; line-height: 1.75; text-align:justify; }}
+
+  table {{ width: 100%; border-collapse: collapse; font-size: 11.5px; }}
+  th {{ font-weight: 600; color: #7A7065; text-align: left; padding: 8px 6px; border-bottom: 1px solid #C9C0AC; font-size: 8.5px; text-transform: uppercase; letter-spacing: 1.4px; }}
+  td {{ padding: 11px 6px; border-bottom: 1px solid #EDE6D3; color: #1A1814; vertical-align: top; }}
+  td.r {{ text-align: right; font-family:'Fraunces',serif; font-weight: 500; font-variant-numeric: tabular-nums; }}
+  td.g {{ color: #7A7065; font-size: 10.5px; }}
   tr:last-child td {{ border-bottom: none; }}
 
-  .footer {{ margin-top: 40px; padding-top: 16px; border-top: 1px solid #e8eaee; display: flex; justify-content: space-between; font-size: 10px; color: #c4c8d0; }}
+  .footer {{ margin-top: 48px; padding-top: 18px; border-top: 1px solid #E8E2D2; display: flex; justify-content: space-between; font-size: 9px; color: #7A7065; letter-spacing:1.5px; text-transform:uppercase; font-weight:500; }}
 </style>
 </head>
 <body>
 <div class="page">
+
+  <div class="doc-head">
+    <div class="doc-kicker">Broquer · Opinión de valor</div>
+    <div class="doc-date">{fecha_hoy}</div>
+  </div>
 
   <div class="valor-bloque">
     <div class="valor-lbl">Opinión de valor comercial</div>
@@ -1474,7 +1486,7 @@ async def generar_avm_pdf(p: dict):
   </div>
 
   <div class="footer">
-    <span>Powered by BROKR®</span>
+    <span>Broquer · Inteligencia inmobiliaria</span>
     <span>{fecha_hoy}</span>
   </div>
 
@@ -1948,12 +1960,12 @@ def build_ficha_html(p: dict, images_b64: dict) -> str:
         s = "{:,.2f}".format(n).rstrip("0").rstrip(".")
         return s + " m²"
 
-    SVG_BED  = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2a9db5" stroke-width="1.8"><path d="M2 20v-8a2 2 0 012-2h16a2 2 0 012 2v8"/><path d="M2 14h20"/><rect x="6" y="4" width="4" height="6" rx="1"/></svg>'
-    SVG_BATH = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2a9db5" stroke-width="1.8"><rect x="2" y="11" width="20" height="4" rx="1"/><path d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3"/><line x1="6" y1="5" x2="6" y2="11"/></svg>'
-    SVG_AREA = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4caf7d" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h18M9 3v18"/></svg>'
-    SVG_LAND = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4caf7d" stroke-width="1.8"><path d="M2 20l5-8 4 5 3-4 8 7"/><circle cx="18" cy="5" r="2"/></svg>'
-    SVG_CAR  = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2a9db5" stroke-width="1.8"><rect x="2" y="10" width="20" height="8" rx="2"/><path d="M5 10l2-4h10l2 4"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/></svg>'
-    SVG_PIN  = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b7a99" stroke-width="2"><path d="M12 2a7 7 0 017 7c0 5-7 13-7 13S5 14 5 9a7 7 0 017-7z"/><circle cx="12" cy="9" r="2.5"/></svg>'
+    SVG_BED  = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1814" stroke-width="1.4"><path d="M2 20v-8a2 2 0 012-2h16a2 2 0 012 2v8"/><path d="M2 14h20"/><rect x="6" y="4" width="4" height="6" rx="1"/></svg>'
+    SVG_BATH = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1814" stroke-width="1.4"><rect x="2" y="11" width="20" height="4" rx="1"/><path d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3"/><line x1="6" y1="5" x2="6" y2="11"/></svg>'
+    SVG_AREA = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1814" stroke-width="1.4"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h18M9 3v18"/></svg>'
+    SVG_LAND = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1814" stroke-width="1.4"><path d="M2 20l5-8 4 5 3-4 8 7"/><circle cx="18" cy="5" r="2"/></svg>'
+    SVG_CAR  = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1814" stroke-width="1.4"><rect x="2" y="10" width="20" height="8" rx="2"/><path d="M5 10l2-4h10l2 4"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/></svg>'
+    SVG_PIN  = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7A7065" stroke-width="1.8"><path d="M12 2a7 7 0 017 7c0 5-7 13-7 13S5 14 5 9a7 7 0 017-7z"/><circle cx="12" cy="9" r="2.5"/></svg>'
 
     specs = []
     if rec:     specs.append((SVG_BED,  str(rec),      "Recámaras"))
@@ -2028,50 +2040,50 @@ def build_ficha_html(p: dict, images_b64: dict) -> str:
         gallery_pages += '<div class="ficha-page">{}{}</div>'.format(chars_section, footer())
 
     CSS = """
-    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Poppins',sans-serif;background:white;color:#0f1829}
-.ficha-page{width:210mm;height:297mm;background:white;display:flex;flex-direction:column;overflow:hidden;page-break-after:always}
+body{font-family:'Inter','Helvetica Neue',sans-serif;background:#FBF9F1;color:#1A1814;-webkit-font-smoothing:antialiased;letter-spacing:-0.005em}
+.ficha-page{width:210mm;height:297mm;background:#FBF9F1;display:flex;flex-direction:column;overflow:hidden;page-break-after:always}
 .ficha-page:last-child{page-break-after:avoid}
-.cover-accent{height:4px;background:linear-gradient(90deg,#2a9db5 0%,#4caf7d 100%);flex-shrink:0}
-.cover-hero{width:100%;height:120mm;object-fit:cover;display:block;flex-shrink:0}
-.cover-hero-placeholder{width:100%;height:120mm;background:linear-gradient(135deg,#0f1829,#1a2744);flex-shrink:0}
-.cover-info{padding:14px 24px 10px;border-bottom:1px solid #e8ecf2}
-.cover-badge{display:inline-block;background:linear-gradient(135deg,#2a9db5,#1f8ba0);color:white;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:4px 12px;border-radius:20px;margin-bottom:7px}
-.cover-precio{font-family:'Poppins',sans-serif;font-size:30px;font-weight:700;color:#0f1829;line-height:1;margin-bottom:4px}
-.cover-titulo{font-size:13px;font-weight:600;color:#1a2744;margin-bottom:3px}
-.cover-ubicacion{font-size:11px;color:#6b7a99;display:flex;align-items:center;gap:4px}
-.cover-specs{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:2px solid #eef2f7;background:#fafbfc}
-.spec-item{padding:10px 8px;text-align:center;border-right:1px solid #e8ecf2;display:flex;flex-direction:column;align-items:center;gap:3px}
+.cover-accent{display:none}
+.cover-hero{width:100%;height:124mm;object-fit:cover;display:block;flex-shrink:0}
+.cover-hero-placeholder{width:100%;height:124mm;background:#1A1814;flex-shrink:0}
+.cover-info{padding:18px 28px 14px;border-bottom:1px solid #E8E2D2;background:#FBF9F1}
+.cover-badge{display:inline-block;background:transparent;color:#5C544A;font-family:'Inter',sans-serif;font-size:9px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;padding:0;margin-bottom:10px;border-bottom:1px solid #C9C0AC;padding-bottom:4px}
+.cover-precio{font-family:'Fraunces',serif;font-size:38px;font-weight:500;color:#1A1814;line-height:1;margin-bottom:8px;letter-spacing:-0.02em}
+.cover-titulo{font-family:'Fraunces',serif;font-size:16px;font-weight:400;color:#1A1814;margin-bottom:5px;letter-spacing:-0.01em}
+.cover-ubicacion{font-size:11px;color:#7A7065;display:flex;align-items:center;gap:5px;letter-spacing:0.01em}
+.cover-specs{display:grid;grid-template-columns:repeat(4,1fr);background:#FBF9F1;border-bottom:1px solid #E8E2D2}
+.spec-item{padding:14px 8px 12px;text-align:center;border-right:1px solid #EDE6D3;display:flex;flex-direction:column;align-items:center;gap:5px}
 .spec-item:last-child{border-right:none}
-.spec-ico{display:flex;align-items:center;justify-content:center;height:26px}
-.spec-val{font-size:14px;font-weight:700;color:#0f1829;line-height:1}
-.spec-lbl{font-size:8px;text-transform:uppercase;letter-spacing:.6px;color:#6b7a99}
-.cover-desc-wrap{padding:14px 24px 8px;flex:1;overflow:hidden}
-.cover-desc-ttl{font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;color:#0f1829;margin-bottom:7px;padding-bottom:5px;border-bottom:2px solid #4caf7d;display:inline-block}
-.cover-desc{font-size:10.5px;color:#3a4a5c;line-height:1.65}
-.section-header{padding:11px 24px 9px;border-bottom:1px solid #e8ecf2;border-left:4px solid #2a9db5;flex-shrink:0;background:#fafbfc}
-.section-header h2{font-family:'Poppins',sans-serif;font-size:14px;font-weight:600;color:#0f1829}
-.chars-hdr{border-left-color:#4caf7d}
-.photo-grid-6{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:82mm 82mm 82mm;gap:2px;padding:2px;height:246mm;flex-shrink:0;overflow:hidden}
-.photo-grid-auto{display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:2px;flex-shrink:0;overflow:hidden}
+.spec-ico{display:flex;align-items:center;justify-content:center;height:24px;color:#1A1814}
+.spec-val{font-family:'Fraunces',serif;font-size:18px;font-weight:500;color:#1A1814;line-height:1;letter-spacing:-0.01em}
+.spec-lbl{font-size:8.5px;text-transform:uppercase;letter-spacing:1.2px;color:#7A7065;font-weight:500}
+.cover-desc-wrap{padding:18px 28px 10px;flex:1;overflow:hidden}
+.cover-desc-ttl{font-family:'Inter',sans-serif;font-size:9px;font-weight:600;color:#7A7065;margin-bottom:10px;letter-spacing:1.6px;text-transform:uppercase}
+.cover-desc{font-size:10.5px;color:#3D3631;line-height:1.75;text-align:justify;hyphens:auto}
+.section-header{padding:14px 28px 12px;border-bottom:1px solid #E8E2D2;flex-shrink:0;background:#FBF9F1}
+.section-header h2{font-family:'Fraunces',serif;font-size:16px;font-weight:500;color:#1A1814;letter-spacing:-0.015em}
+.chars-hdr{}
+.photo-grid-6{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:82mm 82mm 82mm;gap:3px;padding:3px;height:248mm;flex-shrink:0;overflow:hidden;background:#FBF9F1}
+.photo-grid-auto{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;flex-shrink:0;overflow:hidden;background:#FBF9F1}
 .photo-grid-6 img,.photo-grid-auto img{width:100%;height:100%;object-fit:cover;display:block}
 .chars-inline{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0}
-.chars-body{padding:10px 24px 8px;overflow:hidden}
+.chars-body{padding:14px 28px 10px;overflow:hidden}
 .char-table{width:100%;border-collapse:collapse}
-.char-table tr{border-bottom:1px solid #eef2f7}
-.char-table tr:nth-child(even) td{background:#f7f9fb}
-.char-lbl{padding:6px 10px;font-size:11px;color:#6b7a99;width:48%}
-.char-val{padding:6px 10px;font-size:11px;color:#0f1829;font-weight:600;text-align:right}
-.amen-section{margin-top:10px}
-.amen-ttl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#4caf7d;margin-bottom:6px}
-.amen-grid{display:flex;flex-wrap:wrap;gap:5px}
-.amen-item{font-size:10px;padding:3px 9px;background:#f0faf5;border-radius:20px;color:#1a5c38;border:1px solid #b2dfcc;font-weight:500}
-.ficha-footer{width:100%;height:44px;background:linear-gradient(90deg,#0f1829 0%,#1a2744 100%);display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0;margin-top:auto}
-.ft-logo{height:16px;filter:brightness(10)}
-.ft-id{font-size:9px;color:rgba(255,255,255,.45);letter-spacing:.6px}
+.char-table tr{border-bottom:1px solid #EDE6D3}
+.char-table tr:nth-child(even) td{background:transparent}
+.char-lbl{padding:9px 0;font-size:11px;color:#7A7065;width:48%;letter-spacing:0.005em}
+.char-val{padding:9px 0;font-family:'Fraunces',serif;font-size:12px;color:#1A1814;font-weight:500;text-align:right;letter-spacing:-0.005em}
+.amen-section{margin-top:14px;padding-top:12px;border-top:1px solid #E8E2D2}
+.amen-ttl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1.6px;color:#7A7065;margin-bottom:9px}
+.amen-grid{display:flex;flex-wrap:wrap;gap:6px}
+.amen-item{font-size:10px;padding:5px 11px;background:transparent;border-radius:0;color:#3D3631;border:1px solid #C9C0AC;font-weight:400;letter-spacing:0.01em}
+.ficha-footer{width:100%;height:42px;background:#1A1814;display:flex;align-items:center;justify-content:space-between;padding:0 28px;flex-shrink:0;margin-top:auto}
+.ft-logo{height:14px;filter:brightness(0) invert(1) opacity(.85)}
+.ft-id{font-family:'Inter',sans-serif;font-size:9px;color:rgba(251,249,241,.55);letter-spacing:1.5px;text-transform:uppercase}
 @page{size:A4 portrait;margin:0}
 """
     cover_desc_html = (

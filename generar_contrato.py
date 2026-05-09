@@ -72,25 +72,54 @@ def fmt_monto(cantidad_str):
     except:
         return cantidad_str, cantidad_str
 
+# ─── Broquer DOCX typography ───
+# Calibri body for legibility, Cambria headings for editorial weight.
+# Override via env if needed.
+BODY_FONT    = 'Calibri'
+HEADING_FONT = 'Cambria'
+BODY_PT      = 11
+HEADING_PT   = 12
+
+def _apply_font(run, name):
+    """Set Latin + East Asian font name so Word respects it across themes."""
+    run.font.name = name
+    rPr = run._element.get_or_add_rPr()
+    rFonts = rPr.find(qn('w:rFonts'))
+    if rFonts is None:
+        rFonts = OxmlElement('w:rFonts')
+        rPr.append(rFonts)
+    rFonts.set(qn('w:ascii'), name)
+    rFonts.set(qn('w:hAnsi'), name)
+    rFonts.set(qn('w:cs'), name)
+
 def setup_doc():
     doc = Document()
-    # Page margins
+    # Page margins — wider, more editorial
     for section in doc.sections:
-        section.top_margin    = Cm(2.5)
-        section.bottom_margin = Cm(2.5)
-        section.left_margin   = Cm(3)
-        section.right_margin  = Cm(3)
+        section.top_margin    = Cm(2.8)
+        section.bottom_margin = Cm(2.8)
+        section.left_margin   = Cm(3.2)
+        section.right_margin  = Cm(3.2)
 
     # Default style
     style = doc.styles['Normal']
-    style.font.name = 'Arial'
-    style.font.size = Pt(10)
+    style.font.name = BODY_FONT
+    style.font.size = Pt(BODY_PT)
+    rPr = style.element.get_or_add_rPr()
+    rFonts = rPr.find(qn('w:rFonts'))
+    if rFonts is None:
+        rFonts = OxmlElement('w:rFonts')
+        rPr.append(rFonts)
+    rFonts.set(qn('w:ascii'), BODY_FONT)
+    rFonts.set(qn('w:hAnsi'), BODY_FONT)
+    rFonts.set(qn('w:cs'), BODY_FONT)
     style.paragraph_format.space_after = Pt(6)
+    style.paragraph_format.line_spacing = 1.35
 
     return doc
 
 def p(doc, text, bold=False, align=WD_ALIGN_PARAGRAPH.JUSTIFY,
-      size=10, space_before=0, space_after=6, indent=False):
+      size=BODY_PT, space_before=0, space_after=6, indent=False):
     para = doc.add_paragraph()
     para.alignment = align
     para.paragraph_format.space_before = Pt(space_before)
@@ -99,31 +128,37 @@ def p(doc, text, bold=False, align=WD_ALIGN_PARAGRAPH.JUSTIFY,
         para.paragraph_format.left_indent = Cm(1)
     run = para.add_run(text)
     run.bold = run.bold or bold
-    run.font.name = 'Arial'
+    _apply_font(run, BODY_FONT)
     run.font.size = Pt(size)
     return para
 
 def heading(doc, text, level=1):
     para = doc.add_paragraph()
     para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    para.paragraph_format.space_before = Pt(6)
-    para.paragraph_format.space_after  = Pt(6)
-    run = para.add_run(text)
+    para.paragraph_format.space_before = Pt(10)
+    para.paragraph_format.space_after  = Pt(8)
+    run = para.add_run(text.upper() if level == 1 else text)
     run.bold = True
-    run.font.name = 'Arial'
-    run.font.size = Pt(11 if level == 1 else 10)
+    _apply_font(run, HEADING_FONT)
+    run.font.size = Pt(HEADING_PT + 2 if level == 1 else HEADING_PT)
+    if level == 1:
+        # Subtle letter-spacing via character spacing for editorial feel
+        rPr = run._element.get_or_add_rPr()
+        spacing = OxmlElement('w:spacing')
+        spacing.set(qn('w:val'), '40')  # 40 twentieths of a point
+        rPr.append(spacing)
     return para
 
 def clausula(doc, numero, titulo, texto):
     """Add a clause with title and body"""
     para = doc.add_paragraph()
     para.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-    para.paragraph_format.space_before = Pt(8)
+    para.paragraph_format.space_before = Pt(10)
     para.paragraph_format.space_after  = Pt(4)
     r = para.add_run(f'"{titulo}"')
     r.bold = True
-    r.font.name = 'Arial'
-    r.font.size = Pt(10)
+    _apply_font(r, HEADING_FONT)
+    r.font.size = Pt(BODY_PT + 0.5)
 
     body = doc.add_paragraph()
     body.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
@@ -131,18 +166,18 @@ def clausula(doc, numero, titulo, texto):
     body.paragraph_format.space_after  = Pt(6)
     body.paragraph_format.left_indent  = Cm(0.5)
     r2 = body.add_run(f'{numero}- {texto}')
-    r2.font.name = 'Arial'
-    r2.font.size = Pt(10)
+    _apply_font(r2, BODY_FONT)
+    r2.font.size = Pt(BODY_PT)
     return body
 
 def firma_line(doc, label, nombre):
     para = doc.add_paragraph()
     para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    para.paragraph_format.space_before = Pt(30)
+    para.paragraph_format.space_before = Pt(36)
     para.paragraph_format.space_after  = Pt(2)
-    r = para.add_run('_' * 35)
-    r.font.name = 'Arial'
-    r.font.size = Pt(10)
+    r = para.add_run('_' * 38)
+    _apply_font(r, BODY_FONT)
+    r.font.size = Pt(BODY_PT)
 
     para2 = doc.add_paragraph()
     para2.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -150,16 +185,16 @@ def firma_line(doc, label, nombre):
     para2.paragraph_format.space_after  = Pt(2)
     r2 = para2.add_run(label)
     r2.bold = True
-    r2.font.name = 'Arial'
-    r2.font.size = Pt(10)
+    _apply_font(r2, HEADING_FONT)
+    r2.font.size = Pt(BODY_PT)
 
     para3 = doc.add_paragraph()
     para3.alignment = WD_ALIGN_PARAGRAPH.CENTER
     para3.paragraph_format.space_before = Pt(0)
-    para3.paragraph_format.space_after  = Pt(20)
+    para3.paragraph_format.space_after  = Pt(24)
     r3 = para3.add_run(nombre.upper())
-    r3.font.name = 'Arial'
-    r3.font.size = Pt(10)
+    _apply_font(r3, BODY_FONT)
+    r3.font.size = Pt(BODY_PT)
 
 # ─────────────────────────────────────────────
 # CONTRATO DE ARRENDAMIENTO
