@@ -115,7 +115,7 @@
   display: flex; align-items: center;
 }
 .bk-sidebar__brand a { display: flex; align-items: center; gap: 8px; text-decoration: none; }
-.bk-sidebar__brand img { height: 36px; width: auto; display: block; }
+.bk-sidebar__brand img { height: 28px; width: auto; display: block; }
 .bk-sb-section {
   font-family: var(--font-mono);
   font-size: 9px; letter-spacing: 0.18em;
@@ -167,7 +167,7 @@
 }
 @media (max-width: 880px) { .bk-mobile-head { display: flex; } }
 .bk-mobile-head a { display:flex; align-items:center; }
-.bk-mobile-head img { height: 32px; width: auto; display: block; }
+.bk-mobile-head img { height: 26px; width: auto; display: block; }
 .bk-mobile-head__avatar {
   width: 36px; height: 36px; border-radius: 50%;
   background: var(--ink); color: var(--paper);
@@ -455,7 +455,7 @@
       <aside class="bk-sidebar" id="bk-sidebar">
         <div class="bk-sidebar__brand">
           <a href="index.html" aria-label="Ir al inicio Broquer">
-            <img src="logotipo-broquer.png" alt="Broquer"/>
+            <img src="logo-broquer.png" alt="Broquer"/>
           </a>
         </div>
         ${main.map(m => buildSidebarLink(m, activeKey)).join('')}
@@ -473,7 +473,7 @@
 
       <main class="bk-content">
         <div class="bk-mobile-head">
-          <a href="index.html" aria-label="Ir al inicio Broquer"><img src="logotipo-broquer.png" alt="Broquer"/></a>
+          <a href="index.html" aria-label="Ir al inicio Broquer"><img src="logo-broquer.png" alt="Broquer"/></a>
           <div class="bk-mobile-head__avatar" id="bk-mob-avatar">${ini}</div>
         </div>
 
