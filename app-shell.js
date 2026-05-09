@@ -8,7 +8,7 @@
         … contenido del módulo …
      <script src="app-shell.js" defer></script>
    Claves válidas: home, props, contactos, contratos, avm, ficha,
-                   ficha-manual, isr, legal, image-cleaner, verificador, admin
+                   ficha-manual, isr, image-cleaner, verificador, admin
    ════════════════════════════════════════════════════════════════════ */
 (function () {
   if (window.__brokrShellLoaded) return;
@@ -37,7 +37,6 @@
     { key:'isr',          href:'isr.html',           label:'ISR',             group:'tools', icon:'calculator' },
     { key:'image-cleaner',href:'image-cleaner.html', label:'Editor imágenes', group:'tools', icon:'image' },
     { key:'verificador',  href:'verificador.html',   label:'Verificador',     group:'tools', icon:'shield' },
-    { key:'legal',        href:'legal.html',         label:'Documentos legales', group:'tools', icon:'gavel' },
     { key:'admin',        href:'admin.html',         label:'Admin',           group:'tools', icon:'cog', adminOnly:true },
   ];
 
@@ -52,7 +51,6 @@
     'isr':          'Calculadora ISR por enajenación de inmuebles',
     'image-cleaner':'Editor de imágenes — limpieza con IA',
     'verificador':  'Verificador de inmuebles',
-    'legal':        'Documentos legales',
     'admin':        'Panel administrativo',
   };
 
