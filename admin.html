@@ -407,9 +407,9 @@ async function adminInit() {
 
   // Verify admin plan
   try {
-    const r = await sbFetch(`/rest/v1/usuarios?id=eq.${user.id}&select=plan`);
+    const r = await sbFetch(`/rest/v1/usuarios?id=eq.${user.id}&select=rol`);
     const data = await r.json();
-    if (!data.length || data[0].plan !== 'admin') {
+    if (!data.length || data[0].rol !== 'admin') {
       alert('Acceso denegado. Solo administradores.');
       window.location.href = 'index.html';
       return;

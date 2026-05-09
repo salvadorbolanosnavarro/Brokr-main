@@ -500,9 +500,9 @@
     bnav.className = 'bk-bnav';
     bnav.innerHTML =
       bnavMain.map(m => buildBnavItem(m, activeKey)).join('') +
-      `<button class="bk-bnav__item" id="bk-bnav-shaark" type="button" aria-label="Abrir Shaark">
+      `<button class="bk-bnav__item" id="bk-bnav-shaark" type="button" aria-label="Abrir Broquer">
          <img src="isotipo-broquer.png" alt="" style="width:24px;height:24px;object-fit:contain;filter:brightness(0);opacity:.85"/>
-         <span>Shaark</span>
+         <span>Broquer</span>
        </button>
        <button class="bk-bnav__item" type="button" onclick="doLogout()" aria-label="Cerrar sesión">${svg('user', 22)}<span>Cuenta</span></button>`;
     document.body.appendChild(bnav);
@@ -511,8 +511,8 @@
     const fab = document.createElement('button');
     fab.className = 'bk-shaark-fab';
     fab.id = 'bk-shaark-fab';
-    fab.setAttribute('aria-label', 'Abrir Shaark');
-    fab.innerHTML = `<span class="bk-shaark-fab__pulse"></span><span class="bk-wake-dot" id="bk-wake-dot"></span><img src="isotipo-broquer.png" alt="Shaark"/>`;
+    fab.setAttribute('aria-label', 'Abrir Broquer');
+    fab.innerHTML = `<span class="bk-shaark-fab__pulse"></span><span class="bk-wake-dot" id="bk-wake-dot"></span><img src="isotipo-broquer.png" alt="Broquer"/>`;
     fab.addEventListener('click', () => toggleShaarkPopup());
     document.body.appendChild(fab);
 
@@ -522,19 +522,19 @@
     pop.className = 'bk-shaark-popup';
     pop.id = 'bk-shaark-popup';
     pop.setAttribute('role', 'dialog');
-    pop.setAttribute('aria-label', 'Shaark — asistente');
+    pop.setAttribute('aria-label', 'Broquer — asistente');
     pop.innerHTML = `
       <div class="bk-shk-head">
         <div class="bk-shk-avatar"><img src="isotipo-broquer.png" alt=""/></div>
         <div style="flex:1;min-width:0">
-          <div class="bk-shk-name">Shaark</div>
+          <div class="bk-shk-name">Broquer</div>
           <div class="bk-shk-status">En línea</div>
         </div>
-        <button class="bk-shk-wake" id="bk-shk-wake" type="button" title='Activar "Oye Shaark"'>${svg('mic', 12, 2.2)} Oye Shaark</button>
+        <button class="bk-shk-wake" id="bk-shk-wake" type="button" title='Activar "Oye Broquer"'>${svg('mic', 12, 2.2)} Oye Broquer</button>
         <button class="bk-shk-close" type="button" aria-label="Cerrar">${svg('close', 14, 2)}</button>
       </div>
       <div class="bk-shk-msgs" id="bk-shk-msgs">
-        <div class="bk-shk-bubble bot">¡Hola! Soy Shaark, tan inteligente como un 🦈. ¿Qué puedo hacer por ti?</div>
+        <div class="bk-shk-bubble bot">¡Hola! Soy Broquer, tan inteligente como un 🦈. ¿Qué puedo hacer por ti?</div>
       </div>
       <div class="bk-shk-chips" id="bk-shk-chips"></div>
       <div class="bk-shk-input-row">
@@ -861,7 +861,7 @@
     const fab = document.getElementById('bk-shaark-fab');
     if (btn) {
       btn.classList.toggle('is-on', _wakeEnabled);
-      btn.title = _wakeEnabled ? 'Siempre escuchando: ON — toca para desactivar' : 'Activar "Oye Shaark"';
+      btn.title = _wakeEnabled ? 'Siempre escuchando: ON — toca para desactivar' : 'Activar "Oye Broquer"';
     }
     if (fab) fab.classList.toggle('wake-on', _wakeEnabled);
   }

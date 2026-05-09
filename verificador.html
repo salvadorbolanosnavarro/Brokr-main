@@ -8,29 +8,18 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Verificador de Documentos — Broquer</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
-:root{
-  --navy:#1a2744;--navy2:#0f1829;--navy3:#243358;
-  --teal:#0f1829;--teal2:#162035;--tealp:#f0f2f7;
-  --silver:#f4f6f9;--silver2:#e8ecf2;--bdr:#dce2ef;
-  --txt:#1a2744;--mut:#6b7a99;--wh:#ffffff;--r:12px;--r2:8px;
-  --green:#10b981;--greenp:#ecfdf5;--greenb:#a7f3d0;
-  --amber:#f59e0b;--amberp:#fffbeb;--amberb:#fcd34d;
-  --red:#ef4444;--redp:#fef2f2;--redb:#fca5a5;
-  --blue:#3b82f6;--bluep:#eff6ff;--blueb:#93c5fd;
-}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);min-height:100vh}
+body{font-family:var(--font-sans);background:var(--silver);color:var(--txt);min-height:100vh}
 
 /* ── HEADER ── */
 .top-header{background:var(--wh);border-bottom:1px solid var(--silver2);padding:16px 20px;position:sticky;top:0;z-index:20}
-.top-header h1{font-family:'Playfair Display',serif;font-size:22px;color:var(--navy);margin-bottom:2px}
+.top-header h1{font-family:var(--font-display);font-size:22px;color:var(--navy);margin-bottom:2px}
 .top-header p{font-size:12px;color:var(--mut);line-height:1.4}
 
 /* ── CONTRACT TYPE SELECTOR ── */
 .tipo-selector{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px 20px 0}
-.tipo-btn{padding:14px 12px;border:2px solid var(--silver2);border-radius:var(--r);background:var(--wh);cursor:pointer;text-align:center;font-family:'DM Sans',sans-serif;transition:all .15s}
+.tipo-btn{padding:14px 12px;border:2px solid var(--silver2);border-radius:var(--r);background:var(--wh);cursor:pointer;text-align:center;font-family:var(--font-sans);transition:all .15s}
 .tipo-btn:hover{border-color:var(--teal);background:var(--tealp)}
 .tipo-btn.active{border-color:var(--navy);background:var(--navy);color:#fff}
 .tipo-ico{font-size:22px;margin-bottom:5px}
@@ -95,7 +84,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--silver);color:var(--txt);
 
 /* Action buttons */
 .doc-actions{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
-.doc-btn{padding:8px 14px;border-radius:var(--r2);border:none;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s}
+.doc-btn{padding:8px 14px;border-radius:var(--r2);border:none;font-family:var(--font-sans);font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s}
 .doc-btn.ai{background:var(--navy);color:#fff}
 .doc-btn.ai:hover{background:var(--navy3)}
 .doc-btn.ai:disabled{background:var(--silver2);color:var(--mut);cursor:not-allowed}
