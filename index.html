@@ -2011,7 +2011,7 @@ html, body {
 <!-- ══ SHAARK POPUP ══ -->
 <div class="shaark-popup" id="shaark-popup"><div class="shaark-popup-inner">
     <div class="scw-header">
-      <div class="scw-avatar" style="background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.2);overflow:hidden"><img src="isotipo.jpg" style="width:100%;height:100%;object-fit:cover;" alt="Shaark"/></div>
+      <div class="scw-avatar" style="background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.2);overflow:hidden"><img src="isotipo.png" style="width:100%;height:100%;object-fit:cover;" alt="Shaark"/></div>
       <div style="flex:1">
         <div class="scw-name">Shaark</div>
         <div class="scw-status" id="scw-status-txt">● En línea</div>
@@ -2058,7 +2058,7 @@ html, body {
     ontouchend="navShaarkTouchEnd(event)"
     ontouchcancel="navShaarkTouchEnd(event)">
     <div class="proto-nav-shaark" style="position:relative">
-      <img src="isotipo.jpg" alt="Shaark" draggable="false" oncontextmenu="return false" style="-webkit-user-select:none;user-select:none;pointer-events:none"/>
+      <img src="isotipo.png" alt="Shaark" draggable="false" oncontextmenu="return false" style="-webkit-user-select:none;user-select:none;pointer-events:none"/>
       <!-- Wake-word active indicator dot -->
       <span id="wake-dot" style="display:none;position:absolute;top:0;right:0;width:8px;height:8px;background:#4ade80;border-radius:50%;border:1.5px solid white;pointer-events:none"></span>
     </div>
@@ -2141,7 +2141,7 @@ function addScwBubble(text, type) {
   div.className = 'scw-bubble ' + type;
   if(type === 'bot'){
     const ico = document.createElement('img');
-    ico.src = 'isotipo.jpg';
+    ico.src = 'isotipo.png';
     ico.style.cssText = 'width:14px;height:14px;object-fit:contain;margin-right:5px;vertical-align:middle;opacity:0.7;';
     div.appendChild(ico);
     div.appendChild(document.createTextNode(text));
@@ -3326,7 +3326,7 @@ function descargarPDF(){
 // CHAT
 // ══════════════════════════════════════════
 let msgs = [], busy = false;
-const BAV = `<img src="isotipo.jpg" style="width:22px;height:22px;border-radius:50%;object-fit:cover;background:#fff;">`;
+const BAV = `<img src="isotipo.png" style="width:22px;height:22px;border-radius:50%;object-fit:cover;background:#fff;">`;
 function onKey(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();} }
 function resize(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,110)+'px'; }
 
