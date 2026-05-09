@@ -1,0 +1,1877 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<link rel="icon" type="image/png" href="isotipo-broquer.png">
+<link rel="apple-touch-icon" href="isotipo-broquer.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Broquer — Contratos</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --navy:#1a2744;--navy2:#0f1829;--navy3:#243358;
+  --teal:#0f1829;--teal2:#162035;--tealp:#f0f2f7;
+  --gold:#c9a96e;--silver:#f4f6f9;--silver2:#e8ecf2;
+  --txt:#1a2744;--mut:#6b7a99;--wh:#ffffff;--r:12px;--r2:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Poppins',sans-serif;background:var(--silver);color:var(--txt);min-height:100vh;padding-bottom:80px}
+#wrap{max-width:780px;margin:0 auto;padding:32px 20px 60px}
+
+/* Nav */
+.nav{display:flex;align-items:center;gap:12px;margin-bottom:28px}
+.nav img{height:28px;width:auto}
+.nav a{font-size:13px;color:var(--mut);margin-left:auto;text-decoration:none}
+.nav a:hover{color:var(--navy)}
+
+/* Page title */
+.pg-ttl{font-family:'Playfair Display',serif;font-size:26px;color:var(--navy);margin-bottom:4px}
+.pg-sub{font-size:13.5px;color:var(--mut);margin-bottom:24px;line-height:1.5}
+
+/* Type selector */
+.tipo-tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.tipo-tab{padding:16px;border:2px solid var(--silver2);border-radius:var(--r);background:var(--wh);cursor:pointer;transition:all .15s;text-align:center}
+.tipo-tab:hover{border-color:var(--navy2);background:var(--tealp)}
+.tipo-tab.active{border-color:var(--navy);background:var(--navy)}
+.tipo-tab-ico{font-size:24px;margin-bottom:6px}
+.tipo-tab-lbl{font-size:14px;font-weight:600;color:var(--navy)}
+.tipo-tab.active .tipo-tab-lbl{color:#fff}
+.tipo-tab-sub{font-size:11px;color:var(--mut);margin-top:2px}
+.tipo-tab.active .tipo-tab-sub{color:rgba(255,255,255,.6)}
+
+/* Cards */
+.card{background:var(--wh);border:1.5px solid var(--silver2);border-radius:var(--r);padding:22px;margin-bottom:14px}
+.card-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);padding-bottom:9px;border-bottom:1px solid var(--silver2);margin-bottom:16px}
+
+/* Form */
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.frow.one{grid-template-columns:1fr}
+.frow.three{grid-template-columns:1fr 1fr 1fr}
+.f{display:flex;flex-direction:column;gap:4px}
+.f label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+.f input,.f select,.f textarea{background:var(--silver);border:1.5px solid var(--silver2);border-radius:var(--r2);padding:9px 11px;font-family:'Poppins',sans-serif;font-size:14px;color:var(--txt);outline:none;width:100%;transition:border .15s}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--navy);background:var(--wh)}
+.f input::placeholder{color:var(--mut)}
+.f-note{font-size:11px;color:var(--mut);margin-top:3px;font-style:italic}
+
+/* Money input */
+.money-wrap{position:relative}
+.money-prefix{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--txt);font-weight:500;pointer-events:none}
+.money-wrap input{padding-left:22px}
+
+/* Generate button */
+.gen-btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:var(--r2);font-family:'Poppins',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s;margin-top:4px}
+.gen-btn:hover{background:var(--navy3)}
+.gen-btn:disabled{background:var(--silver2);color:var(--mut);cursor:not-allowed}
+.gen-btn svg{flex-shrink:0}
+
+/* Loading */
+.loading{display:none;align-items:center;gap:10px;padding:12px;background:#f0f2f7;border-radius:var(--r2);font-size:13px;color:var(--navy);margin-top:10px}
+.loading.show{display:flex}
+.spinner{width:15px;height:15px;border:2px solid var(--navy2);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Error */
+.err{display:none;background:#fff3f3;border:1px solid #fcc;border-radius:var(--r2);padding:11px 14px;font-size:13px;color:#c00;margin-top:10px}
+.err.show{display:block}
+
+/* Success */
+.success{display:none;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:var(--r2);padding:14px 18px;font-size:14px;color:#2e7d32;margin-top:10px;align-items:center;gap:10px}
+.success.show{display:flex}
+
+@media(max-width:600px){.frow,.frow.three{grid-template-columns:1fr}}
+
+/* ── CLAUSULAS ESPECIALES ── */
+.clausulas-section{
+  background:#f0f4ff;border:1.5px solid #c7d4f0;border-radius:10px;
+  padding:20px 24px;margin:0 0 20px 0;
+}
+.clausulas-section h3{
+  font-size:13px;font-weight:700;color:#1a2744;margin:0 0 4px 0;
+  display:flex;align-items:center;gap:8px;
+}
+.clausulas-section p{
+  font-size:11px;color:#64748b;margin:0 0 12px 0;line-height:1.5;
+}
+.clausula-item{
+  display:flex;gap:8px;margin-bottom:8px;align-items:flex-start;
+}
+.clausula-item textarea{
+  flex:1;border:1px solid #dde3f0;border-radius:6px;padding:8px 10px;
+  font-size:12px;font-family:inherit;resize:vertical;min-height:60px;
+  line-height:1.5;
+}
+.clausula-item textarea:focus{outline:none;border-color:#3b6fd4;}
+.clausula-del{
+  width:28px;height:28px;border:none;background:#fee2e2;color:#ef4444;
+  border-radius:6px;cursor:pointer;font-size:16px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;margin-top:2px;
+}
+.clausula-del:hover{background:#fca5a5;}
+.btn-add-clausula{
+  background:none;border:1.5px dashed #3b6fd4;color:#3b6fd4;
+  border-radius:6px;padding:7px 14px;font-size:12px;cursor:pointer;
+  display:flex;align-items:center;gap:6px;font-weight:600;
+  transition:background .15s;
+}
+.btn-add-clausula:hover{background:#e8eeff;}
+.clausulas-preview{
+  margin-top:14px;display:none;
+}
+.clausulas-preview h4{font-size:11px;font-weight:700;color:#1a2744;margin:0 0 8px 0;}
+.clausula-redactada{
+  background:#fff;border:1px solid #c7d4f0;border-radius:6px;
+  padding:10px 12px;margin-bottom:8px;font-size:11px;line-height:1.6;color:#374151;
+  position:relative;
+}
+.clausula-redactada .cl-num{
+  font-weight:700;color:#3b6fd4;display:block;margin-bottom:4px;font-size:10px;
+}
+
+/* ── SMART FORM ELEMENTS ── */
+.auto-badge{
+  background:rgba(13,148,136,.15);color:var(--teal2);
+  font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;
+  text-transform:uppercase;letter-spacing:.5px;vertical-align:middle;margin-left:4px;
+}
+.opt-badge{
+  background:rgba(148,163,184,.1);color:var(--mut);
+  font-size:9px;font-weight:600;padding:1px 5px;border-radius:4px;
+  vertical-align:middle;margin-left:4px;
+}
+.sexo-toggle{
+  display:flex;gap:6px;margin-top:4px;
+}
+.sexo-btn{
+  flex:1;padding:8px 10px;border:1.5px solid var(--bdr);border-radius:8px;
+  background:none;color:var(--mut);font-size:12px;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:all .15s;
+}
+.sexo-btn.active{
+  border-color:var(--teal);background:rgba(13,148,136,.12);color:var(--teal2);
+}
+.err-note{ display:none; }
+
+/* ── Modo selector (Broquer vs Machote) ── */
+.modo-selector{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px}
+.modo-btn{padding:14px 10px;border:2px solid var(--silver2);border-radius:var(--r);background:var(--wh);cursor:pointer;transition:all .15s;text-align:center;font-family:'DM Sans',sans-serif}
+.modo-btn:hover{border-color:var(--teal);background:var(--tealp)}
+.modo-btn.active{border-color:var(--teal);background:var(--teal);color:#fff}
+.modo-btn-ico{font-size:22px;margin-bottom:5px}
+.modo-btn-lbl{font-size:13px;font-weight:600;display:block}
+.modo-btn.active .modo-btn-lbl{color:#fff}
+.modo-btn-sub{font-size:11px;color:var(--mut);margin-top:2px;display:block}
+.modo-btn.active .modo-btn-sub{color:rgba(255,255,255,.75)}
+
+/* ── Machote upload ── */
+#machote-section{display:none}
+.upload-zone{border:2px dashed var(--silver2);border-radius:var(--r);padding:32px 20px;text-align:center;cursor:pointer;transition:all .15s;background:var(--wh);margin-bottom:14px}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--teal);background:var(--tealp)}
+.upload-zone-ico{font-size:36px;margin-bottom:8px}
+.upload-zone-lbl{font-size:14px;font-weight:600;color:var(--navy);margin-bottom:4px}
+.upload-zone-sub{font-size:12px;color:var(--mut)}
+.upload-zone.has-file{border-color:var(--teal);background:var(--tealp)}
+.upload-zone.has-file .upload-zone-ico::after{content:' ✓';color:var(--teal)}
+.file-name{font-size:12px;font-weight:600;color:var(--teal);margin-top:6px;word-break:break-all}
+#upload-input{display:none}
+
+/* ── Campos detectados ── */
+.campos-list{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.campo-item{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;background:var(--silver);border-radius:var(--r2);padding:8px 10px}
+.campo-item input,.campo-item select{background:var(--wh);border:1.5px solid var(--silver2);border-radius:var(--r2);padding:6px 9px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--txt);width:100%}
+.campo-item input:focus,.campo-item select:focus{border-color:var(--teal);outline:none}
+.campo-del{background:none;border:none;color:var(--mut);cursor:pointer;padding:4px 6px;border-radius:4px;font-size:16px;line-height:1}
+.campo-del:hover{background:#fee;color:#c00}
+.campo-item-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);margin-bottom:2px}
+.campos-header{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;padding:0 10px;margin-bottom:2px}
+.campos-header span{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--mut)}
+.btn-add-campo{display:flex;align-items:center;gap:6px;background:none;border:1.5px dashed var(--silver2);border-radius:var(--r2);padding:7px 12px;cursor:pointer;font-size:13px;color:var(--mut);font-family:'DM Sans',sans-serif;transition:all .15s;margin-top:4px}
+.btn-add-campo:hover{border-color:var(--teal);color:var(--teal)}
+
+/* ── Formulario dinámico (fase llenar) ── */
+#machote-form-section{display:none}
+.dyn-form-field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.dyn-form-field label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+.dyn-form-field input,.dyn-form-field select,.dyn-form-field textarea{background:var(--silver);border:1.5px solid var(--silver2);border-radius:var(--r2);padding:9px 11px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--txt);outline:none;width:100%;transition:border .15s}
+.dyn-form-field input:focus,.dyn-form-field select:focus{border-color:var(--teal);background:var(--wh)}
+.dyn-form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:0}
+@media(max-width:540px){.campo-item{grid-template-columns:1fr 1fr auto}.dyn-form-row{grid-template-columns:1fr}}
+
+/* ── Fases de machote ── */
+.machote-phase{display:none}
+.machote-phase.active{display:block}
+.phase-indicator{display:flex;align-items:center;gap:8px;margin-bottom:18px;font-size:13px;color:var(--mut)}
+.phase-dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--silver2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--mut);flex-shrink:0}
+.phase-dot.done{background:var(--teal);border-color:var(--teal);color:#fff}
+.phase-dot.current{background:var(--navy);border-color:var(--navy);color:#fff}
+.phase-sep{flex:1;height:1px;background:var(--silver2)}
+
+/* ── CONTACT / PROPERTY PICKERS ── */
+.pick-btn{display:inline-flex;align-items:center;gap:5px;margin-top:5px;padding:5px 10px;border:1.5px solid var(--teal);border-radius:6px;background:var(--tealp);color:var(--teal2);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all .12s;text-transform:uppercase;letter-spacing:.04em}
+.pick-btn:hover{background:var(--teal);color:#fff}
+.pick-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.pick-overlay.open{display:flex}
+.pick-sheet{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:780px;max-height:88vh;display:flex;flex-direction:column;animation:pickUp .22s ease}
+@keyframes pickUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.pick-handle{width:36px;height:4px;background:var(--silver2);border-radius:2px;margin:10px auto;flex-shrink:0}
+.pick-head{display:flex;align-items:center;gap:10px;padding:0 18px 12px;border-bottom:1px solid var(--silver2);flex-shrink:0}
+.pick-head-title{font-size:15px;font-weight:700;color:var(--navy);flex:1}
+.pick-close{width:30px;height:30px;border:none;background:var(--silver);border-radius:7px;cursor:pointer;font-size:14px;color:var(--mut)}
+.pick-search{padding:12px 18px;flex-shrink:0}
+.pick-search input{width:100%;background:var(--silver);border:1.5px solid var(--silver2);border-radius:8px;padding:8px 12px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border .15s}
+.pick-search input:focus{border-color:var(--teal)}
+.pick-list{flex:1;overflow-y:auto;padding:0 0 20px}
+.pick-item{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--silver2);cursor:pointer;transition:background .1s}
+.pick-item:hover{background:var(--tealp)}
+.pick-item:last-child{border-bottom:none}
+.pick-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.pick-info{flex:1;min-width:0}
+.pick-name{font-size:14px;font-weight:600;color:var(--navy)}
+.pick-sub{font-size:12px;color:var(--mut);margin-top:2px}
+.pick-role{font-size:10px;font-weight:700;text-transform:uppercase;padding:2px 7px;border-radius:8px;margin-left:4px}
+.pick-empty{text-align:center;padding:40px 20px;color:var(--mut);font-size:13px}
+.prop-pick-item{padding:12px 18px;border-bottom:1px solid var(--silver2);cursor:pointer;transition:background .1s}
+.prop-pick-item:hover{background:var(--tealp)}
+.prop-pick-name{font-size:14px;font-weight:600;color:var(--navy)}
+.prop-pick-sub{font-size:12px;color:var(--mut);margin-top:2px}
+.prop-pick-badge{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;padding:2px 7px;border-radius:8px;margin-right:4px}
+.badge-venta{background:#f0fdf4;color:#15803d}.badge-renta{background:#eff6ff;color:#1d4ed8}
+</style>
+
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style id="__brokr_skin_override">
+:root {
+  --navy: #1F1B17 !important;
+  --navy2: #2D2823 !important;
+  --navy3: #3A332C !important;
+  --teal: #1F1B17 !important;
+  --teal2: #2D2823 !important;
+  --teal-dark: #1F1B17 !important;
+  --silver: #F4F1E9 !important;
+  --silver2: #E8E2D2 !important;
+  --bdr: #E8E2D2 !important;
+  --txt: #1F1B17 !important;
+  --mut: #6B6B66 !important;
+  --wh: #FBF9F1 !important;
+  --gray: #F4F1E9 !important;
+  --gray2: #E8E2D2 !important;
+  --gray-100: #F4F1E9 !important;
+  --gray-600: #6B6B66 !important;
+  --screen-bg: #FBF9F1 !important;
+  --text: #1F1B17 !important;
+  --tealp: #EFEDE5 !important;
+}
+html, body {
+  background: #FBF9F1 !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif !important;
+  color: #1F1B17 !important;
+  letter-spacing: -0.005em !important;
+}
+* { font-family: inherit !important; }
+input, select, textarea, button {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif !important;
+}
+/* Replace Playfair display with system serif fallback in headings */
+[class*="ttl"], [class*="title"], h1, h2, h3,
+.cover-precio, .cover-desc-ttl, .gallery-header h2, .chars-header h2,
+.pg-ttl, .sheet-title, .header-title, .det-name {
+  font-family: 'New York', 'Iowan Old Style', 'Cambria', Georgia, serif !important;
+  letter-spacing: -0.025em !important;
+  font-weight: 600 !important;
+}
+/* Buttons get the new pill treatment */
+.gen-btn, .btn-primary, .ui-btn, .btn-new-prop {
+  background: #1F1B17 !important;
+  border-radius: 999px !important;
+  letter-spacing: -0.005em !important;
+  font-weight: 600 !important;
+}
+/* Inputs warmed */
+input, select, textarea {
+  background: #F4F1E9 !important;
+  border: 1px solid #E8E2D2 !important;
+  border-radius: 12px !important;
+  color: #1F1B17 !important;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: #1F1B17 !important;
+  background: #FBF9F1 !important;
+  outline: none !important;
+}
+/* Cards */
+.card, .stat-card, .prop-card, .pcard {
+  background: #F4F1E9 !important;
+  border: 1px solid #E8E2D2 !important;
+  border-radius: 16px !important;
+}
+</style>
+
+</head>
+<body>
+<div id="wrap">
+
+  <!-- Nav --> 
+
+  <!-- Selector de modo -->
+  <div class="modo-selector">
+    <button class="modo-btn active" id="modo-brokr" onclick="setModo('brokr')">
+      <div class="modo-btn-ico">📄</div>
+      <span class="modo-btn-lbl">Contratos Broquer</span>
+      <span class="modo-btn-sub">Arrendamiento · Promesa de compraventa</span>
+    </button>
+    <button class="modo-btn" id="modo-machote" onclick="setModo('machote')">
+      <div class="modo-btn-ico">📁</div>
+      <span class="modo-btn-lbl">Mi propio machote</span>
+      <span class="modo-btn-sub">Sube tu plantilla y Broquer la automatiza</span>
+    </button>
+  </div>
+
+  <!-- ══ MODO BROKR ══ -->
+  <div id="brokr-section">
+
+  <!-- Tipo selector -->
+  <div class="tipo-tabs">
+    <div class="tipo-tab active" id="tab-arr" onclick="setTipo('arrendamiento')">
+      <div class="tipo-tab-ico">🏠</div>
+      <div class="tipo-tab-lbl">Arrendamiento</div>
+    </div>
+    <div class="tipo-tab" id="tab-pro" onclick="setTipo('promesa')">
+      <div class="tipo-tab-ico">📋</div>
+      <div class="tipo-tab-lbl">Promesa de compraventa</div>
+    </div>
+  </div>
+
+  <!-- ══ FORMULARIO ARRENDAMIENTO ══ -->
+  <div id="form-arrendamiento">
+
+    <!-- ══ SECCIÓN 1: FECHAS/PLAZO ══ -->
+    <div class="card">
+      <div class="card-title">Fechas/Plazo</div>
+      <div class="frow">
+        <div class="f">
+          <label>Fecha de inicio del contrato</label>
+          <input type="date" id="a-inicio" onchange="onFechaInicioChange()"/>
+          <div class="f-note" id="a-fecha-preview" style="color:var(--teal2);font-weight:600"></div>
+        </div>
+        <div class="f">
+          <label>Fecha de término del contrato</label>
+          <input type="date" id="a-fin" onchange="validarFechas()"/>
+        </div>
+      </div>
+      <div class="f-note err-note" id="err-fechas" style="display:none;color:#ef4444;font-weight:600">
+        ⚠️ La fecha de término debe ser posterior a la de inicio.
+      </div>
+
+      <div class="frow" style="margin-top:8px">
+        <div class="f">
+          <label>Plazo del contrato <span class="auto-badge">se genera automático</span></label>
+          <input type="text" id="a-duracion" placeholder="Ej. UN AÑO" readonly style="background:var(--navy3);color:var(--teal2)"/>
+        </div>
+        <div class="f">
+          <label>Inicio escrito <span class="auto-badge">automático</span></label>
+          <input type="text" id="a-inicio-escrito" readonly style="background:var(--navy3);color:var(--teal2)" placeholder="Se genera del picker"/>
+        </div>
+        <div class="f">
+          <label>Término escrito <span class="auto-badge">automático</span></label>
+          <input type="text" id="a-fin-escrito" readonly style="background:var(--navy3);color:var(--teal2)" placeholder="Se genera del picker"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SECCIÓN 2: INMUEBLE ══ -->
+    <div class="card">
+      <div class="card-title">🏠 Inmueble arrendado</div>
+      <button class="pick-btn" onclick="abrirPickerInmueble('arrendamiento')" style="margin-bottom:10px">🏘 Seleccionar de Mis Inmuebles</button>
+      <div class="f-note" style="margin-bottom:10px">Esta dirección se usará en múltiples secciones del contrato automáticamente.</div>
+
+      <div class="frow">
+        <div class="f" style="flex:2">
+          <label>Calle</label>
+          <input type="text" id="a-calle-inm" placeholder="Ej. AV. CAMELINAS" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Núm. exterior</label>
+          <input type="text" id="a-numext-inm" placeholder="Ej. 123" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Núm. interior <span class="opt-badge">opcional</span></label>
+          <input type="text" id="a-numint-inm" placeholder="Ej. 4-A" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f">
+          <label>Colonia</label>
+          <input type="text" id="a-colonia" placeholder="Ej. CHAPULTEPEC" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Código postal</label>
+          <input type="text" id="a-cp" placeholder="Ej. 58260" maxlength="5" oninput="validarCP('a-cp')"/>
+        </div>
+        <div class="f">
+          <label>Municipio y Estado</label>
+          <input type="text" id="a-mpio-inm" placeholder="Ej. MORELIA, MICHOACÁN" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f">
+          <label>Destino y uso del inmueble</label>
+          <select id="a-destino" onchange="onDestinoChange()">
+            <option value="">— Seleccionar —</option>
+            <option value="CASA HABITACIÓN">Casa habitación</option>
+            <option value="DEPARTAMENTO HABITACIONAL">Departamento habitacional</option>
+            <option value="LOCAL COMERCIAL">Local comercial</option>
+            <option value="OFICINA">Oficina</option>
+            <option value="BODEGA">Bodega</option>
+            <option value="otro">Otro (especificar)…</option>
+          </select>
+        </div>
+        <div class="f" id="a-destino-otro-wrap" style="display:none">
+          <label>Especificar destino</label>
+          <input type="text" id="a-destino-otro" placeholder="Ej. CONSULTORIO MÉDICO" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SECCIÓN 3: ARRENDADOR ══ -->
+    <div class="card">
+      <div class="card-title">👤 Arrendador (propietario)</div>
+      <button class="pick-btn" onclick="abrirPickerContacto('arrendador')">📋 Seleccionar de Mis Contactos</button>
+      <div style="height:10px"></div>
+      <div class="frow">
+        <div class="f" style="flex:2">
+          <label>Nombre completo del arrendador</label>
+          <input type="text" id="a-arrendador" placeholder="Ej. SALVADOR BOLAÑOS NAVARRO" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Sexo</label>
+          <div class="sexo-toggle" id="sexo-arr">
+            <button class="sexo-btn active" data-sexo="M" onclick="setSexo('arr','M',this)">♂ Masculino</button>
+            <button class="sexo-btn" data-sexo="F" onclick="setSexo('arr','F',this)">♀ Femenino</button>
+          </div>
+        </div>
+      </div>
+      <div class="f-note" id="preview-sexo-arr" style="color:var(--teal2);font-size:11px"></div>
+
+      <div class="frow" style="margin-top:10px">
+        <div class="f" style="flex:2">
+          <label>Calle del domicilio del arrendador</label>
+          <input type="text" id="a-calle-arr" placeholder="Ej. CALLE REAL DE GUADALUPE" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Núm. exterior</label>
+          <input type="text" id="a-numext-arr" placeholder="Ej. 45" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Núm. int. <span class="opt-badge">opcional</span></label>
+          <input type="text" id="a-numint-arr" placeholder="Ej. B" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f">
+          <label>Colonia del arrendador</label>
+          <input type="text" id="a-colonia-arr" placeholder="Ej. CENTRO" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>C.P. del arrendador</label>
+          <input type="text" id="a-cp-arr" placeholder="58000" maxlength="5" oninput="validarCP('a-cp-arr')"/>
+        </div>
+        <div class="f">
+          <label>Municipio/Estado del arrendador</label>
+          <input type="text" id="a-mpio-arr" placeholder="Ej. MORELIA, MICHOACÁN" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SECCIÓN 4: ARRENDATARIO ══ -->
+    <div class="card">
+      <div class="card-title">👤 Arrendatario (inquilino)</div>
+      <button class="pick-btn" onclick="abrirPickerContacto('arrendatario')">📋 Seleccionar de Mis Contactos</button>
+      <div style="height:10px"></div>
+      <div class="frow">
+        <div class="f" style="flex:2">
+          <label>Nombre completo del arrendatario</label>
+          <input type="text" id="a-arrendatario" placeholder="Ej. GABRIELA NAVARRO PÉREZ" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Sexo</label>
+          <div class="sexo-toggle" id="sexo-arrt">
+            <button class="sexo-btn active" data-sexo="M" onclick="setSexo('arrt','M',this)">♂ Masculino</button>
+            <button class="sexo-btn" data-sexo="F" onclick="setSexo('arrt','F',this)">♀ Femenino</button>
+          </div>
+        </div>
+      </div>
+      <div class="f-note">El domicilio del arrendatario será el inmueble arrendado (se toma automáticamente).</div>
+    </div>
+
+    <!-- ══ SECCIÓN 5: OBLIGADO SOLIDARIO ══ -->
+    <div class="card">
+      <div class="card-title">🤝 Obligado solidario</div>
+      <button class="pick-btn" onclick="abrirPickerContacto('os')">📋 Seleccionar de Mis Contactos</button>
+      <div style="height:10px"></div>
+      <div class="frow">
+        <div class="f" style="flex:2">
+          <label>Nombre completo del obligado solidario</label>
+          <input type="text" id="a-os" placeholder="Ej. PEDRO RAMÍREZ GARCÍA" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Sexo</label>
+          <div class="sexo-toggle" id="sexo-os">
+            <button class="sexo-btn active" data-sexo="M" onclick="setSexo('os','M',this)">♂ Masculino</button>
+            <button class="sexo-btn" data-sexo="F" onclick="setSexo('os','F',this)">♀ Femenino</button>
+          </div>
+        </div>
+      </div>
+      <div class="f-note" id="preview-sexo-os" style="color:var(--teal2);font-size:11px"></div>
+
+      <div class="card-title" style="margin-top:12px;font-size:12px">Domicilio del obligado solidario</div>
+      <div class="frow">
+        <div class="f" style="flex:2">
+          <label>Calle del domicilio del OS</label>
+          <input type="text" id="a-calle-os" placeholder="Ej. BLVD. GARCÍA DE LEÓN" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Núm. exterior</label>
+          <input type="text" id="a-numext-os" placeholder="Ej. 200" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Núm. int. <span class="opt-badge">opcional</span></label>
+          <input type="text" id="a-numint-os" placeholder="" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f">
+          <label>Colonia</label>
+          <input type="text" id="a-colonia-os" placeholder="Ej. CHAPULTEPEC" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>C.P.</label>
+          <input type="text" id="a-cp-os" placeholder="58260" maxlength="5" oninput="validarCP('a-cp-os')"/>
+        </div>
+        <div class="f">
+          <label>Municipio / Estado</label>
+          <input type="text" id="a-mpio-os" placeholder="Ej. MORELIA, MICHOACÁN" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+      </div>
+
+      <div class="card-title" style="margin-top:12px;font-size:12px;display:flex;align-items:center;gap:12px">
+        Inmueble en garantía del obligado solidario
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:500;color:var(--mut);cursor:pointer">
+          <input type="checkbox" id="os-misma-prop" onchange="toggleMismaPropOS(this)" style="accent-color:var(--teal);width:14px;height:14px;cursor:pointer"/>
+          Es la misma donde vive
+        </label>
+      </div>
+      <div class="frow">
+        <div class="f" style="flex:2">
+          <label>Calle del inmueble en garantía</label>
+          <input type="text" id="a-calle-inm-os" placeholder="Ej. AV. ACUEDUCTO" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Núm. exterior</label>
+          <input type="text" id="a-numext-inm-os" placeholder="Ej. 10" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Núm. int. <span class="opt-badge">opcional</span></label>
+          <input type="text" id="a-numint-inm-os" placeholder="" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f">
+          <label>Colonia</label>
+          <input type="text" id="a-colonia-inm-os" placeholder="Ej. JARDINES DE GUADALUPE" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>C.P.</label>
+          <input type="text" id="a-cp-inm-os" placeholder="58270" maxlength="5" oninput="validarCP('a-cp-inm-os')"/>
+        </div>
+        <div class="f">
+          <label>Municipio / Estado</label>
+          <input type="text" id="a-mpio-inm-os" placeholder="Ej. MORELIA, MICHOACÁN" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SECCIÓN 6: RENTA Y PAGOS ══ -->
+    <div class="card">
+      <div class="card-title">💰 Renta y condiciones de pago</div>
+      <div class="frow">
+        <div class="f">
+          <label>Renta mensual ($)</label>
+          <input type="text" id="a-renta" placeholder="Ej. 8,500.00" oninput="onRentaChange(this)" onblur="fmtMoneyBlur(this)"/>
+        </div>
+        <div class="f">
+          <label>Renta en letra <span class="auto-badge">automático</span></label>
+          <input type="text" id="a-renta-letra" readonly style="background:var(--navy3);color:var(--teal2)" placeholder="Se genera del número"/>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f">
+          <label>Depósito en garantía ($) <span class="auto-badge">= 1 mes por defecto</span></label>
+          <input type="text" id="a-deposito" placeholder="Ej. 8,500.00" oninput="fmtMoney(this)" onblur="onDepositoBlur(this)"/>
+        </div>
+        <div class="f">
+          <label>Depósito en letra <span class="auto-badge">automático</span></label>
+          <input type="text" id="a-deposito-letra" readonly style="background:var(--navy3);color:var(--teal2)" placeholder="Se genera del número"/>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f">
+          <label>Día límite de pago mensual</label>
+          <input type="number" id="a-dia-pago" placeholder="Ej. 5" min="1" max="28"
+            oninput="if(this.value>28){this.value=28;showFieldAlert(this,'El día no puede ser mayor a 28.')}
+                     if(this.value<1){this.value=1}"/>
+        </div>
+        <div class="f">
+          <label>Forma de pago</label>
+          <select id="a-forma-pago" onchange="onFormaPagoChange()">
+            <option value="">— Seleccionar —</option>
+            <option value="TRANSFERENCIA BANCARIA">Transferencia bancaria</option>
+            <option value="DEPÓSITO EN EFECTIVO">Depósito en efectivo</option>
+            <option value="CHEQUE">Cheque</option>
+            <option value="EFECTIVO">Efectivo</option>
+          </select>
+        </div>
+        <div class="f">
+          <label>Cuenta / CLABE bancaria <span class="opt-badge">opcional</span></label>
+          <input type="text" id="a-banco" placeholder="Ej. BBVA 0123456789"/>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f">
+          <label>Pena diaria por no desocupar ($)</label>
+          <input type="text" id="a-pena" placeholder="Ej. 500.00" oninput="onPenaChange(this)" onblur="fmtMoneyBlur(this)"/>
+        </div>
+        <div class="f">
+          <label>Pena diaria en letra <span class="auto-badge">automático</span></label>
+          <input type="text" id="a-pena-letra" readonly style="background:var(--navy3);color:var(--teal2)" placeholder="Se genera del número"/>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /form-arrendamiento -->
+
+  <!-- ══ FORMULARIO PROMESA ══ -->
+  <div id="form-promesa" style="display:none">
+
+    <div class="card">
+      <div class="card-title">Fecha</div>
+      <div class="frow one">
+        <div class="f">
+          <label>Fecha del contrato</label>
+          <input type="date" id="p-fecha"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Datos del inmueble</div>
+      <button class="pick-btn" onclick="abrirPickerInmueble('promesa')" style="margin-bottom:10px">🏘 Seleccionar de Mis Inmuebles</button>
+      <div class="frow one">
+        <div class="f">
+          <label>Calle y número</label>
+          <input type="text" id="p-dir" placeholder="Ej. Ciprés 167"/>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f">
+          <label>Colonia</label>
+          <input type="text" id="p-colonia" placeholder="Ej. Melchor Ocampo"/>
+        </div>
+        <div class="f">
+          <label>Código Postal</label>
+          <input type="text" id="p-cp" placeholder="Ej. 58160"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Datos de escritura pública del vendedor</div>
+      <div class="frow">
+        <div class="f">
+          <label>Número de escritura</label>
+          <input type="text" id="p-esc-num" placeholder="Ej. 19289"/>
+        </div>
+        <div class="f">
+          <label>Número de notaría</label>
+          <input type="text" id="p-not-num" placeholder="Ej. 54"/>
+        </div>
+      </div>
+      <div class="frow one">
+        <div class="f">
+          <label>Nombre del notario</label>
+          <input type="text" id="p-not-nombre" placeholder="Ej. Lic. Jorge Humberto Estrada Mejía"/>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f">
+          <label>Tomo del Registro Público</label>
+          <input type="text" id="p-tomo" placeholder="Ej. 4430"/>
+        </div>
+        <div class="f">
+          <label>Registro</label>
+          <input type="text" id="p-registro" placeholder="Ej. 39"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Promitente vendedor</div>
+      <button class="pick-btn" onclick="abrirPickerContacto('vendedor')">📋 Seleccionar de Mis Contactos</button>
+      <div style="height:10px"></div>
+      <div class="frow one">
+        <div class="f">
+          <label>Nombre completo</label>
+          <input type="text" id="p-vendedor" placeholder="Nombre como aparece en escrituras"/>
+        </div>
+      </div>
+      <div class="frow one">
+        <div class="f">
+          <label>Sexo</label>
+          <div class="sexo-toggle" id="sexo-vend">
+            <button class="sexo-btn active" data-sexo="M" onclick="setSexo('vend','M',this)">♂ Masculino</button>
+            <button class="sexo-btn" data-sexo="F" onclick="setSexo('vend','F',this)">♀ Femenino</button>
+          </div>
+        </div>
+      </div>
+      <div class="frow one">
+        <div class="f">
+          <label>Domicilio para notificaciones</label>
+          <input type="text" id="p-dom-vend" placeholder="Calle, número, colonia, C.P."/>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Promitente comprador</div>
+      <button class="pick-btn" onclick="abrirPickerContacto('comprador')">📋 Seleccionar de Mis Contactos</button>
+      <div style="height:10px"></div>
+      <div class="frow one">
+        <div class="f">
+          <label>Nombre completo</label>
+          <input type="text" id="p-comprador" placeholder="Nombre como aparece en su INE"/>
+        </div>
+      </div>
+      <div class="frow one">
+        <div class="f">
+          <label>Sexo</label>
+          <div class="sexo-toggle" id="sexo-comp">
+            <button class="sexo-btn active" data-sexo="M" onclick="setSexo('comp','M',this)">♂ Masculino</button>
+            <button class="sexo-btn" data-sexo="F" onclick="setSexo('comp','F',this)">♀ Femenino</button>
+          </div>
+        </div>
+      </div>
+      <div class="frow one">
+        <div class="f">
+          <label>Domicilio para notificaciones</label>
+          <input type="text" id="p-dom-comp" placeholder="Calle, número, colonia, C.P."/>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Condiciones económicas</div>
+      <div class="frow">
+        <div class="f">
+          <label>Precio total de venta (MXN)</label>
+          <div class="money-wrap">
+            <span class="money-prefix">$</span>
+            <input type="text" id="p-precio" placeholder="1,250,000" oninput="fmtMoney(this);calcularSaldo()" onblur="fmtMoneyBlur(this);calcularSaldo()"/>
+          </div>
+        </div>
+        <div class="f">
+          <label>Monto de arras / enganche (MXN)</label>
+          <div class="money-wrap">
+            <span class="money-prefix">$</span>
+            <input type="text" id="p-arras" placeholder="50,000" oninput="fmtMoney(this);calcularSaldo()" onblur="fmtMoneyBlur(this);calcularSaldo()"/>
+          </div>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f">
+          <label>Saldo restante (MXN) <span class="auto-badge">se calcula automático</span></label>
+          <div class="money-wrap">
+            <span class="money-prefix">$</span>
+            <input type="text" id="p-saldo" placeholder="1,200,000" readonly style="background:var(--navy3);color:var(--teal2)"/>
+          </div>
+        </div>
+        <div class="f">
+          <label>Pena convencional (MXN)</label>
+          <div class="money-wrap">
+            <span class="money-prefix">$</span>
+            <input type="text" id="p-pena" placeholder="50,000" oninput="fmtMoney(this)" onblur="fmtMoneyBlur(this)"/>
+          </div>
+          <div class="f-note">Aplica igual para vendedor y comprador</div>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f">
+          <label>Forma de pago del saldo</label>
+          <select id="p-forma-pago">
+            <option value="efectivo">Efectivo</option>
+            <option value="transferencia bancaria">Transferencia bancaria</option>
+            <option value="crédito hipotecario">Crédito hipotecario</option>
+            <option value="crédito Infonavit">Crédito Infonavit</option>
+            <option value="crédito Fovissste">Crédito Fovissste</option>
+          </select>
+        </div>
+        <div class="f">
+          <label>Fecha límite para escritura</label>
+          <input type="date" id="p-fecha-limite"/>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /form-promesa -->
+
+  <!-- CLAUSULAS ESPECIALES -->
+  <div class="clausulas-section">
+    <h3>
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#3b6fd4" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+      Cláusulas especiales (opcional)
+    </h3>
+    <p>Describe en tus propias palabras lo que quieres incluir. Nuestra IA lo redactará en lenguaje legal mexicano y lo insertará automáticamente en el contrato.</p>
+    <div id="clausulas-list"></div>
+    <button class="btn-add-clausula" onclick="addClausula()">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+      Agregar cláusula especial
+    </button>
+    <div class="clausulas-preview" id="clausulas-preview">
+      <h4>Vista previa — Cláusulas redactadas por IA:</h4>
+      <div id="clausulas-redactadas"></div>
+    </div>
+  </div>
+
+  <!-- Generate button -->
+  <button class="gen-btn" id="gen-btn" onclick="generarContrato()">
+    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h4a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+    </svg>
+    Generar contrato en Word
+  </button>
+  <div class="loading" id="loading"><div class="spinner"></div><span>Generando contrato...</span></div>
+  <div class="err" id="err"></div>
+  <div class="success" id="success">
+    <span style="font-size:20px">✓</span>
+    <span>Contrato generado. La descarga comenzó automáticamente.</span>
+  </div>
+
+  </div><!-- /brokr-section -->
+
+  <!-- ══ MODO MACHOTE ══ -->
+  <div id="machote-section">
+
+    <!-- Indicador de fases -->
+    <div class="phase-indicator" id="machote-phases">
+      <div class="phase-dot current" id="ph1">1</div>
+      <div class="phase-sep"></div>
+      <div class="phase-dot" id="ph2">2</div>
+      <div class="phase-sep"></div>
+      <div class="phase-dot" id="ph3">3</div>
+    </div>
+
+    <!-- FASE 1: Subir machote -->
+    <div class="machote-phase active" id="machote-phase-1">
+      <div class="card">
+        <div class="card-title">1 — Sube tu machote (archivo Word)</div>
+
+        <!-- Upload zone -->
+        <input type="file" id="upload-input" accept=".docx,.doc" onchange="handleFileSelect(this)"/>
+        <div class="upload-zone" id="upload-zone"
+             onclick="document.getElementById('upload-input').click()"
+             ondragover="event.preventDefault();this.classList.add('drag-over')"
+             ondragleave="this.classList.remove('drag-over')"
+             ondrop="handleDrop(event)">
+          <div class="upload-zone-ico">📄</div>
+          <div class="upload-zone-lbl">Arrastra tu archivo Word aquí o haz clic para seleccionarlo</div>
+          <div class="upload-zone-sub">Formatos soportados: .docx — Usa <strong>{{campo}}</strong>, <strong>[CAMPO]</strong> o <strong>&lt;&lt;campo&gt;&gt;</strong> para marcar variables</div>
+          <div class="file-name" id="file-name-display" style="display:none"></div>
+        </div>
+
+        <!-- Tipo de contrato -->
+        <div class="frow" style="margin-top:14px">
+          <div class="f">
+            <label>Tipo de contrato</label>
+            <select id="machote-tipo">
+              <option value="arrendamiento">Arrendamiento</option>
+              <option value="compraventa">Compraventa</option>
+              <option value="promesa_compraventa">Promesa de compraventa</option>
+              <option value="prestacion_servicios">Prestación de servicios</option>
+              <option value="permuta">Permuta</option>
+              <option value="comodato">Comodato</option>
+              <option value="mandato">Mandato / Poder</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+          <div class="f" id="machote-tipo-otro-wrap" style="display:none">
+            <label>Especifica el tipo</label>
+            <input type="text" id="machote-tipo-otro" placeholder="Ej. Contrato de obra"/>
+          </div>
+        </div>
+
+        <button class="gen-btn" id="analizar-btn" onclick="analizarMachote()" style="margin-top:10px" disabled>
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          Analizar machote y detectar campos
+        </button>
+        <div class="loading" id="loading-analizar"><div class="spinner"></div><span>Analizando tu machote...</span></div>
+        <div class="err" id="err-analizar"></div>
+      </div>
+    </div>
+
+    <!-- FASE 2: Revisar y editar campos -->
+    <div class="machote-phase" id="machote-phase-2">
+      <div class="card">
+        <div class="card-title">2 — Revisa y edita los campos detectados</div>
+        <p style="font-size:13px;color:var(--mut);margin-bottom:14px">
+          Broquer detectó los siguientes campos variables en tu machote. Puedes editar los nombres, cambiar el tipo de dato, agregar o eliminar campos antes de continuar.
+        </p>
+
+        <div class="campos-header">
+          <span>Nombre del campo (editable)</span>
+          <span>Tipo de dato</span>
+          <span style="width:30px"></span>
+        </div>
+        <div class="campos-list" id="campos-list"></div>
+
+        <button class="btn-add-campo" onclick="agregarCampo()">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          Agregar campo
+        </button>
+
+        <div style="display:flex;gap:10px;margin-top:16px">
+          <button class="gen-btn" style="background:var(--silver2);color:var(--navy);flex:0 0 auto;width:auto;padding:12px 20px" onclick="volverFase1()">← Regresar</button>
+          <button class="gen-btn" id="aceptar-campos-btn" onclick="aceptarCampos()">
+            Aceptar campos y llenar formulario →
+          </button>
+        </div>
+        <div class="err" id="err-campos"></div>
+      </div>
+    </div>
+
+    <!-- FASE 3: Llenar formulario dinámico -->
+    <div class="machote-phase" id="machote-phase-3">
+      <div class="card">
+        <div class="card-title">3 — Llena los datos del contrato</div>
+        <div id="dyn-form-fields" style="margin-bottom:8px"></div>
+
+        <div style="display:flex;gap:10px;margin-top:16px">
+          <button class="gen-btn" style="background:var(--silver2);color:var(--navy);flex:0 0 auto;width:auto;padding:12px 20px" onclick="volverFase2()">← Regresar</button>
+          <button class="gen-btn" id="gen-machote-btn" onclick="generarContratoMachote()">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h4a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+            Generar contrato personalizado
+          </button>
+        </div>
+        <div class="loading" id="loading-machote"><div class="spinner"></div><span>Generando tu contrato...</span></div>
+        <div class="err" id="err-machote"></div>
+        <div class="success" id="success-machote" style="display:none">
+          <span style="font-size:20px">✓</span>
+          <span>Contrato generado. La descarga comenzó automáticamente.</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /machote-section -->
+
+</div><!-- /wrap -->
+
+<script>
+const API = 'https://brokrebapi-production.up.railway.app';
+let tipoActual = 'arrendamiento';
+let modoActual = 'brokr'; // 'brokr' | 'machote'
+
+// ── Selector de modo ──
+function setModo(modo) {
+  modoActual = modo;
+  document.getElementById('modo-brokr').classList.toggle('active', modo === 'brokr');
+  document.getElementById('modo-machote').classList.toggle('active', modo === 'machote');
+  document.getElementById('brokr-section').style.display = modo === 'brokr' ? '' : 'none';
+  document.getElementById('machote-section').style.display = modo === 'machote' ? '' : 'none';
+}
+
+// ── MACHOTE: estado ──
+let machoteFile = null;       // File object
+let machoteFileData = null;   // ArrayBuffer (para reenviarlo al generar)
+let camposDetectados = [];    // [{id, label, tipo_input, patron_texto, patron_fmt}]
+
+// ── MACHOTE: tipo otro ──
+document.addEventListener('DOMContentLoaded', () => {
+  const sel = document.getElementById('machote-tipo');
+  if (sel) sel.addEventListener('change', () => {
+    document.getElementById('machote-tipo-otro-wrap').style.display =
+      sel.value === 'otro' ? '' : 'none';
+  });
+});
+
+// ── MACHOTE: upload ──
+function handleFileSelect(input) {
+  const f = input.files[0];
+  if (!f) return;
+  setMachoteFile(f);
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (!f) return;
+  if (!f.name.match(/\.docx?$/i)) {
+    mostrarErr('err-analizar', 'Solo se aceptan archivos .docx');
+    return;
+  }
+  setMachoteFile(f);
+}
+
+function setMachoteFile(f) {
+  if (!f.name.match(/\.docx?$/i)) {
+    mostrarErr('err-analizar', 'Solo se aceptan archivos .docx');
+    return;
+  }
+  machoteFile = f;
+  const zone = document.getElementById('upload-zone');
+  zone.classList.add('has-file');
+  const nameEl = document.getElementById('file-name-display');
+  nameEl.textContent = f.name;
+  nameEl.style.display = 'block';
+  document.getElementById('analizar-btn').disabled = false;
+  ocultarErr('err-analizar');
+}
+
+// ── MACHOTE: analizar ──
+async function analizarMachote() {
+  if (!machoteFile) { mostrarErr('err-analizar', 'Selecciona un archivo primero.'); return; }
+  ocultarErr('err-analizar');
+  const loadEl = document.getElementById('loading-analizar');
+  const btn = document.getElementById('analizar-btn');
+  loadEl.classList.add('show'); btn.disabled = true;
+
+  try {
+    const tipo = document.getElementById('machote-tipo').value === 'otro'
+      ? document.getElementById('machote-tipo-otro').value
+      : document.getElementById('machote-tipo').value;
+
+    const fd = new FormData();
+    fd.append('file', machoteFile);
+    fd.append('tipo', tipo);
+
+    const res = await fetch(`${API}/contrato/analizar`, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Error al analizar');
+
+    // Leer el file como ArrayBuffer para reusarlo en la generación
+    machoteFileData = await machoteFile.arrayBuffer();
+
+    camposDetectados = data.campos || [];
+    renderCampos(camposDetectados);
+    irFase(2);
+  } catch(e) {
+    mostrarErr('err-analizar', e.message || 'No se pudo analizar el archivo. Verifica que sea un .docx válido.');
+  } finally {
+    loadEl.classList.remove('show'); btn.disabled = false;
+  }
+}
+
+// ── MACHOTE: renderizar lista de campos editables ──
+function renderCampos(campos) {
+  const list = document.getElementById('campos-list');
+  if (!campos.length) {
+    list.innerHTML = '<p style="font-size:13px;color:var(--mut);padding:12px">No se detectaron campos automáticamente. Agrega los campos manualmente o ajusta tu machote usando {{nombre_campo}} para marcar variables.</p>';
+    return;
+  }
+  list.innerHTML = campos.map((c, idx) => `
+    <div class="campo-item" id="campo-item-${idx}">
+      <div>
+        <div class="campo-item-lbl">Nombre / Etiqueta</div>
+        <input type="text" value="${escHtml(c.label || c.id)}" oninput="updateCampo(${idx},'label',this.value)" placeholder="Ej. Nombre del arrendador"/>
+      </div>
+      <div>
+        <div class="campo-item-lbl">Tipo de dato</div>
+        <select onchange="updateCampo(${idx},'tipo_input',this.value)">
+          <option value="text" ${c.tipo_input==='text'?'selected':''}>Texto</option>
+          <option value="number" ${c.tipo_input==='number'?'selected':''}>Número</option>
+          <option value="currency" ${c.tipo_input==='currency'?'selected':''}>Monto ($)</option>
+          <option value="date" ${c.tipo_input==='date'?'selected':''}>Fecha</option>
+          <option value="textarea" ${c.tipo_input==='textarea'?'selected':''}>Texto largo</option>
+        </select>
+      </div>
+      <button class="campo-del" title="Eliminar campo" onclick="eliminarCampo(${idx})">✕</button>
+    </div>
+  `).join('');
+}
+
+function updateCampo(idx, key, val) {
+  if (camposDetectados[idx]) camposDetectados[idx][key] = val;
+}
+
+function eliminarCampo(idx) {
+  camposDetectados.splice(idx, 1);
+  renderCampos(camposDetectados);
+}
+
+function agregarCampo() {
+  const id = 'campo_' + Date.now();
+  camposDetectados.push({ id, label: '', tipo_input: 'text', patron_texto: null, patron_fmt: 'manual' });
+  renderCampos(camposDetectados);
+  // Focus en el último campo añadido
+  const items = document.querySelectorAll('.campo-item input[type=text]');
+  if (items.length) items[items.length-1].focus();
+}
+
+// ── MACHOTE: aceptar campos → fase 3 ──
+function aceptarCampos() {
+  // Leer valores actuales de los inputs (por si no dispararon el oninput)
+  const items = document.querySelectorAll('#campos-list .campo-item');
+  items.forEach((el, idx) => {
+    const inp = el.querySelector('input[type=text]');
+    const sel = el.querySelector('select');
+    if (inp && camposDetectados[idx]) camposDetectados[idx].label = inp.value;
+    if (sel && camposDetectados[idx]) camposDetectados[idx].tipo_input = sel.value;
+  });
+  if (!camposDetectados.length) { mostrarErr('err-campos', 'Agrega al menos un campo para continuar.'); return; }
+  ocultarErr('err-campos');
+  renderFormDinamico(camposDetectados);
+  irFase(3);
+}
+
+// ── MACHOTE: renderizar formulario dinámico ──
+function renderFormDinamico(campos) {
+  const cont = document.getElementById('dyn-form-fields');
+  const pares = [];
+  for (let i = 0; i < campos.length; i += 2) {
+    pares.push(campos.slice(i, i+2));
+  }
+  cont.innerHTML = pares.map(par => `
+    <div class="dyn-form-row">
+      ${par.map(c => `
+        <div class="dyn-form-field">
+          <label>${escHtml(c.label || c.id)}</label>
+          ${renderInputCampo(c)}
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function renderInputCampo(c) {
+  const id = `dyn_${escHtml(c.id)}`;
+  switch(c.tipo_input) {
+    case 'date':
+      return `<input type="date" id="${id}" name="${escHtml(c.id)}"/>`;
+    case 'number':
+      return `<input type="number" id="${id}" name="${escHtml(c.id)}" placeholder="0"/>`;
+    case 'currency':
+      return `<div class="money-wrap"><span class="money-sym">$</span><input type="number" id="${id}" name="${escHtml(c.id)}" placeholder="0.00" step="0.01"/></div>`;
+    case 'textarea':
+      return `<textarea id="${id}" name="${escHtml(c.id)}" rows="3" placeholder="Escribe aquí..."></textarea>`;
+    default:
+      return `<input type="text" id="${id}" name="${escHtml(c.id)}" placeholder=""/>`;
+  }
+}
+
+// ── MACHOTE: generar contrato ──
+async function generarContratoMachote() {
+  ocultarErr('err-machote');
+  document.getElementById('success-machote').style.display = 'none';
+  const loadEl = document.getElementById('loading-machote');
+  const btn = document.getElementById('gen-machote-btn');
+  loadEl.classList.add('show'); btn.disabled = true;
+
+  try {
+    // Recolectar datos del formulario dinámico
+    const datos = {};
+    camposDetectados.forEach(c => {
+      const inp = document.getElementById(`dyn_${c.id}`);
+      if (inp) {
+        datos[c.id] = inp.value || '';
+        // También mapear por label original para facilitar el reemplazo
+        if (c.patron_texto) datos[`__label_${c.id}`] = c.patron_texto;
+      }
+    });
+
+    const tipo = document.getElementById('machote-tipo').value === 'otro'
+      ? (document.getElementById('machote-tipo-otro').value || 'contrato')
+      : document.getElementById('machote-tipo').value;
+
+    const fd = new FormData();
+    // Reenviar el archivo original
+    fd.append('file', new Blob([machoteFileData], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }), machoteFile.name);
+    fd.append('datos', JSON.stringify(datos));
+    fd.append('tipo', tipo);
+
+    const res = await fetch(`${API}/contrato/generar-machote`, { method: 'POST', body: fd });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Error al generar el contrato');
+    }
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Contrato_${tipo}.docx`;
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 2000);
+    document.getElementById('success-machote').style.display = 'flex';
+  } catch(e) {
+    mostrarErr('err-machote', e.message || 'Error generando el contrato. Intenta de nuevo.');
+  } finally {
+    loadEl.classList.remove('show'); btn.disabled = false;
+  }
+}
+
+// ── MACHOTE: navegación entre fases ──
+function irFase(n) {
+  [1,2,3].forEach(i => {
+    document.getElementById(`machote-phase-${i}`).classList.toggle('active', i === n);
+    const dot = document.getElementById(`ph${i}`);
+    dot.classList.remove('done','current');
+    if (i < n) dot.classList.add('done');
+    else if (i === n) dot.classList.add('current');
+  });
+}
+function volverFase1() { irFase(1); }
+function volverFase2() { irFase(2); renderCampos(camposDetectados); }
+
+// ── Helpers ──
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function mostrarErr(id, msg) { const el=document.getElementById(id); if(el){el.textContent=msg;el.classList.add('show');} }
+function ocultarErr(id) { const el=document.getElementById(id); if(el){el.textContent='';el.classList.remove('show');} }
+
+// ── Load logo ──
+(function(){
+  // Use same logo as other pages if available
+  const logo = document.getElementById('nav-logo');
+  // Will be populated by logo data if needed
+})();
+
+// ── Tipo tabs ──
+function setTipo(tipo){
+  tipoActual = tipo;
+  document.getElementById('tab-arr').classList.toggle('active', tipo==='arrendamiento');
+  document.getElementById('tab-pro').classList.toggle('active', tipo==='promesa');
+  document.getElementById('form-arrendamiento').style.display = tipo==='arrendamiento' ? 'block' : 'none';
+  document.getElementById('form-promesa').style.display = tipo==='promesa' ? 'block' : 'none';
+  document.getElementById('success').classList.remove('show');
+  document.getElementById('err').classList.remove('show');
+}
+
+// ── Money formatting ──
+function getRaw(val){
+  return parseInt((val||'').split('.')[0].replace(/[^0-9]/g,'') || '0', 10);
+}
+function fmtMoney(input){
+  const n = getRaw(input.value);
+  input.value = n ? n.toLocaleString('en-US') : '';
+}
+function fmtMoneyBlur(input){
+  const n = getRaw(input.value);
+  input.value = n ? n.toLocaleString('en-US') + '.00' : '';
+}
+function getMonto(id){
+  return getRaw(document.getElementById(id)?.value || '0');
+}
+function gv(id){ return (document.getElementById(id)?.value || '').trim(); }
+
+// ── Validation ──
+function validateArrendamiento(){
+  const required = [
+    ['a-arrendador','Nombre del arrendador'],
+    ['a-calle-inm','Calle del inmueble'],
+    ['a-numext-inm','Número exterior del inmueble'],
+    ['a-colonia','Colonia del inmueble'],
+    ['a-cp','Código postal del inmueble'],
+    ['a-mpio-inm','Municipio/Estado del inmueble'],
+    ['a-destino','Destino del inmueble'],
+    ['a-arrendatario','Nombre del arrendatario'],
+    ['a-os','Nombre del obligado solidario'],
+    ['a-calle-os','Domicilio del obligado solidario'],
+    ['a-calle-arr','Domicilio del arrendador'],
+    ['a-renta','Renta mensual'],
+    ['a-deposito','Depósito en garantía'],
+    ['a-dia-pago','Día límite de pago'],
+    ['a-forma-pago','Forma de pago'],
+  ];
+  for(const [id, label] of required){
+    if(!gv(id)){ return `El campo "${label}" es requerido.`; }
+  }
+  if(!gv('a-inicio'))
+    return 'Ingresa la fecha de inicio del contrato.';
+  if(!gv('a-inicio') || !gv('a-fin'))
+    return 'Ingresa las fechas de inicio y término del contrato.';
+  if(new Date(gv('a-fin')) <= new Date(gv('a-inicio')))
+    return '⚠️ La fecha de término debe ser posterior a la de inicio.';
+  if(!getMonto('a-renta')) return 'Ingresa el monto de la renta mensual.';
+  return null;
+}
+
+function validatePromesa(){
+  const required = [
+    ['p-fecha',       'Fecha del contrato'],
+    ['p-dir',         'Calle y número del inmueble'],
+    ['p-colonia',     'Colonia del inmueble'],
+    ['p-cp',          'Código postal del inmueble'],
+    ['p-vendedor',    'Nombre del vendedor'],
+    ['p-dom-vend',    'Domicilio del vendedor'],
+    ['p-comprador',   'Nombre del comprador'],
+    ['p-dom-comp',    'Domicilio del comprador'],
+    ['p-fecha-limite','Fecha límite para escritura'],
+  ];
+  for(const [id, label] of required){
+    if(!gv(id)) return `El campo "${label}" es requerido.`;
+  }
+  if(!getMonto('p-precio')) return 'Ingresa el precio total de venta.';
+  if(!getMonto('p-arras'))  return 'Ingresa el monto de arras/enganche.';
+  return null;
+}
+
+// ── Generate ──
+async function generarContrato(){
+  document.getElementById('err').classList.remove('show');
+  document.getElementById('success').classList.remove('show');
+
+  // Validate
+  const error = tipoActual === 'arrendamiento' ? validateArrendamiento() : validatePromesa();
+  if(error){
+    const el = document.getElementById('err');
+    el.textContent = error;
+    el.classList.add('show');
+    return;
+  }
+
+  // Build data — helper para construir dirección completa
+  const buildAddr = (calle, numext, numint, colonia, cp, mpio) => {
+    let s = calle || '';
+    if(numext) s += ' No. ' + numext;
+    if(numint) s += ' Int. ' + numint;
+    if(colonia) s += ', Col. ' + colonia;
+    if(cp) s += ' C.P. ' + cp;
+    if(mpio) s += ', ' + mpio;
+    return s.trim();
+  };
+
+  let datos;
+  if(tipoActual === 'arrendamiento'){
+    const destino = gv('a-destino') === 'otro' ? gv('a-destino-otro') : gv('a-destino');
+    datos = {
+      // Fechas
+      fecha_contrato:     gv('a-inicio'),
+      fecha_inicio:       gv('a-inicio'),
+      fecha_fin:          gv('a-fin'),
+      duracion:           gv('a-duracion'),
+      inicio_escrito:     gv('a-inicio-escrito'),
+      fin_escrito:        gv('a-fin-escrito'),
+      // Inmueble
+      destino_inmueble:   destino,
+      destino_uso:        destino,
+      calle_inmueble:     gv('a-calle-inm'),
+      num_ext_inmueble:   gv('a-numext-inm'),
+      num_int_inmueble:   gv('a-numint-inm'),
+      colonia_inmueble:   gv('a-colonia'),
+      cp_inmueble:        gv('a-cp'),
+      municipio_estado_inmueble: gv('a-mpio-inm'),
+      direccion_inmueble: buildAddr(gv('a-calle-inm'), gv('a-numext-inm'), gv('a-numint-inm'), gv('a-colonia'), gv('a-cp'), gv('a-mpio-inm')),
+      // Arrendador
+      nombre_arrendador:  gv('a-arrendador'),
+      sexo_arrendador:    document.querySelector('#sexo-arr .sexo-btn.active')?.dataset?.sexo || 'M',
+      calle_arrendador:   gv('a-calle-arr'),
+      num_ext_arrendador: gv('a-numext-arr'),
+      colonia_arrendador: gv('a-colonia-arr'),
+      cp_arrendador:      gv('a-cp-arr'),
+      municipio_estado_arrendador: gv('a-mpio-arr'),
+      domicilio_arrendador: buildAddr(gv('a-calle-arr'), gv('a-numext-arr'), '', gv('a-colonia-arr'), gv('a-cp-arr'), gv('a-mpio-arr')),
+      // Arrendatario
+      nombre_arrendatario: gv('a-arrendatario'),
+      sexo_arrendatario:  document.querySelector('#sexo-arrt .sexo-btn.active')?.dataset?.sexo || 'M',
+      // Obligado Solidario
+      nombre_obligado_solidario: gv('a-os'),
+      sexo_os:            document.querySelector('#sexo-os .sexo-btn.active')?.dataset?.sexo || 'M',
+      calle_os:           gv('a-calle-os'),
+      num_ext_os:         gv('a-numext-os'),
+      num_int_os:         gv('a-numint-os'),
+      colonia_os:         gv('a-colonia-os'),
+      cp_os:              gv('a-cp-os'),
+      municipio_estado_os: gv('a-mpio-os'),
+      domicilio_obligado_solidario: buildAddr(gv('a-calle-os'), gv('a-numext-os'), gv('a-numint-os'), gv('a-colonia-os'), gv('a-cp-os'), gv('a-mpio-os')),
+      calle_inm_os:       gv('a-calle-inm-os'),
+      num_ext_inm_os:     gv('a-numext-inm-os'),
+      num_int_inm_os:     gv('a-numint-inm-os'),
+      colonia_inm_os:     gv('a-colonia-inm-os'),
+      cp_inm_os:          gv('a-cp-inm-os'),
+      municipio_estado_inm_os: gv('a-mpio-inm-os'),
+      inmueble_os:        buildAddr(gv('a-calle-inm-os'), gv('a-numext-inm-os'), gv('a-numint-inm-os'), gv('a-colonia-inm-os'), gv('a-cp-inm-os'), gv('a-mpio-inm-os')),
+      // Renta y pagos
+      renta_mensual:      getMonto('a-renta'),
+      renta_letra:        gv('a-renta-letra'),
+      deposito_garantia:  getMonto('a-deposito'),
+      deposito_letra:     gv('a-deposito-letra'),
+      dia_pago:           gv('a-dia-pago') || '1',
+      forma_pago:         gv('a-forma-pago'),
+      cuenta_bancaria:    gv('a-banco'),
+      pena_retencion:     getMonto('a-pena') || 500,
+      pena_dia_num:       getMonto('a-pena') || 500,
+      pena_dia_letra:     gv('a-pena-letra'),
+      cajones_estacionamiento: 0,
+      incluye_bodega:     false,
+    };
+  } else {
+    datos = {
+      fecha_contrato:     gv('p-fecha'),
+      nombre_vendedor:    gv('p-vendedor'),
+      nombre_comprador:   gv('p-comprador'),
+      direccion_inmueble: gv('p-dir'),
+      colonia_inmueble:   gv('p-colonia'),
+      cp_inmueble:        gv('p-cp'),
+      escritura_numero:   gv('p-esc-num'),
+      notario_nombre:     gv('p-not-nombre'),
+      notario_numero:     gv('p-not-num'),
+      tomo_registro:      gv('p-tomo'),
+      registro:           gv('p-registro'),
+      domicilio_vendedor: gv('p-dom-vend'),
+      domicilio_comprador: gv('p-dom-comp'),
+      sexo_vendedor:      document.querySelector('#sexo-vend .sexo-btn.active')?.dataset?.sexo || 'M',
+      sexo_comprador:     document.querySelector('#sexo-comp .sexo-btn.active')?.dataset?.sexo || 'M',
+      precio_total:       getMonto('p-precio'),
+      monto_arras:        getMonto('p-arras'),
+      monto_saldo:        getMonto('p-saldo') || (getMonto('p-precio') - getMonto('p-arras')),
+      pena_convencional:  getMonto('p-pena') || getMonto('p-arras'),
+      forma_pago_saldo:   gv('p-forma-pago'),
+      fecha_limite_escritura: gv('p-fecha-limite'),
+    };
+  }
+
+  // Show loading
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  document.getElementById('loading').classList.add('show');
+
+  try {
+    const res = await fetch(`${API}/contrato`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ tipo: tipoActual, datos, clausulas_especiales: getClausulasTexto() })
+    });
+
+    if(!res.ok){
+      const j = await res.json().catch(()=>({}));
+      throw new Error(j.detail || 'Error al generar el contrato');
+    }
+
+    // Download the file
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const nombres = {
+      arrendamiento: `Contrato_Arrendamiento_${datos.nombre_arrendatario?.split(' ')[0] || ''}.docx`,
+      promesa: `Promesa_Compraventa_${datos.nombre_comprador?.split(' ')[0] || ''}.docx`,
+    };
+    a.href     = url;
+    a.download = nombres[tipoActual] || 'Contrato.docx';
+    a.click();
+    URL.revokeObjectURL(url);
+
+    document.getElementById('success').classList.add('show');
+
+  } catch(e){
+    const el = document.getElementById('err');
+    el.textContent = e.message || 'No se pudo generar el contrato. Verifica tu conexión.';
+    el.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    document.getElementById('loading').classList.remove('show');
+  }
+}
+
+// ── CLÁUSULAS ESPECIALES ──
+let clausulaCount = 0;
+
+function addClausula(){
+  clausulaCount++;
+  const list = document.getElementById('clausulas-list');
+  const div = document.createElement('div');
+  div.className = 'clausula-item';
+  div.id = `cl-item-${clausulaCount}`;
+  div.innerHTML = `
+    <textarea id="cl-${clausulaCount}" placeholder="Ej: El arrendatario puede tener mascotas pequeñas pero no podrá tener perros de razas peligrosas ni animales que causen daños al inmueble..." rows="3"></textarea>
+    <button class="clausula-del" onclick="removeClausula(${clausulaCount})" title="Eliminar">✕</button>
+  `;
+  list.appendChild(div);
+  document.getElementById(`cl-${clausulaCount}`).focus();
+}
+
+function removeClausula(n){
+  const el = document.getElementById(`cl-item-${n}`);
+  if(el) el.remove();
+}
+
+function getClausulasTexto(){
+  const items = document.querySelectorAll('#clausulas-list textarea');
+  return Array.from(items).map(t => t.value.trim()).filter(Boolean);
+}
+
+
+function toggleMismaPropOS(cb){
+  const fields = ['calle-inm-os','numint-inm-os','colonia-inm-os','cp-inm-os','mpio-inm-os'];
+  const src    = ['calle-os',    'numint-os',    'colonia-os',    'cp-os',    'mpio-os'];
+  const wrap   = document.querySelectorAll('#form-arrendamiento .inm-os-field');
+
+  if(cb.checked){
+    // Copy from domicilio OS → inmueble garantía OS
+    fields.forEach((f, i) => {
+      const target = document.getElementById(`a-${f}`);
+      const source = document.getElementById(`a-${src[i]}`);
+      if(target && source){ target.value = source.value; target.disabled = true; }
+    });
+  } else {
+    fields.forEach(f => {
+      const target = document.getElementById(`a-${f}`);
+      if(target){ target.disabled = false; }
+    });
+  }
+}
+
+
+function onFormaPagoChange(){
+  const val   = document.getElementById('a-forma-pago')?.value;
+  const banco = document.getElementById('a-banco');
+  if(!banco) return;
+  if(val === 'EFECTIVO'){
+    banco.value = '';
+    banco.disabled = true;
+    banco.style.opacity = '.4';
+    banco.placeholder = 'No aplica para pago en efectivo';
+  } else {
+    banco.disabled = false;
+    banco.style.opacity = '';
+    banco.placeholder = 'Ej. BBVA 0123456789';
+  }
+}
+
+// ══ FUNCIONES AUXILIARES ══
+
+function setSexo(groupId, sexo, btn){
+  const container = document.getElementById('sexo-' + groupId);
+  if(!container) return;
+  container.querySelectorAll('.sexo-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function fechaEscrita(iso){
+  if(!iso) return '';
+  const MESES = ['enero','febrero','marzo','abril','mayo','junio',
+                 'julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  if(iso.includes(' de ')) return iso;
+  try{
+    const [y,m,d] = iso.split('-').map(Number);
+    return `${d} de ${MESES[m-1]} de ${y}`;
+  }catch(e){ return iso; }
+}
+
+function calcularPlazo(inicio, fin){
+  if(!inicio || !fin) return '';
+  const d1 = new Date(inicio), d2 = new Date(fin);
+  if(isNaN(d1)||isNaN(d2)) return '';
+  let meses = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth());
+  if(meses <= 0) return '';
+  const NUMS = ['','UN','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE','DIEZ',
+                'ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISÉIS','DIECISIETE','DIECIOCHO',
+                'DIECINUEVE','VEINTE','VEINTIUNO','VEINTIDÓS','VEINTITRÉS','VEINTICUATRO'];
+  if(meses % 12 === 0){
+    const años = meses / 12;
+    const s = años === 1 ? 'AÑO' : 'AÑOS';
+    return `${NUMS[años] || años} ${s}`;
+  }
+  return `${NUMS[meses] || meses} ${meses === 1 ? 'MES' : 'MESES'}`;
+}
+
+function onFechaInicioChange(){
+  const inicio = document.getElementById('a-inicio')?.value;
+  const preview = document.getElementById('a-fecha-preview');
+  if(preview) preview.textContent = inicio ? fechaEscrita(inicio) : '';
+  // Recalculate duration if end date exists
+  const fin = document.getElementById('a-fin')?.value;
+  if(fin){
+    const dur = document.getElementById('a-duracion');
+    if(dur && !dur.dataset.manual) dur.value = calcularPlazo(inicio, fin);
+  }
+  validarFechas();
+}
+
+function validarFechas(){
+  const inicio = document.getElementById('a-inicio')?.value;
+  const fin = document.getElementById('a-fin')?.value;
+  const errEl = document.getElementById('err-fechas');
+  if(!inicio || !fin || !errEl) return;
+  const d1 = new Date(inicio), d2 = new Date(fin);
+  if(d2 <= d1){
+    errEl.style.display = 'block';
+  } else {
+    errEl.style.display = 'none';
+    const dur = document.getElementById('a-duracion');
+    if(dur && !dur.dataset.manual) dur.value = calcularPlazo(inicio, fin);
+  }
+}
+
+function calcularSaldo(){
+  const precio = getMonto('p-precio');
+  const arras  = getMonto('p-arras');
+  const saldo  = document.getElementById('p-saldo');
+  if(!saldo) return;
+  if(precio > 0 && arras >= 0){
+    const diff = precio - arras;
+    saldo.value = diff > 0 ? diff.toLocaleString('en-US') : '0';
+  }
+}
+
+// ══ SHAARK — llenar formulario vía postMessage ══
+// ══ CONTACT PICKER ══════════════════════════════════════════════════════════
+const AV_COLORS=['#2a9db5','#8b5cf6','#10b981','#f59e0b','#e11d48','#0ea5e9','#1a2744','#059669'];
+const ROLES_LABEL={arrendador:'Propietario',arrendatario:'Inquilino',comprador:'Comprador',vendedor:'Vendedor',obligado_solidario:'Oblig. solidario',colega:'Colega',notario:'Notario',otro:'Otro'};
+const ROLES_CSS_STR={arrendador:'background:#e8f7fa;color:#1a7a8f',arrendatario:'background:#eef2ff;color:#4338ca',comprador:'background:#fef3c7;color:#92400e',vendedor:'background:#f0fdf4;color:#15803d',obligado_solidario:'background:#fdf4ff;color:#7e22ce',colega:'background:#fff7ed;color:#9a3412',notario:'background:#f0f9ff;color:#0369a1',otro:'background:#f9fafb;color:#374151'};
+let pickerContexto = null;
+let propPickerContexto = null;
+
+function pickAvColor(nombre){let h=0;for(let i=0;i<nombre.length;i++)h=(h*31+nombre.charCodeAt(i))|0;return AV_COLORS[Math.abs(h)%8]}
+function pickInitials(n){const p=n.trim().split(/\s+/);return p.length>=2?(p[0][0]+p[1][0]).toUpperCase():n.slice(0,2).toUpperCase()}
+function cargarContactos(){return JSON.parse(localStorage.getItem('brokr_contactos')||'[]')}
+
+function abrirPickerContacto(contexto) {
+  pickerContexto = contexto;
+  const tituloMap = {arrendador:'Seleccionar arrendador',arrendatario:'Seleccionar arrendatario',os:'Seleccionar obligado solidario',vendedor:'Seleccionar vendedor',comprador:'Seleccionar comprador'};
+  document.getElementById('pick-contact-title').textContent = tituloMap[contexto] || 'Seleccionar contacto';
+  document.getElementById('pick-contact-search').value = '';
+  renderPickerContactos('');
+  document.getElementById('pick-contact-ov').classList.add('open');
+}
+function cerrarPickerContacto() { document.getElementById('pick-contact-ov').classList.remove('open'); }
+
+function renderPickerContactos(q) {
+  const contactos = cargarContactos();
+  const filtrados = contactos.filter(c => !q || [c.nombre,c.telefono,c.email].some(v=>(v||'').toLowerCase().includes(q.toLowerCase())));
+  const lista = document.getElementById('pick-contact-list');
+  if (!filtrados.length) {
+    lista.innerHTML = `<div class="pick-empty">${contactos.length?'Sin coincidencias.':'No tienes contactos guardados.<br>Ve a <strong>Mis Contactos</strong> para agregarlos.'}</div>`;
+    return;
+  }
+  lista.innerHTML = filtrados.map(c => {
+    const col = pickAvColor(c.nombre);
+    const rolStyle = ROLES_CSS_STR[c.tipo] || ROLES_CSS_STR.otro;
+    return `<div class="pick-item" onclick="seleccionarContacto('${c.id}')">
+      <div class="pick-av" style="background:${col}">${pickInitials(c.nombre)}</div>
+      <div class="pick-info">
+        <div class="pick-name">${c.nombre} <span class="pick-role" style="${rolStyle}">${ROLES_LABEL[c.tipo]||'Otro'}</span></div>
+        <div class="pick-sub">${[c.telefono,c.email].filter(Boolean).join(' · ')}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function seleccionarContacto(id) {
+  const c = cargarContactos().find(x => x.id === id);
+  if (!c) return;
+  const ctx = pickerContexto;
+  const up = (el, v) => { if(el) el.value=(v||'').toUpperCase(); };
+  const sv = (el, v) => { if(el) el.value=v||''; };
+  if (ctx === 'arrendador') {
+    up(document.getElementById('a-arrendador'), c.nombre);
+    if (c.sexo) setSexo('arr', c.sexo, document.querySelector(`#sexo-arr .sexo-btn[data-sexo="${c.sexo}"]`));
+    up(document.getElementById('a-calle-arr'), c.calle);
+    up(document.getElementById('a-numext-arr'), c.num_ext);
+    up(document.getElementById('a-numint-arr'), c.num_int);
+    up(document.getElementById('a-colonia-arr'), c.colonia);
+    sv(document.getElementById('a-cp-arr'), c.cp);
+    up(document.getElementById('a-mpio-arr'), c.mpio);
+    if (c.banco || c.cuenta) sv(document.getElementById('a-banco'), [c.banco,c.cuenta].filter(Boolean).join(' '));
+  } else if (ctx === 'arrendatario') {
+    up(document.getElementById('a-arrendatario'), c.nombre);
+    if (c.sexo) setSexo('arrt', c.sexo, document.querySelector(`#sexo-arrt .sexo-btn[data-sexo="${c.sexo}"]`));
+  } else if (ctx === 'os') {
+    up(document.getElementById('a-os'), c.nombre);
+    if (c.sexo) setSexo('os', c.sexo, document.querySelector(`#sexo-os .sexo-btn[data-sexo="${c.sexo}"]`));
+    up(document.getElementById('a-calle-os'), c.calle);
+    up(document.getElementById('a-numext-os'), c.num_ext);
+    up(document.getElementById('a-numint-os'), c.num_int);
+    up(document.getElementById('a-colonia-os'), c.colonia);
+    sv(document.getElementById('a-cp-os'), c.cp);
+    up(document.getElementById('a-mpio-os'), c.mpio);
+  } else if (ctx === 'vendedor') {
+    up(document.getElementById('p-vendedor'), c.nombre);
+    if (c.sexo) setSexo('vend', c.sexo, document.querySelector(`#sexo-vend .sexo-btn[data-sexo="${c.sexo}"]`));
+    const dom=[c.calle,c.num_ext?'No. '+c.num_ext:'',c.num_int?'Int. '+c.num_int:'',c.colonia?'Col. '+c.colonia:'',c.cp?'C.P. '+c.cp:'',c.mpio].filter(Boolean).join(', ');
+    up(document.getElementById('p-dom-vend'), dom);
+  } else if (ctx === 'comprador') {
+    up(document.getElementById('p-comprador'), c.nombre);
+    if (c.sexo) setSexo('comp', c.sexo, document.querySelector(`#sexo-comp .sexo-btn[data-sexo="${c.sexo}"]`));
+    const dom=[c.calle,c.num_ext?'No. '+c.num_ext:'',c.num_int?'Int. '+c.num_int:'',c.colonia?'Col. '+c.colonia:'',c.cp?'C.P. '+c.cp:'',c.mpio].filter(Boolean).join(', ');
+    up(document.getElementById('p-dom-comp'), dom);
+  }
+  cerrarPickerContacto();
+}
+
+// ══ PROPERTY PICKER ══════════════════════════════════════════════════════════
+const SB_URL_P = 'https://urtgysmtnvoqaljuhntz.supabase.co';
+const SB_KEY_P = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
+
+async function abrirPickerInmueble(contexto) {
+  propPickerContexto = contexto;
+  document.getElementById('pick-prop-list').innerHTML = '<div class="pick-empty">Cargando...</div>';
+  document.getElementById('pick-prop-search').value = '';
+  document.getElementById('pick-prop-ov').classList.add('open');
+  const token = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+  if (!token) {
+    document.getElementById('pick-prop-list').innerHTML = '<div class="pick-empty">Inicia sesión en Broquer para ver tus inmuebles.</div>';
+    return;
+  }
+  try {
+    const r = await fetch(`${SB_URL_P}/rest/v1/propiedades?order=created_at.desc&limit=100&select=*`, {
+      headers: { 'apikey': SB_KEY_P, 'Authorization': `Bearer ${token}` }
+    });
+    if (!r.ok) throw new Error('Error ' + r.status);
+    window._brokrProps = await r.json();
+    renderPickerInmuebles('');
+  } catch(e) {
+    document.getElementById('pick-prop-list').innerHTML = `<div class="pick-empty">Error al cargar inmuebles: ${e.message}</div>`;
+  }
+}
+function cerrarPickerInmueble() { document.getElementById('pick-prop-ov').classList.remove('open'); }
+
+function renderPickerInmuebles(q) {
+  const props = (window._brokrProps||[]).filter(p=>!q||(p.titulo+p.colonia+p.ciudad+'').toLowerCase().includes(q.toLowerCase()));
+  const lista = document.getElementById('pick-prop-list');
+  if (!props.length) { lista.innerHTML='<div class="pick-empty">Sin inmuebles o sin coincidencias.</div>'; return; }
+  lista.innerHTML = props.map(p => {
+    const opCls = p.operacion==='venta'?'badge-venta':'badge-renta';
+    const precio = p.precio ? ' · $'+Number(p.precio).toLocaleString('es-MX') : '';
+    return `<div class="prop-pick-item" onclick="seleccionarInmueble('${p.id}')">
+      <div class="prop-pick-name"><span class="prop-pick-badge ${opCls}">${p.operacion||''}</span>${p.titulo||'Sin nombre'}</div>
+      <div class="prop-pick-sub">📍 ${[p.colonia,p.ciudad].filter(Boolean).join(', ')}${precio}</div>
+    </div>`;
+  }).join('');
+}
+
+function seleccionarInmueble(id) {
+  const p = (window._brokrProps||[]).find(x=>x.id===id);
+  if (!p) return;
+  const up = (el,v)=>{if(el)el.value=(v||'').toUpperCase();};
+  const sv = (el,v)=>{if(el)el.value=v||'';};
+  if (propPickerContexto === 'arrendamiento') {
+    up(document.getElementById('a-calle-inm'), p.calle||p.direccion);
+    up(document.getElementById('a-numext-inm'), p.num_exterior||p.numero_exterior);
+    up(document.getElementById('a-numint-inm'), p.num_interior||p.numero_interior);
+    up(document.getElementById('a-colonia'), p.colonia);
+    sv(document.getElementById('a-cp'), p.cp||p.codigo_postal);
+    up(document.getElementById('a-mpio-inm'), [p.colonia,p.ciudad].filter(Boolean).join(', '));
+    if (p.precio) {
+      const el = document.getElementById('a-renta');
+      if(el){el.value=Number(p.precio).toLocaleString('es-MX',{minimumFractionDigits:2});if(typeof onRentaChange==='function')onRentaChange(el);}
+    }
+  } else {
+    up(document.getElementById('p-dir'),[p.calle||p.direccion,p.num_exterior?'No. '+p.num_exterior:'',p.colonia?'Col. '+p.colonia:''].filter(Boolean).join(', '));
+    up(document.getElementById('p-colonia'), p.colonia);
+    sv(document.getElementById('p-cp'), p.cp||p.codigo_postal);
+    if (p.precio) {
+      const el=document.getElementById('p-precio');
+      if(el){el.value=Number(p.precio).toLocaleString('es-MX');if(typeof fmtMoney==='function')fmtMoney(el);if(typeof calcularSaldo==='function')calcularSaldo();}
+    }
+  }
+  cerrarPickerInmueble();
+}
+
+window.addEventListener('message', function(e) {
+  const d = e.data;
+  if (!d || d.tipo !== 'llenar_contrato') return;
+
+  const set = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && val !== undefined && val !== null) el.value = val;
+  };
+  const setUpper = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && val) el.value = String(val).toUpperCase();
+  };
+
+  if (d.subtipo) setTipo(d.subtipo);
+
+  setTimeout(() => {
+    const esArr = (d.subtipo || tipoActual) === 'arrendamiento';
+    if (esArr) {
+      setUpper('a-arrendador',  d.arrendador);
+      setUpper('a-arrendatario',d.arrendatario);
+      setUpper('a-calle-inm',   d.calle_inmueble);
+      setUpper('a-numext-inm',  d.num_ext);
+      setUpper('a-colonia',     d.colonia);
+      set('a-cp',               d.cp);
+      setUpper('a-mpio-inm',    d.municipio_estado);
+      if (d.renta) {
+        const el = document.getElementById('a-renta');
+        if (el) {
+          el.value = Number(d.renta).toLocaleString('es-MX', { minimumFractionDigits: 2 });
+          if (typeof onRentaChange === 'function') onRentaChange(el);
+        }
+      }
+      if (d.deposito) {
+        const el = document.getElementById('a-deposito');
+        if (el) {
+          el.value = Number(d.deposito).toLocaleString('es-MX', { minimumFractionDigits: 2 });
+          if (typeof fmtMoney === 'function') fmtMoney(el);
+        }
+      }
+      set('a-dia-pago', d.dia_pago);
+      if (d.fecha_inicio) {
+        set('a-inicio', d.fecha_inicio);
+        if (typeof onFechaInicioChange === 'function') onFechaInicioChange();
+      }
+    } else {
+      setUpper('p-dir',      d.dir);
+      setUpper('p-colonia',  d.colonia);
+      set('p-cp',            d.cp);
+      setUpper('p-vendedor', d.vendedor);
+      setUpper('p-comprador',d.comprador);
+      if (d.precio) {
+        const el = document.getElementById('p-precio');
+        if (el) {
+          el.value = Number(d.precio).toLocaleString('es-MX');
+          if (typeof fmtMoney === 'function') fmtMoney(el);
+        }
+      }
+      if (d.arras) {
+        const el = document.getElementById('p-arras');
+        if (el) {
+          el.value = Number(d.arras).toLocaleString('es-MX');
+          if (typeof fmtMoney === 'function') fmtMoney(el);
+        }
+      }
+      set('p-fecha-limite', d.fecha_limite);
+    }
+  }, 350);
+});
+
+</script>
+
+<!-- ══ CONTACT PICKER MODAL ══ -->
+<div class="pick-overlay" id="pick-contact-ov" onclick="if(event.target===this)cerrarPickerContacto()">
+  <div class="pick-sheet">
+    <div class="pick-handle"></div>
+    <div class="pick-head">
+      <div class="pick-head-title" id="pick-contact-title">Seleccionar contacto</div>
+      <button class="pick-close" onclick="cerrarPickerContacto()">✕</button>
+    </div>
+    <div class="pick-search">
+      <input id="pick-contact-search" type="search" placeholder="Buscar contacto..." oninput="renderPickerContactos(this.value)"/>
+    </div>
+    <div class="pick-list" id="pick-contact-list"></div>
+  </div>
+</div>
+
+<!-- ══ PROPERTY PICKER MODAL ══ -->
+<div class="pick-overlay" id="pick-prop-ov" onclick="if(event.target===this)cerrarPickerInmueble()">
+  <div class="pick-sheet">
+    <div class="pick-handle"></div>
+    <div class="pick-head">
+      <div class="pick-head-title">Seleccionar inmueble</div>
+      <button class="pick-close" onclick="cerrarPickerInmueble()">✕</button>
+    </div>
+    <div class="pick-search">
+      <input id="pick-prop-search" type="search" placeholder="Buscar inmueble..." oninput="renderPickerInmuebles(this.value)"/>
+    </div>
+    <div class="pick-list" id="pick-prop-list"></div>
+  </div>
+</div>
+</body>
+</html>

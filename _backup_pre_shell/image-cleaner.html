@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<link rel="icon" type="image/png" href="isotipo-broquer.png"/>
+<link rel="apple-touch-icon" href="isotipo-broquer.png"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style id="broquer-skin">
+  html,body{background:var(--paper)!important;color:var(--ink)!important;font-family:var(--font-sans)!important;letter-spacing:-0.01em}
+  *{font-family:var(--font-sans)!important}
+  h1,h2,h3,.title,.heading{font-family:var(--font-display)!important;letter-spacing:-0.02em!important;color:var(--ink)!important}
+  code,pre,.mono,kbd{font-family:var(--font-mono)!important}
+  /* Surfaces */
+  body, .screen, .panel, .container, .wrap, main { background:var(--paper)!important; color:var(--ink)!important; }
+  .card, .ui-card, .box, .module, .pf-card, .stat-pill, .module-card, .cat-module, .profile-section, .activity-item, .news-ticker-wrap, .tile, .section, section, article {
+    background:var(--bone)!important; border:1px solid var(--line)!important; border-radius:var(--r-lg)!important;
+    color:var(--ink)!important; box-shadow:0 1px 2px rgba(10,10,10,.03)!important;
+  }
+  /* Headers/topbars that were navy → ivory */
+  .home-header, .modules-header, .profile-header, .panel-topbar, header, .topbar, .nav-top, .app-header, .hdr, .navbar {
+    background:var(--paper)!important; color:var(--ink)!important; border-bottom:1px solid var(--line)!important;
+  }
+  .home-header *, .modules-header *, .profile-header *, .panel-topbar *, header *, .topbar *, .nav-top *, .app-header *, .hdr *, .navbar * { color:var(--ink)!important; }
+  /* Inputs */
+  input, select, textarea {
+    background:var(--bone)!important; border:1px solid var(--line-2)!important; color:var(--ink)!important;
+    border-radius:var(--r)!important; font-family:var(--font-sans)!important; font-size:14px!important; padding:10px 12px!important;
+    outline:none!important; transition:border-color .2s ease;
+  }
+  input:focus, select:focus, textarea:focus { border-color:var(--ink)!important; }
+  /* Buttons */
+  button, .btn, .ui-btn, .isr-calc-btn, .props-new-btn, .pe-save-btn, .prf-stripe-btn.primary, .pf-save-btn, .btn-pdf, .pe-toggle-slider {
+    font-family:var(--font-sans)!important; letter-spacing:-0.005em!important;
+  }
+  button:not([class]), .btn-primary, .ui-btn, .pf-save-btn, .pe-save-btn, .isr-calc-btn, .props-new-btn, .btn-pdf, .prf-stripe-btn.primary {
+    background:var(--ink)!important; color:var(--paper)!important;
+    border:none!important; border-radius:var(--r)!important;
+    padding:11px 18px!important; font-weight:600!important; cursor:pointer!important;
+    box-shadow:0 1px 2px rgba(10,10,10,.08)!important; font-size:14px!important;
+  }
+  button:not([class]):hover, .btn-primary:hover, .ui-btn:hover, .pf-save-btn:hover, .pe-save-btn:hover, .isr-calc-btn:hover { opacity:.92!important; }
+  /* Badges, chips */
+  .badge, .chip, .pill, .stat-pill .lbl, .res-tipo-lbl, .isr-badge {
+    background:var(--paper-2)!important; color:var(--ink-2)!important; border:1px solid var(--line)!important;
+    border-radius:var(--r-pill)!important; padding:3px 10px!important; font-size:11px!important; font-weight:500!important;
+  }
+  /* Accent text colors that were navy or teal */
+  [class*="navy"], [style*="color:#0f1829"], [style*="color: #0f1829"], [style*="color:#162035"] { color:var(--ink)!important; }
+  /* Links */
+  a { color:var(--ink)!important; text-decoration:none; }
+  a:hover { color:var(--forest)!important; }
+  /* Scrollbars */
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-thumb { background:var(--line-2); border-radius:3px; }
+  /* Drop garish gradients on home-header */
+  .home-header::before, .home-header::after { display:none!important; }
+  /* Misc legacy */
+  .app-sidebar { background:var(--paper)!important; border-right:1px solid var(--line)!important; }
+  .proto-nav, .bottom-nav, .tabbar { background:var(--bone)!important; border-top:1px solid var(--line)!important; }
+  /* Force any greeting "name" or page title light text to be dark */
+  .greeting-text .hello, .greeting-text .name, .profile-name, .profile-sub, .panel-title, .modules-header h2 { color:var(--ink)!important; }
+  /* Avatar-style circles that were translucent on navy → bone */
+  .home-avatar, .profile-avatar, .pr-icon, .act-icon, .scw-avatar, .notif-bell, .stat-pill {
+    background:var(--bone)!important; border:1px solid var(--line)!important; color:var(--ink)!important;
+  }
+</style>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Editor de imágenes — Broquer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --navy:#0f1829;--navy2:#1e2d47;--teal:#0f1829;--teal-dark:#162035;
+  --teal-bg:rgba(15,24,41,0.06);--teal-border:rgba(15,24,41,0.15);
+  --white:#ffffff;--bg:#f0f2f7;--gray:#f5f6f8;--gray2:#e8eaee;
+  --txt:#1a2035;--mut:#5a6070;--mut2:#9aa0ad;
+  --red:#ef4444;--green:#16a34a;
+  --r:14px;--shadow:0 2px 12px rgba(0,0,0,0.07);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+
+.main{max-width:900px;margin:0 auto;padding:20px 16px 80px}
+
+/* Drop zone */
+.drop-zone{border:2px dashed var(--teal-border);border-radius:var(--r);background:var(--teal-bg);padding:44px 20px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.drop-zone.drag-over{border-color:var(--navy);background:rgba(15,24,41,.06)}
+.drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.drop-icon{width:52px;height:52px;background:var(--navy2);border-radius:14px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center}
+.drop-icon svg{width:28px;height:28px;stroke:white;fill:none}
+.drop-title{font-size:16px;font-weight:700;color:var(--txt);margin-bottom:5px}
+.drop-hint{font-size:13px;color:var(--mut)}
+.drop-types{font-size:11px;color:var(--mut2);margin-top:5px}
+
+/* Prompt box */
+.prompt-box{background:var(--white);border-radius:var(--r);box-shadow:var(--shadow);border:1px solid rgba(0,0,0,.05);padding:16px 18px;margin:14px 0 0;display:none}
+.prompt-label{font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.ai-badge{background:var(--navy2);color:white;font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;letter-spacing:.3px}
+.prompt-textarea{width:100%;border:1.5px solid var(--gray2);border-radius:10px;padding:10px 12px;font-size:13px;font-family:'Poppins',sans-serif;color:var(--txt);resize:vertical;min-height:68px;outline:none;transition:border-color .2s;line-height:1.5;background:var(--gray)}
+.prompt-textarea:focus{border-color:var(--teal);background:white;box-shadow:0 0 0 3px var(--teal-bg)}
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.preset-btn{background:var(--gray);border:1.5px solid var(--gray2);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:600;color:var(--mut);cursor:pointer;transition:all .15s;white-space:nowrap;font-family:'Poppins',sans-serif}
+.preset-btn:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-bg)}
+.preset-btn.active{border-color:var(--teal);color:var(--teal);background:var(--teal-bg)}
+.prompt-hint{font-size:11px;color:var(--mut2);margin-top:8px;line-height:1.5}
+
+/* Action bar */
+.action-bar{display:flex;align-items:center;justify-content:space-between;margin:14px 0;flex-wrap:wrap;gap:8px}
+.count-badge{font-size:13px;color:var(--mut);font-weight:600}
+
+.btn{display:inline-flex;align-items:center;gap:6px;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:600;font-family:'Poppins',sans-serif;cursor:pointer;transition:all .2s;white-space:nowrap;border:none}
+.btn svg{flex-shrink:0}
+.btn-primary{background:var(--navy2);color:white}
+.btn-primary:hover{background:var(--navy)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-outline{background:var(--white);color:var(--teal);border:1.5px solid var(--teal-border)}
+.btn-outline:hover{background:var(--teal-bg);border-color:var(--teal)}
+.btn-outline:disabled{opacity:.5;cursor:not-allowed}
+.btn-danger{background:var(--white);color:var(--red);border:1.5px solid rgba(239,68,68,.3)}
+.btn-danger:hover{background:rgba(239,68,68,.06)}
+
+.action-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+
+/* Download buttons group — hidden until processing done */
+.dl-group{display:none;flex-wrap:wrap;gap:8px}
+
+/* Selection mode banner */
+.sel-banner{background:var(--teal-bg);border:1.5px solid var(--teal-border);border-radius:var(--r);padding:10px 16px;margin-bottom:12px;display:none;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.sel-banner-text{font-size:13px;font-weight:600;color:var(--teal-dark)}
+.sel-banner-actions{display:flex;gap:8px}
+
+/* Progress bar */
+.progress-wrap{background:var(--gray2);border-radius:99px;height:6px;overflow:hidden;margin-bottom:14px;display:none}
+.progress-bar{height:100%;background:linear-gradient(90deg,var(--navy2),var(--teal));border-radius:99px;width:0;transition:width .3s}
+
+/* Grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+
+/* Card */
+.card{background:var(--white);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);border:1px solid rgba(0,0,0,.05);transition:transform .2s,box-shadow .2s;position:relative}
+.card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.10)}
+.card.selected{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal)}
+.card-name{padding:10px 14px;font-size:12px;font-weight:600;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid var(--gray)}
+.card-imgs{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.card-img-wrap{position:relative;overflow:hidden;background:var(--gray)}
+.card-img-wrap img{width:100%;height:155px;object-fit:cover;display:block}
+.card-img-label{position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,.55);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:6px;letter-spacing:.5px}
+.card-footer{padding:10px 14px;display:flex;align-items:center;gap:8px}
+.card-status{font-size:11px;color:var(--mut2);flex:1;font-weight:500}
+.card-status.ok{color:var(--green);font-weight:600}
+.card-status.err{color:var(--red);font-weight:600}
+.card-status.loading{color:var(--teal);font-weight:600}
+.btn-dl-one{background:var(--teal);color:white;border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;display:none;align-items:center;gap:4px;transition:opacity .2s;font-family:'Poppins',sans-serif}
+.btn-dl-one:hover{opacity:.85}
+.btn-dl-one svg{width:12px;height:12px;stroke:white;fill:none}
+
+/* Selection checkbox overlay */
+.card-checkbox{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:6px;border:2px solid white;background:rgba(0,0,0,.3);display:none;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;z-index:10}
+.card-checkbox.checked{background:var(--teal);border-color:var(--teal)}
+.card-checkbox svg{width:13px;height:13px;stroke:white;fill:none;opacity:0;transition:opacity .15s;pointer-events:none}
+.card-checkbox.checked svg{opacity:1}
+.sel-mode .card-checkbox{display:flex}
+.sel-mode .card{cursor:pointer}
+
+/* Empty state */
+.empty{display:none;text-align:center;padding:40px 20px;color:var(--mut2);font-size:14px}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--navy);color:white;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;font-family:'Poppins',sans-serif;transition:transform .3s;z-index:999;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+@media(max-width:500px){
+  .main{padding:14px 12px 80px}
+  .card-imgs{grid-template-columns:1fr}
+  .card-img-wrap img{height:130px}
+  .btn{padding:9px 12px;font-size:12px}
+}
+</style>
+</head>
+<body>
+
+<div class="main">
+
+  <!-- Drop zone -->
+  <div class="drop-zone" id="drop-zone">
+    <input type="file" id="file-input" accept="image/*" multiple>
+    <div class="drop-icon">
+      <svg viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 14l4-4 3 3 4-5 5 6"/><circle cx="8.5" cy="9.5" r="1.5"/></svg>
+    </div>
+    <div class="drop-title">Arrastra tus fotos aquí</div>
+    <div class="drop-hint">o toca para seleccionar desde tu galería</div>
+    <div class="drop-types">JPG, PNG, WEBP · máx. 20 fotos a la vez</div>
+  </div>
+
+  <!-- Prompt box -->
+  <div class="prompt-box" id="prompt-box">
+    <div class="prompt-label">
+      Instrucción para la IA
+      <span class="ai-badge">Broquer AI</span>
+    </div>
+    <textarea class="prompt-textarea" id="prompt-input" placeholder="Describe qué quieres hacer con las fotos. Ej: Elimina todos los muebles no fijos, mejora la iluminación y hazlo ver como foto profesional de bienes raíces vacío."></textarea>
+    <div class="presets">
+      <button class="preset-btn" onclick="applyPreset(this,'Foto profesional de bienes raíces: mejora iluminación, contraste y nitidez. Deja el espacio limpio y atractivo.')">Mejorar calidad</button>
+      <button class="preset-btn" onclick="applyPreset(this,'Elimina todos los muebles no fijos: camas, sofás, sillas, mesas, alfombras, cortinas, lámparas y decoraciones. Conserva paredes, pisos, techos, ventanas y puertas. Muestra el cuarto vacío y limpio.')">Retirar muebles</button>
+      <button class="preset-btn" onclick="applyPreset(this,'Transforma esta foto en una imagen profesional de bienes raíces: cuarto vacío, sin muebles, excelente iluminación, colores vivos y balanceados, listo para publicar.')">Cuarto vacío profesional</button>
+      <button class="preset-btn" onclick="applyPreset(this,'Mejora esta foto de jardín o exterior: cielo más azul, vegetación más verde y vibrante, iluminación natural cálida, aspecto de día soleado.')">Exterior vibrante</button>
+      <button class="preset-btn" onclick="applyPreset(this,'Corrige la iluminación: aumenta brillo en zonas oscuras, reduce brillos, mejora el balance de blancos para que la foto luzca natural y profesional.')">Corregir iluminación</button>
+    </div>
+    <div class="prompt-hint">Deja el campo vacío para usar solo mejoras automáticas (sin IA generativa).</div>
+  </div>
+
+  <!-- Action bar -->
+  <div class="action-bar" id="action-bar" style="display:none">
+    <span class="count-badge" id="count-badge">0 fotos</span>
+    <div class="action-right">
+      <!-- Download group (shown after processing) -->
+      <div class="dl-group" id="dl-group">
+        <button class="btn btn-outline" id="btn-dl-all" onclick="downloadAll()">
+          <svg width="15" height="15" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Descargar todas
+        </button>
+        <button class="btn btn-outline" id="btn-dl-selected" onclick="toggleSelectionMode()">
+          <svg width="15" height="15" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          Descargar selección
+        </button>
+        <button class="btn btn-primary" id="btn-use-ficha" onclick="useInFicha()">
+          <svg width="15" height="15" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><rect x="7" y="12" width="10" height="6" rx="1"/><path d="M7 17l3-3 2 2 2-3 3 3"/></svg>
+          Utilizar en ficha
+        </button>
+      </div>
+      <!-- Process button -->
+      <button class="btn btn-primary" id="btn-clean" onclick="cleanAll()">
+        <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/><path d="M19 3l1.5 3.5M21 9l-1.5.5"/></svg>
+        Editar fotos
+      </button>
+    </div>
+  </div>
+
+  <!-- Selection banner -->
+  <div class="sel-banner" id="sel-banner">
+    <span class="sel-banner-text" id="sel-banner-text">Selecciona las imágenes a descargar</span>
+    <div class="sel-banner-actions">
+      <button class="btn btn-outline" style="padding:7px 12px;font-size:12px" onclick="selectAll()">Seleccionar todas</button>
+      <button class="btn btn-primary" style="padding:7px 12px;font-size:12px" id="btn-confirm-sel" onclick="downloadSelected()">Descargar (0)</button>
+      <button class="btn btn-danger" style="padding:7px 12px;font-size:12px" onclick="cancelSelection()">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-wrap" id="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+
+  <!-- Grid -->
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty">No hay fotos. Sube imágenes para comenzar.</div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = (()=>{
+  const h = location.hostname;
+  if(h === 'localhost' || h === '127.0.0.1') return 'http://localhost:8000';
+  return 'https://brokrebapi-production.up.railway.app';
+})();
+
+let files = [];
+let results = [];
+let cleaned = false;
+let selectionMode = false;
+let selectedSet = new Set();
+
+const dropZone     = document.getElementById('drop-zone');
+const fileInput    = document.getElementById('file-input');
+const grid         = document.getElementById('grid');
+const actionBar    = document.getElementById('action-bar');
+const promptBox    = document.getElementById('prompt-box');
+const countBadge   = document.getElementById('count-badge');
+const btnClean     = document.getElementById('btn-clean');
+const dlGroup      = document.getElementById('dl-group');
+const progressWrap = document.getElementById('progress-wrap');
+const progressBar  = document.getElementById('progress-bar');
+const empty        = document.getElementById('empty');
+const selBanner    = document.getElementById('sel-banner');
+const selBannerTxt = document.getElementById('sel-banner-text');
+const btnConfirmSel= document.getElementById('btn-confirm-sel');
+
+// ── Drag & drop ──────────────────────────────────────────────────────────────
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  addFiles(Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')));
+});
+fileInput.addEventListener('change', () => {
+  addFiles(Array.from(fileInput.files));
+  fileInput.value = '';
+});
+
+function addFiles(newFiles) {
+  files = [...files, ...newFiles].slice(0, 20);
+  results = files.map((_, i) => results[i] || null);
+  cleaned = false;
+  dlGroup.style.display = 'none';
+  cancelSelection();
+  renderGrid();
+}
+
+function applyPreset(btn, text) {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('prompt-input').value = text;
+}
+
+function renderGrid() {
+  if (!files.length) {
+    actionBar.style.display = 'none';
+    promptBox.style.display = 'none';
+    empty.style.display = 'none';
+    grid.innerHTML = '';
+    return;
+  }
+  actionBar.style.display = 'flex';
+  promptBox.style.display = 'block';
+  countBadge.textContent = files.length + (files.length === 1 ? ' foto' : ' fotos');
+  grid.className = 'grid' + (selectionMode ? ' sel-mode' : '');
+  grid.innerHTML = files.map((f, i) => {
+    const origUrl = URL.createObjectURL(f);
+    const res = results[i];
+    let cleanedSrc = '';
+    let statusClass = '';
+    let statusText = 'Sin procesar';
+    let dlBtn = '';
+    if (res && res.cleaned_b64) {
+      cleanedSrc = 'data:' + res.content_type + ';base64,' + res.cleaned_b64;
+      statusClass = 'ok';
+      statusText = res.used_gemini ? 'Mejorada con Broquer AI' : 'Mejorada';
+      if (!selectionMode) {
+        dlBtn = `<button class="btn-dl-one" id="dl-btn-${i}" onclick="event.stopPropagation();downloadOne(${i})" style="display:flex">
+          <svg viewBox="0 0 24 24" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Descargar
+        </button>`;
+      }
+    } else if (res && res.error) {
+      statusClass = 'err';
+      statusText = 'Error: ' + (res.error || '').substring(0, 50);
+    }
+    const rightSrc = cleanedSrc || origUrl;
+    const rightLabel = cleanedSrc ? (res && res.used_gemini ? 'BROKR AI' : 'EDITADA') : 'ORIGINAL';
+    const isChecked = selectedSet.has(i) ? 'checked' : '';
+    const checkVisible = res && res.cleaned_b64 ? '' : ' style="display:none"';
+    return `
+    <div class="card${selectedSet.has(i) ? ' selected' : ''}" id="card-${i}" onclick="cardClick(${i})">
+      <div class="card-checkbox ${isChecked}" id="chk-${i}"${checkVisible} onclick="event.stopPropagation();cardClick(${i})">
+        <svg viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="card-name" title="${f.name}">${f.name}</div>
+      <div class="card-imgs">
+        <div class="card-img-wrap">
+          <img src="${origUrl}" alt="original" loading="lazy"/>
+          <span class="card-img-label">ORIGINAL</span>
+        </div>
+        <div class="card-img-wrap" id="right-wrap-${i}">
+          <img src="${rightSrc}" alt="resultado" id="right-img-${i}" loading="lazy"/>
+          <span class="card-img-label" id="right-lbl-${i}">${rightLabel}</span>
+        </div>
+      </div>
+      <div class="card-footer" id="footer-${i}">
+        <span class="card-status ${statusClass}" id="status-${i}">${statusText}</span>
+        ${dlBtn}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function cardClick(i) {
+  if (!selectionMode) return;
+  const res = results[i];
+  if (!res || !res.cleaned_b64) return; // can only select processed images
+  if (selectedSet.has(i)) {
+    selectedSet.delete(i);
+  } else {
+    selectedSet.add(i);
+  }
+  updateCardCheckbox(i);
+  updateSelectionCount();
+}
+
+function updateCardCheckbox(i) {
+  const chk = document.getElementById('chk-' + i);
+  const card = document.getElementById('card-' + i);
+  if (!chk) return;
+  if (selectedSet.has(i)) {
+    chk.classList.add('checked');
+    card && card.classList.add('selected');
+  } else {
+    chk.classList.remove('checked');
+    card && card.classList.remove('selected');
+  }
+}
+
+function updateSelectionCount() {
+  const n = selectedSet.size;
+  selBannerTxt.textContent = n === 0
+    ? 'Selecciona las imágenes a descargar'
+    : `${n} imagen${n !== 1 ? 'es' : ''} seleccionada${n !== 1 ? 's' : ''}`;
+  btnConfirmSel.textContent = `Descargar (${n})`;
+  btnConfirmSel.disabled = n === 0;
+}
+
+function toggleSelectionMode() {
+  if (selectionMode) { cancelSelection(); return; }
+  const hasProcessed = results.some(r => r && r.cleaned_b64);
+  if (!hasProcessed) { showToast('Primero edita las fotos'); return; }
+  selectionMode = true;
+  selectedSet.clear();
+  selBanner.style.display = 'flex';
+  updateSelectionCount();
+  renderGrid();
+}
+
+function cancelSelection() {
+  selectionMode = false;
+  selectedSet.clear();
+  selBanner.style.display = 'none';
+  renderGrid();
+}
+
+function selectAll() {
+  results.forEach((r, i) => { if (r && r.cleaned_b64) selectedSet.add(i); });
+  results.forEach((_, i) => updateCardCheckbox(i));
+  updateSelectionCount();
+}
+
+// ── Clean ────────────────────────────────────────────────────────────────────
+async function cleanAll() {
+  if (!files.length) return;
+  const prompt = document.getElementById('prompt-input').value.trim();
+  const useAI = prompt.length > 0;
+
+  btnClean.disabled = true;
+  btnClean.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Procesando…';
+  progressWrap.style.display = 'block';
+  progressBar.style.width = '0%';
+
+  files.forEach((_, i) => {
+    const s = document.getElementById('status-' + i);
+    if (s) { s.className = 'card-status loading'; s.textContent = useAI ? 'Procesando con Broquer AI…' : 'Procesando…'; }
+  });
+
+  const BATCH = useAI ? 1 : 4;
+  let done = 0;
+  const MAX_RETRIES = 3;
+  const RETRY_DELAYS = [2000, 4000, 8000];
+
+  for (let start = 0; start < files.length; start += BATCH) {
+    const batch = files.slice(start, start + BATCH);
+    const batchIdx = batch.map((_, j) => start + j);
+
+    let success = false;
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      if (attempt > 0) {
+        batchIdx.forEach(idx => {
+          const s = document.getElementById('status-' + idx);
+          if (s) { s.className = 'card-status loading'; s.textContent = `Reintentando (${attempt}/${MAX_RETRIES - 1})…`; }
+        });
+        await new Promise(r => setTimeout(r, RETRY_DELAYS[attempt - 1]));
+      }
+
+      const fd = new FormData();
+      batch.forEach(f => fd.append('files', f));
+      fd.append('prompt', prompt);
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 120000); // 2 min timeout
+
+      try {
+        const r = await fetch(API_BASE + '/images/clean', {
+          method: 'POST',
+          body: fd,
+          signal: controller.signal
+        });
+        clearTimeout(timeout);
+        if (!r.ok) {
+          const errText = await r.text().catch(() => 'HTTP ' + r.status);
+          throw new Error('HTTP ' + r.status + ' — ' + errText.substring(0, 120));
+        }
+        const data = await r.json();
+        data.images.forEach((res, j) => {
+          const idx = batchIdx[j];
+          results[idx] = res;
+          updateCard(idx, res);
+        });
+        success = true;
+        break;
+      } catch (err) {
+        clearTimeout(timeout);
+        if (attempt === MAX_RETRIES - 1) {
+          const msg = err.name === 'AbortError' ? 'Tiempo de espera agotado' : err.message;
+          batchIdx.forEach(idx => {
+            results[idx] = { error: msg, cleaned_b64: null };
+            const s = document.getElementById('status-' + idx);
+            if (s) { s.className = 'card-status err'; s.textContent = 'Error: ' + msg.substring(0, 60); }
+          });
+        }
+        // else continue retry loop
+      }
+    }
+
+    // Delay between AI batches to avoid rate limiting
+    if (useAI && start + BATCH < files.length) {
+      await new Promise(r => setTimeout(r, 800));
+    }
+
+    done += batch.length;
+    progressBar.style.width = Math.round((done / files.length) * 100) + '%';
+  }
+
+  cleaned = results.some(r => r && r.cleaned_b64);
+  if (cleaned) {
+    dlGroup.style.display = 'flex';
+    showToast('Fotos editadas. Descarga o utiliza en una ficha.');
+  }
+  btnClean.disabled = false;
+  btnClean.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Editar fotos`;
+  setTimeout(() => { progressWrap.style.display = 'none'; }, 800);
+}
+
+function updateCard(i, res) {
+  const s = document.getElementById('status-' + i);
+  const rightImg = document.getElementById('right-img-' + i);
+  const rightLbl = document.getElementById('right-lbl-' + i);
+  const footer = document.getElementById('footer-' + i);
+  const chk = document.getElementById('chk-' + i);
+  if (res.cleaned_b64) {
+    const src = 'data:' + res.content_type + ';base64,' + res.cleaned_b64;
+    if (rightImg) rightImg.src = src;
+    if (rightLbl) rightLbl.textContent = res.used_gemini ? 'BROKR AI' : 'EDITADA';
+    if (s) { s.className = 'card-status ok'; s.textContent = res.used_gemini ? 'Mejorada con Broquer AI' : 'Mejorada'; }
+    if (chk) chk.style.display = 'flex';
+    if (footer && !selectionMode) {
+      let dlBtn = footer.querySelector('.btn-dl-one');
+      if (!dlBtn) {
+        dlBtn = document.createElement('button');
+        dlBtn.className = 'btn-dl-one';
+        dlBtn.style.display = 'flex';
+        dlBtn.innerHTML = `<svg viewBox="0 0 24 24" stroke-width="2.5" fill="none" stroke="white" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Descargar`;
+        dlBtn.onclick = (e) => { e.stopPropagation(); downloadOne(i); };
+        footer.appendChild(dlBtn);
+      }
+    }
+  } else if (res.error) {
+    if (s) { s.className = 'card-status err'; s.title = res.error; s.textContent = 'Error: ' + (res.error || '').substring(0, 60); }
+  }
+}
+
+// ── Downloads ─────────────────────────────────────────────────────────────────
+function downloadOne(i) {
+  const res = results[i];
+  if (!res || !res.cleaned_b64) return;
+  const a = document.createElement('a');
+  a.href = 'data:' + res.content_type + ';base64,' + res.cleaned_b64;
+  const orig = files[i].name;
+  const ext = orig.split('.').pop();
+  const base = orig.substring(0, orig.lastIndexOf('.')) || orig;
+  a.download = base + '_editada.' + ext;
+  a.click();
+}
+
+async function downloadAll() {
+  const processed = results.map((r, i) => ({r, i})).filter(({r}) => r && r.cleaned_b64);
+  if (!processed.length) { showToast('No hay fotos editadas aún'); return; }
+  // Suppress Shaark wake-word during download to avoid false triggers
+  try { window.parent.postMessage({ type: 'brokr-suppress-wake', duration: 5000 }, '*'); } catch(e){}
+  showToast(`Descargando ${processed.length} imagen${processed.length !== 1 ? 'es' : ''}…`);
+  for (const {i} of processed) {
+    downloadOne(i);
+    await new Promise(res => setTimeout(res, 250));
+  }
+}
+
+function downloadSelected() {
+  if (selectedSet.size === 0) { showToast('Selecciona al menos una imagen'); return; }
+  const toDownload = [...selectedSet].filter(i => results[i] && results[i].cleaned_b64);
+  if (!toDownload.length) { showToast('Sin imágenes válidas en la selección'); return; }
+  try { window.parent.postMessage({ type: 'brokr-suppress-wake', duration: 5000 }, '*'); } catch(e){}
+  showToast(`Descargando ${toDownload.length} imagen${toDownload.length !== 1 ? 'es' : ''}…`);
+  toDownload.forEach((i, idx) => {
+    setTimeout(() => downloadOne(i), idx * 250);
+  });
+  cancelSelection();
+}
+
+// ── Utilizar en ficha ─────────────────────────────────────────────────────────
+function useInFicha() {
+  const imagesToUse = results
+    .map((res, i) => res && res.cleaned_b64
+      ? { url: 'data:' + res.content_type + ';base64,' + res.cleaned_b64,
+          name: (() => { const n = files[i].name; const e = n.split('.').pop(); const b = n.substring(0, n.lastIndexOf('.')) || n; return b + '_editada.' + e; })() }
+      : null)
+    .filter(Boolean);
+
+  if (!imagesToUse.length) { showToast('No hay fotos editadas aún'); return; }
+
+  // Share via parent window (same-origin iframe)
+  try {
+    window.parent.brokrEditorImages = imagesToUse;
+    window.parent.postMessage({ type: 'brokr-use-in-ficha' }, '*');
+    showToast(`${imagesToUse.length} imagen${imagesToUse.length !== 1 ? 'es' : ''} enviada${imagesToUse.length !== 1 ? 's' : ''} a fichas técnicas`);
+  } catch(e) {
+    showToast('Error al comunicar con el módulo de fichas');
+  }
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg, duration = 3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+</script>
+</body>
+</html>

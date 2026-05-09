@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<link rel="icon" type="image/png" href="isotipo-broquer.png"/>
+<link rel="apple-touch-icon" href="isotipo-broquer.png"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style id="broquer-skin">
+  html,body{background:var(--paper)!important;color:var(--ink)!important;font-family:var(--font-sans)!important;letter-spacing:-0.01em}
+  *{font-family:var(--font-sans)!important}
+  h1,h2,h3,.title,.heading{font-family:var(--font-display)!important;letter-spacing:-0.02em!important;color:var(--ink)!important}
+  code,pre,.mono,kbd{font-family:var(--font-mono)!important}
+  /* Surfaces */
+  body, .screen, .panel, .container, .wrap, main { background:var(--paper)!important; color:var(--ink)!important; }
+  .card, .ui-card, .box, .module, .pf-card, .stat-pill, .module-card, .cat-module, .profile-section, .activity-item, .news-ticker-wrap, .tile, .section, section, article {
+    background:var(--bone)!important; border:1px solid var(--line)!important; border-radius:var(--r-lg)!important;
+    color:var(--ink)!important; box-shadow:0 1px 2px rgba(10,10,10,.03)!important;
+  }
+  /* Headers/topbars that were navy → ivory */
+  .home-header, .modules-header, .profile-header, .panel-topbar, header, .topbar, .nav-top, .app-header, .hdr, .navbar {
+    background:var(--paper)!important; color:var(--ink)!important; border-bottom:1px solid var(--line)!important;
+  }
+  .home-header *, .modules-header *, .profile-header *, .panel-topbar *, header *, .topbar *, .nav-top *, .app-header *, .hdr *, .navbar * { color:var(--ink)!important; }
+  /* Inputs */
+  input, select, textarea {
+    background:var(--bone)!important; border:1px solid var(--line-2)!important; color:var(--ink)!important;
+    border-radius:var(--r)!important; font-family:var(--font-sans)!important; font-size:14px!important; padding:10px 12px!important;
+    outline:none!important; transition:border-color .2s ease;
+  }
+  input:focus, select:focus, textarea:focus { border-color:var(--ink)!important; }
+  /* Buttons */
+  button, .btn, .ui-btn, .isr-calc-btn, .props-new-btn, .pe-save-btn, .prf-stripe-btn.primary, .pf-save-btn, .btn-pdf, .pe-toggle-slider {
+    font-family:var(--font-sans)!important; letter-spacing:-0.005em!important;
+  }
+  button:not([class]), .btn-primary, .ui-btn, .pf-save-btn, .pe-save-btn, .isr-calc-btn, .props-new-btn, .btn-pdf, .prf-stripe-btn.primary {
+    background:var(--ink)!important; color:var(--paper)!important;
+    border:none!important; border-radius:var(--r)!important;
+    padding:11px 18px!important; font-weight:600!important; cursor:pointer!important;
+    box-shadow:0 1px 2px rgba(10,10,10,.08)!important; font-size:14px!important;
+  }
+  button:not([class]):hover, .btn-primary:hover, .ui-btn:hover, .pf-save-btn:hover, .pe-save-btn:hover, .isr-calc-btn:hover { opacity:.92!important; }
+  /* Badges, chips */
+  .badge, .chip, .pill, .stat-pill .lbl, .res-tipo-lbl, .isr-badge {
+    background:var(--paper-2)!important; color:var(--ink-2)!important; border:1px solid var(--line)!important;
+    border-radius:var(--r-pill)!important; padding:3px 10px!important; font-size:11px!important; font-weight:500!important;
+  }
+  /* Accent text colors that were navy or teal */
+  [class*="navy"], [style*="color:#0f1829"], [style*="color: #0f1829"], [style*="color:#162035"] { color:var(--ink)!important; }
+  /* Links */
+  a { color:var(--ink)!important; text-decoration:none; }
+  a:hover { color:var(--forest)!important; }
+  /* Scrollbars */
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-thumb { background:var(--line-2); border-radius:3px; }
+  /* Drop garish gradients on home-header */
+  .home-header::before, .home-header::after { display:none!important; }
+  /* Misc legacy */
+  .app-sidebar { background:var(--paper)!important; border-right:1px solid var(--line)!important; }
+  .proto-nav, .bottom-nav, .tabbar { background:var(--bone)!important; border-top:1px solid var(--line)!important; }
+  /* Force any greeting "name" or page title light text to be dark */
+  .greeting-text .hello, .greeting-text .name, .profile-name, .profile-sub, .panel-title, .modules-header h2 { color:var(--ink)!important; }
+  /* Avatar-style circles that were translucent on navy → bone */
+  .home-avatar, .profile-avatar, .pr-icon, .act-icon, .scw-avatar, .notif-bell, .stat-pill {
+    background:var(--bone)!important; border:1px solid var(--line)!important; color:var(--ink)!important;
+  }
+</style>
+
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Broquer® — Completa tu perfil</title>
+<link rel="icon" type="image/png" href="isotipo-broquer.png">
+<link rel="apple-touch-icon" href="isotipo-broquer.png">
+<meta name="theme-color" content="#0a1628"/>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0f1829;--navy2:#162035;--white:#fff;--muted:#9aa0ad;--border:#e8eaee;--input-bg:#f5f6f8;--radius:12px}
+html,body{min-height:100%;background:#f5f6f8;font-family:'Poppins',sans-serif;color:#0f0f0f}
+.bg{display:none}
+.wrap{position:relative;z-index:1;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px}
+.card{width:100%;max-width:460px;background:#ffffff;border:1px solid var(--border);border-radius:20px;padding:40px 36px 36px;box-shadow:0 4px 24px rgba(0,0,0,.08);animation:cardIn .5s cubic-bezier(.16,1,.3,1)}
+@keyframes cardIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.logo-area{text-align:center;margin-bottom:32px}
+.logo-area img{height:40px}
+.logo-area h2{font-size:22px;font-weight:700;margin-top:12px;color:#0f0f0f}
+.logo-area p{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.5}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+.field input{width:100%;padding:12px 14px;background:var(--input-bg);border:1.5px solid var(--border);border-radius:var(--radius);color:#0f0f0f;font-size:14px;font-family:inherit;outline:none;transition:border-color .2s,box-shadow .2s}
+.field input:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(15,24,41,.08)}
+.field input::placeholder{color:var(--muted)}
+.field .hint{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.4}
+.btn-primary{width:100%;padding:14px;border:none;border-radius:var(--radius);background:var(--navy);color:#ffffff;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;transition:opacity .2s,transform .1s;margin-top:8px}
+.btn-primary:hover{opacity:.9}
+.btn-primary:active{transform:scale(.98)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.msg{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none;line-height:1.5}
+.msg.err{background:rgba(226,75,74,.08);border:1px solid rgba(226,75,74,.25);color:#c0392b;display:block}
+.msg.ok{background:rgba(29,158,117,.08);border:1px solid rgba(29,158,117,.25);color:#1D9E75;display:block}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.legal-check-row{display:flex;align-items:flex-start;gap:12px;margin:18px 0 4px;cursor:pointer}
+.legal-check-row input[type=checkbox]{width:18px;height:18px;margin-top:1px;accent-color:var(--navy);cursor:pointer;flex-shrink:0}
+.legal-check-row span{font-size:12px;color:var(--muted);line-height:1.6}
+.legal-check-row a{color:var(--navy);text-decoration:none;font-weight:600}
+.legal-check-row a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="wrap">
+  <div class="card">
+    <div class="logo-area">
+      <img src="icon-192.png" alt="Broquer®"/>
+      <h2>Completa tu perfil</h2>
+      <p>Solo necesitamos un par de datos para personalizar tu experiencia.</p>
+    </div>
+
+    <div class="msg" id="msg"></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="field" style="margin-bottom:0">
+        <label>Nombre(s)</label>
+        <input type="text" id="r-nombre" placeholder="Ej. Salvador" autocomplete="given-name"/>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label>Apellidos</label>
+        <input type="text" id="r-apellidos" placeholder="Ej. Bolaños" autocomplete="family-name"/>
+      </div>
+    </div>
+    <div class="field" style="margin-top:16px">
+      <label>Teléfono</label>
+      <input type="tel" id="r-telefono" placeholder="Ej. 443 123 4567" autocomplete="tel"/>
+      <div class="hint">Lo usaremos solo para soporte técnico.</div>
+    </div>
+
+    <label class="legal-check-row">
+      <input type="checkbox" id="legal-check" onchange="toggleSaveBtn()"/>
+      <span>He leído y acepto los <a href="legal.html" target="_blank">Términos y condiciones</a>, el <a href="legal.html" target="_blank">Contrato de suscripción</a> y el <a href="legal.html" target="_blank">Aviso de privacidad</a> de Broquer®.</span>
+    </label>
+
+    <button class="btn-primary" id="btn-save" onclick="guardar()" disabled>Continuar a Broquer®</button>
+  </div>
+</div>
+
+<script>
+const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
+const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
+
+function showMsg(t,type='err'){const e=document.getElementById('msg');e.textContent=t;e.className=`msg ${type}`}
+
+async function guardar(){
+  const nombre    = document.getElementById('r-nombre').value.trim();
+  const apellidos = document.getElementById('r-apellidos').value.trim();
+  const telefono  = document.getElementById('r-telefono').value.trim();
+  const nombreCompleto = apellidos ? nombre + ' ' + apellidos : nombre;
+  if(!nombre){ showMsg('Ingresa tu nombre'); return; }
+  if(!apellidos){ showMsg('Ingresa tus apellidos'); return; }
+
+  const token = sessionStorage.getItem('sb_token');
+  const user  = JSON.parse(sessionStorage.getItem('sb_user') || '{}');
+  if(!token || !user.id){ window.location.href = 'login.html'; return; }
+
+  const btn = document.getElementById('btn-save');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>';
+
+  const isAdmin = user.email === 'salvadorbolanosnavarro@gmail.com';
+  const planDefault = isAdmin ? 'admin' : 'free';
+  const modulosDefault = isAdmin
+    ? ['chat','isr','ficha-manual','ficha','contratos','avm']
+    : ['ficha-manual'];
+
+  // Use UPSERT — single call, handles both insert and update
+  const r = await fetch(`${SB_URL}/rest/v1/usuarios`, {
+    method: 'POST',
+    headers:{
+      'apikey': SB_KEY,
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'resolution=merge-duplicates,return=minimal'
+    },
+    body: JSON.stringify({
+      id: user.id,
+      email: user.email,
+      nombre: nombreCompleto,
+      telefono,
+      plan: planDefault,
+      modulos: modulosDefault,
+      updated_at: new Date().toISOString()
+    })
+  });
+
+  if(!r.ok){
+    const errText = await r.text();
+    console.error('Supabase error:', r.status, errText);
+    showMsg(`Error ${r.status}: ${errText}`);
+    btn.disabled=false;
+    btn.textContent='Continuar a BROKR®';
+    return;
+  }
+
+  showMsg('Perfil guardado. Cargando BROKR®…', 'ok');
+  setTimeout(() => { window.location.href = 'index.html'; }, 800);
+}
+
+function toggleSaveBtn(){
+  const checked = document.getElementById('legal-check')?.checked;
+  const btn = document.getElementById('btn-save');
+  if(btn) btn.disabled = !checked;
+}
+
+// Pre-llenar campos si vienen del signup
+(function(){
+  const savedNombre   = sessionStorage.getItem('reg_nombre') || '';
+  const savedTelefono = sessionStorage.getItem('reg_telefono') || '';
+  if(savedNombre){
+    const parts = savedNombre.trim().split(' ');
+    const apellidos = parts.length > 1 ? parts.slice(1).join(' ') : '';
+    const nombre = parts[0] || '';
+    const nEl = document.getElementById('r-nombre');
+    const aEl = document.getElementById('r-apellidos');
+    if(nEl) nEl.value = nombre;
+    if(aEl) aEl.value = apellidos;
+    sessionStorage.removeItem('reg_nombre');
+  }
+  if(savedTelefono){
+    const tEl = document.getElementById('r-telefono');
+    if(tEl) tEl.value = savedTelefono;
+    sessionStorage.removeItem('reg_telefono');
+  }
+})();
+
+// Redirect if not logged in
+if(!sessionStorage.getItem('sb_token')) window.location.href = 'login.html';
+</script>
+</body>
+</html>

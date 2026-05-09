@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<link rel="icon" type="image/png" href="isotipo-broquer.png"/>
+<link rel="apple-touch-icon" href="isotipo-broquer.png"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style id="broquer-skin">
+  html,body{background:var(--paper)!important;color:var(--ink)!important;font-family:var(--font-sans)!important;letter-spacing:-0.01em}
+  *{font-family:var(--font-sans)!important}
+  h1,h2,h3,.title,.heading{font-family:var(--font-display)!important;letter-spacing:-0.02em!important;color:var(--ink)!important}
+  code,pre,.mono,kbd{font-family:var(--font-mono)!important}
+  /* Surfaces */
+  body, .screen, .panel, .container, .wrap, main { background:var(--paper)!important; color:var(--ink)!important; }
+  .card, .ui-card, .box, .module, .pf-card, .stat-pill, .module-card, .cat-module, .profile-section, .activity-item, .news-ticker-wrap, .tile, .section, section, article {
+    background:var(--bone)!important; border:1px solid var(--line)!important; border-radius:var(--r-lg)!important;
+    color:var(--ink)!important; box-shadow:0 1px 2px rgba(10,10,10,.03)!important;
+  }
+  /* Headers/topbars that were navy → ivory */
+  .home-header, .modules-header, .profile-header, .panel-topbar, header, .topbar, .nav-top, .app-header, .hdr, .navbar {
+    background:var(--paper)!important; color:var(--ink)!important; border-bottom:1px solid var(--line)!important;
+  }
+  .home-header *, .modules-header *, .profile-header *, .panel-topbar *, header *, .topbar *, .nav-top *, .app-header *, .hdr *, .navbar * { color:var(--ink)!important; }
+  /* Inputs */
+  input, select, textarea {
+    background:var(--bone)!important; border:1px solid var(--line-2)!important; color:var(--ink)!important;
+    border-radius:var(--r)!important; font-family:var(--font-sans)!important; font-size:14px!important; padding:10px 12px!important;
+    outline:none!important; transition:border-color .2s ease;
+  }
+  input:focus, select:focus, textarea:focus { border-color:var(--ink)!important; }
+  /* Buttons */
+  button, .btn, .ui-btn, .isr-calc-btn, .props-new-btn, .pe-save-btn, .prf-stripe-btn.primary, .pf-save-btn, .btn-pdf, .pe-toggle-slider {
+    font-family:var(--font-sans)!important; letter-spacing:-0.005em!important;
+  }
+  button:not([class]), .btn-primary, .ui-btn, .pf-save-btn, .pe-save-btn, .isr-calc-btn, .props-new-btn, .btn-pdf, .prf-stripe-btn.primary {
+    background:var(--ink)!important; color:var(--paper)!important;
+    border:none!important; border-radius:var(--r)!important;
+    padding:11px 18px!important; font-weight:600!important; cursor:pointer!important;
+    box-shadow:0 1px 2px rgba(10,10,10,.08)!important; font-size:14px!important;
+  }
+  button:not([class]):hover, .btn-primary:hover, .ui-btn:hover, .pf-save-btn:hover, .pe-save-btn:hover, .isr-calc-btn:hover { opacity:.92!important; }
+  /* Badges, chips */
+  .badge, .chip, .pill, .stat-pill .lbl, .res-tipo-lbl, .isr-badge {
+    background:var(--paper-2)!important; color:var(--ink-2)!important; border:1px solid var(--line)!important;
+    border-radius:var(--r-pill)!important; padding:3px 10px!important; font-size:11px!important; font-weight:500!important;
+  }
+  /* Accent text colors that were navy or teal */
+  [class*="navy"], [style*="color:#0f1829"], [style*="color: #0f1829"], [style*="color:#162035"] { color:var(--ink)!important; }
+  /* Links */
+  a { color:var(--ink)!important; text-decoration:none; }
+  a:hover { color:var(--forest)!important; }
+  /* Scrollbars */
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-thumb { background:var(--line-2); border-radius:3px; }
+  /* Drop garish gradients on home-header */
+  .home-header::before, .home-header::after { display:none!important; }
+  /* Misc legacy */
+  .app-sidebar { background:var(--paper)!important; border-right:1px solid var(--line)!important; }
+  .proto-nav, .bottom-nav, .tabbar { background:var(--bone)!important; border-top:1px solid var(--line)!important; }
+  /* Force any greeting "name" or page title light text to be dark */
+  .greeting-text .hello, .greeting-text .name, .profile-name, .profile-sub, .panel-title, .modules-header h2 { color:var(--ink)!important; }
+  /* Avatar-style circles that were translucent on navy → bone */
+  .home-avatar, .profile-avatar, .pr-icon, .act-icon, .scw-avatar, .notif-bell, .stat-pill {
+    background:var(--bone)!important; border:1px solid var(--line)!important; color:var(--ink)!important;
+  }
+</style>
+
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<title>Admin · Broquer</title>
+<link rel="icon" type="image/png" href="isotipo-broquer.png">
+<link rel="apple-touch-icon" href="isotipo-broquer.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --navy:       #0f1829;
+  --navy-mid:   #162035;
+  --navy-light: #1e2d47;
+  --teal:       #0f1829;
+  --teal-dark:  #162035;
+  --white:      #ffffff;
+  --gray-100:   #f5f6f8;
+  --gray-200:   #e8eaee;
+  --gray-400:   #9aa0ad;
+  --gray-600:   #5a6070;
+  --text:       #0f0f0f;
+  --screen-bg:  #f0f2f7;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --red: #ef4444;
+  --green: #10b981;
+  --amber: #f59e0b;
+}
+@supports (-webkit-touch-callout: none) {
+  @media (display-mode: standalone) {
+    :root { --safe-top: max(env(safe-area-inset-top, 0px), 44px); }
+  }
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body {
+  font-family: 'Poppins', sans-serif;
+  background: var(--screen-bg);
+  color: var(--text);
+  min-height: 100%;
+}
+
+/* ══ TOPBAR ══ */
+.admin-topbar {
+  background: var(--navy);
+  padding: calc(var(--safe-top) + 14px) 20px 16px;
+  display: flex; align-items: center; gap: 14px;
+  position: sticky; top: 0; z-index: 100;
+}
+.back-btn {
+  width: 38px; height: 38px; border-radius: 13px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: white; font-size: 20px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0; text-decoration: none;
+  transition: background 0.15s;
+}
+.back-btn:active { background: rgba(255,255,255,0.2); }
+.topbar-title { font-size: 17px; font-weight: 800; color: white; flex: 1; }
+.topbar-badge {
+  background: rgba(239,68,68,0.25);
+  border: 1px solid rgba(239,68,68,0.4);
+  color: #fca5a5; font-size: 10px; font-weight: 700;
+  padding: 3px 10px; border-radius: 20px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+/* ══ STATS HEADER ══ */
+.stats-strip {
+  background: var(--navy-mid);
+  padding: 14px 20px 18px;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+}
+.stat-box {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px; padding: 10px 12px;
+  text-align: center;
+}
+.stat-box .v { font-size: 22px; font-weight: 800; color: white; }
+.stat-box .l { font-size: 10px; color: rgba(255,255,255,0.45); margin-top: 2px; font-weight: 500; }
+.stat-box.accent .v { color: #ffffff; font-weight: 900; }
+.stat-box.warn .v { color: #fbbf24; }
+
+/* ══ SEARCH & FILTER ══ */
+.controls-bar {
+  padding: 16px 16px 8px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.search-input {
+  width: 100%; padding: 11px 16px 11px 40px;
+  background: white; border: 1.5px solid var(--gray-200);
+  border-radius: 14px; font-family: 'Poppins', sans-serif;
+  font-size: 14px; color: var(--text); outline: none;
+  transition: border-color 0.2s;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 24 24' stroke='%239aa0ad' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath stroke-linecap='round' d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 14px center;
+}
+.search-input:focus { border-color: var(--navy); }
+.filter-row {
+  display: flex; gap: 6px; overflow-x: auto;
+  padding-bottom: 4px; scrollbar-width: none;
+}
+.filter-row::-webkit-scrollbar { display: none; }
+.filter-chip {
+  flex-shrink: 0;
+  padding: 6px 14px; border-radius: 20px;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  border: 1.5px solid var(--gray-200); background: white;
+  color: var(--gray-600); transition: all 0.15s;
+  white-space: nowrap;
+}
+.filter-chip.active {
+  background: var(--navy); border-color: var(--navy);
+  color: white;
+}
+
+/* ══ USER LIST ══ */
+.users-list {
+  padding: 4px 16px 100px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.user-card {
+  background: white; border-radius: 18px;
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  overflow: hidden;
+  transition: box-shadow 0.15s;
+}
+.user-card-header {
+  padding: 14px 16px;
+  display: flex; align-items: center; gap: 12px;
+  cursor: pointer;
+}
+.user-avatar-sm {
+  width: 44px; height: 44px; border-radius: 14px;
+  background: var(--navy);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 800; color: white;
+  flex-shrink: 0;
+}
+.user-avatar-sm.inactive {
+  background: linear-gradient(135deg, #9aa0ad, #6b7280);
+}
+.user-info { flex: 1; min-width: 0; }
+.user-name {
+  font-size: 14px; font-weight: 700; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.user-email {
+  font-size: 11px; color: var(--gray-400); margin-top: 1px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.user-tags { display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap; }
+.tag {
+  font-size: 10px; font-weight: 700; padding: 2px 8px;
+  border-radius: 10px; text-transform: uppercase; letter-spacing: 0.3px;
+}
+.tag-admin         { background: rgba(239,68,68,0.12); color: #ef4444; }
+.tag-pro           { background: rgba(15,24,41,0.08); color: var(--navy); }
+.tag-modulos       { background: rgba(139,92,246,0.13); color: #8b5cf6; }
+.tag-personalizado { background: rgba(139,92,246,0.13); color: #8b5cf6; }
+.tag-free          { background: rgba(0,0,0,0.07); color: var(--gray-600); }
+.tag-inactive { background: rgba(239,68,68,0.08); color: #f87171; }
+.tag-active   { background: rgba(16,185,129,0.12); color: #10b981; }
+.expand-icon {
+  color: var(--gray-400); font-size: 16px;
+  transition: transform 0.2s; flex-shrink: 0;
+}
+.user-card.expanded .expand-icon { transform: rotate(90deg); }
+
+/* ══ USER EDIT PANEL ══ */
+.user-edit-panel {
+  display: none;
+  border-top: 1px solid rgba(0,0,0,0.06);
+  padding: 16px;
+  background: var(--gray-100);
+}
+.user-card.expanded .user-edit-panel { display: block; }
+
+.edit-section {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--navy); opacity: 0.65;
+  margin: 14px 0 10px; padding-left: 2px;
+}
+.edit-section:first-child { margin-top: 0; }
+
+/* Plan selector */
+.plan-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+  margin-bottom: 4px;
+}
+.plan-option {
+  padding: 10px 12px; border-radius: 12px;
+  border: 2px solid var(--gray-200); background: white;
+  cursor: pointer; transition: all 0.15s; text-align: center;
+}
+.plan-option.selected {
+  border-color: var(--navy); background: rgba(15,24,41,0.04);
+}
+.plan-option.selected-admin {
+  border-color: var(--red); background: rgba(239,68,68,0.07);
+}
+.plan-option-name {
+  font-size: 13px; font-weight: 700; color: var(--text);
+  display: block;
+}
+.plan-option-desc {
+  font-size: 10px; color: var(--gray-400); margin-top: 2px;
+}
+
+/* Module toggles */
+.mod-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+}
+.mod-toggle-row {
+  display: flex; align-items: center; gap: 10px;
+  background: white; border-radius: 12px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--gray-200);
+  transition: border-color 0.15s;
+}
+.mod-toggle-row.enabled { border-color: rgba(15,24,41,0.2); }
+.mod-toggle-row.locked { opacity: 0.45; pointer-events: none; }
+.mod-icon { font-size: 18px; flex-shrink: 0; }
+.mod-name-lbl { font-size: 12px; font-weight: 600; flex: 1; }
+.toggle-sw { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
+.toggle-sw input { opacity: 0; width: 0; height: 0; }
+.toggle-track {
+  position: absolute; inset: 0; background: var(--gray-200);
+  border-radius: 10px; cursor: pointer; transition: background 0.2s;
+}
+.toggle-track::before {
+  content: ''; position: absolute;
+  width: 14px; height: 14px; background: white;
+  border-radius: 50%; left: 3px; top: 3px;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle-sw input:checked + .toggle-track { background: var(--navy); }
+.toggle-sw input:checked + .toggle-track::before { transform: translateX(16px); }
+
+/* Activate / Deactivate */
+.status-row {
+  display: flex; align-items: center; justify-content: space-between;
+  background: white; border-radius: 12px; padding: 12px 14px;
+  border: 1.5px solid var(--gray-200);
+}
+.status-label { font-size: 13px; font-weight: 600; }
+.status-toggle-btn {
+  padding: 6px 14px; border-radius: 20px; border: none;
+  font-size: 12px; font-weight: 700; font-family: 'Poppins', sans-serif;
+  cursor: pointer; transition: all 0.15s;
+}
+.btn-deactivate { background: rgba(239,68,68,0.1); color: #ef4444; }
+.btn-deactivate:hover { background: rgba(239,68,68,0.2); }
+.btn-activate { background: rgba(16,185,129,0.1); color: #10b981; }
+.btn-activate:hover { background: rgba(16,185,129,0.2); }
+
+/* Save button */
+.save-user-btn {
+  width: 100%; margin-top: 14px;
+  padding: 13px; border-radius: 14px; border: none;
+  background: var(--navy); color: white;
+  font-size: 14px; font-weight: 700; font-family: 'Poppins', sans-serif;
+  cursor: pointer; transition: opacity 0.15s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.save-user-btn:active { opacity: 0.85; }
+.save-user-btn:disabled { opacity: 0.5; cursor: default; }
+
+/* ══ EMPTY / LOADING STATE ══ */
+.state-msg {
+  text-align: center; padding: 50px 20px;
+  color: var(--gray-400); font-size: 14px;
+}
+.state-msg .ico { font-size: 36px; margin-bottom: 10px; }
+
+/* ══ TOAST ══ */
+.admin-toast {
+  position: fixed; bottom: 30px; left: 50%;
+  transform: translateX(-50%) translateY(0);
+  background: var(--navy); color: white;
+  padding: 10px 22px; border-radius: 20px;
+  font-size: 13px; font-weight: 500; font-family: 'Poppins', sans-serif;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  z-index: 9999; opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  white-space: nowrap;
+}
+.admin-toast.show { opacity: 1; }
+
+/* ══ PLAN NOTE ══ */
+.plan-note {
+  font-size: 11px; color: var(--gray-400); margin-top: 8px;
+  padding: 8px 12px; background: white; border-radius: 10px;
+  line-height: 1.5;
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="admin-topbar">
+  <a class="back-btn" onclick="history.back()">←</a>
+  <span class="topbar-title">Panel de Admin</span>
+  <span class="topbar-badge">🛡️ Admin</span>
+</div>
+
+<!-- STATS STRIP -->
+<div class="stats-strip">
+  <div class="stat-box accent">
+    <div class="v" id="stat-total">—</div>
+    <div class="l">Usuarios</div>
+  </div>
+  <div class="stat-box">
+    <div class="v" id="stat-active">—</div>
+    <div class="l">Activos</div>
+  </div>
+  <div class="stat-box warn">
+    <div class="v" id="stat-pro">—</div>
+    <div class="l">Pro / Admin</div>
+  </div>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls-bar">
+  <input class="search-input" id="search-input" type="text" placeholder="Buscar por nombre o correo..."
+         oninput="filterUsers()"/>
+  <div class="filter-row">
+    <div class="filter-chip active" data-filter="todos" onclick="setFilter('todos')">Todos</div>
+    <div class="filter-chip" data-filter="admin"   onclick="setFilter('admin')">Admin</div>
+    <div class="filter-chip" data-filter="pro"     onclick="setFilter('pro')">Pro</div>
+    <div class="filter-chip" data-filter="modulos" onclick="setFilter('modulos')">Módulos</div>
+    <div class="filter-chip" data-filter="free"    onclick="setFilter('free')">Free</div>
+    <div class="filter-chip" data-filter="inactivo" onclick="setFilter('inactivo')">Inactivos</div>
+  </div>
+</div>
+
+<!-- USER LIST -->
+<div class="users-list" id="users-list">
+  <div class="state-msg"><div class="ico">⏳</div>Cargando usuarios...</div>
+</div>
+
+<!-- TOAST -->
+<div class="admin-toast" id="admin-toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+// CONFIG SUPABASE
+// ══════════════════════════════════════════
+const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
+const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
+
+const MODULOS_LIST = [
+  { id: 'isr',         icon: '🧮', nombre: 'Calculadora ISR' },
+  { id: 'ficha-manual',icon: '📝', nombre: 'Ficha Manual' },
+  { id: 'ficha',       icon: '🏷️', nombre: 'Ficha EasyBroker' },
+  { id: 'contratos',   icon: '📄', nombre: 'Contratos' },
+  { id: 'avm',         icon: '📊', nombre: 'Opinión de Valor' },
+  { id: 'props',       icon: '🏘️', nombre: 'Mis Inmuebles' },
+];
+
+const PLANES = [
+  { id: 'admin',        nombre: 'Admin',        desc: 'Acceso total + panel admin' },
+  { id: 'pro',          nombre: 'Pro',           desc: 'Todos los módulos activos' },
+  { id: 'personalizado',nombre: 'Personalizado', desc: 'Elige módulos manualmente' },
+  { id: 'free',         nombre: 'Free',          desc: 'Solo fichas manuales por defecto' },
+];
+
+let allUsers = [];
+let currentFilter = 'todos';
+let currentSearch = '';
+let sbToken = '';
+let currentAdminId = '';
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+async function adminInit() {
+  sbToken = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || '';
+  const user = JSON.parse(localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}');
+
+  if (!sbToken || !user.id) { window.location.href = 'login.html'; return; }
+  currentAdminId = user.id;
+
+  // Verify admin plan
+  try {
+    const r = await sbFetch(`/rest/v1/usuarios?id=eq.${user.id}&select=plan`);
+    const data = await r.json();
+    if (!data.length || data[0].plan !== 'admin') {
+      alert('Acceso denegado. Solo administradores.');
+      window.location.href = 'index.html';
+      return;
+    }
+  } catch(e) {
+    alert('Error de autenticación.');
+    window.location.href = 'index.html';
+    return;
+  }
+
+  loadUsers();
+}
+
+// ══════════════════════════════════════════
+// SUPABASE HELPER
+// ══════════════════════════════════════════
+function sbFetch(path, options = {}) {
+  return fetch(SB_URL + path, {
+    ...options,
+    headers: {
+      'apikey': SB_KEY,
+      'Authorization': `Bearer ${sbToken}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal',
+      ...(options.headers || {})
+    }
+  });
+}
+
+// ══════════════════════════════════════════
+// LOAD USERS
+// ══════════════════════════════════════════
+async function loadUsers() {
+  document.getElementById('users-list').innerHTML =
+    '<div class="state-msg"><div class="ico">⏳</div>Cargando usuarios...</div>';
+  try {
+    const r = await sbFetch('/rest/v1/usuarios?select=*&order=created_at.desc');
+    allUsers = await r.json();
+    updateStats();
+    renderUsers();
+  } catch(e) {
+    document.getElementById('users-list').innerHTML =
+      '<div class="state-msg"><div class="ico">⚠️</div>Error al cargar usuarios.</div>';
+  }
+}
+
+function updateStats() {
+  document.getElementById('stat-total').textContent = allUsers.length;
+  document.getElementById('stat-active').textContent = allUsers.filter(u => u.activo !== false).length;
+  document.getElementById('stat-pro').textContent = allUsers.filter(u => u.plan === 'pro' || u.plan === 'admin').length;
+}
+
+// ══════════════════════════════════════════
+// FILTER & SEARCH
+// ══════════════════════════════════════════
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  document.querySelector(`[data-filter="${f}"]`)?.classList.add('active');
+  renderUsers();
+}
+
+function filterUsers() {
+  currentSearch = document.getElementById('search-input').value.toLowerCase();
+  renderUsers();
+}
+
+function getFilteredUsers() {
+  return allUsers.filter(u => {
+    // Search
+    if (currentSearch) {
+      const hay = ((u.nombre || '') + (u.email || '')).toLowerCase();
+      if (!hay.includes(currentSearch)) return false;
+    }
+    // Filter
+    if (currentFilter === 'todos') return true;
+    if (currentFilter === 'inactivo') return u.activo === false;
+    return u.plan === currentFilter;
+  });
+}
+
+// ══════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════
+function renderUsers() {
+  const list = document.getElementById('users-list');
+  const users = getFilteredUsers();
+
+  if (!users.length) {
+    list.innerHTML = '<div class="state-msg"><div class="ico">🔍</div>Sin resultados.</div>';
+    return;
+  }
+
+  list.innerHTML = users.map(u => buildUserCard(u)).join('');
+}
+
+function buildUserCard(u) {
+  const initial = (u.nombre || u.email || '?')[0].toUpperCase();
+  const isActive = u.activo !== false;
+  const plan = u.plan || 'free';
+  const mods = u.modulos || [];
+  const isModPlan = (plan === 'modulos' || plan === 'personalizado');
+  const isAdminOrPro = (plan === 'admin' || plan === 'pro');
+
+  // Tags
+  const planLabel = {admin:'Admin',pro:'Pro',personalizado:'Personalizado',modulos:'Personalizado',free:'Free'}[plan] || plan;
+  const planTag = `<span class="tag tag-${plan}">${planLabel}</span>`;
+  const statusTag = isActive
+    ? '<span class="tag tag-active">Activo</span>'
+    : '<span class="tag tag-inactive">Inactivo</span>';
+
+  // Plan options
+  const planOptions = PLANES.map(p => {
+    const sel = plan === p.id ? (p.id === 'admin' ? 'selected-admin' : 'selected') : '';
+    return `<div class="plan-option ${sel}" onclick="selectPlan('${u.id}','${p.id}')">
+      <span class="plan-option-name">${p.nombre}</span>
+      <span class="plan-option-desc">${p.desc}</span>
+    </div>`;
+  }).join('');
+
+  // Module toggles
+  const modToggles = MODULOS_LIST.map(m => {
+    const checked = (isAdminOrPro || mods.includes(m.id)) ? 'checked' : '';
+    const locked = isAdminOrPro ? 'locked' : '';
+    const enabled = (isAdminOrPro || mods.includes(m.id)) ? 'enabled' : '';
+    return `<div class="mod-toggle-row ${locked} ${enabled}" id="modrow-${u.id}-${m.id}">
+      <span class="mod-icon">${m.icon}</span>
+      <span class="mod-name-lbl">${m.nombre}</span>
+      <label class="toggle-sw">
+        <input type="checkbox" ${checked} onchange="toggleMod('${u.id}','${m.id}',this)"
+               ${isAdminOrPro ? 'disabled' : ''}/>
+        <span class="toggle-track"></span>
+      </label>
+    </div>`;
+  }).join('');
+
+  const planNote = isAdminOrPro
+    ? `<div class="plan-note">ℹ️ Plan <strong>${plan.toUpperCase()}</strong>: todos los módulos están activos automáticamente. Cambia a <strong>Personalizado</strong> para elegir manualmente.</div>`
+    : (plan === 'free' ? `<div class="plan-note">ℹ️ Plan <strong>Free</strong>: incluye Fichas Manuales por defecto. Puedes activar módulos adicionales arriba.</div>` : '');
+
+  const statusBtn = isActive
+    ? `<button class="status-toggle-btn btn-deactivate" onclick="toggleActive('${u.id}', false)">Desactivar cuenta</button>`
+    : `<button class="status-toggle-btn btn-activate" onclick="toggleActive('${u.id}', true)">Activar cuenta</button>`;
+
+  return `
+  <div class="user-card" id="card-${u.id}">
+    <div class="user-card-header" onclick="toggleCard('${u.id}')">
+      <div class="user-avatar-sm ${isActive ? '' : 'inactive'}">${initial}</div>
+      <div class="user-info">
+        <div class="user-name">${u.nombre || '(Sin nombre)'}</div>
+        <div class="user-email">${u.email || '—'}</div>
+        <div class="user-tags">${planTag}${statusTag}</div>
+      </div>
+      <span class="expand-icon">›</span>
+    </div>
+    <div class="user-edit-panel">
+      <div class="edit-section">Suscripción / Plan</div>
+      <div class="plan-grid" id="plan-grid-${u.id}">${planOptions}</div>
+
+      <div class="edit-section" style="margin-top:14px">Módulos disponibles</div>
+      ${planNote}
+      <div class="mod-grid" id="mod-grid-${u.id}" style="margin-top:${isAdminOrPro?'8px':'0'}">${modToggles}</div>
+
+      <div class="edit-section" style="margin-top:14px">Estado de cuenta</div>
+      <div class="status-row">
+        <span class="status-label">${isActive ? '✅ Cuenta activa' : '🔴 Cuenta inactiva'}</span>
+        ${statusBtn}
+      </div>
+
+      <button class="save-user-btn" id="save-btn-${u.id}" onclick="saveUser('${u.id}')">
+        💾 Guardar cambios
+      </button>
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════
+// INTERACTIONS
+// ══════════════════════════════════════════
+function toggleCard(uid) {
+  const card = document.getElementById(`card-${uid}`);
+  card.classList.toggle('expanded');
+}
+
+function selectPlan(uid, plan) {
+  // Update local data
+  const u = allUsers.find(x => x.id === uid);
+  if (!u) return;
+  u.plan = plan;
+
+  // Re-render that card's plan grid & module grid
+  const planGrid = document.getElementById(`plan-grid-${uid}`);
+  const modGrid  = document.getElementById(`mod-grid-${uid}`);
+  const isAdminOrPro = (plan === 'admin' || plan === 'pro');
+
+  // Update plan options visuals
+  planGrid.querySelectorAll('.plan-option').forEach(opt => {
+    opt.className = 'plan-option';
+    const pname = opt.querySelector('.plan-option-name').textContent.toLowerCase();
+    if (pname === plan) opt.classList.add(plan === 'admin' ? 'selected-admin' : 'selected');
+  });
+
+  // Update module toggles lock state
+  modGrid.querySelectorAll('.mod-toggle-row').forEach(row => {
+    const chk = row.querySelector('input[type=checkbox]');
+    row.classList.remove('locked', 'enabled');
+    if (isAdminOrPro) {
+      row.classList.add('locked', 'enabled');
+      chk.checked = true;
+      chk.disabled = true;
+    } else if (plan === 'free') {
+      chk.checked = false;
+      chk.disabled = false;
+      row.classList.remove('enabled');
+    } else {
+      chk.disabled = false;
+      if (chk.checked) row.classList.add('enabled');
+    }
+  });
+
+  // Update plan note
+  const noteEl = modGrid.previousElementSibling;
+  if (noteEl && noteEl.classList.contains('plan-note')) noteEl.remove();
+  if (isAdminOrPro) {
+    const note = document.createElement('div');
+    note.className = 'plan-note';
+    note.innerHTML = `ℹ️ Plan <strong>${plan.toUpperCase()}</strong>: todos los módulos están activos automáticamente. Cambia a <strong>Personalizado</strong> para elegir manualmente.`;
+    modGrid.parentElement.insertBefore(note, modGrid);
+  } else if (plan === 'free') {
+    const note = document.createElement('div');
+    note.className = 'plan-note';
+    note.innerHTML = `ℹ️ Plan <strong>Free</strong>: incluye Fichas Manuales por defecto. Puedes activar módulos adicionales arriba.`;
+    modGrid.parentElement.insertBefore(note, modGrid);
+  }
+}
+
+function toggleMod(uid, modId, chk) {
+  const u = allUsers.find(x => x.id === uid);
+  if (!u) return;
+  if (!u.modulos) u.modulos = [];
+  if (chk.checked) {
+    if (!u.modulos.includes(modId)) u.modulos.push(modId);
+    chk.closest('.mod-toggle-row').classList.add('enabled');
+  } else {
+    u.modulos = u.modulos.filter(m => m !== modId);
+    chk.closest('.mod-toggle-row').classList.remove('enabled');
+  }
+}
+
+function toggleActive(uid, newState) {
+  const u = allUsers.find(x => x.id === uid);
+  if (!u) return;
+  if (!confirm(newState ? '¿Activar esta cuenta?' : '¿Desactivar esta cuenta? El usuario no podrá entrar.')) return;
+  u.activo = newState;
+
+  // Update status row UI
+  const card = document.getElementById(`card-${uid}`);
+  const statusRow = card.querySelector('.status-row');
+  const statusLabel = statusRow.querySelector('.status-label');
+  statusLabel.textContent = newState ? '✅ Cuenta activa' : '🔴 Cuenta inactiva';
+  statusRow.querySelector('.status-toggle-btn').outerHTML = newState
+    ? `<button class="status-toggle-btn btn-deactivate" onclick="toggleActive('${uid}', false)">Desactivar cuenta</button>`
+    : `<button class="status-toggle-btn btn-activate" onclick="toggleActive('${uid}', true)">Activar cuenta</button>`;
+
+  // Update avatar color
+  const avatar = card.querySelector('.user-avatar-sm');
+  if (newState) avatar.classList.remove('inactive');
+  else avatar.classList.add('inactive');
+}
+
+// ══════════════════════════════════════════
+// SAVE TO SUPABASE
+// ══════════════════════════════════════════
+async function saveUser(uid) {
+  const u = allUsers.find(x => x.id === uid);
+  if (!u) return;
+
+  const btn = document.getElementById(`save-btn-${uid}`);
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+
+  const payload = {
+    plan: u.plan,
+    modulos: u.modulos || [],
+    activo: u.activo !== false,
+  };
+
+  try {
+    const r = await sbFetch(`/rest/v1/usuarios?id=eq.${uid}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload)
+    });
+    if (!r.ok && r.status !== 204) throw new Error('HTTP ' + r.status);
+    showToast('✅ Cambios guardados');
+    // Refresh tags in card header
+    const card = document.getElementById(`card-${uid}`);
+    const tagRow = card.querySelector('.user-tags');
+    const planTag = `<span class="tag tag-${u.plan}">${u.plan.toUpperCase()}</span>`;
+    const statusTag = (u.activo !== false)
+      ? '<span class="tag tag-active">Activo</span>'
+      : '<span class="tag tag-inactive">Inactivo</span>';
+    tagRow.innerHTML = planTag + statusTag;
+    updateStats();
+  } catch(e) {
+    showToast('❌ Error al guardar. Intenta de nuevo.');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '💾 Guardar cambios';
+}
+
+// ══════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════
+let toastTimeout;
+function showToast(msg) {
+  const t = document.getElementById('admin-toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ══════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', adminInit);
+</script>
+</body>
+</html>

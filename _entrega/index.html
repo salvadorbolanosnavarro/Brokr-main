@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Broquer — Inicio</title>
+<link rel="manifest" href="manifest.json"/>
+<link rel="icon" type="image/png" href="isotipo-broquer.png"/>
+<link rel="apple-touch-icon" href="isotipo-broquer.png"/>
+<meta name="theme-color" content="#F7F5EE"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="Broquer"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+/* ─── Dashboard-specific styles (shell-agnostic) ─────────────────── */
+.dash-scroll { padding: 28px 36px 40px; }
+@media (max-width: 720px) { .dash-scroll { padding: 18px 16px 40px; } }
+
+/* Hero greeting */
+.dash-hero {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 24px; flex-wrap: wrap;
+  padding-bottom: 24px; margin-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+.dash-hero__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--mute);
+  margin-bottom: 8px;
+}
+.dash-hero h1 {
+  font-family: var(--font-display);
+  font-size: 44px; font-weight: 600;
+  letter-spacing: -0.035em; line-height: 1.02;
+}
+.dash-hero h1 em { font-style: normal; color: var(--mute-2); font-weight: 500; }
+.dash-hero__date {
+  font-family: var(--font-mono); font-size: 12px;
+  letter-spacing: 0.06em; color: var(--mute);
+  text-align: right;
+}
+.dash-hero__date .label { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mute-2); display: block; margin-bottom: 4px; }
+@media (max-width: 720px) { .dash-hero h1 { font-size: 32px; } .dash-hero__date { text-align: left; } }
+
+/* KPIs */
+.kpi-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--bone);
+  margin-bottom: 28px;
+  overflow: hidden;
+}
+@media (max-width: 880px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .kpi-grid { grid-template-columns: 1fr; } }
+.kpi {
+  padding: 20px 22px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.kpi:last-child { border-right: none; }
+@media (max-width: 880px) {
+  .kpi:nth-child(2n) { border-right: none; }
+  .kpi:nth-last-child(-n+2) { border-bottom: none; }
+}
+@media (max-width: 480px) {
+  .kpi { border-right: none; }
+  .kpi:not(:last-child) { border-bottom: 1px solid var(--line); }
+  .kpi:last-child { border-bottom: none; }
+}
+.kpi__label {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--mute);
+  font-weight: 500; margin-bottom: 4px;
+}
+.kpi__value {
+  font-family: var(--font-display);
+  font-size: 34px; font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--ink); line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.kpi__value .unit {
+  font-family: var(--font-mono);
+  font-size: 12px; font-weight: 500;
+  color: var(--mute); letter-spacing: 0.06em;
+  margin-left: 4px;
+}
+.kpi__delta {
+  font-size: 12px; color: var(--mute);
+  margin-top: 8px;
+  display: flex; align-items: center; gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.kpi__delta strong { color: var(--success); font-weight: 600; }
+.kpi__delta.is-down strong { color: var(--danger); }
+
+/* Section heads */
+.sec-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.sec-head h2 {
+  font-family: var(--font-display);
+  font-size: 22px; font-weight: 600;
+  letter-spacing: -0.025em;
+}
+.sec-head a {
+  font-size: 13px; color: var(--ink-2);
+  font-weight: 500;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.sec-head a:hover { color: var(--forest); }
+
+/* Modules grid */
+.mods-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 14px; margin-bottom: 32px;
+}
+@media (max-width: 880px) { .mods-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .mods-grid { grid-template-columns: 1fr 1fr; } }
+.mod-card {
+  background: var(--bone);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 22px 22px 20px;
+  cursor: pointer;
+  transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  position: relative;
+  display: flex; flex-direction: column;
+  min-height: 168px;
+  text-decoration: none;
+  color: var(--ink);
+}
+.mod-card:hover { transform: translateY(-2px); border-color: var(--line-2); }
+.mod-card__icon {
+  width: 38px; height: 38px;
+  border-radius: var(--r);
+  background: var(--paper-2);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink-2);
+  margin-bottom: 18px;
+}
+.mod-card.is-primary { background: var(--ink); color: var(--paper); border-color: transparent; }
+.mod-card.is-primary .mod-card__icon { background: rgba(247,245,238,.12); color: var(--paper); }
+.mod-card.is-primary .mod-card__sub { color: rgba(247,245,238,.6); }
+.mod-card.is-primary .mod-card__arrow { color: var(--paper); }
+.mod-card__title {
+  font-family: var(--font-display);
+  font-size: 18px; font-weight: 600;
+  letter-spacing: -0.018em;
+  margin-bottom: 4px;
+}
+.mod-card__sub { font-size: 13px; color: var(--mute); line-height: 1.4; }
+.mod-card.is-primary .mod-card__title { color: var(--paper); }
+.mod-card__arrow {
+  position: absolute; top: 22px; right: 22px;
+  color: var(--mute-2); opacity: 0;
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.mod-card:hover .mod-card__arrow { opacity: 1; transform: translate(2px, -2px); }
+
+/* Lower 2-col: pipeline + AI */
+.lower {
+  display: grid; grid-template-columns: 1.4fr 1fr;
+  gap: 24px; margin-bottom: 32px;
+}
+@media (max-width: 980px) { .lower { grid-template-columns: 1fr; } }
+.panel {
+  background: var(--bone);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.panel__head {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.panel__head h3 {
+  font-family: var(--font-display);
+  font-size: 16px; font-weight: 600;
+  letter-spacing: -0.015em;
+}
+.panel__head a { font-size: 12px; color: var(--mute); }
+.panel__head a:hover { color: var(--forest); }
+
+.activity-row {
+  display: grid; grid-template-columns: 32px 1fr auto;
+  gap: 14px; padding: 14px 20px;
+  border-bottom: 1px solid var(--line);
+  align-items: center;
+}
+.activity-row:last-child { border-bottom: none; }
+.activity-row__icon {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--paper-2);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink-2);
+}
+.activity-row__icon.is-forest { background: var(--forest-soft); color: var(--forest); }
+.activity-row__icon.is-warn { background: var(--warn-soft); color: var(--warn); }
+.activity-row__icon.is-info { background: var(--info-soft); color: var(--info); }
+.activity-row__title {
+  font-size: 14px; font-weight: 500;
+  color: var(--ink); letter-spacing: -0.005em;
+  margin-bottom: 2px;
+}
+.activity-row__meta {
+  font-size: 12px; color: var(--mute);
+  font-variant-numeric: tabular-nums;
+}
+.activity-row__time {
+  font-family: var(--font-mono);
+  font-size: 11px; color: var(--mute-2);
+  letter-spacing: 0.04em; text-align: right;
+}
+
+.pipeline { padding: 18px 20px; display: grid; grid-template-columns: 1fr; gap: 14px; }
+.pipe-row { display: flex; align-items: center; gap: 12px; }
+.pipe-row__label { width: 110px; flex-shrink: 0; font-size: 13px; color: var(--ink-2); font-weight: 500; letter-spacing: -0.005em; }
+.pipe-row__bar { flex: 1; height: 8px; background: var(--paper-2); border-radius: var(--r-pill); overflow: hidden; }
+.pipe-row__fill { height: 100%; border-radius: var(--r-pill); background: var(--ink); transition: width .8s var(--ease); }
+.pipe-row__count { width: 64px; text-align: right; font-family: var(--font-mono); font-size: 13px; font-weight: 500; color: var(--ink); letter-spacing: -0.005em; font-variant-numeric: tabular-nums; }
+.pipe-row__count .small { color: var(--mute); font-size: 11px; }
+
+.ai-card {
+  background: var(--ink); color: var(--paper);
+  border-radius: var(--r-lg);
+  padding: 26px 24px 22px;
+  position: relative; overflow: hidden;
+}
+.ai-card::after {
+  content: ''; position: absolute; right: -60px; bottom: -60px;
+  width: 200px; height: 200px; border-radius: 50%;
+  background: radial-gradient(circle, var(--forest-2) 0%, transparent 70%);
+  opacity: .35;
+}
+.ai-card__eyebrow {
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(247,245,238,.6); margin-bottom: 14px;
+  position: relative; z-index: 1;
+}
+.ai-card h3 {
+  font-family: var(--font-display);
+  font-size: 24px; font-weight: 600;
+  letter-spacing: -0.025em; line-height: 1.15;
+  color: var(--paper); margin-bottom: 10px;
+  position: relative; z-index: 1;
+}
+.ai-card p {
+  font-size: 14px; color: rgba(247,245,238,.7);
+  line-height: 1.55; margin-bottom: 18px;
+  position: relative; z-index: 1;
+}
+.ai-card__btn {
+  background: var(--paper); color: var(--ink);
+  border: none; height: 38px; padding: 0 16px;
+  border-radius: var(--r-pill);
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+  display: inline-flex; align-items: center; gap: 8px;
+  position: relative; z-index: 1;
+  transition: transform var(--dur) var(--ease);
+}
+.ai-card__btn:hover { transform: translateX(2px); }
+</style>
+</head>
+<body data-app="home">
+
+<div class="dash-scroll">
+
+  <!-- Hero -->
+  <div class="dash-hero">
+    <div>
+      <div class="dash-hero__eyebrow">Hoy en tu cuenta</div>
+      <h1><span id="dash-greet">Buenos días</span>, <em id="dash-firstname">—</em>.</h1>
+    </div>
+    <div class="dash-hero__date">
+      <span class="label">Fecha</span>
+      <span id="dash-date">— —</span>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi__label">Inmuebles activos</div>
+      <div class="kpi__value" id="kpi-props">—</div>
+      <div class="kpi__delta">
+        <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.306a11.95 11.95 0 015.814-5.518l2.74-1.22m0 0l-5.94-2.281m5.94 2.28l-2.28 5.941"/></svg>
+        <strong>+3</strong> esta semana
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi__label">Contactos en pipeline</div>
+      <div class="kpi__value" id="kpi-contacts">—</div>
+      <div class="kpi__delta"><strong>+12</strong> nuevos este mes</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi__label">Contratos en flujo</div>
+      <div class="kpi__value" id="kpi-contratos">—</div>
+      <div class="kpi__delta">3 esperando firma</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi__label">Comisión proyectada</div>
+      <div class="kpi__value">$1,240,000<span class="unit">MXN</span></div>
+      <div class="kpi__delta"><strong>+18%</strong> vs mes anterior</div>
+    </div>
+  </div>
+
+  <!-- Modules -->
+  <div class="sec-head">
+    <h2>Tu sistema operativo</h2>
+    <a href="#" aria-disabled="true">Personalizar</a>
+  </div>
+
+  <div class="mods-grid">
+    <a class="mod-card is-primary" href="propiedades.html">
+      <div class="mod-card__icon">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.121 0L22.28 12M4.5 9.75v10.125a1.125 1.125 0 001.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125a1.125 1.125 0 001.125-1.125V9.75"/></svg>
+      </div>
+      <div class="mod-card__title">Inmuebles</div>
+      <div class="mod-card__sub">Tu inventario, fotos, ubicación y precio.</div>
+      <div class="mod-card__arrow"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg></div>
+    </a>
+    <a class="mod-card" href="contactos.html">
+      <div class="mod-card__icon">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+      </div>
+      <div class="mod-card__title">Contactos</div>
+      <div class="mod-card__sub">CRM de prospectos, vendedores y compradores.</div>
+      <div class="mod-card__arrow"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg></div>
+    </a>
+    <a class="mod-card" href="contratos.html">
+      <div class="mod-card__icon">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+      </div>
+      <div class="mod-card__title">Contratos</div>
+      <div class="mod-card__sub">Generación, firma y seguimiento de documentos.</div>
+      <div class="mod-card__arrow"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg></div>
+    </a>
+    <a class="mod-card" href="avm.html">
+      <div class="mod-card__icon">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.306a11.95 11.95 0 015.814-5.518l2.74-1.22m0 0l-5.94-2.281m5.94 2.28l-2.28 5.941"/></svg>
+      </div>
+      <div class="mod-card__title">AVM</div>
+      <div class="mod-card__sub">Valuación automática por inteligencia comparativa.</div>
+      <div class="mod-card__arrow"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg></div>
+    </a>
+    <a class="mod-card" href="ficha.html">
+      <div class="mod-card__icon">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"/></svg>
+      </div>
+      <div class="mod-card__title">Ficha técnica</div>
+      <div class="mod-card__sub">Hojas técnicas listas para compartir con clientes.</div>
+      <div class="mod-card__arrow"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg></div>
+    </a>
+    <a class="mod-card" href="isr.html">
+      <div class="mod-card__icon">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><rect x="4.5" y="3" width="15" height="18" rx="2.25" ry="2.25" stroke-linejoin="round"/><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 6.75h9v3h-9zM8.25 13.5h.008v.008H8.25V13.5zm0 3h.008v.008H8.25V16.5zm3.75-3h.008v.008H12V13.5zm0 3h.008v.008H12V16.5zm3.75-3h.008v.008h-.008V13.5zm0 3h.008v.008h-.008V16.5z"/></svg>
+      </div>
+      <div class="mod-card__title">Cálculo de ISR</div>
+      <div class="mod-card__sub">Estimación de impuesto sobre enajenación.</div>
+      <div class="mod-card__arrow"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg></div>
+    </a>
+  </div>
+
+  <!-- Lower: pipeline + AI -->
+  <div class="lower">
+
+    <div class="panel">
+      <div class="panel__head">
+        <h3>Pipeline</h3>
+        <a href="contactos.html">Ver todos →</a>
+      </div>
+      <div class="pipeline">
+        <div class="pipe-row">
+          <div class="pipe-row__label">Prospectos</div>
+          <div class="pipe-row__bar"><div class="pipe-row__fill" style="width: 88%;"></div></div>
+          <div class="pipe-row__count">42 <span class="small">contactos</span></div>
+        </div>
+        <div class="pipe-row">
+          <div class="pipe-row__label">Visitas</div>
+          <div class="pipe-row__bar"><div class="pipe-row__fill" style="width: 56%; background: var(--forest);"></div></div>
+          <div class="pipe-row__count">14 <span class="small">en agenda</span></div>
+        </div>
+        <div class="pipe-row">
+          <div class="pipe-row__label">Negociación</div>
+          <div class="pipe-row__bar"><div class="pipe-row__fill" style="width: 32%; background: var(--forest);"></div></div>
+          <div class="pipe-row__count">6 <span class="small">activos</span></div>
+        </div>
+        <div class="pipe-row">
+          <div class="pipe-row__label">Cerrados</div>
+          <div class="pipe-row__bar"><div class="pipe-row__fill" style="width: 18%; background: var(--ink);"></div></div>
+          <div class="pipe-row__count">3 <span class="small">este mes</span></div>
+        </div>
+      </div>
+      <div style="border-top: 1px solid var(--line);">
+        <div class="activity-row">
+          <div class="activity-row__icon is-forest">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <div>
+            <div class="activity-row__title">Casa Las Palmas — firma confirmada</div>
+            <div class="activity-row__meta">$3,200,000 · Comisión: $96,000</div>
+          </div>
+          <div class="activity-row__time">hoy</div>
+        </div>
+        <div class="activity-row">
+          <div class="activity-row__icon is-info">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.121 0L22.28 12M4.5 9.75v10.125a1.125 1.125 0 001.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125a1.125 1.125 0 001.125-1.125V9.75"/></svg>
+          </div>
+          <div>
+            <div class="activity-row__title">Nueva propiedad publicada — Depto. Centro</div>
+            <div class="activity-row__meta">$1,850,000 · Renta · 2 rec</div>
+          </div>
+          <div class="activity-row__time">2h</div>
+        </div>
+        <div class="activity-row">
+          <div class="activity-row__icon is-warn">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+          </div>
+          <div>
+            <div class="activity-row__title">Contrato esperando firma — Loma Bonita</div>
+            <div class="activity-row__meta">Vence en 2 días</div>
+          </div>
+          <div class="activity-row__time">ayer</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ai-card">
+      <div class="ai-card__eyebrow">Broquer · IA</div>
+      <h3>Tu mercado se movió un 4.2% esta semana.</h3>
+      <p>Las casas en Las Palmas subieron en valuación promedio. Considera ajustar tres propiedades activas para mantenerte competitivo.</p>
+      <button class="ai-card__btn" type="button" onclick="window.location.href='avm.html'">
+        Abrir AVM
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+      </button>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="app-shell.js" defer></script>
+
+<script>
+/* Date + greeting (no-auth, runs immediately) */
+(function(){
+  const d = new Date();
+  const fmt = d.toLocaleDateString('es-MX', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  const dateEl = document.getElementById('dash-date');
+  if (dateEl) dateEl.textContent = fmt.charAt(0).toUpperCase() + fmt.slice(1);
+  const h = d.getHours();
+  const greet = h < 12 ? 'Buenos días' : (h < 19 ? 'Buenas tardes' : 'Buenas noches');
+  const gEl = document.getElementById('dash-greet');
+  if (gEl) gEl.textContent = greet;
+})();
+
+/* When the shell finishes auth, populate first name + KPIs */
+window.addEventListener('brokr-shell-ready', async (e) => {
+  const profile = e.detail?.profile;
+  const first = (profile?.fullName || '').split(' ')[0];
+  const fnEl = document.getElementById('dash-firstname');
+  if (fnEl) fnEl.textContent = first || '—';
+
+  const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
+  const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
+  const tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || SB_KEY;
+  async function fx(p){
+    try {
+      const r = await fetch(SB_URL + '/rest/v1/' + p, { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok } });
+      if (!r.ok) return [];
+      return await r.json();
+    } catch (err) { return []; }
+  }
+  try {
+    const props = await fx('propiedades?select=id,estatus&limit=500');
+    document.getElementById('kpi-props').textContent = props.filter(p => p.estatus === 'activa').length || props.length || 0;
+  } catch (e) {}
+  try {
+    const cts = await fx('contactos?select=id&limit=500');
+    document.getElementById('kpi-contacts').textContent = cts.length;
+  } catch (e) {}
+  try {
+    const cn = await fx('contratos?select=id&limit=500');
+    document.getElementById('kpi-contratos').textContent = cn.length;
+  } catch (e) {}
+});
+</script>
+</body>
+</html>

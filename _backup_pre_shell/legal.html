@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<link rel="icon" type="image/png" href="isotipo-broquer.png"/>
+<link rel="apple-touch-icon" href="isotipo-broquer.png"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style id="broquer-skin">
+  html,body{background:var(--paper)!important;color:var(--ink)!important;font-family:var(--font-sans)!important;letter-spacing:-0.01em}
+  *{font-family:var(--font-sans)!important}
+  h1,h2,h3,.title,.heading{font-family:var(--font-display)!important;letter-spacing:-0.02em!important;color:var(--ink)!important}
+  code,pre,.mono,kbd{font-family:var(--font-mono)!important}
+  /* Surfaces */
+  body, .screen, .panel, .container, .wrap, main { background:var(--paper)!important; color:var(--ink)!important; }
+  .card, .ui-card, .box, .module, .pf-card, .stat-pill, .module-card, .cat-module, .profile-section, .activity-item, .news-ticker-wrap, .tile, .section, section, article {
+    background:var(--bone)!important; border:1px solid var(--line)!important; border-radius:var(--r-lg)!important;
+    color:var(--ink)!important; box-shadow:0 1px 2px rgba(10,10,10,.03)!important;
+  }
+  /* Headers/topbars that were navy → ivory */
+  .home-header, .modules-header, .profile-header, .panel-topbar, header, .topbar, .nav-top, .app-header, .hdr, .navbar {
+    background:var(--paper)!important; color:var(--ink)!important; border-bottom:1px solid var(--line)!important;
+  }
+  .home-header *, .modules-header *, .profile-header *, .panel-topbar *, header *, .topbar *, .nav-top *, .app-header *, .hdr *, .navbar * { color:var(--ink)!important; }
+  /* Inputs */
+  input, select, textarea {
+    background:var(--bone)!important; border:1px solid var(--line-2)!important; color:var(--ink)!important;
+    border-radius:var(--r)!important; font-family:var(--font-sans)!important; font-size:14px!important; padding:10px 12px!important;
+    outline:none!important; transition:border-color .2s ease;
+  }
+  input:focus, select:focus, textarea:focus { border-color:var(--ink)!important; }
+  /* Buttons */
+  button, .btn, .ui-btn, .isr-calc-btn, .props-new-btn, .pe-save-btn, .prf-stripe-btn.primary, .pf-save-btn, .btn-pdf, .pe-toggle-slider {
+    font-family:var(--font-sans)!important; letter-spacing:-0.005em!important;
+  }
+  button:not([class]), .btn-primary, .ui-btn, .pf-save-btn, .pe-save-btn, .isr-calc-btn, .props-new-btn, .btn-pdf, .prf-stripe-btn.primary {
+    background:var(--ink)!important; color:var(--paper)!important;
+    border:none!important; border-radius:var(--r)!important;
+    padding:11px 18px!important; font-weight:600!important; cursor:pointer!important;
+    box-shadow:0 1px 2px rgba(10,10,10,.08)!important; font-size:14px!important;
+  }
+  button:not([class]):hover, .btn-primary:hover, .ui-btn:hover, .pf-save-btn:hover, .pe-save-btn:hover, .isr-calc-btn:hover { opacity:.92!important; }
+  /* Badges, chips */
+  .badge, .chip, .pill, .stat-pill .lbl, .res-tipo-lbl, .isr-badge {
+    background:var(--paper-2)!important; color:var(--ink-2)!important; border:1px solid var(--line)!important;
+    border-radius:var(--r-pill)!important; padding:3px 10px!important; font-size:11px!important; font-weight:500!important;
+  }
+  /* Accent text colors that were navy or teal */
+  [class*="navy"], [style*="color:#0f1829"], [style*="color: #0f1829"], [style*="color:#162035"] { color:var(--ink)!important; }
+  /* Links */
+  a { color:var(--ink)!important; text-decoration:none; }
+  a:hover { color:var(--forest)!important; }
+  /* Scrollbars */
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-thumb { background:var(--line-2); border-radius:3px; }
+  /* Drop garish gradients on home-header */
+  .home-header::before, .home-header::after { display:none!important; }
+  /* Misc legacy */
+  .app-sidebar { background:var(--paper)!important; border-right:1px solid var(--line)!important; }
+  .proto-nav, .bottom-nav, .tabbar { background:var(--bone)!important; border-top:1px solid var(--line)!important; }
+  /* Force any greeting "name" or page title light text to be dark */
+  .greeting-text .hello, .greeting-text .name, .profile-name, .profile-sub, .panel-title, .modules-header h2 { color:var(--ink)!important; }
+  /* Avatar-style circles that were translucent on navy → bone */
+  .home-avatar, .profile-avatar, .pr-icon, .act-icon, .scw-avatar, .notif-bell, .stat-pill {
+    background:var(--bone)!important; border:1px solid var(--line)!important; color:var(--ink)!important;
+  }
+</style>
+
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Broquer® — Aviso Legal</title>
+<link rel="icon" type="image/png" href="isotipo-broquer.png">
+<link rel="apple-touch-icon" href="isotipo-broquer.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --navy:    #0f1829;
+  --teal:    #0f1829;
+  --white:   #ffffff;
+  --gray-100:#f5f6f8;
+  --gray-200:#e8eaee;
+  --gray-400:#9aa0ad;
+  --gray-600:#5a6070;
+  --text:    #0f0f0f;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  font-family: 'Poppins', sans-serif;
+  background: var(--gray-100);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* ── HEADER ── */
+.legal-header {
+  background: var(--navy);
+  padding: 20px 24px 24px;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.2);
+}
+.legal-header-inner {
+  max-width: 760px; margin: 0 auto;
+  display: flex; align-items: center; gap: 16px;
+}
+.back-btn {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 10px; color: white;
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; text-decoration: none; flex-shrink: 0;
+  font-size: 18px; transition: background 0.15s;
+}
+.back-btn:hover { background: rgba(255,255,255,0.2); }
+.legal-header h1 {
+  font-size: 16px; font-weight: 700; color: white;
+}
+.legal-header p {
+  font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 1px;
+}
+
+/* ── TABS ── */
+.tabs-wrap {
+  background: white;
+  border-bottom: 1px solid var(--gray-200);
+  position: sticky; top: 76px; z-index: 99;
+}
+.tabs {
+  max-width: 760px; margin: 0 auto;
+  display: flex; overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab-btn {
+  flex-shrink: 0; padding: 14px 20px;
+  background: none; border: none; border-bottom: 2px solid transparent;
+  font-size: 12px; font-weight: 600; color: var(--gray-400);
+  cursor: pointer; font-family: 'Poppins', sans-serif;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.tab-btn.active {
+  color: var(--navy); border-bottom-color: var(--navy);
+}
+
+/* ── CONTENT ── */
+.legal-body {
+  max-width: 760px; margin: 0 auto;
+  padding: 28px 20px 60px;
+}
+.legal-section { display: none; }
+.legal-section.active { display: block; }
+
+.doc-header {
+  background: white; border-radius: 16px;
+  padding: 24px; margin-bottom: 20px;
+  border: 1px solid var(--gray-200);
+}
+.doc-header .doc-badge {
+  display: inline-block;
+  background: rgba(15,24,41,0.06); color: var(--navy);
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; padding: 3px 10px; border-radius: 20px;
+  margin-bottom: 10px;
+}
+.doc-header h2 {
+  font-size: 20px; font-weight: 700; color: var(--navy);
+  margin-bottom: 6px;
+}
+.doc-header .doc-meta {
+  font-size: 11px; color: var(--gray-400);
+}
+
+.doc-card {
+  background: white; border-radius: 16px;
+  padding: 24px; margin-bottom: 14px;
+  border: 1px solid var(--gray-200);
+}
+.doc-card h3 {
+  font-size: 13px; font-weight: 700; color: var(--navy);
+  margin-bottom: 12px; padding-bottom: 10px;
+  border-bottom: 1px solid var(--gray-200);
+  display: flex; align-items: center; gap: 8px;
+}
+.doc-card h3 .num {
+  width: 22px; height: 22px; border-radius: 7px;
+  background: var(--navy); color: white;
+  font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.doc-card p { font-size: 13px; color: var(--gray-600); margin-bottom: 10px; }
+.doc-card p:last-child { margin-bottom: 0; }
+.doc-card ul {
+  padding-left: 18px; margin: 8px 0;
+}
+.doc-card ul li {
+  font-size: 13px; color: var(--gray-600);
+  margin-bottom: 6px; line-height: 1.6;
+}
+.doc-card strong { color: var(--text); font-weight: 600; }
+
+.highlight-box {
+  background: rgba(15,24,41,0.04);
+  border-left: 3px solid var(--navy);
+  border-radius: 0 10px 10px 0;
+  padding: 12px 16px; margin: 12px 0;
+  font-size: 12px; color: var(--gray-600); line-height: 1.6;
+}
+.warn-box {
+  background: rgba(245,158,11,0.07);
+  border-left: 3px solid #f59e0b;
+  border-radius: 0 10px 10px 0;
+  padding: 12px 16px; margin: 12px 0;
+  font-size: 12px; color: #92400e; line-height: 1.6;
+}
+.price-table {
+  width: 100%; border-collapse: collapse; margin: 12px 0;
+  font-size: 13px;
+}
+.price-table th {
+  background: var(--gray-100); padding: 10px 14px;
+  text-align: left; font-weight: 600; font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray-600);
+}
+.price-table td {
+  padding: 10px 14px; border-top: 1px solid var(--gray-200);
+  color: var(--gray-600);
+}
+.price-table td:last-child { font-weight: 600; color: var(--text); }
+
+.contact-row {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--gray-100); border-radius: 12px;
+  padding: 14px; margin-top: 10px;
+  text-decoration: none;
+}
+.contact-row .ci {
+  width: 38px; height: 38px; border-radius: 11px;
+  background: var(--navy); display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.contact-row .ct { font-size: 13px; font-weight: 600; color: var(--text); }
+.contact-row .cs { font-size: 11px; color: var(--gray-400); }
+
+@media (max-width: 480px) {
+  .legal-body { padding: 20px 14px 60px; }
+  .doc-card { padding: 18px; }
+}
+</style>
+</head>
+<body>
+
+<div class="legal-header">
+  <div class="legal-header-inner">
+    <a class="back-btn" href="index.html">←</a>
+    <div>
+      <h1>Aviso Legal · Broquer®</h1>
+      <p>TL3 Technologies, S.A. de C.V. · Última actualización: abril 2026</p>
+    </div>
+  </div>
+</div>
+
+<div class="tabs-wrap">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('terminos')">Términos y condiciones</button>
+    <button class="tab-btn" onclick="showTab('suscripcion')">Contrato de suscripción</button>
+    <button class="tab-btn" onclick="showTab('privacidad')">Aviso de privacidad</button>
+  </div>
+</div>
+
+<div class="legal-body">
+
+  <!-- ══ TÉRMINOS Y CONDICIONES ══ -->
+  <div class="legal-section active" id="sec-terminos">
+    <div class="doc-header">
+      <div class="doc-badge">Términos y condiciones de uso</div>
+      <h2>Condiciones generales de la plataforma Broquer®</h2>
+      <div class="doc-meta">Emisor: TL3 Technologies, S.A. de C.V. · Vigencia: a partir de abril de 2026</div>
+    </div>
+
+    <div class="doc-card">
+      <h3><span class="num">1</span> Aceptación</h3>
+      <p>Al acceder, registrarse o utilizar la plataforma <strong>Broquer®</strong>, el usuario acepta en su totalidad los presentes Términos y Condiciones de Uso (en adelante "los Términos"). Si no está de acuerdo con alguna de las disposiciones aquí establecidas, deberá abstenerse de utilizar la plataforma.</p>
+      <p>Broquer® es una plataforma de software como servicio (SaaS) propiedad y operada por <strong>TL3 Technologies, S.A. de C.V.</strong>, empresa constituida conforme a las leyes de los Estados Unidos Mexicanos.</p>
+    </div>
+
+    <div class="doc-card">
+      <h3><span class="num">2</span> Descripción del servicio</h3>
+      <p>Broquer® es una plataforma digital dirigida a profesionales del sector inmobiliario en México. Ofrece herramientas para:</p>
+      <ul>
+        <li>Generación de fichas técnicas de propiedades</li>
+        <li>Cálculo estimativo de ISR por enajenación de inmuebles</li>
+        <li>Valuación automatizada de propiedades (AVM)</li>
+        <li>Generación de contratos inmobiliarios</li>
+        <li>Gestión de cartera de inmuebles</li>
+        <li>Asistente de inteligencia artificial (Shaark)</li>
+      </ul>
+      <div class="warn-box"><strong>Importante:</strong> Los cálculos, valuaciones y contratos generados por Broquer® tienen carácter orientativo y de apoyo profesional. No sustituyen la opinión de un notario, abogado, contador o valuador certificado. TL3 Technologies, S.A. de C.V. no asume responsabilidad por decisiones tomadas con base exclusiva en los resultados de la plataforma.</div>
+    </div>
+
+    <div class="doc-card">
+      <h3><span class="num">3</span> Registro y cuenta de usuario</h3>
+      <p>Para utilizar Broquer® es necesario crear una cuenta con información verídica y actualizada. El usuario es responsable de:</p>
+      <ul>
+        <li>Mantener la confidencialidad de sus credenciales de acceso</li>
+        <li>Notificar de inmediato cualquier uso no autorizado de su cuenta</li>
+        <li>No compartir su cuenta con terceros</li>
+        <li>Actualizar su información de contacto cuando sea necesario</li>
+      </ul>
+      <p>Cada suscripción es personal e intransferible. El acceso simultáneo desde múltiples dispositivos de distintos usuarios bajo una misma cuenta está prohibido y puede resultar en la suspensión del servicio.</p>
+    </div>
+
+    <div class="doc-card">
+      <h3><span class="num">4</span> Uso permitido y prohibido</h3>
+      <p>El usuario se compromete a utilizar Broquer® exclusivamente para fines lícitos relacionados con la actividad inmobiliaria profesional. Queda estrictamente prohibido:</p>
+      <ul>
+        <li>Reproducir, distribuir, vender o sublicenciar el software o cualquiera de sus componentes</li>
+        <li>Realizar ingeniería inversa o intentar acceder al código fuente</li>
+        <li>Utilizar la plataforma para actividades ilícitas, fraudes o lavado de dinero</li>
+        <li>Introducir virus, malware o cualquier código malicioso</li>
+        <li>Sobrecargar los servidores mediante acceso automatizado no autorizado</li>
+        <li>Usar los datos obtenidos de la plataforma para fines distintos al ejercicio profesional propio del usuario</li>
+      </ul>
+    </div>
+
+    <div class="doc-card">
+      <h3><span class="num">5</span> Propiedad intelectual</h3>
+      <p>Todos los derechos de propiedad intelectual sobre Broquer®, incluyendo sin limitación el software, diseño, logotipo, marca registrada, bases de datos, algoritmos y contenidos, son propiedad exclusiva de <strong>TL3 Technologies, S.A. de C.V.</strong></p>
+      <p>El uso de la plataforma no otorga al usuario ningún derecho de propiedad sobre los elementos anteriores. Broquer® es una marca registrada. Queda prohibida su reproducción total o parcial sin autorización escrita.</p>
+    </div>
+
+    <div class="doc-card">
+      <h3><span class="num">6</span> Limitación de responsabilidad</h3>
+      <p>TL3 Technologies, S.A. de C.V. no será responsable por:</p>
+      <ul>
+        <li>Pérdidas económicas derivadas del uso o imposibilidad de uso de la plataforma</li>
+        <li>Interrupciones del servicio por mantenimiento, fallas técnicas o causas de fuerza mayor</li>
+        <li>Errores en los cálculos motivados por información incorrecta proporcionada por el usuario</li>
+        <li>Decisiones comerciales, legales o fiscales tomadas con base en los resultados de la plataforma</li>
+        <li>Contenido generado por inteligencia artificial que requiera verificación profesional</li>
+      </ul>
+    </div>
+
+    <div class="doc-card">
+      <h3><span class="num">7</span> Modificaciones y terminación</h3>
+      <p>TL3 Technologies, S.A. de C.V. se reserva el derecho de modificar los presentes Términos en cualquier momento. Los cambios serán notificados al usuario mediante la plataforma o correo electrónico con al menos <strong>15 días naturales</strong> de anticipación.</p>
+      <p>El uso continuado de la plataforma tras la notificación de cambios implica la aceptación de los nuevos términos. TL3 Technologies, S.A. de C.V. podrá suspender o cancelar el acceso a cualquier usuario que incumpla los presentes Términos, sin responsabilidad alguna.</p>
+    </div>
+
+    <div class="doc-card">
+      <h3><span class="num">8</span> Legislación aplicable</h3>
+      <p>Los presentes Términos se rigen por las leyes vigentes en los Estados Unidos Mexicanos. Para cualquier controversia derivada de su interpretación o cumplimiento, las partes se someten a la jurisdicción de los tribunales competentes de la ciudad de <strong>Morelia, Michoacán</strong>, renunciando expresamente a cualquier otro fuero que pudiera corresponderles.</p>
+    </div>
+  </div>
+
+  <!-- ══ CONTRATO DE SUSCRIPCIÓN ══ -->
+  <div class="legal-section" id="sec-suscripcion">
+    <div class="doc-header">
+      <div class="doc-badge">Contrato de suscripción</div>
+      <h2>Términos comerciales del servicio Broquer®</h2>
+      <div class="doc-meta">Emisor: TL3 Technologies, S.A. de C.V. · Vigencia: a partir de abril de 2026</div>
+    </div>
+
+    <div class="doc-card">
+      <h3><span class="num">1</span> Partes del contrato</h3>
+      <p><strong>Proveedor:</strong> TL3 Technologies, S.A. de C.V., empresa legalmente constituida en los Estados Unidos Mexicanos, titular y operadora de la plataforma Broquer®.</p>
+      <p><strong>Suscriptor:</strong> Persona física o moral que contrata el acceso a la plataforma Broquer® mediante el registro y pago de una suscripción activa.</p>
+    </div>
+
+    <div class="doc-card">
+      <h3><span class="num">2</span> Planes y precios</h3>
+      <p>Broquer® ofrece los siguientes planes de suscripción con cobro mensual recurrente:</p>
+      <table class="price-table">
+        <thead>
+          <tr>
+            <th>Plan</th>
+            <th>Descripción</th>
+            <th>Precio mensual</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Free</strong></td>
+            <td>Acceso al módulo de fichas técnicas manuales</td>
+            <td>$0 MXN</td>
+          </tr>
+          <tr>
+            <td><strong>Personalizado</strong></td>
+            <td>Acceso a módulos individuales seleccionados por el usuario</td>
+            <td>$199 MXN por módulo</td>
+          </tr>
+          <tr>
+            <td><strong>Pro</strong></td>
+            <td>Acceso completo a todos los módulos de la plataforma</td>
+            <td>$799 MXN</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="highlight-box">Los precios indicados son en pesos mexicanos (MXN) e incluyen IVA. TL3 Technologies, S.A. de C.V. se reserva el derecho de modificar los precios con previo aviso de 30 días naturales al suscriptor.</div>
+    </div>
+
+    <div class="doc-card">
+      <h3><span class="num">3</span> Facturación y pago</h3>
+      <p>El cobro de la suscripción es <strong>mensual y automático</strong> mediante los métodos de pago habilitados en la plataforma (tarjeta de crédito o débito, procesados por Stripe). El primer cobro se realiza al momento de la contratación y los subsecuentes en la misma fecha de cada mes.</p>
+      <p>En caso de que el pago no pueda procesarse, el acceso a los módulos de pago quedará suspendido hasta regularizar el adeudo. El suscriptor recibirá una notificación por correo electrónico.</p>
+      <p>A solicitud del suscriptor, TL3 Technologies, S.A. de C.V. podrá emitir comprobante fiscal digital (CFDI) por los cargos realizados.</p>
+    </div>
+
+    <div class="doc-card">
+      <h3><span class="num">4</span> Vigencia y renovación</h3>
+      <p>La suscripción tiene vigencia mensual y se renueva automáticamente al término de cada período, salvo que el suscriptor la cancele antes de la fecha de renovación.</p>
+      <p>El suscriptor puede cancelar su suscripción en cualquier momento desde la sección <strong>Perfil → Suscripción</strong> dentro de la plataforma. La cancelación tendrá efecto al término del período mensual en curso, sin reembolso de la fracción proporcional no utilizada.</p>
+    </div>
+
+    <div class="doc-card">
+      <h3><span class="num">5</span> Política de reembolsos</h3>
+      <p>TL3 Technologies, S.A. de C.V. no realiza reembolsos por períodos parcialmente utilizados. Sin embargo, si el suscriptor experimenta una falla grave del servicio imputable al proveedor durante más de <strong>72 horas continuas</strong> en un período de facturación, tendrá derecho a solicitar un crédito equivalente a los días afectados, aplicable al siguiente período.</p>
+      <p>Las solicitudes de crédito deben realizarse dentro de los 5 días hábiles posteriores al incidente, mediante correo a <strong>brokr@navarroai.com.mx</strong>.</p>
+    </div>
+
+    <div class="doc-card">
+      <h3><span class="num">6</span> Cambio de plan</h3>
+      <p>El suscriptor puede cambiar de plan en cualquier momento desde la sección <strong>Perfil → Suscripción</strong>. Los cambios a un plan superior (upgrade) tienen efecto inmediato y se cobra la diferencia proporcional al tiempo restante del período. Los cambios a un plan inferior (downgrade) tienen efecto al inicio del siguiente período de facturación.</p>
+    </div>
+
+    <div class="doc-card">
+      <h3><span class="num">7</span> Suspensión y cancelación por el proveedor</h3>
+      <p>TL3 Technologies, S.A. de C.V. podrá suspender o cancelar la suscripción de forma inmediata y sin reembolso en los siguientes casos:</p>
+      <ul>
+        <li>Incumplimiento de los Términos y Condiciones de Uso</li>
+        <li>Uso fraudulento o ilícito de la plataforma</li>
+        <li>Compartir credenciales de acceso con terceros no autorizados</li>
+        <li>Actividades que comprometan la seguridad o disponibilidad del servicio</li>
+      </ul>
+    </div>
+
+    <div class="doc-card">
+      <h3><span class="num">8</span> Contacto comercial</h3>
+      <a class="contact-row" href="mailto:brokr@navarroai.com.mx?subject=Suscripción Broquer">
+        <div class="ci"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg></div>
+        <div>
+          <div class="ct">brokr@navarroai.com.mx</div>
+          <div class="cs">Dudas sobre facturación y suscripciones</div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- ══ AVISO DE PRIVACIDAD ══ -->
+  <div class="legal-section" id="sec-privacidad">
+    <div class="doc-header">
+      <div class="doc-badge">Aviso de privacidad integral</div>
+      <h2>Tratamiento de datos personales</h2>
+      <div class="doc-meta">Conforme a la LFPDPPP · Emisor: TL3 Technologies, S.A. de C.V. · Abril 2026</div>
+    </div>
+
+    <div class="doc-card">
+      <h3><span class="num">1</span> Responsable del tratamiento</h3>
+      <p><strong>TL3 Technologies, S.A. de C.V.</strong> (en adelante "el Responsable"), con domicilio en proceso de registro ante el IMPI, es responsable del tratamiento de los datos personales que usted proporcione al usar la plataforma Broquer®.</p>
+      <p>Para cualquier consulta relacionada con sus datos personales puede contactarnos en: <strong>brokr@navarroai.com.mx</strong></p>
+    </div>
+
+    <div class="doc-card">
+      <h3><span class="num">2</span> Datos personales que recabamos</h3>
+      <p>El Responsable recaba las siguientes categorías de datos personales:</p>
+      <p><strong>Datos de identificación y contacto:</strong></p>
+      <ul>
+        <li>Nombre completo</li>
+        <li>Correo electrónico</li>
+        <li>Número de teléfono</li>
+        <li>Ciudad de residencia</li>
+        <li>Cédula profesional (opcional)</li>
+        <li>Fotografía de perfil (opcional)</li>
+      </ul>
+      <p><strong>Datos de uso de la plataforma:</strong></p>
+      <ul>
+        <li>Historial de módulos utilizados</li>
+        <li>Propiedades registradas en la plataforma</li>
+        <li>Configuraciones y preferencias del usuario</li>
+        <li>Datos de API de terceros ingresados por el usuario (ej. EasyBroker)</li>
+      </ul>
+      <p><strong>Datos de pago:</strong></p>
+      <ul>
+        <li>Información de tarjeta de crédito o débito, procesada y almacenada exclusivamente por <strong>Stripe, Inc.</strong> El Responsable no almacena datos de tarjeta en sus servidores.</li>
+      </ul>
+      <p><strong>Datos técnicos:</strong></p>
+      <ul>
+        <li>Dirección IP, tipo de dispositivo, navegador y sistema operativo</li>
+        <li>Registro de accesos y actividad dentro de la plataforma</li>
+      </ul>
+    </div>
+
+    <div class="doc-card">
+      <h3><span class="num">3</span> Finalidades del tratamiento</h3>
+      <p><strong>Finalidades primarias</strong> (necesarias para la prestación del servicio):</p>
+      <ul>
+        <li>Crear y gestionar la cuenta del usuario</li>
+        <li>Proveer acceso a los módulos contratados</li>
+        <li>Procesar pagos y gestionar la suscripción</li>
+        <li>Brindar soporte técnico y atención al cliente</li>
+        <li>Cumplir obligaciones legales y fiscales</li>
+      </ul>
+      <p><strong>Finalidades secundarias</strong> (puede oponerse a estas):</p>
+      <ul>
+        <li>Envío de comunicaciones sobre nuevas funcionalidades y actualizaciones de Broquer®</li>
+        <li>Análisis estadístico agregado y anónimo para mejorar la plataforma</li>
+        <li>Encuestas de satisfacción del servicio</li>
+      </ul>
+      <div class="highlight-box">Si no desea que sus datos sean tratados para las finalidades secundarias, puede manifestarlo en cualquier momento escribiendo a <strong>brokr@navarroai.com.mx</strong> con el asunto "Oposición finalidades secundarias".</div>
+    </div>
+
+    <div class="doc-card">
+      <h3><span class="num">4</span> Transferencia de datos</h3>
+      <p>Sus datos personales pueden ser compartidos con los siguientes terceros, exclusivamente para los fines indicados:</p>
+      <ul>
+        <li><strong>Supabase, Inc.</strong> — almacenamiento seguro de datos de usuario y autenticación</li>
+        <li><strong>Stripe, Inc.</strong> — procesamiento de pagos</li>
+        <li><strong>Groq, Inc.</strong> — procesamiento de consultas al asistente de inteligencia artificial</li>
+        <li><strong>Autoridades competentes</strong> — cuando sea requerido por ley o resolución judicial</li>
+      </ul>
+      <p>El Responsable no vende, arrienda ni transfiere sus datos personales a terceros con fines comerciales propios.</p>
+    </div>
+
+    <div class="doc-card">
+      <h3><span class="num">5</span> Derechos ARCO</h3>
+      <p>Usted tiene derecho a <strong>Acceder, Rectificar, Cancelar u Oponerse</strong> al tratamiento de sus datos personales (derechos ARCO), conforme a lo establecido en la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP).</p>
+      <p>Para ejercer sus derechos ARCO, envíe una solicitud a <strong>brokr@navarroai.com.mx</strong> con:</p>
+      <ul>
+        <li>Nombre completo y correo registrado en la plataforma</li>
+        <li>Descripción clara del derecho que desea ejercer</li>
+        <li>Cualquier documento que facilite la localización de sus datos</li>
+      </ul>
+      <p>El Responsable dará respuesta en un plazo máximo de <strong>20 días hábiles</strong> a partir de la recepción de la solicitud.</p>
+      <p>Adicionalmente, desde la plataforma puede solicitar la <strong>eliminación de su cuenta y datos</strong> en la sección Perfil → Eliminar cuenta.</p>
+    </div>
+
+    <div class="doc-card">
+      <h3><span class="num">6</span> Seguridad de los datos</h3>
+      <p>El Responsable implementa medidas técnicas y organizativas para proteger sus datos personales contra pérdida, uso indebido, acceso no autorizado, divulgación, alteración o destrucción, incluyendo:</p>
+      <ul>
+        <li>Cifrado en tránsito mediante HTTPS/TLS</li>
+        <li>Almacenamiento seguro con cifrado en reposo</li>
+        <li>Autenticación de dos factores disponible para el usuario</li>
+        <li>Acceso restringido a los datos únicamente al personal autorizado</li>
+      </ul>
+    </div>
+
+    <div class="doc-card">
+      <h3><span class="num">7</span> Uso de cookies y tecnologías similares</h3>
+      <p>Broquer® utiliza <strong>almacenamiento local del navegador</strong> (localStorage) para mantener la sesión del usuario activa y guardar preferencias de uso. No se utilizan cookies de rastreo publicitario de terceros.</p>
+      <p>El usuario puede limpiar el almacenamiento local desde la configuración de su navegador en cualquier momento, lo que cerrará su sesión activa.</p>
+    </div>
+
+    <div class="doc-card">
+      <h3><span class="num">8</span> Cambios al aviso de privacidad</h3>
+      <p>El Responsable se reserva el derecho de modificar el presente Aviso de Privacidad. Cualquier modificación será notificada al usuario mediante la plataforma o correo electrónico. El uso continuado de Broquer® tras la notificación implica la aceptación de los cambios.</p>
+      <p>La versión vigente siempre estará disponible en <strong>app.navarroai.com.mx/legal.html</strong></p>
+    </div>
+
+    <div class="doc-card">
+      <h3><span class="num">9</span> Autoridad competente</h3>
+      <p>Si considera que el tratamiento de sus datos no se ha realizado conforme a la LFPDPPP, tiene derecho a acudir al <strong>Instituto Nacional de Transparencia, Acceso a la Información y Protección de Datos Personales (INAI)</strong> en <strong>www.inai.org.mx</strong></p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function showTab(id) {
+  document.querySelectorAll('.legal-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>

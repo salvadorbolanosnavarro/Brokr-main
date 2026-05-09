@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Broquer — AVM</title>
+  <link rel="icon" type="image/png" href="isotipo-broquer.png">
+  <link rel="apple-touch-icon" href="isotipo-broquer.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <style>
+    :root {
+      --navy:       #0f1829;
+      --navy-mid:   #162035;
+      --navy-light: #1e2d47;
+      --teal:       #0f1829;
+      --teal-dark:  #162035;
+      --teal-glow:  rgba(15,24,41,0.08);
+      --white:      #ffffff;
+      --gray-100:   #f5f6f8;
+      --gray-200:   #e8eaee;
+      --gray-400:   #9aa0ad;
+      --gray-600:   #5a6070;
+      --text:       #0f0f0f;
+      --screen-bg:  #f0f2f7;
+      --amber:      #f59e0b;
+      --emerald:    #10b981;
+      --violet:     #8b5cf6;
+      --rose:       #f43f5e;
+      --safe-top:   env(safe-area-inset-top, 0px);
+    }
+    @supports (-webkit-touch-callout: none) {
+      @media (display-mode: standalone) {
+        :root { --safe-top: max(env(safe-area-inset-top, 0px), 44px); }
+      }
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { font-family: 'Poppins', sans-serif; background: var(--screen-bg); color: var(--text); }
+    input, select, textarea { font-size: max(16px, 1em) !important; font-family: 'Poppins', sans-serif; }
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; }
+
+    .avm-header {
+      background: var(--navy);
+      padding: calc(var(--safe-top) + 16px) 20px 20px;
+      position: relative; overflow: hidden;
+    }
+    .avm-header::before {
+      content: ''; position: absolute; top: -40px; right: -40px;
+      width: 180px; height: 180px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .avm-header-row { display: flex; align-items: center; justify-content: space-between; }
+    .avm-title { font-size: 20px; font-weight: 800; color: white; letter-spacing: 1px; }
+    .avm-sub { font-size: 11px; color: rgba(255,255,255,0.5); letter-spacing: 0.5px; text-transform: uppercase; margin-top: 2px; }
+
+    .avm-tabs {
+      display: flex; background: var(--navy-mid);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      overflow-x: auto;
+    }
+    .avm-tabs::-webkit-scrollbar { display: none; }
+    .avm-tab {
+      flex: 1; padding: 13px 8px; font-size: 12px; font-weight: 600;
+      font-family: 'Poppins', sans-serif; color: rgba(255,255,255,0.4);
+      background: none; border: none; border-bottom: 2px solid transparent;
+      cursor: pointer; white-space: nowrap; text-align: center; transition: color 0.2s;
+    }
+    .avm-tab.active { color: #ffffff; border-bottom-color: #ffffff; font-weight: 700; }
+
+    .avm-body { padding: 16px 16px 80px; }
+
+    .avm-card {
+      background: white; border-radius: 18px;
+      border: 1px solid rgba(0,0,0,0.06);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      padding: 18px; margin-bottom: 14px;
+    }
+    .card-label {
+      font-size: 10px; font-weight: 700; color: var(--teal);
+      text-transform: uppercase; letter-spacing: 0.8px;
+      margin-bottom: 14px; display: flex; align-items: center; gap: 6px;
+    }
+
+    .tipo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .tipo-btn {
+      border-radius: 12px; border: 1.5px solid var(--gray-200);
+      background: var(--gray-100); padding: 10px 4px;
+      font-size: 10px; font-weight: 600; color: var(--gray-600);
+      font-family: 'Poppins', sans-serif; cursor: pointer;
+      text-align: center; transition: all 0.15s;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    .tipo-btn .tipo-icon { font-size: 20px; }
+    .tipo-btn:active { transform: scale(0.95); }
+    .tipo-btn.selected { border-color: var(--teal); background: var(--teal-glow); color: var(--teal-dark); font-weight: 700; }
+
+    .field-row { display: flex; gap: 10px; margin-bottom: 10px; }
+    .field-row:last-child { margin-bottom: 0; }
+    .field { flex: 1; min-width: 0; }
+    .field label {
+      font-size: 10px; font-weight: 700; color: var(--gray-600);
+      text-transform: uppercase; letter-spacing: 0.6px;
+      margin-bottom: 5px; display: block;
+    }
+    .field input, .field select {
+      width: 100%; padding: 10px 12px;
+      background: var(--gray-100); border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 10px; color: var(--text); outline: none; transition: border-color 0.2s;
+    }
+    .field input:focus, .field select:focus { border-color: var(--teal); background: white; }
+    .field input::placeholder { color: var(--gray-400); }
+
+    .btn-primary {
+      width: 100%; padding: 14px 20px; background: var(--navy); color: white;
+      border: none; border-radius: 14px; font-size: 14px; font-weight: 700;
+      font-family: 'Poppins', sans-serif; cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-primary:active { transform: scale(0.98); opacity: 0.9; }
+    .btn-primary.teal { background: var(--teal); }
+    .btn-primary.outline { background: transparent; color: var(--gray-600); border: 1px solid var(--gray-200); }
+    .btn-sm {
+      padding: 7px 13px; border-radius: 8px; font-size: 11px; font-weight: 600;
+      font-family: 'Poppins', sans-serif; cursor: pointer; border: none;
+    }
+    .btn-sm.danger { background: rgba(244,63,94,0.1); color: var(--rose); border: 1px solid rgba(244,63,94,0.2); }
+
+    .comp-auto-card {
+      border-radius: 14px; border: 1.5px solid var(--gray-200);
+      background: var(--gray-100); margin-bottom: 10px;
+      overflow: hidden; transition: all 0.15s; cursor: pointer;
+    }
+    .comp-auto-card.selected { border-color: var(--navy); background: white; box-shadow: 0 2px 12px rgba(15,24,41,0.12); }
+    .comp-auto-top { display: flex; gap: 12px; padding: 12px; }
+    .comp-auto-img { width: 72px; height: 56px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: var(--gray-200); }
+    .comp-auto-info { flex: 1; min-width: 0; }
+    .comp-auto-titulo {
+      font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.3; margin-bottom: 4px;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .comp-auto-precio { font-size: 14px; font-weight: 800; color: var(--teal-dark); }
+    .comp-auto-datos { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 12px; }
+    .comp-chip {
+      font-size: 10px; font-weight: 600; background: var(--gray-200);
+      color: var(--gray-600); padding: 3px 8px; border-radius: 20px;
+    }
+    .comp-auto-card.selected .comp-chip { background: var(--teal-glow); color: var(--teal-dark); }
+    .sel-badge {
+      font-size: 10px; font-weight: 700; color: var(--navy);
+      background: var(--teal-glow); border: 1px solid rgba(15,24,41,0.15);
+      padding: 3px 9px; border-radius: 20px; margin-left: auto; flex-shrink: 0; align-self: flex-start;
+    }
+
+    .comp-manual-card {
+      background: white; border-radius: 16px; border: 1.5px solid var(--amber);
+      padding: 16px; margin-bottom: 12px;
+    }
+    .comp-manual-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .comp-num { font-size: 13px; font-weight: 700; color: var(--amber); }
+    .comp-price-m2 {
+      background: rgba(245,158,11,0.08); border-radius: 8px;
+      padding: 8px 12px; margin-top: 10px;
+      display: flex; justify-content: space-between; font-size: 11px; color: var(--gray-600);
+    }
+
+    .result-hero {
+      background: linear-gradient(135deg, var(--navy), var(--navy-mid));
+      border: 2px solid var(--teal); border-radius: 20px;
+      padding: 24px; text-align: center; margin-bottom: 14px;
+      position: relative; overflow: hidden;
+    }
+    .result-hero::before {
+      content: ''; position: absolute; top: -30px; right: -30px;
+      width: 140px; height: 140px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+    }
+    .result-lbl { font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+    .result-val { font-size: 34px; font-weight: 800; color: var(--teal); line-height: 1; margin-bottom: 6px; }
+    .result-sub { font-size: 12px; color: rgba(255,255,255,0.4); }
+    .result-range { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 6px; }
+    .result-badge {
+      display: inline-block; margin-top: 12px; font-size: 10px; font-weight: 700;
+      padding: 4px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+
+    .metric-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    .metric-card { background: white; border-radius: 14px; border: 1px solid rgba(0,0,0,0.06); padding: 12px 14px; text-align: center; }
+    .metric-val { font-size: 20px; font-weight: 800; color: var(--text); }
+    .metric-lbl { font-size: 10px; color: var(--gray-400); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .enfoque-card {
+      background: var(--gray-100); border-radius: 14px; padding: 14px 16px;
+      margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .enfoque-lbl { font-size: 10px; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 3px; }
+    .enfoque-val { font-size: 20px; font-weight: 800; }
+    .enfoque-sub { font-size: 10px; color: var(--gray-400); margin-top: 2px; }
+    .enfoque-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+
+    .alert { border-radius: 12px; padding: 10px 14px; font-size: 12px; line-height: 1.5; margin-bottom: 12px; }
+    .alert.warn { background: rgba(245,158,11,0.1); border-left: 3px solid var(--amber); color: #92400e; }
+    .alert.info { background: var(--teal-glow); border-left: 3px solid var(--teal); color: var(--teal-dark); }
+    .alert.success { background: rgba(16,185,129,0.1); border-left: 3px solid var(--emerald); color: #065f46; }
+
+    .spinner {
+      width: 20px; height: 20px; border: 2.5px solid rgba(255,255,255,0.3);
+      border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── AUTOCOMPLETE ── */
+    .autocomplete-wrap { position: relative; }
+    .autocomplete-dropdown {
+      position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+      background: white; border-radius: 12px;
+      border: 1px solid var(--gray-200);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      z-index: 100; overflow: hidden;
+    }
+    .autocomplete-item {
+      padding: 11px 14px; font-size: 13px; color: var(--text);
+      cursor: pointer; border-bottom: 1px solid var(--gray-100);
+      transition: background 0.1s; font-family: 'Poppins', sans-serif;
+    }
+    .autocomplete-item:last-child { border-bottom: none; }
+    .autocomplete-item:active { background: var(--teal-glow); }
+    .autocomplete-item .ac-main { font-weight: 600; }
+    .autocomplete-item .ac-sub { font-size: 11px; color: var(--gray-400); margin-top: 1px; }
+    .colonia-selected {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--teal-glow); border: 1px solid rgba(15,24,41,0.15);
+      border-radius: 10px; padding: 10px 12px;
+      font-size: 13px; font-weight: 600; color: var(--teal-dark);
+    }
+    .colonia-selected button {
+      margin-left: auto; background: none; border: none;
+      color: var(--gray-400); font-size: 16px; cursor: pointer; padding: 0;
+    }
+
+    /* ── IA WEB TAB ── */
+    .ia-hero {
+      background: linear-gradient(135deg, var(--navy), #1a2d4a);
+      border: 1.5px solid var(--teal); border-radius: 18px;
+      padding: 20px; margin-bottom: 14px; text-align: center;
+    }
+    .ia-hero-lbl { font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; }
+    .ia-hero-val { font-size: 34px; font-weight: 800; color: var(--teal); line-height: 1; margin-bottom: 4px; }
+    .ia-hero-range { font-size: 12px; color: rgba(255,255,255,0.4); margin-bottom: 10px; }
+    .ia-conf { display: inline-block; font-size: 10px; font-weight: 700; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; }
+    .ia-conf.alta   { background: rgba(16,185,129,0.15); color: var(--emerald); border: 1px solid rgba(16,185,129,0.3); }
+    .ia-conf.media  { background: rgba(245,158,11,0.15); color: var(--amber);   border: 1px solid rgba(245,158,11,0.3); }
+    .ia-conf.baja   { background: rgba(244,63,94,0.15);  color: var(--rose);    border: 1px solid rgba(244,63,94,0.3); }
+    .ia-uvm { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 8px; }
+    .ia-uvm strong { color: white; }
+    .comp-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--gray-200); font-size: 12px; gap: 8px; }
+    .comp-row:last-child { border-bottom: none; }
+    .comp-row-desc { flex: 1; color: var(--text); font-weight: 500; line-height: 1.4; }
+    .comp-row-right { text-align: right; flex-shrink: 0; }
+    .comp-row-precio { font-size: 13px; font-weight: 700; color: var(--teal-dark); }
+    .comp-row-m2 { font-size: 11px; color: var(--gray-400); margin-top: 1px; }
+    .comp-row-src { font-size: 10px; color: var(--gray-400); font-style: italic; margin-top: 1px; }
+    .factor-row-ia { display: flex; align-items: flex-start; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--gray-100); font-size: 12px; }
+    .factor-row-ia:last-child { border-bottom: none; }
+    .factor-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+    .factor-nombre { font-weight: 600; color: var(--text); flex: 1; }
+    .factor-desc { color: var(--gray-600); font-size: 11px; margin-top: 2px; }
+    .btn-pdf {
+      width: 100%; padding: 14px 20px; background: var(--teal); color: white;
+      border: none; border-radius: 14px; font-size: 14px; font-weight: 700;
+      font-family: 'Poppins', sans-serif; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .btn-pdf:active { transform: scale(0.98); opacity: 0.9; }
+    .btn-pdf:disabled { opacity: 0.5; cursor: not-allowed; }
+    .ia-loading { text-align: center; padding: 40px 20px; }
+    .ia-loading-icon { font-size: 36px; margin-bottom: 12px; }
+    .ia-loading-txt { font-size: 13px; color: var(--gray-600); line-height: 1.6; }
+    .ia-loading-sub { font-size: 11px; color: var(--gray-400); margin-top: 6px; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .ia-pulse { animation: pulse 1.5s ease-in-out infinite; }
+    .toggle-opt { display: flex; background: var(--gray-100); border-radius: 10px; padding: 3px; margin-bottom: 10px; }
+    .toggle-btn { flex: 1; padding: 7px 4px; font-size: 11px; font-weight: 600; font-family: 'Poppins', sans-serif; border: none; border-radius: 8px; cursor: pointer; color: var(--gray-600); background: transparent; transition: all 0.15s; }
+    .toggle-btn.active { background: white; color: var(--teal-dark); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+    /* ── OPINIÓN EDITABLE ── */
+    .opinion-page { background: white; max-width: 760px; margin: 0 auto 20px; padding: 28px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .opinion-header-bar { border-bottom: 3px solid var(--navy); padding-bottom: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px; }
+    .opinion-logo { font-size: 20px; font-weight: 800; color: var(--navy); letter-spacing: 1.5px; }
+    .opinion-doc-title { font-size: 13px; font-weight: 700; color: var(--navy); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .opinion-meta { text-align: right; font-size: 11px; color: var(--gray-400); line-height: 2; }
+    .opinion-section { margin-bottom: 20px; }
+    .opinion-section-title { font-size: 10px; font-weight: 700; color: var(--teal); text-transform: uppercase; letter-spacing: 1px; padding-bottom: 5px; border-bottom: 1px solid var(--gray-200); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+    .opinion-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 22px; }
+    .opinion-field-label { font-size: 10px; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+    .opinion-field-value { font-size: 12px; font-weight: 600; color: var(--text); }
+    .opinion-valor-hero { background: linear-gradient(135deg, var(--navy), #1e2d47); border-radius: 14px; padding: 18px 22px; color: white; margin-bottom: 14px; }
+    .opinion-valor-label { font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; }
+    .opinion-valor-num { font-size: 30px; font-weight: 800; color: var(--teal); }
+    .opinion-valor-sub { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 5px; }
+    .opinion-editable {
+      width: 100%; border: 1.5px dashed rgba(15,24,41,0.2); border-radius: 10px;
+      padding: 11px 13px; font-family: 'Poppins', sans-serif; font-size: 12px;
+      color: var(--text); background: rgba(15,24,41,0.02); resize: vertical;
+      outline: none; min-height: 80px; line-height: 1.6;
+    }
+    .opinion-editable:focus { border-color: var(--teal); background: white; }
+    .opinion-input-inline {
+      border: 1.5px dashed rgba(15,24,41,0.2); border-radius: 8px;
+      padding: 5px 10px; font-family: 'Poppins', sans-serif; font-size: 12px;
+      color: var(--text); background: rgba(15,24,41,0.02); outline: none; width: 100%;
+    }
+    .opinion-input-inline:focus { border-color: var(--teal); background: white; }
+    .comp-tabla { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 6px; }
+    .comp-tabla th { background: var(--navy); color: white; padding: 6px 7px; text-align: left; font-weight: 600; }
+    .comp-tabla td { padding: 5px 7px; border-bottom: 1px solid var(--gray-200); color: var(--text); }
+    .comp-tabla tr:nth-child(even) td { background: var(--gray-100); }
+    .opinion-firma { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 6px; }
+    .opinion-firma-label { font-size: 10px; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .btn-print {
+      display: flex; align-items: center; gap: 8px; padding: 12px 20px;
+      background: var(--navy); color: white; border: none; border-radius: 12px;
+      font-size: 13px; font-weight: 700; font-family: 'Poppins', sans-serif;
+      cursor: pointer; transition: opacity 0.15s; white-space: nowrap;
+    }
+    .btn-print:active { opacity: 0.85; }
+    @media print {
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      .no-print { display: none !important; }
+      .avm-body { padding: 0 !important; background: white !important; }
+      body, html { background: white !important; }
+      .opinion-page { box-shadow: none !important; border: none !important; border-radius: 0 !important; padding: 20px !important; max-width: 100% !important; margin: 0 !important; }
+      .opinion-editable, .opinion-input-inline { border: none !important; background: transparent !important; padding: 0 !important; outline: none !important; }
+      .comp-tabla th { background: #0f1829 !important; color: white !important; }
+    }
+  </style>
+
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style id="__brokr_skin_override">
+:root {
+  --navy: #1F1B17 !important;
+  --navy2: #2D2823 !important;
+  --navy3: #3A332C !important;
+  --teal: #1F1B17 !important;
+  --teal2: #2D2823 !important;
+  --teal-dark: #1F1B17 !important;
+  --silver: #F4F1E9 !important;
+  --silver2: #E8E2D2 !important;
+  --bdr: #E8E2D2 !important;
+  --txt: #1F1B17 !important;
+  --mut: #6B6B66 !important;
+  --wh: #FBF9F1 !important;
+  --gray: #F4F1E9 !important;
+  --gray2: #E8E2D2 !important;
+  --gray-100: #F4F1E9 !important;
+  --gray-600: #6B6B66 !important;
+  --screen-bg: #FBF9F1 !important;
+  --text: #1F1B17 !important;
+  --tealp: #EFEDE5 !important;
+}
+html, body {
+  background: #FBF9F1 !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif !important;
+  color: #1F1B17 !important;
+  letter-spacing: -0.005em !important;
+}
+* { font-family: inherit !important; }
+input, select, textarea, button {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif !important;
+}
+/* Replace Playfair display with system serif fallback in headings */
+[class*="ttl"], [class*="title"], h1, h2, h3,
+.cover-precio, .cover-desc-ttl, .gallery-header h2, .chars-header h2,
+.pg-ttl, .sheet-title, .header-title, .det-name {
+  font-family: 'New York', 'Iowan Old Style', 'Cambria', Georgia, serif !important;
+  letter-spacing: -0.025em !important;
+  font-weight: 600 !important;
+}
+/* Buttons get the new pill treatment */
+.gen-btn, .btn-primary, .ui-btn, .btn-new-prop {
+  background: #1F1B17 !important;
+  border-radius: 999px !important;
+  letter-spacing: -0.005em !important;
+  font-weight: 600 !important;
+}
+/* Inputs warmed */
+input, select, textarea {
+  background: #F4F1E9 !important;
+  border: 1px solid #E8E2D2 !important;
+  border-radius: 12px !important;
+  color: #1F1B17 !important;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: #1F1B17 !important;
+  background: #FBF9F1 !important;
+  outline: none !important;
+}
+/* Cards */
+.card, .stat-card, .prop-card, .pcard {
+  background: #F4F1E9 !important;
+  border: 1px solid #E8E2D2 !important;
+  border-radius: 16px !important;
+}
+</style>
+
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useMemo, useCallback, useRef, useEffect } = React;
+
+    const API = "https://brokrebapi-production.up.railway.app";
+
+    const FC          = { excelente: 1.0, bueno: 0.919, regular: 0.819, malo: 0.668 };
+    const CONSERV_OPTS = { excelente: "Excelente / Como nuevo", bueno: "Bueno", regular: "Regular / Necesita detalles", malo: "Malo / Necesita remodelación" };
+    const CALIDAD_VRN  = { lujo: 18500, bueno: 14000, medio: 11500, economico: 8500 };
+    const CALIDAD_OPTS = { lujo: "Lujo / Residencial plus", bueno: "Bueno / Residencial", medio: "Medio / Estándar", economico: "Económico / Interés social" };
+
+    const TIPOS = [
+      { id: "casa",         label: "Casa",     icon: "" },
+      { id: "departamento", label: "Depto",    icon: "" },
+      { id: "terreno",      label: "Terreno",  icon: "" },
+      { id: "local",        label: "Local",    icon: "" },
+      { id: "oficina",      label: "Oficina",  icon: "" },
+      { id: "bodega",       label: "Bodega",   icon: "" },
+      { id: "edificio",     label: "Edificio", icon: "" },
+    ];
+
+    const CAMPOS = {
+      casa:         { terreno: true,  construccion: true,  recamaras: true,  banos: true,  estac: true,  nivel: false, unidades: false, edad: true  },
+      departamento: { terreno: false, construccion: true,  recamaras: true,  banos: true,  estac: true,  nivel: true,  unidades: false, edad: true  },
+      terreno:      { terreno: true,  construccion: false, recamaras: false, banos: false, estac: false, nivel: false, unidades: false, edad: false },
+      local:        { terreno: false, construccion: true,  recamaras: false, banos: true,  estac: true,  nivel: true,  unidades: false, edad: true  },
+      oficina:      { terreno: false, construccion: true,  recamaras: false, banos: true,  estac: true,  nivel: true,  unidades: false, edad: true  },
+      bodega:       { terreno: true,  construccion: true,  recamaras: false, banos: false, estac: true,  nivel: false, unidades: false, edad: true  },
+      edificio:     { terreno: true,  construccion: true,  recamaras: false, banos: false, estac: true,  nivel: false, unidades: true,  edad: true  },
+    };
+
+    const fmt = (n) => "$" + Math.round(n || 0).toLocaleString("es-MX");
+    const pf  = (v) => parseFloat(v) || 0;
+
+    function rossHeidecke(edad, vidaUtil, conservacion) {
+      if (!vidaUtil || vidaUtil <= 0) return 1;
+      const fc = FC[conservacion] || 1;
+      return Math.max(0, Math.min(1, (1 - Math.pow(edad / vidaUtil, 1.4)) * fc));
+    }
+
+    function calcFactors(sujeto, comp) {
+      const s = { m2c: pf(sujeto.m2Construccion), m2t: pf(sujeto.m2Terreno), edad: pf(sujeto.edad) };
+      const c = { m2c: pf(comp.m2Construccion),   m2t: pf(comp.m2Terreno),   edad: pf(comp.edad)   };
+      const fNeg = 0.95;
+      let fSup = 1.0;
+      if (s.m2c > 0 && c.m2c > 0) { fSup = Math.pow(s.m2c / c.m2c, 0.25); fSup = Math.max(0.80, Math.min(1.25, fSup)); }
+      let fTC = 1.0;
+      if (s.m2t > 0 && s.m2c > 0 && c.m2t > 0 && c.m2c > 0) {
+        const rS = s.m2t / s.m2c, rC = c.m2t / c.m2c;
+        if (rC > 0) { fTC = Math.pow(rS / rC, 0.15); fTC = Math.max(0.85, Math.min(1.20, fTC)); }
+      }
+      let fEdad = 1.0;
+      if (c.edad > 0 || s.edad > 0) { fEdad = 1 + (c.edad - s.edad) * 0.008; fEdad = Math.max(0.85, Math.min(1.20, fEdad)); }
+      const fZona  = comp.mismaZona === "si" ? 1.0 : comp.mismaZona === "similar" ? 1.05 : 1.10;
+      const consOrd = { excelente: 4, bueno: 3, regular: 2, malo: 1 };
+      const fCons  = 1 + ((consOrd[comp.conservacion] || 3) - (consOrd[sujeto.conservacion] || 3)) * 0.05;
+      const calOrd  = { lujo: 4, bueno: 3, medio: 2, economico: 1 };
+      const fCal   = 1 + ((calOrd[comp.calidad] || 2) - (calOrd[sujeto.calidad] || 2)) * 0.08;
+      return { fNeg, fSup, fTC, fEdad, fZona, fCons, fCal, fResultante: fNeg * fSup * fTC * fEdad * fZona * fCons * fCal };
+    }
+
+    function F({ label, children, flex = 1 }) {
+      return <div className="field" style={{ flex }}><label>{label}</label>{children}</div>;
+    }
+    function NI({ value, onChange, placeholder }) {
+      return <input type="number" inputMode="decimal" value={value} placeholder={placeholder || ""} onChange={(e) => onChange(e.target.value)} />;
+    }
+    function SI({ value, onChange, options }) {
+      return <select value={value} onChange={(e) => onChange(e.target.value)}>{Object.entries(options).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>;
+    }
+
+    function CompManualCard({ comp, index, onChange, onRemove, sujeto }) {
+      const campos  = CAMPOS[sujeto.tipo] || CAMPOS.casa;
+      const vum     = pf(comp.m2Construccion) > 0 ? pf(comp.precio) / pf(comp.m2Construccion) : 0;
+      const factors = calcFactors(sujeto, comp);
+      const vHomol  = vum * factors.fResultante;
+      return (
+        <div className="comp-manual-card">
+          <div className="comp-manual-hdr">
+            <span className="comp-num">Comparable {index + 1}</span>
+            <button className="btn-sm danger" onClick={onRemove}>Quitar</button>
+          </div>
+          <div className="field-row"><F label="Precio $" flex={2}><NI value={comp.precio} onChange={(v) => onChange("precio", v)} placeholder="2,500,000" /></F></div>
+          <div className="field-row">
+            {campos.construccion && <F label="m² construidos"><NI value={comp.m2Construccion} onChange={(v) => onChange("m2Construccion", v)} placeholder="120" /></F>}
+            {campos.terreno      && <F label="m² terreno"><NI value={comp.m2Terreno} onChange={(v) => onChange("m2Terreno", v)} placeholder="150" /></F>}
+          </div>
+          {(campos.recamaras || campos.banos || campos.estac) && (
+            <div className="field-row">
+              {campos.recamaras && <F label="Recámaras"><NI value={comp.recamaras} onChange={(v) => onChange("recamaras", v)} placeholder="3" /></F>}
+              {campos.banos     && <F label="Baños"><NI value={comp.banos} onChange={(v) => onChange("banos", v)} placeholder="2" /></F>}
+              {campos.estac     && <F label="Estac."><NI value={comp.estacionamiento} onChange={(v) => onChange("estacionamiento", v)} placeholder="2" /></F>}
+            </div>
+          )}
+          <div className="field-row">
+            <F label="Edad (años)"><NI value={comp.edad} onChange={(v) => onChange("edad", v)} placeholder="10" /></F>
+            <F label="Estado"><SI value={comp.conservacion} onChange={(v) => onChange("conservacion", v)} options={CONSERV_OPTS} /></F>
+          </div>
+          <div className="field-row">
+            <F label="Acabados"><SI value={comp.calidad} onChange={(v) => onChange("calidad", v)} options={CALIDAD_OPTS} /></F>
+            <F label="¿Misma zona?"><SI value={comp.mismaZona} onChange={(v) => onChange("mismaZona", v)} options={{ si: "Sí", similar: "Cercana", diferente: "Diferente" }} /></F>
+          </div>
+          {vum > 0 && (
+            <div className="comp-price-m2">
+              <span>Precio/m²: <strong style={{ color: "var(--text)" }}>{fmt(vum)}</strong></span>
+              <span>Ajustado: <strong style={{ color: "var(--amber)" }}>{fmt(vHomol)}/m²</strong></span>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function ColoniaInput({ value, onSelect, ciudad }) {
+      const [texto,      setTexto]      = useState(value ? value.nombre : "");
+      const [sugerencias,setSugerencias] = useState([]);
+      const [abierto,    setAbierto]    = useState(false);
+      const [buscando,   setBuscando]   = useState(false);
+      const timerRef = useRef(null);
+
+      useEffect(() => {
+        if (value) setTexto(value.nombre);
+      }, [value]);
+
+      const buscar = (txt) => {
+        setTexto(txt);
+        if (value) onSelect(null); // reset selection when typing
+        clearTimeout(timerRef.current);
+        if (txt.length < 3) { setSugerencias([]); setAbierto(false); return; }
+        timerRef.current = setTimeout(async () => {
+          setBuscando(true);
+          try {
+            const r = await fetch(`${API}/api/colonias?texto=${encodeURIComponent(txt)}&ciudad=${encodeURIComponent(ciudad || "Morelia")}`);
+            const d = await r.json();
+            setSugerencias(d.colonias || []);
+            setAbierto(true);
+          } catch {}
+          finally { setBuscando(false); }
+        }, 400);
+      };
+
+      const seleccionar = (col) => {
+        setTexto(col.nombre);
+        setSugerencias([]);
+        setAbierto(false);
+        onSelect(col);
+      };
+
+      if (value) {
+        return (
+          <div className="colonia-selected">
+            <span>{value.nombre}</span>
+            <button onClick={() => { onSelect(null); setTexto(""); }}>✕</button>
+          </div>
+        );
+      }
+
+      return (
+        <div className="autocomplete-wrap">
+          <input
+            type="text" value={texto}
+            onChange={(e) => buscar(e.target.value)}
+            placeholder="Escribe la colonia..."
+            style={{ width: "100%", padding: "10px 12px", background: "var(--gray-100)", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 10, color: "var(--text)", outline: "none", fontFamily: "'Poppins', sans-serif", fontSize: 14 }}
+          />
+          {buscando && <div style={{ fontSize: 11, color: "var(--gray-400)", marginTop: 4 }}>Buscando...</div>}
+          {abierto && sugerencias.length > 0 && (
+            <div className="autocomplete-dropdown">
+              {sugerencias.map((s, i) => (
+                <div key={i} className="autocomplete-item" onClick={() => seleccionar(s)}>
+                  <div className="ac-main">{s.nombre}</div>
+                  <div className="ac-sub">{s.display}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {abierto && sugerencias.length === 0 && !buscando && texto.length >= 3 && (
+            <div className="autocomplete-dropdown">
+              <div className="autocomplete-item" style={{ color: "var(--gray-400)" }}>Sin resultados — verifica el nombre</div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+
+    // ─── COMPONENTE IA WEB SEARCH ───────────────────────────────
+    function AvmIA() {
+      const [form, setForm] = React.useState({
+        tipo: "terreno", operacion: "venta",
+        colonia: "", ciudad: "Morelia",
+        m2_terreno: "", m2_construccion: "",
+        recamaras: "", banos: "", estacionamientos: "",
+        condicion_terreno: "plano", comentarios: ""
+      });
+      const [estado, setEstado] = React.useState("idle"); // idle | loading | result | error
+      const [resultado, setResultado] = React.useState(null);
+      const [errorMsg, setErrorMsg] = React.useState("");
+      const [pdfLoading, setPdfLoading] = React.useState(false);
+      const [opinionMode, setOpinionMode] = React.useState(false);
+      const [opFields, setOpFields] = React.useState({ solicitante: "", empresa: "", expediente: "", valuador: "", cedula: "", observaciones: "", resumen: null, analisisZona: null, conclusiones: null });
+      const uof = (k, v) => setOpFields(p => ({ ...p, [k]: v }));
+
+      const u = (k, v) => setForm(p => ({ ...p, [k]: v }));
+      const esTerreno = form.tipo === "terreno";
+      const esConstruccion = ["casa","departamento","local","oficina","bodega"].includes(form.tipo);
+
+      // Expone __avmIAFill para que Shaark pueda activar la pestaña IA con datos precargados
+      React.useEffect(() => {
+        window.__avmIAFill = (data) => {
+          if (data.tipo_inmueble) setForm(p => ({ ...p, tipo: data.tipo_inmueble }));
+          if (data.colonia)       setForm(p => ({ ...p, colonia: data.colonia }));
+          if (data.ciudad)        setForm(p => ({ ...p, ciudad: data.ciudad }));
+          if (data.m2_terreno)    setForm(p => ({ ...p, m2_terreno: String(data.m2_terreno) }));
+          if (data.m2_construccion) setForm(p => ({ ...p, m2_construccion: String(data.m2_construccion) }));
+          if (data.recamaras)     setForm(p => ({ ...p, recamaras: String(data.recamaras) }));
+          if (data.banos)         setForm(p => ({ ...p, banos: String(data.banos) }));
+          if (data.condicion_terreno) setForm(p => ({ ...p, condicion_terreno: data.condicion_terreno }));
+          if (data.operacion)     setForm(p => ({ ...p, operacion: data.operacion }));
+        };
+        const onMsg = (e) => {
+          if (e.data && e.data.tipo === "opinion_valor_web") {
+            window.__avmIAFill(e.data);
+            // Auto-ejecutar la búsqueda
+            setTimeout(() => { document.getElementById("btn-analizar-ia") && document.getElementById("btn-analizar-ia").click(); }, 300);
+          }
+        };
+        window.addEventListener("message", onMsg);
+        return () => { window.removeEventListener("message", onMsg); delete window.__avmIAFill; };
+      }, []);
+
+      const analizar = async () => {
+        if (!form.colonia.trim()) { setErrorMsg("Escribe la colonia o fraccionamiento."); return; }
+        const supPrincipal = esTerreno ? parseFloat(form.m2_terreno) : parseFloat(form.m2_construccion);
+        if (!supPrincipal || supPrincipal <= 0) {
+          setErrorMsg(esTerreno ? "Ingresa los m² de terreno." : "Ingresa los m² de construcción.");
+          return;
+        }
+        setErrorMsg("");
+        setEstado("loading");
+        try {
+          const body = {
+            colonia: form.colonia.trim(),
+            tipo_inmueble: form.tipo,
+            operacion: form.operacion,
+            m2_terreno: parseFloat(form.m2_terreno) || 0,
+            m2_construccion: parseFloat(form.m2_construccion) || 0,
+            recamaras: parseInt(form.recamaras) || 0,
+            banos: parseFloat(form.banos) || 0,
+            estacionamientos: parseInt(form.estacionamientos) || 0,
+            condicion_terreno: form.condicion_terreno || "",
+            ciudad: form.ciudad || "Morelia",
+            comentarios: form.comentarios || ""
+          };
+          const r = await fetch(`${API}/api/avm-websearch`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+          });
+          const data = await r.json();
+          if (!r.ok) throw new Error(data.detail || "Error en el análisis");
+          setResultado(data);
+          setEstado("result");
+        } catch (e) {
+          setErrorMsg(e.message || "No se pudo conectar. Intenta de nuevo.");
+          setEstado("error");
+        }
+      };
+
+      const descargarPDF = async () => {
+        if (!resultado) return;
+        setPdfLoading(true);
+        try {
+          // Paso 1: generar PDF en Railway
+          const r = await fetch(`${API}/avm-pdf`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ resultado, agente: "Agente Broquer®" })
+          });
+          const data = await r.json();
+          if (!r.ok) throw new Error(data.detail || "Error generando PDF");
+
+          // Paso 2: obtener bytes del PDF
+          const pdfResp = await fetch(`${API}/avm-pdf/${data.token}`);
+          if (!pdfResp.ok) throw new Error("No se pudo obtener el PDF");
+          const blob = await pdfResp.blob();
+          const filename = data.filename || "Opinion_Valor.pdf";
+
+          // Paso 3: Web Share API en móvil → abre menú nativo "Guardar / Compartir PDF"
+          // Fallback a blob link en desktop
+          if (navigator.canShare && navigator.canShare({ files: [new File([blob], filename, { type: "application/pdf" })] })) {
+            const file = new File([blob], filename, { type: "application/pdf" });
+            await navigator.share({ files: [file], title: "Opinión de Valor", text: "Opinión de valor generada con Broquer®" });
+          } else {
+            const blobUrl = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = blobUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            setTimeout(() => { document.body.removeChild(link); URL.revokeObjectURL(blobUrl); }, 500);
+          }
+        } catch (e) {
+          if (e.name !== "AbortError") alert("Error al generar PDF: " + e.message);
+        } finally { setPdfLoading(false); }
+      };
+
+      const fmtMXN = (n) => "$" + Math.round(n || 0).toLocaleString("es-MX");
+      const confClass = (c) => c === "alta" ? "ia-conf alta" : c === "media" ? "ia-conf media" : "ia-conf baja";
+      const dotColor = (imp) => imp === "positivo" ? "var(--emerald)" : imp === "negativo" ? "var(--rose)" : "var(--gray-400)";
+
+      // ── ESTADO: FORMULARIO ──
+      if (estado === "idle" || estado === "error") return (
+        <div className="avm-body">
+          <div className="avm-card">
+            <div className="card-label">Broquer AI</div>
+            <p style={{ fontSize: 12, color: "var(--gray-600)", marginBottom: 14, lineHeight: 1.6 }}>
+              Nuestra IA busca comparables en tiempo real en los mejores portales inmobiliarios y utiliza su criterio entrenado y conocimientos periciales para emitir un resultado fundamentado. Broquer recomienda no reemplazar el avalúo realizado por un perito certificado.
+            </p>
+
+            <div className="field-row" style={{ marginBottom: 14 }}>
+              <F label="Tipo de inmueble">
+                <select value={form.tipo} onChange={e => u("tipo", e.target.value)}>
+                  {TIPOS.map(t => (
+                    <option key={t.id} value={t.id}>{t.label}</option>
+                  ))}
+                </select>
+              </F>
+            </div>
+
+            <div className="toggle-opt">
+              <button className={"toggle-btn" + (form.operacion === "venta" ? " active" : "")} onClick={() => u("operacion","venta")}>Venta</button>
+              <button className={"toggle-btn" + (form.operacion === "renta" ? " active" : "")} onClick={() => u("operacion","renta")}>Renta</button>
+            </div>
+          </div>
+
+          <div className="avm-card">
+            <div className="card-label">Ubicación</div>
+            <div className="field-row">
+              <F label="Colonia / Fraccionamiento *">
+                <input type="text" value={form.colonia}
+                  onChange={e => u("colonia", e.target.value)}
+                  placeholder="Ej: Vistas Altozano, Chapultepec..." />
+              </F>
+            </div>
+            <div className="field-row">
+              <F label="Ciudad">
+                <input type="text" value={form.ciudad}
+                  onChange={e => u("ciudad", e.target.value)}
+                  placeholder="Morelia" />
+              </F>
+            </div>
+          </div>
+
+          <div className="avm-card">
+            <div className="card-label">Superficies</div>
+            <div className="field-row">
+              {(esTerreno || esConstruccion) &&
+                <F label="m² de terreno">
+                  <NI value={form.m2_terreno} onChange={v => u("m2_terreno",v)} placeholder="200" />
+                </F>}
+              {esConstruccion &&
+                <F label="m² construidos *">
+                  <NI value={form.m2_construccion} onChange={v => u("m2_construccion",v)} placeholder="200" />
+                </F>}
+            </div>
+            {esTerreno && (
+              <div className="field-row">
+                <F label="Condición del terreno">
+                  <select value={form.condicion_terreno} onChange={e => u("condicion_terreno", e.target.value)}>
+                    <option value="plano">Plano</option>
+                    <option value="pendiente">Con pendiente</option>
+                    <option value="irregular">Irregular</option>
+                  </select>
+                </F>
+              </div>
+            )}
+          </div>
+
+          {esConstruccion && (
+            <div className="avm-card">
+              <div className="card-label">Características</div>
+              <div className="field-row">
+                <F label="Recámaras"><NI value={form.recamaras} onChange={v => u("recamaras",v)} placeholder="3" /></F>
+                <F label="Baños"><NI value={form.banos} onChange={v => u("banos",v)} placeholder="2" /></F>
+                <F label="Estac."><NI value={form.estacionamientos} onChange={v => u("estacionamientos",v)} placeholder="2" /></F>
+              </div>
+            </div>
+          )}
+
+          <div className="avm-card">
+            <div className="card-label">Comentarios adicionales (opcional)</div>
+            <textarea value={form.comentarios} onChange={e => u("comentarios", e.target.value)}
+              placeholder="Ej: esquina, vista panorámica, con bardas, cerca del campo de golf..."
+              style={{ width:"100%", padding:"10px 12px", background:"var(--gray-100)", border:"1px solid rgba(0,0,0,0.1)", borderRadius:10, color:"var(--text)", outline:"none", fontFamily:"'Poppins',sans-serif", fontSize:13, minHeight:72, resize:"vertical" }} />
+          </div>
+
+          {(estado === "error" || errorMsg) && (
+            <div className="alert warn" style={{ marginBottom: 12 }}>{errorMsg}</div>
+          )}
+
+          <button id="btn-analizar-ia" className="btn-primary teal" onClick={analizar}>
+            Generar opinión de valor
+          </button>
+        </div>
+      );
+
+      // ── ESTADO: CARGANDO ──
+      if (estado === "loading") return (
+        <div className="avm-body">
+          <div className="avm-card">
+            <div className="ia-loading">
+              <div className="ia-loading-icon ia-pulse">🔍</div>
+              <div className="ia-loading-txt">Buscando comparables en el mercado...</div>
+              <div className="ia-loading-sub" style={{ marginTop: 8 }}>Consultando Lamudi, Vivanuncios, Inmuebles24</div>
+              <div className="ia-loading-sub ia-pulse" style={{ marginTop: 16, color: "var(--teal)" }}>Esto puede tomar 20–40 segundos</div>
+            </div>
+          </div>
+        </div>
+      );
+
+      // ── ESTADO: RESULTADO ──
+      if (estado === "result" && resultado) {
+        const confianza = resultado.nivel_confianza || "media";
+        const vpm = resultado.valor_por_m2 || 0;
+        const comparables = resultado.comparables || [];
+        const factores = resultado.factores_ajuste || [];
+        const recs = resultado.recomendaciones || [];
+
+        return (
+          <div className="avm-body">
+            <button className="btn-pdf" onClick={() => { setOpinionMode(true); window.scrollTo(0,0); }}>
+              Vista previa editable
+            </button>
+            <button className="btn-primary outline" style={{ marginTop: 10 }}
+              onClick={() => { setEstado("idle"); setResultado(null); setOpinionMode(false); }}>
+              Nueva valuación
+            </button>
+
+            {opinionMode && (() => {
+              const fmtMXN2 = (n) => "$" + Math.round(n || 0).toLocaleString("es-MX");
+              const defaultResumen = resultado.resumen_ejecutivo || "";
+              const defaultAnalisis = resultado.analisis_zona || "";
+              const defaultConclusiones = `Con base en el análisis de los comparables de mercado y aplicando el criterio pericial de nuestra inteligencia artificial, que evalúa las condiciones del inmueble, su entorno y los datos obtenidos, se determina que el valor comercial de ${form.tipo === "terreno" ? "el terreno" : "la propiedad"} ubicada en ${form.colonia}${form.ciudad ? ", " + form.ciudad : ""}, al día de hoy, asciende a la cantidad de ${fmtMXN2(resultado.valor_estimado)} (${Math.round(resultado.valor_estimado || 0).toLocaleString("es-MX")} pesos 00/100 M.N.).`;
+              return (
+                <div style={{ marginTop: 14 }}>
+                  <div className="opinion-page">
+
+                    <div className="opinion-header-bar">
+                      <div className="opinion-doc-title">Opinión de Valor</div>
+                      <div className="opinion-meta">
+                        <div>Fecha: {new Date().toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" })}</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <span>Exp. No.:</span>
+                          <input className="opinion-input-inline" style={{ width: 130 }} value={opFields.expediente} onChange={e => uof("expediente", e.target.value)} placeholder="OV-2024-001" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="opinion-section">
+                      <div className="opinion-section-title">Datos del solicitante</div>
+                      <div>
+                        <div className="opinion-field-label">Nombre del cliente</div>
+                        <input className="opinion-input-inline" value={opFields.solicitante} onChange={e => uof("solicitante", e.target.value)} placeholder="Nombre del cliente" />
+                      </div>
+                    </div>
+
+                    <div className="opinion-section">
+                      <div className="opinion-section-title">Descripción del inmueble sujeto</div>
+                      <div className="opinion-grid">
+                        <div><div className="opinion-field-label">Tipo de inmueble</div><div className="opinion-field-value">{form.tipo.charAt(0).toUpperCase() + form.tipo.slice(1)}</div></div>
+                        {form.colonia && <div><div className="opinion-field-label">Colonia / Fraccionamiento</div><div className="opinion-field-value">{form.colonia}</div></div>}
+                        {form.ciudad  && <div><div className="opinion-field-label">Ciudad</div><div className="opinion-field-value">{form.ciudad}</div></div>}
+                        {parseFloat(form.m2_terreno) > 0  && <div><div className="opinion-field-label">Superficie terreno</div><div className="opinion-field-value">{form.m2_terreno} m²</div></div>}
+                        {parseFloat(form.m2_construccion) > 0 && <div><div className="opinion-field-label">Superficie construcción</div><div className="opinion-field-value">{form.m2_construccion} m²</div></div>}
+                        {parseInt(form.recamaras) > 0     && <div><div className="opinion-field-label">Recámaras</div><div className="opinion-field-value">{form.recamaras}</div></div>}
+                        {parseFloat(form.banos) > 0       && <div><div className="opinion-field-label">Baños</div><div className="opinion-field-value">{form.banos}</div></div>}
+                        {parseInt(form.estacionamientos) > 0 && <div><div className="opinion-field-label">Estacionamientos</div><div className="opinion-field-value">{form.estacionamientos}</div></div>}
+                        {form.condicion_terreno && form.tipo === "terreno" && <div><div className="opinion-field-label">Condición del terreno</div><div className="opinion-field-value">{form.condicion_terreno}</div></div>}
+                        <div><div className="opinion-field-label">Operación</div><div className="opinion-field-value">{form.operacion === "venta" ? "Venta" : "Renta"}</div></div>
+                      </div>
+                      {form.comentarios && <div style={{ marginTop: 8, fontSize: 12, color: "var(--gray-600)" }}><span style={{ color: "var(--gray-400)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>Comentarios: </span>{form.comentarios}</div>}
+                    </div>
+
+                    <div className="opinion-valor-hero">
+                      <div className="opinion-valor-label">Valor comercial estimado</div>
+                      <div className="opinion-valor-num">{fmtMXN2(resultado.valor_estimado)}</div>
+                      <div className="opinion-valor-sub">
+                        Rango: {fmtMXN2(resultado.valor_minimo)} — {fmtMXN2(resultado.valor_maximo)}
+                        {resultado.valor_por_m2 > 0 && ` · ${fmtMXN2(resultado.valor_por_m2)}/m²`}
+                      </div>
+                    </div>
+
+                    <div className="opinion-section">
+                      <div className="opinion-section-title">
+                        <span>Resumen</span>
+                        {opFields.resumen !== null && <button className="no-print" onClick={() => uof("resumen", null)} style={{ background: "none", border: "none", fontSize: 10, color: "var(--teal)", cursor: "pointer", fontFamily: "'Poppins',sans-serif" }}>↺ Restaurar</button>}
+                      </div>
+                      <textarea className="opinion-editable" value={opFields.resumen !== null ? opFields.resumen : defaultResumen} onChange={e => uof("resumen", e.target.value)} />
+                    </div>
+
+                    {(resultado.comparables || []).length > 0 && (
+                      <div className="opinion-section">
+                        <div className="opinion-section-title">Comparables encontrados en el mercado ({resultado.comparables.length})</div>
+                        <table className="comp-tabla">
+                          <thead><tr><th>#</th><th>Descripción</th><th>Precio</th><th>Superficie</th><th>$/m²</th><th>Fuente</th></tr></thead>
+                          <tbody>
+                            {resultado.comparables.map((c, i) => (
+                              <tr key={i}>
+                                <td>{i + 1}</td>
+                                <td>{c.descripcion}</td>
+                                <td style={{ fontWeight: 700 }}>{fmtMXN2(c.precio)}</td>
+                                <td>{c.superficie_m2} m²</td>
+                                <td style={{ color: "var(--teal-dark)", fontWeight: 700 }}>{fmtMXN2(c.precio_m2)}</td>
+                                <td style={{ color: "var(--gray-400)", fontStyle: "italic" }}>{c.fuente}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    {(resultado.factores_ajuste || []).length > 0 && (
+                      <div className="opinion-section">
+                        <div className="opinion-section-title">Factores de homologación y ajuste</div>
+                        {resultado.factores_ajuste.map((f, i) => (
+                          <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", padding: "7px 0", borderBottom: "1px solid var(--gray-100)", fontSize: 12 }}>
+                            <div style={{ width: 8, height: 8, borderRadius: "50%", background: f.impacto === "positivo" ? "var(--emerald)" : f.impacto === "negativo" ? "var(--rose)" : "var(--gray-400)", flexShrink: 0, marginTop: 4 }} />
+                            <div><div style={{ fontWeight: 600, color: "var(--text)" }}>{f.factor}</div><div style={{ fontSize: 11, color: "var(--gray-600)", marginTop: 2 }}>{f.descripcion}</div></div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {(defaultAnalisis || opFields.analisisZona !== null) && (
+                      <div className="opinion-section">
+                        <div className="opinion-section-title">
+                          <span>Análisis de zona y plusvalía</span>
+                          {opFields.analisisZona !== null && <button className="no-print" onClick={() => uof("analisisZona", null)} style={{ background: "none", border: "none", fontSize: 10, color: "var(--teal)", cursor: "pointer", fontFamily: "'Poppins',sans-serif" }}>↺ Restaurar</button>}
+                        </div>
+                        <textarea className="opinion-editable" value={opFields.analisisZona !== null ? opFields.analisisZona : defaultAnalisis} onChange={e => uof("analisisZona", e.target.value)} />
+                      </div>
+                    )}
+
+                    {(resultado.recomendaciones || []).length > 0 && (
+                      <div className="opinion-section">
+                        <div className="opinion-section-title">Recomendaciones</div>
+                        {resultado.recomendaciones.map((r, i) => (
+                          <div key={i} style={{ display: "flex", gap: 8, marginBottom: 6, fontSize: 12, color: "var(--text)", alignItems: "flex-start" }}>
+                            <span style={{ color: "var(--teal)", fontWeight: 700, flexShrink: 0 }}>›</span>
+                            <span style={{ lineHeight: 1.5 }}>{r}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {resultado.advertencias && (
+                      <div style={{ background: "rgba(245,158,11,0.08)", borderLeft: "3px solid var(--amber)", borderRadius: 8, padding: "8px 12px", fontSize: 12, color: "#92400e", marginBottom: 14 }}>
+                        <strong>Nota:</strong> {resultado.advertencias}
+                      </div>
+                    )}
+
+                    <div className="opinion-section">
+                      <div className="opinion-section-title">
+                        <span>Conclusiones y determinación de valor</span>
+                        {opFields.conclusiones !== null && <button className="no-print" onClick={() => uof("conclusiones", null)} style={{ background: "none", border: "none", fontSize: 10, color: "var(--teal)", cursor: "pointer", fontFamily: "'Poppins',sans-serif" }}>↺ Restaurar</button>}
+                      </div>
+                      <textarea className="opinion-editable" style={{ minHeight: 110 }} value={opFields.conclusiones !== null ? opFields.conclusiones : defaultConclusiones} onChange={e => uof("conclusiones", e.target.value)} />
+                    </div>
+
+                    <div className="no-print" style={{ marginTop: 20, textAlign: "center" }}>
+                      <button style={{ padding: "12px 40px", background: "var(--navy)", color: "white", border: "none", borderRadius: 12, fontSize: 13, fontWeight: 700, fontFamily: "'Poppins',sans-serif", cursor: "pointer" }} onClick={() => window.print()}>
+                        Descargar
+                      </button>
+                    </div>
+
+                    <div style={{ marginTop: 28, paddingTop: 12, borderTop: "1px solid var(--gray-200)", textAlign: "center", fontSize: 10, color: "var(--gray-400)", letterSpacing: "0.3px" }}>
+                      Powered by Broquer by Grupo Navarro
+                    </div>
+
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        );
+      }
+
+      return null;
+    }
+    // ─── FIN COMPONENTE AvmIA ─────────────────────────────────────
+
+    function AVM() {
+      const [tab,        setTab]        = useState(0);
+      const [sujeto,     setSujeto]     = useState({ tipo: "casa", direccion: "", colonia: "", ciudad: "morelia", m2Terreno: "", m2Construccion: "", recamaras: "", banos: "", estacionamiento: "", nivel: "", unidades: "", edad: "", conservacion: "bueno", calidad: "medio" });
+      const [coloniaObj, setColoniaObj] = useState(null); // {nombre, latitud, longitud}
+      const [comps,      setComps]      = useState([]);
+      const [autoComps,  setAutoComps]  = useState([]);
+      const [autoSel,    setAutoSel]    = useState(new Set());
+      const [loading,    setLoading]    = useState(false);
+      const [error,      setError]      = useState("");
+
+      const u      = (k, v) => setSujeto((p) => ({ ...p, [k]: v }));
+      const campos = CAMPOS[sujeto.tipo] || CAMPOS.casa;
+
+      // Expone window.__avmFill para que Shaark pueda llenar el formulario vía postMessage
+      useEffect(() => {
+        window.__avmFill = (data) => {
+          if (data.tipo_inmueble) setSujeto((p) => ({ ...p, tipo: data.tipo_inmueble }));
+          if (data.colonia) {
+            setSujeto((p) => ({ ...p, colonia: data.colonia }));
+            setColoniaObj({ nombre: data.colonia, latitud: null, longitud: null });
+          }
+          if (data.ciudad) setSujeto((p) => ({ ...p, ciudad: data.ciudad.toLowerCase() }));
+          if (data.m2_construccion !== undefined) setSujeto((p) => ({ ...p, m2Construccion: String(data.m2_construccion) }));
+          if (data.m2_terreno !== undefined)      setSujeto((p) => ({ ...p, m2Terreno: String(data.m2_terreno) }));
+          if (data.recamaras !== undefined)       setSujeto((p) => ({ ...p, recamaras: String(data.recamaras) }));
+          if (data.banos !== undefined)           setSujeto((p) => ({ ...p, banos: String(data.banos) }));
+          if (data.edad !== undefined)            setSujeto((p) => ({ ...p, edad: String(data.edad) }));
+          if (data.direccion)                     setSujeto((p) => ({ ...p, direccion: data.direccion }));
+          setTab(0);
+        };
+        const onMsg = (e) => {
+          if (e.data && e.data.tipo === 'llenar_avm') window.__avmFill(e.data);
+          // opinion_valor_web -> activa pestaña IA
+          if (e.data && e.data.tipo === 'opinion_valor_web') {
+            setTab(3);
+            if (window.__avmIAFill) {
+              window.__avmIAFill(e.data);
+              setTimeout(() => {
+                const btn = document.getElementById('btn-analizar-ia');
+                if (btn) btn.click();
+              }, 400);
+            }
+          }
+        };
+        window.addEventListener('message', onMsg);
+        return () => {
+          window.removeEventListener('message', onMsg);
+          delete window.__avmFill;
+        };
+      }, []);
+
+      const addComp    = () => setComps((p) => [...p, { id: Date.now(), precio: "", m2Construccion: "", m2Terreno: "", recamaras: "", banos: "", estacionamiento: "", edad: "", conservacion: "bueno", calidad: "medio", mismaZona: "si" }]);
+      const removeComp = (id) => setComps((p) => p.filter((c) => c.id !== id));
+      const updateComp = (id, k, v) => setComps((p) => p.map((c) => c.id === id ? { ...c, [k]: v } : c));
+
+      const buscarComparables = useCallback(async () => {
+        if (!coloniaObj) { setError("Selecciona una colonia del listado primero."); return; }
+        setError(""); setLoading(true);
+        try {
+          const res = await fetch(`${API}/api/comparables-cercanos`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              latitud: coloniaObj.latitud,
+              longitud: coloniaObj.longitud,
+              tipo: sujeto.tipo,
+              radio_km: 2.0,
+              max_resultados: 15,
+            }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.detail || "Error");
+          setAutoComps(data.comparables || []);
+          setAutoSel(new Set());
+          if (!(data.comparables || []).length) setError("No encontramos propiedades cercanas. Prueba aumentando el radio o agrega comparables manualmente.");
+        } catch { setError("No se pudo conectar. Intenta más tarde."); }
+        finally { setLoading(false); }
+      }, [coloniaObj, sujeto.tipo]);
+
+      const toggleAutoComp = (i) => setAutoSel((p) => { const n = new Set(p); n.has(i) ? n.delete(i) : n.add(i); return n; });
+
+      const allComps = useMemo(() => {
+        const auto = [...autoSel].map((i) => ({ ...autoComps[i], id: `auto_${i}`, mismaZona: "si" }));
+        return [...auto, ...comps];
+      }, [autoSel, autoComps, comps]);
+
+      const result = useMemo(() => {
+        const m2c = pf(sujeto.m2Construccion), m2t = pf(sujeto.m2Terreno), edad = pf(sujeto.edad);
+        const esTerreno = sujeto.tipo === "terreno";
+        const vidaUtil  = esTerreno ? 0 : 70;
+
+        const analyzed = allComps.filter((c) => pf(c.precio) > 0 && pf(c.m2Construccion) > 0).map((c) => {
+          const vum = pf(c.precio) / pf(c.m2Construccion);
+          const factors = calcFactors(sujeto, c);
+          return { ...c, vum, factors, vHomol: vum * factors.fResultante };
+        });
+
+        const analyzedT = esTerreno
+          ? allComps.filter((c) => pf(c.precio) > 0 && pf(c.m2Terreno) > 0).map((c) => ({ ...c, vumT: pf(c.precio) / pf(c.m2Terreno) }))
+          : [];
+
+        const promHomol  = analyzed.length  > 0 ? analyzed.reduce((s, c) => s + c.vHomol, 0)  / analyzed.length  : 0;
+        const promHomolT = analyzedT.length > 0 ? analyzedT.reduce((s, c) => s + c.vumT, 0) / analyzedT.length : 0;
+
+        const valorMercado = esTerreno ? promHomolT * m2t : promHomol * m2c;
+        const minH = analyzed.length > 0 ? Math.min(...analyzed.map((c) => c.vHomol)) : 0;
+        const maxH = analyzed.length > 0 ? Math.max(...analyzed.map((c) => c.vHomol)) : 0;
+        const valorMin = minH * m2c, valorMax = maxH * m2c;
+
+        const vrnUnit = CALIDAD_VRN[sujeto.calidad] || 11500;
+        const fec     = rossHeidecke(edad, vidaUtil, sujeto.conservacion);
+        const vnrTotal = vrnUnit * m2c * fec;
+
+        let terrenoUnit = 0;
+        if (analyzed.length > 0) {
+          const le = analyzed.filter((c) => pf(c.m2Terreno) > 0).map((c) => {
+            const cv = pf(c.m2Construccion) * vrnUnit * rossHeidecke(pf(c.edad), vidaUtil, c.conservacion);
+            return Math.max(0, pf(c.precio) * 0.95 - cv) / pf(c.m2Terreno);
+          });
+          if (le.length > 0) terrenoUnit = le.reduce((a, b) => a + b, 0) / le.length;
+        }
+        if (terrenoUnit <= 0) terrenoUnit = 5000 * ({ lujo: 1.4, bueno: 1.1, medio: 0.85, economico: 0.6 }[sujeto.calidad] || 1);
+
+        const valorTerreno        = terrenoUnit * m2t;
+        const valorFisico         = valorTerreno + vnrTotal;
+        const rentaBruta          = vrnUnit * fec * 0.005 * m2c;
+        const valorCapitalizacion = (rentaBruta * 0.86 * 12) / 0.045;
+
+        const nComps = esTerreno ? analyzedT.length : analyzed.length;
+        let confianza = "baja", confianzaColor = "var(--rose)";
+        if (nComps >= 5)      { confianza = "alta";  confianzaColor = "var(--emerald)"; }
+        else if (nComps >= 3) { confianza = "media"; confianzaColor = "var(--amber)"; }
+
+        const dispersion = promHomol > 0 && analyzed.length > 1 ? ((maxH - minH) / promHomol) * 100 : 0;
+
+        return { analyzed, analyzedT, promHomol, promHomolT, valorMercado, valorMin, valorMax, vrnUnit, fec, vnrTotal, terrenoUnit, valorTerreno, valorFisico, rentaBruta, valorCapitalizacion, nComps, confianza, confianzaColor, dispersion };
+      }, [sujeto, allComps]);
+
+
+      return (
+        <div style={{ fontFamily: "'Poppins', sans-serif", background: "var(--screen-bg)", minHeight: "100vh" }}>
+
+          <AvmIA />
+
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<AVM />);
+  </script>
+</body>
+</html>
