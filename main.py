@@ -1960,11 +1960,11 @@ def build_ficha_html(p: dict, images_b64: dict) -> str:
         s = "{:,.2f}".format(n).rstrip("0").rstrip(".")
         return s + " m²"
 
-    SVG_BED  = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1814" stroke-width="1.4"><path d="M2 20v-8a2 2 0 012-2h16a2 2 0 012 2v8"/><path d="M2 14h20"/><rect x="6" y="4" width="4" height="6" rx="1"/></svg>'
-    SVG_BATH = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1814" stroke-width="1.4"><rect x="2" y="11" width="20" height="4" rx="1"/><path d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3"/><line x1="6" y1="5" x2="6" y2="11"/></svg>'
-    SVG_AREA = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1814" stroke-width="1.4"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h18M9 3v18"/></svg>'
-    SVG_LAND = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1814" stroke-width="1.4"><path d="M2 20l5-8 4 5 3-4 8 7"/><circle cx="18" cy="5" r="2"/></svg>'
-    SVG_CAR  = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1814" stroke-width="1.4"><rect x="2" y="10" width="20" height="8" rx="2"/><path d="M5 10l2-4h10l2 4"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/></svg>'
+    SVG_BED  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 20v-8a2 2 0 012-2h16a2 2 0 012 2v8"/><path d="M2 14h20"/><rect x="6" y="4" width="4" height="6" rx="1"/></svg>'
+    SVG_BATH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="11" width="20" height="4" rx="1"/><path d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3"/><line x1="6" y1="5" x2="6" y2="11"/></svg>'
+    SVG_AREA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h18M9 3v18"/></svg>'
+    SVG_LAND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 20l5-8 4 5 3-4 8 7"/><circle cx="18" cy="5" r="2"/></svg>'
+    SVG_CAR  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="10" width="20" height="8" rx="2"/><path d="M5 10l2-4h10l2 4"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/></svg>'
     SVG_PIN  = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7A7065" stroke-width="1.8"><path d="M12 2a7 7 0 017 7c0 5-7 13-7 13S5 14 5 9a7 7 0 017-7z"/><circle cx="12" cy="9" r="2.5"/></svg>'
 
     specs = []
@@ -2042,48 +2042,50 @@ def build_ficha_html(p: dict, images_b64: dict) -> str:
     CSS = """
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Inter','Helvetica Neue',sans-serif;background:#FBF9F1;color:#1A1814;-webkit-font-smoothing:antialiased;letter-spacing:-0.005em}
-.ficha-page{width:210mm;height:297mm;background:#FBF9F1;display:flex;flex-direction:column;overflow:hidden;page-break-after:always}
+body{font-family:'Inter',sans-serif;background:#F7F5EE;color:#0A0A0A;-webkit-font-smoothing:antialiased}
+.ficha-page{width:210mm;height:297mm;background:#FFFFFF;display:flex;flex-direction:column;overflow:hidden;page-break-after:always;border:1px solid #E8E4DC}
 .ficha-page:last-child{page-break-after:avoid}
-.cover-accent{display:none}
-.cover-hero{width:100%;height:124mm;object-fit:cover;display:block;flex-shrink:0}
-.cover-hero-placeholder{width:100%;height:124mm;background:#1A1814;flex-shrink:0}
-.cover-info{padding:18px 28px 14px;border-bottom:1px solid #E8E2D2;background:#FBF9F1}
-.cover-badge{display:inline-block;background:transparent;color:#5C544A;font-family:'Inter',sans-serif;font-size:9px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;padding:0;margin-bottom:10px;border-bottom:1px solid #C9C0AC;padding-bottom:4px}
-.cover-precio{font-family:'Fraunces',serif;font-size:38px;font-weight:500;color:#1A1814;line-height:1;margin-bottom:8px;letter-spacing:-0.02em}
-.cover-titulo{font-family:'Fraunces',serif;font-size:16px;font-weight:400;color:#1A1814;margin-bottom:5px;letter-spacing:-0.01em}
-.cover-ubicacion{font-size:11px;color:#7A7065;display:flex;align-items:center;gap:5px;letter-spacing:0.01em}
-.cover-specs{display:grid;grid-template-columns:repeat(4,1fr);background:#FBF9F1;border-bottom:1px solid #E8E2D2}
-.spec-item{padding:14px 8px 12px;text-align:center;border-right:1px solid #EDE6D3;display:flex;flex-direction:column;align-items:center;gap:5px}
+.cover-hero{width:100%;height:110mm;object-fit:cover;display:block;flex-shrink:0}
+.cover-hero-placeholder{width:100%;height:110mm;background:linear-gradient(135deg,#0A0A0A,#1F1F1F);flex-shrink:0}
+.cover-info{padding:20px 24px 16px;border-bottom:1px solid #E8E4DC;background:#FFFFFF}
+.cover-badge{display:inline-block;background:#2F4A3A;color:#FFFFFF;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;border-radius:999px;margin-bottom:10px}
+.cover-precio{font-family:'Inter Tight',sans-serif;font-size:30px;font-weight:600;color:#0A0A0A;line-height:1;margin-bottom:6px;letter-spacing:-0.03em}
+.cover-titulo{font-size:14px;font-weight:500;color:#0A0A0A;margin-bottom:4px}
+.cover-ubicacion{font-size:12px;color:#5A5650;display:flex;align-items:center;gap:6px}
+.cover-specs{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid #E8E4DC;background:#FFFFFF}
+.spec-item{padding:12px 16px;text-align:center;border-right:1px solid #E8E4DC;display:flex;flex-direction:column;align-items:center;gap:5px}
 .spec-item:last-child{border-right:none}
-.spec-ico{display:flex;align-items:center;justify-content:center;height:24px;color:#1A1814}
-.spec-val{font-family:'Fraunces',serif;font-size:18px;font-weight:500;color:#1A1814;line-height:1;letter-spacing:-0.01em}
-.spec-lbl{font-size:8.5px;text-transform:uppercase;letter-spacing:1.2px;color:#7A7065;font-weight:500}
-.cover-desc-wrap{padding:18px 28px 10px;flex:1;overflow:hidden}
-.cover-desc-ttl{font-family:'Inter',sans-serif;font-size:9px;font-weight:600;color:#7A7065;margin-bottom:10px;letter-spacing:1.6px;text-transform:uppercase}
-.cover-desc{font-size:10.5px;color:#3D3631;line-height:1.75;text-align:justify;hyphens:auto}
-.section-header{padding:14px 28px 12px;border-bottom:1px solid #E8E2D2;flex-shrink:0;background:#FBF9F1}
-.section-header h2{font-family:'Fraunces',serif;font-size:16px;font-weight:500;color:#1A1814;letter-spacing:-0.015em}
-.chars-hdr{}
-.photo-grid-6{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:82mm 82mm 82mm;gap:3px;padding:3px;height:248mm;flex-shrink:0;overflow:hidden;background:#FBF9F1}
-.photo-grid-auto{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;flex-shrink:0;overflow:hidden;background:#FBF9F1}
+.spec-ico{width:24px;height:24px;color:#5A5650}
+.spec-ico svg{width:100%;height:100%}
+.spec-val{font-family:'Inter Tight',sans-serif;font-size:16px;font-weight:600;color:#0A0A0A;line-height:1.1;letter-spacing:-0.02em}
+.spec-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#5A5650;margin-top:3px}
+.cover-desc-wrap{padding:16px 24px;flex:1;overflow:hidden;background:#FFFFFF}
+.cover-desc-ttl{font-family:'Inter Tight',sans-serif;font-size:13px;font-weight:600;color:#0A0A0A;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #E8E4DC;display:inline-block;letter-spacing:-0.015em}
+.cover-desc{font-size:11.5px;color:#3A3630;line-height:1.65}
+.gallery-header{padding:16px 24px 12px;border-bottom:1px solid #E8E4DC;background:#FFFFFF}
+.gallery-header h2{font-family:'Inter Tight',sans-serif;font-size:16px;font-weight:600;color:#0A0A0A;letter-spacing:-0.018em}
+.section-header{padding:14px 24px 12px;border-bottom:1px solid #E8E4DC;flex-shrink:0;background:#FFFFFF}
+.section-header h2{font-family:'Inter Tight',sans-serif;font-size:16px;font-weight:600;color:#0A0A0A;letter-spacing:-0.018em}
+.photo-grid-6{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:82mm 82mm 82mm;gap:3px;padding:3px;height:246mm;flex-shrink:0;overflow:hidden}
+.photo-grid-auto{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;flex-shrink:0;overflow:hidden}
 .photo-grid-6 img,.photo-grid-auto img{width:100%;height:100%;object-fit:cover;display:block}
 .chars-inline{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0}
-.chars-body{padding:14px 28px 10px;overflow:hidden}
+.chars-body{padding:16px 24px;overflow:hidden;background:#FFFFFF}
 .char-table{width:100%;border-collapse:collapse}
-.char-table tr{border-bottom:1px solid #EDE6D3}
-.char-table tr:nth-child(even) td{background:transparent}
-.char-lbl{padding:9px 0;font-size:11px;color:#7A7065;width:48%;letter-spacing:0.005em}
-.char-val{padding:9px 0;font-family:'Fraunces',serif;font-size:12px;color:#1A1814;font-weight:500;text-align:right;letter-spacing:-0.005em}
-.amen-section{margin-top:14px;padding-top:12px;border-top:1px solid #E8E2D2}
-.amen-ttl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1.6px;color:#7A7065;margin-bottom:9px}
+.char-table tr{border-bottom:1px solid #E8E4DC}
+.char-table tr:last-child{border-bottom:none}
+.char-table tr:nth-child(even) td{background:#F7F5EE}
+.char-lbl{padding:8px 12px;font-size:12px;color:#5A5650;width:42%;font-weight:400}
+.char-val{padding:8px 12px;font-size:12px;color:#0A0A0A;font-weight:500;text-align:right;font-variant-numeric:tabular-nums}
+.amen-section{margin-top:16px}
+.amen-ttl{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:#5A5650;margin-bottom:8px}
 .amen-grid{display:flex;flex-wrap:wrap;gap:6px}
-.amen-item{font-size:10px;padding:5px 11px;background:transparent;border-radius:0;color:#3D3631;border:1px solid #C9C0AC;font-weight:400;letter-spacing:0.01em}
-.ficha-footer{width:100%;height:42px;background:#1A1814;display:flex;align-items:center;justify-content:space-between;padding:0 28px;flex-shrink:0;margin-top:auto}
-.ft-logo{height:22px}
-.ft-id{font-family:'Inter',sans-serif;font-size:9px;color:rgba(251,249,241,.55);letter-spacing:1.5px;text-transform:uppercase}
+.amen-item{font-size:11px;padding:5px 10px;background:#F7F5EE;border-radius:999px;color:#3A3630;border:1px solid #E8E4DC}
+.ficha-footer{width:100%;height:40px;background:#0A0A0A;display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0;margin-top:auto}
+.ft-logo{height:22px;width:auto;display:block}
+.ft-id{font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(247,245,238,.55);letter-spacing:.08em}
 @page{size:A4 portrait;margin:0}
 """
     cover_desc_html = (
