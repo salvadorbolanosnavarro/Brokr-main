@@ -376,7 +376,105 @@
 .bk-shk-send { background: var(--ink); color: var(--paper); }
 .bk-shk-send:hover { opacity: .9; }
 @media (hover: hover) and (pointer: fine) { .bk-shk-mic { display: none; } }
+
+/* ── Profile Drawer ─────────────────────────────────────────── */
+.bk-profile-overlay {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: rgba(10,10,10,0.35); backdrop-filter: blur(2px);
+}
+.bk-profile-overlay.is-open { display: block; }
+.bk-profile-drawer {
+  position: fixed; top: 0; right: -380px; bottom: 0; z-index: 201;
+  width: 360px; max-width: 100vw;
+  background: var(--paper); border-left: 1px solid var(--line);
+  display: flex; flex-direction: column;
+  transition: right .28s cubic-bezier(.16,1,.3,1);
+  overflow: hidden;
+}
+.bk-profile-drawer.is-open { right: 0; }
+.bk-pd-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 20px 16px; border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.bk-pd-head h2 { font-family: var(--font-display); font-size: 16px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); }
+.bk-pd-close {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: none; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--mute);
+}
+.bk-pd-close:hover { background: var(--paper-2); color: var(--ink); }
+.bk-pd-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+.bk-pd-body::-webkit-scrollbar { width: 0; }
+.bk-pd-avatar-row {
+  display: flex; align-items: center; gap: 14px;
+}
+.bk-pd-avatar {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: var(--ink); color: var(--paper);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 18px; letter-spacing: -0.02em;
+  flex-shrink: 0;
+}
+.bk-pd-avatar-info { flex: 1; min-width: 0; }
+.bk-pd-name { font-size: 15px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
+.bk-pd-email { font-size: 12px; color: var(--mute); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bk-pd-role-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: var(--r-pill); margin-top: 4px;
+  background: var(--forest-soft); color: var(--forest);
+}
+.bk-pd-role-badge.admin { background: rgba(184,75,63,0.1); color: var(--danger); }
+.bk-pd-section-label {
+  font-family: var(--font-mono); font-size: 9px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.14em; color: var(--mute-2);
+  margin-bottom: 8px;
+}
+.bk-pd-card {
+  background: var(--bone); border: 1px solid var(--line);
+  border-radius: var(--r); padding: 16px;
+}
+.bk-pd-field { margin-bottom: 12px; }
+.bk-pd-field:last-child { margin-bottom: 0; }
+.bk-pd-field label { display: block; font-size: 11px; font-weight: 600; color: var(--mute); margin-bottom: 5px; letter-spacing: 0.02em; }
+.bk-pd-field input {
+  width: 100%; background: var(--paper-2); border: 1px solid var(--line-2);
+  border-radius: var(--r-sm); padding: 9px 12px;
+  font-size: 13px; font-family: inherit; color: var(--ink); outline: none;
+}
+.bk-pd-field input:focus { border-color: var(--ink); background: var(--bone); }
+.bk-pd-field input[readonly] { color: var(--mute); cursor: default; }
+.bk-pd-btn {
+  width: 100%; padding: 10px; border-radius: var(--r-sm);
+  font-size: 13px; font-weight: 600; font-family: inherit;
+  cursor: pointer; border: none; transition: opacity .2s;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+.bk-pd-btn:hover { opacity: .88; }
+.bk-pd-btn-primary { background: var(--ink); color: var(--paper); }
+.bk-pd-btn-outline { background: none; border: 1px solid var(--line-2); color: var(--ink-2); margin-top: 8px; }
+.bk-pd-btn-danger  { background: none; border: 1px solid rgba(184,75,63,.3); color: var(--danger); margin-top: 8px; }
+.bk-pd-status {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--mute); margin-top: 8px;
+}
+.bk-pd-status .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--mute-3); flex-shrink: 0; }
+.bk-pd-status .dot.ok { background: var(--success); }
+.bk-pd-status .dot.warn { background: var(--warn); }
+.bk-pd-toast {
+  padding: 8px 12px; border-radius: var(--r-sm); font-size: 12px; font-weight: 500;
+  margin-top: 8px; display: none;
+}
+.bk-pd-toast.ok   { background: var(--success-soft); color: var(--success); display: block; }
+.bk-pd-toast.err  { background: var(--danger-soft);  color: var(--danger);  display: block; }
+.bk-pd-foot {
+  padding: 16px 20px; border-top: 1px solid var(--line); flex-shrink: 0;
+}
+
 `;
+
   const styleEl = document.createElement('style');
   styleEl.id = '__brokr-shell-css';
   styleEl.textContent = css;
@@ -510,7 +608,7 @@
         <div class="bk-sb-section">Herramientas</div>
         ${tools.map(m => buildSidebarLink(m, activeKey)).join('')}
         <div class="bk-sb-foot">
-          <div class="bk-sb-foot__avatar" id="bk-sb-avatar">${ini}</div>
+          <div class="bk-sb-foot__avatar" id="bk-sb-avatar" onclick="openProfileDrawer()" style="cursor:pointer" title="Mi perfil">${ini}</div>
           <div class="bk-sb-foot__name">
             <div id="bk-sb-name">${profile?.fullName || ''}</div>
             <div class="role">${profile?.isAdmin ? 'Admin' : 'Agente'}</div>
@@ -522,7 +620,7 @@
       <main class="bk-content">
         <div class="bk-mobile-head">
           <a href="index.html" aria-label="Ir al inicio Broquer"><img src="logo-broquer.png" alt="Broquer"/></a>
-          <div class="bk-mobile-head__avatar" id="bk-mob-avatar">${ini}</div>
+          <div class="bk-mobile-head__avatar" id="bk-mob-avatar" onclick="openProfileDrawer()" style="cursor:pointer" title="Mi perfil">${ini}</div>
         </div>
 
         <div class="bk-topbar">
@@ -553,7 +651,7 @@
          <img src="isotipo-broquer.png" alt="" style="width:24px;height:24px;object-fit:contain;opacity:.9"/>
          <span>Broquer</span>
        </button>
-       <button class="bk-bnav__item" type="button" onclick="doLogout()" aria-label="Cerrar sesión">${svg('user', 22)}<span>Cuenta</span></button>`;
+       <button class="bk-bnav__item" type="button" onclick="openProfileDrawer()" aria-label="Mi perfil">${svg('user', 22)}<span>Cuenta</span></button>`;
     document.body.appendChild(bnav);
 
     // Shaark FAB + popup
@@ -948,6 +1046,242 @@
   /* ════════════════════════════════════════════════════════════════
      Boot
      ════════════════════════════════════════════════════════════════ */
+
+  /* ════════════════════════════════════════════════════════════════
+     DRAWER DE PERFIL
+     ════════════════════════════════════════════════════════════════ */
+  let _pdProfile = null; // datos del usuario cargados
+
+  function openProfileDrawer() {
+    let overlay = document.getElementById('bk-profile-overlay');
+    if (!overlay) buildProfileDrawer();
+    overlay = document.getElementById('bk-profile-overlay');
+    overlay.classList.add('is-open');
+    document.getElementById('bk-profile-drawer').classList.add('is-open');
+    loadProfileData();
+  }
+  window.openProfileDrawer = openProfileDrawer;
+
+  function closeProfileDrawer() {
+    document.getElementById('bk-profile-overlay')?.classList.remove('is-open');
+    document.getElementById('bk-profile-drawer')?.classList.remove('is-open');
+  }
+  window.closeProfileDrawer = closeProfileDrawer;
+
+  function buildProfileDrawer() {
+    // Overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'bk-profile-overlay';
+    overlay.className = 'bk-profile-overlay';
+    overlay.addEventListener('click', closeProfileDrawer);
+    document.body.appendChild(overlay);
+
+    // Drawer
+    const drawer = document.createElement('div');
+    drawer.id = 'bk-profile-drawer';
+    drawer.className = 'bk-profile-drawer';
+    drawer.innerHTML = `
+      <div class="bk-pd-head">
+        <h2>Mi perfil</h2>
+        <button class="bk-pd-close" onclick="closeProfileDrawer()" aria-label="Cerrar">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/></svg>
+        </button>
+      </div>
+
+      <div class="bk-pd-body">
+        <!-- Avatar + info -->
+        <div class="bk-pd-avatar-row">
+          <div class="bk-pd-avatar" id="pd-avatar">—</div>
+          <div class="bk-pd-avatar-info">
+            <div class="bk-pd-name" id="pd-name">Cargando…</div>
+            <div class="bk-pd-email" id="pd-email"></div>
+            <div class="bk-pd-role-badge" id="pd-role-badge">Agente</div>
+          </div>
+        </div>
+
+        <!-- Datos personales -->
+        <div>
+          <div class="bk-pd-section-label">Datos personales</div>
+          <div class="bk-pd-card">
+            <div class="bk-pd-field">
+              <label>Nombre completo</label>
+              <input type="text" id="pd-input-nombre" placeholder="Tu nombre"/>
+            </div>
+            <div class="bk-pd-field">
+              <label>Teléfono</label>
+              <input type="tel" id="pd-input-tel" placeholder="Tu teléfono"/>
+            </div>
+            <div class="bk-pd-field">
+              <label>Correo</label>
+              <input type="email" id="pd-input-email" readonly/>
+            </div>
+            <button class="bk-pd-btn bk-pd-btn-primary" onclick="saveProfileData()">Guardar cambios</button>
+            <div class="bk-pd-toast" id="pd-toast-personal"></div>
+          </div>
+        </div>
+
+        <!-- EasyBroker -->
+        <div>
+          <div class="bk-pd-section-label">Integración EasyBroker</div>
+          <div class="bk-pd-card">
+            <div class="bk-pd-status" id="pd-eb-status">
+              <span class="dot" id="pd-eb-dot"></span>
+              <span id="pd-eb-status-text">Verificando…</span>
+            </div>
+            <div class="bk-pd-field" style="margin-top:12px">
+              <label>API Key de EasyBroker</label>
+              <input type="password" id="pd-input-ebkey" placeholder="Pega tu API key aquí"/>
+            </div>
+            <button class="bk-pd-btn bk-pd-btn-primary" onclick="saveEbKey()">Conectar EasyBroker</button>
+            <div class="bk-pd-toast" id="pd-toast-eb"></div>
+          </div>
+        </div>
+
+        <!-- Admin panel link -->
+        <div id="pd-admin-section" style="display:none">
+          <div class="bk-pd-section-label">Administración</div>
+          <div class="bk-pd-card">
+            <p style="font-size:13px;color:var(--mute);margin-bottom:12px">Tienes acceso al panel de administrador.</p>
+            <a href="admin.html" style="text-decoration:none">
+              <button class="bk-pd-btn bk-pd-btn-outline" style="width:100%">
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+                Ir al panel admin
+              </button>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Foot: cerrar sesión -->
+      <div class="bk-pd-foot">
+        <button class="bk-pd-btn bk-pd-btn-danger" onclick="doLogout()">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/></svg>
+          Cerrar sesión
+        </button>
+      </div>
+    `;
+    document.body.appendChild(drawer);
+  }
+
+  async function loadProfileData() {
+    const tok = getToken();
+    if (!tok) return;
+    let user = {};
+    try { user = JSON.parse(localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}'); } catch(e) {}
+
+    // Rellenar datos básicos si ya los tenemos en memoria
+    if (user.email) {
+      document.getElementById('pd-input-email').value = user.email || '';
+    }
+
+    // Cargar perfil desde Supabase
+    try {
+      const r = await fetch(SB_URL + '/rest/v1/usuarios?id=eq.' + user.id + '&select=nombre,telefono,rol', {
+        headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok }
+      });
+      const data = await r.json();
+      const p = data[0] || {};
+      _pdProfile = { ...p, email: user.email, id: user.id };
+
+      const nombre = p.nombre || '';
+      const ini2 = initials(nombre);
+      document.getElementById('pd-avatar').textContent = ini2 || '?';
+      document.getElementById('pd-name').textContent = nombre || user.email || '—';
+      document.getElementById('pd-email').textContent = user.email || '';
+      document.getElementById('pd-input-nombre').value = nombre;
+      document.getElementById('pd-input-tel').value = p.telefono || '';
+      document.getElementById('pd-input-email').value = user.email || '';
+
+      const badge = document.getElementById('pd-role-badge');
+      if (p.rol === 'admin') {
+        badge.textContent = 'Admin';
+        badge.classList.add('admin');
+        document.getElementById('pd-admin-section').style.display = 'block';
+      } else {
+        badge.textContent = 'Agente';
+        badge.classList.remove('admin');
+        document.getElementById('pd-admin-section').style.display = 'none';
+      }
+    } catch(e) {}
+
+    // Verificar EB key
+    try {
+      const ebRes = await fetch(API_BASE + '/config/eb-key', {
+        headers: { Authorization: 'Bearer ' + tok }
+      });
+      const ebData = await ebRes.json();
+      const dot = document.getElementById('pd-eb-dot');
+      const txt = document.getElementById('pd-eb-status-text');
+      if (ebData.configured) {
+        dot.className = 'dot ok';
+        txt.textContent = 'Conectado — key: ' + ebData.masked;
+      } else {
+        dot.className = 'dot warn';
+        txt.textContent = 'Sin conectar';
+      }
+    } catch(e) {}
+  }
+
+  async function saveProfileData() {
+    const tok = getToken();
+    if (!tok || !_pdProfile?.id) return;
+    const nombre = document.getElementById('pd-input-nombre').value.trim();
+    const telefono = document.getElementById('pd-input-tel').value.trim();
+    const toast = document.getElementById('pd-toast-personal');
+    toast.className = 'bk-pd-toast';
+    try {
+      const r = await fetch(SB_URL + '/rest/v1/usuarios?id=eq.' + _pdProfile.id, {
+        method: 'PATCH',
+        headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok,
+                   'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify({ nombre, telefono })
+      });
+      if (!r.ok) throw new Error('Error');
+      toast.textContent = 'Guardado correctamente.';
+      toast.className = 'bk-pd-toast ok';
+      // Actualizar nombre en sidebar
+      document.getElementById('bk-sb-name').textContent = nombre;
+      document.getElementById('pd-name').textContent = nombre;
+      const ini2 = initials(nombre);
+      document.getElementById('bk-sb-avatar').textContent = ini2;
+      document.getElementById('bk-mob-avatar').textContent = ini2;
+      document.getElementById('pd-avatar').textContent = ini2;
+    } catch(e) {
+      toast.textContent = 'Error al guardar. Intenta de nuevo.';
+      toast.className = 'bk-pd-toast err';
+    }
+    setTimeout(() => { toast.className = 'bk-pd-toast'; }, 3500);
+  }
+  window.saveProfileData = saveProfileData;
+
+  async function saveEbKey() {
+    const tok = getToken();
+    const key = document.getElementById('pd-input-ebkey').value.trim();
+    const toast = document.getElementById('pd-toast-eb');
+    toast.className = 'bk-pd-toast';
+    if (!key) { toast.textContent = 'Pega tu API key primero.'; toast.className = 'bk-pd-toast err'; return; }
+    try {
+      const r = await fetch(API_BASE + '/config/eb-key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+        body: JSON.stringify({ key })
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.detail || 'Error');
+      toast.textContent = 'EasyBroker conectado correctamente.';
+      toast.className = 'bk-pd-toast ok';
+      document.getElementById('pd-input-ebkey').value = '';
+      document.getElementById('pd-eb-dot').className = 'dot ok';
+      document.getElementById('pd-eb-status-text').textContent = 'Conectado — key guardada';
+    } catch(e) {
+      toast.textContent = e.message || 'API key inválida. Verifica que la copiaste bien.';
+      toast.className = 'bk-pd-toast err';
+    }
+    setTimeout(() => { toast.className = 'bk-pd-toast'; }, 4000);
+  }
+  window.saveEbKey = saveEbKey;
+
+
   async function boot() {
     const profile = await authInit();
     if (!profile) return; // redirected to login
