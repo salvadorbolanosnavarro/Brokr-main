@@ -2025,8 +2025,7 @@ def build_ficha_html(p: dict, images_b64: dict) -> str:
         '<div class="chars-body"><table class="char-table"><tbody>{}</tbody></table>{}</div>'
     ).format(rows_html, amen_html)
 
-    # Fotos sobrantes + características en la misma página.
-    # Si no caben, el CSS de impresión las pasa a la siguiente automáticamente.
+    # Fotos sobrantes en su propia página parcial
     if remainder > 0:
         batch = gallery_fotos[full_pages*6:]
         imgs  = "".join('<img src="{}" alt="foto"/>'.format(images_b64.get(u,u)) for u in batch)
@@ -2036,13 +2035,18 @@ def build_ficha_html(p: dict, images_b64: dict) -> str:
         gallery_pages += (
             '<div class="ficha-page">'
             '<div class="section-header"><h2>Galería fotográfica</h2></div>'
-            '<div class="photo-grid-auto" style="grid-template-columns:1fr 1fr;grid-template-rows:repeat({},82mm);height:{}mm;gap:3px;padding:3px;flex-shrink:0">{}</div>'
-            '{}'
+            '<div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat({},82mm);height:{}mm;gap:3px;padding:3px;flex-shrink:0">{}</div>'
+            '<div style="flex:1"></div>'
             '{}</div>'
-        ).format(rows_r, rows_r*82, imgs, chars_section, footer())
-    else:
-        # Sin fotos sobrantes: características en página propia
-        gallery_pages += '<div class="ficha-page">{}{}</div>'.format(chars_section, footer())
+        ).format(rows_r, rows_r*82, imgs, footer())
+
+    # Características siempre en página propia con footer garantizado
+    gallery_pages += (
+        '<div class="ficha-page">'
+        '{}'
+        '<div style="flex:1"></div>'
+        '{}</div>'
+    ).format(chars_section, footer())
 
     CSS = """
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2301,10 +2305,8 @@ async def generar_ficha_pdf(p: dict):
                      ('Á','A'),('É','E'),('Í','I'),('Ó','O'),('Ú','U'),('Ñ','N')]:
             s = s.replace(a, b)
         return _re2.sub(r'[^A-Za-z0-9_]', '_', s).strip('_')
-    parts = ["Ficha_Brokr"]
+    parts = ["Ficha"]
     if colonia:  parts.append(_slug(colonia))
-    if tipo_raw: parts.append(_slug(tipo_raw))
-    if id_prop:  parts.append(_slug(id_prop))
     filename = "_".join(parts) + ".pdf"
     token = str(_uuid.uuid4()).replace("-","")[:16]
     _pdf_store[token] = (pdf_bytes, filename)

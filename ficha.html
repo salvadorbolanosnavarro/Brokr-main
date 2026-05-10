@@ -693,7 +693,8 @@ async function descargarPDF(){
   const btn = document.getElementById('pdf-btn');
   const txt = document.getElementById('print-bar-txt');
   const id  = _propData.public_id || _propData.id || 'ficha';
-  const filename = 'BROQUER_' + id + '.pdf';
+  const colonia = (_propData?.location?.name || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'');
+  const filename = ('Ficha' + (colonia ? '_' + colonia : '') + '.pdf');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px"></span> Generando PDF...';
   txt.textContent = 'Preparando tu ficha...';
