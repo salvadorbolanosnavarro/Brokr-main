@@ -790,39 +790,51 @@ function deletePhoto(idx){
 
 // ── AI DESCRIPCIÓN ────────────────────────────
 async function generarDescripcion(){
-  const btn = document.getElementById('ai-btn');
+  const btn  = document.getElementById('ai-btn');
   const hint = document.getElementById('ai-hint');
-  const data = getDatos();
+  const desc = document.getElementById('d-desc');
 
-  if (!data.tipo && !data.colonia && !data.m2c) {
-    alert('Llena al menos el tipo de inmueble, colonia y metros cuadrados antes de generar la descripción.');
-    return;
-  }
+  if(btn){ btn.disabled = true; btn.innerHTML = '<span style="display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite"></span> Generando...'; }
+  if(hint){ hint.textContent = desc.value.trim() ? 'Mejorando tu texto con IA...' : 'Conectando con IA...'; }
 
-  btn.disabled = true;
-  btn.innerHTML = `<span style="display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;"></span> Generando...`;
-  hint.textContent = 'Conectando con la IA...';
+  const datos = getDatos();
+  const lineas = [
+    datos.tipo    ? '- Tipo: '            + datos.tipo    : '',
+    datos.op      ? '- Operación: '       + datos.op      : '',
+    datos.colonia ? '- Colonia: '         + datos.colonia + ', ' + datos.ciudad : '- Ciudad: ' + datos.ciudad,
+    datos.rec     ? '- Recámaras: '       + datos.rec     : '',
+    datos.ban     ? '- Baños: '           + datos.ban     : '',
+    datos.m2c     ? '- Construcción: '    + datos.m2c + ' m²' : '',
+    datos.m2t     ? '- Terreno: '         + datos.m2t + ' m²' : '',
+    datos.est     ? '- Estacionamientos: '+ datos.est     : '',
+    datos.anio    ? '- Año: '             + datos.anio    : '',
+    datos.amen    ? '- Amenidades: '      + datos.amen    : '',
+  ].filter(Boolean).join('\n');
 
-  try {
-    const res = await fetch(API + '/ficha-manual/descripcion', {
+  const textoUsuario = desc.value.trim();
+  const prompt = textoUsuario
+    ? 'Eres un agente inmobiliario experto en Morelia, Michoacán. El usuario ha redactado la siguiente descripción para una propiedad. Mejórala: hazla más atractiva, profesional y fluida, conservando fielmente las ideas y detalles que el usuario mencionó. Máximo 180 palabras. Sin emojis. Sin mencionar precio.\n\nDatos de la propiedad:\n' + lineas + '\n\nTexto original del usuario:\n' + textoUsuario + '\n\nRedacta solo la descripción mejorada:'
+    : 'Eres un agente inmobiliario experto en Morelia, Michoacán. Redacta una descripción comercial atractiva y profesional para esta propiedad. Máximo 180 palabras. Sin emojis. Sin mencionar precio.\n\nDatos:\n' + lineas + '\n\nRedacta solo la descripción:';
+
+  try{
+    const r = await fetch(API + '/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ messages: [{role:'user', content: prompt}], max_tokens: 400, temperature: 0.7 })
     });
-    if (!res.ok) throw new Error('Error servidor: ' + res.status);
-    const j = await res.json();
-    if (j.descripcion) {
-      document.getElementById('d-desc').value = j.descripcion;
-      hint.textContent = 'Descripción generada. Edítala si lo deseas.';
-    } else {
-      throw new Error('Respuesta vacía');
-    }
-  } catch(e) {
+    const txt = await r.text();
+    if(!r.ok) throw new Error('Error ' + r.status + ': ' + txt);
+    let data;
+    try{ data = JSON.parse(txt); } catch(e){ throw new Error('Respuesta inválida: ' + txt.slice(0,100)); }
+    const respuesta = data.choices?.[0]?.message?.content || data.content || data.text || '';
+    if(!respuesta) throw new Error('Sin contenido');
+    desc.value = respuesta.trim();
+    if(hint){ hint.textContent = 'Descripción generada — puedes editarla.'; }
+  } catch(e){
     alert('Error generando descripción: ' + e.message);
-    hint.textContent = 'La IA redactará una descripción basada en los datos del formulario.';
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = `<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"/></svg> Generar con IA`;
+    if(hint){ hint.textContent = 'La IA redactará una descripción basada en los datos del formulario.'; }
+  } finally{
+    if(btn){ btn.disabled = false; btn.innerHTML = '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"/></svg> Generar con IA'; }
   }
 }
 

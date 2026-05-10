@@ -2025,24 +2025,24 @@ def build_ficha_html(p: dict, images_b64: dict) -> str:
         '<div class="chars-body"><table class="char-table"><tbody>{}</tbody></table>{}</div>'
     ).format(rows_html, amen_html)
 
-    # Fotos sobrantes — página de galería parcial (sin características)
+    # Fotos sobrantes + características en la misma página.
+    # Si no caben, el CSS de impresión las pasa a la siguiente automáticamente.
     if remainder > 0:
         batch = gallery_fotos[full_pages*6:]
         imgs  = "".join('<img src="{}" alt="foto"/>'.format(images_b64.get(u,u)) for u in batch)
-        # Pad to even number for 2-col grid
         if len(batch) % 2 != 0:
             imgs += '<div style="background:#F7F5EE"></div>'
         rows_r = (len(batch) + 1) // 2
         gallery_pages += (
             '<div class="ficha-page">'
             '<div class="section-header"><h2>Galería fotográfica</h2></div>'
-            '<div class="photo-grid-auto" style="grid-template-columns:1fr 1fr;grid-template-rows:repeat({},82mm);height:{}mm;gap:3px;padding:3px">{}</div>'
-            '<div style="flex:1"></div>'
+            '<div class="photo-grid-auto" style="grid-template-columns:1fr 1fr;grid-template-rows:repeat({},82mm);height:{}mm;gap:3px;padding:3px;flex-shrink:0">{}</div>'
+            '{}'
             '{}</div>'
-        ).format(rows_r, rows_r*82, imgs, footer())
-
-    # Características — siempre en su propia página dedicada (igual que ficha.html)
-    gallery_pages += '<div class="ficha-page">{}{}</div>'.format(chars_section, footer())
+        ).format(rows_r, rows_r*82, imgs, chars_section, footer())
+    else:
+        # Sin fotos sobrantes: características en página propia
+        gallery_pages += '<div class="ficha-page">{}{}</div>'.format(chars_section, footer())
 
     CSS = """
 <link rel="preconnect" href="https://fonts.googleapis.com">
