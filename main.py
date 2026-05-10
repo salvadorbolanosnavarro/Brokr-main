@@ -109,26 +109,103 @@ def root():
     return {"status": "Brokr API activa", "version": "4.0"}
 
 # ────────────────────────────────────────────
-# CONFIG — EB API KEY PERSISTENCE
+# CONFIG — EB API KEY POR USUARIO (Supabase)
 # ────────────────────────────────────────────
 class EbKeyRequest(BaseModel):
     key: str
 
+# Helper: extrae el user_id del token de Supabase
+async def get_user_id_from_token(request: Request) -> str:
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return None
+    token = auth[7:]
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        return None
+    try:
+        async with httpx.AsyncClient(timeout=8) as client:
+            r = await client.get(
+                f"{SUPABASE_URL}/auth/v1/user",
+                headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {token}"}
+            )
+            if r.status_code == 200:
+                data = r.json()
+                return data.get("id")
+    except Exception:
+        pass
+    return None
+
+# Helper: obtiene la EB key de un usuario desde Supabase
+async def get_eb_key_for_user(user_id: str) -> str:
+    if not user_id or not SUPABASE_URL or not SUPABASE_KEY:
+        return EB_API_KEY or None
+    try:
+        async with httpx.AsyncClient(timeout=8) as client:
+            r = await client.get(
+                f"{SUPABASE_URL}/rest/v1/user_integrations",
+                headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}",
+                         "Content-Type": "application/json"},
+                params={"user_id": f"eq.{user_id}", "provider": "eq.easybroker",
+                        "select": "api_key", "limit": "1"}
+            )
+            if r.status_code == 200:
+                rows = r.json()
+                if rows and rows[0].get("api_key"):
+                    return rows[0]["api_key"]
+    except Exception:
+        pass
+    return EB_API_KEY or None
+
 @app.post("/config/eb-key")
-async def set_eb_key(req: EbKeyRequest):
-    global EB_API_KEY, _config
-    EB_API_KEY = req.key.strip()
-    _config["eb_api_key"] = EB_API_KEY
-    save_config(_config)
-    return {"ok": True, "saved": True}
+async def set_eb_key(req: EbKeyRequest, request: Request):
+    user_id = await get_user_id_from_token(request)
+
+    if user_id and SUPABASE_URL and SUPABASE_KEY:
+        # Validar la key contra EasyBroker antes de guardar
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                test = await client.get(
+                    f"{EB_BASE}/properties?limit=1",
+                    headers={"X-Authorization": req.key.strip(), "accept": "application/json"}
+                )
+                if test.status_code == 401:
+                    raise HTTPException(status_code=400, detail="API key de EasyBroker invalida. Verifica que la copiaste correctamente.")
+        except HTTPException:
+            raise
+        except Exception:
+            pass
+
+        payload = {
+            "user_id": user_id,
+            "provider": "easybroker",
+            "api_key": req.key.strip(),
+            "updated_at": datetime.utcnow().isoformat()
+        }
+        async with httpx.AsyncClient(timeout=10) as client:
+            await client.post(
+                f"{SUPABASE_URL}/rest/v1/user_integrations",
+                headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}",
+                         "Content-Type": "application/json",
+                         "Prefer": "resolution=merge-duplicates,return=minimal"},
+                json=payload
+            )
+        return {"ok": True, "saved": True, "scope": "user"}
+    else:
+        global EB_API_KEY, _config
+        EB_API_KEY = req.key.strip()
+        _config["eb_api_key"] = EB_API_KEY
+        save_config(_config)
+        return {"ok": True, "saved": True, "scope": "global"}
 
 @app.get("/config/eb-key")
-async def get_eb_key():
-    if EB_API_KEY and len(EB_API_KEY) > 4:
-        masked = "*" * (len(EB_API_KEY) - 4) + EB_API_KEY[-4:]
+async def get_eb_key(request: Request):
+    user_id = await get_user_id_from_token(request)
+    key = await get_eb_key_for_user(user_id) if user_id else EB_API_KEY
+    if key and len(key) > 4:
+        masked = "*" * (len(key) - 4) + key[-4:]
     else:
         masked = ""
-    return {"configured": bool(EB_API_KEY), "masked": masked}
+    return {"configured": bool(key), "masked": masked}
 
 # ────────────────────────────────────────────
 # GROQ CHAT PROXY
@@ -2915,6 +2992,152 @@ async def clean_images(
 
 
 # ─── FACEBOOK OAUTH ───────────────────────────────────────────────────────────
+
+# ────────────────────────────────────────────
+# FACEBOOK — guardar / leer conexión por usuario
+# ────────────────────────────────────────────
+class FbSavePageRequest(BaseModel):
+    page_id: str
+    page_name: str
+    page_token: str
+
+@app.post("/facebook/save-page")
+async def facebook_save_page(req: FbSavePageRequest, request: Request):
+    """Guarda el page_token de Facebook del usuario en Supabase."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autenticado")
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        raise HTTPException(status_code=500, detail="Supabase no configurado")
+
+    payload = {
+        "user_id": user_id,
+        "provider": "facebook",
+        "api_key": req.page_token,
+        "meta": json.dumps({"page_id": req.page_id, "page_name": req.page_name}),
+        "updated_at": datetime.utcnow().isoformat()
+    }
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.post(
+            f"{SUPABASE_URL}/rest/v1/user_integrations",
+            headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}",
+                     "Content-Type": "application/json",
+                     "Prefer": "resolution=merge-duplicates,return=minimal"},
+            json=payload
+        )
+    return {"ok": True, "page_id": req.page_id, "page_name": req.page_name}
+
+@app.get("/facebook/connection")
+async def facebook_get_connection(request: Request):
+    """Devuelve si el usuario tiene Facebook conectado y el nombre de la página."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id or not SUPABASE_URL or not SUPABASE_KEY:
+        return {"connected": False}
+    try:
+        async with httpx.AsyncClient(timeout=8) as client:
+            r = await client.get(
+                f"{SUPABASE_URL}/rest/v1/user_integrations",
+                headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}"},
+                params={"user_id": f"eq.{user_id}", "provider": "eq.facebook",
+                        "select": "api_key,meta", "limit": "1"}
+            )
+            if r.status_code == 200:
+                rows = r.json()
+                if rows and rows[0].get("api_key"):
+                    meta_str = rows[0].get("meta", "{}")
+                    try:
+                        meta = json.loads(meta_str) if isinstance(meta_str, str) else meta_str
+                    except Exception:
+                        meta = {}
+                    return {
+                        "connected": True,
+                        "page_id": meta.get("page_id", ""),
+                        "page_name": meta.get("page_name", "Página conectada"),
+                        "page_token": rows[0]["api_key"]
+                    }
+    except Exception:
+        pass
+    return {"connected": False}
+
+@app.post("/facebook/publish-property")
+async def facebook_publish_property(request: Request):
+    """Publica una propiedad en Facebook usando el token guardado del usuario."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autenticado")
+
+    body = await request.json()
+    titulo = body.get("titulo", "Nueva propiedad")
+    precio = body.get("precio", "")
+    tipo = body.get("tipo", "Inmueble")
+    operacion = body.get("operacion", "venta")
+    colonia = body.get("colonia", "")
+    ciudad = body.get("ciudad", "")
+    m2 = body.get("m2_construccion", "")
+    recamaras = body.get("recamaras", "")
+    fotos = body.get("fotos", [])
+    descripcion = body.get("descripcion", "")
+
+    # Obtener conexión de Facebook del usuario
+    fb = await facebook_get_connection(request)
+    if not fb.get("connected"):
+        raise HTTPException(status_code=400, detail="Facebook no conectado. Ve a tu perfil para conectar tu página.")
+
+    page_id = fb["page_id"]
+    page_token = fb["page_token"]
+
+    # Construir mensaje
+    precio_fmt = f"${int(precio):,}" if precio else ""
+    ubicacion = ", ".join(filter(None, [colonia, ciudad]))
+    specs = []
+    if m2: specs.append(f"🏠 {m2} m²")
+    if recamaras: specs.append(f"🛏️ {recamaras} rec.")
+    specs_str = " · ".join(specs)
+
+    mensaje_lines = [
+        f"{'🏠' if operacion == 'venta' else '🔑'} {tipo} en {operacion.upper()} — {titulo}",
+        "",
+    ]
+    if ubicacion: mensaje_lines.append(f"📍 {ubicacion}")
+    if precio_fmt: mensaje_lines.append(f"💰 {precio_fmt} MXN")
+    if specs_str: mensaje_lines.append(specs_str)
+    if descripcion: mensaje_lines.extend(["", descripcion[:200]])
+    mensaje_lines.extend(["", "✅ Publicado con BROKR®"])
+    mensaje = "
+".join(mensaje_lines)
+
+    # Publicar en Facebook
+    async with httpx.AsyncClient(timeout=30) as client:
+        photo_ids = []
+        for url in (fotos or [])[:5]:
+            try:
+                r = await client.post(
+                    f"https://graph.facebook.com/v21.0/{page_id}/photos",
+                    params={"access_token": page_token},
+                    json={"url": url, "published": False},
+                )
+                if r.status_code == 200:
+                    pid = r.json().get("id")
+                    if pid: photo_ids.append({"media_fbid": pid})
+            except Exception:
+                pass
+
+        payload: dict = {"message": mensaje, "access_token": page_token}
+        if photo_ids:
+            payload["attached_media"] = photo_ids
+
+        r_post = await client.post(
+            f"https://graph.facebook.com/v21.0/{page_id}/feed",
+            params={"access_token": page_token},
+            json=payload,
+        )
+
+    if r_post.status_code not in (200, 201):
+        err = r_post.text
+        raise HTTPException(status_code=502, detail=f"Error de Facebook: {err}")
+
+    return {"ok": True, "post_id": r_post.json().get("id"), "page_name": fb.get("page_name", "")}
+
 
 @app.get("/facebook/callback")
 async def facebook_callback(code: str = Query(...), state: str = Query(None), redirect_uri: str = Query(None)):

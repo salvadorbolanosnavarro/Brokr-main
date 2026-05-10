@@ -782,10 +782,48 @@ async function saveProp(e) {
   const btn = form.querySelector('.pf-save-btn');
   try {
     btn.innerHTML = 'Guardando…'; btn.disabled = true;
+    const esNueva = !id;
     if (id) { await sbFetch('propiedades?id=eq.'+id, 'PATCH', data); } else { await sbFetch('propiedades', 'POST', data); }
     closePropModal(); await loadProps();
+
+    // Publicar en Facebook automáticamente si es propiedad NUEVA y el usuario tiene FB conectado
+    if (esNueva) {
+      publicarEnFacebook(data).catch(() => {}); // silencioso — no bloquea el flujo
+    }
   } catch(err) { alert('Error: ' + err.message); }
   finally { btn.innerHTML = '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg> Guardar inmueble'; btn.disabled = false; }
+}
+
+// ── Facebook: publicar propiedad automáticamente ──────────────────────────
+async function publicarEnFacebook(prop) {
+  const API_BASE = window.API_BASE || 'https://brokrebapi-production.up.railway.app';
+  const token = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+  if (!token) return;
+
+  // Verificar si el usuario tiene Facebook conectado
+  const connRes = await fetch(API_BASE + '/facebook/connection', {
+    headers: { 'Authorization': 'Bearer ' + token }
+  });
+  if (!connRes.ok) return;
+  const conn = await connRes.json();
+  if (!conn.connected) return; // No conectado — no publicar, sin ruido
+
+  // Publicar
+  const res = await fetch(API_BASE + '/facebook/publish-property', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify(prop)
+  });
+
+  if (res.ok) {
+    const d = await res.json();
+    // Toast de éxito no invasivo
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a2035;color:white;padding:10px 18px;border-radius:20px;font-size:13px;z-index:9999;display:flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(0,0,0,.25)';
+    toast.innerHTML = '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg> Publicado en ' + (conn.page_name || 'tu página de Facebook');
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+  }
 }
 
 async function deleteProp(id) {

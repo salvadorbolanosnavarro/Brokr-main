@@ -411,20 +411,61 @@
   }
   window.doLogout = doLogout;
 
+  /* Renueva el access token usando el refresh token guardado en localStorage.
+     Devuelve el nuevo access token o null si falla. */
+  async function tryRefreshToken() {
+    const refresh = localStorage.getItem('sb_refresh');
+    if (!refresh) return null;
+    try {
+      const r = await fetch(SB_URL + '/auth/v1/token?grant_type=refresh_token', {
+        method: 'POST',
+        headers: { apikey: SB_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refresh }),
+      });
+      if (!r.ok) return null;
+      const d = await r.json();
+      if (!d.access_token) return null;
+      // Persistir los nuevos tokens
+      localStorage.setItem('sb_token', d.access_token);
+      localStorage.setItem('sb_refresh', d.refresh_token || refresh);
+      localStorage.setItem('sb_user', JSON.stringify(d.user || {}));
+      sessionStorage.setItem('sb_token', d.access_token);
+      sessionStorage.setItem('sb_user', JSON.stringify(d.user || {}));
+      return d.access_token;
+    } catch (e) { return null; }
+  }
+
   async function authInit() {
-    const tok = getToken();
-    if (!tok) { location.href = 'login.html'; return null; }
+    let tok = getToken();
+
+    // Si no hay token, intentar renovar con refresh token antes de redirigir
+    if (!tok) {
+      tok = await tryRefreshToken();
+      if (!tok) { location.href = 'login.html'; return null; }
+    }
+
     let user = null;
     try {
       user = JSON.parse(localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || 'null');
     } catch (e) {}
+
     if (!user?.id) {
+      // Intentar obtener usuario con el token actual
       try {
         const r = await fetch(SB_URL + '/auth/v1/user', { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok } });
-        user = await r.json();
+        if (r.status === 401) {
+          // Token expirado — renovar y reintentar
+          tok = await tryRefreshToken();
+          if (!tok) { location.href = 'login.html'; return null; }
+          const r2 = await fetch(SB_URL + '/auth/v1/user', { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok } });
+          user = await r2.json();
+        } else {
+          user = await r.json();
+        }
         if (user?.id) sessionStorage.setItem('sb_user', JSON.stringify(user));
       } catch (e) {}
     }
+
     if (!user?.id) { location.href = 'login.html'; return null; }
     let profile = [];
     try { profile = await sbFetch(`usuarios?id=eq.${user.id}&select=nombre,telefono,rol`); } catch (e) {}
