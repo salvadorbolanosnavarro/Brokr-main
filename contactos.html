@@ -528,7 +528,7 @@ html, body { background: var(--paper); }
 @media (max-width: 720px) { .add-btn { display: none; } }
 </style>
 </head>
-<body data-app="contacts">
+<body data-app="contactos">
 
 <!-- shell-replaced-sidebar -->
 <div style="display:none" hidden>
@@ -586,7 +586,7 @@ html, body { background: var(--paper); }
     <div class="handle"></div>
     <div class="sheet-header">
       <div class="sheet-title" id="modal-title">Nuevo contacto</div>
-      <button class="close-btn" onclick="cerrarModal()" aria-label="Cerrar">✕</button>
+      <button class="close-btn" onclick="cerrarModal()" aria-label="Cerrar"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/></svg></button>
     </div>
     <div class="sheet-body">
 
@@ -636,12 +636,6 @@ html, body { background: var(--paper); }
         <div class="f"><label>Municipio / Estado</label><input id="m-mpio" type="text" placeholder="MORELIA, MICHOACÁN" oninput="this.value=this.value.toUpperCase()"/></div>
       </div>
 
-      <div class="sec-lbl">Datos bancarios</div>
-      <div class="frow">
-        <div class="f"><label>Banco</label><input id="m-banco" type="text" placeholder="BBVA"/></div>
-        <div class="f"><label>Cuenta / CLABE</label><input id="m-cuenta" type="text" placeholder="012345678901234567"/></div>
-      </div>
-
       <div class="sec-lbl">Notas</div>
       <div class="f"><label>Observaciones</label><textarea id="m-notas" rows="3" placeholder="Prefiere WhatsApp. Verificado. Responde rápido…"></textarea></div>
 
@@ -665,7 +659,7 @@ html, body { background: var(--paper); }
         <div id="det-badge" style="margin-bottom:4px"></div>
         <div style="font-size:12px;color:var(--mute)" id="det-empresa"></div>
       </div>
-      <button class="close-btn" onclick="cerrarDetalle()" aria-label="Cerrar" style="margin-left:auto;align-self:flex-start">✕</button>
+      <button class="close-btn" onclick="cerrarDetalle()" aria-label="Cerrar" style="margin-left:auto;align-self:flex-start"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/></svg></button>
     </div>
     <div class="det-body" id="det-body"></div>
     <div class="det-acts">
@@ -682,7 +676,6 @@ html, body { background: var(--paper); }
 <script src="app-shell.js" defer></script>
 
 <script>
-const LS_KEY = 'brokr_contactos';
 let sexoActual = 'M';
 let editandoId = null;
 let detContacto = null;
@@ -704,10 +697,81 @@ if (IS_PICKER) {
   }
 }
 
-function cargar() { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); }
-function guardar(arr) { localStorage.setItem(LS_KEY, JSON.stringify(arr)); }
 function gv(id) { return (document.getElementById(id)?.value || '').trim(); }
 function sv(id, v) { const el = document.getElementById(id); if (el) el.value = v || ''; }
+
+/* ── Conexión a Supabase ─────────────────────────────────────── */
+const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
+const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
+const LS_CACHE = 'brokr_contactos_cache';   // solo cache offline, NO fuente de verdad
+
+let _contactosMem = [];   // copia en memoria de la sesión actual
+
+function _token() {
+  return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || null;
+}
+function _headers(extra) {
+  const tok = _token() || SB_KEY;
+  return Object.assign({
+    apikey: SB_KEY,
+    Authorization: 'Bearer ' + tok,
+    'Content-Type': 'application/json',
+  }, extra || {});
+}
+async function _userId() {
+  const tok = _token();
+  if (!tok) return null;
+  try {
+    const r = await fetch(SB_URL + '/auth/v1/user', { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok } });
+    if (!r.ok) return null;
+    const u = await r.json();
+    return u?.id || null;
+  } catch { return null; }
+}
+
+/* Trae todos los contactos del usuario logueado, ordenados por updated_at desc */
+async function cargarRemoto() {
+  const url = SB_URL + '/rest/v1/contactos?select=*&order=updated_at.desc';
+  const r = await fetch(url, { headers: _headers() });
+  if (!r.ok) throw new Error('No se pudieron cargar los contactos (' + r.status + ')');
+  const data = await r.json();
+  _contactosMem = Array.isArray(data) ? data : [];
+  try { localStorage.setItem(LS_CACHE, JSON.stringify(_contactosMem)); } catch {}
+  return _contactosMem;
+}
+
+/* Versión sincrónica: devuelve la copia en memoria (para el render rápido) */
+function cargar() { return _contactosMem; }
+
+/* Inserta o actualiza un contacto en Supabase */
+async function upsertRemoto(contacto) {
+  const uid = await _userId();
+  if (!uid) throw new Error('Sesión expirada. Vuelve a iniciar sesión.');
+  const payload = Object.assign({}, contacto, { user_id: uid });
+  const r = await fetch(SB_URL + '/rest/v1/contactos?on_conflict=id', {
+    method: 'POST',
+    headers: _headers({ Prefer: 'resolution=merge-duplicates,return=representation' }),
+    body: JSON.stringify(payload),
+  });
+  if (!r.ok) {
+    const txt = await r.text().catch(()=> '');
+    throw new Error('Supabase: ' + r.status + ' ' + txt);
+  }
+  return r.json();
+}
+
+/* Elimina un contacto del servidor */
+async function eliminarRemoto(id) {
+  const r = await fetch(SB_URL + '/rest/v1/contactos?id=eq.' + encodeURIComponent(id), {
+    method: 'DELETE',
+    headers: _headers(),
+  });
+  // Supabase suele devolver 204 con return=minimal; ambos son OK
+  if (!r.ok && r.status !== 204) {
+    const txt = await r.text().catch(()=> '');
+    throw new Error('Supabase: ' + r.status + ' ' + txt);
+  }
+}
 
 const ROLES = {
   arrendador:         { lbl:'Propietario', cls:'rb-arrendador' },
@@ -818,7 +882,7 @@ function abrirModal(id = null) {
     sv('m-email', c.email); sv('m-empresa', c.empresa);
     sv('m-calle', c.calle); sv('m-numext', c.num_ext); sv('m-numint', c.num_int);
     sv('m-colonia', c.colonia); sv('m-cp', c.cp); sv('m-mpio', c.mpio);
-    sv('m-banco', c.banco); sv('m-cuenta', c.cuenta); sv('m-notas', c.notas);
+    sv('m-notas', c.notas);
     document.getElementById('m-tipo').value = c.tipo || 'arrendador';
     const sx = c.sexo || 'M';
     sexoActual = sx;
@@ -826,7 +890,7 @@ function abrirModal(id = null) {
     document.getElementById('btn-del').style.display = 'block';
   } else {
     document.getElementById('modal-title').textContent = 'Nuevo contacto';
-    ['m-nombre','m-tel','m-wa','m-email','m-empresa','m-calle','m-numext','m-numint','m-colonia','m-cp','m-banco','m-cuenta','m-notas'].forEach(i => sv(i,''));
+    ['m-nombre','m-tel','m-wa','m-email','m-empresa','m-calle','m-numext','m-numint','m-colonia','m-cp','m-notas'].forEach(i => sv(i,''));
     sv('m-mpio','MORELIA, MICHOACÁN');
     document.getElementById('m-tipo').value = 'arrendador';
     sexoActual = 'M';
@@ -839,13 +903,12 @@ function abrirModal(id = null) {
 
 function cerrarModal() { document.getElementById('modal-ov').classList.remove('open'); editandoId = null; }
 
-function guardarContacto() {
+async function guardarContacto() {
   const nombre = gv('m-nombre');
   const tel    = gv('m-tel');
   if (!nombre) { alert('El nombre es obligatorio.'); document.getElementById('m-nombre').focus(); return; }
   if (!tel)    { alert('El teléfono es obligatorio.'); document.getElementById('m-tel').focus(); return; }
 
-  const contactos = cargar();
   const ahora = new Date().toISOString();
   const datos = {
     nombre: nombre.toUpperCase(),
@@ -861,36 +924,52 @@ function guardarContacto() {
     colonia: gv('m-colonia'),
     cp: gv('m-cp'),
     mpio: gv('m-mpio'),
-    banco: gv('m-banco'),
-    cuenta: gv('m-cuenta'),
     notas: gv('m-notas'),
     updated_at: ahora,
   };
 
   if (editandoId) {
-    const idx = contactos.findIndex(c => c.id === editandoId);
-    if (idx >= 0) contactos[idx] = { ...contactos[idx], ...datos };
+    datos.id = editandoId;
+    // Conservar operaciones existentes
+    const previo = _contactosMem.find(c => c.id === editandoId);
+    if (previo && previo.operaciones) datos.operaciones = previo.operaciones;
   } else {
     datos.id = 'c_' + Date.now();
     datos.created_at = ahora;
     datos.operaciones = [];
-    contactos.unshift(datos);
   }
 
-  guardar(contactos);
-  cerrarModal();
-  renderLista();
-  showToast(editandoId ? 'Contacto actualizado' : 'Contacto guardado');
+  // Bloquear botón mientras guarda
+  const btn = document.querySelector('#modal-ov .btn-primary');
+  const prevTxt = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+
+  try {
+    await upsertRemoto(datos);
+    await cargarRemoto();
+    cerrarModal();
+    renderLista();
+    showToast(editandoId ? 'Contacto actualizado' : 'Contacto guardado');
+  } catch (e) {
+    alert('No se pudo guardar el contacto.\n\n' + (e.message || e));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = prevTxt; }
+  }
 }
 
-function confirmarEliminar() {
+async function confirmarEliminar() {
   if (!editandoId) return;
   if (!confirm('¿Eliminar este contacto? Esta acción no se puede deshacer.')) return;
-  guardar(cargar().filter(c => c.id !== editandoId));
-  cerrarModal();
-  cerrarDetalle();
-  renderLista();
-  showToast('Contacto eliminado');
+  try {
+    await eliminarRemoto(editandoId);
+    await cargarRemoto();
+    cerrarModal();
+    cerrarDetalle();
+    renderLista();
+    showToast('Contacto eliminado');
+  } catch (e) {
+    alert('No se pudo eliminar el contacto.\n\n' + (e.message || e));
+  }
 }
 
 function abrirDetalle(id) {
@@ -919,8 +998,6 @@ function abrirDetalle(id) {
   if (c.email)    rows.push(['Correo', `<a href="mailto:${c.email}">${c.email}</a>`]);
   const dir = domicilio(c);
   if (dir) rows.push(['Domicilio', dir]);
-  if (c.banco)   rows.push(['Banco', c.banco]);
-  if (c.cuenta)  rows.push(['Cuenta / CLABE', c.cuenta]);
   rows.push(['Sexo', c.sexo === 'F' ? 'Femenino' : 'Masculino']);
   if (c.created_at) rows.push(['Agregado', new Date(c.created_at).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'})]);
 
@@ -943,17 +1020,46 @@ function editarDesdeDetalle() {
   abrirModal(detContacto.id);
 }
 
-window.addEventListener('message', e => {
+window.addEventListener('message', async (e) => {
   if (!e.data || e.data.tipo !== 'brokr_registrar_op') return;
-  const contactos = cargar();
-  const c = contactos.find(x => x.id === e.data.contacto_id);
+  const c = _contactosMem.find(x => x.id === e.data.contacto_id);
   if (!c) return;
   if (!c.operaciones) c.operaciones = [];
   c.operaciones.unshift(e.data.op);
-  guardar(contactos);
+  c.updated_at = new Date().toISOString();
+  try {
+    await upsertRemoto(c);
+    await cargarRemoto();
+    renderLista();
+  } catch (err) {
+    console.error('No se pudo registrar la operación:', err);
+  }
 });
 
-renderLista();
+/* Carga inicial: primero pintamos cache local (si existe) para respuesta instantánea,
+   luego refrescamos desde Supabase. Si no hay cache, mostramos un placeholder. */
+(async function init() {
+  try {
+    const cache = JSON.parse(localStorage.getItem(LS_CACHE) || '[]');
+    if (Array.isArray(cache) && cache.length) {
+      _contactosMem = cache;
+      renderLista();
+    } else {
+      const lista = document.getElementById('lista');
+      if (lista) lista.innerHTML = '<div class="empty"><strong>Cargando contactos…</strong></div>';
+    }
+  } catch {}
+
+  try {
+    await cargarRemoto();
+    renderLista();
+  } catch (e) {
+    const lista = document.getElementById('lista');
+    if (lista && !_contactosMem.length) {
+      lista.innerHTML = '<div class="empty"><strong>No se pudieron cargar tus contactos</strong><p>' + (e.message || 'Revisa tu conexión.') + '</p></div>';
+    }
+  }
+})();
 </script>
 </body>
 </html>
