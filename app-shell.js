@@ -383,126 +383,19 @@
   document.head.appendChild(styleEl);
 
   /* ════════════════════════════════════════════════════════════════
-     Auth — gate + load profile + auto-refresh de token
+     Auth — gate + load profile
      ════════════════════════════════════════════════════════════════ */
   function getToken() {
     return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || null;
   }
-  function getRefresh() {
-    return localStorage.getItem('sb_refresh') || null;
-  }
-  /* Decodifica un JWT y devuelve el timestamp de expiración (en segundos).
-     Si no se puede parsear, devuelve 0 → se trata como "expirado". */
-  function jwtExp(tok) {
-    if (!tok) return 0;
-    try {
-      const parts = tok.split('.');
-      if (parts.length < 2) return 0;
-      // base64url → base64
-      const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-      const pad = b64.length % 4 ? b64 + '='.repeat(4 - b64.length % 4) : b64;
-      const payload = JSON.parse(atob(pad));
-      return payload.exp || 0;
-    } catch { return 0; }
-  }
-  /* Pide a Supabase un access_token nuevo usando el refresh_token guardado.
-     Devuelve el nuevo token, o null si no se pudo renovar. */
-  let _refreshing = null; // promesa única para evitar carreras
-  async function refreshToken() {
-    if (_refreshing) return _refreshing;
-    const refresh = getRefresh();
-    if (!refresh) return null;
-    _refreshing = (async () => {
-      try {
-        const r = await fetch(SB_URL + '/auth/v1/token?grant_type=refresh_token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', apikey: SB_KEY },
-          body: JSON.stringify({ refresh_token: refresh }),
-        });
-        if (!r.ok) {
-          // Refresh inválido → forzar relogin
-          if (r.status === 400 || r.status === 401) doLogout();
-          return null;
-        }
-        const d = await r.json();
-        if (d.access_token) {
-          // Respetar dónde estaba originalmente (local o session)
-          if (localStorage.getItem('sb_token')) {
-            localStorage.setItem('sb_token', d.access_token);
-            if (d.refresh_token) localStorage.setItem('sb_refresh', d.refresh_token);
-          } else {
-            sessionStorage.setItem('sb_token', d.access_token);
-            if (d.refresh_token) localStorage.setItem('sb_refresh', d.refresh_token);
-          }
-          return d.access_token;
-        }
-        return null;
-      } catch { return null; }
-      finally { _refreshing = null; }
-    })();
-    return _refreshing;
-  }
-  /* Garantiza que el token sea válido. Si está por expirar (≤60s), renueva.
-     Devuelve el token activo, o null si no hay sesión recuperable. */
-  async function ensureToken() {
-    const tok = getToken();
-    if (!tok) return null;
-    const exp = jwtExp(tok);
-    const now = Math.floor(Date.now() / 1000);
-    if (exp - now > 60) return tok;          // todavía válido
-    return await refreshToken();              // expirado o por expirar
-  }
-  /* Wrapper de fetch para Supabase que renueva token automáticamente.
-     Uso: sbFetchAuth('rest/v1/contactos?select=*', { method:'GET' })  */
-  async function sbFetchAuth(path, init) {
-    init = init || {};
-    let tok = await ensureToken();
-    if (!tok) tok = SB_KEY;
-    const headers = Object.assign({
-      apikey: SB_KEY,
-      Authorization: 'Bearer ' + tok,
-    }, init.headers || {});
-    const url = path.startsWith('http') ? path : SB_URL + '/' + path.replace(/^\//, '');
-    let r = await fetch(url, Object.assign({}, init, { headers }));
-    // Si todavía nos rebota por JWT expirado (carrera), reintentamos una vez
-    if (r.status === 401 || r.status === 403) {
-      const txt = await r.clone().text().catch(()=> '');
-      if (/jwt|expired|bad_jwt/i.test(txt)) {
-        const fresh = await refreshToken();
-        if (fresh) {
-          headers.Authorization = 'Bearer ' + fresh;
-          r = await fetch(url, Object.assign({}, init, { headers }));
-        }
-      }
-    }
-    return r;
-  }
-  /* Versión vieja, conservada para los usos internos del shell */
   async function sbFetch(p) {
-    const r = await sbFetchAuth('rest/v1/' + p);
+    const tok = getToken() || SB_KEY;
+    const r = await fetch(SB_URL + '/rest/v1/' + p, {
+      headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok },
+    });
     if (!r.ok) return [];
     return r.json();
   }
-  /* Refresh proactivo: cada 45 minutos pedimos uno nuevo aunque no haga falta.
-     Esto mantiene la sesión viva durante todo el día sin que el usuario lo note. */
-  setInterval(() => {
-    if (getToken() && getRefresh()) refreshToken();
-  }, 45 * 60 * 1000);
-  /* Al volver a primer plano (cambio de pestaña / lock del celular), revalida */
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && getToken()) ensureToken();
-  });
-
-  /* API pública para que otros módulos hagan fetch a Supabase con token fresco */
-  window.brokrSb = {
-    url: SB_URL,
-    key: SB_KEY,
-    getToken,
-    ensureToken,
-    refreshToken,
-    fetch: sbFetchAuth,
-  };
-
   function initials(name) {
     if (!name) return 'U';
     const parts = name.trim().split(/\s+/);
