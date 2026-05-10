@@ -2025,19 +2025,24 @@ def build_ficha_html(p: dict, images_b64: dict) -> str:
         '<div class="chars-body"><table class="char-table"><tbody>{}</tbody></table>{}</div>'
     ).format(rows_html, amen_html)
 
+    # Fotos sobrantes — página de galería parcial (sin características)
     if remainder > 0:
         batch = gallery_fotos[full_pages*6:]
         imgs  = "".join('<img src="{}" alt="foto"/>'.format(images_b64.get(u,u)) for u in batch)
-        rows_r = (remainder + 1) // 2
+        # Pad to even number for 2-col grid
+        if len(batch) % 2 != 0:
+            imgs += '<div style="background:#F7F5EE"></div>'
+        rows_r = (len(batch) + 1) // 2
         gallery_pages += (
             '<div class="ficha-page">'
             '<div class="section-header"><h2>Galería fotográfica</h2></div>'
-            '<div class="photo-grid-auto" style="grid-template-rows:repeat({},82mm);height:{}mm">{}</div>'
-            '<div class="chars-inline">{}</div>'
+            '<div class="photo-grid-auto" style="grid-template-columns:1fr 1fr;grid-template-rows:repeat({},82mm);height:{}mm;gap:3px;padding:3px">{}</div>'
+            '<div style="flex:1"></div>'
             '{}</div>'
-        ).format(rows_r, rows_r*82, imgs, chars_section, footer())
-    else:
-        gallery_pages += '<div class="ficha-page">{}{}</div>'.format(chars_section, footer())
+        ).format(rows_r, rows_r*82, imgs, footer())
+
+    # Características — siempre en su propia página dedicada (igual que ficha.html)
+    gallery_pages += '<div class="ficha-page">{}{}</div>'.format(chars_section, footer())
 
     CSS = """
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2072,7 +2077,7 @@ body{font-family:'Inter',sans-serif;background:#F7F5EE;color:#0A0A0A;-webkit-fon
 .photo-grid-auto{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;flex-shrink:0;overflow:hidden}
 .photo-grid-6 img,.photo-grid-auto img{width:100%;height:100%;object-fit:cover;display:block}
 .chars-inline{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0}
-.chars-body{padding:16px 24px;overflow:hidden;background:#FFFFFF}
+.chars-body{padding:16px 24px;flex:1;background:#FFFFFF}
 .char-table{width:100%;border-collapse:collapse}
 .char-table tr{border-bottom:1px solid #E8E4DC}
 .char-table tr:last-child{border-bottom:none}
@@ -2228,7 +2233,7 @@ async def generar_descripcion_ficha_manual(data: dict):
                 "content-type": "application/json",
             },
             json={
-                "model": "claude-haiku-4-5-20251001",
+                "model": "claude-sonnet-4-6",
                 "max_tokens": 350,
                 "messages": [{"role": "user", "content": prompt}],
             },
