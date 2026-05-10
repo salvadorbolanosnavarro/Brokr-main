@@ -1130,10 +1130,26 @@
             </div>
             <div class="bk-pd-field" style="margin-top:12px">
               <label>API Key de EasyBroker</label>
-              <input type="password" id="pd-input-ebkey" placeholder="Pega tu API key aquí"/>
+              <input type="text" id="pd-input-ebkey" placeholder="Pega tu API key aquí" autocomplete="off" autocorrect="off" spellcheck="false"/>
             </div>
             <button class="bk-pd-btn bk-pd-btn-primary" onclick="saveEbKey()">Conectar EasyBroker</button>
             <div class="bk-pd-toast" id="pd-toast-eb"></div>
+          </div>
+        </div>
+
+        <!-- Facebook -->
+        <div>
+          <div class="bk-pd-section-label">Integración Facebook</div>
+          <div class="bk-pd-card">
+            <div class="bk-pd-status" id="pd-fb-status">
+              <span class="dot" id="pd-fb-dot"></span>
+              <span id="pd-fb-status-text">Verificando…</span>
+            </div>
+            <button class="bk-pd-btn bk-pd-btn-primary" id="pd-fb-btn" onclick="connectFacebook()" style="margin-top:12px">
+              <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+              Conectar página de Facebook
+            </button>
+            <div class="bk-pd-toast" id="pd-toast-fb"></div>
           </div>
         </div>
 
@@ -1220,6 +1236,25 @@
         txt.textContent = 'Sin conectar';
       }
     } catch(e) {}
+
+    // Verificar conexión Facebook
+    try {
+      const fbRes = await fetch(API_BASE + '/facebook/connection', {
+        headers: { Authorization: 'Bearer ' + tok }
+      });
+      const fbData = await fbRes.json();
+      const fdot = document.getElementById('pd-fb-dot');
+      const ftxt = document.getElementById('pd-fb-status-text');
+      const fbtn = document.getElementById('pd-fb-btn');
+      if (fbData.connected) {
+        fdot.className = 'dot ok';
+        ftxt.textContent = 'Conectado — ' + (fbData.page_name || 'página vinculada');
+        if (fbtn) { fbtn.textContent = 'Cambiar página de Facebook'; }
+      } else {
+        fdot.className = 'dot warn';
+        ftxt.textContent = 'Sin conectar';
+      }
+    } catch(e) {}
   }
 
   async function saveProfileData() {
@@ -1268,6 +1303,8 @@
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.detail || 'Error');
+      // Guardar en localStorage para que ficha.html y otros módulos la encuentren
+      localStorage.setItem('eb_api_key', key);
       toast.textContent = 'EasyBroker conectado correctamente.';
       toast.className = 'bk-pd-toast ok';
       document.getElementById('pd-input-ebkey').value = '';
@@ -1281,6 +1318,55 @@
   }
   window.saveEbKey = saveEbKey;
 
+
+
+  function connectFacebook() {
+    const tok = getToken();
+    if (!tok) return;
+    const FB_APP_ID = window._brokrFbAppId || '';
+    const redirectUri = encodeURIComponent(location.origin + '/facebook-callback.html');
+    const scope = 'pages_show_list,pages_read_engagement,pages_manage_posts';
+    if (!FB_APP_ID) {
+      // Sin App ID configurado — mostrar instrucciones
+      const toast = document.getElementById('pd-toast-fb');
+      toast.textContent = 'Configura FB_APP_ID en Railway para habilitar esta función.';
+      toast.className = 'bk-pd-toast err';
+      setTimeout(() => { toast.className = 'bk-pd-toast'; }, 4000);
+      return;
+    }
+    window.open(
+      `https://www.facebook.com/v21.0/dialog/oauth?client_id=${FB_APP_ID}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`,
+      'facebook_oauth',
+      'width=600,height=700,scrollbars=yes'
+    );
+    // Escuchar cuando la ventana popup mande el resultado
+    window._fbOAuthHandler = async function(code) {
+      const tok2 = getToken();
+      try {
+        const r = await fetch(API_BASE + '/facebook/callback?code=' + encodeURIComponent(code) + '&redirect_uri=' + redirectUri, {
+          headers: { Authorization: 'Bearer ' + tok2 }
+        });
+        const d = await r.json();
+        if (d.ok) {
+          // Guardar en backend
+          await fetch(API_BASE + '/facebook/save-page', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok2 },
+            body: JSON.stringify({ page_id: d.page_id, page_name: d.page_name, page_token: d.page_token })
+          });
+          document.getElementById('pd-fb-dot').className = 'dot ok';
+          document.getElementById('pd-fb-status-text').textContent = 'Conectado — ' + d.page_name;
+          document.getElementById('pd-fb-btn').textContent = 'Cambiar página de Facebook';
+        }
+      } catch(e) {
+        const toast = document.getElementById('pd-toast-fb');
+        toast.textContent = 'Error al conectar. Intenta de nuevo.';
+        toast.className = 'bk-pd-toast err';
+        setTimeout(() => { toast.className = 'bk-pd-toast'; }, 4000);
+      }
+    };
+  }
+  window.connectFacebook = connectFacebook;
 
   async function boot() {
     const profile = await authInit();
