@@ -54,16 +54,6 @@
     'admin':        'Panel administrativo',
   };
 
-  const SHAARK_CHIPS_MAP = {
-    home:         [{l:'📄 Contratos', m:'Generar un contrato'}, {l:'💰 Calc. ISR', m:'Calcular ISR'}, {l:'🏷️ Fichas téc.', m:'Crear ficha técnica'}, {l:'🏠 Mis inmuebles', m:'Ver mis propiedades'}],
-    contratos:    [{l:'📝 Arrendamiento', m:'Genera un contrato de arrendamiento'}, {l:'🤝 Promesa', m:'Genera una promesa de compraventa'}, {l:'📋 ¿Cómo funciona?', m:'¿Qué tipos de contrato puedo generar?'}],
-    avm:          [{l:'📊 Valuación', m:'Valúa una casa de 3 recámaras en'}, {l:'🔍 ¿Cuánto vale?', m:'¿Cuánto vale una propiedad en esta colonia?'}, {l:'🏘️ Comparables', m:'¿Cómo agrego comparables?'}],
-    isr:          [{l:'🧮 Calc. ISR', m:'Calcula el ISR para una venta de'}, {l:'📄 Descargar PDF', m:'Descarga el reporte de ISR'}, {l:'❓ Exención', m:'¿Cuándo aplica la exención de casa habitación?'}],
-    ficha:        [{l:'🔎 Buscar prop.', m:'Genera la ficha para la propiedad EB-'}, {l:'📸 Con fotos', m:'¿Cómo se agregan fotos a la ficha?'}],
-    'ficha-manual':[{l:'🏡 Nueva ficha', m:'Crea una ficha para una casa de 3 recámaras en'}, {l:'✏️ Descripción', m:'Escribe una descripción atractiva para una propiedad en'}],
-    props:        [{l:'🔍 Buscar', m:'Buscar propiedades en Chapultepec'}, {l:'❓ EasyBroker', m:'¿Cómo conecto mi cuenta de EasyBroker?'}],
-  };
-
   /* ── Iconos (heroicons outline 1.6) ── */
   const ICONS = {
     home:       '<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/>',
@@ -86,9 +76,26 @@
     mic:        '<path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"/>',
     send:       '<path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/>',
     close:      '<path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/>',
+    homeList:   '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6h16.5M3.75 12h16.5M3.75 18h16.5"/>',
+    handshake:  '<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l3-3 3 3 4-4 5 5-3 3-2-2-4 4-2-2-2 2-2-2 0-4z"/>',
+    question:   '<path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/>',
   };
   const svg = (name, size = 18, sw = 1.6) =>
     `<svg width="${size}" height="${size}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="${sw}">${ICONS[name] || ''}</svg>`;
+
+  /* Helper local para SVGs dentro de chips de Shaark (14×14, stroke 1.7) */
+  const _CICO = (name) =>
+    `<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7" style="flex-shrink:0;vertical-align:-2px;margin-right:6px">${ICONS[name] || ''}</svg>`;
+
+  const SHAARK_CHIPS_MAP = {
+    home:         [{l:_CICO('document')+'Contratos', m:'Generar un contrato'}, {l:_CICO('calculator')+'Calc. ISR', m:'Calcular ISR'}, {l:_CICO('tag')+'Fichas téc.', m:'Crear ficha técnica'}, {l:_CICO('building')+'Mis inmuebles', m:'Ver mis propiedades'}],
+    contratos:    [{l:_CICO('pencil')+'Arrendamiento', m:'Genera un contrato de arrendamiento'}, {l:_CICO('handshake')+'Promesa', m:'Genera una promesa de compraventa'}, {l:_CICO('question')+'¿Cómo funciona?', m:'¿Qué tipos de contrato puedo generar?'}],
+    avm:          [{l:_CICO('chart')+'Valuación', m:'Valúa una casa de 3 recámaras en'}, {l:_CICO('question')+'¿Cuánto vale?', m:'¿Cuánto vale una propiedad en esta colonia?'}, {l:_CICO('building')+'Comparables', m:'¿Cómo agrego comparables?'}],
+    isr:          [{l:_CICO('calculator')+'Calc. ISR', m:'Calcula el ISR para una venta de'}, {l:_CICO('document')+'Descargar PDF', m:'Descarga el reporte de ISR'}, {l:_CICO('question')+'Exención', m:'¿Cuándo aplica la exención de casa habitación?'}],
+    ficha:        [{l:_CICO('search')+'Buscar prop.', m:'Genera la ficha para la propiedad EB-'}, {l:_CICO('image')+'Con fotos', m:'¿Cómo se agregan fotos a la ficha?'}],
+    'ficha-manual':[{l:_CICO('tag')+'Nueva ficha', m:'Crea una ficha para una casa de 3 recámaras en'}, {l:_CICO('pencil')+'Descripción', m:'Escribe una descripción atractiva para una propiedad en'}],
+    props:        [{l:_CICO('search')+'Buscar', m:'Buscar propiedades en Chapultepec'}, {l:_CICO('question')+'EasyBroker', m:'¿Cómo conecto mi cuenta de EasyBroker?'}],
+  };
 
   /* ════════════════════════════════════════════════════════════════
      CSS injection
@@ -535,7 +542,7 @@
         <button class="bk-shk-close" type="button" aria-label="Cerrar">${svg('close', 14, 2)}</button>
       </div>
       <div class="bk-shk-msgs" id="bk-shk-msgs">
-        <div class="bk-shk-bubble bot">¡Hola! Soy Broquer, tan inteligente como un 🦈. ¿Qué puedo hacer por ti?</div>
+        <div class="bk-shk-bubble bot">¡Hola! Soy Broquer, tu asistente inteligente. ¿Qué puedo hacer por ti?</div>
       </div>
       <div class="bk-shk-chips" id="bk-shk-chips"></div>
       <div class="bk-shk-input-row">
@@ -629,11 +636,11 @@
       });
       const data = await r.json();
       if (!r.ok) {
-        typing.textContent = '⚠️ ' + (data.detail || 'Error del servidor.');
+        typing.textContent = (data.detail || 'Error del servidor.');
         return;
       }
       const reply = data.choices?.[0]?.message?.content;
-      if (!reply) { typing.textContent = '⚠️ Respuesta vacía. Intenta de nuevo.'; return; }
+      if (!reply) { typing.textContent = 'Respuesta vacía. Intenta de nuevo.'; return; }
       // Parse [ACCION]…[/ACCION] payloads
       const accionRe = /\[ACCION\](.*?)\[\/ACCION\]/gs;
       let m;
@@ -648,7 +655,7 @@
       typing.textContent = clean;
       if (window._scwLastWasVoice) { speak(clean); window._scwLastWasVoice = false; }
     } catch (e) {
-      typing.textContent = '⚠️ Sin conexión. Revisa tu internet.';
+      typing.textContent = 'Sin conexión. Revisa tu internet.';
     }
     if (wrap) wrap.scrollTop = wrap.scrollHeight;
   }
