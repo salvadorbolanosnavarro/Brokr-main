@@ -1960,12 +1960,12 @@ def build_ficha_html(p: dict, images_b64: dict) -> str:
         s = "{:,.2f}".format(n).rstrip("0").rstrip(".")
         return s + " m²"
 
-    SVG_BED  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 20v-8a2 2 0 012-2h16a2 2 0 012 2v8"/><path d="M2 14h20"/><rect x="6" y="4" width="4" height="6" rx="1"/></svg>'
-    SVG_BATH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="11" width="20" height="4" rx="1"/><path d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3"/><line x1="6" y1="5" x2="6" y2="11"/></svg>'
-    SVG_AREA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h18M9 3v18"/></svg>'
-    SVG_LAND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 20l5-8 4 5 3-4 8 7"/><circle cx="18" cy="5" r="2"/></svg>'
-    SVG_CAR  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="10" width="20" height="8" rx="2"/><path d="M5 10l2-4h10l2 4"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/></svg>'
-    SVG_PIN  = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7A7065" stroke-width="1.8"><path d="M12 2a7 7 0 017 7c0 5-7 13-7 13S5 14 5 9a7 7 0 017-7z"/><circle cx="12" cy="9" r="2.5"/></svg>'
+    SVG_BED  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M3 18v-6a3 3 0 013-3h12a3 3 0 013 3v6M3 18h18M3 18v2m18-2v2M7 12V8a1 1 0 011-1h3a1 1 0 011 1v4"/></svg>'
+    SVG_BATH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12V6a2 2 0 012-2h2a2 2 0 012 2M3 12h18v3a4 4 0 01-4 4H7a4 4 0 01-4-4v-3zM6 19v2m12-2v2"/></svg>'
+    SVG_AREA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h16v16H4z M4 8h16 M4 16h16 M8 4v16 M16 4v16"/></svg>'
+    SVG_LAND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12c2-1 4-2 6-2s4 2 6 2 4-1 6-2v8H3v-6z M3 12V8 M21 10V6"/></svg>'
+    SVG_CAR  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M5 17a2 2 0 104 0 2 2 0 00-4 0zM15 17a2 2 0 104 0 2 2 0 00-4 0zM3 17h2m4 0h6 M5 17V9l2-4h10l2 4v8h-2"/></svg>'
+    SVG_PIN  = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>'
 
     specs = []
     if rec:     specs.append((SVG_BED,  str(rec),      "Recámaras"))
@@ -1987,7 +1987,7 @@ def build_ficha_html(p: dict, images_b64: dict) -> str:
     def footer():
         return '<div class="ficha-footer"><img src="{}" class="ft-logo" alt="Brokr"/><div class="ft-id">{}</div></div>'.format(LOGO, id_prop)
 
-    gallery_fotos = foto_urls[:]  # include hero photo as first in gallery
+    gallery_fotos = foto_urls[1:]  # skip hero photo, same as ficha.html
     gallery_pages = ""
     total = len(gallery_fotos)
     full_pages = total // 6
@@ -2097,7 +2097,6 @@ body{font-family:'Inter',sans-serif;background:#F7F5EE;color:#0A0A0A;-webkit-fon
         "<!DOCTYPE html><html lang='es'><head><meta charset='UTF-8'/>"
         "<style>{}</style></head><body>"
         "<div class='ficha-page'>"
-        "<div class='cover-accent'></div>"
         "{}"
         "<div class='cover-info'>"
         "<div class='cover-badge'>{}</div>"
@@ -2178,7 +2177,10 @@ async def get_noticias():
 
 @app.post("/ficha-manual/descripcion")
 async def generar_descripcion_ficha_manual(data: dict):
-    """Generate AI description for ficha manual based on property data."""
+    """Generate AI description for ficha manual — uses same httpx pattern as rest of backend."""
+    if not ANTHROPIC_API_KEY:
+        raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY no configurada")
+
     tipo    = data.get("tipo", "")
     colonia = data.get("colonia", "")
     ciudad  = data.get("ciudad", "Morelia")
@@ -2208,7 +2210,6 @@ async def generar_descripcion_ficha_manual(data: dict):
     if amen:    partes.append(f"Amenidades: {amen}")
 
     ficha_info = "\n".join(partes) if partes else "Propiedad sin datos"
-
     prompt = (
         "Eres un redactor especialista en bienes raíces en México. "
         "Escribe una descripción comercial atractiva, profesional y fluida "
@@ -2218,14 +2219,24 @@ async def generar_descripcion_ficha_manual(data: dict):
         f"{ficha_info}"
     )
 
-    from anthropic import AsyncAnthropic
-    client = AsyncAnthropic()
-    message = await client.messages.create(
-        model="claude-opus-4-5",
-        max_tokens=300,
-        messages=[{"role": "user", "content": prompt}]
-    )
-    descripcion = message.content[0].text.strip() if message.content else ""
+    async with httpx.AsyncClient(timeout=30) as client:
+        r = await client.post(
+            f"{ANTHROPIC_BASE}/messages",
+            headers={
+                "x-api-key": ANTHROPIC_API_KEY,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            },
+            json={
+                "model": "claude-haiku-4-5-20251001",
+                "max_tokens": 350,
+                "messages": [{"role": "user", "content": prompt}],
+            },
+        )
+    if r.status_code != 200:
+        raise HTTPException(status_code=500, detail=f"Error IA: {r.status_code}")
+    resp = r.json()
+    descripcion = resp.get("content", [{}])[0].get("text", "").strip()
     return {"descripcion": descripcion}
 
 
