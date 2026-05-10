@@ -2028,17 +2028,25 @@ def build_ficha_html(p: dict, images_b64: dict) -> str:
     # Fotos sobrantes en su propia página parcial
     if remainder > 0:
         batch = gallery_fotos[full_pages*6:]
-        imgs  = "".join('<img src="{}" alt="foto"/>'.format(images_b64.get(u,u)) for u in batch)
-        if len(batch) % 2 != 0:
-            imgs += '<div style="background:#F7F5EE"></div>'
+        # Imágenes pares: grid 2 col normal.
+        # Imágenes impares: la última ocupa span 2 para no dejar celda vacía.
+        imgs_html = ""
+        for i, u in enumerate(batch):
+            src = images_b64.get(u, u)
+            if i == len(batch) - 1 and len(batch) % 2 != 0:
+                # última imagen impar → ocupa las dos columnas
+                imgs_html += '<img src="{}" alt="foto" style="grid-column:span 2;width:100%;height:82mm;object-fit:cover;display:block"/>'.format(src)
+            else:
+                imgs_html += '<img src="{}" alt="foto" style="width:100%;height:82mm;object-fit:cover;display:block"/>'.format(src)
         rows_r = (len(batch) + 1) // 2
+        grid_h = rows_r * 82
         gallery_pages += (
             '<div class="ficha-page">'
             '<div class="section-header"><h2>Galería fotográfica</h2></div>'
-            '<div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat({},82mm);height:{}mm;gap:3px;padding:3px;flex-shrink:0">{}</div>'
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;height:{}mm;flex-shrink:0">{}</div>'
             '<div style="flex:1"></div>'
             '{}</div>'
-        ).format(rows_r, rows_r*82, imgs, footer())
+        ).format(grid_h, imgs_html, footer())
 
     # Características siempre en página propia con footer garantizado
     gallery_pages += (
