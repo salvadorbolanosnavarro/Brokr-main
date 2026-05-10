@@ -3103,8 +3103,7 @@ async def facebook_publish_property(request: Request):
     if specs_str: mensaje_lines.append(specs_str)
     if descripcion: mensaje_lines.extend(["", descripcion[:200]])
     mensaje_lines.extend(["", "✅ Publicado con BROKR®"])
-    mensaje = "
-".join(mensaje_lines)
+    mensaje = "\n".join(mensaje_lines)
 
     # Publicar en Facebook
     async with httpx.AsyncClient(timeout=30) as client:
