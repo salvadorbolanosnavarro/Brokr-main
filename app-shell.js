@@ -27,17 +27,16 @@
 
   /* ── Configuración de módulos ── */
   const MODS = [
-    { key:'home',         href:'index.html',         label:'Inicio',          group:'main', icon:'home' },
     { key:'props',        href:'propiedades.html',   label:'Inmuebles',       group:'main', icon:'building' },
     { key:'contactos',    href:'contactos.html',     label:'Contactos',       group:'main', icon:'users' },
     { key:'contratos',    href:'contratos.html',     label:'Contratos',       group:'main', icon:'document' },
-    { key:'avm',          href:'avm.html',           label:'AVM Valuación',   group:'tools', icon:'chart' },
-    { key:'ficha',        href:'ficha.html',         label:'Ficha técnica',   group:'tools', icon:'tag' },
-    { key:'ficha-manual', href:'ficha-manual.html',  label:'Ficha manual',    group:'tools', icon:'pencil' },
-    { key:'isr',          href:'isr.html',           label:'ISR',             group:'tools', icon:'calculator' },
-    { key:'image-cleaner',href:'image-cleaner.html', label:'Editor imágenes', group:'tools', icon:'image' },
-    { key:'verificador',  href:'verificador.html',   label:'Verificador',     group:'tools', icon:'shield' },
-    { key:'admin',        href:'admin.html',         label:'Admin',           group:'tools', icon:'cog', adminOnly:true },
+    { key:'avm',          href:'avm.html',           label:'AVM Valuación',   group:'main', icon:'chart' },
+    { key:'ficha',        href:'ficha.html',         label:'Ficha técnica',   group:'main', icon:'tag' },
+    { key:'ficha-manual', href:'ficha-manual.html',  label:'Ficha manual',    group:'main', icon:'pencil' },
+    { key:'isr',          href:'isr.html',           label:'ISR',             group:'main', icon:'calculator' },
+    { key:'image-cleaner',href:'image-cleaner.html', label:'Editor imágenes', group:'main', icon:'image' },
+    { key:'verificador',  href:'verificador.html',   label:'Verificador',     group:'main', icon:'shield' },
+    { key:'admin',        href:'admin.html',         label:'Admin',           group:'main', icon:'cog', adminOnly:true },
   ];
 
   const CONTEXT_LABELS = {
@@ -104,11 +103,11 @@
 .bk-shell-root { display: flex; height: 100vh; min-height: 100vh; background: var(--paper); }
 .bk-shell-root.bk-narrow .bk-sidebar { display: none; }
 
-/* Sidebar */
+/* Sidebar (drawer) — fondo negro para distinguirlo del panel principal */
 .bk-sidebar {
   width: 260px; flex-shrink: 0;
-  background: var(--paper);
-  border-right: 1px solid var(--line);
+  background: #0A0A0A;
+  border-right: none;
   padding: 22px 14px;
   display: flex; flex-direction: column;
   overflow-y: auto;
@@ -117,49 +116,49 @@
 @media (max-width: 880px) { .bk-sidebar { display: none; } }
 .bk-sidebar__brand {
   padding: 6px 10px 22px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: none;
   margin-bottom: 14px;
   display: flex; align-items: center;
 }
 .bk-sidebar__brand a { display: flex; align-items: center; gap: 8px; text-decoration: none; }
-.bk-sidebar__brand img { height: 28px; width: auto; display: block; }
+.bk-sidebar__brand img { height: 28px; width: auto; display: block; filter: brightness(0) invert(1); }
 .bk-sb-section {
   font-family: var(--font-mono);
   font-size: 9px; letter-spacing: 0.18em;
-  text-transform: uppercase; color: var(--mute-2);
+  text-transform: uppercase; color: rgba(247,245,238,0.4);
   padding: 16px 10px 8px; font-weight: 500;
 }
 .bk-sb-link {
   display: flex; align-items: center; gap: 10px;
   padding: 10px 12px;
   border-radius: var(--r);
-  font-size: 14px; color: var(--ink-2);
-  cursor: pointer; transition: background var(--dur) var(--ease);
+  font-size: 14px; color: rgba(247,245,238,0.78);
+  cursor: pointer; transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
   font-weight: 500; letter-spacing: -0.005em;
   text-decoration: none;
 }
-.bk-sb-link:hover { background: var(--paper-2); }
-.bk-sb-link.is-active { background: var(--ink); color: var(--paper); }
+.bk-sb-link:hover { background: rgba(247,245,238,0.06); color: var(--paper); }
+.bk-sb-link.is-active { background: var(--paper); color: var(--ink); }
 .bk-sb-link svg { flex-shrink: 0; opacity: .82; }
 .bk-sb-foot {
   margin-top: auto;
   display: flex; align-items: center; gap: 10px;
   padding: 12px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid rgba(247,245,238,0.08);
 }
 .bk-sb-foot__avatar {
   width: 36px; height: 36px; border-radius: 50%;
-  background: var(--ink); color: var(--paper);
+  background: var(--paper); color: var(--ink);
   display: flex; align-items: center; justify-content: center;
   font-weight: 600; font-size: 13px; letter-spacing: -0.02em;
 }
-.bk-sb-foot__name { font-size: 13px; font-weight: 500; line-height: 1.2; flex: 1; min-width: 0; }
-.bk-sb-foot__name .role { color: var(--mute); font-size: 11px; font-weight: 400; }
+.bk-sb-foot__name { font-size: 13px; font-weight: 500; line-height: 1.2; flex: 1; min-width: 0; color: var(--paper); }
+.bk-sb-foot__name .role { color: rgba(247,245,238,0.5); font-size: 11px; font-weight: 400; }
 .bk-sb-foot__logout {
   background: transparent; border: none; cursor: pointer;
-  color: var(--mute); padding: 6px;
+  color: rgba(247,245,238,0.5); padding: 6px;
 }
-.bk-sb-foot__logout:hover { color: var(--ink); }
+.bk-sb-foot__logout:hover { color: var(--paper); }
 
 /* Content area */
 .bk-content { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
@@ -169,7 +168,7 @@
   display: none;
   padding: 14px 16px 12px;
   background: var(--paper);
-  border-bottom: 1px solid var(--line);
+  border-bottom: none;
   align-items: center; justify-content: space-between;
 }
 @media (max-width: 880px) { .bk-mobile-head { display: flex; } }
@@ -187,32 +186,80 @@
   display: flex; align-items: center; justify-content: space-between;
   gap: 16px;
   padding: 18px 36px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: none;
   background: var(--paper);
   flex-shrink: 0;
+  position: relative;
 }
 @media (max-width: 880px) { .bk-topbar { display: none; } }
-.bk-topbar__title {
-  font-family: var(--font-display); font-size: 18px; font-weight: 600;
-  letter-spacing: -0.02em; color: var(--ink); margin-right: auto;
+
+/* Quote rotativo (ocupa el espacio donde antes iban título + búsqueda) */
+.bk-topbar__quote {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-display, 'Inter'), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink-2);
+  line-height: 1.35;
+  opacity: 0;
+  transition: opacity .5s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 16px;
 }
-.bk-topbar__search {
-  flex: 1; max-width: 420px;
-  display: flex; align-items: center; gap: 10px;
+.bk-topbar__quote.is-visible { opacity: 1; }
+.bk-topbar__quote .quote-author {
+  color: var(--mute);
+  font-weight: 400;
+  font-size: 13px;
+  margin-left: 8px;
+}
+
+/* Búsqueda expandible (oculta por defecto, se despliega al click en lupa) */
+.bk-topbar__search-expand {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex; align-items: center;
+  padding: 18px 36px;
+  background: var(--paper);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .25s ease, visibility .25s ease;
+  z-index: 5;
+}
+.bk-topbar__search-expand.is-open {
+  opacity: 1;
+  visibility: visible;
+}
+.bk-topbar__search-expand-inner {
+  flex: 1;
+  display: flex; align-items: center; gap: 12px;
   background: var(--bone);
   border: 1px solid var(--line-2);
   border-radius: var(--r-pill);
-  padding: 0 16px; height: 40px;
+  padding: 0 18px;
+  height: 44px;
 }
-.bk-topbar__search input { flex: 1; background: none; border: none; outline: none; font-size: 14px; letter-spacing: -0.005em; }
-.bk-topbar__search input::placeholder { color: var(--mute-2); }
-.bk-topbar__search kbd {
-  font-family: var(--font-mono); font-size: 10px;
-  background: var(--paper-2); padding: 2px 6px;
-  border-radius: 4px; color: var(--mute);
-  border: 1px solid var(--line);
+.bk-topbar__search-expand-inner svg { color: var(--mute); flex-shrink: 0; }
+.bk-topbar__search-expand-inner input {
+  flex: 1; background: none; border: none; outline: none;
+  font-size: 15px; letter-spacing: -0.005em;
+  font-family: inherit;
+  color: var(--ink);
 }
-.bk-topbar__actions { display: flex; gap: 10px; align-items: center; }
+.bk-topbar__search-expand-inner input::placeholder { color: var(--mute-2); }
+.bk-topbar__search-close {
+  background: transparent; border: none; cursor: pointer;
+  color: var(--mute); padding: 6px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.bk-topbar__search-close:hover { color: var(--ink); }
+
+.bk-topbar__actions { display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
 .bk-icon-btn {
   width: 40px; height: 40px;
   border-radius: 50%;
@@ -244,7 +291,7 @@
   display: none;
   position: fixed; bottom: 0; left: 0; right: 0;
   background: var(--bone);
-  border-top: 1px solid var(--line);
+  border-top: none;
   padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
   z-index: 60;
   justify-content: space-around;
@@ -591,8 +638,7 @@
     pageWrap.id = 'bk-page';
     while (document.body.firstChild) pageWrap.appendChild(document.body.firstChild);
 
-    const main = MODS.filter(m => m.group === 'main');
-    const tools = MODS.filter(m => m.group === 'tools' && (!m.adminOnly || profile?.isAdmin));
+    const main = MODS.filter(m => m.group === 'main' && (!m.adminOnly || profile?.isAdmin));
 
     const ini = initials(profile?.fullName || '');
     const shell = document.createElement('div');
@@ -605,8 +651,6 @@
           </a>
         </div>
         ${main.map(m => buildSidebarLink(m, activeKey)).join('')}
-        <div class="bk-sb-section">Herramientas</div>
-        ${tools.map(m => buildSidebarLink(m, activeKey)).join('')}
         <div class="bk-sb-foot">
           <div class="bk-sb-foot__avatar" id="bk-sb-avatar" onclick="openProfileDrawer()" style="cursor:pointer" title="Mi perfil">${ini}</div>
           <div class="bk-sb-foot__name">
@@ -624,14 +668,19 @@
         </div>
 
         <div class="bk-topbar">
-          <div class="bk-topbar__title">${activeMod.label}</div>
-          <div class="bk-topbar__search">
-            ${svg('search', 16, 2)}
-            <input type="text" id="bk-search" placeholder="Buscar inmuebles, contactos, contratos…"/>
-            <kbd>⌘K</kbd>
-          </div>
+          <div class="bk-topbar__quote" id="bk-topbar-quote"></div>
           <div class="bk-topbar__actions">
+            <button class="bk-icon-btn" id="bk-search-toggle" aria-label="Buscar" type="button">${svg('search', 18, 2)}</button>
             <button class="bk-icon-btn" aria-label="Notificaciones">${svg('bell')}<span class="dot"></span></button>
+          </div>
+          <div class="bk-topbar__search-expand" id="bk-search-expand">
+            <div class="bk-topbar__search-expand-inner">
+              ${svg('search', 18, 2)}
+              <input type="text" id="bk-search" placeholder="Buscar inmuebles, contactos, contratos…" autocomplete="off"/>
+              <button class="bk-topbar__search-close" id="bk-search-close" aria-label="Cerrar búsqueda" type="button">
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
           </div>
         </div>
       </main>
@@ -1384,6 +1433,82 @@
       document.addEventListener('touchstart', initWake, { once: true });
       document.addEventListener('click', initWake, { once: true });
     }
+
+    // ─── Frases motivacionales rotativas (cada hora) ───────────────
+    const QUOTES = [
+      { t: 'El éxito no es definitivo, el fracaso no es fatal: lo que cuenta es el coraje para continuar.', a: 'Winston Churchill' },
+      { t: 'La única forma de hacer un gran trabajo es amar lo que haces.', a: 'Steve Jobs' },
+      { t: 'No te preocupes por el fracaso; preocúpate por las oportunidades que pierdes cuando ni siquiera lo intentas.', a: 'Jack Canfield' },
+      { t: 'El mercado siempre puede permanecer irracional más tiempo del que tú puedes permanecer solvente.', a: 'John Maynard Keynes' },
+      { t: 'La oportunidad no toca: presenta su tarjeta cuando vienes a buscarla.', a: 'Charles Schwab' },
+      { t: 'Quien quiere hacer algo encuentra un medio; quien no quiere hacer nada encuentra una excusa.', a: 'Proverbio árabe' },
+      { t: 'Café es para closers.', a: 'Glengarry Glen Ross' },
+      { t: 'El que no arriesga, no gana.', a: 'Refrán popular' },
+      { t: 'Cada batalla se gana antes de pelearla.', a: 'Sun Tzu' },
+      { t: 'No vendemos casas. Vendemos sueños, posibilidades, hogares.', a: 'Barbara Corcoran' },
+      { t: 'El dinero es como el estiércol: solo sirve si lo esparces.', a: 'J. Paul Getty' },
+      { t: 'Lo importante no es lo que te pasa, sino cómo reaccionas a lo que te pasa.', a: 'Epicteto' },
+      { t: 'Si no estás dispuesto a arriesgarlo todo, no esperes lograr nada.', a: 'Muhammad Ali' },
+      { t: 'En los negocios, lo que es peligroso es no evolucionar.', a: 'Jeff Bezos' },
+      { t: 'El precio es lo que pagas. El valor es lo que recibes.', a: 'Warren Buffett' },
+      { t: 'No se trata de ideas. Se trata de hacer que las ideas sucedan.', a: 'Scott Belsky' },
+      { t: 'Si lo construyes, ellos vendrán.', a: 'Field of Dreams' },
+      { t: 'Greed, for lack of a better word, is good.', a: 'Wall Street — Gordon Gekko' },
+      { t: 'A.B.C. — Always Be Closing.', a: 'Glengarry Glen Ross' },
+      { t: 'La gente no compra productos: compra la versión mejor de sí mismos.', a: 'Don Draper — Mad Men' },
+      { t: 'El que tiene un porqué para vivir, puede soportar casi cualquier cómo.', a: 'Friedrich Nietzsche' },
+      { t: 'Lo que hagas hoy puede mejorar todos tus mañanas.', a: 'Ralph Marston' },
+      { t: 'El verdadero valor de un hombre se determina principalmente examinando en qué medida ha alcanzado la liberación del yo.', a: 'Albert Einstein' },
+      { t: 'No persigas el éxito: vuélvete una persona de valor y el éxito te seguirá.', a: 'Albert Einstein' },
+    ];
+    const quoteEl = document.getElementById('bk-topbar-quote');
+    let _quoteIdx = -1;
+    function showQuote() {
+      if (!quoteEl) return;
+      let next;
+      // hash de la hora actual para que la frase cambie cada hora de forma determinista
+      const hourHash = Math.floor(Date.now() / (1000 * 60 * 60));
+      next = hourHash % QUOTES.length;
+      if (next === _quoteIdx) next = (next + 1) % QUOTES.length;
+      _quoteIdx = next;
+      const q = QUOTES[next];
+      quoteEl.classList.remove('is-visible');
+      setTimeout(() => {
+        quoteEl.innerHTML = `${q.t}<span class="quote-author">— ${q.a}</span>`;
+        quoteEl.classList.add('is-visible');
+      }, 250);
+    }
+    showQuote();
+    // verificación cada minuto: si cambió la hora, rotar
+    let _lastHour = new Date().getHours();
+    setInterval(() => {
+      const h = new Date().getHours();
+      if (h !== _lastHour) {
+        _lastHour = h;
+        showQuote();
+      }
+    }, 60 * 1000);
+
+    // ─── Búsqueda expandible (lupa en topbar) ──────────────────────
+    const searchToggleBtn = document.getElementById('bk-search-toggle');
+    const searchExpand    = document.getElementById('bk-search-expand');
+    const searchCloseBtn  = document.getElementById('bk-search-close');
+    const searchInput     = document.getElementById('bk-search');
+    function openSearch() {
+      if (!searchExpand) return;
+      searchExpand.classList.add('is-open');
+      setTimeout(() => searchInput?.focus(), 50);
+    }
+    function closeSearch() {
+      if (!searchExpand) return;
+      searchExpand.classList.remove('is-open');
+      if (searchInput) searchInput.value = '';
+    }
+    searchToggleBtn?.addEventListener('click', openSearch);
+    searchCloseBtn?.addEventListener('click', closeSearch);
+    searchInput?.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Escape') closeSearch();
+    });
 
     // Notify module that shell is ready (so modules can run code that depends
     // on the .bk-page wrapper or the avatar, e.g. read sessionStorage payloads).
