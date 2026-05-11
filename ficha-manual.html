@@ -1085,6 +1085,156 @@ window.addEventListener('message', function(e) {
 const _sp = document.createElement('style');
 _sp.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
 document.head.appendChild(_sp);
+
+// ════════════════════════════════════════════════════════════════
+// MIS INMUEBLES ↔ FICHA MANUAL — sincronización bidireccional
+// ════════════════════════════════════════════════════════════════
+const SB_URL_FM = 'https://urtgysmtnvoqaljuhntz.supabase.co';
+const SB_KEY_FM = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
+
+// ID de la propiedad de Mis Inmuebles desde la que se precargó esta ficha.
+// Si está vacío, significa que el usuario está creando desde cero — al
+// terminar la ficha también vamos a guardarla automáticamente como inmueble.
+let _propIdOrigen = null;
+
+function _fmGetToken() {
+  return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || null;
+}
+function _fmGetUserId() {
+  try {
+    const u = JSON.parse(localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || 'null');
+    return u?.id || null;
+  } catch(e) { return null; }
+}
+
+// ── Precarga al cargar la página (si vino desde Mis Inmuebles) ──
+(function precargarDesdeMisInmuebles() {
+  try {
+    const raw = sessionStorage.getItem('prefill_ficha_manual');
+    if (!raw) return;
+    sessionStorage.removeItem('prefill_ficha_manual'); // usar una sola vez
+    const d = JSON.parse(raw);
+    _propIdOrigen = d.propId || null;
+
+    // Tipo (normalizar mayúsculas)
+    const setSelect = (selId, val) => {
+      if (!val) return;
+      const el = document.getElementById(selId);
+      if (!el) return;
+      const opt = Array.from(el.options).find(o => o.value.toLowerCase() === String(val).toLowerCase());
+      if (opt) el.value = opt.value;
+    };
+    setSelect('d-tipo', d.tipo);
+    setSelect('d-op',   d.operacion);
+    if (typeof onOpChange === 'function') onOpChange();
+
+    // Precio
+    if (d.precio) {
+      const el = document.getElementById('d-precio');
+      if (el) el.value = '$' + Number(d.precio).toLocaleString('es-MX');
+    }
+    // Resto de campos
+    const setVal = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && val !== undefined && val !== null && val !== '') el.value = val;
+    };
+    setVal('d-colonia', d.colonia);
+    setVal('d-ciudad',  d.ciudad);
+    setVal('d-dir',     d.dir);
+    setVal('d-rec',     d.recamaras);
+    setVal('d-ban',     d.banos);
+    setVal('d-m2c',     d.m2c);
+    setVal('d-m2t',     d.m2t);
+    setVal('d-est',     d.est);
+    setVal('d-anio',    d.anio);
+    setVal('d-desc',    d.desc);
+
+    // Fotos: usar las URLs públicas de Supabase tal cual
+    if (Array.isArray(d.fotos) && d.fotos.length) {
+      fotos.length = 0;
+      d.fotos.forEach(f => fotos.push({ url: f.url, name: f.name || 'foto.jpg' }));
+      if (typeof renderThumbs === 'function') renderThumbs();
+    }
+  } catch (e) {
+    console.warn('No se pudo precargar la ficha:', e);
+  }
+})();
+
+// ── Después de generar la ficha: guardar también en Mis Inmuebles ──
+async function guardarComoInmueble() {
+  // Si ya venía de una propiedad existente, no duplicar
+  if (_propIdOrigen) return;
+
+  const userId = _fmGetUserId();
+  const token = _fmGetToken();
+  if (!userId || !token) return; // sin sesión, no hacemos nada (la ficha igual se generó)
+
+  const d = getDatos();
+  const rawNum = (v) => parseFloat((v || '').replace(/[$,]/g, '').trim()) || null;
+
+  // Mapeo: ficha-manual (form IDs) → esquema de Mis Inmuebles
+  const inmueble = {
+    user_id:           userId,
+    titulo:            [d.tipo, d.op ? 'en ' + d.op : '', d.colonia ? '· ' + d.colonia : ''].filter(Boolean).join(' ') || 'Propiedad',
+    tipo:              (d.tipo || '').toLowerCase() || null,
+    operacion:         (d.op || '').toLowerCase().replace('venta y renta', 'venta') || null,
+    estatus:           'activa',
+    precio:            rawNum(d.precio),
+    moneda:            'MXN',
+    calle:             d.dir || null,
+    colonia:           d.colonia || null,
+    ciudad:            d.ciudad || 'Morelia',
+    recamaras:         d.rec ? parseInt(d.rec) : null,
+    banos:             d.ban ? parseFloat(d.ban) : null,
+    m2_construccion:   d.m2c ? parseFloat(d.m2c) : null,
+    m2_terreno:        d.m2t ? parseFloat(d.m2t) : null,
+    estacionamientos:  d.est ? parseInt(d.est) : null,
+    anio_construccion: d.anio ? parseInt(d.anio) : null,
+    descripcion:       d.desc || null,
+    fotos:             fotos.map(f => f.url).filter(Boolean),
+    updated_at:        new Date().toISOString()
+  };
+
+  try {
+    const r = await fetch(SB_URL_FM + '/rest/v1/propiedades', {
+      method: 'POST',
+      headers: {
+        'apikey': SB_KEY_FM,
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify(inmueble)
+    });
+    if (!r.ok) {
+      console.warn('No se pudo guardar en Mis Inmuebles:', await r.text());
+      return;
+    }
+    _mostrarToastInmueble();
+  } catch (e) {
+    console.warn('Error guardando en Mis Inmuebles:', e);
+  }
+}
+
+function _mostrarToastInmueble() {
+  const toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a2035;color:white;padding:11px 18px;border-radius:22px;font-size:13px;z-index:99999;display:flex;align-items:center;gap:8px;box-shadow:0 8px 28px rgba(0,0,0,.28);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:88vw;text-align:center;';
+  toast.innerHTML = '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> También se guardó en Mis Inmuebles';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.style.opacity = '0', 3500);
+  setTimeout(() => toast.remove(), 4200);
+}
+
+// Wrap de generarFicha para llamar a guardarComoInmueble después
+const _generarFichaOriginal = generarFicha;
+generarFicha = async function() {
+  await _generarFichaOriginal();
+  // Solo guardar si la generación fue exitosa (token presente)
+  if (_lastPdfToken) {
+    guardarComoInmueble();
+  }
+};
+
 </script>
 <script src="app-shell.js" defer></script>
 </body>
