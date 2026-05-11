@@ -901,14 +901,26 @@ function initFotoUpload() {
   input.onchange = async (e) => {
     const files = Array.from(e.target.files); if (!files.length) return;
     const progress = g('fotos-progress'); const preview = g('fotos-preview');
+    const userToken = getCurrentToken();
+    if (!userToken) {
+      progress.textContent = 'Tu sesión expiró. Vuelve a iniciar sesión.';
+      setTimeout(() => { location.href = 'login.html'; }, 1500);
+      return;
+    }
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       progress.textContent = `Subiendo ${i+1} de ${files.length}…`;
       try {
         const ext = file.name.split('.').pop().toLowerCase();
         const name = `prop_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-        const r = await fetch(`${SB_URL}/storage/v1/object/fotos-propiedades/${name}`, { method:'POST', headers:{ 'apikey':SB_KEY, 'Authorization':'Bearer '+SB_KEY, 'Content-Type':file.type, 'x-upsert':'true' }, body:file });
-        if (!r.ok) throw new Error(await r.text());
+        const r = await fetch(`${SB_URL}/storage/v1/object/fotos-propiedades/${name}`, { method:'POST', headers:{ 'apikey':SB_KEY, 'Authorization':'Bearer '+userToken, 'Content-Type':file.type, 'x-upsert':'true' }, body:file });
+        if (!r.ok) {
+          const errTxt = await r.text();
+          if (r.status === 401 || r.status === 403 || errTxt.includes('row-level security')) {
+            throw new Error('Tu sesión expiró. Vuelve a iniciar sesión.');
+          }
+          throw new Error(errTxt);
+        }
         const url = `${SB_URL}/storage/v1/object/public/fotos-propiedades/${name}`;
         uploadedFotoUrls.push(url);
         const div = document.createElement('div'); div.className = 'foto-preview-item';
