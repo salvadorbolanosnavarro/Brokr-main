@@ -593,6 +593,7 @@
     localStorage.removeItem('sb_refresh');
     localStorage.removeItem('sb_user');
     localStorage.removeItem('sesion_activa');
+    localStorage.removeItem('eb_api_key'); // limpia API key personal para que no la herede otro agente
     sessionStorage.clear();
     location.href = 'login.html';
   }
@@ -1249,8 +1250,10 @@
             <div class="bk-pd-field" style="margin-top:12px">
               <label>API Key de EasyBroker</label>
               <input type="text" id="pd-input-ebkey" placeholder="Pega tu API key aquí" autocomplete="off" autocorrect="off" spellcheck="false"/>
+              <div style="font-size:11px;color:var(--mute);margin-top:5px;line-height:1.4">Encuéntrala en EasyBroker → Configuración → API. Cada agente debe usar su propia API key personal.</div>
             </div>
             <button class="bk-pd-btn bk-pd-btn-primary" onclick="saveEbKey()">Conectar EasyBroker</button>
+            <button class="bk-pd-btn bk-pd-btn-outline" id="pd-eb-disconnect-btn" onclick="disconnectEbKey()" style="margin-top:8px;display:none">Desconectar EasyBroker</button>
             <div class="bk-pd-toast" id="pd-toast-eb"></div>
           </div>
         </div>
@@ -1346,12 +1349,15 @@
       const ebData = await ebRes.json();
       const dot = document.getElementById('pd-eb-dot');
       const txt = document.getElementById('pd-eb-status-text');
+      const discBtn = document.getElementById('pd-eb-disconnect-btn');
       if (ebData.configured) {
         dot.className = 'dot ok';
         txt.textContent = 'Conectado — key: ' + ebData.masked;
+        if (discBtn) discBtn.style.display = 'block';
       } else {
         dot.className = 'dot warn';
         txt.textContent = 'Sin conectar';
+        if (discBtn) discBtn.style.display = 'none';
       }
     } catch(e) {}
 
@@ -1421,13 +1427,19 @@
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.detail || 'Error');
-      // Guardar en localStorage para que ficha.html y otros módulos la encuentren
+      // NOTA: guardamos la key en localStorage solo como fallback para ficha.html/ficha-test.html
+      // (módulos viejos que todavía leen de localStorage). El origen de verdad es Supabase con RLS.
+      // TODO post-launch: migrar ficha.html y ficha-test.html para que pidan la key al backend.
       localStorage.setItem('eb_api_key', key);
       toast.textContent = 'EasyBroker conectado correctamente.';
       toast.className = 'bk-pd-toast ok';
       document.getElementById('pd-input-ebkey').value = '';
       document.getElementById('pd-eb-dot').className = 'dot ok';
-      document.getElementById('pd-eb-status-text').textContent = 'Conectado — key guardada';
+      // Mostrar últimos 4 caracteres
+      const masked = key.length > 4 ? '*'.repeat(key.length - 4) + key.slice(-4) : '';
+      document.getElementById('pd-eb-status-text').textContent = 'Conectado — key: ' + masked;
+      const discBtn = document.getElementById('pd-eb-disconnect-btn');
+      if (discBtn) discBtn.style.display = 'block';
     } catch(e) {
       toast.textContent = e.message || 'API key inválida. Verifica que la copiaste bien.';
       toast.className = 'bk-pd-toast err';
@@ -1435,6 +1447,35 @@
     setTimeout(() => { toast.className = 'bk-pd-toast'; }, 4000);
   }
   window.saveEbKey = saveEbKey;
+
+  async function disconnectEbKey() {
+    if (!confirm('¿Desconectar tu cuenta de EasyBroker? Tendrás que volver a pegar tu API key si quieres usarla más adelante.')) return;
+    const tok = getToken();
+    const toast = document.getElementById('pd-toast-eb');
+    toast.className = 'bk-pd-toast';
+    try {
+      const r = await fetch(API_BASE + '/config/eb-key', {
+        method: 'DELETE',
+        headers: { Authorization: 'Bearer ' + tok }
+      });
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        throw new Error(d.detail || 'Error');
+      }
+      // Limpiar también el localStorage que usaban los módulos viejos
+      localStorage.removeItem('eb_api_key');
+      toast.textContent = 'EasyBroker desconectado.';
+      toast.className = 'bk-pd-toast ok';
+      document.getElementById('pd-eb-dot').className = 'dot warn';
+      document.getElementById('pd-eb-status-text').textContent = 'Sin conectar';
+      document.getElementById('pd-eb-disconnect-btn').style.display = 'none';
+    } catch(e) {
+      toast.textContent = e.message || 'No se pudo desconectar.';
+      toast.className = 'bk-pd-toast err';
+    }
+    setTimeout(() => { toast.className = 'bk-pd-toast'; }, 4000);
+  }
+  window.disconnectEbKey = disconnectEbKey;
 
 
 
