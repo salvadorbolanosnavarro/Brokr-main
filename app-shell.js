@@ -129,17 +129,32 @@
   padding: 16px 10px 8px; font-weight: 500;
 }
 .bk-sb-link {
-  display: flex; align-items: center; gap: 10px;
+  display: flex !important; align-items: center; gap: 10px;
   padding: 10px 12px;
   border-radius: var(--r);
-  font-size: 14px; color: rgba(247,245,238,0.78);
+  font-size: 14px; color: rgba(247,245,238,0.78) !important;
   cursor: pointer; transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
   font-weight: 500; letter-spacing: -0.005em;
-  text-decoration: none;
+  text-decoration: none !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
-.bk-sb-link:hover { background: rgba(247,245,238,0.06); color: var(--paper); }
-.bk-sb-link.is-active { background: var(--paper); color: var(--ink); }
-.bk-sb-link svg { flex-shrink: 0; opacity: .82; }
+.bk-sidebar .bk-sb-link,
+.bk-sidebar a.bk-sb-link {
+  color: rgba(247,245,238,0.78) !important;
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: transparent;
+}
+.bk-sb-link:hover,
+.bk-sidebar .bk-sb-link:hover,
+.bk-sidebar a.bk-sb-link:hover { background: rgba(247,245,238,0.06) !important; color: var(--paper) !important; }
+.bk-sb-link.is-active,
+.bk-sidebar .bk-sb-link.is-active,
+.bk-sidebar a.bk-sb-link.is-active { background: var(--paper) !important; color: var(--ink) !important; }
+.bk-sb-link svg,
+.bk-sidebar .bk-sb-link svg { flex-shrink: 0; opacity: .82; }
 .bk-sb-foot {
   margin-top: auto;
   display: flex; align-items: center; gap: 10px;
@@ -152,13 +167,13 @@
   display: flex; align-items: center; justify-content: center;
   font-weight: 600; font-size: 13px; letter-spacing: -0.02em;
 }
-.bk-sb-foot__name { font-size: 13px; font-weight: 500; line-height: 1.2; flex: 1; min-width: 0; color: var(--paper); }
-.bk-sb-foot__name .role { color: rgba(247,245,238,0.5); font-size: 11px; font-weight: 400; }
+.bk-sb-foot__name { font-size: 13px; font-weight: 500; line-height: 1.2; flex: 1; min-width: 0; color: var(--paper) !important; }
+.bk-sb-foot__name .role { color: rgba(247,245,238,0.5) !important; font-size: 11px; font-weight: 400; }
 .bk-sb-foot__logout {
   background: transparent; border: none; cursor: pointer;
-  color: rgba(247,245,238,0.5); padding: 6px;
+  color: rgba(247,245,238,0.5) !important; padding: 6px;
 }
-.bk-sb-foot__logout:hover { color: var(--paper); }
+.bk-sb-foot__logout:hover { color: var(--paper) !important; }
 
 /* Content area */
 .bk-content { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
@@ -198,24 +213,34 @@
   flex: 1;
   min-width: 0;
   font-family: var(--font-display, 'Inter'), -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   letter-spacing: -0.01em;
   color: var(--ink-2);
-  line-height: 1.35;
+  line-height: 1.4;
   opacity: 0;
   transition: opacity .5s ease;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   padding-right: 16px;
+  /* Permite hasta 2 renglones sin cortar nada */
+  display: -webkit-box;
+  display: box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 .bk-topbar__quote.is-visible { opacity: 1; }
 .bk-topbar__quote .quote-author {
   color: var(--mute);
   font-weight: 400;
   font-size: 13px;
-  margin-left: 8px;
+  margin-left: 6px;
+  /* El autor puede romper si el span entero no cabe en la línea */
+  display: inline;
+  white-space: normal;
 }
 
 /* Búsqueda expandible (oculta por defecto, se despliega al click en lupa) */
@@ -526,6 +551,23 @@
   styleEl.id = '__brokr-shell-css';
   styleEl.textContent = css;
   document.head.appendChild(styleEl);
+  // Re-anclar al final del head tras el load para vencer cualquier <style> de módulo
+  // que se haya parseado después (orden de cascada de !important = último gana).
+  function _reanchorShellCSS() {
+    try {
+      const s = document.getElementById('__brokr-shell-css');
+      if (s && document.head.lastElementChild !== s) {
+        document.head.appendChild(s);
+      }
+    } catch(e){}
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _reanchorShellCSS);
+  }
+  window.addEventListener('load', _reanchorShellCSS);
+  // Una pasada más después de un tick por si algún módulo inyecta <style> dinámicamente
+  setTimeout(_reanchorShellCSS, 100);
+  setTimeout(_reanchorShellCSS, 500);
 
   /* ════════════════════════════════════════════════════════════════
      Auth — gate + load profile
@@ -686,6 +728,33 @@
       </main>
     `;
     document.body.appendChild(shell);
+
+    // ── Diagnóstico de cascada CSS del sidebar ──
+    // Si algún módulo override el color de los links del drawer, lo detectamos
+    // y forzamos un re-anclaje del style del shell al final del head.
+    setTimeout(() => {
+      try {
+        const link = document.querySelector('.bk-sidebar .bk-sb-link:not(.is-active)');
+        if (!link) return;
+        const cs = getComputedStyle(link);
+        const c = cs.color;
+        // El color esperado es rgba(247,245,238,0.78) ≈ rgb(247, 245, 238) con alpha
+        // Si en su lugar es muy oscuro (cualquier cosa cercana a negro), hay un override.
+        const m = c.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+        if (m) {
+          const r = +m[1], g = +m[2], b = +m[3];
+          // si el promedio RGB es < 100, es un texto oscuro = invisible sobre fondo negro
+          if ((r + g + b) / 3 < 100) {
+            console.warn('[brokr-shell] Sidebar link color overriden:', c, '— forzando re-anclaje de CSS');
+            _reanchorShellCSS();
+            // Reforzar inline como último recurso
+            document.querySelectorAll('.bk-sb-link:not(.is-active)').forEach(el => {
+              el.style.setProperty('color', 'rgba(247,245,238,0.78)', 'important');
+            });
+          }
+        }
+      } catch(e){}
+    }, 300);
 
     // Place page wrap inside content
     shell.querySelector('.bk-content').appendChild(pageWrap);
