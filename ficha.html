@@ -765,12 +765,13 @@ async function generarFicha(){
   if(!id){ showError('Ingresa el ID de la propiedad.'); return; }
   setLoading(true,'Consultando EasyBroker...');
   try{
-    // Obtener API key — el iframe lee desde el padre (mismo origen)
-    let ebKey = '';
-    try { ebKey = window.parent?.userProfile?.eb_api_key || ''; } catch(e){}
-    if (!ebKey) { try { ebKey = window.parent?.localStorage?.getItem('eb_api_key') || ''; } catch(e){} }
-    if (!ebKey) { try { ebKey = localStorage.getItem('eb_api_key') || ''; } catch(e){} }
-    const fetchHeaders = ebKey ? { 'X-EB-Key': ebKey } : {};
+    // Multi-tenant: mandamos el token de Supabase del usuario logueado.
+    // El backend identifica al usuario y saca SU API key de EasyBroker de forma segura.
+    // La API key real nunca pasa por el frontend.
+    let sbToken = '';
+    try { sbToken = window.parent?.localStorage?.getItem('sb_token') || ''; } catch(e){}
+    if (!sbToken) { try { sbToken = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || ''; } catch(e){} }
+    const fetchHeaders = sbToken ? { 'Authorization': 'Bearer ' + sbToken } : {};
     const res = await fetch(`${API}/propiedad/${encodeURIComponent(id)}`, { headers: fetchHeaders });
     if(!res.ok){
       let d='Error al consultar la propiedad';

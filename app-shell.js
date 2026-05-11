@@ -593,7 +593,6 @@
     localStorage.removeItem('sb_refresh');
     localStorage.removeItem('sb_user');
     localStorage.removeItem('sesion_activa');
-    localStorage.removeItem('eb_api_key'); // limpia API key personal para que no la herede otro agente
     sessionStorage.clear();
     location.href = 'login.html';
   }
@@ -1427,10 +1426,7 @@
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.detail || 'Error');
-      // NOTA: guardamos la key en localStorage solo como fallback para ficha.html/ficha-test.html
-      // (módulos viejos que todavía leen de localStorage). El origen de verdad es Supabase con RLS.
-      // TODO post-launch: migrar ficha.html y ficha-test.html para que pidan la key al backend.
-      localStorage.setItem('eb_api_key', key);
+      // La key vive solo en Supabase con RLS. Nunca toca el navegador del usuario.
       toast.textContent = 'EasyBroker conectado correctamente.';
       toast.className = 'bk-pd-toast ok';
       document.getElementById('pd-input-ebkey').value = '';
@@ -1462,8 +1458,6 @@
         const d = await r.json().catch(() => ({}));
         throw new Error(d.detail || 'Error');
       }
-      // Limpiar también el localStorage que usaban los módulos viejos
-      localStorage.removeItem('eb_api_key');
       toast.textContent = 'EasyBroker desconectado.';
       toast.className = 'bk-pd-toast ok';
       document.getElementById('pd-eb-dot').className = 'dot warn';
