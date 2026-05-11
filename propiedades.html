@@ -641,12 +641,33 @@ function fmtPrecio(p, moneda='MXN') {
   return '$' + Number(p).toLocaleString('es-MX', { minimumFractionDigits: 0 });
 }
 
+function getCurrentUserId() {
+  try {
+    const u = JSON.parse(localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || 'null');
+    return u?.id || null;
+  } catch(e) { return null; }
+}
+
+function getCurrentToken() {
+  return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || null;
+}
+
 async function sbFetch(path, method='GET', body=null) {
-  const token = sessionStorage.getItem('sb_token') || SB_KEY;
+  const token = getCurrentToken() || SB_KEY;
   const opts = { method, headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=representation' } };
   if (body) opts.body = JSON.stringify(body);
   const r = await fetch(SB_URL + '/rest/v1/' + path, opts);
-  if (!r.ok) throw new Error(await r.text());
+  if (!r.ok) {
+    const errTxt = await r.text();
+    // Traducir errores comunes de RLS a mensajes humanos
+    if (r.status === 401 || r.status === 403) {
+      throw new Error('Tu sesión expiró. Por favor vuelve a iniciar sesión.');
+    }
+    if (errTxt.includes('row-level security') || errTxt.includes('violates row-level')) {
+      throw new Error('No tienes permiso para esta acción. Vuelve a iniciar sesión.');
+    }
+    throw new Error(errTxt);
+  }
   const txt = await r.text();
   return txt ? JSON.parse(txt) : [];
 }
@@ -779,6 +800,17 @@ async function saveProp(e) {
   ['m2_construccion','m2_terreno','recamaras','banos','estacionamientos','anio_construccion'].forEach(k => { if (data[k]) data[k] = Number(data[k]); });
   data.updated_at = new Date().toISOString();
   const id = data.prop_id; delete data.prop_id;
+
+  // Verificar sesión antes de guardar — sin user_id la BD rechazará el INSERT
+  const userId = getCurrentUserId();
+  if (!userId) {
+    alert('Tu sesión expiró. Vuelve a iniciar sesión para guardar inmuebles.');
+    location.href = 'login.html';
+    return;
+  }
+  // Si es nuevo, asignar al usuario actual; si es edición, NO tocar user_id
+  if (!id) data.user_id = userId;
+
   const btn = form.querySelector('.pf-save-btn');
   try {
     btn.innerHTML = 'Guardando…'; btn.disabled = true;
