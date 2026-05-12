@@ -644,6 +644,215 @@ async def get_propiedad(property_id: str, request: Request):
             raise HTTPException(status_code=r.status_code, detail="Error EasyBroker")
         return r.json()
 
+# ════════════════════════════════════════════════════════════════
+# IMPORTACIÓN MASIVA DESDE EASYBROKER
+# Trae TODAS las propiedades del agente desde su cuenta de EasyBroker
+# y las inserta en Supabase (tabla propiedades) bajo SU user_id.
+# Deduplicación por eb_public_id: si ya existe, la salta.
+# ════════════════════════════════════════════════════════════════
+
+# Mapeo: tipo EasyBroker → tipo Brokr
+_EB_TIPO_MAP = {
+    "Casa": "casa",
+    "Casa en condominio": "casa",
+    "Departamento": "departamento",
+    "Departamento en condominio": "departamento",
+    "Terreno": "terreno",
+    "Terreno comercial": "terreno",
+    "Local comercial": "local",
+    "Local en centro comercial": "local",
+    "Oficina": "oficina",
+    "Edificio": "oficina",
+    "Bodega comercial": "bodega",
+    "Bodega industrial": "bodega",
+    "Nave industrial": "bodega",
+    "Rancho": "terreno",
+    "Quinta": "casa",
+    "Villa": "casa",
+    "Loft": "departamento",
+    "Penthouse": "departamento",
+    "Casa uso de suelo": "casa",
+}
+
+def _eb_to_brokr(prop_full: dict, user_id: str) -> dict:
+    """Mapea una propiedad de EasyBroker al esquema de la tabla propiedades de Brokr."""
+    # Tipo
+    tipo_eb = prop_full.get("property_type", "")
+    tipo = _EB_TIPO_MAP.get(tipo_eb, tipo_eb.lower() if tipo_eb else None)
+
+    # Operación + precio (EB tiene array de operations con price)
+    operaciones = prop_full.get("operations", []) or []
+    operacion = None
+    precio = None
+    moneda = "MXN"
+    if operaciones:
+        # Preferir venta sobre renta si tiene ambas
+        op_venta = next((o for o in operaciones if o.get("type") == "sale"), None)
+        op_renta = next((o for o in operaciones if o.get("type") == "rental"), None)
+        op = op_venta or op_renta or operaciones[0]
+        if op.get("type") == "sale":
+            operacion = "venta"
+        elif op.get("type") == "rental":
+            operacion = "renta"
+        amount = op.get("amount") or 0
+        precio = float(amount) if amount else None
+        moneda = (op.get("currency") or "MXN").upper()
+
+    # Ubicación
+    location = prop_full.get("location", "") or ""
+    location_parts = [p.strip() for p in location.split(",")] if location else []
+    colonia = location_parts[0] if len(location_parts) > 0 else None
+    ciudad  = location_parts[1] if len(location_parts) > 1 else "Morelia"
+
+    # Fotos (URL completa de cada imagen)
+    property_images = prop_full.get("property_images", []) or []
+    fotos = []
+    # Imagen de título primero si existe y no está duplicada
+    title_img = prop_full.get("title_image_full") or prop_full.get("title_image_thumb")
+    if title_img:
+        fotos.append(title_img)
+    for img in property_images:
+        url = img.get("url") or img.get("title_image_full") or img.get("image_url")
+        if url and url not in fotos:
+            fotos.append(url)
+
+    # Conversiones numéricas defensivas
+    def _to_int(v):
+        try:    return int(float(v)) if v not in (None, "", 0) else None
+        except: return None
+    def _to_float(v):
+        try:    return float(v) if v not in (None, "", 0) else None
+        except: return None
+
+    return {
+        "user_id":            user_id,
+        "eb_public_id":       prop_full.get("public_id"),
+        "titulo":             prop_full.get("title") or "Propiedad",
+        "tipo":               tipo,
+        "operacion":          operacion,
+        "estatus":            "activa",
+        "precio":             precio,
+        "moneda":             moneda,
+        "calle":              prop_full.get("street", "") or None,
+        "colonia":            colonia,
+        "ciudad":             ciudad,
+        "cp":                 prop_full.get("postal_code") or None,
+        "m2_construccion":    _to_float(prop_full.get("construction_size")),
+        "m2_terreno":         _to_float(prop_full.get("lot_size")),
+        "recamaras":          _to_int(prop_full.get("bedrooms")),
+        "banos":              _to_float(prop_full.get("bathrooms")),
+        "estacionamientos":   _to_int(prop_full.get("parking_spaces")),
+        "anio_construccion":  _to_int(prop_full.get("age")),
+        "descripcion":        prop_full.get("description") or None,
+        "fotos":              fotos,
+        "updated_at":         datetime.utcnow().isoformat()
+    }
+
+@app.post("/easybroker/import-all")
+async def easybroker_import_all(request: Request):
+    """
+    Importa TODAS las propiedades del agente desde su cuenta de EasyBroker
+    a Mis Inmuebles. Deduplica por eb_public_id — si la propiedad ya existe,
+    no la duplica. Devuelve resumen al terminar.
+    """
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Tu sesión expiró. Vuelve a iniciar sesión.")
+    user_key = await get_eb_key_for_user(user_id)
+    if not user_key:
+        raise HTTPException(status_code=400, detail="Configura tu API key de EasyBroker en Perfil → Integración EasyBroker antes de importar.")
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        raise HTTPException(status_code=500, detail="Supabase no está configurado en el servidor.")
+
+    # Paso 1: traer IDs ya importados (deduplicación)
+    existentes = set()
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            r = await client.get(
+                f"{SUPABASE_URL}/rest/v1/propiedades",
+                headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
+                params={"user_id": f"eq.{user_id}",
+                        "eb_public_id": "not.is.null",
+                        "select": "eb_public_id"}
+            )
+            if r.status_code == 200:
+                existentes = {row["eb_public_id"] for row in r.json() if row.get("eb_public_id")}
+    except Exception as e:
+        print(f"[import-all] Error leyendo existentes: {e}")
+
+    # Paso 2: paginar todas las propiedades de EasyBroker
+    pagina = 1
+    todas_props_resumen = []  # [{public_id, title}, ...]
+    async with httpx.AsyncClient(timeout=20) as client:
+        while pagina <= 100:  # límite duro de 5000 propiedades (poco probable, pero seguro)
+            r = await client.get(
+                f"{EB_BASE}/properties",
+                headers=eb_headers(user_key),
+                params={"limit": 50, "page": pagina}
+            )
+            if r.status_code == 401:
+                raise HTTPException(status_code=401, detail="Tu API key de EasyBroker fue rechazada. Reconéctala en Perfil.")
+            if r.status_code != 200:
+                break
+            data = r.json()
+            content = data.get("content", []) or []
+            if not content:
+                break
+            for p in content:
+                todas_props_resumen.append({
+                    "public_id": p.get("public_id"),
+                    "title": p.get("title", "Sin título")
+                })
+            # ¿Hay más páginas?
+            if not data.get("pagination", {}).get("next_page"):
+                break
+            pagina += 1
+
+    total_eb = len(todas_props_resumen)
+    a_importar = [p for p in todas_props_resumen if p["public_id"] not in existentes]
+    ya_existian = total_eb - len(a_importar)
+
+    # Paso 3: para cada propiedad nueva, traer detalle completo e insertar
+    importadas = 0
+    errores = []
+    async with httpx.AsyncClient(timeout=30) as client:
+        for prop_resumen in a_importar:
+            pid = prop_resumen["public_id"]
+            try:
+                # Detalle completo (incluye fotos, descripción, etc.)
+                rd = await client.get(f"{EB_BASE}/properties/{pid}",
+                                       headers=eb_headers(user_key))
+                if rd.status_code != 200:
+                    errores.append({"id": pid, "error": f"EB status {rd.status_code}"})
+                    continue
+                prop_full = rd.json()
+                inmueble = _eb_to_brokr(prop_full, user_id)
+
+                # Insertar en Supabase con service_role (bypasea RLS)
+                ri = await client.post(
+                    f"{SUPABASE_URL}/rest/v1/propiedades",
+                    headers={"apikey": SUPABASE_SERVICE_KEY,
+                             "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                             "Content-Type": "application/json",
+                             "Prefer": "return=minimal"},
+                    json=inmueble
+                )
+                if ri.status_code not in (200, 201, 204):
+                    errores.append({"id": pid, "title": prop_resumen["title"],
+                                     "error": f"Supabase {ri.status_code}: {ri.text[:120]}"})
+                    continue
+                importadas += 1
+            except Exception as e:
+                errores.append({"id": pid, "title": prop_resumen["title"], "error": str(e)[:120]})
+
+    return {
+        "total_easybroker": total_eb,
+        "importadas":       importadas,
+        "ya_existian":      ya_existian,
+        "errores":          errores
+    }
+
+
 @app.get("/propiedades")
 async def get_propiedades(page: int = 1, limit: int = 20):
     if not EB_API_KEY:

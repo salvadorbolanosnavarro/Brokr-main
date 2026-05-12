@@ -51,6 +51,71 @@
 .btn-new-prop:hover { background: var(--ink-2); }
 .btn-new-prop:active { transform: scale(.98); }
 
+/* Botón importar EasyBroker — estilo outline secundario */
+.btn-import-eb {
+  height: 44px; padding: 0 16px;
+  background: white; color: var(--ink);
+  border: 1.5px solid #d6dae3; border-radius: var(--r-pill);
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
+  transition: all var(--dur) var(--ease);
+  margin-right: 8px;
+}
+.btn-import-eb:hover { border-color: var(--ink); background: #f6f7fa; }
+.btn-import-eb:active { transform: scale(.98); }
+.btn-import-eb:disabled { opacity: .55; cursor: not-allowed; }
+@media (max-width: 600px) {
+  .btn-import-eb { padding: 0 12px; font-size: 12px; }
+  .btn-import-eb svg { width: 12px; height: 12px; }
+}
+
+/* Modal de progreso de importación */
+.eb-import-overlay {
+  position: fixed; inset: 0; background: rgba(20,28,48,.55);
+  display: none; align-items: center; justify-content: center; z-index: 9999;
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+}
+.eb-import-overlay.is-open { display: flex; }
+.eb-import-modal {
+  background: white; border-radius: 16px;
+  width: min(420px, 92vw); padding: 28px 26px 22px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.28);
+  text-align: center; font-family: var(--font);
+}
+.eb-import-title { font-size: 17px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
+.eb-import-msg { font-size: 13px; color: #5a6070; line-height: 1.5; margin-bottom: 18px; }
+.eb-import-bar {
+  width: 100%; height: 6px; background: #eef0f4;
+  border-radius: 10px; overflow: hidden; margin-bottom: 8px;
+}
+.eb-import-bar__fill {
+  height: 100%; background: var(--ink); border-radius: 10px;
+  transition: width .4s ease;
+}
+.eb-import-bar__fill.indet {
+  width: 35% !important;
+  animation: ebIndet 1.4s ease-in-out infinite;
+}
+@keyframes ebIndet {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(285%); }
+}
+.eb-import-count { font-size: 11px; color: #9aa0ad; }
+.eb-import-summary { margin-top: 16px; font-size: 13px; line-height: 1.7; color: var(--ink); }
+.eb-import-summary b { font-weight: 600; }
+.eb-import-btn {
+  margin-top: 18px; height: 38px; padding: 0 22px;
+  background: var(--ink); color: white;
+  border: none; border-radius: 999px; font-size: 13px; font-weight: 600;
+  cursor: pointer;
+}
+.eb-import-btn:hover { background: var(--ink-2); }
+.eb-import-errs {
+  font-size: 11px; color: #c93737; text-align: left;
+  max-height: 80px; overflow-y: auto; margin-top: 10px;
+  border: 1px solid #f0d2d2; border-radius: 8px; padding: 8px 10px; background: #fff5f5;
+}
+
 /* Toolbar */
 .props-toolbar {
   display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
@@ -492,6 +557,10 @@
           <h1>Inmuebles<span class="props-head__count" id="props-count">— 0</span></h1>
         </div>
         <div class="props-head__actions">
+          <button class="btn-import-eb" onclick="importarDesdeEasyBroker()" title="Trae todas tus propiedades de EasyBroker">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+            Importar de EasyBroker
+          </button>
           <button class="btn-new-prop" onclick="openPropForm(null)">
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
             Nuevo inmueble
@@ -968,10 +1037,118 @@ function initFotoUpload() {
 }
 function removeFoto(idx, el) { uploadedFotoUrls.splice(idx,1); el.remove(); g('fotos-raw-hidden').value = uploadedFotoUrls.join(','); }
 
+// ════════════════════════════════════════════════════════════════
+// IMPORTACIÓN MASIVA DESDE EASYBROKER
+// ════════════════════════════════════════════════════════════════
+let _ebImportDone = false;
+
+async function importarDesdeEasyBroker() {
+  // Validación: que el usuario tenga sesión y EB key conectada
+  const token = getCurrentToken();
+  if (!token) {
+    alert('Tu sesión expiró. Vuelve a iniciar sesión.');
+    location.href = 'login.html';
+    return;
+  }
+
+  // Mostrar modal de carga (indeterminado, no sabemos cuántas hay aún)
+  _ebImportDone = false;
+  const overlay  = document.getElementById('eb-import-overlay');
+  const titleEl  = document.getElementById('eb-import-title');
+  const msgEl    = document.getElementById('eb-import-msg');
+  const fillEl   = document.getElementById('eb-import-fill');
+  const countEl  = document.getElementById('eb-import-count');
+  const sumEl    = document.getElementById('eb-import-summary');
+  const errsEl   = document.getElementById('eb-import-errs');
+  const btnEl    = document.getElementById('eb-import-btn');
+
+  titleEl.textContent = 'Importando desde EasyBroker';
+  msgEl.textContent   = 'Estamos trayendo todas tus propiedades. Esto puede tardar 1-3 minutos según cuántas tengas. No cierres esta ventana.';
+  fillEl.style.width = '35%';
+  fillEl.classList.add('indet');
+  countEl.innerHTML = '&nbsp;';
+  sumEl.style.display = 'none';
+  errsEl.style.display = 'none';
+  btnEl.style.display = 'none';
+  overlay.classList.add('is-open');
+
+  try {
+    const r = await fetch(API_BASE + '/easybroker/import-all', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'Error al importar');
+
+    // Mostrar resumen
+    fillEl.classList.remove('indet');
+    fillEl.style.width = '100%';
+    titleEl.textContent = '✓ Importación completada';
+    msgEl.textContent = 'Tus propiedades ya están en Mis Inmuebles.';
+    countEl.innerHTML = '&nbsp;';
+
+    sumEl.style.display = 'block';
+    sumEl.innerHTML =
+      '<div><b>' + data.importadas + '</b> propiedades nuevas importadas</div>' +
+      '<div><b>' + data.ya_existian + '</b> ya estaban en Mis Inmuebles</div>' +
+      '<div style="color:#9aa0ad;margin-top:4px;font-size:12px">Total en tu cuenta de EasyBroker: ' + data.total_easybroker + '</div>';
+
+    if (data.errores && data.errores.length) {
+      errsEl.style.display = 'block';
+      errsEl.innerHTML = '<b>Errores en ' + data.errores.length + ' propiedades:</b><br>' +
+        data.errores.slice(0, 5).map(e =>
+          '· ' + (e.title || e.id) + ': ' + (e.error || 'desconocido')
+        ).join('<br>') +
+        (data.errores.length > 5 ? '<br>· ...y ' + (data.errores.length - 5) + ' más' : '');
+    }
+
+    btnEl.style.display = 'inline-block';
+    _ebImportDone = true;
+
+    // Refrescar la lista de propiedades
+    if (data.importadas > 0) loadProps();
+
+  } catch (err) {
+    fillEl.classList.remove('indet');
+    fillEl.style.width = '100%';
+    fillEl.style.background = '#c93737';
+    titleEl.textContent = 'No se pudo importar';
+    msgEl.textContent = err.message || 'Error desconocido';
+    countEl.innerHTML = '&nbsp;';
+    btnEl.style.display = 'inline-block';
+    btnEl.textContent = 'Cerrar';
+    _ebImportDone = true;
+  }
+}
+
+function cerrarImportEB() {
+  document.getElementById('eb-import-overlay').classList.remove('is-open');
+  // Reset estilos para próxima vez
+  setTimeout(() => {
+    const fillEl = document.getElementById('eb-import-fill');
+    fillEl.style.background = '';
+    fillEl.style.width = '35%';
+  }, 300);
+}
+
 /* Wait for shell to authenticate before loading props (shell may redirect to login) */
 if (window.__brokrShellLoaded) { loadProps(); }
 else { window.addEventListener('brokr-shell-ready', loadProps, { once: true }); }
 </script>
+
+<!-- Modal de progreso de importación desde EasyBroker -->
+<div class="eb-import-overlay" id="eb-import-overlay" onclick="if(event.target===this&&_ebImportDone)cerrarImportEB()">
+  <div class="eb-import-modal">
+    <div class="eb-import-title" id="eb-import-title">Importando desde EasyBroker</div>
+    <div class="eb-import-msg" id="eb-import-msg">Conectando con tu cuenta…</div>
+    <div class="eb-import-bar"><div class="eb-import-bar__fill indet" id="eb-import-fill" style="width:35%"></div></div>
+    <div class="eb-import-count" id="eb-import-count">&nbsp;</div>
+    <div class="eb-import-summary" id="eb-import-summary" style="display:none"></div>
+    <div class="eb-import-errs" id="eb-import-errs" style="display:none"></div>
+    <button class="eb-import-btn" id="eb-import-btn" onclick="cerrarImportEB()" style="display:none">Entendido</button>
+  </div>
+</div>
+
 <script src="app-shell.js" defer></script>
 </body>
 </html>
