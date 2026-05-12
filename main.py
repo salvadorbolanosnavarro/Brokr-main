@@ -190,13 +190,21 @@ async def set_eb_key(req: EbKeyRequest, request: Request):
         "updated_at": datetime.utcnow().isoformat()
     }
     async with httpx.AsyncClient(timeout=10) as client:
-        await client.post(
+        r = await client.post(
             f"{SUPABASE_URL}/rest/v1/user_integrations",
             headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}",
                      "Content-Type": "application/json",
                      "Prefer": "resolution=merge-duplicates,return=minimal"},
             json=payload
         )
+        # No fallar en silencio: si Supabase rechaza, devolvemos error real al frontend
+        if r.status_code not in (200, 201, 204):
+            err_body = r.text or ""
+            print(f"[set_eb_key] Supabase respondió {r.status_code}: {err_body}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"No se pudo guardar la API key (Supabase {r.status_code}). Reintenta o avisa a soporte si persiste."
+            )
     return {"ok": True, "saved": True, "scope": "user"}
 
 # Endpoint para desconectar EasyBroker (borrar la API key del usuario)
