@@ -421,24 +421,38 @@ window.addEventListener('brokr-shell-ready', async (e) => {
   const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
   const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
   const tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || SB_KEY;
-  async function fx(p){
+
+  // Cuenta exacta con HEAD + Prefer: count=exact (no descarga registros).
+  // El header Content-Range trae "0-0/<total>" (o "*/<total>" cuando hay filtro).
+  async function fxCount(path) {
     try {
-      const r = await fetch(SB_URL + '/rest/v1/' + p, { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok } });
-      if (!r.ok) return [];
-      return await r.json();
-    } catch (err) { return []; }
+      const r = await fetch(SB_URL + '/rest/v1/' + path, {
+        method: 'HEAD',
+        headers: {
+          apikey: SB_KEY,
+          Authorization: 'Bearer ' + tok,
+          Prefer: 'count=exact',
+          Range: '0-0'
+        }
+      });
+      if (!r.ok && r.status !== 206) return 0;
+      const cr = r.headers.get('Content-Range') || '';
+      const total = cr.split('/').pop();
+      return Number(total) || 0;
+    } catch (err) { return 0; }
   }
+
   try {
-    const props = await fx('propiedades?select=id,estatus&limit=500');
-    document.getElementById('kpi-props').textContent = props.filter(p => p.estatus === 'activa').length || props.length || 0;
+    document.getElementById('kpi-props').textContent =
+      await fxCount('propiedades?estatus=eq.activa&select=id');
   } catch (e) {}
   try {
-    const cts = await fx('contactos?select=id&limit=500');
-    document.getElementById('kpi-contacts').textContent = cts.length;
+    document.getElementById('kpi-contacts').textContent =
+      await fxCount('contactos?select=id');
   } catch (e) {}
   try {
-    const cn = await fx('contratos?select=id&limit=500');
-    document.getElementById('kpi-contratos').textContent = cn.length;
+    document.getElementById('kpi-contratos').textContent =
+      await fxCount('contratos?select=id');
   } catch (e) {}
 });
 </script>

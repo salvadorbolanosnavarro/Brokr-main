@@ -676,6 +676,14 @@ _EB_TIPO_MAP = {
 
 def _eb_to_brokr(prop_full: dict, user_id: str) -> dict:
     """Mapea una propiedad de EasyBroker al esquema de la tabla propiedades de Brokr."""
+    # Conversiones numéricas defensivas
+    def _to_int(v):
+        try:    return int(float(v)) if v not in (None, "", 0) else None
+        except: return None
+    def _to_float(v):
+        try:    return float(v) if v not in (None, "", 0) else None
+        except: return None
+
     # Tipo
     tipo_eb = prop_full.get("property_type", "")
     tipo = _EB_TIPO_MAP.get(tipo_eb, tipo_eb.lower() if tipo_eb else None)
@@ -686,7 +694,6 @@ def _eb_to_brokr(prop_full: dict, user_id: str) -> dict:
     precio = None
     moneda = "MXN"
     if operaciones:
-        # Preferir venta sobre renta si tiene ambas
         op_venta = next((o for o in operaciones if o.get("type") == "sale"), None)
         op_renta = next((o for o in operaciones if o.get("type") == "rental"), None)
         op = op_venta or op_renta or operaciones[0]
@@ -698,24 +705,39 @@ def _eb_to_brokr(prop_full: dict, user_id: str) -> dict:
         precio = float(amount) if amount else None
         moneda = (op.get("currency") or "MXN").upper()
 
-    # Ubicación — EasyBroker la manda como string ("Colonia, Ciudad")
-    # en API vieja, o como dict ({"name":..., "city":...}) en API nueva.
-    # Soportamos ambos formatos defensivamente.
-    location_raw = prop_full.get("location", "")
+    # Ubicación — EasyBroker la manda como objeto:
+    # {region, city, city_area, street, postal_code, latitude, longitude}
+    # Soportamos también el formato viejo de string defensivamente.
+    location_raw = prop_full.get("location") or ""
     colonia = None
-    ciudad = "Morelia"
+    ciudad  = "Morelia"
+    estado  = "Michoacán"
+    cp_from_loc = None
     if isinstance(location_raw, dict):
-        colonia = location_raw.get("name") or location_raw.get("neighborhood") or None
+        colonia = location_raw.get("city_area") or location_raw.get("name") or location_raw.get("neighborhood") or None
         ciudad  = location_raw.get("city") or location_raw.get("municipality") or "Morelia"
+        estado  = location_raw.get("region") or location_raw.get("state") or "Michoacán"
+        cp_from_loc = location_raw.get("postal_code") or None
     elif isinstance(location_raw, str) and location_raw:
-        location_parts = [p.strip() for p in location_raw.split(",")]
-        colonia = location_parts[0] if location_parts else None
-        ciudad  = location_parts[1] if len(location_parts) > 1 else "Morelia"
+        parts = [p.strip() for p in location_raw.split(",")]
+        colonia = parts[0] if parts else None
+        ciudad  = parts[1] if len(parts) > 1 else "Morelia"
+        estado  = parts[2] if len(parts) > 2 else "Michoacán"
 
-    # Fotos (URL completa de cada imagen)
+    # Calle, num_ext, num_int — EB las pone juntas en "street" (ej. "Av. Madero 123 Int 4")
+    # Intentamos separar con un regex sencillo; si no se puede, todo va a "calle".
+    street_raw = prop_full.get("street") or ""
+    # En la API moderna street también puede venir dentro de location.street
+    if not street_raw and isinstance(location_raw, dict):
+        street_raw = location_raw.get("street") or ""
+    calle, num_ext, num_int = _split_street(street_raw)
+
+    # CP — preferir el de la raíz, si no, el de location
+    cp = prop_full.get("postal_code") or cp_from_loc or None
+
+    # Fotos — property_images[].url (la API moderna usa "url", no "title_image_full")
     property_images = prop_full.get("property_images", []) or []
     fotos = []
-    # Imagen de título primero si existe y no está duplicada
     title_img = prop_full.get("title_image_full") or prop_full.get("title_image_thumb")
     if title_img:
         fotos.append(title_img)
@@ -724,13 +746,9 @@ def _eb_to_brokr(prop_full: dict, user_id: str) -> dict:
         if url and url not in fotos:
             fotos.append(url)
 
-    # Conversiones numéricas defensivas
-    def _to_int(v):
-        try:    return int(float(v)) if v not in (None, "", 0) else None
-        except: return None
-    def _to_float(v):
-        try:    return float(v) if v not in (None, "", 0) else None
-        except: return None
+    # Amenidades (features[] en EB)
+    features = prop_full.get("features") or []
+    amenidades = [f for f in features if isinstance(f, str) and f.strip()] or None
 
     return {
         "user_id":            user_id,
@@ -741,27 +759,60 @@ def _eb_to_brokr(prop_full: dict, user_id: str) -> dict:
         "estatus":            "activa",
         "precio":             precio,
         "moneda":             moneda,
-        "calle":              prop_full.get("street", "") or None,
+        "calle":              calle or street_raw or None,
+        "num_exterior":       num_ext,
+        "num_interior":       num_int,
         "colonia":            colonia,
         "ciudad":             ciudad,
-        "cp":                 prop_full.get("postal_code") or None,
+        "estado":             estado,
+        "cp":                 cp,
         "m2_construccion":    _to_float(prop_full.get("construction_size")),
         "m2_terreno":         _to_float(prop_full.get("lot_size")),
         "recamaras":          _to_int(prop_full.get("bedrooms")),
         "banos":              _to_float(prop_full.get("bathrooms")),
+        "medio_bano":         _to_int(prop_full.get("half_bathrooms")),
         "estacionamientos":   _to_int(prop_full.get("parking_spaces")),
+        "nivel":              str(prop_full.get("floor")) if prop_full.get("floor") not in (None, "") else None,
+        "mantenimiento":      _to_float(prop_full.get("expenses")),
         "anio_construccion":  _to_int(prop_full.get("age")),
         "descripcion":        prop_full.get("description") or None,
+        "amenidades":         amenidades,
         "fotos":              fotos,
         "updated_at":         datetime.utcnow().isoformat()
     }
 
+
+def _split_street(s: str):
+    """Separa 'Av. Madero 123 Int 4' en (calle, num_ext, num_int).
+    Tolerante: si no encuentra patrón, devuelve (s, None, None)."""
+    import re
+    if not s or not isinstance(s, str):
+        return (None, None, None)
+    s = s.strip()
+    # Buscar "Int 4", "Int. 4", "interior 4", "#4 int 5" al final
+    int_match = re.search(r'[\s,]+(?:int\.?|interior|depto\.?|departamento)\s*([0-9A-Za-z\-]+)\s*$', s, re.IGNORECASE)
+    num_int = None
+    if int_match:
+        num_int = int_match.group(1)
+        s = s[:int_match.start()].strip()
+    # Buscar último número como num_ext: "Av. Madero 123" → calle="Av. Madero", ext="123"
+    ext_match = re.search(r'^(.+?)[\s,#]+([0-9]+[A-Za-z\-]?)\s*$', s)
+    if ext_match:
+        return (ext_match.group(1).strip(), ext_match.group(2).strip(), num_int)
+    return (s, None, num_int)
+
 @app.post("/easybroker/import-all")
 async def easybroker_import_all(request: Request):
     """
-    Importa TODAS las propiedades del agente desde su cuenta de EasyBroker
-    a Mis Inmuebles. Deduplica por eb_public_id — si la propiedad ya existe,
-    no la duplica. Devuelve resumen al terminar.
+    Importa propiedades PUBLICADAS del agente desde su cuenta de EasyBroker
+    a Mis Inmuebles. Upsert por eb_public_id: si ya existe, actualiza datos
+    de EB pero PRESERVA notas internas y estatus que el usuario haya cambiado.
+
+    Optimizaciones:
+    - Filtra solo published con search[statuses][]=published
+    - Procesa detalles en paralelo (lotes de 10)
+    - Inserta en lotes a Supabase (1 POST por lote, no 1 por propiedad)
+    - Preserva notas y estatus del usuario en filas existentes
     """
     user_id = await get_user_id_from_token(request)
     if not user_id:
@@ -772,33 +823,46 @@ async def easybroker_import_all(request: Request):
     if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
         raise HTTPException(status_code=500, detail="Supabase no está configurado en el servidor.")
 
-    # Paso 1: traer IDs ya importados (deduplicación)
-    existentes = set()
+    sb_headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    # ─── Paso 1: leer filas existentes del usuario (para preservar notas/estatus) ───
+    existentes_por_eb_id = {}  # eb_public_id → {notas, estatus}
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with httpx.AsyncClient(timeout=15) as client:
             r = await client.get(
                 f"{SUPABASE_URL}/rest/v1/propiedades",
-                headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
+                headers=sb_headers,
                 params={"user_id": f"eq.{user_id}",
                         "eb_public_id": "not.is.null",
-                        "select": "eb_public_id"}
+                        "select": "eb_public_id,notas,estatus"}
             )
             if r.status_code == 200:
-                existentes = {row["eb_public_id"] for row in r.json() if row.get("eb_public_id")}
+                for row in r.json():
+                    eb_id = row.get("eb_public_id")
+                    if eb_id:
+                        existentes_por_eb_id[eb_id] = {
+                            "notas":   row.get("notas"),
+                            "estatus": row.get("estatus"),
+                        }
     except Exception as e:
         print(f"[import-all] Error leyendo existentes: {e}")
 
-    # Paso 2: paginar todas las propiedades de EasyBroker (solo PUBLICADAS)
-    # statuses=published filtra las activas/publicadas en portales,
-    # excluyendo borradores, vendidas, rentadas y archivadas.
+    # ─── Paso 2: paginar listado de EB (solo PUBLISHED) ───
+    # IMPORTANTE: EasyBroker espera search[statuses][]=published.
+    # Mandar statuses[]=published se ignora y devuelve TODAS las propiedades.
     pagina = 1
-    todas_props_resumen = []  # [{public_id, title}, ...]
-    async with httpx.AsyncClient(timeout=20) as client:
-        while pagina <= 200:  # límite duro de 10,000 propiedades (suficiente para cualquier agencia)
+    ids_published = []  # lista de public_ids (orden de EB)
+    async with httpx.AsyncClient(timeout=30) as client:
+        while pagina <= 200:  # tope duro: 10,000 propiedades
             r = await client.get(
                 f"{EB_BASE}/properties",
                 headers=eb_headers(user_key),
-                params={"limit": 50, "page": pagina, "statuses[]": "published"}
+                params={"limit": 50, "page": pagina,
+                        "search[statuses][]": "published"}
             )
             if r.status_code == 401:
                 raise HTTPException(status_code=401, detail="Tu API key de EasyBroker fue rechazada. Reconéctala en Perfil.")
@@ -809,56 +873,89 @@ async def easybroker_import_all(request: Request):
             if not content:
                 break
             for p in content:
-                todas_props_resumen.append({
-                    "public_id": p.get("public_id"),
-                    "title": p.get("title", "Sin título")
-                })
-            # ¿Hay más páginas?
+                pid = p.get("public_id")
+                if pid:
+                    ids_published.append(pid)
             if not data.get("pagination", {}).get("next_page"):
                 break
             pagina += 1
 
-    total_eb = len(todas_props_resumen)
-    a_importar = [p for p in todas_props_resumen if p["public_id"] not in existentes]
-    ya_existian = total_eb - len(a_importar)
+    total_eb = len(ids_published)
 
-    # Paso 3: para cada propiedad nueva, traer detalle completo e insertar
-    importadas = 0
-    errores = []
+    # ─── Paso 3: traer detalle de TODAS las published en paralelo (lotes de 10) ───
+    # Aún las que ya existen las re-procesamos para que el upsert actualice precio,
+    # fotos, descripción, amenidades, etc. (Decisión D2).
+    errores: list = []
+    inmuebles_listos: list = []
+
+    async def fetch_one(client: httpx.AsyncClient, pid: str):
+        try:
+            rd = await client.get(
+                f"{EB_BASE}/properties/{pid}",
+                headers=eb_headers(user_key),
+                timeout=20.0
+            )
+            if rd.status_code != 200:
+                return ("err", {"id": pid, "error": f"EB status {rd.status_code}"})
+            prop_full = rd.json()
+            inmueble = _eb_to_brokr(prop_full, user_id)
+            # Preservar notas y estatus del usuario si la fila ya existe
+            prev = existentes_por_eb_id.get(pid)
+            if prev:
+                if prev.get("notas"):
+                    inmueble["notas"] = prev["notas"]
+                if prev.get("estatus"):
+                    inmueble["estatus"] = prev["estatus"]
+            return ("ok", inmueble)
+        except Exception as e:
+            return ("err", {"id": pid, "error": str(e)[:120]})
+
+    BATCH = 10
     async with httpx.AsyncClient(timeout=30) as client:
-        for prop_resumen in a_importar:
-            pid = prop_resumen["public_id"]
-            try:
-                # Detalle completo (incluye fotos, descripción, etc.)
-                rd = await client.get(f"{EB_BASE}/properties/{pid}",
-                                       headers=eb_headers(user_key))
-                if rd.status_code != 200:
-                    errores.append({"id": pid, "error": f"EB status {rd.status_code}"})
-                    continue
-                prop_full = rd.json()
-                inmueble = _eb_to_brokr(prop_full, user_id)
+        for i in range(0, len(ids_published), BATCH):
+            chunk = ids_published[i:i+BATCH]
+            results = await asyncio.gather(*[fetch_one(client, pid) for pid in chunk])
+            for status, payload in results:
+                if status == "ok":
+                    inmuebles_listos.append(payload)
+                else:
+                    errores.append(payload)
 
-                # Insertar en Supabase con service_role (bypasea RLS)
+    # ─── Paso 4: UPSERT en lotes a Supabase (50 por POST) ───
+    # Necesita el índice único (user_id, eb_public_id) en Supabase para que
+    # on_conflict funcione.
+    upserted = 0
+    UPSERT_BATCH = 50
+    async with httpx.AsyncClient(timeout=60) as client:
+        for i in range(0, len(inmuebles_listos), UPSERT_BATCH):
+            chunk = inmuebles_listos[i:i+UPSERT_BATCH]
+            try:
                 ri = await client.post(
                     f"{SUPABASE_URL}/rest/v1/propiedades",
-                    headers={"apikey": SUPABASE_SERVICE_KEY,
-                             "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                             "Content-Type": "application/json",
-                             "Prefer": "return=minimal"},
-                    json=inmueble
+                    headers={**sb_headers,
+                             "Prefer": "resolution=merge-duplicates,return=minimal"},
+                    params={"on_conflict": "user_id,eb_public_id"},
+                    json=chunk
                 )
-                if ri.status_code not in (200, 201, 204):
-                    errores.append({"id": pid, "title": prop_resumen["title"],
-                                     "error": f"Supabase {ri.status_code}: {ri.text[:120]}"})
-                    continue
-                importadas += 1
+                if ri.status_code in (200, 201, 204):
+                    upserted += len(chunk)
+                else:
+                    # Si el lote falla, registrar como error global del lote
+                    errores.append({
+                        "id": f"lote_{i // UPSERT_BATCH}",
+                        "error": f"Supabase {ri.status_code}: {ri.text[:200]}"
+                    })
             except Exception as e:
-                errores.append({"id": pid, "title": prop_resumen["title"], "error": str(e)[:120]})
+                errores.append({"id": f"lote_{i // UPSERT_BATCH}", "error": str(e)[:200]})
+
+    nuevas      = sum(1 for inm in inmuebles_listos if inm["eb_public_id"] not in existentes_por_eb_id)
+    actualizadas = upserted - nuevas if upserted >= nuevas else 0
 
     return {
         "total_easybroker": total_eb,
-        "importadas":       importadas,
-        "ya_existian":      ya_existian,
+        "importadas":       nuevas,           # nuevas filas creadas
+        "actualizadas":     actualizadas,     # ya existían y se actualizaron
+        "ya_existian":      actualizadas,     # backward-compat con frontend viejo
         "errores":          errores
     }
 

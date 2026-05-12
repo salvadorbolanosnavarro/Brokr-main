@@ -166,6 +166,36 @@
 .props-empty h3 { font-family: var(--font-display); font-size: 22px; font-weight: 600; color: var(--ink); }
 .props-empty p { font-size: 14px; max-width: 320px; }
 
+/* Pager */
+.props-pager {
+  display: flex; justify-content: center; align-items: center; gap: 6px;
+  padding: 8px 28px 60px;
+  flex-wrap: wrap;
+}
+.props-pager button {
+  min-width: 38px; height: 38px; padding: 0 12px;
+  background: var(--bone); border: 1px solid var(--line-2);
+  border-radius: var(--r); color: var(--ink-2);
+  font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.props-pager button:hover:not(:disabled):not(.is-current) { background: var(--paper-2); border-color: var(--line-3); }
+.props-pager button.is-current {
+  background: var(--ink); color: var(--paper); border-color: var(--ink);
+  font-weight: 600; cursor: default;
+}
+.props-pager button:disabled { opacity: .35; cursor: not-allowed; }
+.props-pager .gap { color: var(--mute-2); padding: 0 4px; user-select: none; }
+.props-pager .info {
+  flex-basis: 100%; text-align: center;
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--mute);
+  margin-bottom: 4px;
+}
+@media (max-width: 720px) {
+  .props-pager { padding: 8px 16px 40px; }
+}
+
 /* Cards */
 .prop-card {
   background: var(--bone);
@@ -418,15 +448,35 @@
 .prop-detail-box { max-width: 720px; }
 .detail-gallery {
   display: grid; grid-template-columns: 2fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
   gap: 6px; margin-bottom: 22px;
   height: 280px;
+  position: relative;
+  isolation: isolate;       /* corta cualquier z-index que se cuele del modal */
 }
 .detail-gallery img {
   width: 100%; height: 100%; object-fit: cover; cursor: pointer;
   border-radius: var(--r); transition: transform var(--dur) var(--ease);
+  display: block;
+  min-height: 0;            /* clave: evita que la img se desborde por el grid */
 }
 .detail-gallery img:hover { transform: scale(1.02); }
-.detail-gallery img:first-child { grid-row: span 2; }
+.detail-gallery img:first-child { grid-row: 1 / span 2; }
+@media (max-width: 560px) {
+  /* En móvil: una sola columna, scroll horizontal para no aplastar imágenes */
+  .detail-gallery {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    grid-auto-flow: column;
+    grid-auto-columns: 82%;
+    height: 220px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .detail-gallery img:first-child { grid-row: auto; }
+  .detail-gallery img { scroll-snap-align: start; }
+}
 
 .detail-price-hero {
   font-family: var(--font-display);
@@ -726,6 +776,9 @@
       </div>
     </div>
 
+    <!-- PAGER -->
+    <div id="props-pager" class="props-pager" style="display:none"></div>
+
 <!-- ── MODAL: FORM ─────────────────────────── -->
 <div id="prop-modal" class="prop-modal-overlay" onclick="if(event.target===this)closePropModal()">
   <div class="prop-modal-box" onclick="event.stopPropagation()">
@@ -748,10 +801,15 @@
         </div>
 
         <div class="pf-section">Ubicación</div>
-        <div class="pf-row"><div class="pf-field full"><label>Calle y número</label><input type="text" name="calle" placeholder="Av. Madero 123"/></div></div>
+        <div class="pf-row">
+          <div class="pf-field"><label>Calle</label><input type="text" name="calle" placeholder="Av. Madero"/></div>
+          <div class="pf-field"><label>Núm. ext.</label><input type="text" name="num_exterior" placeholder="123"/></div>
+          <div class="pf-field"><label>Núm. int.</label><input type="text" name="num_interior" placeholder="4-B"/></div>
+        </div>
         <div class="pf-row">
           <div class="pf-field"><label>Colonia</label><input type="text" name="colonia" placeholder="Las Palmas" required/></div>
           <div class="pf-field"><label>Ciudad</label><input type="text" name="ciudad" value="Morelia"/></div>
+          <div class="pf-field"><label>Estado</label><input type="text" name="estado" value="Michoacán"/></div>
           <div class="pf-field"><label>C.P.</label><input type="text" name="cp" placeholder="58070"/></div>
         </div>
 
@@ -762,10 +820,19 @@
           <div class="pf-field"><label>Recámaras</label><input type="number" name="recamaras" placeholder="3" min="0"/></div>
         </div>
         <div class="pf-row">
-          <div class="pf-field"><label>Baños</label><input type="number" name="banos" placeholder="2.5" min="0" step="0.5"/></div>
+          <div class="pf-field"><label>Baños completos</label><input type="number" name="banos" placeholder="2" min="0" step="0.5"/></div>
+          <div class="pf-field"><label>Medios baños</label><input type="number" name="medio_bano" placeholder="1" min="0"/></div>
           <div class="pf-field"><label>Estacionamientos</label><input type="number" name="estacionamientos" placeholder="2" min="0"/></div>
-          <div class="pf-field"><label>Año construcción</label><input type="number" name="anio_construccion" placeholder="2010" min="1900" max="2030"/></div>
         </div>
+        <div class="pf-row">
+          <div class="pf-field"><label>Año construcción</label><input type="number" name="anio_construccion" placeholder="2010" min="1900" max="2030"/></div>
+          <div class="pf-field"><label>Nivel / piso</label><input type="text" name="nivel" placeholder="PB, 3, etc."/></div>
+          <div class="pf-field"><label>Mantenimiento</label><input type="text" name="mantenimiento" placeholder="$2,500" oninput="propFmtMoney(this)"/></div>
+        </div>
+        <div class="pf-row"><div class="pf-field full">
+          <label>Amenidades <span style="color:var(--mute); font-weight:400;">— separadas por coma</span></label>
+          <input type="text" name="amenidades_raw" placeholder="Alberca, Gimnasio, Seguridad 24h, Elevador"/>
+        </div></div>
 
         <div class="pf-section">Descripción</div>
         <div class="pf-row"><div class="pf-field full"><label>Descripción comercial</label><textarea name="descripcion" rows="4" placeholder="Describe la propiedad…"></textarea></div></div>
@@ -864,27 +931,78 @@ async function sbFetch(path, method='GET', body=null) {
   return txt ? JSON.parse(txt) : [];
 }
 
+/* ── Paginación ────────────────────────────── */
+const PAGE_SIZE = 24;
+let currentPage = 1;
+let filteredProps = [];   // resultado del filtro actual (se pagina sobre esto)
+
 async function loadProps() {
   const grid = g('props-grid');
   grid.innerHTML = '<div class="props-empty"><h3>Cargando inmuebles…</h3></div>';
+  g('props-pager').style.display = 'none';
   try {
-    allProps = await sbFetch('propiedades?order=created_at.desc&limit=200');
-    // Limpiar IDs seleccionados que ya no existan (ej. después de borrar)
+    // Sin límite duro: traemos todo (Supabase devuelve max 1000 por default,
+    // suficiente para casi cualquier agencia). Si necesitas más, abrimos paginación server-side.
+    allProps = await sbFetch('propiedades?order=created_at.desc&limit=1000');
     const validIds = new Set(allProps.map(p => p.id));
     for (const id of Array.from(selectedIds)) {
       if (!validIds.has(id)) selectedIds.delete(id);
     }
-    renderProps(allProps);
+    filteredProps = allProps;
+    currentPage = 1;
+    renderPage();
     updateSelectionUI();
   } catch(e) {
     grid.innerHTML = `<div class="props-empty"><h3>No se pudieron cargar</h3><p>${e.message}</p></div>`;
   }
 }
 
-function renderProps(props) {
+function renderPage() {
+  const total = filteredProps.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (currentPage > totalPages) currentPage = totalPages;
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageItems = filteredProps.slice(start, start + PAGE_SIZE);
+  renderProps(pageItems, total);
+  renderPager(totalPages, total);
+}
+
+function renderPager(totalPages, total) {
+  const pager = g('props-pager');
+  if (total <= PAGE_SIZE) { pager.style.display = 'none'; pager.innerHTML = ''; return; }
+  pager.style.display = 'flex';
+
+  const start = (currentPage - 1) * PAGE_SIZE + 1;
+  const end   = Math.min(currentPage * PAGE_SIZE, total);
+
+  // Páginas a mostrar: 1, ..., currentPage-1, currentPage, currentPage+1, ..., totalPages
+  const pages = new Set([1, totalPages, currentPage, currentPage - 1, currentPage + 1]);
+  const sorted = [...pages].filter(n => n >= 1 && n <= totalPages).sort((a,b) => a - b);
+
+  let html = `<div class="info">${start}–${end} de ${total}</div>`;
+  html += `<button onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} aria-label="Anterior">‹</button>`;
+  let prev = 0;
+  for (const n of sorted) {
+    if (n - prev > 1) html += `<span class="gap">…</span>`;
+    html += `<button class="${n === currentPage ? 'is-current' : ''}" onclick="goToPage(${n})">${n}</button>`;
+    prev = n;
+  }
+  html += `<button onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''} aria-label="Siguiente">›</button>`;
+  pager.innerHTML = html;
+}
+
+function goToPage(n) {
+  currentPage = n;
+  renderPage();
+  // scroll suave hasta arriba del grid
+  const head = document.querySelector('.props-head');
+  if (head) head.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderProps(props, totalForCount) {
   const grid = g('props-grid');
   const cnt = g('props-count');
-  if (cnt) cnt.textContent = '— ' + props.length;
+  if (cnt) cnt.textContent = '— ' + (typeof totalForCount === 'number' ? totalForCount : props.length);
 
   if (!props.length) {
     grid.innerHTML = `<div class="props-empty">
@@ -950,10 +1068,12 @@ function filterProps() {
   const op = g('props-filter-op').value;
   const tipo = g('props-filter-tipo').value;
   const est = g('props-filter-est').value;
-  renderProps(allProps.filter(p =>
+  filteredProps = allProps.filter(p =>
     (!q || (p.titulo+p.colonia+p.ciudad+p.descripcion+'').toLowerCase().includes(q)) &&
     (!op || p.operacion === op) && (!tipo || p.tipo === tipo) && (!est || p.estatus === est)
-  ));
+  );
+  currentPage = 1;
+  renderPage();
   updateSelectionUI();
 }
 
@@ -971,9 +1091,17 @@ function openPropForm(id) {
     g('prop-modal-title').textContent = 'Editar inmueble';
     Object.keys(p).forEach(k => {
       const el = form.elements[k]; if (!el || p[k] == null) return;
-      if (k === 'precio') { el.value = p[k] ? '$' + Number(p[k]).toLocaleString('es-MX') : ''; }
-      else { el.value = p[k]; }
+      if (k === 'precio' || k === 'mantenimiento') {
+        el.value = p[k] ? '$' + Number(p[k]).toLocaleString('es-MX') : '';
+      } else if (k === 'amenidades') {
+        // text[] viene como array; el campo del form es amenidades_raw (CSV)
+        return;
+      } else { el.value = p[k]; }
     });
+    // Llenar amenidades_raw a partir del array
+    if (Array.isArray(p.amenidades) && form.elements['amenidades_raw']) {
+      form.elements['amenidades_raw'].value = p.amenidades.join(', ');
+    }
     form.elements['fotos_raw'].value = (p.fotos||[]).join(',');
     form.elements['prop_id'].value = id;
     if (p.fotos?.length) {
@@ -1002,8 +1130,15 @@ async function saveProp(e) {
   const fotosRaw = (data.fotos_raw||'').split(',').map(s=>s.trim()).filter(Boolean);
   delete data.fotos_raw;
   data.fotos = fotosRaw.length ? fotosRaw : uploadedFotoUrls;
+  // Amenidades: CSV → text[]
+  if ('amenidades_raw' in data) {
+    const am = (data.amenidades_raw || '').split(',').map(s => s.trim()).filter(Boolean);
+    data.amenidades = am.length ? am : null;
+    delete data.amenidades_raw;
+  }
   if (data.precio) data.precio = getRawNum(String(data.precio));
-  ['m2_construccion','m2_terreno','recamaras','banos','estacionamientos','anio_construccion'].forEach(k => { if (data[k]) data[k] = Number(data[k]); });
+  if (data.mantenimiento) data.mantenimiento = getRawNum(String(data.mantenimiento));
+  ['m2_construccion','m2_terreno','recamaras','banos','medio_bano','estacionamientos','anio_construccion'].forEach(k => { if (data[k]) data[k] = Number(data[k]); });
   data.updated_at = new Date().toISOString();
   const id = data.prop_id; delete data.prop_id;
 
@@ -1283,28 +1418,65 @@ function openPropDetail(id) {
   const fotos = p.fotos?.length ? p.fotos : [];
   let gallery = '';
   if (fotos.length) {
-    const slots = fotos.slice(0, 5);
-    while (slots.length < 3) slots.push(null);
-    gallery = `<div class="detail-gallery">${slots.slice(0,3).map(f =>
-      f ? `<img src="${f}" onclick="window.open('${f}','_blank')"/>`
+    // Mosaico grande: hasta 5 visibles (1 grande + 4 chicas). El resto en thumbs scrollables.
+    const visibles = fotos.slice(0, 5);
+    while (visibles.length < 3) visibles.push(null);
+    gallery = `<div class="detail-gallery">${visibles.slice(0,5).map(f =>
+      f ? `<img src="${f}" onclick="openLightbox('${encodeURIComponent(JSON.stringify(fotos))}', ${fotos.indexOf(f)})"/>`
         : `<div style="background:var(--paper-2); border-radius: var(--r); display:flex; align-items:center; justify-content:center; color:var(--mute-2); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;">+ foto</div>`
     ).join('')}</div>`;
+    // Tira de miniaturas con TODAS las fotos
+    if (fotos.length > 1) {
+      gallery += `<div style="display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; margin-bottom:18px; -webkit-overflow-scrolling:touch;">
+        ${fotos.map((f, i) => `<img src="${f}" style="width:84px; height:64px; object-fit:cover; border-radius:6px; cursor:pointer; flex-shrink:0;" onclick="openLightbox('${encodeURIComponent(JSON.stringify(fotos))}', ${i})"/>`).join('')}
+      </div>`;
+    }
   }
+
+  // Domicilio completo: calle + num_ext num_int, colonia, ciudad, estado, cp
+  const calleNum = [p.calle, p.num_exterior].filter(Boolean).join(' ');
+  const calleFull = p.num_interior ? `${calleNum} Int. ${p.num_interior}` : calleNum;
+  const ubicLine = [calleFull, p.colonia, p.ciudad, p.estado, p.cp].filter(Boolean).join(' · ');
+
   const specs = [
     {l:'Tipo', v:p.tipo}, {l:'Operación', v:p.operacion}, {l:'Estatus', v:p.estatus},
     {l:'M² const.', v:p.m2_construccion ? p.m2_construccion+'m²':'—'},
     {l:'M² terreno', v:p.m2_terreno ? p.m2_terreno+'m²':'—'},
     {l:'Recámaras', v:p.recamaras||'—'},
     {l:'Baños', v:p.banos||'—'},
-    {l:'Estac.', v:p.estacionamientos||'—'}
+    {l:'½ Baños', v:p.medio_bano||'—'},
+    {l:'Estac.', v:p.estacionamientos||'—'},
+    {l:'Nivel', v:p.nivel||'—'},
+    {l:'Mantenimiento', v:p.mantenimiento ? fmtPrecio(p.mantenimiento) : '—'},
+    {l:'Año', v:p.anio_construccion||'—'}
   ];
+
+  const amenHTML = (p.amenidades && p.amenidades.length)
+    ? `<div style="margin-top:18px;">
+         <div class="pf-section" style="padding-top:0;">Amenidades</div>
+         <div style="display:flex; flex-wrap:wrap; gap:6px;">
+           ${p.amenidades.map(a => `<span style="background:var(--paper-2); border:1px solid var(--line); border-radius:var(--r-pill); padding:6px 12px; font-size:12px; color:var(--ink-2);">${a}</span>`).join('')}
+         </div>
+       </div>`
+    : '';
+
   g('detail-body').innerHTML = `${gallery}
     <div class="detail-price-hero">${fmtPrecio(p.precio)}<span style="font-size:14px; color:var(--mute); font-family:var(--font-mono); font-weight:500; margin-left:6px;">${p.moneda||'MXN'}</span></div>
-    <div class="detail-loc">${[p.calle,p.colonia,p.ciudad,p.estado].filter(Boolean).join(' · ')}</div>
+    <div class="detail-loc">${ubicLine}</div>
     ${p.descripcion ? `<div class="detail-desc">${p.descripcion}</div>` : ''}
     <div class="detail-info-grid">${specs.map(s=>`<div class="detail-info-item"><label>${s.l}</label><span>${s.v}</span></div>`).join('')}</div>
+    ${amenHTML}
     ${p.notas ? `<div style="background:var(--warn-soft); border-radius: var(--r); padding: 12px 14px; font-size: 13px; color: var(--warn); margin-top:14px;"><strong>Notas internas — </strong>${p.notas}</div>` : ''}`;
   g('prop-detail-modal').style.display = 'flex';
+}
+
+function openLightbox(fotosJsonEncoded, startIdx) {
+  // Lightbox simple: abre la foto en nueva pestaña.
+  // (Si más adelante quieres lightbox con flechas, lo hacemos modular.)
+  try {
+    const fotos = JSON.parse(decodeURIComponent(fotosJsonEncoded));
+    if (fotos[startIdx]) window.open(fotos[startIdx], '_blank');
+  } catch(e) {}
 }
 function closePropDetail() { g('prop-detail-modal').style.display = 'none'; }
 
@@ -1373,7 +1545,7 @@ async function importarDesdeEasyBroker() {
   const btnEl    = document.getElementById('eb-import-btn');
 
   titleEl.textContent = 'Importando desde EasyBroker';
-  msgEl.textContent   = 'Estamos trayendo todas tus propiedades. Esto puede tardar 1-3 minutos según cuántas tengas. No cierres esta ventana.';
+  msgEl.textContent   = 'Estamos trayendo tus propiedades publicadas. Esto debería tardar menos de un minuto. No cierres esta ventana.';
   fillEl.style.width = '35%';
   fillEl.classList.add('indet');
   countEl.innerHTML = '&nbsp;';
@@ -1394,14 +1566,16 @@ async function importarDesdeEasyBroker() {
     fillEl.classList.remove('indet');
     fillEl.style.width = '100%';
     titleEl.textContent = '✓ Importación completada';
-    msgEl.textContent = 'Tus propiedades ya están en Mis Inmuebles.';
+    msgEl.textContent = 'Tus propiedades publicadas ya están en Mis Inmuebles.';
     countEl.innerHTML = '&nbsp;';
 
+    const nuevas       = data.importadas || 0;
+    const actualizadas = data.actualizadas || data.ya_existian || 0;
     sumEl.style.display = 'block';
     sumEl.innerHTML =
-      '<div><b>' + data.importadas + '</b> propiedades nuevas importadas</div>' +
-      '<div><b>' + data.ya_existian + '</b> ya estaban en Mis Inmuebles</div>' +
-      '<div style="color:#9aa0ad;margin-top:4px;font-size:12px">Total en tu cuenta de EasyBroker: ' + data.total_easybroker + '</div>';
+      '<div><b>' + nuevas + '</b> propiedades nuevas importadas</div>' +
+      '<div><b>' + actualizadas + '</b> actualizadas con datos más recientes</div>' +
+      '<div style="color:#9aa0ad;margin-top:4px;font-size:12px">Total publicadas en tu EasyBroker: ' + data.total_easybroker + '</div>';
 
     if (data.errores && data.errores.length) {
       errsEl.style.display = 'block';
@@ -1415,8 +1589,8 @@ async function importarDesdeEasyBroker() {
     btnEl.style.display = 'inline-block';
     _ebImportDone = true;
 
-    // Refrescar la lista de propiedades
-    if (data.importadas > 0) loadProps();
+    // Refrescar la lista de propiedades (siempre, por si hay actualizaciones)
+    if (nuevas > 0 || actualizadas > 0) loadProps();
 
   } catch (err) {
     fillEl.classList.remove('indet');
