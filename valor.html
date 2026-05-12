@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Valor | Estimación de Valor Comercial</title>
+  <meta name="description" content="Motor de estimación de valor comercial inmobiliario para México basado en comparables, scoring, ajustes y análisis asistido por IA." />
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#111827;
+      --panel2:#0f172a;
+      --card:#ffffff;
+      --ink:#0f172a;
+      --muted:#64748b;
+      --line:#e2e8f0;
+      --soft:#f8fafc;
+      --accent:#0f766e;
+      --accent2:#14b8a6;
+      --danger:#dc2626;
+      --warn:#d97706;
+      --ok:#16a34a;
+      --shadow:0 20px 60px rgba(15,23,42,.18);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:#f1f5f9;color:var(--ink)}
+    body{min-height:100vh}
+    .app-shell{display:grid;grid-template-columns:320px 1fr;min-height:100vh}
+    aside{background:linear-gradient(180deg,var(--bg),#111827);color:white;padding:24px;position:sticky;top:0;height:100vh;overflow:auto}
+    main{padding:28px;max-width:1440px;width:100%;margin:0 auto}
+    .brand{display:flex;align-items:center;gap:12px;margin-bottom:28px}
+    .mark{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,var(--accent2),var(--accent));display:grid;place-items:center;font-weight:900;color:#04111a;box-shadow:0 10px 30px rgba(20,184,166,.25)}
+    .brand h1{font-size:20px;margin:0;line-height:1.1}
+    .brand small{display:block;color:#94a3b8;font-weight:500;margin-top:2px}
+    .side-section{border-top:1px solid rgba(255,255,255,.1);padding-top:18px;margin-top:18px}
+    .side-section h3{font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:#94a3b8;margin:0 0 12px}
+    .step{display:flex;gap:10px;margin:12px 0;color:#cbd5e1;font-size:14px;line-height:1.35}
+    .step b{background:rgba(255,255,255,.1);color:white;width:24px;height:24px;display:grid;place-items:center;border-radius:999px;flex:0 0 auto;font-size:12px}
+    .pill{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.14);padding:8px 10px;border-radius:999px;color:#dbeafe;font-size:12px;margin:4px 4px 0 0;background:rgba(255,255,255,.05)}
+    .notice{background:rgba(20,184,166,.1);border:1px solid rgba(20,184,166,.28);border-radius:14px;padding:12px;color:#ccfbf1;font-size:13px;line-height:1.45}
+    .topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:20px}
+    .topbar h2{font-size:30px;margin:0 0 6px;letter-spacing:-.03em}
+    .topbar p{margin:0;color:var(--muted);max-width:760px;line-height:1.45}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+    button,.btn{appearance:none;border:0;border-radius:12px;padding:11px 14px;font-weight:750;cursor:pointer;transition:.18s ease;background:#e2e8f0;color:#0f172a;text-decoration:none;display:inline-flex;align-items:center;gap:8px;font-size:14px}
+    button:hover,.btn:hover{transform:translateY(-1px);box-shadow:0 10px 25px rgba(15,23,42,.12)}
+    button.primary{background:linear-gradient(135deg,var(--accent2),var(--accent));color:white}
+    button.dark{background:#0f172a;color:white}
+    button.ghost{background:#fff;border:1px solid var(--line)}
+    button.danger{background:#fee2e2;color:#991b1b}
+    button:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}
+    .grid{display:grid;grid-template-columns:1.08fr .92fr;gap:20px;align-items:start}
+    .panel{background:white;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+    .panel-head{padding:18px 20px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fff,var(--soft));display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .panel-head h3{margin:0;font-size:18px;letter-spacing:-.02em}
+    .panel-head span{color:var(--muted);font-size:13px}
+    .panel-body{padding:20px}
+    .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .form-grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .field{display:flex;flex-direction:column;gap:7px}
+    label{font-size:12px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:.06em}
+    input,select,textarea{width:100%;border:1px solid #cbd5e1;background:white;color:#0f172a;border-radius:12px;padding:11px 12px;font:inherit;outline:none;transition:.15s ease}
+    input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(20,184,166,.12)}
+    textarea{min-height:96px;resize:vertical;line-height:1.45}
+    .span-2{grid-column:span 2}.span-3{grid-column:span 3}
+    .subtle{font-size:12px;color:var(--muted);line-height:1.4;margin-top:4px}
+    .tabs{display:flex;gap:8px;padding:6px;background:#f1f5f9;border-radius:14px;margin-bottom:16px}
+    .tab{flex:1;background:transparent;border-radius:10px;box-shadow:none;padding:10px;font-size:13px;color:#475569}
+    .tab.active{background:white;color:#0f172a;box-shadow:0 4px 14px rgba(15,23,42,.08)}
+    .hidden{display:none!important}
+    .comps-list{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+    .comp-card{border:1px solid var(--line);border-radius:16px;padding:14px;background:#fff;position:relative}
+    .comp-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:10px}
+    .comp-title{font-weight:850;font-size:15px}.comp-meta{font-size:12px;color:var(--muted);margin-top:2px}
+    .score{min-width:62px;text-align:center;border-radius:999px;padding:7px 9px;font-weight:900;font-size:13px;color:white;background:#64748b}
+    .score.high{background:var(--ok)}.score.med{background:var(--warn)}.score.low{background:var(--danger)}
+    .mini-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}
+    .mini{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:9px}.mini small{display:block;color:#64748b;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}.mini b{font-size:14px}
+    .status{border-radius:16px;padding:14px;background:#f8fafc;border:1px solid var(--line);font-size:14px;color:#334155;line-height:1.5}
+    .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px}
+    .kpi{background:white;border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 10px 30px rgba(15,23,42,.08)}
+    .kpi small{display:block;color:#64748b;font-weight:800;font-size:11px;letter-spacing:.07em;text-transform:uppercase;margin-bottom:7px}.kpi b{font-size:22px;letter-spacing:-.03em}.kpi p{margin:6px 0 0;color:#64748b;font-size:12px;line-height:1.35}
+    .report{background:white;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+    .report-header{background:linear-gradient(135deg,#0f172a,#115e59);color:white;padding:28px}
+    .report-header h2{margin:0 0 8px;font-size:28px}.report-header p{margin:0;color:#ccfbf1;line-height:1.45}
+    .report-body{padding:26px}.report h4{font-size:17px;margin:24px 0 10px}.report p,.report li{line-height:1.62;color:#334155}.report table{width:100%;border-collapse:collapse;margin:14px 0;background:white;border:1px solid var(--line);border-radius:14px;overflow:hidden}.report th,.report td{border-bottom:1px solid var(--line);padding:10px;text-align:left;font-size:13px;vertical-align:top}.report th{background:#f8fafc;color:#334155;text-transform:uppercase;font-size:11px;letter-spacing:.06em}.report tr:last-child td{border-bottom:0}
+    .query-box{background:#0f172a;color:#e2e8f0;border-radius:14px;padding:14px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;white-space:pre-wrap;line-height:1.5;max-height:260px;overflow:auto}
+    .toast{position:fixed;right:22px;bottom:22px;background:#0f172a;color:white;padding:14px 16px;border-radius:14px;box-shadow:0 20px 50px rgba(15,23,42,.3);opacity:0;transform:translateY(10px);pointer-events:none;transition:.2s ease;z-index:50;max-width:380px;font-size:14px}.toast.show{opacity:1;transform:translateY(0)}
+    .loader{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.45);border-top-color:white;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+    @media(max-width:1100px){.app-shell{grid-template-columns:1fr}aside{position:relative;height:auto}.grid{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:700px){main{padding:18px}.topbar{flex-direction:column}.form-grid,.form-grid.three{grid-template-columns:1fr}.span-2,.span-3{grid-column:auto}.mini-grid{grid-template-columns:repeat(2,1fr)}.kpis{grid-template-columns:1fr}.actions{justify-content:flex-start}}
+    @media print{aside,.topbar,.no-print,.panel:not(.printable-source){display:none!important}.app-shell{display:block}main{padding:0}.report{box-shadow:none;border:0}.report-header{border-radius:0}.report-body{padding:18px}body{background:white}}
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside>
+      <div class="brand">
+        <div class="mark">V</div>
+        <div><h1>Valor</h1><small>Estimación comercial México</small></div>
+      </div>
+      <div class="notice">
+        Frontend listo para producción. Para automatización completa conecta un backend seguro: búsqueda web, extracción y Claude. No pegues API keys en este HTML público.
+      </div>
+      <div class="side-section">
+        <h3>Flujo</h3>
+        <div class="step"><b>1</b><span>Captura inmueble sujeto.</span></div>
+        <div class="step"><b>2</b><span>Genera búsquedas o consulta backend.</span></div>
+        <div class="step"><b>3</b><span>Agrega comparables web.</span></div>
+        <div class="step"><b>4</b><span>Deduplica, califica y ajusta.</span></div>
+        <div class="step"><b>5</b><span>Emite estimación y reporte.</span></div>
+      </div>
+      <div class="side-section">
+        <h3>Diseñado para</h3>
+        <span class="pill">Casas</span><span class="pill">Departamentos</span><span class="pill">Terrenos</span><span class="pill">Locales</span><span class="pill">México</span><span class="pill">Comparables públicos</span>
+      </div>
+      <div class="side-section">
+        <h3>Producción</h3>
+        <div class="step"><b>✓</b><span>Claude vía backend.</span></div>
+        <div class="step"><b>✓</b><span>Búsqueda web configurable.</span></div>
+        <div class="step"><b>✓</b><span>Cálculo local verificable.</span></div>
+      </div>
+    </aside>
+
+    <main>
+      <div class="topbar no-print">
+        <div>
+          <h2>Estimación de valor comercial</h2>
+          <p>Herramienta para generar una opinión de valor automatizada con base en comparables públicos, scoring de similitud, ajustes comerciales y redacción asistida por IA.</p>
+        </div>
+        <div class="actions">
+          <button class="ghost" id="btnSave">Guardar</button>
+          <button class="ghost" id="btnLoad">Cargar</button>
+          <button class="ghost" id="btnPrint">Imprimir/PDF</button>
+          <button class="danger" id="btnReset">Limpiar</button>
+        </div>
+      </div>
+
+      <div class="grid no-print">
+        <section class="panel">
+          <div class="panel-head"><div><h3>1. Inmueble sujeto</h3><span>Datos base para buscar y ajustar comparables</span></div></div>
+          <div class="panel-body">
+            <div class="form-grid">
+              <div class="field"><label>Tipo de inmueble</label><select id="tipo"><option>Casa</option><option>Departamento</option><option>Terreno</option><option>Local comercial</option><option>Oficina</option><option>Bodega</option></select></div>
+              <div class="field"><label>Operación</label><select id="operacion"><option>Venta</option><option>Renta</option></select></div>
+              <div class="field span-2"><label>Dirección / ubicación</label><input id="direccion" placeholder="Ej. Chapultepec Oriente, Morelia, Michoacán" /></div>
+              <div class="field"><label>Colonia</label><input id="colonia" placeholder="Colonia" /></div>
+              <div class="field"><label>Municipio y estado</label><input id="municipio" placeholder="Morelia, Michoacán" /></div>
+              <div class="field"><label>Terreno m²</label><input id="terreno" type="number" min="0" step="0.01" /></div>
+              <div class="field"><label>Construcción m²</label><input id="construccion" type="number" min="0" step="0.01" /></div>
+              <div class="field"><label>Recámaras</label><input id="recamaras" type="number" min="0" step="1" /></div>
+              <div class="field"><label>Baños</label><input id="banos" type="number" min="0" step="0.5" /></div>
+              <div class="field"><label>Estacionamientos</label><input id="estacionamientos" type="number" min="0" step="1" /></div>
+              <div class="field"><label>Edad aprox.</label><input id="edad" type="number" min="0" step="1" placeholder="Años" /></div>
+              <div class="field"><label>Estado de conservación</label><select id="estado"><option>Excelente</option><option>Bueno</option><option>Regular</option><option>Malo</option><option>Para remodelar</option></select></div>
+              <div class="field"><label>Calidad percibida</label><select id="calidad"><option>Media</option><option>Económica</option><option>Residencial</option><option>Residencial plus</option><option>Premium</option></select></div>
+              <div class="field span-2"><label>Observaciones comerciales</label><textarea id="observaciones" placeholder="Ej. casa chica escasa en la zona, remodelada, frente amplio, calle tranquila, cercana a..." ></textarea></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><div><h3>2. Configuración producción</h3><span>Backend seguro para Claude y búsqueda</span></div></div>
+          <div class="panel-body">
+            <div class="tabs">
+              <button class="tab active" data-tab="config">API</button>
+              <button class="tab" data-tab="queries">Búsquedas</button>
+              <button class="tab" data-tab="ai">Prompt</button>
+            </div>
+            <div id="tab-config">
+              <div class="form-grid">
+                <div class="field span-2"><label>Endpoint backend estimación</label><input id="endpointEstimacion" value="/api/estimar-valor" /></div>
+                <div class="field span-2"><label>Endpoint backend búsqueda web</label><input id="endpointBusqueda" value="/api/buscar-comparables" /></div>
+                <div class="field"><label>Modelo análisis final</label><input id="modeloFinal" value="claude-sonnet-4-5" /></div>
+                <div class="field"><label>Modelo extracción</label><input id="modeloExtraccion" value="claude-haiku-4-5" /></div>
+                <div class="field"><label>Máx. comparables útiles</label><input id="maxComparables" type="number" value="10" min="3" max="20" /></div>
+                <div class="field"><label>Castigo oferta base %</label><input id="castigoOferta" type="number" value="6" min="0" max="30" step="0.5" /></div>
+              </div>
+              <p class="subtle">La API key de Anthropic debe vivir en el backend como variable de entorno. Este archivo nunca debe guardar secretos.</p>
+              <div class="actions" style="justify-content:flex-start;margin-top:14px">
+                <button class="dark" id="btnBackendSearch">Buscar comparables vía backend</button>
+                <button class="primary" id="btnClaude">Generar análisis con Claude</button>
+              </div>
+            </div>
+            <div id="tab-queries" class="hidden">
+              <div class="actions" style="justify-content:flex-start;margin-bottom:12px"><button id="btnQueries" class="dark">Generar búsquedas Google</button><button id="btnCopyQueries" class="ghost">Copiar búsquedas</button></div>
+              <div class="query-box" id="queriesBox">Captura ubicación y presiona “Generar búsquedas Google”.</div>
+            </div>
+            <div id="tab-ai" class="hidden">
+              <div class="field"><label>Prompt base para backend</label><textarea id="promptBase" style="min-height:260px"></textarea></div>
+              <p class="subtle">Este prompt se manda al backend junto con datos limpios. El backend debe llamar Claude, no el navegador.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel no-print" style="margin-top:20px">
+        <div class="panel-head"><div><h3>3. Comparables</h3><span>Carga automática por backend o manual desde páginas públicas</span></div><div class="actions"><button class="ghost" id="btnAddComp">Agregar comparable</button><button class="dark" id="btnAnalyze">Calcular estimación local</button></div></div>
+        <div class="panel-body">
+          <div class="tabs">
+            <button class="tab active" data-tab="manual">Captura manual</button>
+            <button class="tab" data-tab="bulk">Pegar lote JSON/Texto</button>
+            <button class="tab" data-tab="status">Diagnóstico</button>
+          </div>
+          <div id="tab-manual">
+            <div id="compForm" class="form-grid three">
+              <div class="field span-3"><label>URL / fuente</label><input id="c_url" placeholder="https://..." /></div>
+              <div class="field span-2"><label>Título</label><input id="c_titulo" placeholder="Casa en venta en..." /></div>
+              <div class="field"><label>Tipo</label><select id="c_tipo"><option>Casa</option><option>Departamento</option><option>Terreno</option><option>Local comercial</option><option>Oficina</option><option>Bodega</option></select></div>
+              <div class="field"><label>Precio</label><input id="c_precio" type="number" min="0" step="1000" /></div>
+              <div class="field"><label>Terreno m²</label><input id="c_terreno" type="number" min="0" step="0.01" /></div>
+              <div class="field"><label>Construcción m²</label><input id="c_construccion" type="number" min="0" step="0.01" /></div>
+              <div class="field"><label>Colonia/Zona</label><input id="c_colonia" /></div>
+              <div class="field"><label>Municipio/Estado</label><input id="c_municipio" /></div>
+              <div class="field"><label>Estado</label><select id="c_estado"><option>Bueno</option><option>Excelente</option><option>Regular</option><option>Malo</option><option>Para remodelar</option></select></div>
+              <div class="field"><label>Recámaras</label><input id="c_recamaras" type="number" min="0" step="1" /></div>
+              <div class="field"><label>Baños</label><input id="c_banos" type="number" min="0" step="0.5" /></div>
+              <div class="field"><label>Estac.</label><input id="c_estacionamientos" type="number" min="0" step="1" /></div>
+              <div class="field span-3"><label>Descripción / notas</label><textarea id="c_descripcion" placeholder="Pega descripción relevante del anuncio"></textarea></div>
+            </div>
+            <div class="actions" style="justify-content:flex-start;margin-top:14px"><button class="primary" id="btnSaveComp">Guardar comparable</button><button class="ghost" id="btnDemoComps">Cargar demo México</button></div>
+          </div>
+          <div id="tab-bulk" class="hidden">
+            <div class="field"><label>Pegar JSON o texto con comparables</label><textarea id="bulkInput" style="min-height:220px" placeholder='Ej JSON: [{"titulo":"Casa...","precio":4200000,"terreno":100,"construccion":140,"colonia":"..."}]'></textarea></div>
+            <div class="actions" style="justify-content:flex-start;margin-top:12px"><button class="primary" id="btnImportBulk">Importar lote</button></div>
+          </div>
+          <div id="tab-status" class="hidden">
+            <div class="status" id="diagnosticBox">Sin diagnóstico todavía.</div>
+          </div>
+          <div class="comps-list" id="compsList"></div>
+        </div>
+      </section>
+
+      <section class="kpis" style="margin-top:20px" id="kpis">
+        <div class="kpi"><small>Valor estimado</small><b id="kpiValor">—</b><p>Rango conciliado por comparables ajustados.</p></div>
+        <div class="kpi"><small>Precio publicación</small><b id="kpiPublicacion">—</b><p>Sugerido para salir al mercado.</p></div>
+        <div class="kpi"><small>Confianza</small><b id="kpiConfianza">—</b><p>Depende de calidad, cantidad y similitud.</p></div>
+        <div class="kpi"><small>Comparables útiles</small><b id="kpiComps">0</b><p>Después de deduplicar y filtrar.</p></div>
+      </section>
+
+      <section class="report" id="report">
+        <div class="report-header">
+          <h2>Opinión / estimación de valor comercial</h2>
+          <p>Captura datos y comparables para generar un reporte. El análisis local funciona sin API; Claude puede enriquecer la redacción mediante backend seguro.</p>
+        </div>
+        <div class="report-body" id="reportBody">
+          <p>Sin reporte generado todavía.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+  <div class="toast" id="toast"></div>
+
+<script>
+/*
+  valor.html — Frontend producción para estimación de valor comercial en México.
+  IMPORTANTE:
+  - No coloques API keys en este archivo.
+  - Backend recomendado:
+      POST /api/buscar-comparables -> busca Google/SerpAPI/Tavily/Firecrawl y devuelve comparables limpios.
+      POST /api/estimar-valor -> llama Claude con datos normalizados y devuelve análisis narrativo.
+  - Este archivo incluye cálculo local robusto para operar sin backend.
+*/
+
+const $ = (id) => document.getElementById(id);
+const money = (n) => Number.isFinite(n) ? n.toLocaleString('es-MX',{style:'currency',currency:'MXN',maximumFractionDigits:0}) : '—';
+const pct = (n) => Number.isFinite(n) ? `${n.toFixed(1)}%` : '—';
+const num = (id) => parseFloat($(id).value || '0') || 0;
+const txt = (id) => ($(id).value || '').trim();
+const norm = (s) => (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+let comps = [];
+let lastAnalysis = null;
+
+const defaultPrompt = `Eres un analista inmobiliario experto en México. Tu tarea es redactar una estimación de valor comercial, NO un avalúo.
+
+Reglas obligatorias:
+1. Basa el análisis en comparables públicos y datos proporcionados.
+2. Distingue precio publicado de valor probable de cierre.
+3. Descarta comparables débiles o explica sus limitaciones.
+4. Da rango de valor, precio sugerido de publicación y precio probable de cierre.
+5. No finjas precisión absoluta.
+6. Usa lenguaje profesional, comercial y claro.
+7. Si hay poca evidencia, baja el nivel de confianza.
+8. No menciones que eres IA.
+
+Estructura esperada:
+- Resumen ejecutivo
+- Inmueble sujeto
+- Metodología
+- Comparables considerados
+- Ajustes principales
+- Rango de valor comercial
+- Precio sugerido de publicación
+- Precio probable de cierre
+- Nivel de confianza
+- Observaciones comerciales`;
+$('promptBase').value = defaultPrompt;
+
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3200); }
+function subject(){ return {
+  tipo:txt('tipo'), operacion:txt('operacion'), direccion:txt('direccion'), colonia:txt('colonia'), municipio:txt('municipio'),
+  terreno:num('terreno'), construccion:num('construccion'), recamaras:num('recamaras'), banos:num('banos'), estacionamientos:num('estacionamientos'),
+  edad:num('edad'), estado:txt('estado'), calidad:txt('calidad'), observaciones:txt('observaciones')
+};}
+function estadoRank(e){ const m={ 'excelente':5,'bueno':4,'regular':3,'malo':2,'para remodelar':1 }; return m[norm(e)]||3; }
+function containsSameZone(a,b){ const A=norm(a), B=norm(b); if(!A || !B) return false; return A.includes(B)||B.includes(A); }
+function similarityRatio(a,b){ if(!a || !b) return 0; const r=Math.min(a,b)/Math.max(a,b); return Number.isFinite(r)?r:0; }
+function getUsefulArea(item){ return item.construccion || item.terreno || 0; }
+
+function scoreComparable(c, s){
+  let score = 0; const reasons=[]; const penalties=[];
+  if(norm(c.tipo) === norm(s.tipo)){ score+=15; reasons.push('mismo tipo de inmueble'); } else { score-=20; penalties.push('tipo distinto'); }
+  if(containsSameZone(c.colonia, s.colonia)){ score+=25; reasons.push('misma colonia/zona'); }
+  else if(containsSameZone(c.municipio, s.municipio)){ score+=10; reasons.push('mismo municipio'); }
+  else { score-=15; penalties.push('zona no claramente comparable'); }
+
+  const tr = similarityRatio(c.terreno, s.terreno);
+  if(s.terreno && c.terreno){ if(tr>=.85){score+=10;reasons.push('terreno muy similar')} else if(tr>=.65){score+=6;reasons.push('terreno razonablemente similar')} else {score-=7;penalties.push('terreno muy distinto')} }
+  else if(s.tipo !== 'Departamento'){ score-=6; penalties.push('sin terreno suficiente'); }
+
+  const cr = similarityRatio(c.construccion, s.construccion);
+  if(s.construccion && c.construccion){ if(cr>=.85){score+=12;reasons.push('construcción muy similar')} else if(cr>=.65){score+=7;reasons.push('construcción razonablemente similar')} else {score-=8;penalties.push('construcción muy distinta')} }
+  else if(norm(s.tipo)!=='terreno'){ score-=10; penalties.push('sin construcción suficiente'); }
+
+  const stateDiff = Math.abs(estadoRank(c.estado)-estadoRank(s.estado));
+  if(stateDiff===0){ score+=8; reasons.push('estado comparable'); } else if(stateDiff===1){ score+=4; } else { score-=5; penalties.push('estado físico distinto'); }
+  if(c.precio>0){ score+=10; } else { score-=30; penalties.push('sin precio'); }
+  if(c.url){ score+=4; reasons.push('fuente verificable'); } else { score-=4; penalties.push('sin URL/fuente'); }
+  if(c.descripcion && c.descripcion.length>80){ score+=4; }
+  if(c.recamaras && s.recamaras){ const d=Math.abs(c.recamaras-s.recamaras); if(d===0)score+=3; else if(d>=2)score-=3; }
+  if(c.estacionamientos && s.estacionamientos){ const d=Math.abs(c.estacionamientos-s.estacionamientos); if(d===0)score+=2; else if(d>=2)score-=3; }
+  score = Math.max(0, Math.min(100, score+40));
+  return {score, reasons, penalties};
+}
+
+function adjustmentForComparable(c, s){
+  let adj = 0;
+  const notes=[];
+  const baseCastigo = num('castigoOferta') || 6;
+  adj -= baseCastigo; notes.push(`castigo base por precio de oferta: -${baseCastigo}%`);
+
+  if(s.construccion && c.construccion && norm(s.tipo)!=='terreno'){
+    const diff = (s.construccion - c.construccion)/c.construccion;
+    const a = Math.max(-12, Math.min(12, diff*18));
+    adj += a; notes.push(`ajuste por construcción: ${pct(a)}`);
+  }
+  if(s.terreno && c.terreno && norm(s.tipo)!=='departamento'){
+    const diff = (s.terreno - c.terreno)/c.terreno;
+    const a = Math.max(-10, Math.min(10, diff*14));
+    adj += a; notes.push(`ajuste por terreno: ${pct(a)}`);
+  }
+  const stateDelta = estadoRank(s.estado)-estadoRank(c.estado);
+  if(stateDelta!==0){ const a = stateDelta*3.5; adj += a; notes.push(`ajuste por estado físico: ${pct(a)}`); }
+  if(!containsSameZone(c.colonia,s.colonia) && containsSameZone(c.municipio,s.municipio)){ adj -= 5; notes.push('zona sustituta, no misma colonia: -5%'); }
+  if(s.observaciones && /escas|diamante|alta demanda|poco producto|liquidez/i.test(s.observaciones)){ adj += 3; notes.push('prima comercial por escasez/demanda indicada: +3%'); }
+  if(c.descripcion && /remodelad|lujo|premium|nueva|estrenar/i.test(c.descripcion) && !/remodelad|lujo|premium|nueva|estrenar/i.test(s.observaciones)){ adj -= 4; notes.push('comparable con atributos superiores: -4%'); }
+  adj = Math.max(-35, Math.min(28, adj));
+  const adjusted = c.precio * (1 + adj/100);
+  return {adj, adjusted, notes};
+}
+
+function dedupeComparables(list){
+  const groups=[];
+  for(const c of list){
+    const keyParts=[norm(c.colonia), Math.round((c.precio||0)/50000), Math.round((c.terreno||0)/5), Math.round((c.construccion||0)/5), norm(c.titulo).slice(0,28)].join('|');
+    let found = groups.find(g => g.key===keyParts || likelyDuplicate(g.items[0], c));
+    if(found) found.items.push(c); else groups.push({key:keyParts,items:[c]});
+  }
+  return groups.map(g=>{
+    if(g.items.length===1) return {...g.items[0], duplicados:1};
+    const best = g.items.sort((a,b)=>qualityRaw(b)-qualityRaw(a))[0];
+    return {...best, duplicados:g.items.length, descripcion:(best.descripcion||'')+`\n[Detectados ${g.items.length} posibles duplicados fusionados.]`};
+  });
+}
+function likelyDuplicate(a,b){
+  let hits=0;
+  if(containsSameZone(a.colonia,b.colonia)) hits++;
+  if(a.precio&&b.precio&&Math.abs(a.precio-b.precio)/Math.max(a.precio,b.precio)<.06) hits++;
+  if(a.terreno&&b.terreno&&similarityRatio(a.terreno,b.terreno)>.92) hits++;
+  if(a.construccion&&b.construccion&&similarityRatio(a.construccion,b.construccion)>.92) hits++;
+  const ta=norm(a.titulo), tb=norm(b.titulo);
+  if(ta&&tb&&(ta.includes(tb.slice(0,18))||tb.includes(ta.slice(0,18)))) hits++;
+  return hits>=4;
+}
+function qualityRaw(c){ return (c.url?5:0)+(c.precio?10:0)+(c.construccion?5:0)+(c.terreno?4:0)+(c.descripcion?.length>80?3:0); }
+
+function analyzeLocal(){
+  const s=subject();
+  if(!s.colonia && !s.direccion){ toast('Falta ubicación del inmueble sujeto.'); return null; }
+  if(!s.terreno && !s.construccion){ toast('Falta terreno o construcción del inmueble sujeto.'); return null; }
+  if(comps.length<3){ toast('Agrega al menos 3 comparables para una estimación defendible.'); }
+  const deduped=dedupeComparables(comps);
+  const rows=deduped.map(c=>{
+    const sc=scoreComparable(c,s); const ad=adjustmentForComparable(c,s);
+    const area = getUsefulArea(s) || getUsefulArea(c);
+    return {...c,...sc,...ad, unitValue: area ? ad.adjusted/area : 0};
+  }).sort((a,b)=>b.score-a.score);
+  const useful=rows.filter(r=>r.score>=55 && r.adjusted>0).slice(0, parseInt($('maxComparables').value||'10',10));
+  const weak=rows.filter(r=>r.score<55);
+  const weighted = useful.reduce((acc,r)=>{ const w=Math.max(1,r.score); return {sum:acc.sum+r.adjusted*w, w:acc.w+w}; },{sum:0,w:0});
+  const central = weighted.w ? weighted.sum/weighted.w : NaN;
+  const dispersion = useful.length ? stddev(useful.map(r=>r.adjusted))/central : NaN;
+  const confidence = confidenceLabel(useful, weak, dispersion);
+  const spread = confidence==='Alta' ? .06 : confidence==='Media-alta' ? .08 : confidence==='Media' ? .11 : .16;
+  const min = central ? central*(1-spread) : NaN;
+  const max = central ? central*(1+spread) : NaN;
+  const cierreMin = central ? central*(confidence==='Alta'?.97:.94) : NaN;
+  const cierreMax = central ? central*(confidence==='Alta'?1.01:.99) : NaN;
+  const publicacion = central ? central*(confidence==='Baja'?1.06:1.045) : NaN;
+  lastAnalysis={subject:s, rows, useful, weak, central, min, max, publicacion, cierreMin, cierreMax, confidence, dispersion};
+  renderComps(rows); renderKpis(lastAnalysis); renderReportLocal(lastAnalysis); renderDiagnostic(lastAnalysis);
+  toast('Estimación local generada.');
+  return lastAnalysis;
+}
+function stddev(arr){ if(!arr.length) return NaN; const m=arr.reduce((a,b)=>a+b,0)/arr.length; return Math.sqrt(arr.reduce((a,b)=>a+(b-m)**2,0)/arr.length); }
+function confidenceLabel(useful, weak, dispersion){
+  if(useful.length>=7 && dispersion<.12 && useful[0]?.score>=80) return 'Alta';
+  if(useful.length>=5 && dispersion<.18) return 'Media-alta';
+  if(useful.length>=3 && dispersion<.28) return 'Media';
+  return 'Baja';
+}
+
+function renderKpis(a){
+  $('kpiValor').textContent = a.central ? `${money(a.min)} – ${money(a.max)}` : '—';
+  $('kpiPublicacion').textContent = money(a.publicacion);
+  $('kpiConfianza').textContent = a.confidence || '—';
+  $('kpiComps').textContent = a.useful?.length || 0;
+}
+function renderComps(rows=comps){
+  const box=$('compsList');
+  if(!rows.length){ box.innerHTML=''; return; }
+  box.innerHTML = rows.map((c,i)=>{
+    const cls=c.score>=75?'high':c.score>=55?'med':'low';
+    return `<div class="comp-card">
+      <div class="comp-top"><div><div class="comp-title">${escapeHtml(c.titulo||`Comparable ${i+1}`)}</div><div class="comp-meta">${escapeHtml(c.colonia||'Sin colonia')} · ${escapeHtml(c.municipio||'')} ${c.duplicados>1?`· ${c.duplicados} duplicados fusionados`:''}</div></div>${c.score!==undefined?`<div class="score ${cls}">${Math.round(c.score)}</div>`:''}</div>
+      <div class="mini-grid">
+        <div class="mini"><small>Precio</small><b>${money(c.precio)}</b></div>
+        <div class="mini"><small>Ajustado</small><b>${money(c.adjusted)}</b></div>
+        <div class="mini"><small>Terreno</small><b>${c.terreno||'—'} m²</b></div>
+        <div class="mini"><small>Constr.</small><b>${c.construccion||'—'} m²</b></div>
+      </div>
+      <p class="subtle">${escapeHtml((c.penalties&&c.penalties.length?`Alertas: ${c.penalties.join(', ')}. `:'') + (c.notes?`Ajustes: ${c.notes.slice(0,3).join('; ')}`:''))}</p>
+      <div class="actions" style="justify-content:flex-start"><button class="ghost" onclick="editComp(${i})">Editar</button><button class="danger" onclick="deleteComp(${i})">Eliminar</button>${c.url?`<a class="btn ghost" href="${escapeAttr(c.url)}" target="_blank" rel="noopener">Abrir fuente</a>`:''}</div>
+    </div>`;
+  }).join('');
+}
+function renderDiagnostic(a){
+  $('diagnosticBox').innerHTML = `<b>Diagnóstico:</b><br>
+  Comparables cargados: ${comps.length}<br>
+  Comparables después de deduplicar: ${a.rows.length}<br>
+  Comparables útiles: ${a.useful.length}<br>
+  Comparables débiles/descartados: ${a.weak.length}<br>
+  Dispersión aproximada: ${Number.isFinite(a.dispersion)?pct(a.dispersion*100):'—'}<br>
+  Confianza: ${a.confidence}<br><br>
+  <b>Regla:</b> si la confianza es baja, el reporte debe venderse como estimación exploratoria, no como conclusión fuerte.`;
+}
+function renderReportLocal(a){
+  const s=a.subject;
+  const table = a.useful.map((r,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(r.titulo||'Comparable')}</td><td>${escapeHtml(r.colonia||'')}</td><td>${money(r.precio)}</td><td>${money(r.adjusted)}</td><td>${Math.round(r.score)}</td><td>${escapeHtml((r.notes||[]).slice(0,3).join('; '))}</td></tr>`).join('');
+  $('reportBody').innerHTML = `
+    <h4>Resumen ejecutivo</h4>
+    <p>Con base en los comparables disponibles y después de aplicar deduplicación, scoring de similitud y ajustes comerciales, el valor comercial estimado para el inmueble sujeto se ubica en un rango aproximado de <b>${money(a.min)} a ${money(a.max)}</b>. El valor central recomendado es de <b>${money(a.central)}</b>.</p>
+    <p>Precio sugerido de publicación: <b>${money(a.publicacion)}</b>. Precio probable de cierre: <b>${money(a.cierreMin)} a ${money(a.cierreMax)}</b>. Nivel de confianza: <b>${a.confidence}</b>.</p>
+
+    <h4>Inmueble sujeto</h4>
+    <table><tr><th>Tipo</th><td>${escapeHtml(s.tipo)}</td><th>Operación</th><td>${escapeHtml(s.operacion)}</td></tr>
+    <tr><th>Ubicación</th><td colspan="3">${escapeHtml(s.direccion || `${s.colonia}, ${s.municipio}`)}</td></tr>
+    <tr><th>Terreno</th><td>${s.terreno||'—'} m²</td><th>Construcción</th><td>${s.construccion||'—'} m²</td></tr>
+    <tr><th>Estado</th><td>${escapeHtml(s.estado)}</td><th>Calidad</th><td>${escapeHtml(s.calidad)}</td></tr></table>
+
+    <h4>Metodología</h4>
+    <p>La estimación se construyó mediante análisis comparativo de mercado sobre precios de oferta publicados. Los precios se ajustaron por negociación probable, similitud de ubicación, superficie, estado físico, tipo de inmueble y observaciones comerciales relevantes. Esta herramienta no sustituye un dictamen pericial; su finalidad es apoyar una decisión comercial de precio.</p>
+
+    <h4>Comparables útiles</h4>
+    <table><thead><tr><th>#</th><th>Comparable</th><th>Zona</th><th>Precio publicado</th><th>Precio ajustado</th><th>Score</th><th>Ajustes</th></tr></thead><tbody>${table || '<tr><td colspan="7">No hay comparables útiles suficientes.</td></tr>'}</tbody></table>
+
+    <h4>Conclusión comercial</h4>
+    <p>Para salir al mercado, se recomienda publicar alrededor de <b>${money(a.publicacion)}</b>, siempre que la estrategia busque conservar margen de negociación sin alejarse del valor defendible por comparables. Si el objetivo es vender con mayor rapidez, el precio debería acercarse al valor central de <b>${money(a.central)}</b> o al rango probable de cierre.</p>
+
+    <h4>Limitaciones</h4>
+    <p>Los comparables provienen de información capturada o consultada en fuentes públicas y pueden representar precios de oferta, no precios finales de cierre. La confiabilidad aumenta si se verifican físicamente los inmuebles, se confirma disponibilidad, se revisa documentación y se obtiene evidencia de operaciones cerradas recientes.</p>`;
+}
+
+function buildQueries(){
+  const s=subject();
+  const loc = [s.colonia, s.municipio].filter(Boolean).join(' ');
+  const type = s.tipo.toLowerCase();
+  const op = s.operacion.toLowerCase()==='renta'?'renta':'venta';
+  const m2 = s.construccion || s.terreno || '';
+  const queries = [
+    `${type} en ${op} "${s.colonia}" "${s.municipio}" ${m2?m2+' m2':''}`,
+    `"${s.colonia}" "${s.municipio}" "${type} en ${op}" precio`,
+    `site:inmuebles24.com "${s.colonia}" "${s.municipio}" "${type}" "${op}"`,
+    `site:lamudi.com.mx "${s.colonia}" "${s.municipio}" "${type}" "${op}"`,
+    `site:propiedades.com "${s.colonia}" "${s.municipio}" "${type}" "${op}"`,
+    `site:mercadolibre.com.mx "${s.colonia}" "${s.municipio}" "${type}" "${op}"`,
+    `site:easybroker.com "${s.colonia}" "${s.municipio}" "${type}" "${op}"`,
+    `"${loc}" "${m2} m2" "${op}" "$" inmobiliaria`
+  ].filter(q=>!q.includes('""'));
+  $('queriesBox').textContent = queries.join('\n');
+  return queries;
+}
+
+async function backendSearch(){
+  const endpoint=txt('endpointBusqueda');
+  const queries=buildQueries();
+  const btn=$('btnBackendSearch'); const old=btn.innerHTML; btn.innerHTML='<span class="loader"></span> Buscando'; btn.disabled=true;
+  try{
+    const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subject:subject(),queries, max:parseInt($('maxComparables').value||'10',10)})});
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data=await res.json();
+    const incoming=Array.isArray(data.comparables)?data.comparables:[];
+    if(!incoming.length) throw new Error('El backend no devolvió comparables.');
+    comps=[...comps,...incoming.map(normalizeComp)]; renderComps(comps); toast(`${incoming.length} comparables agregados desde backend.`);
+  }catch(e){ toast(`No se pudo consultar backend: ${e.message}. Usa búsquedas/manual por ahora.`); }
+  finally{ btn.innerHTML=old; btn.disabled=false; }
+}
+async function claudeAnalysis(){
+  const a=lastAnalysis || analyzeLocal(); if(!a) return;
+  const endpoint=txt('endpointEstimacion');
+  const btn=$('btnClaude'); const old=btn.innerHTML; btn.innerHTML='<span class="loader"></span> Analizando'; btn.disabled=true;
+  try{
+    const payload={prompt:txt('promptBase'), model:txt('modeloFinal'), extraction_model:txt('modeloExtraccion'), analysis:a};
+    const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data=await res.json();
+    if(data.html){ $('reportBody').innerHTML=data.html; }
+    else if(data.markdown || data.text){ $('reportBody').innerHTML = markdownLite(data.markdown||data.text); }
+    else throw new Error('Respuesta sin html/markdown/text.');
+    toast('Reporte enriquecido con Claude.');
+  }catch(e){ toast(`Claude/backend no disponible: ${e.message}. Se conserva reporte local.`); }
+  finally{ btn.innerHTML=old; btn.disabled=false; }
+}
+
+function normalizeComp(x){ return {
+  id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()+Math.random()),
+  url:x.url||x.fuente||'', titulo:x.titulo||x.title||'Comparable', tipo:x.tipo||x.type||$('tipo').value,
+  precio:parseFloat(x.precio||x.price||0)||0, terreno:parseFloat(x.terreno||x.land_m2||0)||0, construccion:parseFloat(x.construccion||x.built_m2||0)||0,
+  colonia:x.colonia||x.zona||'', municipio:x.municipio||x.ciudad||'', estado:x.estado||x.conservacion||'Bueno',
+  recamaras:parseFloat(x.recamaras||x.bedrooms||0)||0, banos:parseFloat(x.banos||x.bathrooms||0)||0, estacionamientos:parseFloat(x.estacionamientos||x.parking||0)||0,
+  descripcion:x.descripcion||x.description||''
+}; }
+function saveComparable(){
+  const c=normalizeComp({url:txt('c_url'),titulo:txt('c_titulo'),tipo:txt('c_tipo'),precio:num('c_precio'),terreno:num('c_terreno'),construccion:num('c_construccion'),colonia:txt('c_colonia'),municipio:txt('c_municipio'),estado:txt('c_estado'),recamaras:num('c_recamaras'),banos:num('c_banos'),estacionamientos:num('c_estacionamientos'),descripcion:txt('c_descripcion')});
+  if(!c.precio || (!c.terreno&&!c.construccion)){ toast('El comparable necesita precio y terreno o construcción.'); return; }
+  comps.push(c); clearCompForm(); renderComps(comps); toast('Comparable guardado.');
+}
+function clearCompForm(){ ['c_url','c_titulo','c_precio','c_terreno','c_construccion','c_colonia','c_municipio','c_recamaras','c_banos','c_estacionamientos','c_descripcion'].forEach(id=>$(id).value=''); }
+window.deleteComp=function(i){ comps.splice(i,1); renderComps(comps); }
+window.editComp=function(i){ const c=comps[i]; $('c_url').value=c.url||''; $('c_titulo').value=c.titulo||''; $('c_tipo').value=c.tipo||'Casa'; $('c_precio').value=c.precio||''; $('c_terreno').value=c.terreno||''; $('c_construccion').value=c.construccion||''; $('c_colonia').value=c.colonia||''; $('c_municipio').value=c.municipio||''; $('c_estado').value=c.estado||'Bueno'; $('c_recamaras').value=c.recamaras||''; $('c_banos').value=c.banos||''; $('c_estacionamientos').value=c.estacionamientos||''; $('c_descripcion').value=c.descripcion||''; comps.splice(i,1); renderComps(comps); toast('Comparable cargado para editar. Guarda para reincorporarlo.'); }
+function importBulk(){
+  const raw=txt('bulkInput'); if(!raw) return;
+  try{ const arr=JSON.parse(raw); if(!Array.isArray(arr)) throw new Error('JSON debe ser arreglo'); comps=[...comps,...arr.map(normalizeComp)]; toast(`${arr.length} comparables importados.`); }
+  catch(e){
+    const blocks=raw.split(/\n\s*\n/).filter(Boolean); const parsed=blocks.map((b,i)=>normalizeComp({titulo:b.split('\n')[0]||`Comparable ${i+1}`, descripcion:b, precio:(b.match(/\$?\s?([0-9][0-9,\.]{5,})/)||[])[1]?.replace(/[,\.]/g,'')||0, tipo:$('tipo').value, colonia:$('colonia').value, municipio:$('municipio').value})); comps=[...comps,...parsed]; toast(`${parsed.length} bloques importados como comparables preliminares.`);
+  }
+  renderComps(comps);
+}
+function loadDemo(){
+  $('tipo').value='Casa'; $('operacion').value='Venta'; $('direccion').value='Chapultepec Oriente, Morelia, Michoacán'; $('colonia').value='Chapultepec Oriente'; $('municipio').value='Morelia, Michoacán'; $('terreno').value='87.5'; $('construccion').value='126'; $('recamaras').value='3'; $('banos').value='2'; $('estacionamientos').value='1'; $('estado').value='Bueno'; $('calidad').value='Residencial'; $('observaciones').value='Casa chica en zona consolidada con escasez de producto similar; segmento con buena demanda relativa.';
+  comps=[
+    {titulo:'Casa en Chapultepec Oriente remodelada',tipo:'Casa',precio:4350000,terreno:105,construccion:155,colonia:'Chapultepec Oriente',municipio:'Morelia, Michoacán',estado:'Excelente',recamaras:3,banos:2,estacionamientos:1,url:'https://ejemplo.com/1',descripcion:'Casa remodelada, buenos acabados, ubicada en Chapultepec Oriente.'},
+    {titulo:'Casa compacta en Chapultepec Oriente',tipo:'Casa',precio:3980000,terreno:90,construccion:130,colonia:'Chapultepec Oriente',municipio:'Morelia, Michoacán',estado:'Bueno',recamaras:3,banos:2,estacionamientos:1,url:'https://ejemplo.com/2',descripcion:'Casa en buen estado, cerca de zonas comerciales y vialidades principales.'},
+    {titulo:'Casa amplia en Chapultepec Sur',tipo:'Casa',precio:5200000,terreno:160,construccion:230,colonia:'Chapultepec Sur',municipio:'Morelia, Michoacán',estado:'Bueno',recamaras:4,banos:3,estacionamientos:2,url:'https://ejemplo.com/3',descripcion:'Casa más amplia en zona sustituta, requiere ajuste por superficie.'},
+    {titulo:'Casa en Nueva Chapultepec',tipo:'Casa',precio:3800000,terreno:92,construccion:118,colonia:'Nueva Chapultepec',municipio:'Morelia, Michoacán',estado:'Regular',recamaras:3,banos:1.5,estacionamientos:1,url:'https://ejemplo.com/4',descripcion:'Casa usada en zona cercana, estado regular.'},
+    {titulo:'Casa pequeña en Chapultepec Oriente',tipo:'Casa',precio:4100000,terreno:88,construccion:122,colonia:'Chapultepec Oriente',municipio:'Morelia, Michoacán',estado:'Bueno',recamaras:2,banos:2,estacionamientos:1,url:'https://ejemplo.com/5',descripcion:'Producto pequeño y escaso en la colonia.'}
+  ].map(normalizeComp); renderComps(comps); toast('Demo cargado. Presiona calcular estimación local.');
+}
+
+function saveState(){ localStorage.setItem('valor_state', JSON.stringify({subject:subject(), comps, config:{endpointEstimacion:txt('endpointEstimacion'),endpointBusqueda:txt('endpointBusqueda'),modeloFinal:txt('modeloFinal'),modeloExtraccion:txt('modeloExtraccion')}})); toast('Guardado localmente.'); }
+function loadState(){ const raw=localStorage.getItem('valor_state'); if(!raw){toast('No hay guardado local.');return;} const st=JSON.parse(raw); Object.entries(st.subject||{}).forEach(([k,v])=>{ if($(k)) $(k).value=v; }); comps=(st.comps||[]).map(normalizeComp); Object.entries(st.config||{}).forEach(([k,v])=>{ if($(k)) $(k).value=v; }); renderComps(comps); toast('Cargado.'); }
+function resetAll(){ if(!confirm('¿Limpiar captura y comparables?')) return; localStorage.removeItem('valor_state'); comps=[]; document.querySelectorAll('input,textarea').forEach(el=>{ if(!['endpointEstimacion','endpointBusqueda','modeloFinal','modeloExtraccion','maxComparables','castigoOferta','promptBase'].includes(el.id)) el.value=''; }); renderComps(comps); $('reportBody').innerHTML='<p>Sin reporte generado todavía.</p>'; toast('Limpio.'); }
+
+function escapeHtml(s){ return (s||'').toString().replace(/[&<>"]/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+function escapeAttr(s){ return escapeHtml(s).replace(/'/g,'&#39;'); }
+function markdownLite(md){ return escapeHtml(md).replace(/^### (.*)$/gm,'<h4>$1</h4>').replace(/^## (.*)$/gm,'<h4>$1</h4>').replace(/\*\*(.*?)\*\*/g,'<b>$1</b>').replace(/\n\n/g,'</p><p>').replace(/^/,'<p>').replace(/$/,'</p>'); }
+
+function bindTabs(){ document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{ const parent=btn.closest('.panel-body'); parent.querySelectorAll('.tab').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); const name=btn.dataset.tab; parent.querySelectorAll('[id^="tab-"]').forEach(el=>el.classList.add('hidden')); const target=parent.querySelector(`#tab-${name}`); if(target) target.classList.remove('hidden'); })); }
+function bind(){
+  bindTabs(); $('btnQueries').onclick=buildQueries; $('btnCopyQueries').onclick=()=>navigator.clipboard.writeText($('queriesBox').textContent).then(()=>toast('Búsquedas copiadas.'));
+  $('btnSaveComp').onclick=saveComparable; $('btnAddComp').onclick=()=>window.scrollTo({top:document.querySelector('#compForm').getBoundingClientRect().top+window.scrollY-100,behavior:'smooth'});
+  $('btnAnalyze').onclick=analyzeLocal; $('btnBackendSearch').onclick=backendSearch; $('btnClaude').onclick=claudeAnalysis; $('btnImportBulk').onclick=importBulk; $('btnDemoComps').onclick=loadDemo;
+  $('btnSave').onclick=saveState; $('btnLoad').onclick=loadState; $('btnReset').onclick=resetAll; $('btnPrint').onclick=()=>window.print();
+}
+bind();
+</script>
+</body>
+</html>
