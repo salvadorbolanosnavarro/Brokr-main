@@ -1176,7 +1176,8 @@
     overlay = document.getElementById('bk-profile-overlay');
     overlay.classList.add('is-open');
     document.getElementById('bk-profile-drawer').classList.add('is-open');
-    loadProfileData();
+    // Diferir las peticiones de red para que la animación de apertura no se trabe
+    requestAnimationFrame(() => requestAnimationFrame(() => loadProfileData()));
   }
   window.openProfileDrawer = openProfileDrawer;
 
@@ -1299,85 +1300,124 @@
     document.body.appendChild(drawer);
   }
 
+  // Caché de datos del perfil — evita pegar a 3 endpoints cada vez que el
+  // usuario abre el drawer. Se invalida al guardar perfil o al cambiar
+  // conexión EB/Facebook. TTL: 60 segundos.
+  let _pdCache = null;
+  let _pdCacheAt = 0;
+  const PD_CACHE_TTL = 60000;
+
+  function invalidateProfileCache() {
+    _pdCache = null;
+    _pdCacheAt = 0;
+  }
+  window.invalidateProfileCache = invalidateProfileCache;
+
   async function loadProfileData() {
     const tok = getToken();
     if (!tok) return;
     let user = {};
     try { user = JSON.parse(localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}'); } catch(e) {}
 
-    // Rellenar datos básicos si ya los tenemos en memoria
+    // Rellenar email de inmediato (lo tenemos en memoria, no necesita red)
     if (user.email) {
-      document.getElementById('pd-input-email').value = user.email || '';
+      const emEl = document.getElementById('pd-input-email');
+      if (emEl) emEl.value = user.email;
     }
 
-    // Cargar perfil desde Supabase
-    try {
-      const r = await fetch(SB_URL + '/rest/v1/usuarios?id=eq.' + user.id + '&select=nombre,telefono,rol', {
+    // Si tenemos caché fresco, repintar inmediatamente sin pegar a la red
+    if (_pdCache && (Date.now() - _pdCacheAt) < PD_CACHE_TTL) {
+      renderProfileData(_pdCache, user);
+      return;
+    }
+
+    // 3 peticiones EN PARALELO con Promise.allSettled
+    // (allSettled = si una falla, las demás siguen — el drawer no se queda en blanco)
+    const [usuarioRes, ebRes, fbRes] = await Promise.allSettled([
+      fetch(SB_URL + '/rest/v1/usuarios?id=eq.' + user.id + '&select=nombre,telefono,rol', {
         headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok }
-      });
-      const data = await r.json();
-      const p = data[0] || {};
-      _pdProfile = { ...p, email: user.email, id: user.id };
+      }).then(r => r.ok ? r.json() : []),
+      fetch(API_BASE + '/config/eb-key', {
+        headers: { Authorization: 'Bearer ' + tok }
+      }).then(r => r.ok ? r.json() : { configured: false }),
+      fetch(API_BASE + '/facebook/connection', {
+        headers: { Authorization: 'Bearer ' + tok }
+      }).then(r => r.ok ? r.json() : { connected: false })
+    ]);
 
-      const nombre = p.nombre || '';
-      const ini2 = initials(nombre);
-      document.getElementById('pd-avatar').textContent = ini2 || '?';
-      document.getElementById('pd-name').textContent = nombre || user.email || '—';
-      document.getElementById('pd-email').textContent = user.email || '';
-      document.getElementById('pd-input-nombre').value = nombre;
-      document.getElementById('pd-input-tel').value = p.telefono || '';
-      document.getElementById('pd-input-email').value = user.email || '';
+    const data = {
+      usuario: usuarioRes.status === 'fulfilled' ? (usuarioRes.value[0] || {}) : {},
+      eb:      ebRes.status      === 'fulfilled' ? ebRes.value      : { configured: false },
+      fb:      fbRes.status      === 'fulfilled' ? fbRes.value      : { connected: false }
+    };
 
-      const badge = document.getElementById('pd-role-badge');
+    _pdCache = data;
+    _pdCacheAt = Date.now();
+    renderProfileData(data, user);
+  }
+
+  // Renderiza el drawer con los datos (sin tocar la red). Idempotente.
+  function renderProfileData(data, user) {
+    const p = data.usuario || {};
+    _pdProfile = { ...p, email: user.email, id: user.id };
+
+    const nombre = p.nombre || '';
+    const ini2 = initials(nombre);
+
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+
+    set('pd-avatar', ini2 || '?');
+    set('pd-name', nombre || user.email || '—');
+    set('pd-email', user.email || '');
+    setVal('pd-input-nombre', nombre);
+    setVal('pd-input-tel', p.telefono || '');
+    setVal('pd-input-email', user.email || '');
+
+    const badge = document.getElementById('pd-role-badge');
+    const adminSec = document.getElementById('pd-admin-section');
+    if (badge) {
       if (p.rol === 'admin') {
         badge.textContent = 'Admin';
         badge.classList.add('admin');
-        document.getElementById('pd-admin-section').style.display = 'block';
+        if (adminSec) adminSec.style.display = 'block';
       } else {
         badge.textContent = 'Agente';
         badge.classList.remove('admin');
-        document.getElementById('pd-admin-section').style.display = 'none';
+        if (adminSec) adminSec.style.display = 'none';
       }
-    } catch(e) {}
+    }
 
-    // Verificar EB key
-    try {
-      const ebRes = await fetch(API_BASE + '/config/eb-key', {
-        headers: { Authorization: 'Bearer ' + tok }
-      });
-      const ebData = await ebRes.json();
-      const dot = document.getElementById('pd-eb-dot');
-      const txt = document.getElementById('pd-eb-status-text');
-      const discBtn = document.getElementById('pd-eb-disconnect-btn');
-      if (ebData.configured) {
+    // EasyBroker
+    const dot = document.getElementById('pd-eb-dot');
+    const txt = document.getElementById('pd-eb-status-text');
+    const discBtn = document.getElementById('pd-eb-disconnect-btn');
+    if (dot && txt) {
+      if (data.eb && data.eb.configured) {
         dot.className = 'dot ok';
-        txt.textContent = 'Conectado — key: ' + ebData.masked;
+        txt.textContent = 'Conectado — key: ' + data.eb.masked;
         if (discBtn) discBtn.style.display = 'block';
       } else {
         dot.className = 'dot warn';
         txt.textContent = 'Sin conectar';
         if (discBtn) discBtn.style.display = 'none';
       }
-    } catch(e) {}
+    }
 
-    // Verificar conexión Facebook
-    try {
-      const fbRes = await fetch(API_BASE + '/facebook/connection', {
-        headers: { Authorization: 'Bearer ' + tok }
-      });
-      const fbData = await fbRes.json();
-      const fdot = document.getElementById('pd-fb-dot');
-      const ftxt = document.getElementById('pd-fb-status-text');
-      const fbtn = document.getElementById('pd-fb-btn');
-      if (fbData.connected) {
+    // Facebook
+    const fdot = document.getElementById('pd-fb-dot');
+    const ftxt = document.getElementById('pd-fb-status-text');
+    const fbtn = document.getElementById('pd-fb-btn');
+    if (fdot && ftxt) {
+      if (data.fb && data.fb.connected) {
         fdot.className = 'dot ok';
-        ftxt.textContent = 'Conectado — ' + (fbData.page_name || 'página vinculada');
-        if (fbtn) { fbtn.textContent = 'Cambiar página de Facebook'; }
+        ftxt.textContent = 'Conectado — ' + (data.fb.page_name || 'página vinculada');
+        if (fbtn) fbtn.textContent = 'Cambiar página de Facebook';
       } else {
         fdot.className = 'dot warn';
         ftxt.textContent = 'Sin conectar';
       }
-    } catch(e) {}
+    }
   }
 
   async function saveProfileData() {
@@ -1397,6 +1437,7 @@
       if (!r.ok) throw new Error('Error');
       toast.textContent = 'Guardado correctamente.';
       toast.className = 'bk-pd-toast ok';
+      invalidateProfileCache();
       // Actualizar nombre en sidebar
       document.getElementById('bk-sb-name').textContent = nombre;
       document.getElementById('pd-name').textContent = nombre;
@@ -1427,6 +1468,7 @@
       const d = await r.json();
       if (!r.ok) throw new Error(d.detail || 'Error');
       // La key vive solo en Supabase con RLS. Nunca toca el navegador del usuario.
+      invalidateProfileCache();
       toast.textContent = 'EasyBroker conectado correctamente.';
       toast.className = 'bk-pd-toast ok';
       document.getElementById('pd-input-ebkey').value = '';
@@ -1458,6 +1500,7 @@
         const d = await r.json().catch(() => ({}));
         throw new Error(d.detail || 'Error');
       }
+      invalidateProfileCache();
       toast.textContent = 'EasyBroker desconectado.';
       toast.className = 'bk-pd-toast ok';
       document.getElementById('pd-eb-dot').className = 'dot warn';
