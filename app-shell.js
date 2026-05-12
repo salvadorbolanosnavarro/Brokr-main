@@ -1568,6 +1568,120 @@
     if (!profile) return; // redirected to login
     injectShell(profile);
 
+    // ════════════════════════════════════════════════════════════════
+    // window.brokrSb — helper centralizado con auto-refresh
+    // Lo usan contactos.html, propiedades.html, index.html, etc.
+    //
+    // Esto resuelve dos bugs históricos:
+    //   1) el helper se mencionaba pero nunca se exponía → contactos
+    //      fallaba al cargar.
+    //   2) cada módulo manejaba 401 tirando "Sesión expirada", forzando
+    //      al usuario a hacer login. Ahora: si el access_token expira,
+    //      sbFetch hace refresh y reintenta. Solo si el refresh falla
+    //      se redirige a login.
+    //
+    // Además: refresh proactivo cada 30 min (el access_token de Supabase
+    // dura 1h, así que renovar a la mitad es seguro y evita ventanas
+    // donde el token expire entre clicks).
+    // ════════════════════════════════════════════════════════════════
+    (function setupBrokrSb() {
+      const REFRESH_INTERVAL_MS = 30 * 60 * 1000; // 30 minutos
+      let _refreshInFlight = null;                // de-dupea refreshes paralelos
+
+      function _readToken() {
+        return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || null;
+      }
+
+      async function ensureToken() {
+        // Si hay token, lo devolvemos tal cual. Si no, intentamos refresh.
+        const t = _readToken();
+        if (t) return t;
+        return await refreshNow();
+      }
+
+      async function refreshNow() {
+        // De-dupea: si ya hay un refresh en curso, espera ese mismo.
+        if (_refreshInFlight) return await _refreshInFlight;
+        _refreshInFlight = (async () => {
+          try {
+            return await tryRefreshToken();
+          } finally {
+            _refreshInFlight = null;
+          }
+        })();
+        return await _refreshInFlight;
+      }
+
+      // Refresh proactivo periódico — silencioso si falla (al siguiente
+      // request real, ensureToken hará el refresh on-demand de todas formas).
+      setInterval(() => { refreshNow().catch(() => {}); }, REFRESH_INTERVAL_MS);
+
+      // Wrapper de fetch contra Supabase REST/Auth con auto-retry en 401.
+      // path: 'rest/v1/propiedades?...' o 'auth/v1/user', etc.
+      async function sbApi(path, init = {}) {
+        const tok = await ensureToken();
+        const baseHeaders = {
+          apikey: SB_KEY,
+          ...(tok ? { Authorization: 'Bearer ' + tok } : {}),
+        };
+        const opts = {
+          ...init,
+          headers: { ...baseHeaders, ...(init.headers || {}) }
+        };
+        const url = SB_URL + '/' + path.replace(/^\/+/, '');
+        let r = await fetch(url, opts);
+
+        // Token expirado/invalido → refresh y un único reintento
+        if (r.status === 401) {
+          const newTok = await refreshNow();
+          if (newTok) {
+            opts.headers = {
+              ...baseHeaders,
+              Authorization: 'Bearer ' + newTok,
+              ...(init.headers || {}),
+            };
+            r = await fetch(url, opts);
+          } else {
+            // Refresh falló de verdad → cerrar sesión limpiamente.
+            // No redirigimos en medio del fetch para no romper UIs en curso;
+            // dejamos que el caller maneje !ok como hoy, pero limpiamos
+            // tokens podridos para que el próximo nav vaya a login.
+            localStorage.removeItem('sb_token');
+            sessionStorage.removeItem('sb_token');
+          }
+        }
+        return r;
+      }
+
+      // Helper conveniente para REST: devuelve JSON parseado o lanza con detalle.
+      async function sbRest(pathAndQuery, { method = 'GET', body = null, headers = {} } = {}) {
+        const init = {
+          method,
+          headers: { 'Content-Type': 'application/json', Prefer: 'return=representation', ...headers },
+        };
+        if (body !== null) init.body = typeof body === 'string' ? body : JSON.stringify(body);
+        const r = await sbApi('rest/v1/' + pathAndQuery.replace(/^\/+/, ''), init);
+        if (!r.ok) {
+          const txt = await r.text();
+          if (r.status === 401 || r.status === 403) {
+            throw new Error('Sesión expirada. Vuelve a iniciar sesión.');
+          }
+          throw new Error(txt || ('HTTP ' + r.status));
+        }
+        const txt = await r.text();
+        return txt ? JSON.parse(txt) : [];
+      }
+
+      window.brokrSb = {
+        url: SB_URL,
+        key: SB_KEY,
+        ensureToken,
+        refreshNow,
+        fetch: sbApi,   // contactos.html usa esta firma: sb.fetch('rest/v1/...')
+        rest: sbRest,   // para módulos nuevos
+      };
+    })();
+
     // Wake word: wait for first user gesture before starting (browser policy)
     _updateWakeUI();
     if (_wakeEnabled) {

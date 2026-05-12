@@ -911,7 +911,21 @@ function getCurrentToken() {
   return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || null;
 }
 
+// Devuelve un token de Supabase válido, refrescándolo si hace falta.
+// Úsalo antes de llamar a la API del backend de Brokr (que valida el token).
+async function getValidToken() {
+  if (window.brokrSb && window.brokrSb.ensureToken) {
+    return await window.brokrSb.ensureToken();
+  }
+  return getCurrentToken();
+}
+
 async function sbFetch(path, method='GET', body=null) {
+  // Preferir helper centralizado (con auto-refresh + retry en 401).
+  // Fallback al método legacy solo si app-shell.js aún no se cargó.
+  if (window.brokrSb && window.brokrSb.rest) {
+    return await window.brokrSb.rest(path, { method, body });
+  }
   const token = getCurrentToken() || SB_KEY;
   const opts = { method, headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=representation' } };
   if (body) opts.body = JSON.stringify(body);
@@ -1170,7 +1184,7 @@ async function saveProp(e) {
 // ── Facebook: publicar propiedad automáticamente ──────────────────────────
 async function publicarEnFacebook(prop) {
   const API_BASE = window.API_BASE || 'https://api.navarroai.com.mx';
-  const token = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+  const token = await getValidToken();
   if (!token) return;
 
   // Verificar si el usuario tiene Facebook conectado
@@ -1221,14 +1235,14 @@ function toggleSelectProp(id) {
 }
 
 function toggleSelectAll() {
-  // Si todas las visibles están seleccionadas → deseleccionar todo.
-  // Si no → seleccionar todas las visibles (respeta filtros).
-  const visibleIds = getVisiblePropIds();
-  const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedIds.has(id));
+  // Selecciona/deselecciona TODAS las propiedades que coinciden con el filtro
+  // actual (no solo las visibles en la página). Esto incluye páginas siguientes.
+  const filteredIds = (filteredProps || []).map(p => p.id);
+  const allSelected = filteredIds.length > 0 && filteredIds.every(id => selectedIds.has(id));
   if (allSelected) {
-    visibleIds.forEach(id => selectedIds.delete(id));
+    filteredIds.forEach(id => selectedIds.delete(id));
   } else {
-    visibleIds.forEach(id => selectedIds.add(id));
+    filteredIds.forEach(id => selectedIds.add(id));
   }
   updateSelectionUI();
 }
@@ -1238,27 +1252,32 @@ function deseleccionarTodo() {
   updateSelectionUI();
 }
 
-// Lee los IDs de las cards visibles en el grid (respeta filtros activos)
+// IDs visibles en el DOM (página actual). Para repintar cards renderizadas.
 function getVisiblePropIds() {
   return Array.from(document.querySelectorAll('.prop-card[data-id]')).map(c => c.dataset.id);
 }
 
 // Repinta el estado visual sin recargar nada (rapidísimo)
 function updateSelectionUI() {
-  // 1. Las cards: añadir/quitar clase is-selected
+  // 1. Las cards renderizadas: añadir/quitar clase is-selected
   document.querySelectorAll('.prop-card[data-id]').forEach(card => {
     const isSel = selectedIds.has(card.dataset.id);
     card.classList.toggle('is-selected', isSel);
   });
 
-  // 2. Checkbox "Seleccionar todo"
-  const visibleIds = getVisiblePropIds();
-  const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedIds.has(id));
+  // 2. Checkbox "Seleccionar todo" — basado en el filtro completo, no en la página
+  const filteredIds = (filteredProps || []).map(p => p.id);
+  const allSelected = filteredIds.length > 0 && filteredIds.every(id => selectedIds.has(id));
   const selectAllEl = g('props-select-all');
   const selectAllLabel = g('props-select-all-label');
   if (selectAllEl) {
     selectAllEl.classList.toggle('is-active', allSelected);
-    if (selectAllLabel) selectAllLabel.textContent = allSelected ? 'Deseleccionar todo' : 'Seleccionar todo';
+    if (selectAllLabel) {
+      const total = filteredIds.length;
+      selectAllLabel.textContent = allSelected
+        ? 'Deseleccionar todo'
+        : (total > 0 ? `Seleccionar todo (${total})` : 'Seleccionar todo');
+    }
   }
 
   // 3. Barra flotante
@@ -1327,7 +1346,7 @@ async function borrarSeleccionados() {
 
 // Borra los objetos de Storage extrayendo el path de cada URL pública
 async function borrarFotosDelStorage(urls) {
-  const token = getCurrentToken();
+  const token = await getValidToken();
   if (!token) return;
   const prefix = `${SB_URL}/storage/v1/object/public/fotos-propiedades/`;
   const objects = urls
@@ -1485,7 +1504,7 @@ function initFotoUpload() {
   input.onchange = async (e) => {
     const files = Array.from(e.target.files); if (!files.length) return;
     const progress = g('fotos-progress'); const preview = g('fotos-preview');
-    const userToken = getCurrentToken();
+    const userToken = await getValidToken();
     if (!userToken) {
       progress.textContent = 'Tu sesión expiró. Vuelve a iniciar sesión.';
       setTimeout(() => { location.href = 'login.html'; }, 1500);
@@ -1526,7 +1545,7 @@ let _ebImportDone = false;
 
 async function importarDesdeEasyBroker() {
   // Validación: que el usuario tenga sesión y EB key conectada
-  const token = getCurrentToken();
+  const token = await getValidToken();
   if (!token) {
     alert('Tu sesión expiró. Vuelve a iniciar sesión.');
     location.href = 'login.html';

@@ -420,21 +420,30 @@ window.addEventListener('brokr-shell-ready', async (e) => {
 
   const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
   const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
-  const tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || SB_KEY;
 
   // Cuenta exacta con HEAD + Prefer: count=exact (no descarga registros).
   // El header Content-Range trae "0-0/<total>" (o "*/<total>" cuando hay filtro).
+  // Usa window.brokrSb si está cargado (auto-refresh + retry en 401);
+  // fallback al fetch manual con token actual.
   async function fxCount(path) {
     try {
-      const r = await fetch(SB_URL + '/rest/v1/' + path, {
+      const opts = {
         method: 'HEAD',
         headers: {
-          apikey: SB_KEY,
-          Authorization: 'Bearer ' + tok,
           Prefer: 'count=exact',
-          Range: '0-0'
-        }
-      });
+          Range: '0-0',
+        },
+      };
+      let r;
+      if (window.brokrSb && window.brokrSb.fetch) {
+        r = await window.brokrSb.fetch('rest/v1/' + path, opts);
+      } else {
+        const tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || SB_KEY;
+        r = await fetch(SB_URL + '/rest/v1/' + path, {
+          ...opts,
+          headers: { ...opts.headers, apikey: SB_KEY, Authorization: 'Bearer ' + tok },
+        });
+      }
       if (!r.ok && r.status !== 206) return 0;
       const cr = r.headers.get('Content-Range') || '';
       const total = cr.split('/').pop();
