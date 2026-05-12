@@ -1331,24 +1331,23 @@
       return;
     }
 
-    // 3 peticiones EN PARALELO con Promise.allSettled
+    // 2 peticiones EN PARALELO con Promise.allSettled (antes eran 3).
+    // /profile/status devuelve EB + FB en una sola llamada al backend.
     // (allSettled = si una falla, las demás siguen — el drawer no se queda en blanco)
-    const [usuarioRes, ebRes, fbRes] = await Promise.allSettled([
+    const [usuarioRes, statusRes] = await Promise.allSettled([
       fetch(SB_URL + '/rest/v1/usuarios?id=eq.' + user.id + '&select=nombre,telefono,rol', {
         headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok }
       }).then(r => r.ok ? r.json() : []),
-      fetch(API_BASE + '/config/eb-key', {
+      fetch(API_BASE + '/profile/status', {
         headers: { Authorization: 'Bearer ' + tok }
-      }).then(r => r.ok ? r.json() : { configured: false }),
-      fetch(API_BASE + '/facebook/connection', {
-        headers: { Authorization: 'Bearer ' + tok }
-      }).then(r => r.ok ? r.json() : { connected: false })
+      }).then(r => r.ok ? r.json() : { eb: { configured: false }, fb: { connected: false } })
     ]);
 
+    const profileStatus = statusRes.status === 'fulfilled' ? statusRes.value : { eb: {}, fb: {} };
     const data = {
       usuario: usuarioRes.status === 'fulfilled' ? (usuarioRes.value[0] || {}) : {},
-      eb:      ebRes.status      === 'fulfilled' ? ebRes.value      : { configured: false },
-      fb:      fbRes.status      === 'fulfilled' ? fbRes.value      : { connected: false }
+      eb:      profileStatus.eb || { configured: false },
+      fb:      profileStatus.fb || { connected: false }
     };
 
     _pdCache = data;

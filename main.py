@@ -112,6 +112,12 @@ def eb_headers(key: str = None):
 def root():
     return {"status": "Brokr API activa", "version": "4.0"}
 
+# Endpoint para keep-alive (UptimeRobot u otro monitor cada 4 minutos).
+# No hace queries, no toca DB — solo evita que Railway duerma el servidor.
+@app.get("/ping")
+def ping():
+    return {"ok": True}
+
 # ────────────────────────────────────────────
 # CONFIG — EB API KEY POR USUARIO (Supabase)
 # ────────────────────────────────────────────
@@ -242,6 +248,60 @@ async def get_eb_key(request: Request):
     else:
         masked = ""
     return {"configured": bool(key), "masked": masked}
+
+# ════════════════════════════════════════════════════════════════
+# Endpoint unificado para el perfil del usuario.
+# Devuelve estado de EasyBroker + Facebook en UNA sola llamada
+# con UNA sola query a Supabase. Reduce 2 peticiones HTTP a 1
+# (elimina un CORS preflight) y 2 queries a Supabase a 1.
+# ════════════════════════════════════════════════════════════════
+@app.get("/profile/status")
+async def get_profile_status(request: Request):
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        return {"eb": {"configured": False, "masked": ""}, "fb": {"connected": False}}
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return {"eb": {"configured": False, "masked": ""}, "fb": {"connected": False}}
+
+    # Una sola query trae AMBAS integraciones (EB + FB) del usuario
+    try:
+        async with httpx.AsyncClient(timeout=8) as client:
+            r = await client.get(
+                f"{SUPABASE_URL}/rest/v1/user_integrations",
+                headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
+                params={"user_id": f"eq.{user_id}",
+                        "provider": "in.(easybroker,facebook)",
+                        "select": "provider,api_key,meta"}
+            )
+            if r.status_code != 200:
+                return {"eb": {"configured": False, "masked": ""}, "fb": {"connected": False}}
+            rows = r.json()
+    except Exception:
+        return {"eb": {"configured": False, "masked": ""}, "fb": {"connected": False}}
+
+    # Parsear cada provider
+    eb_state = {"configured": False, "masked": ""}
+    fb_state = {"connected": False}
+
+    for row in rows:
+        provider = row.get("provider")
+        api_key = row.get("api_key", "")
+        if provider == "easybroker" and api_key:
+            masked = "*" * (len(api_key) - 4) + api_key[-4:] if len(api_key) > 4 else ""
+            eb_state = {"configured": True, "masked": masked}
+        elif provider == "facebook" and api_key:
+            meta_str = row.get("meta", "{}")
+            try:
+                meta = json.loads(meta_str) if isinstance(meta_str, str) else (meta_str or {})
+            except Exception:
+                meta = {}
+            fb_state = {
+                "connected": True,
+                "page_id": meta.get("page_id", ""),
+                "page_name": meta.get("page_name", "Página conectada")
+            }
+
+    return {"eb": eb_state, "fb": fb_state}
 
 # ────────────────────────────────────────────
 # GROQ CHAT PROXY
