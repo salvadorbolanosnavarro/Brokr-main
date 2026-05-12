@@ -159,6 +159,28 @@ async def get_eb_key_for_user(user_id: str) -> str:
         pass
     return None
 
+# ════════════════════════════════════════════════════════════════
+# DIAGNÓSTICO TEMPORAL — probar una EB key contra EasyBroker
+# Devuelve exactamente lo que EasyBroker responde. Quitar post-lanzamiento.
+# ════════════════════════════════════════════════════════════════
+@app.post("/debug/eb-test")
+async def debug_eb_test(req: EbKeyRequest):
+    raw_key = req.key
+    stripped_key = req.key.strip()
+    async with httpx.AsyncClient(timeout=15) as client:
+        r = await client.get(
+            f"{EB_BASE}/properties?limit=1",
+            headers={"X-Authorization": stripped_key, "accept": "application/json"}
+        )
+        return {
+            "key_length_raw": len(raw_key),
+            "key_length_stripped": len(stripped_key),
+            "key_first_4": stripped_key[:4] if len(stripped_key) >= 4 else "(corta)",
+            "key_last_4": stripped_key[-4:] if len(stripped_key) >= 4 else "(corta)",
+            "eb_status": r.status_code,
+            "eb_response": r.text[:500]
+        }
+
 @app.post("/config/eb-key")
 async def set_eb_key(req: EbKeyRequest, request: Request):
     user_id = await get_user_id_from_token(request)
