@@ -193,16 +193,18 @@ async def set_eb_key(req: EbKeyRequest, request: Request):
 
     # Validar la key contra EasyBroker antes de guardar
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with httpx.AsyncClient(timeout=15) as client:
             test = await client.get(
                 f"{EB_BASE}/properties?limit=1",
                 headers={"X-Authorization": req.key.strip(), "accept": "application/json"}
             )
+            print(f"[set_eb_key] EasyBroker validation status: {test.status_code}, body[:200]: {test.text[:200]}")
             if test.status_code == 401:
                 raise HTTPException(status_code=400, detail="API key de EasyBroker invalida. Verifica que la copiaste correctamente.")
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"[set_eb_key] Excepcion en validacion: {type(e).__name__}: {e}")
         pass
 
     payload = {
