@@ -518,6 +518,122 @@
 .app-nav-link.is-active { background: var(--ink); color: var(--paper); }
 .app-nav-link svg { flex-shrink: 0; opacity: .8; }
 .app-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+/* ── Selección múltiple ───────────────────────────────────────── */
+.prop-card { position: relative; }
+.prop-check {
+  position: absolute; top: 10px; left: 10px;
+  width: 26px; height: 26px;
+  background: rgba(255,255,255,.92);
+  border: 1.5px solid rgba(15,24,41,.25);
+  border-radius: 8px;
+  z-index: 4;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: all .15s ease;
+}
+.prop-check:hover { border-color: var(--ink); background: white; }
+.prop-check svg { width: 14px; height: 14px; color: white; opacity: 0; transition: opacity .12s ease; }
+.prop-card.is-selected .prop-check { background: var(--ink); border-color: var(--ink); }
+.prop-card.is-selected .prop-check svg { opacity: 1; }
+.prop-card.is-selected { box-shadow: 0 0 0 2px var(--ink); }
+
+/* Checkbox "Seleccionar todo" en el toolbar */
+.props-select-all {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 12px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  font-size: 13px; color: var(--ink-2);
+  cursor: pointer;
+  user-select: none;
+  transition: all .15s ease;
+}
+.props-select-all:hover { border-color: var(--ink); background: white; }
+.props-select-all .check-box {
+  width: 18px; height: 18px;
+  border: 1.5px solid rgba(15,24,41,.25);
+  border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+}
+.props-select-all .check-box svg { width: 11px; height: 11px; color: white; opacity: 0; }
+.props-select-all.is-active .check-box { background: var(--ink); border-color: var(--ink); }
+.props-select-all.is-active .check-box svg { opacity: 1; }
+
+/* Barra flotante de acciones (Gmail/iCloud style) */
+.bulk-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(120px);
+  background: var(--ink);
+  color: white;
+  border-radius: 999px;
+  padding: 10px 12px 10px 22px;
+  display: flex; align-items: center; gap: 14px;
+  font-size: 14px; font-weight: 500;
+  box-shadow: 0 12px 32px rgba(0,0,0,.22), 0 4px 12px rgba(0,0,0,.12);
+  z-index: 900;
+  transition: transform .28s cubic-bezier(.16,1,.3,1);
+  max-width: 92vw;
+}
+.bulk-bar.is-visible { transform: translateX(-50%) translateY(0); }
+.bulk-bar__count { letter-spacing: -.01em; }
+.bulk-bar__sep { width: 1px; height: 18px; background: rgba(255,255,255,.2); }
+.bulk-bar__btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: background .15s ease;
+}
+.bulk-bar__btn--danger { background: #e24b4a; color: white; }
+.bulk-bar__btn--danger:hover { background: #c93737; }
+.bulk-bar__btn--ghost { background: transparent; color: rgba(255,255,255,.85); }
+.bulk-bar__btn--ghost:hover { background: rgba(255,255,255,.1); color: white; }
+
+/* Modal de confirmación de borrado */
+.confirm-del-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15,24,41,.55);
+  display: none; align-items: center; justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+.confirm-del-overlay.is-open { display: flex; }
+.confirm-del-modal {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 380px;
+  width: 88%;
+  box-shadow: 0 24px 60px rgba(0,0,0,.25);
+}
+.confirm-del-modal h3 { font-size: 17px; color: var(--ink); margin-bottom: 6px; letter-spacing: -.01em; }
+.confirm-del-modal p { font-size: 14px; color: var(--ink-2); line-height: 1.45; margin-bottom: 18px; }
+.confirm-del-modal .actions { display: flex; gap: 8px; justify-content: flex-end; }
+.confirm-del-modal button {
+  padding: 9px 18px; border-radius: var(--r);
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; border: none;
+  transition: all .15s ease;
+}
+.confirm-del-modal .btn-cancel { background: var(--paper-2); color: var(--ink); }
+.confirm-del-modal .btn-cancel:hover { background: #e5e7eb; }
+.confirm-del-modal .btn-confirm { background: #e24b4a; color: white; }
+.confirm-del-modal .btn-confirm:hover { background: #c93737; }
+
+@media (max-width: 700px) {
+  .props-select-all { padding: 6px 10px; font-size: 12px; }
+  .bulk-bar { bottom: 16px; padding: 8px 10px 8px 18px; font-size: 13px; gap: 10px; }
+  .bulk-bar__btn { padding: 6px 12px; font-size: 12px; }
+}
 </style>
 </head>
 <body data-app="props">
@@ -568,6 +684,12 @@
         </div>
       </div>
       <div class="props-toolbar">
+        <div class="props-select-all" id="props-select-all" onclick="toggleSelectAll()">
+          <div class="check-box">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <span id="props-select-all-label">Seleccionar todo</span>
+        </div>
         <div class="props-search-wrap">
           <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
           <input id="props-search" type="text" placeholder="Buscar por colonia, tipo, precio…" oninput="filterProps()" />
@@ -697,6 +819,7 @@ const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
 let allProps = [];
 let editingPropId = null;
 let uploadedFotoUrls = [];
+let selectedIds = new Set();  // IDs de propiedades seleccionadas para borrado masivo
 
 function g(id) { return document.getElementById(id); }
 function getRawNum(val) { return parseFloat((val||'').replace(/[$,]/g,'').trim()) || 0; }
@@ -746,7 +869,13 @@ async function loadProps() {
   grid.innerHTML = '<div class="props-empty"><h3>Cargando inmuebles…</h3></div>';
   try {
     allProps = await sbFetch('propiedades?order=created_at.desc&limit=200');
+    // Limpiar IDs seleccionados que ya no existan (ej. después de borrar)
+    const validIds = new Set(allProps.map(p => p.id));
+    for (const id of Array.from(selectedIds)) {
+      if (!validIds.has(id)) selectedIds.delete(id);
+    }
     renderProps(allProps);
+    updateSelectionUI();
   } catch(e) {
     grid.innerHTML = `<div class="props-empty"><h3>No se pudieron cargar</h3><p>${e.message}</p></div>`;
   }
@@ -780,7 +909,10 @@ function renderProps(props) {
     const opLabel = p.operacion === 'venta' ? 'En venta' : (p.operacion === 'renta' ? 'En renta' : '');
     const ubic = p.colonia + (p.ciudad ? ', ' + p.ciudad : '');
 
-    return `<div class="prop-card" onclick="openPropDetail('${p.id}')">
+    return `<div class="prop-card ${selectedIds.has(p.id) ? 'is-selected' : ''}" data-id="${p.id}" onclick="onPropCardClick(event, '${p.id}')">
+      <div class="prop-check" onclick="event.stopPropagation();toggleSelectProp('${p.id}')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+      </div>
       <div class="prop-card-img">
         ${foto}
         <div class="img-badge-wrap">
@@ -822,6 +954,7 @@ function filterProps() {
     (!q || (p.titulo+p.colonia+p.ciudad+p.descripcion+'').toLowerCase().includes(q)) &&
     (!op || p.operacion === op) && (!tipo || p.tipo === tipo) && (!est || p.estatus === est)
   ));
+  updateSelectionUI();
 }
 
 function openPropForm(id) {
@@ -931,6 +1064,172 @@ async function publicarEnFacebook(prop) {
   }
 }
 
+// ════════════════════════════════════════════════════════════════
+// SELECCIÓN MÚLTIPLE + BORRADO MASIVO
+// ════════════════════════════════════════════════════════════════
+
+// Click en una card: si hay algo seleccionado, click toggle selección.
+// Si no hay nada seleccionado, click abre el detalle como siempre.
+function onPropCardClick(event, id) {
+  if (selectedIds.size > 0) {
+    event.stopPropagation();
+    toggleSelectProp(id);
+  } else {
+    openPropDetail(id);
+  }
+}
+
+function toggleSelectProp(id) {
+  if (selectedIds.has(id)) selectedIds.delete(id);
+  else selectedIds.add(id);
+  updateSelectionUI();
+}
+
+function toggleSelectAll() {
+  // Si todas las visibles están seleccionadas → deseleccionar todo.
+  // Si no → seleccionar todas las visibles (respeta filtros).
+  const visibleIds = getVisiblePropIds();
+  const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedIds.has(id));
+  if (allSelected) {
+    visibleIds.forEach(id => selectedIds.delete(id));
+  } else {
+    visibleIds.forEach(id => selectedIds.add(id));
+  }
+  updateSelectionUI();
+}
+
+function deseleccionarTodo() {
+  selectedIds.clear();
+  updateSelectionUI();
+}
+
+// Lee los IDs de las cards visibles en el grid (respeta filtros activos)
+function getVisiblePropIds() {
+  return Array.from(document.querySelectorAll('.prop-card[data-id]')).map(c => c.dataset.id);
+}
+
+// Repinta el estado visual sin recargar nada (rapidísimo)
+function updateSelectionUI() {
+  // 1. Las cards: añadir/quitar clase is-selected
+  document.querySelectorAll('.prop-card[data-id]').forEach(card => {
+    const isSel = selectedIds.has(card.dataset.id);
+    card.classList.toggle('is-selected', isSel);
+  });
+
+  // 2. Checkbox "Seleccionar todo"
+  const visibleIds = getVisiblePropIds();
+  const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedIds.has(id));
+  const selectAllEl = g('props-select-all');
+  const selectAllLabel = g('props-select-all-label');
+  if (selectAllEl) {
+    selectAllEl.classList.toggle('is-active', allSelected);
+    if (selectAllLabel) selectAllLabel.textContent = allSelected ? 'Deseleccionar todo' : 'Seleccionar todo';
+  }
+
+  // 3. Barra flotante
+  const bar = g('bulk-bar');
+  const count = g('bulk-bar-count');
+  if (selectedIds.size > 0) {
+    count.textContent = selectedIds.size + (selectedIds.size === 1 ? ' seleccionado' : ' seleccionados');
+    bar.classList.add('is-visible');
+  } else {
+    bar.classList.remove('is-visible');
+  }
+}
+
+// Modal de confirmación
+function confirmarBorrarSeleccionados() {
+  if (selectedIds.size === 0) return;
+  const n = selectedIds.size;
+  g('confirm-del-title').textContent = `¿Eliminar ${n} ${n === 1 ? 'inmueble' : 'inmuebles'}?`;
+  g('confirm-del-msg').textContent = 'Esta acción no se puede deshacer. Las fotos también se eliminarán.';
+  g('confirm-del-btn').textContent = `Eliminar ${n}`;
+  g('confirm-del-overlay').classList.add('is-open');
+}
+
+function cerrarConfirmDel() {
+  g('confirm-del-overlay').classList.remove('is-open');
+}
+
+// Borrado masivo en una sola petición a Supabase + limpia fotos del Storage
+async function borrarSeleccionados() {
+  const ids = Array.from(selectedIds);
+  if (ids.length === 0) return;
+
+  const btn = g('confirm-del-btn');
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Eliminando…';
+
+  try {
+    // Paso 1: traer las propiedades para conocer las URLs de fotos a borrar del Storage
+    const propsABorrar = allProps.filter(p => selectedIds.has(p.id));
+    const fotoUrls = propsABorrar.flatMap(p => p.fotos || []);
+
+    // Paso 2: borrar todas las filas en UNA sola query (PostgREST permite `id=in.(...)`)
+    const idsCsv = ids.map(encodeURIComponent).join(',');
+    await sbFetch(`propiedades?id=in.(${idsCsv})`, 'DELETE');
+
+    // Paso 3: borrar fotos del Storage (silencioso, no bloquea si falla)
+    if (fotoUrls.length) {
+      borrarFotosDelStorage(fotoUrls).catch(e => console.warn('Fotos no borradas del Storage:', e));
+    }
+
+    // Limpieza UI
+    selectedIds.clear();
+    cerrarConfirmDel();
+    await loadProps();
+
+    // Toast de confirmación
+    mostrarToast(`${ids.length} ${ids.length === 1 ? 'inmueble eliminado' : 'inmuebles eliminados'}`);
+  } catch (err) {
+    alert('Error al eliminar: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }
+}
+
+// Borra los objetos de Storage extrayendo el path de cada URL pública
+async function borrarFotosDelStorage(urls) {
+  const token = getCurrentToken();
+  if (!token) return;
+  const prefix = `${SB_URL}/storage/v1/object/public/fotos-propiedades/`;
+  const objects = urls
+    .filter(u => u && u.startsWith(prefix))
+    .map(u => u.substring(prefix.length));
+  if (!objects.length) return;
+  await fetch(`${SB_URL}/storage/v1/object/fotos-propiedades`, {
+    method: 'DELETE',
+    headers: {
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ prefixes: objects })
+  });
+}
+
+function mostrarToast(text) {
+  const toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a2035;color:white;padding:11px 20px;border-radius:22px;font-size:13px;z-index:99999;display:flex;align-items:center;gap:8px;box-shadow:0 8px 28px rgba(0,0,0,.28);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;';
+  toast.innerHTML = '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> ' + text;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.style.opacity = '0', 2800);
+  setTimeout(() => toast.remove(), 3300);
+}
+
+// Tecla Escape: cancelar selección
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (g('confirm-del-overlay')?.classList.contains('is-open')) {
+      cerrarConfirmDel();
+    } else if (selectedIds.size > 0) {
+      deseleccionarTodo();
+    }
+  }
+});
+
 // ── Mis Inmuebles → Ficha Manual ─────────────────────────
 // Guarda la propiedad en sessionStorage y redirige a ficha-manual
 // donde se va a precargar automáticamente.
@@ -961,8 +1260,19 @@ function crearFichaDesde(id) {
 }
 
 async function deleteProp(id) {
-  if (!confirm('¿Eliminar este inmueble?')) return;
-  try { await sbFetch(`propiedades?id=eq.${id}`, 'DELETE'); await loadProps(); }
+  if (!confirm('¿Eliminar este inmueble? Las fotos también se eliminarán.')) return;
+  try {
+    // Conocer las URLs antes de borrar para limpiar el Storage
+    const p = allProps.find(x => x.id === id);
+    const fotoUrls = p?.fotos || [];
+
+    await sbFetch(`propiedades?id=eq.${id}`, 'DELETE');
+
+    if (fotoUrls.length) {
+      borrarFotosDelStorage(fotoUrls).catch(e => console.warn('Fotos no borradas:', e));
+    }
+    await loadProps();
+  }
   catch(e) { alert('Error: ' + e.message); }
 }
 
@@ -1146,6 +1456,29 @@ else { window.addEventListener('brokr-shell-ready', loadProps, { once: true }); 
     <div class="eb-import-summary" id="eb-import-summary" style="display:none"></div>
     <div class="eb-import-errs" id="eb-import-errs" style="display:none"></div>
     <button class="eb-import-btn" id="eb-import-btn" onclick="cerrarImportEB()" style="display:none">Entendido</button>
+  </div>
+</div>
+
+<!-- ── Barra flotante de selección múltiple ─────────────────── -->
+<div class="bulk-bar" id="bulk-bar">
+  <span class="bulk-bar__count" id="bulk-bar-count">0 seleccionados</span>
+  <span class="bulk-bar__sep"></span>
+  <button class="bulk-bar__btn bulk-bar__btn--danger" onclick="confirmarBorrarSeleccionados()">
+    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397"/></svg>
+    Eliminar
+  </button>
+  <button class="bulk-bar__btn bulk-bar__btn--ghost" onclick="deseleccionarTodo()">Cancelar</button>
+</div>
+
+<!-- ── Modal de confirmación de borrado masivo ──────────────── -->
+<div class="confirm-del-overlay" id="confirm-del-overlay">
+  <div class="confirm-del-modal">
+    <h3 id="confirm-del-title">¿Eliminar inmuebles?</h3>
+    <p id="confirm-del-msg">Esta acción no se puede deshacer.</p>
+    <div class="actions">
+      <button class="btn-cancel" onclick="cerrarConfirmDel()">Cancelar</button>
+      <button class="btn-confirm" id="confirm-del-btn" onclick="borrarSeleccionados()">Eliminar</button>
+    </div>
   </div>
 </div>
 

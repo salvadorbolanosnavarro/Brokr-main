@@ -698,11 +698,19 @@ def _eb_to_brokr(prop_full: dict, user_id: str) -> dict:
         precio = float(amount) if amount else None
         moneda = (op.get("currency") or "MXN").upper()
 
-    # Ubicación
-    location = prop_full.get("location", "") or ""
-    location_parts = [p.strip() for p in location.split(",")] if location else []
-    colonia = location_parts[0] if len(location_parts) > 0 else None
-    ciudad  = location_parts[1] if len(location_parts) > 1 else "Morelia"
+    # Ubicación — EasyBroker la manda como string ("Colonia, Ciudad")
+    # en API vieja, o como dict ({"name":..., "city":...}) en API nueva.
+    # Soportamos ambos formatos defensivamente.
+    location_raw = prop_full.get("location", "")
+    colonia = None
+    ciudad = "Morelia"
+    if isinstance(location_raw, dict):
+        colonia = location_raw.get("name") or location_raw.get("neighborhood") or None
+        ciudad  = location_raw.get("city") or location_raw.get("municipality") or "Morelia"
+    elif isinstance(location_raw, str) and location_raw:
+        location_parts = [p.strip() for p in location_raw.split(",")]
+        colonia = location_parts[0] if location_parts else None
+        ciudad  = location_parts[1] if len(location_parts) > 1 else "Morelia"
 
     # Fotos (URL completa de cada imagen)
     property_images = prop_full.get("property_images", []) or []
@@ -780,15 +788,17 @@ async def easybroker_import_all(request: Request):
     except Exception as e:
         print(f"[import-all] Error leyendo existentes: {e}")
 
-    # Paso 2: paginar todas las propiedades de EasyBroker
+    # Paso 2: paginar todas las propiedades de EasyBroker (solo PUBLICADAS)
+    # statuses=published filtra las activas/publicadas en portales,
+    # excluyendo borradores, vendidas, rentadas y archivadas.
     pagina = 1
     todas_props_resumen = []  # [{public_id, title}, ...]
     async with httpx.AsyncClient(timeout=20) as client:
-        while pagina <= 100:  # límite duro de 5000 propiedades (poco probable, pero seguro)
+        while pagina <= 200:  # límite duro de 10,000 propiedades (suficiente para cualquier agencia)
             r = await client.get(
                 f"{EB_BASE}/properties",
                 headers=eb_headers(user_key),
-                params={"limit": 50, "page": pagina}
+                params={"limit": 50, "page": pagina, "statuses[]": "published"}
             )
             if r.status_code == 401:
                 raise HTTPException(status_code=401, detail="Tu API key de EasyBroker fue rechazada. Reconéctala en Perfil.")
