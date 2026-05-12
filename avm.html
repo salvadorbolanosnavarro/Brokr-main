@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <title>Broquer — AVM</title>
-  <link rel="icon" type="image/png" href="isotipo.png">
-  <link rel="apple-touch-icon" href="isotipo.png">
+  <link rel="icon" type="image/png" href="isotipo-broquer.png">
+  <link rel="apple-touch-icon" href="isotipo-broquer.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -13,26 +13,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
   <style>
-    :root {
-      --navy:       #0f1829;
-      --navy-mid:   #162035;
-      --navy-light: #1e2d47;
-      --teal:       #0f1829;
-      --teal-dark:  #162035;
-      --teal-glow:  rgba(15,24,41,0.08);
-      --white:      #ffffff;
-      --gray-100:   #f5f6f8;
-      --gray-200:   #e8eaee;
-      --gray-400:   #9aa0ad;
-      --gray-600:   #5a6070;
-      --text:       #0f0f0f;
-      --screen-bg:  #f0f2f7;
-      --amber:      #f59e0b;
-      --emerald:    #10b981;
-      --violet:     #8b5cf6;
-      --rose:       #f43f5e;
-      --safe-top:   env(safe-area-inset-top, 0px);
-    }
     @supports (-webkit-touch-callout: none) {
       @media (display-mode: standalone) {
         :root { --safe-top: max(env(safe-area-inset-top, 0px), 44px); }
@@ -342,13 +322,95 @@
       .comp-tabla th { background: #0f1829 !important; color: white !important; }
     }
   </style>
+
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style id="__brokr_skin_override">
+:root {
+  --navy: #1F1B17 !important;
+  --navy2: #2D2823 !important;
+  --navy3: #3A332C !important;
+  --teal: #1F1B17 !important;
+  --teal2: #2D2823 !important;
+  --teal-dark: #1F1B17 !important;
+  --silver: #F4F1E9 !important;
+  --silver2: #E8E2D2 !important;
+  --bdr: #E8E2D2 !important;
+  --txt: #1F1B17 !important;
+  --mut: #6B6B66 !important;
+  --wh: #FBF9F1 !important;
+  --gray: #F4F1E9 !important;
+  --gray2: #E8E2D2 !important;
+  --gray-100: #F4F1E9 !important;
+  --gray-600: #6B6B66 !important;
+  --screen-bg: #FBF9F1 !important;
+  --text: #1F1B17 !important;
+  --tealp: #EFEDE5 !important;
+}
+html, body {
+  background: #FBF9F1 !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif !important;
+  color: #1F1B17 !important;
+  letter-spacing: -0.005em !important;
+}
+* { font-family: inherit !important; }
+input, select, textarea, button {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif !important;
+}
+/* Replace Playfair display with system serif fallback in headings */
+[class*="ttl"], [class*="title"], h1, h2, h3,
+.cover-precio, .cover-desc-ttl, .gallery-header h2, .chars-header h2,
+.pg-ttl, .sheet-title, .header-title, .det-name {
+  font-family: 'New York', 'Iowan Old Style', 'Cambria', Georgia, serif !important;
+  letter-spacing: -0.025em !important;
+  font-weight: 600 !important;
+}
+/* Buttons get the new pill treatment */
+.gen-btn, .btn-primary, .ui-btn, .btn-new-prop {
+  background: #1F1B17 !important;
+  border-radius: 999px !important;
+  letter-spacing: -0.005em !important;
+  font-weight: 600 !important;
+}
+/* Inputs warmed */
+input, select, textarea {
+  background: #F4F1E9 !important;
+  border: 1px solid #E8E2D2 !important;
+  border-radius: 12px !important;
+  color: #1F1B17 !important;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: #1F1B17 !important;
+  background: #FBF9F1 !important;
+  outline: none !important;
+}
+/* Cards */
+.card, .stat-card, .prop-card, .pcard {
+  background: #F4F1E9 !important;
+  border: 1px solid #E8E2D2 !important;
+  border-radius: 16px !important;
+}
+</style>
+
 </head>
-<body>
+<body data-app="avm">
+
+<!-- shell-replaced-sidebar -->
+<div style="display:none" hidden>
+  <aside class="app-sidebar">
+    <div class="app-sidebar__brand">Broquer<span class="dot">.</span></div>
+    <a class="app-nav-link" href="index.html">Inicio</a>
+    <a class="app-nav-link" href="propiedades.html">Inmuebles</a>
+    <a class="app-nav-link" href="contactos.html">Contactos</a>
+    <a class="app-nav-link" href="contratos.html">Contratos</a>
+    <a class="app-nav-link is-active" href="avm.html">AVM</a>
+  </aside>
+</div>
+
   <div id="root"></div>
   <script type="text/babel">
     const { useState, useMemo, useCallback, useRef, useEffect } = React;
 
-    const API = "https://brokrebapi-production.up.railway.app";
+    const API = "https://api.navarroai.com.mx";
 
     const FC          = { excelente: 1.0, bueno: 0.919, regular: 0.819, malo: 0.668 };
     const CONSERV_OPTS = { excelente: "Excelente / Como nuevo", bueno: "Bueno", regular: "Regular / Necesita detalles", malo: "Malo / Necesita remodelación" };
@@ -533,13 +595,10 @@
     function AvmIA() {
       const [form, setForm] = React.useState({
         tipo: "terreno", operacion: "venta",
-        colonia: "", ciudad: "Morelia", estado: "Michoacán",
+        colonia: "", ciudad: "Morelia",
         m2_terreno: "", m2_construccion: "",
         recamaras: "", banos: "", estacionamientos: "",
-        condicion_terreno: "plano",
-        edad: "", conservacion: "bueno", calidad: "medio",
-        sistema_constructivo: "",
-        comentarios: ""
+        condicion_terreno: "plano", comentarios: ""
       });
       const [estado, setEstado] = React.useState("idle"); // idle | loading | result | error
       const [resultado, setResultado] = React.useState(null);
@@ -559,17 +618,12 @@
           if (data.tipo_inmueble) setForm(p => ({ ...p, tipo: data.tipo_inmueble }));
           if (data.colonia)       setForm(p => ({ ...p, colonia: data.colonia }));
           if (data.ciudad)        setForm(p => ({ ...p, ciudad: data.ciudad }));
-          if (data.estado)        setForm(p => ({ ...p, estado: data.estado }));
           if (data.m2_terreno)    setForm(p => ({ ...p, m2_terreno: String(data.m2_terreno) }));
           if (data.m2_construccion) setForm(p => ({ ...p, m2_construccion: String(data.m2_construccion) }));
           if (data.recamaras)     setForm(p => ({ ...p, recamaras: String(data.recamaras) }));
           if (data.banos)         setForm(p => ({ ...p, banos: String(data.banos) }));
           if (data.condicion_terreno) setForm(p => ({ ...p, condicion_terreno: data.condicion_terreno }));
           if (data.operacion)     setForm(p => ({ ...p, operacion: data.operacion }));
-          if (data.edad)          setForm(p => ({ ...p, edad: String(data.edad) }));
-          if (data.conservacion)  setForm(p => ({ ...p, conservacion: data.conservacion }));
-          if (data.calidad)       setForm(p => ({ ...p, calidad: data.calidad }));
-          if (data.sistema_constructivo) setForm(p => ({ ...p, sistema_constructivo: data.sistema_constructivo }));
         };
         const onMsg = (e) => {
           if (e.data && e.data.tipo === "opinion_valor_web") {
@@ -603,11 +657,6 @@
             estacionamientos: parseInt(form.estacionamientos) || 0,
             condicion_terreno: form.condicion_terreno || "",
             ciudad: form.ciudad || "Morelia",
-            estado: form.estado || "Michoacán",
-            edad: parseInt(form.edad) || 0,
-            conservacion: form.conservacion || "bueno",
-            calidad: form.calidad || "medio",
-            sistema_constructivo: form.sistema_constructivo || "",
             comentarios: form.comentarios || ""
           };
           const r = await fetch(`${API}/api/avm-websearch`, {
@@ -707,11 +756,6 @@
                   onChange={e => u("ciudad", e.target.value)}
                   placeholder="Morelia" />
               </F>
-              <F label="Estado">
-                <input type="text" value={form.estado}
-                  onChange={e => u("estado", e.target.value)}
-                  placeholder="Michoacán" />
-              </F>
             </div>
           </div>
 
@@ -747,45 +791,6 @@
                 <F label="Recámaras"><NI value={form.recamaras} onChange={v => u("recamaras",v)} placeholder="3" /></F>
                 <F label="Baños"><NI value={form.banos} onChange={v => u("banos",v)} placeholder="2" /></F>
                 <F label="Estac."><NI value={form.estacionamientos} onChange={v => u("estacionamientos",v)} placeholder="2" /></F>
-              </div>
-            </div>
-          )}
-
-          {esConstruccion && (
-            <div className="avm-card">
-              <div className="card-label">Estado y acabados</div>
-              <div className="field-row">
-                <F label="Edad (años)"><NI value={form.edad} onChange={v => u("edad",v)} placeholder="10" /></F>
-                <F label="Conservación">
-                  <select value={form.conservacion} onChange={e => u("conservacion", e.target.value)}>
-                    <option value="excelente">Excelente / Como nuevo</option>
-                    <option value="bueno">Bueno</option>
-                    <option value="regular">Regular / Necesita detalles</option>
-                    <option value="malo">Malo / Requiere remodelación</option>
-                  </select>
-                </F>
-              </div>
-              <div className="field-row">
-                <F label="Calidad acabados">
-                  <select value={form.calidad} onChange={e => u("calidad", e.target.value)}>
-                    <option value="lujo">Lujo / Residencial plus</option>
-                    <option value="bueno">Bueno / Residencial</option>
-                    <option value="medio">Medio / Estándar</option>
-                    <option value="economico">Económico / Interés social</option>
-                  </select>
-                </F>
-                <F label="Sistema constructivo">
-                  <select value={form.sistema_constructivo} onChange={e => u("sistema_constructivo", e.target.value)}>
-                    <option value="">Auto-detectar</option>
-                    <option value="concreto">Concreto reforzado</option>
-                    <option value="mamposteria">Mampostería / Block</option>
-                    <option value="mixto">Mixto</option>
-                    <option value="ligero">Estructura ligera</option>
-                    <option value="madera">Madera</option>
-                    <option value="adobe">Adobe</option>
-                    <option value="prefabricado">Prefabricado</option>
-                  </select>
-                </F>
               </div>
             </div>
           )}
@@ -891,86 +896,7 @@
                         Rango: {fmtMXN2(resultado.valor_minimo)} — {fmtMXN2(resultado.valor_maximo)}
                         {resultado.valor_por_m2 > 0 && ` · ${fmtMXN2(resultado.valor_por_m2)}/m²`}
                       </div>
-                      {resultado.confianza_detalle && (
-                        <div style={{ marginTop: 10, fontSize: 10, color: "rgba(255,255,255,0.55)", letterSpacing: "0.3px" }}>
-                          Confianza {resultado.confianza_detalle.nivel?.toUpperCase()} ({resultado.confianza_detalle.score}/100)
-                          {" · "}{resultado.confianza_detalle.n_comparables_filtrados} comps válidos
-                          {" · CV "}{((resultado.confianza_detalle.coef_variacion || 0) * 100).toFixed(1)}%
-                          {" · "}{resultado.confianza_detalle.diversidad_fuentes} fuente(s)
-                        </div>
-                      )}
                     </div>
-
-                    {resultado.conciliacion && resultado.conciliacion.pesos && (resultado.conciliacion.pesos.fisico > 0 || resultado.conciliacion.pesos.ingresos > 0) && (
-                      <div className="opinion-section">
-                        <div className="opinion-section-title">Conciliación de enfoques</div>
-                        <div className="opinion-grid">
-                          <div>
-                            <div className="opinion-field-label">Enfoque comparativo ({Math.round((resultado.conciliacion.pesos.comparativo || 0) * 100)}%)</div>
-                            <div className="opinion-field-value">{fmtMXN2(resultado.enfoque_comparativo?.valor_mercado)}</div>
-                          </div>
-                          {resultado.enfoque_fisico && resultado.conciliacion.pesos.fisico > 0 && (
-                            <div>
-                              <div className="opinion-field-label">Enfoque físico ({Math.round(resultado.conciliacion.pesos.fisico * 100)}%)</div>
-                              <div className="opinion-field-value">{fmtMXN2(resultado.enfoque_fisico.valor_fisico_total)}</div>
-                            </div>
-                          )}
-                          {resultado.enfoque_ingresos && resultado.conciliacion.pesos.ingresos > 0 && (
-                            <div>
-                              <div className="opinion-field-label">Enfoque ingresos ({Math.round(resultado.conciliacion.pesos.ingresos * 100)}%)</div>
-                              <div className="opinion-field-value">{fmtMXN2(resultado.enfoque_ingresos.valor_capitalizacion)}</div>
-                            </div>
-                          )}
-                          {resultado.enfoque_fisico && (
-                            <div>
-                              <div className="opinion-field-label">Demérito Ross-Heidecke</div>
-                              <div className="opinion-field-value">{(resultado.enfoque_fisico.fec_ross_heidecke * 100).toFixed(1)}% · vida útil {resultado.enfoque_fisico.vida_util} años</div>
-                            </div>
-                          )}
-                          {resultado.enfoque_ingresos && (
-                            <div>
-                              <div className="opinion-field-label">Renta mensual estimada</div>
-                              <div className="opinion-field-value">{fmtMXN2(resultado.enfoque_ingresos.renta_mensual_estimada)} · cap {(resultado.enfoque_ingresos.cap_rate * 100).toFixed(2)}%</div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {resultado.ajustes_macro && (
-                      <div className="opinion-section">
-                        <div className="opinion-section-title">Parámetros regionales aplicados</div>
-                        <div className="opinion-grid">
-                          <div>
-                            <div className="opinion-field-label">VRN regional</div>
-                            <div className="opinion-field-value">{fmtMXN2(resultado.ajustes_macro.vrn_regional_unitario)}/m²</div>
-                          </div>
-                          <div>
-                            <div className="opinion-field-label">Apreciación anual</div>
-                            <div className="opinion-field-value">{(resultado.ajustes_macro.apreciacion_anual * 100).toFixed(1)}%</div>
-                          </div>
-                          <div>
-                            <div className="opinion-field-label">Factor listing → cierre</div>
-                            <div className="opinion-field-value">{resultado.ajustes_macro.listing_to_sale_factor?.toFixed(2)}× ({((1 - resultado.ajustes_macro.listing_to_sale_factor) * 100).toFixed(1)}% descuento)</div>
-                          </div>
-                          <div>
-                            <div className="opinion-field-label">Plusvalía zona</div>
-                            <div className="opinion-field-value">{resultado.ajustes_macro.plusvalia_zona?.score?.toFixed(2)}× · {resultado.ajustes_macro.plusvalia_zona?.etiqueta}</div>
-                          </div>
-                          {resultado.ajustes_macro.cap_rate_aplicado > 0 && (
-                            <div>
-                              <div className="opinion-field-label">Cap rate aplicado</div>
-                              <div className="opinion-field-value">{(resultado.ajustes_macro.cap_rate_aplicado * 100).toFixed(2)}%</div>
-                            </div>
-                          )}
-                        </div>
-                        {resultado.precio_m2_ajustado_calculo && (
-                          <div style={{ marginTop: 10, padding: "10px 12px", background: "var(--gray-100)", borderRadius: 8, fontSize: 11, color: "var(--gray-600)", fontFamily: "monospace" }}>
-                            {resultado.precio_m2_ajustado_calculo}
-                          </div>
-                        )}
-                      </div>
-                    )}
 
                     <div className="opinion-section">
                       <div className="opinion-section-title">
@@ -982,55 +908,22 @@
 
                     {(resultado.comparables || []).length > 0 && (
                       <div className="opinion-section">
-                        <div className="opinion-section-title">Comparables incluidos en el cálculo ({resultado.comparables.length})</div>
+                        <div className="opinion-section-title">Comparables encontrados en el mercado ({resultado.comparables.length})</div>
                         <table className="comp-tabla">
-                          <thead><tr><th>#</th><th>Descripción</th><th>Precio</th><th>Sup.</th><th>$/m² ajustado</th><th>Peso</th><th>Fuente</th></tr></thead>
+                          <thead><tr><th>#</th><th>Descripción</th><th>Precio</th><th>Superficie</th><th>$/m²</th><th>Fuente</th></tr></thead>
                           <tbody>
                             {resultado.comparables.map((c, i) => (
                               <tr key={i}>
                                 <td>{i + 1}</td>
-                                <td>
-                                  {c.descripcion}
-                                  {c.meses_publicado > 0 && <div style={{ fontSize: 9, color: "var(--gray-400)" }}>~{c.meses_publicado} meses publicado</div>}
-                                  {c.misma_colonia === true && <div style={{ fontSize: 9, color: "var(--emerald)" }}>● misma colonia</div>}
-                                </td>
+                                <td>{c.descripcion}</td>
                                 <td style={{ fontWeight: 700 }}>{fmtMXN2(c.precio)}</td>
                                 <td>{c.superficie_m2} m²</td>
                                 <td style={{ color: "var(--teal-dark)", fontWeight: 700 }}>{fmtMXN2(c.precio_m2)}</td>
-                                <td style={{ fontWeight: 600 }}>{c.peso_similitud ? c.peso_similitud.toFixed(2) : "—"}</td>
                                 <td style={{ color: "var(--gray-400)", fontStyle: "italic" }}>{c.fuente}</td>
                               </tr>
                             ))}
                           </tbody>
                         </table>
-                        <div style={{ fontSize: 10, color: "var(--gray-400)", marginTop: 6, lineHeight: 1.4 }}>
-                          El $/m² mostrado ya incluye ajuste temporal por apreciación y factor listing→cierre regional. El peso refleja similitud al sujeto (superficie, edad, recámaras, misma colonia).
-                        </div>
-                      </div>
-                    )}
-
-                    {(resultado.comparables_excluidos || []).length > 0 && (
-                      <div className="opinion-section">
-                        <div className="opinion-section-title">Comparables excluidos por outlier ({resultado.comparables_excluidos.length})</div>
-                        <table className="comp-tabla">
-                          <thead><tr><th>#</th><th>Descripción</th><th>Precio</th><th>$/m²</th><th>Razón</th></tr></thead>
-                          <tbody>
-                            {resultado.comparables_excluidos.map((c, i) => (
-                              <tr key={i} style={{ opacity: 0.7 }}>
-                                <td>{i + 1}</td>
-                                <td>{c.descripcion}</td>
-                                <td>{fmtMXN2(c.precio)}</td>
-                                <td>{fmtMXN2(c.precio_m2)}</td>
-                                <td style={{ fontSize: 10, color: "var(--rose)" }}>{c.razon_outlier}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                        {resultado.iqr_filtrado && resultado.iqr_filtrado.q1 && (
-                          <div style={{ fontSize: 10, color: "var(--gray-400)", marginTop: 6 }}>
-                            Filtrado IQR 1.5: rango aceptado {fmtMXN2(resultado.iqr_filtrado.q1 - 1.5 * resultado.iqr_filtrado.iqr)} – {fmtMXN2(resultado.iqr_filtrado.q3 + 1.5 * resultado.iqr_filtrado.iqr)}/m².
-                          </div>
-                        )}
                       </div>
                     )}
 
@@ -1255,5 +1148,6 @@
     const root = ReactDOM.createRoot(document.getElementById("root"));
     root.render(<AVM />);
   </script>
+  <script src="app-shell.js" defer></script>
 </body>
 </html>

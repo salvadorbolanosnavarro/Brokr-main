@@ -832,7 +832,7 @@ async function saveProp(e) {
 
 // ── Facebook: publicar propiedad automáticamente ──────────────────────────
 async function publicarEnFacebook(prop) {
-  const API_BASE = window.API_BASE || 'https://brokrebapi-production.up.railway.app';
+  const API_BASE = window.API_BASE || 'https://api.navarroai.com.mx';
   const token = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
   if (!token) return;
 

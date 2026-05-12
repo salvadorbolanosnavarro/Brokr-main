@@ -480,7 +480,7 @@
 <div id="ficha"></div>
 
 <script>
-const API = 'https://brokrebapi-production.up.railway.app';
+const API = 'https://api.navarroai.com.mx';
 
 function g(id){ return document.getElementById(id); }
 
@@ -523,7 +523,7 @@ const SPEC_ICONS = {
 async function imgToBase64(url) {
   if(!url) return null;
   try {
-    const proxyUrl = `https://brokrebapi-production.up.railway.app/img?url=${encodeURIComponent(url)}`;
+    const proxyUrl = `https://api.navarroai.com.mx/img?url=${encodeURIComponent(url)}`;
     const res = await fetch(proxyUrl);
     if(!res.ok) return url; // fallback to original URL
     const blob = await res.blob();
