@@ -73,6 +73,10 @@ APIFY_API_KEY = os.environ.get("APIFY_API_KEY", "")
 GOOGLE_PLACES_KEY = os.environ.get("GOOGLE_PLACES_KEY", "")
 SUPABASE_URL      = os.environ.get("SUPABASE_URL", "")
 SUPABASE_KEY      = os.environ.get("SUPABASE_ANON_KEY", "")
+# service_role key — bypasea RLS. Solo para operaciones del backend en nombre
+# del usuario, DESPUÉS de validar su JWT con get_user_id_from_token().
+# NUNCA expongas esta variable al frontend.
+SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "") or SUPABASE_KEY
 
 # In-memory PDF store: token → (bytes, filename). Max 50 entradas.
 _pdf_store: dict = {}
@@ -146,7 +150,7 @@ async def get_eb_key_for_user(user_id: str) -> str:
         async with httpx.AsyncClient(timeout=8) as client:
             r = await client.get(
                 f"{SUPABASE_URL}/rest/v1/user_integrations",
-                headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}",
+                headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
                          "Content-Type": "application/json"},
                 params={"user_id": f"eq.{user_id}", "provider": "eq.easybroker",
                         "select": "api_key", "limit": "1"}
@@ -158,28 +162,6 @@ async def get_eb_key_for_user(user_id: str) -> str:
     except Exception:
         pass
     return None
-
-# ════════════════════════════════════════════════════════════════
-# DIAGNÓSTICO TEMPORAL — probar una EB key contra EasyBroker
-# Devuelve exactamente lo que EasyBroker responde. Quitar post-lanzamiento.
-# ════════════════════════════════════════════════════════════════
-@app.post("/debug/eb-test")
-async def debug_eb_test(req: EbKeyRequest):
-    raw_key = req.key
-    stripped_key = req.key.strip()
-    async with httpx.AsyncClient(timeout=15) as client:
-        r = await client.get(
-            f"{EB_BASE}/properties?limit=1",
-            headers={"X-Authorization": stripped_key, "accept": "application/json"}
-        )
-        return {
-            "key_length_raw": len(raw_key),
-            "key_length_stripped": len(stripped_key),
-            "key_first_4": stripped_key[:4] if len(stripped_key) >= 4 else "(corta)",
-            "key_last_4": stripped_key[-4:] if len(stripped_key) >= 4 else "(corta)",
-            "eb_status": r.status_code,
-            "eb_response": r.text[:500]
-        }
 
 @app.post("/config/eb-key")
 async def set_eb_key(req: EbKeyRequest, request: Request):
@@ -216,7 +198,7 @@ async def set_eb_key(req: EbKeyRequest, request: Request):
     async with httpx.AsyncClient(timeout=10) as client:
         r = await client.post(
             f"{SUPABASE_URL}/rest/v1/user_integrations",
-            headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}",
+            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
                      "Content-Type": "application/json",
                      "Prefer": "resolution=merge-duplicates,return=minimal"},
             json=payload
@@ -242,7 +224,7 @@ async def delete_eb_key(request: Request):
     async with httpx.AsyncClient(timeout=10) as client:
         await client.delete(
             f"{SUPABASE_URL}/rest/v1/user_integrations",
-            headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}",
+            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
                      "Content-Type": "application/json"},
             params={"user_id": f"eq.{user_id}", "provider": "eq.easybroker"}
         )
@@ -3079,7 +3061,7 @@ async def facebook_save_page(req: FbSavePageRequest, request: Request):
     async with httpx.AsyncClient(timeout=10) as client:
         r = await client.post(
             f"{SUPABASE_URL}/rest/v1/user_integrations",
-            headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}",
+            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
                      "Content-Type": "application/json",
                      "Prefer": "resolution=merge-duplicates,return=minimal"},
             json=payload
@@ -3096,7 +3078,7 @@ async def facebook_get_connection(request: Request):
         async with httpx.AsyncClient(timeout=8) as client:
             r = await client.get(
                 f"{SUPABASE_URL}/rest/v1/user_integrations",
-                headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}"},
+                headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
                 params={"user_id": f"eq.{user_id}", "provider": "eq.facebook",
                         "select": "api_key,meta", "limit": "1"}
             )
