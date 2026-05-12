@@ -1305,7 +1305,7 @@ function cerrarConfirmDel() {
   g('confirm-del-overlay').classList.remove('is-open');
 }
 
-// Borrado masivo en una sola petición a Supabase + limpia fotos del Storage
+// Borrado masivo en lotes a Supabase + limpia fotos del Storage
 async function borrarSeleccionados() {
   const ids = Array.from(selectedIds);
   if (ids.length === 0) return;
@@ -1320,9 +1320,18 @@ async function borrarSeleccionados() {
     const propsABorrar = allProps.filter(p => selectedIds.has(p.id));
     const fotoUrls = propsABorrar.flatMap(p => p.fotos || []);
 
-    // Paso 2: borrar todas las filas en UNA sola query (PostgREST permite `id=in.(...)`)
-    const idsCsv = ids.map(encodeURIComponent).join(',');
-    await sbFetch(`propiedades?id=in.(${idsCsv})`, 'DELETE');
+    // Paso 2: borrar en LOTES de 100 ids para no rebasar el límite de URL.
+    // PostgREST acepta id=in.("uuid1","uuid2",...) — los UUIDs van entrecomillados
+    // para que no choquen con caracteres reservados.
+    const BATCH_DEL = 100;
+    let borradas = 0;
+    for (let i = 0; i < ids.length; i += BATCH_DEL) {
+      btn.textContent = `Eliminando… ${Math.min(i + BATCH_DEL, ids.length)} / ${ids.length}`;
+      const chunk = ids.slice(i, i + BATCH_DEL);
+      const idsCsv = chunk.map(id => `"${encodeURIComponent(id)}"`).join(',');
+      await sbFetch(`propiedades?id=in.(${idsCsv})`, 'DELETE');
+      borradas += chunk.length;
+    }
 
     // Paso 3: borrar fotos del Storage (silencioso, no bloquea si falla)
     if (fotoUrls.length) {
@@ -1335,7 +1344,7 @@ async function borrarSeleccionados() {
     await loadProps();
 
     // Toast de confirmación
-    mostrarToast(`${ids.length} ${ids.length === 1 ? 'inmueble eliminado' : 'inmuebles eliminados'}`);
+    mostrarToast(`${borradas} ${borradas === 1 ? 'inmueble eliminado' : 'inmuebles eliminados'}`);
   } catch (err) {
     alert('Error al eliminar: ' + err.message);
   } finally {
