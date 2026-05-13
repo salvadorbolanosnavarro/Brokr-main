@@ -171,7 +171,7 @@
             <div id="tab-config">
               <div class="form-grid">
                 <div class="field span-2"><label>Endpoint backend estimación</label><input id="endpointEstimacion" value="/api/estimar-valor" /></div>
-                <div class="field span-2"><label>Endpoint backend búsqueda web</label><input id="endpointBusqueda" value="/api/buscar-comparables" /></div>
+                <div class="field span-2"><label>Endpoint backend búsqueda web</label><input id="endpointBusqueda" value="/api/avm-websearch" /></div>
                 <div class="field"><label>Modelo análisis final</label><input id="modeloFinal" value="claude-sonnet-4-5" /></div>
                 <div class="field"><label>Modelo extracción</label><input id="modeloExtraccion" value="claude-haiku-4-5" /></div>
                 <div class="field"><label>Máx. comparables útiles</label><input id="maxComparables" type="number" value="10" min="3" max="20" /></div>
@@ -502,17 +502,59 @@ function buildQueries(){
   return queries;
 }
 
+function tipoToApi(t){
+  const k=norm(t);
+  if(k.includes('departamento')) return 'departamento';
+  if(k.includes('terreno')) return 'terreno';
+  if(k.includes('local')) return 'local';
+  if(k.includes('oficina')) return 'oficina';
+  if(k.includes('bodega')) return 'bodega';
+  return 'casa';
+}
+function splitMunicipioEstado(v){
+  const parts=(v||'').split(',').map(x=>x.trim()).filter(Boolean);
+  return { ciudad: parts[0] || 'Morelia', estado: parts.slice(1).join(', ') || 'Michoacán' };
+}
 async function backendSearch(){
   const endpoint=txt('endpointBusqueda');
-  const queries=buildQueries();
-  const btn=$('btnBackendSearch'); const old=btn.innerHTML; btn.innerHTML='<span class="loader"></span> Buscando'; btn.disabled=true;
+  buildQueries();
+  const s=subject();
+  const loc=splitMunicipioEstado(s.municipio);
+  const btn=$('btnBackendSearch'); const old=btn.innerHTML; btn.innerHTML='<span class="loader"></span> Buscando y analizando'; btn.disabled=true;
   try{
-    const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subject:subject(),queries, max:parseInt($('maxComparables').value||'10',10)})});
-    if(!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data=await res.json();
+    const payload={
+      colonia:s.colonia,
+      tipo_inmueble:tipoToApi(s.tipo),
+      operacion:norm(s.operacion)==='renta'?'renta':'venta',
+      m2_terreno:s.terreno||0,
+      m2_construccion:s.construccion||0,
+      recamaras:Math.round(s.recamaras||0),
+      banos:s.banos||0,
+      estacionamientos:Math.round(s.estacionamientos||0),
+      ciudad:loc.ciudad,
+      estado:loc.estado,
+      comentarios:s.observaciones||''
+    };
+    const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
     const incoming=Array.isArray(data.comparables)?data.comparables:[];
-    if(!incoming.length) throw new Error('El backend no devolvió comparables.');
-    comps=[...comps,...incoming.map(normalizeComp)]; renderComps(comps); toast(`${incoming.length} comparables agregados desde backend.`);
+    if(incoming.length){
+      comps=[...comps,...incoming.map(c=>normalizeComp({
+        url:c.url, titulo:c.descripcion||c.fuente||'Comparable web', tipo:s.tipo,
+        precio:c.precio, terreno:payload.tipo_inmueble==='terreno'?c.superficie_m2:0,
+        construccion:payload.tipo_inmueble==='terreno'?0:c.superficie_m2,
+        colonia:s.colonia, municipio:loc.ciudad, descripcion:c.motivo_inclusion_o_descarte||'', fuente:c.fuente
+      }))];
+      renderComps(comps);
+    }
+    if(data.resumen_ejecutivo || data.valor_estimado){
+      $('reportBody').innerHTML = `<h4>Resumen ejecutivo</h4><p>${escapeHtml(data.resumen_ejecutivo||'')}</p>
+      <h4>Valor estimado</h4><p><b>${money(data.valor_estimado)}</b> · Rango: ${money(data.valor_minimo)} a ${money(data.valor_maximo)} · ${money(data.valor_por_m2)}/m²</p>
+      <h4>Confianza</h4><p><b>${escapeHtml(data.nivel_confianza||'')}</b>. ${escapeHtml(data.razon_confianza||'')}</p>
+      <h4>Advertencias</h4><p>${escapeHtml(data.advertencias||'Opinión de valor no sustituye avalúo certificado.')}</p>`;
+    }
+    toast(`${incoming.length} comparables agregados y opinión generada.`);
   }catch(e){ toast(`No se pudo consultar backend: ${e.message}. Usa búsquedas/manual por ahora.`); }
   finally{ btn.innerHTML=old; btn.disabled=false; }
 }
