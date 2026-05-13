@@ -1597,8 +1597,10 @@ Recuerda: responde ÚNICAMENTE con el JSON, sin ningún texto adicional."""
 
 
 # ────────────────────────────────────────────
-# AVM — OPINIÓN DE VALOR CON WEB SEARCH
+# ESTIMACIÓN DE VALOR — ANÁLISIS COMPARATIVO DE MERCADO (MCA / CONOCER)
 # ────────────────────────────────────────────
+# Rutas conservadas como /api/avm-websearch y /avm-pdf para mantener
+# compatibilidad con integraciones existentes (Shaark, app-shell.js).
 
 class AvmWebSearchRequest(BaseModel):
     colonia: str
@@ -1614,151 +1616,217 @@ class AvmWebSearchRequest(BaseModel):
     estado: str = "Michoacán"
     comentarios: str = ""
 
+
 @app.post("/api/avm-websearch")
 async def avm_websearch(req: AvmWebSearchRequest):
-    """Genera opinión de valor buscando comparables reales en internet con web_search tool de Claude."""
+    """Estimación de Valor — análisis comparativo de mercado con metodología CONOCER.
+
+    Claude Sonnet busca 5 comparables vigentes en portales inmobiliarios y los
+    procesa siguiendo los 6 pasos del MCA (Método Comparativo de Mercado) tal y
+    como lo aplica un valuador certificado CONOCER, razonando como profesional
+    inmobiliario para concluir un valor de lista fundamentado.
+    """
     if not ANTHROPIC_API_KEY:
         raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY no configurada")
 
     tipo_labels = {
-        "casa": "Casa habitación", "departamento": "Departamento/Condominio",
-        "terreno": "Terreno", "local": "Local comercial",
-        "oficina": "Oficina", "bodega": "Bodega/Nave industrial",
+        "casa": "Casa habitación",
+        "departamento": "Departamento / Condominio",
+        "terreno": "Terreno",
+        "local": "Local comercial",
+        "oficina": "Oficina",
+        "bodega": "Bodega / Nave industrial",
     }
     tipo_label = tipo_labels.get(req.tipo_inmueble, req.tipo_inmueble)
     es_terreno = req.tipo_inmueble == "terreno"
 
-    # Construir descripción del sujeto
-    partes = [f"INMUEBLE A VALUAR: {tipo_label} en {req.operacion.upper()}"]
+    # Descripción del sujeto
+    partes = [f"INMUEBLE A VALUAR: {tipo_label} — operación: {req.operacion.upper()}"]
     partes.append(f"Ubicación: {req.colonia}, {req.ciudad}, {req.estado}")
     if req.m2_terreno > 0:
         cond = f" ({req.condicion_terreno})" if req.condicion_terreno else ""
         partes.append(f"Superficie de terreno: {req.m2_terreno} m²{cond}")
     if req.m2_construccion > 0:
         partes.append(f"Superficie construida: {req.m2_construccion} m²")
-    if req.recamaras > 0: partes.append(f"Recámaras: {req.recamaras}")
-    if req.banos > 0: partes.append(f"Baños: {req.banos}")
+    if req.recamaras > 0:        partes.append(f"Recámaras: {req.recamaras}")
+    if req.banos > 0:            partes.append(f"Baños: {req.banos}")
     if req.estacionamientos > 0: partes.append(f"Estacionamientos: {req.estacionamientos}")
-    if req.comentarios: partes.append(f"Comentarios: {req.comentarios}")
+    if req.comentarios:          partes.append(f"Observaciones del agente: {req.comentarios}")
     descripcion_sujeto = "\n".join(partes)
 
-    system_prompt = """Eres el mejor perito valuador de bienes raíces de México, con 30 años de experiencia y certificación de la Sociedad Hipotecaria Federal. Tu análisis es utilizado por bancos, notarías y juzgados. La precisión de tu opinión tiene consecuencias financieras reales para el usuario.
+    system_prompt = """Eres un valuador inmobiliario profesional certificado por CONOCER en el Estándar de Competencia EC0110 (Valuación inmobiliaria), con 25 años de experiencia en el mercado mexicano. Tu trabajo es emitir una OPINIÓN DE VALOR DE LISTA fundamentada para uso comercial del agente inmobiliario (no es un avalúo bancario).
 
-PROCESO OBLIGATORIO — SIGUE ESTOS PASOS EN ORDEN, SIN SALTARTE NINGUNO:
+Aplica rigurosamente el MÉTODO COMPARATIVO DE MERCADO (MCA) en sus 6 pasos:
 
-PASO 1 — BÚSQUEDA MÚLTIPLE DE COMPARABLES
-Ejecuta mínimo 4 búsquedas web diferentes con variaciones de query:
-- Query 1: "[tipo] en venta [colonia] [ciudad] precio"
-- Query 2: "terrenos [colonia] [ciudad] lamudi 2025" (o el tipo que aplique)
-- Query 3: "[colonia] [ciudad] vivanuncios precio metro cuadrado"
-- Query 4: "[fraccionamiento o zona] [ciudad] trovit inmuebles24"
-Busca también en portales adyacentes si la zona tiene submercados (ej: "Rio Altozano", "Campo Golf Altozano" si el sujeto está en "Vistas Altozano").
+═══════════════════════════════════════════════════════════
+PASO 1 — INVESTIGACIÓN Y RECOLECCIÓN DE COMPARABLES
+═══════════════════════════════════════════════════════════
+Ejecuta búsquedas web para encontrar EXACTAMENTE 5 comparables vigentes (ofertas activas, no operaciones cerradas) en estos portales mexicanos:
+- Inmuebles24
+- Lamudi
+- Vivanuncios
+- Propiedades.com
+- Mercado Libre Inmuebles
 
-PASO 2 — RECOPILACIÓN DE COMPARABLES REALES
-De los resultados, extrae TODOS los comparables que encuentres con:
-- Precio de oferta publicado (precio real, no estimado)
-- Superficie en m² (construcción y/o terreno según aplique)
-- Fraccionamiento o colonia exacta
-- Portal donde aparece
-Recopila mínimo 5 comparables. Si un comparable no tiene precio explícito, descártalo.
+Reglas estrictas:
+• Comparables del MISMO tipo de inmueble y MISMA operación (venta o renta) que el sujeto.
+• Comparables en la MISMA colonia/fraccionamiento o zonas inmediatamente adyacentes de nivel socioeconómico equivalente.
+• Cada comparable debe tener: precio publicado, superficie en m², ubicación específica y portal de origen.
+• Si encuentras más de 5 candidatos, selecciona los 5 más representativos (mejor ubicación relativa, características más similares al sujeto).
+• Si no encuentras 5 comparables vigentes, reporta los que hayas encontrado y baja el nivel de confianza explicando por qué.
 
-PASO 3 — FILTRADO Y SELECCIÓN
-Selecciona los 4-6 comparables más representativos siguiendo estas reglas:
-- PRIORIDAD 1: Comparables en el MISMO fraccionamiento o colonia exacta del sujeto
-- PRIORIDAD 2: Comparables en fraccionamientos inmediatamente adyacentes de nivel similar
-- EXCLUIR: Lotes en Campo de Golf si el sujeto es residencial sin golf (son submercado diferente, 30-50% más caros)
-- EXCLUIR: Outliers con precio/m² más del 40% por encima o debajo del promedio sin justificación
-- NOTA: Lotes pequeños (<150m²) tienden a tener precio/m² más alto — aplica ajuste descendente si el sujeto es más grande
-
-PASO 4 — CÁLCULO DEL PRECIO UNITARIO
-Para cada comparable seleccionado:
+═══════════════════════════════════════════════════════════
+PASO 2 — HOMOLOGACIÓN (cálculo del precio unitario)
+═══════════════════════════════════════════════════════════
+Para cada comparable:
 a) Calcula precio/m² = precio_oferta ÷ superficie_relevante
-b) Para terrenos usa m² de terreno; para construcciones usa m² de construcción
-c) Calcula el PROMEDIO del precio/m² de los comparables seleccionados
-d) EXCLUYE del promedio los lotes <150m² si el sujeto es ≥150m² (distorsión de precio unitario)
+b) Para terrenos: usa m² de terreno. Para inmuebles construidos: usa m² de construcción.
+c) Documenta el precio/m² CRUDO de cada comparable (antes de ajustes).
 
-PASO 5 — APLICACIÓN DE FACTORES DE AJUSTE (en este orden)
-Aplica cada factor y explica el impacto:
-1. FACTOR NEGOCIACIÓN: -5% siempre (los precios de oferta en México cierran 5-8% abajo)
-2. FACTOR TOPOGRAFÍA: terreno plano = 0% ajuste; pendiente leve = -5%; pendiente pronunciada = -10 a -15%; irregular = -8%
-3. FACTOR TAMAÑO: si el sujeto es significativamente más grande que los comparables, precio/m² tiende a bajar (economías de escala inversas). Ajusta -3% por cada 20% adicional de superficie vs. promedio de comparables.
-4. FACTOR UBICACIÓN INTERNA: esquina = +8%; frente a área verde = +5%; cul-de-sac privado = +3%; sin dato = 0%
-5. FACTOR SUBMERCADO: si los comparables son de zona más premium que el sujeto, aplica descuento -5 a -15%
+═══════════════════════════════════════════════════════════
+PASO 3 — FACTORES DE AJUSTE (homologación al sujeto)
+═══════════════════════════════════════════════════════════
+Aplica los siguientes factores a CADA comparable (no al promedio, sino a cada uno individualmente) y obtén su precio/m² HOMOLOGADO al sujeto:
 
-PASO 6 — CÁLCULO DEL VALOR
-a) Precio/m² base = promedio de comparables filtrados
-b) Precio/m² ajustado = precio/m² base × (1 + suma de factores de ajuste)
-c) Valor estimado = precio/m² ajustado × superficie del sujeto
-d) Redondea al millar más cercano
-e) Valor mínimo = valor estimado × 0.92 (precio mínimo negociable)
-f) Valor máximo = valor estimado × 1.08 (techo de mercado)
+1. FACTOR NEGOCIACIÓN: -5% siempre (los precios de oferta en México cierran 5-8% por debajo).
+2. FACTOR UBICACIÓN: si el comparable está en zona superior al sujeto, ajusta -5% a -15%. Si está en zona inferior, +5% a +15%. Misma zona = 0%.
+3. FACTOR SUPERFICIE: si el comparable es significativamente más pequeño/grande, aplica corrección por economía de escala (lotes pequeños tienen precio/m² más alto). Aproximadamente ±3% por cada 20% de diferencia de superficie.
+4. FACTOR EDAD/CONSERVACIÓN (solo construcciones): comparable más nuevo = -5% a -10%; más viejo = +5% a +10%.
+5. FACTOR TOPOGRAFÍA (terrenos): plano vs pendiente vs irregular = ±5% a ±15%.
+6. FACTOR ATRIBUTOS ESPECIALES: esquina (+5 a +8%), frente a área verde (+3 a +5%), vista panorámica (+3 a +8%), pendiente pronunciada (-10 a -15%).
 
-PASO 7 — NIVEL DE CONFIANZA
-- ALTA: 5+ comparables directos en el mismo fraccionamiento, mercado activo
-- MEDIA: 3-4 comparables, algunos de zonas adyacentes
-- BAJA: menos de 3 comparables o todos de zonas diferentes
+Para cada comparable documenta: precio/m² crudo, suma de factores aplicados, precio/m² HOMOLOGADO final.
 
-FORMATO DE RESPUESTA — responde ÚNICAMENTE con un JSON válido (sin texto antes ni después, sin markdown, sin ```json), con esta estructura exacta:
+═══════════════════════════════════════════════════════════
+PASO 4 — ANÁLISIS ESTADÍSTICO
+═══════════════════════════════════════════════════════════
+Con los 5 precios/m² homologados:
+a) Calcula el PROMEDIO ARITMÉTICO.
+b) Calcula la DESVIACIÓN ESTÁNDAR y el coeficiente de variación.
+c) Identifica outliers (valores que se alejen más de 1.5σ del promedio) y decide si excluirlos justificadamente.
+d) Si excluyes alguno, recalcula el promedio con los restantes y documéntalo.
+
+═══════════════════════════════════════════════════════════
+PASO 5 — RAZONAMIENTO PROFESIONAL
+═══════════════════════════════════════════════════════════
+Como profesional inmobiliario con criterio, evalúa:
+• ¿Los números obtenidos tienen sentido para esta zona y tipo de inmueble?
+• ¿Hay tendencias del mercado local que justifiquen ajustar arriba o abajo del promedio? (zona en plusvalía, sobreoferta, demanda estancada, nueva infraestructura cercana, inseguridad, etc.)
+• ¿La temporada o el momento del mercado favorece al vendedor o al comprador?
+• Concluye con UN solo precio/m² final, defendiendo el porqué de tu decisión.
+
+═══════════════════════════════════════════════════════════
+PASO 6 — CONCLUSIÓN DE VALOR DE LISTA
+═══════════════════════════════════════════════════════════
+a) Valor estimado = precio/m² final × superficie del sujeto, redondeado al millar más cercano.
+b) Valor mínimo (piso de negociación) = valor estimado × 0.93.
+c) Valor máximo (techo de mercado) = valor estimado × 1.07.
+d) Como agente inmobiliario emite una RECOMENDACIÓN de PRECIO DE LISTA (sale price) que típicamente es el valor estimado o ligeramente arriba (+2% a +5%) para tener margen de negociación.
+
+═══════════════════════════════════════════════════════════
+FORMATO DE RESPUESTA — RESPONDE ÚNICAMENTE CON JSON
+═══════════════════════════════════════════════════════════
+Sin markdown, sin ```json, sin texto antes ni después. Estructura exacta:
+
 {
-  "valor_estimado": <número MXN entero sin comas>,
-  "valor_minimo": <número entero>,
-  "valor_maximo": <número entero>,
-  "valor_por_m2": <número entero — precio/m² ajustado final>,
-  "precio_m2_base": <número entero — promedio de comparables ANTES de ajustes>,
+  "valor_estimado": <entero MXN sin comas>,
+  "valor_minimo": <entero>,
+  "valor_maximo": <entero>,
+  "precio_lista_recomendado": <entero — precio sugerido para publicar>,
+  "valor_por_m2": <entero — precio/m² homologado final>,
+  "precio_m2_promedio_crudo": <entero — promedio antes de ajustes>,
   "nivel_confianza": "<alta|media|baja>",
-  "razon_confianza": "<explica cuántos comparables directos encontraste y de qué fuentes>",
-  "resumen_ejecutivo": "<3 oraciones: (1) valor con rango, (2) precio/m² de mercado y cuántos comparables, (3) factor más importante que afecta el valor>",
-  "comparables": [
+  "razon_confianza": "<explica número y calidad de comparables encontrados>",
+  "resumen_ejecutivo": "<3 oraciones: (1) valor concluido con rango, (2) base de comparables y precio/m², (3) factor más determinante>",
+
+  "razonamiento_pasos": [
     {
-      "descripcion": "<fraccionamiento o colonia exacta + características clave>",
-      "superficie_m2": <número>,
-      "precio": <número entero>,
-      "precio_m2": <número entero>,
-      "fuente": "<portal>",
-      "incluido_en_promedio": <true|false>
+      "paso": 1,
+      "titulo": "Investigación y recolección de comparables",
+      "contenido": "<qué buscaste, en qué portales, cuántos comparables vigentes encontraste, cómo seleccionaste los 5 finales>"
+    },
+    {
+      "paso": 2,
+      "titulo": "Homologación — cálculo del precio unitario",
+      "contenido": "<cómo calculaste precio/m² de cada comparable y rango crudo obtenido>"
+    },
+    {
+      "paso": 3,
+      "titulo": "Factores de ajuste aplicados",
+      "contenido": "<qué factores aplicaste y por qué; menciona los más relevantes>"
+    },
+    {
+      "paso": 4,
+      "titulo": "Análisis estadístico",
+      "contenido": "<promedio, dispersión, outliers excluidos si los hubo>"
+    },
+    {
+      "paso": 5,
+      "titulo": "Razonamiento profesional",
+      "contenido": "<criterio aplicado: tendencia de zona, momento del mercado, ajuste final por juicio profesional>"
+    },
+    {
+      "paso": 6,
+      "titulo": "Conclusión de valor de lista",
+      "contenido": "<cálculo final del valor estimado, rango y recomendación de precio de lista para el agente>"
     }
   ],
+
+  "comparables": [
+    {
+      "descripcion": "<tipo + ubicación específica + características clave>",
+      "superficie_m2": <número>,
+      "precio": <entero>,
+      "precio_m2_crudo": <entero>,
+      "precio_m2_homologado": <entero>,
+      "ajuste_aplicado_pct": <número — suma neta de ajustes, ej: -8 para -8%>,
+      "fuente": "<portal>",
+      "url": "<URL del anuncio si la conoces, o cadena vacía>"
+    }
+  ],
+
   "factores_ajuste": [
     {
       "factor": "<nombre del factor>",
-      "descripcion": "<qué aplica exactamente al sujeto y por qué>",
-      "porcentaje": <número — ej: -5 para -5%, 0 para neutro>,
+      "descripcion": "<aplicación concreta al sujeto>",
+      "porcentaje": <número — ej: -5>,
       "impacto": "<positivo|negativo|neutro>"
     }
   ],
-  "precio_m2_ajustado_calculo": "<muestra el cálculo: ej: $10,379 × (1 - 0.05 - 0.03) = $9,550>",
-  "analisis_zona": "<análisis del mercado, plusvalía, demanda y tendencia de la zona>",
-  "recomendaciones": ["<rec 1>", "<rec 2>", "<rec 3>"],
-  "advertencias": "<limitaciones de esta opinión de valor>",
-  "fecha": "<fecha de hoy en formato DD/MM/YYYY>"
+
+  "analisis_zona": "<análisis del mercado local: plusvalía, demanda, infraestructura, tendencia>",
+  "recomendaciones": ["<rec 1 estratégica para el agente>", "<rec 2>", "<rec 3>"],
+  "advertencias": "<limitaciones de esta opinión de valor (no sustituye avalúo pericial bancario)>",
+  "fecha": "<DD/MM/YYYY>"
 }"""
 
-    # Construir queries de búsqueda específicas según el tipo y zona
     tipo_busqueda = {
         "terreno": "terreno", "casa": "casa", "departamento": "departamento",
         "local": "local comercial", "oficina": "oficina", "bodega": "bodega"
     }.get(req.tipo_inmueble, req.tipo_inmueble)
 
-    user_msg = f"""Genera una opinión de valor profesional siguiendo el proceso de 7 pasos de tu metodología.
+    user_msg = f"""Realiza el análisis comparativo de mercado (MCA) en sus 6 pasos para el siguiente inmueble.
 
-INMUEBLE SUJETO:
 {descripcion_sujeto}
 
-BÚSQUEDAS SUGERIDAS (ejecuta todas o variantes):
-1. "{tipo_busqueda} en venta {req.colonia} {req.ciudad} precio"
+BÚSQUEDAS SUGERIDAS (ejecuta variantes hasta reunir EXACTAMENTE 5 comparables vigentes):
+1. "{tipo_busqueda} en {req.operacion} {req.colonia} {req.ciudad} inmuebles24"
 2. "{tipo_busqueda} {req.colonia} {req.ciudad} lamudi"
 3. "{tipo_busqueda} {req.colonia} {req.ciudad} vivanuncios"
-4. "{tipo_busqueda} {req.colonia} {req.ciudad} inmuebles24"
-5. Si la colonia es parte de un ecosistema más grande (ej: Vistas Altozano → busca también "Rio Altozano", "Altozano Morelia"), busca los submercados adyacentes para tener más comparables.
+4. "{tipo_busqueda} {req.colonia} {req.ciudad} propiedades.com"
+5. "{tipo_busqueda} venta {req.colonia} {req.ciudad} mercadolibre"
 
-IMPORTANTE: 
-- Calcula el precio/m² de CADA comparable encontrado y muéstralo explícitamente.
-- Excluye del promedio los outliers y explica por qué.
-- Muestra el cálculo del valor final paso a paso en "precio_m2_ajustado_calculo".
-- Responde ÚNICAMENTE con el JSON, sin texto antes ni después."""
+Si el sujeto está en una zona con ecosistema más amplio (ej: Vistas Altozano → busca también Rio Altozano, Altozano Morelia), explora los submercados adyacentes para completar los 5 comparables.
 
-    # Llamada a Claude con web_search tool
-    async with httpx.AsyncClient(timeout=120) as client:
+INSTRUCCIONES CLAVE:
+- Necesito EXACTAMENTE 5 comparables vigentes. Si no los encuentras, reporta los que hayas y baja el nivel de confianza.
+- Aplica los 6 pasos del MCA documentando tu razonamiento en el campo "razonamiento_pasos".
+- Razona como profesional inmobiliario: los números deben tener sentido para la zona.
+- Emite una recomendación clara de PRECIO DE LISTA para que el agente publique.
+- Responde SOLO con el JSON, sin texto antes ni después, sin markdown."""
+
+    # Llamada a Claude con web_search
+    async with httpx.AsyncClient(timeout=180) as client:
         r = await client.post(
             f"{ANTHROPIC_BASE}/messages",
             headers={
@@ -1768,10 +1836,10 @@ IMPORTANTE:
             },
             json={
                 "model": "claude-sonnet-4-6",
-                "max_tokens": 6000,
-                "temperature": 0.1,
+                "max_tokens": 8000,
+                "temperature": 0.15,
                 "system": system_prompt,
-                "tools": [{"type": "web_search_20250305", "name": "web_search", "max_uses": 6}],
+                "tools": [{"type": "web_search_20250305", "name": "web_search", "max_uses": 8}],
                 "messages": [{"role": "user", "content": user_msg}],
             },
         )
@@ -1779,7 +1847,7 @@ IMPORTANTE:
     if r.status_code != 200:
         raise HTTPException(status_code=502, detail=f"Error de Claude: {r.text[:400]}")
 
-    # Extraer el texto final de la respuesta (puede venir después de tool_use blocks)
+    # Extraer texto final
     content_blocks = r.json().get("content", [])
     raw = ""
     for block in content_blocks:
@@ -1789,7 +1857,7 @@ IMPORTANTE:
     if not raw:
         raise HTTPException(status_code=502, detail="Claude no devolvió respuesta de texto")
 
-    # Limpiar posibles markdown wrappers
+    # Limpiar wrappers de markdown si los hubiera
     raw = raw.strip()
     if raw.startswith("```"):
         raw = raw.split("\n", 1)[-1]
@@ -1800,7 +1868,6 @@ IMPORTANTE:
     try:
         resultado = json.loads(raw)
     except Exception:
-        # Intentar extraer JSON si viene con texto extra
         import re as _re
         match = _re.search(r'\{.*\}', raw, _re.DOTALL)
         if match:
@@ -1811,32 +1878,53 @@ IMPORTANTE:
         else:
             raise HTTPException(status_code=502, detail=f"Claude no devolvió JSON válido: {raw[:500]}")
 
-    # Enriquecer con metadata de la solicitud
-    resultado["tipo_inmueble"] = tipo_label
-    resultado["operacion"] = req.operacion
-    resultado["colonia"] = req.colonia
-    resultado["ciudad"] = req.ciudad
-    resultado["m2_construccion"] = req.m2_construccion
-    resultado["m2_terreno"] = req.m2_terreno
-    resultado["recamaras"] = req.recamaras
-    resultado["banos"] = req.banos
-    resultado["condicion_terreno"] = req.condicion_terreno
-    resultado["timestamp"] = time.strftime("%Y-%m-%d %H:%M")
+    # Enriquecer con metadata
+    resultado["tipo_inmueble"]      = tipo_label
+    resultado["tipo_inmueble_key"]  = req.tipo_inmueble
+    resultado["operacion"]          = req.operacion
+    resultado["colonia"]            = req.colonia
+    resultado["ciudad"]             = req.ciudad
+    resultado["estado"]             = req.estado
+    resultado["m2_construccion"]    = req.m2_construccion
+    resultado["m2_terreno"]         = req.m2_terreno
+    resultado["recamaras"]          = req.recamaras
+    resultado["banos"]              = req.banos
+    resultado["estacionamientos"]   = req.estacionamientos
+    resultado["condicion_terreno"]  = req.condicion_terreno
+    resultado["comentarios"]        = req.comentarios
+    resultado["timestamp"]          = time.strftime("%Y-%m-%d %H:%M")
 
     return resultado
 
 
 # ────────────────────────────────────────────
-# AVM — PDF DE OPINIÓN DE VALOR
+# ESTIMACIÓN DE VALOR — PDF
 # ────────────────────────────────────────────
+
+def _broquer_logo_b64() -> str:
+    """Lee el logotipo de Broquer en base64 para embeberlo en el PDF."""
+    try:
+        ruta = Path(__file__).parent / "logo-broquer.png"
+        if ruta.exists():
+            return "data:image/png;base64," + base64.b64encode(ruta.read_bytes()).decode("ascii")
+    except Exception:
+        pass
+    return ""
+
 
 @app.post("/avm-pdf")
 async def generar_avm_pdf(p: dict):
-    """Recibe el resultado del AVM websearch y genera un PDF profesional con Playwright."""
+    """Genera el PDF de la Estimación de Valor con la paleta oficial de Broquer.
+
+    Acepta opcionalmente:
+      - foto_inmueble: data URL (base64) de la foto subida por el usuario.
+    Todos los campos del resultado pueden venir editados por el usuario.
+    """
     from playwright.async_api import async_playwright
 
-    resultado = p.get("resultado", {})
-    agente = p.get("agente", "Agente BROKR®")
+    resultado      = p.get("resultado", {}) or {}
+    agente         = p.get("agente", "") or ""
+    foto_inmueble  = p.get("foto_inmueble", "") or ""  # data URL opcional
 
     if not resultado:
         raise HTTPException(status_code=400, detail="Resultado vacío")
@@ -1847,46 +1935,96 @@ async def generar_avm_pdf(p: dict):
         except Exception:
             return str(n)
 
-    # Comparables HTML
-    comps_html = ""
-    for c in resultado.get("comparables", []):
-        comps_html += f"""
-        <tr>
-          <td>{c.get('descripcion','—')}</td>
-          <td class="num">{c.get('superficie_m2','—')} m²</td>
-          <td class="num">{fmt_mx(c.get('precio',0))}</td>
-          <td class="num">{fmt_mx(c.get('precio_m2',0))}/m²</td>
-          <td class="src">{c.get('fuente','—')}</td>
-        </tr>"""
+    def esc(s):
+        # Escape básico para evitar romper el HTML del PDF si el usuario editó texto
+        if s is None: return ""
+        return (str(s)
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;"))
 
-    # Factores HTML
-    factores_html = ""
-    for f in resultado.get("factores_ajuste", []):
-        imp = f.get("impacto", "neutro")
-        color = "#1D9E75" if imp == "positivo" else "#E24B4A" if imp == "negativo" else "#888"
-        dot = f'<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{color};margin-right:6px;"></span>'
-        factores_html += f"""
-        <tr>
-          <td>{dot}{f.get('factor','—')}</td>
-          <td>{f.get('descripcion','—')}</td>
-        </tr>"""
+    logo_b64 = _broquer_logo_b64()
 
-    # Recomendaciones HTML
-    recs_html = "".join(f"<li>{r}</li>" for r in resultado.get("recomendaciones", []))
+    # ── Foto del inmueble (opcional) ─────────────────────────────────────
+    foto_html = ""
+    if foto_inmueble and foto_inmueble.startswith("data:image"):
+        foto_html = f"""
+        <div class="foto-bloque">
+          <img src="{foto_inmueble}" alt="Inmueble"/>
+        </div>"""
 
-    # Superficie display
+    # ── Datos del inmueble ───────────────────────────────────────────────
     m2c = resultado.get("m2_construccion", 0)
     m2t = resultado.get("m2_terreno", 0)
     sup_parts = []
-    if m2t: sup_parts.append(f"{m2t} m² terreno")
-    if m2c: sup_parts.append(f"{m2c} m² construcción")
+    if m2t: sup_parts.append(f"{m2t:g} m² terreno")
+    if m2c: sup_parts.append(f"{m2c:g} m² construcción")
     superficie_str = " · ".join(sup_parts) if sup_parts else "—"
 
-    confianza = resultado.get("nivel_confianza", "media")
-    conf_color = "#1D9E75" if confianza == "alta" else "#EF9F27" if confianza == "media" else "#E24B4A"
-    conf_bg    = "#E1F5EE" if confianza == "alta" else "#FAEEDA" if confianza == "media" else "#FCEBEB"
+    caracteristicas = []
+    if resultado.get("recamaras"):        caracteristicas.append(f"{resultado.get('recamaras')} rec.")
+    if resultado.get("banos"):            caracteristicas.append(f"{resultado.get('banos'):g} baños")
+    if resultado.get("estacionamientos"): caracteristicas.append(f"{resultado.get('estacionamientos')} estac.")
+    caract_str = " · ".join(caracteristicas) if caracteristicas else "—"
 
-    fecha_hoy = resultado.get("fecha", time.strftime("%d/%m/%Y"))
+    # ── Razonamiento (6 pasos) ───────────────────────────────────────────
+    pasos_html = ""
+    for paso in (resultado.get("razonamiento_pasos") or []):
+        n      = paso.get("paso", "")
+        titulo = esc(paso.get("titulo", ""))
+        cont   = esc(paso.get("contenido", "")).replace("\n", "<br/>")
+        pasos_html += f"""
+        <div class="paso">
+          <div class="paso-head">
+            <span class="paso-num">{n}</span>
+            <span class="paso-titulo">{titulo}</span>
+          </div>
+          <div class="paso-cont">{cont}</div>
+        </div>"""
+
+    # ── Comparables ──────────────────────────────────────────────────────
+    comps_html = ""
+    for i, c in enumerate(resultado.get("comparables", []), 1):
+        ajuste = c.get("ajuste_aplicado_pct", 0)
+        ajuste_str = f"{ajuste:+.0f}%" if ajuste else "0%"
+        ajuste_color = "#1F6B4A" if (isinstance(ajuste, (int, float)) and ajuste > 0) else ("#B84B3F" if (isinstance(ajuste, (int, float)) and ajuste < 0) else "#6B6B66")
+        comps_html += f"""
+        <tr>
+          <td class="num">{i}</td>
+          <td>{esc(c.get('descripcion','—'))}<div class="fuente-sub">{esc(c.get('fuente','—'))}</div></td>
+          <td class="r">{c.get('superficie_m2','—')} m²</td>
+          <td class="r">{fmt_mx(c.get('precio',0))}</td>
+          <td class="r">{fmt_mx(c.get('precio_m2_crudo',0))}</td>
+          <td class="r" style="color:{ajuste_color};font-weight:600;">{ajuste_str}</td>
+          <td class="r">{fmt_mx(c.get('precio_m2_homologado',0))}</td>
+        </tr>"""
+
+    # ── Factores de ajuste ───────────────────────────────────────────────
+    factores_html = ""
+    for f in resultado.get("factores_ajuste", []) or []:
+        imp = f.get("impacto", "neutro")
+        color = "#1F6B4A" if imp == "positivo" else "#B84B3F" if imp == "negativo" else "#6B6B66"
+        pct = f.get("porcentaje", 0)
+        pct_str = f"{pct:+g}%" if pct else "0%"
+        factores_html += f"""
+        <tr>
+          <td><span class="dot" style="background:{color}"></span>{esc(f.get('factor','—'))}</td>
+          <td class="muted">{esc(f.get('descripcion','—'))}</td>
+          <td class="r" style="color:{color};font-weight:600;">{pct_str}</td>
+        </tr>"""
+
+    # ── Recomendaciones ──────────────────────────────────────────────────
+    recs_html = "".join(f"<li>{esc(r)}</li>" for r in (resultado.get("recomendaciones") or []))
+
+    # ── Confianza ────────────────────────────────────────────────────────
+    confianza = resultado.get("nivel_confianza", "media")
+    conf_color = "#1F6B4A" if confianza == "alta" else "#B5601C" if confianza == "media" else "#B84B3F"
+    conf_bg    = "#DDEBE0" if confianza == "alta" else "#F6E8D6" if confianza == "media" else "#F5DCD7"
+
+    fecha_hoy = resultado.get("fecha") or time.strftime("%d/%m/%Y")
+
+    # ── Header con logo ──────────────────────────────────────────────────
+    logo_img_html = f'<img src="{logo_b64}" alt="Broquer" class="logo-img"/>' if logo_b64 else '<span class="logo-text">Broquer</span>'
 
     html = f"""<!DOCTYPE html>
 <html lang="es">
@@ -1894,104 +2032,457 @@ async def generar_avm_pdf(p: dict):
 <meta charset="UTF-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-  body {{ font-family: 'Inter', 'Helvetica Neue', sans-serif; color: #1A1814; background: #FBF9F1; font-size: 13px; line-height: 1.55; -webkit-font-smoothing: antialiased; letter-spacing:-0.005em; }}
-  .page {{ padding: 56px 60px 44px; max-width: 760px; margin: 0 auto; }}
 
-  .doc-head {{ display:flex; justify-content:space-between; align-items:baseline; padding-bottom:18px; border-bottom:1px solid #E8E2D2; margin-bottom:32px; }}
-  .doc-kicker {{ font-size:9px; color:#7A7065; text-transform:uppercase; letter-spacing:1.8px; font-weight:600; }}
-  .doc-date {{ font-size:10px; color:#7A7065; letter-spacing:0.04em; }}
+  /* ── Paleta oficial Broquer ── */
+  :root {{
+    --paper:   #F7F5EE;
+    --paper-2: #F1EEE3;
+    --bone:    #FFFFFF;
+    --ink:     #0A0A0A;
+    --ink-2:   #1F1F1B;
+    --ink-3:   #3A3A33;
+    --mute:    #6B6B66;
+    --mute-2:  #9A9A92;
+    --line:    rgba(10,10,10,0.08);
+    --line-2:  rgba(10,10,10,0.14);
+    --forest:  #2F4A3A;
+    --forest-soft: #E5EBE3;
+  }}
 
-  .valor-bloque {{ margin-bottom: 36px; padding-bottom: 28px; border-bottom: 1px solid #E8E2D2; }}
-  .valor-lbl {{ font-size: 9px; color: #7A7065; text-transform: uppercase; letter-spacing: 1.8px; margin-bottom: 14px; font-weight:600; }}
-  .valor-num {{ font-family:'Fraunces',serif; font-size: 56px; font-weight: 500; color: #1A1814; line-height: 1; margin-bottom: 12px; letter-spacing:-0.02em; }}
-  .valor-rango {{ font-size: 12px; color: #5C544A; margin-bottom: 22px; letter-spacing:0.005em; }}
-  .valor-meta {{ display: grid; grid-template-columns:repeat(4,1fr); gap: 24px; padding-top:14px; border-top:1px dashed #E8E2D2; }}
-  .meta-item .meta-lbl {{ font-size: 8.5px; color: #7A7065; text-transform: uppercase; letter-spacing: 1.4px; margin-bottom: 5px; font-weight:600; }}
-  .meta-item .meta-val {{ font-family:'Fraunces',serif; font-size: 13px; font-weight: 500; color: #1A1814; letter-spacing:-0.005em; }}
+  body {{
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    font-size: 12px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.005em;
+  }}
+  .page {{ padding: 38px 44px 24px; max-width: 800px; margin: 0 auto; }}
 
-  .seccion {{ margin-bottom: 30px; }}
-  .sec-titulo {{ font-family:'Inter',sans-serif; font-size: 9px; font-weight: 600; color: #7A7065; text-transform: uppercase; letter-spacing: 1.8px; margin-bottom: 14px; }}
-  .resumen {{ font-size: 12px; color: #1A1814; line-height: 1.75; text-align:justify; }}
+  /* ── Header ── */
+  .doc-head {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--line-2);
+    margin-bottom: 26px;
+  }}
+  .logo-img {{ height: 32px; width: auto; display: block; }}
+  .logo-text {{
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+  }}
+  .doc-meta {{ text-align: right; }}
+  .doc-kicker {{
+    font-size: 9px;
+    color: var(--mute);
+    text-transform: uppercase;
+    letter-spacing: 1.8px;
+    font-weight: 600;
+  }}
+  .doc-date {{ font-size: 10.5px; color: var(--ink-3); margin-top: 3px; }}
 
-  table {{ width: 100%; border-collapse: collapse; font-size: 11.5px; }}
-  th {{ font-weight: 600; color: #7A7065; text-align: left; padding: 8px 6px; border-bottom: 1px solid #C9C0AC; font-size: 8.5px; text-transform: uppercase; letter-spacing: 1.4px; }}
-  td {{ padding: 11px 6px; border-bottom: 1px solid #EDE6D3; color: #1A1814; vertical-align: top; }}
-  td.r {{ text-align: right; font-family:'Fraunces',serif; font-weight: 500; font-variant-numeric: tabular-nums; }}
-  td.g {{ color: #7A7065; font-size: 10.5px; }}
+  /* ── Título y foto ── */
+  .doc-title {{
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }}
+  .doc-sub {{ font-size: 12px; color: var(--mute); margin-bottom: 22px; }}
+
+  .foto-bloque {{
+    width: 100%;
+    height: 220px;
+    margin-bottom: 24px;
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+  }}
+  .foto-bloque img {{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }}
+
+  /* ── Bloque de valor ── */
+  .valor-bloque {{
+    background: var(--bone);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 24px 26px;
+    margin-bottom: 26px;
+    page-break-inside: avoid;
+  }}
+  .valor-lbl {{
+    font-size: 9px;
+    color: var(--mute);
+    text-transform: uppercase;
+    letter-spacing: 1.8px;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }}
+  .valor-num {{
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 44px;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1;
+    margin-bottom: 8px;
+    letter-spacing: -0.025em;
+  }}
+  .valor-rango {{ font-size: 12px; color: var(--mute); margin-bottom: 16px; }}
+  .lista-bloque {{
+    margin-top: 12px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line-2);
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }}
+  .lista-lbl {{
+    font-size: 9px;
+    color: var(--mute);
+    text-transform: uppercase;
+    letter-spacing: 1.8px;
+    font-weight: 600;
+  }}
+  .lista-val {{
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--forest);
+    letter-spacing: -0.015em;
+  }}
+
+  /* ── Confianza badge ── */
+  .conf-badge {{
+    display: inline-block;
+    padding: 4px 11px;
+    border-radius: 999px;
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-left: 10px;
+    background: {conf_bg};
+    color: {conf_color};
+  }}
+
+  /* ── Datos del inmueble ── */
+  .info-grid {{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    padding: 16px 0;
+    margin-bottom: 26px;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }}
+  .info-item .info-lbl {{
+    font-size: 8.5px;
+    color: var(--mute);
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }}
+  .info-item .info-val {{
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink);
+  }}
+
+  /* ── Secciones ── */
+  .seccion {{ margin-bottom: 28px; }}
+  .sec-titulo {{
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--forest);
+    text-transform: uppercase;
+    letter-spacing: 1.8px;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+  }}
+  .resumen {{
+    font-size: 12px;
+    color: var(--ink-2);
+    line-height: 1.75;
+    text-align: justify;
+  }}
+
+  /* ── Razonamiento por pasos ── */
+  .paso {{
+    background: var(--paper-2);
+    border-left: 3px solid var(--forest);
+    border-radius: 0 10px 10px 0;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    page-break-inside: avoid;
+  }}
+  .paso-head {{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }}
+  .paso-num {{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--forest);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }}
+  .paso-titulo {{
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+  }}
+  .paso-cont {{
+    font-size: 11.5px;
+    color: var(--ink-2);
+    line-height: 1.65;
+    padding-left: 32px;
+  }}
+
+  /* ── Tablas ── */
+  table {{ width: 100%; border-collapse: collapse; font-size: 11px; }}
+  th {{
+    font-weight: 600;
+    color: var(--mute);
+    text-align: left;
+    padding: 8px 6px;
+    border-bottom: 1.5px solid var(--ink);
+    font-size: 8.5px;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+  }}
+  td {{
+    padding: 10px 6px;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink);
+    vertical-align: top;
+  }}
+  td.r {{ text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }}
+  td.num {{ color: var(--mute); font-weight: 600; }}
+  td.muted {{ color: var(--mute); }}
   tr:last-child td {{ border-bottom: none; }}
+  .fuente-sub {{ font-size: 10px; color: var(--mute); margin-top: 2px; font-style: italic; }}
+  .dot {{
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    margin-right: 7px;
+    vertical-align: middle;
+  }}
 
-  .footer {{ margin-top: 48px; padding-top: 18px; border-top: 1px solid #E8E2D2; display: flex; justify-content: space-between; font-size: 9px; color: #7A7065; letter-spacing:1.5px; text-transform:uppercase; font-weight:500; }}
+  /* ── Recomendaciones ── */
+  ul.recs {{ list-style: none; padding-left: 0; }}
+  ul.recs li {{
+    position: relative;
+    padding: 6px 0 6px 22px;
+    font-size: 11.5px;
+    color: var(--ink-2);
+    line-height: 1.6;
+    border-bottom: 1px solid var(--line);
+  }}
+  ul.recs li:before {{
+    content: "›";
+    position: absolute;
+    left: 0;
+    color: var(--forest);
+    font-weight: 700;
+    font-size: 14px;
+  }}
+  ul.recs li:last-child {{ border-bottom: none; }}
+
+  /* ── Advertencia ── */
+  .adv {{
+    background: #F6E8D6;
+    border-left: 3px solid #B5601C;
+    border-radius: 0 8px 8px 0;
+    padding: 10px 14px;
+    font-size: 10.5px;
+    color: #6B4419;
+    margin-top: 14px;
+    line-height: 1.55;
+  }}
+
+  /* ── Footer ── */
+  .footer {{
+    margin-top: 30px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line-2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }}
+  .footer-left {{ display: flex; align-items: center; gap: 10px; }}
+  .footer-logo {{ height: 22px; width: auto; }}
+  .footer-logo-text {{
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+  }}
+  .footer-tag {{
+    font-size: 8.5px;
+    color: var(--mute);
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    font-weight: 500;
+  }}
+  .footer-right {{
+    text-align: right;
+    font-size: 8.5px;
+    color: var(--mute);
+    line-height: 1.5;
+  }}
 </style>
 </head>
 <body>
 <div class="page">
 
+  <!-- HEADER -->
   <div class="doc-head">
-    <div class="doc-kicker">Broquer · Opinión de valor</div>
-    <div class="doc-date">{fecha_hoy}</div>
-  </div>
-
-  <div class="valor-bloque">
-    <div class="valor-lbl">Opinión de valor comercial</div>
-    <div class="valor-num">{fmt_mx(resultado.get('valor_estimado',0))}</div>
-    <div class="valor-rango">Rango estimado: {fmt_mx(resultado.get('valor_minimo',0))} — {fmt_mx(resultado.get('valor_maximo',0))}</div>
-    <div class="valor-meta">
-      <div class="meta-item">
-        <div class="meta-lbl">Inmueble</div>
-        <div class="meta-val">{resultado.get('tipo_inmueble','—')}</div>
-      </div>
-      <div class="meta-item">
-        <div class="meta-lbl">Superficie</div>
-        <div class="meta-val">{superficie_str}</div>
-      </div>
-      <div class="meta-item">
-        <div class="meta-lbl">Ubicación</div>
-        <div class="meta-val">{resultado.get('colonia','—')}, {resultado.get('ciudad','Morelia')}</div>
-      </div>
-      <div class="meta-item">
-        <div class="meta-lbl">Operación</div>
-        <div class="meta-val">{resultado.get('operacion','venta').capitalize()}</div>
-      </div>
+    {logo_img_html}
+    <div class="doc-meta">
+      <div class="doc-kicker">Estimación de Valor</div>
+      <div class="doc-date">{esc(fecha_hoy)}</div>
     </div>
   </div>
 
-  <div class="seccion">
-    <div class="sec-titulo">Análisis</div>
-    <div class="resumen">{resultado.get('resumen_ejecutivo','—')}</div>
+  <!-- TÍTULO -->
+  <div class="doc-title">Estimación de Valor</div>
+  <div class="doc-sub">{esc(resultado.get('tipo_inmueble','Inmueble'))} en {esc(resultado.get('colonia','—'))}, {esc(resultado.get('ciudad','—'))}</div>
+
+  {foto_html}
+
+  <!-- VALOR -->
+  <div class="valor-bloque">
+    <div class="valor-lbl">Valor comercial estimado<span class="conf-badge">Confianza {esc(confianza)}</span></div>
+    <div class="valor-num">{fmt_mx(resultado.get('valor_estimado',0))}</div>
+    <div class="valor-rango">
+      Rango: {fmt_mx(resultado.get('valor_minimo',0))} — {fmt_mx(resultado.get('valor_maximo',0))}
+      {f' · {fmt_mx(resultado.get("valor_por_m2",0))}/m²' if resultado.get('valor_por_m2',0) else ''}
+    </div>
+    {f'<div class="lista-bloque"><span class="lista-lbl">Precio de lista recomendado</span><span class="lista-val">{fmt_mx(resultado.get("precio_lista_recomendado",0))}</span></div>' if resultado.get('precio_lista_recomendado') else ''}
   </div>
 
+  <!-- DATOS DEL INMUEBLE -->
+  <div class="info-grid">
+    <div class="info-item">
+      <div class="info-lbl">Tipo</div>
+      <div class="info-val">{esc(resultado.get('tipo_inmueble','—'))}</div>
+    </div>
+    <div class="info-item">
+      <div class="info-lbl">Operación</div>
+      <div class="info-val">{esc(str(resultado.get('operacion','venta')).capitalize())}</div>
+    </div>
+    <div class="info-item">
+      <div class="info-lbl">Superficie</div>
+      <div class="info-val">{superficie_str}</div>
+    </div>
+    <div class="info-item">
+      <div class="info-lbl">Características</div>
+      <div class="info-val">{caract_str}</div>
+    </div>
+  </div>
+
+  <!-- RESUMEN -->
   <div class="seccion">
+    <div class="sec-titulo">Resumen ejecutivo</div>
+    <div class="resumen">{esc(resultado.get('resumen_ejecutivo','—'))}</div>
+  </div>
+
+  <!-- RAZONAMIENTO POR PASOS -->
+  {f'<div class="seccion"><div class="sec-titulo">Cómo llegamos a este valor — Metodología CONOCER (MCA)</div>{pasos_html}</div>' if pasos_html else ''}
+
+  <!-- COMPARABLES -->
+  {f'''<div class="seccion">
     <div class="sec-titulo">Comparables de mercado</div>
     <table>
       <thead>
         <tr>
+          <th style="width:24px">#</th>
           <th>Propiedad</th>
-          <th style="text-align:right">Superficie</th>
-          <th style="text-align:right">Precio</th>
-          <th style="text-align:right">$/m²</th>
-          <th>Fuente</th>
+          <th class="r">Superficie</th>
+          <th class="r">Precio</th>
+          <th class="r">$/m² crudo</th>
+          <th class="r">Ajuste</th>
+          <th class="r">$/m² homol.</th>
         </tr>
       </thead>
       <tbody>{comps_html}</tbody>
     </table>
-  </div>
+  </div>''' if comps_html else ''}
 
+  <!-- FACTORES -->
+  {f'''<div class="seccion">
+    <div class="sec-titulo">Factores de ajuste aplicados</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Factor</th>
+          <th>Aplicación</th>
+          <th class="r">Impacto</th>
+        </tr>
+      </thead>
+      <tbody>{factores_html}</tbody>
+    </table>
+  </div>''' if factores_html else ''}
+
+  <!-- ANÁLISIS DE ZONA -->
+  {f'<div class="seccion"><div class="sec-titulo">Análisis de zona y plusvalía</div><div class="resumen">{esc(resultado.get("analisis_zona",""))}</div></div>' if resultado.get('analisis_zona') else ''}
+
+  <!-- RECOMENDACIONES -->
+  {f'<div class="seccion"><div class="sec-titulo">Recomendaciones para el agente</div><ul class="recs">{recs_html}</ul></div>' if recs_html else ''}
+
+  <!-- ADVERTENCIA -->
+  {f'<div class="adv"><strong>Aviso:</strong> {esc(resultado.get("advertencias",""))}</div>' if resultado.get('advertencias') else ''}
+
+  <!-- FOOTER -->
   <div class="footer">
-    <span>Broquer · Inteligencia inmobiliaria</span>
-    <span>{fecha_hoy}</span>
+    <div class="footer-left">
+      {f'<img src="{logo_b64}" class="footer-logo"/>' if logo_b64 else '<span class="footer-logo-text">Broquer</span>'}
+      <span class="footer-tag">Inteligencia inmobiliaria</span>
+    </div>
+    <div class="footer-right">
+      Documento generado el {esc(fecha_hoy)}<br/>
+      Esta estimación no sustituye un avalúo pericial
+    </div>
   </div>
 
 </div>
 </body>
 </html>"""
+
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(args=["--no-sandbox", "--disable-dev-shm-usage"])
         page = await browser.new_page()
         await page.set_content(html, wait_until="domcontentloaded")
-        await page.wait_for_timeout(400)
+        await page.wait_for_timeout(500)
         pdf_bytes = await page.pdf(
             format="A4",
             print_background=True,
@@ -2000,8 +2491,8 @@ async def generar_avm_pdf(p: dict):
         await browser.close()
 
     token = str(_uuid.uuid4()).replace("-", "")[:16]
-    colonia_slug = resultado.get("colonia", "propiedad").replace(" ", "_")[:20]
-    filename = f"Opinion_Valor_{colonia_slug}_{time.strftime('%Y%m%d')}.pdf"
+    colonia_slug = (resultado.get("colonia", "propiedad") or "propiedad").replace(" ", "_").replace("/", "_")[:25]
+    filename = f"Estimacion_de_Valor_{colonia_slug}_{time.strftime('%Y%m%d')}.pdf"
     _pdf_store[token] = (pdf_bytes, filename)
     if len(_pdf_store) > 50:
         oldest = list(_pdf_store.keys())[0]
@@ -2028,6 +2519,7 @@ async def descargar_avm_pdf(token: str):
             "Access-Control-Allow-Methods": "GET",
         }
     )
+
 
 
 # ────────────────────────────────────────────
