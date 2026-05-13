@@ -1576,15 +1576,35 @@ let propPickerContexto = null;
 
 function pickAvColor(nombre){let h=0;for(let i=0;i<nombre.length;i++)h=(h*31+nombre.charCodeAt(i))|0;return AV_COLORS[Math.abs(h)%8]}
 function pickInitials(n){const p=n.trim().split(/\s+/);return p.length>=2?(p[0][0]+p[1][0]).toUpperCase():n.slice(0,2).toUpperCase()}
-function cargarContactos(){return JSON.parse(localStorage.getItem('brokr_contactos')||'[]')}
+// Los contactos viven en Supabase (tabla `contactos`). Cacheamos en window._brokrContactos.
+const SB_URL_C = 'https://urtgysmtnvoqaljuhntz.supabase.co';
+const SB_KEY_C = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
 
-function abrirPickerContacto(contexto) {
+function cargarContactos(){ return window._brokrContactos || []; }
+
+async function abrirPickerContacto(contexto) {
   pickerContexto = contexto;
   const tituloMap = {arrendador:'Seleccionar arrendador',arrendatario:'Seleccionar arrendatario',os:'Seleccionar obligado solidario',vendedor:'Seleccionar vendedor',comprador:'Seleccionar comprador'};
   document.getElementById('pick-contact-title').textContent = tituloMap[contexto] || 'Seleccionar contacto';
   document.getElementById('pick-contact-search').value = '';
-  renderPickerContactos('');
+  document.getElementById('pick-contact-list').innerHTML = '<div class="pick-empty">Cargando...</div>';
   document.getElementById('pick-contact-ov').classList.add('open');
+
+  const token = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+  if (!token) {
+    document.getElementById('pick-contact-list').innerHTML = '<div class="pick-empty">Inicia sesión en Broquer para ver tus contactos.</div>';
+    return;
+  }
+  try {
+    const r = await fetch(`${SB_URL_C}/rest/v1/contactos?select=*&order=updated_at.desc&limit=500`, {
+      headers: { 'apikey': SB_KEY_C, 'Authorization': `Bearer ${token}` }
+    });
+    if (!r.ok) throw new Error('Error ' + r.status);
+    window._brokrContactos = await r.json();
+    renderPickerContactos('');
+  } catch(e) {
+    document.getElementById('pick-contact-list').innerHTML = `<div class="pick-empty">Error al cargar contactos: ${e.message}</div>`;
+  }
 }
 function cerrarPickerContacto() { document.getElementById('pick-contact-ov').classList.remove('open'); }
 
