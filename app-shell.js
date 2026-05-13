@@ -7,7 +7,7 @@
      <body data-app="isr">         ← clave del módulo activo
         … contenido del módulo …
      <script src="app-shell.js" defer></script>
-   Claves válidas: home, props, contactos, contratos, avm, ficha,
+   Claves válidas: home, props, contactos, contratos, avm, valor, ficha,
                    ficha-manual, isr, image-cleaner, verificador, admin
    ════════════════════════════════════════════════════════════════════ */
 (function () {
@@ -31,6 +31,7 @@
     { key:'contactos',    href:'contactos.html',     label:'Contactos',       group:'main', icon:'users' },
     { key:'contratos',    href:'contratos.html',     label:'Contratos',       group:'main', icon:'document' },
     { key:'avm',          href:'avm.html',           label:'AVM Valuación',   group:'main', icon:'chart' },
+    { key:'valor',        href:'valor.html',         label:'Valor web',       group:'main', icon:'search' },
     { key:'ficha',        href:'ficha.html',         label:'Ficha técnica',   group:'main', icon:'tag' },
     { key:'ficha-manual', href:'ficha-manual.html',  label:'Ficha manual',    group:'main', icon:'pencil' },
     { key:'isr',          href:'isr.html',           label:'ISR',             group:'main', icon:'calculator' },
@@ -45,6 +46,7 @@
     'contactos':    'Contactos — CRM de prospectos',
     'contratos':    'Contratos — arrendamiento y promesa de compraventa',
     'avm':          'Opinión de Valor AVM — avalúo de mercado automatizado',
+    'valor':        'Valor web — opinión de valor con investigación controlada de comparables públicos',
     'ficha':        'Ficha EasyBroker — generar ficha técnica desde ID de EasyBroker',
     'ficha-manual': 'Ficha Técnica Manual — crear ficha sin EasyBroker',
     'isr':          'Calculadora ISR por enajenación de inmuebles',
