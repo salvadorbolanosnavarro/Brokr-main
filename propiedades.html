@@ -1114,7 +1114,7 @@ function openPropForm(id) {
     if (Array.isArray(p.amenidades) && form.elements['amenidades_raw']) {
       form.elements['amenidades_raw'].value = p.amenidades.join(', ');
     }
-    form.elements['fotos_raw'].value = (p.fotos||[]).join(',');
+    form.elements['fotos_raw'].value = JSON.stringify(p.fotos||[]);
     form.elements['prop_id'].value = id;
     if (p.fotos?.length) {
       uploadedFotoUrls = [...p.fotos];
@@ -1139,7 +1139,11 @@ async function saveProp(e) {
   e.preventDefault();
   const form = e.target; const fd = new FormData(form); const data = {};
   fd.forEach((v,k) => { if (v !== '') data[k] = v; });
-  const fotosRaw = (data.fotos_raw||'').split(',').map(s=>s.trim()).filter(Boolean);
+  let fotosRaw;
+  try { fotosRaw = JSON.parse(data.fotos_raw || '[]'); } catch(e) {
+    // fallback: si por alguna razón llega CSV (URLs normales sin base64)
+    fotosRaw = (data.fotos_raw||'').split(',').map(s=>s.trim()).filter(Boolean);
+  }
   delete data.fotos_raw;
   data.fotos = fotosRaw.length ? fotosRaw : uploadedFotoUrls;
   // Amenidades: CSV → text[]
@@ -1540,10 +1544,10 @@ function initFotoUpload() {
       } catch(err) { progress.textContent = `Error: ${err.message}`; return; }
     }
     progress.textContent = `${uploadedFotoUrls.length} foto(s)`;
-    g('fotos-raw-hidden').value = uploadedFotoUrls.join(',');
+    g('fotos-raw-hidden').value = JSON.stringify(uploadedFotoUrls);
   };
 }
-function removeFoto(idx, el) { uploadedFotoUrls.splice(idx,1); el.remove(); g('fotos-raw-hidden').value = uploadedFotoUrls.join(','); }
+function removeFoto(idx, el) { uploadedFotoUrls.splice(idx,1); el.remove(); g('fotos-raw-hidden').value = JSON.stringify(uploadedFotoUrls); }
 
 // ════════════════════════════════════════════════════════════════
 // IMPORTACIÓN MASIVA DESDE EASYBROKER
