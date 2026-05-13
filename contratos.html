@@ -685,6 +685,16 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
           <input type="text" id="p-dom-vend" placeholder="Calle, número, colonia, C.P."/>
         </div>
       </div>
+      <div class="frow" id="p-banco-row" style="display:none">
+        <div class="f">
+          <label>Número de cuenta bancaria <span class="opt-badge">si aplica</span></label>
+          <input type="text" id="p-cuenta-vend" placeholder="Ej. 1234567890123456"/>
+        </div>
+        <div class="f">
+          <label>Banco <span class="opt-badge">si aplica</span></label>
+          <input type="text" id="p-banco-vend" placeholder="Ej. BBVA, Banamex, HSBC"/>
+        </div>
+      </div>
     </div>
 
     <div class="card">
@@ -752,7 +762,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
       <div class="frow">
         <div class="f">
           <label>Forma de pago del saldo</label>
-          <select id="p-forma-pago">
+          <select id="p-forma-pago" onchange="toggleBancoRow()">
             <option value="efectivo">Efectivo</option>
             <option value="transferencia bancaria">Transferencia bancaria</option>
             <option value="crédito hipotecario">Crédito hipotecario</option>
@@ -1379,6 +1389,8 @@ async function generarContrato(){
       monto_saldo:        getMonto('p-saldo') || (getMonto('p-precio') - getMonto('p-arras')),
       pena_convencional:  getMonto('p-pena') || getMonto('p-arras'),
       forma_pago_saldo:   gv('p-forma-pago'),
+      cuenta_vendedor:    gv('p-cuenta-vend'),
+      banco_vendedor:     gv('p-banco-vend'),
       fecha_limite_escritura: gv('p-fecha-limite'),
     };
   }
@@ -1553,6 +1565,12 @@ function validarFechas(){
     const dur = document.getElementById('a-duracion');
     if(dur && !dur.dataset.manual) dur.value = calcularPlazo(inicio, fin);
   }
+}
+
+function toggleBancoRow(){
+  const forma = document.getElementById('p-forma-pago')?.value || '';
+  const row   = document.getElementById('p-banco-row');
+  if(row) row.style.display = forma === 'transferencia bancaria' ? '' : 'none';
 }
 
 function calcularSaldo(){

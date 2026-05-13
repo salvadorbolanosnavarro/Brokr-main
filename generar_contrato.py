@@ -919,7 +919,7 @@ def generar_promesa(d, output_path):
       f"número {notario_num} en el estado de Michoacán, y debidamente inscrita en el Registro "
       f"Público de la Propiedad bajo el tomo {tomo} y registro {registro} del libro de propiedad; "
       f"que este se encuentra libre de todo gravamen y que no existe impedimento legal alguno para "
-      f"vender dicho inmueble.\n\n"
+      f"vender dicho inmueble, obligándose a la responsabilidad de su dicho.\n\n"
       f"Así mismo {el_vend} {prom_vend} señala como domicilio para recibir cualquier tipo de "
       f"notificación el ubicado en {dom_vend}, CORRESPONDIENTE AL MUNICIPIO DE MORELIA, MICHOACÁN.")
 
@@ -931,7 +931,9 @@ def generar_promesa(d, output_path):
       f"quien se identifica con credencial para votar emitida por el Instituto Nacional Electoral, "
       f"que en original exhibe y que se anexa en copia simple al presente instrumento.\n\n"
       f"Además, bajo protesta de decir verdad, manifiesta que los recursos con los que pretende "
-      f"adquirir el inmueble objeto de este contrato, son de procedencia lícita.\n\n"
+      f"adquirir el inmueble objeto de este contrato, son de procedencia lícita y los entrega libres "
+      f"de impuestos, deslindando al prominente vendedor de cualquier responsabilidad de cualquier "
+      f"índole por recibir como pago del precio pactado dichos recursos.\n\n"
       f"Así mismo señala como domicilio para recibir y oír notificaciones el ubicado en "
       f"{dom_comp}, CORRESPONDIENTE AL MUNICIPIO DE MORELIA, MICHOACÁN.")
 
@@ -940,14 +942,15 @@ def generar_promesa(d, output_path):
       "de acuerdo a las identificaciones que se describen anteriormente y que se exhiben el uno "
       "al otro en original, que es su voluntad sujetarse en los términos del presente instrumento "
       "y que en este contrato no existe dolo, mala fe, vicios en el consentimiento, ni ningún otro "
-      "que lo invalide. Además declaran que no obtienen enriquecimiento ilegítimo.")
+      "que lo invalide pues es ratificado en todas sus partes con su firma al calce y al margen en "
+      "todas las hojas de este contrato. Además declaran que no obtienen enriquecimiento ilegítimo.")
 
     p(doc, "- - - - - - - - - - - - - C L Á U S U L A S - - - - - - - - - - - - -",
       align=WD_ALIGN_PARAGRAPH.CENTER)
 
     # ── CLÁUSULAS ──
     clausula(doc, "PRIMERA.-", "OBJETO",
-        f"El C. {nombre_vend} promete VENDER, y el C. {nombre_comp} promete COMPRAR para sí, "
+        f"{el_vend} C. {nombre_vend} promete VENDER, y {el_comp} C. {nombre_comp} promete COMPRAR para sí, "
         f"el inmueble descrito en la declaración I, en el estado físico en que se encuentra, "
         f"que {el_vend} {prom_vend} entregará libre de gravamen, al corriente en sus pagos "
         f"de servicios e impuestos. Así mismo ambos se obligan a celebrar contrato definitivo "
@@ -959,23 +962,36 @@ def generar_promesa(d, output_path):
         f"A) A la firma del presente contrato la cantidad de {arras_num} ({arras_letra}) en "
         f"efectivo, cantidad que será recibida como depósito a título de arras para que en su "
         f"caso dicha cantidad sea aplicada como parte del pago del precio.\n\n"
-        f"B) La cantidad de {saldo_num} ({saldo_letra}) mediante {forma_pago} a más tardar "
-        f"el {fecha_limite}, previo a la firma de la escritura que certifique el contrato de "
-        f"compraventa o simultáneamente a esta.")
+        f"B) La cantidad de {saldo_num} ({saldo_letra}) mediante {forma_pago}"
+        + (f" a la cuenta no. {d.get('cuenta_vendedor','___')} del banco {d.get('banco_vendedor','___')} "
+           f"de {el_vend} {prom_vend}" if d.get('cuenta_vendedor') or d.get('banco_vendedor') else "")
+        + f" a más tardar el {fecha_limite}, previo a la firma de la escritura que certifique "
+        f"el contrato de compraventa o simultáneamente a esta.")
 
     clausula(doc, "TERCERA.-", "ESCRITURA",
         f"Ambas partes aceptan, entienden y se obligan a que la firma de la escritura pública "
         f"que certifique la compraventa sobre el inmueble objeto del presente contrato se celebre "
-        f"a más tardar el {fecha_limite}. EL PROMITENTE VENDEDOR se reserva el dominio y "
-        f"propiedad del inmueble materia del presente contrato hasta que hayan recibido el importe "
-        f"total del precio.")
+        f"a más tardar el {fecha_limite}. En el entendido que podrá ser antes, siempre y cuando "
+        f"existan las condiciones, así como si se alarga la fecha por causas no imputables a "
+        f"cualquiera de las partes no se entenderá como un evento de incumplimiento.\n\n"
+        f"Por tanto, {el_vend} {prom_vend} se reserva el dominio y propiedad del inmueble "
+        f"materia del presente contrato hasta que hayan recibido el importe total del precio.\n\n"
+        f"El otorgamiento del dominio y propiedad de {el_vend} {prom_vend} a {el_comp} {prom_comp} "
+        f"será al pago total del presente acuerdo de voluntades y firma del contrato de compraventa "
+        f"definitivo sobre el inmueble multicitado, y todo cuanto de hecho y derecho les corresponda, "
+        f"quedando obligad{'a' if sv=='F' else 'o'} {el_vend} {prom_vend} al saneamiento para el "
+        f"caso de evicción, una vez entregado el inmueble.\n\n"
+        f"{el_vend} {prom_vend} se obliga a firmar la escritura pública que certifique la "
+        f"compraventa sobre el inmueble objeto de este contrato, una vez que haya recibido el "
+        f"precio total pactado.")
 
     clausula(doc, "CUARTA.-", "RESCISIÓN",
         "Serán causas de rescisión del presente instrumento, si alguna de las declaraciones hechas "
         "por las partes resultan falsas; que alguna de las partes no entregue en su totalidad la "
         "documentación requerida para formalizar la compraventa; si la documentación entregada al "
         "notario que formalizará la compraventa es contraria a derecho o falsa; si no se formalizara "
-        "el contrato de compraventa a más tardar a la fecha pactada por las partes.")
+        "el contrato de compraventa a más tardar a la fecha pactada por las partes; cualquier "
+        "incumplimiento a las obligaciones adquiridas por las partes en este contrato.")
 
     clausula(doc, "QUINTA.-", "PENA CONVENCIONAL",
         f"En caso de rescisión del presente contrato por causas imputables a {el_comp} {prom_comp}, "
@@ -985,7 +1001,10 @@ def generar_promesa(d, output_path):
         f"En el caso de rescisión por causas imputables a {el_vend} {prom_vend}, deberá pagar a "
         f"{el_comp} {prom_comp} la cantidad de {pena_num} ({pena_letra}), a más tardar 3 días "
         f"posteriores a la notificación de su incumplimiento, además de devolver íntegramente todas "
-        f"las cantidades que le hayan sido entregadas.")
+        f"las cantidades que le hayan sido entregadas.\n\n"
+        f"Por lo tanto, en caso de rescisión, cesará de manera inmediata y como consecuencia "
+        f"{el_vend} {prom_vend} estará en aptitud de ofrecer en venta, traspasar, vender, arrendar "
+        f"o disponer con toda libertad del inmueble de su propiedad.")
 
     clausula(doc, "SEXTA.-", "GASTOS E IMPUESTOS",
         f"Acuerdan los contratantes que los gastos, impuestos, derechos y honorarios que se originen "
@@ -996,13 +1015,18 @@ def generar_promesa(d, output_path):
     clausula(doc, "SÉPTIMA.-", "CONFIDENCIALIDAD",
         "Las partes se obligan a mantener de forma confidencial toda la información y documentación "
         "relativa al presente instrumento y a la operación que prometen llevar a cabo, a no divulgar "
-        "a terceros sin el consentimiento previo y por escrito de cualquiera de ellas.")
+        "a terceros sin el consentimiento previo y por escrito de cualquiera de ellas. La obligación "
+        "de confidencialidad aquí establecida no aplicará respecto de aquella información que por su "
+        "naturaleza se encuentre o hubiere estado en dominio público por algún motivo que no "
+        "constituya un acto u omisión de cualquiera de las partes.")
 
     clausula(doc, "OCTAVA.-", "VALIDEZ",
         "Si cualquier parte de este contrato se considera inválida o no exigible por un tribunal "
-        "competente, las demás partes de este contrato se considerarán válidas y exigibles. "
-        "La falta de cualquiera de las partes de exigir los términos y condiciones de este contrato "
-        "no se considerarán como una renuncia al derecho de dicha parte de reclamarlos.")
+        "competente, entonces en la medida en que sea razonable y posible, las demás partes de este "
+        "contrato se considerarán válidas y exigibles, y se dará efecto a la intención manifestada "
+        "en la parte inválida o no exigible. La falta de cualquiera de las partes de exigir los "
+        "términos y condiciones de este contrato no se considerarán como una renuncia al derecho "
+        "de dicha parte de reclamarlos.")
 
     clausula(doc, "NOVENA.-", "JURISDICCIÓN",
         "Para la interpretación y cumplimiento de cualquier controversia que se pudiera suscitar "
