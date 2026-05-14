@@ -1196,19 +1196,25 @@ async function guardarComoInmueble() {
   };
 
   try {
-    const r = await fetch(SB_URL_FM + '/rest/v1/propiedades', {
-      method: 'POST',
-      headers: {
-        'apikey': SB_KEY_FM,
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=representation'
-      },
-      body: JSON.stringify(inmueble)
-    });
-    if (!r.ok) {
-      console.warn('No se pudo guardar en Mis Inmuebles:', await r.text());
-      return;
+    // Usar brokrSb.rest si está disponible (maneja auto-refresh de token)
+    if (window.brokrSb && window.brokrSb.rest) {
+      await window.brokrSb.rest('propiedades', { method: 'POST', body: inmueble });
+    } else {
+      const freshToken = (window.brokrSb?.ensureToken ? await window.brokrSb.ensureToken() : null) || token;
+      const r = await fetch(SB_URL_FM + '/rest/v1/propiedades', {
+        method: 'POST',
+        headers: {
+          'apikey': SB_KEY_FM,
+          'Authorization': 'Bearer ' + freshToken,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify(inmueble)
+      });
+      if (!r.ok) {
+        console.warn('No se pudo guardar en Mis Inmuebles:', await r.text());
+        return;
+      }
     }
     _mostrarToastInmueble();
   } catch (e) {
@@ -1231,7 +1237,7 @@ generarFicha = async function() {
   await _generarFichaOriginal();
   // Solo guardar si la generación fue exitosa (token presente)
   if (_lastPdfToken) {
-    guardarComoInmueble();
+    await guardarComoInmueble().catch(err => console.warn('guardarComoInmueble:', err));
   }
 };
 
