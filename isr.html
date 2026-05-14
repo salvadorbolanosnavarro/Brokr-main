@@ -907,7 +907,7 @@ html, body {
     <div id="res-inpc-row" class="inpc-row" style="display:none">
       <div class="inpc-cell"><div class="inpc-lbl">INPC adquisición</div><div class="inpc-val" id="res-inpc-adq">—</div></div>
       <div class="inpc-arr">→</div>
-      <div class="inpc-cell"><div class="inpc-lbl">INPC enajenación</div><div class="inpc-val" id="res-inpc-venta">—</div></div>
+      <div class="inpc-cell"><div class="inpc-lbl">INPC enajenación<br><span style="font-size:7.5px;opacity:0.7">mes anterior</span></div><div class="inpc-val" id="res-inpc-venta">—</div></div>
       <div class="inpc-arr">=</div>
       <div class="inpc-cell hl"><div class="inpc-lbl">Factor</div><div class="inpc-val" id="res-factor">—</div></div>
     </div>
@@ -1059,8 +1059,57 @@ function getINPC(mes, anio) {
   const key = anio+'-'+String(mes).padStart(2,'0');
   if (INPC_RAW[key]) return INPC_RAW[key];
   if (anio < 1981) return INPC_RAW["1981-01"];
-  return 144.307;
+  // Fallback: último INPC publicado conocido
+  const keys = Object.keys(INPC_RAW).sort();
+  return INPC_RAW[keys[keys.length-1]];
 }
+
+// REGLA NOTARIAL: el INPC de enajenación es el del MES INMEDIATO ANTERIOR a la firma.
+// Esto replica la práctica notarial mexicana (art. 124 LISR último párrafo: "hasta el mes
+// inmediato anterior a aquél en el que se efectúe la enajenación").
+function getINPCEnajenacion(mes, anio) {
+  let mesAnt = mes - 1, anioAnt = anio;
+  if (mesAnt < 1) { mesAnt = 12; anioAnt = anio - 1; }
+  return { mes: mesAnt, anio: anioAnt, inpc: getINPC(mesAnt, anioAnt) };
+}
+
+// TABLA ANEXO 9 RMF — Factor de actualización opcional por años transcurridos.
+// Fuente: Anexo 9 RMF 2025, DOF 07/abr/2025. Regla 3.15.1 RMF.
+// Opción del art. 121 fracc. I LISR: el contribuyente puede elegir entre este factor
+// (tabla) y el factor INPC (art. 124). En la práctica notarial, se calculan ambos y se
+// usa el MAYOR (a favor del contribuyente: mayor costo actualizado = menor ganancia).
+const TABLA_ANEXO9 = [
+  1.00, 1.04, 1.09, 1.17, 1.26, 1.30, 1.34, 1.40, 1.48, 1.55,
+  1.59, 1.64, 1.71, 1.77, 1.84, 1.91, 1.99, 2.12, 2.20, 2.28,
+  2.37, 2.48, 2.58, 2.72, 2.85, 3.08, 3.42, 4.07, 4.69, 5.93,
+  9.00, 9.92, 10.66, 11.87, 14.00, 17.79, 21.79, 29.32, 81.17, 165.86,
+  275.19, 442.38, 767.06, 1611.16, 2108.40, 2694.53, 3275.37, 3854.37, 4607.30, 5932.67,
+  6646.03, 7836.91, 9711.27, 10353.81, 10808.93, 11341.81, 11931.43, 12196.47, 12361.90, 12747.26,
+  12874.06, 13389.11, 13625.13, 13959.86, 13859.38, 14606.89, 14662.76, 15010.93, 16056.63, 16166.00,
+  17824.65, 20885.37, 21339.85, 20610.95, 23989.58, 28776.18, 31744.77, 35110.76, 37863.23, 40201.40,
+  47361.95, 53394.50, 69086.78, 87055.54, 96939.58, 103894.88, 106641.00, 105302.41, 112390.07, 138269.37,
+  147487.33, 147487.33, 155888.50, 167714.53, 157350.15, 139222.25
+];
+// Devuelve el factor de la tabla según años transcurridos enteros.
+// "Hasta 1 año" = índice 0; "más de N años hasta N+1 años" = índice N.
+function getFactorTablaSAT(anios) {
+  if (anios <= 0) return 1.00;
+  const idx = Math.min(anios, TABLA_ANEXO9.length - 1);
+  return TABLA_ANEXO9[idx];
+}
+
+// AÑOS TRANSCURRIDOS — calcula años cumplidos entre adquisición y enajenación,
+// asumiendo día 15 como punto medio del mes (la UI solo captura mes/año).
+// Tope legal: 20 años (art. 120 fracc. I LISR).
+function getAnosTranscurridos(mesC, anioC, mesV, anioV) {
+  // Diferencia en meses, asumiendo día 15 en ambos
+  const mesesTotales = (anioV - anioC) * 12 + (mesV - mesC);
+  let anios = Math.floor(mesesTotales / 12);
+  if (anios < 1) anios = 1;
+  if (anios > 20) anios = 20;
+  return anios;
+}
+
 function getTablaISR(anioVenta) { return (anioVenta<=2024)?TABLA_ISR_2024:TABLA_ISR; }
 function calcTablaProgresiva(tabla, base) {
   if (base<=0) return 0;
@@ -1115,9 +1164,25 @@ function calcISR() {
 
   const mN=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   const preAnio1981=anioC<1981;
+
+  // INPC: adquisición = mes/año del cierre original
+  //       enajenación = MES INMEDIATO ANTERIOR a la firma (práctica notarial)
   const inpcAdq=getINPC(mesC,anioC);
-  const inpcVenta=getINPC(mesV,anioV);
-  const factor=inpcVenta/inpcAdq;
+  const enajData=getINPCEnajenacion(mesV,anioV);
+  const inpcVenta=enajData.inpc;
+  const mesEnajINPC=enajData.mes;
+  const anioEnajINPC=enajData.anio;
+  // Factor INPC truncado a 4 decimales (práctica notarial estándar)
+  const factorINPC=Math.round((inpcVenta/inpcAdq)*10000)/10000;
+
+  // Años transcurridos (cumplidos, tope 20)
+  const anios=getAnosTranscurridos(mesC,anioC,mesV,anioV);
+
+  // Factor Anexo 9 (opción art. 121 fr. I LISR). En la práctica notarial,
+  // se compara contra el factor INPC y se usa el MAYOR (a favor del contribuyente).
+  const factorTabla=getFactorTablaSAT(anios);
+  const factor=Math.max(factorINPC,factorTabla);
+  const factorUsado=factor===factorTabla&&factorTabla>factorINPC?'tabla':'inpc';
 
   let costoAct=0, debugTerreno=null;
   if (tipo==='terreno') {
@@ -1126,7 +1191,7 @@ function calcISR() {
     const pctT=(parseInt((g('f-pct-terreno')||{}).value)||20)/100;
     const pctC=1-pctT;
     const valT=compra*pctT, valC=compra*pctC;
-    const anosConst=Math.max(0,anioV-anioC);
+    const anosConst=anios;
     const depPct=Math.min(0.54,anosConst*0.03);
     const valCDep=valC*(1-depPct);
     const terrenoAct=valT*factor, constAct=valCDep*factor;
@@ -1136,11 +1201,9 @@ function calcISR() {
 
   const mejA=mej*factor;
   const deducTotal=costoAct+mejA+com+esc;
-  const ganTotal=venta-deducTotal;
-
-  let anios=anioV-anioC;
-  if (mesV>mesC) anios+=1;
-  if (anios<1) anios=1;
+  // Costo mínimo: 10% del precio de enajenación (art. 121 fr. I LISR)
+  const deducFinal=Math.max(deducTotal,venta*0.10);
+  const ganTotal=venta-deducFinal;
 
   const LIMITE_EX=700000*8.763028;
   let baseGrav=0,isrTotal=0,exenta=false,exentaParcial=false;
@@ -1169,14 +1232,14 @@ function calcISR() {
   const isrFederal=Math.max(0,isrTotal-isrEstatal);
   const tasaEfecPct=baseGrav>0?(isrTotal/baseGrav)*100:0;
 
-  _isrData={tipo,venta,compra,costoAct,mej,mejA,com,esc,deducTotal,ganTotal,factor,inpcAdq,inpcVenta,mesC,anioC,mesV,anioV,mN,baseGrav,ganAcum,isrAcum,isrTotal,isrFederal,isrEstatal,anios,tasaEfec,tasaEfecPct,exenta,exentaParcial,nota,preAnio1981,LIMITE_EX,debugTerreno};
+  _isrData={tipo,venta,compra,costoAct,mej,mejA,com,esc,deducTotal,deducFinal,ganTotal,factor,factorINPC,factorTabla,factorUsado,inpcAdq,inpcVenta,mesC,anioC,mesV,anioV,mesEnajINPC,anioEnajINPC,mN,baseGrav,ganAcum,isrAcum,isrTotal,isrFederal,isrEstatal,anios,tasaEfec,tasaEfecPct,exenta,exentaParcial,nota,preAnio1981,LIMITE_EX,debugTerreno};
   renderResult(_isrData);
 }
 
 function renderResult(d) {
   const inpcRow=g('res-inpc-row');
   if (inpcRow) {
-    if (d.ganTotal>0){inpcRow.style.display='flex';if(g('res-inpc-adq'))g('res-inpc-adq').textContent=d.inpcAdq.toFixed(6);if(g('res-inpc-venta'))g('res-inpc-venta').textContent=d.inpcVenta.toFixed(6);if(g('res-factor'))g('res-factor').textContent=d.factor.toFixed(6);}
+    if (d.ganTotal>0){inpcRow.style.display='flex';if(g('res-inpc-adq'))g('res-inpc-adq').textContent=d.inpcAdq.toFixed(4);if(g('res-inpc-venta'))g('res-inpc-venta').textContent=d.inpcVenta.toFixed(4);if(g('res-factor'))g('res-factor').textContent=d.factor.toFixed(4);}
     else{inpcRow.style.display='none';}
   }
   const tipos={casa:'Casa habitación / Depto.',terreno:'Terreno',comercial:'Inmueble comercial'};
@@ -1193,9 +1256,9 @@ function renderResult(d) {
   if(g('res-cards'))g('res-cards').innerHTML=cards;
 
   const adqLbl=d.preAnio1981?`INPC adq. base ene-1981: ${d.inpcAdq.toFixed(6)}`:`INPC ${d.mN[d.mesC]} ${d.anioC}: ${d.inpcAdq.toFixed(6)}`;
-  const vtaLbl=`INPC ${d.mN[d.mesV]} ${d.anioV}: ${d.inpcVenta.toFixed(6)}`;
+  const vtaLbl=`INPC ${d.mN[d.mesEnajINPC]} ${d.anioEnajINPC} (mes anterior a firma): ${d.inpcVenta.toFixed(6)}`;
 
-  let bd=`<div class="br"><span class="bl">Precio de venta</span><span class="bv">${fmt(d.venta)}</span></div><div class="br sub"><span class="bl">${adqLbl}</span><span class="bv"></span></div><div class="br sub"><span class="bl">${vtaLbl}</span><span class="bv"></span></div><div class="br sub"><span class="bl">Factor de actualización</span><span class="bv">${d.factor.toFixed(6)}</span></div>`;
+  let bd=`<div class="br"><span class="bl">Precio de venta</span><span class="bv">${fmt(d.venta)}</span></div><div class="br sub"><span class="bl">${adqLbl}</span><span class="bv"></span></div><div class="br sub"><span class="bl">${vtaLbl}</span><span class="bv"></span></div><div class="br sub"><span class="bl">Factor INPC (truncado a 4 decimales)</span><span class="bv">${d.factorINPC.toFixed(4)}</span></div><div class="br sub"><span class="bl">Factor Tabla SAT (Anexo 9, ${d.anios} años)</span><span class="bv">${d.factorTabla.toFixed(4)}</span></div><div class="br sub"><span class="bl">Factor utilizado (mayor — art. 121 fr. I)</span><span class="bv" style="font-weight:600">${d.factor.toFixed(4)}</span></div>`;
 
   if(d.debugTerreno){
     const dt=d.debugTerreno;
@@ -1278,7 +1341,7 @@ function descargarPDF() {
   const tipos={casa:'Casa habitación / Departamento',terreno:'Terreno',comercial:'Inmueble comercial'};
   const bkdn=(g('res-bkdn')||{}).innerHTML||'';
   const nota=(g('res-nota')||{}).innerHTML||'';
-  const html=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/><title>Broquer · ISR — ${meses[d.mesV]} ${d.anioV}</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Inter','Helvetica Neue',sans-serif;font-size:12px;color:#1A1814;background:#FBF9F1;margin:0;padding:48px 56px;max-width:760px;-webkit-font-smoothing:antialiased;letter-spacing:-0.005em}h1{font-family:'Fraunces',serif;font-size:30px;font-weight:500;margin:0 0 6px;letter-spacing:-0.02em;color:#1A1814}.sub{color:#7A7065;font-size:11px;margin-bottom:20px;letter-spacing:0.01em}.badge{background:transparent;color:#7A7065;padding:0 0 3px;border-bottom:1px solid #C9C0AC;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1.6px}h2{font-family:'Inter',sans-serif;font-size:9px;font-weight:600;margin:26px 0 12px;color:#7A7065;text-transform:uppercase;letter-spacing:1.8px;border-bottom:none;padding-bottom:0}.br{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #EDE6D3;font-size:12px}.br.tot{font-family:'Fraunces',serif;font-weight:500;font-size:14px;border-bottom:1px solid #1A1814;padding:11px 0;letter-spacing:-0.005em}.br.sub{padding-left:18px;color:#7A7065;font-size:11px}.bl{color:#3D3631}.br.tot .bl{color:#1A1814;font-family:'Fraunces',serif}.bv{font-family:'Fraunces',serif;font-weight:500;font-variant-numeric:tabular-nums}.nota{background:transparent;border-left:2px solid #1A1814;padding:12px 16px;font-size:11px;margin-top:18px;border-radius:0;line-height:1.7;color:#3D3631}.footer{font-size:9px;color:#7A7065;margin-top:36px;padding-top:14px;border-top:1px solid #E8E2D2;display:flex;justify-content:space-between;letter-spacing:1.5px;text-transform:uppercase;font-weight:500}.inpc-row{display:grid;grid-template-columns:repeat(3,1fr);background:transparent;border:1px solid #E8E2D2;border-radius:0;margin-bottom:18px}.inpc-cell{padding:14px 12px;text-align:center;border-right:1px solid #EDE6D3}.inpc-cell:last-child{border-right:none}.inpc-lbl{color:#7A7065;font-size:8.5px;text-transform:uppercase;letter-spacing:1.4px;margin-bottom:6px;font-weight:600}.inpc-val{font-family:'Fraunces',serif;font-weight:500;font-size:16px;letter-spacing:-0.005em;color:#1A1814}.cards{display:grid;grid-template-columns:repeat(2,1fr);margin-bottom:18px;border:1px solid #E8E2D2}.card{background:transparent;border:none;border-right:1px solid #EDE6D3;border-radius:0;padding:18px 20px}.card:last-child{border-right:none}.card.dk,.card.gn{background:transparent}.card-l{font-size:8.5px;font-weight:600;text-transform:uppercase;color:#7A7065;margin-bottom:8px;letter-spacing:1.4px}.card-v{font-family:'Fraunces',serif;font-size:24px;font-weight:500;margin-bottom:4px;letter-spacing:-0.015em;color:#1A1814}.card.dk .card-v,.card.gn .card-v{color:#1A1814}.card-n{font-size:10px;color:#7A7065;letter-spacing:0.005em}</style></head><body><h1>Cálculo ISR por Enajenación</h1><div class="sub">Generado: ${new Date().toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'})} · Tipo: <span class="badge">${tipos[d.tipo]||d.tipo}</span> · Operación: ${d.mN[d.mesV]} ${d.anioV}</div><h2>Factor de Actualización INPC</h2><div class="inpc-row"><div class="inpc-cell"><div class="inpc-lbl">INPC Adquisición<br>${d.mN[d.mesC]} ${d.anioC}</div><div class="inpc-val">${d.inpcAdq.toFixed(6)}</div></div><div style="display:flex;align-items:center;color:#aaa;font-size:20px">→</div><div class="inpc-cell"><div class="inpc-lbl">INPC Enajenación<br>${d.mN[d.mesV]} ${d.anioV}</div><div class="inpc-val">${d.inpcVenta.toFixed(6)}</div></div><div style="display:flex;align-items:center;color:#aaa;font-size:20px">=</div><div class="inpc-cell"><div class="inpc-lbl">Factor</div><div class="inpc-val" style="color:#0a7a6a">${d.factor.toFixed(6)}</div></div></div>${d.ganTotal>0&&!d.exenta?`<h2>Resumen</h2><div class="cards"><div class="card dk"><div class="card-l">ISR Total a Pagar</div><div class="card-v">${fmt(d.isrTotal)}</div><div class="card-n">Tasa efectiva ${pct(d.tasaEfecPct)}</div></div><div class="card"><div class="card-l">ISR Entidad Federativa</div><div class="card-v">${fmt(d.isrEstatal)}</div><div class="card-n">5% ganancia — art. 127</div></div><div class="card"><div class="card-l">ISR Federación</div><div class="card-v">${fmt(d.isrFederal)}</div><div class="card-n">ISR total − retención estatal</div></div></div>`:''}<h2>Desglose del Cálculo</h2>${bkdn}${nota?`<div class="nota">${nota}</div>`:''}<div class="footer">Generado por BROKR® · Uso interno del agente inmobiliario · No sustituye al cálculo notarial definitivo</div></body></html>`;
+  const html=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/><title>Broquer · ISR — ${meses[d.mesV]} ${d.anioV}</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Inter','Helvetica Neue',sans-serif;font-size:12px;color:#1A1814;background:#FBF9F1;margin:0;padding:48px 56px;max-width:760px;-webkit-font-smoothing:antialiased;letter-spacing:-0.005em}h1{font-family:'Fraunces',serif;font-size:30px;font-weight:500;margin:0 0 6px;letter-spacing:-0.02em;color:#1A1814}.sub{color:#7A7065;font-size:11px;margin-bottom:20px;letter-spacing:0.01em}.badge{background:transparent;color:#7A7065;padding:0 0 3px;border-bottom:1px solid #C9C0AC;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1.6px}h2{font-family:'Inter',sans-serif;font-size:9px;font-weight:600;margin:26px 0 12px;color:#7A7065;text-transform:uppercase;letter-spacing:1.8px;border-bottom:none;padding-bottom:0}.br{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #EDE6D3;font-size:12px}.br.tot{font-family:'Fraunces',serif;font-weight:500;font-size:14px;border-bottom:1px solid #1A1814;padding:11px 0;letter-spacing:-0.005em}.br.sub{padding-left:18px;color:#7A7065;font-size:11px}.bl{color:#3D3631}.br.tot .bl{color:#1A1814;font-family:'Fraunces',serif}.bv{font-family:'Fraunces',serif;font-weight:500;font-variant-numeric:tabular-nums}.nota{background:transparent;border-left:2px solid #1A1814;padding:12px 16px;font-size:11px;margin-top:18px;border-radius:0;line-height:1.7;color:#3D3631}.footer{font-size:9px;color:#7A7065;margin-top:36px;padding-top:14px;border-top:1px solid #E8E2D2;display:flex;justify-content:space-between;letter-spacing:1.5px;text-transform:uppercase;font-weight:500}.inpc-row{display:grid;grid-template-columns:repeat(3,1fr);background:transparent;border:1px solid #E8E2D2;border-radius:0;margin-bottom:18px}.inpc-cell{padding:14px 12px;text-align:center;border-right:1px solid #EDE6D3}.inpc-cell:last-child{border-right:none}.inpc-lbl{color:#7A7065;font-size:8.5px;text-transform:uppercase;letter-spacing:1.4px;margin-bottom:6px;font-weight:600}.inpc-val{font-family:'Fraunces',serif;font-weight:500;font-size:16px;letter-spacing:-0.005em;color:#1A1814}.cards{display:grid;grid-template-columns:repeat(2,1fr);margin-bottom:18px;border:1px solid #E8E2D2}.card{background:transparent;border:none;border-right:1px solid #EDE6D3;border-radius:0;padding:18px 20px}.card:last-child{border-right:none}.card.dk,.card.gn{background:transparent}.card-l{font-size:8.5px;font-weight:600;text-transform:uppercase;color:#7A7065;margin-bottom:8px;letter-spacing:1.4px}.card-v{font-family:'Fraunces',serif;font-size:24px;font-weight:500;margin-bottom:4px;letter-spacing:-0.015em;color:#1A1814}.card.dk .card-v,.card.gn .card-v{color:#1A1814}.card-n{font-size:10px;color:#7A7065;letter-spacing:0.005em}</style></head><body><h1>Cálculo ISR por Enajenación</h1><div class="sub">Generado: ${new Date().toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'})} · Tipo: <span class="badge">${tipos[d.tipo]||d.tipo}</span> · Operación: ${d.mN[d.mesV]} ${d.anioV}</div><h2>Factor de Actualización INPC</h2><div class="inpc-row"><div class="inpc-cell"><div class="inpc-lbl">INPC Adquisición<br>${d.mN[d.mesC]} ${d.anioC}</div><div class="inpc-val">${d.inpcAdq.toFixed(6)}</div></div><div style="display:flex;align-items:center;color:#aaa;font-size:20px">→</div><div class="inpc-cell"><div class="inpc-lbl">INPC Enajenación<br>${d.mN[d.mesEnajINPC]} ${d.anioEnajINPC} (mes anterior)</div><div class="inpc-val">${d.inpcVenta.toFixed(6)}</div></div><div style="display:flex;align-items:center;color:#aaa;font-size:20px">=</div><div class="inpc-cell"><div class="inpc-lbl">Factor</div><div class="inpc-val" style="color:#0a7a6a">${d.factor.toFixed(4)}</div></div></div>${d.ganTotal>0&&!d.exenta?`<h2>Resumen</h2><div class="cards"><div class="card dk"><div class="card-l">ISR Total a Pagar</div><div class="card-v">${fmt(d.isrTotal)}</div><div class="card-n">Tasa efectiva ${pct(d.tasaEfecPct)}</div></div><div class="card"><div class="card-l">ISR Entidad Federativa</div><div class="card-v">${fmt(d.isrEstatal)}</div><div class="card-n">5% ganancia — art. 127</div></div><div class="card"><div class="card-l">ISR Federación</div><div class="card-v">${fmt(d.isrFederal)}</div><div class="card-n">ISR total − retención estatal</div></div></div>`:''}<h2>Desglose del Cálculo</h2>${bkdn}${nota?`<div class="nota">${nota}</div>`:''}<div class="footer">Generado por BROKR® · Uso interno del agente inmobiliario · No sustituye al cálculo notarial definitivo</div></body></html>`;
   const blob=new Blob([html],{type:'text/html;charset=utf-8'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
