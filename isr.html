@@ -448,173 +448,6 @@ html, body {
 }
 #ai-txt { font-size: 13px; line-height: 1.65; color: rgba(255,255,255,0.85); }
 
-/* ── SHAARK FLOTANTE ── */
-.shaark-fab {
-  position: fixed;
-  bottom: 24px;
-  right: 20px;
-  z-index: 200;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 10px;
-}
-
-.shaark-btn {
-  width: 58px; height: 58px;
-  border-radius: 20px;
-  background: var(--navy);
-  border: 2px solid rgba(255,255,255,0.15);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 26px;
-  cursor: pointer;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.25);
-  transition: transform 0.2s, box-shadow 0.2s;
-  position: relative;
-}
-.shaark-btn:active { transform: scale(0.93); }
-.shaark-btn.open { background: var(--navy-mid); border-color: rgba(255,255,255,0.25); }
-.shaark-pulse {
-  position: absolute;
-  top: -2px; right: -2px;
-  width: 12px; height: 12px;
-  border-radius: 50%;
-  background: #22c55e;
-  border: 2px solid var(--bg);
-}
-
-/* Chat window */
-.shaark-window {
-  width: min(300px, calc(100vw - 40px));
-  background: var(--navy);
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.3);
-  border: 1px solid rgba(255,255,255,0.08);
-  display: none;
-  flex-direction: column;
-  max-height: min(420px, calc(100vh - 160px));
-}
-.shaark-window.visible { display: flex; }
-
-.sw-header {
-  padding: 14px 16px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
-  flex-shrink: 0;
-}
-.sw-avatar {
-  width: 34px; height: 34px;
-  border-radius: 11px;
-  background: rgba(255,255,255,0.1);
-  display: flex; align-items: center; justify-content: center;
-  overflow: hidden;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-.sw-name { font-size: 14px; font-weight: 700; color: white; }
-.sw-status { font-size: 11px; color: rgba(255,255,255,0.55); font-weight: 500; }
-.sw-close {
-  margin-left: auto;
-  width: 28px; height: 28px;
-  border-radius: 9px;
-  background: rgba(255,255,255,0.07);
-  border: none;
-  color: rgba(255,255,255,0.5);
-  font-size: 16px;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: background 0.15s;
-}
-.sw-close:hover { background: rgba(255,255,255,0.12); }
-
-.sw-msgs {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.sw-msgs::-webkit-scrollbar { display: none; }
-
-.sw-bubble {
-  max-width: 85%;
-  padding: 9px 12px;
-  border-radius: 14px;
-  font-size: 13px;
-  line-height: 1.45;
-  font-weight: 400;
-}
-.sw-bubble.bot {
-  background: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.88);
-  border-bottom-left-radius: 4px;
-  align-self: flex-start;
-  border: 1px solid rgba(255,255,255,0.06);
-}
-.sw-bubble.user {
-  background: rgba(255,255,255,0.18);
-  color: white;
-  border-bottom-right-radius: 4px;
-  align-self: flex-end;
-}
-
-.sw-chips {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  padding: 0 12px 8px;
-}
-.sw-chip {
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 16px;
-  padding: 6px 11px;
-  font-size: 11px;
-  color: rgba(255,255,255,0.85);
-  cursor: pointer;
-  font-weight: 500;
-  white-space: nowrap;
-  font-family: var(--font);
-  transition: background 0.12s;
-}
-.sw-chip:active { background: rgba(255,255,255,0.18); }
-
-.sw-input-row {
-  display: flex;
-  gap: 8px;
-  padding: 10px 12px 12px;
-  border-top: 1px solid rgba(255,255,255,0.06);
-  flex-shrink: 0;
-}
-.sw-input {
-  flex: 1;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 12px;
-  padding: 9px 13px;
-  font-size: 13px;
-  color: white;
-  font-family: var(--font);
-  outline: none;
-}
-.sw-input::placeholder { color: rgba(255,255,255,0.28); }
-.sw-send {
-  width: 38px; height: 38px;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(255,255,255,0.2);
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 15px;
-  color: white;
-  transition: opacity 0.15s;
-  flex-shrink: 0;
-}
-.sw-send:active { opacity: 0.8; }
 
 /* ── MES/AÑO PICKER ── */
 .mp-trigger {
@@ -914,42 +747,13 @@ html, body {
     <div id="res-bkdn" class="res-bkdn"></div>
     <div id="res-nota" class="res-nota" style="display:none"></div>
     <div id="ai-box" class="ai-box">
-      <div class="ai-lbl"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg> Análisis de Shaark</div>
+      <div class="ai-lbl"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg> Análisis de Broquer</div>
       <div id="ai-txt"></div>
     </div>
   </div>
 
 </div><!-- /page-scroll -->
 
-<!-- SHAARK FLOTANTE -->
-<div class="shaark-fab">
-  <div class="shaark-window" id="shaark-window">
-    <div class="sw-header">
-      <div class="sw-avatar"><img src="isotipo-broquer.png" style="width:100%;height:100%;object-fit:cover;" alt="Shaark"/></div>
-      <div>
-        <div class="sw-name">Shaark</div>
-        <div class="sw-status">● En línea</div>
-      </div>
-      <button class="sw-close" onclick="toggleShaark()">✕</button>
-    </div>
-    <div class="sw-msgs" id="sw-msgs">
-      <div class="sw-bubble bot">Hola Chava 👋 Estoy aquí mientras calculas el ISR. ¿Necesitas ayuda con algo?</div>
-    </div>
-    <div class="sw-chips" id="sw-chips">
-      <div class="sw-chip" onclick="swChip('¿Cómo funciona el factor INPC?')">Factor INPC</div>
-      <div class="sw-chip" onclick="swChip('¿Qué es la exención 700,000 UDIS?')">Exención UDIS</div>
-      <div class="sw-chip" onclick="swChip('¿Cuándo aplica ISR estatal?')">ISR estatal</div>
-    </div>
-    <div class="sw-input-row">
-      <input class="sw-input" id="sw-input" type="text" placeholder="Pregunta algo..." onkeydown="swKey(event)"/>
-      <button class="sw-send" onclick="swSend()">➤</button>
-    </div>
-  </div>
-  <div class="shaark-btn" id="shaark-btn" onclick="toggleShaark()">
-    🦈
-    <div class="shaark-pulse"></div>
-  </div>
-</div>
 
 <script>
 /* ═══════════════════════════════════════
@@ -1308,10 +1112,10 @@ function renderResult(d) {
 
 async function fetchAnalysis(d) {
   if(g('ai-box'))g('ai-box').style.display='block';
-  if(g('ai-txt'))g('ai-txt').innerHTML='<span style="opacity:0.5">Shaark está analizando la operación…</span>';
+  if(g('ai-txt'))g('ai-txt').innerHTML='<span style="opacity:0.5">Broquer está analizando la operación…</span>';
   const prompt=`Operación enajenación inmueble en México:\n- Tipo: ${d.tipo}, Venta: ${fmt(d.venta)}, Compra: ${fmt(d.compra)} (${d.mN[d.mesC]} ${d.anioC})\n- Factor INPC: ${d.factor.toFixed(4)}, Ganancia total: ${fmt(d.ganTotal)}, Base gravable: ${fmt(d.baseGrav)}\n- Ganancia acumulable: ${fmt(d.ganAcum)}, ISR acumulable: ${fmt(d.isrAcum)}, Tasa efectiva: ${(d.tasaEfec*100).toFixed(2)}%\n- ISR total: ${fmt(d.isrTotal)}, ISR estatal 5%: ${fmt(d.isrEstatal)}, ISR federal: ${fmt(d.isrFederal)}\n- Exenta: ${d.exenta}, Exenta parcial: ${d.exentaParcial}\nEn 3 oraciones en español: 1) valida si el resultado es razonable, 2) la consideración fiscal más importante, 3) recomendación práctica para el agente.`;
   try {
-    const r=await fetch('https://api.navarroai.com.mx/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:280,temperature:0.5,messages:[{role:'system',content:'Eres Shaark, asistente experto de BROKR® en fiscalidad inmobiliaria mexicana. Responde en español, breve y práctico.'},{role:'user',content:prompt}]})});
+    const r=await fetch('https://api.navarroai.com.mx/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:280,temperature:0.5,messages:[{role:'system',content:'Eres Broquer, asistente experto de Broquer en fiscalidad inmobiliaria mexicana. Responde en español, breve y práctico.'},{role:'user',content:prompt}]})});
     const data=await r.json();
     const reply=data.choices?.[0]?.message?.content||'';
     if(g('ai-txt'))g('ai-txt').innerHTML=reply.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
@@ -1445,80 +1249,6 @@ document.addEventListener('DOMContentLoaded', function() {
   mpRenderMonths('c');
 });
 
-/* ── SHAARK FLOTANTE ── */
-let shaarkOpen = false;
-
-function toggleShaark() {
-  shaarkOpen = !shaarkOpen;
-  const win = g('shaark-window');
-  const btn = g('shaark-btn');
-  if (shaarkOpen) {
-    win.classList.add('visible');
-    btn.classList.add('open');
-    setTimeout(()=>{ const msgs=g('sw-msgs'); if(msgs) msgs.scrollTop=msgs.scrollHeight; },50);
-  } else {
-    win.classList.remove('visible');
-    btn.classList.remove('open');
-  }
-}
-
-function swSend() {
-  const input = g('sw-input');
-  const text = (input.value||'').trim();
-  if (!text) return;
-  swAddBubble(text, 'user');
-  input.value = '';
-  g('sw-chips') && (g('sw-chips').style.display = 'none');
-  setTimeout(() => swFetch(text), 600);
-}
-
-function swKey(e) { if (e.key==='Enter') swSend(); }
-
-function swChip(text) {
-  swAddBubble(text, 'user');
-  g('sw-chips') && (g('sw-chips').style.display = 'none');
-  setTimeout(() => swFetch(text), 600);
-}
-
-function swAddBubble(text, type) {
-  const msgs = g('sw-msgs');
-  const div = document.createElement('div');
-  div.className = 'sw-bubble ' + type;
-  div.textContent = text;
-  msgs.appendChild(div);
-  msgs.scrollTop = msgs.scrollHeight;
-}
-
-async function swFetch(text) {
-  const typing = document.createElement('div');
-  typing.className = 'sw-bubble bot';
-  typing.textContent = '...';
-  typing.id = 'sw-typing';
-  g('sw-msgs').appendChild(typing);
-  g('sw-msgs').scrollTop = g('sw-msgs').scrollHeight;
-
-  try {
-    const r = await fetch('https://api.navarroai.com.mx/chat', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile', max_tokens: 200, temperature: 0.6,
-        messages: [
-          {role:'system', content:'Eres Shaark, asistente de BROKR® especializado en ISR inmobiliario mexicano. Responde en español, de forma concisa y práctica. Máximo 2-3 oraciones.'},
-          {role:'user', content: text}
-        ]
-      })
-    });
-    const data = await r.json();
-    const reply = data.choices?.[0]?.message?.content || 'No pude obtener respuesta.';
-    const t = document.getElementById('sw-typing');
-    if (t) t.textContent = reply;
-  } catch(e) {
-    const t = document.getElementById('sw-typing');
-    if (t) t.textContent = 'Error de conexión. Intenta de nuevo.';
-  }
-  g('sw-msgs').scrollTop = g('sw-msgs').scrollHeight;
-}
 </script>
 <script src="app-shell.js" defer></script>
 </body>
