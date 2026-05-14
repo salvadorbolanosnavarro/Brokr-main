@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<link rel="icon" type="image/png" href="isotipo-broquer.png">
-<link rel="apple-touch-icon" href="isotipo-broquer.png">
+<link rel="icon" type="image/png" href="icon-192.png"/>
+<link rel="apple-touch-icon" href="isotipo-broquer.png"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Broquer — Contratos</title>
 <link rel="stylesheet" href="brokr-theme.css"/>
@@ -1464,7 +1464,6 @@ function getClausulasTexto(){
   return Array.from(items).map(t => t.value.trim()).filter(Boolean);
 }
 
-
 function toggleMismaPropOS(cb){
   const fields = ['calle-inm-os','numint-inm-os','colonia-inm-os','cp-inm-os','mpio-inm-os'];
   const src    = ['calle-os',    'numint-os',    'colonia-os',    'cp-os',    'mpio-os'];
@@ -1484,7 +1483,6 @@ function toggleMismaPropOS(cb){
     });
   }
 }
-
 
 function onFormaPagoChange(){
   const val   = document.getElementById('a-forma-pago')?.value;

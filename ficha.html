@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<link rel="icon" type="image/png" href="isotipo-broquer.png">
-<link rel="apple-touch-icon" href="isotipo-broquer.png">
+<link rel="icon" type="image/png" href="icon-192.png"/>
+<link rel="apple-touch-icon" href="isotipo-broquer.png"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"/>
 <title>Broquer — Ficha Técnica</title>
 <meta name="theme-color" content="#F7F5EE"/>
@@ -510,7 +510,6 @@ const SPEC_ICONS = {
   parking: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M5 17a2 2 0 104 0 2 2 0 00-4 0zM15 17a2 2 0 104 0 2 2 0 00-4 0zM3 17h2m4 0h6 M5 17V9l2-4h10l2 4v8h-2"/></svg>',
 };
 
-
 // ── IMAGE → BASE64 via Railway proxy ─────────────────
 async function imgToBase64(url) {
   if(!url) return null;
@@ -685,7 +684,6 @@ function renderFicha(p){
   g('print-bar').classList.add('show');
   el.scrollIntoView({behavior:'smooth', block:'start'});
 }
-
 
 // ── DESCARGA PDF VÍA RAILWAY ─────────────────────────────────
 async function descargarPDF(){

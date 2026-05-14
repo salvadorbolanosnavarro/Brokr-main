@@ -2,9 +2,9 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8"/>
+<link rel="icon" type="image/png" href="icon-192.png"/>
+<link rel="apple-touch-icon" href="isotipo-broquer.png"/>
   <title>Broquer — AVM</title>
-  <link rel="icon" type="image/png" href="isotipo-broquer.png">
-  <link rel="apple-touch-icon" href="isotipo-broquer.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -590,7 +590,6 @@ input:focus, select:focus, textarea:focus {
       );
     }
 
-
     // ─── COMPONENTE IA WEB SEARCH ───────────────────────────────
     function AvmIA() {
       const [form, setForm] = React.useState({
@@ -1134,7 +1133,6 @@ input:focus, select:focus, textarea:focus {
 
         return { analyzed, analyzedT, promHomol, promHomolT, valorMercado, valorMin, valorMax, vrnUnit, fec, vnrTotal, terrenoUnit, valorTerreno, valorFisico, rentaBruta, valorCapitalizacion, nComps, confianza, confianzaColor, dispersion };
       }, [sujeto, allComps]);
-
 
       return (
         <div style={{ fontFamily: "'Poppins', sans-serif", background: "var(--screen-bg)", minHeight: "100vh" }}>
