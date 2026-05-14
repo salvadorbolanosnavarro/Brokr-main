@@ -3761,7 +3761,7 @@ async def facebook_publish_property(request: Request):
     if precio_fmt: mensaje_lines.append(f"💰 {precio_fmt} MXN")
     if specs_str: mensaje_lines.append(specs_str)
     if descripcion: mensaje_lines.extend(["", descripcion[:200]])
-    mensaje_lines.extend(["", "✅ Publicado con BROKR®"])
+    mensaje_lines.extend(["", "Publicado con Broquer"])
     mensaje = "\n".join(mensaje_lines)
 
     # Publicar en Facebook
