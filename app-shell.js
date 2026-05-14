@@ -782,7 +782,7 @@
     bnav.innerHTML =
       bnavFixed.map(m => buildBnavItemLabel(m, activeKey)).join('') +
       `<button class="bk-bnav__item bk-bnav__broquer" id="bk-bnav-shaark" type="button" aria-label="Abrir Broquer">
-         <img src="isotipo-broquer.png" alt="" style="width:26px;height:26px;object-fit:contain;"/>
+         <img src="icon-192.png" alt="" style="width:26px;height:26px;object-fit:contain;"/>
          <span>Broquer</span>
        </button>` +
       buildBnavItemLabel(bnavFixed2[0], activeKey, 'Estimación') +
