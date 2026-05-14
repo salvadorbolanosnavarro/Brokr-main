@@ -271,6 +271,17 @@
 </style>
 </head>
 <body data-app="home">
+<script>
+/* ── Splash guard: redirect to splash if not seen this session ── */
+(function(){
+  if (!sessionStorage.getItem('brokr_splashed')) {
+    // Remember where we were trying to go so splash can come back here
+    sessionStorage.setItem('brokr_splash_dest', location.href);
+    window.location.replace('splash.html');
+  }
+})();
+</script>
+
 
 <div class="dash-scroll">
 

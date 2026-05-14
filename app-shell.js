@@ -22,7 +22,7 @@
 
   /* ── Páginas que NO requieren shell ni auth (login/registro/PDF preview) ── */
   const path = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
-  const NOSHELL = ['login.html', 'registro.html', 'ficha-pdf-preview.html'];
+  const NOSHELL = ['login.html', 'registro.html', 'ficha-pdf-preview.html', 'splash.html'];
   if (NOSHELL.includes(path)) return;
 
   /* ── Configuración de módulos ── */
