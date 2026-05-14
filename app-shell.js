@@ -22,7 +22,7 @@
 
   /* ── Páginas que NO requieren shell ni auth (login/registro/PDF preview) ── */
   const path = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
-  const NOSHELL = ['login.html', 'registro.html', 'ficha-pdf-preview.html', 'splash.html'];
+  const NOSHELL = ['login.html', 'registro.html', 'ficha-pdf-preview.html'];
   if (NOSHELL.includes(path)) return;
 
   /* ── Configuración de módulos ── */
@@ -68,8 +68,8 @@
     gavel:      '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0012 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 01-2.031.352 5.988 5.988 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 01-2.031.352 5.989 5.989 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971z"/>',
     cog:        '<path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a6.759 6.759 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.28z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>',
     bell:       '<path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/>',
-    peso:       '<path stroke-linecap="round" stroke-linejoin="round" d="M12 2v20M17 6.5C17 4.567 14.761 3 12 3S7 4.567 7 6.5c0 1.933 2.239 3 5 3s5 1.067 5 3c0 1.933-2.239 3-5 3s-5-1.067-5-3C7 17.433 9.239 19 12 19s5-1.567 5-3.5"/>',
-    landscape:  '<rect x="3" y="4" width="18" height="16" rx="1" ry="1"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 15l4.5-4.5 3 3 3.5-4 4 5.5"/>',
+    peso:       '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v3m0 12v3M8.5 6.5C8.5 5.119 10.1 4 12 4s3.5 1.119 3.5 2.5S13.9 9 12 9s-3.5 1.119-3.5 2.5S10.1 14 12 14s3.5-1.119 3.5-2.5"/>',
+    landscape:  '<path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75l2.25-2.25 1.5 1.5 2.25-2.25 2.25 2.25M8.25 15h7.5M5.625 3H8.25M5.625 3c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>',
     search:     '<circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/>',
     plus:       '<path stroke-linecap="round" d="M12 5v14M5 12h14"/>',
     arrowOut:   '<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/>',
@@ -780,7 +780,7 @@
     const bnav = document.createElement('nav');
     bnav.className = 'bk-bnav';
     bnav.innerHTML =
-      bnavFixed.map((m,i) => buildBnavItemLabel(m, activeKey, i===0 ? 'Inmuebles' : undefined)).join('') +
+      bnavFixed.map(m => buildBnavItemLabel(m, activeKey)).join('') +
       `<button class="bk-bnav__item bk-bnav__broquer" id="bk-bnav-shaark" type="button" aria-label="Abrir Broquer">
          <img src="isotipo-broquer.png" alt="" style="width:26px;height:26px;object-fit:contain;"/>
          <span>Broquer</span>
