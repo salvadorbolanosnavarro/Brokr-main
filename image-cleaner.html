@@ -3,7 +3,7 @@
 <head>
 <link rel="icon" type="image/png" href="isotipo-broquer.png"/>
 <link rel="apple-touch-icon" href="isotipo-broquer.png"/>
-<link rel="stylesheet" href="brokr-theme.css"/>
+<link rel="stylesheet" href="Broquer-theme.css"/>
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -301,7 +301,7 @@ function renderGrid() {
       statusText = 'Error: ' + (res.error || '').substring(0, 50);
     }
     const rightSrc = cleanedSrc || origUrl;
-    const rightLabel = cleanedSrc ? (res && res.used_gemini ? 'BROKR AI' : 'EDITADA') : 'ORIGINAL';
+    const rightLabel = cleanedSrc ? (res && res.used_gemini ? 'Broquer AI' : 'EDITADA') : 'ORIGINAL';
     const isChecked = selectedSet.has(i) ? 'checked' : '';
     const checkVisible = res && res.cleaned_b64 ? '' : ' style="display:none"';
     return `
@@ -490,7 +490,7 @@ function updateCard(i, res) {
   if (res.cleaned_b64) {
     const src = 'data:' + res.content_type + ';base64,' + res.cleaned_b64;
     if (rightImg) rightImg.src = src;
-    if (rightLbl) rightLbl.textContent = res.used_gemini ? 'BROKR AI' : 'EDITADA';
+    if (rightLbl) rightLbl.textContent = res.used_gemini ? 'Broquer AI' : 'EDITADA';
     if (s) { s.className = 'card-status ok'; s.textContent = res.used_gemini ? 'Mejorada con Broquer AI' : 'Mejorada'; }
     if (chk) chk.style.display = 'flex';
     if (footer && !selectionMode) {
@@ -526,7 +526,7 @@ async function downloadAll() {
   const processed = results.map((r, i) => ({r, i})).filter(({r}) => r && r.cleaned_b64);
   if (!processed.length) { showToast('No hay fotos editadas aún'); return; }
   // Suppress Shaark wake-word during download to avoid false triggers
-  try { window.parent.postMessage({ type: 'brokr-suppress-wake', duration: 5000 }, '*'); } catch(e){}
+  try { window.parent.postMessage({ type: 'Broquer-suppress-wake', duration: 5000 }, '*'); } catch(e){}
   showToast(`Descargando ${processed.length} imagen${processed.length !== 1 ? 'es' : ''}…`);
   for (const {i} of processed) {
     downloadOne(i);
@@ -538,7 +538,7 @@ function downloadSelected() {
   if (selectedSet.size === 0) { showToast('Selecciona al menos una imagen'); return; }
   const toDownload = [...selectedSet].filter(i => results[i] && results[i].cleaned_b64);
   if (!toDownload.length) { showToast('Sin imágenes válidas en la selección'); return; }
-  try { window.parent.postMessage({ type: 'brokr-suppress-wake', duration: 5000 }, '*'); } catch(e){}
+  try { window.parent.postMessage({ type: 'Broquer-suppress-wake', duration: 5000 }, '*'); } catch(e){}
   showToast(`Descargando ${toDownload.length} imagen${toDownload.length !== 1 ? 'es' : ''}…`);
   toDownload.forEach((i, idx) => {
     setTimeout(() => downloadOne(i), idx * 250);
@@ -559,8 +559,8 @@ function useInFicha() {
 
   // Share via parent window (same-origin iframe)
   try {
-    window.parent.brokrEditorImages = imagesToUse;
-    window.parent.postMessage({ type: 'brokr-use-in-ficha' }, '*');
+    window.parent.BroquerEditorImages = imagesToUse;
+    window.parent.postMessage({ type: 'Broquer-use-in-ficha' }, '*');
     showToast(`${imagesToUse.length} imagen${imagesToUse.length !== 1 ? 'es' : ''} enviada${imagesToUse.length !== 1 ? 's' : ''} a fichas técnicas`);
   } catch(e) {
     showToast('Error al comunicar con el módulo de fichas');
