@@ -1607,27 +1607,35 @@
     // Escuchar cuando la ventana popup mande el resultado
     window._fbOAuthHandler = async function(code) {
       const tok2 = getToken();
+      const toast = document.getElementById('pd-toast-fb');
       try {
+        // 1. Intercambiar code por token de página
         const r = await fetch(API_BASE + '/facebook/callback?code=' + encodeURIComponent(code) + '&redirect_uri=' + redirectUri, {
           headers: { Authorization: 'Bearer ' + tok2 }
         });
         const d = await r.json();
-        if (d.ok) {
-          // Guardar en backend
-          await fetch(API_BASE + '/facebook/save-page', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok2 },
-            body: JSON.stringify({ page_id: d.page_id, page_name: d.page_name, page_token: d.page_token })
-          });
-          document.getElementById('pd-fb-dot').className = 'dot ok';
-          document.getElementById('pd-fb-status-text').textContent = 'Conectado — ' + d.page_name;
-          document.getElementById('pd-fb-btn').textContent = 'Cambiar página de Facebook';
+        if (!d.ok) {
+          throw new Error(d.error || 'Error al obtener token de Facebook');
         }
+
+        // 2. Guardar en Supabase vía backend
+        const r2 = await fetch(API_BASE + '/facebook/save-page', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok2 },
+          body: JSON.stringify({ page_id: d.page_id, page_name: d.page_name, page_token: d.page_token })
+        });
+        if (!r2.ok) throw new Error('Error al guardar la conexión');
+
+        // 3. Invalidar caché y recargar drawer desde Supabase para confirmar
+        invalidateProfileCache();
+        await loadProfileData();
+
       } catch(e) {
-        const toast = document.getElementById('pd-toast-fb');
-        toast.textContent = 'Error al conectar. Intenta de nuevo.';
-        toast.className = 'bk-pd-toast err';
-        setTimeout(() => { toast.className = 'bk-pd-toast'; }, 4000);
+        if (toast) {
+          toast.textContent = e.message || 'Error al conectar. Intenta de nuevo.';
+          toast.className = 'bk-pd-toast err';
+          setTimeout(() => { toast.className = 'bk-pd-toast'; }, 4000);
+        }
       }
     };
   }
