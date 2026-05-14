@@ -1638,6 +1638,15 @@
     if (!profile) return; // redirected to login
     injectShell(profile);
 
+    // ── Cargar configuración pública del backend (FB_APP_ID, etc.) ──────────
+    try {
+      const cfgRes = await fetch(API_BASE + '/config/public');
+      if (cfgRes.ok) {
+        const cfg = await cfgRes.json();
+        if (cfg.fb_app_id) window._brokrFbAppId = cfg.fb_app_id;
+      }
+    } catch (_) { /* sin conexión — connectFacebook mostrará su propio error */ }
+
     // ════════════════════════════════════════════════════════════════
     // window.brokrSb — helper centralizado con auto-refresh
     // Lo usan contactos.html, propiedades.html, index.html, etc.

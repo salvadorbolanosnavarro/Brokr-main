@@ -73,6 +73,9 @@ APIFY_API_KEY = os.environ.get("APIFY_API_KEY", "")
 GOOGLE_PLACES_KEY = os.environ.get("GOOGLE_PLACES_KEY", "")
 SUPABASE_URL      = os.environ.get("SUPABASE_URL", "")
 SUPABASE_KEY      = os.environ.get("SUPABASE_ANON_KEY", "")
+FB_APP_ID     = os.environ.get("FB_APP_ID", "")
+FB_APP_SECRET = os.environ.get("FB_APP_SECRET", "")
+FRONTEND_URL  = os.environ.get("FRONTEND_URL", "https://app.navarroai.com.mx")
 # service_role key — bypasea RLS. Solo para operaciones del backend en nombre
 # del usuario, DESPUÉS de validar su JWT con get_user_id_from_token().
 # NUNCA expongas esta variable al frontend.
@@ -248,6 +251,12 @@ async def get_eb_key(request: Request):
     else:
         masked = ""
     return {"configured": bool(key), "masked": masked}
+
+@app.get("/config/public")
+async def get_public_config():
+    """Devuelve configuración pública que el frontend necesita al arrancar.
+    FB_APP_ID es un ID de app de Meta — no es secreto, puede exponerse al cliente."""
+    return {"fb_app_id": FB_APP_ID}
 
 # ════════════════════════════════════════════════════════════════
 # Endpoint unificado para el perfil del usuario.
@@ -3435,9 +3444,6 @@ async def comparables_cercanos(req: CercanosRequest):
 
 # ─── LIMPIEZA DE IMÁGENES ─────────────────────────────────────────────────────
 
-FB_APP_ID     = os.environ.get("FB_APP_ID", "")
-FB_APP_SECRET = os.environ.get("FB_APP_SECRET", "")
-FRONTEND_URL  = os.environ.get("FRONTEND_URL", "https://brokr.app")
 
 def _process_image_sync(file_bytes: bytes, content_type: str) -> bytes:
     """Pipeline de mejora automática (sin IA generativa): denoising, CLAHE, WB, unsharp."""
