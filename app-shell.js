@@ -1340,6 +1340,7 @@
               <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
               Conectar página de Facebook
             </button>
+            <button class="bk-pd-btn bk-pd-btn-outline" id="pd-fb-disconnect-btn" onclick="disconnectFacebook()" style="margin-top:8px;display:none">Desconectar Facebook</button>
             <div class="bk-pd-toast" id="pd-toast-fb"></div>
           </div>
         </div>
@@ -1477,14 +1478,18 @@
     const fdot = document.getElementById('pd-fb-dot');
     const ftxt = document.getElementById('pd-fb-status-text');
     const fbtn = document.getElementById('pd-fb-btn');
+    const fdisBtn = document.getElementById('pd-fb-disconnect-btn');
     if (fdot && ftxt) {
       if (data.fb && data.fb.connected) {
         fdot.className = 'dot ok';
         ftxt.textContent = 'Conectado — ' + (data.fb.page_name || 'página vinculada');
         if (fbtn) fbtn.textContent = 'Cambiar página de Facebook';
+        if (fdisBtn) fdisBtn.style.display = 'block';
       } else {
         fdot.className = 'dot warn';
         ftxt.textContent = 'Sin conectar';
+        if (fbtn) fbtn.textContent = 'Conectar página de Facebook';
+        if (fdisBtn) fdisBtn.style.display = 'none';
       }
     }
   }
@@ -1582,6 +1587,35 @@
     setTimeout(() => { toast.className = 'bk-pd-toast'; }, 4000);
   }
   window.disconnectEbKey = disconnectEbKey;
+
+  async function disconnectFacebook() {
+    if (!confirm('¿Desconectar tu página de Facebook? Tendrás que volver a conectarla si quieres publicar propiedades.')) return;
+    const tok = getToken();
+    const toast = document.getElementById('pd-toast-fb');
+    toast.className = 'bk-pd-toast';
+    try {
+      const r = await fetch(API_BASE + '/facebook/connection', {
+        method: 'DELETE',
+        headers: { Authorization: 'Bearer ' + tok }
+      });
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        throw new Error(d.detail || 'Error al desconectar');
+      }
+      invalidateProfileCache();
+      toast.textContent = 'Facebook desconectado.';
+      toast.className = 'bk-pd-toast ok';
+      document.getElementById('pd-fb-dot').className = 'dot warn';
+      document.getElementById('pd-fb-status-text').textContent = 'Sin conectar';
+      document.getElementById('pd-fb-btn').textContent = 'Conectar página de Facebook';
+      document.getElementById('pd-fb-disconnect-btn').style.display = 'none';
+    } catch(e) {
+      toast.textContent = e.message || 'No se pudo desconectar.';
+      toast.className = 'bk-pd-toast err';
+    }
+    setTimeout(() => { toast.className = 'bk-pd-toast'; }, 4000);
+  }
+  window.disconnectFacebook = disconnectFacebook;
 
 
 

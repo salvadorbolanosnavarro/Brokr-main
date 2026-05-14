@@ -3718,6 +3718,23 @@ async def facebook_get_connection(request: Request):
         pass
     return {"connected": False}
 
+@app.delete("/facebook/connection")
+async def facebook_disconnect(request: Request):
+    """Elimina la conexión de Facebook del usuario en Supabase."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autenticado")
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        raise HTTPException(status_code=500, detail="Supabase no configurado")
+    async with httpx.AsyncClient(timeout=10) as client:
+        await client.delete(
+            f"{SUPABASE_URL}/rest/v1/user_integrations",
+            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
+            params={"user_id": f"eq.{user_id}", "provider": "eq.facebook"}
+        )
+    return {"ok": True}
+
+
 @app.post("/facebook/publish-property")
 async def facebook_publish_property(request: Request):
     """Publica una propiedad en Facebook usando el token guardado del usuario."""
@@ -3761,7 +3778,7 @@ async def facebook_publish_property(request: Request):
     if precio_fmt: mensaje_lines.append(f"💰 {precio_fmt} MXN")
     if specs_str: mensaje_lines.append(specs_str)
     if descripcion: mensaje_lines.extend(["", descripcion[:200]])
-    mensaje_lines.extend(["", "Publicado con Broquer"])
+    mensaje_lines.extend(["", "✅ Publicado con BROKR®"])
     mensaje = "\n".join(mensaje_lines)
 
     # Publicar en Facebook
