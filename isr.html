@@ -72,7 +72,7 @@
 
 <style>
 /* ═══════════════════════════════════════
-   Broquer DESIGN SYSTEM — ISR MODULE
+   BROKR® DESIGN SYSTEM — ISR MODULE
    Paleta: Blanco · Navy · Teal
    Tipografía: Poppins
 ═══════════════════════════════════════ */
@@ -1115,7 +1115,7 @@ function renderResult(d) {
   if(!d.exenta&&d.baseGrav>0){
     bd+=`<div class="br"><span class="bl">Años de tenencia (art. 120)</span><span class="bv">${d.anios}</span></div>`;
     bd+=`<div class="br sub"><span class="bl">Ganancia acumulable (÷ ${d.anios} años)</span><span class="bv">${fmt(d.ganAcum)}</span></div>`;
-    bd+=`<div class="br sub"><span class="bl">ISR s/ ganancia acumulable (art. 152)</span><span class="bv">${fmt(d.isrAcum)}</span></div>`;
+    bd+=`<div class="br sub"><span class="bl">ISR s/ ganancia acumulable (art. 126 LISR)</span><span class="bv">${fmt(d.isrAcum)}</span></div>`;
     bd+=`<div class="br sub"><span class="bl">Tasa efectiva</span><span class="bv">${(d.tasaEfec*100).toFixed(4)}%</span></div>`;
     bd+=`<div class="br tot"><span class="bl">ISR total (ISR acumulable × ${d.anios} años)</span><span class="bv">${fmt(d.isrTotal)}</span></div>`;
     bd+=`<div class="br"><span class="bl">ISR Entidad Federativa 5% (art. 127)</span><span class="bv">${fmt(d.isrEstatal)}</span></div>`;
@@ -1136,7 +1136,7 @@ function renderResult(d) {
   if(notaEl){
     notaEl.style.display='block';
     const notaPM=`<br><br><strong>Nota para el agente:</strong> Si el vendedor es persona moral, o persona física con actividad empresarial y este inmueble forma parte de su activo, las reglas de retención del ISR pueden cambiar — en ese caso el notario no retiene y el contribuyente lo declara directamente. Confírmalo con el cliente antes de cerrar.`;
-    notaEl.innerHTML=`<strong>⚠️ Cálculo orientativo</strong> — metodología notarial arts. 121, 124, 120, 152 y 127 LISR. El notario realiza el cálculo definitivo con datos exactos SAT/Banxico.`+(comp.length?`<br><br>Documentos que deberá presentar el vendedor:${compH}`:'')+( d.nota?`<br><br><strong>Nota:</strong> ${d.nota}`:'')+notaPM;
+    notaEl.innerHTML=`<strong>⚠️ Cálculo orientativo</strong> — metodología notarial arts. 121, 124, 120, 126 y 127 LISR. El notario realiza el cálculo definitivo con datos exactos SAT/INEGI.`+(comp.length?`<br><br>Documentos que deberá presentar el vendedor:${compH}`:'')+( d.nota?`<br><br><strong>Nota:</strong> ${d.nota}`:'')+notaPM;
   }
   if(g('res'))g('res').style.display='block';
   if(g('isr-form'))g('isr-form').style.display='none';
@@ -1182,13 +1182,15 @@ function descargarPDF() {
   const nota=(g('res-nota')||{}).innerHTML||'';
 
   const html=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/>
-<title>Broquer · ISR — ${meses[d.mesV]} ${d.anioV}</title>
+<title>Brokr · ISR — ${meses[d.mesV]} ${d.anioV}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  @page{size:A4;margin:18mm 20mm 16mm 20mm}
+  @page{size:A4;margin:14mm 18mm 12mm 18mm}
+  html{height:100%}
+  body{height:100%;overflow:hidden}
   body{
     font-family:'Inter','Helvetica Neue',sans-serif;
     font-size:11.5px;color:#1A1814;background:#fff;
@@ -1196,16 +1198,16 @@ function descargarPDF() {
     line-height:1.5;
   }
   /* ── HEADER ── */
-  .hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:16px;border-bottom:1.5px solid #1A1814}
+  .hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;padding-bottom:12px;border-bottom:1.5px solid #1A1814}
   .hdr-left h1{font-family:'Fraunces',serif;font-size:26px;font-weight:400;letter-spacing:-0.025em;color:#1A1814;line-height:1.1;margin-bottom:5px}
   .hdr-left .meta{font-size:10px;color:#7A7065;letter-spacing:0.01em}
   .hdr-right{text-align:right}
   .tipo-badge{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#0a7a6a;background:#e8f5f2;padding:4px 10px;border-radius:20px;display:inline-block;margin-bottom:6px}
   .fecha{font-size:9.5px;color:#7A7065}
   /* ── SECTION LABEL ── */
-  .sec-lbl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#7A7065;margin:22px 0 10px;padding-bottom:5px;border-bottom:1px solid #E8E2D2}
+  .sec-lbl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#7A7065;margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid #E8E2D2}
   /* ── INPC ROW ── */
-  .inpc-row{display:grid;grid-template-columns:1fr 20px 1fr 20px 1fr;gap:0;border:1px solid #E8E2D2;margin-bottom:20px;border-radius:4px;overflow:hidden}
+  .inpc-row{display:grid;grid-template-columns:1fr 20px 1fr 20px 1fr;gap:0;border:1px solid #E8E2D2;margin-bottom:12px;border-radius:4px;overflow:hidden}
   .inpc-cell{padding:12px 14px;text-align:center;border-right:1px solid #EDE6D3}
   .inpc-cell:last-child{border-right:none}
   .inpc-cell.hl{background:#f0faf7}
@@ -1214,7 +1216,7 @@ function descargarPDF() {
   .inpc-val{font-family:'Fraunces',serif;font-weight:400;font-size:15px;letter-spacing:-0.01em;color:#1A1814}
   .inpc-cell.hl .inpc-val{color:#0a7a6a;font-weight:500}
   /* ── CARDS ── */
-  .cards{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid #E8E2D2;border-radius:4px;overflow:hidden;margin-bottom:20px}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid #E8E2D2;border-radius:4px;overflow:hidden;margin-bottom:12px}
   .card{padding:14px 16px;border-right:1px solid #EDE6D3}
   .card:last-child{border-right:none}
   .card-l{font-size:7.5px;font-weight:600;text-transform:uppercase;letter-spacing:1.4px;color:#7A7065;margin-bottom:6px}
@@ -1223,7 +1225,7 @@ function descargarPDF() {
   .card.total .card-v{color:#c0392b;font-weight:500}
   .card.iva .card-v{color:#b45309}
   /* ── DESGLOSE ── */
-  .br{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px solid #EDE6D3;font-size:11px}
+  .br{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid #EDE6D3;font-size:11px}
   .br:last-child{border-bottom:none}
   .br.sub{padding-left:16px;color:#7A7065;font-size:10px}
   .br.tot{font-size:12.5px;padding:10px 0;border-bottom:1.5px solid #1A1814;border-top:1px solid #C9C0AC;margin-top:2px}
@@ -1236,7 +1238,7 @@ function descargarPDF() {
   .nota ul{margin:4px 0 0 14px}
   .nota li{margin-bottom:2px}
   /* ── FOOTER ── */
-  .footer{margin-top:28px;padding-top:10px;border-top:1px solid #E8E2D2;display:flex;justify-content:space-between;align-items:center}
+  .footer{margin-top:16px;padding-top:8px;border-top:1px solid #E8E2D2;display:flex;justify-content:space-between;align-items:center}
   .footer-brand{font-family:'Fraunces',serif;font-size:13px;font-weight:400;color:#1A1814;letter-spacing:-0.01em}
   .footer-brand span{color:#0a7a6a}
   .footer-disc{font-size:8px;color:#A09488;letter-spacing:0.5px;text-align:right;max-width:340px;line-height:1.5}
@@ -1308,8 +1310,8 @@ function descargarPDF() {
   ${nota?`<div class="nota">${nota}</div>`:''}
 
   <div class="footer">
-    <div class="footer-brand">Broquer<span>®</span></div>
-    <div class="footer-disc">Uso interno del agente inmobiliario · No sustituye el cálculo notarial definitivo · Arts. 119–127 LISR</div>
+    <div class="footer-brand">Brokr<span>®</span></div>
+    <div class="footer-disc">Uso interno del agente inmobiliario · No sustituye al cálculo notarial definitivo · Arts. 119–127 LISR · INPC: INEGI</div>
   </div>
 </body></html>`;
 
