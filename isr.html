@@ -940,7 +940,7 @@ function calcTablaProgresiva(tabla, base) {
 function onTipoChange() {
   const v = g('f-tipo').value;
   g('sec-casa').style.display = v==='casa'?'block':'none';
-  g('iva-note').style.display = v==='comercial'?'block':'none';
+  const ivaN=g('iva-note'); if(ivaN) ivaN.style.display = v==='comercial'?'block':'none';
   const stc = g('sec-terreno-const');
   if (stc) stc.style.display = v==='terreno'?'none':'block';
 }
