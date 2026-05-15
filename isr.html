@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<link rel="icon" type="image/png" href="isotipo-broquer.png"/>
+<link rel="apple-touch-icon" href="isotipo-broquer.png"/>
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style id="broquer-skin">
   html,body{background:var(--paper)!important;color:var(--ink)!important;font-family:var(--font-sans)!important;letter-spacing:-0.01em}
@@ -63,8 +65,6 @@
 </style>
 
 <meta charset="UTF-8"/>
-<link rel="icon" type="image/png" href="icon-192.png"/>
-<link rel="apple-touch-icon" href="isotipo-broquer.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
 <title>ISR — Broquer®</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -448,6 +448,7 @@ html, body {
 }
 #ai-txt { font-size: 13px; line-height: 1.65; color: rgba(255,255,255,0.85); }
 
+
 /* ── MES/AÑO PICKER ── */
 .mp-trigger {
   width: 100%;
@@ -753,6 +754,7 @@ html, body {
 
 </div><!-- /page-scroll -->
 
+
 <script>
 /* ═══════════════════════════════════════
    LÓGICA ISR — 100% intacta
@@ -825,11 +827,12 @@ const INPC_RAW = {
   "2023-01":127.336,"2023-02":128.046,"2023-03":128.389,"2023-04":128.363,"2023-05":128.084,"2023-06":128.214,"2023-07":128.832,"2023-08":129.545,"2023-09":130.12,"2023-10":130.609,"2023-11":131.445,"2023-12":132.373,
   "2024-01":133.555,"2024-02":133.681,"2024-03":134.065,"2024-04":134.336,"2024-05":134.087,"2024-06":134.594,"2024-07":136.003,"2024-08":136.013,"2024-09":136.08,"2024-10":136.828,"2024-11":137.424,"2024-12":137.949,
   "2025-01":138.343,"2025-02":138.726,"2025-03":139.161,"2025-04":139.62,"2025-05":140.012,"2025-06":140.405,"2025-07":140.78,"2025-08":140.867,"2025-09":141.197,"2025-10":141.708,"2025-11":142.645,"2025-12":143.042,
-  "2026-01":143.588,"2026-02":144.307
+  "2026-01":143.588,"2026-02":144.307,"2026-03":145.544,"2026-04":145.831
 };
 
-const TABLA_ISR = [
-  {li:0,         ls:8952.49,     cf:0,          tasa:0.0192},
+// Tarifa anual 2025 — art. 152 LISR (mismos valores 2024, sin actualización ese año)
+const TABLA_ISR_2025 = [
+  {li:0.01,      ls:8952.49,     cf:0,          tasa:0.0192},
   {li:8952.50,   ls:75984.55,    cf:171.88,     tasa:0.0640},
   {li:75984.56,  ls:133536.07,   cf:4461.94,    tasa:0.1088},
   {li:133536.08, ls:155229.80,   cf:10723.55,   tasa:0.1600},
@@ -840,6 +843,21 @@ const TABLA_ISR = [
   {li:1127926.85,ls:1503902.46,  cf:271981.99,  tasa:0.3200},
   {li:1503902.47,ls:4511707.37,  cf:392294.17,  tasa:0.3400},
   {li:4511707.38,ls:Infinity,    cf:1417164.67, tasa:0.3500}
+];
+// Tarifa anual 2026 — Anexo 8 RMF 2026 (DOF 28/12/2025), art. 152 LISR
+// Actualizada por inflación acumulada 13.21% (INPC nov 2022 → nov 2025)
+const TABLA_ISR = [
+  {li:0.01,      ls:10135.11,    cf:0,          tasa:0.0192},
+  {li:10135.12,  ls:86022.11,    cf:194.59,     tasa:0.0640},
+  {li:86022.12,  ls:151176.19,   cf:5051.37,    tasa:0.1088},
+  {li:151176.20, ls:175735.66,   cf:12140.13,   tasa:0.1600},
+  {li:175735.67, ls:210403.69,   cf:16069.64,   tasa:0.1792},
+  {li:210403.70, ls:424353.97,   cf:22282.14,   tasa:0.2136},
+  {li:424353.98, ls:668840.14,   cf:67981.92,   tasa:0.2352},
+  {li:668840.15, ls:1276925.98,  cf:125485.07,  tasa:0.3000},
+  {li:1276925.99,ls:1702567.97,  cf:307910.81,  tasa:0.3200},
+  {li:1702567.98,ls:5107703.92,  cf:444116.23,  tasa:0.3400},
+  {li:5107703.93,ls:Infinity,    cf:1601862.46, tasa:0.3500}
 ];
 const TABLA_ISR_2024 = [
   {li:0.01,      ls:8952.49,     cf:0,          tasa:0.0192},
@@ -912,7 +930,7 @@ function getAnosTranscurridos(mesC, anioC, mesV, anioV) {
   return anios;
 }
 
-function getTablaISR(anioVenta) { return (anioVenta<=2024)?TABLA_ISR_2024:TABLA_ISR; }
+function getTablaISR(anioVenta) { if(anioVenta<=2024) return TABLA_ISR_2024; if(anioVenta===2025) return TABLA_ISR_2025; return TABLA_ISR; }
 function calcTablaProgresiva(tabla, base) {
   if (base<=0) return 0;
   for (const t of tabla) { if (base>=t.li && base<=t.ls) return t.cf+(base-t.li)*t.tasa; }
