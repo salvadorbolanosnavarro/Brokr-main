@@ -1180,12 +1180,150 @@ function descargarPDF() {
   const tipos={casa:'Casa habitación / Departamento',terreno:'Terreno',comercial:'Inmueble comercial'};
   const bkdn=(g('res-bkdn')||{}).innerHTML||'';
   const nota=(g('res-nota')||{}).innerHTML||'';
-  const html=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/><title>Broquer · ISR — ${meses[d.mesV]} ${d.anioV}</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Inter','Helvetica Neue',sans-serif;font-size:12px;color:#1A1814;background:#FBF9F1;margin:0;padding:48px 56px;max-width:760px;-webkit-font-smoothing:antialiased;letter-spacing:-0.005em}h1{font-family:'Fraunces',serif;font-size:30px;font-weight:500;margin:0 0 6px;letter-spacing:-0.02em;color:#1A1814}.sub{color:#7A7065;font-size:11px;margin-bottom:20px;letter-spacing:0.01em}.badge{background:transparent;color:#7A7065;padding:0 0 3px;border-bottom:1px solid #C9C0AC;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1.6px}h2{font-family:'Inter',sans-serif;font-size:9px;font-weight:600;margin:26px 0 12px;color:#7A7065;text-transform:uppercase;letter-spacing:1.8px;border-bottom:none;padding-bottom:0}.br{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #EDE6D3;font-size:12px}.br.tot{font-family:'Fraunces',serif;font-weight:500;font-size:14px;border-bottom:1px solid #1A1814;padding:11px 0;letter-spacing:-0.005em}.br.sub{padding-left:18px;color:#7A7065;font-size:11px}.bl{color:#3D3631}.br.tot .bl{color:#1A1814;font-family:'Fraunces',serif}.bv{font-family:'Fraunces',serif;font-weight:500;font-variant-numeric:tabular-nums}.nota{background:transparent;border-left:2px solid #1A1814;padding:12px 16px;font-size:11px;margin-top:18px;border-radius:0;line-height:1.7;color:#3D3631}.footer{font-size:9px;color:#7A7065;margin-top:36px;padding-top:14px;border-top:1px solid #E8E2D2;display:flex;justify-content:space-between;letter-spacing:1.5px;text-transform:uppercase;font-weight:500}.inpc-row{display:grid;grid-template-columns:repeat(3,1fr);background:transparent;border:1px solid #E8E2D2;border-radius:0;margin-bottom:18px}.inpc-cell{padding:14px 12px;text-align:center;border-right:1px solid #EDE6D3}.inpc-cell:last-child{border-right:none}.inpc-lbl{color:#7A7065;font-size:8.5px;text-transform:uppercase;letter-spacing:1.4px;margin-bottom:6px;font-weight:600}.inpc-val{font-family:'Fraunces',serif;font-weight:500;font-size:16px;letter-spacing:-0.005em;color:#1A1814}.cards{display:grid;grid-template-columns:repeat(2,1fr);margin-bottom:18px;border:1px solid #E8E2D2}.card{background:transparent;border:none;border-right:1px solid #EDE6D3;border-radius:0;padding:18px 20px}.card:last-child{border-right:none}.card.dk,.card.gn{background:transparent}.card-l{font-size:8.5px;font-weight:600;text-transform:uppercase;color:#7A7065;margin-bottom:8px;letter-spacing:1.4px}.card-v{font-family:'Fraunces',serif;font-size:24px;font-weight:500;margin-bottom:4px;letter-spacing:-0.015em;color:#1A1814}.card.dk .card-v,.card.gn .card-v{color:#1A1814}.card-n{font-size:10px;color:#7A7065;letter-spacing:0.005em}</style></head><body><h1>Cálculo ISR por Enajenación</h1><div class="sub">Generado: ${new Date().toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'})} · Tipo: <span class="badge">${tipos[d.tipo]||d.tipo}</span> · Operación: ${d.mN[d.mesV]} ${d.anioV}</div><h2>Factor de Actualización INPC</h2><div class="inpc-row"><div class="inpc-cell"><div class="inpc-lbl">INPC Adquisición<br>${d.mN[d.mesC]} ${d.anioC}</div><div class="inpc-val">${d.inpcAdq.toFixed(6)}</div></div><div style="display:flex;align-items:center;color:#aaa;font-size:20px">→</div><div class="inpc-cell"><div class="inpc-lbl">INPC Enajenación<br>${d.mN[d.mesEnajINPC]} ${d.anioEnajINPC} (mes anterior)</div><div class="inpc-val">${d.inpcVenta.toFixed(6)}</div></div><div style="display:flex;align-items:center;color:#aaa;font-size:20px">=</div><div class="inpc-cell"><div class="inpc-lbl">Factor</div><div class="inpc-val" style="color:#0a7a6a">${d.factor.toFixed(4)}</div></div></div>${d.ganTotal>0&&!d.exenta?`<h2>Resumen</h2><div class="cards"><div class="card dk"><div class="card-l">ISR Total a Pagar</div><div class="card-v">${fmt(d.isrTotal)}</div><div class="card-n">Tasa efectiva ${pct(d.tasaEfecPct)}</div></div><div class="card"><div class="card-l">ISR Entidad Federativa</div><div class="card-v">${fmt(d.isrEstatal)}</div><div class="card-n">5% ganancia — art. 127</div></div><div class="card"><div class="card-l">ISR Federación</div><div class="card-v">${fmt(d.isrFederal)}</div><div class="card-n">ISR total − retención estatal</div></div>${d.ivaMonto>0?`<div class="card" style="border-top:1px solid #E8E2D2"><div class="card-l">IVA 16% estimado</div><div class="card-v">${fmt(d.ivaMonto)}</div><div class="card-n">Sobre construcción — art. 9 LIVA — retiene el notario</div></div>`:''}</div>`:''}<h2>Desglose del Cálculo</h2>${bkdn}${nota?`<div class="nota">${nota}</div>`:''}<div class="footer">Generado por BROKR® · Uso interno del agente inmobiliario · No sustituye al cálculo notarial definitivo</div></body></html>`;
-  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url; a.download=`ISR_BROKR_${d.mN[d.mesV]}${d.anioV}.html`; a.click();
-  URL.revokeObjectURL(url);
+
+  const html=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/>
+<title>Brokr · ISR — ${meses[d.mesV]} ${d.anioV}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  @page{size:A4;margin:18mm 20mm 16mm 20mm}
+  body{
+    font-family:'Inter','Helvetica Neue',sans-serif;
+    font-size:11.5px;color:#1A1814;background:#fff;
+    -webkit-font-smoothing:antialiased;letter-spacing:-0.005em;
+    line-height:1.5;
+  }
+  /* ── HEADER ── */
+  .hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:16px;border-bottom:1.5px solid #1A1814}
+  .hdr-left h1{font-family:'Fraunces',serif;font-size:26px;font-weight:400;letter-spacing:-0.025em;color:#1A1814;line-height:1.1;margin-bottom:5px}
+  .hdr-left .meta{font-size:10px;color:#7A7065;letter-spacing:0.01em}
+  .hdr-right{text-align:right}
+  .tipo-badge{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#0a7a6a;background:#e8f5f2;padding:4px 10px;border-radius:20px;display:inline-block;margin-bottom:6px}
+  .fecha{font-size:9.5px;color:#7A7065}
+  /* ── SECTION LABEL ── */
+  .sec-lbl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#7A7065;margin:22px 0 10px;padding-bottom:5px;border-bottom:1px solid #E8E2D2}
+  /* ── INPC ROW ── */
+  .inpc-row{display:grid;grid-template-columns:1fr 20px 1fr 20px 1fr;gap:0;border:1px solid #E8E2D2;margin-bottom:20px;border-radius:4px;overflow:hidden}
+  .inpc-cell{padding:12px 14px;text-align:center;border-right:1px solid #EDE6D3}
+  .inpc-cell:last-child{border-right:none}
+  .inpc-cell.hl{background:#f0faf7}
+  .inpc-arrow{display:flex;align-items:center;justify-content:center;color:#C9C0AC;font-size:14px;border-right:none!important;padding:0}
+  .inpc-lbl{font-size:7.5px;font-weight:600;text-transform:uppercase;letter-spacing:1.4px;color:#7A7065;margin-bottom:5px}
+  .inpc-val{font-family:'Fraunces',serif;font-weight:400;font-size:15px;letter-spacing:-0.01em;color:#1A1814}
+  .inpc-cell.hl .inpc-val{color:#0a7a6a;font-weight:500}
+  /* ── CARDS ── */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid #E8E2D2;border-radius:4px;overflow:hidden;margin-bottom:20px}
+  .card{padding:14px 16px;border-right:1px solid #EDE6D3}
+  .card:last-child{border-right:none}
+  .card-l{font-size:7.5px;font-weight:600;text-transform:uppercase;letter-spacing:1.4px;color:#7A7065;margin-bottom:6px}
+  .card-v{font-family:'Fraunces',serif;font-size:20px;font-weight:400;letter-spacing:-0.02em;color:#1A1814;margin-bottom:2px}
+  .card-n{font-size:9px;color:#7A7065}
+  .card.total .card-v{color:#c0392b;font-weight:500}
+  .card.iva .card-v{color:#b45309}
+  /* ── DESGLOSE ── */
+  .br{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px solid #EDE6D3;font-size:11px}
+  .br:last-child{border-bottom:none}
+  .br.sub{padding-left:16px;color:#7A7065;font-size:10px}
+  .br.tot{font-size:12.5px;padding:10px 0;border-bottom:1.5px solid #1A1814;border-top:1px solid #C9C0AC;margin-top:2px}
+  .bl{color:#3D3631;flex:1;padding-right:12px}
+  .bv{font-family:'Fraunces',serif;font-weight:400;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:12px}
+  .br.tot .bl,.br.tot .bv{font-family:'Fraunces',serif;font-weight:500;color:#1A1814;font-size:13px}
+  /* ── NOTA ── */
+  .nota{border-left:2px solid #C9C0AC;padding:10px 14px;font-size:10px;margin-top:16px;line-height:1.65;color:#3D3631;background:#FAF8F3}
+  .nota strong{font-weight:600;color:#1A1814}
+  .nota ul{margin:4px 0 0 14px}
+  .nota li{margin-bottom:2px}
+  /* ── FOOTER ── */
+  .footer{margin-top:28px;padding-top:10px;border-top:1px solid #E8E2D2;display:flex;justify-content:space-between;align-items:center}
+  .footer-brand{font-family:'Fraunces',serif;font-size:13px;font-weight:400;color:#1A1814;letter-spacing:-0.01em}
+  .footer-brand span{color:#0a7a6a}
+  .footer-disc{font-size:8px;color:#A09488;letter-spacing:0.5px;text-align:right;max-width:340px;line-height:1.5}
+</style>
+</head>
+<body>
+  <div class="hdr">
+    <div class="hdr-left">
+      <h1>Cálculo ISR<br>por Enajenación</h1>
+      <div class="meta">Operación: ${meses[d.mesV]} ${d.anioV} &nbsp;·&nbsp; Adquisición: ${meses[d.mesC]} ${d.anioC}</div>
+    </div>
+    <div class="hdr-right">
+      <div class="tipo-badge">${tipos[d.tipo]||d.tipo}</div>
+      <div class="fecha">Generado el ${new Date().toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'})}</div>
+    </div>
+  </div>
+
+  <div class="sec-lbl">Factor de actualización INPC</div>
+  <div class="inpc-row">
+    <div class="inpc-cell">
+      <div class="inpc-lbl">INPC Adquisición · ${meses[d.mesC]} ${d.anioC}</div>
+      <div class="inpc-val">${d.inpcAdq.toFixed(6)}</div>
+    </div>
+    <div class="inpc-arrow">→</div>
+    <div class="inpc-cell">
+      <div class="inpc-lbl">INPC Enajenación · ${meses[d.mesEnajINPC]} ${d.anioEnajINPC}</div>
+      <div class="inpc-val">${d.inpcVenta.toFixed(6)}</div>
+    </div>
+    <div class="inpc-arrow">=</div>
+    <div class="inpc-cell hl">
+      <div class="inpc-lbl">Factor utilizado</div>
+      <div class="inpc-val">${d.factor.toFixed(4)}</div>
+    </div>
+  </div>
+
+  ${d.ganTotal>0&&!d.exenta?`
+  <div class="sec-lbl">Resumen fiscal</div>
+  <div class="cards">
+    <div class="card total">
+      <div class="card-l">ISR Total a Pagar</div>
+      <div class="card-v">${fmt(d.isrTotal)}</div>
+      <div class="card-n">Tasa efectiva ${pct(d.tasaEfecPct)}</div>
+    </div>
+    <div class="card">
+      <div class="card-l">ISR Entidad Federativa</div>
+      <div class="card-v">${fmt(d.isrEstatal)}</div>
+      <div class="card-n">5% sobre ganancia · art. 127</div>
+    </div>
+    <div class="card">
+      <div class="card-l">ISR Federación</div>
+      <div class="card-v">${fmt(d.isrFederal)}</div>
+      <div class="card-n">ISR total − retención estatal</div>
+    </div>
+    ${d.ivaMonto>0?`<div class="card iva" style="grid-column:1/-1;border-top:1px solid #EDE6D3;grid-template-columns:auto">
+      <div class="card-l">IVA 16% estimado — art. 9 LIVA</div>
+      <div class="card-v">${fmt(d.ivaMonto)}</div>
+      <div class="card-n">Sobre valor de construcción (${fmt(d.ivaBase)}) · retiene el notario</div>
+    </div>`:''}
+  </div>`:
+  d.exenta?`<div class="sec-lbl">Resumen fiscal</div>
+  <div class="cards"><div class="card" style="grid-column:1/-1">
+    <div class="card-l">ISR a pagar</div>
+    <div class="card-v" style="color:#0a7a6a">$0</div>
+    <div class="card-n">Exento — art. 93 fr. XIX LISR · Ganancia libre de impuesto: ${fmt(d.ganTotal)}</div>
+  </div></div>`:''}
+
+  <div class="sec-lbl">Desglose del cálculo</div>
+  ${bkdn}
+  ${nota?`<div class="nota">${nota}</div>`:''}
+
+  <div class="footer">
+    <div class="footer-brand">Brokr<span>®</span></div>
+    <div class="footer-disc">Uso interno del agente inmobiliario · No sustituye al cálculo notarial definitivo · Arts. 119–127 LISR</div>
+  </div>
+</body></html>`;
+
+  // Abrir en ventana nueva y disparar diálogo de impresión → Guardar como PDF
+  const win = window.open('', '_blank', 'width=900,height=700');
+  win.document.write(html);
+  win.document.close();
+  // Esperar a que carguen las fuentes antes de imprimir
+  win.onload = function() {
+    setTimeout(function() {
+      win.focus();
+      win.print();
+    }, 800);
+  };
 }
 
 /* ── MES/AÑO PICKER ── */
