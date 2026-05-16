@@ -657,7 +657,12 @@ async def analizar_solicitud_arrendamiento(
     # System prompt: rúbrica de evaluación + formato JSON estricto
     SYSTEM_PROMPT = """Eres un perito experto en evaluación de solicitudes de arrendamiento inmobiliario en México. Analizas con el rigor de un banco o inmobiliaria seria. Detectas inconsistencias, riesgos de impago y posibles fraudes.
 
-Tu ÚNICO output debe ser un JSON VÁLIDO con esta estructura exacta, sin texto adicional, sin bloques de markdown, sin explicaciones fuera del JSON:
+Envuelve tu respuesta SIEMPRE entre las etiquetas <output> y </output>. Dentro de esas etiquetas coloca ÚNICAMENTE el JSON, sin texto adicional, sin bloques de markdown, sin comentarios. Así:
+<output>
+{ ... tu JSON aquí ... }
+</output>
+
+La estructura del JSON debe ser:
 {
   "puntaje": <entero 0-100>,
   "nivel_riesgo": "verde" | "amarillo" | "rojo",
@@ -704,9 +709,9 @@ Reglas estrictas:
 9. Indicadores PLD: revisa si hay coincidencias con criterios de actividad vulnerable de LFPIORPI (renta mensual >= 1,605 UMA = $188,282.55 MXN en 2026 obliga identificación del cliente; >= 3,210 UMA = $376,565 MXN obliga aviso al SAT)."""
 
     USER_INSTRUCTION = (
-        "Analiza esta solicitud de arrendamiento y devuelve SOLO el JSON con tu evaluación, "
-        "siguiendo exactamente las instrucciones del system prompt. "
-        "No incluyas texto adicional ni bloques de markdown — solo el JSON."
+        "Analiza esta solicitud de arrendamiento. "
+        "Devuelve tu evaluación ÚNICAMENTE dentro de etiquetas <output></output>, "
+        "como se indica en el system prompt. Solo JSON entre esas etiquetas, nada más."
     )
 
     user_content = []
@@ -781,7 +786,7 @@ Reglas estrictas:
                 },
                 json={
                     "model": "claude-sonnet-4-6",
-                    "max_tokens": 3000,
+                    "max_tokens": 4096,
                     "system": SYSTEM_PROMPT,
                     "messages": [{"role": "user", "content": user_content}]
                 }
@@ -802,18 +807,44 @@ Reglas estrictas:
         if not reply_text:
             raise HTTPException(status_code=502, detail="Claude devolvió respuesta vacía.")
 
-        # Extraer JSON (Claude puede meter texto extra a pesar de las instrucciones)
-        json_match = re.search(r'\{.*\}', reply_text, re.DOTALL)
-        if not json_match:
+        # ── Extracción robusta del JSON ──────────────────────────────────
+        # Prioridad 1: contenido entre <output>...</output>
+        json_str = None
+        tag_match = re.search(r'<output>\s*(.*?)\s*</output>', reply_text, re.DOTALL | re.IGNORECASE)
+        if tag_match:
+            json_str = tag_match.group(1).strip()
+        else:
+            # Prioridad 2: primer bloque { ... } del texto
+            brace_match = re.search(r'\{.*\}', reply_text, re.DOTALL)
+            if brace_match:
+                json_str = brace_match.group().strip()
+
+        if not json_str:
             raise HTTPException(status_code=502, detail="Claude no devolvió JSON válido.")
 
+        # Limpiar caracteres de control que vienen de PDFs (null bytes, BOM, etc.)
+        # Conservamos \n \r \t que son válidos en JSON.
+        json_str = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', json_str)
+        # Quitar BOM si quedó al inicio
+        json_str = json_str.lstrip('\ufeff')
+
         try:
-            parsed = json.loads(json_match.group())
+            parsed = json.loads(json_str)
         except json.JSONDecodeError as e:
-            raise HTTPException(
-                status_code=502,
-                detail=f"JSON inválido de Claude: {str(e)[:120]}"
-            )
+            # Segundo intento: escapar comillas dobles problemáticas dentro de valores string.
+            # Reemplaza secuencias tipo :" texto "con comillas" ": con versión escapada.
+            try:
+                json_str2 = re.sub(
+                    r'(?<=[:{,\[])\s*"((?:[^"\\]|\\.)*)"\s*(?=[,}\]:])',
+                    lambda m: '"' + m.group(1).replace('"', '\\"') + '"',
+                    json_str
+                )
+                parsed = json.loads(json_str2)
+            except Exception:
+                raise HTTPException(
+                    status_code=502,
+                    detail=f"JSON inválido de Claude: {str(e)[:120]}"
+                )
 
         # Validación ligera del shape
         if "puntaje" not in parsed or "nivel_riesgo" not in parsed:
