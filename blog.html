@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="apple-touch-icon" href="isotipo-black.png"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Guía del agente — Broquer</title>
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#F7F5EE"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+/* ── Layout ─────────────────────────────────── */
+.bl-wrap { padding: 28px 36px 80px; max-width: 960px; margin: 0 auto; }
+@media (max-width: 720px) { .bl-wrap { padding: 18px 16px 80px; } }
+
+/* ── Header ─────────────────────────────────── */
+.bl-head { margin-bottom: 28px; }
+.bl-head__eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mute); margin-bottom: 8px; }
+.bl-head h1 { font-family: var(--font-display); font-size: 36px; font-weight: 600; letter-spacing: -0.03em; margin-bottom: 6px; }
+.bl-head__sub { font-size: 14px; color: var(--mute); line-height: 1.5; max-width: 580px; }
+@media (max-width: 720px) { .bl-head h1 { font-size: 28px; } }
+
+/* ── Search ─────────────────────────────────── */
+.bl-search { position: relative; margin-bottom: 20px; }
+.bl-search__input { width: 100%; height: 48px; padding: 0 16px 0 44px; background: var(--bone); border: 1px solid var(--line-2); border-radius: var(--r-pill); font-size: 14px; color: var(--ink); outline: none; transition: border-color var(--dur) var(--ease); }
+.bl-search__input:focus { border-color: var(--ink); }
+.bl-search__input::placeholder { color: var(--mute-2); }
+.bl-search__icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--mute-2); pointer-events: none; }
+.bl-search__clear { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--mute-2); display: none; padding: 4px; }
+.bl-search__clear.is-on { display: block; }
+.bl-search__clear:hover { color: var(--ink); }
+
+/* ── Tags filter ────────────────────────────── */
+.bl-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+.bl-tag { height: 28px; padding: 0 12px; border-radius: var(--r-pill); border: 1px solid var(--line-2); background: var(--bone); font-size: 12px; font-weight: 500; color: var(--mute); cursor: pointer; transition: all var(--dur) var(--ease); white-space: nowrap; }
+.bl-tag:hover { border-color: var(--ink); color: var(--ink); }
+.bl-tag.is-active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+/* ── Article list ───────────────────────────── */
+.bl-list { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; }
+@media (max-width: 720px) { .bl-list { grid-template-columns: 1fr; } }
+
+.bl-card { background: var(--bone); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 22px; cursor: pointer; transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease); display: flex; flex-direction: column; gap: 10px; }
+.bl-card:hover { transform: translateY(-2px); border-color: var(--line-2); }
+.bl-card__top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bl-card__cat { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 9px; border-radius: var(--r-pill); background: var(--forest-soft); color: var(--forest); }
+.bl-card__cat.pld    { background: var(--danger-soft); color: var(--danger); }
+.bl-card__cat.legal  { background: var(--warn-soft);   color: var(--warn); }
+.bl-card__cat.mercado{ background: var(--info-soft);    color: var(--info); }
+.bl-card__cat.tecnica{ background: var(--success-soft); color: var(--success); }
+.bl-card__meta { font-family: var(--font-mono); font-size: 10px; color: var(--mute-2); margin-left: auto; white-space: nowrap; }
+.bl-card__title { font-family: var(--font-display); font-size: 18px; font-weight: 600; letter-spacing: -0.018em; color: var(--ink); line-height: 1.3; }
+.bl-card__sub { font-size: 13px; color: var(--mute); line-height: 1.5; }
+.bl-card__tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.bl-card__tag { font-size: 10px; padding: 2px 7px; border-radius: var(--r-pill); background: var(--paper-2); color: var(--mute); font-weight: 500; }
+.bl-card__footer { display: flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--line); }
+.bl-card__author { font-size: 11px; color: var(--mute); flex: 1; }
+.bl-card__read-more { font-size: 12px; font-weight: 600; color: var(--ink); display: flex; align-items: center; gap: 4px; }
+
+/* Empty state */
+.bl-empty { text-align: center; padding: 48px 20px; color: var(--mute); grid-column: 1/-1; }
+.bl-empty svg { opacity: .2; margin-bottom: 12px; }
+.bl-empty p { font-size: 14px; }
+
+/* ── Article view ───────────────────────────── */
+.bl-article { display: none; }
+.bl-article.is-on { display: block; }
+.bl-list-view.is-off { display: none; }
+
+/* Back button */
+.bl-back { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; background: var(--bone); border: 1px solid var(--line-2); border-radius: var(--r-pill); font-size: 13px; font-weight: 500; color: var(--ink); cursor: pointer; margin-bottom: 24px; transition: background var(--dur) var(--ease); }
+.bl-back:hover { background: var(--paper-2); }
+
+/* Article header */
+.bl-art-head { margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--line); }
+.bl-art-head__cat { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: var(--r-pill); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; background: var(--danger-soft); color: var(--danger); margin-bottom: 14px; }
+.bl-art-head h1 { font-family: var(--font-display); font-size: 34px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 10px; }
+.bl-art-head__sub { font-size: 16px; color: var(--mute); line-height: 1.55; max-width: 680px; margin-bottom: 16px; }
+.bl-art-head__meta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.bl-art-head__meta span { font-family: var(--font-mono); font-size: 11px; color: var(--mute-2); }
+.bl-art-head__meta .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--mute-2); }
+@media (max-width: 600px) { .bl-art-head h1 { font-size: 26px; } .bl-art-head__sub { font-size: 14px; } }
+
+/* Article body */
+.bl-art-body { max-width: 720px; }
+.bl-art-body h2 { font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin: 36px 0 12px; color: var(--ink); }
+.bl-art-body h3 { font-family: var(--font-display); font-size: 17px; font-weight: 600; letter-spacing: -0.015em; margin: 24px 0 10px; color: var(--ink); }
+.bl-art-body p { font-size: 15px; color: var(--ink-2); line-height: 1.75; margin-bottom: 14px; }
+.bl-art-body strong { font-weight: 600; color: var(--ink); }
+.bl-art-body em { font-style: italic; }
+.bl-art-body ul, .bl-art-body ol { padding-left: 0; margin-bottom: 16px; list-style: none; }
+.bl-art-body ul li, .bl-art-body ol li { position: relative; padding-left: 24px; margin-bottom: 10px; font-size: 15px; color: var(--ink-2); line-height: 1.65; }
+.bl-art-body ul li::before { content: ""; position: absolute; left: 0; top: 10px; width: 5px; height: 5px; border-radius: 50%; background: var(--mute-2); }
+.bl-art-body ol { counter-reset: doc-list; }
+.bl-art-body ol li { counter-increment: doc-list; }
+.bl-art-body ol li::before { content: counter(doc-list); position: absolute; left: 0; top: 0; width: 20px; height: 20px; line-height: 20px; background: var(--ink); color: var(--paper); border-radius: 50%; text-align: center; font-size: 11px; font-weight: 600; font-family: var(--font-mono); }
+
+/* Callout boxes */
+.bl-callout { padding: 16px 20px; border-radius: var(--r); margin: 20px 0; border-left: 3px solid; }
+.bl-callout.warn  { background: var(--warn-soft);    border-color: var(--warn); }
+.bl-callout.info  { background: var(--info-soft);    border-color: var(--info); }
+.bl-callout.danger{ background: var(--danger-soft);  border-color: var(--danger); }
+.bl-callout.success{background: var(--success-soft); border-color: var(--success); }
+.bl-callout__label { font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
+.bl-callout.warn   .bl-callout__label { color: var(--warn); }
+.bl-callout.info   .bl-callout__label { color: var(--info); }
+.bl-callout.danger .bl-callout__label { color: var(--danger); }
+.bl-callout.success.bl-callout__label { color: var(--success); }
+.bl-callout p { font-size: 14px; line-height: 1.6; margin: 0; }
+.bl-callout.warn   p { color: #5a3010; }
+.bl-callout.info   p { color: #1a3a55; }
+.bl-callout.danger p { color: #6B2A23; }
+.bl-callout.success p{ color: #1a4030; }
+
+/* Data table */
+.bl-table-wrap { overflow-x: auto; margin: 20px 0; border-radius: var(--r); border: 1px solid var(--line); }
+.bl-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.bl-table th { background: var(--paper-2); padding: 10px 14px; text-align: left; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mute); border-bottom: 1px solid var(--line); }
+.bl-table td { padding: 11px 14px; border-bottom: 1px solid var(--line); color: var(--ink-2); line-height: 1.5; vertical-align: top; }
+.bl-table tr:last-child td { border-bottom: none; }
+.bl-table tr:nth-child(even) td { background: var(--paper); }
+.bl-table .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; color: var(--ink); white-space: nowrap; }
+.bl-table .hl { font-weight: 600; color: var(--ink); }
+
+/* Sources */
+.bl-sources { margin-top: 36px; padding-top: 20px; border-top: 1px solid var(--line); }
+.bl-sources__title { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mute); margin-bottom: 12px; }
+.bl-sources ul { list-style: none; padding: 0; margin: 0; }
+.bl-sources li { font-size: 12px; color: var(--mute); margin-bottom: 8px; display: flex; gap: 8px; align-items: baseline; }
+.bl-sources li::before { content: "↗"; flex-shrink: 0; font-size: 11px; }
+.bl-sources a { color: var(--info); text-decoration: underline; }
+.bl-sources a:hover { color: var(--ink); }
+</style>
+</head>
+<body data-app="blog">
+
+<div style="display:none" hidden>
+  <aside class="app-sidebar">
+    <div class="app-sidebar__brand">Broquer<span class="dot">.</span></div>
+    <a class="app-nav-link" href="index.html">Inicio</a>
+    <a class="app-nav-link" href="propiedades.html">Inmuebles</a>
+    <a class="app-nav-link" href="contactos.html">Contactos</a>
+    <a class="app-nav-link" href="contratos.html">Contratos</a>
+    <a class="app-nav-link" href="avm.html">AVM</a>
+  </aside>
+</div>
+
+<div class="bl-wrap">
+
+  <!-- HEADER -->
+  <div class="bl-head" id="bl-head">
+    <div class="bl-head__eyebrow">Recursos profesionales</div>
+    <h1>Guía del agente</h1>
+    <p class="bl-head__sub">Artículos serios sobre PLD, legal, mercado y mejores prácticas para agentes novatos y expertos.</p>
+  </div>
+
+  <!-- LIST VIEW -->
+  <div class="bl-list-view" id="bl-list-view">
+
+    <div class="bl-search">
+      <svg class="bl-search__icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
+      <input class="bl-search__input" id="bl-search" type="text" placeholder="Buscar por tema, palabra clave o tag…"/>
+      <button class="bl-search__clear" id="bl-search-clear" title="Limpiar búsqueda">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/></svg>
+      </button>
+    </div>
+
+    <div class="bl-tags" id="bl-tags"></div>
+
+    <div class="bl-list" id="bl-list"></div>
+
+  </div>
+
+  <!-- ARTICLE VIEW -->
+  <div class="bl-article" id="bl-article">
+    <button class="bl-back" id="bl-back">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
+      Volver a artículos
+    </button>
+    <div id="bl-article-content"></div>
+  </div>
+
+</div>
+
+<script src="app-shell.js" defer></script>
+<script>
+/* ═══════════════════════════════════════════════════════
+   GUÍA DEL AGENTE — Blog estático
+   Para agregar artículos: añadir un objeto al array ARTICULOS.
+   ═══════════════════════════════════════════════════════ */
+
+const ARTICULOS = [
+  {
+    id: 'expediente-unico-pld',
+    titulo: 'El expediente único: tu blindaje legal como agente inmobiliario',
+    subtitulo: 'Todo lo que debes saber sobre la LFPIORPI, qué documentos pedir a tus clientes y qué pasa si no cumples',
+    categoria: 'PLD / Compliance',
+    catKey: 'pld',
+    tags: ['PLD', 'LFPIORPI', 'Legal', 'SAT', 'Expediente', 'Antilavado'],
+    autor: 'Broquer Research',
+    fecha: '16 de mayo de 2026',
+    lectura: '9 min',
+    resumen: 'Como intermediario inmobiliario eres sujeto obligado bajo la LFPIORPI. Esto significa que la ley te exige identificar a cada cliente, integrar un expediente completo y — en operaciones grandes — reportar al SAT. Te explicamos exactamente qué pedir, cuándo y qué pasa si no lo haces.',
+    fuentes: [
+      { texto: 'LFPIORPI — DOF 17 oct 2012, reformas DOF 16 jul 2025', url: 'https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPIORPI.pdf' },
+      { texto: 'Reglamento LFPIORPI — DOF 27 mar 2026', url: 'https://www.dof.gob.mx/' },
+      { texto: 'SAT — Actividades Vulnerables (umbrales oficiales)', url: 'https://www.sat.gob.mx/minisitio/ActividadesVulnerables/index.html' },
+      { texto: 'SAT — Portal SPPLD (registro y avisos)', url: 'https://sppld.sat.gob.mx/pld/interiores/umbrales.html' },
+      { texto: 'INEGI — Valor UMA 2026: $117.31 diarios (DOF 9 ene 2026)', url: 'https://www.inegi.org.mx/temas/uma/' },
+    ],
+    contenido: `
+<div class="bl-art-head">
+  <div class="bl-art-head__cat">PLD / Compliance</div>
+  <h1>El expediente único: tu blindaje legal como agente inmobiliario</h1>
+  <p class="bl-art-head__sub">Todo lo que debes saber sobre la LFPIORPI, qué documentos pedir a tus clientes y qué pasa si no cumples</p>
+  <div class="bl-art-head__meta">
+    <span>Broquer Research</span>
+    <span class="dot"></span>
+    <span>16 de mayo de 2026</span>
+    <span class="dot"></span>
+    <span>9 min de lectura</span>
+    <span class="dot"></span>
+    <span>Actualizado con UMA 2026 y reforma jul 2025</span>
+  </div>
+</div>
+
+<div class="bl-art-body">
+
+<div class="bl-callout warn">
+  <div class="bl-callout__label">Antes de empezar</div>
+  <p>Este artículo es informativo y no constituye asesoría legal. Ante dudas específicas sobre tu situación, consulta a un abogado o contador especializado en materia fiscal y antilavado.</p>
+</div>
+
+<h2>¿Por qué existe esta obligación?</h2>
+
+<p>La <strong>Ley Federal para la Prevención e Identificación de Operaciones con Recursos de Procedencia Ilícita</strong> (LFPIORPI), conocida como Ley Antilavado, está vigente desde octubre de 2013. Su objetivo es impedir que el sistema financiero y la economía formal sean usados para reciclar dinero de origen ilícito.</p>
+
+<p>El sector inmobiliario es uno de los más vulnerables a este riesgo a nivel global — así lo ha documentado el GAFI (Grupo de Acción Financiera Internacional). En México, la ley fue reformada de manera importante en julio de 2025 (DOF 16/07/2025) y su reglamento en marzo de 2026 (DOF 27/03/2026), endureciendo plazos, umbrales y obligaciones.</p>
+
+<h2>¿Por qué te aplica a ti como agente?</h2>
+
+<p>El <strong>Artículo 17, Fracción V</strong> de la LFPIORPI clasifica como "actividad vulnerable" la <em>intermediación habitual y profesional en la transmisión de la propiedad o constitución de derechos sobre bienes inmuebles</em>. Si estás cobrando comisión por facilitar una compraventa o arrendamiento, estás realizando esta actividad.</p>
+
+<p>No importa si eres persona física independiente o tienes una inmobiliaria. No importa si la operación fue pequeña. A partir del <strong>primer peso</strong> en que intermedias, ya estás obligado a identificar a tu cliente.</p>
+
+<div class="bl-callout info">
+  <div class="bl-callout__label">Dato clave</div>
+  <p>El umbral de <strong>identificación para agentes inmobiliarios es cero</strong> — aplica desde la primera operación sin importar el monto. Solo el umbral de <em>aviso al SAT</em> tiene un importe mínimo (ver tabla abajo).</p>
+</div>
+
+<h2>Umbrales 2026</h2>
+
+<p>La UMA 2026 tiene un valor de <strong>$117.31 MXN diarios</strong>, publicado por el INEGI en el DOF del 9 de enero de 2026, vigente del 1 de febrero de 2026 al 31 de enero de 2027.</p>
+
+<div class="bl-table-wrap">
+  <table class="bl-table">
+    <thead>
+      <tr>
+        <th>Actividad</th>
+        <th>Fracción</th>
+        <th>Identificación obligatoria</th>
+        <th>Aviso al SAT</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="hl">Intermediación en compraventa de inmuebles (agente)</td>
+        <td>Art. 17, Fr. V</td>
+        <td class="num">Siempre</td>
+        <td class="num">≥ 8,025 UMA<br>$941,412.75 MXN</td>
+      </tr>
+      <tr>
+        <td class="hl">Desarrollo y construcción inmobiliaria</td>
+        <td>Art. 17, Fr. V Bis</td>
+        <td class="num">Siempre</td>
+        <td class="num">≥ 8,025 UMA<br>$941,412.75 MXN</td>
+      </tr>
+      <tr>
+        <td class="hl">Arrendamiento de inmuebles (arrendador)</td>
+        <td>Art. 17, Fr. XV</td>
+        <td class="num">≥ 1,605 UMA<br>$188,282.55 MXN / mes</td>
+        <td class="num">≥ 3,210 UMA<br>$376,565.10 MXN / mes</td>
+      </tr>
+      <tr>
+        <td class="hl">Límite de pago en efectivo (inmuebles)</td>
+        <td>Art. 32</td>
+        <td colspan="2" class="num" style="text-align:center">Máx. 80,025 UMA = $9,389,133 MXN en efectivo</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p>El umbral de aviso se calcula sobre el <strong>monto sin IVA</strong> (según el Reglamento reformado del 27 de marzo de 2026). Para arrendamiento, si un mismo cliente acumula operaciones iguales o superiores a 1,605 UMA en un período de 6 meses, también se activa la obligación aunque cada operación individual esté por debajo.</p>
+
+<h2>Documentos que debes recopilar</h2>
+
+<p>El expediente único es el conjunto de documentos que acreditan la identidad y origen de fondos de tus clientes. Debe integrarse <strong>antes o durante</strong> la operación, nunca después. Aquí está la lista completa según el tipo de cliente:</p>
+
+<h3>Para persona física (comprador, vendedor, arrendatario, aval)</h3>
+
+<ol>
+  <li><strong>Identificación oficial vigente con fotografía</strong> — INE/IFE (ambas caras), pasaporte mexicano o extranjero vigente, o cédula profesional. No se aceptan identificaciones vencidas.</li>
+  <li><strong>CURP</strong> — Clave Única de Registro de Población. Puedes verificarla en línea en renapo.gob.mx.</li>
+  <li><strong>RFC con homoclave</strong> — Constancia de situación fiscal del SAT. Verifica que coincida con el nombre en la identificación.</li>
+  <li><strong>Comprobante de domicilio</strong> — No mayor a 3 meses. Recibo de CFE, Telmex, agua, predial o estado de cuenta bancario. Debe mostrar nombre y dirección.</li>
+  <li><strong>Datos de contacto verificables</strong> — Teléfono celular y correo electrónico. Documenta el medio por el que los obtuviste.</li>
+  <li><strong>Declaración de origen de fondos</strong> — Obligatoria cuando la operación alcanza el umbral de aviso (≥$941,412.75 MXN para compraventa). El cliente declara por escrito de dónde proviene el dinero para la operación.</li>
+  <li><strong>Carta laboral o comprobantes de ingresos</strong> — Estados de cuenta de los últimos 3-6 meses, nóminas o declaración anual de ISR. Especialmente importante cuando el origen de fondos no es evidente.</li>
+  <li><strong>Declaración de Persona Políticamente Expuesta (PEP)</strong> — Si el cliente es o ha sido servidor público federal, estatal o municipal en los últimos 2 años, o familiar directo de uno. Se requiere diligencia reforzada.</li>
+</ol>
+
+<h3>Para persona moral (empresa compradora, vendedora o arrendataria)</h3>
+
+<ol>
+  <li><strong>Acta constitutiva</strong> con todas sus reformas — copia certificada o cotejada.</li>
+  <li><strong>Poder notarial vigente</strong> del representante legal que va a firmar la operación.</li>
+  <li><strong>Identificación oficial vigente del representante legal</strong> (igual que persona física).</li>
+  <li><strong>RFC de la persona moral</strong> — Constancia de situación fiscal del SAT actualizada.</li>
+  <li><strong>Comprobante de domicilio fiscal</strong> de la empresa — no mayor a 3 meses.</li>
+  <li><strong>Identificación de todos los beneficiarios controladores</strong> — Desde la reforma de 2025, debes identificar a toda persona física que directa o indirectamente posea o controle el <strong>25% o más</strong> de la empresa (el porcentaje se redujo de 50% a 25%). Para cada uno se requiere la misma documentación que para persona física.</li>
+  <li><strong>Estructura corporativa simplificada</strong> — Si la empresa tiene socios que son otras empresas, debes trazar la cadena hasta llegar a la persona física beneficiaria final.</li>
+  <li><strong>Objeto social</strong> del acta que ampare la realización de operaciones inmobiliarias.</li>
+</ol>
+
+<div class="bl-callout danger">
+  <div class="bl-callout__label">Punto crítico de la reforma 2025</div>
+  <p>El umbral de participación para identificar beneficiarios controladores bajó del 50% al <strong>25%</strong>. Revisa tus expedientes anteriores de personas morales: si solo identificaste al socio mayoritario, es posible que ahora necesites complementar con socios con 25-49% de participación.</p>
+</div>
+
+<h2>Plazo de conservación</h2>
+
+<p>La reforma de julio de 2025 amplió el plazo de conservación de <strong>5 a 10 años</strong> contados a partir de la fecha de realización de la operación. Esto aplica a todos los documentos, correspondencia y análisis relacionados con la operación y con el cliente.</p>
+
+<p>Lo anterior significa que una operación realizada hoy, en mayo de 2026, deberás conservar su expediente hasta mayo de 2036 como mínimo.</p>
+
+<h2>Cómo registrarte en el SPPLD del SAT</h2>
+
+<p>Antes de realizar cualquier operación como agente, debes estar dado de alta como sujeto obligado. El proceso es:</p>
+
+<ol>
+  <li>Contar con <strong>e.firma (FIEL) vigente</strong>. Si no la tienes, tramítala en el SAT con cita previa.</li>
+  <li>Ingresar al <strong>Portal SPPLD</strong> en <em>sppld.sat.gob.mx</em> con tu e.firma.</li>
+  <li>Registrarte bajo la categoría <strong>"Actividades Vulnerables — Fracción V"</strong> (comercialización e intermediación de inmuebles).</li>
+  <li>Designar un <strong>Representante Encargado de Cumplimiento</strong>. Si eres persona física actuando de manera independiente, puedes ser tú mismo con tu propia e.firma.</li>
+  <li>Elaborar un <strong>Manual de Cumplimiento</strong> que documente tus políticas internas para identificar clientes, detectar operaciones inusuales y presentar avisos. No existe un formato único; debe adaptarse a tu operación específica.</li>
+</ol>
+
+<h2>Avisos mensuales al SAT</h2>
+
+<p>Cuando una operación alcanza el umbral de aviso, debes reportarla a la Unidad de Inteligencia Financiera (UIF) a través del SPPLD. Las reglas son:</p>
+
+<ul>
+  <li><strong>Aviso normal</strong> — Se presenta antes del <strong>día 17 del mes siguiente</strong> al cierre de la operación, en formato XML a través del portal SPPLD.</li>
+  <li><strong>Informe en ceros</strong> — Si en un mes no tuviste operaciones objeto de aviso, de todas formas debes presentar este informe antes del día 17. No presentarlo también es una infracción.</li>
+  <li><strong>Aviso urgente (24 horas)</strong> — Cuando detectes indicios de que los recursos provienen de fuente ilícita, o cuando tu cliente aparezca en las listas de personas bloqueadas de la UIF. El plazo para este aviso bajó de 3 días a <strong>24 horas</strong> con la reforma 2025.</li>
+</ul>
+
+<h2>Sanciones por incumplimiento</h2>
+
+<div class="bl-table-wrap">
+  <table class="bl-table">
+    <thead>
+      <tr><th>Tipo de infracción</th><th>Multa mínima</th><th>Multa máxima</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>No registrarse en el SPPLD</td><td class="num">200 UMA ($23,462)</td><td class="num">2,000 UMA ($234,620)</td></tr>
+      <tr><td>No presentar avisos o informes en ceros</td><td class="num">200 UMA ($23,462)</td><td class="num">2,000 UMA ($234,620)</td></tr>
+      <tr><td>No integrar expediente del cliente</td><td class="num">200 UMA ($23,462)</td><td class="num">2,000 UMA ($234,620)</td></tr>
+      <tr><td>Reincidencia en cualquier infracción</td><td class="num">10,000 UMA ($1,173,100)</td><td class="num">65,000 UMA ($7,625,150)</td></tr>
+      <tr><td>Colaboración con lavado (penal)</td><td colspan="2" style="text-align:center">Prisión de 5 a 15 años + multa (Art. 400 Bis CPF)</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>Montos calculados con UMA 2026 = $117.31 MXN/día. Adicionalmente, el SAT puede ordenar la <strong>suspensión temporal o definitiva</strong> de la actividad.</p>
+
+<h2>Los cambios clave de la reforma 2025-2026</h2>
+
+<p>Si ya tenías prácticas de cumplimiento previas a julio de 2025, estas son las actualizaciones que debes incorporar:</p>
+
+<ul>
+  <li>Plazo de conservación de expedientes: <strong>5 → 10 años</strong></li>
+  <li>Umbral para identificar beneficiarios controladores en personas morales: <strong>50% → 25%</strong> de participación</li>
+  <li>Plazo para aviso por operación sospechosa: <strong>72 horas → 24 horas</strong></li>
+  <li>Mecanismos automatizados de monitoreo: ahora son <strong>obligatorios</strong> por ley (Art. 18, Fr. X) — ya no es suficiente con registros en Excel</li>
+  <li>Nueva fracción <strong>V Bis</strong>: el desarrollo inmobiliario se separa como actividad vulnerable independiente</li>
+  <li>Para notarios: umbral de aviso por transmisión de inmuebles bajó de 16,000 a <strong>8,000 UMA</strong></li>
+  <li>El monto límite para pago en efectivo (Art. 32) ahora se calcula <strong>incluyendo IVA y accesorios</strong></li>
+</ul>
+
+<h2>Recomendación práctica</h2>
+
+<p>El expediente único no es burocracia — es tu protección. Si alguna de tus operaciones es investigada por la UIF y no tienes el expediente completo, eres vulnerable a sanciones independientemente de si la operación era legítima. Con el expediente en regla, tienes evidencia documentada de que realizaste la diligencia debida.</p>
+
+<p>Digitaliza tus expedientes desde el primer día: escanea todos los documentos, guárdalos en una carpeta organizada por cliente y fecha, y haz respaldo en la nube. El módulo de Verificador de Documentos de Broquer puede ayudarte a revisar la validez de los documentos antes de archivarlos.</p>
+
+<div class="bl-callout success">
+  <div class="bl-callout__label">Próximo paso</div>
+  <p>Si aún no estás dado de alta como sujeto obligado, ingresa hoy a <strong>sppld.sat.gob.mx</strong> con tu e.firma. El registro no tiene costo y es el primer paso antes de cualquier operación.</p>
+</div>
+
+</div>
+`
+  }
+];
+
+/* ════════════════════════════════════════════════════════
+   Lógica del blog
+   ════════════════════════════════════════════════════════ */
+(function(){
+  const $listView  = document.getElementById('bl-list-view');
+  const $artView   = document.getElementById('bl-article');
+  const $artContent= document.getElementById('bl-article-content');
+  const $list      = document.getElementById('bl-list');
+  const $tagsEl    = document.getElementById('bl-tags');
+  const $search    = document.getElementById('bl-search');
+  const $searchClr = document.getElementById('bl-search-clear');
+  const $back      = document.getElementById('bl-back');
+  const $head      = document.getElementById('bl-head');
+
+  let currentTag = '';
+  let currentQuery = '';
+
+  /* Recopilar todos los tags únicos */
+  const allTags = [];
+  ARTICULOS.forEach(a => a.tags.forEach(t => { if (!allTags.includes(t)) allTags.push(t); }));
+
+  /* Render tags */
+  function renderTags() {
+    $tagsEl.innerHTML = '<button class="bl-tag' + (!currentTag ? ' is-active' : '') + '" data-tag="">Todos</button>'
+      + allTags.map(t =>
+          '<button class="bl-tag' + (currentTag===t?' is-active':'') + '" data-tag="'+esc(t)+'">'+esc(t)+'</button>'
+        ).join('');
+    $tagsEl.querySelectorAll('.bl-tag').forEach(btn => {
+      btn.addEventListener('click', () => { currentTag = btn.dataset.tag; renderTags(); renderList(); });
+    });
+  }
+
+  /* Filtrar artículos */
+  function filteredArticulos() {
+    return ARTICULOS.filter(a => {
+      const matchTag = !currentTag || a.tags.includes(currentTag);
+      const q = currentQuery.toLowerCase().trim();
+      const matchQ = !q || [a.titulo, a.subtitulo, a.resumen, ...a.tags].some(x => x.toLowerCase().includes(q));
+      return matchTag && matchQ;
+    });
+  }
+
+  /* Render lista */
+  function renderList() {
+    const arts = filteredArticulos();
+    if (!arts.length) {
+      $list.innerHTML = '<div class="bl-empty">'
+        + '<svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803a7.5 7.5 0 0010.607 10.607z"/></svg>'
+        + '<p>No se encontraron artículos para esa búsqueda.</p></div>';
+      return;
+    }
+    $list.innerHTML = arts.map(a => `
+      <div class="bl-card" data-id="${esc(a.id)}">
+        <div class="bl-card__top">
+          <span class="bl-card__cat ${a.catKey}">${esc(a.categoria)}</span>
+          <span class="bl-card__meta">${esc(a.lectura)}</span>
+        </div>
+        <div class="bl-card__title">${esc(a.titulo)}</div>
+        <div class="bl-card__sub">${esc(a.resumen)}</div>
+        <div class="bl-card__tags">${a.tags.map(t=>'<span class="bl-card__tag">'+esc(t)+'</span>').join('')}</div>
+        <div class="bl-card__footer">
+          <span class="bl-card__author">${esc(a.autor)} · ${esc(a.fecha)}</span>
+          <span class="bl-card__read-more">Leer
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          </span>
+        </div>
+      </div>
+    `).join('');
+
+    $list.querySelectorAll('.bl-card').forEach(card => {
+      card.addEventListener('click', () => openArticle(card.dataset.id));
+    });
+  }
+
+  /* Abrir artículo */
+  function openArticle(id) {
+    const art = ARTICULOS.find(a => a.id === id);
+    if (!art) return;
+    const sourcesHtml = art.fuentes && art.fuentes.length
+      ? '<div class="bl-sources"><div class="bl-sources__title">Fuentes oficiales</div><ul>'
+          + art.fuentes.map(f => `<li>${f.url ? `<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.texto)}</a>` : esc(f.texto)}</li>`).join('')
+          + '</ul></div>'
+      : '';
+    $artContent.innerHTML = art.contenido + sourcesHtml;
+    $listView.classList.add('is-off');
+    $artView.classList.add('is-on');
+    $head.style.display = 'none';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /* Volver */
+  $back.addEventListener('click', () => {
+    $artView.classList.remove('is-on');
+    $listView.classList.remove('is-off');
+    $head.style.display = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  /* Search */
+  $search.addEventListener('input', () => {
+    currentQuery = $search.value;
+    $searchClr.classList.toggle('is-on', !!currentQuery);
+    renderList();
+  });
+  $searchClr.addEventListener('click', () => {
+    $search.value = '';
+    currentQuery = '';
+    $searchClr.classList.remove('is-on');
+    renderList();
+    $search.focus();
+  });
+
+  function esc(s) { return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  /* Init */
+  renderTags();
+  renderList();
+
+  /* Si la URL tiene ?art=ID abrir directamente */
+  const params = new URLSearchParams(location.search);
+  if (params.get('art')) openArticle(params.get('art'));
+
+})();
+</script>
+</body>
+</html>

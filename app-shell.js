@@ -35,7 +35,9 @@
     { key:'ficha-manual', href:'ficha-manual.html',  label:'Ficha técnica',   group:'main', icon:'landscape' },
     { key:'isr',          href:'isr.html',           label:'ISR',             group:'main', icon:'calculator' },
     { key:'image-cleaner',href:'image-cleaner.html', label:'Editor imágenes', group:'main', icon:'image' },
-    { key:'verificador',  href:'verificador.html',   label:'Verificador',     group:'main', icon:'shield' },
+    { key:'verificador',       href:'verificador.html',              label:'Verificador',         group:'main', icon:'shield' },
+    { key:'solicitud-arr',    href:'solicitud-arrendamiento.html',  label:'Análisis solicitud',  group:'main', icon:'document' },
+    { key:'blog',             href:'blog.html',                     label:'Guía del agente',     group:'main', icon:'question' },
     { key:'admin',        href:'admin.html',         label:'Admin',           group:'main', icon:'cog', adminOnly:true },
   ];
 
@@ -51,6 +53,8 @@
     'isr':          'Calculadora ISR por enajenación de inmuebles',
     'image-cleaner':'Editor de imágenes — limpieza con IA',
     'verificador':  'Verificador de inmuebles',
+    'solicitud-arr':'Análisis de solicitud de arrendamiento — calificación con IA',
+    'blog':         'Guía del agente — artículos y tips de PLD, legal y mejores prácticas',
     'admin':        'Panel administrativo',
   };
 
