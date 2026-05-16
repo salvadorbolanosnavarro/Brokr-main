@@ -613,6 +613,229 @@ async def chat_claude_proxy(req: ClaudeChatRequest):
         }
 
 
+# ──────────────────────────────────────────────────────────────
+# SOLICITUD DE ARRENDAMIENTO — Análisis con Claude (vision/PDF/DOCX)
+# ──────────────────────────────────────────────────────────────
+@app.post("/solicitud-arrendamiento/analizar")
+async def analizar_solicitud_arrendamiento(
+    request: Request,
+    file: UploadFile = File(...),
+):
+    """
+    Lee una solicitud de arrendamiento (PDF, imagen JPG/PNG/WEBP o DOCX),
+    la analiza con Claude Sonnet 4.6 y devuelve un JSON estructurado con:
+      - puntaje (0-100), nivel_riesgo (verde/amarillo/rojo)
+      - datos_extraidos del solicitante
+      - secciones por categoría (Identificación, Domicilio, Empleo, etc.)
+      - banderas_rojas y recomendaciones
+    Máximo 15 MB. Requiere usuario autenticado.
+    """
+    # Auth
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Inicia sesión para usar este módulo.")
+    if not ANTHROPIC_API_KEY:
+        raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY no configurada en el servidor.")
+
+    # Leer archivo y validar tamaño
+    content = await file.read()
+    if len(content) > 15 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Archivo demasiado grande (máx 15 MB).")
+    if len(content) < 100:
+        raise HTTPException(status_code=400, detail="Archivo vacío o corrupto.")
+
+    fname = (file.filename or "").lower()
+    ctype = (file.content_type or "").lower()
+
+    is_pdf = ctype == "application/pdf" or fname.endswith(".pdf")
+    is_docx = "wordprocessingml" in ctype or fname.endswith(".docx")
+    is_image = (
+        ctype.startswith("image/")
+        or any(fname.endswith(x) for x in [".jpg", ".jpeg", ".png", ".webp", ".gif"])
+    )
+
+    # System prompt: rúbrica de evaluación + formato JSON estricto
+    SYSTEM_PROMPT = """Eres un perito experto en evaluación de solicitudes de arrendamiento inmobiliario en México. Analizas con el rigor de un banco o inmobiliaria seria. Detectas inconsistencias, riesgos de impago y posibles fraudes.
+
+Tu ÚNICO output debe ser un JSON VÁLIDO con esta estructura exacta, sin texto adicional, sin bloques de markdown, sin explicaciones fuera del JSON:
+{
+  "puntaje": <entero 0-100>,
+  "nivel_riesgo": "verde" | "amarillo" | "rojo",
+  "veredicto_corto": "<1-2 líneas resumiendo el caso>",
+  "datos_extraidos": {
+    "nombre_solicitante": "<string o null>",
+    "edad": "<string o null>",
+    "ocupacion": "<string o null>",
+    "ingresos_mensuales_mxn": <número o null>,
+    "renta_solicitada_mxn": <número o null>,
+    "ratio_ingreso_renta": <número o null>,
+    "tiene_aval": <true | false | null>,
+    "tiene_referencias": <true | false | null>
+  },
+  "secciones": [
+    {"categoria": "Identificación", "estatus": "ok"|"atencion"|"critico"|"faltante", "puntos": ["..."]},
+    {"categoria": "Domicilio", "estatus": "ok"|"atencion"|"critico"|"faltante", "puntos": ["..."]},
+    {"categoria": "Empleo e ingresos", "estatus": "ok"|"atencion"|"critico"|"faltante", "puntos": ["..."]},
+    {"categoria": "Estabilidad y referencias", "estatus": "ok"|"atencion"|"critico"|"faltante", "puntos": ["..."]},
+    {"categoria": "Fiador o garantía", "estatus": "ok"|"atencion"|"critico"|"faltante", "puntos": ["..."]},
+    {"categoria": "Indicadores PLD", "estatus": "ok"|"atencion"|"critico"|"faltante", "puntos": ["..."]},
+    {"categoria": "Coherencia documental", "estatus": "ok"|"atencion"|"critico"|"faltante", "puntos": ["..."]}
+  ],
+  "banderas_rojas": ["..."],
+  "recomendaciones": ["..."]
+}
+
+Rúbrica de puntaje:
+- 90-100 (verde): completo, coherente, ratio ingreso/renta >= 3x, aval sólido con propiedad libre de gravamen
+- 75-89 (verde): mayoritariamente completo, ratio 2.5-3x, mínimas faltantes
+- 60-74 (amarillo): incompleto pero rescatable, ratio 2-2.5x o aval débil
+- 40-59 (amarillo/rojo): faltan elementos críticos, ratio 1.5-2x, o referencias no verificables
+- 0-39 (rojo): inconsistencias graves, posibles indicios de falsificación, datos críticos ausentes, ratio < 1.5x
+
+Reglas estrictas:
+1. Si no puedes extraer un dato, ponlo en null. NUNCA inventes información.
+2. Calcula ratio_ingreso_renta = ingresos_mensuales_mxn / renta_solicitada_mxn cuando ambos estén presentes. Devuélvelo con 2 decimales.
+3. En "secciones" SIEMPRE devuelve las 7 categorías en ese orden, aunque alguna esté "faltante".
+4. estatus "faltante" = la solicitud simplemente no incluyó esa información (no es necesariamente malo, pero hay que pedirla).
+5. estatus "critico" = riesgo grave detectado (no solo "falta", sino algo activamente alarmante).
+6. Los "puntos" deben ser observaciones CONCRETAS, no generalidades. Cita datos específicos del documento cuando puedas.
+7. "banderas_rojas" solo si hay riesgos genuinos: inconsistencias entre secciones, ratio < 2x sin aval, datos manipulados, referencias laborales sospechosas, fecha de emisión muy antigua, etc.
+8. "recomendaciones" son acciones concretas que el agente debe hacer ANTES de firmar: verificar X comprobante con el patrón, confirmar Y referencia, pedir Z documento faltante, etc.
+9. Indicadores PLD: revisa si hay coincidencias con criterios de actividad vulnerable de LFPIORPI (renta mensual >= 1,605 UMA = $188,282.55 MXN en 2026 obliga identificación del cliente; >= 3,210 UMA = $376,565 MXN obliga aviso al SAT)."""
+
+    USER_INSTRUCTION = (
+        "Analiza esta solicitud de arrendamiento y devuelve SOLO el JSON con tu evaluación, "
+        "siguiendo exactamente las instrucciones del system prompt. "
+        "No incluyas texto adicional ni bloques de markdown — solo el JSON."
+    )
+
+    user_content = []
+
+    if is_pdf:
+        b64 = base64.standard_b64encode(content).decode("utf-8")
+        user_content.append({
+            "type": "document",
+            "source": {"type": "base64", "media_type": "application/pdf", "data": b64}
+        })
+        user_content.append({"type": "text", "text": USER_INSTRUCTION})
+
+    elif is_docx:
+        try:
+            from docx import Document as DocxDocument
+            doc = DocxDocument(io.BytesIO(content))
+            parts = []
+            for p in doc.paragraphs:
+                if p.text and p.text.strip():
+                    parts.append(p.text.strip())
+            for table in doc.tables:
+                for row in table.rows:
+                    for cell in row.cells:
+                        for p in cell.paragraphs:
+                            if p.text and p.text.strip():
+                                parts.append(p.text.strip())
+            extracted = "\n".join(parts)[:18000]
+            if not extracted.strip():
+                raise HTTPException(status_code=400, detail="El DOCX no contiene texto legible.")
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"No se pudo leer el DOCX: {e}")
+        user_content.append({
+            "type": "text",
+            "text": (
+                "Texto extraído de la solicitud de arrendamiento (formato Word):\n\n"
+                f"{extracted}\n\n---\n\n{USER_INSTRUCTION}"
+            )
+        })
+
+    elif is_image:
+        media_type = "image/jpeg"
+        if fname.endswith(".png") or "png" in ctype:
+            media_type = "image/png"
+        elif fname.endswith(".webp") or "webp" in ctype:
+            media_type = "image/webp"
+        elif fname.endswith(".gif") or "gif" in ctype:
+            media_type = "image/gif"
+        b64 = base64.standard_b64encode(content).decode("utf-8")
+        user_content.append({
+            "type": "image",
+            "source": {"type": "base64", "media_type": media_type, "data": b64}
+        })
+        user_content.append({"type": "text", "text": USER_INSTRUCTION})
+
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Formato no soportado. Sube PDF, imagen (JPG/PNG/WEBP) o DOCX."
+        )
+
+    # Llamada a Claude
+    try:
+        async with httpx.AsyncClient(timeout=120) as client:
+            r = await client.post(
+                f"{ANTHROPIC_BASE}/messages",
+                headers={
+                    "x-api-key": ANTHROPIC_API_KEY,
+                    "anthropic-version": "2023-06-01",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": "claude-sonnet-4-6",
+                    "max_tokens": 3000,
+                    "system": SYSTEM_PROMPT,
+                    "messages": [{"role": "user", "content": user_content}]
+                }
+            )
+        if r.status_code != 200:
+            err_txt = (r.text or "")[:300]
+            raise HTTPException(
+                status_code=502,
+                detail=f"Error Claude {r.status_code}: {err_txt}"
+            )
+
+        data = r.json()
+        reply_text = ""
+        try:
+            reply_text = data.get("content", [{}])[0].get("text", "")
+        except Exception:
+            pass
+        if not reply_text:
+            raise HTTPException(status_code=502, detail="Claude devolvió respuesta vacía.")
+
+        # Extraer JSON (Claude puede meter texto extra a pesar de las instrucciones)
+        json_match = re.search(r'\{.*\}', reply_text, re.DOTALL)
+        if not json_match:
+            raise HTTPException(status_code=502, detail="Claude no devolvió JSON válido.")
+
+        try:
+            parsed = json.loads(json_match.group())
+        except json.JSONDecodeError as e:
+            raise HTTPException(
+                status_code=502,
+                detail=f"JSON inválido de Claude: {str(e)[:120]}"
+            )
+
+        # Validación ligera del shape
+        if "puntaje" not in parsed or "nivel_riesgo" not in parsed:
+            raise HTTPException(status_code=502, detail="Respuesta sin estructura esperada.")
+
+        # Asegurar que datos_extraidos y secciones existan (aunque vacías)
+        parsed.setdefault("datos_extraidos", {})
+        parsed.setdefault("secciones", [])
+        parsed.setdefault("banderas_rojas", [])
+        parsed.setdefault("recomendaciones", [])
+        parsed.setdefault("veredicto_corto", "")
+
+        return parsed
+
+    except HTTPException:
+        raise
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="El análisis tardó demasiado. Intenta de nuevo.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error procesando: {str(e)[:200]}")
+
+
 @app.post("/isr-pdf")
 async def generar_isr_pdf(p: dict):
     """Recibe HTML del cálculo ISR y lo convierte a PDF con Playwright."""
