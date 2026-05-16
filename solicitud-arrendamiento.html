@@ -10,96 +10,53 @@
 <meta name="theme-color" content="#F7F5EE"/>
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
-/* ── Page layout (shell-agnostic) ──────────────────── */
 .sa-wrap { padding: 28px 36px 80px; max-width: 920px; margin: 0 auto; }
 @media (max-width: 720px) { .sa-wrap { padding: 18px 16px 80px; } }
 
-/* ── Page header ───────────────────────────────────── */
 .sa-head { margin-bottom: 24px; }
-.sa-head__eyebrow {
-  font-family: var(--font-mono);
-  font-size: 11px; letter-spacing: 0.16em;
-  text-transform: uppercase; color: var(--mute);
-  margin-bottom: 8px;
-}
-.sa-head h1 {
-  font-family: var(--font-display);
-  font-size: 36px; font-weight: 600; letter-spacing: -0.03em;
-  margin-bottom: 6px;
-}
+.sa-head__eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mute); margin-bottom: 8px; }
+.sa-head h1 { font-family: var(--font-display); font-size: 36px; font-weight: 600; letter-spacing: -0.03em; margin-bottom: 6px; }
 .sa-head__sub { font-size: 14px; color: var(--mute); line-height: 1.5; max-width: 640px; }
 @media (max-width: 720px) { .sa-head h1 { font-size: 28px; } }
 
-/* ── Upload card ───────────────────────────────────── */
-.sa-card {
-  background: var(--bone);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  padding: 22px;
-  margin-bottom: 18px;
-}
+.sa-card { background: var(--bone); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 22px; margin-bottom: 18px; }
+.sa-card__label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mute); font-weight: 500; margin-bottom: 10px; display: block; }
 
-.sa-drop {
-  position: relative;
-  border: 1.5px dashed var(--line-2);
-  border-radius: var(--r);
-  padding: 38px 24px;
-  text-align: center;
-  background: var(--paper-2);
-  cursor: pointer;
-  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
-}
-.sa-drop:hover, .sa-drop.is-dragover {
-  border-color: var(--ink);
-  background: var(--shell);
-}
-.sa-drop.has-file {
-  border-style: solid; border-color: var(--forest);
-  background: var(--forest-soft);
-}
-.sa-drop input[type="file"] {
-  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
-}
-.sa-drop__icon {
-  width: 44px; height: 44px; margin: 0 auto 14px;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--bone); border: 1px solid var(--line);
-  border-radius: 50%; color: var(--ink-2);
-}
-.sa-drop.has-file .sa-drop__icon {
-  background: var(--bone); color: var(--forest);
-  border-color: var(--forest);
-}
-.sa-drop__title { font-family: var(--font-display); font-size: 17px; font-weight: 600; letter-spacing: -0.015em; margin-bottom: 4px; }
+/* Drop zone */
+.sa-drop { position: relative; border: 1.5px dashed var(--line-2); border-radius: var(--r); padding: 32px 24px; text-align: center; background: var(--paper-2); cursor: pointer; transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease); display: block; }
+.sa-drop:hover, .sa-drop.is-dragover { border-color: var(--ink); background: var(--shell); }
+.sa-drop.has-file { border-style: solid; border-color: var(--forest); background: var(--forest-soft); }
+.sa-drop input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.sa-drop__icon { width: 40px; height: 40px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; background: var(--bone); border: 1px solid var(--line); border-radius: 50%; color: var(--ink-2); }
+.sa-drop.has-file .sa-drop__icon { color: var(--forest); border-color: var(--forest); }
+.sa-drop__title { font-family: var(--font-display); font-size: 16px; font-weight: 600; letter-spacing: -0.015em; margin-bottom: 4px; }
 .sa-drop__hint  { font-size: 12px; color: var(--mute); }
-.sa-drop__filename {
-  margin-top: 14px; font-size: 13px; color: var(--ink-2);
-  font-family: var(--font-mono); word-break: break-all;
-}
+.sa-drop__filename { margin-top: 12px; font-size: 13px; color: var(--ink-2); font-family: var(--font-mono); word-break: break-all; }
 .sa-drop__filename strong { color: var(--forest); font-weight: 600; }
+.sa-preview { margin-top: 12px; max-width: 100%; max-height: 240px; border-radius: var(--r); border: 1px solid var(--line); display: none; object-fit: contain; }
+.sa-preview.is-on { display: block; margin: 12px auto 0; }
 
-/* Image preview */
-.sa-preview {
-  margin-top: 14px;
-  max-width: 100%; max-height: 280px;
-  border-radius: var(--r); border: 1px solid var(--line);
-  display: none; object-fit: contain;
-}
-.sa-preview.is-on { display: block; margin-left: auto; margin-right: auto; }
+/* Extras */
+.sa-extras { margin-top: 18px; }
+.sa-extras__banner { display: flex; align-items: flex-start; gap: 12px; padding: 13px 16px; border-radius: var(--r); background: var(--info-soft); border: 1px solid var(--info); margin-bottom: 14px; }
+.sa-extras__banner svg { flex-shrink: 0; margin-top: 2px; color: var(--info); }
+.sa-extras__banner p { font-size: 13px; color: #1a3a55; line-height: 1.5; margin: 0; }
+.sa-extras__banner strong { font-weight: 600; }
 
-/* Action row */
-.sa-actions {
-  display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap;
-}
-.sa-btn {
-  appearance: none; border: 1px solid transparent;
-  background: var(--ink); color: var(--paper);
-  height: 44px; padding: 0 20px;
-  border-radius: var(--r-pill);
-  font-weight: 600; font-size: 14px; cursor: pointer;
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  transition: background var(--dur) var(--ease), transform var(--dur) var(--ease);
-}
+.sa-extras__add { position: relative; display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px; border: 1.5px dashed var(--line-2); border-radius: var(--r-pill); background: var(--paper-2); cursor: pointer; font-size: 13px; font-weight: 500; color: var(--ink-2); transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease), color var(--dur) var(--ease); user-select: none; }
+.sa-extras__add:hover { border-color: var(--ink); color: var(--ink); background: var(--paper); }
+.sa-extras__add input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+
+.sa-extras__list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.sa-extra-chip { display: inline-flex; align-items: center; gap: 6px; max-width: 260px; height: 32px; padding: 0 6px 0 12px; border-radius: var(--r-pill); background: var(--bone); border: 1px solid var(--line-2); font-size: 12px; font-weight: 500; color: var(--ink-2); font-family: var(--font-mono); }
+.sa-extra-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+.sa-extra-chip__rm { flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: transparent; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--mute); transition: background var(--dur) var(--ease), color var(--dur) var(--ease); padding: 0; }
+.sa-extra-chip__rm:hover { background: var(--danger-soft); color: var(--danger); }
+.sa-extras__counter { font-size: 11px; color: var(--mute); margin-top: 8px; font-family: var(--font-mono); }
+
+/* Actions */
+.sa-actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+.sa-btn { appearance: none; border: 1px solid transparent; background: var(--ink); color: var(--paper); height: 44px; padding: 0 20px; border-radius: var(--r-pill); font-weight: 600; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: background var(--dur) var(--ease), transform var(--dur) var(--ease); }
 .sa-btn:hover { background: var(--ink-2); }
 .sa-btn:active { transform: scale(.98); }
 .sa-btn:disabled { background: var(--mute-3); color: var(--paper); cursor: not-allowed; transform: none; }
@@ -107,64 +64,34 @@
 .sa-btn--ghost:hover { background: var(--paper-2); }
 .sa-btn--ghost:disabled { color: var(--mute-2); border-color: var(--line); background: transparent; }
 
-/* ── Loading state ─────────────────────────────────── */
-.sa-loading {
-  display: none;
-  flex-direction: column; align-items: center; gap: 14px;
-  padding: 38px 20px; text-align: center;
-}
+/* Loading */
+.sa-loading { display: none; flex-direction: column; align-items: center; gap: 12px; padding: 44px 20px; text-align: center; }
 .sa-loading.is-on { display: flex; }
-.sa-spinner {
-  width: 38px; height: 38px;
-  border: 2.5px solid var(--line-2);
-  border-top-color: var(--ink);
-  border-radius: 50%;
-  animation: sa-spin .8s linear infinite;
-}
+.sa-spinner { width: 38px; height: 38px; border: 2.5px solid var(--line-2); border-top-color: var(--ink); border-radius: 50%; animation: sa-spin .8s linear infinite; }
 @keyframes sa-spin { to { transform: rotate(360deg); } }
-.sa-loading__msg { font-size: 14px; color: var(--mute); font-family: var(--font-mono); letter-spacing: 0.04em; }
+.sa-loading__msg  { font-size: 13px; color: var(--mute); font-family: var(--font-mono); letter-spacing: 0.04em; transition: opacity .2s; }
+.sa-loading__docs { font-size: 12px; color: var(--mute-2); }
 
-/* ── Results ───────────────────────────────────────── */
+/* Results */
 .sa-result { display: none; }
 .sa-result.is-on { display: block; }
 
-.sa-verdict {
-  display: grid; grid-template-columns: auto 1fr; gap: 22px;
-  align-items: center;
-  padding: 22px; margin-bottom: 16px;
-  background: var(--bone); border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-}
+.sa-verdict { display: grid; grid-template-columns: auto 1fr; gap: 22px; align-items: center; padding: 22px; margin-bottom: 16px; background: var(--bone); border: 1px solid var(--line); border-radius: var(--r-lg); }
 @media (max-width: 600px) { .sa-verdict { grid-template-columns: 1fr; gap: 14px; text-align: center; } }
 
-/* Score circle */
-.sa-score {
-  width: 110px; height: 110px;
-  position: relative;
-  flex-shrink: 0;
-}
+.sa-score { width: 110px; height: 110px; position: relative; flex-shrink: 0; }
 @media (max-width: 600px) { .sa-score { margin: 0 auto; } }
 .sa-score svg { width: 100%; height: 100%; transform: rotate(-90deg); }
 .sa-score__track { stroke: var(--line); fill: none; stroke-width: 8; }
 .sa-score__fill  { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1s var(--ease); }
-.sa-score__num   {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  font-family: var(--font-display); letter-spacing: -0.03em;
-}
+.sa-score__num   { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: var(--font-display); letter-spacing: -0.03em; }
 .sa-score__num .v { font-size: 30px; font-weight: 600; color: var(--ink); line-height: 1; }
 .sa-score__num .u { font-size: 10px; color: var(--mute); font-family: var(--font-mono); letter-spacing: 0.12em; margin-top: 3px; }
+.sa-score--verde    .sa-score__fill { stroke: var(--success); }
+.sa-score--amarillo .sa-score__fill { stroke: var(--warn); }
+.sa-score--rojo     .sa-score__fill { stroke: var(--danger); }
 
-/* Verdict text + badge */
-.sa-verdict__txt {}
-.sa-verdict__badge {
-  display: inline-flex; align-items: center; gap: 6px;
-  height: 26px; padding: 0 12px;
-  border-radius: var(--r-pill);
-  font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
-  text-transform: uppercase;
-  margin-bottom: 8px;
-}
+.sa-verdict__badge { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 12px; border-radius: var(--r-pill); font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 8px; }
 .sa-verdict__badge .dot { width: 7px; height: 7px; border-radius: 50%; }
 .sa-verdict__badge.is-verde    { background: var(--success-soft); color: var(--success); }
 .sa-verdict__badge.is-verde .dot { background: var(--success); }
@@ -172,176 +99,70 @@
 .sa-verdict__badge.is-amarillo .dot { background: var(--warn); }
 .sa-verdict__badge.is-rojo     { background: var(--danger-soft); color: var(--danger); }
 .sa-verdict__badge.is-rojo .dot { background: var(--danger); }
-.sa-verdict__title {
-  font-family: var(--font-display); font-size: 19px; font-weight: 600; letter-spacing: -0.015em;
-  color: var(--ink); line-height: 1.35;
-}
+.sa-verdict__title { font-family: var(--font-display); font-size: 19px; font-weight: 600; letter-spacing: -0.015em; color: var(--ink); line-height: 1.35; }
 
-/* Score color variants */
-.sa-score--verde .sa-score__fill    { stroke: var(--success); }
-.sa-score--amarillo .sa-score__fill { stroke: var(--warn); }
-.sa-score--rojo .sa-score__fill     { stroke: var(--danger); }
-
-/* ── Data extracted ────────────────────────────────── */
-.sa-data {
-  background: var(--bone); border: 1px solid var(--line);
-  border-radius: var(--r-lg); padding: 20px;
-  margin-bottom: 16px;
-}
-.sa-section-title {
-  font-family: var(--font-mono);
-  font-size: 10px; letter-spacing: 0.14em;
-  text-transform: uppercase; color: var(--mute);
-  font-weight: 500; margin-bottom: 12px;
-}
-.sa-data__grid {
-  display: grid; grid-template-columns: repeat(2, 1fr);
-  gap: 12px 24px;
-}
+.sa-data { background: var(--bone); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 20px; margin-bottom: 16px; }
+.sa-section-title { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mute); font-weight: 500; margin-bottom: 12px; }
+.sa-data__grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px 24px; }
 @media (max-width: 560px) { .sa-data__grid { grid-template-columns: 1fr; } }
 .sa-data__item { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .sa-data__lbl { font-size: 11px; color: var(--mute); font-weight: 500; letter-spacing: 0.02em; text-transform: uppercase; }
 .sa-data__val { font-size: 14px; color: var(--ink); font-weight: 500; word-break: break-word; }
 .sa-data__val.muted { color: var(--mute-2); font-style: italic; font-weight: 400; }
-.sa-data__val.num { font-variant-numeric: tabular-nums; }
-
-/* Ratio highlight */
-.sa-data__item.is-ratio .sa-data__val {
-  font-family: var(--font-display); font-size: 18px; font-weight: 600;
-}
+.sa-data__item.is-ratio .sa-data__val { font-family: var(--font-display); font-size: 18px; font-weight: 600; }
 .sa-data__item.is-ratio.good .sa-data__val { color: var(--success); }
 .sa-data__item.is-ratio.warn .sa-data__val { color: var(--warn); }
 .sa-data__item.is-ratio.bad  .sa-data__val { color: var(--danger); }
 
-/* ── Sections list (accordions) ────────────────────── */
 .sa-sections { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
-.sa-sect {
-  background: var(--bone); border: 1px solid var(--line);
-  border-radius: var(--r); overflow: hidden;
-}
-.sa-sect__head {
-  display: flex; align-items: center; gap: 12px;
-  padding: 14px 18px; cursor: pointer; user-select: none;
-}
+.sa-sect { background: var(--bone); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.sa-sect__head { display: flex; align-items: center; gap: 12px; padding: 14px 18px; cursor: pointer; user-select: none; }
 .sa-sect__head:hover { background: var(--paper-2); }
-.sa-sect__dot {
-  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-}
-.sa-sect__dot.ok       { background: var(--success); }
-.sa-sect__dot.atencion { background: var(--warn); }
-.sa-sect__dot.critico  { background: var(--danger); }
-.sa-sect__dot.faltante { background: var(--mute-2); }
+.sa-sect__dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.sa-sect__dot.ok { background: var(--success); } .sa-sect__dot.atencion { background: var(--warn); } .sa-sect__dot.critico { background: var(--danger); } .sa-sect__dot.faltante { background: var(--mute-2); }
 .sa-sect__name { flex: 1; font-size: 14px; font-weight: 500; color: var(--ink); letter-spacing: -0.005em; }
-.sa-sect__status {
-  font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
-  padding: 3px 8px; border-radius: var(--r-pill);
-}
-.sa-sect__status.ok       { background: var(--success-soft); color: var(--success); }
-.sa-sect__status.atencion { background: var(--warn-soft);    color: var(--warn); }
-.sa-sect__status.critico  { background: var(--danger-soft);  color: var(--danger); }
-.sa-sect__status.faltante { background: var(--paper-2);       color: var(--mute); }
-.sa-sect__chev {
-  width: 16px; height: 16px; color: var(--mute);
-  transition: transform var(--dur) var(--ease); flex-shrink: 0;
-}
+.sa-sect__status { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 8px; border-radius: var(--r-pill); }
+.sa-sect__status.ok { background: var(--success-soft); color: var(--success); } .sa-sect__status.atencion { background: var(--warn-soft); color: var(--warn); } .sa-sect__status.critico { background: var(--danger-soft); color: var(--danger); } .sa-sect__status.faltante { background: var(--paper-2); color: var(--mute); }
+.sa-sect__chev { width: 16px; height: 16px; color: var(--mute); transition: transform var(--dur) var(--ease); flex-shrink: 0; }
 .sa-sect.is-open .sa-sect__chev { transform: rotate(180deg); }
-.sa-sect__body {
-  display: none;
-  padding: 0 18px 16px 38px;
-  border-top: 1px solid var(--line);
-  padding-top: 14px;
-}
+.sa-sect__body { display: none; padding: 14px 18px 16px 38px; border-top: 1px solid var(--line); }
 .sa-sect.is-open .sa-sect__body { display: block; }
 .sa-sect__body ul { list-style: none; padding: 0; margin: 0; }
-.sa-sect__body li {
-  position: relative; padding-left: 18px;
-  margin-bottom: 8px; font-size: 13.5px; color: var(--ink-2); line-height: 1.55;
-}
+.sa-sect__body li { position: relative; padding-left: 18px; margin-bottom: 8px; font-size: 13.5px; color: var(--ink-2); line-height: 1.55; }
 .sa-sect__body li:last-child { margin-bottom: 0; }
-.sa-sect__body li::before {
-  content: ""; position: absolute; left: 0; top: 9px;
-  width: 4px; height: 4px; background: var(--mute-2); border-radius: 50%;
-}
+.sa-sect__body li::before { content:""; position:absolute; left:0; top:9px; width:4px; height:4px; background:var(--mute-2); border-radius:50%; }
 
-/* ── Red flags ─────────────────────────────────────── */
-.sa-flags {
-  background: var(--danger-soft);
-  border: 1px solid var(--danger);
-  border-radius: var(--r-lg); padding: 18px 20px;
-  margin-bottom: 16px;
-}
+.sa-flags { background: var(--danger-soft); border: 1px solid var(--danger); border-radius: var(--r-lg); padding: 18px 20px; margin-bottom: 16px; }
 .sa-flags .sa-section-title { color: var(--danger); }
 .sa-flags ul { list-style: none; padding: 0; margin: 0; }
-.sa-flags li {
-  position: relative; padding-left: 22px;
-  margin-bottom: 8px; font-size: 13.5px; color: #6B2A23; line-height: 1.5; font-weight: 500;
-}
+.sa-flags li { position: relative; padding-left: 22px; margin-bottom: 8px; font-size: 13.5px; color: #6B2A23; line-height: 1.5; font-weight: 500; }
 .sa-flags li:last-child { margin-bottom: 0; }
-.sa-flags li::before {
-  content: "!"; position: absolute; left: 0; top: 0;
-  width: 16px; height: 16px; line-height: 16px;
-  background: var(--danger); color: var(--paper);
-  border-radius: 50%; text-align: center; font-size: 10px; font-weight: 700;
-  font-family: var(--font-mono);
-}
+.sa-flags li::before { content:"!"; position:absolute; left:0; top:0; width:16px; height:16px; line-height:16px; background:var(--danger); color:var(--paper); border-radius:50%; text-align:center; font-size:10px; font-weight:700; font-family:var(--font-mono); }
 
-/* ── Recommendations ───────────────────────────────── */
-.sa-recs {
-  background: var(--info-soft);
-  border: 1px solid var(--info);
-  border-radius: var(--r-lg); padding: 18px 20px;
-  margin-bottom: 16px;
-}
+.sa-recs { background: var(--info-soft); border: 1px solid var(--info); border-radius: var(--r-lg); padding: 18px 20px; margin-bottom: 16px; }
 .sa-recs .sa-section-title { color: var(--info); }
 .sa-recs ol { list-style: none; padding: 0; margin: 0; counter-reset: rec; }
-.sa-recs li {
-  position: relative; padding-left: 28px;
-  margin-bottom: 10px; font-size: 13.5px; color: #1B3A55; line-height: 1.55;
-  counter-increment: rec;
-}
+.sa-recs li { position: relative; padding-left: 28px; margin-bottom: 10px; font-size: 13.5px; color: #1B3A55; line-height: 1.55; counter-increment: rec; }
 .sa-recs li:last-child { margin-bottom: 0; }
-.sa-recs li::before {
-  content: counter(rec); position: absolute; left: 0; top: 0;
-  width: 20px; height: 20px; line-height: 20px;
-  background: var(--info); color: var(--paper);
-  border-radius: 50%; text-align: center;
-  font-size: 11px; font-weight: 600; font-family: var(--font-mono);
-}
+.sa-recs li::before { content:counter(rec); position:absolute; left:0; top:0; width:20px; height:20px; line-height:20px; background:var(--info); color:var(--paper); border-radius:50%; text-align:center; font-size:11px; font-weight:600; font-family:var(--font-mono); }
 
-/* ── Footer actions / print ────────────────────────── */
-.sa-foot-actions {
-  display: flex; gap: 10px; flex-wrap: wrap;
-  padding: 4px 0;
-}
+.sa-foot-actions { display: flex; gap: 10px; flex-wrap: wrap; padding: 4px 0; }
 
-/* ── Toast ─────────────────────────────────────────── */
-.sa-toast {
-  position: fixed; bottom: 24px; left: 50%;
-  transform: translateX(-50%) translateY(20px);
-  background: var(--ink); color: var(--paper);
-  padding: 11px 20px; border-radius: var(--r-pill);
-  font-size: 13px; font-weight: 500;
-  opacity: 0; pointer-events: none; z-index: 9999;
-  transition: opacity .25s var(--ease), transform .25s var(--ease);
-  white-space: nowrap; max-width: 90vw;
-  box-shadow: 0 8px 22px rgba(0,0,0,.18);
-}
+.sa-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--ink); color: var(--paper); padding: 11px 20px; border-radius: var(--r-pill); font-size: 13px; font-weight: 500; opacity: 0; pointer-events: none; z-index: 9999; transition: opacity .25s var(--ease), transform .25s var(--ease); white-space: normal; max-width: min(520px, 90vw); box-shadow: 0 8px 22px rgba(0,0,0,.18); text-align: center; }
 .sa-toast.is-on { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-/* ── Print styles ──────────────────────────────────── */
 @media print {
-  .sa-card, .sa-actions, .sa-foot-actions, .bk-sidebar, .bk-topbar, .bk-mob-header, .bk-bottom-nav, #bk-shk-fab { display: none !important; }
-  .sa-wrap { padding: 0; max-width: 100%; }
-  .sa-verdict, .sa-data, .sa-sect, .sa-flags, .sa-recs { break-inside: avoid; box-shadow: none !important; }
-  .sa-sect__body { display: block !important; padding: 0 0 12px 24px !important; border-top: 1px solid var(--line) !important; }
-  .sa-sect__chev { display: none; }
-  body { background: white !important; }
+  .sa-card,.sa-actions,.sa-foot-actions,.bk-sidebar,.bk-topbar,.bk-mob-header,.bk-bottom-nav,#bk-shk-fab { display:none!important; }
+  .sa-wrap { padding:0; max-width:100%; }
+  .sa-verdict,.sa-data,.sa-sect,.sa-flags,.sa-recs { break-inside:avoid; box-shadow:none!important; }
+  .sa-sect__body { display:block!important; padding:0 0 12px 24px!important; border-top:1px solid var(--line)!important; }
+  .sa-sect__chev { display:none; }
+  body { background:white!important; }
 }
 </style>
 </head>
 <body data-app="solicitud-arr">
 
-<!-- shell-replaced-sidebar (legacy fallback) -->
 <div style="display:none" hidden>
   <aside class="app-sidebar">
     <div class="app-sidebar__brand">Broquer<span class="dot">.</span></div>
@@ -355,108 +176,105 @@
 
 <div class="sa-wrap">
 
-  <!-- HEADER -->
   <div class="sa-head">
     <div class="sa-head__eyebrow">Análisis con IA</div>
     <h1>Solicitud de arrendamiento</h1>
-    <p class="sa-head__sub">
-      Sube la solicitud que te entregó tu prospecto — en PDF, imagen o Word — y la inteligencia artificial
-      la lee, califica al solicitante y te marca riesgos antes de que firmes.
-    </p>
+    <p class="sa-head__sub">Sube la solicitud que te entregó tu prospecto — en PDF, imagen o Word — y la inteligencia artificial la lee, califica al solicitante y te marca riesgos antes de que firmes.</p>
   </div>
 
-  <!-- UPLOAD CARD -->
   <div class="sa-card" id="sa-card-upload">
+
+    <span class="sa-card__label">Solicitud de arrendamiento (requerida)</span>
 
     <label class="sa-drop" id="sa-drop">
       <input type="file" id="sa-file" accept=".pdf,.docx,.jpg,.jpeg,.png,.webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/*"/>
-      <div class="sa-drop__icon" id="sa-drop-icon">
-        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V4.5m0 0l-4 4m4-4l4 4M4.5 19.5h15"/>
-        </svg>
+      <div class="sa-drop__icon">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V4.5m0 0l-4 4m4-4l4 4M4.5 19.5h15"/></svg>
       </div>
-      <div class="sa-drop__title" id="sa-drop-title">Arrastra el archivo aquí o haz clic para elegir</div>
-      <div class="sa-drop__hint">PDF, imagen (JPG/PNG/WEBP) o Word (DOCX) · máximo 15 MB</div>
+      <div class="sa-drop__title" id="sa-drop-title">Arrastra aquí o haz clic para elegir</div>
+      <div class="sa-drop__hint">PDF · imagen JPG/PNG/WEBP · Word DOCX &nbsp;·&nbsp; máx 15 MB</div>
       <div class="sa-drop__filename" id="sa-drop-filename" style="display:none"></div>
       <img id="sa-preview" class="sa-preview" alt=""/>
     </label>
 
+    <!-- Documentos de respaldo -->
+    <div class="sa-extras">
+
+      <div class="sa-extras__banner">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg>
+        <p><strong>Entre más documentos subas, más preciso y confiable es el análisis.</strong> Agrega escritura del aval, comprobantes de ingresos, estados de cuenta, INE u otros respaldos — la IA los cruza contra la solicitud y detecta inconsistencias específicas.</p>
+      </div>
+
+      <label class="sa-extras__add">
+        <input type="file" id="sa-extra-input" multiple accept=".pdf,.docx,.jpg,.jpeg,.png,.webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/*"/>
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
+        Agregar documentos de respaldo
+      </label>
+
+      <div class="sa-extras__list" id="sa-extras-list"></div>
+      <div class="sa-extras__counter" id="sa-extras-counter" style="display:none"></div>
+
+    </div>
+
     <div class="sa-actions">
       <button class="sa-btn" id="sa-analyze" disabled>
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18 4.5l-.5 1.5L16 6.5l1.5.5L18 8.5l.5-1.5L20 6.5l-1.5-.5L18 4.5zm0 12l-.5 1.5L16 18.5l1.5.5L18 20.5l.5-1.5L20 18.5l-1.5-.5L18 16.5z"/>
-        </svg>
-        <span>Analizar con IA</span>
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18 4.5l-.5 1.5L16 6.5l1.5.5L18 8.5l.5-1.5L20 6.5l-1.5-.5L18 4.5zm0 12l-.5 1.5L16 18.5l1.5.5L18 20.5l.5-1.5L20 18.5l-1.5-.5L18 16.5z"/></svg>
+        <span id="sa-analyze-lbl">Analizar con IA</span>
       </button>
       <button class="sa-btn sa-btn--ghost" id="sa-clear" disabled>
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/>
-        </svg>
-        Quitar archivo
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/></svg>
+        Limpiar todo
       </button>
     </div>
   </div>
 
-  <!-- LOADING STATE -->
+  <!-- LOADING -->
   <div class="sa-loading" id="sa-loading">
     <div class="sa-spinner"></div>
     <div class="sa-loading__msg" id="sa-loading-msg">Leyendo el documento…</div>
+    <div class="sa-loading__docs" id="sa-loading-docs"></div>
   </div>
 
   <!-- RESULTS -->
   <div class="sa-result" id="sa-result">
-
-    <!-- Verdict -->
     <div class="sa-verdict">
       <div class="sa-score" id="sa-score-wrap">
         <svg viewBox="0 0 120 120">
           <circle class="sa-score__track" cx="60" cy="60" r="52"></circle>
           <circle class="sa-score__fill" id="sa-score-fill" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="326.7"></circle>
         </svg>
-        <div class="sa-score__num">
-          <span class="v" id="sa-score-num">0</span>
-          <span class="u">/ 100</span>
-        </div>
+        <div class="sa-score__num"><span class="v" id="sa-score-num">0</span><span class="u">/ 100</span></div>
       </div>
-      <div class="sa-verdict__txt">
+      <div>
         <span class="sa-verdict__badge" id="sa-badge"><span class="dot"></span><span id="sa-badge-lbl">—</span></span>
         <div class="sa-verdict__title" id="sa-verdict-title">—</div>
       </div>
     </div>
 
-    <!-- Data extracted -->
     <div class="sa-data">
       <div class="sa-section-title">Datos extraídos del documento</div>
       <div class="sa-data__grid" id="sa-data-grid"></div>
     </div>
 
-    <!-- Sections -->
     <div class="sa-sections" id="sa-sections"></div>
 
-    <!-- Red flags -->
     <div class="sa-flags" id="sa-flags" style="display:none">
       <div class="sa-section-title">Banderas rojas detectadas</div>
       <ul id="sa-flags-list"></ul>
     </div>
 
-    <!-- Recommendations -->
     <div class="sa-recs" id="sa-recs" style="display:none">
       <div class="sa-section-title">Recomendaciones del agente</div>
       <ol id="sa-recs-list"></ol>
     </div>
 
-    <!-- Footer actions -->
     <div class="sa-foot-actions">
       <button class="sa-btn sa-btn--ghost" onclick="window.print()">
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z"/>
-        </svg>
-        Imprimir / Guardar PDF
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z"/></svg>
+        Imprimir / PDF
       </button>
       <button class="sa-btn" id="sa-new">
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4">
-          <path stroke-linecap="round" d="M12 5v14M5 12h14"/>
-        </svg>
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
         Nuevo análisis
       </button>
     </div>
@@ -464,392 +282,237 @@
 
 </div>
 
-<!-- Toast -->
-<div class="sa-toast" id="sa-toast">—</div>
+<div class="sa-toast" id="sa-toast"></div>
 
 <script src="app-shell.js" defer></script>
-
 <script>
-/* ════════════════════════════════════════════════════════════
-   SOLICITUD DE ARRENDAMIENTO — Análisis IA
-   - Soporta: PDF, JPG/PNG/WEBP, DOCX (máx 15 MB)
-   - Backend: POST /solicitud-arrendamiento/analizar
-   - Esperamos brokr-shell-ready antes de operar (auth)
-   ════════════════════════════════════════════════════════════ */
 (function(){
-  const API_BASE = window.API_BASE || 'https://api.navarroai.com.mx';
-  const MAX_BYTES = 15 * 1024 * 1024; // 15 MB
+  const API_BASE   = window.API_BASE || 'https://api.navarroai.com.mx';
+  const MAX_MAIN   = 15*1024*1024;
+  const MAX_EXTRA  =  8*1024*1024;
+  const MAX_EXTRAS = 5;
   const ACCEPT_EXT = ['pdf','docx','jpg','jpeg','png','webp'];
 
-  /* DOM refs */
   const $drop      = document.getElementById('sa-drop');
   const $file      = document.getElementById('sa-file');
   const $dropTitle = document.getElementById('sa-drop-title');
   const $dropName  = document.getElementById('sa-drop-filename');
   const $preview   = document.getElementById('sa-preview');
   const $analyze   = document.getElementById('sa-analyze');
+  const $analyzeLbl= document.getElementById('sa-analyze-lbl');
   const $clear     = document.getElementById('sa-clear');
   const $loading   = document.getElementById('sa-loading');
   const $loadMsg   = document.getElementById('sa-loading-msg');
+  const $loadDocs  = document.getElementById('sa-loading-docs');
   const $result    = document.getElementById('sa-result');
   const $toast     = document.getElementById('sa-toast');
   const $cardUp    = document.getElementById('sa-card-upload');
   const $newBtn    = document.getElementById('sa-new');
+  const $extraInput= document.getElementById('sa-extra-input');
+  const $extraList = document.getElementById('sa-extras-list');
+  const $extraCnt  = document.getElementById('sa-extras-counter');
 
-  let currentFile = null;
-  let analysing = false;
-  let toastTimer = null;
-  function toast(msg, ms=2400) {
-    $toast.textContent = msg;
-    $toast.classList.add('is-on');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => $toast.classList.remove('is-on'), ms);
-  }
+  let mainFile=null, extraFiles=[], analysing=false, toastTimer=null;
 
-  /* ── Wait for shell so we have auth ─────────────────────── */
-  let shellReady = false;
-  window.addEventListener('brokr-shell-ready', () => { shellReady = true; });
-  function waitForShell(timeoutMs=8000) {
-    return new Promise((resolve) => {
-      if (shellReady || window.brokrSb) return resolve();
-      const t = setTimeout(() => resolve(), timeoutMs);
-      window.addEventListener('brokr-shell-ready', () => { clearTimeout(t); resolve(); }, { once:true });
-    });
-  }
+  function toast(msg,ms=3000){ $toast.textContent=msg; $toast.classList.add('is-on'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>$toast.classList.remove('is-on'),ms); }
 
-  /* ── File handling ──────────────────────────────────────── */
-  function fileExt(f) {
-    return ((f.name || '').split('.').pop() || '').toLowerCase();
-  }
-  function isImage(f) {
-    return (f.type || '').startsWith('image/') || ['jpg','jpeg','png','webp'].includes(fileExt(f));
-  }
+  let shellReady=false;
+  window.addEventListener('brokr-shell-ready',()=>{shellReady=true;});
+  function waitForShell(ms=8000){ return new Promise(res=>{ if(shellReady||window.brokrSb)return res(); const t=setTimeout(res,ms); window.addEventListener('brokr-shell-ready',()=>{clearTimeout(t);res();},{once:true}); }); }
 
-  function setFile(f) {
-    if (!f) { return clearFile(); }
+  function ext(f){return((f.name||'').split('.').pop()||'').toLowerCase();}
+  function isImg(f){return(f.type||'').startsWith('image/')||['jpg','jpeg','png','webp'].includes(ext(f));}
+  function fmtB(b){return b<1024*1024?(b/1024).toFixed(0)+' KB':(b/1024/1024).toFixed(2)+' MB';}
+  function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
-    const ext = fileExt(f);
-    if (!ACCEPT_EXT.includes(ext)) {
-      toast('Formato no aceptado. Sube PDF, imagen o DOCX.');
-      return;
-    }
-    if (f.size > MAX_BYTES) {
-      toast('Archivo muy grande. Máximo 15 MB.');
-      return;
-    }
-
-    currentFile = f;
+  function setMainFile(f){
+    if(!f)return clearAll();
+    if(!ACCEPT_EXT.includes(ext(f))){toast('Formato no aceptado. Sube PDF, imagen o DOCX.');return;}
+    if(f.size>MAX_MAIN){toast('La solicitud es muy grande. Máx 15 MB.');return;}
+    mainFile=f;
     $drop.classList.add('has-file');
-    $dropTitle.textContent = 'Archivo listo para analizar';
-    $dropName.style.display = 'block';
-    $dropName.innerHTML = '<strong>' + escapeHtml(f.name) + '</strong> · ' + formatBytes(f.size);
-
-    // Preview if image
-    if (isImage(f)) {
-      const url = URL.createObjectURL(f);
-      $preview.src = url;
-      $preview.classList.add('is-on');
-    } else {
-      $preview.src = '';
-      $preview.classList.remove('is-on');
-    }
-
-    $analyze.disabled = false;
-    $clear.disabled = false;
+    $dropTitle.textContent='Archivo listo';
+    $dropName.style.display='block';
+    $dropName.innerHTML='<strong>'+esc(f.name)+'</strong> · '+fmtB(f.size);
+    if(isImg(f)){$preview.src=URL.createObjectURL(f);$preview.classList.add('is-on');}
+    else{$preview.src='';$preview.classList.remove('is-on');}
+    updateUI();
   }
 
-  function clearFile() {
-    currentFile = null;
-    $file.value = '';
+  function addExtras(files){
+    let added=0;
+    for(const f of files){
+      if(extraFiles.length>=MAX_EXTRAS){toast('Máximo '+MAX_EXTRAS+' documentos adicionales.');break;}
+      if(!ACCEPT_EXT.includes(ext(f))){toast(f.name+': formato no aceptado.');continue;}
+      if(f.size>MAX_EXTRA){toast(f.name+': excede 8 MB.');continue;}
+      if(extraFiles.some(x=>x.name===f.name&&x.size===f.size))continue;
+      extraFiles.push(f);added++;
+    }
+    if(added)renderChips();
+    updateUI();
+  }
+
+  function removeExtra(i){extraFiles.splice(i,1);renderChips();updateUI();}
+
+  function renderChips(){
+    $extraList.innerHTML=extraFiles.map((f,i)=>
+      '<div class="sa-extra-chip"><span title="'+esc(f.name)+'">'+esc(f.name)+'</span>'
+      +'<button class="sa-extra-chip__rm" data-i="'+i+'" title="Quitar">'
+      +'<svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/></svg>'
+      +'</button></div>'
+    ).join('');
+    $extraList.querySelectorAll('.sa-extra-chip__rm').forEach(btn=>btn.addEventListener('click',()=>removeExtra(+btn.dataset.i)));
+    $extraCnt.style.display=extraFiles.length?'block':'none';
+    if(extraFiles.length)$extraCnt.textContent=extraFiles.length+' de '+MAX_EXTRAS+' documentos de respaldo';
+  }
+
+  function updateUI(){
+    $analyze.disabled=!mainFile||analysing;
+    $clear.disabled=(!mainFile&&!extraFiles.length)||analysing;
+    $analyzeLbl.textContent=extraFiles.length?'Analizar con IA ('+(extraFiles.length+1)+' docs)':'Analizar con IA';
+  }
+
+  function clearAll(){
+    mainFile=null;extraFiles=[];
+    $file.value='';$extraInput.value='';
     $drop.classList.remove('has-file');
-    $dropTitle.textContent = 'Arrastra el archivo aquí o haz clic para elegir';
-    $dropName.style.display = 'none';
-    $dropName.textContent = '';
-    if ($preview.src) { try { URL.revokeObjectURL($preview.src); } catch(e){} }
-    $preview.src = '';
-    $preview.classList.remove('is-on');
-    $analyze.disabled = true;
-    $clear.disabled = true;
+    $dropTitle.textContent='Arrastra aquí o haz clic para elegir';
+    $dropName.style.display='none';
+    if($preview.src)try{URL.revokeObjectURL($preview.src);}catch(_){}
+    $preview.src='';$preview.classList.remove('is-on');
+    renderChips();updateUI();
   }
 
-  function formatBytes(b) {
-    if (b < 1024) return b + ' B';
-    if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
-    return (b/1024/1024).toFixed(2) + ' MB';
+  $file.addEventListener('change',e=>{if(e.target.files?.[0])setMainFile(e.target.files[0]);});
+  $extraInput.addEventListener('change',e=>{if(e.target.files?.length){addExtras(Array.from(e.target.files));$extraInput.value='';}});
+  $clear.addEventListener('click',e=>{e.preventDefault();if(!analysing)clearAll();});
+  ['dragenter','dragover'].forEach(ev=>$drop.addEventListener(ev,e=>{e.preventDefault();$drop.classList.add('is-dragover');}));
+  ['dragleave','drop'].forEach(ev=>$drop.addEventListener(ev,e=>{e.preventDefault();$drop.classList.remove('is-dragover');}));
+  $drop.addEventListener('drop',e=>{const f=e.dataTransfer?.files?.[0];if(f)setMainFile(f);});
+
+  const MSGS_SOLO =['Leyendo el documento…','Extrayendo datos del solicitante…','Verificando ingresos y empleo…','Detectando inconsistencias…','Calificando el caso…'];
+  const MSGS_MULTI=['Leyendo todos los documentos…','Cruzando solicitud con documentos de respaldo…','Verificando coherencia entre documentos…','Detectando inconsistencias…','Calificando el caso…'];
+  let loadIdx=0,loadTimer=null;
+
+  function startLoading(){
+    const msgs=extraFiles.length>0?MSGS_MULTI:MSGS_SOLO;
+    loadIdx=0;$loadMsg.textContent=msgs[0];
+    $loadDocs.textContent=extraFiles.length?'Analizando '+(extraFiles.length+1)+' documentos en conjunto':'';
+    $loading.classList.add('is-on');$result.classList.remove('is-on');$cardUp.style.display='none';
+    loadTimer=setInterval(()=>{
+      loadIdx=(loadIdx+1)%msgs.length;
+      $loadMsg.style.opacity='0';
+      setTimeout(()=>{$loadMsg.textContent=msgs[loadIdx];$loadMsg.style.opacity='1';},180);
+    },2800);
   }
-  function escapeHtml(s) {
-    return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
+  function stopLoading(){clearInterval(loadTimer);$loading.classList.remove('is-on');}
 
-  /* File input + drag/drop */
-  $file.addEventListener('change', (e) => {
-    const f = e.target.files && e.target.files[0];
-    if (f) setFile(f);
-  });
-  ;['dragenter','dragover'].forEach(ev => {
-    $drop.addEventListener(ev, (e) => { e.preventDefault(); $drop.classList.add('is-dragover'); });
-  });
-  ;['dragleave','drop'].forEach(ev => {
-    $drop.addEventListener(ev, (e) => { e.preventDefault(); $drop.classList.remove('is-dragover'); });
-  });
-  $drop.addEventListener('drop', (e) => {
-    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-    if (f) setFile(f);
-  });
-
-  $clear.addEventListener('click', (e) => {
-    e.preventDefault();
-    if (analysing) return;
-    clearFile();
-  });
-
-  /* ── Loading messages rotation ──────────────────────────── */
-  const LOAD_MSGS = [
-    'Leyendo el documento…',
-    'Extrayendo datos del solicitante…',
-    'Verificando ingresos y empleo…',
-    'Cruzando información del aval…',
-    'Detectando inconsistencias…',
-    'Calificando el caso…'
-  ];
-  let loadIdx = 0, loadTimer = null;
-  function startLoading() {
-    loadIdx = 0;
-    $loadMsg.textContent = LOAD_MSGS[0];
-    $loading.classList.add('is-on');
-    $result.classList.remove('is-on');
-    $cardUp.style.display = 'none';
-    loadTimer = setInterval(() => {
-      loadIdx = (loadIdx + 1) % LOAD_MSGS.length;
-      $loadMsg.style.opacity = '0';
-      setTimeout(() => {
-        $loadMsg.textContent = LOAD_MSGS[loadIdx];
-        $loadMsg.style.opacity = '1';
-      }, 180);
-    }, 2400);
-  }
-  function stopLoading() {
-    clearInterval(loadTimer);
-    $loading.classList.remove('is-on');
-  }
-
-  /* ── Analyze ────────────────────────────────────────────── */
-  $analyze.addEventListener('click', async () => {
-    if (analysing || !currentFile) return;
-    analysing = true;
-    $analyze.disabled = true;
-    $clear.disabled = true;
-
-    startLoading();
-
-    try {
-      // Esperar shell para tener token
+  $analyze.addEventListener('click',async()=>{
+    if(analysing||!mainFile)return;
+    analysing=true;updateUI();startLoading();
+    try{
       await waitForShell();
-      let token = '';
-      try {
-        if (window.brokrSb && window.brokrSb.ensureToken) {
-          token = await window.brokrSb.ensureToken();
-        }
-      } catch(_) { /* sin token → backend devolverá 401 */ }
-
-      const fd = new FormData();
-      fd.append('file', currentFile, currentFile.name);
-
-      const headers = {};
-      if (token) headers['Authorization'] = 'Bearer ' + token;
-
-      const r = await fetch(API_BASE + '/solicitud-arrendamiento/analizar', {
-        method: 'POST',
-        headers,
-        body: fd,
-      });
-
-      if (!r.ok) {
-        let txt = '';
-        try { txt = await r.text(); } catch(_) {}
-        if (r.status === 401) throw new Error('Sesión expirada. Vuelve a iniciar sesión.');
-        if (r.status === 413) throw new Error('Archivo demasiado grande. Máximo 15 MB.');
-        if (r.status === 429) throw new Error('Alcanzaste tu límite de análisis. Espera o sube de plan.');
-        throw new Error('No se pudo analizar (' + r.status + '). ' + (txt ? txt.slice(0,160) : ''));
+      let token='';
+      try{if(window.brokrSb?.ensureToken)token=await window.brokrSb.ensureToken();}catch(_){}
+      const fd=new FormData();
+      fd.append('file',mainFile,mainFile.name);
+      extraFiles.forEach(f=>fd.append('documentos',f,f.name));
+      const headers={};if(token)headers['Authorization']='Bearer '+token;
+      const r=await fetch(API_BASE+'/solicitud-arrendamiento/analizar',{method:'POST',headers,body:fd});
+      if(!r.ok){
+        let txt='';try{txt=await r.text();}catch(_){}
+        if(r.status===401)throw new Error('Sesión expirada. Vuelve a iniciar sesión.');
+        if(r.status===413)throw new Error('Archivo muy grande. Verifica los tamaños.');
+        if(r.status===429)throw new Error('Alcanzaste tu límite de análisis este mes.');
+        let det='';try{det=JSON.parse(txt)?.detail||txt;}catch(_){det=txt;}
+        throw new Error('No se pudo analizar ('+r.status+'). '+String(det||'').slice(0,200));
       }
-
-      const data = await r.json();
-      renderResult(data);
-
-    } catch (err) {
-      console.error('[Solicitud arr] error:', err);
-      toast(err.message || 'No se pudo analizar el documento.');
-      // volver al estado de upload
-      $cardUp.style.display = '';
-      $result.classList.remove('is-on');
-    } finally {
-      stopLoading();
-      analysing = false;
-      $analyze.disabled = !currentFile;
-      $clear.disabled = !currentFile;
-    }
+      renderResult(await r.json());
+    }catch(err){
+      console.error('[SolicitudArr]',err);
+      toast(err.message||'Error inesperado. Intenta de nuevo.');
+      $cardUp.style.display='';
+    }finally{stopLoading();analysing=false;updateUI();}
   });
 
-  /* ── Render result ──────────────────────────────────────── */
-  function renderResult(d) {
-    if (!d || typeof d !== 'object') {
-      toast('Respuesta inesperada del servidor.');
-      $cardUp.style.display = '';
-      return;
-    }
-
-    // Score circle
-    const score = Math.max(0, Math.min(100, Math.round(Number(d.puntaje) || 0)));
-    const nivel = (d.nivel_riesgo || '').toLowerCase();
-    const variant = (nivel === 'verde' || nivel === 'amarillo' || nivel === 'rojo') ? nivel : 'amarillo';
-
-    const $scoreWrap = document.getElementById('sa-score-wrap');
-    $scoreWrap.classList.remove('sa-score--verde','sa-score--amarillo','sa-score--rojo');
-    $scoreWrap.classList.add('sa-score--' + variant);
-
-    // animate fill
-    const CIRC = 2 * Math.PI * 52; // 326.7
-    const $fill = document.getElementById('sa-score-fill');
-    $fill.setAttribute('stroke-dasharray', CIRC.toFixed(2));
-    $fill.setAttribute('stroke-dashoffset', CIRC.toFixed(2));
-    setTimeout(() => {
-      const offset = CIRC * (1 - score/100);
-      $fill.setAttribute('stroke-dashoffset', offset.toFixed(2));
-    }, 80);
-
-    // animate number
-    const $num = document.getElementById('sa-score-num');
-    let cur = 0;
-    clearInterval(window._saNumTimer);
-    window._saNumTimer = setInterval(() => {
-      cur += Math.max(1, Math.ceil((score - cur) / 8));
-      if (cur >= score) { cur = score; clearInterval(window._saNumTimer); }
-      $num.textContent = cur;
-    }, 24);
-
-    // badge + title
-    const $badge = document.getElementById('sa-badge');
-    $badge.classList.remove('is-verde','is-amarillo','is-rojo');
-    $badge.classList.add('is-' + variant);
-    const lblByVariant = { verde:'Aprobado', amarillo:'Con atención', rojo:'Alto riesgo' };
-    document.getElementById('sa-badge-lbl').textContent = lblByVariant[variant];
-    document.getElementById('sa-verdict-title').textContent = d.veredicto_corto || '—';
-
-    // data extracted grid
-    renderDataGrid(d.datos_extraidos || {});
-
-    // sections
-    renderSections(Array.isArray(d.secciones) ? d.secciones : []);
-
-    // red flags
-    const flags = Array.isArray(d.banderas_rojas) ? d.banderas_rojas.filter(x => x && String(x).trim()) : [];
-    const $flagsBox = document.getElementById('sa-flags');
-    const $flagsList = document.getElementById('sa-flags-list');
-    if (flags.length) {
-      $flagsBox.style.display = '';
-      $flagsList.innerHTML = flags.map(x => '<li>' + escapeHtml(x) + '</li>').join('');
-    } else {
-      $flagsBox.style.display = 'none';
-      $flagsList.innerHTML = '';
-    }
-
-    // recommendations
-    const recs = Array.isArray(d.recomendaciones) ? d.recomendaciones.filter(x => x && String(x).trim()) : [];
-    const $recsBox = document.getElementById('sa-recs');
-    const $recsList = document.getElementById('sa-recs-list');
-    if (recs.length) {
-      $recsBox.style.display = '';
-      $recsList.innerHTML = recs.map(x => '<li>' + escapeHtml(x) + '</li>').join('');
-    } else {
-      $recsBox.style.display = 'none';
-      $recsList.innerHTML = '';
-    }
-
+  function renderResult(d){
+    if(!d||typeof d!=='object'){toast('Respuesta inesperada.');$cardUp.style.display='';return;}
+    const score=Math.max(0,Math.min(100,Math.round(Number(d.puntaje)||0)));
+    const nivel=(d.nivel_riesgo||'').toLowerCase();
+    const variant=['verde','amarillo','rojo'].includes(nivel)?nivel:'amarillo';
+    const $sw=document.getElementById('sa-score-wrap');
+    $sw.className='sa-score sa-score--'+variant;
+    const CIRC=2*Math.PI*52;
+    const $fill=document.getElementById('sa-score-fill');
+    $fill.setAttribute('stroke-dasharray',CIRC.toFixed(2));
+    $fill.setAttribute('stroke-dashoffset',CIRC.toFixed(2));
+    setTimeout(()=>$fill.setAttribute('stroke-dashoffset',(CIRC*(1-score/100)).toFixed(2)),80);
+    const $num=document.getElementById('sa-score-num');
+    let cur=0;clearInterval(window._saT);
+    window._saT=setInterval(()=>{cur+=Math.max(1,Math.ceil((score-cur)/8));if(cur>=score){cur=score;clearInterval(window._saT);}$num.textContent=cur;},24);
+    const $badge=document.getElementById('sa-badge');
+    $badge.className='sa-verdict__badge is-'+variant;
+    document.getElementById('sa-badge-lbl').textContent={verde:'Aprobado',amarillo:'Con atención',rojo:'Alto riesgo'}[variant];
+    document.getElementById('sa-verdict-title').textContent=d.veredicto_corto||'—';
+    renderDataGrid(d.datos_extraidos||{});
+    renderSections(Array.isArray(d.secciones)?d.secciones:[]);
+    const flags=(d.banderas_rojas||[]).filter(x=>x&&String(x).trim());
+    const $fb=document.getElementById('sa-flags');
+    document.getElementById('sa-flags-list').innerHTML=flags.map(x=>'<li>'+esc(x)+'</li>').join('');
+    $fb.style.display=flags.length?'':'none';
+    const recs=(d.recomendaciones||[]).filter(x=>x&&String(x).trim());
+    const $rb=document.getElementById('sa-recs');
+    document.getElementById('sa-recs-list').innerHTML=recs.map(x=>'<li>'+esc(x)+'</li>').join('');
+    $rb.style.display=recs.length?'':'none';
     $result.classList.add('is-on');
-    $result.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    $result.scrollIntoView({behavior:'smooth',block:'start'});
   }
 
-  function renderDataGrid(d) {
-    const $g = document.getElementById('sa-data-grid');
-    const fmtMoney = (v) => v == null || v === '' ? null : '$' + Math.round(Number(v)).toLocaleString('es-MX');
-    const fmtBool  = (v) => v === true ? 'Sí' : v === false ? 'No' : null;
-
-    const ratio = Number(d.ratio_ingreso_renta) || null;
-    let ratioCls = '';
-    if (ratio) {
-      if (ratio >= 3)  ratioCls = 'good';
-      else if (ratio >= 2) ratioCls = 'warn';
-      else ratioCls = 'bad';
-    }
-
-    const items = [
-      { lbl:'Solicitante',         val: d.nombre_solicitante },
-      { lbl:'Edad',                val: d.edad },
-      { lbl:'Ocupación',           val: d.ocupacion },
-      { lbl:'Ingresos mensuales',  val: fmtMoney(d.ingresos_mensuales_mxn), num:true },
-      { lbl:'Renta solicitada',    val: fmtMoney(d.renta_solicitada_mxn),   num:true },
-      { lbl:'Ratio ingreso / renta', val: ratio ? ratio.toFixed(2) + 'x' : null, ratio:true, ratioCls },
-      { lbl:'¿Tiene aval?',        val: fmtBool(d.tiene_aval) },
-      { lbl:'¿Tiene referencias?', val: fmtBool(d.tiene_referencias) },
+  function renderDataGrid(d){
+    const $g=document.getElementById('sa-data-grid');
+    const fmtM=v=>v==null||v===''?null:'$'+Math.round(Number(v)).toLocaleString('es-MX');
+    const fmtBool=v=>v===true?'Sí':v===false?'No':null;
+    const ratio=Number(d.ratio_ingreso_renta)||null;
+    const rcls=ratio?(ratio>=3?'good':ratio>=2?'warn':'bad'):'';
+    const items=[
+      {lbl:'Solicitante',val:d.nombre_solicitante},
+      {lbl:'Edad',val:d.edad},
+      {lbl:'Ocupación',val:d.ocupacion},
+      {lbl:'Ingresos mensuales',val:fmtM(d.ingresos_mensuales_mxn),num:true},
+      {lbl:'Renta solicitada',val:fmtM(d.renta_solicitada_mxn),num:true},
+      {lbl:'Ratio ingreso/renta',val:ratio?ratio.toFixed(2)+'x':null,ratio:true,rcls},
+      {lbl:'Tiene aval',val:fmtBool(d.tiene_aval)},
+      {lbl:'Tiene referencias',val:fmtBool(d.tiene_referencias)},
     ];
-
-    $g.innerHTML = items.map(it => {
-      const cls = 'sa-data__item' + (it.ratio ? ' is-ratio ' + (it.ratioCls||'') : '');
-      const valCls = 'sa-data__val' + (it.num ? ' num' : '') + (it.val == null || it.val === '' ? ' muted' : '');
-      const valTxt = (it.val == null || it.val === '') ? 'no detectado' : it.val;
-      return '<div class="' + cls + '">'
-        + '<div class="sa-data__lbl">' + escapeHtml(it.lbl) + '</div>'
-        + '<div class="' + valCls + '">' + escapeHtml(valTxt) + '</div>'
-        + '</div>';
+    $g.innerHTML=items.map(it=>{
+      const cls='sa-data__item'+(it.ratio?' is-ratio '+(it.rcls||''):'');
+      const vcls='sa-data__val'+(it.num?' num':'')+(it.val==null||it.val===''?' muted':'');
+      return '<div class="'+cls+'"><div class="sa-data__lbl">'+esc(it.lbl)+'</div><div class="'+vcls+'">'+(it.val==null||it.val===''?'no detectado':esc(it.val))+'</div></div>';
     }).join('');
   }
 
-  const STATUS_LBL = { ok:'Bien', atencion:'Atención', critico:'Crítico', faltante:'Faltante' };
-  function renderSections(arr) {
-    const $s = document.getElementById('sa-sections');
-    if (!arr.length) { $s.innerHTML = ''; return; }
-
-    $s.innerHTML = arr.map((sec, i) => {
-      const estatus = (sec.estatus || 'atencion').toLowerCase();
-      const cls = ['ok','atencion','critico','faltante'].includes(estatus) ? estatus : 'atencion';
-      const pts = Array.isArray(sec.puntos) ? sec.puntos.filter(x => x && String(x).trim()) : [];
-      const ptsHtml = pts.length
-        ? '<ul>' + pts.map(p => '<li>' + escapeHtml(p) + '</li>').join('') + '</ul>'
-        : '<p style="font-size:13px;color:var(--mute);font-style:italic">Sin observaciones.</p>';
-
-      return '<div class="sa-sect" data-idx="' + i + '">'
-        + '<div class="sa-sect__head">'
-        +   '<span class="sa-sect__dot ' + cls + '"></span>'
-        +   '<span class="sa-sect__name">' + escapeHtml(sec.categoria || 'Sección') + '</span>'
-        +   '<span class="sa-sect__status ' + cls + '">' + STATUS_LBL[cls] + '</span>'
-        +   '<svg class="sa-sect__chev" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>'
-        + '</div>'
-        + '<div class="sa-sect__body">' + ptsHtml + '</div>'
-        + '</div>';
+  const S_LBL={ok:'Bien',atencion:'Atención',critico:'Crítico',faltante:'Faltante'};
+  function renderSections(arr){
+    const $s=document.getElementById('sa-sections');
+    if(!arr.length){$s.innerHTML='';return;}
+    $s.innerHTML=arr.map((sec,i)=>{
+      const e=['ok','atencion','critico','faltante'].includes((sec.estatus||'').toLowerCase())?sec.estatus.toLowerCase():'atencion';
+      const pts=(sec.puntos||[]).filter(x=>x&&String(x).trim());
+      return '<div class="sa-sect" data-i="'+i+'"><div class="sa-sect__head">'
+        +'<span class="sa-sect__dot '+e+'"></span><span class="sa-sect__name">'+esc(sec.categoria||'Sección')+'</span>'
+        +'<span class="sa-sect__status '+e+'">'+S_LBL[e]+'</span>'
+        +'<svg class="sa-sect__chev" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>'
+        +'</div><div class="sa-sect__body">'+(pts.length?'<ul>'+pts.map(p=>'<li>'+esc(p)+'</li>').join('')+'</ul>':'<p style="font-size:13px;color:var(--mute);font-style:italic">Sin observaciones.</p>')+'</div></div>';
     }).join('');
-
-    // expand secciones críticas / atención por default
-    $s.querySelectorAll('.sa-sect').forEach((el, i) => {
-      const dot = el.querySelector('.sa-sect__dot');
-      if (dot && (dot.classList.contains('critico') || dot.classList.contains('atencion'))) {
-        el.classList.add('is-open');
-      }
-      el.querySelector('.sa-sect__head').addEventListener('click', () => {
-        el.classList.toggle('is-open');
-      });
+    $s.querySelectorAll('.sa-sect').forEach(el=>{
+      const dot=el.querySelector('.sa-sect__dot');
+      if(dot&&(dot.classList.contains('critico')||dot.classList.contains('atencion')))el.classList.add('is-open');
+      el.querySelector('.sa-sect__head').addEventListener('click',()=>el.classList.toggle('is-open'));
     });
   }
 
-  /* ── New analysis button ────────────────────────────────── */
-  $newBtn.addEventListener('click', () => {
-    clearFile();
-    $result.classList.remove('is-on');
-    $cardUp.style.display = '';
-    window.scrollTo({ top: 0, behavior:'smooth' });
-  });
-
+  $newBtn.addEventListener('click',()=>{clearAll();$result.classList.remove('is-on');$cardUp.style.display='';window.scrollTo({top:0,behavior:'smooth'});});
 })();
 </script>
-
 </body>
 </html>

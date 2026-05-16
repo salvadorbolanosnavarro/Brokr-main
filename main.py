@@ -620,15 +620,15 @@ async def chat_claude_proxy(req: ClaudeChatRequest):
 async def analizar_solicitud_arrendamiento(
     request: Request,
     file: UploadFile = File(...),
+    documentos: List[UploadFile] = File(default=[]),
 ):
     """
-    Lee una solicitud de arrendamiento (PDF, imagen JPG/PNG/WEBP o DOCX),
-    la analiza con Claude Sonnet 4.6 y devuelve un JSON estructurado con:
-      - puntaje (0-100), nivel_riesgo (verde/amarillo/rojo)
-      - datos_extraidos del solicitante
-      - secciones por categoría (Identificación, Domicilio, Empleo, etc.)
-      - banderas_rojas y recomendaciones
-    Máximo 15 MB. Requiere usuario autenticado.
+    Lee una solicitud de arrendamiento (PDF, imagen JPG/PNG/WEBP o DOCX) más
+    hasta 5 documentos de respaldo opcionales (comprobantes de ingresos, escrituras
+    del aval, INE, estados de cuenta, etc.) y los cruza todos con Claude Sonnet 4.6.
+    Devuelve JSON estructurado con puntaje, riesgo, hallazgos y recomendaciones.
+    Solicitud principal: máx 15 MB. Documentos adicionales: máx 8 MB c/u.
+    Requiere usuario autenticado.
     """
     # Auth
     user_id = await get_user_id_from_token(request)
@@ -708,21 +708,70 @@ Reglas estrictas:
 8. "recomendaciones" son acciones concretas que el agente debe hacer ANTES de firmar: verificar X comprobante con el patrón, confirmar Y referencia, pedir Z documento faltante, etc.
 9. Indicadores PLD: revisa si hay coincidencias con criterios de actividad vulnerable de LFPIORPI (renta mensual >= 1,605 UMA = $188,282.55 MXN en 2026 obliga identificación del cliente; >= 3,210 UMA = $376,565 MXN obliga aviso al SAT)."""
 
-    USER_INSTRUCTION = (
-        "Analiza esta solicitud de arrendamiento. "
-        "Devuelve tu evaluación ÚNICAMENTE dentro de etiquetas <output></output>, "
-        "como se indica en el system prompt. Solo JSON entre esas etiquetas, nada más."
-    )
+    # ── Helper: convierte un UploadFile a bloque(s) de contenido para Claude ──
+    async def archivo_a_bloques(uf: UploadFile, etiqueta: str, max_bytes: int = 8 * 1024 * 1024):
+        """Devuelve lista de bloques content para Claude según tipo de archivo."""
+        raw = await uf.read()
+        if len(raw) > max_bytes or len(raw) < 50:
+            return []  # omitir silenciosamente si excede límite o está vacío
+        n = (uf.filename or "").lower()
+        ct = (uf.content_type or "").lower()
+        bloques = []
+        bloques.append({"type": "text", "text": f"\n--- {etiqueta} ({uf.filename}) ---"})
+        if ct == "application/pdf" or n.endswith(".pdf"):
+            bloques.append({
+                "type": "document",
+                "source": {
+                    "type": "base64",
+                    "media_type": "application/pdf",
+                    "data": base64.standard_b64encode(raw).decode("utf-8")
+                }
+            })
+        elif "wordprocessingml" in ct or n.endswith(".docx"):
+            try:
+                from docx import Document as _DocxDocument
+                _doc = _DocxDocument(io.BytesIO(raw))
+                _parts = []
+                for _p in _doc.paragraphs:
+                    if _p.text and _p.text.strip():
+                        _parts.append(_p.text.strip())
+                for _tbl in _doc.tables:
+                    for _row in _tbl.rows:
+                        for _cell in _row.cells:
+                            for _p in _cell.paragraphs:
+                                if _p.text and _p.text.strip():
+                                    _parts.append(_p.text.strip())
+                _txt = "\n".join(_parts)[:10000]
+                if _txt.strip():
+                    bloques.append({"type": "text", "text": _txt})
+            except Exception:
+                pass  # omitir si no se puede leer
+        elif ct.startswith("image/") or any(n.endswith(x) for x in [".jpg", ".jpeg", ".png", ".webp"]):
+            _mt = "image/jpeg"
+            if n.endswith(".png") or "png" in ct:
+                _mt = "image/png"
+            elif n.endswith(".webp") or "webp" in ct:
+                _mt = "image/webp"
+            bloques.append({
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": _mt,
+                    "data": base64.standard_b64encode(raw).decode("utf-8")
+                }
+            })
+        return bloques
 
+    # ── Construir user_content: solicitud principal ──────────────────────────
     user_content = []
 
     if is_pdf:
         b64 = base64.standard_b64encode(content).decode("utf-8")
+        user_content.append({"type": "text", "text": "--- SOLICITUD DE ARRENDAMIENTO (documento principal) ---"})
         user_content.append({
             "type": "document",
             "source": {"type": "base64", "media_type": "application/pdf", "data": b64}
         })
-        user_content.append({"type": "text", "text": USER_INSTRUCTION})
 
     elif is_docx:
         try:
@@ -747,10 +796,7 @@ Reglas estrictas:
             raise HTTPException(status_code=400, detail=f"No se pudo leer el DOCX: {e}")
         user_content.append({
             "type": "text",
-            "text": (
-                "Texto extraído de la solicitud de arrendamiento (formato Word):\n\n"
-                f"{extracted}\n\n---\n\n{USER_INSTRUCTION}"
-            )
+            "text": "--- SOLICITUD DE ARRENDAMIENTO (documento principal, formato Word) ---\n\n" + extracted
         })
 
     elif is_image:
@@ -762,11 +808,11 @@ Reglas estrictas:
         elif fname.endswith(".gif") or "gif" in ctype:
             media_type = "image/gif"
         b64 = base64.standard_b64encode(content).decode("utf-8")
+        user_content.append({"type": "text", "text": "--- SOLICITUD DE ARRENDAMIENTO (documento principal) ---"})
         user_content.append({
             "type": "image",
             "source": {"type": "base64", "media_type": media_type, "data": b64}
         })
-        user_content.append({"type": "text", "text": USER_INSTRUCTION})
 
     else:
         raise HTTPException(
@@ -774,9 +820,41 @@ Reglas estrictas:
             detail="Formato no soportado. Sube PDF, imagen (JPG/PNG/WEBP) o DOCX."
         )
 
+    # ── Documentos adicionales (hasta 5) ─────────────────────────────────────
+    docs_validos = (documentos or [])[:5]
+    nombres_extra = []
+    for i, doc_extra in enumerate(docs_validos, start=1):
+        etiqueta = f"DOCUMENTO DE RESPALDO #{i}"
+        bloques = await archivo_a_bloques(doc_extra, etiqueta)
+        if bloques:
+            user_content.extend(bloques)
+            nombres_extra.append(doc_extra.filename or f"documento_{i}")
+
+    # ── Instrucción final con contexto de documentos enviados ─────────────────
+    if nombres_extra:
+        USER_INSTRUCTION = (
+            f"Se adjuntan {len(nombres_extra)} documento(s) de respaldo además de la solicitud principal: "
+            + ", ".join(nombres_extra) + ".\n"
+            "Cruza la información de todos los documentos entre sí:\n"
+            "- Verifica que los ingresos declarados en la solicitud coincidan con los comprobantes.\n"
+            "- Verifica que el aval tenga solvencia real según su escritura u otro documento.\n"
+            "- Detecta inconsistencias entre lo declarado en la solicitud y lo que muestran los respaldos.\n"
+            "- Menciona discrepancias específicas en la sección 'Coherencia documental' y en banderas_rojas si aplica.\n\n"
+            "Devuelve tu evaluación ÚNICAMENTE dentro de etiquetas <output></output>, "
+            "como se indica en el system prompt. Solo JSON entre esas etiquetas."
+        )
+    else:
+        USER_INSTRUCTION = (
+            "Analiza esta solicitud de arrendamiento. "
+            "Devuelve tu evaluación ÚNICAMENTE dentro de etiquetas <output></output>, "
+            "como se indica en el system prompt. Solo JSON entre esas etiquetas, nada más."
+        )
+
+    user_content.append({"type": "text", "text": USER_INSTRUCTION})
+
     # Llamada a Claude
     try:
-        async with httpx.AsyncClient(timeout=120) as client:
+        async with httpx.AsyncClient(timeout=150) as client:
             r = await client.post(
                 f"{ANTHROPIC_BASE}/messages",
                 headers={
