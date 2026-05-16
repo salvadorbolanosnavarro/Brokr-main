@@ -123,7 +123,7 @@
   display: flex; align-items: center;
 }
 .bk-sidebar__brand a { display: flex; align-items: center; gap: 8px; text-decoration: none; }
-.bk-sidebar__brand img { height: 28px; width: auto; display: block; }
+.bk-sidebar__brand img { height: 88px; width: auto; display: block; }
 .bk-sb-section {
   font-family: var(--font-mono);
   font-size: 9px; letter-spacing: 0.18em;
@@ -190,7 +190,7 @@
 }
 @media (max-width: 880px) { .bk-mobile-head { display: flex; } }
 .bk-mobile-head a { display:flex; align-items:center; }
-.bk-mobile-head img { height: 39px; width: auto; display: block; }
+.bk-mobile-head img { height: 88px; width: auto; display: block; }
 .bk-mobile-head__avatar {
   width: 29px; height: 29px; border-radius: 50%;
   background: var(--ink); color: var(--paper);
@@ -782,7 +782,7 @@
     bnav.innerHTML =
       bnavFixed.map(m => buildBnavItemLabel(m, activeKey)).join('') +
       `<button class="bk-bnav__item bk-bnav__broquer" id="bk-bnav-shaark" type="button" aria-label="Abrir Broquer">
-         <img src="isotipo-black.png" alt="" style="width:26px;height:26px;object-fit:contain;"/>
+         <img src="isotipo-black.png" alt="" style="width:31px;height:31px;object-fit:contain;"/>
          <span>Broquer</span>
        </button>` +
       buildBnavItemLabel(bnavFixed2[0], activeKey, 'Estimación') +
