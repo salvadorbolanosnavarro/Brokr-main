@@ -2004,7 +2004,7 @@
     if (!document.getElementById('conekta-js')) {
       const s = document.createElement('script');
       s.id = 'conekta-js';
-      s.src = 'https://cdn.conekta.io/assets/lib/0.5.0/conekta.js';
+      s.src = 'https://conektaapi.s3.amazonaws.com/v0.3.1/js/conekta.js';
       s.onload = () => {
         if (window.Conekta) {
           window.Conekta.setPublicKey(CONEKTA_PUB);
