@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<link rel="icon" type="image/png" href="icon-192.png"/>
-<link rel="apple-touch-icon" href="isotipo-broquer.png"/>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <title>Admin · Broquer</title>
@@ -763,7 +763,7 @@ function startPolling() {
         nuevo.forEach(u => {
           showToast(`Nuevo usuario: ${u.nombre||u.email}`);
           if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification('Nuevo usuario en BROKR', { body: u.nombre||u.email, icon: 'isotipo-broquer.png' });
+            new Notification('Nuevo usuario en BROKR', { body: u.nombre||u.email, icon: 'isotipo-black.png' });
           }
         });
         await loadUsers();
