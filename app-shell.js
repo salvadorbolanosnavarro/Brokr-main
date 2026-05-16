@@ -454,29 +454,19 @@
 
 /* ── Profile Drawer ─────────────────────────────────────────── */
 .bk-profile-overlay {
-  position: fixed; inset: 0; z-index: 200;
+  display: none; position: fixed; inset: 0; z-index: 200;
   background: rgba(10,10,10,0.35); backdrop-filter: blur(2px);
-  opacity: 0; visibility: hidden; pointer-events: none;
-  transition: opacity .22s cubic-bezier(.16,1,.3,1), visibility 0s linear .22s;
 }
-.bk-profile-overlay.is-open { opacity: 1; visibility: visible; pointer-events: auto; transition-delay: 0s; }
+.bk-profile-overlay.is-open { display: block; }
 .bk-profile-drawer {
-  position: fixed; top: 0; right: 0; bottom: 0; z-index: 201;
+  position: fixed; top: 0; right: -380px; bottom: 0; z-index: 201;
   width: 360px; max-width: 100vw;
   background: var(--paper); border-left: 1px solid var(--line);
   display: flex; flex-direction: column;
-  transform: translate3d(100%,0,0);
-  transition: transform .28s cubic-bezier(.16,1,.3,1);
-  overflow: hidden; will-change: transform; contain: layout paint style;
+  transition: right .28s cubic-bezier(.16,1,.3,1);
+  overflow: hidden;
 }
-.bk-profile-drawer.is-open { transform: translate3d(0,0,0); }
-@media (max-width: 640px) {
-  .bk-profile-overlay { backdrop-filter: none; }
-  .bk-profile-drawer { width: min(360px, 92vw); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .bk-profile-overlay, .bk-profile-drawer { transition: none; }
-}
+.bk-profile-drawer.is-open { right: 0; }
 .bk-pd-head {
   display: flex; align-items: center; justify-content: space-between;
   padding: 18px 20px 16px; border-bottom: 1px solid var(--line);
@@ -1264,24 +1254,14 @@
 
   function openProfileDrawer() {
     let overlay = document.getElementById('bk-profile-overlay');
-    const needsBuild = !overlay;
-    if (needsBuild) buildProfileDrawer();
+    if (!overlay) buildProfileDrawer();
     overlay = document.getElementById('bk-profile-overlay');
-    const drawer = document.getElementById('bk-profile-drawer');
-
-    const show = () => {
-      overlay?.classList.add('is-open');
-      drawer?.classList.add('is-open');
-    };
-    // Si se tuvo que crear en este click, esperamos un frame para que el
-    // navegador pinte el estado cerrado y la transición no salte.
-    if (needsBuild) requestAnimationFrame(show);
-    else show();
-
-    // Pintar datos locales/caché al instante; la red se deja para cuando ya
-    // terminó el slide-in para evitar jank en web y móvil.
-    renderProfileSnapshot();
-    window.setTimeout(() => { loadProfileData(); }, 320);
+    overlay.classList.add('is-open');
+    document.getElementById('bk-profile-drawer').classList.add('is-open');
+    // Diferir las peticiones de red para que la animación de apertura no se trabe
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      loadProfileData();
+    }));
   }
   window.openProfileDrawer = openProfileDrawer;
 
@@ -1292,7 +1272,6 @@
   window.closeProfileDrawer = closeProfileDrawer;
 
   function buildProfileDrawer() {
-    if (document.getElementById('bk-profile-drawer')) return;
     // Overlay
     const overlay = document.createElement('div');
     overlay.id = 'bk-profile-overlay';
@@ -1483,7 +1462,6 @@
       </div>
     `;
     document.body.appendChild(drawer);
-    renderProfileSnapshot();
   }
 
   // Caché de datos del perfil — evita pegar a 3 endpoints cada vez que el
@@ -1491,7 +1469,6 @@
   // conexión EB/Facebook. TTL: 60 segundos.
   let _pdCache = null;
   let _pdCacheAt = 0;
-  let _pdLoadInFlight = null;
   const PD_CACHE_TTL = 60000;
 
   function invalidateProfileCache() {
@@ -1500,35 +1477,11 @@
   }
   window.invalidateProfileCache = invalidateProfileCache;
 
-  function getStoredUser() {
-    try { return JSON.parse(localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}'); }
-    catch(e) { return {}; }
-  }
-
-  function renderProfileSnapshot() {
-    if (!document.getElementById('bk-profile-drawer')) return;
-    const user = getStoredUser();
-    if (_pdCache && (Date.now() - _pdCacheAt) < PD_CACHE_TTL) {
-      renderProfileData(_pdCache, user);
-      return;
-    }
-    const sidebarName = document.getElementById('bk-sb-name')?.textContent?.trim() || '';
-    renderProfileData({ usuario: { nombre: sidebarName } }, user);
-  }
-
-  function scheduleProfileDrawerWarmup() {
-    const warmup = () => {
-      if (!document.getElementById('bk-profile-drawer')) buildProfileDrawer();
-      loadProfileData();
-    };
-    if ('requestIdleCallback' in window) window.requestIdleCallback(warmup, { timeout: 1800 });
-    else window.setTimeout(warmup, 900);
-  }
-
   async function loadProfileData() {
     const tok = getToken();
     if (!tok) return;
-    const user = getStoredUser();
+    let user = {};
+    try { user = JSON.parse(localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}'); } catch(e) {}
 
     // Rellenar email de inmediato (lo tenemos en memoria, no necesita red)
     if (user.email) {
@@ -1539,36 +1492,32 @@
     // Si tenemos caché fresco, repintar inmediatamente sin pegar a la red
     if (_pdCache && (Date.now() - _pdCacheAt) < PD_CACHE_TTL) {
       renderProfileData(_pdCache, user);
-      return _pdCache;
+      return;
     }
-    if (_pdLoadInFlight) return _pdLoadInFlight;
 
-    // 2 peticiones EN PARALELO con Promise.allSettled (antes eran 3).
-    // /profile/status devuelve EB + FB en una sola llamada al backend.
-    // (allSettled = si una falla, las demás siguen — el drawer no se queda en blanco)
-    _pdLoadInFlight = (async () => {
-      const [usuarioRes, statusRes] = await Promise.allSettled([
-        fetch(SB_URL + '/rest/v1/usuarios?id=eq.' + user.id + '&select=nombre,telefono,rol', {
-          headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok }
-        }).then(r => r.ok ? r.json() : []),
-        fetch(API_BASE + '/profile/status', {
-          headers: { Authorization: 'Bearer ' + tok }
-        }).then(r => r.ok ? r.json() : { eb: { configured: false }, fb: { connected: false } })
-      ]);
+    // Render inmediato con caché viejo si existe, para que el drawer no quede en blanco
+    if (_pdCache) renderProfileData(_pdCache, user);
 
-      const profileStatus = statusRes.status === 'fulfilled' ? statusRes.value : { eb: {}, fb: {} };
-      const data = {
-        usuario: usuarioRes.status === 'fulfilled' ? (usuarioRes.value[0] || {}) : {},
-        eb:      profileStatus.eb || { configured: false },
-        fb:      profileStatus.fb || { connected: false }
-      };
+    // Peticiones en paralelo — resultado actualiza el drawer cuando llegan
+    const [usuarioRes, statusRes] = await Promise.allSettled([
+      fetch(SB_URL + '/rest/v1/usuarios?id=eq.' + user.id + '&select=nombre,telefono,rol', {
+        headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok }
+      }).then(r => r.ok ? r.json() : []),
+      fetch(API_BASE + '/profile/status', {
+        headers: { Authorization: 'Bearer ' + tok }
+      }).then(r => r.ok ? r.json() : { eb: { configured: false }, fb: { connected: false } })
+    ]);
 
-      _pdCache = data;
-      _pdCacheAt = Date.now();
-      renderProfileData(data, user);
-      return data;
-    })().finally(() => { _pdLoadInFlight = null; });
-    return _pdLoadInFlight;
+    const profileStatus = statusRes.status === 'fulfilled' ? statusRes.value : { eb: {}, fb: {} };
+    const data = {
+      usuario: usuarioRes.status === 'fulfilled' ? (usuarioRes.value[0] || {}) : {},
+      eb:      profileStatus.eb || { configured: false },
+      fb:      profileStatus.fb || { connected: false }
+    };
+
+    _pdCache = data;
+    _pdCacheAt = Date.now();
+    renderProfileData(data, user);
   }
 
   // Renderiza el drawer con los datos (sin tocar la red). Idempotente.
@@ -1607,7 +1556,7 @@
     const dot = document.getElementById('pd-eb-dot');
     const txt = document.getElementById('pd-eb-status-text');
     const discBtn = document.getElementById('pd-eb-disconnect-btn');
-    if ('eb' in data && dot && txt) {
+    if (dot && txt) {
       if (data.eb && data.eb.configured) {
         dot.className = 'dot ok';
         txt.textContent = 'Conectado — key: ' + data.eb.masked;
@@ -1624,7 +1573,7 @@
     const ftxt = document.getElementById('pd-fb-status-text');
     const fbtn = document.getElementById('pd-fb-btn');
     const fdisBtn = document.getElementById('pd-fb-disconnect-btn');
-    if ('fb' in data && fdot && ftxt) {
+    if (fdot && ftxt) {
       if (data.fb && data.fb.connected) {
         fdot.className = 'dot ok';
         ftxt.textContent = 'Conectado — ' + (data.fb.page_name || 'página vinculada');
@@ -2041,7 +1990,6 @@
     const profile = await authInit();
     if (!profile) return; // redirected to login
     injectShell(profile);
-    scheduleProfileDrawerWarmup();
 
     // ── Cargar configuración pública del backend (FB_APP_ID, etc.) ──────────
     try {
