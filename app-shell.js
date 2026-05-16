@@ -1261,7 +1261,6 @@
     // Diferir las peticiones de red para que la animación de apertura no se trabe
     requestAnimationFrame(() => requestAnimationFrame(() => {
       loadProfileData();
-      loadSubscriptionStatus();
     }));
   }
   window.openProfileDrawer = openProfileDrawer;
@@ -1380,9 +1379,9 @@
           <div class="bk-pd-card" id="pd-sub-card">
 
             <!-- Estado actual -->
-            <div class="bk-pd-status" id="pd-sub-status">
-              <span class="dot" id="pd-sub-dot"></span>
-              <span id="pd-sub-status-text">Cargando…</span>
+            <div class="bk-pd-status" id="pd-sub-status" style="cursor:pointer" onclick="loadSubscriptionStatus()" title="Tocar para verificar">
+              <span class="dot" id="pd-sub-dot" style="background:var(--mute-3)"></span>
+              <span id="pd-sub-status-text" style="color:var(--mute)">Toca para verificar estado</span>
             </div>
 
             <!-- Vista: sin suscripción -->
