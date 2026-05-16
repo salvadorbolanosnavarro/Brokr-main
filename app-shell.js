@@ -1801,22 +1801,6 @@
     const tok = getToken();
     if (!tok) return;
 
-    // Cargar el SDK de Conekta si no está ya
-    if (!window.ConektaCheckout && !document.getElementById('conekta-js')) {
-      await new Promise((resolve) => {
-        const s = document.createElement('script');
-        s.id = 'conekta-js';
-        s.src = 'https://cdn.conekta.io/assets/lib/0.5.0/conekta.js';
-        s.onload = resolve;
-        s.onerror = resolve; // continuar aunque falle la carga
-        document.head.appendChild(s);
-      });
-      if (window.Conekta) {
-        window.Conekta.setPublicKey(CONEKTA_PUB);
-        window.Conekta.setLanguage('es');
-      }
-    }
-
     // Consultar estado de suscripción
     try {
       const r = await fetch(API_BASE + '/subscription/status', {
@@ -2015,6 +1999,20 @@
         if (cfg.fb_app_id) window._brokrFbAppId = cfg.fb_app_id;
       }
     } catch (_) { /* sin conexión — connectFacebook mostrará su propio error */ }
+
+    // ── Cargar SDK de Conekta en segundo plano (no bloquea nada) ────────────
+    if (!document.getElementById('conekta-js')) {
+      const s = document.createElement('script');
+      s.id = 'conekta-js';
+      s.src = 'https://cdn.conekta.io/assets/lib/0.5.0/conekta.js';
+      s.onload = () => {
+        if (window.Conekta) {
+          window.Conekta.setPublicKey(CONEKTA_PUB);
+          window.Conekta.setLanguage('es');
+        }
+      };
+      document.head.appendChild(s);
+    }
 
     // ════════════════════════════════════════════════════════════════
     // window.brokrSb — helper centralizado con auto-refresh
