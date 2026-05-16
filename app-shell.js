@@ -1806,7 +1806,7 @@
       await new Promise((resolve) => {
         const s = document.createElement('script');
         s.id = 'conekta-js';
-        s.src = 'https://cdn.conekta.com/assets/lib/0.5.0/conekta.js';
+        s.src = 'https://cdn.conekta.io/assets/lib/0.5.0/conekta.js';
         s.onload = resolve;
         s.onerror = resolve; // continuar aunque falle la carga
         document.head.appendChild(s);
