@@ -123,7 +123,7 @@
   display: flex; align-items: center;
 }
 .bk-sidebar__brand a { display: flex; align-items: center; gap: 8px; text-decoration: none; }
-.bk-sidebar__brand img { height: 28px; width: auto; display: block; }
+.bk-sidebar__brand img { height: 44px; width: auto; display: block; }
 .bk-sb-section {
   font-family: var(--font-mono);
   font-size: 9px; letter-spacing: 0.18em;
@@ -190,7 +190,7 @@
 }
 @media (max-width: 880px) { .bk-mobile-head { display: flex; } }
 .bk-mobile-head a { display:flex; align-items:center; }
-.bk-mobile-head img { height: 39px; width: auto; display: block; }
+.bk-mobile-head img { height: 44px; width: auto; display: block; }
 .bk-mobile-head__avatar {
   width: 29px; height: 29px; border-radius: 50%;
   background: var(--ink); color: var(--paper);
