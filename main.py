@@ -80,6 +80,15 @@ FRONTEND_URL  = os.environ.get("FRONTEND_URL", "https://app.navarroai.com.mx")
 # del usuario, DESPUÉS de validar su JWT con get_user_id_from_token().
 # NUNCA expongas esta variable al frontend.
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "") or SUPABASE_KEY
+CONEKTA_PRIVATE_KEY  = os.environ.get("CONEKTA_PRIVATE_KEY", "")
+CONEKTA_PUBLIC_KEY   = os.environ.get("CONEKTA_PUBLIC_KEY", "")
+
+# IDs de planes en Conekta (definidos en dashboard.conekta.com)
+CONEKTA_PLAN_ESTANDAR = "Br"
+CONEKTA_PLAN_AMPI     = "ampi"
+
+# Código promocional para el plan AMPI (válido en Supabase tabla promo_codes)
+PROMO_CODE_AMPI = "ampi2026"
 
 # In-memory PDF store: token → (bytes, filename). Max 50 entradas.
 _pdf_store: dict = {}
@@ -3911,3 +3920,295 @@ async def facebook_publish(req: FbPublishRequest):
         raise HTTPException(status_code=502, detail=r_post.text)
 
     return {"ok": True, "post_id": r_post.json().get("id")}
+
+
+# ════════════════════════════════════════════════════════════════
+# CONEKTA — SUSCRIPCIONES
+# ════════════════════════════════════════════════════════════════
+
+import base64 as _b64
+
+def _conekta_headers():
+    """Genera el header de autenticación básico para Conekta API v2."""
+    encoded = _b64.b64encode(f"{CONEKTA_PRIVATE_KEY}:".encode()).decode()
+    return {
+        "Authorization": f"Basic {encoded}",
+        "Content-Type": "application/json",
+        "Accept": "application/vnd.conekta-v2.0.0+json",
+    }
+
+class SubscribeRequest(BaseModel):
+    token_id: str        # token de tarjeta generado por Conekta.js en el frontend
+    plan_id: str         # "Br" o "ampi"
+    promo_code: str = "" # código promocional para plan AMPI
+
+async def _get_or_create_conekta_customer(user_id: str, email: str, nombre: str) -> str:
+    """
+    Busca el conekta_customer_id del usuario en Supabase.
+    Si no existe, crea un nuevo customer en Conekta y lo guarda.
+    Devuelve el conekta_customer_id (string).
+    """
+    # 1. Buscar en Supabase
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.get(
+            f"{SUPABASE_URL}/rest/v1/usuarios",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+            },
+            params={"id": f"eq.{user_id}", "select": "conekta_customer_id,nombre,telefono"}
+        )
+        row = r.json()[0] if r.status_code == 200 and r.json() else {}
+
+    if row.get("conekta_customer_id"):
+        return row["conekta_customer_id"]
+
+    # 2. Crear customer en Conekta
+    payload = {
+        "name": nombre or email,
+        "email": email,
+    }
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.post(
+            "https://api.conekta.io/customers",
+            headers=_conekta_headers(),
+            json=payload,
+        )
+    if r.status_code not in (200, 201):
+        raise HTTPException(status_code=502, detail=f"Conekta crear customer: {r.text}")
+    customer_id = r.json().get("id")
+
+    # 3. Guardar customer_id en Supabase
+    async with httpx.AsyncClient(timeout=10) as client:
+        await client.patch(
+            f"{SUPABASE_URL}/rest/v1/usuarios?id=eq.{user_id}",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                "Content-Type": "application/json",
+                "Prefer": "return=minimal",
+            },
+            json={"conekta_customer_id": customer_id}
+        )
+
+    return customer_id
+
+
+@app.post("/subscription/subscribe")
+async def subscribe(req: SubscribeRequest, request: Request):
+    """
+    Crea o actualiza la suscripción del agente en Conekta.
+    Flujo:
+      1. Validar JWT → obtener user_id + email
+      2. Validar plan_id
+      3. Si plan AMPI: verificar código promo
+      4. Obtener o crear customer en Conekta
+      5. Agregar payment source (tarjeta) al customer
+      6. Crear suscripción
+      7. Guardar estado en Supabase (tabla suscripciones)
+    """
+    if not CONEKTA_PRIVATE_KEY:
+        raise HTTPException(status_code=500, detail="Conekta no configurado en el servidor.")
+
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autenticado.")
+
+    # Validar plan
+    planes_validos = {CONEKTA_PLAN_ESTANDAR, CONEKTA_PLAN_AMPI}
+    if req.plan_id not in planes_validos:
+        raise HTTPException(status_code=400, detail="Plan inválido.")
+
+    # Validar código promo si es plan AMPI
+    if req.plan_id == CONEKTA_PLAN_AMPI:
+        if req.promo_code.strip().lower() != PROMO_CODE_AMPI.lower():
+            raise HTTPException(status_code=400, detail="Código promocional inválido para el plan AMPI.")
+
+    # Obtener datos del usuario desde Supabase
+    auth_tok = request.headers.get("Authorization", "")[7:]
+    async with httpx.AsyncClient(timeout=10) as client:
+        r_user = await client.get(
+            f"{SUPABASE_URL}/auth/v1/user",
+            headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {auth_tok}"}
+        )
+    if r_user.status_code != 200:
+        raise HTTPException(status_code=401, detail="No se pudo verificar el usuario.")
+    user_data = r_user.json()
+    email = user_data.get("email", "")
+
+    # Obtener nombre desde tabla usuarios
+    async with httpx.AsyncClient(timeout=8) as client:
+        r_nombre = await client.get(
+            f"{SUPABASE_URL}/rest/v1/usuarios",
+            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
+            params={"id": f"eq.{user_id}", "select": "nombre"}
+        )
+    nombre_row = r_nombre.json()[0] if r_nombre.status_code == 200 and r_nombre.json() else {}
+    nombre = nombre_row.get("nombre", email)
+
+    # Obtener o crear customer en Conekta
+    customer_id = await _get_or_create_conekta_customer(user_id, email, nombre)
+
+    # Agregar payment source (tarjeta tokenizada)
+    async with httpx.AsyncClient(timeout=15) as client:
+        r_src = await client.post(
+            f"https://api.conekta.io/customers/{customer_id}/payment_sources",
+            headers=_conekta_headers(),
+            json={"type": "card", "token_id": req.token_id},
+        )
+    if r_src.status_code not in (200, 201):
+        detail = r_src.json().get("details", [{}])[0].get("message", r_src.text)
+        raise HTTPException(status_code=400, detail=f"Tarjeta rechazada: {detail}")
+    payment_source_id = r_src.json().get("id")
+
+    # Verificar si ya tiene suscripción activa en Conekta y cancelarla primero
+    async with httpx.AsyncClient(timeout=10) as client:
+        r_subs = await client.get(
+            f"https://api.conekta.io/customers/{customer_id}/subscription",
+            headers=_conekta_headers(),
+        )
+    if r_subs.status_code == 200:
+        sub_status = r_subs.json().get("status", "")
+        if sub_status in ("active", "past_due", "paused"):
+            # Actualizar plan en lugar de crear nueva suscripción
+            async with httpx.AsyncClient(timeout=10) as client:
+                r_upd = await client.put(
+                    f"https://api.conekta.io/customers/{customer_id}/subscription",
+                    headers=_conekta_headers(),
+                    json={"plan": req.plan_id},
+                )
+            if r_upd.status_code not in (200, 201):
+                raise HTTPException(status_code=502, detail=f"Error actualizando suscripción: {r_upd.text}")
+            sub_data = r_upd.json()
+        else:
+            # Crear nueva suscripción
+            async with httpx.AsyncClient(timeout=10) as client:
+                r_new = await client.post(
+                    f"https://api.conekta.io/customers/{customer_id}/subscription",
+                    headers=_conekta_headers(),
+                    json={"plan": req.plan_id},
+                )
+            if r_new.status_code not in (200, 201):
+                raise HTTPException(status_code=502, detail=f"Error creando suscripción: {r_new.text}")
+            sub_data = r_new.json()
+    else:
+        # No hay suscripción previa — crear nueva
+        async with httpx.AsyncClient(timeout=10) as client:
+            r_new = await client.post(
+                f"https://api.conekta.io/customers/{customer_id}/subscription",
+                headers=_conekta_headers(),
+                json={"plan": req.plan_id},
+            )
+        if r_new.status_code not in (200, 201):
+            raise HTTPException(status_code=502, detail=f"Error creando suscripción: {r_new.text}")
+        sub_data = r_new.json()
+
+    # Guardar estado de suscripción en Supabase
+    monto = 49900 if req.plan_id == CONEKTA_PLAN_AMPI else 89900
+    plan_nombre = "AMPI" if req.plan_id == CONEKTA_PLAN_AMPI else "Broquer Agente"
+    sb_payload = {
+        "user_id": user_id,
+        "plan_id": req.plan_id,
+        "plan_nombre": plan_nombre,
+        "monto_centavos": monto,
+        "conekta_subscription_id": sub_data.get("id"),
+        "conekta_customer_id": customer_id,
+        "status": sub_data.get("status", "active"),
+        "updated_at": datetime.utcnow().isoformat(),
+    }
+    async with httpx.AsyncClient(timeout=10) as client:
+        # Upsert por user_id
+        await client.post(
+            f"{SUPABASE_URL}/rest/v1/suscripciones",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                "Content-Type": "application/json",
+                "Prefer": "resolution=merge-duplicates,return=minimal",
+            },
+            json=sb_payload,
+        )
+
+    return {
+        "ok": True,
+        "plan": plan_nombre,
+        "status": sub_data.get("status", "active"),
+        "monto": monto / 100,
+    }
+
+
+@app.get("/subscription/status")
+async def subscription_status(request: Request):
+    """Devuelve el estado actual de la suscripción del usuario."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autenticado.")
+
+    async with httpx.AsyncClient(timeout=8) as client:
+        r = await client.get(
+            f"{SUPABASE_URL}/rest/v1/suscripciones",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+            },
+            params={"user_id": f"eq.{user_id}", "select": "*", "order": "updated_at.desc", "limit": "1"}
+        )
+    if r.status_code != 200 or not r.json():
+        return {"active": False, "plan": None, "status": "sin_suscripcion"}
+
+    row = r.json()[0]
+    return {
+        "active": row.get("status") in ("active", "past_due"),
+        "plan": row.get("plan_nombre"),
+        "plan_id": row.get("plan_id"),
+        "status": row.get("status"),
+        "monto": row.get("monto_centavos", 0) / 100,
+        "updated_at": row.get("updated_at"),
+    }
+
+
+@app.post("/subscription/cancel")
+async def subscription_cancel(request: Request):
+    """Cancela la suscripción activa del usuario en Conekta."""
+    if not CONEKTA_PRIVATE_KEY:
+        raise HTTPException(status_code=500, detail="Conekta no configurado.")
+
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autenticado.")
+
+    # Obtener customer_id de Supabase
+    async with httpx.AsyncClient(timeout=8) as client:
+        r = await client.get(
+            f"{SUPABASE_URL}/rest/v1/usuarios",
+            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
+            params={"id": f"eq.{user_id}", "select": "conekta_customer_id"}
+        )
+    row = r.json()[0] if r.status_code == 200 and r.json() else {}
+    customer_id = row.get("conekta_customer_id")
+    if not customer_id:
+        raise HTTPException(status_code=404, detail="No se encontró suscripción activa.")
+
+    # Cancelar en Conekta
+    async with httpx.AsyncClient(timeout=10) as client:
+        r_cancel = await client.delete(
+            f"https://api.conekta.io/customers/{customer_id}/subscription",
+            headers=_conekta_headers(),
+        )
+    if r_cancel.status_code not in (200, 204):
+        raise HTTPException(status_code=502, detail=f"Error al cancelar: {r_cancel.text}")
+
+    # Actualizar estado en Supabase
+    async with httpx.AsyncClient(timeout=8) as client:
+        await client.patch(
+            f"{SUPABASE_URL}/rest/v1/suscripciones?user_id=eq.{user_id}",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                "Content-Type": "application/json",
+                "Prefer": "return=minimal",
+            },
+            json={"status": "canceled", "updated_at": datetime.utcnow().isoformat()}
+        )
+
+    return {"ok": True, "message": "Suscripción cancelada correctamente."}
