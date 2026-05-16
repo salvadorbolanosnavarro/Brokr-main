@@ -169,6 +169,7 @@
   background: var(--paper); color: var(--ink);
   display: flex; align-items: center; justify-content: center;
   font-weight: 600; font-size: 13px; letter-spacing: -0.02em;
+  touch-action: manipulation;
 }
 .bk-sb-foot__name { font-size: 13px; font-weight: 500; line-height: 1.2; flex: 1; min-width: 0; color: var(--paper) !important; }
 .bk-sb-foot__name .role { color: rgba(247,245,238,0.5) !important; font-size: 11px; font-weight: 400; }
@@ -197,6 +198,7 @@
   background: var(--ink); color: var(--paper);
   font-weight: 600; font-size: 11px;
   display: flex; align-items: center; justify-content: center;
+  touch-action: manipulation;
 }
 
 /* Topbar (desktop) */
@@ -458,6 +460,7 @@
   background: rgba(10,10,10,0.35); backdrop-filter: blur(2px);
   opacity: 0; visibility: hidden; pointer-events: none;
   transition: opacity .22s cubic-bezier(.16,1,.3,1), visibility 0s linear .22s;
+  touch-action: manipulation;
 }
 .bk-profile-overlay.is-open { opacity: 1; visibility: visible; pointer-events: auto; transition-delay: 0s; }
 .bk-profile-drawer {
@@ -470,7 +473,6 @@
   overflow: hidden; will-change: transform; contain: layout paint style;
 }
 .bk-profile-drawer.is-open { transform: translate3d(0,0,0); }
-#bk-sb-avatar, #bk-mob-avatar, .bk-pd-close, .bk-profile-overlay { touch-action: manipulation; }
 @media (max-width: 640px) {
   .bk-profile-overlay { backdrop-filter: none; }
   .bk-profile-drawer { width: min(360px, 92vw); }
@@ -489,6 +491,7 @@
   background: none; border: none; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   color: var(--mute);
+  touch-action: manipulation;
 }
 .bk-pd-close:hover { background: var(--paper-2); color: var(--ink); }
 .bk-pd-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
