@@ -15,10 +15,9 @@
   window.__brokrShellLoaded = true;
 
   /* ── Config ── */
-  const API_BASE      = 'https://api.navarroai.com.mx';
-  const SB_URL        = 'https://urtgysmtnvoqaljuhntz.supabase.co';
-  const SB_KEY        = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
-  const CONEKTA_PUB   = 'key_fQbnXHKQINIvhkNEt78XrFQ';
+  const API_BASE = 'https://api.navarroai.com.mx';
+  const SB_URL   = 'https://urtgysmtnvoqaljuhntz.supabase.co';
+  const SB_KEY   = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
   window.API_BASE = API_BASE;
 
   /* ── Páginas que NO requieren shell ni auth (login/registro/PDF preview) ── */
@@ -35,9 +34,7 @@
     { key:'ficha-manual', href:'ficha-manual.html',  label:'Ficha técnica',   group:'main', icon:'landscape' },
     { key:'isr',          href:'isr.html',           label:'ISR',             group:'main', icon:'calculator' },
     { key:'image-cleaner',href:'image-cleaner.html', label:'Editor imágenes', group:'main', icon:'image' },
-    { key:'verificador',       href:'verificador.html',              label:'Verificador',         group:'main', icon:'shield' },
-    { key:'solicitud-arr',    href:'solicitud-arrendamiento.html',  label:'Análisis solicitud',  group:'main', icon:'document' },
-    { key:'blog',             href:'blog.html',                     label:'Guía del agente',     group:'main', icon:'question' },
+    { key:'verificador',  href:'verificador.html',   label:'Verificador',     group:'main', icon:'shield' },
     { key:'admin',        href:'admin.html',         label:'Admin',           group:'main', icon:'cog', adminOnly:true },
   ];
 
@@ -53,8 +50,6 @@
     'isr':          'Calculadora ISR por enajenación de inmuebles',
     'image-cleaner':'Editor de imágenes — limpieza con IA',
     'verificador':  'Verificador de inmuebles',
-    'solicitud-arr':'Análisis de solicitud de arrendamiento — calificación con IA',
-    'blog':         'Guía del agente — artículos y tips de PLD, legal y mejores prácticas',
     'admin':        'Panel administrativo',
   };
 
@@ -128,7 +123,7 @@
   display: flex; align-items: center;
 }
 .bk-sidebar__brand a { display: flex; align-items: center; gap: 8px; text-decoration: none; }
-.bk-sidebar__brand img { height: 88px; width: auto; display: block; }
+.bk-sidebar__brand img { height: 28px; width: auto; display: block; filter: brightness(0) invert(1); }
 .bk-sb-section {
   font-family: var(--font-mono);
   font-size: 9px; letter-spacing: 0.18em;
@@ -195,7 +190,7 @@
 }
 @media (max-width: 880px) { .bk-mobile-head { display: flex; } }
 .bk-mobile-head a { display:flex; align-items:center; }
-.bk-mobile-head img { height: 88px; width: auto; display: block; }
+.bk-mobile-head img { height: 39px; width: auto; display: block; }
 .bk-mobile-head__avatar {
   width: 29px; height: 29px; border-radius: 50%;
   background: var(--ink); color: var(--paper);
@@ -484,7 +479,7 @@
   color: var(--mute);
 }
 .bk-pd-close:hover { background: var(--paper-2); color: var(--ink); }
-.bk-pd-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
+.bk-pd-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
 .bk-pd-body::-webkit-scrollbar { width: 0; }
 .bk-pd-avatar-row {
   display: flex; align-items: center; gap: 14px;
@@ -551,17 +546,6 @@
 .bk-pd-foot {
   padding: 16px 20px; border-top: 1px solid var(--line); flex-shrink: 0;
 }
-/* Plan cards suscripción */
-.bk-plan-card {
-  flex: 1; border: 1.5px solid var(--line-2); border-radius: var(--r);
-  padding: 10px 10px 8px; cursor: pointer; transition: border-color .2s, background .2s;
-  background: var(--paper-2); text-align: center; user-select: none;
-}
-.bk-plan-card:hover { border-color: var(--ink-3); }
-.bk-plan-card.is-selected { border-color: var(--ink); background: var(--bone); }
-.bk-plan-name { font-size: 11px; font-weight: 700; color: var(--ink); letter-spacing: 0.03em; text-transform: uppercase; }
-.bk-plan-price { font-size: 18px; font-weight: 700; color: var(--ink); margin-top: 4px; letter-spacing: -0.03em; }
-.bk-plan-price span { font-size: 11px; font-weight: 400; color: var(--mute); }
 
 `;
 
@@ -707,7 +691,7 @@
       <aside class="bk-sidebar" id="bk-sidebar">
         <div class="bk-sidebar__brand">
           <a href="index.html" aria-label="Ir al inicio Broquer">
-            <img src="logotipo-white.png" alt="Broquer"/>
+            <img src="logo-broquer.png" alt="Broquer"/>
           </a>
         </div>
         ${main.map(m => buildSidebarLink(m, activeKey)).join('')}
@@ -723,7 +707,7 @@
 
       <main class="bk-content">
         <div class="bk-mobile-head">
-          <a href="index.html" aria-label="Ir al inicio Broquer"><img src="logotipo-black.png" alt="Broquer"/></a>
+          <a href="index.html" aria-label="Ir al inicio Broquer"><img src="logo-broquer.png" alt="Broquer"/></a>
           <div class="bk-mobile-head__avatar" id="bk-mob-avatar" onclick="openProfileDrawer()" style="cursor:pointer" title="Mi perfil">${ini}</div>
         </div>
 
@@ -798,7 +782,7 @@
     bnav.innerHTML =
       bnavFixed.map(m => buildBnavItemLabel(m, activeKey)).join('') +
       `<button class="bk-bnav__item bk-bnav__broquer" id="bk-bnav-shaark" type="button" aria-label="Abrir Broquer">
-         <img src="isotipo-black.png" alt="" style="width:31px;height:31px;object-fit:contain;"/>
+         <img src="icon-192.png" alt="" style="width:26px;height:26px;object-fit:contain;"/>
          <span>Broquer</span>
        </button>` +
       buildBnavItemLabel(bnavFixed2[0], activeKey, 'Estimación') +
@@ -810,7 +794,7 @@
     fab.className = 'bk-shaark-fab';
     fab.id = 'bk-shaark-fab';
     fab.setAttribute('aria-label', 'Abrir Broquer');
-    fab.innerHTML = `<span class="bk-shaark-fab__pulse"></span><span class="bk-wake-dot" id="bk-wake-dot"></span><img src="isotipo-black.png" alt="Broquer"/>`;
+    fab.innerHTML = `<span class="bk-shaark-fab__pulse"></span><span class="bk-wake-dot" id="bk-wake-dot"></span><img src="isotipo-broquer.png" alt="Broquer"/>`;
     fab.addEventListener('click', () => toggleShaarkPopup());
     document.body.appendChild(fab);
 
@@ -823,7 +807,7 @@
     pop.setAttribute('aria-label', 'Broquer — asistente');
     pop.innerHTML = `
       <div class="bk-shk-head">
-        <div class="bk-shk-avatar"><img src="isotipo-black.png" alt=""/></div>
+        <div class="bk-shk-avatar"><img src="isotipo-broquer.png" alt=""/></div>
         <div style="flex:1;min-width:0">
           <div class="bk-shk-name">Broquer</div>
           <div class="bk-shk-status">En línea</div>
@@ -1263,9 +1247,7 @@
     overlay.classList.add('is-open');
     document.getElementById('bk-profile-drawer').classList.add('is-open');
     // Diferir las peticiones de red para que la animación de apertura no se trabe
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      loadProfileData();
-    }));
+    requestAnimationFrame(() => requestAnimationFrame(() => loadProfileData()));
   }
   window.openProfileDrawer = openProfileDrawer;
 
@@ -1376,85 +1358,6 @@
             </a>
           </div>
         </div>
-
-        <!-- Suscripción -->
-        <div>
-          <div class="bk-pd-section-label">Suscripción</div>
-          <div class="bk-pd-card" id="pd-sub-card">
-
-            <!-- Estado actual -->
-            <div class="bk-pd-status" id="pd-sub-status" style="cursor:pointer" onclick="loadSubscriptionStatus()" title="Tocar para verificar">
-              <span class="dot" id="pd-sub-dot" style="background:var(--mute-3)"></span>
-              <span id="pd-sub-status-text" style="color:var(--mute)">Toca para verificar estado</span>
-            </div>
-
-            <!-- Vista: sin suscripción -->
-            <div id="pd-sub-view-nosub" style="margin-top:14px">
-              <!-- Selector de plan -->
-              <div style="display:flex;gap:8px;margin-bottom:12px">
-                <div class="bk-plan-card is-selected" id="pd-plan-estandar" onclick="selectPlan('Br')" data-plan="Br">
-                  <div class="bk-plan-name">Broquer Agente</div>
-                  <div class="bk-plan-price">$899<span>/mes</span></div>
-                </div>
-                <div class="bk-plan-card" id="pd-plan-ampi" onclick="selectPlan('ampi')" data-plan="ampi">
-                  <div class="bk-plan-name">AMPI</div>
-                  <div class="bk-plan-price">$499<span>/mes</span></div>
-                  <div style="font-size:9px;color:var(--mute);margin-top:2px">Requiere código</div>
-                </div>
-              </div>
-
-              <!-- Código promo (aparece solo al seleccionar AMPI) -->
-              <div id="pd-promo-row" style="display:none;margin-bottom:12px">
-                <div class="bk-pd-field">
-                  <label>Código AMPI</label>
-                  <input type="text" id="pd-input-promo" placeholder="Ingresa tu código" autocomplete="off" autocorrect="off" spellcheck="false" style="text-transform:uppercase;letter-spacing:0.05em"/>
-                </div>
-              </div>
-
-              <!-- Campos de tarjeta -->
-              <div style="margin-bottom:12px">
-                <div class="bk-pd-field">
-                  <label>Número de tarjeta</label>
-                  <input type="text" id="pd-card-number" placeholder="1234 5678 9012 3456" maxlength="19" inputmode="numeric" autocomplete="cc-number"/>
-                </div>
-                <div style="display:flex;gap:8px">
-                  <div class="bk-pd-field" style="flex:1">
-                    <label>Vencimiento</label>
-                    <input type="text" id="pd-card-exp" placeholder="MM / AA" maxlength="7" inputmode="numeric" autocomplete="cc-exp"/>
-                  </div>
-                  <div class="bk-pd-field" style="flex:1">
-                    <label>CVV</label>
-                    <input type="text" id="pd-card-cvv" placeholder="123" maxlength="4" inputmode="numeric" autocomplete="cc-csc"/>
-                  </div>
-                </div>
-                <div class="bk-pd-field">
-                  <label>Nombre en la tarjeta</label>
-                  <input type="text" id="pd-card-name" placeholder="Como aparece en tu tarjeta" autocomplete="cc-name"/>
-                </div>
-              </div>
-
-              <button class="bk-pd-btn bk-pd-btn-primary" id="pd-sub-pay-btn" onclick="iniciarPago()">
-                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg>
-                Suscribirme
-              </button>
-              <div style="display:flex;align-items:center;gap:5px;margin-top:8px;justify-content:center">
-                <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
-                <span style="font-size:10px;color:var(--mute)">Pago seguro · Conekta · Cancela cuando quieras</span>
-              </div>
-            </div>
-
-            <!-- Vista: suscripción activa -->
-            <div id="pd-sub-view-active" style="display:none;margin-top:12px">
-              <div style="font-size:13px;color:var(--ink-2);margin-bottom:12px;line-height:1.5" id="pd-sub-detail-text"></div>
-              <button class="bk-pd-btn bk-pd-btn-outline" onclick="cancelarSuscripcion()" style="border-color:#E24B4A;color:#E24B4A">
-                Cancelar suscripción
-              </button>
-            </div>
-
-            <div class="bk-pd-toast" id="pd-toast-sub"></div>
-          </div>
-        </div>
-
       </div>
 
       <!-- Foot: cerrar sesión -->
@@ -1499,10 +1402,9 @@
       return;
     }
 
-    // Render inmediato con caché viejo si existe, para que el drawer no quede en blanco
-    if (_pdCache) renderProfileData(_pdCache, user);
-
-    // Peticiones en paralelo — resultado actualiza el drawer cuando llegan
+    // 2 peticiones EN PARALELO con Promise.allSettled (antes eran 3).
+    // /profile/status devuelve EB + FB en una sola llamada al backend.
+    // (allSettled = si una falla, las demás siguen — el drawer no se queda en blanco)
     const [usuarioRes, statusRes] = await Promise.allSettled([
       fetch(SB_URL + '/rest/v1/usuarios?id=eq.' + user.id + '&select=nombre,telefono,rol', {
         headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok }
@@ -1773,223 +1675,6 @@
   }
   window.connectFacebook = connectFacebook;
 
-  /* ════════════════════════════════════════════════════════════════
-     SUSCRIPCIÓN — Conekta
-     ════════════════════════════════════════════════════════════════ */
-
-  let _selectedPlan = 'Br'; // plan seleccionado actualmente en el drawer
-
-  function selectPlan(planId) {
-    _selectedPlan = planId;
-    document.querySelectorAll('.bk-plan-card').forEach(c => c.classList.remove('is-selected'));
-    const card = document.getElementById(planId === 'ampi' ? 'pd-plan-ampi' : 'pd-plan-estandar');
-    if (card) card.classList.add('is-selected');
-    const promoRow = document.getElementById('pd-promo-row');
-    if (promoRow) promoRow.style.display = planId === 'ampi' ? 'block' : 'none';
-  }
-  window.selectPlan = selectPlan;
-
-  // Formatea el número de tarjeta con espacios (1234 5678 ...)
-  function _fmtCard(v) {
-    return v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
-  }
-  // Formatea vencimiento MM / AA
-  function _fmtExp(v) {
-    const d = v.replace(/\D/g, '').slice(0, 4);
-    if (d.length >= 3) return d.slice(0, 2) + ' / ' + d.slice(2);
-    return d;
-  }
-
-  // Carga Conekta.js y status de suscripción cuando se abre el drawer
-  async function loadSubscriptionStatus() {
-    const tok = getToken();
-    if (!tok) return;
-
-    // Consultar estado de suscripción
-    try {
-      const r = await fetch(API_BASE + '/subscription/status', {
-        headers: { Authorization: 'Bearer ' + tok }
-      });
-      const data = await r.json();
-      renderSubscriptionStatus(data);
-    } catch(e) {
-      renderSubscriptionStatus({ active: false, plan: null, status: 'error' });
-    }
-
-    // Activar formateo de campos de tarjeta
-    const numEl = document.getElementById('pd-card-number');
-    const expEl = document.getElementById('pd-card-exp');
-    if (numEl && !numEl._fmtBound) {
-      numEl._fmtBound = true;
-      numEl.addEventListener('input', () => { const s = numEl.selectionStart; numEl.value = _fmtCard(numEl.value); });
-    }
-    if (expEl && !expEl._fmtBound) {
-      expEl._fmtBound = true;
-      expEl.addEventListener('input', () => { expEl.value = _fmtExp(expEl.value); });
-    }
-  }
-  window.loadSubscriptionStatus = loadSubscriptionStatus;
-
-  function renderSubscriptionStatus(data) {
-    const dot  = document.getElementById('pd-sub-dot');
-    const txt  = document.getElementById('pd-sub-status-text');
-    const vNosub  = document.getElementById('pd-sub-view-nosub');
-    const vActive = document.getElementById('pd-sub-view-active');
-    const detailTxt = document.getElementById('pd-sub-detail-text');
-
-    if (!dot || !txt) return;
-
-    if (data.active) {
-      dot.className = 'dot ok';
-      txt.textContent = 'Activa';
-      if (vNosub)  vNosub.style.display  = 'none';
-      if (vActive) vActive.style.display = 'block';
-      if (detailTxt) {
-        const monto = data.monto ? ('$' + data.monto.toLocaleString('es-MX') + '/mes') : '';
-        detailTxt.textContent = 'Plan: ' + (data.plan || '—') + '  ·  ' + monto;
-      }
-    } else {
-      dot.className = 'dot warn';
-      txt.textContent = data.status === 'error' ? 'Error al verificar' : 'Sin suscripción activa';
-      if (vNosub)  vNosub.style.display  = 'block';
-      if (vActive) vActive.style.display = 'none';
-    }
-  }
-
-  async function iniciarPago() {
-    const tok = getToken();
-    const toast = document.getElementById('pd-toast-sub');
-    const btn   = document.getElementById('pd-sub-pay-btn');
-    toast.className = 'bk-pd-toast';
-
-    const numero = (document.getElementById('pd-card-number')?.value || '').replace(/\s/g, '');
-    const expRaw = (document.getElementById('pd-card-exp')?.value || '').replace(/\s/g, '');
-    const cvv    = (document.getElementById('pd-card-cvv')?.value || '').trim();
-    const nombre = (document.getElementById('pd-card-name')?.value || '').trim();
-    const promo  = (document.getElementById('pd-input-promo')?.value || '').trim();
-    const expParts = expRaw.split('/');
-    const expMes  = (expParts[0] || '').trim();
-    const expAnio = (expParts[1] || '').trim();
-
-    if (!numero || numero.length < 15) {
-      toast.textContent = 'Número de tarjeta inválido.';
-      toast.className = 'bk-pd-toast err';
-      setTimeout(() => { toast.className = 'bk-pd-toast'; }, 4000);
-      return;
-    }
-    if (!expMes || !expAnio) {
-      toast.textContent = 'Fecha de vencimiento inválida.';
-      toast.className = 'bk-pd-toast err';
-      setTimeout(() => { toast.className = 'bk-pd-toast'; }, 4000);
-      return;
-    }
-    if (!cvv || cvv.length < 3) {
-      toast.textContent = 'CVV inválido.';
-      toast.className = 'bk-pd-toast err';
-      setTimeout(() => { toast.className = 'bk-pd-toast'; }, 4000);
-      return;
-    }
-    if (!nombre) {
-      toast.textContent = 'Ingresa el nombre que aparece en tu tarjeta.';
-      toast.className = 'bk-pd-toast err';
-      setTimeout(() => { toast.className = 'bk-pd-toast'; }, 4000);
-      return;
-    }
-    if (_selectedPlan === 'ampi' && !promo) {
-      toast.textContent = 'Ingresa el código AMPI para continuar.';
-      toast.className = 'bk-pd-toast err';
-      setTimeout(() => { toast.className = 'bk-pd-toast'; }, 4000);
-      return;
-    }
-
-    if (!window.Conekta) {
-      toast.textContent = 'Error al cargar el procesador de pago. Recarga la página.';
-      toast.className = 'bk-pd-toast err';
-      setTimeout(() => { toast.className = 'bk-pd-toast'; }, 5000);
-      return;
-    }
-
-    // Deshabilitar botón mientras procesa
-    if (btn) { btn.disabled = true; btn.textContent = 'Procesando…'; }
-
-    // Tokenizar la tarjeta con Conekta.js (los datos nunca pasan por tu servidor)
-    const cardParams = {
-      card: {
-        number: numero,
-        name: nombre,
-        exp_year: expAnio.length === 2 ? '20' + expAnio : expAnio,
-        exp_month: expMes,
-        cvc: cvv,
-      }
-    };
-
-    window.Conekta.Token.create(cardParams,
-      async function(token) {
-        // Éxito — enviar token al backend
-        try {
-          const r = await fetch(API_BASE + '/subscription/subscribe', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
-            body: JSON.stringify({
-              token_id: token.id,
-              plan_id: _selectedPlan,
-              promo_code: promo,
-            })
-          });
-          const d = await r.json();
-          if (!r.ok) throw new Error(d.detail || 'Error al procesar el pago.');
-          // Suscripción exitosa
-          toast.textContent = '¡Suscripción activa! Bienvenido a ' + (d.plan || 'Broquer') + '.';
-          toast.className = 'bk-pd-toast ok';
-          // Limpiar campos
-          ['pd-card-number','pd-card-exp','pd-card-cvv','pd-card-name','pd-input-promo'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.value = '';
-          });
-          // Actualizar status en el drawer
-          renderSubscriptionStatus({ active: true, plan: d.plan, monto: d.monto });
-        } catch(e) {
-          toast.textContent = e.message || 'Error al procesar el pago.';
-          toast.className = 'bk-pd-toast err';
-        }
-        if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg> Suscribirme'; }
-        setTimeout(() => { toast.className = 'bk-pd-toast'; }, 6000);
-      },
-      function(err) {
-        // Error de tokenización (tarjeta rechazada, datos inválidos, etc.)
-        const msg = err.message_to_purchaser || err.message || 'Datos de tarjeta inválidos.';
-        toast.textContent = msg;
-        toast.className = 'bk-pd-toast err';
-        if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg> Suscribirme'; }
-        setTimeout(() => { toast.className = 'bk-pd-toast'; }, 5000);
-      }
-    );
-  }
-  window.iniciarPago = iniciarPago;
-
-  async function cancelarSuscripcion() {
-    if (!confirm('¿Cancelar tu suscripción? Perderás acceso a Broquer al final del ciclo actual.')) return;
-    const tok = getToken();
-    const toast = document.getElementById('pd-toast-sub');
-    toast.className = 'bk-pd-toast';
-    try {
-      const r = await fetch(API_BASE + '/subscription/cancel', {
-        method: 'POST',
-        headers: { Authorization: 'Bearer ' + tok }
-      });
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.detail || 'Error al cancelar.');
-      toast.textContent = 'Suscripción cancelada.';
-      toast.className = 'bk-pd-toast ok';
-      renderSubscriptionStatus({ active: false, status: 'canceled' });
-    } catch(e) {
-      toast.textContent = e.message || 'No se pudo cancelar. Intenta de nuevo.';
-      toast.className = 'bk-pd-toast err';
-    }
-    setTimeout(() => { toast.className = 'bk-pd-toast'; }, 5000);
-  }
-  window.cancelarSuscripcion = cancelarSuscripcion;
-
   async function boot() {
     const profile = await authInit();
     if (!profile) return; // redirected to login
@@ -2003,20 +1688,6 @@
         if (cfg.fb_app_id) window._brokrFbAppId = cfg.fb_app_id;
       }
     } catch (_) { /* sin conexión — connectFacebook mostrará su propio error */ }
-
-    // ── Cargar SDK de Conekta en segundo plano (no bloquea nada) ────────────
-    if (!document.getElementById('conekta-js')) {
-      const s = document.createElement('script');
-      s.id = 'conekta-js';
-      s.src = 'https://conektaapi.s3.amazonaws.com/v0.3.1/js/conekta.js';
-      s.onload = () => {
-        if (window.Conekta) {
-          window.Conekta.setPublicKey(CONEKTA_PUB);
-          window.Conekta.setLanguage('es');
-        }
-      };
-      document.head.appendChild(s);
-    }
 
     // ════════════════════════════════════════════════════════════════
     // window.brokrSb — helper centralizado con auto-refresh

@@ -2,531 +2,396 @@
 <html lang="es">
 <head>
 <link rel="stylesheet" href="brokr-theme.css"/>
-
 <meta charset="UTF-8"/>
-<link rel="icon" type="image/png" href="isotipo-black.png"/>
-<link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Broquer® — Aviso Legal</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<title>Broquer — Aviso Legal</title>
 <style>
-:root {
-  --navy:    #0f1829;
-  --teal:    #0f1829;
-  --white:   #ffffff;
-  --gray-100:#f5f6f8;
-  --gray-200:#e8eaee;
-  --gray-400:#9aa0ad;
-  --gray-600:#5a6070;
-  --text:    #0f0f0f;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
 html, body {
-  font-family: 'Poppins', sans-serif;
-  background: var(--gray-100);
-  color: var(--text);
-  font-size: 14px;
-  line-height: 1.7;
+  margin: 0;
+  padding: 0;
+  background: #ffffff;
+  color: #000000;
+  font-family: Calibri, "Calibri Light", Carlito, Arial, sans-serif;
+  font-size: 11pt;
+  line-height: 1.5;
 }
+.page {
+  max-width: 8.5in;
+  margin: 0 auto;
+  padding: 1in;
+  background: #ffffff;
+}
+p {
+  margin: 0 0 8pt 0;
+  text-align: justify;
+}
+p.center { text-align: center; }
+p.title {
+  font-size: 16pt;
+  font-weight: bold;
+  margin: 0 0 6pt 0;
+}
+p.subtitle {
+  font-style: italic;
+  margin: 0 0 6pt 0;
+}
+p.date {
+  margin: 0 0 6pt 0;
+}
+p.h1 {
+  font-size: 14pt;
+  font-weight: bold;
+  margin: 18pt 0 8pt 0;
+  text-align: left;
+}
+p.h2 {
+  font-size: 12pt;
+  font-weight: bold;
+  margin: 12pt 0 6pt 0;
+  text-align: left;
+}
+ul {
+  margin: 0 0 8pt 0;
+  padding-left: 0.5in;
+}
+ul li {
+  margin-bottom: 4pt;
+  text-align: justify;
+}
+b, strong { font-weight: bold; }
 
-/* ── HEADER ── */
-.legal-header {
-  background: var(--navy);
-  padding: 20px 24px 24px;
-  position: sticky; top: 0; z-index: 100;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.2);
+@media (max-width: 700px) {
+  .page { padding: 0.5in 0.4in; }
 }
-.legal-header-inner {
-  max-width: 760px; margin: 0 auto;
-  display: flex; align-items: center; gap: 16px;
-}
-.back-btn {
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 10px; color: white;
-  width: 36px; height: 36px;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; text-decoration: none; flex-shrink: 0;
-  font-size: 18px; transition: background 0.15s;
-}
-.back-btn:hover { background: rgba(255,255,255,0.2); }
-.legal-header h1 {
-  font-size: 16px; font-weight: 700; color: white;
-}
-.legal-header p {
-  font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 1px;
-}
-
-/* ── TABS ── */
-.tabs-wrap {
-  background: white;
-  border-bottom: 1px solid var(--gray-200);
-  position: sticky; top: 76px; z-index: 99;
-}
-.tabs {
-  max-width: 760px; margin: 0 auto;
-  display: flex; overflow-x: auto;
-  scrollbar-width: none;
-}
-.tabs::-webkit-scrollbar { display: none; }
-.tab-btn {
-  flex-shrink: 0; padding: 14px 20px;
-  background: none; border: none; border-bottom: 2px solid transparent;
-  font-size: 12px; font-weight: 600; color: var(--gray-400);
-  cursor: pointer; font-family: 'Poppins', sans-serif;
-  transition: color 0.15s, border-color 0.15s;
-  white-space: nowrap;
-}
-.tab-btn.active {
-  color: var(--navy); border-bottom-color: var(--navy);
-}
-
-/* ── CONTENT ── */
-.legal-body {
-  max-width: 760px; margin: 0 auto;
-  padding: 28px 20px 60px;
-}
-.legal-section { display: none; }
-.legal-section.active { display: block; }
-
-.doc-header {
-  background: white; border-radius: 16px;
-  padding: 24px; margin-bottom: 20px;
-  border: 1px solid var(--gray-200);
-}
-.doc-header .doc-badge {
-  display: inline-block;
-  background: rgba(15,24,41,0.06); color: var(--navy);
-  font-size: 10px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.8px; padding: 3px 10px; border-radius: 20px;
-  margin-bottom: 10px;
-}
-.doc-header h2 {
-  font-size: 20px; font-weight: 700; color: var(--navy);
-  margin-bottom: 6px;
-}
-.doc-header .doc-meta {
-  font-size: 11px; color: var(--gray-400);
-}
-
-.doc-card {
-  background: white; border-radius: 16px;
-  padding: 24px; margin-bottom: 14px;
-  border: 1px solid var(--gray-200);
-}
-.doc-card h3 {
-  font-size: 13px; font-weight: 700; color: var(--navy);
-  margin-bottom: 12px; padding-bottom: 10px;
-  border-bottom: 1px solid var(--gray-200);
-  display: flex; align-items: center; gap: 8px;
-}
-.doc-card h3 .num {
-  width: 22px; height: 22px; border-radius: 7px;
-  background: var(--navy); color: white;
-  font-size: 10px; font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
-.doc-card p { font-size: 13px; color: var(--gray-600); margin-bottom: 10px; }
-.doc-card p:last-child { margin-bottom: 0; }
-.doc-card ul {
-  padding-left: 18px; margin: 8px 0;
-}
-.doc-card ul li {
-  font-size: 13px; color: var(--gray-600);
-  margin-bottom: 6px; line-height: 1.6;
-}
-.doc-card strong { color: var(--text); font-weight: 600; }
-
-.highlight-box {
-  background: rgba(15,24,41,0.04);
-  border-left: 3px solid var(--navy);
-  border-radius: 0 10px 10px 0;
-  padding: 12px 16px; margin: 12px 0;
-  font-size: 12px; color: var(--gray-600); line-height: 1.6;
-}
-.warn-box {
-  background: rgba(245,158,11,0.07);
-  border-left: 3px solid #f59e0b;
-  border-radius: 0 10px 10px 0;
-  padding: 12px 16px; margin: 12px 0;
-  font-size: 12px; color: #92400e; line-height: 1.6;
-}
-.price-table {
-  width: 100%; border-collapse: collapse; margin: 12px 0;
-  font-size: 13px;
-}
-.price-table th {
-  background: var(--gray-100); padding: 10px 14px;
-  text-align: left; font-weight: 600; font-size: 11px;
-  text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray-600);
-}
-.price-table td {
-  padding: 10px 14px; border-top: 1px solid var(--gray-200);
-  color: var(--gray-600);
-}
-.price-table td:last-child { font-weight: 600; color: var(--text); }
-
-.contact-row {
-  display: flex; align-items: center; gap: 12px;
-  background: var(--gray-100); border-radius: 12px;
-  padding: 14px; margin-top: 10px;
-  text-decoration: none;
-}
-.contact-row .ci {
-  width: 38px; height: 38px; border-radius: 11px;
-  background: var(--navy); display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
-.contact-row .ct { font-size: 13px; font-weight: 600; color: var(--text); }
-.contact-row .cs { font-size: 11px; color: var(--gray-400); }
-
-@media (max-width: 480px) {
-  .legal-body { padding: 20px 14px 60px; }
-  .doc-card { padding: 18px; }
+@media print {
+  .page { padding: 0; max-width: 100%; }
 }
 </style>
 </head>
 <body data-app="legal">
 
-<!-- shell-replaced-sidebar -->
-<div style="display:none" hidden>
-  <aside class="app-sidebar">
-    <div class="app-sidebar__brand">Broquer<span class="dot">.</span></div>
-    <a class="app-nav-link" href="index.html">Inicio</a>
-    <a class="app-nav-link" href="propiedades.html">Inmuebles</a>
-    <a class="app-nav-link" href="contactos.html">Contactos</a>
-    <a class="app-nav-link" href="contratos.html">Contratos</a>
-    <a class="app-nav-link" href="avm.html">AVM</a>
-  </aside>
-</div>
+<div class="page">
 
-<div class="legal-header">
-  <div class="legal-header-inner">
-    <a class="back-btn" href="index.html">←</a>
-    <div>
-      <h1>Aviso Legal · Broquer®</h1>
-      <p>TL3 Technologies, S.A. de C.V. · Última actualización: abril 2026</p>
-    </div>
-  </div>
-</div>
+<p class="center title" style="text-align:center;">TÉRMINOS Y CONDICIONES DE USO</p>
+<p class="center subtitle" style="text-align:center;">Plataforma de software como servicio (SaaS) para profesionales inmobiliarios</p>
+<p class="center date" style="text-align:center;">Última actualización: 13 de mayo de 2026</p>
+<p>&nbsp;</p>
+<p class="h1">AVISO IMPORTANTE — LECTURA OBLIGATORIA</p>
+<p><b>LOS PRESENTES TÉRMINOS Y CONDICIONES (en adelante, los “Términos”) CONSTITUYEN UN CONTRATO LEGALMENTE VINCULANTE</b> entre usted (en adelante, el “Usuario”) y el titular y operador de la plataforma de software como servicio identificada comercialmente como “Broquer” (anteriormente “BROKR®”, en adelante, “Broquer”, “nosotros” o el “Titular”), accesible a través de los dominios app.navarroai.com.mx, api.navarroai.com.mx y cualquier subdominio, aplicación móvil, aplicación web progresiva (PWA) o interfaz relacionada (en adelante, la “Plataforma”). La identificación completa del Titular puede consultarse en la sección final de este documento.</p>
+<p><b>AL REGISTRARSE, ACCEDER, NAVEGAR, SUSCRIBIRSE, INSTALAR O UTILIZAR LA PLATAFORMA, EL USUARIO MANIFIESTA QUE LEYÓ, ENTENDIÓ Y </b><b>ACEPTÓ EXPRESAMENTE LA TOTALIDAD DE LOS PRESENTES TÉRMINOS, ASÍ COMO EL AVISO DE PRIVACIDAD Y DEMÁS POLÍTICAS APLICABLES, OBLIGÁNDOSE EN LOS TÉRMINOS DEL ARTÍCULO 1803 DEL CÓDIGO CIVIL FEDERAL Y SUS CORRELATIVOS EN LAS LEGISLACIONES ESTATALES. SI EL USUARI</b><b>O NO ESTÁ DE ACUERDO CON CUALQUIERA DE ESTAS DISPOSICIONES, DEBERÁ ABSTENERSE DE UTILIZAR LA PLATAFORMA.</b></p>
+<p><b>EN PARTICULAR, EL USUARIO RECONOCE Y ACEPTA EXPRESAMENTE LAS CLÁUSULAS DE EXCLUSIÓN DE RESPONSABILIDAD, LIMITACIÓN DE RESPONSABILIDAD, INDEMNIZACIÓN Y </b><b>JURISDICCIÓN PREVISTAS EN LAS CLÁUSULAS NOVENA, DÉCIMA, DÉCIMA PRIMERA Y VIGÉSIMA SEGUNDA DEL PRESENTE INSTRUMENTO, MISMAS QUE FUERON DESTACADAS EN MAYÚSCULAS Y NEGRITAS PARA SU PLENA IDENTIFICACIÓN.</b></p>
+<p class="h1">CLÁUSULA PRIMERA — DEFINICIONES</p>
+<p>Para los efectos de los presentes Términos, los siguientes vocablos, escritos con mayúscula inicial, tendrán el significado que a continuación se les atribuye, independientemente de que se utilicen en singular o plural:</p>
+<ul>
+  <li>“Plataforma” o “Broquer”: el conjunto de herramientas tecnológicas, software, interfaces, APIs, contenidos, módulos, funcionalidades, algoritmos y servicios accesibles bajo la marca Broquer.</li>
+  <li>“Titular” o “Broquer”: el operador y responsable de la Plataforma, cuya identificación legal y datos de contacto se detallan en la sección final del presente documento.</li>
+  <li>“Usuario”: toda persona física o moral que se registre, acceda o utilice la Plataforma, ya sea en versión gratuita, de prueba o bajo suscripción de pago.</li>
+  <li>“Cuenta”: el registro personal e intransferible del Usuario en la Plataforma, asociado a un correo electrónico, contraseña y, en su caso, datos profesionales.</li>
+  <li>“Contenido del Usuario”: la información, datos, fotografías, documentos, expedientes, contactos, propiedades, descripciones, valores ingresados manualmente, mensajes y, en general, cualquier insumo aportado por el Usuario a la Plataforma.</li>
+  <li>“Resultados” o “Outputs”: cualquier salida, cálculo, estimación, valuación, ficha técnica, contrato, descripción, recomendación, respuesta del asistente de inteligencia artificial, PDF, reporte o material generado por la Plataforma a partir del Contenido del Usuario y/o de fuentes de información de terceros.</li>
+  <li>“Módulos”: las herramientas funcionales específicas de la Plataforma, incluyendo de manera enunciativa mas no limitativa: calculadora de Impuesto Sobre la Renta (ISR), Valuación Automatizada (AVM), Broquer asistente de IA generador de contratos, checklist y módulo PLD, ficha técnica EasyBroker, ficha manual, Mis Propiedades, Mis Contactos, Admin, importador masivo y futuros módulos.</li>
+  <li>“Servicios de Terceros”: las APIs, servicios, integraciones o productos provistos por terceros y consumidos por la Plataforma, incluyendo, sin limitar, Anthropic Claude, Groq, EasyBroker, Google (Places, OAuth), Supabase, Railway, GitHub, Conekta, Facebook/Meta, OpenAI y cualquier otro proveedor presente o futuro.</li>
+  <li>“Suscripción”: la modalidad de pago recurrente o por consumo bajo la cual el Usuario accede a las funcionalidades de pago de la Plataforma.</li>
+  <li>“LFPDPPP”: Ley Federal de Protección de Datos Personales en Posesión de los Particulares y su Reglamento.</li>
+</ul>
+<p class="h1">CLÁUSULA SEGUNDA — OBJETO Y NATURALEZA DEL SERVICIO</p>
+<p>2.1. Broquer es una plataforma de software como servicio (SaaS) que pone a disposición del Usuario un conjunto de herramientas digitales de apoyo operativo dirigidas a profesionales del sector inmobiliario, incluyendo, sin limitar, herramientas de cálculo, generación documental, valuación estimativa, asistencia conversacional con inteligencia artificial, gestión de propiedades y contactos, y cumplimiento documental.</p>
+<p><b>2.2. Broquer NO es: </b>(i) una agencia inmobiliaria, ni intermediario en operaciones de compraventa, arrendamiento o cualquier otra operación inmobiliaria; (ii) un despacho de valuadores profesionales certificados ante la Sociedad Hipotecaria Federal o cualquier colegio o instituto de valuación; (iii) un despacho contable, fiscal, jurídico o de asesoría profesional; (iv) una institución financiera, bancaria, de crédito, fiduciaria, ni asesor financiero o de inversiones autorizado por la Comisión Nacional Bancaria y de Valores; (v) un notario público, corredor público, ni fedatario; (vi) una autoridad fiscal, registral o administrativa; (vii) un sujeto obligado bajo la Ley Federal para la Prevención e Identificación de Operaciones con Recursos de Procedencia Ilícita (LFPIORPI) que sustituya las obligaciones propias del Usuario; ni (viii) un portal o bolsa inmobiliaria.</p>
+<p>2.3. La Plataforma constituye una herramienta de apoyo y productividad. Toda decisión profesional, comercial, fiscal, jurídica, financiera, contractual o de inversión adoptada por el Usuario es y será de su exclusiva responsabilidad, debiendo siempre validarse con los profesionales competentes (notarios, contadores públicos, abogados, valuadores certificados, asesores financieros, autoridades fiscales y demás).</p>
+<p class="h1">CLÁUSULA TERCERA — REGISTRO, CUENTA Y CAPACIDAD</p>
+<p>3.1. Para utilizar la Plataforma, el Usuario deberá crear una Cuenta proporcionando información veraz, completa, exacta y actualizada. El Usuario declara, bajo protesta de decir verdad, que toda la información proporcionada al momento del registro y durante el uso de la Plataforma es verdadera y se encuentra vigente.</p>
+<p>3.2. El Usuario manifiesta que cuenta con la capacidad legal suficiente para obligarse en los términos del Código Civil aplicable y que, en su caso, cuenta con las facultades necesarias para obligar a la persona moral que represente. Solo personas mayores de edad (18 años cumplidos) podrán registrarse y utilizar la Plataforma.</p>
+<p>3.3. La Cuenta es personal e intransferible. El Usuario es el único responsable de la confidencialidad de sus credenciales de acceso y de todas las actividades realizadas desde su Cuenta. Broquer no será responsable por accesos indebidos derivados del descuido, negligencia o falta de medidas de seguridad razonables por parte del Usuario.</p>
+<p>3.4. Broquer podrá implementar mecanismos para impedir el uso compartido de una misma Cuenta por múltiples personas. Cualquier intento de eludir dichos mecanismos constituirá causal de suspensión o terminación de la Cuenta, sin reembolso alguno.</p>
+<p>3.5. Broquer se reserva el derecho, a su entera discreción, de rechazar registros, suspender, restringir o cancelar Cuentas que (i) proporcionen información falsa, (ii) infrinjan los presentes Términos, (iii) realicen un uso abusivo de la Plataforma, o (iv) representen un riesgo legal, técnico o reputacional.</p>
+<p class="h1">CLÁUSULA CUARTA — SUSCRIPCIONES, PRECIOS Y PAGOS</p>
+<p>4.1. El acceso a las funcionalidades de pago de la Plataforma se realiza mediante el pago de una Suscripción periódica (mensual, anual u otra modalidad) o, en su caso, por consumo. Los precios vigentes serán los publicados en la Plataforma al momento de la contratación.</p>
+<p>4.2. Los pagos se procesan a través de pasarelas de pago de terceros (incluyendo, sin limitar, Conekta, Stripe, Clip o las que se incorporen en el futuro). Broquer no almacena directamente datos de tarjetas bancarias; el procesamiento se rige por los términos y políticas de privacidad de dichos proveedores.</p>
+<p>4.3. Las Suscripciones se renuevan automáticamente al final de cada periodo, hasta que el Usuario las cancele desde la propia Plataforma o solicite su cancelación al Titular. Toda cancelación surtirá efectos al cierre del periodo facturado en curso, sin generar derecho a reembolso proporcional, salvo disposición legal en contrario.</p>
+<p><b>4.4. POLÍTICA DE NO REEMBOLSO: </b>Por tratarse de un servicio digital de ejecución inmediata cuya prestación inicia desde el momento del alta, <b>el Usuario reconoce y acepta que los pagos realizados no son reembolsables en su totalidad o parcialmente, salvo cuando (i) lo exija la legislación aplicable, (ii) exista una falla técnica grave e imputable a Broquer que impida el uso de la </b><b>Plataforma por más de quince (15) días naturales continuos sin solución, o (iii) Broquer lo autorice expresamente y por escrito a su entera discreción.</b></p>
+<p>4.5. Broquer podrá modificar los precios, planes, límites de uso o esquemas de cobro en cualquier momento, notificando al Usuario con al menos quince (15) días naturales de anticipación a través de la Plataforma o por correo electrónico. Si el Usuario no acepta los nuevos términos económicos, podrá cancelar su Suscripción antes de su renovación.</p>
+<p>4.6. La Plataforma podrá establecer límites de uso por Usuario (por ejemplo, número de mensajes al asistente, número de valuaciones, fichas generadas, propiedades importadas, etc.) con el fin de controlar costos de operación y prevenir abusos. Dichos límites podrán ser modificados sin previo aviso cuando se requiera por razones técnicas o económicas.</p>
+<p>4.7. La emisión de comprobantes fiscales digitales (CFDI) se realizará conforme a la legislación fiscal mexicana aplicable y a los datos fiscales proporcionados por el Usuario, quien será responsable de la exactitud de dichos datos.</p>
+<p class="h1">CLÁUSULA QUINTA — USO PERMITIDO Y CONDUCTAS PROHIBIDAS</p>
+<p>5.1. El Usuario se obliga a utilizar la Plataforma exclusivamente con fines lícitos, conforme a los presentes Términos, a la legislación mexicana aplicable y a los usos y prácticas del sector inmobiliario profesional.</p>
+<p>5.2. Queda expresamente prohibido al Usuario:</p>
+<ul>
+  <li>Utilizar la Plataforma para fines ilícitos, fraudulentos, engañosos o contrarios a la moral y las buenas costumbres.</li>
+  <li>Ingresar, almacenar o procesar información falsa, alterada o que no le pertenezca o respecto de la cual no cuente con autorización.</li>
+  <li>Realizar ingeniería inversa, descompilar, desensamblar, copiar, modificar, distribuir o crear obras derivadas de la Plataforma, total o parcialmente.</li>
+  <li>Interferir, dañar, sobrecargar o alterar el funcionamiento de la Plataforma o de sus servidores, incluyendo el uso de bots, scrapers, crawlers, scripts automatizados o cualquier mecanismo análogo no autorizado.</li>
+  <li>Eludir o intentar eludir las medidas de seguridad, autenticación, control de acceso, límites de uso o restricciones de la Plataforma.</li>
+  <li>Acceder o intentar acceder a Cuentas ajenas, áreas restringidas, código fuente, infraestructura o información de otros Usuarios.</li>
+  <li>Revender, sublicenciar, ceder, prestar o explotar comercialmente la Plataforma o sus Resultados a terceros, salvo por el uso profesional propio del Usuario en su actividad inmobiliaria.</li>
+  <li>Utilizar la Plataforma para enviar comunicaciones no solicitadas (spam), suplantar identidades, distribuir malware, o realizar prácticas comerciales engañosas.</li>
+  <li>Utilizar la Plataforma o sus Resultados para sustituir asesoría profesional especializada que, por su naturaleza, deba ser prestada por notario, contador, abogado, valuador certificado, asesor financiero u otro profesional con cédula o autorización legalmente requerida.</li>
+  <li>Utilizar el asistente de inteligencia artificial Broquer o cualquier otro componente de IA para generar contenido difamatorio, discriminatorio, violento, sexualmente explícito, que viole derechos de terceros o que contravenga la normatividad aplicable.</li>
+</ul>
+<p>5.3. El incumplimiento de cualquiera de las conductas anteriores facultará a Broquer para suspender o cancelar inmediatamente la Cuenta del Usuario, sin necesidad de declaración judicial previa, sin reembolso, y sin perjuicio de las acciones legales que correspondan por los daños y perjuicios ocasionados.</p>
+<p class="h1">CLÁUSULA SEXTA — PROPIEDAD INTELECTUAL</p>
+<p>6.1. La Plataforma, incluyendo, sin limitar, su código fuente, código objeto, interfaces gráficas, diseño, arquitectura, bases de datos, algoritmos, modelos, prompts, system prompts, paleta visual, logotipos, marcas (incluyendo “Broquer”), nombres comerciales, dominios, materiales escritos, documentación, fichas técnicas y demás elementos, son propiedad exclusiva del Titular o han sido legítimamente licenciados a su favor, y se encuentran protegidos por la Ley Federal del Derecho de Autor, la Ley Federal de Protección a la Propiedad Industrial, tratados internacionales en materia de propiedad intelectual y demás disposiciones aplicables.</p>
+<p>6.2. El Titular otorga al Usuario, durante la vigencia de su Suscripción y conforme a los presentes Términos, una licencia personal, limitada, revocable, no exclusiva, no transferible, no sublicenciable y restringida al uso ordinario de la Plataforma para los fines previstos en estos Términos. Esta licencia no implica transmisión alguna de derechos patrimoniales o morales sobre la Plataforma.</p>
+<p>6.3. Respecto del Contenido del Usuario, el Usuario conserva la titularidad de los derechos correspondientes; sin embargo, otorga a Broquer una licencia mundial, gratuita, no exclusiva y por el tiempo necesario para la prestación del servicio, para alojar, copiar, transmitir, procesar, mostrar y, en su caso, transmitir a Servicios de Terceros (por ejemplo, modelos de inteligencia artificial) dicho Contenido, con el único fin de operar la Plataforma.</p>
+<p>6.4. Respecto de los Resultados generados por la Plataforma a partir del Contenido del Usuario (por ejemplo, fichas técnicas, descripciones, contratos, valuaciones estimativas), el Usuario podrá utilizarlos en su actividad profesional inmobiliaria; no obstante, Broquer no garantiza la exclusividad, originalidad absoluta ni la posibilidad de registro como obra propia del Usuario, particularmente cuando dichos Resultados deriven de modelos generativos de inteligencia artificial.</p>
+<p>6.5. Queda estrictamente prohibido al Usuario remover, ocultar o alterar cualquier aviso de derechos de autor, marca registrada o cualquier otro signo distintivo presente en la Plataforma o en los Resultados.</p>
+<p class="h1">CLÁUSULA SÉPTIMA — PROTECCIÓN DE DATOS PERSONALES</p>
+<p>7.1. El tratamiento de los datos personales del Usuario y, en su caso, de los datos personales de terceros que el Usuario ingrese a la Plataforma (por ejemplo, datos de sus clientes, prospectos o contrapartes), se rige por el Aviso de Privacidad de Broquer, disponible en la Plataforma, el cual forma parte integrante de los presentes Términos.</p>
+<p>7.2. Cuando el Usuario ingrese datos personales de terceros (por ejemplo, en los módulos de Mis Contactos, Expediente PLD, contratos, etc.), el Usuario declara y garantiza que ha obtenido previamente el consentimiento del titular o que cuenta con una causa legítima de tratamiento conforme a la LFPDPPP, manteniendo indemne a Broquer respecto de cualquier reclamación derivada de dicho tratamiento.</p>
+<p>7.3. Broquer implementa medidas administrativas, técnicas y físicas razonables para proteger la información, incluyendo cifrado en tránsito (HTTPS/TLS), políticas de Row Level Security (RLS) en su base de datos, autenticación con JWT y aislamiento por Usuario. No obstante, ningún sistema es absolutamente invulnerable, por lo que Broquer no garantiza la inviolabilidad de los datos ante ataques o eventos de fuerza mayor.</p>
+<p>7.4. El Usuario podrá ejercer sus derechos ARCO (Acceso, Rectificación, Cancelación y Oposición) y solicitar la eliminación de su Cuenta conforme al procedimiento descrito en el Aviso de Privacidad.</p>
+<p class="h1">CLÁUSULA OCTAVA — SERVICIOS DE TERCEROS E INTEGRACIONES</p>
+<p>8.1. La Plataforma se apoya y/o se integra con Servicios de Terceros para prestar diversas funcionalidades. Dichos servicios son operados por proveedores independientes, sujetos a sus propios términos y condiciones, políticas de privacidad, niveles de servicio (SLA), tarifas y disponibilidad.</p>
+<p><b>8.2. Broquer NO ES RESPONSABLE de la disponibilidad, exactitud, seguridad, latencia, cambios, suspensión, descontinuación, errores o tarifas de los Servicios de T</b><b>erceros. Cualquier reclamación derivada del uso de Servicios de Terceros deberá dirigirse directamente al proveedor correspondiente.</b></p>
+<p>8.3. Cuando el Usuario conecte sus propias credenciales (por ejemplo, su API key de EasyBroker, su cuenta de Google, su página de Facebook), reconoce que dichas integraciones se ejecutan en su nombre y bajo su responsabilidad, y que cualquier consumo, cargo, sanción contractual o violación de los términos del tercero será imputable exclusivamente al Usuario.</p>
+<p>8.4. La interrupción, modificación o suspensión de un Servicio de Tercero podrá afectar funcionalidades de la Plataforma sin que ello genere derecho a indemnización, reembolso o descuento alguno a favor del Usuario.</p>
+<p class="h1">CLÁUSULA NOVENA — EXCLUSIONES DE GARANTÍA Y NATURALEZA INFORMATIVA DE LOS RESULTADOS</p>
+<p><b>9.1. NATURALEZA REFERENCIAL DE LOS RESULTADOS. </b>El Usuario reconoce expresamente y acepta que la totalidad de los Resultados generados por la Plataforma —incluyendo, sin limitar, cálculos fiscales, estimaciones de valor (AVM), descripciones de propiedades, fichas técnicas, contratos, checklists, recomendaciones del asistente de IA Broquer, análisis y cualquier otra salida— <b>tienen carácter exclusivamente informativo, orientativo, estimativo y de apoyo operativo, y NO constituyen, en ningú</b><b>n caso, asesoría profesional fiscal, jurídica, contable, financiera, de valuación, notarial, registral, ni opinión profesional vinculante.</b></p>
+<p class="h2">9.2. Calculadora de Impuesto Sobre la Renta (ISR) y herramientas fiscales.</p>
+<p>Las cifras arrojadas por la calculadora de ISR y cualquier otra herramienta fiscal de la Plataforma son <b>estimaciones aproximadas con fines exclusivamente ilustrativos</b>, basadas en los datos ingresados por el Usuario y en parámetros generales de la legislación fiscal mexicana vigente al momento de su programación. Dichas cifras <b>PUEDEN DIFERIR —y es razonablemente previsible que difieran— </b>del cálculo definitivo realizado por el notario público, fedatario, contador público autorizado o autoridad fiscal en la operación correspondiente, debido a factores tales como: deducciones autorizadas, exenciones, actualizaciones por inflación, factores de ajuste, antigüedad de la propiedad, comprobantes fiscales, INPC aplicable, modificaciones legislativas, criterios interpretativos del SAT, cambios en tablas y tarifas, y cualquier otro elemento que el profesional competente esté obligado a considerar. <b>El Usuario se obliga a NO utilizar </b><b>dichas estimaciones como base definitiva para operaciones reales y a validarlas siempre con notario y/o contador antes de cualquier acto jurídico, cierre, retención o pago de impuestos.</b></p>
+<p class="h2">9.3. Módulo de Valuación Automatizada (AVM).</p>
+<p>El AVM de la Plataforma es un <b>modelo de valuación automatizada con fines exclusivamente referenciales</b>, basado en datos públicos, comparables, scraping de portales inmobiliarios, modelos estadísticos y, en su caso, modelos de inteligencia artificial. Los valores estimados <b>NO consti</b><b>tuyen un avalúo en términos del Reglamento de la Ley de Transparencia y de Fomento a la Competencia en el Crédito Garantizado, ni un dictamen de valor emitido por valuador profesional con cédula y registro ante la Sociedad Hipotecaria Federal, colegios pro</b><b>fesionales o autoridades competentes</b>, y por tanto NO podrá utilizarse para fines fiscales, registrales, hipotecarios, judiciales, fideicomisarios, periciales, de crédito, de garantía, ni para cualquier acto que por disposición legal requiera un avalúo formal. Para tales efectos, el Usuario deberá contratar a un valuador profesional autorizado.</p>
+<p class="h2">9.4. Generación de contratos y documentos.</p>
+<p>Los contratos, escritos, formatos, fichas técnicas, descripciones y demás documentos generados por la Plataforma son <b>modelo</b><b>s de referencia</b> y no sustituyen la revisión, validación y, en su caso, otorgamiento por parte de abogado o notario público competente. El Usuario es el único responsable de adaptar, revisar, modificar y validar dichos documentos antes de firmarlos o ponerlos a disposición de terceros, así como de verificar su idoneidad para el caso concreto, jurisdicción aplicable y partes involucradas.</p>
+<p class="h2">9.5. Asistente de IA Broquery otros componentes de inteligencia artificial.</p>
+<p>El asistente Broquer y los demás componentes de inteligencia artificial integrados en la Plataforma utilizan modelos de lenguaje y modelos generativos de terceros (incluyendo Anthropic Claude, Groq/Llama y otros). El Usuario reconoce que <b>los modelos de inteligencia artificial pueden producir respuestas inexa</b><b>ctas, incompletas, desactualizadas, sesgadas o aparentemente verosímiles pero falsas (“alucinaciones”)</b>, y que cualquier respuesta, recomendación, descripción o análisis generado por la inteligencia artificial debe ser críticamente revisado por el Usuario antes de utilizarse. Broquer no garantiza la exactitud, veracidad, vigencia ni idoneidad de los contenidos generados por inteligencia artificial.</p>
+<p class="h2">9.6. Módulo PLD y checklist de cumplimiento.</p>
+<p>El módulo de Prevención de Lavado de Dinero (PLD), el expediente único digital y los checklists de cumplimiento son <b>herramientas de apoyo operativo y organización documental</b> y NO sustituyen las obligaciones que la Ley Federal para la Prevención e Identificación de Operaciones con Recursos de Procedencia Ilícita (LFPIORPI), su Reglamento, las Reglas de Carácter General y demás disposiciones imponen directamente al Usuario en su carácter de sujeto obligado. El cumplimiento sustantivo de dichas obligaciones —incluyendo identificación, integración de expediente, reportes, custodia y plazos de conservación— es responsabilidad personal e indelegable del Usuario.</p>
+<p class="h2">9.7. Datos de propiedades y módulos de listings.</p>
+<p>Los datos de propiedades, fotografías, ubicaciones, descripciones y demás información proveniente de EasyBroker u otras integraciones inmobiliarias se reciben en la forma en que son provistos por el tercero. Broquer <b>NO valida, verifica ni garantiza la veracidad, exactitud, vigencia, disponibilidad real, situación jurídica, libertad de gravámenes ni cualquier otro atributo d</b><b>e las propiedades listadas</b>.</p>
+<p class="h2">9.8. Renuncia expresa de garantías.</p>
+<p><b>LA PLATAFORMA SE PROPORCIONA “TAL COMO ESTÁ” Y “SEGÚN DISPONIBILIDAD” (“AS IS” / “AS AVAILABLE”). EN LA MEDIDA MÁXIMA PERMITIDA POR LA LEGISLACIÓN APLICABLE, BROQUER RENUNCIA EXPRESAMENTE A TO</b><b>DA GARANTÍA EXPRESA O IMPLÍCITA, INCLUYENDO, SIN LIMITAR, GARANTÍAS DE COMERCIABILIDAD, IDONEIDAD PARA UN FIN PARTICULAR, NO INFRACCIÓN, EXACTITUD, COMPLETITUD, VIGENCIA, AUSENCIA DE ERRORES, OPERACIÓN ININTERRUMPIDA, SEGURIDAD ABSOLUTA, O QUE LA PLATAFORM</b><b>A CUMPLA CON LAS EXPECTATIVAS DEL USUARIO.</b></p>
+<p class="h1">CLÁUSULA DÉCIMA — LIMITACIÓN DE RESPONSABILIDAD</p>
+<p><b>10.1. EN LA MEDIDA MÁXIMA PERMITIDA POR LA LEGISLACIÓN APLICABLE, BROQUER, EL TITULAR Y SUS REPRESENTANTES, COLABORADORES, PROVEEDORES, LICENCIANTES Y CAUSAHABIENTE</b><b>S NO SERÁN RESPONSABLES, EN NINGÚN CASO, FRENTE AL USUARIO O FRENTE A TERCEROS, POR DAÑOS INDIRECTOS, INCIDENTALES, ESPECIALES, CONSECUENCIALES, PUNITIVOS O EJEMPLARES, INCLUYENDO, SIN LIMITAR: (i) pérdida de utilidades, ingresos, oportunidades de negocio,</b><b> comisiones, listings o clientes; (ii) pérdida o corrupción de datos; (iii) daño a la reputación; (iv) costos de servicios sustitutos; (v) sanciones fiscales, multas, recargos, intereses, actualizaciones o cualquier consecuencia derivada de cálculos fiscal</b><b>es, retenciones, declaraciones, pagos o gestiones realizadas por el Usuario con base en los Resultados de la Plataforma; (vi) diferencias entre los valores estimados por el AVM y el valor real de mercado, valor catastral, valor de avalúo formal o precio ef</b><b>ectivo de la operación; (vii) consecuencias derivadas del uso, mal uso, distribución, modificación, publicación, firma o ejecución por parte del Usuario o de terceros de los contratos, fichas, descripciones, valuaciones, PDFs o cualquier otro Resultado gen</b><b>erado por la Plataforma; (viii) daños derivados de la dependencia del Usuario en respuestas del asistente </b><b>de IA Broquer </b><b>o de cualquier componente de inteligencia artificial; (ix) operaciones inmobiliarias frustradas, controversias entre las partes de una operació</b><b>n, vicios ocultos, evicción, gravámenes no detectados o conflictos jurídicos; (x) sanciones administrativas o penales derivadas de incumplimientos del Usuario en materia de PLD, protección de datos, fiscal, civil, mercantil </b><b>o cualquier otra; ni (xi) cualqu</b><b>ier otro daño análogo, aun cuando Broquer hubiera sido advertida de la posibilidad de dichos daños.</b></p>
+<p><b>10.2. TOPE MÁXIMO DE RESPONSABILIDAD. Sin perjuicio de lo establecido en el numeral 10.1, en la medida máxima permitida por la legislación aplicable, la res</b><b>ponsabilidad total y acumulada de Broquer frente al Usuario, por cualquier causa, hecho, acción u omisión relacionada con la Plataforma o los presentes Términos, NO EXCEDERÁ DEL MONTO EFECTIVAMENTE PAGADO POR EL USUARIO A BROQUER POR CONCEPTO DE SUSCRIPCIÓ</b><b>N DURANTE LOS TRES (3) MESES INMEDIATOS ANTERIORES AL HECHO QUE DIO ORIGEN A LA RECLAMACIÓN, O LA CANTIDAD DE MIL PESOS 00/100 M.N. ($1,000.00 MXN), LO QUE RESULTE MENOR. Esta limitación aplica con independencia de la teoría de responsabilidad invocada (co</b><b>ntractual, extracontractual, objetiva, por negligencia o cualquier otra) y aun cuando los remedios previstos en estos Términos fallen en su propósito esencial.</b></p>
+<p>10.3. El Usuario reconoce y acepta que los precios de la Suscripción han sido fijados tomando en consideración las exclusiones y limitaciones contenidas en esta cláusula, y que de no existir las mismas, los precios serían significativamente superiores y/o el servicio no se prestaría.</p>
+<p>10.4. Nada en estos Términos limita la responsabilidad de Broquer respecto de aquellos supuestos en que, por disposición expresa e imperativa de la ley aplicable, dicha limitación no sea válida.</p>
+<p class="h1">CLÁUSULA DÉCIMA PRIMERA — INDEMNIZACIÓN POR PARTE DEL USUARIO</p>
+<p><b>11.1. EL USUARIO SE OBLIGA A INDEMNIZAR, DEFENDER Y MANTENER EN PAZ Y A SALVO A BROQUER, AL TITULAR Y A SUS REPRESENTANTES, COLABORADORES, PROVEEDORES, LICENCIANTES Y CAUSAHABIENTES, </b>respecto de cualquier reclamación, demanda, queja, procedimiento administrativo o judicial, sanción, multa, condena, daño, perjuicio, costa, gasto, honorarios de abogados y demás erogaciones que se generen como consecuencia directa o indirecta de: (i) el uso de la Plataforma por parte del Usuario, así como el uso, distribución, modificación o ejecución por parte del Usuario o de terceros de los Resultados; (ii) el incumplimiento de los presentes Términos o de la legislación aplicable; (iii) el ingreso de datos personales de terceros sin contar con base de licitud; (iv) la infracción de derechos de propiedad intelectual, industrial, de imagen, honor o privacidad de terceros; (v) operaciones inmobiliarias, fiscales, contractuales o de cualquier otra naturaleza realizadas por el Usuario con apoyo en la Plataforma; (vi) reclamaciones derivadas de clientes, contrapartes, autoridades fiscales, registrales, judiciales o administrativas con relación al Usuario; y (vii) cualquier otra conducta imputable al Usuario.</p>
+<p>11.2. Broquer notificará al Usuario, en tiempo razonable, sobre cualquier reclamación cubierta por esta indemnización, y podrá asumir, a su discreción, la dirección de la defensa con cargo al Usuario.</p>
+<p class="h1">CLÁUSULA DÉCIMA SEGUNDA — DISPONIBILIDAD, MANTENIMIENTO Y FUERZA MAYOR</p>
+<p>12.1. Broquer realizará esfuerzos razonables para mantener la Plataforma disponible y funcionando adecuadamente, pero no garantiza disponibilidad ininterrumpida, ausencia total de errores, ni niveles de servicio específicos (uptime), salvo que se pacte expresamente por escrito un Acuerdo de Nivel de Servicio (SLA).</p>
+<p>12.2. El Usuario reconoce que la Plataforma puede experimentar interrupciones programadas o no programadas por mantenimiento, actualizaciones, fallas de proveedores de hosting o de Servicios de Terceros, ataques cibernéticos, eventos de fuerza mayor o caso fortuito (incluyendo desastres naturales, pandemias, fallas eléctricas o de telecomunicaciones, actos de autoridad, conflictos armados o sociales), sin que dichas interrupciones generen responsabilidad alguna para Broquer.</p>
+<p>12.3. Broquer podrá modificar, agregar, suspender o descontinuar funcionalidades, módulos o la totalidad de la Plataforma, en cualquier momento, notificando al Usuario en la medida de lo razonable.</p>
+<p class="h1">CLÁUSULA DÉCIMA TERCERA — MODIFICACIONES A LOS TÉRMINOS</p>
+<p>13.1. Broquer podrá modificar los presentes Términos en cualquier momento. Las modificaciones se publicarán en la Plataforma con indicación de la fecha de “Última actualización” y, tratándose de modificaciones sustanciales, se notificará al Usuario por correo electrónico y/o mediante aviso destacado en la Plataforma con al menos quince (15) días naturales de anticipación a su entrada en vigor.</p>
+<p>13.2. El uso continuado de la Plataforma con posterioridad a la entrada en vigor de las modificaciones implicará la aceptación expresa de los Términos modificados. Si el Usuario no está conforme, deberá abstenerse de seguir utilizando la Plataforma y, en su caso, cancelar su Suscripción.</p>
+<p class="h1">CLÁUSULA DÉCIMA CUARTA — TERMINACIÓN</p>
+<p>14.1. El Usuario podrá dar por terminada su relación con Broquer en cualquier momento, cancelando su Suscripción y/o solicitando la eliminación de su Cuenta desde el panel de perfil correspondiente o mediante comunicación al correo de contacto.</p>
+<p>14.2. Broquer podrá suspender o terminar, de manera inmediata y sin necesidad de declaración judicial previa, la Cuenta del Usuario, en caso de: (i) incumplimiento a los presentes Términos; (ii) falta de pago; (iii) conductas que pongan en riesgo a otros Usuarios, a Broquer o a terceros; (iv) orden de autoridad competente; o (v) descontinuación total del servicio.</p>
+<p>14.3. La terminación, por cualquier causa, no liberará al Usuario de las obligaciones generadas con anterioridad ni de aquellas cláusulas que por su naturaleza deban subsistir, incluyendo, sin limitar, propiedad intelectual, exclusiones, limitación de responsabilidad, indemnización, confidencialidad y jurisdicción.</p>
+<p>14.4. A solicitud del Usuario y conforme a la legislación aplicable, sus datos personales serán eliminados; no obstante, Broquer podrá conservar la información que esté obligada a resguardar por disposición legal o por razones legítimas de defensa frente a reclamaciones.</p>
+<p class="h1">CLÁUSULA DÉCIMA QUINTA — CONFIDENCIALIDAD</p>
+<p>15.1. Cada parte se obliga a guardar confidencialidad respecto de la información no pública a la que tenga acceso con motivo de la relación derivada de los presentes Términos, salvo cuando exista obligación legal de revelarla o autorización expresa de la otra parte.</p>
+<p>15.2. La obligación de confidencialidad subsistirá por un plazo de cinco (5) años contados a partir de la terminación de la relación.</p>
+<p class="h1">CLÁUSULA DÉCIMA SEXTA — CESIÓN</p>
+<p>16.1. El Usuario no podrá ceder, total o parcialmente, los derechos y obligaciones derivados de los presentes Términos sin el consentimiento previo y por escrito de Broquer.</p>
+<p>16.2. Broquer podrá ceder, transmitir, aportar o subrogar, total o parcialmente, los derechos y obligaciones derivados de los presentes Términos, así como la titularidad de la Plataforma, a cualquier persona física o moral, incluyendo, sin limitar, a sociedades mercantiles que el Titular constituya, controle o a las que se incorpore en el futuro, sin necesidad de consentimiento previo del Usuario, quien desde ahora otorga su consentimiento expreso para dichos efectos. La cesión se notificará al Usuario por los medios habituales de la Plataforma.</p>
+<p class="h1">CLÁUSULA DÉCIMA SÉPTIMA — INDEPENDENCIA DE DISPOSICIONES</p>
+<p>17.1. Si alguna disposición de los presentes Términos fuera declarada nula, ilegal o inejecutable por autoridad competente, las demás disposiciones conservarán plena validez y eficacia. La disposición afectada será interpretada y aplicada, en la medida de lo posible, en el sentido más cercano a la voluntad original de las partes.</p>
+<p class="h1">CLÁUSULA DÉCIMA OCTAVA — NOTIFICACIONES</p>
+<p>18.1. Toda notificación, requerimiento, aviso o comunicación a Broquer deberá realizarse al correo electrónico hola@broquer.app, surtiendo efectos al momento de su acuse o, en su defecto, dentro de los cinco (5) días hábiles siguientes a su envío.</p>
+<p>18.2. Toda notificación a el Usuario se realizará al correo electrónico registrado en su Cuenta y/o mediante aviso visible en la Plataforma, surtiendo efectos desde su envío o publicación.</p>
+<p>18.3. El Usuario se obliga a mantener actualizado su correo electrónico de contacto y reconoce que cualquier comunicación enviada al último correo proporcionado se tendrá por válidamente realizada.</p>
+<p class="h1">CLÁUSULA DÉCIMA NOVENA — RELACIÓN ENTRE LAS PARTES</p>
+<p>19.1. Los presentes Términos no generan relación laboral, de mandato, de representación, de sociedad, de franquicia, de agencia, de comisión mercantil ni de exclusividad entre las partes. El Usuario actúa por cuenta propia, como profesional independiente, y es el único responsable de sus obligaciones laborales, fiscales, civiles, mercantiles, profesionales y administrativas frente a sus colaboradores, clientes, contrapartes y autoridades.</p>
+<p class="h1">CLÁUSULA VIGÉSIMA — ACUERDO ÍNTEGRO</p>
+<p>20.1. Los presentes Términos, junto con el Aviso de Privacidad, el Contrato de Suscripción (cuando aplique) y las políticas accesorias publicadas en la Plataforma, constituyen el acuerdo íntegro entre las partes respecto del uso de la Plataforma, y dejan sin efecto cualquier convenio, oferta, propuesta o entendimiento previo, verbal o escrito, en lo que se les oponga.</p>
+<p class="h1">CLÁUSULA VIGÉSIMA PRIMERA — NO RENUNCIA</p>
+<p>21.1. La omisión o demora de Broquer en ejercer cualquier derecho o facultad previstos en los presentes Términos no se entenderá como renuncia a los mismos, ni impedirá su ejercicio posterior.</p>
+<p class="h1">CLÁUSULA VIGÉSIMA SEGUNDA — LEGISLACIÓN APLICABLE Y JURISDICCIÓN</p>
+<p><b>22.1. </b>Los presentes Términos se rigen e interpretan conforme a las leyes federales de los Estados Unidos Mexicanos y, supletoriamente, a las leyes del Estado de Michoacán de Ocampo.</p>
+<p><b>22.2. Para la interpretación, cumplimiento y ejecución de los presentes Términos, las partes se someten expresamente a la competencia y jurisdicc</b><b>ión de los tribunales competentes de la ciudad de Morelia, Michoacán, México, renunciando a cualquier otro fuero que por razón de sus domicilios presentes o futuros, o por cualquier otra causa, pudiera corresponderles.</b></p>
+<p>22.3. No obstante lo anterior, cuando el Usuario tenga el carácter de consumidor conforme a la Ley Federal de Protección al Consumidor, podrán resultar aplicables las disposiciones imperativas correspondientes y la competencia que dicha ley establezca, sin que ello afecte la validez del resto del clausulado.</p>
+<p>22.4. Las partes acuerdan procurar la solución amistosa de cualquier controversia mediante comunicación directa y de buena fe durante un plazo de treinta (30) días naturales contados a partir de la primera notificación escrita de la controversia, antes de acudir a la vía jurisdiccional.</p>
+<p class="h1">ACEPTACIÓN</p>
+<p><b>EL USUARIO MANIFIESTA QUE LEYÓ ÍNTEGRAMENTE LOS PRESENTES TÉRMINOS, COMPRENDIÓ SU ALCANCE Y CONSECUENCIAS JURÍDICAS, Y LOS ACEPTA EXPRESAMENTE AL MARCAR LA CASILLA CORRESPONDIENTE AL MOMENTO DEL REGISTRO O AL CONTINUAR UTILIZANDO LA PLATAFORMA, OBLIGÁNDOSE</b><b> EN SUS TÉRMINOS DE CONFORMIDAD CON LO ESTABLECIDO POR LOS ARTÍCULOS 1803, 1832, 1834 BIS Y DEMÁS CORRELATIVOS DEL CÓDIGO CIVIL FEDERAL, Y RECONOCIENDO LA VALIDEZ DE LA MANIFESTACIÓN DE VOLUNTAD POR MEDIOS ELECTRÓNICOS CONFORME AL CÓDIGO DE COMERCIO Y A LA</b><b> LEY DE FIRMA ELECTRÓNICA AVANZADA.</b></p>
+<p><b>Identificación del responsable</b></p>
+<p>Para efectos de cumplimiento con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares, el Código de Comercio y demás normatividad aplicable, se hace constar que el responsable y operador de la Plataforma Broquer es una persona física con actividad empresarial domiciliada en la ciudad de Morelia, Michoacán, México, cuyos datos de identificación se detallan a continuación:</p>
+<p><b>Nombre:</b> Salvador Bolaños Navarro</p>
+<p><b>Régimen fiscal:</b> Persona física con actividad empresarial</p>
+<p><b>Domicilio para oír y recibir notificaciones:</b> Morelia, Michoacán, México</p>
+<p><b>Correo electrónico de contacto:</b> hola@broquer.app</p>
+<p><b>Sitio web de la Plataforma:</b> app.navarroai.com.mx</p>
+<p>Para cualquier consulta, requerimiento, ejercicio de derechos ARCO o solicitud relacionada con los presentes Términos, el Aviso de Privacidad o el servicio en general, el Usuario podrá dirigirse al correo electrónico antes señalado.</p>
+<p class="center" style="text-align:center;">— FIN DE LOS TÉRMINOS Y CONDICIONES —</p>
 
-<div class="tabs-wrap">
-  <div class="tabs">
-    <button class="tab-btn active" onclick="showTab('terminos')">Términos y condiciones</button>
-    <button class="tab-btn" onclick="showTab('suscripcion')">Contrato de suscripción</button>
-    <button class="tab-btn" onclick="showTab('privacidad')">Aviso de privacidad</button>
-  </div>
-</div>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
 
-<div class="legal-body">
+<p class="center title" style="text-align:center;">CONTRATO DE SUSCRIPCIÓN</p>
+<p class="center subtitle" style="text-align:center;">Condiciones comerciales del servicio Broquer</p>
+<p class="center date" style="text-align:center;">Última actualización: 13 de mayo de 2026</p>
+<p>&nbsp;</p>
 
-  <!-- ══ TÉRMINOS Y CONDICIONES ══ -->
-  <div class="legal-section active" id="sec-terminos">
-    <div class="doc-header">
-      <div class="doc-badge">Términos y condiciones de uso</div>
-      <h2>Condiciones generales de la plataforma Broquer®</h2>
-      <div class="doc-meta">Emisor: TL3 Technologies, S.A. de C.V. · Vigencia: a partir de abril de 2026</div>
-    </div>
+<p class="h1">AVISO IMPORTANTE — CARÁCTER ACCESORIO</p>
+<p>El presente Contrato de Suscripción constituye un instrumento <b>accesorio</b> y complementario a los Términos y Condiciones de Uso de la plataforma Broquer. En caso de discrepancia entre ambos documentos respecto de cualquier disposición, prevalecerá lo establecido en los Términos y Condiciones.</p>
+<p>Todas las definiciones, exclusiones de responsabilidad, limitaciones, indemnizaciones, cláusulas de jurisdicción y demás disposiciones de los Términos y Condiciones se entienden incorporadas íntegramente al presente Contrato de Suscripción por referencia.</p>
 
-    <div class="doc-card">
-      <h3><span class="num">1</span> Aceptación</h3>
-      <p>Al acceder, registrarse o utilizar la plataforma <strong>Broquer®</strong>, el usuario acepta en su totalidad los presentes Términos y Condiciones de Uso (en adelante "los Términos"). Si no está de acuerdo con alguna de las disposiciones aquí establecidas, deberá abstenerse de utilizar la plataforma.</p>
-      <p>Broquer® es una plataforma de software como servicio (SaaS) propiedad y operada por <strong>TL3 Technologies, S.A. de C.V.</strong>, empresa constituida conforme a las leyes de los Estados Unidos Mexicanos.</p>
-    </div>
+<p class="h1">CLÁUSULA PRIMERA — PARTES</p>
+<p>1.1. <b>Proveedor:</b> el titular y operador de la Plataforma Broquer, persona física con actividad empresarial, cuya identificación completa se encuentra detallada en la sección final de los Términos y Condiciones.</p>
+<p>1.2. <b>Suscriptor:</b> persona física o moral que contrata el acceso a las funcionalidades de pago de la Plataforma mediante el alta de una Cuenta y la activación de un plan de Suscripción.</p>
 
-    <div class="doc-card">
-      <h3><span class="num">2</span> Descripción del servicio</h3>
-      <p>Broquer® es una plataforma digital dirigida a profesionales del sector inmobiliario en México. Ofrece herramientas para:</p>
-      <ul>
-        <li>Generación de fichas técnicas de propiedades</li>
-        <li>Cálculo estimativo de ISR por enajenación de inmuebles</li>
-        <li>Valuación automatizada de propiedades (AVM)</li>
-        <li>Generación de contratos inmobiliarios</li>
-        <li>Gestión de cartera de inmuebles</li>
-        <li>Asistente de inteligencia artificial (Shaark)</li>
-      </ul>
-      <div class="warn-box"><strong>Importante:</strong> Los cálculos, valuaciones y contratos generados por Broquer® tienen carácter orientativo y de apoyo profesional. No sustituyen la opinión de un notario, abogado, contador o valuador certificado. TL3 Technologies, S.A. de C.V. no asume responsabilidad por decisiones tomadas con base exclusiva en los resultados de la plataforma.</div>
-    </div>
+<p class="h1">CLÁUSULA SEGUNDA — PLANES Y PRECIOS</p>
+<p>2.1. La Plataforma ofrece distintos planes de Suscripción. Los planes vigentes, sus características y sus precios serán los publicados dentro de la Plataforma al momento de la contratación, los cuales prevalecerán sobre cualquier referencia previa, comunicación comercial, presentación o material promocional.</p>
+<p>2.2. A título meramente informativo y enunciativo, los planes contemplados a la fecha de la última actualización del presente documento son los siguientes:</p>
+<ul>
+  <li><b>Plan Free:</b> acceso limitado al módulo de fichas técnicas manuales y a funcionalidades introductorias, sin costo.</li>
+  <li><b>Plan Personalizado:</b> acceso a Módulos individuales seleccionados por el Suscriptor, con precio en función de los Módulos contratados.</li>
+  <li><b>Plan Pro:</b> acceso completo al conjunto de Módulos de la Plataforma, conforme a la tarifa vigente publicada.</li>
+</ul>
+<p>2.3. Los precios se expresan en pesos mexicanos (MXN). Todos los precios incluyen los impuestos aplicables, salvo que expresamente se señale lo contrario al momento de la contratación.</p>
+<p>2.4. El Proveedor podrá modificar planes, precios, características y límites de uso en términos de la cláusula 4.5 de los Términos y Condiciones, notificando con al menos quince (15) días naturales de anticipación.</p>
 
-    <div class="doc-card">
-      <h3><span class="num">3</span> Registro y cuenta de usuario</h3>
-      <p>Para utilizar Broquer® es necesario crear una cuenta con información verídica y actualizada. El usuario es responsable de:</p>
-      <ul>
-        <li>Mantener la confidencialidad de sus credenciales de acceso</li>
-        <li>Notificar de inmediato cualquier uso no autorizado de su cuenta</li>
-        <li>No compartir su cuenta con terceros</li>
-        <li>Actualizar su información de contacto cuando sea necesario</li>
-      </ul>
-      <p>Cada suscripción es personal e intransferible. El acceso simultáneo desde múltiples dispositivos de distintos usuarios bajo una misma cuenta está prohibido y puede resultar en la suspensión del servicio.</p>
-    </div>
+<p class="h1">CLÁUSULA TERCERA — FACTURACIÓN Y PROCESAMIENTO DE PAGOS</p>
+<p>3.1. El cobro de la Suscripción se efectúa de forma <b>recurrente y automática</b> en la fecha de renovación correspondiente, conforme al plan contratado, a través de las pasarelas de pago de terceros habilitadas en la Plataforma, incluyendo, sin limitar, Conekta, Stripe, Clip o las que se incorporen en el futuro.</p>
+<p>3.2. El primer cobro se realiza al momento de la contratación. Los cobros subsecuentes se realizan automáticamente en la fecha equivalente de cada período facturado, hasta que el Suscriptor cancele la Suscripción en términos de la cláusula quinta del presente Contrato.</p>
+<p>3.3. En caso de que un pago no pueda procesarse exitosamente —por falta de fondos, vencimiento del medio de pago, bloqueo bancario o cualquier otro motivo—, el acceso a los Módulos de pago quedará suspendido hasta que se regularice el adeudo. El Suscriptor será notificado por correo electrónico.</p>
+<p>3.4. A solicitud del Suscriptor, el Proveedor emitirá comprobante fiscal digital (CFDI) conforme a la legislación fiscal mexicana aplicable y a los datos fiscales que el Suscriptor proporcione, siendo este el único responsable de la veracidad y exactitud de dichos datos.</p>
+<p>3.5. El Proveedor no almacena directamente datos de tarjetas bancarias en sus servidores; el procesamiento de tarjetas se rige por las políticas y condiciones de las pasarelas de pago utilizadas.</p>
 
-    <div class="doc-card">
-      <h3><span class="num">4</span> Uso permitido y prohibido</h3>
-      <p>El usuario se compromete a utilizar Broquer® exclusivamente para fines lícitos relacionados con la actividad inmobiliaria profesional. Queda estrictamente prohibido:</p>
-      <ul>
-        <li>Reproducir, distribuir, vender o sublicenciar el software o cualquiera de sus componentes</li>
-        <li>Realizar ingeniería inversa o intentar acceder al código fuente</li>
-        <li>Utilizar la plataforma para actividades ilícitas, fraudes o lavado de dinero</li>
-        <li>Introducir virus, malware o cualquier código malicioso</li>
-        <li>Sobrecargar los servidores mediante acceso automatizado no autorizado</li>
-        <li>Usar los datos obtenidos de la plataforma para fines distintos al ejercicio profesional propio del usuario</li>
-      </ul>
-    </div>
+<p class="h1">CLÁUSULA CUARTA — VIGENCIA Y RENOVACIÓN</p>
+<p>4.1. La Suscripción tiene vigencia conforme al período seleccionado por el Suscriptor (mensual, anual u otra modalidad disponible) y se <b>renueva automáticamente</b> al término de cada período por un período equivalente, salvo cancelación previa.</p>
+<p>4.2. La cancelación oportuna debe realizarse con anterioridad a la fecha de renovación correspondiente.</p>
 
-    <div class="doc-card">
-      <h3><span class="num">5</span> Propiedad intelectual</h3>
-      <p>Todos los derechos de propiedad intelectual sobre Broquer®, incluyendo sin limitación el software, diseño, logotipo, marca registrada, bases de datos, algoritmos y contenidos, son propiedad exclusiva de <strong>TL3 Technologies, S.A. de C.V.</strong></p>
-      <p>El uso de la plataforma no otorga al usuario ningún derecho de propiedad sobre los elementos anteriores. Broquer® es una marca registrada. Queda prohibida su reproducción total o parcial sin autorización escrita.</p>
-    </div>
+<p class="h1">CLÁUSULA QUINTA — CANCELACIÓN POR EL SUSCRIPTOR</p>
+<p>5.1. El Suscriptor podrá cancelar su Suscripción en cualquier momento, sin necesidad de expresión de causa, desde la sección Perfil dentro de la Plataforma o mediante comunicación al correo de contacto.</p>
+<p>5.2. La cancelación surtirá efectos al término del período facturado en curso. Durante el tiempo remanente, el Suscriptor conservará el acceso a las funcionalidades contratadas. No se generará reembolso proporcional por el período no consumido, conforme a la cláusula 4.4 de los Términos y Condiciones.</p>
 
-    <div class="doc-card">
-      <h3><span class="num">6</span> Limitación de responsabilidad</h3>
-      <p>TL3 Technologies, S.A. de C.V. no será responsable por:</p>
-      <ul>
-        <li>Pérdidas económicas derivadas del uso o imposibilidad de uso de la plataforma</li>
-        <li>Interrupciones del servicio por mantenimiento, fallas técnicas o causas de fuerza mayor</li>
-        <li>Errores en los cálculos motivados por información incorrecta proporcionada por el usuario</li>
-        <li>Decisiones comerciales, legales o fiscales tomadas con base en los resultados de la plataforma</li>
-        <li>Contenido generado por inteligencia artificial que requiera verificación profesional</li>
-      </ul>
-    </div>
+<p class="h1">CLÁUSULA SEXTA — CAMBIO DE PLAN</p>
+<p>6.1. El Suscriptor puede modificar su plan en cualquier momento desde la sección Perfil de la Plataforma.</p>
+<p>6.2. Los cambios a un plan superior (upgrade) surten efecto inmediato, generándose el cobro de la diferencia proporcional correspondiente al tiempo restante del período en curso.</p>
+<p>6.3. Los cambios a un plan inferior (downgrade) surten efecto al inicio del siguiente período de facturación, sin reembolso proporcional por el período en curso.</p>
 
-    <div class="doc-card">
-      <h3><span class="num">7</span> Modificaciones y terminación</h3>
-      <p>TL3 Technologies, S.A. de C.V. se reserva el derecho de modificar los presentes Términos en cualquier momento. Los cambios serán notificados al usuario mediante la plataforma o correo electrónico con al menos <strong>15 días naturales</strong> de anticipación.</p>
-      <p>El uso continuado de la plataforma tras la notificación de cambios implica la aceptación de los nuevos términos. TL3 Technologies, S.A. de C.V. podrá suspender o cancelar el acceso a cualquier usuario que incumpla los presentes Términos, sin responsabilidad alguna.</p>
-    </div>
+<p class="h1">CLÁUSULA SÉPTIMA — POLÍTICA DE NO REEMBOLSO</p>
+<p>7.1. Por tratarse de un servicio digital de ejecución inmediata, cuya prestación inicia desde el momento del alta o renovación de la Suscripción, los pagos realizados no son reembolsables, ya sea total o parcialmente, salvo en los supuestos expresamente previstos en la cláusula 4.4 de los Términos y Condiciones.</p>
+<p>7.2. Las solicitudes relacionadas con reembolsos, créditos o aclaraciones de cargos deberán dirigirse al correo hola@broquer.app dentro de los treinta (30) días naturales siguientes al cargo correspondiente.</p>
 
-    <div class="doc-card">
-      <h3><span class="num">8</span> Legislación aplicable</h3>
-      <p>Los presentes Términos se rigen por las leyes vigentes en los Estados Unidos Mexicanos. Para cualquier controversia derivada de su interpretación o cumplimiento, las partes se someten a la jurisdicción de los tribunales competentes de la ciudad de <strong>Morelia, Michoacán</strong>, renunciando expresamente a cualquier otro fuero que pudiera corresponderles.</p>
-    </div>
-  </div>
+<p class="h1">CLÁUSULA OCTAVA — SUSPENSIÓN Y TERMINACIÓN POR EL PROVEEDOR</p>
+<p>8.1. El Proveedor podrá suspender o terminar la Suscripción de forma inmediata, sin reembolso y sin necesidad de declaración judicial previa, en los siguientes supuestos:</p>
+<ul>
+  <li>Incumplimiento del Suscriptor a los Términos y Condiciones de Uso o al presente Contrato.</li>
+  <li>Uso fraudulento, ilícito o contrario a derecho de la Plataforma.</li>
+  <li>Compartir credenciales de acceso con terceros no autorizados o eludir mecanismos de uso individual.</li>
+  <li>Actividades que comprometan la seguridad, estabilidad o disponibilidad de la Plataforma o de los datos de otros Usuarios.</li>
+  <li>Falta de pago oportuno de la Suscripción.</li>
+  <li>Orden o mandato de autoridad competente.</li>
+  <li>Descontinuación total del servicio por parte del Proveedor.</li>
+</ul>
 
-  <!-- ══ CONTRATO DE SUSCRIPCIÓN ══ -->
-  <div class="legal-section" id="sec-suscripcion">
-    <div class="doc-header">
-      <div class="doc-badge">Contrato de suscripción</div>
-      <h2>Términos comerciales del servicio Broquer®</h2>
-      <div class="doc-meta">Emisor: TL3 Technologies, S.A. de C.V. · Vigencia: a partir de abril de 2026</div>
-    </div>
+<p class="h1">CLÁUSULA NOVENA — COMUNICACIONES Y NOTIFICACIONES</p>
+<p>9.1. Toda comunicación relativa a la Suscripción, incluyendo facturación, renovaciones, cancelaciones, modificaciones, suspensiones y reembolsos, se realizará al correo electrónico registrado por el Suscriptor en su Cuenta y/o mediante aviso destacado dentro de la Plataforma. El Suscriptor se obliga a mantener actualizados sus datos de contacto.</p>
+<p>9.2. Para dudas o aclaraciones comerciales, el canal oficial es: hola@broquer.app.</p>
 
-    <div class="doc-card">
-      <h3><span class="num">1</span> Partes del contrato</h3>
-      <p><strong>Proveedor:</strong> TL3 Technologies, S.A. de C.V., empresa legalmente constituida en los Estados Unidos Mexicanos, titular y operadora de la plataforma Broquer®.</p>
-      <p><strong>Suscriptor:</strong> Persona física o moral que contrata el acceso a la plataforma Broquer® mediante el registro y pago de una suscripción activa.</p>
-    </div>
+<p class="h1">CLÁUSULA DÉCIMA — DISPOSICIONES SUPLETORIAS</p>
+<p>10.1. En todo lo no previsto expresamente en el presente Contrato de Suscripción, se estará a lo dispuesto por los Términos y Condiciones de Uso de la Plataforma, el Aviso de Privacidad y, supletoriamente, por la legislación federal mexicana aplicable. La jurisdicción y competencia se rigen por la cláusula vigésima segunda de los Términos y Condiciones.</p>
 
-    <div class="doc-card">
-      <h3><span class="num">2</span> Planes y precios</h3>
-      <p>Broquer® ofrece los siguientes planes de suscripción con cobro mensual recurrente:</p>
-      <table class="price-table">
-        <thead>
-          <tr>
-            <th>Plan</th>
-            <th>Descripción</th>
-            <th>Precio mensual</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><strong>Free</strong></td>
-            <td>Acceso al módulo de fichas técnicas manuales</td>
-            <td>$0 MXN</td>
-          </tr>
-          <tr>
-            <td><strong>Personalizado</strong></td>
-            <td>Acceso a módulos individuales seleccionados por el usuario</td>
-            <td>$199 MXN por módulo</td>
-          </tr>
-          <tr>
-            <td><strong>Pro</strong></td>
-            <td>Acceso completo a todos los módulos de la plataforma</td>
-            <td>$799 MXN</td>
-          </tr>
-        </tbody>
-      </table>
-      <div class="highlight-box">Los precios indicados son en pesos mexicanos (MXN) e incluyen IVA. TL3 Technologies, S.A. de C.V. se reserva el derecho de modificar los precios con previo aviso de 30 días naturales al suscriptor.</div>
-    </div>
+<p class="center" style="text-align:center;">— FIN DEL CONTRATO DE SUSCRIPCIÓN —</p>
 
-    <div class="doc-card">
-      <h3><span class="num">3</span> Facturación y pago</h3>
-      <p>El cobro de la suscripción es <strong>mensual y automático</strong> mediante los métodos de pago habilitados en la plataforma (tarjeta de crédito o débito, procesados por Stripe). El primer cobro se realiza al momento de la contratación y los subsecuentes en la misma fecha de cada mes.</p>
-      <p>En caso de que el pago no pueda procesarse, el acceso a los módulos de pago quedará suspendido hasta regularizar el adeudo. El suscriptor recibirá una notificación por correo electrónico.</p>
-      <p>A solicitud del suscriptor, TL3 Technologies, S.A. de C.V. podrá emitir comprobante fiscal digital (CFDI) por los cargos realizados.</p>
-    </div>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
 
-    <div class="doc-card">
-      <h3><span class="num">4</span> Vigencia y renovación</h3>
-      <p>La suscripción tiene vigencia mensual y se renueva automáticamente al término de cada período, salvo que el suscriptor la cancele antes de la fecha de renovación.</p>
-      <p>El suscriptor puede cancelar su suscripción en cualquier momento desde la sección <strong>Perfil → Suscripción</strong> dentro de la plataforma. La cancelación tendrá efecto al término del período mensual en curso, sin reembolso de la fracción proporcional no utilizada.</p>
-    </div>
+<p class="center title" style="text-align:center;">AVISO DE PRIVACIDAD</p>
+<p class="center subtitle" style="text-align:center;">Tratamiento de datos personales conforme a la LFPDPPP</p>
+<p class="center date" style="text-align:center;">Última actualización: 13 de mayo de 2026</p>
+<p>&nbsp;</p>
 
-    <div class="doc-card">
-      <h3><span class="num">5</span> Política de reembolsos</h3>
-      <p>TL3 Technologies, S.A. de C.V. no realiza reembolsos por períodos parcialmente utilizados. Sin embargo, si el suscriptor experimenta una falla grave del servicio imputable al proveedor durante más de <strong>72 horas continuas</strong> en un período de facturación, tendrá derecho a solicitar un crédito equivalente a los días afectados, aplicable al siguiente período.</p>
-      <p>Las solicitudes de crédito deben realizarse dentro de los 5 días hábiles posteriores al incidente, mediante correo a <strong>brokr@navarroai.com.mx</strong>.</p>
-    </div>
+<p class="h1">AVISO IMPORTANTE — LECTURA OBLIGATORIA</p>
+<p>El presente Aviso de Privacidad se emite en cumplimiento a lo dispuesto por los artículos 15 y 16 de la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (en adelante, la <b>"LFPDPPP"</b>), su Reglamento y demás disposiciones aplicables, y forma parte integrante de los Términos y Condiciones de Uso de la plataforma Broquer.</p>
 
-    <div class="doc-card">
-      <h3><span class="num">6</span> Cambio de plan</h3>
-      <p>El suscriptor puede cambiar de plan en cualquier momento desde la sección <strong>Perfil → Suscripción</strong>. Los cambios a un plan superior (upgrade) tienen efecto inmediato y se cobra la diferencia proporcional al tiempo restante del período. Los cambios a un plan inferior (downgrade) tienen efecto al inicio del siguiente período de facturación.</p>
-    </div>
+<p class="h1">CLÁUSULA PRIMERA — IDENTIDAD Y DOMICILIO DEL RESPONSABLE</p>
+<p>1.1. El responsable del tratamiento de los datos personales que el Usuario proporcione mediante el uso de la plataforma Broquer (en adelante, el <b>"Responsable"</b>) es una persona física con actividad empresarial, con domicilio para efectos del presente Aviso en la ciudad de Morelia, Michoacán, México, operadora de la plataforma identificada comercialmente como Broquer (la "Plataforma"). La identificación legal completa del Responsable se encuentra disponible en la sección final del documento de Términos y Condiciones de Uso, así como mediante solicitud directa al correo electrónico de contacto.</p>
+<p>1.2. Correo electrónico para ejercicio de derechos y comunicaciones relacionadas con datos personales: hola@broquer.app.</p>
 
-    <div class="doc-card">
-      <h3><span class="num">7</span> Suspensión y cancelación por el proveedor</h3>
-      <p>TL3 Technologies, S.A. de C.V. podrá suspender o cancelar la suscripción de forma inmediata y sin reembolso en los siguientes casos:</p>
-      <ul>
-        <li>Incumplimiento de los Términos y Condiciones de Uso</li>
-        <li>Uso fraudulento o ilícito de la plataforma</li>
-        <li>Compartir credenciales de acceso con terceros no autorizados</li>
-        <li>Actividades que comprometan la seguridad o disponibilidad del servicio</li>
-      </ul>
-    </div>
+<p class="h1">CLÁUSULA SEGUNDA — DATOS PERSONALES SOMETIDOS A TRATAMIENTO</p>
+<p>2.1. Para las finalidades señaladas en el presente Aviso, el Responsable podrá recabar y tratar las siguientes categorías de datos personales del Usuario:</p>
+<ul>
+  <li>Datos de identificación y contacto: nombre completo, correo electrónico, número telefónico, ciudad de residencia, fotografía de perfil (opcional) y, en su caso, número de cédula profesional, número de socio AMPI u otros datos profesionales que el Usuario decida proporcionar.</li>
+  <li>Datos derivados del uso de la Plataforma: historial de módulos utilizados, propiedades y contactos registrados, valuaciones, fichas técnicas, contratos y demás Resultados generados, configuraciones, preferencias y registros de actividad.</li>
+  <li>Credenciales de integraciones de terceros: claves de API y tokens de acceso que el Usuario ingrese voluntariamente para conectar Servicios de Terceros (por ejemplo, EasyBroker, Google, Facebook/Meta), almacenadas de forma cifrada y aisladas por Usuario.</li>
+  <li>Datos de facturación y pago: datos fiscales necesarios para la emisión de comprobantes fiscales digitales (CFDI), así como identificadores de transacciones procesadas por las pasarelas de pago. Los datos de tarjeta de crédito o débito son procesados y almacenados exclusivamente por las pasarelas de pago de terceros (incluyendo, sin limitar, Conekta, Stripe y Clip); el Responsable no almacena información de tarjetas bancarias en sus servidores.</li>
+  <li>Datos técnicos y de conexión: dirección IP, tipo de dispositivo, navegador, sistema operativo, marcas de tiempo de acceso y registros de actividad (logs) generados automáticamente por motivos de seguridad y operación.</li>
+</ul>
+<p>2.2. El Responsable manifiesta que <b>no recaba ni trata datos personales sensibles</b> en términos del artículo 3, fracción VI, de la LFPDPPP.</p>
 
-    <div class="doc-card">
-      <h3><span class="num">8</span> Contacto comercial</h3>
-      <a class="contact-row" href="mailto:brokr@navarroai.com.mx?subject=Suscripción Broquer">
-        <div class="ci"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg></div>
-        <div>
-          <div class="ct">brokr@navarroai.com.mx</div>
-          <div class="cs">Dudas sobre facturación y suscripciones</div>
-        </div>
-      </a>
-    </div>
-  </div>
+<p class="h1">CLÁUSULA TERCERA — DATOS PERSONALES DE TERCEROS APORTADOS POR EL USUARIO</p>
+<p>3.1. El Usuario, en su carácter de profesional inmobiliario, puede ingresar a la Plataforma datos personales de terceros (por ejemplo, datos de sus clientes, prospectos, contrapartes, propietarios o copropietarios) en módulos tales como Mis Contactos, Expediente PLD, contratos y similares.</p>
+<p>3.2. Respecto de dichos datos, el Usuario actúa como responsable del tratamiento y el Responsable de la Plataforma actúa como <b>encargado</b> en términos del artículo 3, fracción IX, de la LFPDPPP, limitándose a alojar y procesar dicha información por cuenta y siguiendo las instrucciones del Usuario, para la operación del servicio contratado.</p>
+<p>3.3. El Usuario declara y garantiza que cuenta con el consentimiento de los titulares de dichos datos o con una base de licitud distinta conforme a la LFPDPPP, y se obliga a mantener indemne al Responsable de la Plataforma frente a cualquier reclamación, queja, procedimiento o sanción derivada del tratamiento de tales datos.</p>
 
-  <!-- ══ AVISO DE PRIVACIDAD ══ -->
-  <div class="legal-section" id="sec-privacidad">
-    <div class="doc-header">
-      <div class="doc-badge">Aviso de privacidad integral</div>
-      <h2>Tratamiento de datos personales</h2>
-      <div class="doc-meta">Conforme a la LFPDPPP · Emisor: TL3 Technologies, S.A. de C.V. · Abril 2026</div>
-    </div>
+<p class="h1">CLÁUSULA CUARTA — FINALIDADES DEL TRATAMIENTO</p>
+<p>4.1. <b>Finalidades primarias y necesarias</b> (necesarias para la existencia, mantenimiento y cumplimiento de la relación jurídica con el Usuario):</p>
+<ul>
+  <li>Crear, autenticar, mantener y gestionar la Cuenta del Usuario.</li>
+  <li>Proveer acceso a los Módulos contratados y prestar el servicio en general.</li>
+  <li>Procesar pagos, gestionar la Suscripción, emitir comprobantes fiscales y llevar el control de la facturación.</li>
+  <li>Brindar soporte técnico y atención al Usuario.</li>
+  <li>Operar las integraciones con Servicios de Terceros activadas por el Usuario.</li>
+  <li>Garantizar la seguridad de la Plataforma, prevenir fraudes y conservar evidencia de aceptación de Términos y Condiciones.</li>
+  <li>Dar cumplimiento a obligaciones legales, fiscales, administrativas y judiciales aplicables.</li>
+</ul>
+<p>4.2. <b>Finalidades secundarias</b> (no necesarias para la relación, requieren consentimiento tácito y pueden ser objeto de oposición):</p>
+<ul>
+  <li>Envío de comunicaciones sobre nuevas funcionalidades, actualizaciones, novedades, contenidos educativos y mercadotecnia relacionada con la Plataforma.</li>
+  <li>Realización de análisis estadísticos agregados o anonimizados para mejorar la Plataforma y los Módulos.</li>
+  <li>Aplicación de encuestas de satisfacción y de investigación de mercado.</li>
+</ul>
+<p>4.3. Si el Usuario no desea que sus datos personales sean tratados para las finalidades secundarias señaladas, podrá manifestar su oposición en cualquier momento, sin que ello afecte la prestación del servicio, mediante comunicación al correo hola@broquer.app con el asunto "Oposición a finalidades secundarias".</p>
 
-    <div class="doc-card">
-      <h3><span class="num">1</span> Responsable del tratamiento</h3>
-      <p><strong>TL3 Technologies, S.A. de C.V.</strong> (en adelante "el Responsable"), con domicilio en proceso de registro ante el IMPI, es responsable del tratamiento de los datos personales que usted proporcione al usar la plataforma Broquer®.</p>
-      <p>Para cualquier consulta relacionada con sus datos personales puede contactarnos en: <strong>brokr@navarroai.com.mx</strong></p>
-    </div>
+<p class="h1">CLÁUSULA QUINTA — TRANSFERENCIAS Y COMUNICACIONES DE DATOS</p>
+<p>5.1. Para la operación de la Plataforma, los datos personales del Usuario podrán ser puestos a disposición o transferidos, según corresponda, a los siguientes terceros, en calidad de encargados o destinatarios, única y exclusivamente para los fines aquí señalados:</p>
+<ul>
+  <li>Supabase, Inc. — almacenamiento de bases de datos, autenticación y gestión de archivos del Usuario.</li>
+  <li>Railway Corp. — alojamiento e infraestructura del servidor de la aplicación.</li>
+  <li>Conekta, Stripe y/o Clip — procesamiento de pagos y emisión de comprobantes asociados.</li>
+  <li>Anthropic, PBC y Groq, Inc. — procesamiento de consultas y generación de contenidos por parte del asistente de inteligencia artificial y demás componentes de IA de la Plataforma.</li>
+  <li>Proveedores de integraciones activadas voluntariamente por el Usuario, incluyendo EasyBroker, Google (Places, OAuth) y Facebook/Meta, sujetos a sus propios términos y políticas de privacidad.</li>
+  <li>Autoridades competentes, cuando exista requerimiento fundado y motivado en términos de la legislación aplicable, o cuando sea necesario para la defensa de los derechos del Responsable.</li>
+</ul>
+<p>5.2. Conforme al artículo 37 de la LFPDPPP, no se requiere el consentimiento del titular para realizar las transferencias previstas en dicho artículo. Las transferencias adicionales que requieran consentimiento se entenderán autorizadas al aceptar el presente Aviso de Privacidad, salvo oposición expresa del titular.</p>
+<p>5.3. El Responsable no vende, arrienda ni transfiere los datos personales del Usuario a terceros con fines de comercialización propios de dichos terceros.</p>
 
-    <div class="doc-card">
-      <h3><span class="num">2</span> Datos personales que recabamos</h3>
-      <p>El Responsable recaba las siguientes categorías de datos personales:</p>
-      <p><strong>Datos de identificación y contacto:</strong></p>
-      <ul>
-        <li>Nombre completo</li>
-        <li>Correo electrónico</li>
-        <li>Número de teléfono</li>
-        <li>Ciudad de residencia</li>
-        <li>Cédula profesional (opcional)</li>
-        <li>Fotografía de perfil (opcional)</li>
-      </ul>
-      <p><strong>Datos de uso de la plataforma:</strong></p>
-      <ul>
-        <li>Historial de módulos utilizados</li>
-        <li>Propiedades registradas en la plataforma</li>
-        <li>Configuraciones y preferencias del usuario</li>
-        <li>Datos de API de terceros ingresados por el usuario (ej. EasyBroker)</li>
-      </ul>
-      <p><strong>Datos de pago:</strong></p>
-      <ul>
-        <li>Información de tarjeta de crédito o débito, procesada y almacenada exclusivamente por <strong>Stripe, Inc.</strong> El Responsable no almacena datos de tarjeta en sus servidores.</li>
-      </ul>
-      <p><strong>Datos técnicos:</strong></p>
-      <ul>
-        <li>Dirección IP, tipo de dispositivo, navegador y sistema operativo</li>
-        <li>Registro de accesos y actividad dentro de la plataforma</li>
-      </ul>
-    </div>
+<p class="h1">CLÁUSULA SEXTA — EJERCICIO DE DERECHOS ARCO Y REVOCACIÓN DEL CONSENTIMIENTO</p>
+<p>6.1. El titular de los datos personales tiene derecho a Acceder a sus datos en posesión del Responsable, a Rectificarlos cuando sean inexactos o incompletos, a Cancelarlos cuando considere que no se requieren para alguna de las finalidades señaladas, así como a Oponerse a su tratamiento para fines específicos (derechos ARCO), de conformidad con los artículos 22 a 27 de la LFPDPPP. Asimismo, podrá revocar el consentimiento otorgado para el tratamiento de sus datos personales.</p>
+<p>6.2. Para ejercer cualquiera de los derechos ARCO o revocar su consentimiento, el titular podrá enviar su solicitud al correo hola@broquer.app, la cual deberá contener:</p>
+<ul>
+  <li>Nombre completo del titular y correo electrónico registrado en la Plataforma para recibir notificaciones.</li>
+  <li>Documento que acredite la identidad o, en su caso, la representación legal del titular.</li>
+  <li>Descripción clara y precisa del o los derechos que se desean ejercer y, en su caso, de los datos personales involucrados.</li>
+  <li>Cualquier otro elemento o documento que facilite la localización de los datos personales.</li>
+</ul>
+<p>6.3. El Responsable comunicará al titular, en un plazo máximo de veinte (20) días hábiles contados a partir de la recepción de la solicitud, la determinación adoptada. De resultar procedente, hará efectiva la misma dentro de los quince (15) días hábiles siguientes a la fecha en que se comunique la respuesta. Los plazos podrán ser ampliados una sola vez por un período igual, cuando las circunstancias del caso lo justifiquen.</p>
+<p>6.4. Adicionalmente, el Usuario podrá solicitar la eliminación de su Cuenta y datos asociados directamente desde la propia Plataforma, en la sección Perfil. El Responsable podrá conservar la información que esté obligado a resguardar por disposición legal o por razones legítimas de defensa frente a reclamaciones, durante los plazos aplicables.</p>
 
-    <div class="doc-card">
-      <h3><span class="num">3</span> Finalidades del tratamiento</h3>
-      <p><strong>Finalidades primarias</strong> (necesarias para la prestación del servicio):</p>
-      <ul>
-        <li>Crear y gestionar la cuenta del usuario</li>
-        <li>Proveer acceso a los módulos contratados</li>
-        <li>Procesar pagos y gestionar la suscripción</li>
-        <li>Brindar soporte técnico y atención al cliente</li>
-        <li>Cumplir obligaciones legales y fiscales</li>
-      </ul>
-      <p><strong>Finalidades secundarias</strong> (puede oponerse a estas):</p>
-      <ul>
-        <li>Envío de comunicaciones sobre nuevas funcionalidades y actualizaciones de Broquer®</li>
-        <li>Análisis estadístico agregado y anónimo para mejorar la plataforma</li>
-        <li>Encuestas de satisfacción del servicio</li>
-      </ul>
-      <div class="highlight-box">Si no desea que sus datos sean tratados para las finalidades secundarias, puede manifestarlo en cualquier momento escribiendo a <strong>brokr@navarroai.com.mx</strong> con el asunto "Oposición finalidades secundarias".</div>
-    </div>
+<p class="h1">CLÁUSULA SÉPTIMA — MEDIDAS DE SEGURIDAD</p>
+<p>7.1. El Responsable ha implementado medidas administrativas, técnicas y físicas razonables y proporcionales a los riesgos identificados, con el objeto de proteger los datos personales contra daño, pérdida, alteración, destrucción, uso, acceso o tratamiento no autorizado, incluyendo:</p>
+<ul>
+  <li>Cifrado de las comunicaciones en tránsito mediante HTTPS/TLS.</li>
+  <li>Políticas de Row Level Security (RLS) y aislamiento estricto de datos por Usuario en la base de datos.</li>
+  <li>Autenticación basada en tokens (JWT) con renovación automática.</li>
+  <li>Restricción del acceso a los datos al personal autorizado y bajo controles de necesidad.</li>
+  <li>Almacenamiento de credenciales sensibles de manera cifrada y separada de los datos generales del Usuario.</li>
+</ul>
+<p>7.2. No obstante lo anterior, el titular reconoce que ningún sistema de seguridad informática es absolutamente invulnerable, por lo que el Responsable no garantiza la inviolabilidad de los datos ante ataques, accesos no autorizados de terceros o eventos de fuerza mayor.</p>
 
-    <div class="doc-card">
-      <h3><span class="num">4</span> Transferencia de datos</h3>
-      <p>Sus datos personales pueden ser compartidos con los siguientes terceros, exclusivamente para los fines indicados:</p>
-      <ul>
-        <li><strong>Supabase, Inc.</strong> — almacenamiento seguro de datos de usuario y autenticación</li>
-        <li><strong>Stripe, Inc.</strong> — procesamiento de pagos</li>
-        <li><strong>Groq, Inc.</strong> — procesamiento de consultas al asistente de inteligencia artificial</li>
-        <li><strong>Autoridades competentes</strong> — cuando sea requerido por ley o resolución judicial</li>
-      </ul>
-      <p>El Responsable no vende, arrienda ni transfiere sus datos personales a terceros con fines comerciales propios.</p>
-    </div>
+<p class="h1">CLÁUSULA OCTAVA — USO DE TECNOLOGÍAS DE SEGUIMIENTO</p>
+<p>8.1. La Plataforma utiliza almacenamiento local del navegador (localStorage, sessionStorage) y mecanismos análogos exclusivamente para mantener la sesión activa del Usuario y conservar preferencias y configuraciones de uso. No se utilizan cookies de rastreo publicitario de terceros.</p>
+<p>8.2. El Usuario podrá limpiar el almacenamiento local desde la configuración de su navegador en cualquier momento, lo que tendrá como consecuencia el cierre de su sesión activa.</p>
 
-    <div class="doc-card">
-      <h3><span class="num">5</span> Derechos ARCO</h3>
-      <p>Usted tiene derecho a <strong>Acceder, Rectificar, Cancelar u Oponerse</strong> al tratamiento de sus datos personales (derechos ARCO), conforme a lo establecido en la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP).</p>
-      <p>Para ejercer sus derechos ARCO, envíe una solicitud a <strong>brokr@navarroai.com.mx</strong> con:</p>
-      <ul>
-        <li>Nombre completo y correo registrado en la plataforma</li>
-        <li>Descripción clara del derecho que desea ejercer</li>
-        <li>Cualquier documento que facilite la localización de sus datos</li>
-      </ul>
-      <p>El Responsable dará respuesta en un plazo máximo de <strong>20 días hábiles</strong> a partir de la recepción de la solicitud.</p>
-      <p>Adicionalmente, desde la plataforma puede solicitar la <strong>eliminación de su cuenta y datos</strong> en la sección Perfil → Eliminar cuenta.</p>
-    </div>
+<p class="h1">CLÁUSULA NOVENA — PLAZO DE CONSERVACIÓN</p>
+<p>9.1. Los datos personales del Usuario serán conservados durante el tiempo en que se mantenga vigente la relación derivada del uso de la Plataforma y, posteriormente, durante los plazos legales aplicables para la conservación de información fiscal, contable, mercantil y de defensa frente a reclamaciones. Concluidos dichos plazos, los datos serán cancelados o anonimizados de manera segura.</p>
 
-    <div class="doc-card">
-      <h3><span class="num">6</span> Seguridad de los datos</h3>
-      <p>El Responsable implementa medidas técnicas y organizativas para proteger sus datos personales contra pérdida, uso indebido, acceso no autorizado, divulgación, alteración o destrucción, incluyendo:</p>
-      <ul>
-        <li>Cifrado en tránsito mediante HTTPS/TLS</li>
-        <li>Almacenamiento seguro con cifrado en reposo</li>
-        <li>Autenticación de dos factores disponible para el usuario</li>
-        <li>Acceso restringido a los datos únicamente al personal autorizado</li>
-      </ul>
-    </div>
+<p class="h1">CLÁUSULA DÉCIMA — MODIFICACIONES AL AVISO DE PRIVACIDAD</p>
+<p>10.1. El Responsable se reserva el derecho de efectuar en cualquier momento modificaciones o actualizaciones al presente Aviso, ya sea para la atención de reformas legislativas, jurisprudenciales, políticas internas, nuevos requerimientos para la prestación del servicio o por prácticas del mercado.</p>
+<p>10.2. Estas modificaciones se harán del conocimiento del Usuario mediante aviso destacado dentro de la propia Plataforma y/o mediante correo electrónico. La versión vigente del Aviso estará permanentemente disponible en app.navarroai.com.mx/legal.html con indicación de su fecha de "Última actualización".</p>
+<p>10.3. El uso continuado de la Plataforma con posterioridad a la publicación de las modificaciones implicará la aceptación expresa de las mismas, sin perjuicio del derecho del titular a oponerse o revocar su consentimiento conforme a la cláusula sexta del presente Aviso.</p>
 
-    <div class="doc-card">
-      <h3><span class="num">7</span> Uso de cookies y tecnologías similares</h3>
-      <p>Broquer® utiliza <strong>almacenamiento local del navegador</strong> (localStorage) para mantener la sesión del usuario activa y guardar preferencias de uso. No se utilizan cookies de rastreo publicitario de terceros.</p>
-      <p>El usuario puede limpiar el almacenamiento local desde la configuración de su navegador en cualquier momento, lo que cerrará su sesión activa.</p>
-    </div>
+<p class="h1">CLÁUSULA DÉCIMA PRIMERA — AUTORIDAD DE CONTROL</p>
+<p>11.1. Si el titular considera que su derecho a la protección de datos personales ha sido lesionado por alguna conducta u omisión del Responsable, o presume alguna violación a las disposiciones de la LFPDPPP, su Reglamento y demás ordenamientos aplicables, podrá interponer la denuncia o queja correspondiente ante la autoridad federal competente en materia de protección de datos personales.</p>
 
-    <div class="doc-card">
-      <h3><span class="num">8</span> Cambios al aviso de privacidad</h3>
-      <p>El Responsable se reserva el derecho de modificar el presente Aviso de Privacidad. Cualquier modificación será notificada al usuario mediante la plataforma o correo electrónico. El uso continuado de Broquer® tras la notificación implica la aceptación de los cambios.</p>
-      <p>La versión vigente siempre estará disponible en <strong>app.navarroai.com.mx/legal.html</strong></p>
-    </div>
-
-    <div class="doc-card">
-      <h3><span class="num">9</span> Autoridad competente</h3>
-      <p>Si considera que el tratamiento de sus datos no se ha realizado conforme a la LFPDPPP, tiene derecho a acudir al <strong>Instituto Nacional de Transparencia, Acceso a la Información y Protección de Datos Personales (INAI)</strong> en <strong>www.inai.org.mx</strong></p>
-    </div>
-  </div>
+<p class="center" style="text-align:center;">— FIN DEL AVISO DE PRIVACIDAD —</p>
 
 </div>
 
-<script>
-function showTab(id) {
-  document.querySelectorAll('.legal-section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('sec-' + id).classList.add('active');
-  event.currentTarget.classList.add('active');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-</script>
 <script src="app-shell.js" defer></script>
 </body>
 </html>
