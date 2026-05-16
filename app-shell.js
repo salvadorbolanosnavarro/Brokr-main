@@ -480,7 +480,7 @@
   color: var(--mute);
 }
 .bk-pd-close:hover { background: var(--paper-2); color: var(--ink); }
-.bk-pd-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+.bk-pd-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
 .bk-pd-body::-webkit-scrollbar { width: 0; }
 .bk-pd-avatar-row {
   display: flex; align-items: center; gap: 14px;
