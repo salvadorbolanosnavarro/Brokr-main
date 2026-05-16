@@ -1258,17 +1258,11 @@
     overlay = document.getElementById('bk-profile-overlay');
     overlay.classList.add('is-open');
     document.getElementById('bk-profile-drawer').classList.add('is-open');
-
-    // Si hay caché, pintar inmediatamente sin red ni frame delay
-    let user = {};
-    try { user = JSON.parse(localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}'); } catch(e) {}
-    if (_pdCache) renderProfileData(_pdCache, user);
-
-    // Peticiones de red en background — refrescan datos sin bloquear la animación
-    requestAnimationFrame(() => {
+    // Diferir las peticiones de red para que la animación de apertura no se trabe
+    requestAnimationFrame(() => requestAnimationFrame(() => {
       loadProfileData();
       loadSubscriptionStatus();
-    });
+    }));
   }
   window.openProfileDrawer = openProfileDrawer;
 
@@ -1458,7 +1452,7 @@
           </div>
         </div>
 
-      </div><!-- /bk-pd-body -->
+      </div>
 
       <!-- Foot: cerrar sesión -->
       <div class="bk-pd-foot">
@@ -1802,30 +1796,28 @@
     return d;
   }
 
-  // Carga Conekta.js de forma no bloqueante (en background)
-  function _preloadConekta() {
-    if (window.Conekta || document.getElementById('conekta-js')) return;
-    const s = document.createElement('script');
-    s.id = 'conekta-js';
-    s.src = 'https://cdn.conekta.com/assets/lib/0.5.0/conekta.js';
-    s.onload = () => {
-      if (window.Conekta) {
-        window.Conekta.setPublicKey(CONEKTA_PUB);
-        window.Conekta.setLanguage('es');
-      }
-    };
-    document.head.appendChild(s);
-  }
-
-  // Carga status de suscripción — Conekta se carga en paralelo sin bloquear
+  // Carga Conekta.js y status de suscripción cuando se abre el drawer
   async function loadSubscriptionStatus() {
     const tok = getToken();
     if (!tok) return;
 
-    // Iniciar carga de Conekta en background sin await — no bloquea el fetch de status
-    _preloadConekta();
+    // Cargar el SDK de Conekta si no está ya
+    if (!window.ConektaCheckout && !document.getElementById('conekta-js')) {
+      await new Promise((resolve) => {
+        const s = document.createElement('script');
+        s.id = 'conekta-js';
+        s.src = 'https://cdn.conekta.com/assets/lib/0.5.0/conekta.js';
+        s.onload = resolve;
+        s.onerror = resolve; // continuar aunque falle la carga
+        document.head.appendChild(s);
+      });
+      if (window.Conekta) {
+        window.Conekta.setPublicKey(CONEKTA_PUB);
+        window.Conekta.setLanguage('es');
+      }
+    }
 
-    // Consultar estado de suscripción de inmediato
+    // Consultar estado de suscripción
     try {
       const r = await fetch(API_BASE + '/subscription/status', {
         headers: { Authorization: 'Bearer ' + tok }
@@ -2014,16 +2006,6 @@
     const profile = await authInit();
     if (!profile) return; // redirected to login
     injectShell(profile);
-
-    // Pre-llenar el caché del drawer con los datos que authInit ya tiene en memoria
-    // Así el drawer abre instantáneo sin esperar red la primera vez.
-    if (profile.profile) {
-      _pdCache = { usuario: profile.profile, eb: { configured: false }, fb: { connected: false } };
-      _pdCacheAt = Date.now();
-    }
-
-    // Construir el drawer en boot para que el primer clic solo anime, no construya
-    buildProfileDrawer();
 
     // ── Cargar configuración pública del backend (FB_APP_ID, etc.) ──────────
     try {
