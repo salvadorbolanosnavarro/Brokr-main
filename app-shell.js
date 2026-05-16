@@ -123,7 +123,7 @@
   display: flex; align-items: center;
 }
 .bk-sidebar__brand a { display: flex; align-items: center; gap: 8px; text-decoration: none; }
-.bk-sidebar__brand img { height: 28px; width: auto; display: block; filter: brightness(0) invert(1); }
+.bk-sidebar__brand img { height: 28px; width: auto; display: block; }
 .bk-sb-section {
   font-family: var(--font-mono);
   font-size: 9px; letter-spacing: 0.18em;
@@ -691,7 +691,7 @@
       <aside class="bk-sidebar" id="bk-sidebar">
         <div class="bk-sidebar__brand">
           <a href="index.html" aria-label="Ir al inicio Broquer">
-            <img src="logo-broquer.png" alt="Broquer"/>
+            <img src="logotipo-white.png" alt="Broquer"/>
           </a>
         </div>
         ${main.map(m => buildSidebarLink(m, activeKey)).join('')}
@@ -707,7 +707,7 @@
 
       <main class="bk-content">
         <div class="bk-mobile-head">
-          <a href="index.html" aria-label="Ir al inicio Broquer"><img src="logo-broquer.png" alt="Broquer"/></a>
+          <a href="index.html" aria-label="Ir al inicio Broquer"><img src="logotipo-black.png" alt="Broquer"/></a>
           <div class="bk-mobile-head__avatar" id="bk-mob-avatar" onclick="openProfileDrawer()" style="cursor:pointer" title="Mi perfil">${ini}</div>
         </div>
 
@@ -782,7 +782,7 @@
     bnav.innerHTML =
       bnavFixed.map(m => buildBnavItemLabel(m, activeKey)).join('') +
       `<button class="bk-bnav__item bk-bnav__broquer" id="bk-bnav-shaark" type="button" aria-label="Abrir Broquer">
-         <img src="icon-192.png" alt="" style="width:26px;height:26px;object-fit:contain;"/>
+         <img src="isotipo-black.png" alt="" style="width:26px;height:26px;object-fit:contain;"/>
          <span>Broquer</span>
        </button>` +
       buildBnavItemLabel(bnavFixed2[0], activeKey, 'Estimación') +
@@ -794,7 +794,7 @@
     fab.className = 'bk-shaark-fab';
     fab.id = 'bk-shaark-fab';
     fab.setAttribute('aria-label', 'Abrir Broquer');
-    fab.innerHTML = `<span class="bk-shaark-fab__pulse"></span><span class="bk-wake-dot" id="bk-wake-dot"></span><img src="isotipo-broquer.png" alt="Broquer"/>`;
+    fab.innerHTML = `<span class="bk-shaark-fab__pulse"></span><span class="bk-wake-dot" id="bk-wake-dot"></span><img src="isotipo-black.png" alt="Broquer"/>`;
     fab.addEventListener('click', () => toggleShaarkPopup());
     document.body.appendChild(fab);
 
@@ -807,7 +807,7 @@
     pop.setAttribute('aria-label', 'Broquer — asistente');
     pop.innerHTML = `
       <div class="bk-shk-head">
-        <div class="bk-shk-avatar"><img src="isotipo-broquer.png" alt=""/></div>
+        <div class="bk-shk-avatar"><img src="isotipo-black.png" alt=""/></div>
         <div style="flex:1;min-width:0">
           <div class="bk-shk-name">Broquer</div>
           <div class="bk-shk-status">En línea</div>

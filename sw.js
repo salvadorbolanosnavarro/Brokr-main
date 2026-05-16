@@ -43,8 +43,8 @@ self.addEventListener('push', e => {
   const data = e.data ? e.data.json() : {};
   e.waitUntil(self.registration.showNotification(data.title || 'Brokr', {
     body: data.body || 'Tu tarea está lista.',
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    icon: '/isotipo-black.png',
+    badge: '/isotipo-black.png',
     vibrate: [200, 100, 200],
     data: { url: data.url || '/' }
   }));

@@ -2,45 +2,73 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8"/>
-<link rel="icon" type="image/png" href="icon-192.png"/>
-<link rel="apple-touch-icon" href="isotipo-broquer.png"/>
+  <link rel="icon" type="image/png" href="isotipo-black.png"/>
+  <link rel="apple-touch-icon" href="isotipo-black.png"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Conectando con Facebook…</title>
+  <link rel="stylesheet" href="brokr-theme.css"/>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #0f1829;
-      color: #fff;
+      background: var(--paper);
+      color: var(--ink);
       display: flex;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      text-align: center;
       padding: 24px;
+      text-align: center;
     }
+
     .card {
-      background: #1a2540;
-      border-radius: 16px;
-      padding: 40px 32px;
-      max-width: 340px;
+      background: var(--bone);
+      border: 1px solid var(--line-2);
+      border-radius: var(--r-xl);
+      padding: 48px 36px 40px;
+      max-width: 360px;
       width: 100%;
+      box-shadow: 0 2px 16px rgba(10,10,10,0.06);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
     }
+
     .spinner {
-      width: 40px; height: 40px;
-      border: 3px solid rgba(42,157,181,0.3);
-      border-top-color: #2a9db5;
+      width: 36px;
+      height: 36px;
+      border: 2.5px solid var(--line-3);
+      border-top-color: var(--ink);
       border-radius: 50%;
-      animation: spin .8s linear infinite;
-      margin: 0 auto 20px;
+      animation: spin .75s linear infinite;
+      margin-bottom: 4px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .title { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
-    .sub   { font-size: 13px; color: #8a94a8; }
-    .icon-ok  { font-size: 40px; margin-bottom: 16px; }
-    .icon-err { font-size: 40px; margin-bottom: 16px; }
-    .msg-ok  { color: #1D9E75; font-size: 15px; font-weight: 600; }
-    .msg-err { color: #E24B4A; font-size: 15px; font-weight: 600; }
+
+    .status-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 4px;
+    }
+    .status-icon.ok  { background: var(--success-soft); color: var(--success); }
+    .status-icon.err { background: var(--danger-soft);  color: var(--danger);  }
+    .status-icon svg { width: 22px; height: 22px; stroke-width: 2.5; }
+
+    .title {
+      font-family: var(--font-display);
+      font-size: var(--fs-body);
+      font-weight: 600;
+      color: var(--ink);
+      letter-spacing: -.01em;
+    }
+    .sub {
+      font-size: var(--fs-sm);
+      color: var(--mute);
+      margin-top: -4px;
+    }
   </style>
 </head>
 <body>
@@ -52,40 +80,39 @@
 
   <script>
     (function () {
-      // Leer el "code" que Facebook manda en la URL
       const params = new URLSearchParams(window.location.search);
       const code   = params.get('code');
       const error  = params.get('error');
       const card   = document.getElementById('card');
 
       function showOk() {
-        card.innerHTML = '<div class="icon-ok">✓</div><div class="msg-ok">¡Facebook conectado!</div>';
+        card.innerHTML = `
+          <div class="status-icon ok">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="title">¡Facebook conectado!</div>
+          <div class="sub">Cerrando ventana…</div>`;
         setTimeout(() => window.close(), 1200);
       }
 
       function showErr(msg) {
-        card.innerHTML = '<div class="icon-err">✗</div><div class="msg-err">' + (msg || 'Error al conectar') + '</div>';
+        card.innerHTML = `
+          <div class="status-icon err">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </div>
+          <div class="title">${msg || 'Error al conectar'}</div>
+          <div class="sub">Cerrando ventana…</div>`;
         setTimeout(() => window.close(), 3000);
       }
 
-      if (error) {
-        // El usuario canceló el permiso o hubo error de Meta
-        showErr('Permiso cancelado.');
-        return;
-      }
+      if (error) { showErr('Permiso cancelado.'); return; }
+      if (!code)  { showErr('No se recibió el código de autorización.'); return; }
 
-      if (!code) {
-        showErr('No se recibió el código de autorización.');
-        return;
-      }
-
-      // Mandar el code a la ventana padre (app-shell.js lo procesa con _fbOAuthHandler)
       if (window.opener && typeof window.opener._fbOAuthHandler === 'function') {
         window.opener._fbOAuthHandler(code)
           .then(() => showOk())
           .catch(() => showErr('Error al guardar la conexión.'));
       } else {
-        // Fallback: si el opener ya no está disponible (raro), cerrar sin error
         showOk();
       }
     })();
