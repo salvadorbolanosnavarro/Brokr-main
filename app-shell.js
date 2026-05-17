@@ -35,6 +35,7 @@
     { key:'isr',          href:'isr.html',           label:'ISR',             group:'main', icon:'calculator' },
     { key:'image-cleaner',href:'image-cleaner.html', label:'Editor imágenes', group:'main', icon:'image' },
     { key:'verificador',  href:'verificador.html',   label:'Verificador',     group:'main', icon:'shield' },
+    { key:'facebook-ads', href:'facebook-ads.html',  label:'Facebook Ads',    group:'main', icon:'facebook' },
     { key:'admin',        href:'admin.html',         label:'Admin',           group:'main', icon:'cog', adminOnly:true },
   ];
 
@@ -51,6 +52,7 @@
     'image-cleaner':'Editor de imágenes — limpieza con IA',
     'verificador':  'Verificador de inmuebles',
     'admin':        'Panel administrativo',
+    'facebook-ads': 'Facebook Ads — crear y gestionar anuncios pagados en Facebook',
   };
 
   /* ── Iconos (heroicons outline 1.6) ── */
@@ -80,6 +82,7 @@
     homeList:   '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6h16.5M3.75 12h16.5M3.75 18h16.5"/>',
     handshake:  '<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l3-3 3 3 4-4 5 5-3 3-2-2-4 4-2-2-2 2-2-2 0-4z"/>',
     question:   '<path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/>',
+    facebook:   '<path fill="currentColor" stroke="none" d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.269h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>',
   };
   const svg = (name, size = 18, sw = 1.6) =>
     `<svg width="${size}" height="${size}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="${sw}">${ICONS[name] || ''}</svg>`;

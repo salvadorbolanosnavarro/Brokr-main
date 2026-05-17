@@ -4262,6 +4262,207 @@ async def facebook_publish(req: FbPublishRequest):
     return {"ok": True, "post_id": r_post.json().get("id")}
 
 
+
+# ─── FACEBOOK ADS ─────────────────────────────────────────────────────────────
+
+@app.get("/facebook/ad-accounts")
+async def facebook_ad_accounts(request: Request):
+    """Devuelve las cuentas publicitarias accesibles por el usuario."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autenticado")
+
+    # Recuperar user_token guardado en meta
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.get(
+            f"{SUPABASE_URL}/rest/v1/user_integrations",
+            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
+            params={"user_id": f"eq.{user_id}", "provider": "eq.facebook", "select": "meta", "limit": "1"}
+        )
+    if r.status_code != 200 or not r.json():
+        raise HTTPException(status_code=400, detail="Facebook no conectado")
+
+    meta_raw = r.json()[0].get("meta", "{}")
+    try:
+        meta = json.loads(meta_raw) if isinstance(meta_raw, str) else meta_raw
+    except Exception:
+        meta = {}
+
+    user_token = meta.get("user_token", "")
+    if not user_token:
+        raise HTTPException(status_code=400, detail="Token de usuario sin permisos de ads. Reconecta tu Facebook.")
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        r2 = await client.get(
+            "https://graph.facebook.com/v21.0/me/adaccounts",
+            params={"access_token": user_token, "fields": "id,name,account_status,currency", "limit": "50"}
+        )
+
+    if r2.status_code != 200:
+        raise HTTPException(status_code=502, detail=f"Error de Facebook: {r2.text}")
+
+    accounts = r2.json().get("data", [])
+    # Solo cuentas activas (account_status == 1)
+    active = [
+        {"id": a["id"], "name": a.get("name", a["id"]), "currency": a.get("currency", "MXN")}
+        for a in accounts if a.get("account_status", 0) == 1
+    ]
+    return {"accounts": active}
+
+
+class FbCreateAdRequest(BaseModel):
+    account_id: str
+    campaign_name: str
+    objective: str = "OUTCOME_AWARENESS"
+    ad_text: str
+    headline: str
+    destination_url: str = ""
+    image_url: str = ""
+    daily_budget_mxn: float = 50.0
+    duration_days: int = 7
+    age_min: int = 18
+    age_max: int = 0   # 0 = sin límite
+    country: str = "MX"
+    page_id: str = ""
+
+
+@app.post("/facebook/create-ad")
+async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
+    """Crea una campaña completa en Facebook Ads (Campaign → AdSet → Creative → Ad) en estado PAUSED."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autenticado")
+
+    # Recuperar user_token
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.get(
+            f"{SUPABASE_URL}/rest/v1/user_integrations",
+            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
+            params={"user_id": f"eq.{user_id}", "provider": "eq.facebook", "select": "meta", "limit": "1"}
+        )
+    if r.status_code != 200 or not r.json():
+        raise HTTPException(status_code=400, detail="Facebook no conectado")
+
+    meta_raw = r.json()[0].get("meta", "{}")
+    try:
+        meta = json.loads(meta_raw) if isinstance(meta_raw, str) else meta_raw
+    except Exception:
+        meta = {}
+
+    user_token = meta.get("user_token", "")
+    if not user_token:
+        raise HTTPException(status_code=400, detail="Token sin permisos de ads. Reconecta tu Facebook.")
+
+    # Normalizar account_id (asegurar prefijo act_)
+    account_id = req.account_id if req.account_id.startswith("act_") else f"act_{req.account_id}"
+    base_url = f"https://graph.facebook.com/v21.0/{account_id}"
+    params_base = {"access_token": user_token}
+
+    # Presupuesto diario en centavos (Meta usa la moneda de la cuenta en centavos)
+    daily_budget_cents = int(req.daily_budget_mxn * 100)
+
+    async with httpx.AsyncClient(timeout=30) as client:
+
+        # ── 1. Crear Campaign ──────────────────────────────────────────
+        r_camp = await client.post(
+            f"{base_url}/campaigns",
+            params=params_base,
+            json={
+                "name": req.campaign_name,
+                "objective": req.objective,
+                "status": "PAUSED",
+                "special_ad_categories": [],
+            }
+        )
+        if r_camp.status_code not in (200, 201):
+            raise HTTPException(status_code=502, detail=f"Error creando campaña: {r_camp.text}")
+        campaign_id = r_camp.json().get("id")
+
+        # ── 2. Crear AdSet ─────────────────────────────────────────────
+        targeting: dict = {
+            "age_min": req.age_min,
+            "geo_locations": {"countries": [req.country]},
+        }
+        if req.age_max and req.age_max > 0:
+            targeting["age_max"] = req.age_max
+
+        adset_payload: dict = {
+            "name": f"{req.campaign_name} — AdSet",
+            "campaign_id": campaign_id,
+            "daily_budget": daily_budget_cents,
+            "billing_event": "IMPRESSIONS",
+            "optimization_goal": "REACH",
+            "targeting": targeting,
+            "status": "PAUSED",
+        }
+        if req.duration_days and req.duration_days > 0:
+            from datetime import timedelta
+            end_dt = datetime.utcnow() + timedelta(days=req.duration_days)
+            adset_payload["end_time"] = end_dt.strftime("%Y-%m-%dT%H:%M:%S+0000")
+
+        r_adset = await client.post(
+            f"{base_url}/adsets",
+            params=params_base,
+            json=adset_payload
+        )
+        if r_adset.status_code not in (200, 201):
+            raise HTTPException(status_code=502, detail=f"Error creando adset: {r_adset.text}")
+        adset_id = r_adset.json().get("id")
+
+        # ── 3. Crear AdCreative ────────────────────────────────────────
+        link_data: dict = {
+            "message": req.ad_text,
+            "name": req.headline,
+        }
+        if req.destination_url:
+            link_data["link"] = req.destination_url
+        elif req.page_id:
+            link_data["link"] = f"https://www.facebook.com/{req.page_id}"
+
+        if req.image_url:
+            link_data["picture"] = req.image_url
+
+        creative_payload: dict = {
+            "name": f"{req.campaign_name} — Creative",
+            "object_story_spec": {
+                "page_id": req.page_id or meta.get("page_id", ""),
+                "link_data": link_data,
+            }
+        }
+
+        r_creative = await client.post(
+            f"{base_url}/adcreatives",
+            params=params_base,
+            json=creative_payload
+        )
+        if r_creative.status_code not in (200, 201):
+            raise HTTPException(status_code=502, detail=f"Error creando creativo: {r_creative.text}")
+        creative_id = r_creative.json().get("id")
+
+        # ── 4. Crear Ad ────────────────────────────────────────────────
+        r_ad = await client.post(
+            f"{base_url}/ads",
+            params=params_base,
+            json={
+                "name": f"{req.campaign_name} — Ad",
+                "adset_id": adset_id,
+                "creative": {"creative_id": creative_id},
+                "status": "PAUSED",
+            }
+        )
+        if r_ad.status_code not in (200, 201):
+            raise HTTPException(status_code=502, detail=f"Error creando anuncio: {r_ad.text}")
+        ad_id = r_ad.json().get("id")
+
+    return {
+        "ok": True,
+        "campaign_id": campaign_id,
+        "adset_id": adset_id,
+        "creative_id": creative_id,
+        "ad_id": ad_id,
+        "message": "Campaña creada en pausa. Revísala en el Administrador de Anuncios antes de activarla.",
+    }
+
 # ════════════════════════════════════════════════════════════════
 # CONEKTA — SUSCRIPCIONES
 # ════════════════════════════════════════════════════════════════
