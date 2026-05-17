@@ -4000,10 +4000,11 @@ class FbSavePageRequest(BaseModel):
     page_id: str
     page_name: str
     page_token: str
+    user_token: str = ""  # token de usuario (larga duración) — requerido para Ads API
 
 @app.post("/facebook/save-page")
 async def facebook_save_page(req: FbSavePageRequest, request: Request):
-    """Guarda el page_token de Facebook del usuario en Supabase."""
+    """Guarda el page_token y user_token de Facebook del usuario en Supabase."""
     user_id = await get_user_id_from_token(request)
     if not user_id:
         raise HTTPException(status_code=401, detail="No autenticado")
@@ -4014,7 +4015,11 @@ async def facebook_save_page(req: FbSavePageRequest, request: Request):
         "user_id": user_id,
         "provider": "facebook",
         "api_key": req.page_token,
-        "meta": json.dumps({"page_id": req.page_id, "page_name": req.page_name}),
+        "meta": json.dumps({
+            "page_id": req.page_id,
+            "page_name": req.page_name,
+            "user_token": req.user_token,
+        }),
         "updated_at": datetime.utcnow().isoformat()
     }
     async with httpx.AsyncClient(timeout=10) as client:
@@ -4203,11 +4208,14 @@ async def facebook_callback(code: str = Query(...), state: str = Query(None), re
     page_name  = page.get("name", "")
 
     # Devolver datos para que el frontend los guarde en Supabase
+    # user_token (long_token) se necesita para la Ads API — distinto al page_token
     return {
         "ok": True,
         "page_id": page_id,
         "page_name": page_name,
         "page_token": page_token,
+        "user_token": long_token,
+        "pages": [{"id": p.get("id"), "name": p.get("name"), "access_token": p.get("access_token")} for p in pages],
     }
 
 

@@ -1624,7 +1624,7 @@
     if (!tok) return;
     const FB_APP_ID = window._brokrFbAppId || '';
     const redirectUri = encodeURIComponent(location.origin + '/facebook-callback.html');
-    const scope = 'pages_show_list,pages_read_engagement,pages_manage_posts';
+    const scope = 'pages_show_list,pages_read_engagement,pages_manage_posts,ads_management,ads_read,business_management';
     if (!FB_APP_ID) {
       // Sin App ID configurado — mostrar instrucciones
       const toast = document.getElementById('pd-toast-fb');
@@ -1656,7 +1656,7 @@
         const r2 = await fetch(API_BASE + '/facebook/save-page', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok2 },
-          body: JSON.stringify({ page_id: d.page_id, page_name: d.page_name, page_token: d.page_token })
+          body: JSON.stringify({ page_id: d.page_id, page_name: d.page_name, page_token: d.page_token, user_token: d.user_token || '' })
         });
         if (!r2.ok) throw new Error('Error al guardar la conexión');
 
