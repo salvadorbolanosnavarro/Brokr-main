@@ -360,10 +360,7 @@ let _userToken = '';
 let _pageId = '';
 
 function getToken() {
-  try {
-    const s = localStorage.getItem('brokr_session');
-    return s ? JSON.parse(s).access_token : null;
-  } catch { return null; }
+  return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || null;
 }
 
 function goToProfile() {
