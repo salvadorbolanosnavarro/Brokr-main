@@ -316,7 +316,8 @@ async def get_profile_status(request: Request):
             fb_state = {
                 "connected": True,
                 "page_id": meta.get("page_id", ""),
-                "page_name": meta.get("page_name", "Página conectada")
+                "page_name": meta.get("page_name", "Página conectada"),
+                "user_token": meta.get("user_token", ""),
             }
 
     return {"eb": eb_state, "fb": fb_state}
@@ -4058,7 +4059,8 @@ async def facebook_get_connection(request: Request):
                         "connected": True,
                         "page_id": meta.get("page_id", ""),
                         "page_name": meta.get("page_name", "Página conectada"),
-                        "page_token": rows[0]["api_key"]
+                        "page_token": rows[0]["api_key"],
+                        "user_token": meta.get("user_token", ""),
                     }
     except Exception:
         pass

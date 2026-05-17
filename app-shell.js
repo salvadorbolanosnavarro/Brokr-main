@@ -1646,7 +1646,7 @@
       const tok2 = getToken();
       const toast = document.getElementById('pd-toast-fb');
       try {
-        // 1. Intercambiar code por token de página
+        // 1. Intercambiar code por tokens y lista de páginas
         const r = await fetch(API_BASE + '/facebook/callback?code=' + encodeURIComponent(code) + '&redirect_uri=' + redirectUri, {
           headers: { Authorization: 'Bearer ' + tok2 }
         });
@@ -1655,15 +1655,24 @@
           throw new Error(d.error || 'Error al obtener token de Facebook');
         }
 
-        // 2. Guardar en Supabase vía backend
+        // 2. Si hay más de una página, preguntar cuál usar
+        let chosenPage = { id: d.page_id, name: d.page_name, access_token: d.page_token };
+        const pages = d.pages || [];
+        if (pages.length > 1) {
+          const chosen = await _fbPickPage(pages);
+          if (!chosen) throw new Error('Selección cancelada.');
+          chosenPage = chosen;
+        }
+
+        // 3. Guardar en Supabase vía backend
         const r2 = await fetch(API_BASE + '/facebook/save-page', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok2 },
-          body: JSON.stringify({ page_id: d.page_id, page_name: d.page_name, page_token: d.page_token, user_token: d.user_token || '' })
+          body: JSON.stringify({ page_id: chosenPage.id, page_name: chosenPage.name, page_token: chosenPage.access_token, user_token: d.user_token || '' })
         });
         if (!r2.ok) throw new Error('Error al guardar la conexión');
 
-        // 3. Invalidar caché y recargar drawer desde Supabase para confirmar
+        // 4. Invalidar caché y recargar drawer desde Supabase para confirmar
         invalidateProfileCache();
         await loadProfileData();
 
@@ -1675,6 +1684,38 @@
         }
       }
     };
+
+    // Helper: modal de selección de página (solo si hay varias)
+    function _fbPickPage(pages) {
+      return new Promise((resolve) => {
+        // Crear modal
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(10,10,10,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+        const modal = document.createElement('div');
+        modal.style.cssText = 'background:var(--bone);border:1px solid var(--line-2);border-radius:16px;padding:28px 24px;max-width:360px;width:100%;box-shadow:0 8px 32px rgba(10,10,10,.18)';
+        modal.innerHTML = `
+          <div style="font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px;letter-spacing:-.01em">Selecciona tu página</div>
+          <div style="font-size:13px;color:var(--mute);margin-bottom:18px;line-height:1.5">Tienes varias páginas de Facebook. Elige con cuál quieres usar Broquer.</div>
+          <div id="_fb-page-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px"></div>
+          <button id="_fb-cancel-btn" style="width:100%;background:transparent;border:1px solid var(--line-2);border-radius:10px;padding:10px;font-size:13px;font-family:var(--font-sans);color:var(--mute);cursor:pointer">Cancelar</button>
+        `;
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+
+        const list = modal.querySelector('#_fb-page-list');
+        pages.forEach(page => {
+          const btn = document.createElement('button');
+          btn.style.cssText = 'width:100%;background:var(--paper);border:1px solid var(--line-2);border-radius:10px;padding:12px 14px;text-align:left;font-size:14px;font-weight:600;font-family:var(--font-sans);color:var(--ink);cursor:pointer;transition:border-color .15s';
+          btn.textContent = page.name || page.id;
+          btn.onmouseover = () => btn.style.borderColor = 'var(--ink)';
+          btn.onmouseout = () => btn.style.borderColor = 'var(--line-2)';
+          btn.onclick = () => { document.body.removeChild(overlay); resolve(page); };
+          list.appendChild(btn);
+        });
+
+        modal.querySelector('#_fb-cancel-btn').onclick = () => { document.body.removeChild(overlay); resolve(null); };
+      });
+    }
   }
   window.connectFacebook = connectFacebook;
 
