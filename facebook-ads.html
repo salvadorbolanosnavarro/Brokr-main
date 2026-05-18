@@ -102,16 +102,6 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .fa-account-bar{display:flex;align-items:center;gap:10px;margin-bottom:20px}
 .fa-account-bar label{font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap}
 .fa-account-bar select{flex:1;background:var(--paper);border:1px solid var(--line-2);border-radius:var(--r);padding:8px 12px;font-size:13px;font-family:var(--font-sans);color:var(--ink);outline:none;-webkit-appearance:none;appearance:none}
-/* city autocomplete */
-.fa-city-wrap{position:relative}
-.fa-city-dropdown{position:absolute;top:100%;left:0;right:0;background:var(--paper);border:1px solid var(--line-2);border-radius:var(--r);box-shadow:0 4px 16px rgba(10,10,10,.1);z-index:50;display:none;max-height:220px;overflow-y:auto}
-.fa-city-dropdown.open{display:block}
-.fa-city-option{padding:9px 12px;font-size:13px;color:var(--ink);cursor:pointer;border-bottom:1px solid var(--line)}
-.fa-city-option:last-child{border-bottom:none}
-.fa-city-option:hover{background:var(--bone)}
-.fa-city-option .fa-city-sub{font-size:11px;color:var(--mute);display:block;margin-top:1px}
-.fa-city-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:16px;color:var(--mute);cursor:pointer;padding:0;line-height:1;display:none}
-.fa-city-clear.visible{display:block}
 </style>
 </head>
 <body data-app="facebook-ads">
@@ -283,13 +273,49 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
           <div class="fa-card-sub">El anuncio busca maximizar la interacción: likes, comentarios y compartidos. Esto genera alcance orgánico adicional porque Facebook muestra tu anuncio a amigos de quienes interactúan con él. Define aquí a qué grupo de personas quieres llegar.</div>
 
           <div class="fa-field">
-            <label>Ciudad o colonia <span style="font-weight:400;color:var(--mute)">(opcional)</span></label>
-            <div class="fa-city-wrap">
-              <input type="text" id="fa-city-input" autocomplete="off" placeholder="Ej. Morelia, Chapultepec, Guadalajara…" oninput="onCityInput(this)" onfocus="onCityFocus()" onblur="onCityBlur()"/>
-              <button class="fa-city-clear" id="fa-city-clear" onclick="clearCity()">×</button>
-              <div class="fa-city-dropdown" id="fa-city-dropdown"></div>
-            </div>
-            <div class="fa-hint">Deja vacío para mostrar el anuncio en todo el país seleccionado abajo. Si eliges una ciudad específica, el anuncio se dirige solo a esa zona.</div>
+            <label>Ciudad <span style="font-weight:400;color:var(--mute)">(opcional)</span></label>
+            <select id="fa-city-select" autocomplete="off">
+              <option value="">Todo el país</option>
+              <optgroup label="Centro">
+                <option value="2673">Ciudad de México</option>
+                <option value="2648">Guadalajara</option>
+                <option value="2688">Monterrey</option>
+                <option value="2671">Puebla</option>
+                <option value="2701">Querétaro</option>
+                <option value="2691">Morelia</option>
+                <option value="2700">Toluca</option>
+                <option value="2659">León</option>
+                <option value="2660">San Luis Potosí</option>
+                <option value="2698">Aguascalientes</option>
+              </optgroup>
+              <optgroup label="Norte">
+                <option value="2643">Tijuana</option>
+                <option value="2645">Chihuahua</option>
+                <option value="2651">Ciudad Juárez</option>
+                <option value="2662">Torreón</option>
+                <option value="2695">Culiacán</option>
+                <option value="2663">Saltillo</option>
+                <option value="2668">Hermosillo</option>
+                <option value="2699">Mexicali</option>
+                <option value="2706">Mazatlán</option>
+              </optgroup>
+              <optgroup label="Sur y Sureste">
+                <option value="2676">Mérida</option>
+                <option value="2689">Oaxaca</option>
+                <option value="2697">Cancún</option>
+                <option value="2646">Acapulco</option>
+                <option value="2675">Veracruz</option>
+                <option value="2682">Tuxtla Gutiérrez</option>
+                <option value="2644">Villahermosa</option>
+              </optgroup>
+              <optgroup label="Occidente y Bajío">
+                <option value="2687">Zapopan</option>
+                <option value="2692">Irapuato</option>
+                <option value="2669">Celaya</option>
+                <option value="2664">Uruapan</option>
+              </optgroup>
+            </select>
+            <div class="fa-hint">Elige una ciudad para dirigir el anuncio solo a esa zona. Deja "Todo el país" para alcance nacional.</div>
           </div>
 
           <div class="fa-grid-2">
@@ -375,8 +401,6 @@ const API_BASE = 'https://api.navarroai.com.mx';
 let _pageId = '';
 let _imageB64 = '';
 let _imageMime = 'image/jpeg';
-let _cityKey = '';
-let _citySearchTimeout = null;
 
 function getToken() {
   return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || null;
@@ -434,64 +458,6 @@ function onImageSelected(input) {
     strong.textContent = file.name;
   };
   reader.readAsDataURL(file);
-}
-
-// ── Ciudad autocomplete ────────────────────────────────────────
-function onCityInput(input) {
-  clearTimeout(_citySearchTimeout);
-  const q = input.value.trim();
-  document.getElementById('fa-city-clear').classList.toggle('visible', q.length > 0);
-  if (q.length < 2) { closeCityDropdown(); _cityKey = ''; return; }
-  _cityKey = ''; // reset until user picks
-  _citySearchTimeout = setTimeout(() => searchCities(q), 350);
-}
-
-function onCityFocus() {
-  const q = document.getElementById('fa-city-input').value.trim();
-  if (q.length >= 2) searchCities(q);
-}
-
-function onCityBlur() {
-  setTimeout(closeCityDropdown, 180);
-}
-
-function closeCityDropdown() {
-  document.getElementById('fa-city-dropdown').classList.remove('open');
-}
-
-async function searchCities(q) {
-  const tok = getToken();
-  try {
-    const r = await fetch(API_BASE + '/facebook/city-search?q=' + encodeURIComponent(q), {
-      headers: { Authorization: 'Bearer ' + tok }
-    });
-    const d = await r.json();
-    const results = d.results || [];
-    const dd = document.getElementById('fa-city-dropdown');
-    if (!results.length) { closeCityDropdown(); return; }
-    dd.innerHTML = results.map(c =>
-      `<div class="fa-city-option" onmousedown="selectCity('${c.key}', '${c.name.replace(/'/g,"\\'")}', '${(c.region||'').replace(/'/g,"\\'")}')">
-        ${c.name}
-        ${c.region ? `<span class="fa-city-sub">${c.region}, México</span>` : ''}
-      </div>`
-    ).join('');
-    dd.classList.add('open');
-  } catch(e) { closeCityDropdown(); }
-}
-
-function selectCity(key, name, region) {
-  _cityKey = key;
-  const label = region ? name + ', ' + region : name;
-  document.getElementById('fa-city-input').value = label;
-  document.getElementById('fa-city-clear').classList.add('visible');
-  closeCityDropdown();
-}
-
-function clearCity() {
-  _cityKey = '';
-  document.getElementById('fa-city-input').value = '';
-  document.getElementById('fa-city-clear').classList.remove('visible');
-  closeCityDropdown();
 }
 
 async function generateDescription() {
@@ -595,7 +561,7 @@ async function createAd() {
         age_min: ageMin,
         age_max: ageMax,
         country: country,
-        city: _cityKey,
+        city: document.getElementById('fa-city-select').value,
         page_id: _pageId,
       })
     });

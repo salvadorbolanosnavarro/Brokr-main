@@ -4371,7 +4371,7 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
         if req.image_b64:
             r_img = await client.post(
                 f"{base_url}/adimages",
-                params=tok,
+                params=params_base,
                 json={"bytes": req.image_b64}
             )
             if r_img.status_code in (200, 201):
@@ -4385,9 +4385,10 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
             params=params_base,
             json={
                 "name": req.campaign_name,
-                "objective": req.objective,
+                "objective": "OUTCOME_ENGAGEMENT",
                 "status": "PAUSED",
                 "special_ad_categories": [],
+                "is_adset_budget_sharing_enabled": False,
             }
         )
         if r_camp.status_code not in (200, 201):
