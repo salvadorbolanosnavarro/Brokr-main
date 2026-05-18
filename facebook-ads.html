@@ -10,22 +10,15 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-height:100vh}
-
 .fa-wrap{max-width:720px;margin:0 auto;padding:32px 20px 120px}
-
-/* header */
 .fa-header{display:flex;align-items:center;gap:14px;margin-bottom:28px}
 .fa-header-icon{width:44px;height:44px;border-radius:12px;background:#1877F2;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .fa-header-icon svg{width:26px;height:26px}
 .fa-header-text h1{font-family:var(--font-display);font-size:22px;font-weight:700;letter-spacing:-.02em;color:var(--ink)}
 .fa-header-text p{font-size:13px;color:var(--mute);margin-top:2px}
-
-/* tabs */
 .fa-tabs{display:flex;gap:2px;background:var(--bone);border:1px solid var(--line);border-radius:var(--r);padding:3px;margin-bottom:24px}
 .fa-tab{flex:1;padding:8px 12px;text-align:center;font-size:13px;font-weight:600;color:var(--mute);border-radius:calc(var(--r) - 2px);cursor:pointer;border:none;background:transparent;font-family:var(--font-sans);transition:all .15s}
 .fa-tab.active{background:var(--paper);color:var(--ink);box-shadow:0 1px 3px rgba(10,10,10,.08)}
-
-/* banner */
 .fa-banner{background:var(--bone);border:1px solid var(--line-2);border-radius:var(--r-lg);padding:28px 24px;text-align:center;margin-bottom:24px}
 .fa-banner-icon{width:52px;height:52px;border-radius:14px;background:#1877F2;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
 .fa-banner-icon svg{width:30px;height:30px}
@@ -34,41 +27,23 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .fa-banner-btn{display:inline-flex;align-items:center;gap:8px;background:#1877F2;color:#fff;border:none;border-radius:var(--r);padding:11px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font-sans);transition:opacity .15s;text-decoration:none}
 .fa-banner-btn:hover{opacity:.9;color:#fff}
 .fa-banner-btn svg{width:18px;height:18px}
-
-/* section label */
 .fa-section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mute);margin-bottom:10px}
-
-/* card */
 .fa-card{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px 22px;margin-bottom:14px}
 .fa-card-sub{font-size:12px;color:var(--mute);line-height:1.5;margin-bottom:16px}
-
-/* fields */
 .fa-field{margin-bottom:14px}
 .fa-field label{display:block;font-size:12px;font-weight:600;color:var(--ink);margin-bottom:5px;letter-spacing:-.01em}
-.fa-field input[type=text],
-.fa-field input[type=number],
-.fa-field select,
-.fa-field textarea{width:100%;background:var(--paper);border:1px solid var(--line-2);border-radius:var(--r);padding:10px 12px;font-size:14px;font-family:var(--font-sans);color:var(--ink);outline:none;transition:border-color .15s;-webkit-appearance:none;appearance:none}
-.fa-field input[type=text]:focus,
-.fa-field input[type=number]:focus,
-.fa-field select:focus,
-.fa-field textarea:focus{border-color:var(--ink)}
+.fa-field input[type=text],.fa-field input[type=number],.fa-field select,.fa-field textarea{width:100%;background:var(--paper);border:1px solid var(--line-2);border-radius:var(--r);padding:10px 12px;font-size:14px;font-family:var(--font-sans);color:var(--ink);outline:none;transition:border-color .15s;-webkit-appearance:none;appearance:none}
+.fa-field input[type=text]:focus,.fa-field input[type=number]:focus,.fa-field select:focus,.fa-field textarea:focus{border-color:var(--ink)}
 .fa-field textarea{resize:vertical;min-height:80px;line-height:1.5}
 .fa-field .fa-hint{font-size:11px;color:var(--mute);margin-top:4px;line-height:1.4}
-
-/* char counter */
 .fa-char-count{font-size:11px;color:var(--mute);text-align:right;margin-top:4px}
 .fa-char-count.warn{color:#e67e22}
 .fa-char-count.over{color:#ef4444}
-
-/* AI button */
 .fa-ai-btn{display:inline-flex;align-items:center;gap:6px;background:var(--paper);border:1px solid var(--line-2);border-radius:var(--r);padding:7px 12px;font-size:12px;font-weight:600;color:var(--ink);cursor:pointer;font-family:var(--font-sans);transition:all .15s;margin-top:6px}
 .fa-ai-btn:hover{border-color:var(--ink)}
 .fa-ai-btn:disabled{opacity:.45;cursor:not-allowed}
 .fa-ai-spinner{width:12px;height:12px;border:1.5px solid var(--line-2);border-top-color:var(--ink);border-radius:50%;animation:faspin .7s linear infinite;display:none}
 .fa-ai-spinner.active{display:block}
-
-/* image upload */
 .fa-upload-zone{border:1.5px dashed var(--line-2);border-radius:var(--r);padding:20px;text-align:center;cursor:pointer;position:relative;transition:border-color .15s;background:var(--paper)}
 .fa-upload-zone:hover{border-color:var(--ink)}
 .fa-upload-zone.has-file{border-color:#16a34a;border-style:solid}
@@ -76,22 +51,14 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .fa-upload-zone-text{font-size:13px;color:var(--mute);pointer-events:none}
 .fa-upload-zone-text strong{color:var(--ink);display:block;margin-bottom:2px}
 .fa-upload-preview{max-height:120px;border-radius:var(--r);margin-top:10px;display:none}
-
-/* grid */
 .fa-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:520px){.fa-grid-2{grid-template-columns:1fr}}
-
-/* budget row */
 .fa-budget-row{display:flex;align-items:center;gap:8px}
 .fa-budget-row span{font-size:13px;color:var(--mute);white-space:nowrap}
 .fa-budget-row input{flex:1}
-
-/* submit */
 .fa-submit{width:100%;background:var(--ink);color:var(--paper);border:none;border-radius:var(--r);padding:13px 20px;font-size:14px;font-weight:600;font-family:var(--font-sans);cursor:pointer;transition:opacity .15s;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px}
 .fa-submit:hover{opacity:.88}
 .fa-submit:disabled{opacity:.45;cursor:not-allowed}
-
-/* result */
 .fa-result{background:var(--bone);border:1.5px solid var(--line);border-radius:var(--r-lg);padding:20px 22px;margin-top:18px;display:none}
 .fa-result.visible{display:block}
 .fa-result-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
@@ -103,25 +70,17 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .fa-result-link{display:inline-flex;align-items:center;gap:6px;margin-top:12px;background:var(--ink);color:var(--paper);border-radius:var(--r);padding:9px 16px;font-size:13px;font-weight:600;text-decoration:none;transition:opacity .15s}
 .fa-result-link:hover{opacity:.85;color:var(--paper)}
 .fa-result-link svg{width:14px;height:14px}
-
-/* spinner in button */
 .fa-spinner{width:16px;height:16px;border:2px solid rgba(247,245,238,.3);border-top-color:var(--paper);border-radius:50%;animation:faspin .7s linear infinite;display:none}
 .fa-spinner.active{display:block}
 @keyframes faspin{to{transform:rotate(360deg)}}
-
-/* connected chip */
 .fa-connected-chip{display:inline-flex;align-items:center;gap:6px;background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.25);border-radius:var(--r-pill);padding:4px 10px;font-size:12px;font-weight:600;color:#16a34a;margin-bottom:20px}
 .fa-connected-chip .dot{width:7px;height:7px;border-radius:50%;background:#16a34a;flex-shrink:0}
 .fa-reconnect{font-size:12px;color:var(--mute);text-decoration:underline;cursor:pointer;margin-left:6px}
 .fa-reconnect:hover{color:var(--ink)}
-
-/* loading overlay */
 .fa-loading-overlay{display:none;text-align:center;padding:40px 0}
 .fa-loading-overlay.visible{display:block}
 .fa-loading-spinner{width:32px;height:32px;border:2.5px solid var(--line-2);border-top-color:var(--ink);border-radius:50%;animation:faspin .7s linear infinite;margin:0 auto 12px}
 .fa-loading-text{font-size:13px;color:var(--mute)}
-
-/* campaigns */
 .fa-camp-empty{font-size:13px;color:var(--mute);text-align:center;padding:32px 0}
 .fa-camp-card{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 18px;margin-bottom:10px}
 .fa-camp-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
@@ -140,11 +99,19 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .fa-status-pill.paused{background:var(--bone);color:var(--mute);border:1px solid var(--line-2)}
 .fa-camps-refresh{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--mute);margin-bottom:14px;cursor:pointer;border:none;background:transparent;font-family:var(--font-sans)}
 .fa-camps-refresh:hover{color:var(--ink)}
-
-/* account selector */
 .fa-account-bar{display:flex;align-items:center;gap:10px;margin-bottom:20px}
 .fa-account-bar label{font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap}
 .fa-account-bar select{flex:1;background:var(--paper);border:1px solid var(--line-2);border-radius:var(--r);padding:8px 12px;font-size:13px;font-family:var(--font-sans);color:var(--ink);outline:none;-webkit-appearance:none;appearance:none}
+/* city autocomplete */
+.fa-city-wrap{position:relative}
+.fa-city-dropdown{position:absolute;top:100%;left:0;right:0;background:var(--paper);border:1px solid var(--line-2);border-radius:var(--r);box-shadow:0 4px 16px rgba(10,10,10,.1);z-index:50;display:none;max-height:220px;overflow-y:auto}
+.fa-city-dropdown.open{display:block}
+.fa-city-option{padding:9px 12px;font-size:13px;color:var(--ink);cursor:pointer;border-bottom:1px solid var(--line)}
+.fa-city-option:last-child{border-bottom:none}
+.fa-city-option:hover{background:var(--bone)}
+.fa-city-option .fa-city-sub{font-size:11px;color:var(--mute);display:block;margin-top:1px}
+.fa-city-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:16px;color:var(--mute);cursor:pointer;padding:0;line-height:1;display:none}
+.fa-city-clear.visible{display:block}
 </style>
 </head>
 <body data-app="facebook-ads">
@@ -157,11 +124,11 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
     </div>
     <div class="fa-header-text">
       <h1>Facebook Ads</h1>
-      <p>Crea anuncios de interaccion para tus propiedades directamente desde Broquer</p>
+      <p>Crea anuncios de interacción para tus propiedades directamente desde Broquer</p>
     </div>
   </div>
 
-  <!-- Not connected -->
+  <!-- No conectado -->
   <div id="fa-not-connected">
     <div class="fa-banner">
       <div class="fa-banner-icon">
@@ -176,14 +143,14 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
     </div>
   </div>
 
-  <!-- Old token -->
+  <!-- Token viejo -->
   <div id="fa-no-ads-token" style="display:none">
     <div class="fa-banner">
       <div class="fa-banner-icon">
         <svg viewBox="0 0 24 24" fill="white"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.269h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
       </div>
       <h2>Reconecta tu Facebook</h2>
-      <p>Tu conexion de Facebook es anterior a los permisos de publicidad. Vuelve a conectar tu cuenta desde Mi Perfil para habilitar esta funcion.</p>
+      <p>Tu conexión de Facebook es anterior a los permisos de publicidad. Vuelve a conectar tu cuenta desde Mi Perfil para habilitar esta función.</p>
       <button class="fa-banner-btn" onclick="goToProfile()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
         Reconectar en Mi Perfil
@@ -191,13 +158,13 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
     </div>
   </div>
 
-  <!-- Connected -->
+  <!-- Conectado -->
   <div id="fa-connected" style="display:none">
 
     <div style="margin-bottom:20px">
       <span class="fa-connected-chip">
         <span class="dot"></span>
-        <span id="fa-page-name">Pagina conectada</span>
+        <span id="fa-page-name">Página conectada</span>
       </span>
       <span class="fa-reconnect" onclick="goToProfile()">Cambiar cuenta</span>
     </div>
@@ -223,31 +190,29 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 
     <div id="fa-main-content" style="display:none">
 
-      <!-- Account selector -->
       <div class="fa-account-bar">
         <label for="fa-account-select">Cuenta publicitaria</label>
         <select id="fa-account-select" autocomplete="off" onchange="onAccountChange()"></select>
       </div>
 
-      <!-- Tabs -->
       <div class="fa-tabs">
         <button class="fa-tab active" onclick="switchTab('crear', this)">Nuevo anuncio</button>
-        <button class="fa-tab" onclick="switchTab('campanas', this)">Mis campanas</button>
+        <button class="fa-tab" onclick="switchTab('campanas', this)">Mis campañas</button>
       </div>
 
-      <!-- TAB CREAR -->
+      <!-- TAB: Nuevo anuncio -->
       <div id="fa-tab-crear">
 
         <div class="fa-section-label">Contenido del anuncio</div>
         <div class="fa-card" style="margin-bottom:22px">
 
           <div class="fa-field">
-            <label>Nombre de la campana</label>
+            <label>Nombre de la campaña</label>
             <input type="text" id="fa-campaign-name" autocomplete="off" placeholder="Ej. Casas Chapultepec Mayo 2026"/>
           </div>
 
           <div class="fa-field">
-            <label>Texto del anuncio <span style="font-weight:400;color:var(--mute)">(max. 150 caracteres)</span></label>
+            <label>Texto del anuncio <span style="font-weight:400;color:var(--mute)">(máx. 150 caracteres)</span></label>
             <textarea id="fa-ad-text" autocomplete="off" maxlength="150" oninput="updateCharCount()" placeholder="Describe brevemente la propiedad. Este texto aparece en el cuerpo del anuncio en el feed de Facebook."></textarea>
             <div class="fa-char-count" id="fa-char-count">0 / 150</div>
             <div style="display:flex;align-items:center;gap:8px;margin-top:2px">
@@ -256,12 +221,12 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
                 <svg id="fa-ai-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                 Generar con IA
               </button>
-              <span id="fa-ai-hint" style="font-size:11px;color:var(--mute);display:none">Completa el nombre de la campana para generar.</span>
+              <span id="fa-ai-hint" style="font-size:11px;color:var(--mute);display:none">Completa el nombre de la campaña para generar.</span>
             </div>
           </div>
 
           <div class="fa-field">
-            <label>Titulo del anuncio</label>
+            <label>Título del anuncio</label>
             <input type="text" id="fa-ad-headline" autocomplete="off" placeholder="Ej. Casa en venta en Chapultepec"/>
             <div class="fa-hint">Aparece como encabezado del anuncio, debajo de la imagen.</div>
           </div>
@@ -282,11 +247,11 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
           <div class="fa-field" style="margin-bottom:0">
             <label>URL de destino <span style="font-weight:400;color:var(--mute)">(opcional)</span></label>
             <input type="text" id="fa-ad-url" autocomplete="off" placeholder="https://tu-sitio.com/propiedad"/>
-            <div class="fa-hint">A donde llegara quien haga clic. Si lo dejas vacio, el anuncio lleva a tu pagina de Facebook.</div>
+            <div class="fa-hint">A donde llegará quien haga clic. Si lo dejas vacío, el anuncio llevará a tu página de Facebook.</div>
           </div>
         </div>
 
-        <div class="fa-section-label">Presupuesto y duracion</div>
+        <div class="fa-section-label">Presupuesto y duración</div>
         <div class="fa-card" style="margin-bottom:22px">
           <div class="fa-grid-2">
             <div class="fa-field" style="margin-bottom:0">
@@ -294,17 +259,17 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
               <div class="fa-budget-row">
                 <span>$</span>
                 <input type="number" id="fa-budget" value="50" min="10" step="10" autocomplete="off" oninput="updateEstimate()"/>
-                <span>/ dia</span>
+                <span>/ día</span>
               </div>
-              <div class="fa-hint">Minimo $10 MXN</div>
+              <div class="fa-hint">Mínimo $10 MXN</div>
             </div>
             <div class="fa-field" style="margin-bottom:0">
-              <label>Duracion</label>
+              <label>Duración</label>
               <select id="fa-duration" autocomplete="off" onchange="updateEstimate()">
-                <option value="3">3 dias</option>
-                <option value="7" selected>7 dias</option>
-                <option value="14">14 dias</option>
-                <option value="30">30 dias</option>
+                <option value="3">3 días</option>
+                <option value="7" selected>7 días</option>
+                <option value="14">14 días</option>
+                <option value="30">30 días</option>
               </select>
             </div>
           </div>
@@ -315,44 +280,53 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 
         <div class="fa-section-label">Audiencia</div>
         <div class="fa-card" style="margin-bottom:28px">
-          <div class="fa-card-sub">
-            El anuncio busca maximizar la interaccion: likes, comentarios y compartidos. Esto genera alcance organico adicional porque Facebook muestra tu anuncio a amigos de quienes interactuan con el. Define aqui a que grupo de personas quieres llegar.
+          <div class="fa-card-sub">El anuncio busca maximizar la interacción: likes, comentarios y compartidos. Esto genera alcance orgánico adicional porque Facebook muestra tu anuncio a amigos de quienes interactúan con él. Define aquí a qué grupo de personas quieres llegar.</div>
+
+          <div class="fa-field">
+            <label>Ciudad o colonia <span style="font-weight:400;color:var(--mute)">(opcional)</span></label>
+            <div class="fa-city-wrap">
+              <input type="text" id="fa-city-input" autocomplete="off" placeholder="Ej. Morelia, Chapultepec, Guadalajara…" oninput="onCityInput(this)" onfocus="onCityFocus()" onblur="onCityBlur()"/>
+              <button class="fa-city-clear" id="fa-city-clear" onclick="clearCity()">×</button>
+              <div class="fa-city-dropdown" id="fa-city-dropdown"></div>
+            </div>
+            <div class="fa-hint">Deja vacío para mostrar el anuncio en todo el país seleccionado abajo. Si eliges una ciudad específica, el anuncio se dirige solo a esa zona.</div>
           </div>
+
           <div class="fa-grid-2">
             <div class="fa-field" style="margin-bottom:0">
-              <label>Edad minima</label>
+              <label>Edad mínima</label>
               <select id="fa-age-min" autocomplete="off">
-                <option value="18" selected>18 anos</option>
-                <option value="25">25 anos</option>
-                <option value="30">30 anos</option>
-                <option value="35">35 anos</option>
-                <option value="40">40 anos</option>
+                <option value="18" selected>18 años</option>
+                <option value="25">25 años</option>
+                <option value="30">30 años</option>
+                <option value="35">35 años</option>
+                <option value="40">40 años</option>
               </select>
             </div>
             <div class="fa-field" style="margin-bottom:0">
-              <label>Edad maxima</label>
+              <label>Edad máxima</label>
               <select id="fa-age-max" autocomplete="off">
-                <option value="45">45 anos</option>
-                <option value="55">55 anos</option>
-                <option value="65" selected>65 anos</option>
-                <option value="0">Sin limite</option>
+                <option value="45">45 años</option>
+                <option value="55">55 años</option>
+                <option value="65" selected>65 años</option>
+                <option value="0">Sin límite</option>
               </select>
             </div>
           </div>
           <div class="fa-field" style="margin-top:12px;margin-bottom:0">
-            <label>Pais de la audiencia</label>
+            <label>País de la audiencia</label>
             <select id="fa-country" autocomplete="off">
-              <option value="MX" selected>Mexico</option>
+              <option value="MX" selected>México</option>
               <option value="US">Estados Unidos</option>
-              <option value="CA">Canada</option>
-              <option value="ES">Espana</option>
+              <option value="CA">Canadá</option>
+              <option value="ES">España</option>
             </select>
           </div>
         </div>
 
         <button class="fa-submit" id="fa-submit-btn" onclick="createAd()">
           <div class="fa-spinner" id="fa-btn-spinner"></div>
-          <span id="fa-btn-text">Crear campana en Facebook</span>
+          <span id="fa-btn-text">Crear campaña en Facebook</span>
         </button>
 
         <div class="fa-result" id="fa-result">
@@ -362,14 +336,14 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
           </div>
           <div class="fa-result-body" id="fa-result-body"></div>
           <a class="fa-result-link" id="fa-result-link" href="https://www.facebook.com/adsmanager" target="_blank" rel="noopener" style="display:none">
-            Ver en Administrador de Anuncios
+            Revisar y activar en Meta Ads Manager
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           </a>
         </div>
 
       </div><!-- tab crear -->
 
-      <!-- TAB CAMPANAS -->
+      <!-- TAB: Mis campañas -->
       <div id="fa-tab-campanas" style="display:none">
 
         <button class="fa-camps-refresh" onclick="loadCampaigns()">
@@ -379,17 +353,17 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 
         <div class="fa-loading-overlay" id="fa-loading-camps">
           <div class="fa-loading-spinner"></div>
-          <div class="fa-loading-text">Cargando campanas…</div>
+          <div class="fa-loading-text">Cargando campañas…</div>
         </div>
 
         <div id="fa-camps-list"></div>
 
         <div style="margin-top:16px;padding:14px 16px;background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);font-size:12px;color:var(--mute);line-height:1.6">
-          Las estadisticas muestran los ultimos 7 dias. Para segmentacion avanzada, publicos personalizados, pruebas A/B y reportes detallados, usa el
+          Las estadísticas muestran los últimos 7 días. Para segmentación avanzada, públicos personalizados, pruebas A/B y reportes detallados, usa el
           <a href="https://www.facebook.com/adsmanager" target="_blank" rel="noopener" style="color:var(--ink);text-decoration:underline">Administrador de Anuncios de Meta</a>.
         </div>
 
-      </div><!-- tab campanas -->
+      </div><!-- tab campañas -->
 
     </div><!-- fa-main-content -->
   </div><!-- fa-connected -->
@@ -401,6 +375,8 @@ const API_BASE = 'https://api.navarroai.com.mx';
 let _pageId = '';
 let _imageB64 = '';
 let _imageMime = 'image/jpeg';
+let _cityKey = '';
+let _citySearchTimeout = null;
 
 function getToken() {
   return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || null;
@@ -448,8 +424,6 @@ function onImageSelected(input) {
   const zone = document.getElementById('fa-upload-zone');
   const preview = document.getElementById('fa-upload-preview');
   const strong = zone.querySelector('strong');
-  const hint = zone.querySelector('.fa-upload-zone-text');
-
   const reader = new FileReader();
   reader.onload = function(e) {
     const dataUrl = e.target.result;
@@ -458,9 +432,66 @@ function onImageSelected(input) {
     preview.style.display = 'block';
     zone.classList.add('has-file');
     strong.textContent = file.name;
-    if (hint.childNodes[1]) hint.childNodes[1].textContent = '';
   };
   reader.readAsDataURL(file);
+}
+
+// ── Ciudad autocomplete ────────────────────────────────────────
+function onCityInput(input) {
+  clearTimeout(_citySearchTimeout);
+  const q = input.value.trim();
+  document.getElementById('fa-city-clear').classList.toggle('visible', q.length > 0);
+  if (q.length < 2) { closeCityDropdown(); _cityKey = ''; return; }
+  _cityKey = ''; // reset until user picks
+  _citySearchTimeout = setTimeout(() => searchCities(q), 350);
+}
+
+function onCityFocus() {
+  const q = document.getElementById('fa-city-input').value.trim();
+  if (q.length >= 2) searchCities(q);
+}
+
+function onCityBlur() {
+  setTimeout(closeCityDropdown, 180);
+}
+
+function closeCityDropdown() {
+  document.getElementById('fa-city-dropdown').classList.remove('open');
+}
+
+async function searchCities(q) {
+  const tok = getToken();
+  try {
+    const r = await fetch(API_BASE + '/facebook/city-search?q=' + encodeURIComponent(q), {
+      headers: { Authorization: 'Bearer ' + tok }
+    });
+    const d = await r.json();
+    const results = d.results || [];
+    const dd = document.getElementById('fa-city-dropdown');
+    if (!results.length) { closeCityDropdown(); return; }
+    dd.innerHTML = results.map(c =>
+      `<div class="fa-city-option" onmousedown="selectCity('${c.key}', '${c.name.replace(/'/g,"\\'")}', '${(c.region||'').replace(/'/g,"\\'")}')">
+        ${c.name}
+        ${c.region ? `<span class="fa-city-sub">${c.region}, México</span>` : ''}
+      </div>`
+    ).join('');
+    dd.classList.add('open');
+  } catch(e) { closeCityDropdown(); }
+}
+
+function selectCity(key, name, region) {
+  _cityKey = key;
+  const label = region ? name + ', ' + region : name;
+  document.getElementById('fa-city-input').value = label;
+  document.getElementById('fa-city-clear').classList.add('visible');
+  closeCityDropdown();
+}
+
+function clearCity() {
+  _cityKey = '';
+  document.getElementById('fa-city-input').value = '';
+  document.getElementById('fa-city-clear').classList.remove('visible');
+  closeCityDropdown();
 }
 
 async function generateDescription() {
@@ -468,14 +499,12 @@ async function generateDescription() {
   const hint = document.getElementById('fa-ai-hint');
   if (!campaignName) { hint.style.display = ''; return; }
   hint.style.display = 'none';
-
   const btn = document.getElementById('fa-ai-btn');
   const spinner = document.getElementById('fa-ai-spinner');
   const icon = document.getElementById('fa-ai-icon');
   btn.disabled = true;
   spinner.classList.add('active');
   icon.style.display = 'none';
-
   try {
     const tok = getToken();
     const r = await fetch(API_BASE + '/facebook/ad-description', {
@@ -484,12 +513,8 @@ async function generateDescription() {
       body: JSON.stringify({ titulo: campaignName })
     });
     const d = await r.json();
-    if (d.text) {
-      document.getElementById('fa-ad-text').value = d.text;
-      updateCharCount();
-    }
+    if (d.text) { document.getElementById('fa-ad-text').value = d.text; updateCharCount(); }
   } catch(e) { /* silencioso */ }
-
   btn.disabled = false;
   spinner.classList.remove('active');
   icon.style.display = '';
@@ -499,51 +524,31 @@ async function checkConnection() {
   const tok = getToken();
   if (!tok) return;
   try {
-    const r = await fetch(API_BASE + '/facebook/connection', {
-      headers: { Authorization: 'Bearer ' + tok }
-    });
+    const r = await fetch(API_BASE + '/facebook/connection', { headers: { Authorization: 'Bearer ' + tok } });
     const d = await r.json();
-
-    if (!d.connected) {
-      show('fa-not-connected'); hide('fa-no-ads-token'); hide('fa-connected');
-      return;
-    }
-
+    if (!d.connected) { show('fa-not-connected'); hide('fa-no-ads-token'); hide('fa-connected'); return; }
     _pageId = d.page_id || '';
     const userToken = d.user_token || '';
-
-    if (!userToken) {
-      hide('fa-not-connected'); show('fa-no-ads-token'); hide('fa-connected');
-      return;
-    }
-
+    if (!userToken) { hide('fa-not-connected'); show('fa-no-ads-token'); hide('fa-connected'); return; }
     hide('fa-not-connected'); hide('fa-no-ads-token'); show('fa-connected');
-    document.getElementById('fa-page-name').textContent = d.page_name || 'Pagina conectada';
+    document.getElementById('fa-page-name').textContent = d.page_name || 'Página conectada';
     loadAdAccounts();
-  } catch(e) {
-    show('fa-not-connected');
-  }
+  } catch(e) { show('fa-not-connected'); }
 }
 
 async function loadAdAccounts() {
   const tok = getToken();
   show('fa-loading-accounts'); hide('fa-no-accounts'); hide('fa-main-content');
   try {
-    const r = await fetch(API_BASE + '/facebook/ad-accounts', {
-      headers: { Authorization: 'Bearer ' + tok }
-    });
+    const r = await fetch(API_BASE + '/facebook/ad-accounts', { headers: { Authorization: 'Bearer ' + tok } });
     const d = await r.json();
     hide('fa-loading-accounts');
     const accounts = d.accounts || [];
     if (!accounts.length) { show('fa-no-accounts'); return; }
     const select = document.getElementById('fa-account-select');
-    select.innerHTML = accounts.map(a =>
-      `<option value="${a.id}">${a.name} (${a.id})</option>`
-    ).join('');
+    select.innerHTML = accounts.map(a => `<option value="${a.id}">${a.name} (${a.id})</option>`).join('');
     show('fa-main-content');
-  } catch(e) {
-    hide('fa-loading-accounts'); show('fa-no-accounts');
-  }
+  } catch(e) { hide('fa-loading-accounts'); show('fa-no-accounts'); }
 }
 
 async function createAd() {
@@ -559,9 +564,9 @@ async function createAd() {
   const country = document.getElementById('fa-country').value || 'MX';
   const accountId = document.getElementById('fa-account-select').value;
 
-  if (!campaignName) { alert('Escribe un nombre para la campana.'); return; }
+  if (!campaignName) { alert('Escribe un nombre para la campaña.'); return; }
   if (!adText) { alert('Escribe el texto del anuncio.'); return; }
-  if (!headline) { alert('Escribe el titulo del anuncio.'); return; }
+  if (!headline) { alert('Escribe el título del anuncio.'); return; }
 
   const btn = document.getElementById('fa-submit-btn');
   const spinner = document.getElementById('fa-btn-spinner');
@@ -570,7 +575,7 @@ async function createAd() {
 
   btn.disabled = true;
   spinner.classList.add('active');
-  btnText.textContent = 'Creando campana…';
+  btnText.textContent = 'Creando campaña…';
   resultEl.classList.remove('visible');
 
   try {
@@ -590,34 +595,36 @@ async function createAd() {
         age_min: ageMin,
         age_max: ageMax,
         country: country,
+        city: _cityKey,
         page_id: _pageId,
       })
     });
     const d = await r.json();
     resultEl.classList.add('visible');
-
     if (d.ok) {
       document.getElementById('fa-result-dot').className = 'fa-result-dot ok';
-      document.getElementById('fa-result-title').textContent = 'Campana creada en pausa';
+      document.getElementById('fa-result-title').textContent = 'Campaña creada — está en pausa';
       document.getElementById('fa-result-body').innerHTML =
-        'La campana <strong>' + campaignName + '</strong> fue creada correctamente. Esta en pausa — revisa los detalles en el Administrador de Anuncios y activala cuando estes listo.';
+        'La campaña <strong>' + campaignName + '</strong> fue creada correctamente en Facebook. ' +
+        'Está en <strong>pausa</strong> hasta que la actives. Te recomendamos revisarla antes de activarla: ' +
+        'verifica el texto, la imagen y el presupuesto. Puedes activarla desde la pestaña "Mis campañas" o directamente en el Administrador de Anuncios de Meta.';
       document.getElementById('fa-result-link').style.display = 'inline-flex';
     } else {
       document.getElementById('fa-result-dot').className = 'fa-result-dot err';
-      document.getElementById('fa-result-title').textContent = 'Error al crear la campana';
-      document.getElementById('fa-result-body').textContent = d.detail || d.error || 'Ocurrio un error inesperado.';
+      document.getElementById('fa-result-title').textContent = 'Error al crear la campaña';
+      document.getElementById('fa-result-body').textContent = d.detail || d.error || 'Ocurrió un error inesperado.';
       document.getElementById('fa-result-link').style.display = 'none';
     }
   } catch(e) {
     resultEl.classList.add('visible');
     document.getElementById('fa-result-dot').className = 'fa-result-dot err';
-    document.getElementById('fa-result-title').textContent = 'Error de conexion';
+    document.getElementById('fa-result-title').textContent = 'Error de conexión';
     document.getElementById('fa-result-body').textContent = 'No se pudo conectar con el servidor. Intenta de nuevo.';
     document.getElementById('fa-result-link').style.display = 'none';
   } finally {
     btn.disabled = false;
     spinner.classList.remove('active');
-    btnText.textContent = 'Crear campana en Facebook';
+    btnText.textContent = 'Crear campaña en Facebook';
   }
 }
 
@@ -625,24 +632,17 @@ async function loadCampaigns() {
   const tok = getToken();
   const accountId = document.getElementById('fa-account-select').value;
   if (!accountId) return;
-
   const listEl = document.getElementById('fa-camps-list');
   show('fa-loading-camps');
   listEl.innerHTML = '';
-
   try {
     const r = await fetch(API_BASE + '/facebook/campaigns?account_id=' + encodeURIComponent(accountId), {
       headers: { Authorization: 'Bearer ' + tok }
     });
     const d = await r.json();
     hide('fa-loading-camps');
-
     const camps = d.campaigns || [];
-    if (!camps.length) {
-      listEl.innerHTML = '<div class="fa-camp-empty">No hay campanas en esta cuenta todavia.</div>';
-      return;
-    }
-
+    if (!camps.length) { listEl.innerHTML = '<div class="fa-camp-empty">No hay campañas en esta cuenta todavía.</div>'; return; }
     listEl.innerHTML = camps.map(c => {
       const isActive = c.status === 'ACTIVE';
       const dateStr = c.created_time
@@ -663,29 +663,17 @@ async function loadCampaigns() {
           </button>
         </div>
         <div class="fa-camp-stats">
-          <div class="fa-stat">
-            <span class="fa-stat-val">${parseInt(c.impressions||0).toLocaleString('es-MX')}</span>
-            <span class="fa-stat-lbl">Impresiones</span>
-          </div>
-          <div class="fa-stat">
-            <span class="fa-stat-val">${parseInt(c.reach||0).toLocaleString('es-MX')}</span>
-            <span class="fa-stat-lbl">Alcance</span>
-          </div>
-          <div class="fa-stat">
-            <span class="fa-stat-val">${parseInt(c.engagement||0).toLocaleString('es-MX')}</span>
-            <span class="fa-stat-lbl">Interacciones</span>
-          </div>
-          <div class="fa-stat">
-            <span class="fa-stat-val">$${parseFloat(c.spend||0).toFixed(0)}</span>
-            <span class="fa-stat-lbl">Gastado MXN</span>
-          </div>
+          <div class="fa-stat"><span class="fa-stat-val">${parseInt(c.impressions||0).toLocaleString('es-MX')}</span><span class="fa-stat-lbl">Impresiones</span></div>
+          <div class="fa-stat"><span class="fa-stat-val">${parseInt(c.reach||0).toLocaleString('es-MX')}</span><span class="fa-stat-lbl">Alcance</span></div>
+          <div class="fa-stat"><span class="fa-stat-val">${parseInt(c.engagement||0).toLocaleString('es-MX')}</span><span class="fa-stat-lbl">Interacciones</span></div>
+          <div class="fa-stat"><span class="fa-stat-val">$${parseFloat(c.spend||0).toFixed(0)}</span><span class="fa-stat-lbl">Gastado MXN</span></div>
         </div>
-        <div class="fa-camp-note">Estadisticas de los ultimos 7 dias.</div>
+        <div class="fa-camp-note">Estadísticas de los últimos 7 días.</div>
       </div>`;
     }).join('');
   } catch(e) {
     hide('fa-loading-camps');
-    listEl.innerHTML = '<div class="fa-camp-empty">Error al cargar campanas. Intenta de nuevo.</div>';
+    listEl.innerHTML = '<div class="fa-camp-empty">Error al cargar campañas. Intenta de nuevo.</div>';
   }
 }
 
@@ -701,18 +689,9 @@ async function toggleCampaign(campaignId, newStatus, btn) {
       body: JSON.stringify({ campaign_id: campaignId, status: newStatus })
     });
     const d = await r.json();
-    if (d.ok) {
-      loadCampaigns();
-    } else {
-      btn.textContent = prev;
-      btn.disabled = false;
-      alert(d.detail || 'Error al actualizar la campana.');
-    }
-  } catch(e) {
-    btn.textContent = prev;
-    btn.disabled = false;
-    alert('Error de conexion. Intenta de nuevo.');
-  }
+    if (d.ok) { loadCampaigns(); }
+    else { btn.textContent = prev; btn.disabled = false; alert(d.detail || 'Error al actualizar la campaña.'); }
+  } catch(e) { btn.textContent = prev; btn.disabled = false; alert('Error de conexión. Intenta de nuevo.'); }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
