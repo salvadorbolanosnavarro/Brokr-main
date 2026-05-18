@@ -1171,11 +1171,16 @@ async function iniciarImportEB() {
   bar.style.width = '10%';
 
   try {
-    const tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
-    if (!tok) throw new Error('Sesión no válida. Recarga la página e intenta de nuevo.');
+    let tok;
+    if (window.brokrSb && window.brokrSb.ensureToken) {
+      tok = await window.brokrSb.ensureToken();
+    } else {
+      tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+    }
+    if (!tok) throw new Error('Tu sesión expiró. Vuelve a iniciar sesión.');
     const resp = await fetch(window.API_BASE + '/contactos/importar-eb', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok }
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok }
     });
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}));
