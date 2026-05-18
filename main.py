@@ -4518,7 +4518,8 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
     # Targeting
     if req.city:
         geo_locations = {
-            "cities": [{"key": req.city, "radius": 25, "distance_unit": "kilometer"}]
+            "countries": [req.country or "MX"],
+            "cities": [{"key": req.city, "radius": 25, "distance_unit": "kilometer"}],
         }
     else:
         geo_locations = {"countries": [req.country or "MX"]}
