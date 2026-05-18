@@ -272,50 +272,12 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
         <div class="fa-card" style="margin-bottom:28px">
           <div class="fa-card-sub">El anuncio busca maximizar la interacción: likes, comentarios y compartidos. Esto genera alcance orgánico adicional porque Facebook muestra tu anuncio a amigos de quienes interactúan con él. Define aquí a qué grupo de personas quieres llegar.</div>
 
-          <div class="fa-field">
+          <div class="fa-field" style="position:relative">
             <label>Ciudad <span style="font-weight:400;color:var(--mute)">(opcional)</span></label>
-            <select id="fa-city-select" autocomplete="off">
-              <option value="">Todo el país</option>
-              <optgroup label="Centro">
-                <option value="2673">Ciudad de México</option>
-                <option value="2648">Guadalajara</option>
-                <option value="2688">Monterrey</option>
-                <option value="2671">Puebla</option>
-                <option value="2701">Querétaro</option>
-                <option value="2691">Morelia</option>
-                <option value="2700">Toluca</option>
-                <option value="2659">León</option>
-                <option value="2660">San Luis Potosí</option>
-                <option value="2698">Aguascalientes</option>
-              </optgroup>
-              <optgroup label="Norte">
-                <option value="2643">Tijuana</option>
-                <option value="2645">Chihuahua</option>
-                <option value="2651">Ciudad Juárez</option>
-                <option value="2662">Torreón</option>
-                <option value="2695">Culiacán</option>
-                <option value="2663">Saltillo</option>
-                <option value="2668">Hermosillo</option>
-                <option value="2699">Mexicali</option>
-                <option value="2706">Mazatlán</option>
-              </optgroup>
-              <optgroup label="Sur y Sureste">
-                <option value="2676">Mérida</option>
-                <option value="2689">Oaxaca</option>
-                <option value="2697">Cancún</option>
-                <option value="2646">Acapulco</option>
-                <option value="2675">Veracruz</option>
-                <option value="2682">Tuxtla Gutiérrez</option>
-                <option value="2644">Villahermosa</option>
-              </optgroup>
-              <optgroup label="Occidente y Bajío">
-                <option value="2687">Zapopan</option>
-                <option value="2692">Irapuato</option>
-                <option value="2669">Celaya</option>
-                <option value="2664">Uruapan</option>
-              </optgroup>
-            </select>
-            <div class="fa-hint">Elige una ciudad para dirigir el anuncio solo a esa zona. Deja "Todo el país" para alcance nacional.</div>
+            <input type="text" id="fa-city-input" autocomplete="off" placeholder="Escribe una ciudad, ej. Morelia…" oninput="filterCities(this.value)" onfocus="filterCities(this.value)"/>
+            <input type="hidden" id="fa-city-key" value=""/>
+            <div id="fa-city-drop" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--paper);border:1px solid var(--line-2);border-radius:var(--r);box-shadow:0 4px 16px rgba(10,10,10,.12);z-index:100;max-height:200px;overflow-y:auto;margin-top:2px"></div>
+            <div class="fa-hint">Escribe para buscar. Deja vacío para mostrar el anuncio en todo el país.</div>
           </div>
 
           <div class="fa-grid-2">
@@ -561,7 +523,7 @@ async function createAd() {
         age_min: ageMin,
         age_max: ageMax,
         country: country,
-        city: document.getElementById('fa-city-select').value,
+        city: document.getElementById('fa-city-key').value,
         page_id: _pageId,
       })
     });
@@ -659,6 +621,56 @@ async function toggleCampaign(campaignId, newStatus, btn) {
     else { btn.textContent = prev; btn.disabled = false; alert(d.detail || 'Error al actualizar la campaña.'); }
   } catch(e) { btn.textContent = prev; btn.disabled = false; alert('Error de conexión. Intenta de nuevo.'); }
 }
+
+
+const _CITIES = [
+  {k:'2673',n:'Ciudad de México'},{k:'2648',n:'Guadalajara'},{k:'2688',n:'Monterrey'},
+  {k:'2671',n:'Puebla'},{k:'2701',n:'Querétaro'},{k:'2691',n:'Morelia'},
+  {k:'2700',n:'Toluca'},{k:'2659',n:'León'},{k:'2660',n:'San Luis Potosí'},
+  {k:'2698',n:'Aguascalientes'},{k:'2643',n:'Tijuana'},{k:'2645',n:'Chihuahua'},
+  {k:'2651',n:'Ciudad Juárez'},{k:'2662',n:'Torreón'},{k:'2695',n:'Culiacán'},
+  {k:'2663',n:'Saltillo'},{k:'2668',n:'Hermosillo'},{k:'2699',n:'Mexicali'},
+  {k:'2706',n:'Mazatlán'},{k:'2676',n:'Mérida'},{k:'2689',n:'Oaxaca'},
+  {k:'2697',n:'Cancún'},{k:'2646',n:'Acapulco'},{k:'2675',n:'Veracruz'},
+  {k:'2682',n:'Tuxtla Gutiérrez'},{k:'2644',n:'Villahermosa'},{k:'2687',n:'Zapopan'},
+  {k:'2692',n:'Irapuato'},{k:'2669',n:'Celaya'},{k:'2664',n:'Uruapan'},
+  {k:'2704',n:'Zamora'},{k:'2656',n:'Tepic'},{k:'2650',n:'Culiacán'},
+  {k:'2703',n:'Xalapa'},{k:'2653',n:'Coatzacoalcos'},{k:'2705',n:'Zacatecas'},
+  {k:'2667',n:'Durango'},{k:'2686',n:'Reynosa'},{k:'2680',n:'Nuevo Laredo'},
+  {k:'2666',n:'Matamoros'},{k:'2672',n:'Tampico'},{k:'2647',n:'La Paz'},
+  {k:'2655',n:'Los Cabos'},{k:'2658',n:'Colima'},{k:'2649',n:'Manzanillo'},
+  {k:'2693',n:'Tlaquepaque'},{k:'2694',n:'Tonalá'},{k:'2661',n:'Silao'},
+  {k:'2674',n:'Pachuca'},{k:'2681',n:'Tlaxcala'},{k:'2684',n:'Cuernavaca'},
+  {k:'2685',n:'Chilpancingo'},{k:'2690',n:'San Cristóbal de las Casas'},
+  {k:'2696',n:'Campeche'},{k:'2678',n:'Chetumal'},{k:'2679',n:'Playa del Carmen'},
+  {k:'2677',n:'Cancún'},{k:'2683',n:'Tapachula'}
+];
+
+function filterCities(q) {
+  const drop = document.getElementById('fa-city-drop');
+  const norm = q.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  if (!norm) { drop.style.display='none'; document.getElementById('fa-city-key').value=''; return; }
+  const matches = _CITIES.filter(c =>
+    c.n.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').includes(norm)
+  ).slice(0,8);
+  if (!matches.length) { drop.style.display='none'; return; }
+  drop.innerHTML = matches.map(c =>
+    `<div onclick="pickCity('${c.k}','${c.n.replace(/'/g,"\\'")}")" style="padding:9px 12px;cursor:pointer;font-size:13px;color:var(--ink);border-bottom:1px solid var(--line)" onmouseover="this.style.background='var(--bone)'" onmouseout="this.style.background=''">${c.n}</div>`
+  ).join('');
+  drop.style.display='block';
+}
+
+function pickCity(key, name) {
+  document.getElementById('fa-city-input').value = name;
+  document.getElementById('fa-city-key').value = key;
+  document.getElementById('fa-city-drop').style.display='none';
+}
+
+document.addEventListener('click', function(e) {
+  const drop = document.getElementById('fa-city-drop');
+  const inp = document.getElementById('fa-city-input');
+  if (drop && inp && !drop.contains(e.target) && e.target !== inp) drop.style.display='none';
+});
 
 document.addEventListener('DOMContentLoaded', () => {
   updateEstimate();
