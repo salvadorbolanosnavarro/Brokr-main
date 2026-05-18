@@ -589,13 +589,13 @@
       </div>
       <div class="f">
         <label>Ciudad</label>
-        <input type="text" id="d-ciudad" placeholder="Morelia" value="Morelia"/>
+        <input type="text" id="d-ciudad" placeholder="Ciudad de México" value="Morelia"/>
       </div>
     </div>
     <div class="frow single">
       <div class="f">
         <label>Dirección</label>
-        <input type="text" id="d-dir" placeholder="Av. Madero 123"/>
+        <input type="text" id="d-dir" placeholder="Av. Insurgentes 123"/>
       </div>
     </div>
   </div>
@@ -813,8 +813,8 @@ async function generarDescripcion(){
 
   const textoUsuario = desc.value.trim();
   const prompt = textoUsuario
-    ? 'Eres un agente inmobiliario experto en Morelia, Michoacán. El usuario ha redactado la siguiente descripción para una propiedad. Mejórala: hazla más atractiva, profesional y fluida, conservando fielmente las ideas y detalles que el usuario mencionó. Máximo 180 palabras. Sin emojis. Sin mencionar precio.\n\nDatos de la propiedad:\n' + lineas + '\n\nTexto original del usuario:\n' + textoUsuario + '\n\nRedacta solo la descripción mejorada:'
-    : 'Eres un agente inmobiliario experto en Morelia, Michoacán. Redacta una descripción comercial atractiva y profesional para esta propiedad. Máximo 180 palabras. Sin emojis. Sin mencionar precio.\n\nDatos:\n' + lineas + '\n\nRedacta solo la descripción:';
+    ? 'Eres un agente inmobiliario experto en México. El usuario ha redactado la siguiente descripción para una propiedad. Mejórala: hazla más atractiva, profesional y fluida, conservando fielmente las ideas y detalles que el usuario mencionó. Máximo 180 palabras. Sin emojis. Sin mencionar precio.\n\nDatos de la propiedad:\n' + lineas + '\n\nTexto original del usuario:\n' + textoUsuario + '\n\nRedacta solo la descripción mejorada:'
+    : 'Eres un agente inmobiliario experto en México. Redacta una descripción comercial atractiva y profesional para esta propiedad. Máximo 180 palabras. Sin emojis. Sin mencionar precio.\n\nDatos:\n' + lineas + '\n\nRedacta solo la descripción:';
 
   try{
     const r = await fetch(API + '/chat', {
