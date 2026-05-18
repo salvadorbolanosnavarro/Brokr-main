@@ -259,21 +259,9 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 
   <!-- Nav --> 
 
-  <!-- Selector de modo -->
-  <div class="modo-selector">
-    <button class="modo-btn active" id="modo-brokr" onclick="setModo('brokr')">
-      <div class="modo-btn-ico"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg></div>
-      <span class="modo-btn-lbl">Contratos Broquer</span>
-      <span class="modo-btn-sub">Arrendamiento · Promesa de compraventa</span>
-    </button>
-    <button class="modo-btn" id="modo-machote" onclick="setModo('machote')">
-      <div class="modo-btn-ico"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 00-1.883 2.542l.857 6a2.25 2.25 0 002.227 1.932H19.05a2.25 2.25 0 002.227-1.932l.857-6a2.25 2.25 0 00-1.883-2.542m-16.5 0V6A2.25 2.25 0 016 3.75h3.879a1.5 1.5 0 011.06.44l2.122 2.12a1.5 1.5 0 001.06.44H18A2.25 2.25 0 0120.25 9v.776"/></svg></div>
-      <span class="modo-btn-lbl">Mi propio machote</span>
-      <span class="modo-btn-sub">Sube tu plantilla y Broquer la automatiza</span>
-    </button>
-  </div>
 
-  <!-- ══ MODO BROKR ══ -->
+
+  <!-- ══ MODO Broquer ══ -->
   <div id="brokr-section">
 
   <!-- Tipo selector -->
@@ -316,11 +304,11 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
         </div>
         <div class="f">
           <label>Inicio escrito <span class="auto-badge">automático</span></label>
-          <input type="text" id="a-inicio-escrito" readonly style="background:var(--navy3);color:var(--teal2)" placeholder="Se genera del picker"/>
+          <input type="text" id="a-inicio-escrito" readonly style="background:var(--navy3);color:var(--teal2)" placeholder="Se genera automáticamente"/>
         </div>
         <div class="f">
           <label>Término escrito <span class="auto-badge">automático</span></label>
-          <input type="text" id="a-fin-escrito" readonly style="background:var(--navy3);color:var(--teal2)" placeholder="Se genera del picker"/>
+          <input type="text" id="a-fin-escrito" readonly style="background:var(--navy3);color:var(--teal2)" placeholder="Se genera automáticamente"/>
         </div>
       </div>
     </div>
@@ -938,7 +926,7 @@ let modoActual = 'brokr'; // 'brokr' | 'machote'
 function setModo(modo) {
   modoActual = modo;
   document.getElementById('modo-brokr').classList.toggle('active', modo === 'brokr');
-  document.getElementById('modo-machote').classList.toggle('active', modo === 'machote');
+  // modo machote deshabilitado temporalmente
   document.getElementById('brokr-section').style.display = modo === 'brokr' ? '' : 'none';
   document.getElementById('machote-section').style.display = modo === 'machote' ? '' : 'none';
 }
@@ -1541,11 +1529,17 @@ function onFechaInicioChange(){
   const inicio = document.getElementById('a-inicio')?.value;
   const preview = document.getElementById('a-fecha-preview');
   if(preview) preview.textContent = inicio ? fechaEscrita(inicio) : '';
+  // Llenar campo "Inicio escrito" automáticamente
+  const inicioEscrito = document.getElementById('a-inicio-escrito');
+  if(inicioEscrito) inicioEscrito.value = inicio ? fechaEscrita(inicio) : '';
   // Recalculate duration if end date exists
   const fin = document.getElementById('a-fin')?.value;
   if(fin){
     const dur = document.getElementById('a-duracion');
     if(dur && !dur.dataset.manual) dur.value = calcularPlazo(inicio, fin);
+    // Llenar campo "Término escrito" automáticamente
+    const finEscrito = document.getElementById('a-fin-escrito');
+    if(finEscrito) finEscrito.value = fechaEscrita(fin);
   }
   validarFechas();
 }
@@ -1562,6 +1556,11 @@ function validarFechas(){
     errEl.style.display = 'none';
     const dur = document.getElementById('a-duracion');
     if(dur && !dur.dataset.manual) dur.value = calcularPlazo(inicio, fin);
+    // Llenar campos escritos automáticamente
+    const inicioEscrito = document.getElementById('a-inicio-escrito');
+    const finEscrito = document.getElementById('a-fin-escrito');
+    if(inicioEscrito) inicioEscrito.value = fechaEscrita(inicio);
+    if(finEscrito) finEscrito.value = fechaEscrita(fin);
   }
 }
 

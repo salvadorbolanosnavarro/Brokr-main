@@ -8,7 +8,7 @@
         … contenido del módulo …
      <script src="app-shell.js" defer></script>
    Claves válidas: home, props, contactos, contratos, avm, valor, ficha,
-                   ficha-manual, isr, image-cleaner, verificador, admin
+                   ficha-manual, isr, image-cleaner, facebook-ads, guia, admin
    ════════════════════════════════════════════════════════════════════ */
 (function () {
   if (window.__brokrShellLoaded) return;
@@ -34,8 +34,8 @@
     { key:'ficha-manual', href:'ficha-manual.html',  label:'Ficha técnica',   group:'main', icon:'landscape' },
     { key:'isr',          href:'isr.html',           label:'ISR',             group:'main', icon:'calculator' },
     { key:'image-cleaner',href:'image-cleaner.html', label:'Editor imágenes', group:'main', icon:'image' },
-    { key:'verificador',  href:'verificador.html',   label:'Verificador',     group:'main', icon:'shield' },
-    { key:'facebook-ads', href:'facebook-ads.html',  label:'Meta Ads Express', group:'main', icon:'facebook' },
+    { key:'facebook-ads', href:'facebook-ads.html',  label:'Facebook Ads', group:'main', icon:'facebook' },
+    { key:'guia',         href:'guia-agente.html',   label:'Guía del agente', group:'main', icon:'question' },
     { key:'admin',        href:'admin.html',         label:'Admin',           group:'main', icon:'cog', adminOnly:true },
   ];
 
@@ -50,9 +50,8 @@
     'ficha-manual': 'Ficha Técnica Manual — crear ficha sin EasyBroker',
     'isr':          'Calculadora ISR por enajenación de inmuebles',
     'image-cleaner':'Editor de imágenes — limpieza con IA',
-    'verificador':  'Verificador de inmuebles',
     'admin':        'Panel administrativo',
-    'facebook-ads': 'Meta Ads Express — crear, activar y medir anuncios de Facebook',
+    'facebook-ads': 'Meta Ads Express — crear, activar y medir anuncios de Facebook e Instagram',
   };
 
   /* ── Iconos (heroicons outline 1.6) ── */
@@ -716,10 +715,7 @@
 
         <div class="bk-topbar">
           <div class="bk-topbar__quote" id="bk-topbar-quote"></div>
-          <div class="bk-topbar__actions">
-            <button class="bk-icon-btn" id="bk-search-toggle" aria-label="Buscar" type="button">${svg('search', 18, 2)}</button>
-            <button class="bk-icon-btn" id="bk-notif-btn" aria-label="Notificaciones" type="button" onclick="toggleNotifPanel()">${svg('bell')}<span class="dot" id="bk-notif-dot"></span></button>
-          </div>
+          <div class="bk-topbar__actions"></div>
           <div class="bk-topbar__search-expand" id="bk-search-expand">
             <div class="bk-topbar__search-expand-inner">
               ${svg('search', 18, 2)}
@@ -815,13 +811,11 @@
           <div class="bk-shk-name">Broquer</div>
           <div class="bk-shk-status">En línea</div>
         </div>
-        <button class="bk-shk-wake" id="bk-shk-wake" type="button" title='Activar "Oye Broquer"'>${svg('mic', 12, 2.2)} Oye Broquer</button>
         <button class="bk-shk-close" type="button" aria-label="Cerrar">${svg('close', 14, 2)}</button>
       </div>
       <div class="bk-shk-msgs" id="bk-shk-msgs">
-        <div class="bk-shk-bubble bot">¡Hola! Soy Broquer, tu asistente inteligente. ¿Qué puedo hacer por ti?</div>
+        <div class="bk-shk-bubble bot" id="bk-welcome-msg">¡Hola! Soy Broquer, tu asistente inteligente. ¿Qué puedo hacer por ti?</div>
       </div>
-      <div class="bk-shk-chips" id="bk-shk-chips"></div>
       <div class="bk-shk-input-row">
         <button class="bk-shk-mic" id="bk-shk-mic" type="button" aria-label="Hablar">${svg('mic', 16, 1.8)}</button>
         <input class="bk-shk-input" id="bk-shk-input" type="text" placeholder="Pregunta lo que necesites…"/>
@@ -837,7 +831,6 @@
       if (e.key === 'Enter') { shaarkFabSend(); }
     });
     document.getElementById('bk-shk-mic').addEventListener('click', toggleScwVoice);
-    document.getElementById('bk-shk-wake').addEventListener('click', toggleWakeWord);
   }
 
   /* ════════════════════════════════════════════════════════════════
@@ -864,7 +857,7 @@
 
   function refreshShaarkChips() {
     const el = document.getElementById('bk-shk-chips');
-    if (!el) return;
+    if (!el) return; // chips eliminados
     const chips = SHAARK_CHIPS_MAP[activeKey] || SHAARK_CHIPS_MAP.home;
     el.innerHTML = chips.map(c => `<button class="bk-shk-chip" type="button" data-msg="${c.m.replace(/"/g, '&quot;')}">${c.l}</button>`).join('');
     el.querySelectorAll('.bk-shk-chip').forEach(b => b.addEventListener('click', () => shaarkChip(b.dataset.msg)));
@@ -888,7 +881,6 @@
     if (!text) return;
     addBubble(text, 'user');
     input.value = '';
-    document.getElementById('bk-shk-chips').style.display = 'none';
     shaarkMsgs.push({ role: 'user', content: text });
     shaarkFabFetch(text);
   }
@@ -896,7 +888,6 @@
 
   function shaarkChip(text) {
     addBubble(text, 'user');
-    document.getElementById('bk-shk-chips').style.display = 'none';
     shaarkMsgs.push({ role: 'user', content: text });
     shaarkFabFetch(text);
   }
@@ -984,6 +975,16 @@
     } catch (e) { _micGranted = false; localStorage.removeItem('mic_granted'); return false; }
   }
 
+  function _normalizarVoz(t) {
+    if (!t) return t;
+    // Corregir transcripciones de voz comunes
+    t = t.replace(/\bbroker\b/gi, 'Broquer');
+    t = t.replace(/\bbroquer\b/gi, 'Broquer');
+    t = t.replace(/\bshaark\b/gi, 'Broquer');
+    t = t.replace(/\bshark\b/gi, 'Broquer');
+    return t;
+  }
+
   function _addPunctuation(t) {
     if (!t) return t;
     if (/[.?!;,]$/.test(t)) return t;
@@ -1031,7 +1032,7 @@
         if (e.results[k].isFinal) f += e.results[k][0].transcript;
         else i += e.results[k][0].transcript;
       }
-      const raw = (f || i).trim();
+      const raw = _normalizarVoz((f || i).trim());
       if (inp) inp.value = f ? _addPunctuation(raw) : raw;
     };
     scwRec.onerror = ev => {
@@ -1070,7 +1071,7 @@
   let _wakeRec = null, _wakeActive = false, _wakePaused = false, _wakeRestartT = null;
   let _wakeEnabled = localStorage.getItem('shaark_wake') === '1';
   let _wakeSuppressUntil = 0;
-  const WAKE = ['oye shaark','oye shark','shaark','oie shaark','hey shaark','hey shark'];
+  const WAKE = ['oye broquer','oye broker','broquer','broker','oye shaark','oye shark','shaark','oie shaark','hey shaark','hey shark'];
 
   function toggleWakeWord() {
     if (_wakeEnabled) {
@@ -1937,6 +1938,13 @@
 
     // Notify module that shell is ready (so modules can run code that depends
     // on the .bk-page wrapper or the avatar, e.g. read sessionStorage payloads).
+    // Personalizar saludo con nombre del usuario
+    const _welcomeMsg = document.getElementById('bk-welcome-msg');
+    if (_welcomeMsg && profile?.fullName) {
+      const _firstName = profile.fullName.trim().split(' ')[0];
+      _welcomeMsg.textContent = `¡Hola, ${_firstName}! Soy Broquer, tu asistente inteligente. ¿En qué te ayudo?`;
+    }
+
     window.dispatchEvent(new CustomEvent('brokr-shell-ready', { detail: { profile, activeKey } }));
   }
 

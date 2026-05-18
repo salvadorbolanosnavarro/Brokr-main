@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Broquer — Guía del Agente</title>
+<link rel="manifest" href="manifest.json"/>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="apple-touch-icon" href="isotipo-black.png"/>
+<meta name="theme-color" content="#F7F5EE"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+.guide-wrap { padding: 32px 40px 80px; max-width: 840px; }
+@media (max-width:720px){ .guide-wrap{ padding:20px 16px 80px; } }
+
+.guide-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--mute); margin-bottom: 10px;
+}
+.guide-title {
+  font-family: var(--font-display);
+  font-size: 28px; font-weight: 700; letter-spacing: -0.03em;
+  color: var(--ink); margin-bottom: 8px;
+}
+.guide-sub {
+  font-size: 14px; color: var(--ink-2); line-height: 1.6;
+  max-width: 520px; margin-bottom: 36px;
+}
+
+.guide-section { margin-bottom: 40px; }
+.guide-section-label {
+  font-family: var(--font-mono);
+  font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--mute-2); margin-bottom: 14px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--line-2);
+}
+
+/* Grid de módulos */
+.guide-modules {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr));
+  gap: 10px;
+}
+.guide-mod {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 16px; background: var(--bone);
+  border: 1.5px solid var(--line-2); border-radius: var(--r);
+  text-decoration: none; color: inherit;
+  transition: border-color .15s, background .15s;
+}
+.guide-mod:hover { border-color: var(--forest); background: var(--paper); }
+.guide-mod-icon {
+  width: 34px; height: 34px; flex-shrink: 0;
+  background: var(--paper); border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--forest);
+}
+.guide-mod-name { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 3px; }
+.guide-mod-desc { font-size: 12px; color: var(--mute); line-height: 1.4; }
+
+/* Acordeón de pasos */
+.guide-steps { display: flex; flex-direction: column; gap: 8px; }
+.guide-step {
+  border: 1.5px solid var(--line-2); border-radius: var(--r);
+  background: var(--bone); overflow: hidden;
+}
+.guide-step-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 18px; cursor: pointer;
+  transition: background .15s;
+}
+.guide-step-head:hover { background: var(--paper); }
+.guide-step-num {
+  width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+  background: var(--forest); color: var(--paper);
+  font-size: 11px; font-weight: 700; font-family: var(--font-mono);
+  display: flex; align-items: center; justify-content: center;
+}
+.guide-step-lbl { flex: 1; font-size: 13.5px; font-weight: 600; color: var(--ink); }
+.guide-step-arr { color: var(--mute); transition: transform .2s; flex-shrink: 0; }
+.guide-step.open .guide-step-arr { transform: rotate(180deg); }
+.guide-step-body {
+  display: none; padding: 2px 18px 16px 56px;
+  font-size: 13px; color: var(--ink-2); line-height: 1.65;
+}
+.guide-step.open .guide-step-body { display: block; }
+.guide-step-body ol { padding-left: 18px; margin: 0; }
+.guide-step-body li { margin-bottom: 5px; }
+.guide-step-body code {
+  background: var(--line-2); padding: 2px 6px;
+  border-radius: 4px; font-family: var(--font-mono); font-size: 11.5px;
+  color: var(--forest);
+}
+.guide-tip {
+  background: #EEF4F0; border-left: 3px solid var(--forest);
+  padding: 9px 13px; border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  margin-top: 10px; font-size: 12.5px; color: var(--ink-2);
+}
+
+/* FAQ sin número */
+.guide-faq .guide-step-num { background: var(--line-2); color: var(--mute); font-size: 14px; font-weight: 600; }
+
+/* Contacto */
+.guide-contact {
+  background: var(--ink); color: var(--paper);
+  border-radius: var(--r); padding: 24px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 20px; flex-wrap: wrap;
+}
+.guide-contact h3 {
+  font-family: var(--font-display); font-size: 16px; font-weight: 700;
+  letter-spacing: -0.015em; margin-bottom: 4px;
+}
+.guide-contact p { font-size: 13px; color: rgba(247,245,238,.6); }
+.guide-contact-btn {
+  padding: 9px 20px; background: var(--paper); color: var(--ink);
+  border: none; border-radius: 999px; font-size: 13px; font-weight: 600;
+  font-family: inherit; cursor: pointer; text-decoration: none;
+  white-space: nowrap;
+}
+.guide-contact-btn:hover { opacity: .88; }
+</style>
+</head>
+<body data-app="guia">
+
+<div class="bk-page">
+<div class="guide-wrap">
+
+  <div class="guide-eyebrow">Broquer · Documentación</div>
+  <h1 class="guide-title">Guía del agente</h1>
+  <p class="guide-sub">Todo lo que necesitas para sacar el máximo provecho de Broquer. Desde conectar EasyBroker hasta generar contratos y valuaciones en segundos.</p>
+
+  <!-- Módulos -->
+  <div class="guide-section">
+    <div class="guide-section-label">Módulos de la plataforma</div>
+    <div class="guide-modules">
+      <a href="propiedades.html" class="guide-mod">
+        <div class="guide-mod-icon"><svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.121 0L22.28 12M4.5 9.75v10.125a1.125 1.125 0 001.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125a1.125 1.125 0 001.125-1.125V9.75"/></svg></div>
+        <div><div class="guide-mod-name">Tus Inmuebles</div><div class="guide-mod-desc">Catálogo de propiedades. Importa desde EasyBroker o agrega manualmente.</div></div>
+      </a>
+      <a href="contratos.html" class="guide-mod">
+        <div class="guide-mod-icon"><svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg></div>
+        <div><div class="guide-mod-name">Contratos</div><div class="guide-mod-desc">Arrendamiento y promesa de compraventa en segundos.</div></div>
+      </a>
+      <a href="avm.html" class="guide-mod">
+        <div class="guide-mod-icon"><svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18M16 7.5c0-1.5-1.5-2.5-4-2.5s-4 1-4 2.5S9.5 10 12 10.5s4 1 4 2.5-1.5 3-4 3-4-1-4-2.5"/></svg></div>
+        <div><div class="guide-mod-name">Estimación de valor</div><div class="guide-mod-desc">Valuación automatizada con comparables en tiempo real.</div></div>
+      </a>
+      <a href="isr.html" class="guide-mod">
+        <div class="guide-mod-icon"><svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><rect x="4.5" y="3" width="15" height="18" rx="2.25" ry="2.25" stroke-linejoin="round"/><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 6.75h9v3h-9zM8.25 13.5h.008v.008H8.25V13.5zm0 3h.008v.008H8.25V16.5zm3.75-3h.008v.008H12V13.5zm0 3h.008v.008H12V16.5zm3.75-3h.008v.008h-.008V13.5zm0 3h.008v.008h-.008V16.5z"/></svg></div>
+        <div><div class="guide-mod-name">ISR</div><div class="guide-mod-desc">Calculadora de ISR por enajenación con desglose completo.</div></div>
+      </a>
+      <a href="ficha-manual.html" class="guide-mod">
+        <div class="guide-mod-icon"><svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5z"/></svg></div>
+        <div><div class="guide-mod-name">Ficha técnica</div><div class="guide-mod-desc">PDF profesional desde EasyBroker o manual.</div></div>
+      </a>
+      <a href="facebook-ads.html" class="guide-mod">
+        <div class="guide-mod-icon"><svg width="17" height="17" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.269h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg></div>
+        <div><div class="guide-mod-name">Facebook Ads</div><div class="guide-mod-desc">Crea y gestiona anuncios en Meta desde Broquer.</div></div>
+      </a>
+      <a href="contactos.html" class="guide-mod">
+        <div class="guide-mod-icon"><svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg></div>
+        <div><div class="guide-mod-name">Contactos</div><div class="guide-mod-desc">CRM de prospectos, compradores y arrendatarios.</div></div>
+      </a>
+      <a href="image-cleaner.html" class="guide-mod">
+        <div class="guide-mod-icon"><svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg></div>
+        <div><div class="guide-mod-name">Editor de imágenes</div><div class="guide-mod-desc">Limpia fondos de fotos de propiedades con IA.</div></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Pasos -->
+  <div class="guide-section">
+    <div class="guide-section-label">Primeros pasos</div>
+    <div class="guide-steps">
+
+      <div class="guide-step" onclick="this.classList.toggle('open')">
+        <div class="guide-step-head">
+          <div class="guide-step-num">1</div>
+          <div class="guide-step-lbl">Cómo conectar EasyBroker</div>
+          <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="guide-step-body">
+          <ol>
+            <li>En EasyBroker, haz clic en tu nombre (esquina superior derecha) → <strong>Configuración de cuenta</strong>.</li>
+            <li>En el menú izquierdo, busca <strong>Integraciones</strong> o <strong>API</strong>.</li>
+            <li>Copia tu <strong>API Key personal</strong> (código alfanumérico largo).</li>
+            <li>En Broquer, abre tu perfil haciendo clic en tus iniciales (esquina inferior izquierda del sidebar en desktop, o el avatar en la cabecera en móvil).</li>
+            <li>En la sección <strong>EasyBroker</strong>, pega la API Key y haz clic en <strong>Conectar EasyBroker</strong>.</li>
+            <li>Broquer valida la conexión en segundos.</li>
+          </ol>
+          <div class="guide-tip">Cada agente debe usar su propia API Key personal. No la compartas con colegas — cada quien tiene la suya en EasyBroker.</div>
+        </div>
+      </div>
+
+      <div class="guide-step" onclick="this.classList.toggle('open')">
+        <div class="guide-step-head">
+          <div class="guide-step-num">2</div>
+          <div class="guide-step-lbl">Importar propiedades desde EasyBroker</div>
+          <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="guide-step-body">
+          <ol>
+            <li>Ve a <strong>Tus Inmuebles</strong> en el sidebar.</li>
+            <li>Haz clic en <strong>Importar desde EasyBroker</strong>.</li>
+            <li>Broquer importa automáticamente todas tus propiedades publicadas. Puede tomar algunos segundos según el número de propiedades.</li>
+            <li>Las propiedades aparecen con fotos, descripción y datos completos.</li>
+          </ol>
+          <div class="guide-tip">Solo se importan propiedades con estatus "publicado". Si ya existen en Broquer, no se duplican.</div>
+        </div>
+      </div>
+
+      <div class="guide-step" onclick="this.classList.toggle('open')">
+        <div class="guide-step-head">
+          <div class="guide-step-num">3</div>
+          <div class="guide-step-lbl">Generar un contrato de arrendamiento</div>
+          <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="guide-step-body">
+          <ol>
+            <li>Ve a <strong>Contratos</strong> → selecciona <strong>Arrendamiento</strong>.</li>
+            <li>Ingresa las fechas (inicio y término).</li>
+            <li>Llena los datos del inmueble arrendado.</li>
+            <li>Agrega arrendador (propietario), arrendatario (inquilino) y obligado solidario (aval) si aplica. Puedes seleccionarlos directamente desde tus contactos.</li>
+            <li>Llena renta, depósito y día de pago.</li>
+            <li>Haz clic en <strong>Generar contrato</strong> para descargar el Word listo para firmar.</li>
+          </ol>
+          <div class="guide-tip">También puedes pedirle a Broquer el asistente que llene el formulario por ti con solo describir el contrato en voz o texto.</div>
+        </div>
+      </div>
+
+      <div class="guide-step" onclick="this.classList.toggle('open')">
+        <div class="guide-step-head">
+          <div class="guide-step-num">4</div>
+          <div class="guide-step-lbl">Calcular el ISR de una venta</div>
+          <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="guide-step-body">
+          <ol>
+            <li>Ve a <strong>ISR</strong> en el sidebar.</li>
+            <li>Selecciona el tipo de inmueble: casa habitación, terreno o comercial.</li>
+            <li>Ingresa precio de venta, precio de compra, fechas y deducciones (mejoras, escrituración, comisión).</li>
+            <li>Para casa habitación, indica si el vendedor usó la exención en los últimos 3 años.</li>
+            <li>Haz clic en <strong>Calcular</strong> para ver el resultado y descargarlo en PDF.</li>
+          </ol>
+          <div class="guide-tip">La exención de 700,000 UDIS aplica solo si el vendedor tiene escritura notarial de casa habitación y no la ha usado en los últimos 3 años fiscales.</div>
+        </div>
+      </div>
+
+      <div class="guide-step" onclick="this.classList.toggle('open')">
+        <div class="guide-step-head">
+          <div class="guide-step-num">5</div>
+          <div class="guide-step-lbl">Usar Broquer el asistente (incluye modo voz)</div>
+          <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="guide-step-body">
+          <ol>
+            <li>Abre el asistente con el botón del isotipo (esquina inferior derecha en desktop, barra inferior en móvil).</li>
+            <li>Toca el ícono del micrófono para hablar en lugar de escribir.</li>
+            <li>Dile lo que necesitas: <em>"calcula el ISR de una venta de 3 millones"</em>, <em>"hazme un contrato de renta"</em>, <em>"valúa una casa en Chapultepec"</em>.</li>
+            <li>El asistente te pide los datos que faltan uno a uno, y al final llena el formulario y te lleva al módulo correcto.</li>
+          </ol>
+          <div class="guide-tip">Si vas manejando, usa solo la voz. El asistente entiende cuando dices "broker" o "broquer" y lo escribe siempre como Broquer. También puede asesorarte en temas de derecho inmobiliario, marketing y tecnología.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="guide-section">
+    <div class="guide-section-label">Preguntas frecuentes</div>
+    <div class="guide-steps guide-faq">
+
+      <div class="guide-step" onclick="this.classList.toggle('open')">
+        <div class="guide-step-head">
+          <div class="guide-step-lbl" style="margin-left:0">¿Los contratos que genera Broquer tienen validez legal?</div>
+          <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="guide-step-body" style="padding-left:18px">
+          Sí. Los contratos están redactados conforme al Código Civil Federal y al Código Civil del Estado de Michoacán. Son contratos privados con plena validez legal. Para operaciones que requieran escritura pública, el contrato de Broquer funciona como promesa de compraventa previa a la notaría.
+        </div>
+      </div>
+
+      <div class="guide-step" onclick="this.classList.toggle('open')">
+        <div class="guide-step-head">
+          <div class="guide-step-lbl" style="margin-left:0">¿Broquer reemplaza a EasyBroker?</div>
+          <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="guide-step-body" style="padding-left:18px">
+          No, son complementarios. EasyBroker es tu portal de publicación y CRM de operaciones. Broquer es tu copiloto operativo: calcula ISR, genera contratos, hace valuaciones, limpia fotos y crea fichas técnicas. Se integran a través de la API Key para que no captes datos dos veces.
+        </div>
+      </div>
+
+      <div class="guide-step" onclick="this.classList.toggle('open')">
+        <div class="guide-step-head">
+          <div class="guide-step-lbl" style="margin-left:0">¿Puedo usar Broquer desde mi celular?</div>
+          <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="guide-step-body" style="padding-left:18px">
+          Sí. Broquer es una PWA: funciona en cualquier navegador moderno. En iPhone, desde Safari abre el menú de compartir → "Agregar a la pantalla de inicio". En Android, desde Chrome toca los tres puntos → "Instalar aplicación". Funciona como app nativa.
+        </div>
+      </div>
+
+      <div class="guide-step" onclick="this.classList.toggle('open')">
+        <div class="guide-step-head">
+          <div class="guide-step-lbl" style="margin-left:0">¿Mis datos y los de mis clientes están seguros?</div>
+          <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="guide-step-body" style="padding-left:18px">
+          Broquer usa Supabase con políticas de seguridad por fila (RLS): cada agente solo puede ver y editar sus propios datos. Las contraseñas nunca se almacenan en texto plano. Toda comunicación está cifrada con HTTPS/TLS.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Contacto -->
+  <div class="guide-contact">
+    <div>
+      <h3>¿Necesitas ayuda?</h3>
+      <p>Escríbenos directamente.</p>
+    </div>
+    <a href="mailto:hola@broquer.app" class="guide-contact-btn">Contactar soporte</a>
+  </div>
+
+</div>
+</div>
+
+<script src="app-shell.js" defer></script>
+</body>
+</html>

@@ -193,11 +193,11 @@ async function guardar(){
     console.error('Supabase error:', r.status, errText);
     showMsg(`Error ${r.status}: ${errText}`);
     btn.disabled=false;
-    btn.textContent='Continuar a BROKR®';
+    btn.textContent='Continuar a Broquer®';
     return;
   }
 
-  showMsg('Perfil guardado. Cargando BROKR®…', 'ok');
+  showMsg('Perfil guardado. Cargando Broquer®…', 'ok');
   setTimeout(() => { window.location.href = 'index.html'; }, 800);
 }
 

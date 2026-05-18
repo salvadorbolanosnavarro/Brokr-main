@@ -41,7 +41,7 @@ self.addEventListener('fetch', e => {
 // ── PUSH NOTIFICATIONS ──
 self.addEventListener('push', e => {
   const data = e.data ? e.data.json() : {};
-  e.waitUntil(self.registration.showNotification(data.title || 'Brokr', {
+  e.waitUntil(self.registration.showNotification(data.title || 'Broquer', {
     body: data.body || 'Tu tarea está lista.',
     icon: '/isotipo-black.png',
     badge: '/isotipo-black.png',

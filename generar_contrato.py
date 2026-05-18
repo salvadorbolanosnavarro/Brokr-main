@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Brokr Contract Generator
+Broquer Contract Generator
 Generates DOCX contracts from JSON data
 Usage: python3 generar_contrato.py <tipo> <datos.json> <output.docx>
 """
@@ -77,8 +77,8 @@ def fmt_monto(cantidad_str):
 # Override via env if needed.
 BODY_FONT    = 'Calibri'
 HEADING_FONT = 'Cambria'
-BODY_PT      = 11
-HEADING_PT   = 12
+BODY_PT      = 10.5
+HEADING_PT   = 11
 
 def _apply_font(run, name):
     """Set Latin + East Asian font name so Word respects it across themes."""
@@ -94,14 +94,14 @@ def _apply_font(run, name):
 
 def setup_doc():
     doc = Document()
-    # Page margins — wider, more editorial
+    # Márgenes profesionales para documento legal
     for section in doc.sections:
-        section.top_margin    = Cm(2.8)
-        section.bottom_margin = Cm(2.8)
-        section.left_margin   = Cm(3.2)
-        section.right_margin  = Cm(3.2)
+        section.top_margin    = Cm(3.0)
+        section.bottom_margin = Cm(2.5)
+        section.left_margin   = Cm(3.5)  # margen izquierdo amplio para encuadernación
+        section.right_margin  = Cm(2.5)
 
-    # Default style
+    # Estilo base
     style = doc.styles['Normal']
     style.font.name = BODY_FONT
     style.font.size = Pt(BODY_PT)
@@ -113,8 +113,8 @@ def setup_doc():
     rFonts.set(qn('w:ascii'), BODY_FONT)
     rFonts.set(qn('w:hAnsi'), BODY_FONT)
     rFonts.set(qn('w:cs'), BODY_FONT)
-    style.paragraph_format.space_after = Pt(6)
-    style.paragraph_format.line_spacing = 1.35
+    style.paragraph_format.space_after = Pt(4)
+    style.paragraph_format.line_spacing = Pt(16)  # 16pt = ~1.5 interlineado para 10.5pt
 
     return doc
 
@@ -135,17 +135,19 @@ def p(doc, text, bold=False, align=WD_ALIGN_PARAGRAPH.JUSTIFY,
 def heading(doc, text, level=1):
     para = doc.add_paragraph()
     para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    para.paragraph_format.space_before = Pt(10)
-    para.paragraph_format.space_after  = Pt(8)
+    para.paragraph_format.space_before = Pt(14)
+    para.paragraph_format.space_after  = Pt(10)
     run = para.add_run(text.upper() if level == 1 else text)
     run.bold = True
     _apply_font(run, HEADING_FONT)
-    run.font.size = Pt(HEADING_PT + 2 if level == 1 else HEADING_PT)
+    run.font.size = Pt(HEADING_PT + 1.5 if level == 1 else HEADING_PT)
     if level == 1:
-        # Subtle letter-spacing via character spacing for editorial feel
+        # Color verde oscuro institucional en título principal
+        run.font.color.rgb = RGBColor(0x1F, 0x1C, 0x17)
+        # Espaciado entre caracteres para elegancia
         rPr = run._element.get_or_add_rPr()
         spacing = OxmlElement('w:spacing')
-        spacing.set(qn('w:val'), '40')  # 40 twentieths of a point
+        spacing.set(qn('w:val'), '30')
         rPr.append(spacing)
     return para
 
@@ -153,19 +155,21 @@ def clausula(doc, numero, titulo, texto):
     """Add a clause with title and body"""
     para = doc.add_paragraph()
     para.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-    para.paragraph_format.space_before = Pt(10)
-    para.paragraph_format.space_after  = Pt(4)
+    para.paragraph_format.space_before = Pt(12)
+    para.paragraph_format.space_after  = Pt(2)
     r = para.add_run(f'"{titulo}"')
     r.bold = True
+    r.underline = True
     _apply_font(r, HEADING_FONT)
     r.font.size = Pt(BODY_PT + 0.5)
 
     body = doc.add_paragraph()
     body.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-    body.paragraph_format.space_before = Pt(0)
-    body.paragraph_format.space_after  = Pt(6)
-    body.paragraph_format.left_indent  = Cm(0.5)
-    r2 = body.add_run(f'{numero}- {texto}')
+    body.paragraph_format.space_before = Pt(2)
+    body.paragraph_format.space_after  = Pt(8)
+    body.paragraph_format.left_indent  = Cm(0.6)
+    body.paragraph_format.first_line_indent = Cm(0.4)
+    r2 = body.add_run(f'{numero}.- {texto}')
     _apply_font(r2, BODY_FONT)
     r2.font.size = Pt(BODY_PT)
     return body
@@ -173,9 +177,9 @@ def clausula(doc, numero, titulo, texto):
 def firma_line(doc, label, nombre):
     para = doc.add_paragraph()
     para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    para.paragraph_format.space_before = Pt(36)
+    para.paragraph_format.space_before = Pt(44)
     para.paragraph_format.space_after  = Pt(2)
-    r = para.add_run('_' * 38)
+    r = para.add_run('_' * 42)
     _apply_font(r, BODY_FONT)
     r.font.size = Pt(BODY_PT)
 
