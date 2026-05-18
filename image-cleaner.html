@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<link rel="stylesheet" href="Broquer-theme.css"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
 
 <meta charset="UTF-8">
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
@@ -18,6 +18,7 @@
   --txt:#0A0A0A;--mut:#6B6B66;--mut2:#9A9A92;
   --red:#ef4444;--green:#16a34a;
   --r:12px;--shadow:0 2px 12px rgba(0,0,0,0.07);
+  --bone:#F7F5EE;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
@@ -85,7 +86,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--txt);min-
 .card-name{padding:10px 14px;font-size:12px;font-weight:600;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid var(--gray)}
 .card-imgs{display:grid;grid-template-columns:1fr 1fr;gap:0}
 .card-img-wrap{position:relative;overflow:hidden;background:var(--gray)}
-.card-img-wrap img{width:100%;height:155px;object-fit:cover;display:block}
+.card-img-wrap img{width:100%;height:220px;object-fit:cover;display:block}
 .card-img-label{position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,.55);color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:6px;letter-spacing:.5px}
 .card-footer{padding:10px 14px;display:flex;align-items:center;gap:8px}
 .card-status{font-size:11px;color:var(--mut2);flex:1;font-weight:500}
@@ -114,7 +115,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--txt);min-
 @media(max-width:500px){
   .main{padding:14px 12px 80px}
   .card-imgs{grid-template-columns:1fr}
-  .card-img-wrap img{height:130px}
+  .card-img-wrap img{height:180px}
   .btn{padding:9px 12px;font-size:12px}
 }
 </style>
@@ -149,8 +150,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--txt);min-
   <!-- Prompt box -->
   <div class="prompt-box" id="prompt-box">
     <div class="prompt-label">
-      Instrucción para la IA
-      <span class="ai-badge">Broquer AI</span>
+      <span class="ai-badge">Broquer IA</span>
     </div>
     <textarea class="prompt-textarea" id="prompt-input" placeholder="Describe qué quieres hacer con las fotos. Ej: Elimina todos los muebles no fijos, mejora la iluminación y hazlo ver como foto profesional de bienes raíces vacío."></textarea>
     <div class="presets">
