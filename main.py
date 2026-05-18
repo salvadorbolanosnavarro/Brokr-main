@@ -4385,10 +4385,9 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
             params=params_base,
             json={
                 "name": req.campaign_name,
-                "objective": "OUTCOME_ENGAGEMENT",
+                "objective": req.objective,
                 "status": "PAUSED",
                 "special_ad_categories": [],
-                "is_adset_budget_sharing_enabled": False,
             }
         )
         if r_camp.status_code not in (200, 201):
@@ -4428,7 +4427,7 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
         )
         if r_adset.status_code not in (200, 201):
             # Limpiar campaign huérfana
-            await client.delete(f"https://graph.facebook.com/v21.0/{campaign_id}", params=tok)
+            await client.delete(f"https://graph.facebook.com/v21.0/{campaign_id}", params=params_base)
             raise HTTPException(status_code=502, detail=f"Error creando adset: {r_adset.text}")
         adset_id = r_adset.json().get("id")
 
