@@ -35,7 +35,7 @@
     { key:'isr',          href:'isr.html',           label:'ISR',             group:'main', icon:'calculator' },
     { key:'image-cleaner',href:'image-cleaner.html', label:'Editor imágenes', group:'main', icon:'image' },
     { key:'verificador',  href:'verificador.html',   label:'Verificador',     group:'main', icon:'shield' },
-    { key:'facebook-ads', href:'facebook-ads.html',  label:'Facebook Ads',    group:'main', icon:'facebook' },
+    { key:'facebook-ads', href:'facebook-ads.html',  label:'Meta Ads Express', group:'main', icon:'facebook' },
     { key:'admin',        href:'admin.html',         label:'Admin',           group:'main', icon:'cog', adminOnly:true },
   ];
 
@@ -52,7 +52,7 @@
     'image-cleaner':'Editor de imágenes — limpieza con IA',
     'verificador':  'Verificador de inmuebles',
     'admin':        'Panel administrativo',
-    'facebook-ads': 'Facebook Ads — crear y gestionar anuncios pagados en Facebook',
+    'facebook-ads': 'Meta Ads Express — crear, activar y medir anuncios de Facebook',
   };
 
   /* ── Iconos (heroicons outline 1.6) ── */
