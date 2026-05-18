@@ -4315,185 +4315,169 @@ async def facebook_ad_accounts(request: Request):
 class FbCreateAdRequest(BaseModel):
     account_id: str
     campaign_name: str
-    objective: str = "OUTCOME_TRAFFIC"
     ad_text: str
     headline: str
     destination_url: str = ""
     image_b64: str = ""
     image_mime: str = "image/jpeg"
-    daily_budget_mxn: float = 150.0
+    daily_budget_mxn: float = 50.0
     duration_days: int = 7
-    age_min: int = 25
-    age_max: int = 65
+    age_min: int = 18
+    age_max: int = 0
     country: str = "MX"
-    city: str = ""          # Meta geo key para una ciudad
+    city: str = ""          # ciudad o colonia para geo-targeting
     page_id: str = ""
-    publish_now: bool = True
 
 
 @app.post("/facebook/create-ad")
 async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
-    """Crea una campaña completa en Meta Ads (Campaign → AdSet → Creative → Ad)."""
+    """Crea una campaña completa en Facebook Ads (Campaign → AdSet → Creative → Ad) en estado PAUSED."""
     user_id = await get_user_id_from_token(request)
     if not user_id:
         raise HTTPException(status_code=401, detail="No autenticado")
 
-    meta = await _get_fb_meta(user_id)
+    # Recuperar user_token
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.get(
+            f"{SUPABASE_URL}/rest/v1/user_integrations",
+            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
+            params={"user_id": f"eq.{user_id}", "provider": "eq.facebook", "select": "meta", "limit": "1"}
+        )
+    if r.status_code != 200 or not r.json():
+        raise HTTPException(status_code=400, detail="Facebook no conectado")
+
+    meta_raw = r.json()[0].get("meta", "{}")
+    try:
+        meta = json.loads(meta_raw) if isinstance(meta_raw, str) else meta_raw
+    except Exception:
+        meta = {}
+
     user_token = meta.get("user_token", "")
     if not user_token:
         raise HTTPException(status_code=400, detail="Token sin permisos de ads. Reconecta tu Facebook.")
 
-    campaign_name = (req.campaign_name or "").strip()
-    ad_text = (req.ad_text or "").strip()
-    headline = (req.headline or "").strip()
-    destination_url = (req.destination_url or "").strip()
-    page_id = (req.page_id or meta.get("page_id", "")).strip()
-
-    if not campaign_name:
-        raise HTTPException(status_code=400, detail="Escribe un nombre para la campaña.")
-    if not destination_url.startswith(("http://", "https://")):
-        raise HTTPException(status_code=400, detail="Agrega una URL destino válida que empiece con http:// o https://.")
-    if not ad_text:
-        raise HTTPException(status_code=400, detail="Escribe el texto principal del anuncio.")
-    if not headline:
-        raise HTTPException(status_code=400, detail="Escribe el título del anuncio.")
-    if not page_id:
-        raise HTTPException(status_code=400, detail="Falta una página de Facebook conectada.")
-    if req.daily_budget_mxn < 50:
-        raise HTTPException(status_code=400, detail="El presupuesto diario mínimo recomendado es $50 MXN.")
-    if req.duration_days not in (3, 7, 14, 30):
-        raise HTTPException(status_code=400, detail="La duración debe ser de 3, 7, 14 o 30 días.")
-    if req.age_min < 18 or (req.age_max and req.age_max < req.age_min):
-        raise HTTPException(status_code=400, detail="Rango de edad inválido.")
-
-    objective_map = {
-        "OUTCOME_TRAFFIC": {"optimization_goal": "LINK_CLICKS", "destination_type": "WEBSITE"},
-        "OUTCOME_AWARENESS": {"optimization_goal": "REACH"},
-    }
-    objective = req.objective if req.objective in objective_map else "OUTCOME_TRAFFIC"
-    objective_cfg = objective_map[objective]
-
+    # Normalizar account_id (asegurar prefijo act_)
     account_id = req.account_id if req.account_id.startswith("act_") else f"act_{req.account_id}"
-    account_num = account_id.replace("act_", "")
     base_url = f"https://graph.facebook.com/v21.0/{account_id}"
     params_base = {"access_token": user_token}
+
+    # Presupuesto diario en centavos (Meta usa la moneda de la cuenta en centavos)
     daily_budget_cents = int(req.daily_budget_mxn * 100)
-    initial_status = "ACTIVE" if req.publish_now else "PAUSED"
 
     async with httpx.AsyncClient(timeout=45) as client:
+
+        # ── 0. Subir imagen a Meta (si se proporcionó) ─────────────────
         image_hash = None
         if req.image_b64:
             r_img = await client.post(
                 f"{base_url}/adimages",
                 params=params_base,
-                json={"bytes": req.image_b64},
+                json={"bytes": req.image_b64}
             )
-            if r_img.status_code not in (200, 201):
-                raise HTTPException(status_code=502, detail=f"Error subiendo imagen: {r_img.text}")
-            for v in r_img.json().get("images", {}).values():
-                image_hash = v.get("hash")
-                break
+            if r_img.status_code in (200, 201):
+                for v in r_img.json().get("images", {}).values():
+                    image_hash = v.get("hash")
+                    break
 
+        # ── 1. Crear Campaign ──────────────────────────────────────────
         r_camp = await client.post(
             f"{base_url}/campaigns",
             params=params_base,
             json={
-                "name": campaign_name,
-                "objective": objective,
-                "status": initial_status,
+                "name": req.campaign_name,
+                "objective": req.objective,
+                "status": "PAUSED",
                 "special_ad_categories": [],
-            },
+            }
         )
         if r_camp.status_code not in (200, 201):
             raise HTTPException(status_code=502, detail=f"Error creando campaña: {r_camp.text}")
         campaign_id = r_camp.json().get("id")
 
-        geo = {"countries": [req.country or "MX"]}
+        # ── 2. Crear AdSet ─────────────────────────────────────────────
+        geo: dict = {"countries": [req.country]}
         if req.city:
-            geo = {
-                "cities": [{
-                    "key": req.city,
-                    "radius": 25,
-                    "distance_unit": "kilometer",
-                }]
-            }
-        targeting = {
+            geo["cities"] = [{"key": req.city}]
+        targeting: dict = {
             "age_min": req.age_min,
             "geo_locations": geo,
         }
         if req.age_max and req.age_max > 0:
             targeting["age_max"] = req.age_max
 
-        from datetime import timedelta
-        end_dt = datetime.utcnow() + timedelta(days=req.duration_days)
-        adset_payload = {
-            "name": f"{campaign_name} — Audiencia principal",
+        adset_payload: dict = {
+            "name": f"{req.campaign_name} — AdSet",
             "campaign_id": campaign_id,
             "daily_budget": daily_budget_cents,
             "billing_event": "IMPRESSIONS",
-            "optimization_goal": objective_cfg["optimization_goal"],
+            "optimization_goal": "POST_ENGAGEMENT",
             "bid_strategy": "LOWEST_COST_WITHOUT_CAP",
             "targeting": targeting,
-            "status": initial_status,
-            "end_time": end_dt.strftime("%Y-%m-%dT%H:%M:%S+0000"),
+            "status": "PAUSED",
         }
-        if "destination_type" in objective_cfg:
-            adset_payload["destination_type"] = objective_cfg["destination_type"]
+        if req.duration_days and req.duration_days > 0:
+            from datetime import timedelta
+            end_dt = datetime.utcnow() + timedelta(days=req.duration_days)
+            adset_payload["end_time"] = end_dt.strftime("%Y-%m-%dT%H:%M:%S+0000")
 
-        r_adset = await client.post(f"{base_url}/adsets", params=params_base, json=adset_payload)
+        r_adset = await client.post(
+            f"{base_url}/adsets",
+            params=params_base,
+            json=adset_payload
+        )
         if r_adset.status_code not in (200, 201):
+            # Limpiar campaign huérfana
             await client.delete(f"https://graph.facebook.com/v21.0/{campaign_id}", params=params_base)
-            raise HTTPException(status_code=502, detail=f"Error creando conjunto de anuncios: {r_adset.text}")
+            raise HTTPException(status_code=502, detail=f"Error creando adset: {r_adset.text}")
         adset_id = r_adset.json().get("id")
 
-        link_data = {
-            "message": ad_text,
-            "name": headline,
-            "link": destination_url,
-            "call_to_action": {
-                "type": "LEARN_MORE",
-                "value": {"link": destination_url},
-            },
+        # ── 3. Crear AdCreative ────────────────────────────────────────
+        link_data: dict = {
+            "message": req.ad_text,
+            "name": req.headline,
         }
+        if req.destination_url:
+            link_data["link"] = req.destination_url
+        elif req.page_id:
+            link_data["link"] = f"https://www.facebook.com/{req.page_id}"
+
         if image_hash:
             link_data["image_hash"] = image_hash
 
-        creative_payload = {
-            "name": f"{campaign_name} — Creativo",
+        creative_payload: dict = {
+            "name": f"{req.campaign_name} — Creative",
             "object_story_spec": {
-                "page_id": page_id,
+                "page_id": req.page_id or meta.get("page_id", ""),
                 "link_data": link_data,
-            },
+            }
         }
 
-        r_creative = await client.post(f"{base_url}/adcreatives", params=params_base, json=creative_payload)
+        r_creative = await client.post(
+            f"{base_url}/adcreatives",
+            params=params_base,
+            json=creative_payload
+        )
         if r_creative.status_code not in (200, 201):
             raise HTTPException(status_code=502, detail=f"Error creando creativo: {r_creative.text}")
         creative_id = r_creative.json().get("id")
 
+        # ── 4. Crear Ad ────────────────────────────────────────────────
         r_ad = await client.post(
             f"{base_url}/ads",
             params=params_base,
             json={
-                "name": f"{campaign_name} — Anuncio",
+                "name": f"{req.campaign_name} — Ad",
                 "adset_id": adset_id,
                 "creative": {"creative_id": creative_id},
-                "status": initial_status,
-            },
+                "status": "PAUSED",
+            }
         )
         if r_ad.status_code not in (200, 201):
             raise HTTPException(status_code=502, detail=f"Error creando anuncio: {r_ad.text}")
         ad_id = r_ad.json().get("id")
 
-    return {
-        "ok": True,
-        "campaign_id": campaign_id,
-        "adset_id": adset_id,
-        "creative_id": creative_id,
-        "ad_id": ad_id,
-        "status": initial_status,
-        "ads_manager_url": f"https://www.facebook.com/adsmanager/manage/campaigns?act={account_num}&selected_campaign_ids={campaign_id}",
-    }
+    return {"ok": True, "campaign_id": campaign_id, "adset_id": adset_id,
+            "creative_id": creative_id, "ad_id": ad_id}
 
 
 async def _get_fb_meta(user_id: str) -> dict:
@@ -4599,7 +4583,7 @@ async def facebook_campaigns_list(request: Request):
             cid = camp["id"]
             r_ins = await client.get(
                 f"https://graph.facebook.com/v21.0/{cid}/insights",
-                params={"access_token": user_token, "fields": "impressions,reach,clicks,ctr,post_engagement,spend", "date_preset": "last_7d"}
+                params={"access_token": user_token, "fields": "impressions,reach,post_engagement,spend", "date_preset": "last_7d"}
             )
             ins_data = r_ins.json().get("data", []) if r_ins.status_code == 200 else []
             ins = ins_data[0] if ins_data else {}
@@ -4607,7 +4591,6 @@ async def facebook_campaigns_list(request: Request):
                 "id": cid, "name": camp["name"], "status": camp["status"],
                 "created_time": camp.get("created_time", ""),
                 "impressions": ins.get("impressions", "0"), "reach": ins.get("reach", "0"),
-                "clicks": ins.get("clicks", "0"), "ctr": ins.get("ctr", "0"),
                 "engagement": ins.get("post_engagement", "0"), "spend": ins.get("spend", "0"),
             })
     return {"campaigns": results}
