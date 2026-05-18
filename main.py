@@ -4585,7 +4585,8 @@ async def facebook_campaigns_list(request: Request):
                 f"https://graph.facebook.com/v21.0/{cid}/insights",
                 params={"access_token": user_token, "fields": "impressions,reach,post_engagement,spend", "date_preset": "last_7d"}
             )
-            ins = r_ins.json().get("data", [{}])[0] if r_ins.status_code == 200 else {}
+            ins_data = r_ins.json().get("data", []) if r_ins.status_code == 200 else []
+            ins = ins_data[0] if ins_data else {}
             results.append({
                 "id": cid, "name": camp["name"], "status": camp["status"],
                 "created_time": camp.get("created_time", ""),
