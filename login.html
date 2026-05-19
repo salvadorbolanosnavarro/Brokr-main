@@ -468,8 +468,32 @@ async function doSignup(){
   }
 }
 
-function doGoogle(){
-  window.location.href = `${SB_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(location.origin+'/login.html')}`;
+async function sha256Base64Url(input){
+  const enc = new TextEncoder().encode(input);
+  const digest = await crypto.subtle.digest('SHA-256', enc);
+  return btoa(String.fromCharCode(...new Uint8Array(digest)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function randomVerifier(){
+  const arr = new Uint8Array(64);
+  crypto.getRandomValues(arr);
+  return btoa(String.fromCharCode(...arr))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+async function doGoogle(){
+  // Supabase puede devolver OAuth como ?code=... (PKCE). Antes el login solo
+  // entendía #access_token=..., por eso Google aceptaba y volvía al login sin sesión.
+  const redirectTo = location.origin + location.pathname;
+  const verifier = randomVerifier();
+  sessionStorage.setItem('sb_pkce_verifier', verifier);
+  const challenge = await sha256Base64Url(verifier);
+  const url = new URL(`${SB_URL}/auth/v1/authorize`);
+  url.searchParams.set('provider', 'google');
+  url.searchParams.set('redirect_to', redirectTo);
+  url.searchParams.set('code_challenge', challenge);
+  url.searchParams.set('code_challenge_method', 'S256');
+  window.location.href = url.toString();
 }
 
 async function doForgot(){
@@ -527,6 +551,39 @@ setTimeout(() => {
     try { user = JSON.parse(raw) || {}; } catch (e) { user = {}; }
     if(user.id) await checkProfileAndRedirect(token, user);
   }
+  const urlParams = new URLSearchParams(location.search);
+  const oauthCode = urlParams.get('code');
+  if(oauthCode){
+    const verifier = sessionStorage.getItem('sb_pkce_verifier');
+    if(!verifier){
+      showMsg('No se pudo completar Google: falta el verificador de seguridad. Intenta de nuevo.');
+      return;
+    }
+    const r = await fetch(`${SB_URL}/auth/v1/token?grant_type=pkce`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SB_KEY},
+      body: JSON.stringify({ auth_code: oauthCode, code_verifier: verifier })
+    });
+    const d = await r.json();
+    sessionStorage.removeItem('sb_pkce_verifier');
+    if(d.error){
+      showMsg(d.error_description || d.msg || d.error);
+      history.replaceState(null, '', location.pathname);
+      return;
+    }
+    if(d.access_token){
+      localStorage.setItem('sb_token', d.access_token);
+      if(d.refresh_token) localStorage.setItem('sb_refresh', d.refresh_token);
+      localStorage.setItem('sb_user', JSON.stringify(d.user));
+      sessionStorage.setItem('sb_token', d.access_token);
+      sessionStorage.setItem('sb_user', JSON.stringify(d.user));
+      localStorage.setItem('sesion_activa', 'true');
+      history.replaceState(null, '', location.pathname);
+      await checkProfileAndRedirect(d.access_token, d.user);
+      return;
+    }
+  }
+
   const hash = location.hash;
   if(hash.includes('access_token=')){
     const params = new URLSearchParams(hash.slice(1));
@@ -547,8 +604,8 @@ setTimeout(() => {
       await checkProfileAndRedirect(cbToken, user);
     }
   }
-  const urlParams = new URLSearchParams(location.search);
-  if(urlParams.get('type') === 'signup' || urlParams.get('confirmation') === 'true'){
+  const finalUrlParams = new URLSearchParams(location.search);
+  if(finalUrlParams.get('type') === 'signup' || finalUrlParams.get('confirmation') === 'true'){
     showMsg('Correo confirmado. Ahora inicia sesión con tus datos.', 'ok');
     setTab('login');
   }

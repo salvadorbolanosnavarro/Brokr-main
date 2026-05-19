@@ -455,19 +455,24 @@
 
 /* ── Profile Drawer ─────────────────────────────────────────── */
 .bk-profile-overlay {
-  display: none; position: fixed; inset: 0; z-index: 200;
-  background: rgba(10,10,10,0.35); backdrop-filter: blur(2px);
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(10,10,10,0.28);
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity .18s ease, visibility .18s ease;
 }
-.bk-profile-overlay.is-open { display: block; }
+.bk-profile-overlay.is-open { opacity: 1; visibility: visible; pointer-events: auto; }
 .bk-profile-drawer {
-  position: fixed; top: 0; right: -380px; bottom: 0; z-index: 201;
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 201;
   width: 360px; max-width: 100vw;
   background: var(--paper); border-left: 1px solid var(--line);
   display: flex; flex-direction: column;
-  transition: right .28s cubic-bezier(.16,1,.3,1);
+  transform: translate3d(100%,0,0);
+  transition: transform .22s cubic-bezier(.16,1,.3,1);
   overflow: hidden;
+  contain: layout paint style;
+  will-change: transform;
 }
-.bk-profile-drawer.is-open { right: 0; }
+.bk-profile-drawer.is-open { transform: translate3d(0,0,0); }
 .bk-pd-head {
   display: flex; align-items: center; justify-content: space-between;
   padding: 18px 20px 16px; border-bottom: 1px solid var(--line);
@@ -569,10 +574,9 @@
 }
 .bk-pd-menu-item.is-open .bk-pd-menu-chevron { transform: rotate(180deg); }
 .bk-pd-menu-panel {
-  overflow: hidden; max-height: 0;
-  transition: max-height .28s cubic-bezier(.16,1,.3,1);
+  overflow: hidden; display: none;
 }
-.bk-pd-menu-item.is-open .bk-pd-menu-panel { max-height: 800px; }
+.bk-pd-menu-item.is-open .bk-pd-menu-panel { display: block; }
 .bk-pd-menu-panel-inner { padding-bottom: 16px; }
 /* Suscripcion */
 .bk-pd-sub-badge {
@@ -1546,7 +1550,7 @@
         throw new Error(d.detail || 'Error al iniciar pago');
       }
     } catch(e) {
-      if (toast) { toast.textContent = e.message || 'Error al conectar con Stripe.'; toast.className = 'bk-pd-toast err'; }
+      if (toast) { toast.textContent = e.message || 'No pude conectar con el servidor de pagos. Revisa api.broquer.app, SSL y CORS.'; toast.className = 'bk-pd-toast err'; }
       if (btn) { btn.disabled = false; btn.textContent = 'Activar Broquer Max'; }
     }
   }
@@ -1934,9 +1938,64 @@
   }
   window.connectFacebook = connectFacebook;
 
+  async function startSubscriptionCheckoutFromGate() {
+    const tok = getToken();
+    const btn = document.getElementById('bk-gate-sub-btn');
+    const msg = document.getElementById('bk-gate-msg');
+    if (btn) { btn.disabled = true; btn.textContent = 'Abriendo pago…'; }
+    try {
+      const r = await fetch(API_BASE + '/subscription/checkout', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan_id: 'pro',
+          success_url: window.location.origin + '/index.html?suscripcion=ok',
+          cancel_url: window.location.href
+        })
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.checkout_url) throw new Error(d.detail || 'No se pudo iniciar la suscripción.');
+      window.location.href = d.checkout_url;
+    } catch (e) {
+      if (msg) msg.textContent = (e && e.message) ? e.message : 'No pude conectar con el servidor de pagos. Revisa que api.broquer.app tenga DNS y SSL correctos.';
+      if (btn) { btn.disabled = false; btn.textContent = 'Suscribirme ahora'; }
+    }
+  }
+  window.startSubscriptionCheckoutFromGate = startSubscriptionCheckoutFromGate;
+
+  function renderSubscriptionGate(message) {
+    document.body.innerHTML = `
+      <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--paper);padding:24px;font-family:var(--font-sans);">
+        <div style="width:100%;max-width:440px;background:var(--bone);border:1px solid var(--line);border-radius:24px;padding:30px;box-shadow:0 10px 40px rgba(10,10,10,.08);text-align:center;">
+          <img src="isotipo-black.png" alt="Broquer" style="width:58px;height:58px;object-fit:contain;margin-bottom:18px;"/>
+          <h1 style="font-family:var(--font-display);font-size:30px;line-height:1.05;margin:0 0 10px;color:var(--ink);letter-spacing:-.03em;">Actualmente no cuentas con un plan de suscripción</h1>
+          <p style="color:var(--mute);font-size:14px;line-height:1.5;margin:0 0 22px;">Activa tu plan para ingresar a Broquer y usar tus herramientas inmobiliarias.</p>
+          <button id="bk-gate-sub-btn" onclick="startSubscriptionCheckoutFromGate()" style="width:100%;height:48px;border:none;border-radius:999px;background:var(--ink);color:var(--paper);font-weight:700;font-size:14px;cursor:pointer;">Suscribirme ahora</button>
+          <button onclick="doLogout()" style="width:100%;height:42px;border:1px solid var(--line-2);border-radius:999px;background:transparent;color:var(--ink);font-weight:600;font-size:13px;cursor:pointer;margin-top:10px;">Cerrar sesión</button>
+          <div id="bk-gate-msg" style="margin-top:12px;font-size:12px;color:var(--danger);min-height:18px;">${message || ''}</div>
+        </div>
+      </div>`;
+  }
+
+  async function ensureSubscriptionOrGate(profile) {
+    if (profile?.isAdmin || profile?.profile?.plan === 'admin') return true;
+    const tok = getToken();
+    try {
+      const r = await fetch(API_BASE + '/subscription/status', { headers: { Authorization: 'Bearer ' + tok } });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok && d.active) return true;
+      renderSubscriptionGate('');
+      return false;
+    } catch (e) {
+      renderSubscriptionGate('No pude verificar tu suscripción porque el servidor de pagos no respondió. Revisa api.broquer.app.');
+      return false;
+    }
+  }
+
   async function boot() {
     const profile = await authInit();
     if (!profile) return; // redirected to login
+    if (!(await ensureSubscriptionOrGate(profile))) return;
     injectShell(profile);
 
     // ── Cargar configuración pública del backend (FB_APP_ID, etc.) ──────────

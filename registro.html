@@ -197,8 +197,8 @@ async function guardar(){
     return;
   }
 
-  showMsg('Perfil guardado. Cargando Broquer®…', 'ok');
-  setTimeout(() => { window.location.href = 'index.html'; }, 800);
+  showMsg('Perfil guardado. Ahora activa tu suscripción para ingresar a Broquer®.', 'ok');
+  setTimeout(() => { window.location.href = 'index.html?suscribirse=1'; }, 800);
 }
 
 function toggleSaveBtn(){
