@@ -4709,7 +4709,7 @@ def _stripe_headers() -> dict:
     }
 
 class CheckoutRequest(BaseModel):
-    plan_id: str         # "pro" o "ampi"
+    plan_id: str         # "max" o "ampi"
     promo_code: str = "" # código promocional para plan AMPI
     success_url: str = ""
     cancel_url: str  = ""
@@ -4783,7 +4783,7 @@ async def subscription_checkout(req: CheckoutRequest, request: Request):
         raise HTTPException(status_code=401, detail="No autenticado.")
 
     # Validar plan
-    plan_map = {"pro": STRIPE_PRICE_PRO, "ampi": STRIPE_PRICE_AMPI}
+    plan_map = {"max": STRIPE_PRICE_PRO, "ampi": STRIPE_PRICE_AMPI}
     if req.plan_id not in plan_map:
         raise HTTPException(status_code=400, detail="Plan inválido.")
     price_id = plan_map[req.plan_id]
@@ -4880,11 +4880,11 @@ async def stripe_webhook(request: Request):
 
     if event_type == "checkout.session.completed":
         user_id = obj.get("metadata", {}).get("user_id")
-        plan_id = obj.get("metadata", {}).get("plan_id", "pro")
+        plan_id = obj.get("metadata", {}).get("plan_id", "max")
         subscription_id = obj.get("subscription")
         customer_id = obj.get("customer")
         if user_id and subscription_id:
-            plan_nombre = "AMPI" if plan_id == "ampi" else "Broquer Pro"
+            plan_nombre = "AMPI" if plan_id == "ampi" else "Broquer Max"
             sb = {
                 "user_id": user_id,
                 "plan_id": plan_id,
@@ -4955,7 +4955,7 @@ async def subscription_activate(request: Request):
         raise HTTPException(status_code=403, detail="No autorizado.")
 
     customer_id = body.get("customer_id", "").strip()
-    plan_id = body.get("plan_id", "pro").strip() or "pro"
+    plan_id = body.get("plan_id", "max").strip() or "max"
 
     if not customer_id:
         raise HTTPException(status_code=400, detail="customer_id requerido.")
