@@ -1980,16 +1980,33 @@
   async function ensureSubscriptionOrGate(profile) {
     if (profile?.isAdmin || profile?.profile?.plan === 'admin') return true;
     const tok = getToken();
-    try {
-      const r = await fetch(API_BASE + '/subscription/status', { headers: { Authorization: 'Bearer ' + tok } });
-      const d = await r.json().catch(() => ({}));
-      if (r.ok && d.active) return true;
-      renderSubscriptionGate('');
-      return false;
-    } catch (e) {
-      renderSubscriptionGate('No pude verificar tu suscripción porque el servidor de pagos no respondió. Revisa api.broquer.app.');
-      return false;
+
+    // Si el usuario regresa de Stripe con ?suscripcion=ok o ?sub=ok,
+    // hacer polling hasta 15 seg mientras el webhook llega a Supabase
+    const params = new URLSearchParams(window.location.search);
+    const justPaid = params.get('suscripcion') === 'ok' || params.get('sub') === 'ok';
+
+    const maxAttempts = justPaid ? 10 : 1;
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+
+    for (let i = 0; i < maxAttempts; i++) {
+      try {
+        const r = await fetch(API_BASE + '/subscription/status', { headers: { Authorization: 'Bearer ' + tok } });
+        const d = await r.json().catch(() => ({}));
+        if (r.ok && d.active) {
+          // Limpiar parámetro de la URL sin recargar
+          if (justPaid) {
+            const clean = window.location.pathname;
+            window.history.replaceState({}, '', clean);
+          }
+          return true;
+        }
+      } catch (_) { /* continuar intentando */ }
+      if (i < maxAttempts - 1) await delay(1500);
     }
+
+    renderSubscriptionGate(justPaid ? 'Tu pago fue recibido. Si esto tarda más de un minuto, recarga la página.' : '');
+    return false;
   }
 
   async function boot() {
