@@ -137,6 +137,7 @@ body {
 }
 .rt-admin { background: rgba(184,75,63,0.12); color: var(--danger); }
 .rt-pro   { background: rgba(10,10,10,0.08); color: var(--ink-2); }
+.rt-equipo { background: rgba(47,74,58,0.1); color: #2F4A3A; border: 1px solid rgba(47,74,58,0.2); }
 .rt-free  { background: var(--paper-2); color: var(--mute); border: 1px solid var(--line-2); }
 .rt-personalizado { background: rgba(91,66,204,0.1); color: #5b42cc; }
 .adm-empty { padding: 40px 16px; text-align: center; color: var(--mute); font-size: 13px; }
@@ -477,6 +478,7 @@ const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
 const PLANES = [
   { id: 'admin',         nombre: 'Admin',         desc: 'Acceso total + panel admin' },
   { id: 'pro',           nombre: 'Pro',            desc: 'Todos los módulos activos' },
+  { id: 'equipo',        nombre: 'Equipo',         desc: 'Acceso gratuito — equipo interno' },
   { id: 'personalizado', nombre: 'Personalizado',  desc: 'Módulos seleccionados' },
   { id: 'free',          nombre: 'Free',           desc: 'Solo fichas manuales' },
 ];
@@ -585,8 +587,8 @@ function renderUserList() {
     const ini = (u.nombre || u.email || '?')[0].toUpperCase();
     const plan = u.plan || 'free';
     const isActive = u.activo !== false;
-    const tagCls = {admin:'rt-admin',pro:'rt-pro',free:'rt-free',personalizado:'rt-personalizado'}[plan]||'rt-free';
-    const planLbl = {admin:'Admin',pro:'Pro',free:'Free',personalizado:'Custom'}[plan]||plan;
+    const tagCls = {admin:'rt-admin',pro:'rt-pro',equipo:'rt-equipo',free:'rt-free',personalizado:'rt-personalizado'}[plan]||'rt-free';
+    const planLbl = {admin:'Admin',pro:'Pro',equipo:'Equipo',free:'Free',personalizado:'Custom'}[plan]||plan;
     return `<div class="adm-user-row${u.id===selectedUserId?' active':''}" id="row-${u.id}" onclick="selectUser('${u.id}')">
       <div class="adm-avatar${isActive?'':' inactive'}">${ini}</div>
       <div class="adm-row-info">
@@ -641,9 +643,9 @@ function selectUser(uid) {
   st.textContent = isActive ? 'Activo' : 'Inactivo';
   st.className = 'adm-status-pill ' + (isActive?'active':'inactive');
 
-  const tagCls = {admin:'rt-admin',pro:'rt-pro',free:'rt-free',personalizado:'rt-personalizado'}[plan]||'rt-free';
+  const tagCls = {admin:'rt-admin',pro:'rt-pro',equipo:'rt-equipo',free:'rt-free',personalizado:'rt-personalizado'}[plan]||'rt-free';
   const pt = document.getElementById('d-det-plan-tag');
-  pt.textContent = plan.charAt(0).toUpperCase()+plan.slice(1);
+  pt.textContent = {admin:'Admin',pro:'Pro',equipo:'Equipo',free:'Free',personalizado:'Personalizado'}[plan]||plan;
   pt.className = 'adm-row-tag '+tagCls;
 
   const tb = document.getElementById('d-toggle-btn');
@@ -668,7 +670,7 @@ function renderPlanGrid(u) {
 function renderModGrid(u) {
   const plan = u.plan||'free';
   const mods = u.modulos||[];
-  const all = (plan==='admin'||plan==='pro');
+  const all = (plan==='admin'||plan==='pro'||plan==='equipo');
   document.getElementById('d-mod-grid').innerHTML = MODULOS_LIST.map(m => {
     const chk = (all||mods.includes(m.id)) ? 'checked' : '';
     const on = (all||mods.includes(m.id)) ? 'on' : '';
@@ -684,9 +686,9 @@ function renderModGrid(u) {
 function selectPlanD(uid, plan) {
   const u = allUsers.find(x => x.id === uid); if (!u) return;
   u.plan = plan; renderPlanGrid(u); renderModGrid(u);
-  const tagCls = {admin:'rt-admin',pro:'rt-pro',free:'rt-free',personalizado:'rt-personalizado'}[plan]||'rt-free';
+  const tagCls = {admin:'rt-admin',pro:'rt-pro',equipo:'rt-equipo',free:'rt-free',personalizado:'rt-personalizado'}[plan]||'rt-free';
   const pt = document.getElementById('d-det-plan-tag');
-  pt.textContent = plan.charAt(0).toUpperCase()+plan.slice(1);
+  pt.textContent = {admin:'Admin',pro:'Pro',equipo:'Equipo',free:'Free',personalizado:'Personalizado'}[plan]||plan;
   pt.className = 'adm-row-tag '+tagCls;
 }
 
@@ -718,6 +720,22 @@ async function saveUserDesktop() {
       body: JSON.stringify({ plan: u.plan, modulos: u.modulos||[], activo: u.activo !== false })
     });
     if (!r.ok && r.status !== 204) throw new Error();
+
+    // Si el plan es 'equipo', garantizar fila activa en suscripciones
+    if (u.plan === 'equipo') {
+      await sbFetch(`/rest/v1/suscripciones`, {
+        method: 'POST',
+        headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify({
+          user_id: u.id,
+          plan_id: 'equipo',
+          plan_nombre: 'Equipo Interno',
+          status: 'active',
+          updated_at: new Date().toISOString()
+        })
+      });
+    }
+
     showToast('Cambios guardados');
     renderUserList(); updateStats();
   } catch(e) { showToast('Error al guardar'); }

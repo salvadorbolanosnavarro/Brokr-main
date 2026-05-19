@@ -173,6 +173,25 @@ async def get_eb_key_for_user(user_id: str) -> str:
         pass
     return None
 
+# Helper: obtiene el rol del usuario desde la tabla usuarios
+async def get_user_rol(user_id: str) -> str:
+    if not user_id or not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return "agente"
+    try:
+        async with httpx.AsyncClient(timeout=8) as client:
+            r = await client.get(
+                f"{SUPABASE_URL}/rest/v1/usuarios",
+                headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
+                params={"id": f"eq.{user_id}", "select": "rol", "limit": "1"}
+            )
+            if r.status_code == 200:
+                rows = r.json()
+                if rows:
+                    return rows[0].get("rol") or "agente"
+    except Exception:
+        pass
+    return "agente"
+
 @app.post("/config/eb-key")
 async def set_eb_key(req: EbKeyRequest, request: Request):
     user_id = await get_user_id_from_token(request)
@@ -315,19 +334,31 @@ async def get_profile_status(request: Request):
     # Suscripcion
     sub_state = {"active": False, "plan": None, "status": "sin_suscripcion"}
     try:
-        async with httpx.AsyncClient(timeout=6) as client:
-            rs = await client.get(
-                f"{SUPABASE_URL}/rest/v1/suscripciones",
-                headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
-                params={"user_id": f"eq.{user_id}", "select": "status,plan_nombre", "order": "updated_at.desc", "limit": "1"}
-            )
-            if rs.status_code == 200 and rs.json():
-                row = rs.json()[0]
-                sub_state = {
-                    "active": row.get("status") in ("active", "trialing"),
-                    "plan": row.get("plan_nombre"),
-                    "status": row.get("status"),
-                }
+        # Equipo interno y admin siempre tienen acceso activo
+        rol_val = None
+        for row in rows:
+            pass  # rows ya fue procesado arriba
+        rol_val = await get_user_rol(user_id)
+        if rol_val in ("equipo", "admin"):
+            sub_state = {
+                "active": True,
+                "plan": "Equipo Interno" if rol_val == "equipo" else "Admin",
+                "status": "active",
+            }
+        else:
+            async with httpx.AsyncClient(timeout=6) as client:
+                rs = await client.get(
+                    f"{SUPABASE_URL}/rest/v1/suscripciones",
+                    headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
+                    params={"user_id": f"eq.{user_id}", "select": "status,plan_nombre", "order": "updated_at.desc", "limit": "1"}
+                )
+                if rs.status_code == 200 and rs.json():
+                    row = rs.json()[0]
+                    sub_state = {
+                        "active": row.get("status") in ("active", "trialing"),
+                        "plan": row.get("plan_nombre"),
+                        "status": row.get("status"),
+                    }
     except Exception:
         pass
 
@@ -4977,6 +5008,11 @@ async def subscription_status(request: Request):
     user_id = await get_user_id_from_token(request)
     if not user_id:
         raise HTTPException(status_code=401, detail="No autenticado.")
+
+    # Equipo interno y admin siempre tienen acceso activo sin necesidad de suscripción
+    rol = await get_user_rol(user_id)
+    if rol in ("equipo", "admin"):
+        return {"active": True, "plan": "Equipo Interno" if rol == "equipo" else "Admin", "plan_id": rol, "status": "active"}
 
     async with httpx.AsyncClient(timeout=8) as client:
         r = await client.get(
