@@ -4801,7 +4801,7 @@ async def subscription_checkout(req: CheckoutRequest, request: Request):
         "cancel_url": cancel_url,
         "metadata[user_id]": user_id,
         "metadata[plan_id]": req.plan_id,
-        "allow_promotion_codes": "false",
+        "allow_promotion_codes": "true",
         "locale": "es",
     }
     async with httpx.AsyncClient(timeout=15) as client:
