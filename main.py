@@ -312,7 +312,26 @@ async def get_profile_status(request: Request):
                 "user_token": meta.get("user_token", ""),
             }
 
-    return {"eb": eb_state, "fb": fb_state}
+    # Suscripcion
+    sub_state = {"active": False, "plan": None, "status": "sin_suscripcion"}
+    try:
+        async with httpx.AsyncClient(timeout=6) as client:
+            rs = await client.get(
+                f"{SUPABASE_URL}/rest/v1/suscripciones",
+                headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
+                params={"user_id": f"eq.{user_id}", "select": "status,plan_nombre", "order": "updated_at.desc", "limit": "1"}
+            )
+            if rs.status_code == 200 and rs.json():
+                row = rs.json()[0]
+                sub_state = {
+                    "active": row.get("status") in ("active", "trialing"),
+                    "plan": row.get("plan_nombre"),
+                    "status": row.get("status"),
+                }
+    except Exception:
+        pass
+
+    return {"eb": eb_state, "fb": fb_state, "sub": sub_state}
 
 # ────────────────────────────────────────────
 # GROQ CHAT PROXY

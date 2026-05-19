@@ -548,6 +548,41 @@
 .bk-pd-foot {
   padding: 16px 20px; border-top: 1px solid var(--line); flex-shrink: 0;
 }
+/* Accordion menu */
+.bk-pd-menu { display: flex; flex-direction: column; gap: 0; }
+.bk-pd-menu-item { border-bottom: 1px solid var(--line); }
+.bk-pd-menu-item:first-child { border-top: 1px solid var(--line); }
+.bk-pd-menu-trigger {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 0; background: none; border: none; cursor: pointer;
+  font-family: inherit; font-size: 13px; font-weight: 600; color: var(--ink);
+  text-align: left;
+}
+.bk-pd-menu-trigger:hover { color: var(--navy, #1a2e6e); }
+.bk-pd-menu-trigger-left { display: flex; align-items: center; gap: 10px; }
+.bk-pd-menu-trigger-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--mute-3); flex-shrink: 0; }
+.bk-pd-menu-trigger-dot.ok { background: var(--success); }
+.bk-pd-menu-trigger-dot.warn { background: var(--warn); }
+.bk-pd-menu-chevron {
+  width: 16px; height: 16px; color: var(--mute); flex-shrink: 0;
+  transition: transform .22s cubic-bezier(.16,1,.3,1);
+}
+.bk-pd-menu-item.is-open .bk-pd-menu-chevron { transform: rotate(180deg); }
+.bk-pd-menu-panel {
+  overflow: hidden; max-height: 0;
+  transition: max-height .28s cubic-bezier(.16,1,.3,1);
+}
+.bk-pd-menu-item.is-open .bk-pd-menu-panel { max-height: 800px; }
+.bk-pd-menu-panel-inner { padding-bottom: 16px; }
+/* Suscripcion */
+.bk-pd-sub-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 3px 10px; border-radius: var(--r-pill);
+  background: var(--forest-soft); color: var(--forest);
+}
+.bk-pd-sub-badge.inactive { background: var(--bone); color: var(--mute); }
+.bk-pd-sub-info { font-size: 12px; color: var(--mute); margin: 8px 0 14px; line-height: 1.5; }
 
 `;
 
@@ -1275,14 +1310,6 @@
     drawer.className = 'bk-profile-drawer';
     drawer.innerHTML = `
       <div class="bk-pd-head">
-        <h2>Mi perfil</h2>
-        <button class="bk-pd-close" onclick="closeProfileDrawer()" aria-label="Cerrar">
-          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/></svg>
-        </button>
-      </div>
-
-      <div class="bk-pd-body">
-        <!-- Avatar + info -->
         <div class="bk-pd-avatar-row">
           <div class="bk-pd-avatar" id="pd-avatar">—</div>
           <div class="bk-pd-avatar-info">
@@ -1291,76 +1318,170 @@
             <div class="bk-pd-role-badge" id="pd-role-badge">Agente</div>
           </div>
         </div>
+        <button class="bk-pd-close" onclick="closeProfileDrawer()" aria-label="Cerrar">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/></svg>
+        </button>
+      </div>
 
-        <!-- Datos personales -->
-        <div>
-          <div class="bk-pd-section-label">Datos personales</div>
-          <div class="bk-pd-card">
-            <div class="bk-pd-field">
-              <label>Nombre completo</label>
-              <input type="text" id="pd-input-nombre" placeholder="Tu nombre"/>
-            </div>
-            <div class="bk-pd-field">
-              <label>Teléfono</label>
-              <input type="tel" id="pd-input-tel" placeholder="Tu teléfono"/>
-            </div>
-            <div class="bk-pd-field">
-              <label>Correo</label>
-              <input type="email" id="pd-input-email" readonly/>
-            </div>
-            <button class="bk-pd-btn bk-pd-btn-primary" onclick="saveProfileData()">Guardar cambios</button>
-            <div class="bk-pd-toast" id="pd-toast-personal"></div>
-          </div>
-        </div>
+      <div class="bk-pd-body">
+        <div class="bk-pd-menu">
 
-        <!-- EasyBroker -->
-        <div>
-          <div class="bk-pd-section-label">Integración EasyBroker</div>
-          <div class="bk-pd-card">
-            <div class="bk-pd-status" id="pd-eb-status">
-              <span class="dot" id="pd-eb-dot"></span>
-              <span id="pd-eb-status-text">Verificando…</span>
-            </div>
-            <div class="bk-pd-field" style="margin-top:12px">
-              <label>API Key de EasyBroker</label>
-              <input type="text" id="pd-input-ebkey" placeholder="Pega tu API key aquí" autocomplete="off" autocorrect="off" spellcheck="false"/>
-              <div style="font-size:11px;color:var(--mute);margin-top:5px;line-height:1.4">Encuéntrala en EasyBroker → Configuración → API. Cada agente debe usar su propia API key personal.</div>
-            </div>
-            <button class="bk-pd-btn bk-pd-btn-primary" onclick="saveEbKey()">Conectar EasyBroker</button>
-            <button class="bk-pd-btn bk-pd-btn-outline" id="pd-eb-disconnect-btn" onclick="disconnectEbKey()" style="margin-top:8px;display:none">Desconectar EasyBroker</button>
-            <div class="bk-pd-toast" id="pd-toast-eb"></div>
-          </div>
-        </div>
-
-        <!-- Facebook -->
-        <div>
-          <div class="bk-pd-section-label">Integración Facebook</div>
-          <div class="bk-pd-card">
-            <div class="bk-pd-status" id="pd-fb-status">
-              <span class="dot" id="pd-fb-dot"></span>
-              <span id="pd-fb-status-text">Verificando…</span>
-            </div>
-            <button class="bk-pd-btn bk-pd-btn-primary" id="pd-fb-btn" onclick="connectFacebook()" style="margin-top:12px">
-              <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-              Conectar página de Facebook
+          <!-- Datos personales -->
+          <div class="bk-pd-menu-item" id="pdsec-datos">
+            <button class="bk-pd-menu-trigger" onclick="togglePdSection('datos')">
+              <span class="bk-pd-menu-trigger-left">
+                <span class="bk-pd-menu-trigger-dot" id="pdot-datos"></span>
+                Datos personales
+              </span>
+              <svg class="bk-pd-menu-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
             </button>
-            <button class="bk-pd-btn bk-pd-btn-outline" id="pd-fb-disconnect-btn" onclick="disconnectFacebook()" style="margin-top:8px;display:none">Desconectar Facebook</button>
-            <div class="bk-pd-toast" id="pd-toast-fb"></div>
+            <div class="bk-pd-menu-panel">
+              <div class="bk-pd-menu-panel-inner">
+                <div class="bk-pd-card">
+                  <div class="bk-pd-field">
+                    <label>Nombre completo</label>
+                    <input type="text" id="pd-input-nombre" placeholder="Tu nombre"/>
+                  </div>
+                  <div class="bk-pd-field">
+                    <label>Teléfono</label>
+                    <input type="tel" id="pd-input-tel" placeholder="Tu teléfono"/>
+                  </div>
+                  <div class="bk-pd-field">
+                    <label>Correo</label>
+                    <input type="email" id="pd-input-email" readonly/>
+                  </div>
+                  <button class="bk-pd-btn bk-pd-btn-primary" onclick="saveProfileData()">Guardar cambios</button>
+                  <div class="bk-pd-toast" id="pd-toast-personal"></div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <!-- Admin panel link -->
-        <div id="pd-admin-section" style="display:none">
-          <div class="bk-pd-section-label">Administración</div>
-          <div class="bk-pd-card">
-            <p style="font-size:13px;color:var(--mute);margin-bottom:12px">Tienes acceso al panel de administrador.</p>
-            <a href="admin.html" style="text-decoration:none">
-              <button class="bk-pd-btn bk-pd-btn-outline" style="width:100%">
-                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
-                Ir al panel admin
-              </button>
-            </a>
+          <!-- EasyBroker -->
+          <div class="bk-pd-menu-item" id="pdsec-eb">
+            <button class="bk-pd-menu-trigger" onclick="togglePdSection('eb')">
+              <span class="bk-pd-menu-trigger-left">
+                <span class="bk-pd-menu-trigger-dot" id="pdot-eb"></span>
+                EasyBroker
+              </span>
+              <svg class="bk-pd-menu-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="bk-pd-menu-panel">
+              <div class="bk-pd-menu-panel-inner">
+                <div class="bk-pd-card">
+                  <div class="bk-pd-status">
+                    <span class="dot" id="pd-eb-dot"></span>
+                    <span id="pd-eb-status-text">Verificando…</span>
+                  </div>
+                  <div class="bk-pd-field" style="margin-top:12px">
+                    <label>API Key de EasyBroker</label>
+                    <input type="text" id="pd-input-ebkey" placeholder="Pega tu API key aquí" autocomplete="off" autocorrect="off" spellcheck="false"/>
+                    <div style="font-size:11px;color:var(--mute);margin-top:5px;line-height:1.4">Encuéntrala en EasyBroker → Configuración → API.</div>
+                  </div>
+                  <button class="bk-pd-btn bk-pd-btn-primary" onclick="saveEbKey()">Conectar EasyBroker</button>
+                  <button class="bk-pd-btn bk-pd-btn-outline" id="pd-eb-disconnect-btn" onclick="disconnectEbKey()" style="margin-top:8px;display:none">Desconectar EasyBroker</button>
+                  <div class="bk-pd-toast" id="pd-toast-eb"></div>
+                </div>
+              </div>
+            </div>
           </div>
+
+          <!-- Facebook -->
+          <div class="bk-pd-menu-item" id="pdsec-fb">
+            <button class="bk-pd-menu-trigger" onclick="togglePdSection('fb')">
+              <span class="bk-pd-menu-trigger-left">
+                <span class="bk-pd-menu-trigger-dot" id="pdot-fb"></span>
+                Facebook
+              </span>
+              <svg class="bk-pd-menu-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="bk-pd-menu-panel">
+              <div class="bk-pd-menu-panel-inner">
+                <div class="bk-pd-card">
+                  <div class="bk-pd-status">
+                    <span class="dot" id="pd-fb-dot"></span>
+                    <span id="pd-fb-status-text">Verificando…</span>
+                  </div>
+                  <button class="bk-pd-btn bk-pd-btn-primary" id="pd-fb-btn" onclick="connectFacebook()" style="margin-top:12px">
+                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                    Conectar página de Facebook
+                  </button>
+                  <button class="bk-pd-btn bk-pd-btn-outline" id="pd-fb-disconnect-btn" onclick="disconnectFacebook()" style="margin-top:8px;display:none">Desconectar Facebook</button>
+                  <div class="bk-pd-toast" id="pd-toast-fb"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Suscripcion -->
+          <div class="bk-pd-menu-item" id="pdsec-sub">
+            <button class="bk-pd-menu-trigger" onclick="togglePdSection('sub')">
+              <span class="bk-pd-menu-trigger-left">
+                <span class="bk-pd-menu-trigger-dot" id="pdot-sub"></span>
+                Suscripción
+              </span>
+              <svg class="bk-pd-menu-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="bk-pd-menu-panel">
+              <div class="bk-pd-menu-panel-inner">
+                <div class="bk-pd-card">
+                  <div id="pd-sub-badge-wrap"><span class="bk-pd-sub-badge inactive" id="pd-sub-badge">Sin plan activo</span></div>
+                  <div class="bk-pd-sub-info" id="pd-sub-info">Activa tu suscripción para acceder a todas las funciones de Broquer.</div>
+                  <button class="bk-pd-btn bk-pd-btn-primary" id="pd-sub-btn" onclick="startCheckout()">Activar Broquer Max</button>
+                  <button class="bk-pd-btn bk-pd-btn-outline" id="pd-sub-cancel-btn" onclick="cancelSubscription()" style="display:none">Cancelar suscripción</button>
+                  <div class="bk-pd-toast" id="pd-toast-sub"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Legal -->
+          <div class="bk-pd-menu-item" id="pdsec-legal">
+            <button class="bk-pd-menu-trigger" onclick="togglePdSection('legal')">
+              <span class="bk-pd-menu-trigger-left">
+                <span class="bk-pd-menu-trigger-dot" id="pdot-legal"></span>
+                Documentos legales
+              </span>
+              <svg class="bk-pd-menu-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="bk-pd-menu-panel">
+              <div class="bk-pd-menu-panel-inner">
+                <div class="bk-pd-card" style="display:flex;flex-direction:column;gap:8px">
+                  <a href="legal.html#tyc" target="_blank" style="text-decoration:none">
+                    <button class="bk-pd-btn bk-pd-btn-outline" style="margin:0">Términos y condiciones</button>
+                  </a>
+                  <a href="legal.html#contrato" target="_blank" style="text-decoration:none">
+                    <button class="bk-pd-btn bk-pd-btn-outline" style="margin:0">Contrato de suscripción</button>
+                  </a>
+                  <a href="legal.html#privacidad" target="_blank" style="text-decoration:none">
+                    <button class="bk-pd-btn bk-pd-btn-outline" style="margin:0">Aviso de privacidad</button>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Admin (solo admin) -->
+          <div class="bk-pd-menu-item" id="pdsec-admin" style="display:none">
+            <button class="bk-pd-menu-trigger" onclick="togglePdSection('admin')">
+              <span class="bk-pd-menu-trigger-left">
+                <span class="bk-pd-menu-trigger-dot ok"></span>
+                Administración
+              </span>
+              <svg class="bk-pd-menu-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="bk-pd-menu-panel">
+              <div class="bk-pd-menu-panel-inner">
+                <div class="bk-pd-card">
+                  <p style="font-size:13px;color:var(--mute);margin-bottom:12px">Tienes acceso al panel de administrador.</p>
+                  <a href="admin.html" style="text-decoration:none">
+                    <button class="bk-pd-btn bk-pd-btn-outline" style="width:100%">Ir al panel admin</button>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -1375,6 +1496,7 @@
     document.body.appendChild(drawer);
   }
 
+
   // Caché de datos del perfil — evita pegar a 3 endpoints cada vez que el
   // usuario abre el drawer. Se invalida al guardar perfil o al cambiar
   // conexión EB/Facebook. TTL: 60 segundos.
@@ -1387,6 +1509,72 @@
     _pdCacheAt = 0;
   }
   window.invalidateProfileCache = invalidateProfileCache;
+
+  // Accordion toggle
+  function togglePdSection(key) {
+    const item = document.getElementById('pdsec-' + key);
+    if (!item) return;
+    const isOpen = item.classList.contains('is-open');
+    // Cerrar todos
+    document.querySelectorAll('.bk-pd-menu-item.is-open').forEach(el => el.classList.remove('is-open'));
+    // Abrir el seleccionado si estaba cerrado
+    if (!isOpen) item.classList.add('is-open');
+  }
+  window.togglePdSection = togglePdSection;
+
+  // Checkout Stripe
+  async function startCheckout() {
+    const tok = getToken();
+    if (!tok) return;
+    const btn = document.getElementById('pd-sub-btn');
+    const toast = document.getElementById('pd-toast-sub');
+    if (btn) { btn.disabled = true; btn.textContent = 'Redirigiendo…'; }
+    try {
+      const r = await fetch(API_BASE + '/subscription/checkout', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan_id: 'pro',
+          success_url: window.location.origin + '/index.html?sub=ok',
+          cancel_url: window.location.href
+        })
+      });
+      const d = await r.json();
+      if (d.checkout_url) {
+        window.location.href = d.checkout_url;
+      } else {
+        throw new Error(d.detail || 'Error al iniciar pago');
+      }
+    } catch(e) {
+      if (toast) { toast.textContent = e.message || 'Error al conectar con Stripe.'; toast.className = 'bk-pd-toast err'; }
+      if (btn) { btn.disabled = false; btn.textContent = 'Activar Broquer Max'; }
+    }
+  }
+  window.startCheckout = startCheckout;
+
+  // Cancelar suscripcion
+  async function cancelSubscription() {
+    const tok = getToken();
+    if (!tok) return;
+    if (!confirm('¿Confirmas que deseas cancelar tu suscripción? Seguirás teniendo acceso hasta el fin del período pagado.')) return;
+    const toast = document.getElementById('pd-toast-sub');
+    try {
+      const r = await fetch(API_BASE + '/subscription/cancel', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + tok }
+      });
+      const d = await r.json();
+      if (r.ok) {
+        if (toast) { toast.textContent = 'Suscripción cancelada. Tu acceso continúa hasta el fin del período actual.'; toast.className = 'bk-pd-toast ok'; }
+        invalidateProfileCache();
+      } else {
+        throw new Error(d.detail || 'Error al cancelar');
+      }
+    } catch(e) {
+      if (toast) { toast.textContent = e.message || 'Error al cancelar.'; toast.className = 'bk-pd-toast err'; }
+    }
+  }
+  window.cancelSubscription = cancelSubscription;
 
   async function loadProfileData() {
     const tok = getToken();
@@ -1422,7 +1610,8 @@
     const data = {
       usuario: usuarioRes.status === 'fulfilled' ? (usuarioRes.value[0] || {}) : {},
       eb:      profileStatus.eb || { configured: false },
-      fb:      profileStatus.fb || { connected: false }
+      fb:      profileStatus.fb || { connected: false },
+      sub:     profileStatus.sub || { active: false }
     };
 
     _pdCache = data;
@@ -1440,6 +1629,7 @@
 
     const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
     const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    const setDot = (id, cls) => { const el = document.getElementById(id); if (el) el.className = 'bk-pd-menu-trigger-dot ' + cls; };
 
     set('pd-avatar', ini2 || '?');
     set('pd-name', nombre || user.email || '—');
@@ -1448,8 +1638,11 @@
     setVal('pd-input-tel', p.telefono || '');
     setVal('pd-input-email', user.email || '');
 
+    // Datos dot — siempre ok si hay nombre
+    setDot('pdot-datos', nombre ? 'ok' : 'warn');
+
     const badge = document.getElementById('pd-role-badge');
-    const adminSec = document.getElementById('pd-admin-section');
+    const adminSec = document.getElementById('pdsec-admin');
     if (badge) {
       if (p.rol === 'admin') {
         badge.textContent = 'Admin';
@@ -1470,10 +1663,12 @@
       if (data.eb && data.eb.configured) {
         dot.className = 'dot ok';
         txt.textContent = 'Conectado — key: ' + data.eb.masked;
+        setDot('pdot-eb', 'ok');
         if (discBtn) discBtn.style.display = 'block';
       } else {
         dot.className = 'dot warn';
         txt.textContent = 'Sin conectar';
+        setDot('pdot-eb', 'warn');
         if (discBtn) discBtn.style.display = 'none';
       }
     }
@@ -1487,14 +1682,33 @@
       if (data.fb && data.fb.connected) {
         fdot.className = 'dot ok';
         ftxt.textContent = 'Conectado — ' + (data.fb.page_name || 'página vinculada');
+        setDot('pdot-fb', 'ok');
         if (fbtn) fbtn.textContent = 'Cambiar página de Facebook';
         if (fdisBtn) fdisBtn.style.display = 'block';
       } else {
         fdot.className = 'dot warn';
         ftxt.textContent = 'Sin conectar';
+        setDot('pdot-fb', 'warn');
         if (fbtn) fbtn.textContent = 'Conectar página de Facebook';
         if (fdisBtn) fdisBtn.style.display = 'none';
       }
+    }
+
+    // Suscripcion
+    if (data.sub) {
+      const active = data.sub.active;
+      const badge2 = document.getElementById('pd-sub-badge');
+      const info = document.getElementById('pd-sub-info');
+      const btn = document.getElementById('pd-sub-btn');
+      const cancelBtn = document.getElementById('pd-sub-cancel-btn');
+      setDot('pdot-sub', active ? 'ok' : 'warn');
+      if (badge2) {
+        badge2.textContent = active ? (data.sub.plan || 'Broquer Max') : 'Sin plan activo';
+        badge2.className = 'bk-pd-sub-badge' + (active ? '' : ' inactive');
+      }
+      if (info) info.textContent = active ? 'Tu suscripción está activa.' : 'Activa tu suscripción para acceder a todas las funciones.';
+      if (btn) btn.style.display = active ? 'none' : 'flex';
+      if (cancelBtn) cancelBtn.style.display = active ? 'flex' : 'none';
     }
   }
 
