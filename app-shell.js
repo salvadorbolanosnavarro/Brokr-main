@@ -15,7 +15,7 @@
   window.__brokrShellLoaded = true;
 
   /* ── Config ── */
-  const API_BASE = 'https://api.navarroai.com.mx';
+  const API_BASE = 'https://api.broquer.app';
   const SB_URL   = 'https://urtgysmtnvoqaljuhntz.supabase.co';
   const SB_KEY   = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
   window.API_BASE = API_BASE;
