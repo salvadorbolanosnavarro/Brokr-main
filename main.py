@@ -5228,3 +5228,89 @@ async def importar_contactos_eb(request: Request):
         "omitidos": omitidos,
         "errores": errores,
     }
+
+# ─────────────────────────────────────────────
+# ADMIN: actualizar plan de cualquier usuario
+# Usa service key → bypasea RLS
+# Solo accesible si el caller tiene rol=admin
+# ─────────────────────────────────────────────
+@app.post("/admin/set-plan")
+async def admin_set_plan(request: Request):
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autenticado.")
+
+    # Verificar que el caller es admin
+    rol = await get_user_rol(user_id)
+    if rol != "admin":
+        raise HTTPException(status_code=403, detail="Acceso denegado.")
+
+    body = await request.json()
+    target_id = body.get("user_id", "").strip()
+    plan = body.get("plan", "").strip()
+    activo = body.get("activo", True)
+
+    if not target_id or not plan:
+        raise HTTPException(status_code=400, detail="user_id y plan son requeridos.")
+
+    PLANES_VALIDOS = {"admin", "equipo", "max", "free"}
+    if plan not in PLANES_VALIDOS:
+        raise HTTPException(status_code=400, detail=f"Plan inválido: {plan}")
+
+    # PATCH a usuarios con service key (bypasea RLS)
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.patch(
+            f"{SUPABASE_URL}/rest/v1/usuarios?id=eq.{target_id}",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                "Content-Type": "application/json",
+                "Prefer": "return=minimal",
+            },
+            json={"plan": plan, "activo": activo}
+        )
+    if r.status_code not in (200, 204):
+        raise HTTPException(status_code=500, detail=f"Error actualizando usuario: {r.text}")
+
+    # Si plan es equipo, garantizar fila en suscripciones
+    if plan == "equipo":
+        async with httpx.AsyncClient(timeout=10) as client:
+            r_exist = await client.get(
+                f"{SUPABASE_URL}/rest/v1/suscripciones",
+                headers={
+                    "apikey": SUPABASE_SERVICE_KEY,
+                    "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                },
+                params={"user_id": f"eq.{target_id}", "select": "id", "limit": "1"}
+            )
+        sub_data = {
+            "plan_id": "equipo",
+            "plan_nombre": "Equipo Interno",
+            "status": "active",
+            "updated_at": datetime.utcnow().isoformat(),
+        }
+        async with httpx.AsyncClient(timeout=10) as client:
+            if r_exist.status_code == 200 and r_exist.json():
+                await client.patch(
+                    f"{SUPABASE_URL}/rest/v1/suscripciones?user_id=eq.{target_id}",
+                    headers={
+                        "apikey": SUPABASE_SERVICE_KEY,
+                        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                        "Content-Type": "application/json",
+                        "Prefer": "return=minimal",
+                    },
+                    json=sub_data
+                )
+            else:
+                await client.post(
+                    f"{SUPABASE_URL}/rest/v1/suscripciones",
+                    headers={
+                        "apikey": SUPABASE_SERVICE_KEY,
+                        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                        "Content-Type": "application/json",
+                        "Prefer": "return=minimal",
+                    },
+                    json={"user_id": target_id, **sub_data}
+                )
+
+    return {"ok": True, "user_id": target_id, "plan": plan}

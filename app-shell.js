@@ -1538,7 +1538,7 @@
         method: 'POST',
         headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          plan_id: 'pro',
+          plan_id: 'max',
           success_url: window.location.origin + '/index.html?sub=ok',
           cancel_url: window.location.href
         })
@@ -1948,7 +1948,7 @@
         method: 'POST',
         headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          plan_id: 'pro',
+          plan_id: 'max',
           success_url: window.location.origin + '/index.html?suscripcion=ok',
           cancel_url: window.location.href
         })
@@ -1978,7 +1978,7 @@
   }
 
   async function ensureSubscriptionOrGate(profile) {
-    if (profile?.isAdmin || profile?.profile?.plan === 'admin') return true;
+    if (profile?.isAdmin || profile?.profile?.plan === 'admin' || profile?.profile?.rol === 'equipo' || profile?.profile?.plan === 'equipo') return true;
     const tok = getToken();
 
     // Si el usuario regresa de Stripe con ?suscripcion=ok o ?sub=ok,
