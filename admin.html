@@ -3,488 +3,714 @@
 <head>
 <meta charset="UTF-8"/>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>Admin · Broquer</title>
+<title>Broquer · Admin</title>
 <link rel="stylesheet" href="brokr-theme.css"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Inter', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--paper);color:var(--ink);font-family:var(--font-sans);-webkit-font-smoothing:antialiased}
+button{font-family:inherit;border:none;background:none;cursor:pointer;color:inherit}
+input{font-family:inherit}
 
-/* ── Layout ── */
-.root { display: flex; height: 100vh; overflow: hidden; }
-.left { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; border-right: 1px solid var(--line); background: var(--bone); height: 100vh; overflow: hidden; }
-.right { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+/* ── Layout root ─────────────────────────── */
+.adm-root{display:grid;grid-template-columns:340px 1fr;height:100vh;overflow:hidden}
+@media(max-width:880px){.adm-root{grid-template-columns:1fr}}
 
-/* ── Left head ── */
-.left-head { padding: 20px 16px 14px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
-.left-head h1 { font-family: 'Inter Tight', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: -0.02em; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-.badge { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 7px; border-radius: 99px; background: rgba(184,75,63,0.1); color: var(--danger); border: 1px solid rgba(184,75,63,0.2); }
+/* ── Sidebar (lista) ─────────────────────── */
+.adm-side{display:flex;flex-direction:column;border-right:1px solid var(--line);background:var(--bone);min-height:0}
+@media(max-width:880px){.adm-side{border-right:none;border-bottom:1px solid var(--line)}}
 
-.stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 5px; margin-bottom: 12px; }
-.stat { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 7px 6px; text-align: center; }
-.stat .v { font-family: 'Inter Tight', sans-serif; font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
-.stat .l { font-size: 10px; color: var(--mute); margin-top: 1px; }
+.adm-side__top{padding:20px 18px 14px;border-bottom:1px solid var(--line);flex-shrink:0}
+.adm-side__head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.adm-side__title{font-family:var(--font-display);font-size:17px;font-weight:700;letter-spacing:-0.02em;display:flex;align-items:center;gap:8px}
+.adm-side__back{font-size:12px;color:var(--mute);text-decoration:none;font-weight:500;padding:6px 10px;border-radius:99px;border:1px solid var(--line-2);background:var(--paper)}
+.adm-side__back:hover{color:var(--ink);background:var(--paper-2)}
 
-.search { position: relative; }
-.search svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--mute-2); pointer-events: none; }
-.search input { width: 100%; padding: 7px 10px 7px 30px; background: var(--paper); border: 1px solid var(--line-2); border-radius: var(--r-sm); font-size: 13px; font-family: inherit; color: var(--ink); outline: none; }
-.search input:focus { border-color: var(--ink); }
+.adm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px}
+.adm-stat{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:9px 6px;text-align:center}
+.adm-stat__v{font-family:var(--font-display);font-size:18px;font-weight:700;letter-spacing:-0.02em;color:var(--ink)}
+.adm-stat__l{font-size:10px;color:var(--mute);margin-top:2px;letter-spacing:0.04em;text-transform:uppercase}
 
-/* ── Filters ── */
-.filters { display: flex; gap: 4px; overflow-x: auto; padding: 8px 16px; border-bottom: 1px solid var(--line); scrollbar-width: none; flex-shrink: 0; }
-.filters::-webkit-scrollbar { display: none; }
-.chip { flex-shrink: 0; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--line-2); background: var(--paper); color: var(--mute); white-space: nowrap; }
-.chip.on { background: var(--ink); border-color: var(--ink); color: var(--bone); }
+.adm-search{position:relative}
+.adm-search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--mute-2)}
+.adm-search input{width:100%;padding:9px 12px 9px 34px;background:var(--paper);border:1px solid var(--line-2);border-radius:var(--r);font-size:13px;color:var(--ink);outline:none}
+.adm-search input:focus{border-color:var(--ink)}
+.adm-search input::placeholder{color:var(--mute-2)}
 
-/* ── User list ── */
-.user-list { flex: 1; overflow-y: auto; padding: 5px; }
-.user-list::-webkit-scrollbar { width: 3px; }
-.user-list::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 3px; }
-.user-row { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: var(--r); cursor: pointer; border: 1px solid transparent; }
-.user-row:hover { background: var(--paper-2); }
-.user-row.on { background: var(--ink); border-color: var(--ink); }
-.user-row.on .row-name { color: var(--bone); }
-.user-row.on .row-email { color: rgba(255,255,255,0.45); }
-.avatar { width: 32px; height: 32px; border-radius: 9px; background: var(--ink); color: var(--bone); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; flex-shrink: 0; }
-.avatar.off { background: var(--mute-3); }
-.row-info { flex: 1; min-width: 0; }
-.row-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.row-email { font-size: 11px; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
-.tag { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 99px; flex-shrink: 0; }
-.t-admin  { background: rgba(184,75,63,0.12); color: var(--danger); }
-.t-equipo { background: rgba(47,74,58,0.1); color: #2F4A3A; border: 1px solid rgba(47,74,58,0.2); }
-.t-max    { background: rgba(10,10,10,0.08); color: var(--ink-2); }
-.t-free   { background: var(--paper-2); color: var(--mute); border: 1px solid var(--line-2); }
-.empty-list { padding: 32px 16px; text-align: center; color: var(--mute); font-size: 13px; }
+.adm-filters{display:flex;gap:6px;overflow-x:auto;padding:10px 18px;border-bottom:1px solid var(--line);flex-shrink:0;scrollbar-width:none}
+.adm-filters::-webkit-scrollbar{display:none}
+.adm-chip{flex-shrink:0;padding:5px 12px;border-radius:99px;font-size:11px;font-weight:600;border:1px solid var(--line-2);background:var(--paper);color:var(--mute);white-space:nowrap;letter-spacing:-0.005em}
+.adm-chip:hover{color:var(--ink)}
+.adm-chip.is-on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
 
-/* ── Right empty ── */
-.right-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--mute-2); gap: 8px; }
-.right-empty p { font-size: 13px; }
+.adm-list{flex:1;overflow-y:auto;padding:6px 8px 24px}
+.adm-list::-webkit-scrollbar{width:4px}
+.adm-list::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:4px}
+.adm-empty{padding:40px 16px;text-align:center;color:var(--mute);font-size:13px}
 
-/* ── Detail ── */
-.detail { display: none; flex-direction: column; height: 100%; }
-.detail.on { display: flex; }
+.adm-row{display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:var(--r);cursor:pointer;border:1px solid transparent;margin-bottom:2px}
+.adm-row:hover{background:var(--paper-2)}
+.adm-row.is-on{background:var(--ink);border-color:var(--ink)}
+.adm-row.is-on .adm-row__name{color:var(--paper)}
+.adm-row.is-on .adm-row__email{color:rgba(247,245,238,0.55)}
 
-.det-head { padding: 18px 24px 14px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 12px; flex-shrink: 0; background: var(--bone); }
-.det-avatar { width: 44px; height: 44px; border-radius: 12px; background: var(--ink); color: var(--bone); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0; }
-.det-avatar.off { background: var(--mute-3); }
-.det-info { flex: 1; }
-.det-name { font-family: 'Inter Tight', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: -0.02em; }
-.det-email { font-size: 12px; color: var(--mute); margin-top: 2px; }
-.det-meta { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
-.status-pill { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 99px; }
-.status-pill.active { background: var(--success-soft); color: var(--success); }
-.status-pill.inactive { background: var(--danger-soft); color: var(--danger); }
-.det-actions { display: flex; gap: 6px; }
-.btn { padding: 7px 13px; border-radius: var(--r-sm); font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; border: none; }
-.btn:hover { opacity: .82; }
-.btn-save { background: var(--ink); color: var(--bone); }
-.btn-deactivate { background: var(--danger-soft); color: var(--danger); }
-.btn-activate { background: var(--success-soft); color: var(--success); }
+.adm-row__av{width:34px;height:34px;border-radius:10px;background:var(--ink);color:var(--paper);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;letter-spacing:-0.005em}
+.adm-row__av.is-off{background:var(--mute-3);color:var(--paper)}
+.adm-row.is-on .adm-row__av{background:var(--paper);color:var(--ink)}
 
-.det-body { flex: 1; overflow-y: auto; padding: 20px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-content: start; }
-.det-body::-webkit-scrollbar { width: 3px; }
+.adm-row__info{flex:1;min-width:0}
+.adm-row__name{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-0.005em}
+.adm-row__email{font-size:11px;color:var(--mute);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-.section { background: var(--bone); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 14px; }
-.section.full { grid-column: 1 / -1; }
-.section-title { font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mute-2); margin-bottom: 10px; }
+.adm-row__tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;padding:3px 8px;border-radius:99px;flex-shrink:0}
+.t-admin {background:rgba(184,75,63,0.12);color:#B84B3F;border:1px solid rgba(184,75,63,0.2)}
+.t-equipo{background:rgba(47,74,58,0.10);color:#2F4A3A;border:1px solid rgba(47,74,58,0.2)}
+.t-active{background:rgba(47,74,58,0.10);color:#2F4A3A;border:1px solid rgba(47,74,58,0.2)}
+.t-free  {background:var(--paper-2);color:var(--mute);border:1px solid var(--line-2)}
+.t-off   {background:var(--paper-2);color:var(--mute-2);border:1px solid var(--line-2)}
 
-/* ── Plan grid ── */
-.plan-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 6px; }
-.plan-opt { padding: 10px 12px; border-radius: var(--r); border: 1.5px solid var(--line-2); background: var(--paper-2); cursor: pointer; text-align: left; }
-.plan-opt:hover { border-color: var(--line-3); }
-.plan-opt.sel { border-color: var(--ink); background: var(--paper); box-shadow: inset 0 0 0 1px var(--ink); }
-.plan-opt.sel-admin { border-color: var(--danger); background: var(--danger-soft); box-shadow: inset 0 0 0 1px var(--danger); }
-.plan-opt.sel-equipo { border-color: #2F4A3A; background: rgba(47,74,58,0.06); box-shadow: inset 0 0 0 1px #2F4A3A; }
-.plan-name { font-size: 13px; font-weight: 600; display: block; margin-bottom: 2px; }
-.plan-desc { font-size: 10px; color: var(--mute); }
+/* ── Detail panel ────────────────────────── */
+.adm-panel{display:flex;flex-direction:column;background:var(--paper);min-height:0;overflow-y:auto}
+.adm-panel::-webkit-scrollbar{width:4px}
+.adm-panel::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:4px}
 
-/* ── Info rows ── */
-.info-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
-.info-row:last-child { border-bottom: none; }
-.info-label { color: var(--mute); font-size: 12px; }
-.info-val { font-weight: 500; }
-.mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+.adm-empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--mute-2);gap:14px;padding:24px;text-align:center}
+.adm-empty-state svg{color:var(--mute-3)}
+.adm-empty-state p{font-size:14px;color:var(--mute)}
 
-/* ── Toast ── */
-.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bone); padding: 9px 20px; border-radius: 99px; font-size: 13px; font-weight: 500; z-index: 9999; opacity: 0; pointer-events: none; transition: opacity .2s; white-space: nowrap; }
-.toast.on { opacity: 1; }
+.adm-detail{display:none;flex-direction:column;min-height:100%}
+.adm-detail.is-on{display:flex}
 
-/* ── Mobile ── */
-.mobile { display: none; flex-direction: column; height: 100vh; }
-.mob-head { padding: calc(env(safe-area-inset-top,0px) + 14px) 16px 14px; background: var(--bone); border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; }
-.mob-head h1 { font-family: 'Inter Tight', sans-serif; font-size: 16px; font-weight: 700; flex: 1; }
-.mob-back { width: 32px; height: 32px; border-radius: 9px; background: var(--paper-2); border: 1px solid var(--line-2); display: flex; align-items: center; justify-content: center; text-decoration: none; color: var(--ink); font-size: 16px; }
-.mob-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: var(--line); border-bottom: 1px solid var(--line); }
-.mob-stat { background: var(--bone); padding: 12px 8px; text-align: center; }
-.mob-stat .v { font-family: 'Inter Tight', sans-serif; font-size: 19px; font-weight: 700; }
-.mob-stat .l { font-size: 10px; color: var(--mute); margin-top: 2px; }
-.mob-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mute-2); padding: 14px 16px 6px; }
-.notif-list { flex: 1; overflow-y: auto; padding: 4px 10px calc(env(safe-area-inset-bottom,0px) + 90px); }
-.notif-list::-webkit-scrollbar { display: none; }
-.notif-card { display: flex; align-items: flex-start; gap: 10px; padding: 11px 12px; margin-bottom: 5px; background: var(--bone); border: 1px solid var(--line); border-radius: var(--r); }
-.notif-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); flex-shrink: 0; margin-top: 5px; }
-.notif-dot.old { background: var(--mute-3); }
-.notif-info { flex: 1; }
-.notif-name { font-size: 14px; font-weight: 600; }
-.notif-email { font-size: 12px; color: var(--mute); margin-top: 1px; }
-.notif-time { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--mute-2); margin-top: 3px; }
-.notif-empty { text-align: center; padding: 40px 16px; color: var(--mute-2); font-size: 13px; }
+.adm-det__head{padding:24px 28px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-shrink:0;background:var(--bone)}
+.adm-det__av{width:50px;height:50px;border-radius:14px;background:var(--ink);color:var(--paper);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;letter-spacing:-0.02em;flex-shrink:0}
+.adm-det__av.is-off{background:var(--mute-3)}
+.adm-det__info{flex:1;min-width:0}
+.adm-det__name{font-family:var(--font-display);font-size:19px;font-weight:700;letter-spacing:-0.025em;color:var(--ink)}
+.adm-det__email{font-size:13px;color:var(--mute);margin-top:2px}
+.adm-det__meta{display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap}
+.adm-pill{font-size:10px;font-weight:600;padding:3px 9px;border-radius:99px;letter-spacing:-0.005em}
+.adm-pill.is-active{background:rgba(47,74,58,0.10);color:#2F4A3A;border:1px solid rgba(47,74,58,0.2)}
+.adm-pill.is-inactive{background:rgba(184,75,63,0.10);color:#B84B3F;border:1px solid rgba(184,75,63,0.2)}
 
-@media (max-width: 880px) { .root { display: none; } .mobile { display: flex; } }
-@media (min-width: 881px) { .root { display: flex; } .mobile { display: none; } }
+.adm-det__body{padding:24px 28px;display:grid;grid-template-columns:1fr 1fr;gap:16px;align-content:start}
+@media(max-width:1100px){.adm-det__body{grid-template-columns:1fr}}
+
+.adm-sec{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px}
+.adm-sec.full{grid-column:1/-1}
+.adm-sec__title{font-family:var(--font-mono);font-size:10px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:var(--mute-2);margin-bottom:14px}
+
+/* Rol selector — 3 botones */
+.adm-rolgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.adm-roloption{padding:14px 12px;border-radius:var(--r);border:1.5px solid var(--line-2);background:var(--paper);cursor:pointer;text-align:left;transition:all .15s ease}
+.adm-roloption:hover{border-color:var(--ink-3)}
+.adm-roloption__name{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:3px;letter-spacing:-0.005em}
+.adm-roloption__desc{font-size:11px;color:var(--mute);line-height:1.4}
+.adm-roloption.is-sel-admin{border-color:#B84B3F;background:rgba(184,75,63,0.04);box-shadow:inset 0 0 0 1px #B84B3F}
+.adm-roloption.is-sel-equipo{border-color:#2F4A3A;background:rgba(47,74,58,0.04);box-shadow:inset 0 0 0 1px #2F4A3A}
+.adm-roloption.is-sel-agente{border-color:var(--ink);background:var(--paper-2);box-shadow:inset 0 0 0 1px var(--ink)}
+
+/* Activo toggle */
+.adm-toggle{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 14px;border:1px solid var(--line-2);background:var(--paper);border-radius:var(--r)}
+.adm-toggle__lbl{font-size:13px;font-weight:500;color:var(--ink)}
+.adm-toggle__sub{font-size:11px;color:var(--mute);margin-top:2px}
+.adm-switch{position:relative;width:42px;height:24px;border-radius:99px;background:var(--mute-3);cursor:pointer;transition:background .2s ease;flex-shrink:0}
+.adm-switch::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--paper);transition:transform .2s ease;box-shadow:0 1px 2px rgba(10,10,10,0.15)}
+.adm-switch.is-on{background:#2F4A3A}
+.adm-switch.is-on::after{transform:translateX(18px)}
+
+/* Info rows */
+.adm-info{display:flex;flex-direction:column}
+.adm-info__row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;gap:14px}
+.adm-info__row:last-child{border-bottom:none;padding-bottom:0}
+.adm-info__lbl{color:var(--mute);font-size:12px}
+.adm-info__val{font-weight:500;color:var(--ink);text-align:right;word-break:break-word}
+.adm-mono{font-family:var(--font-mono);font-size:11px}
+
+/* Action bar bottom */
+.adm-actions{padding:16px 28px 24px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px;background:var(--bone);flex-shrink:0;position:sticky;bottom:0}
+.adm-btn{padding:10px 18px;border-radius:99px;font-size:13px;font-weight:600;letter-spacing:-0.005em;transition:all .15s ease}
+.adm-btn--ghost{background:transparent;color:var(--ink);border:1px solid var(--line-2)}
+.adm-btn--ghost:hover{background:var(--paper-2)}
+.adm-btn--save{background:var(--ink);color:var(--paper)}
+.adm-btn--save:hover{background:var(--ink-2)}
+.adm-btn--save:disabled{opacity:.4;cursor:not-allowed}
+
+/* Toast */
+.adm-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--paper);padding:11px 22px;border-radius:99px;font-size:13px;font-weight:500;z-index:9999;opacity:0;pointer-events:none;transition:all .25s ease;letter-spacing:-0.005em;max-width:90vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adm-toast.is-on{opacity:1;transform:translateX(-50%) translateY(0)}
+.adm-toast.is-err{background:#B84B3F}
+
+/* Loader */
+.adm-spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(247,245,238,0.3);border-top-color:var(--paper);border-radius:50%;animation:adm-spin .8s linear infinite}
+@keyframes adm-spin{to{transform:rotate(360deg)}}
+
+/* Mobile: detail as overlay */
+@media(max-width:880px){
+  .adm-side{height:100vh;display:flex}
+  .adm-side.is-hidden{display:none}
+  .adm-panel{position:fixed;inset:0;background:var(--paper);z-index:10;display:none}
+  .adm-panel.is-open{display:flex}
+  .adm-det__head{padding:18px 18px 16px;position:sticky;top:0;z-index:2}
+  .adm-det__head::before{content:'←';width:32px;height:32px;border-radius:10px;background:var(--paper-2);border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--ink);flex-shrink:0;margin-right:6px}
+  .adm-det__body{padding:18px;grid-template-columns:1fr}
+  .adm-actions{padding:14px 18px calc(env(safe-area-inset-bottom,0px) + 14px)}
+}
 </style>
 </head>
 <body data-app="admin">
 
-<!-- DESKTOP -->
-<div class="root">
-  <div class="left">
-    <div class="left-head">
-      <h1>Panel Admin <span class="badge">Admin</span></h1>
-      <div class="stats">
-        <div class="stat"><div class="v" id="s-total">—</div><div class="l">Usuarios</div></div>
-        <div class="stat"><div class="v" id="s-active">—</div><div class="l">Activos</div></div>
-        <div class="stat"><div class="v" id="s-paid">—</div><div class="l">Con plan</div></div>
-      </div>
-      <div class="search">
-        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
-        <input type="text" id="search-input" placeholder="Buscar usuario…" oninput="filterUsers()"/>
-      </div>
-    </div>
-    <div class="filters">
-      <div class="chip on" data-f="todos" onclick="setFilter('todos')">Todos</div>
-      <div class="chip" data-f="admin" onclick="setFilter('admin')">Admin</div>
-      <div class="chip" data-f="equipo" onclick="setFilter('equipo')">Equipo</div>
-      <div class="chip" data-f="max" onclick="setFilter('max')">Broquer Max</div>
-      <div class="chip" data-f="free" onclick="setFilter('free')">Free</div>
-      <div class="chip" data-f="inactivo" onclick="setFilter('inactivo')">Inactivos</div>
-    </div>
-    <div class="user-list" id="user-list"><div class="empty-list">Cargando…</div></div>
-  </div>
+<div class="adm-root" id="adm-root">
 
-  <div class="right">
-    <div class="right-empty" id="empty-state">
-      <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0"/></svg>
-      <p>Selecciona un usuario</p>
+  <!-- ─── Sidebar: lista de usuarios ─── -->
+  <aside class="adm-side" id="adm-side">
+    <div class="adm-side__top">
+      <div class="adm-side__head">
+        <h1 class="adm-side__title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 7l9 6 9-6"/></svg>
+          Admin
+        </h1>
+        <a class="adm-side__back" href="index.html">Volver</a>
+      </div>
+      <div class="adm-stats">
+        <div class="adm-stat"><div class="adm-stat__v" id="s-total">—</div><div class="adm-stat__l">Total</div></div>
+        <div class="adm-stat"><div class="adm-stat__v" id="s-pagados">—</div><div class="adm-stat__l">Activos</div></div>
+        <div class="adm-stat"><div class="adm-stat__v" id="s-inactivos">—</div><div class="adm-stat__l">Bloq.</div></div>
+      </div>
+      <div class="adm-search">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" id="adm-search" placeholder="Buscar por nombre o correo…" oninput="onSearch()"/>
+      </div>
     </div>
 
-    <div class="detail" id="detail">
-      <div class="det-head">
-        <div class="det-avatar" id="d-avatar">—</div>
-        <div class="det-info">
-          <div class="det-name" id="d-name">—</div>
-          <div class="det-email" id="d-email">—</div>
-          <div class="det-meta">
-            <span class="status-pill" id="d-status">—</span>
-            <span class="tag" id="d-plan-tag">—</span>
+    <div class="adm-filters" id="adm-filters">
+      <button class="adm-chip is-on" data-f="todos"   onclick="setFilter('todos')">Todos</button>
+      <button class="adm-chip"       data-f="admin"   onclick="setFilter('admin')">Admin</button>
+      <button class="adm-chip"       data-f="equipo"  onclick="setFilter('equipo')">Equipo</button>
+      <button class="adm-chip"       data-f="pagado"  onclick="setFilter('pagado')">Suscritos</button>
+      <button class="adm-chip"       data-f="agente"  onclick="setFilter('agente')">Sin suscripción</button>
+      <button class="adm-chip"       data-f="inactivo" onclick="setFilter('inactivo')">Bloqueados</button>
+    </div>
+
+    <div class="adm-list" id="adm-list">
+      <div class="adm-empty">Cargando…</div>
+    </div>
+  </aside>
+
+  <!-- ─── Detail panel ─── -->
+  <section class="adm-panel" id="adm-panel">
+
+    <div class="adm-empty-state" id="adm-empty-state">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      <p>Selecciona un usuario para administrar su cuenta</p>
+    </div>
+
+    <div class="adm-detail" id="adm-detail" role="region" aria-label="Detalle de usuario">
+      <header class="adm-det__head">
+        <div class="adm-det__av" id="d-av" onclick="closeMobileDetail()">—</div>
+        <div class="adm-det__info">
+          <div class="adm-det__name" id="d-name">—</div>
+          <div class="adm-det__email" id="d-email">—</div>
+          <div class="adm-det__meta">
+            <span class="adm-pill is-active" id="d-pill-activo">—</span>
+            <span class="adm-row__tag" id="d-pill-rol">—</span>
+            <span class="adm-row__tag" id="d-pill-sub">—</span>
           </div>
         </div>
-        <div class="det-actions">
-          <button class="btn btn-deactivate" id="d-toggle" onclick="toggleActive()">Desactivar</button>
-          <button class="btn btn-save" onclick="savePlan()">Guardar</button>
+      </header>
+
+      <div class="adm-det__body">
+
+        <div class="adm-sec full">
+          <div class="adm-sec__title">Rol</div>
+          <div class="adm-rolgrid">
+            <button type="button" class="adm-roloption" data-rol="admin" onclick="pickRol('admin')">
+              <div class="adm-roloption__name">Admin</div>
+              <div class="adm-roloption__desc">Acceso total al sistema y al panel de administración.</div>
+            </button>
+            <button type="button" class="adm-roloption" data-rol="equipo" onclick="pickRol('equipo')">
+              <div class="adm-roloption__name">Equipo</div>
+              <div class="adm-roloption__desc">Acceso completo gratis. Tus empleados internos.</div>
+            </button>
+            <button type="button" class="adm-roloption" data-rol="agente" onclick="pickRol('agente')">
+              <div class="adm-roloption__name">Agente</div>
+              <div class="adm-roloption__desc">Usuario regular. Necesita suscripción para entrar.</div>
+            </button>
+          </div>
         </div>
+
+        <div class="adm-sec">
+          <div class="adm-sec__title">Estado de la cuenta</div>
+          <div class="adm-toggle">
+            <div>
+              <div class="adm-toggle__lbl">Cuenta activa</div>
+              <div class="adm-toggle__sub" id="d-activo-sub">Puede iniciar sesión y usar el sistema.</div>
+            </div>
+            <div class="adm-switch" id="d-switch" onclick="toggleActivo()"></div>
+          </div>
+        </div>
+
+        <div class="adm-sec">
+          <div class="adm-sec__title">Suscripción de Stripe</div>
+          <div class="adm-info">
+            <div class="adm-info__row">
+              <span class="adm-info__lbl">Estado</span>
+              <span class="adm-info__val" id="d-sub-status">—</span>
+            </div>
+            <div class="adm-info__row">
+              <span class="adm-info__lbl">Plan</span>
+              <span class="adm-info__val" id="d-sub-plan">—</span>
+            </div>
+            <div class="adm-info__row">
+              <span class="adm-info__lbl">Actualizado</span>
+              <span class="adm-info__val adm-mono" id="d-sub-date">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="adm-sec full">
+          <div class="adm-sec__title">Información del usuario</div>
+          <div class="adm-info">
+            <div class="adm-info__row">
+              <span class="adm-info__lbl">Teléfono</span>
+              <span class="adm-info__val adm-mono" id="d-tel">—</span>
+            </div>
+            <div class="adm-info__row">
+              <span class="adm-info__lbl">Registro</span>
+              <span class="adm-info__val adm-mono" id="d-created">—</span>
+            </div>
+            <div class="adm-info__row">
+              <span class="adm-info__lbl">Stripe Customer</span>
+              <span class="adm-info__val adm-mono" id="d-stripe" style="font-size:10px">—</span>
+            </div>
+            <div class="adm-info__row">
+              <span class="adm-info__lbl">ID</span>
+              <span class="adm-info__val adm-mono" id="d-id" style="font-size:10px;word-break:break-all">—</span>
+            </div>
+          </div>
+        </div>
+
       </div>
 
-      <div class="det-body">
-        <div class="section">
-          <div class="section-title">Plan</div>
-          <div class="plan-grid" id="d-plan-grid"></div>
-        </div>
-        <div class="section">
-          <div class="section-title">Información</div>
-          <div class="info-row"><span class="info-label">Teléfono</span><span class="info-val mono" id="d-tel">—</span></div>
-          <div class="info-row"><span class="info-label">Registro</span><span class="info-val mono" id="d-fecha">—</span></div>
-          <div class="info-row"><span class="info-label">ID</span><span class="info-val mono" id="d-id" style="font-size:10px;word-break:break-all">—</span></div>
-        </div>
+      <div class="adm-actions">
+        <button class="adm-btn adm-btn--ghost" onclick="resetDetail()">Cancelar</button>
+        <button class="adm-btn adm-btn--save" id="d-save" onclick="saveChanges()">Guardar cambios</button>
       </div>
     </div>
-  </div>
+
+  </section>
+
 </div>
 
-<!-- MOBILE -->
-<div class="mobile">
-  <div class="mob-head">
-    <a class="mob-back" href="index.html">←</a>
-    <h1>Admin</h1>
-    <span class="badge">Admin</span>
-  </div>
-  <div class="mob-stats">
-    <div class="mob-stat"><div class="v" id="ms-total">—</div><div class="l">Usuarios</div></div>
-    <div class="mob-stat"><div class="v" id="ms-active">—</div><div class="l">Activos</div></div>
-    <div class="mob-stat"><div class="v" id="ms-paid">—</div><div class="l">Con plan</div></div>
-  </div>
-  <div class="mob-label">Actividad reciente</div>
-  <div class="notif-list" id="m-notif-list"><div class="notif-empty">Cargando…</div></div>
-</div>
-
-<div class="toast" id="toast"></div>
+<div class="adm-toast" id="toast"></div>
 
 <script>
-const API   = 'https://api.broquer.app';
+/* ════════════════════════════════════════════════════════════════
+   Broquer Admin Panel · 2026-05-20
+   Modelo: usuarios.rol (admin/equipo/agente) + usuarios.activo
+   ════════════════════════════════════════════════════════════════ */
+
+const API   = 'https://api.navarroai.com.mx';
 const SB    = 'https://urtgysmtnvoqaljuhntz.supabase.co';
 const SBKEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
 
-const PLANES = [
-  { id: 'admin',  nombre: 'Admin',       desc: 'Acceso total + panel admin',        selCls: 'sel-admin' },
-  { id: 'equipo', nombre: 'Equipo',      desc: 'Acceso gratuito — equipo interno',  selCls: 'sel-equipo' },
-  { id: 'max',    nombre: 'Broquer Max', desc: 'Plan de pago — acceso completo',    selCls: 'sel' },
-  { id: 'free',   nombre: 'Free',        desc: 'Solo Tus Inmuebles y Contactos',    selCls: 'sel' },
-];
+const ROL_LBL = { admin:'Admin', equipo:'Equipo', agente:'Agente' };
+const ROL_CLS = { admin:'t-admin', equipo:'t-equipo', agente:'t-free' };
 
-const TAG_CLS  = { admin:'t-admin', equipo:'t-equipo', max:'t-max', free:'t-free' };
-const TAG_LBL  = { admin:'Admin', equipo:'Equipo', max:'Max', free:'Free' };
+const SUB_LBL = {
+  active:        'Suscrito',
+  trialing:      'Prueba',
+  canceled:      'Cancelada',
+  past_due:      'Atrasada',
+  sin_suscripcion:'—',
+  desactivada:   '—'
+};
+const SUB_CLS = {
+  active:'t-active', trialing:'t-active',
+  canceled:'t-off', past_due:'t-off',
+  sin_suscripcion:'t-free', desactivada:'t-off'
+};
 
-let token = '', users = [], filter = 'todos', search = '', selId = null;
+let token   = '';
+let users   = [];   // estado base (servidor)
+let filter  = 'todos';
+let search  = '';
+let selId   = null;
+let draft   = null; // edición pendiente del usuario seleccionado
+let _polling = null;
+let _lastIds = new Set();
 
-/* ── Auth ── */
-async function init() {
-  token = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || '';
-  if (!token) {
-    const ref = localStorage.getItem('sb_refresh');
-    if (ref) {
-      try {
-        const r = await fetch(SB + '/auth/v1/token?grant_type=refresh_token', {
-          method: 'POST',
-          headers: { apikey: SBKEY, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refresh_token: ref })
-        });
-        const d = await r.json();
-        if (d.access_token) {
-          token = d.access_token;
-          localStorage.setItem('sb_token', token);
-          localStorage.setItem('sb_refresh', d.refresh_token || ref);
-          sessionStorage.setItem('sb_token', token);
-        }
-      } catch(_) {}
-    }
-  }
-  if (!token) { location.href = 'login.html'; return; }
+/* ── Token & auth ─────────────────────────── */
+function getToken(){
+  return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || '';
+}
 
-  // Verificar que es admin via backend
-  try {
-    const r = await fetch(API + '/admin/me', { headers: { Authorization: 'Bearer ' + token } });
-    if (!r.ok) throw new Error();
+async function tryRefreshToken(){
+  const ref = localStorage.getItem('sb_refresh');
+  if(!ref) return false;
+  try{
+    const r = await fetch(SB + '/auth/v1/token?grant_type=refresh_token', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', apikey: SBKEY },
+      body: JSON.stringify({ refresh_token: ref })
+    });
     const d = await r.json();
-    if (d.rol !== 'admin') throw new Error();
-  } catch(_) {
-    alert('Acceso denegado.'); location.href = 'index.html'; return;
+    if(d.access_token){
+      localStorage.setItem('sb_token', d.access_token);
+      localStorage.setItem('sb_refresh', d.refresh_token || ref);
+      sessionStorage.setItem('sb_token', d.access_token);
+      token = d.access_token;
+      return true;
+    }
+  }catch(_){}
+  return false;
+}
+
+async function init(){
+  token = getToken();
+  if(!token){
+    const ok = await tryRefreshToken();
+    if(!ok){ location.href = 'login.html'; return; }
+  }
+
+  // Verificar admin
+  try{
+    const r = await fetch(API + '/admin/me', { headers:{ Authorization:'Bearer '+token } });
+    if(!r.ok){
+      if(r.status === 401){
+        const ok = await tryRefreshToken();
+        if(ok){ return init(); }
+      }
+      throw new Error('Acceso denegado');
+    }
+    const d = await r.json();
+    if(d.rol !== 'admin') throw new Error();
+  }catch(e){
+    alert('Acceso denegado. Solo administradores.');
+    location.href = 'index.html';
+    return;
   }
 
   await loadUsers();
   startPolling();
 }
 
-/* ── Data ── */
-async function loadUsers() {
-  try {
-    const r = await fetch(SB + '/rest/v1/usuarios?select=*&order=created_at.desc', {
-      headers: { apikey: SBKEY, Authorization: 'Bearer ' + token }
+/* ── Load data ────────────────────────────── */
+async function loadUsers(){
+  try{
+    const r = await fetch(API + '/admin/users', {
+      headers:{ Authorization:'Bearer '+token }
     });
-    users = await r.json();
+    if(!r.ok){
+      if(r.status === 401){
+        const ok = await tryRefreshToken();
+        if(ok) return loadUsers();
+      }
+      throw new Error('Error '+r.status);
+    }
+    const d = await r.json();
+    users = d.users || [];
+    users.forEach(u => _lastIds.add(u.id));
     renderAll();
-    users.forEach(u => lastIds.add(u.id));
-  } catch(_) {
-    document.getElementById('user-list').innerHTML = '<div class="empty-list">Error al cargar.</div>';
+  }catch(e){
+    document.getElementById('adm-list').innerHTML =
+      '<div class="adm-empty">No se pudo cargar la lista.<br><small>'+ (e.message||'Error') +'</small></div>';
   }
 }
 
-function renderAll() { updateStats(); renderList(); renderMobile(); }
+function renderAll(){ updateStats(); renderList(); }
 
-function updateStats() {
-  const total  = users.length;
-  const active = users.filter(u => u.activo !== false).length;
-  const paid   = users.filter(u => ['admin','equipo','max'].includes(u.plan)).length;
-  [['s-total','ms-total',total],['s-active','ms-active',active],['s-paid','ms-paid',paid]].forEach(([d,m,v]) => {
-    const de = document.getElementById(d); if(de) de.textContent = v;
-    const me = document.getElementById(m); if(me) me.textContent = v;
-  });
+function updateStats(){
+  const total     = users.length;
+  // "Activos" = cuentas activas con acceso real (admin/equipo/sub activa)
+  const activos   = users.filter(u =>
+    u.activo !== false && (
+      u.rol === 'admin' || u.rol === 'equipo' || u.sub_active
+    )
+  ).length;
+  const inactivos = users.filter(u => u.activo === false).length;
+  document.getElementById('s-total').textContent     = total;
+  document.getElementById('s-pagados').textContent   = activos;
+  document.getElementById('s-inactivos').textContent = inactivos;
 }
 
-/* ── List ── */
-function getFiltered() {
+/* ── List ─────────────────────────────────── */
+function getFiltered(){
   return users.filter(u => {
-    const q = search.toLowerCase();
-    if (q && !((u.nombre||'')+(u.email||'')).toLowerCase().includes(q)) return false;
-    if (filter === 'todos') return true;
-    if (filter === 'inactivo') return u.activo === false;
-    return (u.plan || 'free') === filter;
+    const q = (search||'').toLowerCase();
+    if(q){
+      const hit = ((u.nombre||'') + ' ' + (u.email||'')).toLowerCase().includes(q);
+      if(!hit) return false;
+    }
+    if(filter === 'todos') return true;
+    if(filter === 'inactivo') return u.activo === false;
+    if(filter === 'pagado')   return u.activo !== false && u.sub_active && u.rol === 'agente';
+    if(filter === 'admin')    return u.rol === 'admin';
+    if(filter === 'equipo')   return u.rol === 'equipo';
+    if(filter === 'agente')   return u.rol === 'agente' && !u.sub_active;
+    return true;
   });
 }
 
-function renderList() {
-  const el = document.getElementById('user-list');
+function renderList(){
+  const el = document.getElementById('adm-list');
   const list = getFiltered();
-  if (!list.length) { el.innerHTML = '<div class="empty-list">Sin resultados.</div>'; return; }
+  if(!list.length){ el.innerHTML = '<div class="adm-empty">Sin resultados.</div>'; return; }
   el.innerHTML = list.map(u => {
-    const plan = u.plan || 'free';
-    const ini  = (u.nombre || u.email || '?')[0].toUpperCase();
+    const rol  = u.rol || 'agente';
     const off  = u.activo === false;
-    return `<div class="user-row${u.id===selId?' on':''}" id="row-${u.id}" onclick="selectUser('${u.id}')">
-      <div class="avatar${off?' off':''}">${ini}</div>
-      <div class="row-info">
-        <div class="row-name">${u.nombre||'(Sin nombre)'}</div>
-        <div class="row-email">${u.email||'—'}</div>
+    const ini  = (u.nombre || u.email || '?')[0].toUpperCase();
+    // El "tag" de la fila prioriza: admin/equipo > suscrito > inactivo > sin sub
+    let tagCls, tagLbl;
+    if(off){ tagCls='t-off'; tagLbl='Bloqueado'; }
+    else if(rol === 'admin'){  tagCls='t-admin';  tagLbl='Admin'; }
+    else if(rol === 'equipo'){ tagCls='t-equipo'; tagLbl='Equipo'; }
+    else if(u.sub_active){     tagCls='t-active'; tagLbl='Suscrito'; }
+    else{                      tagCls='t-free';   tagLbl='Sin sub'; }
+
+    return `<div class="adm-row${u.id===selId?' is-on':''}" id="row-${u.id}" onclick="selectUser('${u.id}')">
+      <div class="adm-row__av${off?' is-off':''}">${escapeHtml(ini)}</div>
+      <div class="adm-row__info">
+        <div class="adm-row__name">${escapeHtml(u.nombre || '(Sin nombre)')}</div>
+        <div class="adm-row__email">${escapeHtml(u.email || '—')}</div>
       </div>
-      <span class="tag ${TAG_CLS[plan]||'t-free'}">${TAG_LBL[plan]||plan}</span>
+      <span class="adm-row__tag ${tagCls}">${tagLbl}</span>
     </div>`;
   }).join('');
 }
 
-function setFilter(f) {
+function setFilter(f){
   filter = f;
-  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.f === f));
+  document.querySelectorAll('.adm-chip').forEach(c =>
+    c.classList.toggle('is-on', c.dataset.f === f));
   renderList();
 }
-function filterUsers() { search = document.getElementById('search-input').value; renderList(); }
+function onSearch(){
+  search = document.getElementById('adm-search').value.trim();
+  renderList();
+}
 
-/* ── Detail ── */
-function selectUser(uid) {
+/* ── Detail ───────────────────────────────── */
+function selectUser(uid){
+  const u = users.find(x => x.id === uid);
+  if(!u) return;
   selId = uid;
-  const u = users.find(x => x.id === uid); if (!u) return;
-  document.querySelectorAll('.user-row').forEach(r => r.classList.remove('on'));
-  document.getElementById('row-'+uid)?.classList.add('on');
-  document.getElementById('empty-state').style.display = 'none';
-  document.getElementById('detail').classList.add('on');
+  // draft = copia editable
+  draft = { id: u.id, rol: u.rol || 'agente', activo: u.activo !== false };
 
-  const plan   = u.plan || 'free';
-  const active = u.activo !== false;
-  const ini    = (u.nombre || u.email || '?')[0].toUpperCase();
+  // Highlight row
+  document.querySelectorAll('.adm-row').forEach(r => r.classList.remove('is-on'));
+  document.getElementById('row-'+uid)?.classList.add('is-on');
 
-  const av = document.getElementById('d-avatar');
-  av.textContent = ini; av.className = 'det-avatar' + (active?'':' off');
+  document.getElementById('adm-empty-state').style.display = 'none';
+  document.getElementById('adm-detail').classList.add('is-on');
 
-  document.getElementById('d-name').textContent  = u.nombre || '(Sin nombre)';
-  document.getElementById('d-email').textContent = u.email  || '—';
+  // Mobile: show detail overlay
+  if(window.matchMedia('(max-width:880px)').matches){
+    document.getElementById('adm-panel').classList.add('is-open');
+  }
+
+  renderDetail(u);
+}
+
+function renderDetail(u){
+  const ini = (u.nombre || u.email || '?')[0].toUpperCase();
+  const av  = document.getElementById('d-av');
+  av.textContent = ini;
+  av.className = 'adm-det__av' + (draft.activo ? '' : ' is-off');
+
+  document.getElementById('d-name').textContent  = u.nombre  || '(Sin nombre)';
+  document.getElementById('d-email').textContent = u.email   || '—';
   document.getElementById('d-tel').textContent   = u.telefono || '—';
   document.getElementById('d-id').textContent    = u.id;
-  document.getElementById('d-fecha').textContent = u.created_at
-    ? new Date(u.created_at).toLocaleDateString('es-MX',{year:'numeric',month:'short',day:'numeric'}) : '—';
+  document.getElementById('d-stripe').textContent= u.stripe_customer_id || '—';
+  document.getElementById('d-created').textContent = u.created_at
+    ? new Date(u.created_at).toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'})
+    : '—';
 
-  const st = document.getElementById('d-status');
-  st.textContent = active ? 'Activo' : 'Inactivo';
-  st.className   = 'status-pill ' + (active ? 'active' : 'inactive');
+  // Pills
+  const pa = document.getElementById('d-pill-activo');
+  pa.textContent = draft.activo ? 'Activa' : 'Bloqueada';
+  pa.className   = 'adm-pill ' + (draft.activo ? 'is-active' : 'is-inactive');
 
-  const tb = document.getElementById('d-toggle');
-  tb.textContent = active ? 'Desactivar' : 'Activar';
-  tb.className   = 'btn ' + (active ? 'btn-deactivate' : 'btn-activate');
+  const pr = document.getElementById('d-pill-rol');
+  pr.textContent = ROL_LBL[draft.rol] || draft.rol;
+  pr.className   = 'adm-row__tag ' + (ROL_CLS[draft.rol] || 't-free');
 
-  renderPlanTag(plan);
-  renderPlanGrid(uid, plan);
+  const ps = document.getElementById('d-pill-sub');
+  if(draft.rol === 'agente'){
+    ps.textContent = SUB_LBL[u.sub_status] || u.sub_status || '—';
+    ps.className   = 'adm-row__tag ' + (SUB_CLS[u.sub_status] || 't-free');
+    ps.style.display = '';
+  } else {
+    ps.style.display = 'none';
+  }
+
+  // Sub info
+  document.getElementById('d-sub-status').textContent = SUB_LBL[u.sub_status] || u.sub_status || '—';
+  document.getElementById('d-sub-plan').textContent   = u.sub_plan || '—';
+  document.getElementById('d-sub-date').textContent   = u.sub_updated_at
+    ? new Date(u.sub_updated_at).toLocaleDateString('es-MX',{year:'numeric',month:'short',day:'numeric'})
+    : '—';
+
+  // Toggle activo
+  document.getElementById('d-switch').classList.toggle('is-on', draft.activo);
+  document.getElementById('d-activo-sub').textContent = draft.activo
+    ? 'Puede iniciar sesión y usar el sistema.'
+    : 'No podrá iniciar sesión hasta que la reactives.';
+
+  // Rol grid selection
+  renderRolGrid();
 }
 
-function renderPlanTag(plan) {
-  const pt = document.getElementById('d-plan-tag');
-  pt.textContent = TAG_LBL[plan] || plan;
-  pt.className   = 'tag ' + (TAG_CLS[plan] || 't-free');
+function renderRolGrid(){
+  document.querySelectorAll('.adm-roloption').forEach(b => {
+    b.classList.remove('is-sel-admin','is-sel-equipo','is-sel-agente');
+  });
+  const sel = document.querySelector(`.adm-roloption[data-rol="${draft.rol}"]`);
+  if(sel) sel.classList.add('is-sel-'+draft.rol);
 }
 
-function renderPlanGrid(uid, selected) {
-  document.getElementById('d-plan-grid').innerHTML = PLANES.map(p => {
-    const isSel = selected === p.id;
-    const cls   = isSel ? p.selCls : '';
-    return `<div class="plan-opt ${cls}" onclick="pickPlan('${uid}','${p.id}')">
-      <span class="plan-name">${p.nombre}</span>
-      <span class="plan-desc">${p.desc}</span>
-    </div>`;
-  }).join('');
+function pickRol(rol){
+  if(!draft) return;
+  draft.rol = rol;
+  // Re-render header pills + grid
+  const u = users.find(x => x.id === selId);
+  if(u) renderDetail(u);
 }
 
-function pickPlan(uid, plan) {
-  const u = users.find(x => x.id === uid); if (!u) return;
-  u.plan = plan;
-  renderPlanTag(plan);
-  renderPlanGrid(uid, plan);
+function toggleActivo(){
+  if(!draft) return;
+  draft.activo = !draft.activo;
+  const u = users.find(x => x.id === selId);
+  if(u) renderDetail(u);
 }
 
-function toggleActive() {
-  const u = users.find(x => x.id === selId); if (!u) return;
-  const newState = u.activo === false;
-  if (!confirm(newState ? '¿Activar esta cuenta?' : '¿Desactivar esta cuenta?')) return;
-  u.activo = newState;
-  const st = document.getElementById('d-status');
-  st.textContent = newState ? 'Activo' : 'Inactivo';
-  st.className   = 'status-pill ' + (newState ? 'active' : 'inactive');
-  const tb = document.getElementById('d-toggle');
-  tb.textContent = newState ? 'Desactivar' : 'Activar';
-  tb.className   = 'btn ' + (newState ? 'btn-deactivate' : 'btn-activate');
+function resetDetail(){
+  if(!selId){ closeMobileDetail(); return; }
+  const u = users.find(x => x.id === selId);
+  if(!u) return;
+  draft = { id: u.id, rol: u.rol || 'agente', activo: u.activo !== false };
+  renderDetail(u);
 }
 
-/* ── Save — va al backend con service key ── */
-async function savePlan() {
-  const u = users.find(x => x.id === selId); if (!u) return;
-  try {
-    const r = await fetch(API + '/admin/set-plan', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-      body: JSON.stringify({ user_id: u.id, plan: u.plan, activo: u.activo !== false })
-    });
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.detail || 'Error');
-    toast('Cambios guardados');
-    renderAll();
-  } catch(e) { toast('Error: ' + e.message); }
+function closeMobileDetail(){
+  if(window.matchMedia('(max-width:880px)').matches){
+    document.getElementById('adm-panel').classList.remove('is-open');
+  }
 }
 
-/* ── Mobile notifs ── */
-function renderMobile() {
-  const el = document.getElementById('m-notif-list'); if (!el) return;
-  const list = [...users].sort((a,b) => new Date(b.created_at)-new Date(a.created_at)).slice(0,30);
-  if (!list.length) { el.innerHTML = '<div class="notif-empty">Sin usuarios aún.</div>'; return; }
-  const now = Date.now();
-  el.innerHTML = list.map(u => {
-    const d = new Date(u.created_at);
-    const isNew = now - d.getTime() < 86400000;
-    return `<div class="notif-card">
-      <div class="notif-dot${isNew?'':' old'}"></div>
-      <div class="notif-info">
-        <div class="notif-name">${u.nombre||'(Sin nombre)'}</div>
-        <div class="notif-email">${u.email||'—'}</div>
-        <div class="notif-time">${relTime(d)}</div>
-      </div>
-    </div>`;
-  }).join('');
-}
+/* ── Save ─────────────────────────────────── */
+async function saveChanges(){
+  if(!draft) return;
+  const u = users.find(x => x.id === selId);
+  if(!u) return;
 
-function relTime(d) {
-  const diff = Date.now() - d.getTime();
-  const m = Math.floor(diff/60000), h = Math.floor(diff/3600000), dd = Math.floor(diff/86400000);
-  if (m < 1) return 'Ahora mismo';
-  if (m < 60) return `Hace ${m} min`;
-  if (h < 24) return `Hace ${h}h`;
-  if (dd < 7) return `Hace ${dd} día${dd>1?'s':''}`;
-  return d.toLocaleDateString('es-MX',{day:'numeric',month:'short'});
-}
+  const changes = [];
+  if((u.rol || 'agente') !== draft.rol)            changes.push('rol');
+  if((u.activo !== false) !== draft.activo)        changes.push('activo');
 
-/* ── Polling ── */
-let lastIds = new Set();
-function startPolling() {
-  setInterval(async () => {
-    try {
-      const r = await fetch(SB + '/rest/v1/usuarios?select=id,nombre,email,created_at&order=created_at.desc&limit=50', {
-        headers: { apikey: SBKEY, Authorization: 'Bearer ' + token }
+  if(!changes.length){ toast('No hay cambios.'); return; }
+
+  const saveBtn = document.getElementById('d-save');
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = '<span class="adm-spinner"></span>';
+
+  try{
+    if(changes.includes('rol')){
+      const r = await fetch(API + '/admin/user/rol', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+token },
+        body: JSON.stringify({ user_id: u.id, rol: draft.rol })
       });
-      const fresh = await r.json();
-      const nuevo = fresh.filter(u => !lastIds.has(u.id));
-      if (nuevo.length && lastIds.size > 0) {
-        nuevo.forEach(u => toast(`Nuevo usuario: ${u.nombre||u.email}`));
-        await loadUsers();
+      if(!r.ok){
+        const e = await r.json().catch(()=>({}));
+        throw new Error(e.detail || ('Error '+r.status));
       }
-      fresh.forEach(u => lastIds.add(u.id));
-    } catch(_) {}
+    }
+    if(changes.includes('activo')){
+      const r = await fetch(API + '/admin/user/activo', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+token },
+        body: JSON.stringify({ user_id: u.id, activo: draft.activo })
+      });
+      if(!r.ok){
+        const e = await r.json().catch(()=>({}));
+        throw new Error(e.detail || ('Error '+r.status));
+      }
+    }
+
+    // Aplicar al estado local
+    u.rol    = draft.rol;
+    u.activo = draft.activo;
+    toast('Cambios guardados.');
+    renderAll();
+    renderDetail(u);
+  }catch(e){
+    toast('Error: ' + (e.message || 'No se pudo guardar'), true);
+  }finally{
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Guardar cambios';
+  }
+}
+
+/* ── Polling para nuevos usuarios ─────────── */
+function startPolling(){
+  if(_polling) return;
+  _polling = setInterval(async () => {
+    try{
+      const r = await fetch(API + '/admin/users', {
+        headers:{ Authorization:'Bearer '+token }
+      });
+      if(!r.ok) return;
+      const d = await r.json();
+      const fresh = d.users || [];
+      const nuevos = fresh.filter(u => !_lastIds.has(u.id));
+      if(nuevos.length && _lastIds.size){
+        nuevos.forEach(u => toast('Nuevo usuario: ' + (u.nombre || u.email)));
+      }
+      users = fresh;
+      users.forEach(u => _lastIds.add(u.id));
+      renderAll();
+      // Si el detalle está abierto, refrescar
+      if(selId){
+        const u = users.find(x => x.id === selId);
+        if(u) renderDetail(u);
+      }
+    }catch(_){}
   }, 30000);
 }
 
-/* ── Toast ── */
-let _tt;
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('on');
-  clearTimeout(_tt); _tt = setTimeout(() => t.classList.remove('on'), 2800);
+/* ── Helpers ──────────────────────────────── */
+function escapeHtml(s){
+  return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+let _t;
+function toast(msg, isErr){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'adm-toast is-on' + (isErr ? ' is-err' : '');
+  clearTimeout(_t);
+  _t = setTimeout(() => t.classList.remove('is-on'), 3200);
+}
+
+/* Mobile: tapar el avatar del detalle para volver a la lista */
+document.addEventListener('click', e => {
+  if(e.target.closest('.adm-det__head') && window.matchMedia('(max-width:880px)').matches){
+    // sólo si tocan exactamente la cabecera del detalle (no inputs/etc)
+    if(e.target.classList.contains('adm-det__head') || e.target === document.getElementById('d-av')){
+      closeMobileDetail();
+    }
+  }
+});
 
 document.addEventListener('DOMContentLoaded', init);
 </script>
+
 </body>
 </html>

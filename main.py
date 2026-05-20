@@ -192,6 +192,33 @@ async def get_user_rol(user_id: str) -> str:
         pass
     return "agente"
 
+# Helper: obtiene rol + activo en una sola llamada
+async def get_user_access_state(user_id: str) -> dict:
+    """
+    Devuelve {'rol': str, 'activo': bool} para verificar acceso de un usuario.
+    Si la cuenta está desactivada (activo=False), ningún rol da acceso.
+    """
+    default = {"rol": "agente", "activo": True}
+    if not user_id or not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return default
+    try:
+        async with httpx.AsyncClient(timeout=8) as client:
+            r = await client.get(
+                f"{SUPABASE_URL}/rest/v1/usuarios",
+                headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
+                params={"id": f"eq.{user_id}", "select": "rol,activo", "limit": "1"}
+            )
+            if r.status_code == 200:
+                rows = r.json()
+                if rows:
+                    return {
+                        "rol": rows[0].get("rol") or "agente",
+                        "activo": rows[0].get("activo") if rows[0].get("activo") is not None else True,
+                    }
+    except Exception:
+        pass
+    return default
+
 @app.post("/config/eb-key")
 async def set_eb_key(req: EbKeyRequest, request: Request):
     user_id = await get_user_id_from_token(request)
@@ -5009,8 +5036,16 @@ async def subscription_status(request: Request):
     if not user_id:
         raise HTTPException(status_code=401, detail="No autenticado.")
 
+    # Verificar rol y estado activo en una sola llamada
+    access = await get_user_access_state(user_id)
+    rol = access["rol"]
+    activo = access["activo"]
+
+    # Cuenta desactivada: bloquear acceso sin importar rol o suscripción
+    if not activo:
+        return {"active": False, "plan": None, "plan_id": None, "status": "desactivada"}
+
     # Equipo interno y admin siempre tienen acceso activo sin necesidad de suscripción
-    rol = await get_user_rol(user_id)
     if rol in ("equipo", "admin"):
         return {"active": True, "plan": "Equipo Interno" if rol == "equipo" else "Admin", "plan_id": rol, "status": "active"}
 
@@ -5230,34 +5265,122 @@ async def importar_contactos_eb(request: Request):
     }
 
 # ─────────────────────────────────────────────
-# ADMIN: actualizar plan de cualquier usuario
-# Usa service key → bypasea RLS
-# Solo accesible si el caller tiene rol=admin
+# ADMIN
+# Endpoints basados en rol (admin/equipo/agente) + activo (bool).
+# El rol gobierna el acceso; las suscripciones de Stripe son solo para agentes.
+# Solo accesibles si el caller tiene rol=admin (verificado vía service key).
 # ─────────────────────────────────────────────
-@app.post("/admin/set-plan")
-async def admin_set_plan(request: Request):
+
+async def require_admin(request: Request) -> str:
+    """Verifica que el caller esté autenticado y tenga rol=admin. Devuelve su user_id."""
     user_id = await get_user_id_from_token(request)
     if not user_id:
         raise HTTPException(status_code=401, detail="No autenticado.")
-
-    # Verificar que el caller es admin
     rol = await get_user_rol(user_id)
     if rol != "admin":
         raise HTTPException(status_code=403, detail="Acceso denegado.")
+    return user_id
 
-    body = await request.json()
-    target_id = body.get("user_id", "").strip()
-    plan = body.get("plan", "").strip()
-    activo = body.get("activo", True)
 
-    if not target_id or not plan:
-        raise HTTPException(status_code=400, detail="user_id y plan son requeridos.")
+@app.get("/admin/me")
+async def admin_me(request: Request):
+    """Verifica que el usuario autenticado tiene rol=admin."""
+    await require_admin(request)
+    return {"ok": True, "rol": "admin"}
 
-    PLANES_VALIDOS = {"admin", "equipo", "max", "free"}
-    if plan not in PLANES_VALIDOS:
-        raise HTTPException(status_code=400, detail=f"Plan inválido: {plan}")
 
-    # PATCH a usuarios con service key (bypasea RLS)
+@app.get("/admin/users")
+async def admin_list_users(request: Request):
+    """
+    Lista todos los usuarios con su rol, estado activo y datos de suscripción.
+    Hace merge de tabla `usuarios` con tabla `suscripciones` (última por user_id).
+    """
+    await require_admin(request)
+
+    # 1) Traer todos los usuarios
+    async with httpx.AsyncClient(timeout=15) as client:
+        r_users = await client.get(
+            f"{SUPABASE_URL}/rest/v1/usuarios",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+            },
+            params={
+                "select": "id,email,nombre,telefono,rol,activo,created_at",
+                "order": "created_at.desc",
+                "limit": "10000",
+            },
+        )
+    if r_users.status_code != 200:
+        raise HTTPException(status_code=500, detail=f"Error listando usuarios: {r_users.text}")
+    users = r_users.json()
+
+    # 2) Traer todas las suscripciones (más reciente primero)
+    async with httpx.AsyncClient(timeout=15) as client:
+        r_subs = await client.get(
+            f"{SUPABASE_URL}/rest/v1/suscripciones",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+            },
+            params={
+                "select": "user_id,plan_id,plan_nombre,status,updated_at",
+                "order": "updated_at.desc",
+                "limit": "10000",
+            },
+        )
+    subs_by_user = {}
+    if r_subs.status_code == 200:
+        for s in r_subs.json():
+            uid = s.get("user_id")
+            if uid and uid not in subs_by_user:  # primera = más reciente
+                subs_by_user[uid] = s
+
+    # 3) Merge
+    result = []
+    for u in users:
+        uid = u.get("id")
+        sub = subs_by_user.get(uid)
+        result.append({
+            "id": uid,
+            "email": u.get("email"),
+            "nombre": u.get("nombre"),
+            "telefono": u.get("telefono"),
+            "rol": u.get("rol") or "agente",
+            "activo": u.get("activo") if u.get("activo") is not None else True,
+            "created_at": u.get("created_at"),
+            "sub_status": sub.get("status") if sub else None,
+            "sub_plan": sub.get("plan_nombre") if sub else None,
+            "sub_plan_id": sub.get("plan_id") if sub else None,
+            "sub_updated_at": sub.get("updated_at") if sub else None,
+            "sub_active": (sub.get("status") in ("active", "trialing")) if sub else False,
+        })
+
+    return {"ok": True, "users": result, "count": len(result)}
+
+
+class AdminRolReq(BaseModel):
+    user_id: str
+    rol: str
+
+
+@app.post("/admin/user/rol")
+async def admin_set_rol(req: AdminRolReq, request: Request):
+    """Cambia el rol de un usuario. Roles válidos: admin, equipo, agente."""
+    caller_id = await require_admin(request)
+
+    ROLES_VALIDOS = {"admin", "equipo", "agente"}
+    if req.rol not in ROLES_VALIDOS:
+        raise HTTPException(status_code=400, detail=f"Rol inválido. Válidos: {', '.join(sorted(ROLES_VALIDOS))}")
+
+    target_id = (req.user_id or "").strip()
+    if not target_id:
+        raise HTTPException(status_code=400, detail="user_id requerido.")
+
+    # Protección: el admin no puede degradarse a sí mismo (evita quedarse sin admins)
+    if target_id == caller_id and req.rol != "admin":
+        raise HTTPException(status_code=400, detail="No puedes cambiar tu propio rol de admin. Pide a otro admin que lo haga.")
+
     async with httpx.AsyncClient(timeout=10) as client:
         r = await client.patch(
             f"{SUPABASE_URL}/rest/v1/usuarios?id=eq.{target_id}",
@@ -5267,61 +5390,45 @@ async def admin_set_plan(request: Request):
                 "Content-Type": "application/json",
                 "Prefer": "return=minimal",
             },
-            json={"plan": plan, "activo": activo}
+            json={"rol": req.rol},
         )
     if r.status_code not in (200, 204):
-        raise HTTPException(status_code=500, detail=f"Error actualizando usuario: {r.text}")
+        raise HTTPException(status_code=500, detail=f"Error actualizando rol: {r.text}")
 
-    # Si plan es equipo, garantizar fila en suscripciones
-    if plan == "equipo":
-        async with httpx.AsyncClient(timeout=10) as client:
-            r_exist = await client.get(
-                f"{SUPABASE_URL}/rest/v1/suscripciones",
-                headers={
-                    "apikey": SUPABASE_SERVICE_KEY,
-                    "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                },
-                params={"user_id": f"eq.{target_id}", "select": "id", "limit": "1"}
-            )
-        sub_data = {
-            "plan_id": "equipo",
-            "plan_nombre": "Equipo Interno",
-            "status": "active",
-            "updated_at": datetime.utcnow().isoformat(),
-        }
-        async with httpx.AsyncClient(timeout=10) as client:
-            if r_exist.status_code == 200 and r_exist.json():
-                await client.patch(
-                    f"{SUPABASE_URL}/rest/v1/suscripciones?user_id=eq.{target_id}",
-                    headers={
-                        "apikey": SUPABASE_SERVICE_KEY,
-                        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                        "Content-Type": "application/json",
-                        "Prefer": "return=minimal",
-                    },
-                    json=sub_data
-                )
-            else:
-                await client.post(
-                    f"{SUPABASE_URL}/rest/v1/suscripciones",
-                    headers={
-                        "apikey": SUPABASE_SERVICE_KEY,
-                        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                        "Content-Type": "application/json",
-                        "Prefer": "return=minimal",
-                    },
-                    json={"user_id": target_id, **sub_data}
-                )
+    return {"ok": True, "user_id": target_id, "rol": req.rol}
 
-    return {"ok": True, "user_id": target_id, "plan": plan}
 
-@app.get("/admin/me")
-async def admin_me(request: Request):
-    """Verifica que el usuario autenticado tiene rol=admin."""
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autenticado.")
-    rol = await get_user_rol(user_id)
-    if rol != "admin":
-        raise HTTPException(status_code=403, detail="Acceso denegado.")
-    return {"ok": True, "rol": rol}
+class AdminActivoReq(BaseModel):
+    user_id: str
+    activo: bool
+
+
+@app.post("/admin/user/activo")
+async def admin_set_activo(req: AdminActivoReq, request: Request):
+    """Activa o desactiva una cuenta. Cuenta desactivada = sin acceso, sin importar rol o suscripción."""
+    caller_id = await require_admin(request)
+
+    target_id = (req.user_id or "").strip()
+    if not target_id:
+        raise HTTPException(status_code=400, detail="user_id requerido.")
+
+    # Protección: el admin no puede desactivarse a sí mismo
+    if target_id == caller_id and not req.activo:
+        raise HTTPException(status_code=400, detail="No puedes desactivar tu propia cuenta de admin.")
+
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.patch(
+            f"{SUPABASE_URL}/rest/v1/usuarios?id=eq.{target_id}",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                "Content-Type": "application/json",
+                "Prefer": "return=minimal",
+            },
+            json={"activo": bool(req.activo)},
+        )
+    if r.status_code not in (200, 204):
+        raise HTTPException(status_code=500, detail=f"Error actualizando activo: {r.text}")
+
+    return {"ok": True, "user_id": target_id, "activo": bool(req.activo)}
+
