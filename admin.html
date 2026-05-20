@@ -3,705 +3,488 @@
 <head>
 <meta charset="UTF-8"/>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
-<link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
 <title>Admin · Broquer</title>
 <link rel="stylesheet" href="brokr-theme.css"/>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: 'Inter', sans-serif;
-  background: var(--paper);
-  color: var(--ink);
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-}
+body { font-family: 'Inter', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; -webkit-font-smoothing: antialiased; }
 
-/* ══ DESKTOP ══════════════════════════════════ */
-.adm-root {
-  display: flex;
-  height: 100vh;
-  overflow: hidden;
-}
+/* ── Layout ── */
+.root { display: flex; height: 100vh; overflow: hidden; }
+.left { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; border-right: 1px solid var(--line); background: var(--bone); height: 100vh; overflow: hidden; }
+.right { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-/* Left panel */
-.adm-left {
-  width: 320px; flex-shrink: 0;
-  display: flex; flex-direction: column;
-  border-right: 1px solid var(--line);
-  background: var(--bone);
-  height: 100vh; overflow: hidden;
-}
-.adm-left-head {
-  padding: 20px 18px 14px;
-  border-bottom: 1px solid var(--line);
-  flex-shrink: 0;
-}
-.adm-left-head h1 {
-  font-family: 'Inter Tight', sans-serif;
-  font-size: 17px; font-weight: 700;
-  letter-spacing: -0.02em; color: var(--ink);
-  margin-bottom: 12px;
-  display: flex; align-items: center; gap: 8px;
-}
-.adm-badge {
-  font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
-  text-transform: uppercase; padding: 3px 8px;
-  border-radius: var(--r-pill);
-  background: rgba(184,75,63,0.1); color: var(--danger);
-  border: 1px solid rgba(184,75,63,0.2);
-}
-.adm-stats {
-  display: grid; grid-template-columns: repeat(3,1fr); gap: 6px;
-  margin-bottom: 12px;
-}
-.adm-stat {
-  background: var(--paper-2); border-radius: var(--r-sm);
-  padding: 7px 8px; text-align: center;
-  border: 1px solid var(--line);
-}
-.adm-stat .v {
-  font-family: 'Inter Tight', sans-serif;
-  font-size: 19px; font-weight: 700; color: var(--ink);
-  letter-spacing: -0.02em;
-}
-.adm-stat .l { font-size: 10px; color: var(--mute); margin-top: 1px; }
-.adm-search { position: relative; }
-.adm-search svg {
-  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
-  color: var(--mute-2); pointer-events: none;
-}
-.adm-search input {
-  width: 100%; padding: 8px 12px 8px 32px;
-  background: var(--paper-2); border: 1px solid var(--line-2);
-  border-radius: var(--r-sm); font-size: 13px;
-  font-family: inherit; color: var(--ink); outline: none;
-}
-.adm-search input:focus { border-color: var(--ink); background: var(--bone); }
+/* ── Left head ── */
+.left-head { padding: 20px 16px 14px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+.left-head h1 { font-family: 'Inter Tight', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: -0.02em; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.badge { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 7px; border-radius: 99px; background: rgba(184,75,63,0.1); color: var(--danger); border: 1px solid rgba(184,75,63,0.2); }
 
-.adm-filters {
-  display: flex; gap: 5px; overflow-x: auto; padding: 10px 18px;
-  border-bottom: 1px solid var(--line);
-  scrollbar-width: none; flex-shrink: 0;
-}
-.adm-filters::-webkit-scrollbar { display: none; }
-.adm-chip {
-  flex-shrink: 0; padding: 4px 11px; border-radius: var(--r-pill);
-  font-size: 11px; font-weight: 600; cursor: pointer;
-  border: 1px solid var(--line-2); background: var(--paper);
-  color: var(--mute); transition: all .15s; white-space: nowrap;
-}
-.adm-chip.active { background: var(--ink); border-color: var(--ink); color: var(--bone); }
+.stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 5px; margin-bottom: 12px; }
+.stat { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 7px 6px; text-align: center; }
+.stat .v { font-family: 'Inter Tight', sans-serif; font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
+.stat .l { font-size: 10px; color: var(--mute); margin-top: 1px; }
 
-.adm-user-list {
-  flex: 1; overflow-y: auto; padding: 6px;
-}
-.adm-user-list::-webkit-scrollbar { width: 3px; }
-.adm-user-list::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 3px; }
+.search { position: relative; }
+.search svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--mute-2); pointer-events: none; }
+.search input { width: 100%; padding: 7px 10px 7px 30px; background: var(--paper); border: 1px solid var(--line-2); border-radius: var(--r-sm); font-size: 13px; font-family: inherit; color: var(--ink); outline: none; }
+.search input:focus { border-color: var(--ink); }
 
-.adm-user-row {
-  display: flex; align-items: center; gap: 10px;
-  padding: 9px 11px; border-radius: var(--r);
-  cursor: pointer; transition: background .12s;
-  border: 1px solid transparent;
-}
-.adm-user-row:hover { background: var(--paper-2); }
-.adm-user-row.active { background: var(--ink); border-color: var(--ink); }
-.adm-user-row.active .adm-row-name { color: var(--bone); }
-.adm-user-row.active .adm-row-email { color: rgba(255,255,255,0.5); }
+/* ── Filters ── */
+.filters { display: flex; gap: 4px; overflow-x: auto; padding: 8px 16px; border-bottom: 1px solid var(--line); scrollbar-width: none; flex-shrink: 0; }
+.filters::-webkit-scrollbar { display: none; }
+.chip { flex-shrink: 0; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--line-2); background: var(--paper); color: var(--mute); white-space: nowrap; }
+.chip.on { background: var(--ink); border-color: var(--ink); color: var(--bone); }
 
-.adm-avatar {
-  width: 34px; height: 34px; border-radius: 9px;
-  background: var(--ink); color: var(--bone);
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 13px; flex-shrink: 0;
-}
-.adm-avatar.inactive { background: var(--mute-3); }
-.adm-row-info { flex: 1; min-width: 0; }
-.adm-row-name {
-  font-size: 13px; font-weight: 600; color: var(--ink);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.adm-row-email {
-  font-size: 11px; color: var(--mute);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;
-}
-.adm-row-tag {
-  font-size: 9px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.06em; padding: 2px 6px; border-radius: var(--r-pill);
-  flex-shrink: 0;
-}
-.rt-admin  { background: rgba(184,75,63,0.12); color: var(--danger); }
-.rt-equipo { background: rgba(47,74,58,0.1); color: #2F4A3A; border: 1px solid rgba(47,74,58,0.2); }
-.rt-max    { background: rgba(10,10,10,0.08); color: var(--ink-2); }
-.rt-free   { background: var(--paper-2); color: var(--mute); border: 1px solid var(--line-2); }
-.adm-empty { padding: 40px 16px; text-align: center; color: var(--mute); font-size: 13px; }
+/* ── User list ── */
+.user-list { flex: 1; overflow-y: auto; padding: 5px; }
+.user-list::-webkit-scrollbar { width: 3px; }
+.user-list::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 3px; }
+.user-row { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: var(--r); cursor: pointer; border: 1px solid transparent; }
+.user-row:hover { background: var(--paper-2); }
+.user-row.on { background: var(--ink); border-color: var(--ink); }
+.user-row.on .row-name { color: var(--bone); }
+.user-row.on .row-email { color: rgba(255,255,255,0.45); }
+.avatar { width: 32px; height: 32px; border-radius: 9px; background: var(--ink); color: var(--bone); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; flex-shrink: 0; }
+.avatar.off { background: var(--mute-3); }
+.row-info { flex: 1; min-width: 0; }
+.row-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row-email { font-size: 11px; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+.tag { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 99px; flex-shrink: 0; }
+.t-admin  { background: rgba(184,75,63,0.12); color: var(--danger); }
+.t-equipo { background: rgba(47,74,58,0.1); color: #2F4A3A; border: 1px solid rgba(47,74,58,0.2); }
+.t-max    { background: rgba(10,10,10,0.08); color: var(--ink-2); }
+.t-free   { background: var(--paper-2); color: var(--mute); border: 1px solid var(--line-2); }
+.empty-list { padding: 32px 16px; text-align: center; color: var(--mute); font-size: 13px; }
 
-/* Right panel */
-.adm-right {
-  flex: 1; display: flex; flex-direction: column;
-  height: 100vh; overflow: hidden;
-}
-.adm-right-empty {
-  flex: 1; display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  color: var(--mute-2); gap: 10px;
-}
-.adm-right-empty p { font-size: 13px; text-align: center; }
+/* ── Right empty ── */
+.right-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--mute-2); gap: 8px; }
+.right-empty p { font-size: 13px; }
 
-.adm-detail { display: none; flex-direction: column; height: 100%; overflow: hidden; }
-.adm-detail.visible { display: flex; }
+/* ── Detail ── */
+.detail { display: none; flex-direction: column; height: 100%; }
+.detail.on { display: flex; }
 
-.adm-detail-head {
-  padding: 20px 26px 16px;
-  border-bottom: 1px solid var(--line);
-  display: flex; align-items: center; gap: 14px;
-  flex-shrink: 0; background: var(--bone);
-}
-.adm-detail-avatar {
-  width: 46px; height: 46px; border-radius: 13px;
-  background: var(--ink); color: var(--bone);
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 17px; flex-shrink: 0;
-}
-.adm-detail-avatar.inactive { background: var(--mute-3); }
-.adm-detail-info { flex: 1; }
-.adm-detail-name {
-  font-family: 'Inter Tight', sans-serif;
-  font-size: 16px; font-weight: 700; color: var(--ink); letter-spacing: -0.02em;
-}
-.adm-detail-email { font-size: 12px; color: var(--mute); margin-top: 2px; }
-.adm-detail-meta { display: flex; align-items: center; gap: 6px; margin-top: 5px; }
-.adm-status-pill {
-  font-size: 10px; font-weight: 600; padding: 2px 8px;
-  border-radius: var(--r-pill); letter-spacing: 0.04em;
-}
-.adm-status-pill.active { background: var(--success-soft); color: var(--success); }
-.adm-status-pill.inactive { background: var(--danger-soft); color: var(--danger); }
+.det-head { padding: 18px 24px 14px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 12px; flex-shrink: 0; background: var(--bone); }
+.det-avatar { width: 44px; height: 44px; border-radius: 12px; background: var(--ink); color: var(--bone); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0; }
+.det-avatar.off { background: var(--mute-3); }
+.det-info { flex: 1; }
+.det-name { font-family: 'Inter Tight', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: -0.02em; }
+.det-email { font-size: 12px; color: var(--mute); margin-top: 2px; }
+.det-meta { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+.status-pill { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 99px; }
+.status-pill.active { background: var(--success-soft); color: var(--success); }
+.status-pill.inactive { background: var(--danger-soft); color: var(--danger); }
+.det-actions { display: flex; gap: 6px; }
+.btn { padding: 7px 13px; border-radius: var(--r-sm); font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; border: none; }
+.btn:hover { opacity: .82; }
+.btn-save { background: var(--ink); color: var(--bone); }
+.btn-deactivate { background: var(--danger-soft); color: var(--danger); }
+.btn-activate { background: var(--success-soft); color: var(--success); }
 
-.adm-detail-actions { display: flex; gap: 7px; }
-.adm-action-btn {
-  padding: 7px 13px; border-radius: var(--r-sm);
-  font-size: 12px; font-weight: 600; font-family: inherit;
-  cursor: pointer; border: none; transition: opacity .15s;
-}
-.adm-action-btn:hover { opacity: .82; }
-.adm-btn-save { background: var(--ink); color: var(--bone); }
-.adm-btn-deactivate { background: var(--danger-soft); color: var(--danger); }
-.adm-btn-activate { background: var(--success-soft); color: var(--success); }
+.det-body { flex: 1; overflow-y: auto; padding: 20px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-content: start; }
+.det-body::-webkit-scrollbar { width: 3px; }
 
-.adm-detail-body {
-  flex: 1; overflow-y: auto; padding: 22px 26px;
-  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
-  align-content: start;
-}
-.adm-detail-body::-webkit-scrollbar { width: 3px; }
-.adm-detail-body::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 3px; }
+.section { background: var(--bone); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 14px; }
+.section.full { grid-column: 1 / -1; }
+.section-title { font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mute-2); margin-bottom: 10px; }
 
-.adm-section {
-  background: var(--bone); border: 1px solid var(--line);
-  border-radius: var(--r-lg); padding: 16px;
-}
-.adm-section.full { grid-column: 1 / -1; }
-.adm-section-title {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 9px; font-weight: 500; letter-spacing: 0.14em;
-  text-transform: uppercase; color: var(--mute-2); margin-bottom: 12px;
-}
+/* ── Plan grid ── */
+.plan-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 6px; }
+.plan-opt { padding: 10px 12px; border-radius: var(--r); border: 1.5px solid var(--line-2); background: var(--paper-2); cursor: pointer; text-align: left; }
+.plan-opt:hover { border-color: var(--line-3); }
+.plan-opt.sel { border-color: var(--ink); background: var(--paper); box-shadow: inset 0 0 0 1px var(--ink); }
+.plan-opt.sel-admin { border-color: var(--danger); background: var(--danger-soft); box-shadow: inset 0 0 0 1px var(--danger); }
+.plan-opt.sel-equipo { border-color: #2F4A3A; background: rgba(47,74,58,0.06); box-shadow: inset 0 0 0 1px #2F4A3A; }
+.plan-name { font-size: 13px; font-weight: 600; display: block; margin-bottom: 2px; }
+.plan-desc { font-size: 10px; color: var(--mute); }
 
-.adm-plan-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 7px; }
-.adm-plan-opt {
-  padding: 9px 11px; border-radius: var(--r);
-  border: 1.5px solid var(--line-2); background: var(--paper-2);
-  cursor: pointer; transition: all .15s; text-align: left;
-}
-.adm-plan-opt:hover { border-color: var(--line-3); }
-.adm-plan-opt.sel { border-color: var(--ink); background: var(--paper); box-shadow: inset 0 0 0 1px var(--ink); }
-.adm-plan-opt.sel-admin { border-color: var(--danger); background: var(--danger-soft); box-shadow: inset 0 0 0 1px var(--danger); }
-.adm-plan-name { font-size: 13px; font-weight: 600; color: var(--ink); display: block; margin-bottom: 2px; }
-.adm-plan-desc { font-size: 10px; color: var(--mute); }
+/* ── Info rows ── */
+.info-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.info-row:last-child { border-bottom: none; }
+.info-label { color: var(--mute); font-size: 12px; }
+.info-val { font-weight: 500; }
+.mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
 
+/* ── Toast ── */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bone); padding: 9px 20px; border-radius: 99px; font-size: 13px; font-weight: 500; z-index: 9999; opacity: 0; pointer-events: none; transition: opacity .2s; white-space: nowrap; }
+.toast.on { opacity: 1; }
 
-.adm-info-row {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 7px 0; border-bottom: 1px solid var(--line);
-  font-size: 13px;
-}
-.adm-info-row:last-child { border-bottom: none; }
-.adm-info-label { color: var(--mute); font-size: 12px; }
-.adm-info-val { font-weight: 500; }
-.adm-mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+/* ── Mobile ── */
+.mobile { display: none; flex-direction: column; height: 100vh; }
+.mob-head { padding: calc(env(safe-area-inset-top,0px) + 14px) 16px 14px; background: var(--bone); border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; }
+.mob-head h1 { font-family: 'Inter Tight', sans-serif; font-size: 16px; font-weight: 700; flex: 1; }
+.mob-back { width: 32px; height: 32px; border-radius: 9px; background: var(--paper-2); border: 1px solid var(--line-2); display: flex; align-items: center; justify-content: center; text-decoration: none; color: var(--ink); font-size: 16px; }
+.mob-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: var(--line); border-bottom: 1px solid var(--line); }
+.mob-stat { background: var(--bone); padding: 12px 8px; text-align: center; }
+.mob-stat .v { font-family: 'Inter Tight', sans-serif; font-size: 19px; font-weight: 700; }
+.mob-stat .l { font-size: 10px; color: var(--mute); margin-top: 2px; }
+.mob-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mute-2); padding: 14px 16px 6px; }
+.notif-list { flex: 1; overflow-y: auto; padding: 4px 10px calc(env(safe-area-inset-bottom,0px) + 90px); }
+.notif-list::-webkit-scrollbar { display: none; }
+.notif-card { display: flex; align-items: flex-start; gap: 10px; padding: 11px 12px; margin-bottom: 5px; background: var(--bone); border: 1px solid var(--line); border-radius: var(--r); }
+.notif-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); flex-shrink: 0; margin-top: 5px; }
+.notif-dot.old { background: var(--mute-3); }
+.notif-info { flex: 1; }
+.notif-name { font-size: 14px; font-weight: 600; }
+.notif-email { font-size: 12px; color: var(--mute); margin-top: 1px; }
+.notif-time { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--mute-2); margin-top: 3px; }
+.notif-empty { text-align: center; padding: 40px 16px; color: var(--mute-2); font-size: 13px; }
 
-
-/* ══ MOBILE ════════════════════════════════ */
-.adm-mobile {
-  display: none; flex-direction: column;
-  height: 100vh; background: var(--paper);
-}
-.adm-mob-head {
-  padding: calc(env(safe-area-inset-top,0px) + 14px) 18px 14px;
-  background: var(--bone); border-bottom: 1px solid var(--line);
-  display: flex; align-items: center; gap: 10px;
-}
-.adm-mob-head h1 {
-  font-family: 'Inter Tight', sans-serif;
-  font-size: 17px; font-weight: 700; letter-spacing: -0.02em;
-  color: var(--ink); flex: 1;
-}
-.adm-mob-back {
-  width: 32px; height: 32px; border-radius: 9px;
-  background: var(--paper-2); border: 1px solid var(--line-2);
-  color: var(--ink); display: flex; align-items: center;
-  justify-content: center; cursor: pointer; flex-shrink: 0;
-  font-size: 16px; text-decoration: none;
-}
-.adm-mob-stats {
-  display: grid; grid-template-columns: repeat(3,1fr); gap: 1px;
-  background: var(--line); border-bottom: 1px solid var(--line);
-}
-.adm-mob-stat {
-  background: var(--bone); padding: 12px 10px; text-align: center;
-}
-.adm-mob-stat .v {
-  font-family: 'Inter Tight', sans-serif;
-  font-size: 20px; font-weight: 700; color: var(--ink);
-}
-.adm-mob-stat .l { font-size: 10px; color: var(--mute); margin-top: 2px; }
-.adm-mob-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 9px; font-weight: 500; letter-spacing: 0.14em;
-  text-transform: uppercase; color: var(--mute-2);
-  padding: 14px 18px 6px;
-}
-.adm-notif-list {
-  flex: 1; overflow-y: auto;
-  padding: 4px 10px calc(env(safe-area-inset-bottom,0px) + 90px);
-}
-.adm-notif-list::-webkit-scrollbar { display: none; }
-.adm-notif-card {
-  display: flex; align-items: flex-start; gap: 11px;
-  padding: 12px 13px; margin-bottom: 6px;
-  background: var(--bone); border: 1px solid var(--line);
-  border-radius: var(--r);
-  animation: notifIn .3s cubic-bezier(.16,1,.3,1);
-}
-@keyframes notifIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
-.adm-notif-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--success); flex-shrink: 0; margin-top: 5px;
-}
-.adm-notif-dot.old { background: var(--mute-3); }
-.adm-notif-info { flex: 1; }
-.adm-notif-name { font-size: 14px; font-weight: 600; color: var(--ink); }
-.adm-notif-email { font-size: 12px; color: var(--mute); margin-top: 1px; }
-.adm-notif-time {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px; color: var(--mute-2); margin-top: 3px;
-}
-.adm-notif-empty { text-align: center; padding: 50px 20px; color: var(--mute-2); font-size: 13px; }
-
-/* Toast */
-.adm-toast {
-  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-  background: var(--ink); color: var(--bone);
-  padding: 9px 20px; border-radius: var(--r-pill);
-  font-size: 13px; font-weight: 500;
-  box-shadow: 0 4px 20px rgba(0,0,0,.25);
-  z-index: 9999; opacity: 0; pointer-events: none;
-  transition: opacity .2s; white-space: nowrap;
-}
-.adm-toast.show { opacity: 1; }
-
-/* Responsive */
-@media (max-width: 880px) {
-  .adm-root { display: none; }
-  .adm-mobile { display: flex; }
-}
-@media (min-width: 881px) {
-  .adm-root { display: flex; }
-  .adm-mobile { display: none; }
-}
+@media (max-width: 880px) { .root { display: none; } .mobile { display: flex; } }
+@media (min-width: 881px) { .root { display: flex; } .mobile { display: none; } }
 </style>
 </head>
 <body data-app="admin">
 
-<!-- ══ DESKTOP ══ -->
-<div class="adm-root">
-  <div class="adm-left">
-    <div class="adm-left-head">
-      <h1>Panel Admin <span class="adm-badge">Admin</span></h1>
-      <div class="adm-stats">
-        <div class="adm-stat"><div class="v" id="d-stat-total">—</div><div class="l">Usuarios</div></div>
-        <div class="adm-stat"><div class="v" id="d-stat-active">—</div><div class="l">Activos</div></div>
-        <div class="adm-stat"><div class="v" id="d-stat-pro">—</div><div class="l">Pro/Admin</div></div>
+<!-- DESKTOP -->
+<div class="root">
+  <div class="left">
+    <div class="left-head">
+      <h1>Panel Admin <span class="badge">Admin</span></h1>
+      <div class="stats">
+        <div class="stat"><div class="v" id="s-total">—</div><div class="l">Usuarios</div></div>
+        <div class="stat"><div class="v" id="s-active">—</div><div class="l">Activos</div></div>
+        <div class="stat"><div class="v" id="s-paid">—</div><div class="l">Con plan</div></div>
       </div>
-      <div class="adm-search">
+      <div class="search">
         <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
-        <input type="text" id="d-search" placeholder="Buscar usuario…" oninput="filterUsers()"/>
+        <input type="text" id="search-input" placeholder="Buscar usuario…" oninput="filterUsers()"/>
       </div>
     </div>
-    <div class="adm-filters">
-      <div class="adm-chip active" data-filter="todos" onclick="setFilter('todos')">Todos</div>
-      <div class="adm-chip" data-filter="admin" onclick="setFilter('admin')">Admin</div>
-      <div class="adm-chip" data-filter="equipo" onclick="setFilter('equipo')">Equipo</div>
-      <div class="adm-chip" data-filter="max" onclick="setFilter('max')">Broquer Max</div>
-      <div class="adm-chip" data-filter="free" onclick="setFilter('free')">Free</div>
-      <div class="adm-chip" data-filter="inactivo" onclick="setFilter('inactivo')">Inactivos</div>
+    <div class="filters">
+      <div class="chip on" data-f="todos" onclick="setFilter('todos')">Todos</div>
+      <div class="chip" data-f="admin" onclick="setFilter('admin')">Admin</div>
+      <div class="chip" data-f="equipo" onclick="setFilter('equipo')">Equipo</div>
+      <div class="chip" data-f="max" onclick="setFilter('max')">Broquer Max</div>
+      <div class="chip" data-f="free" onclick="setFilter('free')">Free</div>
+      <div class="chip" data-f="inactivo" onclick="setFilter('inactivo')">Inactivos</div>
     </div>
-    <div class="adm-user-list" id="d-user-list">
-      <div class="adm-empty">Cargando usuarios…</div>
-    </div>
+    <div class="user-list" id="user-list"><div class="empty-list">Cargando…</div></div>
   </div>
 
-  <div class="adm-right">
-    <div class="adm-right-empty" id="d-empty-state">
-      <svg width="44" height="44" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0"/></svg>
-      <p>Selecciona un usuario<br>para ver sus detalles</p>
+  <div class="right">
+    <div class="right-empty" id="empty-state">
+      <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0"/></svg>
+      <p>Selecciona un usuario</p>
     </div>
 
-    <div class="adm-detail" id="d-detail">
-      <div class="adm-detail-head">
-        <div class="adm-detail-avatar" id="d-det-avatar">—</div>
-        <div class="adm-detail-info">
-          <div class="adm-detail-name" id="d-det-name">—</div>
-          <div class="adm-detail-email" id="d-det-email">—</div>
-          <div class="adm-detail-meta">
-            <span class="adm-status-pill" id="d-det-status">Activo</span>
-            <span class="adm-row-tag" id="d-det-plan-tag">—</span>
+    <div class="detail" id="detail">
+      <div class="det-head">
+        <div class="det-avatar" id="d-avatar">—</div>
+        <div class="det-info">
+          <div class="det-name" id="d-name">—</div>
+          <div class="det-email" id="d-email">—</div>
+          <div class="det-meta">
+            <span class="status-pill" id="d-status">—</span>
+            <span class="tag" id="d-plan-tag">—</span>
           </div>
         </div>
-        <div class="adm-detail-actions">
-          <button class="adm-action-btn adm-btn-deactivate" id="d-toggle-btn" onclick="toggleActiveDesktop()">Desactivar</button>
-          <button class="adm-action-btn adm-btn-save" onclick="saveUserDesktop()">Guardar cambios</button>
+        <div class="det-actions">
+          <button class="btn btn-deactivate" id="d-toggle" onclick="toggleActive()">Desactivar</button>
+          <button class="btn btn-save" onclick="savePlan()">Guardar</button>
         </div>
       </div>
 
-      <div class="adm-detail-body">
-        <div class="adm-section">
-          <div class="adm-section-title">Suscripción / Plan</div>
-          <div class="adm-plan-grid" id="d-plan-grid"></div>
+      <div class="det-body">
+        <div class="section">
+          <div class="section-title">Plan</div>
+          <div class="plan-grid" id="d-plan-grid"></div>
         </div>
-
-        <div class="adm-section">
-          <div class="adm-section-title">Información</div>
-          <div class="adm-info-row"><span class="adm-info-label">Teléfono</span><span class="adm-info-val adm-mono" id="d-det-tel">—</span></div>
-          <div class="adm-info-row"><span class="adm-info-label">Registro</span><span class="adm-info-val adm-mono" id="d-det-fecha">—</span></div>
-          <div class="adm-info-row"><span class="adm-info-label">ID</span><span class="adm-info-val adm-mono" id="d-det-id" style="font-size:10px">—</span></div>
+        <div class="section">
+          <div class="section-title">Información</div>
+          <div class="info-row"><span class="info-label">Teléfono</span><span class="info-val mono" id="d-tel">—</span></div>
+          <div class="info-row"><span class="info-label">Registro</span><span class="info-val mono" id="d-fecha">—</span></div>
+          <div class="info-row"><span class="info-label">ID</span><span class="info-val mono" id="d-id" style="font-size:10px;word-break:break-all">—</span></div>
         </div>
-
       </div>
     </div>
   </div>
 </div>
 
-<!-- ══ MOBILE ══ -->
-<div class="adm-mobile">
-  <div class="adm-mob-head">
-    <a class="adm-mob-back" href="index.html">←</a>
+<!-- MOBILE -->
+<div class="mobile">
+  <div class="mob-head">
+    <a class="mob-back" href="index.html">←</a>
     <h1>Admin</h1>
-    <span class="adm-badge">Admin</span>
+    <span class="badge">Admin</span>
   </div>
-  <div class="adm-mob-stats">
-    <div class="adm-mob-stat"><div class="v" id="m-stat-total">—</div><div class="l">Usuarios</div></div>
-    <div class="adm-mob-stat"><div class="v" id="m-stat-active">—</div><div class="l">Activos</div></div>
-    <div class="adm-mob-stat"><div class="v" id="m-stat-pro">—</div><div class="l">Pro/Admin</div></div>
+  <div class="mob-stats">
+    <div class="mob-stat"><div class="v" id="ms-total">—</div><div class="l">Usuarios</div></div>
+    <div class="mob-stat"><div class="v" id="ms-active">—</div><div class="l">Activos</div></div>
+    <div class="mob-stat"><div class="v" id="ms-paid">—</div><div class="l">Con plan</div></div>
   </div>
-  <div class="adm-mob-label">Actividad reciente</div>
-  <div class="adm-notif-list" id="m-notif-list">
-    <div class="adm-notif-empty">Cargando…</div>
-  </div>
+  <div class="mob-label">Actividad reciente</div>
+  <div class="notif-list" id="m-notif-list"><div class="notif-empty">Cargando…</div></div>
 </div>
 
-<div class="adm-toast" id="adm-toast"></div>
+<div class="toast" id="toast"></div>
 
 <script>
-const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
-const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
+const API   = 'https://api.broquer.app';
+const SB    = 'https://urtgysmtnvoqaljuhntz.supabase.co';
+const SBKEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
 
 const PLANES = [
-  { id: 'admin',       nombre: 'Admin',        desc: 'Acceso total + panel admin' },
-  { id: 'equipo',      nombre: 'Equipo',       desc: 'Acceso gratuito — equipo interno' },
-  { id: 'max',         nombre: 'Broquer Max',  desc: 'Plan de pago — acceso completo' },
-  { id: 'free',        nombre: 'Free',         desc: 'Solo Tus Inmuebles y Contactos' },
+  { id: 'admin',  nombre: 'Admin',       desc: 'Acceso total + panel admin',        selCls: 'sel-admin' },
+  { id: 'equipo', nombre: 'Equipo',      desc: 'Acceso gratuito — equipo interno',  selCls: 'sel-equipo' },
+  { id: 'max',    nombre: 'Broquer Max', desc: 'Plan de pago — acceso completo',    selCls: 'sel' },
+  { id: 'free',   nombre: 'Free',        desc: 'Solo Tus Inmuebles y Contactos',    selCls: 'sel' },
 ];
 
-let allUsers = [], currentFilter = 'todos', currentSearch = '';
-let sbToken = '', currentAdminId = '', selectedUserId = null;
-let lastSeenIds = new Set();
+const TAG_CLS  = { admin:'t-admin', equipo:'t-equipo', max:'t-max', free:'t-free' };
+const TAG_LBL  = { admin:'Admin', equipo:'Equipo', max:'Max', free:'Free' };
+
+let token = '', users = [], filter = 'todos', search = '', selId = null;
 
 /* ── Auth ── */
-async function adminInit() {
-  sbToken = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || '';
-  if (!sbToken) {
-    const refresh = localStorage.getItem('sb_refresh');
-    if (refresh) {
+async function init() {
+  token = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || '';
+  if (!token) {
+    const ref = localStorage.getItem('sb_refresh');
+    if (ref) {
       try {
-        const rr = await fetch(SB_URL + '/auth/v1/token?grant_type=refresh_token', {
+        const r = await fetch(SB + '/auth/v1/token?grant_type=refresh_token', {
           method: 'POST',
-          headers: { 'apikey': SB_KEY, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refresh_token: refresh })
+          headers: { apikey: SBKEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: ref })
         });
-        const rd = await rr.json();
-        if (rd.access_token) {
-          sbToken = rd.access_token;
-          localStorage.setItem('sb_token', rd.access_token);
-          localStorage.setItem('sb_refresh', rd.refresh_token || refresh);
-          localStorage.setItem('sb_user', JSON.stringify(rd.user || {}));
-          sessionStorage.setItem('sb_token', rd.access_token);
+        const d = await r.json();
+        if (d.access_token) {
+          token = d.access_token;
+          localStorage.setItem('sb_token', token);
+          localStorage.setItem('sb_refresh', d.refresh_token || ref);
+          sessionStorage.setItem('sb_token', token);
         }
-      } catch(e) {}
+      } catch(_) {}
     }
   }
-  if (!sbToken) { window.location.href = 'login.html'; return; }
-  let user = {};
-  try { user = JSON.parse(localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}'); } catch(e) {}
-  if (!user.id) { window.location.href = 'login.html'; return; }
-  currentAdminId = user.id;
+  if (!token) { location.href = 'login.html'; return; }
+
+  // Verificar que es admin via backend
   try {
-    const r = await sbFetch(`/rest/v1/usuarios?id=eq.${user.id}&select=rol`);
-    const data = await r.json();
-    if (!data.length || data[0].rol !== 'admin') {
-      alert('Acceso denegado.'); window.location.href = 'index.html'; return;
-    }
-  } catch(e) { alert('Error de autenticación.'); window.location.href = 'index.html'; return; }
-  loadUsers();
+    const r = await fetch(API + '/admin/me', { headers: { Authorization: 'Bearer ' + token } });
+    if (!r.ok) throw new Error();
+    const d = await r.json();
+    if (d.rol !== 'admin') throw new Error();
+  } catch(_) {
+    alert('Acceso denegado.'); location.href = 'index.html'; return;
+  }
+
+  await loadUsers();
   startPolling();
 }
 
-function sbFetch(path, options = {}) {
-  return fetch(SB_URL + path, {
-    ...options,
-    headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${sbToken}`,
-      'Content-Type': 'application/json', 'Prefer': 'return=minimal',
-      ...(options.headers || {}) }
-  });
-}
-
-/* ── Load ── */
+/* ── Data ── */
 async function loadUsers() {
   try {
-    const r = await sbFetch('/rest/v1/usuarios?select=*&order=created_at.desc');
-    allUsers = await r.json();
-    updateStats(); renderUserList(); renderMobileNotifs();
-    allUsers.forEach(u => lastSeenIds.add(u.id));
-  } catch(e) {
-    document.getElementById('d-user-list').innerHTML = '<div class="adm-empty">Error al cargar.</div>';
+    const r = await fetch(SB + '/rest/v1/usuarios?select=*&order=created_at.desc', {
+      headers: { apikey: SBKEY, Authorization: 'Bearer ' + token }
+    });
+    users = await r.json();
+    renderAll();
+    users.forEach(u => lastIds.add(u.id));
+  } catch(_) {
+    document.getElementById('user-list').innerHTML = '<div class="empty-list">Error al cargar.</div>';
   }
 }
 
+function renderAll() { updateStats(); renderList(); renderMobile(); }
+
 function updateStats() {
-  const total = allUsers.length;
-  const active = allUsers.filter(u => u.activo !== false).length;
-  const pro = allUsers.filter(u => u.plan === 'max' || u.plan === 'admin' || u.plan === 'equipo').length;
-  ['d','m'].forEach(p => {
-    const t = document.getElementById(`${p}-stat-total`); if(t) t.textContent = total;
-    const a = document.getElementById(`${p}-stat-active`); if(a) a.textContent = active;
-    const r = document.getElementById(`${p}-stat-pro`); if(r) r.textContent = pro;
+  const total  = users.length;
+  const active = users.filter(u => u.activo !== false).length;
+  const paid   = users.filter(u => ['admin','equipo','max'].includes(u.plan)).length;
+  [['s-total','ms-total',total],['s-active','ms-active',active],['s-paid','ms-paid',paid]].forEach(([d,m,v]) => {
+    const de = document.getElementById(d); if(de) de.textContent = v;
+    const me = document.getElementById(m); if(me) me.textContent = v;
   });
 }
 
-/* ── Desktop list ── */
+/* ── List ── */
 function getFiltered() {
-  return allUsers.filter(u => {
-    if (currentSearch) {
-      if (!((u.nombre||'')+(u.email||'')).toLowerCase().includes(currentSearch)) return false;
-    }
-    if (currentFilter === 'todos') return true;
-    if (currentFilter === 'inactivo') return u.activo === false;
-    return u.plan === currentFilter;
+  return users.filter(u => {
+    const q = search.toLowerCase();
+    if (q && !((u.nombre||'')+(u.email||'')).toLowerCase().includes(q)) return false;
+    if (filter === 'todos') return true;
+    if (filter === 'inactivo') return u.activo === false;
+    return (u.plan || 'free') === filter;
   });
 }
 
-function renderUserList() {
-  const list = document.getElementById('d-user-list');
-  const users = getFiltered();
-  if (!users.length) { list.innerHTML = '<div class="adm-empty">Sin resultados.</div>'; return; }
-  list.innerHTML = users.map(u => {
-    const ini = (u.nombre || u.email || '?')[0].toUpperCase();
+function renderList() {
+  const el = document.getElementById('user-list');
+  const list = getFiltered();
+  if (!list.length) { el.innerHTML = '<div class="empty-list">Sin resultados.</div>'; return; }
+  el.innerHTML = list.map(u => {
     const plan = u.plan || 'free';
-    const isActive = u.activo !== false;
-    const tagCls = {admin:'rt-admin',equipo:'rt-equipo',max:'rt-max',free:'rt-free'}[plan]||'rt-free';
-    const planLbl = {admin:'Admin',equipo:'Equipo',max:'Max',free:'Free'}[plan]||plan;
-    return `<div class="adm-user-row${u.id===selectedUserId?' active':''}" id="row-${u.id}" onclick="selectUser('${u.id}')">
-      <div class="adm-avatar${isActive?'':' inactive'}">${ini}</div>
-      <div class="adm-row-info">
-        <div class="adm-row-name">${u.nombre||'(Sin nombre)'}</div>
-        <div class="adm-row-email">${u.email||'—'}</div>
+    const ini  = (u.nombre || u.email || '?')[0].toUpperCase();
+    const off  = u.activo === false;
+    return `<div class="user-row${u.id===selId?' on':''}" id="row-${u.id}" onclick="selectUser('${u.id}')">
+      <div class="avatar${off?' off':''}">${ini}</div>
+      <div class="row-info">
+        <div class="row-name">${u.nombre||'(Sin nombre)'}</div>
+        <div class="row-email">${u.email||'—'}</div>
       </div>
-      <span class="adm-row-tag ${tagCls}">${planLbl}</span>
+      <span class="tag ${TAG_CLS[plan]||'t-free'}">${TAG_LBL[plan]||plan}</span>
     </div>`;
   }).join('');
 }
 
 function setFilter(f) {
-  currentFilter = f;
-  document.querySelectorAll('.adm-chip').forEach(c => c.classList.remove('active'));
-  document.querySelector(`[data-filter="${f}"]`)?.classList.add('active');
-  renderUserList();
+  filter = f;
+  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.f === f));
+  renderList();
 }
-function filterUsers() {
-  currentSearch = document.getElementById('d-search').value.toLowerCase();
-  renderUserList();
-}
+function filterUsers() { search = document.getElementById('search-input').value; renderList(); }
 
-/* ── Desktop detail ── */
+/* ── Detail ── */
 function selectUser(uid) {
-  selectedUserId = uid;
-  const u = allUsers.find(x => x.id === uid);
-  if (!u) return;
-  document.querySelectorAll('.adm-user-row').forEach(r => r.classList.remove('active'));
-  document.getElementById('row-'+uid)?.classList.add('active');
-  document.getElementById('d-empty-state').style.display = 'none';
-  document.getElementById('d-detail').classList.add('visible');
+  selId = uid;
+  const u = users.find(x => x.id === uid); if (!u) return;
+  document.querySelectorAll('.user-row').forEach(r => r.classList.remove('on'));
+  document.getElementById('row-'+uid)?.classList.add('on');
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('detail').classList.add('on');
 
-  const plan = u.plan || 'free';
-  const isActive = u.activo !== false;
-  const ini = (u.nombre||u.email||'?')[0].toUpperCase();
+  const plan   = u.plan || 'free';
+  const active = u.activo !== false;
+  const ini    = (u.nombre || u.email || '?')[0].toUpperCase();
 
-  const av = document.getElementById('d-det-avatar');
-  av.textContent = ini;
-  av.className = 'adm-detail-avatar' + (isActive?'':' inactive');
+  const av = document.getElementById('d-avatar');
+  av.textContent = ini; av.className = 'det-avatar' + (active?'':' off');
 
-  document.getElementById('d-det-name').textContent = u.nombre||'(Sin nombre)';
-  document.getElementById('d-det-email').textContent = u.email||'—';
-  document.getElementById('d-det-tel').textContent = u.telefono||'—';
-  document.getElementById('d-det-id').textContent = u.id;
+  document.getElementById('d-name').textContent  = u.nombre || '(Sin nombre)';
+  document.getElementById('d-email').textContent = u.email  || '—';
+  document.getElementById('d-tel').textContent   = u.telefono || '—';
+  document.getElementById('d-id').textContent    = u.id;
+  document.getElementById('d-fecha').textContent = u.created_at
+    ? new Date(u.created_at).toLocaleDateString('es-MX',{year:'numeric',month:'short',day:'numeric'}) : '—';
 
-  const fecha = u.created_at
-    ? new Date(u.created_at).toLocaleDateString('es-MX',{year:'numeric',month:'short',day:'numeric'})
-    : '—';
-  document.getElementById('d-det-fecha').textContent = fecha;
+  const st = document.getElementById('d-status');
+  st.textContent = active ? 'Activo' : 'Inactivo';
+  st.className   = 'status-pill ' + (active ? 'active' : 'inactive');
 
-  const st = document.getElementById('d-det-status');
-  st.textContent = isActive ? 'Activo' : 'Inactivo';
-  st.className = 'adm-status-pill ' + (isActive?'active':'inactive');
+  const tb = document.getElementById('d-toggle');
+  tb.textContent = active ? 'Desactivar' : 'Activar';
+  tb.className   = 'btn ' + (active ? 'btn-deactivate' : 'btn-activate');
 
-  const tagCls = {admin:'rt-admin',equipo:'rt-equipo',max:'rt-max',free:'rt-free'}[plan]||'rt-free';
-  const pt = document.getElementById('d-det-plan-tag');
-  pt.textContent = {admin:'Admin',equipo:'Equipo',max:'Broquer Max',free:'Free'}[plan]||plan;
-  pt.className = 'adm-row-tag '+tagCls;
-
-  const tb = document.getElementById('d-toggle-btn');
-  tb.textContent = isActive ? 'Desactivar' : 'Activar';
-  tb.className = 'adm-action-btn ' + (isActive?'adm-btn-deactivate':'adm-btn-activate');
-
-  renderPlanGrid(u);
+  renderPlanTag(plan);
+  renderPlanGrid(uid, plan);
 }
 
-function renderPlanGrid(u) {
-  const plan = u.plan||'free';
+function renderPlanTag(plan) {
+  const pt = document.getElementById('d-plan-tag');
+  pt.textContent = TAG_LBL[plan] || plan;
+  pt.className   = 'tag ' + (TAG_CLS[plan] || 't-free');
+}
+
+function renderPlanGrid(uid, selected) {
   document.getElementById('d-plan-grid').innerHTML = PLANES.map(p => {
-    const sel = plan===p.id ? (p.id==='admin'?'sel-admin':'sel') : '';
-    return `<div class="adm-plan-opt ${sel}" onclick="selectPlanD('${u.id}','${p.id}')">
-      <span class="adm-plan-name">${p.nombre}</span>
-      <span class="adm-plan-desc">${p.desc}</span>
+    const isSel = selected === p.id;
+    const cls   = isSel ? p.selCls : '';
+    return `<div class="plan-opt ${cls}" onclick="pickPlan('${uid}','${p.id}')">
+      <span class="plan-name">${p.nombre}</span>
+      <span class="plan-desc">${p.desc}</span>
     </div>`;
   }).join('');
 }
 
-
-function selectPlanD(uid, plan) {
-  const u = allUsers.find(x => x.id === uid); if (!u) return;
-  u.plan = plan; renderPlanGrid(u);
-  const tagCls = {admin:'rt-admin',equipo:'rt-equipo',max:'rt-max',free:'rt-free'}[plan]||'rt-free';
-  const pt = document.getElementById('d-det-plan-tag');
-  pt.textContent = {admin:'Admin',equipo:'Equipo',max:'Broquer Max',free:'Free'}[plan]||plan;
-  pt.className = 'adm-row-tag '+tagCls;
+function pickPlan(uid, plan) {
+  const u = users.find(x => x.id === uid); if (!u) return;
+  u.plan = plan;
+  renderPlanTag(plan);
+  renderPlanGrid(uid, plan);
 }
 
-
-function toggleActiveDesktop() {
-  const u = allUsers.find(x => x.id === selectedUserId); if (!u) return;
+function toggleActive() {
+  const u = users.find(x => x.id === selId); if (!u) return;
   const newState = u.activo === false;
   if (!confirm(newState ? '¿Activar esta cuenta?' : '¿Desactivar esta cuenta?')) return;
   u.activo = newState;
-  const st = document.getElementById('d-det-status');
+  const st = document.getElementById('d-status');
   st.textContent = newState ? 'Activo' : 'Inactivo';
-  st.className = 'adm-status-pill ' + (newState?'active':'inactive');
-  const tb = document.getElementById('d-toggle-btn');
+  st.className   = 'status-pill ' + (newState ? 'active' : 'inactive');
+  const tb = document.getElementById('d-toggle');
   tb.textContent = newState ? 'Desactivar' : 'Activar';
-  tb.className = 'adm-action-btn ' + (newState?'adm-btn-deactivate':'adm-btn-activate');
+  tb.className   = 'btn ' + (newState ? 'btn-deactivate' : 'btn-activate');
 }
 
-async function saveUserDesktop() {
-  const u = allUsers.find(x => x.id === selectedUserId); if (!u) return;
+/* ── Save — va al backend con service key ── */
+async function savePlan() {
+  const u = users.find(x => x.id === selId); if (!u) return;
   try {
-    const API = window.API_BASE || 'https://api.broquer.app';
     const r = await fetch(API + '/admin/set-plan', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sbToken },
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
       body: JSON.stringify({ user_id: u.id, plan: u.plan, activo: u.activo !== false })
     });
-    if (!r.ok) throw new Error();
-    showToast('Cambios guardados');
-    renderUserList(); updateStats();
-  } catch(e) { showToast('Error al guardar'); }
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || 'Error');
+    toast('Cambios guardados');
+    renderAll();
+  } catch(e) { toast('Error: ' + e.message); }
 }
 
 /* ── Mobile notifs ── */
-function renderMobileNotifs() {
-  const list = document.getElementById('m-notif-list'); if (!list) return;
-  const sorted = [...allUsers].sort((a,b) => new Date(b.created_at)-new Date(a.created_at)).slice(0,30);
-  if (!sorted.length) { list.innerHTML = '<div class="adm-notif-empty">Sin usuarios aún.</div>'; return; }
+function renderMobile() {
+  const el = document.getElementById('m-notif-list'); if (!el) return;
+  const list = [...users].sort((a,b) => new Date(b.created_at)-new Date(a.created_at)).slice(0,30);
+  if (!list.length) { el.innerHTML = '<div class="notif-empty">Sin usuarios aún.</div>'; return; }
   const now = Date.now();
-  list.innerHTML = sorted.map(u => {
-    const created = new Date(u.created_at);
-    const isNew = (now - created.getTime()) < 86400000;
-    return `<div class="adm-notif-card">
-      <div class="adm-notif-dot${isNew?'':' old'}"></div>
-      <div class="adm-notif-info">
-        <div class="adm-notif-name">${u.nombre||'(Sin nombre)'}</div>
-        <div class="adm-notif-email">${u.email||'—'}</div>
-        <div class="adm-notif-time">${relTime(created)}</div>
+  el.innerHTML = list.map(u => {
+    const d = new Date(u.created_at);
+    const isNew = now - d.getTime() < 86400000;
+    return `<div class="notif-card">
+      <div class="notif-dot${isNew?'':' old'}"></div>
+      <div class="notif-info">
+        <div class="notif-name">${u.nombre||'(Sin nombre)'}</div>
+        <div class="notif-email">${u.email||'—'}</div>
+        <div class="notif-time">${relTime(d)}</div>
       </div>
     </div>`;
   }).join('');
 }
 
-function relTime(date) {
-  const d = Date.now() - date.getTime();
-  const m = Math.floor(d/60000), h = Math.floor(d/3600000), dd = Math.floor(d/86400000);
+function relTime(d) {
+  const diff = Date.now() - d.getTime();
+  const m = Math.floor(diff/60000), h = Math.floor(diff/3600000), dd = Math.floor(diff/86400000);
   if (m < 1) return 'Ahora mismo';
   if (m < 60) return `Hace ${m} min`;
   if (h < 24) return `Hace ${h}h`;
   if (dd < 7) return `Hace ${dd} día${dd>1?'s':''}`;
-  return date.toLocaleDateString('es-MX',{day:'numeric',month:'short'});
+  return d.toLocaleDateString('es-MX',{day:'numeric',month:'short'});
 }
 
+/* ── Polling ── */
+let lastIds = new Set();
 function startPolling() {
   setInterval(async () => {
     try {
-      const r = await sbFetch('/rest/v1/usuarios?select=id,nombre,email,created_at&order=created_at.desc&limit=50');
+      const r = await fetch(SB + '/rest/v1/usuarios?select=id,nombre,email,created_at&order=created_at.desc&limit=50', {
+        headers: { apikey: SBKEY, Authorization: 'Bearer ' + token }
+      });
       const fresh = await r.json();
-      const nuevo = fresh.filter(u => !lastSeenIds.has(u.id));
-      if (nuevo.length && lastSeenIds.size > 0) {
-        nuevo.forEach(u => {
-          showToast(`Nuevo usuario: ${u.nombre||u.email}`);
-          if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification('Nuevo usuario en Broquer', { body: u.nombre||u.email, icon: 'isotipo-black.png' });
-          }
-        });
+      const nuevo = fresh.filter(u => !lastIds.has(u.id));
+      if (nuevo.length && lastIds.size > 0) {
+        nuevo.forEach(u => toast(`Nuevo usuario: ${u.nombre||u.email}`));
         await loadUsers();
       }
-      fresh.forEach(u => lastSeenIds.add(u.id));
-    } catch(e) {}
+      fresh.forEach(u => lastIds.add(u.id));
+    } catch(_) {}
   }, 30000);
-  if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
 }
 
 /* ── Toast ── */
 let _tt;
-function showToast(msg) {
-  const t = document.getElementById('adm-toast');
-  t.textContent = msg; t.classList.add('show');
-  clearTimeout(_tt); _tt = setTimeout(() => t.classList.remove('show'), 2800);
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('on');
+  clearTimeout(_tt); _tt = setTimeout(() => t.classList.remove('on'), 2800);
 }
 
-document.addEventListener('DOMContentLoaded', adminInit);
+document.addEventListener('DOMContentLoaded', init);
 </script>
 <script src="app-shell.js" defer></script>
 </body>

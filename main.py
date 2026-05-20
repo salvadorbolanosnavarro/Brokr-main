@@ -5314,3 +5314,14 @@ async def admin_set_plan(request: Request):
                 )
 
     return {"ok": True, "user_id": target_id, "plan": plan}
+
+@app.get("/admin/me")
+async def admin_me(request: Request):
+    """Verifica que el usuario autenticado tiene rol=admin."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autenticado.")
+    rol = await get_user_rol(user_id)
+    if rol != "admin":
+        raise HTTPException(status_code=403, detail="Acceso denegado.")
+    return {"ok": True, "rol": rol}
