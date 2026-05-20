@@ -638,17 +638,14 @@ async function saveUserDesktop() {
 
     // Si el plan es 'equipo', garantizar fila activa en suscripciones
     if (u.plan === 'equipo') {
-      await sbFetch(`/rest/v1/suscripciones`, {
-        method: 'POST',
-        headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-        body: JSON.stringify({
-          user_id: u.id,
-          plan_id: 'equipo',
-          plan_nombre: 'Equipo Interno',
-          status: 'active',
-          updated_at: new Date().toISOString()
-        })
-      });
+      const rExist = await sbFetch(`/rest/v1/suscripciones?user_id=eq.${u.id}&limit=1`);
+      const rowsExist = await rExist.json();
+      const subData = { plan_id: 'equipo', plan_nombre: 'Equipo Interno', status: 'active', updated_at: new Date().toISOString() };
+      if (rowsExist && rowsExist.length > 0) {
+        await sbFetch(`/rest/v1/suscripciones?user_id=eq.${u.id}`, { method: 'PATCH', body: JSON.stringify(subData) });
+      } else {
+        await sbFetch(`/rest/v1/suscripciones`, { method: 'POST', body: JSON.stringify({ user_id: u.id, ...subData }) });
+      }
     }
 
     showToast('Cambios guardados');
