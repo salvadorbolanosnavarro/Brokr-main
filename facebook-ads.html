@@ -23,6 +23,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .fa-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:var(--r);padding:12px 18px;font:600 14px var(--font-sans);cursor:pointer;text-decoration:none;transition:opacity .15s,transform .15s}.fa-btn:hover{opacity:.9;transform:translateY(-1px)}.fa-btn-primary{background:var(--ink);color:var(--paper)}.fa-btn-blue{background:#1877f2;color:#fff}.fa-btn-ghost{background:var(--paper);color:var(--ink);border:1px solid var(--line-2)}.fa-btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
 .fa-connected-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}.fa-connected-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bone);border:1px solid var(--line);border-radius:999px;font-size:12px;font-weight:600}.fa-connected-chip .dot{width:8px;height:8px;background:#16a34a;border-radius:50%}.fa-reconnect{font-size:12px;color:var(--mute);text-decoration:underline;cursor:pointer}
 .fa-account-bar{display:grid;grid-template-columns:170px 1fr;gap:12px;align-items:center;margin-bottom:18px}.fa-account-bar label,.fa-field label{font-size:12px;font-weight:700;color:var(--ink);letter-spacing:-.01em}.fa-account-bar select,.fa-field input,.fa-field select,.fa-field textarea{width:100%;background:var(--paper);border:1px solid var(--line-2);border-radius:var(--r);padding:11px 12px;font:14px var(--font-sans);color:var(--ink);outline:none;-webkit-appearance:none;appearance:none}.fa-field textarea{min-height:104px;resize:vertical;line-height:1.5}.fa-account-bar select:focus,.fa-field input:focus,.fa-field select:focus,.fa-field textarea:focus{border-color:var(--ink)}
+.fa-account-warn{background:rgba(230,126,34,.08);border:1px solid rgba(230,126,34,.35);border-radius:var(--r);padding:11px 13px;font-size:12px;color:#a14b00;line-height:1.5;margin-bottom:18px}
 .fa-tabs{display:flex;gap:3px;background:var(--bone);border:1px solid var(--line);border-radius:var(--r);padding:3px;margin-bottom:18px}.fa-tab{flex:1;padding:9px 12px;text-align:center;font-size:13px;font-weight:700;color:var(--mute);border-radius:calc(var(--r) - 2px);cursor:pointer;border:none;background:transparent;font-family:var(--font-sans)}.fa-tab.active{background:var(--paper);color:var(--ink);box-shadow:0 1px 3px rgba(10,10,10,.08)}
 .fa-modeswitch{display:flex;gap:3px;background:var(--paper);border:1px solid var(--line-2);border-radius:var(--r);padding:3px;margin-bottom:16px}.fa-modeswitch button{flex:1;padding:10px 12px;text-align:center;font-size:13px;font-weight:700;color:var(--mute);border-radius:calc(var(--r) - 2px);cursor:pointer;border:none;background:transparent;font-family:var(--font-sans)}.fa-modeswitch button.active{background:var(--ink);color:var(--paper)}
 .fa-layout{display:grid;grid-template-columns:1.35fr .75fr;gap:16px;align-items:start}.fa-card{padding:22px;margin-bottom:14px}.fa-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px}.fa-card-title{font-family:var(--font-display);font-size:20px;font-weight:600;letter-spacing:-.025em}.fa-card-sub{font-size:12px;color:var(--mute);line-height:1.55;margin-top:4px}.fa-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.fa-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}.fa-field{margin-bottom:14px;position:relative}.fa-field .fa-hint{font-size:11px;color:var(--mute);line-height:1.45;margin-top:5px}.fa-char-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:6px}.fa-char-count{font-size:11px;color:var(--mute)}.fa-char-count.warn{color:#e67e22}.fa-char-count.over{color:#ef4444}
@@ -97,6 +98,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
         <label for="fa-account-select">Cuenta publicitaria</label>
         <select id="fa-account-select" autocomplete="off" onchange="onAccountChange()"></select>
       </div>
+      <div id="fa-account-warn" class="fa-account-warn" style="display:none"></div>
 
       <div class="fa-tabs">
         <button class="fa-tab active" onclick="switchTab('crear', this)">Nuevo anuncio</button>
@@ -137,8 +139,8 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
               </div>
               <div class="fa-field" id="fa-url-field"><label for="fa-ad-url">URL destino</label><input id="fa-ad-url" type="url" autocomplete="off" placeholder="https://tu-sitio.com/propiedad"/><div class="fa-hint">Requerida para medir clics y llevar al prospecto a la ficha, landing o WhatsApp.</div></div>
               <div class="fa-grid-2">
-                <div class="fa-field"><label for="fa-budget">Presupuesto diario (MXN)</label><input id="fa-budget" type="number" min="50" step="10" value="150" oninput="syncSummary()"/><div class="fa-hint">Mínimo recomendado: $50 MXN por día.</div></div>
-                <div class="fa-field"><label for="fa-duration">Duración</label><select id="fa-duration" onchange="syncSummary()"><option value="3">3 días</option><option value="7" selected>7 días</option><option value="14">14 días</option><option value="30">30 días</option></select></div>
+                <div class="fa-field"><label for="fa-budget">Presupuesto diario (MXN)</label><input id="fa-budget" type="number" min="50" step="1" value="150" oninput="syncSummary()"/><div class="fa-hint">Mínimo recomendado: $50 MXN por día.</div></div>
+                <div class="fa-field"><label for="fa-duration">Duración (días)</label><input id="fa-duration" type="number" min="1" max="365" step="1" value="7" oninput="syncSummary()"/><div class="fa-hint">Cualquier valor entre 1 y 365 días.</div></div>
               </div>
             </div>
 
@@ -156,9 +158,9 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
             <div class="fa-field"><label for="fa-boost-name">Nombre de campaña</label><input id="fa-boost-name" type="text" autocomplete="off" placeholder="Boost — Casa Chapultepec" oninput="syncSummary()"/></div>
             <div class="fa-grid-2">
               <div class="fa-field"><label for="fa-boost-objective">Objetivo</label><select id="fa-boost-objective" onchange="syncSummary()"><option value="OUTCOME_ENGAGEMENT" selected>Generar interacciones</option><option value="OUTCOME_AWARENESS">Dar a conocer</option></select></div>
-              <div class="fa-field"><label for="fa-boost-budget">Presupuesto diario (MXN)</label><input id="fa-boost-budget" type="number" min="50" step="10" value="150" oninput="syncSummary()"/></div>
+              <div class="fa-field"><label for="fa-boost-budget">Presupuesto diario (MXN)</label><input id="fa-boost-budget" type="number" min="50" step="1" value="150" oninput="syncSummary()"/></div>
             </div>
-            <div class="fa-field"><label for="fa-boost-duration">Duración</label><select id="fa-boost-duration" onchange="syncSummary()"><option value="3">3 días</option><option value="7" selected>7 días</option><option value="14">14 días</option><option value="30">30 días</option></select></div>
+            <div class="fa-field"><label for="fa-boost-duration">Duración (días)</label><input id="fa-boost-duration" type="number" min="1" max="365" step="1" value="7" oninput="syncSummary()"/><div class="fa-hint">Cualquier valor entre 1 y 365 días.</div></div>
           </div>
 
           <!-- ─── Audiencia (común a ambos modos) ─── -->
@@ -210,7 +212,10 @@ let _lastAdsManagerUrl = 'https://www.facebook.com/adsmanager';
 let _mode = 'new';                // 'new' | 'boost'
 let _selectedPostId = '';
 let _postsCache = [];
+let _accountsCache = [];
 let _citySearchTimer = null;
+let _campaignsPollTimer = null;
+let _postsPollTimer = null;
 
 function getToken(){return localStorage.getItem('sb_token')||sessionStorage.getItem('sb_token')||null;}
 function goToProfile(){const btn=document.getElementById('bk-profile-btn'); if(btn) btn.click();}
@@ -222,11 +227,36 @@ function escapeHtml(s){return String(s||'').replace(/[&<>'"]/g,c=>({'&':'&amp;',
 function switchTab(tab, el){
   document.querySelectorAll('.fa-tab').forEach(t=>t.classList.remove('active'));
   if(el) el.classList.add('active');
-  if(tab==='crear'){show('fa-tab-crear');hide('fa-tab-campanas');}
-  else{hide('fa-tab-crear');show('fa-tab-campanas');loadCampaigns();}
+  if(tab==='crear'){
+    show('fa-tab-crear'); hide('fa-tab-campanas');
+    stopCampaignsPolling();
+  }else{
+    hide('fa-tab-crear'); show('fa-tab-campanas');
+    loadCampaigns(); startCampaignsPolling();
+  }
 }
 function openCampaignsTab(){const tabs=document.querySelectorAll('.fa-tab'); switchTab('campanas', tabs[1]);}
-function onAccountChange(){document.getElementById('fa-camps-list').innerHTML='';}
+
+function startCampaignsPolling(){
+  stopCampaignsPolling();
+  _campaignsPollTimer = setInterval(() => {
+    if(document.visibilityState === 'visible' &&
+       document.getElementById('fa-tab-campanas').style.display !== 'none'){
+      loadCampaigns(true);   // silent=true → sin spinner full
+    }
+  }, 30000);
+}
+function stopCampaignsPolling(){ if(_campaignsPollTimer){ clearInterval(_campaignsPollTimer); _campaignsPollTimer=null; } }
+
+function startPostsPolling(){
+  stopPostsPolling();
+  _postsPollTimer = setInterval(() => {
+    if(document.visibilityState === 'visible' && _mode === 'boost'){
+      loadPagePosts(true);
+    }
+  }, 60000);
+}
+function stopPostsPolling(){ if(_postsPollTimer){ clearInterval(_postsPollTimer); _postsPollTimer=null; } }
 
 function setMode(m){
   _mode = m;
@@ -238,6 +268,7 @@ function setMode(m){
     hide('fa-boost-brief');
     document.getElementById('fa-summary-sub').textContent='Se crea campaña + conjunto + creativo + anuncio.';
     document.getElementById('fa-btn-text').textContent='Crear anuncio en Meta Ads';
+    stopPostsPolling();
   }else{
     hide('fa-new-section');
     show('fa-boost-section');
@@ -245,6 +276,7 @@ function setMode(m){
     document.getElementById('fa-summary-sub').textContent='Se promociona la publicación que selecciones.';
     document.getElementById('fa-btn-text').textContent='Promocionar publicación';
     loadPagePosts();
+    startPostsPolling();
   }
   syncSummary();
 }
@@ -332,28 +364,57 @@ async function loadAdAccounts(){
     hide('fa-loading-accounts');
     const accounts = d.accounts || [];
     if(!accounts.length){ show('fa-no-accounts'); return; }
+    // Ordenar: primero las cuentas que pueden anunciar la página del usuario
+    accounts.sort((a,b) => {
+      const aCan = (a.promote_pages||[]).includes(_pageId) ? 0 : 1;
+      const bCan = (b.promote_pages||[]).includes(_pageId) ? 0 : 1;
+      return aCan - bCan;
+    });
+    _accountsCache = accounts;
     const select = document.getElementById('fa-account-select');
-    select.innerHTML = accounts.map(a => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.name)} (${escapeHtml(a.currency||'MXN')})</option>`).join('');
+    select.innerHTML = accounts.map(a => {
+      const canPromote = (a.promote_pages||[]).includes(_pageId);
+      const badge = canPromote ? ' — Tu página' : '';
+      return `<option value="${escapeHtml(a.id)}" data-can="${canPromote?'1':'0'}">${escapeHtml(a.name)} (${escapeHtml(a.currency||'MXN')})${badge}</option>`;
+    }).join('');
     show('fa-main-content');
+    onAccountChange();   // dispara warning si la primera no es compatible
   }catch(e){ hide('fa-loading-accounts'); show('fa-no-accounts'); }
 }
 
-async function loadPagePosts(){
+function onAccountChange(){
+  document.getElementById('fa-camps-list').innerHTML='';
+  const sel = document.getElementById('fa-account-select');
+  const opt = sel.options[sel.selectedIndex];
+  const canPromote = opt && opt.getAttribute('data-can') === '1';
+  const warn = document.getElementById('fa-account-warn');
+  if(_accountsCache.length && !canPromote){
+    warn.style.display = '';
+    warn.textContent = 'Esta cuenta publicitaria no aparece asociada a tu página en Business Manager. Los anuncios pueden fallar al publicar. Asocia la página a esta cuenta en business.facebook.com o elige otra cuenta.';
+  } else {
+    warn.style.display = 'none';
+  }
+  // Si estamos en la pestaña de campañas, recargar al cambiar de cuenta
+  if(document.getElementById('fa-tab-campanas').style.display !== 'none') loadCampaigns();
+}
+
+async function loadPagePosts(silent){
   const tok = getToken();
   const grid = document.getElementById('fa-posts-grid');
-  show('fa-loading-posts'); hide('fa-posts-empty'); grid.innerHTML='';
+  if(!silent){ show('fa-loading-posts'); hide('fa-posts-empty'); grid.innerHTML=''; }
   try{
     const r = await fetch(API_BASE+'/facebook/page-posts', { headers:{ Authorization:'Bearer '+tok } });
     const d = await r.json();
     hide('fa-loading-posts');
     const posts = d.posts || [];
     _postsCache = posts;
-    if(!posts.length){ show('fa-posts-empty'); return; }
+    if(!posts.length){ if(!silent){ show('fa-posts-empty'); } return; }
     grid.innerHTML = posts.map(p => {
       const bg = p.image ? `style="background-image:url('${escapeHtml(p.image)}')"` : '';
       const msg = escapeHtml(p.message || '(Publicación sin texto)');
       const dt  = p.created_time ? new Date(p.created_time).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}) : '';
-      return `<div class="fa-post" data-id="${escapeHtml(p.id)}" onclick="selectPost('${escapeHtml(p.id)}')">
+      const isSel = p.id === _selectedPostId;
+      return `<div class="fa-post${isSel?' selected':''}" data-id="${escapeHtml(p.id)}" onclick="selectPost('${escapeHtml(p.id)}')">
         <div class="fa-post-img" ${bg}></div>
         <div class="fa-post-body">
           <div class="fa-post-msg">${msg}</div>
@@ -363,8 +424,10 @@ async function loadPagePosts(){
       </div>`;
     }).join('');
   }catch(e){
-    hide('fa-loading-posts'); show('fa-posts-empty');
-    document.getElementById('fa-posts-empty').textContent = 'No pudimos cargar tus publicaciones. Intenta de nuevo.';
+    if(!silent){
+      hide('fa-loading-posts'); show('fa-posts-empty');
+      document.getElementById('fa-posts-empty').textContent = 'No pudimos cargar tus publicaciones. Intenta de nuevo.';
+    }
   }
 }
 
@@ -473,12 +536,12 @@ async function createAd(){
   }
 }
 
-async function loadCampaigns(){
+async function loadCampaigns(silent){
   const tok = getToken();
   const accountId = document.getElementById('fa-account-select').value;
   if(!accountId) return;
   const listEl = document.getElementById('fa-camps-list');
-  show('fa-loading-camps'); listEl.innerHTML = '';
+  if(!silent){ show('fa-loading-camps'); listEl.innerHTML = ''; }
   try{
     const r = await fetch(API_BASE+'/facebook/campaigns?account_id='+encodeURIComponent(accountId), { headers:{ Authorization:'Bearer '+tok } });
     const d = await r.json();
@@ -565,6 +628,8 @@ document.addEventListener('click', e => {
   const inp  = document.getElementById('fa-city-input');
   if(drop && inp && !drop.contains(e.target) && e.target !== inp) drop.style.display = 'none';
 });
+
+window.addEventListener('beforeunload', () => { stopCampaignsPolling(); stopPostsPolling(); });
 
 document.addEventListener('DOMContentLoaded', () => {
   syncSummary();

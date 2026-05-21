@@ -4387,10 +4387,30 @@ async def facebook_ad_accounts(request: Request):
 
     accounts = r2.json().get("data", [])
     # Solo cuentas activas (account_status == 1)
-    active = [
-        {"id": a["id"], "name": a.get("name", a["id"]), "currency": a.get("currency", "MXN")}
-        for a in accounts if a.get("account_status", 0) == 1
-    ]
+    active_raw = [a for a in accounts if a.get("account_status", 0) == 1]
+
+    # Para cada cuenta activa, traer las páginas que puede anunciar (promote_pages).
+    # Esto permite al frontend auto-seleccionar la cuenta correcta para la página
+    # conectada del usuario y marcar las que no pueden anunciar esa página.
+    active: list[dict] = []
+    async with httpx.AsyncClient(timeout=10) as client:
+        for a in active_raw:
+            page_ids: list[str] = []
+            try:
+                rp = await client.get(
+                    f"https://graph.facebook.com/v21.0/{a['id']}/promote_pages",
+                    params={"access_token": user_token, "fields": "id", "limit": "100"}
+                )
+                if rp.status_code == 200:
+                    page_ids = [p["id"] for p in rp.json().get("data", []) if "id" in p]
+            except Exception:
+                page_ids = []
+            active.append({
+                "id": a["id"],
+                "name": a.get("name", a["id"]),
+                "currency": a.get("currency", "MXN"),
+                "promote_pages": page_ids,
+            })
     return {"accounts": active}
 
 
@@ -4507,6 +4527,11 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
                 "objective": req.objective,
                 "status": "PAUSED",
                 "special_ad_categories": [],
+                "buying_type": "AUCTION",
+                # Meta exige declarar explícitamente que el presupuesto NO se
+                # comparte a nivel campaña (Advantage Campaign Budget OFF).
+                # Sin esto, la creación falla con error 100 / subcode 4834011.
+                "is_adset_budget_sharing_enabled": False,
             }
         )
         if r_camp.status_code not in (200, 201):
