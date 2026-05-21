@@ -213,7 +213,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .pick-btn:hover{background:var(--teal);color:#fff}
 .pick-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:flex-end;justify-content:center}
 .pick-overlay.open{display:flex}
-.pick-sheet{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:780px;max-height:88vh;display:flex;flex-direction:column;animation:pickUp .22s ease}
+.pick-sheet{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:780px;height:92vh;max-height:92vh;min-height:560px;display:flex;flex-direction:column;animation:pickUp .22s ease}
 @keyframes pickUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .pick-handle{width:36px;height:4px;background:var(--silver2);border-radius:2px;margin:10px auto;flex-shrink:0}
 .pick-head{display:flex;align-items:center;gap:10px;padding:0 18px 12px;border-bottom:1px solid var(--silver2);flex-shrink:0}
@@ -257,9 +257,21 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 
 <div id="wrap">
 
-  <!-- Nav --> 
+  <!-- Nav -->
 
-
+  <!-- Selector de modo: Contratos Broquer vs Tu machote -->
+  <div class="modo-selector">
+    <button class="modo-btn active" id="modo-brokr" onclick="setModo('brokr')">
+      <div class="modo-btn-ico"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div>
+      <span class="modo-btn-lbl">Contratos Broquer</span>
+      <span class="modo-btn-sub">Plantillas listas: arrendamiento y compraventa</span>
+    </button>
+    <button class="modo-btn" id="modo-machote" onclick="setModo('machote')">
+      <div class="modo-btn-ico"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 0115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg></div>
+      <span class="modo-btn-lbl">Tu machote</span>
+      <span class="modo-btn-sub">Sube tu Word y detectamos las variables</span>
+    </button>
+  </div>
 
   <!-- ══ MODO Broquer ══ -->
   <div id="brokr-section">
@@ -345,6 +357,16 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
         <div class="f">
           <label>Municipio y Estado</label>
           <input type="text" id="a-mpio-inm" placeholder="Ej. MORELIA, MICHOACAN" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f">
+          <label>Ciudad de firma <span style="color:var(--mut);font-weight:400">— opcional</span></label>
+          <input type="text" id="a-ciudad-firma" placeholder="Por defecto: la del inmueble"/>
+        </div>
+        <div class="f">
+          <label>Estado (tribunales y Código Civil) <span style="color:var(--mut);font-weight:400">— opcional</span></label>
+          <input type="text" id="a-estado-firma" placeholder="Por defecto: el del inmueble"/>
         </div>
       </div>
       <div class="frow">
@@ -614,6 +636,22 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
         <div class="f">
           <label>Código Postal</label>
           <input type="text" id="p-cp" placeholder="Ej. 44290"/>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f">
+          <label>Municipio y Estado del inmueble</label>
+          <input type="text" id="p-mpio-inm" placeholder="Ej. GUADALAJARA, JALISCO" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f">
+          <label>Ciudad de firma <span style="color:var(--mut);font-weight:400">— opcional</span></label>
+          <input type="text" id="p-ciudad-firma" placeholder="Por defecto: la del inmueble"/>
+        </div>
+        <div class="f">
+          <label>Estado (tribunales y Código Civil) <span style="color:var(--mut);font-weight:400">— opcional</span></label>
+          <input type="text" id="p-estado-firma" placeholder="Por defecto: el del inmueble"/>
         </div>
       </div>
     </div>
@@ -925,8 +963,10 @@ let modoActual = 'brokr'; // 'brokr' | 'machote'
 // ── Selector de modo ──
 function setModo(modo) {
   modoActual = modo;
-  document.getElementById('modo-brokr').classList.toggle('active', modo === 'brokr');
-  // modo machote deshabilitado temporalmente
+  const bBtn = document.getElementById('modo-brokr');
+  const mBtn = document.getElementById('modo-machote');
+  if (bBtn) bBtn.classList.toggle('active', modo === 'brokr');
+  if (mBtn) mBtn.classList.toggle('active', modo === 'machote');
   document.getElementById('brokr-section').style.display = modo === 'brokr' ? '' : 'none';
   document.getElementById('machote-section').style.display = modo === 'machote' ? '' : 'none';
 }
@@ -1311,6 +1351,8 @@ async function generarContrato(){
       colonia_inmueble:   gv('a-colonia'),
       cp_inmueble:        gv('a-cp'),
       municipio_estado_inmueble: gv('a-mpio-inm'),
+      ciudad_firma:       gv('a-ciudad-firma'),
+      estado_firma:       gv('a-estado-firma'),
       direccion_inmueble: buildAddr(gv('a-calle-inm'), gv('a-numext-inm'), gv('a-numint-inm'), gv('a-colonia'), gv('a-cp'), gv('a-mpio-inm')),
       // Arrendador
       nombre_arrendador:  gv('a-arrendador'),
@@ -1363,6 +1405,9 @@ async function generarContrato(){
       direccion_inmueble: gv('p-dir'),
       colonia_inmueble:   gv('p-colonia'),
       cp_inmueble:        gv('p-cp'),
+      municipio_estado_inmueble: gv('p-mpio-inm'),
+      ciudad_firma:       gv('p-ciudad-firma'),
+      estado_firma:       gv('p-estado-firma'),
       escritura_numero:   gv('p-esc-num'),
       notario_nombre:     gv('p-not-nombre'),
       notario_numero:     gv('p-not-num'),

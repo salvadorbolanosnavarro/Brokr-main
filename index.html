@@ -143,19 +143,25 @@
   display: flex; align-items: center; justify-content: center;
   color: var(--ink-2);
   margin-bottom: 18px;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-.mod-card.is-primary { background: var(--ink); color: var(--paper); border-color: transparent; }
-.mod-card.is-primary .mod-card__icon { background: rgba(247,245,238,.12); color: var(--paper); }
-.mod-card.is-primary .mod-card__sub { color: rgba(247,245,238,.6); }
-.mod-card.is-primary .mod-card__arrow { color: var(--paper); }
+.mod-card.is-primary,
+.mod-card:hover { background: var(--ink); color: var(--paper); border-color: transparent; }
+.mod-card.is-primary .mod-card__icon,
+.mod-card:hover .mod-card__icon { background: rgba(247,245,238,.12); color: var(--paper); }
+.mod-card.is-primary .mod-card__sub,
+.mod-card:hover .mod-card__sub { color: rgba(247,245,238,.6); }
+.mod-card.is-primary .mod-card__arrow,
+.mod-card:hover .mod-card__arrow { color: var(--paper); }
 .mod-card__title {
   font-family: var(--font-display);
   font-size: 18px; font-weight: 600;
   letter-spacing: -0.018em;
   margin-bottom: 4px;
 }
-.mod-card__sub { font-size: 13px; color: var(--mute); line-height: 1.4; }
-.mod-card.is-primary .mod-card__title { color: var(--paper); }
+.mod-card__sub { font-size: 13px; color: var(--mute); line-height: 1.4; transition: color var(--dur) var(--ease); }
+.mod-card.is-primary .mod-card__title,
+.mod-card:hover .mod-card__title { color: var(--paper); }
 .mod-card__arrow {
   position: absolute; top: 22px; right: 22px;
   color: var(--mute-2); opacity: 0;
@@ -300,9 +306,9 @@
       <div class="kpi__delta">total registrados</div>
     </div>
     <div class="kpi">
-      <div class="kpi__label">Contratos activos</div>
-      <div class="kpi__value" id="kpi-contratos">—</div>
-      <div class="kpi__delta">en seguimiento</div>
+      <div class="kpi__label">Horas ahorradas</div>
+      <div class="kpi__value" id="kpi-horas">—</div>
+      <div class="kpi__delta">con Broquer</div>
     </div>
   </div>
 
@@ -380,7 +386,7 @@
       <div class="mod-card__icon">
         <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
       </div>
-      <div class="mod-card__title">Guía del agente</div>
+      <div class="mod-card__title">Blog</div>
       <div class="mod-card__sub">Artículos serios sobre PLD, legal y mejores prácticas.</div>
       <div class="mod-card__arrow"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg></div>
     </a>
@@ -390,8 +396,8 @@
   <div class="ai-card" style="margin-bottom: 32px;">
     <h3>Tu asistente de bienes raíces.</h3>
     <p>Pregúntame sobre valuaciones, ISR, contratos o cualquier duda del mercado. Estoy aquí para ayudarte a cerrar más rápido.</p>
-    <button class="ai-card__btn" type="button" onclick="document.getElementById('bk-shk-fab')?.click()">
-      Abrir Brokr
+    <button class="ai-card__btn" type="button" onclick="window.toggleShaarkPopup ? window.toggleShaarkPopup(true) : document.getElementById('bk-shaark-fab')?.click()">
+      Abrir Broquer
       <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
     </button>
   </div>
@@ -453,18 +459,27 @@ window.addEventListener('brokr-shell-ready', async (e) => {
     } catch (err) { return 0; }
   }
 
+  let nProps = 0, nContacts = 0, nContratos = 0;
   try {
-    document.getElementById('kpi-props').textContent =
-      await fxCount('propiedades?estatus=eq.activa&select=id');
+    nProps = await fxCount('propiedades?estatus=eq.activa&select=id');
+    document.getElementById('kpi-props').textContent = nProps;
   } catch (e) {}
   try {
-    document.getElementById('kpi-contacts').textContent =
-      await fxCount('contactos?select=id');
+    nContacts = await fxCount('contactos?select=id');
+    document.getElementById('kpi-contacts').textContent = nContacts;
   } catch (e) {}
   try {
-    document.getElementById('kpi-contratos').textContent =
-      await fxCount('contratos?select=id');
+    nContratos = await fxCount('contratos?select=id');
   } catch (e) {}
+
+  // Horas ahorradas: estimación conservadora basada en lo que Broquer
+  // automatiza vs hacerlo manualmente.
+  //   Inmueble activo (ficha + fotos + datos): 30 min  → 0.5 h
+  //   Contacto en CRM (alta + seguimiento):     5 min  → 0.083 h
+  //   Contrato generado (redacción + formato): 45 min  → 0.75 h
+  const horas = Math.round(nProps * 0.5 + nContacts * 0.083 + nContratos * 0.75);
+  const horasEl = document.getElementById('kpi-horas');
+  if (horasEl) horasEl.textContent = horas;
 });
 </script>
 </body>

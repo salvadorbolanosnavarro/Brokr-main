@@ -5,7 +5,7 @@
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>Guía del agente — Broquer</title>
+<title>Blog — Broquer</title>
 <link rel="manifest" href="manifest.json"/>
 <meta name="theme-color" content="#F7F5EE"/>
 <link rel="stylesheet" href="brokr-theme.css"/>
@@ -151,7 +151,7 @@
   <!-- HEADER -->
   <div class="bl-head" id="bl-head">
     <div class="bl-head__eyebrow">Recursos profesionales</div>
-    <h1>Guía del agente</h1>
+    <h1>Blog</h1>
     <p class="bl-head__sub">Artículos serios sobre PLD, legal, mercado y mejores prácticas para agentes novatos y expertos.</p>
   </div>
 
@@ -165,8 +165,6 @@
         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/></svg>
       </button>
     </div>
-
-    <div class="bl-tags" id="bl-tags"></div>
 
     <div class="bl-list" id="bl-list"></div>
 
@@ -191,6 +189,96 @@
    ═══════════════════════════════════════════════════════ */
 
 const ARTICULOS = [
+  {
+    id: 'exencion-isr-casa-habitacion',
+    titulo: 'Exención del ISR en venta de casa habitación: cómo aprovecharla cada 3 años',
+    subtitulo: 'Tu cliente puede vender su casa sin pagar ISR sobre los primeros 700,000 UDIS de ganancia. Te explicamos exactamente cómo funciona y qué pedirle.',
+    categoria: 'ISR / Fiscal',
+    catKey: 'isr',
+    tags: ['ISR', 'Exención', 'Casa habitación', 'UDIS', 'LISR', 'SAT', 'Notario'],
+    autor: 'Broquer Research',
+    fecha: '20 de mayo de 2026',
+    lectura: '7 min',
+    resumen: 'La Ley del ISR (art. 93 fr. XIX) permite a una persona física exentar el ISR sobre la ganancia obtenida en la venta de su casa habitación principal, siempre que la ganancia no exceda 700,000 UDIS y que NO se haya aplicado la misma exención en los 3 años previos. Es una de las herramientas fiscales más poderosas del agente inmobiliario — y la más subutilizada.',
+    fuentes: [
+      { texto: 'Ley del ISR — Art. 93 fr. XIX (exención casa habitación)', url: 'https://www.diputados.gob.mx/LeyesBiblio/pdf/LISR.pdf' },
+      { texto: 'Reglamento de la Ley del ISR — Art. 154 (requisitos exención)', url: 'https://www.diputados.gob.mx/LeyesBiblio/regley/Reg_LISR.pdf' },
+      { texto: 'Resolución Miscelánea Fiscal 2026 (reglas 3.10–3.12)', url: 'https://www.sat.gob.mx/normatividad/35323/resolucion-miscelanea-fiscal-(rmf)' },
+      { texto: 'Valor de la UDI — Banco de México (consulta diaria)', url: 'https://www.banxico.org.mx/tipcamb/main.do?page=tip&idioma=sp' },
+      { texto: 'INPC mensual — INEGI', url: 'https://www.inegi.org.mx/temas/inpc/' },
+    ],
+    contenido: `
+<div class="bl-art-head">
+  <div class="bl-art-head__cat">ISR / Fiscal</div>
+  <h1>Exención del ISR en venta de casa habitación: cómo aprovecharla cada 3 años</h1>
+  <p class="bl-art-head__sub">Tu cliente puede vender su casa sin pagar ISR sobre los primeros 700,000 UDIS de ganancia. Te explicamos exactamente cómo funciona y qué pedirle.</p>
+  <div class="bl-art-head__meta">
+    <span>Broquer Research</span>
+    <span class="dot"></span>
+    <span>20 de mayo de 2026</span>
+    <span class="dot"></span>
+    <span>7 min de lectura</span>
+  </div>
+</div>
+
+<div class="bl-art-body">
+
+<h2>¿Qué dice la ley?</h2>
+<p>El <strong>artículo 93, fracción XIX, inciso a)</strong> de la Ley del ISR establece que <strong>no se pagará ISR</strong> sobre la ganancia obtenida por la enajenación de la casa habitación del contribuyente, siempre que:</p>
+<ul>
+  <li>La ganancia no exceda <strong>700,000 UDIS</strong> (~$5.7 millones MXN en 2026, depende del valor diario de la UDI).</li>
+  <li>El enajenante <strong>no haya aplicado la misma exención</strong> en los <strong>3 años inmediatos anteriores</strong> a la fecha de la nueva enajenación.</li>
+</ul>
+<p>Si la ganancia excede 700,000 UDIS, <strong>solo se grava el excedente</strong> — es decir, los primeros 700,000 UDIS quedan exentos en cualquier caso.</p>
+
+<h2>¿Cómo se prueba que es "casa habitación"?</h2>
+<p>El <strong>artículo 154 del Reglamento de la LISR</strong> exige que el vendedor acredite que el inmueble fue su residencia. Documentos que el notario suele pedir <em>(elige al menos dos a nombre del enajenante, con domicilio del inmueble, expedidos en los últimos seis meses)</em>:</p>
+<ul>
+  <li>Credencial para votar (INE/IFE).</li>
+  <li>Estados de cuenta bancarios, de seguros, fondos de inversión o casas comerciales.</li>
+  <li>Recibos de luz, agua, predial, teléfono o gas.</li>
+  <li>Comprobante de inscripción al RFC con domicilio coincidente.</li>
+</ul>
+
+<h2>El timing es clave: la regla de los 3 años</h2>
+<p>El plazo se cuenta <strong>de fecha de escritura a fecha de escritura</strong>. Si tu cliente vendió una casa habitación en agosto de 2023, podrá usar la exención otra vez a partir de <strong>agosto de 2026</strong>. Si vende antes, la ganancia completa entra a la tarifa del artículo 152 LISR (cálculo notarial, retenciones SAT + entidad federativa).</p>
+<p><strong>Pro tip del agente:</strong> antes de listar la propiedad, pregunta a tu cliente si ha aplicado la exención antes. Si está dentro del plazo, considera asesorarle a esperar (si su situación lo permite) o ajustar el precio para compensar el ISR. Eso es lo que hace un agente experto.</p>
+
+<h2>¿Qué pasa si rebasa los 700,000 UDIS?</h2>
+<p>Solo el excedente paga ISR. Ejemplo (UDI ~$8.10 mxn en mayo 2026, valor referencial — consulta el del día en Banxico):</p>
+<ul>
+  <li>Precio venta: <strong>$8,000,000</strong></li>
+  <li>Costo actualizado (con INPC) del inmueble: <strong>$2,000,000</strong></li>
+  <li>Ganancia: <strong>$6,000,000</strong></li>
+  <li>Límite exento (700,000 UDIS × $8.10): <strong>~$5,670,000</strong></li>
+  <li>Base gravable: <strong>$330,000</strong> → sobre eso aplica la tarifa anual del art. 152 LISR.</li>
+</ul>
+<p>El notario actualiza el costo con el INPC del INEGI, descuenta deducciones (mejoras, escrituración, comisiones) y aplica la tarifa progresiva federal + 5% estatal. Broquer estima esto en segundos en el módulo <a href="isr.html">ISR</a>.</p>
+
+<h2>Casos donde NO aplica la exención</h2>
+<ul>
+  <li>El inmueble se usó como local comercial, oficina u arrendamiento (no era residencia principal).</li>
+  <li>El vendedor es persona moral o persona física con actividad empresarial donde el inmueble es activo del negocio.</li>
+  <li>Ya aplicaste la exención en los últimos 3 años a otra propiedad.</li>
+  <li>Departamentos y casas en preventa que nunca fueron habitados por el enajenante.</li>
+</ul>
+
+<h2>Lo que debes pedir al cierre</h2>
+<ol>
+  <li><strong>Confirmación escrita</strong> del cliente sobre si ha aplicado esta exención en los últimos 3 años.</li>
+  <li><strong>Los dos comprobantes de domicilio</strong> a nombre del enajenante para acreditar residencia.</li>
+  <li><strong>Avalúo y/o escritura de adquisición</strong> con valor original (para que el notario calcule la ganancia real con INPC).</li>
+  <li><strong>Comprobantes de mejoras</strong> (facturas con RFC del vendedor) si hubo remodelaciones — son deducibles.</li>
+</ol>
+
+<h2>Resumen para el agente</h2>
+<p>La exención del ISR por casa habitación es <strong>la diferencia entre cerrar y no cerrar</strong> una operación grande. Si manejas el timing y los documentos correctamente, puedes ahorrar a tu cliente <strong>cientos de miles de pesos</strong> y, de paso, ganarte su confianza para siempre. Usa el módulo de <a href="isr.html">ISR de Broquer</a> para estimar la retención antes de firmar el contrato — así llegas al cierre sin sorpresas.</p>
+
+<p style="margin-top:24px;color:#7A7065;font-size:13px;font-style:italic">Este artículo es de uso informativo para el agente inmobiliario. El cálculo y retención definitivos los realiza el notario público. Para casos atípicos (persona moral, copropiedad, herencia, donación previa) consulta con un contador fiscal certificado.</p>
+
+</div>
+`,
+  },
   {
     id: 'expediente-unico-pld',
     titulo: 'El expediente único: tu blindaje legal como agente inmobiliario',
@@ -520,7 +608,6 @@ const ARTICULOS = [
   function esc(s) { return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
   /* Init */
-  renderTags();
   renderList();
 
   /* Si la URL tiene ?art=ID abrir directamente */

@@ -284,6 +284,9 @@ def generar_arrendamiento(datos, output_path):
     fecha_fin_s = _fecha_escrita(d('fecha_fin'))
     mpio_inm    = u('municipio_estado_inmueble')
     estado_inm  = mpio_inm.split(',')[-1].strip() if ',' in mpio_inm else mpio_inm
+    # Variables nacionales: ciudad de firma + estado de firma. Default = los del inmueble.
+    ciudad_firma_arr = (d('ciudad_firma') or mpio_inm) if mpio_inm else d('ciudad_firma')
+    estado_firma_arr = (d('estado_firma') or estado_inm) if estado_inm else d('estado_firma')
     renta_num   = d('renta_mensual')
     # Letras: use JS-provided value, fallback to Python calculation
     def _letra(num_str):
@@ -520,10 +523,10 @@ def generar_arrendamiento(datos, output_path):
         "del importe de la renta que se encuentre vigente en ese momento, desde la constitución en mora "
         "y hasta la total liquidación de todas y cada una de las obligaciones contraídas.")
 
-    sub("La parte arrendataria no podrá retener la renta en ningún caso ni bajo ningún título judicial "
-        "o extrajudicial, ni por falta de composturas ni reparaciones que la parte arrendadora hiciere "
-        "sino que la pagará íntegramente y en la fecha estipulada cumpliendo además las obligaciones "
-        "que previenen el Código Civil del Estado de Michoacán, en cuanto a arrendatario le competen.")
+    sub(f"La parte arrendataria no podrá retener la renta en ningún caso ni bajo ningún título judicial "
+        f"o extrajudicial, ni por falta de composturas ni reparaciones que la parte arrendadora hiciere "
+        f"sino que la pagará íntegramente y en la fecha estipulada cumpliendo además las obligaciones "
+        f"que previenen el Código Civil del Estado de {estado_inm}, en cuanto a arrendatario le competen.")
 
     titulo('"DESTINO, OBJETO"')
     clausula("SEXTA",
@@ -711,7 +714,8 @@ def generar_arrendamiento(datos, output_path):
     clausula("VIGESIMOTERCERA",
         f"Para todas las cuestiones relativas al alcance de la interpretación y cumplimiento de las "
         f"obligaciones y derechos que se consignan en este contrato, las partes contratantes se someten "
-        f"expresamente a las leyes y a los tribunales competentes en la ciudad de {mpio_inm}, "
+        f"expresamente a las leyes y a los tribunales competentes en la ciudad de {ciudad_firma_arr}, "
+        f"así como al Código Civil vigente en el estado de {estado_firma_arr}, "
         f"renunciando al fuero que por sus domicilios actuales o futuros o que por cualquier otra "
         f"razón pudiera corresponderles. Conviniendo que serán a cargo de la parte arrendataria, "
         f"todos los gastos y costas judiciales y extrajudiciales a que dieran lugar por incumplimiento "
@@ -771,7 +775,7 @@ def generar_arrendamiento(datos, output_path):
         f"lo leen y habiendo quedado plenamente enteradas del contenido y los alcances legales de "
         f"todas y cada una de las cláusulas de este contrato, lo firman de absoluta conformidad por "
         f"duplicado, al margen de cada página anterior y al calce de ésta, en la ciudad de "
-        f"{mpio_inm}, a {fecha_firma}.", size=10)
+        f"{ciudad_firma_arr}, a {fecha_firma}.", size=10)
 
     # ── FIRMAS EN RECUADROS ──
     par('', space_before=20, space_after=4)
@@ -881,6 +885,19 @@ def generar_promesa(d, output_path):
     dir_inmueble  = d['direccion_inmueble'].upper()
     col_inmueble  = d['colonia_inmueble'].upper()
     cp_inmueble   = d['cp_inmueble']
+
+    # ── Ciudad / estado del inmueble + variables nacionales ──
+    # Default: ciudad/estado del inmueble. El usuario puede sobrescribir con
+    # ciudad_firma + estado_firma para indicar dónde se firma y a qué tribunales
+    # se someten las partes.
+    mpio_inm_raw   = str(d.get('municipio_estado_inmueble') or 'Ciudad de México, CDMX').strip()
+    mpio_inm_up    = mpio_inm_raw.upper()
+    estado_inm     = (mpio_inm_raw.split(',')[-1].strip() if ',' in mpio_inm_raw else mpio_inm_raw)
+    estado_inm_up  = estado_inm.upper()
+    ciudad_firma   = str(d.get('ciudad_firma') or mpio_inm_raw).strip()
+    estado_firma   = str(d.get('estado_firma') or estado_inm).strip()
+    ciudad_firma_up= ciudad_firma.upper()
+    estado_firma_up= estado_firma.upper()
     escritura_num = d.get('escritura_numero', '___')
     notario_nombre= d.get('notario_nombre', '___')
     notario_num   = d.get('notario_numero', '___')
@@ -899,7 +916,7 @@ def generar_promesa(d, output_path):
       f"CONTRATO PRIVADO DE PROMESA DE COMPRAVENTA QUE CELEBRAN POR UNA PARTE "
       f"{nombre_vend}, {prop_vend} DEL INMUEBLE UBICADO EN {dir_inmueble}, "
       f"COLONIA {col_inmueble}, CÓDIGO POSTAL {cp_inmueble}, CORRESPONDIENTE AL "
-      f"MUNICIPIO DE MORELIA, MICHOACÁN, A QUIEN EN LO SUCESIVO SE LE DENOMINARÁ "
+      f"MUNICIPIO DE {mpio_inm_up}, A QUIEN EN LO SUCESIVO SE LE DENOMINARÁ "
       f"\"{el_vend} {prom_vend}\", Y POR LA OTRA PARTE {nombre_comp}, A QUIEN EN "
       f"LO SUCESIVO SE LE DENOMINARÁ \"{el_comp} {prom_comp}\", SUJETÁNDOSE LAS "
       f"PARTES A LAS SIGUIENTES DECLARACIONES Y CLÁUSULAS:",
@@ -918,14 +935,14 @@ def generar_promesa(d, output_path):
       f"presente instrumento en copia simple.\n\n"
       f"Así mismo, declara bajo protesta de decir verdad, ser {el_vend.lower()} legítim{'a' if sv=='F' else 'o'} {prop_vend.lower()} del "
       f"INMUEBLE UBICADO EN {dir_inmueble}, COLONIA {col_inmueble}, CÓDIGO POSTAL {cp_inmueble}, "
-      f"CORRESPONDIENTE AL MUNICIPIO DE MORELIA, MICHOACÁN, lo que demuestra con la escritura "
+      f"CORRESPONDIENTE AL MUNICIPIO DE {mpio_inm_up}, lo que demuestra con la escritura "
       f"pública número {escritura_num} pasada ante la fe del {notario_nombre}, notario público "
-      f"número {notario_num} en el estado de Michoacán, y debidamente inscrita en el Registro "
+      f"número {notario_num} en el estado de {estado_inm}, y debidamente inscrita en el Registro "
       f"Público de la Propiedad bajo el tomo {tomo} y registro {registro} del libro de propiedad; "
       f"que este se encuentra libre de todo gravamen y que no existe impedimento legal alguno para "
       f"vender dicho inmueble, obligándose a la responsabilidad de su dicho.\n\n"
       f"Así mismo {el_vend} {prom_vend} señala como domicilio para recibir cualquier tipo de "
-      f"notificación el ubicado en {dom_vend}, CORRESPONDIENTE AL MUNICIPIO DE MORELIA, MICHOACÁN.")
+      f"notificación el ubicado en {dom_vend}, CORRESPONDIENTE AL MUNICIPIO DE {mpio_inm_up}.")
 
     p(doc,
       f"II.- Declara {el_comp} {prom_comp}, bajo protesta de decir verdad, ser {mex_comp}, "
@@ -939,7 +956,7 @@ def generar_promesa(d, output_path):
       f"de impuestos, deslindando al prominente vendedor de cualquier responsabilidad de cualquier "
       f"índole por recibir como pago del precio pactado dichos recursos.\n\n"
       f"Así mismo señala como domicilio para recibir y oír notificaciones el ubicado en "
-      f"{dom_comp}, CORRESPONDIENTE AL MUNICIPIO DE MORELIA, MICHOACÁN.")
+      f"{dom_comp}, CORRESPONDIENTE AL MUNICIPIO DE {mpio_inm_up}.")
 
     p(doc,
       "III.- Declaran LAS PARTES, bajo protesta de decir verdad, que se reconocen la identidad "
@@ -1035,9 +1052,10 @@ def generar_promesa(d, output_path):
     clausula(doc, "NOVENA.-", "JURISDICCIÓN",
         "Para la interpretación y cumplimiento de cualquier controversia que se pudiera suscitar "
         "con motivo de cumplimiento de las obligaciones que las partes contraen en este contrato, "
-        "ambos se someten expresamente a la jurisdicción y tribunales competentes de la ciudad de "
-        "Morelia, Michoacán, renunciando a cualquier fuero presente o futuro que les pudiera "
-        "corresponder por razón de domicilio.")
+        f"ambos se someten expresamente a la jurisdicción y tribunales competentes de la ciudad de "
+        f"{ciudad_firma}, {estado_firma}, así como al Código Civil vigente en dicho estado, "
+        f"renunciando a cualquier fuero presente o futuro que les pudiera "
+        f"corresponder por razón de domicilio.")
 
     # ── CLÁUSULAS ESPECIALES (inmediatamente después de NOVENA) ──
     ORDINALES_P = ['DÉCIMA','UNDÉCIMA','DUODÉCIMA','DECIMOTERCERA','DECIMOCUARTA',
@@ -1064,7 +1082,7 @@ def generar_promesa(d, output_path):
       f"dolo, mala fe, o algún vicio del consentimiento que pueda afectarle de nulidad, lo leen y "
       f"habiendo quedado enteradas del contenido y los alcances legales de todas y cada una de las "
       f"cláusulas de este contrato, lo firman por duplicado, al margen de cada página anterior y "
-      f"al calce de esta, en la ciudad de Morelia, Michoacán, a {fecha}.",
+      f"al calce de esta, en la ciudad de {ciudad_firma}, {estado_firma}, a {fecha}.",
       bold=True)
 
     # ── FIRMAS ──

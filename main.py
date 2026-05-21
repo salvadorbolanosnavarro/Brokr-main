@@ -615,6 +615,36 @@ ACCIÓN 9: NAVEGAR A UN MÓDULO
 [ACCION]{"tipo":"navegar","modulo":"image-cleaner"}[/ACCION]
 
 ══════════════════════════════════════════════════
+ACCIÓN 10: AGREGAR CONTACTO DIRECTAMENTE (sin navegar)
+══════════════════════════════════════════════════
+Cuando el usuario pide agregar un contacto/prospecto/cliente, captura los datos y lánzalo directo. NO navegues. El contacto se crea en el CRM y aparece la confirmación en el chat.
+
+Datos OBLIGATORIOS: nombre. Opcionales: telefono, email, empresa, tipo_contacto (prospecto|vendedor|comprador|arrendatario), notas.
+
+[ACCION]{"tipo":"agregar_contacto","nombre":"María López","telefono":"4431234567","email":"maria@example.com","tipo_contacto":"prospecto","notas":"Interesada en Chapultepec, presupuesto 4M"}[/ACCION]
+
+Ejemplo:
+Usuario: "agrega a María López, su tel es 443 123 4567, le interesa una casa en Chapultepec con presupuesto de 4 millones"
+Broquer: "Listo, lo agrego."
+[ACCION]{"tipo":"agregar_contacto","nombre":"María López","telefono":"4431234567","tipo_contacto":"prospecto","notas":"Interesada en Chapultepec, presupuesto 4M"}[/ACCION]
+
+══════════════════════════════════════════════════
+ACCIÓN 11: GENERAR Y DESCARGAR CONTRATO DIRECTAMENTE
+══════════════════════════════════════════════════
+Cuando ya tienes TODOS los datos obligatorios y el usuario CONFIRMA que quiere descargar el contrato, usa esta acción. El DOCX se descarga directo en su dispositivo, sin navegar.
+
+Si faltan datos: usa "llenar_contrato" (acción 4) en su lugar — eso navega y deja el form pre-llenado para que complete.
+
+Datos: TODOS los del contrato. subtipo: "arrendamiento" | "promesa".
+
+[ACCION]{"tipo":"generar_contrato_directo","subtipo":"arrendamiento","datos":{...}}[/ACCION]
+
+Ejemplo:
+Usuario: "ya tengo todo, descárgame el contrato ya"
+Broquer: "Listo, lo genero y se descarga."
+[ACCION]{"tipo":"generar_contrato_directo","subtipo":"arrendamiento","datos":{"fecha_contrato":"2026-05-21","calle_inmueble":"Av. Camelinas","num_ext_inmueble":"123","colonia_inmueble":"CHAPULTEPEC","cp_inmueble":"58260","municipio_estado_inmueble":"MORELIA, MICHOACAN","nombre_arrendador":"SALVADOR BOLAÑOS","nombre_arrendatario":"GABRIELA NAVARRO","renta_mensual":8500,"deposito_garantia":8500,"dia_pago":5,"fecha_inicio":"2026-06-01","fecha_fin":"2027-05-31"}}[/ACCION]
+
+══════════════════════════════════════════════════
 EJEMPLOS DE CONVERSACIÓN
 ══════════════════════════════════════════════════
 
@@ -4805,29 +4835,51 @@ async def _get_fb_meta(user_id: str) -> dict:
 
 @app.post("/facebook/ad-description")
 async def facebook_ad_description(request: Request):
-    """Genera texto del anuncio con Claude. Máx 150 caracteres."""
+    """Genera o MEJORA texto del anuncio con Claude. Máx 150 caracteres.
+
+    Body acepta:
+      - titulo: texto base / título de referencia
+      - mejorar: bool — si True, mejora el texto en lugar de generar desde cero
+      - emojis: bool — si True, incluye emojis relevantes en el resultado
+    """
     user_id = await get_user_id_from_token(request)
     if not user_id:
         raise HTTPException(status_code=401, detail="No autenticado")
     if not ANTHROPIC_API_KEY:
         raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY no configurada")
     body = await request.json()
-    titulo = body.get("titulo", "")
-    prompt = (
-        f"Escribe el texto principal para un anuncio de Facebook de una propiedad inmobiliaria. "
-        f"{'Título/referencia: ' + titulo + '. ' if titulo else ''}"
-        f"El texto debe ser directo, profesional y convincente. "
-        f"Máximo 150 caracteres. Solo el texto del anuncio, sin comillas ni explicaciones."
-    )
+    titulo = (body.get("titulo") or "").strip()
+    mejorar = bool(body.get("mejorar"))
+    emojis = bool(body.get("emojis"))
+
+    emoji_instr = " Incluye 2–3 emojis relevantes (🏡, 📍, ✨, 🔑, 🌳, etc.) integrados naturalmente, no al inicio/final." if emojis else ""
+
+    if mejorar and titulo:
+        prompt = (
+            f"Mejora este texto para un anuncio inmobiliario en Facebook, conservando su intención original.\n"
+            f"Texto del agente: \"{titulo}\"\n\n"
+            f"Reglas: máximo 150 caracteres; tono profesional y convincente; "
+            f"corrige ortografía/redacción; agrega 1 gancho corto si falta.{emoji_instr} "
+            f"Devuelve SOLO el texto mejorado, sin comillas ni explicaciones."
+        )
+    else:
+        prompt = (
+            f"Escribe el texto principal para un anuncio de Facebook de una propiedad inmobiliaria. "
+            f"{'Título/referencia: ' + titulo + '. ' if titulo else ''}"
+            f"El texto debe ser directo, profesional y convincente. "
+            f"Máximo 150 caracteres.{emoji_instr} "
+            f"Solo el texto del anuncio, sin comillas ni explicaciones."
+        )
+
     async with httpx.AsyncClient(timeout=20) as client:
         r = await client.post(
             f"{ANTHROPIC_BASE}/messages",
             headers={"x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "Content-Type": "application/json"},
-            json={"model": "claude-sonnet-4-6", "max_tokens": 80, "messages": [{"role": "user", "content": prompt}]}
+            json={"model": "claude-sonnet-4-6", "max_tokens": 120, "messages": [{"role": "user", "content": prompt}]}
         )
     if r.status_code != 200:
         raise HTTPException(status_code=502, detail="Error generando descripción")
-    text = r.json().get("content", [{}])[0].get("text", "").strip()[:150]
+    text = r.json().get("content", [{}])[0].get("text", "").strip()[:200]
     return {"text": text}
 
 
@@ -5738,4 +5790,76 @@ async def admin_set_activo(req: AdminActivoReq, request: Request):
         raise HTTPException(status_code=500, detail=f"Error actualizando activo: {r.text}")
 
     return {"ok": True, "user_id": target_id, "activo": bool(req.activo)}
+
+
+# ════════════════════════════════════════════════════════════════
+# Eliminar cuenta y datos del usuario (acción irreversible)
+# ════════════════════════════════════════════════════════════════
+@app.delete("/usuario/eliminar-cuenta")
+async def eliminar_cuenta_y_datos(request: Request):
+    """Borra TODA la información del usuario autenticado.
+
+    Tablas afectadas (cascada lógica):
+      • propiedades, contactos, contratos, user_integrations, usuarios
+      • Supabase Auth (auth.users)
+
+    Es irreversible. El frontend debe confirmar dos veces antes de llamar.
+    """
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autenticado.")
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        raise HTTPException(status_code=500, detail="Supabase no está configurado.")
+
+    sb_headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+        "Prefer": "return=minimal",
+    }
+    tablas = ["propiedades", "contactos", "contratos", "user_integrations"]
+    borrados = {}
+    errores = []
+    async with httpx.AsyncClient(timeout=20) as client:
+        for tabla in tablas:
+            try:
+                r = await client.delete(
+                    f"{SUPABASE_URL}/rest/v1/{tabla}?user_id=eq.{user_id}",
+                    headers=sb_headers,
+                )
+                borrados[tabla] = (r.status_code in (200, 204))
+                if r.status_code not in (200, 204):
+                    errores.append(f"{tabla}: {r.status_code} {r.text[:120]}")
+            except Exception as e:
+                errores.append(f"{tabla}: {e}")
+                borrados[tabla] = False
+
+        # Borrar fila en `usuarios` (el id es el mismo de auth.users)
+        try:
+            r = await client.delete(
+                f"{SUPABASE_URL}/rest/v1/usuarios?id=eq.{user_id}",
+                headers=sb_headers,
+            )
+            borrados["usuarios"] = (r.status_code in (200, 204))
+        except Exception as e:
+            errores.append(f"usuarios: {e}")
+            borrados["usuarios"] = False
+
+        # Borrar el usuario de auth.users (admin API)
+        try:
+            r = await client.delete(
+                f"{SUPABASE_URL}/auth/v1/admin/users/{user_id}",
+                headers={
+                    "apikey": SUPABASE_SERVICE_KEY,
+                    "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                },
+            )
+            borrados["auth"] = (r.status_code in (200, 204))
+            if r.status_code not in (200, 204):
+                errores.append(f"auth: {r.status_code} {r.text[:120]}")
+        except Exception as e:
+            errores.append(f"auth: {e}")
+            borrados["auth"] = False
+
+    return {"ok": True, "user_id": user_id, "borrados": borrados, "errores": errores}
 

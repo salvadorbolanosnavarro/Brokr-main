@@ -431,8 +431,8 @@ input:focus, select:focus, textarea:focus {
       casa:         { terreno: true,  construccion: true,  recamaras: true,  banos: true,  estac: true,  nivel: false, unidades: false, edad: true  },
       departamento: { terreno: false, construccion: true,  recamaras: true,  banos: true,  estac: true,  nivel: true,  unidades: false, edad: true  },
       terreno:      { terreno: true,  construccion: false, recamaras: false, banos: false, estac: false, nivel: false, unidades: false, edad: false },
-      local:        { terreno: false, construccion: true,  recamaras: false, banos: true,  estac: true,  nivel: true,  unidades: false, edad: true  },
-      oficina:      { terreno: false, construccion: true,  recamaras: false, banos: true,  estac: true,  nivel: true,  unidades: false, edad: true  },
+      local:        { terreno: false, construccion: true,  recamaras: false, banos: false, estac: true,  nivel: true,  unidades: false, edad: true  },
+      oficina:      { terreno: false, construccion: true,  recamaras: false, banos: false, estac: true,  nivel: true,  unidades: false, edad: true  },
       bodega:       { terreno: true,  construccion: true,  recamaras: false, banos: false, estac: true,  nivel: false, unidades: false, edad: true  },
       edificio:     { terreno: true,  construccion: true,  recamaras: false, banos: false, estac: true,  nivel: false, unidades: true,  edad: true  },
     };
@@ -537,7 +537,7 @@ input:focus, select:focus, textarea:focus {
         timerRef.current = setTimeout(async () => {
           setBuscando(true);
           try {
-            const r = await fetch(`${API}/api/colonias?texto=${encodeURIComponent(txt)}&ciudad=${encodeURIComponent(ciudad || "Morelia")}`);
+            const r = await fetch(`${API}/api/colonias?texto=${encodeURIComponent(txt)}&ciudad=${encodeURIComponent(ciudad || "")}`);
             const d = await r.json();
             setSugerencias(d.colonias || []);
             setAbierto(true);
@@ -590,11 +590,109 @@ input:focus, select:focus, textarea:focus {
       );
     }
 
+    // ─── CIUDAD INPUT con autocompletar (lista nacional) ─────────
+    const CIUDADES_MX = [
+      "Ciudad de México","Guadalajara","Monterrey","Puebla","Tijuana","León","Juárez","Zapopan",
+      "Mérida","San Luis Potosí","Querétaro","Aguascalientes","Hermosillo","Saltillo","Mexicali",
+      "Culiacán","Acapulco","Tlalnepantla","Naucalpan","Ecatepec","Chihuahua","Toluca","Morelia",
+      "Cancún","Playa del Carmen","Veracruz","Xalapa","Coatzacoalcos","Tampico","Reynosa","Matamoros",
+      "Nuevo Laredo","Torreón","Durango","Tepic","Mazatlán","Los Mochis","La Paz","Cabo San Lucas",
+      "Oaxaca","Tuxtla Gutiérrez","Tapachula","Villahermosa","Campeche","Pachuca","Cuernavaca",
+      "Cuautla","Tlaxcala","Colima","Zacatecas","Irapuato","Celaya","Guanajuato","San Miguel de Allende",
+      "Manzanillo","Puerto Vallarta","Ensenada","Rosarito","Chetumal","Ciudad del Carmen","Uruapan",
+      "Lázaro Cárdenas","Iguala","Chilpancingo","Salina Cruz","Tehuacán","Orizaba","Córdoba","Poza Rica"
+    ];
+    function CiudadInput({ value, onChange }) {
+      const [texto, setTexto] = useState(value || "");
+      const [abierto, setAbierto] = useState(false);
+      useEffect(() => { setTexto(value || ""); }, [value]);
+      const sugerencias = texto.length >= 2
+        ? CIUDADES_MX.filter(c => c.toLowerCase().includes(texto.toLowerCase())).slice(0, 8)
+        : [];
+      const onInput = (e) => {
+        const v = e.target.value;
+        setTexto(v);
+        onChange(v);
+        setAbierto(v.length >= 2);
+      };
+      const seleccionar = (c) => { setTexto(c); onChange(c); setAbierto(false); };
+      return (
+        <div className="autocomplete-wrap" onBlur={() => setTimeout(() => setAbierto(false), 150)}>
+          <input
+            type="text" value={texto}
+            onChange={onInput}
+            onFocus={() => setAbierto(texto.length >= 2)}
+            placeholder="Escribe la ciudad..."
+            style={{ width: "100%", padding: "10px 12px", background: "var(--gray-100)", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 10, color: "var(--text)", outline: "none", fontFamily: "'Poppins', sans-serif", fontSize: 14 }}
+          />
+          {abierto && sugerencias.length > 0 && (
+            <div className="autocomplete-dropdown">
+              {sugerencias.map((c, i) => (
+                <div key={i} className="autocomplete-item" onMouseDown={(e) => { e.preventDefault(); seleccionar(c); }}>
+                  <div className="ac-main">{c}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ─── COLONIA INPUT con autocompletar (devuelve string) ───────
+    function ColoniaTextInput({ value, ciudad, onChange }) {
+      const [texto, setTexto] = useState(value || "");
+      const [sugerencias, setSugerencias] = useState([]);
+      const [abierto, setAbierto] = useState(false);
+      const [buscando, setBuscando] = useState(false);
+      const timerRef = useRef(null);
+      useEffect(() => { setTexto(value || ""); }, [value]);
+      const onInput = (e) => {
+        const v = e.target.value;
+        setTexto(v);
+        onChange(v);
+        clearTimeout(timerRef.current);
+        if (v.length < 3) { setSugerencias([]); setAbierto(false); return; }
+        timerRef.current = setTimeout(async () => {
+          setBuscando(true);
+          try {
+            const r = await fetch(`${API}/api/colonias?texto=${encodeURIComponent(v)}&ciudad=${encodeURIComponent(ciudad || "")}`);
+            const d = await r.json();
+            setSugerencias(d.colonias || []);
+            setAbierto(true);
+          } catch {}
+          finally { setBuscando(false); }
+        }, 400);
+      };
+      const seleccionar = (col) => { setTexto(col.nombre); onChange(col.nombre); setAbierto(false); };
+      return (
+        <div className="autocomplete-wrap" onBlur={() => setTimeout(() => setAbierto(false), 150)}>
+          <input
+            type="text" value={texto}
+            onChange={onInput}
+            onFocus={() => texto.length >= 3 && sugerencias.length > 0 && setAbierto(true)}
+            placeholder="Ej: Vistas Altozano, Chapultepec..."
+            style={{ width: "100%", padding: "10px 12px", background: "var(--gray-100)", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 10, color: "var(--text)", outline: "none", fontFamily: "'Poppins', sans-serif", fontSize: 14 }}
+          />
+          {buscando && <div style={{ fontSize: 11, color: "var(--gray-400)", marginTop: 4 }}>Buscando...</div>}
+          {abierto && sugerencias.length > 0 && (
+            <div className="autocomplete-dropdown">
+              {sugerencias.map((s, i) => (
+                <div key={i} className="autocomplete-item" onMouseDown={(e) => { e.preventDefault(); seleccionar(s); }}>
+                  <div className="ac-main">{s.nombre}</div>
+                  {s.display && <div className="ac-sub">{s.display}</div>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
     // ─── COMPONENTE IA WEB SEARCH ───────────────────────────────
     function AvmIA() {
       const [form, setForm] = React.useState({
         tipo: "terreno", operacion: "venta",
-        colonia: "", ciudad: "Morelia",
+        colonia: "", ciudad: "",
         m2_terreno: "", m2_construccion: "",
         recamaras: "", banos: "", estacionamientos: "",
         condicion_terreno: "plano", comentarios: ""
@@ -608,8 +706,8 @@ input:focus, select:focus, textarea:focus {
       const uof = (k, v) => setOpFields(p => ({ ...p, [k]: v }));
 
       const u = (k, v) => setForm(p => ({ ...p, [k]: v }));
-      const esTerreno = form.tipo === "terreno";
-      const esConstruccion = ["casa","departamento","local","oficina","bodega"].includes(form.tipo);
+      const esTerreno = form.tipo === "terreno" || form.tipo === "edificio";
+      const esConstruccion = ["casa","departamento","local","oficina","bodega","edificio"].includes(form.tipo);
 
       // Expone __avmIAFill para que Shaark pueda activar la pestaña IA con datos precargados
       React.useEffect(() => {
@@ -655,7 +753,7 @@ input:focus, select:focus, textarea:focus {
             banos: parseFloat(form.banos) || 0,
             estacionamientos: parseInt(form.estacionamientos) || 0,
             condicion_terreno: form.condicion_terreno || "",
-            ciudad: form.ciudad || "Morelia",
+            ciudad: form.ciudad || "",
             comentarios: form.comentarios || ""
           };
           const r = await fetch(`${API}/api/avm-websearch`, {
@@ -719,11 +817,6 @@ input:focus, select:focus, textarea:focus {
       if (estado === "idle" || estado === "error") return (
         <div className="avm-body">
           <div className="avm-card">
-            <div className="card-label">Broquer AI</div>
-            <p style={{ fontSize: 12, color: "var(--gray-600)", marginBottom: 14, lineHeight: 1.6 }}>
-              Nuestra IA busca comparables en tiempo real en los mejores portales inmobiliarios y utiliza su criterio entrenado y conocimientos periciales para emitir un resultado fundamentado. Broquer recomienda no reemplazar el avalúo realizado por un perito certificado.
-            </p>
-
             <div className="field-row" style={{ marginBottom: 14 }}>
               <F label="Tipo de inmueble">
                 <select value={form.tipo} onChange={e => u("tipo", e.target.value)}>
@@ -744,16 +837,13 @@ input:focus, select:focus, textarea:focus {
             <div className="card-label">Ubicación</div>
             <div className="field-row">
               <F label="Colonia / Fraccionamiento *">
-                <input type="text" value={form.colonia}
-                  onChange={e => u("colonia", e.target.value)}
-                  placeholder="Ej: Vistas Altozano, Chapultepec..." />
+                <ColoniaTextInput value={form.colonia} ciudad={form.ciudad}
+                  onChange={(v) => u("colonia", v)} />
               </F>
             </div>
             <div className="field-row">
               <F label="Ciudad">
-                <input type="text" value={form.ciudad}
-                  onChange={e => u("ciudad", e.target.value)}
-                  placeholder="Morelia" />
+                <CiudadInput value={form.ciudad} onChange={(v) => u("ciudad", v)} />
               </F>
             </div>
           </div>
@@ -816,10 +906,15 @@ input:focus, select:focus, textarea:focus {
         <div className="avm-body">
           <div className="avm-card">
             <div className="ia-loading">
-              <div className="ia-loading-icon ia-pulse">🔍</div>
-              <div className="ia-loading-txt">Buscando comparables en el mercado...</div>
-              <div className="ia-loading-sub" style={{ marginTop: 8 }}>Consultando Lamudi, Vivanuncios, Inmuebles24</div>
-              <div className="ia-loading-sub ia-pulse" style={{ marginTop: 16, color: "var(--teal)" }}>Esto puede tomar 20–40 segundos</div>
+              <div className="bk-shark-loader bk-shark-loader--col" role="status" aria-label="Cargando">
+                <svg viewBox="0 0 100 40" xmlns="http://www.w3.org/2000/svg">
+                  <path className="bk-wave" d="M0,30 Q12,22 25,30 T50,30 T75,30 T100,30"/>
+                  <path className="bk-fin"  d="M0,28 C2,12 12,18 14,28 C10,24 5,26 0,28 Z"/>
+                </svg>
+                <span className="bk-shark-loader__text">Buscando comparables</span>
+              </div>
+              <div className="ia-loading-sub" style={{ marginTop: 14 }}>Consultando Lamudi, Vivanuncios, Inmuebles24</div>
+              <div className="ia-loading-sub" style={{ marginTop: 4 }}>Esto puede tomar 20–40 segundos</div>
             </div>
           </div>
         </div>
@@ -835,12 +930,9 @@ input:focus, select:focus, textarea:focus {
 
         return (
           <div className="avm-body">
-            <button className="btn-pdf" onClick={() => { setOpinionMode(true); window.scrollTo(0,0); }}>
-              Vista previa editable
-            </button>
             <button className="btn-primary outline" style={{ marginTop: 10 }}
               onClick={() => { setEstado("idle"); setResultado(null); setOpinionMode(false); }}>
-              Nueva valuación
+              Volver
             </button>
 
             {opinionMode && (() => {
@@ -998,7 +1090,7 @@ input:focus, select:focus, textarea:focus {
 
     function AVM() {
       const [tab,        setTab]        = useState(0);
-      const [sujeto,     setSujeto]     = useState({ tipo: "casa", direccion: "", colonia: "", ciudad: "morelia", m2Terreno: "", m2Construccion: "", recamaras: "", banos: "", estacionamiento: "", nivel: "", unidades: "", edad: "", conservacion: "bueno", calidad: "medio" });
+      const [sujeto,     setSujeto]     = useState({ tipo: "casa", direccion: "", colonia: "", ciudad: "", m2Terreno: "", m2Construccion: "", recamaras: "", banos: "", estacionamiento: "", nivel: "", unidades: "", edad: "", conservacion: "bueno", calidad: "medio" });
       const [coloniaObj, setColoniaObj] = useState(null); // {nombre, latitud, longitud}
       const [comps,      setComps]      = useState([]);
       const [autoComps,  setAutoComps]  = useState([]);

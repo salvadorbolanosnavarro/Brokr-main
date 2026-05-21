@@ -706,6 +706,7 @@ html, body { background: var(--paper); }
       <a class="det-btn" id="det-call-btn" href="#">Llamar</a>
       <a class="det-btn" id="det-mail-btn" href="#">Email</a>
       <button class="det-btn navy" onclick="editarDesdeDetalle()">Editar</button>
+      <button class="det-btn" onclick="eliminarDesdeDetalle()" style="background:#c93737;color:#fff">Eliminar</button>
     </div>
   </div>
 </div>
@@ -1055,6 +1056,21 @@ function editarDesdeDetalle() {
   abrirModal(detContacto.id);
 }
 
+async function eliminarDesdeDetalle() {
+  if (!detContacto) return;
+  const c = detContacto;
+  if (!confirm(`¿Eliminar a ${c.nombre || 'este contacto'}? Esta acción no se puede deshacer.`)) return;
+  try {
+    await eliminarRemoto(c.id);
+    await cargarRemoto();
+    cerrarDetalle();
+    renderLista();
+    showToast('Contacto eliminado');
+  } catch (e) {
+    alert('No se pudo eliminar el contacto.\n\n' + (e.message || e));
+  }
+}
+
 window.addEventListener('message', async (e) => {
   if (!e.data || e.data.tipo !== 'brokr_registrar_op') return;
   const c = _contactosMem.find(x => x.id === e.data.contacto_id);
@@ -1184,6 +1200,10 @@ async function iniciarImportEB() {
     });
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}));
+      // Caso específico: usuario sin API key de EasyBroker conectada
+      if (resp.status === 400 && /API Key|api_key|configura|configuración/i.test(err.detail || '')) {
+        throw new Error('Conecta tu cuenta de EasyBroker. Ve a tu panel de EasyBroker → Configuraciones → API para programadores, cópiala y regresa a Broquer y pégala en la sección "EasyBroker" de tu perfil.');
+      }
       throw new Error(err.detail || 'Error ' + resp.status);
     }
     const d = await resp.json();

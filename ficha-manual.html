@@ -547,10 +547,11 @@
     <div class="frow">
       <div class="f">
         <label>Tipo de inmueble</label>
-        <select id="d-tipo">
+        <select id="d-tipo" onchange="onTipoFichaChange()">
           <option value="">Seleccionar</option>
           <option value="Casa">Casa</option>
           <option value="Departamento">Departamento</option>
+          <option value="Edificio">Edificio</option>
           <option value="Terreno">Terreno</option>
           <option value="Local comercial">Local comercial</option>
           <option value="Oficina">Oficina</option>
@@ -603,10 +604,10 @@
   <!-- CARACTERÍSTICAS -->
   <div class="ui-card">
     <h3>Características</h3>
-    <div class="frow three">
-      <div class="f"><label>Recámaras</label><input type="number" id="d-rec" placeholder="3" min="0"/></div>
-      <div class="f"><label>Baños completos</label><input type="number" id="d-ban" placeholder="2" min="0" step="0.5"/></div>
-      <div class="f"><label>Medios baños</label><input type="number" id="d-mban" placeholder="1" min="0"/></div>
+    <div class="frow three" id="frow-rec-ban">
+      <div class="f" id="fld-rec"><label>Recámaras</label><input type="number" id="d-rec" placeholder="3" min="0"/></div>
+      <div class="f" id="fld-ban"><label>Baños completos</label><input type="number" id="d-ban" placeholder="2" min="0" step="0.5"/></div>
+      <div class="f" id="fld-mban"><label>Medios baños</label><input type="number" id="d-mban" placeholder="1" min="0"/></div>
     </div>
     <div class="frow three">
       <div class="f"><label>m² Construcción</label><input type="number" id="d-m2c" placeholder="180" min="0"/></div>
@@ -646,6 +647,10 @@
 
   <!-- ACTIONS -->
   <div class="ui-card">
+    <label style="display:flex;align-items:center;gap:10px;margin-bottom:14px;cursor:pointer;font-size:13px;color:var(--ink)">
+      <input type="checkbox" id="ficha-save-inmueble" checked style="width:18px;height:18px;cursor:pointer;accent-color:var(--ink)"/>
+      <span><strong>Guardar en Tus inmuebles</strong> <span style="color:var(--mute)">— quedará disponible en tu inventario.</span></span>
+    </label>
     <div class="actions">
       <button class="ui-btn" onclick="generarFicha()">
         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -686,6 +691,25 @@ function propFmtMoney(input){
 
 // ── FOTOS ────────────────────────────────────
 let fotos = []; // {url, name}
+
+// Precargar fotos enviadas desde el Editor de imágenes (sessionStorage)
+(function preloadFromEditor(){
+  try {
+    const raw = sessionStorage.getItem('broquer_editor_images');
+    if (!raw) return;
+    const imgs = JSON.parse(raw);
+    if (Array.isArray(imgs) && imgs.length) {
+      imgs.forEach(img => { if (img && img.url) fotos.push({ url: img.url, name: img.name || 'editada.jpg' }); });
+      sessionStorage.removeItem('broquer_editor_images');
+      // Renderizar cuando el DOM esté listo
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => renderThumbs());
+      } else {
+        setTimeout(renderThumbs, 0);
+      }
+    }
+  } catch(_) {}
+})();
 
 // ── PRICE FORMATTING ──
 function onOpChange(){
@@ -1235,11 +1259,34 @@ function _mostrarToastInmueble() {
 const _generarFichaOriginal = generarFicha;
 generarFicha = async function() {
   await _generarFichaOriginal();
-  // Solo guardar si la generación fue exitosa (token presente)
+  // Solo guardar si la generación fue exitosa (token presente) Y el checkbox sigue marcado
   if (_lastPdfToken) {
-    await guardarComoInmueble().catch(err => console.warn('guardarComoInmueble:', err));
+    const chk = document.getElementById('ficha-save-inmueble');
+    if (!chk || chk.checked) {
+      await guardarComoInmueble().catch(err => console.warn('guardarComoInmueble:', err));
+    }
   }
 };
+
+// Ocultar campos de recámaras/baños para tipos que no aplican
+function onTipoFichaChange() {
+  const tipoEl = document.getElementById('d-tipo');
+  if (!tipoEl) return;
+  const tipo = (tipoEl.value || '').toLowerCase();
+  const sinHabitaciones = ['terreno', 'local comercial', 'oficina', 'bodega', 'rancho', 'edificio'];
+  const hide = sinHabitaciones.includes(tipo);
+  ['fld-rec', 'fld-ban', 'fld-mban'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = hide ? 'none' : '';
+  });
+  // Limpiar valores si se ocultan, para evitar enviar datos irrelevantes
+  if (hide) {
+    ['d-rec', 'd-ban', 'd-mban'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+  }
+}
 
 </script>
 <script src="app-shell.js" defer></script>

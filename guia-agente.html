@@ -129,7 +129,7 @@
 <div class="guide-wrap">
 
   <div class="guide-eyebrow">Broquer · Documentación</div>
-  <h1 class="guide-title">Guía del agente</h1>
+  <h1 class="guide-title">Ayuda</h1>
   <p class="guide-sub">Todo lo que necesitas para sacar el máximo provecho de Broquer. Desde conectar EasyBroker hasta generar contratos y valuaciones en segundos.</p>
 
   <!-- Módulos -->
@@ -321,14 +321,47 @@
   <div class="guide-contact">
     <div>
       <h3>¿Necesitas ayuda?</h3>
-      <p>Escríbenos directamente.</p>
+      <p>Escríbenos directamente. Responderemos en un plazo de 48 horas hábiles.</p>
     </div>
     <a href="mailto:hola@broquer.app" class="guide-contact-btn">Contactar soporte</a>
+  </div>
+
+  <!-- Eliminar cuenta -->
+  <div class="guide-contact" style="margin-top:24px;border:1px solid #f4cccc;background:#fff7f6">
+    <div>
+      <h3 style="color:#b32f24">Eliminar cuenta y datos</h3>
+      <p>Acción irreversible. Se borran tus inmuebles, contactos, contratos, integraciones y tu cuenta de acceso.</p>
+    </div>
+    <button class="guide-contact-btn" onclick="confirmEliminarCuenta()" style="background:#b32f24;color:#fff;border:none;cursor:pointer">Eliminar mi cuenta</button>
   </div>
 
 </div>
 </div>
 
 <script src="app-shell.js" defer></script>
+<script>
+async function confirmEliminarCuenta() {
+  if (!confirm('¿Eliminar tu cuenta y TODOS tus datos? Esta acción es irreversible.')) return;
+  const txt = prompt('Para confirmar, escribe ELIMINAR en mayúsculas:');
+  if (txt !== 'ELIMINAR') { alert('Cancelado.'); return; }
+  const tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+  if (!tok) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
+  const API = window.API_BASE || 'https://api.broquer.app';
+  try {
+    const r = await fetch(API + '/usuario/eliminar-cuenta', {
+      method: 'DELETE',
+      headers: { Authorization: 'Bearer ' + tok }
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.detail || ('Error ' + r.status));
+    localStorage.clear();
+    sessionStorage.clear();
+    alert('Tu cuenta y datos fueron eliminados. Gracias por probar Broquer.');
+    location.href = 'login.html';
+  } catch (e) {
+    alert('No se pudo eliminar la cuenta. ' + (e.message || e));
+  }
+}
+</script>
 </body>
 </html>

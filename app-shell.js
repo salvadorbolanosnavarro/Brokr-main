@@ -35,7 +35,7 @@
     { key:'isr',          href:'isr.html',           label:'ISR',             group:'main', icon:'calculator' },
     { key:'image-cleaner',href:'image-cleaner.html', label:'Editor imágenes', group:'main', icon:'image' },
     { key:'facebook-ads', href:'facebook-ads.html',  label:'Facebook Ads', group:'main', icon:'facebook' },
-    { key:'guia',         href:'guia-agente.html',   label:'Guía del agente', group:'main', icon:'question' },
+    { key:'guia',         href:'guia-agente.html',   label:'Ayuda', group:'main', icon:'question' },
     { key:'admin',        href:'admin.html',         label:'Admin',           group:'main', icon:'cog', adminOnly:true },
   ];
 
@@ -979,11 +979,95 @@
         break;
       }
       case 'llenar_isr':         stash('isr', ac);          location.href = 'isr.html'; break;
-      case 'llenar_avm':         stash('avm', ac);          location.href = 'avm.html'; break;
+      case 'llenar_avm':
+      case 'opinion_valor_web':  stash('avm', ac);          location.href = 'avm.html'; break;
       case 'llenar_contrato':    stash('contrato', ac);     location.href = 'contratos.html'; break;
       case 'crear_ficha':        stash('ficha', ac);        location.href = 'ficha.html'; break;
       case 'crear_ficha_manual': stash('ficha_manual', ac); location.href = 'ficha-manual.html'; break;
       case 'buscar_propiedad':   stash('buscar_props', ac); location.href = 'propiedades.html'; break;
+      case 'confirmar_campana':  stash('fb_ads', ac);       location.href = 'facebook-ads.html'; break;
+
+      // ── ACCIONES DIRECTAS — ejecutan en la ventana del asistente ──
+      case 'agregar_contacto':       agregarContactoDirecto(ac); break;
+      case 'generar_contrato_directo': generarContratoDirecto(ac); break;
+    }
+  }
+
+  /* ── Acciones directas: ejecutan API y muestran resultado en chat ── */
+  function _addAssistantBubble(html) {
+    const wrap = document.getElementById('bk-shk-msgs');
+    if (!wrap) return;
+    const b = document.createElement('div');
+    b.className = 'bk-shk-bubble bot';
+    b.innerHTML = html;
+    wrap.appendChild(b);
+    wrap.scrollTop = wrap.scrollHeight;
+  }
+
+  async function agregarContactoDirecto(ac) {
+    try {
+      const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
+      const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
+      const tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+      const userRaw = localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}';
+      const user = JSON.parse(userRaw);
+      if (!tok || !user.id) { _addAssistantBubble('No pude crear el contacto: tu sesión expiró.'); return; }
+      const payload = {
+        user_id: user.id,
+        nombre: (ac.nombre || '').trim(),
+        telefono: (ac.telefono || '').replace(/[^+\d]/g, '').slice(0, 20),
+        email: (ac.email || '').trim(),
+        empresa: ac.empresa || null,
+        tipo: ac.tipo_contacto || 'prospecto',
+        notas: ac.notas || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      const r = await fetch(`${SB_URL}/rest/v1/contactos`, {
+        method: 'POST',
+        headers: {
+          'apikey': SB_KEY,
+          'Authorization': 'Bearer ' + tok,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(payload)
+      });
+      if (r.ok) {
+        _addAssistantBubble(`✓ Contacto agregado: <strong>${payload.nombre || 'sin nombre'}</strong>${payload.telefono ? ' · ' + payload.telefono : ''}${payload.email ? ' · ' + payload.email : ''}. Ya está en tu CRM.`);
+      } else {
+        _addAssistantBubble('No pude agregar el contacto. Revisa los datos e inténtalo otra vez.');
+      }
+    } catch (e) {
+      _addAssistantBubble('No pude agregar el contacto: ' + (e.message || e));
+    }
+  }
+
+  async function generarContratoDirecto(ac) {
+    try {
+      const API = window.API_BASE || 'https://api.broquer.app';
+      const tipo = ac.subtipo === 'promesa' ? 'promesa' : 'arrendamiento';
+      _addAssistantBubble(`Generando contrato de ${tipo === 'promesa' ? 'promesa de compraventa' : 'arrendamiento'}…`);
+      const r = await fetch(API + '/contrato', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo, datos: ac.datos || ac, clausulas_especiales: ac.clausulas_especiales || [] })
+      });
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        _addAssistantBubble('No pude generar el contrato: ' + (j.detail || ('error ' + r.status)));
+        return;
+      }
+      const blob = await r.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = tipo === 'promesa' ? 'Promesa_Compraventa.docx' : 'Contrato_Arrendamiento.docx';
+      document.body.appendChild(a); a.click();
+      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 800);
+      _addAssistantBubble(`✓ Contrato listo. Se descargó en tu dispositivo.`);
+    } catch (e) {
+      _addAssistantBubble('No pude generar el contrato: ' + (e.message || e));
     }
   }
 

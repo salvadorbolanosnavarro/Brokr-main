@@ -210,6 +210,7 @@ html, body {
   align-items: center;
   gap: 6px;
 }
+.card-label svg { display: none; }
 .card-label-opt {
   font-size: 10px;
   font-weight: 400;
@@ -708,14 +709,9 @@ html, body {
       <div class="row1"><div class="field"><label>Comisión del agente en esta venta (MXN)</label><input type="text" id="f-com" placeholder="Ej. $105,000" oninput="fmtMoneyField(this)" autocomplete="off"/></div></div>
     </div>
 
-    <!-- Exención -->
-    <div class="card anim d5" id="sec-casa">
-      <div class="card-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Exención — Casa habitación</div>
-      <div class="row2">
-        <div class="field"><label>¿Es la casa habitación principal del vendedor?</label><select id="f-pri"><option value="si">Sí</option><option value="no">No</option><option value="nose">No estoy seguro</option></select></div>
-        <div class="field"><label>¿Usó esta exención en los últimos 3 años?</label><select id="f-exp"><option value="no">No</option><option value="si">Sí</option><option value="nose">No lo sé</option></select></div>
-      </div>
-    </div>
+    <!-- Hidden defaults: el agente ya no llena exención aquí — se muestra como leyenda en resultados -->
+    <select id="f-pri" style="display:none"><option value="si" selected>Sí</option></select>
+    <select id="f-exp" style="display:none"><option value="nose" selected>No lo sé</option></select>
 
     <!-- Botón -->
     <button id="calc-btn" class="btn-calc anim d6" onclick="calcISR()">
@@ -939,7 +935,6 @@ function calcTablaProgresiva(tabla, base) {
 
 function onTipoChange() {
   const v = g('f-tipo').value;
-  g('sec-casa').style.display = v==='casa'?'block':'none';
   const ivaN=g('iva-note'); if(ivaN) ivaN.style.display = v==='comercial'?'block':'none';
   const stc = g('sec-terreno-const');
   if (stc) stc.style.display = v==='terreno'?'none':'block';
@@ -1136,7 +1131,10 @@ function renderResult(d) {
   if(notaEl){
     notaEl.style.display='block';
     const notaPM=`<br><br><strong>Nota para el agente:</strong> Si el vendedor es persona moral, o persona física con actividad empresarial y este inmueble forma parte de su activo, las reglas de retención del ISR pueden cambiar — en ese caso el notario no retiene y el contribuyente lo declara directamente. Confírmalo con el cliente antes de cerrar.`;
-    notaEl.innerHTML=`<strong>⚠️ Cálculo orientativo</strong> — metodología notarial arts. 121, 124, 120, 126 y 127 LISR. El notario realiza el cálculo definitivo con datos exactos SAT/INEGI.`+(comp.length?`<br><br>Documentos que deberá presentar el vendedor:${compH}`:'')+( d.nota?`<br><br><strong>Nota:</strong> ${d.nota}`:'')+notaPM;
+    const exencionLeyenda = (d.tipo === 'casa')
+      ? `<br><br><strong>¿Casa habitación o departamento?</strong> Tu cliente podría ser candidato para <strong>exentar el ISR</strong> (total o parcialmente) si esta es su casa habitación principal y no usó la exención en los últimos 3 años. <a href="blog.html?art=exencion-isr-casa-habitacion" style="color:#0f766e;font-weight:600">Lee cómo funciona la exención →</a>`
+      : '';
+    notaEl.innerHTML=`<strong>⚠️ Cálculo orientativo</strong> — metodología notarial arts. 121, 124, 120, 126 y 127 LISR. El notario realiza el cálculo definitivo con datos exactos SAT/INEGI.`+(comp.length?`<br><br>Documentos que deberá presentar el vendedor:${compH}`:'')+( d.nota?`<br><br><strong>Nota:</strong> ${d.nota}`:'')+notaPM+exencionLeyenda;
   }
   if(g('res'))g('res').style.display='block';
   if(g('isr-form'))g('isr-form').style.display='none';
@@ -1238,10 +1236,8 @@ function descargarPDF() {
   .nota ul{margin:4px 0 0 14px}
   .nota li{margin-bottom:2px}
   /* ── FOOTER ── */
-  .footer{margin-top:16px;padding-top:8px;border-top:1px solid #E8E2D2;display:flex;justify-content:space-between;align-items:center}
-  .footer-brand{font-family:'Fraunces',serif;font-size:13px;font-weight:400;color:#1A1814;letter-spacing:-0.01em}
-  .footer-brand span{color:#0a7a6a}
-  .footer-disc{font-size:8px;color:#A09488;letter-spacing:0.5px;text-align:right;max-width:340px;line-height:1.5}
+  .footer{margin-top:18px;padding-top:8px;border-top:1px solid #E8E2D2;text-align:center}
+  .footer-brand{font-family:'Inter',sans-serif;font-size:9px;font-weight:500;color:#7A7065;letter-spacing:0.4px}
 </style>
 </head>
 <body>
@@ -1310,8 +1306,7 @@ function descargarPDF() {
   ${nota?`<div class="nota">${nota}</div>`:''}
 
   <div class="footer">
-    <div class="footer-brand">Broquer<span></div>
-    <div class="footer-disc">Uso interno del agente inmobiliario · No sustituye al cálculo notarial definitivo · Arts. 119–127 LISR · INPC: INEGI</div>
+    <div class="footer-brand">Powered by Broquer.app</div>
   </div>
 </body></html>`;
 

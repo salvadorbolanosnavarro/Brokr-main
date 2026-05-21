@@ -5,7 +5,7 @@
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>Meta Ads Express — Broquer</title>
+<title>Facebook Ads — Broquer</title>
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -220,9 +220,9 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
   <!-- ═══ HERO ═══════════════════════════════════════════════ -->
   <section class="fa-hero">
     <div class="fa-hero-main">
-      <div class="fa-eyebrow">Meta Ads Express</div>
-      <h1>Crea anuncios en <span>Meta</span> sin abrir el Ads Manager.</h1>
-      <p>Cambia de página y cuenta publicitaria a placer, lanza una campaña en tres pasos y mide resultados básicos sin salir de Broquer. Para parámetros avanzados, abre Ads Manager.</p>
+      <div class="fa-eyebrow">Facebook Ads</div>
+      <h1>Crea anuncios en <span>Facebook</span> sin abrir el Ads Manager.</h1>
+      <p>Lanza una campaña en tres pasos y mide resultados básicos sin salir de Broquer. Tu página y cuenta publicitaria son las que conectaste; para cambiarlas, reconecta Facebook desde tu perfil.</p>
     </div>
     <aside class="fa-side-card">
       <div class="fa-side-title">Qué automatizamos</div>
@@ -237,7 +237,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
     <div class="fa-banner">
       <div class="fa-banner-icon"><svg viewBox="0 0 24 24" fill="white"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.269h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg></div>
       <h2>Conecta Facebook para empezar</h2>
-      <p>Necesitamos una página y permisos de Meta Ads para crear, activar y medir anuncios. Conecta una sola vez; después podrás cambiar de página y cuenta cuantas veces quieras.</p>
+      <p>Necesitamos una página y permisos de Facebook Ads para crear, activar y medir anuncios. Conecta tu página y la cuenta publicitaria asociada.</p>
       <button class="fa-btn fa-btn-blue" onclick="goToProfile()">Conectar en Mi Perfil</button>
     </div>
   </div>
@@ -246,7 +246,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
     <div class="fa-banner">
       <div class="fa-banner-icon"><svg viewBox="0 0 24 24" fill="white"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.269h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg></div>
       <h2>Reconecta tu cuenta</h2>
-      <p>Tu conexión actual no incluye permisos publicitarios. Vuelve a conectar Facebook para habilitar Meta Ads Express.</p>
+      <p>Tu conexión actual no incluye permisos publicitarios. Vuelve a conectar Facebook para habilitar Facebook Ads.</p>
       <button class="fa-btn fa-btn-blue" onclick="goToProfile()">Reconectar Facebook</button>
     </div>
   </div>
@@ -254,27 +254,26 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
   <!-- ═══ CONECTADO ══════════════════════════════════════════ -->
   <div id="fa-connected" style="display:none">
 
-    <!-- Selectores (Página + Cuenta) -->
+    <!-- Página y cuenta publicitaria (fijas: las conectadas) -->
     <div class="fa-selectors">
-      <div class="fa-selector" id="fa-page-sel" onclick="togglePageDrop(event)">
+      <div class="fa-selector" id="fa-page-sel">
         <span class="fa-sel-label">Página</span>
         <div class="fa-sel-value">
           <span class="fa-sel-pic" id="fa-page-pic"></span>
           <span class="fa-sel-txt" id="fa-page-name">Cargando…</span>
-          <svg class="fa-sel-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
         <div class="fa-sel-sub" id="fa-page-sub">&nbsp;</div>
-        <div class="fa-sel-drop" id="fa-page-drop"></div>
       </div>
-      <div class="fa-selector" id="fa-acct-sel" onclick="toggleAcctDrop(event)">
+      <div class="fa-selector" id="fa-acct-sel">
         <span class="fa-sel-label">Cuenta publicitaria</span>
         <div class="fa-sel-value">
           <span class="fa-sel-txt" id="fa-acct-name">Cargando…</span>
-          <svg class="fa-sel-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
         <div class="fa-sel-sub" id="fa-acct-sub">&nbsp;</div>
-        <div class="fa-sel-drop" id="fa-acct-drop"></div>
       </div>
+    </div>
+    <div style="font-size:12px;color:var(--mute);margin:-6px 0 14px;padding:0 4px">
+      Para cambiar de página o cuenta publicitaria, <a href="#" onclick="goToProfile();return false" style="color:var(--ink);font-weight:600;text-decoration:underline">reconecta Facebook desde tu perfil</a>.
     </div>
 
     <div id="fa-account-warn" class="fa-account-warn" style="display:none">
@@ -285,7 +284,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
     <div id="fa-no-accounts" style="display:none">
       <div class="fa-banner">
         <h2>Sin cuenta publicitaria activa</h2>
-        <p>No encontramos una cuenta publicitaria disponible para este perfil de Facebook. Crea o activa una en Meta Business Manager y regresa.</p>
+        <p>No encontramos una cuenta publicitaria disponible para este perfil de Facebook. Crea o activa una en Facebook Business Manager y regresa.</p>
         <a class="fa-btn fa-btn-blue" href="https://business.facebook.com/settings/ad-accounts" target="_blank" rel="noopener">Abrir Business Manager</a>
       </div>
     </div>
@@ -295,7 +294,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
       <!-- Tabs principales -->
       <div class="fa-tabs">
         <button class="fa-tab active" id="fa-tabbtn-crear" onclick="switchTab('crear')">Crear anuncio</button>
-        <button class="fa-tab" id="fa-tabbtn-camps" onclick="switchTab('camps')">Mis campañas</button>
+        <button class="fa-tab" id="fa-tabbtn-camps" onclick="switchTab('camps')">Tus campañas</button>
       </div>
 
       <!-- ════ TAB CREAR ════════════════════════════════════ -->
@@ -320,12 +319,12 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
             <!-- ── PASO 1: Brief ── -->
             <section class="fa-step-panel" data-step-panel="1">
               <div class="fa-card">
-                <div class="fa-card-head"><div><div class="fa-card-title">Brief de la campaña</div><div class="fa-card-sub">Lo mínimo para que Meta entregue tu anuncio.</div></div></div>
+                <div class="fa-card-head"><div><div class="fa-card-title">Brief de la campaña</div><div class="fa-card-sub">Lo mínimo para que Facebook entregue tu anuncio.</div></div></div>
 
                 <div class="fa-field">
                   <label for="fa-campaign-name">Nombre interno</label>
                   <input id="fa-campaign-name" type="text" autocomplete="off" placeholder="Ej. Casa Chapultepec — Mayo" oninput="syncSummary()"/>
-                  <div class="fa-hint">Solo lo ves tú. Te ayuda a identificarla en "Mis campañas".</div>
+                  <div class="fa-hint">Solo lo ves tú. Te ayuda a identificarla en "Tus campañas".</div>
                 </div>
 
                 <div class="fa-grid-2">
@@ -346,7 +345,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
                 <div class="fa-field">
                   <label for="fa-budget">Presupuesto diario (MXN)</label>
                   <input id="fa-budget" type="number" min="50" step="1" value="150" oninput="syncSummary()"/>
-                  <div class="fa-hint">Mínimo recomendado por Meta: $50 MXN al día.</div>
+                  <div class="fa-hint">Mínimo recomendado por Facebook: $50 MXN al día.</div>
                 </div>
 
                 <div class="fa-field" style="margin-bottom:0">
@@ -389,12 +388,12 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 
                   <div class="fa-field">
                     <label for="fa-ad-text">Texto principal</label>
-                    <textarea id="fa-ad-text" maxlength="180" oninput="updateCharCount();syncPreview()" placeholder="Ej. Casa iluminada en Chapultepec, cerca de servicios y con jardín. Agenda tu visita hoy."></textarea>
+                    <textarea id="fa-ad-text" maxlength="180" oninput="updateCharCount();syncPreview();updateAiBtn()" placeholder="Ej. Casa iluminada en Chapultepec, cerca de servicios y con jardín. Agenda tu visita hoy."></textarea>
                     <div class="fa-char-row">
-                      <button class="fa-btn fa-btn-ghost" id="fa-ai-btn" type="button" onclick="generateDescription()">Generar con IA</button>
+                      <button class="fa-btn fa-btn-ghost" id="fa-ai-btn" type="button" onclick="generateDescription()" disabled>Mejorar con IA</button>
                       <span id="fa-char-count" class="fa-char-count">0 / 180</span>
                     </div>
-                    <div id="fa-ai-hint" class="fa-hint" style="display:none">Escribe primero el nombre interno en el paso anterior.</div>
+                    <div id="fa-ai-hint" class="fa-hint" style="display:none">Escribe primero tu texto y luego pulsa "Mejorar con IA".</div>
                   </div>
 
                   <div class="fa-field">
@@ -416,7 +415,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
                       <span>JPG, PNG o WEBP — recomendado 1200 × 628 px, máx 8 MB</span>
                       <img class="fa-upload-preview" id="fa-upload-preview" alt="Vista previa de imagen del anuncio"/>
                     </div>
-                    <div class="fa-hint">Muy recomendado. Sin imagen, Meta solo muestra texto y rinde mucho menos.</div>
+                    <div class="fa-hint">Obligatoria. Sin imagen, Facebook solo muestra texto y rinde mucho menos.</div>
                   </div>
                 </div>
               </div>
@@ -458,17 +457,14 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
                 <button class="fa-btn fa-btn-ghost" onclick="goStep(2)">← Atrás</button>
                 <button class="fa-btn fa-btn-primary" id="fa-submit-btn" onclick="createAd()">
                   <span class="fa-spinner" id="fa-btn-spinner"></span>
-                  <span id="fa-btn-text">Publicar en Meta</span>
+                  <span id="fa-btn-text">Publicar en Facebook</span>
                 </button>
               </div>
 
               <div class="fa-result" id="fa-result">
                 <div class="fa-result-head"><div class="fa-result-dot" id="fa-result-dot"></div><div class="fa-result-title" id="fa-result-title"></div></div>
                 <div class="fa-result-body" id="fa-result-body"></div>
-                <div class="fa-result-actions">
-                  <a class="fa-btn fa-btn-ghost" id="fa-result-link" href="https://www.facebook.com/adsmanager" target="_blank" rel="noopener" style="display:none">Abrir en Ads Manager</a>
-                  <button class="fa-btn fa-btn-ghost" type="button" onclick="openCampaignsTab()">Ver mis campañas</button>
-                </div>
+                <div class="fa-result-actions"></div>
               </div>
             </section>
           </main>
@@ -486,7 +482,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
               <input type="checkbox" id="fa-publish-now" checked onchange="syncSummary()"/>
               <span>
                 <strong>Publicar activo al terminar</strong>
-                <span class="fa-sw-desc">Meta puede dejarlo "en revisión" antes de entregar. Si lo desmarcas quedará pausado.</span>
+                <span class="fa-sw-desc">Facebook puede dejarlo "en revisión" antes de entregar. Si lo desmarcas quedará pausado.</span>
               </span>
             </label>
             <div class="fa-note">Para parámetros avanzados (públicos personalizados, conversiones, Pixel) abre el <a href="https://www.facebook.com/adsmanager" target="_blank" rel="noopener">Ads Manager</a>.</div>
@@ -498,7 +494,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
       <div id="fa-tab-camps" style="display:none">
         <div class="fa-card">
           <div class="fa-card-head">
-            <div><div class="fa-card-title">Mis campañas</div><div class="fa-card-sub">Resultados de los últimos 7 días. Activa o pausa con un clic.</div></div>
+            <div><div class="fa-card-title">Tus campañas</div><div class="fa-card-sub">Resultados de los últimos 7 días. Activa o pausa con un clic.</div></div>
             <button class="fa-btn fa-btn-ghost" onclick="loadCampaigns()">Actualizar</button>
           </div>
 
@@ -772,7 +768,7 @@ function setMode(m){
   if(m==='new'){
     show('fa-new-section'); hide('fa-boost-section');
     document.getElementById('fa-summary-sub').textContent = 'Se crea campaña + conjunto + creativo + anuncio.';
-    document.getElementById('fa-btn-text').textContent = 'Publicar en Meta';
+    document.getElementById('fa-btn-text').textContent = 'Publicar en Facebook';
   } else {
     hide('fa-new-section'); show('fa-boost-section');
     document.getElementById('fa-summary-sub').textContent = 'Se promociona la publicación que selecciones.';
@@ -799,6 +795,7 @@ function goStep(n){
     el.classList.toggle('done', i < n);
     el.classList.toggle('current', i === n);
   });
+  if(n === 2 && _mode === 'boost') loadPagePosts();
   if(n === 3) syncPreview();
   window.scrollTo({top: 0, behavior:'smooth'});
 }
@@ -909,20 +906,26 @@ function onImageSelected(input){
   reader.readAsDataURL(file);
 }
 
-// ── IA: generar texto ──────────────────────────────────────
+// ── IA: mejorar texto ──────────────────────────────────────
+function updateAiBtn(){
+  const txt = document.getElementById('fa-ad-text').value.trim();
+  const btn = document.getElementById('fa-ai-btn');
+  if(btn) btn.disabled = !txt;
+}
+
 async function generateDescription(){
-  const campaignName = document.getElementById('fa-campaign-name').value.trim();
+  const current = document.getElementById('fa-ad-text').value.trim();
   const hint = document.getElementById('fa-ai-hint');
-  if(!campaignName){ hint.style.display = ''; return; }
+  if(!current){ hint.style.display = ''; return; }
   hint.style.display = 'none';
   const btn = document.getElementById('fa-ai-btn');
-  btn.disabled = true; const prev = btn.textContent; btn.textContent = 'Generando…';
+  btn.disabled = true; const prev = btn.textContent; btn.textContent = 'Mejorando…';
   try{
     const tok = getToken();
     const r = await fetch(API_BASE+'/facebook/ad-description', {
       method:'POST',
       headers:{'Content-Type':'application/json', Authorization:'Bearer '+tok},
-      body: JSON.stringify({titulo: campaignName}),
+      body: JSON.stringify({titulo: current, mejorar: true, emojis: true}),
     });
     const d = await r.json();
     if(d.text){
@@ -931,7 +934,8 @@ async function generateDescription(){
       syncPreview();
     }
   }catch(e){}
-  btn.disabled = false; btn.textContent = prev;
+  btn.textContent = prev;
+  updateAiBtn();
 }
 
 // ── Posts (boost) ──────────────────────────────────────────
@@ -989,7 +993,7 @@ async function createAd(){
       objective: document.getElementById('fa-objective').value || 'OUTCOME_ENGAGEMENT',
       daily_budget_mxn: parseFloat(document.getElementById('fa-budget').value)||0,
       duration_days: parseInt(document.getElementById('fa-duration').value)||7,
-      age_min: 25, age_max: 65,
+      age_min: 25, age_max: 59,
       country: 'MX',
       city: document.getElementById('fa-city-key').value,
       page_id: _activePage.id,
@@ -997,6 +1001,13 @@ async function createAd(){
       publish_now: document.getElementById('fa-publish-now').checked,
     };
   } else {
+    // Imagen obligatoria en modo "anuncio nuevo"
+    if(!_imageB64){ toast('Sube una imagen para el anuncio. Es obligatoria.'); return; }
+    // OUTCOME_ENGAGEMENT con anuncio nuevo lo rechaza Meta: hay que promocionar un post existente
+    if(document.getElementById('fa-objective').value === 'OUTCOME_ENGAGEMENT'){
+      toast('Para "Generar interacciones" debes promocionar una publicación existente. Cambia el objetivo o usa "Promocionar publicación".');
+      return;
+    }
     payload = {
       account_id: _activeAccount.id,
       campaign_name: document.getElementById('fa-campaign-name').value.trim(),
@@ -1008,7 +1019,7 @@ async function createAd(){
       image_mime: _imageMime,
       daily_budget_mxn: parseFloat(document.getElementById('fa-budget').value)||0,
       duration_days: parseInt(document.getElementById('fa-duration').value)||7,
-      age_min: 25, age_max: 65,
+      age_min: 25, age_max: 59,
       country: 'MX',
       city: document.getElementById('fa-city-key').value,
       page_id: _activePage.id,
@@ -1021,7 +1032,7 @@ async function createAd(){
   const btnText = document.getElementById('fa-btn-text');
   const resultEl = document.getElementById('fa-result');
   const prevTxt = btnText.textContent;
-  btn.disabled = true; spinner.classList.add('active'); btnText.textContent = 'Creando en Meta…';
+  btn.disabled = true; spinner.classList.add('active'); btnText.textContent = 'Creando en Facebook…';
   resultEl.classList.remove('visible');
 
   try{
@@ -1034,26 +1045,23 @@ async function createAd(){
     const d = await r.json();
     resultEl.classList.add('visible');
     if(r.ok && d.ok){
-      _lastAdsManagerUrl = d.ads_manager_url || _lastAdsManagerUrl;
       document.getElementById('fa-result-dot').className = 'fa-result-dot ok';
       document.getElementById('fa-result-title').textContent = d.status === 'ACTIVE' ? 'Anuncio enviado a publicación' : 'Campaña creada en pausa';
       document.getElementById('fa-result-body').innerHTML = d.status === 'ACTIVE'
-        ? 'Meta recibió tu anuncio. Puede pasar por revisión antes de entregar impresiones; puedes pausarlo desde "Mis campañas".'
-        : 'La campaña quedó en pausa. Actívala desde "Mis campañas" cuando quieras publicarla.';
-      const link = document.getElementById('fa-result-link');
-      link.href = _lastAdsManagerUrl; link.style.display = 'inline-flex';
+        ? 'Facebook recibió tu anuncio. Puede pasar por revisión antes de entregar impresiones; puedes pausarlo desde "Tus campañas".'
+        : 'La campaña quedó en pausa. Actívala desde "Tus campañas" cuando quieras publicarla.';
+      // Refrescar la lista de campañas para que aparezca sin tener que actualizar
+      try { loadCampaigns(true); } catch(_) {}
     } else {
       document.getElementById('fa-result-dot').className = 'fa-result-dot err';
       document.getElementById('fa-result-title').textContent = 'Error al crear el anuncio';
       document.getElementById('fa-result-body').textContent = d.detail || d.error || 'Ocurrió un error inesperado.';
-      document.getElementById('fa-result-link').style.display = 'none';
     }
   } catch(e){
     resultEl.classList.add('visible');
     document.getElementById('fa-result-dot').className = 'fa-result-dot err';
     document.getElementById('fa-result-title').textContent = 'Error de conexión';
     document.getElementById('fa-result-body').textContent = 'No se pudo conectar con el servidor. Intenta de nuevo.';
-    document.getElementById('fa-result-link').style.display = 'none';
   } finally {
     btn.disabled = false; spinner.classList.remove('active'); btnText.textContent = prevTxt;
   }
@@ -1122,7 +1130,7 @@ function renderCampaigns(){
         <div class="fa-stat"><span class="fa-stat-val">${ctr.toFixed(2)}%</span><span class="fa-stat-lbl">CTR</span></div>
         <div class="fa-stat"><span class="fa-stat-val">$${parseFloat(c.spend||0).toFixed(0)}</span><span class="fa-stat-lbl">Gastado</span></div>
       </div>
-      <div class="fa-campaign-note">Datos de los últimos 7 días. "Activa" puede incluir revisión de Meta antes de entregar.</div>
+      <div class="fa-campaign-note">Datos de los últimos 7 días. "Activa" puede incluir revisión de Facebook antes de entregar.</div>
     </div>`;
   }).join('');
 }
