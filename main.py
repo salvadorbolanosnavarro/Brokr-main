@@ -4679,6 +4679,10 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
             "bid_strategy": "LOWEST_COST_WITHOUT_CAP",
             "targeting": targeting,
             "status": "PAUSED",
+            # Meta exige un objeto promocionado en el adset; usamos la Facebook
+            # Page del usuario para cubrir los 3 objetivos manejados sin
+            # requerir Pixel (cf. nota sobre destination_type abajo).
+            "promoted_object": {"page_id": page_id},
         }
         # NOTA: no se pasa destination_type. Para OUTCOME_TRAFFIC con
         # optimization_goal=LINK_CLICKS, Meta infiere el destino del link en
