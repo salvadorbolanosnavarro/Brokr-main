@@ -472,12 +472,19 @@ window.addEventListener('brokr-shell-ready', async (e) => {
     nContratos = await fxCount('contratos?select=id');
   } catch (e) {}
 
-  // Horas ahorradas: estimación conservadora basada en lo que Broquer
-  // automatiza vs hacerlo manualmente.
-  //   Inmueble activo (ficha + fotos + datos): 30 min  → 0.5 h
-  //   Contacto en CRM (alta + seguimiento):     5 min  → 0.083 h
-  //   Contrato generado (redacción + formato): 45 min  → 0.75 h
-  const horas = Math.round(nProps * 0.5 + nContacts * 0.083 + nContratos * 0.75);
+  // Horas ahorradas: estimación realista, con tope de 3.5 h/día desde el alta.
+  //   Inmueble activo (ficha + fotos + datos):  9 min  → 0.15 h
+  //   Contacto en CRM (alta + seguimiento):    1.2 min → 0.02 h
+  //   Contrato generado (redacción + formato):15 min  → 0.25 h
+  const brutoHoras = nProps * 0.15 + nContacts * 0.02 + nContratos * 0.25;
+  // Tope diario: nunca más de 3.5 h/día desde la fecha de alta.
+  const created = profile?.user?.created_at;
+  let topeHoras = Infinity;
+  if (created) {
+    const diasUso = Math.max(1, (Date.now() - new Date(created).getTime()) / 86400000);
+    topeHoras = diasUso * 3.5;
+  }
+  const horas = Math.max(0, Math.round(Math.min(brutoHoras, topeHoras)));
   const horasEl = document.getElementById('kpi-horas');
   if (horasEl) horasEl.textContent = horas;
 });

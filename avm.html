@@ -922,164 +922,113 @@ input:focus, select:focus, textarea:focus {
 
       // ── ESTADO: RESULTADO ──
       if (estado === "result" && resultado) {
-        const confianza = resultado.nivel_confianza || "media";
-        const vpm = resultado.valor_por_m2 || 0;
+        const fmtMXN2 = (n) => "$" + Math.round(n || 0).toLocaleString("es-MX");
         const comparables = resultado.comparables || [];
         const factores = resultado.factores_ajuste || [];
         const recs = resultado.recomendaciones || [];
+        const resumen = resultado.resumen_ejecutivo || "";
+        const tipoLabel = form.tipo.charAt(0).toUpperCase() + form.tipo.slice(1);
+        const confianza = resultado.nivel_confianza || "media";
+        const confColor = confianza === "alta" ? "var(--emerald)" : confianza === "media" ? "var(--amber)" : "var(--rose)";
 
         return (
           <div className="avm-body">
-            <button className="btn-primary outline" style={{ marginTop: 10 }}
-              onClick={() => { setEstado("idle"); setResultado(null); setOpinionMode(false); }}>
-              Volver
-            </button>
+            <div style={{ display:"flex", gap:10, marginTop:6, marginBottom:14 }}>
+              <button className="btn-primary outline" style={{ flex:1 }}
+                onClick={() => { setEstado("idle"); setResultado(null); setOpinionMode(false); }}>
+                ← Nueva búsqueda
+              </button>
+              <button className="btn-primary teal" style={{ flex:1.4 }}
+                disabled={pdfLoading} onClick={descargarPDF}>
+                {pdfLoading ? "Generando PDF…" : "Descargar PDF"}
+              </button>
+            </div>
 
-            {opinionMode && (() => {
-              const fmtMXN2 = (n) => "$" + Math.round(n || 0).toLocaleString("es-MX");
-              const defaultResumen = resultado.resumen_ejecutivo || "";
-              const defaultAnalisis = resultado.analisis_zona || "";
-              const defaultConclusiones = `Con base en el análisis de los comparables de mercado y aplicando el criterio pericial de nuestra inteligencia artificial, que evalúa las condiciones del inmueble, su entorno y los datos obtenidos, se determina que el valor comercial de ${form.tipo === "terreno" ? "el terreno" : "la propiedad"} ubicada en ${form.colonia}${form.ciudad ? ", " + form.ciudad : ""}, al día de hoy, asciende a la cantidad de ${fmtMXN2(resultado.valor_estimado)} (${Math.round(resultado.valor_estimado || 0).toLocaleString("es-MX")} pesos 00/100 M.N.).`;
-              return (
-                <div style={{ marginTop: 14 }}>
-                  <div className="opinion-page">
+            <div className="opinion-page">
 
-                    <div className="opinion-header-bar">
-                      <div className="opinion-doc-title">Opinión de Valor</div>
-                      <div className="opinion-meta">
-                        <div>Fecha: {new Date().toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" })}</div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                          <span>Exp. No.:</span>
-                          <input className="opinion-input-inline" style={{ width: 130 }} value={opFields.expediente} onChange={e => uof("expediente", e.target.value)} placeholder="OV-2024-001" />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="opinion-section">
-                      <div className="opinion-section-title">Datos del solicitante</div>
-                      <div>
-                        <div className="opinion-field-label">Nombre del cliente</div>
-                        <input className="opinion-input-inline" value={opFields.solicitante} onChange={e => uof("solicitante", e.target.value)} placeholder="Nombre del cliente" />
-                      </div>
-                    </div>
-
-                    <div className="opinion-section">
-                      <div className="opinion-section-title">Descripción del inmueble sujeto</div>
-                      <div className="opinion-grid">
-                        <div><div className="opinion-field-label">Tipo de inmueble</div><div className="opinion-field-value">{form.tipo.charAt(0).toUpperCase() + form.tipo.slice(1)}</div></div>
-                        {form.colonia && <div><div className="opinion-field-label">Colonia / Fraccionamiento</div><div className="opinion-field-value">{form.colonia}</div></div>}
-                        {form.ciudad  && <div><div className="opinion-field-label">Ciudad</div><div className="opinion-field-value">{form.ciudad}</div></div>}
-                        {parseFloat(form.m2_terreno) > 0  && <div><div className="opinion-field-label">Superficie terreno</div><div className="opinion-field-value">{form.m2_terreno} m²</div></div>}
-                        {parseFloat(form.m2_construccion) > 0 && <div><div className="opinion-field-label">Superficie construcción</div><div className="opinion-field-value">{form.m2_construccion} m²</div></div>}
-                        {parseInt(form.recamaras) > 0     && <div><div className="opinion-field-label">Recámaras</div><div className="opinion-field-value">{form.recamaras}</div></div>}
-                        {parseFloat(form.banos) > 0       && <div><div className="opinion-field-label">Baños</div><div className="opinion-field-value">{form.banos}</div></div>}
-                        {parseInt(form.estacionamientos) > 0 && <div><div className="opinion-field-label">Estacionamientos</div><div className="opinion-field-value">{form.estacionamientos}</div></div>}
-                        {form.condicion_terreno && form.tipo === "terreno" && <div><div className="opinion-field-label">Condición del terreno</div><div className="opinion-field-value">{form.condicion_terreno}</div></div>}
-                        <div><div className="opinion-field-label">Operación</div><div className="opinion-field-value">{form.operacion === "venta" ? "Venta" : "Renta"}</div></div>
-                      </div>
-                      {form.comentarios && <div style={{ marginTop: 8, fontSize: 12, color: "var(--gray-600)" }}><span style={{ color: "var(--gray-400)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>Comentarios: </span>{form.comentarios}</div>}
-                    </div>
-
-                    <div className="opinion-valor-hero">
-                      <div className="opinion-valor-label">Valor comercial estimado</div>
-                      <div className="opinion-valor-num">{fmtMXN2(resultado.valor_estimado)}</div>
-                      <div className="opinion-valor-sub">
-                        Rango: {fmtMXN2(resultado.valor_minimo)} — {fmtMXN2(resultado.valor_maximo)}
-                        {resultado.valor_por_m2 > 0 && ` · ${fmtMXN2(resultado.valor_por_m2)}/m²`}
-                      </div>
-                    </div>
-
-                    <div className="opinion-section">
-                      <div className="opinion-section-title">
-                        <span>Resumen</span>
-                        {opFields.resumen !== null && <button className="no-print" onClick={() => uof("resumen", null)} style={{ background: "none", border: "none", fontSize: 10, color: "var(--teal)", cursor: "pointer", fontFamily: "'Poppins',sans-serif" }}>↺ Restaurar</button>}
-                      </div>
-                      <textarea className="opinion-editable" value={opFields.resumen !== null ? opFields.resumen : defaultResumen} onChange={e => uof("resumen", e.target.value)} />
-                    </div>
-
-                    {(resultado.comparables || []).length > 0 && (
-                      <div className="opinion-section">
-                        <div className="opinion-section-title">Comparables encontrados en el mercado ({resultado.comparables.length})</div>
-                        <table className="comp-tabla">
-                          <thead><tr><th>#</th><th>Descripción</th><th>Precio</th><th>Superficie</th><th>$/m²</th><th>Fuente</th></tr></thead>
-                          <tbody>
-                            {resultado.comparables.map((c, i) => (
-                              <tr key={i}>
-                                <td>{i + 1}</td>
-                                <td>{c.descripcion}</td>
-                                <td style={{ fontWeight: 700 }}>{fmtMXN2(c.precio)}</td>
-                                <td>{c.superficie_m2} m²</td>
-                                <td style={{ color: "var(--teal-dark)", fontWeight: 700 }}>{fmtMXN2(c.precio_m2)}</td>
-                                <td style={{ color: "var(--gray-400)", fontStyle: "italic" }}>{c.fuente}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-
-                    {(resultado.factores_ajuste || []).length > 0 && (
-                      <div className="opinion-section">
-                        <div className="opinion-section-title">Factores de homologación y ajuste</div>
-                        {resultado.factores_ajuste.map((f, i) => (
-                          <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", padding: "7px 0", borderBottom: "1px solid var(--gray-100)", fontSize: 12 }}>
-                            <div style={{ width: 8, height: 8, borderRadius: "50%", background: f.impacto === "positivo" ? "var(--emerald)" : f.impacto === "negativo" ? "var(--rose)" : "var(--gray-400)", flexShrink: 0, marginTop: 4 }} />
-                            <div><div style={{ fontWeight: 600, color: "var(--text)" }}>{f.factor}</div><div style={{ fontSize: 11, color: "var(--gray-600)", marginTop: 2 }}>{f.descripcion}</div></div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {(defaultAnalisis || opFields.analisisZona !== null) && (
-                      <div className="opinion-section">
-                        <div className="opinion-section-title">
-                          <span>Análisis de zona y plusvalía</span>
-                          {opFields.analisisZona !== null && <button className="no-print" onClick={() => uof("analisisZona", null)} style={{ background: "none", border: "none", fontSize: 10, color: "var(--teal)", cursor: "pointer", fontFamily: "'Poppins',sans-serif" }}>↺ Restaurar</button>}
-                        </div>
-                        <textarea className="opinion-editable" value={opFields.analisisZona !== null ? opFields.analisisZona : defaultAnalisis} onChange={e => uof("analisisZona", e.target.value)} />
-                      </div>
-                    )}
-
-                    {(resultado.recomendaciones || []).length > 0 && (
-                      <div className="opinion-section">
-                        <div className="opinion-section-title">Recomendaciones</div>
-                        {resultado.recomendaciones.map((r, i) => (
-                          <div key={i} style={{ display: "flex", gap: 8, marginBottom: 6, fontSize: 12, color: "var(--text)", alignItems: "flex-start" }}>
-                            <span style={{ color: "var(--teal)", fontWeight: 700, flexShrink: 0 }}>›</span>
-                            <span style={{ lineHeight: 1.5 }}>{r}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {resultado.advertencias && (
-                      <div style={{ background: "rgba(245,158,11,0.08)", borderLeft: "3px solid var(--amber)", borderRadius: 8, padding: "8px 12px", fontSize: 12, color: "#92400e", marginBottom: 14 }}>
-                        <strong>Nota:</strong> {resultado.advertencias}
-                      </div>
-                    )}
-
-                    <div className="opinion-section">
-                      <div className="opinion-section-title">
-                        <span>Conclusiones y determinación de valor</span>
-                        {opFields.conclusiones !== null && <button className="no-print" onClick={() => uof("conclusiones", null)} style={{ background: "none", border: "none", fontSize: 10, color: "var(--teal)", cursor: "pointer", fontFamily: "'Poppins',sans-serif" }}>↺ Restaurar</button>}
-                      </div>
-                      <textarea className="opinion-editable" style={{ minHeight: 110 }} value={opFields.conclusiones !== null ? opFields.conclusiones : defaultConclusiones} onChange={e => uof("conclusiones", e.target.value)} />
-                    </div>
-
-                    <div className="no-print" style={{ marginTop: 20, textAlign: "center" }}>
-                      <button style={{ padding: "12px 40px", background: "var(--navy)", color: "white", border: "none", borderRadius: 12, fontSize: 13, fontWeight: 700, fontFamily: "'Poppins',sans-serif", cursor: "pointer" }} onClick={() => window.print()}>
-                        Descargar
-                      </button>
-                    </div>
-
-                    <div style={{ marginTop: 28, paddingTop: 12, borderTop: "1px solid var(--gray-200)", textAlign: "center", fontSize: 10, color: "var(--gray-400)", letterSpacing: "0.3px" }}>
-                      Powered by Broquer by Grupo Navarro
-                    </div>
-
+              <div className="opinion-header-bar">
+                <div className="opinion-doc-title">Opinión de Valor</div>
+                <div className="opinion-meta">
+                  <div>{new Date().toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" })}</div>
+                  <div>
+                    <span style={{ display:"inline-block", padding:"2px 10px", borderRadius:20, background:confColor, color:"#fff", fontSize:9, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.6px" }}>
+                      Confianza {confianza}
+                    </span>
                   </div>
                 </div>
-              );
-            })()}
+              </div>
+
+              <div className="opinion-valor-hero">
+                <div className="opinion-valor-label">Valor comercial estimado</div>
+                <div className="opinion-valor-num">{fmtMXN2(resultado.valor_estimado)}</div>
+                <div className="opinion-valor-sub">
+                  Rango: {fmtMXN2(resultado.valor_minimo)} — {fmtMXN2(resultado.valor_maximo)}
+                  {resultado.valor_por_m2 > 0 && ` · ${fmtMXN2(resultado.valor_por_m2)}/m²`}
+                </div>
+              </div>
+
+              <div className="opinion-section">
+                <div className="opinion-section-title">Inmueble sujeto</div>
+                <div className="opinion-grid">
+                  <div><div className="opinion-field-label">Tipo</div><div className="opinion-field-value">{tipoLabel}</div></div>
+                  <div><div className="opinion-field-label">Operación</div><div className="opinion-field-value">{form.operacion === "venta" ? "Venta" : "Renta"}</div></div>
+                  {form.colonia && <div><div className="opinion-field-label">Colonia</div><div className="opinion-field-value">{form.colonia}</div></div>}
+                  {form.ciudad  && <div><div className="opinion-field-label">Ciudad</div><div className="opinion-field-value">{form.ciudad}</div></div>}
+                  {parseFloat(form.m2_terreno) > 0  && <div><div className="opinion-field-label">Terreno</div><div className="opinion-field-value">{form.m2_terreno} m²</div></div>}
+                  {parseFloat(form.m2_construccion) > 0 && <div><div className="opinion-field-label">Construcción</div><div className="opinion-field-value">{form.m2_construccion} m²</div></div>}
+                </div>
+              </div>
+
+              {resumen && (
+                <div className="opinion-section">
+                  <div className="opinion-section-title">Resumen del análisis</div>
+                  <div style={{ fontSize:12, color:"var(--text)", lineHeight:1.6, textAlign:"justify" }}>{resumen}</div>
+                </div>
+              )}
+
+              {comparables.length > 0 && (
+                <div className="opinion-section">
+                  <div className="opinion-section-title">Comparables ({comparables.length})</div>
+                  <table className="comp-tabla">
+                    <thead><tr><th>#</th><th>Descripción</th><th>Sup.</th><th>Precio</th><th>$/m²</th></tr></thead>
+                    <tbody>
+                      {comparables.slice(0, 8).map((c, i) => (
+                        <tr key={i}>
+                          <td>{i + 1}</td>
+                          <td style={{ maxWidth:260, overflow:"hidden", textOverflow:"ellipsis" }}>{c.descripcion}</td>
+                          <td>{c.superficie_m2} m²</td>
+                          <td style={{ fontWeight: 700 }}>{fmtMXN2(c.precio)}</td>
+                          <td style={{ color: "var(--teal-dark)", fontWeight: 700 }}>{fmtMXN2(c.precio_m2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {recs.length > 0 && (
+                <div className="opinion-section">
+                  <div className="opinion-section-title">Recomendaciones clave</div>
+                  {recs.slice(0, 4).map((r, i) => (
+                    <div key={i} style={{ display: "flex", gap: 8, marginBottom: 6, fontSize: 12, color: "var(--text)", alignItems: "flex-start" }}>
+                      <span style={{ color: "var(--teal)", fontWeight: 700, flexShrink: 0 }}>›</span>
+                      <span style={{ lineHeight: 1.5 }}>{r}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {resultado.advertencias && (
+                <div style={{ background: "rgba(245,158,11,0.08)", borderLeft: "3px solid var(--amber)", borderRadius: 8, padding: "8px 12px", fontSize: 12, color: "#92400e", marginBottom: 14 }}>
+                  <strong>Nota:</strong> {resultado.advertencias}
+                </div>
+              )}
+
+              <div style={{ marginTop: 22, paddingTop: 12, borderTop: "1px solid var(--gray-200)", textAlign: "center", fontSize: 10, color: "var(--gray-400)", letterSpacing: "0.3px" }}>
+                Broquer · Inteligencia inmobiliaria
+              </div>
+
+            </div>
           </div>
         );
       }

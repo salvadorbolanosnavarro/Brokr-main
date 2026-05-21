@@ -115,12 +115,48 @@
 }
 .guide-contact p { font-size: 13px; color: rgba(247,245,238,.6); }
 .guide-contact-btn {
-  padding: 9px 20px; background: var(--paper); color: var(--ink);
-  border: none; border-radius: 999px; font-size: 13px; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 22px; background: var(--paper); color: var(--ink);
+  border: 1px solid rgba(0,0,0,0.08); border-radius: 999px;
+  font-size: 13px; font-weight: 600; letter-spacing: -0.005em;
   font-family: inherit; cursor: pointer; text-decoration: none;
   white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 4px 14px rgba(0,0,0,.12);
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
 }
-.guide-contact-btn:hover { opacity: .88; }
+.guide-contact-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,.1), 0 8px 22px rgba(0,0,0,.18);
+}
+.guide-contact-btn:active { transform: translateY(0); }
+.guide-contact-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+/* Variante: Eliminar cuenta — fondo claro, look profesional sereno */
+.guide-danger {
+  background: #fffbfa; color: #1f1410;
+  border: 1px solid #f2d3cd;
+}
+.guide-danger h3 {
+  font-family: var(--font-display); font-size: 16px; font-weight: 700;
+  letter-spacing: -0.015em; color: #7c1d12; margin-bottom: 4px;
+}
+.guide-danger p { font-size: 13px; color: rgba(31,20,16,.6); }
+.guide-danger-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 22px; background: #b32f24; color: #fff;
+  border: 1px solid rgba(0,0,0,0.05); border-radius: 999px;
+  font-size: 13px; font-weight: 600; letter-spacing: -0.005em;
+  font-family: inherit; cursor: pointer; text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(179,47,36,.25), 0 4px 14px rgba(179,47,36,.28);
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.guide-danger-btn:hover {
+  background: #9a261c; transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(179,47,36,.3), 0 8px 22px rgba(179,47,36,.35);
+}
+.guide-danger-btn:active { transform: translateY(0); }
+.guide-danger-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
 </style>
 </head>
 <body data-app="guia">
@@ -323,16 +359,22 @@
       <h3>¿Necesitas ayuda?</h3>
       <p>Escríbenos directamente. Responderemos en un plazo de 48 horas hábiles.</p>
     </div>
-    <a href="mailto:hola@broquer.app" class="guide-contact-btn">Contactar soporte</a>
+    <a href="mailto:hola@broquer.app" class="guide-contact-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l9 6 9-6M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+      Contactar soporte
+    </a>
   </div>
 
   <!-- Eliminar cuenta -->
-  <div class="guide-contact" style="margin-top:24px;border:1px solid #f4cccc;background:#fff7f6">
+  <div class="guide-contact guide-danger" style="margin-top:24px">
     <div>
-      <h3 style="color:#b32f24">Eliminar cuenta y datos</h3>
+      <h3>Eliminar cuenta y datos</h3>
       <p>Acción irreversible. Se borran tus inmuebles, contactos, contratos, integraciones y tu cuenta de acceso.</p>
     </div>
-    <button class="guide-contact-btn" onclick="confirmEliminarCuenta()" style="background:#b32f24;color:#fff;border:none;cursor:pointer">Eliminar mi cuenta</button>
+    <button class="guide-danger-btn" onclick="confirmEliminarCuenta()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3"/></svg>
+      Eliminar mi cuenta
+    </button>
   </div>
 
 </div>

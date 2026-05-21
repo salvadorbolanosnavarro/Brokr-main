@@ -591,10 +591,6 @@ html, body { background: var(--paper); }
         <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
         Nuevo contacto
       </button>
-      <button class="import-btn" onclick="abrirImportEB()">
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
-        Importar de EasyBroker
-      </button>
     </div>
   </div>
   <div class="head-search">
@@ -1133,96 +1129,4 @@ async function _waitForShell(maxMs) {
   }
 })();
 </script>
-
-<!-- ════ IMPORT OVERLAY (shared) ════ -->
-<div class="overlay" id="import-ov" onclick="if(event.target===this)cerrarImport()">
-  <div class="sheet" style="max-width:500px">
-    <div class="handle"></div>
-    <div class="sheet-header">
-      <span class="sheet-title" id="import-title">Importar</span>
-      <button class="close-btn" onclick="cerrarImport()">
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <div id="import-body" style="padding:20px 24px 28px;overflow-y:auto"></div>
-  </div>
-</div>
-
-<!-- Hidden file input for VCF -->
-
-<script>
-/* ══ IMPORT MENU ══ */
-function cerrarImport() {
-  document.getElementById('import-ov').classList.remove('open');
-}
-
-/* ══ EASYBROKER ══ */
-function abrirImportEB() {
-  document.getElementById('import-title').textContent = 'Importar de EasyBroker';
-  document.getElementById('import-body').innerHTML = `
-    <p style="font-size:14px;color:var(--ink-2);line-height:1.6;margin-bottom:20px">
-      Se importarán los contactos de tu cuenta de EasyBroker. Si ya existe alguno con el mismo teléfono o correo, se actualiza sin duplicar.
-    </p>
-    <div id="eb-progress" style="display:none" class="import-progress-wrap">
-      <div id="eb-label" style="font-size:14px;font-weight:600;margin-bottom:4px">Importando…</div>
-      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="eb-bar"></div></div>
-      <div id="eb-txt" style="font-size:11px;color:var(--mute)">Conectando…</div>
-      <div class="import-log" id="eb-log"></div>
-    </div>
-    <button class="btn-primary" id="eb-start-btn" onclick="iniciarImportEB()">
-      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" style="margin-right:6px"><path stroke-linecap="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
-      Importar contactos
-    </button>
-  `;
-  document.getElementById('import-ov').classList.add('open');
-}
-
-async function iniciarImportEB() {
-  document.getElementById('eb-start-btn').style.display = 'none';
-  document.getElementById('eb-progress').style.display = 'block';
-  const label = document.getElementById('eb-label');
-  const bar   = document.getElementById('eb-bar');
-  const txt   = document.getElementById('eb-txt');
-  const log   = document.getElementById('eb-log');
-  bar.style.width = '10%';
-
-  try {
-    let tok;
-    if (window.brokrSb && window.brokrSb.ensureToken) {
-      tok = await window.brokrSb.ensureToken();
-    } else {
-      tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
-    }
-    if (!tok) throw new Error('Tu sesión expiró. Vuelve a iniciar sesión.');
-    const resp = await fetch(window.API_BASE + '/contactos/importar-eb', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok }
-    });
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      // Caso específico: usuario sin API key de EasyBroker conectada
-      if (resp.status === 400 && /API Key|api_key|configura|configuración/i.test(err.detail || '')) {
-        throw new Error('Conecta tu cuenta de EasyBroker. Ve a tu panel de EasyBroker → Configuraciones → API para programadores, cópiala y regresa a Broquer y pégala en la sección "EasyBroker" de tu perfil.');
-      }
-      throw new Error(err.detail || 'Error ' + resp.status);
-    }
-    const d = await resp.json();
-    bar.style.width = '100%';
-    label.textContent = '✓ Listo';
-    txt.textContent = `${d.importados + d.actualizados} de ${d.total} contactos procesados`;
-    if (d.importados)  log.innerHTML += `<div class="import-log-line ok">✓ ${d.importados} nuevos importados</div>`;
-    if (d.actualizados) log.innerHTML += `<div class="import-log-line ok">↻ ${d.actualizados} actualizados</div>`;
-    if (d.omitidos)    log.innerHTML += `<div class="import-log-line skip">— ${d.omitidos} omitidos (sin datos)</div>`;
-    if (d.errores)     log.innerHTML += `<div class="import-log-line err">✗ ${d.errores} con error</div>`;
-    if (!d.total)      log.innerHTML  = '<div class="import-log-line skip">Sin contactos en EasyBroker.</div>';
-    await cargarRemoto();
-    renderLista();
-    mostrarToast(`${d.importados + d.actualizados} contactos importados`);
-  } catch (err) {
-    bar.style.width = '100%'; bar.style.background = 'oklch(50% .18 30)';
-    label.textContent = '✗ Error';
-    txt.textContent = err.message || 'Error desconocido';
-  }
-}
-
 

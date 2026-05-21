@@ -1336,7 +1336,7 @@ function confirmarBorrarSeleccionados() {
   if (selectedIds.size === 0) return;
   const n = selectedIds.size;
   g('confirm-del-title').textContent = `¿Eliminar ${n} ${n === 1 ? 'inmueble' : 'inmuebles'}?`;
-  g('confirm-del-msg').textContent = 'Esta acción no se puede deshacer. Las fotos también se eliminarán.';
+  g('confirm-del-msg').innerHTML = 'Esta acción no se puede deshacer. Las fotos también se eliminarán.<br><br><strong>Eliminar de Broquer no elimina de tu página de Facebook.</strong>';
   g('confirm-del-btn').textContent = `Eliminar ${n}`;
   g('confirm-del-overlay').classList.add('is-open');
 }
@@ -1463,7 +1463,7 @@ function crearFichaDesde(id) {
 }
 
 async function deleteProp(id) {
-  if (!confirm('¿Eliminar este inmueble? Las fotos también se eliminarán.')) return;
+  if (!confirm('¿Eliminar este inmueble? Las fotos también se eliminarán.\n\nEliminar de Broquer no elimina de tu página de Facebook.')) return;
   try {
     // Conocer las URLs antes de borrar para limpiar el Storage
     const p = allProps.find(x => x.id === id);

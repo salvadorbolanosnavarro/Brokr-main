@@ -482,17 +482,25 @@ function randomVerifier(){
 }
 
 async function doGoogle(){
-  // Supabase puede devolver OAuth como ?code=... (PKCE). Antes el login solo
-  // entendía #access_token=..., por eso Google aceptaba y volvía al login sin sesión.
+  // Supabase OAuth con PKCE. El verifier se guarda en localStorage (más robusto
+  // que sessionStorage en flujos donde el navegador puede recrear contextos)
+  // con marca de tiempo para limpiar verificadores viejos.
   const redirectTo = location.origin + location.pathname;
   const verifier = randomVerifier();
-  sessionStorage.setItem('sb_pkce_verifier', verifier);
+  try {
+    localStorage.setItem('sb_pkce_verifier', verifier);
+    localStorage.setItem('sb_pkce_ts', String(Date.now()));
+  } catch(_) {}
+  // También en sessionStorage como respaldo.
+  try { sessionStorage.setItem('sb_pkce_verifier', verifier); } catch(_) {}
   const challenge = await sha256Base64Url(verifier);
   const url = new URL(`${SB_URL}/auth/v1/authorize`);
   url.searchParams.set('provider', 'google');
   url.searchParams.set('redirect_to', redirectTo);
   url.searchParams.set('code_challenge', challenge);
   url.searchParams.set('code_challenge_method', 'S256');
+  // Algunas configuraciones de Supabase requieren el apikey en la URL de authorize.
+  url.searchParams.set('apikey', SB_KEY);
   window.location.href = url.toString();
 }
 
@@ -505,14 +513,25 @@ async function doForgot(){
 }
 
 async function checkProfileAndRedirect(token, user){
-  const r = await fetch(`${SB_URL}/rest/v1/usuarios?id=eq.${user.id}&select=nombre,telefono`, {
-    headers:{ 'apikey':SB_KEY, 'Authorization':`Bearer ${token}` }
-  });
-  const data = await r.json();
-  if(!data.length || !data[0].nombre){
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/usuarios?id=eq.${user.id}&select=nombre,telefono`, {
+      headers:{ 'apikey':SB_KEY, 'Authorization':`Bearer ${token}` }
+    });
+    if (!r.ok) {
+      // Si la sesión es válida (200/204 del token) pero el query falló, asumimos
+      // que necesitamos completar perfil. No quemamos la sesión.
+      window.location.href = 'registro.html';
+      return;
+    }
+    const data = await r.json();
+    if (!Array.isArray(data) || !data.length || !data[0].nombre) {
+      window.location.href = 'registro.html';
+    } else {
+      window.location.href = 'index.html';
+    }
+  } catch (e) {
+    console.error('checkProfileAndRedirect error', e);
     window.location.href = 'registro.html';
-  } else {
-    window.location.href = 'index.html';
   }
 }
 
@@ -526,9 +545,16 @@ setTimeout(() => {
 
 /* OAuth/email confirmation callback handling */
 (async () => {
-  let token = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+  // Si venimos con OAuth callback en la URL (?code= o #access_token=), procesar
+  // PRIMERO ese flujo y no intentar reusar tokens viejos que puedan estar stale
+  // y mandar al usuario a registro/index antes de canjear el code.
+  const hasOauthInUrl = /[?&]code=/.test(location.search)
+                       || /[?&]error/.test(location.search)
+                       || /access_token=/.test(location.hash);
+
+  let token = hasOauthInUrl ? null : (localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token'));
   const refresh = localStorage.getItem('sb_refresh');
-  if(!token && refresh){
+  if(!hasOauthInUrl && !token && refresh){
     const r = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
       method:'POST',
       headers:{'Content-Type':'application/json','apikey':SB_KEY},
@@ -552,34 +578,59 @@ setTimeout(() => {
     if(user.id) await checkProfileAndRedirect(token, user);
   }
   const urlParams = new URLSearchParams(location.search);
+
+  // Supabase puede regresar errores como ?error=...&error_description=... cuando
+  // rechaza el redirect_to, la configuración de provider, etc. Mostrarlos.
+  const oauthErr = urlParams.get('error') || urlParams.get('error_description');
+  if(oauthErr){
+    const desc = urlParams.get('error_description') || urlParams.get('error') || 'Error de Google.';
+    showMsg('No se pudo iniciar con Google: ' + decodeURIComponent(desc).replace(/\+/g,' '));
+    history.replaceState(null, '', location.pathname);
+    return;
+  }
+
   const oauthCode = urlParams.get('code');
   if(oauthCode){
-    const verifier = sessionStorage.getItem('sb_pkce_verifier');
+    // Indicador inmediato — para que el usuario no vea "nada" mientras se
+    // intercambia el código por la sesión.
+    showMsg('Completando inicio con Google…', 'ok');
+    // Verifier: probar localStorage primero (más durable) y luego sessionStorage.
+    const verifier = localStorage.getItem('sb_pkce_verifier') || sessionStorage.getItem('sb_pkce_verifier');
     if(!verifier){
       showMsg('No se pudo completar Google: falta el verificador de seguridad. Intenta de nuevo.');
-      return;
-    }
-    const r = await fetch(`${SB_URL}/auth/v1/token?grant_type=pkce`, {
-      method:'POST',
-      headers:{'Content-Type':'application/json','apikey':SB_KEY},
-      body: JSON.stringify({ auth_code: oauthCode, code_verifier: verifier })
-    });
-    const d = await r.json();
-    sessionStorage.removeItem('sb_pkce_verifier');
-    if(d.error){
-      showMsg(d.error_description || d.msg || d.error);
       history.replaceState(null, '', location.pathname);
       return;
     }
-    if(d.access_token){
+    try {
+      const r = await fetch(`${SB_URL}/auth/v1/token?grant_type=pkce`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json','apikey':SB_KEY},
+        body: JSON.stringify({ auth_code: oauthCode, code_verifier: verifier })
+      });
+      const d = await r.json().catch(() => ({}));
+      // Limpiar verifier siempre, sea éxito o error.
+      try { localStorage.removeItem('sb_pkce_verifier'); localStorage.removeItem('sb_pkce_ts'); } catch(_) {}
+      try { sessionStorage.removeItem('sb_pkce_verifier'); } catch(_) {}
+
+      if(!r.ok || d.error || !d.access_token){
+        const msg = d.error_description || d.msg || d.error || ('Error ' + r.status + ' al intercambiar el código de Google.');
+        showMsg(msg);
+        history.replaceState(null, '', location.pathname);
+        return;
+      }
       localStorage.setItem('sb_token', d.access_token);
       if(d.refresh_token) localStorage.setItem('sb_refresh', d.refresh_token);
-      localStorage.setItem('sb_user', JSON.stringify(d.user));
+      localStorage.setItem('sb_user', JSON.stringify(d.user || {}));
       sessionStorage.setItem('sb_token', d.access_token);
-      sessionStorage.setItem('sb_user', JSON.stringify(d.user));
+      sessionStorage.setItem('sb_user', JSON.stringify(d.user || {}));
       localStorage.setItem('sesion_activa', 'true');
       history.replaceState(null, '', location.pathname);
-      await checkProfileAndRedirect(d.access_token, d.user);
+      await checkProfileAndRedirect(d.access_token, d.user || {});
+      return;
+    } catch (err) {
+      console.error('PKCE exchange failed', err);
+      showMsg('No se pudo completar Google: ' + (err.message || 'error de red'));
+      history.replaceState(null, '', location.pathname);
       return;
     }
   }
