@@ -2099,6 +2099,62 @@ BLOCKED_FETCH_DOMAINS = {
     "youtube.com", "maps.google.com", "googleusercontent.com"
 }
 
+# ── Firecrawl: scraping con bypass de anti-bot para dominios complejos ──
+FIRECRAWL_API_KEY = os.environ.get("FIRECRAWL_API_KEY", "")
+FIRECRAWL_CONCURRENCY = int(os.environ.get("FIRECRAWL_CONCURRENCY", "5"))
+FIRECRAWL_TIMEOUT = float(os.environ.get("FIRECRAWL_TIMEOUT", "45"))
+
+# Dominios que requieren Firecrawl (DataDome / Cloudflare / antibot fuerte).
+# Si no hay API key, se intenta httpx directo y los 403 se reportan como antes.
+PREMIUM_FETCH_DOMAINS = {
+    "inmuebles24.com",
+    "lamudi.com.mx",
+    "lamudi.com",
+    "propiedades.com",
+    "metroscubicos.com",
+    "mercadolibre.com.mx",
+}
+
+
+async def _firecrawl_scrape(url: str) -> Dict[str, Any]:
+    """
+    Llama Firecrawl /v1/scrape en modo proxy=auto: cobra 1 crédito si pasa con
+    proxy básico, 5 créditos si necesita escalar a enhanced. Devuelve un dict
+    con `ok`, `page_text` y `credits` para logging.
+    """
+    if not FIRECRAWL_API_KEY:
+        return {"ok": False, "error": "no_api_key", "page_text": "", "credits": 0}
+    payload = {
+        "url": url,
+        "formats": ["markdown"],
+        "proxy": "auto",
+        "onlyMainContent": True,
+        "timeout": int(FIRECRAWL_TIMEOUT * 1000),
+    }
+    headers = {
+        "Authorization": f"Bearer {FIRECRAWL_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    try:
+        async with httpx.AsyncClient(timeout=FIRECRAWL_TIMEOUT + 5) as client:
+            r = await client.post(
+                "https://api.firecrawl.dev/v1/scrape",
+                json=payload, headers=headers,
+            )
+        if r.status_code != 200:
+            return {"ok": False, "error": f"http_{r.status_code}", "page_text": "", "credits": 0}
+        d = r.json() or {}
+        if not d.get("success"):
+            return {"ok": False, "error": d.get("error") or "no_success", "page_text": "", "credits": 0}
+        data = d.get("data") or {}
+        # Firecrawl devuelve markdown limpio; lo recortamos al mismo límite que httpx.
+        text = (data.get("markdown") or "")[:MAX_TEXT_CHARS_PER_URL]
+        meta = data.get("metadata") or {}
+        credits = int(meta.get("creditsUsed") or d.get("creditsUsed") or 1)
+        return {"ok": True, "page_text": text, "credits": credits}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:120], "page_text": "", "credits": 0}
+
 
 def _today_mx() -> str:
     return datetime.now().strftime("%d/%m/%Y")
@@ -2310,32 +2366,85 @@ def _extract_visible_text(html: str) -> str:
 
 async def _fetch_candidate_pages(candidates: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     headers = {
-        "User-Agent": "BrokrComparableResearch/1.0 (+https://navarroai.com.mx; opinion-de-valor; contacto: soporte)",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "es-MX,es;q=0.9,en;q=0.6",
     }
-    fetched: List[Dict[str, Any]] = []
-    sem = asyncio.Semaphore(3)
+    sem_http = asyncio.Semaphore(3)
+    sem_fc   = asyncio.Semaphore(FIRECRAWL_CONCURRENCY)
+    stats = {"firecrawl_calls": 0, "firecrawl_credits": 0}
+
+    async def _try_httpx(url: str) -> Dict[str, Any]:
+        async with sem_http:
+            async with httpx.AsyncClient(timeout=FETCH_TIMEOUT, follow_redirects=True, headers=headers) as client:
+                r = await client.get(url)
+        ctype = (r.headers.get("content-type") or "").lower()
+        if r.status_code >= 400 or "text/html" not in ctype:
+            return {"ok": False, "status": r.status_code, "text": ""}
+        return {"ok": True, "status": r.status_code, "text": _extract_visible_text(r.text)}
+
+    async def _try_firecrawl(url: str) -> Dict[str, Any]:
+        async with sem_fc:
+            res = await _firecrawl_scrape(url)
+        if res.get("ok"):
+            stats["firecrawl_calls"] += 1
+            stats["firecrawl_credits"] += int(res.get("credits") or 0)
+        return res
 
     async def one(item: Dict[str, Any]) -> Dict[str, Any]:
         url = item.get("url", "")
         h = _host(url)
         if any(bad in h for bad in BLOCKED_FETCH_DOMAINS):
             return {**item, "fetch_status": "skipped_domain", "page_text": ""}
+
+        is_premium = any(p in h for p in PREMIUM_FETCH_DOMAINS)
+
+        # Estrategia:
+        #   - Premium domains → Firecrawl primero (httpx siempre fallaría con 403).
+        #   - Resto → httpx primero, fallback a Firecrawl si responde 403/429/5xx.
         try:
-            async with sem:
-                async with httpx.AsyncClient(timeout=FETCH_TIMEOUT, follow_redirects=True, headers=headers) as client:
-                    r = await client.get(url)
-            ctype = (r.headers.get("content-type") or "").lower()
-            if r.status_code >= 400 or "text/html" not in ctype:
-                return {**item, "fetch_status": f"http_{r.status_code}", "page_text": ""}
-            return {**item, "fetch_status": "ok", "page_text": _extract_visible_text(r.text)}
+            if is_premium and FIRECRAWL_API_KEY:
+                fc = await _try_firecrawl(url)
+                if fc.get("ok"):
+                    return {**item, "fetch_status": "ok_firecrawl",
+                            "page_text": fc["page_text"]}
+                # Si Firecrawl falla, intento httpx como último recurso.
+                try:
+                    h_res = await _try_httpx(url)
+                    if h_res["ok"]:
+                        return {**item, "fetch_status": "ok_httpx_fallback",
+                                "page_text": h_res["text"]}
+                    return {**item, "fetch_status": f"firecrawl_{fc.get('error','err')}__http_{h_res.get('status')}",
+                            "page_text": ""}
+                except Exception as e:
+                    return {**item, "fetch_status": f"firecrawl_{fc.get('error','err')}__httpx_err",
+                            "fetch_error": str(e)[:120], "page_text": ""}
+
+            # Camino directo (gratis) primero.
+            h_res = await _try_httpx(url)
+            if h_res["ok"]:
+                return {**item, "fetch_status": "ok", "page_text": h_res["text"]}
+
+            # Si el sitio devolvió 403/429/5xx y hay Firecrawl, reintento allí.
+            status = h_res.get("status") or 0
+            if FIRECRAWL_API_KEY and (status in (403, 429) or status >= 500):
+                fc = await _try_firecrawl(url)
+                if fc.get("ok"):
+                    return {**item, "fetch_status": f"ok_firecrawl_retry_{status}",
+                            "page_text": fc["page_text"]}
+                return {**item, "fetch_status": f"http_{status}__firecrawl_{fc.get('error','err')}",
+                        "page_text": ""}
+            return {**item, "fetch_status": f"http_{status}", "page_text": ""}
         except Exception as e:
             return {**item, "fetch_status": "error", "fetch_error": str(e)[:120], "page_text": ""}
 
     tasks = [one(c) for c in candidates[:MAX_URLS_TO_FETCH]]
-    if tasks:
-        fetched = await asyncio.gather(*tasks)
+    fetched = await asyncio.gather(*tasks) if tasks else []
+
+    # Log telemetría de Firecrawl por opinión (lo verás en Railway logs).
+    if stats["firecrawl_calls"]:
+        print(f"[firecrawl] calls={stats['firecrawl_calls']} credits={stats['firecrawl_credits']}")
+
     return fetched
 
 
