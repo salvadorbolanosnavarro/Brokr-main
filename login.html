@@ -235,6 +235,19 @@ body { overflow-y: auto; }
 .bk-msg.is-err { display: block; background: var(--danger-soft); color: var(--danger); border-color: rgba(184,75,63,.20); }
 .bk-msg.is-ok  { display: block; background: var(--success-soft); color: var(--success); border-color: rgba(31,107,74,.20); }
 
+.bk-legal {
+  margin-top: 18px;
+  font-size: 12px;
+  color: var(--mute);
+  text-align: center;
+  line-height: 1.55;
+}
+.bk-legal a {
+  color: var(--ink); text-decoration: underline; text-underline-offset: 2px;
+  font-weight: 600;
+}
+.bk-legal a:hover { color: var(--forest); }
+
 .bk-foot {
   margin-top: 32px;
   font-size: 12px;
@@ -373,6 +386,12 @@ body { overflow-y: auto; }
           Registrarse con Google
         </button>
       </form>
+
+      <div class="bk-legal">
+        Al continuar aceptas nuestros
+        <a href="legal.html" target="_blank" rel="noopener">Términos</a> y el
+        <a href="legal.html#privacidad" target="_blank" rel="noopener">Aviso de Privacidad</a>.
+      </div>
 
       <div class="bk-foot">Broquer 2026 — Para Sharks inmobiliarios</div>
     </div>
