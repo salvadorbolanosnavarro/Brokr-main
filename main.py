@@ -4559,9 +4559,12 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
             "targeting": targeting,
             "status": "PAUSED",
         }
-        # destination_type sólo aplica para tráfico con link
-        if req.objective == "OUTCOME_TRAFFIC" and not req.post_id:
-            adset_payload["destination_type"] = "WEBSITE"
+        # NOTA: no se pasa destination_type. Para OUTCOME_TRAFFIC con
+        # optimization_goal=LINK_CLICKS, Meta infiere el destino del link en
+        # link_data del creativo. Si se pasa destination_type="WEBSITE", Meta
+        # interpreta que es optimización de conversión y exige un Facebook Pixel
+        # (error 100/1487888 "Se requiere el píxel de seguimiento"), cosa que
+        # un agente inmobiliario típicamente no tiene configurada.
 
         if req.duration_days and req.duration_days > 0:
             from datetime import timedelta

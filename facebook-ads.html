@@ -218,7 +218,17 @@ let _campaignsPollTimer = null;
 let _postsPollTimer = null;
 
 function getToken(){return localStorage.getItem('sb_token')||sessionStorage.getItem('sb_token')||null;}
-function goToProfile(){const btn=document.getElementById('bk-profile-btn'); if(btn) btn.click();}
+function goToProfile(){
+  // app-shell.js expone window.openProfileDrawer (verificado en app-shell.js L1295)
+  if(typeof window.openProfileDrawer === 'function'){
+    window.openProfileDrawer();
+    return;
+  }
+  // Fallback: clic en el avatar del sidebar o el del header móvil
+  const btn = document.getElementById('bk-sb-avatar') || document.getElementById('bk-mob-avatar');
+  if(btn){ btn.click(); return; }
+  alert('No se pudo abrir tu perfil. Recarga la página e intenta de nuevo.');
+}
 function show(id){const el=document.getElementById(id); if(el) el.style.display='';}
 function hide(id){const el=document.getElementById(id); if(el) el.style.display='none';}
 function money(n){return '$'+Math.round(Number(n)||0).toLocaleString('es-MX')+' MXN';}
