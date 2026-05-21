@@ -4397,8 +4397,8 @@ async def facebook_ad_accounts(request: Request):
 class FbCreateAdRequest(BaseModel):
     account_id: str
     campaign_name: str
-    ad_text: str
-    headline: str
+    ad_text: str = ""
+    headline: str = ""
     destination_url: str = ""
     image_b64: str = ""
     image_mime: str = "image/jpeg"
@@ -4407,13 +4407,24 @@ class FbCreateAdRequest(BaseModel):
     age_min: int = 18
     age_max: int = 0
     country: str = "MX"
-    city: str = ""          # ciudad o colonia para geo-targeting
+    city: str = ""              # key de ciudad/región para geo-targeting
     page_id: str = ""
+    objective: str = "OUTCOME_TRAFFIC"   # OUTCOME_TRAFFIC | OUTCOME_AWARENESS | OUTCOME_ENGAGEMENT
+    publish_now: bool = False   # si True, crea y activa; si False, queda en PAUSED
+    post_id: str = ""           # si viene, promociona una publicación existente (formato pageid_postid)
 
 
 @app.post("/facebook/create-ad")
 async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
-    """Crea una campaña completa en Facebook Ads (Campaign → AdSet → Creative → Ad) en estado PAUSED."""
+    """Crea una campaña completa en Facebook Ads (Campaign → AdSet → Creative → Ad).
+
+    Soporta dos modos:
+      • Anuncio nuevo: arma el creativo a partir de ad_text/headline/image_b64/destination_url.
+      • Promocionar publicación existente: si req.post_id viene, el creativo usa
+        object_story_id = post_id y se promueve el post tal cual.
+
+    Si req.publish_now=True, queda en ACTIVE; si no, en PAUSED.
+    """
     user_id = await get_user_id_from_token(request)
     if not user_id:
         raise HTTPException(status_code=401, detail="No autenticado")
@@ -4423,12 +4434,13 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
         r = await client.get(
             f"{SUPABASE_URL}/rest/v1/user_integrations",
             headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
-            params={"user_id": f"eq.{user_id}", "provider": "eq.facebook", "select": "meta", "limit": "1"}
+            params={"user_id": f"eq.{user_id}", "provider": "eq.facebook", "select": "api_key,meta", "limit": "1"}
         )
     if r.status_code != 200 or not r.json():
         raise HTTPException(status_code=400, detail="Facebook no conectado")
 
-    meta_raw = r.json()[0].get("meta", "{}")
+    row = r.json()[0]
+    meta_raw = row.get("meta", "{}")
     try:
         meta = json.loads(meta_raw) if isinstance(meta_raw, str) else meta_raw
     except Exception:
@@ -4438,19 +4450,44 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
     if not user_token:
         raise HTTPException(status_code=400, detail="Token sin permisos de ads. Reconecta tu Facebook.")
 
+    page_id = req.page_id or meta.get("page_id", "")
+    if not page_id:
+        raise HTTPException(status_code=400, detail="Página de Facebook no identificada. Reconecta tu Facebook.")
+
+    # Promocionar publicación existente: validar formato pageid_postid
+    if req.post_id:
+        if "_" not in req.post_id:
+            # Si nos pasaron solo el post id, lo concatenamos con la page
+            req.post_id = f"{page_id}_{req.post_id}"
+
+    # Mapeo objective → (optimization_goal, billing_event) compatible con Meta
+    OBJ_MAP = {
+        "OUTCOME_TRAFFIC":     ("LINK_CLICKS",      "IMPRESSIONS"),
+        "OUTCOME_AWARENESS":   ("REACH",            "IMPRESSIONS"),
+        "OUTCOME_ENGAGEMENT":  ("POST_ENGAGEMENT",  "IMPRESSIONS"),
+    }
+    optimization_goal, billing_event = OBJ_MAP.get(
+        req.objective, ("LINK_CLICKS", "IMPRESSIONS")
+    )
+    # Si se promociona un post existente, POST_ENGAGEMENT es lo más seguro
+    if req.post_id:
+        optimization_goal = "POST_ENGAGEMENT"
+
+    target_status = "ACTIVE" if req.publish_now else "PAUSED"
+
     # Normalizar account_id (asegurar prefijo act_)
     account_id = req.account_id if req.account_id.startswith("act_") else f"act_{req.account_id}"
     base_url = f"https://graph.facebook.com/v21.0/{account_id}"
     params_base = {"access_token": user_token}
 
-    # Presupuesto diario en centavos (Meta usa la moneda de la cuenta en centavos)
+    # Presupuesto diario en centavos
     daily_budget_cents = int(req.daily_budget_mxn * 100)
 
     async with httpx.AsyncClient(timeout=45) as client:
 
-        # ── 0. Subir imagen a Meta (si se proporcionó) ─────────────────
+        # ── 0. Subir imagen a Meta (solo en modo "anuncio nuevo") ──────
         image_hash = None
-        if req.image_b64:
+        if req.image_b64 and not req.post_id:
             r_img = await client.post(
                 f"{base_url}/adimages",
                 params=params_base,
@@ -4461,7 +4498,7 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
                     image_hash = v.get("hash")
                     break
 
-        # ── 1. Crear Campaign ──────────────────────────────────────────
+        # ── 1. Crear Campaign (siempre en PAUSED; activamos al final) ──
         r_camp = await client.post(
             f"{base_url}/campaigns",
             params=params_base,
@@ -4491,12 +4528,16 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
             "name": f"{req.campaign_name} — AdSet",
             "campaign_id": campaign_id,
             "daily_budget": daily_budget_cents,
-            "billing_event": "IMPRESSIONS",
-            "optimization_goal": "POST_ENGAGEMENT",
+            "billing_event": billing_event,
+            "optimization_goal": optimization_goal,
             "bid_strategy": "LOWEST_COST_WITHOUT_CAP",
             "targeting": targeting,
             "status": "PAUSED",
         }
+        # destination_type sólo aplica para tráfico con link
+        if req.objective == "OUTCOME_TRAFFIC" and not req.post_id:
+            adset_payload["destination_type"] = "WEBSITE"
+
         if req.duration_days and req.duration_days > 0:
             from datetime import timedelta
             end_dt = datetime.utcnow() + timedelta(days=req.duration_days)
@@ -4514,25 +4555,32 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
         adset_id = r_adset.json().get("id")
 
         # ── 3. Crear AdCreative ────────────────────────────────────────
-        link_data: dict = {
-            "message": req.ad_text,
-            "name": req.headline,
-        }
-        if req.destination_url:
-            link_data["link"] = req.destination_url
-        elif req.page_id:
-            link_data["link"] = f"https://www.facebook.com/{req.page_id}"
-
-        if image_hash:
-            link_data["image_hash"] = image_hash
-
-        creative_payload: dict = {
-            "name": f"{req.campaign_name} — Creative",
-            "object_story_spec": {
-                "page_id": req.page_id or meta.get("page_id", ""),
-                "link_data": link_data,
+        if req.post_id:
+            # Modo "promocionar publicación existente": el creativo apunta al post
+            creative_payload: dict = {
+                "name": f"{req.campaign_name} — Boost",
+                "object_story_id": req.post_id,
             }
-        }
+        else:
+            # Modo "anuncio nuevo": armamos link_data desde cero
+            link_data: dict = {
+                "message": req.ad_text,
+                "name": req.headline,
+            }
+            if req.destination_url:
+                link_data["link"] = req.destination_url
+            else:
+                link_data["link"] = f"https://www.facebook.com/{page_id}"
+            if image_hash:
+                link_data["image_hash"] = image_hash
+
+            creative_payload = {
+                "name": f"{req.campaign_name} — Creative",
+                "object_story_spec": {
+                    "page_id": page_id,
+                    "link_data": link_data,
+                }
+            }
 
         r_creative = await client.post(
             f"{base_url}/adcreatives",
@@ -4540,10 +4588,11 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
             json=creative_payload
         )
         if r_creative.status_code not in (200, 201):
+            await client.delete(f"https://graph.facebook.com/v21.0/{campaign_id}", params=params_base)
             raise HTTPException(status_code=502, detail=f"Error creando creativo: {r_creative.text}")
         creative_id = r_creative.json().get("id")
 
-        # ── 4. Crear Ad ────────────────────────────────────────────────
+        # ── 4. Crear Ad (siempre en PAUSED; activamos en cascada al final)
         r_ad = await client.post(
             f"{base_url}/ads",
             params=params_base,
@@ -4555,11 +4604,33 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
             }
         )
         if r_ad.status_code not in (200, 201):
+            await client.delete(f"https://graph.facebook.com/v21.0/{campaign_id}", params=params_base)
             raise HTTPException(status_code=502, detail=f"Error creando anuncio: {r_ad.text}")
         ad_id = r_ad.json().get("id")
 
-    return {"ok": True, "campaign_id": campaign_id, "adset_id": adset_id,
-            "creative_id": creative_id, "ad_id": ad_id}
+        # ── 5. Activar en cascada si el usuario marcó "Publicar ahora" ──
+        if target_status == "ACTIVE":
+            # Orden: ad → adset → campaign (Meta exige hijos activos primero)
+            await client.post(f"https://graph.facebook.com/v21.0/{ad_id}",       params=params_base, json={"status": "ACTIVE"})
+            await client.post(f"https://graph.facebook.com/v21.0/{adset_id}",    params=params_base, json={"status": "ACTIVE"})
+            await client.post(f"https://graph.facebook.com/v21.0/{campaign_id}", params=params_base, json={"status": "ACTIVE"})
+
+    # account_id sin prefijo act_ para el deep-link al Ads Manager
+    acct_short = account_id.replace("act_", "")
+    ads_manager_url = (
+        f"https://www.facebook.com/adsmanager/manage/campaigns"
+        f"?act={acct_short}&selected_campaign_ids={campaign_id}"
+    )
+
+    return {
+        "ok": True,
+        "status": target_status,
+        "campaign_id": campaign_id,
+        "adset_id": adset_id,
+        "creative_id": creative_id,
+        "ad_id": ad_id,
+        "ads_manager_url": ads_manager_url,
+    }
 
 
 async def _get_fb_meta(user_id: str) -> dict:
@@ -4665,17 +4736,88 @@ async def facebook_campaigns_list(request: Request):
             cid = camp["id"]
             r_ins = await client.get(
                 f"https://graph.facebook.com/v21.0/{cid}/insights",
-                params={"access_token": user_token, "fields": "impressions,reach,post_engagement,spend", "date_preset": "last_7d"}
+                params={"access_token": user_token,
+                        "fields": "impressions,reach,clicks,ctr,post_engagement,spend",
+                        "date_preset": "last_7d"}
             )
             ins_data = r_ins.json().get("data", []) if r_ins.status_code == 200 else []
             ins = ins_data[0] if ins_data else {}
             results.append({
                 "id": cid, "name": camp["name"], "status": camp["status"],
                 "created_time": camp.get("created_time", ""),
-                "impressions": ins.get("impressions", "0"), "reach": ins.get("reach", "0"),
-                "engagement": ins.get("post_engagement", "0"), "spend": ins.get("spend", "0"),
+                "impressions": ins.get("impressions", "0"),
+                "reach": ins.get("reach", "0"),
+                "clicks": ins.get("clicks", "0"),
+                "ctr": ins.get("ctr", "0"),
+                "engagement": ins.get("post_engagement", "0"),
+                "spend": ins.get("spend", "0"),
             })
     return {"campaigns": results}
+
+
+@app.get("/facebook/page-posts")
+async def facebook_page_posts(request: Request):
+    """Lista las últimas publicaciones de la página conectada para promocionarlas."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autenticado")
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        raise HTTPException(status_code=500, detail="Servidor mal configurado")
+
+    # Necesitamos el page_token (guardado como api_key) y el page_id
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.get(
+            f"{SUPABASE_URL}/rest/v1/user_integrations",
+            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
+            params={"user_id": f"eq.{user_id}", "provider": "eq.facebook",
+                    "select": "api_key,meta", "limit": "1"}
+        )
+    if r.status_code != 200 or not r.json():
+        raise HTTPException(status_code=400, detail="Facebook no conectado")
+
+    row = r.json()[0]
+    page_token = row.get("api_key", "")
+    meta_raw = row.get("meta", "{}")
+    try:
+        meta = json.loads(meta_raw) if isinstance(meta_raw, str) else meta_raw
+    except Exception:
+        meta = {}
+    page_id = meta.get("page_id", "")
+    if not page_token or not page_id:
+        raise HTTPException(status_code=400, detail="Reconecta tu Facebook.")
+
+    # Traer las últimas 25 publicaciones de la página con campos útiles para la galería
+    async with httpx.AsyncClient(timeout=15) as client:
+        rp = await client.get(
+            f"https://graph.facebook.com/v21.0/{page_id}/posts",
+            params={
+                "access_token": page_token,
+                "fields": "id,message,created_time,full_picture,permalink_url,"
+                          "reactions.summary(true),comments.summary(true),shares,is_published",
+                "limit": "25",
+            }
+        )
+    if rp.status_code != 200:
+        raise HTTPException(status_code=502, detail=f"Error obteniendo publicaciones: {rp.text}")
+
+    items = []
+    for p in rp.json().get("data", []):
+        if p.get("is_published") is False:
+            continue
+        msg = (p.get("message") or "").strip()
+        items.append({
+            "id": p["id"],                              # formato pageid_postid
+            "message": msg[:280],
+            "created_time": p.get("created_time", ""),
+            "image": p.get("full_picture", ""),
+            "permalink": p.get("permalink_url", ""),
+            "reactions": ((p.get("reactions") or {}).get("summary") or {}).get("total_count", 0),
+            "comments":  ((p.get("comments")  or {}).get("summary") or {}).get("total_count", 0),
+            "shares":    (p.get("shares") or {}).get("count", 0),
+            "has_image": bool(p.get("full_picture")),
+        })
+
+    return {"posts": items, "page_id": page_id}
 
 
 @app.post("/facebook/campaign/toggle")
