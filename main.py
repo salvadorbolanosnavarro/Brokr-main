@@ -40,8 +40,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from routers.campanas import router as campanas_router
-app.include_router(campanas_router)
 
 CONFIG_FILE = Path(__file__).parent / "config.json"
 
@@ -4143,10 +4141,133 @@ async def facebook_get_connection(request: Request):
                         "page_name": meta.get("page_name", "Página conectada"),
                         "page_token": rows[0]["api_key"],
                         "user_token": meta.get("user_token", ""),
+                        "ad_account_id": meta.get("ad_account_id", ""),
+                        "ad_account_name": meta.get("ad_account_name", ""),
                     }
     except Exception:
         pass
     return {"connected": False}
+
+
+async def _fb_get_meta_row(user_id: str) -> dict:
+    """Devuelve la fila completa (api_key + meta dict) del usuario, o {}."""
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return {}
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.get(
+            f"{SUPABASE_URL}/rest/v1/user_integrations",
+            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
+            params={"user_id": f"eq.{user_id}", "provider": "eq.facebook",
+                    "select": "api_key,meta", "limit": "1"}
+        )
+    if r.status_code != 200 or not r.json():
+        return {}
+    row = r.json()[0]
+    meta_raw = row.get("meta", "{}")
+    try:
+        meta = json.loads(meta_raw) if isinstance(meta_raw, str) else meta_raw
+    except Exception:
+        meta = {}
+    return {"page_token": row.get("api_key", ""), "meta": meta}
+
+
+async def _fb_patch_meta(user_id: str, updates: dict, new_page_token: str | None = None) -> None:
+    """Actualiza la fila de Facebook del usuario fusionando 'updates' en meta."""
+    cur = await _fb_get_meta_row(user_id)
+    meta = cur.get("meta") or {}
+    meta.update(updates)
+    payload = {
+        "user_id": user_id,
+        "provider": "facebook",
+        "api_key": new_page_token if new_page_token is not None else cur.get("page_token", ""),
+        "meta": json.dumps(meta),
+        "updated_at": datetime.utcnow().isoformat(),
+    }
+    async with httpx.AsyncClient(timeout=10) as client:
+        await client.post(
+            f"{SUPABASE_URL}/rest/v1/user_integrations",
+            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                     "Content-Type": "application/json",
+                     "Prefer": "resolution=merge-duplicates,return=minimal"},
+            json=payload,
+        )
+
+
+@app.get("/facebook/pages")
+async def facebook_list_pages(request: Request):
+    """Lista TODAS las páginas que el usuario administra (sin reconectar FB)."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autenticado")
+    row = await _fb_get_meta_row(user_id)
+    user_token = (row.get("meta") or {}).get("user_token", "")
+    if not user_token:
+        raise HTTPException(status_code=400, detail="Reconecta tu Facebook para habilitar el cambio de página.")
+    async with httpx.AsyncClient(timeout=15) as client:
+        r = await client.get(
+            "https://graph.facebook.com/v21.0/me/accounts",
+            params={"access_token": user_token,
+                    "fields": "id,name,access_token,picture.type(square)",
+                    "limit": "200"},
+        )
+    if r.status_code != 200:
+        raise HTTPException(status_code=502, detail=f"Error de Facebook: {r.text}")
+    data = r.json().get("data", []) or []
+    pages = [{
+        "id": p.get("id", ""),
+        "name": p.get("name", p.get("id", "")),
+        "picture": ((p.get("picture") or {}).get("data") or {}).get("url", ""),
+    } for p in data if p.get("id")]
+    active_id = (row.get("meta") or {}).get("page_id", "")
+    return {"pages": pages, "active_page_id": active_id}
+
+
+class FbSelectPageRequest(BaseModel):
+    page_id: str
+
+@app.post("/facebook/select-page")
+async def facebook_select_page(req: FbSelectPageRequest, request: Request):
+    """Cambia la página activa del usuario (sin re-OAuth)."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autenticado")
+    row = await _fb_get_meta_row(user_id)
+    user_token = (row.get("meta") or {}).get("user_token", "")
+    if not user_token:
+        raise HTTPException(status_code=400, detail="Reconecta tu Facebook.")
+    # Buscar la página en /me/accounts para obtener su page_token específico
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.get(
+            "https://graph.facebook.com/v21.0/me/accounts",
+            params={"access_token": user_token, "fields": "id,name,access_token", "limit": "200"},
+        )
+    if r.status_code != 200:
+        raise HTTPException(status_code=502, detail=f"Error de Facebook: {r.text}")
+    target = next((p for p in r.json().get("data", []) if p.get("id") == req.page_id), None)
+    if not target:
+        raise HTTPException(status_code=400, detail="No administras esa página o ya no es accesible.")
+    page_token = target.get("access_token", "")
+    page_name = target.get("name", req.page_id)
+    await _fb_patch_meta(user_id, {"page_id": req.page_id, "page_name": page_name},
+                        new_page_token=page_token)
+    return {"ok": True, "page_id": req.page_id, "page_name": page_name}
+
+
+class FbSelectAdAccountRequest(BaseModel):
+    account_id: str
+    account_name: str = ""
+
+@app.post("/facebook/select-ad-account")
+async def facebook_select_ad_account(req: FbSelectAdAccountRequest, request: Request):
+    """Recuerda la última cuenta publicitaria elegida."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autenticado")
+    await _fb_patch_meta(user_id, {
+        "ad_account_id": req.account_id,
+        "ad_account_name": req.account_name or req.account_id,
+    })
+    return {"ok": True, "account_id": req.account_id}
 
 @app.delete("/facebook/connection")
 async def facebook_disconnect(request: Request):
@@ -4784,35 +4905,47 @@ async def facebook_campaigns_list(request: Request):
 
 
 @app.get("/facebook/page-posts")
-async def facebook_page_posts(request: Request):
-    """Lista las últimas publicaciones de la página conectada para promocionarlas."""
+async def facebook_page_posts(request: Request, page_id: str = ""):
+    """Lista las últimas publicaciones de la página para promocionarlas.
+
+    Si se pasa page_id por query, se usa esa página (resolviendo su page_token
+    desde /me/accounts con el user_token). Si no, usa la página activa guardada.
+    """
     user_id = await get_user_id_from_token(request)
     if not user_id:
         raise HTTPException(status_code=401, detail="No autenticado")
-    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
-        raise HTTPException(status_code=500, detail="Servidor mal configurado")
-
-    # Necesitamos el page_token (guardado como api_key) y el page_id
-    async with httpx.AsyncClient(timeout=10) as client:
-        r = await client.get(
-            f"{SUPABASE_URL}/rest/v1/user_integrations",
-            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
-            params={"user_id": f"eq.{user_id}", "provider": "eq.facebook",
-                    "select": "api_key,meta", "limit": "1"}
-        )
-    if r.status_code != 200 or not r.json():
+    row = await _fb_get_meta_row(user_id)
+    if not row:
         raise HTTPException(status_code=400, detail="Facebook no conectado")
+    meta = row.get("meta") or {}
+    user_token = meta.get("user_token", "")
 
-    row = r.json()[0]
-    page_token = row.get("api_key", "")
-    meta_raw = row.get("meta", "{}")
-    try:
-        meta = json.loads(meta_raw) if isinstance(meta_raw, str) else meta_raw
-    except Exception:
-        meta = {}
-    page_id = meta.get("page_id", "")
-    if not page_token or not page_id:
+    target_page_id = (page_id or meta.get("page_id", "")).strip()
+    if not target_page_id:
+        raise HTTPException(status_code=400, detail="No hay página seleccionada.")
+
+    # Resolver el page_token correcto: si nos piden la página guardada usamos
+    # api_key directo; si nos piden otra, resolvemos con user_token.
+    if target_page_id == meta.get("page_id", ""):
+        page_token = row.get("page_token", "")
+    else:
+        if not user_token:
+            raise HTTPException(status_code=400, detail="Reconecta tu Facebook.")
+        async with httpx.AsyncClient(timeout=10) as client:
+            rp = await client.get(
+                "https://graph.facebook.com/v21.0/me/accounts",
+                params={"access_token": user_token, "fields": "id,access_token", "limit": "200"},
+            )
+        if rp.status_code != 200:
+            raise HTTPException(status_code=502, detail="No se pudieron resolver las páginas.")
+        match = next((p for p in rp.json().get("data", []) if p.get("id") == target_page_id), None)
+        if not match:
+            raise HTTPException(status_code=400, detail="No administras esa página.")
+        page_token = match.get("access_token", "")
+
+    if not page_token:
         raise HTTPException(status_code=400, detail="Reconecta tu Facebook.")
+    page_id = target_page_id
 
     # Traer las últimas 25 publicaciones de la página con campos útiles para la galería
     async with httpx.AsyncClient(timeout=15) as client:
