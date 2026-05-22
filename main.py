@@ -4917,9 +4917,35 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
     # Presupuesto diario en centavos
     daily_budget_cents = int(req.daily_budget_mxn * 100)
 
+    # ── Helper: extrae mensaje legible de un error JSON de Meta ──────
+    def _fb_friendly_error(resp_text: str, prefix: str) -> str:
+        try:
+            payload = json.loads(resp_text or "{}")
+            err = (payload.get("error") or {})
+            sub = err.get("error_subcode") or err.get("code")
+            user_title = err.get("error_user_title") or ""
+            user_msg = err.get("error_user_msg") or err.get("message") or ""
+            # Errores comunes traducidos
+            COMMON = {
+                1487888: "Tu cuenta publicitaria requiere un Píxel de Facebook configurado para optimizar conversiones. Contacta soporte de Broquer.",
+                4834011: "La cuenta tiene 'Optimización del presupuesto de campaña' activada. Desactívala en Business Manager o crea el anuncio directamente en Ads Manager.",
+                2069013: "La imagen no cumple los requisitos de Facebook (mínimo 600x600, sin texto excesivo). Usa otra imagen.",
+                1815245: "Para anuncios inmobiliarios en EE.UU./Canadá, Meta exige la categoría especial 'Vivienda'. En México no aplica — verifica tu ubicación de cuenta.",
+                1815111: "El público objetivo es muy pequeño. Amplía la edad, la ciudad o quita filtros.",
+                368:    "Facebook bloqueó la acción por seguridad. Espera unos minutos y reintenta, o reconecta tu cuenta.",
+            }
+            if sub in COMMON:
+                return f"{prefix}: {COMMON[sub]}"
+            if user_title or user_msg:
+                return f"{prefix}: {user_title}. {user_msg}".strip(". ").strip()
+            return f"{prefix}: {err.get('message') or resp_text[:300]}"
+        except Exception:
+            return f"{prefix}: {resp_text[:300]}"
+
     async with httpx.AsyncClient(timeout=45) as client:
 
-        # ── 0. Subir imagen a Meta (solo en modo "anuncio nuevo") ──────
+        # ── 0. Subir imagen a Meta ANTES de crear campaña (si falla, no
+        # dejamos basura en la cuenta del usuario). Solo modo "anuncio nuevo".
         image_hash = None
         if req.image_b64 and not req.post_id:
             r_img = await client.post(
@@ -4931,26 +4957,43 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
                 for v in r_img.json().get("images", {}).values():
                     image_hash = v.get("hash")
                     break
+            if not image_hash:
+                # La imagen falló: no creamos nada.
+                raise HTTPException(status_code=502, detail=_fb_friendly_error(r_img.text, "No se pudo subir la imagen"))
+
+        # ── Validar URL destino (Meta exige http/https para link_data.link) ──
+        dest_url = (req.destination_url or "").strip()
+        if not req.post_id and dest_url and not dest_url.lower().startswith(("http://", "https://")):
+            dest_url = "https://" + dest_url
+
+        # ── Recortar campos a límites Meta para evitar rechazos por longitud ──
+        ad_text = (req.ad_text or "")[:2200]
+        headline = (req.headline or "")[:255]   # técnicamente 255, recomendado <40
+        campaign_name = (req.campaign_name or "Campaña Broquer")[:120]
 
         # ── 1. Crear Campaign (siempre en PAUSED; activamos al final) ──
         r_camp = await client.post(
             f"{base_url}/campaigns",
             params=params_base,
             json={
-                "name": req.campaign_name,
+                "name": campaign_name,
                 "objective": req.objective,
                 "status": "PAUSED",
                 "special_ad_categories": [],
                 "buying_type": "AUCTION",
-                # Meta exige declarar explícitamente que el presupuesto NO se
-                # comparte a nivel campaña (Advantage Campaign Budget OFF).
-                # Sin esto, la creación falla con error 100 / subcode 4834011.
                 "is_adset_budget_sharing_enabled": False,
             }
         )
         if r_camp.status_code not in (200, 201):
-            raise HTTPException(status_code=502, detail=f"Error creando campaña: {r_camp.text}")
+            raise HTTPException(status_code=502, detail=_fb_friendly_error(r_camp.text, "Error creando campaña"))
         campaign_id = r_camp.json().get("id")
+
+        # Cleanup helper: borra recursos creados si algo falla a medio camino
+        async def _cleanup(*ids):
+            for rid in ids:
+                if not rid: continue
+                try: await client.delete(f"https://graph.facebook.com/v21.0/{rid}", params=params_base)
+                except Exception: pass
 
         # ── 2. Crear AdSet ─────────────────────────────────────────────
         geo: dict = {"countries": [req.country]}
@@ -4959,12 +5002,17 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
         targeting: dict = {
             "age_min": req.age_min,
             "geo_locations": geo,
+            # Meta requiere desde 2024 que se declare EXPLÍCITAMENTE si se usa
+            # Advantage Audience (expansión automática de público). Sin esto,
+            # Meta rechaza con error 100/1870227 "Se requiere la marca de público
+            # Advantage". 0 = desactivado (público controlado por el agente).
+            "targeting_automation": {"advantage_audience": 0},
         }
         if req.age_max and req.age_max > 0:
             targeting["age_max"] = req.age_max
 
         adset_payload: dict = {
-            "name": f"{req.campaign_name} — AdSet",
+            "name": f"{campaign_name} — AdSet",
             "campaign_id": campaign_id,
             "daily_budget": daily_budget_cents,
             "billing_event": billing_event,
@@ -4972,17 +5020,12 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
             "bid_strategy": "LOWEST_COST_WITHOUT_CAP",
             "targeting": targeting,
             "status": "PAUSED",
-            # Meta exige un objeto promocionado en el adset; usamos la Facebook
-            # Page del usuario para cubrir los 3 objetivos manejados sin
-            # requerir Pixel (cf. nota sobre destination_type abajo).
+            # Objeto promocionado: la página. Cubre los 3 objetivos sin pixel.
             "promoted_object": {"page_id": page_id},
         }
-        # NOTA: no se pasa destination_type. Para OUTCOME_TRAFFIC con
-        # optimization_goal=LINK_CLICKS, Meta infiere el destino del link en
-        # link_data del creativo. Si se pasa destination_type="WEBSITE", Meta
-        # interpreta que es optimización de conversión y exige un Facebook Pixel
-        # (error 100/1487888 "Se requiere el píxel de seguimiento"), cosa que
-        # un agente inmobiliario típicamente no tiene configurada.
+        # NOTA: NO pasamos destination_type. Para OUTCOME_TRAFFIC +
+        # LINK_CLICKS, Meta infiere el destino del link_data del creativo.
+        # Pasar destination_type="WEBSITE" gatilla requisito de Pixel (1487888).
 
         if req.duration_days and req.duration_days > 0:
             from datetime import timedelta
@@ -4995,37 +5038,37 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
             json=adset_payload
         )
         if r_adset.status_code not in (200, 201):
-            # Limpiar campaign huérfana
-            await client.delete(f"https://graph.facebook.com/v21.0/{campaign_id}", params=params_base)
-            raise HTTPException(status_code=502, detail=f"Error creando adset: {r_adset.text}")
+            await _cleanup(campaign_id)
+            raise HTTPException(status_code=502, detail=_fb_friendly_error(r_adset.text, "Error creando conjunto de anuncios"))
         adset_id = r_adset.json().get("id")
 
         # ── 3. Crear AdCreative ────────────────────────────────────────
         if req.post_id:
-            # Modo "promocionar publicación existente": el creativo apunta al post
             creative_payload: dict = {
-                "name": f"{req.campaign_name} — Boost",
+                "name": f"{campaign_name} — Boost",
                 "object_story_id": req.post_id,
             }
         else:
-            # Modo "anuncio nuevo": armamos link_data desde cero
             link_data: dict = {
-                "message": req.ad_text,
-                "name": req.headline,
+                "message": ad_text,
+                "name": headline,
+                "link": dest_url or f"https://www.facebook.com/{page_id}",
             }
-            if req.destination_url:
-                link_data["link"] = req.destination_url
-            else:
-                link_data["link"] = f"https://www.facebook.com/{page_id}"
             if image_hash:
                 link_data["image_hash"] = image_hash
 
             creative_payload = {
-                "name": f"{req.campaign_name} — Creative",
+                "name": f"{campaign_name} — Creative",
                 "object_story_spec": {
                     "page_id": page_id,
                     "link_data": link_data,
-                }
+                },
+                # Habilita formato dinámico (Meta optimiza el creative según device)
+                "degrees_of_freedom_spec": {
+                    "creative_features_spec": {
+                        "standard_enhancements": {"enroll_status": "OPT_OUT"}
+                    }
+                },
             }
 
         r_creative = await client.post(
@@ -5034,32 +5077,41 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
             json=creative_payload
         )
         if r_creative.status_code not in (200, 201):
-            await client.delete(f"https://graph.facebook.com/v21.0/{campaign_id}", params=params_base)
-            raise HTTPException(status_code=502, detail=f"Error creando creativo: {r_creative.text}")
+            await _cleanup(adset_id, campaign_id)
+            raise HTTPException(status_code=502, detail=_fb_friendly_error(r_creative.text, "Error creando creativo"))
         creative_id = r_creative.json().get("id")
 
-        # ── 4. Crear Ad (siempre en PAUSED; activamos en cascada al final)
+        # ── 4. Crear Ad (PAUSED; activamos en cascada al final) ────────
         r_ad = await client.post(
             f"{base_url}/ads",
             params=params_base,
             json={
-                "name": f"{req.campaign_name} — Ad",
+                "name": f"{campaign_name} — Ad",
                 "adset_id": adset_id,
                 "creative": {"creative_id": creative_id},
                 "status": "PAUSED",
             }
         )
         if r_ad.status_code not in (200, 201):
-            await client.delete(f"https://graph.facebook.com/v21.0/{campaign_id}", params=params_base)
-            raise HTTPException(status_code=502, detail=f"Error creando anuncio: {r_ad.text}")
+            await _cleanup(adset_id, campaign_id)
+            raise HTTPException(status_code=502, detail=_fb_friendly_error(r_ad.text, "Error creando anuncio"))
         ad_id = r_ad.json().get("id")
 
         # ── 5. Activar en cascada si el usuario marcó "Publicar ahora" ──
         if target_status == "ACTIVE":
             # Orden: ad → adset → campaign (Meta exige hijos activos primero)
-            await client.post(f"https://graph.facebook.com/v21.0/{ad_id}",       params=params_base, json={"status": "ACTIVE"})
-            await client.post(f"https://graph.facebook.com/v21.0/{adset_id}",    params=params_base, json={"status": "ACTIVE"})
-            await client.post(f"https://graph.facebook.com/v21.0/{campaign_id}", params=params_base, json={"status": "ACTIVE"})
+            r_a1 = await client.post(f"https://graph.facebook.com/v21.0/{ad_id}",       params=params_base, json={"status": "ACTIVE"})
+            r_a2 = await client.post(f"https://graph.facebook.com/v21.0/{adset_id}",    params=params_base, json={"status": "ACTIVE"})
+            r_a3 = await client.post(f"https://graph.facebook.com/v21.0/{campaign_id}", params=params_base, json={"status": "ACTIVE"})
+            # Si la activación falla, no eliminamos lo creado — solo cambiamos el
+            # estado a "PAUSED" y devolvemos un aviso para que el usuario lo
+            # active manualmente desde "Tus campañas" después de revisar.
+            if any(rr.status_code not in (200, 201) for rr in (r_a1, r_a2, r_a3)):
+                # Detectar primer error para reportarlo
+                fail = next((rr for rr in (r_a1, r_a2, r_a3) if rr.status_code not in (200, 201)), None)
+                if fail is not None:
+                    target_status = "PAUSED"
+                    # No raise: la campaña existe en pausa, el usuario puede activarla.
 
     # account_id sin prefijo act_ para el deep-link al Ads Manager
     acct_short = account_id.replace("act_", "")
