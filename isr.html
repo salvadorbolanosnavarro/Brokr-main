@@ -1171,9 +1171,11 @@ function resetISR() {
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-function descargarPDF() {
+let _isrPdfBusy = false;
+async function descargarPDF() {
   const d=_isrData;
   if(!d){alert('Primero realiza un cálculo.');return;}
+  if(_isrPdfBusy) return;
   const meses=['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const tipos={casa:'Casa habitación / Departamento',terreno:'Terreno',comercial:'Inmueble comercial'};
   const bkdn=(g('res-bkdn')||{}).innerHTML||'';
@@ -1310,17 +1312,39 @@ function descargarPDF() {
   </div>
 </body></html>`;
 
-  // Abrir en ventana nueva y disparar diálogo de impresión → Guardar como PDF
-  const win = window.open('', '_blank', 'width=900,height=700');
-  win.document.write(html);
-  win.document.close();
-  // Esperar a que carguen las fuentes antes de imprimir
-  win.onload = function() {
-    setTimeout(function() {
-      win.focus();
-      win.print();
-    }, 800);
-  };
+  // Descarga directa al dispositivo (mismo patrón que estimación de valor):
+  // 1) POST /isr-pdf con el HTML → token
+  // 2) GET /isr-pdf/{token} → blob
+  // 3) <a download> sin menús intermedios
+  _isrPdfBusy = true;
+  const API = (typeof window !== 'undefined' && window.API_BASE) ? window.API_BASE : 'https://api.broquer.app';
+  const filename = `ISR_${meses[d.mesV]}_${d.anioV}.pdf`.replace(/\s+/g, '_');
+  try {
+    const r = await fetch(`${API}/isr-pdf`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ html, filename })
+    });
+    const data = await r.json();
+    if(!r.ok) throw new Error(data.detail || 'Error generando PDF');
+
+    const pdfResp = await fetch(`${API}/isr-pdf/${data.token}`);
+    if(!pdfResp.ok) throw new Error('No se pudo obtener el PDF');
+    const blob = await pdfResp.blob();
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = data.filename || filename;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+  } catch (e) {
+    alert('Error al generar PDF: ' + (e.message || e));
+  } finally {
+    _isrPdfBusy = false;
+  }
 }
 
 /* ── MES/AÑO PICKER ── */

@@ -2841,6 +2841,58 @@ async def descargar_avm_pdf(token: str):
     )
 
 
+@app.post("/isr-pdf")
+async def generar_isr_pdf(p: dict):
+    """Recibe HTML pre-renderizado del cálculo ISR del frontend y devuelve
+    un token para descargar el PDF. Mismo patrón que /avm-pdf."""
+    from playwright.async_api import async_playwright
+
+    html = p.get("html", "")
+    filename = (p.get("filename") or "Calculo_ISR.pdf").replace("/", "_")
+    if not html:
+        raise HTTPException(status_code=400, detail="HTML vacío")
+
+    async with async_playwright() as pw:
+        browser = await pw.chromium.launch(args=["--no-sandbox", "--disable-dev-shm-usage"])
+        page = await browser.new_page()
+        await page.set_content(html, wait_until="domcontentloaded")
+        await page.wait_for_timeout(500)
+        pdf_bytes = await page.pdf(
+            format="A4",
+            print_background=True,
+            margin={"top": "14mm", "right": "18mm", "bottom": "12mm", "left": "18mm"},
+        )
+        await browser.close()
+
+    token = str(_uuid.uuid4()).replace("-", "")[:16]
+    _pdf_store[token] = (pdf_bytes, filename)
+    if len(_pdf_store) > 50:
+        oldest = list(_pdf_store.keys())[0]
+        del _pdf_store[oldest]
+
+    from fastapi.responses import JSONResponse
+    return JSONResponse({"token": token, "filename": filename})
+
+
+@app.get("/isr-pdf/{token}")
+async def descargar_isr_pdf(token: str):
+    from fastapi.responses import StreamingResponse
+    import io as _io
+    if token not in _pdf_store:
+        raise HTTPException(status_code=404, detail="PDF no encontrado o expirado")
+    pdf_bytes, filename = _pdf_store[token]
+    return StreamingResponse(
+        _io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Content-Type": "application/pdf",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET",
+        }
+    )
+
+
 # ────────────────────────────────────────────
 # CONTRATOS
 # ────────────────────────────────────────────
