@@ -153,60 +153,6 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 }
 .err-note{ display:none; }
 
-/* ── Modo selector (Broquer vs Machote) ── */
-.modo-selector{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px}
-.modo-btn{padding:14px 10px;border:2px solid var(--silver2);border-radius:var(--r);background:var(--wh);cursor:pointer;transition:all .15s;text-align:center;font-family:'DM Sans',sans-serif}
-.modo-btn:hover{border-color:var(--teal);background:var(--tealp)}
-.modo-btn.active{border-color:var(--teal);background:var(--teal);color:#fff}
-.modo-btn-ico{margin-bottom:5px;color:var(--ink);display:flex;justify-content:center}
-.modo-btn.active .modo-btn-ico{color:#fff}
-.modo-btn-lbl{font-size:13px;font-weight:600;display:block}
-.modo-btn.active .modo-btn-lbl{color:#fff}
-.modo-btn-sub{font-size:11px;color:var(--mut);margin-top:2px;display:block}
-.modo-btn.active .modo-btn-sub{color:rgba(255,255,255,.75)}
-
-/* ── Machote upload ── */
-#machote-section{display:none}
-.upload-zone{border:2px dashed var(--silver2);border-radius:var(--r);padding:32px 20px;text-align:center;cursor:pointer;transition:all .15s;background:var(--wh);margin-bottom:14px}
-.upload-zone:hover,.upload-zone.drag-over{border-color:var(--teal);background:var(--tealp)}
-.upload-zone-ico{font-size:36px;margin-bottom:8px}
-.upload-zone-lbl{font-size:14px;font-weight:600;color:var(--navy);margin-bottom:4px}
-.upload-zone-sub{font-size:12px;color:var(--mut)}
-.upload-zone.has-file{border-color:var(--teal);background:var(--tealp)}
-.upload-zone.has-file .upload-zone-ico::after{content:' ✓';color:var(--teal)}
-.file-name{font-size:12px;font-weight:600;color:var(--teal);margin-top:6px;word-break:break-all}
-#upload-input{display:none}
-
-/* ── Campos detectados ── */
-.campos-list{display:flex;flex-direction:column;gap:8px;margin:12px 0}
-.campo-item{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;background:var(--silver);border-radius:var(--r2);padding:8px 10px}
-.campo-item input,.campo-item select{background:var(--wh);border:1.5px solid var(--silver2);border-radius:var(--r2);padding:6px 9px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--txt);width:100%}
-.campo-item input:focus,.campo-item select:focus{border-color:var(--teal);outline:none}
-.campo-del{background:none;border:none;color:var(--mut);cursor:pointer;padding:4px 6px;border-radius:4px;font-size:16px;line-height:1}
-.campo-del:hover{background:#fee;color:#c00}
-.campo-item-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);margin-bottom:2px}
-.campos-header{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;padding:0 10px;margin-bottom:2px}
-.campos-header span{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--mut)}
-.btn-add-campo{display:flex;align-items:center;gap:6px;background:none;border:1.5px dashed var(--silver2);border-radius:var(--r2);padding:7px 12px;cursor:pointer;font-size:13px;color:var(--mut);font-family:'DM Sans',sans-serif;transition:all .15s;margin-top:4px}
-.btn-add-campo:hover{border-color:var(--teal);color:var(--teal)}
-
-/* ── Formulario dinámico (fase llenar) ── */
-#machote-form-section{display:none}
-.dyn-form-field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
-.dyn-form-field label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
-.dyn-form-field input,.dyn-form-field select,.dyn-form-field textarea{background:var(--silver);border:1.5px solid var(--silver2);border-radius:var(--r2);padding:9px 11px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--txt);outline:none;width:100%;transition:border .15s}
-.dyn-form-field input:focus,.dyn-form-field select:focus{border-color:var(--teal);background:var(--wh)}
-.dyn-form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:0}
-@media(max-width:540px){.campo-item{grid-template-columns:1fr 1fr auto}.dyn-form-row{grid-template-columns:1fr}}
-
-/* ── Fases de machote ── */
-.machote-phase{display:none}
-.machote-phase.active{display:block}
-.phase-indicator{display:flex;align-items:center;gap:8px;margin-bottom:18px;font-size:13px;color:var(--mut)}
-.phase-dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--silver2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--mut);flex-shrink:0}
-.phase-dot.done{background:var(--teal);border-color:var(--teal);color:#fff}
-.phase-dot.current{background:var(--navy);border-color:var(--navy);color:#fff}
-.phase-sep{flex:1;height:1px;background:var(--silver2)}
 
 /* ── CONTACT / PROPERTY PICKERS ── */
 .pick-btn{display:inline-flex;align-items:center;gap:5px;margin-top:5px;padding:5px 10px;border:1.5px solid var(--teal);border-radius:6px;background:var(--tealp);color:var(--teal2);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all .12s;text-transform:uppercase;letter-spacing:.04em}
@@ -259,21 +205,6 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 
   <!-- Nav -->
 
-  <!-- Selector de modo: Contratos Broquer vs Tu machote -->
-  <div class="modo-selector">
-    <button class="modo-btn active" id="modo-brokr" onclick="setModo('brokr')">
-      <div class="modo-btn-ico"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div>
-      <span class="modo-btn-lbl">Contratos Broquer</span>
-      <span class="modo-btn-sub">Plantillas listas: arrendamiento y compraventa</span>
-    </button>
-    <button class="modo-btn" id="modo-machote" onclick="setModo('machote')">
-      <div class="modo-btn-ico"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 0115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg></div>
-      <span class="modo-btn-lbl">Tu machote</span>
-      <span class="modo-btn-sub">Sube tu Word y detectamos las variables</span>
-    </button>
-  </div>
-
-  <!-- ══ MODO Broquer ══ -->
   <div id="brokr-section">
 
   <!-- Tipo selector -->
@@ -309,18 +240,18 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
         ⚠️ La fecha de término debe ser posterior a la de inicio.
       </div>
 
-      <div class="frow" style="margin-top:8px">
+      <div class="frow three" style="margin-top:8px">
         <div class="f">
-          <label>Plazo del contrato <span class="auto-badge">se genera automático</span></label>
-          <input type="text" id="a-duracion" placeholder="Ej. UN AÑO" readonly style="background:#000000;color:#ffffff"/>
+          <label>Plazo del contrato <span class="auto-badge">automático</span></label>
+          <input type="text" id="a-duracion" placeholder="Se calcula" readonly style="background:var(--silver);color:var(--mut);font-weight:600"/>
         </div>
         <div class="f">
           <label>Inicio escrito <span class="auto-badge">automático</span></label>
-          <input type="text" id="a-inicio-escrito" readonly style="background:#000000;color:#ffffff" placeholder="Se genera automáticamente"/>
+          <input type="text" id="a-inicio-escrito" readonly style="background:var(--silver);color:var(--mut);font-weight:600" placeholder="Se calcula"/>
         </div>
         <div class="f">
           <label>Término escrito <span class="auto-badge">automático</span></label>
-          <input type="text" id="a-fin-escrito" readonly style="background:#000000;color:#ffffff" placeholder="Se genera automáticamente"/>
+          <input type="text" id="a-fin-escrito" readonly style="background:var(--silver);color:var(--mut);font-weight:600" placeholder="Se calcula"/>
         </div>
       </div>
     </div>
@@ -331,45 +262,55 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
       <button class="pick-btn" onclick="abrirPickerInmueble('arrendamiento')" style="margin-bottom:10px">🏘 Seleccionar de Mis Inmuebles</button>
       <div class="f-note" style="margin-bottom:10px">Esta dirección se usará en múltiples secciones del contrato automáticamente.</div>
 
-      <div class="frow">
-        <div class="f" style="flex:2">
+      <div class="frow three">
+        <div class="f" style="grid-column:span 3">
           <label>Calle</label>
-          <input type="text" id="a-calle-inm" placeholder="Ej. AV. MELCHOR OCAMPO" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="a-calle-inm" placeholder="Calle" oninput="this.value=this.value.toUpperCase()"/>
         </div>
+      </div>
+      <div class="frow">
         <div class="f">
           <label>Núm. exterior</label>
-          <input type="text" id="a-numext-inm" placeholder="Ej. 123" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="a-numext-inm" placeholder="123" oninput="this.value=this.value.toUpperCase()"/>
         </div>
         <div class="f">
           <label>Núm. interior <span class="opt-badge">opcional</span></label>
-          <input type="text" id="a-numint-inm" placeholder="Ej. 4-A" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="a-numint-inm" placeholder="4-A" oninput="this.value=this.value.toUpperCase()"/>
         </div>
       </div>
       <div class="frow">
         <div class="f">
           <label>Colonia</label>
-          <input type="text" id="a-colonia" placeholder="Ej. CENTRO" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="a-colonia" placeholder="Colonia" oninput="this.value=this.value.toUpperCase()"/>
         </div>
         <div class="f">
           <label>Código postal</label>
-          <input type="text" id="a-cp" placeholder="Ej. 58000" maxlength="5" oninput="validarCP('a-cp')"/>
-        </div>
-        <div class="f">
-          <label>Municipio y Estado</label>
-          <input type="text" id="a-mpio-inm" placeholder="Ej. MORELIA, MICHOACAN" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="a-cp" placeholder="00000" maxlength="5" oninput="validarCP('a-cp')"/>
         </div>
       </div>
       <div class="frow">
         <div class="f">
-          <label>Ciudad de firma <span style="color:var(--mut);font-weight:400">— opcional</span></label>
+          <label>Municipio / Alcaldía</label>
+          <input type="text" id="a-municipio-inm" placeholder="Municipio o alcaldía" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Estado</label>
+          <input type="text" id="a-estado-inm" placeholder="Estado" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f">
+          <label>Ciudad de firma <span class="opt-badge">opcional</span></label>
           <input type="text" id="a-ciudad-firma" placeholder="Por defecto: la del inmueble"/>
         </div>
         <div class="f">
-          <label>Estado (tribunales y Código Civil) <span style="color:var(--mut);font-weight:400">— opcional</span></label>
+          <label>Estado de firma <span class="opt-badge">opcional</span></label>
           <input type="text" id="a-estado-firma" placeholder="Por defecto: el del inmueble"/>
         </div>
       </div>
-      <div class="frow">
+      <div class="f-note" style="margin-bottom:6px">Los tribunales competentes y el Código Civil aplicable se determinan por el Estado de firma; si se deja vacío, se usa el del inmueble.</div>
+
+      <div class="frow" style="margin-top:8px">
         <div class="f">
           <label>Destino y uso del inmueble</label>
           <select id="a-destino" onchange="onDestinoChange()">
@@ -409,32 +350,49 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
       </div>
       <div class="f-note" id="preview-sexo-arr" style="color:var(--teal2);font-size:11px"></div>
 
-      <div class="frow" style="margin-top:10px">
-        <div class="f" style="flex:2">
-          <label>Calle del domicilio del arrendador</label>
-          <input type="text" id="a-calle-arr" placeholder="Ej. AV. PARAGUAY" oninput="this.value=this.value.toUpperCase()"/>
-        </div>
-        <div class="f">
-          <label>Núm. exterior</label>
-          <input type="text" id="a-numext-arr" placeholder="Ej. 123" oninput="this.value=this.value.toUpperCase()"/>
-        </div>
-        <div class="f">
-          <label>Núm. int. <span class="opt-badge">opcional</span></label>
-          <input type="text" id="a-numint-arr" placeholder="Ej. B" oninput="this.value=this.value.toUpperCase()"/>
-        </div>
+      <div class="card-title" style="margin-top:14px;font-size:12px;display:flex;align-items:center;gap:12px">
+        Domicilio del arrendador
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:500;color:var(--mut);cursor:pointer">
+          <input type="checkbox" id="arr-misma-inm" onchange="toggleMismaDom('arr')" style="accent-color:var(--teal);width:14px;height:14px;cursor:pointer"/>
+          Es el mismo que el del inmueble objeto
+        </label>
       </div>
-      <div class="frow">
-        <div class="f">
-          <label>Colonia del arrendador</label>
-          <input type="text" id="a-colonia-arr" placeholder="Ej. LAS AMÉRICAS" oninput="this.value=this.value.toUpperCase()"/>
+      <div class="dom-block" id="dom-arr-block">
+        <div class="frow three">
+          <div class="f" style="grid-column:span 3">
+            <label>Calle</label>
+            <input type="text" id="a-calle-arr" placeholder="Calle" oninput="this.value=this.value.toUpperCase()"/>
+          </div>
         </div>
-        <div class="f">
-          <label>C.P. del arrendador</label>
-          <input type="text" id="a-cp-arr" placeholder="01123" maxlength="5" oninput="validarCP('a-cp-arr')"/>
+        <div class="frow">
+          <div class="f">
+            <label>Núm. exterior</label>
+            <input type="text" id="a-numext-arr" placeholder="123" oninput="this.value=this.value.toUpperCase()"/>
+          </div>
+          <div class="f">
+            <label>Núm. interior <span class="opt-badge">opcional</span></label>
+            <input type="text" id="a-numint-arr" placeholder="" oninput="this.value=this.value.toUpperCase()"/>
+          </div>
         </div>
-        <div class="f">
-          <label>Municipio/Estado del arrendador</label>
-          <input type="text" id="a-mpio-arr" placeholder="Ej. CIUDAD DE MÉXICO" oninput="this.value=this.value.toUpperCase()"/>
+        <div class="frow">
+          <div class="f">
+            <label>Colonia</label>
+            <input type="text" id="a-colonia-arr" placeholder="Colonia" oninput="this.value=this.value.toUpperCase()"/>
+          </div>
+          <div class="f">
+            <label>Código postal</label>
+            <input type="text" id="a-cp-arr" placeholder="00000" maxlength="5" oninput="validarCP('a-cp-arr')"/>
+          </div>
+        </div>
+        <div class="frow">
+          <div class="f">
+            <label>Municipio / Alcaldía</label>
+            <input type="text" id="a-municipio-arr" placeholder="Municipio o alcaldía" oninput="this.value=this.value.toUpperCase()"/>
+          </div>
+          <div class="f">
+            <label>Estado</label>
+            <input type="text" id="a-estado-arr" placeholder="Estado" oninput="this.value=this.value.toUpperCase()"/>
+          </div>
         </div>
       </div>
     </div>
@@ -480,101 +438,107 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
       </div>
       <div class="f-note" id="preview-sexo-os" style="color:var(--teal2);font-size:11px"></div>
 
-      <div class="card-title" style="margin-top:12px;font-size:12px">Domicilio del obligado solidario</div>
-      <div class="frow">
-        <div class="f" style="flex:2">
-          <label>Calle del domicilio del OS</label>
-          <input type="text" id="a-calle-os" placeholder="Ej. CALLE ARTILLEROS DE 1847" oninput="this.value=this.value.toUpperCase()"/>
+      <div class="card-title" style="margin-top:14px;font-size:12px">Domicilio del obligado solidario</div>
+      <div class="frow three">
+        <div class="f" style="grid-column:span 3">
+          <label>Calle</label>
+          <input type="text" id="a-calle-os" placeholder="Calle" oninput="this.value=this.value.toUpperCase()"/>
         </div>
+      </div>
+      <div class="frow">
         <div class="f">
           <label>Núm. exterior</label>
-          <input type="text" id="a-numext-os" placeholder="Ej. 123" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="a-numext-os" placeholder="123" oninput="this.value=this.value.toUpperCase()"/>
         </div>
         <div class="f">
-          <label>Núm. int. <span class="opt-badge">opcional</span></label>
+          <label>Núm. interior <span class="opt-badge">opcional</span></label>
           <input type="text" id="a-numint-os" placeholder="" oninput="this.value=this.value.toUpperCase()"/>
         </div>
       </div>
       <div class="frow">
         <div class="f">
           <label>Colonia</label>
-          <input type="text" id="a-colonia-os" placeholder="Ej. CHAPULTEPEC SUR" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="a-colonia-os" placeholder="Colonia" oninput="this.value=this.value.toUpperCase()"/>
         </div>
         <div class="f">
-          <label>C.P.</label>
-          <input type="text" id="a-cp-os" placeholder="01123" maxlength="5" oninput="validarCP('a-cp-os')"/>
+          <label>Código postal</label>
+          <input type="text" id="a-cp-os" placeholder="00000" maxlength="5" oninput="validarCP('a-cp-os')"/>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f">
+          <label>Municipio / Alcaldía</label>
+          <input type="text" id="a-municipio-os" placeholder="Municipio o alcaldía" oninput="this.value=this.value.toUpperCase()"/>
         </div>
         <div class="f">
-          <label>Municipio / Estado</label>
-          <input type="text" id="a-mpio-os" placeholder="Ej. MONTERREY, NUEVO LEÓN" oninput="this.value=this.value.toUpperCase()"/>
+          <label>Estado</label>
+          <input type="text" id="a-estado-os" placeholder="Estado" oninput="this.value=this.value.toUpperCase()"/>
         </div>
       </div>
 
-      <div class="card-title" style="margin-top:12px;font-size:12px;display:flex;align-items:center;gap:12px">
+      <div class="card-title" style="margin-top:18px;font-size:12px;display:flex;align-items:center;gap:12px">
         Inmueble en garantía del obligado solidario
         <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:500;color:var(--mut);cursor:pointer">
           <input type="checkbox" id="os-misma-prop" onchange="toggleMismaPropOS(this)" style="accent-color:var(--teal);width:14px;height:14px;cursor:pointer"/>
           Es la misma donde vive
         </label>
       </div>
-      <div class="frow">
-        <div class="f" style="flex:2">
-          <label>Calle del inmueble en garantía</label>
-          <input type="text" id="a-calle-inm-os" placeholder="Ej. AV. MAXIMILIANO I DE MÉXICO" oninput="this.value=this.value.toUpperCase()"/>
+      <div class="frow three">
+        <div class="f" style="grid-column:span 3">
+          <label>Calle</label>
+          <input type="text" id="a-calle-inm-os" placeholder="Calle" oninput="this.value=this.value.toUpperCase()"/>
         </div>
+      </div>
+      <div class="frow">
         <div class="f">
           <label>Núm. exterior</label>
-          <input type="text" id="a-numext-inm-os" placeholder="Ej. 123" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="a-numext-inm-os" placeholder="123" oninput="this.value=this.value.toUpperCase()"/>
         </div>
         <div class="f">
-          <label>Núm. int. <span class="opt-badge">opcional</span></label>
+          <label>Núm. interior <span class="opt-badge">opcional</span></label>
           <input type="text" id="a-numint-inm-os" placeholder="" oninput="this.value=this.value.toUpperCase()"/>
         </div>
       </div>
       <div class="frow">
         <div class="f">
           <label>Colonia</label>
-          <input type="text" id="a-colonia-inm-os" placeholder="Ej. LOMAS DE CHAPULTEPEC" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="a-colonia-inm-os" placeholder="Colonia" oninput="this.value=this.value.toUpperCase()"/>
         </div>
         <div class="f">
-          <label>C.P.</label>
-          <input type="text" id="a-cp-inm-os" placeholder="58260" maxlength="5" oninput="validarCP('a-cp-inm-os')"/>
+          <label>Código postal</label>
+          <input type="text" id="a-cp-inm-os" placeholder="00000" maxlength="5" oninput="validarCP('a-cp-inm-os')"/>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f">
+          <label>Municipio / Alcaldía</label>
+          <input type="text" id="a-municipio-inm-os" placeholder="Municipio o alcaldía" oninput="this.value=this.value.toUpperCase()"/>
         </div>
         <div class="f">
-          <label>Municipio / Estado</label>
-          <input type="text" id="a-mpio-inm-os" placeholder="Ej. URIANGATO, GUANAJUATO" oninput="this.value=this.value.toUpperCase()"/>
+          <label>Estado</label>
+          <input type="text" id="a-estado-inm-os" placeholder="Estado" oninput="this.value=this.value.toUpperCase()"/>
         </div>
       </div>
     </div>
 
     <!-- ══ SECCIÓN 6: RENTA Y PAGOS ══ -->
     <div class="card">
-      <div class="card-title">💰 Renta y condiciones de pago</div>
+      <div class="card-title">Renta y condiciones de pago</div>
       <div class="frow">
         <div class="f">
           <label>Renta mensual ($)</label>
-          <input type="text" id="a-renta" placeholder="Ej. 8,500.00" oninput="onRentaChange(this)" onblur="fmtMoneyBlur(this)"/>
+          <input type="text" id="a-renta" placeholder="8,500.00" oninput="fmtMoney(this)" onblur="fmtMoneyBlur(this);autoFillDeposito()"/>
         </div>
-        <div class="f">
-          <label>Renta en letra <span class="auto-badge">automático</span></label>
-          <input type="text" id="a-renta-letra" readonly style="background:#000000;color:#ffffff" placeholder="Se genera del número"/>
-        </div>
-      </div>
-      <div class="frow">
         <div class="f">
           <label>Depósito en garantía ($) <span class="auto-badge">= 1 mes por defecto</span></label>
-          <input type="text" id="a-deposito" placeholder="Ej. 8,500.00" oninput="fmtMoney(this)" onblur="onDepositoBlur(this)"/>
-        </div>
-        <div class="f">
-          <label>Depósito en letra <span class="auto-badge">automático</span></label>
-          <input type="text" id="a-deposito-letra" readonly style="background:#000000;color:#ffffff" placeholder="Se genera del número"/>
+          <input type="text" id="a-deposito" placeholder="8,500.00" oninput="fmtMoney(this)" onblur="fmtMoneyBlur(this)"/>
         </div>
       </div>
-      <div class="frow">
+      <div class="frow three">
         <div class="f">
           <label>Día límite de pago mensual</label>
-          <input type="number" id="a-dia-pago" placeholder="Ej. 5" min="1" max="31"
-            oninput="if(this.value>28){this.value=28;showFieldAlert(this,'El día no puede ser mayor a 31.')}
+          <input type="number" id="a-dia-pago" placeholder="5" min="1" max="28"
+            oninput="if(this.value>28){this.value=28}
                      if(this.value<1){this.value=1}"/>
         </div>
         <div class="f">
@@ -588,18 +552,31 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
           </select>
         </div>
         <div class="f">
-          <label>Cuenta / CLABE bancaria <span class="opt-badge">opcional</span></label>
+          <label>Cuenta / CLABE <span class="opt-badge">opcional</span></label>
           <input type="text" id="a-banco" placeholder="Ej. BBVA 0123456789"/>
         </div>
       </div>
       <div class="frow">
         <div class="f">
           <label>Pena diaria por no desocupar ($)</label>
-          <input type="text" id="a-pena" placeholder="Ej. 500.00" oninput="onPenaChange(this)" onblur="fmtMoneyBlur(this)"/>
+          <input type="text" id="a-pena" placeholder="500.00" oninput="fmtMoney(this)" onblur="fmtMoneyBlur(this)"/>
+        </div>
+        <div class="f"></div>
+      </div>
+    </div>
+
+    <!-- ══ SECCIÓN 7: TESTIGOS ══ -->
+    <div class="card">
+      <div class="card-title">Testigos</div>
+      <div class="f-note" style="margin-bottom:10px">Personas que firman como testigos del contrato (opcional pero recomendado).</div>
+      <div class="frow">
+        <div class="f">
+          <label>Nombre del testigo 1 <span class="opt-badge">opcional</span></label>
+          <input type="text" id="a-testigo1" placeholder="Nombre completo" oninput="this.value=this.value.toUpperCase()"/>
         </div>
         <div class="f">
-          <label>Pena diaria en letra <span class="auto-badge">automático</span></label>
-          <input type="text" id="a-pena-letra" readonly style="background:#000000;color:#ffffff" placeholder="Se genera del número"/>
+          <label>Nombre del testigo 2 <span class="opt-badge">opcional</span></label>
+          <input type="text" id="a-testigo2" placeholder="Nombre completo" oninput="this.value=this.value.toUpperCase()"/>
         </div>
       </div>
     </div>
@@ -622,38 +599,53 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
     <div class="card">
       <div class="card-title">Datos del inmueble</div>
       <button class="pick-btn" onclick="abrirPickerInmueble('promesa')" style="margin-bottom:10px">🏘 Seleccionar de Mis Inmuebles</button>
-      <div class="frow one">
+      <div class="frow three">
+        <div class="f" style="grid-column:span 3">
+          <label>Calle</label>
+          <input type="text" id="p-calle-inm" placeholder="Calle" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+      </div>
+      <div class="frow">
         <div class="f">
-          <label>Calle y número</label>
-          <input type="text" id="p-dir" placeholder="Ej. San Juan 123"/>
+          <label>Núm. exterior</label>
+          <input type="text" id="p-numext-inm" placeholder="123" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Núm. interior <span class="opt-badge">opcional</span></label>
+          <input type="text" id="p-numint-inm" placeholder="" oninput="this.value=this.value.toUpperCase()"/>
         </div>
       </div>
       <div class="frow">
         <div class="f">
           <label>Colonia</label>
-          <input type="text" id="p-colonia" placeholder="Ej. Atlas Chapalita"/>
+          <input type="text" id="p-colonia" placeholder="Colonia" oninput="this.value=this.value.toUpperCase()"/>
         </div>
         <div class="f">
-          <label>Código Postal</label>
-          <input type="text" id="p-cp" placeholder="Ej. 44290"/>
-        </div>
-      </div>
-      <div class="frow">
-        <div class="f">
-          <label>Municipio y Estado del inmueble</label>
-          <input type="text" id="p-mpio-inm" placeholder="Ej. GUADALAJARA, JALISCO" oninput="this.value=this.value.toUpperCase()"/>
+          <label>Código postal</label>
+          <input type="text" id="p-cp" placeholder="00000" maxlength="5" oninput="validarCP('p-cp')"/>
         </div>
       </div>
       <div class="frow">
         <div class="f">
-          <label>Ciudad de firma <span style="color:var(--mut);font-weight:400">— opcional</span></label>
+          <label>Municipio / Alcaldía</label>
+          <input type="text" id="p-municipio-inm" placeholder="Municipio o alcaldía" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Estado</label>
+          <input type="text" id="p-estado-inm" placeholder="Estado" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f">
+          <label>Ciudad de firma <span class="opt-badge">opcional</span></label>
           <input type="text" id="p-ciudad-firma" placeholder="Por defecto: la del inmueble"/>
         </div>
         <div class="f">
-          <label>Estado (tribunales y Código Civil) <span style="color:var(--mut);font-weight:400">— opcional</span></label>
+          <label>Estado de firma <span class="opt-badge">opcional</span></label>
           <input type="text" id="p-estado-firma" placeholder="Por defecto: el del inmueble"/>
         </div>
       </div>
+      <div class="f-note">Los tribunales competentes y el Código Civil aplicable se determinan por el Estado de firma; si se deja vacío, se usa el del inmueble.</div>
     </div>
 
     <div class="card">
@@ -676,13 +668,20 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
       </div>
       <div class="frow">
         <div class="f">
-          <label>Tomo del Registro Público</label>
-          <input type="text" id="p-tomo" placeholder="Ej. 4430"/>
+          <label>Estado de la notaría</label>
+          <input type="text" id="p-estado-notaria" placeholder="Estado donde otorgó la escritura" oninput="this.value=this.value.toUpperCase()"/>
         </div>
         <div class="f">
-          <label>Registro</label>
+          <label>Tomo del Registro Público <span class="opt-badge">opcional</span></label>
+          <input type="text" id="p-tomo" placeholder="Ej. 4430"/>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f">
+          <label>Registro <span class="opt-badge">opcional</span></label>
           <input type="text" id="p-registro" placeholder="Ej. 39"/>
         </div>
+        <div class="f"></div>
       </div>
     </div>
 
@@ -690,13 +689,11 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
       <div class="card-title">Promitente vendedor</div>
       <button class="pick-btn" onclick="abrirPickerContacto('vendedor')">📋 Seleccionar de Mis Contactos</button>
       <div style="height:10px"></div>
-      <div class="frow one">
-        <div class="f">
+      <div class="frow">
+        <div class="f" style="flex:2">
           <label>Nombre completo</label>
           <input type="text" id="p-vendedor" placeholder="Nombre como aparece en escrituras"/>
         </div>
-      </div>
-      <div class="frow one">
         <div class="f">
           <label>Sexo</label>
           <div class="sexo-toggle" id="sexo-vend">
@@ -705,13 +702,54 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
           </div>
         </div>
       </div>
-      <div class="frow one">
-        <div class="f">
-          <label>Domicilio para notificaciones</label>
-          <input type="text" id="p-dom-vend" placeholder="Calle, número, colonia, C.P."/>
+
+      <div class="card-title" style="margin-top:14px;font-size:12px;display:flex;align-items:center;gap:12px">
+        Domicilio del vendedor
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:500;color:var(--mut);cursor:pointer">
+          <input type="checkbox" id="vend-misma-inm" onchange="toggleMismaDom('vend')" style="accent-color:var(--teal);width:14px;height:14px;cursor:pointer"/>
+          Es el mismo que el del inmueble objeto
+        </label>
+      </div>
+      <div class="dom-block" id="dom-vend-block">
+        <div class="frow three">
+          <div class="f" style="grid-column:span 3">
+            <label>Calle</label>
+            <input type="text" id="p-calle-vend" placeholder="Calle" oninput="this.value=this.value.toUpperCase()"/>
+          </div>
+        </div>
+        <div class="frow">
+          <div class="f">
+            <label>Núm. exterior</label>
+            <input type="text" id="p-numext-vend" placeholder="123" oninput="this.value=this.value.toUpperCase()"/>
+          </div>
+          <div class="f">
+            <label>Núm. interior <span class="opt-badge">opcional</span></label>
+            <input type="text" id="p-numint-vend" placeholder="" oninput="this.value=this.value.toUpperCase()"/>
+          </div>
+        </div>
+        <div class="frow">
+          <div class="f">
+            <label>Colonia</label>
+            <input type="text" id="p-colonia-vend" placeholder="Colonia" oninput="this.value=this.value.toUpperCase()"/>
+          </div>
+          <div class="f">
+            <label>Código postal</label>
+            <input type="text" id="p-cp-vend" placeholder="00000" maxlength="5" oninput="validarCP('p-cp-vend')"/>
+          </div>
+        </div>
+        <div class="frow">
+          <div class="f">
+            <label>Municipio / Alcaldía</label>
+            <input type="text" id="p-municipio-vend" placeholder="Municipio o alcaldía" oninput="this.value=this.value.toUpperCase()"/>
+          </div>
+          <div class="f">
+            <label>Estado</label>
+            <input type="text" id="p-estado-vend" placeholder="Estado" oninput="this.value=this.value.toUpperCase()"/>
+          </div>
         </div>
       </div>
-      <div class="frow" id="p-banco-row" style="display:none">
+
+      <div class="frow" id="p-banco-row" style="display:none;margin-top:10px">
         <div class="f">
           <label>Número de cuenta bancaria <span class="opt-badge">si aplica</span></label>
           <input type="text" id="p-cuenta-vend" placeholder="Ej. 1234567890123456"/>
@@ -725,15 +763,13 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 
     <div class="card">
       <div class="card-title">Promitente comprador</div>
-      <button class="pick-btn" onclick="abrirPickerContacto('comprador')">Seleccionar de Mis Contactos</button>
+      <button class="pick-btn" onclick="abrirPickerContacto('comprador')">📋 Seleccionar de Mis Contactos</button>
       <div style="height:10px"></div>
-      <div class="frow one">
-        <div class="f">
+      <div class="frow">
+        <div class="f" style="flex:2">
           <label>Nombre completo</label>
           <input type="text" id="p-comprador" placeholder="Nombre como aparece en su identificación"/>
         </div>
-      </div>
-      <div class="frow one">
         <div class="f">
           <label>Sexo</label>
           <div class="sexo-toggle" id="sexo-comp">
@@ -742,10 +778,42 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
           </div>
         </div>
       </div>
-      <div class="frow one">
+
+      <div class="card-title" style="margin-top:14px;font-size:12px">Domicilio del comprador</div>
+      <div class="frow three">
+        <div class="f" style="grid-column:span 3">
+          <label>Calle</label>
+          <input type="text" id="p-calle-comp" placeholder="Calle" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+      </div>
+      <div class="frow">
         <div class="f">
-          <label>Domicilio para notificaciones</label>
-          <input type="text" id="p-dom-comp" placeholder="Calle, número, colonia, C.P."/>
+          <label>Núm. exterior</label>
+          <input type="text" id="p-numext-comp" placeholder="123" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Núm. interior <span class="opt-badge">opcional</span></label>
+          <input type="text" id="p-numint-comp" placeholder="" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f">
+          <label>Colonia</label>
+          <input type="text" id="p-colonia-comp" placeholder="Colonia" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Código postal</label>
+          <input type="text" id="p-cp-comp" placeholder="00000" maxlength="5" oninput="validarCP('p-cp-comp')"/>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="f">
+          <label>Municipio / Alcaldía</label>
+          <input type="text" id="p-municipio-comp" placeholder="Municipio o alcaldía" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Estado</label>
+          <input type="text" id="p-estado-comp" placeholder="Estado" oninput="this.value=this.value.toUpperCase()"/>
         </div>
       </div>
     </div>
@@ -773,7 +841,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
           <label>Saldo restante (MXN) <span class="auto-badge">se calcula automático</span></label>
           <div class="money-wrap">
             <span class="money-prefix">$</span>
-            <input type="text" id="p-saldo" placeholder="6,000,000" readonly style="background:#000000;color:#ffffff"/>
+            <input type="text" id="p-saldo" placeholder="6,000,000" readonly style="background:var(--silver);color:var(--mut);font-weight:600"/>
           </div>
         </div>
         <div class="f">
@@ -799,6 +867,21 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
         <div class="f">
           <label>Fecha límite para escritura</label>
           <input type="date" id="p-fecha-limite"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Testigos</div>
+      <div class="f-note" style="margin-bottom:10px">Personas que firman como testigos del contrato (opcional pero recomendado).</div>
+      <div class="frow">
+        <div class="f">
+          <label>Nombre del testigo 1 <span class="opt-badge">opcional</span></label>
+          <input type="text" id="p-testigo1" placeholder="Nombre completo" oninput="this.value=this.value.toUpperCase()"/>
+        </div>
+        <div class="f">
+          <label>Nombre del testigo 2 <span class="opt-badge">opcional</span></label>
+          <input type="text" id="p-testigo2" placeholder="Nombre completo" oninput="this.value=this.value.toUpperCase()"/>
         </div>
       </div>
     </div>
@@ -839,380 +922,12 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 
   </div><!-- /brokr-section -->
 
-  <!-- ══ MODO MACHOTE ══ -->
-  <div id="machote-section">
-
-    <!-- Indicador de fases -->
-    <div class="phase-indicator" id="machote-phases">
-      <div class="phase-dot current" id="ph1">1</div>
-      <div class="phase-sep"></div>
-      <div class="phase-dot" id="ph2">2</div>
-      <div class="phase-sep"></div>
-      <div class="phase-dot" id="ph3">3</div>
-    </div>
-
-    <!-- FASE 1: Subir machote -->
-    <div class="machote-phase active" id="machote-phase-1">
-      <div class="card">
-        <div class="card-title">1 — Sube tu machote (archivo Word)</div>
-
-        <!-- Upload zone -->
-        <input type="file" id="upload-input" accept=".docx,.doc" onchange="handleFileSelect(this)"/>
-        <div class="upload-zone" id="upload-zone"
-             onclick="document.getElementById('upload-input').click()"
-             ondragover="event.preventDefault();this.classList.add('drag-over')"
-             ondragleave="this.classList.remove('drag-over')"
-             ondrop="handleDrop(event)">
-          <div class="upload-zone-ico">📄</div>
-          <div class="upload-zone-lbl">Arrastra tu archivo Word aquí o haz clic para seleccionarlo</div>
-          <div class="upload-zone-sub">Formatos soportados: .docx — Usa <strong>{{campo}}</strong>, <strong>[CAMPO]</strong> o <strong>&lt;&lt;campo&gt;&gt;</strong> para marcar variables</div>
-          <div class="file-name" id="file-name-display" style="display:none"></div>
-        </div>
-
-        <!-- Tipo de contrato -->
-        <div class="frow" style="margin-top:14px">
-          <div class="f">
-            <label>Tipo de contrato</label>
-            <select id="machote-tipo">
-              <option value="arrendamiento">Arrendamiento</option>
-              <option value="compraventa">Compraventa</option>
-              <option value="promesa_compraventa">Promesa de compraventa</option>
-              <option value="prestacion_servicios">Prestación de servicios</option>
-              <option value="permuta">Permuta</option>
-              <option value="comodato">Comodato</option>
-              <option value="mandato">Mandato / Poder</option>
-              <option value="otro">Otro</option>
-            </select>
-          </div>
-          <div class="f" id="machote-tipo-otro-wrap" style="display:none">
-            <label>Especifica el tipo</label>
-            <input type="text" id="machote-tipo-otro" placeholder="Ej. Contrato de obra"/>
-          </div>
-        </div>
-
-        <button class="gen-btn" id="analizar-btn" onclick="analizarMachote()" style="margin-top:10px" disabled>
-          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-          Analizar machote y detectar campos
-        </button>
-        <div class="loading" id="loading-analizar"><div class="spinner"></div><span>Analizando tu machote...</span></div>
-        <div class="err" id="err-analizar"></div>
-      </div>
-    </div>
-
-    <!-- FASE 2: Revisar y editar campos -->
-    <div class="machote-phase" id="machote-phase-2">
-      <div class="card">
-        <div class="card-title">2 — Revisa y edita los campos detectados</div>
-        <p style="font-size:13px;color:var(--mut);margin-bottom:14px">
-          Broquer detectó los siguientes campos variables en tu machote. Puedes editar los nombres, cambiar el tipo de dato, agregar o eliminar campos antes de continuar.
-        </p>
-
-        <div class="campos-header">
-          <span>Nombre del campo (editable)</span>
-          <span>Tipo de dato</span>
-          <span style="width:30px"></span>
-        </div>
-        <div class="campos-list" id="campos-list"></div>
-
-        <button class="btn-add-campo" onclick="agregarCampo()">
-          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-          Agregar campo
-        </button>
-
-        <div style="display:flex;gap:10px;margin-top:16px">
-          <button class="gen-btn" style="background:var(--silver2);color:var(--navy);flex:0 0 auto;width:auto;padding:12px 20px" onclick="volverFase1()">← Regresar</button>
-          <button class="gen-btn" id="aceptar-campos-btn" onclick="aceptarCampos()">
-            Aceptar campos y llenar formulario →
-          </button>
-        </div>
-        <div class="err" id="err-campos"></div>
-      </div>
-    </div>
-
-    <!-- FASE 3: Llenar formulario dinámico -->
-    <div class="machote-phase" id="machote-phase-3">
-      <div class="card">
-        <div class="card-title">3 — Llena los datos del contrato</div>
-        <div id="dyn-form-fields" style="margin-bottom:8px"></div>
-
-        <div style="display:flex;gap:10px;margin-top:16px">
-          <button class="gen-btn" style="background:var(--silver2);color:var(--navy);flex:0 0 auto;width:auto;padding:12px 20px" onclick="volverFase2()">← Regresar</button>
-          <button class="gen-btn" id="gen-machote-btn" onclick="generarContratoMachote()">
-            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h4a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-            Generar contrato personalizado
-          </button>
-        </div>
-        <div class="loading" id="loading-machote"><div class="spinner"></div><span>Generando tu contrato...</span></div>
-        <div class="err" id="err-machote"></div>
-        <div class="success" id="success-machote" style="display:none">
-          <span style="font-size:20px">✓</span>
-          <span>Contrato generado. La descarga comenzó automáticamente.</span>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /machote-section -->
 
 </div><!-- /wrap -->
 
 <script>
 const API = 'https://api.broquer.app';
 let tipoActual = 'arrendamiento';
-let modoActual = 'brokr'; // 'brokr' | 'machote'
-
-// ── Selector de modo ──
-function setModo(modo) {
-  modoActual = modo;
-  const bBtn = document.getElementById('modo-brokr');
-  const mBtn = document.getElementById('modo-machote');
-  if (bBtn) bBtn.classList.toggle('active', modo === 'brokr');
-  if (mBtn) mBtn.classList.toggle('active', modo === 'machote');
-  document.getElementById('brokr-section').style.display = modo === 'brokr' ? '' : 'none';
-  document.getElementById('machote-section').style.display = modo === 'machote' ? '' : 'none';
-}
-
-// ── MACHOTE: estado ──
-let machoteFile = null;       // File object
-let machoteFileData = null;   // ArrayBuffer (para reenviarlo al generar)
-let camposDetectados = [];    // [{id, label, tipo_input, patron_texto, patron_fmt}]
-
-// ── MACHOTE: tipo otro ──
-document.addEventListener('DOMContentLoaded', () => {
-  const sel = document.getElementById('machote-tipo');
-  if (sel) sel.addEventListener('change', () => {
-    document.getElementById('machote-tipo-otro-wrap').style.display =
-      sel.value === 'otro' ? '' : 'none';
-  });
-});
-
-// ── MACHOTE: upload ──
-function handleFileSelect(input) {
-  const f = input.files[0];
-  if (!f) return;
-  setMachoteFile(f);
-}
-
-function handleDrop(e) {
-  e.preventDefault();
-  document.getElementById('upload-zone').classList.remove('drag-over');
-  const f = e.dataTransfer.files[0];
-  if (!f) return;
-  if (!f.name.match(/\.docx?$/i)) {
-    mostrarErr('err-analizar', 'Solo se aceptan archivos .docx');
-    return;
-  }
-  setMachoteFile(f);
-}
-
-function setMachoteFile(f) {
-  if (!f.name.match(/\.docx?$/i)) {
-    mostrarErr('err-analizar', 'Solo se aceptan archivos .docx');
-    return;
-  }
-  machoteFile = f;
-  const zone = document.getElementById('upload-zone');
-  zone.classList.add('has-file');
-  const nameEl = document.getElementById('file-name-display');
-  nameEl.textContent = f.name;
-  nameEl.style.display = 'block';
-  document.getElementById('analizar-btn').disabled = false;
-  ocultarErr('err-analizar');
-}
-
-// ── MACHOTE: analizar ──
-async function analizarMachote() {
-  if (!machoteFile) { mostrarErr('err-analizar', 'Selecciona un archivo primero.'); return; }
-  ocultarErr('err-analizar');
-  const loadEl = document.getElementById('loading-analizar');
-  const btn = document.getElementById('analizar-btn');
-  loadEl.classList.add('show'); btn.disabled = true;
-
-  try {
-    const tipo = document.getElementById('machote-tipo').value === 'otro'
-      ? document.getElementById('machote-tipo-otro').value
-      : document.getElementById('machote-tipo').value;
-
-    const fd = new FormData();
-    fd.append('file', machoteFile);
-    fd.append('tipo', tipo);
-
-    const res = await fetch(`${API}/contrato/analizar`, { method: 'POST', body: fd });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Error al analizar');
-
-    // Leer el file como ArrayBuffer para reusarlo en la generación
-    machoteFileData = await machoteFile.arrayBuffer();
-
-    camposDetectados = data.campos || [];
-    renderCampos(camposDetectados);
-    irFase(2);
-  } catch(e) {
-    mostrarErr('err-analizar', e.message || 'No se pudo analizar el archivo. Verifica que sea un .docx válido.');
-  } finally {
-    loadEl.classList.remove('show'); btn.disabled = false;
-  }
-}
-
-// ── MACHOTE: renderizar lista de campos editables ──
-function renderCampos(campos) {
-  const list = document.getElementById('campos-list');
-  if (!campos.length) {
-    list.innerHTML = '<p style="font-size:13px;color:var(--mut);padding:12px">No se detectaron campos automáticamente. Agrega los campos manualmente o ajusta tu machote usando {{nombre_campo}} para marcar variables.</p>';
-    return;
-  }
-  list.innerHTML = campos.map((c, idx) => `
-    <div class="campo-item" id="campo-item-${idx}">
-      <div>
-        <div class="campo-item-lbl">Nombre / Etiqueta</div>
-        <input type="text" value="${escHtml(c.label || c.id)}" oninput="updateCampo(${idx},'label',this.value)" placeholder="Ej. Nombre del arrendador"/>
-      </div>
-      <div>
-        <div class="campo-item-lbl">Tipo de dato</div>
-        <select onchange="updateCampo(${idx},'tipo_input',this.value)">
-          <option value="text" ${c.tipo_input==='text'?'selected':''}>Texto</option>
-          <option value="number" ${c.tipo_input==='number'?'selected':''}>Número</option>
-          <option value="currency" ${c.tipo_input==='currency'?'selected':''}>Monto ($)</option>
-          <option value="date" ${c.tipo_input==='date'?'selected':''}>Fecha</option>
-          <option value="textarea" ${c.tipo_input==='textarea'?'selected':''}>Texto largo</option>
-        </select>
-      </div>
-      <button class="campo-del" title="Eliminar campo" onclick="eliminarCampo(${idx})">✕</button>
-    </div>
-  `).join('');
-}
-
-function updateCampo(idx, key, val) {
-  if (camposDetectados[idx]) camposDetectados[idx][key] = val;
-}
-
-function eliminarCampo(idx) {
-  camposDetectados.splice(idx, 1);
-  renderCampos(camposDetectados);
-}
-
-function agregarCampo() {
-  const id = 'campo_' + Date.now();
-  camposDetectados.push({ id, label: '', tipo_input: 'text', patron_texto: null, patron_fmt: 'manual' });
-  renderCampos(camposDetectados);
-  // Focus en el último campo añadido
-  const items = document.querySelectorAll('.campo-item input[type=text]');
-  if (items.length) items[items.length-1].focus();
-}
-
-// ── MACHOTE: aceptar campos → fase 3 ──
-function aceptarCampos() {
-  // Leer valores actuales de los inputs (por si no dispararon el oninput)
-  const items = document.querySelectorAll('#campos-list .campo-item');
-  items.forEach((el, idx) => {
-    const inp = el.querySelector('input[type=text]');
-    const sel = el.querySelector('select');
-    if (inp && camposDetectados[idx]) camposDetectados[idx].label = inp.value;
-    if (sel && camposDetectados[idx]) camposDetectados[idx].tipo_input = sel.value;
-  });
-  if (!camposDetectados.length) { mostrarErr('err-campos', 'Agrega al menos un campo para continuar.'); return; }
-  ocultarErr('err-campos');
-  renderFormDinamico(camposDetectados);
-  irFase(3);
-}
-
-// ── MACHOTE: renderizar formulario dinámico ──
-function renderFormDinamico(campos) {
-  const cont = document.getElementById('dyn-form-fields');
-  const pares = [];
-  for (let i = 0; i < campos.length; i += 2) {
-    pares.push(campos.slice(i, i+2));
-  }
-  cont.innerHTML = pares.map(par => `
-    <div class="dyn-form-row">
-      ${par.map(c => `
-        <div class="dyn-form-field">
-          <label>${escHtml(c.label || c.id)}</label>
-          ${renderInputCampo(c)}
-        </div>
-      `).join('')}
-    </div>
-  `).join('');
-}
-
-function renderInputCampo(c) {
-  const id = `dyn_${escHtml(c.id)}`;
-  switch(c.tipo_input) {
-    case 'date':
-      return `<input type="date" id="${id}" name="${escHtml(c.id)}"/>`;
-    case 'number':
-      return `<input type="number" id="${id}" name="${escHtml(c.id)}" placeholder="0"/>`;
-    case 'currency':
-      return `<div class="money-wrap"><span class="money-sym">$</span><input type="number" id="${id}" name="${escHtml(c.id)}" placeholder="0.00" step="0.01"/></div>`;
-    case 'textarea':
-      return `<textarea id="${id}" name="${escHtml(c.id)}" rows="3" placeholder="Escribe aquí..."></textarea>`;
-    default:
-      return `<input type="text" id="${id}" name="${escHtml(c.id)}" placeholder=""/>`;
-  }
-}
-
-// ── MACHOTE: generar contrato ──
-async function generarContratoMachote() {
-  ocultarErr('err-machote');
-  document.getElementById('success-machote').style.display = 'none';
-  const loadEl = document.getElementById('loading-machote');
-  const btn = document.getElementById('gen-machote-btn');
-  loadEl.classList.add('show'); btn.disabled = true;
-
-  try {
-    // Recolectar datos del formulario dinámico
-    const datos = {};
-    camposDetectados.forEach(c => {
-      const inp = document.getElementById(`dyn_${c.id}`);
-      if (inp) {
-        datos[c.id] = inp.value || '';
-        // También mapear por label original para facilitar el reemplazo
-        if (c.patron_texto) datos[`__label_${c.id}`] = c.patron_texto;
-      }
-    });
-
-    const tipo = document.getElementById('machote-tipo').value === 'otro'
-      ? (document.getElementById('machote-tipo-otro').value || 'contrato')
-      : document.getElementById('machote-tipo').value;
-
-    const fd = new FormData();
-    // Reenviar el archivo original
-    fd.append('file', new Blob([machoteFileData], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }), machoteFile.name);
-    fd.append('datos', JSON.stringify(datos));
-    fd.append('tipo', tipo);
-
-    const res = await fetch(`${API}/contrato/generar-machote`, { method: 'POST', body: fd });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || 'Error al generar el contrato');
-    }
-
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Contrato_${tipo}.docx`;
-    document.body.appendChild(a); a.click();
-    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 2000);
-    document.getElementById('success-machote').style.display = 'flex';
-  } catch(e) {
-    mostrarErr('err-machote', e.message || 'Error generando el contrato. Intenta de nuevo.');
-  } finally {
-    loadEl.classList.remove('show'); btn.disabled = false;
-  }
-}
-
-// ── MACHOTE: navegación entre fases ──
-function irFase(n) {
-  [1,2,3].forEach(i => {
-    document.getElementById(`machote-phase-${i}`).classList.toggle('active', i === n);
-    const dot = document.getElementById(`ph${i}`);
-    dot.classList.remove('done','current');
-    if (i < n) dot.classList.add('done');
-    else if (i === n) dot.classList.add('current');
-  });
-}
-function volverFase1() { irFase(1); }
-function volverFase2() { irFase(2); renderCampos(camposDetectados); }
 
 // ── Helpers ──
 function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -1254,6 +969,21 @@ function getMonto(id){
 }
 function gv(id){ return (document.getElementById(id)?.value || '').trim(); }
 
+// Solo 5 dígitos numéricos para CP
+function validarCP(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.value = (el.value||'').replace(/[^0-9]/g,'').slice(0,5);
+}
+
+// Mostrar/ocultar el input "otro destino"
+function onDestinoChange(){
+  const sel = document.getElementById('a-destino');
+  const wrap = document.getElementById('a-destino-otro-wrap');
+  if(!sel || !wrap) return;
+  wrap.style.display = sel.value === 'otro' ? '' : 'none';
+}
+
 // ── Validation ──
 function validateArrendamiento(){
   const required = [
@@ -1262,17 +992,28 @@ function validateArrendamiento(){
     ['a-numext-inm','Número exterior del inmueble'],
     ['a-colonia','Colonia del inmueble'],
     ['a-cp','Código postal del inmueble'],
-    ['a-mpio-inm','Municipio/Estado del inmueble'],
+    ['a-municipio-inm','Municipio del inmueble'],
+    ['a-estado-inm','Estado del inmueble'],
     ['a-destino','Destino del inmueble'],
     ['a-arrendatario','Nombre del arrendatario'],
     ['a-os','Nombre del obligado solidario'],
-    ['a-calle-os','Domicilio del obligado solidario'],
-    ['a-calle-arr','Domicilio del arrendador'],
+    ['a-calle-os','Calle del domicilio del obligado solidario'],
+    ['a-municipio-os','Municipio del obligado solidario'],
+    ['a-estado-os','Estado del obligado solidario'],
     ['a-renta','Renta mensual'],
     ['a-deposito','Depósito en garantía'],
     ['a-dia-pago','Día límite de pago'],
     ['a-forma-pago','Forma de pago'],
   ];
+  // Si el arrendador NO marcó "mismo domicilio que inmueble", su domicilio es requerido
+  const arrSame = document.getElementById('arr-misma-inm')?.checked;
+  if(!arrSame){
+    required.push(
+      ['a-calle-arr','Calle del domicilio del arrendador'],
+      ['a-municipio-arr','Municipio del arrendador'],
+      ['a-estado-arr','Estado del arrendador'],
+    );
+  }
   for(const [id, label] of required){
     if(!gv(id)){ return `El campo "${label}" es requerido.`; }
   }
@@ -1289,15 +1030,27 @@ function validateArrendamiento(){
 function validatePromesa(){
   const required = [
     ['p-fecha',       'Fecha del contrato'],
-    ['p-dir',         'Calle y número del inmueble'],
+    ['p-calle-inm',   'Calle del inmueble'],
+    ['p-numext-inm',  'Número exterior del inmueble'],
     ['p-colonia',     'Colonia del inmueble'],
     ['p-cp',          'Código postal del inmueble'],
+    ['p-municipio-inm','Municipio del inmueble'],
+    ['p-estado-inm',  'Estado del inmueble'],
     ['p-vendedor',    'Nombre del vendedor'],
-    ['p-dom-vend',    'Domicilio del vendedor'],
     ['p-comprador',   'Nombre del comprador'],
-    ['p-dom-comp',    'Domicilio del comprador'],
+    ['p-calle-comp',  'Calle del domicilio del comprador'],
+    ['p-municipio-comp','Municipio del comprador'],
+    ['p-estado-comp', 'Estado del comprador'],
     ['p-fecha-limite','Fecha límite para escritura'],
   ];
+  const vendSame = document.getElementById('vend-misma-inm')?.checked;
+  if(!vendSame){
+    required.push(
+      ['p-calle-vend','Calle del domicilio del vendedor'],
+      ['p-municipio-vend','Municipio del vendedor'],
+      ['p-estado-vend','Estado del vendedor'],
+    );
+  }
   for(const [id, label] of required){
     if(!gv(id)) return `El campo "${label}" es requerido.`;
   }
@@ -1320,26 +1073,43 @@ async function generarContrato(){
     return;
   }
 
-  // Build data — helper para construir dirección completa
-  const buildAddr = (calle, numext, numint, colonia, cp, mpio) => {
-    let s = calle || '';
-    if(numext) s += ' No. ' + numext;
-    if(numint) s += ' Int. ' + numint;
-    if(colonia) s += ', Col. ' + colonia;
-    if(cp) s += ' C.P. ' + cp;
-    if(mpio) s += ', ' + mpio;
-    return s.trim();
+  // Helpers para combinar municipio + estado y construir dirección completa
+  const mpioEst = (mun, est) => {
+    const m = (mun||'').trim(); const e = (est||'').trim();
+    if(m && e) return `${m}, ${e}`;
+    return m || e;
+  };
+  const buildAddr = (calle, numext, numint, colonia, cp, mun, est) => {
+    const parts = [];
+    if(calle) parts.push(calle);
+    if(numext) parts.push('No. ' + numext);
+    if(numint) parts.push('Int. ' + numint);
+    if(colonia) parts.push('Col. ' + colonia);
+    if(cp) parts.push('C.P. ' + cp);
+    const me = mpioEst(mun, est);
+    if(me) parts.push(me);
+    return parts.join(', ');
   };
 
   let datos;
   if(tipoActual === 'arrendamiento'){
     const destino = gv('a-destino') === 'otro' ? gv('a-destino-otro') : gv('a-destino');
+    const arrSame = document.getElementById('arr-misma-inm')?.checked;
+    // Si el arrendador comparte domicilio con el inmueble, copiamos los campos
+    const arrCalle  = arrSame ? gv('a-calle-inm')     : gv('a-calle-arr');
+    const arrNumExt = arrSame ? gv('a-numext-inm')    : gv('a-numext-arr');
+    const arrNumInt = arrSame ? gv('a-numint-inm')    : gv('a-numint-arr');
+    const arrCol    = arrSame ? gv('a-colonia')       : gv('a-colonia-arr');
+    const arrCp     = arrSame ? gv('a-cp')            : gv('a-cp-arr');
+    const arrMun    = arrSame ? gv('a-municipio-inm') : gv('a-municipio-arr');
+    const arrEst    = arrSame ? gv('a-estado-inm')    : gv('a-estado-arr');
     datos = {
       // Fechas
       fecha_contrato:     gv('a-inicio'),
       fecha_inicio:       gv('a-inicio'),
       fecha_fin:          gv('a-fin'),
       duracion:           gv('a-duracion'),
+      plazo_contrato:     gv('a-duracion'),
       inicio_escrito:     gv('a-inicio-escrito'),
       fin_escrito:        gv('a-fin-escrito'),
       // Inmueble
@@ -1350,19 +1120,24 @@ async function generarContrato(){
       num_int_inmueble:   gv('a-numint-inm'),
       colonia_inmueble:   gv('a-colonia'),
       cp_inmueble:        gv('a-cp'),
-      municipio_estado_inmueble: gv('a-mpio-inm'),
+      municipio_inmueble: gv('a-municipio-inm'),
+      estado_inmueble:    gv('a-estado-inm'),
+      municipio_estado_inmueble: mpioEst(gv('a-municipio-inm'), gv('a-estado-inm')),
       ciudad_firma:       gv('a-ciudad-firma'),
       estado_firma:       gv('a-estado-firma'),
-      direccion_inmueble: buildAddr(gv('a-calle-inm'), gv('a-numext-inm'), gv('a-numint-inm'), gv('a-colonia'), gv('a-cp'), gv('a-mpio-inm')),
+      direccion_inmueble: buildAddr(gv('a-calle-inm'), gv('a-numext-inm'), gv('a-numint-inm'), gv('a-colonia'), gv('a-cp'), gv('a-municipio-inm'), gv('a-estado-inm')),
       // Arrendador
       nombre_arrendador:  gv('a-arrendador'),
       sexo_arrendador:    document.querySelector('#sexo-arr .sexo-btn.active')?.dataset?.sexo || 'M',
-      calle_arrendador:   gv('a-calle-arr'),
-      num_ext_arrendador: gv('a-numext-arr'),
-      colonia_arrendador: gv('a-colonia-arr'),
-      cp_arrendador:      gv('a-cp-arr'),
-      municipio_estado_arrendador: gv('a-mpio-arr'),
-      domicilio_arrendador: buildAddr(gv('a-calle-arr'), gv('a-numext-arr'), '', gv('a-colonia-arr'), gv('a-cp-arr'), gv('a-mpio-arr')),
+      calle_arrendador:   arrCalle,
+      num_ext_arrendador: arrNumExt,
+      num_int_arrendador: arrNumInt,
+      colonia_arrendador: arrCol,
+      cp_arrendador:      arrCp,
+      municipio_arrendador: arrMun,
+      estado_arrendador:    arrEst,
+      municipio_estado_arrendador: mpioEst(arrMun, arrEst),
+      domicilio_arrendador: buildAddr(arrCalle, arrNumExt, arrNumInt, arrCol, arrCp, arrMun, arrEst),
       // Arrendatario
       nombre_arrendatario: gv('a-arrendatario'),
       sexo_arrendatario:  document.querySelector('#sexo-arrt .sexo-btn.active')?.dataset?.sexo || 'M',
@@ -1374,47 +1149,79 @@ async function generarContrato(){
       num_int_os:         gv('a-numint-os'),
       colonia_os:         gv('a-colonia-os'),
       cp_os:              gv('a-cp-os'),
-      municipio_estado_os: gv('a-mpio-os'),
-      domicilio_obligado_solidario: buildAddr(gv('a-calle-os'), gv('a-numext-os'), gv('a-numint-os'), gv('a-colonia-os'), gv('a-cp-os'), gv('a-mpio-os')),
+      municipio_os:       gv('a-municipio-os'),
+      estado_os:          gv('a-estado-os'),
+      municipio_estado_os: mpioEst(gv('a-municipio-os'), gv('a-estado-os')),
+      domicilio_obligado_solidario: buildAddr(gv('a-calle-os'), gv('a-numext-os'), gv('a-numint-os'), gv('a-colonia-os'), gv('a-cp-os'), gv('a-municipio-os'), gv('a-estado-os')),
       calle_inm_os:       gv('a-calle-inm-os'),
       num_ext_inm_os:     gv('a-numext-inm-os'),
       num_int_inm_os:     gv('a-numint-inm-os'),
       colonia_inm_os:     gv('a-colonia-inm-os'),
       cp_inm_os:          gv('a-cp-inm-os'),
-      municipio_estado_inm_os: gv('a-mpio-inm-os'),
-      inmueble_os:        buildAddr(gv('a-calle-inm-os'), gv('a-numext-inm-os'), gv('a-numint-inm-os'), gv('a-colonia-inm-os'), gv('a-cp-inm-os'), gv('a-mpio-inm-os')),
+      municipio_inm_os:   gv('a-municipio-inm-os'),
+      estado_inm_os:      gv('a-estado-inm-os'),
+      municipio_estado_inm_os: mpioEst(gv('a-municipio-inm-os'), gv('a-estado-inm-os')),
+      inmueble_os:        buildAddr(gv('a-calle-inm-os'), gv('a-numext-inm-os'), gv('a-numint-inm-os'), gv('a-colonia-inm-os'), gv('a-cp-inm-os'), gv('a-municipio-inm-os'), gv('a-estado-inm-os')),
       // Renta y pagos
       renta_mensual:      getMonto('a-renta'),
-      renta_letra:        gv('a-renta-letra'),
       deposito_garantia:  getMonto('a-deposito'),
-      deposito_letra:     gv('a-deposito-letra'),
       dia_pago:           gv('a-dia-pago') || '1',
       forma_pago:         gv('a-forma-pago'),
       cuenta_bancaria:    gv('a-banco'),
       pena_retencion:     getMonto('a-pena') || 500,
       pena_dia_num:       getMonto('a-pena') || 500,
-      pena_dia_letra:     gv('a-pena-letra'),
       cajones_estacionamiento: 0,
       incluye_bodega:     false,
+      // Testigos
+      testigo_1:          gv('a-testigo1'),
+      testigo_2:          gv('a-testigo2'),
     };
   } else {
+    const vendSame = document.getElementById('vend-misma-inm')?.checked;
+    const vCalle  = vendSame ? gv('p-calle-inm')     : gv('p-calle-vend');
+    const vNumExt = vendSame ? gv('p-numext-inm')    : gv('p-numext-vend');
+    const vNumInt = vendSame ? gv('p-numint-inm')    : gv('p-numint-vend');
+    const vCol    = vendSame ? gv('p-colonia')       : gv('p-colonia-vend');
+    const vCp     = vendSame ? gv('p-cp')            : gv('p-cp-vend');
+    const vMun    = vendSame ? gv('p-municipio-inm') : gv('p-municipio-vend');
+    const vEst    = vendSame ? gv('p-estado-inm')    : gv('p-estado-vend');
     datos = {
       fecha_contrato:     gv('p-fecha'),
       nombre_vendedor:    gv('p-vendedor'),
       nombre_comprador:   gv('p-comprador'),
-      direccion_inmueble: gv('p-dir'),
+      calle_inmueble:     gv('p-calle-inm'),
+      num_ext_inmueble:   gv('p-numext-inm'),
+      num_int_inmueble:   gv('p-numint-inm'),
+      direccion_inmueble: buildAddr(gv('p-calle-inm'), gv('p-numext-inm'), gv('p-numint-inm'), '', '', '', ''),
       colonia_inmueble:   gv('p-colonia'),
       cp_inmueble:        gv('p-cp'),
-      municipio_estado_inmueble: gv('p-mpio-inm'),
+      municipio_inmueble: gv('p-municipio-inm'),
+      estado_inmueble:    gv('p-estado-inm'),
+      municipio_estado_inmueble: mpioEst(gv('p-municipio-inm'), gv('p-estado-inm')),
       ciudad_firma:       gv('p-ciudad-firma'),
       estado_firma:       gv('p-estado-firma'),
       escritura_numero:   gv('p-esc-num'),
       notario_nombre:     gv('p-not-nombre'),
       notario_numero:     gv('p-not-num'),
+      estado_notaria:     gv('p-estado-notaria'),
       tomo_registro:      gv('p-tomo'),
       registro:           gv('p-registro'),
-      domicilio_vendedor: gv('p-dom-vend'),
-      domicilio_comprador: gv('p-dom-comp'),
+      domicilio_vendedor: buildAddr(vCalle, vNumExt, vNumInt, vCol, vCp, vMun, vEst),
+      calle_vendedor:     vCalle,
+      num_ext_vendedor:   vNumExt,
+      num_int_vendedor:   vNumInt,
+      colonia_vendedor:   vCol,
+      cp_vendedor:        vCp,
+      municipio_vendedor: vMun,
+      estado_vendedor:    vEst,
+      domicilio_comprador: buildAddr(gv('p-calle-comp'), gv('p-numext-comp'), gv('p-numint-comp'), gv('p-colonia-comp'), gv('p-cp-comp'), gv('p-municipio-comp'), gv('p-estado-comp')),
+      calle_comprador:    gv('p-calle-comp'),
+      num_ext_comprador:  gv('p-numext-comp'),
+      num_int_comprador:  gv('p-numint-comp'),
+      colonia_comprador:  gv('p-colonia-comp'),
+      cp_comprador:       gv('p-cp-comp'),
+      municipio_comprador: gv('p-municipio-comp'),
+      estado_comprador:    gv('p-estado-comp'),
       sexo_vendedor:      document.querySelector('#sexo-vend .sexo-btn.active')?.dataset?.sexo || 'M',
       sexo_comprador:     document.querySelector('#sexo-comp .sexo-btn.active')?.dataset?.sexo || 'M',
       precio_total:       getMonto('p-precio'),
@@ -1425,6 +1232,8 @@ async function generarContrato(){
       cuenta_vendedor:    gv('p-cuenta-vend'),
       banco_vendedor:     gv('p-banco-vend'),
       fecha_limite_escritura: gv('p-fecha-limite'),
+      testigo_1:          gv('p-testigo1'),
+      testigo_2:          gv('p-testigo2'),
     };
   }
 
@@ -1498,23 +1307,41 @@ function getClausulasTexto(){
 }
 
 function toggleMismaPropOS(cb){
-  const fields = ['calle-inm-os','numint-inm-os','colonia-inm-os','cp-inm-os','mpio-inm-os'];
-  const src    = ['calle-os',    'numint-os',    'colonia-os',    'cp-os',    'mpio-os'];
-  const wrap   = document.querySelectorAll('#form-arrendamiento .inm-os-field');
+  // Copia domicilio del OS → inmueble en garantía del OS y deshabilita
+  const pairs = [
+    ['a-calle-inm-os',     'a-calle-os'],
+    ['a-numext-inm-os',    'a-numext-os'],
+    ['a-numint-inm-os',    'a-numint-os'],
+    ['a-colonia-inm-os',   'a-colonia-os'],
+    ['a-cp-inm-os',        'a-cp-os'],
+    ['a-municipio-inm-os', 'a-municipio-os'],
+    ['a-estado-inm-os',    'a-estado-os'],
+  ];
+  pairs.forEach(([tgtId, srcId]) => {
+    const target = document.getElementById(tgtId);
+    const source = document.getElementById(srcId);
+    if(!target || !source) return;
+    if(cb.checked){ target.value = source.value; target.disabled = true; }
+    else { target.disabled = false; }
+  });
+}
 
-  if(cb.checked){
-    // Copy from domicilio OS → inmueble garantía OS
-    fields.forEach((f, i) => {
-      const target = document.getElementById(`a-${f}`);
-      const source = document.getElementById(`a-${src[i]}`);
-      if(target && source){ target.value = source.value; target.disabled = true; }
-    });
-  } else {
-    fields.forEach(f => {
-      const target = document.getElementById(`a-${f}`);
-      if(target){ target.disabled = false; }
-    });
-  }
+// Toggle "domicilio = inmueble objeto" para arrendador (a) o vendedor (p).
+// Cuando se activa, oculta el bloque de domicilio y lo deshabilita.
+function toggleMismaDom(role){
+  // role: 'arr' (arrendamiento) | 'vend' (promesa)
+  const cb = document.getElementById(role === 'arr' ? 'arr-misma-inm' : 'vend-misma-inm');
+  const block = document.getElementById(role === 'arr' ? 'dom-arr-block' : 'dom-vend-block');
+  if(block) block.style.display = cb.checked ? 'none' : '';
+}
+
+// Si no se ingresó depósito manualmente, igualar a la renta mensual.
+function autoFillDeposito(){
+  const dep = document.getElementById('a-deposito');
+  if(!dep) return;
+  if(getMonto('a-deposito') > 0) return;
+  const r = getMonto('a-renta');
+  if(r > 0) dep.value = r.toLocaleString('en-US') + '.00';
 }
 
 function onFormaPagoChange(){
@@ -1783,18 +1610,23 @@ function seleccionarInmueble(id) {
     up(document.getElementById('a-numint-inm'), p.num_interior||p.numero_interior);
     up(document.getElementById('a-colonia'), p.colonia);
     sv(document.getElementById('a-cp'), p.cp||p.codigo_postal);
-    up(document.getElementById('a-mpio-inm'), [p.colonia,p.ciudad].filter(Boolean).join(', '));
+    up(document.getElementById('a-municipio-inm'), p.ciudad||p.municipio);
+    up(document.getElementById('a-estado-inm'), p.estado);
     if (p.precio) {
       const el = document.getElementById('a-renta');
-      if(el){el.value=Number(p.precio).toLocaleString('es-MX',{minimumFractionDigits:2});if(typeof onRentaChange==='function')onRentaChange(el);}
+      if(el){el.value=Number(p.precio).toLocaleString('en-US')+'.00'; autoFillDeposito();}
     }
   } else {
-    up(document.getElementById('p-dir'),[p.calle||p.direccion,p.num_exterior?'No. '+p.num_exterior:'',p.colonia?'Col. '+p.colonia:''].filter(Boolean).join(', '));
+    up(document.getElementById('p-calle-inm'), p.calle||p.direccion);
+    up(document.getElementById('p-numext-inm'), p.num_exterior||p.numero_exterior);
+    up(document.getElementById('p-numint-inm'), p.num_interior||p.numero_interior);
     up(document.getElementById('p-colonia'), p.colonia);
     sv(document.getElementById('p-cp'), p.cp||p.codigo_postal);
+    up(document.getElementById('p-municipio-inm'), p.ciudad||p.municipio);
+    up(document.getElementById('p-estado-inm'), p.estado);
     if (p.precio) {
       const el=document.getElementById('p-precio');
-      if(el){el.value=Number(p.precio).toLocaleString('es-MX');if(typeof fmtMoney==='function')fmtMoney(el);if(typeof calcularSaldo==='function')calcularSaldo();}
+      if(el){el.value=Number(p.precio).toLocaleString('en-US');calcularSaldo();}
     }
   }
   cerrarPickerInmueble();
@@ -1824,19 +1656,19 @@ window.addEventListener('message', function(e) {
       setUpper('a-numext-inm',  d.num_ext);
       setUpper('a-colonia',     d.colonia);
       set('a-cp',               d.cp);
-      setUpper('a-mpio-inm',    d.municipio_estado);
+      setUpper('a-municipio-inm', d.municipio || d.municipio_estado);
+      setUpper('a-estado-inm',    d.estado);
       if (d.renta) {
         const el = document.getElementById('a-renta');
         if (el) {
-          el.value = Number(d.renta).toLocaleString('es-MX', { minimumFractionDigits: 2 });
-          if (typeof onRentaChange === 'function') onRentaChange(el);
+          el.value = Number(d.renta).toLocaleString('en-US') + '.00';
+          autoFillDeposito();
         }
       }
       if (d.deposito) {
         const el = document.getElementById('a-deposito');
         if (el) {
-          el.value = Number(d.deposito).toLocaleString('es-MX', { minimumFractionDigits: 2 });
-          if (typeof fmtMoney === 'function') fmtMoney(el);
+          el.value = Number(d.deposito).toLocaleString('en-US') + '.00';
         }
       }
       set('a-dia-pago', d.dia_pago);
@@ -1845,11 +1677,14 @@ window.addEventListener('message', function(e) {
         if (typeof onFechaInicioChange === 'function') onFechaInicioChange();
       }
     } else {
-      setUpper('p-dir',      d.dir);
-      setUpper('p-colonia',  d.colonia);
-      set('p-cp',            d.cp);
-      setUpper('p-vendedor', d.vendedor);
-      setUpper('p-comprador',d.comprador);
+      setUpper('p-calle-inm', d.calle_inmueble || d.dir);
+      setUpper('p-numext-inm',d.num_ext);
+      setUpper('p-colonia',   d.colonia);
+      set('p-cp',             d.cp);
+      setUpper('p-municipio-inm', d.municipio);
+      setUpper('p-estado-inm',    d.estado);
+      setUpper('p-vendedor',  d.vendedor);
+      setUpper('p-comprador', d.comprador);
       if (d.precio) {
         const el = document.getElementById('p-precio');
         if (el) {

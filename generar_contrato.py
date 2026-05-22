@@ -259,7 +259,10 @@ def generar_arrendamiento(datos, output_path):
     nombre_arrt = u('nombre_arrendatario')
     nombre_os   = u('nombre_obligado_solidario')
     destino     = u('destino_uso')
-    plazo       = u('plazo_contrato')
+    # Acepta cualquier denominación del frontend (duracion o plazo_contrato)
+    plazo       = (u('plazo_contrato') or u('duracion') or '').strip()
+    testigo_1   = u('testigo_1')
+    testigo_2   = u('testigo_2')
     MESES_PY = ['enero','febrero','marzo','abril','mayo','junio',
                 'julio','agosto','septiembre','octubre','noviembre','diciembre']
 
@@ -617,7 +620,7 @@ def generar_arrendamiento(datos, output_path):
         "los actos establecidos en el inciso b) del precepto legal en cita.")
 
     titulo("''DEVOLUCIÓN DEL INMUEBLE''")
-    clausula("DECIMOCUARTA",
+    clausula("DECIMOSEGUNDA",
         "Independientemente de la causa de rescisión del contrato o por su terminación, la parte "
         "arrendataria queda obligada a hacer la devolución del inmueble, de manera personal, "
         "entregándolo en buen estado de conservación y funcionamiento en que le fue entregado, ya "
@@ -626,7 +629,7 @@ def generar_arrendamiento(datos, output_path):
         "inmueble al estado en el que estaba, después de los desperfectos y mal uso que haya hecho "
         "la parte arrendataria al inmueble; además de todos los daños y perjuicios que le ocasione ésta.")
 
-    clausula("DECIMOQUINTA",
+    clausula("DECIMOTERCERA",
         "Así mismo, se obliga la parte arrendataria a entregar el inmueble al corriente de los pagos "
         "en los servicios de agua, luz, gas, internet o cualquier otro servicio que derive de la "
         "ocupación del inmueble.")
@@ -638,7 +641,7 @@ def generar_arrendamiento(datos, output_path):
         f"hasta que la desocupe y entregue, como pena convencional por la no devolución del mismo.")
 
     titulo('"DEPOSITO"')
-    clausula("DECIMOSEXTA",
+    clausula("DECIMOCUARTA",
         f"La parte arrendataria entregará a la parte arrendadora, la cantidad de {dep_f} ({dep_letra}), "
         f"por concepto de DEPÓSITO EN GARANTÍA, sin que el mismo genere intereses y sin que pueda ser "
         f"aplicado a ninguna mensualidad por concepto de renta para garantizar las obligaciones a su "
@@ -653,7 +656,7 @@ def generar_arrendamiento(datos, output_path):
         "anticipada de EL INMUEBLE arrendado, pueda este último disponer del depósito de garantía "
         "para hacer los arreglos necesarios y de pintura de EL INMUEBLE.")
 
-    clausula("DECIMOSÉPTIMA",
+    clausula("DECIMOQUINTA",
         "Cualquier pago que efectúe LA PARTE ARRENDATARIA a favor de LA PARTE ARRENDADORA se "
         "aplicará, primeramente, a cubrir los gastos que erogue LA PARTE ARRENDADORA y que "
         "correspondan a LA PARTE ARRENDATARIA en los términos del presente contrato, después serán "
@@ -661,11 +664,11 @@ def generar_arrendamiento(datos, output_path):
         "generadas y no cubiertas.")
 
     titulo("''DERECHO DEL TANTO Y TRANSMISIÓN DE LA PROPIEDAD''")
-    clausula("DECIMOCTAVA",
+    clausula("DECIMOSEXTA",
         "La parte arrendataria renuncia expresamente al derecho de preferencia o derecho del tanto, "
         "es decir, para la compra del inmueble.")
 
-    clausula("DECIMONOVENA",
+    clausula("DECIMOSÉPTIMA",
         "Si durante la vigencia del contrato de arrendamiento se verificare la transmisión de la "
         "propiedad inmueble arrendado, en virtud de que la parte arrendataria renunció a su derecho "
         "de preferencia o del tanto, en los términos establecidos en este contrato. El arrendamiento "
@@ -676,11 +679,11 @@ def generar_arrendamiento(datos, output_path):
         "de propiedad.")
 
     titulo('"OBLIGADO SOLIDARIO"')
-    clausula("VIGÉSIMA",
+    clausula("DECIMOCTAVA",
         f"El obligado solidario se constituye como responsable de todas y cada una de las obligaciones "
         f"contraídas por la parte arrendataria, haciendo todas las renuncias que la parte arrendataria "
         f"tiene hechas, y los beneficios que de orden y exclusión consignadas en el Código Civil del "
-        f"estado de {estado_inm}, no cesando la responsabilidad de este sino hasta cuando la parte "
+        f"estado de {estado_firma_arr}, no cesando la responsabilidad de este sino hasta cuando la parte "
         f"arrendadora se dé por recibido de la localidad de todo cuanto se le deba, por virtud de este "
         f"contrato aun cuando el arrendamiento haya concedido prórrogas o esperas subsistiendo la "
         f"obligación del obligado solidario a pesar de que no se le notifique. Así como se obliga a "
@@ -694,7 +697,7 @@ def generar_arrendamiento(datos, output_path):
         "a la parte arrendataria. Quien en señal de aceptación del cargo firma en compañía de las partes.")
 
     titulo('"CONFIDENCIALIDAD"')
-    clausula("VIGESIMOPRIMERA",
+    clausula("DECIMONOVENA",
         "Las partes se obligan a mantener de forma confidencial toda la información y documentación "
         "relativa al presente instrumento y a la operación que prometen llevar a cabo, a no divulgar "
         "a terceros sin el consentimiento previo y por escrito de cualquiera de ellas. La obligación "
@@ -703,7 +706,7 @@ def generar_arrendamiento(datos, output_path):
         "un acto u omisión de cualquiera de las partes.")
 
     titulo('"COMPETENCIA LEGAL CONTRACTUAL"')
-    clausula("VIGESIMOSEGUNDA",
+    clausula("VIGÉSIMA",
         "Si cualquier parte de este contrato se considera inválida o no exigible por un tribunal "
         "competente, entonces en la medida en que sea razonable y posible, las demás partes de este "
         "contrato se considerarán válidas y exigibles, y se dará efecto a la intención manifestada "
@@ -711,10 +714,10 @@ def generar_arrendamiento(datos, output_path):
         "la otra los términos y condiciones de este contrato no se considerarán como una renuncia al "
         "derecho de dicha parte de reclamar a la otra tal término o estipulación o cualquier otro.")
 
-    clausula("VIGESIMOTERCERA",
+    clausula("VIGESIMOPRIMERA",
         f"Para todas las cuestiones relativas al alcance de la interpretación y cumplimiento de las "
         f"obligaciones y derechos que se consignan en este contrato, las partes contratantes se someten "
-        f"expresamente a las leyes y a los tribunales competentes en la ciudad de {ciudad_firma_arr}, "
+        f"expresamente a las leyes y a los tribunales competentes de {ciudad_firma_arr}, "
         f"así como al Código Civil vigente en el estado de {estado_firma_arr}, "
         f"renunciando al fuero que por sus domicilios actuales o futuros o que por cualquier otra "
         f"razón pudiera corresponderles. Conviniendo que serán a cargo de la parte arrendataria, "
@@ -747,14 +750,14 @@ def generar_arrendamiento(datos, output_path):
         sub(termino)
 
     # ── CLÁUSULAS ESPECIALES NUMERADAS ──
-    ORDINALES = ['VIGESIMOCUARTA','VIGESIMOQUINTA','VIGESIMOSEXTA','VIGESIMOSÉPTIMA',
-                 'VIGESIMOCTAVA','VIGESIMONOVENA','TRIGÉSIMA','TRIGESIMOPRIMERA',
-                 'TRIGESIMOSEGUNDA','TRIGESIMOTERCERA']
+    ORDINALES = ['VIGESIMOSEGUNDA','VIGESIMOTERCERA','VIGESIMOCUARTA','VIGESIMOQUINTA',
+                 'VIGESIMOSEXTA','VIGESIMOSÉPTIMA','VIGESIMOCTAVA','VIGESIMONOVENA',
+                 'TRIGÉSIMA','TRIGESIMOPRIMERA']
     clausulas_esp = datos.get('clausulas_especiales', [])
     import re as _re
     for idx_cl, cl_text in enumerate(clausulas_esp):
         if not cl_text.strip(): continue
-        ordinal = ORDINALES[idx_cl] if idx_cl < len(ORDINALES) else f'CLÁUSULA {idx_cl+24}'
+        ordinal = ORDINALES[idx_cl] if idx_cl < len(ORDINALES) else f'CLÁUSULA {idx_cl+22}'
         lines = [l.strip() for l in cl_text.strip().split('\n') if l.strip()]
         # Extract subject from AI header line if present
         subject = ''
@@ -784,57 +787,67 @@ def generar_arrendamiento(datos, output_path):
     from docx.oxml.ns import qn
     from docx.oxml import OxmlElement
 
-    def firma_box(nombre, titulo_firma):
-        """Add a signature box as a table cell"""
-        table = doc.add_table(rows=1, cols=1)
-        table.style = 'Table Grid'
-        cell = table.cell(0, 0)
-        cell.width = Inches(2.8)
-        # Title
-        tp = cell.paragraphs[0]
-        tp.alignment = C
-        r = tp.add_run(titulo_firma)
-        r.bold = True; r.font.name = 'Arial'; r.font.size = Pt(9)
-        # Signature line
+    def _set_cell_borderless(cell):
+        tc = cell._tc
+        tcPr = tc.get_or_add_tcPr()
+        tcBorders = OxmlElement('w:tcBorders')
+        for side in ('top','left','bottom','right','insideH','insideV'):
+            border = OxmlElement(f'w:{side}')
+            border.set(qn('w:val'), 'nil')
+            tcBorders.append(border)
+        tcPr.append(tcBorders)
+
+    def _signature_cell(cell, titulo_firma, nombre, dash_len=30):
+        # Espaciador superior para que el "_____" no se pegue al título
+        sp = cell.paragraphs[0]
+        sp.alignment = C
+        sp.paragraph_format.space_before = Pt(28)
+        sp.paragraph_format.space_after  = Pt(0)
+        sp.add_run('').font.size = Pt(10)
+        # Línea
+        p1 = cell.add_paragraph()
+        p1.alignment = C
+        p1.paragraph_format.space_before = Pt(0)
+        p1.paragraph_format.space_after  = Pt(2)
+        r1 = p1.add_run('_' * dash_len)
+        r1.font.name = 'Arial'; r1.font.size = Pt(10)
+        # Título del firmante
         p2 = cell.add_paragraph()
         p2.alignment = C
-        p2.paragraph_format.space_before = Pt(30)
-        p2.paragraph_format.space_after  = Pt(2)
-        r2 = p2.add_run('_' * 30)
-        r2.font.name = 'Arial'; r2.font.size = Pt(10)
-        # Name
+        p2.paragraph_format.space_before = Pt(0)
+        p2.paragraph_format.space_after  = Pt(0)
+        r2 = p2.add_run(titulo_firma)
+        r2.bold = True; r2.font.name = 'Arial'; r2.font.size = Pt(9)
+        # Nombre
         p3 = cell.add_paragraph()
         p3.alignment = C
-        r3 = p3.add_run(f'C. {nombre}')
+        p3.paragraph_format.space_before = Pt(0)
+        p3.paragraph_format.space_after  = Pt(8)
+        r3 = p3.add_run(f'C. {nombre}' if nombre else '')
         r3.bold = True; r3.font.name = 'Arial'; r3.font.size = Pt(9)
-        return table
+        _set_cell_borderless(cell)
 
-    # Row 1: Arrendador centered
-    firma_box(nombre_arr, 'LA PARTE ARRENDADORA')
+    # Fila 1 — Arrendador (centrado, fila de una sola celda)
+    tbl1 = doc.add_table(rows=1, cols=1)
+    _signature_cell(tbl1.cell(0,0), 'LA PARTE ARRENDADORA', nombre_arr, dash_len=42)
+
     par('', space_before=8, space_after=4)
 
-    # Row 2: Arrendatario + OS side by side
+    # Fila 2 — Arrendatario y Obligado solidario
     tbl2 = doc.add_table(rows=1, cols=2)
-    tbl2.style = 'Table Grid'
     for col_idx, (nom, tit) in enumerate([
         (nombre_arrt, 'LA PARTE ARRENDATARIA'),
         (nombre_os,   'EL OBLIGADO SOLIDARIO'),
     ]):
-        cell = tbl2.cell(0, col_idx)
-        tp = cell.paragraphs[0]
-        tp.alignment = C
-        r = tp.add_run(tit)
-        r.bold = True; r.font.name = 'Arial'; r.font.size = Pt(9)
-        p2 = cell.add_paragraph()
-        p2.alignment = C
-        p2.paragraph_format.space_before = Pt(30)
-        p2.paragraph_format.space_after  = Pt(2)
-        r2 = p2.add_run('_' * 28)
-        r2.font.name = 'Arial'; r2.font.size = Pt(10)
-        p3 = cell.add_paragraph()
-        p3.alignment = C
-        r3 = p3.add_run(f'C. {nom}')
-        r3.bold = True; r3.font.name = 'Arial'; r3.font.size = Pt(9)
+        _signature_cell(tbl2.cell(0, col_idx), tit, nom, dash_len=28)
+
+    # Fila 3 — Testigos (solo si se proporcionaron)
+    if testigo_1 or testigo_2:
+        par('', space_before=8, space_after=4)
+        par('TESTIGOS', bold=True, align=C, size=10, space_before=4, space_after=4)
+        tbl3 = doc.add_table(rows=1, cols=2)
+        for col_idx, nom in enumerate([testigo_1, testigo_2]):
+            _signature_cell(tbl3.cell(0, col_idx), 'TESTIGO', nom, dash_len=28)
 
     doc.save(output_path)
     print(f"✓ Contrato de arrendamiento generado: {output_path}")
@@ -882,31 +895,68 @@ def generar_promesa(d, output_path):
     fecha         = _fp(d['fecha_contrato'])
     nombre_vend   = d['nombre_vendedor'].upper()
     nombre_comp   = d['nombre_comprador'].upper()
-    dir_inmueble  = d['direccion_inmueble'].upper()
-    col_inmueble  = d['colonia_inmueble'].upper()
-    cp_inmueble   = d['cp_inmueble']
+
+    # Dirección del inmueble: preferir campos separados; fallback a string libre.
+    def _u(k): return str(d.get(k) or '').strip().upper()
+    calle_inm_p   = _u('calle_inmueble')
+    numext_inm_p  = _u('num_ext_inmueble')
+    numint_inm_p  = _u('num_int_inmueble')
+    dir_partes    = [p for p in [calle_inm_p,
+                                 (f"No. {numext_inm_p}" if numext_inm_p else ''),
+                                 (f"Int. {numint_inm_p}" if numint_inm_p else '')]
+                     if p]
+    dir_inmueble  = ', '.join(dir_partes) if dir_partes else str(d.get('direccion_inmueble','')).upper()
+    col_inmueble  = _u('colonia_inmueble')
+    cp_inmueble   = str(d.get('cp_inmueble') or '').strip()
 
     # ── Ciudad / estado del inmueble + variables nacionales ──
-    # Default: ciudad/estado del inmueble. El usuario puede sobrescribir con
-    # ciudad_firma + estado_firma para indicar dónde se firma y a qué tribunales
-    # se someten las partes.
-    mpio_inm_raw   = str(d.get('municipio_estado_inmueble') or 'Ciudad de México, CDMX').strip()
-    mpio_inm_up    = mpio_inm_raw.upper()
-    estado_inm     = (mpio_inm_raw.split(',')[-1].strip() if ',' in mpio_inm_raw else mpio_inm_raw)
-    estado_inm_up  = estado_inm.upper()
-    ciudad_firma   = str(d.get('ciudad_firma') or mpio_inm_raw).strip()
-    estado_firma   = str(d.get('estado_firma') or estado_inm).strip()
-    ciudad_firma_up= ciudad_firma.upper()
-    estado_firma_up= estado_firma.upper()
+    # Sin defaults regionales: Broquer es para todo México.
+    municipio_inm  = _u('municipio_inmueble')
+    estado_inm     = _u('estado_inmueble')
+    if not municipio_inm and not estado_inm:
+        # Fallback a string combinado si el frontend antiguo lo envía así
+        combo = str(d.get('municipio_estado_inmueble') or '').strip()
+        if ',' in combo:
+            municipio_inm, estado_inm = [x.strip().upper() for x in combo.split(',',1)]
+        else:
+            municipio_inm = combo.upper()
+    mpio_inm_up    = (f"{municipio_inm}, {estado_inm}".strip(', ')) or municipio_inm or estado_inm
+    ciudad_firma   = (str(d.get('ciudad_firma') or '').strip() or municipio_inm)
+    estado_firma   = (str(d.get('estado_firma') or '').strip() or estado_inm)
+
     escritura_num = d.get('escritura_numero', '___')
     notario_nombre= d.get('notario_nombre', '___')
     notario_num   = d.get('notario_numero', '___')
-    tomo          = d.get('tomo_registro', '___')
-    registro      = d.get('registro', '___')
-    dom_vend      = d['domicilio_vendedor'].upper()
-    dom_comp      = d['domicilio_comprador'].upper()
+    estado_notaria= str(d.get('estado_notaria') or '').strip() or estado_inm
+    tomo          = d.get('tomo_registro') or '___'
+    registro      = d.get('registro') or '___'
     fecha_limite  = _fp(d['fecha_limite_escritura'])
     forma_pago    = d.get('forma_pago_saldo', 'efectivo').lower()
+
+    # Domicilios — usar campos separados si vienen, si no, el string libre
+    def _build_dir(prefix):
+        c   = _u(f'calle_{prefix}')
+        ne  = _u(f'num_ext_{prefix}')
+        ni  = _u(f'num_int_{prefix}')
+        col = _u(f'colonia_{prefix}')
+        cp  = str(d.get(f'cp_{prefix}') or '').strip()
+        mun = _u(f'municipio_{prefix}')
+        est = _u(f'estado_{prefix}')
+        partes = []
+        if c: partes.append(c)
+        if ne: partes.append(f"No. {ne}")
+        if ni: partes.append(f"Int. {ni}")
+        if col: partes.append(f"COL. {col}")
+        if cp: partes.append(f"C.P. {cp}")
+        if mun or est:
+            partes.append((f"{mun}, {est}".strip(', ')) or mun or est)
+        return ', '.join(partes)
+
+    dom_vend      = (_build_dir('vendedor') or str(d.get('domicilio_vendedor') or '').upper())
+    dom_comp      = (_build_dir('comprador') or str(d.get('domicilio_comprador') or '').upper())
+
+    testigo_1     = str(d.get('testigo_1') or '').strip().upper()
+    testigo_2     = str(d.get('testigo_2') or '').strip().upper()
 
     # ── ENCABEZADO ──
     heading(doc, "CONTRATO PRIVADO DE PROMESA DE COMPRAVENTA DE BIEN INMUEBLE")
@@ -915,8 +965,8 @@ def generar_promesa(d, output_path):
     p(doc,
       f"CONTRATO PRIVADO DE PROMESA DE COMPRAVENTA QUE CELEBRAN POR UNA PARTE "
       f"{nombre_vend}, {prop_vend} DEL INMUEBLE UBICADO EN {dir_inmueble}, "
-      f"COLONIA {col_inmueble}, CÓDIGO POSTAL {cp_inmueble}, CORRESPONDIENTE AL "
-      f"MUNICIPIO DE {mpio_inm_up}, A QUIEN EN LO SUCESIVO SE LE DENOMINARÁ "
+      f"COLONIA {col_inmueble}, CÓDIGO POSTAL {cp_inmueble}, "
+      f"{municipio_inm}, {estado_inm}, A QUIEN EN LO SUCESIVO SE LE DENOMINARÁ "
       f"\"{el_vend} {prom_vend}\", Y POR LA OTRA PARTE {nombre_comp}, A QUIEN EN "
       f"LO SUCESIVO SE LE DENOMINARÁ \"{el_comp} {prom_comp}\", SUJETÁNDOSE LAS "
       f"PARTES A LAS SIGUIENTES DECLARACIONES Y CLÁUSULAS:",
@@ -935,14 +985,14 @@ def generar_promesa(d, output_path):
       f"presente instrumento en copia simple.\n\n"
       f"Así mismo, declara bajo protesta de decir verdad, ser {el_vend.lower()} legítim{'a' if sv=='F' else 'o'} {prop_vend.lower()} del "
       f"INMUEBLE UBICADO EN {dir_inmueble}, COLONIA {col_inmueble}, CÓDIGO POSTAL {cp_inmueble}, "
-      f"CORRESPONDIENTE AL MUNICIPIO DE {mpio_inm_up}, lo que demuestra con la escritura "
+      f"{municipio_inm}, {estado_inm}, lo que demuestra con la escritura "
       f"pública número {escritura_num} pasada ante la fe del {notario_nombre}, notario público "
-      f"número {notario_num} en el estado de {estado_inm}, y debidamente inscrita en el Registro "
+      f"número {notario_num} en el estado de {estado_notaria}, y debidamente inscrita en el Registro "
       f"Público de la Propiedad bajo el tomo {tomo} y registro {registro} del libro de propiedad; "
       f"que este se encuentra libre de todo gravamen y que no existe impedimento legal alguno para "
       f"vender dicho inmueble, obligándose a la responsabilidad de su dicho.\n\n"
       f"Así mismo {el_vend} {prom_vend} señala como domicilio para recibir cualquier tipo de "
-      f"notificación el ubicado en {dom_vend}, CORRESPONDIENTE AL MUNICIPIO DE {mpio_inm_up}.")
+      f"notificación el ubicado en {dom_vend}.")
 
     p(doc,
       f"II.- Declara {el_comp} {prom_comp}, bajo protesta de decir verdad, ser {mex_comp}, "
@@ -955,8 +1005,7 @@ def generar_promesa(d, output_path):
       f"adquirir el inmueble objeto de este contrato, son de procedencia lícita y los entrega libres "
       f"de impuestos, deslindando al prominente vendedor de cualquier responsabilidad de cualquier "
       f"índole por recibir como pago del precio pactado dichos recursos.\n\n"
-      f"Así mismo señala como domicilio para recibir y oír notificaciones el ubicado en "
-      f"{dom_comp}, CORRESPONDIENTE AL MUNICIPIO DE {mpio_inm_up}.")
+      f"Así mismo señala como domicilio para recibir y oír notificaciones el ubicado en {dom_comp}.")
 
     p(doc,
       "III.- Declaran LAS PARTES, bajo protesta de decir verdad, que se reconocen la identidad "
@@ -1086,41 +1135,55 @@ def generar_promesa(d, output_path):
       bold=True)
 
     # ── FIRMAS ──
+    def _set_cell_borderless(cell):
+        tc = cell._tc
+        tcPr = tc.get_or_add_tcPr()
+        tcBorders = OxmlElement('w:tcBorders')
+        for side in ('top','left','bottom','right','insideH','insideV'):
+            border = OxmlElement(f'w:{side}')
+            border.set(qn('w:val'), 'nil')
+            tcBorders.append(border)
+        tcPr.append(tcBorders)
+
+    def sig_cell2(cell, label, nombre):
+        sp = cell.paragraphs[0]
+        sp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        sp.paragraph_format.space_before = Pt(28)
+        sp.paragraph_format.space_after  = Pt(0)
+        sp.add_run('').font.size = Pt(10)
+        p1 = cell.add_paragraph()
+        p1.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p1.paragraph_format.space_after = Pt(2)
+        r1 = p1.add_run('_' * 28)
+        r1.font.name = 'Arial'; r1.font.size = Pt(10)
+        p2 = cell.add_paragraph()
+        p2.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p2.paragraph_format.space_after = Pt(0)
+        r = p2.add_run(label)
+        r.bold = True; r.font.name = 'Arial'; r.font.size = Pt(9)
+        p3 = cell.add_paragraph()
+        p3.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p3.paragraph_format.space_after = Pt(8)
+        r3 = p3.add_run((nombre or '').upper())
+        r3.bold = True; r3.font.name = 'Arial'; r3.font.size = Pt(9)
+        _set_cell_borderless(cell)
+
     doc.add_paragraph()
     table = doc.add_table(rows=1, cols=2)
     for cell in table.rows[0].cells:
         cell.width = Cm(9)
-
     cells = table.rows[0].cells
-
-    def sig_cell2(cell, label, nombre):
-        p1 = cell.paragraphs[0]
-        p1.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p1.add_run('\n\n\n_________________________\n').font.size = Pt(10)
-        p2 = cell.add_paragraph()
-        p2.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        r = p2.add_run(label)
-        r.bold = True
-        r.font.size = Pt(9)
-        p3 = cell.add_paragraph()
-        p3.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        r3 = p3.add_run(nombre.upper())
-        r3.font.size = Pt(9)
-
     sig_cell2(cells[0], f"{el_vend} {prom_vend}", nombre_vend)
     sig_cell2(cells[1], f"{el_comp} {prom_comp}", nombre_comp)
 
-    # Remove table borders
-    for cell in table.rows[0].cells:
-        for side in ['top','left','bottom','right']:
-            tc = cell._tc
-            tcPr = tc.get_or_add_tcPr()
-            tcBorders = OxmlElement('w:tcBorders')
-            border = OxmlElement(f'w:{side}')
-            border.set(qn('w:val'), 'none')
-            tcBorders.append(border)
-            tcPr.append(tcBorders)
-
+    if testigo_1 or testigo_2:
+        doc.add_paragraph()
+        p(doc, "TESTIGOS", bold=True, align=WD_ALIGN_PARAGRAPH.CENTER)
+        tw = doc.add_table(rows=1, cols=2)
+        for cell in tw.rows[0].cells:
+            cell.width = Cm(9)
+        sig_cell2(tw.cell(0,0), 'TESTIGO', testigo_1)
+        sig_cell2(tw.cell(0,1), 'TESTIGO', testigo_2)
 
     doc.save(output_path)
     print(f"✓ Promesa de compraventa generada: {output_path}")
