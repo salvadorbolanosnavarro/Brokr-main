@@ -35,7 +35,7 @@
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Broquer® — Completa tu perfil</title>
+<title>Broquer — Completa tu perfil</title>
 <meta name="theme-color" content="#F7F5EE"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -71,7 +71,7 @@ html,body{min-height:100%;background:var(--paper);font-family:var(--font-sans);c
 <div class="wrap">
   <div class="card">
     <div class="logo-area">
-      <img src="isotipo-black.png" alt="Broquer®"/>
+      <img src="isotipo-black.png" alt="Broquer"/>
       <h2>Completa tu perfil</h2>
       <p>Solo necesitamos un par de datos para personalizar tu experiencia.</p>
     </div>
@@ -96,10 +96,10 @@ html,body{min-height:100%;background:var(--paper);font-family:var(--font-sans);c
 
     <label class="legal-check-row">
       <input type="checkbox" id="legal-check" onchange="toggleSaveBtn()"/>
-      <span>He leído y acepto los <a href="legal.html" target="_blank">Términos y condiciones</a>, el <a href="legal.html" target="_blank">Contrato de suscripción</a> y el <a href="legal.html" target="_blank">Aviso de privacidad</a> de Broquer®.</span>
+      <span>He leído y acepto los <a href="legal.html" target="_blank">Términos y condiciones</a>, el <a href="legal.html" target="_blank">Contrato de suscripción</a> y el <a href="legal.html" target="_blank">Aviso de privacidad</a> de Broquer.</span>
     </label>
 
-    <button class="btn-primary" id="btn-save" onclick="guardar()" disabled>Continuar a Broquer®</button>
+    <button class="btn-primary" id="btn-save" onclick="guardar()" disabled>Continuar a Broquer</button>
   </div>
 </div>
 
@@ -171,7 +171,7 @@ async function guardar(){
       console.error('Supabase error:', r2.status, errText);
       showMsg('No pudimos guardar tu perfil. Intenta de nuevo.');
       btn.disabled = false;
-      btn.textContent = 'Continuar a Broquer®';
+      btn.textContent = 'Continuar a Broquer';
       return;
     }
   }
