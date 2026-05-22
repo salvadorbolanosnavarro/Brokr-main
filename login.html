@@ -425,6 +425,7 @@ body { overflow-y: auto; }
    Auth logic — preserved from original (Supabase).
    ════════════════════════════════════════════════ */
 const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
+const SB_AUTH_URL = 'https://auth.broquer.app';
 const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
 
 // Llamadas a Supabase auth con manejo robusto de errores de red.
@@ -432,7 +433,7 @@ const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
 // { error: 'network', error_description: 'No hay conexión...' }.
 async function sbAuth(path, body){
   try {
-    const r = await fetch(`${SB_URL}/auth/v1/${path}`, {
+    const r = await fetch(`${SB_AUTH_URL}/auth/v1/${path}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY },
       body: JSON.stringify(body)
@@ -690,7 +691,7 @@ async function doGoogle(){
   // También en sessionStorage como respaldo.
   try { sessionStorage.setItem('sb_pkce_verifier', verifier); } catch(_) {}
   const challenge = await sha256Base64Url(verifier);
-  const url = new URL(`${SB_URL}/auth/v1/authorize`);
+  const url = new URL(`${SB_AUTH_URL}/auth/v1/authorize`);
   url.searchParams.set('provider', 'google');
   url.searchParams.set('redirect_to', redirectTo);
   url.searchParams.set('code_challenge', challenge);
@@ -838,7 +839,7 @@ setTimeout(() => {
       return;
     }
     try {
-      const r = await fetch(`${SB_URL}/auth/v1/token?grant_type=pkce`, {
+      const r = await fetch(`${SB_AUTH_URL}/auth/v1/token?grant_type=pkce`, {
         method:'POST',
         headers:{'Content-Type':'application/json','apikey':SB_KEY},
         body: JSON.stringify({ auth_code: oauthCode, code_verifier: verifier })
@@ -876,7 +877,7 @@ setTimeout(() => {
     const cbToken   = hashParams.get('access_token');
     const cbRefresh = hashParams.get('refresh_token');
     try {
-      const r = await fetch(`${SB_URL}/auth/v1/user`, {
+      const r = await fetch(`${SB_AUTH_URL}/auth/v1/user`, {
         headers:{ 'apikey':SB_KEY, 'Authorization':`Bearer ${cbToken}` }
       });
       if(!r.ok){
@@ -916,7 +917,7 @@ setTimeout(() => {
   const refresh = localStorage.getItem('sb_refresh');
   if(!token && refresh){
     try {
-      const r = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
+      const r = await fetch(`${SB_AUTH_URL}/auth/v1/token?grant_type=refresh_token`, {
         method:'POST',
         headers:{'Content-Type':'application/json','apikey':SB_KEY},
         body: JSON.stringify({ refresh_token: refresh })
