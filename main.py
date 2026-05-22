@@ -5063,13 +5063,12 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
                     "page_id": page_id,
                     "link_data": link_data,
                 },
-                # Habilita formato dinámico (Meta optimiza el creative según device)
-                "degrees_of_freedom_spec": {
-                    "creative_features_spec": {
-                        "standard_enhancements": {"enroll_status": "OPT_OUT"}
-                    }
-                },
             }
+            # NOTA: NO incluir `degrees_of_freedom_spec.creative_features_spec.
+            # standard_enhancements`. Meta lo deprecó en 2024 y rechaza el
+            # creativo si está presente. Para configurar mejoras específicas
+            # hay que usar flags individuales por feature, pero el default de
+            # Meta ya es razonable para un anuncio simple.
 
         r_creative = await client.post(
             f"{base_url}/adcreatives",
