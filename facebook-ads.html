@@ -10,93 +10,62 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-height:100vh}
-.fa-wrap{max-width:1100px;margin:0 auto;padding:28px 24px 120px}
+.fa-wrap{max-width:980px;margin:0 auto;padding:28px 24px 120px}
 
 /* ─── Hero ───────────────────────────────────────────────── */
-.fa-hero{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;align-items:stretch;margin-bottom:18px}
-.fa-hero-main,.fa-side-card,.fa-card,.fa-result,.fa-campaign-card{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg)}
-.fa-hero-main{padding:28px 28px 26px;position:relative;overflow:hidden}
-.fa-hero-main:after{content:"";position:absolute;right:-80px;top:-100px;width:240px;height:240px;border-radius:50%;background:rgba(24,119,242,.10)}
-.fa-eyebrow{font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--mute);margin-bottom:10px}
-.fa-hero h1{font-family:var(--font-display);font-size:38px;font-weight:600;letter-spacing:-.04em;line-height:1.04;max-width:610px}
+.fa-hero{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:26px 26px 22px;margin-bottom:16px;position:relative;overflow:hidden}
+.fa-hero:after{content:"";position:absolute;right:-90px;top:-110px;width:240px;height:240px;border-radius:50%;background:rgba(24,119,242,.10)}
+.fa-eyebrow{font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--mute);margin-bottom:9px}
+.fa-hero h1{font-family:var(--font-display);font-size:34px;font-weight:600;letter-spacing:-.035em;line-height:1.05;max-width:620px}
 .fa-hero h1 span{color:#1877f2}
-.fa-hero p{font-size:14px;color:var(--mute);line-height:1.65;max-width:560px;margin-top:12px}
-.fa-side-card{padding:22px}
-.fa-side-title{font-family:var(--font-display);font-size:18px;font-weight:600;letter-spacing:-.02em;margin-bottom:10px}
-.fa-check{display:flex;gap:10px;font-size:13px;color:var(--mute);line-height:1.45;margin:11px 0}
-.fa-check svg{width:17px;height:17px;flex:none;color:#16a34a}
-
-/* ─── Empty / banner state ───────────────────────────────── */
-.fa-banner{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:32px 24px;text-align:center;margin-bottom:18px}
-.fa-banner-icon{width:52px;height:52px;border-radius:16px;background:#1877f2;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
-.fa-banner-icon svg{width:30px;height:30px}
-.fa-banner h2{font-family:var(--font-display);font-size:20px;font-weight:600;letter-spacing:-.02em;margin-bottom:8px}
-.fa-banner p{font-size:13px;color:var(--mute);line-height:1.6;max-width:460px;margin:0 auto 18px}
+.fa-hero p{font-size:14px;color:var(--mute);line-height:1.6;max-width:560px;margin-top:10px}
 
 /* ─── Botones ────────────────────────────────────────────── */
 .fa-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:var(--r);padding:11px 18px;font:600 14px var(--font-sans);cursor:pointer;text-decoration:none;transition:opacity .15s,transform .15s,background .15s}
 .fa-btn:hover{opacity:.92;transform:translateY(-1px)}
+.fa-btn:active{transform:translateY(0)}
 .fa-btn-primary{background:var(--ink);color:var(--paper)}
 .fa-btn-blue{background:#1877f2;color:#fff}
 .fa-btn-ghost{background:var(--paper);color:var(--ink);border:1px solid var(--line-2)}
 .fa-btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
 
-/* ─── Selector pills (Página + Ad Account) ───────────────── */
-.fa-selectors{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
-.fa-selector{position:relative;background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:13px 14px;cursor:pointer;transition:border-color .15s}
-.fa-selector:hover{border-color:var(--ink)}
-.fa-selector .fa-sel-label{display:block;font-size:10px;color:var(--mute);text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:4px}
-.fa-selector .fa-sel-value{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:600;color:var(--ink);min-height:20px}
-.fa-selector .fa-sel-value .fa-sel-pic{width:22px;height:22px;border-radius:50%;background:var(--line) center/cover no-repeat;flex:none}
-.fa-selector .fa-sel-value .fa-sel-txt{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fa-selector .fa-sel-value .fa-sel-caret{flex:none;color:var(--mute)}
-.fa-selector .fa-sel-sub{font-size:11px;color:var(--mute);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fa-sel-drop{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--paper);border:1px solid var(--line-2);border-radius:var(--r);box-shadow:0 10px 24px rgba(10,10,10,.14);z-index:100;max-height:280px;overflow-y:auto;display:none}
-.fa-sel-drop.open{display:block}
-.fa-sel-option{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--line);font-size:13px}
-.fa-sel-option:last-child{border-bottom:0}
-.fa-sel-option:hover{background:var(--bone)}
-.fa-sel-option.is-active{background:rgba(24,119,242,.07)}
-.fa-sel-option .fa-sel-pic{width:24px;height:24px;border-radius:50%;background:var(--line) center/cover no-repeat;flex:none}
-.fa-sel-option strong{display:block;font-size:13px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fa-sel-option small{display:block;font-size:11px;color:var(--mute);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fa-sel-empty{padding:14px;font-size:12px;color:var(--mute);text-align:center}
+/* ─── Banner estados ─────────────────────────────────────── */
+.fa-banner{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:36px 24px;text-align:center}
+.fa-banner-icon{width:54px;height:54px;border-radius:16px;background:#1877f2;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.fa-banner-icon svg{width:30px;height:30px}
+.fa-banner h2{font-family:var(--font-display);font-size:22px;font-weight:600;letter-spacing:-.025em;margin-bottom:8px}
+.fa-banner p{font-size:14px;color:var(--mute);line-height:1.6;max-width:480px;margin:0 auto 18px}
 
-.fa-account-warn{background:rgba(230,126,34,.08);border:1px solid rgba(230,126,34,.35);border-radius:var(--r);padding:11px 13px;font-size:12px;color:#a14b00;line-height:1.5;margin-bottom:16px;display:flex;gap:8px;align-items:flex-start}
-.fa-account-warn svg{width:16px;height:16px;flex:none;margin-top:1px}
+/* ─── Conexión actual (solo lectura) ─────────────────────── */
+.fa-conn{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.fa-conn-card{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:13px 16px;display:flex;align-items:center;gap:12px}
+.fa-conn-pic{width:38px;height:38px;border-radius:50%;background:#e4e6eb center/cover no-repeat;flex:none}
+.fa-conn-info{min-width:0;flex:1}
+.fa-conn-lbl{font-size:10px;color:var(--mute);text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:2px}
+.fa-conn-name{font-size:14px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fa-conn-sub{font-size:11px;color:var(--mute);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fa-reconnect-line{font-size:12px;color:var(--mute);margin:-8px 0 16px;padding:0 2px}
+.fa-reconnect-line a{color:var(--ink);font-weight:600;text-decoration:underline}
 
 /* ─── Tabs principales ───────────────────────────────────── */
 .fa-tabs{display:flex;gap:3px;background:var(--bone);border:1px solid var(--line);border-radius:var(--r);padding:3px;margin-bottom:16px}
-.fa-tab{flex:1;padding:10px 12px;text-align:center;font-size:13px;font-weight:700;color:var(--mute);border-radius:calc(var(--r) - 2px);cursor:pointer;border:none;background:transparent;font-family:var(--font-sans);transition:background .15s,color .15s}
+.fa-tab{flex:1;padding:11px 12px;text-align:center;font-size:13px;font-weight:700;color:var(--mute);border-radius:calc(var(--r) - 2px);cursor:pointer;border:none;background:transparent;font-family:var(--font-sans);transition:background .15s,color .15s}
 .fa-tab.active{background:var(--paper);color:var(--ink);box-shadow:0 1px 3px rgba(10,10,10,.08)}
 
-/* ─── Mode switch (anuncio nuevo / boost) ────────────────── */
-.fa-modeswitch{display:flex;gap:3px;background:var(--paper);border:1px solid var(--line-2);border-radius:var(--r);padding:3px;margin-bottom:16px}
-.fa-modeswitch button{flex:1;padding:11px 12px;text-align:center;font-size:13px;font-weight:700;color:var(--mute);border-radius:calc(var(--r) - 2px);cursor:pointer;border:none;background:transparent;font-family:var(--font-sans)}
-.fa-modeswitch button.active{background:var(--ink);color:var(--paper)}
-
-/* ─── Wizard (stepper + steps) ───────────────────────────── */
-.fa-stepper{display:flex;align-items:center;gap:8px;margin:6px 0 18px;padding:0 4px}
-.fa-step{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
-.fa-step-dot{width:24px;height:24px;border-radius:50%;background:var(--paper);border:1.5px solid var(--line-2);font-size:12px;font-weight:700;color:var(--mute);display:flex;align-items:center;justify-content:center;flex:none}
-.fa-step.done .fa-step-dot,.fa-step.current .fa-step-dot{background:var(--ink);color:var(--paper);border-color:var(--ink)}
-.fa-step-label{font-size:12px;font-weight:600;color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fa-step.current .fa-step-label,.fa-step.done .fa-step-label{color:var(--ink)}
-.fa-step-bar{flex:1;height:2px;background:var(--line-2);border-radius:2px;min-width:14px}
-.fa-step.done + .fa-step .fa-step-bar,.fa-step.done .fa-step-bar{background:var(--ink)}
-
-.fa-layout{display:grid;grid-template-columns:1.45fr .7fr;gap:16px;align-items:start}
-.fa-card{padding:24px;margin-bottom:14px}
-.fa-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px}
+/* ─── Layout principal ───────────────────────────────────── */
+.fa-layout{display:grid;grid-template-columns:1.55fr .85fr;gap:18px;align-items:start}
+.fa-card{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;margin-bottom:14px}
+.fa-card-head{margin-bottom:16px}
 .fa-card-title{font-family:var(--font-display);font-size:19px;font-weight:600;letter-spacing:-.025em}
 .fa-card-sub{font-size:12px;color:var(--mute);line-height:1.55;margin-top:4px}
-.fa-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 
+.fa-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .fa-field{margin-bottom:14px;position:relative}
+.fa-field:last-child{margin-bottom:0}
 .fa-field label{font-size:12px;font-weight:700;color:var(--ink);letter-spacing:-.01em;display:block;margin-bottom:6px}
-.fa-field input,.fa-field select,.fa-field textarea{width:100%;background:var(--paper);border:1px solid var(--line-2);border-radius:var(--r);padding:11px 12px;font:14px var(--font-sans);color:var(--ink);outline:none;-webkit-appearance:none;appearance:none}
+.fa-field input,.fa-field textarea{width:100%;background:var(--paper);border:1px solid var(--line-2);border-radius:var(--r);padding:11px 12px;font:14px var(--font-sans);color:var(--ink);outline:none;-webkit-appearance:none;appearance:none}
 .fa-field textarea{min-height:104px;resize:vertical;line-height:1.5}
-.fa-field input:focus,.fa-field select:focus,.fa-field textarea:focus{border-color:var(--ink)}
+.fa-field input:focus,.fa-field textarea:focus{border-color:var(--ink)}
 .fa-field .fa-hint{font-size:11px;color:var(--mute);line-height:1.45;margin-top:5px}
 .fa-char-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:6px}
 .fa-char-count{font-size:11px;color:var(--mute)}
@@ -109,45 +78,41 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .fa-upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
 .fa-upload-zone strong{display:block;font-size:13px;color:var(--ink);margin-bottom:2px}
 .fa-upload-zone span{font-size:12px;color:var(--mute)}
-.fa-upload-preview{max-height:140px;max-width:100%;border-radius:var(--r);margin-top:10px;display:none}
+.fa-upload-preview{max-height:160px;max-width:100%;border-radius:var(--r);margin-top:10px;display:none}
 
 .fa-switch-row{display:flex;gap:10px;align-items:flex-start;background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:13px;margin-top:6px}
-.fa-switch-row input{width:17px;height:17px;margin-top:1px;flex:none}
+.fa-switch-row input{width:17px;height:17px;margin-top:1px;flex:none;cursor:pointer;accent-color:var(--ink)}
 .fa-switch-row strong{display:block;font-size:13px}
-.fa-switch-row span.fa-sw-desc{display:block;font-size:11px;color:var(--mute);line-height:1.45;margin-top:2px}
+.fa-switch-row .fa-sw-desc{display:block;font-size:11px;color:var(--mute);line-height:1.45;margin-top:2px}
 
-.fa-summary{position:sticky;top:18px}
+/* ─── Aside: resumen + preview ───────────────────────────── */
+.fa-aside{position:sticky;top:18px;display:grid;gap:14px}
 .fa-summary-list{display:grid;gap:10px}
 .fa-summary-item{display:flex;align-items:baseline;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding-bottom:10px}
 .fa-summary-item:last-child{border-bottom:0;padding-bottom:0}
 .fa-summary-item span{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.08em}
 .fa-summary-item strong{font-family:var(--font-display);font-size:18px;font-weight:600;text-align:right}
-.fa-note{font-size:12px;color:var(--mute);line-height:1.6;background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:13px;margin-top:14px}
-.fa-note a{color:var(--ink);text-decoration:underline}
 
-.fa-wizard-nav{display:flex;justify-content:space-between;gap:10px;margin-top:18px}
-.fa-wizard-nav .fa-btn-ghost{min-width:96px}
-
-/* ─── Vista previa estilo Facebook (paso 3) ──────────────── */
-.fa-preview{background:#fff;border:1px solid #dcdfe4;border-radius:8px;overflow:hidden;font-family:Segoe UI,Helvetica,Arial,sans-serif;color:#1c1e21;box-shadow:0 1px 2px rgba(0,0,0,.08);max-width:480px}
+/* ─── Vista previa estilo Facebook ───────────────────────── */
+.fa-preview{background:#fff;border:1px solid #dcdfe4;border-radius:8px;overflow:hidden;font-family:Segoe UI,Helvetica,Arial,sans-serif;color:#1c1e21;box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .fa-preview-head{display:flex;align-items:center;gap:8px;padding:10px 12px}
 .fa-preview-pp{width:36px;height:36px;border-radius:50%;background:#e4e6eb center/cover no-repeat;flex:none}
 .fa-preview-page{font-size:13px;font-weight:700;color:#050505}
 .fa-preview-sponsored{font-size:11px;color:#65676b;line-height:1.3}
-.fa-preview-msg{padding:0 12px 8px;font-size:14px;line-height:1.34;color:#050505;white-space:pre-wrap;word-wrap:break-word}
+.fa-preview-msg{padding:0 12px 8px;font-size:13.5px;line-height:1.34;color:#050505;white-space:pre-wrap;word-wrap:break-word}
 .fa-preview-img{width:100%;aspect-ratio:1.91;background:#e4e6eb center/cover no-repeat;display:block}
 .fa-preview-imgph{width:100%;aspect-ratio:1.91;background:#e4e6eb;display:flex;align-items:center;justify-content:center;color:#65676b;font-size:12px}
 .fa-preview-link{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#f0f2f5;gap:12px}
 .fa-preview-link-info{min-width:0}
-.fa-preview-link-domain{font-size:11px;color:#65676b;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fa-preview-link-title{font-size:15px;font-weight:600;color:#050505;line-height:1.25;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.fa-preview-link-domain{font-size:10.5px;color:#65676b;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fa-preview-link-title{font-size:14.5px;font-weight:600;color:#050505;line-height:1.25;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .fa-preview-cta{background:#e4e6eb;border:0;border-radius:6px;padding:8px 14px;font-size:13px;font-weight:700;color:#050505;flex:none;cursor:default}
 
-/* ─── Mensajes / loading ─────────────────────────────────── */
+/* ─── Resultado / spinner ────────────────────────────────── */
 .fa-spinner{width:14px;height:14px;border:2px solid rgba(247,245,238,.35);border-top-color:var(--paper);border-radius:50%;animation:faspin .7s linear infinite;display:none}
-.fa-spinner.active{display:block}
+.fa-spinner.active{display:inline-block}
 @keyframes faspin{to{transform:rotate(360deg)}}
-.fa-result{padding:16px 18px;margin-top:14px;display:none}
+.fa-result{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;margin-top:14px;display:none}
 .fa-result.visible{display:block}
 .fa-result-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .fa-result-dot{width:10px;height:10px;border-radius:50%;background:var(--mute)}
@@ -155,18 +120,14 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .fa-result-dot.err{background:#ef4444}
 .fa-result-title{font-weight:700;font-size:14px}
 .fa-result-body{font-size:13px;color:var(--mute);line-height:1.55}
-.fa-result-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-.fa-loading-overlay{display:none;text-align:center;padding:38px 0}
+.fa-loading-overlay{display:none;text-align:center;padding:36px 0}
 .fa-loading-overlay.visible{display:block}
 .fa-loading-spinner{width:32px;height:32px;border:2.5px solid var(--line-2);border-top-color:var(--ink);border-radius:50%;animation:faspin .7s linear infinite;margin:0 auto 12px}
 .fa-loading-text,.fa-empty{font-size:13px;color:var(--mute);text-align:center}
 .fa-empty{padding:30px 0}
 
-/* ─── Campañas ───────────────────────────────────────────── */
-.fa-camps-filters{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
-.fa-camps-filter{background:var(--paper);border:1px solid var(--line-2);border-radius:999px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--mute);cursor:pointer;font-family:var(--font-sans)}
-.fa-camps-filter.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
-.fa-campaign-card{padding:17px;margin-bottom:11px}
+/* ─── Tab campañas ───────────────────────────────────────── */
+.fa-campaign-card{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:17px;margin-bottom:11px}
 .fa-campaign-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
 .fa-campaign-name{font-size:14px;font-weight:700;line-height:1.3}
 .fa-campaign-date{font-size:11px;color:var(--mute);margin-top:3px}
@@ -181,570 +142,302 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .fa-stat-lbl{display:block;font-size:10px;color:var(--mute);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
 .fa-campaign-note{font-size:11px;color:var(--mute);margin-top:12px;line-height:1.5}
 
-/* ─── Boost posts grid ───────────────────────────────────── */
-.fa-posts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-top:6px}
-.fa-post{position:relative;background:var(--paper);border:1.5px solid var(--line-2);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:border-color .15s,transform .15s}
-.fa-post:hover{border-color:var(--ink);transform:translateY(-1px)}
-.fa-post.selected{border-color:#1877f2;box-shadow:0 0 0 2px rgba(24,119,242,.18)}
-.fa-post-img{aspect-ratio:1.2;background:var(--bone) center/cover no-repeat;width:100%}
-.fa-post-body{padding:10px}
-.fa-post-msg{font-size:12px;line-height:1.4;color:var(--ink);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;min-height:50px}
-.fa-post-meta{display:flex;gap:10px;font-size:10px;color:var(--mute);margin-top:8px}
-.fa-post-check{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;background:#1877f2;color:#fff;display:none;align-items:center;justify-content:center;font-size:14px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.18)}
-.fa-post.selected .fa-post-check{display:flex}
-
-#fa-city-drop{display:none;position:absolute;top:100%;left:0;right:0;background:var(--paper);border:1px solid var(--line-2);border-radius:var(--r);box-shadow:0 10px 24px rgba(10,10,10,.14);z-index:100;max-height:220px;overflow-y:auto;margin-top:2px}
-.fa-city-option{padding:10px 12px;cursor:pointer;font-size:13px;color:var(--ink);border-bottom:1px solid var(--line)}
-.fa-city-option:hover{background:var(--bone)}
-.fa-city-option small{display:block;font-size:11px;color:var(--mute);margin-top:1px}
-
 /* ─── Responsive ─────────────────────────────────────────── */
 @media(max-width:900px){
   .fa-wrap{padding:18px 14px 110px}
-  .fa-hero,.fa-layout,.fa-selectors{grid-template-columns:1fr}
-  .fa-summary{position:static}
-  .fa-hero h1{font-size:30px}
+  .fa-layout,.fa-conn{grid-template-columns:1fr}
+  .fa-aside{position:static}
+  .fa-hero h1{font-size:28px}
   .fa-stats{grid-template-columns:repeat(2,1fr)}
 }
 @media(max-width:560px){
   .fa-grid-2{grid-template-columns:1fr}
   .fa-campaign-head{flex-direction:column}
   .fa-toggle{width:100%}
-  .fa-posts-grid{grid-template-columns:repeat(2,1fr)}
 }
 </style>
 </head>
 <body data-app="facebook-ads">
 <div class="fa-wrap">
 
-  <!-- ═══ HERO ═══════════════════════════════════════════════ -->
+  <!-- HERO -->
   <section class="fa-hero">
-    <div class="fa-hero-main">
-      <div class="fa-eyebrow">Facebook Ads</div>
-      <h1>Crea anuncios en <span>Facebook</span> sin abrir el Ads Manager.</h1>
-      <p>Lanza una campaña en tres pasos y mide resultados básicos sin salir de Broquer. Tu página y cuenta publicitaria son las que conectaste; para cambiarlas, reconecta Facebook desde tu perfil.</p>
-    </div>
-    <aside class="fa-side-card">
-      <div class="fa-side-title">Qué automatizamos</div>
-      <div class="fa-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg><span>Campaña, conjunto, creativo y anuncio con parámetros seguros.</span></div>
-      <div class="fa-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg><span>Cambio de página y cuenta publicitaria con un clic.</span></div>
-      <div class="fa-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg><span>Activar, pausar y revisar resultados de los últimos 7 días.</span></div>
-    </aside>
+    <div class="fa-eyebrow">Facebook Ads</div>
+    <h1>Lanza un anuncio en <span>Facebook</span> en 30 segundos.</h1>
+    <p>Un solo formulario, sin abrir el Ads Manager. Publicamos a la página y cuenta publicitaria que conectaste en tu perfil.</p>
   </section>
 
-  <!-- ═══ ESTADOS DE CONEXIÓN ════════════════════════════════ -->
+  <!-- ESTADO: no conectado -->
   <div id="fa-not-connected">
     <div class="fa-banner">
       <div class="fa-banner-icon"><svg viewBox="0 0 24 24" fill="white"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.269h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg></div>
       <h2>Conecta Facebook para empezar</h2>
-      <p>Necesitamos una página y permisos de Facebook Ads para crear, activar y medir anuncios. Conecta tu página y la cuenta publicitaria asociada.</p>
-      <button class="fa-btn fa-btn-blue" onclick="goToProfile()">Conectar en Mi Perfil</button>
+      <p>Necesitamos una página y permisos publicitarios para crear, activar y medir anuncios. Cada usuario maneja una sola página y cuenta publicitaria.</p>
+      <button class="fa-btn fa-btn-blue" onclick="goToProfile()">Conectar desde mi perfil</button>
     </div>
   </div>
 
+  <!-- ESTADO: sin permisos Ads -->
   <div id="fa-no-ads-token" style="display:none">
     <div class="fa-banner">
       <div class="fa-banner-icon"><svg viewBox="0 0 24 24" fill="white"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.269h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg></div>
       <h2>Reconecta tu cuenta</h2>
-      <p>Tu conexión actual no incluye permisos publicitarios. Vuelve a conectar Facebook para habilitar Facebook Ads.</p>
+      <p>Tu conexión actual no incluye permisos publicitarios. Vuelve a conectar Facebook desde tu perfil aceptando todos los permisos.</p>
       <button class="fa-btn fa-btn-blue" onclick="goToProfile()">Reconectar Facebook</button>
     </div>
   </div>
 
-  <!-- ═══ CONECTADO ══════════════════════════════════════════ -->
+  <!-- ESTADO: conectado pero sin cuenta publicitaria seleccionada -->
+  <div id="fa-no-account-saved" style="display:none">
+    <div class="fa-banner">
+      <h2>Falta seleccionar cuenta publicitaria</h2>
+      <p>Para asegurar consistencia, debes definir desde tu perfil cuál es la cuenta publicitaria que se va a usar. Esto evita que el anuncio termine en una cuenta equivocada.</p>
+      <button class="fa-btn fa-btn-blue" onclick="goToProfile()">Ir a mi perfil</button>
+    </div>
+  </div>
+
+  <!-- ESTADO CONECTADO -->
   <div id="fa-connected" style="display:none">
 
-    <!-- Página y cuenta publicitaria (fijas: las conectadas) -->
-    <div class="fa-selectors">
-      <div class="fa-selector" id="fa-page-sel">
-        <span class="fa-sel-label">Página</span>
-        <div class="fa-sel-value">
-          <span class="fa-sel-pic" id="fa-page-pic"></span>
-          <span class="fa-sel-txt" id="fa-page-name">Cargando…</span>
+    <!-- Conexión activa (solo lectura) -->
+    <div class="fa-conn">
+      <div class="fa-conn-card">
+        <span class="fa-conn-pic" id="fa-page-pic"></span>
+        <div class="fa-conn-info">
+          <div class="fa-conn-lbl">Página</div>
+          <div class="fa-conn-name" id="fa-page-name">—</div>
+          <div class="fa-conn-sub" id="fa-page-sub">&nbsp;</div>
         </div>
-        <div class="fa-sel-sub" id="fa-page-sub">&nbsp;</div>
       </div>
-      <div class="fa-selector" id="fa-acct-sel">
-        <span class="fa-sel-label">Cuenta publicitaria</span>
-        <div class="fa-sel-value">
-          <span class="fa-sel-txt" id="fa-acct-name">Cargando…</span>
+      <div class="fa-conn-card">
+        <div class="fa-conn-info" style="margin-left:2px">
+          <div class="fa-conn-lbl">Cuenta publicitaria</div>
+          <div class="fa-conn-name" id="fa-acct-name">—</div>
+          <div class="fa-conn-sub" id="fa-acct-sub">&nbsp;</div>
         </div>
-        <div class="fa-sel-sub" id="fa-acct-sub">&nbsp;</div>
-      </div>
-    </div>
-    <div style="font-size:12px;color:var(--mute);margin:-6px 0 14px;padding:0 4px">
-      Para cambiar de página o cuenta publicitaria, <a href="#" onclick="goToProfile();return false" style="color:var(--ink);font-weight:600;text-decoration:underline">reconecta Facebook desde tu perfil</a>.
-    </div>
-
-    <div id="fa-account-warn" class="fa-account-warn" style="display:none">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
-      <span id="fa-account-warn-text"></span>
-    </div>
-
-    <div id="fa-no-accounts" style="display:none">
-      <div class="fa-banner">
-        <h2>Sin cuenta publicitaria activa</h2>
-        <p>No encontramos una cuenta publicitaria disponible para este perfil de Facebook. Crea o activa una en Facebook Business Manager y regresa.</p>
-        <a class="fa-btn fa-btn-blue" href="https://business.facebook.com/settings/ad-accounts" target="_blank" rel="noopener">Abrir Business Manager</a>
       </div>
     </div>
+    <div class="fa-reconnect-line">
+      Para cambiar página o cuenta, <a href="#" onclick="goToProfile();return false">reconecta Facebook desde tu perfil</a>.
+    </div>
 
-    <div id="fa-main-content" style="display:none">
+    <!-- Tabs -->
+    <div class="fa-tabs">
+      <button class="fa-tab active" id="fa-tabbtn-crear" onclick="switchTab('crear')">Crear anuncio</button>
+      <button class="fa-tab" id="fa-tabbtn-camps" onclick="switchTab('camps')">Tus campañas</button>
+    </div>
 
-      <!-- Tabs principales -->
-      <div class="fa-tabs">
-        <button class="fa-tab active" id="fa-tabbtn-crear" onclick="switchTab('crear')">Crear anuncio</button>
-        <button class="fa-tab" id="fa-tabbtn-camps" onclick="switchTab('camps')">Tus campañas</button>
-      </div>
-
-      <!-- ════ TAB CREAR ════════════════════════════════════ -->
-      <div id="fa-tab-crear">
-
-        <div class="fa-modeswitch">
-          <button id="fa-mode-new" class="active" onclick="setMode('new')">Anuncio nuevo</button>
-          <button id="fa-mode-boost" onclick="setMode('boost')">Promocionar publicación</button>
-        </div>
-
-        <!-- Stepper -->
-        <div class="fa-stepper">
-          <div class="fa-step current" data-step="1"><span class="fa-step-dot">1</span><span class="fa-step-label">Brief</span></div>
-          <span class="fa-step-bar"></span>
-          <div class="fa-step" data-step="2"><span class="fa-step-dot">2</span><span class="fa-step-label">Creativo</span></div>
-          <span class="fa-step-bar"></span>
-          <div class="fa-step" data-step="3"><span class="fa-step-dot">3</span><span class="fa-step-label">Publicar</span></div>
-        </div>
-
-        <div class="fa-layout">
-          <main>
-            <!-- ── PASO 1: Brief ── -->
-            <section class="fa-step-panel" data-step-panel="1">
-              <div class="fa-card">
-                <div class="fa-card-head"><div><div class="fa-card-title">Brief de la campaña</div><div class="fa-card-sub">Lo mínimo para que Facebook entregue tu anuncio.</div></div></div>
-
-                <div class="fa-field">
-                  <label for="fa-campaign-name">Nombre interno</label>
-                  <input id="fa-campaign-name" type="text" autocomplete="off" placeholder="Ej. Casa Chapultepec — Mayo" oninput="syncSummary()"/>
-                  <div class="fa-hint">Solo lo ves tú. Te ayuda a identificarla en "Tus campañas".</div>
-                </div>
-
-                <div class="fa-grid-2">
-                  <div class="fa-field">
-                    <label for="fa-objective">Objetivo</label>
-                    <select id="fa-objective" onchange="syncSummary()">
-                      <option value="OUTCOME_TRAFFIC" selected>Llevar visitas a una página</option>
-                      <option value="OUTCOME_AWARENESS">Dar a conocer la propiedad</option>
-                      <option value="OUTCOME_ENGAGEMENT">Generar interacciones</option>
-                    </select>
-                  </div>
-                  <div class="fa-field">
-                    <label for="fa-duration">Duración (días)</label>
-                    <input id="fa-duration" type="number" min="1" max="365" step="1" value="7" oninput="syncSummary()"/>
-                  </div>
-                </div>
-
-                <div class="fa-field">
-                  <label for="fa-budget">Presupuesto diario (MXN)</label>
-                  <input id="fa-budget" type="number" min="50" step="1" value="150" oninput="syncSummary()"/>
-                  <div class="fa-hint">Mínimo recomendado por Facebook: $50 MXN al día.</div>
-                </div>
-
-                <div class="fa-field" style="margin-bottom:0">
-                  <label for="fa-city-input">Ciudad o región (opcional)</label>
-                  <input type="text" id="fa-city-input" autocomplete="off" placeholder="Escribe una ciudad, ej. Morelia…" oninput="onCityInput(this.value)" onfocus="onCityInput(this.value)"/>
-                  <input type="hidden" id="fa-city-key" value=""/>
-                  <div id="fa-city-drop"></div>
-                  <div class="fa-hint">Déjala vacía para anunciar en todo México. Edad por defecto: 25–65+.</div>
-                </div>
-              </div>
-              <div class="fa-wizard-nav">
-                <span></span>
-                <button class="fa-btn fa-btn-primary" onclick="goStep(2)">Continuar →</button>
-              </div>
-            </section>
-
-            <!-- ── PASO 2: Creativo ── -->
-            <section class="fa-step-panel" data-step-panel="2" style="display:none">
-
-              <!-- Modo BOOST: galería de publicaciones -->
-              <div id="fa-boost-section" style="display:none">
-                <div class="fa-card">
-                  <div class="fa-card-head">
-                    <div>
-                      <div class="fa-card-title">Elige una publicación de tu página</div>
-                      <div class="fa-card-sub">Se promociona tal cual. Likes y comentarios orgánicos se acumulan con los del anuncio.</div>
-                    </div>
-                    <button class="fa-btn fa-btn-ghost" type="button" onclick="loadPagePosts()">Actualizar</button>
-                  </div>
-                  <div class="fa-loading-overlay" id="fa-loading-posts"><div class="fa-loading-spinner"></div><div class="fa-loading-text">Cargando publicaciones…</div></div>
-                  <div id="fa-posts-empty" class="fa-empty" style="display:none">No encontramos publicaciones recientes en tu página.</div>
-                  <div id="fa-posts-grid" class="fa-posts-grid"></div>
-                </div>
-              </div>
-
-              <!-- Modo NEW: creativo desde cero -->
-              <div id="fa-new-section">
-                <div class="fa-card">
-                  <div class="fa-card-head"><div><div class="fa-card-title">Anuncio</div><div class="fa-card-sub">Lo que verá el usuario en el feed de Facebook e Instagram.</div></div></div>
-
-                  <div class="fa-field">
-                    <label for="fa-ad-text">Texto principal</label>
-                    <textarea id="fa-ad-text" maxlength="180" oninput="updateCharCount();syncPreview();updateAiBtn()" placeholder="Ej. Casa iluminada en Chapultepec, cerca de servicios y con jardín. Agenda tu visita hoy."></textarea>
-                    <div class="fa-char-row">
-                      <button class="fa-btn fa-btn-ghost" id="fa-ai-btn" type="button" onclick="generateDescription()" disabled>Mejorar con IA</button>
-                      <span id="fa-char-count" class="fa-char-count">0 / 180</span>
-                    </div>
-                    <div id="fa-ai-hint" class="fa-hint" style="display:none">Escribe primero tu texto y luego pulsa "Mejorar con IA".</div>
-                  </div>
-
-                  <div class="fa-field">
-                    <label for="fa-ad-headline">Título</label>
-                    <input id="fa-ad-headline" type="text" maxlength="80" autocomplete="off" placeholder="Casa en venta en Chapultepec" oninput="syncPreview()"/>
-                  </div>
-
-                  <div class="fa-field">
-                    <label for="fa-ad-url">URL destino</label>
-                    <input id="fa-ad-url" type="url" autocomplete="off" placeholder="https://tu-sitio.com/propiedad" oninput="syncPreview()"/>
-                    <div class="fa-hint">A dónde lleva el clic: ficha, landing o WhatsApp con link directo.</div>
-                  </div>
-
-                  <div class="fa-field" style="margin-bottom:0">
-                    <label>Imagen</label>
-                    <div class="fa-upload-zone" id="fa-upload-zone">
-                      <input type="file" id="fa-image-input" accept="image/jpeg,image/png,image/webp" onchange="onImageSelected(this)"/>
-                      <strong>Subir imagen del anuncio</strong>
-                      <span>JPG, PNG o WEBP — recomendado 1200 × 628 px, máx 8 MB</span>
-                      <img class="fa-upload-preview" id="fa-upload-preview" alt="Vista previa de imagen del anuncio"/>
-                    </div>
-                    <div class="fa-hint">Obligatoria. Sin imagen, Facebook solo muestra texto y rinde mucho menos.</div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="fa-wizard-nav">
-                <button class="fa-btn fa-btn-ghost" onclick="goStep(1)">← Atrás</button>
-                <button class="fa-btn fa-btn-primary" onclick="goStep(3)">Continuar →</button>
-              </div>
-            </section>
-
-            <!-- ── PASO 3: Resumen y publicar ── -->
-            <section class="fa-step-panel" data-step-panel="3" style="display:none">
-              <div class="fa-card">
-                <div class="fa-card-head"><div><div class="fa-card-title">Vista previa</div><div class="fa-card-sub">Así se verá tu anuncio en Facebook. En Instagram puede ajustarse.</div></div></div>
-                <div class="fa-preview" id="fa-preview">
-                  <div class="fa-preview-head">
-                    <div class="fa-preview-pp" id="fa-preview-pp"></div>
-                    <div>
-                      <div class="fa-preview-page" id="fa-preview-page">Tu página</div>
-                      <div class="fa-preview-sponsored">Publicidad · 🌐</div>
-                    </div>
-                  </div>
-                  <div class="fa-preview-msg" id="fa-preview-msg">Texto del anuncio…</div>
-                  <div id="fa-preview-image-wrap">
-                    <div class="fa-preview-imgph" id="fa-preview-imgph">Sin imagen</div>
-                    <img class="fa-preview-img" id="fa-preview-img" alt="" style="display:none"/>
-                  </div>
-                  <div class="fa-preview-link" id="fa-preview-link-block">
-                    <div class="fa-preview-link-info">
-                      <div class="fa-preview-link-domain" id="fa-preview-domain">tu-sitio.com</div>
-                      <div class="fa-preview-link-title" id="fa-preview-title">Título del anuncio</div>
-                    </div>
-                    <button class="fa-preview-cta" type="button" tabindex="-1">Más información</button>
-                  </div>
-                </div>
-              </div>
-
-              <div class="fa-wizard-nav">
-                <button class="fa-btn fa-btn-ghost" onclick="goStep(2)">← Atrás</button>
-                <button class="fa-btn fa-btn-primary" id="fa-submit-btn" onclick="createAd()">
-                  <span class="fa-spinner" id="fa-btn-spinner"></span>
-                  <span id="fa-btn-text">Publicar en Facebook</span>
-                </button>
-              </div>
-
-              <div class="fa-result" id="fa-result">
-                <div class="fa-result-head"><div class="fa-result-dot" id="fa-result-dot"></div><div class="fa-result-title" id="fa-result-title"></div></div>
-                <div class="fa-result-body" id="fa-result-body"></div>
-                <div class="fa-result-actions"></div>
-              </div>
-            </section>
-          </main>
-
-          <aside class="fa-card fa-summary">
-            <div class="fa-card-title">Resumen</div>
-            <div class="fa-card-sub" id="fa-summary-sub">Se crea campaña + conjunto + creativo + anuncio.</div>
-            <div class="fa-summary-list" style="margin-top:16px">
-              <div class="fa-summary-item"><span>Inversión total</span><strong id="fa-total-estimate">$1,050</strong></div>
-              <div class="fa-summary-item"><span>Diario</span><strong id="fa-daily-estimate">$150</strong></div>
-              <div class="fa-summary-item"><span>Duración</span><strong id="fa-summary-duration">7 días</strong></div>
-              <div class="fa-summary-item"><span>Estado inicial</span><strong id="fa-summary-status">Activo</strong></div>
+    <!-- TAB CREAR -->
+    <div id="fa-tab-crear">
+      <div class="fa-layout">
+        <main>
+          <div class="fa-card">
+            <div class="fa-card-head">
+              <div class="fa-card-title">Tu anuncio</div>
+              <div class="fa-card-sub">Lo mínimo necesario para que Facebook lo entregue.</div>
             </div>
+
+            <div class="fa-field">
+              <label for="fa-campaign-name">Nombre interno</label>
+              <input id="fa-campaign-name" type="text" autocomplete="off" placeholder="Ej. Casa Chapultepec — junio" oninput="syncSummary()"/>
+              <div class="fa-hint">Solo lo ves tú. Te ayuda a identificarla en "Tus campañas".</div>
+            </div>
+
+            <div class="fa-field">
+              <label for="fa-ad-text">Texto principal</label>
+              <textarea id="fa-ad-text" maxlength="180" oninput="updateCharCount();syncPreview();updateAiBtn()" placeholder="Ej. Casa iluminada en Chapultepec, cerca de servicios y con jardín. Agenda tu visita hoy."></textarea>
+              <div class="fa-char-row">
+                <button class="fa-btn fa-btn-ghost" id="fa-ai-btn" type="button" onclick="improveText()" disabled>Mejorar con IA</button>
+                <span id="fa-char-count" class="fa-char-count">0 / 180</span>
+              </div>
+            </div>
+
+            <div class="fa-grid-2">
+              <div class="fa-field">
+                <label for="fa-ad-headline">Título</label>
+                <input id="fa-ad-headline" type="text" maxlength="60" autocomplete="off" placeholder="Casa en venta en Chapultepec" oninput="syncPreview()"/>
+              </div>
+              <div class="fa-field">
+                <label for="fa-ad-url">URL destino</label>
+                <input id="fa-ad-url" type="url" autocomplete="off" placeholder="https://tu-sitio.com/propiedad" oninput="syncPreview()"/>
+              </div>
+            </div>
+
+            <div class="fa-field">
+              <label>Imagen</label>
+              <div class="fa-upload-zone" id="fa-upload-zone">
+                <input type="file" id="fa-image-input" accept="image/jpeg,image/png,image/webp" onchange="onImageSelected(this)"/>
+                <strong>Subir imagen del anuncio</strong>
+                <span>JPG, PNG o WEBP — recomendado 1200 × 628 px, máx 8 MB</span>
+                <img class="fa-upload-preview" id="fa-upload-preview" alt="Vista previa"/>
+              </div>
+              <div class="fa-hint">Obligatoria. Sin imagen, el anuncio rinde mucho menos.</div>
+            </div>
+          </div>
+
+          <div class="fa-card">
+            <div class="fa-card-head">
+              <div class="fa-card-title">Presupuesto y duración</div>
+              <div class="fa-card-sub">Solo gastará lo que indiques. Puedes pausar cuando quieras.</div>
+            </div>
+            <div class="fa-grid-2">
+              <div class="fa-field">
+                <label for="fa-budget">Presupuesto diario (MXN)</label>
+                <input id="fa-budget" type="number" min="50" step="1" value="150" oninput="syncSummary()"/>
+                <div class="fa-hint">Mínimo recomendado por Facebook: $50/día.</div>
+              </div>
+              <div class="fa-field">
+                <label for="fa-duration">Duración (días)</label>
+                <input id="fa-duration" type="number" min="1" max="365" step="1" value="7" oninput="syncSummary()"/>
+                <div class="fa-hint">Facebook detendrá la entrega al cumplirse el plazo.</div>
+              </div>
+            </div>
+
             <label class="fa-switch-row">
               <input type="checkbox" id="fa-publish-now" checked onchange="syncSummary()"/>
               <span>
                 <strong>Publicar activo al terminar</strong>
-                <span class="fa-sw-desc">Facebook puede dejarlo "en revisión" antes de entregar. Si lo desmarcas quedará pausado.</span>
+                <span class="fa-sw-desc">Si desactivas, la campaña queda en pausa y la activas tú mismo desde "Tus campañas".</span>
               </span>
             </label>
-            <div class="fa-note">Para parámetros avanzados (públicos personalizados, conversiones, Pixel) abre el <a href="https://www.facebook.com/adsmanager" target="_blank" rel="noopener">Ads Manager</a>.</div>
-          </aside>
-        </div>
-      </div>
-
-      <!-- ════ TAB CAMPAÑAS ═════════════════════════════════ -->
-      <div id="fa-tab-camps" style="display:none">
-        <div class="fa-card">
-          <div class="fa-card-head">
-            <div><div class="fa-card-title">Tus campañas</div><div class="fa-card-sub">Resultados de los últimos 7 días. Activa o pausa con un clic.</div></div>
-            <button class="fa-btn fa-btn-ghost" onclick="loadCampaigns()">Actualizar</button>
           </div>
 
-          <div class="fa-camps-filters">
-            <button class="fa-camps-filter active" data-filter="all" onclick="setCampFilter('all',this)">Todas</button>
-            <button class="fa-camps-filter" data-filter="ACTIVE" onclick="setCampFilter('ACTIVE',this)">Activas</button>
-            <button class="fa-camps-filter" data-filter="PAUSED" onclick="setCampFilter('PAUSED',this)">Pausadas</button>
+          <button class="fa-btn fa-btn-primary" id="fa-submit-btn" onclick="createAd()" style="width:100%;padding:14px;font-size:15px">
+            <span class="fa-spinner" id="fa-btn-spinner"></span>
+            <span id="fa-btn-text">Publicar en Facebook</span>
+          </button>
+
+          <div class="fa-result" id="fa-result">
+            <div class="fa-result-head"><div class="fa-result-dot" id="fa-result-dot"></div><div class="fa-result-title" id="fa-result-title"></div></div>
+            <div class="fa-result-body" id="fa-result-body"></div>
+          </div>
+        </main>
+
+        <aside class="fa-aside">
+          <div class="fa-card" style="margin:0">
+            <div class="fa-card-title">Resumen</div>
+            <div class="fa-card-sub" style="margin-bottom:14px">Inversión y plazo del anuncio.</div>
+            <div class="fa-summary-list">
+              <div class="fa-summary-item"><span>Diario</span><strong id="fa-daily-estimate">$150</strong></div>
+              <div class="fa-summary-item"><span>Duración</span><strong id="fa-summary-duration">7 días</strong></div>
+              <div class="fa-summary-item"><span>Inversión total</span><strong id="fa-total-estimate">$1,050</strong></div>
+              <div class="fa-summary-item"><span>Estado inicial</span><strong id="fa-summary-status">Activo</strong></div>
+            </div>
           </div>
 
-          <div class="fa-loading-overlay" id="fa-loading-camps"><div class="fa-loading-spinner"></div><div class="fa-loading-text">Cargando campañas…</div></div>
-          <div id="fa-camps-list"></div>
-          <div class="fa-note">Para ediciones más finas, abre el <a href="https://www.facebook.com/adsmanager" target="_blank" rel="noopener">Ads Manager</a>.</div>
-        </div>
+          <div class="fa-card" style="margin:0">
+            <div class="fa-card-title" style="margin-bottom:12px">Vista previa</div>
+            <div class="fa-preview" id="fa-preview">
+              <div class="fa-preview-head">
+                <div class="fa-preview-pp" id="fa-preview-pp"></div>
+                <div>
+                  <div class="fa-preview-page" id="fa-preview-page">Tu página</div>
+                  <div class="fa-preview-sponsored">Publicidad · 🌐</div>
+                </div>
+              </div>
+              <div class="fa-preview-msg" id="fa-preview-msg">Texto del anuncio…</div>
+              <div id="fa-preview-image-wrap">
+                <div class="fa-preview-imgph" id="fa-preview-imgph">Sin imagen</div>
+                <img class="fa-preview-img" id="fa-preview-img" alt="" style="display:none"/>
+              </div>
+              <div class="fa-preview-link">
+                <div class="fa-preview-link-info">
+                  <div class="fa-preview-link-domain" id="fa-preview-domain">tu-sitio.com</div>
+                  <div class="fa-preview-link-title" id="fa-preview-title">Título del anuncio</div>
+                </div>
+                <button class="fa-preview-cta" type="button" tabindex="-1">Más información</button>
+              </div>
+            </div>
+          </div>
+        </aside>
       </div>
+    </div>
 
-    </div><!-- /fa-main-content -->
+    <!-- TAB CAMPAÑAS -->
+    <div id="fa-tab-camps" style="display:none">
+      <div class="fa-card">
+        <div class="fa-card-head" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+          <div>
+            <div class="fa-card-title">Tus campañas</div>
+            <div class="fa-card-sub">Resultados de los últimos 7 días. Activa o pausa con un clic.</div>
+          </div>
+          <button class="fa-btn fa-btn-ghost" onclick="loadCampaigns()">Actualizar</button>
+        </div>
+        <div class="fa-loading-overlay" id="fa-loading-camps"><div class="fa-loading-spinner"></div><div class="fa-loading-text">Cargando campañas…</div></div>
+        <div id="fa-camps-list"></div>
+        <div class="fa-campaign-note">Para ediciones avanzadas (públicos, conversiones, Pixel) abre el <a href="https://www.facebook.com/adsmanager" target="_blank" rel="noopener">Ads Manager</a>.</div>
+      </div>
+    </div>
+
   </div><!-- /fa-connected -->
 </div>
 
 <script>
 const API_BASE = 'https://api.broquer.app';
 
-// ── Estado global ──────────────────────────────────────────
-let _userToken = '';
-let _pages = [];
-let _activePage = null;          // {id, name, picture}
-let _accounts = [];
-let _activeAccount = null;       // {id, name, currency, promote_pages}
-let _mode = 'new';               // 'new' | 'boost'
-let _currentStep = 1;
-let _selectedPostId = '';
-let _postsCache = [];
+// ── Estado (solo informativo — todo se controla en el server) ──
+let _connection = null;     // {page_id, page_name, page_pic, ad_account_id, ad_account_name}
 let _imageB64 = '';
 let _imageDataUrl = '';
 let _imageMime = 'image/jpeg';
-let _lastAdsManagerUrl = 'https://www.facebook.com/adsmanager';
-let _citySearchTimer = null;
 let _campaignsPollTimer = null;
-let _campFilter = 'all';
-let _campsCache = [];
 
-const LS = {
-  page: 'fa_active_page_id',
-  acct: 'fa_active_account_id',
-};
-
-// ── Utilidades ─────────────────────────────────────────────
+// ── Utilidades ──────────────────────────────────────────────
 function getToken(){return localStorage.getItem('sb_token')||sessionStorage.getItem('sb_token')||null;}
 function goToProfile(){
   if(typeof window.openProfileDrawer === 'function'){ window.openProfileDrawer(); return; }
   const btn = document.getElementById('bk-sb-avatar') || document.getElementById('bk-mob-avatar');
   if(btn){ btn.click(); return; }
-  alert('No se pudo abrir tu perfil. Recarga la página.');
+  alert('Abre tu perfil desde el menú lateral para conectar Facebook.');
 }
 function show(id){const el=document.getElementById(id); if(el) el.style.display='';}
 function hide(id){const el=document.getElementById(id); if(el) el.style.display='none';}
 function money(n){return '$'+Math.round(Number(n)||0).toLocaleString('es-MX');}
 function escapeHtml(s){return String(s||'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
 function domainOf(url){
-  try { return new URL(url).hostname.replace(/^www\./,''); } catch(e){ return url ? url.replace(/^https?:\/\//,'').split('/')[0] : 'tu-sitio.com'; }
+  try { return new URL(url).hostname.replace(/^www\./,''); }
+  catch(e){ return url ? url.replace(/^https?:\/\//,'').split('/')[0] : 'tu-sitio.com'; }
 }
 
-// ── Conexión inicial ───────────────────────────────────────
+// ── Inicio: leer conexión del server (única fuente de verdad) ──
 async function checkConnection(){
   const tok = getToken();
-  if(!tok){ return; }
+  if(!tok){ show('fa-not-connected'); return; }
   try{
     const r = await fetch(API_BASE+'/facebook/connection', { headers:{ Authorization:'Bearer '+tok } });
     const d = await r.json();
     if(!d.connected){
-      show('fa-not-connected'); hide('fa-no-ads-token'); hide('fa-connected'); return;
+      show('fa-not-connected'); hide('fa-no-ads-token'); hide('fa-no-account-saved'); hide('fa-connected'); return;
     }
     if(!d.user_token){
-      hide('fa-not-connected'); show('fa-no-ads-token'); hide('fa-connected'); return;
+      hide('fa-not-connected'); show('fa-no-ads-token'); hide('fa-no-account-saved'); hide('fa-connected'); return;
     }
-    _userToken = d.user_token;
-    hide('fa-not-connected'); hide('fa-no-ads-token'); show('fa-connected');
-
-    // Página inicial: la guardada en el server o la última recordada
-    const initialPageId = localStorage.getItem(LS.page) || d.page_id || '';
-    await loadPages(initialPageId, d.page_name);
-
-    // Cuenta publicitaria
-    const initialAcctId = localStorage.getItem(LS.acct) || d.ad_account_id || '';
-    await loadAccounts(initialAcctId);
+    if(!d.ad_account_id){
+      hide('fa-not-connected'); hide('fa-no-ads-token'); show('fa-no-account-saved'); hide('fa-connected');
+      // Aún así mostramos página conectada arriba
+      _connection = d;
+      return;
+    }
+    _connection = d;
+    hide('fa-not-connected'); hide('fa-no-ads-token'); hide('fa-no-account-saved'); show('fa-connected');
+    paintConnection();
+    syncPreview();
   }catch(e){
-    console.error(e);
     show('fa-not-connected');
   }
 }
 
-// ── Páginas ────────────────────────────────────────────────
-async function loadPages(preferId, fallbackName){
-  const tok = getToken();
-  try{
-    const r = await fetch(API_BASE+'/facebook/pages', { headers:{ Authorization:'Bearer '+tok } });
-    const d = await r.json();
-    _pages = d.pages || [];
-    if(!_pages.length){
-      document.getElementById('fa-page-name').textContent = fallbackName || 'Sin página';
-      document.getElementById('fa-page-sub').textContent = 'No administras ninguna página.';
-      return;
-    }
-    let target = _pages.find(p => p.id === preferId)
-              || _pages.find(p => p.id === d.active_page_id)
-              || _pages[0];
-    await selectPage(target, /*silent=*/true);
-  }catch(e){
-    document.getElementById('fa-page-name').textContent = fallbackName || 'Página conectada';
-  }
+function paintConnection(){
+  if(!_connection) return;
+  document.getElementById('fa-page-name').textContent = _connection.page_name || 'Página conectada';
+  document.getElementById('fa-page-sub').textContent  = _connection.page_id ? ('ID ' + _connection.page_id) : '';
+  const pp = document.getElementById('fa-page-pic');
+  pp.style.backgroundImage = _connection.page_pic ? `url('${_connection.page_pic}')` : '';
+  document.getElementById('fa-acct-name').textContent = _connection.ad_account_name || _connection.ad_account_id || 'Cuenta conectada';
+  document.getElementById('fa-acct-sub').textContent  = _connection.ad_account_id || '';
 }
 
-async function selectPage(page, silent){
-  if(!page) return;
-  _activePage = page;
-  document.getElementById('fa-page-name').textContent = page.name;
-  document.getElementById('fa-page-sub').textContent = 'ID ' + page.id;
-  const pic = document.getElementById('fa-page-pic');
-  pic.style.backgroundImage = page.picture ? `url('${page.picture}')` : '';
-  localStorage.setItem(LS.page, page.id);
-  closeDrops();
-  // Persistir en server (sin bloquear UI)
-  try{
-    const tok = getToken();
-    await fetch(API_BASE+'/facebook/select-page', {
-      method:'POST',
-      headers:{'Content-Type':'application/json', Authorization:'Bearer '+tok},
-      body: JSON.stringify({page_id: page.id}),
-    });
-  }catch(e){}
-  // Refrescar cosas que dependen de la página
-  syncPreview();
-  if(_mode === 'boost') loadPagePosts();
-  if(!silent && document.getElementById('fa-tab-camps').style.display !== 'none') loadCampaigns();
-}
-
-function togglePageDrop(e){
-  if(e) e.stopPropagation();
-  const drop = document.getElementById('fa-page-drop');
-  const isOpen = drop.classList.contains('open');
-  closeDrops();
-  if(isOpen) return;
-  if(!_pages.length){
-    drop.innerHTML = '<div class="fa-sel-empty">No tienes páginas disponibles.</div>';
-  }else{
-    drop.innerHTML = _pages.map(p => `
-      <div class="fa-sel-option${(_activePage && p.id===_activePage.id)?' is-active':''}" onclick="onPickPage('${escapeHtml(p.id)}',event)">
-        <span class="fa-sel-pic" style="background-image:${p.picture?`url('${p.picture}')`:'none'}"></span>
-        <div style="min-width:0;flex:1"><strong>${escapeHtml(p.name)}</strong><small>ID ${escapeHtml(p.id)}</small></div>
-      </div>
-    `).join('');
-  }
-  drop.classList.add('open');
-}
-
-function onPickPage(id, e){
-  if(e){ e.stopPropagation(); }
-  const p = _pages.find(x => x.id === id);
-  if(p) selectPage(p);
-}
-
-// ── Cuentas publicitarias ──────────────────────────────────
-async function loadAccounts(preferId){
-  const tok = getToken();
-  try{
-    const r = await fetch(API_BASE+'/facebook/ad-accounts', { headers:{ Authorization:'Bearer '+tok } });
-    const d = await r.json();
-    _accounts = d.accounts || [];
-    if(!_accounts.length){ show('fa-no-accounts'); hide('fa-main-content'); return; }
-    hide('fa-no-accounts'); show('fa-main-content');
-    // Ordenar: primero las que pueden anunciar la página activa
-    const pid = _activePage ? _activePage.id : '';
-    _accounts.sort((a,b) => {
-      const aCan = (a.promote_pages||[]).includes(pid) ? 0 : 1;
-      const bCan = (b.promote_pages||[]).includes(pid) ? 0 : 1;
-      return aCan - bCan;
-    });
-    let target = _accounts.find(a => a.id === preferId) || _accounts[0];
-    await selectAccount(target, /*silent=*/true);
-  }catch(e){
-    show('fa-no-accounts');
-  }
-}
-
-async function selectAccount(acct, silent){
-  if(!acct) return;
-  _activeAccount = acct;
-  document.getElementById('fa-acct-name').textContent = acct.name;
-  document.getElementById('fa-acct-sub').textContent = (acct.currency||'MXN') + ' · ' + acct.id;
-  localStorage.setItem(LS.acct, acct.id);
-  closeDrops();
-  // Persistir
-  try{
-    const tok = getToken();
-    await fetch(API_BASE+'/facebook/select-ad-account', {
-      method:'POST',
-      headers:{'Content-Type':'application/json', Authorization:'Bearer '+tok},
-      body: JSON.stringify({account_id: acct.id, account_name: acct.name}),
-    });
-  }catch(e){}
-  updateAccountWarning();
-  if(!silent && document.getElementById('fa-tab-camps').style.display !== 'none') loadCampaigns();
-}
-
-function toggleAcctDrop(e){
-  if(e) e.stopPropagation();
-  const drop = document.getElementById('fa-acct-drop');
-  const isOpen = drop.classList.contains('open');
-  closeDrops();
-  if(isOpen) return;
-  if(!_accounts.length){
-    drop.innerHTML = '<div class="fa-sel-empty">No tienes cuentas publicitarias.</div>';
-  }else{
-    const pid = _activePage ? _activePage.id : '';
-    drop.innerHTML = _accounts.map(a => {
-      const canPromote = (a.promote_pages||[]).includes(pid);
-      const badge = canPromote ? '<small style="color:#16a34a;font-weight:700">✓ Compatible con tu página</small>' : `<small>${escapeHtml(a.currency||'MXN')} · ${escapeHtml(a.id)}</small>`;
-      return `<div class="fa-sel-option${(_activeAccount && a.id===_activeAccount.id)?' is-active':''}" onclick="onPickAcct('${escapeHtml(a.id)}',event)">
-        <div style="min-width:0;flex:1"><strong>${escapeHtml(a.name)}</strong>${badge}</div>
-      </div>`;
-    }).join('');
-  }
-  drop.classList.add('open');
-}
-
-function onPickAcct(id, e){
-  if(e) e.stopPropagation();
-  const a = _accounts.find(x => x.id === id);
-  if(a) selectAccount(a);
-}
-
-function updateAccountWarning(){
-  const warn = document.getElementById('fa-account-warn');
-  const txt = document.getElementById('fa-account-warn-text');
-  if(!_activeAccount || !_activePage){ warn.style.display='none'; return; }
-  const can = (_activeAccount.promote_pages||[]).includes(_activePage.id);
-  if(!can){
-    warn.style.display = 'flex';
-    txt.textContent = `Esta cuenta publicitaria no aparece asociada a "${_activePage.name}" en Business Manager. La publicación puede fallar. Cambia de cuenta o asocia la página en business.facebook.com.`;
-  } else {
-    warn.style.display = 'none';
-  }
-}
-
-function closeDrops(){
-  document.querySelectorAll('.fa-sel-drop.open').forEach(el => el.classList.remove('open'));
-}
-document.addEventListener('click', closeDrops);
-
-// ── Tabs ───────────────────────────────────────────────────
+// ── Tabs ────────────────────────────────────────────────────
 function switchTab(tab){
   const t1 = document.getElementById('fa-tabbtn-crear');
   const t2 = document.getElementById('fa-tabbtn-camps');
@@ -755,126 +448,45 @@ function switchTab(tab){
   } else {
     t2.classList.add('active'); t1.classList.remove('active');
     hide('fa-tab-crear'); show('fa-tab-camps');
-    loadCampaigns(); startCampaignsPolling();
+    loadCampaigns();
+    startCampaignsPolling();
   }
 }
-function openCampaignsTab(){ switchTab('camps'); }
 
-// ── Modo y wizard ──────────────────────────────────────────
-function setMode(m){
-  _mode = m;
-  document.getElementById('fa-mode-new').classList.toggle('active', m==='new');
-  document.getElementById('fa-mode-boost').classList.toggle('active', m==='boost');
-  if(m==='new'){
-    show('fa-new-section'); hide('fa-boost-section');
-    document.getElementById('fa-summary-sub').textContent = 'Se crea campaña + conjunto + creativo + anuncio.';
-    document.getElementById('fa-btn-text').textContent = 'Publicar en Facebook';
-  } else {
-    hide('fa-new-section'); show('fa-boost-section');
-    document.getElementById('fa-summary-sub').textContent = 'Se promociona la publicación que selecciones.';
-    document.getElementById('fa-btn-text').textContent = 'Promocionar publicación';
-    loadPagePosts();
-  }
-  syncSummary();
-  syncPreview();
-}
-
-function goStep(n){
-  if(n < 1 || n > 3) return;
-  if(n > _currentStep){
-    // Validar antes de avanzar
-    if(_currentStep === 1 && !validateStep1()) return;
-    if(_currentStep === 2 && !validateStep2()) return;
-  }
-  _currentStep = n;
-  document.querySelectorAll('.fa-step-panel').forEach(el => {
-    el.style.display = el.getAttribute('data-step-panel') === String(n) ? '' : 'none';
-  });
-  document.querySelectorAll('.fa-step').forEach(el => {
-    const i = parseInt(el.getAttribute('data-step'),10);
-    el.classList.toggle('done', i < n);
-    el.classList.toggle('current', i === n);
-  });
-  if(n === 2 && _mode === 'boost') loadPagePosts();
-  if(n === 3) syncPreview();
-  window.scrollTo({top: 0, behavior:'smooth'});
-}
-
-function validateStep1(){
-  const name = document.getElementById('fa-campaign-name').value.trim();
-  if(!name){ toast('Escribe un nombre interno para identificar la campaña.'); return false; }
-  const budget = parseFloat(document.getElementById('fa-budget').value)||0;
-  if(budget < 50){ toast('El presupuesto diario mínimo recomendado es $50 MXN.'); return false; }
-  const dur = parseInt(document.getElementById('fa-duration').value)||0;
-  if(dur < 1 || dur > 365){ toast('La duración debe ser entre 1 y 365 días.'); return false; }
-  return true;
-}
-
-function validateStep2(){
-  if(_mode === 'boost'){
-    if(!_selectedPostId){ toast('Selecciona una publicación para promocionar.'); return false; }
-    return true;
-  }
-  const text = document.getElementById('fa-ad-text').value.trim();
-  const headline = document.getElementById('fa-ad-headline').value.trim();
-  const url = document.getElementById('fa-ad-url').value.trim();
-  if(!text){ toast('Escribe el texto principal del anuncio.'); return false; }
-  if(!headline){ toast('Escribe el título del anuncio.'); return false; }
-  if(!url || !/^https?:\/\//i.test(url)){ toast('Agrega una URL destino válida (http:// o https://).'); return false; }
-  return true;
-}
-
-// ── Resumen y vista previa ─────────────────────────────────
+// ── Resumen y vista previa ──────────────────────────────────
 function syncSummary(){
   const budget = parseFloat(document.getElementById('fa-budget').value)||0;
   const duration = parseInt(document.getElementById('fa-duration').value)||7;
-  document.getElementById('fa-total-estimate').textContent = money(budget*duration) + ' MXN';
-  document.getElementById('fa-daily-estimate').textContent = money(budget) + ' MXN';
+  document.getElementById('fa-total-estimate').textContent = money(budget*duration);
+  document.getElementById('fa-daily-estimate').textContent = money(budget);
   document.getElementById('fa-summary-duration').textContent = duration + ' días';
   document.getElementById('fa-summary-status').textContent = document.getElementById('fa-publish-now').checked ? 'Activo' : 'Pausa';
 }
 
 function syncPreview(){
-  // Página
-  const pageName = _activePage ? _activePage.name : 'Tu página';
-  const pagePic = _activePage && _activePage.picture ? _activePage.picture : '';
+  const pageName = _connection && _connection.page_name ? _connection.page_name : 'Tu página';
+  const pagePic  = _connection && _connection.page_pic ? _connection.page_pic : '';
   document.getElementById('fa-preview-page').textContent = pageName;
   const pp = document.getElementById('fa-preview-pp');
   pp.style.backgroundImage = pagePic ? `url('${pagePic}')` : '';
 
-  if(_mode === 'boost'){
-    const post = _postsCache.find(p => p.id === _selectedPostId);
-    document.getElementById('fa-preview-msg').textContent = post && post.message ? post.message : '(Publicación sin texto)';
-    const wrap = document.getElementById('fa-preview-image-wrap');
-    const img = document.getElementById('fa-preview-img');
-    const ph = document.getElementById('fa-preview-imgph');
-    if(post && post.image){
-      img.style.backgroundImage = `url('${post.image}')`;
-      img.style.display = ''; ph.style.display = 'none';
-    } else {
-      img.style.display = 'none'; ph.style.display = '';
-    }
-    document.getElementById('fa-preview-link-block').style.display = 'none';
+  const text  = document.getElementById('fa-ad-text').value.trim() || 'Texto del anuncio…';
+  const title = document.getElementById('fa-ad-headline').value.trim() || 'Título del anuncio';
+  const url   = document.getElementById('fa-ad-url').value.trim();
+  document.getElementById('fa-preview-msg').textContent = text;
+  document.getElementById('fa-preview-title').textContent = title;
+  document.getElementById('fa-preview-domain').textContent = (domainOf(url) || 'tu-sitio.com').toUpperCase();
+  const img = document.getElementById('fa-preview-img');
+  const ph  = document.getElementById('fa-preview-imgph');
+  if(_imageDataUrl){
+    img.style.backgroundImage = `url('${_imageDataUrl}')`;
+    img.style.display = ''; ph.style.display = 'none';
   } else {
-    const text = document.getElementById('fa-ad-text').value.trim() || 'Texto del anuncio…';
-    const title = document.getElementById('fa-ad-headline').value.trim() || 'Título del anuncio';
-    const url = document.getElementById('fa-ad-url').value.trim();
-    document.getElementById('fa-preview-msg').textContent = text;
-    document.getElementById('fa-preview-title').textContent = title;
-    document.getElementById('fa-preview-domain').textContent = (domainOf(url) || 'tu-sitio.com').toUpperCase();
-    document.getElementById('fa-preview-link-block').style.display = '';
-    const img = document.getElementById('fa-preview-img');
-    const ph = document.getElementById('fa-preview-imgph');
-    if(_imageDataUrl){
-      img.style.backgroundImage = `url('${_imageDataUrl}')`;
-      img.style.display = ''; ph.style.display = 'none';
-    } else {
-      img.style.display = 'none'; ph.style.display = '';
-    }
+    img.style.display = 'none'; ph.style.display = '';
   }
 }
 
-// ── Texto y conteo de caracteres ───────────────────────────
+// ── Caracteres ──────────────────────────────────────────────
 function updateCharCount(){
   const ta = document.getElementById('fa-ad-text');
   const cc = document.getElementById('fa-char-count');
@@ -883,12 +495,12 @@ function updateCharCount(){
   cc.className = 'fa-char-count' + (len > 160 ? ' warn' : '') + (len >= 180 ? ' over' : '');
 }
 
-// ── Imagen ─────────────────────────────────────────────────
+// ── Imagen ──────────────────────────────────────────────────
 function onImageSelected(input){
   const file = input.files[0]; if(!file) return;
   if(file.size > 8 * 1024 * 1024){
     toast('La imagen pesa más de 8 MB. Comprime antes de subirla.');
-    input.value=''; return;
+    input.value = ''; return;
   }
   _imageMime = file.type || 'image/jpeg';
   const reader = new FileReader();
@@ -896,9 +508,9 @@ function onImageSelected(input){
     _imageDataUrl = e.target.result;
     _imageB64 = _imageDataUrl.split(',')[1] || '';
     const zone = document.getElementById('fa-upload-zone');
-    const preview = document.getElementById('fa-upload-preview');
-    preview.src = _imageDataUrl;
-    preview.style.display = 'block';
+    const prev = document.getElementById('fa-upload-preview');
+    prev.src = _imageDataUrl;
+    prev.style.display = 'block';
     zone.classList.add('has-file');
     zone.querySelector('strong').textContent = file.name;
     syncPreview();
@@ -906,18 +518,15 @@ function onImageSelected(input){
   reader.readAsDataURL(file);
 }
 
-// ── IA: mejorar texto ──────────────────────────────────────
+// ── IA: mejorar texto ───────────────────────────────────────
 function updateAiBtn(){
   const txt = document.getElementById('fa-ad-text').value.trim();
   const btn = document.getElementById('fa-ai-btn');
   if(btn) btn.disabled = !txt;
 }
-
-async function generateDescription(){
+async function improveText(){
   const current = document.getElementById('fa-ad-text').value.trim();
-  const hint = document.getElementById('fa-ai-hint');
-  if(!current){ hint.style.display = ''; return; }
-  hint.style.display = 'none';
+  if(!current) return;
   const btn = document.getElementById('fa-ai-btn');
   btn.disabled = true; const prev = btn.textContent; btn.textContent = 'Mejorando…';
   try{
@@ -929,7 +538,7 @@ async function generateDescription(){
     });
     const d = await r.json();
     if(d.text){
-      document.getElementById('fa-ad-text').value = d.text;
+      document.getElementById('fa-ad-text').value = d.text.slice(0, 180);
       updateCharCount();
       syncPreview();
     }
@@ -938,100 +547,52 @@ async function generateDescription(){
   updateAiBtn();
 }
 
-// ── Posts (boost) ──────────────────────────────────────────
-async function loadPagePosts(){
-  if(!_activePage) return;
-  const tok = getToken();
-  const grid = document.getElementById('fa-posts-grid');
-  show('fa-loading-posts'); hide('fa-posts-empty'); grid.innerHTML = '';
-  try{
-    const r = await fetch(API_BASE+'/facebook/page-posts?page_id=' + encodeURIComponent(_activePage.id), {
-      headers:{ Authorization:'Bearer '+tok },
-    });
-    const d = await r.json();
-    hide('fa-loading-posts');
-    const posts = d.posts || [];
-    _postsCache = posts;
-    if(!posts.length){ show('fa-posts-empty'); return; }
-    grid.innerHTML = posts.map(p => {
-      const bg = p.image ? `style="background-image:url('${escapeHtml(p.image)}')"` : '';
-      const msg = escapeHtml(p.message || '(Publicación sin texto)');
-      const dt = p.created_time ? new Date(p.created_time).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}) : '';
-      const isSel = p.id === _selectedPostId;
-      return `<div class="fa-post${isSel?' selected':''}" data-id="${escapeHtml(p.id)}" onclick="selectPost('${escapeHtml(p.id)}')">
-        <div class="fa-post-img" ${bg}></div>
-        <div class="fa-post-body">
-          <div class="fa-post-msg">${msg}</div>
-          <div class="fa-post-meta"><span>${dt}</span><span>♥ ${p.reactions||0}</span><span>💬 ${p.comments||0}</span></div>
-        </div>
-        <div class="fa-post-check">✓</div>
-      </div>`;
-    }).join('');
-  }catch(e){
-    hide('fa-loading-posts'); show('fa-posts-empty');
-    document.getElementById('fa-posts-empty').textContent = 'No pudimos cargar tus publicaciones. Intenta de nuevo.';
-  }
-}
-
-function selectPost(id){
-  _selectedPostId = id;
-  document.querySelectorAll('.fa-post').forEach(el => el.classList.toggle('selected', el.getAttribute('data-id') === id));
-  syncPreview();
-}
-
-// ── Crear anuncio ──────────────────────────────────────────
+// ── Crear anuncio ───────────────────────────────────────────
 async function createAd(){
-  if(!_activeAccount){ toast('Selecciona una cuenta publicitaria.'); return; }
-  if(!_activePage){ toast('Selecciona una página.'); return; }
+  // Validaciones cliente
+  const name = document.getElementById('fa-campaign-name').value.trim();
+  const text = document.getElementById('fa-ad-text').value.trim();
+  const headline = document.getElementById('fa-ad-headline').value.trim();
+  const url = document.getElementById('fa-ad-url').value.trim();
+  const budget = parseFloat(document.getElementById('fa-budget').value)||0;
+  const duration = parseInt(document.getElementById('fa-duration').value)||0;
 
-  let payload;
-  if(_mode === 'boost'){
-    if(!_selectedPostId){ toast('Selecciona una publicación.'); return; }
-    payload = {
-      account_id: _activeAccount.id,
-      campaign_name: document.getElementById('fa-campaign-name').value.trim() || ('Boost — ' + (new Date()).toLocaleDateString('es-MX')),
-      objective: document.getElementById('fa-objective').value || 'OUTCOME_ENGAGEMENT',
-      daily_budget_mxn: parseFloat(document.getElementById('fa-budget').value)||0,
-      duration_days: parseInt(document.getElementById('fa-duration').value)||7,
-      age_min: 25, age_max: 59,
-      country: 'MX',
-      city: document.getElementById('fa-city-key').value,
-      page_id: _activePage.id,
-      post_id: _selectedPostId,
-      publish_now: document.getElementById('fa-publish-now').checked,
-    };
-  } else {
-    // Imagen obligatoria en modo "anuncio nuevo"
-    if(!_imageB64){ toast('Sube una imagen para el anuncio. Es obligatoria.'); return; }
-    // OUTCOME_ENGAGEMENT con anuncio nuevo lo rechaza Meta: hay que promocionar un post existente
-    if(document.getElementById('fa-objective').value === 'OUTCOME_ENGAGEMENT'){
-      toast('Para "Generar interacciones" debes promocionar una publicación existente. Cambia el objetivo o usa "Promocionar publicación".');
-      return;
-    }
-    payload = {
-      account_id: _activeAccount.id,
-      campaign_name: document.getElementById('fa-campaign-name').value.trim(),
-      objective: document.getElementById('fa-objective').value,
-      ad_text: document.getElementById('fa-ad-text').value.trim(),
-      headline: document.getElementById('fa-ad-headline').value.trim(),
-      destination_url: document.getElementById('fa-ad-url').value.trim(),
-      image_b64: _imageB64,
-      image_mime: _imageMime,
-      daily_budget_mxn: parseFloat(document.getElementById('fa-budget').value)||0,
-      duration_days: parseInt(document.getElementById('fa-duration').value)||7,
-      age_min: 25, age_max: 59,
-      country: 'MX',
-      city: document.getElementById('fa-city-key').value,
-      page_id: _activePage.id,
-      publish_now: document.getElementById('fa-publish-now').checked,
-    };
+  if(!name){ toast('Ponle un nombre interno a la campaña.'); return; }
+  if(!text){ toast('Escribe el texto principal del anuncio.'); return; }
+  if(!headline){ toast('Escribe el título del anuncio.'); return; }
+  if(!url || !/^https?:\/\//i.test(url)){ toast('La URL destino debe empezar con http:// o https://.'); return; }
+  if(!_imageB64){ toast('Sube una imagen para el anuncio.'); return; }
+  if(budget < 50){ toast('El presupuesto diario mínimo recomendado es $50 MXN.'); return; }
+  if(duration < 1 || duration > 365){ toast('La duración debe ser entre 1 y 365 días.'); return; }
+  if(!_connection || !_connection.ad_account_id){
+    toast('No hay cuenta publicitaria conectada. Reconecta Facebook desde tu perfil.');
+    return;
   }
+
+  const payload = {
+    // Estos los pasamos por compatibilidad; el server los IGNORA y usa los
+    // guardados en su DB para evitar publicar en página o cuenta equivocada.
+    account_id: _connection.ad_account_id,
+    page_id:    _connection.page_id,
+    campaign_name: name,
+    objective: 'OUTCOME_TRAFFIC',
+    ad_text: text,
+    headline: headline,
+    destination_url: url,
+    image_b64: _imageB64,
+    image_mime: _imageMime,
+    daily_budget_mxn: budget,
+    duration_days: duration,
+    age_min: 25,
+    age_max: 60,
+    country: 'MX',
+    publish_now: document.getElementById('fa-publish-now').checked,
+  };
 
   const btn = document.getElementById('fa-submit-btn');
   const spinner = document.getElementById('fa-btn-spinner');
   const btnText = document.getElementById('fa-btn-text');
   const resultEl = document.getElementById('fa-result');
-  const prevTxt = btnText.textContent;
   btn.disabled = true; spinner.classList.add('active'); btnText.textContent = 'Creando en Facebook…';
   resultEl.classList.remove('visible');
 
@@ -1048,91 +609,88 @@ async function createAd(){
       document.getElementById('fa-result-dot').className = 'fa-result-dot ok';
       document.getElementById('fa-result-title').textContent = d.status === 'ACTIVE' ? 'Anuncio enviado a publicación' : 'Campaña creada en pausa';
       document.getElementById('fa-result-body').innerHTML = d.status === 'ACTIVE'
-        ? 'Facebook recibió tu anuncio. Puede pasar por revisión antes de entregar impresiones; puedes pausarlo desde "Tus campañas".'
-        : 'La campaña quedó en pausa. Actívala desde "Tus campañas" cuando quieras publicarla.';
-      // Refrescar la lista de campañas para que aparezca sin tener que actualizar
-      try { loadCampaigns(true); } catch(_) {}
+        ? 'Facebook recibió tu anuncio. Puede pasar por revisión antes de entregar; lo verás en "Tus campañas" en unos minutos.'
+        : 'Quedó en pausa. Actívala desde "Tus campañas" cuando quieras publicarla.';
+      // Limpiar campos del formulario para evitar re-envío accidental
+      document.getElementById('fa-campaign-name').value = '';
+      document.getElementById('fa-ad-text').value = '';
+      document.getElementById('fa-ad-headline').value = '';
+      document.getElementById('fa-ad-url').value = '';
+      document.getElementById('fa-image-input').value = '';
+      _imageB64 = ''; _imageDataUrl = '';
+      const z = document.getElementById('fa-upload-zone');
+      z.classList.remove('has-file');
+      z.querySelector('strong').textContent = 'Subir imagen del anuncio';
+      document.getElementById('fa-upload-preview').style.display = 'none';
+      updateCharCount(); syncPreview();
     } else {
       document.getElementById('fa-result-dot').className = 'fa-result-dot err';
-      document.getElementById('fa-result-title').textContent = 'Error al crear el anuncio';
-      document.getElementById('fa-result-body').textContent = d.detail || d.error || 'Ocurrió un error inesperado.';
+      document.getElementById('fa-result-title').textContent = 'No se pudo crear el anuncio';
+      document.getElementById('fa-result-body').textContent = d.detail || d.error || 'Ocurrió un error inesperado. Intenta de nuevo.';
     }
-  } catch(e){
+  }catch(e){
     resultEl.classList.add('visible');
     document.getElementById('fa-result-dot').className = 'fa-result-dot err';
     document.getElementById('fa-result-title').textContent = 'Error de conexión';
-    document.getElementById('fa-result-body').textContent = 'No se pudo conectar con el servidor. Intenta de nuevo.';
+    document.getElementById('fa-result-body').textContent = 'No se pudo conectar con el servidor. Revisa tu internet e intenta de nuevo.';
   } finally {
-    btn.disabled = false; spinner.classList.remove('active'); btnText.textContent = prevTxt;
+    btn.disabled = false; spinner.classList.remove('active'); btnText.textContent = 'Publicar en Facebook';
   }
 }
 
-// ── Campañas ───────────────────────────────────────────────
+// ── Campañas ────────────────────────────────────────────────
 function startCampaignsPolling(){
   stopCampaignsPolling();
   _campaignsPollTimer = setInterval(() => {
-    if(document.visibilityState === 'visible' &&
-       document.getElementById('fa-tab-camps').style.display !== 'none'){
+    if(document.visibilityState === 'visible' && document.getElementById('fa-tab-camps').style.display !== 'none'){
       loadCampaigns(true);
     }
   }, 60000);
 }
 function stopCampaignsPolling(){ if(_campaignsPollTimer){ clearInterval(_campaignsPollTimer); _campaignsPollTimer = null; } }
 
-function setCampFilter(f, btn){
-  _campFilter = f;
-  document.querySelectorAll('.fa-camps-filter').forEach(b => b.classList.toggle('active', b.getAttribute('data-filter') === f));
-  renderCampaigns();
-}
-
 async function loadCampaigns(silent){
-  if(!_activeAccount) return;
+  if(!_connection || !_connection.ad_account_id) return;
   const tok = getToken();
   const listEl = document.getElementById('fa-camps-list');
   if(!silent){ show('fa-loading-camps'); listEl.innerHTML = ''; }
   try{
-    const r = await fetch(API_BASE+'/facebook/campaigns?account_id='+encodeURIComponent(_activeAccount.id), {
+    const r = await fetch(API_BASE+'/facebook/campaigns?account_id='+encodeURIComponent(_connection.ad_account_id), {
       headers:{ Authorization:'Bearer '+tok },
     });
     const d = await r.json();
     hide('fa-loading-camps');
-    _campsCache = d.campaigns || [];
-    renderCampaigns();
-  } catch(e){
+    const camps = d.campaigns || [];
+    if(!camps.length){
+      listEl.innerHTML = '<div class="fa-empty">Aún no tienes campañas. Cuando crees una aparecerá aquí.</div>';
+      return;
+    }
+    listEl.innerHTML = camps.map(c => {
+      const isActive = c.status === 'ACTIVE';
+      const dateStr = c.created_time ? new Date(c.created_time).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}) : '';
+      const ctr = Number(c.ctr || 0);
+      return `<div class="fa-campaign-card">
+        <div class="fa-campaign-head">
+          <div>
+            <div class="fa-campaign-name">${escapeHtml(c.name)}<span class="fa-status-pill ${isActive?'active':'paused'}">${isActive?'Activa':'Pausada'}</span></div>
+            ${dateStr?`<div class="fa-campaign-date">Creada el ${dateStr}</div>`:''}
+          </div>
+          <button class="fa-toggle ${isActive?'is-active':''}" onclick="toggleCampaign('${escapeHtml(c.id)}','${isActive?'PAUSED':'ACTIVE'}',this)">${isActive?'Pausar':'Activar'}</button>
+        </div>
+        <div class="fa-stats">
+          <div class="fa-stat"><span class="fa-stat-val">${parseInt(c.impressions||0).toLocaleString('es-MX')}</span><span class="fa-stat-lbl">Impresiones</span></div>
+          <div class="fa-stat"><span class="fa-stat-val">${parseInt(c.reach||0).toLocaleString('es-MX')}</span><span class="fa-stat-lbl">Alcance</span></div>
+          <div class="fa-stat"><span class="fa-stat-val">${parseInt(c.clicks||0).toLocaleString('es-MX')}</span><span class="fa-stat-lbl">Clics</span></div>
+          <div class="fa-stat"><span class="fa-stat-val">${ctr.toFixed(2)}%</span><span class="fa-stat-lbl">CTR</span></div>
+          <div class="fa-stat"><span class="fa-stat-val">$${parseFloat(c.spend||0).toFixed(0)}</span><span class="fa-stat-lbl">Gastado</span></div>
+        </div>
+        <div class="fa-campaign-note">Datos de los últimos 7 días.</div>
+      </div>`;
+    }).join('');
+  }catch(e){
     hide('fa-loading-camps');
     listEl.innerHTML = '<div class="fa-empty">Error al cargar campañas. Intenta de nuevo.</div>';
   }
-}
-
-function renderCampaigns(){
-  const listEl = document.getElementById('fa-camps-list');
-  const filtered = _campFilter === 'all' ? _campsCache : _campsCache.filter(c => c.status === _campFilter);
-  if(!filtered.length){
-    listEl.innerHTML = '<div class="fa-empty">No hay campañas que coincidan con el filtro.</div>';
-    return;
-  }
-  listEl.innerHTML = filtered.map(c => {
-    const isActive = c.status === 'ACTIVE';
-    const dateStr = c.created_time ? new Date(c.created_time).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}) : '';
-    const ctr = Number(c.ctr || 0);
-    return `<div class="fa-campaign-card" id="camp-card-${escapeHtml(c.id)}">
-      <div class="fa-campaign-head">
-        <div>
-          <div class="fa-campaign-name">${escapeHtml(c.name)}<span class="fa-status-pill ${isActive?'active':'paused'}">${isActive?'Activa':'Pausada'}</span></div>
-          ${dateStr?`<div class="fa-campaign-date">Creada el ${dateStr}</div>`:''}
-        </div>
-        <button class="fa-toggle ${isActive?'is-active':''}" onclick="toggleCampaign('${escapeHtml(c.id)}','${isActive?'PAUSED':'ACTIVE'}',this)">${isActive?'Pausar':'Activar'}</button>
-      </div>
-      <div class="fa-stats">
-        <div class="fa-stat"><span class="fa-stat-val">${parseInt(c.impressions||0).toLocaleString('es-MX')}</span><span class="fa-stat-lbl">Impresiones</span></div>
-        <div class="fa-stat"><span class="fa-stat-val">${parseInt(c.reach||0).toLocaleString('es-MX')}</span><span class="fa-stat-lbl">Alcance</span></div>
-        <div class="fa-stat"><span class="fa-stat-val">${parseInt(c.clicks||0).toLocaleString('es-MX')}</span><span class="fa-stat-lbl">Clics</span></div>
-        <div class="fa-stat"><span class="fa-stat-val">${ctr.toFixed(2)}%</span><span class="fa-stat-lbl">CTR</span></div>
-        <div class="fa-stat"><span class="fa-stat-val">$${parseFloat(c.spend||0).toFixed(0)}</span><span class="fa-stat-lbl">Gastado</span></div>
-      </div>
-      <div class="fa-campaign-note">Datos de los últimos 7 días. "Activa" puede incluir revisión de Facebook antes de entregar.</div>
-    </div>`;
-  }).join('');
 }
 
 async function toggleCampaign(campaignId, newStatus, btn){
@@ -1146,56 +704,18 @@ async function toggleCampaign(campaignId, newStatus, btn){
     });
     const d = await r.json();
     if(r.ok && d.ok){ loadCampaigns(); }
-    else { btn.textContent = prev; btn.disabled = false; toast(d.detail || 'Error al actualizar la campaña.'); }
-  } catch(e){ btn.textContent = prev; btn.disabled = false; toast('Error de conexión.'); }
+    else { btn.textContent = prev; btn.disabled = false; toast(d.detail || 'No se pudo actualizar la campaña.'); }
+  }catch(e){ btn.textContent = prev; btn.disabled = false; toast('Error de conexión.'); }
 }
 
-// ── Búsqueda de ciudades ───────────────────────────────────
-function onCityInput(value){
-  const drop = document.getElementById('fa-city-drop');
-  const norm = (value||'').trim();
-  document.getElementById('fa-city-key').value = '';
-  if(norm.length < 2){ drop.style.display = 'none'; return; }
-  if(_citySearchTimer) clearTimeout(_citySearchTimer);
-  _citySearchTimer = setTimeout(() => searchCities(norm), 220);
-}
-
-async function searchCities(q){
-  const tok = getToken();
-  const drop = document.getElementById('fa-city-drop');
-  try{
-    const r = await fetch(API_BASE+'/facebook/city-search?q='+encodeURIComponent(q), { headers:{ Authorization:'Bearer '+tok } });
-    const d = await r.json();
-    const results = d.results || [];
-    if(!results.length){ drop.style.display = 'none'; return; }
-    drop.innerHTML = results.map(c => {
-      const region = c.region ? `<small>${escapeHtml(c.region)} · ${escapeHtml(c.type||'')}</small>` : '';
-      return `<div class="fa-city-option" onclick="pickCity('${escapeHtml(c.key)}','${escapeHtml(c.name).replace(/'/g,"\\'")}')">${escapeHtml(c.name)}${region}</div>`;
-    }).join('');
-    drop.style.display = 'block';
-  } catch(e){ drop.style.display = 'none'; }
-}
-
-function pickCity(key, name){
-  document.getElementById('fa-city-input').value = name;
-  document.getElementById('fa-city-key').value = key;
-  document.getElementById('fa-city-drop').style.display = 'none';
-}
-
-document.addEventListener('click', e => {
-  const drop = document.getElementById('fa-city-drop');
-  const inp = document.getElementById('fa-city-input');
-  if(drop && inp && !drop.contains(e.target) && e.target !== inp) drop.style.display = 'none';
-});
-
-// ── Toast simple ───────────────────────────────────────────
+// ── Toast ───────────────────────────────────────────────────
 let _toastTimer = null;
 function toast(msg){
   let el = document.getElementById('fa-toast');
   if(!el){
     el = document.createElement('div');
     el.id = 'fa-toast';
-    el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:11px 18px;border-radius:8px;font:600 13px var(--font-sans);box-shadow:0 4px 16px rgba(0,0,0,.2);z-index:9999;opacity:0;transition:opacity .2s';
+    el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:11px 18px;border-radius:8px;font:600 13px var(--font-sans);box-shadow:0 4px 16px rgba(0,0,0,.2);z-index:9999;opacity:0;transition:opacity .2s;max-width:90vw;text-align:center';
     document.body.appendChild(el);
   }
   el.textContent = msg;
@@ -1204,7 +724,7 @@ function toast(msg){
   _toastTimer = setTimeout(() => { el.style.opacity = '0'; }, 3400);
 }
 
-// ── Inicialización ─────────────────────────────────────────
+// ── Init ────────────────────────────────────────────────────
 window.addEventListener('beforeunload', () => { stopCampaignsPolling(); });
 document.addEventListener('DOMContentLoaded', () => {
   syncSummary();

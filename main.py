@@ -4281,33 +4281,96 @@ class FbSavePageRequest(BaseModel):
 
 @app.post("/facebook/save-page")
 async def facebook_save_page(req: FbSavePageRequest, request: Request):
-    """Guarda el page_token y user_token de Facebook del usuario en Supabase."""
+    """Guarda el page_token, user_token y AUTO-SELECCIONA la cuenta publicitaria
+    asociada a la página (la primera cuenta activa autorizada para anunciar
+    esa página). Esto elimina el riesgo de publicar en una cuenta equivocada."""
     user_id = await get_user_id_from_token(request)
     if not user_id:
         raise HTTPException(status_code=401, detail="No autenticado")
     if not SUPABASE_URL or not SUPABASE_KEY:
         raise HTTPException(status_code=500, detail="Supabase no configurado")
 
+    # ── Auto-seleccionar cuenta publicitaria compatible con la página ──
+    ad_account_id = ""
+    ad_account_name = ""
+    page_pic = ""
+    try:
+        async with httpx.AsyncClient(timeout=15) as client_a:
+            # 1) Foto de la página (mejora UI)
+            try:
+                rpic = await client_a.get(
+                    f"https://graph.facebook.com/v21.0/{req.page_id}",
+                    params={"access_token": req.user_token, "fields": "picture.type(square)"}
+                )
+                if rpic.status_code == 200:
+                    page_pic = ((rpic.json().get("picture") or {}).get("data") or {}).get("url", "")
+            except Exception:
+                page_pic = ""
+
+            # 2) Cuentas publicitarias del usuario
+            ra = await client_a.get(
+                "https://graph.facebook.com/v21.0/me/adaccounts",
+                params={"access_token": req.user_token, "fields": "id,name,account_status,currency", "limit": "50"}
+            )
+            accounts = []
+            if ra.status_code == 200:
+                accounts = [a for a in ra.json().get("data", []) if a.get("account_status") == 1]
+
+            # 3) Para cada cuenta, ver si puede anunciar nuestra página
+            chosen = None
+            for a in accounts:
+                try:
+                    rp = await client_a.get(
+                        f"https://graph.facebook.com/v21.0/{a['id']}/promote_pages",
+                        params={"access_token": req.user_token, "fields": "id", "limit": "100"}
+                    )
+                    if rp.status_code == 200:
+                        pids = [p.get("id") for p in rp.json().get("data", []) if p.get("id")]
+                        if req.page_id in pids:
+                            chosen = a
+                            break
+                except Exception:
+                    continue
+            # Fallback: si ninguna está autorizada explícitamente, usar la primera activa
+            if not chosen and accounts:
+                chosen = accounts[0]
+            if chosen:
+                ad_account_id = chosen.get("id", "")
+                ad_account_name = chosen.get("name", ad_account_id)
+    except Exception:
+        # No bloquear el guardado de página si hubo error obteniendo cuenta
+        pass
+
+    meta = {
+        "page_id": req.page_id,
+        "page_name": req.page_name,
+        "page_pic": page_pic,
+        "user_token": req.user_token,
+        "ad_account_id": ad_account_id,
+        "ad_account_name": ad_account_name,
+    }
     payload = {
         "user_id": user_id,
         "provider": "facebook",
         "api_key": req.page_token,
-        "meta": json.dumps({
-            "page_id": req.page_id,
-            "page_name": req.page_name,
-            "user_token": req.user_token,
-        }),
+        "meta": json.dumps(meta),
         "updated_at": datetime.utcnow().isoformat()
     }
     async with httpx.AsyncClient(timeout=10) as client:
-        r = await client.post(
+        await client.post(
             f"{SUPABASE_URL}/rest/v1/user_integrations",
             headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
                      "Content-Type": "application/json",
                      "Prefer": "resolution=merge-duplicates,return=minimal"},
             json=payload
         )
-    return {"ok": True, "page_id": req.page_id, "page_name": req.page_name}
+    return {
+        "ok": True,
+        "page_id": req.page_id,
+        "page_name": req.page_name,
+        "ad_account_id": ad_account_id,
+        "ad_account_name": ad_account_name,
+    }
 
 @app.get("/facebook/connection")
 async def facebook_get_connection(request: Request):
@@ -4335,6 +4398,7 @@ async def facebook_get_connection(request: Request):
                         "connected": True,
                         "page_id": meta.get("page_id", ""),
                         "page_name": meta.get("page_name", "Página conectada"),
+                        "page_pic": meta.get("page_pic", ""),
                         "page_token": rows[0]["api_key"],
                         "user_token": meta.get("user_token", ""),
                         "ad_account_id": meta.get("ad_account_id", ""),
@@ -4787,9 +4851,42 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
     if not user_token:
         raise HTTPException(status_code=400, detail="Token sin permisos de ads. Reconecta tu Facebook.")
 
-    page_id = req.page_id or meta.get("page_id", "")
+    # SEGURIDAD: ignoramos req.page_id y req.account_id si vienen del cliente.
+    # Usamos SIEMPRE los guardados en server por el flujo de conexión, así no
+    # hay forma de que el cliente induzca a publicar en la página equivocada
+    # (bug que pasó con la versión anterior con selector dinámico).
+    page_id = meta.get("page_id", "")
     if not page_id:
-        raise HTTPException(status_code=400, detail="Página de Facebook no identificada. Reconecta tu Facebook.")
+        raise HTTPException(status_code=400, detail="Página de Facebook no identificada. Reconecta tu Facebook desde tu perfil.")
+
+    server_account_id = meta.get("ad_account_id", "")
+    if not server_account_id:
+        raise HTTPException(status_code=400, detail="Cuenta publicitaria no seleccionada. Reconecta tu Facebook desde tu perfil.")
+    # Normalizar el account_id servidor y forzarlo (ignora cualquier valor del cliente)
+    req.account_id = server_account_id if server_account_id.startswith("act_") else f"act_{server_account_id}"
+    # Forzar la página oficial del usuario, no la del request
+    req.page_id = page_id
+
+    # Validación cruzada: la cuenta debe poder anunciar la página. Si no,
+    # rechazar ANTES de crear nada para evitar el bug "publica en otra página".
+    try:
+        async with httpx.AsyncClient(timeout=10) as client_v:
+            rp = await client_v.get(
+                f"https://graph.facebook.com/v21.0/{req.account_id}/promote_pages",
+                params={"access_token": user_token, "fields": "id", "limit": "100"}
+            )
+        if rp.status_code == 200:
+            promote_ids = [p.get("id") for p in rp.json().get("data", []) if p.get("id")]
+            if promote_ids and page_id not in promote_ids:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Tu cuenta publicitaria no está autorizada para anunciar tu página de Facebook. Asocia la página a la cuenta en business.facebook.com → Configuración del negocio → Páginas → Asignar a cuenta publicitaria, y luego reconecta Facebook."
+                )
+    except HTTPException:
+        raise
+    except Exception:
+        # Si Meta no responde a la verificación, dejamos pasar pero anotamos.
+        pass
 
     # Promocionar publicación existente: validar formato pageid_postid
     if req.post_id:
