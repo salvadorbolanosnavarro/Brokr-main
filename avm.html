@@ -282,10 +282,10 @@
     .opinion-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 22px; }
     .opinion-field-label { font-size: 10px; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
     .opinion-field-value { font-size: 12px; font-weight: 600; color: var(--text); }
-    .opinion-valor-hero { background: linear-gradient(135deg, var(--navy), #1e2d47); border-radius: 14px; padding: 18px 22px; color: white; margin-bottom: 14px; }
-    .opinion-valor-label { font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; }
-    .opinion-valor-num { font-size: 30px; font-weight: 800; color: var(--teal); }
-    .opinion-valor-sub { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 5px; }
+    .opinion-valor-hero { background: #000; border-radius: 14px; padding: 20px 22px; color: #fff; margin-bottom: 14px; }
+    .opinion-valor-label { font-size: 10px; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; }
+    .opinion-valor-num { font-size: 32px; font-weight: 800; color: #fff; letter-spacing: -0.01em; }
+    .opinion-valor-sub { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 6px; }
     .opinion-editable {
       width: 100%; border: 1.5px dashed rgba(15,24,41,0.2); border-radius: 10px;
       padding: 11px 13px; font-family: 'Poppins', sans-serif; font-size: 12px;
@@ -790,22 +790,19 @@ input:focus, select:focus, textarea:focus {
           const blob = await pdfResp.blob();
           const filename = data.filename || "Opinion_Valor.pdf";
 
-          // Paso 3: Web Share API en móvil → abre menú nativo "Guardar / Compartir PDF"
-          // Fallback a blob link en desktop
-          if (navigator.canShare && navigator.canShare({ files: [new File([blob], filename, { type: "application/pdf" })] })) {
-            const file = new File([blob], filename, { type: "application/pdf" });
-            await navigator.share({ files: [file], title: "Opinión de Valor", text: "Opinión de valor generada con Broquer®" });
-          } else {
-            const blobUrl = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = blobUrl;
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            setTimeout(() => { document.body.removeChild(link); URL.revokeObjectURL(blobUrl); }, 500);
-          }
+          // Descarga directa con <a download>. Sin Web Share — el navegador
+          // (desktop y móvil) guarda el archivo donde el usuario tenga
+          // configurado por defecto, sin abrir menús intermedios.
+          const blobUrl = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = blobUrl;
+          link.download = filename;
+          link.rel = "noopener";
+          document.body.appendChild(link);
+          link.click();
+          setTimeout(() => { document.body.removeChild(link); URL.revokeObjectURL(blobUrl); }, 1000);
         } catch (e) {
-          if (e.name !== "AbortError") alert("Error al generar PDF: " + e.message);
+          alert("Error al generar PDF: " + (e.message || e));
         } finally { setPdfLoading(false); }
       };
 
@@ -928,8 +925,6 @@ input:focus, select:focus, textarea:focus {
         const recs = resultado.recomendaciones || [];
         const resumen = resultado.resumen_ejecutivo || "";
         const tipoLabel = form.tipo.charAt(0).toUpperCase() + form.tipo.slice(1);
-        const confianza = resultado.nivel_confianza || "media";
-        const confColor = confianza === "alta" ? "var(--emerald)" : confianza === "media" ? "var(--amber)" : "var(--rose)";
 
         return (
           <div className="avm-body">
@@ -950,11 +945,6 @@ input:focus, select:focus, textarea:focus {
                 <div className="opinion-doc-title">Opinión de Valor</div>
                 <div className="opinion-meta">
                   <div>{new Date().toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" })}</div>
-                  <div>
-                    <span style={{ display:"inline-block", padding:"2px 10px", borderRadius:20, background:confColor, color:"#fff", fontSize:9, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.6px" }}>
-                      Confianza {confianza}
-                    </span>
-                  </div>
                 </div>
               </div>
 

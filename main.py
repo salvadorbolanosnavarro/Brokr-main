@@ -2688,10 +2688,6 @@ async def generar_avm_pdf(p: dict):
     if m2c: sup_parts.append(f"{m2c} m² construcción")
     superficie_str = " · ".join(sup_parts) if sup_parts else "—"
 
-    confianza = resultado.get("nivel_confianza", "media")
-    conf_color = "#1D9E75" if confianza == "alta" else "#EF9F27" if confianza == "media" else "#E24B4A"
-    conf_bg    = "#E1F5EE" if confianza == "alta" else "#FAEEDA" if confianza == "media" else "#FCEBEB"
-
     fecha_hoy = resultado.get("fecha", time.strftime("%d/%m/%Y"))
 
     html = f"""<!DOCTYPE html>
@@ -2710,11 +2706,12 @@ async def generar_avm_pdf(p: dict):
   .doc-kicker {{ font-size:9px; color:#7A7065; text-transform:uppercase; letter-spacing:1.8px; font-weight:600; }}
   .doc-date {{ font-size:10px; color:#7A7065; letter-spacing:0.04em; }}
 
-  .valor-bloque {{ margin-bottom: 36px; padding-bottom: 28px; border-bottom: 1px solid #E8E2D2; }}
-  .valor-lbl {{ font-size: 9px; color: #7A7065; text-transform: uppercase; letter-spacing: 1.8px; margin-bottom: 14px; font-weight:600; }}
-  .valor-num {{ font-family:'Fraunces',serif; font-size: 56px; font-weight: 500; color: #1A1814; line-height: 1; margin-bottom: 12px; letter-spacing:-0.02em; }}
-  .valor-rango {{ font-size: 12px; color: #5C544A; margin-bottom: 22px; letter-spacing:0.005em; }}
-  .valor-meta {{ display: grid; grid-template-columns:repeat(4,1fr); gap: 24px; padding-top:14px; border-top:1px dashed #E8E2D2; }}
+  .valor-bloque {{ margin-bottom: 32px; }}
+  .valor-card {{ background:#000; color:#fff; border-radius:14px; padding:26px 28px 24px; margin-bottom:18px; -webkit-print-color-adjust:exact; print-color-adjust:exact; }}
+  .valor-lbl {{ font-size: 9px; color: rgba(255,255,255,.55); text-transform: uppercase; letter-spacing: 1.8px; margin-bottom: 10px; font-weight:600; }}
+  .valor-num {{ font-family:'Fraunces',serif; font-size: 52px; font-weight: 500; color: #fff; line-height: 1; margin-bottom: 10px; letter-spacing:-0.02em; }}
+  .valor-rango {{ font-size: 12px; color: rgba(255,255,255,.7); letter-spacing:0.005em; }}
+  .valor-meta {{ display: grid; grid-template-columns:repeat(4,1fr); gap: 24px; padding-top:6px; }}
   .meta-item .meta-lbl {{ font-size: 8.5px; color: #7A7065; text-transform: uppercase; letter-spacing: 1.4px; margin-bottom: 5px; font-weight:600; }}
   .meta-item .meta-val {{ font-family:'Fraunces',serif; font-size: 13px; font-weight: 500; color: #1A1814; letter-spacing:-0.005em; }}
 
@@ -2741,9 +2738,11 @@ async def generar_avm_pdf(p: dict):
   </div>
 
   <div class="valor-bloque">
-    <div class="valor-lbl">Opinión de valor comercial</div>
-    <div class="valor-num">{fmt_mx(resultado.get('valor_estimado',0))}</div>
-    <div class="valor-rango">Rango estimado: {fmt_mx(resultado.get('valor_minimo',0))} — {fmt_mx(resultado.get('valor_maximo',0))}</div>
+    <div class="valor-card">
+      <div class="valor-lbl">Opinión de valor comercial</div>
+      <div class="valor-num">{fmt_mx(resultado.get('valor_estimado',0))}</div>
+      <div class="valor-rango">Rango estimado: {fmt_mx(resultado.get('valor_minimo',0))} — {fmt_mx(resultado.get('valor_maximo',0))}</div>
+    </div>
     <div class="valor-meta">
       <div class="meta-item">
         <div class="meta-lbl">Inmueble</div>
