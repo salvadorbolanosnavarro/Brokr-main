@@ -66,7 +66,7 @@
 
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
-<title>ISR — Broquer</title>
+<title>ISR — Broquer®</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 
@@ -1441,6 +1441,82 @@ document.addEventListener('click', function(e) {
 document.addEventListener('DOMContentLoaded', function() {
   mpRenderMonths('v');
   mpRenderMonths('c');
+
+  // ── Integración con Broquer Asistente ──────────────────────────
+  // 1) Si llegan datos pre-llenados en sessionStorage (acción `llenar_isr` o
+  //    `calcular_isr_directo` del chat), los aplicamos al formulario.
+  // 2) Si además la URL trae `?asistente=1`, ejecutamos calcISR()+descargarPDF()
+  //    automáticamente y notificamos al iframe padre cuando termine.
+  try {
+    const raw = sessionStorage.getItem('shaark_isr');
+    if (raw) {
+      const d = JSON.parse(raw);
+      sessionStorage.removeItem('shaark_isr');
+      const setVal = (id, v) => { const el = g(id); if (el && v !== undefined && v !== null && v !== '') el.value = v; };
+      // Tipo de inmueble
+      if (d.inmueble) setVal('f-tipo', d.inmueble);
+      // Precios (con formato si el campo lo aplica)
+      if (d.precio_venta) {
+        const ev = g('f-venta'); if (ev) { ev.value = Number(d.precio_venta).toLocaleString('en-US'); if (typeof fmtVenta === 'function') fmtVenta(ev); }
+      }
+      if (d.precio_compra) {
+        const ec = g('f-compra'); if (ec) { ec.value = Number(d.precio_compra).toLocaleString('en-US'); if (typeof fmtCompra === 'function') fmtCompra(ec); }
+      }
+      if (d.mejoras)        setVal('f-mej', Number(d.mejoras).toLocaleString('en-US'));
+      if (d.comision)       setVal('f-com', Number(d.comision).toLocaleString('en-US'));
+      if (d.escrituracion)  setVal('f-esc', Number(d.escrituracion).toLocaleString('en-US'));
+      // Fechas (mes/año compra y venta) usando el picker existente
+      if (d.mes_compra && d.anio_compra) {
+        mpState.c.year = parseInt(d.anio_compra) || mpState.c.year;
+        mpState.c.month = parseInt(d.mes_compra) || null;
+        if (g('f-mes-c')) g('f-mes-c').value = mpState.c.month || '';
+        if (g('f-anio-c')) g('f-anio-c').value = mpState.c.year;
+        mpRenderMonths('c');
+        if (typeof mpUpdateLabel === 'function') mpUpdateLabel('c');
+      }
+      if (d.mes_venta && d.anio_venta) {
+        mpState.v.year = parseInt(d.anio_venta) || mpState.v.year;
+        mpState.v.month = parseInt(d.mes_venta) || null;
+        if (g('f-mes-v')) g('f-mes-v').value = mpState.v.month || '';
+        if (g('f-anio-v')) g('f-anio-v').value = mpState.v.year;
+        mpRenderMonths('v');
+        if (typeof mpUpdateLabel === 'function') mpUpdateLabel('v');
+      }
+      // Casa habitación: principal / exención previa
+      if (d.exencion === 'parcial' || d.exencion === 'si') { setVal('f-pri', 'si'); setVal('f-exp', 'no'); }
+      else if (d.exencion === 'no') { setVal('f-pri', 'no'); }
+      if (typeof onTipoChange === 'function') onTipoChange();
+      if (typeof onAnioChange === 'function') onAnioChange();
+    }
+  } catch (e) { console.warn('shaark_isr prefill error', e); }
+
+  // Modo asistente: calcula + descarga PDF + notifica al iframe padre
+  const url = new URL(location.href);
+  const esAsistente = url.searchParams.get('asistente') === '1'
+                    || sessionStorage.getItem('shaark_isr_auto') === '1';
+  if (esAsistente) {
+    sessionStorage.removeItem('shaark_isr_auto');
+    const finish = (ok, error) => {
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ tipo: 'asistente_isr_done', ok: !!ok, error: error || '' }, '*');
+        }
+      } catch (_) {}
+    };
+    // Espera un tick para que el render del formulario aplique los valores
+    setTimeout(async () => {
+      try {
+        if (typeof calcISR === 'function') calcISR();
+        if (!_isrData) { finish(false, 'No se pudo calcular el ISR con los datos enviados.'); return; }
+        // Pequeño delay para que el DOM termine de renderizar el resultado
+        await new Promise(r => setTimeout(r, 250));
+        if (typeof descargarPDF === 'function') await descargarPDF();
+        finish(true);
+      } catch (e) {
+        finish(false, (e && e.message) || String(e));
+      }
+    }, 350);
+  }
 });
 
 </script>

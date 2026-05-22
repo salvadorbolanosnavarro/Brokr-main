@@ -44,8 +44,8 @@
     'props':        'Tus Inmuebles — catálogo de propiedades',
     'contactos':    'Contactos — CRM de prospectos',
     'contratos':    'Contratos — arrendamiento y promesa de compraventa',
-    'avm':          'Opinión de Valor AVM — avalúo de mercado automatizado',
-    'valor':        'Valor web — opinión de valor con investigación controlada de comparables públicos',
+    'avm':          'Estimación de valor AVM — avalúo de mercado automatizado',
+    'valor':        'Valor web — estimación de valor con investigación controlada de comparables públicos',
     'ficha':        'Ficha EasyBroker — generar ficha técnica desde ID de EasyBroker',
     'ficha-manual': 'Ficha Técnica Manual — crear ficha sin EasyBroker',
     'isr':          'Calculadora ISR por enajenación de inmuebles',
@@ -988,8 +988,10 @@
       case 'confirmar_campana':  stash('fb_ads', ac);       location.href = 'facebook-ads.html'; break;
 
       // ── ACCIONES DIRECTAS — ejecutan en la ventana del asistente ──
-      case 'agregar_contacto':       agregarContactoDirecto(ac); break;
+      case 'agregar_contacto':         agregarContactoDirecto(ac); break;
       case 'generar_contrato_directo': generarContratoDirecto(ac); break;
+      case 'calcular_isr_directo':     calcularISRDirecto(ac); break;
+      case 'estimar_valor_directo':    estimarValorDirecto(ac); break;
     }
   }
 
@@ -1068,6 +1070,134 @@
       _addAssistantBubble(`✓ Contrato listo. Se descargó en tu dispositivo.`);
     } catch (e) {
       _addAssistantBubble('No pude generar el contrato: ' + (e.message || e));
+    }
+  }
+
+  /* ── Calcular ISR + entregar PDF, sin sacar al usuario del chat ── */
+  /* Implementación: iframe oculto carga isr.html?asistente=1, que lee los
+     datos de sessionStorage, ejecuta el cálculo verificado, dispara la
+     descarga del PDF y notifica de vuelta por postMessage. */
+  async function calcularISRDirecto(ac) {
+    const bubble = _addAssistantBubble('Calculando ISR y preparando tu PDF…');
+    try {
+      // Limpia handlers previos
+      if (window._asistenteISRListener) {
+        window.removeEventListener('message', window._asistenteISRListener);
+      }
+      // Listener para escuchar que el iframe terminó
+      let timeoutId = null;
+      window._asistenteISRListener = (e) => {
+        if (!e.data || e.data.tipo !== 'asistente_isr_done') return;
+        clearTimeout(timeoutId);
+        window.removeEventListener('message', window._asistenteISRListener);
+        const fr = document.getElementById('asistente-isr-frame');
+        if (fr && fr.parentNode) fr.parentNode.removeChild(fr);
+        if (e.data.ok) {
+          bubble.innerHTML = '✓ <strong>Tu PDF de ISR se descargó.</strong> Revisa tu carpeta de descargas. ¿Necesitas otro?';
+        } else {
+          bubble.textContent = 'No pude generar el PDF: ' + (e.data.error || 'error desconocido');
+        }
+      };
+      window.addEventListener('message', window._asistenteISRListener);
+
+      // Guarda los datos en sessionStorage (mismo canal que el flujo "llenar_isr")
+      sessionStorage.setItem('shaark_isr', JSON.stringify(ac));
+      // Bandera para que isr.html ejecute en modo asistente
+      sessionStorage.setItem('shaark_isr_auto', '1');
+
+      // Crea iframe oculto que carga isr.html en modo asistente
+      let fr = document.getElementById('asistente-isr-frame');
+      if (fr) fr.remove();
+      fr = document.createElement('iframe');
+      fr.id = 'asistente-isr-frame';
+      fr.src = 'isr.html?asistente=1';
+      fr.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:1024px;height:768px;border:0;opacity:0;pointer-events:none';
+      document.body.appendChild(fr);
+
+      // Si en 60s no recibimos respuesta, asumimos error y limpiamos
+      timeoutId = setTimeout(() => {
+        window.removeEventListener('message', window._asistenteISRListener);
+        const fr2 = document.getElementById('asistente-isr-frame');
+        if (fr2 && fr2.parentNode) fr2.parentNode.removeChild(fr2);
+        bubble.textContent = 'No pude generar el PDF en 60 segundos. Intenta de nuevo o usa el módulo ISR directamente.';
+      }, 60000);
+    } catch (e) {
+      bubble.textContent = 'No pude calcular el ISR: ' + (e.message || e);
+    }
+  }
+
+  /* ── Estimación de valor + PDF directo, sin sacar al usuario del chat ── */
+  async function estimarValorDirecto(ac) {
+    const bubble = _addAssistantBubble('Buscando comparables en internet… (esto puede tomar algunos minutos)');
+    try {
+      const API = window.API_BASE || 'https://api.broquer.app';
+      const body = {
+        colonia: (ac.colonia || '').trim(),
+        tipo_inmueble: ac.tipo_inmueble || 'casa',
+        operacion: ac.operacion || 'venta',
+        m2_terreno: parseFloat(ac.m2_terreno) || 0,
+        m2_construccion: parseFloat(ac.m2_construccion) || 0,
+        recamaras: parseInt(ac.recamaras) || 0,
+        banos: parseFloat(ac.banos) || 0,
+        estacionamientos: parseInt(ac.estacionamientos) || 0,
+        condicion_terreno: ac.condicion_terreno || '',
+        ciudad: ac.ciudad || '',
+        comentarios: ac.comentarios || '',
+      };
+      // 1) Pedir la estimación con comparables
+      const r1 = await fetch(API + '/api/avm-websearch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const resultado = await r1.json();
+      if (!r1.ok) {
+        bubble.textContent = 'No pude completar la estimación: ' + (resultado.detail || 'error del servidor');
+        return;
+      }
+
+      // 2) Mostrar resumen breve en el chat
+      const fmt = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-MX');
+      const ne = resultado.valor_estimado;
+      const lo = resultado.valor_minimo;
+      const hi = resultado.valor_maximo;
+      const vpm = resultado.valor_por_m2;
+      const nc = (resultado.comparables || []).length;
+      bubble.innerHTML =
+        '<strong>Estimación lista.</strong><br>' +
+        'Valor estimado: <strong>' + fmt(ne) + '</strong><br>' +
+        'Rango: ' + fmt(lo) + ' – ' + fmt(hi) +
+        (vpm > 0 ? ' · ' + fmt(vpm) + '/m²' : '') + '<br>' +
+        nc + ' comparables encontrados. Preparando PDF…';
+
+      // 3) Generar PDF
+      const r2 = await fetch(API + '/avm-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resultado, agente: 'Agente Broquer®' }),
+      });
+      const tokData = await r2.json();
+      if (!r2.ok) {
+        bubble.innerHTML += '<br>No pude generar el PDF: ' + (tokData.detail || 'error');
+        return;
+      }
+      // 4) Descargar el blob
+      const pdfResp = await fetch(API + '/avm-pdf/' + tokData.token);
+      if (!pdfResp.ok) {
+        bubble.innerHTML += '<br>No pude obtener el PDF (' + pdfResp.status + ').';
+        return;
+      }
+      const blob = await pdfResp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = tokData.filename || ('Estimacion_Valor_' + (body.colonia || 'inmueble') + '.pdf');
+      a.rel = 'noopener';
+      document.body.appendChild(a); a.click();
+      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+      bubble.innerHTML += '<br>✓ <strong>PDF descargado.</strong>';
+    } catch (e) {
+      bubble.textContent = 'No pude completar la estimación: ' + (e.message || e);
     }
   }
 
