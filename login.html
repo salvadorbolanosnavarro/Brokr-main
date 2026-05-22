@@ -1,14 +1,15 @@
 <!DOCTYPE html>
+
 <html lang="es">
 <head>
-<meta charset="UTF-8"/>
-<link rel="icon" type="image/png" href="isotipo-black.png"/>
-<link rel="apple-touch-icon" href="isotipo-black.png"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta charset="utf-8"/>
+<link href="isotipo-black.png" rel="icon" type="image/png"/>
+<link href="isotipo-black.png" rel="apple-touch-icon"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
 <title>Broquer — Acceso</title>
-<link rel="manifest" href="manifest.json"/>
-<meta name="theme-color" content="#F7F5EE"/>
-<link rel="stylesheet" href="brokr-theme.css"/>
+<link href="manifest.json" rel="manifest"/>
+<meta content="#F7F5EE" name="theme-color"/>
+<link href="brokr-theme.css" rel="stylesheet"/>
 <style>
 html, body { background: var(--paper); min-height: 100%; }
 body { overflow-y: auto; }
@@ -299,133 +300,106 @@ body { overflow-y: auto; }
 </style>
 </head>
 <body>
-
 <!-- Splash -->
-<div id="splash"><div class="mark"><img src="logotipo-black.png" alt="Broquer"/></div></div>
-
+<div id="splash"><div class="mark"><img alt="Broquer" src="logotipo-black.png"/></div></div>
 <div class="bk-auth">
+<!-- HERO (desktop) -->
+<aside class="bk-hero">
+<div class="bk-hero__top">
+<div class="bk-hero__mark"><img alt="Broquer" src="logotipo-white.png" style="height:120px;width:auto;display:block"/></div>
+<div class="bk-hero__nav">V 1.0 — México</div>
+</div>
+<div class="bk-hero__body">
+<h1 class="bk-hero__hed">Cierra más operaciones. <em>Con menos fricción.</em></h1>
+<p class="bk-hero__sub">Software único en el mundo. El asistente inmobiliario más inteligente de la historia, fichas técnicas automáticas, contratos automáticos, cálculo de ISR, estimaciones de valor automáticas, edición de imágenes automática y más. En un solo lugar.</p>
+<div class="bk-hero__foot">
+<div class="bk-hero__stat"><div class="v">10,000+</div><div class="l">Agentes activos</div></div>
+<div class="bk-hero__stat"><div class="v">$500M</div><div class="l">En comisiones</div></div>
+<div class="bk-hero__stat"><div class="v">10</div><div class="l">Países LATAM</div></div>
+</div>
+</div>
+</aside>
+<!-- FORM -->
+<main class="bk-form-wrap">
+<div class="bk-form">
+<div class="bk-form__brand">
+<img alt="Broquer" src="logotipo-black.png"/>
+</div>
+<h2 class="bk-form__hed" id="form-title">Bienvenido</h2>
+<p class="bk-form__sub" id="form-sub">Inicia sesión para continuar a tu cuenta.</p>
+<div class="bk-seg" role="tablist">
+<button class="bk-seg__btn is-active" id="seg-login" onclick="setTab('login')">Iniciar sesión</button>
+<button class="bk-seg__btn" id="seg-signup" onclick="setTab('signup')">Crear cuenta</button>
+</div>
+<div class="bk-msg" id="msg"></div>
+<!-- LOGIN -->
+<form id="form-login" onsubmit="event.preventDefault();doLogin()">
+<div class="bk-field">
+<label for="l-email">Correo electrónico</label>
+<input autocomplete="email" class="bk-input" id="l-email" placeholder="tu@correo.com" type="email"/>
+</div>
+<div class="bk-field">
+<label for="l-pass">Contraseña</label>
+<input autocomplete="current-password" class="bk-input" id="l-pass" placeholder="••••••••" type="password"/>
+</div>
+<div class="bk-forgot"><a href="#" onclick="doForgot();return false">¿Olvidaste tu contraseña?</a></div>
+<button class="bk-submit" id="btn-login" type="submit">Continuar</button>
 
-  <!-- HERO (desktop) -->
-  <aside class="bk-hero">
-    <div class="bk-hero__top">
-      <div class="bk-hero__mark"><img src="logotipo-white.png" alt="Broquer" style="height:120px;width:auto;display:block"/></div>
-      <div class="bk-hero__nav">V 1.0 — México</div>
-    </div>
-    <div class="bk-hero__body">
-      <h1 class="bk-hero__hed">Cierra más operaciones. <em>Con menos fricción.</em></h1>
-      <p class="bk-hero__sub">Software único en el mundo. El asistente inmobiliario más inteligente de la historia, fichas técnicas automáticas, contratos automáticos, cálculo de ISR, estimaciones de valor automáticas, edición de imágenes automática y más. En un solo lugar.</p>
-      <div class="bk-hero__foot">
-        <div class="bk-hero__stat"><div class="v">10,000+</div><div class="l">Agentes activos</div></div>
-        <div class="bk-hero__stat"><div class="v">$500M</div><div class="l">En comisiones</div></div>
-        <div class="bk-hero__stat"><div class="v">10</div><div class="l">Países LATAM</div></div>
-      </div>
-    </div>
-  </aside>
 
-  <!-- FORM -->
-  <main class="bk-form-wrap">
-    <div class="bk-form">
-
-      <div class="bk-form__brand">
-        <img src="logotipo-black.png" alt="Broquer"/>
-      </div>
-
-      <h2 class="bk-form__hed" id="form-title">Bienvenido</h2>
-      <p class="bk-form__sub" id="form-sub">Inicia sesión para continuar a tu cuenta.</p>
-
-      <div class="bk-seg" role="tablist">
-        <button class="bk-seg__btn is-active" id="seg-login"  onclick="setTab('login')">Iniciar sesión</button>
-        <button class="bk-seg__btn"           id="seg-signup" onclick="setTab('signup')">Crear cuenta</button>
-      </div>
-
-      <div class="bk-msg" id="msg"></div>
-
-      <!-- LOGIN -->
-      <form id="form-login" onsubmit="event.preventDefault();doLogin()">
-        <div class="bk-field">
-          <label for="l-email">Correo electrónico</label>
-          <input class="bk-input" type="email" id="l-email" placeholder="tu@correo.com" autocomplete="email"/>
-        </div>
-        <div class="bk-field">
-          <label for="l-pass">Contraseña</label>
-          <input class="bk-input" type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password"/>
-        </div>
-        <div class="bk-forgot"><a href="#" onclick="doForgot();return false">¿Olvidaste tu contraseña?</a></div>
-        <button type="submit" class="bk-submit" id="btn-login">Continuar</button>
-
-        <div class="bk-divider">o</div>
-
-        <button type="button" class="bk-oauth" onclick="doGoogle()">
-          <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
-          Continuar con Google
-        </button>
-
-        <div class="bk-faceid">
-          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a9 9 0 01-9 9m0 0a9 9 0 01-9-9 9 9 0 0118 0z"/></svg>
+<div class="bk-faceid">
+<svg fill="none" height="14" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24" width="14"><path d="M15.75 5.25a3 3 0 013 3m3 0a9 9 0 01-9 9m0 0a9 9 0 01-9-9 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
           Face ID disponible tras el primer inicio de sesión
         </div>
-      </form>
-
-      <!-- SIGNUP -->
-      <form id="form-signup" style="display:none" onsubmit="event.preventDefault();doSignup()">
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-          <div class="bk-field" style="margin-bottom:0">
-            <label for="s-nombre">Nombre(s)</label>
-            <input class="bk-input" type="text" id="s-nombre" placeholder="Salvador" autocomplete="given-name"/>
-          </div>
-          <div class="bk-field" style="margin-bottom:0">
-            <label for="s-apellidos">Apellidos</label>
-            <input class="bk-input" type="text" id="s-apellidos" placeholder="Bolaños" autocomplete="family-name"/>
-          </div>
-        </div>
-        <div class="bk-field" style="margin-top:14px">
-          <label for="s-telefono">Teléfono</label>
-          <input class="bk-input" type="tel" id="s-telefono" placeholder="443 123 4567" autocomplete="tel"/>
-        </div>
-        <div class="bk-field">
-          <label for="s-email">Correo electrónico</label>
-          <input class="bk-input" type="email" id="s-email" placeholder="tu@correo.com" autocomplete="email"/>
-        </div>
-        <div class="bk-field">
-          <label for="s-pass">Contraseña</label>
-          <input class="bk-input" type="password" id="s-pass" placeholder="Mínimo 8 caracteres" autocomplete="new-password"/>
-        </div>
-        <div class="bk-field">
-          <label for="s-pass2">Confirmar contraseña</label>
-          <input class="bk-input" type="password" id="s-pass2" placeholder="Repite la contraseña"/>
-        </div>
-
-        <label class="bk-legal-check">
-          <input type="checkbox" id="s-legal"/>
-          <span>He leído y acepto los <a href="legal.html" target="_blank" rel="noopener">Términos</a>, el <a href="legal.html" target="_blank" rel="noopener">Contrato de suscripción</a> y el <a href="legal.html#privacidad" target="_blank" rel="noopener">Aviso de Privacidad</a> de Broquer.</span>
-        </label>
-
-        <button type="submit" class="bk-submit" id="btn-signup">Crear cuenta</button>
-
-        <button type="button" class="bk-oauth" onclick="doGoogle()" style="margin-top:10px">
-          <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
-          Registrarse con Google
-        </button>
-      </form>
-
-      <div class="bk-legal">
-        Al continuar aceptas nuestros
-        <a href="legal.html" target="_blank" rel="noopener">Términos</a> y el
-        <a href="legal.html#privacidad" target="_blank" rel="noopener">Aviso de Privacidad</a>.
-      </div>
-
-      <div class="bk-foot">Broquer 2026 — Para Sharks inmobiliarios</div>
-    </div>
-  </main>
-
+</form>
+<!-- SIGNUP -->
+<form id="form-signup" onsubmit="event.preventDefault();doSignup()" style="display:none">
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+<div class="bk-field" style="margin-bottom:0">
+<label for="s-nombre">Nombre(s)</label>
+<input autocomplete="given-name" class="bk-input" id="s-nombre" placeholder="Salvador" type="text"/>
 </div>
+<div class="bk-field" style="margin-bottom:0">
+<label for="s-apellidos">Apellidos</label>
+<input autocomplete="family-name" class="bk-input" id="s-apellidos" placeholder="Bolaños" type="text"/>
+</div>
+</div>
+<div class="bk-field" style="margin-top:14px">
+<label for="s-telefono">Teléfono</label>
+<input autocomplete="tel" class="bk-input" id="s-telefono" placeholder="443 123 4567" type="tel"/>
+</div>
+<div class="bk-field">
+<label for="s-email">Correo electrónico</label>
+<input autocomplete="email" class="bk-input" id="s-email" placeholder="tu@correo.com" type="email"/>
+</div>
+<div class="bk-field">
+<label for="s-pass">Contraseña</label>
+<input autocomplete="new-password" class="bk-input" id="s-pass" placeholder="Mínimo 8 caracteres" type="password"/>
+</div>
+<div class="bk-field">
+<label for="s-pass2">Confirmar contraseña</label>
+<input class="bk-input" id="s-pass2" placeholder="Repite la contraseña" type="password"/>
+</div>
+<label class="bk-legal-check">
+<input id="s-legal" type="checkbox"/>
+<span>He leído y acepto los <a href="legal.html" rel="noopener" target="_blank">Términos</a>, el <a href="legal.html" rel="noopener" target="_blank">Contrato de suscripción</a> y el <a href="legal.html#privacidad" rel="noopener" target="_blank">Aviso de Privacidad</a> de Broquer.</span>
+</label>
+<button class="bk-submit" id="btn-signup" type="submit">Crear cuenta</button>
 
+</form>
+<div class="bk-legal">
+        Al continuar aceptas nuestros
+        <a href="legal.html" rel="noopener" target="_blank">Términos</a> y el
+        <a href="legal.html#privacidad" rel="noopener" target="_blank">Aviso de Privacidad</a>.
+      </div>
+<div class="bk-foot">Broquer 2026 — Para Sharks inmobiliarios</div>
+</div>
+</main>
+</div>
 <script>
 /* ════════════════════════════════════════════════
    Auth logic — preserved from original (Supabase).
    ════════════════════════════════════════════════ */
 const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
-const SB_AUTH_URL = 'https://auth.broquer.app';
 const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
 
 // Llamadas a Supabase auth con manejo robusto de errores de red.
@@ -433,7 +407,7 @@ const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
 // { error: 'network', error_description: 'No hay conexión...' }.
 async function sbAuth(path, body){
   try {
-    const r = await fetch(`${SB_AUTH_URL}/auth/v1/${path}`, {
+    const r = await fetch(`${SB_URL}/auth/v1/${path}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY },
       body: JSON.stringify(body)
@@ -682,7 +656,7 @@ async function doGoogle(){
   // Supabase OAuth con PKCE. El verifier se guarda en localStorage (más robusto
   // que sessionStorage en flujos donde el navegador puede recrear contextos)
   // con marca de tiempo para limpiar verificadores viejos.
-  const redirectTo = 'https://broquer.app/login.html';
+  const redirectTo = 'https://broquer.app';
   const verifier = randomVerifier();
   try {
     localStorage.setItem('sb_pkce_verifier', verifier);
@@ -691,7 +665,7 @@ async function doGoogle(){
   // También en sessionStorage como respaldo.
   try { sessionStorage.setItem('sb_pkce_verifier', verifier); } catch(_) {}
   const challenge = await sha256Base64Url(verifier);
-  const url = new URL(`${SB_AUTH_URL}/auth/v1/authorize`);
+  const url = new URL(`${SB_URL}/auth/v1/authorize`);
   url.searchParams.set('provider', 'google');
   url.searchParams.set('redirect_to', redirectTo);
   url.searchParams.set('code_challenge', challenge);
@@ -839,7 +813,7 @@ setTimeout(() => {
       return;
     }
     try {
-      const r = await fetch(`${SB_AUTH_URL}/auth/v1/token?grant_type=pkce`, {
+      const r = await fetch(`${SB_URL}/auth/v1/token?grant_type=pkce`, {
         method:'POST',
         headers:{'Content-Type':'application/json','apikey':SB_KEY},
         body: JSON.stringify({ auth_code: oauthCode, code_verifier: verifier })
@@ -877,7 +851,7 @@ setTimeout(() => {
     const cbToken   = hashParams.get('access_token');
     const cbRefresh = hashParams.get('refresh_token');
     try {
-      const r = await fetch(`${SB_AUTH_URL}/auth/v1/user`, {
+      const r = await fetch(`${SB_URL}/auth/v1/user`, {
         headers:{ 'apikey':SB_KEY, 'Authorization':`Bearer ${cbToken}` }
       });
       if(!r.ok){
@@ -917,7 +891,7 @@ setTimeout(() => {
   const refresh = localStorage.getItem('sb_refresh');
   if(!token && refresh){
     try {
-      const r = await fetch(`${SB_AUTH_URL}/auth/v1/token?grant_type=refresh_token`, {
+      const r = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
         method:'POST',
         headers:{'Content-Type':'application/json','apikey':SB_KEY},
         body: JSON.stringify({ refresh_token: refresh })
@@ -975,6 +949,5 @@ window.addEventListener('load', () => {
   if (s && s.parentNode) { s.style.opacity = '0'; setTimeout(() => s.remove(), 400); }
 });
 </script>
-
 </body>
 </html>
