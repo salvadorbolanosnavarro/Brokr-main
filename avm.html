@@ -282,10 +282,9 @@
     .opinion-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 22px; }
     .opinion-field-label { font-size: 10px; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
     .opinion-field-value { font-size: 12px; font-weight: 600; color: var(--text); }
-    .opinion-valor-hero { background: #000; border-radius: 14px; padding: 20px 22px; color: #fff; margin-bottom: 14px; }
-    .opinion-valor-label { font-size: 10px; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; }
-    .opinion-valor-num { font-size: 32px; font-weight: 800; color: #fff; letter-spacing: -0.01em; }
-    .opinion-valor-sub { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 6px; }
+    .opinion-valor-hero { background: #000; border-radius: 10px; padding: 12px 16px; color: #fff; margin-bottom: 14px; display: inline-block; }
+    .opinion-valor-label { font-size: 9px; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 1.6px; margin-bottom: 3px; }
+    .opinion-valor-num { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -0.01em; line-height: 1.1; }
     .opinion-editable {
       width: 100%; border: 1.5px dashed rgba(15,24,41,0.2); border-radius: 10px;
       padding: 11px 13px; font-family: 'Poppins', sans-serif; font-size: 12px;
@@ -788,7 +787,7 @@ input:focus, select:focus, textarea:focus {
           const pdfResp = await fetch(`${API}/avm-pdf/${data.token}`);
           if (!pdfResp.ok) throw new Error("No se pudo obtener el PDF");
           const blob = await pdfResp.blob();
-          const filename = data.filename || "Opinion_Valor.pdf";
+          const filename = data.filename || "Estimacion_Valor.pdf";
 
           // Descarga directa con <a download>. Sin Web Share — el navegador
           // (desktop y móvil) guarda el archivo donde el usuario tenga
@@ -893,7 +892,7 @@ input:focus, select:focus, textarea:focus {
           )}
 
           <button id="btn-analizar-ia" className="btn-primary teal" onClick={analizar}>
-            Generar opinión de valor
+            Generar estimación de valor
           </button>
         </div>
       );
@@ -901,18 +900,15 @@ input:focus, select:focus, textarea:focus {
       // ── ESTADO: CARGANDO ──
       if (estado === "loading") return (
         <div className="avm-body">
-          <div className="avm-card">
-            <div className="ia-loading">
-              <div className="bk-shark-loader bk-shark-loader--col" role="status" aria-label="Cargando">
-                <svg viewBox="0 0 100 40" xmlns="http://www.w3.org/2000/svg">
-                  <path className="bk-wave" d="M0,30 Q12,22 25,30 T50,30 T75,30 T100,30"/>
-                  <path className="bk-fin"  d="M0,28 C2,12 12,18 14,28 C10,24 5,26 0,28 Z"/>
-                </svg>
-                <span className="bk-shark-loader__text">Buscando comparables</span>
-              </div>
-              <div className="ia-loading-sub" style={{ marginTop: 14 }}>Consultando Lamudi, Vivanuncios, Inmuebles24</div>
-              <div className="ia-loading-sub" style={{ marginTop: 4 }}>Esto puede tomar 20–40 segundos</div>
-            </div>
+          <div className="avm-card" style={{ display:"flex", flexDirection:"column", alignItems:"center", textAlign:"center", padding:"22px 18px" }}>
+            <video
+              src="animacion-broquer.mp4"
+              autoPlay loop muted playsInline
+              style={{ width:"100%", maxWidth:280, borderRadius:14, marginBottom:14 }}
+            />
+            <div style={{ fontSize:15, fontWeight:700, color:"var(--text)", marginBottom:6 }}>Buscando comparables</div>
+            <div className="ia-loading-sub">Consultando Lamudi, Vivanuncios, Inmuebles24</div>
+            <div className="ia-loading-sub" style={{ marginTop: 4 }}>Esto puede tomar algunos minutos</div>
           </div>
         </div>
       );
@@ -942,19 +938,15 @@ input:focus, select:focus, textarea:focus {
             <div className="opinion-page">
 
               <div className="opinion-header-bar">
-                <div className="opinion-doc-title">Opinión de Valor</div>
+                <div className="opinion-doc-title">Estimación de valor</div>
                 <div className="opinion-meta">
                   <div>{new Date().toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" })}</div>
                 </div>
               </div>
 
               <div className="opinion-valor-hero">
-                <div className="opinion-valor-label">Valor comercial estimado</div>
+                <div className="opinion-valor-label">Valor estimado</div>
                 <div className="opinion-valor-num">{fmtMXN2(resultado.valor_estimado)}</div>
-                <div className="opinion-valor-sub">
-                  Rango: {fmtMXN2(resultado.valor_minimo)} — {fmtMXN2(resultado.valor_maximo)}
-                  {resultado.valor_por_m2 > 0 && ` · ${fmtMXN2(resultado.valor_por_m2)}/m²`}
-                </div>
               </div>
 
               <div className="opinion-section">
@@ -980,15 +972,20 @@ input:focus, select:focus, textarea:focus {
                 <div className="opinion-section">
                   <div className="opinion-section-title">Comparables ({comparables.length})</div>
                   <table className="comp-tabla">
-                    <thead><tr><th>#</th><th>Descripción</th><th>Sup.</th><th>Precio</th><th>$/m²</th></tr></thead>
+                    <thead><tr><th>#</th><th>Descripción</th><th>Sup.</th><th>Precio</th><th>$/m²</th><th>Enlace</th></tr></thead>
                     <tbody>
                       {comparables.slice(0, 8).map((c, i) => (
                         <tr key={i}>
                           <td>{i + 1}</td>
-                          <td style={{ maxWidth:260, overflow:"hidden", textOverflow:"ellipsis" }}>{c.descripcion}</td>
+                          <td style={{ maxWidth:240, overflow:"hidden", textOverflow:"ellipsis" }}>{c.descripcion}</td>
                           <td>{c.superficie_m2} m²</td>
                           <td style={{ fontWeight: 700 }}>{fmtMXN2(c.precio)}</td>
                           <td style={{ color: "var(--teal-dark)", fontWeight: 700 }}>{fmtMXN2(c.precio_m2)}</td>
+                          <td>
+                            {c.url
+                              ? <a href={c.url} target="_blank" rel="noopener noreferrer" style={{ color:"var(--teal-dark)", textDecoration:"underline" }}>{c.fuente || "Ver"}</a>
+                              : <span style={{ color:"var(--gray-400)" }}>{c.fuente || "—"}</span>}
+                          </td>
                         </tr>
                       ))}
                     </tbody>

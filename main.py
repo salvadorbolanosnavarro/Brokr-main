@@ -1981,9 +1981,9 @@ async def avm_claude(req: AvmClaudeRequest):
 
     descripcion = "\n".join(partes)
 
-    system_prompt = """Eres el mejor perito valuador de bienes raíces de México, certificado por la Sociedad Hipotecaria Federal y el INDAABIN, con 30 años de experiencia valuando propiedades en todo el territorio nacional. Tu análisis es utilizado por bancos, notarías y juzgados para transacciones de millones de pesos. La vida financiera del usuario que solicita esta opinión de valor depende de la precisión de tu análisis.
+    system_prompt = """Eres el mejor perito valuador de bienes raíces de México, certificado por la Sociedad Hipotecaria Federal y el INDAABIN, con 30 años de experiencia valuando propiedades en todo el territorio nacional. Tu análisis es utilizado por bancos, notarías y juzgados para transacciones de millones de pesos. La vida financiera del usuario que solicita esta estimación de valor depende de la precisión de tu análisis.
 
-Tu misión: proporcionar la opinión de valor más precisa, fundamentada y útil posible basándote en:
+Tu misión: proporcionar la estimación de valor más precisa, fundamentada y útil posible basándote en:
 1. Tu conocimiento profundo del mercado inmobiliario mexicano por región, ciudad y colonia
 2. Tendencias y precios actuales del mercado (hasta tu fecha de corte de conocimiento)
 3. Factores macroeconómicos: inflación, tasas de interés, INPP, INPC
@@ -2009,10 +2009,10 @@ IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido (sin texto antes ni 
   "recomendaciones": ["<recomendación 1>", "<recomendación 2>", ...],
   "mercado_actual": "<descripción del mercado actual en esa zona>",
   "metodologia": "<metodología aplicada y justificación>",
-  "advertencias": "<advertencias o limitaciones de esta opinión>"
+  "advertencias": "<advertencias o limitaciones de esta estimación>"
 }"""
 
-    user_msg = f"""Por favor valúa la siguiente propiedad y proporciona tu opinión de valor profesional:
+    user_msg = f"""Por favor valúa la siguiente propiedad y proporciona tu estimación de valor profesional:
 
 {descripcion}
 
@@ -2485,7 +2485,7 @@ async def _claude_extract_and_value(req: AvmWebSearchRequest, tipo_label: str, e
 
     system_prompt = f"""Eres un analista valuador inmobiliario mexicano. Tu trabajo NO es inventar comparables: debes usar únicamente la evidencia web entregada por el servidor.
 
-Objetivo: limpiar, clasificar y calcular una opinión de valor por método comparativo de mercado.
+Objetivo: limpiar, clasificar y calcular una estimación de valor por método comparativo de mercado.
 
 Reglas duras:
 1. No inventes precios, superficies, colonias ni URLs.
@@ -2497,7 +2497,7 @@ Reglas duras:
 7. Aplica factor negociación de -5% a precios de oferta en venta. En renta usa -3% si aplica.
 8. Penaliza comparables sospechosos: anuncio viejo, datos incompletos, precio/m² extremo, ubicación poco clara, submercado distinto.
 9. Si hay menos de 3 comparables útiles, entrega rango conservador y nivel_confianza='baja'.
-10. Esta salida es una opinión de valor, no avalúo certificado.
+10. Esta salida es una estimación de valor, no avalúo certificado.
 
 Responde ÚNICAMENTE JSON válido con esta estructura:
 {{
@@ -2654,15 +2654,24 @@ async def generar_avm_pdf(p: dict):
             return str(n)
 
     # Comparables HTML
+    def _esc(s):
+        return (str(s) if s is not None else "").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace('"',"&quot;")
+
     comps_html = ""
     for c in resultado.get("comparables", []):
+        fuente = c.get("fuente","—") or "—"
+        url = c.get("url","") or ""
+        src_cell = (
+            f'<a href="{_esc(url)}" target="_blank" rel="noopener" style="color:#1A1814;text-decoration:underline">{_esc(fuente)}</a>'
+            if url else _esc(fuente)
+        )
         comps_html += f"""
         <tr>
-          <td>{c.get('descripcion','—')}</td>
-          <td class="num">{c.get('superficie_m2','—')} m²</td>
+          <td>{_esc(c.get('descripcion','—'))}</td>
+          <td class="num">{_esc(c.get('superficie_m2','—'))} m²</td>
           <td class="num">{fmt_mx(c.get('precio',0))}</td>
           <td class="num">{fmt_mx(c.get('precio_m2',0))}/m²</td>
-          <td class="src">{c.get('fuente','—')}</td>
+          <td class="src">{src_cell}</td>
         </tr>"""
 
     # Factores HTML
@@ -2703,14 +2712,13 @@ async def generar_avm_pdf(p: dict):
   .page {{ padding: 56px 60px 44px; max-width: 760px; margin: 0 auto; }}
 
   .doc-head {{ display:flex; justify-content:space-between; align-items:baseline; padding-bottom:18px; border-bottom:1px solid #E8E2D2; margin-bottom:32px; }}
-  .doc-kicker {{ font-size:9px; color:#7A7065; text-transform:uppercase; letter-spacing:1.8px; font-weight:600; }}
+  .doc-kicker {{ font-size:13px; color:#1A1814; font-weight:700; letter-spacing:-0.005em; }}
   .doc-date {{ font-size:10px; color:#7A7065; letter-spacing:0.04em; }}
 
   .valor-bloque {{ margin-bottom: 32px; }}
-  .valor-card {{ background:#000; color:#fff; border-radius:14px; padding:26px 28px 24px; margin-bottom:18px; -webkit-print-color-adjust:exact; print-color-adjust:exact; }}
-  .valor-lbl {{ font-size: 9px; color: rgba(255,255,255,.55); text-transform: uppercase; letter-spacing: 1.8px; margin-bottom: 10px; font-weight:600; }}
-  .valor-num {{ font-family:'Fraunces',serif; font-size: 52px; font-weight: 500; color: #fff; line-height: 1; margin-bottom: 10px; letter-spacing:-0.02em; }}
-  .valor-rango {{ font-size: 12px; color: rgba(255,255,255,.7); letter-spacing:0.005em; }}
+  .valor-card {{ display:inline-block; background:#000; color:#fff; border-radius:10px; padding:14px 20px 12px; margin-bottom:22px; -webkit-print-color-adjust:exact; print-color-adjust:exact; }}
+  .valor-lbl {{ font-size: 8.5px; color: rgba(255,255,255,.6); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; font-weight:600; }}
+  .valor-num {{ font-family:'Fraunces',serif; font-size: 28px; font-weight: 500; color: #fff; line-height: 1.05; letter-spacing:-0.02em; }}
   .valor-meta {{ display: grid; grid-template-columns:repeat(4,1fr); gap: 24px; padding-top:6px; }}
   .meta-item .meta-lbl {{ font-size: 8.5px; color: #7A7065; text-transform: uppercase; letter-spacing: 1.4px; margin-bottom: 5px; font-weight:600; }}
   .meta-item .meta-val {{ font-family:'Fraunces',serif; font-size: 13px; font-weight: 500; color: #1A1814; letter-spacing:-0.005em; }}
@@ -2726,22 +2734,21 @@ async def generar_avm_pdf(p: dict):
   td.g {{ color: #7A7065; font-size: 10.5px; }}
   tr:last-child td {{ border-bottom: none; }}
 
-  .footer {{ margin-top: 48px; padding-top: 18px; border-top: 1px solid #E8E2D2; display: flex; justify-content: space-between; font-size: 9px; color: #7A7065; letter-spacing:1.5px; text-transform:uppercase; font-weight:500; }}
+  .footer {{ margin-top: 48px; padding-top: 18px; border-top: 1px solid #E8E2D2; text-align:center; font-size: 9px; color: #7A7065; letter-spacing:1.5px; text-transform:uppercase; font-weight:500; }}
 </style>
 </head>
 <body>
 <div class="page">
 
   <div class="doc-head">
-    <div class="doc-kicker">Broquer · Opinión de valor</div>
+    <div class="doc-kicker">Estimación de valor</div>
     <div class="doc-date">{fecha_hoy}</div>
   </div>
 
   <div class="valor-bloque">
     <div class="valor-card">
-      <div class="valor-lbl">Opinión de valor comercial</div>
+      <div class="valor-lbl">Valor estimado</div>
       <div class="valor-num">{fmt_mx(resultado.get('valor_estimado',0))}</div>
-      <div class="valor-rango">Rango estimado: {fmt_mx(resultado.get('valor_minimo',0))} — {fmt_mx(resultado.get('valor_maximo',0))}</div>
     </div>
     <div class="valor-meta">
       <div class="meta-item">
@@ -2785,8 +2792,7 @@ async def generar_avm_pdf(p: dict):
   </div>
 
   <div class="footer">
-    <span>Broquer · Inteligencia inmobiliaria</span>
-    <span>{fecha_hoy}</span>
+    Powered by Broquer
   </div>
 
 </div>
@@ -2806,7 +2812,7 @@ async def generar_avm_pdf(p: dict):
 
     token = str(_uuid.uuid4()).replace("-", "")[:16]
     colonia_slug = resultado.get("colonia", "propiedad").replace(" ", "_")[:20]
-    filename = f"Opinion_Valor_{colonia_slug}_{time.strftime('%Y%m%d')}.pdf"
+    filename = f"Estimacion_Valor_{colonia_slug}_{time.strftime('%Y%m%d')}.pdf"
     _pdf_store[token] = (pdf_bytes, filename)
     if len(_pdf_store) > 50:
         oldest = list(_pdf_store.keys())[0]
