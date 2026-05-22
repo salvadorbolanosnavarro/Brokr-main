@@ -681,7 +681,7 @@ async function doGoogle(){
   // Supabase OAuth con PKCE. El verifier se guarda en localStorage (más robusto
   // que sessionStorage en flujos donde el navegador puede recrear contextos)
   // con marca de tiempo para limpiar verificadores viejos.
-  const redirectTo = location.origin + location.pathname;
+  const redirectTo = 'https://broquer.app';
   const verifier = randomVerifier();
   try {
     localStorage.setItem('sb_pkce_verifier', verifier);
