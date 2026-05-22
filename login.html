@@ -235,6 +235,21 @@ body { overflow-y: auto; }
 .bk-msg.is-err { display: block; background: var(--danger-soft); color: var(--danger); border-color: rgba(184,75,63,.20); }
 .bk-msg.is-ok  { display: block; background: var(--success-soft); color: var(--success); border-color: rgba(31,107,74,.20); }
 
+.bk-legal-check {
+  display: flex; align-items: flex-start; gap: 10px;
+  margin: 14px 0 6px;
+  font-size: 12px; color: var(--mute); line-height: 1.5;
+  cursor: pointer;
+}
+.bk-legal-check input[type=checkbox] {
+  width: 16px; height: 16px; margin-top: 2px;
+  accent-color: var(--ink); cursor: pointer; flex-shrink: 0;
+}
+.bk-legal-check a {
+  color: var(--ink); font-weight: 600;
+  text-decoration: underline; text-underline-offset: 2px;
+}
+
 .bk-legal {
   margin-top: 18px;
   font-size: 12px;
@@ -379,6 +394,12 @@ body { overflow-y: auto; }
           <label for="s-pass2">Confirmar contraseña</label>
           <input class="bk-input" type="password" id="s-pass2" placeholder="Repite la contraseña"/>
         </div>
+
+        <label class="bk-legal-check">
+          <input type="checkbox" id="s-legal"/>
+          <span>He leído y acepto los <a href="legal.html" target="_blank" rel="noopener">Términos</a>, el <a href="legal.html" target="_blank" rel="noopener">Contrato de suscripción</a> y el <a href="legal.html#privacidad" target="_blank" rel="noopener">Aviso de Privacidad</a> de Broquer®.</span>
+        </label>
+
         <button type="submit" class="bk-submit" id="btn-signup">Crear cuenta</button>
 
         <button type="button" class="bk-oauth" onclick="doGoogle()" style="margin-top:10px">
@@ -461,6 +482,47 @@ async function doLogin(){
   await checkProfileAndRedirect(data.access_token, data.user);
 }
 
+// Guarda nombre + teléfono en la tabla `usuarios`. Devuelve true si OK.
+// Se usa tras signup con token (caso ideal) y tras el callback de email
+// confirmation (caso fallback) para no pedir los mismos datos dos veces.
+async function persistProfile(token, userId, nombreCompleto, telefono){
+  if(!token || !userId) return false;
+  try {
+    // PATCH primero (la fila la suele crear el trigger SQL de Supabase)
+    let r = await fetch(`${SB_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({ nombre: nombreCompleto, telefono }),
+    });
+    if(r.ok) return true;
+    // Fallback: upsert si la fila aún no existe
+    let raw = localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}';
+    if (raw === 'undefined' || raw === 'null') raw = '{}';
+    let user = {};
+    try { user = JSON.parse(raw) || {}; } catch(_) {}
+    const email = user.email || '';
+    r = await fetch(`${SB_URL}/rest/v1/usuarios`, {
+      method: 'POST',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates,return=minimal',
+      },
+      body: JSON.stringify({ id: userId, email, nombre: nombreCompleto, telefono }),
+    });
+    return r.ok;
+  } catch(e){
+    console.error('persistProfile failed', e);
+    return false;
+  }
+}
+
 async function doSignup(){
   const nombre    = document.getElementById('s-nombre').value.trim();
   const apellidos = document.getElementById('s-apellidos').value.trim();
@@ -468,23 +530,43 @@ async function doSignup(){
   const email     = document.getElementById('s-email').value.trim();
   const pass      = document.getElementById('s-pass').value;
   const pass2     = document.getElementById('s-pass2').value;
-  if(!nombre||!apellidos||!email||!pass||!pass2){ showMsg('Completa todos los campos'); return; }
+  const legal     = document.getElementById('s-legal').checked;
+  if(!nombre||!apellidos||!telefono||!email||!pass||!pass2){ showMsg('Completa todos los campos'); return; }
   if(pass !== pass2){ showMsg('Las contraseñas no coinciden'); return; }
   if(pass.length < 8){ showMsg('La contraseña debe tener al menos 8 caracteres'); return; }
+  if(!legal){ showMsg('Debes aceptar los Términos y el Aviso de Privacidad para continuar.'); return; }
+
   setLoading('btn-signup', true);
   const data = await sbAuth('signup', { email, password: pass });
   setLoading('btn-signup', false);
   if(data.error){ showMsg(data.error_description || data.error); return; }
-  sessionStorage.setItem('reg_nombre', nombre + ' ' + apellidos);
-  sessionStorage.setItem('reg_telefono', telefono);
-  if(data.id || data.user?.id){
-    sessionStorage.setItem('sb_token', data.access_token || '');
+
+  const nombreCompleto = `${nombre} ${apellidos}`.trim();
+  const userId = data.user?.id || data.id || null;
+  const token  = data.access_token || data.session?.access_token || '';
+
+  // Caso ideal: Supabase devolvió token (sin email confirmation pendiente).
+  // Guardamos perfil de inmediato y entramos directo a la app, sin segunda pantalla.
+  if(token && userId){
+    localStorage.setItem('sb_token', token);
+    if(data.refresh_token) localStorage.setItem('sb_refresh', data.refresh_token);
+    localStorage.setItem('sb_user', JSON.stringify(data.user || data));
+    sessionStorage.setItem('sb_token', token);
     sessionStorage.setItem('sb_user', JSON.stringify(data.user || data));
-    showMsg('Cuenta creada. Completando tu perfil…', 'ok');
-    setTimeout(() => { window.location.href = 'registro.html'; }, 1200);
-  } else {
-    showMsg('Te enviamos un correo de confirmación. Una vez confirmado, inicia sesión para continuar.', 'ok');
+    localStorage.setItem('sesion_activa', 'true');
+    showMsg('Cuenta creada. Entrando…', 'ok');
+    await persistProfile(token, userId, nombreCompleto, telefono);
+    window.location.href = 'index.html';
+    return;
   }
+
+  // Caso email-confirmation: guardamos los datos para completar el perfil
+  // automáticamente cuando el usuario regrese desde el correo. Ya no
+  // necesita rellenar nada más al confirmar.
+  try {
+    localStorage.setItem('pending_profile', JSON.stringify({ nombre: nombreCompleto, telefono }));
+  } catch(_) {}
+  showMsg('Te enviamos un correo de confirmación. Al confirmar entrarás directo a Broquer.', 'ok');
 }
 
 async function sha256Base64Url(input){
@@ -532,24 +614,53 @@ async function doForgot(){
 }
 
 async function checkProfileAndRedirect(token, user){
+  // Recupera nombre/teléfono pendientes guardados en doSignup (caso email-
+  // confirmation). Si existen, los aplica para evitar la 2ª pantalla.
+  function _pendingProfile(){
+    try {
+      const raw = localStorage.getItem('pending_profile');
+      if(!raw) return null;
+      const p = JSON.parse(raw);
+      if(p && p.nombre) return p;
+    } catch(_) {}
+    return null;
+  }
+
+  async function _completarConPending(){
+    const pend = _pendingProfile();
+    if(!pend) return false;
+    const ok = await persistProfile(token, user.id, pend.nombre, pend.telefono || '');
+    if(ok){
+      try { localStorage.removeItem('pending_profile'); } catch(_) {}
+    }
+    return ok;
+  }
+
   try {
     const r = await fetch(`${SB_URL}/rest/v1/usuarios?id=eq.${user.id}&select=nombre,telefono`, {
       headers:{ 'apikey':SB_KEY, 'Authorization':`Bearer ${token}` }
     });
     if (!r.ok) {
-      // Si la sesión es válida (200/204 del token) pero el query falló, asumimos
-      // que necesitamos completar perfil. No quemamos la sesión.
+      // Sesión válida pero el query falló: intenta completar con pending y
+      // sólo manda a registro.html si no hay datos guardados.
+      if (await _completarConPending()) { window.location.href = 'index.html'; return; }
       window.location.href = 'registro.html';
       return;
     }
     const data = await r.json();
-    if (!Array.isArray(data) || !data.length || !data[0].nombre) {
+    const tieneNombre = Array.isArray(data) && data.length && data[0].nombre;
+    if (!tieneNombre) {
+      // Caso típico tras email-confirmation: completamos perfil con los datos
+      // que el usuario ya capturó en el signup. No hay segunda pantalla.
+      if (await _completarConPending()) { window.location.href = 'index.html'; return; }
+      // OAuth nuevo o usuario sin pending: registro.html como fallback.
       window.location.href = 'registro.html';
     } else {
       window.location.href = 'index.html';
     }
   } catch (e) {
     console.error('checkProfileAndRedirect error', e);
+    if (await _completarConPending()) { window.location.href = 'index.html'; return; }
     window.location.href = 'registro.html';
   }
 }
