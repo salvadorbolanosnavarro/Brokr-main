@@ -2193,34 +2193,64 @@
 
   async function ensureSubscriptionOrGate(profile) {
     if (profile?.isAdmin || profile?.profile?.plan === 'admin' || profile?.profile?.rol === 'equipo' || profile?.profile?.plan === 'equipo') return true;
-    const tok = getToken();
 
     // Si el usuario regresa de Stripe con ?suscripcion=ok o ?sub=ok,
     // hacer polling hasta 15 seg mientras el webhook llega a Supabase
     const params = new URLSearchParams(window.location.search);
     const justPaid = params.get('suscripcion') === 'ok' || params.get('sub') === 'ok';
 
-    const maxAttempts = justPaid ? 10 : 1;
+    const maxAttempts = justPaid ? 10 : 3;
     const delay = ms => new Promise(res => setTimeout(res, ms));
 
+    // Solo mostramos el paywall cuando el backend RESPONDE OK con active:false.
+    // Cualquier otro escenario (401 sin poder refrescar, 5xx, red caída) NO debe
+    // gatillar el gate, porque un cliente que paga jamás debe verlo por un blip.
+    let confirmedInactive = false;
+    let authExpired = false;
+
     for (let i = 0; i < maxAttempts; i++) {
+      const tok = getToken();
       try {
-        const r = await fetch(API_BASE + '/subscription/status', { headers: { Authorization: 'Bearer ' + tok } });
-        const d = await r.json().catch(() => ({}));
-        if (r.ok && d.active) {
-          // Limpiar parámetro de la URL sin recargar
-          if (justPaid) {
-            const clean = window.location.pathname;
-            window.history.replaceState({}, '', clean);
+        let r = await fetch(API_BASE + '/subscription/status', { headers: { Authorization: 'Bearer ' + tok } });
+
+        // Token de acceso expirado tras inactividad: refrescar y reintentar UNA vez.
+        if (r.status === 401) {
+          const newTok = await tryRefreshToken();
+          if (newTok) {
+            r = await fetch(API_BASE + '/subscription/status', { headers: { Authorization: 'Bearer ' + newTok } });
+          } else {
+            // El refresh token también murió → sesión inválida, no es un problema de plan.
+            authExpired = true;
+            break;
           }
-          return true;
         }
-      } catch (_) { /* continuar intentando */ }
+
+        if (r.ok) {
+          const d = await r.json().catch(() => ({}));
+          if (d.active) {
+            if (justPaid) {
+              const clean = window.location.pathname;
+              window.history.replaceState({}, '', clean);
+            }
+            return true;
+          }
+          confirmedInactive = true;
+        }
+        // 5xx u otros: reintentar silenciosamente.
+      } catch (_) { /* red intermitente — reintentar */ }
       if (i < maxAttempts - 1) await delay(1500);
     }
 
-    renderSubscriptionGate(justPaid ? 'Tu pago fue recibido. Si esto tarda más de un minuto, recarga la página.' : '');
-    return false;
+    if (authExpired) { location.href = 'login.html'; return false; }
+
+    if (confirmedInactive) {
+      renderSubscriptionGate(justPaid ? 'Tu pago fue recibido. Si esto tarda más de un minuto, recarga la página.' : '');
+      return false;
+    }
+
+    // Nunca pudimos confirmar inactividad → fail-open. El backend ya valida la
+    // suscripción en cada endpoint real, así que esto no abre acceso indebido.
+    return true;
   }
 
   async function boot() {
