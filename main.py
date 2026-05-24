@@ -12,8 +12,14 @@ import io
 import json
 import concurrent.futures
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from pathlib import Path
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
 
 # Pillow
 try:
@@ -74,6 +80,11 @@ SUPABASE_KEY      = os.environ.get("SUPABASE_ANON_KEY", "")
 FB_APP_ID     = os.environ.get("FB_APP_ID", "")
 FB_APP_SECRET = os.environ.get("FB_APP_SECRET", "")
 FRONTEND_URL  = os.environ.get("FRONTEND_URL", "https://app.navarroai.com.mx")
+# Banxico SIE — INPC + UDIS para calculadora ISR
+BANXICO_TOKEN     = os.environ.get("BANXICO_TOKEN", "")
+BANXICO_BASE      = "https://www.banxico.org.mx/SieAPIRest/service/v1/series"
+BANXICO_SERIE_UDIS = os.environ.get("BANXICO_SERIE_UDIS", "SP68257")  # Valor de UDIS (diaria)
+BANXICO_SERIE_INPC = os.environ.get("BANXICO_SERIE_INPC", "SP74625")  # INPC mensual base 2Q-jul-2018=100
 # service_role key — bypasea RLS. Solo para operaciones del backend en nombre
 # del usuario, DESPUÉS de validar su JWT con get_user_id_from_token().
 # NUNCA expongas esta variable al frontend.
@@ -119,6 +130,111 @@ def root():
 @app.get("/ping")
 def ping():
     return {"ok": True}
+
+# ────────────────────────────────────────────
+# BANXICO SIE — INPC mensual + UDIS diaria
+# Series: SP74625 (INPC base 2Q-jul-2018=100), SP68257 (UDIS)
+# Token gratuito: banxico.org.mx/SieAPIRest
+# Cache: meses/fechas pasadas 30 días; corrientes 6h
+# ────────────────────────────────────────────
+async def _banxico_fetch(serie: str, fecha_ini: str = None, fecha_fin: str = None) -> list:
+    """
+    Consulta una serie de Banxico SIE.
+    Fechas en formato YYYY-MM-DD (formato esperado por Banxico SIE).
+    Si no se pasan fechas, usa /datos/oportuno (último valor publicado).
+    Devuelve lista de {fecha: 'DD/MM/YYYY', dato: 'valor'}.
+    """
+    if not BANXICO_TOKEN:
+        raise HTTPException(status_code=503, detail="BANXICO_TOKEN no configurado en el backend")
+    if fecha_ini and fecha_fin:
+        url = f"{BANXICO_BASE}/{serie}/datos/{fecha_ini}/{fecha_fin}"
+    else:
+        url = f"{BANXICO_BASE}/{serie}/datos/oportuno"
+    try:
+        async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
+            r = await client.get(url, params={"token": BANXICO_TOKEN},
+                                 headers={"Accept": "application/json"})
+            if r.status_code in (401, 403):
+                raise HTTPException(status_code=502, detail="Token Banxico rechazado")
+            if r.status_code == 400:
+                raise HTTPException(status_code=400, detail=f"Banxico rechazó request: {r.text[:200]}")
+            if r.status_code != 200:
+                raise HTTPException(status_code=502, detail=f"Banxico devolvió HTTP {r.status_code}")
+            data = r.json()
+    except HTTPException:
+        raise
+    except (httpx.HTTPError, ValueError) as e:
+        raise HTTPException(status_code=502, detail=f"Error consultando Banxico: {e}")
+    series = (data.get("bmx") or {}).get("series") or []
+    if not series:
+        return []
+    datos = series[0].get("datos") or []
+    # Filtra "N/E" (no existe ese día — feriados/no publicado)
+    return [d for d in datos if d.get("dato") and d["dato"] != "N/E"]
+
+@app.get("/api/inpc/{anio}/{mes}")
+async def api_inpc(anio: int, mes: int):
+    """
+    INPC mensual de Banxico SIE (serie SP74625, base 2Q jul 2018 = 100).
+    Devuelve {anio, mes, valor, fecha_publicacion, fuente}.
+    """
+    if not (1969 <= anio <= 2099):
+        raise HTTPException(status_code=400, detail="Año fuera de rango (1969-2099)")
+    if not (1 <= mes <= 12):
+        raise HTTPException(status_code=400, detail="Mes debe ser 1-12")
+    key = f"inpc:{anio}-{mes:02d}"
+    cached = cache_get(key)
+    if cached:
+        return cached
+    # Banxico requiere fechas YYYY-MM-DD
+    if mes == 12:
+        last_day = 31
+    else:
+        last_day = (date(anio, mes + 1, 1) - timedelta(days=1)).day
+    fecha_ini = f"{anio}-{mes:02d}-01"
+    fecha_fin = f"{anio}-{mes:02d}-{last_day:02d}"
+    datos = await _banxico_fetch(BANXICO_SERIE_INPC, fecha_ini, fecha_fin)
+    if not datos:
+        raise HTTPException(status_code=404, detail=f"INPC no publicado para {anio}-{mes:02d}")
+    valor = float(str(datos[-1]["dato"]).replace(",", ""))
+    fecha_pub = datos[-1]["fecha"]
+    result = {"anio": anio, "mes": mes, "valor": valor,
+              "fecha_publicacion": fecha_pub, "fuente": "banxico_sie"}
+    now = datetime.now()
+    is_past = (anio < now.year) or (anio == now.year and mes < now.month)
+    cache_set(key, result, ttl=30 * 86400 if is_past else 6 * 3600)
+    return result
+
+@app.get("/api/udis/{fecha}")
+async def api_udis(fecha: str):
+    """
+    Valor de UDIS de Banxico SIE (serie SP68257) para una fecha específica.
+    fecha en formato YYYY-MM-DD. Devuelve {fecha, valor, fecha_publicacion, fuente}.
+    Si la fecha es muy reciente y aún no publicada, devuelve el último valor disponible.
+    """
+    try:
+        fecha_obj = datetime.strptime(fecha, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Fecha debe ser YYYY-MM-DD")
+    key = f"udis:{fecha}"
+    cached = cache_get(key)
+    if cached:
+        return cached
+    datos = await _banxico_fetch(BANXICO_SERIE_UDIS, fecha, fecha)
+    if not datos:
+        # Fallback: rango de 14 días hacia atrás (UDIS se publican diariamente
+        # pero en feriados raros puede haber gaps)
+        fecha_ini = (fecha_obj - timedelta(days=14)).isoformat()
+        datos = await _banxico_fetch(BANXICO_SERIE_UDIS, fecha_ini, fecha)
+    if not datos:
+        raise HTTPException(status_code=404, detail=f"UDIS no publicadas para {fecha}")
+    valor = float(str(datos[-1]["dato"]).replace(",", ""))
+    fecha_pub = datos[-1]["fecha"]
+    result = {"fecha": fecha, "valor": valor,
+              "fecha_publicacion": fecha_pub, "fuente": "banxico_sie"}
+    is_past = fecha_obj < datetime.now().date()
+    cache_set(key, result, ttl=7 * 86400 if is_past else 12 * 3600)
+    return result
 
 # ────────────────────────────────────────────
 # CONFIG — EB API KEY POR USUARIO (Supabase)
