@@ -100,6 +100,31 @@ input{font-family:inherit}
 .adm-sec.full{grid-column:1/-1}
 .adm-sec__title{font-family:var(--font-mono);font-size:10px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:var(--mute-2);margin-bottom:14px}
 
+/* ── Uso y costos IA ─────────────────────── */
+.adm-sec__head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.adm-sec__head .adm-sec__title{margin-bottom:0}
+.adm-range{display:inline-flex;background:var(--paper-2);border:1px solid var(--line);border-radius:99px;padding:3px}
+.adm-range__btn{padding:5px 12px;border-radius:99px;font-size:11px;font-weight:600;color:var(--mute);letter-spacing:-0.005em;background:transparent}
+.adm-range__btn:hover{color:var(--ink)}
+.adm-range__btn.is-on{background:var(--ink);color:var(--paper)}
+.adm-uso-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.adm-ust{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:12px}
+.adm-ust__v{font-family:var(--font-display);font-size:20px;font-weight:700;letter-spacing:-0.02em;color:var(--ink);line-height:1.05}
+.adm-ust__l{font-size:10px;color:var(--mute);margin-top:4px;letter-spacing:0.04em;text-transform:uppercase}
+.adm-uso-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:880px){.adm-uso-cols{grid-template-columns:1fr}}
+.adm-uso-sub{font-family:var(--font-mono);font-size:10px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:var(--mute-2);margin:0 0 8px 2px}
+.adm-uso-list{display:flex;flex-direction:column;gap:4px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:8px;min-height:80px}
+.adm-uso-empty{padding:16px 10px;text-align:center;color:var(--mute);font-size:12px}
+.adm-bar{position:relative;padding:8px 10px;border-radius:6px;overflow:hidden}
+.adm-bar::before{content:'';position:absolute;inset:0 auto 0 0;width:var(--w,0%);background:var(--paper-2);border-radius:6px;z-index:0;transition:width .4s ease}
+.adm-bar > *{position:relative;z-index:1}
+.adm-bar__top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.adm-bar__name{font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-0.005em}
+.adm-bar__val{color:var(--mute);font-family:var(--font-mono);font-size:11px;flex-shrink:0}
+.adm-bar__meta{font-size:10px;color:var(--mute-2);margin-top:2px;letter-spacing:0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adm-uso-foot{font-size:10px;color:var(--mute-2);margin-top:10px;font-family:var(--font-mono);letter-spacing:0.04em;text-align:center}
+
 /* Rol selector — 3 botones */
 .adm-rolgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .adm-roloption{padding:14px 12px;border-radius:var(--r);border:1.5px solid var(--line-2);background:var(--paper);cursor:pointer;text-align:left;transition:all .15s ease}
@@ -273,6 +298,44 @@ input{font-family:inherit}
           </div>
         </div>
 
+        <div class="adm-sec full" id="uso-sec">
+          <div class="adm-sec__head">
+            <div class="adm-sec__title">Uso y costos IA</div>
+            <div class="adm-range" id="uso-range" role="tablist">
+              <button class="adm-range__btn" data-d="7"  onclick="setUsoRange(7)">7 días</button>
+              <button class="adm-range__btn is-on" data-d="30" onclick="setUsoRange(30)">30 días</button>
+              <button class="adm-range__btn" data-d="90" onclick="setUsoRange(90)">90 días</button>
+            </div>
+          </div>
+
+          <div class="adm-uso-stats">
+            <div class="adm-ust">
+              <div class="adm-ust__v" id="uso-costo">—</div>
+              <div class="adm-ust__l">Costo IA (USD)</div>
+            </div>
+            <div class="adm-ust">
+              <div class="adm-ust__v" id="uso-tiempo">—</div>
+              <div class="adm-ust__l">Tiempo activo</div>
+            </div>
+            <div class="adm-ust">
+              <div class="adm-ust__v" id="uso-llamadas">—</div>
+              <div class="adm-ust__l">Llamadas IA</div>
+            </div>
+          </div>
+
+          <div class="adm-uso-cols">
+            <div>
+              <div class="adm-uso-sub">Tiempo por módulo</div>
+              <div class="adm-uso-list" id="uso-modulos"><div class="adm-uso-empty">Selecciona un usuario.</div></div>
+            </div>
+            <div>
+              <div class="adm-uso-sub">Herramientas más usadas</div>
+              <div class="adm-uso-list" id="uso-herramientas"><div class="adm-uso-empty">Selecciona un usuario.</div></div>
+            </div>
+          </div>
+          <div class="adm-uso-foot">Costos calculados con tarifas públicas por proveedor · USD aproximado</div>
+        </div>
+
         <div class="adm-sec full">
           <div class="adm-sec__title">Información del usuario</div>
           <div class="adm-info">
@@ -344,6 +407,16 @@ let selId   = null;
 let draft   = null; // edición pendiente del usuario seleccionado
 let _polling = null;
 let _lastIds = new Set();
+let _usoRangeDias = 30;
+let _usoReqId = 0;  // race-guard: ignora respuestas de selecciones viejas
+
+const MOD_LBL = {
+  home:'Inicio', props:'Tus Inmuebles', contactos:'Contactos', contratos:'Contratos',
+  avm:'AVM', valor:'Valor web', ficha:'Ficha EB', 'ficha-manual':'Ficha técnica',
+  isr:'ISR', 'image-cleaner':'Editor imágenes', 'facebook-ads':'Facebook Ads',
+  guia:'Ayuda', 'solicitud-arr':'Solicitudes arrend.', admin:'Admin',
+  blog:'Blog', verificador:'Verificador', chat:'Asistente Shaark', desconocido:'Desconocido'
+};
 
 /* ── Token & auth ─────────────────────────── */
 function getToken(){
@@ -516,6 +589,7 @@ function selectUser(uid){
   }
 
   renderDetail(u);
+  loadUsoCostos(uid, _usoRangeDias);
 }
 
 function renderDetail(u){
@@ -657,6 +731,116 @@ async function saveChanges(){
     saveBtn.disabled = false;
     saveBtn.textContent = 'Guardar cambios';
   }
+}
+
+/* ── Uso y costos IA ──────────────────────── */
+function _fmtSeg(s){
+  const n = Math.max(0, Math.floor(s||0));
+  if(n < 60) return n + ' s';
+  if(n < 3600) return Math.round(n/60) + ' min';
+  const h = Math.floor(n/3600);
+  const m = Math.round((n%3600)/60);
+  return m ? (h + ' h ' + m + ' min') : (h + ' h');
+}
+function _fmtUsd(n){
+  const x = Number(n||0);
+  if(!isFinite(x) || x === 0) return '$0.00';
+  if(x < 0.01) return '$' + x.toFixed(4);
+  if(x < 1)    return '$' + x.toFixed(3);
+  return '$' + x.toFixed(2);
+}
+function _fmtNum(n){ return Number(n||0).toLocaleString('es-MX'); }
+
+async function loadUsoCostos(uid, dias){
+  const $costo  = document.getElementById('uso-costo');
+  const $tiempo = document.getElementById('uso-tiempo');
+  const $llam   = document.getElementById('uso-llamadas');
+  const $mod    = document.getElementById('uso-modulos');
+  const $her    = document.getElementById('uso-herramientas');
+  if($costo)  $costo.textContent  = '—';
+  if($tiempo) $tiempo.textContent = '—';
+  if($llam)   $llam.textContent   = '—';
+  if($mod)    $mod.innerHTML = '<div class="adm-uso-empty">Cargando…</div>';
+  if($her)    $her.innerHTML = '<div class="adm-uso-empty">Cargando…</div>';
+
+  const myReq = ++_usoReqId;
+  try{
+    const r = await fetch(API + '/admin/user/' + encodeURIComponent(uid) + '/uso?dias=' + dias, {
+      headers:{ Authorization:'Bearer ' + token }
+    });
+    if(!r.ok){
+      if(r.status === 401){
+        const ok = await tryRefreshToken();
+        if(ok) return loadUsoCostos(uid, dias);
+      }
+      throw new Error('Error ' + r.status);
+    }
+    const d = await r.json();
+    if(myReq !== _usoReqId || uid !== selId) return; // selección cambió
+    renderUsoCostos(d);
+  } catch(e){
+    if(myReq !== _usoReqId) return;
+    if($mod) $mod.innerHTML = '<div class="adm-uso-empty">No se pudo cargar.</div>';
+    if($her) $her.innerHTML = '';
+  }
+}
+
+function renderUsoCostos(d){
+  document.getElementById('uso-costo').textContent    = _fmtUsd(d.costo_total_usd);
+  document.getElementById('uso-tiempo').textContent   = _fmtSeg(d.tiempo_total_seg);
+  document.getElementById('uso-llamadas').textContent = _fmtNum(d.llamadas_total);
+
+  const $mod = document.getElementById('uso-modulos');
+  const mods = d.por_modulo || [];
+  if(!mods.length){
+    $mod.innerHTML = '<div class="adm-uso-empty">Aún sin actividad en este rango.</div>';
+  } else {
+    const maxSeg = Math.max.apply(null, mods.map(m => m.segundos || 0).concat([1]));
+    $mod.innerHTML = mods.map(m => {
+      const pct = Math.min(100, Math.round(((m.segundos||0)/maxSeg) * 100));
+      const lbl = MOD_LBL[m.modulo] || m.modulo;
+      return '<div class="adm-bar" style="--w:' + pct + '%">' +
+        '<div class="adm-bar__top">' +
+          '<span class="adm-bar__name">' + escapeHtml(lbl) + '</span>' +
+          '<span class="adm-bar__val">' + _fmtSeg(m.segundos) + '</span>' +
+        '</div>' +
+        '<div class="adm-bar__meta">' + _fmtUsd(m.costo_usd) + ' · ' + _fmtNum(m.llamadas) + ' llamadas IA</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  const $her = document.getElementById('uso-herramientas');
+  const herr = d.por_herramienta || [];
+  if(!herr.length){
+    $her.innerHTML = '<div class="adm-uso-empty">Aún sin llamadas IA en este rango.</div>';
+  } else {
+    const maxCosto = Math.max.apply(null, herr.map(h => h.costo_usd || 0).concat([0.0001]));
+    $her.innerHTML = herr.slice(0, 12).map(h => {
+      const pct = Math.min(100, Math.round(((h.costo_usd||0)/maxCosto) * 100));
+      const name = h.herramienta || '—';
+      const tokens = (h.tokens_in + h.tokens_out) > 0
+        ? (_fmtNum(h.tokens_in) + ' in · ' + _fmtNum(h.tokens_out) + ' out')
+        : (h.unidades ? (_fmtNum(h.unidades) + ' unidades') : '—');
+      const meta = (h.proveedor || '') +
+                   (h.modelo ? (' · ' + h.modelo) : '') +
+                   ' · ' + _fmtNum(h.llamadas) + ' llam · ' + tokens;
+      return '<div class="adm-bar" style="--w:' + pct + '%">' +
+        '<div class="adm-bar__top">' +
+          '<span class="adm-bar__name">' + escapeHtml(name) + '</span>' +
+          '<span class="adm-bar__val">' + _fmtUsd(h.costo_usd) + '</span>' +
+        '</div>' +
+        '<div class="adm-bar__meta">' + escapeHtml(meta) + '</div>' +
+      '</div>';
+    }).join('');
+  }
+}
+
+function setUsoRange(dias){
+  _usoRangeDias = dias;
+  document.querySelectorAll('#uso-range .adm-range__btn').forEach(b =>
+    b.classList.toggle('is-on', parseInt(b.dataset.d, 10) === dias)
+  );
+  if(selId) loadUsoCostos(selId, dias);
 }
 
 /* ── Polling para nuevos usuarios ─────────── */

@@ -81,7 +81,7 @@ FB_APP_ID     = os.environ.get("FB_APP_ID", "")
 FB_APP_SECRET = os.environ.get("FB_APP_SECRET", "")
 FRONTEND_URL  = os.environ.get("FRONTEND_URL", "https://app.navarroai.com.mx")
 # Banxico SIE — INPC + UDIS para calculadora ISR
-BANXICO_TOKEN     = os.environ.get("BANXICO_TOKEN", "")
+BANXICO_TOKEN     = os.environ.get("BANXICO_TOKEN", "").strip().strip('"').strip("'")
 BANXICO_BASE      = "https://www.banxico.org.mx/SieAPIRest/service/v1/series"
 BANXICO_SERIE_UDIS = os.environ.get("BANXICO_SERIE_UDIS", "SP68257")  # Valor de UDIS (diaria)
 BANXICO_SERIE_INPC = os.environ.get("BANXICO_SERIE_INPC", "SP74625")  # INPC mensual base 2Q-jul-2018=100
@@ -333,6 +333,193 @@ async def get_user_access_state(user_id: str) -> dict:
         pass
     return default
 
+# ─────────────────────────────────────────────
+# TELEMETRÍA — uso de IA y tiempo por módulo
+# Tablas: usage_logs, module_sessions (ver migracion-telemetria.sql)
+# Nunca rompen el endpoint principal: todos los errores se silencian.
+# ─────────────────────────────────────────────
+
+# Precios públicos por modelo (USD por token, salvo Gemini image-gen que es por imagen).
+# Si un modelo no está aquí, usa el fallback del proveedor.
+# Fuentes: anthropic.com/pricing, groq.com/pricing, ai.google.dev/pricing.
+PRICING = {
+    # Anthropic — por token
+    "claude-sonnet-4-6":           {"in": 3.0  / 1_000_000, "out": 15.0 / 1_000_000},
+    "claude-opus-4-7":             {"in": 15.0 / 1_000_000, "out": 75.0 / 1_000_000},
+    "claude-haiku-4-5-20251001":   {"in": 1.0  / 1_000_000, "out": 5.0  / 1_000_000},
+    # Groq — por token
+    "llama-3.3-70b-versatile":     {"in": 0.59 / 1_000_000, "out": 0.79 / 1_000_000},
+    "llama-3.1-8b-instant":        {"in": 0.05 / 1_000_000, "out": 0.08 / 1_000_000},
+}
+PRICING_FALLBACK_BY_PROVIDER = {
+    "anthropic": {"in": 3.0  / 1_000_000, "out": 15.0 / 1_000_000},
+    "groq":      {"in": 0.59 / 1_000_000, "out": 0.79 / 1_000_000},
+    "gemini":    {"in": 0.30 / 1_000_000, "out": 2.50 / 1_000_000},
+}
+# Gemini image generation se cobra por imagen, no por token.
+GEMINI_IMAGE_USD_PER_UNIT = 0.039  # Nano Banana 2 — precio público aproximado.
+
+
+def _cost_for(proveedor: str, modelo: str, tokens_in: int, tokens_out: int, unidades: int) -> float:
+    """Calcula costo en USD para una llamada. Tolerante a modelos desconocidos."""
+    try:
+        if proveedor == "gemini" and unidades > 0:
+            return round(float(unidades) * GEMINI_IMAGE_USD_PER_UNIT, 6)
+        rate = PRICING.get(modelo) or PRICING_FALLBACK_BY_PROVIDER.get(proveedor) or {"in": 0, "out": 0}
+        return round(float(tokens_in) * rate["in"] + float(tokens_out) * rate["out"], 6)
+    except Exception:
+        return 0.0
+
+
+async def track_usage(
+    user_id: str,
+    modulo: str,
+    herramienta: str,
+    proveedor: str,
+    modelo: str = "",
+    tokens_in: int = 0,
+    tokens_out: int = 0,
+    unidades: int = 0,
+):
+    """Inserta una fila en usage_logs. Fire-and-forget: nunca lanza."""
+    if not user_id or not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return
+    costo = _cost_for(proveedor, modelo, tokens_in, tokens_out, unidades)
+    payload = {
+        "user_id":     user_id,
+        "modulo":      (modulo or "desconocido")[:80],
+        "herramienta": (herramienta or "")[:120],
+        "proveedor":   (proveedor or "")[:40],
+        "modelo":      (modelo or "")[:80],
+        "tokens_in":   int(tokens_in or 0),
+        "tokens_out":  int(tokens_out or 0),
+        "unidades":    int(unidades or 0),
+        "costo_usd":   costo,
+    }
+    try:
+        async with httpx.AsyncClient(timeout=6) as client:
+            await client.post(
+                f"{SUPABASE_URL}/rest/v1/usage_logs",
+                headers={
+                    "apikey": SUPABASE_SERVICE_KEY,
+                    "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                    "Content-Type": "application/json",
+                    "Prefer": "return=minimal",
+                },
+                json=payload,
+            )
+    except Exception:
+        pass
+
+
+def _track_anthropic(user_id: str, modulo: str, herramienta: str, response_json: dict, modelo: str = "claude-sonnet-4-6"):
+    """Helper sync: extrae usage del response de Anthropic y dispara track_usage en background."""
+    if not user_id:
+        return
+    try:
+        usage = (response_json or {}).get("usage") or {}
+        ti = int(usage.get("input_tokens") or 0)
+        to = int(usage.get("output_tokens") or 0)
+        # Cache read/creation también consumen — los sumamos al input si están.
+        ti += int(usage.get("cache_read_input_tokens") or 0)
+        ti += int(usage.get("cache_creation_input_tokens") or 0)
+        asyncio.create_task(track_usage(
+            user_id=user_id, modulo=modulo, herramienta=herramienta,
+            proveedor="anthropic", modelo=modelo, tokens_in=ti, tokens_out=to,
+        ))
+    except Exception:
+        pass
+
+
+def _track_groq(user_id: str, modulo: str, herramienta: str, response_json: dict, modelo: str = "llama-3.3-70b-versatile"):
+    """Helper sync: extrae usage del response de Groq (formato OpenAI) y trackea en background."""
+    if not user_id:
+        return
+    try:
+        usage = (response_json or {}).get("usage") or {}
+        ti = int(usage.get("prompt_tokens") or 0)
+        to = int(usage.get("completion_tokens") or 0)
+        asyncio.create_task(track_usage(
+            user_id=user_id, modulo=modulo, herramienta=herramienta,
+            proveedor="groq", modelo=modelo, tokens_in=ti, tokens_out=to,
+        ))
+    except Exception:
+        pass
+
+
+def _track_gemini_image(user_id: str, modulo: str, herramienta: str, unidades: int = 1, modelo: str = "gemini-image"):
+    """Helper sync: trackea generación de imagen con Gemini (cobro por unidad)."""
+    if not user_id:
+        return
+    try:
+        asyncio.create_task(track_usage(
+            user_id=user_id, modulo=modulo, herramienta=herramienta,
+            proveedor="gemini", modelo=modelo, unidades=int(unidades or 0),
+        ))
+    except Exception:
+        pass
+
+
+# Módulos válidos para el heartbeat. Mantener sincronizado con los `data-app`
+# de los HTML del frontend (búsqueda rápida: grep -h "data-app=" *.html).
+MODULOS_VALIDOS = {
+    "home", "props", "contactos", "contratos", "avm", "valor", "ficha",
+    "ficha-manual", "isr", "image-cleaner", "facebook-ads", "guia",
+    "solicitud-arr", "admin", "blog", "verificador",
+}
+
+
+def _request_modulo(request: Request, fallback: str) -> str:
+    """Lee el módulo activo del header X-Brokr-Module (puesto por app-shell.js).
+    Permite que /chat-claude o /chat (genéricos) atribuyan al módulo correcto."""
+    try:
+        m = (request.headers.get("X-Brokr-Module") or "").strip().lower()[:40]
+        if m and m in MODULOS_VALIDOS:
+            return m
+    except Exception:
+        pass
+    return fallback
+
+
+class TelemetriaSesionModuloReq(BaseModel):
+    modulo: str
+    segundos: int
+
+
+@app.post("/telemetria/sesion-modulo")
+async def telemetria_sesion_modulo(req: TelemetriaSesionModuloReq, request: Request):
+    """Heartbeat del frontend: registra segundos activos de un usuario en un módulo.
+    Silenciosamente ignora payloads inválidos o usuarios anónimos — no es crítico.
+    """
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        return {"ok": False}
+    modulo = (req.modulo or "").strip().lower()[:40]
+    if modulo not in MODULOS_VALIDOS:
+        return {"ok": False, "razon": "modulo_invalido"}
+    segs = int(req.segundos or 0)
+    # Anti-abuso: ignorar valores absurdos. Cap 1h por heartbeat.
+    if segs <= 0 or segs > 3600:
+        return {"ok": False, "razon": "segundos_invalidos"}
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return {"ok": False}
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            await client.post(
+                f"{SUPABASE_URL}/rest/v1/module_sessions",
+                headers={
+                    "apikey": SUPABASE_SERVICE_KEY,
+                    "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                    "Content-Type": "application/json",
+                    "Prefer": "return=minimal",
+                },
+                json={"user_id": user_id, "modulo": modulo, "segundos": segs},
+            )
+    except Exception:
+        pass
+    return {"ok": True}
+
+
 @app.post("/config/eb-key")
 async def set_eb_key(req: EbKeyRequest, request: Request):
     user_id = await get_user_id_from_token(request)
@@ -515,9 +702,10 @@ class ChatRequest(BaseModel):
     temperature: float = 0.7
 
 @app.post("/chat")
-async def chat_proxy(req: ChatRequest):
+async def chat_proxy(req: ChatRequest, request: Request):
     if not GROQ_API_KEY:
         raise HTTPException(status_code=500, detail="GROQ_API_KEY no configurada en el servidor")
+    user_id = await get_user_id_from_token(request)
     async with httpx.AsyncClient(timeout=30) as client:
         r = await client.post(
             f"{GROQ_BASE}/chat/completions",
@@ -535,7 +723,10 @@ async def chat_proxy(req: ChatRequest):
         if r.status_code != 200:
             raise HTTPException(status_code=r.status_code,
                 detail=f"Error Groq: {r.text}")
-        return r.json()
+        data = r.json()
+        _track_groq(user_id, _request_modulo(request, "chat"), "/chat", data,
+                    modelo=req.model or "llama-3.3-70b-versatile")
+        return data
 
 
 # ────────────────────────────────────────────
@@ -850,9 +1041,10 @@ class ClaudeChatRequest(BaseModel):
     context: str = ""  # Módulo/pantalla activa — se inyecta al system prompt
 
 @app.post("/chat-claude")
-async def chat_claude_proxy(req: ClaudeChatRequest):
+async def chat_claude_proxy(req: ClaudeChatRequest, request: Request):
     if not ANTHROPIC_API_KEY:
         raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY no configurada en el servidor")
+    user_id = await get_user_id_from_token(request)
 
     # Construir system prompt con contexto dinámico del módulo activo
     system_content = SHAARK_SYSTEM_PROMPT
@@ -882,6 +1074,8 @@ async def chat_claude_proxy(req: ClaudeChatRequest):
                 detail=f"Error Claude: {r.text}")
 
         data = r.json()
+        _track_anthropic(user_id, _request_modulo(request, "chat"), "/chat-claude", data,
+                         modelo=data.get("model") or "claude-sonnet-4-6")
         # Extraer texto ignorando bloques tool_use (web_search)
         blocks = data.get("content", [])
         text_parts = [b.get("text", "") for b in blocks if b.get("type") == "text"]
@@ -1157,6 +1351,8 @@ Reglas estrictas:
             )
 
         data = r.json()
+        _track_anthropic(user_id, "solicitud-arr", "/solicitud-arrendamiento/analizar",
+                         data, modelo=data.get("model") or "claude-sonnet-4-6")
         reply_text = ""
         try:
             reply_text = data.get("content", [{}])[0].get("text", "")
@@ -2082,9 +2278,10 @@ class AvmClaudeRequest(BaseModel):
     comentarios: str = ""
 
 @app.post("/api/avm-claude")
-async def avm_claude(req: AvmClaudeRequest):
+async def avm_claude(req: AvmClaudeRequest, request: Request):
     if not ANTHROPIC_API_KEY:
         raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY no configurada en el servidor")
+    user_id = await get_user_id_from_token(request)
 
     # Construir descripción detallada de la propiedad
     tipo_labels = {
@@ -2207,7 +2404,10 @@ Recuerda: responde ÚNICAMENTE con el JSON, sin ningún texto adicional."""
     if r.status_code != 200:
         raise HTTPException(status_code=502, detail=f"Error de Claude: {r.text[:300]}")
 
-    raw = r.json().get("content", [{}])[0].get("text", "")
+    _resp_json = r.json()
+    _track_anthropic(user_id, "avm", "/api/avm-claude", _resp_json,
+                     modelo=_resp_json.get("model") or "claude-sonnet-4-6")
+    raw = _resp_json.get("content", [{}])[0].get("text", "")
     # Limpiar posibles markdown wrappers
     raw = raw.strip()
     if raw.startswith("```"):
@@ -2634,7 +2834,7 @@ def _subject_summary(req: AvmWebSearchRequest, tipo_label: str) -> str:
     return "\n".join(partes)
 
 
-async def _claude_extract_and_value(req: AvmWebSearchRequest, tipo_label: str, evidence: List[Dict[str, Any]], queries: List[str]) -> Dict[str, Any]:
+async def _claude_extract_and_value(req: AvmWebSearchRequest, tipo_label: str, evidence: List[Dict[str, Any]], queries: List[str], user_id: str = None) -> Dict[str, Any]:
     if not ANTHROPIC_API_KEY:
         raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY no configurada")
 
@@ -2732,8 +2932,11 @@ Responde ÚNICAMENTE JSON válido con esta estructura:
     if r.status_code != 200:
         raise HTTPException(status_code=502, detail=f"Error de Claude: {r.text[:500]}")
 
+    _resp_json = r.json()
+    _track_anthropic(user_id, "avm", "/api/avm-websearch", _resp_json,
+                     modelo=_resp_json.get("model") or os.environ.get("ANTHROPIC_AVM_MODEL", "claude-sonnet-4-6"))
     raw = ""
-    for block in r.json().get("content", []) or []:
+    for block in _resp_json.get("content", []) or []:
         if block.get("type") == "text":
             raw += block.get("text", "")
     try:
@@ -2743,8 +2946,9 @@ Responde ÚNICAMENTE JSON válido con esta estructura:
 
 
 @app.post("/api/avm-websearch")
-async def avm_websearch(req: AvmWebSearchRequest):
+async def avm_websearch(req: AvmWebSearchRequest, request: Request):
     """Opinión de valor con búsqueda web controlada: search API → URLs candidatas → extracción mínima → IA limpia y calcula."""
+    user_id = await get_user_id_from_token(request)
     tipo_labels = {
         "casa": "Casa habitación", "departamento": "Departamento/Condominio",
         "terreno": "Terreno", "local": "Local comercial",
@@ -2758,7 +2962,7 @@ async def avm_websearch(req: AvmWebSearchRequest):
         raise HTTPException(status_code=404, detail="No encontré URLs candidatas con las APIs de búsqueda configuradas. Prueba con otra colonia/zona o configura otra API de búsqueda.")
 
     paginas = await _fetch_candidate_pages(candidatos)
-    resultado = await _claude_extract_and_value(req, tipo_label, paginas, busqueda["queries"])
+    resultado = await _claude_extract_and_value(req, tipo_label, paginas, busqueda["queries"], user_id=user_id)
 
     # Metadata útil para depuración y transparencia del frontend/PDF
     resultado["tipo_inmueble"] = tipo_label
@@ -3096,8 +3300,9 @@ async def proxy_image(url: str):
     raise HTTPException(status_code=404, detail="Image not available")
 
 @app.post("/contrato")
-async def generar_contrato(req: ContratoRequest):
+async def generar_contrato(req: ContratoRequest, request: Request):
     """Generate a DOCX contract from form data, with AI-drafted special clauses."""
+    user_id = await get_user_id_from_token(request)
 
     # ── STEP 1: Draft special clauses with AI (abogado mexicano) ──
     clausulas_redactadas = []
@@ -3135,7 +3340,10 @@ async def generar_contrato(req: ContratoRequest):
                     headers=headers, json=payload
                 )
             if r.status_code == 200:
-                ai_text = r.json()["choices"][0]["message"]["content"].strip()
+                _resp_json = r.json()
+                _track_groq(user_id, "contratos", "/contrato", _resp_json,
+                            modelo=payload.get("model") or "llama-3.3-70b-versatile")
+                ai_text = _resp_json["choices"][0]["message"]["content"].strip()
                 clausulas_redactadas = [ai_text]
         except Exception as e:
             print(f"AI clause drafting error: {e}")
@@ -3188,6 +3396,7 @@ from fastapi import Form as FastAPIForm
 
 @app.post("/contrato/analizar")
 async def analizar_machote(
+    request: Request,
     file: UploadFile = File(...),
     tipo: str = FastAPIForm(default=""),
 ):
@@ -3286,7 +3495,14 @@ async def analizar_machote(
                           "max_tokens": 1000, "temperature": 0.1}
                 )
             if r.status_code == 200:
-                txt = r.json()["choices"][0]["message"]["content"].strip()
+                _resp_json = r.json()
+                try:
+                    _uid_analizar = await get_user_id_from_token(request)
+                    _track_groq(_uid_analizar, "contratos", "/contrato/analizar",
+                                _resp_json, modelo="llama-3.3-70b-versatile")
+                except Exception:
+                    pass
+                txt = _resp_json["choices"][0]["message"]["content"].strip()
                 # Extraer JSON aunque venga con texto extra
                 json_match = re.search(r'\{.*\}', txt, re.DOTALL)
                 if json_match:
@@ -3719,10 +3935,11 @@ async def get_noticias():
 
 
 @app.post("/ficha-manual/descripcion")
-async def generar_descripcion_ficha_manual(data: dict):
+async def generar_descripcion_ficha_manual(data: dict, request: Request):
     """Generate AI description for ficha manual — uses same httpx pattern as rest of backend."""
     if not ANTHROPIC_API_KEY:
         raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY no configurada")
+    user_id = await get_user_id_from_token(request)
 
     tipo    = data.get("tipo", "")
     colonia = data.get("colonia", "")
@@ -3779,6 +3996,8 @@ async def generar_descripcion_ficha_manual(data: dict):
     if r.status_code != 200:
         raise HTTPException(status_code=500, detail=f"Error IA: {r.status_code}")
     resp = r.json()
+    _track_anthropic(user_id, "ficha-manual", "/ficha-manual/descripcion", resp,
+                     modelo=resp.get("model") or "claude-sonnet-4-6")
     descripcion = resp.get("content", [{}])[0].get("text", "").strip()
     return {"descripcion": descripcion}
 
@@ -4392,11 +4611,13 @@ from fastapi import Form as _Form
 
 @app.post("/images/clean")
 async def clean_images(
+    request: Request,
     files: List[UploadFile] = File(...),
     prompt: str = _Form(""),
     # legacy field kept for backward compat
     remove_furniture: str = _Form("false"),
 ):
+    user_id = await get_user_id_from_token(request)
     use_gemini = bool(prompt.strip()) and bool(GEMINI_API_KEY)
 
     async def process_one(uf: UploadFile):
@@ -4434,6 +4655,15 @@ async def clean_images(
             }
 
     results = await asyncio.gather(*[process_one(f) for f in files])
+    # Trackeo: solo imágenes procesadas exitosamente con Gemini (cobro real)
+    try:
+        gemini_ok = sum(1 for r in results if r.get("used_gemini") and not r.get("error"))
+        if gemini_ok > 0:
+            _track_gemini_image(user_id, "image-cleaner", "/images/clean",
+                                unidades=gemini_ok,
+                                modelo=os.environ.get("GEMINI_IMAGE_MODEL", "gemini-3.1-flash-image-preview"))
+    except Exception:
+        pass
     return {"images": list(results)}
 
 
@@ -5362,7 +5592,10 @@ async def facebook_ad_description(request: Request):
         )
     if r.status_code != 200:
         raise HTTPException(status_code=502, detail="Error generando descripción")
-    text = r.json().get("content", [{}])[0].get("text", "").strip()[:200]
+    _resp_json = r.json()
+    _track_anthropic(user_id, "facebook-ads", "/facebook/ad-description", _resp_json,
+                     modelo=_resp_json.get("model") or "claude-sonnet-4-6")
+    text = _resp_json.get("content", [{}])[0].get("text", "").strip()[:200]
     return {"text": text}
 
 
@@ -6273,6 +6506,138 @@ async def admin_set_activo(req: AdminActivoReq, request: Request):
         raise HTTPException(status_code=500, detail=f"Error actualizando activo: {r.text}")
 
     return {"ok": True, "user_id": target_id, "activo": bool(req.activo)}
+
+
+@app.get("/admin/user/{user_id}/uso")
+async def admin_user_uso(user_id: str, request: Request, dias: int = 30):
+    """Agregaciones de uso y costo IA de un usuario, junto con tiempo por módulo.
+    Devuelve totales, desglose por módulo y desglose por herramienta para el rango
+    indicado (default 30 días). Solo accesible para rol=admin.
+    """
+    await require_admin(request)
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        raise HTTPException(status_code=500, detail="Supabase no está configurado.")
+
+    try:
+        dias_int = max(1, min(int(dias), 365))
+    except Exception:
+        dias_int = 30
+    desde_iso = (datetime.utcnow() - timedelta(days=dias_int)).isoformat() + "Z"
+
+    sb_headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+    }
+
+    # 1) usage_logs en el rango
+    usage_rows: List[Dict[str, Any]] = []
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.get(
+                f"{SUPABASE_URL}/rest/v1/usage_logs",
+                headers=sb_headers,
+                params={
+                    "user_id": f"eq.{user_id}",
+                    "ts": f"gte.{desde_iso}",
+                    "select": "modulo,herramienta,proveedor,modelo,tokens_in,tokens_out,unidades,costo_usd,ts",
+                    "order": "ts.desc",
+                    "limit": "20000",
+                },
+            )
+            if r.status_code == 200:
+                usage_rows = r.json() or []
+    except Exception:
+        usage_rows = []
+
+    # 2) module_sessions en el rango
+    session_rows: List[Dict[str, Any]] = []
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.get(
+                f"{SUPABASE_URL}/rest/v1/module_sessions",
+                headers=sb_headers,
+                params={
+                    "user_id": f"eq.{user_id}",
+                    "ts": f"gte.{desde_iso}",
+                    "select": "modulo,segundos,ts",
+                    "limit": "50000",
+                },
+            )
+            if r.status_code == 200:
+                session_rows = r.json() or []
+    except Exception:
+        session_rows = []
+
+    # 3) Agregar — por módulo (combinando tiempo + costo de IA)
+    por_modulo: Dict[str, Dict[str, Any]] = {}
+    for row in session_rows:
+        m = (row.get("modulo") or "desconocido")
+        slot = por_modulo.setdefault(m, {"modulo": m, "segundos": 0, "costo_usd": 0.0, "llamadas": 0})
+        slot["segundos"] += int(row.get("segundos") or 0)
+    for row in usage_rows:
+        m = (row.get("modulo") or "desconocido")
+        slot = por_modulo.setdefault(m, {"modulo": m, "segundos": 0, "costo_usd": 0.0, "llamadas": 0})
+        slot["costo_usd"] += float(row.get("costo_usd") or 0)
+        slot["llamadas"] += 1
+
+    # 4) Por herramienta
+    por_herramienta: Dict[str, Dict[str, Any]] = {}
+    for row in usage_rows:
+        key = f"{row.get('herramienta','')}|{row.get('proveedor','')}|{row.get('modelo','')}"
+        slot = por_herramienta.setdefault(key, {
+            "herramienta": row.get("herramienta") or "",
+            "proveedor":   row.get("proveedor") or "",
+            "modelo":      row.get("modelo") or "",
+            "llamadas":    0,
+            "tokens_in":   0,
+            "tokens_out":  0,
+            "unidades":    0,
+            "costo_usd":   0.0,
+        })
+        slot["llamadas"]   += 1
+        slot["tokens_in"]  += int(row.get("tokens_in") or 0)
+        slot["tokens_out"] += int(row.get("tokens_out") or 0)
+        slot["unidades"]   += int(row.get("unidades") or 0)
+        slot["costo_usd"]  += float(row.get("costo_usd") or 0)
+
+    # 5) Totales y ordenamientos
+    costo_total = round(sum(float(r.get("costo_usd") or 0) for r in usage_rows), 4)
+    tiempo_total = sum(int(r.get("segundos") or 0) for r in session_rows)
+    llamadas_total = len(usage_rows)
+
+    # Round per-module
+    modulos_arr = []
+    for slot in por_modulo.values():
+        modulos_arr.append({
+            "modulo":    slot["modulo"],
+            "segundos":  int(slot["segundos"]),
+            "costo_usd": round(float(slot["costo_usd"]), 4),
+            "llamadas":  int(slot["llamadas"]),
+        })
+    modulos_arr.sort(key=lambda x: (x["segundos"], x["costo_usd"]), reverse=True)
+
+    herr_arr = []
+    for slot in por_herramienta.values():
+        slot["costo_usd"] = round(float(slot["costo_usd"]), 4)
+        herr_arr.append(slot)
+    herr_arr.sort(key=lambda x: x["costo_usd"], reverse=True)
+
+    # Última actividad observada
+    ultima = None
+    if usage_rows:
+        ultima = usage_rows[0].get("ts")
+
+    return {
+        "ok": True,
+        "user_id": user_id,
+        "rango_dias": dias_int,
+        "costo_total_usd": costo_total,
+        "llamadas_total": llamadas_total,
+        "tiempo_total_seg": int(tiempo_total),
+        "ultima_actividad": ultima,
+        "por_modulo":      modulos_arr,
+        "por_herramienta": herr_arr,
+    }
 
 
 # ════════════════════════════════════════════════════════════════

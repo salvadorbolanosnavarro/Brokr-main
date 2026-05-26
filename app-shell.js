@@ -25,6 +25,149 @@
   const NOSHELL = ['login.html', 'registro.html', 'ficha-pdf-preview.html', 'legal.html', 'admin.html'];
   if (NOSHELL.includes(path)) return;
 
+  /* ════════════════════════════════════════════════════════════════
+     TELEMETRÍA · auto-auth en fetch + heartbeat de tiempo por módulo
+     Backend: POST /telemetria/sesion-modulo cada 30s + en pagehide.
+     Fetch patch: añade Authorization Bearer + X-Brokr-Module a llamadas
+     a endpoints IA para atribuir uso/costo al usuario actual.
+     ════════════════════════════════════════════════════════════════ */
+  (function setupTelemetry(){
+    if (window.__brokrTelemetryReady) return;
+    window.__brokrTelemetryReady = true;
+
+    const BACKEND_HOSTS = new Set([
+      'api.broquer.app',
+      // permitir también llamadas relativas (mismo origen) por si en algún
+      // entorno el backend corre detrás del mismo dominio que el frontend.
+      location.hostname,
+    ]);
+    const AI_PATHS = [
+      '/chat', '/chat-claude',
+      '/api/avm-claude', '/api/avm-websearch',
+      '/contrato', '/contrato/analizar',
+      '/ficha-manual/descripcion',
+      '/images/clean',
+      '/solicitud-arrendamiento/analizar',
+      '/facebook/ad-description',
+      '/telemetria/sesion-modulo',
+    ];
+    function getToken(){
+      try { return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || ''; }
+      catch (_) { return ''; }
+    }
+    function currentModule(){
+      try {
+        const m = (document.body && document.body.dataset && document.body.dataset.app) || '';
+        return (m || (path.replace(/\.html$/, '') || 'home')).toLowerCase();
+      } catch (_) { return 'home'; }
+    }
+    function pathOf(input){
+      try {
+        const url = typeof input === 'string' ? input : (input && input.url) || '';
+        if (!url) return { path: '', host: '' };
+        const u = new URL(url, location.href);
+        return { path: u.pathname || '', host: u.host || '' };
+      } catch (_) { return { path: '', host: '' }; }
+    }
+
+    // Auto-auth: añade Bearer + X-Brokr-Module a llamadas a endpoints IA
+    const ORIG_FETCH = window.fetch.bind(window);
+    window.fetch = function(input, init){
+      try {
+        const { path: p, host: h } = pathOf(input);
+        const isBackend = !h || BACKEND_HOSTS.has(h);
+        const isAI = isBackend && p && AI_PATHS.some(pre => p === pre || p.startsWith(pre + '/') || p.startsWith(pre + '?'));
+        if (isAI) {
+          const tok = getToken();
+          init = init || {};
+          // Combinar headers de input (Request) e init.headers preservando lo existente.
+          const baseHdrs = (typeof input !== 'string' && input && input.headers) ? input.headers : {};
+          const h2 = new Headers(baseHdrs);
+          // init.headers gana sobre los de Request
+          if (init.headers) {
+            try {
+              new Headers(init.headers).forEach((v, k) => h2.set(k, v));
+            } catch (_) {}
+          }
+          if (tok && !h2.has('Authorization')) h2.set('Authorization', 'Bearer ' + tok);
+          if (!h2.has('X-Brokr-Module')) h2.set('X-Brokr-Module', currentModule());
+          init.headers = h2;
+        }
+      } catch (_) {}
+      return ORIG_FETCH(input, init);
+    };
+
+    // Heartbeat: cuenta segundos activos del módulo y flushea cada 30s.
+    let active = 0;
+    let lastActivity = Date.now();
+    let lastTick = Date.now();
+    const IDLE_MS = 60_000;            // 1 min sin input = idle, no cuenta.
+    const FLUSH_INTERVAL_MS = 30_000;  // batch hacia backend cada 30s.
+
+    function markActivity(){ lastActivity = Date.now(); }
+    ['mousemove','keydown','touchstart','scroll','click','focus'].forEach(ev =>
+      window.addEventListener(ev, markActivity, { passive: true, capture: true })
+    );
+
+    function tick(){
+      const now = Date.now();
+      const elapsed = Math.floor((now - lastTick) / 1000);
+      lastTick = now;
+      if (document.visibilityState === 'visible' &&
+          (now - lastActivity) < IDLE_MS &&
+          elapsed > 0 && elapsed < 120) {
+        active += elapsed;
+      }
+    }
+    setInterval(tick, 1000);
+
+    function flush(useBeacon){
+      tick();
+      if (active < 5) return;            // ignora ráfagas <5s para no saturar la tabla.
+      const segs = Math.min(active, 3600);
+      active = 0;
+      const payload = { modulo: currentModule(), segundos: segs };
+      const url = (window.API_BASE || 'https://api.broquer.app') + '/telemetria/sesion-modulo';
+      const tok = getToken();
+      if (useBeacon && navigator.sendBeacon) {
+        try {
+          // sendBeacon no permite headers personalizados — colamos el token en query string.
+          const u = tok ? (url + '?_t=' + encodeURIComponent(tok.slice(0, 8))) : url;
+          const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+          // Beacon sin auth se ignorará en backend (silenciosamente). Por eso preferimos fetch keepalive.
+          try {
+            const fd = new FormData();
+            fd.append('payload', JSON.stringify(payload));
+            // Mejor: fetch con keepalive — sí permite headers.
+            ORIG_FETCH(url, {
+              method: 'POST', keepalive: true,
+              headers: tok ? { 'Content-Type':'application/json', 'Authorization':'Bearer '+tok, 'X-Brokr-Module': payload.modulo } : { 'Content-Type':'application/json' },
+              body: JSON.stringify(payload),
+            }).catch(() => navigator.sendBeacon(u, blob));
+          } catch (_) {
+            navigator.sendBeacon(u, blob);
+          }
+        } catch (_) {}
+        return;
+      }
+      try {
+        // Pasa por el window.fetch parcheado (añadirá Authorization + X-Brokr-Module).
+        fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }).catch(() => {});
+      } catch (_) {}
+    }
+
+    setInterval(() => flush(false), FLUSH_INTERVAL_MS);
+    window.addEventListener('pagehide', () => flush(true));
+    window.addEventListener('beforeunload', () => flush(true));
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') flush(false);
+    });
+  })();
+
   /* ── Configuración de módulos ── */
   const MODS = [
     { key:'props',        href:'propiedades.html',   label:'Tus Inmuebles',       group:'main', icon:'building' },
