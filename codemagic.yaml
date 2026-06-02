@@ -45,11 +45,18 @@ workflows:
             --iconBackgroundColorDark "#F7F5EE" \
             --splashBackgroundColor "#F7F5EE" \
             --splashBackgroundColorDark "#F7F5EE"
-      - name: Aplicar signing profiles al proyecto Xcode
+      - name: Crear / fetch certificado y provisioning profile
         script: |
-          # Codemagic resuelve cert + provisioning profile automáticamente
-          # gracias al bloque ios_signing + la integración App Store Connect.
-          # Aquí solo los aplicamos al .xcodeproj.
+          # Inicializa keychain temporal de la build
+          keychain initialize
+          # Crea cert distribution + provisioning profile App Store si no existen
+          app-store-connect fetch-signing-files com.broquer.app \
+            --platform IOS \
+            --type IOS_APP_STORE \
+            --create
+          # Importa los certificados al keychain
+          keychain add-certificates
+          # Aplica los profiles al .xcodeproj
           xcode-project use-profiles
       - name: Aumentar build number automáticamente
         script: |
