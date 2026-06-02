@@ -14,7 +14,7 @@ workflows:
       node: 22
       xcode: latest
     integrations:
-      app_store_connect: codemagic_broquer_asc  # ← nombre que le des a la integración en Codemagic settings
+      app_store_connect: "Broquer 1"
     scripts:
       - name: Instalar dependencias web (raíz del repo)
         script: |
@@ -45,13 +45,11 @@ workflows:
             --iconBackgroundColorDark "#F7F5EE" \
             --splashBackgroundColor "#F7F5EE" \
             --splashBackgroundColorDark "#F7F5EE"
-      - name: Configurar code signing (automático via API key)
+      - name: Aplicar signing profiles al proyecto Xcode
         script: |
-          keychain initialize
-          app-store-connect fetch-signing-files "$BUNDLE_IDENTIFIER" \
-            --type IOS_APP_STORE \
-            --create
-          keychain add-certificates
+          # Codemagic resuelve cert + provisioning profile automáticamente
+          # gracias al bloque ios_signing + la integración App Store Connect.
+          # Aquí solo los aplicamos al .xcodeproj.
           xcode-project use-profiles
       - name: Aumentar build number automáticamente
         script: |
