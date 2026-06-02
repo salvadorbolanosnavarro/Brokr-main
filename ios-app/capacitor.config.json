@@ -1,0 +1,24 @@
+{
+  "appId": "com.broquer.app",
+  "appName": "Broquer",
+  "webDir": "www",
+  "ios": {
+    "scheme": "Broquer",
+    "contentInset": "automatic",
+    "limitsNavigationsToAppBoundDomains": false,
+    "backgroundColor": "#F7F5EE"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "launchAutoHide": true,
+      "backgroundColor": "#F7F5EE",
+      "iosSpinnerStyle": "small",
+      "showSpinner": false,
+      "splashImmersive": false
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    }
+  }
+}

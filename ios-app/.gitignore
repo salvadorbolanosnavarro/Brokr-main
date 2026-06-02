@@ -1,0 +1,16 @@
+# Capacitor / Node
+node_modules/
+dist/
+
+# Build / OS
+.DS_Store
+*.log
+
+# Web assets sincronizados desde la raíz por sync-web.sh
+# (regenerables — no se versionan)
+www/
+
+# Master assets generados desde isotipo-black.png (regenerables)
+assets/
+
+# iOS — Capacitor 8 ya trae ios/.gitignore (ignora Pods/, DerivedData, etc.)
