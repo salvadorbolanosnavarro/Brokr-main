@@ -1,0 +1,83 @@
+workflows:
+  ios-capacitor:
+    name: Broquer iOS (Capacitor)
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.broquer.app
+      vars:
+        XCODE_PROJECT: "App.xcodeproj"
+        XCODE_SCHEME: "App"
+        APP_STORE_APPLE_ID: 6775727897
+      node: 22
+      xcode: latest
+    integrations:
+      app_store_connect: codemagic_broquer_asc  # ← nombre que le des a la integración en Codemagic settings
+    scripts:
+      - name: Instalar dependencias web (raíz del repo)
+        script: |
+          # Si tu PWA en la raíz tiene su propio package.json, instala aquí.
+          # Brokr es HTML/CSS/JS puro → este paso es no-op.
+          true
+      - name: Sync de assets web a ios-app/www
+        script: |
+          cd $CM_BUILD_DIR
+          bash ios-app/sync-web.sh
+      - name: Instalar dependencias Node de Capacitor
+        script: |
+          cd $CM_BUILD_DIR/ios-app
+          npm ci --no-audit --no-fund
+      - name: Capacitor sync iOS
+        script: |
+          cd $CM_BUILD_DIR/ios-app
+          npx cap sync ios
+      - name: Generar master icon/splash desde isotipo
+        script: |
+          pip3 install --quiet pillow
+          python3 $CM_BUILD_DIR/ios-app/gen-master-assets.py
+      - name: Generar iconos y splash iOS (capacitor-assets)
+        script: |
+          cd $CM_BUILD_DIR/ios-app
+          npx capacitor-assets generate --ios \
+            --iconBackgroundColor "#F7F5EE" \
+            --iconBackgroundColorDark "#F7F5EE" \
+            --splashBackgroundColor "#F7F5EE" \
+            --splashBackgroundColorDark "#F7F5EE"
+      - name: Configurar code signing (automático via API key)
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_IDENTIFIER" \
+            --type IOS_APP_STORE \
+            --create
+          keychain add-certificates
+          xcode-project use-profiles
+      - name: Aumentar build number automáticamente
+        script: |
+          cd $CM_BUILD_DIR/ios-app/ios/App
+          LATEST=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID" || echo 0)
+          NEXT=$((LATEST + 1))
+          agvtool new-version -all $NEXT
+      - name: Build IPA
+        script: |
+          cd $CM_BUILD_DIR/ios-app/ios/App
+          xcode-project build-ipa \
+            --project "$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME"
+    artifacts:
+      - ios-app/ios/App/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        beta_groups:
+          - Internal Testers
+      email:
+        recipients:
+          - salvadorbolanosnavarro@gmail.com
+        notify:
+          success: true
+          failure: true
