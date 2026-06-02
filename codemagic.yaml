@@ -45,18 +45,25 @@ workflows:
             --iconBackgroundColorDark "#F7F5EE" \
             --splashBackgroundColor "#F7F5EE" \
             --splashBackgroundColorDark "#F7F5EE"
+      - name: Debug — verificar acceso a la API de Apple
+        script: |
+          echo "=== Certificados existentes ==="
+          app-store-connect list-certificates || echo "ERROR listing certificates"
+          echo ""
+          echo "=== Bundle IDs registrados ==="
+          app-store-connect list-bundle-ids || echo "ERROR listing bundle IDs"
+          echo ""
+          echo "=== Provisioning profiles ==="
+          app-store-connect list-profiles || echo "ERROR listing profiles"
       - name: Crear / fetch certificado y provisioning profile
         script: |
-          # Inicializa keychain temporal de la build
           keychain initialize
-          # Crea cert distribution + provisioning profile App Store si no existen
           app-store-connect fetch-signing-files com.broquer.app \
             --platform IOS \
             --type IOS_APP_STORE \
-            --create
-          # Importa los certificados al keychain
+            --create \
+            --verbose
           keychain add-certificates
-          # Aplica los profiles al .xcodeproj
           xcode-project use-profiles
       - name: Aumentar build number automáticamente
         script: |
