@@ -1184,6 +1184,50 @@ function _fmGetUserId() {
   }
 })();
 
+// ── Subir fotos al bucket de Storage ──────────────────────────────
+// Toma la lista de fotos (que pueden venir como base64 "data:..." cuando
+// el agente las acaba de subir desde su dispositivo) y las sube al bucket
+// "fotos-propiedades". Devuelve solo las URLs públicas. Las fotos que ya
+// son una URL http(s) (vinieron de Mis Inmuebles o del editor) se dejan
+// igual. Así la base de datos guarda enlaces ligeros, NO las imágenes como
+// texto —que era lo que saturaba el disco de la base—.
+async function _fmSubirFotosAlBucket(lista, token) {
+  const urls = [];
+  for (const f of (lista || [])) {
+    const u = f && f.url ? f.url : null;
+    if (!u) continue;
+    // Ya es una URL pública: se deja tal cual, no se vuelve a subir.
+    if (/^https?:\/\//i.test(u)) { urls.push(u); continue; }
+    // Es base64 (data:...): convertir a archivo binario y subir al bucket.
+    if (u.startsWith('data:')) {
+      try {
+        const blob = await (await fetch(u)).blob();
+        const mime = blob.type || 'image/jpeg';
+        const ext  = (mime.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
+        const name = `prop_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+        const r = await fetch(`${SB_URL_FM}/storage/v1/object/fotos-propiedades/${name}`, {
+          method: 'POST',
+          headers: {
+            'apikey': SB_KEY_FM,
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': mime,
+            'x-upsert': 'true'
+          },
+          body: blob
+        });
+        if (r.ok) {
+          urls.push(`${SB_URL_FM}/storage/v1/object/public/fotos-propiedades/${name}`);
+        } else {
+          console.warn('No se pudo subir una foto al bucket:', r.status, await r.text());
+        }
+      } catch (e) {
+        console.warn('Error subiendo foto al bucket:', e);
+      }
+    }
+  }
+  return urls;
+}
+
 // ── Después de generar la ficha: guardar también en Mis Inmuebles ──
 async function guardarComoInmueble() {
   // Si ya venía de una propiedad existente, no duplicar
@@ -1192,6 +1236,12 @@ async function guardarComoInmueble() {
   const userId = _fmGetUserId();
   const token = _fmGetToken();
   if (!userId || !token) return; // sin sesión, no hacemos nada (la ficha igual se generó)
+
+  // Subir las fotos al bucket y quedarnos solo con sus URLs. Esto evita
+  // guardar las imágenes como base64 dentro de la fila de la base de datos
+  // (el patrón que disparaba el disco al 95% y tiraba todo lo demás).
+  const upToken = (window.brokrSb && window.brokrSb.ensureToken ? await window.brokrSb.ensureToken() : null) || token;
+  const fotosUrls = await _fmSubirFotosAlBucket(fotos, upToken);
 
   const d = getDatos();
   const rawNum = (v) => parseFloat((v || '').replace(/[$,]/g, '').trim()) || null;
@@ -1215,7 +1265,7 @@ async function guardarComoInmueble() {
     estacionamientos:  d.est ? parseInt(d.est) : null,
     anio_construccion: d.anio ? parseInt(d.anio) : null,
     descripcion:       d.desc || null,
-    fotos:             fotos.map(f => f.url).filter(Boolean),
+    fotos:             fotosUrls,
     updated_at:        new Date().toISOString()
   };
 
