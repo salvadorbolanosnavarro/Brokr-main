@@ -750,45 +750,70 @@ async function checkProfileAndRedirect(token, user){
     return ok;
   }
 
-  try {
-    const r = await fetch(`${SB_URL}/rest/v1/usuarios?id=eq.${user.id}&select=nombre,telefono`, {
-      headers:{ 'apikey':SB_KEY, 'Authorization':`Bearer ${token}` }
-    });
-    if (r.status === 401) {
-      // Token expirado o revocado: limpiar sesión y dejar al usuario en login.
+  // Consulta el perfil con reintentos. Devuelve uno de tres estados:
+  //   'ok'            -> el servidor respondió 200 (incluye tieneNombre)
+  //   'expirado'      -> 401: la sesión ya no es válida
+  //   'indeterminado' -> no se pudo verificar (timeout / 5xx / red caída)
+  // La distinción es CLAVE: un error al *leer* el perfil NO es prueba de que
+  // el perfil no exista. Antes el código asumía "sin perfil" ante cualquier
+  // fallo y mandaba al usuario a registro.html — por eso un agente viejo veía
+  // la pantalla de "Completa tu perfil" cuando la base de datos estaba
+  // momentáneamente saturada, y volvía a la normalidad al ceder la carga.
+  async function _consultarPerfil(){
+    for (let intento = 0; intento < 3; intento++){
       try {
-        localStorage.removeItem('sb_token');
-        localStorage.removeItem('sb_refresh');
-        localStorage.removeItem('sb_user');
-        sessionStorage.removeItem('sb_token');
-        sessionStorage.removeItem('sb_user');
-      } catch(_){}
-      showMsg('Tu sesión expiró. Inicia sesión de nuevo.', 'ok');
-      return;
+        const r = await fetch(`${SB_URL}/rest/v1/usuarios?id=eq.${user.id}&select=nombre,telefono`, {
+          headers:{ 'apikey':SB_KEY, 'Authorization':`Bearer ${token}` }
+        });
+        if (r.status === 401) return { estado:'expirado' };
+        if (r.ok) {
+          const data = await r.json().catch(() => null);
+          const tieneNombre = Array.isArray(data) && data.length && !!data[0].nombre;
+          return { estado:'ok', tieneNombre };
+        }
+        // 5xx u otro error de servidor: caemos al reintento.
+      } catch(_) {
+        // Red caída / timeout: caemos al reintento.
+      }
+      if (intento < 2) {
+        await new Promise(res => setTimeout(res, 800 * (intento + 1)));
+      }
     }
-    if (!r.ok) {
-      // Sesión válida pero el query falló por otro motivo (5xx, etc.).
-      // Intenta completar con pending si existe; si no, registro.html.
-      if (await _completarConPending()) { window.location.href = 'index.html'; return; }
-      window.location.href = 'registro.html';
-      return;
-    }
-    const data = await r.json();
-    const tieneNombre = Array.isArray(data) && data.length && data[0].nombre;
-    if (!tieneNombre) {
-      // Caso típico tras email-confirmation: completamos perfil con los datos
-      // que el usuario ya capturó en el signup. No hay segunda pantalla.
-      if (await _completarConPending()) { window.location.href = 'index.html'; return; }
-      // OAuth nuevo o usuario sin pending: registro.html como fallback.
-      window.location.href = 'registro.html';
-    } else {
-      window.location.href = 'index.html';
-    }
-  } catch (e) {
-    console.error('checkProfileAndRedirect error', e);
-    if (await _completarConPending()) { window.location.href = 'index.html'; return; }
-    window.location.href = 'registro.html';
+    return { estado:'indeterminado' };
   }
+
+  const res = await _consultarPerfil();
+
+  if (res.estado === 'expirado') {
+    // Token expirado o revocado: limpiar sesión y dejar al usuario en login.
+    try {
+      localStorage.removeItem('sb_token');
+      localStorage.removeItem('sb_refresh');
+      localStorage.removeItem('sb_user');
+      sessionStorage.removeItem('sb_token');
+      sessionStorage.removeItem('sb_user');
+    } catch(_){}
+    showMsg('Tu sesión expiró. Inicia sesión de nuevo.', 'ok');
+    return;
+  }
+
+  if (res.estado === 'ok') {
+    if (res.tieneNombre) { window.location.href = 'index.html'; return; }
+    // El servidor confirmó (200) que NO hay nombre: usuario realmente nuevo.
+    // Caso típico tras email-confirmation: completamos con los datos del signup.
+    if (await _completarConPending()) { window.location.href = 'index.html'; return; }
+    // OAuth nuevo o usuario sin pending: registro.html.
+    window.location.href = 'registro.html';
+    return;
+  }
+
+  // estado === 'indeterminado': la base de datos no respondió con claridad
+  // (saturación momentánea, timeout, 5xx). NUNCA asumimos perfil vacío: un
+  // usuario ya autenticado es casi siempre un usuario existente. Fail-safe:
+  // lo dejamos entrar a la app (index.html lee el nombre cuando la base se
+  // recupera) en lugar de mandarlo a la pantalla de registro.
+  if (await _completarConPending()) { window.location.href = 'index.html'; return; }
+  window.location.href = 'index.html';
 }
 
 /* Splash */
