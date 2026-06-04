@@ -65,7 +65,7 @@ workflows:
       - name: Aumentar build number automáticamente
         script: |
           cd $CM_BUILD_DIR/ios-app/ios/App
-          LATEST=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID" || echo 0)
+          LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" || echo 0)
           NEXT=$((LATEST + 1))
           agvtool new-version -all $NEXT
       - name: Build IPA
