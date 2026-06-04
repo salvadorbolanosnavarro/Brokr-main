@@ -2,6 +2,19 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
+<script>
+  /* Detección temprana del WebView nativo iOS (antes de pintar la pantalla)
+     para que los botones de OAuth de Google no parpadeen antes de ocultarse.
+     capacitor-bridge.js (defer) vuelve a aplicar esta misma clase más tarde. */
+  (function () {
+    try {
+      if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
+        document.documentElement.classList.add('is-ios-native');
+        window.__BROQUER_IOS_NATIVE__ = true;
+      }
+    } catch (e) {}
+  })();
+</script>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
@@ -220,6 +233,13 @@ body { overflow-y: auto; }
 }
 .bk-oauth:hover { background: var(--paper-2); border-color: var(--line-3); }
 
+/* ── App nativa iOS: ocultar OAuth de Google y su separador ──
+   En el WebView de iOS el login es solo correo + contraseña.
+   Apple rechaza apps con botones de inicio de sesión de terceros
+   que no cumplan su guideline; al tener correo/contraseña quedamos
+   exentos, así que simplemente no mostramos estos botones en iOS. */
+.is-ios-native .bk-oauth { display: none !important; }
+.is-ios-native .bk-divider { display: none !important; }
 .bk-faceid {
   text-align: center; font-size: 12px; color: var(--mute);
   margin-top: 22px;

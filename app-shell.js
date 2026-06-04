@@ -20,6 +20,26 @@
   const SB_KEY   = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
   window.API_BASE = API_BASE;
 
+  /* ── Contexto nativo iOS (App Store) ──────────────────────────────
+     En la app nativa de iOS NO se muestra ningún botón de pago/checkout
+     dentro de la app: Apple lo prohíbe salvo vía su propio IAP (30%).
+     La suscripción se gestiona solo por web (broquer.app). Detectamos el
+     WebView de Capacitor y marcamos <html class="is-ios-native"> para que
+     el CSS y la lógica de abajo oculten el cobro únicamente en iOS, sin
+     afectar la versión web ni la PWA. */
+  const IS_IOS_NATIVE = (function () {
+    try {
+      if (window.__BROQUER_IOS_NATIVE__) return true;
+      if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) return true;
+      if (document.documentElement.classList.contains('is-ios-native')) return true;
+    } catch (e) {}
+    return false;
+  })();
+  if (IS_IOS_NATIVE) {
+    try { document.documentElement.classList.add('is-ios-native'); } catch (e) {}
+  }
+  window.__BROQUER_IOS_NATIVE__ = IS_IOS_NATIVE;
+
   /* ── Páginas que NO requieren shell ni auth (login/registro/PDF preview) ── */
   const path = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
   const NOSHELL = ['login.html', 'registro.html', 'ficha-pdf-preview.html', 'legal.html', 'admin.html'];
@@ -1788,7 +1808,9 @@
                 <div class="bk-pd-card">
                   <div id="pd-sub-badge-wrap"><span class="bk-pd-sub-badge inactive" id="pd-sub-badge">Sin plan activo</span></div>
                   <div class="bk-pd-sub-info" id="pd-sub-info">Activa tu suscripción para acceder a todas las funciones de Broquer.</div>
-                  <button class="bk-pd-btn bk-pd-btn-primary" id="pd-sub-btn" onclick="startCheckout()">Activar Broquer Max</button>
+                  ${IS_IOS_NATIVE
+                    ? `<div class="bk-pd-sub-info" id="pd-sub-web-note" style="font-size:13px;color:var(--mute);line-height:1.5;">Para activar o administrar tu suscripción, entra a <strong>broquer.app</strong> desde tu navegador.</div>`
+                    : `<button class="bk-pd-btn bk-pd-btn-primary" id="pd-sub-btn" onclick="startCheckout()">Activar Broquer Max</button>`}
                   <button class="bk-pd-btn bk-pd-btn-outline" id="pd-sub-cancel-btn" onclick="cancelSubscription()" style="display:none">Cancelar suscripción</button>
                   <div class="bk-pd-toast" id="pd-toast-sub"></div>
                 </div>
@@ -2296,6 +2318,8 @@
   window.connectFacebook = connectFacebook;
 
   async function startSubscriptionCheckoutFromGate() {
+    // En iOS nativo no iniciamos checkout dentro de la app (política de Apple).
+    if (IS_IOS_NATIVE) return;
     const tok = getToken();
     const btn = document.getElementById('bk-gate-sub-btn');
     const msg = document.getElementById('bk-gate-msg');
@@ -2321,6 +2345,21 @@
   window.startSubscriptionCheckoutFromGate = startSubscriptionCheckoutFromGate;
 
   function renderSubscriptionGate(message) {
+    if (IS_IOS_NATIVE) {
+      // App nativa iOS: sin botón de pago ni enlace de compra (política de Apple).
+      // Solo se informa al usuario que debe suscribirse desde la web.
+      document.body.innerHTML = `
+        <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--paper);padding:24px;font-family:var(--font-sans);">
+          <div style="width:100%;max-width:440px;background:var(--bone);border:1px solid var(--line);border-radius:24px;padding:30px;box-shadow:0 10px 40px rgba(10,10,10,.08);text-align:center;">
+            <img src="isotipo-black.png" alt="Broquer" style="width:58px;height:58px;object-fit:contain;margin-bottom:18px;"/>
+            <h1 style="font-family:var(--font-display);font-size:30px;line-height:1.05;margin:0 0 10px;color:var(--ink);letter-spacing:-.03em;">Actualmente no cuentas con un plan de suscripción</h1>
+            <p style="color:var(--mute);font-size:14px;line-height:1.5;margin:0 0 22px;">Para activar tu plan, entra a <strong>broquer.app</strong> desde tu navegador. Una vez activado, inicia sesión aquí con tu correo y contraseña para usar tus herramientas.</p>
+            <button onclick="doLogout()" style="width:100%;height:48px;border:1px solid var(--line-2);border-radius:999px;background:transparent;color:var(--ink);font-weight:600;font-size:14px;cursor:pointer;">Cerrar sesión</button>
+            <div id="bk-gate-msg" style="margin-top:12px;font-size:12px;color:var(--danger);min-height:18px;">${message || ''}</div>
+          </div>
+        </div>`;
+      return;
+    }
     document.body.innerHTML = `
       <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--paper);padding:24px;font-family:var(--font-sans);">
         <div style="width:100%;max-width:440px;background:var(--bone);border:1px solid var(--line);border-radius:24px;padding:30px;box-shadow:0 10px 40px rgba(10,10,10,.08);text-align:center;">

@@ -1,13 +1,27 @@
-// capacitor-bridge.js — puente nativo iOS para Brokr.
+// capacitor-bridge.js — puente nativo iOS para Broquer.
 // No-op cuando se carga desde un navegador web normal.
 // Solo se activa cuando window.Capacitor.isNativePlatform() === true (iOS app).
+//
+// NOTA (App Store review): en iOS NO se inyecta "Iniciar sesión con Apple"
+// ni se muestran botones de OAuth de Google ni botones de pago/checkout.
+// El login en iOS es exclusivamente correo + contraseña, y la suscripción
+// se gestiona únicamente vía web (broquer.app). Esto se controla marcando
+// <html class="is-ios-native"> lo antes posible para que el CSS y app-shell.js
+// oculten esos elementos solo dentro del WebView nativo.
 (function () {
   const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
   if (!isNative) return;
 
+  // ─── 0. Marca el contexto nativo iOS cuanto antes ───────────────────
+  // El CSS (.is-ios-native ...) y app-shell.js dependen de esta clase/flag
+  // para ocultar OAuth de Google y cualquier botón de pago dentro de la app.
+  try {
+    document.documentElement.classList.add('is-ios-native');
+    window.__BROQUER_IOS_NATIVE__ = true;
+  } catch (_) {}
+
   const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
   const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
-  const APPLE_CLIENT_ID = 'com.broquer.app';
 
   // ─── 1. Desregistrar service worker (rompe caching en WebView) ───
   if ('serviceWorker' in navigator) {
@@ -16,66 +30,7 @@
       .catch(() => {});
   }
 
-  // ─── 2. Sign in with Apple (requerido por Apple guideline 4.8) ───
-  function nonce16() {
-    const a = new Uint8Array(16);
-    crypto.getRandomValues(a);
-    return Array.from(a).map(b => b.toString(16).padStart(2, '0')).join('');
-  }
-
-  async function signInWithApple() {
-    const { SignInWithApple } = window.Capacitor.Plugins;
-    if (!SignInWithApple) throw new Error('Plugin SignInWithApple no disponible');
-    const res = await SignInWithApple.authorize({
-      clientId: APPLE_CLIENT_ID,
-      redirectURI: SB_URL + '/auth/v1/callback',
-      scopes: 'email name',
-      nonce: nonce16(),
-    });
-    const idToken = res && res.response && res.response.identityToken;
-    if (!idToken) throw new Error('Apple no devolvió identityToken');
-
-    const r = await fetch(SB_URL + '/auth/v1/token?grant_type=id_token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY },
-      body: JSON.stringify({ provider: 'apple', id_token: idToken }),
-    });
-    const data = await r.json().catch(() => ({}));
-    if (!r.ok || !data.access_token) {
-      throw new Error(data.error_description || data.msg || 'apple-signin-failed');
-    }
-    localStorage.setItem('sb_token', data.access_token);
-    if (data.refresh_token) localStorage.setItem('sb_refresh', data.refresh_token);
-    if (data.user) localStorage.setItem('sb_user', JSON.stringify(data.user));
-    window.location.href = 'index.html';
-  }
-
-  function injectAppleButton() {
-    const googles = document.querySelectorAll('button[onclick*="doGoogle"]');
-    googles.forEach(g => {
-      if (g.parentNode.querySelector('[data-brokr-apple]')) return;
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.dataset.brokrApple = '1';
-      btn.className = g.className;
-      btn.style.marginTop = '10px';
-      btn.innerHTML =
-        '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="margin-right:8px;vertical-align:middle">' +
-        '<path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>' +
-        '</svg>Continuar con Apple';
-      btn.addEventListener('click', () => {
-        btn.disabled = true;
-        signInWithApple().catch(err => {
-          console.error('[apple-signin]', err);
-          alert('No se pudo iniciar sesión con Apple: ' + (err.message || err));
-          btn.disabled = false;
-        });
-      });
-      g.parentNode.insertBefore(btn, g.nextSibling);
-    });
-  }
-
-  // ─── 3. Push notifications (APNs) ─────────────────────────────────
+  // ─── 2. Push notifications (APNs) ─────────────────────────────────
   async function registerPush() {
     try {
       const { PushNotifications } = window.Capacitor.Plugins;
@@ -106,20 +61,9 @@
   }
 
   // ─── Lifecycle ────────────────────────────────────────────────────
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', injectAppleButton);
-  } else {
-    injectAppleButton();
-  }
-  // Login.html re-renderiza forms (tab login/signup); reintenta inyectar.
-  try {
-    new MutationObserver(() => injectAppleButton())
-      .observe(document.body || document.documentElement, { childList: true, subtree: true });
-  } catch (_) {}
-
   // Después de que el shell autentica y carga, registramos APNs.
   window.addEventListener('brokr-shell-ready', registerPush);
 
   // Exponer para debug
-  window.brokrCapacitor = { signInWithApple, registerPush };
+  window.brokrCapacitor = { registerPush };
 })();
