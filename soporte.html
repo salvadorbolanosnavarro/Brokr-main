@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Soporte — Broquer</title>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="apple-touch-icon" href="isotipo-black.png"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
+.hdr {
+  background: var(--ink);
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.hdr img {
+  height: 32px;
+  width: auto;
+  display: block;
+}
+.hdr-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(247,245,238,0.45);
+}
+
+/* ── Hero ────────────────────────────────────────────────────── */
+.hero {
+  background: var(--ink);
+  padding: 48px 24px 56px;
+  text-align: center;
+  border-bottom: 1px solid rgba(247,245,238,0.08);
+}
+.hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 5vw, 42px);
+  font-weight: 800;
+  color: var(--paper);
+  letter-spacing: -0.03em;
+  margin-bottom: 12px;
+  line-height: 1.15;
+}
+.hero p {
+  font-size: var(--fs-sm);
+  color: rgba(247,245,238,0.55);
+  max-width: 480px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* ── Contenedor principal ────────────────────────────────────── */
+.wrap {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
+
+/* ── Sección ─────────────────────────────────────────────────── */
+.section {
+  margin-bottom: 48px;
+}
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--mute-2);
+  margin-bottom: 6px;
+}
+.section-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+  line-height: 1.3;
+}
+
+/* ── Tarjeta de contacto ─────────────────────────────────────── */
+.contact-card {
+  background: var(--bone);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-lg);
+  padding: 24px 28px;
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+.contact-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r);
+  background: var(--forest-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.contact-icon svg {
+  width: 20px;
+  height: 20px;
+  stroke: var(--forest);
+  fill: none;
+}
+.contact-body {}
+.contact-label {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mute-2);
+  margin-bottom: 4px;
+}
+.contact-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.contact-value a {
+  color: var(--forest);
+  text-decoration: none;
+}
+.contact-value a:hover { text-decoration: underline; }
+.contact-note {
+  font-size: var(--fs-sm);
+  color: var(--mute);
+  line-height: 1.5;
+}
+
+/* ── FAQ ─────────────────────────────────────────────────────── */
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.faq-item {
+  background: var(--bone);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.faq-item + .faq-item { margin-top: 2px; }
+.faq-q {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 16px 20px;
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  line-height: 1.4;
+  transition: background var(--dur) var(--ease);
+}
+.faq-q:hover { background: var(--paper-2); }
+.faq-chevron {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  stroke: var(--mute-2);
+  fill: none;
+  transition: transform var(--dur) var(--ease);
+}
+.faq-item.open .faq-chevron { transform: rotate(180deg); }
+.faq-a {
+  display: none;
+  padding: 0 20px 16px;
+  font-size: var(--fs-sm);
+  color: var(--mute);
+  line-height: 1.65;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+.faq-item.open .faq-a { display: block; }
+
+/* ── Módulos grid ────────────────────────────────────────────── */
+.modules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+.mod-pill {
+  background: var(--bone);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mod-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--forest);
+  flex-shrink: 0;
+}
+.mod-name {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--ink-3);
+  line-height: 1.3;
+}
+
+/* ── Divider ─────────────────────────────────────────────────── */
+.divider {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 0 0 48px;
+}
+
+/* ── Footer ──────────────────────────────────────────────────── */
+.footer {
+  background: var(--paper-2);
+  border-top: 1px solid var(--line);
+  padding: 28px 24px;
+  text-align: center;
+}
+.footer p {
+  font-size: var(--fs-xs);
+  color: var(--mute-2);
+  line-height: 1.7;
+}
+.footer a {
+  color: var(--mute);
+  text-decoration: none;
+}
+.footer a:hover { color: var(--ink); }
+
+@media (max-width: 480px) {
+  .hdr { padding: 16px 20px; }
+  .hero { padding: 36px 20px 44px; }
+  .wrap { padding: 32px 20px 64px; }
+  .contact-card { flex-direction: column; gap: 14px; }
+  .modules-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="hdr">
+  <img src="logo-broquer-blanco.png" alt="Broquer"/>
+  <span class="hdr-badge">Centro de soporte</span>
+</header>
+
+<!-- Hero -->
+<div class="hero">
+  <h1>¿En qué podemos ayudarte?</h1>
+  <p>Soporte oficial de Broquer para agentes inmobiliarios. Respondemos en menos de 24 horas hábiles.</p>
+</div>
+
+<!-- Contenido -->
+<div class="wrap">
+
+  <!-- Contacto -->
+  <div class="section">
+    <div class="section-label">Contacto</div>
+    <div class="section-title">Escríbenos directamente</div>
+    <div class="contact-card">
+      <div class="contact-icon">
+        <svg viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+          <polyline points="22,6 12,13 2,6"/>
+        </svg>
+      </div>
+      <div class="contact-body">
+        <div class="contact-label">Correo de soporte</div>
+        <div class="contact-value"><a href="mailto:hola@broquer.app">hola@broquer.app</a></div>
+        <div class="contact-note">Tiempo de respuesta: menos de 24 horas hábiles (lunes a viernes, 9:00–18:00 CST). Para incidencias urgentes relacionadas con pagos o acceso a la cuenta, indica el asunto "URGENTE" en el correo.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- Módulos -->
+  <div class="section">
+    <div class="section-label">La plataforma</div>
+    <div class="section-title">¿Qué incluye Broquer?</div>
+    <div class="modules-grid">
+      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Calculadora de ISR</div></div>
+      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Estimación de valor (AVM)</div></div>
+      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Asistente IA Shaark</div></div>
+      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Generación de contratos</div></div>
+      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Anuncios en Facebook</div></div>
+      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Mis Inmuebles</div></div>
+      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Gestión de contactos</div></div>
+      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Fichas técnicas (PDF)</div></div>
+      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Cumplimiento PLD</div></div>
+      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Integración EasyBroker</div></div>
+      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Editor de imágenes</div></div>
+      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Solicitud de arrendamiento</div></div>
+    </div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- FAQ -->
+  <div class="section">
+    <div class="section-label">Preguntas frecuentes</div>
+    <div class="section-title">Respuestas rápidas</div>
+    <div class="faq-list">
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggle(this)">
+          ¿Cómo cancelo mi suscripción?
+          <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-a">Puedes cancelar tu suscripción en cualquier momento desde la sección <strong>Mi perfil → Suscripción</strong> dentro de la app, o enviando un correo a <a href="mailto:hola@broquer.app">hola@broquer.app</a>. Tu acceso se mantiene activo hasta el fin del período pagado.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggle(this)">
+          Olvidé mi contraseña. ¿Cómo la recupero?
+          <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-a">En la pantalla de inicio de sesión, toca <strong>¿Olvidaste tu contraseña?</strong> e ingresa tu correo registrado. Recibirás un enlace para restablecerla en pocos minutos. Revisa también tu carpeta de spam.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggle(this)">
+          ¿La app funciona sin conexión a internet?
+          <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-a">Broquer requiere conexión a internet para funcionar, ya que la mayoría de sus herramientas (asistente de IA, AVM, generación de documentos) dependen de procesamiento en la nube. Algunas vistas previamente cargadas pueden consultarse brevemente sin conexión.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggle(this)">
+          ¿Cómo solicito una factura (CFDI)?
+          <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-a">Para solicitar tu CFDI 4.0 escribe a <a href="mailto:hola@broquer.app">hola@broquer.app</a> antes del último día hábil del mes indicando tu RFC, razón social, uso de CFDI y correo de recepción. Las facturas se emiten mensualmente.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggle(this)">
+          ¿Mis datos y los de mis clientes están seguros?
+          <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-a">Sí. Broquer almacena toda la información en servidores con cifrado en tránsito (TLS) y en reposo. Cada cuenta está completamente aislada y nunca compartimos datos con terceros con fines comerciales. Consulta nuestro <a href="legal.html">Aviso de Privacidad</a> para más detalle.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggle(this)">
+          ¿Cómo conecto mi cuenta de EasyBroker?
+          <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-a">Ve a <strong>Mi perfil → Integraciones</strong> y pega tu API Key de EasyBroker. La encontrarás en tu cuenta de EasyBroker bajo <em>Configuración → API</em>. Una vez conectada, puedes importar tus propiedades publicadas a Mis Inmuebles con un solo toque.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggle(this)">
+          Tengo un cobro que no reconozco. ¿Qué hago?
+          <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-a">Escríbenos de inmediato a <a href="mailto:hola@broquer.app">hola@broquer.app</a> con el asunto "URGENTE — Cargo no reconocido" indicando el monto, fecha y últimos 4 dígitos de tu tarjeta. Investigamos y respondemos en menos de 24 horas hábiles.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggle(this)">
+          ¿En qué países está disponible Broquer?
+          <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-a">Broquer está disponible actualmente en México. Nos encontramos en proceso de expansión a otros países de América Latina. Si tienes interés desde otro país, escríbenos a <a href="mailto:hola@broquer.app">hola@broquer.app</a>.</div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  <p>
+    Broquer — Salvador Bolaños Navarro · Morelia, Michoacán, México<br/>
+    <a href="mailto:hola@broquer.app">hola@broquer.app</a> ·
+    <a href="legal.html">Aviso de privacidad</a> ·
+    <a href="legal.html">Términos y condiciones</a>
+  </p>
+  <p style="margin-top:6px;">© 2025 Broquer. Todos los derechos reservados.</p>
+</footer>
+
+<script>
+function toggle(btn) {
+  const item = btn.closest('.faq-item');
+  const isOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
+  if (!isOpen) item.classList.add('open');
+}
+</script>
+</body>
+</html>
