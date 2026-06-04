@@ -11,7 +11,6 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@capacitor-community/apple-sign-in": "^7.1.0",
     "@capacitor/app": "^8.1.0",
     "@capacitor/camera": "^8.2.0",
     "@capacitor/cli": "^8.3.4",
