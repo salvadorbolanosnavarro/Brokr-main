@@ -4,9 +4,6 @@ workflows:
     instance_type: mac_mini_m2
     max_build_duration: 60
     environment:
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.broquer.app
       vars:
         XCODE_PROJECT: "App.xcodeproj"
         XCODE_SCHEME: "App"
@@ -18,8 +15,6 @@ workflows:
     scripts:
       - name: Instalar dependencias web (raíz del repo)
         script: |
-          # Si tu PWA en la raíz tiene su propio package.json, instala aquí.
-          # Brokr es HTML/CSS/JS puro → este paso es no-op.
           true
       - name: Sync de assets web a ios-app/www
         script: |
