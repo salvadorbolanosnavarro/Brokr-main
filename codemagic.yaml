@@ -71,7 +71,9 @@ workflows:
           cd $CM_BUILD_DIR/ios-app/ios/App
           xcode-project build-ipa \
             --project "$XCODE_PROJECT" \
-            --scheme "$XCODE_SCHEME"
+            --scheme "$XCODE_SCHEME" \
+            --no-show-build-settings \
+            --archive-flags="-skipPackagePluginValidation -skipMacroValidation"
     artifacts:
       - ios-app/ios/App/build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
