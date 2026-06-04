@@ -59,7 +59,7 @@ workflows:
             --create \
             --verbose
           keychain add-certificates
-          xcode-project use-profiles
+          xcode-project use-profiles --project "$CM_BUILD_DIR/ios-app/ios/App/App.xcodeproj"
       - name: Aumentar build number automáticamente
         script: |
           cd $CM_BUILD_DIR/ios-app/ios/App
