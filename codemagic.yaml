@@ -73,7 +73,8 @@ workflows:
             --project "$XCODE_PROJECT" \
             --scheme "$XCODE_SCHEME" \
             --no-show-build-settings \
-            --archive-flags="-skipPackagePluginValidation -skipMacroValidation"
+            --archive-flags="-skipPackagePluginValidation -skipMacroValidation" \
+            --disable-xcpretty
     artifacts:
       - ios-app/ios/App/build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
