@@ -194,15 +194,38 @@ async def api_inpc(anio: int, mes: int):
     fecha_ini = f"{anio}-{mes:02d}-01"
     fecha_fin = f"{anio}-{mes:02d}-{last_day:02d}"
     datos = await _banxico_fetch(BANXICO_SERIE_INPC, fecha_ini, fecha_fin)
+    fallback = False
     if not datos:
-        raise HTTPException(status_code=404, detail=f"INPC no publicado para {anio}-{mes:02d}")
-    valor = float(str(datos[-1]["dato"]).replace(",", ""))
+        # El INPC de un mes lo publica el INEGI alrededor del día 9 del mes
+        # siguiente. Si el mes solicitado aún no está publicado (mes corriente o
+        # muy reciente), usamos el último INPC publicado (dato oportuno) y
+        # reportamos el mes/año reales. Así la calculadora nunca se bloquea.
+        datos = await _banxico_fetch(BANXICO_SERIE_INPC)
+        fallback = True
+    if not datos:
+        raise HTTPException(status_code=404, detail=f"INPC no disponible para {anio}-{mes:02d}")
     fecha_pub = datos[-1]["fecha"]
-    result = {"anio": anio, "mes": mes, "valor": valor,
-              "fecha_publicacion": fecha_pub, "fuente": "banxico_sie"}
+    # Banxico entrega la fecha como DD/MM/YYYY; para el INPC mensual el día es 01.
+    try:
+        partes = fecha_pub.split("/")
+        anio_real, mes_real = int(partes[2]), int(partes[1])
+    except (IndexError, ValueError):
+        anio_real, mes_real = anio, mes
+    # Defensa: si el mes solicitado es ANTERIOR al último publicado y aun así vino
+    # vacío (p. ej. anterior a 1982, donde la serie no existe), no es un caso de
+    # "aún no publicado" — es un dato genuinamente inexistente. Devolver el último
+    # publicado sería incorrecto, así que respondemos 404.
+    if fallback and (anio * 12 + mes) < (anio_real * 12 + mes_real):
+        raise HTTPException(status_code=404, detail=f"INPC no disponible para {anio}-{mes:02d}")
+    valor = float(str(datos[-1]["dato"]).replace(",", ""))
+    result = {"anio": anio_real, "mes": mes_real, "valor": valor,
+              "fecha_publicacion": fecha_pub, "fuente": "banxico_sie",
+              "solicitado": {"anio": anio, "mes": mes}, "fallback": fallback}
     now = datetime.now()
     is_past = (anio < now.year) or (anio == now.year and mes < now.month)
-    cache_set(key, result, ttl=30 * 86400 if is_past else 6 * 3600)
+    # En fallback el mes solicitado se publicará pronto: TTL corto (6h) para que la
+    # caché lo refresque y tome el valor oficial en cuanto el INEGI lo libere.
+    cache_set(key, result, ttl=6 * 3600 if fallback else (30 * 86400 if is_past else 6 * 3600))
     return result
 
 @app.get("/api/udis/{fecha}")
