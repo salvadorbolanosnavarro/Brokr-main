@@ -142,6 +142,17 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .fa-stat-lbl{display:block;font-size:10px;color:var(--mute);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
 .fa-campaign-note{font-size:11px;color:var(--mute);margin-top:12px;line-height:1.5}
 
+/* ─── Ciudad autocomplete ────────────────────────────────── */
+.fa-city-wrap{position:relative}
+.fa-city-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--paper);border:1px solid var(--line-2);border-radius:var(--r);box-shadow:0 4px 16px rgba(10,10,10,.10);z-index:200;overflow:hidden;display:none}
+.fa-city-dropdown.open{display:block}
+.fa-city-opt{padding:10px 12px;font-size:13px;cursor:pointer;display:flex;flex-direction:column;gap:1px;transition:background .1s}
+.fa-city-opt:hover,.fa-city-opt.focused{background:var(--bone)}
+.fa-city-opt strong{font-weight:700;color:var(--ink)}
+.fa-city-opt span{font-size:11px;color:var(--mute)}
+.fa-city-clear{position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--mute);font-size:16px;line-height:1;padding:2px 4px;display:none}
+.fa-city-clear.visible{display:block}
+
 /* ─── Responsive ─────────────────────────────────────────── */
 @media(max-width:900px){
   .fa-wrap{padding:18px 14px 110px}
@@ -277,9 +288,20 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 
           <div class="fa-card">
             <div class="fa-card-head">
-              <div class="fa-card-title">Presupuesto y duración</div>
-              <div class="fa-card-sub">Solo gastará lo que indiques. Puedes pausar cuando quieras.</div>
+              <div class="fa-card-title">Segmentación y presupuesto</div>
+              <div class="fa-card-sub">Define dónde se muestra el anuncio y cuánto invertir.</div>
             </div>
+
+            <div class="fa-field">
+              <label for="fa-city-input">Ciudad objetivo</label>
+              <div class="fa-city-wrap">
+                <input id="fa-city-input" type="text" autocomplete="off" placeholder="Ej. Morelia" oninput="onCityInput(this.value)" onkeydown="onCityKeydown(event)"/>
+                <button type="button" class="fa-city-clear" id="fa-city-clear" onclick="clearCity()" title="Quitar ciudad">×</button>
+                <div class="fa-city-dropdown" id="fa-city-dropdown"></div>
+              </div>
+              <div class="fa-hint">Opcional. Si no eliges ciudad, el anuncio se muestra en todo México.</div>
+            </div>
+
             <div class="fa-grid-2">
               <div class="fa-field">
                 <label for="fa-budget">Presupuesto diario (MXN)</label>
@@ -381,6 +403,9 @@ let _imageB64 = '';
 let _imageDataUrl = '';
 let _imageMime = 'image/jpeg';
 let _campaignsPollTimer = null;
+let _selectedCityKey = '';   // key de ciudad Meta para geo-targeting
+let _citySearchTimer = null; // debounce para búsqueda de ciudades
+let _cityFocusIdx = -1;      // índice de opción enfocada con teclado
 
 // ── Utilidades ──────────────────────────────────────────────
 function getToken(){return localStorage.getItem('sb_token')||sessionStorage.getItem('sb_token')||null;}
@@ -547,6 +572,100 @@ async function improveText(){
   updateAiBtn();
 }
 
+// ── Ciudad autocomplete ─────────────────────────────────────
+function onCityInput(val){
+  clearTimeout(_citySearchTimer);
+  const dropdown = document.getElementById('fa-city-dropdown');
+  if(!val || val.length < 2){
+    _selectedCityKey = '';
+    dropdown.innerHTML = '';
+    dropdown.classList.remove('open');
+    document.getElementById('fa-city-clear').classList.remove('visible');
+    return;
+  }
+  // Si el usuario escribe encima de una ciudad ya seleccionada, la deselecciona
+  _selectedCityKey = '';
+  document.getElementById('fa-city-clear').classList.remove('visible');
+  _citySearchTimer = setTimeout(() => searchCities(val), 320);
+}
+
+async function searchCities(q){
+  try{
+    const tok = getToken();
+    const r = await fetch(`${API_BASE}/facebook/city-search?q=${encodeURIComponent(q)}`, {
+      headers:{ Authorization: 'Bearer ' + tok }
+    });
+    if(!r.ok) return;
+    const d = await r.json();
+    renderCityDropdown(d.results || []);
+  }catch(e){}
+}
+
+function renderCityDropdown(results){
+  const dropdown = document.getElementById('fa-city-dropdown');
+  _cityFocusIdx = -1;
+  if(!results.length){
+    dropdown.innerHTML = '<div class="fa-city-opt"><span>Sin resultados para esa búsqueda.</span></div>';
+    dropdown.classList.add('open');
+    return;
+  }
+  dropdown.innerHTML = results.map((r, i) => {
+    const sub = [r.region, r.type === 'region' ? 'Estado' : 'Ciudad'].filter(Boolean).join(' · ');
+    return `<div class="fa-city-opt" data-key="${r.key}" data-name="${r.name}" data-idx="${i}" onclick="selectCity('${r.key}','${r.name.replace(/'/g,"\\'")}')">
+      <strong>${r.name}</strong>${sub ? `<span>${sub}</span>` : ''}
+    </div>`;
+  }).join('');
+  dropdown.classList.add('open');
+}
+
+function selectCity(key, name){
+  _selectedCityKey = key;
+  document.getElementById('fa-city-input').value = name;
+  document.getElementById('fa-city-dropdown').classList.remove('open');
+  document.getElementById('fa-city-clear').classList.add('visible');
+}
+
+function clearCity(){
+  _selectedCityKey = '';
+  document.getElementById('fa-city-input').value = '';
+  document.getElementById('fa-city-clear').classList.remove('visible');
+  document.getElementById('fa-city-dropdown').classList.remove('open');
+  document.getElementById('fa-city-input').focus();
+}
+
+function onCityKeydown(e){
+  const dropdown = document.getElementById('fa-city-dropdown');
+  if(!dropdown.classList.contains('open')) return;
+  const opts = dropdown.querySelectorAll('.fa-city-opt[data-key]');
+  if(!opts.length) return;
+  if(e.key === 'ArrowDown'){
+    e.preventDefault();
+    _cityFocusIdx = Math.min(_cityFocusIdx + 1, opts.length - 1);
+  } else if(e.key === 'ArrowUp'){
+    e.preventDefault();
+    _cityFocusIdx = Math.max(_cityFocusIdx - 1, 0);
+  } else if(e.key === 'Enter'){
+    e.preventDefault();
+    if(_cityFocusIdx >= 0 && opts[_cityFocusIdx]){
+      const opt = opts[_cityFocusIdx];
+      selectCity(opt.dataset.key, opt.dataset.name);
+    }
+    return;
+  } else if(e.key === 'Escape'){
+    dropdown.classList.remove('open');
+    return;
+  }
+  opts.forEach((o, i) => o.classList.toggle('focused', i === _cityFocusIdx));
+}
+
+// Cierra dropdown al hacer clic fuera
+document.addEventListener('click', e => {
+  if(!e.target.closest('.fa-city-wrap')){
+    const dd = document.getElementById('fa-city-dropdown');
+    if(dd) dd.classList.remove('open');
+  }
+});
+
 // ── Crear anuncio ───────────────────────────────────────────
 async function createAd(){
   // Validaciones cliente
@@ -575,7 +694,7 @@ async function createAd(){
     account_id: _connection.ad_account_id,
     page_id:    _connection.page_id,
     campaign_name: name,
-    objective: 'OUTCOME_TRAFFIC',
+    objective: 'OUTCOME_ENGAGEMENT',
     ad_text: text,
     headline: headline,
     destination_url: url,
@@ -586,6 +705,7 @@ async function createAd(){
     age_min: 25,
     age_max: 60,
     country: 'MX',
+    city: _selectedCityKey,
     publish_now: document.getElementById('fa-publish-now').checked,
   };
 
@@ -622,6 +742,7 @@ async function createAd(){
       z.classList.remove('has-file');
       z.querySelector('strong').textContent = 'Subir imagen del anuncio';
       document.getElementById('fa-upload-preview').style.display = 'none';
+      clearCity();
       updateCharCount(); syncPreview();
     } else {
       document.getElementById('fa-result-dot').className = 'fa-result-dot err';
