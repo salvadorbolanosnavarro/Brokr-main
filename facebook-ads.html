@@ -162,6 +162,8 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .fa-city-opt span{font-size:11px;color:var(--mute)}
 .fa-city-clear{position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--mute);font-size:16px;line-height:1;padding:2px 4px;display:none}
 .fa-city-clear.visible{display:block}
+.fa-city-confirmed input{border-color:#16a34a !important;padding-right:32px}
+.fa-city-confirmed .fa-city-clear{color:#16a34a}
 
 /* ─── Responsive ─────────────────────────────────────────── */
 @media(max-width:900px){
@@ -300,8 +302,8 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 
             <div class="fa-field">
               <label for="fa-city-input">Ciudad objetivo</label>
-              <div class="fa-city-wrap">
-                <input id="fa-city-input" type="text" autocomplete="off" placeholder="Ej. Morelia" oninput="onCityInput(this.value)" onkeydown="onCityKeydown(event)"/>
+              <div class="fa-city-wrap" id="fa-city-wrap">
+                <input id="fa-city-input" type="text" autocomplete="off" placeholder="Busca una ciudad…" oninput="onCityInput(this.value)" onkeydown="onCityKeydown(event)" onblur="onCityBlur()"/>
                 <button type="button" class="fa-city-clear" id="fa-city-clear" onclick="clearCity()" title="Quitar ciudad">×</button>
                 <div class="fa-city-dropdown" id="fa-city-dropdown"></div>
               </div>
@@ -634,20 +636,33 @@ async function improveText(){
 }
 
 // ── Ciudad autocomplete ─────────────────────────────────────
+// REGLA: _selectedCityKey solo se asigna desde selectCity().
+// Si el input pierde el foco sin selección confirmada, se limpia solo.
+// Así es imposible enviar texto libre sin key válida de Meta.
+
 function onCityInput(val){
   clearTimeout(_citySearchTimer);
   const dropdown = document.getElementById('fa-city-dropdown');
+  // Cualquier edición invalida la selección anterior
+  _selectedCityKey = '';
+  document.getElementById('fa-city-wrap').classList.remove('fa-city-confirmed');
+  document.getElementById('fa-city-clear').classList.remove('visible');
   if(!val || val.length < 2){
-    _selectedCityKey = '';
     dropdown.innerHTML = '';
     dropdown.classList.remove('open');
-    document.getElementById('fa-city-clear').classList.remove('visible');
     return;
   }
-  // Si el usuario escribe encima de una ciudad ya seleccionada, la deselecciona
-  _selectedCityKey = '';
-  document.getElementById('fa-city-clear').classList.remove('visible');
   _citySearchTimer = setTimeout(() => searchCities(val), 320);
+}
+
+function onCityBlur(){
+  // Delay para que onmousedown del dropdown alcance a disparar antes del blur
+  setTimeout(() => {
+    if(!_selectedCityKey){
+      document.getElementById('fa-city-input').value = '';
+      document.getElementById('fa-city-dropdown').classList.remove('open');
+    }
+  }, 200);
 }
 
 async function searchCities(q){
@@ -666,13 +681,14 @@ function renderCityDropdown(results){
   const dropdown = document.getElementById('fa-city-dropdown');
   _cityFocusIdx = -1;
   if(!results.length){
-    dropdown.innerHTML = '<div class="fa-city-opt"><span>Sin resultados para esa búsqueda.</span></div>';
+    dropdown.innerHTML = '<div class="fa-city-opt"><span>No se encontraron ciudades. Intenta con otro nombre.</span></div>';
     dropdown.classList.add('open');
     return;
   }
   dropdown.innerHTML = results.map((r, i) => {
-    const sub = [r.region, r.type === 'region' ? 'Estado' : 'Ciudad'].filter(Boolean).join(' · ');
-    return `<div class="fa-city-opt" data-key="${r.key}" data-name="${r.name}" data-idx="${i}" onclick="selectCity('${r.key}','${r.name.replace(/'/g,"\\'")}')">
+    const tipo = r.type === 'region' ? 'Estado' : 'Ciudad';
+    const sub  = [tipo, r.region].filter(Boolean).join(' · ');
+    return `<div class="fa-city-opt" data-key="${r.key}" data-name="${r.name}" data-idx="${i}" onmousedown="selectCity('${r.key}','${r.name.replace(/'/g,"\'")}')">
       <strong>${r.name}</strong>${sub ? `<span>${sub}</span>` : ''}
     </div>`;
   }).join('');
@@ -684,12 +700,14 @@ function selectCity(key, name){
   document.getElementById('fa-city-input').value = name;
   document.getElementById('fa-city-dropdown').classList.remove('open');
   document.getElementById('fa-city-clear').classList.add('visible');
+  document.getElementById('fa-city-wrap').classList.add('fa-city-confirmed');
 }
 
 function clearCity(){
   _selectedCityKey = '';
   document.getElementById('fa-city-input').value = '';
   document.getElementById('fa-city-clear').classList.remove('visible');
+  document.getElementById('fa-city-wrap').classList.remove('fa-city-confirmed');
   document.getElementById('fa-city-dropdown').classList.remove('open');
   document.getElementById('fa-city-input').focus();
 }

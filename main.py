@@ -5636,7 +5636,7 @@ async def facebook_city_search(q: str = "", request: Request = None):
             params={
                 "access_token": user_token,
                 "type": "adgeolocation",
-                "location_types": ["city", "region"],
+                "location_types": "city,region",
                 "q": q,
                 "country_code": "MX",
                 "limit": "8",
