@@ -194,38 +194,15 @@ async def api_inpc(anio: int, mes: int):
     fecha_ini = f"{anio}-{mes:02d}-01"
     fecha_fin = f"{anio}-{mes:02d}-{last_day:02d}"
     datos = await _banxico_fetch(BANXICO_SERIE_INPC, fecha_ini, fecha_fin)
-    fallback = False
     if not datos:
-        # El INPC de un mes lo publica el INEGI alrededor del día 9 del mes
-        # siguiente. Si el mes solicitado aún no está publicado (mes corriente o
-        # muy reciente), usamos el último INPC publicado (dato oportuno) y
-        # reportamos el mes/año reales. Así la calculadora nunca se bloquea.
-        datos = await _banxico_fetch(BANXICO_SERIE_INPC)
-        fallback = True
-    if not datos:
-        raise HTTPException(status_code=404, detail=f"INPC no disponible para {anio}-{mes:02d}")
-    fecha_pub = datos[-1]["fecha"]
-    # Banxico entrega la fecha como DD/MM/YYYY; para el INPC mensual el día es 01.
-    try:
-        partes = fecha_pub.split("/")
-        anio_real, mes_real = int(partes[2]), int(partes[1])
-    except (IndexError, ValueError):
-        anio_real, mes_real = anio, mes
-    # Defensa: si el mes solicitado es ANTERIOR al último publicado y aun así vino
-    # vacío (p. ej. anterior a 1982, donde la serie no existe), no es un caso de
-    # "aún no publicado" — es un dato genuinamente inexistente. Devolver el último
-    # publicado sería incorrecto, así que respondemos 404.
-    if fallback and (anio * 12 + mes) < (anio_real * 12 + mes_real):
-        raise HTTPException(status_code=404, detail=f"INPC no disponible para {anio}-{mes:02d}")
+        raise HTTPException(status_code=404, detail=f"INPC no publicado para {anio}-{mes:02d}")
     valor = float(str(datos[-1]["dato"]).replace(",", ""))
-    result = {"anio": anio_real, "mes": mes_real, "valor": valor,
-              "fecha_publicacion": fecha_pub, "fuente": "banxico_sie",
-              "solicitado": {"anio": anio, "mes": mes}, "fallback": fallback}
+    fecha_pub = datos[-1]["fecha"]
+    result = {"anio": anio, "mes": mes, "valor": valor,
+              "fecha_publicacion": fecha_pub, "fuente": "banxico_sie"}
     now = datetime.now()
     is_past = (anio < now.year) or (anio == now.year and mes < now.month)
-    # En fallback el mes solicitado se publicará pronto: TTL corto (6h) para que la
-    # caché lo refresque y tome el valor oficial en cuanto el INEGI lo libere.
-    cache_set(key, result, ttl=6 * 3600 if fallback else (30 * 86400 if is_past else 6 * 3600))
+    cache_set(key, result, ttl=30 * 86400 if is_past else 6 * 3600)
     return result
 
 @app.get("/api/udis/{fecha}")
@@ -5222,29 +5199,28 @@ class FbCreateAdRequest(BaseModel):
     campaign_name: str
     ad_text: str = ""
     headline: str = ""
-    destination_url: str = ""
-    image_b64: str = ""
-    image_mime: str = "image/jpeg"
+    # Carrusel Click-to-Messenger: hasta 10 imagenes en base64
+    images_b64: list = []       # lista de strings base64 (1-10 imagenes)
+    images_mime: list = []      # lista de mime types correspondientes
     daily_budget_mxn: float = 50.0
     duration_days: int = 7
     age_min: int = 18
     age_max: int = 0
     country: str = "MX"
-    city: str = ""              # key de ciudad/región para geo-targeting
+    city: str = ""              # key de ciudad/region para geo-targeting
     page_id: str = ""
-    objective: str = "OUTCOME_TRAFFIC"   # OUTCOME_TRAFFIC | OUTCOME_AWARENESS | OUTCOME_ENGAGEMENT
+    objective: str = "OUTCOME_ENGAGEMENT"
     publish_now: bool = False   # si True, crea y activa; si False, queda en PAUSED
-    post_id: str = ""           # si viene, promociona una publicación existente (formato pageid_postid)
+    post_id: str = ""           # si viene, promociona una publicacion existente (formato pageid_postid)
 
 
 @app.post("/facebook/create-ad")
 async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
-    """Crea una campaña completa en Facebook Ads (Campaign → AdSet → Creative → Ad).
+    """Crea una campaña de carrusel Click-to-Messenger en Facebook Ads.
 
-    Soporta dos modos:
-      • Anuncio nuevo: arma el creativo a partir de ad_text/headline/image_b64/destination_url.
-      • Promocionar publicación existente: si req.post_id viene, el creativo usa
-        object_story_id = post_id y se promueve el post tal cual.
+    Flujo: Campaign → AdSet → AdCreative (carrusel, CTA = MESSAGE_PAGE) → Ad.
+    Objetivo fijo: OUTCOME_ENGAGEMENT / CONVERSATIONS.
+    No usa destination_url: el CTA abre Messenger directamente.
 
     Si req.publish_now=True, queda en ACTIVE; si no, en PAUSED.
     """
@@ -5316,18 +5292,10 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
             # Si nos pasaron solo el post id, lo concatenamos con la page
             req.post_id = f"{page_id}_{req.post_id}"
 
-    # Mapeo objective → (optimization_goal, billing_event) compatible con Meta
-    OBJ_MAP = {
-        "OUTCOME_TRAFFIC":     ("LINK_CLICKS",      "IMPRESSIONS"),
-        "OUTCOME_AWARENESS":   ("REACH",            "IMPRESSIONS"),
-        "OUTCOME_ENGAGEMENT":  ("POST_ENGAGEMENT",  "IMPRESSIONS"),
-    }
-    optimization_goal, billing_event = OBJ_MAP.get(
-        req.objective, ("LINK_CLICKS", "IMPRESSIONS")
-    )
-    # Si se promociona un post existente, POST_ENGAGEMENT es lo más seguro
-    if req.post_id:
-        optimization_goal = "POST_ENGAGEMENT"
+    # Carrusel Click-to-Messenger: objetivo y optimización fijos
+    # CONVERSATIONS + IMPRESSIONS es el par correcto para anuncios que abren Messenger.
+    optimization_goal = "CONVERSATIONS"
+    billing_event = "IMPRESSIONS"
 
     target_status = "ACTIVE" if req.publish_now else "PAUSED"
 
@@ -5364,33 +5332,48 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
         except Exception:
             return f"{prefix}: {resp_text[:300]}"
 
-    async with httpx.AsyncClient(timeout=45) as client:
+    async with httpx.AsyncClient(timeout=60) as client:
 
-        # ── 0. Subir imagen a Meta ANTES de crear campaña (si falla, no
-        # dejamos basura en la cuenta del usuario). Solo modo "anuncio nuevo".
-        image_hash = None
-        if req.image_b64 and not req.post_id:
-            r_img = await client.post(
-                f"{base_url}/adimages",
-                params=params_base,
-                json={"bytes": req.image_b64}
-            )
-            if r_img.status_code in (200, 201):
-                for v in r_img.json().get("images", {}).values():
-                    image_hash = v.get("hash")
-                    break
-            if not image_hash:
-                # La imagen falló: no creamos nada.
-                raise HTTPException(status_code=502, detail=_fb_friendly_error(r_img.text, "No se pudo subir la imagen"))
+        # ── 0. Validar imágenes ────────────────────────────────────────
+        images_b64 = [b for b in (req.images_b64 or []) if b]
+        images_mime = list(req.images_mime or [])
+        if not req.post_id and not images_b64:
+            raise HTTPException(status_code=400, detail="Sube al menos una imagen para el anuncio.")
+        if len(images_b64) > 10:
+            images_b64 = images_b64[:10]
+            images_mime = images_mime[:10]
+        # Completar mimes si faltan
+        while len(images_mime) < len(images_b64):
+            images_mime.append("image/jpeg")
 
-        # ── Validar URL destino (Meta exige http/https para link_data.link) ──
-        dest_url = (req.destination_url or "").strip()
-        if not req.post_id and dest_url and not dest_url.lower().startswith(("http://", "https://")):
-            dest_url = "https://" + dest_url
+        # ── 0b. Subir todas las imágenes a Meta ANTES de crear campaña ──
+        # Si cualquier imagen falla, abortamos sin dejar basura en la cuenta.
+        image_hashes = []
+        if not req.post_id:
+            for idx, b64 in enumerate(images_b64):
+                r_img = await client.post(
+                    f"{base_url}/adimages",
+                    params=params_base,
+                    json={"bytes": b64}
+                )
+                if r_img.status_code in (200, 201):
+                    for v in r_img.json().get("images", {}).values():
+                        h = v.get("hash")
+                        if h:
+                            image_hashes.append(h)
+                        break
+                if not image_hashes or len(image_hashes) < idx + 1:
+                    raise HTTPException(
+                        status_code=502,
+                        detail=_fb_friendly_error(
+                            r_img.text,
+                            f"No se pudo subir la imagen {idx + 1}"
+                        )
+                    )
 
-        # ── Recortar campos a límites Meta para evitar rechazos por longitud ──
+        # ── Recortar campos a límites Meta ─────────────────────────────
         ad_text = (req.ad_text or "")[:2200]
-        headline = (req.headline or "")[:255]   # técnicamente 255, recomendado <40
+        headline = (req.headline or "")[:40]      # recomendado <40 para carrusel
         campaign_name = (req.campaign_name or "Campaña Broquer")[:120]
 
         # ── 1. Crear Campaign (siempre en PAUSED; activamos al final) ──
@@ -5399,7 +5382,7 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
             params=params_base,
             json={
                 "name": campaign_name,
-                "objective": req.objective,
+                "objective": "OUTCOME_ENGAGEMENT",
                 "status": "PAUSED",
                 "special_ad_categories": [],
                 "buying_type": "AUCTION",
@@ -5425,9 +5408,7 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
             "age_min": req.age_min,
             "geo_locations": geo,
             # Meta requiere desde 2024 que se declare EXPLÍCITAMENTE si se usa
-            # Advantage Audience (expansión automática de público). Sin esto,
-            # Meta rechaza con error 100/1870227 "Se requiere la marca de público
-            # Advantage". 0 = desactivado (público controlado por el agente).
+            # Advantage Audience. 0 = desactivado (público controlado por el agente).
             "targeting_automation": {"advantage_audience": 0},
         }
         if req.age_max and req.age_max > 0:
@@ -5442,12 +5423,12 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
             "bid_strategy": "LOWEST_COST_WITHOUT_CAP",
             "targeting": targeting,
             "status": "PAUSED",
-            # Objeto promocionado: la página. Cubre los 3 objetivos sin pixel.
+            # Click-to-Messenger: promoted_object apunta a la página.
             "promoted_object": {"page_id": page_id},
+            # destination_type = MESSENGER indica a Meta que el destino es Messenger.
+            # Esto es obligatorio para anuncios Click-to-Messenger.
+            "destination_type": "MESSENGER",
         }
-        # NOTA: NO pasamos destination_type. Para OUTCOME_TRAFFIC +
-        # LINK_CLICKS, Meta infiere el destino del link_data del creativo.
-        # Pasar destination_type="WEBSITE" gatilla requisito de Pixel (1487888).
 
         if req.duration_days and req.duration_days > 0:
             from datetime import timedelta
@@ -5464,20 +5445,40 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
             raise HTTPException(status_code=502, detail=_fb_friendly_error(r_adset.text, "Error creando conjunto de anuncios"))
         adset_id = r_adset.json().get("id")
 
-        # ── 3. Crear AdCreative ────────────────────────────────────────
+        # ── 3. Crear AdCreative (carrusel Click-to-Messenger) ──────────
         if req.post_id:
+            # Modo boost de publicación existente (no carrusel)
             creative_payload: dict = {
                 "name": f"{campaign_name} — Boost",
                 "object_story_id": req.post_id,
             }
         else:
+            # Construir child_attachments: una tarjeta por imagen.
+            # CTA = MESSAGE_PAGE abre Messenger sin URL de destino.
+            child_attachments = []
+            for i, img_hash in enumerate(image_hashes):
+                attachment: dict = {
+                    "name": headline,
+                    "image_hash": img_hash,
+                    "call_to_action": {
+                        "type": "MESSAGE_PAGE",
+                        "value": {"app_destination": "MESSENGER"},
+                    },
+                }
+                child_attachments.append(attachment)
+
+            # link_data del carrusel: message global + tarjetas hijas.
+            # link es obligatorio en link_data pero para Click-to-Messenger
+            # apuntamos a la página de Facebook (no a un sitio web).
             link_data: dict = {
                 "message": ad_text,
-                "name": headline,
-                "link": dest_url or f"https://www.facebook.com/{page_id}",
+                "link": f"https://www.facebook.com/{page_id}",
+                "child_attachments": child_attachments,
+                "call_to_action": {
+                    "type": "MESSAGE_PAGE",
+                    "value": {"app_destination": "MESSENGER"},
+                },
             }
-            if image_hash:
-                link_data["image_hash"] = image_hash
 
             creative_payload = {
                 "name": f"{campaign_name} — Creative",
@@ -5486,11 +5487,6 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
                     "link_data": link_data,
                 },
             }
-            # NOTA: NO incluir `degrees_of_freedom_spec.creative_features_spec.
-            # standard_enhancements`. Meta lo deprecó en 2024 y rechaza el
-            # creativo si está presente. Para configurar mejoras específicas
-            # hay que usar flags individuales por feature, pero el default de
-            # Meta ya es razonable para un anuncio simple.
 
         r_creative = await client.post(
             f"{base_url}/adcreatives",
