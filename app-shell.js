@@ -2545,7 +2545,23 @@
           headers: { ...baseHeaders, ...(init.headers || {}) }
         };
         const url = SB_URL + '/' + path.replace(/^\/+/, '');
-        let r = await fetch(url, opts);
+
+        // Timeout de 15 s para evitar que fetch quede colgado en conexiones lentas/inestables.
+        function fetchWithTimeout(u, o) {
+          const controller = new AbortController();
+          const tid = setTimeout(() => controller.abort(), 15000);
+          return fetch(u, { ...o, signal: controller.signal })
+            .then(res => { clearTimeout(tid); return res; })
+            .catch(err => {
+              clearTimeout(tid);
+              if (err.name === 'AbortError') {
+                throw new Error('La conexión tardó demasiado. Verifica tu red e intenta de nuevo.');
+              }
+              throw err;
+            });
+        }
+
+        let r = await fetchWithTimeout(url, opts);
 
         // Token expirado/invalido → refresh y un único reintento
         if (r.status === 401) {
@@ -2556,7 +2572,7 @@
               Authorization: 'Bearer ' + newTok,
               ...(init.headers || {}),
             };
-            r = await fetch(url, opts);
+            r = await fetchWithTimeout(url, opts);
           } else {
             // Refresh falló de verdad → cerrar sesión limpiamente.
             // No redirigimos en medio del fetch para no romper UIs en curso;
