@@ -149,6 +149,62 @@
 }
 .props-toolbar select:hover { border-color: var(--line-3); }
 
+/* Estatus multi-selección */
+.props-filter-est-wrap {
+  position: relative;
+}
+.props-filter-est-btn {
+  height: 44px; padding: 0 36px 0 14px;
+  background: var(--bone) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='none' stroke='%236B6B66' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l4 4 4-4'/%3E%3C/svg%3E") right 14px center/10px no-repeat;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-pill);
+  color: var(--ink); font-size: 13px; font-weight: 500;
+  cursor: pointer; font-family: inherit;
+  white-space: nowrap;
+  display: flex; align-items: center; gap: 8px;
+  transition: border-color var(--dur) var(--ease);
+}
+.props-filter-est-btn:hover { border-color: var(--line-3); }
+.props-filter-est-btn svg { display: none; } /* la flecha es el bg */
+.props-filter-est-btn.is-active { border-color: var(--ink); background-color: var(--paper-2); }
+.props-est-dropdown {
+  display: none;
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 200;
+  background: var(--bone); border: 1px solid var(--line-2);
+  border-radius: var(--r); box-shadow: 0 4px 16px rgba(0,0,0,.10);
+  padding: 6px 0; min-width: 160px;
+}
+.props-est-dropdown.is-open { display: block; }
+.props-est-option {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 16px; font-size: 13px; font-weight: 500;
+  color: var(--ink); cursor: pointer;
+  transition: background var(--dur) var(--ease);
+}
+.props-est-option:hover { background: var(--paper-2); }
+.props-est-option input[type="checkbox"] {
+  width: 15px; height: 15px; accent-color: var(--forest); cursor: pointer; flex-shrink: 0;
+}
+
+/* Filtro precio */
+.props-price-wrap {
+  display: flex; align-items: center; gap: 6px;
+  height: 44px;
+  background: var(--bone);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-pill);
+  padding: 0 14px;
+  transition: border-color var(--dur) var(--ease);
+}
+.props-price-wrap:focus-within { border-color: var(--ink); }
+.props-price-wrap input {
+  background: none; border: none; outline: none;
+  color: var(--ink); font-size: 13px; font-weight: 500; font-family: inherit;
+  width: 100px;
+}
+.props-price-wrap input::placeholder { color: var(--mute-2); }
+.props-price-sep { color: var(--mute-2); font-size: 13px; flex-shrink: 0; }
+
 /* ── Grid ─────────────────────────────────── */
 .props-grid {
   padding: 24px 28px 60px;
@@ -532,6 +588,10 @@
   .props-head__title h1 { font-size: 26px; }
   .props-grid { padding: 16px; gap: 12px; grid-template-columns: 1fr; }
   .props-toolbar select { width: 100%; }
+  .props-filter-est-btn { width: 100%; }
+  .props-price-wrap { width: 100%; }
+  .props-price-wrap input { width: 80px; }
+  .props-est-dropdown { width: 100%; }
 }
 
 /* ── Sidebar nav (desktop) ───────────────── */
@@ -756,12 +816,33 @@
           <option value="oficina">Oficina</option>
           <option value="bodega">Bodega</option>
         </select>
-        <select id="props-filter-est" onchange="filterProps()">
-          <option value="">Todos los estatus</option>
-          <option value="activa">Activas</option>
-          <option value="vendida">Vendidas</option>
-          <option value="rentada">Rentadas</option>
-          <option value="suspendida">Suspendidas</option>
+
+        <!-- Estatus multi-selección -->
+        <div class="props-filter-est-wrap" id="props-filter-est-wrap">
+          <button type="button" class="props-filter-est-btn" id="props-filter-est-btn" onclick="toggleEstDropdown()">
+            <span id="props-filter-est-label">Todos los estatus</span>
+            <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path stroke="#6B6B66" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M1 1l4 4 4-4"/></svg>
+          </button>
+          <div class="props-est-dropdown" id="props-est-dropdown">
+            <label class="props-est-option"><input type="checkbox" value="activa" onchange="filterProps()"> Activa</label>
+            <label class="props-est-option"><input type="checkbox" value="vendida" onchange="filterProps()"> Vendida</label>
+            <label class="props-est-option"><input type="checkbox" value="rentada" onchange="filterProps()"> Rentada</label>
+            <label class="props-est-option"><input type="checkbox" value="suspendida" onchange="filterProps()"> Suspendida</label>
+          </div>
+        </div>
+
+        <!-- Filtro precio min/max -->
+        <div class="props-price-wrap">
+          <input id="props-price-min" type="text" inputmode="numeric" placeholder="Precio min" oninput="filterProps()" />
+          <span class="props-price-sep">–</span>
+          <input id="props-price-max" type="text" inputmode="numeric" placeholder="Precio max" oninput="filterProps()" />
+        </div>
+
+        <!-- Orden por precio -->
+        <select id="props-sort-precio" onchange="filterProps()">
+          <option value="">Ordenar por precio</option>
+          <option value="asc">Menor a mayor</option>
+          <option value="desc">Mayor a menor</option>
         </select>
       </div>
     </div>
@@ -1084,15 +1165,76 @@ function renderProps(props, totalForCount) {
   }).join('');
 }
 
+function toggleEstDropdown() {
+  const dd = g('props-est-dropdown');
+  const btn = g('props-filter-est-btn');
+  const isOpen = dd.classList.contains('is-open');
+  dd.classList.toggle('is-open', !isOpen);
+  btn.classList.toggle('is-active', !isOpen);
+}
+
+// Cierra el dropdown de estatus si se hace click fuera
+document.addEventListener('click', function(e) {
+  const wrap = g('props-filter-est-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    g('props-est-dropdown').classList.remove('is-open');
+    // Mantener is-active solo si hay algún estatus seleccionado
+    const checked = wrap.querySelectorAll('input[type="checkbox"]:checked');
+    g('props-filter-est-btn').classList.toggle('is-active', checked.length > 0);
+  }
+});
+
+function getSelectedEstatus() {
+  const checks = document.querySelectorAll('#props-est-dropdown input[type="checkbox"]:checked');
+  return Array.from(checks).map(c => c.value);
+}
+
+function updateEstLabel() {
+  const selected = getSelectedEstatus();
+  const label = g('props-filter-est-label');
+  if (selected.length === 0) {
+    label.textContent = 'Todos los estatus';
+  } else if (selected.length === 1) {
+    const map = { activa: 'Activa', vendida: 'Vendida', rentada: 'Rentada', suspendida: 'Suspendida' };
+    label.textContent = map[selected[0]] || selected[0];
+  } else {
+    label.textContent = selected.length + ' estatus';
+  }
+}
+
+function parsePrecio(val) {
+  if (!val) return null;
+  const n = parseFloat(val.replace(/[$,\s]/g, ''));
+  return isNaN(n) ? null : n;
+}
+
 function filterProps() {
   const q = g('props-search').value.toLowerCase();
   const op = g('props-filter-op').value;
   const tipo = g('props-filter-tipo').value;
-  const est = g('props-filter-est').value;
-  filteredProps = allProps.filter(p =>
-    (!q || (p.titulo+p.colonia+p.ciudad+p.descripcion+'').toLowerCase().includes(q)) &&
-    (!op || p.operacion === op) && (!tipo || p.tipo === tipo) && (!est || p.estatus === est)
-  );
+  const selectedEst = getSelectedEstatus();
+  const precioMin = parsePrecio(g('props-price-min').value);
+  const precioMax = parsePrecio(g('props-price-max').value);
+  const sort = g('props-sort-precio').value;
+
+  updateEstLabel();
+
+  filteredProps = allProps.filter(p => {
+    if (q && !(p.titulo+p.colonia+p.ciudad+p.descripcion+'').toLowerCase().includes(q)) return false;
+    if (op && p.operacion !== op) return false;
+    if (tipo && p.tipo !== tipo) return false;
+    if (selectedEst.length > 0 && !selectedEst.includes(p.estatus)) return false;
+    if (precioMin !== null && (p.precio == null || Number(p.precio) < precioMin)) return false;
+    if (precioMax !== null && (p.precio == null || Number(p.precio) > precioMax)) return false;
+    return true;
+  });
+
+  if (sort === 'asc') {
+    filteredProps.sort((a, b) => (Number(a.precio) || 0) - (Number(b.precio) || 0));
+  } else if (sort === 'desc') {
+    filteredProps.sort((a, b) => (Number(b.precio) || 0) - (Number(a.precio) || 0));
+  }
+
   currentPage = 1;
   renderPage();
   updateSelectionUI();
