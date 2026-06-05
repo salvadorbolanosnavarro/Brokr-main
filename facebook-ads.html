@@ -307,7 +307,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
                 <button type="button" class="fa-city-clear" id="fa-city-clear" onclick="clearCity()" title="Quitar ciudad">×</button>
                 <div class="fa-city-dropdown" id="fa-city-dropdown"></div>
               </div>
-              <div class="fa-hint">Opcional. Si no eliges ciudad, el anuncio se muestra en todo México.</div>
+              <div class="fa-hint">Obligatoria. El anuncio se entrega solo en la ciudad que elijas.</div>
             </div>
 
             <div class="fa-grid-2">
@@ -759,6 +759,7 @@ async function createAd(){
   if(!_images.length){ toast('Sube al menos una imagen para el carrusel.'); return; }
   if(budget < 50){ toast('El presupuesto diario mínimo recomendado es $50 MXN.'); return; }
   if(duration < 1 || duration > 365){ toast('La duración debe ser entre 1 y 365 días.'); return; }
+  if(!_selectedCityKey){ toast('Selecciona una ciudad del buscador antes de publicar.'); return; }
   if(!_connection || !_connection.ad_account_id){
     toast('No hay cuenta publicitaria conectada. Reconecta Facebook desde tu perfil.');
     return;
@@ -778,7 +779,6 @@ async function createAd(){
     duration_days: duration,
     age_min:  25,
     age_max:  60,
-    country:  'MX',
     city:     _selectedCityKey,
     publish_now: document.getElementById('fa-publish-now').checked,
   };

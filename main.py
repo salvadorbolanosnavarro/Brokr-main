@@ -5401,9 +5401,11 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
                 except Exception: pass
 
         # ── 2. Crear AdSet ─────────────────────────────────────────────
-        geo: dict = {"countries": [req.country]}
-        if req.city:
-            geo["cities"] = [{"key": req.city}]
+        # Siempre se segmenta por ciudad. No se usa countries — no tiene sentido
+        # para un agente inmobiliario anunciar en todo un país.
+        if not req.city:
+            raise HTTPException(status_code=400, detail="Debes seleccionar una ciudad para el anuncio.")
+        geo: dict = {"cities": [{"key": req.city}]}
         targeting: dict = {
             "age_min": req.age_min,
             "geo_locations": geo,
