@@ -14,6 +14,40 @@
   if (window.__brokrShellLoaded) return;
   window.__brokrShellLoaded = true;
 
+  /* ── Sentry — monitoreo de errores en producción ──────────────────────
+     Captura automáticamente cualquier error JavaScript no manejado en todas
+     las páginas de Broquer y lo envía a tu panel de sentry.io.
+
+     PASO ÚNICO: reemplaza PEGAR_URL_AQUI con la URL que Sentry te da al
+     crear tu proyecto (la encuentras en Project Settings → Client Keys →
+     Loader Script; se ve así: https://js.sentry-cdn.com/TU_CLAVE.min.js).
+
+     No carga nada en localhost — solo en broquer.app.
+     ─────────────────────────────────────────────────────────────────── */
+  (function initSentry() {
+    const h = window.location.hostname;
+    if (h === 'localhost' || h === '127.0.0.1' || h === '') return;
+    const s = document.createElement('script');
+    s.src = 'https://js.sentry-cdn.com/266e3bda223d2a0a211074bde709f4e8.min.js';
+    s.crossOrigin = 'anonymous';
+    s.onload = function () {
+      if (!window.Sentry) return;
+      // Etiqueta el módulo activo (ej. "isr", "avm") para filtrar en Sentry por página
+      const mod = (document.body && document.body.dataset.app)
+        ? document.body.dataset.app
+        : (location.pathname.split('/').pop() || 'index').replace('.html', '');
+      Sentry.setTag('modulo', mod);
+      // Si el usuario ya tiene sesión, adjunta su correo al reporte
+      try {
+        const u = JSON.parse(
+          localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}'
+        );
+        if (u && u.email) Sentry.setUser({ email: u.email, id: u.id || undefined });
+      } catch (_) {}
+    };
+    document.head.appendChild(s);
+  })();
+
   /* ── Config ── */
   const API_BASE = 'https://api.broquer.app';
   const SB_URL   = 'https://urtgysmtnvoqaljuhntz.supabase.co';
