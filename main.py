@@ -2700,19 +2700,71 @@ async def _collect_search_candidates(req: AvmWebSearchRequest) -> Dict[str, Any]
 
 
 def _extract_json_from_text(raw: str) -> Dict[str, Any]:
-    raw = (raw or "").strip()
-    if raw.startswith("```"):
-        raw = raw.split("\n", 1)[-1]
-        if raw.endswith("```"):
-            raw = raw[:-3]
-    raw = raw.strip()
-    try:
-        return json.loads(raw)
-    except Exception:
-        m = re.search(r"\{.*\}", raw, re.DOTALL)
-        if not m:
-            raise
-        return json.loads(m.group())
+    """Extrae un objeto JSON de la respuesta del modelo aunque venga envuelto en
+    cercas de markdown (```json ... ```), con texto antes o despues, o con la
+    llave de apertura pegada a la cerca. Solo lanza error si de plano no hay un
+    objeto JSON parseable (p. ej. respuesta truncada)."""
+    text = (raw or "").strip()
+
+    def _try(s: str):
+        try:
+            return json.loads(s)
+        except Exception:
+            return None
+
+    # 1) Tal cual: por si ya viene como JSON limpio.
+    out = _try(text)
+    if out is not None:
+        return out
+
+    # 2) Quitando cercas de markdown en cualquier posicion.
+    nofence = text
+    if "```" in nofence:
+        first = re.search(r"```(?:json|JSON)?", nofence)
+        if first:
+            inner = nofence[first.end():]
+            last = inner.rfind("```")
+            nofence = (inner[:last] if last != -1 else inner).strip()
+            out = _try(nofence)
+            if out is not None:
+                return out
+
+    # 3) Primer objeto {...} balanceado (ignora llaves dentro de cadenas).
+    for source in (nofence, text):
+        start = source.find("{")
+        if start == -1:
+            continue
+        depth, in_str, esc = 0, False, False
+        for i in range(start, len(source)):
+            ch = source[i]
+            if in_str:
+                if esc:
+                    esc = False
+                elif ch == "\\":
+                    esc = True
+                elif ch == '"':
+                    in_str = False
+                continue
+            if ch == '"':
+                in_str = True
+            elif ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    out = _try(source[start:i + 1])
+                    if out is not None:
+                        return out
+                    break
+
+    # 4) Ultimo recurso: regex codicioso (comportamiento previo).
+    m = re.search(r"\{.*\}", text, re.DOTALL)
+    if m:
+        out = _try(m.group())
+        if out is not None:
+            return out
+
+    raise ValueError("No se encontro un objeto JSON valido en la respuesta del modelo.")
 
 
 def _extract_visible_text(html: str) -> str:
@@ -2922,7 +2974,7 @@ Responde ÚNICAMENTE JSON válido con esta estructura:
             },
             json={
                 "model": os.environ.get("ANTHROPIC_AVM_MODEL", "claude-sonnet-4-6"),
-                "max_tokens": 6500,
+                "max_tokens": 8000,
                 "temperature": 0.05,
                 "system": system_prompt,
                 "messages": [{"role": "user", "content": json.dumps(user_msg, ensure_ascii=False)}],
