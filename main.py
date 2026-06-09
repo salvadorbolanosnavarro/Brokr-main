@@ -6718,13 +6718,17 @@ async def admin_user_uso(user_id: str, request: Request, dias: int = 30):
 # ════════════════════════════════════════════════════════════════
 @app.delete("/usuario/eliminar-cuenta")
 async def eliminar_cuenta_y_datos(request: Request):
-    """Borra TODA la información del usuario autenticado.
+    """Borra TODA la información del usuario autenticado, de forma permanente.
 
-    Tablas afectadas (cascada lógica):
-      • propiedades, contactos, contratos, user_integrations, usuarios
-      • Supabase Auth (auth.users)
+    Pasos (irreversibles, en este orden):
+      1. Cancela de inmediato la suscripción de Stripe (si tiene una activa).
+      2. Borra las fotos del usuario del bucket de Storage (fotos-propiedades).
+      3. Borra sus filas: propiedades, contactos, contratos, user_integrations,
+         suscripciones, usage_logs, module_sessions.
+      4. Borra su fila en `usuarios`.
+      5. Borra al usuario de Supabase Auth (auth.users).
 
-    Es irreversible. El frontend debe confirmar dos veces antes de llamar.
+    El frontend confirma dos veces (el usuario escribe su correo) antes de llamar.
     """
     user_id = await get_user_id_from_token(request)
     if not user_id:
@@ -6738,10 +6742,85 @@ async def eliminar_cuenta_y_datos(request: Request):
         "Content-Type": "application/json",
         "Prefer": "return=minimal",
     }
-    tablas = ["propiedades", "contactos", "contratos", "user_integrations"]
+    sb_read_headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+    }
+    tablas = ["propiedades", "contactos", "contratos", "user_integrations",
+              "suscripciones", "usage_logs", "module_sessions"]
     borrados = {}
     errores = []
-    async with httpx.AsyncClient(timeout=20) as client:
+    async with httpx.AsyncClient(timeout=30) as client:
+        # ── 1. Cancelar la suscripción de Stripe de inmediato ──────────
+        # Al borrar la cuenta, Stripe NO debe seguir cobrando. Cancelación
+        # inmediata (no al final del período). Si algo falla, se registra en
+        # `errores` pero no detiene el resto del borrado.
+        if STRIPE_SECRET_KEY:
+            try:
+                rs = await client.get(
+                    f"{SUPABASE_URL}/rest/v1/suscripciones",
+                    headers=sb_read_headers,
+                    params={
+                        "user_id": f"eq.{user_id}",
+                        "select": "stripe_subscription_id",
+                        "order": "updated_at.desc",
+                        "limit": "1",
+                    },
+                )
+                sub_rows = rs.json() if rs.status_code == 200 else []
+                sub_id = sub_rows[0].get("stripe_subscription_id") if sub_rows else None
+                if sub_id:
+                    rc = await client.delete(
+                        f"https://api.stripe.com/v1/subscriptions/{sub_id}",
+                        headers=_stripe_headers(),
+                    )
+                    borrados["stripe"] = (rc.status_code in (200, 201))
+                    if rc.status_code not in (200, 201):
+                        errores.append(f"stripe: {rc.status_code} {rc.text[:120]}")
+                else:
+                    borrados["stripe"] = "sin_suscripcion"
+            except Exception as e:
+                errores.append(f"stripe: {e}")
+                borrados["stripe"] = False
+
+        # ── 2. Borrar las fotos del usuario del bucket de Storage ──────
+        # Las fotos se guardan con nombre aleatorio (sin prefijo de usuario),
+        # así que se obtienen las URLs de sus propiedades ANTES de borrar las filas.
+        try:
+            rp = await client.get(
+                f"{SUPABASE_URL}/rest/v1/propiedades",
+                headers=sb_read_headers,
+                params={"user_id": f"eq.{user_id}", "select": "fotos"},
+            )
+            objetos = []
+            if rp.status_code == 200:
+                for fila in (rp.json() or []):
+                    for url in (fila.get("fotos") or []):
+                        if not isinstance(url, str):
+                            continue
+                        marcador = "/fotos-propiedades/"
+                        if marcador in url:
+                            nombre = url.split(marcador, 1)[1].split("?", 1)[0]
+                            if nombre:
+                                objetos.append(nombre)
+            objetos = list(dict.fromkeys(objetos))  # quitar duplicados
+            fotos_borradas = 0
+            for nombre in objetos:
+                try:
+                    rf = await client.delete(
+                        f"{SUPABASE_URL}/storage/v1/object/fotos-propiedades/{nombre}",
+                        headers=sb_read_headers,
+                    )
+                    if rf.status_code in (200, 204):
+                        fotos_borradas += 1
+                except Exception:
+                    pass
+            borrados["fotos_storage"] = f"{fotos_borradas}/{len(objetos)}"
+        except Exception as e:
+            errores.append(f"fotos_storage: {e}")
+            borrados["fotos_storage"] = False
+
+        # ── 3. Borrar las filas de datos del usuario ───────────────────
         for tabla in tablas:
             try:
                 r = await client.delete(

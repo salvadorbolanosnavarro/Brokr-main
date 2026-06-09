@@ -1878,6 +1878,30 @@
             </div>
           </div>
 
+          <!-- Eliminar cuenta (requerido por App Store; visible también en iOS) -->
+          <div class="bk-pd-menu-item" id="pdsec-del">
+            <button class="bk-pd-menu-trigger" onclick="togglePdSection('del')">
+              <span class="bk-pd-menu-trigger-left">
+                <span class="bk-pd-menu-trigger-dot" style="background:var(--danger)"></span>
+                Eliminar mi cuenta
+              </span>
+              <svg class="bk-pd-menu-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="bk-pd-menu-panel">
+              <div class="bk-pd-menu-panel-inner">
+                <div class="bk-pd-card">
+                  <p style="font-size:13px;color:var(--mute);line-height:1.5;margin-bottom:12px">Esta acción elimina de forma permanente tu cuenta y todos tus datos (propiedades, contactos, contratos e integraciones). No se puede deshacer.</p>
+                  <div class="bk-pd-field">
+                    <label>Para confirmar, escribe tu correo</label>
+                    <input type="email" id="pd-del-input" placeholder="tu@correo.com" autocomplete="off" autocorrect="off" spellcheck="false" oninput="checkDeleteMatch()"/>
+                  </div>
+                  <button class="bk-pd-btn bk-pd-btn-danger" id="pd-del-confirm-btn" onclick="ejecutarEliminarCuenta()" style="opacity:.4;pointer-events:none">Eliminar mi cuenta permanentemente</button>
+                  <div class="bk-pd-toast" id="pd-toast-del"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Admin (solo admin) -->
           <div class="bk-pd-menu-item" id="pdsec-admin" style="display:none">
             <button class="bk-pd-menu-trigger" onclick="togglePdSection('admin')">
@@ -2161,6 +2185,52 @@
     setTimeout(() => { toast.className = 'bk-pd-toast'; }, 3500);
   }
   window.saveProfileData = saveProfileData;
+
+  // ── Eliminar cuenta (acción irreversible) ────────────────────
+  // Habilita el botón solo cuando el correo escrito coincide con el de la cuenta.
+  function checkDeleteMatch() {
+    const inp = document.getElementById('pd-del-input');
+    const btn = document.getElementById('pd-del-confirm-btn');
+    if (!inp || !btn) return;
+    const email = (_pdProfile?.email || '').trim().toLowerCase();
+    const match = email !== '' && inp.value.trim().toLowerCase() === email;
+    btn.style.opacity = match ? '' : '.4';
+    btn.style.pointerEvents = match ? 'auto' : 'none';
+  }
+  window.checkDeleteMatch = checkDeleteMatch;
+
+  // Llama al backend, que borra datos + usuario de Supabase Auth de forma real.
+  async function ejecutarEliminarCuenta() {
+    const btn = document.getElementById('pd-del-confirm-btn');
+    const toast = document.getElementById('pd-toast-del');
+    const tok = getToken();
+    if (!tok) return;
+    if (toast) toast.className = 'bk-pd-toast';
+    if (btn) { btn.style.pointerEvents = 'none'; btn.style.opacity = '.6'; btn.textContent = 'Eliminando…'; }
+    try {
+      const r = await fetch(API_BASE + '/usuario/eliminar-cuenta', {
+        method: 'DELETE',
+        headers: { Authorization: 'Bearer ' + tok }
+      });
+      const d = await r.json().catch(() => ({}));
+      // Solo damos por buena la baja si el usuario de Auth se eliminó de verdad.
+      if (!r.ok || (d && d.borrados && d.borrados.auth === false)) throw new Error('delete failed');
+      // Confirmación visible (también para la grabación de App Review).
+      const card = btn ? btn.closest('.bk-pd-card') : null;
+      if (card) card.innerHTML = '<p style="font-size:14px;color:var(--ink);line-height:1.5">Tu cuenta y todos tus datos fueron eliminados permanentemente.</p>';
+      // Limpiar sesión y salir.
+      localStorage.removeItem('sb_token');
+      localStorage.removeItem('sb_refresh');
+      localStorage.removeItem('sb_user');
+      localStorage.removeItem('sesion_activa');
+      sessionStorage.clear();
+      setTimeout(() => { location.href = 'login.html'; }, 1800);
+    } catch (e) {
+      if (toast) { toast.textContent = 'No se pudo eliminar la cuenta. Intenta de nuevo o escríbenos a soporte.'; toast.className = 'bk-pd-toast err'; }
+      if (btn) { btn.style.pointerEvents = 'auto'; btn.style.opacity = ''; btn.textContent = 'Eliminar mi cuenta permanentemente'; }
+    }
+  }
+  window.ejecutarEliminarCuenta = ejecutarEliminarCuenta;
 
   async function saveEbKey() {
     const tok = getToken();

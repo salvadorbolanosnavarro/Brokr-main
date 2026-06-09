@@ -399,7 +399,7 @@ body { overflow-y: auto; }
           </div>
         </div>
         <div class="bk-field" style="margin-top:14px">
-          <label for="s-telefono">Teléfono</label>
+          <label for="s-telefono">Teléfono (opcional)</label>
           <input class="bk-input" type="tel" id="s-telefono" placeholder="443 123 4567" autocomplete="tel"/>
         </div>
         <div class="bk-field">
@@ -614,8 +614,7 @@ async function doSignup(){
   // Validación granular con mensajes específicos
   if(!nombre)      { showMsg('Ingresa tu nombre.'); return; }
   if(!apellidos)   { showMsg('Ingresa tus apellidos.'); return; }
-  if(!telefono)    { showMsg('Ingresa tu teléfono.'); return; }
-  if(!isValidPhoneMx(telefono)) { showMsg('El teléfono debe tener 10 dígitos (Lada + número).'); return; }
+  if(telefono && !isValidPhoneMx(telefono)) { showMsg('El teléfono debe tener 10 dígitos (Lada + número).'); return; }
   if(!email)       { showMsg('Ingresa tu correo electrónico.'); return; }
   if(!isValidEmail(email)) { showMsg('El correo electrónico no es válido.'); return; }
   if(!pass || !pass2) { showMsg('Ingresa tu contraseña dos veces.'); return; }
