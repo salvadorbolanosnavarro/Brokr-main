@@ -1828,7 +1828,8 @@
             </div>
           </div>
 
-          <!-- Suscripcion -->
+          <!-- Suscripcion (solo web; dentro de la app de iOS no se muestra gestión ni cobro de suscripción) -->
+          ${IS_IOS_NATIVE ? '' : `
           <div class="bk-pd-menu-item" id="pdsec-sub">
             <button class="bk-pd-menu-trigger" onclick="togglePdSection('sub')">
               <span class="bk-pd-menu-trigger-left">
@@ -1842,15 +1843,13 @@
                 <div class="bk-pd-card">
                   <div id="pd-sub-badge-wrap"><span class="bk-pd-sub-badge inactive" id="pd-sub-badge">Sin plan activo</span></div>
                   <div class="bk-pd-sub-info" id="pd-sub-info">Activa tu suscripción para acceder a todas las funciones de Broquer.</div>
-                  ${IS_IOS_NATIVE
-                    ? `<div class="bk-pd-sub-info" id="pd-sub-web-note" style="font-size:13px;color:var(--mute);line-height:1.5;">Para activar o administrar tu suscripción, entra a <strong>broquer.app</strong> desde tu navegador.</div>`
-                    : `<button class="bk-pd-btn bk-pd-btn-primary" id="pd-sub-btn" onclick="startCheckout()">Activar Broquer Max</button>`}
+                  <button class="bk-pd-btn bk-pd-btn-primary" id="pd-sub-btn" onclick="startCheckout()">Activar Broquer Max</button>
                   <button class="bk-pd-btn bk-pd-btn-outline" id="pd-sub-cancel-btn" onclick="cancelSubscription()" style="display:none">Cancelar suscripción</button>
                   <div class="bk-pd-toast" id="pd-toast-sub"></div>
                 </div>
               </div>
             </div>
-          </div>
+          </div>`}
 
           <!-- Legal -->
           <div class="bk-pd-menu-item" id="pdsec-legal">
@@ -1965,6 +1964,8 @@
 
   // Checkout Stripe
   async function startCheckout() {
+    // En la app nativa de iOS jamás se inicia un cobro dentro de la app (política de Apple).
+    if (IS_IOS_NATIVE) return;
     const tok = getToken();
     if (!tok) return;
     const btn = document.getElementById('pd-sub-btn');
@@ -2448,20 +2449,124 @@
   }
   window.startSubscriptionCheckoutFromGate = startSubscriptionCheckoutFromGate;
 
+  // ─── Compra in-app (RevenueCat / App Store) — solo iOS nativo ─────────────
+  let RC_CONFIGURED = false;
+  let RC_PACKAGE = null;
+  const RC_APPLE_KEY = 'appl_JeLrHwOaILyXDQYLShLWzoEAtEA';
+
+  function getUserIdFromToken() {
+    try {
+      const t = getToken();
+      if (!t) return null;
+      const json = atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'));
+      return JSON.parse(json).sub || null;
+    } catch (_) { return null; }
+  }
+
+  async function rcConfigure() {
+    if (!IS_IOS_NATIVE || RC_CONFIGURED) return;
+    const RC = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Purchases;
+    if (!RC) return;
+    try {
+      await RC.configure({ apiKey: RC_APPLE_KEY, appUserID: getUserIdFromToken() || undefined });
+      RC_CONFIGURED = true;
+    } catch (_) {}
+  }
+
+  async function rcLoadOffering() {
+    const RC = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Purchases;
+    if (!RC) return null;
+    await rcConfigure();
+    try {
+      const offerings = await RC.getOfferings();
+      RC_PACKAGE = (offerings && offerings.current && offerings.current.availablePackages && offerings.current.availablePackages[0]) || null;
+    } catch (_) { RC_PACKAGE = null; }
+    return RC_PACKAGE;
+  }
+
+  async function rcRenderPrice() {
+    const btn = document.getElementById('bk-iap-buy');
+    if (!btn) return;
+    const pkg = await rcLoadOffering();
+    if (!pkg) { btn.textContent = 'Suscripción no disponible'; btn.disabled = true; return; }
+    const price = (pkg.product && pkg.product.priceString) ? pkg.product.priceString : '';
+    btn.textContent = price ? ('Suscribirme · ' + price + '/mes') : 'Suscribirme';
+    btn.disabled = false;
+  }
+
+  async function rcWaitForActiveThenReload() {
+    const msg = document.getElementById('bk-gate-msg');
+    if (msg) { msg.style.color = 'var(--mute)'; msg.textContent = 'Activando tu cuenta…'; }
+    const delay = ms => new Promise(r => setTimeout(r, ms));
+    for (let i = 0; i < 12; i++) {
+      try {
+        const r = await fetch(API_BASE + '/subscription/status', { headers: { Authorization: 'Bearer ' + getToken() } });
+        if (r.ok) { const d = await r.json().catch(() => ({})); if (d.active) { location.reload(); return; } }
+      } catch (_) {}
+      await delay(2500);
+    }
+    if (msg) { msg.style.color = 'var(--ink)'; msg.textContent = 'Tu pago se procesó. Dale unos segundos y recarga la app.'; }
+  }
+
+  async function rcBuy() {
+    const RC = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Purchases;
+    const btn = document.getElementById('bk-iap-buy');
+    const msg = document.getElementById('bk-gate-msg');
+    if (!RC) { if (msg) { msg.style.color = 'var(--danger)'; msg.textContent = 'No se pudo iniciar la compra.'; } return; }
+    if (!RC_PACKAGE) await rcLoadOffering();
+    if (!RC_PACKAGE) { if (msg) { msg.style.color = 'var(--danger)'; msg.textContent = 'Suscripción no disponible por ahora.'; } return; }
+    if (btn) { btn.disabled = true; btn.textContent = 'Procesando…'; }
+    if (msg) { msg.textContent = ''; }
+    try {
+      const res = await RC.purchasePackage({ aPackage: RC_PACKAGE });
+      const active = (res && res.customerInfo && res.customerInfo.entitlements && res.customerInfo.entitlements.active) || {};
+      if (Object.keys(active).length > 0) { rcWaitForActiveThenReload(); }
+      else {
+        if (msg) { msg.style.color = 'var(--danger)'; msg.textContent = 'La compra no otorgó acceso. Escríbenos a hola@broquer.app.'; }
+        if (btn) rcRenderPrice();
+      }
+    } catch (e) {
+      if (btn) rcRenderPrice();
+      if (!(e && e.userCancelled) && msg) { msg.style.color = 'var(--danger)'; msg.textContent = 'No se pudo completar la compra. Intenta de nuevo.'; }
+    }
+  }
+
+  async function rcRestore() {
+    const RC = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Purchases;
+    const msg = document.getElementById('bk-gate-msg');
+    if (!RC) return;
+    if (msg) { msg.style.color = 'var(--mute)'; msg.textContent = 'Restaurando…'; }
+    try {
+      await rcConfigure();
+      const info = await RC.restorePurchases();
+      const active = (info && info.customerInfo && info.customerInfo.entitlements && info.customerInfo.entitlements.active) || {};
+      if (Object.keys(active).length > 0) { rcWaitForActiveThenReload(); }
+      else if (msg) { msg.style.color = 'var(--danger)'; msg.textContent = 'No encontramos una compra activa en esta cuenta de Apple.'; }
+    } catch (_) {
+      if (msg) { msg.style.color = 'var(--danger)'; msg.textContent = 'No se pudo restaurar. Intenta de nuevo.'; }
+    }
+  }
+
+  window.rcBuy = rcBuy;
+  window.rcRestore = rcRestore;
+
   function renderSubscriptionGate(message) {
     if (IS_IOS_NATIVE) {
-      // App nativa iOS: sin botón de pago ni enlace de compra (política de Apple).
-      // Solo se informa al usuario que debe suscribirse desde la web.
+      // App nativa iOS: compra dentro de la app vía App Store (RevenueCat).
       document.body.innerHTML = `
         <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--paper);padding:24px;font-family:var(--font-sans);">
           <div style="width:100%;max-width:440px;background:var(--bone);border:1px solid var(--line);border-radius:24px;padding:30px;box-shadow:0 10px 40px rgba(10,10,10,.08);text-align:center;">
             <img src="isotipo-black.png" alt="Broquer" style="width:58px;height:58px;object-fit:contain;margin-bottom:18px;"/>
-            <h1 style="font-family:var(--font-display);font-size:30px;line-height:1.05;margin:0 0 10px;color:var(--ink);letter-spacing:-.03em;">Actualmente no cuentas con un plan de suscripción</h1>
-            <p style="color:var(--mute);font-size:14px;line-height:1.5;margin:0 0 22px;">Para activar tu plan, entra a <strong>broquer.app</strong> desde tu navegador. Una vez activado, inicia sesión aquí con tu correo y contraseña para usar tus herramientas.</p>
-            <button onclick="doLogout()" style="width:100%;height:48px;border:1px solid var(--line-2);border-radius:999px;background:transparent;color:var(--ink);font-weight:600;font-size:14px;cursor:pointer;">Cerrar sesión</button>
-            <div id="bk-gate-msg" style="margin-top:12px;font-size:12px;color:var(--danger);min-height:18px;">${message || ''}</div>
+            <h1 style="font-family:var(--font-display);font-size:30px;line-height:1.05;margin:0 0 10px;color:var(--ink);letter-spacing:-.03em;">Activa Broquer Max</h1>
+            <p style="color:var(--mute);font-size:13px;line-height:1.5;margin:0 0 20px;">Suscríbete para usar todas tus herramientas. Broquer Max es una suscripción mensual: el pago se cobra a tu cuenta de Apple al confirmar y se renueva automáticamente cada mes, salvo que la canceles desde Ajustes de iOS al menos 24 h antes del fin del periodo.</p>
+            <button id="bk-iap-buy" onclick="rcBuy()" disabled style="width:100%;height:48px;border:none;border-radius:999px;background:var(--ink);color:var(--paper);font-weight:700;font-size:14px;cursor:pointer;">Cargando…</button>
+            <button id="bk-iap-restore" onclick="rcRestore()" style="width:100%;height:42px;border:1px solid var(--line-2);border-radius:999px;background:transparent;color:var(--ink);font-weight:600;font-size:13px;cursor:pointer;margin-top:10px;">Restaurar compras</button>
+            <button onclick="doLogout()" style="width:100%;height:40px;border:none;background:transparent;color:var(--mute);font-weight:500;font-size:13px;cursor:pointer;margin-top:4px;">Cerrar sesión</button>
+            <div id="bk-gate-msg" style="margin-top:10px;font-size:12px;color:var(--danger);min-height:18px;">${message || ''}</div>
+            <div style="margin-top:14px;font-size:11px;color:var(--mute);line-height:1.5;">Al continuar aceptas los <a href="legal.html" style="color:var(--mute);text-decoration:underline;">Términos de uso</a> y el <a href="legal.html" style="color:var(--mute);text-decoration:underline;">Aviso de Privacidad</a>.</div>
           </div>
         </div>`;
+      rcRenderPrice();
       return;
     }
     document.body.innerHTML = `
