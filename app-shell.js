@@ -2464,12 +2464,21 @@
   }
 
   async function rcConfigure() {
-    if (!IS_IOS_NATIVE || RC_CONFIGURED) return;
+    if (!IS_IOS_NATIVE) return;
     const RC = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Purchases;
     if (!RC) return;
+    const uid = getUserIdFromToken();
     try {
-      await RC.configure({ apiKey: RC_APPLE_KEY, appUserID: getUserIdFromToken() || undefined });
-      RC_CONFIGURED = true;
+      if (!RC_CONFIGURED) {
+        await RC.configure({ apiKey: RC_APPLE_KEY, appUserID: uid || undefined });
+        RC_CONFIGURED = true;
+      }
+      // Siempre identificar al usuario REAL de Supabase ante RevenueCat.
+      // Evita que la compra quede ligada a un ID anónimo/viejo, que el backend
+      // no puede guardar por el foreign key a auth.users.
+      if (uid) {
+        await RC.logIn({ appUserID: uid });
+      }
     } catch (_) {}
   }
 
