@@ -6267,6 +6267,78 @@ async def subscription_cancel(request: Request):
     return {"ok": True, "message": "Suscripción cancelada correctamente."}
 
 
+@app.post("/subscription/revenuecat-webhook")
+async def revenuecat_webhook(request: Request):
+    """
+    Recibe los eventos de RevenueCat (compras IAP de iOS vía App Store).
+    RevenueCat valida el recibo con Apple y nos avisa de cada cambio de estado.
+    Escribe en la MISMA tabla `suscripciones` que Stripe, por lo que
+    /subscription/status NO necesita cambios: un usuario con IAP activo se
+    marca status="active" igual que uno de Stripe.
+
+    Configurar en RevenueCat → Project settings → Integrations → Webhooks:
+      URL:  https://api.broquer.app/subscription/revenuecat-webhook
+      Authorization header value: el mismo string que pongas en la env var
+      REVENUECAT_WEBHOOK_AUTH (Railway). Si la env var está vacía, no se valida.
+
+    IMPORTANTE: la app de iOS debe identificar al usuario en RevenueCat con su
+    user_id de Supabase (Purchases.logIn(user_id)). Así el `app_user_id` que
+    llega aquí ES el user_id de Supabase y no hay que mapear nada.
+    """
+    # 1. Validar el header de autorización compartido (anti-spoofing)
+    expected_auth = os.environ.get("REVENUECAT_WEBHOOK_AUTH", "")
+    if expected_auth and request.headers.get("Authorization", "") != expected_auth:
+        raise HTTPException(status_code=403, detail="No autorizado.")
+
+    body = await request.json()
+    event = body.get("event", {}) or {}
+    event_type = event.get("type", "")
+    user_id = event.get("app_user_id") or event.get("original_app_user_id")
+    if not user_id:
+        return {"ok": True, "skipped": "sin app_user_id"}
+
+    # 2. Traducir el evento de RevenueCat a un status de nuestra tabla
+    ACTIVA = {
+        "INITIAL_PURCHASE", "RENEWAL", "UNCANCELLATION",
+        "NON_RENEWING_PURCHASE", "SUBSCRIPTION_EXTENDED",
+    }
+    if event_type in ACTIVA:
+        nuevo_status = "active"
+    elif event_type == "EXPIRATION":
+        nuevo_status = "expired"          # el acceso terminó de verdad → cortar
+    elif event_type == "BILLING_ISSUE":
+        nuevo_status = "past_due"         # problema de cobro; sigue en gracia
+    elif event_type == "CANCELLATION":
+        # Canceló la renovación, pero conserva acceso hasta que expire.
+        # No tocamos el status todavía; ya llegará EXPIRATION cuando termine.
+        return {"ok": True, "noted": "cancelacion_programada", "user_id": user_id}
+    else:
+        # PRODUCT_CHANGE, TRANSFER, TEST, etc. — no cambian el acceso.
+        return {"ok": True, "ignored": event_type}
+
+    # 3. Upsert en la misma tabla que usa Stripe (merge por user_id)
+    sb = {
+        "user_id": user_id,
+        "plan_id": "max",
+        "plan_nombre": "Broquer Max",
+        "status": nuevo_status,
+        "updated_at": datetime.utcnow().isoformat(),
+    }
+    async with httpx.AsyncClient(timeout=10) as client:
+        await client.post(
+            f"{SUPABASE_URL}/rest/v1/suscripciones",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                "Content-Type": "application/json",
+                "Prefer": "resolution=merge-duplicates,return=minimal",
+            },
+            json=sb,
+        )
+
+    return {"ok": True, "user_id": user_id, "status": nuevo_status, "event": event_type}
+
+
 # ════════════════════════════════════════════════════════════════
 # Contactos / Importar desde EasyBroker
 # ════════════════════════════════════════════════════════════════
