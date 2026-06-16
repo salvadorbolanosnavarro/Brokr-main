@@ -46,6 +46,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from whatsapp import router as whatsapp_router
+app.include_router(whatsapp_router)
 
 CONFIG_FILE = Path(__file__).parent / "config.json"
 
