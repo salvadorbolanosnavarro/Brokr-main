@@ -296,7 +296,19 @@ async def recepcion_responde(history: list, property_ctx: str | None) -> dict:
 # =============================================================================
 # 4) ENVÍO POR WHATSAPP (Cloud API)
 # =============================================================================
+def _normaliza_mx(num: str) -> str:
+    """México: el wa_id que manda WhatsApp a veces trae un '1' extra después del 52
+    (52 1 XXXXXXXXXX = 13 dígitos). Para ENVIAR hay que usar 52 + 10 dígitos, sin ese 1.
+    Si no, Meta lo trata como número distinto (y en la sandbox, 'no autorizado')."""
+    n = "".join(ch for ch in str(num) if ch.isdigit())
+    if n.startswith("521") and len(n) == 13:
+        n = "52" + n[3:]
+    return n
+
+
 async def wa_send_text(phone_number_id: str, to: str, body: str) -> dict:
+    to = _normaliza_mx(to)
+    log.info("WhatsApp enviando a %s", to)
     url = f"{GRAPH_API}/{phone_number_id}/messages"
     headers = {"Authorization": f"Bearer {WHATSAPP_TOKEN}", "Content-Type": "application/json"}
     data = {"messaging_product": "whatsapp", "to": to, "type": "text", "text": {"body": body}}
