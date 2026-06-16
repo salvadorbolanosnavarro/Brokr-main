@@ -276,7 +276,14 @@ async def recepcion_responde(history: list, property_ctx: str | None) -> dict:
             )
             data = r.json()
             text = "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text").strip()
-            return json.loads(text.replace("```json", "").replace("```", "").strip())
+            if not text:
+                log.error("Anthropic sin texto (status %s): %s", r.status_code, json.dumps(data)[:500])
+                raise ValueError("respuesta vacia de Anthropic")
+            t = text.replace("```json", "").replace("```", "").strip()
+            s, e = t.find("{"), t.rfind("}")           # extrae el JSON aunque venga con texto alrededor
+            if s != -1 and e != -1:
+                t = t[s:e + 1]
+            return json.loads(t)
     except Exception as e:
         log.exception("Error en Recepción (Anthropic): %s", e)
         return {"reply": "¡Hola! Gracias por escribir. ¿Me cuentas qué estás buscando y para cuándo, "
