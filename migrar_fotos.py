@@ -40,14 +40,14 @@ import httpx
 #
 #   La sacas en:  Supabase -> Settings -> API -> "service_role" (secret)
 #
-SUPABASE_SERVICE_KEY = "PEGA_TU_KEY_AQUI"
+SUPABASE_SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVydGd5c210bnZvcWFsanVobnR6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzk1NTQwMSwiZXhwIjoyMDg5NTMxNDAxfQ.ZvHqprsHzR81j1ZOBM4Ytdd5btBryv37tUpKLkwKAIc"
 #
 #   ↑↑↑   No cambies nada más del archivo.   ↑↑↑
 # ══════════════════════════════════════════════════════════════════════
 
 SUPABASE_URL = "https://urtgysmtnvoqaljuhntz.supabase.co"
 
-if not SUPABASE_SERVICE_KEY or SUPABASE_SERVICE_KEY == "PEGA_TU_KEY_AQUI":
+if not SUPABASE_SERVICE_KEY or SUPABASE_SERVICE_KEY == "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVydGd5c210bnZvcWFsanVobnR6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzk1NTQwMSwiZXhwIjoyMDg5NTMxNDAxfQ.ZvHqprsHzR81j1ZOBM4Ytdd5btBryv37tUpKLkwKAIc":
     print("ERROR: todavía no pegaste tu service_role key dentro del archivo.")
     print("Abre migrar_fotos.py con TextEdit, busca el texto PEGA_TU_KEY_AQUI,")
     print("bórralo, pega tu key (deja las comillas), guarda, y vuelve a correr.")
