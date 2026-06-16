@@ -1,99 +1,87 @@
-# Broquer · WhatsApp (Recepción) — Instalación
+# Broquer · WhatsApp (Recepción + Bandeja) — Instalación
 
-Tres archivos:
-- `whatsapp.py` — el motor (webhook + IA + envío).
+Cuatro archivos:
+- `whatsapp.py` — el motor (webhook + Recepción IA + envío). Hecho con **tu** stack:
+  httpx, Supabase por REST, Anthropic (`claude-sonnet-4-6`). **No instala nada nuevo.**
+- `bandeja.html` — la bandeja (ver conversaciones, tomar el control, prender/apagar la IA).
 - `schema.sql` — las tablas en Supabase.
 - este `INSTALACION.md`.
+
+> Sin dependencias nuevas: `httpx` ya está en tu `requirements.txt`, y el cerebro usa
+> tu `ANTHROPIC_API_KEY` que ya tienes configurada.
 
 ---
 
 ## Paso 1 · Base de datos
-Entra a Supabase → **SQL Editor** → pega todo `schema.sql` → **Run**.
-Eso crea las 4 tablas (contactos, conversaciones, mensajes y mapeo de números).
+Supabase → **SQL Editor** → pega `schema.sql` → **Run**. Crea las 4 tablas
+(`wa_numbers`, `wa_contacts`, `wa_conversations`, `wa_messages`) con `user_id` y RLS,
+igual que tu tabla `contactos`.
 
-## Paso 2 · El archivo
-Copia `whatsapp.py` a la carpeta de tu backend (donde vive tu `main.py`).
-
-Instala lo que falte:
-```
-pip install fastapi requests supabase openai
-```
-
-## Paso 3 · Conéctalo a tu app
-En tu `main.py`, donde tienes tu `app = FastAPI()`, agrega:
+## Paso 2 · El backend
+1. Copia `whatsapp.py` junto a tu `main.py`.
+2. En `main.py`, debajo de donde creas `app = FastAPI(...)`, agrega:
 ```python
 from whatsapp import router as whatsapp_router
 app.include_router(whatsapp_router)
 ```
-Eso deja tu webhook viviendo en:  `https://TU-APP.railway.app/whatsapp/webhook`
+Tu webhook queda en: `https://TU-APP.railway.app/whatsapp/webhook`
 
-## Paso 4 · Variables de entorno (en Railway → Variables)
+## Paso 3 · La bandeja (frontend)
+Copia `bandeja.html` a la raíz, junto a `contactos.html`. Ya usa tu `app-shell.js`,
+tu `brokr-theme.css` y `window.brokrSb`, así que se ve idéntica a Broquer.
+- Para que aparezca en el menú de todas las páginas, agrega el link **Bandeja**
+  (`bandeja.html`) a la lista de navegación dentro de `app-shell.js`.
+
+## Paso 4 · Variables de entorno (Railway → Variables)
+Las de Supabase y Anthropic **ya las tienes**. Agrega solo las de WhatsApp:
 
 | Variable | Qué es | De dónde sale |
 |---|---|---|
 | `WHATSAPP_TOKEN` | Token permanente para enviar | Meta → System User token |
 | `WA_VERIFY_TOKEN` | Una palabra que tú inventas | la pones aquí Y en Meta (paso 5) |
 | `WA_APP_SECRET` | Para validar la firma (opcional) | Meta → App Settings → Basic |
-| `SUPABASE_URL` | URL de tu proyecto | Supabase → Settings → API |
-| `SUPABASE_SERVICE_KEY` | La **service_role** key | Supabase → Settings → API |
-| `LLM_API_KEY` | Tu key del cerebro | Groq (o el que uses) |
-| `LLM_BASE_URL` | Endpoint del LLM | `https://api.groq.com/openai/v1` (default) |
-| `LLM_MODEL` | Modelo | `llama-3.3-70b-versatile` (default) |
-| `DEFAULT_OWNER_ID` | El uuid de tu agente piloto | tu `auth.users` (Grupo Navarro) |
+| `DEFAULT_USER_ID` | Tu `user_id` de Grupo Navarro (piloto) | Supabase → Authentication → Users |
 | `DEFAULT_AGENCIA` | Nombre de la agencia | `Grupo Navarro` |
+| `RECEPCION_MODEL` | Modelo del cerebro (opcional) | default `claude-sonnet-4-6` |
 
-> El cerebro está puesto en Groq para que pegue con tu stack. Si quieres que
-> Recepción corra en Claude, cámbiame `LLM_BASE_URL`, `LLM_API_KEY` y `LLM_MODEL`
-> (o te ajusto la función `recepcion_responde` para llamar a Anthropic directo).
+> Ya usa `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY` y `ANTHROPIC_API_KEY`
+> tal cual los tienes en `main.py`.
 
 ## Paso 5 · Conectar el webhook en Meta
-En tu app de Meta (developers.facebook.com) → WhatsApp → **Configuration**:
+developers.facebook.com → tu app → WhatsApp → **Configuration**:
 1. **Callback URL:** `https://TU-APP.railway.app/whatsapp/webhook`
-2. **Verify token:** la misma palabra que pusiste en `WA_VERIFY_TOKEN`.
-3. Da **Verify and Save** (si truena, revisa que la variable y la palabra sean idénticas).
+2. **Verify token:** la misma palabra de `WA_VERIFY_TOKEN`.
+3. **Verify and Save.**
 4. En **Webhook fields**, suscríbete a:
-   - `messages` (mensajes entrantes del cliente) — el básico.
+   - `messages` (entrantes del cliente) — el básico.
    - `smb_message_echoes` (**Coexistence**: lo que el agente manda desde su celular).
-   - `history` y `smb_app_state_sync` (**Coexistence**, opcionales: historial y contactos al conectar).
+   - `history` y `smb_app_state_sync` (**Coexistence**, opcionales).
 
 ## Paso 6 · Probar
-Manda un WhatsApp al número conectado (desde tu celular personal).
-Debe contestarte Recepción en segundos, y en Supabase → Table Editor deben
-aparecer el contacto, la conversación y los mensajes, con la calificación
-llenándose sola.
+Manda un WhatsApp al número conectado desde tu celular personal. Recepción debe
+contestar en segundos, y al abrir `bandeja.html` debe aparecer la conversación con
+su calificación llenándose sola. Escribe tú un mensaje desde la bandeja: la IA se
+apaga en esa conversación (tú tomaste el control) y la vuelves a prender con el switch.
 
 ---
 
-## Coexistence (importante para tu caso)
-Si el agente conecta su número con **Coexistence** (sigue usando su WhatsApp en el
-cel + la API), el código ya lo contempla así:
-- Cuando un cliente escribe, Recepción contesta al instante (como siempre).
-- **En cuanto el agente contesta desde su celular, la IA se calla sola** en esa
-  conversación (`ai_enabled` se apaga). Recepción es la red de seguridad que
-  responde cuando tú no puedes, y se quita en cuanto tú entras. Sin encimarse.
-- El agente puede volver a prender la IA desde la bandeja.
+## Coexistence (tu caso)
+El número del agente sigue en su celular **y** conectado a Broquer al mismo tiempo:
+- Recepción contesta al instante cuando el agente no puede.
+- **En cuanto el agente responde desde su celular, la IA se apaga sola** en esa
+  conversación (`smb_message_echoes` lo detecta). Sin encimarse.
+- El agente la vuelve a prender desde la bandeja.
 
-Detalles de Coexistence que conviene tener en mente:
-- Usa dispositivos soportados; mensajes desde WhatsApp para Windows o WearOS no
-  generan echo y no se sincronizan.
-- No hay palomita azul (OBA) bajo Coexistence; si la quieres, es por Meta Verified.
-- El número tiene un tope de 5 mensajes por segundo (de sobra para esto).
+Detalles: usa dispositivos soportados (Windows/WearOS no generan echo); no hay
+palomita azul bajo Coexistence (sería por Meta Verified); tope de 5 mensajes/seg.
 
----
+## Lo que sigue
+- Plantillas para los seguimientos fuera de la ventana de 24h.
+- Embedded Signup para que cada agente conecte su número con un clic (post-piloto).
 
-## Lo que falta (siguiente entrega)
-- **La bandeja** (la pantalla donde tú ves las conversaciones y le quitas el
-  control a la IA). Es rápida, pero la armo pegada a tu frontend para que se
-  vea idéntica a Broquer — por eso necesito tu repo (ver nota abajo).
-- **Plantillas** para los seguimientos fuera de la ventana de 24h.
-- **Embedded Signup** para que cada agente conecte su número con un clic
-  (esto es para cuando salgas del piloto).
-
-## Notas honestas
-- Tu zip no se pudo abrir de mi lado (error de lectura en la subida). Escribí
-  esto para que pegue con tu stack de siempre, pero hay 2 puntos marcados en el
-  código (`# usa tu cliente si ya tienes uno`) que conviene amarrar a tus
-  helpers existentes. Si me lo re-subes, lo dejo exacto y de una vez te hago la
-  bandeja.
-- No pude probar este código contra un WhatsApp real desde aquí; déjalo correr
-  en Railway y, si algo truena, me pasas el log y lo afino al toque.
+## Notas
+- El JSON del `smb_message_echoes` puede variar un poquito; el código lo lee defensivo
+  y, la primera vez, te lo deja en el log para confirmarlo. Si algo no cuadra, me pasas
+  ese log y lo ajusto.
+- No pude probar contra un WhatsApp real desde aquí. Súbelo a Railway y, si truena algo,
+  me pasas el log.
