@@ -76,6 +76,7 @@ b, strong { color: #111827; }
   <button class="tab-btn active" role="tab" onclick="showTab('tyc',this)">Términos y Condiciones</button>
   <button class="tab-btn" role="tab" onclick="showTab('contrato',this)">Contrato de Suscripción</button>
   <button class="tab-btn" role="tab" onclick="showTab('privacidad',this)">Aviso de Privacidad</button>
+  <button class="tab-btn" role="tab" onclick="showTab('whatsapp',this)">WhatsApp y Datos</button>
 </nav>
 
 <!-- PANEL 1: TÉRMINOS Y CONDICIONES -->
@@ -525,5 +526,71 @@ function showTab(id, btn) {
 })();
 </script>
 <script src="app-shell.js" defer></script>
+
+<!-- ══════════════════════════════════════════════════════
+     PESTAÑA: WHATSAPP Y DATOS DE CONVERSACIONES
+     ══════════════════════════════════════════════════════ -->
+<div id="tab-whatsapp" class="tab-panel">
+<div class="doc-wrap">
+  <h1 class="doc-title">WhatsApp y Datos de Conversaciones</h1>
+  <p class="doc-subtitle">Alcance, limitaciones y responsabilidades del módulo de mensajería</p>
+  <p class="doc-date">Última actualización: junio 2025</p>
+
+  <div class="notice-banner">
+    <strong>Resumen.</strong> Al conectar tu número de WhatsApp a Broquer, autorizas que nuestra plataforma reciba, procese y almacene las conversaciones entrantes de tus contactos para ofrecerte el servicio de recepción automatizada. Tú eres el responsable ante tus clientes; Broquer actúa como encargado del tratamiento de esos datos.
+  </div>
+
+  <div class="h1">1. Qué datos recopilamos</div>
+  <p>Al activar el módulo de WhatsApp, Broquer almacena en tu cuenta:</p>
+  <ul>
+    <li>El número de teléfono de cada persona que te escriba.</li>
+    <li>El contenido de los mensajes de texto entrantes y las respuestas generadas por Recepción.</li>
+    <li>Metadatos: fecha, hora, estado de entrega y calificación de lead generada por IA.</li>
+    <li>El estado de la conversación (IA activa / pausada) y las acciones manuales del agente.</li>
+  </ul>
+  <p>No almacenamos archivos multimedia (imágenes, audios, documentos) en esta versión.</p>
+
+  <div class="h1">2. Cómo usamos esos datos</div>
+  <ul>
+    <li><strong>Respuesta automática:</strong> el contenido del mensaje se envía al modelo de lenguaje (Claude, de Anthropic) para generar una respuesta y calificación. Anthropic no retiene estos datos para entrenamiento bajo los términos de uso de API.</li>
+    <li><strong>CRM:</strong> la conversación se almacena en tu base de datos privada, visible únicamente para ti y los colaboradores que autorices.</li>
+    <li><strong>Métricas:</strong> Broquer puede usar datos agregados y anonimizados para mejorar la plataforma. Nunca compartimos el contenido de conversaciones individuales.</li>
+  </ul>
+
+  <div class="h1">3. Tu responsabilidad como agente</div>
+  <ul>
+    <li>Eres el <strong>Responsable del tratamiento</strong> de los datos de tus contactos conforme a la LFPDPPP.</li>
+    <li>Debes contar con el consentimiento de tus contactos para procesar sus mensajes de forma automatizada.</li>
+    <li>Broquer no es responsable del uso que hagas de la información de tus contactos fuera de la plataforma.</li>
+  </ul>
+
+  <div class="h1">4. Broquer como Encargado del tratamiento</div>
+  <p>Broquer actúa exclusivamente como <strong>Encargado del tratamiento</strong> en los términos del artículo 50 de la LFPDPPP: procesamos los datos únicamente para prestarte el servicio, sin utilizarlos para fines propios distintos a la operación de la plataforma.</p>
+
+  <div class="h1">5. Retención y eliminación</div>
+  <ul>
+    <li>Las conversaciones se conservan mientras tu cuenta esté activa.</li>
+    <li>Al cancelar tu suscripción, tus datos se eliminan en un plazo máximo de 30 días naturales.</li>
+    <li>Puedes solicitar la eliminación de conversaciones desde la bandeja o escribiendo a privacidad@broquer.mx.</li>
+    <li>Desconectar tu número <strong>no elimina</strong> las conversaciones previamente guardadas.</li>
+  </ul>
+
+  <div class="h1">6. Seguridad</div>
+  <ul>
+    <li>Todas las comunicaciones con la API de WhatsApp de Meta ocurren sobre HTTPS.</li>
+    <li>Los datos se almacenan en Supabase con cifrado en reposo y Row Level Security (RLS).</li>
+    <li>Los tokens de acceso a WhatsApp se almacenan cifrados y nunca se exponen en el frontend.</li>
+  </ul>
+
+  <div class="h1">7. Relación con Meta</div>
+  <p>Al conectar tu número, también aceptas las <a href="https://www.whatsapp.com/legal/business-policy/" target="_blank" rel="noopener">Políticas de WhatsApp Business</a> y los <a href="https://developers.facebook.com/terms/" target="_blank" rel="noopener">Términos de la plataforma de Meta</a>. Broquer no controla la infraestructura de Meta y no es responsable de interrupciones o cambios en el servicio de WhatsApp.</p>
+
+  <div class="h1">8. Contacto</div>
+  <p>Para ejercicio de derechos ARCO o cualquier asunto relacionado con el tratamiento de datos, escríbenos a <strong>privacidad@broquer.mx</strong>.</p>
+
+  <p class="aviso-final">Broquer es una marca registrada de Salvador Bolaños Navarro. Morelia, Michoacán, México.</p>
+</div>
+</div>
+
 </body>
 </html>

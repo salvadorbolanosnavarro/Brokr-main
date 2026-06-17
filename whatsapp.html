@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="apple-touch-icon" href="isotipo-black.png"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>WhatsApp — Broquer</title>
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-height:100vh}
+.wa-wrap{max-width:780px;margin:0 auto;padding:28px 24px 120px}
+
+/* ─── Hero ─────────────────────────────────────────────── */
+.wa-hero{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:26px 26px 22px;margin-bottom:20px;position:relative;overflow:hidden}
+.wa-hero:after{content:"";position:absolute;right:-80px;top:-100px;width:220px;height:220px;border-radius:50%;background:rgba(37,211,102,.10)}
+.wa-eyebrow{font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--mute);margin-bottom:9px}
+.wa-hero h1{font-family:var(--font-display);font-size:32px;font-weight:600;letter-spacing:-.035em;line-height:1.05;max-width:580px}
+.wa-hero h1 span{color:#25d366}
+.wa-hero p{font-size:14px;color:var(--mute);line-height:1.6;max-width:540px;margin-top:10px}
+
+/* ─── Botones ───────────────────────────────────────────── */
+.wa-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:var(--r);padding:11px 20px;font:600 14px var(--font-sans);cursor:pointer;text-decoration:none;transition:opacity .15s,transform .15s}
+.wa-btn:hover{opacity:.9;transform:translateY(-1px)}
+.wa-btn:active{transform:translateY(0)}
+.wa-btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.wa-btn-green{background:#25d366;color:#fff}
+.wa-btn-ink{background:var(--ink);color:var(--paper)}
+.wa-btn-ghost{background:var(--paper);color:var(--ink);border:1px solid var(--line-2)}
+.wa-btn-danger{background:#fee2e2;color:#b91c1c;border:1px solid #fecaca}
+
+/* ─── Banner desconectado ───────────────────────────────── */
+.wa-banner{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:40px 24px;text-align:center;margin-bottom:20px}
+.wa-banner-icon{width:56px;height:56px;border-radius:16px;background:#25d366;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.wa-banner-icon svg{width:32px;height:32px}
+.wa-banner h2{font-family:var(--font-display);font-size:22px;font-weight:600;letter-spacing:-.025em;margin-bottom:8px}
+.wa-banner p{font-size:14px;color:var(--mute);line-height:1.6;max-width:460px;margin:0 auto 20px}
+
+/* ─── Cómo funciona ─────────────────────────────────────── */
+.wa-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.wa-step{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 16px}
+.wa-step-num{width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--paper);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+.wa-step h3{font-size:13px;font-weight:700;margin-bottom:4px}
+.wa-step p{font-size:12px;color:var(--mute);line-height:1.5}
+
+/* ─── Estado conectado ──────────────────────────────────── */
+.wa-connected-card{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;margin-bottom:16px}
+.wa-number-row{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.wa-number-dot{width:10px;height:10px;border-radius:50%;background:#25d366;flex:none}
+.wa-number-info h3{font-size:16px;font-weight:700;letter-spacing:-.01em}
+.wa-number-info span{font-size:12px;color:var(--mute)}
+.wa-status-pill{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;border-radius:999px;padding:3px 9px;background:rgba(37,211,102,.12);color:#15803d;margin-left:10px;vertical-align:middle}
+
+.wa-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.wa-action-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;gap:6px;transition:border-color .15s}
+.wa-action-card:hover{border-color:var(--ink)}
+.wa-action-card svg{width:20px;height:20px;color:var(--ink)}
+.wa-action-card h4{font-size:13px;font-weight:700}
+.wa-action-card p{font-size:12px;color:var(--mute);line-height:1.4}
+
+.wa-ia-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:14px}
+.wa-ia-info h4{font-size:13px;font-weight:700;margin-bottom:2px}
+.wa-ia-info p{font-size:12px;color:var(--mute);line-height:1.4}
+.wa-toggle{position:relative;width:44px;height:24px;flex:none}
+.wa-toggle input{opacity:0;width:0;height:0;position:absolute}
+.wa-toggle-track{position:absolute;inset:0;background:var(--line-2);border-radius:999px;transition:background .2s;cursor:pointer}
+.wa-toggle input:checked + .wa-toggle-track{background:#25d366}
+.wa-toggle-thumb{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s;pointer-events:none;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.wa-toggle input:checked ~ .wa-toggle-thumb{transform:translateX(20px)}
+
+.wa-danger-zone{border:1px solid #fecaca;border-radius:var(--r-lg);padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px}
+.wa-danger-info h4{font-size:13px;font-weight:700;color:#b91c1c;margin-bottom:2px}
+.wa-danger-info p{font-size:12px;color:var(--mute);line-height:1.4}
+
+/* ─── Spinner ───────────────────────────────────────────── */
+.wa-spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:waspin .7s linear infinite;display:none}
+.wa-spinner.active{display:inline-block}
+@keyframes waspin{to{transform:rotate(360deg)}}
+
+/* ─── Aviso ─────────────────────────────────────────────── */
+.wa-notice{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--r);padding:12px 16px;font-size:12px;color:#15803d;line-height:1.55;margin-bottom:16px}
+.wa-notice strong{color:#14532d}
+
+/* ─── Modal confirmación ────────────────────────────────── */
+.wa-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:none;align-items:center;justify-content:center;padding:20px}
+.wa-modal-bg.open{display:flex}
+.wa-modal{background:var(--paper);border-radius:var(--r-lg);padding:28px 24px;max-width:420px;width:100%;box-shadow:0 16px 40px rgba(0,0,0,.18)}
+.wa-modal h3{font-family:var(--font-display);font-size:18px;font-weight:600;margin-bottom:8px}
+.wa-modal p{font-size:13px;color:var(--mute);line-height:1.6;margin-bottom:20px}
+.wa-modal-btns{display:flex;gap:10px;justify-content:flex-end}
+
+/* ─── Responsive ────────────────────────────────────────── */
+@media(max-width:640px){
+  .wa-steps{grid-template-columns:1fr}
+  .wa-actions{grid-template-columns:1fr}
+  .wa-hero h1{font-size:26px}
+  .wa-danger-zone{flex-direction:column;align-items:flex-start}
+}
+</style>
+</head>
+<body data-app="whatsapp">
+<div class="wa-wrap">
+
+  <!-- HERO -->
+  <section class="wa-hero">
+    <div class="wa-eyebrow">WhatsApp · Recepción</div>
+    <h1>Tu recepcionista en <span>WhatsApp</span>, activa 24/7.</h1>
+    <p>Conecta tu número de WhatsApp Business y deja que Recepción califique leads, responda preguntas y registre cada conversación en tu CRM — mientras tú te enfocas en cerrar.</p>
+  </section>
+
+  <!-- ESTADO: desconectado -->
+  <div id="wa-not-connected">
+
+    <div class="wa-banner">
+      <div class="wa-banner-icon">
+        <svg viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.857L.057 23.882a.5.5 0 00.614.612l6.115-1.598A11.947 11.947 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.967 0-3.805-.538-5.378-1.47l-.385-.23-3.993 1.044 1.012-3.9-.252-.403A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+      </div>
+      <h2>Conecta tu WhatsApp para empezar</h2>
+      <p>Vincula tu número de WhatsApp Business con Broquer. Puedes seguir respondiendo desde tu celular — la IA solo entra cuando tú no estás.</p>
+      <button class="wa-btn wa-btn-green" id="wa-connect-btn" onclick="startEmbeddedSignup()">
+        <span class="wa-spinner" id="wa-connect-spinner"></span>
+        <span id="wa-connect-text">Conectar WhatsApp</span>
+      </button>
+    </div>
+
+    <div class="wa-steps">
+      <div class="wa-step">
+        <div class="wa-step-num">1</div>
+        <h3>Conecta tu número</h3>
+        <p>Vincula tu WhatsApp Business en un proceso guiado de Meta. Tu número sigue siendo tuyo.</p>
+      </div>
+      <div class="wa-step">
+        <div class="wa-step-num">2</div>
+        <h3>Recepción entra</h3>
+        <p>Cada lead que te escriba recibe respuesta inmediata: bienvenida, calificación y captura automática.</p>
+      </div>
+      <div class="wa-step">
+        <div class="wa-step-num">3</div>
+        <h3>Tú tomas el control</h3>
+        <p>En cuanto respondes desde tu cel, la IA se apaga para esa conversación. Nada interfiere.</p>
+      </div>
+    </div>
+
+    <div class="wa-notice">
+      <strong>Coexistencia activa.</strong> Tu número puede estar en la app de WhatsApp de tu celular y en Broquer al mismo tiempo. No necesitas número nuevo ni dejar de usar WhatsApp normalmente.
+    </div>
+
+  </div>
+
+  <!-- ESTADO: conectado -->
+  <div id="wa-connected" style="display:none">
+
+    <div class="wa-connected-card">
+      <div class="wa-number-row">
+        <div class="wa-number-dot"></div>
+        <div class="wa-number-info">
+          <h3 id="wa-phone-display">—<span class="wa-status-pill">Activo</span></h3>
+          <span id="wa-waba-name">WhatsApp Business</span>
+        </div>
+      </div>
+
+      <div class="wa-actions">
+        <a href="bandeja.html" class="wa-action-card">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"/></svg>
+          <h4>Bandeja de entrada</h4>
+          <p>Ver conversaciones, leads calificados y responder a mano.</p>
+        </a>
+        <div class="wa-action-card" onclick="window.location.href='guia-agente.html#whatsapp'">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/></svg>
+          <h4>Cómo funciona</h4>
+          <p>Guía completa: Recepción, coexistencia y privacidad.</p>
+        </div>
+      </div>
+
+      <div class="wa-ia-row">
+        <div class="wa-ia-info">
+          <h4>Recepción (IA) activa globalmente</h4>
+          <p>Cuando está encendida, Recepción contesta leads nuevos. Se apaga por conversación en cuanto tú respondes.</p>
+        </div>
+        <label class="wa-toggle">
+          <input type="checkbox" id="wa-global-ia" checked onchange="toggleIAGlobal(this.checked)"/>
+          <div class="wa-toggle-track"></div>
+          <div class="wa-toggle-thumb"></div>
+        </label>
+      </div>
+
+      <div class="wa-danger-zone">
+        <div class="wa-danger-info">
+          <h4>Desconectar WhatsApp</h4>
+          <p>Desvincula tu número de Broquer. Tus conversaciones guardadas no se eliminan.</p>
+        </div>
+        <button class="wa-btn wa-btn-danger" onclick="openDisconnectModal()">Desconectar</button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Modal desconectar -->
+<div class="wa-modal-bg" id="wa-modal-bg">
+  <div class="wa-modal">
+    <h3>¿Desconectar WhatsApp?</h3>
+    <p>Tu número se desvincula de Broquer y Recepción deja de contestar. Tus conversaciones y leads guardados no se borran. Puedes volver a conectar cuando quieras.</p>
+    <div class="wa-modal-btns">
+      <button class="wa-btn wa-btn-ghost" onclick="closeDisconnectModal()">Cancelar</button>
+      <button class="wa-btn wa-btn-danger" id="wa-confirm-disconnect" onclick="disconnectWA()">
+        <span class="wa-spinner" id="wa-disc-spinner"></span>
+        <span id="wa-disc-text">Sí, desconectar</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_BASE = window.API_BASE || 'https://brokrebapi-production.up.railway.app';
+// ID de tu app de Meta (la misma de Facebook Ads)
+const META_APP_ID = '1709238933850389';
+
+function getToken(){
+  return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || null;
+}
+
+// ── Cargar estado al iniciar ─────────────────────────────
+async function checkWAStatus(){
+  const tok = getToken();
+  if(!tok){ showState('not-connected'); return; }
+  try{
+    const r = await fetch(API_BASE + '/whatsapp/status', {
+      headers:{ Authorization: 'Bearer ' + tok }
+    });
+    if(!r.ok){ showState('not-connected'); return; }
+    const d = await r.json();
+    if(d.connected){
+      document.getElementById('wa-phone-display').childNodes[0].nodeValue = '+' + (d.phone_number || '—');
+      document.getElementById('wa-waba-name').textContent = d.waba_name || 'WhatsApp Business';
+      document.getElementById('wa-global-ia').checked = d.ia_enabled !== false;
+      showState('connected');
+    } else {
+      showState('not-connected');
+    }
+  }catch(e){ showState('not-connected'); }
+}
+
+function showState(state){
+  document.getElementById('wa-not-connected').style.display = state === 'not-connected' ? '' : 'none';
+  document.getElementById('wa-connected').style.display     = state === 'connected'     ? '' : 'none';
+}
+
+// ── Embedded Signup ──────────────────────────────────────
+function startEmbeddedSignup(){
+  const btn     = document.getElementById('wa-connect-btn');
+  const spinner = document.getElementById('wa-connect-spinner');
+  const text    = document.getElementById('wa-connect-text');
+  btn.disabled = true;
+  spinner.classList.add('active');
+  text.textContent = 'Abriendo Meta…';
+
+  // Meta Embedded Signup abre un popup
+  const url = `https://www.facebook.com/dialog/oauth` +
+    `?client_id=${META_APP_ID}` +
+    `&redirect_uri=${encodeURIComponent(location.origin + '/whatsapp-callback.html')}` +
+    `&scope=whatsapp_business_management,whatsapp_business_messaging` +
+    `&response_type=code` +
+    `&extras=${encodeURIComponent(JSON.stringify({setup:{},feature:'whatsapp_embedded_signup'}))}`;
+
+  const popup = window.open(url, 'wa_signup', 'width=700,height=680,scrollbars=yes');
+
+  // Escuchar el código que devuelve el callback
+  const listener = async (e) => {
+    if(e.origin !== location.origin) return;
+    if(!e.data || e.data.type !== 'wa_code') return;
+    window.removeEventListener('message', listener);
+    await exchangeCode(e.data.code);
+  };
+  window.addEventListener('message', listener);
+
+  // Watchdog por si cierran el popup sin completar
+  const watchdog = setInterval(() => {
+    if(popup.closed){
+      clearInterval(watchdog);
+      window.removeEventListener('message', listener);
+      btn.disabled = false;
+      spinner.classList.remove('active');
+      text.textContent = 'Conectar WhatsApp';
+    }
+  }, 800);
+}
+
+async function exchangeCode(code){
+  const tok = getToken();
+  try{
+    const r = await fetch(API_BASE + '/whatsapp/connect', {
+      method: 'POST',
+      headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+tok },
+      body: JSON.stringify({ code, redirect_uri: location.origin + '/whatsapp-callback.html' })
+    });
+    const d = await r.json();
+    if(r.ok && d.ok){
+      await checkWAStatus();
+      toast('WhatsApp conectado correctamente.');
+    } else {
+      toast(d.detail || 'No se pudo completar la conexión. Intenta de nuevo.');
+      resetConnectBtn();
+    }
+  }catch(e){
+    toast('Error de conexión. Intenta de nuevo.');
+    resetConnectBtn();
+  }
+}
+
+function resetConnectBtn(){
+  document.getElementById('wa-connect-btn').disabled = false;
+  document.getElementById('wa-connect-spinner').classList.remove('active');
+  document.getElementById('wa-connect-text').textContent = 'Conectar WhatsApp';
+}
+
+// ── Toggle IA global ─────────────────────────────────────
+async function toggleIAGlobal(enabled){
+  const tok = getToken();
+  try{
+    await fetch(API_BASE + '/whatsapp/ia-global', {
+      method: 'PATCH',
+      headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+tok },
+      body: JSON.stringify({ ia_enabled: enabled })
+    });
+    toast(enabled ? 'Recepción activada.' : 'Recepción pausada para todos los chats.');
+  }catch(e){ toast('No se pudo actualizar.'); }
+}
+
+// ── Desconectar ──────────────────────────────────────────
+function openDisconnectModal(){ document.getElementById('wa-modal-bg').classList.add('open'); }
+function closeDisconnectModal(){ document.getElementById('wa-modal-bg').classList.remove('open'); }
+
+async function disconnectWA(){
+  const btn     = document.getElementById('wa-confirm-disconnect');
+  const spinner = document.getElementById('wa-disc-spinner');
+  const text    = document.getElementById('wa-disc-text');
+  btn.disabled = true;
+  spinner.classList.add('active');
+  text.textContent = 'Desconectando…';
+  const tok = getToken();
+  try{
+    const r = await fetch(API_BASE + '/whatsapp/disconnect', {
+      method: 'DELETE',
+      headers:{ Authorization: 'Bearer ' + tok }
+    });
+    closeDisconnectModal();
+    if(r.ok){ showState('not-connected'); toast('Número desconectado.'); }
+    else { toast('No se pudo desconectar. Intenta de nuevo.'); }
+  }catch(e){ toast('Error de conexión.'); }
+  finally{
+    btn.disabled = false;
+    spinner.classList.remove('active');
+    text.textContent = 'Sí, desconectar';
+  }
+}
+
+// ── Toast ────────────────────────────────────────────────
+let _tt = null;
+function toast(msg){
+  let el = document.getElementById('wa-toast');
+  if(!el){
+    el = document.createElement('div'); el.id = 'wa-toast';
+    el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:11px 18px;border-radius:8px;font:600 13px var(--font-sans);box-shadow:0 4px 16px rgba(0,0,0,.2);z-index:9999;opacity:0;transition:opacity .2s;max-width:90vw;text-align:center';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg; el.style.opacity = '1';
+  if(_tt) clearTimeout(_tt);
+  _tt = setTimeout(() => el.style.opacity = '0', 3400);
+}
+
+// ── Init ─────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', checkWAStatus);
+</script>
+<script src="app-shell.js" defer></script>
+</body>
+</html>

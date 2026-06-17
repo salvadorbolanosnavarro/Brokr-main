@@ -439,3 +439,171 @@ async def ai_sigue_encendida(conversation_id) -> bool:
     rows = await sb_get("wa_conversations",
                         {"id": f"eq.{conversation_id}", "select": "ai_enabled", "limit": "1"})
     return bool(rows) and rows[0].get("ai_enabled", True)
+
+
+# =============================================================================
+# 6) ENDPOINTS PARA EL MÓDULO WHATSAPP (conexión por agente)
+# =============================================================================
+
+META_APP_ID     = os.environ.get("META_APP_ID", "")
+META_APP_SECRET = os.environ.get("META_APP_SECRET", "") or WA_APP_SECRET
+
+
+# ── /whatsapp/status ─────────────────────────────────────────────────────────
+@router.get("/status")
+async def wa_status(request: Request):
+    """Devuelve si el usuario tiene un número conectado."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autorizado")
+    rows = await sb_get("wa_numbers", {"user_id": f"eq.{user_id}", "select": "*", "limit": "1"})
+    if not rows:
+        return {"connected": False}
+    row = rows[0]
+    return {
+        "connected":    True,
+        "phone_number": row.get("phone_number", ""),
+        "waba_name":    row.get("waba_name", "WhatsApp Business"),
+        "ia_enabled":   row.get("ia_enabled", True),
+    }
+
+
+# ── /whatsapp/connect ─────────────────────────────────────────────────────────
+class ConnectReq(BaseModel):
+    code: str
+    redirect_uri: str
+
+@router.post("/connect")
+async def wa_connect(req: ConnectReq, request: Request):
+    """Intercambia el código de Embedded Signup por un token y registra el número."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autorizado")
+
+    if not META_APP_ID or not META_APP_SECRET:
+        raise HTTPException(status_code=500, detail="META_APP_ID o META_APP_SECRET no configurados")
+
+    # 1) Intercambiar código por token de usuario
+    async with httpx.AsyncClient(timeout=20) as c:
+        r = await c.get("https://graph.facebook.com/v21.0/oauth/access_token", params={
+            "client_id":     META_APP_ID,
+            "client_secret": META_APP_SECRET,
+            "redirect_uri":  req.redirect_uri,
+            "code":          req.code,
+        })
+        if r.status_code != 200:
+            log.error("Meta token error: %s", r.text)
+            raise HTTPException(status_code=400, detail="No se pudo obtener el token de Meta")
+        user_token = r.json().get("access_token", "")
+
+    # 2) Obtener las cuentas WABA vinculadas
+    async with httpx.AsyncClient(timeout=20) as c:
+        r = await c.get("https://graph.facebook.com/v21.0/me/businesses",
+                        params={"access_token": user_token, "fields": "id,name"})
+        businesses = r.json().get("data", []) if r.status_code == 200 else []
+
+    waba_id = ""
+    waba_name = "WhatsApp Business"
+    phone_number_id = ""
+    phone_number = ""
+
+    for biz in businesses:
+        async with httpx.AsyncClient(timeout=20) as c:
+            r = await c.get(f"https://graph.facebook.com/v21.0/{biz['id']}/owned_whatsapp_business_accounts",
+                            params={"access_token": user_token, "fields": "id,name"})
+            wabas = r.json().get("data", []) if r.status_code == 200 else []
+        if wabas:
+            waba_id   = wabas[0].get("id", "")
+            waba_name = wabas[0].get("name", "WhatsApp Business")
+            # Obtener número de teléfono
+            async with httpx.AsyncClient(timeout=20) as c:
+                r2 = await c.get(f"https://graph.facebook.com/v21.0/{waba_id}/phone_numbers",
+                                 params={"access_token": user_token, "fields": "id,display_phone_number"})
+                phones = r2.json().get("data", []) if r2.status_code == 200 else []
+            if phones:
+                phone_number_id = phones[0].get("id", "")
+                phone_number    = phones[0].get("display_phone_number", "").replace("+", "").replace(" ", "")
+            break
+
+    if not phone_number_id:
+        raise HTTPException(status_code=400, detail="No se encontró un número de teléfono en tu cuenta de WhatsApp Business")
+
+    # 3) Guardar en wa_numbers (upsert por user_id)
+    existing = await sb_get("wa_numbers", {"user_id": f"eq.{user_id}", "select": "id", "limit": "1"})
+    payload = {
+        "user_id":          user_id,
+        "phone_number_id":  phone_number_id,
+        "phone_number":     phone_number,
+        "waba_id":          waba_id,
+        "waba_name":        waba_name,
+        "access_token":     user_token,
+        "ia_enabled":       True,
+        "updated_at":       _now(),
+    }
+    if existing:
+        await sb_patch("wa_numbers", {"user_id": f"eq.{user_id}"}, payload)
+    else:
+        payload["created_at"] = _now()
+        await sb_post("wa_numbers", payload)
+
+    # 4) Suscribir el webhook de la WABA si hay app configurada
+    if META_APP_ID and waba_id:
+        async with httpx.AsyncClient(timeout=15) as c:
+            await c.post(f"https://graph.facebook.com/v21.0/{waba_id}/subscribed_apps",
+                         params={"access_token": user_token})
+
+    log.info("WhatsApp conectado: user=%s phone=%s", user_id, phone_number)
+    return {"ok": True, "phone_number": phone_number, "waba_name": waba_name}
+
+
+# ── /whatsapp/ia-global ───────────────────────────────────────────────────────
+class IAGlobalReq(BaseModel):
+    ia_enabled: bool
+
+@router.patch("/ia-global")
+async def wa_ia_global(req: IAGlobalReq, request: Request):
+    """Enciende o apaga Recepción para todas las conversaciones del usuario."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autorizado")
+    await sb_patch("wa_numbers", {"user_id": f"eq.{user_id}"}, {
+        "ia_enabled": req.ia_enabled,
+        "updated_at": _now(),
+    })
+    # Propagar a todas las conversaciones activas
+    await sb_patch("wa_conversations", {"user_id": f"eq.{user_id}"}, {
+        "ai_enabled": req.ia_enabled,
+        "updated_at": _now(),
+    })
+    return {"ok": True, "ia_enabled": req.ia_enabled}
+
+
+# ── /whatsapp/disconnect ──────────────────────────────────────────────────────
+@router.delete("/disconnect")
+async def wa_disconnect(request: Request):
+    """Desvincula el número de WhatsApp del usuario. No elimina conversaciones."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autorizado")
+
+    # Obtener info antes de borrar (para revocar token en Meta)
+    rows = await sb_get("wa_numbers", {"user_id": f"eq.{user_id}", "select": "*", "limit": "1"})
+    if rows:
+        token = rows[0].get("access_token", "")
+        # Intentar revocar en Meta (best-effort, no bloquea si falla)
+        if token:
+            try:
+                async with httpx.AsyncClient(timeout=10) as c:
+                    await c.delete(f"https://graph.facebook.com/v21.0/me/permissions",
+                                   params={"access_token": token})
+            except Exception:
+                pass
+
+    # Eliminar el registro (las conversaciones y contactos se quedan)
+    async with httpx.AsyncClient(timeout=15) as c:
+        h = _sb_headers()
+        await c.delete(f"{SUPABASE_URL}/rest/v1/wa_numbers",
+                       headers=h, params={"user_id": f"eq.{user_id}"})
+
+    log.info("WhatsApp desconectado: user=%s", user_id)
+    return {"ok": True}
