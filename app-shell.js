@@ -2509,7 +2509,7 @@
     const msg = document.getElementById('bk-gate-msg');
     if (msg) { msg.style.color = 'var(--mute)'; msg.textContent = 'Activando tu cuenta…'; }
     const delay = ms => new Promise(r => setTimeout(r, ms));
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 36; i++) {
       try {
         const r = await fetch(API_BASE + '/subscription/status', { headers: { Authorization: 'Bearer ' + getToken() } });
         if (r.ok) { const d = await r.json().catch(() => ({})); if (d.active) { location.reload(); return; } }
