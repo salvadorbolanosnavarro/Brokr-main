@@ -97,6 +97,7 @@
     ]);
     const AI_PATHS = [
       '/chat', '/chat-claude',
+      '/agent', '/transcribir',
       '/api/avm-claude', '/api/avm-websearch',
       '/contrato', '/contrato/analizar',
       '/ficha-manual/descripcion',
@@ -625,6 +626,19 @@
 .bk-shk-bubble.bot { background: var(--bone); color: var(--ink); border: 1px solid var(--line); border-bottom-left-radius: 5px; align-self: flex-start; }
 .bk-shk-bubble.user { background: var(--ink); color: var(--paper); border-bottom-right-radius: 5px; align-self: flex-end; }
 .bk-shk-bubble.toast { background: transparent; border: none; color: var(--mute); font-size: 12px; padding: 4px 10px; align-self: center; }
+/* Pasos del agente — "lo que está haciendo" en vivo */
+.bk-shk-bubble.step { background: transparent; border: none; color: var(--mute); font-size: 12px; padding: 3px 8px 3px 22px; align-self: flex-start; position: relative; opacity: 0.95; }
+.bk-shk-bubble.step::before { content: ""; position: absolute; left: 6px; top: 50%; width: 9px; height: 9px; margin-top: -4.5px; border: 1.6px solid var(--ink-2, #2F4A3A); border-right-color: transparent; border-radius: 50%; animation: bkSpin 0.7s linear infinite; }
+.bk-shk-bubble.step.done { opacity: 0.6; }
+.bk-shk-bubble.step.done::before { content: ""; border: none; width: 10px; height: 10px; margin-top: -5px; animation: none; background: no-repeat center/contain url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232F4A3A' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>"); }
+@keyframes bkSpin { to { transform: rotate(360deg); } }
+/* Animación "pensando" (3 puntos) */
+.bk-shk-bubble.thinking { padding: 12px 14px; }
+.bk-dots { display: inline-flex; gap: 4px; align-items: center; }
+.bk-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--mute, #999); display: inline-block; animation: bkBlink 1.2s ease-in-out infinite; }
+.bk-dots i:nth-child(2) { animation-delay: 0.2s; }
+.bk-dots i:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bkBlink { 0%, 60%, 100% { opacity: 0.25; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-2px); } }
 .bk-shk-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px 10px; }
 .bk-shk-chip {
   background: var(--paper); border: 1px solid var(--line-2);
@@ -1129,38 +1143,111 @@
   }
   window.shaarkChip = shaarkChip;
 
+  /* ── Lee el nombre de pila del usuario (para que el agente lo use) ── */
+  function _shaarkNombreUsuario() {
+    try {
+      const raw = localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}';
+      const u = JSON.parse(raw);
+      const meta = u.user_metadata || u.metadata || {};
+      const full = (meta.nombre || meta.full_name || meta.name || u.nombre || u.email || '').trim();
+      if (!full) return '';
+      return full.split(/[ @.]/)[0]; // primer nombre / antes del @
+    } catch (_) { return ''; }
+  }
+
+  /* ── Burbuja de estado en vivo ("pensando…", "revisando tu cartera…") ── */
+  function _addStepBubble(text) {
+    const wrap = document.getElementById('bk-shk-msgs');
+    if (!wrap) return null;
+    const div = document.createElement('div');
+    div.className = 'bk-shk-bubble step';
+    div.textContent = text;
+    wrap.appendChild(div);
+    wrap.scrollTop = wrap.scrollHeight;
+    return div;
+  }
+
   async function shaarkFabFetch(text) {
     const wrap = document.getElementById('bk-shk-msgs');
-    const typing = addBubble('…', 'bot');
+    const typing = addBubble('', 'bot');
+    typing.classList.add('thinking');
+    typing.innerHTML = '<span class="bk-dots"><i></i><i></i><i></i></span>';
+
+    let data = null, usedFallback = false;
     try {
-      const r = await fetch(API_BASE + '/chat-claude', {
+      const r = await fetch(API_BASE + '/agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ max_tokens: 1200, messages: shaarkMsgs, context: getCurrentContext() }),
+        body: JSON.stringify({
+          messages: shaarkMsgs,
+          context: getCurrentContext(),
+          nombre: _shaarkNombreUsuario(),
+        }),
       });
-      const data = await r.json();
-      if (!r.ok) {
-        typing.textContent = (data.detail || 'Error del servidor.');
-        return;
+      if (r.status === 404 || r.status === 405) { usedFallback = true; }
+      else {
+        data = await r.json();
+        if (!r.ok) {
+          typing.classList.remove('thinking');
+          typing.textContent = (data && data.detail) ? data.detail : 'Error del servidor.';
+          return;
+        }
       }
-      const reply = data.choices?.[0]?.message?.content;
-      if (!reply) { typing.textContent = 'Respuesta vacía. Intenta de nuevo.'; return; }
-      // Parse [ACCION]…[/ACCION] payloads
-      const accionRe = /\[ACCION\](.*?)\[\/ACCION\]/gs;
-      let m;
-      while ((m = accionRe.exec(reply)) !== null) {
-        try {
-          const ac = JSON.parse(m[1].trim());
-          handleAccion(ac);
-        } catch (e) { /* malformed payload */ }
-      }
-      const clean = reply.replace(/\[ACCION\].*?\[\/ACCION\]/gs, '').trim();
-      shaarkMsgs.push({ role: 'assistant', content: clean });
-      typing.textContent = clean;
-      if (window._scwLastWasVoice) { speak(clean); window._scwLastWasVoice = false; }
     } catch (e) {
-      typing.textContent = 'Sin conexión. Revisa tu internet.';
+      usedFallback = true; // sin /agent → intentamos el chat clásico
     }
+
+    // ── Fallback al chat clásico (/chat-claude) si /agent no está disponible ──
+    if (usedFallback) {
+      try {
+        const r2 = await fetch(API_BASE + '/chat-claude', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ max_tokens: 1200, messages: shaarkMsgs, context: getCurrentContext() }),
+        });
+        const d2 = await r2.json();
+        typing.classList.remove('thinking');
+        if (!r2.ok) { typing.textContent = (d2.detail || 'Error del servidor.'); return; }
+        const reply = d2.choices?.[0]?.message?.content || '';
+        const accionRe = /\[ACCION\](.*?)\[\/ACCION\]/gs; let m;
+        while ((m = accionRe.exec(reply)) !== null) {
+          try { handleAccion(JSON.parse(m[1].trim())); } catch (_) {}
+        }
+        const clean = reply.replace(/\[ACCION\].*?\[\/ACCION\]/gs, '').trim() || 'Listo.';
+        shaarkMsgs.push({ role: 'assistant', content: clean });
+        typing.textContent = clean;
+        if (window._scwLastWasVoice) { speak(clean); window._scwLastWasVoice = false; }
+      } catch (e) {
+        typing.classList.remove('thinking');
+        typing.textContent = 'Sin conexión. Revisa tu internet.';
+      }
+      if (wrap) wrap.scrollTop = wrap.scrollHeight;
+      return;
+    }
+
+    // ── Respuesta del agente: {reply, client_actions, steps} ──
+    typing.classList.remove('thinking');
+    const reply   = (data && data.reply) || data?.choices?.[0]?.message?.content || 'Listo.';
+    const steps   = (data && Array.isArray(data.steps)) ? data.steps : [];
+    const actions = (data && Array.isArray(data.client_actions)) ? data.client_actions : [];
+
+    // Muestra brevemente lo que hizo el agente (efecto "trabajando")
+    const uniqSteps = steps.filter((s, i) => steps.indexOf(s) === i);
+    for (const s of uniqSteps) {
+      const sb = _addStepBubble(s);
+      await new Promise(res => setTimeout(res, 280));
+      if (sb) sb.classList.add('done');
+    }
+
+    shaarkMsgs.push({ role: 'assistant', content: reply });
+    typing.textContent = reply;
+    if (window._scwLastWasVoice) { speak(reply); window._scwLastWasVoice = false; }
+
+    // Ejecuta las acciones encadenadas (cada una muestra su propio progreso real)
+    for (const ac of actions) {
+      try { handleAccion(ac); } catch (e) { /* noop */ }
+    }
+
     if (wrap) wrap.scrollTop = wrap.scrollHeight;
   }
 
@@ -1452,62 +1539,236 @@
     } catch (e) {}
   }
 
+  /* ════════════════════════════════════════════════════════════════
+     Dictado por voz — Whisper (Groq) con detección de silencio.
+     Graba audio real, detecta cuándo dejas de hablar y lo transcribe
+     en el backend (/transcribir). Muy superior a webkitSpeechRecognition
+     en iPhone, con ruido de coche y en español mexicano.
+     Si el dispositivo no soporta grabación o el backend no responde,
+     cae automáticamente al reconocimiento del navegador (legacy).
+     ════════════════════════════════════════════════════════════════ */
+  let scwStream = null, scwRecorder = null, scwChunks = [];
+  let scwAudioCtx = null, scwAnalyser = null, scwRAF = 0;
+  let scwSilenceTimer = null, scwMaxTimer = null, scwSpoke = false;
+
+  function _whisperSupported() {
+    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia &&
+              window.MediaRecorder);
+  }
+
   function toggleScwVoice() {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      showShaarkToast('Tu navegador no soporta voz. Usa Chrome o Safari.'); return;
-    }
-    if (scwListening) { stopScwVoice(); return; }
+    if (scwListening) { stopScwVoice(true); return; }
     startScwVoice();
   }
   window.toggleScwVoice = toggleScwVoice;
 
   async function startScwVoice() {
     if (scwListening) return;
+    // Sin soporte de grabación → método clásico del navegador
+    if (!_whisperSupported()) { return startScwVoiceLegacy(); }
+
     _wakePaused = true; stopWakeWordListener();
     const ok = await ensureMicPermission();
     if (!ok) { _wakePaused = false; _resumeWake(); showShaarkToast('Sin permiso de micrófono'); return; }
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    try { scwRec = new SR(); } catch (e) { _wakePaused = false; _resumeWake(); return; }
-    scwRec.lang = 'es-MX'; scwRec.continuous = false; scwRec.interimResults = true;
+
     const btn = document.getElementById('bk-shk-mic');
     const inp = document.getElementById('bk-shk-input');
+
+    try {
+      scwStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+      });
+    } catch (e) {
+      _wakePaused = false; _resumeWake();
+      // Si falla la grabación, intentamos el método clásico
+      return startScwVoiceLegacy();
+    }
+
+    // Elegir un mimeType soportado (Safari usa mp4, Chrome webm)
+    let mime = '';
+    const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'];
+    for (const c of candidates) {
+      if (window.MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(c)) { mime = c; break; }
+    }
+    try {
+      scwRecorder = mime ? new MediaRecorder(scwStream, { mimeType: mime })
+                         : new MediaRecorder(scwStream);
+    } catch (e) {
+      _cleanupScwStream(); _wakePaused = false; _resumeWake();
+      return startScwVoiceLegacy();
+    }
+
+    scwChunks = [];
+    scwSpoke = false;
     scwListening = true;
     btn?.classList.add('listening');
     if (inp) { inp.placeholder = 'Escuchando…'; inp.value = ''; }
-    scwTimer = setTimeout(() => stopScwVoice(), 12000);
-    scwRec.onresult = e => {
-      clearTimeout(scwTimer);
-      let f = '', i = '';
-      for (let k = 0; k < e.results.length; k++) {
-        if (e.results[k].isFinal) f += e.results[k][0].transcript;
-        else i += e.results[k][0].transcript;
-      }
-      const raw = _normalizarVoz((f || i).trim());
-      if (inp) inp.value = f ? _addPunctuation(raw) : raw;
-    };
-    scwRec.onerror = ev => {
-      clearTimeout(scwTimer);
-      if (ev.error === 'not-allowed') {
-        _micGranted = false; localStorage.removeItem('mic_granted');
-        showShaarkToast('Sin permiso de micrófono. Activa el micrófono en la configuración del navegador.');
-      }
-      stopScwVoice(); _wakePaused = false; _resumeWake();
-    };
-    scwRec.onend = () => {
-      clearTimeout(scwTimer);
-      const txt = inp ? inp.value.trim() : '';
-      const wasListening = scwListening;
-      stopScwVoice();
-      if (wasListening && txt) {
-        window._scwLastWasVoice = true;
-        setTimeout(() => shaarkFabSend(), 100);
-      }
+
+    scwRecorder.ondataavailable = ev => { if (ev.data && ev.data.size > 0) scwChunks.push(ev.data); };
+    scwRecorder.onstop = () => _onScwRecordingStop(mime);
+
+    try { scwRecorder.start(); } catch (e) {
+      _cleanupScwStream(); scwListening = false; btn?.classList.remove('listening');
       _wakePaused = false; _resumeWake();
-    };
-    try { scwRec.start(); } catch (e) { stopScwVoice(); _wakePaused = false; _resumeWake(); }
+      return startScwVoiceLegacy();
+    }
+
+    // Detección de silencio con AnalyserNode (auto-stop al dejar de hablar)
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      scwAudioCtx = new AC();
+      const src = scwAudioCtx.createMediaStreamSource(scwStream);
+      scwAnalyser = scwAudioCtx.createAnalyser();
+      scwAnalyser.fftSize = 2048;
+      src.connect(scwAnalyser);
+      const buf = new Uint8Array(scwAnalyser.fftSize);
+      const SPEAK = 0.018;   // umbral de voz (RMS)
+      const SILENCE = 0.010; // umbral de silencio
+      const tick = () => {
+        if (!scwListening || !scwAnalyser) return;
+        scwAnalyser.getByteTimeDomainData(buf);
+        let sum = 0;
+        for (let i = 0; i < buf.length; i++) { const v = (buf[i] - 128) / 128; sum += v * v; }
+        const rms = Math.sqrt(sum / buf.length);
+        if (rms > SPEAK) {
+          scwSpoke = true;
+          clearTimeout(scwSilenceTimer); scwSilenceTimer = null;
+        } else if (scwSpoke && rms < SILENCE && !scwSilenceTimer) {
+          // Silencio sostenido tras haber hablado → cerrar a los 1.3s
+          scwSilenceTimer = setTimeout(() => { if (scwListening) stopScwVoice(true); }, 1300);
+        }
+        scwRAF = requestAnimationFrame(tick);
+      };
+      scwRAF = requestAnimationFrame(tick);
+    } catch (e) { /* sin auto-stop por análisis; queda el tope duro */ }
+
+    // Si no se detecta voz en 8s, o tope duro de 15s, cerrar.
+    scwMaxTimer = setTimeout(() => { if (scwListening) stopScwVoice(scwSpoke); }, 15000);
+    setTimeout(() => { if (scwListening && !scwSpoke) stopScwVoice(false); }, 8000);
+  }
+  window.startScwVoice = startScwVoice;
+
+  function stopScwVoice(envia) {
+    if (!scwListening && !scwRecorder) {
+      // Puede venir del legacy
+      return stopScwVoiceLegacy();
+    }
+    scwListening = false;
+    const btn = document.getElementById('bk-shk-mic');
+    btn?.classList.remove('listening');
+    clearTimeout(scwSilenceTimer); scwSilenceTimer = null;
+    clearTimeout(scwMaxTimer); scwMaxTimer = null;
+    cancelAnimationFrame(scwRAF); scwRAF = 0;
+    window._scwShouldSend = !!envia;
+    try {
+      if (scwRecorder && scwRecorder.state !== 'inactive') scwRecorder.stop();
+      else _onScwRecordingStop('');
+    } catch (e) { _onScwRecordingStop(''); }
+  }
+  window.stopScwVoice = stopScwVoice;
+
+  function _cleanupScwStream() {
+    try { if (scwStream) scwStream.getTracks().forEach(t => t.stop()); } catch (_) {}
+    scwStream = null;
+    try { if (scwAudioCtx) scwAudioCtx.close(); } catch (_) {}
+    scwAudioCtx = null; scwAnalyser = null;
   }
 
-  function stopScwVoice() {
+  async function _onScwRecordingStop(mime) {
+    const inp = document.getElementById('bk-shk-input');
+    const chunks = scwChunks.slice();
+    scwChunks = [];
+    const shouldSend = window._scwShouldSend;
+    window._scwShouldSend = false;
+    _cleanupScwStream();
+    scwRecorder = null;
+    if (inp && inp.placeholder === 'Escuchando…') inp.placeholder = 'Pregunta lo que necesites…';
+    _wakePaused = false; _resumeWake();
+
+    if (!shouldSend || chunks.length === 0) { return; }
+
+    const type = (mime && mime.split(';')[0]) || (chunks[0] && chunks[0].type) || 'audio/webm';
+    const blob = new Blob(chunks, { type });
+    if (blob.size < 1200) { return; } // demasiado corto: probablemente silencio
+
+    if (inp) inp.placeholder = 'Entendiendo…';
+    try {
+      const ext = type.includes('mp4') ? 'mp4' : (type.includes('ogg') ? 'ogg' : 'webm');
+      const fd = new FormData();
+      fd.append('audio', blob, 'voz.' + ext);
+      fd.append('idioma', 'es');
+      const r = await fetch(API_BASE + '/transcribir', { method: 'POST', body: fd });
+      if (!r.ok) throw new Error('status ' + r.status);
+      const data = await r.json();
+      const texto = (data.texto || '').trim();
+      if (inp) inp.placeholder = 'Pregunta lo que necesites…';
+      if (texto) {
+        if (inp) inp.value = texto;
+        window._scwLastWasVoice = true;
+        setTimeout(() => shaarkFabSend(), 80);
+      } else {
+        showShaarkToast('No te escuché bien. Intenta de nuevo.');
+      }
+    } catch (e) {
+      if (inp) inp.placeholder = 'Pregunta lo que necesites…';
+      // Si la transcripción falla, ofrecemos el método clásico
+      showShaarkToast('No pude transcribir. Probando el micrófono del navegador…');
+      setTimeout(() => startScwVoiceLegacy(), 300);
+    }
+  }
+
+  /* ── Método clásico (fallback): reconocimiento del navegador ── */
+  function startScwVoiceLegacy() {
+    if (scwListening) return;
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      showShaarkToast('Tu navegador no soporta voz. Usa Chrome o Safari.'); return;
+    }
+    _wakePaused = true; stopWakeWordListener();
+    ensureMicPermission().then(ok => {
+      if (!ok) { _wakePaused = false; _resumeWake(); showShaarkToast('Sin permiso de micrófono'); return; }
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      try { scwRec = new SR(); } catch (e) { _wakePaused = false; _resumeWake(); return; }
+      scwRec.lang = 'es-MX'; scwRec.continuous = false; scwRec.interimResults = true;
+      const btn = document.getElementById('bk-shk-mic');
+      const inp = document.getElementById('bk-shk-input');
+      scwListening = true;
+      btn?.classList.add('listening');
+      if (inp) { inp.placeholder = 'Escuchando…'; inp.value = ''; }
+      scwTimer = setTimeout(() => stopScwVoiceLegacy(), 12000);
+      scwRec.onresult = e => {
+        clearTimeout(scwTimer);
+        let f = '', i = '';
+        for (let k = 0; k < e.results.length; k++) {
+          if (e.results[k].isFinal) f += e.results[k][0].transcript;
+          else i += e.results[k][0].transcript;
+        }
+        const raw = _normalizarVoz((f || i).trim());
+        if (inp) inp.value = f ? _addPunctuation(raw) : raw;
+      };
+      scwRec.onerror = ev => {
+        clearTimeout(scwTimer);
+        if (ev.error === 'not-allowed') {
+          _micGranted = false; localStorage.removeItem('mic_granted');
+          showShaarkToast('Sin permiso de micrófono. Actívalo en la configuración del navegador.');
+        }
+        stopScwVoiceLegacy(); _wakePaused = false; _resumeWake();
+      };
+      scwRec.onend = () => {
+        clearTimeout(scwTimer);
+        const txt = inp ? inp.value.trim() : '';
+        const wasListening = scwListening;
+        stopScwVoiceLegacy();
+        if (wasListening && txt) {
+          window._scwLastWasVoice = true;
+          setTimeout(() => shaarkFabSend(), 100);
+        }
+        _wakePaused = false; _resumeWake();
+      };
+      try { scwRec.start(); } catch (e) { stopScwVoiceLegacy(); _wakePaused = false; _resumeWake(); }
+    });
+  }
+
+  function stopScwVoiceLegacy() {
     clearTimeout(scwTimer);
     scwListening = false;
     const btn = document.getElementById('bk-shk-mic');

@@ -49,6 +49,15 @@ app.add_middleware(
 from whatsapp import router as whatsapp_router
 app.include_router(whatsapp_router)
 
+# Motor agéntico de Shaark (tool-use nativo + loop de varios pasos + voz Whisper).
+# Import defensivo: si por cualquier razón fallara la carga, el resto del backend
+# sigue funcionando con normalidad.
+try:
+    from routers.agente import router as agente_router
+    app.include_router(agente_router)
+except Exception as _e:
+    print(f"[agente] No se pudo montar el router agéntico: {_e}")
+
 CONFIG_FILE = Path(__file__).parent / "config.json"
 
 def load_config() -> dict:
