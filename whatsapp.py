@@ -462,7 +462,7 @@ async def wa_status(request: Request):
     row = rows[0]
     return {
         "connected":    True,
-        "phone_number": row.get("phone_number", ""),
+        "phone_number": row.get("display_number", ""),
         "waba_name":    row.get("waba_name", "WhatsApp Business"),
         "ia_enabled":   row.get("ia_enabled", True),
     }
@@ -533,7 +533,7 @@ async def wa_connect(req: ConnectReq, request: Request):
     payload = {
         "user_id":          user_id,
         "phone_number_id":  phone_number_id,
-        "phone_number":     phone_number,
+        "display_number":   phone_number,
         "waba_id":          waba_id,
         "waba_name":        waba_name,
         "access_token":     user_token,
