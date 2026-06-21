@@ -194,6 +194,21 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
       </div>
     </div>
 
+    <!-- ── Plantillas de mensaje ──────────────────────────────────────── -->
+    <div class="wa-connected-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px">
+        <div>
+          <h3 style="font-size:16px;font-weight:700;letter-spacing:-.01em">Plantillas de mensaje</h3>
+          <span style="font-size:12px;color:var(--mute)">Necesarias para escribirle primero a un contacto o reactivar una conversación después de 24h.</span>
+        </div>
+        <button class="wa-btn wa-btn-ink" onclick="openTemplateModal()">+ Nueva plantilla</button>
+      </div>
+
+      <div id="wa-templates-list" style="margin-top:16px;display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:12px;color:var(--mute);padding:12px 0">Cargando plantillas…</div>
+      </div>
+    </div>
+
   </div>
 
 </div>
@@ -208,6 +223,50 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
       <button class="wa-btn wa-btn-danger" id="wa-confirm-disconnect" onclick="disconnectWA()">
         <span class="wa-spinner" id="wa-disc-spinner"></span>
         <span id="wa-disc-text">Sí, desconectar</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal crear plantilla -->
+<div class="wa-modal-bg" id="wa-template-modal-bg">
+  <div class="wa-modal" style="max-width:480px">
+    <h3>Nueva plantilla</h3>
+    <p>Meta revisa cada plantilla antes de aprobarla. Puede tardar desde minutos hasta 24 horas.</p>
+
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:18px">
+      <div>
+        <label style="font-size:12px;font-weight:700;display:block;margin-bottom:5px">Nombre interno</label>
+        <input type="text" id="tpl-name" placeholder="seguimiento_visita" style="width:100%;padding:9px 12px;border:1px solid var(--line-2);border-radius:8px;font-size:13px;font-family:var(--font-sans)"/>
+        <span style="font-size:11px;color:var(--mute)">Solo minúsculas y guion_bajo, sin espacios.</span>
+      </div>
+
+      <div>
+        <label style="font-size:12px;font-weight:700;display:block;margin-bottom:5px">Categoría</label>
+        <select id="tpl-category" style="width:100%;padding:9px 12px;border:1px solid var(--line-2);border-radius:8px;font-size:13px;font-family:var(--font-sans)">
+          <option value="UTILITY">Utilidad (seguimiento, confirmaciones)</option>
+          <option value="MARKETING">Marketing (promociones, novedades)</option>
+        </select>
+      </div>
+
+      <div>
+        <label style="font-size:12px;font-weight:700;display:block;margin-bottom:5px">Texto del mensaje</label>
+        <textarea id="tpl-body" rows="4" placeholder="Hola {{1}}, ¿sigues interesado en la propiedad que viste? Quedo al pendiente." style="width:100%;padding:9px 12px;border:1px solid var(--line-2);border-radius:8px;font-size:13px;font-family:var(--font-sans);resize:vertical"></textarea>
+        <span style="font-size:11px;color:var(--mute)">Usa {{1}}, {{2}}… para variables (ej. nombre del lead).</span>
+      </div>
+
+      <div id="tpl-example-wrap" style="display:none">
+        <label style="font-size:12px;font-weight:700;display:block;margin-bottom:5px">Ejemplo para la variable {{1}}</label>
+        <input type="text" id="tpl-example" placeholder="Juan" style="width:100%;padding:9px 12px;border:1px solid var(--line-2);border-radius:8px;font-size:13px;font-family:var(--font-sans)"/>
+        <span style="font-size:11px;color:var(--mute)">Meta pide un ejemplo real para aprobar la plantilla.</span>
+      </div>
+    </div>
+
+    <div class="wa-modal-btns">
+      <button class="wa-btn wa-btn-ghost" onclick="closeTemplateModal()">Cancelar</button>
+      <button class="wa-btn wa-btn-ink" id="tpl-submit-btn" onclick="submitTemplate()">
+        <span class="wa-spinner" id="tpl-submit-spinner"></span>
+        <span id="tpl-submit-text">Enviar a revisión</span>
       </button>
     </div>
   </div>
@@ -237,6 +296,7 @@ async function checkWAStatus(){
       document.getElementById('wa-waba-name').textContent = d.waba_name || 'WhatsApp Business';
       document.getElementById('wa-global-ia').checked = d.ia_enabled !== false;
       showState('connected');
+      cargarTemplates();
     } else {
       showState('not-connected');
     }
@@ -369,6 +429,104 @@ function toast(msg){
   el.textContent = msg; el.style.opacity = '1';
   if(_tt) clearTimeout(_tt);
   _tt = setTimeout(() => el.style.opacity = '0', 3400);
+}
+
+// ── Plantillas de mensaje ────────────────────────────────
+const TPL_STATUS_LABEL = {
+  APPROVED: 'Aprobada', PENDING: 'En revisión', REJECTED: 'Rechazada'
+};
+const TPL_STATUS_COLOR = {
+  APPROVED: '#15803d', PENDING: '#b45309', REJECTED: '#b91c1c'
+};
+
+async function cargarTemplates(){
+  const tok = getToken();
+  const list = document.getElementById('wa-templates-list');
+  if(!tok) return;
+  try{
+    const r = await fetch(API_BASE + '/whatsapp/templates', {
+      headers:{ Authorization: 'Bearer ' + tok }
+    });
+    if(!r.ok){ list.innerHTML = '<div style="font-size:12px;color:var(--mute);padding:12px 0">No se pudieron cargar las plantillas.</div>'; return; }
+    const d = await r.json();
+    const tpls = d.templates || [];
+    if(tpls.length === 0){
+      list.innerHTML = '<div style="font-size:12px;color:var(--mute);padding:12px 0">Aún no tienes plantillas. Crea la primera para poder escribirle a tus leads fuera de la ventana de 24 horas.</div>';
+      return;
+    }
+    list.innerHTML = tpls.map(t => `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:11px 14px">
+        <div>
+          <div style="font-size:13px;font-weight:700">${escapeHtml(t.name)}</div>
+          <div style="font-size:11px;color:var(--mute)">${escapeHtml(t.category || '')} · ${escapeHtml(t.language || '')}</div>
+        </div>
+        <span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:${TPL_STATUS_COLOR[t.status]||'#666'}">${TPL_STATUS_LABEL[t.status]||t.status}</span>
+      </div>
+    `).join('');
+  }catch(e){
+    list.innerHTML = '<div style="font-size:12px;color:var(--mute);padding:12px 0">Error de conexión.</div>';
+  }
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML;
+}
+
+function openTemplateModal(){
+  document.getElementById('tpl-name').value = '';
+  document.getElementById('tpl-body').value = '';
+  document.getElementById('tpl-example').value = '';
+  document.getElementById('tpl-category').value = 'UTILITY';
+  document.getElementById('wa-template-modal-bg').classList.add('open');
+}
+function closeTemplateModal(){
+  document.getElementById('wa-template-modal-bg').classList.remove('open');
+}
+
+document.getElementById('tpl-body')?.addEventListener('input', function(){
+  document.getElementById('tpl-example-wrap').style.display = this.value.includes('{{1}}') ? '' : 'none';
+});
+
+async function submitTemplate(){
+  const name = document.getElementById('tpl-name').value.trim();
+  const category = document.getElementById('tpl-category').value;
+  const body = document.getElementById('tpl-body').value.trim();
+  const example = document.getElementById('tpl-example').value.trim();
+
+  if(!name || !body){ toast('Completa el nombre y el texto del mensaje.'); return; }
+
+  const btn = document.getElementById('tpl-submit-btn');
+  const spinner = document.getElementById('tpl-submit-spinner');
+  const text = document.getElementById('tpl-submit-text');
+  btn.disabled = true; spinner.classList.add('active'); text.textContent = 'Enviando…';
+
+  const tok = getToken();
+  const payload = {
+    name, category, language: 'es_MX', body_text: body,
+  };
+  if(body.includes('{{1}}') && example){
+    payload.example_body_params = [example];
+  }
+
+  try{
+    const r = await fetch(API_BASE + '/whatsapp/templates', {
+      method: 'POST',
+      headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+tok },
+      body: JSON.stringify(payload)
+    });
+    const d = await r.json();
+    if(r.ok && d.ok){
+      closeTemplateModal();
+      toast('Plantilla enviada a revisión de Meta.');
+      cargarTemplates();
+    } else {
+      toast(d.detail || 'No se pudo crear la plantilla.');
+    }
+  }catch(e){
+    toast('Error de conexión.');
+  }finally{
+    btn.disabled = false; spinner.classList.remove('active'); text.textContent = 'Enviar a revisión';
+  }
 }
 
 // ── Init ─────────────────────────────────────────────────

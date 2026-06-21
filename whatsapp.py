@@ -607,3 +607,197 @@ async def wa_disconnect(request: Request):
 
     log.info("WhatsApp desconectado: user=%s", user_id)
     return {"ok": True}
+
+
+# =============================================================================
+# 7) PLANTILLAS DE MENSAJE (Message Templates)
+# =============================================================================
+# Las plantillas son obligatorias para escribirle primero a un contacto
+# (fuera de la ventana de 24h) y para los mensajes de seguimiento/marketing.
+# Meta las revisa y aprueba antes de poder usarlas.
+
+class TemplateComponent(BaseModel):
+    type: str          # "BODY", "HEADER", "FOOTER", "BUTTONS"
+    text: str | None = None
+    format: str | None = None   # para HEADER: "TEXT", "IMAGE", "VIDEO", "DOCUMENT"
+    buttons: list[dict] | None = None
+
+class TemplateCreateReq(BaseModel):
+    name: str                      # solo minúsculas, números y guion_bajo
+    category: str                  # "UTILITY", "MARKETING", "AUTHENTICATION"
+    language: str = "es_MX"
+    body_text: str                 # texto del cuerpo, puede incluir {{1}}, {{2}}...
+    header_text: str | None = None
+    footer_text: str | None = None
+    example_body_params: list[str] | None = None   # ejemplo para cada {{n}} del cuerpo
+
+
+async def _waba_id_y_token(user_id: str) -> tuple[str, str]:
+    """Obtiene el waba_id y el token de acceso del usuario."""
+    rows = await sb_get("wa_numbers", {"user_id": f"eq.{user_id}", "select": "waba_id,access_token", "limit": "1"})
+    if not rows or not rows[0].get("waba_id"):
+        raise HTTPException(status_code=400, detail="No tienes un número de WhatsApp conectado")
+    waba_id = rows[0]["waba_id"]
+    token = rows[0].get("access_token") or WHATSAPP_TOKEN
+    if not token:
+        raise HTTPException(status_code=400, detail="No hay token de acceso configurado")
+    return waba_id, token
+
+
+# ── GET /whatsapp/templates — listar plantillas existentes ───────────────────
+@router.get("/templates")
+async def list_templates(request: Request):
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autorizado")
+
+    waba_id, token = await _waba_id_y_token(user_id)
+
+    async with httpx.AsyncClient(timeout=20) as c:
+        r = await c.get(
+            f"{GRAPH_API}/{waba_id}/message_templates",
+            params={"access_token": token, "limit": "50"},
+        )
+    if r.status_code != 200:
+        log.error("Error listando templates: %s", r.text)
+        raise HTTPException(status_code=400, detail="No se pudieron obtener las plantillas")
+
+    data = r.json().get("data", [])
+    out = []
+    for t in data:
+        out.append({
+            "id":       t.get("id"),
+            "name":     t.get("name"),
+            "status":   t.get("status"),       # APPROVED / PENDING / REJECTED
+            "category": t.get("category"),
+            "language": t.get("language"),
+        })
+    return {"templates": out}
+
+
+# ── POST /whatsapp/templates — crear una plantilla nueva ─────────────────────
+@router.post("/templates")
+async def create_template(req: TemplateCreateReq, request: Request):
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autorizado")
+
+    nombre = "".join(ch for ch in req.name.lower().strip().replace(" ", "_") if ch.isalnum() or ch == "_")
+    if not nombre:
+        raise HTTPException(status_code=400, detail="Nombre de plantilla inválido")
+
+    waba_id, token = await _waba_id_y_token(user_id)
+
+    components = []
+
+    if req.header_text:
+        components.append({"type": "HEADER", "format": "TEXT", "text": req.header_text})
+
+    body_comp = {"type": "BODY", "text": req.body_text}
+    if req.example_body_params:
+        body_comp["example"] = {"body_text": [req.example_body_params]}
+    components.append(body_comp)
+
+    if req.footer_text:
+        components.append({"type": "FOOTER", "text": req.footer_text})
+
+    payload = {
+        "name":       nombre,
+        "category":   req.category.upper(),
+        "language":   req.language,
+        "components": components,
+    }
+
+    async with httpx.AsyncClient(timeout=20) as c:
+        r = await c.post(
+            f"{GRAPH_API}/{waba_id}/message_templates",
+            params={"access_token": token},
+            json=payload,
+        )
+
+    if r.status_code not in (200, 201):
+        log.error("Error creando template: %s", r.text)
+        try:
+            detail = r.json().get("error", {}).get("error_user_msg") or r.json().get("error", {}).get("message")
+        except Exception:
+            detail = "Meta rechazó la plantilla"
+        raise HTTPException(status_code=400, detail=detail or "No se pudo crear la plantilla")
+
+    data = r.json()
+    log.info("Template creado: user=%s name=%s id=%s", user_id, nombre, data.get("id"))
+    return {"ok": True, "id": data.get("id"), "status": data.get("status", "PENDING"), "name": nombre}
+
+
+# ── DELETE /whatsapp/templates/{name} — eliminar plantilla ───────────────────
+@router.delete("/templates/{name}")
+async def delete_template(name: str, request: Request):
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autorizado")
+
+    waba_id, token = await _waba_id_y_token(user_id)
+
+    async with httpx.AsyncClient(timeout=20) as c:
+        r = await c.delete(
+            f"{GRAPH_API}/{waba_id}/message_templates",
+            params={"access_token": token, "name": name},
+        )
+
+    if r.status_code != 200:
+        log.error("Error borrando template: %s", r.text)
+        raise HTTPException(status_code=400, detail="No se pudo eliminar la plantilla")
+
+    return {"ok": True}
+
+
+# ── POST /whatsapp/templates/{name}/send — enviar una plantilla a un contacto ─
+class TemplateSendReq(BaseModel):
+    to: str
+    template_name: str
+    language: str = "es_MX"
+    body_params: list[str] | None = None
+
+@router.post("/templates/send")
+async def send_template(req: TemplateSendReq, request: Request):
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autorizado")
+
+    rows = await sb_get("wa_numbers", {"user_id": f"eq.{user_id}", "select": "phone_number_id,access_token", "limit": "1"})
+    if not rows:
+        raise HTTPException(status_code=400, detail="No tienes un número de WhatsApp conectado")
+    phone_number_id = rows[0]["phone_number_id"]
+    token = rows[0].get("access_token") or WHATSAPP_TOKEN
+
+    to = _normaliza_mx(req.to)
+
+    components = []
+    if req.body_params:
+        components.append({
+            "type": "body",
+            "parameters": [{"type": "text", "text": p} for p in req.body_params],
+        })
+
+    payload = {
+        "messaging_product": "whatsapp",
+        "to": to,
+        "type": "template",
+        "template": {
+            "name": req.template_name,
+            "language": {"code": req.language},
+            "components": components,
+        },
+    }
+
+    async with httpx.AsyncClient(timeout=20) as c:
+        r = await c.post(
+            f"{GRAPH_API}/{phone_number_id}/messages",
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+            json=payload,
+        )
+
+    if r.status_code != 200:
+        log.error("Error enviando template: %s", r.text)
+        raise HTTPException(status_code=400, detail="No se pudo enviar la plantilla")
+
+    return {"ok": True, "wamid": r.json().get("messages", [{}])[0].get("id")}
