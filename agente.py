@@ -90,40 +90,61 @@ def _money(n) -> str:
 async def _tool_buscar_propiedades(user_id: str, args: dict) -> str:
     """Busca en la tabla `propiedades` del usuario por texto/operación/tipo."""
     if not user_id:
-        return "No hay sesión activa; no puedo consultar las propiedades del usuario."
+        return "No pude confirmar la sesión del usuario, así que no logro leer su cartera. Pídele que cierre sesión y vuelva a entrar; no asumas que no tiene propiedades."
     query     = (args.get("query") or "").strip()
     operacion = (args.get("operacion") or "").strip().lower()
     tipo      = (args.get("tipo") or "").strip().lower()
     limit     = min(int(args.get("limit") or 8), 20)
 
-    params = {
-        "user_id": f"eq.{user_id}",
-        "select": "id,titulo,tipo,operacion,precio,moneda,colonia,ciudad,calle,num_exterior,recamaras,banos,m2_construccion,m2_terreno,estacionamientos,estatus,eb_public_id",
-        "order": "updated_at.desc",
-        "limit": str(limit),
-    }
-    if operacion in ("venta", "renta"):
-        params["operacion"] = f"eq.{operacion}"
-    if tipo:
-        params["tipo"] = f"ilike.*{tipo}*"
-    if query:
-        safe = query.replace(",", " ").replace("(", " ").replace(")", " ")
-        params["or"] = (
-            f"(titulo.ilike.*{safe}*,colonia.ilike.*{safe}*,"
-            f"calle.ilike.*{safe}*,ciudad.ilike.*{safe}*,descripcion.ilike.*{safe}*)"
-        )
-    try:
+    sel = ("id,titulo,tipo,operacion,precio,moneda,colonia,ciudad,calle,"
+           "num_exterior,recamaras,banos,m2_construccion,m2_terreno,estacionamientos,estatus")
+
+    async def _consulta(extra: dict) -> list:
+        params = {"user_id": f"eq.{user_id}", "select": sel,
+                  "order": "updated_at.desc", "limit": str(limit)}
+        params.update(extra)
         async with httpx.AsyncClient(timeout=15) as client:
             r = await client.get(f"{SUPABASE_URL}/rest/v1/propiedades",
                                  headers=_sb_headers(), params=params)
-        if r.status_code != 200:
-            return f"Error al consultar propiedades ({r.status_code}). El usuario puede revisar su módulo de propiedades manualmente."
-        rows = r.json() or []
+        return r.json() if r.status_code == 200 else None
+
+    extra = {}
+    if operacion in ("venta", "renta"):
+        extra["operacion"] = f"eq.{operacion}"
+    if tipo:
+        extra["tipo"] = f"ilike.*{tipo}*"
+    if query:
+        safe = query.replace(",", " ").replace("(", " ").replace(")", " ")
+        extra["or"] = (f"(titulo.ilike.*{safe}*,colonia.ilike.*{safe}*,"
+                       f"calle.ilike.*{safe}*,ciudad.ilike.*{safe}*,descripcion.ilike.*{safe}*)")
+
+    try:
+        rows = await _consulta(extra)
     except Exception as e:
         return f"No pude consultar las propiedades ahora mismo: {str(e)[:120]}"
+    if rows is None:
+        return "Hubo un error al leer la cartera. No asumas que el usuario no tiene propiedades; pídele reintentar."
+
+    # Sin coincidencias con los filtros: revisa si SÍ tiene inventario (sin filtros)
+    # para no decirle por error que no tiene nada.
+    if not rows and extra:
+        try:
+            todas = await _consulta({})
+        except Exception:
+            todas = None
+        if todas:
+            muestras = ", ".join(filter(None, [t.get("titulo") or t.get("colonia") for t in todas[:6]]))
+            return (f"No hay coincidencias con ese criterio exacto, pero el usuario SÍ tiene "
+                    f"{len(todas)} propiedad(es) en su cartera (p. ej.: {muestras}). "
+                    "Pídele que precise cuál, o muéstrale la lista. NUNCA le digas que no tiene inmuebles.")
+        return ("El usuario aún no tiene propiedades cargadas en Mis Inmuebles. "
+                "Ofrécele crearlas en ese módulo o pídele los datos para generar la ficha manual. "
+                "No menciones integraciones externas.")
 
     if not rows:
-        return "No encontré propiedades que coincidan con esa búsqueda en la cartera del usuario."
+        return ("El usuario aún no tiene propiedades cargadas en Mis Inmuebles. "
+                "Ofrécele crearlas en ese módulo o pídele los datos para generar la ficha manual. "
+                "No menciones integraciones externas.")
 
     out = []
     for p in rows:
@@ -140,7 +161,6 @@ async def _tool_buscar_propiedades(user_id: str, args: dict) -> str:
         if p.get("m2_terreno"): det.append(f"{p['m2_terreno']} m² terreno")
         linea = " — ".join(partes)
         if det: linea += " · " + ", ".join(det)
-        if p.get("eb_public_id"): linea += f" · EB: {p['eb_public_id']}"
         linea += f" · id:{p.get('id')}"
         out.append("• " + linea)
     return f"Encontré {len(rows)} propiedad(es) en la cartera del usuario:\n" + "\n".join(out)
@@ -161,7 +181,7 @@ async def _tool_detalle_propiedad(user_id: str, args: dict) -> str:
         params["id"] = f"eq.{pid}"
     elif query:
         safe = query.replace(",", " ")
-        params["or"] = f"(titulo.ilike.*{safe}*,colonia.ilike.*{safe}*,calle.ilike.*{safe}*,eb_public_id.ilike.*{safe}*)"
+        params["or"] = f"(titulo.ilike.*{safe}*,colonia.ilike.*{safe}*,calle.ilike.*{safe}*)"
         params["order"] = "updated_at.desc"
     else:
         return "Necesito un id de propiedad o un texto de búsqueda para dar el detalle."
@@ -183,7 +203,7 @@ async def _tool_detalle_propiedad(user_id: str, args: dict) -> str:
         "Recámaras": p.get("recamaras"), "Baños": p.get("banos"),
         "Estacionamientos": p.get("estacionamientos"),
         "m² construcción": p.get("m2_construccion"), "m² terreno": p.get("m2_terreno"),
-        "Estatus": p.get("estatus"), "EasyBroker ID": p.get("eb_public_id"),
+        "Estatus": p.get("estatus"),
         "id": p.get("id"),
     }
     lineas = [f"{k}: {v}" for k, v in campos.items() if v not in (None, "", 0)]
@@ -292,8 +312,8 @@ def _fotos_to_images(fotos) -> list:
 
 
 def _propiedad_to_eb(p: dict) -> dict:
-    """Mapea una fila de la tabla `propiedades` al formato (estilo EasyBroker)
-    que consume build_ficha_html / /ficha-pdf."""
+    """Mapea una fila de la tabla `propiedades` al formato que consume
+    build_ficha_html / /ficha-pdf (el renderizador del PDF)."""
     op_raw = (p.get("operacion") or "").strip().lower()
     op_type = "sale" if op_raw == "venta" else "rental" if op_raw == "renta" else "sale"
     operations = []
@@ -306,7 +326,7 @@ def _propiedad_to_eb(p: dict) -> dict:
     calle = " ".join(filter(None, [str(p.get("calle") or "").strip(),
                                    str(p.get("num_exterior") or "").strip()])).strip()
     return {
-        "public_id": p.get("eb_public_id") or p.get("id") or "",
+        "public_id": p.get("id") or "",
         "id": p.get("id") or "",
         "title": p.get("titulo") or p.get("tipo") or "Propiedad",
         "property_type": p.get("tipo") or "Propiedad",
@@ -365,19 +385,16 @@ async def _render_ficha_pdf(eb: dict):
 
 
 async def _leer_propiedad(user_id: str, args: dict) -> Optional[dict]:
-    """Trae la fila completa de una propiedad por id, eb_public_id o texto."""
+    """Trae la fila completa de una propiedad por id o texto."""
     pid    = (args.get("id") or "").strip()
-    eb_id  = (args.get("id_easybroker") or "").strip()
     query  = (args.get("query") or "").strip()
     params = {"user_id": f"eq.{user_id}", "select": "*", "limit": "1"}
     if pid:
         params["id"] = f"eq.{pid}"
-    elif eb_id:
-        params["eb_public_id"] = f"eq.{eb_id}"
     elif query:
         safe = query.replace(",", " ")
         params["or"] = (f"(titulo.ilike.*{safe}*,colonia.ilike.*{safe}*,"
-                        f"calle.ilike.*{safe}*,eb_public_id.ilike.*{safe}*)")
+                        f"calle.ilike.*{safe}*)")
         params["order"] = "updated_at.desc"
     else:
         return None
@@ -393,21 +410,15 @@ async def _leer_propiedad(user_id: str, args: dict) -> Optional[dict]:
 
 async def _tool_generar_ficha(user_id: str, args: dict) -> dict:
     """Genera la ficha técnica (PDF) de una propiedad de la cartera y la entrega
-    lista para abrir. Acepta id, id_easybroker o query."""
+    lista para abrir. Acepta id o query."""
     if not user_id:
-        return {"text": "No hay sesión activa; no puedo generar la ficha."}
+        return {"text": "No pude confirmar la sesión; pídele al usuario reingresar. No asumas que no tiene propiedades."}
     p = await _leer_propiedad(user_id, args)
     if not p:
-        # Si venía un id de EasyBroker no sincronizado, deja que el módulo lo resuelva.
-        eb_id = (args.get("id_easybroker") or "").strip()
-        if eb_id:
-            return {
-                "text": (f"Esa propiedad ({eb_id}) no está en la cartera local, así que abrí "
-                         "el módulo de ficha con el ID de EasyBroker para terminarla ahí. "
-                         "Dile al usuario que la ficha se está preparando con ese ID."),
-                "client_action": {"tipo": "crear_ficha", "id_easybroker": eb_id},
-            }
-        return {"text": "No encontré esa propiedad en la cartera del usuario para generar la ficha."}
+        return {"text": ("No ubiqué esa propiedad por ese dato. Usa buscar_propiedades para "
+                         "listar la cartera del usuario y confirma con él CUÁL quiere antes de "
+                         "generar la ficha. Nunca le digas que no tiene inmuebles ni menciones "
+                         "integraciones externas.")}
 
     eb = _propiedad_to_eb(p)
     nombre = eb.get("title") or "la propiedad"
@@ -484,7 +495,6 @@ SERVER_TOOLS = {
     "resumen_cartera":        _tool_resumen_cartera,
     # Fichas técnicas: se generan de verdad en el servidor (PDF listo).
     "generar_ficha_tecnica":  _tool_generar_ficha,
-    "crear_ficha_easybroker": _tool_generar_ficha,
     "crear_ficha_manual":     _tool_crear_ficha_manual,
 }
 
@@ -607,15 +617,6 @@ TOOLS_SCHEMA = [
         }
     },
     {
-        "name": "crear_ficha_easybroker",
-        "description": "Genera el PDF de la ficha técnica de una propiedad por su ID de EasyBroker (ej. EB-KH4322). Si está sincronizada en la cartera, el PDF se entrega listo; si no, abre el módulo con ese ID.",
-        "input_schema": {
-            "type": "object",
-            "properties": {"id_easybroker": {"type": "string"}},
-            "required": ["id_easybroker"]
-        }
-    },
-    {
         "name": "crear_ficha_manual",
         "description": "Genera el PDF de la ficha técnica desde datos sueltos (para inmuebles que NO están en la cartera). Lo entrega listo, se abre solo. Mínimo: tipo_inmueble, operacion, precio, colonia.",
         "input_schema": {
@@ -707,7 +708,6 @@ _STEP_LABELS = {
     "generar_contrato":       "Generando el contrato…",
     "crear_contacto":         "Agregando el contacto a tu CRM…",
     "generar_ficha_tecnica":  "Armando la ficha técnica…",
-    "crear_ficha_easybroker": "Armando la ficha técnica…",
     "crear_ficha_manual":     "Armando la ficha técnica…",
     "crear_campana_facebook": "Preparando tu campaña de anuncios…",
     "abrir_modulo":           "Abriendo el módulo…",
@@ -732,9 +732,12 @@ CONOCIMIENTO EXPERTO (úsalo al responder asesorías):
 - Fiscal e ISR: LISR arts. 119 y 120, exención de 700,000 UDIS para casa habitación, deducciones (compra actualizada por INPC, mejoras, escrituración, comisiones), ISAI, régimen de arrendamiento (deducción ciega 35%).
 - Valuación: comparables, costo, capitalización de rentas, cap rate, precio por m². Zonas de Morelia: Chapultepec, Altozano, Félix Ireta, Lomas del Estadio, Santa María, Lomas de Tzompantle, Vistas del Campestre, Villas del Pedregal, Las Américas, Torremolinos.
 - Marketing inmobiliario: Facebook/Instagram Ads, fichas que venden, captación de exclusivas, manejo de la objeción de precio.
-- Tecnología: EasyBroker (conexión por API key personal en Perfil → EasyBroker), portales, firma electrónica (Mifiel, Docusign).
+- Tecnología: portales inmobiliarios, firma electrónica (Mifiel, Docusign), y el flujo de captación digital.
 
-CÓMO CONECTAR EASYBROKER (si lo preguntan): en EasyBroker, clic en tu nombre → Configuración de cuenta → Integraciones/API → copia tu API Key. En Broquer, abre tu perfil (tus iniciales abajo a la izquierda) → sección EasyBroker → pega la key → Conectar. Cada agente usa su propia key.
+REGLAS DE CARTERA:
+- Las propiedades del usuario viven en su módulo «Mis Inmuebles» dentro de Broquer. Para trabajar con una, usa buscar_propiedades (para ubicarla y obtener su id) y luego generar_ficha_tecnica con ese id.
+- Si una búsqueda no arroja coincidencias, NUNCA concluyas que el usuario no tiene inmuebles: vuelve a buscar sin filtros o pídele que precise. Solo di que no tiene propiedades si la herramienta lo confirma explícitamente.
+- Si de verdad no tiene inmuebles cargados, ofrécele crearlos en Mis Inmuebles o pídele los datos para hacer la ficha manual. NUNCA menciones EasyBroker, importaciones externas ni integraciones de terceros: no son parte de tu discurso.
 
 ESTILO:
 - Español mexicano, natural, cercano y profesional. Directo, sin relleno ni redundancia.
@@ -914,7 +917,7 @@ async def transcribir(request: Request, audio: UploadFile = File(...), idioma: s
                     "model": "whisper-large-v3-turbo",
                     "language": idioma or "es",
                     "temperature": "0",
-                    "prompt": "Transcripción de un agente inmobiliario en México hablando de propiedades, colonias de Morelia, contratos, ISR, EasyBroker y la app Broquer.",
+                    "prompt": "Transcripción de un agente inmobiliario en México hablando de propiedades, colonias de Morelia, contratos, ISR y la app Broquer.",
                 },
             )
     except Exception as e:
