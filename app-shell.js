@@ -1276,7 +1276,33 @@
       case 'generar_contrato_directo': generarContratoDirecto(ac); break;
       case 'calcular_isr_directo':     calcularISRDirecto(ac); break;
       case 'estimar_valor_directo':    estimarValorDirecto(ac); break;
+      case 'abrir_pdf':                abrirPdfDirecto(ac); break;
     }
+  }
+
+  /* Abre/descarga un PDF que el servidor ya generó (p. ej. la ficha técnica).
+     No navega a ningún módulo: el documento llega listo. */
+  function abrirPdfDirecto(ac) {
+    try {
+      const API = window.API_BASE || 'https://api.broquer.app';
+      let url = ac.url || '';
+      if (!url) return;
+      if (url.indexOf('http') !== 0) url = API + url;
+      const nombre = ac.filename || 'documento.pdf';
+      // Abrir en nueva pestaña/visor (en iOS lo muestra; en escritorio descarga).
+      const win = window.open(url, '_blank');
+      // Respaldo en el chat: enlace por si el navegador bloqueó la ventana.
+      _addAssistantBubble(
+        'Tu ficha está lista: <a href="' + url + '" target="_blank" rel="noopener" download="' +
+        nombre + '" style="color:var(--ink-2,#2F4A3A);font-weight:600;text-decoration:underline;">abrir el PDF</a>.'
+      );
+      if (!win) {
+        // Popup bloqueado: forzar descarga con un <a> temporal.
+        const a = document.createElement('a');
+        a.href = url; a.download = nombre; a.target = '_blank'; a.rel = 'noopener';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      }
+    } catch (e) { /* noop */ }
   }
 
   /* ── Acciones directas: ejecutan API y muestran resultado en chat ── */
