@@ -7,271 +7,95 @@
 <link rel="manifest" href="manifest.json"/>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
-<meta name="theme-color" content="#F7F5EE"/>
+<meta name="theme-color" content="#05203C"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-title" content="Broquer"/>
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
-/* ─── Dashboard-specific styles (shell-agnostic) ─────────────────── */
-.dash-scroll { padding: 28px 36px 40px; }
-@media (max-width: 720px) { .dash-scroll { padding: 18px 16px 40px; } }
+/* ─── Dashboard — sistema visual "Sky" ─────────────────────────── */
+.dash-scroll { padding: 24px 28px 48px; max-width: 1180px; margin: 0 auto; }
+@media (max-width: 720px) { .dash-scroll { padding: 16px 14px 40px; } }
 
-/* Hero greeting */
-.dash-hero {
-  display: flex; align-items: flex-end; justify-content: space-between;
-  gap: 24px; flex-wrap: wrap;
-  padding-bottom: 24px; margin-bottom: 24px;
+/* ── HERO navy (estructura) ── */
+.sky-hero {
+  background: var(--sky-navy); color: #fff;
+  border-radius: 16px; padding: 28px 28px 22px;
 }
-.dash-hero__eyebrow {
-  font-family: var(--font-mono);
-  font-size: 11px; letter-spacing: 0.16em;
-  text-transform: uppercase; color: var(--mute);
-  margin-bottom: 8px;
+.sky-hero__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.sky-hero__eyebrow {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: rgba(255,255,255,0.6); margin-bottom: 8px;
 }
-.dash-hero h1 {
-  font-family: var(--font-display);
-  font-size: 44px; font-weight: 600;
-  letter-spacing: -0.035em; line-height: 1.02;
-}
-.dash-hero h1 em { font-style: normal; color: var(--mute-2); font-weight: 500; }
-.dash-hero__date {
-  font-family: var(--font-mono); font-size: 12px;
-  letter-spacing: 0.06em; color: var(--mute);
-  text-align: right;
-}
-.dash-hero__date .label { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mute-2); display: block; margin-bottom: 4px; }
-@media (max-width: 720px) { .dash-hero h1 { font-size: 32px; } .dash-hero__date { text-align: left; } }
+.sky-hero__title { font-family: var(--font-display); font-size: 34px; font-weight: 700; letter-spacing: -0.02em; color: #fff; line-height: 1.05; }
+.sky-hero__title em { font-style: normal; color: #5BA4FF; }
+.sky-hero__date { text-align: right; font-family: var(--font-mono); font-size: 12px; color: rgba(255,255,255,0.7); }
+.sky-hero__date .label { display: block; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 3px; }
+.sky-hero__kpis { display: flex; gap: 0; margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.14); padding-top: 18px; }
+.sky-kpi { flex: 1; padding-right: 20px; }
+.sky-kpi + .sky-kpi { border-left: 1px solid rgba(255,255,255,0.14); padding-left: 20px; }
+.sky-kpi__value { font-family: var(--font-display); font-size: 30px; font-weight: 700; color: #fff; line-height: 1; letter-spacing: -0.02em; }
+.sky-kpi__label { font-size: 12px; color: rgba(255,255,255,0.65); margin-top: 6px; }
+@media (max-width: 560px) { .sky-hero__title { font-size: 26px; } .sky-kpi__value { font-size: 22px; } .sky-hero__date { text-align: left; } }
 
-/* KPIs */
-.kpi-grid {
-  display: grid; grid-template-columns: repeat(4, 1fr);
-  gap: 0;
-  border: none;
-  border-radius: var(--r-lg);
-  background: var(--bone);
-  margin-bottom: 28px;
-  overflow: hidden;
+/* ── HERO CARD azul (firma Skyscanner) ── */
+.sky-herocard {
+  display: block; margin-top: 16px; text-decoration: none;
+  background: var(--sky-blue); color: #fff; border-radius: 16px; padding: 30px 28px;
+  position: relative; overflow: hidden; transition: background 0.2s var(--ease);
+  background-image: radial-gradient(120% 150% at 100% 0%, rgba(255,255,255,0.16), transparent 55%);
 }
-@media (max-width: 880px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 480px) { .kpi-grid { grid-template-columns: 1fr; } }
-.kpi {
-  padding: 20px 22px;
-  border-right: 1px solid transparent;
-  border-bottom: 1px solid transparent;
-  display: flex; flex-direction: column; gap: 4px;
-}
-.kpi:last-child { border-right: none; }
-@media (max-width: 880px) {
-  .kpi:nth-child(2n) { border-right: none; }
-  .kpi:nth-last-child(-n+2) { border-bottom: none; }
-}
-@media (max-width: 480px) {
-  .kpi { border-right: none; }
-  .kpi:not(:last-child) { border-bottom: 1px solid var(--line); }
-  .kpi:last-child { border-bottom: none; }
-}
-.kpi__label {
-  font-family: var(--font-mono);
-  font-size: 10px; letter-spacing: 0.14em;
-  text-transform: uppercase; color: var(--mute);
-  font-weight: 500; margin-bottom: 4px;
-}
-.kpi__value {
-  font-family: var(--font-display);
-  font-size: 34px; font-weight: 600;
-  letter-spacing: -0.03em;
-  color: var(--ink); line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-.kpi__value .unit {
-  font-family: var(--font-mono);
-  font-size: 12px; font-weight: 500;
-  color: var(--mute); letter-spacing: 0.06em;
-  margin-left: 4px;
-}
-.kpi__delta {
-  font-size: 12px; color: var(--mute);
-  margin-top: 8px;
-  display: flex; align-items: center; gap: 6px;
-  font-variant-numeric: tabular-nums;
-}
-.kpi__delta strong { color: var(--success); font-weight: 600; }
-.kpi__delta.is-down strong { color: var(--danger); }
+.sky-herocard:hover { background: var(--sky-blue-press); }
+.sky-herocard__eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; opacity: 0.9; }
+.sky-herocard h2 { color: #fff; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; margin: 8px 0 18px; max-width: 22ch; }
+.sky-herocard__cta { display: inline-flex; align-items: center; gap: 8px; background: #fff; color: var(--sky-blue); font-weight: 700; font-size: 14px; padding: 11px 18px; border-radius: 12px; }
+@media (max-width: 560px) { .sky-herocard h2 { font-size: 22px; } }
 
-/* Section heads */
-.sec-head {
-  display: flex; align-items: baseline; justify-content: space-between;
-  margin-bottom: 14px;
-}
-.sec-head h2 {
-  font-family: var(--font-display);
-  font-size: 22px; font-weight: 600;
-  letter-spacing: -0.025em;
-}
-.sec-head a {
-  font-size: 13px; color: var(--ink-2);
-  font-weight: 500;
-  display: inline-flex; align-items: center; gap: 4px;
-}
-.sec-head a:hover { color: var(--forest); }
+/* ── Encabezado de sección ── */
+.sky-sec-head { margin: 34px 0 16px; }
+.sky-sec-head h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; color: var(--ink); }
 
-/* Modules grid */
-.mods-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 14px; margin-bottom: 32px;
-}
+/* ── Tarjetas de módulo ── */
+.mods-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 @media (max-width: 880px) { .mods-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 480px) { .mods-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 520px) { .mods-grid { grid-template-columns: 1fr; } }
 .mod-card {
-  background: var(--bone);
-  border: 1px solid transparent;
-  border-radius: var(--r-lg);
-  padding: 22px 22px 20px;
-  cursor: pointer;
-  transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease);
-  position: relative;
-  display: flex; flex-direction: column;
-  min-height: 168px;
-  text-decoration: none;
-  color: var(--ink);
+  display: flex; flex-direction: column; position: relative;
+  background: var(--bone); border: 1px solid var(--line); border-radius: 12px;
+  padding: 18px; text-decoration: none; color: var(--ink); min-height: 128px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.18s var(--ease), box-shadow 0.18s var(--ease), border-color 0.18s var(--ease), background 0.18s var(--ease);
 }
-.mod-card:hover { transform: translateY(-2px); border-color: transparent; }
+.mod-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--sky-blue); }
 .mod-card__icon {
-  width: 38px; height: 38px;
-  border-radius: var(--r);
-  background: var(--paper-2);
-  display: flex; align-items: center; justify-content: center;
-  color: var(--ink-2);
-  margin-bottom: 18px;
-  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+  width: 42px; height: 42px; border-radius: 10px;
+  background: var(--sky-navy); color: #fff;
+  display: flex; align-items: center; justify-content: center; margin-bottom: 12px;
+  transition: background 0.18s var(--ease), color 0.18s var(--ease);
 }
-.mod-card.is-primary,
-.mod-card:hover { background: var(--ink); color: var(--paper); border-color: transparent; }
-.mod-card.is-primary .mod-card__icon,
-.mod-card:hover .mod-card__icon { background: rgba(247,245,238,.12); color: var(--paper); }
-.mod-card.is-primary .mod-card__sub,
-.mod-card:hover .mod-card__sub { color: rgba(247,245,238,.6); }
-.mod-card.is-primary .mod-card__arrow,
-.mod-card:hover .mod-card__arrow { color: var(--paper); }
-.mod-card__title {
-  font-family: var(--font-display);
-  font-size: 18px; font-weight: 600;
-  letter-spacing: -0.018em;
-  margin-bottom: 4px;
-}
-.mod-card__sub { font-size: 13px; color: var(--mute); line-height: 1.4; transition: color var(--dur) var(--ease); }
-.mod-card.is-primary .mod-card__title,
-.mod-card:hover .mod-card__title { color: var(--paper); }
-.mod-card__arrow {
-  position: absolute; top: 22px; right: 22px;
-  color: var(--mute-2); opacity: 0;
-  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
-}
-.mod-card:hover .mod-card__arrow { opacity: 1; transform: translate(2px, -2px); }
+.mod-card__title { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; color: var(--ink); margin-bottom: 4px; }
+.mod-card__sub { font-size: 13px; color: var(--mute); line-height: 1.4; }
+.mod-card__arrow { position: absolute; top: 18px; right: 16px; color: var(--mute-3); opacity: 0; transition: opacity 0.18s var(--ease), transform 0.18s var(--ease), color 0.18s var(--ease); }
+.mod-card:hover .mod-card__arrow { opacity: 1; color: var(--sky-blue); transform: translate(2px, -2px); }
+/* Destacada = azul brillante */
+.mod-card.is-primary { background: var(--sky-blue); border-color: transparent; color: #fff; }
+.mod-card.is-primary .mod-card__icon { background: rgba(255,255,255,0.18); color: #fff; }
+.mod-card.is-primary .mod-card__title { color: #fff; }
+.mod-card.is-primary .mod-card__sub { color: rgba(255,255,255,0.85); }
+.mod-card.is-primary .mod-card__arrow { color: #fff; opacity: 1; }
+.mod-card.is-primary:hover { background: var(--sky-blue-press); border-color: transparent; }
 
-/* Lower 2-col: pipeline + AI */
-.lower {
-  display: grid; grid-template-columns: 1.4fr 1fr;
-  gap: 24px; margin-bottom: 32px;
-}
-@media (max-width: 980px) { .lower { grid-template-columns: 1fr; } }
-.panel {
-  background: var(--bone);
-  border: 1px solid transparent;
-  border-radius: var(--r-lg);
-  overflow: hidden;
-}
-.panel__head {
-  padding: 18px 20px;
-  border-bottom: 1px solid transparent;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.panel__head h3 {
-  font-family: var(--font-display);
-  font-size: 16px; font-weight: 600;
-  letter-spacing: -0.015em;
-}
-.panel__head a { font-size: 12px; color: var(--mute); }
-.panel__head a:hover { color: var(--forest); }
-
-.activity-row {
-  display: grid; grid-template-columns: 32px 1fr auto;
-  gap: 14px; padding: 14px 20px;
-  border-bottom: 1px solid transparent;
-  align-items: center;
-}
-.activity-row:last-child { border-bottom: none; }
-.activity-row__icon {
-  width: 32px; height: 32px; border-radius: 50%;
-  background: var(--paper-2);
-  display: flex; align-items: center; justify-content: center;
-  color: var(--ink-2);
-}
-.activity-row__icon.is-forest { background: var(--forest-soft); color: var(--forest); }
-.activity-row__icon.is-warn { background: var(--warn-soft); color: var(--warn); }
-.activity-row__icon.is-info { background: var(--info-soft); color: var(--info); }
-.activity-row__title {
-  font-size: 14px; font-weight: 500;
-  color: var(--ink); letter-spacing: -0.005em;
-  margin-bottom: 2px;
-}
-.activity-row__meta {
-  font-size: 12px; color: var(--mute);
-  font-variant-numeric: tabular-nums;
-}
-.activity-row__time {
-  font-family: var(--font-mono);
-  font-size: 11px; color: var(--mute-2);
-  letter-spacing: 0.04em; text-align: right;
-}
-
-.pipeline { padding: 18px 20px; display: grid; grid-template-columns: 1fr; gap: 14px; }
-.pipe-row { display: flex; align-items: center; gap: 12px; }
-.pipe-row__label { width: 110px; flex-shrink: 0; font-size: 13px; color: var(--ink-2); font-weight: 500; letter-spacing: -0.005em; }
-.pipe-row__bar { flex: 1; height: 8px; background: var(--paper-2); border-radius: var(--r-pill); overflow: hidden; }
-.pipe-row__fill { height: 100%; border-radius: var(--r-pill); background: var(--ink); transition: width .8s var(--ease); }
-.pipe-row__count { width: 64px; text-align: right; font-family: var(--font-mono); font-size: 13px; font-weight: 500; color: var(--ink); letter-spacing: -0.005em; font-variant-numeric: tabular-nums; }
-.pipe-row__count .small { color: var(--mute); font-size: 11px; }
-
+/* ── CTA azul (Shaark) ── */
 .ai-card {
-  background: var(--ink); color: var(--paper);
-  border-radius: var(--r-lg);
-  padding: 26px 24px 22px;
-  position: relative; overflow: hidden;
+  background: var(--sky-blue); color: #fff; border-radius: 16px;
+  padding: 30px 28px; margin-top: 34px; position: relative; overflow: hidden;
+  background-image: radial-gradient(120% 160% at 100% 0%, rgba(255,255,255,0.16), transparent 55%);
 }
-.ai-card::after {
-  content: ''; position: absolute; right: -60px; bottom: -60px;
-  width: 200px; height: 200px; border-radius: 50%;
-  background: radial-gradient(circle, var(--forest-2) 0%, transparent 70%);
-  opacity: .35;
-}
-.ai-card__eyebrow {
-  font-family: var(--font-mono); font-size: 10px;
-  letter-spacing: 0.18em; text-transform: uppercase;
-  color: rgba(247,245,238,.6); margin-bottom: 14px;
-  position: relative; z-index: 1;
-}
-.ai-card h3 {
-  font-family: var(--font-display);
-  font-size: 24px; font-weight: 600;
-  letter-spacing: -0.025em; line-height: 1.15;
-  color: var(--paper); margin-bottom: 10px;
-  position: relative; z-index: 1;
-}
-.ai-card p {
-  font-size: 14px; color: rgba(247,245,238,.7);
-  line-height: 1.55; margin-bottom: 18px;
-  position: relative; z-index: 1;
-}
+.ai-card h3 { font-family: var(--font-display); font-size: 26px; font-weight: 700; letter-spacing: -0.02em; color: #fff; margin-bottom: 8px; line-height: 1.1; }
+.ai-card p { font-size: 15px; color: rgba(255,255,255,0.9); line-height: 1.5; margin-bottom: 18px; max-width: 60ch; }
 .ai-card__btn {
-  background: var(--paper); color: var(--ink);
-  border: none; height: 38px; padding: 0 16px;
-  border-radius: var(--r-pill);
-  font-size: 13px; font-weight: 600;
-  cursor: pointer; font-family: inherit;
-  display: inline-flex; align-items: center; gap: 8px;
-  position: relative; z-index: 1;
-  transition: transform var(--dur) var(--ease);
+  background: #fff; color: var(--sky-blue); border: none; height: 46px; padding: 0 22px;
+  border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit;
+  display: inline-flex; align-items: center; gap: 8px; transition: transform 0.18s var(--ease);
 }
 .ai-card__btn:hover { transform: translateX(2px); }
 </style>
@@ -280,39 +104,37 @@
 
 <div class="dash-scroll">
 
-  <!-- Hero -->
-  <div class="dash-hero">
-    <div>
-      <h1><span id="dash-greet">Buenos días</span>, <em id="dash-firstname">—</em>.</h1>
-    </div>
-    <div class="dash-hero__date">
-      <span class="label">Fecha</span>
-      <span id="dash-date">— —</span>
-    </div>
-  </div>
-
-  <!-- KPIs -->
-  <div class="kpi-grid">
-    <div class="kpi">
-      <div class="kpi__label">Inmuebles activos</div>
-      <div class="kpi__value" id="kpi-props">—</div>
-      <div class="kpi__delta">
-      <div class="kpi__delta">en tu inventario</div>
+  <!-- HERO navy -->
+  <section class="sky-hero">
+    <div class="sky-hero__top">
+      <div>
+        <div class="sky-hero__eyebrow">El co-piloto del agente inmobiliario</div>
+        <h1 class="sky-hero__title"><span id="dash-greet">Buenos días</span>, <em id="dash-firstname">—</em></h1>
+      </div>
+      <div class="sky-hero__date">
+        <span class="label">Hoy</span>
+        <span id="dash-date">— —</span>
       </div>
     </div>
-    <div class="kpi">
-      <div class="kpi__label">Contactos</div>
-      <div class="kpi__value" id="kpi-contacts">—</div>
-      <div class="kpi__delta">total registrados</div>
+    <div class="sky-hero__kpis">
+      <div class="sky-kpi"><div class="sky-kpi__value" id="kpi-props">—</div><div class="sky-kpi__label">Inmuebles activos</div></div>
+      <div class="sky-kpi"><div class="sky-kpi__value" id="kpi-contacts">—</div><div class="sky-kpi__label">Contactos</div></div>
+      <div class="sky-kpi"><div class="sky-kpi__value" id="kpi-horas">—</div><div class="sky-kpi__label">Horas ahorradas</div></div>
     </div>
-    <div class="kpi">
-      <div class="kpi__label">Horas ahorradas</div>
-      <div class="kpi__value" id="kpi-horas">—</div>
-      <div class="kpi__delta">con Broquer</div>
-    </div>
-  </div>
+  </section>
 
-  <!-- Modules -->
+  <!-- HERO CARD azul -->
+  <a class="sky-herocard" href="avm.html">
+    <div class="sky-herocard__eyebrow">Estimación de valor</div>
+    <h2>Estima el valor de cualquier propiedad en segundos</h2>
+    <span class="sky-herocard__cta">Abrir estimación
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+    </span>
+  </a>
+
+  <!-- Módulos -->
+  <div class="sky-sec-head"><h2>Tus herramientas</h2></div>
+
   <div class="mods-grid">
     <a class="mod-card is-primary" href="propiedades.html">
       <div class="mod-card__icon">
@@ -392,9 +214,9 @@
     </a>
   </div>
 
-  <!-- AI card -->
-  <div class="ai-card" style="margin-bottom: 32px;">
-    <h3>Tu asistente de bienes raíces.</h3>
+  <!-- CTA Shaark -->
+  <div class="ai-card">
+    <h3>Tu asistente inmobiliario, listo cuando lo necesites.</h3>
     <p>Pregúntame sobre valuaciones, ISR, contratos o cualquier duda del mercado. Estoy aquí para ayudarte a cerrar más rápido.</p>
     <button class="ai-card__btn" type="button" onclick="window.toggleShaarkPopup ? window.toggleShaarkPopup(true) : document.getElementById('bk-shaark-fab')?.click()">
       Abrir Broquer
