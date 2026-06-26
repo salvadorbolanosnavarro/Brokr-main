@@ -18,48 +18,48 @@
    1:1 para que el markup existente siga funcionando.
    ════════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Anton&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
   /* ── Surfaces ───────────────────────────── */
-  --paper:   #F1F2F4;     /* page background (dentro del app) */
-  --paper-2: #ECECEF;     /* inset / hover sutil */
+  --paper:   #F7F5EE;     /* warm ivory background */
+  --paper-2: #F1EEE3;     /* subtle inset surface */
   --bone:    #FFFFFF;     /* card surface */
-  --shell:   #F4F5F7;     /* mid surface */
+  --shell:   #FBFAF5;     /* mid surface */
 
   /* ── Ink ─────────────────────────────────── */
-  --ink:     #16161A;
-  --ink-2:   #2A2A30;
-  --ink-3:   #4A4A52;
-  --mute:    #6F6F76;
-  --mute-2:  #9A9AA0;
-  --mute-3:  #C9C9CE;
+  --ink:     #0A0A0A;
+  --ink-2:   #1F1F1B;
+  --ink-3:   #3A3A33;
+  --mute:    #6B6B66;
+  --mute-2:  #9A9A92;
+  --mute-3:  #C5C2B5;
 
   /* ── Hairlines ──────────────────────────── */
-  --line:     #E8E8EB;
-  --line-2:   #DEDEE2;
-  --line-3:   #CBCBD0;
+  --line:     rgba(10,10,10,0.07);
+  --line-2:   rgba(10,10,10,0.12);
+  --line-3:   rgba(10,10,10,0.20);
 
   /* ── Accents ────────────────────────────── */
-  --forest:   #3538D6;   /* azul royal — acento único */
-  --forest-2: #2A2DB0;   /* hover / pressed */
-  --forest-soft: #ECEDFB;
+  --forest:   #2F4A3A;
+  --forest-2: #3D5C49;
+  --forest-soft: #E5EBE3;
 
   --warn:     #B5601C;
-  --warn-soft:#F4E7D6;
-  --danger:   #D23030;
-  --danger-soft:#FBE0E0;
-  --success:  #1F8A4C;
-  --success-soft:#DCEFE2;
-  --info:     #2F44D6;
-  --info-soft:#E4E7FB;
+  --warn-soft:#F6E8D6;
+  --danger:   #B84B3F;
+  --danger-soft:#F5DCD7;
+  --success:  #1F6B4A;
+  --success-soft:#DDEBE0;
+  --info:     #2D5A88;
+  --info-soft:#DCE6F0;
 
   /* ── Geometry (radios) ──────────────────── */
-  --r-xs: 8px;
-  --r-sm: 10px;
-  --r:    14px;
-  --r-lg: 18px;
-  --r-xl: 20px;
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r:    12px;
+  --r-lg: 16px;
+  --r-xl: 22px;
   --r-pill: 999px;
 
   /* ── Espaciado (escala base 4px) ────────── */
@@ -76,12 +76,12 @@
   --sp-16: 64px;
 
   /* ── Sombras (tinte cálido coherente) ───── */
-  --shadow-xs: none;
-  --shadow-sm: none;
-  --shadow:    none;
-  --shadow-md: none;
-  --shadow-lg: 0 8px 28px rgba(22,22,26,.12);   /* solo flotantes: menú / popover */
-  --shadow-xl: 0 16px 44px rgba(22,22,26,.16);  /* solo modal */
+  --shadow-xs: 0 1px 2px rgba(31,28,22,.04);
+  --shadow-sm: 0 1px 3px rgba(31,28,22,.06), 0 1px 2px rgba(31,28,22,.04);
+  --shadow:    0 4px 12px rgba(31,28,22,.08), 0 1px 3px rgba(31,28,22,.05);
+  --shadow-md: 0 8px 24px rgba(31,28,22,.10), 0 2px 6px rgba(31,28,22,.06);
+  --shadow-lg: 0 14px 36px rgba(31,28,22,.14), 0 4px 10px rgba(31,28,22,.07);
+  --shadow-xl: 0 24px 64px rgba(31,28,22,.18), 0 8px 16px rgba(31,28,22,.08);
 
   /* ── Alturas de control ─────────────────── */
   --h-sm:  36px;
@@ -90,9 +90,9 @@
   --touch-min: 44px;
 
   /* ── Anillo de foco ─────────────────────── */
-  --focus:        0 0 0 3px rgba(53,56,214,0.16);
-  --focus-forest: 0 0 0 3px rgba(53,56,214,0.22);
-  --focus-danger: 0 0 0 3px rgba(210,48,48,0.18);
+  --focus:        0 0 0 3px rgba(10,10,10,0.10);
+  --focus-forest: 0 0 0 3px rgba(47,74,58,0.18);
+  --focus-danger: 0 0 0 3px rgba(184,75,63,0.18);
 
   /* ── Z-index (alineado con app-shell.js) ── */
   --z-base:    1;
@@ -105,10 +105,9 @@
   --z-toast:   320;
 
   /* ── Tipografía ─────────────────────────── */
-  --font-sans: 'Hanken Grotesk', -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
-  --font-display: 'Hanken Grotesk', -apple-system, system-ui, sans-serif;
-  --font-anton: 'Anton', 'Hanken Grotesk', sans-serif;
-  --font-mono: 'Hanken Grotesk', ui-monospace, system-ui, sans-serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  --font-display: 'Inter Tight', 'Inter', -apple-system, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
   --fs-display: 44px;
   --fs-h1: 32px;
@@ -162,7 +161,7 @@
   --amber: #B5601C; --amber2:#C77D3F;
   --rose:  #B84B3F; --rose2: #C8665B;
   --violet:#5B4D8A; --violet2:#7D6FAF;
-  --emerald:#3538D6; --emerald2:#2A2DB0;
+  --emerald:#2F4A3A; --emerald2:#3D5C49;
   --sky:   #2D5A88; --sky2:   #3F71A0;
   --fs-base: var(--fs-body);
   --fs-label: var(--fs-xs);
@@ -192,13 +191,13 @@ html, body {
 h1,h2,h3,h4,h5 {
   font-family: var(--font-display);
   letter-spacing: -0.025em;
-  font-weight: 800;
+  font-weight: 600;
   line-height: var(--lh-tight);
   color: var(--ink);
 }
 h1 { font-size: var(--fs-h1); }
 h2 { font-size: var(--fs-h2); }
-h3 { font-size: var(--fs-h3); letter-spacing: -0.018em; font-weight: 700; }
+h3 { font-size: var(--fs-h3); letter-spacing: -0.018em; }
 
 p { line-height: var(--lh); color: var(--ink-2); }
 
@@ -379,7 +378,7 @@ input, select, textarea, button {
 }
 .bk-input:focus,
 .bk-textarea:focus,
-.bk-select:focus { border-color: var(--forest); box-shadow: var(--focus); }
+.bk-select:focus { border-color: var(--ink); box-shadow: var(--focus); }
 .bk-input::placeholder,
 .bk-textarea::placeholder { color: var(--mute-2); }
 .bk-input:disabled,
@@ -492,14 +491,14 @@ input, select, textarea, button {
   letter-spacing: 0.16em; text-transform: uppercase;
   color: var(--mute); margin-bottom: var(--sp-2);
 }
-.bk-page-header__title { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 800; letter-spacing: -0.03em; line-height: var(--lh-tight); }
+.bk-page-header__title { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 600; letter-spacing: -0.03em; line-height: var(--lh-tight); }
 .bk-page-header__sub { font-size: var(--fs-sm); color: var(--mute); margin-top: var(--sp-2); line-height: var(--lh); max-width: 60ch; }
 
 .bk-section-header {
   display: flex; align-items: baseline; justify-content: space-between;
   gap: var(--sp-4); margin-bottom: var(--sp-4);
 }
-.bk-section-header h2 { font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 800; letter-spacing: -0.025em; }
+.bk-section-header h2 { font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 600; letter-spacing: -0.025em; }
 .bk-section-header a { font-size: var(--fs-sm); color: var(--ink-2); font-weight: 500; display: inline-flex; align-items: center; gap: var(--sp-1); }
 .bk-section-header a:hover { color: var(--forest); }
 
@@ -694,7 +693,7 @@ input, select, textarea, button {
 .bk-prop-card__media { aspect-ratio: 4 / 3; background: var(--paper-2); position: relative; overflow: hidden; }
 .bk-prop-card__media img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .bk-prop-card__body { padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-1); }
-.bk-prop-card__price { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 800; letter-spacing: -0.02em; color: var(--ink); }
+.bk-prop-card__price { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 600; letter-spacing: -0.02em; color: var(--ink); }
 .bk-prop-card__title { font-size: var(--fs-sm); color: var(--ink-2); }
 .bk-prop-card__meta  { font-size: var(--fs-xs); color: var(--mute); display: flex; gap: var(--sp-3); margin-top: var(--sp-1); }
 
@@ -762,10 +761,3 @@ input, select, textarea, button {
   letter-spacing: 0.08em; text-transform: uppercase; text-align: center;
 }
 .bk-shark-loader--col { flex-direction: column; height: auto; }
-
-/* ════════════════════════════════════════════════════════════
-   ANTON — display condensado puntual
-   Solo para títulos grandes y etiquetas de la tarjeta oscura
-   (no usar como display general; eso es Hanken Grotesk 800).
-   ════════════════════════════════════════════════════════════ */
-.bk-anton { font-family: var(--font-anton); font-weight: 400; letter-spacing: 0.01em; }
