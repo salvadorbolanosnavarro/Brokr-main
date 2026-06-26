@@ -20,7 +20,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>Broquer — Acceso</title>
 <link rel="manifest" href="manifest.json"/>
-<meta name="theme-color" content="#F7F5EE"/>
+<meta name="theme-color" content="#05203C"/>
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
 html, body { background: var(--paper); min-height: 100%; }
@@ -39,11 +39,8 @@ body { overflow-y: auto; }
 /* ── LEFT: editorial hero (desktop only) ─────── */
 .bk-hero {
   display: none;
-  background:
-    linear-gradient(rgba(10,10,10,.72), rgba(10,10,10,.72)),
-    url('auth-hero.jpg') center center / cover no-repeat,
-    var(--ink);
-  color: var(--paper);
+  background: var(--sky-navy);
+  color: #FFFFFF;
   padding: 56px 56px 40px;
   position: relative;
   overflow: hidden;
@@ -53,8 +50,8 @@ body { overflow-y: auto; }
   content: '';
   position: absolute; inset: 0;
   background:
-    radial-gradient(circle at 80% 90%, rgba(247,245,238,.06), transparent 50%),
-    radial-gradient(circle at 0% 0%, rgba(247,245,238,.04), transparent 50%);
+    radial-gradient(circle at 85% 8%, rgba(0,98,227,.30), transparent 50%),
+    radial-gradient(circle at 0% 100%, rgba(255,255,255,.05), transparent 45%);
   pointer-events: none;
 }
 .bk-hero__top { display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; }
@@ -70,7 +67,7 @@ body { overflow-y: auto; }
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(247,245,238,.55);
+  color: rgba(255,255,255,.55);
 }
 .bk-hero__body { position: relative; z-index: 1; max-width: 520px; }
 .bk-hero__eyebrow {
@@ -78,7 +75,7 @@ body { overflow-y: auto; }
   font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(247,245,238,.55);
+  color: rgba(255,255,255,.55);
   margin-bottom: 20px;
 }
 .bk-hero__hed {
@@ -90,18 +87,18 @@ body { overflow-y: auto; }
   color: var(--paper);
   margin-bottom: 20px;
 }
-.bk-hero__hed em { font-style: normal; color: rgba(247,245,238,.55); }
+.bk-hero__hed em { font-style: normal; color: #5BA4FF; }
 .bk-hero__sub {
   font-size: 16px;
   line-height: 1.5;
-  color: rgba(247,245,238,.65);
+  color: rgba(255,255,255,.65);
   max-width: 440px;
 }
 .bk-hero__foot {
   position: relative; z-index: 1;
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
   padding-top: 32px;
-  border-top: 1px solid rgba(247,245,238,.10);
+  border-top: 1px solid rgba(255,255,255,.10);
 }
 .bk-hero__stat .v {
   font-family: var(--font-display);
@@ -112,7 +109,7 @@ body { overflow-y: auto; }
 .bk-hero__stat .l {
   font-family: var(--font-mono);
   font-size: 10px; letter-spacing: 0.14em;
-  text-transform: uppercase; color: rgba(247,245,238,.50);
+  text-transform: uppercase; color: rgba(255,255,255,.50);
   margin-top: 4px;
 }
 
@@ -146,8 +143,8 @@ body { overflow-y: auto; }
 
 .bk-form__hed {
   font-family: var(--font-display);
-  font-size: 38px; font-weight: 600;
-  letter-spacing: -0.03em;
+  font-size: 38px; font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--ink);
   margin-bottom: 8px;
   line-height: 1.05;
@@ -178,7 +175,7 @@ body { overflow-y: auto; }
   transition: all var(--dur) var(--ease);
   letter-spacing: -0.005em;
 }
-.bk-seg__btn.is-active { background: var(--bone); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(10,10,10,.04); }
+.bk-seg__btn.is-active { background: var(--bone); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(22,22,22,.06); }
 
 /* Field */
 .bk-field { margin-bottom: 16px; }
@@ -194,16 +191,16 @@ body { overflow-y: auto; }
   width: 100%;
   height: 52px;
   border: none;
-  background: var(--ink);
-  color: var(--paper);
-  border-radius: var(--r-pill);
-  font-size: 15px; font-weight: 600;
+  background: var(--sky-blue);
+  color: #FFFFFF;
+  border-radius: 12px;
+  font-size: 15px; font-weight: 700;
   letter-spacing: -0.005em;
   cursor: pointer;
   transition: background var(--dur) var(--ease), transform var(--dur) var(--ease);
   margin-top: 6px;
 }
-.bk-submit:hover { background: var(--ink-2); }
+.bk-submit:hover { background: var(--sky-blue-press); }
 .bk-submit:active { transform: scale(.985); }
 .bk-submit:disabled { opacity: .5; cursor: not-allowed; }
 
@@ -226,7 +223,7 @@ body { overflow-y: auto; }
   gap: 10px;
   background: var(--bone); color: var(--ink);
   border: 1px solid var(--line-2);
-  border-radius: var(--r-pill);
+  border-radius: 12px;
   font-size: 14px; font-weight: 500;
   cursor: pointer;
   transition: all var(--dur) var(--ease);
@@ -252,8 +249,8 @@ body { overflow-y: auto; }
   margin-bottom: 16px; display: none;
   border: 1px solid transparent;
 }
-.bk-msg.is-err { display: block; background: var(--danger-soft); color: var(--danger); border-color: rgba(184,75,63,.20); }
-.bk-msg.is-ok  { display: block; background: var(--success-soft); color: var(--success); border-color: rgba(31,107,74,.20); }
+.bk-msg.is-err { display: block; background: var(--danger-soft); color: var(--danger); border-color: rgba(231,8,102,.20); }
+.bk-msg.is-ok  { display: block; background: var(--success-soft); color: var(--success); border-color: rgba(0,170,108,.25); }
 
 .bk-legal-check {
   display: flex; align-items: flex-start; gap: 10px;
@@ -263,7 +260,7 @@ body { overflow-y: auto; }
 }
 .bk-legal-check input[type=checkbox] {
   width: 16px; height: 16px; margin-top: 2px;
-  accent-color: var(--ink); cursor: pointer; flex-shrink: 0;
+  accent-color: var(--sky-blue); cursor: pointer; flex-shrink: 0;
 }
 .bk-legal-check a {
   color: var(--ink); font-weight: 600;
@@ -294,7 +291,7 @@ body { overflow-y: auto; }
 }
 
 /* Spinner */
-.bk-spin { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(247,245,238,.3); border-top-color: var(--paper); border-radius: 50%; animation: bk-spin .7s linear infinite; }
+.bk-spin { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.3); border-top-color: var(--paper); border-radius: 50%; animation: bk-spin .7s linear infinite; }
 @keyframes bk-spin { to { transform: rotate(360deg); } }
 
 /* Splash */

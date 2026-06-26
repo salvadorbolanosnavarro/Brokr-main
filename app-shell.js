@@ -310,7 +310,7 @@
   width: 260px; flex-shrink: 0;
   background: var(--sky-navy);
   border-right: none;
-  padding: 22px 14px;
+  padding: 14px 14px;
   display: flex; flex-direction: column;
   overflow-y: auto;
 }
@@ -334,7 +334,7 @@
   display: flex !important; align-items: center; gap: 10px;
   padding: 10px 12px;
   border-radius: var(--r);
-  font-size: 14px; color: rgba(255,255,255,0.78) !important;
+  font-size: 14px; color: #FFFFFF !important;
   cursor: pointer; transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
   font-weight: 500; letter-spacing: -0.005em;
   text-decoration: none !important;
@@ -343,7 +343,7 @@
 }
 .bk-sidebar .bk-sb-link,
 .bk-sidebar a.bk-sb-link {
-  color: rgba(255,255,255,0.78) !important;
+  color: #FFFFFF !important;
   display: flex !important;
   visibility: visible !important;
   opacity: 1 !important;
@@ -355,8 +355,7 @@
 .bk-sb-link.is-active,
 .bk-sidebar .bk-sb-link.is-active,
 .bk-sidebar a.bk-sb-link.is-active { background: var(--sky-blue) !important; color: #FFFFFF !important; }
-.bk-sb-link svg,
-.bk-sidebar .bk-sb-link svg { flex-shrink: 0; opacity: .82; }
+.bk-sb-link svg, .bk-sidebar .bk-sb-link svg { flex-shrink: 0; opacity: 1; color: #FFFFFF; }
 .bk-sb-foot {
   margin-top: auto;
   display: flex; align-items: center; gap: 10px;
@@ -941,11 +940,6 @@
     shell.className = 'bk-shell-root';
     shell.innerHTML = `
       <aside class="bk-sidebar" id="bk-sidebar">
-        <div class="bk-sidebar__brand">
-          <a href="index.html" aria-label="Ir al inicio Broquer">
-            <img src="logo-broquer.png" alt="Broquer"/>
-          </a>
-        </div>
         ${main.map(m => buildSidebarLink(m, activeKey)).join('')}
         <div class="bk-sb-foot">
           <div class="bk-sb-foot__avatar" id="bk-sb-avatar" onclick="openProfileDrawer()" style="cursor:pointer" title="Mi perfil">${ini}</div>
@@ -1000,7 +994,7 @@
             _reanchorShellCSS();
             // Reforzar inline como último recurso
             document.querySelectorAll('.bk-sb-link:not(.is-active)').forEach(el => {
-              el.style.setProperty('color', 'rgba(255,255,255,0.78)', 'important');
+              el.style.setProperty('color', '#FFFFFF', 'important');
             });
           }
         }
