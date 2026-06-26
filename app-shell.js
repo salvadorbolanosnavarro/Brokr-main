@@ -305,10 +305,10 @@
 .bk-shell-root { display: flex; height: 100vh; min-height: 100vh; background: var(--paper); }
 .bk-shell-root.bk-narrow .bk-sidebar { display: none; }
 
-/* Sidebar (drawer) — fondo negro para distinguirlo del panel principal */
+/* Sidebar (drawer) — fondo navy (estructura, como el header del sitio) */
 .bk-sidebar {
   width: 260px; flex-shrink: 0;
-  background: #0A0A0A;
+  background: var(--sky-navy);
   border-right: none;
   padding: 22px 14px;
   display: flex; flex-direction: column;
@@ -327,14 +327,14 @@
 .bk-sb-section {
   font-family: var(--font-mono);
   font-size: 9px; letter-spacing: 0.18em;
-  text-transform: uppercase; color: rgba(247,245,238,0.4);
+  text-transform: uppercase; color: rgba(255,255,255,0.4);
   padding: 16px 10px 8px; font-weight: 500;
 }
 .bk-sb-link {
   display: flex !important; align-items: center; gap: 10px;
   padding: 10px 12px;
   border-radius: var(--r);
-  font-size: 14px; color: rgba(247,245,238,0.78) !important;
+  font-size: 14px; color: rgba(255,255,255,0.78) !important;
   cursor: pointer; transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
   font-weight: 500; letter-spacing: -0.005em;
   text-decoration: none !important;
@@ -343,7 +343,7 @@
 }
 .bk-sidebar .bk-sb-link,
 .bk-sidebar a.bk-sb-link {
-  color: rgba(247,245,238,0.78) !important;
+  color: rgba(255,255,255,0.78) !important;
   display: flex !important;
   visibility: visible !important;
   opacity: 1 !important;
@@ -351,17 +351,17 @@
 }
 .bk-sb-link:hover,
 .bk-sidebar .bk-sb-link:hover,
-.bk-sidebar a.bk-sb-link:hover { background: rgba(247,245,238,0.06) !important; color: var(--paper) !important; }
+.bk-sidebar a.bk-sb-link:hover { background: rgba(255,255,255,0.06) !important; color: var(--paper) !important; }
 .bk-sb-link.is-active,
 .bk-sidebar .bk-sb-link.is-active,
-.bk-sidebar a.bk-sb-link.is-active { background: var(--paper) !important; color: var(--ink) !important; }
+.bk-sidebar a.bk-sb-link.is-active { background: var(--sky-blue) !important; color: #FFFFFF !important; }
 .bk-sb-link svg,
 .bk-sidebar .bk-sb-link svg { flex-shrink: 0; opacity: .82; }
 .bk-sb-foot {
   margin-top: auto;
   display: flex; align-items: center; gap: 10px;
   padding: 12px;
-  border-top: 1px solid rgba(247,245,238,0.08);
+  border-top: 1px solid rgba(255,255,255,0.08);
 }
 .bk-sb-foot__avatar {
   width: 36px; height: 36px; border-radius: 50%;
@@ -370,10 +370,10 @@
   font-weight: 600; font-size: 13px; letter-spacing: -0.02em;
 }
 .bk-sb-foot__name { font-size: 13px; font-weight: 500; line-height: 1.2; flex: 1; min-width: 0; color: var(--paper) !important; }
-.bk-sb-foot__name .role { color: rgba(247,245,238,0.5) !important; font-size: 11px; font-weight: 400; }
+.bk-sb-foot__name .role { color: rgba(255,255,255,0.5) !important; font-size: 11px; font-weight: 400; }
 .bk-sb-foot__logout {
   background: transparent; border: none; cursor: pointer;
-  color: rgba(247,245,238,0.5) !important; padding: 6px;
+  color: rgba(255,255,255,0.5) !important; padding: 6px;
 }
 .bk-sb-foot__logout:hover { color: var(--paper) !important; }
 
@@ -549,11 +549,11 @@
   border: 1px solid var(--line);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 14px 32px rgba(31,28,22,.18), 0 4px 10px rgba(31,28,22,.08);
+  box-shadow: 0 14px 32px rgba(22,22,22,.18), 0 4px 10px rgba(22,22,22,.08);
   transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
   padding: 0; overflow: hidden;
 }
-.bk-shaark-fab:hover { transform: translateY(-2px); box-shadow: 0 18px 36px rgba(31,28,22,.22), 0 6px 12px rgba(31,28,22,.12); }
+.bk-shaark-fab:hover { transform: translateY(-2px); box-shadow: 0 18px 36px rgba(22,22,22,.22), 0 6px 12px rgba(22,22,22,.12); }
 .bk-shaark-fab img { width: 70%; height: 70%; object-fit: contain; }
 .bk-shaark-fab__pulse {
   position: absolute; inset: -4px; border-radius: 50%;
@@ -564,7 +564,7 @@
 @keyframes bkPulse { 0% { transform: scale(.95); opacity: .35; } 100% { transform: scale(1.25); opacity: 0; } }
 .bk-wake-dot {
   position: absolute; top: 6px; right: 6px;
-  width: 10px; height: 10px; background: #4ade80;
+  width: 10px; height: 10px; background: var(--success);
   border-radius: 50%; border: 2px solid var(--bone);
   display: none;
 }
@@ -580,7 +580,7 @@
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
-  box-shadow: 0 24px 64px rgba(31,28,22,.18), 0 8px 16px rgba(31,28,22,.08);
+  box-shadow: 0 24px 64px rgba(22,22,22,.18), 0 8px 16px rgba(22,22,22,.08);
   flex-direction: column; overflow: hidden;
   animation: bkShkIn .26s cubic-bezier(.16,1,.3,1);
 }
@@ -628,14 +628,14 @@
 .bk-shk-bubble.toast { background: transparent; border: none; color: var(--mute); font-size: 12px; padding: 4px 10px; align-self: center; }
 /* Pasos del agente — "lo que está haciendo" en vivo */
 .bk-shk-bubble.step { background: transparent; border: none; color: var(--mute); font-size: 12px; padding: 3px 8px 3px 22px; align-self: flex-start; position: relative; opacity: 0.95; }
-.bk-shk-bubble.step::before { content: ""; position: absolute; left: 6px; top: 50%; width: 9px; height: 9px; margin-top: -4.5px; border: 1.6px solid var(--ink-2, #2F4A3A); border-right-color: transparent; border-radius: 50%; animation: bkSpin 0.7s linear infinite; }
+.bk-shk-bubble.step::before { content: ""; position: absolute; left: 6px; top: 50%; width: 9px; height: 9px; margin-top: -4.5px; border: 1.6px solid var(--ink-2, #2E3338); border-right-color: transparent; border-radius: 50%; animation: bkSpin 0.7s linear infinite; }
 .bk-shk-bubble.step.done { opacity: 0.6; }
-.bk-shk-bubble.step.done::before { content: ""; border: none; width: 10px; height: 10px; margin-top: -5px; animation: none; background: no-repeat center/contain url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232F4A3A' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>"); }
+.bk-shk-bubble.step.done::before { content: ""; border: none; width: 10px; height: 10px; margin-top: -5px; animation: none; background: no-repeat center/contain url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300AA6C' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>"); }
 @keyframes bkSpin { to { transform: rotate(360deg); } }
 /* Animación "pensando" (3 puntos) */
 .bk-shk-bubble.thinking { padding: 12px 14px; }
 .bk-dots { display: inline-flex; gap: 4px; align-items: center; }
-.bk-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--mute, #999); display: inline-block; animation: bkBlink 1.2s ease-in-out infinite; }
+.bk-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--mute, #6B7685); display: inline-block; animation: bkBlink 1.2s ease-in-out infinite; }
 .bk-dots i:nth-child(2) { animation-delay: 0.2s; }
 .bk-dots i:nth-child(3) { animation-delay: 0.4s; }
 @keyframes bkBlink { 0%, 60%, 100% { opacity: 0.25; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-2px); } }
@@ -659,7 +659,7 @@
 .bk-shk-mic { background: var(--paper-2); color: var(--ink-2); border: 1px solid var(--line); }
 .bk-shk-mic:hover { background: var(--ink); color: var(--paper); }
 .bk-shk-mic.listening { background: var(--danger); color: white; border-color: var(--danger); animation: bkMicPulse 1.2s ease-in-out infinite; }
-@keyframes bkMicPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(184,75,63,.5); } 50% { box-shadow: 0 0 0 8px rgba(184,75,63,0); } }
+@keyframes bkMicPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(231,8,102,.5); } 50% { box-shadow: 0 0 0 8px rgba(231,8,102,0); } }
 .bk-shk-send { background: var(--ink); color: var(--paper); }
 .bk-shk-send:hover { opacity: .9; }
 @media (hover: hover) and (pointer: fine) { .bk-shk-mic { display: none; } }
@@ -667,7 +667,7 @@
 /* ── Profile Drawer ─────────────────────────────────────────── */
 .bk-profile-overlay {
   position: fixed; inset: 0; z-index: 200;
-  background: rgba(10,10,10,0.28);
+  background: rgba(0,0,0,0.6);
   opacity: 0; visibility: hidden; pointer-events: none;
   transition: opacity .18s ease, visibility .18s ease;
 }
@@ -718,7 +718,7 @@
   padding: 3px 8px; border-radius: var(--r-pill); margin-top: 4px;
   background: var(--forest-soft); color: var(--forest);
 }
-.bk-pd-role-badge.admin { background: rgba(184,75,63,0.1); color: var(--danger); }
+.bk-pd-role-badge.admin { background: rgba(231,8,102,0.1); color: var(--danger); }
 .bk-pd-section-label {
   font-family: var(--font-mono); font-size: 9px; font-weight: 600;
   text-transform: uppercase; letter-spacing: 0.14em; color: var(--mute-2);
@@ -747,7 +747,7 @@
 .bk-pd-btn:hover { opacity: .88; }
 .bk-pd-btn-primary { background: var(--ink); color: var(--paper); }
 .bk-pd-btn-outline { background: none; border: 1px solid var(--line-2); color: var(--ink-2); margin-top: 8px; }
-.bk-pd-btn-danger  { background: none; border: 1px solid rgba(184,75,63,.3); color: var(--danger); margin-top: 8px; }
+.bk-pd-btn-danger  { background: none; border: 1px solid rgba(231,8,102,.3); color: var(--danger); margin-top: 8px; }
 .bk-pd-status {
   display: flex; align-items: center; gap: 6px;
   font-size: 12px; color: var(--mute); margin-top: 8px;
@@ -774,7 +774,7 @@
   font-family: inherit; font-size: 13px; font-weight: 600; color: var(--ink);
   text-align: left;
 }
-.bk-pd-menu-trigger:hover { color: var(--navy, #1a2e6e); }
+.bk-pd-menu-trigger:hover { color: var(--sky-blue); }
 .bk-pd-menu-trigger-left { display: flex; align-items: center; gap: 10px; }
 .bk-pd-menu-trigger-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--mute-3); flex-shrink: 0; }
 .bk-pd-menu-trigger-dot.ok { background: var(--success); }
@@ -989,7 +989,7 @@
         if (!link) return;
         const cs = getComputedStyle(link);
         const c = cs.color;
-        // El color esperado es rgba(247,245,238,0.78) ≈ rgb(247, 245, 238) con alpha
+        // El color esperado es rgba(255,255,255,0.78) ≈ rgb(247, 245, 238) con alpha
         // Si en su lugar es muy oscuro (cualquier cosa cercana a negro), hay un override.
         const m = c.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
         if (m) {
@@ -1000,7 +1000,7 @@
             _reanchorShellCSS();
             // Reforzar inline como último recurso
             document.querySelectorAll('.bk-sb-link:not(.is-active)').forEach(el => {
-              el.style.setProperty('color', 'rgba(247,245,238,0.78)', 'important');
+              el.style.setProperty('color', 'rgba(255,255,255,0.78)', 'important');
             });
           }
         }
@@ -1294,7 +1294,7 @@
       // Respaldo en el chat: enlace por si el navegador bloqueó la ventana.
       _addAssistantBubble(
         'Tu ficha está lista: <a href="' + url + '" target="_blank" rel="noopener" download="' +
-        nombre + '" style="color:var(--ink-2,#2F4A3A);font-weight:600;text-decoration:underline;">abrir el PDF</a>.'
+        nombre + '" style="color:var(--ink-2,#2E3338);font-weight:600;text-decoration:underline;">abrir el PDF</a>.'
       );
       if (!win) {
         // Popup bloqueado: forzar descarga con un <a> temporal.
@@ -1952,7 +1952,7 @@
             <p style="font-size:13px;color:var(--ink-3);margin:0;">Sin notificaciones por ahora</p>
           </div>
         `;
-        panel.style.cssText = "position:fixed;top:64px;right:16px;z-index:300;width:min(340px, calc(100vw - 32px));background:var(--paper);border:1px solid var(--line-2);border-radius:16px;box-shadow:0 12px 40px rgba(31,28,22,.14),0 3px 8px rgba(31,28,22,.08);animation:bkNotifIn .18s var(--ease) both;";
+        panel.style.cssText = "position:fixed;top:64px;right:16px;z-index:300;width:min(340px, calc(100vw - 32px));background:var(--paper);border:1px solid var(--line-2);border-radius:16px;box-shadow:0 12px 40px rgba(22,22,22,.14),0 3px 8px rgba(22,22,22,.08);animation:bkNotifIn .18s var(--ease) both;";
         document.body.appendChild(panel);
 
         if (!document.getElementById('bk-notif-style')) {
@@ -2680,9 +2680,9 @@
       return new Promise((resolve) => {
         // Crear modal
         const overlay = document.createElement('div');
-        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(10,10,10,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
         const modal = document.createElement('div');
-        modal.style.cssText = 'background:var(--bone);border:1px solid var(--line-2);border-radius:16px;padding:28px 24px;max-width:360px;width:100%;box-shadow:0 8px 32px rgba(10,10,10,.18)';
+        modal.style.cssText = 'background:var(--bone);border:1px solid var(--line-2);border-radius:16px;padding:28px 24px;max-width:360px;width:100%;box-shadow:0 8px 32px rgba(22,22,22,.18)';
         modal.innerHTML = `
           <div style="font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px;letter-spacing:-.01em">Selecciona tu página</div>
           <div style="font-size:13px;color:var(--mute);margin-bottom:18px;line-height:1.5">Tienes varias páginas de Facebook. Elige con cuál quieres usar Broquer.</div>
@@ -2850,12 +2850,12 @@
       // App nativa iOS: compra dentro de la app vía App Store (RevenueCat).
       document.body.innerHTML = `
         <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--paper);padding:24px;font-family:var(--font-sans);">
-          <div style="width:100%;max-width:440px;background:var(--bone);border:1px solid var(--line);border-radius:24px;padding:30px;box-shadow:0 10px 40px rgba(10,10,10,.08);text-align:center;">
+          <div style="width:100%;max-width:440px;background:var(--bone);border:1px solid var(--line);border-radius:24px;padding:30px;box-shadow:0 10px 40px rgba(22,22,22,.08);text-align:center;">
             <img src="isotipo-black.png" alt="Broquer" style="width:58px;height:58px;object-fit:contain;margin-bottom:18px;"/>
             <h1 style="font-family:var(--font-display);font-size:30px;line-height:1.05;margin:0 0 10px;color:var(--ink);letter-spacing:-.03em;">Activa Broquer Max</h1>
             <p style="color:var(--mute);font-size:13px;line-height:1.5;margin:0 0 20px;">Suscríbete para usar todas tus herramientas. Broquer Max es una suscripción mensual: el pago se cobra a tu cuenta de Apple al confirmar y se renueva automáticamente cada mes, salvo que la canceles desde Ajustes de iOS al menos 24 h antes del fin del periodo.</p>
-            <button id="bk-iap-buy" onclick="rcBuy()" disabled style="width:100%;height:48px;border:none;border-radius:999px;background:var(--ink);color:var(--paper);font-weight:700;font-size:14px;cursor:pointer;">Cargando…</button>
-            <button id="bk-iap-restore" onclick="rcRestore()" style="width:100%;height:42px;border:1px solid var(--line-2);border-radius:999px;background:transparent;color:var(--ink);font-weight:600;font-size:13px;cursor:pointer;margin-top:10px;">Restaurar compras</button>
+            <button id="bk-iap-buy" onclick="rcBuy()" disabled style="width:100%;height:48px;border:none;border-radius:12px;background:var(--sky-blue);color:#FFFFFF;font-weight:700;font-size:14px;cursor:pointer;">Cargando…</button>
+            <button id="bk-iap-restore" onclick="rcRestore()" style="width:100%;height:42px;border:1px solid var(--line-2);border-radius:12px;background:transparent;color:var(--ink);font-weight:600;font-size:13px;cursor:pointer;margin-top:10px;">Restaurar compras</button>
             <button onclick="doLogout()" style="width:100%;height:40px;border:none;background:transparent;color:var(--mute);font-weight:500;font-size:13px;cursor:pointer;margin-top:4px;">Cerrar sesión</button>
             <div id="bk-gate-msg" style="margin-top:10px;font-size:12px;color:var(--danger);min-height:18px;">${message || ''}</div>
             <div style="margin-top:14px;font-size:11px;color:var(--mute);line-height:1.5;">Al continuar aceptas los <a href="legal.html" style="color:var(--mute);text-decoration:underline;">Términos de uso</a> y el <a href="legal.html" style="color:var(--mute);text-decoration:underline;">Aviso de Privacidad</a>.</div>
@@ -2866,12 +2866,12 @@
     }
     document.body.innerHTML = `
       <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--paper);padding:24px;font-family:var(--font-sans);">
-        <div style="width:100%;max-width:440px;background:var(--bone);border:1px solid var(--line);border-radius:24px;padding:30px;box-shadow:0 10px 40px rgba(10,10,10,.08);text-align:center;">
+        <div style="width:100%;max-width:440px;background:var(--bone);border:1px solid var(--line);border-radius:24px;padding:30px;box-shadow:0 10px 40px rgba(22,22,22,.08);text-align:center;">
           <img src="isotipo-black.png" alt="Broquer" style="width:58px;height:58px;object-fit:contain;margin-bottom:18px;"/>
           <h1 style="font-family:var(--font-display);font-size:30px;line-height:1.05;margin:0 0 10px;color:var(--ink);letter-spacing:-.03em;">Actualmente no cuentas con un plan de suscripción</h1>
           <p style="color:var(--mute);font-size:14px;line-height:1.5;margin:0 0 22px;">Activa tu plan para ingresar a Broquer y usar tus herramientas inmobiliarias.</p>
-          <button id="bk-gate-sub-btn" onclick="startSubscriptionCheckoutFromGate()" style="width:100%;height:48px;border:none;border-radius:999px;background:var(--ink);color:var(--paper);font-weight:700;font-size:14px;cursor:pointer;">Suscribirme ahora</button>
-          <button onclick="doLogout()" style="width:100%;height:42px;border:1px solid var(--line-2);border-radius:999px;background:transparent;color:var(--ink);font-weight:600;font-size:13px;cursor:pointer;margin-top:10px;">Cerrar sesión</button>
+          <button id="bk-gate-sub-btn" onclick="startSubscriptionCheckoutFromGate()" style="width:100%;height:48px;border:none;border-radius:12px;background:var(--sky-blue);color:#FFFFFF;font-weight:700;font-size:14px;cursor:pointer;">Suscribirme ahora</button>
+          <button onclick="doLogout()" style="width:100%;height:42px;border:1px solid var(--line-2);border-radius:12px;background:transparent;color:var(--ink);font-weight:600;font-size:13px;cursor:pointer;margin-top:10px;">Cerrar sesión</button>
           <div id="bk-gate-msg" style="margin-top:12px;font-size:12px;color:var(--danger);min-height:18px;">${message || ''}</div>
         </div>
       </div>`;
