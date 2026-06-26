@@ -1,16 +1,16 @@
 /* ════════════════════════════════════════════════════════════
-   BROQUER — Design System  ·  Edición "26 Hospitality"
-   Inspirado en el sistema visual del sitio de Hospitality del
-   Mundial 2026. Token-driven.
+   BROQUER — Design System  ·  Edición "Sky"
+   Inspirado en el sistema visual de Skyscanner. Token-driven.
 
-   Lenguaje: fondo blanco, texto casi negro (#05090e), acento
-   TEAL (#4bd7e6 brillante / #0297a7 oscuro), rojo de urgencia
-   (#fe1743), secciones oscuras selectivas (navy #0f174f, negro
-   #05090e, morado #24146e). Botones con firma de esquina
-   superior-izquierda cuadrada. Títulos condensados negros en
-   MAYÚSCULAS (Anton, proxy libre de "Fwc 2026 Condensed");
-   cuerpo en Noto Sans (la misma secundaria que usa el sitio).
-   Único elemento heredado de Broquer: el logotipo.
+   Lenguaje: paleta restringida — navy #05203C como ESTRUCTURA
+   (nav, footer, cards oscuras, chips activos) y azul brillante
+   #0062E3 como ACCIÓN (CTA, hero, botón primario). Blanco base,
+   texto casi negro #161616. Una sola familia tipográfica en
+   todo el sitio (proxy libre de "Skyscanner Relative" vía Inter
+   / system-ui), pesos 400 y 700, sin mayúsculas forzadas. Radios
+   suaves: 12px en cards y botones, 8px en botones de icono,
+   100px (píldora) en chips/tabs. Único elemento heredado de
+   Broquer: el logotipo.
 
    Esta hoja es la única fuente de verdad visual de Broquer.
    Define: tokens (color, tipografía, espaciado, radios, sombras,
@@ -27,68 +27,59 @@
    Los nombres de variable NO cambian (incluidos los alias
    "legacy" como --forest, --teal, --emerald): solo se reasigna
    su VALOR a la nueva piel. --forest y sus alias ahora apuntan
-   al TEAL de acento.
+   al AZUL de acción.
    ════════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Anton&family=Noto+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
-  /* ── Surfaces (claro, blanco como el sitio) ─ */
+  /* ── Surfaces (blanco base, canvas gris-azul) ─ */
   --paper:   #FFFFFF;     /* fondo del body */
-  --paper-2: #EDF0F7;     /* inset visible / hover / chips (gray-300) */
+  --paper-2: #EFF3F8;     /* canvas / inset / hover / chips */
   --bone:    #FFFFFF;     /* superficie de card */
-  --shell:   #F9FBFF;     /* superficie media (gray-200) */
+  --shell:   #F7F9FB;     /* hover de input / superficie media */
 
   /* ── Ink (casi negro sobre claro) ─────────── */
-  --ink:     #05090E;     /* texto principal */
-  --ink-2:   #2A3649;     /* gray-1000 */
-  --ink-3:   #4B5667;     /* gray-900 — secundario */
-  --mute:    #6B7585;     /* gray-800 */
-  --mute-2:  #858F9F;     /* gray-700 */
-  --mute-3:  #BCC4D1;     /* gray-600 */
+  --ink:     #161616;     /* texto principal */
+  --ink-2:   #2E3338;
+  --ink-3:   #54606E;     /* secundario */
+  --mute:    #6B7685;
+  --mute-2:  #939BA6;
+  --mute-3:  #C1C7CF;
 
-  /* ── Hairlines (líneas del sistema FIFA) ──── */
-  --line:     #E0E4ED;    /* gray-400 — bordes de card */
-  --line-2:   #D0D5DF;    /* gray-500 — divisores */
-  --line-3:   #BCC4D1;    /* gray-600 — más fuerte */
+  /* ── Hairlines (bordes del sistema) ───────── */
+  --line:     #E0E4E9;    /* borde claro / disabled */
+  --line-2:   #C1C7CF;    /* borde / input */
+  --line-3:   #AAB2BD;
 
-  /* ── Accents (TEAL de marca) ──────────────── */
-  --forest:   #0297A7;    /* alias histórico → ahora TEAL oscuro */
-  --forest-2: #4BD7E6;    /* teal brillante (CTA) */
-  --forest-soft: rgba(2,151,167,0.10);
+  /* ── Accents (AZUL de acción) ─────────────── */
+  --forest:   #0062E3;    /* alias histórico → ahora AZUL */
+  --forest-2: #024DAF;    /* azul pressed (hover) */
+  --forest-soft: rgba(0,98,227,0.10);
 
-  --teal-bright: #4BD7E6; /* CTA primario sobre cualquier fondo */
-  --teal-deep:   #0297A7; /* bordes activos, iconos, links */
-  --red:         #FE1743; /* urgencia / "Going Fast" */
-  --gold:        #B29F6C; /* On Location premium */
+  /* Marca Skyscanner */
+  --sky-navy:       #05203C;  /* estructura: nav, footer, cards */
+  --sky-navy-mid:   #154679;
+  --sky-blue:       #0062E3;  /* acción */
+  --sky-blue-press: #024DAF;
+  --sky-canvas:     #EFF3F8;
 
-  /* Superficies oscuras de marca (para secciones/hero) */
-  --fifa-navy:    #0F174F;
-  --fifa-black:   #05090E;
-  --fifa-purple:  #24146E;
-  --fifa-purple2: #4A168C;
-  --fifa-filter:  #0E0734;
+  --warn:     #E8910C;
+  --warn-soft:rgba(232,145,12,0.14);
+  --danger:   #E70866;
+  --danger-soft:rgba(231,8,102,0.10);
+  --success:  #00AA6C;
+  --success-soft:rgba(0,170,108,0.12);
+  --info:     #0FA1A9;
+  --info-soft:rgba(15,161,169,0.12);
 
-  --warn:     #FFA850;
-  --warn-soft:rgba(255,168,80,0.14);
-  --danger:   #FE1743;
-  --danger-soft:rgba(254,23,67,0.10);
-  --success:  #14A06E;
-  --success-soft:rgba(20,160,110,0.12);
-  --info:     #4A168C;
-  --info-soft:rgba(74,22,140,0.10);
-
-  /* ── Geometry (radios del sistema FIFA) ──── */
+  /* ── Geometry (radios BPK de Skyscanner) ─── */
   --r-xs: 4px;
   --r-sm: 8px;
   --r:    12px;
-  --r-lg: 16px;
+  --r-lg: 24px;
   --r-xl: 24px;
   --r-pill: 999px;
-  --r-btn:    0 24px 24px 24px;  /* firma: esquina sup-izq cuadrada */
-  --r-btn-sm: 0 12px 12px 12px;
-  --wave:    60px;   /* curva de esquina de sección */
-  --wave-lg: 120px;  /* curva grande del hero */
 
   /* ── Espaciado (escala base 4px) ────────── */
   --sp-1: 4px;
@@ -103,13 +94,13 @@
   --sp-12: 48px;
   --sp-16: 64px;
 
-  /* ── Sombras (tinte tinta, fondo claro) ─── */
-  --shadow-xs: 0 1px 2px rgba(5,9,14,.05);
-  --shadow-sm: 0 1px 3px rgba(5,9,14,.07), 0 1px 2px rgba(5,9,14,.04);
-  --shadow:    0 4px 14px rgba(5,9,14,.08), 0 1px 3px rgba(5,9,14,.05);
-  --shadow-md: 0 10px 28px rgba(5,9,14,.10), 0 2px 6px rgba(5,9,14,.06);
-  --shadow-lg: 0 18px 44px rgba(5,9,14,.12), 0 4px 12px rgba(5,9,14,.07);
-  --shadow-xl: 0 28px 72px rgba(5,9,14,.16), 0 8px 20px rgba(5,9,14,.10);
+  /* ── Sombras (tinte #161616, fondo claro) ── */
+  --shadow-xs: 0 1px 2px rgba(22,22,22,.06);
+  --shadow-sm: 0 1px 3px rgba(22,22,22,.10), 0 1px 2px rgba(22,22,22,.06);
+  --shadow:    0 4px 14px rgba(22,22,22,.12), 0 1px 3px rgba(22,22,22,.08);
+  --shadow-md: 0 10px 28px rgba(22,22,22,.14), 0 2px 6px rgba(22,22,22,.08);
+  --shadow-lg: 0 18px 44px rgba(22,22,22,.18), 0 4px 12px rgba(22,22,22,.10);
+  --shadow-xl: 0 28px 72px rgba(22,22,22,.22), 0 8px 20px rgba(22,22,22,.12);
 
   /* ── Alturas de control ─────────────────── */
   --h-sm:  36px;
@@ -118,9 +109,9 @@
   --touch-min: 44px;
 
   /* ── Anillo de foco ─────────────────────── */
-  --focus:        0 0 0 3px rgba(2,151,167,0.22);
-  --focus-forest: 0 0 0 3px rgba(2,151,167,0.22);
-  --focus-danger: 0 0 0 3px rgba(254,23,67,0.20);
+  --focus:        0 0 0 3px rgba(0,98,227,0.22);
+  --focus-forest: 0 0 0 3px rgba(0,98,227,0.22);
+  --focus-danger: 0 0 0 3px rgba(231,8,102,0.20);
 
   /* ── Z-index (alineado con app-shell.js) ── */
   --z-base:    1;
@@ -132,9 +123,9 @@
   --z-modal:   240;
   --z-toast:   320;
 
-  /* ── Tipografía ─────────────────────────── */
-  --font-sans: 'Noto Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-display: 'Anton', 'Arial Narrow', 'Noto Sans', system-ui, sans-serif;
+  /* ── Tipografía (familia única, como el sitio) ── */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', sans-serif;
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
   --fs-display: 44px;
@@ -165,7 +156,7 @@
   --teal: var(--forest);
   --teal2: var(--forest-2);
   --teal-dark: var(--forest);
-  --teal-glow: rgba(2,151,167,0.12);
+  --teal-glow: rgba(0,98,227,0.12);
   --white: var(--bone);
   --gray-100: var(--paper-2);
   --gray-200: var(--line);
@@ -183,14 +174,14 @@
   --txt: var(--ink);
   --mut: var(--mute);
   --mut2: var(--mute-2);
-  --r-old: 16px;
+  --r-old: 12px;
   --r2: 12px;
   --r3: 8px;
-  --amber: #FFA850; --amber2:#FFC07A;
-  --rose:  #FE1743; --rose2: #FF5C7A;
-  --violet:#4A168C; --violet2:#7B1FA2;
-  --emerald:#0297A7; --emerald2:#4BD7E6;
-  --sky:   #0F174F; --sky2:   #2A3AA0;
+  --amber: #E8910C; --amber2:#F2A838;
+  --rose:  #E70866; --rose2: #F2407F;
+  --violet:#5B4FE0; --violet2:#7D72E8;
+  --emerald:#00AA6C; --emerald2:#0FA1A9;
+  --sky:   #0062E3; --sky2:   #024DAF;
   --fs-base: var(--fs-body);
   --fs-label: var(--fs-xs);
   --fs-title: var(--fs-h3);
@@ -214,19 +205,18 @@ html, body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
-::selection { background: var(--teal-bright); color: var(--fifa-black); }
+::selection { background: var(--sky-blue); color: #FFFFFF; }
 
 h1,h2,h3,h4,h5 {
   font-family: var(--font-display);
-  letter-spacing: 0.01em;
-  font-weight: 400;
-  text-transform: uppercase;
-  line-height: 1.0;
+  letter-spacing: -0.012em;
+  font-weight: 700;
+  line-height: 1.12;
   color: var(--ink);
 }
 h1 { font-size: var(--fs-h1); }
 h2 { font-size: var(--fs-h2); }
-h3 { font-size: var(--fs-h3); letter-spacing: 0.02em; }
+h3 { font-size: var(--fs-h3); }
 
 p { line-height: var(--lh); color: var(--ink-2); }
 
@@ -292,12 +282,12 @@ input, select, textarea, button {
 .bk-btn {
   appearance: none;
   border: 1px solid transparent;
-  background: var(--ink);
+  background: var(--sky-navy);
   color: var(--bone);
   height: var(--h);
   padding: 0 var(--sp-5);
-  border-radius: var(--r-btn);
-  font-weight: 600;
+  border-radius: var(--r);
+  font-weight: 700;
   font-size: var(--fs-sm);
   letter-spacing: -0.005em;
   cursor: pointer;
@@ -308,7 +298,7 @@ input, select, textarea, button {
   white-space: nowrap;
   transition: transform var(--dur) var(--ease), background var(--dur) var(--ease), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), opacity var(--dur) var(--ease);
 }
-.bk-btn:hover  { background: var(--ink-2); }
+.bk-btn:hover  { background: var(--sky-navy-mid); }
 .bk-btn:active { transform: scale(.98); }
 .bk-btn:disabled,
 .bk-btn[aria-disabled="true"] {
@@ -316,8 +306,8 @@ input, select, textarea, button {
 }
 .bk-btn svg { flex-shrink: 0; }
 
-.bk-btn--forest { background: var(--teal-bright); color: var(--fifa-black); }
-.bk-btn--forest:hover { background: #66DFEB; }
+.bk-btn--forest { background: var(--forest); }
+.bk-btn--forest:hover { background: var(--forest-2); }
 
 .bk-btn--ghost { background: transparent; color: var(--ink); border-color: var(--line-2); }
 .bk-btn--ghost:hover { background: var(--paper-2); border-color: var(--line-3); }
@@ -328,7 +318,7 @@ input, select, textarea, button {
 .bk-btn--danger { background: transparent; color: var(--danger); border-color: var(--danger-soft); }
 .bk-btn--danger:hover { background: var(--danger-soft); }
 
-.bk-btn--sm  { height: var(--h-sm); padding: 0 var(--sp-3); font-size: var(--fs-xs); border-radius: var(--r-btn-sm); }
+.bk-btn--sm  { height: var(--h-sm); padding: 0 var(--sp-3); font-size: var(--fs-xs); }
 .bk-btn--lg  { height: var(--h-lg); padding: 0 var(--sp-6); font-size: var(--fs-body); }
 .bk-btn--block { width: 100%; }
 
@@ -343,14 +333,13 @@ input, select, textarea, button {
 }
 .bk-btn--ghost.is-loading::after,
 .bk-btn--quiet.is-loading::after { color: var(--ink); }
-.bk-btn--forest.is-loading::after { color: var(--fifa-black); }
 
 @keyframes bk-spin { to { transform: rotate(360deg); } }
 
 /* Botón circular de icono */
 .bk-icon-btn {
   width: 40px; height: 40px;
-  border-radius: 50%;
+  border-radius: var(--r-sm);
   background: var(--bone);
   border: 1px solid var(--line-2);
   cursor: pointer;
@@ -401,7 +390,7 @@ input, select, textarea, button {
 .bk-select {
   height: var(--h-lg); padding: 0 var(--sp-8) 0 var(--sp-4);
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7585' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7685' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right var(--sp-4) center;
   cursor: pointer;
@@ -521,14 +510,14 @@ input, select, textarea, button {
   letter-spacing: 0.16em; text-transform: uppercase;
   color: var(--mute); margin-bottom: var(--sp-2);
 }
-.bk-page-header__title { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 400; text-transform: uppercase; letter-spacing: 0.01em; line-height: 1.02; }
+.bk-page-header__title { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 600; letter-spacing: -0.03em; line-height: var(--lh-tight); }
 .bk-page-header__sub { font-size: var(--fs-sm); color: var(--mute); margin-top: var(--sp-2); line-height: var(--lh); max-width: 60ch; }
 
 .bk-section-header {
   display: flex; align-items: baseline; justify-content: space-between;
   gap: var(--sp-4); margin-bottom: var(--sp-4);
 }
-.bk-section-header h2 { font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 400; letter-spacing: 0.01em; }
+.bk-section-header h2 { font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 600; letter-spacing: -0.025em; }
 .bk-section-header a { font-size: var(--fs-sm); color: var(--ink-2); font-weight: 500; display: inline-flex; align-items: center; gap: var(--sp-1); }
 .bk-section-header a:hover { color: var(--forest); }
 
@@ -600,7 +589,7 @@ input, select, textarea, button {
    ════════════════════════════════════════════════════════════ */
 .bk-overlay {
   position: fixed; inset: 0; z-index: var(--z-overlay);
-  background: rgba(5,9,14,0.45);
+  background: rgba(0,0,0,0.6);
   display: flex; align-items: center; justify-content: center;
   padding: var(--sp-4);
   opacity: 0; visibility: hidden; pointer-events: none;
@@ -624,7 +613,7 @@ input, select, textarea, button {
   display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4);
   padding: var(--sp-5) var(--sp-6); border-bottom: 1px solid var(--line); flex-shrink: 0;
 }
-.bk-modal__title { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 400; text-transform: uppercase; letter-spacing: 0.02em; }
+.bk-modal__title { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 600; letter-spacing: -0.01em; }
 .bk-modal__body { padding: var(--sp-6); overflow-y: auto; }
 .bk-modal__foot {
   display: flex; align-items: center; justify-content: flex-end; gap: var(--sp-2);
@@ -650,7 +639,7 @@ input, select, textarea, button {
   display: flex; align-items: center; justify-content: center;
   margin-bottom: var(--sp-1);
 }
-.bk-empty__title { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 400; text-transform: uppercase; letter-spacing: 0.02em; color: var(--ink); }
+.bk-empty__title { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 600; color: var(--ink); }
 .bk-empty__text { font-size: var(--fs-sm); color: var(--mute); max-width: 36ch; line-height: var(--lh); }
 .bk-empty__action { margin-top: var(--sp-3); }
 
@@ -723,7 +712,7 @@ input, select, textarea, button {
 .bk-prop-card__media { aspect-ratio: 4 / 3; background: var(--paper-2); position: relative; overflow: hidden; }
 .bk-prop-card__media img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .bk-prop-card__body { padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-1); }
-.bk-prop-card__price { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 400; letter-spacing: 0.01em; color: var(--ink); }
+.bk-prop-card__price { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 600; letter-spacing: -0.02em; color: var(--ink); }
 .bk-prop-card__title { font-size: var(--fs-sm); color: var(--ink-2); }
 .bk-prop-card__meta  { font-size: var(--fs-xs); color: var(--mute); display: flex; gap: var(--sp-3); margin-top: var(--sp-1); }
 
