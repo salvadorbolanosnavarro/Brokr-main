@@ -28,7 +28,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .wa-btn-green{background:#25d366;color:#fff}
 .wa-btn-ink{background:var(--ink);color:var(--paper)}
 .wa-btn-ghost{background:var(--paper);color:var(--ink);border:1px solid var(--line-2)}
-.wa-btn-danger{background:#fee2e2;color:#b91c1c;border:1px solid #fecaca}
+.wa-btn-danger{background:#EFF3F8;color:#E70866;border:1px solid #E0E4E9}
 
 /* ─── Banner desconectado ───────────────────────────────── */
 .wa-banner{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:40px 24px;text-align:center;margin-bottom:20px}
@@ -50,7 +50,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .wa-number-dot{width:10px;height:10px;border-radius:50%;background:#25d366;flex:none}
 .wa-number-info h3{font-size:16px;font-weight:700;letter-spacing:-.01em}
 .wa-number-info span{font-size:12px;color:var(--mute)}
-.wa-status-pill{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;border-radius:999px;padding:3px 9px;background:rgba(37,211,102,.12);color:#15803d;margin-left:10px;vertical-align:middle}
+.wa-status-pill{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;border-radius:999px;padding:3px 9px;background:rgba(37,211,102,.12);color:#00AA6C;margin-left:10px;vertical-align:middle}
 
 .wa-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
 .wa-action-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;gap:6px;transition:border-color .15s}
@@ -69,8 +69,8 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .wa-toggle-thumb{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s;pointer-events:none;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 .wa-toggle input:checked ~ .wa-toggle-thumb{transform:translateX(20px)}
 
-.wa-danger-zone{border:1px solid #fecaca;border-radius:var(--r-lg);padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px}
-.wa-danger-info h4{font-size:13px;font-weight:700;color:#b91c1c;margin-bottom:2px}
+.wa-danger-zone{border:1px solid #E0E4E9;border-radius:var(--r-lg);padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px}
+.wa-danger-info h4{font-size:13px;font-weight:700;color:#E70866;margin-bottom:2px}
 .wa-danger-info p{font-size:12px;color:var(--mute);line-height:1.4}
 
 /* ─── Spinner ───────────────────────────────────────────── */
@@ -79,8 +79,8 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 @keyframes waspin{to{transform:rotate(360deg)}}
 
 /* ─── Aviso ─────────────────────────────────────────────── */
-.wa-notice{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--r);padding:12px 16px;font-size:12px;color:#15803d;line-height:1.55;margin-bottom:16px}
-.wa-notice strong{color:#14532d}
+.wa-notice{background:#FFFFFF;border:1px solid #EFF3F8;border-radius:var(--r);padding:12px 16px;font-size:12px;color:#00AA6C;line-height:1.55;margin-bottom:16px}
+.wa-notice strong{color:#00AA6C}
 
 /* ─── Modal confirmación ────────────────────────────────── */
 .wa-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:none;align-items:center;justify-content:center;padding:20px}
@@ -436,7 +436,7 @@ const TPL_STATUS_LABEL = {
   APPROVED: 'Aprobada', PENDING: 'En revisión', REJECTED: 'Rechazada'
 };
 const TPL_STATUS_COLOR = {
-  APPROVED: '#15803d', PENDING: '#b45309', REJECTED: '#b91c1c'
+  APPROVED: '#00AA6C', PENDING: '#E8910C', REJECTED: '#E70866'
 };
 
 async function cargarTemplates(){
@@ -460,7 +460,7 @@ async function cargarTemplates(){
           <div style="font-size:13px;font-weight:700">${escapeHtml(t.name)}</div>
           <div style="font-size:11px;color:var(--mute)">${escapeHtml(t.category || '')} · ${escapeHtml(t.language || '')}</div>
         </div>
-        <span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:${TPL_STATUS_COLOR[t.status]||'#666'}">${TPL_STATUS_LABEL[t.status]||t.status}</span>
+        <span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:${TPL_STATUS_COLOR[t.status]||'#6B7585'}">${TPL_STATUS_LABEL[t.status]||t.status}</span>
       </div>
     `).join('');
   }catch(e){

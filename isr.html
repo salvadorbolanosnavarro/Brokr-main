@@ -13,7 +13,7 @@
   body, .screen, .panel, .container, .wrap, main { background:var(--paper)!important; color:var(--ink)!important; }
   .card, .ui-card, .box, .module, .pf-card, .stat-pill, .module-card, .cat-module, .profile-section, .activity-item, .news-ticker-wrap, .tile, .section, section, article {
     background:var(--bone)!important; border:1px solid var(--line)!important; border-radius:var(--r-lg)!important;
-    color:var(--ink)!important; box-shadow:0 1px 2px rgba(10,10,10,.03)!important;
+    color:var(--ink)!important; box-shadow:0 1px 2px rgba(22,22,22,.03)!important;
   }
   /* Headers/topbars that were navy → ivory */
   .home-header, .modules-header, .profile-header, .panel-topbar, header, .topbar, .nav-top, .app-header, .hdr, .navbar {
@@ -35,7 +35,7 @@
     background:var(--ink)!important; color:var(--paper)!important;
     border:none!important; border-radius:var(--r)!important;
     padding:11px 18px!important; font-weight:600!important; cursor:pointer!important;
-    box-shadow:0 1px 2px rgba(10,10,10,.08)!important; font-size:14px!important;
+    box-shadow:0 1px 2px rgba(22,22,22,.08)!important; font-size:14px!important;
   }
   button:not([class]):hover, .btn-primary:hover, .ui-btn:hover, .pf-save-btn:hover, .pe-save-btn:hover, .isr-calc-btn:hover { opacity:.92!important; }
   /* Badges, chips */
@@ -44,7 +44,7 @@
     border-radius:var(--r-pill)!important; padding:3px 10px!important; font-size:11px!important; font-weight:500!important;
   }
   /* Accent text colors that were navy or teal */
-  [class*="navy"], [style*="color:#0f1829"], [style*="color: #0f1829"], [style*="color:#162035"] { color:var(--ink)!important; }
+  [class*="navy"], [style*="color:#161616"], [style*="color: #161616"], [style*="color:#2E3338"] { color:var(--ink)!important; }
   /* Links */
   a { color:var(--ink)!important; text-decoration:none; }
   a:hover { color:var(--forest)!important; }
@@ -78,27 +78,27 @@
 ═══════════════════════════════════════ */
 :root {
   --navy:       var(--ink);
-  --navy-mid:   #2D2823;
-  --navy-light: #3A332C;
+  --navy-mid:   #2E3338;
+  --navy-light: #54606E;
   --teal:       var(--ink);
-  --teal-dark:  #2D2823;
+  --teal-dark:  #2E3338;
   --teal-bg:    rgba(15,24,41,0.06);
   --teal-border:rgba(15,24,41,0.15);
   --white:      #ffffff;
-  --bg:         #f0f2f7;
+  --bg:         #FFFFFF;
   --card:       #ffffff;
   --border:     rgba(0,0,0,0.08);
   --border2:    rgba(0,0,0,0.05);
-  --txt:        #1a2035;
-  --txt-soft:   #5a6070;
-  --txt-muted:  #9aa0ad;
-  --success:    #0d9e6e;
+  --txt:        #2E3338;
+  --txt-soft:   #6B7585;
+  --txt-muted:  #C1C7CF;
+  --success:    #00AA6C;
   --success-bg: rgba(13,158,110,0.07);
   --success-bd: rgba(13,158,110,0.25);
-  --danger:     #e0364a;
+  --danger:     #E70866;
   --danger-bg:  rgba(224,54,74,0.07);
   --danger-bd:  rgba(224,54,74,0.25);
-  --warn:       #d97706;
+  --warn:       #0062E3;
   --warn-bg:    rgba(217,119,6,0.10);
   --info:       var(--teal);
   --info-bg:    var(--teal-bg);
@@ -273,7 +273,7 @@ html, body {
   margin-top: 10px;
   background: var(--warn-bg);
   border-left: 3px solid var(--warn);
-  color: #7c3a00;
+  color: #024DAF;
 }
 .alert-info {
   border-radius: var(--r3);
@@ -624,13 +624,13 @@ html, body {
   padding: 8px 10px;
   margin-bottom: 6px;
   border-radius: var(--r3);
-  background: var(--paper-2, #f7f4ec);
+  background: var(--paper-2, #FFFFFF);
   border-left: 2px solid var(--txt-muted);
   color: var(--txt-soft);
 }
 .edu-note strong { color: var(--txt); }
-.edu-note.warn { background: var(--warn-bg); border-left-color: var(--warn); color: #7c3a00; }
-.edu-note.warn strong { color: #5a2700; }
+.edu-note.warn { background: var(--warn-bg); border-left-color: var(--warn); color: #024DAF; }
+.edu-note.warn strong { color: #024DAF; }
 
 /* ── ANIMACIONES ── */
 @keyframes fadeUp {
@@ -1268,7 +1268,7 @@ function renderResult(d) {
   }
   // Card IVA (solo comercial)
   if(d.ivaMonto>0){
-    cards+=`<div class="rc" style="border-color:rgba(217,119,6,0.3);background:rgba(217,119,6,0.06)"><div class="rc-l" style="color:#b45309">IVA 16% estimado</div><div class="rc-v" style="color:#92400e">${fmt(d.ivaMonto)}</div><div class="rc-n">Sobre construcción (art. 9 LIVA) — retiene el notario</div></div>`;
+    cards+=`<div class="rc" style="border-color:rgba(217,119,6,0.3);background:rgba(217,119,6,0.06)"><div class="rc-l" style="color:#024DAF">IVA 16% estimado</div><div class="rc-v" style="color:#0062E3">${fmt(d.ivaMonto)}</div><div class="rc-n">Sobre construcción (art. 9 LIVA) — retiene el notario</div></div>`;
   }
   if(g('res-cards'))g('res-cards').innerHTML=cards;
 
@@ -1305,7 +1305,7 @@ function renderResult(d) {
     bd+=`<div class="br"><span class="bl">ISR Federación (ISR total − ISR estatal)</span><span class="bv">${fmt(d.isrFederal)}</span></div>`;
   }
   if(d.ivaMonto>0){
-    bd+=`<div class="br" style="border-color:rgba(217,119,6,0.25)"><span class="bl" style="color:#92400e">IVA 16% s/ construcción (${fmt(d.ivaBase)}) — art. 9 LIVA</span><span class="bv" style="color:#92400e">${fmt(d.ivaMonto)}</span></div>`;
+    bd+=`<div class="br" style="border-color:rgba(217,119,6,0.25)"><span class="bl" style="color:#0062E3">IVA 16% s/ construcción (${fmt(d.ivaBase)}) — art. 9 LIVA</span><span class="bv" style="color:#0062E3">${fmt(d.ivaMonto)}</span></div>`;
   }
   if(g('res-bkdn'))g('res-bkdn').innerHTML=bd;
 
@@ -1355,7 +1355,7 @@ function renderResult(d) {
       eduNotes.map(n => `<div class="edu-note${n.warn?' warn':''}"><strong>${n.title}.</strong> ${n.body}</div>`).join('');
 
     const exencionLeyenda = (d.tipo === 'casa')
-      ? `<br><strong>¿Casa habitación o departamento?</strong> Tu cliente podría ser candidato para <strong>exentar el ISR</strong> (total o parcialmente) si esta es su casa habitación principal y no usó la exención en los últimos 3 años. <a href="blog.html?art=exencion-isr-casa-habitacion" style="color:#0f766e;font-weight:600">Lee cómo funciona la exención →</a><br>`
+      ? `<br><strong>¿Casa habitación o departamento?</strong> Tu cliente podría ser candidato para <strong>exentar el ISR</strong> (total o parcialmente) si esta es su casa habitación principal y no usó la exención en los últimos 3 años. <a href="blog.html?art=exencion-isr-casa-habitacion" style="color:#024DAF;font-weight:600">Lee cómo funciona la exención →</a><br>`
       : '';
     const inpcFallbackNota = d.inpcVentaFallback
       ? `<br><br><strong>Nota sobre el INPC de enajenación:</strong> el INPC de ${d.mN[d.inpcVentaMesSolicitado]} ${d.inpcVentaAnioSolicitado} aún no lo publica el INEGI (se libera alrededor del día 9 del mes siguiente). Se usó el último INPC publicado, el de ${d.mN[d.mesEnajINPC]} ${d.anioEnajINPC}. Al firmar la escritura, el notario aplicará el INPC oficial del mes que corresponda.`
@@ -1428,53 +1428,53 @@ async function descargarPDF() {
   body{height:100%;overflow:hidden}
   body{
     font-family:'Inter','Helvetica Neue',sans-serif;
-    font-size:11.5px;color:#1A1814;background:#fff;
+    font-size:11.5px;color:#161616;background:#fff;
     -webkit-font-smoothing:antialiased;letter-spacing:-0.005em;
     line-height:1.5;
   }
   /* ── HEADER ── */
-  .hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;padding-bottom:12px;border-bottom:1.5px solid #1A1814}
-  .hdr-left h1{font-family:'Fraunces',serif;font-size:26px;font-weight:400;letter-spacing:-0.025em;color:#1A1814;line-height:1.1;margin-bottom:5px}
-  .hdr-left .meta{font-size:10px;color:#7A7065;letter-spacing:0.01em}
+  .hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;padding-bottom:12px;border-bottom:1.5px solid #161616}
+  .hdr-left h1{font-family:'Fraunces',serif;font-size:26px;font-weight:400;letter-spacing:-0.025em;color:#161616;line-height:1.1;margin-bottom:5px}
+  .hdr-left .meta{font-size:10px;color:#939BA6;letter-spacing:0.01em}
   .hdr-right{text-align:right}
-  .tipo-badge{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#0a7a6a;background:#e8f5f2;padding:4px 10px;border-radius:20px;display:inline-block;margin-bottom:6px}
-  .fecha{font-size:9.5px;color:#7A7065}
+  .tipo-badge{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#0062E3;background:#FFFFFF;padding:4px 10px;border-radius:20px;display:inline-block;margin-bottom:6px}
+  .fecha{font-size:9.5px;color:#939BA6}
   /* ── SECTION LABEL ── */
-  .sec-lbl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#7A7065;margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid #E8E2D2}
+  .sec-lbl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#939BA6;margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid #EFF3F8}
   /* ── INPC ROW ── */
-  .inpc-row{display:grid;grid-template-columns:1fr 20px 1fr 20px 1fr;gap:0;border:1px solid #E8E2D2;margin-bottom:12px;border-radius:4px;overflow:hidden}
-  .inpc-cell{padding:12px 14px;text-align:center;border-right:1px solid #EDE6D3}
+  .inpc-row{display:grid;grid-template-columns:1fr 20px 1fr 20px 1fr;gap:0;border:1px solid #EFF3F8;margin-bottom:12px;border-radius:4px;overflow:hidden}
+  .inpc-cell{padding:12px 14px;text-align:center;border-right:1px solid #EFF3F8}
   .inpc-cell:last-child{border-right:none}
-  .inpc-cell.hl{background:#f0faf7}
-  .inpc-arrow{display:flex;align-items:center;justify-content:center;color:#C9C0AC;font-size:14px;border-right:none!important;padding:0}
-  .inpc-lbl{font-size:7.5px;font-weight:600;text-transform:uppercase;letter-spacing:1.4px;color:#7A7065;margin-bottom:5px}
-  .inpc-val{font-family:'Fraunces',serif;font-weight:400;font-size:15px;letter-spacing:-0.01em;color:#1A1814}
-  .inpc-cell.hl .inpc-val{color:#0a7a6a;font-weight:500}
+  .inpc-cell.hl{background:#FFFFFF}
+  .inpc-arrow{display:flex;align-items:center;justify-content:center;color:#E0E4E9;font-size:14px;border-right:none!important;padding:0}
+  .inpc-lbl{font-size:7.5px;font-weight:600;text-transform:uppercase;letter-spacing:1.4px;color:#939BA6;margin-bottom:5px}
+  .inpc-val{font-family:'Fraunces',serif;font-weight:400;font-size:15px;letter-spacing:-0.01em;color:#161616}
+  .inpc-cell.hl .inpc-val{color:#0062E3;font-weight:500}
   /* ── CARDS ── */
-  .cards{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid #E8E2D2;border-radius:4px;overflow:hidden;margin-bottom:12px}
-  .card{padding:14px 16px;border-right:1px solid #EDE6D3}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid #EFF3F8;border-radius:4px;overflow:hidden;margin-bottom:12px}
+  .card{padding:14px 16px;border-right:1px solid #EFF3F8}
   .card:last-child{border-right:none}
-  .card-l{font-size:7.5px;font-weight:600;text-transform:uppercase;letter-spacing:1.4px;color:#7A7065;margin-bottom:6px}
-  .card-v{font-family:'Fraunces',serif;font-size:20px;font-weight:400;letter-spacing:-0.02em;color:#1A1814;margin-bottom:2px}
-  .card-n{font-size:9px;color:#7A7065}
-  .card.total .card-v{color:#c0392b;font-weight:500}
-  .card.iva .card-v{color:#b45309}
+  .card-l{font-size:7.5px;font-weight:600;text-transform:uppercase;letter-spacing:1.4px;color:#939BA6;margin-bottom:6px}
+  .card-v{font-family:'Fraunces',serif;font-size:20px;font-weight:400;letter-spacing:-0.02em;color:#161616;margin-bottom:2px}
+  .card-n{font-size:9px;color:#939BA6}
+  .card.total .card-v{color:#E70866;font-weight:500}
+  .card.iva .card-v{color:#024DAF}
   /* ── DESGLOSE ── */
-  .br{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid #EDE6D3;font-size:11px}
+  .br{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid #EFF3F8;font-size:11px}
   .br:last-child{border-bottom:none}
-  .br.sub{padding-left:16px;color:#7A7065;font-size:10px}
-  .br.tot{font-size:12.5px;padding:10px 0;border-bottom:1.5px solid #1A1814;border-top:1px solid #C9C0AC;margin-top:2px}
-  .bl{color:#3D3631;flex:1;padding-right:12px}
+  .br.sub{padding-left:16px;color:#939BA6;font-size:10px}
+  .br.tot{font-size:12.5px;padding:10px 0;border-bottom:1.5px solid #161616;border-top:1px solid #E0E4E9;margin-top:2px}
+  .bl{color:#54606E;flex:1;padding-right:12px}
   .bv{font-family:'Fraunces',serif;font-weight:400;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:12px}
-  .br.tot .bl,.br.tot .bv{font-family:'Fraunces',serif;font-weight:500;color:#1A1814;font-size:13px}
+  .br.tot .bl,.br.tot .bv{font-family:'Fraunces',serif;font-weight:500;color:#161616;font-size:13px}
   /* ── NOTA ── */
-  .nota{border-left:2px solid #C9C0AC;padding:10px 14px;font-size:10px;margin-top:16px;line-height:1.65;color:#3D3631;background:#FAF8F3}
-  .nota strong{font-weight:600;color:#1A1814}
+  .nota{border-left:2px solid #E0E4E9;padding:10px 14px;font-size:10px;margin-top:16px;line-height:1.65;color:#54606E;background:#FFFFFF}
+  .nota strong{font-weight:600;color:#161616}
   .nota ul{margin:4px 0 0 14px}
   .nota li{margin-bottom:2px}
   /* ── FOOTER ── */
-  .footer{margin-top:18px;padding-top:8px;border-top:1px solid #E8E2D2;text-align:center}
-  .footer-brand{font-family:'Inter',sans-serif;font-size:9px;font-weight:500;color:#7A7065;letter-spacing:0.4px}
+  .footer{margin-top:18px;padding-top:8px;border-top:1px solid #EFF3F8;text-align:center}
+  .footer-brand{font-family:'Inter',sans-serif;font-size:9px;font-weight:500;color:#939BA6;letter-spacing:0.4px}
 </style>
 </head>
 <body>
@@ -1525,7 +1525,7 @@ async function descargarPDF() {
       <div class="card-v">${fmt(d.isrFederal)}</div>
       <div class="card-n">ISR total − retención estatal</div>
     </div>
-    ${d.ivaMonto>0?`<div class="card iva" style="grid-column:1/-1;border-top:1px solid #EDE6D3;grid-template-columns:auto">
+    ${d.ivaMonto>0?`<div class="card iva" style="grid-column:1/-1;border-top:1px solid #EFF3F8;grid-template-columns:auto">
       <div class="card-l">IVA 16% estimado — art. 9 LIVA</div>
       <div class="card-v">${fmt(d.ivaMonto)}</div>
       <div class="card-n">Sobre valor de construcción (${fmt(d.ivaBase)}) · retiene el notario</div>
@@ -1534,7 +1534,7 @@ async function descargarPDF() {
   d.exenta?`<div class="sec-lbl">Resumen fiscal</div>
   <div class="cards"><div class="card" style="grid-column:1/-1">
     <div class="card-l">ISR a pagar</div>
-    <div class="card-v" style="color:#0a7a6a">$0</div>
+    <div class="card-v" style="color:#0062E3">$0</div>
     <div class="card-n">Exento — art. 93 fr. XIX LISR · Ganancia libre de impuesto: ${fmt(d.ganTotal)}</div>
   </div></div>`:''}
 

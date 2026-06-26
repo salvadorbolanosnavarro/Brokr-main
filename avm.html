@@ -186,9 +186,9 @@
     .enfoque-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
 
     .alert { border-radius: 12px; padding: 10px 14px; font-size: 12px; line-height: 1.5; margin-bottom: 12px; }
-    .alert.warn { background: rgba(245,158,11,0.1); border-left: 3px solid var(--amber); color: #92400e; }
+    .alert.warn { background: rgba(245,158,11,0.1); border-left: 3px solid var(--amber); color: #0062E3; }
     .alert.info { background: var(--teal-glow); border-left: 3px solid var(--teal); color: var(--teal-dark); }
-    .alert.success { background: rgba(16,185,129,0.1); border-left: 3px solid var(--emerald); color: #065f46; }
+    .alert.success { background: rgba(16,185,129,0.1); border-left: 3px solid var(--emerald); color: #00AA6C; }
 
     .spinner {
       width: 20px; height: 20px; border: 2.5px solid rgba(255,255,255,0.3);
@@ -227,7 +227,7 @@
 
     /* ── IA WEB TAB ── */
     .ia-hero {
-      background: linear-gradient(135deg, var(--navy), #1a2d4a);
+      background: linear-gradient(135deg, var(--navy), #0062E3);
       border: 1.5px solid var(--teal); border-radius: 18px;
       padding: 20px; margin-bottom: 14px; text-align: center;
     }
@@ -318,37 +318,37 @@
       body, html { background: white !important; }
       .opinion-page { box-shadow: none !important; border: none !important; border-radius: 0 !important; padding: 20px !important; max-width: 100% !important; margin: 0 !important; }
       .opinion-editable, .opinion-input-inline { border: none !important; background: transparent !important; padding: 0 !important; outline: none !important; }
-      .comp-tabla th { background: #0f1829 !important; color: white !important; }
+      .comp-tabla th { background: #161616 !important; color: white !important; }
     }
   </style>
 
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style id="__brokr_skin_override">
 :root {
-  --navy: #1F1B17 !important;
-  --navy2: #2D2823 !important;
-  --navy3: #3A332C !important;
-  --teal: #1F1B17 !important;
-  --teal2: #2D2823 !important;
-  --teal-dark: #1F1B17 !important;
-  --silver: #F4F1E9 !important;
-  --silver2: #E8E2D2 !important;
-  --bdr: #E8E2D2 !important;
-  --txt: #1F1B17 !important;
-  --mut: #6B6B66 !important;
-  --wh: #FBF9F1 !important;
-  --gray: #F4F1E9 !important;
-  --gray2: #E8E2D2 !important;
-  --gray-100: #F4F1E9 !important;
-  --gray-600: #6B6B66 !important;
-  --screen-bg: #FBF9F1 !important;
-  --text: #1F1B17 !important;
-  --tealp: #EFEDE5 !important;
+  --navy: #2E3338 !important;
+  --navy2: #2E3338 !important;
+  --navy3: #54606E !important;
+  --teal: #2E3338 !important;
+  --teal2: #2E3338 !important;
+  --teal-dark: #2E3338 !important;
+  --silver: #FFFFFF !important;
+  --silver2: #EFF3F8 !important;
+  --bdr: #EFF3F8 !important;
+  --txt: #2E3338 !important;
+  --mut: #6B7585 !important;
+  --wh: #FFFFFF !important;
+  --gray: #FFFFFF !important;
+  --gray2: #EFF3F8 !important;
+  --gray-100: #FFFFFF !important;
+  --gray-600: #6B7585 !important;
+  --screen-bg: #FFFFFF !important;
+  --text: #2E3338 !important;
+  --tealp: #EFF3F8 !important;
 }
 html, body {
-  background: #FBF9F1 !important;
+  background: #FFFFFF !important;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif !important;
-  color: #1F1B17 !important;
+  color: #2E3338 !important;
   letter-spacing: -0.005em !important;
 }
 * { font-family: inherit !important; }
@@ -365,27 +365,27 @@ input, select, textarea, button {
 }
 /* Buttons get the new pill treatment */
 .gen-btn, .btn-primary, .ui-btn, .btn-new-prop {
-  background: #1F1B17 !important;
+  background: #2E3338 !important;
   border-radius: 999px !important;
   letter-spacing: -0.005em !important;
   font-weight: 600 !important;
 }
 /* Inputs warmed */
 input, select, textarea {
-  background: #F4F1E9 !important;
-  border: 1px solid #E8E2D2 !important;
+  background: #FFFFFF !important;
+  border: 1px solid #EFF3F8 !important;
   border-radius: 12px !important;
-  color: #1F1B17 !important;
+  color: #2E3338 !important;
 }
 input:focus, select:focus, textarea:focus {
-  border-color: #1F1B17 !important;
-  background: #FBF9F1 !important;
+  border-color: #2E3338 !important;
+  background: #FFFFFF !important;
   outline: none !important;
 }
 /* Cards */
 .card, .stat-card, .prop-card, .pcard {
-  background: #F4F1E9 !important;
-  border: 1px solid #E8E2D2 !important;
+  background: #FFFFFF !important;
+  border: 1px solid #EFF3F8 !important;
   border-radius: 16px !important;
 }
 </style>
@@ -1006,7 +1006,7 @@ input:focus, select:focus, textarea:focus {
               )}
 
               {resultado.advertencias && (
-                <div style={{ background: "rgba(245,158,11,0.08)", borderLeft: "3px solid var(--amber)", borderRadius: 8, padding: "8px 12px", fontSize: 12, color: "#92400e", marginBottom: 14 }}>
+                <div style={{ background: "rgba(245,158,11,0.08)", borderLeft: "3px solid var(--amber)", borderRadius: 8, padding: "8px 12px", fontSize: 12, color: "#0062E3", marginBottom: 14 }}>
                   <strong>Nota:</strong> {resultado.advertencias}
                 </div>
               )}

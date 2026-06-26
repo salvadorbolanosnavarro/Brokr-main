@@ -6,7 +6,7 @@
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"/>
 <title>Broquer — Ficha Manual</title>
-<meta name="theme-color" content="#F7F5EE"/>
+<meta name="theme-color" content="#05203C"/>
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -65,7 +65,7 @@
 }
 .f input:focus, .f select:focus, .f textarea:focus{
   border-color: var(--ink);
-  box-shadow: 0 0 0 3px rgba(10,10,10,0.06);
+  box-shadow: 0 0 0 3px rgba(22,22,22,0.06);
 }
 .f input::placeholder, .f textarea::placeholder{ color: var(--mute-2); }
 .f textarea{ resize: vertical; min-height: 90px; }
@@ -127,7 +127,7 @@
 .photo-del{
   position: absolute;
   top: 5px; right: 5px;
-  background: rgba(10,10,10,.65);
+  background: rgba(22,22,22,.65);
   color: var(--bone);
   border: none;
   width: 22px; height: 22px;
@@ -465,7 +465,7 @@
 .ft-id{
   font-family: var(--font-mono);
   font-size: 9px;
-  color: rgba(247,245,238,.55);
+  color: rgba(255,255,255,.55);
   letter-spacing: .08em;
 }
 
@@ -1298,7 +1298,7 @@ async function guardarComoInmueble() {
 
 function _mostrarToastInmueble() {
   const toast = document.createElement('div');
-  toast.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a2035;color:white;padding:11px 18px;border-radius:22px;font-size:13px;z-index:99999;display:flex;align-items:center;gap:8px;box-shadow:0 8px 28px rgba(0,0,0,.28);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:88vw;text-align:center;';
+  toast.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#2E3338;color:white;padding:11px 18px;border-radius:22px;font-size:13px;z-index:99999;display:flex;align-items:center;gap:8px;box-shadow:0 8px 28px rgba(0,0,0,.28);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:88vw;text-align:center;';
   toast.innerHTML = '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> También se guardó en Mis Inmuebles';
   document.body.appendChild(toast);
   setTimeout(() => toast.style.opacity = '0', 3500);

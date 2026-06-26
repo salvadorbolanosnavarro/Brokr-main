@@ -55,13 +55,13 @@
 .btn-import-eb {
   height: 44px; padding: 0 16px;
   background: white; color: var(--ink);
-  border: 1.5px solid #d6dae3; border-radius: var(--r-pill);
+  border: 1.5px solid #EFF3F8; border-radius: var(--r-pill);
   font-size: 13px; font-weight: 600; cursor: pointer;
   display: inline-flex; align-items: center; gap: 8px;
   transition: all var(--dur) var(--ease);
   margin-right: 8px;
 }
-.btn-import-eb:hover { border-color: var(--ink); background: #f6f7fa; }
+.btn-import-eb:hover { border-color: var(--ink); background: #FFFFFF; }
 .btn-import-eb:active { transform: scale(.98); }
 .btn-import-eb:disabled { opacity: .55; cursor: not-allowed; }
 @media (max-width: 600px) {
@@ -83,9 +83,9 @@
   text-align: center; font-family: var(--font);
 }
 .eb-import-title { font-size: 17px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
-.eb-import-msg { font-size: 13px; color: #5a6070; line-height: 1.5; margin-bottom: 18px; }
+.eb-import-msg { font-size: 13px; color: #6B7585; line-height: 1.5; margin-bottom: 18px; }
 .eb-import-bar {
-  width: 100%; height: 6px; background: #eef0f4;
+  width: 100%; height: 6px; background: #FFFFFF;
   border-radius: 10px; overflow: hidden; margin-bottom: 8px;
 }
 .eb-import-bar__fill {
@@ -100,7 +100,7 @@
   0%   { transform: translateX(-100%); }
   100% { transform: translateX(285%); }
 }
-.eb-import-count { font-size: 11px; color: #9aa0ad; }
+.eb-import-count { font-size: 11px; color: #C1C7CF; }
 .eb-import-summary { margin-top: 16px; font-size: 13px; line-height: 1.7; color: var(--ink); }
 .eb-import-summary b { font-weight: 600; }
 .eb-import-btn {
@@ -111,9 +111,9 @@
 }
 .eb-import-btn:hover { background: var(--ink-2); }
 .eb-import-errs {
-  font-size: 11px; color: #c93737; text-align: left;
+  font-size: 11px; color: #E70866; text-align: left;
   max-height: 80px; overflow-y: auto; margin-top: 10px;
-  border: 1px solid #f0d2d2; border-radius: 8px; padding: 8px 10px; background: #fff5f5;
+  border: 1px solid #E0E4E9; border-radius: 8px; padding: 8px 10px; background: #FFFFFF;
 }
 
 /* Toolbar */
@@ -130,7 +130,7 @@
   height: 44px;
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
-.props-search-wrap:focus-within { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(10,10,10,.05); }
+.props-search-wrap:focus-within { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(22,22,22,.05); }
 .props-search-wrap svg { flex-shrink: 0; color: var(--mute); }
 .props-search-wrap input {
   flex: 1; background: none; border: none; outline: none;
@@ -265,7 +265,7 @@
 .prop-card:hover {
   transform: translateY(-2px);
   border-color: var(--line-2);
-  box-shadow: 0 8px 32px rgba(10,10,10,.06);
+  box-shadow: 0 8px 32px rgba(22,22,22,.06);
 }
 .prop-card-img {
   width: 100%; aspect-ratio: 4/3;
@@ -306,7 +306,7 @@
   color: var(--ink); border-radius: var(--r-pill);
   font-size: 11px; font-weight: 600; letter-spacing: -0.005em;
 }
-.img-badge.dark { background: rgba(10,10,10,.85); color: var(--paper); }
+.img-badge.dark { background: rgba(22,22,22,.85); color: var(--paper); }
 
 .prop-card-body { padding: 16px; flex: 1; display: flex; flex-direction: column; }
 .prop-card-loc {
@@ -369,7 +369,7 @@
   display: inline-flex; align-items: center; justify-content: center; gap: 5px;
 }
 .prop-act-btn:hover { background: var(--paper-2); border-color: var(--line-3); }
-.prop-act-del:hover { color: var(--danger); border-color: rgba(184,75,63,.30); background: var(--danger-soft); }
+.prop-act-del:hover { color: var(--danger); border-color: rgba(231,8,102,.30); background: var(--danger-soft); }
 
 /* ── Status badges ────────────────────────── */
 .badge {
@@ -384,14 +384,14 @@
 .badge-venta    { background: var(--forest-soft); color: var(--forest); }
 .badge-renta    { background: var(--info-soft);   color: var(--info); }
 .badge-activa   { background: var(--success-soft);color: var(--success); }
-.badge-vendida  { background: rgba(91,77,138,.12);color: #5B4D8A; }
+.badge-vendida  { background: rgba(91,77,138,.12);color: #0062E3; }
 .badge-rentada  { background: var(--info-soft);   color: var(--info); }
 .badge-suspendida{ background: var(--warn-soft);  color: var(--warn); }
 
 /* ── Modals ───────────────────────────────── */
 .prop-modal-overlay {
   display: none; position: fixed; inset: 0;
-  background: rgba(10,10,10,.45);
+  background: rgba(22,22,22,.45);
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
   z-index: 300; align-items: flex-end; justify-content: center;
   padding: 0;
@@ -467,7 +467,7 @@
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
 .pf-field input:focus, .pf-field textarea:focus, .pf-field select:focus {
-  border-color: var(--ink); box-shadow: 0 0 0 3px rgba(10,10,10,.05);
+  border-color: var(--ink); box-shadow: 0 0 0 3px rgba(22,22,22,.05);
 }
 .pf-field textarea { resize: vertical; min-height: 88px; padding: 12px 14px; height: auto; }
 .pf-field select {
@@ -702,8 +702,8 @@
   border: none;
   transition: background .15s ease;
 }
-.bulk-bar__btn--danger { background: #e24b4a; color: white; }
-.bulk-bar__btn--danger:hover { background: #c93737; }
+.bulk-bar__btn--danger { background: #E70866; color: white; }
+.bulk-bar__btn--danger:hover { background: #E70866; }
 .bulk-bar__btn--ghost { background: transparent; color: rgba(255,255,255,.85); }
 .bulk-bar__btn--ghost:hover { background: rgba(255,255,255,.1); color: white; }
 
@@ -735,9 +735,9 @@
   transition: all .15s ease;
 }
 .confirm-del-modal .btn-cancel { background: var(--paper-2); color: var(--ink); }
-.confirm-del-modal .btn-cancel:hover { background: #e5e7eb; }
-.confirm-del-modal .btn-confirm { background: #e24b4a; color: white; }
-.confirm-del-modal .btn-confirm:hover { background: #c93737; }
+.confirm-del-modal .btn-cancel:hover { background: #EFF3F8; }
+.confirm-del-modal .btn-confirm { background: #E70866; color: white; }
+.confirm-del-modal .btn-confirm:hover { background: #E70866; }
 
 @media (max-width: 700px) {
   .props-select-all { padding: 6px 10px; font-size: 12px; }
@@ -821,7 +821,7 @@
         <div class="props-filter-est-wrap" id="props-filter-est-wrap">
           <button type="button" class="props-filter-est-btn" id="props-filter-est-btn" onclick="toggleEstDropdown()">
             <span id="props-filter-est-label">Todos los estatus</span>
-            <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path stroke="#6B6B66" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M1 1l4 4 4-4"/></svg>
+            <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path stroke="#6B7585" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M1 1l4 4 4-4"/></svg>
           </button>
           <div class="props-est-dropdown" id="props-est-dropdown">
             <label class="props-est-option"><input type="checkbox" value="activa" onchange="filterProps()"> Activa</label>
@@ -1388,7 +1388,7 @@ async function publicarEnFacebook(prop) {
     const d = await res.json();
     // Toast de éxito no invasivo
     const toast = document.createElement('div');
-    toast.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a2035;color:white;padding:10px 18px;border-radius:20px;font-size:13px;z-index:9999;display:flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(0,0,0,.25)';
+    toast.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#2E3338;color:white;padding:10px 18px;border-radius:20px;font-size:13px;z-index:9999;display:flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(0,0,0,.25)';
     toast.innerHTML = '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg> Publicado en ' + (conn.page_name || 'tu página de Facebook');
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 4000);
@@ -1557,7 +1557,7 @@ async function borrarFotosDelStorage(urls) {
 
 function mostrarToast(text) {
   const toast = document.createElement('div');
-  toast.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a2035;color:white;padding:11px 20px;border-radius:22px;font-size:13px;z-index:99999;display:flex;align-items:center;gap:8px;box-shadow:0 8px 28px rgba(0,0,0,.28);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;';
+  toast.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#2E3338;color:white;padding:11px 20px;border-radius:22px;font-size:13px;z-index:99999;display:flex;align-items:center;gap:8px;box-shadow:0 8px 28px rgba(0,0,0,.28);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;';
   toast.innerHTML = '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> ' + text;
   document.body.appendChild(toast);
   setTimeout(() => toast.style.opacity = '0', 2800);
@@ -1791,7 +1791,7 @@ async function importarDesdeEasyBroker() {
     sumEl.innerHTML =
       '<div><b>' + nuevas + '</b> propiedades nuevas importadas</div>' +
       '<div><b>' + actualizadas + '</b> actualizadas con datos más recientes</div>' +
-      '<div style="color:#9aa0ad;margin-top:4px;font-size:12px">Total publicadas en tu EasyBroker: ' + data.total_easybroker + '</div>';
+      '<div style="color:#C1C7CF;margin-top:4px;font-size:12px">Total publicadas en tu EasyBroker: ' + data.total_easybroker + '</div>';
 
     if (data.errores && data.errores.length) {
       errsEl.style.display = 'block';
@@ -1811,7 +1811,7 @@ async function importarDesdeEasyBroker() {
   } catch (err) {
     fillEl.classList.remove('indet');
     fillEl.style.width = '100%';
-    fillEl.style.background = '#c93737';
+    fillEl.style.background = '#E70866';
     titleEl.textContent = 'No se pudo importar';
     msgEl.textContent = err.message || 'Error desconocido';
     countEl.innerHTML = '&nbsp;';
