@@ -1,6 +1,16 @@
 /* ════════════════════════════════════════════════════════════
-   BROQUER — Design System
-   Apple-pristine + warm-professional. Token-driven.
+   BROQUER — Design System  ·  Edición "26 Hospitality"
+   Inspirado en el sistema visual del sitio de Hospitality del
+   Mundial 2026. Token-driven.
+
+   Lenguaje: fondo blanco, texto casi negro (#05090e), acento
+   TEAL (#4bd7e6 brillante / #0297a7 oscuro), rojo de urgencia
+   (#fe1743), secciones oscuras selectivas (navy #0f174f, negro
+   #05090e, morado #24146e). Botones con firma de esquina
+   superior-izquierda cuadrada. Títulos condensados negros en
+   MAYÚSCULAS (Anton, proxy libre de "Fwc 2026 Condensed");
+   cuerpo en Noto Sans (la misma secundaria que usa el sitio).
+   Único elemento heredado de Broquer: el logotipo.
 
    Esta hoja es la única fuente de verdad visual de Broquer.
    Define: tokens (color, tipografía, espaciado, radios, sombras,
@@ -14,53 +24,71 @@
    componente equivalente. Nada de colores ni radios a mano:
    siempre tokens.
 
-   La paleta principal NO cambia. Los alias "legacy" se conservan
-   1:1 para que el markup existente siga funcionando.
+   Los nombres de variable NO cambian (incluidos los alias
+   "legacy" como --forest, --teal, --emerald): solo se reasigna
+   su VALOR a la nueva piel. --forest y sus alias ahora apuntan
+   al TEAL de acento.
    ════════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Noto+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
-  /* ── Surfaces ───────────────────────────── */
-  --paper:   #F7F5EE;     /* warm ivory background */
-  --paper-2: #F1EEE3;     /* subtle inset surface */
-  --bone:    #FFFFFF;     /* card surface */
-  --shell:   #FBFAF5;     /* mid surface */
+  /* ── Surfaces (claro, blanco como el sitio) ─ */
+  --paper:   #FFFFFF;     /* fondo del body */
+  --paper-2: #EDF0F7;     /* inset visible / hover / chips (gray-300) */
+  --bone:    #FFFFFF;     /* superficie de card */
+  --shell:   #F9FBFF;     /* superficie media (gray-200) */
 
-  /* ── Ink ─────────────────────────────────── */
-  --ink:     #0A0A0A;
-  --ink-2:   #1F1F1B;
-  --ink-3:   #3A3A33;
-  --mute:    #6B6B66;
-  --mute-2:  #9A9A92;
-  --mute-3:  #C5C2B5;
+  /* ── Ink (casi negro sobre claro) ─────────── */
+  --ink:     #05090E;     /* texto principal */
+  --ink-2:   #2A3649;     /* gray-1000 */
+  --ink-3:   #4B5667;     /* gray-900 — secundario */
+  --mute:    #6B7585;     /* gray-800 */
+  --mute-2:  #858F9F;     /* gray-700 */
+  --mute-3:  #BCC4D1;     /* gray-600 */
 
-  /* ── Hairlines ──────────────────────────── */
-  --line:     rgba(10,10,10,0.07);
-  --line-2:   rgba(10,10,10,0.12);
-  --line-3:   rgba(10,10,10,0.20);
+  /* ── Hairlines (líneas del sistema FIFA) ──── */
+  --line:     #E0E4ED;    /* gray-400 — bordes de card */
+  --line-2:   #D0D5DF;    /* gray-500 — divisores */
+  --line-3:   #BCC4D1;    /* gray-600 — más fuerte */
 
-  /* ── Accents ────────────────────────────── */
-  --forest:   #2F4A3A;
-  --forest-2: #3D5C49;
-  --forest-soft: #E5EBE3;
+  /* ── Accents (TEAL de marca) ──────────────── */
+  --forest:   #0297A7;    /* alias histórico → ahora TEAL oscuro */
+  --forest-2: #4BD7E6;    /* teal brillante (CTA) */
+  --forest-soft: rgba(2,151,167,0.10);
 
-  --warn:     #B5601C;
-  --warn-soft:#F6E8D6;
-  --danger:   #B84B3F;
-  --danger-soft:#F5DCD7;
-  --success:  #1F6B4A;
-  --success-soft:#DDEBE0;
-  --info:     #2D5A88;
-  --info-soft:#DCE6F0;
+  --teal-bright: #4BD7E6; /* CTA primario sobre cualquier fondo */
+  --teal-deep:   #0297A7; /* bordes activos, iconos, links */
+  --red:         #FE1743; /* urgencia / "Going Fast" */
+  --gold:        #B29F6C; /* On Location premium */
 
-  /* ── Geometry (radios) ──────────────────── */
-  --r-xs: 6px;
+  /* Superficies oscuras de marca (para secciones/hero) */
+  --fifa-navy:    #0F174F;
+  --fifa-black:   #05090E;
+  --fifa-purple:  #24146E;
+  --fifa-purple2: #4A168C;
+  --fifa-filter:  #0E0734;
+
+  --warn:     #FFA850;
+  --warn-soft:rgba(255,168,80,0.14);
+  --danger:   #FE1743;
+  --danger-soft:rgba(254,23,67,0.10);
+  --success:  #14A06E;
+  --success-soft:rgba(20,160,110,0.12);
+  --info:     #4A168C;
+  --info-soft:rgba(74,22,140,0.10);
+
+  /* ── Geometry (radios del sistema FIFA) ──── */
+  --r-xs: 4px;
   --r-sm: 8px;
   --r:    12px;
   --r-lg: 16px;
-  --r-xl: 22px;
+  --r-xl: 24px;
   --r-pill: 999px;
+  --r-btn:    0 24px 24px 24px;  /* firma: esquina sup-izq cuadrada */
+  --r-btn-sm: 0 12px 12px 12px;
+  --wave:    60px;   /* curva de esquina de sección */
+  --wave-lg: 120px;  /* curva grande del hero */
 
   /* ── Espaciado (escala base 4px) ────────── */
   --sp-1: 4px;
@@ -75,13 +103,13 @@
   --sp-12: 48px;
   --sp-16: 64px;
 
-  /* ── Sombras (tinte cálido coherente) ───── */
-  --shadow-xs: 0 1px 2px rgba(31,28,22,.04);
-  --shadow-sm: 0 1px 3px rgba(31,28,22,.06), 0 1px 2px rgba(31,28,22,.04);
-  --shadow:    0 4px 12px rgba(31,28,22,.08), 0 1px 3px rgba(31,28,22,.05);
-  --shadow-md: 0 8px 24px rgba(31,28,22,.10), 0 2px 6px rgba(31,28,22,.06);
-  --shadow-lg: 0 14px 36px rgba(31,28,22,.14), 0 4px 10px rgba(31,28,22,.07);
-  --shadow-xl: 0 24px 64px rgba(31,28,22,.18), 0 8px 16px rgba(31,28,22,.08);
+  /* ── Sombras (tinte tinta, fondo claro) ─── */
+  --shadow-xs: 0 1px 2px rgba(5,9,14,.05);
+  --shadow-sm: 0 1px 3px rgba(5,9,14,.07), 0 1px 2px rgba(5,9,14,.04);
+  --shadow:    0 4px 14px rgba(5,9,14,.08), 0 1px 3px rgba(5,9,14,.05);
+  --shadow-md: 0 10px 28px rgba(5,9,14,.10), 0 2px 6px rgba(5,9,14,.06);
+  --shadow-lg: 0 18px 44px rgba(5,9,14,.12), 0 4px 12px rgba(5,9,14,.07);
+  --shadow-xl: 0 28px 72px rgba(5,9,14,.16), 0 8px 20px rgba(5,9,14,.10);
 
   /* ── Alturas de control ─────────────────── */
   --h-sm:  36px;
@@ -90,9 +118,9 @@
   --touch-min: 44px;
 
   /* ── Anillo de foco ─────────────────────── */
-  --focus:        0 0 0 3px rgba(10,10,10,0.10);
-  --focus-forest: 0 0 0 3px rgba(47,74,58,0.18);
-  --focus-danger: 0 0 0 3px rgba(184,75,63,0.18);
+  --focus:        0 0 0 3px rgba(2,151,167,0.22);
+  --focus-forest: 0 0 0 3px rgba(2,151,167,0.22);
+  --focus-danger: 0 0 0 3px rgba(254,23,67,0.20);
 
   /* ── Z-index (alineado con app-shell.js) ── */
   --z-base:    1;
@@ -105,8 +133,8 @@
   --z-toast:   320;
 
   /* ── Tipografía ─────────────────────────── */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
-  --font-display: 'Inter Tight', 'Inter', -apple-system, system-ui, sans-serif;
+  --font-sans: 'Noto Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-display: 'Anton', 'Arial Narrow', 'Noto Sans', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
   --fs-display: 44px;
@@ -137,7 +165,7 @@
   --teal: var(--forest);
   --teal2: var(--forest-2);
   --teal-dark: var(--forest);
-  --teal-glow: rgba(47,74,58,0.10);
+  --teal-glow: rgba(2,151,167,0.12);
   --white: var(--bone);
   --gray-100: var(--paper-2);
   --gray-200: var(--line);
@@ -157,12 +185,12 @@
   --mut2: var(--mute-2);
   --r-old: 16px;
   --r2: 12px;
-  --r3: 10px;
-  --amber: #B5601C; --amber2:#C77D3F;
-  --rose:  #B84B3F; --rose2: #C8665B;
-  --violet:#5B4D8A; --violet2:#7D6FAF;
-  --emerald:#2F4A3A; --emerald2:#3D5C49;
-  --sky:   #2D5A88; --sky2:   #3F71A0;
+  --r3: 8px;
+  --amber: #FFA850; --amber2:#FFC07A;
+  --rose:  #FE1743; --rose2: #FF5C7A;
+  --violet:#4A168C; --violet2:#7B1FA2;
+  --emerald:#0297A7; --emerald2:#4BD7E6;
+  --sky:   #0F174F; --sky2:   #2A3AA0;
   --fs-base: var(--fs-body);
   --fs-label: var(--fs-xs);
   --fs-title: var(--fs-h3);
@@ -186,18 +214,19 @@ html, body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
-::selection { background: var(--ink); color: var(--paper); }
+::selection { background: var(--teal-bright); color: var(--fifa-black); }
 
 h1,h2,h3,h4,h5 {
   font-family: var(--font-display);
-  letter-spacing: -0.025em;
-  font-weight: 600;
-  line-height: var(--lh-tight);
+  letter-spacing: 0.01em;
+  font-weight: 400;
+  text-transform: uppercase;
+  line-height: 1.0;
   color: var(--ink);
 }
 h1 { font-size: var(--fs-h1); }
 h2 { font-size: var(--fs-h2); }
-h3 { font-size: var(--fs-h3); letter-spacing: -0.018em; }
+h3 { font-size: var(--fs-h3); letter-spacing: 0.02em; }
 
 p { line-height: var(--lh); color: var(--ink-2); }
 
@@ -267,7 +296,7 @@ input, select, textarea, button {
   color: var(--bone);
   height: var(--h);
   padding: 0 var(--sp-5);
-  border-radius: var(--r-pill);
+  border-radius: var(--r-btn);
   font-weight: 600;
   font-size: var(--fs-sm);
   letter-spacing: -0.005em;
@@ -287,8 +316,8 @@ input, select, textarea, button {
 }
 .bk-btn svg { flex-shrink: 0; }
 
-.bk-btn--forest { background: var(--forest); }
-.bk-btn--forest:hover { background: var(--forest-2); }
+.bk-btn--forest { background: var(--teal-bright); color: var(--fifa-black); }
+.bk-btn--forest:hover { background: #66DFEB; }
 
 .bk-btn--ghost { background: transparent; color: var(--ink); border-color: var(--line-2); }
 .bk-btn--ghost:hover { background: var(--paper-2); border-color: var(--line-3); }
@@ -299,7 +328,7 @@ input, select, textarea, button {
 .bk-btn--danger { background: transparent; color: var(--danger); border-color: var(--danger-soft); }
 .bk-btn--danger:hover { background: var(--danger-soft); }
 
-.bk-btn--sm  { height: var(--h-sm); padding: 0 var(--sp-3); font-size: var(--fs-xs); }
+.bk-btn--sm  { height: var(--h-sm); padding: 0 var(--sp-3); font-size: var(--fs-xs); border-radius: var(--r-btn-sm); }
 .bk-btn--lg  { height: var(--h-lg); padding: 0 var(--sp-6); font-size: var(--fs-body); }
 .bk-btn--block { width: 100%; }
 
@@ -314,6 +343,7 @@ input, select, textarea, button {
 }
 .bk-btn--ghost.is-loading::after,
 .bk-btn--quiet.is-loading::after { color: var(--ink); }
+.bk-btn--forest.is-loading::after { color: var(--fifa-black); }
 
 @keyframes bk-spin { to { transform: rotate(360deg); } }
 
@@ -371,7 +401,7 @@ input, select, textarea, button {
 .bk-select {
   height: var(--h-lg); padding: 0 var(--sp-8) 0 var(--sp-4);
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B6B66' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7585' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right var(--sp-4) center;
   cursor: pointer;
@@ -491,14 +521,14 @@ input, select, textarea, button {
   letter-spacing: 0.16em; text-transform: uppercase;
   color: var(--mute); margin-bottom: var(--sp-2);
 }
-.bk-page-header__title { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 600; letter-spacing: -0.03em; line-height: var(--lh-tight); }
+.bk-page-header__title { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 400; text-transform: uppercase; letter-spacing: 0.01em; line-height: 1.02; }
 .bk-page-header__sub { font-size: var(--fs-sm); color: var(--mute); margin-top: var(--sp-2); line-height: var(--lh); max-width: 60ch; }
 
 .bk-section-header {
   display: flex; align-items: baseline; justify-content: space-between;
   gap: var(--sp-4); margin-bottom: var(--sp-4);
 }
-.bk-section-header h2 { font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 600; letter-spacing: -0.025em; }
+.bk-section-header h2 { font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 400; letter-spacing: 0.01em; }
 .bk-section-header a { font-size: var(--fs-sm); color: var(--ink-2); font-weight: 500; display: inline-flex; align-items: center; gap: var(--sp-1); }
 .bk-section-header a:hover { color: var(--forest); }
 
@@ -570,7 +600,7 @@ input, select, textarea, button {
    ════════════════════════════════════════════════════════════ */
 .bk-overlay {
   position: fixed; inset: 0; z-index: var(--z-overlay);
-  background: rgba(10,10,10,0.28);
+  background: rgba(5,9,14,0.45);
   display: flex; align-items: center; justify-content: center;
   padding: var(--sp-4);
   opacity: 0; visibility: hidden; pointer-events: none;
@@ -594,7 +624,7 @@ input, select, textarea, button {
   display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4);
   padding: var(--sp-5) var(--sp-6); border-bottom: 1px solid var(--line); flex-shrink: 0;
 }
-.bk-modal__title { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 600; letter-spacing: -0.01em; }
+.bk-modal__title { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 400; text-transform: uppercase; letter-spacing: 0.02em; }
 .bk-modal__body { padding: var(--sp-6); overflow-y: auto; }
 .bk-modal__foot {
   display: flex; align-items: center; justify-content: flex-end; gap: var(--sp-2);
@@ -620,7 +650,7 @@ input, select, textarea, button {
   display: flex; align-items: center; justify-content: center;
   margin-bottom: var(--sp-1);
 }
-.bk-empty__title { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 600; color: var(--ink); }
+.bk-empty__title { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 400; text-transform: uppercase; letter-spacing: 0.02em; color: var(--ink); }
 .bk-empty__text { font-size: var(--fs-sm); color: var(--mute); max-width: 36ch; line-height: var(--lh); }
 .bk-empty__action { margin-top: var(--sp-3); }
 
@@ -693,7 +723,7 @@ input, select, textarea, button {
 .bk-prop-card__media { aspect-ratio: 4 / 3; background: var(--paper-2); position: relative; overflow: hidden; }
 .bk-prop-card__media img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .bk-prop-card__body { padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-1); }
-.bk-prop-card__price { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 600; letter-spacing: -0.02em; color: var(--ink); }
+.bk-prop-card__price { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 400; letter-spacing: 0.01em; color: var(--ink); }
 .bk-prop-card__title { font-size: var(--fs-sm); color: var(--ink-2); }
 .bk-prop-card__meta  { font-size: var(--fs-xs); color: var(--mute); display: flex; gap: var(--sp-3); margin-top: var(--sp-1); }
 
