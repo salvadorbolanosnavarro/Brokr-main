@@ -68,13 +68,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
 <title>ISR — Broquer®</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
-
 <style>
 /* ═══════════════════════════════════════
    Broquer DESIGN SYSTEM — ISR MODULE
    Paleta: Blanco · Navy · Teal
-   Tipografía: Poppins
+   Tipografía: Inter (theme)
 ═══════════════════════════════════════ */
 :root {
   --navy:       var(--ink);
@@ -106,7 +104,7 @@
   --r2:         14px;
   --r3:         10px;
   --touch:      48px;
-  --font:       'Poppins', sans-serif;
+  --font:       var(--font-sans);
   --shadow:     0 2px 16px rgba(0,0,0,0.07);
   --shadow-sm:  0 1px 6px rgba(0,0,0,0.05);
 }
@@ -1420,7 +1418,6 @@ async function descargarPDF() {
 <title>Broquer · ${meses[d.mesV]} ${d.anioV}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   @page{size:A4;margin:14mm 18mm 12mm 18mm}
@@ -1434,7 +1431,7 @@ async function descargarPDF() {
   }
   /* ── HEADER ── */
   .hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;padding-bottom:12px;border-bottom:1.5px solid #161616}
-  .hdr-left h1{font-family:'Fraunces',serif;font-size:26px;font-weight:400;letter-spacing:-0.025em;color:#161616;line-height:1.1;margin-bottom:5px}
+  .hdr-left h1{font-family:var(--font-sans);font-size:26px;font-weight:400;letter-spacing:-0.025em;color:#161616;line-height:1.1;margin-bottom:5px}
   .hdr-left .meta{font-size:10px;color:#939BA6;letter-spacing:0.01em}
   .hdr-right{text-align:right}
   .tipo-badge{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#0062E3;background:#FFFFFF;padding:4px 10px;border-radius:20px;display:inline-block;margin-bottom:6px}
@@ -1448,14 +1445,14 @@ async function descargarPDF() {
   .inpc-cell.hl{background:#FFFFFF}
   .inpc-arrow{display:flex;align-items:center;justify-content:center;color:#E0E4E9;font-size:14px;border-right:none!important;padding:0}
   .inpc-lbl{font-size:7.5px;font-weight:600;text-transform:uppercase;letter-spacing:1.4px;color:#939BA6;margin-bottom:5px}
-  .inpc-val{font-family:'Fraunces',serif;font-weight:400;font-size:15px;letter-spacing:-0.01em;color:#161616}
+  .inpc-val{font-family:var(--font-sans);font-weight:400;font-size:15px;letter-spacing:-0.01em;color:#161616}
   .inpc-cell.hl .inpc-val{color:#0062E3;font-weight:500}
   /* ── CARDS ── */
   .cards{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid #EFF3F8;border-radius:4px;overflow:hidden;margin-bottom:12px}
   .card{padding:14px 16px;border-right:1px solid #EFF3F8}
   .card:last-child{border-right:none}
   .card-l{font-size:7.5px;font-weight:600;text-transform:uppercase;letter-spacing:1.4px;color:#939BA6;margin-bottom:6px}
-  .card-v{font-family:'Fraunces',serif;font-size:20px;font-weight:400;letter-spacing:-0.02em;color:#161616;margin-bottom:2px}
+  .card-v{font-family:var(--font-sans);font-size:20px;font-weight:400;letter-spacing:-0.02em;color:#161616;margin-bottom:2px}
   .card-n{font-size:9px;color:#939BA6}
   .card.total .card-v{color:#E70866;font-weight:500}
   .card.iva .card-v{color:#024DAF}
@@ -1465,8 +1462,8 @@ async function descargarPDF() {
   .br.sub{padding-left:16px;color:#939BA6;font-size:10px}
   .br.tot{font-size:12.5px;padding:10px 0;border-bottom:1.5px solid #161616;border-top:1px solid #E0E4E9;margin-top:2px}
   .bl{color:#54606E;flex:1;padding-right:12px}
-  .bv{font-family:'Fraunces',serif;font-weight:400;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:12px}
-  .br.tot .bl,.br.tot .bv{font-family:'Fraunces',serif;font-weight:500;color:#161616;font-size:13px}
+  .bv{font-family:var(--font-sans);font-weight:400;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:12px}
+  .br.tot .bl,.br.tot .bv{font-family:var(--font-sans);font-weight:500;color:#161616;font-size:13px}
   /* ── NOTA ── */
   .nota{border-left:2px solid #E0E4E9;padding:10px 14px;font-size:10px;margin-top:16px;line-height:1.65;color:#54606E;background:#FFFFFF}
   .nota strong{font-weight:600;color:#161616}

@@ -8,7 +8,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
@@ -19,8 +18,8 @@
       }
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    html, body { font-family: 'Poppins', sans-serif; background: var(--screen-bg); color: var(--text); }
-    input, select, textarea { font-size: max(16px, 1em) !important; font-family: 'Poppins', sans-serif; }
+    html, body { font-family: var(--font-sans); background: var(--screen-bg); color: var(--text); }
+    input, select, textarea { font-size: max(16px, 1em) !important; font-family: var(--font-sans); }
     input[type=number]::-webkit-inner-spin-button,
     input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     input[type=number] { -moz-appearance: textfield; }
@@ -48,7 +47,7 @@
     .avm-tabs::-webkit-scrollbar { display: none; }
     .avm-tab {
       flex: 1; padding: 13px 8px; font-size: 12px; font-weight: 600;
-      font-family: 'Poppins', sans-serif; color: rgba(255,255,255,0.4);
+      font-family: var(--font-sans); color: rgba(255,255,255,0.4);
       background: none; border: none; border-bottom: 2px solid transparent;
       cursor: pointer; white-space: nowrap; text-align: center; transition: color 0.2s;
     }
@@ -73,7 +72,7 @@
       border-radius: 12px; border: 1.5px solid var(--gray-200);
       background: var(--gray-100); padding: 10px 4px;
       font-size: 10px; font-weight: 600; color: var(--gray-600);
-      font-family: 'Poppins', sans-serif; cursor: pointer;
+      font-family: var(--font-sans); cursor: pointer;
       text-align: center; transition: all 0.15s;
       display: flex; flex-direction: column; align-items: center; gap: 4px;
     }
@@ -100,7 +99,7 @@
     .btn-primary {
       width: 100%; padding: 14px 20px; background: var(--navy); color: white;
       border: none; border-radius: 14px; font-size: 14px; font-weight: 700;
-      font-family: 'Poppins', sans-serif; cursor: pointer;
+      font-family: var(--font-sans); cursor: pointer;
       transition: opacity 0.2s, transform 0.15s;
       display: flex; align-items: center; justify-content: center; gap: 8px;
     }
@@ -109,7 +108,7 @@
     .btn-primary.outline { background: transparent; color: var(--gray-600); border: 1px solid var(--gray-200); }
     .btn-sm {
       padding: 7px 13px; border-radius: 8px; font-size: 11px; font-weight: 600;
-      font-family: 'Poppins', sans-serif; cursor: pointer; border: none;
+      font-family: var(--font-sans); cursor: pointer; border: none;
     }
     .btn-sm.danger { background: rgba(244,63,94,0.1); color: var(--rose); border: 1px solid rgba(244,63,94,0.2); }
 
@@ -208,7 +207,7 @@
     .autocomplete-item {
       padding: 11px 14px; font-size: 13px; color: var(--text);
       cursor: pointer; border-bottom: 1px solid var(--gray-100);
-      transition: background 0.1s; font-family: 'Poppins', sans-serif;
+      transition: background 0.1s; font-family: var(--font-sans);
     }
     .autocomplete-item:last-child { border-bottom: none; }
     .autocomplete-item:active { background: var(--teal-glow); }
@@ -255,7 +254,7 @@
     .btn-pdf {
       width: 100%; padding: 14px 20px; background: var(--teal); color: white;
       border: none; border-radius: 14px; font-size: 14px; font-weight: 700;
-      font-family: 'Poppins', sans-serif; cursor: pointer;
+      font-family: var(--font-sans); cursor: pointer;
       display: flex; align-items: center; justify-content: center; gap: 8px;
       transition: opacity 0.2s, transform 0.15s;
     }
@@ -268,7 +267,7 @@
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
     .ia-pulse { animation: pulse 1.5s ease-in-out infinite; }
     .toggle-opt { display: flex; background: var(--gray-100); border-radius: 10px; padding: 3px; margin-bottom: 10px; }
-    .toggle-btn { flex: 1; padding: 7px 4px; font-size: 11px; font-weight: 600; font-family: 'Poppins', sans-serif; border: none; border-radius: 8px; cursor: pointer; color: var(--gray-600); background: transparent; transition: all 0.15s; }
+    .toggle-btn { flex: 1; padding: 7px 4px; font-size: 11px; font-weight: 600; font-family: var(--font-sans); border: none; border-radius: 8px; cursor: pointer; color: var(--gray-600); background: transparent; transition: all 0.15s; }
     .toggle-btn.active { background: white; color: var(--teal-dark); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
 
     /* ── OPINIÓN EDITABLE ── */
@@ -287,14 +286,14 @@
     .opinion-valor-num { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -0.01em; line-height: 1.1; }
     .opinion-editable {
       width: 100%; border: 1.5px dashed rgba(15,24,41,0.2); border-radius: 10px;
-      padding: 11px 13px; font-family: 'Poppins', sans-serif; font-size: 12px;
+      padding: 11px 13px; font-family: var(--font-sans); font-size: 12px;
       color: var(--text); background: rgba(15,24,41,0.02); resize: vertical;
       outline: none; min-height: 80px; line-height: 1.6;
     }
     .opinion-editable:focus { border-color: var(--teal); background: white; }
     .opinion-input-inline {
       border: 1.5px dashed rgba(15,24,41,0.2); border-radius: 8px;
-      padding: 5px 10px; font-family: 'Poppins', sans-serif; font-size: 12px;
+      padding: 5px 10px; font-family: var(--font-sans); font-size: 12px;
       color: var(--text); background: rgba(15,24,41,0.02); outline: none; width: 100%;
     }
     .opinion-input-inline:focus { border-color: var(--teal); background: white; }
@@ -307,7 +306,7 @@
     .btn-print {
       display: flex; align-items: center; gap: 8px; padding: 12px 20px;
       background: var(--navy); color: white; border: none; border-radius: 12px;
-      font-size: 13px; font-weight: 700; font-family: 'Poppins', sans-serif;
+      font-size: 13px; font-weight: 700; font-family: var(--font-sans);
       cursor: pointer; transition: opacity 0.15s; white-space: nowrap;
     }
     .btn-print:active { opacity: 0.85; }
@@ -347,13 +346,13 @@
 }
 html, body {
   background: #FFFFFF !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif !important;
+  font-family: var(--font-sans) !important;
   color: #2E3338 !important;
   letter-spacing: -0.005em !important;
 }
 * { font-family: inherit !important; }
 input, select, textarea, button {
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif !important;
+  font-family: var(--font-sans) !important;
 }
 /* Replace Playfair display with system serif fallback in headings */
 [class*="ttl"], [class*="title"], h1, h2, h3,
@@ -567,7 +566,7 @@ input:focus, select:focus, textarea:focus {
             type="text" value={texto}
             onChange={(e) => buscar(e.target.value)}
             placeholder="Escribe la colonia..."
-            style={{ width: "100%", padding: "10px 12px", background: "var(--gray-100)", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 10, color: "var(--text)", outline: "none", fontFamily: "'Poppins', sans-serif", fontSize: 14 }}
+            style={{ width: "100%", padding: "10px 12px", background: "var(--gray-100)", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 10, color: "var(--text)", outline: "none", fontFamily: "var(--font-sans)", fontSize: 14 }}
           />
           {buscando && <div style={{ fontSize: 11, color: "var(--gray-400)", marginTop: 4 }}>Buscando...</div>}
           {abierto && sugerencias.length > 0 && (
@@ -622,7 +621,7 @@ input:focus, select:focus, textarea:focus {
             onChange={onInput}
             onFocus={() => setAbierto(texto.length >= 2)}
             placeholder="Escribe la ciudad..."
-            style={{ width: "100%", padding: "10px 12px", background: "var(--gray-100)", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 10, color: "var(--text)", outline: "none", fontFamily: "'Poppins', sans-serif", fontSize: 14 }}
+            style={{ width: "100%", padding: "10px 12px", background: "var(--gray-100)", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 10, color: "var(--text)", outline: "none", fontFamily: "var(--font-sans)", fontSize: 14 }}
           />
           {abierto && sugerencias.length > 0 && (
             <div className="autocomplete-dropdown">
@@ -670,7 +669,7 @@ input:focus, select:focus, textarea:focus {
             onChange={onInput}
             onFocus={() => texto.length >= 3 && sugerencias.length > 0 && setAbierto(true)}
             placeholder="Ej: Vistas Altozano, Chapultepec..."
-            style={{ width: "100%", padding: "10px 12px", background: "var(--gray-100)", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 10, color: "var(--text)", outline: "none", fontFamily: "'Poppins', sans-serif", fontSize: 14 }}
+            style={{ width: "100%", padding: "10px 12px", background: "var(--gray-100)", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 10, color: "var(--text)", outline: "none", fontFamily: "var(--font-sans)", fontSize: 14 }}
           />
           {buscando && <div style={{ fontSize: 11, color: "var(--gray-400)", marginTop: 4 }}>Buscando...</div>}
           {abierto && sugerencias.length > 0 && (
@@ -884,7 +883,7 @@ input:focus, select:focus, textarea:focus {
             <div className="card-label">Comentarios adicionales (opcional)</div>
             <textarea value={form.comentarios} onChange={e => u("comentarios", e.target.value)}
               placeholder="Ej: esquina, vista panorámica, con bardas, cerca del campo de golf..."
-              style={{ width:"100%", padding:"10px 12px", background:"var(--gray-100)", border:"1px solid rgba(0,0,0,0.1)", borderRadius:10, color:"var(--text)", outline:"none", fontFamily:"'Poppins',sans-serif", fontSize:13, minHeight:72, resize:"vertical" }} />
+              style={{ width:"100%", padding:"10px 12px", background:"var(--gray-100)", border:"1px solid rgba(0,0,0,0.1)", borderRadius:10, color:"var(--text)", outline:"none", fontFamily:"var(--font-sans)", fontSize:13, minHeight:72, resize:"vertical" }} />
           </div>
 
           {(estado === "error" || errorMsg) && (
@@ -1163,7 +1162,7 @@ input:focus, select:focus, textarea:focus {
       }, [sujeto, allComps]);
 
       return (
-        <div style={{ fontFamily: "'Poppins', sans-serif", background: "var(--screen-bg)", minHeight: "100vh" }}>
+        <div style={{ fontFamily: "var(--font-sans)", background: "var(--screen-bg)", minHeight: "100vh" }}>
 
           <AvmIA />
 
