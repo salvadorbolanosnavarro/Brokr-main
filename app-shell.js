@@ -252,7 +252,22 @@
     'facebook-ads': 'Meta Ads Express — crear, activar y medir anuncios de Facebook e Instagram',
   };
 
-  /* ── Iconos (heroicons outline 1.6) ── */
+  /* ── Encabezado canónico por página (unificación de esqueleto) ──
+     Inyectado por el shell arriba del contenido de CADA módulo, idéntico
+     en posición/tamaño/estilo. 'home' se excluye (tiene su propio hero). */
+  const PAGE_META = {
+    'contratos':     { title:'Contratos',              sub:'Genera contratos listos para firma en minutos.' },
+    'avm':           { title:'Estimación de valor',    sub:'Avalúo automático con comparables de tu zona.' },
+    'ficha':         { title:'Ficha técnica',          sub:'Genera la ficha profesional de una propiedad.' },
+    'ficha-manual':  { title:'Ficha técnica',          sub:'Crea fichas profesionales de tus propiedades.' },
+    'isr':           { title:'Cálculo de ISR',         sub:'ISR por enajenación de inmuebles con el INPC vigente.' },
+    'image-cleaner': { title:'Editor de imágenes',     sub:'Limpia y mejora las fotos de tus propiedades con IA.' },
+    'facebook-ads':  { title:'Facebook Ads',           sub:'Crea, activa y mide anuncios de Facebook e Instagram.' },
+    'whatsapp':      { title:'WhatsApp',               sub:'Conecta y administra tu número de WhatsApp Business.' },
+    'verificador':   { title:'Verificador',            sub:'Revisión con IA para detectar problemas antes de firmar.' },
+    'blog':          { title:'Blog',                   sub:'Recursos profesionales sobre PLD, legal y mercado.' },
+    'solicitud-arr': { title:'Solicitud de arrendamiento', sub:'Sube la solicitud y la IA califica al prospecto.' },
+  };
   const ICONS = {
     home:       '<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/>',
     building:   '<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.121 0L22.28 12M4.5 9.75v10.125a1.125 1.125 0 001.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125a1.125 1.125 0 001.125-1.125V9.75"/>',
@@ -511,6 +526,42 @@
   padding-bottom: 100px;
 }
 .bk-page::-webkit-scrollbar { width: 0; }
+
+/* ── Encabezado canónico unificado (mismo en todos los módulos) ── */
+.bk-ph {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 28px 36px 4px;
+  box-sizing: border-box;
+}
+.bk-ph__title {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--ink);
+  text-transform: none;
+  margin: 0;
+}
+.bk-ph__sub {
+  font-size: 15px;
+  color: var(--mute);
+  margin: 6px 0 0;
+  line-height: 1.5;
+  max-width: 70ch;
+}
+@media (max-width: 720px) {
+  .bk-ph { padding: 16px 16px 4px; }
+  .bk-ph__title { font-size: 24px; }
+}
+
+/* Heros de solo-título reemplazados por el encabezado canónico */
+body[data-app="facebook-ads"] .fa-hero,
+body[data-app="whatsapp"] .wa-hero,
+body[data-app="blog"] .bl-head,
+body[data-app="solicitud-arr"] .sa-head,
+body[data-app="verificador"] .top-header { display: none !important; }
 
 /* Bottom nav (mobile) */
 .bk-bnav {
@@ -932,6 +983,25 @@
     pageWrap.className = 'bk-page';
     pageWrap.id = 'bk-page';
     while (document.body.firstChild) pageWrap.appendChild(document.body.firstChild);
+
+    // ── Encabezado canónico unificado (idéntico en todos los módulos) ──
+    // Se antepone al contenido de cada página. 'home' no está en PAGE_META.
+    const _meta = PAGE_META[activeKey];
+    if (_meta) {
+      const hd = document.createElement('header');
+      hd.className = 'bk-ph';
+      const h = document.createElement('h1');
+      h.className = 'bk-ph__title';
+      h.textContent = _meta.title;
+      hd.appendChild(h);
+      if (_meta.sub) {
+        const p = document.createElement('p');
+        p.className = 'bk-ph__sub';
+        p.textContent = _meta.sub;
+        hd.appendChild(p);
+      }
+      pageWrap.insertBefore(hd, pageWrap.firstChild);
+    }
 
     const main = MODS.filter(m => m.group === 'main' && (!m.adminOnly || profile?.isAdmin));
 
