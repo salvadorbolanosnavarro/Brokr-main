@@ -566,30 +566,42 @@ body[data-app="verificador"] .top-header { display: none !important; }
 /* Bottom nav (mobile) */
 .bk-bnav {
   display: none;
-  position: fixed; bottom: 0; left: 0; right: 0;
-  background: var(--bone);
-  border-top: none;
-  padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+  position: fixed;
+  left: 16px; right: 16px;
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
   z-index: 60;
+  align-items: center;
   justify-content: space-around;
+  gap: 4px;
+  padding: 7px 12px;
+  border-radius: 28px;
+  /* Liquid glass */
+  background: rgba(255,255,255,0.55);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.65);
+  box-shadow: 0 10px 34px rgba(5,32,60,0.18), inset 0 1px 0 rgba(255,255,255,0.75);
 }
 @media (max-width: 880px) { .bk-bnav { display: flex; } }
 .bk-bnav__item {
   flex: 1;
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
-  padding: 8px 4px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 6px 4px;
   font-size: 10px;
   color: var(--mute);
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   border: none; background: transparent;
   font-family: inherit;
   transition: color var(--dur) var(--ease);
+  -webkit-tap-highlight-color: transparent;
 }
-.bk-bnav__item.is-active { color: var(--ink); }
+.bk-bnav__item.is-active { color: var(--sky-blue); }
 .bk-bnav__item svg { opacity: .9; }
 .bk-bnav__item.is-active svg { opacity: 1; }
+.bk-bnav__broquer { padding: 2px 4px; }
+.bk-bnav__broquer img { width: 34px; height: 34px; object-fit: contain; display: block; }
 
 /* Broquer FAB (desktop only — mobile uses bottom-nav center) */
 .bk-shaark-fab {
@@ -1024,7 +1036,6 @@ body[data-app="verificador"] .top-header { display: none !important; }
       <main class="bk-content">
         <div class="bk-mobile-head">
           <a href="index.html" aria-label="Ir al inicio Broquer"><img src="logo-broquer.png" alt="Broquer"/></a>
-          <div class="bk-mobile-head__avatar" id="bk-mob-avatar" onclick="openProfileDrawer()" style="cursor:pointer" title="Mi perfil">${ini}</div>
         </div>
 
         <div class="bk-topbar">
@@ -1075,31 +1086,15 @@ body[data-app="verificador"] .top-header { display: none !important; }
     shell.querySelector('.bk-content').appendChild(pageWrap);
 
     // Bottom nav
-    // PWA bottom nav: Inmuebles · Contratos · [Broquer] · Estimación · ISR
-    const bnavFixed = [
-      MODS.find(m => m.key === 'props'),
-      MODS.find(m => m.key === 'contratos'),
-    ].filter(Boolean);
-    const bnavFixed2 = [
-      MODS.find(m => m.key === 'avm'),
-      MODS.find(m => m.key === 'isr'),
-    ].filter(Boolean);
-
-    function buildBnavItemLabel(m, active, overrideLabel) {
-      const label = overrideLabel || m.label.split(' ')[0];
-      return `<a href="${m.href}" class="bk-bnav__item${m.key === active ? ' is-active' : ''}">${svg(m.icon, 22)} <span>${label}</span></a>`;
-    }
-
+    // PWA bottom nav (liquid glass): Inicio · Broquer (isotipo) · Perfil
     const bnav = document.createElement('nav');
     bnav.className = 'bk-bnav';
     bnav.innerHTML =
-      bnavFixed.map(m => buildBnavItemLabel(m, activeKey)).join('') +
+      `<a href="index.html" class="bk-bnav__item${activeKey === 'home' ? ' is-active' : ''}">${svg('home', 24)} <span>Inicio</span></a>` +
       `<button class="bk-bnav__item bk-bnav__broquer" id="bk-bnav-shaark" type="button" aria-label="Abrir Broquer">
-         <img src="icon-192.png" alt="" style="width:26px;height:26px;object-fit:contain;"/>
-         <span>Broquer</span>
+         <img src="isotipo-broquer.png" alt="Broquer"/>
        </button>` +
-      buildBnavItemLabel(bnavFixed2[0], activeKey, 'Estimación') +
-      buildBnavItemLabel(bnavFixed2[1], activeKey, 'ISR');
+      `<button class="bk-bnav__item" id="bk-bnav-perfil" type="button" aria-label="Mi perfil">${svg('user', 24)} <span>Perfil</span></button>`;
     document.body.appendChild(bnav);
 
     // Shaark FAB + popup
@@ -1112,6 +1107,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
     document.body.appendChild(fab);
 
     document.getElementById('bk-bnav-shaark').addEventListener('click', () => toggleShaarkPopup());
+    document.getElementById('bk-bnav-perfil').addEventListener('click', () => openProfileDrawer());
 
     const pop = document.createElement('div');
     pop.className = 'bk-shaark-popup';
@@ -2528,7 +2524,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
       document.getElementById('pd-name').textContent = nombre;
       const ini2 = initials(nombre);
       document.getElementById('bk-sb-avatar').textContent = ini2;
-      document.getElementById('bk-mob-avatar').textContent = ini2;
+      { const _ma = document.getElementById('bk-mob-avatar'); if (_ma) _ma.textContent = ini2; }
       document.getElementById('pd-avatar').textContent = ini2;
     } catch(e) {
       toast.textContent = 'Error al guardar. Intenta de nuevo.';
