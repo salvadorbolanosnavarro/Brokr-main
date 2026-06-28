@@ -38,10 +38,10 @@ workflows:
         script: |
           cd $CM_BUILD_DIR/ios-app
           npx capacitor-assets generate --ios \
-            --iconBackgroundColor "#F7F5EE" \
-            --iconBackgroundColorDark "#F7F5EE" \
-            --splashBackgroundColor "#F7F5EE" \
-            --splashBackgroundColorDark "#F7F5EE"
+            --iconBackgroundColor "#FFFFFF" \
+            --iconBackgroundColorDark "#FFFFFF" \
+            --splashBackgroundColor "#FFFFFF" \
+            --splashBackgroundColorDark "#FFFFFF"
       - name: Debug — verificar acceso a la API de Apple
         script: |
           echo "=== Certificados existentes ==="
