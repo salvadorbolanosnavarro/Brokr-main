@@ -10,6 +10,7 @@ workflows:
         XCODE_PROJECT: "App.xcodeproj"
         XCODE_SCHEME: "App"
         APP_STORE_APPLE_ID: 6775727897
+        APP_VERSION: "1.1"
       node: 22
       xcode: latest
     integrations:
@@ -62,11 +63,18 @@ workflows:
             --verbose
           keychain add-certificates
           xcode-project use-profiles --project "$CM_BUILD_DIR/ios-app/ios/App/App.xcodeproj"
-      - name: Aumentar build number automáticamente
+      - name: Setear versión de marketing y build number
         script: |
           cd $CM_BUILD_DIR/ios-app/ios/App
-          LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" || echo 0)
+          # Versión de marketing (CFBundleShortVersionString) desde la variable APP_VERSION
+          agvtool new-marketing-version "$APP_VERSION"
+          # Build number (CFBundleVersion) auto-incrementado contra App Store Connect
+          LATEST=$(app-store-connect get-latest-build-number "$APP_STORE_APPLE_ID" 2>/dev/null || echo "")
+          if ! echo "$LATEST" | grep -qE '^[0-9]+$'; then
+            LATEST=0
+          fi
           NEXT=$((LATEST + 1))
+          echo "Marketing version: $APP_VERSION | Build number más alto: $LATEST -> usando $NEXT"
           agvtool new-version -all $NEXT
       - name: Build IPA
         script: |
