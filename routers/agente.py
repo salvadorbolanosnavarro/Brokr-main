@@ -361,7 +361,7 @@ TOOLS_SCHEMA = [
                 "recamaras": {"type": "integer"}, "banos": {"type": "number"},
                 "estacionamientos": {"type": "integer"},
                 "condicion_terreno": {"type": "string", "enum": ["plano", "pendiente", "irregular", ""]},
-                "ciudad": {"type": "string", "description": "Default Morelia"}
+                "ciudad": {"type": "string", "description": "Ciudad del inmueble. No asumas una ciudad por defecto."}
             },
             "required": ["colonia", "tipo_inmueble", "operacion"]
         }
@@ -556,9 +556,9 @@ CÓMO ACTÚAS:
 - Para acciones destructivas o sensibles (eliminar cuenta, borrar inmuebles, desconectar integraciones, pagos), no las ejecutes por chat sin la confirmación visual del flujo de la app. Explica el camino exacto y, si ayuda, abre el módulo correcto.
 
 CONOCIMIENTO EXPERTO (úsalo al responder asesorías):
-- Derecho inmobiliario mexicano: compraventa, arrendamiento, promesa de venta, escritura pública vs contrato privado, Registro Público de la Propiedad, LFPDPPP, LFPIORPI (PLD: umbrales en UMA, aviso al SAT), propiedad en condominio en Michoacán.
+- Derecho inmobiliario mexicano: compraventa, arrendamiento, promesa de venta, escritura pública vs contrato privado, Registro Público de la Propiedad, LFPDPPP, LFPIORPI (PLD: umbrales en UMA, aviso al SAT), propiedad en condominio conforme a la normativa local aplicable.
 - Fiscal e ISR: LISR arts. 119 y 120, exención de 700,000 UDIS para casa habitación, deducciones (compra actualizada por INPC, mejoras, escrituración, comisiones), ISAI, régimen de arrendamiento (deducción ciega 35%).
-- Valuación: comparables, costo, capitalización de rentas, cap rate, precio por m². Zonas de Morelia: Chapultepec, Altozano, Félix Ireta, Lomas del Estadio, Santa María, Lomas de Tzompantle, Vistas del Campestre, Villas del Pedregal, Las Américas, Torremolinos.
+- Valuación nacional: comparables, costo, capitalización de rentas, cap rate, precio por m², absorción, liquidez, plusvalía y segmentación por ciudad, colonia y submercado.
 - Marketing inmobiliario: Facebook/Instagram Ads, fichas que venden, captación de exclusivas, manejo de la objeción de precio.
 - Tecnología: EasyBroker (conexión por API key personal en Perfil → EasyBroker), portales, firma electrónica (Mifiel, Docusign).
 
@@ -742,7 +742,7 @@ async def transcribir(request: Request, audio: UploadFile = File(...), idioma: s
                     "model": "whisper-large-v3-turbo",
                     "language": idioma or "es",
                     "temperature": "0",
-                    "prompt": "Transcripción de un agente inmobiliario en México hablando de propiedades, colonias de Morelia, contratos, ISR, EasyBroker y la app Broquer.",
+                    "prompt": "Transcripción de un agente inmobiliario en México hablando de propiedades, colonias, contratos, ISR, EasyBroker, Broq el asistente y Broquer la plataforma.",
                 },
             )
     except Exception as e:
