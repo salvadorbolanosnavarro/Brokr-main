@@ -529,7 +529,7 @@ function downloadOne(i) {
 async function downloadAll() {
   const processed = results.map((r, i) => ({r, i})).filter(({r}) => r && r.cleaned_b64);
   if (!processed.length) { showToast('No hay fotos editadas aún'); return; }
-  // Suppress Shaark wake-word during download to avoid false triggers
+  // Suppress Broq wake-word during download to avoid false triggers
   try { window.parent.postMessage({ type: 'Broquer-suppress-wake', duration: 5000 }, '*'); } catch(e){}
   showToast(`Descargando ${processed.length} imagen${processed.length !== 1 ? 'es' : ''}…`);
   for (const {i} of processed) {
