@@ -1465,10 +1465,6 @@ body[data-app="verificador"] .top-header { display: none !important; }
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
-      // Broquer es nacional: conservamos las líneas históricas para evitar conflictos,
-      // pero no asumimos ciudad/estado cuando el usuario no los dictó.
-      if (!txt(ac.ciudad)) payload.ciudad = '';
-      if (!txt(ac.estado)) payload.estado = '';
       if (!payload.titulo || !payload.colonia || !payload.precio) {
         _addAssistantBubble('Me faltan datos obligatorios para crear el inmueble: título o descripción, colonia y precio.');
         return;
