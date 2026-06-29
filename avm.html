@@ -707,7 +707,7 @@ input:focus, select:focus, textarea:focus {
       const esTerreno = form.tipo === "terreno" || form.tipo === "edificio";
       const esConstruccion = ["casa","departamento","local","oficina","bodega","edificio"].includes(form.tipo);
 
-      // Expone __avmIAFill para que Shaark pueda activar la pestaña IA con datos precargados
+      // Expone __avmIAFill para que Broq pueda activar la pestaña IA con datos precargados
       React.useEffect(() => {
         window.__avmIAFill = (data) => {
           if (data.tipo_inmueble) setForm(p => ({ ...p, tipo: data.tipo_inmueble }));
@@ -1036,7 +1036,7 @@ input:focus, select:focus, textarea:focus {
       const u      = (k, v) => setSujeto((p) => ({ ...p, [k]: v }));
       const campos = CAMPOS[sujeto.tipo] || CAMPOS.casa;
 
-      // Expone window.__avmFill para que Shaark pueda llenar el formulario vía postMessage
+      // Expone window.__avmFill para que Broq pueda llenar el formulario vía postMessage
       useEffect(() => {
         window.__avmFill = (data) => {
           if (data.tipo_inmueble) setSujeto((p) => ({ ...p, tipo: data.tipo_inmueble }));

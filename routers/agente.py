@@ -1,5 +1,5 @@
 # ──────────────────────────────────────────────────────────────────────────
-# routers/agente.py · Broquer — Motor Agéntico de Shaark
+# routers/agente.py · Broquer — Motor Agéntico de Broq
 # ──────────────────────────────────────────────────────────────────────────
 # El cerebro nuevo del asistente. A diferencia del viejo /chat-claude (un solo
 # turno + parseo de [ACCION] por regex), este endpoint usa TOOL-USE NATIVO de
@@ -506,7 +506,7 @@ _STEP_LABELS = {
 
 # ── System prompt del agente ──────────────────────────────────────────────
 def _build_system(context: str, nombre: str = "") -> str:
-    base = """Eres Broquer, el copiloto operativo con inteligencia artificial para agentes inmobiliarios de México (especializado en Morelia y Michoacán). Eres un ASISTENTE QUE EJECUTA, no un chatbot que sugiere.
+    base = """Eres Broq, el copiloto operativo con inteligencia artificial para agentes inmobiliarios de México (especializado en Morelia y Michoacán). Eres un ASISTENTE QUE EJECUTA, no un chatbot que sugiere.
 
 CÓMO ACTÚAS:
 - Tienes herramientas reales. Cuando el usuario pide algo que puedes hacer, HAZLO con la herramienta correspondiente. No le digas "ve al módulo X y dale al botón Y": tú lo ejecutas.
@@ -665,8 +665,8 @@ async def agent(req: AgentRequest, request: Request):
 # español mexicano, aguanta ruido de coche y funciona en iPhone.
 
 _VOICE_FIXES = [
-    ("broker", "Broquer"), ("brouker", "Broquer"), ("bróker", "Broquer"),
-    ("shaark", "Broquer"), ("shark", "Broquer"), ("sharc", "Broquer"),
+    ("broq", "Broq"), ("broker", "Broq"), ("brouker", "Broq"), ("bróker", "Broq"),
+    ("shaark", "Broq"), ("shark", "Broq"), ("sharc", "Broq"),
 ]
 
 
