@@ -68,10 +68,13 @@ workflows:
           cd $CM_BUILD_DIR/ios-app/ios/App
           # Versión de marketing (CFBundleShortVersionString) desde la variable APP_VERSION
           agvtool new-marketing-version "$APP_VERSION"
-          # Build number más alto ya subido a App Store Connect (con plataforma explícita)
-          LATEST=$(app-store-connect get-latest-build-number "$APP_STORE_APPLE_ID" --platform IOS 2>&1)
-          echo "Respuesta de App Store Connect: '$LATEST'"
-          # Si no es un número limpio, usar el contador interno de Codemagic como respaldo
+          # Leer la respuesta de App Store Connect (puede traer texto + el número)
+          RAW=$(app-store-connect get-latest-build-number "$APP_STORE_APPLE_ID" --platform IOS 2>&1 || true)
+          echo "Respuesta cruda de App Store Connect:"
+          echo "$RAW"
+          # Quedarnos SOLO con la última línea que sea puramente un número
+          LATEST=$(printf '%s\n' "$RAW" | grep -E '^[0-9]+$' | tail -1)
+          # Si no salió un número limpio, usar el contador interno de Codemagic como respaldo
           if ! echo "$LATEST" | grep -qE '^[0-9]+$'; then
             echo "No se pudo leer el build number desde App Store Connect; usando el contador de Codemagic ($BUILD_NUMBER) como base."
             LATEST=$BUILD_NUMBER
@@ -82,7 +85,7 @@ workflows:
             NEXT=$BUILD_NUMBER
           fi
           echo "Marketing version: $APP_VERSION | Build más alto detectado: $LATEST -> usando build number $NEXT"
-          agvtool new-version -all $NEXT
+          agvtool new-version -all "$NEXT"
       - name: Build IPA
         script: |
           cd $CM_BUILD_DIR/ios-app/ios/App
