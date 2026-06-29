@@ -1333,6 +1333,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
 
       // ── ACCIONES DIRECTAS — ejecutan en la ventana del asistente ──
       case 'agregar_contacto':         agregarContactoDirecto(ac); break;
+      case 'crear_inmueble_directo':    crearInmuebleDirecto(ac); break;
       case 'generar_contrato_directo': generarContratoDirecto(ac); break;
       case 'calcular_isr_directo':     calcularISRDirecto(ac); break;
       case 'estimar_valor_directo':    estimarValorDirecto(ac); break;
@@ -1374,6 +1375,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
     b.innerHTML = html;
     wrap.appendChild(b);
     wrap.scrollTop = wrap.scrollHeight;
+    return b;
   }
 
   async function agregarContactoDirecto(ac) {
@@ -1412,6 +1414,81 @@ body[data-app="verificador"] .top-header { display: none !important; }
       }
     } catch (e) {
       _addAssistantBubble('No pude agregar el contacto: ' + (e.message || e));
+    }
+  }
+
+  async function crearInmuebleDirecto(ac) {
+    try {
+      const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
+      const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
+      const tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+      const userRaw = localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}';
+      const user = JSON.parse(userRaw);
+      if (!tok || !user.id) { _addAssistantBubble('No pude crear el inmueble: tu sesión expiró.'); return; }
+
+      const num = (v) => {
+        if (v === undefined || v === null || v === '') return null;
+        const n = Number(String(v).replace(/[$,\s]/g, ''));
+        return Number.isFinite(n) ? n : null;
+      };
+      const txt = (v) => (v === undefined || v === null) ? '' : String(v).trim();
+      const tipo = txt(ac.tipo || ac.tipo_inmueble).toLowerCase();
+      const operacion = txt(ac.operacion).toLowerCase();
+      const titulo = txt(ac.titulo) || [tipo || 'Inmueble', operacion ? 'en ' + operacion : '', txt(ac.colonia)].filter(Boolean).join(' ');
+      const payload = {
+        user_id: user.id,
+        titulo,
+        tipo: tipo || 'casa',
+        operacion: operacion || 'venta',
+        estatus: txt(ac.estatus) || 'activa',
+        precio: num(ac.precio),
+        moneda: txt(ac.moneda) || 'MXN',
+        calle: txt(ac.calle),
+        num_exterior: txt(ac.num_exterior),
+        num_interior: txt(ac.num_interior),
+        colonia: txt(ac.colonia),
+        ciudad: txt(ac.ciudad) || 'Morelia',
+        estado: txt(ac.estado) || 'Michoacán',
+        cp: txt(ac.cp),
+        m2_construccion: num(ac.m2_construccion),
+        m2_terreno: num(ac.m2_terreno),
+        recamaras: num(ac.recamaras),
+        banos: num(ac.banos),
+        medio_bano: num(ac.medio_bano),
+        estacionamientos: num(ac.estacionamientos),
+        anio_construccion: num(ac.anio_construccion),
+        nivel: txt(ac.nivel),
+        mantenimiento: num(ac.mantenimiento),
+        amenidades: Array.isArray(ac.amenidades) ? ac.amenidades : txt(ac.amenidades).split(',').map(s => s.trim()).filter(Boolean),
+        descripcion: txt(ac.descripcion),
+        fotos: Array.isArray(ac.fotos) ? ac.fotos : [],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      if (!payload.titulo || !payload.colonia || !payload.precio) {
+        _addAssistantBubble('Me faltan datos obligatorios para crear el inmueble: título o descripción, colonia y precio.');
+        return;
+      }
+      const r = await fetch(`${SB_URL}/rest/v1/propiedades`, {
+        method: 'POST',
+        headers: {
+          'apikey': SB_KEY,
+          'Authorization': 'Bearer ' + tok,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify(payload)
+      });
+      const rows = await r.json().catch(() => []);
+      if (r.ok) {
+        const id = Array.isArray(rows) && rows[0] ? rows[0].id : '';
+        _addAssistantBubble(`✓ Inmueble creado: <strong>${payload.titulo}</strong>${payload.colonia ? ' · ' + payload.colonia : ''}. Ya está en Mis Inmuebles.`);
+        if (id) sessionStorage.setItem('broq_last_property_id', id);
+      } else {
+        _addAssistantBubble('No pude crear el inmueble. Revisa los datos e inténtalo otra vez.');
+      }
+    } catch (e) {
+      _addAssistantBubble('No pude crear el inmueble: ' + (e.message || e));
     }
   }
 

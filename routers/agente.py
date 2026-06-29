@@ -42,8 +42,8 @@ SUPABASE_KEY         = os.environ.get("SUPABASE_ANON_KEY", "")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "") or SUPABASE_KEY
 
 AGENT_MODEL    = "claude-sonnet-4-6"   # Sonnet 4.6 por default (preferencia del usuario)
-MAX_TURNS      = 6                     # tope de iteraciones del loop agéntico
-MAX_TOKENS     = 1500
+MAX_TURNS      = 8                     # más pasos para resolver tareas encadenadas dentro de la app
+MAX_TOKENS     = 2200
 
 
 # ── Auth: valida el JWT de Supabase y devuelve el user_id ─────────────────
@@ -393,6 +393,40 @@ TOOLS_SCHEMA = [
         }
     },
     {
+        "name": "crear_inmueble",
+        "description": "Crea un inmueble en Mis Inmuebles sin salir del chat. Usa esta herramienta cuando el usuario dicte o escriba los datos de una propiedad nueva. Reúne primero los obligatorios: título o descripción, tipo, operación, precio y colonia.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "titulo": {"type": "string"},
+                "tipo": {"type": "string", "enum": ["casa", "departamento", "terreno", "local", "oficina", "bodega"]},
+                "operacion": {"type": "string", "enum": ["venta", "renta"]},
+                "estatus": {"type": "string", "enum": ["activa", "vendida", "rentada", "suspendida"]},
+                "precio": {"type": "number"},
+                "moneda": {"type": "string", "enum": ["MXN", "USD"]},
+                "calle": {"type": "string"},
+                "num_exterior": {"type": "string"},
+                "num_interior": {"type": "string"},
+                "colonia": {"type": "string"},
+                "ciudad": {"type": "string"},
+                "estado": {"type": "string"},
+                "cp": {"type": "string"},
+                "m2_construccion": {"type": "number"},
+                "m2_terreno": {"type": "number"},
+                "recamaras": {"type": "integer"},
+                "banos": {"type": "number"},
+                "medio_bano": {"type": "integer"},
+                "estacionamientos": {"type": "integer"},
+                "anio_construccion": {"type": "integer"},
+                "nivel": {"type": "string"},
+                "mantenimiento": {"type": "number"},
+                "amenidades": {"type": "array", "items": {"type": "string"}},
+                "descripcion": {"type": "string"}
+            },
+            "required": ["tipo", "operacion", "precio", "colonia"]
+        }
+    },
+    {
         "name": "crear_ficha_easybroker",
         "description": "Genera una ficha técnica a partir de una propiedad de EasyBroker usando su ID (ej. EB-KH4322).",
         "input_schema": {
@@ -468,6 +502,8 @@ def _to_client_action(name: str, args: dict) -> Optional[dict]:
                 "datos": args.get("datos", {})}
     if name == "crear_contacto":
         a = {"tipo": "agregar_contacto"}; a.update(args); return a
+    if name == "crear_inmueble":
+        a = {"tipo": "crear_inmueble_directo"}; a.update(args); return a
     if name == "crear_ficha_easybroker":
         return {"tipo": "crear_ficha", "id_easybroker": args.get("id_easybroker", "")}
     if name == "crear_ficha_manual":
@@ -496,6 +532,7 @@ _STEP_LABELS = {
     "estimar_valor":          "Buscando comparables y estimando el valor…",
     "generar_contrato":       "Generando el contrato…",
     "crear_contacto":         "Agregando el contacto a tu CRM…",
+    "crear_inmueble":         "Creando el inmueble en tu cartera…",
     "crear_ficha_easybroker": "Armando la ficha técnica…",
     "crear_ficha_manual":     "Armando la ficha técnica…",
     "crear_campana_facebook": "Preparando tu campaña de anuncios…",
@@ -509,11 +546,14 @@ def _build_system(context: str, nombre: str = "") -> str:
     base = """Eres Broq, el copiloto operativo con inteligencia artificial para agentes inmobiliarios de México (especializado en Morelia y Michoacán). Eres un ASISTENTE QUE EJECUTA, no un chatbot que sugiere.
 
 CÓMO ACTÚAS:
+- Eres un SUPER ASISTENTE OPERATIVO: entiendes comandos escritos y de voz, razonas con datos reales de la app y ejecutas acciones completas cuando tienes lo necesario.
 - Tienes herramientas reales. Cuando el usuario pide algo que puedes hacer, HAZLO con la herramienta correspondiente. No le digas "ve al módulo X y dale al botón Y": tú lo ejecutas.
-- Puedes encadenar pasos: primero busca datos (buscar_propiedades, detalle_propiedad, buscar_contactos) y luego actúa (generar_contrato, crear_ficha_manual, estimar_valor). Usa los datos reales que obtengas; nunca inventes precios, m², direcciones ni nombres.
+- Puedes encadenar pasos: primero busca datos (buscar_propiedades, detalle_propiedad, buscar_contactos, resumen_cartera) y luego actúa (crear_contacto, crear_inmueble, generar_contrato, crear_ficha_manual, estimar_valor, calcular_isr, crear_campana_facebook, abrir_modulo o prellenar_formulario). Usa los datos reales que obtengas; nunca inventes precios, m², direcciones ni nombres.
+- Si el usuario pide crear un contacto o inmueble y ya dio los datos obligatorios, créalo directo. Si falta un dato obligatorio, pregunta SOLO el siguiente dato faltante.
 - Antes de una acción que produce un documento o un cambio, reúne los datos OBLIGATORIOS preguntando de UNO EN UNO de forma conversacional. Nunca ejecutes con datos incompletos. Los opcionales que el usuario no sepa: déjalos en 0 o "".
 - Las acciones que generan un archivo (ISR, estimación de valor, contrato, ficha) o que crean algo se ejecutan en el dispositivo del usuario. Cuando lances una de esas, NO digas "ya está descargado": di que la estás preparando y que aparecerá en un momento. El sistema le confirma al usuario cuando termina.
 - Para campañas de Facebook Ads NUNCA ejecutes sin confirmación explícita de presupuesto y objetivo.
+- Para acciones destructivas o sensibles (eliminar cuenta, borrar inmuebles, desconectar integraciones, pagos), no las ejecutes por chat sin la confirmación visual del flujo de la app. Explica el camino exacto y, si ayuda, abre el módulo correcto.
 
 CONOCIMIENTO EXPERTO (úsalo al responder asesorías):
 - Derecho inmobiliario mexicano: compraventa, arrendamiento, promesa de venta, escritura pública vs contrato privado, Registro Público de la Propiedad, LFPDPPP, LFPIORPI (PLD: umbrales en UMA, aviso al SAT), propiedad en condominio en Michoacán.
@@ -523,6 +563,16 @@ CONOCIMIENTO EXPERTO (úsalo al responder asesorías):
 - Tecnología: EasyBroker (conexión por API key personal en Perfil → EasyBroker), portales, firma electrónica (Mifiel, Docusign).
 
 CÓMO CONECTAR EASYBROKER (si lo preguntan): en EasyBroker, clic en tu nombre → Configuración de cuenta → Integraciones/API → copia tu API Key. En Broquer, abre tu perfil (tus iniciales abajo a la izquierda) → sección EasyBroker → pega la key → Conectar. Cada agente usa su propia key.
+
+CONOCIMIENTO DE LA APP (fuente de verdad para preguntas operativas):
+- Eliminar cuenta: abre Mi perfil, baja a la sección "Eliminar cuenta", toca "Eliminar mi cuenta", lee la advertencia, escribe exactamente el correo de la cuenta y confirma "Eliminar mi cuenta permanentemente". La acción borra de forma permanente propiedades, contactos, contratos e integraciones, cancela la suscripción de Stripe si existe y elimina el usuario de Supabase Auth; no se puede deshacer.
+- Crear contactos: puedes hacerlo directo con crear_contacto. Nombre es obligatorio; teléfono, email, empresa, tipo y notas son opcionales.
+- Crear inmuebles: puedes hacerlo directo con crear_inmueble. Obligatorios: tipo, operación, precio y colonia; título se puede inferir con tipo + operación + colonia si el usuario no lo da. Ciudad por defecto Morelia, estado Michoacán, moneda MXN, estatus activa.
+- Ficha técnica: si el inmueble ya está en cartera, busca la propiedad y genera la ficha con sus datos reales. Si no está en cartera, pide los datos mínimos y usa ficha manual.
+- ISR: usa calcular_isr con la misma lógica del módulo ISR cuando tengas precio y fecha de compra, precio y fecha de venta, tipo de inmueble, exención si aplica, mejoras, escrituración y comisión. Si el usuario no sabe mejoras/escrituración/comisión, usa 0 solo después de confirmarlo.
+- Estimación de valor: usa estimar_valor con la lógica del módulo AVM cuando tengas colonia, tipo, operación y superficies disponibles; busca comparables reales y entrega PDF.
+- Contratos: usa generar_contrato cuando tengas todos los datos obligatorios de partes, inmueble, monto y fechas. Si faltan varios datos, prellena el módulo para que el usuario revise.
+- Si te preguntan algo como "¿cómo puedo eliminar mi cuenta?", responde con esos pasos concretos; no inventes menús ni políticas.
 
 ESTILO:
 - Español mexicano, natural, cercano y profesional. Directo, sin relleno ni redundancia.
