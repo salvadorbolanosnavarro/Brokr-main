@@ -1,6 +1,6 @@
 /* ════════════════════════════════════════════════════════════════════
    BROQUER — App Shell compartido
-   Inyecta: sidebar desktop, topbar, mobile header, bottom nav, Shaark.
+   Inyecta: sidebar desktop, topbar, mobile header, bottom nav, Broq.
    Conserva 1:1 el flujo de Supabase / OpenAI / Railway del repo original.
 
    Uso en cada módulo:
@@ -299,7 +299,7 @@
   const svg = (name, size = 18, sw = 1.6) =>
     `<svg width="${size}" height="${size}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="${sw}">${ICONS[name] || ''}</svg>`;
 
-  /* Helper local para SVGs dentro de chips de Shaark (14×14, stroke 1.7) */
+  /* Helper local para SVGs dentro de chips de Broq (14×14, stroke 1.7) */
   const _CICO = (name) =>
     `<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7" style="flex-shrink:0;vertical-align:-2px;margin-right:6px">${ICONS[name] || ''}</svg>`;
 
@@ -603,7 +603,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
 .bk-bnav__broquer { padding: 2px 4px; }
 .bk-bnav__broquer img { width: 34px; height: 34px; object-fit: contain; display: block; }
 
-/* Broquer FAB (desktop only — mobile uses bottom-nav center) */
+/* Broq FAB (desktop only — mobile uses bottom-nav center) */
 .bk-shaark-fab {
   position: fixed; right: 28px; bottom: 28px; z-index: 80;
   width: 60px; height: 60px; border-radius: 50%;
@@ -633,7 +633,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
 .bk-shaark-fab.wake-on .bk-wake-dot { display: block; }
 @media (max-width: 880px) { .bk-shaark-fab { display: none; } }
 
-/* Shaark popup */
+/* Broq popup */
 .bk-shaark-popup {
   display: none;
   position: fixed; right: 28px; bottom: 100px; z-index: 90;
@@ -1091,18 +1091,18 @@ body[data-app="verificador"] .top-header { display: none !important; }
     bnav.className = 'bk-bnav';
     bnav.innerHTML =
       `<a href="index.html" class="bk-bnav__item${activeKey === 'home' ? ' is-active' : ''}">${svg('home', 24)} <span>Inicio</span></a>` +
-      `<button class="bk-bnav__item bk-bnav__broquer" id="bk-bnav-shaark" type="button" aria-label="Abrir Broquer">
-         <img src="isotipo-broquer.png" alt="Broquer"/>
+      `<button class="bk-bnav__item bk-bnav__broquer" id="bk-bnav-shaark" type="button" aria-label="Abrir Broq">
+         <img src="isotipo-broquer.png" alt="Broq"/>
        </button>` +
       `<button class="bk-bnav__item" id="bk-bnav-perfil" type="button" aria-label="Mi perfil">${svg('user', 24)} <span>Perfil</span></button>`;
     document.body.appendChild(bnav);
 
-    // Shaark FAB + popup
+    // Broq FAB + popup
     const fab = document.createElement('button');
     fab.className = 'bk-shaark-fab';
     fab.id = 'bk-shaark-fab';
-    fab.setAttribute('aria-label', 'Abrir Broquer');
-    fab.innerHTML = `<span class="bk-shaark-fab__pulse"></span><span class="bk-wake-dot" id="bk-wake-dot"></span><img src="isotipo-broquer.png" alt="Broquer"/>`;
+    fab.setAttribute('aria-label', 'Abrir Broq');
+    fab.innerHTML = `<span class="bk-shaark-fab__pulse"></span><span class="bk-wake-dot" id="bk-wake-dot"></span><img src="isotipo-broquer.png" alt="Broq"/>`;
     fab.addEventListener('click', () => toggleShaarkPopup());
     document.body.appendChild(fab);
 
@@ -1113,18 +1113,18 @@ body[data-app="verificador"] .top-header { display: none !important; }
     pop.className = 'bk-shaark-popup';
     pop.id = 'bk-shaark-popup';
     pop.setAttribute('role', 'dialog');
-    pop.setAttribute('aria-label', 'Broquer — asistente');
+    pop.setAttribute('aria-label', 'Broq — asistente');
     pop.innerHTML = `
       <div class="bk-shk-head">
         <div class="bk-shk-avatar"><img src="isotipo-broquer.png" alt=""/></div>
         <div style="flex:1;min-width:0">
-          <div class="bk-shk-name">Broquer</div>
+          <div class="bk-shk-name">Broq</div>
           <div class="bk-shk-status">En línea</div>
         </div>
         <button class="bk-shk-close" type="button" aria-label="Cerrar">${svg('close', 14, 2)}</button>
       </div>
       <div class="bk-shk-msgs" id="bk-shk-msgs">
-        <div class="bk-shk-bubble bot" id="bk-welcome-msg">¡Hola! Soy Broquer, tu asistente inteligente. ¿Qué puedo hacer por ti?</div>
+        <div class="bk-shk-bubble bot" id="bk-welcome-msg">¡Hola! Soy Broq, tu asistente inteligente. ¿Qué puedo hacer por ti?</div>
       </div>
       <div class="bk-shk-input-row">
         <button class="bk-shk-mic" id="bk-shk-mic" type="button" aria-label="Hablar">${svg('mic', 16, 1.8)}</button>
@@ -1144,7 +1144,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   }
 
   /* ════════════════════════════════════════════════════════════════
-     Shaark — popup, fetch, voice, wake word
+     Broq — popup, fetch, voice, wake word
      ════════════════════════════════════════════════════════════════ */
   let shaarkOpen = false;
   let shaarkMsgs = [];
@@ -1333,6 +1333,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
 
       // ── ACCIONES DIRECTAS — ejecutan en la ventana del asistente ──
       case 'agregar_contacto':         agregarContactoDirecto(ac); break;
+      case 'crear_inmueble_directo':    crearInmuebleDirecto(ac); break;
       case 'generar_contrato_directo': generarContratoDirecto(ac); break;
       case 'calcular_isr_directo':     calcularISRDirecto(ac); break;
       case 'estimar_valor_directo':    estimarValorDirecto(ac); break;
@@ -1374,6 +1375,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
     b.innerHTML = html;
     wrap.appendChild(b);
     wrap.scrollTop = wrap.scrollHeight;
+    return b;
   }
 
   async function agregarContactoDirecto(ac) {
@@ -1412,6 +1414,81 @@ body[data-app="verificador"] .top-header { display: none !important; }
       }
     } catch (e) {
       _addAssistantBubble('No pude agregar el contacto: ' + (e.message || e));
+    }
+  }
+
+  async function crearInmuebleDirecto(ac) {
+    try {
+      const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
+      const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
+      const tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+      const userRaw = localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}';
+      const user = JSON.parse(userRaw);
+      if (!tok || !user.id) { _addAssistantBubble('No pude crear el inmueble: tu sesión expiró.'); return; }
+
+      const num = (v) => {
+        if (v === undefined || v === null || v === '') return null;
+        const n = Number(String(v).replace(/[$,\s]/g, ''));
+        return Number.isFinite(n) ? n : null;
+      };
+      const txt = (v) => (v === undefined || v === null) ? '' : String(v).trim();
+      const tipo = txt(ac.tipo || ac.tipo_inmueble).toLowerCase();
+      const operacion = txt(ac.operacion).toLowerCase();
+      const titulo = txt(ac.titulo) || [tipo || 'Inmueble', operacion ? 'en ' + operacion : '', txt(ac.colonia)].filter(Boolean).join(' ');
+      const payload = {
+        user_id: user.id,
+        titulo,
+        tipo: tipo || 'casa',
+        operacion: operacion || 'venta',
+        estatus: txt(ac.estatus) || 'activa',
+        precio: num(ac.precio),
+        moneda: txt(ac.moneda) || 'MXN',
+        calle: txt(ac.calle),
+        num_exterior: txt(ac.num_exterior),
+        num_interior: txt(ac.num_interior),
+        colonia: txt(ac.colonia),
+        ciudad: txt(ac.ciudad) || 'Morelia',
+        estado: txt(ac.estado) || 'Michoacán',
+        cp: txt(ac.cp),
+        m2_construccion: num(ac.m2_construccion),
+        m2_terreno: num(ac.m2_terreno),
+        recamaras: num(ac.recamaras),
+        banos: num(ac.banos),
+        medio_bano: num(ac.medio_bano),
+        estacionamientos: num(ac.estacionamientos),
+        anio_construccion: num(ac.anio_construccion),
+        nivel: txt(ac.nivel),
+        mantenimiento: num(ac.mantenimiento),
+        amenidades: Array.isArray(ac.amenidades) ? ac.amenidades : txt(ac.amenidades).split(',').map(s => s.trim()).filter(Boolean),
+        descripcion: txt(ac.descripcion),
+        fotos: Array.isArray(ac.fotos) ? ac.fotos : [],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      if (!payload.titulo || !payload.colonia || !payload.precio) {
+        _addAssistantBubble('Me faltan datos obligatorios para crear el inmueble: título o descripción, colonia y precio.');
+        return;
+      }
+      const r = await fetch(`${SB_URL}/rest/v1/propiedades`, {
+        method: 'POST',
+        headers: {
+          'apikey': SB_KEY,
+          'Authorization': 'Bearer ' + tok,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify(payload)
+      });
+      const rows = await r.json().catch(() => []);
+      if (r.ok) {
+        const id = Array.isArray(rows) && rows[0] ? rows[0].id : '';
+        _addAssistantBubble(`✓ Inmueble creado: <strong>${payload.titulo}</strong>${payload.colonia ? ' · ' + payload.colonia : ''}. Ya está en Mis Inmuebles.`);
+        if (id) sessionStorage.setItem('broq_last_property_id', id);
+      } else {
+        _addAssistantBubble('No pude crear el inmueble. Revisa los datos e inténtalo otra vez.');
+      }
+    } catch (e) {
+      _addAssistantBubble('No pude crear el inmueble: ' + (e.message || e));
     }
   }
 
@@ -1601,10 +1678,10 @@ body[data-app="verificador"] .top-header { display: none !important; }
   function _normalizarVoz(t) {
     if (!t) return t;
     // Corregir transcripciones de voz comunes
-    t = t.replace(/\bbroker\b/gi, 'Broquer');
-    t = t.replace(/\bbroquer\b/gi, 'Broquer');
-    t = t.replace(/\bshaark\b/gi, 'Broquer');
-    t = t.replace(/\bshark\b/gi, 'Broquer');
+    t = t.replace(/\bbroker\b/gi, 'Broq');
+    t = t.replace(/\bbroquer\b/gi, 'Broq');
+    t = t.replace(/\bshaark\b/gi, 'Broq');
+    t = t.replace(/\bshark\b/gi, 'Broq');
     return t;
   }
 
@@ -1868,7 +1945,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   let _wakeRec = null, _wakeActive = false, _wakePaused = false, _wakeRestartT = null;
   let _wakeEnabled = localStorage.getItem('shaark_wake') === '1';
   let _wakeSuppressUntil = 0;
-  const WAKE = ['oye broquer','oye broker','broquer','broker','oye shaark','oye shark','shaark','oie shaark','hey shaark','hey shark'];
+  const WAKE = ['oye broq','broq','oye broquer','oye broker','broquer','broker','oye shaark','oye shark','shaark','oie shaark','hey shaark','hey shark'];
 
   function toggleWakeWord() {
     if (_wakeEnabled) {
@@ -1944,7 +2021,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
     const fab = document.getElementById('bk-shaark-fab');
     if (btn) {
       btn.classList.toggle('is-on', _wakeEnabled);
-      btn.title = _wakeEnabled ? 'Siempre escuchando: ON — toca para desactivar' : 'Activar "Oye Broquer"';
+      btn.title = _wakeEnabled ? 'Siempre escuchando: ON — toca para desactivar' : 'Activar "Oye Broq"';
     }
     if (fab) fab.classList.toggle('wake-on', _wakeEnabled);
   }
@@ -3259,7 +3336,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
     const _welcomeMsg = document.getElementById('bk-welcome-msg');
     if (_welcomeMsg && profile?.fullName) {
       const _firstName = profile.fullName.trim().split(' ')[0];
-      _welcomeMsg.textContent = `¡Hola, ${_firstName}! Soy Broquer, tu asistente inteligente. ¿En qué te ayudo?`;
+      _welcomeMsg.textContent = `¡Hola, ${_firstName}! Soy Broq, tu asistente inteligente. ¿En qué te ayudo?`;
     }
 
     window.dispatchEvent(new CustomEvent('brokr-shell-ready', { detail: { profile, activeKey } }));
