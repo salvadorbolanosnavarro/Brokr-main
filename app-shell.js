@@ -1945,7 +1945,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   let _wakeRec = null, _wakeActive = false, _wakePaused = false, _wakeRestartT = null;
   let _wakeEnabled = localStorage.getItem('shaark_wake') === '1';
   let _wakeSuppressUntil = 0;
-  const WAKE = ['oye broq','broq','oye shaark','oye shark','shaark','oie shaark','hey shaark','hey shark'];
+  const WAKE = ['oye broq','broq','oye broquer','oye broker','broquer','broker','oye shaark','oye shark','shaark','oie shaark','hey shaark','hey shark'];
 
   function toggleWakeWord() {
     if (_wakeEnabled) {

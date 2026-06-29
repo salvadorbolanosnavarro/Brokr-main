@@ -715,7 +715,7 @@ async def agent(req: AgentRequest, request: Request):
 # español mexicano, aguanta ruido de coche y funciona en iPhone.
 
 _VOICE_FIXES = [
-    ("broq", "Broq"),
+    ("broq", "Broq"), ("broker", "Broq"), ("brouker", "Broq"), ("bróker", "Broq"),
     ("shaark", "Broq"), ("shark", "Broq"), ("sharc", "Broq"),
 ]
 
