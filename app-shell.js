@@ -1678,6 +1678,8 @@ body[data-app="verificador"] .top-header { display: none !important; }
   function _normalizarVoz(t) {
     if (!t) return t;
     // Corregir transcripciones de voz comunes
+    t = t.replace(/\bbroker\b/gi, 'Broq');
+    t = t.replace(/\bbroquer\b/gi, 'Broq');
     t = t.replace(/\bshaark\b/gi, 'Broq');
     t = t.replace(/\bshark\b/gi, 'Broq');
     return t;
