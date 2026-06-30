@@ -1058,9 +1058,16 @@ async function generarFicha(){
     const data = await res.json();
     const pdfUrl = API + '/ficha-pdf/' + data.token;
     _lastPdfToken = data.token;
-    window.open(pdfUrl, '_blank');
+    const pdfResp = await fetch(pdfUrl);
+    if (!pdfResp.ok) throw new Error('No se pudo obtener el PDF');
+    const blob = await pdfResp.blob();
+    if (window.broquerDeliverBlob) {
+      await window.broquerDeliverBlob(blob, data.filename || 'Ficha.pdf', { type:'application/pdf', title:'Ficha lista', text:'Ficha técnica generada por Broquer' });
+    } else {
+      window.open(URL.createObjectURL(blob), '_blank', 'noopener');
+    }
     g('print-bar').classList.add('show');
-    document.getElementById('print-bar-txt').textContent = 'Ficha lista — comparte desde el visor';
+    document.getElementById('print-bar-txt').textContent = 'Ficha lista — comparte desde la pantalla';
   } catch(e){
     alert('Error generando ficha: ' + e.message);
   } finally{

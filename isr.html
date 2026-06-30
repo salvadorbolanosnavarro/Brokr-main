@@ -1564,14 +1564,13 @@ async function descargarPDF() {
     if(!pdfResp.ok) throw new Error('No se pudo obtener el PDF');
     const blob = await pdfResp.blob();
 
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = data.filename || filename;
-    a.rel = 'noopener';
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    if (window.broquerDeliverBlob) {
+      await window.broquerDeliverBlob(blob, data.filename || filename, { type: 'application/pdf', title: 'Cálculo ISR listo', text: 'Cálculo ISR generado por Broquer' });
+    } else {
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank', 'noopener');
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
+    }
   } catch (e) {
     alert('Error al generar PDF: ' + (e.message || e));
   } finally {
