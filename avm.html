@@ -788,17 +788,13 @@ input:focus, select:focus, textarea:focus {
           const blob = await pdfResp.blob();
           const filename = data.filename || "Estimacion_Valor.pdf";
 
-          // Descarga directa con <a download>. Sin Web Share — el navegador
-          // (desktop y móvil) guarda el archivo donde el usuario tenga
-          // configurado por defecto, sin abrir menús intermedios.
-          const blobUrl = URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = blobUrl;
-          link.download = filename;
-          link.rel = "noopener";
-          document.body.appendChild(link);
-          link.click();
-          setTimeout(() => { document.body.removeChild(link); URL.revokeObjectURL(blobUrl); }, 1000);
+          if (window.broquerDeliverBlob) {
+            await window.broquerDeliverBlob(blob, filename, { type: 'application/pdf', title: 'Estimación de valor lista', text: 'Estimación de valor generada por Broquer' });
+          } else {
+            const blobUrl = URL.createObjectURL(blob);
+            window.open(blobUrl, '_blank', 'noopener');
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 3000);
+          }
         } catch (e) {
           alert("Error al generar PDF: " + (e.message || e));
         } finally { setPdfLoading(false); }
