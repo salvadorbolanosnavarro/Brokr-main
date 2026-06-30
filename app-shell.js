@@ -1401,6 +1401,15 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
     let file = null;
     try { file = new File([blob], safeName, { type }); } catch (_) {}
 
+    if (file && navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+      try {
+        await navigator.share({ title, text: opts.text || 'Archivo generado por Broquer', files: [file] });
+        return { method: 'share' };
+      } catch (e) {
+        if (e && e.name === 'AbortError') return { method: 'share-cancelled' };
+      }
+    }
+
     const url = URL.createObjectURL(blob);
     const isPdf = type.includes('pdf') || /\.pdf$/i.test(safeName);
     const overlay = document.createElement('div');
