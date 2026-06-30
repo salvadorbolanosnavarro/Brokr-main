@@ -1391,10 +1391,9 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
 
 
   /* ── Entrega universal de archivos (iPhone/PWA/WebView/Desktop) ─────────
-     Política final: el archivo listo se muestra siempre en pantalla primero.
-     En iOS/WKWebView <a download> no es confiable y Web Share solo funciona
-     de forma consistente desde el toque del usuario; por eso el botón
-     "Compartir / reenviar" del visor abre WhatsApp, Archivos, Mail, etc. */
+     iOS no siempre respeta <a download> dentro de WKWebView. Este helper
+     intenta primero el share sheet nativo con el archivo real y, si no está
+     disponible, muestra un visor inmediato con botones de compartir/abrir. */
   async function deliverGeneratedFile(blob, filename, opts = {}) {
     const type = opts.type || blob.type || 'application/octet-stream';
     const title = opts.title || filename || 'Archivo Broquer';
