@@ -724,33 +724,18 @@ async function descargarPDF(){
 
   const downloadBtnHTML = '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> Descargar / Compartir PDF';
 
-  if(canShare){
-    // iOS Safari — native share sheet (WhatsApp, Files, Mail, etc.)
-    navigator.share({title:'Ficha ' + id, files:[file]})
-      .then(() => { txt.textContent = 'Listo'; })
-      .catch((err) => {
-        // User cancelled or share failed — fallback to object URL open
-        if(err.name !== 'AbortError'){
-          const url = URL.createObjectURL(blob);
-          window.open(url, '_blank');
-        }
-        txt.textContent = 'Ficha lista';
-      })
-      .finally(() => {
-        btn.disabled = false;
-        btn.innerHTML = downloadBtnHTML;
-      });
-  } else {
-    // Desktop or browser without share API
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 3000);
-    txt.textContent = 'PDF descargado';
+  try {
+    if (window.broquerDeliverBlob) {
+      await window.broquerDeliverBlob(blob, filename, { type:'application/pdf', title:'Ficha lista', text:'Ficha técnica generada por Broquer' });
+    } else if (canShare) {
+      await navigator.share({title:'Ficha ' + id, files:[file]});
+    } else {
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank', 'noopener');
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
+    }
+    txt.textContent = 'Ficha lista — comparte desde la pantalla';
+  } finally {
     btn.disabled = false;
     btn.innerHTML = downloadBtnHTML;
   }

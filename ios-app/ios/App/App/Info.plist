@@ -49,6 +49,10 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Brokr necesita acceso a la cámara para tomar fotos de tus inmuebles y subirlas a tu inventario.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Broquer necesita acceso al micrófono para que puedas dictarle instrucciones a Broq dentro de la app.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Broquer usa el reconocimiento de voz para transcribir tus instrucciones a Broq.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Brokr necesita acceso a tus fotos para que puedas seleccionar imágenes de propiedades existentes desde tu galería.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

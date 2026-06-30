@@ -1366,6 +1366,56 @@ body[data-app="verificador"] .top-header { display: none !important; }
     } catch (e) { /* noop */ }
   }
 
+
+  /* ── Entrega universal de archivos (iPhone/PWA/WebView/Desktop) ─────────
+     iOS no siempre respeta <a download> dentro de WKWebView. Este helper
+     intenta primero el share sheet nativo con el archivo real y, si no está
+     disponible, muestra un visor inmediato con botones de compartir/abrir. */
+  async function deliverGeneratedFile(blob, filename, opts = {}) {
+    const type = opts.type || blob.type || 'application/octet-stream';
+    const title = opts.title || filename || 'Archivo Broquer';
+    const safeName = filename || (title.replace(/\s+/g, '_') + (type.includes('pdf') ? '.pdf' : ''));
+    let file = null;
+    try { file = new File([blob], safeName, { type }); } catch (_) {}
+
+    if (file && navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+      try {
+        await navigator.share({ title, text: opts.text || 'Archivo generado por Broquer', files: [file] });
+        return { method: 'share' };
+      } catch (e) {
+        if (e && e.name === 'AbortError') return { method: 'share-cancelled' };
+      }
+    }
+
+    const url = URL.createObjectURL(blob);
+    const isPdf = type.includes('pdf') || /\.pdf$/i.test(safeName);
+    const overlay = document.createElement('div');
+    overlay.className = 'bk-file-overlay';
+    overlay.innerHTML = `
+      <div class="bk-file-sheet" role="dialog" aria-modal="true" aria-label="Archivo listo">
+        <div class="bk-file-head">
+          <div><strong>${title}</strong><span>${safeName}</span></div>
+          <button type="button" class="bk-file-close" aria-label="Cerrar">×</button>
+        </div>
+        ${isPdf ? `<iframe class="bk-file-frame" src="${url}" title="${safeName}"></iframe>` : `<div class="bk-file-placeholder">Archivo listo para compartir.</div>`}
+        <div class="bk-file-actions">
+          <button type="button" class="bk-file-primary">Compartir / reenviar</button>
+          <a class="bk-file-secondary" href="${url}" download="${safeName}" target="_blank" rel="noopener">Abrir / descargar</a>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const close = () => { overlay.remove(); setTimeout(() => URL.revokeObjectURL(url), 3000); };
+    overlay.querySelector('.bk-file-close')?.addEventListener('click', close);
+    overlay.querySelector('.bk-file-primary')?.addEventListener('click', async () => {
+      if (file && navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+        try { await navigator.share({ title, text: opts.text || 'Archivo generado por Broquer', files: [file] }); return; } catch (_) {}
+      }
+      window.open(url, '_blank', 'noopener');
+    });
+    return { method: 'viewer', url };
+  }
+  window.broquerDeliverBlob = deliverGeneratedFile;
+
   /* ── Acciones directas: ejecutan API y muestran resultado en chat ── */
   function _addAssistantBubble(html) {
     const wrap = document.getElementById('bk-shk-msgs');
@@ -1508,13 +1558,13 @@ body[data-app="verificador"] .top-header { display: none !important; }
         return;
       }
       const blob = await r.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = tipo === 'promesa' ? 'Promesa_Compraventa.docx' : 'Contrato_Arrendamiento.docx';
-      document.body.appendChild(a); a.click();
-      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 800);
-      _addAssistantBubble(`✓ Contrato listo. Se descargó en tu dispositivo.`);
+      const filename = tipo === 'promesa' ? 'Promesa_Compraventa.docx' : 'Contrato_Arrendamiento.docx';
+      await deliverGeneratedFile(blob, filename, {
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        title: 'Contrato listo',
+        text: 'Contrato generado por Broquer'
+      });
+      _addAssistantBubble(`✓ <strong>Contrato listo.</strong> Se abrió en pantalla para compartirlo o guardarlo.`);
     } catch (e) {
       _addAssistantBubble('No pude generar el contrato: ' + (e.message || e));
     }
@@ -1635,14 +1685,9 @@ body[data-app="verificador"] .top-header { display: none !important; }
         return;
       }
       const blob = await pdfResp.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = tokData.filename || ('Estimacion_Valor_' + (body.colonia || 'inmueble') + '.pdf');
-      a.rel = 'noopener';
-      document.body.appendChild(a); a.click();
-      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
-      bubble.innerHTML += '<br>✓ <strong>PDF descargado.</strong>';
+      const filename = tokData.filename || ('Estimacion_Valor_' + (body.colonia || 'inmueble') + '.pdf');
+      await deliverGeneratedFile(blob, filename, { type: 'application/pdf', title: 'Estimación de valor lista', text: 'Estimación de valor generada por Broquer' });
+      bubble.innerHTML += '<br>✓ <strong>PDF listo.</strong> Se abrió en pantalla para compartirlo o guardarlo.';
     } catch (e) {
       bubble.textContent = 'No pude completar la estimación: ' + (e.message || e);
     }
