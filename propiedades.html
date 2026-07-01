@@ -744,6 +744,207 @@
   .bulk-bar { bottom: 16px; padding: 8px 10px 8px 18px; font-size: 13px; gap: 10px; }
   .bulk-bar__btn { padding: 6px 12px; font-size: 12px; }
 }
+
+/* ══ Detalle: barra de acciones + tabs (mismas métricas del sistema) ══ */
+.pd-actions {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 14px 26px;
+  border-bottom: 1px solid var(--line);
+}
+.pd-est-select {
+  height: 36px; padding: 0 34px 0 14px;
+  background: var(--bone);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-pill);
+  font-family: inherit; font-size: 12px; font-weight: 600;
+  color: var(--ink);
+  cursor: pointer; outline: none;
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='none' stroke='%236B7585' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  transition: border-color var(--dur) var(--ease);
+}
+.pd-est-select:hover { border-color: var(--line-3); }
+.pd-est-select:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(22,22,22,.05); }
+.pd-actions .spacer { flex: 1; }
+
+.pd-tabs {
+  display: flex; gap: 20px;
+  padding: 0 26px;
+  border-bottom: 1px solid var(--line);
+  overflow-x: auto; scrollbar-width: none;
+}
+.pd-tabs::-webkit-scrollbar { display: none; }
+.pd-tab {
+  appearance: none; background: none; border: none; cursor: pointer;
+  font-family: inherit; font-size: 13px; font-weight: 500; color: var(--mute);
+  padding: 12px 0; margin-bottom: -1px;
+  border-bottom: 2px solid transparent; flex-shrink: 0;
+  display: inline-flex; align-items: center; gap: 7px;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.pd-tab:hover { color: var(--ink-2); }
+.pd-tab.is-active { color: var(--ink); border-bottom-color: var(--ink); font-weight: 600; }
+.pd-tab .n {
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--mute); background: var(--paper-2);
+  border-radius: var(--r-pill); padding: 1px 7px;
+  font-variant-numeric: tabular-nums;
+}
+.pd-tab.is-active .n { background: var(--ink); color: var(--paper); }
+
+/* Composer de nota / tarea — misma métrica que props-search-wrap */
+.pd-composer { display: flex; gap: 8px; margin-bottom: 16px; }
+.pd-composer input[type="text"] {
+  flex: 1; min-width: 0; height: 40px; padding: 0 14px;
+  background: var(--bone);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-pill);
+  font-family: inherit; font-size: 13px; color: var(--ink);
+  outline: none;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.pd-composer input[type="text"]:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(22,22,22,.05); }
+.pd-composer input[type="text"]::placeholder { color: var(--mute-2); }
+.pd-composer input[type="date"] {
+  height: 40px; padding: 0 12px; width: 138px;
+  background: var(--bone);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-pill);
+  font-family: inherit; font-size: 12px; color: var(--ink-2);
+  outline: none;
+}
+.pd-composer input[type="date"]:focus { border-color: var(--ink); }
+.pd-composer select {
+  height: 40px; padding: 0 32px 0 14px;
+  background: var(--bone);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-pill);
+  font-family: inherit; font-size: 13px; color: var(--ink);
+  outline: none; cursor: pointer;
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='none' stroke='%236B7585' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+.pd-composer select:first-child { flex: 1; min-width: 150px; }
+.pd-composer .go {
+  height: 40px; padding: 0 18px;
+  background: var(--ink); color: var(--paper);
+  border: none; border-radius: var(--r-pill);
+  font-family: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer; flex-shrink: 0;
+  transition: background var(--dur) var(--ease);
+}
+.pd-composer .go:hover { background: var(--ink-2); }
+.pd-composer .go:disabled { opacity: .55; cursor: not-allowed; }
+
+/* Feed items (historial / interesados / tareas) */
+.pd-item {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.pd-item:last-child { border-bottom: none; }
+.pd-item__ico {
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  background: var(--paper-2); color: var(--ink-3);
+  display: flex; align-items: center; justify-content: center;
+}
+.pd-item__ico.nota { background: var(--forest-soft); color: var(--forest); }
+.pd-item__ico.estatus { background: var(--warn-soft); color: var(--warn); }
+.pd-item__ico.tarea { background: var(--success-soft); color: var(--success); }
+.pd-item__txt { flex: 1; min-width: 0; font-size: 13px; color: var(--ink); line-height: 1.5; overflow-wrap: break-word; }
+.pd-item__date {
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--mute); margin-top: 3px; letter-spacing: 0.05em;
+}
+.pd-item.is-center { align-items: center; }
+
+.pd-check {
+  width: 22px; height: 22px; padding: 0; flex-shrink: 0;
+  border: 1.5px solid var(--line-2); border-radius: 50%;
+  background: var(--bone); color: transparent; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.pd-check:hover { border-color: var(--success); }
+.pd-item.is-done .pd-check { background: var(--success); border-color: var(--success); color: #fff; }
+.pd-item.is-done .pd-item__txt { text-decoration: line-through; color: var(--mute); }
+.pd-item__due { font-family: var(--font-mono); font-size: 10px; color: var(--mute); margin-top: 2px; letter-spacing: 0.05em; }
+.pd-item__due.is-overdue { color: var(--danger); font-weight: 600; }
+.pd-x {
+  border: none; background: none; padding: 4px 7px; flex-shrink: 0;
+  color: var(--mute-2); cursor: pointer; font-size: 15px; line-height: 1;
+  border-radius: var(--r-sm);
+  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.pd-x:hover { color: var(--danger); background: var(--danger-soft); }
+
+.pd-empty {
+  text-align: center; padding: 28px 12px;
+  font-size: 13px; color: var(--mute-2);
+}
+.pd-id {
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--mute);
+}
+
+/* Tarjeta archivada */
+.prop-card.is-archived { opacity: .62; }
+.prop-card.is-archived:hover { opacity: 1; }
+
+/* Toggle Archivadas — misma métrica del filtro de estatus */
+.props-arch-toggle {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 40px; padding: 0 16px; flex-shrink: 0;
+  background: var(--bone);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-pill);
+  font-family: inherit; font-size: 13px; font-weight: 500;
+  color: var(--ink-2); cursor: pointer;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.props-arch-toggle:hover { border-color: var(--line-3); }
+.props-arch-toggle.is-active { border-color: var(--ink); background: var(--paper-2); color: var(--ink); }
+
+/* Badges de estatus adicionales */
+.badge-reservada  { background: var(--info-soft);  color: var(--info); }
+.badge-en_proceso { background: rgba(91,79,224,.12); color: var(--violet); }
+
+/* CSV import */
+.csv-drop {
+  border: 2px dashed var(--line-2); border-radius: var(--r);
+  padding: 26px 16px; text-align: center;
+  background: var(--paper); cursor: pointer;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.csv-drop:hover { border-color: var(--ink); }
+.csv-drop strong { display: block; font-size: 14px; color: var(--ink); margin-bottom: 4px; }
+.csv-drop span { font-size: 12px; color: var(--mute); }
+.csv-report { margin-top: 14px; font-size: 13px; line-height: 1.7; color: var(--ink); }
+.csv-report .err-list {
+  margin-top: 8px; padding: 10px 12px;
+  background: var(--danger-soft); border-radius: var(--r);
+  font-family: var(--font-mono); font-size: 11px; color: var(--danger);
+  max-height: 140px; overflow-y: auto;
+}
+.csv-link {
+  font-size: 12px; color: var(--ink-2);
+  text-decoration: underline; text-underline-offset: 3px;
+  text-decoration-color: var(--line-2); cursor: pointer;
+}
+.csv-link:hover { text-decoration-color: var(--forest); color: var(--forest); }
+
+/* Chips de etiqueta — mismo lenguaje que las amenidades del detalle */
+.pd-tag {
+  background: var(--paper-2); border: 1px solid var(--line);
+  border-radius: var(--r-pill); padding: 5px 12px;
+  font-size: 12px; color: var(--ink-2);
+  display: inline-flex; align-items: center; gap: 6px;
+}
 </style>
 </head>
 <body data-app="props">
@@ -781,6 +982,10 @@
         <div class="props-head__title">
         </div>
         <div class="props-head__actions">
+          <button class="btn-import-eb" onclick="abrirCsvModal()" title="Importa propiedades desde un archivo CSV">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            CSV
+          </button>
           <button class="btn-import-eb" onclick="importarDesdeEasyBroker()" title="Trae todas tus propiedades de EasyBroker">
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
             Importar de EasyBroker
@@ -825,6 +1030,8 @@
           </button>
           <div class="props-est-dropdown" id="props-est-dropdown">
             <label class="props-est-option"><input type="checkbox" value="activa" onchange="filterProps()"> Activa</label>
+            <label class="props-est-option"><input type="checkbox" value="reservada" onchange="filterProps()"> Reservada</label>
+            <label class="props-est-option"><input type="checkbox" value="en_proceso" onchange="filterProps()"> En proceso</label>
             <label class="props-est-option"><input type="checkbox" value="vendida" onchange="filterProps()"> Vendida</label>
             <label class="props-est-option"><input type="checkbox" value="rentada" onchange="filterProps()"> Rentada</label>
             <label class="props-est-option"><input type="checkbox" value="suspendida" onchange="filterProps()"> Suspendida</label>
@@ -844,6 +1051,17 @@
           <option value="asc">Menor a mayor</option>
           <option value="desc">Mayor a menor</option>
         </select>
+
+        <!-- Filtro por etiqueta (se muestra solo si hay etiquetas) -->
+        <select id="props-filter-tag" onchange="filterProps()" style="display:none">
+          <option value="">Todas las etiquetas</option>
+        </select>
+
+        <!-- Ver archivadas -->
+        <button type="button" class="props-arch-toggle" id="props-arch-toggle" onclick="toggleArchivadas()">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-1 12a2 2 0 01-2 2H7a2 2 0 01-2-2L4 7m16 0H4m16 0l-1.5-3h-13L4 7m6 4h4"/></svg>
+          <span id="props-arch-label">Archivadas</span>
+        </button>
       </div>
     </div>
 
@@ -871,13 +1089,23 @@
         <div class="pf-row"><div class="pf-field full"><label>Título</label><input type="text" name="titulo" placeholder="Casa en venta en Las Palmas" required/></div></div>
         <div class="pf-row">
           <div class="pf-field"><label>Tipo</label><select name="tipo" required><option value="">Seleccionar</option><option value="casa">Casa</option><option value="departamento">Departamento</option><option value="terreno">Terreno</option><option value="local">Local comercial</option><option value="oficina">Oficina</option><option value="bodega">Bodega</option></select></div>
-          <div class="pf-field"><label>Operación</label><select name="operacion" required><option value="">Seleccionar</option><option value="venta">Venta</option><option value="renta">Renta</option></select></div>
-          <div class="pf-field"><label>Estatus</label><select name="estatus"><option value="activa">Activa</option><option value="vendida">Vendida</option><option value="rentada">Rentada</option><option value="suspendida">Suspendida</option></select></div>
+          <div class="pf-field"><label>Operación</label><select name="operacion" required onchange="pfActualizarComision(this.value)"><option value="">Seleccionar</option><option value="venta">Venta</option><option value="renta">Renta</option></select></div>
+          <div class="pf-field"><label>Estatus</label><select name="estatus"><option value="activa">Activa</option><option value="reservada">Reservada</option><option value="en_proceso">En proceso</option><option value="vendida">Vendida</option><option value="rentada">Rentada</option><option value="suspendida">Suspendida</option></select></div>
         </div>
         <div class="pf-row">
           <div class="pf-field"><label>Precio</label><input type="text" name="precio" placeholder="$2,500,000" oninput="propFmtMoney(this)" required/></div>
           <div class="pf-field"><label>Moneda</label><select name="moneda"><option value="MXN">MXN</option><option value="USD">USD</option></select></div>
+          <div class="pf-field" id="pf-comision-field" style="display:none">
+            <label id="pf-comision-label">Comisión (%)</label>
+            <input type="number" name="comision_venta_pct" id="pf-comision-input" placeholder="5" min="0" step="0.5"/>
+          </div>
         </div>
+        <div class="pf-row"><div class="pf-field full">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--ink);text-transform:none;letter-spacing:normal">
+            <input type="checkbox" name="mostrar_precio" checked style="width:18px;height:18px;cursor:pointer;accent-color:var(--ink)"/>
+            <span>Mostrar el precio en el anuncio</span>
+          </label>
+        </div></div>
 
         <div class="pf-section">Ubicación</div>
         <div class="pf-row">
@@ -891,11 +1119,21 @@
           <div class="pf-field"><label>Estado</label><input type="text" name="estado" value="Michoacán"/></div>
           <div class="pf-field"><label>C.P.</label><input type="text" name="cp" placeholder="58070"/></div>
         </div>
+        <div class="pf-row">
+          <div class="pf-field"><label>Esquina con</label><input type="text" name="esquina_con" placeholder="Av. Camelinas"/></div>
+          <div class="pf-field full" style="grid-column:auto;display:flex;justify-content:flex-start">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--ink);text-transform:none;letter-spacing:normal;margin-top:26px">
+              <input type="checkbox" name="mostrar_ubicacion_exacta" style="width:18px;height:18px;cursor:pointer;accent-color:var(--ink)"/>
+              <span>Mostrar ubicación exacta en el anuncio</span>
+            </label>
+          </div>
+        </div>
 
         <div class="pf-section">Características</div>
         <div class="pf-row">
           <div class="pf-field"><label>M² construcción</label><input type="number" name="m2_construccion" placeholder="180" min="0"/></div>
           <div class="pf-field"><label>M² terreno</label><input type="number" name="m2_terreno" placeholder="220" min="0"/></div>
+          <div class="pf-field"><label>M² no cubiertos</label><input type="number" name="m2_superficie_no_cubierta" placeholder="35" min="0" title="Balcón, terraza, patio"/></div>
           <div class="pf-field"><label>Recámaras</label><input type="number" name="recamaras" placeholder="3" min="0"/></div>
         </div>
         <div class="pf-row">
@@ -912,6 +1150,22 @@
           <label>Amenidades <span style="color:var(--mute); font-weight:400;">— separadas por coma</span></label>
           <input type="text" name="amenidades_raw" placeholder="Alberca, Gimnasio, Seguridad 24h, Elevador"/>
         </div></div>
+
+        <div class="pf-section">Exclusividad y colaboración</div>
+        <div class="pf-row">
+          <div class="pf-field"><label>Exclusiva</label><select name="exclusiva"><option value="no_indicado">No indicado</option><option value="si">Sí</option><option value="no">No</option></select></div>
+          <div class="pf-field"><label>Comisión compartida</label><select name="comision_compartida_sel" id="pf-comp-sel"><option value="">No indicado</option><option value="si">Sí</option><option value="no">No</option></select></div>
+        </div>
+        <div class="pf-row"><div class="pf-field full"><label>Condiciones para compartir</label><input type="text" name="condiciones_compartir" placeholder="50/50 con colegas de AMPI…"/></div></div>
+
+        <div class="pf-section">Etiquetas y control interno</div>
+        <div class="pf-row">
+          <div class="pf-field full"><label>Etiquetas <span style="color:var(--mute); font-weight:400;">— separadas por coma</span></label><input type="text" name="etiquetas_raw" placeholder="destacada, remodelada, urgente"/></div>
+        </div>
+        <div class="pf-row">
+          <div class="pf-field"><label>Clave interna</label><input type="text" name="clave_interna" placeholder="MOR-042"/></div>
+          <div class="pf-field"><label>Código de la llave</label><input type="text" name="codigo_llave" placeholder="Caja 3, gancho B"/></div>
+        </div>
 
         <div class="pf-section">Descripción</div>
         <div class="pf-row"><div class="pf-field full"><label>Descripción comercial</label><textarea name="descripcion" rows="4" placeholder="Describe la propiedad…"></textarea></div></div>
@@ -954,13 +1208,70 @@
 <div id="prop-detail-modal" class="prop-modal-overlay" onclick="if(event.target===this)closePropDetail()">
   <div class="prop-modal-box prop-detail-box" onclick="event.stopPropagation()">
     <div class="prop-modal-hdr">
-      <h3 id="detail-title">Detalle</h3>
-      <div style="display:flex; gap:8px; align-items:center;">
+      <div style="min-width:0">
+        <div class="pd-id" id="detail-id" style="margin-bottom:4px"></div>
+        <h3 id="detail-title" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Detalle</h3>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center; flex-shrink:0;">
         <button class="prop-act-btn" id="detail-edit-btn" style="height:36px;padding:0 14px;">Editar</button>
         <button onclick="closePropDetail()" class="prop-modal-close" aria-label="Cerrar">✕</button>
       </div>
     </div>
-    <div class="prop-modal-body" id="detail-body"></div>
+    <div class="pd-actions">
+      <select class="pd-est-select" id="pd-estatus" onchange="pdCambiarEstatus(this.value)">
+        <option value="activa">Activa</option>
+        <option value="reservada">Reservada</option>
+        <option value="en_proceso">En proceso</option>
+        <option value="vendida">Vendida</option>
+        <option value="rentada">Rentada</option>
+        <option value="suspendida">Suspendida</option>
+      </select>
+      <div class="spacer"></div>
+      <button class="prop-act-btn" style="flex:0 0 auto" onclick="duplicarProp()" title="Crear una copia de este inmueble">
+        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M8 8V6a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2h-2M6 20h8a2 2 0 002-2v-8a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+        Duplicar
+      </button>
+      <button class="prop-act-btn" style="flex:0 0 auto" id="pd-arch-btn" onclick="archivarDesdeDetalle()">
+        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-1 12a2 2 0 01-2 2H7a2 2 0 01-2-2L4 7m16 0H4m16 0l-1.5-3h-13L4 7m6 4h4"/></svg>
+        <span id="pd-arch-label">Archivar</span>
+      </button>
+    </div>
+    <div class="pd-tabs">
+      <button class="pd-tab is-active" id="pd-tab-btn-detalles" onclick="pdSetTab('detalles')">Detalles</button>
+      <button class="pd-tab" id="pd-tab-btn-hist" onclick="pdSetTab('hist')">Historial <span class="n" id="pd-n-hist">·</span></button>
+      <button class="pd-tab" id="pd-tab-btn-int" onclick="pdSetTab('int')">Interesados <span class="n" id="pd-n-int">·</span></button>
+      <button class="pd-tab" id="pd-tab-btn-tareas" onclick="pdSetTab('tareas')">Tareas <span class="n" id="pd-n-tareas">·</span></button>
+    </div>
+    <div class="prop-modal-body">
+      <div id="detail-body"></div>
+      <div id="pd-pane-hist" style="display:none">
+        <div class="pd-composer">
+          <input type="text" id="pd-nota-input" placeholder="Escribe una nota…" onkeydown="if(event.key==='Enter')pdAgregarNota()"/>
+          <button class="go" id="pd-nota-btn" onclick="pdAgregarNota()">Agregar</button>
+        </div>
+        <div id="pd-hist-feed"></div>
+      </div>
+      <div id="pd-pane-int" style="display:none">
+        <div class="pd-composer">
+          <select id="pd-int-contacto"></select>
+          <select id="pd-int-rel">
+            <option value="interes">Interesado</option>
+            <option value="propietario">Propietario</option>
+            <option value="relacionado">Relacionado</option>
+          </select>
+          <button class="go" onclick="pdVincularContacto()">Vincular</button>
+        </div>
+        <div id="pd-int-feed"></div>
+      </div>
+      <div id="pd-pane-tareas" style="display:none">
+        <div class="pd-composer">
+          <input type="text" id="pd-tarea-input" placeholder="Nueva tarea… (ej. Subir fotos nuevas)" onkeydown="if(event.key==='Enter')pdAgregarTarea()"/>
+          <input type="date" id="pd-tarea-fecha"/>
+          <button class="go" id="pd-tarea-btn" onclick="pdAgregarTarea()">Agregar</button>
+        </div>
+        <div id="pd-tareas-feed"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -987,6 +1298,14 @@ function fmtPrecio(p, moneda='MXN') {
   if (!p) return '—';
   return '$' + Number(p).toLocaleString('es-MX', { minimumFractionDigits: 0 });
 }
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+let currentDetailId = null;   // propiedad abierta en el modal de detalle
+let mostrandoArchivadas = false;
+let _csvFilas = null;         // filas parseadas listas para importar
 
 function getCurrentUserId() {
   try {
@@ -1050,7 +1369,8 @@ async function loadProps() {
     for (const id of Array.from(selectedIds)) {
       if (!validIds.has(id)) selectedIds.delete(id);
     }
-    filteredProps = allProps;
+    poblarFiltroEtiquetas();
+    filteredProps = allProps.filter(p => mostrandoArchivadas ? p.archivada === true : p.archivada !== true);
     currentPage = 1;
     renderPage();
     updateSelectionUI();
@@ -1129,7 +1449,7 @@ function renderProps(props, totalForCount) {
     const opLabel = p.operacion === 'venta' ? 'En venta' : (p.operacion === 'renta' ? 'En renta' : '');
     const ubic = p.colonia + (p.ciudad ? ', ' + p.ciudad : '');
 
-    return `<div class="prop-card ${selectedIds.has(p.id) ? 'is-selected' : ''}" data-id="${p.id}" onclick="onPropCardClick(event, '${p.id}')">
+    return `<div class="prop-card ${selectedIds.has(p.id) ? 'is-selected' : ''} ${p.archivada ? 'is-archived' : ''}" data-id="${p.id}" onclick="onPropCardClick(event, '${p.id}')">
       <div class="prop-check" onclick="event.stopPropagation();toggleSelectProp('${p.id}')">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
       </div>
@@ -1220,12 +1540,15 @@ function filterProps() {
   updateEstLabel();
 
   filteredProps = allProps.filter(p => {
+    if (mostrandoArchivadas ? p.archivada !== true : p.archivada === true) return false;
     if (q && !(p.titulo+p.colonia+p.ciudad+p.descripcion+'').toLowerCase().includes(q)) return false;
     if (op && p.operacion !== op) return false;
     if (tipo && p.tipo !== tipo) return false;
     if (selectedEst.length > 0 && !selectedEst.includes(p.estatus)) return false;
     if (precioMin !== null && (p.precio == null || Number(p.precio) < precioMin)) return false;
     if (precioMax !== null && (p.precio == null || Number(p.precio) > precioMax)) return false;
+    const tag = g('props-filter-tag') ? g('props-filter-tag').value : '';
+    if (tag && !(Array.isArray(p.etiquetas) && p.etiquetas.includes(tag))) return false;
     return true;
   });
 
@@ -1265,6 +1588,21 @@ function openPropForm(id) {
     if (Array.isArray(p.amenidades) && form.elements['amenidades_raw']) {
       form.elements['amenidades_raw'].value = p.amenidades.join(', ');
     }
+    // Campos nuevos que el loop genérico no cubre
+    if (form.elements['etiquetas_raw']) {
+      form.elements['etiquetas_raw'].value = Array.isArray(p.etiquetas) ? p.etiquetas.join(', ') : '';
+    }
+    if (form.elements['mostrar_precio']) form.elements['mostrar_precio'].checked = p.mostrar_precio !== false;
+    if (form.elements['mostrar_ubicacion_exacta']) form.elements['mostrar_ubicacion_exacta'].checked = p.mostrar_ubicacion_exacta === true;
+    const compSel = g('pf-comp-sel');
+    if (compSel) compSel.value = p.comision_compartida === true ? 'si' : (p.comision_compartida === false ? 'no' : '');
+    pfActualizarComision(p.operacion || '');
+    const comInput = g('pf-comision-input');
+    if (comInput) {
+      comInput.value = p.operacion === 'renta'
+        ? (p.comision_renta_meses != null ? p.comision_renta_meses : '')
+        : (p.comision_venta_pct != null ? p.comision_venta_pct : '');
+    }
     form.elements['fotos_raw'].value = JSON.stringify(p.fotos||[]);
     form.elements['prop_id'].value = id;
     if (p.fotos?.length) {
@@ -1279,6 +1617,7 @@ function openPropForm(id) {
   } else {
     g('prop-modal-title').textContent = 'Nuevo inmueble';
     form.elements['prop_id'].value = '';
+    pfActualizarComision('');
   }
   // El checkbox de FB solo aplica a propiedades NUEVAS y solo si el usuario tiene FB conectado
   const fbRow = document.getElementById('fb-publish-row');
@@ -1329,9 +1668,34 @@ async function saveProp(e) {
     data.amenidades = am.length ? am : null;
     delete data.amenidades_raw;
   }
+  // Etiquetas: CSV → text[]
+  {
+    const et = (data.etiquetas_raw || '').split(',').map(s => s.trim()).filter(Boolean);
+    data.etiquetas = et;
+    delete data.etiquetas_raw;
+  }
+  // Checkboxes: si no vienen en FormData es que están desmarcados
+  data.mostrar_precio = 'mostrar_precio' in data;
+  data.mostrar_ubicacion_exacta = 'mostrar_ubicacion_exacta' in data;
+  // Comisión contextual: el input es uno, la columna depende de la operación
+  {
+    const comVal = data.comision_venta_pct !== undefined ? Number(data.comision_venta_pct) : null;
+    if (data.operacion === 'renta') {
+      data.comision_renta_meses = comVal;
+      data.comision_venta_pct = null;
+    } else {
+      data.comision_venta_pct = comVal;
+      data.comision_renta_meses = null;
+    }
+  }
+  // Comisión compartida: select → boolean/null
+  data.comision_compartida = data.comision_compartida_sel === 'si' ? true
+    : (data.comision_compartida_sel === 'no' ? false : null);
+  delete data.comision_compartida_sel;
+  if (!data.exclusiva) data.exclusiva = 'no_indicado';
   if (data.precio) data.precio = getRawNum(String(data.precio));
   if (data.mantenimiento) data.mantenimiento = getRawNum(String(data.mantenimiento));
-  ['m2_construccion','m2_terreno','recamaras','banos','medio_bano','estacionamientos','anio_construccion'].forEach(k => { if (data[k]) data[k] = Number(data[k]); });
+  ['m2_construccion','m2_terreno','m2_superficie_no_cubierta','recamaras','banos','medio_bano','estacionamientos','anio_construccion'].forEach(k => { if (data[k]) data[k] = Number(data[k]); });
   data.updated_at = new Date().toISOString();
   const id = data.prop_id; delete data.prop_id;
 
@@ -1498,9 +1862,11 @@ async function borrarSeleccionados() {
   btn.textContent = 'Eliminando…';
 
   try {
-    // Paso 1: traer las propiedades para conocer las URLs de fotos a borrar del Storage
+    // Paso 1: traer las propiedades para conocer las URLs de fotos a borrar del Storage.
+    // Guard: fotos que también usa una propiedad NO seleccionada (ej. duplicados) se conservan.
     const propsABorrar = allProps.filter(p => selectedIds.has(p.id));
-    const fotoUrls = propsABorrar.flatMap(p => p.fotos || []);
+    const enUsoPorRestantes = new Set(allProps.filter(p => !selectedIds.has(p.id)).flatMap(p => p.fotos || []));
+    const fotoUrls = propsABorrar.flatMap(p => p.fotos || []).filter(u => !enUsoPorRestantes.has(u));
 
     // Paso 2: borrar en LOTES de 100 ids para no rebasar el límite de URL.
     // PostgREST acepta id=in.("uuid1","uuid2",...) — los UUIDs van entrecomillados
@@ -1607,9 +1973,11 @@ function crearFichaDesde(id) {
 async function deleteProp(id) {
   if (!confirm('¿Eliminar este inmueble? Las fotos también se eliminarán.\n\nEliminar de Broquer no elimina de tu página de Facebook.')) return;
   try {
-    // Conocer las URLs antes de borrar para limpiar el Storage
+    // Conocer las URLs antes de borrar para limpiar el Storage.
+    // Guard: si otra propiedad (ej. un duplicado) usa la misma foto, NO se borra del Storage.
     const p = allProps.find(x => x.id === id);
-    const fotoUrls = p?.fotos || [];
+    const enUsoPorOtras = new Set(allProps.filter(x => x.id !== id).flatMap(x => x.fotos || []));
+    const fotoUrls = (p?.fotos || []).filter(u => !enUsoPorOtras.has(u));
 
     await sbFetch(`propiedades?id=eq.${id}`, 'DELETE');
 
@@ -1623,8 +1991,15 @@ async function deleteProp(id) {
 
 function openPropDetail(id) {
   const p = allProps.find(x => x.id === id); if (!p) return;
+  currentDetailId = id;
   g('detail-title').textContent = p.titulo;
+  g('detail-id').textContent = p.clave_interna || (p.eb_public_id ? 'EB · ' + p.eb_public_id : '');
   g('detail-edit-btn').onclick = () => { closePropDetail(); openPropForm(id); };
+  g('pd-estatus').value = p.estatus || 'activa';
+  g('pd-arch-label').textContent = p.archivada ? 'Restaurar' : 'Archivar';
+  pdSetTab('detalles');
+  ['pd-n-hist','pd-n-int','pd-n-tareas'].forEach(i => g(i).textContent = '·');
+  pdPrecargarContadores(id);
   const fotos = p.fotos?.length ? p.fotos : [];
   let gallery = '';
   if (fotos.length) {
@@ -1652,13 +2027,21 @@ function openPropDetail(id) {
     {l:'Tipo', v:p.tipo}, {l:'Operación', v:p.operacion}, {l:'Estatus', v:p.estatus},
     {l:'M² const.', v:p.m2_construccion ? p.m2_construccion+'m²':'—'},
     {l:'M² terreno', v:p.m2_terreno ? p.m2_terreno+'m²':'—'},
+    {l:'M² no cub.', v:p.m2_superficie_no_cubierta ? p.m2_superficie_no_cubierta+'m²':'—'},
     {l:'Recámaras', v:p.recamaras||'—'},
     {l:'Baños', v:p.banos||'—'},
     {l:'½ Baños', v:p.medio_bano||'—'},
     {l:'Estac.', v:p.estacionamientos||'—'},
     {l:'Nivel', v:p.nivel||'—'},
     {l:'Mantenimiento', v:p.mantenimiento ? fmtPrecio(p.mantenimiento) : '—'},
-    {l:'Año', v:p.anio_construccion||'—'}
+    {l:'Año', v:p.anio_construccion||'—'},
+    {l:'Comisión', v: p.operacion === 'renta'
+        ? (p.comision_renta_meses != null ? p.comision_renta_meses + ' mes(es)' : '—')
+        : (p.comision_venta_pct != null ? p.comision_venta_pct + '%' : '—')},
+    {l:'Exclusiva', v: p.exclusiva === 'si' ? 'Sí' : (p.exclusiva === 'no' ? 'No' : '—')},
+    {l:'Comparte', v: p.comision_compartida === true ? 'Sí' : (p.comision_compartida === false ? 'No' : '—')},
+    {l:'Clave interna', v:p.clave_interna||'—'},
+    {l:'Cód. llave', v:p.codigo_llave||'—'}
   ];
 
   const amenHTML = (p.amenidades && p.amenidades.length)
@@ -1670,12 +2053,27 @@ function openPropDetail(id) {
        </div>`
     : '';
 
+  const tagsHTML = (Array.isArray(p.etiquetas) && p.etiquetas.length)
+    ? `<div style="margin-top:18px;">
+         <div class="pf-section" style="padding-top:0;">Etiquetas</div>
+         <div style="display:flex; flex-wrap:wrap; gap:6px;">
+           ${p.etiquetas.map(t => `<span class="pd-tag">${esc(t)}</span>`).join('')}
+         </div>
+       </div>`
+    : '';
+
+  const compartirHTML = p.condiciones_compartir
+    ? `<div style="background:var(--info-soft); border-radius: var(--r); padding: 12px 14px; font-size: 13px; color: var(--info); margin-top:14px;"><strong>Condiciones para compartir — </strong>${esc(p.condiciones_compartir)}</div>`
+    : '';
+
   g('detail-body').innerHTML = `${gallery}
     <div class="detail-price-hero">${fmtPrecio(p.precio)}<span style="font-size:14px; color:var(--mute); font-family:var(--font-mono); font-weight:500; margin-left:6px;">${p.moneda||'MXN'}</span></div>
     <div class="detail-loc">${ubicLine}</div>
     ${p.descripcion ? `<div class="detail-desc">${p.descripcion}</div>` : ''}
     <div class="detail-info-grid">${specs.map(s=>`<div class="detail-info-item"><label>${s.l}</label><span>${s.v}</span></div>`).join('')}</div>
     ${amenHTML}
+    ${tagsHTML}
+    ${compartirHTML}
     ${p.notas ? `<div style="background:var(--warn-soft); border-radius: var(--r); padding: 12px 14px; font-size: 13px; color: var(--warn); margin-top:14px;"><strong>Notas internas — </strong>${p.notas}</div>` : ''}`;
   g('prop-detail-modal').style.display = 'flex';
 }
@@ -1688,7 +2086,7 @@ function openLightbox(fotosJsonEncoded, startIdx) {
     if (fotos[startIdx]) window.open(fotos[startIdx], '_blank');
   } catch(e) {}
 }
-function closePropDetail() { g('prop-detail-modal').style.display = 'none'; }
+function closePropDetail() { g('prop-detail-modal').style.display = 'none'; currentDetailId = null; }
 
 function initFotoUpload() {
   const input = g('fotos-upload'); if (!input) return;
@@ -1831,6 +2229,512 @@ function cerrarImportEB() {
   }, 300);
 }
 
+/* ════════════════════════════════════════════════════════════════
+   CRM DEL INMUEBLE — tabs del detalle, estatus, duplicar, archivar
+   ════════════════════════════════════════════════════════════════ */
+
+function pdSetTab(tab) {
+  const panes = { detalles:'detail-body', hist:'pd-pane-hist', int:'pd-pane-int', tareas:'pd-pane-tareas' };
+  Object.keys(panes).forEach(t => {
+    const pane = g(panes[t]); if (pane) pane.style.display = t === tab ? '' : 'none';
+    const btn = g('pd-tab-btn-' + t); if (btn) btn.classList.toggle('is-active', t === tab);
+  });
+  if (!currentDetailId) return;
+  if (tab === 'hist')   pdCargarHistorial();
+  if (tab === 'int')    pdCargarInteresados();
+  if (tab === 'tareas') pdCargarTareas();
+}
+
+async function pdPrecargarContadores(pid) {
+  const enc = encodeURIComponent(pid);
+  const carga = async (path, elId) => {
+    try {
+      const rows = await sbFetch(path);
+      const el = g(elId);
+      if (el && currentDetailId === pid) el.textContent = Array.isArray(rows) ? rows.length : 0;
+    } catch { const el = g(elId); if (el) el.textContent = '0'; }
+  };
+  carga('actividades?select=id&propiedad_id=eq.' + enc + '&limit=200', 'pd-n-hist');
+  carga('contactos_propiedades?select=id&propiedad_id=eq.' + enc + '&limit=200', 'pd-n-int');
+  carga('tareas?select=id&propiedad_id=eq.' + enc + '&completada=eq.false&limit=200', 'pd-n-tareas');
+}
+
+/* ── Estatus rápido desde el detalle (se registra en el historial) ── */
+async function pdCambiarEstatus(nuevo) {
+  const id = currentDetailId; if (!id) return;
+  const p = allProps.find(x => x.id === id);
+  if (!p || p.estatus === nuevo) return;
+  const previo = p.estatus;
+  p.estatus = nuevo;   // optimista
+  renderPage();
+  try {
+    await sbFetch('propiedades?id=eq.' + encodeURIComponent(id), 'PATCH',
+      { estatus: nuevo, updated_at: new Date().toISOString() });
+    const uid = getCurrentUserId();
+    if (uid) {
+      sbFetch('actividades', 'POST', {
+        user_id: uid, tipo: 'cambio_estatus',
+        texto: 'Estatus cambiado de "' + (previo || 'sin estatus') + '" a "' + nuevo + '"',
+        propiedad_id: id,
+      }).catch(() => {});
+    }
+    mostrarToast('Estatus: ' + nuevo);
+  } catch (e) {
+    p.estatus = previo;
+    g('pd-estatus').value = previo || 'activa';
+    renderPage();
+    alert('No se pudo cambiar el estatus.\n\n' + e.message);
+  }
+}
+
+/* ── Duplicar inmueble ─────────────────────────────────────────── */
+async function duplicarProp() {
+  const id = currentDetailId; if (!id) return;
+  const p = allProps.find(x => x.id === id); if (!p) return;
+  if (!confirm('¿Crear una copia de este inmueble?')) return;
+  const uid = getCurrentUserId();
+  if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); location.href = 'login.html'; return; }
+  const copia = Object.assign({}, p);
+  delete copia.id;
+  delete copia.created_at;
+  delete copia.eb_public_id;   // el vínculo con EasyBroker no se hereda
+  copia.titulo = (p.titulo || 'Inmueble') + ' (copia)';
+  copia.estatus = 'activa';
+  copia.archivada = false;
+  copia.user_id = uid;
+  copia.updated_at = new Date().toISOString();
+  try {
+    await sbFetch('propiedades', 'POST', copia);
+    closePropDetail();
+    await loadProps();
+    mostrarToast('Copia creada');
+  } catch (e) { alert('No se pudo duplicar.\n\n' + e.message); }
+}
+
+/* ── Archivar / restaurar ──────────────────────────────────────── */
+async function archivarDesdeDetalle() {
+  const id = currentDetailId; if (!id) return;
+  const p = allProps.find(x => x.id === id); if (!p) return;
+  const archivar = p.archivada !== true;
+  try {
+    await sbFetch('propiedades?id=eq.' + encodeURIComponent(id), 'PATCH',
+      { archivada: archivar, updated_at: new Date().toISOString() });
+    p.archivada = archivar;
+    closePropDetail();
+    filterProps();
+    mostrarToast(archivar ? 'Inmueble archivado' : 'Inmueble restaurado');
+  } catch (e) { alert('No se pudo archivar.\n\n' + e.message); }
+}
+
+function toggleArchivadas() {
+  mostrandoArchivadas = !mostrandoArchivadas;
+  const btn = g('props-arch-toggle');
+  btn.classList.toggle('is-active', mostrandoArchivadas);
+  g('props-arch-label').textContent = mostrandoArchivadas ? 'Ver activas' : 'Archivadas';
+  selectedIds.clear();
+  filterProps();
+}
+
+/* ── Filtro por etiqueta ───────────────────────────────────────── */
+function poblarFiltroEtiquetas() {
+  const sel = g('props-filter-tag'); if (!sel) return;
+  const tags = [...new Set(allProps.flatMap(p => Array.isArray(p.etiquetas) ? p.etiquetas : []))].sort();
+  const actual = sel.value;
+  if (!tags.length) { sel.style.display = 'none'; sel.value = ''; return; }
+  sel.style.display = '';
+  sel.innerHTML = '<option value="">Todas las etiquetas</option>' +
+    tags.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+  if (tags.includes(actual)) sel.value = actual;
+}
+
+/* ── Comisión contextual en el formulario ──────────────────────── */
+function pfActualizarComision(operacion) {
+  const field = g('pf-comision-field');
+  const label = g('pf-comision-label');
+  const input = g('pf-comision-input');
+  if (!field) return;
+  if (operacion === 'venta') {
+    field.style.display = '';
+    label.textContent = 'Comisión (%)';
+    input.placeholder = '5';
+  } else if (operacion === 'renta') {
+    field.style.display = '';
+    label.textContent = 'Comisión (meses)';
+    input.placeholder = '1';
+  } else {
+    field.style.display = 'none';
+    input.value = '';
+  }
+}
+
+/* ── Tab Historial ─────────────────────────────────────────────── */
+const PD_ICONS = {
+  nota: '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.862 4.487z"/></svg>',
+  cambio_estatus: '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16l-4-4m0 0l4-4m-4 4h18M17 8l4 4m0 0l-4 4"/></svg>',
+  tarea_completada: '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+};
+function pdIconClass(tipo) {
+  if (tipo === 'cambio_estatus') return 'estatus';
+  if (tipo === 'tarea_completada') return 'tarea';
+  return 'nota';
+}
+function pdFechaHora(iso) {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString('es-MX', { day:'2-digit', month:'short' }) + ' · ' +
+           d.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
+  } catch { return ''; }
+}
+function pdFechaCorta(iso) {
+  if (!iso) return '';
+  try { return new Date(iso).toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric' }); }
+  catch { return ''; }
+}
+
+async function pdCargarHistorial() {
+  const pid = currentDetailId; if (!pid) return;
+  const feed = g('pd-hist-feed');
+  feed.innerHTML = '<div class="pd-empty">Cargando…</div>';
+  let acts = [];
+  try {
+    acts = await sbFetch('actividades?select=*&propiedad_id=eq.' + encodeURIComponent(pid) + '&order=created_at.desc&limit=100');
+  } catch { acts = []; }
+  if (currentDetailId !== pid) return;
+  feed.innerHTML = acts.length
+    ? acts.map(a => `<div class="pd-item">
+        <div class="pd-item__ico ${pdIconClass(a.tipo)}">${PD_ICONS[a.tipo] || PD_ICONS.nota}</div>
+        <div style="flex:1;min-width:0">
+          <div class="pd-item__txt">${esc(a.texto || '')}</div>
+          <div class="pd-item__date">${pdFechaHora(a.created_at)}</div>
+        </div>
+      </div>`).join('')
+    : '<div class="pd-empty">Sin actividad todavía. Agrega la primera nota arriba.</div>';
+  g('pd-n-hist').textContent = acts.length;
+}
+
+async function pdAgregarNota() {
+  const pid = currentDetailId; if (!pid) return;
+  const inp = g('pd-nota-input'); const btn = g('pd-nota-btn');
+  const texto = (inp.value || '').trim();
+  if (!texto) { inp.focus(); return; }
+  const uid = getCurrentUserId();
+  if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
+  btn.disabled = true;
+  try {
+    await sbFetch('actividades', 'POST', { user_id: uid, tipo: 'nota', texto: texto, propiedad_id: pid });
+    inp.value = '';
+    await pdCargarHistorial();
+  } catch (e) { alert('No se pudo guardar la nota.\n\n' + e.message); }
+  finally { btn.disabled = false; }
+}
+
+/* ── Tab Interesados (contactos vinculados) ────────────────────── */
+let _contactosMin = null;
+async function pdCargarContactosMin() {
+  if (_contactosMin) return _contactosMin;
+  try { _contactosMin = await sbFetch('contactos?select=id,nombre,telefono,wa&order=updated_at.desc&limit=500'); }
+  catch { _contactosMin = []; }
+  return _contactosMin;
+}
+
+async function pdCargarInteresados() {
+  const pid = currentDetailId; if (!pid) return;
+  const feed = g('pd-int-feed');
+  feed.innerHTML = '<div class="pd-empty">Cargando…</div>';
+  let contactos = [], vinculos = [];
+  try {
+    [contactos, vinculos] = await Promise.all([
+      pdCargarContactosMin(),
+      sbFetch('contactos_propiedades?select=*&propiedad_id=eq.' + encodeURIComponent(pid) + '&order=created_at.desc'),
+    ]);
+  } catch { vinculos = []; contactos = _contactosMin || []; }
+  if (currentDetailId !== pid) return;
+
+  const yaVinculados = new Set(vinculos.map(v => String(v.contacto_id)));
+  const sel = g('pd-int-contacto');
+  const disponibles = contactos.filter(c => !yaVinculados.has(String(c.id)));
+  sel.innerHTML = disponibles.length
+    ? '<option value="">Elige un contacto…</option>' + disponibles.map(c => `<option value="${esc(String(c.id))}">${esc(c.nombre || 'Sin nombre')}</option>`).join('')
+    : '<option value="">' + (contactos.length ? 'Todos ya vinculados' : 'No tienes contactos') + '</option>';
+
+  const porId = Object.fromEntries(contactos.map(c => [String(c.id), c]));
+  const REL = { interes:'Interesado', propietario:'Propietario', relacionado:'Relacionado' };
+  feed.innerHTML = vinculos.length
+    ? vinculos.map(v => {
+        const c = porId[String(v.contacto_id)] || {};
+        const tel = (c.wa || c.telefono || '').replace(/\D/g, '');
+        return `<div class="pd-item is-center">
+          <div class="pd-item__ico">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.5-1.632z"/></svg>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div class="pd-item__txt" style="font-weight:500">${esc(c.nombre || 'Contacto')}</div>
+            ${c.telefono ? `<div class="pd-item__date">${esc(c.telefono)}</div>` : ''}
+          </div>
+          <span class="badge badge-activa" style="text-transform:none">${REL[v.relacion] || esc(v.relacion)}</span>
+          ${tel ? `<a class="pd-x" href="https://wa.me/52${tel}" target="_blank" title="WhatsApp" style="color:var(--success)">
+            <svg width="15" height="15" fill="currentColor" viewBox="0 0 32 32"><path d="M16 0C7.163 0 0 7.163 0 16c0 2.823.736 5.474 2.029 7.776L0 32l8.42-2.207A15.9 15.9 0 0016 32c8.837 0 16-7.163 16-16S24.837 0 16 0zm7.45 19.2c-.39-.196-2.31-1.142-2.668-1.273-.358-.13-.618-.196-.878.196-.26.39-1.008 1.272-1.236 1.532-.228.26-.456.293-.846.098-.39-.196-1.65-.61-3.143-1.94-1.162-1.037-1.948-2.318-2.176-2.708-.228-.39-.024-.6.171-.795.176-.175.39-.456.586-.683.196-.228.26-.39.39-.65.13-.26.065-.488-.033-.683-.098-.196-.878-2.117-1.203-2.9-.317-.762-.64-.66-.879-.672-.227-.012-.487-.014-.747-.014-.26 0-.683.098-1.04.488-.358.39-1.366 1.336-1.366 3.257 0 1.92 1.398 3.778 1.594 4.038.195.26 2.752 4.203 6.667 5.893.93.402 1.657.642 2.223.821.934.297 1.785.255 2.457.155.75-.112 2.31-.945 2.636-1.857.325-.911.325-1.692.228-1.857-.098-.165-.358-.26-.748-.456z"/></svg>
+          </a>` : ''}
+          <button class="pd-x" title="Quitar vínculo" onclick="pdQuitarVinculo('${esc(String(v.id))}')">×</button>
+        </div>`;
+      }).join('')
+    : '<div class="pd-empty">Sin contactos vinculados. Vincula el primero arriba.</div>';
+  g('pd-n-int').textContent = vinculos.length;
+}
+
+async function pdVincularContacto() {
+  const pid = currentDetailId; if (!pid) return;
+  const cid = g('pd-int-contacto').value;
+  const rel = g('pd-int-rel').value;
+  if (!cid) return;
+  const uid = getCurrentUserId();
+  if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
+  try {
+    await sbFetch('contactos_propiedades', 'POST',
+      { user_id: uid, contacto_id: cid, propiedad_id: pid, relacion: rel });
+    await pdCargarInteresados();
+    mostrarToast('Contacto vinculado');
+  } catch (e) { alert('No se pudo vincular.\n\n' + e.message); }
+}
+
+async function pdQuitarVinculo(vid) {
+  try {
+    await sbFetch('contactos_propiedades?id=eq.' + encodeURIComponent(vid), 'DELETE');
+    await pdCargarInteresados();
+  } catch (e) { alert('No se pudo quitar el vínculo.\n\n' + e.message); }
+}
+
+/* ── Tab Tareas ────────────────────────────────────────────────── */
+let _pdTareas = [];
+async function pdCargarTareas() {
+  const pid = currentDetailId; if (!pid) return;
+  const feed = g('pd-tareas-feed');
+  feed.innerHTML = '<div class="pd-empty">Cargando…</div>';
+  try {
+    _pdTareas = await sbFetch('tareas?select=*&propiedad_id=eq.' + encodeURIComponent(pid) + '&order=completada.asc,fecha_entrega.asc.nullslast,created_at.desc&limit=100');
+  } catch { _pdTareas = []; }
+  if (currentDetailId !== pid) return;
+  pdRenderTareas();
+}
+
+function pdRenderTareas() {
+  const feed = g('pd-tareas-feed');
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  feed.innerHTML = _pdTareas.length
+    ? _pdTareas.map(t => {
+        const due = t.fecha_entrega ? new Date(t.fecha_entrega) : null;
+        const vencida = due && !t.completada && due < hoy;
+        return `<div class="pd-item is-center${t.completada ? ' is-done' : ''}">
+          <button class="pd-check" onclick="pdToggleTarea('${esc(String(t.id))}')" title="${t.completada ? 'Reabrir' : 'Completar'}">
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          </button>
+          <div style="flex:1;min-width:0">
+            <div class="pd-item__txt">${esc(t.titulo)}</div>
+            ${due ? `<div class="pd-item__due${vencida ? ' is-overdue' : ''}">${vencida ? 'Vencida · ' : ''}${pdFechaCorta(t.fecha_entrega)}</div>` : ''}
+          </div>
+          <button class="pd-x" title="Eliminar tarea" onclick="pdEliminarTarea('${esc(String(t.id))}')">×</button>
+        </div>`;
+      }).join('')
+    : '<div class="pd-empty">Sin tareas. Agrega la primera arriba.</div>';
+  g('pd-n-tareas').textContent = _pdTareas.filter(t => !t.completada).length;
+}
+
+async function pdAgregarTarea() {
+  const pid = currentDetailId; if (!pid) return;
+  const inp = g('pd-tarea-input'); const btn = g('pd-tarea-btn');
+  const titulo = (inp.value || '').trim();
+  if (!titulo) { inp.focus(); return; }
+  const uid = getCurrentUserId();
+  if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
+  const fecha = g('pd-tarea-fecha').value || null;
+  btn.disabled = true;
+  try {
+    await sbFetch('tareas', 'POST', {
+      user_id: uid, titulo: titulo, propiedad_id: pid,
+      fecha_entrega: fecha ? fecha + 'T12:00:00' : null,
+    });
+    inp.value = '';
+    g('pd-tarea-fecha').value = '';
+    await pdCargarTareas();
+  } catch (e) { alert('No se pudo crear la tarea.\n\n' + e.message); }
+  finally { btn.disabled = false; }
+}
+
+async function pdToggleTarea(tid) {
+  const t = _pdTareas.find(x => String(x.id) === tid); if (!t) return;
+  const completar = !t.completada;
+  t.completada = completar;
+  t.fecha_completada = completar ? new Date().toISOString() : null;
+  pdRenderTareas();
+  try {
+    await sbFetch('tareas?id=eq.' + encodeURIComponent(tid), 'PATCH',
+      { completada: completar, fecha_completada: t.fecha_completada });
+    if (completar && currentDetailId) {
+      const uid = getCurrentUserId();
+      if (uid) sbFetch('actividades', 'POST', {
+        user_id: uid, tipo: 'tarea_completada',
+        texto: 'Tarea completada: ' + t.titulo,
+        propiedad_id: currentDetailId,
+      }).catch(() => {});
+    }
+  } catch (e) {
+    t.completada = !completar;
+    t.fecha_completada = null;
+    pdRenderTareas();
+    alert('No se pudo actualizar la tarea.\n\n' + e.message);
+  }
+}
+
+async function pdEliminarTarea(tid) {
+  if (!confirm('¿Eliminar esta tarea?')) return;
+  try {
+    await sbFetch('tareas?id=eq.' + encodeURIComponent(tid), 'DELETE');
+    _pdTareas = _pdTareas.filter(t => String(t.id) !== tid);
+    pdRenderTareas();
+  } catch (e) { alert('No se pudo eliminar la tarea.\n\n' + e.message); }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   IMPORTACIÓN DESDE CSV
+   ════════════════════════════════════════════════════════════════ */
+const CSV_COLS = ['titulo','tipo','operacion','estatus','precio','moneda','calle','num_exterior','num_interior','colonia','ciudad','estado','cp','m2_construccion','m2_terreno','recamaras','banos','medio_bano','estacionamientos','anio_construccion','mantenimiento','descripcion','amenidades','etiquetas','clave_interna','notas'];
+const CSV_REQ  = ['titulo','tipo','operacion','precio','colonia'];
+const CSV_NUM  = ['precio','m2_construccion','m2_terreno','recamaras','banos','medio_bano','estacionamientos','anio_construccion','mantenimiento'];
+
+function abrirCsvModal() {
+  _csvFilas = null;
+  g('csv-file').value = '';
+  g('csv-report').style.display = 'none';
+  g('csv-report').innerHTML = '';
+  g('csv-import-btn').style.display = 'none';
+  g('csv-modal').style.display = 'flex';
+}
+function cerrarCsvModal() { g('csv-modal').style.display = 'none'; }
+
+function descargarPlantillaCsv() {
+  const ejemplo = ['Casa en venta en Las Palmas','casa','venta','activa','2500000','MXN','Av. Madero','123','','Las Palmas','Morelia','Michoacán','58070','180','220','3','2','1','2','2015','','Hermosa casa remodelada','Alberca, Jardín','destacada','MOR-001',''];
+  const csv = CSV_COLS.join(',') + '\n' + ejemplo.map(v => /[",\n]/.test(v) ? '"' + v.replace(/"/g,'""') + '"' : v).join(',') + '\n';
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'plantilla-inmuebles-broquer.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* Parser CSV tolerante: comillas, comas dentro de comillas, CRLF */
+function parseCsv(texto) {
+  const filas = [];
+  let fila = [], campo = '', enComillas = false;
+  const s = texto.replace(/^\ufeff/, '');
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (enComillas) {
+      if (ch === '"') {
+        if (s[i+1] === '"') { campo += '"'; i++; }
+        else enComillas = false;
+      } else campo += ch;
+    } else {
+      if (ch === '"') enComillas = true;
+      else if (ch === ',') { fila.push(campo); campo = ''; }
+      else if (ch === '\n' || ch === '\r') {
+        if (ch === '\r' && s[i+1] === '\n') i++;
+        fila.push(campo); campo = '';
+        if (fila.some(c => c.trim() !== '')) filas.push(fila);
+        fila = [];
+      } else campo += ch;
+    }
+  }
+  fila.push(campo);
+  if (fila.some(c => c.trim() !== '')) filas.push(fila);
+  return filas;
+}
+
+function procesarCsv(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const rep = g('csv-report');
+    rep.style.display = 'block';
+    try {
+      const filas = parseCsv(String(reader.result || ''));
+      if (filas.length < 2) throw new Error('El archivo no tiene filas de datos.');
+      const headers = filas[0].map(h => h.trim().toLowerCase());
+      const faltantes = CSV_REQ.filter(c => !headers.includes(c));
+      if (faltantes.length) throw new Error('Faltan columnas obligatorias: ' + faltantes.join(', '));
+
+      const errores = [];
+      const registros = [];
+      for (let i = 1; i < filas.length; i++) {
+        const obj = {};
+        headers.forEach((h, idx) => {
+          if (!CSV_COLS.includes(h)) return;
+          const v = (filas[i][idx] || '').trim();
+          if (v === '') return;
+          if (h === 'amenidades' || h === 'etiquetas') {
+            obj[h] = v.split(/[;,]/).map(x => x.trim()).filter(Boolean);
+          } else if (CSV_NUM.includes(h)) {
+            const n = parseFloat(v.replace(/[$,\s]/g, ''));
+            if (!isNaN(n)) obj[h] = n;
+          } else obj[h] = v;
+        });
+        const sinCampo = CSV_REQ.find(c => obj[c] == null || obj[c] === '');
+        if (sinCampo) { errores.push('Fila ' + (i+1) + ': falta ' + sinCampo); continue; }
+        if (!obj.estatus) obj.estatus = 'activa';
+        if (!obj.moneda) obj.moneda = 'MXN';
+        obj.operacion = String(obj.operacion).toLowerCase();
+        obj.tipo = String(obj.tipo).toLowerCase();
+        registros.push(obj);
+      }
+
+      _csvFilas = registros;
+      rep.innerHTML =
+        '<div><b>' + registros.length + '</b> inmuebles listos para importar</div>' +
+        (errores.length
+          ? '<div class="err-list">' + errores.slice(0, 20).map(esc).join('<br>') +
+            (errores.length > 20 ? '<br>…y ' + (errores.length - 20) + ' más' : '') + '</div>'
+          : '');
+      g('csv-import-btn').style.display = registros.length ? '' : 'none';
+    } catch (e) {
+      _csvFilas = null;
+      g('csv-import-btn').style.display = 'none';
+      rep.innerHTML = '<div class="err-list">' + esc(e.message) + '</div>';
+    }
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+async function ejecutarImportCsv() {
+  if (!_csvFilas || !_csvFilas.length) return;
+  const uid = getCurrentUserId();
+  if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); location.href = 'login.html'; return; }
+  const btn = g('csv-import-btn');
+  const rep = g('csv-report');
+  btn.disabled = true;
+  const ahora = new Date().toISOString();
+  const filas = _csvFilas.map(r => Object.assign({}, r, { user_id: uid, updated_at: ahora }));
+  const LOTE = 50;
+  let insertadas = 0;
+  try {
+    for (let i = 0; i < filas.length; i += LOTE) {
+      btn.textContent = 'Importando… ' + Math.min(i + LOTE, filas.length) + ' / ' + filas.length;
+      await sbFetch('propiedades', 'POST', filas.slice(i, i + LOTE));
+      insertadas += Math.min(LOTE, filas.length - i);
+    }
+    rep.innerHTML = '<div><b>' + insertadas + '</b> inmuebles importados correctamente</div>';
+    btn.style.display = 'none';
+    _csvFilas = null;
+    await loadProps();
+    mostrarToast(insertadas + ' inmuebles importados');
+  } catch (e) {
+    rep.innerHTML += '<div class="err-list">Error al importar: ' + esc(e.message) + '</div>';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Importar';
+  }
+}
+
 /* Wait for shell to authenticate before loading props (shell may redirect to login) */
 if (window.__brokrShellLoaded) { loadProps(); }
 else { window.addEventListener('brokr-shell-ready', loadProps, { once: true }); }
@@ -1846,6 +2750,33 @@ else { window.addEventListener('brokr-shell-ready', loadProps, { once: true }); 
     <div class="eb-import-summary" id="eb-import-summary" style="display:none"></div>
     <div class="eb-import-errs" id="eb-import-errs" style="display:none"></div>
     <button class="eb-import-btn" id="eb-import-btn" onclick="cerrarImportEB()" style="display:none">Entendido</button>
+  </div>
+</div>
+
+<!-- ── MODAL: IMPORTAR CSV ─────────────────────────────────── -->
+<div id="csv-modal" class="prop-modal-overlay" onclick="if(event.target===this)cerrarCsvModal()">
+  <div class="prop-modal-box" onclick="event.stopPropagation()" style="max-width:520px">
+    <div class="prop-modal-hdr">
+      <h3>Importar desde CSV</h3>
+      <button onclick="cerrarCsvModal()" class="prop-modal-close" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="prop-modal-body">
+      <div class="csv-drop" id="csv-drop" onclick="g('csv-file').click()">
+        <svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="color:var(--mute);margin-bottom:8px"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5 5 5M12 5v10"/></svg>
+        <strong>Elige tu archivo CSV</strong>
+        <span>Columnas mínimas: titulo, tipo, operacion, precio, colonia</span>
+      </div>
+      <input type="file" id="csv-file" accept=".csv,text/csv" style="display:none" onchange="procesarCsv(this.files[0])"/>
+      <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center">
+        <span class="csv-link" onclick="descargarPlantillaCsv()">Descargar plantilla CSV</span>
+        <span style="font-size:11px;color:var(--mute-2);font-family:var(--font-mono)">UTF-8 · separado por comas</span>
+      </div>
+      <div class="csv-report" id="csv-report" style="display:none"></div>
+      <div class="pf-actions" style="position:static">
+        <button type="button" onclick="cerrarCsvModal()" class="pf-cancel-btn">Cerrar</button>
+        <button type="button" class="pf-save-btn" id="csv-import-btn" style="display:none" onclick="ejecutarImportCsv()">Importar</button>
+      </div>
+    </div>
   </div>
 </div>
 
