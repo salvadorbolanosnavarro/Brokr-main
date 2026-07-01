@@ -225,8 +225,9 @@
 
   /* ── Configuración de módulos ── */
   const MODS = [
-    { key:'props',        href:'propiedades.html',   label:'Tus Inmuebles',       group:'main', icon:'building' },
-    { key:'contactos',    href:'contactos.html',     label:'Contactos',       group:'main', icon:'users' },
+    { key:'props',        href:'propiedades.html',   label:'Tus Inmuebles',   group:'crm',  icon:'building' },
+    { key:'contactos',    href:'contactos.html',     label:'Contactos',       group:'crm',  icon:'users' },
+    { key:'tareas',       href:'tareas.html',        label:'Tareas',          group:'crm',  icon:'check' },
     { key:'contratos',    href:'contratos.html',     label:'Contratos',       group:'main', icon:'document' },
     { key:'avm',          href:'avm.html',           label:'Estimación de valor', group:'main', icon:'peso' },
     { key:'ficha-manual', href:'ficha-manual.html',  label:'Ficha técnica',   group:'main', icon:'landscape' },
@@ -241,6 +242,7 @@
     'home':         'Dashboard principal — menú de módulos',
     'props':        'Tus Inmuebles — catálogo de propiedades',
     'contactos':    'Contactos — CRM de prospectos',
+    'tareas':       'Tareas — pendientes y actividad del CRM',
     'contratos':    'Contratos — arrendamiento y promesa de compraventa',
     'avm':          'Estimación de valor AVM — avalúo de mercado automatizado',
     'valor':        'Valor web — estimación de valor con investigación controlada de comparables públicos',
@@ -294,6 +296,7 @@
     homeList:   '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6h16.5M3.75 12h16.5M3.75 18h16.5"/>',
     handshake:  '<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l3-3 3 3 4-4 5 5-3 3-2-2-4 4-2-2-2 2-2-2 0-4z"/>',
     question:   '<path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/>',
+    check:      '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>',
     facebook:   '<path fill="currentColor" stroke="none" d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.269h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>',
   };
   const svg = (name, size = 18, sw = 1.6) =>
@@ -1038,13 +1041,17 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
       pageWrap.insertBefore(hd, pageWrap.firstChild);
     }
 
-    const main = MODS.filter(m => m.group === 'main' && (!m.adminOnly || profile?.isAdmin));
+    const crm   = MODS.filter(m => m.group === 'crm');
+    const main  = MODS.filter(m => m.group === 'main' && (!m.adminOnly || profile?.isAdmin));
 
     const ini = initials(profile?.fullName || '');
     const shell = document.createElement('div');
     shell.className = 'bk-shell-root';
     shell.innerHTML = `
       <aside class="bk-sidebar" id="bk-sidebar">
+        <div class="bk-sb-section">CRM</div>
+        ${crm.map(m => buildSidebarLink(m, activeKey)).join('')}
+        <div class="bk-sb-section">Herramientas</div>
         ${main.map(m => buildSidebarLink(m, activeKey)).join('')}
         <div class="bk-sb-foot">
           <div class="bk-sb-foot__avatar" id="bk-sb-avatar" onclick="openProfileDrawer()" style="cursor:pointer" title="Mi perfil">${ini}</div>
