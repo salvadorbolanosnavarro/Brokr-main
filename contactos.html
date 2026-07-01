@@ -235,19 +235,19 @@ html, body { background: var(--paper); }
 .rb-notario { background: oklch(94% .03 200); color: oklch(40% .08 200); }
 .rb-otro { background: var(--paper-2); color: var(--ink-2); }
 
-/* Chip de estatus (pipeline) */
+/* Chip de estatus (pipeline) — mismo lenguaje que los badges de inmuebles */
 .est-chip {
   display: inline-flex; align-items: center; gap: 5px;
-  font-family: var(--font-mono);
-  font-size: 9px; font-weight: 500;
-  text-transform: uppercase; letter-spacing: 0.1em;
-  padding: 2px 8px;
-  border-radius: 4px;
+  font-size: 10px; font-weight: 600;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
   background: var(--paper-2);
   color: var(--ink-2);
   white-space: nowrap;
 }
-.est-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.est-chip .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 
 .tag-chip {
   font-size: 10px; font-weight: 500;
@@ -305,15 +305,13 @@ html, body { background: var(--paper); }
 }
 .kb-col__dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .kb-col__name {
-  font-family: var(--font-mono);
-  font-size: 10px; font-weight: 600;
-  text-transform: uppercase; letter-spacing: 0.14em;
-  color: var(--ink-2);
+  font-size: 13px; font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.01em;
   flex: 1;
 }
 .kb-col__count {
-  font-family: var(--font-mono);
-  font-size: 11px; color: var(--mute);
+  font-size: 12px; color: var(--mute);
   font-variant-numeric: tabular-nums;
 }
 .kb-col__body {
@@ -558,10 +556,9 @@ html, body { background: var(--paper); }
   border: 1px solid var(--line);
   border-radius: var(--r-pill);
   height: 30px; padding: 0 28px 0 12px;
-  font-family: var(--font-mono);
-  font-size: 10px; font-weight: 600;
-  text-transform: uppercase; letter-spacing: 0.1em;
-  color: var(--ink-2);
+  font-family: inherit;
+  font-size: 12px; font-weight: 600;
+  color: var(--ink);
   outline: none; cursor: pointer;
   -webkit-appearance: none; appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236B7685' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
@@ -592,8 +589,8 @@ html, body { background: var(--paper); }
   transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 .det-tab .n {
-  font-family: var(--font-mono);
-  font-size: 9px; color: var(--mute);
+  font-size: 10px; font-weight: 600;
+  color: var(--mute);
   background: var(--paper-2);
   border-radius: var(--r-pill);
   padding: 1px 6px;
@@ -735,7 +732,7 @@ html, body { background: var(--paper); }
 .act-ico.estatus { background: var(--warn-soft); color: var(--warn); }
 .act-ico.tarea { background: var(--success-soft); color: var(--success); }
 .act-txt { font-size: 13px; color: var(--ink); line-height: 1.5; flex: 1; min-width: 0; overflow-wrap: break-word; }
-.act-date { font-size: 10px; color: var(--mute); margin-top: 3px; font-family: var(--font-mono); letter-spacing: 0.05em; }
+.act-date { font-size: 11px; color: var(--mute); margin-top: 3px; }
 
 /* Tareas */
 .task-item {
@@ -762,7 +759,7 @@ html, body { background: var(--paper); }
 .task-main { flex: 1; min-width: 0; }
 .task-title { font-size: 13px; font-weight: 500; color: var(--ink); overflow-wrap: break-word; }
 .task-item.done .task-title { text-decoration: line-through; color: var(--mute); }
-.task-due { font-size: 10px; font-family: var(--font-mono); color: var(--mute); margin-top: 2px; letter-spacing: 0.05em; }
+.task-due { font-size: 11px; color: var(--mute); margin-top: 2px; }
 .task-due.overdue { color: var(--danger); font-weight: 600; }
 .task-del {
   border: none; background: none;
@@ -792,11 +789,10 @@ html, body { background: var(--paper); }
 }
 .prop-link-title { font-size: 13px; font-weight: 500; color: var(--ink); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rel-chip {
-  font-family: var(--font-mono);
-  font-size: 9px; font-weight: 500;
-  text-transform: uppercase; letter-spacing: 0.1em;
-  padding: 2px 8px;
-  border-radius: 4px;
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
   background: var(--forest-soft); color: var(--forest);
   flex-shrink: 0;
 }
@@ -953,7 +949,7 @@ html, body { background: var(--paper); }
   <div class="filters-row">
     <div class="head-search" style="margin-bottom:0;flex:1">
       <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--mute);"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
-      <input type="search" id="search-input" placeholder="Buscar por nombre, teléfono o correo…" oninput="renderActual()"/>
+      <input type="search" id="search-input" placeholder="Buscar por nombre, teléfono o correo…" oninput="busquedaDebounced()"/>
     </div>
     <select class="filtro-select" id="filtro-estatus" onchange="renderActual()" style="display:none">
       <option value="todos">Todas las etapas</option>
@@ -1423,7 +1419,7 @@ function contactosFiltrados(aplicarEstatus) {
 }
 
 /* ── Vista: toggle Pipeline / Lista ──────────────────────────────── */
-function setVista(v) {
+function setVista(v, skipRender) {
   vistaActual = v;
   try { localStorage.setItem(LS_VISTA, v); } catch {}
   document.getElementById('seg-pipeline')?.classList.toggle('active', v === 'pipeline');
@@ -1432,7 +1428,13 @@ function setVista(v) {
   document.getElementById('lista').style.display = v === 'lista' ? 'flex' : 'none';
   const fEst = document.getElementById('filtro-estatus');
   if (fEst) fEst.style.display = v === 'lista' && !IS_PICKER ? '' : 'none';
-  renderActual();
+  if (!skipRender) renderActual();
+}
+
+let _busqT = null;
+function busquedaDebounced() {
+  clearTimeout(_busqT);
+  _busqT = setTimeout(renderActual, 200);
 }
 
 function renderActual() {
@@ -1521,12 +1523,15 @@ async function cambiarEstatus(id, etapa) {
   const c = _contactosMem.find(x => x.id === id);
   if (!c || String(c.estatus||'nuevo').toLowerCase() === etapa) return;
   const previo = c.estatus;
-  c.estatus = etapa;               // optimista
+  const ahora = new Date().toISOString();
+  c.estatus = etapa;               // optimista: la memoria queda como la BD
+  c.updated_at = ahora;
+  c.fecha_cambio_estatus = ahora;
   renderActual();
   try {
-    await patchRemoto(id, { estatus: etapa, updated_at: new Date().toISOString() });
+    await patchRemoto(id, { estatus: etapa, updated_at: ahora });
+    try { localStorage.setItem(LS_CACHE, JSON.stringify(_contactosMem)); } catch {}
     showToast('Movido a ' + etapaInfo(etapa).nombre);
-    cargarRemoto().then(renderActual).catch(()=>{});
   } catch (e) {
     c.estatus = previo;            // revertir
     renderActual();
@@ -1747,9 +1752,6 @@ function abrirDetalle(id) {
 
   setDetTab('info');
   document.getElementById('detail-ov').classList.add('open');
-
-  // Precargar contadores en segundo plano
-  precargarContadores(c.id);
 }
 
 function renderDetInfo(c) {
@@ -1772,31 +1774,6 @@ function renderDetInfo(c) {
   }
   if (c.notas) html += `<div style="margin-top:18px"><div class="det-lbl" style="margin-bottom:8px">Notas</div><div class="nota-box">${esc(c.notas)}</div></div>`;
   document.getElementById('dtab-info').innerHTML = html;
-}
-
-async function precargarContadores(cid) {
-  const enc = encodeURIComponent(cid);
-  const conteo = async (path, elId) => {
-    try {
-      const rows = await restGet(path);
-      const el = document.getElementById(elId);
-      if (el && detContacto && detContacto.id === cid) el.textContent = Array.isArray(rows) ? rows.length : 0;
-    } catch {
-      const el = document.getElementById(elId);
-      if (el) el.textContent = '0';
-    }
-  };
-  const nOps = (detContacto && Array.isArray(detContacto.operaciones)) ? detContacto.operaciones.length : 0;
-  try {
-    const acts = await restGet('actividades?select=id&contacto_id=eq.' + enc + '&limit=200');
-    const el = document.getElementById('dtab-n-hist');
-    if (el && detContacto && detContacto.id === cid) el.textContent = (Array.isArray(acts) ? acts.length : 0) + nOps;
-  } catch {
-    const el = document.getElementById('dtab-n-hist');
-    if (el) el.textContent = String(nOps);
-  }
-  conteo('contactos_propiedades?select=id&contacto_id=eq.' + enc + '&limit=200', 'dtab-n-props');
-  conteo('tareas?select=id&contacto_id=eq.' + enc + '&completada=eq.false&limit=200', 'dtab-n-tareas');
 }
 
 /* ── Tab Historial ───────────────────────────────────────────────── */
@@ -2081,7 +2058,7 @@ async function _waitForShell(maxMs) {
     vistaActual = v === 'lista' ? 'lista' : 'pipeline';
   }
   poblarSelectsEtapas();
-  setVista(vistaActual);
+  setVista(vistaActual, true);
 
   // 1) Cache offline para respuesta instantánea
   try {

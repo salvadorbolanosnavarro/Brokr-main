@@ -787,7 +787,7 @@
 .pd-tab:hover { color: var(--ink-2); }
 .pd-tab.is-active { color: var(--ink); border-bottom-color: var(--ink); font-weight: 600; }
 .pd-tab .n {
-  font-family: var(--font-mono); font-size: 10px;
+  font-size: 10px; font-weight: 600;
   color: var(--mute); background: var(--paper-2);
   border-radius: var(--r-pill); padding: 1px 7px;
   font-variant-numeric: tabular-nums;
@@ -857,8 +857,8 @@
 .pd-item__ico.tarea { background: var(--success-soft); color: var(--success); }
 .pd-item__txt { flex: 1; min-width: 0; font-size: 13px; color: var(--ink); line-height: 1.5; overflow-wrap: break-word; }
 .pd-item__date {
-  font-family: var(--font-mono); font-size: 10px;
-  color: var(--mute); margin-top: 3px; letter-spacing: 0.05em;
+  font-size: 11px;
+  color: var(--mute); margin-top: 3px;
 }
 .pd-item.is-center { align-items: center; }
 
@@ -872,7 +872,7 @@
 .pd-check:hover { border-color: var(--success); }
 .pd-item.is-done .pd-check { background: var(--success); border-color: var(--success); color: #fff; }
 .pd-item.is-done .pd-item__txt { text-decoration: line-through; color: var(--mute); }
-.pd-item__due { font-family: var(--font-mono); font-size: 10px; color: var(--mute); margin-top: 2px; letter-spacing: 0.05em; }
+.pd-item__due { font-size: 11px; color: var(--mute); margin-top: 2px; }
 .pd-item__due.is-overdue { color: var(--danger); font-weight: 600; }
 .pd-x {
   border: none; background: none; padding: 4px 7px; flex-shrink: 0;
@@ -887,9 +887,9 @@
   font-size: 13px; color: var(--mute-2);
 }
 .pd-id {
-  font-family: var(--font-mono); font-size: 10px;
-  letter-spacing: 0.12em; text-transform: uppercase;
+  font-size: 12px; font-weight: 500;
   color: var(--mute);
+  letter-spacing: -0.005em;
 }
 
 /* Tarjeta archivada */
@@ -928,7 +928,7 @@
 .csv-report .err-list {
   margin-top: 8px; padding: 10px 12px;
   background: var(--danger-soft); border-radius: var(--r);
-  font-family: var(--font-mono); font-size: 11px; color: var(--danger);
+  font-size: 12px; color: var(--danger);
   max-height: 140px; overflow-y: auto;
 }
 .csv-link {
@@ -1005,7 +1005,7 @@
         </div>
         <div class="props-search-wrap">
           <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
-          <input id="props-search" type="text" placeholder="Buscar por colonia, tipo, precio…" oninput="filterProps()" />
+          <input id="props-search" type="text" placeholder="Buscar por colonia, tipo, precio…" oninput="filterPropsDebounced()" />
         </div>
         <select id="props-filter-op" onchange="filterProps()">
           <option value="">Todas las operaciones</option>
@@ -1528,6 +1528,12 @@ function parsePrecio(val) {
   return isNaN(n) ? null : n;
 }
 
+let _filtT = null;
+function filterPropsDebounced() {
+  clearTimeout(_filtT);
+  _filtT = setTimeout(filterProps, 200);
+}
+
 function filterProps() {
   const q = g('props-search').value.toLowerCase();
   const op = g('props-filter-op').value;
@@ -1538,6 +1544,7 @@ function filterProps() {
   const sort = g('props-sort-precio').value;
 
   updateEstLabel();
+  const tag = g('props-filter-tag') ? g('props-filter-tag').value : '';
 
   filteredProps = allProps.filter(p => {
     if (mostrandoArchivadas ? p.archivada !== true : p.archivada === true) return false;
@@ -1547,7 +1554,6 @@ function filterProps() {
     if (selectedEst.length > 0 && !selectedEst.includes(p.estatus)) return false;
     if (precioMin !== null && (p.precio == null || Number(p.precio) < precioMin)) return false;
     if (precioMax !== null && (p.precio == null || Number(p.precio) > precioMax)) return false;
-    const tag = g('props-filter-tag') ? g('props-filter-tag').value : '';
     if (tag && !(Array.isArray(p.etiquetas) && p.etiquetas.includes(tag))) return false;
     return true;
   });
@@ -1999,7 +2005,6 @@ function openPropDetail(id) {
   g('pd-arch-label').textContent = p.archivada ? 'Restaurar' : 'Archivar';
   pdSetTab('detalles');
   ['pd-n-hist','pd-n-int','pd-n-tareas'].forEach(i => g(i).textContent = '·');
-  pdPrecargarContadores(id);
   const fotos = p.fotos?.length ? p.fotos : [];
   let gallery = '';
   if (fotos.length) {
@@ -2243,20 +2248,6 @@ function pdSetTab(tab) {
   if (tab === 'hist')   pdCargarHistorial();
   if (tab === 'int')    pdCargarInteresados();
   if (tab === 'tareas') pdCargarTareas();
-}
-
-async function pdPrecargarContadores(pid) {
-  const enc = encodeURIComponent(pid);
-  const carga = async (path, elId) => {
-    try {
-      const rows = await sbFetch(path);
-      const el = g(elId);
-      if (el && currentDetailId === pid) el.textContent = Array.isArray(rows) ? rows.length : 0;
-    } catch { const el = g(elId); if (el) el.textContent = '0'; }
-  };
-  carga('actividades?select=id&propiedad_id=eq.' + enc + '&limit=200', 'pd-n-hist');
-  carga('contactos_propiedades?select=id&propiedad_id=eq.' + enc + '&limit=200', 'pd-n-int');
-  carga('tareas?select=id&propiedad_id=eq.' + enc + '&completada=eq.false&limit=200', 'pd-n-tareas');
 }
 
 /* ── Estatus rápido desde el detalle (se registra en el historial) ── */
@@ -2769,7 +2760,7 @@ else { window.addEventListener('brokr-shell-ready', loadProps, { once: true }); 
       <input type="file" id="csv-file" accept=".csv,text/csv" style="display:none" onchange="procesarCsv(this.files[0])"/>
       <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center">
         <span class="csv-link" onclick="descargarPlantillaCsv()">Descargar plantilla CSV</span>
-        <span style="font-size:11px;color:var(--mute-2);font-family:var(--font-mono)">UTF-8 · separado por comas</span>
+        <span style="font-size:11px;color:var(--mute-2)">UTF-8 · separado por comas</span>
       </div>
       <div class="csv-report" id="csv-report" style="display:none"></div>
       <div class="pf-actions" style="position:static">
