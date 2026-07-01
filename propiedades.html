@@ -1438,7 +1438,7 @@ function renderProps(props, totalForCount) {
 
   grid.innerHTML = props.map(p => {
     const foto = p.fotos?.length
-      ? `<img src="${p.fotos[0]}" onerror="this.parentElement.innerHTML='<div class=\\'placeholder\\'><span>Sin foto</span></div>'" />`
+      ? `<img src="${p.fotos[0]}" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='<div class=\\'placeholder\\'><span>Sin foto</span></div>'" />`
       : `<div class="placeholder"><span>Sin foto</span></div>`;
 
     const specs = [];
@@ -1570,6 +1570,7 @@ function filterProps() {
 }
 
 function openPropForm(id) {
+  clearTimeout(_filtT);
   editingPropId = id;
   const form = g('prop-form');
   form.reset();
@@ -1615,7 +1616,7 @@ function openPropForm(id) {
       uploadedFotoUrls = [...p.fotos];
       p.fotos.forEach((url, idx) => {
         const div = document.createElement('div'); div.className = 'foto-preview-item';
-        div.innerHTML = `<img src="${url}"/><button onclick="removeFoto(${idx},this.parentElement)">✕</button>`;
+        div.innerHTML = `<img src="${url}" loading="lazy" decoding="async"/><button onclick="removeFoto(${idx},this.parentElement)">✕</button>`;
         g('fotos-preview').appendChild(div);
       });
       g('fotos-progress').textContent = `${p.fotos.length} foto(s)`;
@@ -1996,6 +1997,7 @@ async function deleteProp(id) {
 }
 
 function openPropDetail(id) {
+  clearTimeout(_filtT);
   const p = allProps.find(x => x.id === id); if (!p) return;
   currentDetailId = id;
   g('detail-title').textContent = p.titulo;
@@ -2012,13 +2014,13 @@ function openPropDetail(id) {
     const visibles = fotos.slice(0, 5);
     while (visibles.length < 3) visibles.push(null);
     gallery = `<div class="detail-gallery">${visibles.slice(0,5).map(f =>
-      f ? `<img src="${f}" onclick="openLightbox('${encodeURIComponent(JSON.stringify(fotos))}', ${fotos.indexOf(f)})"/>`
+      f ? `<img src="${f}" loading="lazy" decoding="async" onclick="openLightbox('${encodeURIComponent(JSON.stringify(fotos))}', ${fotos.indexOf(f)})"/>`
         : `<div style="background:var(--paper-2); border-radius: var(--r); display:flex; align-items:center; justify-content:center; color:var(--mute-2); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;">+ foto</div>`
     ).join('')}</div>`;
     // Tira de miniaturas con TODAS las fotos
     if (fotos.length > 1) {
       gallery += `<div style="display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; margin-bottom:18px; -webkit-overflow-scrolling:touch;">
-        ${fotos.map((f, i) => `<img src="${f}" style="width:84px; height:64px; object-fit:cover; border-radius:6px; cursor:pointer; flex-shrink:0;" onclick="openLightbox('${encodeURIComponent(JSON.stringify(fotos))}', ${i})"/>`).join('')}
+        ${fotos.map((f, i) => `<img src="${f}" loading="lazy" decoding="async" style="width:84px; height:64px; object-fit:cover; border-radius:6px; cursor:pointer; flex-shrink:0;" onclick="openLightbox('${encodeURIComponent(JSON.stringify(fotos))}', ${i})"/>`).join('')}
       </div>`;
     }
   }
@@ -2122,7 +2124,7 @@ function initFotoUpload() {
         uploadedFotoUrls.push(url);
         const div = document.createElement('div'); div.className = 'foto-preview-item';
         const idx = uploadedFotoUrls.length - 1;
-        div.innerHTML = `<img src="${url}"/><button onclick="removeFoto(${idx},this.parentElement)">✕</button>`;
+        div.innerHTML = `<img src="${url}" loading="lazy" decoding="async"/><button onclick="removeFoto(${idx},this.parentElement)">✕</button>`;
         preview.appendChild(div);
       } catch(err) { progress.textContent = `Error: ${err.message}`; return; }
     }

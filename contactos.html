@@ -1597,6 +1597,7 @@ function setSexo(s, btn) {
 }
 
 function abrirModal(id = null) {
+  clearTimeout(_busqT);
   editandoId = id;
   if (id) {
     const c = cargar().find(x => x.id === id);
@@ -1721,6 +1722,7 @@ function setDetTab(tab) {
 }
 
 function abrirDetalle(id) {
+  clearTimeout(_busqT);
   const c = cargar().find(x => x.id === id);
   if (!c) return;
   detContacto = c;
