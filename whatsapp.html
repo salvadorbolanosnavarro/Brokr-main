@@ -15,86 +15,86 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 /* ─── Hero ─────────────────────────────────────────────── */
 .wa-hero{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:26px 26px 22px;margin-bottom:20px;position:relative;overflow:hidden}
 .wa-hero:after{content:"";position:absolute;right:-80px;top:-100px;width:220px;height:220px;border-radius:50%;background:rgba(37,211,102,.10)}
-.wa-eyebrow{font-family:var(--font-mono);font-size: 20px;letter-spacing: 0.02em;color:var(--mute);margin-bottom:9px}
-.wa-hero h1{font-family:var(--font-display);font-size:32px;font-weight:600;letter-spacing:-.035em;line-height:1.05;max-width:580px}
+.wa-eyebrow{font-family:var(--font-mono);font-size: var(--fs-label-3);letter-spacing: 0.02em;color:var(--mute);margin-bottom:9px}
+.wa-hero h1{font-family:var(--font-display);font-size:var(--fs-h1);font-weight:700;letter-spacing:-.035em;line-height:1.05;max-width:580px}
 .wa-hero h1 span{color:#25d366}
-.wa-hero p{font-size:14px;color:var(--mute);line-height:1.6;max-width:540px;margin-top:10px}
+.wa-hero p{font-size:var(--fs-sm);color:var(--mute);line-height:1.6;max-width:540px;margin-top:10px}
 
 /* ─── Botones ───────────────────────────────────────────── */
 .wa-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:var(--r);padding:11px 20px;font:600 14px var(--font-sans);cursor:pointer;text-decoration:none;transition:opacity .15s,transform .15s}
 .wa-btn:hover{opacity:.9;transform:translateY(-1px)}
 .wa-btn:active{transform:translateY(0)}
 .wa-btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
-.wa-btn-green{background:#25d366;color:#fff}
+.wa-btn-green{background:#25d366;color:var(--bone)}
 .wa-btn-ink{background:var(--ink);color:var(--paper)}
 .wa-btn-ghost{background:var(--paper);color:var(--ink);border:1px solid var(--line-2)}
-.wa-btn-danger{background:#EFF3F8;color:#E70866;border:1px solid #E0E4E9}
+.wa-btn-danger{background:var(--paper-2);color:var(--danger);border:1px solid var(--line)}
 
 /* ─── Banner desconectado ───────────────────────────────── */
 .wa-banner{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:40px 24px;text-align:center;margin-bottom:20px}
 .wa-banner-icon{width:56px;height:56px;border-radius:16px;background:#25d366;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
 .wa-banner-icon svg{width:32px;height:32px}
-.wa-banner h2{font-family:var(--font-display);font-size:22px;font-weight:600;letter-spacing:-.025em;margin-bottom:8px}
-.wa-banner p{font-size:14px;color:var(--mute);line-height:1.6;max-width:460px;margin:0 auto 20px}
+.wa-banner h2{font-family:var(--font-display);font-size:var(--fs-h3);font-weight:700;letter-spacing:-.025em;margin-bottom:8px}
+.wa-banner p{font-size:var(--fs-sm);color:var(--mute);line-height:1.6;max-width:460px;margin:0 auto 20px}
 
 /* ─── Cómo funciona ─────────────────────────────────────── */
 .wa-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
 .wa-step{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 16px}
-.wa-step-num{width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--paper);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
-.wa-step h3{font-size:13px;font-weight:700;margin-bottom:4px}
-.wa-step p{font-size:12px;color:var(--mute);line-height:1.5}
+.wa-step-num{width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--paper);font-size:var(--fs-sm);font-weight:700;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+.wa-step h3{font-size:var(--fs-sm);font-weight:700;margin-bottom:4px}
+.wa-step p{font-size:var(--fs-xs);color:var(--mute);line-height:1.5}
 
 /* ─── Estado conectado ──────────────────────────────────── */
 .wa-connected-card{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;margin-bottom:16px}
 .wa-number-row{display:flex;align-items:center;gap:14px;margin-bottom:18px}
 .wa-number-dot{width:10px;height:10px;border-radius:50%;background:#25d366;flex:none}
-.wa-number-info h3{font-size:16px;font-weight:700;letter-spacing:-.01em}
-.wa-number-info span{font-size:12px;color:var(--mute)}
-.wa-status-pill{display:inline-block;font-size: 20px;font-weight:800;letter-spacing: 0.02em;border-radius:999px;padding:3px 9px;background:rgba(37,211,102,.12);color:#00AA6C;margin-left:10px;vertical-align:middle}
+.wa-number-info h3{font-size:var(--fs-h5);font-weight:700;letter-spacing:-.01em}
+.wa-number-info span{font-size:var(--fs-xs);color:var(--mute)}
+.wa-status-pill{display:inline-block;font-size: var(--fs-label-3);font-weight:800;letter-spacing: 0.02em;border-radius:999px;padding:3px 9px;background:rgba(37,211,102,.12);color:var(--success);margin-left:10px;vertical-align:middle}
 
 .wa-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
 .wa-action-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;gap:6px;transition:border-color .15s}
 .wa-action-card:hover{border-color:var(--ink)}
 .wa-action-card svg{width:20px;height:20px;color:var(--ink)}
-.wa-action-card h4{font-size:13px;font-weight:700}
-.wa-action-card p{font-size:12px;color:var(--mute);line-height:1.4}
+.wa-action-card h4{font-size:var(--fs-sm);font-weight:700}
+.wa-action-card p{font-size:var(--fs-xs);color:var(--mute);line-height:1.4}
 
 .wa-ia-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:14px}
-.wa-ia-info h4{font-size:13px;font-weight:700;margin-bottom:2px}
-.wa-ia-info p{font-size:12px;color:var(--mute);line-height:1.4}
+.wa-ia-info h4{font-size:var(--fs-sm);font-weight:700;margin-bottom:2px}
+.wa-ia-info p{font-size:var(--fs-xs);color:var(--mute);line-height:1.4}
 .wa-toggle{position:relative;width:44px;height:24px;flex:none}
 .wa-toggle input{opacity:0;width:0;height:0;position:absolute}
 .wa-toggle-track{position:absolute;inset:0;background:var(--line-2);border-radius:999px;transition:background .2s;cursor:pointer}
 .wa-toggle input:checked + .wa-toggle-track{background:#25d366}
-.wa-toggle-thumb{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s;pointer-events:none;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.wa-toggle-thumb{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--bone);transition:transform .2s;pointer-events:none;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 .wa-toggle input:checked ~ .wa-toggle-thumb{transform:translateX(20px)}
 
-.wa-danger-zone{border:1px solid #E0E4E9;border-radius:var(--r-lg);padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px}
-.wa-danger-info h4{font-size:13px;font-weight:700;color:#E70866;margin-bottom:2px}
-.wa-danger-info p{font-size:12px;color:var(--mute);line-height:1.4}
+.wa-danger-zone{border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px}
+.wa-danger-info h4{font-size:var(--fs-sm);font-weight:700;color:var(--danger);margin-bottom:2px}
+.wa-danger-info p{font-size:var(--fs-xs);color:var(--mute);line-height:1.4}
 
 /* ─── Spinner ───────────────────────────────────────────── */
-.wa-spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:waspin .7s linear infinite;display:none}
+.wa-spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:var(--bone);border-radius:50%;animation:waspin .7s linear infinite;display:none}
 .wa-spinner.active{display:inline-block}
 @keyframes waspin{to{transform:rotate(360deg)}}
 
 /* ─── Aviso ─────────────────────────────────────────────── */
-.wa-notice{background:#FFFFFF;border:1px solid #EFF3F8;border-radius:var(--r);padding:12px 16px;font-size:12px;color:#00AA6C;line-height:1.55;margin-bottom:16px}
-.wa-notice strong{color:#00AA6C}
+.wa-notice{background:var(--bone);border:1px solid var(--paper-2);border-radius:var(--r);padding:12px 16px;font-size:var(--fs-xs);color:var(--success);line-height:1.55;margin-bottom:16px}
+.wa-notice strong{color:var(--success)}
 
 /* ─── Modal confirmación ────────────────────────────────── */
 .wa-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:none;align-items:center;justify-content:center;padding:20px}
 .wa-modal-bg.open{display:flex}
 .wa-modal{background:var(--paper);border-radius:var(--r-lg);padding:28px 24px;max-width:420px;width:100%;box-shadow:0 16px 40px rgba(0,0,0,.18)}
-.wa-modal h3{font-family:var(--font-display);font-size:18px;font-weight:600;margin-bottom:8px}
-.wa-modal p{font-size:13px;color:var(--mute);line-height:1.6;margin-bottom:20px}
+.wa-modal h3{font-family:var(--font-display);font-size:var(--fs-h5);font-weight:700;margin-bottom:8px}
+.wa-modal p{font-size:var(--fs-sm);color:var(--mute);line-height:1.6;margin-bottom:20px}
 .wa-modal-btns{display:flex;gap:10px;justify-content:flex-end}
 
 /* ─── Responsive ────────────────────────────────────────── */
 @media(max-width:640px){
   .wa-steps{grid-template-columns:1fr}
   .wa-actions{grid-template-columns:1fr}
-  .wa-hero h1{font-size:26px}
+  .wa-hero h1{font-size:var(--fs-h2)}
   .wa-danger-zone{flex-direction:column;align-items:flex-start}
 }
 </style>
@@ -198,14 +198,14 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
     <div class="wa-connected-card">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px">
         <div>
-          <h3 style="font-size:16px;font-weight:700;letter-spacing:-.01em">Plantillas de mensaje</h3>
-          <span style="font-size:12px;color:var(--mute)">Necesarias para escribirle primero a un contacto o reactivar una conversación después de 24h.</span>
+          <h3 style="font-size:var(--fs-h5);font-weight:700;letter-spacing:-.01em">Plantillas de mensaje</h3>
+          <span style="font-size:var(--fs-xs);color:var(--mute)">Necesarias para escribirle primero a un contacto o reactivar una conversación después de 24h.</span>
         </div>
         <button class="wa-btn wa-btn-ink" onclick="openTemplateModal()">+ Nueva plantilla</button>
       </div>
 
       <div id="wa-templates-list" style="margin-top:16px;display:flex;flex-direction:column;gap:8px">
-        <div style="font-size:12px;color:var(--mute);padding:12px 0">Cargando plantillas…</div>
+        <div style="font-size:var(--fs-xs);color:var(--mute);padding:12px 0">Cargando plantillas…</div>
       </div>
     </div>
 
@@ -236,29 +236,29 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 
     <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:18px">
       <div>
-        <label style="font-size:12px;font-weight:700;display:block;margin-bottom:5px">Nombre interno</label>
-        <input type="text" id="tpl-name" placeholder="seguimiento_visita" style="width:100%;padding:9px 12px;border:1px solid var(--line-2);border-radius:8px;font-size:13px;font-family:var(--font-sans)"/>
-        <span style="font-size:11px;color:var(--mute)">Solo minúsculas y guion_bajo, sin espacios.</span>
+        <label style="font-size:var(--fs-xs);font-weight:700;display:block;margin-bottom:5px">Nombre interno</label>
+        <input type="text" id="tpl-name" placeholder="seguimiento_visita" style="width:100%;padding:9px 12px;border:1px solid var(--line-2);border-radius:8px;font-size:var(--fs-sm);font-family:var(--font-sans)"/>
+        <span style="font-size:var(--fs-caption);color:var(--mute)">Solo minúsculas y guion_bajo, sin espacios.</span>
       </div>
 
       <div>
-        <label style="font-size:12px;font-weight:700;display:block;margin-bottom:5px">Categoría</label>
-        <select id="tpl-category" style="width:100%;padding:9px 12px;border:1px solid var(--line-2);border-radius:8px;font-size:13px;font-family:var(--font-sans)">
+        <label style="font-size:var(--fs-xs);font-weight:700;display:block;margin-bottom:5px">Categoría</label>
+        <select id="tpl-category" style="width:100%;padding:9px 12px;border:1px solid var(--line-2);border-radius:8px;font-size:var(--fs-sm);font-family:var(--font-sans)">
           <option value="UTILITY">Utilidad (seguimiento, confirmaciones)</option>
           <option value="MARKETING">Marketing (promociones, novedades)</option>
         </select>
       </div>
 
       <div>
-        <label style="font-size:12px;font-weight:700;display:block;margin-bottom:5px">Texto del mensaje</label>
-        <textarea id="tpl-body" rows="4" placeholder="Hola {{1}}, ¿sigues interesado en la propiedad que viste? Quedo al pendiente." style="width:100%;padding:9px 12px;border:1px solid var(--line-2);border-radius:8px;font-size:13px;font-family:var(--font-sans);resize:vertical"></textarea>
-        <span style="font-size:11px;color:var(--mute)">Usa {{1}}, {{2}}… para variables (ej. nombre del lead).</span>
+        <label style="font-size:var(--fs-xs);font-weight:700;display:block;margin-bottom:5px">Texto del mensaje</label>
+        <textarea id="tpl-body" rows="4" placeholder="Hola {{1}}, ¿sigues interesado en la propiedad que viste? Quedo al pendiente." style="width:100%;padding:9px 12px;border:1px solid var(--line-2);border-radius:8px;font-size:var(--fs-sm);font-family:var(--font-sans);resize:vertical"></textarea>
+        <span style="font-size:var(--fs-caption);color:var(--mute)">Usa {{1}}, {{2}}… para variables (ej. nombre del lead).</span>
       </div>
 
       <div id="tpl-example-wrap" style="display:none">
-        <label style="font-size:12px;font-weight:700;display:block;margin-bottom:5px">Ejemplo para la variable {{1}}</label>
-        <input type="text" id="tpl-example" placeholder="Juan" style="width:100%;padding:9px 12px;border:1px solid var(--line-2);border-radius:8px;font-size:13px;font-family:var(--font-sans)"/>
-        <span style="font-size:11px;color:var(--mute)">Meta pide un ejemplo real para aprobar la plantilla.</span>
+        <label style="font-size:var(--fs-xs);font-weight:700;display:block;margin-bottom:5px">Ejemplo para la variable {{1}}</label>
+        <input type="text" id="tpl-example" placeholder="Juan" style="width:100%;padding:9px 12px;border:1px solid var(--line-2);border-radius:8px;font-size:var(--fs-sm);font-family:var(--font-sans)"/>
+        <span style="font-size:var(--fs-caption);color:var(--mute)">Meta pide un ejemplo real para aprobar la plantilla.</span>
       </div>
     </div>
 
@@ -436,7 +436,7 @@ const TPL_STATUS_LABEL = {
   APPROVED: 'Aprobada', PENDING: 'En revisión', REJECTED: 'Rechazada'
 };
 const TPL_STATUS_COLOR = {
-  APPROVED: '#00AA6C', PENDING: '#E8910C', REJECTED: '#E70866'
+  APPROVED: 'var(--success)', PENDING: 'var(--warn)', REJECTED: 'var(--danger)'
 };
 
 async function cargarTemplates(){
@@ -447,24 +447,24 @@ async function cargarTemplates(){
     const r = await fetch(API_BASE + '/whatsapp/templates', {
       headers:{ Authorization: 'Bearer ' + tok }
     });
-    if(!r.ok){ list.innerHTML = '<div style="font-size:12px;color:var(--mute);padding:12px 0">No se pudieron cargar las plantillas.</div>'; return; }
+    if(!r.ok){ list.innerHTML = '<div style="font-size:var(--fs-xs);color:var(--mute);padding:12px 0">No se pudieron cargar las plantillas.</div>'; return; }
     const d = await r.json();
     const tpls = d.templates || [];
     if(tpls.length === 0){
-      list.innerHTML = '<div style="font-size:12px;color:var(--mute);padding:12px 0">Aún no tienes plantillas. Crea la primera para poder escribirle a tus leads fuera de la ventana de 24 horas.</div>';
+      list.innerHTML = '<div style="font-size:var(--fs-xs);color:var(--mute);padding:12px 0">Aún no tienes plantillas. Crea la primera para poder escribirle a tus leads fuera de la ventana de 24 horas.</div>';
       return;
     }
     list.innerHTML = tpls.map(t => `
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:11px 14px">
         <div>
-          <div style="font-size:13px;font-weight:700">${escapeHtml(t.name)}</div>
-          <div style="font-size:11px;color:var(--mute)">${escapeHtml(t.category || '')} · ${escapeHtml(t.language || '')}</div>
+          <div style="font-size:var(--fs-sm);font-weight:700">${escapeHtml(t.name)}</div>
+          <div style="font-size:var(--fs-caption);color:var(--mute)">${escapeHtml(t.category || '')} · ${escapeHtml(t.language || '')}</div>
         </div>
-        <span style="font-size:10px;font-weight:800;letter-spacing:.02em;color:${TPL_STATUS_COLOR[t.status]||'#6B7585'}">${TPL_STATUS_LABEL[t.status]||t.status}</span>
+        <span style="font-size:var(--fs-caption);font-weight:800;letter-spacing:.02em;color:${TPL_STATUS_COLOR[t.status]||'var(--mute)'}">${TPL_STATUS_LABEL[t.status]||t.status}</span>
       </div>
     `).join('');
   }catch(e){
-    list.innerHTML = '<div style="font-size:12px;color:var(--mute);padding:12px 0">Error de conexión.</div>';
+    list.innerHTML = '<div style="font-size:var(--fs-xs);color:var(--mute);padding:12px 0">Error de conexión.</div>';
   }
 }
 

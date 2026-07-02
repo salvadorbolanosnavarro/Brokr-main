@@ -23,7 +23,7 @@
   /* Inputs */
   input, select, textarea {
     background:var(--bone)!important; border:1px solid var(--line-2)!important; color:var(--ink)!important;
-    border-radius:var(--r)!important; font-family:var(--font-sans)!important; font-size:14px!important; padding:10px 12px!important;
+    border-radius:var(--r)!important; font-family:var(--font-sans)!important; font-size: var(--fs-sm)!important; padding:10px 12px!important;
     outline:none!important; transition:border-color .2s ease;
   }
   input:focus, select:focus, textarea:focus { border-color:var(--ink)!important; }
@@ -35,13 +35,13 @@
     background:var(--ink)!important; color:var(--paper)!important;
     border:none!important; border-radius:var(--r)!important;
     padding:11px 18px!important; font-weight:600!important; cursor:pointer!important;
-    box-shadow:0 1px 2px rgba(22,22,22,.08)!important; font-size:14px!important;
+    box-shadow:0 1px 2px rgba(22,22,22,.08)!important; font-size: var(--fs-sm)!important;
   }
   button:not([class]):hover, .btn-primary:hover, .ui-btn:hover, .pf-save-btn:hover, .pe-save-btn:hover, .isr-calc-btn:hover { opacity:.92!important; }
   /* Badges, chips */
   .badge, .chip, .pill, .stat-pill .lbl, .res-tipo-lbl, .isr-badge {
     background:var(--paper-2)!important; color:var(--ink-2)!important; border:1px solid var(--line)!important;
-    border-radius:var(--r-pill)!important; padding:3px 10px!important; font-size:11px!important; font-weight:500!important;
+    border-radius:var(--r-pill)!important; padding:3px 10px!important; font-size: var(--fs-xs)!important; font-weight:500!important;
   }
   /* Accent text colors that were navy or teal */
   [class*="navy"], [style*="color:#161616"], [style*="color: #161616"], [style*="color:#2E3338"] { color:var(--ink)!important; }
@@ -76,28 +76,28 @@
 ═══════════════════════════════════════ */
 :root {
   --navy:       var(--ink);
-  --navy-mid:   #2E3338;
-  --navy-light: #54606E;
+  --navy-mid:   var(--ink-2);
+  --navy-light: var(--ink-3);
   --teal:       var(--ink);
-  --teal-dark:  #2E3338;
+  --teal-dark:  var(--ink-2);
   --teal-bg:    rgba(15,24,41,0.06);
   --teal-border:rgba(15,24,41,0.15);
-  --white:      #ffffff;
-  --bg:         #FFFFFF;
-  --card:       #ffffff;
+  --white:      var(--bone);
+  --bg:         var(--bone);
+  --card:       var(--bone);
   --border:     rgba(0,0,0,0.08);
   --border2:    rgba(0,0,0,0.05);
-  --txt:        #2E3338;
-  --txt-soft:   #6B7585;
-  --txt-muted:  #C1C7CF;
-  --success:    #00AA6C;
-  --success-bg: rgba(13,158,110,0.07);
-  --success-bd: rgba(13,158,110,0.25);
-  --danger:     #E70866;
-  --danger-bg:  rgba(224,54,74,0.07);
-  --danger-bd:  rgba(224,54,74,0.25);
-  --warn:       #0062E3;
-  --warn-bg:    rgba(217,119,6,0.10);
+  --txt:        var(--ink-2);
+  --txt-soft:   var(--mute);
+  --txt-muted:  var(--line-2);
+  --success:    #0C838A;
+  --success-bg: var(--success-soft);
+  --success-bd: rgba(12,131,138,0.25);
+  --danger:     var(--danger);
+  --danger-bg:  var(--danger-soft);
+  --danger-bd:  rgba(231,8,102,0.25);
+  --warn:       #F55D42;
+  --warn-bg:    var(--warn-soft);
   --info:       var(--teal);
   --info-bg:    var(--teal-bg);
   --r:          18px;
@@ -115,7 +115,7 @@ html, body {
   font-family: var(--font);
   background: var(--bg);
   color: var(--txt);
-  font-size: 15px;
+  font-size: var(--fs-sm);
   min-height: 100%;
   overflow-y: auto;
 }
@@ -147,13 +147,13 @@ html, body {
 }
 .topbar-back:active { background: rgba(255,255,255,0.15); }
 .topbar-title {
-  font-size: 16px;
+  font-size: var(--fs-h5);
   font-weight: 700;
   color: white;
   flex: 1;
 }
 .topbar-badge {
-  font-size: 9px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   background: var(--teal-bg);
   color: var(--teal);
@@ -177,7 +177,7 @@ html, body {
   margin-bottom: 18px;
 }
 .page-hdr-sub {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--txt-soft);
   line-height: 1.55;
   margin-top: 4px;
@@ -198,7 +198,7 @@ html, body {
   z-index: 200;
 }
 .card-label {
-  font-size: 10px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   
   letter-spacing: .8px;
@@ -210,7 +210,7 @@ html, body {
 }
 .card-label svg { display: none; }
 .card-label-opt {
-  font-size: 10px;
+  font-size: var(--fs-caption);
   font-weight: 400;
   text-transform: none;
   letter-spacing: 0;
@@ -228,7 +228,7 @@ html, body {
 /* ── FIELDS ── */
 .field { display: flex; flex-direction: column; gap: 5px; }
 .field label {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 600;
   color: var(--txt-muted);
   
@@ -242,7 +242,7 @@ html, body {
   border: 1.5px solid var(--border);
   border-radius: var(--r3);
   color: var(--txt);
-  font-size: 15px;
+  font-size: var(--fs-sm);
   font-family: var(--font);
   font-weight: 500;
   outline: none;
@@ -256,7 +256,7 @@ html, body {
 }
 .field input::placeholder { color: var(--txt-muted); font-weight: 400; }
 .field-hint {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--teal);
   margin-top: 1px;
   font-weight: 500;
@@ -266,17 +266,17 @@ html, body {
 .alert-warn {
   border-radius: var(--r3);
   padding: 11px 14px;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   line-height: 1.5;
   margin-top: 10px;
   background: var(--warn-bg);
   border-left: 3px solid var(--warn);
-  color: #024DAF;
+  color: var(--forest-2);
 }
 .alert-info {
   border-radius: var(--r3);
   padding: 11px 14px;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   line-height: 1.5;
   margin-top: 10px;
   background: var(--teal-bg);
@@ -293,7 +293,7 @@ html, body {
   border: none;
   border-radius: var(--r2);
   color: white;
-  font-size: 15px;
+  font-size: var(--fs-sm);
   font-weight: 700;
   font-family: var(--font);
   cursor: pointer;
@@ -336,7 +336,7 @@ html, body {
   min-height: var(--touch);
   padding: 8px 16px;
   color: var(--txt-soft);
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 600;
   font-family: var(--font);
   cursor: pointer;
@@ -345,7 +345,7 @@ html, body {
 .btn-secondary:hover { border-color: var(--navy); color: var(--navy); }
 .btn-secondary.teal { border-color: var(--teal); color: var(--teal); }
 .res-tipo-tag {
-  font-size: 10px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   background: var(--teal-bg);
   color: var(--teal);
@@ -372,11 +372,11 @@ html, body {
 }
 .rc.gn { background: var(--success-bg); border-color: var(--success-bd); }
 .rc.dk { background: var(--danger-bg); border-color: var(--danger-bd); }
-.rc-l { font-size: 10px; font-weight: 700; color: var(--txt-muted);  letter-spacing: .5px; margin-bottom: 6px; }
-.rc-v { font-size: 21px; font-weight: 800; color: var(--txt); line-height: 1.1; margin-bottom: 3px; word-break: break-word; }
+.rc-l { font-size: var(--fs-caption); font-weight: 700; color: var(--txt-muted);  letter-spacing: .5px; margin-bottom: 6px; }
+.rc-v { font-size: var(--fs-h3); font-weight: 800; color: var(--txt); line-height: 1.1; margin-bottom: 3px; word-break: break-word; }
 .rc.gn .rc-v { color: var(--success); }
 .rc.dk .rc-v { color: var(--danger); }
-.rc-n { font-size: 10px; color: var(--txt-muted); line-height: 1.4; }
+.rc-n { font-size: var(--fs-caption); color: var(--txt-muted); line-height: 1.4; }
 
 /* INPC row */
 .inpc-row {
@@ -393,8 +393,8 @@ html, body {
 }
 .inpc-cell { flex: 1; min-width: 80px; text-align: center; }
 .inpc-cell.hl .inpc-val { color: var(--teal); }
-.inpc-lbl { font-size: 10px;  letter-spacing: .6px; color: var(--txt-muted); margin-bottom: 3px; font-weight: 600; }
-.inpc-val { font-size: 15px; font-weight: 700; color: var(--txt); }
+.inpc-lbl { font-size: var(--fs-caption);  letter-spacing: .6px; color: var(--txt-muted); margin-bottom: 3px; font-weight: 600; }
+.inpc-val { font-size: var(--fs-sm); font-weight: 700; color: var(--txt); }
 .inpc-arr { color: var(--txt-muted); font-size: 16px; flex-shrink: 0; }
 
 /* Desglose */
@@ -406,9 +406,9 @@ html, body {
   margin-bottom: 12px;
   box-shadow: var(--shadow-sm);
 }
-.br { display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; border-bottom: 1px solid var(--border2); font-size: 13px; }
+.br { display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; border-bottom: 1px solid var(--border2); font-size: var(--fs-sm); }
 .br:last-child { border-bottom: none; }
-.br.tot { font-weight: 700; font-size: 14px; }
+.br.tot { font-weight: 700; font-size: var(--fs-sm); }
 .br.sub { padding-left: 14px; color: var(--txt-soft); }
 .bl { color: var(--txt-soft); }
 .br.tot .bl { color: var(--txt); }
@@ -420,7 +420,7 @@ html, body {
   border-left: 3px solid var(--teal);
   border-radius: 0 var(--r3) var(--r3) 0;
   padding: 12px 14px;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   line-height: 1.6;
   color: var(--teal-dark);
   margin-bottom: 12px;
@@ -435,7 +435,7 @@ html, body {
   display: none;
 }
 .ai-lbl {
-  font-size: 10px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   color: var(--teal);
   
@@ -445,7 +445,7 @@ html, body {
   align-items: center;
   gap: 6px;
 }
-#ai-txt { font-size: 13px; line-height: 1.65; color: rgba(255,255,255,0.85); }
+#ai-txt { font-size: var(--fs-sm); line-height: 1.65; color: rgba(255,255,255,0.85); }
 
 
 /* ── MES/AÑO PICKER ── */
@@ -457,7 +457,7 @@ html, body {
   border: 1.5px solid var(--border);
   border-radius: var(--r3);
   color: var(--txt);
-  font-size: 15px;
+  font-size: var(--fs-sm);
   font-family: var(--font);
   font-weight: 500;
   cursor: pointer;
@@ -475,7 +475,7 @@ html, body {
 }
 .mp-trigger .mp-val { flex: 1; }
 .mp-trigger .mp-arrow {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--txt-muted);
   transition: transform 0.2s;
 }
@@ -510,7 +510,7 @@ html, body {
 }
 .mp-year-nav .mp-yr {
   font-family: var(--font);
-  font-size: 16px;
+  font-size: var(--fs-h5);
   font-weight: 700;
   color: white;
 }
@@ -539,7 +539,7 @@ html, body {
   padding: 10px 4px;
   border-radius: 10px;
   text-align: center;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 500;
   font-family: var(--font);
   cursor: pointer;
@@ -566,7 +566,7 @@ html, body {
   border: 1px dashed var(--border);
   border-radius: var(--r3);
   padding: 8px 12px;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   font-weight: 600;
   font-family: var(--font);
   color: var(--teal);
@@ -580,12 +580,12 @@ html, body {
   border-left: 3px solid var(--teal);
   border-radius: 0 var(--r3) var(--r3) 0;
   padding: 12px 14px;
-  font-size: 12.5px;
+  font-size: var(--fs-xs);
   line-height: 1.55;
   color: var(--txt);
   animation: fadeUp 0.25s ease;
 }
-.th-title { font-weight: 700; color: var(--teal-dark); margin-bottom: 8px; font-size: 13px; }
+.th-title { font-weight: 700; color: var(--teal-dark); margin-bottom: 8px; font-size: var(--fs-sm); }
 .th-list { margin: 0 0 12px 18px; padding: 0; }
 .th-list li { margin-bottom: 6px; }
 .th-list em { color: var(--teal-dark); font-style: italic; }
@@ -596,11 +596,11 @@ html, body {
   padding: 12px;
   margin-top: 8px;
 }
-.th-parser-title { font-weight: 700; font-size: 12px; color: var(--txt-soft); margin-bottom: 8px;  letter-spacing: .5px; }
+.th-parser-title { font-weight: 700; font-size: var(--fs-xs); color: var(--txt-soft); margin-bottom: 8px;  letter-spacing: .5px; }
 .th-parser-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
 @media (max-width: 420px) { .th-parser-grid { grid-template-columns: 1fr; } }
 .th-parser-out {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--txt-soft);
   background: var(--bg);
   border-radius: var(--r3);
@@ -615,20 +615,20 @@ html, body {
 }
 
 /* ── NOTAS EDUCATIVAS ── */
-.edu-notes-title { font-weight: 700; margin-top: 14px; margin-bottom: 6px; color: var(--txt); font-size: 12.5px; }
+.edu-notes-title { font-weight: 700; margin-top: 14px; margin-bottom: 6px; color: var(--txt); font-size: var(--fs-xs); }
 .edu-note {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   line-height: 1.5;
   padding: 8px 10px;
   margin-bottom: 6px;
   border-radius: var(--r3);
-  background: var(--paper-2, #FFFFFF);
+  background: var(--paper-2, var(--bone));
   border-left: 2px solid var(--txt-muted);
   color: var(--txt-soft);
 }
 .edu-note strong { color: var(--txt); }
-.edu-note.warn { background: var(--warn-bg); border-left-color: var(--warn); color: #024DAF; }
-.edu-note.warn strong { color: #024DAF; }
+.edu-note.warn { background: var(--warn-bg); border-left-color: var(--warn); color: var(--forest-2); }
+.edu-note.warn strong { color: var(--forest-2); }
 
 /* ── ANIMACIONES ── */
 @keyframes fadeUp {
@@ -830,7 +830,7 @@ html, body {
     <div id="res-inpc-row" class="inpc-row" style="display:none">
       <div class="inpc-cell"><div class="inpc-lbl">INPC adquisición</div><div class="inpc-val" id="res-inpc-adq">—</div></div>
       <div class="inpc-arr">→</div>
-      <div class="inpc-cell"><div class="inpc-lbl">INPC enajenación<br><span style="font-size:7.5px;opacity:0.7">mes anterior</span></div><div class="inpc-val" id="res-inpc-venta">—</div></div>
+      <div class="inpc-cell"><div class="inpc-lbl">INPC enajenación<br><span style="font-size: var(--fs-caption);opacity:0.7">mes anterior</span></div><div class="inpc-val" id="res-inpc-venta">—</div></div>
       <div class="inpc-arr">=</div>
       <div class="inpc-cell hl"><div class="inpc-lbl">Factor</div><div class="inpc-val" id="res-factor">—</div></div>
     </div>
@@ -1266,7 +1266,7 @@ function renderResult(d) {
   }
   // Card IVA (solo comercial)
   if(d.ivaMonto>0){
-    cards+=`<div class="rc" style="border-color:rgba(217,119,6,0.3);background:rgba(217,119,6,0.06)"><div class="rc-l" style="color:#024DAF">IVA 16% estimado</div><div class="rc-v" style="color:#0062E3">${fmt(d.ivaMonto)}</div><div class="rc-n">Sobre construcción (art. 9 LIVA) — retiene el notario</div></div>`;
+    cards+=`<div class="rc" style="border-color:rgba(217,119,6,0.3);background:rgba(217,119,6,0.06)"><div class="rc-l" style="color:var(--forest-2)">IVA 16% estimado</div><div class="rc-v" style="color:var(--forest)">${fmt(d.ivaMonto)}</div><div class="rc-n">Sobre construcción (art. 9 LIVA) — retiene el notario</div></div>`;
   }
   if(g('res-cards'))g('res-cards').innerHTML=cards;
 
@@ -1303,7 +1303,7 @@ function renderResult(d) {
     bd+=`<div class="br"><span class="bl">ISR Federación (ISR total − ISR estatal)</span><span class="bv">${fmt(d.isrFederal)}</span></div>`;
   }
   if(d.ivaMonto>0){
-    bd+=`<div class="br" style="border-color:rgba(217,119,6,0.25)"><span class="bl" style="color:#0062E3">IVA 16% s/ construcción (${fmt(d.ivaBase)}) — art. 9 LIVA</span><span class="bv" style="color:#0062E3">${fmt(d.ivaMonto)}</span></div>`;
+    bd+=`<div class="br" style="border-color:rgba(217,119,6,0.25)"><span class="bl" style="color:var(--forest)">IVA 16% s/ construcción (${fmt(d.ivaBase)}) — art. 9 LIVA</span><span class="bv" style="color:var(--forest)">${fmt(d.ivaMonto)}</span></div>`;
   }
   if(g('res-bkdn'))g('res-bkdn').innerHTML=bd;
 
@@ -1353,7 +1353,7 @@ function renderResult(d) {
       eduNotes.map(n => `<div class="edu-note${n.warn?' warn':''}"><strong>${n.title}.</strong> ${n.body}</div>`).join('');
 
     const exencionLeyenda = (d.tipo === 'casa')
-      ? `<br><strong>¿Casa habitación o departamento?</strong> Tu cliente podría ser candidato para <strong>exentar el ISR</strong> (total o parcialmente) si esta es su casa habitación principal y no usó la exención en los últimos 3 años. <a href="blog.html?art=exencion-isr-casa-habitacion" style="color:#024DAF;font-weight:600">Lee cómo funciona la exención →</a><br>`
+      ? `<br><strong>¿Casa habitación o departamento?</strong> Tu cliente podría ser candidato para <strong>exentar el ISR</strong> (total o parcialmente) si esta es su casa habitación principal y no usó la exención en los últimos 3 años. <a href="blog.html?art=exencion-isr-casa-habitacion" style="color:var(--forest-2);font-weight:600">Lee cómo funciona la exención →</a><br>`
       : '';
     const inpcFallbackNota = d.inpcVentaFallback
       ? `<br><br><strong>Nota sobre el INPC de enajenación:</strong> el INPC de ${d.mN[d.inpcVentaMesSolicitado]} ${d.inpcVentaAnioSolicitado} aún no lo publica el INEGI (se libera alrededor del día 9 del mes siguiente). Se usó el último INPC publicado, el de ${d.mN[d.mesEnajINPC]} ${d.anioEnajINPC}. Al firmar la escritura, el notario aplicará el INPC oficial del mes que corresponda.`
@@ -1425,53 +1425,53 @@ async function descargarPDF() {
   body{height:100%;overflow:hidden}
   body{
     font-family:'Inter','Helvetica Neue',sans-serif;
-    font-size:11.5px;color:#161616;background:#fff;
+    font-size: var(--fs-xs);color:var(--ink);background:var(--bone);
     -webkit-font-smoothing:antialiased;letter-spacing:-0.005em;
     line-height:1.5;
   }
   /* ── HEADER ── */
-  .hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;padding-bottom:12px;border-bottom:1.5px solid #161616}
-  .hdr-left h1{font-family:var(--font-sans);font-size:26px;font-weight:400;letter-spacing:-0.025em;color:#161616;line-height:1.1;margin-bottom:5px}
-  .hdr-left .meta{font-size: 20px;color:#939BA6;letter-spacing:0.01em}
+  .hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;padding-bottom:12px;border-bottom:1.5px solid var(--ink)}
+  .hdr-left h1{font-family:var(--font-sans);font-size:var(--fs-h1);font-weight:700;letter-spacing:-0.025em;color:var(--ink);line-height:1.1;margin-bottom:5px}
+  .hdr-left .meta{font-size: var(--fs-label-3);color:var(--mute-2);letter-spacing:0.01em}
   .hdr-right{text-align:right}
-  .tipo-badge{font-size:8.5px;font-weight:700;letter-spacing:1.5px;color:#0062E3;background:#FFFFFF;padding:4px 10px;border-radius:20px;display:inline-block;margin-bottom:6px}
-  .fecha{font-size:9.5px;color:#939BA6}
+  .tipo-badge{font-size: var(--fs-caption);font-weight:700;letter-spacing:1.5px;color:var(--forest);background:var(--bone);padding:4px 10px;border-radius:20px;display:inline-block;margin-bottom:6px}
+  .fecha{font-size: var(--fs-caption);color:var(--mute-2)}
   /* ── SECTION LABEL ── */
-  .sec-lbl{font-size:8px;font-weight:700;letter-spacing:2px;color:#939BA6;margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid #EFF3F8}
+  .sec-lbl{font-size: var(--fs-caption);font-weight:700;letter-spacing:2px;color:var(--mute-2);margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--paper-2)}
   /* ── INPC ROW ── */
-  .inpc-row{display:grid;grid-template-columns:1fr 20px 1fr 20px 1fr;gap:0;border:1px solid #EFF3F8;margin-bottom:12px;border-radius:4px;overflow:hidden}
-  .inpc-cell{padding:12px 14px;text-align:center;border-right:1px solid #EFF3F8}
+  .inpc-row{display:grid;grid-template-columns:1fr 20px 1fr 20px 1fr;gap:0;border:1px solid var(--paper-2);margin-bottom:12px;border-radius:4px;overflow:hidden}
+  .inpc-cell{padding:12px 14px;text-align:center;border-right:1px solid var(--paper-2)}
   .inpc-cell:last-child{border-right:none}
-  .inpc-cell.hl{background:#FFFFFF}
-  .inpc-arrow{display:flex;align-items:center;justify-content:center;color:#E0E4E9;font-size:14px;border-right:none!important;padding:0}
-  .inpc-lbl{font-size:7.5px;font-weight:600;letter-spacing:1.4px;color:#939BA6;margin-bottom:5px}
-  .inpc-val{font-family:var(--font-sans);font-weight:400;font-size:15px;letter-spacing:-0.01em;color:#161616}
-  .inpc-cell.hl .inpc-val{color:#0062E3;font-weight:500}
+  .inpc-cell.hl{background:var(--bone)}
+  .inpc-arrow{display:flex;align-items:center;justify-content:center;color:var(--line);font-size: var(--fs-sm);border-right:none!important;padding:0}
+  .inpc-lbl{font-size: var(--fs-caption);font-weight:600;letter-spacing:1.4px;color:var(--mute-2);margin-bottom:5px}
+  .inpc-val{font-family:var(--font-sans);font-weight:400;font-size: var(--fs-sm);letter-spacing:-0.01em;color:var(--ink)}
+  .inpc-cell.hl .inpc-val{color:var(--forest);font-weight:500}
   /* ── CARDS ── */
-  .cards{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid #EFF3F8;border-radius:4px;overflow:hidden;margin-bottom:12px}
-  .card{padding:14px 16px;border-right:1px solid #EFF3F8}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--paper-2);border-radius:4px;overflow:hidden;margin-bottom:12px}
+  .card{padding:14px 16px;border-right:1px solid var(--paper-2)}
   .card:last-child{border-right:none}
-  .card-l{font-size:7.5px;font-weight:600;letter-spacing:1.4px;color:#939BA6;margin-bottom:6px}
-  .card-v{font-family:var(--font-sans);font-size:20px;font-weight:400;letter-spacing:-0.02em;color:#161616;margin-bottom:2px}
-  .card-n{font-size:9px;color:#939BA6}
-  .card.total .card-v{color:#E70866;font-weight:500}
-  .card.iva .card-v{color:#024DAF}
+  .card-l{font-size: var(--fs-caption);font-weight:600;letter-spacing:1.4px;color:var(--mute-2);margin-bottom:6px}
+  .card-v{font-family:var(--font-sans);font-size:var(--fs-h3);font-weight:700;letter-spacing:-0.02em;color:var(--ink);margin-bottom:2px}
+  .card-n{font-size: var(--fs-caption);color:var(--mute-2)}
+  .card.total .card-v{color:var(--danger);font-weight:500}
+  .card.iva .card-v{color:var(--forest-2)}
   /* ── DESGLOSE ── */
-  .br{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid #EFF3F8;font-size:11px}
+  .br{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--paper-2);font-size: var(--fs-xs)}
   .br:last-child{border-bottom:none}
-  .br.sub{padding-left:16px;color:#939BA6;font-size:10px}
-  .br.tot{font-size:12.5px;padding:10px 0;border-bottom:1.5px solid #161616;border-top:1px solid #E0E4E9;margin-top:2px}
-  .bl{color:#54606E;flex:1;padding-right:12px}
-  .bv{font-family:var(--font-sans);font-weight:400;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:12px}
-  .br.tot .bl,.br.tot .bv{font-family:var(--font-sans);font-weight:500;color:#161616;font-size:13px}
+  .br.sub{padding-left:16px;color:var(--mute-2);font-size: var(--fs-caption)}
+  .br.tot{font-size: var(--fs-xs);padding:10px 0;border-bottom:1.5px solid var(--ink);border-top:1px solid var(--line);margin-top:2px}
+  .bl{color:var(--ink-3);flex:1;padding-right:12px}
+  .bv{font-family:var(--font-sans);font-weight:400;font-variant-numeric:tabular-nums;white-space:nowrap;font-size: var(--fs-xs)}
+  .br.tot .bl,.br.tot .bv{font-family:var(--font-sans);font-weight:500;color:var(--ink);font-size: var(--fs-sm)}
   /* ── NOTA ── */
-  .nota{border-left:2px solid #E0E4E9;padding:10px 14px;font-size:10px;margin-top:16px;line-height:1.65;color:#54606E;background:#FFFFFF}
-  .nota strong{font-weight:600;color:#161616}
+  .nota{border-left:2px solid var(--line);padding:10px 14px;font-size: var(--fs-caption);margin-top:16px;line-height:1.65;color:var(--ink-3);background:var(--bone)}
+  .nota strong{font-weight:600;color:var(--ink)}
   .nota ul{margin:4px 0 0 14px}
   .nota li{margin-bottom:2px}
   /* ── FOOTER ── */
-  .footer{margin-top:18px;padding-top:8px;border-top:1px solid #EFF3F8;text-align:center}
-  .footer-brand{font-family:'Inter',sans-serif;font-size:9px;font-weight:500;color:#939BA6;letter-spacing:0.4px}
+  .footer{margin-top:18px;padding-top:8px;border-top:1px solid var(--paper-2);text-align:center}
+  .footer-brand{font-family:'Inter',sans-serif;font-size: var(--fs-caption);font-weight:500;color:var(--mute-2);letter-spacing:0.4px}
 </style>
 </head>
 <body>
@@ -1522,7 +1522,7 @@ async function descargarPDF() {
       <div class="card-v">${fmt(d.isrFederal)}</div>
       <div class="card-n">ISR total − retención estatal</div>
     </div>
-    ${d.ivaMonto>0?`<div class="card iva" style="grid-column:1/-1;border-top:1px solid #EFF3F8;grid-template-columns:auto">
+    ${d.ivaMonto>0?`<div class="card iva" style="grid-column:1/-1;border-top:1px solid var(--paper-2);grid-template-columns:auto">
       <div class="card-l">IVA 16% estimado — art. 9 LIVA</div>
       <div class="card-v">${fmt(d.ivaMonto)}</div>
       <div class="card-n">Sobre valor de construcción (${fmt(d.ivaBase)}) · retiene el notario</div>
@@ -1531,7 +1531,7 @@ async function descargarPDF() {
   d.exenta?`<div class="sec-lbl">Resumen fiscal</div>
   <div class="cards"><div class="card" style="grid-column:1/-1">
     <div class="card-l">ISR a pagar</div>
-    <div class="card-v" style="color:#0062E3">$0</div>
+    <div class="card-v" style="color:var(--forest)">$0</div>
     <div class="card-n">Exento — art. 93 fr. XIX LISR · Ganancia libre de impuesto: ${fmt(d.ganTotal)}</div>
   </div></div>`:''}
 

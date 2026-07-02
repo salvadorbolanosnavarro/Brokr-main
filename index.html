@@ -18,41 +18,41 @@
 
 /* ── HERO navy (estructura) ── */
 .sky-hero {
-  background: var(--sky-navy); color: #fff !important;
+  background: var(--sky-navy); color: var(--bone) !important;
   border-radius: 16px; padding: 28px 28px 22px;
 }
 .sky-hero__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
 .sky-hero__eyebrow {
-  font-family: var(--font-mono); font-size: 22px; letter-spacing: 0.02em;
+  font-family: var(--font-mono); font-size: var(--fs-label-3); letter-spacing: 0.02em;
    color: rgba(255,255,255,0.6); margin-bottom: 8px;
 }
-.sky-hero__title { font-family: var(--font-display); font-size: 34px; font-weight: 700; letter-spacing: -0.02em; color: #fff; line-height: 1.05; }
+.sky-hero__title { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 700; letter-spacing: -0.02em; color: var(--bone); line-height: 1.05; }
 .sky-hero__title em { font-style: normal; color: #5BA4FF; }
-.sky-hero__date { text-align: right; font-family: var(--font-mono); font-size: 12px; color: rgba(255,255,255,0.7); }
-.sky-hero__date .label { display: block; font-size: 20px; letter-spacing: 0.02em;  color: rgba(255,255,255,0.5); margin-bottom: 3px; }
+.sky-hero__date { text-align: right; font-family: var(--font-mono); font-size: var(--fs-xs); color: rgba(255,255,255,0.7); }
+.sky-hero__date .label { display: block; font-size: var(--fs-label-3); letter-spacing: 0.02em;  color: rgba(255,255,255,0.5); margin-bottom: 3px; }
 .sky-hero__kpis { display: flex; gap: 0; margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.14); padding-top: 18px; }
 .sky-kpi { flex: 1; padding-right: 20px; }
 .sky-kpi + .sky-kpi { border-left: 1px solid rgba(255,255,255,0.14); padding-left: 20px; }
-.sky-kpi__value { font-family: var(--font-display); font-size: 30px; font-weight: 700; color: #fff; line-height: 1; letter-spacing: -0.02em; }
-.sky-kpi__label { font-size: 12px; color: rgba(255,255,255,0.65); margin-top: 6px; }
-@media (max-width: 560px) { .sky-hero__title { font-size: 26px; } .sky-kpi__value { font-size: 22px; } .sky-hero__date { text-align: left; } }
+.sky-kpi__value { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 700; color: var(--bone); line-height: 1; letter-spacing: -0.02em; }
+.sky-kpi__label { font-size: var(--fs-xs); color: rgba(255,255,255,0.65); margin-top: 6px; }
+@media (max-width: 560px) { .sky-hero__title { font-size: var(--fs-h2); } .sky-kpi__value { font-size: var(--fs-h3); } .sky-hero__date { text-align: left; } }
 
 /* ── HERO CARD azul (firma Skyscanner) ── */
 .sky-herocard {
   display: block; margin-top: 16px; text-decoration: none;
-  background: var(--sky-blue); color: #fff !important; border-radius: 16px; padding: 30px 28px;
+  background: var(--sky-blue); color: var(--bone) !important; border-radius: 16px; padding: 30px 28px;
   position: relative; overflow: hidden; transition: background 0.2s var(--ease);
   background-image: radial-gradient(120% 150% at 100% 0%, rgba(255,255,255,0.16), transparent 55%);
 }
 .sky-herocard:hover { background: var(--sky-blue-press); }
-.sky-herocard__eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.05em;  opacity: 0.9; }
-.sky-herocard h2 { color: #fff; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; margin: 8px 0 18px; max-width: 22ch; }
-.sky-herocard__cta { display: inline-flex; align-items: center; gap: 8px; background: #fff; color: var(--sky-blue); font-weight: 700; font-size: 14px; padding: 11px 18px; border-radius: 12px; }
-@media (max-width: 560px) { .sky-herocard h2 { font-size: 22px; } }
+.sky-herocard__eyebrow { font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.05em;  opacity: 0.9; }
+.sky-herocard h2 { color: var(--bone); font-size: var(--fs-h2); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; margin: 8px 0 18px; max-width: 22ch; }
+.sky-herocard__cta { display: inline-flex; align-items: center; gap: 8px; background: var(--bone); color: var(--sky-blue); font-weight: 700; font-size: var(--fs-sm); padding: 11px 18px; border-radius: 12px; }
+@media (max-width: 560px) { .sky-herocard h2 { font-size: var(--fs-h3); } }
 
 /* ── Encabezado de sección ── */
 .sky-sec-head { margin: 34px 0 16px; }
-.sky-sec-head h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; color: var(--ink); }
+.sky-sec-head h2 { font-size: var(--fs-h3); font-weight: 700; letter-spacing: -0.01em; color: var(--ink); }
 
 /* ── Tarjetas de módulo ── */
 .mods-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
@@ -68,48 +68,48 @@
 .mod-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--sky-blue); }
 .mod-card__icon {
   width: 42px; height: 42px; border-radius: 10px;
-  background: var(--sky-navy); color: #fff !important;
+  background: var(--sky-navy); color: var(--bone) !important;
   display: flex; align-items: center; justify-content: center; margin-bottom: 12px;
   transition: background 0.18s var(--ease), color 0.18s var(--ease);
 }
-.mod-card__title { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; color: var(--ink); margin-bottom: 4px; }
-.mod-card__sub { font-size: 13px; color: var(--mute); line-height: 1.4; }
+.mod-card__title { font-size: var(--fs-sm); font-weight: 700; letter-spacing: -0.01em; color: var(--ink); margin-bottom: 4px; }
+.mod-card__sub { font-size: var(--fs-sm); color: var(--mute); line-height: 1.4; }
 .mod-card__arrow { position: absolute; top: 18px; right: 16px; color: var(--mute-3); opacity: 0; transition: opacity 0.18s var(--ease), transform 0.18s var(--ease), color 0.18s var(--ease); }
 .mod-card:hover .mod-card__arrow { opacity: 1; color: var(--sky-blue); transform: translate(2px, -2px); }
 /* Destacada = azul brillante */
-.mod-card.is-primary { background: var(--sky-blue); border-color: transparent; color: #fff !important; }
-.mod-card.is-primary .mod-card__icon { background: rgba(255,255,255,0.18); color: #fff; }
-.mod-card.is-primary .mod-card__title { color: #fff; }
+.mod-card.is-primary { background: var(--sky-blue); border-color: transparent; color: var(--bone) !important; }
+.mod-card.is-primary .mod-card__icon { background: rgba(255,255,255,0.18); color: var(--bone); }
+.mod-card.is-primary .mod-card__title { color: var(--bone); }
 .mod-card.is-primary .mod-card__sub { color: rgba(255,255,255,0.85); }
-.mod-card.is-primary .mod-card__arrow { color: #fff; opacity: 1; }
+.mod-card.is-primary .mod-card__arrow { color: var(--bone); opacity: 1; }
 .mod-card.is-primary:hover { background: var(--sky-blue-press); border-color: transparent; }
 
 /* ── CTA azul (Broq) ── */
 .ai-card {
-  background: var(--sky-blue); color: #fff !important; border-radius: 16px;
+  background: var(--sky-blue); color: var(--bone) !important; border-radius: 16px;
   padding: 30px 28px; margin-top: 34px; position: relative; overflow: hidden;
   background-image: radial-gradient(120% 160% at 100% 0%, rgba(255,255,255,0.16), transparent 55%);
 }
-.ai-card h3 { font-family: var(--font-display); font-size: 26px; font-weight: 700; letter-spacing: -0.02em; color: #fff; margin-bottom: 8px; line-height: 1.1; }
-.ai-card p { font-size: 15px; color: rgba(255,255,255,0.9); line-height: 1.5; margin-bottom: 18px; max-width: 60ch; }
+.ai-card h3 { font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 700; letter-spacing: -0.02em; color: var(--bone); margin-bottom: 8px; line-height: 1.1; }
+.ai-card p { font-size: var(--fs-body); color: rgba(255,255,255,0.9); line-height: 1.5; margin-bottom: 18px; max-width: 60ch; }
 .ai-card__btn {
-  background: #fff; color: var(--sky-blue); border: none; height: 46px; padding: 0 22px;
-  border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit;
+  background: var(--bone); color: var(--sky-blue); border: none; height: 46px; padding: 0 22px;
+  border-radius: 12px; font-size: var(--fs-body); font-weight: 700; cursor: pointer; font-family: inherit;
   display: inline-flex; align-items: center; gap: 8px; transition: transform 0.18s var(--ease);
 }
 .ai-card__btn:hover { transform: translateX(2px); }
 
 /* ── App Store (navy, footer del dashboard) ── */
 .appstore-card {
-  background: var(--sky-navy); color: #fff !important; border-radius: 16px;
+  background: var(--sky-navy); color: var(--bone) !important; border-radius: 16px;
   padding: 22px 26px; margin-top: 16px;
   display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
 }
-.appstore-card__eyebrow { font-family: var(--font-mono); font-size: 22px; letter-spacing: 0.02em;  color: rgba(255,255,255,0.55); margin-bottom: 4px; }
-.appstore-card__title { font-family: var(--font-display); font-size: 17px; font-weight: 700; letter-spacing: -0.015em; color: #fff; }
+.appstore-card__eyebrow { font-family: var(--font-mono); font-size: var(--fs-label-3); letter-spacing: 0.02em;  color: rgba(255,255,255,0.55); margin-bottom: 4px; }
+.appstore-card__title { font-family: var(--font-display); font-size: var(--fs-h5); font-weight: 700; letter-spacing: -0.015em; color: var(--bone); }
 .appstore-card__badge { display: block; line-height: 0; flex-shrink: 0; }
 .appstore-card__badge img { height: 42px; width: auto; display: block; }
-@media (max-width: 560px) { .appstore-card { padding: 18px 20px; } .appstore-card__title { font-size: 15px; } }
+@media (max-width: 560px) { .appstore-card { padding: 18px 20px; } .appstore-card__title { font-size: var(--fs-sm); } }
 </style>
 </head>
 <body data-app="home">
