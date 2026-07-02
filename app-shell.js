@@ -966,13 +966,20 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
     } catch (e) { return null; }
   }
 
+  /* Destino cuando NO hay sesión: en web mandamos a la página comercial
+     (landing.html) para que el visitante conozca Broquer antes de entrar;
+     en la app nativa de iOS no existe página comercial, va directo a login. */
+  function bkAuthRedirectTarget() {
+    return IS_IOS_NATIVE ? 'login.html' : 'landing.html';
+  }
+
   async function authInit() {
     let tok = getToken();
 
     // Si no hay token, intentar renovar con refresh token antes de redirigir
     if (!tok) {
       tok = await tryRefreshToken();
-      if (!tok) { location.href = 'login.html'; return null; }
+      if (!tok) { location.href = bkAuthRedirectTarget(); return null; }
     }
 
     let user = null;
@@ -987,7 +994,7 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
         if (r.status === 401) {
           // Token expirado — renovar y reintentar
           tok = await tryRefreshToken();
-          if (!tok) { location.href = 'login.html'; return null; }
+          if (!tok) { location.href = bkAuthRedirectTarget(); return null; }
           const r2 = await fetch(SB_URL + '/auth/v1/user', { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok } });
           user = await r2.json();
         } else {
@@ -997,7 +1004,7 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
       } catch (e) {}
     }
 
-    if (!user?.id) { location.href = 'login.html'; return null; }
+    if (!user?.id) { location.href = bkAuthRedirectTarget(); return null; }
     let profile = [];
     try { profile = await sbFetch(`usuarios?id=eq.${user.id}&select=nombre,telefono,rol`); } catch (e) {}
     const fullName = profile[0]?.nombre || user.email?.split('@')[0] || 'Usuario';
@@ -1217,6 +1224,7 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
   }
 
   function shaarkFabSend() {
+    if (!window.__BK_SUB_ACTIVE) { showBroquerMaxModal(); return; }
     const input = document.getElementById('bk-shk-input');
     if (!input) return;
     const text = (input.value || '').trim();
@@ -1229,6 +1237,7 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
   window.shaarkFabSend = shaarkFabSend;
 
   function shaarkChip(text) {
+    if (!window.__BK_SUB_ACTIVE) { showBroquerMaxModal(); return; }
     addBubble(text, 'user');
     shaarkMsgs.push({ role: 'user', content: text });
     shaarkFabFetch(text);
@@ -3078,39 +3087,93 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
   window.rcBuy = rcBuy;
   window.rcRestore = rcRestore;
 
-  function renderSubscriptionGate(message) {
-    if (IS_IOS_NATIVE) {
-      // App nativa iOS: compra dentro de la app vía App Store (RevenueCat).
-      document.body.innerHTML = `
-        <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--paper);padding:24px;font-family:var(--font-sans);">
-          <div style="width:100%;max-width:440px;background:var(--bone);border:1px solid var(--line);border-radius:24px;padding:30px;box-shadow:0 10px 40px rgba(22,22,22,.08);text-align:center;">
-            <img src="isotipo-black.png" alt="Broquer" style="width:58px;height:58px;object-fit:contain;margin-bottom:18px;"/>
-            <h1 style="font-family:var(--font-display);font-size:30px;line-height:1.05;margin:0 0 10px;color:var(--ink);letter-spacing:-.03em;">Activa Broquer Max</h1>
-            <p style="color:var(--mute);font-size:13px;line-height:1.5;margin:0 0 20px;">Suscríbete para usar todas tus herramientas. Broquer Max es una suscripción mensual: el pago se cobra a tu cuenta de Apple al confirmar y se renueva automáticamente cada mes, salvo que la canceles desde Ajustes de iOS al menos 24 h antes del fin del periodo.</p>
-            <button id="bk-iap-buy" onclick="rcBuy()" disabled style="width:100%;height:48px;border:none;border-radius:12px;background:var(--sky-blue);color:#FFFFFF;font-weight:700;font-size:14px;cursor:pointer;">Cargando…</button>
-            <button id="bk-iap-restore" onclick="rcRestore()" style="width:100%;height:42px;border:1px solid var(--line-2);border-radius:12px;background:transparent;color:var(--ink);font-weight:600;font-size:13px;cursor:pointer;margin-top:10px;">Restaurar compras</button>
-            <button onclick="doLogout()" style="width:100%;height:40px;border:none;background:transparent;color:var(--mute);font-weight:500;font-size:13px;cursor:pointer;margin-top:4px;">Cerrar sesión</button>
-            <div id="bk-gate-msg" style="margin-top:10px;font-size:12px;color:var(--danger);min-height:18px;">${message || ''}</div>
-            <div style="margin-top:14px;font-size:11px;color:var(--mute);line-height:1.5;">Al continuar aceptas los <a href="legal.html" style="color:var(--mute);text-decoration:underline;">Términos de uso</a> y el <a href="legal.html" style="color:var(--mute);text-decoration:underline;">Aviso de Privacidad</a>.</div>
-          </div>
-        </div>`;
-      rcRenderPrice();
-      return;
-    }
-    document.body.innerHTML = `
-      <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--paper);padding:24px;font-family:var(--font-sans);">
-        <div style="width:100%;max-width:440px;background:var(--bone);border:1px solid var(--line);border-radius:24px;padding:30px;box-shadow:0 10px 40px rgba(22,22,22,.08);text-align:center;">
-          <img src="isotipo-black.png" alt="Broquer" style="width:58px;height:58px;object-fit:contain;margin-bottom:18px;"/>
-          <h1 style="font-family:var(--font-display);font-size:30px;line-height:1.05;margin:0 0 10px;color:var(--ink);letter-spacing:-.03em;">Actualmente no cuentas con un plan de suscripción</h1>
-          <p style="color:var(--mute);font-size:14px;line-height:1.5;margin:0 0 22px;">Activa tu plan para ingresar a Broquer y usar tus herramientas inmobiliarias.</p>
-          <button id="bk-gate-sub-btn" onclick="startSubscriptionCheckoutFromGate()" style="width:100%;height:48px;border:none;border-radius:12px;background:var(--sky-blue);color:#FFFFFF;font-weight:700;font-size:14px;cursor:pointer;">Suscribirme ahora</button>
-          <button onclick="doLogout()" style="width:100%;height:42px;border:1px solid var(--line-2);border-radius:12px;background:transparent;color:var(--ink);font-weight:600;font-size:13px;cursor:pointer;margin-top:10px;">Cerrar sesión</button>
-          <div id="bk-gate-msg" style="margin-top:12px;font-size:12px;color:var(--danger);min-height:18px;">${message || ''}</div>
-        </div>
+  /* ── Modal Broquer Max (freemium) ──────────────────────────────────
+     Ya NO se reemplaza la pantalla completa. Cuando un usuario sin
+     suscripción intenta ejecutar una acción premium (calcular ISR,
+     estimar valor, limpiar imágenes, generar contrato/ficha, publicar
+     anuncio, hablar con Broq, etc.) se abre este modal encima de la
+     página. El usuario puede cerrarlo y seguir navegando libremente. */
+  function closeBroquerMaxModal() {
+    const ov = document.getElementById('bk-max-modal');
+    if (ov) ov.remove();
+  }
+  window.closeBroquerMaxModal = closeBroquerMaxModal;
+
+  function showBroquerMaxModal() {
+    if (document.getElementById('bk-max-modal')) return;
+    const buyBtn = IS_IOS_NATIVE
+      ? `<button id="bk-iap-buy" onclick="rcBuy()" disabled style="width:100%;height:48px;border:none;border-radius:12px;background:var(--sky-blue);color:#FFFFFF;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Cargando…</button>
+         <button id="bk-iap-restore" onclick="rcRestore()" style="width:100%;height:42px;border:1px solid var(--line-2);border-radius:12px;background:transparent;color:var(--ink);font-weight:600;font-size:13px;cursor:pointer;margin-top:10px;font-family:inherit;">Restaurar compras</button>`
+      : `<button id="bk-gate-sub-btn" onclick="startSubscriptionCheckoutFromGate()" style="width:100%;height:48px;border:none;border-radius:12px;background:var(--sky-blue);color:#FFFFFF;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Suscribirme a Broquer Max</button>`;
+    const legal = IS_IOS_NATIVE
+      ? `<div style="margin-top:14px;font-size:11px;color:var(--mute);line-height:1.5;">Broquer Max es una suscripción mensual: el pago se cobra a tu cuenta de Apple al confirmar y se renueva automáticamente cada mes, salvo que la canceles desde Ajustes de iOS al menos 24 h antes del fin del periodo. Al continuar aceptas los <a href="legal.html" style="color:var(--mute);text-decoration:underline;">Términos de uso</a> y el <a href="legal.html" style="color:var(--mute);text-decoration:underline;">Aviso de Privacidad</a>.</div>`
+      : '';
+    const ov = document.createElement('div');
+    ov.id = 'bk-max-modal';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:2147483646;background:rgba(5,32,60,.46);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;font-family:var(--font-sans);';
+    ov.innerHTML = `
+      <div style="width:100%;max-width:400px;background:var(--bone);border:1px solid var(--line);border-radius:24px;padding:28px;box-shadow:0 20px 60px rgba(5,32,60,.30);text-align:center;position:relative;">
+        <button onclick="closeBroquerMaxModal()" aria-label="Cerrar" style="position:absolute;top:12px;right:14px;border:none;background:transparent;color:var(--mute);font-size:26px;line-height:1;cursor:pointer;padding:4px 8px;font-family:inherit;">&times;</button>
+        <img src="isotipo-black.png" alt="Broquer" style="width:52px;height:52px;object-fit:contain;margin-bottom:14px;"/>
+        <h2 style="font-family:var(--font-display);font-size:24px;line-height:1.1;margin:0 0 10px;color:var(--ink);letter-spacing:-.02em;">Broquer Max</h2>
+        <p style="color:var(--mute);font-size:14px;line-height:1.55;margin:0 0 20px;">Para hacer uso de estos módulos exclusivos de Broquer por favor suscríbete a Broquer Max.</p>
+        ${buyBtn}
+        <button onclick="closeBroquerMaxModal()" style="width:100%;height:40px;border:none;background:transparent;color:var(--mute);font-weight:600;font-size:13px;cursor:pointer;margin-top:8px;font-family:inherit;">Ahora no</button>
+        <div id="bk-gate-msg" style="margin-top:8px;font-size:12px;color:var(--danger);min-height:18px;"></div>
+        ${legal}
       </div>`;
+    ov.addEventListener('click', (e) => { if (e.target === ov) closeBroquerMaxModal(); });
+    document.body.appendChild(ov);
+    if (IS_IOS_NATIVE) rcRenderPrice();
+  }
+  window.showBroquerMaxModal = showBroquerMaxModal;
+
+  /* ── Freemium: acciones premium por página ─────────────────────────
+     El CRM (inicio, contactos, leads, tareas, propiedades, perfil) es
+     de uso libre. En el resto de módulos el usuario puede entrar,
+     navegar y llenar formularios; solo al EJECUTAR la acción de valor
+     aparece el modal de Broquer Max si no tiene suscripción activa. */
+  const BK_PREMIUM_ACTIONS = {
+    'isr.html':            ['#calc-btn'],
+    'avm.html':            ['#btn-analizar-ia'],
+    'valor.html':          ['#btnBackendSearch', '#btnClaude', '#btnAnalyze'],
+    'image-cleaner.html':  ['#btn-clean'],
+    'contratos.html':      ['#gen-btn'],
+    'ficha.html':          ['#pdf-btn'],
+    'ficha-manual.html':   ['#ai-btn', '#pdf-btn'],
+    'facebook-ads.html':   ['#fa-ai-btn', '#fa-submit-btn'],
+    'whatsapp.html':       ['#wa-connect-btn', '#tpl-submit-btn'],
+  };
+
+  function bkCurrentPageFile() {
+    const p = (location.pathname.split('/').pop() || '').toLowerCase();
+    return p || 'index.html';
   }
 
-  async function ensureSubscriptionOrGate(profile) {
+  function bkInstallFreemiumGate() {
+    if (window.__BK_SUB_ACTIVE) return; // suscriptor: sin intercepción
+    const sels = BK_PREMIUM_ACTIONS[bkCurrentPageFile()];
+    if (!sels || !sels.length) return;
+    const selector = sels.join(',');
+    // Fase de captura: interceptamos ANTES de que el módulo ejecute su lógica.
+    document.addEventListener('click', function (e) {
+      if (window.__BK_SUB_ACTIVE) return;
+      const t = e.target;
+      const hit = t && t.closest ? t.closest(selector) : null;
+      if (!hit) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      e.stopPropagation();
+      showBroquerMaxModal();
+    }, true);
+  }
+
+  /* Chequeo de suscripción NO bloqueante (freemium).
+     Devuelve true (activa / admin / fail-open), false (confirmada inactiva)
+     o null (sesión expirada — ya se redirigió a login). Nunca reemplaza la
+     pantalla: el modal de Broquer Max aparece solo al ejecutar acciones
+     premium. */
+  async function checkSubscriptionActive(profile) {
     if (profile?.isAdmin || profile?.profile?.plan === 'admin' || profile?.profile?.rol === 'equipo' || profile?.profile?.plan === 'equipo') return true;
 
     // ── iOS nativo: la fuente de verdad es RevenueCat en el dispositivo ──────
@@ -3181,23 +3244,27 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
       if (i < maxAttempts - 1) await delay(1500);
     }
 
-    if (authExpired) { location.href = 'login.html'; return false; }
+    if (authExpired) { location.href = 'login.html'; return null; }
 
     if (confirmedInactive) {
-      renderSubscriptionGate(justPaid ? 'Tu pago fue recibido. Si esto tarda más de un minuto, recarga la página.' : '');
+      // Sin suscripción: el usuario entra igual (freemium). El modal de
+      // Broquer Max aparecerá solo cuando intente una acción premium.
       return false;
     }
 
-    // Nunca pudimos confirmar inactividad → fail-open. El backend ya valida la
-    // suscripción en cada endpoint real, así que esto no abre acceso indebido.
+    // Nunca pudimos confirmar inactividad → fail-open: un cliente que paga
+    // jamás debe ver el bloqueo por un blip de red.
     return true;
   }
 
   async function boot() {
     const profile = await authInit();
-    if (!profile) return; // redirected to login
-    if (!(await ensureSubscriptionOrGate(profile))) return;
+    if (!profile) return; // redirected to login/landing
+    const subActive = await checkSubscriptionActive(profile);
+    if (subActive === null) return; // sesión expirada — ya se redirigió
+    window.__BK_SUB_ACTIVE = (subActive === true);
     injectShell(profile);
+    bkInstallFreemiumGate();
 
     // ── Cargar configuración pública del backend (FB_APP_ID, etc.) ──────────
     try {
