@@ -70,8 +70,8 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
 .ld-hero__in { position: relative; z-index: 1; display: grid; grid-template-columns: 1.1fr .9fr; gap: 48px; align-items: center; }
 @media (max-width: 920px) { .ld-hero__in { grid-template-columns: 1fr; } .ld-hero { padding: 56px 0 48px; } }
 .ld-hero__eyebrow {
-  font-family: var(--font-mono); font-size: 11px; letter-spacing: .18em;
-  text-transform: uppercase; color: rgba(255,255,255,.55); margin-bottom: 18px;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.02em;
+   color: rgba(255,255,255,.55); margin-bottom: 18px;
 }
 .ld-hero h1 {
   font-family: var(--font-display); font-weight: 700;
@@ -103,7 +103,7 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
   border-top: 1px solid rgba(255,255,255,.10);
 }
 .ld-stat .v { font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: -.03em; color: #fff; }
-.ld-stat .l { font-family: var(--font-mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.5); margin-top: 4px; }
+.ld-stat .l { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.02em;  color: rgba(255,255,255,.5); margin-top: 4px; }
 @media (max-width: 560px) { .ld-hero__stats { grid-template-columns: 1fr 1fr; padding: 28px 16px 0; } }
 
 /* ── Encabezados de sección ─────────────────────────────────── */
@@ -111,8 +111,8 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
 .ld-sec--alt { background: var(--sky-canvas); }
 .ld-sec-head { max-width: 640px; margin-bottom: 40px; }
 .ld-sec-head .eyebrow {
-  font-family: var(--font-mono); font-size: 11px; letter-spacing: .18em;
-  text-transform: uppercase; color: var(--sky-blue); margin-bottom: 12px; font-weight: 600;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.02em;
+   color: var(--sky-blue); margin-bottom: 12px; font-weight: 600;
 }
 .ld-sec-head h2 {
   font-family: var(--font-display); font-size: clamp(28px, 3.4vw, 40px);
@@ -141,13 +141,13 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
   color: rgba(255,255,255,.85);
 }
 .ld-mod__ph img { width: 44px; height: 44px; object-fit: contain; opacity: .95; }
-.ld-mod__ph span { font-family: var(--font-mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: rgba(255,255,255,.55); }
+.ld-mod__ph span { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.02em;  color: rgba(255,255,255,.55); }
 .ld-mod.no-video .ld-mod__media video { display: none; }
 .ld-mod.no-video .ld-mod__ph { display: flex; }
 .ld-mod__body { padding: 20px 22px 24px; }
 .ld-mod__tag {
   display: inline-flex; font-family: var(--font-mono); font-size: 10px; font-weight: 600;
-  letter-spacing: .14em; text-transform: uppercase; color: var(--sky-blue);
+  letter-spacing: 0.02em;  color: var(--sky-blue);
   background: var(--forest-soft); padding: 4px 10px; border-radius: var(--r-pill); margin-bottom: 10px;
 }
 .ld-mod__tag.free { color: var(--success); background: var(--success-soft); }
@@ -192,7 +192,7 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
   font-weight: 700; letter-spacing: -.025em; line-height: 1.2; margin-bottom: 18px;
 }
 .ld-quote p em { font-style: normal; color: #5BA4FF; }
-.ld-quote .who { font-family: var(--font-mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: rgba(255,255,255,.55); }
+.ld-quote .who { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.02em;  color: rgba(255,255,255,.55); }
 
 /* ── Precios ────────────────────────────────────────────────── */
 .ld-price {
@@ -234,7 +234,7 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
   padding: 44px 40px; text-align: center; position: relative; overflow: hidden;
   background-image: radial-gradient(120% 160% at 50% 0%, rgba(0,98,227,.30), transparent 55%);
 }
-.ld-appstore__eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: rgba(255,255,255,.55); margin-bottom: 14px; }
+.ld-appstore__eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.02em;  color: rgba(255,255,255,.55); margin-bottom: 14px; }
 .ld-appstore h2 { font-family: var(--font-display); font-size: clamp(24px, 3vw, 34px); font-weight: 700; letter-spacing: -.03em; line-height: 1.1; margin-bottom: 10px; }
 .ld-appstore p { font-size: 15px; color: rgba(255,255,255,.70); max-width: 460px; margin: 0 auto 24px; line-height: 1.55; }
 .ld-appstore__badge { display: inline-block; line-height: 0; }

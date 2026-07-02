@@ -346,8 +346,8 @@
 .bk-sidebar__brand img { height: 84px; width: auto; display: block; filter: brightness(0) invert(1); }
 .bk-sb-section {
   font-family: var(--font-mono);
-  font-size: 9px; letter-spacing: 0.18em;
-  text-transform: uppercase; color: rgba(255,255,255,0.4);
+  font-size: 9px; letter-spacing: 0.02em;
+  color: rgba(255,255,255,0.4);
   padding: 16px 10px 8px; font-weight: 500;
 }
 .bk-sb-link {
@@ -781,14 +781,14 @@ body[data-app="verificador"] .top-header { display: none !important; }
 .bk-pd-email { font-size: 12px; color: var(--mute); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bk-pd-role-badge {
   display: inline-flex; align-items: center; gap: 4px;
-  font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.02em;
   padding: 3px 8px; border-radius: var(--r-pill); margin-top: 4px;
   background: var(--forest-soft); color: var(--forest);
 }
 .bk-pd-role-badge.admin { background: rgba(231,8,102,0.1); color: var(--danger); }
 .bk-pd-section-label {
   font-family: var(--font-mono); font-size: 9px; font-weight: 600;
-  text-transform: uppercase; letter-spacing: 0.14em; color: var(--mute-2);
+  letter-spacing: 0.02em; color: var(--mute-2);
   margin-bottom: 8px;
 }
 .bk-pd-card {
@@ -859,7 +859,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
 /* Suscripcion */
 .bk-pd-sub-badge {
   display: inline-flex; align-items: center; gap: 5px;
-  font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.02em;
   padding: 3px 10px; border-radius: var(--r-pill);
   background: var(--forest-soft); color: var(--forest);
 }
@@ -872,14 +872,14 @@ body[data-app]{background:var(--paper)!important;color:var(--ink)!important;font
 body[data-app] main,body[data-app] .app-main,body[data-app] .screen,body[data-app] .container,body[data-app] .wrap{background:transparent!important}
 body[data-app] .card,body[data-app] .ui-card,body[data-app] .panel,body[data-app] .box,body[data-app] .module,body[data-app] .section,body[data-app] .pf-card,body[data-app] .res-card,body[data-app] .form-card,body[data-app] .calc-card,body[data-app] .result-card{background:var(--bone)!important;border:1px solid var(--line)!important;border-radius:var(--r-lg)!important;box-shadow:var(--shadow-xs)!important;color:var(--ink)!important}
 body[data-app] h1,body[data-app] h2,body[data-app] h3,body[data-app] .title,body[data-app] .card-title,body[data-app] .section-title{font-family:var(--font-display)!important;color:var(--ink)!important;letter-spacing:-.02em!important;font-weight:700!important}
-body[data-app] label,body[data-app] .label,body[data-app] .field-label,body[data-app] .sec-lbl{color:var(--mute)!important;font-size:11px!important;font-weight:700!important;letter-spacing:.08em!important;text-transform:uppercase!important}
+body[data-app] label,body[data-app] .label,body[data-app] .field-label,body[data-app] .sec-lbl{color:var(--mute)!important;font-size:11px!important;font-weight:700!important;letter-spacing:.01em!important}
 body[data-app] input,body[data-app] select,body[data-app] textarea{background:var(--bone)!important;border:1px solid var(--line-2)!important;border-radius:var(--r)!important;color:var(--ink)!important;box-shadow:none!important;min-height:42px}
 body[data-app] input:focus,body[data-app] select:focus,body[data-app] textarea:focus{border-color:var(--sky-blue)!important;box-shadow:var(--focus)!important;outline:none!important}
 body[data-app] button,body[data-app] .btn,body[data-app] .ui-btn,body[data-app] .btn-pdf,body[data-app] .isr-calc-btn{border-radius:var(--r-pill)!important;font-family:var(--font-sans)!important;font-weight:700!important;letter-spacing:-.005em!important}
 body[data-app] .btn-primary,body[data-app] .ui-btn.forest,body[data-app] .isr-calc-btn,body[data-app] .btn-pdf,body[data-app] #gen-btn,body[data-app] #pdf-btn{background:var(--sky-blue)!important;color:#fff!important;border:1px solid var(--sky-blue)!important;box-shadow:0 1px 2px rgba(0,98,227,.18)!important}
 body[data-app] .btn-primary:hover,body[data-app] .ui-btn.forest:hover,body[data-app] .isr-calc-btn:hover,body[data-app] .btn-pdf:hover,body[data-app] #gen-btn:hover,body[data-app] #pdf-btn:hover{background:var(--sky-blue-press)!important;border-color:var(--sky-blue-press)!important}
 body[data-app] table{border-collapse:separate!important;border-spacing:0!important;background:var(--bone)!important;border:1px solid var(--line)!important;border-radius:var(--r)!important;overflow:hidden!important}
-body[data-app] th{background:var(--paper-2)!important;color:var(--mute)!important;font-size:11px!important;text-transform:uppercase!important;letter-spacing:.06em!important}
+body[data-app] th{background:var(--paper-2)!important;color:var(--mute)!important;font-size:11px!important;letter-spacing:.01em!important}
 body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
 
 /* ── Visor/entrega inmediata de archivos generados ── */

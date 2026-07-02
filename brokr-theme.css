@@ -30,7 +30,7 @@
    al AZUL de acción.
    ════════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
   /* ── Surfaces (blanco base, canvas gris-azul) ─ */
@@ -126,7 +126,7 @@
   /* ── Tipografía (familia única, como el sitio) ── */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', sans-serif;
   --font-display: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-mono: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', sans-serif; /* alias histórico → ya no es monoespaciada, ahora Inter */
 
   --fs-display: 44px;
   --fs-h1: 32px;
@@ -365,8 +365,7 @@ input, select, textarea, button {
   font-size: var(--fs-xs);
   font-weight: 500;
   color: var(--mute);
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   margin-bottom: var(--sp-1);
   display: block;
 }
@@ -476,7 +475,7 @@ input, select, textarea, button {
   padding: 2px var(--sp-2);
   border-radius: var(--r-pill);
   font-size: var(--fs-caption); font-weight: 600;
-  letter-spacing: 0.04em; text-transform: uppercase;
+  letter-spacing: 0.02em;
   background: var(--paper-2); color: var(--mute);
 }
 .bk-badge--forest { background: var(--forest-soft); color: var(--forest); }
@@ -493,8 +492,7 @@ input, select, textarea, button {
   font-family: var(--font-mono);
   font-size: var(--fs-caption);
   font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   color: var(--mute);
 }
 .bk-num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
@@ -507,7 +505,7 @@ input, select, textarea, button {
 .bk-page-header { margin-bottom: var(--sp-6); }
 .bk-page-header__eyebrow {
   font-family: var(--font-mono); font-size: var(--fs-xs);
-  letter-spacing: 0.16em; text-transform: uppercase;
+  letter-spacing: 0.01em;
   color: var(--mute); margin-bottom: var(--sp-2);
 }
 .bk-page-header__title { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 600; letter-spacing: -0.03em; line-height: var(--lh-tight); }
@@ -573,7 +571,7 @@ input, select, textarea, button {
 .bk-table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 .bk-table th {
   text-align: left; font-family: var(--font-mono);
-  font-size: var(--fs-caption); font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+  font-size: var(--fs-caption); font-weight: 500; letter-spacing: 0.01em;
   color: var(--mute); padding: var(--sp-2) var(--sp-3);
   border-bottom: 1px solid var(--line-2);
   white-space: nowrap;
@@ -777,6 +775,6 @@ input, select, textarea, button {
   display: block; margin-top: 6px;
   font-size: 12px; color: var(--mute);
   font-family: var(--font-mono);
-  letter-spacing: 0.08em; text-transform: uppercase; text-align: center;
+  letter-spacing: 0.01em; text-align: center;
 }
 .bk-shark-loader--col { flex-direction: column; height: auto; }
