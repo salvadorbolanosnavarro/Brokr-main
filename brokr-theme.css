@@ -28,6 +28,17 @@
    "legacy" como --forest, --teal, --emerald): solo se reasigna
    su VALOR a la nueva piel. --forest y sus alias ahora apuntan
    al AZUL de acción.
+
+   AUDITORÍA 2 — escala tipográfica BPK aplicada 1:1 (caption 12,
+   footnote/label-2 14, body 16, subheading 20, heading-3 24,
+   heading-2 32, heading-1/display 40), pesos 700 en headings/
+   labels y 400 en cuerpo, line-heights bpk. Se corrigieron bugs
+   reales de producción: .bk-label, .bk-eyebrow, .bk-badge,
+   .bk-page-header__eyebrow, .bk-table th y .bk-shark-loader__text
+   tenían font-size de 20-24px (tamaño de heading) en elementos que
+   son microcopy — ahora usan --fs-label-2/3. --success y --warn
+   se alinearon a los spot-colors exactos de la guía (#0C838A y
+   #F55D42) y --mute al text-secondary exacto (#626971).
    ════════════════════════════════════════════════════════════ */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -43,7 +54,7 @@
   --ink:     #161616;     /* texto principal */
   --ink-2:   #2E3338;
   --ink-3:   #54606E;     /* secundario */
-  --mute:    #6B7685;
+  --mute:    #626971;  /* bpk-text-secondary exacto */
   --mute-2:  #939BA6;
   --mute-3:  #C1C7CF;
 
@@ -64,12 +75,12 @@
   --sky-blue-press: #024DAF;
   --sky-canvas:     #EFF3F8;
 
-  --warn:     #E8910C;
-  --warn-soft:rgba(232,145,12,0.14);
-  --danger:   #E70866;
+  --warn:     #F55D42;  /* bpk-status-warning-spot */
+  --warn-soft:rgba(245,93,66,0.14);
+  --danger:   #E70866;  /* bpk-status-danger-spot */
   --danger-soft:rgba(231,8,102,0.10);
-  --success:  #00AA6C;
-  --success-soft:rgba(0,170,108,0.12);
+  --success:  #0C838A;  /* bpk-status-success-spot / bpk-text-success */
+  --success-soft:rgba(12,131,138,0.12);
   --info:     #0FA1A9;
   --info-soft:rgba(15,161,169,0.12);
 
@@ -128,14 +139,36 @@
   --font-display: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
   --font-mono: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', sans-serif; /* alias histórico → ya no es monoespaciada, ahora Inter */
 
-  --fs-display: 44px;
-  --fs-h1: 32px;
-  --fs-h2: 24px;
-  --fs-h3: 18px;
-  --fs-body: 15px;
-  --fs-sm: 13px;
-  --fs-xs: 11px;
-  --fs-caption: 10px;
+  /* Escala BPK (Skyscanner) — tamaño/peso 700 para headings, 400 para cuerpo.
+     Broquer es un SaaS denso en datos, no un sitio de viajes: se usa la
+     escala BPK completa pero anclada en heading-2 (32px) como techo para
+     páginas normales; --fs-display (heading-1/xxxl, 40px) solo para el
+     landing/hero. Nada de tamaños "a mano": todo componente usa estos
+     tokens o los de --fs-label-*. */
+  --fs-display: 40px;   /* bpk heading-1 / xxxl */
+  --fs-h1: 32px;         /* bpk heading-2 / xxl */
+  --fs-h2: 24px;         /* bpk heading-3 */
+  --fs-h3: 20px;         /* bpk heading-4 */
+  --fs-h5: 16px;         /* bpk heading-5 */
+  --fs-body-lg: 20px;    /* bpk body-longform */
+  --fs-body: 16px;       /* bpk body-default */
+  --fs-sm: 14px;         /* bpk footnote / label-2 */
+  --fs-xs: 12px;         /* bpk caption / label-3 */
+  --fs-caption: 11px;    /* micro — solo tablas/UI ultra densa, fuera de escala bpk */
+
+  /* Labels bold (bpk label-1/2/3) — para .bk-label, .bk-eyebrow, .bk-badge,
+     th de tabla, y cualquier microcopy en mayúscula-peso alto */
+  --fs-label-1: 16px;
+  --fs-label-2: 14px;
+  --fs-label-3: 12px;
+
+  --lh-display: 48px;   /* line-height bpk para heading-1 */
+  --lh-h1: 40px;
+  --lh-h2: 28px;
+  --lh-h3: 24px;
+  --lh-body: 24px;
+  --lh-sm: 20px;
+  --lh-xs: 16px;
 
   --lh-tight: 1.05;
   --lh-snug:  1.3;
@@ -214,9 +247,9 @@ h1,h2,h3,h4,h5 {
   line-height: 1.12;
   color: var(--ink);
 }
-h1 { font-size: var(--fs-h1); }
-h2 { font-size: var(--fs-h2); }
-h3 { font-size: var(--fs-h3); }
+h1 { font-size: var(--fs-h1); line-height: var(--lh-h1); }
+h2 { font-size: var(--fs-h2); line-height: var(--lh-h2); }
+h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); }
 
 p { line-height: var(--lh); color: var(--ink-2); }
 
@@ -362,8 +395,9 @@ input, select, textarea, button {
 @media (max-width: 600px) { .bk-field-row, .bk-field-row.is-three { grid-template-columns: 1fr; } }
 
 .bk-label {
-  font-size: 22px;
-  font-weight: 500;
+  font-size: var(--fs-label-2);
+  line-height: var(--lh-sm);
+  font-weight: 600;
   color: var(--mute);
   letter-spacing: 0.01em;
   margin-bottom: var(--sp-1);
@@ -474,7 +508,7 @@ input, select, textarea, button {
   display: inline-flex; align-items: center; gap: var(--sp-1);
   padding: 2px var(--sp-2);
   border-radius: var(--r-pill);
-  font-size: 20px; font-weight: 600;
+  font-size: var(--fs-label-3); line-height: var(--lh-xs); font-weight: 700;
   letter-spacing: 0.02em;
   background: var(--paper-2); color: var(--mute);
 }
@@ -490,8 +524,9 @@ input, select, textarea, button {
    ════════════════════════════════════════════════════════════ */
 .bk-eyebrow {
   font-family: var(--font-mono);
-  font-size: 20px;
-  font-weight: 500;
+  font-size: var(--fs-label-3);
+  line-height: var(--lh-xs);
+  font-weight: 700;
   letter-spacing: 0.01em;
   color: var(--mute);
 }
@@ -504,18 +539,19 @@ input, select, textarea, button {
    ════════════════════════════════════════════════════════════ */
 .bk-page-header { margin-bottom: var(--sp-6); }
 .bk-page-header__eyebrow {
-  font-family: var(--font-mono); font-size: 22px;
+  font-family: var(--font-mono); font-size: var(--fs-label-3);
+  line-height: var(--lh-xs); font-weight: 700;
   letter-spacing: 0.01em;
   color: var(--mute); margin-bottom: var(--sp-2);
 }
-.bk-page-header__title { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 600; letter-spacing: -0.03em; line-height: var(--lh-tight); }
+.bk-page-header__title { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 700; letter-spacing: -0.03em; line-height: var(--lh-h1); }
 .bk-page-header__sub { font-size: var(--fs-sm); color: var(--mute); margin-top: var(--sp-2); line-height: var(--lh); max-width: 60ch; }
 
 .bk-section-header {
   display: flex; align-items: baseline; justify-content: space-between;
   gap: var(--sp-4); margin-bottom: var(--sp-4);
 }
-.bk-section-header h2 { font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 600; letter-spacing: -0.025em; }
+.bk-section-header h2 { font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 700; line-height: var(--lh-h2); letter-spacing: -0.025em; }
 .bk-section-header a { font-size: var(--fs-sm); color: var(--ink-2); font-weight: 500; display: inline-flex; align-items: center; gap: var(--sp-1); }
 .bk-section-header a:hover { color: var(--forest); }
 
@@ -571,7 +607,7 @@ input, select, textarea, button {
 .bk-table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 .bk-table th {
   text-align: left; font-family: var(--font-mono);
-  font-size: 20px; font-weight: 500; letter-spacing: 0.01em;
+  font-size: var(--fs-label-3); line-height: var(--lh-xs); font-weight: 700; letter-spacing: 0.01em;
   color: var(--mute); padding: var(--sp-2) var(--sp-3);
   border-bottom: 1px solid var(--line-2);
   white-space: nowrap;
@@ -611,7 +647,7 @@ input, select, textarea, button {
   display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4);
   padding: var(--sp-5) var(--sp-6); border-bottom: 1px solid var(--line); flex-shrink: 0;
 }
-.bk-modal__title { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 600; letter-spacing: -0.01em; }
+.bk-modal__title { font-family: var(--font-display); font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 700; letter-spacing: -0.01em; }
 .bk-modal__body { padding: var(--sp-6); overflow-y: auto; }
 .bk-modal__foot {
   display: flex; align-items: center; justify-content: flex-end; gap: var(--sp-2);
@@ -637,7 +673,7 @@ input, select, textarea, button {
   display: flex; align-items: center; justify-content: center;
   margin-bottom: var(--sp-1);
 }
-.bk-empty__title { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 600; color: var(--ink); }
+.bk-empty__title { font-family: var(--font-display); font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 700; color: var(--ink); }
 .bk-empty__text { font-size: var(--fs-sm); color: var(--mute); max-width: 36ch; line-height: var(--lh); }
 .bk-empty__action { margin-top: var(--sp-3); }
 
@@ -710,7 +746,7 @@ input, select, textarea, button {
 .bk-prop-card__media { aspect-ratio: 4 / 3; background: var(--paper-2); position: relative; overflow: hidden; }
 .bk-prop-card__media img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .bk-prop-card__body { padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-1); }
-.bk-prop-card__price { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 600; letter-spacing: -0.02em; color: var(--ink); }
+.bk-prop-card__price { font-family: var(--font-display); font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 700; letter-spacing: -0.02em; color: var(--ink); }
 .bk-prop-card__title { font-size: var(--fs-sm); color: var(--ink-2); }
 .bk-prop-card__meta  { font-size: var(--fs-xs); color: var(--mute); display: flex; gap: var(--sp-3); margin-top: var(--sp-1); }
 
@@ -773,7 +809,7 @@ input, select, textarea, button {
 }
 .bk-shark-loader__text {
   display: block; margin-top: 6px;
-  font-size: 24px; color: var(--mute);
+  font-size: var(--fs-caption); color: var(--mute);
   font-family: var(--font-mono);
   letter-spacing: 0.01em; text-align: center;
 }
