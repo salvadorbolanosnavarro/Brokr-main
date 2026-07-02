@@ -98,6 +98,18 @@
   display: inline-flex; align-items: center; gap: 8px; transition: transform 0.18s var(--ease);
 }
 .ai-card__btn:hover { transform: translateX(2px); }
+
+/* ── App Store (navy, footer del dashboard) ── */
+.appstore-card {
+  background: var(--sky-navy); color: #fff; border-radius: 16px;
+  padding: 22px 26px; margin-top: 16px;
+  display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
+}
+.appstore-card__eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.55); margin-bottom: 4px; }
+.appstore-card__title { font-family: var(--font-display); font-size: 17px; font-weight: 700; letter-spacing: -0.015em; color: #fff; }
+.appstore-card__badge { display: block; line-height: 0; flex-shrink: 0; }
+.appstore-card__badge img { height: 42px; width: auto; display: block; }
+@media (max-width: 560px) { .appstore-card { padding: 18px 20px; } .appstore-card__title { font-size: 15px; } }
 </style>
 </head>
 <body data-app="home">
@@ -222,6 +234,17 @@
       Abrir Broq
       <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
     </button>
+  </div>
+
+  <!-- App Store -->
+  <div class="appstore-card">
+    <div class="appstore-card__txt">
+      <div class="appstore-card__eyebrow">También disponible en iOS</div>
+      <div class="appstore-card__title">Lleva Broquer contigo a todas partes</div>
+    </div>
+    <a href="https://apps.apple.com/us/app/broquer/id6775727897" target="_blank" rel="noopener" class="appstore-card__badge">
+      <img src="appstore-badge.webp" alt="Descárgalo en el App Store"/>
+    </a>
   </div>
 
 </div>

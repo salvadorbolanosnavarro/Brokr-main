@@ -228,6 +228,22 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
 .ld-final h2 { font-family: var(--font-display); font-size: clamp(28px, 4vw, 44px); font-weight: 700; letter-spacing: -.03em; line-height: 1.05; margin-bottom: 14px; }
 .ld-final p { font-size: 16px; color: rgba(255,255,255,.70); margin-bottom: 28px; }
 
+/* ── App Store ──────────────────────────────────────────────── */
+.ld-appstore {
+  background: var(--sky-navy); color: #fff; border-radius: var(--r-lg);
+  padding: 44px 40px; text-align: center; position: relative; overflow: hidden;
+  background-image: radial-gradient(120% 160% at 50% 0%, rgba(0,98,227,.30), transparent 55%);
+}
+.ld-appstore__eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: rgba(255,255,255,.55); margin-bottom: 14px; }
+.ld-appstore h2 { font-family: var(--font-display); font-size: clamp(24px, 3vw, 34px); font-weight: 700; letter-spacing: -.03em; line-height: 1.1; margin-bottom: 10px; }
+.ld-appstore p { font-size: 15px; color: rgba(255,255,255,.70); max-width: 460px; margin: 0 auto 24px; line-height: 1.55; }
+.ld-appstore__badge { display: inline-block; line-height: 0; }
+.ld-appstore__badge img { height: 54px; width: auto; display: block; }
+.ld-appstore__badge:hover { opacity: .92; }
+
+/* App Store footer */
+.ld-foot__badge { display: block; line-height: 0; }
+.ld-foot__badge img { height: 34px; width: auto; display: block; }
 /* ── Footer ─────────────────────────────────────────────────── */
 .ld-foot { background: var(--sky-navy); border-top: 1px solid rgba(255,255,255,.10); padding: 30px 0; }
 .ld-foot__in { max-width: 1180px; margin: 0 auto; padding: 0 28px; display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
@@ -447,6 +463,20 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
   </div>
 </section>
 
+<!-- ── APP STORE ───────────────────────────────────────────── -->
+<section class="ld-sec ld-sec--alt">
+  <div class="ld-wrap">
+    <div class="ld-appstore">
+      <div class="ld-appstore__eyebrow">También en iOS</div>
+      <h2>Lleva Broquer contigo a todas partes</h2>
+      <p>Consulta tu inventario, atiende leads y usa Broq desde tu iPhone, donde sea que estés.</p>
+      <a class="ld-appstore__badge" href="https://apps.apple.com/us/app/broquer/id6775727897" target="_blank" rel="noopener">
+        <img src="appstore-badge.webp" alt="Descárgalo en el App Store"/>
+      </a>
+    </div>
+  </div>
+</section>
+
 <!-- ── CTA FINAL ───────────────────────────────────────────── -->
 <section class="ld-final">
   <div class="ld-wrap ld-final__in">
@@ -466,6 +496,9 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
       <a href="soporte.html">Soporte</a>
       <a href="legal.html">Términos y privacidad</a>
     </div>
+    <a class="ld-foot__badge" href="https://apps.apple.com/us/app/broquer/id6775727897" target="_blank" rel="noopener">
+      <img src="appstore-badge.webp" alt="Descárgalo en el App Store"/>
+    </a>
     <div class="ld-foot__copy">BROQUER · MÉXICO</div>
   </div>
 </footer>
