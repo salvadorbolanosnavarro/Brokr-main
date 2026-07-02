@@ -18,18 +18,18 @@
 
 /* ── HERO navy (estructura) ── */
 .sky-hero {
-  background: var(--sky-navy); color: #fff;
+  background: var(--sky-navy); color: #fff !important;
   border-radius: 16px; padding: 28px 28px 22px;
 }
 .sky-hero__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
 .sky-hero__eyebrow {
-  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.02em;
+  font-family: var(--font-mono); font-size: 22px; letter-spacing: 0.02em;
    color: rgba(255,255,255,0.6); margin-bottom: 8px;
 }
 .sky-hero__title { font-family: var(--font-display); font-size: 34px; font-weight: 700; letter-spacing: -0.02em; color: #fff; line-height: 1.05; }
 .sky-hero__title em { font-style: normal; color: #5BA4FF; }
 .sky-hero__date { text-align: right; font-family: var(--font-mono); font-size: 12px; color: rgba(255,255,255,0.7); }
-.sky-hero__date .label { display: block; font-size: 10px; letter-spacing: 0.02em;  color: rgba(255,255,255,0.5); margin-bottom: 3px; }
+.sky-hero__date .label { display: block; font-size: 20px; letter-spacing: 0.02em;  color: rgba(255,255,255,0.5); margin-bottom: 3px; }
 .sky-hero__kpis { display: flex; gap: 0; margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.14); padding-top: 18px; }
 .sky-kpi { flex: 1; padding-right: 20px; }
 .sky-kpi + .sky-kpi { border-left: 1px solid rgba(255,255,255,0.14); padding-left: 20px; }
@@ -40,7 +40,7 @@
 /* ── HERO CARD azul (firma Skyscanner) ── */
 .sky-herocard {
   display: block; margin-top: 16px; text-decoration: none;
-  background: var(--sky-blue); color: #fff; border-radius: 16px; padding: 30px 28px;
+  background: var(--sky-blue); color: #fff !important; border-radius: 16px; padding: 30px 28px;
   position: relative; overflow: hidden; transition: background 0.2s var(--ease);
   background-image: radial-gradient(120% 150% at 100% 0%, rgba(255,255,255,0.16), transparent 55%);
 }
@@ -68,7 +68,7 @@
 .mod-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--sky-blue); }
 .mod-card__icon {
   width: 42px; height: 42px; border-radius: 10px;
-  background: var(--sky-navy); color: #fff;
+  background: var(--sky-navy); color: #fff !important;
   display: flex; align-items: center; justify-content: center; margin-bottom: 12px;
   transition: background 0.18s var(--ease), color 0.18s var(--ease);
 }
@@ -77,7 +77,7 @@
 .mod-card__arrow { position: absolute; top: 18px; right: 16px; color: var(--mute-3); opacity: 0; transition: opacity 0.18s var(--ease), transform 0.18s var(--ease), color 0.18s var(--ease); }
 .mod-card:hover .mod-card__arrow { opacity: 1; color: var(--sky-blue); transform: translate(2px, -2px); }
 /* Destacada = azul brillante */
-.mod-card.is-primary { background: var(--sky-blue); border-color: transparent; color: #fff; }
+.mod-card.is-primary { background: var(--sky-blue); border-color: transparent; color: #fff !important; }
 .mod-card.is-primary .mod-card__icon { background: rgba(255,255,255,0.18); color: #fff; }
 .mod-card.is-primary .mod-card__title { color: #fff; }
 .mod-card.is-primary .mod-card__sub { color: rgba(255,255,255,0.85); }
@@ -86,7 +86,7 @@
 
 /* ── CTA azul (Broq) ── */
 .ai-card {
-  background: var(--sky-blue); color: #fff; border-radius: 16px;
+  background: var(--sky-blue); color: #fff !important; border-radius: 16px;
   padding: 30px 28px; margin-top: 34px; position: relative; overflow: hidden;
   background-image: radial-gradient(120% 160% at 100% 0%, rgba(255,255,255,0.16), transparent 55%);
 }
@@ -101,11 +101,11 @@
 
 /* ── App Store (navy, footer del dashboard) ── */
 .appstore-card {
-  background: var(--sky-navy); color: #fff; border-radius: 16px;
+  background: var(--sky-navy); color: #fff !important; border-radius: 16px;
   padding: 22px 26px; margin-top: 16px;
   display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
 }
-.appstore-card__eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.02em;  color: rgba(255,255,255,0.55); margin-bottom: 4px; }
+.appstore-card__eyebrow { font-family: var(--font-mono); font-size: 22px; letter-spacing: 0.02em;  color: rgba(255,255,255,0.55); margin-bottom: 4px; }
 .appstore-card__title { font-family: var(--font-display); font-size: 17px; font-weight: 700; letter-spacing: -0.015em; color: #fff; }
 .appstore-card__badge { display: block; line-height: 0; flex-shrink: 0; }
 .appstore-card__badge img { height: 42px; width: auto; display: block; }

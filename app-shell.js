@@ -346,7 +346,7 @@
 .bk-sidebar__brand img { height: 84px; width: auto; display: block; filter: brightness(0) invert(1); }
 .bk-sb-section {
   font-family: var(--font-mono);
-  font-size: 9px; letter-spacing: 0.02em;
+  font-size: 18px; letter-spacing: 0.02em;
   color: rgba(255,255,255,0.4);
   padding: 16px 10px 8px; font-weight: 500;
 }
@@ -781,13 +781,13 @@ body[data-app="verificador"] .top-header { display: none !important; }
 .bk-pd-email { font-size: 12px; color: var(--mute); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bk-pd-role-badge {
   display: inline-flex; align-items: center; gap: 4px;
-  font-size: 10px; font-weight: 600; letter-spacing: 0.02em;
+  font-size: 20px; font-weight: 600; letter-spacing: 0.02em;
   padding: 3px 8px; border-radius: var(--r-pill); margin-top: 4px;
   background: var(--forest-soft); color: var(--forest);
 }
 .bk-pd-role-badge.admin { background: rgba(231,8,102,0.1); color: var(--danger); }
 .bk-pd-section-label {
-  font-family: var(--font-mono); font-size: 9px; font-weight: 600;
+  font-family: var(--font-mono); font-size: 18px; font-weight: 600;
   letter-spacing: 0.02em; color: var(--mute-2);
   margin-bottom: 8px;
 }
@@ -797,7 +797,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
 }
 .bk-pd-field { margin-bottom: 12px; }
 .bk-pd-field:last-child { margin-bottom: 0; }
-.bk-pd-field label { display: block; font-size: 11px; font-weight: 600; color: var(--mute); margin-bottom: 5px; letter-spacing: 0.02em; }
+.bk-pd-field label { display: block; font-size: 22px; font-weight: 600; color: var(--mute); margin-bottom: 5px; letter-spacing: 0.02em; }
 .bk-pd-field input {
   width: 100%; background: var(--paper-2); border: 1px solid var(--line-2);
   border-radius: var(--r-sm); padding: 9px 12px;
@@ -859,7 +859,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
 /* Suscripcion */
 .bk-pd-sub-badge {
   display: inline-flex; align-items: center; gap: 5px;
-  font-size: 10px; font-weight: 700; letter-spacing: 0.02em;
+  font-size: 20px; font-weight: 700; letter-spacing: 0.02em;
   padding: 3px 10px; border-radius: var(--r-pill);
   background: var(--forest-soft); color: var(--forest);
 }

@@ -205,7 +205,7 @@ html, body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
-::selection { background: var(--sky-blue); color: #FFFFFF; }
+::selection { background: var(--sky-blue); color: #FFFFFF !important; }
 
 h1,h2,h3,h4,h5 {
   font-family: var(--font-display);
@@ -283,7 +283,7 @@ input, select, textarea, button {
   appearance: none;
   border: 1px solid transparent;
   background: var(--sky-navy);
-  color: var(--bone);
+  color: var(--bone) !important;
   height: var(--h);
   padding: 0 var(--sp-5);
   border-radius: var(--r);
@@ -362,7 +362,7 @@ input, select, textarea, button {
 @media (max-width: 600px) { .bk-field-row, .bk-field-row.is-three { grid-template-columns: 1fr; } }
 
 .bk-label {
-  font-size: var(--fs-xs);
+  font-size: 22px;
   font-weight: 500;
   color: var(--mute);
   letter-spacing: 0.01em;
@@ -474,7 +474,7 @@ input, select, textarea, button {
   display: inline-flex; align-items: center; gap: var(--sp-1);
   padding: 2px var(--sp-2);
   border-radius: var(--r-pill);
-  font-size: var(--fs-caption); font-weight: 600;
+  font-size: 20px; font-weight: 600;
   letter-spacing: 0.02em;
   background: var(--paper-2); color: var(--mute);
 }
@@ -490,7 +490,7 @@ input, select, textarea, button {
    ════════════════════════════════════════════════════════════ */
 .bk-eyebrow {
   font-family: var(--font-mono);
-  font-size: var(--fs-caption);
+  font-size: 20px;
   font-weight: 500;
   letter-spacing: 0.01em;
   color: var(--mute);
@@ -504,7 +504,7 @@ input, select, textarea, button {
    ════════════════════════════════════════════════════════════ */
 .bk-page-header { margin-bottom: var(--sp-6); }
 .bk-page-header__eyebrow {
-  font-family: var(--font-mono); font-size: var(--fs-xs);
+  font-family: var(--font-mono); font-size: 22px;
   letter-spacing: 0.01em;
   color: var(--mute); margin-bottom: var(--sp-2);
 }
@@ -571,7 +571,7 @@ input, select, textarea, button {
 .bk-table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 .bk-table th {
   text-align: left; font-family: var(--font-mono);
-  font-size: var(--fs-caption); font-weight: 500; letter-spacing: 0.01em;
+  font-size: 20px; font-weight: 500; letter-spacing: 0.01em;
   color: var(--mute); padding: var(--sp-2) var(--sp-3);
   border-bottom: 1px solid var(--line-2);
   white-space: nowrap;
@@ -773,7 +773,7 @@ input, select, textarea, button {
 }
 .bk-shark-loader__text {
   display: block; margin-top: 6px;
-  font-size: 12px; color: var(--mute);
+  font-size: 24px; color: var(--mute);
   font-family: var(--font-mono);
   letter-spacing: 0.01em; text-align: center;
 }
