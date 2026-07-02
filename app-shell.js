@@ -1407,6 +1407,25 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
     const type = opts.type || blob.type || 'application/octet-stream';
     const title = opts.title || filename || 'Archivo Broquer';
     const safeName = filename || (title.replace(/\s+/g, '_') + (type.includes('pdf') ? '.pdf' : ''));
+
+    // ── WEB (navegador de escritorio o móvil, PWA incluida): descarga
+    // directa al dispositivo, igual que cualquier archivo de internet.
+    // Nada de hoja de compartir ni vista previa — eso solo aplica a la
+    // app nativa de iOS, donde sí hay una carpeta de Descargas visible
+    // y el usuario espera compartir/guardar desde ahí.
+    if (!IS_IOS_NATIVE) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = safeName;
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
+      return { method: 'download' };
+    }
+
     let file = null;
     try { file = new File([blob], safeName, { type }); } catch (_) {}
 
