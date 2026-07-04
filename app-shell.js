@@ -300,6 +300,8 @@
     question:   '<path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/>',
     check:      '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>',
     facebook:   '<path fill="currentColor" stroke="none" d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.269h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>',
+    lock:       '<path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>',
+    trash:      '<path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>',
   };
   const svg = (name, size = 18, sw = 1.6) =>
     `<svg width="${size}" height="${size}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="${sw}">${ICONS[name] || ''}</svg>`;
@@ -344,12 +346,6 @@
 }
 .bk-sidebar__brand a { display: flex; align-items: center; gap: 8px; text-decoration: none; }
 .bk-sidebar__brand img { height: 84px; width: auto; display: block; filter: brightness(0) invert(1); }
-.bk-sb-section {
-  font-family: var(--font-mono);
-  font-size: 18px; letter-spacing: 0.02em;
-  color: rgba(255,255,255,0.4);
-  padding: 16px 10px 8px; font-weight: 500;
-}
 .bk-sb-link {
   display: flex !important; align-items: center; gap: 10px;
   padding: 10px 12px;
@@ -376,25 +372,6 @@
 .bk-sidebar .bk-sb-link.is-active,
 .bk-sidebar a.bk-sb-link.is-active { background: var(--sky-blue) !important; color: #FFFFFF !important; }
 .bk-sb-link svg, .bk-sidebar .bk-sb-link svg { flex-shrink: 0; opacity: 1; color: #FFFFFF; }
-.bk-sb-foot {
-  margin-top: auto;
-  display: flex; align-items: center; gap: 10px;
-  padding: 12px;
-  border-top: 1px solid rgba(255,255,255,0.08);
-}
-.bk-sb-foot__avatar {
-  width: 36px; height: 36px; border-radius: 50%;
-  background: var(--paper); color: var(--ink);
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 600; font-size: 13px; letter-spacing: -0.02em;
-}
-.bk-sb-foot__name { font-size: 13px; font-weight: 500; line-height: 1.2; flex: 1; min-width: 0; color: var(--paper) !important; }
-.bk-sb-foot__name .role { color: rgba(255,255,255,0.5) !important; font-size: 11px; font-weight: 400; }
-.bk-sb-foot__logout {
-  background: transparent; border: none; cursor: pointer;
-  color: rgba(255,255,255,0.5) !important; padding: 6px;
-}
-.bk-sb-foot__logout:hover { color: var(--paper) !important; }
 
 /* Content area */
 .bk-content { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
@@ -734,60 +711,70 @@ body[data-app="verificador"] .top-header { display: none !important; }
 /* ── Profile Drawer ─────────────────────────────────────────── */
 .bk-profile-overlay {
   position: fixed; inset: 0; z-index: 200;
-  background: rgba(0,0,0,0.6);
+  background: rgba(5,32,60,0.55);
+  backdrop-filter: blur(2px);
   opacity: 0; visibility: hidden; pointer-events: none;
   transition: opacity .18s ease, visibility .18s ease;
 }
 .bk-profile-overlay.is-open { opacity: 1; visibility: visible; pointer-events: auto; }
 .bk-profile-drawer {
   position: fixed; top: 0; right: 0; bottom: 0; z-index: 201;
-  width: 360px; max-width: 100vw;
+  width: 384px; max-width: 100vw;
   background: var(--paper); border-left: 1px solid var(--line);
+  box-shadow: -24px 0 48px rgba(5,32,60,0.10);
   display: flex; flex-direction: column;
   transform: translate3d(100%,0,0);
-  transition: transform .22s cubic-bezier(.16,1,.3,1);
+  transition: transform .28s cubic-bezier(.16,1,.3,1);
   overflow: hidden;
   contain: layout paint style;
   will-change: transform;
 }
 .bk-profile-drawer.is-open { transform: translate3d(0,0,0); }
+
+/* Header: fondo navy de marca, avatar en degradé de acción */
 .bk-pd-head {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 18px 20px 16px; border-bottom: 1px solid var(--line);
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 12px;
+  padding: 26px 22px 22px;
+  background: var(--sky-navy);
+  background-image: radial-gradient(120% 140% at 100% 0%, rgba(0,98,227,.35), transparent 55%);
   flex-shrink: 0;
+  position: relative;
 }
-.bk-pd-head h2 { font-family: var(--font-display); font-size: 16px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); }
 .bk-pd-close {
   width: 30px; height: 30px; border-radius: 8px;
-  background: none; border: none; cursor: pointer;
+  background: rgba(255,255,255,0.08); border: none; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  color: var(--mute);
+  color: rgba(255,255,255,0.7); flex-shrink: 0;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-.bk-pd-close:hover { background: var(--paper-2); color: var(--ink); }
+.bk-pd-close:hover { background: rgba(255,255,255,0.16); color: #FFFFFF; }
 .bk-pd-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
 .bk-pd-body::-webkit-scrollbar { width: 0; }
 .bk-pd-avatar-row {
   display: flex; align-items: center; gap: 14px;
 }
 .bk-pd-avatar {
-  width: 52px; height: 52px; border-radius: 50%;
-  background: var(--ink); color: var(--paper);
+  width: 56px; height: 56px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--sky-blue), var(--sky-blue-press));
+  color: #FFFFFF;
   display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 18px; letter-spacing: -0.02em;
+  font-weight: 700; font-size: 19px; letter-spacing: -0.02em;
   flex-shrink: 0;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.14), 0 4px 14px rgba(0,98,227,0.35);
 }
 .bk-pd-avatar-info { flex: 1; min-width: 0; }
-.bk-pd-name { font-size: 15px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
-.bk-pd-email { font-size: 12px; color: var(--mute); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bk-pd-name { font-family: var(--font-display); font-size: 16px; font-weight: 600; color: #FFFFFF; letter-spacing: -0.01em; }
+.bk-pd-email { font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bk-pd-role-badge {
   display: inline-flex; align-items: center; gap: 4px;
-  font-size: 20px; font-weight: 600; letter-spacing: 0.02em;
-  padding: 3px 8px; border-radius: var(--r-pill); margin-top: 4px;
-  background: var(--forest-soft); color: var(--forest);
+  font-size: var(--fs-label-3); font-weight: 600; letter-spacing: 0.02em;
+  padding: 3px 9px; border-radius: var(--r-pill); margin-top: 7px;
+  background: rgba(255,255,255,0.14); color: #FFFFFF;
 }
-.bk-pd-role-badge.admin { background: rgba(231,8,102,0.1); color: var(--danger); }
+.bk-pd-role-badge.admin { background: var(--danger); color: #FFFFFF; }
 .bk-pd-section-label {
-  font-family: var(--font-mono); font-size: 18px; font-weight: 600;
+  font-family: var(--font-mono); font-size: var(--fs-label-3); font-weight: 600;
   letter-spacing: 0.02em; color: var(--mute-2);
   margin-bottom: 8px;
 }
@@ -797,24 +784,26 @@ body[data-app="verificador"] .top-header { display: none !important; }
 }
 .bk-pd-field { margin-bottom: 12px; }
 .bk-pd-field:last-child { margin-bottom: 0; }
-.bk-pd-field label { display: block; font-size: 22px; font-weight: 600; color: var(--mute); margin-bottom: 5px; letter-spacing: 0.02em; }
+.bk-pd-field label { display: block; font-size: var(--fs-label-3); font-weight: 600; color: var(--mute); margin-bottom: 5px; letter-spacing: 0.02em; }
 .bk-pd-field input {
   width: 100%; background: var(--paper-2); border: 1px solid var(--line-2);
-  border-radius: var(--r-sm); padding: 9px 12px;
+  border-radius: var(--r-sm); padding: 10px 12px;
   font-size: 13px; font-family: inherit; color: var(--ink); outline: none;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
-.bk-pd-field input:focus { border-color: var(--ink); background: var(--bone); }
+.bk-pd-field input:focus { border-color: var(--sky-blue); box-shadow: var(--focus); background: var(--bone); }
 .bk-pd-field input[readonly] { color: var(--mute); cursor: default; }
 .bk-pd-btn {
-  width: 100%; padding: 10px; border-radius: var(--r-sm);
-  font-size: 13px; font-weight: 600; font-family: inherit;
-  cursor: pointer; border: none; transition: opacity .2s;
+  width: 100%; padding: 11px; border-radius: var(--r-pill);
+  font-size: 13px; font-weight: 700; font-family: inherit;
+  cursor: pointer; border: none; transition: opacity .2s, transform .15s;
   display: flex; align-items: center; justify-content: center; gap: 7px;
 }
-.bk-pd-btn:hover { opacity: .88; }
-.bk-pd-btn-primary { background: var(--ink); color: var(--paper); }
-.bk-pd-btn-outline { background: none; border: 1px solid var(--line-2); color: var(--ink-2); margin-top: 8px; }
-.bk-pd-btn-danger  { background: none; border: 1px solid rgba(231,8,102,.3); color: var(--danger); margin-top: 8px; }
+.bk-pd-btn:hover { opacity: .9; }
+.bk-pd-btn:active { transform: scale(.98); }
+.bk-pd-btn-primary { background: var(--sky-navy); color: #FFFFFF; }
+.bk-pd-btn-outline { background: var(--bone); border: 1px solid var(--line-2); color: var(--ink-2); margin-top: 8px; }
+.bk-pd-btn-danger  { background: var(--bone); border: 1px solid rgba(231,8,102,.3); color: var(--danger); margin-top: 8px; }
 .bk-pd-status {
   display: flex; align-items: center; gap: 6px;
   font-size: 12px; color: var(--mute); margin-top: 8px;
@@ -823,7 +812,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
 .bk-pd-status .dot.ok { background: var(--success); }
 .bk-pd-status .dot.warn { background: var(--warn); }
 .bk-pd-toast {
-  padding: 8px 12px; border-radius: var(--r-sm); font-size: 12px; font-weight: 500;
+  padding: 9px 12px; border-radius: var(--r-sm); font-size: 12px; font-weight: 500;
   margin-top: 8px; display: none;
 }
 .bk-pd-toast.ok   { background: var(--success-soft); color: var(--success); display: block; }
@@ -831,35 +820,52 @@ body[data-app="verificador"] .top-header { display: none !important; }
 .bk-pd-foot {
   padding: 16px 20px; border-top: 1px solid var(--line); flex-shrink: 0;
 }
-/* Accordion menu */
-.bk-pd-menu { display: flex; flex-direction: column; gap: 0; }
-.bk-pd-menu-item { border-bottom: 1px solid var(--line); }
-.bk-pd-menu-item:first-child { border-top: 1px solid var(--line); }
+
+/* Accordion menu — cada sección con su ícono en tile, estilo moderno */
+.bk-pd-menu { display: flex; flex-direction: column; gap: 2px; }
+.bk-pd-menu-item { border-radius: var(--r); transition: background var(--dur) var(--ease); }
+.bk-pd-menu-item.is-open { background: var(--paper-2); }
 .bk-pd-menu-trigger {
   width: 100%; display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 0; background: none; border: none; cursor: pointer;
-  font-family: inherit; font-size: 13px; font-weight: 600; color: var(--ink);
-  text-align: left;
+  padding: 10px; background: none; border: none; cursor: pointer;
+  font-family: inherit; font-size: 13.5px; font-weight: 600; color: var(--ink);
+  text-align: left; border-radius: var(--r);
+  transition: background var(--dur) var(--ease);
 }
-.bk-pd-menu-trigger:hover { color: var(--sky-blue); }
-.bk-pd-menu-trigger-left { display: flex; align-items: center; gap: 10px; }
-.bk-pd-menu-trigger-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--mute-3); flex-shrink: 0; }
+.bk-pd-menu-item:not(.is-open) .bk-pd-menu-trigger:hover { background: var(--paper-2); }
+.bk-pd-menu-trigger-left { display: flex; align-items: center; gap: 12px; }
+.bk-pd-menu-icon {
+  width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+  background: var(--paper-2); color: var(--ink-2);
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.bk-pd-menu-icon svg { width: 16px; height: 16px; }
+.bk-pd-menu-item.is-open .bk-pd-menu-icon { background: var(--sky-blue); color: #FFFFFF; }
+.bk-pd-menu-icon--danger { color: var(--danger); }
+.bk-pd-menu-item.is-open .bk-pd-menu-icon--danger { background: var(--danger); color: #FFFFFF; }
+.bk-pd-menu-trigger-dot {
+  position: absolute; bottom: -1px; right: -1px;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--mute-3); border: 2px solid var(--paper);
+}
 .bk-pd-menu-trigger-dot.ok { background: var(--success); }
 .bk-pd-menu-trigger-dot.warn { background: var(--warn); }
 .bk-pd-menu-chevron {
   width: 16px; height: 16px; color: var(--mute); flex-shrink: 0;
   transition: transform .22s cubic-bezier(.16,1,.3,1);
 }
-.bk-pd-menu-item.is-open .bk-pd-menu-chevron { transform: rotate(180deg); }
+.bk-pd-menu-item.is-open .bk-pd-menu-chevron { transform: rotate(180deg); color: var(--sky-blue); }
 .bk-pd-menu-panel {
   overflow: hidden; display: none;
 }
 .bk-pd-menu-item.is-open .bk-pd-menu-panel { display: block; }
-.bk-pd-menu-panel-inner { padding-bottom: 16px; }
+.bk-pd-menu-panel-inner { padding: 2px 10px 14px; }
 /* Suscripcion */
 .bk-pd-sub-badge {
   display: inline-flex; align-items: center; gap: 5px;
-  font-size: 20px; font-weight: 700; letter-spacing: 0.02em;
+  font-size: var(--fs-label-3); font-weight: 700; letter-spacing: 0.02em;
   padding: 3px 10px; border-radius: var(--r-pill);
   background: var(--forest-soft); color: var(--forest);
 }
@@ -1053,23 +1059,13 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
     const crm   = MODS.filter(m => m.group === 'crm');
     const main  = MODS.filter(m => m.group === 'main' && (!m.adminOnly || profile?.isAdmin));
 
-    const ini = initials(profile?.fullName || '');
     const shell = document.createElement('div');
     shell.className = 'bk-shell-root';
     shell.innerHTML = `
       <aside class="bk-sidebar" id="bk-sidebar">
-        <div class="bk-sb-section">CRM</div>
         ${crm.map(m => buildSidebarLink(m, activeKey)).join('')}
-        <div class="bk-sb-section">Herramientas</div>
         ${main.map(m => buildSidebarLink(m, activeKey)).join('')}
-        <div class="bk-sb-foot">
-          <div class="bk-sb-foot__avatar" id="bk-sb-avatar" onclick="openProfileDrawer()" style="cursor:pointer" title="Mi perfil">${ini}</div>
-          <div class="bk-sb-foot__name">
-            <div id="bk-sb-name">${profile?.fullName || ''}</div>
-            <div class="role">${profile?.isAdmin ? 'Admin' : 'Agente'}</div>
-          </div>
-          <button class="bk-sb-foot__logout" onclick="doLogout()" title="Cerrar sesión" aria-label="Cerrar sesión">${svg('arrowOut', 16)}</button>
-        </div>
+        <a href="javascript:void(0)" class="bk-sb-link" onclick="openProfileDrawer()">${svg('user')} Mi perfil</a>
       </aside>
 
       <main class="bk-content">
@@ -2274,7 +2270,10 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
           <div class="bk-pd-menu-item" id="pdsec-datos">
             <button class="bk-pd-menu-trigger" onclick="togglePdSection('datos')">
               <span class="bk-pd-menu-trigger-left">
-                <span class="bk-pd-menu-trigger-dot" id="pdot-datos"></span>
+                <span class="bk-pd-menu-icon">
+                  ${svg('user', 16)}
+                  <span class="bk-pd-menu-trigger-dot" id="pdot-datos"></span>
+                </span>
                 Datos personales
               </span>
               <svg class="bk-pd-menu-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
@@ -2305,7 +2304,7 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
           <div class="bk-pd-menu-item" id="pdsec-pass">
             <button class="bk-pd-menu-trigger" onclick="togglePdSection('pass')">
               <span class="bk-pd-menu-trigger-left">
-                <span class="bk-pd-menu-trigger-dot" id="pdot-pass"></span>
+                <span class="bk-pd-menu-icon">${svg('lock', 16)}</span>
                 Contraseña
               </span>
               <svg class="bk-pd-menu-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
@@ -2337,7 +2336,10 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
           <div class="bk-pd-menu-item" id="pdsec-eb">
             <button class="bk-pd-menu-trigger" onclick="togglePdSection('eb')">
               <span class="bk-pd-menu-trigger-left">
-                <span class="bk-pd-menu-trigger-dot" id="pdot-eb"></span>
+                <span class="bk-pd-menu-icon">
+                  ${svg('building', 16)}
+                  <span class="bk-pd-menu-trigger-dot" id="pdot-eb"></span>
+                </span>
                 EasyBroker
               </span>
               <svg class="bk-pd-menu-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
@@ -2366,7 +2368,10 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
           <div class="bk-pd-menu-item" id="pdsec-fb">
             <button class="bk-pd-menu-trigger" onclick="togglePdSection('fb')">
               <span class="bk-pd-menu-trigger-left">
-                <span class="bk-pd-menu-trigger-dot" id="pdot-fb"></span>
+                <span class="bk-pd-menu-icon">
+                  ${svg('facebook', 15)}
+                  <span class="bk-pd-menu-trigger-dot" id="pdot-fb"></span>
+                </span>
                 Facebook
               </span>
               <svg class="bk-pd-menu-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
@@ -2394,7 +2399,10 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
           <div class="bk-pd-menu-item" id="pdsec-sub">
             <button class="bk-pd-menu-trigger" onclick="togglePdSection('sub')">
               <span class="bk-pd-menu-trigger-left">
-                <span class="bk-pd-menu-trigger-dot" id="pdot-sub"></span>
+                <span class="bk-pd-menu-icon">
+                  ${svg('peso', 16)}
+                  <span class="bk-pd-menu-trigger-dot" id="pdot-sub"></span>
+                </span>
                 Suscripción
               </span>
               <svg class="bk-pd-menu-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
@@ -2416,7 +2424,7 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
           <div class="bk-pd-menu-item" id="pdsec-legal">
             <button class="bk-pd-menu-trigger" onclick="togglePdSection('legal')">
               <span class="bk-pd-menu-trigger-left">
-                <span class="bk-pd-menu-trigger-dot" id="pdot-legal"></span>
+                <span class="bk-pd-menu-icon">${svg('gavel', 16)}</span>
                 Documentos legales
               </span>
               <svg class="bk-pd-menu-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
@@ -2442,7 +2450,7 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
           <div class="bk-pd-menu-item" id="pdsec-del">
             <button class="bk-pd-menu-trigger" onclick="togglePdSection('del')">
               <span class="bk-pd-menu-trigger-left">
-                <span class="bk-pd-menu-trigger-dot" style="background:var(--danger)"></span>
+                <span class="bk-pd-menu-icon bk-pd-menu-icon--danger">${svg('trash', 16)}</span>
                 Eliminar mi cuenta
               </span>
               <svg class="bk-pd-menu-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
@@ -2466,7 +2474,7 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
           <div class="bk-pd-menu-item" id="pdsec-admin" style="display:none">
             <button class="bk-pd-menu-trigger" onclick="togglePdSection('admin')">
               <span class="bk-pd-menu-trigger-left">
-                <span class="bk-pd-menu-trigger-dot ok"></span>
+                <span class="bk-pd-menu-icon">${svg('shield', 16)}</span>
                 Administración
               </span>
               <svg class="bk-pd-menu-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
@@ -2733,11 +2741,9 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
       toast.textContent = 'Guardado correctamente.';
       toast.className = 'bk-pd-toast ok';
       invalidateProfileCache();
-      // Actualizar nombre en sidebar
-      document.getElementById('bk-sb-name').textContent = nombre;
+      // Actualizar nombre/avatar en el propio drawer y en el header móvil
       document.getElementById('pd-name').textContent = nombre;
       const ini2 = initials(nombre);
-      document.getElementById('bk-sb-avatar').textContent = ini2;
       { const _ma = document.getElementById('bk-mob-avatar'); if (_ma) _ma.textContent = ini2; }
       document.getElementById('pd-avatar').textContent = ini2;
     } catch(e) {
