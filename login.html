@@ -294,6 +294,10 @@ body { overflow-y: auto; }
 .bk-spin { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.3); border-top-color: var(--paper); border-radius: 50%; animation: bk-spin .7s linear infinite; }
 @keyframes bk-spin { to { transform: rotate(360deg); } }
 
+
+/* Scoped auth logo fix: black logo on light splash/form surfaces. */
+:is(.bk-form__brand, #splash) img[src*="logo-broquer"] { filter: brightness(0) !important; }
+
 /* Splash */
 #splash {
   position: fixed; inset: 0;
@@ -318,14 +322,14 @@ body { overflow-y: auto; }
 <body>
 
 <!-- Splash -->
-<div id="splash"><div class="mark"><img src="logotipo-black.png" alt="Broquer"/></div></div>
+<div id="splash"><div class="mark"><img src="logo-broquer.png" alt="Broquer"/></div></div>
 
 <div class="bk-auth">
 
   <!-- HERO (desktop) -->
   <aside class="bk-hero">
     <div class="bk-hero__top">
-      <div class="bk-hero__mark"><img src="logotipo-white.png" alt="Broquer" style="height:60px;width:auto;display:block"/></div>
+      <div class="bk-hero__mark"><img src="logo-broquer-blanco.png" alt="Broquer" style="height:60px;width:auto;display:block"/></div>
     </div>
     <div class="bk-hero__body">
       <h1 class="bk-hero__hed">Cierra más operaciones. <em>Con menos fricción.</em></h1>
@@ -343,7 +347,7 @@ body { overflow-y: auto; }
     <div class="bk-form">
 
       <div class="bk-form__brand">
-        <img src="logotipo-black.png" alt="Broquer"/>
+        <img src="logo-broquer.png" alt="Broquer"/>
       </div>
 
       <h2 class="bk-form__hed" id="form-title">Bienvenido</h2>
