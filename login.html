@@ -294,6 +294,10 @@ body { overflow-y: auto; }
 .bk-spin { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.3); border-top-color: var(--paper); border-radius: 50%; animation: bk-spin .7s linear infinite; }
 @keyframes bk-spin { to { transform: rotate(360deg); } }
 
+
+/* Scoped auth logo fix: black logo on light splash/form surfaces. */
+:is(.bk-form__brand, #splash) img[src*="logo-broquer"] { filter: brightness(0) !important; }
+
 /* Splash */
 #splash {
   position: fixed; inset: 0;

@@ -244,6 +244,11 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
 /* App Store footer */
 .ld-foot__badge { display: block; line-height: 0; }
 .ld-foot__badge img { height: 34px; width: auto; display: block; }
+
+/* Scoped contrast/logo fixes for this page only. */
+:is(.ld-final, .ld-appstore) h2 { color: #FFFFFF !important; }
+.ld-mod__ph img[src*="isotipo"] { filter: brightness(0) invert(1) !important; }
+
 /* ── Footer ─────────────────────────────────────────────────── */
 .ld-foot { background: var(--sky-navy); border-top: 1px solid rgba(255,255,255,.10); padding: 30px 0; }
 .ld-foot__in { max-width: 1180px; margin: 0 auto; padding: 0 28px; display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
