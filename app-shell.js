@@ -2301,6 +2301,38 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
             </div>
           </div>
 
+          <!-- Contraseña -->
+          <div class="bk-pd-menu-item" id="pdsec-pass">
+            <button class="bk-pd-menu-trigger" onclick="togglePdSection('pass')">
+              <span class="bk-pd-menu-trigger-left">
+                <span class="bk-pd-menu-trigger-dot" id="pdot-pass"></span>
+                Contraseña
+              </span>
+              <svg class="bk-pd-menu-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="bk-pd-menu-panel">
+              <div class="bk-pd-menu-panel-inner">
+                <div class="bk-pd-card">
+                  <div class="bk-pd-field">
+                    <label>Contraseña actual</label>
+                    <input type="password" id="pd-pass-current" placeholder="Tu contraseña actual" autocomplete="current-password"/>
+                  </div>
+                  <div class="bk-pd-field">
+                    <label>Nueva contraseña</label>
+                    <input type="password" id="pd-pass-new" placeholder="Mínimo 8 caracteres" autocomplete="new-password"/>
+                  </div>
+                  <div class="bk-pd-field">
+                    <label>Confirmar nueva contraseña</label>
+                    <input type="password" id="pd-pass-new2" placeholder="Repite la nueva contraseña" autocomplete="new-password"/>
+                  </div>
+                  <button class="bk-pd-btn bk-pd-btn-primary" id="pd-pass-btn" onclick="changePasswordFromProfile()">Actualizar contraseña</button>
+                  <div style="font-size:11px;color:var(--mute);margin-top:8px;line-height:1.4">Al actualizarla, cerraremos tu sesión en todos los demás dispositivos por seguridad. Esta sesión seguirá activa.</div>
+                  <div class="bk-pd-toast" id="pd-toast-pass"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- EasyBroker -->
           <div class="bk-pd-menu-item" id="pdsec-eb">
             <button class="bk-pd-menu-trigger" onclick="togglePdSection('eb')">
@@ -2715,6 +2747,95 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
     setTimeout(() => { toast.className = 'bk-pd-toast'; }, 3500);
   }
   window.saveProfileData = saveProfileData;
+
+  // ── Cambiar contraseña desde el perfil (usuario ya logueado) ──────────
+  // Flujo: 1) reautenticar con la contraseña actual (grant_type=password)
+  // para confirmar identidad antes de tocar la contraseña; 2) con el token
+  // fresco de esa reautenticación, hacer PUT /auth/v1/user con la nueva
+  // contraseña; 3) cerrar TODAS las demás sesiones (scope=others) dejando
+  // viva únicamente la sesión actual, para que un dispositivo robado/perdido
+  // quede fuera en el momento en que el dueño cambia su contraseña.
+  async function changePasswordFromProfile() {
+    const toast = document.getElementById('pd-toast-pass');
+    const btn = document.getElementById('pd-pass-btn');
+    const setToast = (text, kind) => { if (toast) { toast.textContent = text; toast.className = 'bk-pd-toast ' + (kind || ''); } };
+
+    const current = document.getElementById('pd-pass-current').value;
+    const p1 = document.getElementById('pd-pass-new').value;
+    const p2 = document.getElementById('pd-pass-new2').value;
+    const email = _pdProfile?.email || '';
+
+    if (!current) { setToast('Ingresa tu contraseña actual.', 'err'); return; }
+    if (!p1 || !p2) { setToast('Ingresa la nueva contraseña dos veces.', 'err'); return; }
+    if (p1 !== p2) { setToast('Las contraseñas nuevas no coinciden.', 'err'); return; }
+    if (p1.length < 8) { setToast('La nueva contraseña debe tener al menos 8 caracteres.', 'err'); return; }
+    if (p1 === current) { setToast('La nueva contraseña debe ser distinta a la actual.', 'err'); return; }
+    if (!email) { setToast('No se pudo identificar tu correo. Recarga la página e intenta de nuevo.', 'err'); return; }
+
+    if (btn) { btn.disabled = true; btn.textContent = 'Actualizando…'; }
+    setToast('', '');
+
+    try {
+      // 1) Confirmar identidad con la contraseña actual.
+      const authR = await fetch(SB_URL + '/auth/v1/token?grant_type=password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: SB_KEY },
+        body: JSON.stringify({ email, password: current })
+      });
+      const authD = await authR.json().catch(() => ({}));
+      if (!authR.ok || !authD.access_token) {
+        setToast('Tu contraseña actual es incorrecta.', 'err');
+        if (btn) { btn.disabled = false; btn.textContent = 'Actualizar contraseña'; }
+        return;
+      }
+      const freshToken = authD.access_token;
+
+      // 2) Actualizar la contraseña con el token recién validado.
+      const updR = await fetch(SB_URL + '/auth/v1/user', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', apikey: SB_KEY, Authorization: 'Bearer ' + freshToken },
+        body: JSON.stringify({ password: p1 })
+      });
+      const updD = await updR.json().catch(() => ({}));
+      if (!updR.ok) {
+        const raw = (updD.msg || updD.error_description || updD.error || '').toString().toLowerCase();
+        if (raw.includes('weak') || raw.includes('password should'))
+          setToast('La contraseña es demasiado débil. Usa al menos 8 caracteres con letras y números.', 'err');
+        else if (raw.includes('same') || raw.includes('different from the old'))
+          setToast('La nueva contraseña debe ser distinta a la anterior.', 'err');
+        else
+          setToast('No se pudo actualizar la contraseña. Intenta de nuevo.', 'err');
+        if (btn) { btn.disabled = false; btn.textContent = 'Actualizar contraseña'; }
+        return;
+      }
+
+      // 3) Cerrar todas las demás sesiones — esta se queda activa.
+      try {
+        await fetch(SB_URL + '/auth/v1/logout?scope=others', {
+          method: 'POST',
+          headers: { apikey: SB_KEY, Authorization: 'Bearer ' + freshToken }
+        });
+      } catch(_){}
+
+      // Sincronizar el token/refresh de esta sesión con los nuevos que
+      // emitió Supabase al reautenticar, para no dejarla en un estado raro.
+      try {
+        localStorage.setItem('sb_token', freshToken);
+        sessionStorage.setItem('sb_token', freshToken);
+        if (authD.refresh_token) localStorage.setItem('sb_refresh', authD.refresh_token);
+      } catch(_){}
+
+      setToast('Contraseña actualizada. Cerramos tu sesión en tus otros dispositivos.', 'ok');
+      document.getElementById('pd-pass-current').value = '';
+      document.getElementById('pd-pass-new').value = '';
+      document.getElementById('pd-pass-new2').value = '';
+      if (btn) { btn.disabled = false; btn.textContent = 'Actualizar contraseña'; }
+    } catch(e) {
+      setToast('Sin conexión. Intenta de nuevo en unos segundos.', 'err');
+      if (btn) { btn.disabled = false; btn.textContent = 'Actualizar contraseña'; }
+    }
+  }
+  window.changePasswordFromProfile = changePasswordFromProfile;
 
   // ── Eliminar cuenta (acción irreversible) ────────────────────
   // Habilita el botón solo cuando el correo escrito coincide con el de la cuenta.
