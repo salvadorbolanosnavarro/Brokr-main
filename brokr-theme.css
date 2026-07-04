@@ -814,3 +814,22 @@ input, select, textarea, button {
   letter-spacing: 0.01em; text-align: center;
 }
 .bk-shark-loader--col { flex-direction: column; height: auto; }
+
+/* ── Contrast fixes: only black/dark text that lands on blue surfaces ── */
+:is(.ld-final, .ld-appstore) h2,
+.ld-quote p,
+:is(.sky-hero, .ai-card, .appstore-card) :is(h1,h2,h3,h4,h5,h6),
+:is(.bk-sidebar, .bk-pd-head) :is(h1,h2,h3,h4,h5,h6) {
+  color: #FFFFFF !important;
+}
+
+/* Brand marks: use monochrome marks according to surface contrast. */
+:is(.bk-hero, .ld-nav, .ld-foot) img[src*="logo-broquer"],
+.ld-mod__ph img[src*="isotipo"] {
+  filter: brightness(0) invert(1) !important;
+}
+
+:is(.bk-form__brand, #splash) img[src*="logo-broquer"],
+:is(.bk-form__brand, #splash) img[src*="logotipo"] {
+  filter: brightness(0) !important;
+}
