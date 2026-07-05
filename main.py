@@ -3141,10 +3141,10 @@ async def generar_avm_pdf(p: dict):
 <meta charset="UTF-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-  body {{ font-family: 'Inter', 'Helvetica Neue', sans-serif; color: #1A1814; background: #FBF9F1; font-size: 13px; line-height: 1.55; -webkit-font-smoothing: antialiased; letter-spacing:-0.005em; }}
+  body {{ font-family: 'DM Sans', 'Helvetica Neue', sans-serif; color: #1A1814; background: #FBF9F1; font-size: 13px; line-height: 1.55; -webkit-font-smoothing: antialiased; letter-spacing:-0.005em; }}
   .page {{ padding: 56px 60px 44px; max-width: 760px; margin: 0 auto; }}
 
   .doc-head {{ display:flex; justify-content:space-between; align-items:baseline; padding-bottom:18px; border-bottom:1px solid #E8E2D2; margin-bottom:32px; }}
@@ -3160,7 +3160,7 @@ async def generar_avm_pdf(p: dict):
   .meta-item .meta-val {{ font-family:'Fraunces',serif; font-size: 13px; font-weight: 500; color: #1A1814; letter-spacing:-0.005em; }}
 
   .seccion {{ margin-bottom: 30px; }}
-  .sec-titulo {{ font-family:'Inter',sans-serif; font-size: 9px; font-weight: 600; color: #7A7065; text-transform: uppercase; letter-spacing: 1.8px; margin-bottom: 14px; }}
+  .sec-titulo {{ font-family:'DM Sans',sans-serif; font-size: 9px; font-weight: 600; color: #7A7065; text-transform: uppercase; letter-spacing: 1.8px; margin-bottom: 14px; }}
   .resumen {{ font-size: 12px; color: #1A1814; line-height: 1.75; text-align:justify; }}
 
   table {{ width: 100%; border-collapse: collapse; font-size: 11.5px; }}
@@ -3864,16 +3864,16 @@ def build_ficha_html(p: dict, images_b64: dict) -> str:
     CSS = """
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Inter',sans-serif;background:#F7F5EE;color:#0A0A0A;-webkit-font-smoothing:antialiased}
+body{font-family:'DM Sans',sans-serif;background:#F7F5EE;color:#0A0A0A;-webkit-font-smoothing:antialiased}
 .ficha-page{width:210mm;height:297mm;background:#FFFFFF;display:flex;flex-direction:column;overflow:hidden;page-break-after:always;border:1px solid #E8E4DC}
 .ficha-page:last-child{page-break-after:avoid}
 .cover-hero{width:100%;height:110mm;object-fit:cover;display:block;flex-shrink:0}
 .cover-hero-placeholder{width:100%;height:110mm;background:linear-gradient(135deg,#0A0A0A,#1F1F1F);flex-shrink:0}
 .cover-info{padding:20px 24px 16px;border-bottom:1px solid #E8E4DC;background:#FFFFFF}
 .cover-badge{display:inline-block;background:#2F4A3A;color:#FFFFFF;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;border-radius:999px;margin-bottom:10px}
-.cover-precio{font-family:'Inter Tight',sans-serif;font-size:30px;font-weight:600;color:#0A0A0A;line-height:1;margin-bottom:6px;letter-spacing:-0.03em}
+.cover-precio{font-family:'DM Sans',sans-serif;font-size:30px;font-weight:600;color:#0A0A0A;line-height:1;margin-bottom:6px;letter-spacing:-0.03em}
 .cover-titulo{font-size:14px;font-weight:500;color:#0A0A0A;margin-bottom:4px}
 .cover-ubicacion{font-size:12px;color:#5A5650;display:flex;align-items:center;gap:6px}
 .cover-specs{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid #E8E4DC;background:#FFFFFF}
@@ -3881,15 +3881,15 @@ body{font-family:'Inter',sans-serif;background:#F7F5EE;color:#0A0A0A;-webkit-fon
 .spec-item:last-child{border-right:none}
 .spec-ico{width:24px;height:24px;color:#5A5650}
 .spec-ico svg{width:100%;height:100%}
-.spec-val{font-family:'Inter Tight',sans-serif;font-size:16px;font-weight:600;color:#0A0A0A;line-height:1.1;letter-spacing:-0.02em}
+.spec-val{font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;color:#0A0A0A;line-height:1.1;letter-spacing:-0.02em}
 .spec-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#5A5650;margin-top:3px}
 .cover-desc-wrap{padding:16px 24px;flex:1;overflow:hidden;background:#FFFFFF}
-.cover-desc-ttl{font-family:'Inter Tight',sans-serif;font-size:13px;font-weight:600;color:#0A0A0A;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #E8E4DC;display:inline-block;letter-spacing:-0.015em}
+.cover-desc-ttl{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#0A0A0A;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #E8E4DC;display:inline-block;letter-spacing:-0.015em}
 .cover-desc{font-size:11.5px;color:#3A3630;line-height:1.65}
 .gallery-header{padding:16px 24px 12px;border-bottom:1px solid #E8E4DC;background:#FFFFFF}
-.gallery-header h2{font-family:'Inter Tight',sans-serif;font-size:16px;font-weight:600;color:#0A0A0A;letter-spacing:-0.018em}
+.gallery-header h2{font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;color:#0A0A0A;letter-spacing:-0.018em}
 .section-header{padding:14px 24px 12px;border-bottom:1px solid #E8E4DC;flex-shrink:0;background:#FFFFFF}
-.section-header h2{font-family:'Inter Tight',sans-serif;font-size:16px;font-weight:600;color:#0A0A0A;letter-spacing:-0.018em}
+.section-header h2{font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;color:#0A0A0A;letter-spacing:-0.018em}
 .photo-grid-6{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:82mm 82mm 82mm;gap:3px;padding:3px;height:246mm;flex-shrink:0;overflow:hidden}
 .photo-grid-auto{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;flex-shrink:0;overflow:hidden}
 .photo-grid-6 img,.photo-grid-auto img{width:100%;height:100%;object-fit:cover;display:block}

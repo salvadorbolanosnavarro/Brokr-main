@@ -410,7 +410,7 @@
 .bk-topbar__quote {
   flex: 1;
   min-width: 0;
-  font-family: var(--font-display, 'Inter'), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-display, 'DM Sans'), -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 14px;
   font-weight: 500;
   letter-spacing: -0.01em;
