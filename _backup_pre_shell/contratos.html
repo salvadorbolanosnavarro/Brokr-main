@@ -154,7 +154,7 @@ body{font-family:'Poppins',sans-serif;background:var(--silver);color:var(--txt);
 
 /* ── Modo selector (Broquer vs Machote) ── */
 .modo-selector{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px}
-.modo-btn{padding:14px 10px;border:2px solid var(--silver2);border-radius:var(--r);background:var(--wh);cursor:pointer;transition:all .15s;text-align:center;font-family:'DM Sans',sans-serif}
+.modo-btn{padding:14px 10px;border:2px solid var(--silver2);border-radius:var(--r);background:var(--wh);cursor:pointer;transition:all .15s;text-align:center;font-family:'Broquer Sans','DM Sans',sans-serif}
 .modo-btn:hover{border-color:var(--teal);background:var(--tealp)}
 .modo-btn.active{border-color:var(--teal);background:var(--teal);color:#fff}
 .modo-btn-ico{font-size:22px;margin-bottom:5px}
@@ -178,21 +178,21 @@ body{font-family:'Poppins',sans-serif;background:var(--silver);color:var(--txt);
 /* ── Campos detectados ── */
 .campos-list{display:flex;flex-direction:column;gap:8px;margin:12px 0}
 .campo-item{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;background:var(--silver);border-radius:var(--r2);padding:8px 10px}
-.campo-item input,.campo-item select{background:var(--wh);border:1.5px solid var(--silver2);border-radius:var(--r2);padding:6px 9px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--txt);width:100%}
+.campo-item input,.campo-item select{background:var(--wh);border:1.5px solid var(--silver2);border-radius:var(--r2);padding:6px 9px;font-family:'Broquer Sans','DM Sans',sans-serif;font-size:13px;color:var(--txt);width:100%}
 .campo-item input:focus,.campo-item select:focus{border-color:var(--teal);outline:none}
 .campo-del{background:none;border:none;color:var(--mut);cursor:pointer;padding:4px 6px;border-radius:4px;font-size:16px;line-height:1}
 .campo-del:hover{background:#fee;color:#c00}
 .campo-item-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);margin-bottom:2px}
 .campos-header{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;padding:0 10px;margin-bottom:2px}
 .campos-header span{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--mut)}
-.btn-add-campo{display:flex;align-items:center;gap:6px;background:none;border:1.5px dashed var(--silver2);border-radius:var(--r2);padding:7px 12px;cursor:pointer;font-size:13px;color:var(--mut);font-family:'DM Sans',sans-serif;transition:all .15s;margin-top:4px}
+.btn-add-campo{display:flex;align-items:center;gap:6px;background:none;border:1.5px dashed var(--silver2);border-radius:var(--r2);padding:7px 12px;cursor:pointer;font-size:13px;color:var(--mut);font-family:'Broquer Sans','DM Sans',sans-serif;transition:all .15s;margin-top:4px}
 .btn-add-campo:hover{border-color:var(--teal);color:var(--teal)}
 
 /* ── Formulario dinámico (fase llenar) ── */
 #machote-form-section{display:none}
 .dyn-form-field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
 .dyn-form-field label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
-.dyn-form-field input,.dyn-form-field select,.dyn-form-field textarea{background:var(--silver);border:1.5px solid var(--silver2);border-radius:var(--r2);padding:9px 11px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--txt);outline:none;width:100%;transition:border .15s}
+.dyn-form-field input,.dyn-form-field select,.dyn-form-field textarea{background:var(--silver);border:1.5px solid var(--silver2);border-radius:var(--r2);padding:9px 11px;font-family:'Broquer Sans','DM Sans',sans-serif;font-size:14px;color:var(--txt);outline:none;width:100%;transition:border .15s}
 .dyn-form-field input:focus,.dyn-form-field select:focus{border-color:var(--teal);background:var(--wh)}
 .dyn-form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:0}
 @media(max-width:540px){.campo-item{grid-template-columns:1fr 1fr auto}.dyn-form-row{grid-template-columns:1fr}}
@@ -207,7 +207,7 @@ body{font-family:'Poppins',sans-serif;background:var(--silver);color:var(--txt);
 .phase-sep{flex:1;height:1px;background:var(--silver2)}
 
 /* ── CONTACT / PROPERTY PICKERS ── */
-.pick-btn{display:inline-flex;align-items:center;gap:5px;margin-top:5px;padding:5px 10px;border:1.5px solid var(--teal);border-radius:6px;background:var(--tealp);color:var(--teal2);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all .12s;text-transform:uppercase;letter-spacing:.04em}
+.pick-btn{display:inline-flex;align-items:center;gap:5px;margin-top:5px;padding:5px 10px;border:1.5px solid var(--teal);border-radius:6px;background:var(--tealp);color:var(--teal2);font-family:'Broquer Sans','DM Sans',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all .12s;text-transform:uppercase;letter-spacing:.04em}
 .pick-btn:hover{background:var(--teal);color:#fff}
 .pick-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:flex-end;justify-content:center}
 .pick-overlay.open{display:flex}
@@ -218,7 +218,7 @@ body{font-family:'Poppins',sans-serif;background:var(--silver);color:var(--txt);
 .pick-head-title{font-size:15px;font-weight:700;color:var(--navy);flex:1}
 .pick-close{width:30px;height:30px;border:none;background:var(--silver);border-radius:7px;cursor:pointer;font-size:14px;color:var(--mut)}
 .pick-search{padding:12px 18px;flex-shrink:0}
-.pick-search input{width:100%;background:var(--silver);border:1.5px solid var(--silver2);border-radius:8px;padding:8px 12px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border .15s}
+.pick-search input{width:100%;background:var(--silver);border:1.5px solid var(--silver2);border-radius:8px;padding:8px 12px;font-family:'Broquer Sans','DM Sans',sans-serif;font-size:13px;outline:none;transition:border .15s}
 .pick-search input:focus{border-color:var(--teal)}
 .pick-list{flex:1;overflow-y:auto;padding:0 0 20px}
 .pick-item{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--silver2);cursor:pointer;transition:background .1s}
@@ -263,13 +263,13 @@ body{font-family:'Poppins',sans-serif;background:var(--silver);color:var(--txt);
 }
 html, body {
   background: #FBF9F1 !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Broquer Sans', 'DM Sans', system-ui, sans-serif !important;
   color: #1F1B17 !important;
   letter-spacing: -0.005em !important;
 }
 * { font-family: inherit !important; }
 input, select, textarea, button {
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Broquer Sans', 'DM Sans', system-ui, sans-serif !important;
 }
 /* Replace Playfair display with system serif fallback in headings */
 [class*="ttl"], [class*="title"], h1, h2, h3,

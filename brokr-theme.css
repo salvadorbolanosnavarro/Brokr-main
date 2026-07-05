@@ -6,7 +6,7 @@
    (nav, footer, cards oscuras, chips activos) y azul brillante
    #0062E3 como ACCIÓN (CTA, hero, botón primario). Blanco base,
    texto casi negro #161616. Una sola familia tipográfica en
-   todo el sitio (proxy libre de "Skyscanner Relative" vía Inter
+   todo el sitio (proxy libre de "Skyscanner Relative" vía Broquer Sans
    / system-ui), pesos 400 y 700, sin mayúsculas forzadas. Radios
    suaves: 12px en cards y botones, 8px en botones de icono,
    100px (píldora) en chips/tabs. Único elemento heredado de
@@ -41,7 +41,15 @@
    #F55D42) y --mute al text-secondary exacto (#626971).
    ════════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
+@font-face {
+  font-family: 'Broquer Sans';
+  src: local('DM Sans');
+  font-weight: 300 800;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   /* ── Surfaces (blanco base, canvas gris-azul) ─ */
@@ -135,9 +143,9 @@
   --z-toast:   320;
 
   /* ── Tipografía (familia única, como el sitio) ── */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', sans-serif;
-  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-  --font-mono: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', sans-serif; /* alias histórico → ya no es monoespaciada, ahora Inter */
+  --font-sans: 'Broquer Sans', 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', sans-serif;
+  --font-display: 'Broquer Sans', 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+  --font-mono: 'Broquer Sans', 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', sans-serif; /* alias histórico → ya no es monoespaciada, ahora Broquer Sans */
 
   /* Escala BPK (Skyscanner) — tamaño/peso 700 para headings, 400 para cuerpo.
      Broquer es un SaaS denso en datos, no un sitio de viajes: se usa la
