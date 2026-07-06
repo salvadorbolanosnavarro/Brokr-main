@@ -104,7 +104,7 @@
     <div class="sky-hero__top">
       <div>
         <div class="sky-hero__eyebrow">El co-piloto del agente inmobiliario</div>
-        <h1 class="sky-hero__title"><span id="dash-greet">Buenos días</span>, <em id="dash-firstname">—</em></h1>
+        <h1 class="sky-hero__title"><span id="dash-greet">Buenos días,</span> <em id="dash-firstname">—</em></h1>
       </div>
       <div class="sky-hero__date">
         <span class="label">Hoy</span>
@@ -236,7 +236,7 @@
   const h = d.getHours();
   const greet = h < 12 ? 'Buenos días' : (h < 19 ? 'Buenas tardes' : 'Buenas noches');
   const gEl = document.getElementById('dash-greet');
-  if (gEl) gEl.textContent = greet;
+  if (gEl) gEl.textContent = `${greet},`;
 })();
 
 /* When the shell finishes auth, populate first name + KPIs */
