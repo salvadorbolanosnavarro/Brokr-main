@@ -1723,7 +1723,8 @@ function setDetTab(tab) {
 
 function abrirDetalle(id) {
   clearTimeout(_busqT);
-  const c = cargar().find(x => x.id === id);
+  id = String(id || '');
+  const c = cargar().find(x => String(x.id) === id);
   if (!c) return;
   detContacto = c;
   const av = document.getElementById('det-av');
@@ -1873,7 +1874,7 @@ async function cargarVinculos() {
   feed.innerHTML = vinculos.length
     ? vinculos.map(v => `<div class="prop-link-item">
         <div class="prop-link-ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg></div>
-        <div class="prop-link-title">${esc((porId[String(v.propiedad_id)] || {}).titulo || 'Propiedad')}</div>
+        <a class="prop-link-title" href="propiedades.html?id=${encodeURIComponent(String(v.propiedad_id))}">${esc((porId[String(v.propiedad_id)] || {}).titulo || 'Propiedad')}</a>
         <span class="rel-chip">${REL[v.relacion] || esc(v.relacion)}</span>
         <button class="task-del" title="Quitar vínculo" onclick="eliminarVinculo('${esc(String(v.id))}')">×</button>
       </div>`).join('')
@@ -2091,6 +2092,9 @@ async function _waitForShell(maxMs) {
       cargarRemoto(),
     ]);
     renderActual();
+    const params = new URLSearchParams(window.location.search);
+    const openId = params.get('id') || params.get('contacto');
+    if (openId && _contactosMem.some(c => String(c.id) === String(openId))) abrirDetalle(openId);
   } catch (e) {
     const lista = document.getElementById(vistaActual === 'pipeline' ? 'kanban' : 'lista');
     if (lista && !_contactosMem.length) {
