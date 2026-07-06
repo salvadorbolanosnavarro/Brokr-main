@@ -1374,7 +1374,9 @@ async function loadProps() {
     currentPage = 1;
     renderPage();
     updateSelectionUI();
-    consumirDeepLinkPropiedad();
+    const params = new URLSearchParams(window.location.search);
+    const openId = params.get('id') || params.get('propiedad');
+    if (openId && allProps.some(p => String(p.id) === String(openId))) openPropDetail(openId);
   } catch(e) {
     grid.innerHTML = `<div class="props-empty"><h3>No se pudieron cargar</h3><p>${e.message}</p></div>`;
   }
@@ -1995,18 +1997,6 @@ async function deleteProp(id) {
     await loadProps();
   }
   catch(e) { alert('Error: ' + e.message); }
-}
-
-
-function consumirDeepLinkPropiedad() {
-  const url = new URL(window.location.href);
-  const openId = url.searchParams.get('id') || url.searchParams.get('propiedad');
-  if (!openId) return;
-  if (!allProps.some(p => String(p.id) === String(openId))) return;
-  openPropDetail(openId);
-  url.searchParams.delete('id');
-  url.searchParams.delete('propiedad');
-  window.history.replaceState({}, '', url.pathname + url.search + url.hash);
 }
 
 function openPropDetail(id) {

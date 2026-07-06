@@ -1721,18 +1721,6 @@ function setDetTab(tab) {
   if (tab === 'tareas') cargarTareas();
 }
 
-
-function consumirDeepLinkContacto() {
-  const url = new URL(window.location.href);
-  const openId = url.searchParams.get('id') || url.searchParams.get('contacto');
-  if (!openId) return;
-  if (!_contactosMem.some(c => String(c.id) === String(openId))) return;
-  abrirDetalle(openId);
-  url.searchParams.delete('id');
-  url.searchParams.delete('contacto');
-  window.history.replaceState({}, '', url.pathname + url.search + url.hash);
-}
-
 function abrirDetalle(id) {
   clearTimeout(_busqT);
   id = String(id || '');
@@ -2104,7 +2092,9 @@ async function _waitForShell(maxMs) {
       cargarRemoto(),
     ]);
     renderActual();
-    consumirDeepLinkContacto();
+    const params = new URLSearchParams(window.location.search);
+    const openId = params.get('id') || params.get('contacto');
+    if (openId && _contactosMem.some(c => String(c.id) === String(openId))) abrirDetalle(openId);
   } catch (e) {
     const lista = document.getElementById(vistaActual === 'pipeline' ? 'kanban' : 'lista');
     if (lista && !_contactosMem.length) {
