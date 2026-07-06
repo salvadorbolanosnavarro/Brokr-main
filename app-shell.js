@@ -228,7 +228,6 @@
     { key:'props',        href:'propiedades.html',   label:'Tus Inmuebles',   group:'crm',  icon:'building' },
     { key:'contactos',    href:'contactos.html',     label:'Contactos',       group:'crm',  icon:'users' },
     { key:'tareas',       href:'tareas.html',        label:'Tareas',          group:'crm',  icon:'check' },
-    { key:'leads',        href:'leads.html',         label:'Leads',           group:'crm',  icon:'send' },
     { key:'contratos',    href:'contratos.html',     label:'Contratos',       group:'main', icon:'document' },
     { key:'avm',          href:'avm.html',           label:'Estimación de valor', group:'main', icon:'peso' },
     { key:'ficha-manual', href:'ficha-manual.html',  label:'Ficha técnica',   group:'main', icon:'landscape' },
