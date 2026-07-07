@@ -113,8 +113,6 @@
   letter-spacing: 0.02em;
 }
 .ld-badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
-.ld-badge--nuevo    { background: var(--forest-soft);  color: var(--forest); }
-.ld-badge--atendido { background: var(--success-soft); color: var(--success); }
 
 .ld-card__msg {
   font-size: 13px; color: var(--ink-2); line-height: 1.5;
@@ -285,12 +283,10 @@
   <div class="ld-toolbar">
     <div class="ld-search-wrap">
       <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
-      <input id="ld-search" type="text" placeholder="Buscar por nombre, teléfono o mensaje…" oninput="filtrarDebounced()"/>
+      <input id="ld-search" type="text" placeholder="Buscar por nombre, teléfono o notas…" oninput="filtrarDebounced()"/>
     </div>
-    <select id="ld-filtro-estado" onchange="renderLeads()">
-      <option value="nuevos">Sin atender</option>
-      <option value="atendidos">Atendidos</option>
-      <option value="todos">Todos</option>
+    <select id="ld-filtro-etapa" onchange="renderLeads()">
+      <option value="">Todas las etapas</option>
     </select>
     <select id="ld-filtro-fuente" onchange="renderLeads()" style="display:none">
       <option value="">Todas las fuentes</option>
@@ -336,13 +332,13 @@
         </div>
       </div>
       <div class="lf-row">
-        <div class="lf-field full"><label>Mensaje / interés</label><textarea id="lf-mensaje" placeholder="Vio la casa de Las Palmas en Facebook, quiere agendar visita el sábado…"></textarea></div>
+        <div class="lf-field full"><label>Notas / interés</label><textarea id="lf-mensaje" placeholder="Vio la casa de Las Palmas en Facebook, quiere agendar visita el sábado…"></textarea></div>
       </div>
       <div class="lf-actions">
         <button class="lf-cancel" onclick="cerrarModalLead()">Cancelar</button>
         <button class="lf-save" id="lf-save-btn" onclick="guardarLead()">
           <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
-          Guardar lead
+          Guardar
         </button>
       </div>
     </div>
@@ -361,7 +357,7 @@ function esc(s) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-/* ── Conexión (mismo patrón que propiedades/tareas) ──────────── */
+/* ── Conexión (mismo patrón que contactos/tareas/propiedades) ────── */
 async function sbFetch(path, method = 'GET', body = null) {
   if (!window.brokrSb || !window.brokrSb.rest) {
     throw new Error('La app aún se está cargando. Intenta de nuevo en un segundo.');
@@ -382,11 +378,33 @@ async function userId() {
   } catch { return null; }
 }
 
-/* ── Estado ──────────────────────────────────────────────────── */
-let leads = [];
-let contactosMin = [];
+/* ── Etapas del pipeline — mismo criterio que contactos.html ──────
+   Leads es una VISTA de contactos: no tiene su propio concepto de
+   etapa, usa exactamente las mismas etapas del pipeline de Contactos. */
+const ETAPAS_DEFAULT = [
+  { clave:'nuevo',      nombre:'Nuevo',      color:'var(--forest)'  },
+  { clave:'activo',     nombre:'Activo',     color:'var(--success)' },
+  { clave:'contactado', nombre:'Contactado', color:'var(--warn)'    },
+  { clave:'cerrado',    nombre:'Cerrado',    color:'var(--ink-3)'   },
+];
+let ETAPAS = ETAPAS_DEFAULT.slice();
+function etapaInfo(clave) {
+  const k = String(clave || 'nuevo').toLowerCase();
+  return ETAPAS.find(e => e.clave === k) || { clave:k, nombre:k.charAt(0).toUpperCase()+k.slice(1), color:'var(--mute)' };
+}
+function poblarSelectEtapa() {
+  const sel = g('ld-filtro-etapa');
+  const actual = sel.value;
+  sel.innerHTML = '<option value="">Todas las etapas</option>' +
+    ETAPAS.map(e => `<option value="${esc(e.clave)}">${esc(e.nombre)}</option>`).join('');
+  if (ETAPAS.some(e => e.clave === actual)) sel.value = actual;
+}
+
+/* ── Estado ────────────────────────────────────────────────────── */
+let potenciales = [];   // contactos con es_potencial = true (fuente de esta pantalla)
 let propsMin = [];
-let contactoIdx = {}, propIdx = {};
+let propIdx = {};
+let interesPorContacto = {}; // contacto_id -> [propiedad_id, ...]
 
 function showToast(msg) {
   const t = g('toast');
@@ -394,50 +412,44 @@ function showToast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2400);
 }
-function fechaHora(iso) {
+function fechaCorta(iso) {
   if (!iso) return '';
-  try {
-    const d = new Date(iso);
-    return d.toLocaleDateString('es-MX', { day:'2-digit', month:'short' }) + ' · ' +
-           d.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
-  } catch { return ''; }
+  try { return new Date(iso).toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric' }); }
+  catch { return ''; }
 }
 function iniciales(nombre) {
   const p = String(nombre || '?').trim().split(/\s+/);
   return (p.length >= 2 ? p[0][0] + p[1][0] : String(nombre || '??').slice(0, 2)).toUpperCase();
 }
 
-/* Identidad del lead: de meta o del contacto vinculado */
-function leadNombre(l) {
-  if (l.contacto_id && contactoIdx[String(l.contacto_id)]) return contactoIdx[String(l.contacto_id)].nombre;
-  return (l.meta && l.meta.nombre) || 'Sin nombre';
-}
-function leadTel(l) {
-  if (l.contacto_id && contactoIdx[String(l.contacto_id)]) return contactoIdx[String(l.contacto_id)].telefono || '';
-  return (l.meta && l.meta.telefono) || '';
-}
-function leadEmail(l) { return (l.meta && l.meta.email) || ''; }
-
-/* ── Carga: un solo lote paralelo ────────────────────────────── */
+/* ── Carga: un solo lote paralelo ─────────────────────────────── */
 async function cargarTodo() {
   const lista = g('ld-lista');
-  lista.innerHTML = '<div class="ld-empty"><h3>Cargando leads…</h3></div>';
+  lista.innerHTML = '<div class="ld-empty"><h3>Cargando…</h3></div>';
   try {
-    const [l, c, p] = await Promise.all([
-      sbFetch('leads?select=*&order=created_at.desc&limit=300'),
-      sbFetch('contactos?select=id,nombre,telefono&limit=1000'),
+    const [et, c, p, ip] = await Promise.all([
+      sbFetch('pipeline_etapas?select=nombre,orden,color&order=orden.asc').catch(() => []),
+      sbFetch('contactos?select=*&es_potencial=eq.true&order=updated_at.desc&limit=1000'),
       sbFetch('propiedades?select=id,titulo,clave_interna&order=updated_at.desc&limit=1000'),
+      sbFetch('contactos_propiedades?select=contacto_id,propiedad_id&relacion=eq.interes&limit=3000').catch(() => []),
     ]);
-    leads = Array.isArray(l) ? l : [];
-    contactosMin = Array.isArray(c) ? c : [];
+    if (Array.isArray(et) && et.length) {
+      ETAPAS = et.map(r => ({ clave: String(r.nombre || '').toLowerCase().trim(), nombre: r.nombre, color: r.color || 'var(--forest)' })).filter(e => e.clave);
+    }
+    potenciales = Array.isArray(c) ? c : [];
     propsMin = Array.isArray(p) ? p : [];
-    contactoIdx = Object.fromEntries(contactosMin.map(x => [String(x.id), x]));
     propIdx = Object.fromEntries(propsMin.map(x => [String(x.id), x]));
+    interesPorContacto = {};
+    (Array.isArray(ip) ? ip : []).forEach(r => {
+      const k = String(r.contacto_id);
+      (interesPorContacto[k] = interesPorContacto[k] || []).push(String(r.propiedad_id));
+    });
+    poblarSelectEtapa();
     poblarSelectPropiedad();
     poblarFiltroFuente();
     renderLeads();
   } catch (e) {
-    lista.innerHTML = '<div class="ld-empty"><h3>No se pudieron cargar los leads</h3><p>' + esc(e.message || 'Revisa tu conexión.') + '</p></div>';
+    lista.innerHTML = '<div class="ld-empty"><h3>No se pudo cargar</h3><p>' + esc(e.message || 'Revisa tu conexión.') + '</p></div>';
   }
 }
 
@@ -449,7 +461,7 @@ function poblarSelectPropiedad() {
 
 function poblarFiltroFuente() {
   const sel = g('ld-filtro-fuente');
-  const fuentes = [...new Set(leads.map(l => l.fuente).filter(Boolean))].sort();
+  const fuentes = [...new Set(potenciales.map(c => c.fuente).filter(Boolean))].sort();
   if (!fuentes.length) { sel.style.display = 'none'; sel.value = ''; return; }
   const actual = sel.value;
   sel.style.display = '';
@@ -458,17 +470,16 @@ function poblarFiltroFuente() {
   if (fuentes.includes(actual)) sel.value = actual;
 }
 
-/* ── Filtro + render ─────────────────────────────────────────── */
+/* ── Filtro + render ───────────────────────────────────────────── */
 function leadsFiltrados() {
   const q = (g('ld-search').value || '').trim().toLowerCase();
-  const estado = g('ld-filtro-estado').value;
+  const etapa = g('ld-filtro-etapa').value;
   const fuente = g('ld-filtro-fuente').value;
-  return leads.filter(l => {
-    if (estado === 'nuevos' && l.atendido) return false;
-    if (estado === 'atendidos' && !l.atendido) return false;
-    if (fuente && l.fuente !== fuente) return false;
+  return potenciales.filter(c => {
+    if (etapa && String(c.estatus || 'nuevo').toLowerCase() !== etapa) return false;
+    if (fuente && c.fuente !== fuente) return false;
     if (q) {
-      const blob = [leadNombre(l), leadTel(l), leadEmail(l), l.mensaje, l.fuente].join(' ').toLowerCase();
+      const blob = [c.nombre, c.telefono, c.email, c.notas, c.fuente].join(' ').toLowerCase();
       if (!blob.includes(q)) return false;
     }
     return true;
@@ -478,64 +489,54 @@ function leadsFiltrados() {
 function renderLeads() {
   const lista = g('ld-lista');
   const filtrados = leadsFiltrados();
-  const nuevos = leads.filter(l => !l.atendido).length;
-  g('ld-count').textContent = nuevos ? '— ' + nuevos + ' sin atender' : '';
+  g('ld-count').textContent = potenciales.length ? '— ' + potenciales.length + ' potenciales' : '';
 
   if (!filtrados.length) {
-    const hayFiltro = g('ld-search').value || g('ld-filtro-estado').value !== 'nuevos' || g('ld-filtro-fuente').value;
+    const hayFiltro = g('ld-search').value || g('ld-filtro-etapa').value || g('ld-filtro-fuente').value;
     lista.innerHTML = `<div class="ld-empty">
       <svg width="42" height="42" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/></svg>
-      <h3>${hayFiltro ? 'Sin resultados' : 'Sin leads pendientes'}</h3>
-      <p>${hayFiltro ? 'Prueba con otros términos o cambia los filtros.' : 'Aquí caerán las solicitudes de tus anuncios y sitio web. También puedes capturar uno manual con el botón Nuevo lead.'}</p>
+      <h3>${hayFiltro ? 'Sin resultados' : 'Sin potenciales por ahora'}</h3>
+      <p>${hayFiltro ? 'Prueba con otros términos o cambia los filtros.' : 'Marca un contacto como \u201cPotencial\u201d desde su ficha, o agrega uno nuevo aquí, y aparecerá en esta bandeja.'}</p>
     </div>`;
     return;
   }
 
-  lista.innerHTML = filtrados.map(l => {
-    const nombre = leadNombre(l);
-    const tel = leadTel(l);
-    const email = leadEmail(l);
-    const telDigits = tel.replace(/\D/g, '');
-    const prop = l.propiedad_id ? propIdx[String(l.propiedad_id)] : null;
-    const yaContacto = !!(l.contacto_id && contactoIdx[String(l.contacto_id)]);
-    const sub = [tel, email].filter(Boolean).join(' · ');
-    return `<div class="ld-card${l.atendido ? ' is-atendido' : ''}">
+  lista.innerHTML = filtrados.map(c => {
+    const sub = [c.telefono, c.email].filter(Boolean).join(' · ');
+    const telDigits = (c.wa || c.telefono || '').replace(/\D/g, '');
+    const propsInteres = (interesPorContacto[String(c.id)] || []).map(id => propIdx[id]).filter(Boolean);
+    const et = etapaInfo(c.estatus);
+    return `<div class="ld-card">
       <div class="ld-card__top">
-        <div class="ld-card__ico">${esc(iniciales(nombre))}</div>
+        <div class="ld-card__ico">${esc(iniciales(c.nombre))}</div>
         <div class="ld-card__info">
           <div class="ld-card__name">
-            ${esc(nombre)}
-            <span class="ld-badge ${l.atendido ? 'ld-badge--atendido' : 'ld-badge--nuevo'}">${l.atendido ? 'Atendido' : 'Nuevo'}</span>
+            ${esc(c.nombre)}
+            <span class="ld-badge" style="background:color-mix(in srgb, ${et.color} 16%, transparent);color:${et.color}">${esc(et.nombre)}</span>
           </div>
           ${sub ? `<div class="ld-card__sub">${esc(sub)}</div>` : ''}
         </div>
-        <div class="ld-card__fecha">${fechaHora(l.created_at)}</div>
+        <div class="ld-card__fecha">${fechaCorta(c.updated_at || c.created_at)}</div>
       </div>
-      ${l.mensaje ? `<div class="ld-card__msg">${esc(l.mensaje)}</div>` : ''}
-      ${(l.fuente || l.canal || prop) ? `<div class="ld-card__chips">
-        ${l.fuente ? `<span class="ld-chip"><span>${esc(l.fuente)}</span></span>` : ''}
-        ${l.canal && l.canal !== l.fuente ? `<span class="ld-chip"><span>${esc(l.canal)}</span></span>` : ''}
-        ${prop ? `<span class="ld-chip">
+      ${c.notas ? `<div class="ld-card__msg">${esc(c.notas)}</div>` : ''}
+      ${(c.fuente || propsInteres.length) ? `<div class="ld-card__chips">
+        ${c.fuente ? `<span class="ld-chip"><span>${esc(c.fuente)}</span></span>` : ''}
+        ${propsInteres.slice(0,2).map(p => `<span class="ld-chip">
           <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg>
-          <span>${esc(prop.clave_interna || prop.titulo || 'Inmueble')}</span>
-        </span>` : ''}
+          <span>${esc(p.clave_interna || p.titulo || 'Inmueble')}</span>
+        </span>`).join('')}
+        ${propsInteres.length > 2 ? `<span class="ld-chip"><span>+${propsInteres.length - 2}</span></span>` : ''}
       </div>` : ''}
       <div class="ld-card__acts">
-        ${!yaContacto
-          ? `<button class="ld-act ld-act--primary" onclick="convertirLead('${esc(String(l.id))}')">
-               <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
-               Convertir a contacto
-             </button>`
-          : `<a class="ld-act" href="contactos.html">
-               <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.5-1.632z"/></svg>
-               Ver en Contactos
-             </a>`}
+        <a class="ld-act ld-act--primary" href="contactos.html?id=${encodeURIComponent(String(c.id))}">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.5-1.632z"/></svg>
+          Ver en Contactos
+        </a>
         ${telDigits ? `<a class="ld-act ld-act--wa" href="https://wa.me/52${esc(telDigits)}" target="_blank">
           <svg width="13" height="13" fill="currentColor" viewBox="0 0 32 32"><path d="M16 0C7.163 0 0 7.163 0 16c0 2.823.736 5.474 2.029 7.776L0 32l8.42-2.207A15.9 15.9 0 0016 32c8.837 0 16-7.163 16-16S24.837 0 16 0zm7.45 19.2c-.39-.196-2.31-1.142-2.668-1.273-.358-.13-.618-.196-.878.196-.26.39-1.008 1.272-1.236 1.532-.228.26-.456.293-.846.098-.39-.196-1.65-.61-3.143-1.94-1.162-1.037-1.948-2.318-2.176-2.708-.228-.39-.024-.6.171-.795.176-.175.39-.456.586-.683.196-.228.26-.39.39-.65.13-.26.065-.488-.033-.683-.098-.196-.878-2.117-1.203-2.9-.317-.762-.64-.66-.879-.672-.227-.012-.487-.014-.747-.014-.26 0-.683.098-1.04.488-.358.39-1.366 1.336-1.366 3.257 0 1.92 1.398 3.778 1.594 4.038.195.26 2.752 4.203 6.667 5.893.93.402 1.657.642 2.223.821.934.297 1.785.255 2.457.155.75-.112 2.31-.945 2.636-1.857.325-.911.325-1.692.228-1.857-.098-.165-.358-.26-.748-.456z"/></svg>
           WhatsApp
         </a>` : ''}
-        <button class="ld-act" onclick="toggleAtendido('${esc(String(l.id))}')">${l.atendido ? 'Reabrir' : 'Marcar atendido'}</button>
-        <button class="ld-act ld-act--del" onclick="eliminarLead('${esc(String(l.id))}')">Eliminar</button>
+        <button class="ld-act" onclick="quitarDePotenciales('${esc(String(c.id))}')">Quitar de potenciales</button>
       </div>
     </div>`;
   }).join('');
@@ -547,7 +548,7 @@ function filtrarDebounced() {
   _filtT = setTimeout(renderLeads, 200);
 }
 
-/* ── Modal nuevo lead ────────────────────────────────────────── */
+/* ── Modal nuevo lead → crea el contacto directo, sin bandeja intermedia ── */
 function abrirModalLead() {
   ['lf-nombre','lf-tel','lf-email','lf-fuente','lf-mensaje'].forEach(i => { g(i).value = ''; });
   g('lf-propiedad').value = '';
@@ -563,115 +564,61 @@ async function guardarLead() {
   if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); location.href = 'login.html'; return; }
   const btn = g('lf-save-btn');
   btn.disabled = true;
-  const payload = {
+  const ahora = new Date().toISOString();
+  const propId = g('lf-propiedad').value || null;
+  const contacto = {
+    id: 'c_' + Date.now(),
     user_id: uid,
-    mensaje: (g('lf-mensaje').value || '').trim() || null,
+    nombre: nombre.toUpperCase(),
+    telefono: (g('lf-tel').value || '').trim(),
+    email: (g('lf-email').value || '').trim().toLowerCase(),
+    tipo: 'comprador',
+    estatus: ETAPAS[0] ? ETAPAS[0].clave : 'nuevo',
     fuente: (g('lf-fuente').value || '').trim() || null,
-    canal: 'manual',
-    propiedad_id: g('lf-propiedad').value || null,
-    atendido: false,
-    meta: {
-      nombre: nombre,
-      telefono: (g('lf-tel').value || '').trim() || null,
-      email: (g('lf-email').value || '').trim().toLowerCase() || null,
-    },
+    notas: (g('lf-mensaje').value || '').trim() || '',
+    etiquetas: [],
+    operaciones: [],
+    es_potencial: true,
+    created_at: ahora,
+    updated_at: ahora,
   };
   try {
-    const rows = await sbFetch('leads', 'POST', payload);
-    const nuevo = Array.isArray(rows) ? rows[0] : rows;
-    if (nuevo && nuevo.id) leads.unshift(nuevo);
+    await sbFetch('contactos', 'POST', contacto);
+    if (propId) {
+      await sbFetch('contactos_propiedades', 'POST', {
+        user_id: uid, contacto_id: contacto.id, propiedad_id: propId, relacion: 'interes',
+      }).catch(() => {});
+      (interesPorContacto[contacto.id] = interesPorContacto[contacto.id] || []).push(propId);
+    }
+    potenciales.unshift(contacto);
     cerrarModalLead();
     poblarFiltroFuente();
     renderLeads();
-    showToast('Lead guardado');
+    showToast('Contacto creado');
   } catch (e) {
-    alert('No se pudo guardar el lead.\n\n' + (e.message || e));
+    alert('No se pudo guardar.\n\n' + (e.message || e));
   } finally {
     btn.disabled = false;
   }
 }
 
-/* ── Convertir lead → contacto ───────────────────────────────── */
-async function convertirLead(id) {
-  const l = leads.find(x => String(x.id) === id); if (!l) return;
-  const nombre = leadNombre(l);
-  if (!confirm('¿Crear el contacto "' + nombre + '" a partir de este lead?')) return;
-  const uid = await userId();
-  if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
-
-  const ahora = new Date().toISOString();
-  const contacto = {
-    id: 'c_' + Date.now(),
-    user_id: uid,
-    nombre: nombre.toUpperCase(),
-    telefono: leadTel(l) || '',
-    email: leadEmail(l) || '',
-    tipo: 'comprador',
-    estatus: 'nuevo',
-    fuente: l.fuente || null,
-    notas: l.mensaje || '',
-    operaciones: [],
-    created_at: ahora,
-    updated_at: ahora,
-  };
-  try {
-    // 1) Crear contacto
-    await sbFetch('contactos', 'POST', contacto);
-    // 2) Vincular propiedad de interés si la hay
-    if (l.propiedad_id) {
-      await sbFetch('contactos_propiedades', 'POST', {
-        user_id: uid, contacto_id: contacto.id,
-        propiedad_id: l.propiedad_id, relacion: 'interes',
-      }).catch(() => {});
-    }
-    // 3) Dejar rastro en el historial del contacto
-    sbFetch('actividades', 'POST', {
-      user_id: uid, tipo: 'nota',
-      texto: 'Convertido desde lead' + (l.fuente ? ' (' + l.fuente + ')' : ''),
-      contacto_id: contacto.id,
-    }).catch(() => {});
-    // 4) Marcar el lead como atendido y ligado al contacto
-    await sbFetch('leads?id=eq.' + encodeURIComponent(id), 'PATCH',
-      { contacto_id: contacto.id, atendido: true });
-    l.contacto_id = contacto.id;
-    l.atendido = true;
-    contactoIdx[contacto.id] = { id: contacto.id, nombre: contacto.nombre, telefono: contacto.telefono };
-    renderLeads();
-    showToast('Contacto creado');
-  } catch (e) {
-    alert('No se pudo convertir el lead.\n\n' + (e.message || e));
-  }
-}
-
-/* ── Atendido / eliminar ─────────────────────────────────────── */
-async function toggleAtendido(id) {
-  const l = leads.find(x => String(x.id) === id); if (!l) return;
-  const nuevo = !l.atendido;
-  l.atendido = nuevo;               // optimista
+/* ── Quitar de potenciales: apaga la bandera, el contacto sigue existiendo ── */
+async function quitarDePotenciales(id) {
+  const c = potenciales.find(x => String(x.id) === id); if (!c) return;
+  const antes = potenciales.slice();
+  potenciales = potenciales.filter(x => String(x.id) !== id);   // optimista
   renderLeads();
   try {
-    await sbFetch('leads?id=eq.' + encodeURIComponent(id), 'PATCH', { atendido: nuevo });
+    await sbFetch('contactos?id=eq.' + encodeURIComponent(id), 'PATCH', { es_potencial: false });
+    showToast('Quitado de potenciales');
   } catch (e) {
-    l.atendido = !nuevo;
+    potenciales = antes;
     renderLeads();
-    alert('No se pudo actualizar el lead.\n\n' + (e.message || e));
+    alert('No se pudo actualizar.\n\n' + (e.message || e));
   }
 }
 
-async function eliminarLead(id) {
-  if (!confirm('¿Eliminar este lead? Esta acción no se puede deshacer.')) return;
-  try {
-    await sbFetch('leads?id=eq.' + encodeURIComponent(id), 'DELETE');
-    leads = leads.filter(l => String(l.id) !== id);
-    poblarFiltroFuente();
-    renderLeads();
-    showToast('Lead eliminado');
-  } catch (e) {
-    alert('No se pudo eliminar el lead.\n\n' + (e.message || e));
-  }
-}
-
-/* ── Init: espera al shell ───────────────────────────────────── */
+/* ── Init: espera al shell ─────────────────────────────────────── */
 if (window.__brokrShellLoaded) { cargarTodo(); }
 else { window.addEventListener('brokr-shell-ready', cargarTodo, { once: true }); }
 </script>
