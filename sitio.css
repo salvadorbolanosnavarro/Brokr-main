@@ -1,0 +1,208 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   BROQUER · SITIO PÚBLICO DE AGENTES · ESTILOS
+   Estructura HTML idéntica para ambas plantillas — la personalidad visual
+   vive aquí, seleccionada por [data-template="editorial"|"ejecutiva"]
+   en <body>, puesto por sitio-engine.js según lo que el agente eligió.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --st-navy: #05203C;
+  --st-blue: #0062E3;
+  --st-ink: #16161a;
+  --st-mute: #6b6b66;
+  --st-line: #E7E4DC;
+  --st-paper: #FAFAF8;
+  --st-bone: #ffffff;
+  --st-warn: #F55D42;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--st-paper);
+  color: var(--st-ink);
+  -webkit-font-smoothing: antialiased;
+}
+img { max-width: 100%; display: block; }
+a { color: inherit; }
+
+#sitio-root { min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ── No encontrado / error ─────────────────────────────────────────────── */
+.nf-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--st-navy); }
+.nf-box { max-width: 420px; text-align: center; color: #fff; }
+.nf-box h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 12px; }
+.nf-box p { font-size: 14px; color: rgba(255,255,255,.75); line-height: 1.6; margin-bottom: 20px; }
+.nf-link { display: inline-block; padding: 10px 22px; background: #fff; color: var(--st-navy); border-radius: 999px; font-weight: 600; font-size: 13px; text-decoration: none; }
+
+/* ── Botones y elementos compartidos ───────────────────────────────────── */
+.st-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 22px; border-radius: 999px;
+  font-size: 14px; font-weight: 600; text-decoration: none;
+  transition: transform .15s ease, opacity .15s ease;
+}
+.st-btn:hover { transform: translateY(-1px); }
+.st-btn--primary { background: #25D366; color: #fff; }
+
+.st-social {
+  width: 38px; height: 38px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.15); color: #fff;
+  transition: background .15s ease;
+}
+.st-social:hover { background: rgba(255,255,255,.28); }
+
+.st-wa-float {
+  position: fixed; bottom: 22px; right: 22px; z-index: 40;
+  width: 58px; height: 58px; border-radius: 50%;
+  background: #25D366; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 6px 18px rgba(0,0,0,.25);
+  animation: st-pulse 2.4s ease-in-out infinite;
+}
+@keyframes st-pulse { 0%,100% { box-shadow: 0 6px 18px rgba(0,0,0,.25); } 50% { box-shadow: 0 6px 22px rgba(37,211,102,.5); } }
+
+.st-vacio { padding: 40px 20px; text-align: center; color: var(--st-mute); font-size: 14px; }
+
+.st-footer {
+  margin-top: auto;
+  padding: 24px 6vw; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
+  font-size: 12px; color: var(--st-mute); border-top: 1px solid var(--st-line);
+}
+.st-credito { color: var(--st-mute); text-decoration: none; }
+.st-credito:hover { color: var(--st-ink); }
+
+/* ── Testimonios (compartido) ──────────────────────────────────────────── */
+.st-testis { padding: 50px 6vw; }
+.st-testis h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 22px; }
+.st-testis__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.st-testi { background: var(--st-bone); border: 1px solid var(--st-line); border-radius: 14px; padding: 20px; }
+.st-testi__stars { color: var(--st-warn); font-size: 13px; margin-bottom: 8px; letter-spacing: 1px; }
+.st-testi__texto { font-size: 14px; line-height: 1.6; color: var(--st-ink); margin-bottom: 10px; }
+.st-testi__nombre { font-size: 13px; font-weight: 600; color: var(--st-mute); }
+
+/* ── Modal de detalle de propiedad (compartido) ────────────────────────── */
+.st-modal-overlay {
+  position: fixed; inset: 0; background: rgba(5,32,60,.55); z-index: 50;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  backdrop-filter: blur(4px);
+}
+.st-modal {
+  background: #fff; border-radius: 16px; max-width: 640px; width: 100%; max-height: 88vh;
+  overflow-y: auto; position: relative;
+}
+.st-modal__x {
+  position: absolute; top: 14px; right: 14px; z-index: 2;
+  width: 34px; height: 34px; border-radius: 50%; border: none;
+  background: rgba(255,255,255,.9); cursor: pointer; font-size: 15px;
+}
+.st-modal__fotos { display: flex; overflow-x: auto; gap: 2px; scroll-snap-type: x mandatory; }
+.st-modal__fotos img { width: 100%; flex-shrink: 0; scroll-snap-align: start; max-height: 320px; object-fit: cover; }
+.st-modal__body { padding: 22px 24px 26px; }
+.st-modal__precio { font-size: 22px; font-weight: 700; color: var(--st-blue); }
+.st-modal__body h3 { font-size: 19px; font-weight: 700; margin: 6px 0 2px; letter-spacing: -0.01em; }
+.st-modal__ubic { font-size: 13px; color: var(--st-mute); margin-bottom: 10px; }
+.st-modal__specs { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--st-ink); margin-bottom: 14px; }
+.st-modal__specs span { background: var(--st-paper); padding: 5px 12px; border-radius: 999px; }
+.st-modal__desc { font-size: 14px; line-height: 1.6; color: var(--st-ink); margin-bottom: 18px; white-space: pre-line; }
+
+/* Tarjeta de propiedad — estructura compartida */
+.st-card { cursor: pointer; }
+.st-card__foto { position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: 4/3; background: var(--st-line); }
+.st-card__foto img { width: 100%; height: 100%; object-fit: cover; }
+.st-card__sinfoto { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--st-mute); font-size: 12px; }
+.st-card__op {
+  position: absolute; top: 10px; left: 10px;
+  background: rgba(255,255,255,.95); color: var(--st-ink);
+  font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px;
+}
+.st-card__precio { font-size: 17px; font-weight: 700; color: var(--st-blue); margin-top: 10px; }
+.st-card__titulo { font-size: 14px; font-weight: 600; margin-top: 2px; }
+.st-card__ubic { font-size: 12px; color: var(--st-mute); margin-top: 2px; }
+.st-card__specs { display: flex; gap: 10px; margin-top: 8px; font-size: 11px; color: var(--st-mute); }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PLANTILLA "EDITORIAL" — hero a pantalla completa, fotos grandes, tono
+   revista. Navy de fondo, mucho aire, tipografía grande.
+   ═══════════════════════════════════════════════════════════════════════ */
+body[data-template="editorial"] {
+  --acento: var(--st-blue);
+}
+[data-template="editorial"] .st-hero {
+  background: linear-gradient(160deg, var(--st-navy), #0a3a68);
+  color: #fff; padding: 64px 6vw 56px;
+}
+[data-template="editorial"] .st-hero__inner {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  max-width: 640px; margin: 0 auto;
+}
+[data-template="editorial"] .st-hero__foto {
+  width: 112px; height: 112px; border-radius: 50%; overflow: hidden;
+  border: 3px solid rgba(255,255,255,.25); margin-bottom: 20px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.12); font-size: 28px; font-weight: 700;
+}
+[data-template="editorial"] .st-hero__foto img { width: 100%; height: 100%; object-fit: cover; }
+[data-template="editorial"] .st-hero__texto h1 { font-size: clamp(28px, 5vw, 44px); font-weight: 800; letter-spacing: -0.03em; margin: 0 0 8px; }
+[data-template="editorial"] .st-hero__zona { font-size: 13px; color: rgba(255,255,255,.65); margin-bottom: 14px; }
+[data-template="editorial"] .st-hero__bio { font-size: 16px; line-height: 1.6; color: rgba(255,255,255,.85); margin-bottom: 18px; }
+[data-template="editorial"] .st-hero__meta { display: flex; gap: 18px; justify-content: center; font-size: 13px; color: rgba(255,255,255,.7); margin-bottom: 22px; flex-wrap: wrap; }
+[data-template="editorial"] .st-hero__acts { display: flex; align-items: center; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+[data-template="editorial"] .st-props { padding: 56px 6vw; max-width: 1200px; margin: 0 auto; }
+[data-template="editorial"] .st-props h2 { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 26px; text-align: center; }
+[data-template="editorial"] .st-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 28px; }
+[data-template="editorial"] .st-card__foto { border-radius: 16px; }
+[data-template="editorial"] .st-card__precio { font-size: 19px; }
+
+[data-template="editorial"] .st-testis { background: var(--st-bone); }
+[data-template="editorial"] .st-testis h2 { text-align: center; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PLANTILLA "EJECUTIVA" — formal, con panel lateral fijo (foto + datos)
+   y el contenido principal a la derecha. Fondo claro, orden corporativo.
+   ═══════════════════════════════════════════════════════════════════════ */
+body[data-template="ejecutiva"] {
+  --acento: var(--st-blue);
+  background: #F7F5F0;
+}
+[data-template="ejecutiva"] .st-hero {
+  display: grid; grid-template-columns: 300px 1fr; gap: 0;
+  max-width: 1200px; margin: 0 auto; padding: 40px 6vw;
+}
+[data-template="ejecutiva"] .st-hero__inner { display: contents; }
+[data-template="ejecutiva"] .st-hero__foto {
+  grid-column: 1; grid-row: 1 / span 3;
+  width: 100%; aspect-ratio: 1; border-radius: 12px; overflow: hidden;
+  background: var(--st-navy); color: #fff;
+  display: flex; align-items: center; justify-content: center; font-size: 34px; font-weight: 700;
+  margin-right: 28px;
+}
+[data-template="ejecutiva"] .st-hero__foto img { width: 100%; height: 100%; object-fit: cover; }
+[data-template="ejecutiva"] .st-hero__texto { grid-column: 2; padding-top: 6px; }
+[data-template="ejecutiva"] .st-hero__texto h1 { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; color: var(--st-navy); margin: 0 0 6px; }
+[data-template="ejecutiva"] .st-hero__zona { font-size: 13px; color: var(--st-mute); margin-bottom: 14px; font-weight: 500; }
+[data-template="ejecutiva"] .st-hero__bio { font-size: 14px; line-height: 1.65; color: var(--st-ink); margin-bottom: 16px; max-width: 560px; }
+[data-template="ejecutiva"] .st-hero__meta { display: flex; gap: 20px; font-size: 12px; color: var(--st-mute); margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--st-line); }
+[data-template="ejecutiva"] .st-hero__acts { display: flex; align-items: center; gap: 10px; }
+[data-template="ejecutiva"] .st-hero__acts .st-social { background: var(--st-navy); }
+[data-template="ejecutiva"] .st-hero__acts .st-social:hover { background: var(--st-blue); }
+
+[data-template="ejecutiva"] .st-props { padding: 10px 6vw 56px; max-width: 1200px; margin: 0 auto; }
+[data-template="ejecutiva"] .st-props h2 { font-size: 20px; font-weight: 700; color: var(--st-navy); margin-bottom: 20px; padding-top: 20px; border-top: 1px solid var(--st-line); }
+[data-template="ejecutiva"] .st-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 18px; }
+[data-template="ejecutiva"] .st-card { background: #fff; border: 1px solid var(--st-line); border-radius: 10px; padding: 10px; }
+[data-template="ejecutiva"] .st-card__foto { border-radius: 6px; }
+[data-template="ejecutiva"] .st-card__info { padding: 4px 2px 0; }
+
+[data-template="ejecutiva"] .st-testis { max-width: 1200px; margin: 0 auto; }
+[data-template="ejecutiva"] .st-testis h2 { color: var(--st-navy); }
+[data-template="ejecutiva"] .st-testi { border-radius: 8px; }
+
+@media (max-width: 720px) {
+  [data-template="ejecutiva"] .st-hero { grid-template-columns: 1fr; }
+  [data-template="ejecutiva"] .st-hero__foto { grid-column: 1; grid-row: 1; width: 96px; height: 96px; margin: 0 0 16px; }
+  [data-template="ejecutiva"] .st-hero__texto { grid-column: 1; }
+}
