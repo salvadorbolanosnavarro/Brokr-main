@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="apple-touch-icon" href="isotipo-black.png"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Mi sitio · Broquer</title>
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#05203C"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+/* layout owned by app-shell.js (.bk-page is the scroll container) */
+
+.ms-head {
+  padding: 22px 28px 18px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+.ms-head h1 { font-family: var(--font-display); font-size: 32px; font-weight: 600; letter-spacing: -0.03em; }
+.ms-head p { font-size: 13px; color: var(--mute); margin-top: 4px; }
+
+.ms-body { padding: 20px 28px 120px; max-width: 760px; }
+@media (max-width: 720px) { .ms-body { padding: 14px 16px 120px; } .ms-head { padding: 16px 16px 14px; } }
+
+/* Tarjeta de activación — lo primero que ves, es la decisión más importante */
+.ms-activar {
+  background: var(--bone); border: 1px solid var(--line); border-radius: var(--r-lg);
+  padding: 20px; margin-bottom: 24px;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.ms-activar__info { flex: 1; min-width: 220px; }
+.ms-activar__info h3 { font-size: 16px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
+.ms-activar__url {
+  font-size: 13px; color: var(--forest); font-weight: 500; margin-top: 4px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ms-activar__hint { font-size: 12px; color: var(--mute); margin-top: 4px; }
+
+/* Switch */
+.ms-switch { position: relative; width: 48px; height: 28px; flex-shrink: 0; }
+.ms-switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; z-index: 1; }
+.ms-switch__track {
+  position: absolute; inset: 0; background: var(--line-2); border-radius: 999px;
+  transition: background var(--dur) var(--ease);
+}
+.ms-switch__thumb {
+  position: absolute; top: 3px; left: 3px; width: 22px; height: 22px;
+  background: #fff; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  transition: transform var(--dur) var(--ease);
+}
+.ms-switch input:checked ~ .ms-switch__track { background: var(--success); }
+.ms-switch input:checked ~ .ms-switch__thumb { transform: translateX(20px); }
+
+.ms-ver-btn {
+  height: 38px; padding: 0 16px;
+  background: var(--ink); color: var(--paper);
+  border: none; border-radius: var(--r-pill);
+  font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.ms-ver-btn:hover { background: var(--ink-2); }
+
+/* Secciones del formulario */
+.ms-section { margin-bottom: 28px; }
+.ms-section__hdr {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 500;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--mute);
+  padding-bottom: 10px; margin-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.ms-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 14px; }
+.ms-field { display: flex; flex-direction: column; gap: 6px; }
+.ms-field.full { grid-column: 1/-1; }
+.ms-field label { font-size: 12px; font-weight: 500; color: var(--ink-2); }
+.ms-field input, .ms-field textarea, .ms-field select {
+  width: 100%; height: 44px; padding: 0 14px;
+  background: var(--bone); border: 1px solid var(--line-2); border-radius: var(--r);
+  color: var(--ink); font-size: 14px; font-family: inherit; outline: none;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.ms-field input:focus, .ms-field textarea:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(22,22,22,.05); }
+.ms-field textarea { height: auto; min-height: 90px; padding: 12px 14px; resize: vertical; line-height: 1.5; }
+.ms-field .ms-slug-wrap { display: flex; align-items: center; background: var(--bone); border: 1px solid var(--line-2); border-radius: var(--r); overflow: hidden; }
+.ms-field .ms-slug-wrap span { padding: 0 0 0 14px; font-size: 13px; color: var(--mute); white-space: nowrap; }
+.ms-field .ms-slug-wrap input { border: none; background: none; height: 42px; }
+.ms-hint { font-size: 11px; color: var(--mute); }
+.ms-hint.is-err { color: var(--danger); }
+.ms-hint.is-ok { color: var(--success); }
+
+/* Foto de perfil */
+.ms-foto-row { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
+.ms-foto-preview {
+  width: 84px; height: 84px; border-radius: 50%; flex-shrink: 0;
+  background: var(--paper-2); overflow: hidden;
+  display: flex; align-items: center; justify-content: center; color: var(--mute-2);
+}
+.ms-foto-preview img { width: 100%; height: 100%; object-fit: cover; }
+.ms-foto-btn {
+  height: 38px; padding: 0 16px;
+  background: var(--paper-2); border: 1px solid var(--line-2); color: var(--ink);
+  border-radius: var(--r-pill); font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit;
+}
+.ms-foto-btn:hover { background: var(--line); }
+
+/* Plantillas */
+.ms-plantillas { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.ms-plantilla {
+  border: 2px solid var(--line); border-radius: var(--r-lg); padding: 4px; cursor: pointer;
+  transition: border-color var(--dur) var(--ease);
+}
+.ms-plantilla:hover { border-color: var(--line-3); }
+.ms-plantilla.is-active { border-color: var(--forest); }
+.ms-plantilla__preview {
+  height: 130px; border-radius: var(--r); overflow: hidden; position: relative;
+  display: flex; flex-direction: column;
+}
+.ms-plantilla__nombre { padding: 12px 10px 4px; font-size: 13px; font-weight: 600; color: var(--ink); }
+.ms-plantilla__desc { padding: 0 10px 10px; font-size: 11px; color: var(--mute); line-height: 1.4; }
+
+/* Mini-mockups CSS puro para cada plantilla */
+.mock-editorial { background: linear-gradient(135deg,#05203C,#0a3a68); }
+.mock-editorial .m-hero { flex: 1; margin: 10px; border-radius: 4px; background: rgba(255,255,255,.12); display:flex; align-items:flex-end; padding: 8px; }
+.mock-editorial .m-hero span { font-size: 9px; color: #fff; font-weight: 700; }
+.mock-editorial .m-cards { display:flex; gap:4px; padding: 0 10px 10px; }
+.mock-editorial .m-cards div { flex:1; height:22px; background: rgba(255,255,255,.25); border-radius: 3px; }
+
+.mock-ejecutiva { background: #F7F5F0; }
+.mock-ejecutiva .m-top { height: 26px; background: #05203C; margin: 0; }
+.mock-ejecutiva .m-body { flex:1; display:flex; gap:8px; padding: 10px; }
+.mock-ejecutiva .m-side { width: 34%; background: #E4E0D6; border-radius: 3px; }
+.mock-ejecutiva .m-main { flex:1; display:flex; flex-direction:column; gap:5px; }
+.mock-ejecutiva .m-main div { height: 14px; background:#E4E0D6; border-radius:3px; }
+.mock-ejecutiva .m-main div:first-child { width: 70%; height: 10px; background:#0062E3; opacity:.7; }
+
+/* Testimonios */
+.ms-testi-item {
+  background: var(--bone); border: 1px solid var(--line); border-radius: var(--r-lg);
+  padding: 14px 16px; margin-bottom: 10px;
+}
+.ms-testi-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.ms-testi-nombre { font-size: 13px; font-weight: 600; color: var(--ink); }
+.ms-testi-stars { color: var(--warn); font-size: 12px; margin-top: 2px; letter-spacing: 1px; }
+.ms-testi-texto { font-size: 13px; color: var(--ink-2); line-height: 1.5; margin-top: 8px; }
+.ms-testi-del {
+  border: none; background: none; color: var(--mute-2); cursor: pointer; font-size: 16px; line-height: 1;
+  padding: 4px 6px; border-radius: var(--r-sm); flex-shrink: 0;
+}
+.ms-testi-del:hover { color: var(--danger); background: var(--danger-soft); }
+
+.ms-add-testi {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px;
+}
+.ms-add-testi input[type="text"] {
+  flex: 1; min-width: 160px; height: 42px; padding: 0 14px;
+  background: var(--bone); border: 1px solid var(--line-2); border-radius: var(--r);
+  font-family: inherit; font-size: 13px; outline: none;
+}
+.ms-add-testi select {
+  height: 42px; padding: 0 10px; background: var(--bone); border: 1px solid var(--line-2); border-radius: var(--r);
+  font-family: inherit; font-size: 13px;
+}
+.ms-add-testi textarea {
+  width: 100%; min-height: 60px; padding: 10px 14px; margin-top: 8px;
+  background: var(--bone); border: 1px solid var(--line-2); border-radius: var(--r);
+  font-family: inherit; font-size: 13px; outline: none; resize: vertical; line-height: 1.5;
+}
+.ms-add-btn {
+  height: 42px; padding: 0 18px; margin-top: 8px;
+  background: var(--ink); color: var(--paper); border: none; border-radius: var(--r-pill);
+  font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.ms-add-btn:hover { background: var(--ink-2); }
+.ms-add-btn:disabled { opacity: .55; cursor: not-allowed; }
+
+/* Guardar */
+.ms-guardar-bar {
+  position: sticky; bottom: 0; margin-top: 8px;
+  background: var(--paper); border-top: 1px solid var(--line);
+  padding: 14px 0; display: flex; justify-content: flex-end; gap: 10px;
+}
+.ms-guardar-btn {
+  height: 46px; padding: 0 24px;
+  background: var(--ink); color: var(--paper); border: none; border-radius: var(--r-pill);
+  font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.ms-guardar-btn:hover { background: var(--ink-2); }
+.ms-guardar-btn:disabled { opacity: .55; cursor: not-allowed; }
+
+.toast {
+  position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--ink); color: var(--paper); padding: 10px 18px; border-radius: var(--r-pill);
+  font-size: 13px; font-weight: 500; opacity: 0;
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+  z-index: 999; white-space: nowrap; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.ms-loading { padding: 60px 20px; text-align: center; color: var(--mute); font-size: 14px; }
+</style>
+</head>
+<body data-app="mi-sitio">
+
+<div class="ms-head">
+  <h1>Mi sitio</h1>
+  <p>El sitio web público que tus clientes ven cuando les compartes tu link.</p>
+</div>
+
+<div class="ms-body" id="ms-body">
+  <div class="ms-loading">Cargando…</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="app-shell.js" defer></script>
+
+<script>
+function g(id) { return document.getElementById(id); }
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
+const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
+
+async function sbFetch(path, method = 'GET', body = null) {
+  if (!window.brokrSb || !window.brokrSb.rest) {
+    throw new Error('La app aún se está cargando. Intenta de nuevo en un segundo.');
+  }
+  return await window.brokrSb.rest(path, { method, body });
+}
+let _uid = null;
+async function userId() {
+  if (_uid) return _uid;
+  const sb = window.brokrSb;
+  const tok = await sb.ensureToken();
+  if (!tok) return null;
+  try {
+    const r = await fetch(sb.url + '/auth/v1/user', { headers: { apikey: sb.key, Authorization: 'Bearer ' + tok } });
+    if (!r.ok) return null;
+    _uid = (await r.json())?.id || null;
+    return _uid;
+  } catch { return null; }
+}
+
+function showToast(msg) {
+  const t = g('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+let perfil = null;         // fila de usuarios (id, slug, sitio_activo, etc.)
+let testimonios = [];
+let fotoNuevaUrl = null;   // si el usuario sube una foto nueva en esta sesión de edición
+let slugDisponible = null; // null=sin checar, true/false = resultado
+let _slugCheckT = null;
+
+/* ── Carga ─────────────────────────────────────────────────────── */
+async function cargarTodo() {
+  const body = g('ms-body');
+  body.innerHTML = '<div class="ms-loading">Cargando…</div>';
+  const uid = await userId();
+  if (!uid) {
+    body.innerHTML = '<div class="ms-loading">Tu sesión expiró. <a href="login.html">Vuelve a iniciar sesión</a>.</div>';
+    return;
+  }
+  try {
+    const [rows, t] = await Promise.all([
+      sbFetch('usuarios?id=eq.' + encodeURIComponent(uid) + '&select=id,slug,sitio_activo,sitio_template,nombre_publico,foto_url,bio,whatsapp_publico,anos_experiencia,zona_cobertura,redes'),
+      sbFetch('testimonios?select=*&order=created_at.desc&limit=200'),
+    ]);
+    perfil = (Array.isArray(rows) && rows[0]) || { id: uid };
+    perfil.redes = perfil.redes || {};
+    testimonios = Array.isArray(t) ? t : [];
+    render();
+  } catch (e) {
+    body.innerHTML = '<div class="ms-loading">No se pudo cargar. ' + esc(e.message || '') + '</div>';
+  }
+}
+
+function urlSitio(slug) { return 'broquer.app/' + (slug || ''); }
+
+/* ── Render ────────────────────────────────────────────────────── */
+function render() {
+  const body = g('ms-body');
+  const p = perfil;
+  const activo = !!p.sitio_activo;
+  const puedeActivar = !!(p.slug && p.nombre_publico);
+
+  body.innerHTML = `
+    <div class="ms-activar">
+      <div class="ms-activar__info">
+        <h3>${activo ? 'Tu sitio está activo' : 'Tu sitio está apagado'}</h3>
+        ${p.slug ? `<div class="ms-activar__url">${esc(urlSitio(p.slug))}</div>` : `<div class="ms-activar__hint">Configura tu link abajo para poder activarlo.</div>`}
+        ${activo ? '' : (puedeActivar ? '<div class="ms-activar__hint">Listo para activar cuando quieras.</div>' : '<div class="ms-activar__hint">Falta tu link y tu nombre público.</div>')}
+      </div>
+      ${activo ? `<a class="ms-ver-btn" href="https://${esc(urlSitio(p.slug))}" target="_blank">Ver mi sitio ↗</a>` : ''}
+      <label class="ms-switch">
+        <input type="checkbox" id="ms-activo" ${activo ? 'checked' : ''} ${puedeActivar ? '' : 'disabled'} onchange="toggleActivo()"/>
+        <span class="ms-switch__track"></span>
+        <span class="ms-switch__thumb"></span>
+      </label>
+    </div>
+
+    <div class="ms-section">
+      <div class="ms-section__hdr">Perfil público</div>
+      <div class="ms-foto-row">
+        <div class="ms-foto-preview" id="ms-foto-preview">
+          ${p.foto_url ? `<img src="${esc(p.foto_url)}"/>` : `<svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>`}
+        </div>
+        <div>
+          <button type="button" class="ms-foto-btn" onclick="g('ms-foto-input').click()">Cambiar foto</button>
+          <input type="file" id="ms-foto-input" accept="image/*" style="display:none" onchange="subirFoto(this.files[0])"/>
+          <div class="ms-hint" id="ms-foto-progress"></div>
+        </div>
+      </div>
+
+      <div class="ms-row">
+        <div class="ms-field full">
+          <label>Tu link *</label>
+          <div class="ms-slug-wrap">
+            <span>broquer.app/</span>
+            <input id="ms-slug" type="text" placeholder="tu-nombre" value="${esc(p.slug || '')}" oninput="onSlugInput()"/>
+          </div>
+          <div class="ms-hint" id="ms-slug-hint">Solo letras minúsculas, números y guiones.</div>
+        </div>
+      </div>
+      <div class="ms-row">
+        <div class="ms-field full">
+          <label>Nombre público *</label>
+          <input id="ms-nombre" type="text" placeholder="Cómo quieres que te vean tus clientes" value="${esc(p.nombre_publico || '')}"/>
+        </div>
+      </div>
+      <div class="ms-row">
+        <div class="ms-field full">
+          <label>Bio</label>
+          <textarea id="ms-bio" placeholder="Cuéntales quién eres, tu experiencia, tu zona…">${esc(p.bio || '')}</textarea>
+        </div>
+      </div>
+      <div class="ms-row">
+        <div class="ms-field"><label>WhatsApp público</label><input id="ms-whatsapp" type="tel" placeholder="4431234567" value="${esc(p.whatsapp_publico || '')}"/></div>
+        <div class="ms-field"><label>Años de experiencia</label><input id="ms-experiencia" type="number" min="0" value="${p.anos_experiencia ?? ''}"/></div>
+        <div class="ms-field"><label>Zona de cobertura</label><input id="ms-zona" type="text" placeholder="Morelia y alrededores" value="${esc(p.zona_cobertura || '')}"/></div>
+      </div>
+      <div class="ms-row">
+        <div class="ms-field"><label>Instagram</label><input id="ms-instagram" type="text" placeholder="usuario o link" value="${esc(p.redes.instagram || '')}"/></div>
+        <div class="ms-field"><label>Facebook</label><input id="ms-facebook" type="text" placeholder="usuario o link" value="${esc(p.redes.facebook || '')}"/></div>
+        <div class="ms-field"><label>TikTok</label><input id="ms-tiktok" type="text" placeholder="usuario o link" value="${esc(p.redes.tiktok || '')}"/></div>
+      </div>
+    </div>
+
+    <div class="ms-section">
+      <div class="ms-section__hdr">Plantilla</div>
+      <div class="ms-plantillas">
+        <div class="ms-plantilla ${(p.sitio_template || 'editorial') === 'editorial' ? 'is-active' : ''}" onclick="elegirPlantilla('editorial')">
+          <div class="ms-plantilla__preview mock-editorial">
+            <div class="m-hero"><span>NOMBRE AGENTE</span></div>
+            <div class="m-cards"><div></div><div></div><div></div></div>
+          </div>
+          <div class="ms-plantilla__nombre">Editorial</div>
+          <div class="ms-plantilla__desc">Fotos grandes, estilo revista. Ideal si tus fotos de propiedad son tu mejor argumento.</div>
+        </div>
+        <div class="ms-plantilla ${p.sitio_template === 'ejecutiva' ? 'is-active' : ''}" onclick="elegirPlantilla('ejecutiva')">
+          <div class="ms-plantilla__preview mock-ejecutiva">
+            <div class="m-top"></div>
+            <div class="m-body"><div class="m-side"></div><div class="m-main"><div></div><div></div><div></div></div></div>
+          </div>
+          <div class="ms-plantilla__nombre">Ejecutiva</div>
+          <div class="ms-plantilla__desc">Formal y ordenada, con tu ficha al lado. Ideal para un perfil más corporativo.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ms-section">
+      <div class="ms-section__hdr">Testimonios</div>
+      <div id="ms-testimonios-lista">${renderTestimonios()}</div>
+      <div class="ms-add-testi">
+        <input type="text" id="mt-nombre" placeholder="Nombre del cliente"/>
+        <select id="mt-calificacion">
+          <option value="5">★★★★★</option>
+          <option value="4">★★★★☆</option>
+          <option value="3">★★★☆☆</option>
+        </select>
+      </div>
+      <textarea id="mt-texto" placeholder="Lo que te dijo tu cliente…"></textarea>
+      <button class="ms-add-btn" id="mt-add-btn" onclick="agregarTestimonio()">Agregar testimonio</button>
+    </div>
+
+    <div class="ms-guardar-bar">
+      <button class="ms-guardar-btn" id="ms-guardar-btn" onclick="guardarPerfil()">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
+        Guardar cambios
+      </button>
+    </div>
+  `;
+}
+
+function renderTestimonios() {
+  if (!testimonios.length) return '<div class="ms-hint">Aún no tienes testimonios. Agrega el primero abajo.</div>';
+  return testimonios.map(t => `<div class="ms-testi-item">
+    <div class="ms-testi-top">
+      <div>
+        <div class="ms-testi-nombre">${esc(t.nombre_cliente)}</div>
+        ${t.calificacion ? `<div class="ms-testi-stars">${'★'.repeat(t.calificacion)}${'☆'.repeat(5 - t.calificacion)}</div>` : ''}
+      </div>
+      <button class="ms-testi-del" onclick="eliminarTestimonio('${esc(String(t.id))}')" title="Eliminar">×</button>
+    </div>
+    <div class="ms-testi-texto">${esc(t.texto)}</div>
+  </div>`).join('');
+}
+
+/* ── Slug: normalización + verificación de disponibilidad ────────── */
+function normalizarSlug(v) {
+  return String(v || '').toLowerCase().trim()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+}
+function onSlugInput() {
+  const inp = g('ms-slug');
+  const limpio = normalizarSlug(inp.value);
+  if (limpio !== inp.value) inp.value = limpio;
+  slugDisponible = null;
+  clearTimeout(_slugCheckT);
+  const hint = g('ms-slug-hint');
+  if (!limpio) { hint.textContent = 'Solo letras minúsculas, números y guiones.'; hint.className = 'ms-hint'; return; }
+  if (limpio === (perfil.slug || '')) { hint.textContent = 'Este ya es tu link actual.'; hint.className = 'ms-hint is-ok'; slugDisponible = true; return; }
+  hint.textContent = 'Verificando disponibilidad…';
+  hint.className = 'ms-hint';
+  _slugCheckT = setTimeout(async () => {
+    try {
+      const rows = await sbFetch('usuarios?select=id&slug=eq.' + encodeURIComponent(limpio) + '&limit=1');
+      const ocupado = Array.isArray(rows) && rows.length > 0;
+      slugDisponible = !ocupado;
+      hint.textContent = ocupado ? 'Ese link ya lo tiene otro agente.' : 'Disponible.';
+      hint.className = ocupado ? 'ms-hint is-err' : 'ms-hint is-ok';
+    } catch { hint.textContent = 'No se pudo verificar, intenta de nuevo.'; hint.className = 'ms-hint is-err'; }
+  }, 500);
+}
+
+/* ── Foto de perfil (mismo bucket y patrón que propiedades.html) ─── */
+async function subirFoto(file) {
+  if (!file) return;
+  const progress = g('ms-foto-progress');
+  const sb = window.brokrSb;
+  const token = sb ? await sb.ensureToken() : null;
+  if (!token) { progress.textContent = 'Tu sesión expiró. Vuelve a iniciar sesión.'; return; }
+  progress.textContent = 'Subiendo…';
+  try {
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const uid = await userId();
+    const name = `perfil_${uid}_${Date.now()}.${ext}`;
+    const r = await fetch(`${SB_URL}/storage/v1/object/fotos-propiedades/${name}`, {
+      method: 'POST',
+      headers: { apikey: SB_KEY, Authorization: 'Bearer ' + token, 'Content-Type': file.type, 'x-upsert': 'true' },
+      body: file,
+    });
+    if (!r.ok) throw new Error(await r.text());
+    fotoNuevaUrl = `${SB_URL}/storage/v1/object/public/fotos-propiedades/${name}`;
+    g('ms-foto-preview').innerHTML = `<img src="${esc(fotoNuevaUrl)}"/>`;
+    progress.textContent = 'Lista — no olvides Guardar cambios.';
+  } catch (e) {
+    progress.textContent = 'Error al subir: ' + (e.message || e);
+  }
+}
+
+/* ── Plantilla ─────────────────────────────────────────────────── */
+function elegirPlantilla(clave) {
+  perfil.sitio_template = clave;
+  document.querySelectorAll('.ms-plantilla').forEach((el, i) => {
+    el.classList.toggle('is-active', (i === 0 ? 'editorial' : 'ejecutiva') === clave);
+  });
+}
+
+/* ── Activar / desactivar ──────────────────────────────────────── */
+async function toggleActivo() {
+  const chk = g('ms-activo');
+  const nuevo = chk.checked;
+  try {
+    await sbFetch('usuarios?id=eq.' + encodeURIComponent(perfil.id), 'PATCH', { sitio_activo: nuevo });
+    perfil.sitio_activo = nuevo;
+    render();
+    showToast(nuevo ? 'Tu sitio está activo' : 'Tu sitio se apagó');
+  } catch (e) {
+    chk.checked = !nuevo;
+    alert('No se pudo actualizar.\n\n' + (e.message || e));
+  }
+}
+
+/* ── Guardar perfil completo ───────────────────────────────────── */
+async function guardarPerfil() {
+  const slug = normalizarSlug(g('ms-slug').value);
+  const nombre = (g('ms-nombre').value || '').trim();
+  if (!slug) { alert('Tu link no puede estar vacío.'); g('ms-slug').focus(); return; }
+  if (!nombre) { alert('Tu nombre público es obligatorio.'); g('ms-nombre').focus(); return; }
+  if (slugDisponible === false) { alert('Ese link ya lo tiene otro agente. Elige otro.'); g('ms-slug').focus(); return; }
+
+  const btn = g('ms-guardar-btn');
+  btn.disabled = true;
+  const payload = {
+    slug,
+    nombre_publico: nombre,
+    bio: (g('ms-bio').value || '').trim(),
+    whatsapp_publico: (g('ms-whatsapp').value || '').trim(),
+    anos_experiencia: g('ms-experiencia').value ? parseInt(g('ms-experiencia').value, 10) : null,
+    zona_cobertura: (g('ms-zona').value || '').trim(),
+    sitio_template: perfil.sitio_template || 'editorial',
+    redes: {
+      instagram: (g('ms-instagram').value || '').trim(),
+      facebook: (g('ms-facebook').value || '').trim(),
+      tiktok: (g('ms-tiktok').value || '').trim(),
+    },
+  };
+  if (fotoNuevaUrl) payload.foto_url = fotoNuevaUrl;
+
+  try {
+    await sbFetch('usuarios?id=eq.' + encodeURIComponent(perfil.id), 'PATCH', payload);
+    Object.assign(perfil, payload);
+    fotoNuevaUrl = null;
+    render();
+    showToast('Cambios guardados');
+  } catch (e) {
+    alert('No se pudo guardar.\n\n' + (e.message || e));
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/* ── Testimonios ───────────────────────────────────────────────── */
+async function agregarTestimonio() {
+  const nombre = (g('mt-nombre').value || '').trim();
+  const texto = (g('mt-texto').value || '').trim();
+  const calificacion = parseInt(g('mt-calificacion').value, 10);
+  if (!nombre || !texto) { alert('Falta el nombre del cliente o el texto del testimonio.'); return; }
+  const uid = await userId();
+  if (!uid) { alert('Tu sesión expiró.'); return; }
+  const btn = g('mt-add-btn');
+  btn.disabled = true;
+  try {
+    const rows = await sbFetch('testimonios', 'POST', { user_id: uid, nombre_cliente: nombre, texto, calificacion });
+    const nuevo = Array.isArray(rows) ? rows[0] : rows;
+    if (nuevo && nuevo.id) testimonios.unshift(nuevo);
+    g('mt-nombre').value = ''; g('mt-texto').value = '';
+    g('ms-testimonios-lista').innerHTML = renderTestimonios();
+    showToast('Testimonio agregado');
+  } catch (e) {
+    alert('No se pudo guardar.\n\n' + (e.message || e));
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function eliminarTestimonio(id) {
+  if (!confirm('¿Eliminar este testimonio?')) return;
+  try {
+    await sbFetch('testimonios?id=eq.' + encodeURIComponent(id), 'DELETE');
+    testimonios = testimonios.filter(t => String(t.id) !== id);
+    g('ms-testimonios-lista').innerHTML = renderTestimonios();
+  } catch (e) {
+    alert('No se pudo eliminar.\n\n' + (e.message || e));
+  }
+}
+
+/* ── Init ──────────────────────────────────────────────────────── */
+if (window.__brokrShellLoaded) { cargarTodo(); }
+else { window.addEventListener('brokr-shell-ready', cargarTodo, { once: true }); }
+</script>
+
+</body>
+</html>
