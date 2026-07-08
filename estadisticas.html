@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="apple-touch-icon" href="isotipo-black.png"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Estadísticas · Broquer</title>
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#05203C"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+/* layout owned by app-shell.js (.bk-page is the scroll container) */
+
+.es-head {
+  padding: 22px 28px 18px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: flex-end;
+  gap: 16px; flex-wrap: wrap;
+}
+.es-head h1 { font-family: var(--font-display); font-size: 32px; font-weight: 600; letter-spacing: -0.03em; }
+
+.es-periodo {
+  display: inline-flex; background: var(--paper-2); border-radius: var(--r-pill); padding: 3px;
+  gap: 2px;
+}
+.es-periodo button {
+  border: none; background: none; cursor: pointer;
+  padding: 8px 16px; border-radius: var(--r-pill);
+  font-family: inherit; font-size: 13px; font-weight: 500; color: var(--mute);
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.es-periodo button.active { background: var(--ink); color: var(--paper); font-weight: 600; }
+
+.es-body { padding: 20px 28px 120px; max-width: 980px; }
+@media (max-width: 720px) { .es-body { padding: 14px 16px 120px; } .es-head { padding: 16px 16px 14px; } }
+
+/* Sección */
+.es-section { margin-bottom: 32px; }
+.es-section__hdr {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 500;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--mute);
+  padding-bottom: 10px; margin-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* Tarjetas de KPI */
+.es-kpis {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px; margin-bottom: 18px;
+}
+.es-kpi {
+  background: var(--bone); border: 1px solid var(--line);
+  border-radius: var(--r-lg); padding: 16px 18px;
+}
+.es-kpi__n {
+  font-family: var(--font-display); font-size: 28px; font-weight: 600;
+  letter-spacing: -0.02em; color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.es-kpi__lbl { font-size: 12px; color: var(--mute); margin-top: 2px; }
+.es-kpi__n.is-good { color: var(--success); }
+.es-kpi__n.is-warn { color: var(--warn); }
+
+/* Barras horizontales (fuente / etapa) */
+.es-bars { background: var(--bone); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 6px 18px; }
+.es-bar-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.es-bar-row:last-child { border-bottom: none; }
+.es-bar-row__lbl { width: 130px; flex-shrink: 0; font-size: 13px; font-weight: 500; color: var(--ink); letter-spacing: -0.005em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.es-bar-track { flex: 1; height: 8px; background: var(--paper-2); border-radius: 4px; overflow: hidden; }
+.es-bar-fill { height: 100%; border-radius: 4px; background: var(--forest); transition: width .4s var(--ease); }
+.es-bar-row__n { width: 76px; flex-shrink: 0; text-align: right; font-size: 12px; color: var(--mute); font-variant-numeric: tabular-nums; }
+
+/* Lista de inmuebles top */
+.es-props { display: flex; flex-direction: column; gap: 8px; }
+.es-prop-row {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--bone); border: 1px solid var(--line); border-radius: var(--r-lg);
+  padding: 12px 16px;
+}
+.es-prop-row__rank {
+  width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+  background: var(--paper-2); color: var(--ink-2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+}
+.es-prop-row__info { flex: 1; min-width: 0; }
+.es-prop-row__title { font-size: 13px; font-weight: 600; color: var(--ink); letter-spacing: -0.005em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.es-prop-row__sub { font-size: 11px; color: var(--mute); margin-top: 1px; }
+.es-prop-row__n { font-family: var(--font-mono); font-size: 13px; color: var(--forest); font-weight: 600; flex-shrink: 0; }
+
+.es-empty {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  padding: 32px 20px; gap: 6px; color: var(--mute);
+  background: var(--bone); border: 1px solid var(--line); border-radius: var(--r-lg);
+}
+.es-empty p { font-size: 13px; margin: 0; max-width: 300px; line-height: 1.5; }
+
+.es-loading { padding: 60px 20px; text-align: center; color: var(--mute); font-size: 14px; }
+</style>
+</head>
+<body data-app="estadisticas">
+
+<div class="es-head">
+  <h1>Estadísticas</h1>
+  <div class="es-periodo" id="es-periodo">
+    <button data-p="semana" onclick="setPeriodo('semana')">Semana</button>
+    <button data-p="mes" onclick="setPeriodo('mes')">Mes</button>
+    <button data-p="todo" class="active" onclick="setPeriodo('todo')">Todo</button>
+  </div>
+</div>
+
+<div class="es-body" id="es-body">
+  <div class="es-loading">Cargando estadísticas…</div>
+</div>
+
+<script src="app-shell.js" defer></script>
+
+<script>
+function g(id) { return document.getElementById(id); }
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+async function sbFetch(path) {
+  if (!window.brokrSb || !window.brokrSb.rest) {
+    throw new Error('La app aún se está cargando. Intenta de nuevo en un segundo.');
+  }
+  return await window.brokrSb.rest(path, { method: 'GET' });
+}
+
+/* ── Etapas del pipeline — mismo criterio que contactos.html ─── */
+const ETAPAS_DEFAULT = [
+  { clave:'nuevo',      nombre:'Nuevo',      color:'var(--forest)'  },
+  { clave:'activo',     nombre:'Activo',     color:'var(--success)' },
+  { clave:'contactado', nombre:'Contactado', color:'var(--warn)'    },
+  { clave:'cerrado',    nombre:'Cerrado',    color:'var(--ink-3)'   },
+];
+let ETAPAS = ETAPAS_DEFAULT.slice();
+function etapaInfo(clave) {
+  const k = String(clave || 'nuevo').toLowerCase();
+  return ETAPAS.find(e => e.clave === k) || { clave:k, nombre:k.charAt(0).toUpperCase()+k.slice(1), color:'var(--mute)' };
+}
+
+/* ── Estado ──────────────────────────────────────────────────── */
+let contactos = [], props = [], interesRows = [];
+let periodoActual = 'todo';
+
+function fechaDesde(periodo) {
+  if (periodo === 'todo') return null;
+  const d = new Date();
+  d.setHours(0,0,0,0);
+  d.setDate(d.getDate() - (periodo === 'semana' ? 7 : 30));
+  return d;
+}
+function enPeriodo(iso) {
+  if (periodoActual === 'todo') return true;
+  if (!iso) return false;
+  const desde = fechaDesde(periodoActual);
+  return new Date(iso) >= desde;
+}
+
+/* ── Carga: un solo lote paralelo ─────────────────────────────── */
+async function cargarTodo() {
+  const body = g('es-body');
+  body.innerHTML = '<div class="es-loading">Cargando estadísticas…</div>';
+  try {
+    const [et, c, p, ip] = await Promise.all([
+      sbFetch('pipeline_etapas?select=nombre,orden,color&order=orden.asc').catch(() => []),
+      sbFetch('contactos?select=id,estatus,fuente,es_potencial,created_at,fecha_cambio_estatus&limit=3000'),
+      sbFetch('propiedades?select=id,titulo,clave_interna,archivada&limit=2000'),
+      sbFetch('contactos_propiedades?select=contacto_id,propiedad_id,relacion&relacion=eq.interes&limit=5000'),
+    ]);
+    if (Array.isArray(et) && et.length) {
+      ETAPAS = et.map(r => ({ clave: String(r.nombre || '').toLowerCase().trim(), nombre: r.nombre, color: r.color || 'var(--forest)' })).filter(e => e.clave);
+    }
+    contactos = Array.isArray(c) ? c : [];
+    props = Array.isArray(p) ? p : [];
+    interesRows = Array.isArray(ip) ? ip : [];
+    render();
+  } catch (e) {
+    body.innerHTML = '<div class="es-empty"><p>No se pudieron cargar las estadísticas. ' + esc(e.message || '') + '</p></div>';
+  }
+}
+
+function setPeriodo(p) {
+  periodoActual = p;
+  document.querySelectorAll('#es-periodo button').forEach(b => b.classList.toggle('active', b.dataset.p === p));
+  render();
+}
+
+/* ── Cálculos ─────────────────────────────────────────────────── */
+function calcCaptacion() {
+  const enP = contactos.filter(c => enPeriodo(c.created_at));
+  const total = enP.length;
+  const avanzados = enP.filter(c => String(c.estatus || 'nuevo').toLowerCase() !== 'nuevo').length;
+  const pct = total ? Math.round((avanzados / total) * 100) : 0;
+  const potencialesActivos = contactos.filter(c => c.es_potencial).length; // snapshot, no depende del periodo
+  const porFuente = {};
+  enP.forEach(c => { const f = c.fuente || 'Sin especificar'; porFuente[f] = (porFuente[f] || 0) + 1; });
+  const fuentes = Object.entries(porFuente).sort((a,b) => b[1]-a[1]);
+  return { total, avanzados, pct, potencialesActivos, fuentes };
+}
+
+function calcPipeline() {
+  const enP = contactos.filter(c => enPeriodo(c.created_at));
+  const porEtapa = {};
+  enP.forEach(c => { const k = String(c.estatus || 'nuevo').toLowerCase(); porEtapa[k] = (porEtapa[k] || 0) + 1; });
+  // Tiempo promedio hasta el primer cambio de etapa (proxy de "qué tan rápido avanzan")
+  const conCambio = enP.filter(c => c.fecha_cambio_estatus && c.created_at && c.fecha_cambio_estatus !== c.created_at);
+  let diasProm = null;
+  if (conCambio.length) {
+    const totalDias = conCambio.reduce((acc, c) => acc + (new Date(c.fecha_cambio_estatus) - new Date(c.created_at)) / 86400000, 0);
+    diasProm = Math.round(totalDias / conCambio.length);
+  }
+  return { total: enP.length, porEtapa, diasProm, conCambio: conCambio.length };
+}
+
+function calcInmuebles() {
+  const activos = props.filter(p => !p.archivada).length;
+  const contactoIdx = Object.fromEntries(contactos.map(c => [String(c.id), c]));
+  const conteo = {};       // propiedad_id -> total interesados
+  const conteoPot = {};    // propiedad_id -> de esos, cuántos son potenciales activos ahora
+  interesRows.forEach(r => {
+    const pid = String(r.propiedad_id);
+    conteo[pid] = (conteo[pid] || 0) + 1;
+    const contacto = contactoIdx[String(r.contacto_id)];
+    if (contacto && contacto.es_potencial) conteoPot[pid] = (conteoPot[pid] || 0) + 1;
+  });
+  const propIdx = Object.fromEntries(props.map(p => [String(p.id), p]));
+  const top = Object.entries(conteo)
+    .map(([id, n]) => ({ prop: propIdx[String(id)], n, potenciales: conteoPot[id] || 0 }))
+    .filter(x => x.prop)
+    .sort((a,b) => b.n - a.n)
+    .slice(0, 8);
+  return { activos, total: props.length, top };
+}
+
+/* ── Render ───────────────────────────────────────────────────── */
+function barra(color, pct) {
+  return `<div class="es-bar-track"><div class="es-bar-fill" style="width:${Math.max(pct,3)}%;background:${color}"></div></div>`;
+}
+
+function render() {
+  const L = calcCaptacion();
+  const P = calcPipeline();
+  const I = calcInmuebles();
+  const body = g('es-body');
+
+  const maxFuente = L.fuentes.length ? L.fuentes[0][1] : 1;
+  const maxEtapaN = Math.max(1, ...ETAPAS.map(e => P.porEtapa[e.clave] || 0));
+
+  body.innerHTML = `
+    <div class="es-section">
+      <div class="es-section__hdr">Captación</div>
+      <div class="es-kpis">
+        <div class="es-kpi"><div class="es-kpi__n">${L.total}</div><div class="es-kpi__lbl">Contactos nuevos en el periodo</div></div>
+        <div class="es-kpi"><div class="es-kpi__n is-good">${L.potencialesActivos}</div><div class="es-kpi__lbl">Potenciales activos ahora</div></div>
+        <div class="es-kpi"><div class="es-kpi__n ${L.pct >= 50 ? 'is-good' : L.pct < 25 ? 'is-warn' : ''}">${L.pct}%</div><div class="es-kpi__lbl">Ya avanzaron de etapa "Nuevo"</div></div>
+      </div>
+      ${L.fuentes.length ? `<div class="es-bars">
+        ${L.fuentes.map(([f,n]) => `<div class="es-bar-row">
+          <div class="es-bar-row__lbl">${esc(f)}</div>
+          ${barra('var(--forest)', (n/maxFuente)*100)}
+          <div class="es-bar-row__n">${n}</div>
+        </div>`).join('')}
+      </div>` : `<div class="es-empty"><p>Sin contactos nuevos en este periodo. Aquí verás de dónde vienen en cuanto entren.</p></div>`}
+    </div>
+
+    <div class="es-section">
+      <div class="es-section__hdr">Pipeline</div>
+      <div class="es-kpis">
+        <div class="es-kpi"><div class="es-kpi__n">${P.total}</div><div class="es-kpi__lbl">Contactos en el periodo</div></div>
+        <div class="es-kpi"><div class="es-kpi__n">${P.diasProm != null ? P.diasProm : '—'}</div><div class="es-kpi__lbl">Días promedio al 1er cambio de etapa${P.diasProm != null ? ' (' + P.conCambio + ' contactos)' : ''}</div></div>
+      </div>
+      ${P.total ? `<div class="es-bars">
+        ${ETAPAS.filter(e => P.porEtapa[e.clave]).map(e => `<div class="es-bar-row">
+          <div class="es-bar-row__lbl">${esc(e.nombre)}</div>
+          ${barra(e.color, ((P.porEtapa[e.clave]||0)/maxEtapaN)*100)}
+          <div class="es-bar-row__n">${P.porEtapa[e.clave] || 0}</div>
+        </div>`).join('')}
+      </div>` : `<div class="es-empty"><p>Sin contactos nuevos en este periodo.</p></div>`}
+    </div>
+
+    <div class="es-section">
+      <div class="es-section__hdr">Inmuebles con más interés</div>
+      <div class="es-kpis">
+        <div class="es-kpi"><div class="es-kpi__n">${I.activos}</div><div class="es-kpi__lbl">Inmuebles activos</div></div>
+        <div class="es-kpi"><div class="es-kpi__n">${I.total}</div><div class="es-kpi__lbl">Inmuebles totales</div></div>
+      </div>
+      ${I.top.length ? `<div class="es-props">
+        ${I.top.map((x, i) => `<div class="es-prop-row">
+          <div class="es-prop-row__rank">${i+1}</div>
+          <div class="es-prop-row__info">
+            <div class="es-prop-row__title">${esc(x.prop.clave_interna ? x.prop.clave_interna + ' · ' + (x.prop.titulo||'') : (x.prop.titulo || 'Sin título'))}</div>
+            <div class="es-prop-row__sub">${x.n} interesado${x.n===1?'':'s'}${x.potenciales ? ' · ' + x.potenciales + ' potencial' + (x.potenciales===1?'':'es') + ' activo' + (x.potenciales===1?'':'s') : ''}</div>
+
+          </div>
+          <div class="es-prop-row__n">${x.n}</div>
+        </div>`).join('')}
+      </div>` : `<div class="es-empty"><p>Todavía no hay interesados vinculados a tus inmuebles. Cuando marques un contacto como interesado en una propiedad, aquí verás el ranking.</p></div>`}
+    </div>
+  `;
+}
+
+/* ── Init: espera al shell ───────────────────────────────────── */
+if (window.__brokrShellLoaded) { cargarTodo(); }
+else { window.addEventListener('brokr-shell-ready', cargarTodo, { once: true }); }
+</script>
+
+</body>
+</html>
