@@ -198,7 +198,7 @@
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-.ms-loading { padding: 60px 20px; text-align: center; color: var(--mute); font-size: 14px; }
+.ms-loading { padding: 24px; color: var(--mute); font-size: 14px; }.ms-loading-card{display:grid;gap:12px;max-width:720px}.ms-skeleton{height:18px;border-radius:12px;background:linear-gradient(90deg,var(--paper-2),#fff,var(--paper-2));background-size:220% 100%;animation:ms-shimmer 1.3s infinite}.ms-skeleton.hero{height:120px;border-radius:var(--r-lg)}@keyframes ms-shimmer{to{background-position:-220% 0}}
 </style>
 </head>
 <body data-app="mi-sitio">
@@ -209,7 +209,7 @@
 </div>
 
 <div class="ms-body" id="ms-body">
-  <div class="ms-loading">Cargando…</div>
+  <div class="ms-loading"><div class="ms-loading-card"><div class="ms-skeleton hero"></div><div class="ms-skeleton"></div><div class="ms-skeleton" style="width:72%"></div></div></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -262,7 +262,7 @@ let _slugCheckT = null;
 /* ── Carga ─────────────────────────────────────────────────────── */
 async function cargarTodo() {
   const body = g('ms-body');
-  body.innerHTML = '<div class="ms-loading">Cargando…</div>';
+  body.innerHTML = '<div class="ms-loading"><div class="ms-loading-card"><div class="ms-skeleton hero"></div><div class="ms-skeleton"></div><div class="ms-skeleton" style="width:72%"></div></div></div>';
   const uid = await userId();
   if (!uid) {
     body.innerHTML = '<div class="ms-loading">Tu sesión expiró. <a href="login.html">Vuelve a iniciar sesión</a>.</div>';
@@ -535,6 +535,7 @@ async function agregarTestimonio() {
   const texto = (g('mt-texto').value || '').trim();
   const calificacion = parseInt(g('mt-calificacion').value, 10);
   if (!nombre || !texto) { alert('Falta el nombre del cliente o el texto del testimonio.'); return; }
+  if (/^(test|prueba|demo|lorem|asdf|qwerty|fvds|fds|sdf|xxx)$/i.test(nombre) || /(fvds|sdfv|lorem ipsum|texto de prueba|:os mejores|\bos mejores\b)/i.test(texto)) { alert('Revisa el testimonio: parece contenido de prueba. Publica solo comentarios reales de clientes.'); return; }
   const uid = await userId();
   if (!uid) { alert('Tu sesión expiró.'); return; }
   const btn = g('mt-add-btn');
