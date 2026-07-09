@@ -181,8 +181,6 @@ input{font-family:inherit}
   .adm-det__body{padding:18px;grid-template-columns:1fr}
   .adm-actions{padding:14px 18px calc(env(safe-area-inset-bottom,0px) + 14px)}
 }
-
-.adm-side__title img{height:22px;width:auto;display:block}.adm-hero{background:linear-gradient(145deg,var(--brand-navy),#0B1E33);color:#fff;border-radius:var(--r-lg);padding:18px;margin-bottom:14px;box-shadow:var(--shadow-md)}.adm-hero__eyebrow{font-size:var(--fs-xs);color:rgba(255,255,255,.66);font-weight:700;letter-spacing:.08em;text-transform:uppercase}.adm-hero__title{font-family:var(--font-display);font-size:var(--fs-h3);font-weight:800;letter-spacing:-.03em;margin-top:4px}.adm-hero__sub{font-size:var(--fs-xs);color:rgba(255,255,255,.70);margin-top:4px}.adm-stat{box-shadow:var(--shadow-xs)}.adm-stat__v.is-loading,.adm-skel{position:relative;color:transparent!important;overflow:hidden;background:rgba(16,24,32,.08);border-radius:10px}.adm-stat__v.is-loading::after,.adm-skel::after{content:'';position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.62),transparent);animation:adm-shimmer 1.35s infinite}@keyframes adm-shimmer{to{transform:translateX(100%)}}.adm-bottom-nav{display:none}@media(max-width:880px){.adm-bottom-nav{display:flex;position:fixed;left:0;right:0;bottom:0;height:64px;padding-bottom:env(safe-area-inset-bottom,0);background:rgba(255,255,255,.94);border-top:1px solid var(--line);backdrop-filter:blur(12px);z-index:30;align-items:center;justify-content:space-around}.adm-bottom-nav a{font-size:11px;font-weight:700;color:var(--mute);text-decoration:none;display:grid;gap:3px;place-items:center}.adm-bottom-nav a.is-on{color:var(--ink)}}
 </style>
 </head>
 <body data-app="admin">
@@ -193,14 +191,16 @@ input{font-family:inherit}
   <aside class="adm-side" id="adm-side">
     <div class="adm-side__top">
       <div class="adm-side__head">
-        <h1 class="adm-side__title"><img src="logotipo-broquer.svg" alt="Broquer"/><span>Admin</span></h1>
+        <h1 class="adm-side__title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 7l9 6 9-6"/></svg>
+          Admin
+        </h1>
         <a class="adm-side__back" href="index.html">Volver</a>
       </div>
-      <div class="adm-hero"><div class="adm-hero__eyebrow">Panel administrativo</div><div class="adm-hero__title">Control de usuarios</div><div class="adm-hero__sub">Roles, acceso, suscripciones y uso de IA.</div></div>
       <div class="adm-stats">
-        <div class="adm-stat"><div class="adm-stat__v is-loading" id="s-total">00</div><div class="adm-stat__l">Total</div></div>
-        <div class="adm-stat"><div class="adm-stat__v is-loading" id="s-pagados">00</div><div class="adm-stat__l">Activos</div></div>
-        <div class="adm-stat"><div class="adm-stat__v is-loading" id="s-inactivos">00</div><div class="adm-stat__l">Bloq.</div></div>
+        <div class="adm-stat"><div class="adm-stat__v" id="s-total">—</div><div class="adm-stat__l">Total</div></div>
+        <div class="adm-stat"><div class="adm-stat__v" id="s-pagados">—</div><div class="adm-stat__l">Activos</div></div>
+        <div class="adm-stat"><div class="adm-stat__v" id="s-inactivos">—</div><div class="adm-stat__l">Bloq.</div></div>
       </div>
       <div class="adm-search">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -218,7 +218,7 @@ input{font-family:inherit}
     </div>
 
     <div class="adm-list" id="adm-list">
-      <div class="adm-empty"><span class="adm-skel" style="display:block;height:48px;margin-bottom:8px"></span><span class="adm-skel" style="display:block;height:48px;margin-bottom:8px"></span><span class="adm-skel" style="display:block;height:48px"></span></div>
+      <div class="adm-empty">Cargando…</div>
     </div>
   </aside>
 
@@ -370,7 +370,6 @@ input{font-family:inherit}
 
 </div>
 
-<nav class="adm-bottom-nav" aria-label="Navegación admin"><a href="index.html">Inicio</a><a class="is-on" href="admin.html">Broq</a><a href="login.html">Perfil</a></nav>
 <div class="adm-toast" id="toast"></div>
 
 <script>
@@ -508,9 +507,6 @@ function updateStats(){
     )
   ).length;
   const inactivos = users.filter(u => u.activo === false).length;
-  document.getElementById('s-total').classList.remove('is-loading');
-  document.getElementById('s-pagados').classList.remove('is-loading');
-  document.getElementById('s-inactivos').classList.remove('is-loading');
   document.getElementById('s-total').textContent     = total;
   document.getElementById('s-pagados').textContent   = activos;
   document.getElementById('s-inactivos').textContent = inactivos;

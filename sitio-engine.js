@@ -58,24 +58,6 @@ function redSocialLink(tipo, valor) {
   return null;
 }
 
-
-function esContenidoDePrueba(s) {
-  const v = String(s || '').trim();
-  if (!v) return true;
-  if (/^(test|prueba|demo|lorem|asdf|qwerty|fvds|fds|sdfs?|xxx|\W+)$/i.test(v)) return true;
-  if (/(fvds|sdfv|lorem ipsum|texto de prueba|\bos mejores\b|:os mejores)/i.test(v)) return true;
-  if (v.length < 3) return true;
-  return false;
-}
-function fotoPropiedadValida(url) {
-  const v = String(url || '').trim();
-  if (!/^https?:\/\//i.test(v)) return false;
-  return !/(screenshot|captura|spreadsheet|dashboard|placeholder|isotipo|logotipo|logo-broquer|brokr-logo)/i.test(v);
-}
-function fotosPropiedadValidas(p) {
-  return (Array.isArray(p.fotos) ? p.fotos : []).filter(fotoPropiedadValida);
-}
-
 function tipoLegible(t) {
   const mapa = { casa:'Casa', departamento:'Departamento', depa:'Departamento', terreno:'Terreno', local:'Local comercial', oficina:'Oficina', bodega:'Bodega', edificio:'Edificio' };
   const k = String(t || '').toLowerCase();
@@ -153,9 +135,9 @@ async function cargarSitio() {
     ]);
   } catch (e) { /* si truena, mostramos el sitio igual sin esas secciones */ }
 
-  _propsTodas = (Array.isArray(props) ? props : []).filter(p => !esContenidoDePrueba(p.titulo) && (!p.descripcion || !esContenidoDePrueba(p.descripcion)));
+  _propsTodas = Array.isArray(props) ? props : [];
   _propsVisibles = _propsTodas.slice();
-  render(perfil, (Array.isArray(testimonios) ? testimonios : []).filter(t => !esContenidoDePrueba(t.nombre_cliente) && !esContenidoDePrueba(t.texto)));
+  render(perfil, Array.isArray(testimonios) ? testimonios : []);
 }
 
 function setMetaDescripcion(texto) {
@@ -423,12 +405,11 @@ function limpiarFiltros() {
 
 /* ── Tarjeta + modal de detalle ─────────────────────────────────────────── */
 function tarjetaProp(p, i) {
-  const fotosValidas = fotosPropiedadValidas(p);
-  const foto = fotosValidas[0] || null;
+  const foto = Array.isArray(p.fotos) && p.fotos[0] ? p.fotos[0] : null;
   const ubic = [p.colonia, p.ciudad].filter(Boolean).join(', ');
   return `<article class="st-card" data-idx="${i}">
     <div class="st-card__foto">
-      ${foto ? `<img src="${esc(foto)}" loading="lazy" decoding="async" alt=""/>` : `<div class="st-card__sinfoto">Foto profesional pendiente</div>`}
+      ${foto ? `<img src="${esc(foto)}" loading="lazy" decoding="async" alt=""/>` : `<div class="st-card__sinfoto">Sin foto</div>`}
       <span class="st-card__op">${p.operacion === 'renta' ? 'Renta' : 'Venta'}</span>
     </div>
     <div class="st-card__info">
@@ -448,7 +429,7 @@ function toggleDetalleProp(idxStr) {
   const idx = parseInt(idxStr, 10);
   const p = _propsVisibles[idx];
   if (!p) return;
-  const fotos = fotosPropiedadValidas(p);
+  const fotos = Array.isArray(p.fotos) && p.fotos.length ? p.fotos : [];
   const ubic = [p.colonia, p.ciudad].filter(Boolean).join(', ');
   const wa = waLink(document.body.dataset.whatsappActual, 'Hola, me interesa esta propiedad: ' + (p.titulo || '') + (ubic ? ' (' + ubic + ')' : ''));
   const overlay = document.createElement('div');
@@ -457,7 +438,7 @@ function toggleDetalleProp(idxStr) {
   overlay.innerHTML = `<div class="st-modal">
     <button class="st-modal__x" onclick="this.closest('.st-modal-overlay').remove()">✕</button>
     <div class="st-modal__fotos">
-      ${fotos.length ? fotos.map(f => `<img src="${esc(f)}" loading="lazy"/>`).join('') : '<div class="st-card__sinfoto">Foto profesional pendiente</div>'}
+      ${fotos.length ? fotos.map(f => `<img src="${esc(f)}" loading="lazy"/>`).join('') : '<div class="st-card__sinfoto">Sin fotos</div>'}
     </div>
     <div class="st-modal__body">
       <div class="st-modal__precio">${esc(precioTexto(p))}</div>

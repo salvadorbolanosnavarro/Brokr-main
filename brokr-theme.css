@@ -1,6 +1,6 @@
 /* ════════════════════════════════════════════════════════════
-   BROQUER — Design System · Edición Premium
-   Sistema visual único para app agente, admin, sitio público y PDFs.
+   BROQUER — Design System  ·  Edición "Sky"
+   Inspirado en el sistema visual de Skyscanner. Token-driven.
 
    Lenguaje: paleta restringida — navy #05203C como ESTRUCTURA
    (nav, footer, cards oscuras, chips activos) y azul brillante
@@ -41,19 +41,19 @@
    #F55D42) y --mute al text-secondary exacto (#626971).
    ════════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
 
 :root {
   /* ── Surfaces (blanco base, canvas gris-azul) ─ */
   --paper:   #FFFFFF;     /* fondo del body */
-  --paper-2: #F4F1EA;     /* canvas / inset / hover / chips */
+  --paper-2: #EFF3F8;     /* canvas / inset / hover / chips */
   --bone:    #FFFFFF;     /* superficie de card */
-  --shell:   #FAF8F3;     /* hover de input / superficie media */
+  --shell:   #F7F9FB;     /* hover de input / superficie media */
 
   /* ── Ink (casi negro sobre claro) ─────────── */
-  --ink:     #101820;     /* texto principal */
-  --ink-2:   #1D2A36;
-  --ink-3:   #52606D;     /* secundario */
+  --ink:     #161616;     /* texto principal */
+  --ink-2:   #2E3338;
+  --ink-3:   #54606E;     /* secundario */
   --mute:    #626971;  /* bpk-text-secondary exacto */
   --mute-2:  #939BA6;
   --mute-3:  #C1C7CF;
@@ -63,16 +63,16 @@
   --line-2:   #C1C7CF;    /* borde / input */
   --line-3:   #AAB2BD;
 
-  /* ── Accents (navy de marca + acento dorado) ───── */
-  --forest:   #0B1E33;    /* alias histórico → ahora AZUL */
-  --forest-2: #101820;    /* azul pressed (hover) */
-  --forest-soft: rgba(11,30,51,0.10);
+  /* ── Accents (AZUL de acción) ─────────────── */
+  --forest:   #0062E3;    /* alias histórico → ahora AZUL */
+  --forest-2: #024DAF;    /* azul pressed (hover) */
+  --forest-soft: rgba(0,98,227,0.10);
 
-  /* Marca Broquer */
+  /* Marca Skyscanner */
   --sky-navy:       #05203C;  /* estructura: nav, footer, cards */
   --sky-navy-mid:   #154679;
-  --sky-blue:       #C89B3C;  /* acción */
-  --sky-blue-press: #A87E25;
+  --sky-blue:       #0062E3;  /* acción */
+  --sky-blue-press: #024DAF;
   --sky-canvas:     #EFF3F8;
 
   --warn:     #F55D42;  /* bpk-status-warning-spot */
@@ -108,8 +108,8 @@
   /* ── Sombras (tinte #161616, fondo claro) ── */
   --shadow-xs: 0 1px 2px rgba(22,22,22,.06);
   --shadow-sm: 0 1px 3px rgba(22,22,22,.10), 0 1px 2px rgba(22,22,22,.06);
-  --shadow:    0 12px 30px rgba(16,24,32,.10), 0 1px 3px rgba(16,24,32,.06);
-  --shadow-md: 0 18px 44px rgba(16,24,32,.14), 0 2px 8px rgba(16,24,32,.08);
+  --shadow:    0 4px 14px rgba(22,22,22,.12), 0 1px 3px rgba(22,22,22,.08);
+  --shadow-md: 0 10px 28px rgba(22,22,22,.14), 0 2px 6px rgba(22,22,22,.08);
   --shadow-lg: 0 18px 44px rgba(22,22,22,.18), 0 4px 12px rgba(22,22,22,.10);
   --shadow-xl: 0 28px 72px rgba(22,22,22,.22), 0 8px 20px rgba(22,22,22,.12);
 
@@ -120,8 +120,8 @@
   --touch-min: 44px;
 
   /* ── Anillo de foco ─────────────────────── */
-  --focus:        0 0 0 3px rgba(200,155,60,0.24);
-  --focus-forest: 0 0 0 3px rgba(11,30,51,0.22);
+  --focus:        0 0 0 3px rgba(0,98,227,0.22);
+  --focus-forest: 0 0 0 3px rgba(0,98,227,0.22);
   --focus-danger: 0 0 0 3px rgba(231,8,102,0.20);
 
   /* ── Z-index (alineado con app-shell.js) ── */
@@ -134,12 +134,12 @@
   --z-modal:   240;
   --z-toast:   320;
 
-  /* ── Tipografía premium (familia única) ── */
-  --font-sans: 'Manrope', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', sans-serif;
-  --font-display: 'Manrope', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-  --font-mono: 'Manrope', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', sans-serif; /* alias histórico → ya no es monoespaciada, ahora DM Sans */
+  /* ── Tipografía (familia única, como el sitio) ── */
+  --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', sans-serif;
+  --font-display: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+  --font-mono: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', sans-serif; /* alias histórico → ya no es monoespaciada, ahora DM Sans */
 
-  /* Escala tipográfica Broquer — tamaño/peso 700 para headings, 400 para cuerpo.
+  /* Escala BPK (Skyscanner) — tamaño/peso 700 para headings, 400 para cuerpo.
      Broquer es un SaaS denso en datos, no un sitio de viajes: se usa la
      escala BPK completa pero anclada en heading-2 (32px) como techo para
      páginas normales; --fs-display (heading-1/xxxl, 40px) solo para el
@@ -210,18 +210,11 @@
   --r-old: 12px;
   --r2: 12px;
   --r3: 8px;
-  --amber: #C89B3C; --amber2:#E5C778;
+  --amber: #E8910C; --amber2:#F2A838;
   --rose:  #E70866; --rose2: #F2407F;
   --violet:#5B4FE0; --violet2:#7D72E8;
   --emerald:#00AA6C; --emerald2:#0FA1A9;
-  --sky:   #C89B3C; --sky2:   #A87E25;
-
-  /* Broquer premium tokens */
-  --brand-navy:#05203C;
-  --brand-black:#101820;
-  --brand-gold:#C89B3C;
-  --brand-gold-soft:rgba(200,155,60,.14);
-  --brand-whatsapp:#25D366;
+  --sky:   #0062E3; --sky2:   #024DAF;
   --fs-base: var(--fs-body);
   --fs-label: var(--fs-xs);
   --fs-title: var(--fs-h3);
