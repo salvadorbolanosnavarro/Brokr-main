@@ -108,31 +108,35 @@
 .ms-plantillas { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
 .ms-plantilla {
   border: 2px solid var(--line); border-radius: var(--r-lg); padding: 4px; cursor: pointer;
-  transition: border-color var(--dur) var(--ease);
+  transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+  background: var(--paper);
 }
+.ms-plantilla:hover { transform: translateY(-3px); box-shadow: 0 18px 46px rgba(22,22,22,.10); }
 .ms-plantilla:hover { border-color: var(--line-3); }
-.ms-plantilla.is-active { border-color: var(--forest); }
+.ms-plantilla.is-active { border-color: var(--forest); box-shadow: 0 0 0 4px rgba(27,94,74,.09), 0 18px 46px rgba(22,22,22,.10); }
 .ms-plantilla__preview {
-  height: 130px; border-radius: var(--r); overflow: hidden; position: relative;
-  display: flex; flex-direction: column;
+  height: 154px; border-radius: var(--r); overflow: hidden; position: relative;
+  display: flex; flex-direction: column; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18);
 }
 .ms-plantilla__nombre { padding: 12px 10px 4px; font-size: 13px; font-weight: 600; color: var(--ink); }
 .ms-plantilla__desc { padding: 0 10px 10px; font-size: 11px; color: var(--mute); line-height: 1.4; }
 
 /* Mini-mockups CSS puro para cada plantilla */
-.mock-editorial { background: linear-gradient(135deg,#05203C,#0a3a68); }
-.mock-editorial .m-hero { flex: 1; margin: 10px; border-radius: 4px; background: rgba(255,255,255,.12); display:flex; align-items:flex-end; padding: 8px; }
-.mock-editorial .m-hero span { font-size: 9px; color: #fff; font-weight: 700; }
-.mock-editorial .m-cards { display:flex; gap:4px; padding: 0 10px 10px; }
-.mock-editorial .m-cards div { flex:1; height:22px; background: rgba(255,255,255,.25); border-radius: 3px; }
+.mock-editorial { background: radial-gradient(circle at 80% 8%, rgba(200,164,93,.55), transparent 34%), linear-gradient(135deg,#061321,#0B2A43 58%,#02080F); padding: 12px; }
+.mock-editorial::before { content:"BROQUER"; position:absolute; top:18px; left:14px; right:14px; text-align:center; font-family:Georgia,serif; font-size:30px; font-weight:700; letter-spacing:-.08em; color:rgba(255,255,255,.08); }
+.mock-editorial .m-hero { flex: 1; margin: 4px; border-radius: 18px; border:1px solid rgba(200,164,93,.36); background: linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.04)); display:flex; align-items:flex-end; justify-content:center; padding: 14px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+.mock-editorial .m-hero span { font-size: 10px; color: #fff; font-weight: 800; letter-spacing:.16em; }
+.mock-editorial .m-cards { display:flex; gap:6px; padding: 0 4px 2px; }
+.mock-editorial .m-cards div { flex:1; height:26px; background: linear-gradient(135deg,rgba(255,255,255,.95),rgba(233,221,199,.8)); border-radius: 9px; box-shadow:0 8px 18px rgba(0,0,0,.18); }
 
-.mock-ejecutiva { background: #F7F5F0; }
-.mock-ejecutiva .m-top { height: 26px; background: #05203C; margin: 0; }
-.mock-ejecutiva .m-body { flex:1; display:flex; gap:8px; padding: 10px; }
-.mock-ejecutiva .m-side { width: 34%; background: #E4E0D6; border-radius: 3px; }
-.mock-ejecutiva .m-main { flex:1; display:flex; flex-direction:column; gap:5px; }
-.mock-ejecutiva .m-main div { height: 14px; background:#E4E0D6; border-radius:3px; }
-.mock-ejecutiva .m-main div:first-child { width: 70%; height: 10px; background:#0062E3; opacity:.7; }
+.mock-ejecutiva { background: radial-gradient(circle at 84% 0%, rgba(10,99,255,.22), transparent 38%), linear-gradient(135deg,#F8FAFF,#FFFFFF); padding: 12px; }
+.mock-ejecutiva .m-top { height: 20px; background: linear-gradient(90deg,#07111F,#0A63FF); border-radius: 999px; margin: 0 0 10px; width: 58%; }
+.mock-ejecutiva .m-body { flex:1; display:flex; gap:10px; padding: 0; }
+.mock-ejecutiva .m-side { width: 38%; background: linear-gradient(135deg,#07111F,#123A6A); border-radius: 16px; box-shadow:0 14px 28px rgba(7,17,31,.24); position:relative; }
+.mock-ejecutiva .m-side::after { content:""; position:absolute; left:10px; right:10px; bottom:10px; height:3px; border-radius:999px; background:linear-gradient(90deg,#0A63FF,#57D4FF); }
+.mock-ejecutiva .m-main { flex:1; display:flex; flex-direction:column; gap:7px; padding-top:2px; }
+.mock-ejecutiva .m-main div { height: 17px; background:#E7EEF8; border-radius:8px; }
+.mock-ejecutiva .m-main div:first-child { width: 82%; height: 28px; background:linear-gradient(135deg,#07111F,#0A63FF); opacity:1; }
 
 /* Testimonios */
 .ms-testi-item {
@@ -361,16 +365,16 @@ function render() {
             <div class="m-hero"><span>NOMBRE AGENTE</span></div>
             <div class="m-cards"><div></div><div></div><div></div></div>
           </div>
-          <div class="ms-plantilla__nombre">Editorial</div>
-          <div class="ms-plantilla__desc">Fotos grandes, estilo revista. Ideal si tus fotos de propiedad son tu mejor argumento.</div>
+          <div class="ms-plantilla__nombre">Editorial Signature</div>
+          <div class="ms-plantilla__desc">Portada tipo revista luxury, hero cinematográfico, detalles dorados y propiedades como colección premium.</div>
         </div>
         <div class="ms-plantilla ${p.sitio_template === 'ejecutiva' ? 'is-active' : ''}" onclick="elegirPlantilla('ejecutiva')">
           <div class="ms-plantilla__preview mock-ejecutiva">
             <div class="m-top"></div>
             <div class="m-body"><div class="m-side"></div><div class="m-main"><div></div><div></div><div></div></div></div>
           </div>
-          <div class="ms-plantilla__nombre">Ejecutiva</div>
-          <div class="ms-plantilla__desc">Formal y ordenada, con tu ficha al lado. Ideal para un perfil más corporativo.</div>
+          <div class="ms-plantilla__nombre">Ejecutiva Prime</div>
+          <div class="ms-plantilla__desc">Dossier corporativo de alto valor, tarjetas elevadas, acentos azules y una presentación muy institucional.</div>
         </div>
       </div>
     </div>
