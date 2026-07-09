@@ -1379,6 +1379,7 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
       case 'generar_contrato_directo': generarContratoDirecto(ac); break;
       case 'calcular_isr_directo':     calcularISRDirecto(ac); break;
       case 'estimar_valor_directo':    estimarValorDirecto(ac); break;
+      case 'generar_reporte_estadisticas': generarReporteEstadisticas(ac); break;
       case 'abrir_pdf':                abrirPdfDirecto(ac); break;
     }
   }
@@ -1751,6 +1752,86 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
       bubble.innerHTML += '<br>✓ <strong>PDF listo.</strong> Se abrió en pantalla para compartirlo o guardarlo.';
     } catch (e) {
       bubble.textContent = 'No pude completar la estimación: ' + (e.message || e);
+    }
+  }
+
+
+  async function loadJsPdf() {
+    if (window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
+    await new Promise((resolve, reject) => {
+      const existing = document.querySelector('script[data-broquer-jspdf="1"]');
+      if (existing) { existing.addEventListener('load', resolve, { once:true }); existing.addEventListener('error', reject, { once:true }); return; }
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
+      s.async = true;
+      s.dataset.broquerJspdf = '1';
+      s.onload = resolve;
+      s.onerror = () => reject(new Error('No se pudo cargar el generador PDF.'));
+      document.head.appendChild(s);
+    });
+    return window.jspdf && window.jspdf.jsPDF;
+  }
+
+  async function generarReporteEstadisticas(ac) {
+    const bubble = _addAssistantBubble('Creando reporte ejecutivo de estadísticas…');
+    try {
+      const jsPDF = await loadJsPdf();
+      if (!jsPDF) throw new Error('Generador PDF no disponible.');
+      const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+      const margin = 54;
+      const width = doc.internal.pageSize.getWidth();
+      const height = doc.internal.pageSize.getHeight();
+      const title = (ac.titulo || 'Reporte ejecutivo de estadísticas').trim();
+      const periodo = (ac.periodo || '').trim();
+      const contenido = String(ac.contenido || '').trim();
+      const fecha = new Date().toLocaleDateString('es-MX', { day:'2-digit', month:'long', year:'numeric' });
+      let y = 56;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.text(title, margin, y, { maxWidth: width - margin * 2 });
+      y += 24;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(95, 95, 95);
+      doc.text(['Broquer · Broq', periodo ? 'Periodo: ' + periodo : '', 'Generado: ' + fecha].filter(Boolean).join('  ·  '), margin, y);
+      y += 28;
+      doc.setDrawColor(210, 210, 210);
+      doc.line(margin, y, width - margin, y);
+      y += 26;
+      doc.setTextColor(28, 31, 34);
+      doc.setFontSize(11);
+
+      const sections = contenido.split(/\n{2,}/).map(x => x.trim()).filter(Boolean);
+      const blocks = sections.length ? sections : [contenido];
+      blocks.forEach((block) => {
+        const lines = doc.splitTextToSize(block.replace(/^[-•]\s*/gm, '• '), width - margin * 2);
+        lines.forEach((line) => {
+          if (y > height - 64) { doc.addPage(); y = 56; }
+          doc.text(line, margin, y);
+          y += 15;
+        });
+        y += 8;
+      });
+
+      const pages = doc.getNumberOfPages();
+      for (let i = 1; i <= pages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(9);
+        doc.setTextColor(120, 120, 120);
+        doc.text('Powered by Broquer.app', margin, height - 28);
+        doc.text(String(i) + ' / ' + String(pages), width - margin, height - 28, { align: 'right' });
+      }
+      const blob = doc.output('blob');
+      const safePeriodo = periodo ? '_' + periodo.replace(/[^a-z0-9_-]+/gi, '_') : '';
+      await deliverGeneratedFile(blob, 'Reporte_Estadisticas' + safePeriodo + '.pdf', {
+        type: 'application/pdf',
+        title: 'Reporte de estadísticas listo',
+        text: 'Reporte generado por Broquer'
+      });
+      bubble.innerHTML = '✓ <strong>Reporte listo.</strong> Se abrió en pantalla para compartirlo o guardarlo.';
+    } catch (e) {
+      bubble.textContent = 'No pude crear el reporte PDF: ' + (e.message || e);
     }
   }
 
