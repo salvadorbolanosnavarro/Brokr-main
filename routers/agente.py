@@ -270,6 +270,96 @@ async def _tool_resumen_cartera(user_id: str, args: dict) -> str:
     return "Resumen de la cartera:\n" + "\n".join(lineas)
 
 
+async def _tool_resumen_estadisticas(user_id: str, args: dict) -> str:
+    """Lee CRM, inmuebles e intereses para resumir estadísticas operativas."""
+    if not user_id:
+        return "No pude confirmar la sesión del usuario, así que no logro leer sus estadísticas."
+    periodo = (args.get("periodo") or "todo").strip().lower()
+    if periodo not in ("semana", "mes", "todo"):
+        periodo = "todo"
+    selects = {
+        "contactos": "id,estatus,fuente,es_potencial,created_at,fecha_cambio_estatus",
+        "propiedades": "id,titulo,clave_interna,archivada,operacion,tipo,precio",
+        "contactos_propiedades": "contacto_id,propiedad_id,relacion",
+    }
+
+    async def _get(table: str, extra: dict = None, limit: int = 5000, scoped: bool = True) -> list:
+        params = {"select": selects[table], "limit": str(limit)}
+        if scoped:
+            params["user_id"] = f"eq.{user_id}"
+        if extra:
+            params.update(extra)
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.get(f"{SUPABASE_URL}/rest/v1/{table}", headers=_sb_headers(), params=params)
+        return r.json() if r.status_code == 200 else []
+
+    try:
+        contactos, props, intereses = await asyncio.gather(
+            _get("contactos", limit=3000),
+            _get("propiedades", limit=2000),
+            _get("contactos_propiedades", {"relacion": "eq.interes"}, limit=5000, scoped=False),
+        )
+    except Exception as e:
+        return f"No pude leer las estadísticas ahora mismo: {str(e)[:120]}"
+
+    now = time.time()
+    dias = 7 if periodo == "semana" else 30 if periodo == "mes" else None
+
+    def _in_period(row):
+        if dias is None:
+            return True
+        iso = row.get("created_at")
+        if not iso:
+            return False
+        try:
+            ts = time.mktime(time.strptime(iso[:19], "%Y-%m-%dT%H:%M:%S"))
+            return (now - ts) <= dias * 86400
+        except Exception:
+            return False
+
+    contactos_p = [c for c in contactos if _in_period(c)]
+    total_contactos = len(contactos_p)
+    avanzados = sum(1 for c in contactos_p if (c.get("estatus") or "nuevo").lower() != "nuevo")
+    pct_avance = round((avanzados / total_contactos) * 100) if total_contactos else 0
+    potenciales = sum(1 for c in contactos if c.get("es_potencial"))
+
+    por_fuente = {}
+    por_etapa = {}
+    for c in contactos_p:
+        por_fuente[c.get("fuente") or "Sin especificar"] = por_fuente.get(c.get("fuente") or "Sin especificar", 0) + 1
+        etapa = (c.get("estatus") or "nuevo").lower()
+        por_etapa[etapa] = por_etapa.get(etapa, 0) + 1
+
+    activos = [p for p in props if not p.get("archivada")]
+    prop_idx = {str(p.get("id")): p for p in props}
+    conteo = {}
+    for r in intereses:
+        pid = str(r.get("propiedad_id"))
+        conteo[pid] = conteo.get(pid, 0) + 1
+    top = sorted(conteo.items(), key=lambda kv: kv[1], reverse=True)[:5]
+
+    def _fmt_pairs(d):
+        if not d:
+            return "sin datos"
+        return ", ".join(f"{k}: {v}" for k, v in sorted(d.items(), key=lambda kv: kv[1], reverse=True)[:8])
+
+    lines = [
+        f"Reporte estadístico ({'últimos 7 días' if periodo == 'semana' else 'últimos 30 días' if periodo == 'mes' else 'todo el histórico'}):",
+        f"Contactos nuevos: {total_contactos}",
+        f"Contactos que avanzaron de etapa: {avanzados} ({pct_avance}%)",
+        f"Prospectos potenciales activos: {potenciales}",
+        f"Fuentes principales: {_fmt_pairs(por_fuente)}",
+        f"Pipeline por etapa: {_fmt_pairs(por_etapa)}",
+        f"Inmuebles activos: {len(activos)} de {len(props)} totales",
+    ]
+    if top:
+        lines.append("Inmuebles con más interesados: " + "; ".join(
+            f"{(prop_idx.get(pid) or {}).get('titulo') or (prop_idx.get(pid) or {}).get('clave_interna') or pid}: {n}"
+            for pid, n in top
+        ))
+    return "\n".join(lines)
+
+
 # ══════════════════════════════════════════════════════════════════════════
 #  DEFINICIÓN DE HERRAMIENTAS (esquema para Claude)
 # ══════════════════════════════════════════════════════════════════════════
@@ -283,6 +373,7 @@ SERVER_TOOLS = {
     "detalle_propiedad":  _tool_detalle_propiedad,
     "buscar_contactos":   _tool_buscar_contactos,
     "resumen_cartera":    _tool_resumen_cartera,
+    "resumen_estadisticas": _tool_resumen_estadisticas,
 }
 
 TOOLS_SCHEMA = [
@@ -329,6 +420,14 @@ TOOLS_SCHEMA = [
         "name": "resumen_cartera",
         "description": "Resumen del inventario del usuario: cuántas propiedades tiene, desglose por operación y tipo, y valor total en venta. Úsala para '¿cómo va mi inventario?', '¿cuántas propiedades tengo?'.",
         "input_schema": {"type": "object", "properties": {}}
+    },
+    {
+        "name": "resumen_estadisticas",
+        "description": "Lee las estadísticas reales del usuario: captación, fuentes, pipeline, prospectos potenciales e inmuebles con más interesados. Úsala para 'lee mis estadísticas', 'cómo va mi negocio', 'hazme un reporte'.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"periodo": {"type": "string", "enum": ["semana", "mes", "todo"]}}
+        }
     },
 
     # ── CLIENT-SIDE (se ejecutan en el dispositivo del usuario) ──
@@ -466,6 +565,19 @@ TOOLS_SCHEMA = [
         }
     },
     {
+        "name": "generar_reporte_estadisticas",
+        "description": "Crea y entrega un PDF de reporte ejecutivo de estadísticas. Úsala después de llamar resumen_estadisticas; incluye en contenido el análisis, hallazgos y recomendaciones concretas.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "titulo": {"type": "string"},
+                "periodo": {"type": "string"},
+                "contenido": {"type": "string"}
+            },
+            "required": ["contenido"]
+        }
+    },
+    {
         "name": "abrir_modulo",
         "description": "Lleva al usuario a un módulo de la plataforma. Úsala solo si el usuario pide explícitamente abrir/ir a un módulo, o si una acción requiere que edite datos a mano.",
         "input_schema": {
@@ -510,6 +622,8 @@ def _to_client_action(name: str, args: dict) -> Optional[dict]:
         a = {"tipo": "crear_ficha_manual"}; a.update(args); return a
     if name == "crear_campana_facebook":
         a = {"tipo": "confirmar_campana"}; a.update(args); return a
+    if name == "generar_reporte_estadisticas":
+        a = {"tipo": "generar_reporte_estadisticas"}; a.update(args); return a
     if name == "abrir_modulo":
         return {"tipo": "navegar", "modulo": args.get("modulo", "")}
     if name == "prellenar_formulario":
@@ -528,6 +642,7 @@ _STEP_LABELS = {
     "detalle_propiedad":      "Abriendo los datos de la propiedad…",
     "buscar_contactos":       "Buscando en tu CRM…",
     "resumen_cartera":        "Analizando tu inventario…",
+    "resumen_estadisticas":   "Leyendo tus estadísticas…",
     "calcular_isr":           "Calculando el ISR y preparando el PDF…",
     "estimar_valor":          "Buscando comparables y estimando el valor…",
     "generar_contrato":       "Generando el contrato…",
@@ -536,6 +651,7 @@ _STEP_LABELS = {
     "crear_ficha_easybroker": "Armando la ficha técnica…",
     "crear_ficha_manual":     "Armando la ficha técnica…",
     "crear_campana_facebook": "Preparando tu campaña de anuncios…",
+    "generar_reporte_estadisticas": "Creando el reporte en PDF…",
     "abrir_modulo":           "Abriendo el módulo…",
     "prellenar_formulario":   "Dejando el formulario listo para ti…",
 }
@@ -548,7 +664,7 @@ def _build_system(context: str, nombre: str = "") -> str:
 CÓMO ACTÚAS:
 - Eres un SUPER ASISTENTE OPERATIVO: entiendes comandos escritos y de voz, razonas con datos reales de la app y ejecutas acciones completas cuando tienes lo necesario.
 - Tienes herramientas reales. Cuando el usuario pide algo que puedes hacer, HAZLO con la herramienta correspondiente. No le digas "ve al módulo X y dale al botón Y": tú lo ejecutas.
-- Puedes encadenar pasos: primero busca datos (buscar_propiedades, detalle_propiedad, buscar_contactos, resumen_cartera) y luego actúa (crear_contacto, crear_inmueble, generar_contrato, crear_ficha_manual, estimar_valor, calcular_isr, crear_campana_facebook, abrir_modulo o prellenar_formulario). Usa los datos reales que obtengas; nunca inventes precios, m², direcciones ni nombres.
+- Puedes encadenar pasos: primero busca datos (buscar_propiedades, detalle_propiedad, buscar_contactos, resumen_cartera, resumen_estadisticas) y luego actúa (crear_contacto, crear_inmueble, generar_contrato, crear_ficha_manual, estimar_valor, calcular_isr, generar_reporte_estadisticas, crear_campana_facebook, abrir_modulo o prellenar_formulario). Usa los datos reales que obtengas; nunca inventes precios, m², direcciones ni nombres.
 - Si el usuario pide crear un contacto o inmueble y ya dio los datos obligatorios, créalo directo. Si falta un dato obligatorio, pregunta SOLO el siguiente dato faltante.
 - Antes de una acción que produce un documento o un cambio, reúne los datos OBLIGATORIOS preguntando de UNO EN UNO de forma conversacional. Nunca ejecutes con datos incompletos. Los opcionales que el usuario no sepa: déjalos en 0 o "".
 - Las acciones que generan un archivo (ISR, estimación de valor, contrato, ficha) o que crean algo se ejecutan en el dispositivo del usuario. Cuando lances una de esas, NO digas "ya está descargado": di que la estás preparando y que aparecerá en un momento. El sistema le confirma al usuario cuando termina.
@@ -571,6 +687,7 @@ CONOCIMIENTO DE LA APP (fuente de verdad para preguntas operativas):
 - Ficha técnica: si el inmueble ya está en cartera, busca la propiedad y genera la ficha con sus datos reales. Si no está en cartera, pide los datos mínimos y usa ficha manual.
 - ISR: usa calcular_isr con la misma lógica del módulo ISR cuando tengas precio y fecha de compra, precio y fecha de venta, tipo de inmueble, exención si aplica, mejoras, escrituración y comisión. Si el usuario no sabe mejoras/escrituración/comisión, usa 0 solo después de confirmarlo.
 - Estimación de valor: usa estimar_valor con la lógica del módulo AVM cuando tengas colonia, tipo, operación y superficies disponibles; busca comparables reales y entrega PDF.
+- Estadísticas y reportes: si el usuario pide leer estadísticas o crear un reporte, usa resumen_estadisticas; si pide un entregable, después genera un PDF con generar_reporte_estadisticas incluyendo hallazgos y recomendaciones.
 - Contratos: usa generar_contrato cuando tengas todos los datos obligatorios de partes, inmueble, monto y fechas. Si faltan varios datos, prellena el módulo para que el usuario revise.
 - Si te preguntan algo como "¿cómo puedo eliminar mi cuenta?", responde con esos pasos concretos; no inventes menús ni políticas.
 
