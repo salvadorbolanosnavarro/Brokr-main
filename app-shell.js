@@ -1531,12 +1531,11 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
 
   async function crearInmuebleDirecto(ac) {
     try {
-      const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
-      const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
       const tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
       const userRaw = localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}';
       const user = JSON.parse(userRaw);
       if (!tok || !user.id) { _addAssistantBubble('No pude crear el inmueble: tu sesión expiró.'); return; }
+      if (!window.brokrSb || !window.brokrSb.rest) { _addAssistantBubble('No pude crear el inmueble: la conexión con Broquer aún no está lista. Intenta otra vez en un segundo.'); return; }
 
       const num = (v) => {
         if (v === undefined || v === null || v === '') return null;
@@ -1581,23 +1580,12 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
         _addAssistantBubble('Me faltan datos obligatorios para crear el inmueble: título o descripción, colonia y precio.');
         return;
       }
-      const r = await fetch(`${SB_URL}/rest/v1/propiedades`, {
-        method: 'POST',
-        headers: {
-          'apikey': SB_KEY,
-          'Authorization': 'Bearer ' + tok,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=representation'
-        },
-        body: JSON.stringify(payload)
-      });
-      const rows = await r.json().catch(() => []);
-      if (r.ok) {
-        const id = Array.isArray(rows) && rows[0] ? rows[0].id : '';
-        _addAssistantBubble(`✓ Inmueble creado: <strong>${payload.titulo}</strong>${payload.colonia ? ' · ' + payload.colonia : ''}. Ya está en Mis Inmuebles.`);
-        if (id) sessionStorage.setItem('broq_last_property_id', id);
-      } else {
-        _addAssistantBubble('No pude crear el inmueble. Revisa los datos e inténtalo otra vez.');
+      const rows = await window.brokrSb.rest('propiedades', { method: 'POST', body: payload });
+      const id = Array.isArray(rows) && rows[0] ? rows[0].id : '';
+      _addAssistantBubble(`✓ Inmueble creado: <strong>${payload.titulo}</strong>${payload.colonia ? ' · ' + payload.colonia : ''}. Ya está en Tus Inmuebles.`);
+      if (id) sessionStorage.setItem('broq_last_property_id', id);
+      if (document.body && document.body.dataset.app === 'props' && typeof window.loadProps === 'function') {
+        try { window.loadProps(); } catch (_) {}
       }
     } catch (e) {
       _addAssistantBubble('No pude crear el inmueble: ' + (e.message || e));
@@ -1609,9 +1597,11 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
       const API = window.API_BASE || 'https://api.broquer.app';
       const tipo = ac.subtipo === 'promesa' ? 'promesa' : 'arrendamiento';
       _addAssistantBubble(`Generando contrato de ${tipo === 'promesa' ? 'promesa de compraventa' : 'arrendamiento'}…`);
+      const tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+      if (!tok) { _addAssistantBubble('No pude generar el contrato: tu sesión expiró.'); return; }
       const r = await fetch(API + '/contrato', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },
         body: JSON.stringify({ tipo, datos: ac.datos || ac, clausulas_especiales: ac.clausulas_especiales || [] })
       });
       if (!r.ok) {
