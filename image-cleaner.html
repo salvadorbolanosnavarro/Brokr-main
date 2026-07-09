@@ -208,11 +208,7 @@ body{font-family:var(--font-sans);background:var(--bg);color:var(--txt);min-heig
 <div class="toast" id="toast"></div>
 
 <script>
-const API_BASE = (()=>{
-  const h = location.hostname;
-  if(h === 'localhost' || h === '127.0.0.1') return 'http://localhost:8000';
-  return 'https://api.broquer.app';
-})();
+const API_BASE = window.API_BASE || 'https://api.broquer.app';
 
 let files = [];
 let results = [];
