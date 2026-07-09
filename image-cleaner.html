@@ -235,6 +235,85 @@ const selBanner    = document.getElementById('sel-banner');
 const selBannerTxt = document.getElementById('sel-banner-text');
 const btnConfirmSel= document.getElementById('btn-confirm-sel');
 
+// ── Marca de agua (solo al descargar, solo para cuentas autorizadas) ──────────
+// Este editor lo usan muchas cuentas de Broquer que no tienen nada que ver
+// entre sí. El logotipo de la inmobiliaria SOLO debe aparecer para el dueño
+// de esa cuenta y sus colaboradores — para el resto de usuarios de Broquer
+// nunca se aplica ninguna marca de agua.
+const WATERMARK_LOGO_SRC = 'logo-inmobiliaria-navarro.png';
+const WATERMARK_ALLOWED_EMAILS = [
+  'navarrocontactomx@gmail.com',
+  'salvadorbolanosnavarro@gmail.com',
+  'juridico@gruponavarro.mx'
+];
+
+function getCurrentUserEmail() {
+  try {
+    const raw = localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}';
+    const u = JSON.parse(raw);
+    return (u && u.email) ? String(u.email).toLowerCase().trim() : '';
+  } catch (e) { return ''; }
+}
+
+function shouldApplyWatermark() {
+  const email = getCurrentUserEmail();
+  return !!email && WATERMARK_ALLOWED_EMAILS.includes(email);
+}
+
+let _watermarkImgPromise = null;
+function loadWatermarkImg() {
+  if (!_watermarkImgPromise) {
+    _watermarkImgPromise = new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('No se pudo cargar el logotipo de marca de agua'));
+      img.src = WATERMARK_LOGO_SRC;
+    });
+  }
+  return _watermarkImgPromise;
+}
+
+// Recibe un data URL (imagen editada) y devuelve un nuevo data URL con el
+// logotipo de la inmobiliaria en la esquina inferior derecha, tal cual, sin
+// caja ni fondo de color — solo una sombra suave para que no se pierda si
+// la foto es muy clara justo en esa esquina.
+async function addWatermark(dataUrl, contentType) {
+  const [img, wm] = await Promise.all([
+    new Promise((resolve, reject) => {
+      const im = new Image();
+      im.onload = () => resolve(im);
+      im.onerror = () => reject(new Error('No se pudo leer la imagen editada'));
+      im.src = dataUrl;
+    }),
+    loadWatermarkImg()
+  ]);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0);
+
+  // Logotipo horizontal ancho (marca + slogan): se dimensiona como % del
+  // ancho de la foto, con topes para que no se vea diminuto ni gigante.
+  const wmW = Math.min(320, Math.max(140, canvas.width * 0.22));
+  const wmH = wmW * (wm.naturalHeight / wm.naturalWidth);
+  const margin = canvas.width * 0.03;
+  const x = canvas.width - wmW - margin;
+  const y = canvas.height - wmH - margin;
+
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.45)';
+  ctx.shadowBlur = Math.max(4, wmW * 0.03);
+  ctx.shadowOffsetX = 1;
+  ctx.shadowOffsetY = 1;
+  ctx.drawImage(wm, x, y, wmW, wmH);
+  ctx.restore();
+
+  const outType = (contentType && contentType.includes('png')) ? 'image/png' : 'image/jpeg';
+  return canvas.toDataURL(outType, 0.92);
+}
+
 // ── Drag & drop ──────────────────────────────────────────────────────────────
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
@@ -514,11 +593,22 @@ function updateCard(i, res) {
 }
 
 // ── Downloads ─────────────────────────────────────────────────────────────────
-function downloadOne(i) {
+async function downloadOne(i) {
   const res = results[i];
   if (!res || !res.cleaned_b64) return;
+  const rawUrl = 'data:' + res.content_type + ';base64,' + res.cleaned_b64;
+  let finalUrl = rawUrl;
+  if (shouldApplyWatermark()) {
+    try {
+      finalUrl = await addWatermark(rawUrl, res.content_type);
+    } catch (e) {
+      // Si falla el marcado de agua, se descarga la imagen editada sin marca
+      // para no bloquear al usuario.
+      console.error('Watermark error:', e);
+    }
+  }
   const a = document.createElement('a');
-  a.href = 'data:' + res.content_type + ';base64,' + res.cleaned_b64;
+  a.href = finalUrl;
   const orig = files[i].name;
   const ext = orig.split('.').pop();
   const base = orig.substring(0, orig.lastIndexOf('.')) || orig;
@@ -533,7 +623,7 @@ async function downloadAll() {
   try { window.parent.postMessage({ type: 'Broquer-suppress-wake', duration: 5000 }, '*'); } catch(e){}
   showToast(`Descargando ${processed.length} imagen${processed.length !== 1 ? 'es' : ''}…`);
   for (const {i} of processed) {
-    downloadOne(i);
+    await downloadOne(i);
     await new Promise(res => setTimeout(res, 250));
   }
 }
