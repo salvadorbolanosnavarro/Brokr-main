@@ -1176,17 +1176,23 @@ async function generarFicha(){
   btn.innerHTML = `<span style="display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;"></span> Generando ficha...`;
   try{
     const rawNum = (v) => parseFloat((v||'').replace(/[$,]/g,'').trim()) || null;
+    const buildOperations = () => {
+      const ops = [];
+      if (d.op === 'Venta y renta') {
+        if (d.precio) ops.push({ type: 'sale', amount: rawNum(d.precio), currency: 'MXN' });
+        if (d.precioRenta) ops.push({ type: 'rental', amount: rawNum(d.precioRenta), currency: 'MXN' });
+      } else if (d.precio) {
+        ops.push({ type: d.op === 'Renta' ? 'rental' : 'sale', amount: rawNum(d.precio), currency: 'MXN' });
+      }
+      return ops;
+    };
     const propData = {
       id: null,
       public_id: null,
       title: [d.tipo, d.op ? 'en ' + d.op : ''].filter(Boolean).join(' ') || 'Propiedad',
       property_type: d.tipo || 'Propiedad',
       description: d.desc || '',
-      operations: d.precio ? [{
-        type: d.op === 'Renta' ? 'rental' : 'sale',
-        amount: rawNum(d.precio),
-        currency: 'MXN'
-      }] : [],
+      operations: buildOperations(),
       location: { name: d.colonia || '', city: d.ciudad || 'Morelia' },
       address: d.dir || '',
       bedrooms: d.rec ? parseFloat(d.rec) : null,
