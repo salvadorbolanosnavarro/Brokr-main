@@ -1418,66 +1418,83 @@ async function descargarPDF() {
 <title>Broquer · ${meses[d.mesV]} ${d.anioV}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+  /* ── Tokens de Broquer (brokr-theme.css) — definidos aquí porque este
+     documento lo renderiza Playwright de forma aislada, sin cargar el
+     CSS de la app. Mismo sistema que Estimación de valor y Ficha técnica. ── */
+  :root{
+    --paper:#FFFFFF; --paper-2:#EFF3F8; --bone:#FFFFFF;
+    --ink:#161616; --ink-2:#2E3338; --ink-3:#54606E;
+    --mute:#626971; --mute-2:#939BA6;
+    --line:#E0E4E9; --line-2:#C1C7CF;
+    --forest:#0062E3; --forest-2:#024DAF; --forest-soft:rgba(0,98,227,0.10);
+    --sky-navy:#05203C;
+    --danger:#E70866; --danger-soft:rgba(231,8,102,0.10);
+    --success:#0C838A;
+    --font-sans:'DM Sans',-apple-system,BlinkMacSystemFont,system-ui,Roboto,'Helvetica Neue',sans-serif;
+    --fs-h1:32px; --fs-h3:20px; --fs-sm:14px; --fs-xs:12px; --fs-caption:11px;
+  }
   *{box-sizing:border-box;margin:0;padding:0}
   @page{size:A4;margin:14mm 18mm 12mm 18mm}
   html{height:100%}
   body{height:100%;overflow:hidden}
   body{
-    font-family:'DM Sans','Helvetica Neue',sans-serif;
-    font-size: var(--fs-xs);color:var(--ink);background:var(--bone);
+    font-family:var(--font-sans);
+    font-size:var(--fs-xs);color:var(--ink);background:var(--paper);
     -webkit-font-smoothing:antialiased;letter-spacing:-0.005em;
     line-height:1.5;
   }
   /* ── HEADER ── */
-  .hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;padding-bottom:12px;border-bottom:1.5px solid var(--ink)}
-  .hdr-left h1{font-family:var(--font-sans);font-size:var(--fs-h1);font-weight:700;letter-spacing:-0.025em;color:var(--ink);line-height:1.1;margin-bottom:5px}
-  .hdr-left .meta{font-size: var(--fs-label-3);color:var(--mute-2);letter-spacing:0.01em}
+  .hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;padding-bottom:12px;border-bottom:1.5px solid var(--sky-navy)}
+  .hdr-left h1{font-family:var(--font-sans);font-size:var(--fs-h1);font-weight:700;letter-spacing:-0.02em;color:var(--sky-navy);line-height:1.1;margin-bottom:5px}
+  .hdr-left .meta{font-size:var(--fs-caption);color:var(--mute);letter-spacing:0.01em}
   .hdr-right{text-align:right}
-  .tipo-badge{font-size: var(--fs-caption);font-weight:700;letter-spacing:1.5px;color:var(--forest);background:var(--bone);padding:4px 10px;border-radius:20px;display:inline-block;margin-bottom:6px}
-  .fecha{font-size: var(--fs-caption);color:var(--mute-2)}
+  .tipo-badge{font-size:var(--fs-caption);font-weight:700;letter-spacing:0.01em;color:var(--forest);background:var(--forest-soft);padding:4px 12px;border-radius:20px;display:inline-block;margin-bottom:6px}
+  .fecha{font-size:var(--fs-caption);color:var(--mute)}
   /* ── SECTION LABEL ── */
-  .sec-lbl{font-size: var(--fs-caption);font-weight:700;letter-spacing:2px;color:var(--mute-2);margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--paper-2)}
+  .sec-lbl{font-size:var(--fs-caption);font-weight:700;letter-spacing:0.02em;color:var(--mute);margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--line)}
   /* ── INPC ROW ── */
-  .inpc-row{display:grid;grid-template-columns:1fr 20px 1fr 20px 1fr;gap:0;border:1px solid var(--paper-2);margin-bottom:12px;border-radius:4px;overflow:hidden}
-  .inpc-cell{padding:12px 14px;text-align:center;border-right:1px solid var(--paper-2)}
+  .inpc-row{display:grid;grid-template-columns:1fr 20px 1fr 20px 1fr;gap:0;border:1px solid var(--line);margin-bottom:12px;border-radius:8px;overflow:hidden}
+  .inpc-cell{padding:12px 14px;text-align:center;border-right:1px solid var(--line)}
   .inpc-cell:last-child{border-right:none}
-  .inpc-cell.hl{background:var(--bone)}
-  .inpc-arrow{display:flex;align-items:center;justify-content:center;color:var(--line);font-size: var(--fs-sm);border-right:none!important;padding:0}
-  .inpc-lbl{font-size: var(--fs-caption);font-weight:600;letter-spacing:1.4px;color:var(--mute-2);margin-bottom:5px}
-  .inpc-val{font-family:var(--font-sans);font-weight:400;font-size: var(--fs-sm);letter-spacing:-0.01em;color:var(--ink)}
-  .inpc-cell.hl .inpc-val{color:var(--forest);font-weight:500}
+  .inpc-cell.hl{background:var(--forest-soft)}
+  .inpc-arrow{display:flex;align-items:center;justify-content:center;color:var(--mute-2);font-size:var(--fs-sm);border-right:none!important;padding:0}
+  .inpc-lbl{font-size:var(--fs-caption);font-weight:600;letter-spacing:0.01em;color:var(--mute);margin-bottom:5px}
+  .inpc-val{font-family:var(--font-sans);font-weight:500;font-size:var(--fs-sm);letter-spacing:-0.005em;color:var(--ink)}
+  .inpc-cell.hl .inpc-val{color:var(--forest);font-weight:700}
   /* ── CARDS ── */
-  .cards{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--paper-2);border-radius:4px;overflow:hidden;margin-bottom:12px}
-  .card{padding:14px 16px;border-right:1px solid var(--paper-2)}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:12px}
+  .card{padding:14px 16px;border-right:1px solid var(--line)}
   .card:last-child{border-right:none}
-  .card-l{font-size: var(--fs-caption);font-weight:600;letter-spacing:1.4px;color:var(--mute-2);margin-bottom:6px}
-  .card-v{font-family:var(--font-sans);font-size:var(--fs-h3);font-weight:700;letter-spacing:-0.02em;color:var(--ink);margin-bottom:2px}
-  .card-n{font-size: var(--fs-caption);color:var(--mute-2)}
-  .card.total .card-v{color:var(--danger);font-weight:500}
+  .card-l{font-size:var(--fs-caption);font-weight:600;letter-spacing:0.01em;color:var(--mute);margin-bottom:6px}
+  .card-v{font-family:var(--font-sans);font-size:var(--fs-h3);font-weight:700;letter-spacing:-0.01em;color:var(--ink);margin-bottom:2px}
+  .card-n{font-size:var(--fs-caption);color:var(--mute)}
+  .card.total{background:var(--danger-soft)}
+  .card.total .card-v{color:var(--danger)}
   .card.iva .card-v{color:var(--forest-2)}
   /* ── DESGLOSE ── */
-  .br{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--paper-2);font-size: var(--fs-xs)}
+  .br{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--line);font-size:var(--fs-xs)}
   .br:last-child{border-bottom:none}
-  .br.sub{padding-left:16px;color:var(--mute-2);font-size: var(--fs-caption)}
-  .br.tot{font-size: var(--fs-xs);padding:10px 0;border-bottom:1.5px solid var(--ink);border-top:1px solid var(--line);margin-top:2px}
+  .br.sub{padding-left:16px;color:var(--mute);font-size:var(--fs-caption)}
+  .br.tot{font-size:var(--fs-xs);padding:10px 0;border-bottom:1.5px solid var(--sky-navy);border-top:1px solid var(--line);margin-top:2px}
   .bl{color:var(--ink-3);flex:1;padding-right:12px}
-  .bv{font-family:var(--font-sans);font-weight:400;font-variant-numeric:tabular-nums;white-space:nowrap;font-size: var(--fs-xs)}
-  .br.tot .bl,.br.tot .bv{font-family:var(--font-sans);font-weight:500;color:var(--ink);font-size: var(--fs-sm)}
+  .bv{font-family:var(--font-sans);font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:var(--fs-xs);color:var(--ink)}
+  .br.tot .bl,.br.tot .bv{font-family:var(--font-sans);font-weight:700;color:var(--sky-navy);font-size:var(--fs-sm)}
   /* ── NOTA ── */
-  .nota{border-left:2px solid var(--line);padding:10px 14px;font-size: var(--fs-caption);margin-top:16px;line-height:1.65;color:var(--ink-3);background:var(--bone)}
-  .nota strong{font-weight:600;color:var(--ink)}
+  .nota{border-left:2px solid var(--forest);padding:10px 14px;font-size:var(--fs-caption);margin-top:16px;line-height:1.65;color:var(--ink-3);background:var(--paper-2)}
+  .nota strong{font-weight:700;color:var(--ink)}
   .nota ul{margin:4px 0 0 14px}
   .nota li{margin-bottom:2px}
   /* ── FOOTER ── */
-  .footer{margin-top:18px;padding-top:8px;border-top:1px solid var(--paper-2);text-align:center}
-  .footer-brand{font-family:'DM Sans',sans-serif;font-size: var(--fs-caption);font-weight:500;color:var(--mute-2);letter-spacing:0.4px}
+  .footer{margin-top:18px;padding-top:8px;border-top:1px solid var(--line);text-align:center}
+  .footer-brand{font-family:var(--font-sans);font-size:var(--fs-caption);font-weight:700;color:var(--mute);letter-spacing:0.01em}
 </style>
 </head>
 <body>
   <div class="hdr">
     <div class="hdr-left">
-      <h1>Cálculo ISR<br>por Enajenación</h1>
+      <h1>Cálculo ISR<br>por enajenación</h1>
       <div class="meta">Operación: ${meses[d.mesV]} ${d.anioV} &nbsp;·&nbsp; Adquisición: ${meses[d.mesC]} ${d.anioC}</div>
     </div>
     <div class="hdr-right">
@@ -1508,21 +1525,21 @@ async function descargarPDF() {
   <div class="sec-lbl">Resumen fiscal</div>
   <div class="cards">
     <div class="card total">
-      <div class="card-l">ISR Total a Pagar</div>
+      <div class="card-l">ISR total a pagar</div>
       <div class="card-v">${fmt(d.isrTotal)}</div>
       <div class="card-n">Tasa efectiva ${pct(d.tasaEfecPct)}</div>
     </div>
     <div class="card">
-      <div class="card-l">ISR Entidad Federativa</div>
+      <div class="card-l">ISR entidad federativa</div>
       <div class="card-v">${fmt(d.isrEstatal)}</div>
       <div class="card-n">5% sobre ganancia · art. 127</div>
     </div>
     <div class="card">
-      <div class="card-l">ISR Federación</div>
+      <div class="card-l">ISR federación</div>
       <div class="card-v">${fmt(d.isrFederal)}</div>
       <div class="card-n">ISR total − retención estatal</div>
     </div>
-    ${d.ivaMonto>0?`<div class="card iva" style="grid-column:1/-1;border-top:1px solid var(--paper-2);grid-template-columns:auto">
+    ${d.ivaMonto>0?`<div class="card iva" style="grid-column:1/-1;border-top:1px solid var(--line);grid-template-columns:auto">
       <div class="card-l">IVA 16% estimado — art. 9 LIVA</div>
       <div class="card-v">${fmt(d.ivaMonto)}</div>
       <div class="card-n">Sobre valor de construcción (${fmt(d.ivaBase)}) · retiene el notario</div>
@@ -1531,7 +1548,7 @@ async function descargarPDF() {
   d.exenta?`<div class="sec-lbl">Resumen fiscal</div>
   <div class="cards"><div class="card" style="grid-column:1/-1">
     <div class="card-l">ISR a pagar</div>
-    <div class="card-v" style="color:var(--forest)">$0</div>
+    <div class="card-v" style="color:var(--success)">$0</div>
     <div class="card-n">Exento — art. 93 fr. XIX LISR · Ganancia libre de impuesto: ${fmt(d.ganTotal)}</div>
   </div></div>`:''}
 
@@ -1540,7 +1557,7 @@ async function descargarPDF() {
   ${nota?`<div class="nota">${nota}</div>`:''}
 
   <div class="footer">
-    <div class="footer-brand">Powered by Broquer.app</div>
+    <div class="footer-brand">Broquer</div>
   </div>
 </body></html>`;
 
