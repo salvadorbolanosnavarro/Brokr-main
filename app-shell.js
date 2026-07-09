@@ -8,7 +8,7 @@
         … contenido del módulo …
      <script src="app-shell.js" defer></script>
    Claves válidas: home, props, contactos, contratos, avm, valor, ficha,
-                   ficha-manual, isr, image-cleaner, facebook-ads, guia, admin
+                   ficha-manual, isr, image-cleaner, facebook-ads, blog, guia, admin
    ════════════════════════════════════════════════════════════════════ */
 (function () {
   if (window.__brokrShellLoaded) return;
