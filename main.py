@@ -3073,8 +3073,15 @@ async def avm_websearch(req: AvmWebSearchRequest, request: Request):
 # ────────────────────────────────────────────
 
 @app.post("/avm-pdf")
+@app.post("/avm-pdf")
 async def generar_avm_pdf(p: dict):
-    """Recibe el resultado del AVM websearch y genera un PDF profesional con Playwright."""
+    """Recibe el resultado del AVM websearch y genera un PDF profesional con Playwright.
+
+    Sistema de diseño: los mismos tokens de brokr-theme.css (navy, azul,
+    DM Sans, radios, sombras) que usa el resto de Broquer — para que este
+    documento se sienta hermano de la Ficha técnica y del ISR, no un
+    invitado con otra identidad visual.
+    """
     from playwright.async_api import async_playwright
 
     resultado = p.get("resultado", {})
@@ -3089,16 +3096,16 @@ async def generar_avm_pdf(p: dict):
         except Exception:
             return str(n)
 
-    # Comparables HTML
     def _esc(s):
         return (str(s) if s is not None else "").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace('"',"&quot;")
 
+    # Comparables
     comps_html = ""
     for c in resultado.get("comparables", []):
         fuente = c.get("fuente","—") or "—"
         url = c.get("url","") or ""
         src_cell = (
-            f'<a href="{_esc(url)}" target="_blank" rel="noopener" style="color:#1A1814;text-decoration:underline">{_esc(fuente)}</a>'
+            f'<a href="{_esc(url)}" target="_blank" rel="noopener" class="link">{_esc(fuente)}</a>'
             if url else _esc(fuente)
         )
         comps_html += f"""
@@ -3110,22 +3117,23 @@ async def generar_avm_pdf(p: dict):
           <td class="src">{src_cell}</td>
         </tr>"""
 
-    # Factores HTML
+    # Factores de ajuste — badge con punto, mismo patrón que .bk-badge del app
     factores_html = ""
     for f in resultado.get("factores_ajuste", []):
         imp = f.get("impacto", "neutro")
-        color = "#1D9E75" if imp == "positivo" else "#E24B4A" if imp == "negativo" else "#888"
-        dot = f'<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{color};margin-right:6px;"></span>'
+        badge_cls = "badge--success" if imp == "positivo" else "badge--danger" if imp == "negativo" else "badge--mute"
+        etiqueta = "Favorable" if imp == "positivo" else "Desfavorable" if imp == "negativo" else "Neutro"
         factores_html += f"""
         <tr>
-          <td>{dot}{f.get('factor','—')}</td>
-          <td>{f.get('descripcion','—')}</td>
+          <td>
+            <div class="factor-nombre">{_esc(f.get('factor','—'))}</div>
+            <span class="badge {badge_cls}"><span class="dot"></span>{etiqueta}</span>
+          </td>
+          <td class="factor-desc">{_esc(f.get('descripcion','—'))}</td>
         </tr>"""
 
-    # Recomendaciones HTML
-    recs_html = "".join(f"<li>{r}</li>" for r in resultado.get("recomendaciones", []))
+    recs_html = "".join(f"<li>{_esc(r)}</li>" for r in resultado.get("recomendaciones", []))
 
-    # Superficie display
     m2c = resultado.get("m2_construccion", 0)
     m2t = resultado.get("m2_terreno", 0)
     sup_parts = []
@@ -3134,81 +3142,123 @@ async def generar_avm_pdf(p: dict):
     superficie_str = " · ".join(sup_parts) if sup_parts else "—"
 
     fecha_hoy = resultado.get("fecha", time.strftime("%d/%m/%Y"))
+    operacion = (resultado.get('operacion','venta') or 'venta').capitalize()
 
     html = f"""<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+  :root {{
+    /* ── Tokens de Broquer (brokr-theme.css) — misma fuente para
+       Ficha técnica, AVM e ISR ── */
+    --paper: #FFFFFF; --paper-2: #EFF3F8; --bone: #FFFFFF;
+    --ink: #161616; --ink-2: #2E3338; --ink-3: #54606E;
+    --mute: #626971; --mute-2: #939BA6;
+    --line: #E0E4E9; --line-2: #C1C7CF;
+    --forest: #0062E3; --forest-soft: rgba(0,98,227,0.10);
+    --sky-navy: #05203C; --sky-navy-mid: #154679;
+    --warn: #F55D42; --warn-soft: rgba(245,93,66,0.14);
+    --danger: #E70866; --danger-soft: rgba(231,8,102,0.10);
+    --success: #0C838A; --success-soft: rgba(12,131,138,0.12);
+    --r-xs: 4px; --r-sm: 8px; --r: 12px; --r-lg: 24px; --r-pill: 999px;
+    --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', sans-serif;
+  }}
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-  body {{ font-family: 'DM Sans', 'Helvetica Neue', sans-serif; color: #1A1814; background: #FBF9F1; font-size: 13px; line-height: 1.55; -webkit-font-smoothing: antialiased; letter-spacing:-0.005em; }}
-  .page {{ padding: 56px 60px 44px; max-width: 760px; margin: 0 auto; }}
+  body {{ font-family: var(--font-sans); color: var(--ink); background: var(--paper); font-size: 13px; line-height: 1.55; -webkit-font-smoothing: antialiased; letter-spacing: -0.01em; }}
+  .page {{ padding: 48px 52px 40px; max-width: 780px; margin: 0 auto; }}
 
-  .doc-head {{ display:flex; justify-content:space-between; align-items:baseline; padding-bottom:18px; border-bottom:1px solid #E8E2D2; margin-bottom:32px; }}
-  .doc-kicker {{ font-size:13px; color:#1A1814; font-weight:700; letter-spacing:-0.005em; }}
-  .doc-date {{ font-size:10px; color:#7A7065; letter-spacing:0.04em; }}
+  /* ── Encabezado de documento ── */
+  .doc-head {{ display: flex; justify-content: space-between; align-items: flex-end; padding-bottom: 20px; border-bottom: 1px solid var(--line); margin-bottom: 28px; }}
+  .doc-head__brand {{ font-size: 15px; font-weight: 700; color: var(--sky-navy); letter-spacing: -0.01em; }}
+  .doc-head__title {{ font-size: 12px; color: var(--mute); margin-top: 2px; }}
+  .doc-head__date {{ font-size: 11px; color: var(--mute); }}
 
-  .valor-bloque {{ margin-bottom: 32px; }}
-  .valor-card {{ display:inline-block; background:#000; color:#fff; border-radius:10px; padding:14px 20px 12px; margin-bottom:22px; -webkit-print-color-adjust:exact; print-color-adjust:exact; }}
-  .valor-lbl {{ font-size: 8.5px; color: rgba(255,255,255,.6); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; font-weight:600; }}
-  .valor-num {{ font-family:'Fraunces',serif; font-size: 28px; font-weight: 500; color: #fff; line-height: 1.05; letter-spacing:-0.02em; }}
-  .valor-meta {{ display: grid; grid-template-columns:repeat(4,1fr); gap: 24px; padding-top:6px; }}
-  .meta-item .meta-lbl {{ font-size: 8.5px; color: #7A7065; text-transform: uppercase; letter-spacing: 1.4px; margin-bottom: 5px; font-weight:600; }}
-  .meta-item .meta-val {{ font-family:'Fraunces',serif; font-size: 13px; font-weight: 500; color: #1A1814; letter-spacing:-0.005em; }}
+  /* ── Bloque de valor — tarjeta navy, no negro genérico ── */
+  .valor-card {{
+    background: linear-gradient(155deg, var(--sky-navy), var(--sky-navy-mid));
+    border-radius: var(--r-lg);
+    padding: 26px 28px 22px;
+    margin-bottom: 22px;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }}
+  .valor-lbl {{ font-size: 11px; color: rgba(255,255,255,.65); font-weight: 600; letter-spacing: 0.02em; margin-bottom: 6px; }}
+  .valor-num {{ font-family: var(--font-sans); font-size: 34px; font-weight: 700; color: #fff; line-height: 1.05; letter-spacing: -0.02em; }}
+  .valor-meta {{ display: grid; grid-template-columns: repeat(4,1fr); gap: 18px; margin-top: 20px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.14); }}
+  .meta-item .meta-lbl {{ font-size: 10px; color: rgba(255,255,255,.55); font-weight: 600; letter-spacing: 0.02em; margin-bottom: 4px; }}
+  .meta-item .meta-val {{ font-size: 13px; font-weight: 700; color: #fff; letter-spacing: -0.005em; }}
 
-  .seccion {{ margin-bottom: 30px; }}
-  .sec-titulo {{ font-family:'DM Sans',sans-serif; font-size: 9px; font-weight: 600; color: #7A7065; text-transform: uppercase; letter-spacing: 1.8px; margin-bottom: 14px; }}
-  .resumen {{ font-size: 12px; color: #1A1814; line-height: 1.75; text-align:justify; }}
+  /* ── Secciones ── */
+  .seccion {{ margin-bottom: 26px; }}
+  .sec-titulo {{ font-size: 11px; font-weight: 700; color: var(--mute); letter-spacing: 0.02em; margin-bottom: 12px; }}
+  .resumen {{ font-size: 12.5px; color: var(--ink-2); line-height: 1.7; text-align: justify; }}
 
-  table {{ width: 100%; border-collapse: collapse; font-size: 11.5px; }}
-  th {{ font-weight: 600; color: #7A7065; text-align: left; padding: 8px 6px; border-bottom: 1px solid #C9C0AC; font-size: 8.5px; text-transform: uppercase; letter-spacing: 1.4px; }}
-  td {{ padding: 11px 6px; border-bottom: 1px solid #EDE6D3; color: #1A1814; vertical-align: top; }}
-  td.r {{ text-align: right; font-family:'Fraunces',serif; font-weight: 500; font-variant-numeric: tabular-nums; }}
-  td.g {{ color: #7A7065; font-size: 10.5px; }}
+  /* ── Badge con punto — idéntico a .bk-badge del app ── */
+  .badge {{
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 9px; border-radius: var(--r-pill);
+    font-size: 11px; font-weight: 700; letter-spacing: 0.02em;
+    background: var(--paper-2); color: var(--mute);
+  }}
+  .badge .dot {{ width: 6px; height: 6px; border-radius: 50%; background: currentColor; }}
+  .badge--success {{ background: var(--success-soft); color: var(--success); }}
+  .badge--danger  {{ background: var(--danger-soft);  color: var(--danger); }}
+  .badge--mute    {{ background: var(--paper-2);       color: var(--mute); }}
+
+  /* ── Tablas ── */
+  table {{ width: 100%; border-collapse: collapse; font-size: 12px; }}
+  th {{ font-weight: 700; color: var(--mute); text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line-2); font-size: 10px; letter-spacing: 0.02em; }}
+  td {{ padding: 12px 6px; border-bottom: 1px solid var(--line); color: var(--ink); vertical-align: top; }}
+  td.num {{ text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); }}
+  .link {{ color: var(--forest); text-decoration: underline; }}
   tr:last-child td {{ border-bottom: none; }}
 
-  .footer {{ margin-top: 48px; padding-top: 18px; border-top: 1px solid #E8E2D2; text-align:center; font-size: 9px; color: #7A7065; letter-spacing:1.5px; text-transform:uppercase; font-weight:500; }}
+  .factor-nombre {{ font-weight: 700; font-size: 12.5px; margin-bottom: 5px; }}
+  .factor-desc {{ color: var(--mute); font-size: 11.5px; line-height: 1.5; }}
+
+  .recs {{ padding-left: 18px; }}
+  .recs li {{ font-size: 12.5px; color: var(--ink-2); line-height: 1.7; margin-bottom: 4px; }}
+
+  .footer {{ margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line); text-align: center; font-size: 10px; color: var(--mute-2); letter-spacing: 0.02em; }}
 </style>
 </head>
 <body>
 <div class="page">
 
   <div class="doc-head">
-    <div class="doc-kicker">Estimación de valor</div>
-    <div class="doc-date">{fecha_hoy}</div>
+    <div>
+      <div class="doc-head__brand">Broquer</div>
+      <div class="doc-head__title">Estimación de valor</div>
+    </div>
+    <div class="doc-head__date">{fecha_hoy}</div>
   </div>
 
-  <div class="valor-bloque">
-    <div class="valor-card">
-      <div class="valor-lbl">Valor estimado</div>
-      <div class="valor-num">{fmt_mx(resultado.get('valor_estimado',0))}</div>
-    </div>
+  <div class="valor-card">
+    <div class="valor-lbl">Valor estimado</div>
+    <div class="valor-num">{fmt_mx(resultado.get('valor_estimado',0))}</div>
     <div class="valor-meta">
       <div class="meta-item">
         <div class="meta-lbl">Inmueble</div>
-        <div class="meta-val">{resultado.get('tipo_inmueble','—')}</div>
+        <div class="meta-val">{_esc(resultado.get('tipo_inmueble','—'))}</div>
       </div>
       <div class="meta-item">
         <div class="meta-lbl">Superficie</div>
-        <div class="meta-val">{superficie_str}</div>
+        <div class="meta-val">{_esc(superficie_str)}</div>
       </div>
       <div class="meta-item">
         <div class="meta-lbl">Ubicación</div>
-        <div class="meta-val">{resultado.get('colonia','—')}, {resultado.get('ciudad','Morelia')}</div>
+        <div class="meta-val">{_esc(resultado.get('colonia','—'))}, {_esc(resultado.get('ciudad','Morelia'))}</div>
       </div>
       <div class="meta-item">
         <div class="meta-lbl">Operación</div>
-        <div class="meta-val">{resultado.get('operacion','venta').capitalize()}</div>
+        <div class="meta-val">{_esc(operacion)}</div>
       </div>
     </div>
   </div>
 
   <div class="seccion">
     <div class="sec-titulo">Análisis</div>
-    <div class="resumen">{resultado.get('resumen_ejecutivo','—')}</div>
+    <div class="resumen">{_esc(resultado.get('resumen_ejecutivo','—'))}</div>
   </div>
 
   <div class="seccion">
@@ -3227,9 +3277,23 @@ async def generar_avm_pdf(p: dict):
     </table>
   </div>
 
-  <div class="footer">
-    Powered by Broquer
+  {"" if not factores_html else f'''
+  <div class="seccion">
+    <div class="sec-titulo">Factores de ajuste</div>
+    <table>
+      <tbody>{factores_html}</tbody>
+    </table>
   </div>
+  '''}
+
+  {"" if not recs_html else f'''
+  <div class="seccion">
+    <div class="sec-titulo">Recomendaciones</div>
+    <ul class="recs">{recs_html}</ul>
+  </div>
+  '''}
+
+  <div class="footer">Broquer · Real Estate Operating System</div>
 
 </div>
 </body>
