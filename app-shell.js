@@ -227,7 +227,7 @@
   const MODS = [
     { key:'props',        href:'propiedades.html',   label:'Tus Inmuebles',   group:'crm',  icon:'building' },
     { key:'contactos',    href:'contactos.html',     label:'Contactos',       group:'crm',  icon:'users' },
-    { key:'tareas',       href:'tareas.html',        label:'Tareas',          group:'crm',  icon:'check' },
+    { key:'tareas',       href:'tareas.html',        label:'Tareas',          group:'main', icon:'check' },
     { key:'leads',        href:'leads.html',         label:'Leads',           group:'crm',  icon:'send' },
     { key:'estadisticas', href:'estadisticas.html',  label:'Estadísticas',    group:'crm',  icon:'chart' },
     { key:'contratos',    href:'contratos.html',     label:'Contratos',       group:'main', icon:'document' },
@@ -236,8 +236,9 @@
     { key:'isr',          href:'isr.html',           label:'ISR',             group:'main', icon:'calculator' },
     { key:'image-cleaner',href:'image-cleaner.html', label:'Editor imágenes', group:'main', icon:'image' },
     { key:'facebook-ads', href:'facebook-ads.html',  label:'Facebook Ads', group:'main', icon:'facebook' },
-    { key:'guia',         href:'guia-agente.html',   label:'Ayuda', group:'main', icon:'question' },
     { key:'mi-sitio',     href:'mi-sitio.html',      label:'Mi sitio',        group:'main', icon:'globo' },
+    { key:'guia',         href:'guia-agente.html',   label:'Ayuda', group:'main', icon:'question' },
+    { key:'blog',         href:'blog.html',          label:'Blog',            group:'main', icon:'document' },
     { key:'admin',        href:'admin.html',         label:'Admin',           group:'main', icon:'cog', adminOnly:true },
   ];
 
@@ -305,11 +306,13 @@
     check:      '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>',
     globo:      '<path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zM3.6 9h16.8M3.6 15h16.8M11.5 3a17 17 0 000 18M12.5 3a17 17 0 010 18"/>',
     facebook:   '<path fill="currentColor" stroke="none" d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.269h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>',
+    funnel:     '<path stroke-linecap="round" stroke-linejoin="round" d="M3 4.5h18l-7.25 8.25v5.1l-3.5 1.75v-6.85L3 4.5z"/>',
+    chevron:    '<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>',
     lock:       '<path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>',
     trash:      '<path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>',
   };
-  const svg = (name, size = 18, sw = 1.6) =>
-    `<svg width="${size}" height="${size}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="${sw}">${ICONS[name] || ''}</svg>`;
+  const svg = (name, size = 18, sw = 1.6, cls = '') =>
+    `<svg${cls ? ` class="${cls}"` : ''} width="${size}" height="${size}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="${sw}">${ICONS[name] || ''}</svg>`;
 
   /* Helper local para SVGs dentro de chips de Broq (14×14, stroke 1.7) */
   const _CICO = (name) =>
@@ -377,6 +380,14 @@
 .bk-sidebar .bk-sb-link.is-active,
 .bk-sidebar a.bk-sb-link.is-active { background: var(--sky-blue) !important; color: #FFFFFF !important; }
 .bk-sb-link svg, .bk-sidebar .bk-sb-link svg { flex-shrink: 0; opacity: 1; color: #FFFFFF; }
+.bk-sb-group { display: flex; flex-direction: column; gap: 2px; }
+.bk-sb-group + .bk-sb-link { margin-top: 4px; }
+.bk-sb-trigger { width: 100%; border: 0; background: transparent; font-family: inherit; text-align: left; }
+.bk-sb-trigger .bk-sb-chevron { margin-left: auto; transition: transform var(--dur) var(--ease); }
+.bk-sb-group.is-open .bk-sb-chevron { transform: rotate(180deg); }
+.bk-sb-submenu { display: none; flex-direction: column; gap: 2px; padding: 2px 0 6px 28px; }
+.bk-sb-group.is-open .bk-sb-submenu { display: flex; }
+.bk-sb-submenu .bk-sb-link { font-size: 13px; padding: 8px 10px; }
 
 /* Content area */
 .bk-content { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
@@ -1031,6 +1042,21 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
   function buildSidebarLink(m, active) {
     return `<a href="${m.href}" class="bk-sb-link${m.key === active ? ' is-active' : ''}">${svg(m.icon)} ${m.label}</a>`;
   }
+  function buildCrmGroup(items, active) {
+    const isOpen = items.some(m => m.key === active);
+    return `<div class="bk-sb-group${isOpen ? ' is-open' : ''}" id="bk-sb-crm-group">
+      <button class="bk-sb-link bk-sb-trigger${isOpen ? ' is-active' : ''}" id="bk-sb-crm-trigger" type="button" aria-expanded="${isOpen ? 'true' : 'false'}" aria-controls="bk-sb-crm-submenu">
+        ${svg('funnel')} CRM ${svg('chevron', 16, 2, 'bk-sb-chevron')}
+      </button>
+      <div class="bk-sb-submenu" id="bk-sb-crm-submenu">
+        ${items.map(m => buildSidebarLink(m, active)).join('')}
+      </div>
+    </div>`;
+  }
+  function buildMainSidebar(items, active) {
+    const profileLink = `<a href="javascript:void(0)" class="bk-sb-link" onclick="openProfileDrawer()">${svg('user')} Mi perfil</a>`;
+    return items.map(m => buildSidebarLink(m, active) + (m.key === 'mi-sitio' ? profileLink : '')).join('');
+  }
   function buildBnavItem(m, active) {
     return `<a href="${m.href}" class="bk-bnav__item${m.key === active ? ' is-active' : ''}">${svg(m.icon, 22)} <span>${m.label.split(' ')[0]}</span></a>`;
   }
@@ -1068,9 +1094,8 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
     shell.className = 'bk-shell-root';
     shell.innerHTML = `
       <aside class="bk-sidebar" id="bk-sidebar">
-        ${crm.map(m => buildSidebarLink(m, activeKey)).join('')}
-        ${main.map(m => buildSidebarLink(m, activeKey)).join('')}
-        <a href="javascript:void(0)" class="bk-sb-link" onclick="openProfileDrawer()">${svg('user')} Mi perfil</a>
+        ${buildCrmGroup(crm, activeKey)}
+        ${buildMainSidebar(main, activeKey)}
       </aside>
 
       <main class="bk-content">
@@ -1094,6 +1119,17 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
       </main>
     `;
     document.body.appendChild(shell);
+
+    const crmTrigger = document.getElementById('bk-sb-crm-trigger');
+    const crmGroup = document.getElementById('bk-sb-crm-group');
+    if (crmTrigger && crmGroup) {
+      crmTrigger.addEventListener('click', () => {
+        const open = !crmGroup.classList.contains('is-open');
+        crmGroup.classList.toggle('is-open', open);
+        crmTrigger.classList.toggle('is-active', open);
+        crmTrigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+    }
 
     // ── Diagnóstico de cascada CSS del sidebar ──
     // Si algún módulo override el color de los links del drawer, lo detectamos
