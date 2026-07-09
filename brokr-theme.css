@@ -814,3 +814,301 @@ input, select, textarea, button {
   letter-spacing: 0.01em; text-align: center;
 }
 .bk-shark-loader--col { flex-direction: column; height: auto; }
+/* ============================================================
+   BROQUER — Design System  ·  Upgrade “Premium”
+   ============================================================ */
+
+:root {
+  /* ── Fondo general más cálido ─ */
+  --paper:   #F8F9FA;          /* blanco roto */
+  --bone:    #FFFFFF;          /* cards en blanco puro */
+  --paper-2: #F1F3F5;          /* canvas ligeramente más oscuro */
+
+  /* ── Azul más profundo y saturado ─ */
+  --forest:   #0055CC;         /* primary más intenso */
+  --forest-2: #003D99;         /* hover */
+  --sky-blue: #0055CC;         /* mismo azul */
+  --sky-blue-press: #003D99;
+
+  /* ── Grises con subtono cálido ─ */
+  --ink:      #1A1D21;         /* casi negro pero no puro */
+  --ink-2:    #2D333A;
+  --ink-3:    #4A535E;
+  --mute:     #6B7685;         /* gris más legible */
+  --mute-2:   #9AA5B3;
+  --mute-3:   #C8D0D9;
+
+  /* ── Sombras con color (no gris neutro) ─ */
+  --shadow-xs: 0 1px 2px rgba(0, 85, 204, .06);
+  --shadow-sm: 0 2px 6px rgba(0, 85, 204, .08), 0 1px 2px rgba(0, 85, 204, .04);
+  --shadow:    0 6px 20px rgba(0, 85, 204, .10), 0 2px 4px rgba(0, 85, 204, .05);
+  --shadow-md: 0 12px 34px rgba(0, 85, 204, .12), 0 4px 8px rgba(0, 85, 204, .06);
+  --shadow-lg: 0 22px 56px rgba(0, 85, 204, .16), 0 6px 12px rgba(0, 85, 204, .08);
+  --shadow-xl: 0 32px 80px rgba(0, 85, 204, .20), 0 8px 20px rgba(0, 85, 204, .10);
+
+  /* ── Radios más suaves ─ */
+  --r:    14px;
+  --r-lg: 28px;
+  --r-xl: 32px;
+
+  /* ── Tipografía: más aire y contraste ─ */
+  --lh-body: 1.65;
+  --lh-sm:   1.5;
+  --lh-xs:   1.4;
+
+  /* Títulos un poco más grandes y con tracking negativo */
+  --fs-h1: 36px;
+  --fs-h2: 28px;
+  --fs-h3: 22px;
+  --fs-h5: 18px;
+
+  --lh-h1: 1.1;
+  --lh-h2: 1.15;
+  --lh-h3: 1.2;
+
+  /* Body un pelín más grande */
+  --fs-body: 17px;
+  --fs-sm: 15px;
+  --fs-xs: 13px;
+}
+
+/* ── Reset de tipografía ─ */
+html, body {
+  font-weight: 400;
+  letter-spacing: -0.012em;
+}
+
+h1, h2, h3, h4, h5 {
+  letter-spacing: -0.025em;
+  font-weight: 700;
+}
+h1 { letter-spacing: -0.03em; }
+h2 { letter-spacing: -0.028em; }
+p {
+  font-weight: 400;
+  color: var(--ink-2);
+}
+
+/* ── Botones con gradiente + sombra ─ */
+.bk-btn--forest {
+  background: linear-gradient(145deg, var(--forest), var(--forest-2));
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 85, 204, .30);
+  transition: all .25s ease;
+}
+.bk-btn--forest:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0, 85, 204, .35);
+  background: linear-gradient(145deg, var(--forest-2), var(--forest));
+}
+.bk-btn--forest:active {
+  transform: scale(.97);
+  box-shadow: 0 2px 6px rgba(0, 85, 204, .20);
+}
+
+/* Botón ghost más refinado */
+.bk-btn--ghost {
+  border-color: var(--line-2);
+  background: transparent;
+  color: var(--ink-2);
+  font-weight: 600;
+}
+.bk-btn--ghost:hover {
+  background: var(--bone);
+  border-color: var(--mute-2);
+  color: var(--ink);
+}
+
+/* ── Inputs y selects con borde más fino y foco suave ─ */
+.bk-input,
+.bk-textarea,
+.bk-select {
+  border-width: 1.5px;
+  background: var(--bone);
+  border-color: var(--line-2);
+  transition: border-color .25s, box-shadow .25s;
+}
+.bk-input:focus,
+.bk-textarea:focus,
+.bk-select:focus {
+  border-color: var(--forest);
+  box-shadow: 0 0 0 4px rgba(0, 85, 204, .12);
+}
+
+/* ── Cards con elevación y borde sutil ─ */
+.bk-card {
+  border: 1px solid rgba(0, 85, 204, .06);
+  background: var(--bone);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow .3s ease, transform .25s ease;
+}
+.bk-card--hover:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* ── Badges y chips más suaves ─ */
+.bk-badge {
+  padding: 4px 12px;
+  font-weight: 600;
+  border-radius: 100px;
+  background: var(--paper-2);
+  color: var(--mute);
+}
+.bk-badge--forest {
+  background: rgba(0, 85, 204, .10);
+  color: var(--forest);
+}
+.bk-badge--success {
+  background: rgba(12, 131, 138, .10);
+  color: var(--success);
+}
+.bk-badge--warn {
+  background: rgba(245, 93, 66, .10);
+  color: var(--warn);
+}
+.bk-badge--danger {
+  background: rgba(231, 8, 102, .10);
+  color: var(--danger);
+}
+
+/* ── Chips (filtros) ─ */
+.bk-chip {
+  height: 30px;
+  padding: 0 14px;
+  font-weight: 500;
+  border: 1px solid var(--line-2);
+  background: var(--bone);
+  color: var(--ink-2);
+  border-radius: 100px;
+}
+.bk-chip--forest {
+  background: var(--forest);
+  color: #fff;
+  border-color: var(--forest);
+}
+
+/* ── Tabs más elegantes ─ */
+.bk-tab {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  padding-bottom: 10px;
+  border-bottom-width: 2.5px;
+  color: var(--mute);
+}
+.bk-tab.is-active {
+  color: var(--ink);
+  border-bottom-color: var(--forest);
+}
+
+/* ── Tablas con más aire ─ */
+.bk-table th {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.04em;
+  color: var(--mute-2);
+  padding: 12px 16px;
+}
+.bk-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* ── Page Header con más presencia ─ */
+.bk-page-header__title {
+  font-size: var(--fs-h1);
+  letter-spacing: -0.035em;
+}
+.bk-page-header__sub {
+  font-size: var(--fs-sm);
+  color: var(--mute);
+  max-width: 70ch;
+  line-height: var(--lh);
+}
+
+/* ── Section Header ─ */
+.bk-section-header h2 {
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+/* ── Empty state más emotivo ─ */
+.bk-empty__icon {
+  width: 64px;
+  height: 64px;
+  background: var(--paper-2);
+  color: var(--mute-2);
+}
+.bk-empty__title {
+  font-size: var(--fs-h2);
+}
+.bk-empty__text {
+  font-size: var(--fs-sm);
+}
+
+/* ── Modales con más profundidad ─ */
+.bk-modal {
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-xl);
+  border: 1px solid rgba(0, 85, 204, .06);
+}
+.bk-modal__head {
+  padding: 24px 28px 16px;
+}
+.bk-modal__title {
+  font-size: var(--fs-h2);
+  letter-spacing: -0.025em;
+}
+.bk-modal__body {
+  padding: 24px 28px;
+}
+.bk-modal__foot {
+  padding: 16px 28px 24px;
+}
+
+/* ── Notificaciones / Toast ─ */
+.bk-toast {
+  border-radius: 100px;
+  padding: 10px 24px;
+  font-weight: 500;
+  background: var(--ink);
+  color: var(--bone);
+  box-shadow: var(--shadow-lg);
+}
+.bk-toast--success {
+  background: var(--success);
+}
+.bk-toast--error {
+  background: var(--danger);
+}
+
+/* ── Ajustes para el shell (sidebar, topbar, etc.) ─ */
+.bk-sidebar {
+  background: var(--sky-navy);
+  padding: 20px 16px;
+}
+.bk-sb-link {
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  padding: 12px 14px;
+  border-radius: var(--r);
+  transition: background .2s, color .2s;
+}
+.bk-sb-link:hover {
+  background: rgba(255,255,255,0.08);
+}
+.bk-sb-link.is-active {
+  background: var(--sky-blue);
+  box-shadow: 0 2px 8px rgba(0, 85, 204, .25);
+}
+
+.bk-topbar {
+  padding: 20px 40px;
+  background: var(--bone);
+  border-bottom: 1px solid var(--line);
+}
+
+.bk-mobile-head {
+  padding: 16px 20px 14px;
+}
