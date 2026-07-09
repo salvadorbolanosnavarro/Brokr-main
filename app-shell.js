@@ -237,6 +237,7 @@
     { key:'image-cleaner',href:'image-cleaner.html', label:'Editor imágenes', group:'main', icon:'image' },
     { key:'facebook-ads', href:'facebook-ads.html',  label:'Facebook Ads', group:'main', icon:'facebook' },
     { key:'mi-sitio',     href:'mi-sitio.html',      label:'Mi sitio',        group:'main', icon:'globo' },
+    // Blog debe permanecer justo debajo de Mi sitio y antes de Ayuda.
     { key:'blog',         href:'blog.html',          label:'Blog',            group:'main', icon:'feather' },
     { key:'guia',         href:'guia-agente.html',   label:'Ayuda', group:'main', icon:'question' },
     { key:'admin',        href:'admin.html',         label:'Admin',           group:'main', icon:'cog', adminOnly:true },
