@@ -4040,9 +4040,7 @@ def build_ficha_html(p: dict, images_b64: dict) -> str:
     # navy #05203C como estructura, azul #0062E3 como acción, DM Sans en
     # todo. Cero JetBrains Mono, cero mayúsculas decorativas.
     CSS = """
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
 :root{
   --paper:#FFFFFF; --paper-2:#EFF3F8; --bone:#FFFFFF;
   --ink:#161616; --ink-2:#2E3338; --mute:#626971; --mute-2:#939BA6;
@@ -4054,7 +4052,7 @@ def build_ficha_html(p: dict, images_b64: dict) -> str:
   --font-sans:'DM Sans',-apple-system,BlinkMacSystemFont,system-ui,Roboto,'Helvetica Neue',sans-serif;
   --font-display:'DM Sans',-apple-system,BlinkMacSystemFont,system-ui,Roboto,sans-serif;
 }
-*{box-sizing:border-box;margin:0;padding:0}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
 html,body{width:210mm}
 body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased}
 .ficha-page{position:relative;width:210mm;height:297mm;background:var(--paper);display:flex;flex-direction:column;overflow:hidden;page-break-after:always}
