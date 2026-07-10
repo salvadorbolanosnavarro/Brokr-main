@@ -3767,6 +3767,424 @@ async def generar_desde_machote(
     )
 
 
+# ────────────────────────────────────────────
+# MACHOTES PROPIOS — el usuario sube su propia plantilla, Broquer detecta
+# las variables y la guarda con un título para elegirla del menú después.
+# ────────────────────────────────────────────
+MACHOTES_BUCKET = "machotes-contrato"
+
+
+async def _detectar_campos_machote(full_text: str, tipo: str, user_id: str = None) -> dict:
+    """Detecta variables en el texto de un machote: patrones {{campo}}, {campo},
+    <<campo>>, [CAMPO], blancos (___), o vía IA si no hay patrones reconocibles."""
+    campos = []
+    patron_usado = None
+
+    patrones_regex = [
+        (r'\{\{([^}]{1,60})\}\}',   '{{{}}}'),
+        (r'\{([^}]{1,60})\}',        '{}'),
+        (r'<<([^>]{1,60})>>',        '<<{}>>'),
+        (r'\[([A-ZÁÉÍÓÚÜÑ][^[\]]{0,58})\]', '[{}]'),
+        (r'\[([a-záéíóúüñ][^[\]]{0,58})\]', '[{}]'),
+    ]
+
+    for regex, fmt in patrones_regex:
+        matches = re.findall(regex, full_text, re.IGNORECASE)
+        if matches:
+            seen = set()
+            for m in matches:
+                nombre_original = m.strip()
+                slug = re.sub(r'[^a-z0-9_]', '_', nombre_original.lower().strip())
+                slug = re.sub(r'_+', '_', slug).strip('_') or 'campo'
+                if slug not in seen:
+                    seen.add(slug)
+                    campos.append({
+                        "id": slug,
+                        "label": nombre_original.replace('_', ' ').strip(),
+                        "tipo_input": "text",
+                        "patron_texto": nombre_original,
+                        "patron_fmt": fmt,
+                    })
+            patron_usado = fmt
+            break
+
+    if not campos:
+        blancos = re.findall(r'_{3,}', full_text)
+        if blancos:
+            for i, _ in enumerate(set(map(len, blancos)), start=1):
+                campos.append({
+                    "id": f"campo_{i}",
+                    "label": f"Campo {i}",
+                    "tipo_input": "text",
+                    "patron_texto": None,
+                    "patron_fmt": "blank",
+                })
+            patron_usado = "blank"
+
+    if not campos and os.environ.get('GROQ_API_KEY'):
+        tipo_label = tipo if tipo else "contrato"
+        prompt_ia = (
+            "Eres un asistente que analiza contratos legales mexicanos.\n\n"
+            f"Analiza el siguiente texto de un {tipo_label} e identifica TODOS los campos "
+            "variables (nombres de partes, fechas, montos, direcciones, plazos, etc.).\n\n"
+            "Devuelve ÚNICAMENTE un JSON válido con esta estructura (sin explicaciones extra):\n"
+            '{"campos": [{"id": "nombre_snake_case", "label": "Nombre legible", "tipo_input": "text|number|date|currency"}]}\n\n'
+            f"Texto del contrato (primeros 3000 caracteres):\n{full_text[:3000]}"
+        )
+        try:
+            async with httpx.AsyncClient(timeout=30) as client:
+                r = await client.post(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers={"Authorization": f"Bearer {os.environ.get('GROQ_API_KEY','')}",
+                             "Content-Type": "application/json"},
+                    json={"model": "llama-3.3-70b-versatile",
+                          "messages": [{"role": "user", "content": prompt_ia}],
+                          "max_tokens": 1000, "temperature": 0.1}
+                )
+            if r.status_code == 200:
+                _resp_json = r.json()
+                try:
+                    _track_groq(user_id, "contratos", "/contrato/machote/subir",
+                                _resp_json, modelo="llama-3.3-70b-versatile")
+                except Exception:
+                    pass
+                txt = _resp_json["choices"][0]["message"]["content"].strip()
+                json_match = re.search(r'\{.*\}', txt, re.DOTALL)
+                if json_match:
+                    ia_data = _json.loads(json_match.group())
+                    for c in ia_data.get("campos", []):
+                        c.setdefault("patron_texto", None)
+                        c.setdefault("patron_fmt", "ia")
+                        campos.append(c)
+                    patron_usado = "ia"
+        except Exception as e:
+            print(f"Error IA _detectar_campos_machote: {e}")
+
+    TIPO_HINTS = {
+        "fecha": "date", "date": "date", "dia": "date",
+        "monto": "currency", "precio": "currency", "renta": "currency",
+        "pago": "currency", "importe": "currency", "valor": "currency",
+        "cantidad": "number", "plazo": "number", "dias": "number",
+        "meses": "number", "años": "number", "superficie": "number",
+        "metros": "number", "m2": "number",
+    }
+    for c in campos:
+        if c.get("tipo_input") in (None, "text"):
+            label_lower = c.get("label", "").lower()
+            for hint, tipo_inp in TIPO_HINTS.items():
+                if hint in label_lower:
+                    c["tipo_input"] = tipo_inp
+                    break
+
+    return {
+        "campos": campos,
+        "patron_usado": patron_usado,
+        "detectado_automaticamente": bool(campos),
+    }
+
+
+def _rellenar_docx_bytes(content: bytes, valores: dict) -> bytes:
+    """Rellena un DOCX (bytes) reemplazando {{campo}}, {campo}, <<campo>>, [CAMPO]
+    con los valores dados. Devuelve los bytes del DOCX ya rellenado."""
+    from docx import Document as DocxDocument
+
+    doc = DocxDocument(io.BytesIO(content))
+
+    def reemplazar_texto(texto: str, vals: dict) -> str:
+        for campo_id, valor in vals.items():
+            if campo_id.startswith("__label_"):
+                continue
+            valor_str = str(valor) if valor is not None else ""
+            patrones_campo = [
+                "{{" + campo_id + "}}",
+                "{" + campo_id + "}",
+                "<<" + campo_id + ">>",
+                "[" + campo_id + "]",
+                "[" + campo_id.upper() + "]",
+                "[" + campo_id.replace('_', ' ').title() + "]",
+                "{{" + campo_id.replace('_', ' ') + "}}",
+                "<<" + campo_id.replace('_', ' ') + ">>",
+            ]
+            label_original = vals.get(f"__label_{campo_id}")
+            if label_original:
+                patrones_campo += [
+                    "{{" + label_original + "}}",
+                    "{" + label_original + "}",
+                    "<<" + label_original + ">>",
+                    "[" + label_original + "]",
+                    "[" + label_original.upper() + "]",
+                ]
+            for patron in patrones_campo:
+                if patron in texto:
+                    texto = texto.replace(patron, valor_str)
+        return texto
+
+    def reemplazar_run(run, vals):
+        if run.text:
+            run.text = reemplazar_texto(run.text, vals)
+
+    for p in doc.paragraphs:
+        for run in p.runs:
+            reemplazar_run(run, valores)
+        texto_completo = p.text
+        texto_reemplazado = reemplazar_texto(texto_completo, valores)
+        if texto_reemplazado != texto_completo and p.runs:
+            p.runs[0].text = texto_reemplazado
+            for run in p.runs[1:]:
+                run.text = ""
+
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for p in cell.paragraphs:
+                    for run in p.runs:
+                        reemplazar_run(run, valores)
+                    texto_completo = p.text
+                    texto_reemplazado = reemplazar_texto(texto_completo, valores)
+                    if texto_reemplazado != texto_completo and p.runs:
+                        p.runs[0].text = texto_reemplazado
+                        for run in p.runs[1:]:
+                            run.text = ""
+
+    out = io.BytesIO()
+    doc.save(out)
+    return out.getvalue()
+
+
+@app.post("/contrato/machote/subir")
+async def subir_machote(
+    request: Request,
+    file: UploadFile = File(...),
+    titulo: str = FastAPIForm(...),
+    tipo: str = FastAPIForm(default="personalizado"),
+):
+    """
+    Sube un machote propio del usuario (DOCX), detecta sus variables y lo
+    guarda para que aparezca en su menú de machotes la próxima vez.
+    """
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Debes iniciar sesión para guardar tu machote.")
+
+    titulo = (titulo or "").strip()
+    if not titulo:
+        raise HTTPException(status_code=400, detail="Ponle un título a tu machote para poder identificarlo después.")
+
+    content = await file.read()
+    try:
+        from docx import Document as DocxDocument
+        doc = DocxDocument(io.BytesIO(content))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"No se pudo leer el archivo DOCX: {e}")
+
+    partes = []
+    for p in doc.paragraphs:
+        if p.text.strip():
+            partes.append(p.text)
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for p in cell.paragraphs:
+                    if p.text.strip():
+                        partes.append(p.text)
+    full_text = "\n".join(partes)
+
+    analisis = await _detectar_campos_machote(full_text, tipo, user_id)
+    if not analisis["campos"]:
+        raise HTTPException(
+            status_code=400,
+            detail="No pudimos detectar campos variables en tu machote. Márcalos con {{campo}}, [CAMPO] o líneas con ___ y vuelve a intentarlo."
+        )
+
+    machote_id = str(_uuid.uuid4())
+    storage_path = f"{user_id}/{machote_id}.docx"
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        ru = await client.post(
+            f"{SUPABASE_URL}/storage/v1/object/{MACHOTES_BUCKET}/{storage_path}",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "x-upsert": "true",
+            },
+            content=content,
+        )
+        if ru.status_code not in (200, 201):
+            raise HTTPException(status_code=500, detail=f"No se pudo guardar el archivo: {ru.text[:200]}")
+
+        rd = await client.post(
+            f"{SUPABASE_URL}/rest/v1/machotes_contrato",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                "Content-Type": "application/json",
+                "Prefer": "return=representation",
+            },
+            json={
+                "id": machote_id,
+                "user_id": user_id,
+                "titulo": titulo,
+                "tipo": tipo or "personalizado",
+                "storage_path": storage_path,
+                "campos": analisis["campos"],
+                "patron_usado": analisis["patron_usado"],
+                "texto_preview": full_text[:600],
+            },
+        )
+        if rd.status_code not in (200, 201):
+            try:
+                await client.delete(
+                    f"{SUPABASE_URL}/storage/v1/object/{MACHOTES_BUCKET}/{storage_path}",
+                    headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
+                )
+            except Exception:
+                pass
+            raise HTTPException(status_code=500, detail=f"No se pudo guardar tu machote: {rd.text[:200]}")
+
+    return {
+        "id": machote_id,
+        "titulo": titulo,
+        "tipo": tipo or "personalizado",
+        "campos": analisis["campos"],
+        "patron_usado": analisis["patron_usado"],
+        "detectado_automaticamente": analisis["detectado_automaticamente"],
+    }
+
+
+@app.get("/contrato/machotes")
+async def listar_machotes(request: Request):
+    """Lista los machotes guardados del usuario (para el menú de selección)."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Debes iniciar sesión.")
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        r = await client.get(
+            f"{SUPABASE_URL}/rest/v1/machotes_contrato",
+            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
+            params={
+                "user_id": f"eq.{user_id}",
+                "select": "id,titulo,tipo,campos,patron_usado,created_at",
+                "order": "created_at.desc",
+            },
+        )
+    if r.status_code != 200:
+        raise HTTPException(status_code=500, detail="No se pudieron cargar tus machotes.")
+    return {"machotes": r.json() or []}
+
+
+@app.get("/contrato/machote/{machote_id}")
+async def obtener_machote(machote_id: str, request: Request):
+    """Obtiene los campos de un machote guardado (para volver a llenarlo)."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Debes iniciar sesión.")
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        r = await client.get(
+            f"{SUPABASE_URL}/rest/v1/machotes_contrato",
+            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
+            params={
+                "id": f"eq.{machote_id}",
+                "user_id": f"eq.{user_id}",
+                "select": "id,titulo,tipo,campos,patron_usado,created_at",
+                "limit": "1",
+            },
+        )
+    if r.status_code != 200 or not r.json():
+        raise HTTPException(status_code=404, detail="No encontramos ese machote.")
+    return r.json()[0]
+
+
+@app.post("/contrato/machote/{machote_id}/generar")
+async def generar_desde_machote_guardado(machote_id: str, request: Request):
+    """Rellena un machote ya guardado con los datos capturados y devuelve el DOCX."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Debes iniciar sesión.")
+
+    body = await request.json()
+    datos = body.get("datos") or {}
+    if not isinstance(datos, dict):
+        raise HTTPException(status_code=400, detail="El campo 'datos' debe ser un objeto.")
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        rm = await client.get(
+            f"{SUPABASE_URL}/rest/v1/machotes_contrato",
+            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
+            params={"id": f"eq.{machote_id}", "user_id": f"eq.{user_id}",
+                    "select": "id,titulo,storage_path", "limit": "1"},
+        )
+        if rm.status_code != 200 or not rm.json():
+            raise HTTPException(status_code=404, detail="No encontramos ese machote.")
+        machote = rm.json()[0]
+
+        rf = await client.get(
+            f"{SUPABASE_URL}/storage/v1/object/{MACHOTES_BUCKET}/{machote['storage_path']}",
+            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
+        )
+        if rf.status_code != 200:
+            raise HTTPException(status_code=500, detail="No se pudo leer el archivo de tu machote.")
+        content = rf.content
+
+    try:
+        docx_bytes = _rellenar_docx_bytes(content, datos)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"No se pudo generar el contrato: {e}")
+
+    with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as f:
+        f.write(docx_bytes)
+        output_path = f.name
+
+    titulo_limpio = re.sub(r'[^a-zA-Z0-9_]', '_', machote.get('titulo') or 'Contrato')
+    filename = f"{titulo_limpio}.docx"
+
+    return FileResponse(
+        output_path,
+        media_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        filename=filename,
+    )
+
+
+@app.delete("/contrato/machote/{machote_id}")
+async def eliminar_machote(machote_id: str, request: Request):
+    """Elimina un machote guardado (archivo del Storage + registro en la tabla)."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Debes iniciar sesión.")
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        rm = await client.get(
+            f"{SUPABASE_URL}/rest/v1/machotes_contrato",
+            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
+            params={"id": f"eq.{machote_id}", "user_id": f"eq.{user_id}",
+                    "select": "storage_path", "limit": "1"},
+        )
+        if rm.status_code != 200 or not rm.json():
+            raise HTTPException(status_code=404, detail="No encontramos ese machote.")
+        storage_path = rm.json()[0]["storage_path"]
+
+        try:
+            await client.delete(
+                f"{SUPABASE_URL}/storage/v1/object/{MACHOTES_BUCKET}/{storage_path}",
+                headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
+            )
+        except Exception:
+            pass
+
+        rd = await client.delete(
+            f"{SUPABASE_URL}/rest/v1/machotes_contrato",
+            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                     "Prefer": "return=minimal"},
+            params={"id": f"eq.{machote_id}", "user_id": f"eq.{user_id}"},
+        )
+        if rd.status_code not in (200, 204):
+            raise HTTPException(status_code=500, detail="No se pudo eliminar el machote.")
+
+    return {"ok": True}
+
+
 # ── PDF GENERATION ──────────────────────────────────────────────
 from playwright.async_api import async_playwright
 import base64, asyncio
