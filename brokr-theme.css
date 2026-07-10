@@ -41,7 +41,7 @@
    #F55D42) y --mute al text-secondary exacto (#626971).
    ════════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 :root {
   /* ── Surfaces (blanco base, canvas gris-azul) ─ */
@@ -105,6 +105,13 @@
   --sp-12: 48px;
   --sp-16: 64px;
 
+  /* ── Ritmo vertical de página (Auditoría 3) ──
+     --page-top: padding-top idéntico en las 15 pantallas para que el
+     título no "salte" al navegar. --header-gap: distancia fija entre
+     el page-header y el primer bloque de contenido. */
+  --page-top: 24px;
+  --header-gap: 32px;
+
   /* ── Sombras (tinte #161616, fondo claro) ── */
   --shadow-xs: 0 1px 2px rgba(22,22,22,.06);
   --shadow-sm: 0 1px 3px rgba(22,22,22,.10), 0 1px 2px rgba(22,22,22,.06);
@@ -134,9 +141,11 @@
   --z-modal:   240;
   --z-toast:   320;
 
-  /* ── Tipografía (familia única, como el sitio) ── */
+  /* ── Tipografía ── DM Sans para cuerpo/UI; Space Grotesk como
+     display para titulares y cifras grandes (Auditoría 3). --font-mono
+     sigue siendo alias de DM Sans: PROHIBIDO usar monoespaciadas. ── */
   --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', sans-serif;
-  --font-display: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+  --font-display: 'Space Grotesk', 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
   --font-mono: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', sans-serif; /* alias histórico → ya no es monoespaciada, ahora DM Sans */
 
   /* Escala BPK (Skyscanner) — tamaño/peso 700 para headings, 400 para cuerpo.
@@ -546,6 +555,66 @@ input, select, textarea, button {
 }
 .bk-page-header__title { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 700; letter-spacing: -0.03em; line-height: var(--lh-h1); }
 .bk-page-header__sub { font-size: var(--fs-sm); color: var(--mute); margin-top: var(--sp-2); line-height: var(--lh); max-width: 60ch; }
+
+/* ── PAGE HEADER CANÓNICO (Auditoría 3) ──────────────────────
+   Patrón único de encabezado para las 15 pantallas de la app.
+   Estructura: .page-main > .page-header > (__text con .page-title
+   + .page-subtitle) + (__actions con los botones de la página).
+   Ninguna pantalla debe definir su propio título de página. */
+.page-main { padding-top: var(--page-top); }
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-6);
+  margin-bottom: var(--header-gap);
+}
+
+.page-header__text { min-width: 0; }
+
+/* Fila auxiliar para título + badge de conteo u otros adornos inline */
+.page-title-row { display: flex; align-items: center; gap: var(--sp-3); }
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: var(--fs-h1);          /* 32px — único tamaño de título de página */
+  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin: 0;
+}
+
+.page-subtitle {
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: 400;
+  color: var(--mute);
+  margin: 6px 0 0;
+  max-width: 60ch;
+}
+
+.page-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .page-header { flex-direction: column; gap: var(--sp-4); }
+  .page-header__actions { width: 100%; }
+}
+
+/* Números grandes de métricas (dashboard, estadísticas) */
+.metric-value {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  line-height: 1;
+}
 
 .bk-section-header {
   display: flex; align-items: baseline; justify-content: space-between;
