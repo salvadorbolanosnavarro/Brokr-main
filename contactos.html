@@ -98,29 +98,6 @@ html, body { background: var(--paper); }
 .head-search input { flex: 1; background: none; border: none; outline: none; font-size: var(--fs-sm); font-family: inherit; color: var(--ink); letter-spacing: -0.005em; }
 .head-search input::placeholder { color: var(--mute-2); }
 
-/* Toggle de vista Pipeline / Lista */
-.view-seg {
-  display: inline-flex;
-  background: var(--paper-2);
-  border: 1px solid var(--line);
-  border-radius: var(--r-pill);
-  padding: 3px;
-  gap: 2px;
-}
-.view-seg button {
-  border: none; background: none;
-  font-family: inherit;
-  font-size: var(--fs-xs); font-weight: 600;
-  letter-spacing: -0.005em;
-  color: var(--mute);
-  padding: 6px 14px;
-  border-radius: var(--r-pill);
-  cursor: pointer;
-  display: flex; align-items: center; gap: 6px;
-  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
-}
-.view-seg button.active { background: var(--bone); color: var(--ink); box-shadow: var(--sh-1, 0 1px 2px rgba(0,0,0,.06)); }
-
 .filters-row {
   display: flex; align-items: center; gap: 10px;
   margin-bottom: 14px; flex-wrap: wrap;
@@ -235,20 +212,6 @@ html, body { background: var(--paper); }
 .rb-notario { background: oklch(94% .03 200); color: oklch(40% .08 200); }
 .rb-otro { background: var(--paper-2); color: var(--ink-2); }
 
-/* Chip de estatus (pipeline) — mismo lenguaje que los badges de inmuebles */
-.est-chip {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-size: var(--fs-label-3); font-weight: 600;
-  padding: 3px 9px;
-  border-radius: var(--r-pill);
-  letter-spacing: 0.02em;
-  text-transform: capitalize;
-  background: var(--paper-2);
-  color: var(--ink-2);
-  white-space: nowrap;
-}
-.est-chip .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
-
 .tag-chip {
   font-size: var(--fs-caption); font-weight: 500;
   padding: 2px 8px;
@@ -274,89 +237,6 @@ html, body { background: var(--paper); }
 }
 .qa:hover { border-color: var(--forest); color: var(--forest); }
 .qa-wa:hover { border-color: #25D366; background: #25D36610; }
-
-/* ── Pipeline (Kanban) ─────────────────────────────────────── */
-.kanban {
-  display: flex; gap: 14px;
-  padding: 16px 36px 120px;
-  overflow-x: auto;
-  align-items: flex-start;
-  scroll-snap-type: x proximity;
-}
-@media (max-width: 720px) { .kanban { padding: 8px 16px 120px; gap: 10px; } }
-.kb-col {
-  flex: 0 0 292px;
-  max-width: 292px;
-  background: var(--paper-2);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  display: flex; flex-direction: column;
-  max-height: calc(100vh - 300px);
-  min-height: 180px;
-  scroll-snap-align: start;
-  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
-}
-@media (max-width: 720px) { .kb-col { flex-basis: 260px; max-width: 260px; max-height: none; } }
-.kb-col.drag-over { border-color: var(--forest); background: var(--forest-soft); }
-.kb-col__head {
-  display: flex; align-items: center; gap: 8px;
-  padding: 14px 16px 10px;
-  flex-shrink: 0;
-}
-.kb-col__dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.kb-col__name {
-  font-size: var(--fs-sm); font-weight: 600;
-  color: var(--ink);
-  letter-spacing: -0.01em;
-  flex: 1;
-}
-.kb-col__count {
-  font-size: var(--fs-xs); color: var(--mute);
-  font-variant-numeric: tabular-nums;
-}
-.kb-col__body {
-  padding: 4px 10px 12px;
-  overflow-y: auto;
-  display: flex; flex-direction: column; gap: 8px;
-  flex: 1;
-}
-.kb-card {
-  background: var(--bone);
-  border: 1px solid var(--line);
-  border-radius: var(--r);
-  padding: 12px 13px;
-  cursor: pointer;
-  transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
-}
-.kb-card:hover { border-color: var(--line-2); transform: translateY(-1px); box-shadow: var(--sh-1, 0 1px 3px rgba(0,0,0,.07)); }
-.kb-card.dragging { opacity: .45; }
-.kb-card__top { display: flex; align-items: center; gap: 10px; }
-.kb-card__av {
-  width: 32px; height: 32px;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: var(--fs-caption); font-weight: 600;
-  color: var(--paper);
-  flex-shrink: 0;
-}
-.kb-card__name {
-  font-size: var(--fs-sm); font-weight: 500; color: var(--ink);
-  letter-spacing: -0.01em;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  flex: 1; min-width: 0;
-}
-.kb-card__meta {
-  display: flex; align-items: center; gap: 6px;
-  margin-top: 8px; flex-wrap: wrap;
-}
-.kb-card__sub { font-size: var(--fs-caption); color: var(--mute); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.kb-empty {
-  border: 1px dashed var(--line-2);
-  border-radius: var(--r);
-  padding: 18px 12px;
-  text-align: center;
-  font-size: var(--fs-caption); color: var(--mute-2);
-}
 
 /* Empty */
 .empty { text-align: center; padding: 64px 24px; color: var(--mute); }
@@ -584,20 +464,6 @@ html, body { background: var(--paper); }
   margin-bottom: 6px;
 }
 .det-estatus-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.det-estatus {
-  background: var(--paper-2);
-  border: 1px solid var(--line);
-  border-radius: var(--r-pill);
-  height: 30px; padding: 0 28px 0 12px;
-  font-family: inherit;
-  font-size: var(--fs-xs); font-weight: 600;
-  color: var(--ink);
-  outline: none; cursor: pointer;
-  -webkit-appearance: none; appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236B7685' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-}
 .det-tabs {
   display: flex; gap: 4px;
   padding: 0 24px;
@@ -767,33 +633,7 @@ html, body { background: var(--paper); }
 .act-txt { font-size: var(--fs-sm); color: var(--ink); line-height: 1.5; flex: 1; min-width: 0; overflow-wrap: break-word; }
 .act-date { font-size: var(--fs-caption); color: var(--mute); margin-top: 3px; }
 
-/* Tareas */
-.task-item {
-  display: flex; gap: 12px;
-  padding: 11px 0;
-  border-bottom: 1px solid var(--line);
-  align-items: center;
-}
-.task-item:last-child { border-bottom: none; }
-.task-check {
-  width: 22px; height: 22px;
-  border: 1.6px solid var(--line-2);
-  border-radius: 50%;
-  background: none;
-  cursor: pointer;
-  flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  color: transparent;
-  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease);
-  padding: 0;
-}
-.task-check:hover { border-color: var(--success); }
-.task-item.done .task-check { background: var(--success); border-color: var(--success); color: var(--bone); }
-.task-main { flex: 1; min-width: 0; }
-.task-title { font-size: var(--fs-sm); font-weight: 500; color: var(--ink); overflow-wrap: break-word; }
-.task-item.done .task-title { text-decoration: line-through; color: var(--mute); }
-.task-due { font-size: var(--fs-caption); color: var(--mute); margin-top: 2px; }
-.task-due.overdue { color: var(--danger); font-weight: 600; }
+/* Botón de quitar (reusado en vínculos de propiedades) */
 .task-del {
   border: none; background: none;
   color: var(--mute-2); cursor: pointer;
@@ -962,16 +802,6 @@ html, body { background: var(--paper); }
   <div class="page-head__row">
     <h1>Contactos</h1>
     <span class="page-head__count" id="count-badge" style="display:none">0</span>
-    <div class="view-seg" id="view-seg">
-      <button id="seg-pipeline" onclick="setVista('pipeline')">
-        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="10" rx="1.5"/><rect x="17" y="4" width="4" height="13" rx="1.5"/></svg>
-        Pipeline
-      </button>
-      <button id="seg-lista" onclick="setVista('lista')">
-        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
-        Lista
-      </button>
-    </div>
     <div style="display:flex;gap:8px;align-items:center">
       <button class="add-btn" id="add-btn-top" onclick="abrirModal()">
         <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
@@ -984,9 +814,6 @@ html, body { background: var(--paper); }
       <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--mute);"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
       <input type="search" id="search-input" placeholder="Buscar por nombre, teléfono o correo…" oninput="busquedaDebounced()"/>
     </div>
-    <select class="filtro-select" id="filtro-estatus" onchange="renderActual()" style="display:none">
-      <option value="todos">Todas las etapas</option>
-    </select>
   </div>
   <div class="tabs">
     <button class="ftab active" onclick="setFiltro('todos',this)">Todos</button>
@@ -1000,7 +827,6 @@ html, body { background: var(--paper); }
   </div>
 </header>
 
-<div class="kanban" id="kanban" style="display:none"></div>
 <div class="list" id="lista"></div>
 
 <button class="fab" onclick="abrirModal()" aria-label="Nuevo contacto">
@@ -1052,21 +878,6 @@ html, body { background: var(--paper); }
       <div class="f"><label>Empresa / Inmobiliaria</label><input id="m-empresa" type="text" placeholder="Ej. Casas del Bajío"/></div>
 
       <div class="sec-lbl">Seguimiento</div>
-      <div class="frow">
-        <div class="f">
-          <label>Etapa</label>
-          <select id="m-estatus"></select>
-        </div>
-        <div class="f">
-          <label>Probabilidad de cierre</label>
-          <select id="m-probabilidad">
-            <option value="">Desconocida</option>
-            <option value="baja">Baja</option>
-            <option value="media">Media</option>
-            <option value="alta">Alta</option>
-          </select>
-        </div>
-      </div>
       <div class="frow">
         <div class="f">
           <label>Fuente de captación</label>
@@ -1126,7 +937,6 @@ html, body { background: var(--paper); }
       <div class="det-hero-info">
         <div class="det-name" id="det-nombre"></div>
         <div class="det-estatus-row">
-          <select class="det-estatus" id="det-estatus" onchange="cambiarEstatusDesdeDetalle(this.value)"></select>
           <button type="button" class="pot-toggle" id="det-potencial" onclick="toggleDetPotencial()" title="Marcar/quitar como potencial">
             <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.562.562 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/></svg>
             <span>Potencial</span>
@@ -1141,7 +951,6 @@ html, body { background: var(--paper); }
       <button class="det-tab active" id="dtab-btn-info" onclick="setDetTab('info')">Información</button>
       <button class="det-tab" id="dtab-btn-hist" onclick="setDetTab('hist')">Historial <span class="n" id="dtab-n-hist">0</span></button>
       <button class="det-tab" id="dtab-btn-props" onclick="setDetTab('props')">Propiedades <span class="n" id="dtab-n-props">0</span></button>
-      <button class="det-tab" id="dtab-btn-tareas" onclick="setDetTab('tareas')">Tareas <span class="n" id="dtab-n-tareas">0</span></button>
     </div>
     <div class="det-body">
       <div id="dtab-info"></div>
@@ -1164,14 +973,6 @@ html, body { background: var(--paper); }
         </div>
         <div id="props-feed"></div>
       </div>
-      <div id="dtab-tareas" hidden>
-        <div class="composer">
-          <input type="text" id="tarea-input" placeholder="Nueva tarea… (ej. Llamar para agendar visita)" onkeydown="if(event.key==='Enter')agregarTarea()"/>
-          <input type="date" id="tarea-fecha"/>
-          <button id="tarea-btn" onclick="agregarTarea()">Agregar</button>
-        </div>
-        <div id="tareas-feed"></div>
-      </div>
     </div>
     <div class="det-acts">
       <a class="det-btn" id="det-wa-btn" href="#" target="_blank">WhatsApp</a>
@@ -1192,7 +993,6 @@ let sexoActual = 'M';
 let editandoId = null;
 let detContacto = null;
 let filtroActual = 'todos';
-let vistaActual = 'pipeline';
 let detTabActual = 'info';
 
 const params = new URLSearchParams(location.search);
@@ -1202,8 +1002,6 @@ const PICKER_TIPO = params.get('tipo') || '';
 if (IS_PICKER) {
   document.getElementById('picker-banner').classList.add('show');
   document.getElementById('add-btn-top').style.display = 'none';
-  document.getElementById('view-seg').style.display = 'none';
-  vistaActual = 'lista';
   if (PICKER_TIPO) {
     const tabMap = {arrendador:'Propietarios',arrendatario:'Inquilinos',comprador:'Compradores',vendedor:'Vendedores',colega:'Colegas',notario:'Notarios'};
     filtroActual = PICKER_TIPO;
@@ -1225,7 +1023,6 @@ function esc(s) {
    Usamos el helper window.brokrSb expuesto por app-shell.js.
    Ese helper renueva el token automáticamente si está por expirar. */
 const LS_CACHE = 'brokr_contactos_cache';   // solo cache offline, NO fuente de verdad
-const LS_VISTA = 'brokr_contactos_vista';
 let _contactosMem = [];
 let _userIdCache = null;
 
@@ -1361,52 +1158,6 @@ function rolBadge(tipo) {
   return `<span class="role-badge ${r.cls}">${r.lbl}</span>`;
 }
 
-/* ── Etapas del pipeline ─────────────────────────────────────────
-   Si el usuario no tiene etapas personalizadas en pipeline_etapas,
-   se usan estas por defecto. El valor guardado en contactos.estatus
-   es la clave (nombre en minúsculas). */
-const ETAPAS_DEFAULT = [
-  { clave:'nuevo',      nombre:'Nuevo',      color:'var(--forest)'  },
-  { clave:'activo',     nombre:'Activo',     color:'var(--success)' },
-  { clave:'contactado', nombre:'Contactado', color:'var(--warn)'    },
-  { clave:'cerrado',    nombre:'Cerrado',    color:'var(--ink-3)'   },
-];
-let ETAPAS = ETAPAS_DEFAULT.slice();
-
-async function cargarEtapas() {
-  try {
-    const rows = await restGet('pipeline_etapas?select=nombre,orden,color&order=orden.asc');
-    if (Array.isArray(rows) && rows.length) {
-      ETAPAS = rows.map(r => ({
-        clave: String(r.nombre || '').toLowerCase().trim(),
-        nombre: r.nombre,
-        color: r.color || 'var(--forest)',
-      })).filter(e => e.clave);
-    }
-  } catch { /* si falla, se quedan las default */ }
-  poblarSelectsEtapas();
-}
-
-function etapaInfo(clave) {
-  const k = String(clave || 'nuevo').toLowerCase();
-  return ETAPAS.find(e => e.clave === k) || { clave:k, nombre:k.charAt(0).toUpperCase()+k.slice(1), color:'var(--mute)' };
-}
-
-function poblarSelectsEtapas() {
-  const opts = ETAPAS.map(e => `<option value="${esc(e.clave)}">${esc(e.nombre)}</option>`).join('');
-  const mSel = document.getElementById('m-estatus');
-  if (mSel) mSel.innerHTML = opts;
-  const dSel = document.getElementById('det-estatus');
-  if (dSel) dSel.innerHTML = opts;
-  const fSel = document.getElementById('filtro-estatus');
-  if (fSel) fSel.innerHTML = '<option value="todos">Todas las etapas</option>' + opts;
-}
-
-function estatusChip(clave) {
-  const e = etapaInfo(clave);
-  return `<span class="est-chip" style="color:${e.color}"><span class="dot"></span>${esc(e.nombre)}</span>`;
-}
-
 function avColor(nombre) {
   let h = 0;
   for (let i = 0; i < nombre.length; i++) h = (h * 31 + nombre.charCodeAt(i)) | 0;
@@ -1448,30 +1199,15 @@ function fechaHora(iso) {
   } catch { return ''; }
 }
 
-/* ── Filtro común a ambas vistas ─────────────────────────────────── */
-function contactosFiltrados(aplicarEstatus) {
+/* ── Filtro de la lista ───────────────────────────────────────────── */
+function contactosFiltrados() {
   const todos = cargar();
   const q = gv('search-input').toLowerCase();
-  const fEst = (document.getElementById('filtro-estatus')?.value || 'todos');
   return todos.filter(c => {
     const okTipo = filtroActual === 'todos' || c.tipo === filtroActual;
     const okQ = !q || [c.nombre, c.telefono, c.email, c.empresa].some(v => (v||'').toLowerCase().includes(q));
-    const okEst = !aplicarEstatus || fEst === 'todos' || String(c.estatus||'nuevo').toLowerCase() === fEst;
-    return okTipo && okQ && okEst;
+    return okTipo && okQ;
   });
-}
-
-/* ── Vista: toggle Pipeline / Lista ──────────────────────────────── */
-function setVista(v, skipRender) {
-  vistaActual = v;
-  try { localStorage.setItem(LS_VISTA, v); } catch {}
-  document.getElementById('seg-pipeline')?.classList.toggle('active', v === 'pipeline');
-  document.getElementById('seg-lista')?.classList.toggle('active', v === 'lista');
-  document.getElementById('kanban').style.display = v === 'pipeline' ? 'flex' : 'none';
-  document.getElementById('lista').style.display = v === 'lista' ? 'flex' : 'none';
-  const fEst = document.getElementById('filtro-estatus');
-  if (fEst) fEst.style.display = v === 'lista' && !IS_PICKER ? '' : 'none';
-  if (!skipRender) renderActual();
 }
 
 let _busqT = null;
@@ -1485,107 +1221,7 @@ function renderActual() {
   const badge = document.getElementById('count-badge');
   badge.textContent = todos.length;
   badge.style.display = todos.length ? '' : 'none';
-  if (vistaActual === 'pipeline') renderPipeline();
-  else renderLista();
-}
-
-/* ── Vista Pipeline (Kanban) ─────────────────────────────────────── */
-function renderPipeline() {
-  const kb = document.getElementById('kanban');
-  const filtrados = contactosFiltrados(false);
-
-  if (!cargar().length) {
-    kb.innerHTML = `<div class="empty" style="flex:1">
-      <svg width="56" height="56" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-      <strong>Aún no hay contactos</strong>
-      <p>Agrega tu primer contacto con el botón Nuevo.</p>
-    </div>`;
-    return;
-  }
-
-  kb.innerHTML = ETAPAS.map(e => {
-    const cards = filtrados.filter(c => String(c.estatus || 'nuevo').toLowerCase() === e.clave);
-    const cardsHtml = cards.length
-      ? cards.map(c => kbCard(c)).join('')
-      : `<div class="kb-empty">Arrastra contactos aquí</div>`;
-    return `<div class="kb-col" data-etapa="${esc(e.clave)}"
-      ondragover="kbDragOver(event, this)" ondragleave="kbDragLeave(this)" ondrop="kbDrop(event, this)">
-      <div class="kb-col__head">
-        <span class="kb-col__dot" style="background:${e.color}"></span>
-        <span class="kb-col__name">${esc(e.nombre)}</span>
-        <span class="kb-col__count">${cards.length}</span>
-      </div>
-      <div class="kb-col__body">${cardsHtml}</div>
-    </div>`;
-  }).join('');
-}
-
-function kbCard(c) {
-  const sub = c.telefono || c.email || c.empresa || '';
-  const tags = Array.isArray(c.etiquetas) ? c.etiquetas.slice(0,2) : [];
-  return `<div class="kb-card" draggable="true" data-id="${esc(c.id)}"
-    ondragstart="kbDragStart(event, this)" ondragend="this.classList.remove('dragging')"
-    onclick="abrirDetalle(this.dataset.id)">
-    <div class="kb-card__top">
-      <div class="kb-card__av ${avColor(c.nombre||'')}">${esc(initials(c.nombre||'??'))}</div>
-      <div class="kb-card__name">${esc(c.nombre)}${c.es_potencial ? ' <span class="pot-dot" title="Potencial">★</span>' : ''}</div>
-    </div>
-    <div class="kb-card__meta">
-      ${rolBadge(c.tipo)}
-      ${tags.map(t => `<span class="tag-chip">${esc(t)}</span>`).join('')}
-    </div>
-    ${sub ? `<div class="kb-card__sub" style="margin-top:6px">${esc(sub)}</div>` : ''}
-  </div>`;
-}
-
-let _dragId = null;
-function kbDragStart(ev, el) {
-  _dragId = el.dataset.id;
-  el.classList.add('dragging');
-  try { ev.dataTransfer.setData('text/plain', _dragId); ev.dataTransfer.effectAllowed = 'move'; } catch {}
-}
-function kbDragOver(ev, col) {
-  ev.preventDefault();
-  try { ev.dataTransfer.dropEffect = 'move'; } catch {}
-  col.classList.add('drag-over');
-}
-function kbDragLeave(col) { col.classList.remove('drag-over'); }
-async function kbDrop(ev, col) {
-  ev.preventDefault();
-  col.classList.remove('drag-over');
-  const id = _dragId || (function(){ try { return ev.dataTransfer.getData('text/plain'); } catch { return null; } })();
-  _dragId = null;
-  if (!id) return;
-  const etapa = col.dataset.etapa;
-  await cambiarEstatus(id, etapa);
-}
-
-/* Cambia el estatus de un contacto (drag & drop o detalle).
-   El trigger de la base registra el cambio en el historial automáticamente. */
-async function cambiarEstatus(id, etapa) {
-  const c = _contactosMem.find(x => x.id === id);
-  if (!c || String(c.estatus||'nuevo').toLowerCase() === etapa) return;
-  const previo = c.estatus;
-  const ahora = new Date().toISOString();
-  c.estatus = etapa;               // optimista: la memoria queda como la BD
-  c.updated_at = ahora;
-  c.fecha_cambio_estatus = ahora;
-  renderActual();
-  try {
-    await patchRemoto(id, { estatus: etapa, updated_at: ahora });
-    try { localStorage.setItem(LS_CACHE, JSON.stringify(_contactosMem)); } catch {}
-    showToast('Movido a ' + etapaInfo(etapa).nombre);
-  } catch (e) {
-    c.estatus = previo;            // revertir
-    renderActual();
-    alert('No se pudo mover el contacto.\n\n' + (e.message || e));
-  }
-}
-
-async function cambiarEstatusDesdeDetalle(etapa) {
-  if (!detContacto) return;
-  await cambiarEstatus(detContacto.id, etapa);
-  if (detTabActual === 'hist') cargarHistorial();
+  renderLista();
 }
 
 function pintarDetPotencial(activo) {
@@ -1618,7 +1254,7 @@ async function toggleDetPotencial() {
 
 /* ── Vista Lista ─────────────────────────────────────────────────── */
 function renderLista() {
-  const filtrados = contactosFiltrados(true);
+  const filtrados = contactosFiltrados();
   const lista = document.getElementById('lista');
   const q = gv('search-input');
   if (!filtrados.length) {
@@ -1637,7 +1273,7 @@ function renderLista() {
       <div class="avatar ${avColor(c.nombre||'')}">${esc(initials(c.nombre||'??'))}</div>
       <div class="contact-info">
         <div class="contact-name">${esc(c.nombre)}${c.es_potencial ? ' <span class="pot-dot" title="Potencial">★</span>' : ''}</div>
-        <div class="contact-meta">${rolBadge(c.tipo)}${estatusChip(c.estatus)}<span class="contact-sub">${esc(sub)}</span></div>
+        <div class="contact-meta">${rolBadge(c.tipo)}<span class="contact-sub">${esc(sub)}</span></div>
       </div>
       ${!IS_PICKER ? `<div class="quick-acts" onclick="event.stopPropagation()">
         ${(c.telefono||c.wa) ? `<a class="qa qa-wa" href="https://wa.me/52${(c.wa||c.telefono).replace(/\D/g,'')}" target="_blank" title="WhatsApp"><svg width="16" height="16" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path fill="#25D366" d="M16 0C7.163 0 0 7.163 0 16c0 2.823.736 5.474 2.029 7.776L0 32l8.42-2.207A15.9 15.9 0 0016 32c8.837 0 16-7.163 16-16S24.837 0 16 0z"/><path fill="#FFF" d="M23.45 19.2c-.39-.196-2.31-1.142-2.668-1.273-.358-.13-.618-.196-.878.196-.26.39-1.008 1.272-1.236 1.532-.228.26-.456.293-.846.098-.39-.196-1.65-.61-3.143-1.94-1.162-1.037-1.948-2.318-2.176-2.708-.228-.39-.024-.6.171-.795.176-.175.39-.456.586-.683.196-.228.26-.39.39-.65.13-.26.065-.488-.033-.683-.098-.196-.878-2.117-1.203-2.9-.317-.762-.64-.66-.879-.672-.227-.012-.487-.014-.747-.014-.26 0-.683.098-1.04.488-.358.39-1.366 1.336-1.366 3.257 0 1.92 1.398 3.778 1.594 4.038.195.26 2.752 4.203 6.667 5.893.93.402 1.657.642 2.223.821.934.297 1.785.255 2.457.155.75-.112 2.31-.945 2.636-1.857.325-.911.325-1.692.228-1.857-.098-.165-.358-.26-.748-.456z"/></svg></a>` : ''}
@@ -1682,8 +1318,6 @@ function abrirModal(id = null) {
     sv('m-fuente', c.fuente);
     sv('m-etiquetas', Array.isArray(c.etiquetas) ? c.etiquetas.join(', ') : '');
     document.getElementById('m-tipo').value = c.tipo || 'arrendador';
-    document.getElementById('m-estatus').value = String(c.estatus || 'nuevo').toLowerCase();
-    document.getElementById('m-probabilidad').value = c.probabilidad || '';
     document.getElementById('m-potencial').checked = !!c.es_potencial;
     const sx = c.sexo || 'M';
     sexoActual = sx;
@@ -1694,8 +1328,6 @@ function abrirModal(id = null) {
     ['m-nombre','m-tel','m-wa','m-email','m-empresa','m-calle','m-numext','m-numint','m-colonia','m-cp','m-notas','m-fuente','m-etiquetas'].forEach(i => sv(i,''));
     sv('m-mpio','MORELIA, MICHOACÁN');
     document.getElementById('m-tipo').value = 'arrendador';
-    document.getElementById('m-estatus').value = ETAPAS[0] ? ETAPAS[0].clave : 'nuevo';
-    document.getElementById('m-probabilidad').value = '';
     document.getElementById('m-potencial').checked = false;
     sexoActual = 'M';
     document.querySelectorAll('.sexo-opt').forEach(b => b.classList.toggle('active', b.dataset.s === 'M'));
@@ -1730,8 +1362,6 @@ async function guardarContacto() {
     cp: gv('m-cp'),
     mpio: gv('m-mpio'),
     notas: gv('m-notas'),
-    estatus: document.getElementById('m-estatus').value || 'nuevo',
-    probabilidad: document.getElementById('m-probabilidad').value || null,
     es_potencial: document.getElementById('m-potencial').checked,
     fuente: gv('m-fuente') || null,
     etiquetas: etiquetas,
@@ -1785,14 +1415,13 @@ async function confirmarEliminar() {
 /* ── Detalle con tabs ────────────────────────────────────────────── */
 function setDetTab(tab) {
   detTabActual = tab;
-  ['info','hist','props','tareas'].forEach(t => {
+  ['info','hist','props'].forEach(t => {
     document.getElementById('dtab-' + t).hidden = t !== tab;
     document.getElementById('dtab-btn-' + t).classList.toggle('active', t === tab);
   });
   if (!detContacto) return;
   if (tab === 'hist')   cargarHistorial();
   if (tab === 'props')  cargarVinculos();
-  if (tab === 'tareas') cargarTareas();
 }
 
 function abrirDetalle(id) {
@@ -1806,7 +1435,6 @@ function abrirDetalle(id) {
   av.className = `det-av ${avColor(c.nombre)}`;
   document.getElementById('det-nombre').textContent = c.nombre;
   document.getElementById('det-badge').innerHTML = rolBadge(c.tipo);
-  document.getElementById('det-estatus').value = String(c.estatus || 'nuevo').toLowerCase();
   document.getElementById('det-empresa').textContent = c.empresa || '';
   pintarDetPotencial(c.es_potencial);
   const wa = c.wa || c.telefono;
@@ -1823,10 +1451,8 @@ function abrirDetalle(id) {
   renderDetInfo(c);
   document.getElementById('hist-feed').innerHTML = '';
   document.getElementById('props-feed').innerHTML = '';
-  document.getElementById('tareas-feed').innerHTML = '';
   document.getElementById('dtab-n-hist').textContent = '·';
   document.getElementById('dtab-n-props').textContent = '·';
-  document.getElementById('dtab-n-tareas').textContent = '·';
 
   setDetTab('info');
   document.getElementById('detail-ov').classList.add('open');
@@ -1840,10 +1466,8 @@ function renderDetInfo(c) {
   const dir = domicilio(c);
   if (dir) rows.push(['Domicilio', esc(dir)]);
   if (c.fuente) rows.push(['Fuente', esc(c.fuente)]);
-  if (c.probabilidad) rows.push(['Probabilidad', esc(c.probabilidad.charAt(0).toUpperCase() + c.probabilidad.slice(1))]);
   rows.push(['Sexo', c.sexo === 'F' ? 'Femenino' : 'Masculino']);
   if (c.created_at) rows.push(['Agregado', fechaCorta(c.created_at)]);
-  if (c.fecha_cambio_estatus) rows.push(['Última etapa', fechaCorta(c.fecha_cambio_estatus)]);
 
   let html = rows.map(([l,v]) => `<div class="det-row"><span class="det-lbl">${l}</span><span class="det-val">${v}</span></div>`).join('');
   if (Array.isArray(c.etiquetas) && c.etiquetas.length) {
@@ -1980,102 +1604,6 @@ async function eliminarVinculo(id) {
   }
 }
 
-/* ── Tab Tareas ──────────────────────────────────────────────────── */
-let _tareasMem = [];
-async function cargarTareas() {
-  if (!detContacto) return;
-  const feed = document.getElementById('tareas-feed');
-  feed.innerHTML = '<div class="mini-empty">Cargando…</div>';
-  const cid = detContacto.id;
-  try {
-    _tareasMem = await restGet('tareas?select=*&contacto_id=eq.' + encodeURIComponent(cid) + '&order=completada.asc,fecha_entrega.asc.nullslast,created_at.desc&limit=100');
-  } catch { _tareasMem = []; }
-  if (!detContacto || detContacto.id !== cid) return;
-  renderTareas();
-}
-
-function renderTareas() {
-  const feed = document.getElementById('tareas-feed');
-  const hoy = new Date(); hoy.setHours(0,0,0,0);
-  feed.innerHTML = _tareasMem.length
-    ? _tareasMem.map(t => {
-        const due = t.fecha_entrega ? new Date(t.fecha_entrega) : null;
-        const overdue = due && !t.completada && due < hoy;
-        return `<div class="task-item${t.completada ? ' done' : ''}">
-          <button class="task-check" onclick="toggleTarea('${esc(String(t.id))}')" title="${t.completada ? 'Reabrir' : 'Completar'}">
-            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-          </button>
-          <div class="task-main">
-            <div class="task-title">${esc(t.titulo)}</div>
-            ${due ? `<div class="task-due${overdue ? ' overdue' : ''}">${overdue ? 'Vencida · ' : ''}${fechaCorta(t.fecha_entrega)}</div>` : ''}
-          </div>
-          <button class="task-del" title="Eliminar tarea" onclick="eliminarTarea('${esc(String(t.id))}')">×</button>
-        </div>`;
-      }).join('')
-    : '<div class="mini-empty">Sin tareas. Agrega la primera arriba.</div>';
-  document.getElementById('dtab-n-tareas').textContent = _tareasMem.filter(t => !t.completada).length;
-}
-
-async function agregarTarea() {
-  if (!detContacto) return;
-  const inp = document.getElementById('tarea-input');
-  const btn = document.getElementById('tarea-btn');
-  const titulo = (inp.value || '').trim();
-  if (!titulo) { inp.focus(); return; }
-  const fecha = document.getElementById('tarea-fecha').value || null;
-  btn.disabled = true;
-  try {
-    await restPost('tareas', {
-      titulo: titulo,
-      contacto_id: detContacto.id,
-      fecha_entrega: fecha ? fecha + 'T12:00:00' : null,
-    });
-    inp.value = '';
-    document.getElementById('tarea-fecha').value = '';
-    await cargarTareas();
-  } catch (e) {
-    alert('No se pudo crear la tarea.\n\n' + (e.message || e));
-  } finally {
-    btn.disabled = false;
-  }
-}
-
-async function toggleTarea(id) {
-  const t = _tareasMem.find(x => String(x.id) === id);
-  if (!t) return;
-  const completar = !t.completada;
-  t.completada = completar;                    // optimista
-  t.fecha_completada = completar ? new Date().toISOString() : null;
-  renderTareas();
-  try {
-    await restPatch('tareas', id, { completada: completar, fecha_completada: t.fecha_completada });
-    if (completar && detContacto) {
-      // Registrar en historial
-      restPost('actividades', {
-        tipo: 'tarea_completada',
-        texto: 'Tarea completada: ' + t.titulo,
-        contacto_id: detContacto.id,
-      }).catch(()=>{});
-    }
-  } catch (e) {
-    t.completada = !completar;                 // revertir
-    t.fecha_completada = null;
-    renderTareas();
-    alert('No se pudo actualizar la tarea.\n\n' + (e.message || e));
-  }
-}
-
-async function eliminarTarea(id) {
-  if (!confirm('¿Eliminar esta tarea?')) return;
-  try {
-    await restDelete('tareas', id);
-    _tareasMem = _tareasMem.filter(t => String(t.id) !== id);
-    renderTareas();
-  } catch (e) {
-    alert('No se pudo eliminar la tarea.\n\n' + (e.message || e));
-  }
-}
-
 function cerrarDetalle() { document.getElementById('detail-ov').classList.remove('open'); detContacto = null; }
 
 function editarDesdeDetalle() {
@@ -2128,16 +1656,6 @@ async function _waitForShell(maxMs) {
 }
 
 (async function init() {
-  // 0) Vista inicial: preferencia guardada; en móvil primera vez, lista
-  if (!IS_PICKER) {
-    let v = null;
-    try { v = localStorage.getItem(LS_VISTA); } catch {}
-    if (!v) v = window.innerWidth < 720 ? 'lista' : 'pipeline';
-    vistaActual = v === 'lista' ? 'lista' : 'pipeline';
-  }
-  poblarSelectsEtapas();
-  setVista(vistaActual, true);
-
   // 1) Cache offline para respuesta instantánea
   try {
     const cache = JSON.parse(localStorage.getItem(LS_CACHE) || '[]');
@@ -2145,35 +1663,32 @@ async function _waitForShell(maxMs) {
       _contactosMem = cache;
       renderActual();
     } else {
-      const lista = document.getElementById(vistaActual === 'pipeline' ? 'kanban' : 'lista');
-      if (lista) lista.innerHTML = '<div class="empty" style="flex:1"><strong>Cargando contactos…</strong></div>';
+      const lista = document.getElementById('lista');
+      if (lista) lista.innerHTML = '<div class="empty"><strong>Cargando contactos…</strong></div>';
     }
   } catch {}
 
   // 2) Esperar al shell
   const ok = await _waitForShell(5000);
   if (!ok) {
-    const lista = document.getElementById(vistaActual === 'pipeline' ? 'kanban' : 'lista');
+    const lista = document.getElementById('lista');
     if (lista && !_contactosMem.length) {
-      lista.innerHTML = '<div class="empty" style="flex:1"><strong>Error al iniciar la app</strong><p>Recarga la página.</p></div>';
+      lista.innerHTML = '<div class="empty"><strong>Error al iniciar la app</strong><p>Recarga la página.</p></div>';
     }
     return;
   }
 
-  // 3) Etapas + contactos en paralelo
+  // 3) Contactos
   try {
-    const [, ] = await Promise.all([
-      cargarEtapas(),
-      cargarRemoto(),
-    ]);
+    await cargarRemoto();
     renderActual();
     const params = new URLSearchParams(window.location.search);
     const openId = params.get('id') || params.get('contacto');
     if (openId && _contactosMem.some(c => String(c.id) === String(openId))) abrirDetalle(openId);
   } catch (e) {
-    const lista = document.getElementById(vistaActual === 'pipeline' ? 'kanban' : 'lista');
+    const lista = document.getElementById('lista');
     if (lista && !_contactosMem.length) {
-      lista.innerHTML = '<div class="empty" style="flex:1"><strong>No se pudieron cargar tus contactos</strong><p>' + esc(e.message || 'Revisa tu conexión.') + '</p></div>';
+      lista.innerHTML = '<div class="empty"><strong>No se pudieron cargar tus contactos</strong><p>' + esc(e.message || 'Revisa tu conexión.') + '</p></div>';
     }
   }
 })();
