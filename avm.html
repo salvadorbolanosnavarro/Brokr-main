@@ -231,7 +231,7 @@
       padding: 20px; margin-bottom: 14px; text-align: center;
     }
     .ia-hero-lbl { font-size: var(--fs-caption); color: rgba(255,255,255,0.5);  letter-spacing: 2px; margin-bottom: 6px; }
-    .ia-hero-val { font-size: var(--fs-h1); font-weight: 800; color: var(--teal); line-height: 1; margin-bottom: 4px; }
+    .ia-hero-val { font-size: var(--fs-h1); font-weight: 800; color: var(--bone); line-height: 1; margin-bottom: 4px; }
     .ia-hero-range { font-size: var(--fs-xs); color: rgba(255,255,255,0.4); margin-bottom: 10px; }
     .ia-conf { display: inline-block; font-size: var(--fs-caption); font-weight: 700; padding: 4px 12px; border-radius: 20px;  }
     .ia-conf.alta   { background: rgba(16,185,129,0.15); color: var(--emerald); border: 1px solid rgba(16,185,129,0.3); }
@@ -324,30 +324,32 @@
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style id="__brokr_skin_override">
 :root {
-  --navy: var(--ink-2) !important;
-  --navy2: var(--ink-2) !important;
-  --navy3: var(--ink-3) !important;
-  --teal: var(--ink-2) !important;
-  --teal2: var(--ink-2) !important;
-  --teal-dark: var(--ink-2) !important;
-  --silver: var(--bone) !important;
-  --silver2: var(--paper-2) !important;
-  --bdr: var(--paper-2) !important;
-  --txt: var(--ink-2) !important;
+  --navy: var(--sky-navy) !important;
+  --navy-mid: var(--sky-navy-mid) !important;
+  --navy2: var(--sky-blue) !important;
+  --navy3: var(--sky-navy-mid) !important;
+  --teal: var(--sky-blue) !important;
+  --teal2: var(--sky-blue-press) !important;
+  --teal-dark: var(--sky-blue-press) !important;
+  --teal-glow: rgba(0,98,227,0.10) !important;
+  --silver: var(--paper-2) !important;
+  --silver2: var(--line) !important;
+  --bdr: var(--line) !important;
+  --txt: var(--ink) !important;
   --mut: var(--mute) !important;
   --wh: var(--bone) !important;
   --gray: var(--bone) !important;
   --gray2: var(--paper-2) !important;
-  --gray-100: var(--bone) !important;
+  --gray-100: var(--paper-2) !important;
   --gray-600: var(--mute) !important;
-  --screen-bg: var(--bone) !important;
-  --text: var(--ink-2) !important;
-  --tealp: var(--paper-2) !important;
+  --screen-bg: var(--paper) !important;
+  --text: var(--ink) !important;
+  --tealp: rgba(0,98,227,.08) !important;
 }
 html, body {
-  background: var(--bone) !important;
+  background: var(--paper) !important;
   font-family: var(--font-sans) !important;
-  color: var(--ink-2) !important;
+  color: var(--ink) !important;
   letter-spacing: -0.005em !important;
 }
 * { font-family: inherit !important; }
@@ -362,9 +364,14 @@ input, select, textarea, button {
   letter-spacing: -0.025em !important;
   font-weight: 700 !important;
 }
-/* Buttons get the new pill treatment */
-.gen-btn, .btn-primary, .ui-btn, .btn-new-prop {
-  background: var(--ink-2) !important;
+/* Eyebrows / etiquetas pequeñas: mismo tracking que Index y Contratos */
+.avm-sub, .card-label, .result-lbl, .metric-lbl, .enfoque-lbl, .ia-hero-lbl,
+.opinion-field-label, .opinion-valor-label, .opinion-firma-label {
+  letter-spacing: 0.03em !important;
+}
+/* Buttons get the new pill treatment — siempre ink, el azul es solo acento */
+.gen-btn, .btn-primary, .ui-btn, .btn-new-prop, .btn-pdf, .btn-print {
+  background: var(--ink) !important;
   border-radius: 999px !important;
   letter-spacing: -0.005em !important;
   font-weight: 700 !important;
@@ -374,10 +381,10 @@ input, select, textarea {
   background: var(--bone) !important;
   border: 1px solid var(--paper-2) !important;
   border-radius: 12px !important;
-  color: var(--ink-2) !important;
+  color: var(--ink) !important;
 }
 input:focus, select:focus, textarea:focus {
-  border-color: var(--ink-2) !important;
+  border-color: var(--ink) !important;
   background: var(--bone) !important;
   outline: none !important;
 }
@@ -386,6 +393,12 @@ input:focus, select:focus, textarea:focus {
   background: var(--bone) !important;
   border: 1px solid var(--paper-2) !important;
   border-radius: 16px !important;
+}
+.avm-card, .comp-auto-card {
+  background: var(--bone) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r) !important;
+  box-shadow: var(--shadow-sm) !important;
 }
 </style>
 
