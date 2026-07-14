@@ -35,7 +35,7 @@
   content: '';
   position: absolute; inset: auto auto -50% -8%;
   width: 420px; height: 420px;
-  background: radial-gradient(circle, rgba(15,161,169,.35) 0%, rgba(15,161,169,0) 70%);
+  background: radial-gradient(circle, rgba(0,85,204,.35) 0%, rgba(0,85,204,0) 70%);
   z-index: -1;
   pointer-events: none;
 }
@@ -233,7 +233,7 @@ const TIPO_PROP_LBL = {
 };
 
 /* Paleta de acento tomada 1:1 de los tokens de marca (brokr-theme.css) */
-const PALETA = ['var(--sky)', 'var(--emerald)', 'var(--amber)', 'var(--rose)', 'var(--violet)', 'var(--info)', 'var(--forest-2)', 'var(--ink-3)'];
+const PALETA = ['var(--sky-blue)', 'var(--sky-navy-mid)', 'var(--forest-2)', 'var(--ink-3)', 'var(--sky-navy)', 'var(--mute)', 'var(--ink-2)', 'var(--mute-2)'];
 
 /* ── Estado ──────────────────────────────────────────────────────── */
 let contactos = [], props = [], interesRows = [];
@@ -649,8 +649,8 @@ function panelResumen(RL, RP) {
     <div class="es-section">
       <div class="es-section__hdr"><span class="t">Leads captados vs. inmuebles captados</span><span class="s">por ${bb.cfg.unit === 'day' ? 'día' : bb.cfg.unit === 'week' ? 'semana' : 'mes'}</span></div>
       <div class="es-trend-wrap bk-card">${renderTrendMulti(bb, [
-        { label: 'Leads', color: 'var(--sky)', counts: serieLeads },
-        { label: 'Inmuebles', color: 'var(--emerald)', counts: serieCaptadas },
+        { label: 'Leads', color: 'var(--sky-blue)', counts: serieLeads },
+        { label: 'Inmuebles', color: 'var(--sky-navy-mid)', counts: serieCaptadas },
       ])}</div>
     </div>
   `;
@@ -679,7 +679,7 @@ function panelLeads(RL) {
 
     <div class="es-section">
       <div class="es-section__hdr"><span class="t">Tendencia de captación de leads</span><span class="s">nuevos por ${bb.cfg.unit === 'day' ? 'día' : bb.cfg.unit === 'week' ? 'semana' : 'mes'}</span></div>
-      <div class="es-trend-wrap bk-card">${renderTrendMulti(bb, [{ label:'Leads', color:'var(--sky)', counts: serie }])}</div>
+      <div class="es-trend-wrap bk-card">${renderTrendMulti(bb, [{ label:'Leads', color:'var(--sky-blue)', counts: serie }])}</div>
     </div>
 
     <div class="es-section">
@@ -710,8 +710,8 @@ function panelPropiedades(RP) {
 
   const tipoEntries = TP.arr.map(([tipo, n], i) => ({ label: TIPO_PROP_LBL[tipo] || tipo, n, color: PALETA[i % PALETA.length] }));
   const vrEntries = [
-    { label: 'Vendida', n: VR.vendidas, color: 'var(--sky)' },
-    { label: 'Rentada', n: VR.rentadas, color: 'var(--emerald)' },
+    { label: 'Vendida', n: VR.vendidas, color: 'var(--sky-blue)' },
+    { label: 'Rentada', n: VR.rentadas, color: 'var(--sky-navy-mid)' },
   ].filter(e => e.n > 0);
 
   const monedas = Object.keys(RP.valorPorMoneda);
@@ -731,8 +731,8 @@ function panelPropiedades(RP) {
     <div class="es-section">
       <div class="es-section__hdr"><span class="t">Captadas vs. cerradas</span><span class="s">por ${bb.cfg.unit === 'day' ? 'día' : bb.cfg.unit === 'week' ? 'semana' : 'mes'} · el cierre se aproxima con la última edición del inmueble</span></div>
       <div class="es-trend-wrap bk-card">${renderTrendMulti(bb, [
-        { label:'Captadas', color:'var(--sky)', counts: serieCaptadas },
-        { label:'Cerradas', color:'var(--rose)', counts: serieCerradas },
+        { label:'Captadas', color:'var(--sky-blue)', counts: serieCaptadas },
+        { label:'Cerradas', color:'var(--forest-2)', counts: serieCerradas },
       ])}</div>
     </div>
 

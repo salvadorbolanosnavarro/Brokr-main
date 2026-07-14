@@ -252,7 +252,6 @@
     'mi-sitio':     'Mi sitio — perfil público, plantilla y sitio web del agente',
     'contratos':    'Contratos — arrendamiento y promesa de compraventa',
     'avm':          'Estimación de valor AVM — avalúo de mercado automatizado',
-    'valor':        'Valor web — estimación de valor con investigación controlada de comparables públicos',
     'ficha':        'Ficha EasyBroker — generar ficha técnica desde ID de EasyBroker',
     'ficha-manual': 'Ficha Técnica Manual — crear ficha sin EasyBroker',
     'isr':          'Calculadora ISR por enajenación de inmuebles',
@@ -3376,7 +3375,6 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
   const BK_PREMIUM_ACTIONS = {
     'isr.html':            ['#calc-btn'],
     'avm.html':            ['#btn-analizar-ia'],
-    'valor.html':          ['#btnBackendSearch', '#btnClaude', '#btnAnalyze'],
     'image-cleaner.html':  ['#btn-clean'],
     'contratos.html':      ['#gen-btn'],
     'ficha.html':          ['#pdf-btn'],

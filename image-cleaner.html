@@ -10,14 +10,14 @@
 <title>Editor de imágenes — Broquer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <style>
+/* Alias locales remapeados 1:1 al sistema Broquer (no inventar colores). */
 :root{
-  --navy:#161616;--navy2:#2E3338;--teal:#0062E3;--teal-dark:#0062E3;
-  --teal-bg:rgba(0,98,227,0.07);--teal-border:rgba(0,98,227,0.18);
-  --white:#ffffff;--bg:#FFFFFF;--gray:#FFFFFF;--gray2:rgba(22,22,22,0.10);
-  --txt:#161616;--mut:#6B7585;--mut2:#C1C7CF;
-  --red:#E70866;--green:#00AA6C;
-  --r:12px;--shadow:0 2px 12px rgba(0,0,0,0.07);
-  --bone:#FFFFFF;
+  --navy:var(--sky-navy);--navy2:var(--sky-navy-mid);--teal:var(--sky-blue);--teal-dark:var(--sky-blue-press);
+  --teal-bg:var(--forest-soft);--teal-border:rgba(0,85,204,0.18);
+  --white:var(--bone);--bg:var(--paper);--gray:var(--bone);--gray2:var(--line);
+  --txt:var(--ink);--mut:var(--mute);--mut2:var(--mute-3);
+  --red:var(--danger);--green:var(--success);
+  --r:14px;--shadow:var(--shadow-sm);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--font-sans);background:var(--bg);color:var(--txt);min-height:100vh}
@@ -58,8 +58,8 @@ body{font-family:var(--font-sans);background:var(--bg);color:var(--txt);min-heig
 .btn-outline{background:var(--white);color:var(--teal);border:1.5px solid var(--teal-border)}
 .btn-outline:hover{background:var(--teal-bg);border-color:var(--teal)}
 .btn-outline:disabled{opacity:.5;cursor:not-allowed}
-.btn-danger{background:var(--white);color:var(--red);border:1.5px solid rgba(239,68,68,.3)}
-.btn-danger:hover{background:rgba(239,68,68,.06)}
+.btn-danger{background:var(--white);color:var(--red);border:1.5px solid var(--danger-soft)}
+.btn-danger:hover{background:var(--danger-soft)}
 
 .action-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 

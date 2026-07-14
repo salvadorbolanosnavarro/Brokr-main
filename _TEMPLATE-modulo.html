@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Broquer — Nuevo módulo</title>
+<!--
+  ════════════════════════════════════════════════════════════════════
+  PLANTILLA DE MÓDULO BROQUER  ·  copia este archivo y renómbralo.
+  Lee DESIGN.md. Un módulo hermano se construye así:
+
+  1. <body data-app="mi-modulo">  ← clave única.
+  2. Registra el módulo en app-shell.js:
+       · PAGE_META['mi-modulo'] = { title:'…', sub:'…' }   (el shell pinta el header)
+       · MODS += { key:'mi-modulo', href:'mi-modulo.html', label:'…', group:'main', icon:'…' }
+  3. Usa SIEMPRE componentes bk-* y tokens var(--…). Cero hex/px a mano.
+  4. NO pongas tu propio título de página: el shell inyecta .bk-ph automáticamente.
+  ════════════════════════════════════════════════════════════════════
+-->
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<meta name="theme-color" content="#05203C"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+  /* Solo lo ESPECÍFICO de este módulo. Todo compone tokens del sistema.
+     Prefija las clases con la clave del módulo (.mod-…) para no colisionar.
+     NO redefinas :root ni tokens aquí. */
+  .mod-scroll { padding: 24px 28px 48px; max-width: 1180px; margin: 0 auto; }
+  @media (max-width: 720px) { .mod-scroll { padding: 16px 14px 40px; } }
+  .mod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--sp-4); }
+</style>
+</head>
+<body data-app="mi-modulo">
+
+<div class="mod-scroll">
+
+  <!-- El header (.bk-ph) lo inyecta el shell desde PAGE_META. No lo dupliques. -->
+
+  <!-- Encabezado de sección interna (opcional) -->
+  <div class="bk-section-header">
+    <h2>Sección de ejemplo</h2>
+    <a href="#">Ver todo</a>
+  </div>
+
+  <!-- Tarjetas: bk-card. Radio, borde, sombra y fondo salen del token. -->
+  <div class="mod-grid">
+
+    <article class="bk-card bk-card--pad bk-card--raise bk-card--hover">
+      <span class="bk-eyebrow">Etiqueta</span>
+      <h3 style="font-size:var(--fs-h3);margin:var(--sp-2) 0;">Título de tarjeta</h3>
+      <p style="font-size:var(--fs-sm);color:var(--mute);">
+        Texto de apoyo con color secundario tomado del token.
+      </p>
+      <div class="bk-cluster" style="margin-top:var(--sp-4);">
+        <span class="bk-badge bk-badge--success">Activo</span>
+        <span class="bk-chip">Filtro</span>
+      </div>
+    </article>
+
+    <!-- Formulario: bk-field / bk-label / bk-input / bk-select -->
+    <form class="bk-card bk-card--pad bk-card--raise">
+      <div class="bk-field">
+        <label class="bk-label" for="mod-nombre">Nombre</label>
+        <input class="bk-input" id="mod-nombre" type="text" placeholder="Escribe aquí"/>
+      </div>
+      <div class="bk-field">
+        <label class="bk-label" for="mod-tipo">Tipo</label>
+        <select class="bk-select" id="mod-tipo">
+          <option>Opción A</option>
+          <option>Opción B</option>
+        </select>
+      </div>
+      <div class="bk-cluster" style="justify-content:flex-end;">
+        <button type="button" class="bk-btn bk-btn--ghost">Cancelar</button>
+        <button type="submit" class="bk-btn bk-btn--forest">Guardar</button>
+      </div>
+    </form>
+
+  </div>
+
+  <!-- Estado vacío -->
+  <div class="bk-empty" hidden id="mod-empty">
+    <div class="bk-empty__icon">
+      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+      </svg>
+    </div>
+    <div class="bk-empty__title">Aún no hay nada aquí</div>
+    <div class="bk-empty__text">Crea tu primer elemento para empezar.</div>
+    <button class="bk-btn bk-btn--forest bk-empty__action">Crear</button>
+  </div>
+
+</div>
+
+<script src="app-shell.js" defer></script>
+</body>
+</html>

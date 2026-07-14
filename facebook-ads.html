@@ -14,10 +14,10 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 
 /* ─── Hero ───────────────────────────────────────────────── */
 .fa-hero{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:26px 26px 22px;margin-bottom:16px;position:relative;overflow:hidden}
-.fa-hero:after{content:"";position:absolute;right:-90px;top:-110px;width:240px;height:240px;border-radius:50%;background:rgba(24,119,242,.10)}
+.fa-hero:after{content:"";position:absolute;right:-90px;top:-110px;width:240px;height:240px;border-radius:50%;background:var(--forest-soft)}
 .fa-eyebrow{font-family:var(--font-mono);font-size: var(--fs-label-3);letter-spacing: 0.02em;color:var(--mute);margin-bottom:9px}
 .fa-hero h1{font-family:var(--font-display);font-size:var(--fs-h1);font-weight:700;letter-spacing:-.035em;line-height:1.05;max-width:620px}
-.fa-hero h1 span{color:#1877f2}
+.fa-hero h1 span{color:var(--brand-facebook)}
 .fa-hero p{font-size:var(--fs-sm);color:var(--mute);line-height:1.6;max-width:560px;margin-top:10px}
 
 /* ─── Botones ────────────────────────────────────────────── */
@@ -25,13 +25,13 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .fa-btn:hover{opacity:.92;transform:translateY(-1px)}
 .fa-btn:active{transform:translateY(0)}
 .fa-btn-primary{background:var(--ink);color:var(--paper)}
-.fa-btn-blue{background:#1877f2;color:#fff}
+.fa-btn-blue{background:var(--brand-facebook);color:#fff}
 .fa-btn-ghost{background:var(--paper);color:var(--ink);border:1px solid var(--line-2)}
 .fa-btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
 
 /* ─── Banner estados ─────────────────────────────────────── */
 .fa-banner{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:36px 24px;text-align:center}
-.fa-banner-icon{width:54px;height:54px;border-radius:16px;background:#1877f2;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.fa-banner-icon{width:54px;height:54px;border-radius:var(--r-lg);background:var(--brand-facebook);display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
 .fa-banner-icon svg{width:30px;height:30px}
 .fa-banner h2{font-family:var(--font-display);font-size:var(--fs-h3);font-weight:700;letter-spacing:-.025em;margin-bottom:8px}
 .fa-banner p{font-size:var(--fs-sm);color:var(--mute);line-height:1.6;max-width:480px;margin:0 auto 18px}
@@ -104,19 +104,19 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .fa-summary-item strong{font-family:var(--font-display);font-size:var(--fs-h3);font-weight:600;text-align:right}
 
 /* ─── Vista previa estilo Facebook ───────────────────────── */
-.fa-preview{background:#fff;border:1px solid #EFF3F8;border-radius:8px;overflow:hidden;font-family:Segoe UI,Helvetica,Arial,sans-serif;color:#2E3338;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.fa-preview{background:#fff;border:1px solid #EFF3F8;border-radius:var(--r);overflow:hidden;font-family:var(--font-sans);color:#2E3338;box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .fa-preview-head{display:flex;align-items:center;gap:8px;padding:10px 12px}
 .fa-preview-pp{width:36px;height:36px;border-radius:50%;background:#EFF3F8 center/cover no-repeat;flex:none}
-.fa-preview-page{font-size:13px;font-weight:700;color:#161616}
-.fa-preview-sponsored{font-size:11px;color:#6B7585;line-height:1.3}
-.fa-preview-msg{padding:0 12px 8px;font-size:13.5px;line-height:1.34;color:#161616;white-space:pre-wrap;word-wrap:break-word}
+.fa-preview-page{font-size:var(--fs-sm);font-weight:700;color:#161616}
+.fa-preview-sponsored{font-size:var(--fs-caption);color:#6B7585;line-height:1.3}
+.fa-preview-msg{padding:0 12px 8px;font-size:var(--fs-sm);line-height:1.34;color:#161616;white-space:pre-wrap;word-wrap:break-word}
 .fa-preview-img{width:100%;aspect-ratio:1.91;background:#EFF3F8 center/cover no-repeat;display:block}
-.fa-preview-imgph{width:100%;aspect-ratio:1.91;background:#EFF3F8;display:flex;align-items:center;justify-content:center;color:#6B7585;font-size:12px}
+.fa-preview-imgph{width:100%;aspect-ratio:1.91;background:#EFF3F8;display:flex;align-items:center;justify-content:center;color:#6B7585;font-size:var(--fs-xs)}
 .fa-preview-link{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#FFFFFF;gap:12px}
 .fa-preview-link-info{min-width:0}
-.fa-preview-link-domain{font-size:10.5px;color:#6B7585;letter-spacing:.04em;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fa-preview-link-title{font-size:14.5px;font-weight:600;color:#161616;line-height:1.25;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.fa-preview-cta{background:#1877f2;border:0;border-radius:6px;padding:8px 14px;font-size:13px;font-weight:700;color:#fff;flex:none;cursor:default}
+.fa-preview-link-domain{font-size:var(--fs-caption);color:#6B7585;letter-spacing:.04em;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fa-preview-link-title{font-size:var(--fs-sm);font-weight:600;color:#161616;line-height:1.25;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.fa-preview-cta{background:var(--brand-facebook);border:0;border-radius:var(--r-sm);padding:8px 14px;font-size:var(--fs-sm);font-weight:700;color:#fff;flex:none;cursor:default}
 
 /* ─── Resultado / spinner ────────────────────────────────── */
 .fa-spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.35);border-top-color:var(--paper);border-radius:50%;animation:faspin .7s linear infinite;display:none}
@@ -142,7 +142,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .fa-campaign-name{font-size:var(--fs-sm);font-weight:700;line-height:1.3}
 .fa-campaign-date{font-size:var(--fs-caption);color:var(--mute);margin-top:3px}
 .fa-status-pill{display:inline-block;font-size: var(--fs-label-3);font-weight:800;letter-spacing: 0.02em;border-radius:999px;padding:3px 8px;margin-left:8px;vertical-align:middle}
-.fa-status-pill.active{background:rgba(22,163,74,.12);color:var(--success)}
+.fa-status-pill.active{background:var(--success-soft);color:var(--success)}
 .fa-status-pill.paused{background:var(--paper);color:var(--mute);border:1px solid var(--line-2)}
 .fa-toggle{flex:none;border:1px solid var(--line-2);border-radius:var(--r);padding:7px 13px;font-size:var(--fs-xs);font-weight:700;font-family:var(--font-sans);cursor:pointer;background:var(--paper);color:var(--ink)}
 .fa-toggle.is-active{background:var(--ink);color:var(--paper);border-color:var(--ink)}

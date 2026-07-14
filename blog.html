@@ -16,8 +16,8 @@
 
 /* ── Header ─────────────────────────────────── */
 .bl-head { margin-bottom: 28px; }
-.bl-head__eyebrow { font-family: var(--font-mono); font-size: 22px; letter-spacing: 0.02em;  color: var(--mute); margin-bottom: 8px; }
-.bl-head h1 { font-family: var(--font-display); font-size: 36px; font-weight: 600; letter-spacing: -0.03em; margin-bottom: 6px; }
+.bl-head__eyebrow { font-family: var(--font-mono); font-size: var(--fs-label-3); letter-spacing: 0.02em;  color: var(--mute); margin-bottom: 8px; }
+.bl-head h1 { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 700; letter-spacing: -0.03em; margin-bottom: 6px; }
 .bl-head__sub { font-size: 14px; color: var(--mute); line-height: 1.5; max-width: 580px; }
 @media (max-width: 720px) { .bl-head h1 { font-size: 28px; } }
 
@@ -44,7 +44,7 @@
 .bl-card { background: var(--bone); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 22px; cursor: pointer; transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease); display: flex; flex-direction: column; gap: 10px; }
 .bl-card:hover { transform: translateY(-2px); border-color: var(--line-2); }
 .bl-card__top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.bl-card__cat { font-size: 20px; font-weight: 600; letter-spacing: 0.02em;  padding: 3px 9px; border-radius: var(--r-pill); background: var(--forest-soft); color: var(--forest); }
+.bl-card__cat { font-size: var(--fs-label-3); font-weight: 700; letter-spacing: 0.02em;  padding: 3px 9px; border-radius: var(--r-pill); background: var(--forest-soft); color: var(--forest); }
 .bl-card__cat.pld    { background: var(--danger-soft); color: var(--danger); }
 .bl-card__cat.legal  { background: var(--warn-soft);   color: var(--warn); }
 .bl-card__cat.mercado{ background: var(--info-soft);    color: var(--info); }
@@ -74,8 +74,8 @@
 
 /* Article header */
 .bl-art-head { margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--line); }
-.bl-art-head__cat { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: var(--r-pill); font-size: 20px; font-weight: 600; letter-spacing: 0.02em;  background: var(--danger-soft); color: var(--danger); margin-bottom: 14px; }
-.bl-art-head h1 { font-family: var(--font-display); font-size: 34px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 10px; }
+.bl-art-head__cat { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: var(--r-pill); font-size: var(--fs-label-3); font-weight: 700; letter-spacing: 0.02em;  background: var(--danger-soft); color: var(--danger); margin-bottom: 14px; }
+.bl-art-head h1 { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 10px; }
 .bl-art-head__sub { font-size: 16px; color: var(--mute); line-height: 1.55; max-width: 680px; margin-bottom: 16px; }
 .bl-art-head__meta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .bl-art-head__meta span { font-family: var(--font-mono); font-size: 11px; color: var(--mute-2); }
@@ -102,21 +102,21 @@
 .bl-callout.info  { background: var(--info-soft);    border-color: var(--info); }
 .bl-callout.danger{ background: var(--danger-soft);  border-color: var(--danger); }
 .bl-callout.success{background: var(--success-soft); border-color: var(--success); }
-.bl-callout__label { font-family: var(--font-mono); font-size: 20px; font-weight: 600; letter-spacing: 0.02em;  margin-bottom: 6px; }
+.bl-callout__label { font-family: var(--font-mono); font-size: var(--fs-label-3); font-weight: 700; letter-spacing: 0.02em;  margin-bottom: 6px; }
 .bl-callout.warn   .bl-callout__label { color: var(--warn); }
 .bl-callout.info   .bl-callout__label { color: var(--info); }
 .bl-callout.danger .bl-callout__label { color: var(--danger); }
-.bl-callout.success.bl-callout__label { color: var(--success); }
-.bl-callout p { font-size: 14px; line-height: 1.6; margin: 0; }
-.bl-callout.warn   p { color: #E8910C; }
-.bl-callout.info   p { color: #0062E3; }
-.bl-callout.danger p { color: #E70866; }
-.bl-callout.success p{ color: #00AA6C; }
+.bl-callout.success .bl-callout__label { color: var(--success); }
+.bl-callout p { font-size: var(--fs-sm); line-height: 1.6; margin: 0; }
+.bl-callout.warn   p { color: var(--warn); }
+.bl-callout.info   p { color: var(--info); }
+.bl-callout.danger p { color: var(--danger); }
+.bl-callout.success p{ color: var(--success); }
 
 /* Data table */
 .bl-table-wrap { overflow-x: auto; margin: 20px 0; border-radius: var(--r); border: 1px solid var(--line); }
 .bl-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.bl-table th { background: var(--paper-2); padding: 10px 14px; text-align: left; font-size: 20px; font-weight: 600; letter-spacing: 0.02em;  color: var(--mute); border-bottom: 1px solid var(--line); }
+.bl-table th { background: var(--paper-2); padding: 10px 14px; text-align: left; font-size: var(--fs-label-3); font-weight: 700; letter-spacing: 0.02em;  color: var(--mute); border-bottom: 1px solid var(--line); }
 .bl-table td { padding: 11px 14px; border-bottom: 1px solid var(--line); color: var(--ink-2); line-height: 1.5; vertical-align: top; }
 .bl-table tr:last-child td { border-bottom: none; }
 .bl-table tr:nth-child(even) td { background: var(--paper); }
@@ -125,7 +125,7 @@
 
 /* Sources */
 .bl-sources { margin-top: 36px; padding-top: 20px; border-top: 1px solid var(--line); }
-.bl-sources__title { font-family: var(--font-mono); font-size: 20px; letter-spacing: 0.02em;  color: var(--mute); margin-bottom: 12px; }
+.bl-sources__title { font-family: var(--font-mono); font-size: var(--fs-label-3); font-weight: 700; letter-spacing: 0.02em;  color: var(--mute); margin-bottom: 12px; }
 .bl-sources ul { list-style: none; padding: 0; margin: 0; }
 .bl-sources li { font-size: 12px; color: var(--mute); margin-bottom: 8px; display: flex; gap: 8px; align-items: baseline; }
 .bl-sources li::before { content: "↗"; flex-shrink: 0; font-size: 11px; }
@@ -274,7 +274,7 @@ const ARTICULOS = [
 <h2>Resumen para el agente</h2>
 <p>La exención del ISR por casa habitación es <strong>la diferencia entre cerrar y no cerrar</strong> una operación grande. Si manejas el timing y los documentos correctamente, puedes ahorrar a tu cliente <strong>cientos de miles de pesos</strong> y, de paso, ganarte su confianza para siempre. Usa el módulo de <a href="isr.html">ISR de Broquer</a> para estimar la retención antes de firmar el contrato — así llegas al cierre sin sorpresas.</p>
 
-<p style="margin-top:24px;color:#939BA6;font-size:13px;font-style:italic">Este artículo es de uso informativo para el agente inmobiliario. El cálculo y retención definitivos los realiza el notario público. Para casos atípicos (persona moral, copropiedad, herencia, donación previa) consulta con un contador fiscal certificado.</p>
+<p style="margin-top:24px;color:var(--mute-2);font-size:var(--fs-xs);font-style:italic">Este artículo es de uso informativo para el agente inmobiliario. El cálculo y retención definitivos los realiza el notario público. Para casos atípicos (persona moral, copropiedad, herencia, donación previa) consulta con un contador fiscal certificado.</p>
 
 </div>
 `,

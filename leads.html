@@ -193,14 +193,15 @@ html, body { background: var(--paper); }
   flex-shrink: 0;
   letter-spacing: -0.01em;
 }
-.av-1 { background: #2E3338; }
-.av-2 { background: #6B7585; }
-.av-3 { background: #00AA6C; }
-.av-4 { background: #E8910C; }
-.av-5 { background: #E70866; }
-.av-6 { background: #0062E3; }
-.av-7 { background: #2E3338; }
-.av-8 { background: #00AA6C; }
+/* Paleta de avatar restringida a la familia navy+azul+gris (hermanos). */
+.av-1 { background: var(--sky-navy); }
+.av-2 { background: var(--forest); }
+.av-3 { background: var(--ink-3); }
+.av-4 { background: var(--sky-navy-mid); }
+.av-5 { background: var(--mute); }
+.av-6 { background: var(--forest-2); }
+.av-7 { background: var(--ink-2); }
+.av-8 { background: var(--ink); }
 
 .contact-info { flex: 1; min-width: 0; }
 .contact-name {
@@ -219,20 +220,22 @@ html, body { background: var(--paper); }
   font-size: var(--fs-label-3); font-weight: 500;
    letter-spacing: 0.02em;
   padding: 2px 8px;
-  border-radius: 4px;
+  border-radius: var(--r-pill);
   white-space: nowrap;
   background: var(--paper-2);
   color: var(--ink-2);
 }
 .contact-sub { font-size: var(--fs-xs); color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 
-.rb-arrendador { background: oklch(94% .03 220); color: oklch(40% .08 220); }
-.rb-arrendatario { background: oklch(94% .025 250); color: oklch(40% .09 260); }
-.rb-comprador { background: oklch(94% .04 70); color: oklch(40% .11 60); }
+/* Roles: familia navy+azul+neutro (sin arcoíris). Azul = parte transaccional,
+   navy = contraparte/profesional formal, gris = resto. */
+.rb-arrendador { background: var(--forest-soft); color: var(--forest); }
+.rb-arrendatario { background: var(--navy-soft); color: var(--sky-navy); }
+.rb-comprador { background: var(--forest-soft); color: var(--forest); }
 .rb-vendedor { background: var(--forest-soft); color: var(--forest); }
-.rb-obligado_solidario { background: oklch(94% .04 320); color: oklch(40% .12 320); }
-.rb-colega { background: oklch(94% .04 40); color: oklch(40% .12 40); }
-.rb-notario { background: oklch(94% .03 200); color: oklch(40% .08 200); }
+.rb-obligado_solidario { background: var(--paper-2); color: var(--ink-2); }
+.rb-colega { background: var(--paper-2); color: var(--ink-2); }
+.rb-notario { background: var(--navy-soft); color: var(--sky-navy); }
 .rb-otro { background: var(--paper-2); color: var(--ink-2); }
 
 /* Chip de estatus (pipeline) — mismo lenguaje que los badges de inmuebles */
@@ -273,7 +276,7 @@ html, body { background: var(--paper); }
   font-size: var(--fs-sm);
 }
 .qa:hover { border-color: var(--forest); color: var(--forest); }
-.qa-wa:hover { border-color: #25D366; background: #25D36610; }
+.qa-wa:hover { border-color: var(--brand-whatsapp); background: var(--brand-whatsapp-soft); }
 
 /* ── Pipeline (Kanban) ─────────────────────────────────────── */
 .kanban {
@@ -556,9 +559,9 @@ html, body { background: var(--paper); }
 .btn-del {
   background: var(--paper);
   color: var(--danger);
-  border: 1px solid oklch(85% .04 25);
+  border: 1px solid var(--danger-soft);
 }
-.btn-del:hover { background: oklch(96% .015 25); }
+.btn-del:hover { background: var(--danger-soft); }
 
 /* Detail sheet */
 .det-hero {
@@ -936,7 +939,7 @@ html, body { background: var(--paper); }
 }
 .import-log-line.ok { color: var(--forest); }
 .import-log-line.skip { color: var(--mute); }
-.import-log-line.err { color: oklch(50% .18 30); }
+.import-log-line.err { color: var(--danger); }
 
 </style>
 </head>
