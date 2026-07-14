@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.json"/>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
-<meta name="theme-color" content="#05203C"/>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
@@ -21,11 +21,11 @@
 }
 .guide-title {
   font-family: var(--font-display);
-  font-size: 28px; font-weight: 700; letter-spacing: -0.03em;
+  font-size:var(--fs-h2); font-weight: 700; letter-spacing: -0.03em;
   color: var(--ink); margin-bottom: 8px;
 }
 .guide-sub {
-  font-size: 14px; color: var(--ink-2); line-height: 1.6;
+  font-size:var(--fs-sm); color: var(--ink-2); line-height: 1.6;
   max-width: 520px; margin-bottom: 36px;
 }
 
@@ -57,8 +57,8 @@
   display: flex; align-items: center; justify-content: center;
   color: var(--forest);
 }
-.guide-mod-name { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 3px; }
-.guide-mod-desc { font-size: 12px; color: var(--mute); line-height: 1.4; }
+.guide-mod-name { font-size:var(--fs-xs); font-weight: 600; color: var(--ink); margin-bottom: 3px; }
+.guide-mod-desc { font-size:var(--fs-xs); color: var(--mute); line-height: 1.4; }
 
 /* Acordeón de pasos */
 .guide-steps { display: flex; flex-direction: column; gap: 8px; }
@@ -75,32 +75,32 @@
 .guide-step-num {
   width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
   background: var(--forest); color: var(--paper) !important;
-  font-size: 11px; font-weight: 700; font-family: var(--font-mono);
+  font-size:var(--fs-caption); font-weight: 700; font-family: var(--font-mono);
   display: flex; align-items: center; justify-content: center;
 }
-.guide-step-lbl { flex: 1; font-size: 13.5px; font-weight: 600; color: var(--ink); }
+.guide-step-lbl { flex: 1; font-size: var(--fs-xs); font-weight: 600; color: var(--ink); }
 .guide-step-arr { color: var(--mute); transition: transform .2s; flex-shrink: 0; }
 .guide-step.open .guide-step-arr { transform: rotate(180deg); }
 .guide-step-body {
   display: none; padding: 2px 18px 16px 56px;
-  font-size: 13px; color: var(--ink-2); line-height: 1.65;
+  font-size:var(--fs-xs); color: var(--ink-2); line-height: 1.65;
 }
 .guide-step.open .guide-step-body { display: block; }
 .guide-step-body ol { padding-left: 18px; margin: 0; }
 .guide-step-body li { margin-bottom: 5px; }
 .guide-step-body code {
   background: var(--line-2); padding: 2px 6px;
-  border-radius: var(--r-xs); font-family: var(--font-mono); font-size: 11.5px;
+  border-radius: var(--r-xs); font-family: var(--font-mono); font-size: var(--fs-caption);
   color: var(--forest);
 }
 .guide-tip {
   background: #FFFFFF; border-left: 3px solid var(--forest);
   padding: 9px 13px; border-radius: 0 var(--r-sm) var(--r-sm) 0;
-  margin-top: 10px; font-size: 12.5px; color: var(--ink-2);
+  margin-top: 10px; font-size: var(--fs-xs); color: var(--ink-2);
 }
 
 /* FAQ sin número */
-.guide-faq .guide-step-num { background: var(--line-2); color: var(--mute); font-size: 14px; font-weight: 600; }
+.guide-faq .guide-step-num { background: var(--line-2); color: var(--mute); font-size:var(--fs-sm); font-weight: 600; }
 
 /* Contacto */
 .guide-contact {
@@ -113,12 +113,12 @@
   font-family: var(--font-display); font-size: var(--fs-h5); font-weight: 700;
   letter-spacing: -0.015em; margin-bottom: 4px;
 }
-.guide-contact p { font-size: 13px; color: rgba(255,255,255,.6); }
+.guide-contact p { font-size:var(--fs-xs); color: rgba(255,255,255,.6); }
 .guide-contact-btn {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 11px 22px; background: var(--paper); color: var(--ink);
   border: 1px solid var(--line); border-radius: var(--r-pill);
-  font-size: 13px; font-weight: 600; letter-spacing: -0.005em;
+  font-size:var(--fs-xs); font-weight: 600; letter-spacing: -0.005em;
   font-family: inherit; cursor: pointer; text-decoration: none;
   white-space: nowrap;
   box-shadow: var(--shadow-sm);
@@ -140,12 +140,12 @@
   font-family: var(--font-display); font-size: var(--fs-h5); font-weight: 700;
   letter-spacing: -0.015em; color: var(--danger); margin-bottom: 4px;
 }
-.guide-danger p { font-size: 13px; color: var(--mute); }
+.guide-danger p { font-size:var(--fs-xs); color: var(--mute); }
 .guide-danger-btn {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 11px 22px; background: var(--danger); color: #fff;
   border: 1px solid rgba(0,0,0,0.05); border-radius: var(--r-pill);
-  font-size: 13px; font-weight: 600; letter-spacing: -0.005em;
+  font-size:var(--fs-xs); font-weight: 600; letter-spacing: -0.005em;
   font-family: inherit; cursor: pointer; text-decoration: none;
   white-space: nowrap;
   box-shadow: 0 1px 2px var(--danger-soft), 0 4px 14px var(--danger-soft);

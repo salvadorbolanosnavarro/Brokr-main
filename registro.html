@@ -10,11 +10,11 @@
   body, .screen, .panel, .container, .wrap, main { background:var(--paper)!important; color:var(--ink)!important; }
   .card, .ui-card, .box, .module, .pf-card, .stat-pill, .module-card, .cat-module, .profile-section, .activity-item, .news-ticker-wrap, .tile, .section, section, article {
     background:var(--bone)!important; border:1px solid var(--line)!important; border-radius:var(--r-lg)!important;
-    color:var(--ink)!important; box-shadow:0 1px 2px rgba(22,22,22,.03)!important;
+    color:var(--ink)!important; box-shadow:var(--shadow-xs)!important;
   }
   input, select, textarea {
     background:var(--bone)!important; border:1px solid var(--line-2)!important; color:var(--ink)!important;
-    border-radius:var(--r)!important; font-family:var(--font-sans)!important; font-size:14px!important; padding:10px 12px!important;
+    border-radius:var(--r)!important; font-family:var(--font-sans)!important; font-size:var(--fs-sm)!important; padding:10px 12px!important;
     outline:none!important; transition:border-color .2s ease;
   }
   input:focus, select:focus, textarea:focus { border-color:var(--ink)!important; }
@@ -22,13 +22,13 @@
     background:var(--ink)!important; color:var(--paper)!important;
     border:none!important; border-radius:var(--r)!important;
     padding:11px 18px!important; font-weight:600!important; cursor:pointer!important;
-    font-size:14px!important;
+    font-size:var(--fs-sm)!important;
   }
   button:not([class]):hover, .btn-primary:hover { opacity:.92!important; }
   a { color:var(--ink)!important; text-decoration:none; }
   a:hover { color:var(--forest)!important; }
   ::-webkit-scrollbar { width:6px; height:6px; }
-  ::-webkit-scrollbar-thumb { background:var(--line-2); border-radius:3px; }
+  ::-webkit-scrollbar-thumb { background:var(--line-2); border-radius:var(--r-xs); }
 </style>
 
 <meta charset="UTF-8"/>
@@ -36,33 +36,33 @@
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Broquer — Completa tu perfil</title>
-<meta name="theme-color" content="#05203C"/>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{min-height:100%;background:var(--paper);font-family:var(--font-sans);color:var(--ink)}
 .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px}
-.card{width:100%;max-width:460px;background:var(--bone);border:1px solid var(--line);border-radius:20px;padding:40px 36px 36px;box-shadow:0 4px 24px rgba(0,0,0,.05);animation:cardIn .5s cubic-bezier(.16,1,.3,1)}
+.card{width:100%;max-width:460px;background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:40px 36px 36px;box-shadow:var(--shadow-sm);animation:cardIn .5s cubic-bezier(.16,1,.3,1)}
 @keyframes cardIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
 .logo-area{text-align:center;margin-bottom:32px}
 .logo-area img{height:40px}
-.logo-area h2{font-family:var(--font-display);font-size:22px;font-weight:700;margin-top:12px;color:var(--ink);letter-spacing:-0.02em}
-.logo-area p{font-size:13px;color:var(--mute);margin-top:6px;line-height:1.5}
+.logo-area h2{font-family:var(--font-display);font-size:var(--fs-h3);font-weight:700;margin-top:12px;color:var(--ink);letter-spacing:-0.02em}
+.logo-area p{font-size:var(--fs-xs);color:var(--mute);margin-top:6px;line-height:1.5}
 .field{margin-bottom:16px}
-.field label{display:block;font-size:11px;font-weight:600;color:var(--mute);letter-spacing:.8px;margin-bottom:6px}
+.field label{display:block;font-size:var(--fs-caption);font-weight:600;color:var(--mute);letter-spacing:.8px;margin-bottom:6px}
 .field input{width:100%}
-.field .hint{font-size:11px;color:var(--mute);margin-top:5px;line-height:1.4}
-.btn-primary{width:100%;padding:14px;border:none;border-radius:12px;background:var(--ink);color:var(--paper);font-size:15px;font-weight:600;cursor:pointer;transition:opacity .2s,transform .1s;margin-top:8px}
+.field .hint{font-size:var(--fs-caption);color:var(--mute);margin-top:5px;line-height:1.4}
+.btn-primary{width:100%;padding:14px;border:none;border-radius:var(--r);background:var(--ink);color:var(--paper);font-size:var(--fs-sm);font-weight:600;cursor:pointer;transition:opacity .2s,transform .1s;margin-top:8px}
 .btn-primary:hover{opacity:.9}
 .btn-primary:active{transform:scale(.98)}
 .btn-primary:disabled{opacity:.4;cursor:not-allowed}
-.msg{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none;line-height:1.5}
-.msg.err{background:rgba(231,8,102,.08);border:1px solid rgba(231,8,102,.25);color:#E70866;display:block}
-.msg.ok {background:rgba(0,98,227,.08); border:1px solid rgba(0,98,227,.25); color:#0062E3;display:block}
+.msg{padding:10px 14px;border-radius:var(--r-sm);font-size:var(--fs-xs);margin-bottom:14px;display:none;line-height:1.5}
+.msg.err{background:rgba(231,8,102,.08);border:1px solid rgba(231,8,102,.25);color:var(--danger);display:block}
+.msg.ok {background:rgba(0,98,227,.08); border:1px solid rgba(0,98,227,.25); color:var(--forest);display:block}
 .spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:var(--paper);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .legal-check-row{display:flex;align-items:flex-start;gap:12px;margin:18px 0 4px;cursor:pointer}
 .legal-check-row input[type=checkbox]{width:18px;height:18px;margin-top:1px;accent-color:var(--ink);cursor:pointer;flex-shrink:0}
-.legal-check-row span{font-size:12px;color:var(--mute);line-height:1.6}
+.legal-check-row span{font-size:var(--fs-xs);color:var(--mute);line-height:1.6}
 .legal-check-row a{color:var(--ink);text-decoration:none;font-weight:600}
 .legal-check-row a:hover{text-decoration:underline}
 </style>

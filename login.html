@@ -20,7 +20,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>Broquer — Acceso</title>
 <link rel="manifest" href="manifest.json"/>
-<meta name="theme-color" content="#05203C"/>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
 html, body { background: var(--paper); min-height: 100%; }
@@ -58,13 +58,13 @@ body { overflow-y: auto; }
 .bk-hero__mark {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 22px;
+  font-size: var(--fs-h3);
   letter-spacing: -0.03em;
   color: var(--paper);
 }
 .bk-hero__nav {
   font-family: var(--font-mono);
-  font-size: 22px;
+  font-size: var(--fs-h3);
   letter-spacing: 0.02em;
   
   color: rgba(255,255,255,.55);
@@ -72,7 +72,7 @@ body { overflow-y: auto; }
 .bk-hero__body { position: relative; z-index: 1; max-width: 520px; }
 .bk-hero__eyebrow {
   font-family: var(--font-mono);
-  font-size: 22px;
+  font-size: var(--fs-h3);
   letter-spacing: 0.02em;
   
   color: rgba(255,255,255,.55);
@@ -81,15 +81,15 @@ body { overflow-y: auto; }
 .bk-hero__hed {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 56px;
+  font-size: var(--fs-display);
   line-height: 1.02;
   letter-spacing: -0.035em;
   color: var(--paper);
   margin-bottom: 20px;
 }
-.bk-hero__hed em { font-style: normal; color: #5BA4FF; }
+.bk-hero__hed em { font-style: normal; color: var(--sky-blue-on-dark); }
 .bk-hero__sub {
-  font-size: 16px;
+  font-size: var(--fs-body);
   line-height: 1.5;
   color: rgba(255,255,255,.65);
   max-width: 440px;
@@ -102,13 +102,13 @@ body { overflow-y: auto; }
 }
 .bk-hero__stat .v {
   font-family: var(--font-display);
-  font-size: 28px; font-weight: 600;
+  font-size: var(--fs-h2); font-weight: 600;
   letter-spacing: -0.03em;
   color: var(--paper);
 }
 .bk-hero__stat .l {
   font-family: var(--font-mono);
-  font-size: 20px; letter-spacing: 0.02em;
+  font-size: var(--fs-h3); letter-spacing: 0.02em;
    color: rgba(255,255,255,.50);
   margin-top: 4px;
 }
@@ -132,7 +132,7 @@ body { overflow-y: auto; }
 .bk-form__brand img { height: 44px; width: auto; }
 .bk-form__brand .tag {
   font-family: var(--font-mono);
-  font-size: 20px; letter-spacing: 0.02em;
+  font-size: var(--fs-h3); letter-spacing: 0.02em;
   color: var(--mute); 
   padding-left: 12px; margin-left: 2px;
   border-left: 1px solid var(--line-2);
@@ -143,14 +143,14 @@ body { overflow-y: auto; }
 
 .bk-form__hed {
   font-family: var(--font-display);
-  font-size: 38px; font-weight: 700;
+  font-size: var(--fs-h1); font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--ink);
   margin-bottom: 8px;
   line-height: 1.05;
 }
 .bk-form__sub {
-  font-size: 15px; color: var(--mute);
+  font-size: var(--fs-sm); color: var(--mute);
   margin-bottom: 32px;
 }
 
@@ -169,20 +169,20 @@ body { overflow-y: auto; }
   border: none; background: transparent;
   height: 38px;
   border-radius: var(--r-pill);
-  font-size: 13px; font-weight: 500;
+  font-size: var(--fs-xs); font-weight: 500;
   color: var(--mute);
   cursor: pointer;
   transition: all var(--dur) var(--ease);
   letter-spacing: -0.005em;
 }
-.bk-seg__btn.is-active { background: var(--bone); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(22,22,22,.06); }
+.bk-seg__btn.is-active { background: var(--bone); color: var(--ink); font-weight: 600; box-shadow: var(--shadow-xs); }
 
 /* Field */
 .bk-field { margin-bottom: 16px; }
-.bk-field label { display: block; font-size: 12px; font-weight: 500; color: var(--ink-2); margin-bottom: 6px; letter-spacing: -0.005em; }
+.bk-field label { display: block; font-size: var(--fs-xs); font-weight: 500; color: var(--ink-2); margin-bottom: 6px; letter-spacing: -0.005em; }
 
 /* Forgot row */
-.bk-forgot { font-size: 13px; color: var(--mute); text-align: right; margin: -4px 0 18px; }
+.bk-forgot { font-size: var(--fs-xs); color: var(--mute); text-align: right; margin: -4px 0 18px; }
 .bk-forgot a { color: var(--ink); font-weight: 500; }
 .bk-forgot a:hover { color: var(--forest); }
 
@@ -193,8 +193,8 @@ body { overflow-y: auto; }
   border: none;
   background: var(--sky-blue);
   color: #FFFFFF !important;
-  border-radius: 12px;
-  font-size: 15px; font-weight: 700;
+  border-radius: var(--r);
+  font-size: var(--fs-sm); font-weight: 700;
   letter-spacing: -0.005em;
   cursor: pointer;
   transition: background var(--dur) var(--ease), transform var(--dur) var(--ease);
@@ -208,7 +208,7 @@ body { overflow-y: auto; }
   display: flex; align-items: center; gap: 14px;
   margin: 26px 0 18px;
   color: var(--mute-2);
-  font-size: 24px;
+  font-size: var(--fs-h2);
   font-family: var(--font-mono);
   letter-spacing: 0.02em;
   
@@ -223,8 +223,8 @@ body { overflow-y: auto; }
   gap: 10px;
   background: var(--bone); color: var(--ink);
   border: 1px solid var(--line-2);
-  border-radius: 12px;
-  font-size: 14px; font-weight: 500;
+  border-radius: var(--r);
+  font-size: var(--fs-sm); font-weight: 500;
   cursor: pointer;
   transition: all var(--dur) var(--ease);
 }
@@ -238,14 +238,14 @@ body { overflow-y: auto; }
 .is-ios-native .bk-oauth { display: none !important; }
 .is-ios-native .bk-divider { display: none !important; }
 .bk-faceid {
-  text-align: center; font-size: 12px; color: var(--mute);
+  text-align: center; font-size: var(--fs-xs); color: var(--mute);
   margin-top: 22px;
   display: flex; justify-content: center; align-items: center; gap: 6px;
 }
 
 .bk-msg {
   padding: 12px 14px; border-radius: var(--r);
-  font-size: 13px; line-height: 1.5;
+  font-size: var(--fs-xs); line-height: 1.5;
   margin-bottom: 16px; display: none;
   border: 1px solid transparent;
 }
@@ -255,7 +255,7 @@ body { overflow-y: auto; }
 .bk-legal-check {
   display: flex; align-items: flex-start; gap: 10px;
   margin: 14px 0 6px;
-  font-size: 12px; color: var(--mute); line-height: 1.5;
+  font-size: var(--fs-xs); color: var(--mute); line-height: 1.5;
   cursor: pointer;
 }
 .bk-legal-check input[type=checkbox] {
@@ -269,7 +269,7 @@ body { overflow-y: auto; }
 
 .bk-legal {
   margin-top: 18px;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--mute);
   text-align: center;
   line-height: 1.55;
@@ -282,7 +282,7 @@ body { overflow-y: auto; }
 
 .bk-foot {
   margin-top: 32px;
-  font-size: 24px;
+  font-size: var(--fs-h2);
   color: var(--mute-2);
   text-align: center;
   font-family: var(--font-mono);
@@ -372,7 +372,7 @@ body { overflow-y: auto; }
         <div class="bk-divider">o</div>
 
         <button type="button" class="bk-oauth" onclick="doGoogle()">
-          <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
+          <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg><!-- AUDIT-EXEMPT-LINE: logo oficial de Google (marca externa, mismos términos que WhatsApp/Facebook) -->
           Continuar con Google
         </button>
 
@@ -419,7 +419,7 @@ body { overflow-y: auto; }
         <button type="submit" class="bk-submit" id="btn-signup">Crear cuenta</button>
 
         <button type="button" class="bk-oauth" onclick="doGoogle()" style="margin-top:10px">
-          <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
+          <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg><!-- AUDIT-EXEMPT-LINE: logo oficial de Google (marca externa, mismos términos que WhatsApp/Facebook) -->
           Registrarse con Google
         </button>
       </form>

@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>Estadísticas · Broquer</title>
 <link rel="manifest" href="manifest.json"/>
-<meta name="theme-color" content="#05203C"/>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
 /* layout owned by app-shell.js (.bk-page is the scroll container) */
@@ -49,15 +49,15 @@
 .es-periodo.bk-seg .bk-seg__btn.is-active { background: var(--bone); color: var(--ink); }
 
 .es-hero__main { display: flex; align-items: flex-end; gap: 36px; flex-wrap: wrap; }
-.es-hero__figure { font-family: var(--font-display); font-size: 76px; font-weight: 700; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+.es-hero__figure { font-family: var(--font-display); font-size: 76px; /* AUDIT-EXEMPT-LINE: numeral display del hero de datos */ font-weight: 700; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
 .es-hero__lbl { font-size: var(--fs-body); color: rgba(255,255,255,.72); margin-top: 8px; max-width: 30ch; }
 .es-hero__minis { display: flex; gap: 30px; flex-wrap: wrap; padding-bottom: 6px; }
-.es-hero__mini-n { font-family: var(--font-display); font-size: 22px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.es-hero__mini-n { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .es-hero__mini-lbl { font-size: var(--fs-xs); color: rgba(255,255,255,.6); margin-top: 2px; }
 
 @media (max-width: 720px) {
   .es-hero { padding: 24px 16px 26px; }
-  .es-hero__figure { font-size: 52px; }
+  .es-hero__figure { font-size: 52px; } /* AUDIT-EXEMPT-LINE: numeral display del hero (móvil) */
   .es-hero__main { gap: 20px; }
   .es-hero__minis { gap: 20px; }
 }
@@ -87,7 +87,7 @@
 /* KPIs */
 .es-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 18px; }
 .es-kpi { padding: var(--sp-5) var(--sp-5); }
-.es-kpi__n { font-family: var(--font-display); font-size: 27px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); font-variant-numeric: tabular-nums; }
+.es-kpi__n { font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 700; letter-spacing: -0.02em; color: var(--ink); font-variant-numeric: tabular-nums; }
 .es-kpi__lbl { font-size: var(--fs-xs); color: var(--mute); margin-top: 3px; }
 .es-kpi__n.is-good { color: var(--success); }
 .es-kpi__n.is-warn { color: var(--warn); }
@@ -98,8 +98,8 @@
 .es-bar-row:last-child { border-bottom: none; }
 .es-bar-row__dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
 .es-bar-row__lbl { width: 152px; flex-shrink: 0; font-size: var(--fs-sm); font-weight: 500; color: var(--ink); letter-spacing: -0.005em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
-.es-bar-track { flex: 1; height: 8px; background: var(--paper-2); border-radius: 4px; overflow: hidden; }
-.es-bar-fill { height: 100%; border-radius: 4px; transition: width .6s var(--ease); }
+.es-bar-track { flex: 1; height: 8px; background: var(--paper-2); border-radius: var(--r-xs); overflow: hidden; }
+.es-bar-fill { height: 100%; border-radius: var(--r-xs); transition: width .6s var(--ease); }
 .es-bar-row__n { width: 96px; flex-shrink: 0; text-align: right; font-size: var(--fs-xs); color: var(--mute); font-variant-numeric: tabular-nums; }
 .es-bar-row__n b { color: var(--ink); font-weight: 700; }
 
@@ -130,9 +130,9 @@
 .es-trend-wrap { padding: var(--sp-5) var(--sp-5) var(--sp-3); }
 .es-trend-legend { display: flex; gap: 18px; margin-bottom: 6px; flex-wrap: wrap; }
 .es-trend-legend__item { display: flex; align-items: center; gap: 7px; font-size: var(--fs-xs); color: var(--ink-2); font-weight: 600; }
-.es-trend-legend__sw { width: 10px; height: 10px; border-radius: 3px; }
+.es-trend-legend__sw { width: 10px; height: 10px; border-radius: var(--r-xs); }
 .es-trend-svg { width: 100%; height: auto; display: block; }
-.es-trend-tip { font-size: 9px; fill: var(--mute); font-family: var(--font-mono); }
+.es-trend-tip { font-size: var(--fs-caption); fill: var(--mute); font-family: var(--font-mono); }
 
 /* Lista de inmuebles top */
 .es-props { display: flex; flex-direction: column; gap: 8px; }

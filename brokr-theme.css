@@ -1164,4 +1164,8 @@ p {
   --brand-whatsapp-soft:  rgba(37, 211, 102, 0.10);
   --brand-facebook:       #1877F2;
   --brand-facebook-press: #145FCC;
+
+  /* Acento azul claro para texto sobre superficies navy (heros oscuros).
+     El azul de acción #0062E3 no contrasta sobre --sky-navy. */
+  --sky-blue-on-dark: #5BA4FF;
 }

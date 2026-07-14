@@ -76,7 +76,7 @@
       text-align: center; transition: all 0.15s;
       display: flex; flex-direction: column; align-items: center; gap: 4px;
     }
-    .tipo-btn .tipo-icon { font-size: 20px; }
+    .tipo-btn .tipo-icon { font-size: var(--fs-h3); }
     .tipo-btn:active { transform: scale(0.95); }
     .tipo-btn.selected { border-color: var(--teal); background: var(--teal-glow); color: var(--teal-dark); font-weight: 700; }
 
@@ -182,7 +182,7 @@
     .enfoque-lbl { font-size: var(--fs-caption); color: var(--gray-400);  letter-spacing: 0.8px; margin-bottom: 3px; }
     .enfoque-val { font-size: var(--fs-h3); font-weight: 800; }
     .enfoque-sub { font-size: var(--fs-caption); color: var(--gray-400); margin-top: 2px; }
-    .enfoque-icon { width: 40px; height: 40px; border-radius: var(--r); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .enfoque-icon { width: 40px; height: 40px; border-radius: var(--r); display: flex; align-items: center; justify-content: center; font-size: var(--fs-h3); }
 
     .alert { border-radius: var(--r); padding: 10px 14px; font-size: var(--fs-xs); line-height: 1.5; margin-bottom: 12px; }
     .alert.warn { background: var(--warn-soft); border-left: 3px solid var(--warn); color: var(--warn); }
@@ -261,7 +261,7 @@
     .btn-pdf:active { transform: scale(0.98); opacity: 0.9; }
     .btn-pdf:disabled { opacity: 0.5; cursor: not-allowed; }
     .ia-loading { text-align: center; padding: 40px 20px; }
-    .ia-loading-icon { font-size: 36px; margin-bottom: 12px; }
+    .ia-loading-icon { font-size: var(--fs-h1); margin-bottom: 12px; }
     .ia-loading-txt { font-size: var(--fs-sm); color: var(--gray-600); line-height: 1.6; }
     .ia-loading-sub { font-size: var(--fs-caption); color: var(--gray-400); margin-top: 6px; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
@@ -372,7 +372,7 @@ input, select, textarea, button {
 /* Buttons get the new pill treatment — siempre ink, el azul es solo acento */
 .gen-btn, .btn-primary, .ui-btn, .btn-new-prop, .btn-pdf, .btn-print {
   background: var(--ink) !important;
-  border-radius: 999px !important;
+  border-radius: var(--r-pill) !important;
   letter-spacing: -0.005em !important;
   font-weight: 700 !important;
 }
@@ -380,7 +380,7 @@ input, select, textarea, button {
 input, select, textarea {
   background: var(--bone) !important;
   border: 1px solid var(--paper-2) !important;
-  border-radius: 12px !important;
+  border-radius: var(--r) !important;
   color: var(--ink) !important;
 }
 input:focus, select:focus, textarea:focus {
@@ -392,7 +392,7 @@ input:focus, select:focus, textarea:focus {
 .card, .stat-card, .prop-card, .pcard {
   background: var(--bone) !important;
   border: 1px solid var(--paper-2) !important;
-  border-radius: 16px !important;
+  border-radius: var(--r-lg) !important;
 }
 .avm-card, .comp-auto-card {
   background: var(--bone) !important;
@@ -568,7 +568,7 @@ input:focus, select:focus, textarea:focus {
         return (
           <div className="colonia-selected">
             <span>{value.nombre}</span>
-            <button onClick={() => { onSelect(null); setTexto(""); }}>✕</button>
+            <button onClick={() => { onSelect(null); setTexto(""); }}>×</button>
           </div>
         );
       }

@@ -7,12 +7,12 @@
 <meta name="description" content="Somos un AI Real Estate Operating System (REOS): CRM inmobiliario, contratos, estimaciones de valor, cálculos de ISR, Facebook Ads, edición de imágenes y el mejor y más inteligente asistente: Broq."/>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
-<meta name="theme-color" content="#05203C"/>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
 /* ════════════════════════════════════════════════════════════
    BROQUER — Landing comercial · Edición "Sky"
-   Navy #05203C = estructura · Azul #0062E3 = acción · DM Sans.
+   Navy var(--sky-navy) = estructura · Azul var(--forest) = acción · DM Sans.
    ════════════════════════════════════════════════════════════ */
 html { scroll-behavior: smooth; }
 html, body { background: var(--paper); min-height: 100%; }
@@ -78,7 +78,7 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
   font-size: clamp(36px, 5vw, 58px); line-height: 1.03; letter-spacing: -.035em;
   color: var(--bone); margin-bottom: 18px;
 }
-.ld-hero h1 em { font-style: normal; color: #5BA4FF; }
+.ld-hero h1 em { font-style: normal; color: var(--sky-blue-on-dark); }
 .ld-hero__sub { font-size: var(--fs-body); line-height: 1.55; color: rgba(255,255,255,.70); max-width: 520px; margin-bottom: 28px; }
 .ld-hero__sub strong { color: var(--bone); font-weight: 700; }
 .ld-hero__ctas { display: flex; gap: 12px; flex-wrap: wrap; }
@@ -92,7 +92,7 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
 .ld-hero__media {
   border-radius: var(--r-lg); overflow: hidden;
   border: 1px solid rgba(255,255,255,.14);
-  box-shadow: 0 24px 70px rgba(0,0,0,.35);
+  box-shadow: var(--shadow-xl);
   background: #FFFFFF;
 }
 .ld-hero__media video, .ld-hero__media img { width: 100%; height: auto; display: block; }
@@ -192,7 +192,7 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
   font-family: var(--font-display); font-size: clamp(22px, 2.6vw, 30px);
   font-weight: 700; letter-spacing: -.025em; line-height: 1.2; margin-bottom: 18px;
 }
-.ld-quote p em { font-style: normal; color: #5BA4FF; }
+.ld-quote p em { font-style: normal; color: var(--sky-blue-on-dark); }
 .ld-quote .who { font-family: var(--font-mono); font-size: var(--fs-label-3); letter-spacing: 0.02em;  color: rgba(255,255,255,.55); }
 
 /* ── Precios ────────────────────────────────────────────────── */
@@ -456,7 +456,7 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
           <li>Anuncios de Facebook</li>
           <li>CRM completo: contactos, leads, tareas e inventario, etc.</li>
         </ul>
-        <a class="ld-btn-blue" href="registro.html" style="width:100%;justify-content:center;padding:14px 22px;font-size:var(--fs-body);border-radius:12px;">Crear mi cuenta</a>
+        <a class="ld-btn-blue" href="registro.html" style="width:100%;justify-content:center;padding:14px 22px;font-size:var(--fs-body);border-radius:var(--r);">Crear mi cuenta</a>
         <div class="ld-price__note">Crea tu cuenta y comienza a usar tu CRM gratis hoy mismo</div>
       </div>
     </div>

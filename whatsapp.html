@@ -51,7 +51,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .wa-number-dot{width:10px;height:10px;border-radius:50%;background:var(--brand-whatsapp);flex:none}
 .wa-number-info h3{font-size:var(--fs-h5);font-weight:700;letter-spacing:-.01em}
 .wa-number-info span{font-size:var(--fs-xs);color:var(--mute)}
-.wa-status-pill{display:inline-block;font-size: var(--fs-label-3);font-weight:800;letter-spacing: 0.02em;border-radius:999px;padding:3px 9px;background:var(--brand-whatsapp-soft);color:var(--success);margin-left:10px;vertical-align:middle}
+.wa-status-pill{display:inline-block;font-size: var(--fs-label-3);font-weight:800;letter-spacing: 0.02em;border-radius:var(--r-pill);padding:3px 9px;background:var(--brand-whatsapp-soft);color:var(--success);margin-left:10px;vertical-align:middle}
 
 .wa-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
 .wa-action-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;gap:6px;transition:border-color .15s}
@@ -65,7 +65,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .wa-ia-info p{font-size:var(--fs-xs);color:var(--mute);line-height:1.4}
 .wa-toggle{position:relative;width:44px;height:24px;flex:none}
 .wa-toggle input{opacity:0;width:0;height:0;position:absolute}
-.wa-toggle-track{position:absolute;inset:0;background:var(--line-2);border-radius:999px;transition:background .2s;cursor:pointer}
+.wa-toggle-track{position:absolute;inset:0;background:var(--line-2);border-radius:var(--r-pill);transition:background .2s;cursor:pointer}
 .wa-toggle input:checked + .wa-toggle-track{background:var(--brand-whatsapp)}
 .wa-toggle-thumb{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--bone);transition:transform .2s;pointer-events:none;box-shadow:var(--shadow-sm)}
 .wa-toggle input:checked ~ .wa-toggle-thumb{transform:translateX(20px)}
@@ -424,7 +424,7 @@ function toast(msg){
   let el = document.getElementById('wa-toast');
   if(!el){
     el = document.createElement('div'); el.id = 'wa-toast';
-    el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:11px 18px;border-radius:8px;font:600 13px var(--font-sans);box-shadow:0 4px 16px rgba(0,0,0,.2);z-index:9999;opacity:0;transition:opacity .2s;max-width:90vw;text-align:center';
+    el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:11px 18px;border-radius:var(--r-sm);font:600 13px var(--font-sans);box-shadow:var(--shadow-sm);z-index:9999;opacity:0;transition:opacity .2s;max-width:90vw;text-align:center';
     document.body.appendChild(el);
   }
   el.textContent = msg; el.style.opacity = '1';
@@ -456,7 +456,7 @@ async function cargarTemplates(){
       return;
     }
     list.innerHTML = tpls.map(t => `
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:11px 14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-sm);padding:11px 14px">
         <div>
           <div style="font-size:var(--fs-sm);font-weight:700">${escapeHtml(t.name)}</div>
           <div style="font-size:var(--fs-caption);color:var(--mute)">${escapeHtml(t.category || '')} · ${escapeHtml(t.language || '')}</div>

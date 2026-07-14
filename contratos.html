@@ -10,9 +10,9 @@
 <style>
 :root{
   --navy:var(--ink-2);--navy2:var(--sky-blue);--navy3:var(--ink-3);
-  --teal:var(--sky-blue);--teal2:var(--sky-blue-press);--tealp:rgba(0,98,227,.08);
+  --teal:var(--sky-blue);--teal2:var(--sky-blue-press);--tealp:var(--forest-soft);
   --gold:var(--warn);--silver:var(--paper-2);--silver2:var(--line);
-  --txt:var(--ink-2);--mut:var(--mute);--wh:var(--bone);--r:14px;--r2:8px;
+  --txt:var(--ink-2);--mut:var(--mute);--wh:var(--bone);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-height:100vh;padding-bottom:80px;letter-spacing:-0.005em}
@@ -31,7 +31,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 /* Type selector */
 .tipo-tabs{display:flex;gap:8px;margin-bottom:20px}
 @media(max-width:600px){.tipo-tabs{flex-wrap:wrap}}
-.tipo-tab{flex:1;padding:10px 14px;border:1.5px solid var(--silver2);border-radius:999px;background:var(--wh);cursor:pointer;text-align:center;transition:all .15s}
+.tipo-tab{flex:1;padding:10px 14px;border:1.5px solid var(--silver2);border-radius:var(--r-pill);background:var(--wh);cursor:pointer;text-align:center;transition:all .15s}
 .tipo-tab:hover{border-color:var(--sky-blue)}
 .tipo-tab.active{border-color:var(--sky-navy);background:var(--sky-navy)}
 .tipo-tab-lbl{font-size:var(--fs-sm);font-weight:600;color:var(--mut)}
@@ -60,7 +60,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .money-wrap input{padding-left:22px}
 
 /* Generate button */
-.gen-btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:14px;background:var(--ink);color:var(--paper);border:none;border-radius:999px;font-family:inherit;font-size:var(--fs-body);font-weight:600;cursor:pointer;transition:background .15s;margin-top:4px}
+.gen-btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:14px;background:var(--ink);color:var(--paper);border:none;border-radius:var(--r-pill);font-family:inherit;font-size:var(--fs-body);font-weight:600;cursor:pointer;transition:background .15s;margin-top:4px}
 .gen-btn:hover{background:var(--ink-3)}
 .gen-btn:disabled{background:var(--silver2);color:var(--mut);cursor:not-allowed}
 .gen-btn svg{flex-shrink:0}
@@ -83,7 +83,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 
 /* ── CLAUSULAS ESPECIALES ── */
 .clausulas-section{
-  background:var(--bone);border:1.5px solid var(--line);border-radius:10px;
+  background:var(--bone);border:1.5px solid var(--line);border-radius:var(--r);
   padding:20px 24px;margin:0 0 20px 0;
 }
 .clausulas-section h3{
@@ -97,20 +97,20 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
   display:flex;gap:8px;margin-bottom:8px;align-items:flex-start;
 }
 .clausula-item textarea{
-  flex:1;border:1px solid var(--paper-2);border-radius:6px;padding:8px 10px;
+  flex:1;border:1px solid var(--paper-2);border-radius:var(--r-sm);padding:8px 10px;
   font-size:var(--fs-xs);font-family:inherit;resize:vertical;min-height:60px;
   line-height:1.5;
 }
 .clausula-item textarea:focus{outline:none;border-color:var(--forest);}
 .clausula-del{
   width:28px;height:28px;border:none;background:var(--paper-2);color:var(--danger);
-  border-radius:6px;cursor:pointer;font-size:16px;flex-shrink:0;
+  border-radius:var(--r-sm);cursor:pointer;font-size:var(--fs-h5);flex-shrink:0;
   display:flex;align-items:center;justify-content:center;margin-top:2px;
 }
 .clausula-del:hover{background:var(--danger);}
 .btn-add-clausula{
   background:none;border:1.5px dashed var(--forest);color:var(--forest);
-  border-radius:6px;padding:7px 14px;font-size:var(--fs-xs);cursor:pointer;
+  border-radius:var(--r-sm);padding:7px 14px;font-size:var(--fs-xs);cursor:pointer;
   display:flex;align-items:center;gap:6px;font-weight:600;
   transition:background .15s;
 }
@@ -120,7 +120,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 }
 .clausulas-preview h4{font-size:var(--fs-caption);font-weight:700;color:var(--ink-2);margin:0 0 8px 0;}
 .clausula-redactada{
-  background:var(--bone);border:1px solid var(--line);border-radius:6px;
+  background:var(--bone);border:1px solid var(--line);border-radius:var(--r-sm);
   padding:10px 12px;margin-bottom:8px;font-size:var(--fs-caption);line-height:1.6;color:var(--forest);
   position:relative;
 }
@@ -131,19 +131,19 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 /* ── SMART FORM ELEMENTS ── */
 .auto-badge{
   background:rgba(0,98,227,.12);color:var(--teal2);
-  font-size:var(--fs-caption);font-weight:700;padding:1px 5px;border-radius:4px;
+  font-size:var(--fs-caption);font-weight:700;padding:1px 5px;border-radius:var(--r-xs);
   letter-spacing:.5px;vertical-align:middle;margin-left:4px;
 }
 .opt-badge{
   background:rgba(148,163,184,.1);color:var(--mut);
-  font-size:var(--fs-caption);font-weight:600;padding:1px 5px;border-radius:4px;
+  font-size:var(--fs-caption);font-weight:600;padding:1px 5px;border-radius:var(--r-xs);
   vertical-align:middle;margin-left:4px;
 }
 .sexo-toggle{
   display:flex;gap:6px;margin-top:4px;
 }
 .sexo-btn{
-  flex:1;padding:8px 10px;border:1.5px solid var(--bdr);border-radius:8px;
+  flex:1;padding:8px 10px;border:1.5px solid var(--bdr);border-radius:var(--r-sm);
   background:none;color:var(--mut);font-size:var(--fs-xs);font-weight:600;
   cursor:pointer;font-family:inherit;transition:all .15s;
 }
@@ -154,18 +154,18 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 
 
 /* ── CONTACT / PROPERTY PICKERS ── */
-.pick-btn{display:inline-flex;align-items:center;gap:5px;margin-top:5px;padding:5px 10px;border:1.5px solid var(--teal);border-radius:6px;background:var(--tealp);color:var(--teal2);font-family:var(--font-sans);font-size:var(--fs-caption);font-weight:700;cursor:pointer;transition:all .12s;letter-spacing:.04em}
+.pick-btn{display:inline-flex;align-items:center;gap:5px;margin-top:5px;padding:5px 10px;border:1.5px solid var(--teal);border-radius:var(--r-sm);background:var(--tealp);color:var(--teal2);font-family:var(--font-sans);font-size:var(--fs-caption);font-weight:700;cursor:pointer;transition:all .12s;letter-spacing:.04em}
 .pick-btn:hover{background:var(--teal);color:var(--bone)}
 .pick-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:flex-end;justify-content:center}
 .pick-overlay.open{display:flex}
-.pick-sheet{background:var(--bone);border-radius:16px 16px 0 0;width:100%;max-width:780px;height:92vh;max-height:92vh;min-height:560px;display:flex;flex-direction:column;animation:pickUp .22s ease;box-shadow:var(--shadow-lg)}
+.pick-sheet{background:var(--bone);border-radius:var(--r-lg) var(--r-lg) 0 0;width:100%;max-width:780px;height:92vh;max-height:92vh;min-height:560px;display:flex;flex-direction:column;animation:pickUp .22s ease;box-shadow:var(--shadow-lg)}
 @keyframes pickUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.pick-handle{width:36px;height:4px;background:var(--silver2);border-radius:2px;margin:10px auto;flex-shrink:0}
+.pick-handle{width:36px;height:4px;background:var(--silver2);border-radius:var(--r-xs);margin:10px auto;flex-shrink:0}
 .pick-head{display:flex;align-items:center;gap:10px;padding:0 18px 12px;border-bottom:1px solid var(--silver2);flex-shrink:0}
 .pick-head-title{font-size:var(--fs-h5);font-weight:700;color:var(--navy);flex:1}
-.pick-close{width:30px;height:30px;border:none;background:var(--silver);border-radius:7px;cursor:pointer;font-size:var(--fs-sm);color:var(--mut)}
+.pick-close{width:30px;height:30px;border:none;background:var(--silver);border-radius:var(--r-sm);cursor:pointer;font-size:var(--fs-sm);color:var(--mut)}
 .pick-search{padding:12px 18px;flex-shrink:0}
-.pick-search input{width:100%;background:var(--silver);border:1.5px solid var(--silver2);border-radius:8px;padding:8px 12px;font-family:var(--font-sans);font-size:var(--fs-sm);outline:none;transition:border .15s}
+.pick-search input{width:100%;background:var(--silver);border:1.5px solid var(--silver2);border-radius:var(--r-sm);padding:8px 12px;font-family:var(--font-sans);font-size:var(--fs-sm);outline:none;transition:border .15s}
 .pick-search input:focus{border-color:var(--teal)}
 .pick-list{flex:1;overflow-y:auto;padding:0 0 20px}
 .pick-item{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--silver2);cursor:pointer;transition:background .1s}
@@ -175,18 +175,18 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .pick-info{flex:1;min-width:0}
 .pick-name{font-size:var(--fs-sm);font-weight:600;color:var(--navy)}
 .pick-sub{font-size:var(--fs-xs);color:var(--mut);margin-top:2px}
-.pick-role{font-size:var(--fs-caption);font-weight:700;padding:2px 7px;border-radius:8px;margin-left:4px}
+.pick-role{font-size:var(--fs-caption);font-weight:700;padding:2px 7px;border-radius:var(--r-sm);margin-left:4px}
 .pick-empty{text-align:center;padding:40px 20px;color:var(--mut);font-size:var(--fs-sm)}
 .prop-pick-item{padding:12px 18px;border-bottom:1px solid var(--silver2);cursor:pointer;transition:background .1s}
 .prop-pick-item:hover{background:var(--tealp)}
 .prop-pick-name{font-size:var(--fs-sm);font-weight:600;color:var(--navy)}
 .prop-pick-sub{font-size:var(--fs-xs);color:var(--mut);margin-top:2px}
-.prop-pick-badge{display:inline-block;font-size:var(--fs-caption);font-weight:700;padding:2px 7px;border-radius:8px;margin-right:4px}
+.prop-pick-badge{display:inline-block;font-size:var(--fs-caption);font-weight:700;padding:2px 7px;border-radius:var(--r-sm);margin-right:4px}
 .badge-venta{background:var(--bone);color:var(--success)}.badge-renta{background:var(--bone);color:var(--forest)}
 
 /* ── MI PROPIO MACHOTE ── */
 .mach-subtabs{display:flex;gap:8px;margin-bottom:16px}
-.mach-subtab{flex:1;padding:10px;border:1.5px solid var(--silver2);border-radius:999px;background:var(--wh);cursor:pointer;text-align:center;font-size:var(--fs-sm);font-weight:600;color:var(--mut);transition:all .15s}
+.mach-subtab{flex:1;padding:10px;border:1.5px solid var(--silver2);border-radius:var(--r-pill);background:var(--wh);cursor:pointer;text-align:center;font-size:var(--fs-sm);font-weight:600;color:var(--mut);transition:all .15s}
 .mach-subtab:hover{border-color:var(--navy2)}
 .mach-subtab.active{border-color:var(--sky-navy);background:var(--sky-navy);color:var(--bone)}
 
@@ -200,16 +200,16 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .mach-file-chip button{margin-left:auto;background:none;border:none;color:var(--danger);cursor:pointer;font-size:var(--fs-sm);font-weight:700}
 
 .mach-hint{font-size:var(--fs-caption);color:var(--mut);line-height:1.5;margin-top:8px}
-.mach-hint code{background:var(--silver);padding:1px 5px;border-radius:4px;font-size:11px}
+.mach-hint code{background:var(--silver);padding:1px 5px;border-radius:var(--r-xs);font-size:var(--fs-caption)}
 
 .mach-list-empty{text-align:center;padding:34px 16px;color:var(--mut);font-size:var(--fs-sm)}
 .mach-item{display:flex;align-items:center;gap:12px;padding:14px 16px;border:1px solid var(--silver2);border-radius:var(--r);margin-bottom:10px;cursor:pointer;box-shadow:var(--shadow-sm);transition:transform .18s var(--ease),box-shadow .18s var(--ease),border-color .18s var(--ease)}
 .mach-item:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);border-color:var(--sky-blue)}
-.mach-item-ico{width:38px;height:38px;border-radius:10px;background:var(--sky-navy);display:flex;align-items:center;justify-content:center;color:var(--bone);flex-shrink:0}
+.mach-item-ico{width:38px;height:38px;border-radius:var(--r);background:var(--sky-navy);display:flex;align-items:center;justify-content:center;color:var(--bone);flex-shrink:0}
 .mach-item-info{flex:1;min-width:0}
 .mach-item-title{font-size:var(--fs-sm);font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mach-item-sub{font-size:var(--fs-caption);color:var(--mut);margin-top:2px}
-.mach-item-del{width:30px;height:30px;border:none;background:var(--silver);border-radius:7px;cursor:pointer;color:var(--danger);font-size:var(--fs-sm);flex-shrink:0}
+.mach-item-del{width:30px;height:30px;border:none;background:var(--silver);border-radius:var(--r-sm);cursor:pointer;color:var(--danger);font-size:var(--fs-sm);flex-shrink:0}
 .mach-item-del:hover{background:var(--danger);color:var(--bone)}
 
 .mach-form-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--silver2)}
@@ -272,7 +272,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
         </div>
       </div>
       <div class="f-note err-note" id="err-fechas" style="display:none;color:var(--danger);font-weight:600">
-        ⚠️ La fecha de término debe ser posterior a la de inicio.
+        <svg width="13" height="13" style="vertical-align:-2px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 17H2L12 3zm0 7v4m0 3h.01"/></svg> La fecha de término debe ser posterior a la de inicio.
       </div>
 
       <div class="frow three" style="margin-top:8px">
@@ -378,8 +378,8 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
         <div class="f">
           <label>Sexo</label>
           <div class="sexo-toggle" id="sexo-arr">
-            <button class="sexo-btn active" data-sexo="M" onclick="setSexo('arr','M',this)">♂ Masculino</button>
-            <button class="sexo-btn" data-sexo="F" onclick="setSexo('arr','F',this)">♀ Femenino</button>
+            <button class="sexo-btn active" data-sexo="M" onclick="setSexo('arr','M',this)">Masculino</button>
+            <button class="sexo-btn" data-sexo="F" onclick="setSexo('arr','F',this)">Femenino</button>
           </div>
         </div>
       </div>
@@ -445,8 +445,8 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
         <div class="f">
           <label>Sexo</label>
           <div class="sexo-toggle" id="sexo-arrt">
-            <button class="sexo-btn active" data-sexo="M" onclick="setSexo('arrt','M',this)">♂ Masculino</button>
-            <button class="sexo-btn" data-sexo="F" onclick="setSexo('arrt','F',this)">♀ Femenino</button>
+            <button class="sexo-btn active" data-sexo="M" onclick="setSexo('arrt','M',this)">Masculino</button>
+            <button class="sexo-btn" data-sexo="F" onclick="setSexo('arrt','F',this)">Femenino</button>
           </div>
         </div>
       </div>
@@ -466,8 +466,8 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
         <div class="f">
           <label>Sexo</label>
           <div class="sexo-toggle" id="sexo-os">
-            <button class="sexo-btn active" data-sexo="M" onclick="setSexo('os','M',this)">♂ Masculino</button>
-            <button class="sexo-btn" data-sexo="F" onclick="setSexo('os','F',this)">♀ Femenino</button>
+            <button class="sexo-btn active" data-sexo="M" onclick="setSexo('os','M',this)">Masculino</button>
+            <button class="sexo-btn" data-sexo="F" onclick="setSexo('os','F',this)">Femenino</button>
           </div>
         </div>
       </div>
@@ -732,8 +732,8 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
         <div class="f">
           <label>Sexo</label>
           <div class="sexo-toggle" id="sexo-vend">
-            <button class="sexo-btn active" data-sexo="M" onclick="setSexo('vend','M',this)">♂ Masculino</button>
-            <button class="sexo-btn" data-sexo="F" onclick="setSexo('vend','F',this)">♀ Femenino</button>
+            <button class="sexo-btn active" data-sexo="M" onclick="setSexo('vend','M',this)">Masculino</button>
+            <button class="sexo-btn" data-sexo="F" onclick="setSexo('vend','F',this)">Femenino</button>
           </div>
         </div>
       </div>
@@ -808,8 +808,8 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
         <div class="f">
           <label>Sexo</label>
           <div class="sexo-toggle" id="sexo-comp">
-            <button class="sexo-btn active" data-sexo="M" onclick="setSexo('comp','M',this)">♂ Masculino</button>
-            <button class="sexo-btn" data-sexo="F" onclick="setSexo('comp','F',this)">♀ Femenino</button>
+            <button class="sexo-btn active" data-sexo="M" onclick="setSexo('comp','M',this)">Masculino</button>
+            <button class="sexo-btn" data-sexo="F" onclick="setSexo('comp','F',this)">Femenino</button>
           </div>
         </div>
       </div>
@@ -997,7 +997,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
       <div class="loading" id="mach-gen-loading"><div class="spinner"></div><span>Generando contrato...</span></div>
       <div class="err" id="mach-err-generar"></div>
       <div class="success" id="mach-success">
-        <span style="font-size:20px">✓</span>
+        <span style="display:inline-flex"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span>
         <span>Contrato generado. La descarga comenzó automáticamente.</span>
       </div>
     </div>
@@ -1008,7 +1008,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
   <div id="form-estandar-footer">
   <div class="clausulas-section">
     <h3>
-      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#0062E3" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color:var(--forest)" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
       Cláusulas especiales (opcional)
     </h3>
     <p>Describe en tus propias palabras lo que quieres incluir. Nuestra IA lo redactará en lenguaje legal mexicano y lo insertará automáticamente en el contrato.</p>
@@ -1033,7 +1033,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
   <div class="loading" id="loading"><div class="spinner"></div><span>Generando contrato...</span></div>
   <div class="err" id="err"></div>
   <div class="success" id="success">
-    <span style="font-size:20px">✓</span>
+    <span style="display:inline-flex"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span>
     <span>Contrato generado. La descarga comenzó automáticamente.</span>
   </div>
   </div><!-- /form-estandar-footer -->
@@ -1203,7 +1203,7 @@ async function cargarMisMachotes(){
           <div class="mach-item-title">${escHtml(m.titulo)}</div>
           <div class="mach-item-sub">${escHtml(m.tipo || 'Personalizado')} · ${nCampos} campo${nCampos===1?'':'s'} · ${fecha}</div>
         </div>
-        <button class="mach-item-del" onclick="event.stopPropagation(); eliminarMachoteGuardado('${m.id}', '${escHtml(m.titulo).replace(/'/g, "\\'")}')" title="Eliminar">✕</button>
+        <button class="mach-item-del" onclick="event.stopPropagation(); eliminarMachoteGuardado('${m.id}', '${escHtml(m.titulo).replace(/'/g, "\\'")}')" title="Eliminar"><svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
       </div>`;
     }).join('');
 
@@ -1420,7 +1420,7 @@ function validateArrendamiento(){
   if(!gv('a-inicio') || !gv('a-fin'))
     return 'Ingresa las fechas de inicio y término del contrato.';
   if(new Date(gv('a-fin')) <= new Date(gv('a-inicio')))
-    return '⚠️ La fecha de término debe ser posterior a la de inicio.';
+    return 'La fecha de término debe ser posterior a la de inicio.';
   if(!getMonto('a-renta')) return 'Ingresa el monto de la renta mensual.';
   return null;
 }
@@ -1689,7 +1689,7 @@ function addClausula(){
   div.id = `cl-item-${clausulaCount}`;
   div.innerHTML = `
     <textarea id="cl-${clausulaCount}" placeholder="Ej: El arrendatario puede tener mascotas pequeñas pero no podrá tener perros de razas peligrosas ni animales que causen daños al inmueble..." rows="3"></textarea>
-    <button class="clausula-del" onclick="removeClausula(${clausulaCount})" title="Eliminar">✕</button>
+    <button class="clausula-del" onclick="removeClausula(${clausulaCount})" title="Eliminar"><svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
   `;
   list.appendChild(div);
   document.getElementById(`cl-${clausulaCount}`).focus();
@@ -1855,9 +1855,9 @@ function calcularSaldo(){
 // ══ SHAARK — llenar formulario vía postMessage ══
 // ══ CONTACT PICKER ══════════════════════════════════════════════════════════
 // Paleta de avatar/roles restringida a la familia Broquer (navy+azul+gris).
-const AV_COLORS=['#05203C','#0055CC','#4A535E','#154679','#6B7585','#003D99','#2E3338','#1A1D21'];
+const AV_COLORS=['#05203C','#0055CC','#4A535E','#154679','#6B7585','#003D99','#2E3338','#1A1D21']; // AUDIT-EXEMPT-LINE: paleta JS de avatares, tonos de la familia Broquer (navy/azul/gris)
 const ROLES_LABEL={arrendador:'Propietario',arrendatario:'Inquilino',comprador:'Comprador',vendedor:'Vendedor',obligado_solidario:'Oblig. solidario',colega:'Colega',notario:'Notario',otro:'Otro'};
-const ROLES_CSS_STR={arrendador:'background:#FFFFFF;color:#0055CC',arrendatario:'background:#FFFFFF;color:#05203C',comprador:'background:#FFFFFF;color:#0055CC',vendedor:'background:#FFFFFF;color:#0055CC',obligado_solidario:'background:#FFFFFF;color:#2E3338',colega:'background:#FFFFFF;color:#2E3338',notario:'background:#FFFFFF;color:#05203C',otro:'background:#FFFFFF;color:#2E3338'};
+const ROLES_CSS_STR={arrendador:'background:var(--bone);color:var(--forest)',arrendatario:'background:var(--bone);color:var(--sky-navy)',comprador:'background:var(--bone);color:var(--forest)',vendedor:'background:var(--bone);color:var(--forest)',obligado_solidario:'background:var(--bone);color:var(--ink-2)',colega:'background:var(--bone);color:var(--ink-2)',notario:'background:var(--bone);color:var(--sky-navy)',otro:'background:var(--bone);color:var(--ink-2)'};
 let pickerContexto = null;
 let propPickerContexto = null;
 
@@ -1994,7 +1994,7 @@ function renderPickerInmuebles(q) {
     const precio = p.precio ? ' · $'+Number(p.precio).toLocaleString('es-MX') : '';
     return `<div class="prop-pick-item" onclick="seleccionarInmueble('${p.id}')">
       <div class="prop-pick-name"><span class="prop-pick-badge ${opCls}">${p.operacion||''}</span>${p.titulo||'Sin nombre'}</div>
-      <div class="prop-pick-sub">📍 ${[p.colonia,p.ciudad].filter(Boolean).join(', ')}${precio}</div>
+      <div class="prop-pick-sub">${[p.colonia,p.ciudad].filter(Boolean).join(', ')}${precio}</div>
     </div>`;
   }).join('');
 }
@@ -2112,7 +2112,7 @@ window.addEventListener('message', function(e) {
     <div class="pick-handle"></div>
     <div class="pick-head">
       <div class="pick-head-title" id="pick-contact-title">Seleccionar contacto</div>
-      <button class="pick-close" onclick="cerrarPickerContacto()">✕</button>
+      <button class="pick-close" onclick="cerrarPickerContacto()"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
     </div>
     <div class="pick-search">
       <input id="pick-contact-search" type="search" placeholder="Buscar contacto..." oninput="renderPickerContactos(this.value)"/>
@@ -2127,7 +2127,7 @@ window.addEventListener('message', function(e) {
     <div class="pick-handle"></div>
     <div class="pick-head">
       <div class="pick-head-title">Seleccionar inmueble</div>
-      <button class="pick-close" onclick="cerrarPickerInmueble()">✕</button>
+      <button class="pick-close" onclick="cerrarPickerInmueble()"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
     </div>
     <div class="pick-search">
       <input id="pick-prop-search" type="search" placeholder="Buscar inmueble..." oninput="renderPickerInmuebles(this.value)"/>

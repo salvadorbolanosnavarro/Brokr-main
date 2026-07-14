@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.json"/>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
-<meta name="theme-color" content="#05203C"/>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-title" content="Broquer"/>
 <link rel="stylesheet" href="brokr-theme.css"/>
@@ -19,7 +19,7 @@
 /* ── HERO navy (estructura) ── */
 .sky-hero {
   background: var(--sky-navy); color: var(--bone) !important;
-  border-radius: 16px; padding: 28px 28px 22px;
+  border-radius: var(--r-lg); padding: 28px 28px 22px;
 }
 .sky-hero__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
 .sky-hero__eyebrow {
@@ -28,7 +28,7 @@
 }
 .sky-hero__title { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 700; letter-spacing: -0.02em; color: var(--bone); line-height: 1.05; }
 #dash-greet { color: var(--bone); }
-.sky-hero__title em { font-style: normal; color: #5BA4FF; }
+.sky-hero__title em { font-style: normal; color: var(--sky-blue-on-dark); }
 .sky-hero__date { text-align: right; font-family: var(--font-mono); font-size: var(--fs-xs); color: rgba(255,255,255,0.7); }
 .sky-hero__date .label { display: block; font-size: var(--fs-label-3); letter-spacing: 0.02em;  color: rgba(255,255,255,0.5); margin-bottom: 3px; }
 .sky-hero__kpis { display: flex; gap: 0; margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.14); padding-top: 18px; }
@@ -50,14 +50,14 @@
 @media (max-width: 520px) { .mods-grid { grid-template-columns: 1fr; } }
 .mod-card {
   display: flex; flex-direction: column; position: relative;
-  background: var(--bone); border: 1px solid var(--line); border-radius: 12px;
+  background: var(--bone); border: 1px solid var(--line); border-radius: var(--r);
   padding: 18px; text-decoration: none; color: var(--ink); min-height: 128px;
   box-shadow: var(--shadow-sm);
   transition: transform 0.18s var(--ease), box-shadow 0.18s var(--ease), border-color 0.18s var(--ease), background 0.18s var(--ease);
 }
 .mod-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--sky-blue); }
 .mod-card__icon {
-  width: 42px; height: 42px; border-radius: 10px;
+  width: 42px; height: 42px; border-radius: var(--r);
   background: var(--sky-navy); color: var(--bone) !important;
   display: flex; align-items: center; justify-content: center; margin-bottom: 12px;
   transition: background 0.18s var(--ease), color 0.18s var(--ease);
@@ -69,7 +69,7 @@
 
 /* ── CTA azul (Broq) ── */
 .ai-card {
-  background: var(--sky-blue); color: var(--bone) !important; border-radius: 16px;
+  background: var(--sky-blue); color: var(--bone) !important; border-radius: var(--r-lg);
   padding: 30px 28px; margin-top: 34px; position: relative; overflow: hidden;
   background-image: radial-gradient(120% 160% at 100% 0%, rgba(255,255,255,0.16), transparent 55%);
 }
@@ -77,14 +77,14 @@
 .ai-card p { font-size: var(--fs-body); color: rgba(255,255,255,0.9); line-height: 1.5; margin-bottom: 18px; max-width: 60ch; }
 .ai-card__btn {
   background: var(--bone); color: var(--sky-blue); border: none; height: 46px; padding: 0 22px;
-  border-radius: 12px; font-size: var(--fs-body); font-weight: 700; cursor: pointer; font-family: inherit;
+  border-radius: var(--r); font-size: var(--fs-body); font-weight: 700; cursor: pointer; font-family: inherit;
   display: inline-flex; align-items: center; gap: 8px; transition: transform 0.18s var(--ease);
 }
 .ai-card__btn:hover { transform: translateX(2px); }
 
 /* ── App Store (navy, footer del dashboard) ── */
 .appstore-card {
-  background: var(--sky-navy); color: var(--bone) !important; border-radius: 16px;
+  background: var(--sky-navy); color: var(--bone) !important; border-radius: var(--r-lg);
   padding: 22px 26px; margin-top: 16px;
   display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
 }

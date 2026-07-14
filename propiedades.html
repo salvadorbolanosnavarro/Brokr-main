@@ -130,7 +130,7 @@
   height: 44px;
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
-.props-search-wrap:focus-within { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(22,22,22,.05); }
+.props-search-wrap:focus-within { border-color: var(--ink); box-shadow: var(--focus); }
 .props-search-wrap svg { flex-shrink: 0; color: var(--mute); }
 .props-search-wrap input {
   flex: 1; background: none; border: none; outline: none;
@@ -171,7 +171,7 @@
   display: none;
   position: absolute; top: calc(100% + 6px); left: 0; z-index: 200;
   background: var(--bone); border: 1px solid var(--line-2);
-  border-radius: var(--r); box-shadow: 0 4px 16px rgba(0,0,0,.10);
+  border-radius: var(--r); box-shadow: var(--shadow);
   padding: 6px 0; min-width: 160px;
 }
 .props-est-dropdown.is-open { display: block; }
@@ -265,7 +265,7 @@
 .prop-card:hover {
   transform: translateY(-2px);
   border-color: var(--line-2);
-  box-shadow: 0 8px 32px rgba(22,22,22,.06);
+  box-shadow: var(--shadow-md);
 }
 .prop-card-img {
   width: 100%; aspect-ratio: 4/3;
@@ -467,7 +467,7 @@
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
 .pf-field input:focus, .pf-field textarea:focus, .pf-field select:focus {
-  border-color: var(--ink); box-shadow: 0 0 0 3px rgba(22,22,22,.05);
+  border-color: var(--ink); box-shadow: var(--focus);
 }
 .pf-field textarea { resize: vertical; min-height: 88px; padding: 12px 14px; height: auto; }
 .pf-field select {
@@ -685,7 +685,7 @@
   padding: 10px 12px 10px 22px;
   display: flex; align-items: center; gap: 14px;
   font-size: var(--fs-sm); font-weight: 500;
-  box-shadow: 0 12px 32px rgba(0,0,0,.22), 0 4px 12px rgba(0,0,0,.12);
+  box-shadow: var(--shadow-lg);
   z-index: 900;
   transition: transform .28s cubic-bezier(.16,1,.3,1);
   max-width: 92vw;
@@ -766,7 +766,7 @@
   transition: border-color var(--dur) var(--ease);
 }
 .pd-est-select:hover { border-color: var(--line-3); }
-.pd-est-select:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(22,22,22,.05); }
+.pd-est-select:focus { border-color: var(--ink); box-shadow: var(--focus); }
 .pd-actions .spacer { flex: 1; }
 
 .pd-tabs {
@@ -805,7 +805,7 @@
   outline: none;
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
-.pd-composer input[type="text"]:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(22,22,22,.05); }
+.pd-composer input[type="text"]:focus { border-color: var(--ink); box-shadow: var(--focus); }
 .pd-composer input[type="text"]::placeholder { color: var(--mute-2); }
 .pd-composer input[type="date"] {
   height: 40px; padding: 0 12px; width: 138px;
@@ -1081,7 +1081,7 @@
   <div class="prop-modal-box" onclick="event.stopPropagation()">
     <div class="prop-modal-hdr">
       <h3 id="prop-modal-title">Nuevo inmueble</h3>
-      <button onclick="closePropModal()" class="prop-modal-close" aria-label="Cerrar">✕</button>
+      <button onclick="closePropModal()" class="prop-modal-close" aria-label="Cerrar"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
     </div>
     <div class="prop-modal-body">
       <form id="prop-form" onsubmit="saveProp(event)">
@@ -1214,7 +1214,7 @@
       </div>
       <div style="display:flex; gap:8px; align-items:center; flex-shrink:0;">
         <button class="prop-act-btn" id="detail-edit-btn" style="height:36px;padding:0 14px;">Editar</button>
-        <button onclick="closePropDetail()" class="prop-modal-close" aria-label="Cerrar">✕</button>
+        <button onclick="closePropDetail()" class="prop-modal-close" aria-label="Cerrar"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
       </div>
     </div>
     <div class="pd-actions">
@@ -1619,7 +1619,7 @@ function openPropForm(id) {
       uploadedFotoUrls = [...p.fotos];
       p.fotos.forEach((url, idx) => {
         const div = document.createElement('div'); div.className = 'foto-preview-item';
-        div.innerHTML = `<img src="${url}" loading="lazy" decoding="async"/><button onclick="removeFoto(${idx},this.parentElement)">✕</button>`;
+        div.innerHTML = `<img src="${url}" loading="lazy" decoding="async"/><button onclick="removeFoto(${idx},this.parentElement)"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg></button>`;
         g('fotos-preview').appendChild(div);
       });
       g('fotos-progress').textContent = `${p.fotos.length} foto(s)`;
@@ -2128,7 +2128,7 @@ function initFotoUpload() {
         uploadedFotoUrls.push(url);
         const div = document.createElement('div'); div.className = 'foto-preview-item';
         const idx = uploadedFotoUrls.length - 1;
-        div.innerHTML = `<img src="${url}" loading="lazy" decoding="async"/><button onclick="removeFoto(${idx},this.parentElement)">✕</button>`;
+        div.innerHTML = `<img src="${url}" loading="lazy" decoding="async"/><button onclick="removeFoto(${idx},this.parentElement)"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg></button>`;
         preview.appendChild(div);
       } catch(err) { progress.textContent = `Error: ${err.message}`; return; }
     }
@@ -2190,7 +2190,7 @@ async function importarDesdeEasyBroker() {
     // Mostrar resumen
     fillEl.classList.remove('indet');
     fillEl.style.width = '100%';
-    titleEl.textContent = '✓ Importación completada';
+    titleEl.textContent = 'Importación completada';
     msgEl.textContent = 'Tus propiedades publicadas ya están en Mis Inmuebles.';
     countEl.innerHTML = '&nbsp;';
 
@@ -2755,7 +2755,7 @@ else { window.addEventListener('brokr-shell-ready', loadProps, { once: true }); 
   <div class="prop-modal-box" onclick="event.stopPropagation()" style="max-width:520px">
     <div class="prop-modal-hdr">
       <h3>Importar desde CSV</h3>
-      <button onclick="cerrarCsvModal()" class="prop-modal-close" aria-label="Cerrar">✕</button>
+      <button onclick="cerrarCsvModal()" class="prop-modal-close" aria-label="Cerrar"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
     </div>
     <div class="prop-modal-body">
       <div class="csv-drop" id="csv-drop" onclick="g('csv-file').click()">
