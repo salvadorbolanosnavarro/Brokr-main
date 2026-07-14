@@ -84,14 +84,14 @@
     .field-row:last-child { margin-bottom: 0; }
     .field { flex: 1; min-width: 0; }
     .field label {
-      font-size: var(--fs-caption); font-weight: 700; color: var(--gray-600);
-       letter-spacing: 0.6px;
+      font-size: var(--fs-label-3); font-weight: 600; color: var(--gray-600);
+       letter-spacing: .05em;
       margin-bottom: 5px; display: block;
     }
     .field input, .field select {
-      width: 100%; padding: 10px 12px;
+      width: 100%; padding: 9px 11px; font-size: var(--fs-sm) !important;
       background: var(--gray-100); border: 1px solid rgba(0,0,0,0.1);
-      border-radius: 10px; color: var(--text); outline: none; transition: border-color 0.2s;
+      border-radius: 8px; color: var(--text); outline: none; transition: border-color 0.2s;
     }
     .field input:focus, .field select:focus { border-color: var(--teal); background: white; }
     .field input::placeholder { color: var(--gray-400); }
