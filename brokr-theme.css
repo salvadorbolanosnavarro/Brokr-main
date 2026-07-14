@@ -1112,3 +1112,56 @@ p {
 .bk-mobile-head {
   padding: 16px 20px 14px;
 }
+
+/* ════════════════════════════════════════════════════════════
+   CAPA DE COMPATIBILIDAD + MARCA EXTERNA  ·  (2026-07)
+   ─────────────────────────────────────────────────────────────
+   Varios módulos legacy referencian nombres de token que NUNCA
+   se definieron en esta hoja (--silver, --wh, --green, --bdr,
+   --sh-1/2, --font, etc.). Al no existir, sus var() no resolvían
+   y los bordes/fondos/sombras caían a "initial" → módulos con
+   apariencia rota (caso claro: verificador.html). Aquí se definen
+   esos nombres como ALIAS hacia el token correcto del sistema, de
+   modo que los módulos quedan visualmente unificados SIN tocar su
+   markup. NO inventar colores nuevos: todo apunta a un token real.
+
+   Regla para el futuro: si un módulo necesita un nombre nuevo,
+   se agrega aquí como alias — nunca se hardcodea un hex.
+   ════════════════════════════════════════════════════════════ */
+:root {
+  /* Familia (alias corto usado por propiedades.html) */
+  --font: var(--font-sans);
+
+  /* Fondo navy tenue — para chips/badges "navy" (contactos/leads roles) */
+  --navy-soft: rgba(5, 32, 60, 0.08);
+
+  /* Superficies / bordes legacy (verificador, contratos, otros) */
+  --wh:      var(--bone);      /* superficie blanca de card   */
+  --silver:  var(--paper-2);   /* canvas / inset / fondo suave */
+  --silver2: var(--line-2);    /* borde de card / input        */
+  --bdr:     var(--line-2);    /* borde genérico               */
+  --navy3:   var(--sky-blue-press); /* hover oscuro de botón azul */
+
+  /* Sombras legacy (contactos, leads) */
+  --sh-1: var(--shadow-sm);
+  --sh-2: var(--shadow);
+
+  /* Estados legacy pale/bold → tokens semánticos del sistema.
+     (--green/--red/--amber/--teal ya existían o se derivan aquí.
+     Los sufijos p = pale/fondo, b = bold/borde-texto.) */
+  --green:  var(--success);      --greenp: var(--success-soft);  --greenb: var(--success);
+  --red:    var(--danger);       --redp:   var(--danger-soft);   --redb:   var(--danger);
+  --amberp: var(--warn-soft);    --amberb: var(--warn);
+  --bluep:  var(--forest-soft);  --blueb:  var(--forest);
+  --tealp:  var(--forest-soft);  /* teal → azul de acción para no salir del sistema */
+
+  /* ── MARCA EXTERNA (única excepción a la paleta navy+azul) ──
+     Usar EXCLUSIVAMENTE en el botón/icono de la integración
+     correspondiente (conectar WhatsApp, conectar Facebook).
+     Prohibido usarlos como acento general del módulo. */
+  --brand-whatsapp:       #25D366;
+  --brand-whatsapp-press: #1EB855;
+  --brand-whatsapp-soft:  rgba(37, 211, 102, 0.10);
+  --brand-facebook:       #1877F2;
+  --brand-facebook-press: #145FCC;
+}
