@@ -23,6 +23,20 @@ ALLOWED_HEX = {'#fff','#ffffff','#000','#000000','#25d366','#1877f2'}
 SKIP = {'legal.html','aviso-privacidad.html','404.html','sitio.html','_TEMPLATE-modulo.html'}
 
 
+
+def check_texto_ilegible(txt):
+    """Texto con color --mute-2/--mute-3 (grises de deshabilitado) es ilegible
+    sobre los fondos claros del sistema (contraste < 2.6). Solo se permiten en
+    ::placeholder, :disabled e iconos/decoración (svg, arrows, separadores)."""
+    import re as _re
+    bad = []
+    for m in _re.finditer(r'([^{}]+)\{([^{}]*)\}', txt):
+        sel = _re.sub(r'/\*.*?\*/', '', m.group(1), flags=_re.S).strip()
+        if any(k in sel for k in ('placeholder',':disabled','svg','arrow','sep','.gap','ico','preview')): continue
+        if _re.search(r'(?<!-)color:\s*var\(--mute-[23]\)', m.group(2)):
+            bad.append(sel[:44])
+    return bad
+
 def check_botones_ink(txt):
     """Regla semántica DESIGN.md §checklist: botón primario azul, secundario navy/ghost.
     Un botón con fondo var(--ink*) (negro) no existe en la paleta de botones."""
@@ -60,8 +74,9 @@ def audit(path):
     hexes = [h for h in (x.lower() for x in re.findall(r'#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?\b', t)) if h not in ALLOWED_HEX]
     fs = re.findall(r'font-size\s*:\s*[\d.]+px', t)
     btn_ink = check_botones_ink(t)
+    ilegible = check_texto_ilegible(t)
     css_ok = all(c.count('{')==c.count('}') for c in re.findall(r'<style[^>]*>(.*?)</style>', txt, re.S))
-    return {'hex':hexes,'font-family':ff,'font-size-px':fs,'border-radius':br,'box-shadow':bs,'emoji':emoji,'boton-negro (debe ser azul o navy)':btn_ink}, css_ok
+    return {'hex':hexes,'font-family':ff,'font-size-px':fs,'border-radius':br,'box-shadow':bs,'emoji':emoji,'boton-negro (debe ser azul o navy)':btn_ink,'texto-ilegible (mute-2/3)':ilegible}, css_ok
 
 files = sys.argv[1:] or [f for f in sorted(glob.glob('*.html')) if os.path.basename(f) not in SKIP]
 total = 0

@@ -787,8 +787,8 @@ body[data-app="verificador"] .top-header { display: none !important; }
 }
 .bk-pd-role-badge.admin { background: var(--danger); color: #FFFFFF; }
 .bk-pd-section-label {
-  font-family: var(--font-mono); font-size: var(--fs-label-3); font-weight: 600;
-  letter-spacing: 0.02em; color: var(--mute-2);
+  font-family: var(--font-sans); font-size: var(--fs-label-3); font-weight: 600;
+  letter-spacing: 0.02em; color: var(--mute);
   margin-bottom: 8px;
 }
 .bk-pd-card {

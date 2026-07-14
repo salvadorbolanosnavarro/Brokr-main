@@ -639,7 +639,7 @@ html, body { background: var(--paper); }
 /* Botón de quitar (reusado en vínculos de propiedades) */
 .task-del {
   border: none; background: none;
-  color: var(--mute-2); cursor: pointer;
+  color: var(--mute); cursor: pointer;
   font-size: var(--fs-body); line-height: 1;
   padding: 4px 6px;
   flex-shrink: 0;
@@ -693,7 +693,7 @@ html, body { background: var(--paper); }
 }
 .vinculo-form button:hover { opacity: .9; }
 
-.mini-empty { text-align: center; padding: 26px 12px; color: var(--mute-2); font-size: var(--fs-sm); }
+.mini-empty { text-align: center; padding: 26px 12px; color: var(--mute); font-size: var(--fs-sm); }
 
 /* Bottom nav */
 .bottom-nav {
@@ -759,62 +759,27 @@ html, body { background: var(--paper); }
   position: relative;
 }
 .import-btn:hover { border-color: var(--line-2); background: var(--paper-2); }
-.import-btn:disabled { opacity: .55; cursor: not-allowed; }
+@media (max-width: 720px) { .import-btn { display: none; } }
 
 
-@media (max-width: 720px) {
-  .import-btn { display: flex; height: 34px; padding: 0 12px; font-size: var(--fs-xs); }
-  .import-btn svg { width: 12px; height: 12px; }
+/* Progress sheet */
+.import-progress-wrap { padding: 20px 24px; }
+.progress-bar-wrap {
+  height: 5px; border-radius: var(--r-xs);
+  background: var(--bone); margin: 10px 0 5px; overflow: hidden;
 }
-
-/* Modal de progreso de importación desde EasyBroker */
-.eb-import-overlay {
-  position: fixed; inset: 0; background: rgba(20,28,48,.55);
-  display: none; align-items: center; justify-content: center; z-index: 9999;
-  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+.progress-bar-fill {
+  height: 100%; border-radius: var(--r-xs);
+  background: var(--forest); transition: width .3s ease; width: 0%;
 }
-.eb-import-overlay.is-open { display: flex; }
-.eb-import-modal {
-  background: var(--bone); border-radius: var(--r-lg);
-  width: min(420px, 92vw); padding: 28px 26px 22px;
-  box-shadow: var(--shadow-xl);
-  text-align: center; font-family: var(--font);
+.import-log {
+  font-family: var(--font-mono); font-size: var(--fs-caption); color: var(--mute);
+  max-height: 160px; overflow-y: auto; margin-top: 10px;
+  display: flex; flex-direction: column; gap: 2px;
 }
-.eb-import-title { font-size: var(--fs-h3); font-weight: 700; color: var(--ink); margin-bottom: 6px; }
-.eb-import-msg { font-size: var(--fs-sm); color: var(--mute); line-height: 1.5; margin-bottom: 18px; }
-.eb-import-bar {
-  width: 100%; height: 6px; background: var(--paper-2);
-  border-radius: var(--r-sm); overflow: hidden; margin-bottom: 8px;
-}
-.eb-import-bar__fill {
-  height: 100%; background: var(--ink); border-radius: var(--r-sm);
-  transition: width .4s ease;
-}
-.eb-import-bar__fill.indet {
-  width: 35% !important;
-  animation: ebIndet 1.4s ease-in-out infinite;
-}
-@keyframes ebIndet {
-  0%   { transform: translateX(-100%); }
-  100% { transform: translateX(285%); }
-}
-.eb-import-count { font-size: var(--fs-caption); color: var(--line-2); }
-.eb-import-summary { margin-top: 16px; font-size: var(--fs-sm); line-height: 1.7; color: var(--ink); text-align: left; }
-.eb-import-summary b { font-weight: 600; font-variant-numeric: tabular-nums; }
-.eb-import-btn {
-  margin-top: 18px; height: 38px; padding: 0 22px;
-  background: var(--ink); color: var(--paper);
-  border: none; border-radius: var(--r-pill);
-  font-family: inherit; font-size: var(--fs-sm); font-weight: 600;
-  cursor: pointer;
-}
-.eb-import-btn:hover { opacity: .9; }
-.eb-import-errs {
-  font-size: var(--fs-caption); color: var(--danger); text-align: left;
-  max-height: 90px; overflow-y: auto; margin-top: 10px;
-  border: 1px solid var(--line); border-radius: var(--r-sm);
-  padding: 8px 10px; background: var(--bone);
-}
+.import-log-line.ok { color: var(--forest); }
+.import-log-line.skip { color: var(--mute); }
+.import-log-line.err { color: var(--danger); }
 
 </style>
 </head>
@@ -841,10 +806,6 @@ html, body { background: var(--paper); }
     <h1>Contactos</h1>
     <span class="page-head__count" id="count-badge" style="display:none">0</span>
     <div style="display:flex;gap:8px;align-items:center">
-      <button class="import-btn" id="eb-import-trigger" onclick="importarContactosEB()" title="Trae los contactos de tu CRM de EasyBroker">
-        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
-        Importar de EasyBroker
-      </button>
       <button class="add-btn" id="add-btn-top" onclick="abrirModal()">
         <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
         Nuevo contacto
@@ -1023,19 +984,6 @@ html, body { background: var(--paper); }
       <button class="det-btn navy" onclick="editarDesdeDetalle()">Editar</button>
       <button class="det-btn" onclick="eliminarDesdeDetalle()" style="background:var(--danger);color:var(--bone)">Eliminar</button>
     </div>
-  </div>
-</div>
-
-<!-- MODAL: IMPORTAR CONTACTOS DESDE EASYBROKER -->
-<div class="eb-import-overlay" id="eb-import-overlay" onclick="if(event.target===this&&_ebImportDone)cerrarImportEB()">
-  <div class="eb-import-modal">
-    <div class="eb-import-title" id="eb-import-title">Importando contactos</div>
-    <div class="eb-import-msg" id="eb-import-msg">Conectando con tu cuenta…</div>
-    <div class="eb-import-bar"><div class="eb-import-bar__fill indet" id="eb-import-fill" style="width:35%"></div></div>
-    <div class="eb-import-count" id="eb-import-count">&nbsp;</div>
-    <div class="eb-import-summary" id="eb-import-summary" style="display:none"></div>
-    <div class="eb-import-errs" id="eb-import-errs" style="display:none"></div>
-    <button class="eb-import-btn" id="eb-import-btn" onclick="cerrarImportEB()" style="display:none">Entendido</button>
   </div>
 </div>
 
@@ -1238,105 +1186,6 @@ function showToast(msg) {
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2400);
-}
-
-/* ── Importar contactos desde EasyBroker ──────────────────────────
-   Pega al endpoint /contactos/importar-eb del backend, que trae el CRM
-   completo del agente y lo mapea al esquema de la tabla contactos.
-   Reimportar no duplica: rellena huecos y respeta lo capturado a mano. */
-const API_BASE = window.API_BASE || 'https://api.broquer.app';
-let _ebImportDone = false;
-
-async function importarContactosEB() {
-  const trigger = document.getElementById('eb-import-trigger');
-  let token = null;
-  try { token = await _sb().ensureToken(); } catch {}
-  if (!token) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
-
-  _ebImportDone = false;
-  const overlay = document.getElementById('eb-import-overlay');
-  const titleEl = document.getElementById('eb-import-title');
-  const msgEl   = document.getElementById('eb-import-msg');
-  const fillEl  = document.getElementById('eb-import-fill');
-  const countEl = document.getElementById('eb-import-count');
-  const sumEl   = document.getElementById('eb-import-summary');
-  const errsEl  = document.getElementById('eb-import-errs');
-  const btnEl   = document.getElementById('eb-import-btn');
-
-  titleEl.textContent = 'Importando contactos';
-  msgEl.textContent   = 'Estamos trayendo tu agenda con todos sus datos. Puede tardar hasta un minuto. No cierres esta ventana.';
-  fillEl.style.background = 'var(--ink)';
-  fillEl.classList.add('indet');
-  fillEl.style.width = '35%';
-  countEl.innerHTML = '&nbsp;';
-  sumEl.style.display = 'none';
-  errsEl.style.display = 'none';
-  btnEl.style.display = 'none';
-  overlay.classList.add('is-open');
-  if (trigger) trigger.disabled = true;
-
-  try {
-    const r = await fetch(API_BASE + '/contactos/importar-eb', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }
-    });
-    const data = await r.json().catch(() => ({}));
-    if (!r.ok) {
-      const detalle = data.detail || '';
-      if (r.status === 400 && /API key|api_key|configura/i.test(detalle)) {
-        throw new Error('Primero conecta tu cuenta. Abre tu perfil (tus iniciales, abajo a la izquierda) → sección EasyBroker y pega tu API Key.');
-      }
-      throw new Error(detalle || 'No se pudo completar la importación.');
-    }
-
-    fillEl.classList.remove('indet');
-    fillEl.style.width = '100%';
-    titleEl.textContent = 'Importación completada';
-    msgEl.textContent   = 'Tus contactos ya están en Broquer, con teléfono, correo, dirección y etiquetas.';
-    countEl.innerHTML = '&nbsp;';
-
-    const nuevos = data.importados || 0;
-    const act    = data.actualizados || 0;
-    const omit   = data.omitidos || 0;
-    sumEl.style.display = 'block';
-    sumEl.innerHTML =
-      '<div><b>' + nuevos + '</b> contactos nuevos</div>' +
-      '<div><b>' + act + '</b> completados con datos que faltaban</div>' +
-      (omit ? '<div><b>' + omit + '</b> ya estaban al día</div>' : '') +
-      '<div style="color:var(--mute);margin-top:6px;font-size:var(--fs-xs)">Total en tu EasyBroker: ' + (data.total_easybroker || 0) + '</div>';
-
-    const errores = Array.isArray(data.errores) ? data.errores : [];
-    if (errores.length) {
-      errsEl.style.display = 'block';
-      errsEl.innerHTML = '<b>Avisos:</b><br>' +
-        errores.slice(0, 4).map(e => '· ' + esc(e.error || 'desconocido')).join('<br>') +
-        (errores.length > 4 ? '<br>· y ' + (errores.length - 4) + ' más' : '');
-    }
-
-    btnEl.style.display = 'inline-block';
-    _ebImportDone = true;
-
-    if (nuevos || act) {
-      try { await cargarRemoto(); renderActual(); } catch {}
-    }
-  } catch (err) {
-    fillEl.classList.remove('indet');
-    fillEl.style.width = '100%';
-    fillEl.style.background = 'var(--danger)';
-    titleEl.textContent = 'No se pudo importar';
-    msgEl.textContent   = err.message || 'Error desconocido.';
-    countEl.innerHTML = '&nbsp;';
-    btnEl.textContent = 'Cerrar';
-    btnEl.style.display = 'inline-block';
-    _ebImportDone = true;
-  } finally {
-    if (trigger) trigger.disabled = false;
-  }
-}
-
-function cerrarImportEB() {
-  document.getElementById('eb-import-overlay').classList.remove('is-open');
-  document.getElementById('eb-import-btn').textContent = 'Entendido';
 }
 
 function fechaCorta(iso) {

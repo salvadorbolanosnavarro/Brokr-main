@@ -68,14 +68,14 @@ input{font-family:inherit}
 .t-equipo{background:rgba(0,98,227,0.10);color:var(--forest);border:1px solid rgba(0,98,227,0.2)}
 .t-active{background:rgba(0,98,227,0.10);color:var(--forest);border:1px solid rgba(0,98,227,0.2)}
 .t-free  {background:var(--paper-2);color:var(--mute);border:1px solid var(--line-2)}
-.t-off   {background:var(--paper-2);color:var(--mute-2);border:1px solid var(--line-2)}
+.t-off   {background:var(--paper-2);color: var(--mute);border:1px solid var(--line-2)}
 
 /* ── Detail panel ────────────────────────── */
 .adm-panel{display:flex;flex-direction:column;background:var(--paper);min-height:0;overflow-y:auto}
 .adm-panel::-webkit-scrollbar{width:4px}
 .adm-panel::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:var(--r-xs)}
 
-.adm-empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--mute-2);gap:14px;padding:24px;text-align:center}
+.adm-empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color: var(--mute);gap:14px;padding:24px;text-align:center}
 .adm-empty-state svg{color:var(--mute-3)}
 .adm-empty-state p{font-size:var(--fs-sm);color:var(--mute)}
 
@@ -98,7 +98,7 @@ input{font-family:inherit}
 
 .adm-sec{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px}
 .adm-sec.full{grid-column:1/-1}
-.adm-sec__title{font-family:var(--font-mono);font-size: var(--fs-label-3);font-weight:500;letter-spacing: 0.02em;color:var(--mute-2);margin-bottom:14px}
+.adm-sec__title{font-family:var(--font-mono);font-size: var(--fs-label-3);font-weight:500;letter-spacing: 0.02em;color: var(--mute);margin-bottom:14px}
 
 /* ── Uso y costos IA ─────────────────────── */
 .adm-sec__head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
@@ -113,7 +113,7 @@ input{font-family:inherit}
 .adm-ust__l{font-size:var(--fs-caption);color:var(--mute);margin-top:4px;letter-spacing:0.04em;}
 .adm-uso-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:880px){.adm-uso-cols{grid-template-columns:1fr}}
-.adm-uso-sub{font-family:var(--font-mono);font-size: var(--fs-label-3);font-weight:500;letter-spacing: 0.02em;color:var(--mute-2);margin:0 0 8px 2px}
+.adm-uso-sub{font-family:var(--font-mono);font-size: var(--fs-label-3);font-weight:500;letter-spacing: 0.02em;color: var(--mute);margin:0 0 8px 2px}
 .adm-uso-list{display:flex;flex-direction:column;gap:4px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:8px;min-height:80px}
 .adm-uso-empty{padding:16px 10px;text-align:center;color:var(--mute);font-size:var(--fs-xs)}
 .adm-bar{position:relative;padding:8px 10px;border-radius:var(--r-sm);overflow:hidden}
@@ -122,8 +122,8 @@ input{font-family:inherit}
 .adm-bar__top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .adm-bar__name{font-size:var(--fs-xs);font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-0.005em}
 .adm-bar__val{color:var(--mute);font-family:var(--font-mono);font-size:var(--fs-caption);flex-shrink:0}
-.adm-bar__meta{font-size: var(--fs-label-3);color:var(--mute-2);margin-top:2px;letter-spacing:0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.adm-uso-foot{font-size:var(--fs-caption);color:var(--mute-2);margin-top:10px;font-family:var(--font-mono);letter-spacing:0.04em;text-align:center}
+.adm-bar__meta{font-size: var(--fs-label-3);color: var(--mute);margin-top:2px;letter-spacing:0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adm-uso-foot{font-size:var(--fs-caption);color: var(--mute);margin-top:10px;font-family:var(--font-mono);letter-spacing:0.04em;text-align:center}
 
 /* Rol selector — 3 botones */
 .adm-rolgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
