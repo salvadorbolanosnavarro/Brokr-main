@@ -33,7 +33,7 @@ def check_texto_ilegible(txt):
     for m in _re.finditer(r'([^{}]+)\{([^{}]*)\}', txt):
         sel = _re.sub(r'/\*.*?\*/', '', m.group(1), flags=_re.S).strip()
         if any(k in sel for k in ('placeholder',':disabled','svg','arrow','sep','.gap','ico','preview')): continue
-        if _re.search(r'(?<!-)color:\s*var\(--mute-[23]\)', m.group(2)):
+        if _re.search(r'(?<!-)color:\s*var\((--mute-[23]|--line[\w-]*)\)', m.group(2)) or _re.search(r'--txt[\w-]*:\s*var\(--line', m.group(2)):
             bad.append(sel[:44])
     return bad
 

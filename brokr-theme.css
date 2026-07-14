@@ -322,7 +322,7 @@ input, select, textarea, button {
   appearance: none;
   border: 1px solid transparent;
   background: var(--sky-navy);
-  color: var(--bone) !important;
+  color: var(--bone);
   height: var(--h);
   padding: 0 var(--sp-5);
   border-radius: var(--r);
@@ -401,11 +401,11 @@ input, select, textarea, button {
 @media (max-width: 600px) { .bk-field-row, .bk-field-row.is-three { grid-template-columns: 1fr; } }
 
 .bk-label {
-  font-size: var(--fs-label-2);
+  font-size: var(--fs-label-3);
   line-height: var(--lh-sm);
   font-weight: 600;
   color: var(--mute);
-  letter-spacing: 0.01em;
+  letter-spacing: 0.05em;
   margin-bottom: var(--sp-1);
   display: block;
 }
@@ -424,10 +424,10 @@ input, select, textarea, button {
   outline: none;
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease);
 }
-.bk-input  { height: var(--h-lg); padding: 0 var(--sp-4); }
+.bk-input  { height: var(--h); padding: 0 var(--sp-4); }
 .bk-textarea { padding: var(--sp-3) var(--sp-4); min-height: 96px; line-height: var(--lh); resize: vertical; }
 .bk-select {
-  height: var(--h-lg); padding: 0 var(--sp-8) 0 var(--sp-4);
+  height: var(--h); padding: 0 var(--sp-8) 0 var(--sp-4);
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7685' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
