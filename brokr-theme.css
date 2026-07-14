@@ -45,18 +45,18 @@
 
 :root {
   /* ── Surfaces (blanco base, canvas gris-azul) ─ */
-  --paper:   #FFFFFF;     /* fondo del body */
-  --paper-2: #EFF3F8;     /* canvas / inset / hover / chips */
+  --paper:   #F8F9FA;     /* fondo del body (blanco roto) */
+  --paper-2: #F1F3F5;     /* canvas / inset / hover / chips */
   --bone:    #FFFFFF;     /* superficie de card */
   --shell:   #F7F9FB;     /* hover de input / superficie media */
 
   /* ── Ink (casi negro sobre claro) ─────────── */
-  --ink:     #161616;     /* texto principal */
-  --ink-2:   #2E3338;
-  --ink-3:   #54606E;     /* secundario */
-  --mute:    #626971;  /* bpk-text-secondary exacto */
-  --mute-2:  #939BA6;
-  --mute-3:  #C1C7CF;
+  --ink:     #1A1D21;     /* texto principal (casi negro, no puro) */
+  --ink-2:   #2D333A;
+  --ink-3:   #4A535E;     /* secundario */
+  --mute:    #6B7685;  /* gris secundario legible */
+  --mute-2:  #9AA5B3;
+  --mute-3:  #C8D0D9;
 
   /* ── Hairlines (bordes del sistema) ───────── */
   --line:     #E0E4E9;    /* borde claro / disabled */
@@ -64,15 +64,15 @@
   --line-3:   #AAB2BD;
 
   /* ── Accents (AZUL de acción) ─────────────── */
-  --forest:   #0062E3;    /* alias histórico → ahora AZUL */
-  --forest-2: #024DAF;    /* azul pressed (hover) */
-  --forest-soft: rgba(0,98,227,0.10);
+  --forest:   #0055CC;    /* alias histórico → azul de acción */
+  --forest-2: #003D99;    /* azul pressed (hover) */
+  --forest-soft: rgba(0,85,204,0.10);
 
   /* Marca Skyscanner */
   --sky-navy:       #05203C;  /* estructura: nav, footer, cards */
   --sky-navy-mid:   #154679;
-  --sky-blue:       #0062E3;  /* acción */
-  --sky-blue-press: #024DAF;
+  --sky-blue:       #0055CC;  /* acción */
+  --sky-blue-press: #003D99;
   --sky-canvas:     #EFF3F8;
 
   --warn:     #F55D42;  /* bpk-status-warning-spot */
@@ -87,9 +87,9 @@
   /* ── Geometry (radios BPK de Skyscanner) ─── */
   --r-xs: 4px;
   --r-sm: 8px;
-  --r:    12px;
-  --r-lg: 24px;
-  --r-xl: 24px;
+  --r:    14px;
+  --r-lg: 28px;
+  --r-xl: 32px;
   --r-pill: 999px;
 
   /* ── Espaciado (escala base 4px) ────────── */
@@ -106,12 +106,12 @@
   --sp-16: 64px;
 
   /* ── Sombras (tinte #161616, fondo claro) ── */
-  --shadow-xs: 0 1px 2px rgba(22,22,22,.06);
-  --shadow-sm: 0 1px 3px rgba(22,22,22,.10), 0 1px 2px rgba(22,22,22,.06);
-  --shadow:    0 4px 14px rgba(22,22,22,.12), 0 1px 3px rgba(22,22,22,.08);
-  --shadow-md: 0 10px 28px rgba(22,22,22,.14), 0 2px 6px rgba(22,22,22,.08);
-  --shadow-lg: 0 18px 44px rgba(22,22,22,.18), 0 4px 12px rgba(22,22,22,.10);
-  --shadow-xl: 0 28px 72px rgba(22,22,22,.22), 0 8px 20px rgba(22,22,22,.12);
+  --shadow-xs: 0 1px 2px rgba(0,85,204,.06);
+  --shadow-sm: 0 2px 6px rgba(0,85,204,.08), 0 1px 2px rgba(0,85,204,.04);
+  --shadow:    0 6px 20px rgba(0,85,204,.10), 0 2px 4px rgba(0,85,204,.05);
+  --shadow-md: 0 12px 34px rgba(0,85,204,.12), 0 4px 8px rgba(0,85,204,.06);
+  --shadow-lg: 0 22px 56px rgba(0,85,204,.16), 0 6px 12px rgba(0,85,204,.08);
+  --shadow-xl: 0 32px 80px rgba(0,85,204,.20), 0 8px 20px rgba(0,85,204,.10);
 
   /* ── Alturas de control ─────────────────── */
   --h-sm:  36px;
@@ -146,14 +146,14 @@
      landing/hero. Nada de tamaños "a mano": todo componente usa estos
      tokens o los de --fs-label-*. */
   --fs-display: 40px;   /* bpk heading-1 / xxxl */
-  --fs-h1: 32px;         /* bpk heading-2 / xxl */
-  --fs-h2: 24px;         /* bpk heading-3 */
-  --fs-h3: 20px;         /* bpk heading-4 */
-  --fs-h5: 16px;         /* bpk heading-5 */
+  --fs-h1: 36px;         /* heading principal */
+  --fs-h2: 28px;
+  --fs-h3: 22px;
+  --fs-h5: 18px;
   --fs-body-lg: 20px;    /* bpk body-longform */
-  --fs-body: 16px;       /* bpk body-default */
-  --fs-sm: 14px;         /* bpk footnote / label-2 */
-  --fs-xs: 12px;         /* bpk caption / label-3 */
+  --fs-body: 17px;
+  --fs-sm: 15px;
+  --fs-xs: 13px;
   --fs-caption: 11px;    /* micro — solo tablas/UI ultra densa, fuera de escala bpk */
 
   /* Labels bold (bpk label-1/2/3) — para .bk-label, .bk-eyebrow, .bk-badge,
@@ -815,62 +815,12 @@ input, select, textarea, button {
 }
 .bk-shark-loader--col { flex-direction: column; height: auto; }
 /* ============================================================
-   BROQUER — Design System  ·  Upgrade “Premium”
+   BROQUER — Design System · capa "Premium" (integrada)
+   Los tokens de esta capa se consolidaron en el :root principal
+   (2026-07). Quedan aquí solo los refinamientos de componentes
+   (gradiente de botón, ghost, etc.), pendientes de integrarse a
+   sus secciones base en la próxima limpieza.
    ============================================================ */
-
-:root {
-  /* ── Fondo general más cálido ─ */
-  --paper:   #F8F9FA;          /* blanco roto */
-  --bone:    #FFFFFF;          /* cards en blanco puro */
-  --paper-2: #F1F3F5;          /* canvas ligeramente más oscuro */
-
-  /* ── Azul más profundo y saturado ─ */
-  --forest:   #0055CC;         /* primary más intenso */
-  --forest-2: #003D99;         /* hover */
-  --sky-blue: #0055CC;         /* mismo azul */
-  --sky-blue-press: #003D99;
-
-  /* ── Grises con subtono cálido ─ */
-  --ink:      #1A1D21;         /* casi negro pero no puro */
-  --ink-2:    #2D333A;
-  --ink-3:    #4A535E;
-  --mute:     #6B7685;         /* gris más legible */
-  --mute-2:   #9AA5B3;
-  --mute-3:   #C8D0D9;
-
-  /* ── Sombras con color (no gris neutro) ─ */
-  --shadow-xs: 0 1px 2px rgba(0, 85, 204, .06);
-  --shadow-sm: 0 2px 6px rgba(0, 85, 204, .08), 0 1px 2px rgba(0, 85, 204, .04);
-  --shadow:    0 6px 20px rgba(0, 85, 204, .10), 0 2px 4px rgba(0, 85, 204, .05);
-  --shadow-md: 0 12px 34px rgba(0, 85, 204, .12), 0 4px 8px rgba(0, 85, 204, .06);
-  --shadow-lg: 0 22px 56px rgba(0, 85, 204, .16), 0 6px 12px rgba(0, 85, 204, .08);
-  --shadow-xl: 0 32px 80px rgba(0, 85, 204, .20), 0 8px 20px rgba(0, 85, 204, .10);
-
-  /* ── Radios más suaves ─ */
-  --r:    14px;
-  --r-lg: 28px;
-  --r-xl: 32px;
-
-  /* ── Tipografía: más aire y contraste ─ */
-  --lh-body: 1.65;
-  --lh-sm:   1.5;
-  --lh-xs:   1.4;
-
-  /* Títulos un poco más grandes y con tracking negativo */
-  --fs-h1: 36px;
-  --fs-h2: 28px;
-  --fs-h3: 22px;
-  --fs-h5: 18px;
-
-  --lh-h1: 1.1;
-  --lh-h2: 1.15;
-  --lh-h3: 1.2;
-
-  /* Body un pelín más grande */
-  --fs-body: 17px;
-  --fs-sm: 15px;
-  --fs-xs: 13px;
-}
 
 /* ── Reset de tipografía ─ */
 html, body {

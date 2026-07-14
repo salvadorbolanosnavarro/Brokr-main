@@ -22,6 +22,21 @@ import re, sys, glob, os
 ALLOWED_HEX = {'#fff','#ffffff','#000','#000000','#25d366','#1877f2'}
 SKIP = {'legal.html','aviso-privacidad.html','404.html','sitio.html','_TEMPLATE-modulo.html'}
 
+
+def check_botones_ink(txt):
+    """Regla semántica DESIGN.md §checklist: botón primario azul, secundario navy/ghost.
+    Un botón con fondo var(--ink*) (negro) no existe en la paleta de botones."""
+    import re as _re
+    bad = []
+    for css in _re.findall(r'<style[^>]*>(.*?)</style>', txt, _re.S):
+        for m in _re.finditer(r'([^{}]+)\{([^{}]*)\}', css):
+            sel = _re.sub(r'/\*.*?\*/', '', m.group(1), flags=_re.S).strip()
+            if ('btn' not in sel and 'button' not in sel and '.fab' not in sel): continue
+            if any(p in sel for p in (':hover',':active',':disabled')): continue
+            if _re.search(r'background(?:-color)?\s*:\s*var\(--ink', m.group(2)):
+                bad.append(sel[:44])
+    return bad
+
 def audit(path):
     txt = open(path, encoding='utf-8').read()
     t = re.sub(r'/\* ═+ AUDIT-EXEMPT.*?/AUDIT-EXEMPT ═+ \*/', '', txt, flags=re.S)
@@ -44,8 +59,9 @@ def audit(path):
     emoji = [e for e in re.findall('[\U0001F300-\U0001FAFF\u2600-\u27BF\u2B00-\u2BFF]', t) if e not in ('★','☆')]
     hexes = [h for h in (x.lower() for x in re.findall(r'#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?\b', t)) if h not in ALLOWED_HEX]
     fs = re.findall(r'font-size\s*:\s*[\d.]+px', t)
+    btn_ink = check_botones_ink(t)
     css_ok = all(c.count('{')==c.count('}') for c in re.findall(r'<style[^>]*>(.*?)</style>', txt, re.S))
-    return {'hex':hexes,'font-family':ff,'font-size-px':fs,'border-radius':br,'box-shadow':bs,'emoji':emoji}, css_ok
+    return {'hex':hexes,'font-family':ff,'font-size-px':fs,'border-radius':br,'box-shadow':bs,'emoji':emoji,'boton-negro (debe ser azul o navy)':btn_ink}, css_ok
 
 files = sys.argv[1:] or [f for f in sorted(glob.glob('*.html')) if os.path.basename(f) not in SKIP]
 total = 0

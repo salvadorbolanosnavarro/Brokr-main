@@ -1,5 +1,11 @@
 # Broquer — Reglas de diseño (sistema "Sky")
 
+> **Nota (2026-07):** los tokens de la capa "Upgrade Premium" se consolidaron
+> como valores canónicos del `:root` principal. Ya no existe redefinición
+> tardía de tokens dentro del theme: una sola fuente, un solo valor.
+> Azul de acción canónico: `#0055CC` (press `#003D99`). Radios: `--r` 14,
+> `--r-lg` 28. La verificación automática vive en `audit.py` (raíz del repo).
+
 > **Objetivo:** que todo módulo parezca **hermano** de los demás y de `index.html`.
 > Un módulo nuevo debe verse como si lo hubiera hecho la misma mano que hizo el
 > resto. Este documento es la ley; `brokr-theme.css` es la implementación.
