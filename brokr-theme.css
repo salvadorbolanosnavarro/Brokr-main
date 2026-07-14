@@ -116,7 +116,7 @@
   /* ── Contrato de layout (anchos canónicos) ── */
   --page-max: 1180px;   /* módulos de datos (tablas, cards, dashboards) */
   --form-max: 760px;    /* módulos de formulario / una columna */
-  --canvas-max: 900px;  /* editor de imágenes (lienzo) */
+  --pad-x: 36px;        /* gutter lateral canónico (alinea contenido con .bk-ph) */
 
   /* ── Alturas de control ─────────────────── */
   --h-sm:  36px;
@@ -243,6 +243,7 @@ html, body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
+@media (max-width: 720px) { :root { --pad-x: 16px; } }
 ::selection { background: var(--sky-blue); color: #FFFFFF !important; }
 
 h1,h2,h3,h4,h5 {

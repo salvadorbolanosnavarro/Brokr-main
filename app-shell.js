@@ -527,7 +527,7 @@
 .bk-ph {
   max-width: 1180px;
   margin: 0 auto;
-  padding: 28px 36px 4px;
+  padding: 28px var(--pad-x, 36px) 4px;
   box-sizing: border-box;
 }
 .bk-ph__title {
@@ -548,7 +548,7 @@
   max-width: 70ch;
 }
 @media (max-width: 720px) {
-  .bk-ph { padding: 16px 16px 4px; }
+  .bk-ph { padding: 16px var(--pad-x, 16px) 4px; }
   .bk-ph__title { font-size: 24px; }
 }
 
@@ -918,8 +918,7 @@ body[data-app] .btn,body[data-app] .btn-primary,body[data-app] .ui-btn,body[data
 body[data-app] .props-head__title h1,body[data-app] .page-head h1,body[data-app] .tk-head__title h1,body[data-app] .ms-head h1,body[data-app] .guide-title,body[data-app] .bx-list-head h1,body[data-app] .es-hero__brand{font-size:30px!important;font-weight:700!important;letter-spacing:-.02em!important;line-height:1.1!important}
 /* ── Alineación título↔cuerpo: el header canónico respeta el ancho del módulo ── */
 body[data-app] .bk-ph{max-width:var(--page-max,1180px)!important}
-body[data-app="isr"],body[data-app="ficha-manual"],body[data-app="avm"],body[data-app="contratos"],body[data-app="whatsapp"],body[data-app="mi-sitio"]{--page-max:var(--form-max,760px)}
-body[data-app="image-cleaner"]{--page-max:var(--canvas-max,900px)}
+body[data-app="isr"],body[data-app="ficha-manual"],body[data-app="avm"],body[data-app="contratos"],body[data-app="whatsapp"],body[data-app="mi-sitio"],body[data-app="image-cleaner"]{--page-max:var(--form-max,760px)}
 body[data-app="blog"]{--page-max:960px}
 body[data-app="facebook-ads"]{--page-max:980px}
 

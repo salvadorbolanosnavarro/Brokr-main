@@ -405,19 +405,7 @@ input:focus, select:focus, textarea:focus {
 </head>
 <body data-app="avm">
 
-<!-- shell-replaced-sidebar -->
-<div style="display:none" hidden>
-  <aside class="app-sidebar">
-    <div class="app-sidebar__brand">Broquer<span class="dot">.</span></div>
-    <a class="app-nav-link" href="index.html">Inicio</a>
-    <a class="app-nav-link" href="propiedades.html">Inmuebles</a>
-    <a class="app-nav-link" href="contactos.html">Contactos</a>
-    <a class="app-nav-link" href="contratos.html">Contratos</a>
-    <a class="app-nav-link is-active" href="avm.html">AVM</a>
-  </aside>
-</div>
-
-  <div id="root"></div>
+  <div id="root" style="max-width:var(--page-max, 760px);margin:0 auto;padding:0 var(--pad-x, 36px)"></div>
   <script type="text/babel">
     const { useState, useMemo, useCallback, useRef, useEffect } = React;
 
