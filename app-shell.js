@@ -918,10 +918,8 @@ body[data-app] .btn,body[data-app] .btn-primary,body[data-app] .ui-btn,body[data
 body[data-app] .props-head__title h1,body[data-app] .page-head h1,body[data-app] .tk-head__title h1,body[data-app] .ms-head h1,body[data-app] .guide-title,body[data-app] .bx-list-head h1,body[data-app] .es-hero__brand{font-size:30px!important;font-weight:700!important;letter-spacing:-.02em!important;line-height:1.1!important}
 /* ── Alineación título↔cuerpo: el header canónico respeta el ancho del módulo ── */
 body[data-app] .bk-ph{max-width:var(--page-max,1180px)!important}
-body[data-app="isr"],body[data-app="ficha-manual"]{--page-max:680px}
-body[data-app="avm"]{--page-max:760px}
-body[data-app="contratos"],body[data-app="whatsapp"]{--page-max:780px}
-body[data-app="image-cleaner"]{--page-max:900px}
+body[data-app="isr"],body[data-app="ficha-manual"],body[data-app="avm"],body[data-app="contratos"],body[data-app="whatsapp"],body[data-app="mi-sitio"]{--page-max:var(--form-max,760px)}
+body[data-app="image-cleaner"]{--page-max:var(--canvas-max,900px)}
 body[data-app="blog"]{--page-max:960px}
 body[data-app="facebook-ads"]{--page-max:980px}
 

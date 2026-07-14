@@ -113,6 +113,11 @@
   --shadow-lg: 0 22px 56px rgba(0,85,204,.16), 0 6px 12px rgba(0,85,204,.08);
   --shadow-xl: 0 32px 80px rgba(0,85,204,.20), 0 8px 20px rgba(0,85,204,.10);
 
+  /* ── Contrato de layout (anchos canónicos) ── */
+  --page-max: 1180px;   /* módulos de datos (tablas, cards, dashboards) */
+  --form-max: 760px;    /* módulos de formulario / una columna */
+  --canvas-max: 900px;  /* editor de imágenes (lienzo) */
+
   /* ── Alturas de control ─────────────────── */
   --h-sm:  36px;
   --h:     44px;

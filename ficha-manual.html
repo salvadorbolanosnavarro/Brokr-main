@@ -13,7 +13,7 @@
 
 /* ─── App UI ─────────────────────────────────── */
 #app-ui{
-  max-width: 680px; margin: 0 auto;
+  max-width: var(--page-max, 760px); margin: 0 auto;
   padding: 24px 20px 60px;
 }
 
@@ -51,19 +51,23 @@
   color: var(--mute);
   letter-spacing: .05em;
 }
-.f input, .f select, .f textarea{
-  padding: 9px 11px;
-  background: var(--bone);
-  border: 1.5px solid var(--line);
-  border-radius: var(--r-sm);
-  font-size: var(--fs-sm);
-  font-family: var(--font-sans);
-  color: var(--ink);
-  outline: none;
-  transition: border-color .2s var(--ease), box-shadow .2s var(--ease);
+.f input, .f select{
+  height: var(--h-lg); padding: 0 var(--sp-4);
+  background: var(--bone); border: 1px solid var(--line-2);
+  border-radius: var(--r); font-size: var(--fs-sm);
+  font-family: inherit; color: var(--ink); width: 100%; outline: none;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.f textarea{
+  padding: var(--sp-3) var(--sp-4); min-height: 96px;
+  background: var(--bone); border: 1px solid var(--line-2);
+  border-radius: var(--r); font-size: var(--fs-sm);
+  font-family: inherit; color: var(--ink); width: 100%; outline: none;
+  resize: vertical; line-height: var(--lh);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
 .f input:focus, .f select:focus, .f textarea:focus{
-  border-color: var(--ink);
+  border-color: var(--forest);
   box-shadow: var(--focus);
 }
 .f input::placeholder, .f textarea::placeholder{ color: var(--mute-2); }
