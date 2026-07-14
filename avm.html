@@ -110,7 +110,7 @@
       padding: 7px 13px; border-radius: var(--r-sm); font-size: var(--fs-caption); font-weight: 600;
       font-family: var(--font-sans); cursor: pointer; border: none;
     }
-    .btn-sm.danger { background: rgba(244,63,94,0.1); color: var(--rose); border: 1px solid rgba(244,63,94,0.2); }
+    .btn-sm.danger { background: var(--danger-soft); color: var(--danger); border: 1px solid var(--danger-soft); }
 
     .comp-auto-card {
       border-radius: var(--r); border: 1.5px solid var(--gray-200);
@@ -187,7 +187,7 @@
     .alert { border-radius: var(--r); padding: 10px 14px; font-size: var(--fs-xs); line-height: 1.5; margin-bottom: 12px; }
     .alert.warn { background: var(--warn-soft); border-left: 3px solid var(--warn); color: var(--warn); }
     .alert.info { background: var(--teal-glow); border-left: 3px solid var(--teal); color: var(--teal-dark); }
-    .alert.success { background: rgba(16,185,129,0.1); border-left: 3px solid var(--emerald); color: var(--success); }
+    .alert.success { background: var(--success-soft); border-left: 3px solid var(--success); color: var(--success); }
 
     .spinner {
       width: 20px; height: 20px; border: 2.5px solid rgba(255,255,255,0.3);
@@ -234,9 +234,9 @@
     .ia-hero-val { font-size: var(--fs-h1); font-weight: 800; color: var(--bone); line-height: 1; margin-bottom: 4px; }
     .ia-hero-range { font-size: var(--fs-xs); color: rgba(255,255,255,0.4); margin-bottom: 10px; }
     .ia-conf { display: inline-block; font-size: var(--fs-caption); font-weight: 700; padding: 4px 12px; border-radius: var(--r-pill);  }
-    .ia-conf.alta   { background: rgba(16,185,129,0.15); color: var(--emerald); border: 1px solid rgba(16,185,129,0.3); }
+    .ia-conf.alta   { background: var(--success-soft); color: var(--success); border: 1px solid var(--success-soft); }
     .ia-conf.media  { background: var(--warn-soft); color: var(--warn);   border: 1px solid var(--warn-soft); }
-    .ia-conf.baja   { background: rgba(244,63,94,0.15);  color: var(--rose);    border: 1px solid rgba(244,63,94,0.3); }
+    .ia-conf.baja   { background: var(--danger-soft);  color: var(--danger);    border: 1px solid var(--danger-soft); }
     .ia-uvm { font-size: var(--fs-sm); color: rgba(255,255,255,0.5); margin-top: 8px; }
     .ia-uvm strong { color: white; }
     .comp-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--gray-200); font-size: var(--fs-xs); gap: 8px; }
@@ -815,7 +815,7 @@ input:focus, select:focus, textarea:focus {
 
       const fmtMXN = (n) => "$" + Math.round(n || 0).toLocaleString("es-MX");
       const confClass = (c) => c === "alta" ? "ia-conf alta" : c === "media" ? "ia-conf media" : "ia-conf baja";
-      const dotColor = (imp) => imp === "positivo" ? "var(--emerald)" : imp === "negativo" ? "var(--rose)" : "var(--gray-400)";
+      const dotColor = (imp) => imp === "positivo" ? "var(--success)" : imp === "negativo" ? "var(--danger)" : "var(--gray-400)";
 
       // ── ESTADO: FORMULARIO ──
       if (estado === "idle" || estado === "error") return (
@@ -1163,8 +1163,8 @@ input:focus, select:focus, textarea:focus {
         const valorCapitalizacion = (rentaBruta * 0.86 * 12) / 0.045;
 
         const nComps = esTerreno ? analyzedT.length : analyzed.length;
-        let confianza = "baja", confianzaColor = "var(--rose)";
-        if (nComps >= 5)      { confianza = "alta";  confianzaColor = "var(--emerald)"; }
+        let confianza = "baja", confianzaColor = "var(--danger)";
+        if (nComps >= 5)      { confianza = "alta";  confianzaColor = "var(--success)"; }
         else if (nComps >= 3) { confianza = "media"; confianzaColor = "var(--warn)"; }
 
         const dispersion = promHomol > 0 && analyzed.length > 1 ? ((maxH - minH) / promHomol) * 100 : 0;

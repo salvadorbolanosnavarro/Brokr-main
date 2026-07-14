@@ -252,7 +252,6 @@
     'mi-sitio':     'Mi sitio — perfil público, plantilla y sitio web del agente',
     'contratos':    'Contratos — arrendamiento y promesa de compraventa',
     'avm':          'Estimación de valor AVM — avalúo de mercado automatizado',
-    'ficha':        'Ficha EasyBroker — generar ficha técnica desde ID de EasyBroker',
     'ficha-manual': 'Ficha Técnica Manual — crear ficha sin EasyBroker',
     'isr':          'Calculadora ISR por enajenación de inmuebles',
     'image-cleaner':'Editor de imágenes — limpieza con IA',
@@ -266,7 +265,6 @@
   const PAGE_META = {
     'contratos':     { title:'Contratos',              sub:'Genera contratos listos para firma en minutos.' },
     'avm':           { title:'Estimación de valor',    sub:'Avalúo automático con comparables de tu zona.' },
-    'ficha':         { title:'Ficha técnica',          sub:'Genera la ficha profesional de una propiedad.' },
     'ficha-manual':  { title:'Ficha técnica',          sub:'Crea fichas profesionales de tus propiedades.' },
     'isr':           { title:'Cálculo de ISR',         sub:'ISR por enajenación de inmuebles con el INPC vigente.' },
     'image-cleaner': { title:'Editor de imágenes',     sub:'Limpia y mejora las fotos de tus propiedades con IA.' },
@@ -274,7 +272,6 @@
     'whatsapp':      { title:'WhatsApp',               sub:'Conecta y administra tu número de WhatsApp Business.' },
     'verificador':   { title:'Verificador',            sub:'Revisión con IA para detectar problemas antes de firmar.' },
     'blog':          { title:'Blog',                   sub:'Recursos profesionales sobre PLD, legal y mercado.' },
-    'solicitud-arr': { title:'Solicitud de arrendamiento', sub:'Sube la solicitud y la IA califica al prospecto.' },
   };
   const ICONS = {
     home:       '<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/>',
@@ -558,7 +555,6 @@
 body[data-app="facebook-ads"] .fa-hero,
 body[data-app="whatsapp"] .wa-hero,
 body[data-app="blog"] .bl-head,
-body[data-app="solicitud-arr"] .sa-head,
 body[data-app="verificador"] .top-header { display: none !important; }
 
 /* Bottom nav (mobile) */
@@ -911,6 +907,22 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
    deben usar .btn-primary o .bk-btn--forest para heredar esto. */
 body[data-app] .btn-new-tarea,body[data-app] .tk-composer .go,body[data-app] .fa-btn-primary,body[data-app] .btn-new-prop,body[data-app] .eb-import-btn,body[data-app] .pf-save-btn,body[data-app] #ai-btn,body[data-app] #calc-btn,body[data-app] #btn-analizar-ia,body[data-app] #btn-clean,body[data-app] #fa-ai-btn,body[data-app] #fa-submit-btn,body[data-app] #tpl-submit-btn{background:var(--sky-blue)!important;color:#fff!important;border:1px solid var(--sky-blue)!important;box-shadow:0 1px 2px rgba(0,98,227,.18)!important}
 body[data-app] .btn-new-tarea:hover,body[data-app] .tk-composer .go:hover,body[data-app] .fa-btn-primary:hover,body[data-app] .btn-new-prop:hover,body[data-app] .eb-import-btn:hover,body[data-app] .pf-save-btn:hover,body[data-app] #ai-btn:hover,body[data-app] #calc-btn:hover,body[data-app] #btn-analizar-ia:hover,body[data-app] #btn-clean:hover,body[data-app] #fa-ai-btn:hover,body[data-app] #fa-submit-btn:hover,body[data-app] #tpl-submit-btn:hover{background:var(--sky-blue-press)!important;border-color:var(--sky-blue-press)!important}
+/* ── Unificación de TAMAÑO/FORMA de botones de acción (misma altura 44px,
+   padding, tipo y radio píldora en todos los módulos). Se excluyen a propósito
+   tiles de selección (.tipo-btn), toggles/segmented, chips de filtro y botones
+   de icono, que tienen su propia geometría. */
+body[data-app] .btn,body[data-app] .btn-primary,body[data-app] .ui-btn,body[data-app] .fa-btn,body[data-app] .wa-btn,body[data-app] .doc-btn,body[data-app] .gen-btn,body[data-app] .add-btn,body[data-app] .import-btn,body[data-app] .btn-new-tarea,body[data-app] .tk-composer .go,body[data-app] .btn-new-prop,body[data-app] .eb-import-btn,body[data-app] .pf-save-btn,body[data-app] .isr-calc-btn,body[data-app] .btn-pdf{min-height:44px!important;padding:0 18px!important;font-size:var(--fs-sm)!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;line-height:1!important}
+/* ── Unificación del TÍTULO DE PÁGINA: mismo tamaño que el header canónico
+   (.bk-ph=30px) en los módulos que pintan su propio título ── */
+body[data-app] .props-head__title h1,body[data-app] .page-head h1,body[data-app] .tk-head__title h1,body[data-app] .ms-head h1,body[data-app] .guide-title,body[data-app] .bx-list-head h1,body[data-app] .es-hero__brand{font-size:30px!important;font-weight:700!important;letter-spacing:-.02em!important;line-height:1.1!important}
+/* ── Alineación título↔cuerpo: el header canónico respeta el ancho del módulo ── */
+body[data-app] .bk-ph{max-width:var(--page-max,1180px)!important}
+body[data-app="isr"],body[data-app="ficha-manual"]{--page-max:680px}
+body[data-app="avm"]{--page-max:760px}
+body[data-app="contratos"],body[data-app="whatsapp"]{--page-max:780px}
+body[data-app="image-cleaner"]{--page-max:900px}
+body[data-app="blog"]{--page-max:960px}
+body[data-app="facebook-ads"]{--page-max:980px}
 
 /* ── Visor/entrega inmediata de archivos generados ── */
 .bk-file-overlay{position:fixed;inset:0;z-index:2147483647;background:rgba(5,32,60,.46);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;padding:18px}
@@ -1412,7 +1424,7 @@ body[data-app] .btn-new-tarea:hover,body[data-app] .tk-composer .go:hover,body[d
       case 'llenar_avm':
       case 'opinion_valor_web':  stash('avm', ac);          location.href = 'avm.html'; break;
       case 'llenar_contrato':    stash('contrato', ac);     location.href = 'contratos.html'; break;
-      case 'crear_ficha':        stash('ficha', ac);        location.href = 'ficha.html'; break;
+      case 'crear_ficha':        // ficha.html eliminada → usar ficha-manual
       case 'crear_ficha_manual': stash('ficha_manual', ac); location.href = 'ficha-manual.html'; break;
       case 'buscar_propiedad':   stash('buscar_props', ac); location.href = 'propiedades.html'; break;
       case 'confirmar_campana':  stash('fb_ads', ac);       location.href = 'facebook-ads.html'; break;
@@ -3385,7 +3397,6 @@ body[data-app] .btn-new-tarea:hover,body[data-app] .tk-composer .go:hover,body[d
     'avm.html':            ['#btn-analizar-ia'],
     'image-cleaner.html':  ['#btn-clean'],
     'contratos.html':      ['#gen-btn'],
-    'ficha.html':          ['#pdf-btn'],
     'ficha-manual.html':   ['#ai-btn', '#pdf-btn'],
     'facebook-ads.html':   ['#fa-ai-btn', '#fa-submit-btn'],
     'whatsapp.html':       ['#wa-connect-btn', '#tpl-submit-btn'],

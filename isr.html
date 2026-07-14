@@ -100,7 +100,7 @@
   --warn-bg:    var(--warn-soft);
   --info:       var(--teal);
   --info-bg:    var(--teal-bg);
-  --r:          18px;
+  --r:          14px;
   --r2:         14px;
   --r3:         10px;
   --touch:      48px;
@@ -662,9 +662,6 @@ html, body {
   <!-- FORMULARIO -->
   <div id="isr-form">
 
-    <div class="page-hdr anim d1">
-      <div class="page-hdr-sub">Ingresa los datos de la operación. Los campos de deducciones son opcionales pero mejoran la precisión.</div>
-    </div>
 
     <!-- Tipo -->
     <div class="card anim d2">
@@ -1264,7 +1261,7 @@ function renderResult(d) {
   }
   // Card IVA (solo comercial)
   if(d.ivaMonto>0){
-    cards+=`<div class="rc" style="border-color:rgba(217,119,6,0.3);background:rgba(217,119,6,0.06)"><div class="rc-l" style="color:var(--forest-2)">IVA 16% estimado</div><div class="rc-v" style="color:var(--forest)">${fmt(d.ivaMonto)}</div><div class="rc-n">Sobre construcción (art. 9 LIVA) — retiene el notario</div></div>`;
+    cards+=`<div class="rc" style="border-color:rgba(0,85,204,0.3);background:rgba(0,85,204,0.06)"><div class="rc-l" style="color:var(--forest-2)">IVA 16% estimado</div><div class="rc-v" style="color:var(--forest)">${fmt(d.ivaMonto)}</div><div class="rc-n">Sobre construcción (art. 9 LIVA) — retiene el notario</div></div>`;
   }
   if(g('res-cards'))g('res-cards').innerHTML=cards;
 
@@ -1301,7 +1298,7 @@ function renderResult(d) {
     bd+=`<div class="br"><span class="bl">ISR Federación (ISR total − ISR estatal)</span><span class="bv">${fmt(d.isrFederal)}</span></div>`;
   }
   if(d.ivaMonto>0){
-    bd+=`<div class="br" style="border-color:rgba(217,119,6,0.25)"><span class="bl" style="color:var(--forest)">IVA 16% s/ construcción (${fmt(d.ivaBase)}) — art. 9 LIVA</span><span class="bv" style="color:var(--forest)">${fmt(d.ivaMonto)}</span></div>`;
+    bd+=`<div class="br" style="border-color:rgba(0,85,204,0.25)"><span class="bl" style="color:var(--forest)">IVA 16% s/ construcción (${fmt(d.ivaBase)}) — art. 9 LIVA</span><span class="bv" style="color:var(--forest)">${fmt(d.ivaMonto)}</span></div>`;
   }
   if(g('res-bkdn'))g('res-bkdn').innerHTML=bd;
 
