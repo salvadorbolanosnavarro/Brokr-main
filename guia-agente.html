@@ -16,7 +16,7 @@
 
 .guide-eyebrow {
   font-family: var(--font-mono);
-  font-size: 20px; letter-spacing: 0.02em; 
+  font-size: var(--fs-label-3); letter-spacing: 0.02em;
   color: var(--mute); margin-bottom: 10px;
 }
 .guide-title {
@@ -32,7 +32,7 @@
 .guide-section { margin-bottom: 40px; }
 .guide-section-label {
   font-family: var(--font-mono);
-  font-size: 18px; letter-spacing: 0.02em; 
+  font-size: var(--fs-label-3); letter-spacing: 0.02em;
   color: var(--mute-2); margin-bottom: 14px;
   padding-bottom: 8px; border-bottom: 1px solid var(--line-2);
 }
@@ -45,7 +45,7 @@
 .guide-mod {
   display: flex; align-items: flex-start; gap: 14px;
   padding: 16px; background: var(--bone);
-  border: 1.5px solid var(--line-2); border-radius: var(--r);
+  border: 1px solid var(--line); border-radius: var(--r);
   text-decoration: none; color: inherit;
   transition: border-color .15s, background .15s;
 }
@@ -63,7 +63,7 @@
 /* Acordeón de pasos */
 .guide-steps { display: flex; flex-direction: column; gap: 8px; }
 .guide-step {
-  border: 1.5px solid var(--line-2); border-radius: var(--r);
+  border: 1px solid var(--line); border-radius: var(--r);
   background: var(--bone); overflow: hidden;
 }
 .guide-step-head {
@@ -90,7 +90,7 @@
 .guide-step-body li { margin-bottom: 5px; }
 .guide-step-body code {
   background: var(--line-2); padding: 2px 6px;
-  border-radius: 4px; font-family: var(--font-mono); font-size: 11.5px;
+  border-radius: var(--r-xs); font-family: var(--font-mono); font-size: 11.5px;
   color: var(--forest);
 }
 .guide-tip {
@@ -110,50 +110,50 @@
   gap: 20px; flex-wrap: wrap;
 }
 .guide-contact h3 {
-  font-family: var(--font-display); font-size: 16px; font-weight: 700;
+  font-family: var(--font-display); font-size: var(--fs-h5); font-weight: 700;
   letter-spacing: -0.015em; margin-bottom: 4px;
 }
 .guide-contact p { font-size: 13px; color: rgba(255,255,255,.6); }
 .guide-contact-btn {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 11px 22px; background: var(--paper); color: var(--ink);
-  border: 1px solid rgba(0,0,0,0.08); border-radius: 999px;
+  border: 1px solid var(--line); border-radius: var(--r-pill);
   font-size: 13px; font-weight: 600; letter-spacing: -0.005em;
   font-family: inherit; cursor: pointer; text-decoration: none;
   white-space: nowrap;
-  box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 4px 14px rgba(0,0,0,.12);
+  box-shadow: var(--shadow-sm);
   transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
 }
 .guide-contact-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0,0,0,.1), 0 8px 22px rgba(0,0,0,.18);
+  box-shadow: var(--shadow);
 }
 .guide-contact-btn:active { transform: translateY(0); }
 .guide-contact-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
 
 /* Variante: Eliminar cuenta — fondo claro, look profesional sereno */
 .guide-danger {
-  background: #FFFFFF; color: #161616;
-  border: 1px solid #EFF3F8;
+  background: var(--bone); color: var(--ink);
+  border: 1px solid var(--line);
 }
 .guide-danger h3 {
-  font-family: var(--font-display); font-size: 16px; font-weight: 700;
-  letter-spacing: -0.015em; color: #E70866; margin-bottom: 4px;
+  font-family: var(--font-display); font-size: var(--fs-h5); font-weight: 700;
+  letter-spacing: -0.015em; color: var(--danger); margin-bottom: 4px;
 }
-.guide-danger p { font-size: 13px; color: rgba(31,20,16,.6); }
+.guide-danger p { font-size: 13px; color: var(--mute); }
 .guide-danger-btn {
   display: inline-flex; align-items: center; gap: 8px;
-  padding: 11px 22px; background: #E70866; color: #fff;
-  border: 1px solid rgba(0,0,0,0.05); border-radius: 999px;
+  padding: 11px 22px; background: var(--danger); color: #fff;
+  border: 1px solid rgba(0,0,0,0.05); border-radius: var(--r-pill);
   font-size: 13px; font-weight: 600; letter-spacing: -0.005em;
   font-family: inherit; cursor: pointer; text-decoration: none;
   white-space: nowrap;
-  box-shadow: 0 1px 2px rgba(179,47,36,.25), 0 4px 14px rgba(179,47,36,.28);
+  box-shadow: 0 1px 2px var(--danger-soft), 0 4px 14px var(--danger-soft);
   transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
 }
 .guide-danger-btn:hover {
-  background: #E70866; transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(179,47,36,.3), 0 8px 22px rgba(179,47,36,.35);
+  background: var(--danger); transform: translateY(-1px);
+  box-shadow: 0 2px 4px var(--danger-soft), 0 8px 22px var(--danger-soft);
 }
 .guide-danger-btn:active { transform: translateY(0); }
 .guide-danger-btn svg { width: 15px; height: 15px; flex-shrink: 0; }

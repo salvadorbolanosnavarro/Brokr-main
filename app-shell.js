@@ -903,6 +903,14 @@ body[data-app] .btn-primary:hover,body[data-app] .ui-btn.forest:hover,body[data-
 body[data-app] table{border-collapse:separate!important;border-spacing:0!important;background:var(--bone)!important;border:1px solid var(--line)!important;border-radius:var(--r)!important;overflow:hidden!important}
 body[data-app] th{background:var(--paper-2)!important;color:var(--mute)!important;font-size:11px!important;letter-spacing:.01em!important}
 body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
+/* ── Unificación del BOTÓN DE ACCIÓN PRIMARIA: azul en TODOS los módulos ──
+   El sistema tenía primarios en negro/gris/navy/azul según el módulo. Aquí se
+   fuerza el azul de acción en el botón principal de cada uno. Se dejan intactos
+   los secundarios/ghost/cancelar/eliminar y las superficies de MARCA externa
+   (verde de conectar WhatsApp, azul de conectar Facebook). Los futuros módulos
+   deben usar .btn-primary o .bk-btn--forest para heredar esto. */
+body[data-app] .btn-new-tarea,body[data-app] .tk-composer .go,body[data-app] .fa-btn-primary,body[data-app] .btn-new-prop,body[data-app] .eb-import-btn,body[data-app] .pf-save-btn,body[data-app] #ai-btn,body[data-app] #calc-btn,body[data-app] #btn-analizar-ia,body[data-app] #btn-clean,body[data-app] #fa-ai-btn,body[data-app] #fa-submit-btn,body[data-app] #tpl-submit-btn{background:var(--sky-blue)!important;color:#fff!important;border:1px solid var(--sky-blue)!important;box-shadow:0 1px 2px rgba(0,98,227,.18)!important}
+body[data-app] .btn-new-tarea:hover,body[data-app] .tk-composer .go:hover,body[data-app] .fa-btn-primary:hover,body[data-app] .btn-new-prop:hover,body[data-app] .eb-import-btn:hover,body[data-app] .pf-save-btn:hover,body[data-app] #ai-btn:hover,body[data-app] #calc-btn:hover,body[data-app] #btn-analizar-ia:hover,body[data-app] #btn-clean:hover,body[data-app] #fa-ai-btn:hover,body[data-app] #fa-submit-btn:hover,body[data-app] #tpl-submit-btn:hover{background:var(--sky-blue-press)!important;border-color:var(--sky-blue-press)!important}
 
 /* ── Visor/entrega inmediata de archivos generados ── */
 .bk-file-overlay{position:fixed;inset:0;z-index:2147483647;background:rgba(5,32,60,.46);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;padding:18px}
