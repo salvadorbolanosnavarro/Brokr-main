@@ -6963,141 +6963,425 @@ async def revenuecat_webhook(request: Request):
 # Contactos / Importar desde EasyBroker
 # ════════════════════════════════════════════════════════════════
 
+# Mapeo de probabilidad EasyBroker → Broquer
+_EB_PROB_MAP = {"low": "baja", "medium": "media", "high": "alta"}
+
+# Prioridad de tipos de teléfono de EasyBroker para elegir el principal
+_EB_TEL_PRIORIDAD = ["Mobile", "Nextel", "Home", "Work", "Pager"]
+
+# Prioridad de tipos de email de EasyBroker
+_EB_MAIL_PRIORIDAD = ["Personal", "Work", "Other"]
+
+
+def _eb_solo_digitos(valor: str) -> str:
+    """Deja solo dígitos (y un + inicial opcional) de un teléfono."""
+    if not valor:
+        return ""
+    v = str(valor).strip()
+    mas = v.startswith("+")
+    d = re.sub(r"\D", "", v)
+    return ("+" + d) if (mas and d) else d
+
+
+def _eb_tel_clave(valor: str) -> str:
+    """Últimos 10 dígitos — sirve para deduplicar sin importar lada/país."""
+    d = re.sub(r"\D", "", str(valor or ""))
+    return d[-10:] if len(d) >= 10 else d
+
+
+def _eb_elegir_telefono(phones: list) -> tuple:
+    """
+    Recibe la lista phones[] de EasyBroker y devuelve (telefono, whatsapp).
+    - telefono: el primero según prioridad Mobile > Nextel > Home > Work > Pager.
+    - whatsapp: el que viene marcado como tipo 'WhatsApp' (solo si es distinto
+      al principal; si es igual, se deja vacío para no duplicar el dato).
+    """
+    if not isinstance(phones, list) or not phones:
+        return "", ""
+
+    por_tipo = {}
+    otros = []
+    wa = ""
+    for p in phones:
+        if not isinstance(p, dict):
+            continue
+        num = _eb_solo_digitos(p.get("phone"))
+        if not num:
+            continue
+        tipo = (p.get("type") or "").strip()
+        if tipo == "WhatsApp":
+            if not wa:
+                wa = num
+            continue
+        if "fax" in tipo.lower():
+            continue
+        if tipo and tipo not in por_tipo:
+            por_tipo[tipo] = num
+        elif not tipo:
+            otros.append(num)
+
+    principal = ""
+    for t in _EB_TEL_PRIORIDAD:
+        if por_tipo.get(t):
+            principal = por_tipo[t]
+            break
+    if not principal:
+        principal = next(iter(por_tipo.values()), "") or (otros[0] if otros else "")
+    # Si el único número que hay es el de WhatsApp, ese es el principal.
+    if not principal and wa:
+        principal, wa = wa, ""
+
+    if wa and _eb_tel_clave(wa) == _eb_tel_clave(principal):
+        wa = ""
+
+    return principal[:20], wa[:20]
+
+
+def _eb_elegir_email(emails: list) -> str:
+    """Elige el mejor email de la lista emails[] de EasyBroker."""
+    if not isinstance(emails, list) or not emails:
+        return ""
+    por_tipo = {}
+    otros = []
+    for e in emails:
+        if not isinstance(e, dict):
+            continue
+        mail = (e.get("email") or "").strip().lower()
+        if not mail:
+            continue
+        tipo = (e.get("type") or "").strip()
+        if tipo and tipo not in por_tipo:
+            por_tipo[tipo] = mail
+        elif not tipo:
+            otros.append(mail)
+    for t in _EB_MAIL_PRIORIDAD:
+        if por_tipo.get(t):
+            return por_tipo[t][:120]
+    elegido = next(iter(por_tipo.values()), "") or (otros[0] if otros else "")
+    return elegido[:120]
+
+
+def _eb_partir_calle(street: str) -> tuple:
+    """
+    EasyBroker manda la calle y el número juntos ('Av. Insurgentes 123').
+    Broquer los guarda separados. Corta el número final si existe.
+    Devuelve (calle, num_ext). Si no hay número claro, num_ext queda vacío.
+    """
+    s = (street or "").strip()
+    if not s:
+        return "", ""
+    m = re.match(r"^(.*?)[\s,#]+(\d+[A-Za-z\-]{0,4})$", s)
+    if m and m.group(1).strip():
+        return m.group(1).strip()[:120].upper(), m.group(2).strip()[:20].upper()
+    return s[:120].upper(), ""
+
+
+def _eb_mapear_contacto(det: dict, base: dict) -> dict:
+    """
+    Mapea un contacto de EasyBroker al esquema real de la tabla `contactos`.
+    `det` es la respuesta de /contacts/{id} (detalle).
+    `base` es el renglón del listado /contacts (respaldo si el detalle falla).
+    """
+    det = det or {}
+    base = base or {}
+
+    nombre = (det.get("full_name") or base.get("full_name") or "").strip()
+    if not nombre:
+        nombre = " ".join(
+            x for x in [(det.get("first_name") or "").strip(),
+                        (det.get("last_name") or "").strip()] if x
+        ).strip()
+
+    telefono, wa = _eb_elegir_telefono(det.get("phones"))
+    if not telefono:
+        telefono = _eb_solo_digitos(base.get("phone"))[:20]
+
+    email = _eb_elegir_email(det.get("emails"))
+    if not email:
+        email = (base.get("email") or "").strip().lower()[:120]
+
+    # Notas: la descripción privada + el puesto, que en EasyBroker es campo aparte.
+    notas_partes = []
+    if (det.get("private_description") or "").strip():
+        notas_partes.append(det["private_description"].strip())
+    if (det.get("title") or "").strip():
+        notas_partes.append("Puesto: " + det["title"].strip())
+    agente = det.get("agent") or {}
+    if isinstance(agente, dict) and (agente.get("full_name") or agente.get("name")):
+        notas_partes.append("Agente asignado en EasyBroker: " +
+                            (agente.get("full_name") or agente.get("name")))
+    elif isinstance(base.get("agent"), str) and base["agent"].strip():
+        notas_partes.append("Agente asignado en EasyBroker: " + base["agent"].strip())
+
+    etiquetas = det.get("tags")
+    if not isinstance(etiquetas, list):
+        etiquetas = []
+    etiquetas = [str(t).strip() for t in etiquetas if str(t).strip()][:20]
+
+    # Dirección: EasyBroker manda una lista; tomamos la primera con calle.
+    calle = num_ext = colonia = cp = mpio = ""
+    direcciones = det.get("addresses")
+    if isinstance(direcciones, list):
+        dir_ok = next((d for d in direcciones
+                       if isinstance(d, dict) and (d.get("street") or d.get("city"))), None)
+        if dir_ok:
+            calle, num_ext = _eb_partir_calle(dir_ok.get("street"))
+            cp = re.sub(r"\D", "", str(dir_ok.get("postal_code") or ""))[:5]
+            ciudad = (dir_ok.get("city") or "").strip()
+            estado = (dir_ok.get("administrative_division") or "").strip()
+            mpio = ", ".join(x for x in [ciudad, estado] if x)[:120].upper()
+
+    prob = det.get("probability")
+    probabilidad = _EB_PROB_MAP.get(str(prob or "").lower()) if prob else None
+
+    fuente = (det.get("source") or base.get("source") or "").strip()[:80] or "EasyBroker"
+    creado = det.get("created_at") or base.get("created_at") or datetime.utcnow().isoformat()
+
+    return {
+        "nombre":       (nombre or "Sin nombre").upper()[:120],
+        "telefono":     telefono,
+        "wa":           wa,
+        "email":        email,
+        "tipo":         "comprador",
+        "empresa":      (det.get("company") or "").strip()[:120],
+        "notas":        "\n".join(notas_partes)[:2000],
+        "etiquetas":    etiquetas,
+        "fuente":       fuente,
+        "probabilidad": probabilidad,
+        "estatus":      "nuevo",
+        "es_potencial": True,
+        "calle":        calle,
+        "num_ext":      num_ext,
+        "colonia":      colonia,
+        "cp":           cp,
+        "mpio":         mpio,
+        "created_at":   creado,
+    }
+
+
 @app.post("/contactos/importar-eb")
 async def importar_contactos_eb(request: Request):
     """
-    Jala los contactos (leads) de EasyBroker del usuario y los guarda
-    en la tabla `contactos` de Supabase.
-    Deduplication: si ya existe un contacto con el mismo teléfono o email del mismo user_id, lo actualiza en lugar de duplicar.
+    Trae los contactos del CRM de EasyBroker del usuario y los guarda en la
+    tabla `contactos` de Supabase, con el mapeo completo de campos.
+
+    Cómo evita duplicados, en este orden:
+      1. Por el id de origen (los contactos importados se guardan como eb_<id>).
+      2. Por los últimos 10 dígitos del teléfono.
+      3. Por email.
+    Si el contacto ya existe en Broquer, solo rellena los campos vacíos:
+    nunca pisa lo que el agente ya escribió a mano.
     """
     user_id = await get_user_id_from_token(request)
     if not user_id:
         raise HTTPException(status_code=401, detail="No autenticado.")
 
-    # Obtener EB key del usuario
     eb_key = await get_eb_key_for_user(user_id)
     if not eb_key:
-        raise HTTPException(status_code=400, detail="No tienes una API Key de EasyBroker configurada. Ve a Configuración → Integraciones.")
+        raise HTTPException(
+            status_code=400,
+            detail="Configura tu API key de EasyBroker en Perfil → Integración EasyBroker antes de importar."
+        )
 
     sb_headers = {
         "apikey": SUPABASE_SERVICE_KEY,
         "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
         "Content-Type": "application/json",
-        "Prefer": "return=minimal",
     }
 
-    # Obtener contactos existentes del usuario para deduplicar
-    async with httpx.AsyncClient(timeout=15) as client:
-        r_existing = await client.get(
+    # ── 1. Contactos que el usuario ya tiene en Broquer (para deduplicar) ──
+    existentes = []
+    async with httpx.AsyncClient(timeout=20) as client:
+        r_ex = await client.get(
             f"{SUPABASE_URL}/rest/v1/contactos",
             headers=sb_headers,
-            params={"user_id": f"eq.{user_id}", "select": "id,telefono,email,nombre"}
+            params={
+                "user_id": f"eq.{user_id}",
+                "select": ("id,nombre,telefono,wa,email,tipo,empresa,notas,etiquetas,"
+                           "fuente,probabilidad,calle,num_ext,colonia,cp,mpio,es_potencial"),
+                "limit": "10000",
+            },
         )
-    existing = r_existing.json() if r_existing.status_code == 200 else []
-    existing_by_tel = {c["telefono"]: c for c in existing if c.get("telefono")}
-    existing_by_email = {c["email"]: c for c in existing if c.get("email")}
+        if r_ex.status_code != 200:
+            raise HTTPException(status_code=502,
+                                detail=f"No se pudieron leer tus contactos actuales ({r_ex.status_code}).")
+        existentes = r_ex.json() or []
 
-    # Paginar EasyBroker /contacts (leads)
-    importados = 0
-    actualizados = 0
-    omitidos = 0
-    errores = 0
-    total_eb = 0
-    page = 1
+    por_id    = {c["id"]: c for c in existentes if c.get("id")}
+    por_tel   = {}
+    por_email = {}
+    for c in existentes:
+        k = _eb_tel_clave(c.get("telefono"))
+        if k and k not in por_tel:
+            por_tel[k] = c
+        kw = _eb_tel_clave(c.get("wa"))
+        if kw and kw not in por_tel:
+            por_tel[kw] = c
+        e = (c.get("email") or "").strip().lower()
+        if e and e not in por_email:
+            por_email[e] = c
 
-    async with httpx.AsyncClient(timeout=20) as client:
+    # ── 2. Listado paginado de contactos en EasyBroker ──
+    listado = []
+    async with httpx.AsyncClient(timeout=30) as client:
+        page = 1
         while True:
             r = await client.get(
                 f"{EB_BASE}/contacts",
                 headers=eb_headers(eb_key),
-                params={"page": page, "limit": 50}
+                params={"page": page, "limit": 50},
             )
+            if r.status_code == 401:
+                raise HTTPException(status_code=401,
+                                    detail="Tu API key de EasyBroker fue rechazada. Reconéctala en Perfil.")
             if r.status_code == 404:
-                # EasyBroker podría no tener /contacts en el plan
-                raise HTTPException(status_code=400, detail="Tu plan de EasyBroker no tiene acceso a contactos via API, o el endpoint no está disponible.")
+                raise HTTPException(
+                    status_code=400,
+                    detail="Tu plan de EasyBroker no da acceso a contactos por API. Escríbeles para habilitarlo."
+                )
             if r.status_code != 200:
-                raise HTTPException(status_code=502, detail=f"EasyBroker respondió {r.status_code}: {r.text[:300]}")
+                raise HTTPException(status_code=502,
+                                    detail=f"EasyBroker respondió {r.status_code}: {r.text[:200]}")
 
-            data = r.json()
-            items = data.get("content", data.get("data", []))
-            if not items:
-                break
+            data = r.json() or {}
+            items = data.get("content") or []
+            listado.extend([i for i in items if isinstance(i, dict)])
 
-            total_eb += len(items)
-
-            for item in items:
-                # Mapear campos de EasyBroker a Brokr
-                nombre = (item.get("name") or item.get("nombre") or "").strip()[:120]
-                telefono = re.sub(r"[^+\d]", "", item.get("phone") or item.get("telefono") or "")[:20]
-                email = (item.get("email") or "").strip()[:120]
-
-                if not nombre and not telefono and not email:
-                    omitidos += 1
-                    continue
-
-                now_iso = datetime.utcnow().isoformat()
-
-                # Deduplicar
-                existente = existing_by_tel.get(telefono) or existing_by_email.get(email)
-
-                if existente:
-                    # Actualizar campos vacíos
-                    patch = {}
-                    if not existente.get("nombre") and nombre:
-                        patch["nombre"] = nombre
-                    if not existente.get("telefono") and telefono:
-                        patch["telefono"] = telefono
-                    if not existente.get("email") and email:
-                        patch["email"] = email
-                    if patch:
-                        patch["updated_at"] = now_iso
-                        rb = await client.patch(
-                            f"{SUPABASE_URL}/rest/v1/contactos?id=eq.{existente['id']}&user_id=eq.{user_id}",
-                            headers=sb_headers,
-                            json=patch
-                        )
-                        if rb.status_code in (200, 204):
-                            actualizados += 1
-                        else:
-                            errores += 1
-                    else:
-                        omitidos += 1
-                else:
-                    # Insertar nuevo
-                    nuevo = {
-                        "id": str(_uuid.uuid4()),
-                        "user_id": user_id,
-                        "nombre": nombre or "Sin nombre",
-                        "telefono": telefono,
-                        "email": email,
-                        "rol": "otro",
-                        "created_at": now_iso,
-                        "updated_at": now_iso,
-                    }
-                    ri = await client.post(
-                        f"{SUPABASE_URL}/rest/v1/contactos",
-                        headers={**sb_headers, "Prefer": "return=minimal"},
-                        json=nuevo
-                    )
-                    if ri.status_code in (200, 201):
-                        importados += 1
-                        # Añadir a índice local para evitar duplicados en la misma corrida
-                        if telefono:
-                            existing_by_tel[telefono] = nuevo
-                        if email:
-                            existing_by_email[email] = nuevo
-                    else:
-                        errores += 1
-
-            # Paginación: si vino menos de 50, llegamos al final
-            pagination = data.get("pagination", {})
-            if len(items) < 50 or not pagination.get("next_page"):
+            paginacion = data.get("pagination") or {}
+            if not paginacion.get("next_page") or len(items) < 50 or page >= 200:
                 break
             page += 1
 
+        total_eb = len(listado)
+        if not total_eb:
+            return {"ok": True, "total_easybroker": 0, "importados": 0,
+                    "actualizados": 0, "omitidos": 0, "errores": 0}
+
+        # ── 3. Detalle de cada contacto, en paralelo (EasyBroker permite 20 req/s) ──
+        sem = asyncio.Semaphore(8)
+
+        async def _detalle(item):
+            cid = item.get("id")
+            if not cid:
+                return item, {}
+            async with sem:
+                try:
+                    rd = await client.get(f"{EB_BASE}/contacts/{cid}",
+                                          headers=eb_headers(eb_key))
+                    if rd.status_code == 200:
+                        return item, (rd.json() or {})
+                except Exception:
+                    pass
+            return item, {}
+
+        detalles = await asyncio.gather(*[_detalle(i) for i in listado])
+
+    # ── 4. Mapear, deduplicar y armar los lotes ──
+    ahora = datetime.utcnow().isoformat()
+    a_insertar = []
+    a_parchar  = []   # (id, patch)
+    omitidos   = 0
+
+    # Campos que sí se pueden rellenar si están vacíos en Broquer
+    rellenables = ["telefono", "wa", "email", "empresa", "notas", "fuente",
+                   "probabilidad", "calle", "num_ext", "colonia", "cp", "mpio"]
+
+    for base, det in detalles:
+        datos = _eb_mapear_contacto(det, base)
+        if datos["nombre"] == "SIN NOMBRE" and not datos["telefono"] and not datos["email"]:
+            omitidos += 1
+            continue
+
+        eb_id = det.get("id") or base.get("id")
+        nuevo_id = f"eb_{eb_id}" if eb_id else "eb_" + _uuid.uuid4().hex[:12]
+
+        existente = (por_id.get(nuevo_id)
+                     or por_tel.get(_eb_tel_clave(datos["telefono"]))
+                     or (por_email.get(datos["email"]) if datos["email"] else None))
+
+        if existente:
+            patch = {}
+            for campo in rellenables:
+                valor = datos.get(campo)
+                if not valor:
+                    continue
+                actual = existente.get(campo)
+                vacio = actual is None or (isinstance(actual, str) and not actual.strip())
+                if vacio:
+                    patch[campo] = valor
+            # Etiquetas: unir las que ya tenía con las de EasyBroker, sin repetir.
+            previas = existente.get("etiquetas") if isinstance(existente.get("etiquetas"), list) else []
+            union = list(dict.fromkeys([*previas, *datos["etiquetas"]]))
+            if union and union != previas:
+                patch["etiquetas"] = union
+            if not patch:
+                omitidos += 1
+                continue
+            patch["updated_at"] = ahora
+            a_parchar.append((existente["id"], patch))
+        else:
+            fila = dict(datos)
+            fila["id"] = nuevo_id
+            fila["user_id"] = user_id
+            fila["updated_at"] = ahora
+            fila["operaciones"] = []
+            a_insertar.append(fila)
+            # Registrar en los índices para no duplicar dentro de la misma corrida
+            por_id[nuevo_id] = fila
+            kt = _eb_tel_clave(fila["telefono"])
+            if kt:
+                por_tel.setdefault(kt, fila)
+            if fila["email"]:
+                por_email.setdefault(fila["email"], fila)
+
+    # ── 5. Escribir en Supabase ──
+    importados = 0
+    actualizados = 0
+    errores = []
+
+    async with httpx.AsyncClient(timeout=60) as client:
+        # Inserts en lotes de 100 (upsert por id, así reimportar no duplica)
+        for i in range(0, len(a_insertar), 100):
+            lote = a_insertar[i:i + 100]
+            try:
+                ri = await client.post(
+                    f"{SUPABASE_URL}/rest/v1/contactos?on_conflict=id",
+                    headers={**sb_headers,
+                             "Prefer": "resolution=merge-duplicates,return=minimal"},
+                    json=lote,
+                )
+                if ri.status_code in (200, 201, 204):
+                    importados += len(lote)
+                else:
+                    errores.append({"error": f"Lote {i//100 + 1}: {ri.status_code} {ri.text[:160]}"})
+            except Exception as e:
+                errores.append({"error": f"Lote {i//100 + 1}: {str(e)[:160]}"})
+
+        # Patches (uno por contacto, pero en paralelo)
+        sem_p = asyncio.Semaphore(8)
+
+        async def _patch(cid, patch):
+            async with sem_p:
+                try:
+                    rp = await client.patch(
+                        f"{SUPABASE_URL}/rest/v1/contactos?id=eq.{cid}&user_id=eq.{user_id}",
+                        headers={**sb_headers, "Prefer": "return=minimal"},
+                        json=patch,
+                    )
+                    return rp.status_code in (200, 204)
+                except Exception:
+                    return False
+
+        if a_parchar:
+            res = await asyncio.gather(*[_patch(cid, p) for cid, p in a_parchar])
+            actualizados = sum(1 for ok in res if ok)
+            fallidos = len(res) - actualizados
+            if fallidos:
+                errores.append({"error": f"{fallidos} contactos no se pudieron actualizar."})
+
     return {
         "ok": True,
-        "total": total_eb,
+        "total_easybroker": total_eb,
         "importados": importados,
         "actualizados": actualizados,
         "omitidos": omitidos,
