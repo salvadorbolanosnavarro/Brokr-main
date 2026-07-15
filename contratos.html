@@ -188,11 +188,11 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 /* ── MI PROPIO MACHOTE ── */
 .mach-subtabs{display:flex;gap:8px;margin-bottom:16px}
 .mach-subtab{flex:1;padding:10px;border:1.5px solid var(--silver2);border-radius:var(--r-pill);background:var(--wh);cursor:pointer;text-align:center;font-size:var(--fs-sm);font-weight:600;color:var(--mut);transition:all .15s}
-.mach-subtab:hover{border-color:var(--navy2)}
+.mach-subtab:hover{border-color:var(--sky-navy)}
 .mach-subtab.active{border-color:var(--sky-navy);background:var(--sky-navy);color:var(--bone)}
 
 .mach-drop{border:2px dashed var(--silver2);border-radius:var(--r);padding:26px 18px;text-align:center;cursor:pointer;transition:all .15s;background:var(--bone)}
-.mach-drop:hover,.mach-drop.drag{border-color:var(--navy2);background:var(--tealp)}
+.mach-drop:hover,.mach-drop.drag{border-color:var(--sky-navy);background:var(--tealp)}
 .mach-drop-ico{color:var(--mut);margin-bottom:8px;display:flex;justify-content:center}
 .mach-drop-txt{font-size:var(--fs-sm);font-weight:600;color:var(--navy)}
 .mach-drop-sub{font-size:var(--fs-caption);color:var(--mut);margin-top:3px}
@@ -200,8 +200,8 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .mach-file-chip.show{display:flex}
 .mach-file-chip button{margin-left:auto;background:none;border:none;color:var(--danger);cursor:pointer;font-size:var(--fs-sm);font-weight:700}
 
-.mach-hint{font-size:var(--fs-caption);color:var(--mut);line-height:1.5;margin-top:8px}
-.mach-hint code{background:var(--silver);padding:1px 5px;border-radius:var(--r-xs);font-size:var(--fs-caption)}
+.mach-hint{font-size:var(--fs-xs);color:var(--mut);line-height:1.55;margin-top:10px}
+.mach-hint b{color:var(--ink-3);font-weight:600}
 
 .mach-list-empty{text-align:center;padding:34px 16px;color:var(--mut);font-size:var(--fs-sm)}
 .mach-item{display:flex;align-items:center;gap:12px;padding:14px 16px;border:1px solid var(--silver2);border-radius:var(--r);margin-bottom:10px;cursor:pointer;box-shadow:var(--shadow-sm);transition:transform .18s var(--ease),box-shadow .18s var(--ease),border-color .18s var(--ease)}
@@ -210,14 +210,57 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .mach-item-info{flex:1;min-width:0}
 .mach-item-title{font-size:var(--fs-sm);font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mach-item-sub{font-size:var(--fs-caption);color:var(--mut);margin-top:2px}
-.mach-item-del{width:30px;height:30px;border:none;background:var(--silver);border-radius:var(--r-sm);cursor:pointer;color:var(--danger);font-size:var(--fs-sm);flex-shrink:0}
+.mach-item-del{width:30px;height:30px;border:none;background:var(--paper-2);border-radius:var(--r-sm);cursor:pointer;color:var(--danger);font-size:var(--fs-sm);flex-shrink:0}
 .mach-item-del:hover{background:var(--danger);color:var(--bone)}
 
 .mach-form-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--silver2)}
-.mach-form-head-ttl{font-size:var(--fs-h5);font-weight:700;color:var(--navy);flex:1}
-.mach-form-back{background:none;border:none;color:var(--mut);cursor:pointer;font-size:var(--fs-sm);text-decoration:underline}
+.mach-form-head-ttl{font-size:var(--fs-h5);font-weight:700;color:var(--navy);flex:1;min-width:0}
+.mach-form-back{background:none;border:none;color:var(--mut);cursor:pointer;font-size:var(--fs-sm);text-decoration:underline;flex-shrink:0}
 #mach-campos-form .frow{grid-template-columns:1fr 1fr}
 @media(max-width:600px){#mach-campos-form .frow{grid-template-columns:1fr}}
+
+/* ── Resumen de la detección ── */
+.mach-sum{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:var(--r);background:var(--sky-canvas);border:1px solid var(--line);margin-bottom:16px}
+.mach-sum-ico{color:var(--sky-blue);flex-shrink:0;margin-top:1px}
+.mach-sum-txt{font-size:var(--fs-sm);color:var(--ink-2);line-height:1.5}
+.mach-sum-txt b{font-weight:700;color:var(--navy)}
+.mach-chip{display:inline-block;margin-top:6px;padding:3px 10px;border-radius:var(--r-pill);background:var(--bone);border:1px solid var(--line-2);font-size:var(--fs-caption);font-weight:600;color:var(--ink-3)}
+
+.mach-warn{display:flex;gap:10px;padding:12px 14px;border-radius:var(--r2);background:var(--warn-soft);border:1px solid var(--line);margin-bottom:16px;font-size:var(--fs-xs);color:var(--ink-2);line-height:1.5}
+.mach-warn-ico{color:var(--warn);flex-shrink:0}
+
+/* ── Grupos y filas de revisión ── */
+.mach-grp{margin-bottom:18px}
+.mach-grp-ttl{display:flex;align-items:center;gap:8px;font-size:var(--fs-label-3);font-weight:700;letter-spacing:.03em;color:var(--mut);padding-bottom:8px;border-bottom:1px solid var(--silver2);margin-bottom:12px}
+.mach-grp-n{margin-left:auto;font-weight:600;color:var(--mut);letter-spacing:0}
+
+.mach-row{border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:10px;background:var(--bone);transition:border-color .15s}
+.mach-row:hover{border-color:var(--line-2)}
+.mach-row.off{background:var(--paper-2);border-style:dashed}
+.mach-row-top{display:grid;grid-template-columns:1fr 190px;gap:12px}
+@media(max-width:600px){.mach-row-top{grid-template-columns:1fr}}
+.mach-row-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
+.mach-tag{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:var(--r-pill);background:var(--paper-2);font-size:var(--fs-caption);color:var(--ink-3);max-width:100%}
+.mach-tag-lit{font-weight:600;color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:280px}
+.mach-fijo-lbl{display:inline-flex;align-items:center;gap:7px;margin-left:auto;font-size:var(--fs-xs);color:var(--ink-3);cursor:pointer;user-select:none}
+.mach-fijo-lbl input{width:16px;height:16px;accent-color:var(--sky-blue);cursor:pointer}
+.mach-def{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+.mach-lnk{background:none;border:none;padding:0;color:var(--sky-blue);cursor:pointer;font-family:inherit;font-size:var(--fs-caption);font-weight:600;text-decoration:underline}
+
+/* ── Acciones ── */
+.mach-actions{display:flex;gap:10px;margin-top:18px}
+@media(max-width:600px){.mach-actions{flex-direction:column}}
+.mach-actions .gen-btn{margin-top:0}
+.sec-btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:14px;background:var(--sky-navy);color:var(--paper);border:none;border-radius:var(--r-pill);font-family:inherit;font-size:var(--fs-body);font-weight:600;cursor:pointer;transition:background .15s}
+.sec-btn:hover{background:var(--sky-navy-mid)}
+.sec-btn:disabled{background:var(--silver2);color:var(--mut);cursor:not-allowed}
+.sec-btn svg{flex-shrink:0}
+
+/* ── Vista previa del contrato ── */
+.mach-prev{max-height:460px;overflow-y:auto;padding:22px 24px;border:1px solid var(--line);border-radius:var(--r);background:var(--bone)}
+.mach-prev p{font-size:var(--fs-sm);line-height:1.7;color:var(--ink-2);margin:0 0 10px}
+.mach-hl{background:var(--forest-soft);color:var(--navy);font-weight:600;border-radius:var(--r-xs);padding:0 3px}
+.mach-falta{background:var(--danger-soft);color:var(--danger);font-weight:600;border-radius:var(--r-xs);padding:0 5px;font-size:var(--fs-xs)}
 </style>
 
 </head>
@@ -927,9 +970,9 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
   <!-- ══ MI PROPIO MACHOTE ══ -->
   <div id="form-machote" style="display:none">
 
-    <div class="card">
-      <div class="card-title">¿No te gustan nuestras plantillas?</div>
-      <div class="f-note" style="margin-bottom:14px">Sube tu propio machote de contrato (de compraventa, arrendamiento, prestación de servicios, lo que sea). Broquer detecta las variables automáticamente y arma el formulario para que lo llenes cada vez que lo necesites — sin volver a subirlo.</div>
+    <div class="card" id="mach-card-subir">
+      <div class="card-title">Tu contrato, tu formato</div>
+      <div class="f-note" style="margin-bottom:14px">Sube el contrato que ya usas — de compraventa, arrendamiento, prestación de servicios, el que sea. Broquer lo lee, detecta qué datos cambian en cada operación y te arma el formulario. Lo llenas en dos minutos y cada vez que lo necesites vuelve a estar listo, sin subirlo otra vez.</div>
 
       <div class="mach-subtabs">
         <div class="mach-subtab active" id="mach-subtab-nuevo" onclick="setMachSubtab('nuevo')">Subir nuevo machote</div>
@@ -949,13 +992,14 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
           <div class="f">
             <label>Tipo de contrato <span class="opt-badge">opcional</span></label>
             <input type="text" id="mach-tipo" placeholder="Ej. Compraventa, Arrendamiento, Prestación de servicios..."/>
+            <div class="f-note">Decírnoslo ayuda a que la detección sea más precisa.</div>
           </div>
         </div>
 
         <div class="mach-drop" id="mach-drop" onclick="document.getElementById('mach-file').click()">
           <div class="mach-drop-ico"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l-3 3m3-3l3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"/></svg></div>
           <div class="mach-drop-txt">Arrastra tu archivo o haz clic para elegirlo</div>
-          <div class="mach-drop-sub">Formato .docx (Word)</div>
+          <div class="mach-drop-sub">Formato .docx (Word), hasta 12 MB</div>
         </div>
         <input type="file" id="mach-file" accept=".docx" style="display:none" onchange="onMachFileChange()"/>
         <div class="mach-file-chip" id="mach-file-chip">
@@ -964,14 +1008,14 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
         </div>
 
         <div class="mach-hint">
-          Si tu machote ya tiene marcadas las variables (<code>{{campo}}</code>, <code>[CAMPO]</code>, <code>&lt;&lt;campo&gt;&gt;</code> o líneas <code>___</code>), Broquer las usa directo. Si no, nuestra IA las detecta por ti.
+          <b>Funciona de las dos formas.</b> Si tu machote ya trae las variables marcadas (<b>{{campo}}</b>, <b>[CAMPO]</b>, <b>&lt;&lt;campo&gt;&gt;</b> o líneas <b>___</b>), las usamos tal cual. Y si subes un contrato real ya lleno, con nombres y montos de una operación pasada, la IA lo lee completo y descubre sola qué datos son los que cambian.
         </div>
 
         <button class="gen-btn" id="mach-analizar-btn" style="margin-top:16px" onclick="subirYAnalizarMachote()">
-          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/></svg>
-          Analizar machote
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.8 15.9L9 18.8l-.8-2.9a4.5 4.5 0 00-3.1-3.1L2.3 12l2.8-.8a4.5 4.5 0 003.1-3.1L9 5.3l.8 2.8a4.5 4.5 0 003.1 3.1l2.8.8-2.8.8a4.5 4.5 0 00-3.1 3.1zM18.3 8.7L18 9.8l-.3-1a3.4 3.4 0 00-2.4-2.5L14.3 6l1-.3a3.4 3.4 0 002.4-2.4L18 2.3l.3 1a3.4 3.4 0 002.4 2.4l1 .3-1 .3a3.4 3.4 0 00-2.4 2.4z"/></svg>
+          Analizar mi contrato
         </button>
-        <div class="loading" id="mach-loading"><div class="spinner"></div><span>Analizando tu machote...</span></div>
+        <div class="loading" id="mach-loading"><div class="spinner"></div><span id="mach-loading-txt">Leyendo tu contrato...</span></div>
         <div class="err" id="mach-err-nuevo"></div>
       </div>
 
@@ -982,25 +1026,59 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
       </div>
     </div>
 
-    <!-- ── FORMULARIO DINÁMICO (campos detectados) ── -->
+    <!-- ── REVISIÓN DE LA DETECCIÓN ── -->
+    <div class="card" id="mach-rev-card" style="display:none">
+      <div class="mach-form-head">
+        <div class="mach-form-head-ttl" id="mach-rev-ttl">Revisa lo que detectamos</div>
+        <button class="mach-form-back" onclick="cerrarMachote()">Elegir otro</button>
+      </div>
+      <div id="mach-rev-sum"></div>
+      <div id="mach-rev-warn"></div>
+      <div id="mach-rev-campos"></div>
+      <div class="mach-actions">
+        <button class="gen-btn" id="mach-rev-btn" onclick="guardarRevision()">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+          Guardar y llenar
+        </button>
+      </div>
+      <div class="loading" id="mach-rev-loading"><div class="spinner"></div><span>Guardando tus ajustes...</span></div>
+      <div class="err" id="mach-err-rev"></div>
+    </div>
+
+    <!-- ── FORMULARIO DINÁMICO ── -->
     <div class="card" id="mach-form-card" style="display:none">
       <div class="mach-form-head">
         <div class="mach-form-head-ttl" id="mach-form-titulo">Completa los datos</div>
-        <button class="mach-form-back" onclick="cerrarFormMachote()">Elegir otro</button>
+        <button class="mach-form-back" onclick="abrirRevision()">Ajustar campos</button>
+        <button class="mach-form-back" onclick="cerrarMachote()">Elegir otro</button>
       </div>
       <div id="mach-campos-form"></div>
-      <button class="gen-btn" id="mach-generar-btn" style="margin-top:6px" onclick="generarDesdeMachoteGuardado()">
-        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h4a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-        </svg>
-        Generar contrato en Word
-      </button>
-      <div class="loading" id="mach-gen-loading"><div class="spinner"></div><span>Generando contrato...</span></div>
+      <div class="mach-actions">
+        <button class="sec-btn" id="mach-prev-btn" onclick="previsualizarMachote()">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></svg>
+          Ver cómo va a quedar
+        </button>
+        <button class="gen-btn" id="mach-generar-btn" onclick="generarDesdeMachote()">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h4a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+          Generar contrato en Word
+        </button>
+      </div>
+      <div class="loading" id="mach-gen-loading"><div class="spinner"></div><span>Generando tu contrato...</span></div>
       <div class="err" id="mach-err-generar"></div>
       <div class="success" id="mach-success">
         <span style="display:inline-flex"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span>
         <span>Contrato generado. La descarga comenzó automáticamente.</span>
       </div>
+    </div>
+
+    <!-- ── VISTA PREVIA ── -->
+    <div class="card" id="mach-prev-card" style="display:none">
+      <div class="mach-form-head">
+        <div class="mach-form-head-ttl">Así va a quedar tu contrato</div>
+        <button class="mach-form-back" onclick="cerrarPreview()">Cerrar</button>
+      </div>
+      <div class="f-note" style="margin-bottom:12px">Lo resaltado en azul es lo que capturaste. Lo marcado en rosa son los datos que te faltan: si los dejas así, el Word saldrá con una raya para llenarla a mano.</div>
+      <div class="mach-prev" id="mach-prev-body"></div>
     </div>
 
   </div><!-- /form-machote -->
@@ -1081,8 +1159,21 @@ function setTipo(tipo){
 const API_M = 'https://api.broquer.app';
 let machoteFile = null;
 let machotesCargados = false;
-let machoteActivoId = null;
-let machoteActivoCampos = [];
+let MACH = { id:null, titulo:'', tipo:'', campos:[], motor:null, descartados:[] };
+
+const TIPOS_CAMPO = [
+  ['text',     'Texto'],
+  ['textarea', 'Texto largo'],
+  ['currency', 'Importe en pesos'],
+  ['number',   'Número'],
+  ['date',     'Fecha'],
+];
+const MOTOR_TXT = {
+  marcadores: 'Usamos las variables que tú ya habías marcado',
+  blancos:    'Detectamos las líneas en blanco de tu formato',
+  mixto:      'Combinamos tus variables marcadas con las líneas en blanco',
+  ia:         'Tu contrato no traía variables marcadas: la IA las dedujo leyéndolo completo',
+};
 
 async function machHeaders(){
   let tok = null;
@@ -1090,54 +1181,69 @@ async function machHeaders(){
   if(!tok){ try { tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token'); } catch(e){} }
   return tok ? { 'Authorization': 'Bearer ' + tok } : {};
 }
+function machShow(id, on){ const el = document.getElementById(id); if(el) el.style.display = on ? 'block' : 'none'; }
+function machScroll(id){ document.getElementById(id)?.scrollIntoView({behavior:'smooth', block:'start'}); }
 
 function setMachSubtab(sub){
   document.getElementById('mach-subtab-nuevo').classList.toggle('active', sub==='nuevo');
   document.getElementById('mach-subtab-guardados').classList.toggle('active', sub==='guardados');
-  document.getElementById('mach-panel-nuevo').style.display = sub==='nuevo' ? 'block' : 'none';
-  document.getElementById('mach-panel-guardados').style.display = sub==='guardados' ? 'block' : 'none';
-  cerrarFormMachote();
+  machShow('mach-panel-nuevo', sub==='nuevo');
+  machShow('mach-panel-guardados', sub==='guardados');
+  cerrarMachote();
   if(sub==='guardados') cargarMisMachotes();
 }
 
-function onMachFileChange(){
-  const input = document.getElementById('mach-file');
-  const f = input.files && input.files[0];
-  if(!f) return;
+// ── Selección de archivo ──
+function aceptarMachFile(f){
+  if(!f) return false;
   if(!f.name.toLowerCase().endsWith('.docx')){
-    mostrarErr('mach-err-nuevo', 'Solo aceptamos archivos .docx (Word).');
-    input.value = '';
-    return;
+    mostrarErr('mach-err-nuevo', 'Solo aceptamos archivos .docx (Word). Si tu contrato está en PDF, ábrelo en Word y guárdalo como .docx.');
+    return false;
+  }
+  if(f.size > 12*1024*1024){
+    mostrarErr('mach-err-nuevo', 'Tu machote pesa más de 12 MB. Quítale las imágenes pesadas y vuelve a subirlo.');
+    return false;
   }
   machoteFile = f;
   document.getElementById('mach-file-name').textContent = f.name;
   document.getElementById('mach-file-chip').classList.add('show');
   ocultarErr('mach-err-nuevo');
+  return true;
 }
-
+function onMachFileChange(){
+  const input = document.getElementById('mach-file');
+  if(!aceptarMachFile(input.files && input.files[0])) input.value = '';
+}
 function limpiarMachFile(){
   machoteFile = null;
   document.getElementById('mach-file').value = '';
   document.getElementById('mach-file-chip').classList.remove('show');
 }
 
+// ── Subir y analizar ──
+let machTicker = null;
+function machTickerStart(){
+  const pasos = ['Leyendo tu contrato...', 'Identificando qué datos cambian...',
+                 'Agrupando los campos...', 'Armando tu formulario...'];
+  let i = 0;
+  const el = document.getElementById('mach-loading-txt');
+  if(el) el.textContent = pasos[0];
+  machTicker = setInterval(() => { i = Math.min(i+1, pasos.length-1); if(el) el.textContent = pasos[i]; }, 6000);
+}
+function machTickerStop(){ if(machTicker){ clearInterval(machTicker); machTicker = null; } }
+
 async function subirYAnalizarMachote(){
   ocultarErr('mach-err-nuevo');
   const titulo = gv('mach-titulo');
   const tipo = gv('mach-tipo');
 
-  if(!titulo){
-    mostrarErr('mach-err-nuevo', 'Ponle un título a tu machote para poder identificarlo después.');
-    return;
-  }
-  if(!machoteFile){
-    mostrarErr('mach-err-nuevo', 'Selecciona tu archivo .docx.');
-    return;
-  }
+  if(!titulo){ mostrarErr('mach-err-nuevo', 'Ponle un título a tu machote para poder identificarlo después.'); return; }
+  if(!machoteFile){ mostrarErr('mach-err-nuevo', 'Selecciona tu archivo .docx.'); return; }
 
   const btn = document.getElementById('mach-analizar-btn');
   btn.disabled = true;
   document.getElementById('mach-loading').classList.add('show');
+  machTickerStart();
 
   try{
     const fd = new FormData();
@@ -1152,29 +1258,24 @@ async function subirYAnalizarMachote(){
       throw new Error(j.detail || 'No se pudo analizar tu machote.');
     }
     const data = await res.json();
+    MACH = { id:data.id, titulo:data.titulo, tipo:data.tipo, campos:data.campos||[],
+             motor:data.motor, descartados:data.descartados||[] };
 
-    machoteActivoId = data.id;
-    machoteActivoCampos = data.campos || [];
-    document.getElementById('mach-form-titulo').textContent = 'Completa los datos — ' + (data.titulo || titulo);
-    renderCamposMachoteForm(machoteActivoCampos);
-    document.getElementById('mach-form-card').style.display = 'block';
-    document.getElementById('mach-success')?.classList.remove('show');
-    document.getElementById('mach-form-card').scrollIntoView({behavior:'smooth', block:'start'});
-
-    // Limpiar formulario de subida para la próxima vez
     limpiarMachFile();
     document.getElementById('mach-titulo').value = '';
     document.getElementById('mach-tipo').value = '';
-    machotesCargados = false; // forzar refresco del menú la próxima vez que se abra
-
+    machotesCargados = false;
+    abrirRevision(true);
   } catch(e){
     mostrarErr('mach-err-nuevo', e.message || 'No se pudo analizar tu machote. Verifica tu conexión.');
   } finally {
+    machTickerStop();
     btn.disabled = false;
     document.getElementById('mach-loading').classList.remove('show');
   }
 }
 
+// ── Machotes guardados ──
 async function cargarMisMachotes(){
   const cont = document.getElementById('mach-lista');
   ocultarErr('mach-err-lista');
@@ -1186,28 +1287,25 @@ async function cargarMisMachotes(){
       const j = await res.json().catch(()=>({}));
       throw new Error(j.detail || 'No se pudieron cargar tus machotes.');
     }
-    const data = await res.json();
-    const machotes = data.machotes || [];
+    const machotes = (await res.json()).machotes || [];
     machotesCargados = true;
 
     if(machotes.length === 0){
       cont.innerHTML = '<div class="mach-list-empty">Todavía no has guardado ningún machote. Sube uno en "Subir nuevo machote".</div>';
       return;
     }
-
     cont.innerHTML = machotes.map(m => {
       const fecha = m.created_at ? new Date(m.created_at).toLocaleDateString('es-MX', {day:'numeric', month:'short', year:'numeric'}) : '';
-      const nCampos = (m.campos || []).length;
+      const n = (m.campos || []).length;
       return `<div class="mach-item" onclick="usarMachoteGuardado('${m.id}')">
         <div class="mach-item-ico"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m-9 5h12a2 2 0 002-2V7.5L14.5 3H6a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg></div>
         <div class="mach-item-info">
           <div class="mach-item-title">${escHtml(m.titulo)}</div>
-          <div class="mach-item-sub">${escHtml(m.tipo || 'Personalizado')} · ${nCampos} campo${nCampos===1?'':'s'} · ${fecha}</div>
+          <div class="mach-item-sub">${escHtml(m.tipo || 'Personalizado')} · ${n} campo${n===1?'':'s'} · ${fecha}</div>
         </div>
         <button class="mach-item-del" onclick="event.stopPropagation(); eliminarMachoteGuardado('${m.id}', '${escHtml(m.titulo).replace(/'/g, "\\'")}')" title="Eliminar"><svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
       </div>`;
     }).join('');
-
   } catch(e){
     mostrarErr('mach-err-lista', e.message || 'No se pudieron cargar tus machotes.');
     cont.innerHTML = '';
@@ -1224,13 +1322,9 @@ async function usarMachoteGuardado(id){
       throw new Error(j.detail || 'No pudimos abrir ese machote.');
     }
     const m = await res.json();
-    machoteActivoId = m.id;
-    machoteActivoCampos = m.campos || [];
-    document.getElementById('mach-form-titulo').textContent = 'Completa los datos — ' + m.titulo;
-    renderCamposMachoteForm(machoteActivoCampos);
-    document.getElementById('mach-form-card').style.display = 'block';
-    document.getElementById('mach-success')?.classList.remove('show');
-    document.getElementById('mach-form-card').scrollIntoView({behavior:'smooth', block:'start'});
+    MACH = { id:m.id, titulo:m.titulo, tipo:m.tipo, campos:m.campos||[],
+             motor:m.motor, descartados:m.descartados||[] };
+    abrirFormulario();
   } catch(e){
     mostrarErr('mach-err-lista', e.message || 'No pudimos abrir ese machote.');
   }
@@ -1245,71 +1339,291 @@ async function eliminarMachoteGuardado(id, titulo){
       const j = await res.json().catch(()=>({}));
       throw new Error(j.detail || 'No se pudo eliminar el machote.');
     }
-    if(machoteActivoId === id) cerrarFormMachote();
+    if(MACH.id === id) cerrarMachote();
     cargarMisMachotes();
   } catch(e){
     mostrarErr('mach-err-lista', e.message || 'No se pudo eliminar el machote.');
   }
 }
 
-function renderCamposMachoteForm(campos){
-  const cont = document.getElementById('mach-campos-form');
-  if(!campos || campos.length === 0){
-    cont.innerHTML = '<div class="f-note">No detectamos campos en este machote.</div>';
-    return;
-  }
-  let html = '<div class="frow">';
-  campos.forEach((c, i) => {
-    if(i > 0 && i % 2 === 0) html += '</div><div class="frow">';
-    const inputType = c.tipo_input === 'date' ? 'date' : (c.tipo_input === 'number' ? 'number' : 'text');
-    const placeholder = c.tipo_input === 'currency' ? 'Ej. 8,500' : '';
-    html += `<div class="f">
-      <label>${escHtml(c.label || c.id)}</label>
-      <input type="${inputType}" id="mcampo-${escHtml(c.id)}" placeholder="${placeholder}" data-campo-id="${escHtml(c.id)}"/>
-    </div>`;
-  });
-  html += '</div>';
-  cont.innerHTML = html;
-}
-
-function cerrarFormMachote(){
-  machoteActivoId = null;
-  machoteActivoCampos = [];
-  document.getElementById('mach-form-card').style.display = 'none';
+// ── Navegación entre pantallas ──
+function cerrarMachote(){
+  MACH = { id:null, titulo:'', tipo:'', campos:[], motor:null, descartados:[] };
+  ['mach-rev-card','mach-form-card','mach-prev-card'].forEach(id => machShow(id, false));
   document.getElementById('mach-campos-form').innerHTML = '';
+  document.getElementById('mach-rev-campos').innerHTML = '';
+}
+function cerrarPreview(){ machShow('mach-prev-card', false); machScroll('mach-form-card'); }
+
+function agrupar(campos){
+  const grupos = [];
+  campos.forEach(c => {
+    const g = c.grupo || 'Datos del contrato';
+    let e = grupos.find(x => x.nombre === g);
+    if(!e){ e = { nombre:g, campos:[] }; grupos.push(e); }
+    e.campos.push(c);
+  });
+  return grupos;
 }
 
-async function generarDesdeMachoteGuardado(){
-  ocultarErr('mach-err-generar');
-  if(!machoteActivoId){
-    mostrarErr('mach-err-generar', 'Selecciona un machote primero.');
-    return;
-  }
+// ── Pantalla 1: revisión de la detección ──
+function abrirRevision(recienSubido){
+  ['mach-form-card','mach-prev-card'].forEach(id => machShow(id, false));
+  ocultarErr('mach-err-rev');
+  const n = MACH.campos.length;
+  document.getElementById('mach-rev-ttl').textContent = 'Revisa lo que detectamos — ' + MACH.titulo;
 
-  const datos = {};
-  machoteActivoCampos.forEach(c => {
-    const el = document.getElementById('mcampo-' + c.id);
-    datos[c.id] = el ? el.value : '';
-    if(c.label) datos['__label_' + c.id] = c.label;
+  const motorTxt = MOTOR_TXT[MACH.motor] || 'Detectamos los campos variables de tu contrato';
+  document.getElementById('mach-rev-sum').innerHTML =
+    `<div class="mach-sum">
+      <span class="mach-sum-ico"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span>
+      <div class="mach-sum-txt">
+        Encontramos <b>${n} dato${n===1?'':'s'} que cambia${n===1?'':'n'}</b> en cada operación${recienSubido ? '' : ' de este machote'}.
+        Ajusta lo que quieras: el nombre con el que te lo vamos a pedir, el tipo de dato, o márcalo como fijo si siempre es el mismo.
+        <div class="mach-chip">${escHtml(motorTxt)}</div>
+      </div>
+    </div>`;
+
+  const warn = document.getElementById('mach-rev-warn');
+  const desc = (MACH.descartados || []).filter(d => d && d.literal);
+  warn.innerHTML = desc.length ? `<div class="mach-warn">
+      <span class="mach-warn-ico"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L2.4 17.5A2 2 0 004.1 20.5h15.8a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg></span>
+      <div>Descartamos ${desc.length} candidato${desc.length===1?'':'s'} que no pudimos ubicar con exactitud en tu archivo, para no meterle mano a texto que no toca:
+      ${desc.slice(0,6).map(d => `<b>${escHtml((d.literal||'').slice(0,44))}</b>`).join(', ')}${desc.length>6?'…':''}.
+      Si alguno sí era un dato variable, márcalo en tu Word con {{doble_llave}} y vuelve a subirlo.</div>
+    </div>` : '';
+
+  document.getElementById('mach-rev-campos').innerHTML = agrupar(MACH.campos).map(g => `
+    <div class="mach-grp">
+      <div class="mach-grp-ttl">${escHtml(g.nombre)}<span class="mach-grp-n">${g.campos.length} campo${g.campos.length===1?'':'s'}</span></div>
+      ${g.campos.map(filaRevision).join('')}
+    </div>`).join('');
+
+  machShow('mach-rev-card', true);
+  machScroll('mach-rev-card');
+}
+
+function filaRevision(c){
+  const fijo = !!c.fijo;
+  const lit = (c.ejemplo || '').trim();
+  return `<div class="mach-row${fijo ? ' off' : ''}" data-id="${escHtml(c.id)}">
+    <div class="mach-row-top">
+      <div class="f">
+        <label>Cómo te lo vamos a pedir</label>
+        <input type="text" class="mach-lbl" value="${escHtml(c.label || c.id)}" maxlength="70"/>
+      </div>
+      <div class="f">
+        <label>Tipo de dato</label>
+        <select class="mach-tipo">
+          ${TIPOS_CAMPO.map(([v,t]) => `<option value="${v}"${c.tipo_input===v?' selected':''}>${t}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="mach-row-meta">
+      ${lit ? `<span class="mach-tag">En tu contrato dice <span class="mach-tag-lit" title="${escHtml(lit)}">${escHtml(lit.slice(0,70))}</span></span>` : ''}
+      ${c.ocurrencias > 1 ? `<span class="mach-tag">Se repite ${c.ocurrencias} veces</span>` : ''}
+      ${c.auto_letras_de ? '<span class="mach-tag">Se escribe solo con letra</span>' : ''}
+      <label class="mach-fijo-lbl">
+        <input type="checkbox" class="mach-fijo"${fijo ? ' checked' : ''} onchange="toggleFijo(this)"/>
+        Este dato nunca cambia
+      </label>
+    </div>
+    <div class="mach-def" style="display:${fijo ? 'block' : 'none'}">
+      <div class="f">
+        <label>Valor que se escribe siempre</label>
+        <input type="text" class="mach-default" value="${escHtml(c.default || '')}" placeholder="Ej. tu nombre, tu inmobiliaria, tu RFC"/>
+        <div class="f-note">No te lo vamos a preguntar al llenar el contrato.${lit ? ' <button type="button" class="mach-lnk" onclick="usarOriginal(this)">Usar el texto original</button>' : ''}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleFijo(chk){
+  const row = chk.closest('.mach-row');
+  row.classList.toggle('off', chk.checked);
+  row.querySelector('.mach-def').style.display = chk.checked ? 'block' : 'none';
+}
+function usarOriginal(btn){
+  const row = btn.closest('.mach-row');
+  const c = MACH.campos.find(x => x.id === row.dataset.id);
+  if(c) row.querySelector('.mach-default').value = c.ejemplo || '';
+}
+
+async function guardarRevision(){
+  ocultarErr('mach-err-rev');
+  const filas = [...document.querySelectorAll('#mach-rev-campos .mach-row')];
+  const campos = filas.map(row => {
+    const base = MACH.campos.find(x => x.id === row.dataset.id) || {};
+    return {
+      id: row.dataset.id,
+      label: (row.querySelector('.mach-lbl').value || '').trim() || base.label || row.dataset.id,
+      tipo_input: row.querySelector('.mach-tipo').value,
+      grupo: base.grupo,
+      fijo: row.querySelector('.mach-fijo').checked,
+      default: (row.querySelector('.mach-default').value || '').trim(),
+    };
   });
+
+  const btn = document.getElementById('mach-rev-btn');
+  btn.disabled = true;
+  document.getElementById('mach-rev-loading').classList.add('show');
+  try{
+    const headers = await machHeaders();
+    const res = await fetch(`${API_M}/contrato/machote/${MACH.id}`, {
+      method:'PATCH',
+      headers: { ...headers, 'Content-Type':'application/json' },
+      body: JSON.stringify({ campos }),
+    });
+    if(!res.ok){
+      const j = await res.json().catch(()=>({}));
+      throw new Error(j.detail || 'No se pudieron guardar los cambios.');
+    }
+    const m = await res.json();
+    MACH.campos = m.campos || campos;
+    machotesCargados = false;
+    abrirFormulario();
+  } catch(e){
+    mostrarErr('mach-err-rev', e.message || 'No se pudieron guardar los cambios.');
+  } finally {
+    btn.disabled = false;
+    document.getElementById('mach-rev-loading').classList.remove('show');
+  }
+}
+
+// ── Pantalla 2: formulario ──
+function abrirFormulario(){
+  ['mach-rev-card','mach-prev-card'].forEach(id => machShow(id, false));
+  document.getElementById('mach-success').classList.remove('show');
+  ocultarErr('mach-err-generar');
+  document.getElementById('mach-form-titulo').textContent = 'Completa los datos — ' + MACH.titulo;
+
+  const visibles = MACH.campos.filter(c => !c.fijo);
+  const cont = document.getElementById('mach-campos-form');
+  if(!visibles.length){
+    cont.innerHTML = '<div class="f-note">Todos los campos de este machote son fijos. Genera el contrato directamente.</div>';
+  } else {
+    cont.innerHTML = agrupar(visibles).map(g => `
+      <div class="mach-grp">
+        <div class="mach-grp-ttl">${escHtml(g.nombre)}</div>
+        ${filasFormulario(g.campos)}
+      </div>`).join('');
+  }
+  machShow('mach-form-card', true);
+  machScroll('mach-form-card');
+}
+
+function filasFormulario(campos){
+  let html = '', abierto = false;
+  campos.forEach(c => {
+    const ancho = (c.tipo_input === 'textarea');
+    if(ancho && abierto){ html += '</div>'; abierto = false; }
+    if(!abierto){ html += `<div class="frow${ancho ? ' one' : ''}">`; abierto = true; }
+    html += campoHtml(c);
+    if(ancho){ html += '</div>'; abierto = false; }
+  });
+  if(abierto) html += '</div>';
+  return html;
+}
+
+function campoHtml(c){
+  const id = 'mcampo-' + c.id;
+  const val = escHtml(c.default || '');
+  let input;
+  if(c.tipo_input === 'textarea'){
+    input = `<textarea id="${id}" rows="3" placeholder="${escHtml(c.ayuda || '')}">${val}</textarea>`;
+  } else if(c.tipo_input === 'currency'){
+    input = `<input type="text" id="${id}" inputmode="decimal" value="${val}" placeholder="Ej. 8,500" oninput="fmtMoney(this)" onblur="fmtMoneyBlur(this)"/>`;
+  } else if(c.tipo_input === 'date'){
+    input = `<input type="date" id="${id}" value="${val}"/>`;
+  } else if(c.tipo_input === 'number'){
+    input = `<input type="number" id="${id}" value="${val}" placeholder="${escHtml(c.ayuda || '')}"/>`;
+  } else {
+    input = `<input type="text" id="${id}" value="${val}" placeholder="${escHtml(c.ayuda || '')}"/>`;
+  }
+  const nota = c.auto_letras_de
+    ? 'Déjalo vacío: lo escribimos solo a partir del importe.'
+    : (c.ayuda || '');
+  return `<div class="f">
+    <label>${escHtml(c.label || c.id)}</label>
+    ${input}
+    ${nota ? `<div class="f-note">${escHtml(nota)}</div>` : ''}
+  </div>`;
+}
+
+function recolectarDatos(){
+  const datos = {};
+  MACH.campos.forEach(c => {
+    if(c.fijo){ datos[c.id] = c.default || ''; return; }
+    const el = document.getElementById('mcampo-' + c.id);
+    datos[c.id] = el ? (el.value || '').trim() : '';
+  });
+  return datos;
+}
+
+// ── Vista previa ──
+async function previsualizarMachote(){
+  ocultarErr('mach-err-generar');
+  const btn = document.getElementById('mach-prev-btn');
+  btn.disabled = true;
+  try{
+    const headers = await machHeaders();
+    const res = await fetch(`${API_M}/contrato/machote/${MACH.id}/preview`, {
+      method:'POST',
+      headers: { ...headers, 'Content-Type':'application/json' },
+      body: JSON.stringify({ datos: recolectarDatos() }),
+    });
+    if(!res.ok){
+      const j = await res.json().catch(()=>({}));
+      throw new Error(j.detail || 'No se pudo generar la vista previa.');
+    }
+    const parrafos = (await res.json()).parrafos || [];
+    const valores = Object.values(recolectarDatos()).filter(v => v && String(v).length > 2);
+    const etiquetas = {};
+    MACH.campos.forEach(c => { etiquetas[c.id] = c.label || c.id; });
+
+    document.getElementById('mach-prev-body').innerHTML = parrafos.map(p => {
+      let t = escHtml(p.texto);
+      valores.forEach(v => {
+        const rx = new RegExp(escRegex(escHtml(String(v))), 'g');
+        t = t.replace(rx, m => `<mark class="mach-hl">${m}</mark>`);
+      });
+      t = t.replace(/\{\{([a-z0-9_]+)\}\}/g, (_, id) =>
+        `<span class="mach-falta">falta: ${escHtml(etiquetas[id] || id)}</span>`);
+      return `<p>${t}</p>`;
+    }).join('');
+    machShow('mach-prev-card', true);
+    machScroll('mach-prev-card');
+  } catch(e){
+    mostrarErr('mach-err-generar', e.message || 'No se pudo generar la vista previa.');
+  } finally {
+    btn.disabled = false;
+  }
+}
+function escRegex(s){ return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+// ── Generar ──
+async function generarDesdeMachote(){
+  ocultarErr('mach-err-generar');
+  if(!MACH.id){ mostrarErr('mach-err-generar', 'Selecciona un machote primero.'); return; }
 
   const btn = document.getElementById('mach-generar-btn');
   btn.disabled = true;
   document.getElementById('mach-gen-loading').classList.add('show');
+  document.getElementById('mach-success').classList.remove('show');
 
   try{
     const headers = await machHeaders();
-    const res = await fetch(`${API_M}/contrato/machote/${machoteActivoId}/generar`, {
-      method: 'POST',
-      headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ datos }),
+    const res = await fetch(`${API_M}/contrato/machote/${MACH.id}/generar`, {
+      method:'POST',
+      headers: { ...headers, 'Content-Type':'application/json' },
+      body: JSON.stringify({ datos: recolectarDatos() }),
     });
     if(!res.ok){
       const j = await res.json().catch(()=>({}));
       throw new Error(j.detail || 'No se pudo generar el contrato.');
     }
     const blob = await res.blob();
-    const filename = (document.getElementById('mach-form-titulo').textContent || 'Contrato').replace('Completa los datos — ', '').trim() + '.docx';
+    const filename = (MACH.titulo || 'Contrato').replace(/[^\w\sáéíóúüñÁÉÍÓÚÜÑ-]/g,'').trim() + '.docx';
 
     if (window.broquerDeliverBlob) {
       await window.broquerDeliverBlob(blob, filename, { type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document', title:'Contrato listo', text:'Contrato generado por Broquer' });
@@ -1327,7 +1641,7 @@ async function generarDesdeMachoteGuardado(){
   }
 }
 
-// ── Drag & drop para subir machote ──
+// ── Drag & drop ──
 (function(){
   const drop = document.getElementById('mach-drop');
   if(!drop) return;
@@ -1337,18 +1651,7 @@ async function generarDesdeMachoteGuardado(){
   ['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => {
     e.preventDefault(); e.stopPropagation(); drop.classList.remove('drag');
   }));
-  drop.addEventListener('drop', e => {
-    const f = e.dataTransfer.files && e.dataTransfer.files[0];
-    if(!f) return;
-    if(!f.name.toLowerCase().endsWith('.docx')){
-      mostrarErr('mach-err-nuevo', 'Solo aceptamos archivos .docx (Word).');
-      return;
-    }
-    machoteFile = f;
-    document.getElementById('mach-file-name').textContent = f.name;
-    document.getElementById('mach-file-chip').classList.add('show');
-    ocultarErr('mach-err-nuevo');
-  });
+  drop.addEventListener('drop', e => aceptarMachFile(e.dataTransfer.files && e.dataTransfer.files[0]));
 })();
 
 // ── Money formatting ──
