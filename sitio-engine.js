@@ -436,7 +436,7 @@ function toggleDetalleProp(idxStr) {
   overlay.className = 'st-modal-overlay';
   overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
   overlay.innerHTML = `<div class="st-modal">
-    <button class="st-modal__x" onclick="this.closest('.st-modal-overlay').remove()">✕</button>
+    <button class="st-modal__x" onclick="this.closest('.st-modal-overlay').remove()" aria-label="Cerrar"><svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
     <div class="st-modal__fotos">
       ${fotos.length ? fotos.map(f => `<img src="${esc(f)}" loading="lazy"/>`).join('') : '<div class="st-card__sinfoto">Sin fotos</div>'}
     </div>
