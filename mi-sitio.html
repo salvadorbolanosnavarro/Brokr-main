@@ -82,25 +82,25 @@
 .ms-plantilla__desc { padding: 0 var(--sp-2) var(--sp-2); font-size: var(--fs-caption); color: var(--mute); line-height: var(--lh-sm); }
 
 /* ═══ AUDIT-EXEMPT: mini-mockups de las plantillas del sitio PÚBLICO ═══
-   Estas miniaturas replican la paleta y tipografía de sitio.css
-   (Editorial usa serif y dorados; Ejecutiva su propio azul). Sus colores
-   son CONTENIDO (preview de otro producto), no diseño de la plataforma.
-   No mapear a tokens del theme. ═══ */
-.mock-editorial { background: radial-gradient(circle at 80% 8%, rgba(200,164,93,.55), transparent 34%), linear-gradient(135deg,#061321,#0B2A43 58%,#02080F); padding: 12px; }
-.mock-editorial::before { content:"BROQUER"; position:absolute; top:18px; left:14px; right:14px; text-align:center; font-family:Georgia,serif; font-size:30px; font-weight:700; letter-spacing:-.08em; color:rgba(255,255,255,.08); }
-.mock-editorial .m-hero { flex: 1; margin: 4px; border-radius: 18px; border:1px solid rgba(200,164,93,.36); background: linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.04)); display:flex; align-items:flex-end; justify-content:center; padding: 14px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
-.mock-editorial .m-hero span { font-size: 10px; color: #fff; font-weight: 800; letter-spacing:.16em; }
-.mock-editorial .m-cards { display:flex; gap:6px; padding: 0 4px 2px; }
-.mock-editorial .m-cards div { flex:1; height:26px; background: linear-gradient(135deg,rgba(255,255,255,.95),rgba(233,221,199,.8)); border-radius: 9px; box-shadow:0 8px 18px rgba(0,0,0,.18); }
+   Réplicas en miniatura del rediseño 2026-07 de sitio.css:
+   Editorial = galería en blanco puro con nombre gigante en tinta y punto azul;
+   Ejecutiva = corporativa en papel claro con panel navy.
+   Sus colores son CONTENIDO (preview de otro producto). ═══ */
+.mock-editorial { background:#FFFFFF; padding:14px 14px 12px; border-radius:inherit; }
+.mock-editorial .m-kicker { width:38%; height:5px; border-radius:99px; background:#0055CC; opacity:.85; }
+.mock-editorial .m-nombre { margin-top:10px; font-weight:900; font-size:26px; letter-spacing:-.05em; line-height:.95; color:#0A0B0D; }
+.mock-editorial .m-nombre::after { content:'.'; color:#0055CC; }
+.mock-editorial .m-cards { display:flex; gap:7px; margin-top:14px; }
+.mock-editorial .m-cards div { flex:1; height:44px; border-radius:9px; border:1px solid rgba(10,11,13,.12); background:linear-gradient(180deg,#EDEFF2 62%,#FFFFFF 62%); }
 
-.mock-ejecutiva { background: radial-gradient(circle at 84% 0%, rgba(10,99,255,.22), transparent 38%), linear-gradient(135deg,#F8FAFF,#FFFFFF); padding: 12px; }
-.mock-ejecutiva .m-top { height: 20px; background: linear-gradient(90deg,#07111F,#0A63FF); border-radius: 999px; margin: 0 0 10px; width: 58%; }
-.mock-ejecutiva .m-body { flex:1; display:flex; gap:10px; padding: 0; }
-.mock-ejecutiva .m-side { width: 38%; background: linear-gradient(135deg,#07111F,#123A6A); border-radius: 16px; box-shadow:0 14px 28px rgba(7,17,31,.24); position:relative; }
-.mock-ejecutiva .m-side::after { content:""; position:absolute; left:10px; right:10px; bottom:10px; height:3px; border-radius:999px; background:linear-gradient(90deg,#0A63FF,#57D4FF); }
-.mock-ejecutiva .m-main { flex:1; display:flex; flex-direction:column; gap:7px; padding-top:2px; }
-.mock-ejecutiva .m-main div { height: 17px; background:#E7EEF8; border-radius:8px; }
-.mock-ejecutiva .m-main div:first-child { width: 82%; height: 28px; background:linear-gradient(135deg,#07111F,#0A63FF); opacity:1; }
+.mock-ejecutiva { background:linear-gradient(180deg,#F8F9FA,#EFF4FA); padding:14px 14px 12px; }
+.mock-ejecutiva .m-kicker { width:38%; height:5px; border-radius:99px; background:#0055CC; }
+.mock-ejecutiva .m-nombre { margin-top:10px; font-weight:900; font-size:26px; letter-spacing:-.05em; line-height:.95; color:#0B1B2E; }
+.mock-ejecutiva .m-nombre::after { content:'.'; color:#0055CC; }
+.mock-ejecutiva .m-body { display:flex; gap:8px; margin-top:14px; }
+.mock-ejecutiva .m-side { width:36%; height:44px; border-radius:10px; background:linear-gradient(200deg,#0E2A4A,#05203C); }
+.mock-ejecutiva .m-main { flex:1; display:flex; flex-direction:column; gap:6px; }
+.mock-ejecutiva .m-main div { height:19px; border-radius:7px; background:#FFFFFF; border:1px solid rgba(5,32,60,.14); }
 /* ═══ /AUDIT-EXEMPT ═══ */
 
 /* Testimonios */
@@ -281,19 +281,21 @@ function render() {
       <div class="ms-plantillas">
         <div class="ms-plantilla ${(p.sitio_template || 'editorial') === 'editorial' ? 'is-active' : ''}" onclick="elegirPlantilla('editorial')">
           <div class="ms-plantilla__preview mock-editorial">
-            <div class="m-hero"><span>NOMBRE AGENTE</span></div>
+            <div class="m-kicker"></div>
+            <div class="m-nombre">Tu Nombre</div>
             <div class="m-cards"><div></div><div></div><div></div></div>
           </div>
           <div class="ms-plantilla__nombre">Editorial Signature</div>
-          <div class="ms-plantilla__desc">Portada tipo revista luxury, hero cinematográfico, detalles dorados y propiedades como colección premium.</div>
+          <div class="ms-plantilla__desc">Galería en blanco puro: tu nombre como protagonista, tipografía editorial y propiedades como colección.</div>
         </div>
         <div class="ms-plantilla ${p.sitio_template === 'ejecutiva' ? 'is-active' : ''}" onclick="elegirPlantilla('ejecutiva')">
           <div class="ms-plantilla__preview mock-ejecutiva">
-            <div class="m-top"></div>
-            <div class="m-body"><div class="m-side"></div><div class="m-main"><div></div><div></div><div></div></div></div>
+            <div class="m-kicker"></div>
+            <div class="m-nombre">Tu Nombre</div>
+            <div class="m-body"><div class="m-side"></div><div class="m-main"><div></div><div></div></div></div>
           </div>
           <div class="ms-plantilla__nombre">Ejecutiva Prime</div>
-          <div class="ms-plantilla__desc">Dossier corporativo de alto valor, tarjetas elevadas, acentos azules y una presentación muy institucional.</div>
+          <div class="ms-plantilla__desc">Corporativa en papel claro con estructura navy: presencia institucional con el mismo motor y buscador.</div>
         </div>
       </div>
     </div>
