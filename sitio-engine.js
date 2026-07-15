@@ -103,7 +103,7 @@ function renderError(msg) {
 let _perfil = null;
 let _propsTodas = [];
 let _propsVisibles = [];
-let _filtro = { operacion: '', tipo: '', texto: '', orden: 'reciente' };
+let _filtro = { operacion: '', tipo: '', texto: '', orden: 'reciente', ciudad: '', colonia: '', precioMin: null, precioMax: null, recamaras: 0 };
 
 async function cargarSitio() {
   const slug = slugDesdeUrl();
@@ -301,28 +301,59 @@ function render(perfil, testimonios) {
 
 /* ── Buscador / filtros ────────────────────────────────────────────────── */
 function buscadorHtml() {
-  const tipos = [...new Set(_propsTodas.map(p => p.tipo).filter(Boolean))];
+  const tipos = [...new Set(_propsTodas.map(p => p.tipo).filter(Boolean))].sort();
+  const ciudades = [...new Set(_propsTodas.map(p => p.ciudad).filter(Boolean))].sort();
   return `
     <div class="st-buscador">
-      <div class="st-buscador__tabs">
-        <button type="button" class="st-tab is-active" data-op="">Todas</button>
-        <button type="button" class="st-tab" data-op="venta">Venta</button>
-        <button type="button" class="st-tab" data-op="renta">Renta</button>
-      </div>
-      <div class="st-buscador__row">
-        <input type="text" id="st-f-texto" placeholder="Buscar por colonia, ciudad o título…"/>
-        <select id="st-f-tipo">
-          <option value="">Todos los tipos</option>
-          ${tipos.map(t => `<option value="${esc(t)}">${esc(tipoLegible(t))}</option>`).join('')}
-        </select>
-        <select id="st-f-orden">
+      <div class="st-buscador__top">
+        <div class="st-buscador__tabs">
+          <button type="button" class="st-tab is-active" data-op="">Todas</button>
+          <button type="button" class="st-tab" data-op="venta">Venta</button>
+          <button type="button" class="st-tab" data-op="renta">Renta</button>
+        </div>
+        <select id="st-f-orden" class="st-f-orden">
           <option value="reciente">Más recientes</option>
           <option value="precio_asc">Precio: menor a mayor</option>
           <option value="precio_desc">Precio: mayor a menor</option>
         </select>
       </div>
+      <input type="text" id="st-f-texto" placeholder="Buscar por colonia, ciudad o título…"/>
+      <div class="st-buscador__filtros">
+        <select id="st-f-tipo">
+          <option value="">Todos los tipos</option>
+          ${tipos.map(t => `<option value="${esc(t)}">${esc(tipoLegible(t))}</option>`).join('')}
+        </select>
+        <select id="st-f-ciudad" ${ciudades.length < 2 ? 'style="display:none"' : ''}>
+          <option value="">Todas las ciudades</option>
+          ${ciudades.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('')}
+        </select>
+        <select id="st-f-colonia">
+          <option value="">Todas las colonias</option>
+        </select>
+        <select id="st-f-rec">
+          <option value="0">Recámaras: todas</option>
+          <option value="1">1+ recámaras</option>
+          <option value="2">2+ recámaras</option>
+          <option value="3">3+ recámaras</option>
+          <option value="4">4+ recámaras</option>
+        </select>
+        <input type="number" id="st-f-pmin" inputmode="numeric" min="0" placeholder="Precio mín."/>
+        <input type="number" id="st-f-pmax" inputmode="numeric" min="0" placeholder="Precio máx."/>
+      </div>
     </div>
   `;
+}
+
+function poblarColonias() {
+  const sel = document.getElementById('st-f-colonia');
+  if (!sel) return;
+  const base = _filtro.ciudad ? _propsTodas.filter(p => p.ciudad === _filtro.ciudad) : _propsTodas;
+  const colonias = [...new Set(base.map(p => p.colonia).filter(Boolean))].sort();
+  const actual = _filtro.colonia;
+  sel.innerHTML = '<option value="">Todas las colonias</option>' +
+    colonias.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  if (colonias.includes(actual)) sel.value = actual;
+  else { sel.value = ''; _filtro.colonia = ''; }
 }
 
 function bindBuscador() {
@@ -343,12 +374,35 @@ function bindBuscador() {
   });
   document.getElementById('st-f-tipo').addEventListener('change', (e) => { _filtro.tipo = e.target.value; aplicarFiltros(); });
   document.getElementById('st-f-orden').addEventListener('change', (e) => { _filtro.orden = e.target.value; aplicarFiltros(); });
+  document.getElementById('st-f-ciudad').addEventListener('change', (e) => { _filtro.ciudad = e.target.value; poblarColonias(); aplicarFiltros(); });
+  document.getElementById('st-f-colonia').addEventListener('change', (e) => { _filtro.colonia = e.target.value; aplicarFiltros(); });
+  document.getElementById('st-f-rec').addEventListener('change', (e) => { _filtro.recamaras = parseInt(e.target.value, 10) || 0; aplicarFiltros(); });
+  let debP = null;
+  const leerPrecios = () => {
+    const min = document.getElementById('st-f-pmin').value, max = document.getElementById('st-f-pmax').value;
+    _filtro.precioMin = min !== '' ? Number(min) : null;
+    _filtro.precioMax = max !== '' ? Number(max) : null;
+    aplicarFiltros();
+  };
+  ['st-f-pmin','st-f-pmax'].forEach(id => document.getElementById(id).addEventListener('input', () => {
+    clearTimeout(debP); debP = setTimeout(leerPrecios, 300);
+  }));
+  poblarColonias();
 }
 
 function aplicarFiltros() {
   let lista = _propsTodas.filter(p => {
     if (_filtro.operacion && p.operacion !== _filtro.operacion) return false;
     if (_filtro.tipo && p.tipo !== _filtro.tipo) return false;
+    if (_filtro.ciudad && p.ciudad !== _filtro.ciudad) return false;
+    if (_filtro.colonia && p.colonia !== _filtro.colonia) return false;
+    if (_filtro.recamaras && !(Number(p.recamaras) >= _filtro.recamaras)) return false;
+    if (_filtro.precioMin != null || _filtro.precioMax != null) {
+      const precio = precioNumerico(p);
+      if (precio == null) return false;
+      if (_filtro.precioMin != null && precio < _filtro.precioMin) return false;
+      if (_filtro.precioMax != null && precio > _filtro.precioMax) return false;
+    }
     if (_filtro.texto) {
       const blob = [p.titulo, p.colonia, p.ciudad].filter(Boolean).join(' ').toLowerCase();
       if (!blob.includes(_filtro.texto)) return false;
@@ -394,10 +448,12 @@ function renderGrid() {
 }
 
 function limpiarFiltros() {
-  _filtro = { operacion: '', tipo: '', texto: '', orden: 'reciente' };
-  const texto = document.getElementById('st-f-texto'); if (texto) texto.value = '';
-  const tipo = document.getElementById('st-f-tipo'); if (tipo) tipo.value = '';
+  _filtro = { operacion: '', tipo: '', texto: '', orden: 'reciente', ciudad: '', colonia: '', precioMin: null, precioMax: null, recamaras: 0 };
+  ['st-f-texto','st-f-pmin','st-f-pmax'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
+  ['st-f-tipo','st-f-ciudad','st-f-colonia'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
+  const rec = document.getElementById('st-f-rec'); if (rec) rec.value = '0';
   const orden = document.getElementById('st-f-orden'); if (orden) orden.value = 'reciente';
+  poblarColonias();
   document.querySelectorAll('.st-tab').forEach(b => b.classList.toggle('is-active', b.dataset.op === ''));
   _propsVisibles = _propsTodas.slice();
   renderGrid();
