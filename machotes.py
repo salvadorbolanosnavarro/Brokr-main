@@ -1,21 +1,27 @@
 """
 machotes.py — Motor de machotes propios de Broquer.
 
-Convierte cualquier contrato .docx que suba el usuario en una plantilla real:
+El usuario abre su contrato dentro de Broquer, señala con el dedo o el mouse
+qué datos cambian en cada operación, les pone nombre y guarda. Nada se marca
+sin que él lo vea y lo confirme: un contrato es su responsabilidad legal.
 
-  1. EXTRACCIÓN   Recorre cuerpo, tablas anidadas, encabezados, pies y cuadros
-                  de texto, conservando la posición exacta de cada run.
-  2. DETECCIÓN    a) Marcadores explícitos: {{campo}}, [[campo]], <<campo>>,
-                     «campo», {campo}, [CAMPO], XXXX, y blancos (___ / .....).
-                  b) Contrato real sin marcar: Claude identifica las variables
-                     y devuelve el literal EXACTO de cada una; se verifica
-                     contra el documento antes de aceptarlo (cero alucinación).
-  3. NORMALIZACIÓN Reescribe el DOCX sustituyendo cada variable por {{id}}.
-                  El machote guardado ya es una plantilla marcada, así que el
-                  relleno posterior es determinista.
-  4. RELLENO      Sustituye {{id}} respetando el formato original (negritas,
-                  tamaños, subrayados) aun cuando Word parte el marcador en
-                  varios runs.
+  1. ABRIR       Se recorre el DOCX (cuerpo, tablas anidadas, encabezados, pies
+                 y cuadros de texto) y se devuelve al navegador párrafo por
+                 párrafo, con su formato, para pintarlo tal cual.
+  2. MARCAR      El navegador manda marcas {parrafo, inicio, fin, campo}. Los
+                 offsets son sobre el texto plano del párrafo — exactamente el
+                 mismo sistema de coordenadas que usan los runs del DOCX.
+  3. VERIFICAR   Antes de tocar el archivo se comprueba que el texto en cada
+                 marca sea idéntico al que el usuario seleccionó. Si no cuadra,
+                 se aborta: nunca se escribe a ciegas.
+  4. NORMALIZAR  Se reescribe el DOCX poniendo {{id}} en cada marca. Lo que se
+                 guarda ya es una plantilla; el relleno posterior es determinista.
+  5. RELLENAR    Se sustituye {{id}} respetando negritas, tamaños y subrayados,
+                 aun cuando Word parte el marcador en varios runs.
+
+Las sugerencias (marcadores que el usuario ya traía, líneas en blanco, o la IA)
+son solo eso: llegan pre-marcadas a la pantalla para ahorrar trabajo, y el
+usuario las confirma, corrige o borra antes de crear el machote.
 
 Todo el módulo es puro (sin FastAPI, sin Supabase) para poder probarse aislado.
 """
@@ -262,36 +268,38 @@ def _parrafos_de_cuadros_texto(cont):
 
 
 def iter_parrafos(doc):
-    """Todos los párrafos del documento: cuerpo, tablas, encabezados, pies y
-    cuadros de texto. Orden estable entre llamadas."""
+    """Todos los párrafos del documento (cuerpo, tablas, encabezados, pies y
+    cuadros de texto) como (parrafo, zona). El orden es estable entre llamadas:
+    de eso depende que los índices que manda el navegador sigan siendo válidos
+    cuando el archivo se vuelve a subir para crear el machote."""
     vistos = set()
 
-    def _emitir(p):
+    def _nuevo(p):
         pid = id(p._p)
         if pid in vistos:
-            return None
+            return False
         vistos.add(pid)
-        return p
+        return True
 
     for p in _parrafos_de_contenedor(doc):
-        if _emitir(p) is not None:
-            yield p
+        if _nuevo(p):
+            yield p, "cuerpo"
     for p in _parrafos_de_cuadros_texto(doc):
-        if _emitir(p) is not None:
-            yield p
+        if _nuevo(p):
+            yield p, "cuerpo"
     for sec in doc.sections:
-        for cont in (sec.header, sec.footer, sec.first_page_header,
-                     sec.first_page_footer, sec.even_page_header,
-                     sec.even_page_footer):
+        for cont, zona in ((sec.header, "encabezado"), (sec.first_page_header, "encabezado"),
+                           (sec.even_page_header, "encabezado"), (sec.footer, "pie"),
+                           (sec.first_page_footer, "pie"), (sec.even_page_footer, "pie")):
             if cont is None:
                 continue
             try:
                 for p in _parrafos_de_contenedor(cont):
-                    if _emitir(p) is not None:
-                        yield p
+                    if _nuevo(p):
+                        yield p, zona
                 for p in _parrafos_de_cuadros_texto(cont):
-                    if _emitir(p) is not None:
-                        yield p
+                    if _nuevo(p):
+                        yield p, zona
             except Exception:
                 continue
 
@@ -306,11 +314,41 @@ def cargar_docx(content: bytes):
 
 
 def snapshot(doc) -> List[Dict[str, Any]]:
-    """[{'p': Paragraph, 'runs': [...], 'texto': str}] para todo el documento."""
+    """[{'p': Paragraph, 'runs': [...], 'texto': str, 'zona': str}]."""
     out = []
-    for p in iter_parrafos(doc):
+    for p, zona in iter_parrafos(doc):
         runs = _runs_de_parrafo(p)
-        out.append({"p": p, "runs": runs, "texto": _texto_runs(runs)})
+        out.append({"p": p, "runs": runs, "texto": _texto_runs(runs), "zona": zona})
+    return out
+
+
+_ALINEACION = {0: "left", 1: "center", 2: "right", 3: "justify"}
+
+
+def para_frontend(snap: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """El documento tal como se va a pintar en el navegador. 'i' es el índice
+    real dentro del snapshot: es la coordenada con la que vuelven las marcas.
+    Los párrafos vacíos no se mandan, pero los índices no se recalculan."""
+    out = []
+    for i, s in enumerate(snap):
+        if not (s["texto"] or "").strip():
+            continue
+        try:
+            align = _ALINEACION.get(s["p"].paragraph_format.alignment)
+        except Exception:
+            align = None
+        out.append({
+            "i": i,
+            "txt": s["texto"],
+            "zona": s.get("zona", "cuerpo"),
+            "align": align,
+            "runs": [{
+                "t": r.text or "",
+                "b": bool(r.bold),
+                "k": bool(r.italic),
+                "u": bool(r.underline),
+            } for r in s["runs"] if (r.text or "")],
+        })
     return out
 
 
@@ -416,11 +454,12 @@ def _corchete_valido(contenido: str) -> bool:
 
 
 def detectar_marcadores(snap: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Busca marcadores explícitos. Devuelve campos + los spans a normalizar."""
+    """Marcadores que el usuario ya traía escritos en su machote. Determinista:
+    cero IA. Devuelve campos + marcas listas para pintar en el navegador."""
     for nombre, rx in _MARCADORES:
         hits = []
-        for i, s in enumerate(snap):
-            for m in rx.finditer(s["texto"]):
+        for i, s_ in enumerate(snap):
+            for m in rx.finditer(s_["texto"]):
                 contenido = (m.group(1) or "").strip()
                 if not contenido:
                     continue
@@ -433,7 +472,7 @@ def detectar_marcadores(snap: List[Dict[str, Any]]) -> Dict[str, Any]:
             continue
 
         usados, por_nombre, campos = set(), {}, []
-        spans: Dict[int, List[Tuple[int, int, str]]] = {}
+        marcas = []
         for i, ini, fin, contenido in hits:
             clave = _sin_acentos(contenido).lower().strip()
             if clave not in por_nombre:
@@ -444,52 +483,54 @@ def detectar_marcadores(snap: List[Dict[str, Any]]) -> Dict[str, Any]:
                     "label": humanizar(contenido),
                     "tipo_input": "text",
                     "grupo": "Datos del contrato",
-                    "ejemplo": "",
-                    "ocurrencias": 0,
                     "origen": nombre,
                 })
-            cid = por_nombre[clave]
-            for c in campos:
-                if c["id"] == cid:
-                    c["ocurrencias"] += 1
-                    break
-            spans.setdefault(i, []).append((ini, fin, "{{" + cid + "}}"))
-        return {"campos": campos, "spans": spans, "motor": "marcadores",
-                "patron": nombre}
+            marcas.append({"p": i, "ini": ini, "fin": fin,
+                           "campo": por_nombre[clave],
+                           "texto": snap[i]["texto"][ini:fin]})
+        return {"campos": campos, "marcas": marcas, "motor": "marcadores"}
 
-    return {"campos": [], "spans": {}, "motor": None, "patron": None}
+    return {"campos": [], "marcas": [], "motor": None}
 
 
 def detectar_blancos(snap: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Cada línea ___ / ..... / XXXX se convierte en un campo independiente,
-    con etiqueta provisional tomada del texto que la precede."""
-    campos, spans, usados = [], {}, set()
+    """Cada línea ___ / ..... / XXXX es un campo, con etiqueta provisional
+    tomada del texto que la precede. Determinista: cero IA."""
+    campos, marcas, usados = [], [], set()
     n = 0
-    for i, s in enumerate(snap):
-        texto = s["texto"]
+    for i, s_ in enumerate(snap):
+        texto = s_["texto"]
         for m in _RE_BLANCO.finditer(texto):
             n += 1
-            previo = texto[:m.start()]
-            etiqueta = _etiqueta_desde_contexto(previo, snap, i)
+            etiqueta = _etiqueta_desde_contexto(texto[:m.start()], snap, i)
             cid = slug_campo(etiqueta or f"campo {n}", usados)
             campos.append({
                 "id": cid,
                 "label": humanizar(etiqueta) if etiqueta else f"Campo {n}",
                 "tipo_input": "text",
                 "grupo": "Datos del contrato",
-                "ejemplo": "",
-                "ocurrencias": 1,
                 "origen": "blanco",
-                "contexto": (previo[-90:] + " ______ " + texto[m.end():m.end() + 40]).strip(),
             })
-            spans.setdefault(i, []).append((m.start(), m.end(), "{{" + cid + "}}"))
+            marcas.append({"p": i, "ini": m.start(), "fin": m.end(),
+                           "campo": cid, "texto": texto[m.start():m.end()]})
     if not campos:
-        return {"campos": [], "spans": {}, "motor": None, "patron": None}
-    return {"campos": campos, "spans": spans, "motor": "blancos", "patron": "blanco"}
+        return {"campos": [], "marcas": [], "motor": None}
+    return {"campos": campos, "marcas": marcas, "motor": "blancos"}
 
 
-_ACRONIMOS = {"rfc", "curp", "cp", "c.p.", "ine", "ife", "m2", "iva", "isr",
-              "clabe", "cfdi", "sat", "id"}
+def sugerencias(snap: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Lo que Broquer puede proponer sin adivinar nada: los marcadores que el
+    usuario ya escribió y sus líneas en blanco. Llegan pre-marcadas a la
+    pantalla; él decide si las conserva."""
+    marc = detectar_marcadores(snap)
+    bl = detectar_blancos(snap)
+    campos = marc["campos"] + bl["campos"]
+    if not campos:
+        return {"campos": [], "marcas": [], "motor": None}
+    motor = "mixto" if (marc["campos"] and bl["campos"]) else (marc["motor"] or bl["motor"])
+    return {"campos": afinar_campos(campos),
+            "marcas": marc["marcas"] + bl["marcas"],
+            "motor": motor}
 
 
 def _etiqueta_desde_contexto(previo: str, snap, i: int) -> str:
@@ -605,20 +646,6 @@ Responde ÚNICAMENTE con JSON válido, sin explicaciones ni markdown:
 - "grupo": agrupa los campos por bloque lógico ("Arrendador", "Arrendatario", "Inmueble", "Renta y depósito", "Vigencia", "Firma", "Testigos"). Usa pocos grupos y repítelos.
 - "tipo_input": "currency" solo para importes en cifra; "date" solo para fechas completas; "number" para cantidades; "textarea" para descripciones largas; "text" para el resto."""
 
-_SYSTEM_ETIQUETAS = """Eres un abogado mexicano experto en contratos. Recibes un contrato que ya tiene marcadores de variable con el formato {{id}}.
-
-Tu trabajo: para cada {{id}} que aparezca, deducir por el contexto qué dato hay que capturar ahí y darle una etiqueta clara, un tipo de dato y un grupo.
-
-Responde ÚNICAMENTE con JSON válido, sin explicaciones ni markdown:
-{"campos":[{"id":"id_exacto_del_marcador","label":"Etiqueta en español natural","tipo_input":"text|textarea|number|currency|date","grupo":"Nombre del bloque","ayuda":"pista corta, opcional","descartar":false}]}
-
-- Usa EXACTAMENTE los mismos id que ya vienen entre llaves. No inventes ids nuevos ni omitas ninguno.
-- "label": cómo se lo pedirías al agente inmobiliario (ej. "Nombre completo del arrendatario", "Renta mensual con letra").
-- "grupo": bloque lógico ("Arrendador", "Arrendatario", "Inmueble", "Renta y depósito", "Vigencia", "Firma", "Testigos"). Usa pocos grupos y repítelos.
-- "tipo_input": "currency" para importes en cifra; "date" para fechas; "number" para cantidades; "textarea" para descripciones largas; "text" para el resto.
-- "descartar": ponlo en true SOLO si ese marcador claramente no es un dato que el usuario deba capturar (por ejemplo una acotación editorial como [sic], una nota al pie o una referencia legal). En cualquier duda, false."""
-
-
 async def _detectar_ia_trozo(api_key: str, trozo: str, tipo: str, modelo: str):
     hint = f"El documento es un contrato de {tipo}.\n\n" if tipo else ""
     user = f"{hint}Contrato:\n<<<\n{trozo}\n>>>"
@@ -669,53 +696,20 @@ async def detectar_con_ia(api_key: str, texto: str, tipo: str = "",
     return campos, raws
 
 
-async def etiquetar_con_ia(api_key: str, texto_normalizado: str, campos: List[dict],
-                           tipo: str = "", modelo: str = MODELO_DEFAULT):
-    """Mejora label/tipo/grupo de campos que ya están marcados como {{id}}."""
-    hint = f"El documento es un contrato de {tipo}.\n\n" if tipo else ""
-    ids = ", ".join(c["id"] for c in campos)
-    trozo = texto_normalizado[:CHUNK_CHARS * 2]
-    user = (f"{hint}Marcadores presentes: {ids}\n\nContrato con marcadores:\n<<<\n{trozo}\n>>>")
-    txt, raw = await _claude(api_key, _SYSTEM_ETIQUETAS, user, 8000, modelo)
-    sugeridos = {c.get("id"): c for c in (_json_de_respuesta(txt).get("campos") or [])
-                 if isinstance(c, dict) and c.get("id")}
-    fuera = {cid for cid, s in sugeridos.items() if s.get("descartar") is True}
-    for c in campos:
-        s = sugeridos.get(c["id"])
-        if not s:
-            continue
-        label = (s.get("label") or "").strip().rstrip(":")
-        if label:
-            c["label"] = label
-        if s.get("tipo_input") in TIPOS_INPUT:
-            c["tipo_input"] = s["tipo_input"]
-        if (s.get("grupo") or "").strip():
-            c["grupo"] = s["grupo"].strip()
-        if (s.get("ayuda") or "").strip():
-            c["ayuda"] = s["ayuda"].strip()
-    if fuera and len(fuera) < len(campos):
-        campos = [c for c in campos if c["id"] not in fuera]
-    return campos, [raw]
-
-
 # ────────────────────────────────────────────────────────────────
 # ANCLAJE: verificar los literales de la IA contra el documento real
 # ────────────────────────────────────────────────────────────────
 
 def anclar_literales(snap: List[Dict[str, Any]], campos: List[dict]):
-    """Localiza cada literal en el documento y produce los spans a normalizar.
-
-    Se procesa de literal más largo a más corto para que "JUAN PÉREZ LÓPEZ" gane
-    sobre "JUAN PÉREZ". Un literal que no aparece tal cual se descarta: es la
-    garantía de que la IA no invente campos que luego no se pueden rellenar.
-    """
+    """Ubica en el documento los literales que propuso la IA y los convierte en
+    marcas. Un literal que no aparece tal cual se descarta: nada llega a la
+    pantalla si no se puede señalar con el dedo dónde está."""
     ocupados: Dict[int, List[Tuple[int, int]]] = {}
-    spans: Dict[int, List[Tuple[int, int, str]]] = {}
-    aceptados, descartados = [], []
+    marcas, aceptados, descartados = [], [], []
 
     def libre(i, ini, fin) -> bool:
-        for a, b in ocupados.get(i, []):
-            if ini < b and a < fin:
+        for a_, b_ in ocupados.get(i, []):
+            if ini < b_ and a_ < fin:
                 return False
         return True
 
@@ -729,13 +723,13 @@ def anclar_literales(snap: List[Dict[str, Any]], campos: List[dict]):
 
         rx = _regex_flexible(lit)
         hallazgos = []
-        for i, s in enumerate(snap):
-            for m in rx.finditer(s["texto"]):
+        for i, s_ in enumerate(snap):
+            for m in rx.finditer(s_["texto"]):
                 hallazgos.append((i, m.start(), m.end()))
         if not hallazgos:
             rx = re.compile(rx.pattern, re.IGNORECASE)
-            for i, s in enumerate(snap):
-                for m in rx.finditer(s["texto"]):
+            for i, s_ in enumerate(snap):
+                for m in rx.finditer(s_["texto"]):
                     hallazgos.append((i, m.start(), m.end()))
         if not hallazgos:
             descartados.append({"label": c.get("label"), "literal": lit,
@@ -746,21 +740,21 @@ def anclar_literales(snap: List[Dict[str, Any]], campos: List[dict]):
                                 "motivo": "aparece demasiadas veces"})
             continue
 
-        usables = [(i, a, b) for (i, a, b) in hallazgos if libre(i, a, b)]
+        usables = [(i, a_, b_) for (i, a_, b_) in hallazgos if libre(i, a_, b_)]
         if not usables:
             descartados.append({"label": c.get("label"), "literal": lit,
                                 "motivo": "contenido dentro de otro campo"})
             continue
 
-        for i, a, b in usables:
-            ocupados.setdefault(i, []).append((a, b))
-            spans.setdefault(i, []).append((a, b, "{{" + c["id"] + "}}"))
+        for i, a_, b_ in usables:
+            ocupados.setdefault(i, []).append((a_, b_))
+            marcas.append({"p": i, "ini": a_, "fin": b_, "campo": c["id"],
+                           "texto": snap[i]["texto"][a_:b_]})
         c = dict(c)
-        c["ocurrencias"] = len(usables)
-        c["ejemplo"] = lit[:120]
+        c.pop("literal", None)
         aceptados.append(c)
 
-    return aceptados, spans, descartados
+    return aceptados, marcas, descartados
 
 
 # ────────────────────────────────────────────────────────────────
@@ -832,9 +826,13 @@ def afinar_campos(campos: List[dict]) -> List[dict]:
 # NORMALIZACIÓN Y RELLENO
 # ────────────────────────────────────────────────────────────────
 
-def normalizar(doc, snap, spans: Dict[int, List[Tuple[int, int, str]]]) -> bytes:
-    """Reescribe el DOCX con los marcadores {{id}} en su lugar."""
-    for i, lista in spans.items():
+def normalizar(doc, snap, marcas: List[dict]) -> bytes:
+    """Reescribe el DOCX poniendo {{id}} en cada marca."""
+    por_parrafo: Dict[int, List[Tuple[int, int, str]]] = {}
+    for m in marcas:
+        por_parrafo.setdefault(m["p"], []).append(
+            (m["ini"], m["fin"], "{{" + m["campo"] + "}}"))
+    for i, lista in por_parrafo.items():
         aplicar_spans(snap[i]["runs"], lista)
     out = io.BytesIO()
     doc.save(out)
@@ -934,18 +932,116 @@ def previsualizar(content: bytes, valores: Optional[Dict[str, str]] = None,
 
 
 # ────────────────────────────────────────────────────────────────
-# ORQUESTADOR
+# VERIFICACIÓN Y CREACIÓN DE LA PLANTILLA
 # ────────────────────────────────────────────────────────────────
 
-async def analizar(content: bytes, tipo: str = "", api_key: str = "",
-                   modelo: str = MODELO_DEFAULT) -> Dict[str, Any]:
-    """Analiza un DOCX y devuelve la plantilla normalizada + los campos.
+def verificar_marcas(snap: List[Dict[str, Any]], marcas: List[dict],
+                     ids_validos: set) -> List[dict]:
+    """Contrato de integridad entre el navegador y el archivo.
 
-    {
-      "campos": [...], "plantilla": bytes, "motor": "marcadores|blancos|ia",
-      "texto_preview": str, "descartados": [...], "raws": [...]
-    }
+    El usuario marcó sobre lo que vio en pantalla; aquí comprobamos que el
+    documento diga exactamente eso en esa posición antes de reescribirlo. Si
+    algo no cuadra —otro archivo, otra versión, un índice fuera de rango— se
+    aborta en vez de escribir en el lugar equivocado.
     """
+    limpias = []
+    for m in marcas or []:
+        try:
+            p = int(m["p"]); ini = int(m["ini"]); fin = int(m["fin"])
+            campo = str(m["campo"])
+        except (KeyError, TypeError, ValueError):
+            raise ValueError("Una de las marcas llegó incompleta. Vuelve a abrir tu contrato.")
+        if campo not in ids_validos:
+            raise ValueError(f"La marca apunta a un campo que no existe ({campo}).")
+        if not (0 <= p < len(snap)):
+            raise ValueError("Tu contrato no coincide con el que marcaste. Vuelve a abrirlo.")
+        texto = snap[p]["texto"]
+        if not (0 <= ini < fin <= len(texto)):
+            raise ValueError("Una marca quedó fuera del párrafo. Vuelve a abrir tu contrato.")
+        esperado = m.get("texto")
+        if esperado is not None and texto[ini:fin] != esperado:
+            raise ValueError("El contenido del contrato cambió respecto a lo que marcaste. "
+                             "Vuelve a abrirlo y marca de nuevo.")
+        limpias.append({"p": p, "ini": ini, "fin": fin, "campo": campo,
+                        "texto": texto[ini:fin]})
+
+    limpias.sort(key=lambda m: (m["p"], m["ini"]))
+    for a_, b_ in zip(limpias, limpias[1:]):
+        if a_["p"] == b_["p"] and b_["ini"] < a_["fin"]:
+            raise ValueError("Hay dos campos encimados sobre el mismo texto. "
+                             "Quita uno y vuelve a intentarlo.")
+    return limpias
+
+
+def crear_plantilla(content: bytes, campos: List[dict], marcas: List[dict]):
+    """Convierte el contrato del usuario en plantilla usando SUS marcas.
+
+    Devuelve (plantilla_bytes, campos_finales). Solo sobreviven los campos que
+    de verdad quedaron escritos como {{id}} en el archivo: si algo no se ancló,
+    no se muestra en el formulario.
+    """
+    campos, mapa = _limpiar_campos(campos)
+    if not campos:
+        raise ValueError("Marca al menos un dato variable antes de crear tu machote.")
+
+    # El navegador trabaja con sus propios ids; aquí se traducen a los
+    # definitivos antes de tocar el archivo.
+    marcas = [dict(m, campo=mapa.get(str(m.get("campo")), str(m.get("campo"))))
+              for m in (marcas or []) if isinstance(m, dict)]
+
+    doc = cargar_docx(content)
+    snap = snapshot(doc)
+    marcas = verificar_marcas(snap, marcas, {c["id"] for c in campos})
+    if not marcas:
+        raise ValueError("Marca al menos un dato variable antes de crear tu machote.")
+
+    # Lo que de verdad quedó marcado manda sobre lo que dijo el navegador.
+    for c in campos:
+        suyas = [m for m in marcas if m["campo"] == c["id"]]
+        c["ocurrencias"] = len(suyas)
+        if suyas and not c.get("ejemplo"):
+            c["ejemplo"] = suyas[0]["texto"][:160]
+
+    plantilla = normalizar(doc, snap, marcas)
+    presentes = set(campos_en_plantilla(plantilla))
+    campos = [c for c in campos if c["id"] in presentes]
+    if not campos:
+        raise ValueError("No pudimos preparar la plantilla a partir de este archivo.")
+    return plantilla, afinar_campos(campos)
+
+
+def _limpiar_campos(campos: List[dict]) -> Tuple[List[dict], Dict[str, str]]:
+    """Normaliza lo que manda el navegador y devuelve (campos, mapa de ids).
+
+    Los ids definitivos se generan aquí a partir de la etiqueta que escribió el
+    usuario: el navegador propone, el backend dispone. El mapa permite traducir
+    las marcas, que vienen con los ids del navegador.
+    """
+    out, vistos, mapa = [], set(), {}
+    for c in campos or []:
+        if not isinstance(c, dict) or not c.get("id"):
+            continue
+        original = str(c["id"])
+        cid = slug_campo(str(c.get("label") or original), vistos)
+        mapa[original] = cid
+        out.append({
+            "id": cid,
+            "label": (str(c.get("label") or "").strip().rstrip(":") or humanizar(cid))[:70],
+            "tipo_input": c.get("tipo_input") if c.get("tipo_input") in TIPOS_INPUT else "text",
+            "grupo": (str(c.get("grupo") or "").strip() or "Datos del contrato")[:40],
+            "ayuda": str(c.get("ayuda") or "").strip()[:120],
+            "ejemplo": str(c.get("ejemplo") or "").strip()[:160],
+            "ocurrencias": int(c.get("ocurrencias") or 1),
+        })
+    return out, mapa
+
+
+async def sugerir_ia(content: bytes, tipo: str = "", api_key: str = "",
+                     modelo: str = MODELO_DEFAULT) -> Dict[str, Any]:
+    """Acelerador opcional: la IA lee el contrato y PROPONE marcas. No guarda
+    nada — todo aterriza en la pantalla para que el usuario lo revise."""
+    if not api_key:
+        raise ValueError("Las sugerencias con IA no están disponibles en este momento.")
     doc = cargar_docx(content)
     snap = snapshot(doc)
     texto = texto_completo(snap)
@@ -953,56 +1049,24 @@ async def analizar(content: bytes, tipo: str = "", api_key: str = "",
         raise ValueError("El documento no tiene texto legible. "
                          "Si lo escaneaste, súbelo como Word editable.")
 
-    raws: List[dict] = []
-    descartados: List[dict] = []
-
-    marc = detectar_marcadores(snap)
-    blancos = detectar_blancos(snap)
-
-    if marc["campos"] or blancos["campos"]:
-        campos = marc["campos"] + blancos["campos"]
-        spans = dict(marc["spans"])
-        for i, lista in blancos["spans"].items():
-            spans.setdefault(i, []).extend(lista)
-        motor = "mixto" if (marc["campos"] and blancos["campos"]) \
-            else (marc["motor"] or blancos["motor"])
-        plantilla = normalizar(doc, snap, spans)
-        if api_key:
-            try:
-                texto_norm = texto_completo(snapshot(cargar_docx(plantilla)))
-                campos, r = await etiquetar_con_ia(api_key, texto_norm, campos, tipo, modelo)
-                raws += r
-            except Exception as e:
-                print(f"[machotes] etiquetado IA omitido: {e}")
-    else:
-        if not api_key:
-            raise ValueError("No encontramos variables marcadas en tu machote y el "
-                             "análisis con IA no está disponible en este momento.")
-        candidatos, raws = await detectar_con_ia(api_key, texto, tipo, modelo)
-        if not candidatos:
-            raise ValueError("La IA no encontró datos variables en este documento. "
-                             "Revisa que sea un contrato y no un instructivo.")
-        campos, spans, descartados = anclar_literales(snap, candidatos)
-        if not campos:
-            raise ValueError("Detectamos variables pero no pudimos ubicarlas en el "
-                             "archivo. Vuelve a intentarlo.")
-        motor = "ia"
-        plantilla = normalizar(doc, snap, spans)
-
-    campos = afinar_campos(campos)
-
-    # Verificación dura: solo sobreviven los campos que de verdad quedaron
-    # escritos como {{id}} en la plantilla. Si algo no se ancló, no se muestra.
-    presentes = set(campos_en_plantilla(plantilla))
-    campos = [c for c in campos if c["id"] in presentes]
+    candidatos, raws = await detectar_con_ia(api_key, texto, tipo, modelo)
+    if not candidatos:
+        raise ValueError("La IA no encontró datos variables en este documento. "
+                         "Márcalos tú y quedará igual de bien.")
+    campos, marcas, descartados = anclar_literales(snap, candidatos)
     if not campos:
-        raise ValueError("No pudimos preparar la plantilla a partir de este archivo.")
+        raise ValueError("La IA propuso campos pero no pudimos ubicarlos con exactitud "
+                         "en tu archivo. Márcalos tú.")
+    return {"campos": afinar_campos(campos), "marcas": marcas,
+            "descartados": descartados, "raws": raws}
 
-    return {
-        "campos": campos,
-        "plantilla": plantilla,
-        "motor": motor,
-        "texto_preview": texto[:900],
-        "descartados": descartados,
-        "raws": raws,
-    }
+
+def abrir(content: bytes) -> Dict[str, Any]:
+    """Deja el contrato listo para pintarse y marcarse en el navegador."""
+    doc = cargar_docx(content)
+    snap = snapshot(doc)
+    parrafos = para_frontend(snap)
+    if not parrafos:
+        raise ValueError("El documento no tiene texto legible. "
+                         "Si lo escaneaste, súbelo como Word editable.")
+    return {"parrafos": parrafos, "sugerencias": sugerencias(snap)}

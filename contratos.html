@@ -219,21 +219,74 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 #mach-campos-form .frow{grid-template-columns:1fr 1fr}
 @media(max-width:600px){#mach-campos-form .frow{grid-template-columns:1fr}}
 
-/* ── Resumen de la detección ── */
+/* ── Resumen ── */
 .mach-sum{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:var(--r);background:var(--sky-canvas);border:1px solid var(--line);margin-bottom:16px}
 .mach-sum-ico{color:var(--sky-blue);flex-shrink:0;margin-top:1px}
 .mach-sum-txt{font-size:var(--fs-sm);color:var(--ink-2);line-height:1.5}
 .mach-sum-txt b{font-weight:700;color:var(--navy)}
 .mach-chip{display:inline-block;margin-top:6px;padding:3px 10px;border-radius:var(--r-pill);background:var(--bone);border:1px solid var(--line-2);font-size:var(--fs-caption);font-weight:600;color:var(--ink-3)}
-
 .mach-warn{display:flex;gap:10px;padding:12px 14px;border-radius:var(--r2);background:var(--warn-soft);border:1px solid var(--line);margin-bottom:16px;font-size:var(--fs-xs);color:var(--ink-2);line-height:1.5}
 .mach-warn-ico{color:var(--warn);flex-shrink:0}
 
-/* ── Grupos y filas de revisión ── */
+/* ── Barra de marcado ── */
+.mach-bar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 0 14px;margin-bottom:14px;border-bottom:1px solid var(--silver2);background:var(--wh)}
+.mach-bar-txt{flex:1;min-width:180px;font-size:var(--fs-xs);color:var(--ink-3);line-height:1.45}
+.mach-bar-txt b{color:var(--navy);font-weight:700}
+.mach-bar-btns{display:flex;gap:8px;flex-shrink:0}
+.mini-btn{display:inline-flex;align-items:center;gap:7px;padding:0 16px;height:var(--h);border-radius:var(--r-pill);border:none;font-family:inherit;font-size:var(--fs-sm);font-weight:600;cursor:pointer;transition:background .15s}
+.mini-btn-pri{background:var(--forest);color:var(--paper)}
+.mini-btn-pri:hover{background:var(--forest-2)}
+.mini-btn-sec{background:var(--sky-navy);color:var(--paper)}
+.mini-btn-sec:hover{background:var(--sky-navy-mid)}
+.mini-btn:disabled{background:var(--silver2);color:var(--mut);cursor:not-allowed}
+@media(max-width:600px){.mach-bar-btns{width:100%}.mini-btn{flex:1;justify-content:center}}
+
+/* ── El contrato en pantalla ── */
+.mach-doc{max-height:56vh;overflow-y:auto;padding:26px 28px;border:1px solid var(--line);border-radius:var(--r);background:var(--bone);user-select:text;-webkit-user-select:text}
+@media(max-width:600px){.mach-doc{padding:18px 16px;max-height:52vh}}
+.doc-p{font-size:var(--fs-sm);line-height:1.95;color:var(--ink-2);margin:0 0 12px;cursor:text}
+.doc-p b{font-weight:700;color:var(--navy)}
+.doc-p i{font-style:italic}
+.doc-p u{text-decoration:underline}
+.doc-zona{display:flex;align-items:center;gap:10px;margin:4px 0 14px;font-size:var(--fs-caption);font-weight:600;color:var(--mut)}
+.doc-zona::after{content:"";flex:1;height:1px;background:var(--line)}
+
+.mk{border-radius:var(--r-xs);background:var(--forest-soft);box-shadow:inset 0 -2px 0 var(--sky-blue);cursor:pointer;padding:1px 0}
+.mk:hover{background:var(--sky-canvas)}
+.mk-tag{display:inline-block;margin:0 2px 0 5px;padding:1px 7px;border-radius:var(--r-pill);background:var(--sky-blue);color:var(--paper);font-size:var(--fs-caption);font-weight:600;line-height:1.6;vertical-align:middle;user-select:none;-webkit-user-select:none}
+
+/* ── Globo para nombrar el campo ── */
+.mach-pop{position:fixed;z-index:60;width:330px;max-width:calc(100vw - 24px);padding:16px;border-radius:var(--r);background:var(--wh);border:1px solid var(--line-2);box-shadow:var(--shadow-lg)}
+@media(max-width:600px){.mach-pop{position:fixed;left:12px;right:12px;bottom:12px;top:auto;width:auto}}
+.mach-pop-sel{padding:8px 10px;border-radius:var(--r-sm);background:var(--paper-2);font-size:var(--fs-xs);color:var(--navy);font-weight:600;margin-bottom:12px;max-height:64px;overflow:auto;line-height:1.5}
+.mach-pop-lbl{font-size:var(--fs-label-3);font-weight:600;letter-spacing:.05em;color:var(--mut);display:block;margin-bottom:5px}
+.mach-pop input,.mach-pop select{background:var(--bone);border:1px solid var(--line-2);border-radius:var(--r);height:var(--h);padding:0 var(--sp-3);font-family:inherit;font-size:var(--fs-sm);color:var(--ink);outline:none;width:100%;margin-bottom:10px}
+.mach-pop input:focus,.mach-pop select:focus{border-color:var(--forest);box-shadow:var(--focus)}
+.mach-pop-chk{display:flex;align-items:flex-start;gap:8px;font-size:var(--fs-xs);color:var(--ink-3);line-height:1.45;margin-bottom:12px;cursor:pointer}
+.mach-pop-chk input{width:16px;height:16px;margin:2px 0 0;accent-color:var(--sky-blue);flex-shrink:0}
+.mach-pop-acc{display:flex;gap:8px}
+.mach-pop-acc button{flex:1;height:var(--h);border-radius:var(--r-pill);border:none;font-family:inherit;font-size:var(--fs-sm);font-weight:600;cursor:pointer}
+.mach-pop-ok{background:var(--forest);color:var(--paper)}
+.mach-pop-ok:hover{background:var(--forest-2)}
+.mach-pop-no{background:var(--paper-2);color:var(--ink-3)}
+.mach-pop-del{background:var(--danger-soft);color:var(--danger)}
+.mach-pop-err{font-size:var(--fs-xs);color:var(--danger);margin-bottom:10px;display:none}
+.mach-pop-err.show{display:block}
+
+/* ── Lista de campos marcados ── */
+.mach-marcados{margin-top:16px;padding-top:14px;border-top:1px solid var(--silver2)}
+.mach-marcados-ttl{font-size:var(--fs-label-3);font-weight:700;letter-spacing:.03em;color:var(--mut);margin-bottom:10px}
+.mach-pills{display:flex;flex-wrap:wrap;gap:8px}
+.mach-pill{display:inline-flex;align-items:center;gap:7px;padding:6px 8px 6px 12px;border-radius:var(--r-pill);background:var(--paper-2);border:1px solid var(--line);font-size:var(--fs-xs);color:var(--navy);font-weight:600}
+.mach-pill-n{color:var(--mut);font-weight:600}
+.mach-pill button{display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;border:none;border-radius:var(--r-pill);background:none;color:var(--mut);cursor:pointer}
+.mach-pill button:hover{background:var(--danger);color:var(--paper)}
+.mach-vacio{padding:22px 16px;text-align:center;font-size:var(--fs-xs);color:var(--mut);line-height:1.6}
+
+/* ── Grupos y filas de ajuste ── */
 .mach-grp{margin-bottom:18px}
 .mach-grp-ttl{display:flex;align-items:center;gap:8px;font-size:var(--fs-label-3);font-weight:700;letter-spacing:.03em;color:var(--mut);padding-bottom:8px;border-bottom:1px solid var(--silver2);margin-bottom:12px}
 .mach-grp-n{margin-left:auto;font-weight:600;color:var(--mut);letter-spacing:0}
-
 .mach-row{border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:10px;background:var(--bone);transition:border-color .15s}
 .mach-row:hover{border-color:var(--line-2)}
 .mach-row.off{background:var(--paper-2);border-style:dashed}
@@ -256,7 +309,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .sec-btn:disabled{background:var(--silver2);color:var(--mut);cursor:not-allowed}
 .sec-btn svg{flex-shrink:0}
 
-/* ── Vista previa del contrato ── */
+/* ── Vista previa ── */
 .mach-prev{max-height:460px;overflow-y:auto;padding:22px 24px;border:1px solid var(--line);border-radius:var(--r);background:var(--bone)}
 .mach-prev p{font-size:var(--fs-sm);line-height:1.7;color:var(--ink-2);margin:0 0 10px}
 .mach-hl{background:var(--forest-soft);color:var(--navy);font-weight:600;border-radius:var(--r-xs);padding:0 3px}
@@ -972,14 +1025,13 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 
     <div class="card" id="mach-card-subir">
       <div class="card-title">Tu contrato, tu formato</div>
-      <div class="f-note" style="margin-bottom:14px">Sube el contrato que ya usas — de compraventa, arrendamiento, prestación de servicios, el que sea. Broquer lo lee, detecta qué datos cambian en cada operación y te arma el formulario. Lo llenas en dos minutos y cada vez que lo necesites vuelve a estar listo, sin subirlo otra vez.</div>
+      <div class="f-note" style="margin-bottom:14px">Sube el contrato que ya usas. Broquer lo abre aquí mismo y tú vas señalando con el dedo qué datos cambian en cada operación: el nombre del cliente, el monto, la fecha. Les pones nombre, creas tu machote, y de ahí en adelante solo llenas el formulario. Nunca vamos a tocar una sola palabra que tú no hayas marcado.</div>
 
       <div class="mach-subtabs">
-        <div class="mach-subtab active" id="mach-subtab-nuevo" onclick="setMachSubtab('nuevo')">Subir nuevo machote</div>
+        <div class="mach-subtab active" id="mach-subtab-nuevo" onclick="setMachSubtab('nuevo')">Crear un machote</div>
         <div class="mach-subtab" id="mach-subtab-guardados" onclick="setMachSubtab('guardados')">Mis machotes guardados</div>
       </div>
 
-      <!-- ── SUBIR NUEVO ── -->
       <div id="mach-panel-nuevo">
         <div class="frow one" style="margin-bottom:12px">
           <div class="f">
@@ -992,7 +1044,6 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
           <div class="f">
             <label>Tipo de contrato <span class="opt-badge">opcional</span></label>
             <input type="text" id="mach-tipo" placeholder="Ej. Compraventa, Arrendamiento, Prestación de servicios..."/>
-            <div class="f-note">Decírnoslo ayuda a que la detección sea más precisa.</div>
           </div>
         </div>
 
@@ -1008,44 +1059,74 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
         </div>
 
         <div class="mach-hint">
-          <b>Funciona de las dos formas.</b> Si tu machote ya trae las variables marcadas (<b>{{campo}}</b>, <b>[CAMPO]</b>, <b>&lt;&lt;campo&gt;&gt;</b> o líneas <b>___</b>), las usamos tal cual. Y si subes un contrato real ya lleno, con nombres y montos de una operación pasada, la IA lo lee completo y descubre sola qué datos son los que cambian.
+          Da lo mismo cómo esté tu machote. Si ya traes las variables marcadas (<b>{{campo}}</b>, <b>[CAMPO]</b> o líneas <b>___</b>), llega pre-marcado y solo confirmas. Si subes un contrato real de una operación pasada, con nombres y montos de verdad, lo marcas tú en dos minutos.
         </div>
 
-        <button class="gen-btn" id="mach-analizar-btn" style="margin-top:16px" onclick="subirYAnalizarMachote()">
-          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.8 15.9L9 18.8l-.8-2.9a4.5 4.5 0 00-3.1-3.1L2.3 12l2.8-.8a4.5 4.5 0 003.1-3.1L9 5.3l.8 2.8a4.5 4.5 0 003.1 3.1l2.8.8-2.8.8a4.5 4.5 0 00-3.1 3.1zM18.3 8.7L18 9.8l-.3-1a3.4 3.4 0 00-2.4-2.5L14.3 6l1-.3a3.4 3.4 0 002.4-2.4L18 2.3l.3 1a3.4 3.4 0 002.4 2.4l1 .3-1 .3a3.4 3.4 0 00-2.4 2.4z"/></svg>
-          Analizar mi contrato
+        <button class="gen-btn" id="mach-abrir-btn" style="margin-top:16px" onclick="abrirEnBroquer()">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17V7a2 2 0 012-2h6l2 2h4a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+          Abrir mi contrato
         </button>
-        <div class="loading" id="mach-loading"><div class="spinner"></div><span id="mach-loading-txt">Leyendo tu contrato...</span></div>
+        <div class="loading" id="mach-loading"><div class="spinner"></div><span id="mach-loading-txt">Abriendo tu contrato...</span></div>
         <div class="err" id="mach-err-nuevo"></div>
       </div>
 
-      <!-- ── MIS MACHOTES GUARDADOS ── -->
       <div id="mach-panel-guardados" style="display:none">
         <div id="mach-lista"></div>
         <div class="err" id="mach-err-lista"></div>
       </div>
     </div>
 
-    <!-- ── REVISIÓN DE LA DETECCIÓN ── -->
+    <!-- ── MARCADO ── -->
+    <div class="card" id="mach-marcar-card" style="display:none">
+      <div class="mach-form-head">
+        <div class="mach-form-head-ttl" id="mach-marcar-ttl">Señala los datos que cambian</div>
+        <button class="mach-form-back" onclick="cerrarMachote()">Cancelar</button>
+      </div>
+
+      <div class="mach-bar">
+        <div class="mach-bar-txt" id="mach-bar-txt">Selecciona un dato en el contrato y ponle nombre. <b>Nada se toca si tú no lo marcas.</b></div>
+        <div class="mach-bar-btns">
+          <button class="mini-btn mini-btn-sec" id="mach-sug-btn" onclick="sugerirConIA()">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.8 15.9L9 18.8l-.8-2.9a4.5 4.5 0 00-3.1-3.1L2.3 12l2.8-.8a4.5 4.5 0 003.1-3.1L9 5.3l.8 2.8a4.5 4.5 0 003.1 3.1l2.8.8-2.8.8a4.5 4.5 0 00-3.1 3.1z"/></svg>
+            Sugerir
+          </button>
+          <button class="mini-btn mini-btn-pri" id="mach-crear-btn" onclick="crearMachote()" disabled>
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+            Crear machote
+          </button>
+        </div>
+      </div>
+
+      <div class="mach-doc" id="mach-doc"></div>
+
+      <div class="mach-marcados">
+        <div class="mach-marcados-ttl" id="mach-marcados-ttl">Campos marcados</div>
+        <div id="mach-pills"></div>
+      </div>
+
+      <div class="loading" id="mach-marcar-loading"><div class="spinner"></div><span id="mach-marcar-loading-txt">Trabajando...</span></div>
+      <div class="err" id="mach-err-marcar"></div>
+    </div>
+
+    <!-- ── AJUSTE FINO DE CAMPOS ── -->
     <div class="card" id="mach-rev-card" style="display:none">
       <div class="mach-form-head">
-        <div class="mach-form-head-ttl" id="mach-rev-ttl">Revisa lo que detectamos</div>
-        <button class="mach-form-back" onclick="cerrarMachote()">Elegir otro</button>
+        <div class="mach-form-head-ttl" id="mach-rev-ttl">Ajusta tus campos</div>
+        <button class="mach-form-back" onclick="abrirFormulario()">Volver</button>
       </div>
       <div id="mach-rev-sum"></div>
-      <div id="mach-rev-warn"></div>
       <div id="mach-rev-campos"></div>
       <div class="mach-actions">
         <button class="gen-btn" id="mach-rev-btn" onclick="guardarRevision()">
           <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
-          Guardar y llenar
+          Guardar cambios
         </button>
       </div>
       <div class="loading" id="mach-rev-loading"><div class="spinner"></div><span>Guardando tus ajustes...</span></div>
       <div class="err" id="mach-err-rev"></div>
     </div>
 
-    <!-- ── FORMULARIO DINÁMICO ── -->
+    <!-- ── FORMULARIO ── -->
     <div class="card" id="mach-form-card" style="display:none">
       <div class="mach-form-head">
         <div class="mach-form-head-ttl" id="mach-form-titulo">Completa los datos</div>
@@ -1080,6 +1161,9 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
       <div class="f-note" style="margin-bottom:12px">Lo resaltado en azul es lo que capturaste. Lo marcado en rosa son los datos que te faltan: si los dejas así, el Word saldrá con una raya para llenarla a mano.</div>
       <div class="mach-prev" id="mach-prev-body"></div>
     </div>
+
+    <!-- ── GLOBO PARA NOMBRAR EL CAMPO ── -->
+    <div class="mach-pop" id="mach-pop" style="display:none"></div>
 
   </div><!-- /form-machote -->
 
@@ -1155,11 +1239,22 @@ function setTipo(tipo){
   }
 }
 
-// ── MI PROPIO MACHOTE ──
+// ══════════════════════════════════════════════════════════════
+// MI PROPIO MACHOTE
+// El usuario abre su contrato, selecciona con el mouse o el dedo los datos
+// que cambian, les pone nombre y crea el machote. Los offsets de cada marca
+// son sobre el texto plano del párrafo: el mismo sistema de coordenadas que
+// usa el backend sobre los runs del DOCX.
+// ══════════════════════════════════════════════════════════════
 const API_M = 'https://api.broquer.app';
 let machoteFile = null;
 let machotesCargados = false;
-let MACH = { id:null, titulo:'', tipo:'', campos:[], motor:null, descartados:[] };
+
+// Machote guardado que se está llenando
+let MACH = { id:null, titulo:'', tipo:'', campos:[] };
+// Sesión de marcado en curso
+let DOC = { file:null, titulo:'', tipo:'', parrafos:[], campos:[], marcas:[], seq:0 };
+let PEND = null;   // selección esperando nombre
 
 const TIPOS_CAMPO = [
   ['text',     'Texto'],
@@ -1168,12 +1263,7 @@ const TIPOS_CAMPO = [
   ['number',   'Número'],
   ['date',     'Fecha'],
 ];
-const MOTOR_TXT = {
-  marcadores: 'Usamos las variables que tú ya habías marcado',
-  blancos:    'Detectamos las líneas en blanco de tu formato',
-  mixto:      'Combinamos tus variables marcadas con las líneas en blanco',
-  ia:         'Tu contrato no traía variables marcadas: la IA las dedujo leyéndolo completo',
-};
+const ZONAS = { encabezado:'Encabezado del documento', pie:'Pie de página' };
 
 async function machHeaders(){
   let tok = null;
@@ -1183,6 +1273,7 @@ async function machHeaders(){
 }
 function machShow(id, on){ const el = document.getElementById(id); if(el) el.style.display = on ? 'block' : 'none'; }
 function machScroll(id){ document.getElementById(id)?.scrollIntoView({behavior:'smooth', block:'start'}); }
+function escRegex(s){ return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
 function setMachSubtab(sub){
   document.getElementById('mach-subtab-nuevo').classList.toggle('active', sub==='nuevo');
@@ -1193,7 +1284,7 @@ function setMachSubtab(sub){
   if(sub==='guardados') cargarMisMachotes();
 }
 
-// ── Selección de archivo ──
+// ── Archivo ──
 function aceptarMachFile(f){
   if(!f) return false;
   if(!f.name.toLowerCase().endsWith('.docx')){
@@ -1201,7 +1292,7 @@ function aceptarMachFile(f){
     return false;
   }
   if(f.size > 12*1024*1024){
-    mostrarErr('mach-err-nuevo', 'Tu machote pesa más de 12 MB. Quítale las imágenes pesadas y vuelve a subirlo.');
+    mostrarErr('mach-err-nuevo', 'Tu contrato pesa más de 12 MB. Quítale las imágenes pesadas y vuelve a subirlo.');
     return false;
   }
   machoteFile = f;
@@ -1220,58 +1311,447 @@ function limpiarMachFile(){
   document.getElementById('mach-file-chip').classList.remove('show');
 }
 
-// ── Subir y analizar ──
-let machTicker = null;
-function machTickerStart(){
-  const pasos = ['Leyendo tu contrato...', 'Identificando qué datos cambian...',
-                 'Agrupando los campos...', 'Armando tu formulario...'];
-  let i = 0;
-  const el = document.getElementById('mach-loading-txt');
-  if(el) el.textContent = pasos[0];
-  machTicker = setInterval(() => { i = Math.min(i+1, pasos.length-1); if(el) el.textContent = pasos[i]; }, 6000);
-}
-function machTickerStop(){ if(machTicker){ clearInterval(machTicker); machTicker = null; } }
-
-async function subirYAnalizarMachote(){
+// ── Abrir el contrato para marcarlo ──
+async function abrirEnBroquer(){
   ocultarErr('mach-err-nuevo');
   const titulo = gv('mach-titulo');
-  const tipo = gv('mach-tipo');
-
   if(!titulo){ mostrarErr('mach-err-nuevo', 'Ponle un título a tu machote para poder identificarlo después.'); return; }
   if(!machoteFile){ mostrarErr('mach-err-nuevo', 'Selecciona tu archivo .docx.'); return; }
 
-  const btn = document.getElementById('mach-analizar-btn');
+  const btn = document.getElementById('mach-abrir-btn');
   btn.disabled = true;
   document.getElementById('mach-loading').classList.add('show');
-  machTickerStart();
-
   try{
     const fd = new FormData();
     fd.append('file', machoteFile);
-    fd.append('titulo', titulo);
-    if(tipo) fd.append('tipo', tipo);
-
     const headers = await machHeaders();
-    const res = await fetch(`${API_M}/contrato/machote/subir`, { method:'POST', headers, body: fd });
+    const res = await fetch(`${API_M}/contrato/machote/abrir`, { method:'POST', headers, body: fd });
     if(!res.ok){
       const j = await res.json().catch(()=>({}));
-      throw new Error(j.detail || 'No se pudo analizar tu machote.');
+      throw new Error(j.detail || 'No pudimos abrir tu contrato.');
     }
     const data = await res.json();
-    MACH = { id:data.id, titulo:data.titulo, tipo:data.tipo, campos:data.campos||[],
-             motor:data.motor, descartados:data.descartados||[] };
+    DOC = { file:machoteFile, titulo, tipo:gv('mach-tipo'),
+            parrafos:data.parrafos || [], campos:[], marcas:[], seq:0 };
 
+    // Lo que ya venía marcado en su Word llega listo, sin adivinar nada.
+    const sug = data.sugerencias || {};
+    if((sug.campos || []).length) adoptarSugerencias(sug.campos, sug.marcas);
+
+    abrirMarcado();
+  } catch(e){
+    mostrarErr('mach-err-nuevo', e.message || 'No pudimos abrir tu contrato. Verifica tu conexión.');
+  } finally {
+    btn.disabled = false;
+    document.getElementById('mach-loading').classList.remove('show');
+  }
+}
+
+function adoptarSugerencias(campos, marcas){
+  const mapa = {};
+  campos.forEach(c => {
+    const id = 'f' + (++DOC.seq);
+    mapa[c.id] = id;
+    DOC.campos.push({ id, label:c.label || c.id, tipo_input:c.tipo_input || 'text',
+                      grupo:c.grupo || 'Datos del contrato' });
+  });
+  (marcas || []).forEach(m => {
+    if(!mapa[m.campo]) return;
+    if(chocaCon(m.p, m.ini, m.fin)) return;
+    DOC.marcas.push({ p:m.p, ini:m.ini, fin:m.fin, campo:mapa[m.campo], texto:m.texto });
+  });
+  DOC.campos = DOC.campos.filter(c => DOC.marcas.some(m => m.campo === c.id));
+  DOC.campos.forEach(c => {
+    if(!c.ejemplo){
+      const m = DOC.marcas.find(x => x.campo === c.id);
+      if(m) c.ejemplo = m.texto;
+    }
+  });
+}
+
+function abrirMarcado(){
+  ['mach-form-card','mach-prev-card','mach-rev-card'].forEach(id => machShow(id, false));
+  ocultarErr('mach-err-marcar');
+  document.getElementById('mach-marcar-ttl').textContent = 'Señala los datos que cambian — ' + DOC.titulo;
+  machShow('mach-marcar-card', true);
+  renderDoc();
+  machScroll('mach-marcar-card');
+}
+
+// ── Pintar el contrato ──
+function renderDoc(){
+  let html = '', zona = 'cuerpo';
+  DOC.parrafos.forEach(p => {
+    if(p.zona !== zona){
+      zona = p.zona;
+      if(ZONAS[zona]) html += `<div class="doc-zona">${ZONAS[zona]}</div>`;
+    }
+    html += renderParrafo(p);
+  });
+  document.getElementById('mach-doc').innerHTML = html;
+  renderPills();
+  const n = DOC.campos.length;
+  document.getElementById('mach-crear-btn').disabled = n === 0;
+  document.getElementById('mach-bar-txt').innerHTML = n
+    ? `<b>${n} campo${n===1?'':'s'} marcado${n===1?'':'s'}.</b> Sigue señalando los que falten, o crea tu machote.`
+    : 'Selecciona un dato en el contrato y ponle nombre. <b>Nada se toca si tú no lo marcas.</b>';
+}
+
+function runEn(p, off){
+  let acc = 0;
+  for(const r of p.runs){
+    if(off >= acc && off < acc + r.t.length) return r;
+    acc += r.t.length;
+  }
+  return null;
+}
+function envolver(txt, r){
+  let h = escHtml(txt);
+  if(r && r.b) h = '<b>' + h + '</b>';
+  if(r && r.k) h = '<i>' + h + '</i>';
+  if(r && r.u) h = '<u>' + h + '</u>';
+  return h;
+}
+function campoDe(id){ return DOC.campos.find(c => c.id === id); }
+
+function renderParrafo(p){
+  const marcas = DOC.marcas.filter(m => m.p === p.i).sort((a,b) => a.ini - b.ini);
+  const cortes = new Set([0, p.txt.length]);
+  let acc = 0;
+  p.runs.forEach(r => { cortes.add(acc); acc += r.t.length; cortes.add(acc); });
+  marcas.forEach(m => { cortes.add(m.ini); cortes.add(m.fin); });
+  const pts = [...cortes].filter(x => x >= 0 && x <= p.txt.length).sort((a,b) => a-b);
+
+  let html = '', actual = null, buf = '';
+  const cerrar = () => {
+    if(!buf) return;
+    if(actual){
+      const c = campoDe(actual.campo);
+      const idx = DOC.marcas.indexOf(actual);
+      html += `<span class="mk" data-m="${idx}" onclick="clicMarca(event,${idx})">${buf}<span class="mk-tag" data-tag>${escHtml(c ? c.label : '')}</span></span>`;
+    } else html += buf;
+    buf = '';
+  };
+  for(let k = 0; k < pts.length - 1; k++){
+    const ini = pts[k], fin = pts[k+1];
+    if(fin <= ini) continue;
+    const m = marcas.find(x => x.ini <= ini && fin <= x.fin) || null;
+    if(m !== actual){ cerrar(); actual = m; }
+    buf += envolver(p.txt.slice(ini, fin), runEn(p, ini));
+  }
+  cerrar();
+  const align = p.align && p.align !== 'left' ? ` style="text-align:${p.align}"` : '';
+  return `<div class="doc-p" data-p="${p.i}"${align}>${html}</div>`;
+}
+
+function renderPills(){
+  const cont = document.getElementById('mach-pills');
+  document.getElementById('mach-marcados-ttl').textContent =
+    DOC.campos.length ? `Campos marcados (${DOC.campos.length})` : 'Campos marcados';
+  if(!DOC.campos.length){
+    cont.innerHTML = '<div class="mach-vacio">Todavía no marcas nada.<br/>Selecciona en el contrato de arriba el primer dato que cambie — por ejemplo el nombre de tu cliente — y ponle nombre.</div>';
+    return;
+  }
+  cont.innerHTML = DOC.campos.map(c => {
+    const n = DOC.marcas.filter(m => m.campo === c.id).length;
+    return `<span class="mach-pill">${escHtml(c.label)}${n>1?`<span class="mach-pill-n">×${n}</span>`:''}
+      <button type="button" onclick="quitarCampo('${c.id}')" title="Quitar"><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 18L18 6M6 6l12 12"/></svg></button></span>`;
+  }).join('');
+}
+
+// ── Coordenadas: del DOM al texto plano del párrafo ──
+function offsetEn(cont, node, off){
+  if(node.nodeType !== 3){
+    const hijo = node.childNodes[off] || node.childNodes[node.childNodes.length-1];
+    const t = hijo ? document.createTreeWalker(hijo, NodeFilter.SHOW_TEXT).nextNode() : null;
+    if(!t) return -1;
+    node = t; off = 0;
+  }
+  let n = 0;
+  const w = document.createTreeWalker(cont, NodeFilter.SHOW_TEXT, {
+    acceptNode: t => (t.parentElement && t.parentElement.closest('[data-tag]'))
+      ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+  });
+  let t;
+  while((t = w.nextNode())){
+    if(t === node) return n + off;
+    n += t.nodeValue.length;
+  }
+  return -1;
+}
+function parrafoDe(i){ return DOC.parrafos.find(p => p.i === i); }
+function chocaCon(p, ini, fin, exceptoCampo){
+  return DOC.marcas.some(m => m.p === p && ini < m.fin && m.ini < fin && m.campo !== exceptoCampo);
+}
+
+// ── El usuario seleccionó texto ──
+function onSeleccion(){
+  const card = document.getElementById('mach-marcar-card');
+  if(!card || card.style.display === 'none') return;
+  const sel = window.getSelection();
+  if(!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+
+  const r = sel.getRangeAt(0);
+  const nodo = r.startContainer.nodeType === 3 ? r.startContainer.parentElement : r.startContainer;
+  const pEl = nodo && nodo.closest ? nodo.closest('.doc-p') : null;
+  if(!pEl) return;
+
+  const nodoFin = r.endContainer.nodeType === 3 ? r.endContainer.parentElement : r.endContainer;
+  const pElFin = nodoFin && nodoFin.closest ? nodoFin.closest('.doc-p') : null;
+  if(pElFin !== pEl){ errPop('Selecciona el dato dentro de un mismo párrafo.'); return; }
+
+  const pi = parseInt(pEl.dataset.p, 10);
+  const p = parrafoDe(pi);
+  if(!p) return;
+
+  let ini = offsetEn(pEl, r.startContainer, r.startOffset);
+  let fin = offsetEn(pEl, r.endContainer, r.endOffset);
+  if(ini < 0 || fin < 0 || fin <= ini) return;
+
+  // Recortar espacios: el usuario casi siempre arrastra de más.
+  while(ini < fin && /\s/.test(p.txt[ini])) ini++;
+  while(fin > ini && /\s/.test(p.txt[fin-1])) fin--;
+  if(fin <= ini) return;
+
+  if(chocaCon(pi, ini, fin)){ errPop('Ese texto ya forma parte de un campo. Haz clic en él para editarlo.'); return; }
+
+  PEND = { p:pi, ini, fin, texto:p.txt.slice(ini, fin) };
+  abrirPop(r.getBoundingClientRect ? r.getBoundingClientRect() : null);
+}
+
+// Solo proponemos nombre cuando el contrato trae una etiqueta explícita
+// ("Arrendatario: ____"). Adivinar de más obliga al usuario a borrar; mejor
+// dejarlo vacío y que escriba.
+function sugerirNombre(p, ini){
+  const previo = p.txt.slice(0, ini).replace(/[\s$(\[]+$/, '');
+  if(!previo.endsWith(':')) return '';
+  let t = previo.slice(0, -1).split(/[.;•]|\s{3,}/).pop().trim();
+  t = t.replace(/^[\s:;,.\-—–\d)°º]+/, '').trim();
+  const w = t.split(/\s+/).filter(Boolean);
+  if(w.length > 6) t = w.slice(-6).join(' ');
+  if(t.length < 3 || t.length > 60) return '';
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
+// ── Globo ──
+function abrirPop(rect, marcaIdx){
+  const pop = document.getElementById('mach-pop');
+  const editando = typeof marcaIdx === 'number';
+  const marca = editando ? DOC.marcas[marcaIdx] : null;
+  const campo = editando ? campoDe(marca.campo) : null;
+  const p = parrafoDe(editando ? marca.p : PEND.p);
+  const texto = editando ? marca.texto : PEND.texto;
+
+  const otras = editando ? 0 : contarOtras(texto);
+  const nombre = editando ? campo.label : sugerirNombre(p, PEND.ini);
+  const tipo = editando ? campo.tipo_input : (adivinarTipo(texto, nombre));
+
+  pop.innerHTML = `
+    <div class="mach-pop-sel">${escHtml(texto.slice(0,160))}${texto.length>160?'…':''}</div>
+    <div class="mach-pop-err" id="mach-pop-err"></div>
+    ${(!editando && DOC.campos.length) ? `
+      <label class="mach-pop-lbl">Campo</label>
+      <select id="pop-existente" onchange="popCambioExistente()">
+        <option value="">Crear un campo nuevo</option>
+        ${DOC.campos.map(c => `<option value="${c.id}">Es el mismo que "${escHtml(c.label)}"</option>`).join('')}
+      </select>` : ''}
+    <div id="pop-nuevo">
+      <label class="mach-pop-lbl">¿Qué dato es?</label>
+      <input type="text" id="pop-nombre" maxlength="70" value="${escHtml(nombre)}" placeholder="Ej. Nombre del arrendatario"/>
+      <label class="mach-pop-lbl">Tipo de dato</label>
+      <select id="pop-tipo">
+        ${TIPOS_CAMPO.map(([v,t]) => `<option value="${v}"${tipo===v?' selected':''}>${t}</option>`).join('')}
+      </select>
+    </div>
+    ${otras > 0 ? `
+      <label class="mach-pop-chk">
+        <input type="checkbox" id="pop-otras" checked/>
+        <span>Marcar también las otras ${otras} veces que aparece este mismo texto en el contrato.</span>
+      </label>` : ''}
+    <div class="mach-pop-acc">
+      ${editando ? `<button type="button" class="mach-pop-del" onclick="quitarMarca(${marcaIdx})">Quitar</button>` : `<button type="button" class="mach-pop-no" onclick="cerrarPop()">Cancelar</button>`}
+      <button type="button" class="mach-pop-ok" onclick="${editando ? `guardarMarca(${marcaIdx})` : 'confirmarMarca()'}">${editando ? 'Guardar' : 'Marcar campo'}</button>
+    </div>`;
+
+  pop.style.display = 'block';
+  if(window.innerWidth > 600 && rect){
+    const w = 330, h = pop.offsetHeight || 300;
+    let left = Math.min(Math.max(12, rect.left), window.innerWidth - w - 12);
+    let top = rect.bottom + 10;
+    if(top + h > window.innerHeight - 12) top = Math.max(12, rect.top - h - 10);
+    pop.style.left = left + 'px';
+    pop.style.top = top + 'px';
+  }
+  setTimeout(() => document.getElementById('pop-nombre')?.focus(), 30);
+}
+function cerrarPop(){ document.getElementById('mach-pop').style.display = 'none'; PEND = null; }
+function errPop(msg){ mostrarErr('mach-err-marcar', msg); setTimeout(() => ocultarErr('mach-err-marcar'), 4000); }
+function popCambioExistente(){
+  const v = document.getElementById('pop-existente').value;
+  machShow('pop-nuevo', !v);
+}
+function contarOtras(texto){
+  if(!texto || texto.length < 3) return 0;
+  let n = 0;
+  const rx = new RegExp(escRegex(texto), 'g');
+  DOC.parrafos.forEach(p => {
+    let m;
+    while((m = rx.exec(p.txt))){
+      if(PEND && p.i === PEND.p && m.index === PEND.ini) continue;
+      if(chocaCon(p.i, m.index, m.index + texto.length)) continue;
+      n++;
+    }
+  });
+  return n;
+}
+function adivinarTipo(texto, nombre){
+  const t = (texto || '').trim();
+  const n = (nombre || '').toLowerCase();
+  if(/^\$?\s*[\d,]+\.?\d{0,2}$/.test(t) && /[,.]|\d{4,}/.test(t)) return 'currency';
+  if(/\b(monto|renta|precio|importe|dep[oó]sito|pago|valor|enganche)\b/.test(n)) return 'currency';
+  if(/\b(fecha|d[ií]a de firma|vencimiento)\b/.test(n)) return 'date';
+  if(/\b(plazo|meses|a[ñn]os|d[ií]as|superficie|metros|cantidad|n[uú]mero)\b/.test(n)) return 'number';
+  if(t.length > 90) return 'textarea';
+  return 'text';
+}
+
+// ── Crear / editar marcas ──
+function confirmarMarca(){
+  if(!PEND) return;
+  const existente = document.getElementById('pop-existente');
+  let campoId;
+  if(existente && existente.value){
+    campoId = existente.value;
+  } else {
+    const nombre = (document.getElementById('pop-nombre').value || '').trim();
+    if(!nombre){ popErr('Ponle nombre al campo para poder pedírtelo después.'); return; }
+    campoId = 'f' + (++DOC.seq);
+    DOC.campos.push({ id:campoId, label:nombre,
+                      tipo_input:document.getElementById('pop-tipo').value,
+                      grupo:'Datos del contrato', ejemplo:PEND.texto });
+  }
+  DOC.marcas.push({ ...PEND, campo:campoId });
+
+  const otras = document.getElementById('pop-otras');
+  if(otras && otras.checked) marcarOtras(PEND.texto, campoId);
+
+  window.getSelection()?.removeAllRanges();
+  cerrarPop();
+  renderDoc();
+}
+function popErr(msg){
+  const el = document.getElementById('mach-pop-err');
+  if(el){ el.textContent = msg; el.classList.add('show'); }
+}
+function marcarOtras(texto, campoId){
+  const rx = new RegExp(escRegex(texto), 'g');
+  DOC.parrafos.forEach(p => {
+    let m;
+    while((m = rx.exec(p.txt))){
+      const ini = m.index, fin = ini + texto.length;
+      if(chocaCon(p.i, ini, fin)) continue;
+      DOC.marcas.push({ p:p.i, ini, fin, campo:campoId, texto });
+    }
+  });
+}
+function clicMarca(ev, idx){
+  ev.stopPropagation();
+  PEND = null;
+  abrirPop(ev.currentTarget.getBoundingClientRect(), idx);
+}
+function guardarMarca(idx){
+  const m = DOC.marcas[idx];
+  const c = campoDe(m.campo);
+  const nombre = (document.getElementById('pop-nombre').value || '').trim();
+  if(!nombre){ popErr('Ponle nombre al campo.'); return; }
+  c.label = nombre;
+  c.tipo_input = document.getElementById('pop-tipo').value;
+  cerrarPop();
+  renderDoc();
+}
+function quitarMarca(idx){
+  const campoId = DOC.marcas[idx].campo;
+  DOC.marcas.splice(idx, 1);
+  if(!DOC.marcas.some(m => m.campo === campoId))
+    DOC.campos = DOC.campos.filter(c => c.id !== campoId);
+  cerrarPop();
+  renderDoc();
+}
+function quitarCampo(id){
+  DOC.marcas = DOC.marcas.filter(m => m.campo !== id);
+  DOC.campos = DOC.campos.filter(c => c.id !== id);
+  renderDoc();
+}
+
+// ── Sugerencias con IA (opcional) ──
+async function sugerirConIA(){
+  ocultarErr('mach-err-marcar');
+  if(DOC.campos.length && !confirm('Vamos a proponerte campos encima de los que ya marcaste. Los tuyos se conservan. ¿Seguimos?')) return;
+  const btn = document.getElementById('mach-sug-btn');
+  btn.disabled = true;
+  document.getElementById('mach-marcar-loading-txt').textContent = 'Leyendo tu contrato...';
+  document.getElementById('mach-marcar-loading').classList.add('show');
+  try{
+    const fd = new FormData();
+    fd.append('file', DOC.file);
+    if(DOC.tipo) fd.append('tipo', DOC.tipo);
+    const headers = await machHeaders();
+    const res = await fetch(`${API_M}/contrato/machote/sugerir`, { method:'POST', headers, body: fd });
+    if(!res.ok){
+      const j = await res.json().catch(()=>({}));
+      throw new Error(j.detail || 'No pudimos revisar tu contrato.');
+    }
+    const data = await res.json();
+    const antes = DOC.campos.length;
+    adoptarSugerencias(data.campos || [], data.marcas || []);
+    renderDoc();
+    const nuevos = DOC.campos.length - antes;
+    errPop(nuevos
+      ? `Te propusimos ${nuevos} campo${nuevos===1?'':'s'}. Revísalos uno por uno: quita los que no van y corrige los nombres.`
+      : 'No encontramos campos nuevos que proponerte.');
+  } catch(e){
+    mostrarErr('mach-err-marcar', e.message || 'No pudimos revisar tu contrato. Márcalo tú y quedará igual de bien.');
+  } finally {
+    btn.disabled = false;
+    document.getElementById('mach-marcar-loading').classList.remove('show');
+  }
+}
+
+// ── Crear el machote ──
+async function crearMachote(){
+  ocultarErr('mach-err-marcar');
+  if(!DOC.campos.length){ errPop('Marca al menos un dato antes de crear tu machote.'); return; }
+
+  const btn = document.getElementById('mach-crear-btn');
+  btn.disabled = true;
+  document.getElementById('mach-marcar-loading-txt').textContent = 'Creando tu machote...';
+  document.getElementById('mach-marcar-loading').classList.add('show');
+  try{
+    const fd = new FormData();
+    fd.append('file', DOC.file);
+    fd.append('titulo', DOC.titulo);
+    if(DOC.tipo) fd.append('tipo', DOC.tipo);
+    fd.append('campos', JSON.stringify(DOC.campos));
+    fd.append('marcas', JSON.stringify(DOC.marcas));
+    const headers = await machHeaders();
+    const res = await fetch(`${API_M}/contrato/machote/crear`, { method:'POST', headers, body: fd });
+    if(!res.ok){
+      const j = await res.json().catch(()=>({}));
+      throw new Error(j.detail || 'No pudimos crear tu machote.');
+    }
+    const data = await res.json();
+    MACH = { id:data.id, titulo:data.titulo, tipo:data.tipo, campos:data.campos || [] };
+    machotesCargados = false;
     limpiarMachFile();
     document.getElementById('mach-titulo').value = '';
     document.getElementById('mach-tipo').value = '';
-    machotesCargados = false;
-    abrirRevision(true);
+    machShow('mach-marcar-card', false);
+    abrirFormulario();
   } catch(e){
-    mostrarErr('mach-err-nuevo', e.message || 'No se pudo analizar tu machote. Verifica tu conexión.');
+    mostrarErr('mach-err-marcar', e.message || 'No pudimos crear tu machote. Verifica tu conexión.');
   } finally {
-    machTickerStop();
     btn.disabled = false;
-    document.getElementById('mach-loading').classList.remove('show');
+    document.getElementById('mach-marcar-loading').classList.remove('show');
   }
 }
 
@@ -1289,9 +1769,8 @@ async function cargarMisMachotes(){
     }
     const machotes = (await res.json()).machotes || [];
     machotesCargados = true;
-
     if(machotes.length === 0){
-      cont.innerHTML = '<div class="mach-list-empty">Todavía no has guardado ningún machote. Sube uno en "Subir nuevo machote".</div>';
+      cont.innerHTML = '<div class="mach-list-empty">Todavía no has creado ningún machote. Empieza en "Crear un machote".</div>';
       return;
     }
     cont.innerHTML = machotes.map(m => {
@@ -1322,8 +1801,7 @@ async function usarMachoteGuardado(id){
       throw new Error(j.detail || 'No pudimos abrir ese machote.');
     }
     const m = await res.json();
-    MACH = { id:m.id, titulo:m.titulo, tipo:m.tipo, campos:m.campos||[],
-             motor:m.motor, descartados:m.descartados||[] };
+    MACH = { id:m.id, titulo:m.titulo, tipo:m.tipo, campos:m.campos || [] };
     abrirFormulario();
   } catch(e){
     mostrarErr('mach-err-lista', e.message || 'No pudimos abrir ese machote.');
@@ -1346,10 +1824,12 @@ async function eliminarMachoteGuardado(id, titulo){
   }
 }
 
-// ── Navegación entre pantallas ──
+// ── Navegación ──
 function cerrarMachote(){
-  MACH = { id:null, titulo:'', tipo:'', campos:[], motor:null, descartados:[] };
-  ['mach-rev-card','mach-form-card','mach-prev-card'].forEach(id => machShow(id, false));
+  MACH = { id:null, titulo:'', tipo:'', campos:[] };
+  DOC = { file:null, titulo:'', tipo:'', parrafos:[], campos:[], marcas:[], seq:0 };
+  cerrarPop();
+  ['mach-marcar-card','mach-rev-card','mach-form-card','mach-prev-card'].forEach(id => machShow(id, false));
   document.getElementById('mach-campos-form').innerHTML = '';
   document.getElementById('mach-rev-campos').innerHTML = '';
 }
@@ -1366,39 +1846,23 @@ function agrupar(campos){
   return grupos;
 }
 
-// ── Pantalla 1: revisión de la detección ──
-function abrirRevision(recienSubido){
+// ── Ajuste fino de campos ──
+function abrirRevision(){
   ['mach-form-card','mach-prev-card'].forEach(id => machShow(id, false));
   ocultarErr('mach-err-rev');
-  const n = MACH.campos.length;
-  document.getElementById('mach-rev-ttl').textContent = 'Revisa lo que detectamos — ' + MACH.titulo;
-
-  const motorTxt = MOTOR_TXT[MACH.motor] || 'Detectamos los campos variables de tu contrato';
+  document.getElementById('mach-rev-ttl').textContent = 'Ajusta tus campos — ' + MACH.titulo;
   document.getElementById('mach-rev-sum').innerHTML =
     `<div class="mach-sum">
       <span class="mach-sum-ico"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span>
       <div class="mach-sum-txt">
-        Encontramos <b>${n} dato${n===1?'':'s'} que cambia${n===1?'':'n'}</b> en cada operación${recienSubido ? '' : ' de este machote'}.
-        Ajusta lo que quieras: el nombre con el que te lo vamos a pedir, el tipo de dato, o márcalo como fijo si siempre es el mismo.
-        <div class="mach-chip">${escHtml(motorTxt)}</div>
+        Aquí afinas cómo te vamos a pedir cada dato. Lo más útil: marca como <b>fijo</b> lo que en tu caso nunca cambia — tu nombre, tu inmobiliaria, tu RFC — y dejamos de preguntártelo.
       </div>
     </div>`;
-
-  const warn = document.getElementById('mach-rev-warn');
-  const desc = (MACH.descartados || []).filter(d => d && d.literal);
-  warn.innerHTML = desc.length ? `<div class="mach-warn">
-      <span class="mach-warn-ico"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L2.4 17.5A2 2 0 004.1 20.5h15.8a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg></span>
-      <div>Descartamos ${desc.length} candidato${desc.length===1?'':'s'} que no pudimos ubicar con exactitud en tu archivo, para no meterle mano a texto que no toca:
-      ${desc.slice(0,6).map(d => `<b>${escHtml((d.literal||'').slice(0,44))}</b>`).join(', ')}${desc.length>6?'…':''}.
-      Si alguno sí era un dato variable, márcalo en tu Word con {{doble_llave}} y vuelve a subirlo.</div>
-    </div>` : '';
-
   document.getElementById('mach-rev-campos').innerHTML = agrupar(MACH.campos).map(g => `
     <div class="mach-grp">
       <div class="mach-grp-ttl">${escHtml(g.nombre)}<span class="mach-grp-n">${g.campos.length} campo${g.campos.length===1?'':'s'}</span></div>
       ${g.campos.map(filaRevision).join('')}
     </div>`).join('');
-
   machShow('mach-rev-card', true);
   machScroll('mach-rev-card');
 }
@@ -1420,7 +1884,7 @@ function filaRevision(c){
       </div>
     </div>
     <div class="mach-row-meta">
-      ${lit ? `<span class="mach-tag">En tu contrato dice <span class="mach-tag-lit" title="${escHtml(lit)}">${escHtml(lit.slice(0,70))}</span></span>` : ''}
+      ${lit ? `<span class="mach-tag">En tu contrato decía <span class="mach-tag-lit" title="${escHtml(lit)}">${escHtml(lit.slice(0,70))}</span></span>` : ''}
       ${c.ocurrencias > 1 ? `<span class="mach-tag">Se repite ${c.ocurrencias} veces</span>` : ''}
       ${c.auto_letras_de ? '<span class="mach-tag">Se escribe solo con letra</span>' : ''}
       <label class="mach-fijo-lbl">
@@ -1437,7 +1901,6 @@ function filaRevision(c){
     </div>
   </div>`;
 }
-
 function toggleFijo(chk){
   const row = chk.closest('.mach-row');
   row.classList.toggle('off', chk.checked);
@@ -1451,8 +1914,7 @@ function usarOriginal(btn){
 
 async function guardarRevision(){
   ocultarErr('mach-err-rev');
-  const filas = [...document.querySelectorAll('#mach-rev-campos .mach-row')];
-  const campos = filas.map(row => {
+  const campos = [...document.querySelectorAll('#mach-rev-campos .mach-row')].map(row => {
     const base = MACH.campos.find(x => x.id === row.dataset.id) || {};
     return {
       id: row.dataset.id,
@@ -1463,7 +1925,6 @@ async function guardarRevision(){
       default: (row.querySelector('.mach-default').value || '').trim(),
     };
   });
-
   const btn = document.getElementById('mach-rev-btn');
   btn.disabled = true;
   document.getElementById('mach-rev-loading').classList.add('show');
@@ -1490,24 +1951,22 @@ async function guardarRevision(){
   }
 }
 
-// ── Pantalla 2: formulario ──
+// ── Formulario ──
 function abrirFormulario(){
-  ['mach-rev-card','mach-prev-card'].forEach(id => machShow(id, false));
+  ['mach-rev-card','mach-prev-card','mach-marcar-card'].forEach(id => machShow(id, false));
   document.getElementById('mach-success').classList.remove('show');
   ocultarErr('mach-err-generar');
   document.getElementById('mach-form-titulo').textContent = 'Completa los datos — ' + MACH.titulo;
 
   const visibles = MACH.campos.filter(c => !c.fijo);
   const cont = document.getElementById('mach-campos-form');
-  if(!visibles.length){
-    cont.innerHTML = '<div class="f-note">Todos los campos de este machote son fijos. Genera el contrato directamente.</div>';
-  } else {
-    cont.innerHTML = agrupar(visibles).map(g => `
-      <div class="mach-grp">
-        <div class="mach-grp-ttl">${escHtml(g.nombre)}</div>
-        ${filasFormulario(g.campos)}
-      </div>`).join('');
-  }
+  cont.innerHTML = visibles.length
+    ? agrupar(visibles).map(g => `
+        <div class="mach-grp">
+          <div class="mach-grp-ttl">${escHtml(g.nombre)}</div>
+          ${filasFormulario(g.campos)}
+        </div>`).join('')
+    : '<div class="f-note">Todos los campos de este machote son fijos. Genera el contrato directamente.</div>';
   machShow('mach-form-card', true);
   machScroll('mach-form-card');
 }
@@ -1540,9 +1999,7 @@ function campoHtml(c){
   } else {
     input = `<input type="text" id="${id}" value="${val}" placeholder="${escHtml(c.ayuda || '')}"/>`;
   }
-  const nota = c.auto_letras_de
-    ? 'Déjalo vacío: lo escribimos solo a partir del importe.'
-    : (c.ayuda || '');
+  const nota = c.auto_letras_de ? 'Déjalo vacío: lo escribimos solo a partir del importe.' : (c.ayuda || '');
   return `<div class="f">
     <label>${escHtml(c.label || c.id)}</label>
     ${input}
@@ -1584,8 +2041,7 @@ async function previsualizarMachote(){
     document.getElementById('mach-prev-body').innerHTML = parrafos.map(p => {
       let t = escHtml(p.texto);
       valores.forEach(v => {
-        const rx = new RegExp(escRegex(escHtml(String(v))), 'g');
-        t = t.replace(rx, m => `<mark class="mach-hl">${m}</mark>`);
+        t = t.replace(new RegExp(escRegex(escHtml(String(v))), 'g'), m => `<mark class="mach-hl">${m}</mark>`);
       });
       t = t.replace(/\{\{([a-z0-9_]+)\}\}/g, (_, id) =>
         `<span class="mach-falta">falta: ${escHtml(etiquetas[id] || id)}</span>`);
@@ -1599,18 +2055,15 @@ async function previsualizarMachote(){
     btn.disabled = false;
   }
 }
-function escRegex(s){ return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
 // ── Generar ──
 async function generarDesdeMachote(){
   ocultarErr('mach-err-generar');
   if(!MACH.id){ mostrarErr('mach-err-generar', 'Selecciona un machote primero.'); return; }
-
   const btn = document.getElementById('mach-generar-btn');
   btn.disabled = true;
   document.getElementById('mach-gen-loading').classList.add('show');
   document.getElementById('mach-success').classList.remove('show');
-
   try{
     const headers = await machHeaders();
     const res = await fetch(`${API_M}/contrato/machote/${MACH.id}/generar`, {
@@ -1624,7 +2077,6 @@ async function generarDesdeMachote(){
     }
     const blob = await res.blob();
     const filename = (MACH.titulo || 'Contrato').replace(/[^\w\sáéíóúüñÁÉÍÓÚÜÑ-]/g,'').trim() + '.docx';
-
     if (window.broquerDeliverBlob) {
       await window.broquerDeliverBlob(blob, filename, { type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document', title:'Contrato listo', text:'Contrato generado por Broquer' });
     } else {
@@ -1641,8 +2093,22 @@ async function generarDesdeMachote(){
   }
 }
 
-// ── Drag & drop ──
+// ── Escuchas de selección ──
 (function(){
+  const doc = document.getElementById('mach-doc');
+  if(doc){
+    doc.addEventListener('mouseup', () => setTimeout(onSeleccion, 0));
+    doc.addEventListener('touchend', () => setTimeout(onSeleccion, 60));
+  }
+  // En móvil la selección se ajusta con las manijas nativas, sin mouseup.
+  let t = null;
+  document.addEventListener('selectionchange', () => {
+    if(PEND) return;                       // ya hay un globo abierto
+    clearTimeout(t);
+    t = setTimeout(onSeleccion, 450);
+  });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') cerrarPop(); });
+
   const drop = document.getElementById('mach-drop');
   if(!drop) return;
   ['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => {

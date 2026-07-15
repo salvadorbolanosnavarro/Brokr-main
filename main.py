@@ -3551,14 +3551,79 @@ async def _subir_a_storage(client: httpx.AsyncClient, path: str, content: bytes)
         raise HTTPException(status_code=500, detail=f"No se pudo guardar el archivo: {r.text[:200]}")
 
 
-@app.post("/contrato/machote/subir")
-async def subir_machote(
+def _leer_docx_subido(file: UploadFile, content: bytes):
+    if not content:
+        raise HTTPException(status_code=400, detail="El archivo llegó vacío. Vuelve a seleccionarlo.")
+    if len(content) > MACHOTE_MAX_BYTES:
+        raise HTTPException(status_code=400, detail="Tu contrato pesa más de 12 MB. Quítale las imágenes pesadas y vuelve a subirlo.")
+    if not (file.filename or "").lower().endswith(".docx"):
+        raise HTTPException(status_code=400, detail="Solo aceptamos archivos .docx (Word).")
+
+
+@app.post("/contrato/machote/abrir")
+async def abrir_machote(request: Request, file: UploadFile = File(...)):
+    """Devuelve el contrato párrafo por párrafo para pintarlo en pantalla y que
+    el usuario señale ahí mismo qué datos cambian. No guarda nada."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Debes iniciar sesión.")
+
+    content = await file.read()
+    _leer_docx_subido(file, content)
+    try:
+        return await asyncio.get_event_loop().run_in_executor(
+            _thread_pool, _mach.abrir, content)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        print(f"[machotes] error al abrir: {e}")
+        raise HTTPException(status_code=400, detail="No pudimos leer tu archivo. Ábrelo en Word y guárdalo otra vez como .docx.")
+
+
+@app.post("/contrato/machote/sugerir")
+async def sugerir_campos_machote(
+    request: Request,
+    file: UploadFile = File(...),
+    tipo: str = FastAPIForm(default=""),
+):
+    """Acelerador opcional: la IA propone marcas. No guarda nada; todo aterriza
+    en la pantalla para que el usuario lo revise, corrija o borre."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Debes iniciar sesión.")
+
+    content = await file.read()
+    _leer_docx_subido(file, content)
+    try:
+        res = await _mach.sugerir_ia(content, tipo=(tipo or "").strip(),
+                                     api_key=ANTHROPIC_API_KEY)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        print(f"[machotes] error al sugerir: {e}")
+        raise HTTPException(status_code=500, detail="No pudimos revisar tu contrato. Márcalo tú y quedará igual de bien.")
+
+    for raw in res.get("raws") or []:
+        try:
+            _track_anthropic(user_id, "contratos", "/contrato/machote/sugerir", raw,
+                             modelo=(raw or {}).get("model") or _mach.MODELO_DEFAULT)
+        except Exception:
+            pass
+
+    return {"campos": res["campos"], "marcas": res["marcas"],
+            "descartados": res["descartados"]}
+
+
+@app.post("/contrato/machote/crear")
+async def crear_machote(
     request: Request,
     file: UploadFile = File(...),
     titulo: str = FastAPIForm(...),
     tipo: str = FastAPIForm(default=""),
+    campos: str = FastAPIForm(...),
+    marcas: str = FastAPIForm(...),
 ):
-    """Analiza el DOCX del usuario, lo normaliza a plantilla y lo guarda."""
+    """Crea el machote con las marcas que hizo el usuario sobre su contrato."""
     user_id = await get_user_id_from_token(request)
     if not user_id:
         raise HTTPException(status_code=401, detail="Debes iniciar sesión para guardar tu machote.")
@@ -3567,38 +3632,33 @@ async def subir_machote(
     if not titulo:
         raise HTTPException(status_code=400, detail="Ponle un título a tu machote para poder identificarlo después.")
 
-    original = await file.read()
-    if not original:
-        raise HTTPException(status_code=400, detail="El archivo llegó vacío. Vuelve a seleccionarlo.")
-    if len(original) > MACHOTE_MAX_BYTES:
-        raise HTTPException(status_code=400, detail="Tu machote pesa más de 12 MB. Quítale imágenes pesadas y vuelve a subirlo.")
-    if not (file.filename or "").lower().endswith(".docx"):
-        raise HTTPException(status_code=400, detail="Solo aceptamos archivos .docx (Word).")
+    content = await file.read()
+    _leer_docx_subido(file, content)
+    try:
+        campos_in = _json.loads(campos)
+        marcas_in = _json.loads(marcas)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Los campos marcados llegaron mal. Vuelve a intentarlo.")
+    if not isinstance(campos_in, list) or not isinstance(marcas_in, list):
+        raise HTTPException(status_code=400, detail="Los campos marcados llegaron mal. Vuelve a intentarlo.")
 
     try:
-        res = await _mach.analizar(original, tipo=(tipo or "").strip(),
-                                   api_key=ANTHROPIC_API_KEY)
+        plantilla, campos_final = await asyncio.get_event_loop().run_in_executor(
+            _thread_pool, _mach.crear_plantilla, content, campos_in, marcas_in)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        print(f"[machotes] error al analizar: {e}")
-        raise HTTPException(status_code=500, detail="No pudimos analizar tu machote. Vuelve a intentarlo en un momento.")
-
-    for raw in res.get("raws") or []:
-        try:
-            _track_anthropic(user_id, "contratos", "/contrato/machote/subir", raw,
-                             modelo=(raw or {}).get("model") or _mach.MODELO_DEFAULT)
-        except Exception:
-            pass
+        print(f"[machotes] error al crear: {e}")
+        raise HTTPException(status_code=500, detail="No pudimos crear tu machote. Vuelve a intentarlo.")
 
     machote_id = str(_uuid.uuid4())
     storage_path = f"{user_id}/{machote_id}.docx"
     storage_path_original = f"{user_id}/{machote_id}__original.docx"
 
     async with httpx.AsyncClient(timeout=60) as client:
-        await _subir_a_storage(client, storage_path, res["plantilla"])
+        await _subir_a_storage(client, storage_path, plantilla)
         try:
-            await _subir_a_storage(client, storage_path_original, original)
+            await _subir_a_storage(client, storage_path_original, content)
         except Exception:
             storage_path_original = None
 
@@ -3609,11 +3669,10 @@ async def subir_machote(
             "tipo": (tipo or "").strip() or "Personalizado",
             "storage_path": storage_path,
             "storage_path_original": storage_path_original,
-            "campos": res["campos"],
-            "motor": res["motor"],
-            "patron_usado": res["motor"],
-            "descartados": res["descartados"],
-            "texto_preview": res["texto_preview"],
+            "campos": campos_final,
+            "motor": "manual",
+            "patron_usado": "manual",
+            "descartados": [],
         }
         rd = await client.post(
             f"{SUPABASE_URL}/rest/v1/machotes_contrato",
@@ -3633,14 +3692,8 @@ async def subir_machote(
                     pass
             raise HTTPException(status_code=500, detail=f"No se pudo guardar tu machote: {rd.text[:200]}")
 
-    return {
-        "id": machote_id,
-        "titulo": titulo,
-        "tipo": fila["tipo"],
-        "campos": res["campos"],
-        "motor": res["motor"],
-        "descartados": res["descartados"],
-    }
+    return {"id": machote_id, "titulo": titulo, "tipo": fila["tipo"],
+            "campos": campos_final}
 
 
 @app.get("/contrato/machotes")
