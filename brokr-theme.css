@@ -419,7 +419,7 @@ input, select, textarea, button {
   border: 1px solid var(--line-2);
   border-radius: var(--r);
   color: var(--ink);
-  font-size: var(--fs-body);
+  font-size: var(--fs-sm);
   font-family: inherit;
   outline: none;
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease);
@@ -453,7 +453,7 @@ input, select, textarea, button {
 .bk-input-affix__prefix,
 .bk-input-affix__suffix {
   position: absolute; top: 50%; transform: translateY(-50%);
-  font-size: var(--fs-body); color: var(--mute); pointer-events: none;
+  font-size: var(--fs-sm); color: var(--mute); pointer-events: none;
 }
 .bk-input-affix__prefix { left: var(--sp-4); }
 .bk-input-affix__suffix { right: var(--sp-4); }
