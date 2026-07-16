@@ -23,6 +23,14 @@ import httpx
 from fastapi import APIRouter, Request, Response, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 
+# Notificaciones al iPhone del agente. Si push.py no está o le faltan sus
+# variables de entorno, el import falla suave y WhatsApp sigue igual de bien.
+try:
+    from push import avisar_mensaje_whatsapp
+except Exception:  # pragma: no cover
+    async def avisar_mensaje_whatsapp(*a, **k):
+        return None
+
 log = logging.getLogger("broquer.whatsapp")
 
 # -----------------------------------------------------------------------------
@@ -185,6 +193,9 @@ async def process_change(value: dict):
             contact = await upsert_contact(user_id, from_wa, profile_name)
             conv = await get_or_create_conversation(user_id, contact, referral, phone_number_id)
             await store_message(user_id, contact["id"], conv["id"], wamid, "in", "lead", body)
+            await sumar_no_leido(conv["id"])
+            await avisar_al_agente(user_id, contact, conv["id"],
+                                   f"Te mandó un {msg.get('type')} por WhatsApp.")
             if conv.get("ai_enabled", True):
                 await wa_send_text(phone_number_id, from_wa,
                                    "Gracias por tu mensaje. Por aquí te leo mejor en texto, "
@@ -195,6 +206,8 @@ async def process_change(value: dict):
         contact = await upsert_contact(user_id, from_wa, profile_name)
         conv = await get_or_create_conversation(user_id, contact, referral, phone_number_id)
         await store_message(user_id, contact["id"], conv["id"], wamid, "in", "lead", body)
+        await sumar_no_leido(conv["id"])
+        await avisar_al_agente(user_id, contact, conv["id"], body)
 
         if not conv.get("ai_enabled", True):
             continue  # el agente tomó el control
@@ -244,7 +257,9 @@ async def process_echo(value: dict):
         contact = await upsert_contact(user_id, to_wa, None)
         conv = await get_or_create_conversation(user_id, contact, None, phone_number_id)
         await store_message(user_id, contact["id"], conv["id"], wamid or f"echo-{to_wa}", "out", "agent", body)
-        await sb_patch("wa_conversations", {"id": f"eq.{conv['id']}"}, {"ai_enabled": False})
+        # Si contestó desde su propio WhatsApp, ya lo leyó: el globito se baja.
+        await sb_patch("wa_conversations", {"id": f"eq.{conv['id']}"},
+                       {"ai_enabled": False, "unread_count": 0})
 
 
 # =============================================================================
@@ -607,6 +622,44 @@ async def store_message(user_id, contact_id, conversation_id, wa_message_id, dir
         fila["status"] = status
     await sb_post("wa_messages", fila, prefer="return=minimal")
     await sb_patch("wa_conversations", {"id": f"eq.{conversation_id}"}, {"last_message_at": _now()})
+
+
+async def sumar_no_leido(conversation_id) -> int:
+    """Sube en 1 el contador de mensajes sin leer de la conversación y lo
+    regresa. La bandeja lo baja a 0 cuando el agente abre el chat.
+    Postgres no tiene 'incrementa' por REST, así que se lee y se escribe."""
+    try:
+        filas = await sb_get("wa_conversations",
+                             {"id": f"eq.{conversation_id}", "select": "unread_count", "limit": "1"})
+        actual = int((filas[0] or {}).get("unread_count") or 0) if filas else 0
+        nuevo = actual + 1
+        await sb_patch("wa_conversations", {"id": f"eq.{conversation_id}"}, {"unread_count": nuevo})
+        return nuevo
+    except Exception as e:
+        log.warning("No se pudo actualizar unread_count: %s", e)
+        return 0
+
+
+async def total_no_leidos(user_id) -> int:
+    """Suma de todos los chats sin leer del agente: es el número que va en el
+    globito rojo del ícono de la app."""
+    try:
+        filas = await sb_get("wa_conversations", {"user_id": f"eq.{user_id}", "select": "unread_count"})
+        return sum(int(f.get("unread_count") or 0) for f in (filas or []))
+    except Exception:
+        return 0
+
+
+async def avisar_al_agente(user_id, contact, conversation_id, texto):
+    """Notificación push al iPhone del agente. Envuelto en try porque un aviso
+    que no sale JAMÁS debe tumbar el webhook de Meta (Meta reintentaría y se
+    duplicarían mensajes)."""
+    try:
+        nombre = (contact or {}).get("nombre") or _norm10((contact or {}).get("wa_id", "")) or "Nuevo mensaje"
+        badge = await total_no_leidos(user_id)
+        await avisar_mensaje_whatsapp(user_id, nombre, texto, str(conversation_id), badge=badge)
+    except Exception as e:
+        log.warning("Push no enviado: %s", e)
 
 
 async def fetch_history(conversation_id) -> list:

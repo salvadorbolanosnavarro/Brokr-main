@@ -229,6 +229,7 @@
     { key:'contactos',    href:'contactos.html',     label:'Contactos',       group:'crm',  icon:'users' },
     { key:'tareas',       href:'tareas.html',        label:'Tareas',          group:'crm',  icon:'check' },
     { key:'leads',        href:'leads.html',         label:'Leads',           group:'crm',  icon:'send' },
+    { key:'bandeja',      href:'bandeja.html',       label:'Chats',           group:'crm',  icon:'whatsapp' },
     { key:'estadisticas', href:'estadisticas.html',  label:'Estadísticas',    group:'crm',  icon:'chart' },
     { key:'contratos',    href:'contratos.html',     label:'Contratos',       group:'main', icon:'document' },
     { key:'avm',          href:'avm.html',           label:'Estimación de valor', group:'main', icon:'peso' },
@@ -602,6 +603,64 @@ body[data-app="verificador"] .top-header { display: none !important; }
 .bk-bnav__item.is-active svg { opacity: 1; }
 .bk-bnav__broquer { padding: 2px 4px; }
 .bk-bnav__broquer img { width: 34px; height: 34px; object-fit: contain; display: block; }
+.bk-bnav__ico { position: relative; display: block; line-height: 0; }
+
+/* Globito rojo de mensajes sin leer (sobre el ícono de Chats) */
+.bk-badge {
+  position: absolute; top: -5px; right: -8px;
+  min-width: 17px; height: 17px; padding: 0 4px;
+  border-radius: 9px;
+  background: #E5484D; color: #FFFFFF;
+  font-size: 10px; font-weight: 800; line-height: 17px; text-align: center;
+  border: 2px solid rgba(255,255,255,0.9);
+  display: none;
+  font-variant-numeric: tabular-nums;
+}
+.bk-badge.is-on { display: block; }
+
+/* ── Hoja de módulos CRM (solo móvil) ── */
+.bk-sheet-back {
+  position: fixed; inset: 0; z-index: 95;
+  background: rgba(5,32,60,0.38);
+  -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+  opacity: 0; pointer-events: none;
+  transition: opacity var(--dur) var(--ease);
+}
+.bk-sheet-back.is-open { opacity: 1; pointer-events: auto; }
+.bk-sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 96;
+  max-height: 82vh; overflow-y: auto; overscroll-behavior: contain;
+  background: var(--bone);
+  border-radius: 22px 22px 0 0;
+  padding: 8px 16px calc(22px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -12px 44px rgba(5,32,60,0.28);
+  transform: translateY(102%);
+  transition: transform var(--dur) var(--ease);
+}
+.bk-sheet.is-open { transform: none; }
+.bk-sheet__grip { width: 38px; height: 4px; border-radius: 2px; background: var(--line-2); margin: 6px auto 12px; }
+.bk-sheet__eyebrow {
+  font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--mute); margin: 14px 4px 8px;
+}
+.bk-sheet__eyebrow:first-of-type { margin-top: 2px; }
+.bk-sheet__grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.bk-sheet__item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 13px 12px; border-radius: 14px;
+  background: var(--paper); border: 1px solid var(--line);
+  color: var(--ink); text-decoration: none;
+  font-size: 13px; font-weight: 700; font-family: inherit; text-align: left;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: background var(--dur) var(--ease);
+}
+.bk-sheet__item:active { background: var(--paper-2); }
+.bk-sheet__item.is-active { border-color: var(--sky-blue); color: var(--sky-blue); }
+.bk-sheet__item svg { flex: none; }
+.bk-sheet__item .bk-sheet__ico { position: relative; display: block; line-height: 0; color: var(--sky-navy); }
+.bk-sheet__item.is-active .bk-sheet__ico { color: var(--sky-blue); }
+.bk-sheet__item span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (min-width: 881px) { .bk-sheet, .bk-sheet-back { display: none; } }
 
 /* Broq FAB (desktop only — mobile uses bottom-nav center) */
 .bk-shaark-fab {
@@ -1186,15 +1245,66 @@ body[data-app="facebook-ads"]{--page-max:980px}
 
     // Bottom nav
     // PWA bottom nav (liquid glass): Inicio · Broquer (isotipo) · Perfil
+    const crmKeys = new Set(MODS.filter(m => m.group === 'crm').map(m => m.key));
+    const crmActive = crmKeys.has(activeKey) && activeKey !== 'bandeja';
+
     const bnav = document.createElement('nav');
     bnav.className = 'bk-bnav';
     bnav.innerHTML =
       `<a href="index.html" class="bk-bnav__item${activeKey === 'home' ? ' is-active' : ''}">${svg('home', 24)} <span>Inicio</span></a>` +
+      `<button class="bk-bnav__item${crmActive ? ' is-active' : ''}" id="bk-bnav-crm" type="button" aria-label="Módulos del CRM">${svg('funnel', 24)} <span>CRM</span></button>` +
       `<button class="bk-bnav__item bk-bnav__broquer" id="bk-bnav-shaark" type="button" aria-label="Abrir Broq">
          <img src="isotipo-broquer.png" alt="Broq"/>
        </button>` +
+      `<a href="bandeja.html" class="bk-bnav__item${activeKey === 'bandeja' ? ' is-active' : ''}" id="bk-bnav-chats" aria-label="Chats de WhatsApp">
+         <span class="bk-bnav__ico">${svg('whatsapp', 24)}<i class="bk-badge" id="bk-bnav-badge"></i></span>
+         <span>Chats</span>
+       </a>` +
       `<button class="bk-bnav__item" id="bk-bnav-perfil" type="button" aria-label="Mi perfil">${svg('user', 24)} <span>Perfil</span></button>`;
     document.body.appendChild(bnav);
+
+    // ── Hoja de módulos (móvil): CRM completo + resto de herramientas ──
+    const sheetBack = document.createElement('div');
+    sheetBack.className = 'bk-sheet-back';
+    sheetBack.id = 'bk-sheet-back';
+    document.body.appendChild(sheetBack);
+
+    const sheet = document.createElement('div');
+    sheet.className = 'bk-sheet';
+    sheet.id = 'bk-sheet';
+    sheet.setAttribute('role', 'dialog');
+    sheet.setAttribute('aria-label', 'Módulos');
+
+    const crmMods  = MODS.filter(m => m.group === 'crm');
+    const toolMods = MODS.filter(m => m.group === 'main' && (!m.adminOnly || profile?.isAdmin));
+
+    function sheetItem(m) {
+      const act = m.key === activeKey ? ' is-active' : '';
+      const badge = m.key === 'bandeja' ? '<i class="bk-badge" id="bk-sheet-badge"></i>' : '';
+      // "Mi sitio" en móvil/iOS no abre la pantalla de configuración: abre el sitio público.
+      const attrs = m.key === 'mi-sitio'
+        ? `href="javascript:void(0)" onclick="bkOpenMiSitio()"`
+        : `href="${m.href}"`;
+      return `<a ${attrs} class="bk-sheet__item${act}"><span class="bk-sheet__ico">${svg(m.icon, 19)}${badge}</span><span>${m.label}</span></a>`;
+    }
+
+    sheet.innerHTML =
+      `<div class="bk-sheet__grip"></div>` +
+      `<div class="bk-sheet__eyebrow">CRM</div>` +
+      `<div class="bk-sheet__grid">${crmMods.map(sheetItem).join('')}</div>` +
+      `<div class="bk-sheet__eyebrow">Herramientas</div>` +
+      `<div class="bk-sheet__grid">${toolMods.map(sheetItem).join('')}</div>`;
+    document.body.appendChild(sheet);
+
+    function toggleSheet(force) {
+      const open = (typeof force === 'boolean') ? force : !sheet.classList.contains('is-open');
+      sheet.classList.toggle('is-open', open);
+      sheetBack.classList.toggle('is-open', open);
+    }
+    window.bkToggleModsSheet = toggleSheet;
+    document.getElementById('bk-bnav-crm').addEventListener('click', () => toggleSheet());
+    sheetBack.addEventListener('click', () => toggleSheet(false));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') toggleSheet(false); });
 
     // Broq FAB + popup
     const fab = document.createElement('button');
@@ -3762,8 +3872,145 @@ body[data-app="facebook-ads"]{--page-max:980px}
       _welcomeMsg.textContent = `¡Hola, ${_firstName}! Soy Broq, tu asistente inteligente. ¿En qué te ayudo?`;
     }
 
+    // ─── "Mi sitio" en móvil / iOS ────────────────────────────────
+    // En web abre la pantalla de configuración (mi-sitio.html).
+    // En celular y en la app de iOS NO: abre directo el sitio público
+    // del agente (broquer.app/su-link) en el navegador del teléfono.
+    // Si todavía no tiene link configurado, cae a la configuración,
+    // porque si no, no habría manera de crearlo desde el celular.
+    setupMiSitio(profile);
+
+    // ─── Mensajes de WhatsApp sin leer: globito + notificación ────
+    setupChatsBadge(profile);
+
     window.dispatchEvent(new CustomEvent('brokr-shell-ready', { detail: { profile, activeKey } }));
   }
+
+  /* ════════════════════════════════════════════════════════════════
+     MI SITIO — comportamiento distinto en móvil/iOS que en web
+     ════════════════════════════════════════════════════════════════ */
+  let _miSitioCache = null;
+
+  function esMovil() {
+    return IS_IOS_NATIVE || window.matchMedia('(max-width: 880px)').matches;
+  }
+
+  async function _miSitioDatos(profile) {
+    if (_miSitioCache) return _miSitioCache;
+    const uid = profile?.user?.id;
+    if (!uid) return null;
+    try {
+      const rows = await sbFetch('usuarios?id=eq.' + encodeURIComponent(uid) + '&select=slug,sitio_activo');
+      _miSitioCache = rows[0] || {};
+      return _miSitioCache;
+    } catch (e) { return null; }
+  }
+
+  /* Global: lo usan la hoja de módulos, el drawer de perfil y el dashboard. */
+  window.bkOpenMiSitio = async function () {
+    if (!esMovil()) { location.href = 'mi-sitio.html'; return; }
+    const d = await _miSitioDatos(window.__brokrProfile);
+    const slug = d && d.slug;
+    if (!slug) { location.href = 'mi-sitio.html'; return; }   // aún no lo configura
+    const url = 'https://broquer.app/' + slug;
+    // En el WebView de iOS, target=_blank sale a Safari (no atrapa la app).
+    try { window.open(url, '_blank', 'noopener'); }
+    catch (e) { location.href = url; }
+  };
+
+  function setupMiSitio(profile) {
+    window.__brokrProfile = profile;
+    if (!esMovil()) return;
+    // Cualquier link a mi-sitio.html dentro de la app (dashboard, sidebar,
+    // atajos de Broq) se reencamina al sitio público cuando es celular.
+    document.addEventListener('click', (ev) => {
+      const a = ev.target.closest && ev.target.closest('a[href$="mi-sitio.html"]');
+      if (!a) return;
+      ev.preventDefault();
+      window.bkOpenMiSitio();
+    }, true);
+    // Precarga el slug para que el primer toque sea instantáneo.
+    _miSitioDatos(profile);
+  }
+
+  /* ════════════════════════════════════════════════════════════════
+     CHATS — globito de mensajes sin leer + notificación
+     El conteo vive en wa_conversations.unread_count: el webhook lo sube
+     cuando entra un mensaje del prospecto y la bandeja lo baja a 0 al
+     abrir el chat. Aquí solo lo leemos cada 20 s.
+     En iOS la notificación real la manda APNs (ver capacitor-bridge.js);
+     esto es el respaldo para web y PWA.
+     ════════════════════════════════════════════════════════════════ */
+  let _unreadPrev = null;
+
+  async function _leerNoLeidos() {
+    try {
+      const rows = await sbFetch('wa_conversations?select=unread_count');
+      if (!Array.isArray(rows)) return 0;
+      return rows.reduce((a, c) => a + (Number(c.unread_count) || 0), 0);
+    } catch (e) { return 0; }
+  }
+
+  function _pintarBadge(n) {
+    const txt = n > 99 ? '99+' : String(n);
+    ['bk-bnav-badge', 'bk-sheet-badge'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = txt;
+      el.classList.toggle('is-on', n > 0);
+    });
+    // Globito en el ícono de la app (iOS / Android / algunos navegadores)
+    try {
+      if (navigator.setAppBadge) { n > 0 ? navigator.setAppBadge(n) : navigator.clearAppBadge(); }
+    } catch (e) {}
+    window.__brokrUnread = n;
+  }
+
+  function setupChatsBadge(profile) {
+    if (!profile?.user?.id) return;
+
+    async function tick() {
+      const n = await _leerNoLeidos();
+      _pintarBadge(n);
+      // Notificación de escritorio/PWA solo cuando SUBE el número y no
+      // estamos ya viendo la bandeja. En iOS nativo no entra aquí: allá
+      // manda APNs, y duplicar avisos sería molesto.
+      if (_unreadPrev !== null && n > _unreadPrev && activeKey !== 'bandeja' && !IS_IOS_NATIVE) {
+        _avisoWeb(n - _unreadPrev);
+      }
+      _unreadPrev = n;
+    }
+
+    tick();
+    setInterval(() => { if (!document.hidden) tick(); }, 20000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+    // La bandeja avisa al shell cuando el agente lee un chat.
+    window.addEventListener('brokr-chats-leidos', tick);
+  }
+
+  function _avisoWeb(nuevos) {
+    try {
+      if (!('Notification' in window) || Notification.permission !== 'granted') return;
+      const n = new Notification('Broquer · WhatsApp', {
+        body: nuevos === 1 ? 'Tienes un mensaje nuevo de un prospecto.'
+                           : `Tienes ${nuevos} mensajes nuevos de prospectos.`,
+        icon: 'icon-192.png',
+        tag: 'broquer-wa',
+      });
+      n.onclick = () => { window.focus(); location.href = 'bandeja.html'; };
+    } catch (e) {}
+  }
+
+  /* Pedir permiso de notificaciones en web/PWA: solo desde la bandeja y
+     solo una vez (pedirlo al entrar a la app se siente invasivo y el
+     navegador lo bloquea si no hay gesto del usuario). */
+  window.bkPedirNotificaciones = async function () {
+    try {
+      if (!('Notification' in window)) return 'unsupported';
+      if (Notification.permission !== 'default') return Notification.permission;
+      return await Notification.requestPermission();
+    } catch (e) { return 'error'; }
+  };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);

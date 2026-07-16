@@ -95,9 +95,31 @@ body[data-app="bandeja"] .bk-page{
 .bx-conv__prev b{color:var(--ink-3);font-weight:700}
 .bx-conv__tags{display:flex;align-items:center;gap:var(--sp-2);margin-top:var(--sp-2)}
 
+.bx-unread{
+  flex:none;min-width:19px;height:19px;padding:0 5px;margin-left:var(--sp-2);
+  border-radius:var(--r-pill);background:var(--brand-whatsapp);color:#fff;
+  font-size:var(--fs-caption);font-weight:800;line-height:19px;text-align:center;
+  font-variant-numeric:tabular-nums;
+}
+.bx-conv.has-unread .bx-conv__name{font-weight:800}
+.bx-conv.has-unread .bx-conv__prev{color:var(--ink-2)}
+
 .bx-tag{font-size:var(--fs-caption);font-weight:700;padding:2px var(--sp-2);border-radius:var(--r-pill);line-height:1.5}
 .bx-tag--hot{background:var(--warn-soft);color:var(--warn)}
 .bx-tag--mine{background:var(--forest-soft);color:var(--forest)}
+
+.bx-avisos{
+  display:flex;align-items:center;gap:var(--sp-2);margin-top:var(--sp-3);
+  padding:var(--sp-2) var(--sp-3);border-radius:var(--r-sm);
+  background:var(--sky-canvas);border:1px solid var(--line);
+}
+.bx-avisos span{flex:1;min-width:0;font-size:var(--fs-caption);color:var(--ink-2);line-height:var(--lh-snug)}
+.bx-avisos__ok{
+  flex:none;border:0;cursor:pointer;background:var(--sky-blue);color:#fff;
+  border-radius:var(--r-pill);padding:5px var(--sp-3);
+  font-family:inherit;font-size:var(--fs-caption);font-weight:700;
+}
+.bx-avisos__no{flex:none;border:0;background:transparent;cursor:pointer;color:var(--mute);font-size:13px;padding:2px 4px}
 
 .bx-list__empty{padding:var(--sp-8) var(--sp-5);text-align:center}
 .bx-list__empty p{font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh);margin:0}
@@ -275,6 +297,9 @@ body[data-app="bandeja"] .bk-page{
 /* ≤880px: lista y conversación se apilan */
 @media (max-width:880px){
   .bx-list{width:100%;border-right:0}
+  /* La barra inferior flotante mide ~74px: sin este colchón tapaba la
+     última conversación de la lista. */
+  .bx-convs{padding-bottom:calc(74px + env(safe-area-inset-bottom, 0px))}
   .bx-thread{display:none}
   .bx.thread-open .bx-list{display:none}
   .bx.thread-open .bx-thread{display:flex}
@@ -470,7 +495,7 @@ function visibles(){
 function renderConvs(force){
   const lista = visibles();
   const sig = FILTRO + '|' + BUSCA + '|' + (ACTIVE ? ACTIVE.id : '') + '|' +
-    lista.map(c => c.id + (c.last_message_at||'') + c.ai_enabled + ((c.wa_contacts||{}).temperatura||'') + ((PREVIEW[c.id]||{}).body||'').slice(0,20)).join(',');
+    lista.map(c => c.id + (c.last_message_at||'') + c.ai_enabled + (c.unread_count||0) + ((c.wa_contacts||{}).temperatura||'') + ((PREVIEW[c.id]||{}).body||'').slice(0,20)).join(',');
   if(!force && sig === _sigConvs) return;
   _sigConvs = sig;
 
@@ -502,12 +527,15 @@ function renderConvs(force){
     if(esCaliente(ct))  tags.push('<span class="bx-tag bx-tag--hot">Caliente</span>');
     if(!c.ai_enabled)   tags.push('<span class="bx-tag bx-tag--mine">Tú al control</span>');
 
-    return `<button type="button" class="bx-conv ${ACTIVE && ACTIVE.id === c.id ? 'is-active' : ''}" onclick="abrir('${c.id}')">
+    const sinLeer = Number(c.unread_count) || 0;
+
+    return `<button type="button" class="bx-conv ${ACTIVE && ACTIVE.id === c.id ? 'is-active' : ''} ${sinLeer ? 'has-unread' : ''}" onclick="abrir('${c.id}')">
       <span class="bx-ava">${esc(inicial(nombre))}</span>
       <span class="bx-conv__main">
         <span class="bx-conv__top">
           <span class="bx-conv__name">${esc(nombre)}</span>
           <span class="bx-conv__time">${timeAgo(c.last_message_at)}</span>
+          ${sinLeer ? `<span class="bx-unread">${sinLeer > 99 ? '99+' : sinLeer}</span>` : ''}
         </span>
         <span class="bx-conv__prev">${prev}</span>
         ${tags.length ? '<span class="bx-conv__tags">'+tags.join('')+'</span>' : ''}
@@ -536,6 +564,22 @@ async function abrir(id){
   pintarDossier(ct);
   renderConvs(true);
   await cargarMsgs();
+  await marcarLeido(ACTIVE);
+}
+
+/* ── Marcar la conversación como leída (baja el globito rojo) ── */
+async function marcarLeido(conv){
+  if(!conv || !conv.unread_count) return;
+  conv.unread_count = 0;
+  try{
+    await _sb().fetch('rest/v1/wa_conversations?id=eq.'+conv.id, {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json', Prefer:'return=minimal'},
+      body: JSON.stringify({unread_count: 0})
+    });
+    // El shell repinta el globito de la barra inferior sin esperar su ciclo.
+    window.dispatchEvent(new CustomEvent('brokr-chats-leidos'));
+  }catch(e){}
 }
 
 function pintarAi(){
@@ -701,9 +745,41 @@ function startPolling(){
       await cargarConvs();
       await cargarPreviews();
       renderConvs();
-      if(ACTIVE) await cargarMsgs();
+      if(ACTIVE){
+        // ACTIVE apunta al objeto viejo: lo reengancho al recién cargado
+        // para no perder el unread_count fresco de Supabase.
+        const fresco = CONVS.find(c => c.id === ACTIVE.id);
+        if(fresco){ fresco.ai_enabled = ACTIVE.ai_enabled; ACTIVE = fresco; }
+        await cargarMsgs();
+        await marcarLeido(ACTIVE);   // chat abierto = leído en tiempo real
+      }
     }catch(e){}
   }, 6000);
+}
+
+/* ── Notificaciones ──
+   iOS (app nativa): las manda APNs desde el backend; capacitor-bridge.js
+   pide el permiso al abrir la app. Aquí solo se ofrece en web/PWA, y solo
+   dentro de la bandeja, que es donde tiene sentido. */
+function ofrecerAvisos(){
+  try{
+    if(window.__BROQUER_IOS_NATIVE__) return;
+    if(!('Notification' in window) || Notification.permission !== 'default') return;
+    if(localStorage.getItem('bx_avisos_pedido')) return;
+    const barra = document.createElement('div');
+    barra.className = 'bx-avisos';
+    barra.innerHTML =
+      '<span>Avísame cuando llegue un mensaje nuevo.</span>' +
+      '<button type="button" class="bx-avisos__ok">Activar</button>' +
+      '<button type="button" class="bx-avisos__no" aria-label="Ahora no">✕</button>';
+    document.querySelector('.bx-list__head').appendChild(barra);
+    const cerrar = () => { localStorage.setItem('bx_avisos_pedido','1'); barra.remove(); };
+    barra.querySelector('.bx-avisos__ok').onclick = async () => {
+      if(window.bkPedirNotificaciones) await window.bkPedirNotificaciones();
+      cerrar();
+    };
+    barra.querySelector('.bx-avisos__no').onclick = cerrar;
+  }catch(e){}
 }
 
 (async function init(){
@@ -713,6 +789,11 @@ function startPolling(){
     await cargarPreviews();
     renderConvs(true);
     startPolling();
+    ofrecerAvisos();
+    // Enlace profundo: bandeja.html?c=<id> — así abre el chat exacto
+    // cuando el agente toca la notificación de WhatsApp en su celular.
+    const cid = new URLSearchParams(location.search).get('c');
+    if(cid && CONVS.some(c => c.id === cid)) await abrir(cid);
   }catch(e){
     document.getElementById('convs').innerHTML = '<div class="bx-list__empty"><p>'+esc(e.message)+'</p></div>';
   }

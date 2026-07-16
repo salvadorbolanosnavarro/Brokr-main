@@ -30,39 +30,120 @@
       .catch(() => {});
   }
 
-  // ─── 2. Push notifications (APNs) ─────────────────────────────────
+  // ─── 2. Notificaciones push (APNs) ────────────────────────────────
+  // El backend (push.py) manda el aviso cuando un prospecto escribe por
+  // WhatsApp. Aquí: pedimos permiso, guardamos el token del iPhone en
+  // usuarios.apns_token, y decidimos qué hacer cuando llega o la tocan.
+
+  function usuarioActual() {
+    try {
+      return JSON.parse(localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || 'null');
+    } catch (_) { return null; }
+  }
+
+  // Guarda el token del dispositivo en la fila del agente.
+  // OJO: el PATCH va filtrado por id. Sin filtro, PostgREST intentaría tocar
+  // toda la tabla (RLS lo frena, pero es una llamada que no queremos hacer).
+  function guardarToken(valor) {
+    const tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+    const u = usuarioActual();
+    if (!tok || !u || !u.id) return;
+    // Si ya está guardado el mismo, no gastamos la llamada.
+    if (localStorage.getItem('apns_token_guardado') === valor) return;
+
+    fetch(SB_URL + '/rest/v1/usuarios?id=eq.' + encodeURIComponent(u.id), {
+      method: 'PATCH',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer ' + tok,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({ apns_token: valor }),
+    })
+      .then(r => { if (r.ok) localStorage.setItem('apns_token_guardado', valor); })
+      .catch(() => {});
+  }
+
+  let _listenersListos = false;
+
   async function registerPush() {
     try {
       const { PushNotifications } = window.Capacitor.Plugins;
       if (!PushNotifications) return;
-      const perm = await PushNotifications.requestPermissions();
-      if (perm.receive !== 'granted') return;
-      await PushNotifications.register();
 
-      PushNotifications.addListener('registration', t => {
-        const tok = localStorage.getItem('sb_token');
-        if (!tok) return;
-        // Guarda el APNs token en la fila del usuario actual (Supabase RLS lo limita a su propio id)
-        fetch(SB_URL + '/rest/v1/usuarios?select=id', {
-          method: 'PATCH',
-          headers: {
-            'apikey': SB_KEY,
-            'Authorization': 'Bearer ' + tok,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal',
-          },
-          body: JSON.stringify({ apns_token: t.value }),
-        }).catch(() => {});
-      });
-      PushNotifications.addListener('registrationError', e => console.error('[push] regError', e));
+      if (!_listenersListos) {
+        _listenersListos = true;
+
+        // Apple nos da el token del iPhone.
+        PushNotifications.addListener('registration', t => guardarToken(t.value));
+        PushNotifications.addListener('registrationError', e => console.error('[push] regError', e));
+
+        // Llega un aviso con la app ABIERTA. iOS no lo muestra encima de la
+        // app; lo aprovechamos para refrescar el globito y, si el agente ya
+        // está en la bandeja, recargar la lista sin que tenga que hacer nada.
+        PushNotifications.addListener('pushNotificationReceived', () => {
+          try { window.dispatchEvent(new CustomEvent('brokr-chats-leidos')); } catch (_) {}
+        });
+
+        // El agente TOCÓ la notificación: lo llevamos al chat exacto.
+        PushNotifications.addListener('pushNotificationActionPerformed', ev => {
+          try {
+            const d = (ev && ev.notification && ev.notification.data) || {};
+            if (d.tipo === 'whatsapp' && d.conversation_id) {
+              location.href = 'bandeja.html?c=' + encodeURIComponent(d.conversation_id);
+            } else {
+              location.href = 'bandeja.html';
+            }
+          } catch (_) { location.href = 'bandeja.html'; }
+        });
+      }
+
+      // El permiso se pide una sola vez. Si el agente dijo que no, iOS ya no
+      // vuelve a preguntar: tiene que ir a Ajustes > Broquer > Notificaciones.
+      let perm = await PushNotifications.checkPermissions();
+      if (perm.receive === 'prompt' || perm.receive === 'prompt-with-rationale') {
+        perm = await PushNotifications.requestPermissions();
+      }
+      if (perm.receive !== 'granted') return;
+
+      await PushNotifications.register();
     } catch (e) {
       console.error('[push] init', e);
     }
   }
 
+  // ─── 3. Limpiar el globito del ícono al abrir la app ───────────────
+  function limpiarBadgeSiCorresponde() {
+    try {
+      const { PushNotifications } = window.Capacitor.Plugins;
+      if (PushNotifications && PushNotifications.removeAllDeliveredNotifications) {
+        // Solo cuando el agente entra a la bandeja: si borramos los avisos
+        // nada más por abrir la app, perdería los que no ha visto.
+        const enBandeja = (location.pathname.split('/').pop() || '').indexOf('bandeja') === 0;
+        if (enBandeja) PushNotifications.removeAllDeliveredNotifications();
+      }
+    } catch (_) {}
+  }
+
   // ─── Lifecycle ────────────────────────────────────────────────────
   // Después de que el shell autentica y carga, registramos APNs.
-  window.addEventListener('brokr-shell-ready', registerPush);
+  window.addEventListener('brokr-shell-ready', () => {
+    registerPush();
+    limpiarBadgeSiCorresponde();
+  });
+
+  // Al volver a la app desde segundo plano, revisamos mensajes nuevos.
+  try {
+    const { App } = window.Capacitor.Plugins;
+    if (App) {
+      App.addListener('appStateChange', ({ isActive }) => {
+        if (!isActive) return;
+        try { window.dispatchEvent(new CustomEvent('brokr-chats-leidos')); } catch (_) {}
+        limpiarBadgeSiCorresponde();
+      });
+    }
+  } catch (_) {}
 
   // Exponer para debug
   window.brokrCapacitor = { registerPush };

@@ -1,6 +1,6 @@
 fastapi
 uvicorn
-httpx
+httpx[http2]
 beautifulsoup4
 pydantic
 python-docx
@@ -9,3 +9,5 @@ Pillow
 opencv-python-headless
 python-multipart
 python-dotenv
+PyJWT
+cryptography
