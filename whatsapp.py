@@ -207,8 +207,14 @@ async def process_change(value: dict):
         # anti-choque: si el agente contestó desde su cel mientras tanto, la IA ya no manda
         if reply and await ai_sigue_encendida(conv["id"]):
             sent = await wa_send_text(phone_number_id, from_wa, reply, token=token)
-            out_id = (sent.get("messages") or [{}])[0].get("id")
-            await store_message(user_id, contact["id"], conv["id"], out_id or f"local-{wamid}", "out", "ai", reply)
+            # Se guarda igual aunque falle —el agente tiene que ver que Recepción
+            # intentó contestar— pero marcado como failed, no como entregado.
+            await store_message(user_id, contact["id"], conv["id"],
+                                sent["message_id"] or f"local-{wamid}",
+                                "out", "ai", reply,
+                                status="sent" if sent["ok"] else "failed")
+            if not sent["ok"]:
+                log.error("Recepción no pudo responder a %s: %s", from_wa, sent["error"])
 
         await actualizar_calificacion(contact["id"], result)
 
@@ -349,31 +355,71 @@ def _normaliza_mx(num: str) -> str:
     return n
 
 
-async def wa_send_text(phone_number_id: str, to: str, body: str, token: str | None = None) -> dict:
-    """token: el access_token del usuario dueño del número. Si no se pasa, se busca
-    en wa_numbers. WHATSAPP_TOKEN (global) queda solo como último recurso para el
-    piloto; con multi-tenant cada número manda con SU propio token de negocio."""
+async def wa_send_text(phone_number_id: str, to: str, body: str,
+                       token: str | None = None) -> dict:
+    """Envía y REPORTA si se pudo. Devuelve siempre la misma forma:
+        {"ok": bool, "message_id": str|None, "error": str|None, "code": int|None}
+
+    Antes devolvía el JSON crudo de Meta y quien llamaba deducía el éxito de si
+    venía o no un id. Un rechazo (p. ej. #131037, nombre visible sin aprobar)
+    era indistinguible de un envío bueno, así que la bandeja guardaba mensajes
+    que jamás salieron y /send contestaba 200 OK. Nunca más."""
     if not token:
         row = await resolve_number(phone_number_id)
         token = (row or {}).get("access_token") or WHATSAPP_TOKEN
     if not token:
         log.error("Sin token para phone_number_id=%s — no se envía", phone_number_id)
-        return {}
+        return {"ok": False, "message_id": None, "code": None,
+                "error": "No hay token de acceso para este número."}
 
     to = _normaliza_mx(to)
-    log.info("WhatsApp enviando a %s", to)
     url = f"{GRAPH_API}/{phone_number_id}/messages"
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
     data = {"messaging_product": "whatsapp", "to": to, "type": "text", "text": {"body": body}}
     try:
         async with httpx.AsyncClient(timeout=20) as c:
             r = await c.post(url, headers=headers, json=data)
+            payload = r.json() if r.content else {}
+
             if r.status_code >= 400:
-                log.error("WhatsApp send error %s: %s", r.status_code, r.text)
-            return r.json()
+                err  = (payload.get("error") or {})
+                code = err.get("code")
+                msg  = err.get("message") or r.text[:200]
+                log.error("WhatsApp send error %s (code=%s) a %s: %s",
+                          r.status_code, code, to, msg)
+                return {"ok": False, "message_id": None, "code": code,
+                        "error": _error_legible(code, msg)}
+
+            mid = (payload.get("messages") or [{}])[0].get("id")
+            if not mid:
+                log.error("Meta respondió 200 sin message id: %s", json.dumps(payload)[:300])
+                return {"ok": False, "message_id": None, "code": None,
+                        "error": "Meta aceptó la petición pero no devolvió un id de mensaje."}
+
+            log.info("WhatsApp enviado a %s (%s)", to, mid)
+            return {"ok": True, "message_id": mid, "error": None, "code": None}
     except Exception as e:
-        log.exception("Error enviando WhatsApp: %s", e)
-        return {}
+        log.exception("Error enviando WhatsApp a %s: %s", to, e)
+        return {"ok": False, "message_id": None, "code": None,
+                "error": "No se pudo contactar a WhatsApp. Intenta de nuevo."}
+
+
+def _error_legible(code, msg: str) -> str:
+    """Traduce los rechazos más comunes de Meta a algo que el agente entienda
+    y pueda accionar. Si no lo conocemos, se pasa el mensaje de Meta tal cual."""
+    conocidos = {
+        131037: ("Tu número aún no tiene el nombre visible aprobado por Meta. "
+                 "Ve a WhatsApp Manager y mándalo a aprobación: hasta entonces "
+                 "puedes recibir mensajes, pero no responder."),
+        131047: ("Pasaron más de 24 horas desde el último mensaje del prospecto. "
+                 "Para reabrir la conversación hay que enviar una plantilla."),
+        131026: "El número del destinatario no tiene WhatsApp o no puede recibir mensajes.",
+        131031: "Meta bloqueó tu cuenta de WhatsApp. Revisa WhatsApp Manager.",
+        190:    "La conexión con WhatsApp caducó. Vuelve a conectar tu número.",
+        131049: "Meta limitó el envío a este usuario para cuidar la experiencia.",
+        130429: "Estás enviando demasiado rápido. Espera un momento.",
+    }
+    return conocidos.get(code, msg)
 
 
 # =============================================================================
@@ -402,12 +448,19 @@ async def agent_send(req: SendReq, request: Request):
     to = cs[0]["wa_id"]
 
     sent = await wa_send_text(conv["phone_number_id"], to, req.body)
-    out_id = (sent.get("messages") or [{}])[0].get("id")
+
+    if not sent["ok"]:
+        # NO se guarda el mensaje ni se apaga la IA: el prospecto no recibió nada,
+        # así que Recepción debe seguir a cargo. Antes esto devolvía 200 OK, el
+        # mensaje aparecía en la bandeja y la IA quedaba apagada — el peor caso:
+        # el agente creía haber contestado y nadie estaba atendiendo al lead.
+        raise HTTPException(status_code=502, detail=sent["error"])
+
     await store_message(user_id, conv["contact_id"], conv["id"],
-                        out_id or f"agent-{_now()}", "out", "agent", req.body)
+                        sent["message_id"], "out", "agent", req.body, status="sent")
     # el humano contestó -> apagamos la IA en esta conversación
     await sb_patch("wa_conversations", {"id": f"eq.{conv['id']}"}, {"ai_enabled": False})
-    return {"ok": True, "wa_message_id": out_id}
+    return {"ok": True, "wa_message_id": sent["message_id"]}
 
 
 # =============================================================================
@@ -543,11 +596,16 @@ async def get_or_create_conversation(user_id, contact, referral, phone_number_id
     return created[0] if created else {"id": None, "ai_enabled": True}
 
 
-async def store_message(user_id, contact_id, conversation_id, wa_message_id, direction, sender, body):
-    await sb_post("wa_messages",
-                  {"user_id": user_id, "contact_id": contact_id, "conversation_id": conversation_id,
-                   "wa_message_id": wa_message_id, "direction": direction, "sender": sender, "body": body},
-                  prefer="return=minimal")
+async def store_message(user_id, contact_id, conversation_id, wa_message_id, direction, sender, body,
+                        status: str | None = None):
+    """status: 'sent' | 'failed' | None (entrantes). La columna ya existía en el
+    esquema pero nadie la escribía, así que un mensaje rechazado por Meta se veía
+    idéntico a uno entregado."""
+    fila = {"user_id": user_id, "contact_id": contact_id, "conversation_id": conversation_id,
+            "wa_message_id": wa_message_id, "direction": direction, "sender": sender, "body": body}
+    if status:
+        fila["status"] = status
+    await sb_post("wa_messages", fila, prefer="return=minimal")
     await sb_patch("wa_conversations", {"id": f"eq.{conversation_id}"}, {"last_message_at": _now()})
 
 

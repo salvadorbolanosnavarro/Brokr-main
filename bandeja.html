@@ -651,7 +651,16 @@ async function sendMsg(){
       headers:{'Content-Type':'application/json', Authorization:'Bearer '+tok},
       body: JSON.stringify({ conversation_id: ACTIVE.id, body })
     });
-    if(!r.ok){ alert('No se pudo enviar el mensaje ('+r.status+'). Intenta de nuevo.'); btn.disabled=false; return; }
+    if(!r.ok){
+      // El backend manda en 'detail' el motivo real de Meta ya traducido
+      // (nombre visible sin aprobar, ventana de 24h vencida, token caducado...).
+      // El texto queda en el composer para poder reintentar sin reescribirlo.
+      let motivo = 'No se pudo enviar el mensaje (' + r.status + ').';
+      try{ const e = await r.json(); if(e && e.detail) motivo = e.detail; }catch(_){}
+      alert(motivo);
+      btn.disabled = false;
+      return;
+    }
     ta.value=''; growBox(ta);
     // al contestar tú, Recepción se apaga (el backend ya lo hizo)
     document.getElementById('aiToggle').checked = false;
