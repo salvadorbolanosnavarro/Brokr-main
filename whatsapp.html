@@ -371,7 +371,16 @@ function startEmbeddedSignup(){
     config_id: WA_CONFIG_ID,
     response_type: 'code',
     override_default_response_type: true,
-    extras: { setup: {}, featureType: '', sessionInfoVersion: '3' }
+    extras: {
+      setup: {},
+      // COEXISTENCIA: permite conectar un número que ya vive en la app de
+      // WhatsApp Business SIN sacarlo de ahí. El agente sigue contestando desde
+      // su celular y los echos llegan al webhook -> process_echo() los guarda y
+      // apaga la IA de esa conversación. Sin esto, Meta exige migrar el número
+      // y el agente pierde la app.
+      featureType: 'whatsapp_business_app_onboarding',
+      sessionInfoVersion: '3'
+    }
   });
 }
 

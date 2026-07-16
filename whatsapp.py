@@ -200,7 +200,7 @@ async def process_change(value: dict):
             continue  # el agente tomó el control
 
         history = await fetch_history(conv["id"])
-        agente  = await perfil_agente(user_id)
+        agente  = await perfil_agente(user_id, numero.get("waba_name"))
         result  = await recepcion_responde(history, conv.get("property_ctx"), agente)
         reply   = (result or {}).get("reply")
 
@@ -244,10 +244,18 @@ async def process_echo(value: dict):
 # =============================================================================
 # 3) RECEPCIÓN (la IA)  ->  Anthropic, responde y califica de una
 # =============================================================================
-async def perfil_agente(user_id: str) -> dict:
-    """Nombre y zona del agente dueño del número, para que la IA se presente como ÉL
-    y no como la agencia del piloto. Sin esto, un lead de cualquier agente recibía
-    'Soy Recepción de Grupo Navarro'."""
+async def perfil_agente(user_id: str, waba_name: str | None = None) -> dict:
+    """Cómo se presenta la IA ante el prospecto. Cadena de respaldo:
+        1. usuarios.nombre_publico  — lo que el agente configuró en Mi Sitio
+        2. waba_name                — el nombre de SU cuenta de WhatsApp Business
+        3. genérico neutro          — nunca el nombre de otra inmobiliaria
+
+    El default global NO puede ser una empresa real: un agente sin perfil
+    terminaba presentándose como Grupo Navarro ante sus propios prospectos.
+    Un respaldo que se confunde con un valor legítimo además hace imposible
+    detectar en logs quién no ha llenado su perfil."""
+    nombre = ""
+    zona   = ""
     try:
         rows = await sb_get("usuarios", {
             "id": f"eq.{user_id}",
@@ -255,27 +263,33 @@ async def perfil_agente(user_id: str) -> dict:
             "limit": "1",
         })
         if rows:
-            return {
-                "nombre": (rows[0].get("nombre_publico") or "").strip() or DEFAULT_AGENCIA,
-                "zona":   (rows[0].get("zona_cobertura") or "").strip() or "México",
-            }
+            nombre = (rows[0].get("nombre_publico") or "").strip()
+            zona   = (rows[0].get("zona_cobertura") or "").strip()
     except Exception as e:
         log.warning("No se pudo leer el perfil de %s: %s", user_id, e)
-    return {"nombre": DEFAULT_AGENCIA, "zona": "Morelia"}
+
+    if not nombre:
+        nombre = (waba_name or "").strip()
+    if not nombre:
+        nombre = "tu asesor inmobiliario"
+        log.info("Usuario %s sin nombre_publico ni waba_name — la IA usa genérico", user_id)
+
+    return {"nombre": nombre, "zona": zona}
 
 
 async def recepcion_responde(history: list, property_ctx: str | None,
                              agente: dict | None = None) -> dict:
-    agente = agente or {"nombre": DEFAULT_AGENCIA, "zona": "Morelia"}
+    agente = agente or {"nombre": "tu asesor inmobiliario", "zona": ""}
     quien  = agente["nombre"]
-    zona   = agente["zona"]
+    zona   = agente.get("zona") or ""
+    ubica  = f" en {zona}" if zona else ""
 
     contexto = property_ctx or (
-        f"Atiendes prospectos de {quien}, asesor inmobiliario en {zona}. "
+        f"Atiendes prospectos de {quien}, asesor inmobiliario{ubica}. "
         "Si no sabes por qué propiedad escribe, pregúntale qué busca."
     )
     system = (
-        f"Eres 'Recepción', el asistente de WhatsApp de {quien}, asesor inmobiliario en {zona}. "
+        f"Eres 'Recepción', el asistente de WhatsApp de {quien}, asesor inmobiliario{ubica}. "
         "Atiendes a un prospecto que escribió por un anuncio. Califícalo con calidez y rapidez, sin sonar "
         "a robot ni a interrogatorio: averigua forma de pago o crédito, presupuesto real, para cuándo lo "
         "necesita y qué busca; cuando haga sentido, ofrece agendar una visita con día y hora. Español "
@@ -407,7 +421,7 @@ async def resolve_number(phone_number_id: str | None) -> dict | None:
         return None
     rows = await sb_get("wa_numbers", {
         "phone_number_id": f"eq.{phone_number_id}",
-        "select": "user_id,access_token,ia_enabled,waba_id",
+        "select": "user_id,access_token,ia_enabled,waba_id,waba_name",
         "limit": "1",
     })
     return rows[0] if rows else None
