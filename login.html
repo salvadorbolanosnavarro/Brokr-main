@@ -280,6 +280,15 @@ body { overflow-y: auto; }
 }
 .bk-legal a:hover { color: var(--forest); }
 
+/* Insignia Meta Tech Provider — discreta, bajo el aviso legal */
+.bk-meta {
+  margin-top: 20px;
+  display: flex; justify-content: center; line-height: 0;
+  opacity: .5; transition: opacity .18s ease;
+}
+.bk-meta:hover { opacity: .8; }
+.bk-meta img { height: 24px; width: auto; display: block; }
+
 .bk-foot {
   margin-top: 32px;
   font-size: var(--fs-h2);
@@ -428,6 +437,10 @@ body { overflow-y: auto; }
         Al continuar aceptas nuestros
         <a href="legal.html" target="_blank" rel="noopener">Términos</a> y el
         <a href="legal.html#privacidad" target="_blank" rel="noopener">Aviso de Privacidad</a>.
+      </div>
+
+      <div class="bk-meta"><!-- AUDIT-EXEMPT-LINE: insignia oficial de Meta (marca externa) -->
+        <img src="meta-tech-provider.png" alt="Meta Tech Provider"/>
       </div>
 
       <div class="bk-foot">Broquer 2026 — Para Sharks inmobiliarios</div>

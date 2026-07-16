@@ -253,6 +253,10 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
 .ld-foot__links a { color: rgba(255,255,255,.6); text-decoration: none; font-size: var(--fs-sm); }
 .ld-foot__links a:hover { color: var(--bone); }
 .ld-foot__copy { font-family: var(--font-mono); font-size: var(--fs-caption); color: rgba(255,255,255,.4); letter-spacing: .06em; }
+/* Insignia Meta Tech Provider — discreta, al pie */
+.ld-foot__meta { display: block; line-height: 0; opacity: .7; transition: opacity .18s var(--ease); }
+.ld-foot__meta:hover { opacity: .85; }
+.ld-foot__meta img { height: 26px; width: auto; display: block; }
 </style>
 </head>
 <body>
@@ -499,6 +503,9 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
     <a class="ld-foot__badge" href="https://apps.apple.com/us/app/broquer/id6775727897" target="_blank" rel="noopener">
       <img src="appstore-badge.webp" alt="Descárgalo en el App Store"/>
     </a>
+    <span class="ld-foot__meta"><!-- AUDIT-EXEMPT-LINE: insignia oficial de Meta (marca externa) -->
+      <img src="meta-tech-provider-white.png" alt="Meta Tech Provider"/>
+    </span>
     <div class="ld-foot__copy">Broquer 2026</div>
   </div>
 </footer>

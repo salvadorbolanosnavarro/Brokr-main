@@ -93,6 +93,15 @@
 .appstore-card__badge { display: block; line-height: 0; flex-shrink: 0; }
 .appstore-card__badge img { height: 42px; width: auto; display: block; }
 @media (max-width: 560px) { .appstore-card { padding: 18px 20px; } .appstore-card__title { font-size: var(--fs-sm); } }
+
+/* ── Pie discreto: insignia Meta Tech Provider ── */
+.dash-foot {
+  margin-top: 22px; padding-top: 18px;
+  border-top: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+}
+.dash-foot img { height: 22px; width: auto; display: block; opacity: .45; transition: opacity 0.18s var(--ease); }
+.dash-foot:hover img { opacity: .75; }
 </style>
 </head>
 <body data-app="home">
@@ -219,6 +228,11 @@
     <a href="https://apps.apple.com/us/app/broquer/id6775727897" target="_blank" rel="noopener" class="appstore-card__badge">
       <img src="appstore-badge.webp" alt="Descárgalo en el App Store"/>
     </a>
+  </div>
+
+  <!-- Pie -->
+  <div class="dash-foot"><!-- AUDIT-EXEMPT-LINE: insignia oficial de Meta (marca externa) -->
+    <img src="meta-tech-provider.png" alt="Meta Tech Provider"/>
   </div>
 
 </div>

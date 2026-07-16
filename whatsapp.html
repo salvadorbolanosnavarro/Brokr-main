@@ -138,6 +138,11 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
    PANELES BLANCOS — todo lo que es control, no protagonista
    ═══════════════════════════════════════════════════════════ */
 .wa-jump{display:flex;flex-wrap:wrap;gap:var(--sp-3);margin-bottom:var(--sp-6)}
+/* Pie discreto: insignia Meta Tech Provider */
+.wa-foot{margin-top:var(--sp-6);padding-top:var(--sp-5);border-top:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:var(--sp-2)}
+.wa-foot img{height:22px;width:auto;display:block;opacity:.45;transition:opacity var(--dur-fast) var(--ease)}
+.wa-foot:hover img{opacity:.75}
+.wa-foot p{margin:0;font-size:var(--fs-caption);color:var(--mute-2);text-align:center;line-height:var(--lh-snug)}
 
 .wa-panel{
   background:var(--bone);border:1px solid var(--line);border-radius:var(--r);
@@ -333,6 +338,12 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
       <button class="wa-btn wa-btn-danger wa-btn--sm" onclick="openDisconnectModal()">Desconectar</button>
     </div>
 
+  </div>
+
+  <!-- Pie: se ve conectado o no, porque es lo que da confianza ANTES de conectar -->
+  <div class="wa-foot"><!-- AUDIT-EXEMPT-LINE: insignia oficial de Meta (marca externa) -->
+    <img src="meta-tech-provider.png" alt="Meta Tech Provider"/>
+    <p>Broquer es Tech Provider de Meta. Tu número se conecta con la API oficial de WhatsApp Business.</p>
   </div>
 
 </div>
