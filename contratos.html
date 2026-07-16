@@ -28,16 +28,33 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .pg-ttl{font-family:var(--font-display);font-size:var(--fs-h1);color:var(--ink);margin-bottom:4px;letter-spacing:-0.025em;font-weight:700}
 .pg-sub{font-size:var(--fs-xs);color:var(--mut);margin-bottom:24px;line-height:1.5}
 
-/* Type selector */
-.tipo-tabs{display:flex;gap:8px;margin-bottom:20px}
-@media(max-width:600px){.tipo-tabs{flex-wrap:wrap}}
-.tipo-tab{flex:1;padding:10px 14px;border:1.5px solid var(--silver2);border-radius:var(--r-pill);background:var(--wh);cursor:pointer;text-align:center;transition:all .15s}
-.tipo-tab:hover{border-color:var(--sky-blue)}
-.tipo-tab.active{border-color:var(--sky-navy);background:var(--sky-navy)}
-.tipo-tab-lbl{font-size:var(--fs-sm);font-weight:600;color:var(--mut)}
-.tipo-tab.active .tipo-tab-lbl{color:var(--bone)}
-.tipo-tab-sub{font-size:var(--fs-caption);color:var(--mut);margin-top:1px}
-.tipo-tab.active .tipo-tab-sub{color:rgba(255,255,255,.65)}
+/* Type selector — menú desplegable + botón de nuevo machote */
+.doc-picker{position:relative;display:flex;gap:8px;align-items:stretch;margin-bottom:20px}
+.doc-picker-btn{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:11px 14px;border:1.5px solid var(--silver2);border-radius:var(--r-pill);background:var(--wh);cursor:pointer;text-align:left;transition:all .15s}
+.doc-picker-btn:hover{border-color:var(--sky-blue)}
+.doc-picker-btn.open{border-color:var(--sky-navy)}
+.doc-picker-txt{flex:1;min-width:0}
+.doc-picker-lbl{font-size:var(--fs-sm);font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doc-picker-sub{font-size:var(--fs-caption);color:var(--mut);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doc-picker-chev{color:var(--mut);flex-shrink:0;transition:transform .18s var(--ease)}
+.doc-picker-btn.open .doc-picker-chev{transform:rotate(180deg)}
+.doc-new-btn{display:inline-flex;align-items:center;gap:7px;padding:11px 16px;border:1.5px solid var(--sky-navy);border-radius:var(--r-pill);background:var(--sky-navy);color:var(--bone);font-size:var(--fs-sm);font-weight:700;cursor:pointer;white-space:nowrap;transition:all .15s}
+.doc-new-btn:hover{filter:brightness(1.08)}
+
+.doc-menu{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:40;background:var(--wh);border:1px solid var(--silver2);border-radius:var(--r);box-shadow:var(--shadow-lg);padding:6px;max-height:60vh;overflow-y:auto}
+.doc-menu-grp{font-size:var(--fs-caption);font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;padding:9px 10px 5px}
+.doc-menu-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:var(--r-sm);cursor:pointer;transition:background .12s}
+.doc-menu-item:hover{background:var(--bone)}
+.doc-menu-item.active{background:var(--tealp)}
+.doc-menu-ico{width:30px;height:30px;border-radius:var(--r-sm);background:var(--sky-navy);color:var(--bone);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.doc-menu-info{flex:1;min-width:0}
+.doc-menu-ttl{font-size:var(--fs-sm);font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doc-menu-sub{font-size:var(--fs-caption);color:var(--mut);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doc-menu-del{width:26px;height:26px;border:none;background:transparent;border-radius:var(--r-sm);cursor:pointer;color:var(--mut);flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.doc-menu-item:hover .doc-menu-del{background:var(--paper-2);color:var(--danger)}
+.doc-menu-del:hover{background:var(--danger)!important;color:var(--bone)!important}
+.doc-menu-empty{padding:12px 10px;font-size:var(--fs-caption);color:var(--mut);line-height:1.5}
+@media(max-width:600px){.doc-new-btn span{display:none}.doc-new-btn{padding:11px 13px}}
 
 /* Cards */
 .card{background:var(--wh);border:1px solid var(--silver2);border-radius:var(--r);padding:22px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
@@ -186,11 +203,6 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .badge-venta{background:var(--bone);color:var(--success)}.badge-renta{background:var(--bone);color:var(--forest)}
 
 /* ── MI PROPIO MACHOTE ── */
-.mach-subtabs{display:flex;gap:8px;margin-bottom:16px}
-.mach-subtab{flex:1;padding:10px;border:1.5px solid var(--silver2);border-radius:var(--r-pill);background:var(--wh);cursor:pointer;text-align:center;font-size:var(--fs-sm);font-weight:600;color:var(--mut);transition:all .15s}
-.mach-subtab:hover{border-color:var(--sky-navy)}
-.mach-subtab.active{border-color:var(--sky-navy);background:var(--sky-navy);color:var(--bone)}
-
 .mach-drop{border:2px dashed var(--silver2);border-radius:var(--r);padding:26px 18px;text-align:center;cursor:pointer;transition:all .15s;background:var(--bone)}
 .mach-drop:hover,.mach-drop.drag{border-color:var(--sky-navy);background:var(--tealp)}
 .mach-drop-ico{color:var(--mut);margin-bottom:8px;display:flex;justify-content:center}
@@ -338,18 +350,46 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
   <div id="brokr-section">
 
   <!-- Tipo selector -->
-  <div class="tipo-tabs">
-    <div class="tipo-tab active" id="tab-arr" onclick="setTipo('arrendamiento')">
-      <div class="tipo-tab-lbl">Arrendamiento</div>
-    </div>
-    <div class="tipo-tab" id="tab-pro" onclick="setTipo('promesa')">
-      <div class="tipo-tab-lbl">Promesa de compraventa</div>
-    </div>
-    <div class="tipo-tab" id="tab-mach" onclick="setTipo('machote')">
-      <div class="tipo-tab-lbl">Mi propio machote</div>
-      <div class="tipo-tab-sub">Usa tu propia plantilla</div>
+  <div class="doc-picker">
+    <button type="button" class="doc-picker-btn" id="doc-picker-btn" onclick="toggleDocMenu(event)">
+      <span class="doc-menu-ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m-9 5h12a2 2 0 002-2V7.5L14.5 3H6a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg></span>
+      <span class="doc-picker-txt">
+        <span class="doc-picker-lbl" id="doc-picker-lbl">Arrendamiento</span>
+        <span class="doc-picker-sub" id="doc-picker-sub">Contrato de Broquer</span>
+      </span>
+      <svg class="doc-picker-chev" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+
+    <!-- Solo web: crear/subir machote propio -->
+    <button type="button" class="doc-new-btn" id="doc-new-btn" style="display:none" onclick="nuevoMachote()">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+      <span>Subir machote</span>
+    </button>
+
+    <div class="doc-menu" id="doc-menu" style="display:none">
+      <div class="doc-menu-grp">Contratos de Broquer</div>
+      <div class="doc-menu-item active" id="doc-opt-arr" onclick="setTipo('arrendamiento')">
+        <div class="doc-menu-ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m-9 5h12a2 2 0 002-2V7.5L14.5 3H6a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg></div>
+        <div class="doc-menu-info">
+          <div class="doc-menu-ttl">Arrendamiento</div>
+          <div class="doc-menu-sub">Formato estándar de Broquer</div>
+        </div>
+      </div>
+      <div class="doc-menu-item" id="doc-opt-pro" onclick="setTipo('promesa')">
+        <div class="doc-menu-ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m-9 5h12a2 2 0 002-2V7.5L14.5 3H6a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg></div>
+        <div class="doc-menu-info">
+          <div class="doc-menu-ttl">Promesa de compraventa</div>
+          <div class="doc-menu-sub">Formato estándar de Broquer</div>
+        </div>
+      </div>
+      <!-- Solo web -->
+      <div id="doc-menu-mach-wrap" style="display:none">
+        <div class="doc-menu-grp">Mis machotes</div>
+        <div id="doc-menu-mach"></div>
+      </div>
     </div>
   </div>
+  <div class="err" id="mach-err-lista" style="margin-top:-12px;margin-bottom:16px"></div>
 
   <!-- ══ FORMULARIO ARRENDAMIENTO ══ -->
   <div id="form-arrendamiento">
@@ -1023,14 +1063,12 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
   <!-- ══ MI PROPIO MACHOTE ══ -->
   <div id="form-machote" style="display:none">
 
-    <div class="card" id="mach-card-subir">
-      <div class="card-title">Tu contrato, tu formato</div>
-      <div class="f-note" style="margin-bottom:14px">Sube el contrato que ya usas. Broquer lo abre aquí mismo y tú vas señalando con el dedo qué datos cambian en cada operación: el nombre del cliente, el monto, la fecha. Les pones nombre, creas tu machote, y de ahí en adelante solo llenas el formulario. Nunca vamos a tocar una sola palabra que tú no hayas marcado.</div>
-
-      <div class="mach-subtabs">
-        <div class="mach-subtab active" id="mach-subtab-nuevo" onclick="setMachSubtab('nuevo')">Crear un machote</div>
-        <div class="mach-subtab" id="mach-subtab-guardados" onclick="setMachSubtab('guardados')">Mis machotes guardados</div>
+    <div class="card" id="mach-card-subir" style="display:none">
+      <div class="mach-form-head">
+        <div class="mach-form-head-ttl">Tu contrato, tu formato</div>
+        <button class="mach-form-back" onclick="setTipo('arrendamiento')">Cancelar</button>
       </div>
+      <div class="f-note" style="margin-bottom:14px">Sube el contrato que ya usas. Broquer lo abre aquí mismo y tú vas señalando qué datos cambian en cada operación: el nombre del cliente, el monto, la fecha. Les pones nombre, creas tu machote, y de ahí en adelante solo llenas el formulario. Tu machote queda guardado en el menú de arriba. Nunca vamos a tocar una sola palabra que tú no hayas marcado.</div>
 
       <div id="mach-panel-nuevo">
         <div class="frow one" style="margin-bottom:12px">
@@ -1070,10 +1108,6 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
         <div class="err" id="mach-err-nuevo"></div>
       </div>
 
-      <div id="mach-panel-guardados" style="display:none">
-        <div id="mach-lista"></div>
-        <div class="err" id="mach-err-lista"></div>
-      </div>
     </div>
 
     <!-- ── MARCADO ── -->
@@ -1131,7 +1165,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
       <div class="mach-form-head">
         <div class="mach-form-head-ttl" id="mach-form-titulo">Completa los datos</div>
         <button class="mach-form-back" onclick="abrirRevision()">Ajustar campos</button>
-        <button class="mach-form-back" onclick="cerrarMachote()">Elegir otro</button>
+        <button class="mach-form-back" onclick="abrirDocMenu()">Elegir otro</button>
       </div>
       <div id="mach-campos-form"></div>
       <div class="mach-actions">
@@ -1222,21 +1256,98 @@ function ocultarErr(id) { const el=document.getElementById(id); if(el){el.textCo
   // Will be populated by logo data if needed
 })();
 
-// ── Tipo tabs ──
+// ══════════════════════════════════════════════════════════════
+// PLATAFORMA
+// "Mi propio machote" solo existe en web de escritorio: subir un .docx y
+// marcarlo campo por campo no funciona bien en pantalla chica, y en la app
+// nativa de iOS no exponemos el flujo de archivos. En móvil e iOS el menú
+// solo muestra Arrendamiento y Promesa de compraventa.
+// ══════════════════════════════════════════════════════════════
+const ES_IOS_NATIVO = (function(){
+  try{
+    if(window.__BROQUER_IOS_NATIVE__) return true;
+    if(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) return true;
+    if(document.documentElement.classList.contains('is-ios-native')) return true;
+  }catch(e){}
+  return false;
+})();
+const ES_MOVIL = (function(){
+  if(ES_IOS_NATIVO) return true;
+  const ua = navigator.userAgent || '';
+  if(/iPhone|iPad|iPod|Android/i.test(ua)) return true;
+  // iPadOS 13+ se anuncia como Macintosh
+  if(/Macintosh/.test(ua) && (navigator.maxTouchPoints || 0) > 1) return true;
+  try{
+    if(window.matchMedia('(pointer: coarse)').matches && window.matchMedia('(max-width: 900px)').matches) return true;
+  }catch(e){}
+  return false;
+})();
+const MACHOTES_ON = !ES_MOVIL;
+
+// ── Menú de documentos ──
+function toggleDocMenu(ev){
+  if(ev) ev.stopPropagation();
+  const m = document.getElementById('doc-menu');
+  m.style.display === 'none' ? abrirDocMenu() : cerrarDocMenu();
+}
+function abrirDocMenu(){
+  document.getElementById('doc-menu').style.display = 'block';
+  document.getElementById('doc-picker-btn').classList.add('open');
+  if(MACHOTES_ON && machotesCargados === false) cargarMisMachotes();
+}
+function cerrarDocMenu(){
+  document.getElementById('doc-menu').style.display = 'none';
+  document.getElementById('doc-picker-btn').classList.remove('open');
+}
+document.addEventListener('click', function(e){
+  const p = document.querySelector('.doc-picker');
+  if(p && !p.contains(e.target)) cerrarDocMenu();
+});
+
+function setDocPicker(lbl, sub){
+  document.getElementById('doc-picker-lbl').textContent = lbl;
+  document.getElementById('doc-picker-sub').textContent = sub;
+}
+
+// ── Selección de documento ──
 function setTipo(tipo){
+  // En móvil/iOS no hay machotes propios: cualquier intento cae en arrendamiento.
+  if(tipo === 'machote' && !MACHOTES_ON) tipo = 'arrendamiento';
   tipoActual = tipo;
-  document.getElementById('tab-arr').classList.toggle('active', tipo==='arrendamiento');
-  document.getElementById('tab-pro').classList.toggle('active', tipo==='promesa');
-  document.getElementById('tab-mach').classList.toggle('active', tipo==='machote');
-  document.getElementById('form-arrendamiento').style.display = tipo==='arrendamiento' ? 'block' : 'none';
-  document.getElementById('form-promesa').style.display = tipo==='promesa' ? 'block' : 'none';
-  document.getElementById('form-machote').style.display = tipo==='machote' ? 'block' : 'none';
-  document.getElementById('form-estandar-footer').style.display = tipo==='machote' ? 'none' : 'block';
+
+  document.getElementById('doc-opt-arr').classList.toggle('active', tipo==='arrendamiento');
+  document.getElementById('doc-opt-pro').classList.toggle('active', tipo==='promesa');
+  document.querySelectorAll('#doc-menu-mach .doc-menu-item').forEach(el => el.classList.remove('active'));
+
+  machShow('form-arrendamiento', tipo==='arrendamiento');
+  machShow('form-promesa', tipo==='promesa');
+  machShow('form-machote', tipo==='machote');
+  machShow('form-estandar-footer', tipo!=='machote');
   document.getElementById('success').classList.remove('show');
   document.getElementById('err').classList.remove('show');
-  if(tipo==='machote'){
-    if(machotesCargados === false) cargarMisMachotes();
-  }
+
+  if(tipo === 'arrendamiento') setDocPicker('Arrendamiento', 'Contrato de Broquer');
+  if(tipo === 'promesa')       setDocPicker('Promesa de compraventa', 'Contrato de Broquer');
+  if(tipo !== 'machote'){ machShow('mach-card-subir', false); cerrarMachote(); }
+
+  cerrarDocMenu();
+}
+
+// Botón "Subir machote" (solo web): abre el flujo de creación.
+function nuevoMachote(){
+  if(!MACHOTES_ON) return;
+  tipoActual = 'machote';
+  document.getElementById('form-arrendamiento').style.display = 'none';
+  document.getElementById('form-promesa').style.display = 'none';
+  document.getElementById('form-machote').style.display = 'block';
+  document.getElementById('form-estandar-footer').style.display = 'none';
+  document.getElementById('doc-opt-arr').classList.remove('active');
+  document.getElementById('doc-opt-pro').classList.remove('active');
+  cerrarMachote();
+  machShow('mach-card-subir', true);
+  setDocPicker('Nuevo machote', 'Sube tu propio formato');
+  cerrarDocMenu();
+  machScroll('mach-card-subir');
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1274,15 +1385,6 @@ async function machHeaders(){
 function machShow(id, on){ const el = document.getElementById(id); if(el) el.style.display = on ? 'block' : 'none'; }
 function machScroll(id){ document.getElementById(id)?.scrollIntoView({behavior:'smooth', block:'start'}); }
 function escRegex(s){ return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
-
-function setMachSubtab(sub){
-  document.getElementById('mach-subtab-nuevo').classList.toggle('active', sub==='nuevo');
-  document.getElementById('mach-subtab-guardados').classList.toggle('active', sub==='guardados');
-  machShow('mach-panel-nuevo', sub==='nuevo');
-  machShow('mach-panel-guardados', sub==='guardados');
-  cerrarMachote();
-  if(sub==='guardados') cargarMisMachotes();
-}
 
 // ── Archivo ──
 function aceptarMachFile(f){
@@ -1584,7 +1686,7 @@ function abrirPop(rect, marcaIdx){
   }
   setTimeout(() => document.getElementById('pop-nombre')?.focus(), 30);
 }
-function cerrarPop(){ document.getElementById('mach-pop').style.display = 'none'; PEND = null; }
+function cerrarPop(){ const p = document.getElementById('mach-pop'); if(p) p.style.display = 'none'; PEND = null; }
 function errPop(msg){ mostrarErr('mach-err-marcar', msg); setTimeout(() => ocultarErr('mach-err-marcar'), 4000); }
 function popCambioExistente(){
   const v = document.getElementById('pop-existente').value;
@@ -1746,6 +1848,9 @@ async function crearMachote(){
     document.getElementById('mach-titulo').value = '';
     document.getElementById('mach-tipo').value = '';
     machShow('mach-marcar-card', false);
+    machShow('mach-card-subir', false);
+    setDocPicker(MACH.titulo, MACH.tipo || 'Machote propio');
+    cargarMisMachotes();
     abrirFormulario();
   } catch(e){
     mostrarErr('mach-err-marcar', e.message || 'No pudimos crear tu machote. Verifica tu conexión.');
@@ -1755,11 +1860,13 @@ async function crearMachote(){
   }
 }
 
-// ── Machotes guardados ──
+// ── Machotes guardados: viven dentro del menú de documentos ──
 async function cargarMisMachotes(){
-  const cont = document.getElementById('mach-lista');
+  if(!MACHOTES_ON) return;
+  const cont = document.getElementById('doc-menu-mach');
+  if(!cont) return;
   ocultarErr('mach-err-lista');
-  cont.innerHTML = '<div class="mach-list-empty">Cargando tus machotes...</div>';
+  cont.innerHTML = '<div class="doc-menu-empty">Cargando tus machotes...</div>';
   try{
     const headers = await machHeaders();
     const res = await fetch(`${API_M}/contrato/machotes`, { headers });
@@ -1770,19 +1877,19 @@ async function cargarMisMachotes(){
     const machotes = (await res.json()).machotes || [];
     machotesCargados = true;
     if(machotes.length === 0){
-      cont.innerHTML = '<div class="mach-list-empty">Todavía no has creado ningún machote. Empieza en "Crear un machote".</div>';
+      cont.innerHTML = '<div class="doc-menu-empty">Todavía no tienes machotes propios. Súbelos con el botón de arriba y aparecerán aquí.</div>';
       return;
     }
     cont.innerHTML = machotes.map(m => {
-      const fecha = m.created_at ? new Date(m.created_at).toLocaleDateString('es-MX', {day:'numeric', month:'short', year:'numeric'}) : '';
       const n = (m.campos || []).length;
-      return `<div class="mach-item" onclick="usarMachoteGuardado('${m.id}')">
-        <div class="mach-item-ico"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m-9 5h12a2 2 0 002-2V7.5L14.5 3H6a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg></div>
-        <div class="mach-item-info">
-          <div class="mach-item-title">${escHtml(m.titulo)}</div>
-          <div class="mach-item-sub">${escHtml(m.tipo || 'Personalizado')} · ${n} campo${n===1?'':'s'} · ${fecha}</div>
+      const t = escHtml(m.titulo).replace(/'/g, "\\'");
+      return `<div class="doc-menu-item${MACH.id===m.id?' active':''}" onclick="usarMachoteGuardado('${m.id}')">
+        <div class="doc-menu-ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m-9 5h12a2 2 0 002-2V7.5L14.5 3H6a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg></div>
+        <div class="doc-menu-info">
+          <div class="doc-menu-ttl">${escHtml(m.titulo)}</div>
+          <div class="doc-menu-sub">${escHtml(m.tipo || 'Personalizado')} · ${n} campo${n===1?'':'s'}</div>
         </div>
-        <button class="mach-item-del" onclick="event.stopPropagation(); eliminarMachoteGuardado('${m.id}', '${escHtml(m.titulo).replace(/'/g, "\\'")}')" title="Eliminar"><svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
+        <button class="doc-menu-del" onclick="event.stopPropagation(); eliminarMachoteGuardado('${m.id}', '${t}')" title="Eliminar"><svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
       </div>`;
     }).join('');
   } catch(e){
@@ -1792,6 +1899,7 @@ async function cargarMisMachotes(){
 }
 
 async function usarMachoteGuardado(id){
+  if(!MACHOTES_ON) return;
   ocultarErr('mach-err-lista');
   try{
     const headers = await machHeaders();
@@ -1802,6 +1910,19 @@ async function usarMachoteGuardado(id){
     }
     const m = await res.json();
     MACH = { id:m.id, titulo:m.titulo, tipo:m.tipo, campos:m.campos || [] };
+
+    tipoActual = 'machote';
+    document.getElementById('form-arrendamiento').style.display = 'none';
+    document.getElementById('form-promesa').style.display = 'none';
+    document.getElementById('form-machote').style.display = 'block';
+    document.getElementById('form-estandar-footer').style.display = 'none';
+    document.getElementById('doc-opt-arr').classList.remove('active');
+    document.getElementById('doc-opt-pro').classList.remove('active');
+    document.querySelectorAll('#doc-menu-mach .doc-menu-item').forEach(el => el.classList.remove('active'));
+    machShow('mach-card-subir', false);
+    setDocPicker(m.titulo, (m.tipo || 'Machote propio'));
+    cerrarDocMenu();
+
     abrirFormulario();
   } catch(e){
     mostrarErr('mach-err-lista', e.message || 'No pudimos abrir ese machote.');
@@ -1817,8 +1938,10 @@ async function eliminarMachoteGuardado(id, titulo){
       const j = await res.json().catch(()=>({}));
       throw new Error(j.detail || 'No se pudo eliminar el machote.');
     }
-    if(MACH.id === id) cerrarMachote();
-    cargarMisMachotes();
+    const eraElAbierto = (MACH.id === id);
+    machotesCargados = false;
+    await cargarMisMachotes();
+    if(eraElAbierto) setTipo('arrendamiento');
   } catch(e){
     mostrarErr('mach-err-lista', e.message || 'No se pudo eliminar el machote.');
   }
@@ -1830,8 +1953,8 @@ function cerrarMachote(){
   DOC = { file:null, titulo:'', tipo:'', parrafos:[], campos:[], marcas:[], seq:0 };
   cerrarPop();
   ['mach-marcar-card','mach-rev-card','mach-form-card','mach-prev-card'].forEach(id => machShow(id, false));
-  document.getElementById('mach-campos-form').innerHTML = '';
-  document.getElementById('mach-rev-campos').innerHTML = '';
+  const cf = document.getElementById('mach-campos-form'); if(cf) cf.innerHTML = '';
+  const rc = document.getElementById('mach-rev-campos');  if(rc) rc.innerHTML = '';
 }
 function cerrarPreview(){ machShow('mach-prev-card', false); machScroll('mach-form-card'); }
 
@@ -2873,6 +2996,24 @@ window.addEventListener('message', function(e) {
     }
   }, 350);
 });
+
+// ══════════════════════════════════════════════════════════════
+// INIT DEL SELECTOR
+// En web se habilitan el botón "Subir machote" y el grupo "Mis machotes"
+// dentro del menú. En móvil e iOS ni siquiera se pintan.
+// ══════════════════════════════════════════════════════════════
+(function initDocPicker(){
+  if(MACHOTES_ON){
+    document.getElementById('doc-new-btn').style.display = 'inline-flex';
+    document.getElementById('doc-menu-mach-wrap').style.display = 'block';
+    cargarMisMachotes();
+  } else {
+    // Sin machotes propios: el módulo completo queda fuera del DOM activo.
+    const fm = document.getElementById('form-machote');
+    if(fm) fm.remove();
+  }
+  setTipo('arrendamiento');
+})();
 
 </script>
 
