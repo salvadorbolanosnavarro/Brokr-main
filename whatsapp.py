@@ -40,6 +40,7 @@ GRAPH_API        = "https://graph.facebook.com/v21.0"
 WHATSAPP_TOKEN   = os.environ.get("WHATSAPP_TOKEN", "")
 WA_VERIFY_TOKEN  = os.environ.get("WA_VERIFY_TOKEN", "broquer_verify")
 WA_APP_SECRET    = os.environ.get("WA_APP_SECRET", "")
+WA_REGISTER_PIN  = os.environ.get("WA_REGISTER_PIN", "142857")  # PIN de 6 dígitos para 2FA del número
 
 # Piloto (Grupo Navarro): si un número no está mapeado en wa_numbers, usamos esto
 DEFAULT_USER_ID = os.environ.get("DEFAULT_USER_ID", "")
@@ -161,10 +162,12 @@ async def process_payload(payload: dict):
 async def process_change(value: dict):
     metadata = value.get("metadata", {})
     phone_number_id = metadata.get("phone_number_id")
-    user_id = await resolve_user(phone_number_id)
-    if not user_id:
-        log.warning("Sin user_id para phone_number_id=%s (configura wa_numbers o DEFAULT_USER_ID)", phone_number_id)
+    numero = await resolve_number(phone_number_id)
+    if not numero:
+        log.warning("Número no registrado en wa_numbers: %s — ignorado", phone_number_id)
         return
+    user_id = numero["user_id"]
+    token   = numero.get("access_token")
 
     contacts = value.get("contacts", [])
     profile_name = contacts[0].get("profile", {}).get("name") if contacts else None
@@ -185,7 +188,7 @@ async def process_change(value: dict):
             if conv.get("ai_enabled", True):
                 await wa_send_text(phone_number_id, from_wa,
                                    "Gracias por tu mensaje. Por aquí te leo mejor en texto, "
-                                   "¿me cuentas qué estás buscando?")
+                                   "¿me cuentas qué estás buscando?", token=token)
             continue
 
         body = msg.get("text", {}).get("body", "").strip()
@@ -197,12 +200,13 @@ async def process_change(value: dict):
             continue  # el agente tomó el control
 
         history = await fetch_history(conv["id"])
-        result = await recepcion_responde(history, conv.get("property_ctx"))
-        reply = (result or {}).get("reply")
+        agente  = await perfil_agente(user_id)
+        result  = await recepcion_responde(history, conv.get("property_ctx"), agente)
+        reply   = (result or {}).get("reply")
 
         # anti-choque: si el agente contestó desde su cel mientras tanto, la IA ya no manda
         if reply and await ai_sigue_encendida(conv["id"]):
-            sent = await wa_send_text(phone_number_id, from_wa, reply)
+            sent = await wa_send_text(phone_number_id, from_wa, reply, token=token)
             out_id = (sent.get("messages") or [{}])[0].get("id")
             await store_message(user_id, contact["id"], conv["id"], out_id or f"local-{wamid}", "out", "ai", reply)
 
@@ -240,13 +244,38 @@ async def process_echo(value: dict):
 # =============================================================================
 # 3) RECEPCIÓN (la IA)  ->  Anthropic, responde y califica de una
 # =============================================================================
-async def recepcion_responde(history: list, property_ctx: str | None) -> dict:
+async def perfil_agente(user_id: str) -> dict:
+    """Nombre y zona del agente dueño del número, para que la IA se presente como ÉL
+    y no como la agencia del piloto. Sin esto, un lead de cualquier agente recibía
+    'Soy Recepción de Grupo Navarro'."""
+    try:
+        rows = await sb_get("usuarios", {
+            "id": f"eq.{user_id}",
+            "select": "nombre_publico,zona_cobertura",
+            "limit": "1",
+        })
+        if rows:
+            return {
+                "nombre": (rows[0].get("nombre_publico") or "").strip() or DEFAULT_AGENCIA,
+                "zona":   (rows[0].get("zona_cobertura") or "").strip() or "México",
+            }
+    except Exception as e:
+        log.warning("No se pudo leer el perfil de %s: %s", user_id, e)
+    return {"nombre": DEFAULT_AGENCIA, "zona": "Morelia"}
+
+
+async def recepcion_responde(history: list, property_ctx: str | None,
+                             agente: dict | None = None) -> dict:
+    agente = agente or {"nombre": DEFAULT_AGENCIA, "zona": "Morelia"}
+    quien  = agente["nombre"]
+    zona   = agente["zona"]
+
     contexto = property_ctx or (
-        f"Atiendes prospectos de {DEFAULT_AGENCIA}, inmobiliaria en Morelia. "
+        f"Atiendes prospectos de {quien}, asesor inmobiliario en {zona}. "
         "Si no sabes por qué propiedad escribe, pregúntale qué busca."
     )
     system = (
-        f"Eres 'Recepción', el asistente de WhatsApp de {DEFAULT_AGENCIA}, inmobiliaria en Morelia. "
+        f"Eres 'Recepción', el asistente de WhatsApp de {quien}, asesor inmobiliario en {zona}. "
         "Atiendes a un prospecto que escribió por un anuncio. Califícalo con calidez y rapidez, sin sonar "
         "a robot ni a interrogatorio: averigua forma de pago o crédito, presupuesto real, para cuándo lo "
         "necesita y qué busca; cuando haga sentido, ofrece agendar una visita con día y hora. Español "
@@ -306,11 +335,21 @@ def _normaliza_mx(num: str) -> str:
     return n
 
 
-async def wa_send_text(phone_number_id: str, to: str, body: str) -> dict:
+async def wa_send_text(phone_number_id: str, to: str, body: str, token: str | None = None) -> dict:
+    """token: el access_token del usuario dueño del número. Si no se pasa, se busca
+    en wa_numbers. WHATSAPP_TOKEN (global) queda solo como último recurso para el
+    piloto; con multi-tenant cada número manda con SU propio token de negocio."""
+    if not token:
+        row = await resolve_number(phone_number_id)
+        token = (row or {}).get("access_token") or WHATSAPP_TOKEN
+    if not token:
+        log.error("Sin token para phone_number_id=%s — no se envía", phone_number_id)
+        return {}
+
     to = _normaliza_mx(to)
     log.info("WhatsApp enviando a %s", to)
     url = f"{GRAPH_API}/{phone_number_id}/messages"
-    headers = {"Authorization": f"Bearer {WHATSAPP_TOKEN}", "Content-Type": "application/json"}
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
     data = {"messaging_product": "whatsapp", "to": to, "type": "text", "text": {"body": body}}
     try:
         async with httpx.AsyncClient(timeout=20) as c:
@@ -360,13 +399,23 @@ async def agent_send(req: SendReq, request: Request):
 # =============================================================================
 # 6) Funciones de datos
 # =============================================================================
+async def resolve_number(phone_number_id: str | None) -> dict | None:
+    """Devuelve la fila completa de wa_numbers (user_id, access_token, ia_enabled...).
+    SIN fallback a DEFAULT_USER_ID: un número no mapeado se ignora. Antes caía en la
+    cuenta del piloto, lo que en multi-tenant es una fuga de datos entre clientes."""
+    if not phone_number_id:
+        return None
+    rows = await sb_get("wa_numbers", {
+        "phone_number_id": f"eq.{phone_number_id}",
+        "select": "user_id,access_token,ia_enabled,waba_id",
+        "limit": "1",
+    })
+    return rows[0] if rows else None
+
+
 async def resolve_user(phone_number_id: str | None) -> str | None:
-    if phone_number_id:
-        rows = await sb_get("wa_numbers",
-                            {"phone_number_id": f"eq.{phone_number_id}", "select": "user_id", "limit": "1"})
-        if rows:
-            return rows[0]["user_id"]
-    return DEFAULT_USER_ID or None
+    row = await resolve_number(phone_number_id)
+    return row["user_id"] if row else None
 
 
 async def already_processed(wamid: str) -> bool:
@@ -471,11 +520,22 @@ async def wa_status(request: Request):
 # ── /whatsapp/connect ─────────────────────────────────────────────────────────
 class ConnectReq(BaseModel):
     code: str
-    redirect_uri: str
+    waba_id: str | None = None
+    phone_number_id: str | None = None
+
 
 @router.post("/connect")
 async def wa_connect(req: ConnectReq, request: Request):
-    """Intercambia el código de Embedded Signup por un token y registra el número."""
+    """Cierra el Embedded Signup: intercambia el code por un business token y
+    registra el número del cliente.
+
+    OJO — esto NO es el OAuth clásico:
+      · El intercambio va SIN redirect_uri (el ES usa el SDK de JS, no redirect).
+      · El token que regresa es un business integration system user access token,
+        ligado a la integración, no un user token de 2 horas.
+      · waba_id y phone_number_id los devuelve el propio flujo de ES al frontend;
+        no hay que ir a adivinarlos recorriendo /me/businesses.
+    """
     user_id = await get_user_id_from_token(request)
     if not user_id:
         raise HTTPException(status_code=401, detail="No autorizado")
@@ -483,76 +543,111 @@ async def wa_connect(req: ConnectReq, request: Request):
     if not META_APP_ID or not META_APP_SECRET:
         raise HTTPException(status_code=500, detail="META_APP_ID o META_APP_SECRET no configurados")
 
-    # 1) Intercambiar código por token de usuario
+    # 1) code -> business token  (sin redirect_uri: es Embedded Signup)
     async with httpx.AsyncClient(timeout=20) as c:
-        r = await c.get("https://graph.facebook.com/v21.0/oauth/access_token", params={
+        r = await c.get(f"{GRAPH_API}/oauth/access_token", params={
             "client_id":     META_APP_ID,
             "client_secret": META_APP_SECRET,
-            "redirect_uri":  req.redirect_uri,
             "code":          req.code,
         })
         if r.status_code != 200:
-            log.error("Meta token error: %s", r.text)
+            log.error("Meta token error %s: %s", r.status_code, r.text)
             raise HTTPException(status_code=400, detail="No se pudo obtener el token de Meta")
-        user_token = r.json().get("access_token", "")
+        tok = r.json()
+        business_token = tok.get("access_token", "")
+        expires_in     = tok.get("expires_in")
 
-    # 2) Obtener las cuentas WABA vinculadas
-    async with httpx.AsyncClient(timeout=20) as c:
-        r = await c.get("https://graph.facebook.com/v21.0/me/businesses",
-                        params={"access_token": user_token, "fields": "id,name"})
-        businesses = r.json().get("data", []) if r.status_code == 200 else []
+    if not business_token:
+        raise HTTPException(status_code=400, detail="Meta no devolvió un token de acceso")
 
-    waba_id = ""
-    waba_name = "WhatsApp Business"
-    phone_number_id = ""
-    phone_number = ""
+    waba_id         = (req.waba_id or "").strip()
+    phone_number_id = (req.phone_number_id or "").strip()
 
-    for biz in businesses:
+    # 2) Si el frontend no los mandó, se leen con el business token (fallback)
+    if not waba_id:
         async with httpx.AsyncClient(timeout=20) as c:
-            r = await c.get(f"https://graph.facebook.com/v21.0/{biz['id']}/owned_whatsapp_business_accounts",
-                            params={"access_token": user_token, "fields": "id,name"})
-            wabas = r.json().get("data", []) if r.status_code == 200 else []
-        if wabas:
-            waba_id   = wabas[0].get("id", "")
-            waba_name = wabas[0].get("name", "WhatsApp Business")
-            # Obtener número de teléfono
-            async with httpx.AsyncClient(timeout=20) as c:
-                r2 = await c.get(f"https://graph.facebook.com/v21.0/{waba_id}/phone_numbers",
-                                 params={"access_token": user_token, "fields": "id,display_phone_number"})
-                phones = r2.json().get("data", []) if r2.status_code == 200 else []
-            if phones:
-                phone_number_id = phones[0].get("id", "")
-                phone_number    = phones[0].get("display_phone_number", "").replace("+", "").replace(" ", "")
-            break
+            r = await c.get(f"{GRAPH_API}/debug_token", params={
+                "input_token":  business_token,
+                "access_token": f"{META_APP_ID}|{META_APP_SECRET}",
+            })
+            if r.status_code == 200:
+                scopes = r.json().get("data", {}).get("granular_scopes", [])
+                for s in scopes:
+                    if s.get("scope") == "whatsapp_business_management":
+                        ids = s.get("target_ids") or []
+                        if ids:
+                            waba_id = ids[0]
+                            break
+    if not waba_id:
+        raise HTTPException(status_code=400, detail="No se pudo identificar la cuenta de WhatsApp Business")
+
+    # 3) Datos del número
+    waba_name    = "WhatsApp Business"
+    phone_number = ""
+    async with httpx.AsyncClient(timeout=20) as c:
+        r = await c.get(f"{GRAPH_API}/{waba_id}", params={"access_token": business_token, "fields": "name"})
+        if r.status_code == 200:
+            waba_name = r.json().get("name") or waba_name
+
+        r = await c.get(f"{GRAPH_API}/{waba_id}/phone_numbers",
+                        params={"access_token": business_token, "fields": "id,display_phone_number"})
+        phones = r.json().get("data", []) if r.status_code == 200 else []
+
+    if phone_number_id:
+        match = next((p for p in phones if p.get("id") == phone_number_id), None)
+        if match:
+            phone_number = (match.get("display_phone_number") or "").replace("+", "").replace(" ", "")
+    elif phones:
+        phone_number_id = phones[0].get("id", "")
+        phone_number    = (phones[0].get("display_phone_number") or "").replace("+", "").replace(" ", "")
 
     if not phone_number_id:
-        raise HTTPException(status_code=400, detail="No se encontró un número de teléfono en tu cuenta de WhatsApp Business")
+        raise HTTPException(status_code=400,
+                            detail="No se encontró un número en tu cuenta de WhatsApp Business")
 
-    # 3) Guardar en wa_numbers (upsert por user_id)
-    existing = await sb_get("wa_numbers", {"user_id": f"eq.{user_id}", "select": "id", "limit": "1"})
+    # 4) Guardar. El upsert va por phone_number_id (tiene unique), NO por user_id:
+    #    así un número que cambia de dueño no duplica fila.
     payload = {
-        "user_id":          user_id,
-        "phone_number_id":  phone_number_id,
-        "display_number":   phone_number,
-        "waba_id":          waba_id,
-        "waba_name":        waba_name,
-        "access_token":     user_token,
-        "ia_enabled":       True,
-        "updated_at":       _now(),
+        "user_id":         user_id,
+        "phone_number_id": phone_number_id,
+        "display_number":  phone_number,
+        "waba_id":         waba_id,
+        "waba_name":       waba_name,
+        "access_token":    business_token,
+        "ia_enabled":      True,
+        "updated_at":      _now(),
     }
+    if expires_in:
+        try:
+            payload["token_expires_at"] = datetime.fromtimestamp(
+                datetime.now(timezone.utc).timestamp() + int(expires_in), timezone.utc).isoformat()
+        except Exception:
+            pass
+
+    existing = await sb_get("wa_numbers",
+                            {"phone_number_id": f"eq.{phone_number_id}", "select": "id", "limit": "1"})
     if existing:
-        await sb_patch("wa_numbers", {"user_id": f"eq.{user_id}"}, payload)
+        await sb_patch("wa_numbers", {"phone_number_id": f"eq.{phone_number_id}"}, payload)
     else:
         payload["created_at"] = _now()
         await sb_post("wa_numbers", payload)
 
-    # 4) Suscribir el webhook de la WABA si hay app configurada
-    if META_APP_ID and waba_id:
-        async with httpx.AsyncClient(timeout=15) as c:
-            await c.post(f"https://graph.facebook.com/v21.0/{waba_id}/subscribed_apps",
-                         params={"access_token": user_token})
+    # 5) Suscribir la app al webhook de ESA WABA (sin esto no llegan mensajes)
+    async with httpx.AsyncClient(timeout=15) as c:
+        r = await c.post(f"{GRAPH_API}/{waba_id}/subscribed_apps",
+                         params={"access_token": business_token})
+        if r.status_code >= 400:
+            log.error("No se pudo suscribir el webhook de %s: %s", waba_id, r.text)
 
-    log.info("WhatsApp conectado: user=%s phone=%s", user_id, phone_number)
+    # 6) Registrar el número en Cloud API (idempotente; si ya está, Meta responde error benigno)
+    async with httpx.AsyncClient(timeout=20) as c:
+        r = await c.post(f"{GRAPH_API}/{phone_number_id}/register",
+                         params={"access_token": business_token},
+                         json={"messaging_product": "whatsapp", "pin": WA_REGISTER_PIN})
+        if r.status_code >= 400:
+            log.warning("Registro de %s: %s", phone_number_id, r.text)
+
+    log.info("WhatsApp conectado: user=%s waba=%s phone=%s", user_id, waba_id, phone_number)
     return {"ok": True, "phone_number": phone_number, "waba_name": waba_name}
 
 

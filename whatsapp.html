@@ -278,6 +278,20 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 const API_BASE = window.API_BASE || 'https://brokrebapi-production.up.railway.app';
 // ID de tu app de Meta (la misma de Facebook Ads)
 const META_APP_ID = '1709238933850389';
+// Configuración de "Inicio de sesión de Facebook para empresas", variante WhatsApp Embedded Signup
+const WA_CONFIG_ID = '1028338620073056';
+
+// ── SDK de Facebook (lo exige el Embedded Signup) ─────────
+window.fbAsyncInit = function(){
+  FB.init({ appId: META_APP_ID, cookie: true, xfbml: false, version: 'v21.0' });
+};
+(function(d, s, id){
+  if(d.getElementById(id)) return;
+  const js = d.createElement(s); js.id = id;
+  js.src = 'https://connect.facebook.net/es_LA/sdk.js';
+  js.async = true; js.defer = true; js.crossOrigin = 'anonymous';
+  d.getElementsByTagName('head')[0].appendChild(js);
+})(document, 'script', 'facebook-jssdk');
 
 function getToken(){
   return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || null;
@@ -311,43 +325,54 @@ function showState(state){
 }
 
 // ── Embedded Signup ──────────────────────────────────────
+// El ES real NO es el dialog/oauth clásico: corre sobre el SDK de JS de Facebook
+// con un config_id de "Inicio de sesión de Facebook para empresas". El flujo
+// devuelve el code por FB.login y, en paralelo, waba_id + phone_number_id por
+// postMessage desde el iframe de Meta. Hay que capturar las dos cosas.
+let _waSignupData = null;   // { waba_id, phone_number_id } que manda el iframe de Meta
+
+window.addEventListener('message', (e) => {
+  if(!/facebook\.com$/.test(new URL(e.origin).hostname)) return;
+  try{
+    const d = JSON.parse(e.data);
+    if(d.type === 'WA_EMBEDDED_SIGNUP' && d.event === 'FINISH'){
+      _waSignupData = {
+        waba_id:         d.data?.waba_id || null,
+        phone_number_id: d.data?.phone_number_id || null
+      };
+    }
+  }catch(_){ /* el iframe también manda mensajes que no son JSON */ }
+});
+
 function startEmbeddedSignup(){
   const btn     = document.getElementById('wa-connect-btn');
   const spinner = document.getElementById('wa-connect-spinner');
   const text    = document.getElementById('wa-connect-text');
+
+  if(!window.FB){
+    toast('Aún cargando Meta. Intenta en un segundo.');
+    return;
+  }
+
   btn.disabled = true;
   spinner.classList.add('active');
   text.textContent = 'Abriendo Meta…';
+  _waSignupData = null;
 
-  // Meta Embedded Signup abre un popup
-  const url = `https://www.facebook.com/dialog/oauth` +
-    `?client_id=${META_APP_ID}` +
-    `&redirect_uri=${encodeURIComponent(location.origin + '/whatsapp-callback.html')}` +
-    `&scope=whatsapp_business_management,whatsapp_business_messaging` +
-    `&response_type=code` +
-    `&extras=${encodeURIComponent(JSON.stringify({setup:{},feature:'whatsapp_embedded_signup'}))}`;
-
-  const popup = window.open(url, 'wa_signup', 'width=700,height=680,scrollbars=yes');
-
-  // Escuchar el código que devuelve el callback
-  const listener = async (e) => {
-    if(e.origin !== location.origin) return;
-    if(!e.data || e.data.type !== 'wa_code') return;
-    window.removeEventListener('message', listener);
-    await exchangeCode(e.data.code);
-  };
-  window.addEventListener('message', listener);
-
-  // Watchdog por si cierran el popup sin completar
-  const watchdog = setInterval(() => {
-    if(popup.closed){
-      clearInterval(watchdog);
-      window.removeEventListener('message', listener);
-      btn.disabled = false;
-      spinner.classList.remove('active');
-      text.textContent = 'Conectar WhatsApp';
+  FB.login((response) => {
+    const code = response?.authResponse?.code;
+    if(code){
+      exchangeCode(code);
+    } else {
+      resetConnectBtn();
+      toast('Conexión cancelada.');
     }
-  }, 800);
+  }, {
+    config_id: WA_CONFIG_ID,
+    response_type: 'code',
+    override_default_response_type: true,
+    extras: { setup: {}, featureType: '', sessionInfoVersion: '3' }
+  });
 }
 
 async function exchangeCode(code){
@@ -356,7 +381,11 @@ async function exchangeCode(code){
     const r = await fetch(API_BASE + '/whatsapp/connect', {
       method: 'POST',
       headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+tok },
-      body: JSON.stringify({ code, redirect_uri: location.origin + '/whatsapp-callback.html' })
+      body: JSON.stringify({
+        code,
+        waba_id:         _waSignupData?.waba_id || null,
+        phone_number_id: _waSignupData?.phone_number_id || null
+      })
     });
     const d = await r.json();
     if(r.ok && d.ok){
