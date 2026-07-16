@@ -55,13 +55,13 @@ html, body {
 .doc-date { font-size: 13px; color: #C1C7CF; text-align: center; margin: 0 0 32px; }
 .h1 { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .6px; color: #0062E3; margin: 32px 0 12px; padding-bottom: 6px; border-bottom: 1.5px solid #EFF3F8; }
 .h2 { font-size: 14px; font-weight: 700; color: #0062E3; margin: 20px 0 8px; }
-p { margin: 0 0 12px; color: #0062E3; text-align: justify; }
+p { margin: 0 0 12px; color: var(--ink-2); text-align: justify; }
 p.center { text-align: center; }
 ul { margin: 0 0 12px; padding-left: 22px; }
-ul li { margin-bottom: 6px; color: #0062E3; text-align: justify; }
+ul li { margin-bottom: 6px; color: var(--ink-2); text-align: justify; }
 b, strong { color: #161616; }
-.notice-banner { background: #FFFFFF; border: 1.5px solid #E0E4E9; border-radius: 10px; padding: 16px 20px; margin-bottom: 32px; font-size: 13px; color: #0062E3; line-height: 1.55; }
-.notice-banner strong { color: #0062E3; }
+.notice-banner { background: #FFFFFF; border: 1.5px solid #E0E4E9; border-radius: 10px; padding: 16px 20px; margin-bottom: 32px; font-size: 13px; color: var(--ink-2); line-height: 1.55; }
+.notice-banner strong { color: #161616; }
 .aviso-final { text-align: center; color: #C1C7CF; font-size: 13px; margin-top: 40px; padding-top: 24px; border-top: 1px solid #EFF3F8; }
 @media (max-width: 600px) {
   .doc-wrap { padding: 24px 16px 60px; }
@@ -508,6 +508,158 @@ En cumplimiento a lo dispuesto por la <strong>Ley Federal de Protección de Dato
 <p class="aviso-final">— FIN DEL AVISO DE PRIVACIDAD —</p>
 </div></div>
 
+<!-- PANEL 4: WHATSAPP Y DATOS DE CONVERSACIONES -->
+<div id="panel-whatsapp" class="tab-panel" role="tabpanel">
+<div class="doc-wrap">
+<p class="doc-title">ANEXO — MÓDULO DE WHATSAPP (RECEPCIÓN)</p>
+<p class="doc-subtitle">Condiciones de uso, coexistencia y tratamiento de datos de conversaciones</p>
+<p class="doc-date">Última actualización: 16 de julio de 2026</p>
+<div class="notice-banner">
+<strong>LEA ESTO ANTES DE CONECTAR SU NÚMERO</strong><br><br>
+El presente Anexo forma parte integrante de los Términos y Condiciones y del Aviso de Privacidad de Broquer, y aplica exclusivamente al módulo de mensajería por WhatsApp (en adelante, <strong>"Recepción"</strong>). Al conectar un número de WhatsApp Business a la Plataforma, el Usuario acepta expresamente este Anexo.<br><br>
+<strong>REPARTO DE ROLES.</strong> Respecto de los datos personales de las personas que escriban a su número, <strong>el Usuario es el Responsable</strong> y <strong>Broquer es la Persona Encargada</strong>, en los términos del artículo 2, fracciones XII y XVI de la Ley Federal de Protección de Datos Personales en Posesión de los Particulares publicada en el DOF el 20 de marzo de 2025 (en adelante, la "LFPDPPP"). Broquer trata esos datos por cuenta del Usuario y conforme a sus instrucciones. La relación del Usuario con sus prospectos es del Usuario.<br><br>
+<strong>RECEPCIÓN ES UN SISTEMA AUTOMATIZADO QUE RESPONDE, PERFILA Y CALIFICA A PERSONAS SIN INTERVENCIÓN HUMANA PREVIA.</strong> EL USUARIO RECONOCE QUE ESTO CONSTITUYE UN TRATAMIENTO AUTOMATIZADO EN TÉRMINOS DEL ARTÍCULO 26, FRACCIÓN II DE LA LFPDPPP Y ASUME LAS OBLIGACIONES QUE DE ELLO DERIVAN, CONFORME A LA CLÁUSULA QUINTA DE ESTE ANEXO.
+</div>
+
+<p class="h1">PRIMERA — OBJETO Y ALCANCE</p>
+<p>Recepción permite al Usuario vincular un número propio de WhatsApp Business a la Plataforma, a través de la <strong>WhatsApp Business Platform (Cloud API)</strong> de Meta Platforms, Inc. y su producto de <strong>Embedded Signup</strong>, para que la Plataforma reciba los mensajes entrantes de sus prospectos, los conteste de forma automatizada, los califique y los registre en el CRM del Usuario.</p>
+<p>Broquer <strong>no provee números telefónicos</strong>, no revende líneas y no es operador de telecomunicaciones. El número es y sigue siendo del Usuario, contratado con su propio proveedor y registrado ante Meta bajo su propia cuenta empresarial.</p>
+
+<p class="h1">SEGUNDA — REQUISITOS Y COEXISTENCIA</p>
+<p class="h2">2.1. Modalidad de conexión.</p>
+<p>Broquer conecta el número mediante la modalidad que Meta denomina <em>onboarding de usuarios de la app de WhatsApp Business</em>, conocida comercialmente como <strong>"coexistencia"</strong>. Esta modalidad permite que el mismo número siga funcionando en la aplicación de WhatsApp Business del celular del Usuario y, simultáneamente, en la Cloud API a través de Broquer.</p>
+<p class="h2">2.2. Requisitos a cargo del Usuario.</p>
+<ul>
+  <li>Contar con la <strong>aplicación de WhatsApp Business</strong> (no WhatsApp personal ni WhatsApp Web como cuenta principal) en versión <strong>2.24.17 o superior</strong>.</li>
+  <li>Que el número tenga <strong>código de país soportado</strong> por Meta para coexistencia. México lo está a la fecha de este Anexo.</li>
+  <li>Que el número <strong>no esté ya conectado</strong> a la WhatsApp Business Platform con otro proveedor.</li>
+  <li>Contar con una cuenta de Facebook o credenciales de Meta Business con control total sobre el portafolio empresarial al que se asociará la cuenta de WhatsApp Business.</li>
+  <li>Que el número cumpla los criterios de elegibilidad que Meta determina de forma discrecional, incluyendo antigüedad de la cuenta y calidad de mensajería.</li>
+</ul>
+<p>Broquer <strong>no puede garantizar la elegibilidad</strong> de un número determinado. La aprobación, el rechazo, la suspensión o la reversión de la conexión son decisiones exclusivas de Meta, ajenas al control de Broquer.</p>
+<p class="h2">2.3. Cambios que la coexistencia produce en la aplicación del Usuario.</p>
+<p>El Usuario reconoce que, por disposición de Meta y no de Broquer, al completar la conexión ocurre lo siguiente en su aplicación de WhatsApp Business, de forma permanente mientras el número esté conectado:</p>
+<ul>
+  <li>Los <strong>mensajes temporales</strong> quedan desactivados en todos los chats individuales.</li>
+  <li>Los mensajes de <strong>"ver una vez"</strong> quedan desactivados en todos los chats individuales.</li>
+  <li>La <strong>ubicación en tiempo real</strong> queda desactivada en todos los chats individuales.</li>
+  <li>Las <strong>listas de difusión</strong> quedan deshabilitadas: las existentes pasan a solo lectura y no pueden crearse nuevas.</li>
+  <li>Los <strong>dispositivos vinculados</strong> se desvinculan al momento de la conexión; el Usuario puede volver a vincular los compatibles. <strong>WhatsApp para Windows y WhatsApp para WearOS no son compatibles</strong> y los mensajes enviados desde ellos no llegarán a Broquer.</li>
+</ul>
+<p>Las llamadas de voz y video, los chats de grupo, el catálogo, los pedidos, los estados, las etiquetas, las respuestas rápidas, el mensaje de bienvenida y el mensaje de ausencia <strong>siguen funcionando con normalidad en la aplicación</strong>, pero no se reflejan ni se administran desde Broquer.</p>
+<p class="h2">2.4. Historial previo.</p>
+<p>Durante el proceso, Meta ofrece al Usuario compartir su historial de conversaciones. <strong>Broquer no importa, no descarga ni almacena el historial previo del Usuario</strong> en la versión vigente de la Plataforma. El registro de conversaciones en Broquer comienza a partir del momento de la conexión. La elección que el Usuario haga en esa pantalla de Meta no altera el comportamiento de la Plataforma.</p>
+<p class="h2">2.5. Desconexión.</p>
+<p>El Usuario puede desconectar su número en cualquier momento desde el módulo de WhatsApp de la Plataforma o, directamente, desde su aplicación de WhatsApp Business en <em>Configuración &gt; Cuenta &gt; Plataforma de empresas &gt; Desconectar cuenta</em>. La desinstalación de la aplicación de WhatsApp Business puede desvincular la cuenta y provocar la pérdida de la conexión.</p>
+
+<p class="h1">TERCERA — DATOS PERSONALES QUE SE TRATAN</p>
+<p>Al activar Recepción, Broquer trata en la cuenta del Usuario los siguientes datos, respecto de las personas que interactúen con el número conectado:</p>
+<ul>
+  <li><strong>Número telefónico</strong> de cada persona que escriba, y el nombre de perfil que dicha persona tenga configurado en WhatsApp.</li>
+  <li><strong>Contenido de los mensajes de texto entrantes</strong> y de las respuestas generadas por Recepción.</li>
+  <li><strong>Contenido de los mensajes que el propio Usuario envíe desde la aplicación de WhatsApp Business de su celular</strong> a esas conversaciones. El Usuario reconoce y acepta expresamente que, por virtud de la coexistencia, Meta envía a Broquer una copia (<em>echo</em>) de cada mensaje saliente que el Usuario escriba desde su teléfono, y que dicha copia se almacena en la Plataforma.</li>
+  <li><strong>Metadatos:</strong> fecha, hora, identificador de mensaje, dirección (entrante o saliente), estado de la conversación y origen del contacto cuando el mensaje proviene de un anuncio con clic a WhatsApp.</li>
+  <li><strong>Perfilamiento generado por inteligencia artificial:</strong> temperatura del prospecto, puntaje numérico de 0 a 100, presupuesto declarado o inferido, forma de pago, objeto de búsqueda, disposición a agendar visita y resumen de la conversación.</li>
+</ul>
+<p>Broquer <strong>no almacena archivos multimedia</strong> (imágenes, audios, video, documentos ni ubicaciones) en la versión vigente; dichos mensajes se registran únicamente como una marca de tipo. Broquer <strong>no sincroniza la libreta de contactos</strong> del teléfono del Usuario. Los chats de grupo no se sincronizan por disposición de Meta.</p>
+<p>El Usuario se obliga a <strong>no utilizar Recepción para recabar datos personales sensibles</strong> en términos del artículo 2, fracción VI de la LFPDPPP, ni números completos de tarjeta, cuentas financieras o identificaciones oficiales, conforme lo prohíbe expresamente la Política de Mensajería para Empresas de WhatsApp.</p>
+
+<p class="h1">CUARTA — FINALIDADES DEL TRATAMIENTO</p>
+<p class="h2">4.1. Finalidades necesarias.</p>
+<ul>
+  <li>Recibir, contestar y dar seguimiento a las conversaciones del número conectado.</li>
+  <li>Generar respuestas y calificaciones mediante modelos de lenguaje.</li>
+  <li>Registrar contactos, conversaciones y calificaciones en el CRM privado del Usuario.</li>
+  <li>Mostrar métricas de operación al propio Usuario.</li>
+  <li>Prevención de abuso, seguridad de la Plataforma y cumplimiento de obligaciones legales.</li>
+</ul>
+<p class="h2">4.2. Finalidades secundarias.</p>
+<p>Broquer podrá utilizar datos <strong>agregados y previamente disociados</strong>, en términos del artículo 2, fracción IX de la LFPDPPP, para medir y mejorar la calidad del servicio. Broquer <strong>no comercializa el contenido de conversaciones individuales</strong>, no lo cede a terceros con fines publicitarios y no lo utiliza para prestar servicio a otros usuarios de la Plataforma.</p>
+<p class="h2">4.3. Entrenamiento de modelos.</p>
+<p>Conforme a los términos comerciales del proveedor de inteligencia artificial contratado por Broquer, <strong>el contenido de las conversaciones no se utiliza para entrenar modelos</strong>. Broquer no controla dichos términos y no responde de sus modificaciones unilaterales; la versión vigente puede consultarse en el sitio del proveedor.</p>
+
+<p class="h1">QUINTA — TRATAMIENTO AUTOMATIZADO Y OBLIGACIONES DEL USUARIO</p>
+<p>Recepción responde y <strong>califica prospectos sin intervención humana</strong>, y al hacerlo analiza y predice, entre otros aspectos, la <strong>situación económica</strong> de la persona titular. El artículo 26, fracción II de la LFPDPPP otorga a la persona titular el derecho a oponerse en todo momento a un tratamiento automatizado con esas características. En consecuencia, <strong>EL USUARIO, EN SU CARÁCTER DE RESPONSABLE, SE OBLIGA A:</strong></p>
+<ul>
+  <li><strong>Poner a disposición su propio aviso de privacidad</strong> desde el momento en que recaba los datos, en términos de los artículos 14, 15 y 16 de la LFPDPPP, informando expresamente que la atención inicial es automatizada y que se genera un perfilamiento del prospecto. Cuando los datos se recaben por medios electrónicos, el aviso simplificado es obligatorio.</li>
+  <li><strong>Contar con el opt-in</strong> de cada persona antes de iniciar una conversación, y honrar de inmediato toda solicitud de baja, bloqueo u oposición, dentro y fuera de WhatsApp.</li>
+  <li><strong>Atender los derechos ARCO</strong> de sus prospectos en los plazos del artículo 31 de la LFPDPPP: veinte días para comunicar la determinación y quince días para hacerla efectiva.</li>
+  <li><strong>Atender el derecho de oposición</strong> al tratamiento automatizado y, en tal caso, desactivar Recepción en esa conversación y atenderla personalmente.</li>
+  <li><strong>Mantener una vía de escalamiento a persona humana</strong> pronta, clara y directa, según lo exige la Política de Mensajería para Empresas de WhatsApp cuando se emplea automatización dentro de la ventana de veinticuatro horas.</li>
+  <li><strong>No discriminar</strong> ni sugerir preferencia en contra de persona alguna por características personales, conforme lo prohíben la Política de Mensajería para Empresas de WhatsApp y la legislación aplicable.</li>
+  <li><strong>No compartir</strong> información de la conversación de un cliente con otro cliente.</li>
+</ul>
+<p>El Usuario mantiene en todo momento el control operativo: puede apagar Recepción de forma global desde la Plataforma y, además, la inteligencia artificial <strong>se apaga automáticamente</strong> en cualquier conversación en la que el Usuario responda por sí mismo.</p>
+
+<p class="h1">SEXTA — BROQUER COMO PERSONA ENCARGADA</p>
+<p>Broquer, en su carácter de Persona Encargada conforme al artículo 2, fracción XII de la LFPDPPP: (i) trata los datos únicamente para prestar el servicio contratado y conforme a las instrucciones del Usuario; (ii) no los trata para finalidades propias distintas de la operación y mejora de la Plataforma en términos de la cláusula 4.2; (iii) guarda confidencialidad respecto de ellos, obligación que subsiste aun después de terminada la relación, en términos del artículo 20 de la LFPDPPP; (iv) implementa las medidas de seguridad del artículo 18 de la LFPDPPP; y (v) suprime o devuelve los datos al término de la relación, salvo obligación legal de conservación.</p>
+<p>La comunicación de datos del Usuario a Broquer <strong>no constituye una transferencia</strong> en términos del artículo 2, fracción XX de la LFPDPPP, precisamente por tratarse de una persona encargada.</p>
+
+<p class="h1">SÉPTIMA — PROVEEDORES Y UBICACIÓN DE LOS DATOS</p>
+<p>Para prestar Recepción, Broquer se apoya en los siguientes proveedores, que actúan como subencargados y cuya infraestructura se ubica fuera del territorio nacional:</p>
+<ul>
+  <li><strong>Meta Platforms, Inc.</strong> — transporte, entrega y almacenamiento de los mensajes de WhatsApp. Los mensajes de WhatsApp están protegidos por cifrado del protocolo Signal antes de salir del dispositivo; en la Cloud API, Meta es el destino elegido por la empresa y aplica cifrado en tránsito y en reposo conforme a su propia documentación.</li>
+  <li><strong>Anthropic PBC</strong> — generación de respuestas y calificación mediante modelos de lenguaje.</li>
+  <li><strong>Supabase</strong> — base de datos y almacenamiento, con cifrado en reposo y políticas de seguridad a nivel de fila.</li>
+  <li><strong>Railway</strong> — cómputo del servidor de aplicación de Broquer.</li>
+</ul>
+<p>El Usuario, en su carácter de Responsable, reconoce y acepta este esquema de subencargo y de procesamiento fuera de México, y se obliga a reflejarlo en su propio aviso de privacidad.</p>
+
+<p class="h1">OCTAVA — SEGURIDAD</p>
+<ul>
+  <li>Toda comunicación con la Cloud API de Meta y con la Plataforma ocurre sobre HTTPS con TLS.</li>
+  <li>Cada evento entrante se valida contra la firma <em>X-Hub-Signature-256</em> de Meta antes de ser procesado.</li>
+  <li>Los datos se almacenan en Supabase con cifrado en reposo y políticas de seguridad a nivel de fila: cada Usuario únicamente puede leer y escribir sus propios registros.</li>
+  <li>Los tokens de acceso a WhatsApp se almacenan del lado del servidor, con cifrado en reposo, y <strong>nunca se exponen al navegador ni a la aplicación móvil</strong>.</li>
+  <li>Ninguna medida de seguridad es infalible. Broquer no garantiza la inviolabilidad absoluta de los sistemas, y notificará al Usuario de forma inmediata cualquier vulneración de seguridad que afecte de forma significativa sus derechos patrimoniales o morales, conforme al artículo 19 de la LFPDPPP.</li>
+</ul>
+
+<p class="h1">NOVENA — REGLAS DE MENSAJERÍA IMPUESTAS POR META</p>
+<p>El Usuario reconoce que las siguientes reglas provienen de Meta, no de Broquer, y que Broquer no puede modificarlas ni exceptuarlas:</p>
+<ul>
+  <li><strong>Ventana de veinticuatro horas:</strong> por la Cloud API solo pueden enviarse mensajes de formato libre dentro de las veinticuatro horas siguientes al último mensaje del prospecto. Fuera de esa ventana, únicamente pueden enviarse plantillas previamente aprobadas por Meta.</li>
+  <li><strong>Plantillas:</strong> toda conversación iniciada por la empresa requiere una plantilla aprobada. Meta se reserva el derecho de revisar, aprobar, pausar o rechazar cualquier plantilla en cualquier momento y a su entera discreción.</li>
+  <li><strong>Coexistencia:</strong> la ventana de veinticuatro horas y los costos de la Cloud API <strong>no aplican</strong> a los mensajes que el Usuario envíe desde su aplicación de WhatsApp Business, que permanecen gratuitos y no crean, extienden ni afectan la ventana de la API.</li>
+  <li><strong>Costos de Meta:</strong> los mensajes enviados por la Cloud API se rigen por el tarifario de Meta y <strong>no están incluidos en la suscripción de Broquer</strong>, salvo que se pacte expresamente por escrito.</li>
+  <li><strong>Calidad y sanciones:</strong> Meta puede limitar, degradar, suspender o eliminar el acceso del Usuario a los servicios de WhatsApp Business por violaciones a sus políticas, por reportes negativos o por baja calificación de calidad. Broquer no controla ni puede revertir esas decisiones.</li>
+  <li><strong>Insignia azul:</strong> la verificación de cuenta empresarial oficial no es compatible con la modalidad de coexistencia ni se transfiere entre la aplicación y la plataforma.</li>
+</ul>
+<p>Al conectar su número, el Usuario acepta además, directamente frente a Meta, la <a href="https://business.whatsapp.com/policy" target="_blank" rel="noopener">Política de Mensajería para Empresas de WhatsApp</a>, los <a href="https://www.whatsapp.com/legal/business-terms" target="_blank" rel="noopener">Términos de Servicio para Empresas de WhatsApp</a> y las <a href="https://developers.facebook.com/terms/" target="_blank" rel="noopener">Condiciones de la plataforma de Meta</a>.</p>
+
+<p class="h1">DÉCIMA — CONSERVACIÓN Y ELIMINACIÓN</p>
+<ul>
+  <li>Las conversaciones y calificaciones se conservan mientras la cuenta del Usuario esté activa.</li>
+  <li><strong>Desconectar el número no elimina</strong> las conversaciones ya almacenadas: únicamente detiene la recepción de nuevos mensajes y revoca el token de acceso.</li>
+  <li>Al cancelarse la suscripción o eliminarse la cuenta, los datos se suprimen en un plazo máximo de <strong>treinta días naturales</strong>, previo bloqueo, salvo aquellos que deban conservarse por disposición legal o para la determinación de responsabilidades derivadas del tratamiento.</li>
+  <li>El Usuario puede solicitar la eliminación de conversaciones específicas desde la bandeja o por escrito al correo señalado en la cláusula Décima Segunda.</li>
+  <li>Los mensajes conservados por Meta en su propia infraestructura y en el dispositivo del Usuario se rigen por las políticas de Meta y quedan fuera del alcance de Broquer.</li>
+</ul>
+
+<p class="h1">DÉCIMA PRIMERA — LIMITACIÓN DE RESPONSABILIDAD</p>
+<p>EN ADICIÓN A LAS CLÁUSULAS NOVENA, DÉCIMA Y DÉCIMA PRIMERA DE LOS TÉRMINOS Y CONDICIONES, QUE SE TIENEN AQUÍ POR REPRODUCIDAS, EL USUARIO RECONOCE Y ACEPTA EXPRESAMENTE QUE:</p>
+<ul>
+  <li>RECEPCIÓN ES UN SISTEMA AUTOMATIZADO Y <strong>PUEDE GENERAR RESPUESTAS INEXACTAS, INCOMPLETAS O INADECUADAS</strong>. LAS RESPUESTAS NO CONSTITUYEN ASESORÍA PROFESIONAL, LEGAL, FISCAL NI FINANCIERA, NI OFERTA VINCULANTE, NI COTIZACIÓN EN FIRME, NI COMPROMISO DE DISPONIBILIDAD O DE PRECIO. <strong>EL USUARIO ES EL ÚNICO RESPONSABLE DEL CONTENIDO QUE SE ENVÍE DESDE SU NÚMERO</strong>, HAYA SIDO REDACTADO POR ÉL O GENERADO POR RECEPCIÓN.</li>
+  <li>BROQUER <strong>NO GARANTIZA LA ENTREGA, LA OPORTUNIDAD NI LA DISPONIBILIDAD</strong> DEL SERVICIO DE WHATSAPP, QUE DEPENDE ÍNTEGRAMENTE DE LA INFRAESTRUCTURA DE META Y DE TERCEROS.</li>
+  <li>BROQUER NO RESPONDE POR LA PÉRDIDA DE OPORTUNIDADES COMERCIALES, COMISIONES, PROSPECTOS O INGRESOS DERIVADA DE FALLAS, INTERRUPCIONES, RESPUESTAS ERRÓNEAS, SUSPENSIONES DE META O CAMBIOS EN SUS POLÍTICAS.</li>
+  <li>EL USUARIO <strong>SACARÁ EN PAZ Y A SALVO A BROQUER</strong> DE CUALQUIER RECLAMACIÓN, PROCEDIMIENTO O SANCIÓN, INCLUIDA CUALQUIERA IMPUESTA POR LA SECRETARÍA ANTICORRUPCIÓN Y BUEN GOBIERNO, DERIVADA DEL INCUMPLIMIENTO DE SUS OBLIGACIONES COMO RESPONSABLE CONFORME A LA CLÁUSULA QUINTA, DE LA FALTA DE CONSENTIMIENTO U OPT-IN DE SUS PROSPECTOS, O DEL USO QUE DÉ A LA INFORMACIÓN FUERA DE LA PLATAFORMA.</li>
+</ul>
+
+<p class="h1">DÉCIMA SEGUNDA — CONTACTO Y EJERCICIO DE DERECHOS</p>
+<p>El titular de datos que desee ejercer derechos ARCO, revocar su consentimiento u oponerse al tratamiento automatizado debe dirigirse, en primer término, <strong>al agente inmobiliario con quien tuvo contacto</strong>, por ser éste el Responsable del tratamiento.</p>
+<p>Para asuntos relativos al papel de Broquer como Persona Encargada, o cuando el Responsable no atienda la solicitud:</p>
+<p><strong>Correo electrónico:</strong> hola@broquer.app<br>
+<strong>Responsable de la Plataforma:</strong> Salvador Bolaños Navarro<br>
+<strong>Domicilio:</strong> Primer Retorno 117-B, Américas Britania, Morelia, Michoacán, México<br>
+<strong>Autoridad competente:</strong> Secretaría Anticorrupción y Buen Gobierno, en términos del artículo 2, fracción XV de la LFPDPPP</p>
+
+<p class="h1">DÉCIMA TERCERA — MODIFICACIONES</p>
+<p>Meta modifica sus políticas y su documentación técnica de forma unilateral y sin aviso previo. Broquer podrá actualizar el presente Anexo para reflejar dichos cambios, publicando la versión vigente en esta misma dirección. El uso continuado del módulo de WhatsApp con posterioridad a la publicación implica la aceptación de la versión vigente.</p>
+
+<p class="aviso-final">— FIN DEL ANEXO DE WHATSAPP —</p>
+</div>
+</div>
+
+
 <script>
 function showTab(id, btn) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
@@ -517,7 +669,7 @@ function showTab(id, btn) {
   window.scrollTo({top: 0, behavior: 'smooth'});
 }
 (function(){
-  const map = {'tyc':0,'contrato':1,'privacidad':2};
+  const map = {'tyc':0,'contrato':1,'privacidad':2,'whatsapp':3};
   const hash = location.hash.replace('#','');
   if (map[hash] !== undefined) {
     const btn = document.querySelectorAll('.tab-btn')[map[hash]];
@@ -526,71 +678,6 @@ function showTab(id, btn) {
 })();
 </script>
 <script src="app-shell.js" defer></script>
-
-<!-- ══════════════════════════════════════════════════════
-     PESTAÑA: WHATSAPP Y DATOS DE CONVERSACIONES
-     ══════════════════════════════════════════════════════ -->
-<div id="tab-whatsapp" class="tab-panel">
-<div class="doc-wrap">
-  <h1 class="doc-title">WhatsApp y Datos de Conversaciones</h1>
-  <p class="doc-subtitle">Alcance, limitaciones y responsabilidades del módulo de mensajería</p>
-  <p class="doc-date">Última actualización: junio 2025</p>
-
-  <div class="notice-banner">
-    <strong>Resumen.</strong> Al conectar tu número de WhatsApp a Broquer, autorizas que nuestra plataforma reciba, procese y almacene las conversaciones entrantes de tus contactos para ofrecerte el servicio de recepción automatizada. Tú eres el responsable ante tus clientes; Broquer actúa como encargado del tratamiento de esos datos.
-  </div>
-
-  <div class="h1">1. Qué datos recopilamos</div>
-  <p>Al activar el módulo de WhatsApp, Broquer almacena en tu cuenta:</p>
-  <ul>
-    <li>El número de teléfono de cada persona que te escriba.</li>
-    <li>El contenido de los mensajes de texto entrantes y las respuestas generadas por Recepción.</li>
-    <li>Metadatos: fecha, hora, estado de entrega y calificación de lead generada por IA.</li>
-    <li>El estado de la conversación (IA activa / pausada) y las acciones manuales del agente.</li>
-  </ul>
-  <p>No almacenamos archivos multimedia (imágenes, audios, documentos) en esta versión.</p>
-
-  <div class="h1">2. Cómo usamos esos datos</div>
-  <ul>
-    <li><strong>Respuesta automática:</strong> el contenido del mensaje se envía al modelo de lenguaje (Claude, de Anthropic) para generar una respuesta y calificación. Anthropic no retiene estos datos para entrenamiento bajo los términos de uso de API.</li>
-    <li><strong>CRM:</strong> la conversación se almacena en tu base de datos privada, visible únicamente para ti y los colaboradores que autorices.</li>
-    <li><strong>Métricas:</strong> Broquer puede usar datos agregados y anonimizados para mejorar la plataforma. Nunca compartimos el contenido de conversaciones individuales.</li>
-  </ul>
-
-  <div class="h1">3. Tu responsabilidad como agente</div>
-  <ul>
-    <li>Eres el <strong>Responsable del tratamiento</strong> de los datos de tus contactos conforme a la LFPDPPP.</li>
-    <li>Debes contar con el consentimiento de tus contactos para procesar sus mensajes de forma automatizada.</li>
-    <li>Broquer no es responsable del uso que hagas de la información de tus contactos fuera de la plataforma.</li>
-  </ul>
-
-  <div class="h1">4. Broquer como Encargado del tratamiento</div>
-  <p>Broquer actúa exclusivamente como <strong>Encargado del tratamiento</strong> en los términos del artículo 50 de la LFPDPPP: procesamos los datos únicamente para prestarte el servicio, sin utilizarlos para fines propios distintos a la operación de la plataforma.</p>
-
-  <div class="h1">5. Retención y eliminación</div>
-  <ul>
-    <li>Las conversaciones se conservan mientras tu cuenta esté activa.</li>
-    <li>Al cancelar tu suscripción, tus datos se eliminan en un plazo máximo de 30 días naturales.</li>
-    <li>Puedes solicitar la eliminación de conversaciones desde la bandeja o escribiendo a privacidad@broquer.mx.</li>
-    <li>Desconectar tu número <strong>no elimina</strong> las conversaciones previamente guardadas.</li>
-  </ul>
-
-  <div class="h1">6. Seguridad</div>
-  <ul>
-    <li>Todas las comunicaciones con la API de WhatsApp de Meta ocurren sobre HTTPS.</li>
-    <li>Los datos se almacenan en Supabase con cifrado en reposo y Row Level Security (RLS).</li>
-    <li>Los tokens de acceso a WhatsApp se almacenan cifrados y nunca se exponen en el frontend.</li>
-  </ul>
-
-  <div class="h1">7. Relación con Meta</div>
-  <p>Al conectar tu número, también aceptas las <a href="https://www.whatsapp.com/legal/business-policy/" target="_blank" rel="noopener">Políticas de WhatsApp Business</a> y los <a href="https://developers.facebook.com/terms/" target="_blank" rel="noopener">Términos de la plataforma de Meta</a>. Broquer no controla la infraestructura de Meta y no es responsable de interrupciones o cambios en el servicio de WhatsApp.</p>
-
-  <div class="h1">8. Contacto</div>
-  <p>Para ejercicio de derechos ARCO o cualquier asunto relacionado con el tratamiento de datos, escríbenos a <strong>privacidad@broquer.mx</strong>.</p>
-
-  <p class="aviso-final">Broquer es una marca registrada de Salvador Bolaños Navarro. Morelia, Michoacán, México.</p>
-</div>
-</div>
 
 </body>
 </html>
