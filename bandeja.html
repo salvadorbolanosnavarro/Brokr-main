@@ -106,6 +106,14 @@ body[data-app="bandeja"] .bk-page{
 /* ═══════════ CARRIL 2 · CONVERSACIÓN ═══════════ */
 .bx-thread{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--paper)}
 
+/* El atributo hidden aplica display:none desde la hoja del navegador, pero
+   cualquier display:flex de autor le gana. Sin esto, threadEmpty.hidden=true
+   no hacía nada: el estado vacío y el chat se renderizaban a la vez y se
+   partían la altura. Selector de 2 clases -> gana por especificidad, sin
+   necesidad de !important. */
+.bx-blank[hidden],
+.bx-thread__inner[hidden]{display:none}
+
 .bx-blank{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--sp-3);padding:var(--sp-8);text-align:center}
 .bx-blank__icon{width:52px;height:52px;border-radius:50%;background:var(--paper-2);display:flex;align-items:center;justify-content:center;color:var(--mute)}
 .bx-blank__icon svg{width:24px;height:24px}
