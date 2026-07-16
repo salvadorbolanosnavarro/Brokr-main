@@ -437,17 +437,76 @@ async def already_processed(wamid: str) -> bool:
     return bool(rows)
 
 
+def _norm10(num: str) -> str:
+    """Últimos 10 dígitos. Es la llave con la que se cruza WhatsApp contra
+    Contactos: aguanta +52, el 1 de móvil, 044/045, espacios y guiones.
+    Regla mexicana — revisar cuando entre Colombia."""
+    d = "".join(ch for ch in str(num or "") if ch.isdigit())
+    return d[-10:] if len(d) >= 10 else ""
+
+
+async def vincular_contacto(user_id: str, wa_id: str, nombre: str | None) -> str | None:
+    """Devuelve el id de contactos para este número de WhatsApp.
+    Si ya existe (por teléfono o por el campo wa), lo reutiliza y NO lo pisa:
+    los datos que el agente capturó a mano mandan sobre lo que diga WhatsApp.
+    Si no existe, lo crea marcado como potencial y con fuente WhatsApp."""
+    norm = _norm10(wa_id)
+    if not norm:
+        return None
+
+    try:
+        # Busca en el universo de ESE agente, contra los dos campos de teléfono
+        rows = await sb_get("contactos", {
+            "user_id": f"eq.{user_id}",
+            "or":      f"(tel_norm.eq.{norm},wa_norm.eq.{norm})",
+            "select":  "id",
+            "order":   "updated_at.desc",
+            "limit":   "1",
+        })
+        if rows:
+            return rows[0]["id"]
+
+        creado = await sb_post("contactos", {
+            "user_id":      user_id,
+            "nombre":       (nombre or "").strip() or f"WhatsApp {norm[-4:]}",
+            "telefono":     norm,
+            "wa":           norm,
+            "tipo":         "prospecto",
+            "es_potencial": True,
+            "fuente":       "WhatsApp",
+            "notas":        "Creado automáticamente por Recepción al recibir el primer mensaje.",
+        })
+        if creado:
+            return creado[0]["id"]
+    except Exception as e:
+        # Nunca tumbar la conversación por un fallo del CRM: el lead se atiende
+        # igual y queda en wa_contacts; el enlace se puede reparar después.
+        log.warning("No se pudo vincular contacto para %s: %s", wa_id, e)
+    return None
+
+
 async def upsert_contact(user_id, wa_id, nombre):
     rows = await sb_get("wa_contacts",
                         {"user_id": f"eq.{user_id}", "wa_id": f"eq.{wa_id}", "limit": "1"})
     if rows:
         contact = rows[0]
+        patch = {}
         if nombre and not contact.get("nombre"):
-            await sb_patch("wa_contacts", {"id": f"eq.{contact['id']}"}, {"nombre": nombre})
-            contact["nombre"] = nombre
+            patch["nombre"] = nombre
+        # Repara el enlace si falta (contacto creado a mano después, o backfill fallido)
+        if not contact.get("contacto_id"):
+            cid = await vincular_contacto(user_id, wa_id, nombre or contact.get("nombre"))
+            if cid:
+                patch["contacto_id"] = cid
+        if patch:
+            await sb_patch("wa_contacts", {"id": f"eq.{contact['id']}"}, patch)
+            contact.update(patch)
         return contact
+
+    contacto_id = await vincular_contacto(user_id, wa_id, nombre)
     created = await sb_post("wa_contacts",
                             {"user_id": user_id, "wa_id": wa_id, "nombre": nombre,
+                             "contacto_id": contacto_id,
                              "temperatura": "Nuevo", "score": 0, "etapa": "Nuevo"})
     return created[0] if created else {"id": None}
 

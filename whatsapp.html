@@ -8,207 +8,329 @@
 <title>WhatsApp — Broquer</title>
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-height:100vh}
-.wa-wrap{max-width:var(--form-max, 760px);margin:0 auto;padding:28px var(--pad-x, 36px) 120px}
+.wa-wrap{max-width:var(--form-max, 760px);margin:0 auto;padding:8px var(--pad-x, 36px) 120px}
 
-/* ─── Hero ─────────────────────────────────────────────── */
-.wa-hero{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:26px 26px 22px;margin-bottom:20px;position:relative;overflow:hidden}
-.wa-hero:after{content:"";position:absolute;right:-80px;top:-100px;width:220px;height:220px;border-radius:50%;background:var(--brand-whatsapp-soft)}
-.wa-eyebrow{font-family:var(--font-mono);font-size: var(--fs-label-3);letter-spacing: 0.02em;color:var(--mute);margin-bottom:9px}
-.wa-hero h1{font-family:var(--font-display);font-size:var(--fs-h1);font-weight:700;letter-spacing:-.035em;line-height:1.05;max-width:580px}
-.wa-hero h1 span{color:var(--brand-whatsapp)}
-.wa-hero p{font-size:var(--fs-sm);color:var(--mute);line-height:1.6;max-width:540px;margin-top:10px}
+/* ═══════════════════════════════════════════════════════════
+   STAGE — la superficie navy de Broquer (misma ADN que los PDF:
+   card oscura, métrica protagonista, rejilla de apoyo).
+   Es el único elemento con peso visual de la pantalla.
+   ═══════════════════════════════════════════════════════════ */
+.wa-stage{
+  position:relative;overflow:hidden;
+  background:linear-gradient(148deg, var(--sky-navy) 0%, var(--sky-navy-mid) 100%);
+  border-radius:var(--r-lg);
+  padding:var(--sp-8) var(--sp-8) var(--sp-7);
+  margin-bottom:var(--sp-5);
+}
+.wa-stage::before{
+  content:"";position:absolute;right:-140px;top:-160px;
+  width:380px;height:380px;border-radius:50%;
+  background:radial-gradient(circle, rgba(91,164,255,.20) 0%, rgba(91,164,255,0) 68%);
+  pointer-events:none;
+}
+.wa-stage > *{position:relative}
 
-/* ─── Botones ───────────────────────────────────────────── */
-.wa-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:var(--r);padding:11px 20px;font-family:var(--font-sans);font-size:var(--fs-label-2);font-weight:600;cursor:pointer;text-decoration:none;transition:opacity .15s,transform .15s}
-.wa-btn:hover{opacity:.9;transform:translateY(-1px)}
-.wa-btn:active{transform:translateY(0)}
+.wa-stage__mark{
+  width:44px;height:44px;border-radius:var(--r);
+  background:var(--brand-whatsapp);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:var(--sp-5);
+}
+.wa-stage__mark svg{width:26px;height:26px}
+.wa-stage__eyebrow{
+  font-size:var(--fs-label-3);font-weight:700;color:var(--sky-blue-on-dark);
+  margin:0 0 var(--sp-2);
+}
+.wa-stage__title{
+  font-family:var(--font-display);font-size:var(--fs-h1);font-weight:700;
+  letter-spacing:-.03em;line-height:var(--lh-tight);color:#fff;
+  max-width:16ch;margin:0;
+}
+.wa-stage__title b{color:var(--sky-blue-on-dark);font-weight:700}
+.wa-stage__text{
+  font-size:var(--fs-sm);line-height:var(--lh-loose);
+  color:rgba(255,255,255,.72);max-width:46ch;margin:var(--sp-3) 0 0;
+}
+.wa-stage__cta{display:flex;flex-wrap:wrap;gap:var(--sp-3);margin-top:var(--sp-6)}
+.wa-stage__foot{
+  margin:var(--sp-6) 0 0;padding-top:var(--sp-5);
+  border-top:1px solid rgba(255,255,255,.14);
+  font-size:var(--fs-xs);line-height:var(--lh);color:rgba(255,255,255,.60);
+}
+.wa-stage__foot b{color:rgba(255,255,255,.92);font-weight:700}
+
+/* ─── Stage en modo conectado: el número es el protagonista ─── */
+.wa-live__top{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-6)}
+.wa-presence{display:inline-flex;align-items:center;gap:var(--sp-2);font-size:var(--fs-xs);font-weight:700;color:#fff}
+.wa-presence i{
+  position:relative;width:9px;height:9px;border-radius:50%;
+  background:var(--brand-whatsapp);flex:none;
+}
+.wa-presence i::after{
+  content:"";position:absolute;inset:-5px;border-radius:50%;
+  border:1.5px solid var(--brand-whatsapp);opacity:0;
+  animation:waPulse 2.6s var(--ease-out) infinite;
+}
+@keyframes waPulse{0%{transform:scale(.7);opacity:.55}100%{transform:scale(1.35);opacity:0}}
+.wa-live__waba{font-size:var(--fs-xs);color:rgba(255,255,255,.60);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:50%}
+
+.wa-live__label{margin:0;font-size:var(--fs-label-3);font-weight:700;color:var(--sky-blue-on-dark)}
+.wa-live__number{
+  font-family:var(--font-display);font-size:var(--fs-display);font-weight:700;
+  letter-spacing:-.03em;line-height:var(--lh-tight);color:#fff;
+  font-variant-numeric:tabular-nums;margin:var(--sp-2) 0 0;
+}
+
+.wa-live__grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  margin-top:var(--sp-7);padding-top:var(--sp-5);
+  border-top:1px solid rgba(255,255,255,.14);
+}
+.wa-live__grid div{padding-right:var(--sp-4);border-right:1px solid rgba(255,255,255,.14)}
+.wa-live__grid div:last-child{border-right:0;padding-right:0}
+.wa-live__grid b{
+  display:block;font-family:var(--font-display);font-size:var(--fs-h2);font-weight:700;
+  color:#fff;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:var(--lh-tight);
+}
+.wa-live__grid span{display:block;margin-top:var(--sp-1);font-size:var(--fs-caption);color:rgba(255,255,255,.60);line-height:var(--lh-snug)}
+
+/* ═══════════════════════════════════════════════════════════
+   BOTONES
+   ═══════════════════════════════════════════════════════════ */
+.wa-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2);
+  height:var(--h);padding:0 var(--sp-5);border:1px solid transparent;
+  border-radius:var(--r-pill);font-family:var(--font-sans);font-size:var(--fs-sm);
+  font-weight:700;cursor:pointer;text-decoration:none;
+  transition:background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.wa-btn:active{transform:scale(.98)}
 .wa-btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
-.wa-btn-green{background:var(--brand-whatsapp);color:var(--bone)}
-.wa-btn-green:hover{background:var(--brand-whatsapp-press)}
-.wa-btn-ink{background:var(--sky-navy);color:var(--paper)}
-.wa-btn-ghost{background:var(--paper);color:var(--ink);border:1px solid var(--line-2)}
-.wa-btn-danger{background:var(--paper-2);color:var(--danger);border:1px solid var(--line)}
+.wa-btn-green{background:var(--brand-whatsapp);border-color:var(--brand-whatsapp);color:var(--sky-navy)}
+.wa-btn-green:hover{background:var(--brand-whatsapp-press);border-color:var(--brand-whatsapp-press);color:var(--sky-navy)}
+.wa-btn-onnavy{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.26);color:#fff}
+.wa-btn-onnavy:hover{background:rgba(255,255,255,.18);color:#fff}
+.wa-btn-primary{background:var(--sky-blue);border-color:var(--sky-blue);color:#fff}
+.wa-btn-primary:hover{background:var(--sky-blue-press);border-color:var(--sky-blue-press);color:#fff}
+.wa-btn-ink{background:var(--sky-navy);border-color:var(--sky-navy);color:#fff}
+.wa-btn-ink:hover{background:var(--sky-navy-mid);border-color:var(--sky-navy-mid);color:#fff}
+.wa-btn-ghost{background:var(--bone);border-color:var(--line-2);color:var(--ink)}
+.wa-btn-ghost:hover{background:var(--paper-2);border-color:var(--line-3)}
+.wa-btn-danger{background:transparent;border-color:var(--danger-soft);color:var(--danger)}
+.wa-btn-danger:hover{background:var(--danger-soft)}
+.wa-btn--sm{height:var(--h-sm);padding:0 var(--sp-4);font-size:var(--fs-xs)}
 
-/* ─── Banner desconectado ───────────────────────────────── */
-.wa-banner{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:40px 24px;text-align:center;margin-bottom:20px}
-.wa-banner-icon{width:56px;height:56px;border-radius:var(--r-lg);background:var(--brand-whatsapp);display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
-.wa-banner-icon svg{width:32px;height:32px}
-.wa-banner h2{font-family:var(--font-display);font-size:var(--fs-h3);font-weight:700;letter-spacing:-.025em;margin-bottom:8px}
-.wa-banner p{font-size:var(--fs-sm);color:var(--mute);line-height:1.6;max-width:460px;margin:0 auto 20px}
+/* ═══════════════════════════════════════════════════════════
+   FLUJO EN TRES PASOS — es una secuencia real (conectar →
+   contestar → tomar el control), por eso va numerado. Rieles
+   con filete, no tres cajas iguales.
+   ═══════════════════════════════════════════════════════════ */
+.wa-flow{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-6)}
+.wa-flow li{padding-top:var(--sp-4);border-top:2px solid var(--sky-navy)}
+.wa-flow li:nth-child(2){border-top-color:var(--line-2)}
+.wa-flow li:nth-child(3){border-top-color:var(--line-2)}
+.wa-flow__n{display:block;font-family:var(--font-display);font-size:var(--fs-label-3);font-weight:700;color:var(--mute);font-variant-numeric:tabular-nums}
+.wa-flow h3{font-size:var(--fs-sm);font-weight:700;margin:var(--sp-2) 0 var(--sp-1);line-height:var(--lh-snug)}
+.wa-flow p{font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh);margin:0}
 
-/* ─── Cómo funciona ─────────────────────────────────────── */
-.wa-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
-.wa-step{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 16px}
-.wa-step-num{width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--paper);font-size:var(--fs-sm);font-weight:700;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
-.wa-step h3{font-size:var(--fs-sm);font-weight:700;margin-bottom:4px}
-.wa-step p{font-size:var(--fs-xs);color:var(--mute);line-height:1.5}
+/* ═══════════════════════════════════════════════════════════
+   PANELES BLANCOS — todo lo que es control, no protagonista
+   ═══════════════════════════════════════════════════════════ */
+.wa-jump{display:flex;flex-wrap:wrap;gap:var(--sp-3);margin-bottom:var(--sp-6)}
 
-/* ─── Estado conectado ──────────────────────────────────── */
-.wa-connected-card{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;margin-bottom:16px}
-.wa-number-row{display:flex;align-items:center;gap:14px;margin-bottom:18px}
-.wa-number-dot{width:10px;height:10px;border-radius:50%;background:var(--brand-whatsapp);flex:none}
-.wa-number-info h3{font-size:var(--fs-h5);font-weight:700;letter-spacing:-.01em}
-.wa-number-info span{font-size:var(--fs-xs);color:var(--mute)}
-.wa-status-pill{display:inline-block;font-size: var(--fs-label-3);font-weight:800;letter-spacing: 0.02em;border-radius:var(--r-pill);padding:3px 9px;background:var(--brand-whatsapp-soft);color:var(--success);margin-left:10px;vertical-align:middle}
+.wa-panel{
+  background:var(--bone);border:1px solid var(--line);border-radius:var(--r);
+  padding:var(--sp-5);margin-bottom:var(--sp-3);
+}
+.wa-panel__head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp-4)}
+.wa-panel__head h3{font-size:var(--fs-h5);font-weight:700;letter-spacing:-.015em;margin:0;line-height:var(--lh-snug)}
+.wa-panel__head p{font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh);margin:var(--sp-1) 0 0;max-width:52ch}
 
-.wa-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
-.wa-action-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;gap:6px;transition:border-color .15s}
-.wa-action-card:hover{border-color:var(--ink)}
-.wa-action-card svg{width:20px;height:20px;color:var(--ink)}
-.wa-action-card h4{font-size:var(--fs-sm);font-weight:700}
-.wa-action-card p{font-size:var(--fs-xs);color:var(--mute);line-height:1.4}
-
-.wa-ia-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:14px}
-.wa-ia-info h4{font-size:var(--fs-sm);font-weight:700;margin-bottom:2px}
-.wa-ia-info p{font-size:var(--fs-xs);color:var(--mute);line-height:1.4}
-.wa-toggle{position:relative;width:44px;height:24px;flex:none}
-.wa-toggle input{opacity:0;width:0;height:0;position:absolute}
-.wa-toggle-track{position:absolute;inset:0;background:var(--line-2);border-radius:var(--r-pill);transition:background .2s;cursor:pointer}
+/* Switch de Recepción */
+.wa-toggle{position:relative;width:46px;height:26px;flex:none;cursor:pointer}
+.wa-toggle input{position:absolute;opacity:0;width:0;height:0}
+.wa-toggle-track{position:absolute;inset:0;background:var(--line-2);border-radius:var(--r-pill);transition:background var(--dur) var(--ease)}
 .wa-toggle input:checked + .wa-toggle-track{background:var(--brand-whatsapp)}
-.wa-toggle-thumb{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--bone);transition:transform .2s;pointer-events:none;box-shadow:var(--shadow-sm)}
+.wa-toggle input:focus-visible + .wa-toggle-track{box-shadow:var(--focus)}
+.wa-toggle-thumb{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform var(--dur) var(--ease);pointer-events:none;box-shadow:var(--shadow-xs)}
 .wa-toggle input:checked ~ .wa-toggle-thumb{transform:translateX(20px)}
 
-.wa-danger-zone{border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px}
-.wa-danger-info h4{font-size:var(--fs-sm);font-weight:700;color:var(--danger);margin-bottom:2px}
-.wa-danger-info p{font-size:var(--fs-xs);color:var(--mute);line-height:1.4}
+/* Plantillas */
+.wa-tpl-list{display:flex;flex-direction:column;gap:var(--sp-2);margin-top:var(--sp-4)}
+.wa-tpl{
+  display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);
+  background:var(--paper);border:1px solid var(--line);border-radius:var(--r-sm);
+  padding:var(--sp-3) var(--sp-4);
+}
+.wa-tpl__name{font-size:var(--fs-sm);font-weight:700;color:var(--ink)}
+.wa-tpl__meta{font-size:var(--fs-caption);color:var(--mute);margin-top:2px}
+.wa-tpl__state{font-size:var(--fs-caption);font-weight:700;flex:none}
+.wa-note{font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh);padding:var(--sp-3) 0}
 
-/* ─── Spinner ───────────────────────────────────────────── */
-.wa-spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:var(--bone);border-radius:50%;animation:waspin .7s linear infinite;display:none}
+/* Zona de desconexión — deliberadamente sin card: no compite */
+.wa-quiet{
+  display:flex;align-items:center;justify-content:space-between;gap:var(--sp-4);
+  padding:var(--sp-5) var(--sp-1) 0;margin-top:var(--sp-5);
+  border-top:1px solid var(--line);
+}
+.wa-quiet h4{font-size:var(--fs-sm);font-weight:700;margin:0;color:var(--ink)}
+.wa-quiet p{font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh);margin:var(--sp-1) 0 0;max-width:48ch}
+
+/* ═══════════════════════════════════════════════════════════
+   ESQUELETO DE CARGA — evita el parpadeo "desconectado"
+   ═══════════════════════════════════════════════════════════ */
+.wa-boot{height:262px;border-radius:var(--r-lg);background:var(--paper-2);position:relative;overflow:hidden}
+.wa-boot::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.55) 50%, rgba(255,255,255,0) 100%);
+  animation:waShimmer 1.3s linear infinite;
+}
+@keyframes waShimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+
+/* Spinner de botón */
+.wa-spinner{width:15px;height:15px;border:2px solid rgba(255,255,255,.35);border-top-color:currentColor;border-radius:50%;animation:waSpin .7s linear infinite;display:none}
 .wa-spinner.active{display:inline-block}
-@keyframes waspin{to{transform:rotate(360deg)}}
+@keyframes waSpin{to{transform:rotate(360deg)}}
 
-/* ─── Aviso ─────────────────────────────────────────────── */
-.wa-notice{background:var(--bone);border:1px solid var(--paper-2);border-radius:var(--r);padding:12px 16px;font-size:var(--fs-xs);color:var(--success);line-height:1.55;margin-bottom:16px}
-.wa-notice strong{color:var(--success)}
-
-/* ─── Modal confirmación ────────────────────────────────── */
-.wa-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:none;align-items:center;justify-content:center;padding:20px}
+/* ═══════════════════════════════════════════════════════════
+   MODALES
+   ═══════════════════════════════════════════════════════════ */
+.wa-modal-bg{position:fixed;inset:0;background:rgba(5,32,60,.52);z-index:var(--z-modal);display:none;align-items:center;justify-content:center;padding:var(--sp-5)}
 .wa-modal-bg.open{display:flex}
-.wa-modal{background:var(--paper);border-radius:var(--r-lg);padding:28px 24px;max-width:420px;width:100%;box-shadow:var(--shadow-md)}
-.wa-modal h3{font-family:var(--font-display);font-size:var(--fs-h5);font-weight:700;margin-bottom:8px}
-.wa-modal p{font-size:var(--fs-sm);color:var(--mute);line-height:1.6;margin-bottom:20px}
-.wa-modal-btns{display:flex;gap:10px;justify-content:flex-end}
+.wa-modal{background:var(--bone);border-radius:var(--r-lg);padding:var(--sp-7);max-width:440px;width:100%;box-shadow:var(--shadow-lg)}
+.wa-modal h3{font-family:var(--font-display);font-size:var(--fs-h3);font-weight:700;letter-spacing:-.02em;margin:0 0 var(--sp-2)}
+.wa-modal > p{font-size:var(--fs-sm);color:var(--mute);line-height:var(--lh);margin:0 0 var(--sp-6)}
+.wa-modal-btns{display:flex;gap:var(--sp-2);justify-content:flex-end}
+.wa-form{display:flex;flex-direction:column;gap:var(--sp-4);margin-bottom:var(--sp-6)}
+.wa-form label{font-size:var(--fs-xs);font-weight:700;display:block;margin-bottom:var(--sp-1);color:var(--ink)}
+.wa-form input,.wa-form select,.wa-form textarea{
+  width:100%;height:var(--h);padding:0 var(--sp-4);
+  border:1px solid var(--line-2);border-radius:var(--r-sm);
+  font-family:var(--font-sans);font-size:var(--fs-sm);color:var(--ink);background:var(--bone);
+}
+.wa-form textarea{height:auto;padding:var(--sp-3) var(--sp-4);min-height:96px;resize:vertical;line-height:var(--lh)}
+.wa-form input:focus,.wa-form select:focus,.wa-form textarea:focus{outline:none;border-color:var(--sky-blue);box-shadow:var(--focus)}
+.wa-form small{display:block;font-size:var(--fs-caption);color:var(--mute);margin-top:var(--sp-1);line-height:var(--lh-snug)}
 
-/* ─── Responsive ────────────────────────────────────────── */
-@media(max-width:640px){
-  .wa-wrap{padding-left:20px;padding-right:20px}
-  .wa-steps{grid-template-columns:1fr}
-  .wa-actions{grid-template-columns:1fr}
-  .wa-hero h1{font-size:var(--fs-h2)}
-  .wa-danger-zone{flex-direction:column;align-items:flex-start}
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════ */
+@media(max-width:720px){
+  .wa-stage{padding:var(--sp-6) var(--sp-5)}
+  .wa-stage__title{font-size:var(--fs-h2);max-width:none}
+  .wa-live__number{font-size:var(--fs-h1)}
+  .wa-live__grid{grid-template-columns:1fr;gap:var(--sp-4)}
+  .wa-live__grid div{padding-right:0;border-right:0;display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-4)}
+  .wa-live__grid b{font-size:var(--fs-h3)}
+  .wa-live__grid span{margin-top:0;text-align:right}
+  .wa-flow{grid-template-columns:1fr;gap:var(--sp-4)}
+  .wa-stage__cta .wa-btn,.wa-jump .wa-btn{flex:1 1 100%}
+  .wa-quiet{flex-direction:column;align-items:flex-start}
 }
 </style>
 </head>
 <body data-app="whatsapp">
 <div class="wa-wrap">
 
-  <!-- HERO -->
-  <section class="wa-hero">
-    <div class="wa-eyebrow">WhatsApp · Recepción</div>
-    <h1>Tu recepcionista en <span>WhatsApp</span>, activa 24/7.</h1>
-    <p>Conecta tu número de WhatsApp Business y deja que Recepción califique leads, responda preguntas y registre cada conversación en tu CRM — mientras tú te enfocas en cerrar.</p>
-  </section>
+  <!-- ═══ CARGANDO ═══ -->
+  <div class="wa-boot" id="wa-boot"></div>
 
-  <!-- ESTADO: desconectado -->
-  <div id="wa-not-connected">
+  <!-- ═══ ESTADO: DESCONECTADO ═══ -->
+  <div id="wa-not-connected" hidden>
 
-    <div class="wa-banner">
-      <div class="wa-banner-icon">
-        <svg viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.857L.057 23.882a.5.5 0 00.614.612l6.115-1.598A11.947 11.947 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.967 0-3.805-.538-5.378-1.47l-.385-.23-3.993 1.044 1.012-3.9-.252-.403A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+    <section class="wa-stage">
+      <div class="wa-stage__mark">
+        <svg viewBox="0 0 24 24" fill="#ffffff" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.857L.057 23.882a.5.5 0 00.614.612l6.115-1.598A11.947 11.947 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.967 0-3.805-.538-5.378-1.47l-.385-.23-3.993 1.044 1.012-3.9-.252-.403A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
       </div>
-      <h2>Conecta tu WhatsApp para empezar</h2>
-      <p>Vincula tu número de WhatsApp Business con Broquer. Puedes seguir respondiendo desde tu celular — la IA solo entra cuando tú no estás.</p>
-      <button class="wa-btn wa-btn-green" id="wa-connect-btn" onclick="startEmbeddedSignup()">
-        <span class="wa-spinner" id="wa-connect-spinner"></span>
-        <span id="wa-connect-text">Conectar WhatsApp</span>
-      </button>
-    </div>
+      <p class="wa-stage__eyebrow">Recepción</p>
+      <h2 class="wa-stage__title">Ningún lead <b>sin respuesta</b>.</h2>
+      <p class="wa-stage__text">Conecta tu número de WhatsApp Business y Recepción contesta, califica y guarda cada prospecto en tu CRM. También de madrugada.</p>
+      <div class="wa-stage__cta">
+        <button class="wa-btn wa-btn-green" id="wa-connect-btn" onclick="startEmbeddedSignup()">
+          <span class="wa-spinner" id="wa-connect-spinner"></span>
+          <span id="wa-connect-text">Conectar WhatsApp</span>
+        </button>
+        <a class="wa-btn wa-btn-onnavy" href="guia-agente.html#whatsapp">Ver cómo funciona</a>
+      </div>
+      <p class="wa-stage__foot"><b>Tu número se queda contigo.</b> Sigue funcionando en la app de WhatsApp de tu celular al mismo tiempo que en Broquer. No migras nada ni contratas un número nuevo.</p>
+    </section>
 
-    <div class="wa-steps">
-      <div class="wa-step">
-        <div class="wa-step-num">1</div>
-        <h3>Conecta tu número</h3>
-        <p>Vincula tu WhatsApp Business en un proceso guiado de Meta. Tu número sigue siendo tuyo.</p>
-      </div>
-      <div class="wa-step">
-        <div class="wa-step-num">2</div>
-        <h3>Recepción entra</h3>
-        <p>Cada lead que te escriba recibe respuesta inmediata: bienvenida, calificación y captura automática.</p>
-      </div>
-      <div class="wa-step">
-        <div class="wa-step-num">3</div>
+    <ol class="wa-flow">
+      <li>
+        <span class="wa-flow__n">Paso 1</span>
+        <h3>Conectas tu número</h3>
+        <p>Meta te guía en el proceso. Toma un par de minutos y lo haces una sola vez.</p>
+      </li>
+      <li>
+        <span class="wa-flow__n">Paso 2</span>
+        <h3>Recepción contesta</h3>
+        <p>Saluda al lead, pregunta qué busca y con cuánto cuenta, y lo registra en tu CRM.</p>
+      </li>
+      <li>
+        <span class="wa-flow__n">Paso 3</span>
         <h3>Tú tomas el control</h3>
-        <p>En cuanto respondes desde tu cel, la IA se apaga para esa conversación. Nada interfiere.</p>
-      </div>
-    </div>
-
-    <div class="wa-notice">
-      <strong>Coexistencia activa.</strong> Tu número puede estar en la app de WhatsApp de tu celular y en Broquer al mismo tiempo. No necesitas número nuevo ni dejar de usar WhatsApp normalmente.
-    </div>
+        <p>En cuanto escribes desde tu celular, la IA se apaga en ese chat. No estorba.</p>
+      </li>
+    </ol>
 
   </div>
 
-  <!-- ESTADO: conectado -->
-  <div id="wa-connected" style="display:none">
+  <!-- ═══ ESTADO: CONECTADO ═══ -->
+  <div id="wa-connected" hidden>
 
-    <div class="wa-connected-card">
-      <div class="wa-number-row">
-        <div class="wa-number-dot"></div>
-        <div class="wa-number-info">
-          <h3 id="wa-phone-display">—<span class="wa-status-pill">Activo</span></h3>
-          <span id="wa-waba-name">WhatsApp Business</span>
-        </div>
+    <section class="wa-stage wa-stage--live">
+      <div class="wa-live__top">
+        <span class="wa-presence"><i></i>En línea</span>
+        <span class="wa-live__waba" id="wa-waba-name">WhatsApp Business</span>
       </div>
+      <p class="wa-live__label">Tu número conectado</p>
+      <p class="wa-live__number" id="wa-phone-display">—</p>
+      <div class="wa-live__grid" id="wa-metrics" hidden>
+        <div><b id="wa-m-convs">0</b><span>Conversaciones</span></div>
+        <div><b id="wa-m-auto">0</b><span>Con Recepción activa</span></div>
+        <div><b id="wa-m-hot">0</b><span>Leads calificados</span></div>
+      </div>
+    </section>
 
-      <div class="wa-actions">
-        <a href="bandeja.html" class="wa-action-card">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"/></svg>
-          <h4>Bandeja de entrada</h4>
-          <p>Ver conversaciones, leads calificados y responder a mano.</p>
-        </a>
-        <div class="wa-action-card" onclick="window.location.href='guia-agente.html#whatsapp'">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/></svg>
-          <h4>Cómo funciona</h4>
-          <p>Guía completa: Recepción, coexistencia y privacidad.</p>
-        </div>
-      </div>
-
-      <div class="wa-ia-row">
-        <div class="wa-ia-info">
-          <h4>Recepción (IA) activa globalmente</h4>
-          <p>Cuando está encendida, Recepción contesta leads nuevos. Se apaga por conversación en cuanto tú respondes.</p>
-        </div>
-        <label class="wa-toggle">
-          <input type="checkbox" id="wa-global-ia" checked onchange="toggleIAGlobal(this.checked)"/>
-          <div class="wa-toggle-track"></div>
-          <div class="wa-toggle-thumb"></div>
-        </label>
-      </div>
-
-      <div class="wa-danger-zone">
-        <div class="wa-danger-info">
-          <h4>Desconectar WhatsApp</h4>
-          <p>Desvincula tu número de Broquer. Tus conversaciones guardadas no se eliminan.</p>
-        </div>
-        <button class="wa-btn wa-btn-danger" onclick="openDisconnectModal()">Desconectar</button>
-      </div>
+    <div class="wa-jump">
+      <a href="bandeja.html" class="wa-btn wa-btn-primary">Abrir bandeja</a>
+      <a href="guia-agente.html#whatsapp" class="wa-btn wa-btn-ghost">Cómo funciona</a>
     </div>
 
-    <!-- ── Plantillas de mensaje ──────────────────────────────────────── -->
-    <div class="wa-connected-card">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px">
+    <section class="wa-panel">
+      <div class="wa-panel__head">
         <div>
-          <h3 style="font-size:var(--fs-h5);font-weight:700;letter-spacing:-.01em">Plantillas de mensaje</h3>
-          <span style="font-size:var(--fs-xs);color:var(--mute)">Necesarias para escribirle primero a un contacto o reactivar una conversación después de 24h.</span>
+          <h3>Recepción automática</h3>
+          <p>Cuando está encendida, Recepción contesta a los leads nuevos. Se apaga sola en cada chat donde tú respondas.</p>
         </div>
-        <button class="wa-btn wa-btn-ink" onclick="openTemplateModal()">+ Nueva plantilla</button>
+        <label class="wa-toggle" aria-label="Recepción automática">
+          <input type="checkbox" id="wa-global-ia" checked onchange="toggleIAGlobal(this.checked)"/>
+          <span class="wa-toggle-track"></span>
+          <span class="wa-toggle-thumb"></span>
+        </label>
       </div>
+    </section>
 
-      <div id="wa-templates-list" style="margin-top:16px;display:flex;flex-direction:column;gap:8px">
-        <div style="font-size:var(--fs-xs);color:var(--mute);padding:12px 0">Cargando plantillas…</div>
+    <section class="wa-panel">
+      <div class="wa-panel__head">
+        <div>
+          <h3>Plantillas de mensaje</h3>
+          <p>Meta solo te deja escribir primero, o reabrir un chat después de 24 horas, con un mensaje que ya aprobó.</p>
+        </div>
+        <button class="wa-btn wa-btn-ink wa-btn--sm" onclick="openTemplateModal()">Nueva plantilla</button>
       </div>
+      <div class="wa-tpl-list" id="wa-templates-list">
+        <div class="wa-note">Cargando plantillas…</div>
+      </div>
+    </section>
+
+    <div class="wa-quiet">
+      <div>
+        <h4>Desconectar WhatsApp</h4>
+        <p>Desvincula tu número de Broquer. Tus conversaciones y leads guardados no se borran.</p>
+      </div>
+      <button class="wa-btn wa-btn-danger wa-btn--sm" onclick="openDisconnectModal()">Desconectar</button>
     </div>
 
   </div>
@@ -232,35 +354,35 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 
 <!-- Modal crear plantilla -->
 <div class="wa-modal-bg" id="wa-template-modal-bg">
-  <div class="wa-modal" style="max-width:480px">
+  <div class="wa-modal">
     <h3>Nueva plantilla</h3>
     <p>Meta revisa cada plantilla antes de aprobarla. Puede tardar desde minutos hasta 24 horas.</p>
 
-    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:18px">
+    <div class="wa-form">
       <div>
-        <label style="font-size:var(--fs-xs);font-weight:700;display:block;margin-bottom:5px">Nombre interno</label>
-        <input type="text" id="tpl-name" placeholder="seguimiento_visita" style="width:100%;padding:9px 12px;border:1px solid var(--line-2);border-radius:var(--r);font-size:var(--fs-sm);font-family:var(--font-sans)"/>
-        <span style="font-size:var(--fs-caption);color:var(--mute)">Solo minúsculas y guion_bajo, sin espacios.</span>
+        <label for="tpl-name">Nombre interno</label>
+        <input type="text" id="tpl-name" placeholder="seguimiento_visita"/>
+        <small>Solo minúsculas y guion_bajo, sin espacios.</small>
       </div>
 
       <div>
-        <label style="font-size:var(--fs-xs);font-weight:700;display:block;margin-bottom:5px">Categoría</label>
-        <select id="tpl-category" style="width:100%;padding:9px 12px;border:1px solid var(--line-2);border-radius:var(--r);font-size:var(--fs-sm);font-family:var(--font-sans)">
+        <label for="tpl-category">Categoría</label>
+        <select id="tpl-category">
           <option value="UTILITY">Utilidad (seguimiento, confirmaciones)</option>
           <option value="MARKETING">Marketing (promociones, novedades)</option>
         </select>
       </div>
 
       <div>
-        <label style="font-size:var(--fs-xs);font-weight:700;display:block;margin-bottom:5px">Texto del mensaje</label>
-        <textarea id="tpl-body" rows="4" placeholder="Hola {{1}}, ¿sigues interesado en la propiedad que viste? Quedo al pendiente." style="width:100%;padding:9px 12px;border:1px solid var(--line-2);border-radius:var(--r);font-size:var(--fs-sm);font-family:var(--font-sans);resize:vertical"></textarea>
-        <span style="font-size:var(--fs-caption);color:var(--mute)">Usa {{1}}, {{2}}… para variables (ej. nombre del lead).</span>
+        <label for="tpl-body">Texto del mensaje</label>
+        <textarea id="tpl-body" rows="4" placeholder="Hola {{1}}, ¿sigues interesado en la propiedad que viste? Quedo al pendiente."></textarea>
+        <small>Usa {{1}}, {{2}}… para variables, por ejemplo el nombre del lead.</small>
       </div>
 
-      <div id="tpl-example-wrap" style="display:none">
-        <label style="font-size:var(--fs-xs);font-weight:700;display:block;margin-bottom:5px">Ejemplo para la variable {{1}}</label>
-        <input type="text" id="tpl-example" placeholder="Juan" style="width:100%;padding:9px 12px;border:1px solid var(--line-2);border-radius:var(--r);font-size:var(--fs-sm);font-family:var(--font-sans)"/>
-        <span style="font-size:var(--fs-caption);color:var(--mute)">Meta pide un ejemplo real para aprobar la plantilla.</span>
+      <div id="tpl-example-wrap" hidden>
+        <label for="tpl-example">Ejemplo para la variable {{1}}</label>
+        <input type="text" id="tpl-example" placeholder="Juan"/>
+        <small>Meta pide un ejemplo real para aprobar la plantilla.</small>
       </div>
     </div>
 
@@ -297,6 +419,16 @@ function getToken(){
   return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || null;
 }
 
+// ── Formato del número: +52 443 123 4567 ─────────────────
+function fmtPhone(raw){
+  const d = String(raw || '').replace(/\D/g, '');
+  if(!d) return '—';
+  if(d.length === 12 && d.startsWith('52')) return '+52 ' + d.slice(2,5) + ' ' + d.slice(5,8) + ' ' + d.slice(8);
+  if(d.length === 13 && d.startsWith('521')) return '+52 ' + d.slice(3,6) + ' ' + d.slice(6,9) + ' ' + d.slice(9);
+  if(d.length === 10) return d.slice(0,3) + ' ' + d.slice(3,6) + ' ' + d.slice(6);
+  return '+' + d;
+}
+
 // ── Cargar estado al iniciar ─────────────────────────────
 async function checkWAStatus(){
   const tok = getToken();
@@ -308,11 +440,12 @@ async function checkWAStatus(){
     if(!r.ok){ showState('not-connected'); return; }
     const d = await r.json();
     if(d.connected){
-      document.getElementById('wa-phone-display').childNodes[0].nodeValue = '+' + (d.phone_number || '—');
+      document.getElementById('wa-phone-display').textContent = fmtPhone(d.phone_number);
       document.getElementById('wa-waba-name').textContent = d.waba_name || 'WhatsApp Business';
       document.getElementById('wa-global-ia').checked = d.ia_enabled !== false;
       showState('connected');
       cargarTemplates();
+      cargarMetricas();
     } else {
       showState('not-connected');
     }
@@ -320,8 +453,32 @@ async function checkWAStatus(){
 }
 
 function showState(state){
-  document.getElementById('wa-not-connected').style.display = state === 'not-connected' ? '' : 'none';
-  document.getElementById('wa-connected').style.display     = state === 'connected'     ? '' : 'none';
+  document.getElementById('wa-boot').hidden = true;
+  document.getElementById('wa-not-connected').hidden = state !== 'not-connected';
+  document.getElementById('wa-connected').hidden     = state !== 'connected';
+}
+
+// ── Métricas reales de la bandeja (Supabase, vía el shell) ───────
+// Si el shell aún no expone brokrSb o la consulta falla, la rejilla
+// simplemente no se muestra. Nunca se pintan ceros inventados.
+async function cargarMetricas(){
+  try{
+    for(let i=0; i<40 && !window.brokrSb; i++) await new Promise(r=>setTimeout(r,150));
+    if(!window.brokrSb) return;
+    const r = await window.brokrSb.fetch('rest/v1/wa_conversations?select=ai_enabled,wa_contacts(temperatura,score)');
+    if(!r.ok) return;
+    const convs = await r.json();
+    if(!Array.isArray(convs) || !convs.length) return;
+    const auto = convs.filter(c => c.ai_enabled).length;
+    const hot  = convs.filter(c => {
+      const ct = c.wa_contacts || {};
+      return (ct.score || 0) > 0 || (ct.temperatura && ct.temperatura !== 'Nuevo');
+    }).length;
+    document.getElementById('wa-m-convs').textContent = convs.length;
+    document.getElementById('wa-m-auto').textContent  = auto;
+    document.getElementById('wa-m-hot').textContent   = hot;
+    document.getElementById('wa-metrics').hidden = false;
+  }catch(e){ /* sin métricas: la rejilla se queda oculta */ }
 }
 
 // ── Embedded Signup ──────────────────────────────────────
@@ -469,7 +626,7 @@ function toast(msg){
   let el = document.getElementById('wa-toast');
   if(!el){
     el = document.createElement('div'); el.id = 'wa-toast';
-    el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:11px 18px;border-radius:var(--r-sm);font-family:var(--font-sans);font-size:var(--fs-xs);font-weight:600;box-shadow:var(--shadow-sm);z-index:9999;opacity:0;transition:opacity .2s;max-width:90vw;text-align:center';
+    el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--sky-navy);color:#fff;padding:12px 18px;border-radius:var(--r-pill);font-family:var(--font-sans);font-size:var(--fs-xs);font-weight:700;box-shadow:var(--shadow-md);z-index:var(--z-toast);opacity:0;transition:opacity .2s;max-width:90vw;text-align:center';
     document.body.appendChild(el);
   }
   el.textContent = msg; el.style.opacity = '1';
@@ -493,24 +650,24 @@ async function cargarTemplates(){
     const r = await fetch(API_BASE + '/whatsapp/templates', {
       headers:{ Authorization: 'Bearer ' + tok }
     });
-    if(!r.ok){ list.innerHTML = '<div style="font-size:var(--fs-xs);color:var(--mute);padding:12px 0">No se pudieron cargar las plantillas.</div>'; return; }
+    if(!r.ok){ list.innerHTML = '<div class="wa-note">No se pudieron cargar las plantillas.</div>'; return; }
     const d = await r.json();
     const tpls = d.templates || [];
     if(tpls.length === 0){
-      list.innerHTML = '<div style="font-size:var(--fs-xs);color:var(--mute);padding:12px 0">Aún no tienes plantillas. Crea la primera para poder escribirle a tus leads fuera de la ventana de 24 horas.</div>';
+      list.innerHTML = '<div class="wa-note">Aún no tienes plantillas. Crea la primera para poder escribirle a tus leads fuera de la ventana de 24 horas.</div>';
       return;
     }
     list.innerHTML = tpls.map(t => `
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-sm);padding:11px 14px">
+      <div class="wa-tpl">
         <div>
-          <div style="font-size:var(--fs-sm);font-weight:700">${escapeHtml(t.name)}</div>
-          <div style="font-size:var(--fs-caption);color:var(--mute)">${escapeHtml(t.category || '')} · ${escapeHtml(t.language || '')}</div>
+          <div class="wa-tpl__name">${escapeHtml(t.name)}</div>
+          <div class="wa-tpl__meta">${escapeHtml(t.category || '')} · ${escapeHtml(t.language || '')}</div>
         </div>
-        <span style="font-size:var(--fs-caption);font-weight:800;letter-spacing:.02em;color:${TPL_STATUS_COLOR[t.status]||'var(--mute)'}">${TPL_STATUS_LABEL[t.status]||t.status}</span>
+        <span class="wa-tpl__state" style="color:${TPL_STATUS_COLOR[t.status] || 'var(--mute)'}">${TPL_STATUS_LABEL[t.status] || escapeHtml(t.status || '')}</span>
       </div>
     `).join('');
   }catch(e){
-    list.innerHTML = '<div style="font-size:var(--fs-xs);color:var(--mute);padding:12px 0">Error de conexión.</div>';
+    list.innerHTML = '<div class="wa-note">Error de conexión.</div>';
   }
 }
 
@@ -523,6 +680,7 @@ function openTemplateModal(){
   document.getElementById('tpl-body').value = '';
   document.getElementById('tpl-example').value = '';
   document.getElementById('tpl-category').value = 'UTILITY';
+  document.getElementById('tpl-example-wrap').hidden = true;
   document.getElementById('wa-template-modal-bg').classList.add('open');
 }
 function closeTemplateModal(){
@@ -530,7 +688,7 @@ function closeTemplateModal(){
 }
 
 document.getElementById('tpl-body')?.addEventListener('input', function(){
-  document.getElementById('tpl-example-wrap').style.display = this.value.includes('{{1}}') ? '' : 'none';
+  document.getElementById('tpl-example-wrap').hidden = !this.value.includes('{{1}}');
 });
 
 async function submitTemplate(){
@@ -574,6 +732,11 @@ async function submitTemplate(){
     btn.disabled = false; spinner.classList.remove('active'); text.textContent = 'Enviar a revisión';
   }
 }
+
+// Cerrar modales al hacer clic fuera
+document.querySelectorAll('.wa-modal-bg').forEach(bg => {
+  bg.addEventListener('click', e => { if(e.target === bg) bg.classList.remove('open'); });
+});
 
 // ── Init ─────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', checkWAStatus);

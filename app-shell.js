@@ -235,6 +235,7 @@
     { key:'ficha-manual', href:'ficha-manual.html',  label:'Ficha técnica',   group:'main', icon:'landscape' },
     { key:'isr',          href:'isr.html',           label:'ISR',             group:'main', icon:'calculator' },
     { key:'image-cleaner',href:'image-cleaner.html', label:'Editor imágenes', group:'main', icon:'image' },
+    { key:'whatsapp',     href:'whatsapp.html',      label:'WhatsApp',        group:'main', icon:'whatsapp' },
     { key:'facebook-ads', href:'facebook-ads.html',  label:'Facebook Ads', group:'main', icon:'facebook' },
     { key:'mi-sitio',     href:'mi-sitio.html',      label:'Mi sitio',        group:'main', icon:'globo' },
     { key:'blog',         href:'blog.html',          label:'Blog',            group:'main', icon:'feather' },
@@ -257,6 +258,8 @@
     'image-cleaner':'Editor de imágenes — limpieza con IA',
     'admin':        'Panel administrativo',
     'facebook-ads': 'Meta Ads Express — crear, activar y medir anuncios de Facebook e Instagram',
+    'whatsapp':     'WhatsApp — conexión del número, Recepción automática y plantillas de mensaje',
+    'bandeja':      'Bandeja — conversaciones de WhatsApp y expediente de cada prospecto',
   };
 
   /* ── Encabezado canónico por página (unificación de esqueleto) ──
@@ -304,6 +307,9 @@
     check:      '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>',
     globo:      '<path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zM3.6 9h16.8M3.6 15h16.8M11.5 3a17 17 0 000 18M12.5 3a17 17 0 010 18"/>',
     facebook:   '<path fill="currentColor" stroke="none" d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.269h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>',
+    /* Marca externa: el glifo oficial va sólido, igual que el de Facebook.
+       Es la excepción reconocida a la regla de iconos de trazo. */
+    whatsapp:   '<path fill="currentColor" stroke="none" d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.857L.057 23.882a.5.5 0 00.614.612l6.115-1.598A11.947 11.947 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.967 0-3.805-.538-5.378-1.47l-.385-.23-3.993 1.044 1.012-3.9-.252-.403A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/><path fill="currentColor" stroke="none" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>',
     funnel:     '<path stroke-linecap="round" stroke-linejoin="round" d="M3 4.5h18l-7.25 8.25v5.1l-3.5 1.75v-6.85L3 4.5z"/>',
     chevron:    '<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>',
     lock:       '<path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>',
@@ -554,7 +560,6 @@
 
 /* Heros de solo-título reemplazados por el encabezado canónico */
 body[data-app="facebook-ads"] .fa-hero,
-body[data-app="whatsapp"] .wa-hero,
 body[data-app="blog"] .bl-head,
 body[data-app="verificador"] .top-header { display: none !important; }
 
@@ -915,7 +920,7 @@ body[data-app] .btn-new-tarea:hover,body[data-app] .tk-composer .go:hover,body[d
 body[data-app] .btn,body[data-app] .btn-primary,body[data-app] .ui-btn,body[data-app] .fa-btn,body[data-app] .wa-btn,body[data-app] .doc-btn,body[data-app] .gen-btn,body[data-app] .add-btn,body[data-app] .import-btn,body[data-app] .btn-new-tarea,body[data-app] .tk-composer .go,body[data-app] .btn-new-prop,body[data-app] .eb-import-btn,body[data-app] .pf-save-btn,body[data-app] .isr-calc-btn,body[data-app] .btn-pdf{min-height:44px!important;padding:0 18px!important;font-size:var(--fs-sm)!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;line-height:1!important}
 /* ── Unificación del TÍTULO DE PÁGINA: mismo tamaño que el header canónico
    (.bk-ph=30px) en los módulos que pintan su propio título ── */
-body[data-app] .props-head__title h1,body[data-app] .page-head h1,body[data-app] .tk-head__title h1,body[data-app] .ms-head h1,body[data-app] .guide-title,body[data-app] .bx-list-head h1,body[data-app] .es-hero__brand{font-size:30px!important;font-weight:700!important;letter-spacing:-.02em!important;line-height:1.1!important}
+body[data-app] .props-head__title h1,body[data-app] .page-head h1,body[data-app] .tk-head__title h1,body[data-app] .ms-head h1,body[data-app] .guide-title,body[data-app] .bx-list__title h1,body[data-app] .es-hero__brand{font-size:30px!important;font-weight:700!important;letter-spacing:-.02em!important;line-height:1.1!important}
 /* ── Alineación título↔cuerpo: el header canónico respeta el ancho del módulo ── */
 body[data-app] .bk-ph{max-width:var(--page-max,1180px)!important}
 body[data-app="isr"],body[data-app="ficha-manual"],body[data-app="avm"],body[data-app="contratos"],body[data-app="whatsapp"],body[data-app="mi-sitio"],body[data-app="image-cleaner"]{--page-max:var(--form-max,760px)}
