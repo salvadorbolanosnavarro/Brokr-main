@@ -329,16 +329,21 @@ function showState(state){
 // con un config_id de "Inicio de sesión de Facebook para empresas". El flujo
 // devuelve el code por FB.login y, en paralelo, waba_id + phone_number_id por
 // postMessage desde el iframe de Meta. Hay que capturar las dos cosas.
-let _waSignupData = null;   // { waba_id, phone_number_id } que manda el iframe de Meta
+let _waSignupData = null;   // { waba_id, phone_number_id, coexistence }
 
 window.addEventListener('message', (e) => {
   if(!/facebook\.com$/.test(new URL(e.origin).hostname)) return;
   try{
     const d = JSON.parse(e.data);
-    if(d.type === 'WA_EMBEDDED_SIGNUP' && d.event === 'FINISH'){
+    if(d.type !== 'WA_EMBEDDED_SIGNUP') return;
+    // Dos eventos distintos segun el flujo:
+    //   FINISH                              -> numero nuevo, trae waba_id + phone_number_id
+    //   FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING -> coexistencia, trae SOLO waba_id
+    if(d.event === 'FINISH' || d.event === 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING'){
       _waSignupData = {
         waba_id:         d.data?.waba_id || null,
-        phone_number_id: d.data?.phone_number_id || null
+        phone_number_id: d.data?.phone_number_id || null,
+        coexistence:     d.event === 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING'
       };
     }
   }catch(_){ /* el iframe también manda mensajes que no son JSON */ }
@@ -393,7 +398,8 @@ async function exchangeCode(code){
       body: JSON.stringify({
         code,
         waba_id:         _waSignupData?.waba_id || null,
-        phone_number_id: _waSignupData?.phone_number_id || null
+        phone_number_id: _waSignupData?.phone_number_id || null,
+        coexistence:     _waSignupData?.coexistence || false
       })
     });
     const d = await r.json();

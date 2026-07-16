@@ -536,6 +536,7 @@ class ConnectReq(BaseModel):
     code: str
     waba_id: str | None = None
     phone_number_id: str | None = None
+    coexistence: bool = False
 
 
 @router.post("/connect")
@@ -653,16 +654,23 @@ async def wa_connect(req: ConnectReq, request: Request):
         if r.status_code >= 400:
             log.error("No se pudo suscribir el webhook de %s: %s", waba_id, r.text)
 
-    # 6) Registrar el número en Cloud API (idempotente; si ya está, Meta responde error benigno)
-    async with httpx.AsyncClient(timeout=20) as c:
-        r = await c.post(f"{GRAPH_API}/{phone_number_id}/register",
-                         params={"access_token": business_token},
-                         json={"messaging_product": "whatsapp", "pin": WA_REGISTER_PIN})
-        if r.status_code >= 400:
-            log.warning("Registro de %s: %s", phone_number_id, r.text)
+    # 6) Registrar el número en Cloud API.
+    #    En COEXISTENCIA se SALTA: el número ya está registrado por la app de
+    #    WhatsApp Business y llamar a /register aquí rompe el vínculo.
+    if req.coexistence:
+        log.info("Coexistencia: se omite /register para %s (ya registrado)", phone_number_id)
+    else:
+        async with httpx.AsyncClient(timeout=20) as c:
+            r = await c.post(f"{GRAPH_API}/{phone_number_id}/register",
+                             params={"access_token": business_token},
+                             json={"messaging_product": "whatsapp", "pin": WA_REGISTER_PIN})
+            if r.status_code >= 400:
+                log.warning("Registro de %s: %s", phone_number_id, r.text)
 
-    log.info("WhatsApp conectado: user=%s waba=%s phone=%s", user_id, waba_id, phone_number)
-    return {"ok": True, "phone_number": phone_number, "waba_name": waba_name}
+    log.info("WhatsApp conectado: user=%s waba=%s phone=%s coex=%s",
+             user_id, waba_id, phone_number, req.coexistence)
+    return {"ok": True, "phone_number": phone_number, "waba_name": waba_name,
+            "coexistence": req.coexistence}
 
 
 # ── /whatsapp/ia-global ───────────────────────────────────────────────────────
