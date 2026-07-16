@@ -445,6 +445,13 @@ def _norm10(num: str) -> str:
     return d[-10:] if len(d) >= 10 else ""
 
 
+def _nuevo_contacto_id() -> str:
+    """contactos.id NO se autogenera: lo arma el frontend como 'c_' + Date.now()
+    (contactos.html:1380). El backend debe seguir la misma convención o el
+    insert truena por not-null."""
+    return "c_" + str(int(datetime.now(timezone.utc).timestamp() * 1000))
+
+
 async def vincular_contacto(user_id: str, wa_id: str, nombre: str | None) -> str | None:
     """Devuelve el id de contactos para este número de WhatsApp.
     Si ya existe (por teléfono o por el campo wa), lo reutiliza y NO lo pisa:
@@ -463,10 +470,11 @@ async def vincular_contacto(user_id: str, wa_id: str, nombre: str | None) -> str
             "order":   "updated_at.desc",
             "limit":   "1",
         })
-        if rows:
+        if isinstance(rows, list) and rows:
             return rows[0]["id"]
 
         creado = await sb_post("contactos", {
+            "id":           _nuevo_contacto_id(),
             "user_id":      user_id,
             "nombre":       (nombre or "").strip() or f"WhatsApp {norm[-4:]}",
             "telefono":     norm,
@@ -476,12 +484,20 @@ async def vincular_contacto(user_id: str, wa_id: str, nombre: str | None) -> str
             "fuente":       "WhatsApp",
             "notas":        "Creado automáticamente por Recepción al recibir el primer mensaje.",
         })
-        if creado:
+        # sb_post devuelve r.json() tal cual: si PostgREST rechaza, es un DICT de
+        # error, no una lista. Sin este chequeo el fallo real quedaba enterrado
+        # bajo un KeyError genérico y el log no servía para nada.
+        if isinstance(creado, dict):
+            log.error("Supabase rechazó el contacto para %s: %s", wa_id, json.dumps(creado)[:400])
+            return None
+        if isinstance(creado, list) and creado:
+            log.info("Contacto creado desde WhatsApp: %s -> %s", norm, creado[0].get("id"))
             return creado[0]["id"]
+        log.error("Supabase no devolvió el contacto creado para %s: %r", wa_id, creado)
     except Exception as e:
         # Nunca tumbar la conversación por un fallo del CRM: el lead se atiende
         # igual y queda en wa_contacts; el enlace se puede reparar después.
-        log.warning("No se pudo vincular contacto para %s: %s", wa_id, e)
+        log.exception("No se pudo vincular contacto para %s: %s", wa_id, e)
     return None
 
 
