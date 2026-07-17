@@ -70,8 +70,8 @@
 <style>
 /* ═══════════════════════════════════════
    Broquer DESIGN SYSTEM — ISR MODULE
-   Paleta: Blanco · Navy · Teal
-   Tipografía: DM Sans (theme)
+   Paleta: Blanco · Navy · Azul (desde brokr-theme.css)
+   Tipografía: Manrope (theme)
 ═══════════════════════════════════════ */
 :root {
   --navy:       var(--ink);
@@ -1392,6 +1392,40 @@ function resetISR() {
 }
 
 let _isrPdfBusy = false;
+// ── Tokens del sistema de diseño para el PDF ──
+// Este documento lo renderiza Playwright aislado, sin cargar
+// brokr-theme.css. Antes los tokens vivían copiados a mano aquí, y se
+// quedaron dos ediciones atrás sin que nadie lo notara. Ahora se leen
+// del theme que esta página YA tiene cargado: una sola fuente de verdad.
+// El respaldo solo entra si el theme no cargó (fallo de red): un PDF con
+// el color de ayer es mejor que un PDF sin colores.
+/* ═══ AUDIT-EXEMPT: respaldo de tokens del PDF ═══
+   Estos hex son deliberados y no son un bypass del sistema: son el
+   espejo de brokr-theme.css que se usa SOLO si el theme no cargó por
+   un fallo de red. Sin ellos, ese PDF saldría sin colores. La ruta
+   normal (_isrTokens) lee el theme; esto es la red de seguridad.
+   Si cambias la paleta del theme, actualiza también este espejo. ── */
+const _ISR_TOKENS_FALLBACK = {
+  '--paper':'#FFFFFF', '--paper-2':'#EDF2FB', '--bone':'#FFFFFF',
+  '--ink':'#00143B', '--ink-2':'#1B2C4F', '--ink-3':'#4A5875',
+  '--mute':'#4A5875', '--mute-2':'#8592AB',
+  '--line':'#E6ECF6', '--line-2':'#D8E1EF',
+  '--forest':'#1240A0', '--forest-2':'#0B2E78',
+  '--forest-soft':'rgba(18,64,160,0.10)',
+  '--sky-navy':'#00143B',
+  '--danger':'#C62839', '--danger-soft':'rgba(198,40,57,0.10)',
+  '--success':'#0C7A5E',
+  '--font-sans':"'Manrope',-apple-system,BlinkMacSystemFont,system-ui,Roboto,'Helvetica Neue',sans-serif"
+};
+/* ═══ /AUDIT-EXEMPT ═══ */
+function _isrTokens(){
+  const cs = getComputedStyle(document.documentElement);
+  return Object.keys(_ISR_TOKENS_FALLBACK).map(n => {
+    const v = (cs.getPropertyValue(n) || '').trim();
+    return n + ':' + (v || _ISR_TOKENS_FALLBACK[n]);
+  }).join('; ');
+}
+
 async function descargarPDF() {
   const d=_isrData;
   if(!d){alert('Primero realiza un cálculo.');return;}
@@ -1405,22 +1439,16 @@ async function descargarPDF() {
 <title>Broquer · ${meses[d.mesV]} ${d.anioV}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   /* ═══ AUDIT-EXEMPT: documento PDF autocontenido ═══
-     Tokens de Broquer (brokr-theme.css) — definidos aquí porque este
-     documento lo renderiza Playwright de forma aislada, sin cargar el
-     CSS de la app. Mismo sistema que Estimación de valor y Ficha técnica. ── */
+     Los tokens se inyectan desde brokr-theme.css vía _isrTokens(): este
+     bloque ya no los duplica. Solo quedan los overrides propios del
+     impreso. Mismo sistema que Estimación de valor y Ficha técnica. ── */
   :root{
-    --paper:#FFFFFF; --paper-2:#F1F3F5; --bone:#FFFFFF;
-    --ink:#1A1D21; --ink-2:#2D333A; --ink-3:#4A535E;
-    --mute:#6B7685; --mute-2:#9AA5B3;
-    --line:#E0E4E9; --line-2:#C1C7CF;
-    --forest:#0055CC; --forest-2:#003D99; --forest-soft:rgba(0,85,204,0.10);
-    --sky-navy:#05203C;
-    --danger:#E70866; --danger-soft:rgba(231,8,102,0.10);
-    --success:#0C838A;
-    --font-sans:'DM Sans',-apple-system,BlinkMacSystemFont,system-ui,Roboto,'Helvetica Neue',sans-serif;
+    ${_isrTokens()};
+    /* Overrides del documento: el papel es blanco, no el canvas de la app */
+    --paper:#FFFFFF;
     --fs-h1:32px; --fs-h3:20px; --fs-sm:14px; --fs-xs:12px; --fs-caption:11px;
   }
   *{box-sizing:border-box;margin:0;padding:0}

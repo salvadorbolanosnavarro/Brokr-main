@@ -38,6 +38,86 @@ except ImportError:
 
 _thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=4)
 
+# ════════════════════════════════════════════════════════════════
+# SISTEMA DE DISEÑO — fuente única de color para los PDFs
+# ════════════════════════════════════════════════════════════════
+# Los PDFs (Ficha técnica, AVM, ISR) los renderiza Playwright de forma
+# aislada: no cargan brokr-theme.css por <link>, así que sus tokens
+# vivían COPIADOS A MANO en tres archivos. Se desincronizaron dos
+# ediciones seguidas —se quedaron en la paleta "Sky" cuando la app ya
+# iba en "Premium"— y nadie lo notó porque nada lo verificaba.
+#
+# Ahora se leen del theme real. Un solo lugar donde cambiar un color.
+# brokr-theme.css viaja en la imagen de Railway porque el Dockerfile
+# hace COPY . . — queda junto a main.py.
+#
+# Lo que un documento impreso SÍ puede sobrescribir (y por qué), va
+# como `extra` en theme_css_for_pdf(): el papel es blanco, no el canvas
+# azul de la app; y los radios son de documento, no de interfaz.
+
+_THEME_PATH = Path(__file__).parent / "brokr-theme.css"
+_theme_tokens_cache: Optional[str] = None
+
+# Respaldo por si el CSS no se puede leer (archivo movido, permisos).
+# Un PDF que no se genera es peor que un PDF con el color de ayer.
+# Espejo del :root de la edición "Navarro".
+_THEME_TOKENS_FALLBACK = """
+  --paper:#F4F7FD; --paper-2:#EDF2FB; --bone:#FFFFFF; --shell:#F4F7FE;
+  --ink:#00143B; --ink-2:#1B2C4F; --ink-3:#4A5875;
+  --mute:#4A5875; --mute-2:#8592AB; --mute-3:#BFCADD;
+  --line:#E6ECF6; --line-2:#D8E1EF; --line-3:#BFCADD;
+  --forest:#1240A0; --forest-2:#0B2E78; --forest-soft:rgba(18,64,160,0.10);
+  --sky-navy:#00143B; --sky-navy-mid:#032873; --sky-navy-deep:#000D28;
+  --sky-blue:#1240A0; --sky-blue-press:#0B2E78; --sky-blue-lift:#3A6FD8;
+  --sky-canvas:#E8F0FE; --sky-blue-on-dark:#7FA8F0;
+  --warn:#B45309; --warn-soft:rgba(180,83,9,0.10);
+  --danger:#C62839; --danger-soft:rgba(198,40,57,0.10);
+  --success:#0C7A5E; --success-soft:rgba(12,122,94,0.10);
+  --info:#0B2E78; --info-soft:rgba(11,46,120,0.10);
+  --r-xs:6px; --r-sm:8px; --r:10px; --r-lg:16px; --r-xl:22px; --r-pill:999px;
+  --font-sans:'Manrope',-apple-system,BlinkMacSystemFont,system-ui,Roboto,'Helvetica Neue',sans-serif;
+  --font-display:'Manrope',-apple-system,BlinkMacSystemFont,system-ui,Roboto,sans-serif;
+"""
+
+
+def _theme_tokens() -> str:
+    """Declaraciones de todos los bloques :root de brokr-theme.css,
+    listas para inyectarse dentro de un :root{}. Se lee una vez por
+    proceso; si falla, cae al respaldo sin tumbar la generación."""
+    global _theme_tokens_cache
+    if _theme_tokens_cache is not None:
+        return _theme_tokens_cache
+    try:
+        css = _THEME_PATH.read_text(encoding="utf-8")
+        css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)  # fuera comentarios
+        blocks = re.findall(r":root\s*\{([^{}]*)\}", css)
+        decls = "\n".join(b.strip() for b in blocks if b.strip())
+        # Si el theme cambia de forma y ya no trae lo esperado, mejor el
+        # respaldo conocido que un PDF sin colores.
+        for required in ("--ink", "--sky-navy", "--sky-blue", "--font-sans"):
+            if required not in decls:
+                raise ValueError(f"brokr-theme.css sin {required}")
+        _theme_tokens_cache = decls
+    except Exception as e:
+        print(f"[theme] no se pudo leer {_THEME_PATH}: {e} — usando respaldo")
+        _theme_tokens_cache = _THEME_TOKENS_FALLBACK
+    return _theme_tokens_cache
+
+
+def theme_css_for_pdf(extra: str = "") -> str:
+    """CSS base de un documento PDF: los tokens del theme, más los
+    overrides que un impreso legítimamente necesita. `extra` se aplica
+    al final, así que gana sobre todo lo anterior."""
+    return (
+        "@import url('https://fonts.googleapis.com/css2?"
+        "family=Manrope:wght@400;500;600;700;800&display=swap');\n"
+        ":root{\n" + _theme_tokens() + "\n}\n"
+        "/* Overrides del documento impreso: el papel es blanco (el canvas\n"
+        "   azul de la app no aplica) y los radios son de documento. */\n"
+        ":root{\n  --paper:#FFFFFF;\n  " + extra + "\n}\n"
+    )
+
+
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -3143,28 +3223,16 @@ async def generar_avm_pdf(p: dict):
     fecha_hoy = resultado.get("fecha", time.strftime("%d/%m/%Y"))
     operacion = (resultado.get('operacion','venta') or 'venta').capitalize()
 
+    # Tokens desde brokr-theme.css. Radios propios del documento.
+    _AVM_TOKENS = theme_css_for_pdf(
+        "--r-xs:4px; --r-sm:8px; --r:14px; --r-lg:28px; --r-pill:999px;"
+    )
     html = f"""<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
-  :root {{
-    /* ── Tokens de Broquer (brokr-theme.css, edición "Navarro") — misma
-       fuente para Ficha técnica, AVM e ISR. COPIA A MANO: si tocas el
-       theme, toca también build_ficha_html() y el :root de isr.html. ── */
-    --paper: #FFFFFF; --paper-2: #EDF2FB; --bone: #FFFFFF;
-    --ink: #00143B; --ink-2: #1B2C4F; --ink-3: #4A5875;
-    --mute: #4A5875; --mute-2: #8592AB;
-    --line: #E6ECF6; --line-2: #D8E1EF;
-    --forest: #1240A0; --forest-soft: rgba(18,64,160,0.10);
-    --sky-navy: #00143B; --sky-navy-mid: #032873;
-    --warn: #B45309; --warn-soft: rgba(180,83,9,0.10);
-    --danger: #C62839; --danger-soft: rgba(198,40,57,0.10);
-    --success: #0C7A5E; --success-soft: rgba(12,122,94,0.10);
-    --r-xs: 4px; --r-sm: 8px; --r: 14px; --r-lg: 28px; --r-pill: 999px;
-    --font-sans: 'Manrope', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', sans-serif;
-  }}
+{_AVM_TOKENS}
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{ font-family: var(--font-sans); color: var(--ink); background: var(--paper); font-size: 13px; line-height: 1.55; -webkit-font-smoothing: antialiased; letter-spacing: -0.01em; }}
   .page {{ padding: 48px 52px 40px; max-width: 780px; margin: 0 auto; }}
@@ -4156,29 +4224,17 @@ def build_ficha_html(p: dict, images_b64: dict) -> str:
         for i, content in enumerate(all_contents)
     )
 
-    # ── Sistema de diseño: mismos tokens de brokr-theme.css (edición
-    # "Navarro") ── navy #00143B como estructura, azul royal #1240A0 como
-    # acción, Manrope en todo. Cero JetBrains Mono, cero mayúsculas
+    # ── Sistema de diseño ──
+    # Los colores salen de brokr-theme.css vía theme_css_for_pdf(): este
+    # archivo ya no los duplica. Cero JetBrains Mono, cero mayúsculas
     # decorativas.
-    #
-    # OJO: este bloque es una COPIA A MANO del theme. Se desincronizó dos
-    # ediciones seguidas (se quedó en "Sky" cuando la app ya iba en
-    # "Premium"). Si tocas brokr-theme.css, toca también este bloque, el
-    # de generar_avm_pdf() y el de isr.html. Los radios (--r 14/--r-lg 28)
-    # son deliberadamente los del documento impreso, no los de la app.
-    CSS = """
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
-:root{
-  --paper:#FFFFFF; --paper-2:#EDF2FB; --bone:#FFFFFF;
-  --ink:#00143B; --ink-2:#1B2C4F; --mute:#4A5875; --mute-2:#8592AB;
-  --line:#E6ECF6;
-  --sky-navy:#00143B; --sky-blue:#1240A0;
-  --r:14px; --r-sm:8px; --r-lg:28px; --r-pill:999px;
-  --shadow-sm:0 1px 3px rgba(0,20,59,.10),0 1px 2px rgba(0,20,59,.06);
-  --shadow-lg:0 18px 44px rgba(0,20,59,.18),0 4px 12px rgba(0,20,59,.10);
-  --font-sans:'Manrope',-apple-system,BlinkMacSystemFont,system-ui,Roboto,'Helvetica Neue',sans-serif;
-  --font-display:'Manrope',-apple-system,BlinkMacSystemFont,system-ui,Roboto,sans-serif;
-}
+    # Tokens desde brokr-theme.css. Radios y sombras propios del
+    # documento: la ficha es un impreso, no una pantalla.
+    CSS = theme_css_for_pdf(
+        "--r:14px; --r-sm:8px; --r-lg:28px; --r-pill:999px;"
+        "--shadow-sm:0 1px 3px rgba(0,20,59,.10),0 1px 2px rgba(0,20,59,.06);"
+        "--shadow-lg:0 18px 44px rgba(0,20,59,.18),0 4px 12px rgba(0,20,59,.10);"
+    ) + """
 *{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
 html,body{width:210mm}
 body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased}

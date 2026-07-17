@@ -990,6 +990,6 @@ input, select, textarea, button {
   --brand-facebook-press: #145FCC;
 
   /* Acento azul claro para texto sobre superficies navy (heros oscuros).
-     El azul de acción #2563D9 no contrasta sobre --sky-navy. */
+     El azul de acción #1240A0 no contrasta sobre --sky-navy. */
   --sky-blue-on-dark: #7FA8F0;
 }
