@@ -3077,7 +3077,7 @@ async def generar_avm_pdf(p: dict):
     """Recibe el resultado del AVM websearch y genera un PDF profesional con Playwright.
 
     Sistema de diseño: los mismos tokens de brokr-theme.css (navy, azul,
-    DM Sans, radios, sombras) que usa el resto de Broquer — para que este
+    Manrope, radios, sombras) que usa el resto de Broquer — para que este
     documento se sienta hermano de la Ficha técnica y del ISR, no un
     invitado con otra identidad visual.
     """
@@ -3148,21 +3148,22 @@ async def generar_avm_pdf(p: dict):
 <head>
 <meta charset="UTF-8"/>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
   :root {{
-    /* ── Tokens de Broquer (brokr-theme.css) — misma fuente para
-       Ficha técnica, AVM e ISR ── */
-    --paper: #FFFFFF; --paper-2: #F1F3F5; --bone: #FFFFFF;
-    --ink: #1A1D21; --ink-2: #2D333A; --ink-3: #4A535E;
-    --mute: #6B7685; --mute-2: #9AA5B3;
-    --line: #E0E4E9; --line-2: #C1C7CF;
-    --forest: #0055CC; --forest-soft: rgba(0,85,204,0.10);
-    --sky-navy: #05203C; --sky-navy-mid: #154679;
-    --warn: #F55D42; --warn-soft: rgba(245,93,66,0.14);
-    --danger: #E70866; --danger-soft: rgba(231,8,102,0.10);
-    --success: #0C838A; --success-soft: rgba(12,131,138,0.12);
+    /* ── Tokens de Broquer (brokr-theme.css, edición "Navarro") — misma
+       fuente para Ficha técnica, AVM e ISR. COPIA A MANO: si tocas el
+       theme, toca también build_ficha_html() y el :root de isr.html. ── */
+    --paper: #FFFFFF; --paper-2: #EDF2FB; --bone: #FFFFFF;
+    --ink: #00143B; --ink-2: #1B2C4F; --ink-3: #4A5875;
+    --mute: #4A5875; --mute-2: #8592AB;
+    --line: #E6ECF6; --line-2: #D8E1EF;
+    --forest: #1240A0; --forest-soft: rgba(18,64,160,0.10);
+    --sky-navy: #00143B; --sky-navy-mid: #032873;
+    --warn: #B45309; --warn-soft: rgba(180,83,9,0.10);
+    --danger: #C62839; --danger-soft: rgba(198,40,57,0.10);
+    --success: #0C7A5E; --success-soft: rgba(12,122,94,0.10);
     --r-xs: 4px; --r-sm: 8px; --r: 14px; --r-lg: 28px; --r-pill: 999px;
-    --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', sans-serif;
+    --font-sans: 'Manrope', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', sans-serif;
   }}
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{ font-family: var(--font-sans); color: var(--ink); background: var(--paper); font-size: 13px; line-height: 1.55; -webkit-font-smoothing: antialiased; letter-spacing: -0.01em; }}
@@ -4155,21 +4156,28 @@ def build_ficha_html(p: dict, images_b64: dict) -> str:
         for i, content in enumerate(all_contents)
     )
 
-    # ── Sistema de diseño: mismos tokens de brokr-theme.css (edición Sky) ──
-    # navy #05203C como estructura, azul #0055CC como acción, DM Sans en
-    # todo. Cero JetBrains Mono, cero mayúsculas decorativas.
+    # ── Sistema de diseño: mismos tokens de brokr-theme.css (edición
+    # "Navarro") ── navy #00143B como estructura, azul royal #1240A0 como
+    # acción, Manrope en todo. Cero JetBrains Mono, cero mayúsculas
+    # decorativas.
+    #
+    # OJO: este bloque es una COPIA A MANO del theme. Se desincronizó dos
+    # ediciones seguidas (se quedó en "Sky" cuando la app ya iba en
+    # "Premium"). Si tocas brokr-theme.css, toca también este bloque, el
+    # de generar_avm_pdf() y el de isr.html. Los radios (--r 14/--r-lg 28)
+    # son deliberadamente los del documento impreso, no los de la app.
     CSS = """
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
 :root{
-  --paper:#FFFFFF; --paper-2:#F1F3F5; --bone:#FFFFFF;
-  --ink:#1A1D21; --ink-2:#2D333A; --mute:#6B7685; --mute-2:#9AA5B3;
-  --line:#E0E4E9;
-  --sky-navy:#05203C; --sky-blue:#0055CC;
+  --paper:#FFFFFF; --paper-2:#EDF2FB; --bone:#FFFFFF;
+  --ink:#00143B; --ink-2:#1B2C4F; --mute:#4A5875; --mute-2:#8592AB;
+  --line:#E6ECF6;
+  --sky-navy:#00143B; --sky-blue:#1240A0;
   --r:14px; --r-sm:8px; --r-lg:28px; --r-pill:999px;
-  --shadow-sm:0 1px 3px rgba(22,22,22,.10),0 1px 2px rgba(22,22,22,.06);
-  --shadow-lg:0 18px 44px rgba(22,22,22,.18),0 4px 12px rgba(22,22,22,.10);
-  --font-sans:'DM Sans',-apple-system,BlinkMacSystemFont,system-ui,Roboto,'Helvetica Neue',sans-serif;
-  --font-display:'DM Sans',-apple-system,BlinkMacSystemFont,system-ui,Roboto,sans-serif;
+  --shadow-sm:0 1px 3px rgba(0,20,59,.10),0 1px 2px rgba(0,20,59,.06);
+  --shadow-lg:0 18px 44px rgba(0,20,59,.18),0 4px 12px rgba(0,20,59,.10);
+  --font-sans:'Manrope',-apple-system,BlinkMacSystemFont,system-ui,Roboto,'Helvetica Neue',sans-serif;
+  --font-display:'Manrope',-apple-system,BlinkMacSystemFont,system-ui,Roboto,sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
 html,body{width:210mm}

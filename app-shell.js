@@ -602,7 +602,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
 .bk-bnav__item svg { opacity: .9; }
 .bk-bnav__item.is-active svg { opacity: 1; }
 .bk-bnav__broquer { padding: 2px 4px; }
-.bk-bnav__broquer img { width: 34px; height: 34px; object-fit: contain; display: block; }
+.bk-bnav__broquer img { width: 34px; height: 34px; object-fit: cover; display: block; border-radius: 50%; border: 1px solid var(--line); }
 .bk-bnav__ico { position: relative; display: block; line-height: 0; }
 
 /* Globito rojo de mensajes sin leer (sobre el ícono de Chats) */
@@ -675,7 +675,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   padding: 0; overflow: hidden;
 }
 .bk-shaark-fab:hover { transform: translateY(-2px); box-shadow: 0 18px 36px rgba(22,22,22,.22), 0 6px 12px rgba(22,22,22,.12); }
-.bk-shaark-fab img { width: 70%; height: 70%; object-fit: contain; }
+.bk-shaark-fab img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .bk-shaark-fab__pulse {
   position: absolute; inset: -4px; border-radius: 50%;
   border: 1.5px solid var(--ink); opacity: 0;
@@ -720,7 +720,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   overflow: hidden;
 }
-.bk-shk-avatar img { width: 70%; height: 70%; object-fit: contain; }
+.bk-shk-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .bk-shk-name { font-family: var(--font-display); font-size: 14px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); }
 .bk-shk-status { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--mute); font-family: var(--font-mono); letter-spacing: .04em; }
 .bk-shk-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--forest); }
@@ -1254,7 +1254,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
       `<a href="index.html" class="bk-bnav__item${activeKey === 'home' ? ' is-active' : ''}">${svg('home', 24)} <span>Inicio</span></a>` +
       `<button class="bk-bnav__item${crmActive ? ' is-active' : ''}" id="bk-bnav-crm" type="button" aria-label="Módulos del CRM">${svg('funnel', 24)} <span>CRM</span></button>` +
       `<button class="bk-bnav__item bk-bnav__broquer" id="bk-bnav-shaark" type="button" aria-label="Abrir Broq">
-         <img src="isotipo-broquer.png" alt="Broq"/>
+         <img src="broq-icon.png" alt="Broq"/>
        </button>` +
       `<a href="bandeja.html" class="bk-bnav__item${activeKey === 'bandeja' ? ' is-active' : ''}" id="bk-bnav-chats" aria-label="Chats de WhatsApp">
          <span class="bk-bnav__ico">${svg('whatsapp', 24)}<i class="bk-badge" id="bk-bnav-badge"></i></span>
@@ -1311,7 +1311,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
     fab.className = 'bk-shaark-fab';
     fab.id = 'bk-shaark-fab';
     fab.setAttribute('aria-label', 'Abrir Broq');
-    fab.innerHTML = `<span class="bk-shaark-fab__pulse"></span><span class="bk-wake-dot" id="bk-wake-dot"></span><img src="isotipo-broquer.png" alt="Broq"/>`;
+    fab.innerHTML = `<span class="bk-shaark-fab__pulse"></span><span class="bk-wake-dot" id="bk-wake-dot"></span><img src="broq-icon.png" alt="Broq"/>`;
     fab.addEventListener('click', () => toggleShaarkPopup());
     document.body.appendChild(fab);
 
@@ -1325,7 +1325,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
     pop.setAttribute('aria-label', 'Broq — asistente');
     pop.innerHTML = `
       <div class="bk-shk-head">
-        <div class="bk-shk-avatar"><img src="isotipo-broquer.png" alt=""/></div>
+        <div class="bk-shk-avatar"><img src="broq-icon.png" alt=""/></div>
         <div style="flex:1;min-width:0">
           <div class="bk-shk-name">Broq</div>
           <div class="bk-shk-status">En línea</div>
