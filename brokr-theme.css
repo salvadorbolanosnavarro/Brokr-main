@@ -1,78 +1,92 @@
 /* ════════════════════════════════════════════════════════════
-   BROQUER — Design System  ·  Edición "Premium"
+   BROQUER — Design System  ·  Edición "Navarro"
    Token-driven. Única fuente de verdad visual de la plataforma.
 
-   Lenguaje: blanco dominante (70%), azul marino #071A3D como
+   Lenguaje: blanco dominante (70%), azul marino #00143B como
    ESTRUCTURA (nav, footer, cards oscuras, botón primario) y azul
-   #2563D9 como ACCIÓN (links, foco, estados activos, acentos).
-   Tipografía única de interfaz: Manrope. Instrument Serif existe
-   como --font-serif y es EXCLUSIVA de marketing/landing: nunca en
-   tablas, filtros, formularios, menús ni módulos densos.
+   royal #1240A0 como ACCIÓN (links, foco, estados activos,
+   acentos). Tipografía única de interfaz: Manrope. Instrument
+   Serif existe como --font-serif y es EXCLUSIVA de marketing/
+   landing: nunca en tablas, filtros, formularios, menús ni
+   módulos densos.
 
    REGLA DE ORO DE ESTA HOJA: los nombres de variable NO cambian.
    Solo se reasignan sus VALORES a la piel nueva. Todo módulo que
    ya consume var(--…) se rediseña solo, sin tocar su markup.
 
-   REVISIÓN 2026-07 — "Premium":
-   · Paleta reasignada: navy #05203C → #071A3D, azul #0055CC →
-     #2563D9, líneas → #DCE4F0, canvas → #F8FAFC.
-   · Tipografía DM Sans → Manrope. Se agrega --font-serif
-     (Instrument Serif) solo para marketing.
-   · Geometría según spec: botón 8, input 10, card 16, card grande
-     22, modal 24. Altura de control 48. Sidebar 252, topbar 72.
-   · Sombras con tinte navy rgba(7,26,61,…) y sin negros fuertes.
+   REVISIÓN 2026-07 — "Navarro":
+   Piel derivada por muestreo directo de la referencia visual
+   aprobada. Cero cambios estructurales: solo se reasignan valores
+   de color. Geometría, tipografía, escala, motion y componentes
+   quedan idénticos a la edición Premium.
+
+   · Navy más profundo y más azul: #071A3D → #00143B.
+     Sidebar #04132F → #000D28. Navy medio #0E2E68 → #032873
+     (el navy de banda de la referencia).
+   · Azul de acción de brillante a royal profundo:
+     #2563D9 → #1240A0. Pressed #174EA6 → #0B2E78.
+     Lift #3978F6 → #3A6FD8. Canvas #EAF2FF → #E8F0FE.
+   · Canvas más frío: #F8FAFC → #F4F7FD. Inset → #EDF2FB.
+   · Tinta y grises al eje navy: --ink #00143B, --ink-2 #1B2C4F,
+     --mute #4A5875, --mute-2 #8592AB.
+   · Hairlines: --line #E6ECF6, --line-2 #D8E1EF.
+   · Sombras y overlay de modal retintados de rgba(7,26,61,…) a
+     rgba(0,20,59,…) para no ensuciar el navy nuevo.
+   · --sky-blue-on-dark #8FBAFF → #7FA8F0 (contraste 7.53:1 sobre
+     el navy nuevo).
+
+   Contraste verificado sobre esta paleta (todos ≥ WCAG AA):
+     ink/paper 16.8 · ink-2/paper 12.9 · mute/paper 6.7
+     azul/blanco 9.3 · blanco/navy 18.1 · blanco/navy-mid 13.5
+     on-dark/navy 7.5 · lift/navy 3.8 (no-texto)
+
+   HISTÓRICO (edición Premium, vigente salvo lo de arriba):
+   · Geometría: botón 8, input 10, card 16, card grande 22,
+     modal 24. Altura de control 48. Sidebar 252, topbar 72.
    · Motion 120/180/280ms.
-   · Se ELIMINA la capa "Premium" duplicada que vivía al final del
-     archivo y peleaba con los componentes base (redefinía .bk-btn,
-     .bk-card, .bk-badge, .bk-chip, .bk-table, .bk-modal…). Sus
-     refinamientos válidos quedan integrados en la sección de cada
-     componente. Un componente = una definición.
-   · BUG CORREGIDO: .bk-table th tenía text-transform: uppercase
-     (mayúscula decorativa, prohibida por DESIGN.md). Eliminado.
-   · BUG CORREGIDO: la capa Premium metía radios (100px) y sombras
-     (0 4px 12px rgba(...)) a mano dentro de esta misma hoja, que
-     es justo lo que audit.py prohíbe en los módulos. Todo a token.
-   · BUG CORREGIDO: el alias legacy --sky (#0062E3) no coincidía
-     con --sky-blue (#0055CC): dos azules distintos conviviendo.
-     Ahora --sky → var(--sky-blue). Igual --focus, que usaba un
-     tercer azul en su rgba.
+   · Se ELIMINÓ la capa "Premium" duplicada del final del archivo
+     que peleaba con los componentes base. Un componente = una
+     definición.
+   · .bk-table th ya no lleva text-transform: uppercase
+     (mayúscula decorativa, prohibida por DESIGN.md).
+   · El alias legacy --sky apunta a var(--sky-blue): un solo azul.
    ════════════════════════════════════════════════════════════ */
 
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap');
 
 :root {
   /* ── Surfaces (blanco dominante) ──────────── */
-  --paper:   #F8FAFC;     /* fondo del body */
-  --paper-2: #F3F6FB;     /* canvas / inset / hover / chips */
+  --paper:   #F4F7FD;     /* fondo del body */
+  --paper-2: #EDF2FB;     /* canvas / inset / hover / chips */
   --bone:    #FFFFFF;     /* superficie de card */
-  --shell:   #F4F8FF;     /* hover de input / superficie media */
+  --shell:   #F4F7FE;     /* hover de input / superficie media */
 
   /* ── Ink (azul marino como texto, no negro) ─ */
-  --ink:     #071A3D;     /* texto principal */
-  --ink-2:   #2A3A56;
-  --ink-3:   #526078;     /* secundario */
-  --mute:    #526078;     /* gris-azul secundario legible */
-  --mute-2:  #8B97AC;
-  --mute-3:  #C3CDDE;
+  --ink:     #00143B;     /* texto principal */
+  --ink-2:   #1B2C4F;
+  --ink-3:   #4A5875;     /* secundario */
+  --mute:    #4A5875;     /* gris-azul secundario legible */
+  --mute-2:  #8592AB;
+  --mute-3:  #BFCADD;
 
   /* ── Hairlines (bordes del sistema) ───────── */
-  --line:     #E7ECF4;    /* borde claro / disabled */
-  --line-2:   #DCE4F0;    /* borde / input */
-  --line-3:   #C3CDDE;
+  --line:     #E6ECF6;    /* borde claro / disabled */
+  --line-2:   #D8E1EF;    /* borde / input */
+  --line-3:   #BFCADD;
 
   /* ── Accents (AZUL de acción) ─────────────── */
-  --forest:   #2563D9;    /* alias histórico → azul de acción */
-  --forest-2: #174EA6;    /* azul pressed (hover) */
-  --forest-soft: rgba(37,99,217,0.10);
+  --forest:   #1240A0;    /* alias histórico → azul de acción */
+  --forest-2: #0B2E78;    /* azul pressed (hover) */
+  --forest-soft: rgba(18,64,160,0.10);
 
   /* Marca Broquer */
-  --sky-navy:       #071A3D;  /* estructura: nav, footer, botón primario */
-  --sky-navy-mid:   #0E2E68;
-  --sky-navy-deep:  #04132F;  /* sidebar, fondos navy profundos */
-  --sky-blue:       #2563D9;  /* acción */
-  --sky-blue-press: #174EA6;
-  --sky-blue-lift:  #3978F6;  /* azul brillante, solo estados activos */
-  --sky-canvas:     #EAF2FF;
+  --sky-navy:       #00143B;  /* estructura: nav, footer, botón primario */
+  --sky-navy-mid:   #032873;
+  --sky-navy-deep:  #000D28;  /* sidebar, fondos navy profundos */
+  --sky-blue:       #1240A0;  /* acción */
+  --sky-blue-press: #0B2E78;
+  --sky-blue-lift:  #3A6FD8;  /* azul brillante, solo estados activos */
+  --sky-canvas:     #E8F0FE;
 
   --warn:     #B45309;
   --warn-soft:rgba(180,83,9,0.10);
@@ -80,8 +94,8 @@
   --danger-soft:rgba(198,40,57,0.10);
   --success:  #0C7A5E;
   --success-soft:rgba(12,122,94,0.10);
-  --info:     #174EA6;
-  --info-soft:rgba(23,78,166,0.10);
+  --info:     #0B2E78;
+  --info-soft:rgba(11,46,120,0.10);
 
   /* ── Geometry ─────────────────────────────── */
   --r-xs: 6px;     /* micro (check, tag) */
@@ -108,12 +122,12 @@
   --sp-24: 112px;   /* sección vertical desktop */
 
   /* ── Sombras (tinte navy, nunca negro fuerte) ── */
-  --shadow-xs: 0 2px 8px rgba(7,26,61,.04);
-  --shadow-sm: 0 6px 24px rgba(7,26,61,.06);
-  --shadow:    0 14px 40px rgba(7,26,61,.09);
-  --shadow-md: 0 14px 40px rgba(7,26,61,.11);
-  --shadow-lg: 0 24px 80px rgba(7,26,61,.12);
-  --shadow-xl: 0 32px 96px rgba(7,26,61,.16);
+  --shadow-xs: 0 2px 8px rgba(0,20,59,.04);
+  --shadow-sm: 0 6px 24px rgba(0,20,59,.06);
+  --shadow:    0 14px 40px rgba(0,20,59,.09);
+  --shadow-md: 0 14px 40px rgba(0,20,59,.11);
+  --shadow-lg: 0 24px 80px rgba(0,20,59,.12);
+  --shadow-xl: 0 32px 96px rgba(0,20,59,.16);
 
   /* ── Contrato de layout (anchos canónicos) ── */
   --page-max: 1280px;   /* módulos de datos (tablas, cards, dashboards) */
@@ -129,8 +143,8 @@
   --touch-min: 44px;
 
   /* ── Anillo de foco ─────────────────────── */
-  --focus:        0 0 0 4px rgba(37,99,217,0.16);
-  --focus-forest: 0 0 0 4px rgba(37,99,217,0.16);
+  --focus:        0 0 0 4px rgba(18,64,160,0.16);
+  --focus-forest: 0 0 0 4px rgba(18,64,160,0.16);
   --focus-danger: 0 0 0 4px rgba(198,40,57,0.16);
 
   /* ── Z-index (alineado con app-shell.js) ── */
@@ -199,7 +213,7 @@
   --teal: var(--forest);
   --teal2: var(--forest-2);
   --teal-dark: var(--forest);
-  --teal-glow: rgba(37,99,217,0.12);
+  --teal-glow: rgba(18,64,160,0.12);
   --white: var(--bone);
   --gray-100: var(--paper-2);
   --gray-200: var(--line);
@@ -676,7 +690,7 @@ input, select, textarea, button {
    ════════════════════════════════════════════════════════════ */
 .bk-overlay {
   position: fixed; inset: 0; z-index: var(--z-overlay);
-  background: rgba(7,26,61,0.48);
+  background: rgba(0,20,59,0.48);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   display: flex; align-items: center; justify-content: center;
@@ -944,7 +958,7 @@ input, select, textarea, button {
   --font: var(--font-sans);
 
   /* Fondo navy tenue — para chips/badges "navy" (contactos/leads roles) */
-  --navy-soft: rgba(7, 26, 61, 0.06);
+  --navy-soft: rgba(0, 20, 59, 0.06);
 
   /* Superficies / bordes legacy (verificador, contratos, otros) */
   --wh:      var(--bone);      /* superficie blanca de card   */
@@ -977,5 +991,5 @@ input, select, textarea, button {
 
   /* Acento azul claro para texto sobre superficies navy (heros oscuros).
      El azul de acción #2563D9 no contrasta sobre --sky-navy. */
-  --sky-blue-on-dark: #8FBAFF;
+  --sky-blue-on-dark: #7FA8F0;
 }
