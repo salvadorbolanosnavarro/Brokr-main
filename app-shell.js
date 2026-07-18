@@ -223,20 +223,24 @@
     });
   })();
 
-  /* ── Configuración de módulos ── */
+  /* ── Configuración de módulos ──
+     'whatsapp' abre el grupo 'main': es lo primero que ve el agente al salir
+     del CRM y lo que más abre en el día. Antes estaba partido en dos entradas
+     ('bandeja' dentro del CRM y 'whatsapp' perdido entre las herramientas),
+     y el agente tenía que aprender que una era el chat y la otra el número.
+     Es lo mismo: su WhatsApp. Ahora es un módulo con pestañas. */
   const MODS = [
     { key:'props',        href:'propiedades.html',   label:'Tus Inmuebles',   group:'crm',  icon:'building' },
     { key:'contactos',    href:'contactos.html',     label:'Contactos',       group:'crm',  icon:'users' },
     { key:'tareas',       href:'tareas.html',        label:'Tareas',          group:'crm',  icon:'check' },
     { key:'leads',        href:'leads.html',         label:'Leads',           group:'crm',  icon:'send' },
-    { key:'bandeja',      href:'bandeja.html',       label:'Chats',           group:'crm',  icon:'whatsapp' },
     { key:'estadisticas', href:'estadisticas.html',  label:'Estadísticas',    group:'crm',  icon:'chart' },
+    { key:'whatsapp',     href:'whatsapp.html',      label:'WhatsApp (Beta)', group:'main', icon:'whatsapp' },
     { key:'contratos',    href:'contratos.html',     label:'Contratos',       group:'main', icon:'document' },
     { key:'avm',          href:'avm.html',           label:'Estimación de valor', group:'main', icon:'peso' },
     { key:'ficha-manual', href:'ficha-manual.html',  label:'Ficha técnica',   group:'main', icon:'landscape' },
     { key:'isr',          href:'isr.html',           label:'ISR',             group:'main', icon:'calculator' },
     { key:'image-cleaner',href:'image-cleaner.html', label:'Editor imágenes', group:'main', icon:'image' },
-    { key:'whatsapp',     href:'whatsapp.html',      label:'WhatsApp (Beta)',        group:'main', icon:'whatsapp' },
     { key:'facebook-ads', href:'facebook-ads.html',  label:'Facebook Ads', group:'main', icon:'facebook' },
     { key:'mi-sitio',     href:'mi-sitio.html',      label:'Mi sitio',        group:'main', icon:'globo' },
     { key:'blog',         href:'blog.html',          label:'Blog',            group:'main', icon:'feather' },
@@ -259,8 +263,7 @@
     'image-cleaner':'Editor de imágenes — limpieza con IA',
     'admin':        'Panel administrativo',
     'facebook-ads': 'Meta Ads Express — crear, activar y medir anuncios de Facebook e Instagram',
-    'whatsapp':     'WhatsApp — conexión del número, Recepción automática y plantillas de mensaje',
-    'bandeja':      'Bandeja — conversaciones de WhatsApp y expediente de cada prospecto',
+    'whatsapp':     'WhatsApp — chats de los prospectos, conexión del número, Recepción automática, entrenamiento de la IA y plantillas de mensaje',
   };
 
   /* ── Encabezado canónico por página (unificación de esqueleto) ──
@@ -1245,7 +1248,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
     // Bottom nav
     // PWA bottom nav (liquid glass): Inicio · Broquer (isotipo) · Perfil
     const crmKeys = new Set(MODS.filter(m => m.group === 'crm').map(m => m.key));
-    const crmActive = crmKeys.has(activeKey) && activeKey !== 'bandeja';
+    const crmActive = crmKeys.has(activeKey);
 
     const bnav = document.createElement('nav');
     bnav.className = 'bk-bnav';
@@ -1255,7 +1258,9 @@ body[data-app="facebook-ads"]{--page-max:980px}
       `<button class="bk-bnav__item bk-bnav__broquer" id="bk-bnav-shaark" type="button" aria-label="Abrir Broq">
          <img src="broq-icon.png" alt=""/> <span>Broq</span>
        </button>` +
-      `<a href="bandeja.html" class="bk-bnav__item${activeKey === 'bandeja' ? ' is-active' : ''}" id="bk-bnav-chats" aria-label="Chats de WhatsApp">
+      // El acceso del pulgar entra directo a la pestaña de chats, no a la de
+      // ajustes: el agente aprieta esto para leer, no para configurar.
+      `<a href="whatsapp.html#chats" class="bk-bnav__item${activeKey === 'whatsapp' ? ' is-active' : ''}" id="bk-bnav-chats" aria-label="Chats de WhatsApp">
          <span class="bk-bnav__ico">${svg('whatsapp', 24)}<i class="bk-badge" id="bk-bnav-badge"></i></span>
          <span>Chats</span>
        </a>` +
@@ -1279,7 +1284,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
 
     function sheetItem(m) {
       const act = m.key === activeKey ? ' is-active' : '';
-      const badge = m.key === 'bandeja' ? '<i class="bk-badge" id="bk-sheet-badge"></i>' : '';
+      const badge = m.key === 'whatsapp' ? '<i class="bk-badge" id="bk-sheet-badge"></i>' : '';
       // "Mi sitio" en móvil/iOS no abre la pantalla de configuración: abre el sitio público.
       const attrs = m.key === 'mi-sitio'
         ? `href="javascript:void(0)" onclick="bkOpenMiSitio()"`
@@ -3935,8 +3940,8 @@ body[data-app="facebook-ads"]{--page-max:980px}
   /* ════════════════════════════════════════════════════════════════
      CHATS — globito de mensajes sin leer + notificación
      El conteo vive en wa_conversations.unread_count: el webhook lo sube
-     cuando entra un mensaje del prospecto y la bandeja lo baja a 0 al
-     abrir el chat. Aquí solo lo leemos cada 20 s.
+     cuando entra un mensaje del prospecto y la pestaña de chats lo baja
+     a 0 al abrir el chat. Aquí solo lo leemos cada 20 s.
      En iOS la notificación real la manda APNs (ver capacitor-bridge.js);
      esto es el respaldo para web y PWA.
      ════════════════════════════════════════════════════════════════ */
@@ -3972,9 +3977,14 @@ body[data-app="facebook-ads"]{--page-max:980px}
       const n = await _leerNoLeidos();
       _pintarBadge(n);
       // Notificación de escritorio/PWA solo cuando SUBE el número y no
-      // estamos ya viendo la bandeja. En iOS nativo no entra aquí: allá
-      // manda APNs, y duplicar avisos sería molesto.
-      if (_unreadPrev !== null && n > _unreadPrev && activeKey !== 'bandeja' && !IS_IOS_NATIVE) {
+      // estamos ya viendo los chats. Ojo: ahora WhatsApp es un módulo con
+      // pestañas, así que estar en whatsapp.html no basta para callar el
+      // aviso —en Ajustes o Entrenamiento el agente sí quiere enterarse—.
+      // La clase .wa-chats en <body> es la que dice si el hilo está a la
+      // vista. En iOS nativo no entra aquí: allá manda APNs, y duplicar
+      // avisos sería molesto.
+      const viendoChats = activeKey === 'whatsapp' && document.body.classList.contains('wa-chats');
+      if (_unreadPrev !== null && n > _unreadPrev && !viendoChats && !IS_IOS_NATIVE) {
         _avisoWeb(n - _unreadPrev);
       }
       _unreadPrev = n;
@@ -3983,7 +3993,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
     tick();
     setInterval(() => { if (!document.hidden) tick(); }, 20000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
-    // La bandeja avisa al shell cuando el agente lee un chat.
+    // La pestaña de chats avisa al shell cuando el agente lee un chat.
     window.addEventListener('brokr-chats-leidos', tick);
   }
 
@@ -3996,11 +4006,11 @@ body[data-app="facebook-ads"]{--page-max:980px}
         icon: 'icon-192.png',
         tag: 'broquer-wa',
       });
-      n.onclick = () => { window.focus(); location.href = 'bandeja.html'; };
+      n.onclick = () => { window.focus(); location.href = 'whatsapp.html#chats'; };
     } catch (e) {}
   }
 
-  /* Pedir permiso de notificaciones en web/PWA: solo desde la bandeja y
+  /* Pedir permiso de notificaciones en web/PWA: solo desde los chats y
      solo una vez (pedirlo al entrar a la app se siente invasivo y el
      navegador lo bloquea si no hay gesto del usuario). */
   window.bkPedirNotificaciones = async function () {

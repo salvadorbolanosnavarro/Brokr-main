@@ -81,21 +81,24 @@
 
         // Llega un aviso con la app ABIERTA. iOS no lo muestra encima de la
         // app; lo aprovechamos para refrescar el globito y, si el agente ya
-        // está en la bandeja, recargar la lista sin que tenga que hacer nada.
+        // está en sus chats, recargar la lista sin que tenga que hacer nada.
         PushNotifications.addListener('pushNotificationReceived', () => {
           try { window.dispatchEvent(new CustomEvent('brokr-chats-leidos')); } catch (_) {}
         });
 
         // El agente TOCÓ la notificación: lo llevamos al chat exacto.
+        // Chats dejó de ser bandeja.html: ahora es la pestaña por defecto de
+        // whatsapp.html. El '?c=<id>' sigue igual y '#chats' fuerza la pestaña
+        // aunque el agente hubiera dejado abierta la de Ajustes.
         PushNotifications.addListener('pushNotificationActionPerformed', ev => {
           try {
             const d = (ev && ev.notification && ev.notification.data) || {};
             if (d.tipo === 'whatsapp' && d.conversation_id) {
-              location.href = 'bandeja.html?c=' + encodeURIComponent(d.conversation_id);
+              location.href = 'whatsapp.html?c=' + encodeURIComponent(d.conversation_id) + '#chats';
             } else {
-              location.href = 'bandeja.html';
+              location.href = 'whatsapp.html#chats';
             }
-          } catch (_) { location.href = 'bandeja.html'; }
+          } catch (_) { location.href = 'whatsapp.html#chats'; }
         });
       }
 
@@ -118,10 +121,16 @@
     try {
       const { PushNotifications } = window.Capacitor.Plugins;
       if (PushNotifications && PushNotifications.removeAllDeliveredNotifications) {
-        // Solo cuando el agente entra a la bandeja: si borramos los avisos
+        // Solo cuando el agente entra a sus chats: si borramos los avisos
         // nada más por abrir la app, perdería los que no ha visto.
-        const enBandeja = (location.pathname.split('/').pop() || '').indexOf('bandeja') === 0;
-        if (enBandeja) PushNotifications.removeAllDeliveredNotifications();
+        // Se compara el archivo exacto, no un prefijo: 'whatsapp-callback.html'
+        // también empieza con 'whatsapp' y no es la bandeja de nadie. Y si
+        // entró a Ajustes o Entrenamiento, no leyó nada: los avisos se quedan.
+        const archivo = (location.pathname.split('/').pop() || '');
+        const pestana = (location.hash || '').replace('#', '');
+        const enChats = archivo === 'whatsapp.html' &&
+                        pestana !== 'ajustes' && pestana !== 'entrenamiento';
+        if (enChats) PushNotifications.removeAllDeliveredNotifications();
       }
     } catch (_) {}
   }

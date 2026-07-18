@@ -6,10 +6,65 @@
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>WhatsApp — Broquer</title>
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
+/* ═══════════════════════════════════════════════════════════════
+   WHATSAPP — un solo módulo, tres vistas.
+   Antes esto vivía partido en dos páginas (whatsapp.html y
+   bandeja.html) y el agente tenía que saber cuál era cuál. Ahora
+   Chats, Ajustes y Entrenamiento son pestañas de lo mismo, porque
+   es lo mismo: su número de WhatsApp.
+
+   Chats necesita alto completo y scroll por carril; Ajustes y
+   Entrenamiento son formularios centrados a 760px. La clase
+   .wa-chats en <body> conmuta entre las dos geometrías.
+   ═══════════════════════════════════════════════════════════════ */
 body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-height:100vh}
 .wa-wrap{max-width:var(--form-max, 760px);margin:0 auto;padding:8px var(--pad-x, 36px) 120px}
+
+/* ─── Modo Chats: el shell deja de ser una página con scroll y pasa
+       a ser un contenedor de alto completo. Dos clases en el selector
+       -> gana por especificidad al shell, sin !important. ─── */
+body[data-app="whatsapp"].wa-chats{--page-max:none}
+body[data-app="whatsapp"].wa-chats .bk-page{
+  padding-bottom:0;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+/* El encabezado canónico del shell dice "WhatsApp" y ya lo dice la
+   pestaña activa. En Chats solo robaría altura al hilo. */
+body[data-app="whatsapp"].wa-chats .bk-ph{display:none}
+.wa-view[hidden]{display:none}
+
+/* ═══════════════════════════════════════════════════════════
+   PESTAÑAS — solo aparecen cuando hay número conectado. Sin
+   número no hay nada que separar.
+   ═══════════════════════════════════════════════════════════ */
+.wa-tabs{border-bottom:1px solid var(--line);padding:0 var(--pad-x, 36px);background:var(--paper)}
+.wa-tabs__inner{max-width:var(--form-max, 760px);margin:0 auto;display:flex;gap:var(--sp-5)}
+body[data-app="whatsapp"].wa-chats .wa-tabs__inner{max-width:none}
+.wa-tab{
+  position:relative;border:0;background:transparent;cursor:pointer;
+  padding:var(--sp-4) 0 calc(var(--sp-4) - 2px);
+  font-family:var(--font-sans);font-size:var(--fs-sm);font-weight:700;
+  color:var(--mute);white-space:nowrap;
+  display:inline-flex;align-items:center;gap:var(--sp-2);
+  border-bottom:2px solid transparent;
+  transition:color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+.wa-tab:hover{color:var(--ink-2)}
+.wa-tab.is-active{color:var(--ink);border-bottom-color:var(--sky-navy)}
+.wa-tab:focus-visible{outline:none;box-shadow:var(--focus)}
+.wa-tab__badge{
+  min-width:18px;height:18px;padding:0 5px;border-radius:var(--r-pill);
+  background:var(--brand-whatsapp);color:#fff;
+  font-size:var(--fs-caption);font-weight:800;line-height:18px;
+  font-variant-numeric:tabular-nums;display:none;
+}
+.wa-tab__badge.on{display:inline-block}
 
 /* ═══════════════════════════════════════════════════════════
    STAGE — la superficie navy de Broquer (misma ADN que los PDF:
@@ -138,11 +193,6 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
    PANELES BLANCOS — todo lo que es control, no protagonista
    ═══════════════════════════════════════════════════════════ */
 .wa-jump{display:flex;flex-wrap:wrap;gap:var(--sp-3);margin-bottom:var(--sp-6)}
-/* Pie discreto: insignia Meta Tech Provider */
-.wa-foot{margin-top:var(--sp-6);padding-top:var(--sp-5);border-top:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:var(--sp-2)}
-.wa-foot img{height:22px;width:auto;display:block;opacity:.45;transition:opacity var(--dur-fast) var(--ease)}
-.wa-foot:hover img{opacity:.75}
-.wa-foot p{margin:0;font-size:var(--fs-caption);color:var(--mute-2);text-align:center;line-height:var(--lh-snug)}
 
 .wa-panel{
   background:var(--bone);border:1px solid var(--line);border-radius:var(--r);
@@ -183,9 +233,106 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .wa-quiet p{font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh);margin:var(--sp-1) 0 0;max-width:48ch}
 
 /* ═══════════════════════════════════════════════════════════
+   PIE — "Cómo funciona" dejó de ser un botón perdido junto a los
+   demás. Abajo, como fila completa, es una puerta clara a la guía
+   en vez de una pastilla que compite con las acciones reales.
+   ═══════════════════════════════════════════════════════════ */
+.wa-foot{margin-top:var(--sp-7);padding-top:var(--sp-6);border-top:1px solid var(--line)}
+
+.wa-howto{
+  display:flex;align-items:center;gap:var(--sp-4);
+  padding:var(--sp-5);border-radius:var(--r);text-decoration:none;
+  background:linear-gradient(148deg, var(--sky-navy) 0%, var(--sky-navy-mid) 100%);
+  position:relative;overflow:hidden;
+  transition:transform var(--dur-fast) var(--ease);
+}
+.wa-howto::before{
+  content:"";position:absolute;right:-90px;top:-110px;
+  width:250px;height:250px;border-radius:50%;
+  background:radial-gradient(circle, rgba(91,164,255,.22) 0%, rgba(91,164,255,0) 68%);
+  pointer-events:none;
+}
+.wa-howto > *{position:relative}
+.wa-howto:hover{transform:translateY(-1px)}
+.wa-howto:active{transform:none}
+.wa-howto:focus-visible{outline:none;box-shadow:var(--focus)}
+.wa-howto__ico{
+  width:42px;height:42px;border-radius:var(--r-sm);flex:none;
+  background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);
+  display:flex;align-items:center;justify-content:center;color:var(--sky-blue-on-dark);
+}
+.wa-howto__ico svg{width:21px;height:21px}
+.wa-howto__txt{flex:1;min-width:0}
+.wa-howto__txt b{display:block;font-family:var(--font-display);font-size:var(--fs-h5);font-weight:700;letter-spacing:-.015em;color:#fff;line-height:var(--lh-snug)}
+.wa-howto__txt span{display:block;margin-top:var(--sp-1);font-size:var(--fs-xs);color:rgba(255,255,255,.66);line-height:var(--lh)}
+.wa-howto__arrow{flex:none;width:20px;height:20px;color:rgba(255,255,255,.55);transition:transform var(--dur-fast) var(--ease)}
+.wa-howto:hover .wa-howto__arrow{transform:translateX(3px);color:#fff}
+
+/* Insignia Meta Tech Provider */
+.wa-badge{margin-top:var(--sp-6);display:flex;flex-direction:column;align-items:center;gap:var(--sp-2)}
+.wa-badge img{height:22px;width:auto;display:block;opacity:.45;transition:opacity var(--dur-fast) var(--ease)}
+.wa-badge:hover img{opacity:.75}
+.wa-badge p{margin:0;font-size:var(--fs-caption);color:var(--mute);text-align:center;line-height:var(--lh-snug)}
+
+/* ═══════════════════════════════════════════════════════════
+   ENTRENAMIENTO — dos bloques, y la diferencia entre ellos es
+   real, no cosmética: arriba lo que Recepción interpreta, abajo
+   lo que se cumple aunque el modelo quiera otra cosa.
+   ═══════════════════════════════════════════════════════════ */
+.wa-field{margin-bottom:var(--sp-5)}
+.wa-field:last-child{margin-bottom:0}
+.wa-field label{display:block;font-size:var(--fs-sm);font-weight:700;color:var(--ink);margin-bottom:var(--sp-1)}
+.wa-field .wa-help{display:block;font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh);margin-bottom:var(--sp-3);max-width:58ch}
+.wa-field input[type="text"],.wa-field input[type="time"],.wa-field input[type="number"],.wa-field textarea{
+  width:100%;height:var(--h);padding:0 var(--sp-4);
+  border:1px solid var(--line-2);border-radius:var(--r-sm);
+  font-family:var(--font-sans);font-size:var(--fs-sm);color:var(--ink);background:var(--paper);
+}
+.wa-field textarea{height:auto;padding:var(--sp-3) var(--sp-4);min-height:88px;resize:vertical;line-height:var(--lh)}
+.wa-field input:focus,.wa-field textarea:focus{outline:none;border-color:var(--sky-blue);box-shadow:var(--focus)}
+.wa-field input::placeholder,.wa-field textarea::placeholder{color:var(--mute-2)}
+
+.wa-rule{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp-4);padding:var(--sp-4) 0;border-bottom:1px solid var(--line)}
+.wa-rule:last-of-type{border-bottom:0}
+.wa-rule__txt{flex:1;min-width:0}
+.wa-rule__txt b{display:block;font-size:var(--fs-sm);font-weight:700;color:var(--ink)}
+.wa-rule__txt span{display:block;margin-top:var(--sp-1);font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh);max-width:52ch}
+
+.wa-horas{display:flex;align-items:flex-end;gap:var(--sp-3);margin-top:var(--sp-4)}
+.wa-horas > div{flex:1;min-width:0}
+.wa-horas label{font-size:var(--fs-xs)}
+.wa-sub[hidden]{display:none}
+
+/* Palabras que escalan: fichas, no un campo de texto con comas que
+   el agente tiene que adivinar cómo separar. */
+.wa-chips{display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-bottom:var(--sp-3)}
+.wa-chip{
+  display:inline-flex;align-items:center;gap:var(--sp-2);
+  padding:5px var(--sp-2) 5px var(--sp-3);border-radius:var(--r-pill);
+  background:var(--paper);border:1px solid var(--line-2);
+  font-size:var(--fs-xs);font-weight:700;color:var(--ink);
+}
+.wa-chip button{
+  border:0;background:transparent;cursor:pointer;padding:0;
+  width:16px;height:16px;display:flex;align-items:center;justify-content:center;
+  color:var(--mute);border-radius:50%;
+}
+.wa-chip button:hover{color:var(--danger);background:var(--danger-soft)}
+.wa-chip button svg{width:11px;height:11px}
+.wa-chips__empty{font-size:var(--fs-xs);color:var(--mute);margin:0 0 var(--sp-3)}
+
+.wa-save{
+  position:sticky;bottom:0;z-index:1;
+  display:flex;align-items:center;justify-content:space-between;gap:var(--sp-4);
+  margin-top:var(--sp-6);padding:var(--sp-4) 0;
+  background:var(--paper);border-top:1px solid var(--line);
+}
+.wa-save p{margin:0;font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh-snug)}
+
+/* ═══════════════════════════════════════════════════════════
    ESQUELETO DE CARGA — evita el parpadeo "desconectado"
    ═══════════════════════════════════════════════════════════ */
-.wa-boot{height:262px;border-radius:var(--r-lg);background:var(--paper-2);position:relative;overflow:hidden}
+.wa-boot{height:262px;border-radius:var(--r-lg);background:var(--paper-2);position:relative;overflow:hidden;margin-top:var(--sp-5)}
 .wa-boot::after{
   content:"";position:absolute;inset:0;
   background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.55) 50%, rgba(255,255,255,0) 100%);
@@ -218,6 +365,268 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .wa-form input:focus,.wa-form select:focus,.wa-form textarea:focus{outline:none;border-color:var(--sky-blue);box-shadow:var(--focus)}
 .wa-form small{display:block;font-size:var(--fs-caption);color:var(--mute);margin-top:var(--sp-1);line-height:var(--lh-snug)}
 
+/* ═══════════════════════════════════════════════════════════════
+   VISTA CHATS — no es un clon de WhatsApp: es el escritorio donde
+   el agente trabaja los leads que Recepción ya calificó.
+   Tres carriles: lista · conversación · expediente.
+   El expediente reusa la superficie navy de Broquer (misma ADN que
+   los PDF y que el resto del módulo): score protagonista y rejilla
+   de datos de apoyo.
+   ═══════════════════════════════════════════════════════════════ */
+.bx{display:flex;flex:1;min-height:0;background:var(--paper)}
+
+/* ═══════════ CARRIL 1 · LISTA ═══════════ */
+.bx-list{
+  width:330px;flex:none;min-width:0;
+  display:flex;flex-direction:column;
+  background:var(--bone);border-right:1px solid var(--line);
+}
+.bx-list__head{padding:var(--sp-5) var(--sp-5) var(--sp-3);border-bottom:1px solid var(--line)}
+.bx-list__title{display:flex;align-items:baseline;gap:var(--sp-2)}
+.bx-list__title h1{font-family:var(--font-display);font-size:var(--fs-h2);font-weight:700;letter-spacing:-.025em;line-height:var(--lh-tight);margin:0;color:var(--ink)}
+.bx-count{font-size:var(--fs-xs);color:var(--mute);font-variant-numeric:tabular-nums}
+
+.bx-search{position:relative;margin-top:var(--sp-4)}
+.bx-search svg{position:absolute;left:var(--sp-3);top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--mute);pointer-events:none}
+.bx-search input{
+  width:100%;height:var(--h-sm);padding:0 var(--sp-3) 0 var(--sp-8);
+  background:var(--paper);border:1px solid var(--line);border-radius:var(--r-pill);
+  font-family:var(--font-sans);font-size:var(--fs-xs);color:var(--ink);
+}
+.bx-search input:focus{outline:none;border-color:var(--sky-blue);box-shadow:var(--focus)}
+.bx-search input::placeholder{color:var(--mute-2)}
+
+.bx-filters{display:flex;gap:2px;padding:3px;margin-top:var(--sp-3);background:var(--paper-2);border-radius:var(--r-pill)}
+.bx-filter{
+  flex:1;border:0;background:transparent;cursor:pointer;
+  padding:var(--sp-2) var(--sp-1);border-radius:var(--r-pill);
+  font-family:var(--font-sans);font-size:var(--fs-caption);font-weight:700;color:var(--mute);
+  transition:background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  white-space:nowrap;
+}
+.bx-filter:hover{color:var(--ink-2)}
+.bx-filter.is-active{background:var(--bone);color:var(--ink);box-shadow:var(--shadow-xs)}
+.bx-filter:focus-visible{outline:none;box-shadow:var(--focus)}
+
+.bx-convs{flex:1;overflow-y:auto;overscroll-behavior:contain}
+.bx-conv{
+  position:relative;display:flex;gap:var(--sp-3);align-items:center;
+  width:100%;text-align:left;border:0;background:transparent;cursor:pointer;
+  padding:var(--sp-3) var(--sp-5);border-bottom:1px solid var(--line);
+  font-family:var(--font-sans);
+  transition:background var(--dur-fast) var(--ease);
+}
+.bx-conv:hover{background:var(--paper)}
+.bx-conv.is-active{background:var(--sky-canvas)}
+.bx-conv.is-active::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--sky-navy)}
+.bx-conv:focus-visible{outline:none;box-shadow:var(--focus)}
+
+.bx-ava{
+  width:40px;height:40px;border-radius:50%;flex:none;
+  background:var(--sky-navy);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-size:var(--fs-sm);font-weight:700;
+}
+.bx-conv__main{display:block;flex:1;min-width:0}
+.bx-conv__top{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-2)}
+.bx-conv__name{font-size:var(--fs-sm);font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bx-conv__time{font-size:var(--fs-caption);color:var(--mute);flex:none;font-variant-numeric:tabular-nums}
+.bx-conv__prev{
+  display:block;
+  font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh-snug);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.bx-conv__prev b{color:var(--ink-3);font-weight:700}
+.bx-conv__tags{display:flex;align-items:center;gap:var(--sp-2);margin-top:var(--sp-2)}
+
+.bx-unread{
+  flex:none;min-width:19px;height:19px;padding:0 5px;margin-left:var(--sp-2);
+  border-radius:var(--r-pill);background:var(--brand-whatsapp);color:#fff;
+  font-size:var(--fs-caption);font-weight:800;line-height:19px;text-align:center;
+  font-variant-numeric:tabular-nums;
+}
+.bx-conv.has-unread .bx-conv__name{font-weight:800}
+.bx-conv.has-unread .bx-conv__prev{color:var(--ink-2)}
+
+.bx-tag{font-size:var(--fs-caption);font-weight:700;padding:2px var(--sp-2);border-radius:var(--r-pill);line-height:1.5}
+.bx-tag--hot{background:var(--warn-soft);color:var(--warn)}
+.bx-tag--mine{background:var(--forest-soft);color:var(--forest)}
+
+.bx-avisos{
+  display:flex;align-items:center;gap:var(--sp-2);margin-top:var(--sp-3);
+  padding:var(--sp-2) var(--sp-3);border-radius:var(--r-sm);
+  background:var(--sky-canvas);border:1px solid var(--line);
+}
+.bx-avisos span{flex:1;min-width:0;font-size:var(--fs-caption);color:var(--ink-2);line-height:var(--lh-snug)}
+.bx-avisos__ok{
+  flex:none;border:0;cursor:pointer;background:var(--sky-blue);color:#fff;
+  border-radius:var(--r-pill);padding:5px var(--sp-3);
+  font-family:inherit;font-size:var(--fs-caption);font-weight:700;
+}
+.bx-avisos__no{flex:none;border:0;background:transparent;cursor:pointer;color:var(--mute);width:20px;height:20px;display:flex;align-items:center;justify-content:center;padding:0}
+.bx-avisos__no svg{width:11px;height:11px}
+
+.bx-list__empty{padding:var(--sp-8) var(--sp-5);text-align:center}
+.bx-list__empty p{font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh);margin:0}
+.bx-list__empty .bx-cta{margin-top:var(--sp-4)}
+
+/* ═══════════ CARRIL 2 · CONVERSACIÓN ═══════════ */
+.bx-thread{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--paper)}
+
+/* El atributo hidden aplica display:none desde la hoja del navegador, pero
+   cualquier display:flex de autor le gana. Sin esto, threadEmpty.hidden=true
+   no hacía nada: el estado vacío y el chat se renderizaban a la vez y se
+   partían la altura. Selector de 2 clases -> gana por especificidad, sin
+   necesidad de !important. */
+.bx-blank[hidden],
+.bx-thread__inner[hidden]{display:none}
+
+.bx-blank{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--sp-3);padding:var(--sp-8);text-align:center}
+.bx-blank__icon{width:52px;height:52px;border-radius:50%;background:var(--paper-2);display:flex;align-items:center;justify-content:center;color:var(--mute)}
+.bx-blank__icon svg{width:24px;height:24px}
+.bx-blank h2{font-family:var(--font-display);font-size:var(--fs-h5);font-weight:700;margin:0;color:var(--ink)}
+.bx-blank p{font-size:var(--fs-xs);color:var(--mute);max-width:34ch;line-height:var(--lh);margin:0}
+.bx-blank .bx-cta{margin-top:var(--sp-3)}
+
+.bx-cta{
+  display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2);
+  height:var(--h);padding:0 var(--sp-5);border:1px solid var(--sky-blue);
+  border-radius:var(--r-pill);background:var(--sky-blue);color:#fff;
+  font-family:var(--font-sans);font-size:var(--fs-sm);font-weight:700;
+  cursor:pointer;text-decoration:none;
+  transition:background var(--dur-fast) var(--ease);
+}
+.bx-cta:hover{background:var(--sky-blue-press);color:#fff}
+
+.bx-thread__inner{flex:1;display:flex;flex-direction:column;min-height:0}
+.bx-th-head{
+  display:flex;align-items:center;gap:var(--sp-3);
+  padding:var(--sp-3) var(--sp-5);border-bottom:1px solid var(--line);background:var(--bone);
+}
+.bx-back{
+  display:none;flex:none;width:36px;height:36px;border:0;background:transparent;
+  border-radius:50%;cursor:pointer;color:var(--ink);
+  align-items:center;justify-content:center;
+}
+.bx-back:hover{background:var(--paper-2)}
+.bx-th-id{flex:1;min-width:0}
+.bx-th-id h2{font-family:var(--font-display);font-size:var(--fs-body);font-weight:700;letter-spacing:-.015em;margin:0;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bx-th-id span{display:block;font-size:var(--fs-caption);color:var(--mute);margin-top:1px;font-variant-numeric:tabular-nums}
+
+.bx-ai{display:flex;align-items:center;gap:var(--sp-2);flex:none}
+.bx-ai__label{font-size:var(--fs-caption);font-weight:700;color:var(--mute);white-space:nowrap}
+.bx-switch{position:relative;width:40px;height:23px;flex:none;cursor:pointer}
+.bx-switch input{position:absolute;opacity:0;width:0;height:0}
+.bx-switch__track{position:absolute;inset:0;background:var(--line-2);border-radius:var(--r-pill);transition:background var(--dur) var(--ease)}
+.bx-switch input:checked + .bx-switch__track{background:var(--brand-whatsapp)}
+.bx-switch input:focus-visible + .bx-switch__track{box-shadow:var(--focus)}
+.bx-switch__thumb{position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:#fff;transition:transform var(--dur) var(--ease);pointer-events:none;box-shadow:var(--shadow-xs)}
+.bx-switch input:checked ~ .bx-switch__thumb{transform:translateX(17px)}
+
+.bx-dossier-btn{display:none;flex:none;width:36px;height:36px;border:1px solid var(--line-2);background:var(--bone);border-radius:50%;cursor:pointer;color:var(--ink);align-items:center;justify-content:center}
+.bx-dossier-btn:hover{background:var(--paper-2)}
+
+/* ─── Mensajes ─── */
+.bx-msgs{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:var(--sp-6) var(--sp-6);display:flex;flex-direction:column;gap:var(--sp-2)}
+
+.bx-day{display:flex;align-items:center;gap:var(--sp-4);margin:var(--sp-4) 0 var(--sp-3)}
+.bx-day::before,.bx-day::after{content:"";flex:1;height:1px;background:var(--line)}
+.bx-day span{font-size:var(--fs-caption);font-weight:700;color:var(--mute);white-space:nowrap}
+
+.bx-row{display:flex;flex-direction:column;max-width:70%}
+.bx-row.lead{align-self:flex-start;align-items:flex-start}
+.bx-row.ai,.bx-row.agent{align-self:flex-end;align-items:flex-end}
+
+.bx-bub{padding:var(--sp-3) var(--sp-4);font-size:var(--fs-sm);line-height:var(--lh);white-space:pre-wrap;word-break:break-word}
+.bx-row.lead .bx-bub{
+  background:var(--bone);border:1px solid var(--line);color:var(--ink);
+  border-radius:var(--r) var(--r) var(--r) var(--r-xs);
+}
+.bx-row.ai .bx-bub{
+  background:var(--sky-canvas);border:1px solid var(--line);color:var(--ink-2);
+  border-radius:var(--r) var(--r) var(--r-xs) var(--r);
+}
+.bx-row.agent .bx-bub{
+  background:var(--sky-blue);border:1px solid var(--sky-blue);color:#fff;
+  border-radius:var(--r) var(--r) var(--r-xs) var(--r);
+}
+.bx-meta{display:flex;align-items:center;gap:var(--sp-2);margin:var(--sp-1) var(--sp-1) 0;font-size:var(--fs-caption);color:var(--mute);font-variant-numeric:tabular-nums}
+.bx-meta b{color:var(--sky-blue);font-weight:700}
+
+/* ─── Composer ─── */
+.bx-strip{
+  display:flex;align-items:center;gap:var(--sp-2);
+  padding:var(--sp-2) var(--sp-6);
+  font-size:var(--fs-caption);line-height:var(--lh-snug);color:var(--mute);
+  background:var(--paper-2);border-top:1px solid var(--line);
+}
+.bx-strip i{width:6px;height:6px;border-radius:50%;flex:none;background:var(--brand-whatsapp)}
+.bx-strip.is-manual i{background:var(--sky-blue)}
+.bx-strip.is-off i{background:var(--mute-2)}
+
+.bx-composer{
+  display:flex;gap:var(--sp-3);align-items:flex-end;
+  padding:var(--sp-3) var(--sp-6);
+  border-top:1px solid var(--line);background:var(--bone);
+}
+.bx-composer textarea{
+  flex:1;resize:none;min-height:var(--h);max-height:132px;
+  padding:var(--sp-3) var(--sp-4);
+  border:1px solid var(--line-2);border-radius:var(--r);
+  font-family:var(--font-sans);font-size:var(--fs-sm);line-height:var(--lh);
+  background:var(--paper);color:var(--ink);
+}
+.bx-composer textarea:focus{outline:none;border-color:var(--sky-blue);box-shadow:var(--focus)}
+.bx-composer textarea::placeholder{color:var(--mute-2)}
+.bx-send{
+  flex:none;width:var(--h);height:var(--h);border-radius:50%;
+  border:1px solid var(--sky-blue);background:var(--sky-blue);color:#fff;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.bx-send:hover{background:var(--sky-blue-press)}
+.bx-send:active{transform:scale(.94)}
+.bx-send:disabled{opacity:.4;cursor:default;transform:none}
+
+/* ═══════════ CARRIL 3 · EXPEDIENTE ═══════════ */
+.bx-dossier{
+  width:300px;flex:none;overflow-y:auto;overscroll-behavior:contain;
+  background:var(--bone);border-left:1px solid var(--line);
+  padding:var(--sp-5);
+}
+.bx-dossier__eyebrow{font-size:var(--fs-label-3);font-weight:700;color:var(--mute);margin:0 0 var(--sp-3)}
+
+.bx-score{
+  position:relative;overflow:hidden;
+  background:linear-gradient(148deg, var(--sky-navy) 0%, var(--sky-navy-mid) 100%);
+  border-radius:var(--r);padding:var(--sp-5);
+  display:flex;align-items:center;gap:var(--sp-4);
+}
+.bx-score__ring{position:relative;width:76px;height:76px;flex:none}
+.bx-score__ring svg{width:76px;height:76px;transform:rotate(-90deg)}
+.bx-score__val{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-size:var(--fs-h3);font-weight:700;color:#fff;
+  font-variant-numeric:tabular-nums;letter-spacing:-.02em;
+}
+.bx-score__side{min-width:0}
+.bx-score__side p{margin:0;font-size:var(--fs-caption);color:rgba(255,255,255,.62);line-height:var(--lh-snug)}
+.bx-temp{display:inline-block;margin-bottom:var(--sp-2);font-size:var(--fs-caption);font-weight:700;padding:3px var(--sp-2);border-radius:var(--r-pill)}
+.bx-temp--caliente{background:var(--warn-soft);color:var(--warn)}
+.bx-temp--tibio{background:rgba(255,255,255,.12);color:var(--sky-blue-on-dark)}
+.bx-temp--frio,.bx-temp--nuevo{background:rgba(255,255,255,.12);color:rgba(255,255,255,.82)}
+
+.bx-facts{margin-top:var(--sp-5);display:flex;flex-direction:column}
+.bx-fact{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-4);padding:var(--sp-3) 0;border-bottom:1px solid var(--line)}
+.bx-fact:last-child{border-bottom:0}
+.bx-fact dt{font-size:var(--fs-caption);color:var(--mute);flex:none}
+.bx-fact dd{margin:0;font-size:var(--fs-xs);font-weight:700;color:var(--ink);text-align:right;line-height:var(--lh-snug)}
+
+.bx-resumen{margin-top:var(--sp-5);padding:var(--sp-4);background:var(--paper);border:1px solid var(--line);border-radius:var(--r-sm)}
+.bx-resumen h3{font-size:var(--fs-label-3);font-weight:700;color:var(--mute);margin:0 0 var(--sp-2)}
+.bx-resumen p{font-size:var(--fs-xs);line-height:var(--lh-loose);color:var(--ink-2);margin:0}
+.bx-dossier__empty{font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh);margin:var(--sp-4) 0 0}
+
 /* ═══════════════════════════════════════════════════════════
    RESPONSIVE
    ═══════════════════════════════════════════════════════════ */
@@ -232,13 +641,152 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
   .wa-flow{grid-template-columns:1fr;gap:var(--sp-4)}
   .wa-stage__cta .wa-btn,.wa-jump .wa-btn{flex:1 1 100%}
   .wa-quiet{flex-direction:column;align-items:flex-start}
+  .wa-tabs{padding:0 var(--sp-4)}
+  .wa-tabs__inner{gap:var(--sp-4)}
+  .wa-howto{padding:var(--sp-4);gap:var(--sp-3)}
+  .wa-howto__arrow{display:none}
+  .wa-horas{flex-wrap:wrap}
+  .wa-save{flex-direction:column;align-items:stretch;gap:var(--sp-3)}
+  .wa-save .wa-btn{width:100%}
+}
+
+/* Bajo 1360px el expediente se vuelve un panel que se abre: mejor eso que
+   un hilo estrangulado a 390px. */
+@media (max-width:1360px){
+  .bx-dossier-btn{display:flex}
+  .bx-dossier{
+    position:absolute;top:0;right:0;bottom:0;z-index:var(--z-popover);
+    width:300px;box-shadow:var(--shadow-lg);
+    transform:translateX(100%);transition:transform var(--dur) var(--ease);
+  }
+  .bx.dossier-open .bx-dossier{transform:none}
+  .bx{position:relative}
+}
+/* ≤880px: lista y conversación se apilan */
+@media (max-width:880px){
+  .bx-list{width:100%;border-right:0}
+  /* La barra inferior flotante mide ~74px: sin este colchón tapaba la
+     última conversación de la lista. */
+  .bx-convs{padding-bottom:calc(74px + env(safe-area-inset-bottom, 0px))}
+  .bx-thread{display:none}
+  .bx.thread-open .bx-list{display:none}
+  .bx.thread-open .bx-thread{display:flex}
+  .bx-back{display:flex}
+  .bx-msgs{padding:var(--sp-4)}
+  .bx-strip{padding:var(--sp-2) var(--sp-4)}
+  .bx-composer{padding:var(--sp-3) var(--sp-4) calc(var(--sp-3) + 74px + env(safe-area-inset-bottom, 0px))}
+  .bx-dossier{width:min(300px, 88vw)}
+  .bx-row{max-width:82%}
+}
+@media (max-width:480px){
+  .bx-th-head > .bx-ava{display:none}
+  .bx-ai__label{display:none}
+  .bx-th-head{gap:var(--sp-2);padding:var(--sp-3) var(--sp-4)}
 }
 </style>
 </head>
 <body data-app="whatsapp">
-<div class="wa-wrap">
 
-  <!-- ═══ CARGANDO ═══ -->
+<!-- ═══ PESTAÑAS (solo con número conectado) ═══ -->
+<nav class="wa-tabs" id="wa-tabs" hidden>
+  <div class="wa-tabs__inner">
+    <button type="button" class="wa-tab is-active" data-tab="chats" onclick="irATab('chats')">
+      Chats <span class="wa-tab__badge" id="wa-tab-badge">0</span>
+    </button>
+    <button type="button" class="wa-tab" data-tab="ajustes" onclick="irATab('ajustes')">Ajustes</button>
+    <button type="button" class="wa-tab" data-tab="entrenamiento" onclick="irATab('entrenamiento')">Entrenamiento</button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════
+     VISTA · CHATS
+     ═══════════════════════════════════════════════════════════ -->
+<div class="bx wa-view" id="view-chats" hidden>
+
+  <!-- ═══ CARRIL 1 · LISTA ═══ -->
+  <aside class="bx-list">
+    <div class="bx-list__head">
+      <div class="bx-list__title">
+        <h1>Chats</h1>
+        <span class="bx-count" id="bxCount"></span>
+      </div>
+      <div class="bx-search">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
+        <input type="search" id="bxSearch" placeholder="Buscar por nombre o número" autocomplete="off" aria-label="Buscar conversación"/>
+      </div>
+      <div class="bx-filters" role="tablist">
+        <button class="bx-filter is-active" role="tab" data-f="todos" onclick="setFiltro('todos')">Todos</button>
+        <button class="bx-filter" role="tab" data-f="calientes" onclick="setFiltro('calientes')">Calientes</button>
+        <button class="bx-filter" role="tab" data-f="mios" onclick="setFiltro('mios')">Tú al control</button>
+      </div>
+    </div>
+    <div class="bx-convs" id="convs">
+      <div class="bx-list__empty"><p>Cargando…</p></div>
+    </div>
+  </aside>
+
+  <!-- ═══ CARRIL 2 · CONVERSACIÓN ═══ -->
+  <section class="bx-thread">
+
+    <div class="bx-blank" id="threadEmpty">
+      <div class="bx-blank__icon">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10.5h8M8 14h5M21 12a9 9 0 01-9 9c-1.6 0-3.1-.42-4.4-1.15L3 21l1.2-4.4A8.96 8.96 0 013 12a9 9 0 1118 0z"/></svg>
+      </div>
+      <h2>Elige una conversación</h2>
+      <p>Aquí ves el chat completo y, a la derecha, lo que Recepción ya averiguó del prospecto.</p>
+    </div>
+
+    <div class="bx-thread__inner" id="threadInner" hidden>
+      <div class="bx-th-head">
+        <button class="bx-back" onclick="closeThread()" aria-label="Volver a la lista">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <div class="bx-ava" id="thAva">?</div>
+        <div class="bx-th-id">
+          <h2 id="thName"></h2>
+          <span id="thPhone"></span>
+        </div>
+        <div class="bx-ai">
+          <span class="bx-ai__label" id="aiLabel">Recepción</span>
+          <label class="bx-switch" aria-label="Recepción automática en este chat">
+            <input type="checkbox" id="aiToggle" onchange="toggleAI()"/>
+            <span class="bx-switch__track"></span>
+            <span class="bx-switch__thumb"></span>
+          </label>
+        </div>
+        <button class="bx-dossier-btn" onclick="toggleDossier()" aria-label="Ver expediente del prospecto">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.1a7.5 7.5 0 0115 0A17.9 17.9 0 0112 21.75c-2.68 0-5.22-.58-7.5-1.63z"/></svg>
+        </button>
+      </div>
+
+      <div class="bx-msgs" id="msgs"></div>
+
+      <div class="bx-strip" id="aiStrip"><i></i><span id="aiHint"></span></div>
+
+      <div class="bx-composer">
+        <textarea id="composer" placeholder="Escribe un mensaje…" rows="1" oninput="growBox(this)" aria-label="Mensaje"></textarea>
+        <button class="bx-send" id="sendBtn" onclick="sendMsg()" aria-label="Enviar mensaje">
+          <svg width="19" height="19" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.27 3.13A59.77 59.77 0 0121.49 12 59.77 59.77 0 013.27 20.88L6 12zm0 0h7.5"/></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ CARRIL 3 · EXPEDIENTE ═══ -->
+  <aside class="bx-dossier" id="dossier">
+    <p class="bx-dossier__eyebrow">Expediente del prospecto</p>
+    <div id="dossierBody">
+      <p class="bx-dossier__empty">Selecciona una conversación para ver qué averiguó Recepción.</p>
+    </div>
+  </aside>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     VISTAS · CONEXIÓN / AJUSTES / ENTRENAMIENTO
+     ═══════════════════════════════════════════════════════════ -->
+<div class="wa-wrap" id="wa-wrap">
+
   <div class="wa-boot" id="wa-boot"></div>
 
   <!-- ═══ ESTADO: DESCONECTADO ═══ -->
@@ -256,7 +804,6 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
           <span class="wa-spinner" id="wa-connect-spinner"></span>
           <span id="wa-connect-text">Conectar WhatsApp</span>
         </button>
-        <a class="wa-btn wa-btn-onnavy" href="guia-agente.html#whatsapp">Ver cómo funciona</a>
       </div>
       <p class="wa-stage__foot"><b>Tu número se queda contigo.</b> Sigue funcionando en la app de WhatsApp de tu celular al mismo tiempo que en Broquer. No migras nada ni contratas un número nuevo.</p>
     </section>
@@ -281,8 +828,8 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 
   </div>
 
-  <!-- ═══ ESTADO: CONECTADO ═══ -->
-  <div id="wa-connected" hidden>
+  <!-- ═══ VISTA · AJUSTES ═══ -->
+  <div class="wa-view" id="view-ajustes" hidden>
 
     <section class="wa-stage wa-stage--live">
       <div class="wa-live__top">
@@ -299,18 +846,18 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
     </section>
 
     <div class="wa-jump">
-      <a href="bandeja.html" class="wa-btn wa-btn-primary">Abrir bandeja</a>
-      <a href="guia-agente.html#whatsapp" class="wa-btn wa-btn-ghost">Cómo funciona</a>
+      <button type="button" class="wa-btn wa-btn-primary" onclick="irATab('chats')">Ir a tus chats</button>
+      <button type="button" class="wa-btn wa-btn-ink" onclick="irATab('entrenamiento')">Entrenar a Recepción</button>
     </div>
 
     <section class="wa-panel">
       <div class="wa-panel__head">
         <div>
           <h3>Recepción automática</h3>
-          <p>Cuando está encendida, Recepción contesta a los leads nuevos. Se apaga sola en cada chat donde tú respondas.</p>
+          <p>Cuando está encendida, Recepción contesta a los leads nuevos. Se apaga sola en cada chat donde tú respondas. Si la apagas aquí, no contesta nada: ni los chats de siempre ni los que lleguen nuevos.</p>
         </div>
         <label class="wa-toggle" aria-label="Recepción automática">
-          <input type="checkbox" id="wa-global-ia" checked onchange="toggleIAGlobal(this.checked)"/>
+          <input type="checkbox" id="wa-global-ia" onchange="toggleIAGlobal(this.checked)"/>
           <span class="wa-toggle-track"></span>
           <span class="wa-toggle-thumb"></span>
         </label>
@@ -340,10 +887,151 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 
   </div>
 
-  <!-- Pie: se ve conectado o no, porque es lo que da confianza ANTES de conectar -->
-  <div class="wa-foot"><!-- AUDIT-EXEMPT-LINE: insignia oficial de Meta (marca externa) -->
-    <img src="meta-tech-provider.png" alt="Meta Tech Provider"/>
-    <p>Broquer es Tech Provider de Meta. Tu número se conecta con la API oficial de WhatsApp Business.</p>
+  <!-- ═══ VISTA · ENTRENAMIENTO ═══ -->
+  <div class="wa-view" id="view-entrenamiento" hidden>
+
+    <section class="wa-panel">
+      <div class="wa-panel__head">
+        <div>
+          <h3>Cómo habla Recepción</h3>
+          <p>Escríbelo como se lo dirías a un asistente nuevo. Recepción lo entiende: no tienes que armar diagramas ni aprender un lenguaje raro.</p>
+        </div>
+      </div>
+
+      <div style="margin-top:var(--sp-5)">
+        <div class="wa-field">
+          <label for="tr-tono">Tono</label>
+          <span class="wa-help">Cómo quieres que suene contigo enfrente de un cliente.</span>
+          <input type="text" id="tr-tono" placeholder="Cercano y breve, de usted, sin presionar"/>
+        </div>
+
+        <div class="wa-field">
+          <label for="tr-primer">Saludo de apertura</label>
+          <span class="wa-help">Las primeras palabras que lee el prospecto. Déjalo vacío y Recepción saluda a su manera.</span>
+          <textarea id="tr-primer" placeholder="Hola, soy la recepción de Salvador Bolaños. ¿En qué propiedad estás interesado?"></textarea>
+        </div>
+
+        <div class="wa-field">
+          <label for="tr-puede">Qué sí puede responder</label>
+          <span class="wa-help">Los temas donde le das permiso de hablar sin consultarte.</span>
+          <textarea id="tr-puede" placeholder="Ubicación por colonia, superficie, recámaras, si acepta crédito Infonavit, disponibilidad para agendar visita."></textarea>
+        </div>
+
+        <div class="wa-field">
+          <label for="tr-debe">Qué siempre debe hacer</label>
+          <span class="wa-help">Lo que no se le puede olvidar en ninguna conversación.</span>
+          <textarea id="tr-debe" placeholder="Preguntar si es crédito o contado. Preguntar para cuándo lo necesita. Ofrecer visita cuando el lead se vea serio."></textarea>
+        </div>
+
+        <div class="wa-field">
+          <label for="tr-nodebe">Qué nunca debe hacer</label>
+          <span class="wa-help">Lo que te costaría caro si lo dice. Esto pesa más que cualquier otra instrucción.</span>
+          <textarea id="tr-nodebe" placeholder="Dar el precio final ni negociar. Dar la dirección exacta antes de la cita. Prometer que el crédito se aprueba. Hablar de comisiones."></textarea>
+        </div>
+      </div>
+    </section>
+
+    <section class="wa-panel">
+      <div class="wa-panel__head">
+        <div>
+          <h3>Barreras</h3>
+          <p>Estas no son sugerencias: se cumplen antes de que Recepción abra la boca. Lo de arriba lo interpreta la IA; esto se ejecuta pase lo que pase.</p>
+        </div>
+      </div>
+
+      <div style="margin-top:var(--sp-3)">
+
+        <div class="wa-rule">
+          <div class="wa-rule__txt">
+            <b>Horario de atención</b>
+            <span>Fuera de este rango Recepción no contesta. El mensaje del prospecto se guarda y te llega el aviso igual.</span>
+          </div>
+          <label class="wa-toggle" aria-label="Horario de atención">
+            <input type="checkbox" id="tr-horario" onchange="pintarHorario()"/>
+            <span class="wa-toggle-track"></span>
+            <span class="wa-toggle-thumb"></span>
+          </label>
+        </div>
+
+        <div class="wa-sub" id="tr-horario-sub" hidden>
+          <div class="wa-horas">
+            <div>
+              <label for="tr-inicio">Desde</label>
+              <input type="time" id="tr-inicio" value="08:00"/>
+            </div>
+            <div>
+              <label for="tr-fin">Hasta</label>
+              <input type="time" id="tr-fin" value="21:00"/>
+            </div>
+          </div>
+          <div class="wa-field" style="margin-top:var(--sp-4)">
+            <label for="tr-fuera">Mensaje fuera de horario</label>
+            <span class="wa-help">Opcional. Si lo dejas vacío, Recepción se queda callada en vez de mandar algo que tú no escribiste.</span>
+            <textarea id="tr-fuera" placeholder="Gracias por escribir. Te contesto mañana a primera hora."></textarea>
+          </div>
+        </div>
+
+        <div class="wa-rule">
+          <div class="wa-rule__txt">
+            <b>Tope de mensajes</b>
+            <span>Después de este número de respuestas, Recepción se apaga en ese chat y te avisa. Cero significa sin tope.</span>
+          </div>
+          <div style="width:96px;flex:none">
+            <input type="number" id="tr-tope" min="0" max="50" step="1" value="0" aria-label="Tope de mensajes de Recepción"/>
+          </div>
+        </div>
+
+        <div class="wa-field" style="margin-top:var(--sp-5)">
+          <label for="tr-palabra">Palabras que te pasan el chat</label>
+          <span class="wa-help">Si el prospecto escribe alguna de estas, Recepción se apaga en ese chat y te manda el aviso. Escribe una y presiona Enter.</span>
+          <div class="wa-chips" id="tr-chips"></div>
+          <p class="wa-chips__empty" id="tr-chips-empty">Todavía no agregas ninguna.</p>
+          <input type="text" id="tr-palabra" placeholder="abogado" autocomplete="off"/>
+        </div>
+
+      </div>
+    </section>
+
+    <div class="wa-quiet">
+      <div>
+        <h4>Pausar el entrenamiento</h4>
+        <p>Recepción deja de contestar por completo, sin desconectar tu número ni perder lo que ya escribiste aquí.</p>
+      </div>
+      <label class="wa-toggle" aria-label="Entrenamiento activo">
+        <input type="checkbox" id="tr-activo" checked/>
+        <span class="wa-toggle-track"></span>
+        <span class="wa-toggle-thumb"></span>
+      </label>
+    </div>
+
+    <div class="wa-save">
+      <p>Los cambios aplican al siguiente mensaje que llegue.</p>
+      <button class="wa-btn wa-btn-primary" id="tr-save-btn" onclick="guardarEntrenamiento()">
+        <span class="wa-spinner" id="tr-save-spinner"></span>
+        <span id="tr-save-text">Guardar entrenamiento</span>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ═══ PIE ═══ -->
+  <div class="wa-foot" id="wa-foot" hidden>
+    <a class="wa-howto" href="guia-agente.html#whatsapp">
+      <span class="wa-howto__ico">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75c-1.6-1-3.5-1.5-5.25-1.5-.9 0-1.8.13-2.65.38a.75.75 0 00-.6.73v11.4c0 .5.47.86.95.73a9.4 9.4 0 012.3-.29c1.9 0 3.85.56 5.25 1.55m0-13c1.6-1 3.5-1.5 5.25-1.5.9 0 1.8.13 2.65.38a.75.75 0 01.6.73v11.4c0 .5-.47.86-.95.73a9.4 9.4 0 00-2.3-.29c-1.9 0-3.85.56-5.25 1.55m0-13v13"/></svg>
+      </span>
+      <span class="wa-howto__txt">
+        <b>Cómo funciona</b>
+        <span>Qué contesta Recepción, cuándo se apaga sola y cómo entrenarla para que hable como tú.</span>
+      </span>
+      <svg class="wa-howto__arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12l-7.5 7.5M21 12H3"/></svg>
+    </a>
+
+    <!-- Se ve conectado o no: es lo que da confianza ANTES de conectar -->
+    <div class="wa-badge"><!-- AUDIT-EXEMPT-LINE: insignia oficial de Meta (marca externa) -->
+      <img src="meta-tech-provider.png" alt="Meta Tech Provider"/>
+      <p>Broquer es Tech Provider de Meta. Tu número se conecta con la API oficial de WhatsApp Business.</p>
+    </div>
   </div>
 
 </div>
@@ -407,6 +1095,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
   </div>
 </div>
 
+<script src="app-shell.js" defer></script>
 <script>
 const API_BASE = window.API_BASE || 'https://brokrebapi-production.up.railway.app';
 // ID de tu app de Meta (la misma de Facebook Ads)
@@ -428,6 +1117,35 @@ window.fbAsyncInit = function(){
 
 function getToken(){
   return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || null;
+}
+
+/* ═════════════════════════════════════════════════════════
+   PESTAÑAS
+   La vista Chats vive fuera de .wa-wrap porque necesita alto
+   completo. La clase .wa-chats en <body> es la que conmuta la
+   geometría del shell; sin ella el hilo no tendría dónde crecer.
+   ═════════════════════════════════════════════════════════ */
+let TAB = 'chats';
+let _chatsIniciado = false;
+
+function irATab(tab){
+  TAB = tab;
+  document.querySelectorAll('.wa-tab').forEach(b => b.classList.toggle('is-active', b.dataset.tab === tab));
+  document.getElementById('view-chats').hidden         = tab !== 'chats';
+  document.getElementById('view-ajustes').hidden       = tab !== 'ajustes';
+  document.getElementById('view-entrenamiento').hidden = tab !== 'entrenamiento';
+  document.getElementById('wa-wrap').hidden            = tab === 'chats';
+  document.body.classList.toggle('wa-chats', tab === 'chats');
+
+  // El hash sobrevive a recargas y sirve de enlace profundo desde el shell y
+  // desde las notificaciones. El query (?c=<id>) va ANTES del hash: al revés
+  // queda '#chats?c=...' y deja de ser un query, con lo que el enlace de la
+  // notificación se pierde en la primera recarga. replaceState para no
+  // ensuciar el historial con cada cambio de pestaña.
+  try{ history.replaceState(null, '', location.pathname + location.search + '#' + tab); }catch(_){}
+
+  if(tab === 'chats' && !_chatsIniciado){ _chatsIniciado = true; iniciarChats(); }
+  if(tab === 'entrenamiento') cargarEntrenamiento();
 }
 
 // ── Formato del número: +52 443 123 4567 ─────────────────
@@ -464,12 +1182,30 @@ async function checkWAStatus(){
 }
 
 function showState(state){
+  const conectado = state === 'connected';
   document.getElementById('wa-boot').hidden = true;
-  document.getElementById('wa-not-connected').hidden = state !== 'not-connected';
-  document.getElementById('wa-connected').hidden     = state !== 'connected';
+  document.getElementById('wa-not-connected').hidden = conectado;
+  document.getElementById('wa-tabs').hidden = !conectado;
+  document.getElementById('wa-foot').hidden = false;
+
+  if(!conectado){
+    // Sin número no hay chats ni entrenamiento que valgan: una sola pantalla.
+    document.body.classList.remove('wa-chats');
+    document.getElementById('view-chats').hidden = true;
+    document.getElementById('view-ajustes').hidden = true;
+    document.getElementById('view-entrenamiento').hidden = true;
+    document.getElementById('wa-wrap').hidden = false;
+    return;
+  }
+
+  // Pestaña inicial: la del hash si viene, si no Chats — que es a lo que
+  // el agente entra el 95% de las veces.
+  const hash = (location.hash || '').replace('#','');
+  const cid  = new URLSearchParams(location.search).get('c');
+  irATab(cid ? 'chats' : (['chats','ajustes','entrenamiento'].includes(hash) ? hash : 'chats'));
 }
 
-// ── Métricas reales de la bandeja (Supabase, vía el shell) ───────
+// ── Métricas reales de los chats (Supabase, vía el shell) ───────
 // Si el shell aún no expone brokrSb o la consulta falla, la rejilla
 // simplemente no se muestra. Nunca se pintan ceros inventados.
 async function cargarMetricas(){
@@ -591,16 +1327,25 @@ function resetConnectBtn(){
 }
 
 // ── Toggle IA global ─────────────────────────────────────
+// Ya no propaga a cada conversación: el backend evalúa
+// ia_global AND conv.ai_enabled en cada mensaje entrante. Por eso
+// apagarlo aquí sí alcanza a los leads que todavía no existen.
 async function toggleIAGlobal(enabled){
   const tok = getToken();
   try{
-    await fetch(API_BASE + '/whatsapp/ia-global', {
+    const r = await fetch(API_BASE + '/whatsapp/ia-global', {
       method: 'PATCH',
       headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+tok },
       body: JSON.stringify({ ia_enabled: enabled })
     });
-    toast(enabled ? 'Recepción activada.' : 'Recepción pausada para todos los chats.');
-  }catch(e){ toast('No se pudo actualizar.'); }
+    if(!r.ok) throw new Error('http ' + r.status);
+    toast(enabled ? 'Recepción activada.' : 'Recepción apagada. No contestará ningún chat.');
+    if(_chatsIniciado){ pintarAi(); renderConvs(true); }
+  }catch(e){
+    // Si falló, el switch no debe mentir sobre el estado real.
+    document.getElementById('wa-global-ia').checked = !enabled;
+    toast('No se pudo actualizar. Intenta de nuevo.');
+  }
 }
 
 // ── Desconectar ──────────────────────────────────────────
@@ -643,6 +1388,120 @@ function toast(msg){
   el.textContent = msg; el.style.opacity = '1';
   if(_tt) clearTimeout(_tt);
   _tt = setTimeout(() => el.style.opacity = '0', 3400);
+}
+
+/* ═════════════════════════════════════════════════════════
+   ENTRENAMIENTO
+   ═════════════════════════════════════════════════════════ */
+let PALABRAS = [];
+let _trCargado = false;
+
+function pintarHorario(){
+  document.getElementById('tr-horario-sub').hidden = !document.getElementById('tr-horario').checked;
+}
+
+function pintarChips(){
+  const box = document.getElementById('tr-chips');
+  document.getElementById('tr-chips-empty').hidden = PALABRAS.length > 0;
+  box.innerHTML = PALABRAS.map((p, i) => `
+    <span class="wa-chip">${escapeHtml(p)}
+      <button type="button" onclick="quitarPalabra(${i})" aria-label="Quitar ${escapeHtml(p)}">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </span>`).join('');
+}
+
+function quitarPalabra(i){ PALABRAS.splice(i, 1); pintarChips(); }
+
+function agregarPalabra(){
+  const inp = document.getElementById('tr-palabra');
+  const v = inp.value.trim().toLowerCase();
+  if(!v) return;
+  if(PALABRAS.length >= 20){ toast('Máximo 20 palabras.'); return; }
+  if(PALABRAS.includes(v)){ inp.value = ''; return; }
+  PALABRAS.push(v);
+  inp.value = '';
+  pintarChips();
+}
+
+async function cargarEntrenamiento(){
+  if(_trCargado) return;
+  const tok = getToken();
+  if(!tok) return;
+  try{
+    const r = await fetch(API_BASE + '/whatsapp/training', { headers:{ Authorization:'Bearer '+tok } });
+    if(!r.ok) return;
+    const d = await r.json();
+    _trCargado = true;
+    document.getElementById('tr-tono').value    = d.tono || '';
+    document.getElementById('tr-primer').value  = d.primer_mensaje || '';
+    document.getElementById('tr-puede').value   = d.puede || '';
+    document.getElementById('tr-debe').value    = d.debe || '';
+    document.getElementById('tr-nodebe').value  = d.no_debe || '';
+    document.getElementById('tr-horario').checked = !!d.horario_activo;
+    // Postgres devuelve 'time' como '08:00:00'; <input type="time"> quiere HH:MM.
+    document.getElementById('tr-inicio').value  = String(d.hora_inicio || '08:00').slice(0,5);
+    document.getElementById('tr-fin').value     = String(d.hora_fin || '21:00').slice(0,5);
+    document.getElementById('tr-fuera').value   = d.fuera_horario_msg || '';
+    document.getElementById('tr-tope').value    = Number(d.max_mensajes_ia) || 0;
+    document.getElementById('tr-activo').checked = d.activo !== false;
+    PALABRAS = Array.isArray(d.escalar_palabras) ? d.escalar_palabras.slice() : [];
+    pintarHorario();
+    pintarChips();
+  }catch(e){ toast('No se pudo cargar el entrenamiento.'); }
+}
+
+async function guardarEntrenamiento(){
+  const btn = document.getElementById('tr-save-btn');
+  const spinner = document.getElementById('tr-save-spinner');
+  const text = document.getElementById('tr-save-text');
+
+  const ini = document.getElementById('tr-inicio').value || '08:00';
+  const fin = document.getElementById('tr-fin').value || '21:00';
+  if(document.getElementById('tr-horario').checked && ini === fin){
+    toast('El horario no puede empezar y terminar a la misma hora.');
+    return;
+  }
+
+  // Una palabra escrita y sin dar Enter se guarda igual: perderla en
+  // silencio sería peor que asumir la intención obvia.
+  agregarPalabra();
+
+  btn.disabled = true; spinner.classList.add('active'); text.textContent = 'Guardando…';
+
+  const payload = {
+    tono:              document.getElementById('tr-tono').value.trim(),
+    primer_mensaje:    document.getElementById('tr-primer').value.trim(),
+    puede:             document.getElementById('tr-puede').value.trim(),
+    debe:              document.getElementById('tr-debe').value.trim(),
+    no_debe:           document.getElementById('tr-nodebe').value.trim(),
+    horario_activo:    document.getElementById('tr-horario').checked,
+    hora_inicio:       ini,
+    hora_fin:          fin,
+    fuera_horario_msg: document.getElementById('tr-fuera').value.trim(),
+    max_mensajes_ia:   Math.max(0, Math.min(50, Number(document.getElementById('tr-tope').value) || 0)),
+    escalar_palabras:  PALABRAS,
+    activo:            document.getElementById('tr-activo').checked,
+  };
+
+  const tok = getToken();
+  try{
+    const r = await fetch(API_BASE + '/whatsapp/training', {
+      method: 'PUT',
+      headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+tok },
+      body: JSON.stringify(payload)
+    });
+    if(!r.ok){
+      let motivo = 'No se pudo guardar (' + r.status + ').';
+      try{ const e = await r.json(); if(e && e.detail) motivo = e.detail; }catch(_){}
+      toast(motivo);
+      return;
+    }
+    toast('Entrenamiento guardado. Aplica al siguiente mensaje.');
+  }catch(e){ toast('Error de conexión.'); }
+  finally{
+    btn.disabled = false; spinner.classList.remove('active'); text.textContent = 'Guardar entrenamiento';
+  }
 }
 
 // ── Plantillas de mensaje ────────────────────────────────
@@ -749,9 +1608,438 @@ document.querySelectorAll('.wa-modal-bg').forEach(bg => {
   bg.addEventListener('click', e => { if(e.target === bg) bg.classList.remove('open'); });
 });
 
+/* ═════════════════════════════════════════════════════════
+   CHATS — antes bandeja.html. Mismo código, misma lógica: lo
+   único que cambió es que ya no vive en otra página.
+   ═════════════════════════════════════════════════════════ */
+function _sb(){ if(!window.brokrSb) throw new Error('La app aún carga, intenta en un segundo.'); return window.brokrSb; }
+function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
+async function ready(){ for(let i=0;i<40 && !window.brokrSb;i++) await wait(150); }
+
+let CONVS   = [];
+let PREVIEW = {};      // conversation_id -> { body, sender }
+let ACTIVE  = null;
+let FILTRO  = 'todos';
+let BUSCA   = '';
+let pollTimer = null;
+let _sigConvs = '';    // firma para no repintar la lista sin cambios
+let _sigMsgs  = '';
+
+/* ── Utilidades ── */
+function esc(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function inicial(n){ return (n||'?').trim().charAt(0).toUpperCase() || '?'; }
+
+function timeAgo(iso){
+  if(!iso) return '';
+  const s = (Date.now() - new Date(iso).getTime())/1000;
+  if(s<60) return 'ahora';
+  if(s<3600) return Math.floor(s/60)+' min';
+  if(s<86400) return Math.floor(s/3600)+' h';
+  if(s<604800) return Math.floor(s/86400)+' d';
+  return new Date(iso).toLocaleDateString('es-MX',{day:'numeric',month:'short'});
+}
+function hora(iso){
+  if(!iso) return '';
+  return new Date(iso).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+}
+function diaEtiqueta(iso){
+  const d = new Date(iso);
+  const hoy = new Date(); const ayer = new Date(Date.now()-86400000);
+  const mismo = (a,b)=> a.toDateString()===b.toDateString();
+  if(mismo(d,hoy))  return 'Hoy';
+  if(mismo(d,ayer)) return 'Ayer';
+  return d.toLocaleDateString('es-MX',{day:'numeric',month:'long'});
+}
+function fmtTel(raw){
+  const d = String(raw||'').replace(/\D/g,'');
+  if(!d) return '';
+  if(d.length===12 && d.startsWith('52')) return '+52 '+d.slice(2,5)+' '+d.slice(5,8)+' '+d.slice(8);
+  if(d.length===13 && d.startsWith('521')) return '+52 '+d.slice(3,6)+' '+d.slice(6,9)+' '+d.slice(9);
+  return '+'+d;
+}
+function esCaliente(ct){ return (ct.temperatura||'') === 'Caliente'; }
+
+/* El switch global manda: si está apagado, ningún chat tiene Recepción
+   activa por mucho que su ai_enabled diga que sí. La pantalla no debe
+   prometer lo que el backend no va a hacer. */
+function iaGlobalOn(){ return document.getElementById('wa-global-ia').checked; }
+
+/* ── Cargar conversaciones (con su contacto embebido) ── */
+async function cargarConvs(){
+  const r = await _sb().fetch('rest/v1/wa_conversations?select=*,wa_contacts(*)&order=last_message_at.desc.nullslast');
+  if(!r.ok){
+    document.getElementById('convs').innerHTML = '<div class="bx-list__empty"><p>No se pudieron cargar los chats ('+r.status+').</p></div>';
+    return;
+  }
+  CONVS = await r.json();
+  renderConvs();
+  pintarBadge();
+}
+
+/* ── Globito de la pestaña Chats ── */
+function pintarBadge(){
+  const n = CONVS.reduce((a,c) => a + (Number(c.unread_count)||0), 0);
+  const b = document.getElementById('wa-tab-badge');
+  b.textContent = n > 99 ? '99+' : n;
+  b.classList.toggle('on', n > 0);
+}
+
+/* ── Último mensaje de cada conversación, para la vista previa ── */
+async function cargarPreviews(){
+  try{
+    const r = await _sb().fetch('rest/v1/wa_messages?select=conversation_id,body,sender,created_at&order=created_at.desc&limit=300');
+    if(!r.ok) return;
+    const rows = await r.json();
+    const map = {};
+    for(const m of rows){ if(!map[m.conversation_id]) map[m.conversation_id] = m; }
+    PREVIEW = map;
+  }catch(e){ /* sin vista previa: la lista cae al campo "busca" */ }
+}
+
+/* ── Filtro + búsqueda ── */
+function setFiltro(f){
+  FILTRO = f;
+  document.querySelectorAll('.bx-filter').forEach(b => b.classList.toggle('is-active', b.dataset.f === f));
+  renderConvs(true);
+}
+function visibles(){
+  return CONVS.filter(c => {
+    const ct = c.wa_contacts || {};
+    if(FILTRO === 'calientes' && !esCaliente(ct)) return false;
+    if(FILTRO === 'mios' && c.ai_enabled) return false;
+    if(BUSCA){
+      const heno = ((ct.nombre||'') + ' ' + (ct.wa_id||'') + ' ' + (ct.busca||'')).toLowerCase();
+      if(!heno.includes(BUSCA)) return false;
+    }
+    return true;
+  });
+}
+
+function renderConvs(force){
+  const lista = visibles();
+  const sig = FILTRO + '|' + BUSCA + '|' + (ACTIVE ? ACTIVE.id : '') + '|' + iaGlobalOn() + '|' +
+    lista.map(c => c.id + (c.last_message_at||'') + c.ai_enabled + (c.unread_count||0) + ((c.wa_contacts||{}).temperatura||'') + ((PREVIEW[c.id]||{}).body||'').slice(0,20)).join(',');
+  if(!force && sig === _sigConvs) return;
+  _sigConvs = sig;
+
+  document.getElementById('bxCount').textContent = CONVS.length ? CONVS.length + (CONVS.length===1 ? ' conversación' : ' conversaciones') : '';
+
+  const box = document.getElementById('convs');
+
+  if(!CONVS.length){
+    box.innerHTML = '<div class="bx-list__empty"><p>Aún no llega ningún mensaje. En cuanto un prospecto te escriba por WhatsApp, la conversación aparece aquí.</p><button type="button" class="bx-cta" onclick="irATab(\'ajustes\')">Revisar ajustes</button></div>';
+    return;
+  }
+  if(!lista.length){
+    box.innerHTML = '<div class="bx-list__empty"><p>Ninguna conversación coincide con lo que buscas.</p></div>';
+    return;
+  }
+
+  box.innerHTML = lista.map(c => {
+    const ct     = c.wa_contacts || {};
+    const nombre = ct.nombre || fmtTel(ct.wa_id) || 'Prospecto';
+    const pv     = PREVIEW[c.id];
+    let prev = '';
+    if(pv && pv.body){
+      const quien = pv.sender === 'lead' ? '' : (pv.sender === 'ai' ? '<b>Recepción:</b> ' : '<b>Tú:</b> ');
+      prev = quien + esc(pv.body.replace(/\s+/g,' ').slice(0,70));
+    } else if(ct.busca){
+      prev = esc(ct.busca.slice(0,70));
+    }
+    const tags = [];
+    if(esCaliente(ct))  tags.push('<span class="bx-tag bx-tag--hot">Caliente</span>');
+    if(!c.ai_enabled)   tags.push('<span class="bx-tag bx-tag--mine">Tú al control</span>');
+
+    const sinLeer = Number(c.unread_count) || 0;
+
+    return `<button type="button" class="bx-conv ${ACTIVE && ACTIVE.id === c.id ? 'is-active' : ''} ${sinLeer ? 'has-unread' : ''}" onclick="abrir('${c.id}')">
+      <span class="bx-ava">${esc(inicial(nombre))}</span>
+      <span class="bx-conv__main">
+        <span class="bx-conv__top">
+          <span class="bx-conv__name">${esc(nombre)}</span>
+          <span class="bx-conv__time">${timeAgo(c.last_message_at)}</span>
+          ${sinLeer ? `<span class="bx-unread">${sinLeer > 99 ? '99+' : sinLeer}</span>` : ''}
+        </span>
+        <span class="bx-conv__prev">${prev}</span>
+        ${tags.length ? '<span class="bx-conv__tags">'+tags.join('')+'</span>' : ''}
+      </span>
+    </button>`;
+  }).join('');
+}
+
+/* ── Abrir una conversación ── */
+async function abrir(id){
+  ACTIVE = CONVS.find(c => c.id === id);
+  if(!ACTIVE) return;
+  _sigMsgs = '';
+  document.getElementById('view-chats').classList.add('thread-open');
+  document.getElementById('threadEmpty').hidden = true;
+  document.getElementById('threadInner').hidden = false;
+
+  const ct = ACTIVE.wa_contacts || {};
+  const nombre = ct.nombre || fmtTel(ct.wa_id) || 'Prospecto';
+  document.getElementById('thAva').textContent   = inicial(nombre);
+  document.getElementById('thName').textContent  = nombre;
+  document.getElementById('thPhone').textContent = fmtTel(ct.wa_id);
+  document.getElementById('aiToggle').checked    = !!ACTIVE.ai_enabled;
+
+  pintarAi();
+  pintarDossier(ct);
+  renderConvs(true);
+  await cargarMsgs();
+  await marcarLeido(ACTIVE);
+}
+
+/* ── Marcar la conversación como leída (baja el globito rojo) ── */
+async function marcarLeido(conv){
+  if(!conv || !conv.unread_count) return;
+  conv.unread_count = 0;
+  pintarBadge();
+  try{
+    await _sb().fetch('rest/v1/wa_conversations?id=eq.'+conv.id, {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json', Prefer:'return=minimal'},
+      body: JSON.stringify({unread_count: 0})
+    });
+    // El shell repinta el globito de la barra inferior sin esperar su ciclo.
+    window.dispatchEvent(new CustomEvent('brokr-chats-leidos'));
+  }catch(e){}
+}
+
+function pintarAi(){
+  const chat   = document.getElementById('aiToggle').checked;
+  const global = iaGlobalOn();
+  const strip  = document.getElementById('aiStrip');
+  strip.classList.toggle('is-manual', global && !chat);
+  strip.classList.toggle('is-off', !global);
+  document.getElementById('aiLabel').textContent = chat ? 'Recepción' : 'Tú al control';
+  document.getElementById('aiHint').textContent = !global
+    ? 'Recepción está apagada para todos tus chats. Préndela en Ajustes para que vuelva a contestar.'
+    : (chat
+      ? 'Recepción está contestando este chat. Si escribes, tomas el control y la IA se apaga.'
+      : 'Tú llevas este chat. Prende el switch para que Recepción vuelva a contestar.');
+}
+
+/* ── Expediente ── */
+function toggleDossier(){ document.getElementById('view-chats').classList.toggle('dossier-open'); }
+
+function pintarDossier(ct){
+  const body = document.getElementById('dossierBody');
+  // El esquema trae `score int default 0`: un 0 significa "Recepción todavía no
+  // lo califica", no "vale cero". Se pinta como guion, nunca como cero grande.
+  const score = (typeof ct.score === 'number' && ct.score > 0) ? ct.score : null;
+  const temp  = ct.temperatura || 'Nuevo';
+  const tempCls = { 'Caliente':'caliente', 'Tibio':'tibio', 'Frío':'frio', 'Nuevo':'nuevo' }[temp] || 'nuevo';
+
+  const C = 2 * Math.PI * 33;                      // circunferencia del anillo (r=33)
+  const dash = score === null ? 0 : C * Math.max(0, Math.min(100, score)) / 100;
+
+  const ring = `<div class="bx-score__ring">
+      <svg viewBox="0 0 76 76" aria-hidden="true">
+        <circle cx="38" cy="38" r="33" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="6"/>
+        <circle cx="38" cy="38" r="33" fill="none" stroke="var(--sky-blue-on-dark)" stroke-width="6"
+                stroke-linecap="round" stroke-dasharray="${dash} ${C}"/>
+      </svg>
+      <span class="bx-score__val">${score === null ? '—' : score}</span>
+    </div>`;
+
+  const facts = [];
+  if(ct.presupuesto)  facts.push(['Presupuesto', esc(ct.presupuesto)]);
+  if(ct.forma_pago)   facts.push(['Forma de pago', esc(ct.forma_pago)]);
+  if(ct.etapa)        facts.push(['Etapa', esc(ct.etapa)]);
+  if(ct.busca)        facts.push(['Busca', esc(ct.busca)]);
+  if(ACTIVE && ACTIVE.property_ctx) facts.push(['Llegó por', esc(ACTIVE.property_ctx)]);
+
+  body.innerHTML = `
+    <div class="bx-score">
+      ${ring}
+      <div class="bx-score__side">
+        <span class="bx-temp bx-temp--${tempCls}">${esc(temp)}</span>
+        <p>${score === null ? 'Recepción aún no califica a este prospecto.' : 'Score de calificación sobre 100.'}</p>
+      </div>
+    </div>
+    ${facts.length ? '<dl class="bx-facts">' + facts.map(f => `<div class="bx-fact"><dt>${f[0]}</dt><dd>${f[1]}</dd></div>`).join('') + '</dl>'
+                   : '<p class="bx-dossier__empty">Recepción todavía no reúne datos de este prospecto. Aparecerán aquí conforme avance la plática.</p>'}
+    ${ct.resumen ? `<div class="bx-resumen"><h3>Resumen</h3><p>${esc(ct.resumen)}</p></div>` : ''}
+  `;
+}
+
+/* ── Mensajes ── */
+async function cargarMsgs(){
+  if(!ACTIVE) return;
+  const r = await _sb().fetch('rest/v1/wa_messages?conversation_id=eq.'+ACTIVE.id+'&select=*&order=created_at.asc&limit=200');
+  if(!r.ok) return;
+  const msgs = await r.json();
+
+  const sig = ACTIVE.id + '|' + msgs.length + '|' + (msgs.length ? msgs[msgs.length-1].id : '');
+  if(sig === _sigMsgs) return;
+  _sigMsgs = sig;
+
+  const box = document.getElementById('msgs');
+  const nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 120;
+
+  let html = '';
+  let ultimoDia = '';
+  for(const m of msgs){
+    const dia = m.created_at ? diaEtiqueta(m.created_at) : '';
+    if(dia && dia !== ultimoDia){
+      html += `<div class="bx-day"><span>${dia}</span></div>`;
+      ultimoDia = dia;
+    }
+    const quien = m.sender === 'ai' ? '<b>Recepción</b>' : (m.sender === 'agent' ? '<b>Tú</b>' : '');
+    html += `<div class="bx-row ${esc(m.sender)}">
+      <div class="bx-bub">${esc(m.body)}</div>
+      <div class="bx-meta">${quien}<span>${hora(m.created_at)}</span></div>
+    </div>`;
+  }
+  box.innerHTML = html || '<div class="bx-list__empty"><p>Todavía no hay mensajes en este chat.</p></div>';
+  if(nearBottom) box.scrollTop = box.scrollHeight;
+}
+
+/* ── Prender/apagar Recepción en este chat (PATCH a Supabase, RLS) ── */
+async function toggleAI(){
+  if(!ACTIVE) return;
+  const val = document.getElementById('aiToggle').checked;
+  pintarAi();
+  if(val && !iaGlobalOn()){
+    toast('Recepción está apagada para todos tus chats. Préndela en Ajustes.');
+  }
+  await _sb().fetch('rest/v1/wa_conversations?id=eq.'+ACTIVE.id, {
+    method:'PATCH',
+    headers:{'Content-Type':'application/json', Prefer:'return=minimal'},
+    body: JSON.stringify({ai_enabled: val})
+  });
+  ACTIVE.ai_enabled = val;
+  renderConvs(true);
+}
+
+/* ── Enviar mensaje a mano (pasa por el backend, que tiene el token de WhatsApp) ── */
+async function sendMsg(){
+  const ta = document.getElementById('composer');
+  const body = ta.value.trim();
+  if(!body || !ACTIVE) return;
+  const btn = document.getElementById('sendBtn');
+  btn.disabled = true;
+  try{
+    const tok = await _sb().ensureToken();
+    const r = await fetch(window.API_BASE + '/whatsapp/send', {
+      method:'POST',
+      headers:{'Content-Type':'application/json', Authorization:'Bearer '+tok},
+      body: JSON.stringify({ conversation_id: ACTIVE.id, body })
+    });
+    if(!r.ok){
+      // El backend manda en 'detail' el motivo real de Meta ya traducido
+      // (nombre visible sin aprobar, ventana de 24h vencida, token caducado...).
+      // El texto queda en el composer para poder reintentar sin reescribirlo.
+      let motivo = 'No se pudo enviar el mensaje (' + r.status + ').';
+      try{ const e = await r.json(); if(e && e.detail) motivo = e.detail; }catch(_){}
+      alert(motivo);
+      btn.disabled = false;
+      return;
+    }
+    ta.value=''; growBox(ta);
+    // al contestar tú, Recepción se apaga (el backend ya lo hizo)
+    document.getElementById('aiToggle').checked = false;
+    ACTIVE.ai_enabled = false;
+    pintarAi();
+    _sigMsgs = '';
+    await cargarMsgs();
+    await cargarPreviews();
+    renderConvs(true);
+  }catch(e){ alert('Error: '+e.message); }
+  btn.disabled = false;
+}
+
+function closeThread(){
+  document.getElementById('view-chats').classList.remove('thread-open','dossier-open');
+  ACTIVE = null;
+  document.getElementById('threadInner').hidden = true;
+  document.getElementById('threadEmpty').hidden = false;
+  renderConvs(true);
+}
+function growBox(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,132)+'px'; }
+
+/* Enter envía, Shift+Enter hace salto de línea */
+document.getElementById('composer').addEventListener('keydown', e => {
+  if(e.key === 'Enter' && !e.shiftKey && !e.isComposing){ e.preventDefault(); sendMsg(); }
+});
+document.getElementById('bxSearch').addEventListener('input', e => {
+  BUSCA = e.target.value.trim().toLowerCase();
+  renderConvs(true);
+});
+document.getElementById('tr-palabra').addEventListener('keydown', e => {
+  if(e.key === 'Enter' || e.key === ','){ e.preventDefault(); agregarPalabra(); }
+});
+
+/* ── Polling: refresca lista y, si hay hilo abierto, mensajes ── */
+function startPolling(){
+  if(pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    // Sin la pestaña de Chats abierta no hay nada que repintar: el globito
+    // de la barra inferior lo lleva el shell por su cuenta.
+    if(document.hidden || TAB !== 'chats') return;
+    try{
+      await cargarConvs();
+      await cargarPreviews();
+      renderConvs();
+      if(ACTIVE){
+        // ACTIVE apunta al objeto viejo: lo reengancho al recién cargado
+        // para no perder el unread_count fresco de Supabase.
+        const fresco = CONVS.find(c => c.id === ACTIVE.id);
+        if(fresco){ fresco.ai_enabled = ACTIVE.ai_enabled; ACTIVE = fresco; }
+        await cargarMsgs();
+        await marcarLeido(ACTIVE);   // chat abierto = leído en tiempo real
+      }
+    }catch(e){}
+  }, 6000);
+}
+
+/* ── Notificaciones ──
+   iOS (app nativa): las manda APNs desde el backend; capacitor-bridge.js
+   pide el permiso al abrir la app. Aquí solo se ofrece en web/PWA, y solo
+   dentro de Chats, que es donde tiene sentido. */
+function ofrecerAvisos(){
+  try{
+    if(window.__BROQUER_IOS_NATIVE__) return;
+    if(!('Notification' in window) || Notification.permission !== 'default') return;
+    if(localStorage.getItem('bx_avisos_pedido')) return;
+    const barra = document.createElement('div');
+    barra.className = 'bx-avisos';
+    barra.innerHTML =
+      '<span>Avísame cuando llegue un mensaje nuevo.</span>' +
+      '<button type="button" class="bx-avisos__ok">Activar</button>' +
+      '<button type="button" class="bx-avisos__no" aria-label="Ahora no">' +
+        '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>' +
+      '</button>';
+    document.querySelector('.bx-list__head').appendChild(barra);
+    const cerrar = () => { localStorage.setItem('bx_avisos_pedido','1'); barra.remove(); };
+    barra.querySelector('.bx-avisos__ok').onclick = async () => {
+      if(window.bkPedirNotificaciones) await window.bkPedirNotificaciones();
+      cerrar();
+    };
+    barra.querySelector('.bx-avisos__no').onclick = cerrar;
+  }catch(e){}
+}
+
+async function iniciarChats(){
+  await ready();
+  try{
+    await cargarConvs();
+    await cargarPreviews();
+    renderConvs(true);
+    startPolling();
+    ofrecerAvisos();
+    // Enlace profundo: whatsapp.html?c=<id> — así abre el chat exacto
+    // cuando el agente toca la notificación de WhatsApp en su celular.
+    const cid = new URLSearchParams(location.search).get('c');
+    if(cid && CONVS.some(c => c.id === cid)) await abrir(cid);
+  }catch(e){
+    document.getElementById('convs').innerHTML = '<div class="bx-list__empty"><p>'+esc(e.message)+'</p></div>';
+  }
+}
+
 // ── Init ─────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', checkWAStatus);
 </script>
-<script src="app-shell.js" defer></script>
 </body>
 </html>
