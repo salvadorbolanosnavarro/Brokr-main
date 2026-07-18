@@ -140,13 +140,27 @@ async def get_org_context(user_id: str) -> Optional[Dict[str, Any]]:
     rows = await _sb_get("organizacion_miembros", {
         "user_id": f"eq.{user_id}",
         "activo": "eq.true",
-        "select": "org_id,rol_org,permisos,activo,organizaciones(nombre,tipo,activo,plan,asientos_max,vence_el)",
+        "select": "org_id,rol_org,permisos,activo",
         "limit": "1",
     })
     if not rows:
         return None
     m = rows[0]
-    org = m.get("organizaciones") or {}
+
+    # Segunda query en vez de join embebido: PostgREST necesita tener la FK en
+    # su cache de esquema para resolver organizaciones(...), y recién creada la
+    # tabla a veces no la reconoce hasta un reload. Dos queries simples nunca
+    # fallan por eso.
+    org = {}
+    if m.get("org_id"):
+        orows = await _sb_get("organizaciones", {
+            "id": f"eq.{m['org_id']}",
+            "select": "nombre,tipo,activo,plan,asientos_max,vence_el",
+            "limit": "1",
+        })
+        if orows:
+            org = orows[0]
+
     return {
         "org_id": m.get("org_id"),
         "rol_org": m.get("rol_org") or "agente",
@@ -425,7 +439,7 @@ async def ver_invitacion(token: str):
     filas = await _sb_get("organizacion_invitaciones", {
         "token": f"eq.{token}",
         "aceptada_el": "is.null",
-        "select": "email,rol_org,expira_el,organizaciones(nombre)",
+        "select": "org_id,email,rol_org,expira_el",
         "limit": "1",
     })
     if not filas:
@@ -436,10 +450,17 @@ async def ver_invitacion(token: str):
             return {"valida": False, "razon": "vencida"}
     except Exception:
         pass
+
+    empresa = None
+    if f.get("org_id"):
+        orows = await _sb_get("organizaciones", {"id": f"eq.{f['org_id']}", "select": "nombre", "limit": "1"})
+        if orows:
+            empresa = orows[0].get("nombre")
+
     return {
         "valida": True,
         "email": f["email"],
-        "empresa": (f.get("organizaciones") or {}).get("nombre"),
+        "empresa": empresa,
         "rol_org": f["rol_org"],
     }
 
