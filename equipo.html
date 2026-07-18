@@ -204,7 +204,21 @@
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g,
     (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
-  function token() {
+  // Espera a que app-shell.js exponga window.brokrSb (trae ensureToken, que
+  // renueva el token si venció — leerlo crudo de localStorage da 401).
+  async function esperarShell(maxMs) {
+    const t0 = Date.now();
+    while (!window.brokrSb && Date.now() - t0 < (maxMs || 6000)) {
+      await new Promise((r) => setTimeout(r, 60));
+    }
+    return !!window.brokrSb;
+  }
+
+  async function token() {
+    if (window.brokrSb && window.brokrSb.ensureToken) {
+      const t = await window.brokrSb.ensureToken();
+      if (t) return t;
+    }
     return localStorage.getItem('sb_token') || '';
   }
 
@@ -213,7 +227,7 @@
     const r = await fetch(API + ruta, {
       method: o.method || 'GET',
       headers: {
-        'Authorization': 'Bearer ' + token(),
+        'Authorization': 'Bearer ' + (await token()),
         'Content-Type': 'application/json',
       },
       body: o.body ? JSON.stringify(o.body) : undefined,
@@ -516,7 +530,7 @@
       if (e.target === $('#eq-modal')) cerrarModal();
     });
 
-    cargar();
+    esperarShell().then(cargar);
   });
 })();
 </script>
