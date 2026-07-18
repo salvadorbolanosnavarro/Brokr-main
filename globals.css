@@ -1,0 +1,3 @@
+/* Broquer token entrypoint: import this file in Tailwind/Vite builds.
+   Static HTML pages in this repository already consume brokr-theme.css directly. */
+@import './brokr-theme.css';
