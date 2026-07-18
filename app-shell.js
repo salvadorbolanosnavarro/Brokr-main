@@ -245,6 +245,7 @@
     { key:'mi-sitio',     href:'mi-sitio.html',      label:'Mi sitio',        group:'main', icon:'globo' },
     { key:'blog',         href:'blog.html',          label:'Blog',            group:'main', icon:'feather' },
     { key:'guia',         href:'guia-agente.html',   label:'Ayuda', group:'main', icon:'question' },
+    { key:'equipo',       href:'equipo.html',        label:'Equipo',          group:'crm',  icon:'users' },
     { key:'admin',        href:'admin.html',         label:'Admin',           group:'main', icon:'cog', adminOnly:true },
   ];
 
@@ -252,6 +253,7 @@
     'home':         'Dashboard principal — menú de módulos',
     'props':        'Tus Inmuebles — catálogo de propiedades',
     'contactos':    'Contactos — CRM de prospectos',
+    'equipo':       'Equipo — miembros de la cuenta, roles y permisos',
     'tareas':       'Tareas — pendientes y actividad del CRM',
     'leads':        'Leads — contactos marcados como potenciales, aún sin cerrar',
     'estadisticas': 'Estadísticas — captación, pipeline e inmuebles con más interés',
@@ -270,6 +272,7 @@
      Inyectado por el shell arriba del contenido de CADA módulo, idéntico
      en posición/tamaño/estilo. 'home' se excluye (tiene su propio hero). */
   const PAGE_META = {
+    'equipo':        { title:'Equipo',                 sub:'Quién trabaja en tu cuenta y qué puede ver cada quien.' },
     'contratos':     { title:'Contratos',              sub:'Genera contratos listos para firma en minutos.' },
     'avm':           { title:'Estimación de valor',    sub:'Avalúo automático con comparables de tu zona.' },
     'ficha-manual':  { title:'Ficha técnica',          sub:'Crea fichas profesionales de tus propiedades.' },

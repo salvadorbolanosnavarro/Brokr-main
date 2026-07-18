@@ -196,8 +196,14 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
 .ld-quote .who { font-family: var(--font-mono); font-size: var(--fs-label-3); letter-spacing: 0.02em;  color: rgba(255,255,255,.55); }
 
 /* ── Precios ────────────────────────────────────────────────── */
+.ld-planes {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-5); max-width: 940px; margin: 0 auto; align-items: start;
+}
+@media (max-width: 800px) { .ld-planes { grid-template-columns: 1fr; max-width: 480px; } }
+
 .ld-price {
-  max-width: 480px; margin: 0 auto;
+  max-width: 480px; margin: 0 auto; width: 100%;
   background: var(--bone); border: 1px solid var(--line); border-radius: var(--r-lg);
   box-shadow: var(--shadow-md); overflow: hidden; text-align: center;
 }
@@ -218,6 +224,16 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
   background-size: 9px; background-position: center; background-repeat: no-repeat;
 }
 .ld-price__note { font-size: var(--fs-xs); color: var(--mute); margin-top: 12px; line-height: 1.5; }
+
+/* Empresas: cabecera navy para separarlo del plan individual sin gritar. */
+.ld-price--empresa .ld-price__head {
+  background: var(--sky-navy);
+  background-image: radial-gradient(120% 160% at 100% 0%, rgba(0,98,227,.34), transparent 55%);
+}
+.ld-price__precio {
+  font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 700;
+  color: var(--bone); letter-spacing: -.02em; margin-top: 6px;
+}
 
 /* ── CTA final ──────────────────────────────────────────────── */
 .ld-final {
@@ -299,7 +315,7 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
   </div>
   <div class="ld-hero__stats">
     <div class="ld-stat"><div class="v">REOS</div><div class="l">Una sola plataforma</div></div>
-    <div class="ld-stat"><div class="v">8+</div><div class="l">Módulos profesionales</div></div>
+    <div class="ld-stat"><div class="v">9+</div><div class="l">Módulos profesionales</div></div>
     <div class="ld-stat"><div class="v">24/7</div><div class="l">Broq, tu asistente IA</div></div>
   </div>
 </header>
@@ -441,13 +457,15 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
   <div class="ld-wrap">
     <div class="ld-sec-head" style="text-align:center;margin-left:auto;margin-right:auto;">
       <div class="eyebrow">Precios</div>
-      <h2>Un solo plan. Todo incluido.</h2>
-      <p>¡Solo $899 al mes por todo el ecosistema!</p>
+      <h2>Para ti o para toda tu inmobiliaria.</h2>
+      <p>Todo el ecosistema por $899 al mes. Si son varios, hablamos.</p>
     </div>
+    <div class="ld-planes">
     <div class="ld-price">
       <div class="ld-price__head">
         <div class="name">Broquer Max</div>
-        <div class="sub">Cancela cuando quieras</div>
+        <div class="sub">Para un agente</div>
+        <div class="ld-price__precio">$899 al mes</div>
       </div>
       <div class="ld-price__body">
         <ul class="ld-price__list">
@@ -463,6 +481,29 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
         <a class="ld-btn-blue" href="registro.html" style="width:100%;justify-content:center;padding:14px 22px;font-size:var(--fs-body);border-radius:var(--r);">Crear mi cuenta</a>
         <div class="ld-price__note">Crea tu cuenta y comienza a usar tu CRM gratis hoy mismo</div>
       </div>
+    </div>
+
+    <div class="ld-price ld-price--empresa">
+      <div class="ld-price__head">
+        <div class="name">Broquer para empresas</div>
+        <div class="sub">Para tu inmobiliaria completa</div>
+        <div class="ld-price__precio">Hablemos</div>
+      </div>
+      <div class="ld-price__body">
+        <ul class="ld-price__list">
+          <li>Todo lo de Broquer Max, para cada agente de tu equipo</li>
+          <li>Un solo inventario compartido por toda la inmobiliaria</li>
+          <li>Tú decides quién ve los teléfonos de tus propietarios</li>
+          <li>Tú decides quién ve las comisiones</li>
+          <li>Solo tú conectas EasyBroker y Facebook, o quien tú designes</li>
+          <li>Cada agente con su propio WhatsApp, bajo tu misma cuenta</li>
+          <li>Cuando un agente se va, su cartera se queda en la inmobiliaria</li>
+          <li>Precio según el tamaño de tu equipo</li>
+        </ul>
+        <a class="ld-btn-blue" href="mailto:hola@broquer.app?subject=Broquer%20para%20empresas" style="width:100%;justify-content:center;padding:14px 22px;font-size:var(--fs-body);border-radius:var(--r);">Contáctanos</a>
+        <div class="ld-price__note">Nos sentamos contigo, vemos cómo trabaja tu equipo y armamos el plan</div>
+      </div>
+    </div>
     </div>
   </div>
 </section>

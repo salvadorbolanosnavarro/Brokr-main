@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Broquer — Equipo</title>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+  .eq-scroll { padding: 24px 28px 48px; max-width: var(--page-max, 1180px); margin: 0 auto; }
+  @media (max-width: 720px) { .eq-scroll { padding: 16px 14px 40px; } }
+
+  /* Tarjeta de miembro */
+  .eq-lista { display: grid; gap: var(--sp-3); }
+  .eq-m__top { display: flex; align-items: center; gap: var(--sp-3); }
+  .eq-m__ini {
+    width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
+    background: var(--sky-canvas); color: var(--sky-navy);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-weight: 700; font-size: var(--fs-sm);
+  }
+  .eq-m__id { min-width: 0; flex: 1; }
+  .eq-m__nom {
+    font-family: var(--font-display); font-size: var(--fs-body); font-weight: 700;
+    color: var(--ink); letter-spacing: -.01em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .eq-m__mail {
+    font-size: var(--fs-sm); color: var(--mute);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* Permisos */
+  .eq-perms { margin-top: var(--sp-4); padding-top: var(--sp-4); border-top: 1px solid var(--line); }
+  .eq-perm {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: var(--sp-4); padding: 10px 0;
+  }
+  .eq-perm + .eq-perm { border-top: 1px solid var(--line); }
+  .eq-perm__txt { min-width: 0; }
+  .eq-perm__nom { font-size: var(--fs-sm); color: var(--ink); font-weight: 600; }
+  .eq-perm__ayuda { font-size: var(--fs-xs); color: var(--mute); margin-top: 2px; line-height: 1.45; }
+  .eq-perm--critico .eq-perm__nom { color: var(--sky-navy); }
+
+  /* Invitaciones */
+  .eq-inv { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
+  .eq-inv__mail { flex: 1; min-width: 180px; font-size: var(--fs-sm); color: var(--ink); }
+  .eq-link {
+    width: 100%; margin-top: var(--sp-3); padding: 10px 12px;
+    background: var(--sky-canvas); border: 1px solid var(--line);
+    border-radius: var(--r-sm); font-size: var(--fs-xs); color: var(--ink-2);
+    word-break: break-all; line-height: 1.5;
+  }
+
+  .eq-vacio-cta { max-width: 560px; margin: 0 auto; text-align: center; }
+</style>
+</head>
+<body data-app="equipo">
+
+<div class="eq-scroll">
+
+  <!-- ═══ Cargando ═══ -->
+  <div id="eq-cargando" class="bk-loading" style="padding:48px 0;text-align:center;color:var(--mute);">
+    Cargando tu equipo…
+  </div>
+
+  <!-- ═══ Cuenta individual: invitación a contratar Empresas ═══ -->
+  <div id="eq-no-empresa" hidden>
+    <div class="bk-card bk-card--pad bk-card--raise eq-vacio-cta">
+      <div class="bk-empty__icon" style="margin:0 auto var(--sp-4);">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M17 20h5v-2a3 3 0 0 0-5.36-1.86M17 20H7m10 0v-2c0-.66-.13-1.29-.36-1.86m0 0A5 5 0 0 0 12 13a5 5 0 0 0-4.64 3.14M7 20H2v-2a3 3 0 0 1 5.36-1.86M7 20v-2c0-.66.13-1.29.36-1.86m0 0A5 5 0 0 1 12 13a5 5 0 0 1 4.64 3.14M15 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+        </svg>
+      </div>
+      <h2 style="font-family:var(--font-display);font-size:var(--fs-h2);letter-spacing:-.02em;margin-bottom:var(--sp-2);">
+        Tu cuenta es individual
+      </h2>
+      <p style="font-size:var(--fs-sm);color:var(--mute);line-height:1.6;margin-bottom:var(--sp-5);">
+        Con Broquer para empresas tu inmobiliaria trabaja sobre un mismo inventario, y tú decides
+        qué ve cada agente. Los teléfonos de tus propietarios y tus comisiones quedan bajo tu control.
+      </p>
+      <a class="bk-btn bk-btn--forest" href="mailto:hola@broquer.app?subject=Broquer%20para%20empresas">
+        Contáctanos
+      </a>
+    </div>
+  </div>
+
+  <!-- ═══ Agente sin permisos de administración ═══ -->
+  <div id="eq-no-admin" hidden>
+    <div class="bk-card bk-card--pad bk-card--raise eq-vacio-cta">
+      <h2 style="font-family:var(--font-display);font-size:var(--fs-h3);margin-bottom:var(--sp-2);">
+        Tu equipo
+      </h2>
+      <p id="eq-no-admin-txt" style="font-size:var(--fs-sm);color:var(--mute);line-height:1.6;"></p>
+    </div>
+    <div class="eq-lista" id="eq-lista-simple" style="margin-top:var(--sp-5);"></div>
+  </div>
+
+  <!-- ═══ Vista de administrador ═══ -->
+  <div id="eq-admin" hidden>
+
+    <div class="bk-section-header">
+      <h2>Miembros</h2>
+      <button type="button" class="bk-btn bk-btn--forest bk-btn--sm" id="eq-btn-invitar">
+        Invitar a alguien
+      </button>
+    </div>
+
+    <div class="eq-lista" id="eq-lista"></div>
+
+    <!-- Invitaciones pendientes -->
+    <div id="eq-bloque-inv" hidden style="margin-top:var(--sp-6);">
+      <div class="bk-section-header"><h2>Invitaciones pendientes</h2></div>
+      <div class="eq-lista" id="eq-lista-inv"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ═══ Modal de invitación ═══ -->
+<div class="bk-overlay" id="eq-modal" hidden>
+  <div class="bk-modal" role="dialog" aria-modal="true" aria-labelledby="eq-modal-t">
+    <div class="bk-card bk-card--pad">
+      <h3 id="eq-modal-t" style="font-family:var(--font-display);font-size:var(--fs-h3);margin-bottom:var(--sp-4);">
+        Invitar a tu equipo
+      </h3>
+
+      <div id="eq-modal-form">
+        <div class="bk-field">
+          <label class="bk-label" for="eq-email">Correo</label>
+          <input class="bk-input" id="eq-email" type="email" placeholder="agente@inmobiliaria.mx" autocomplete="off"/>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="eq-rol">Rol</label>
+          <select class="bk-select" id="eq-rol">
+            <option value="agente">Agente</option>
+            <option value="admin">Administrador</option>
+          </select>
+          <div class="bk-hint" id="eq-rol-hint">
+            Un agente ve el inventario, pero no los teléfonos de los propietarios ni las comisiones.
+            Tú decides después qué le abres.
+          </div>
+        </div>
+        <div class="bk-alert bk-alert--danger" id="eq-modal-err" hidden style="margin-bottom:var(--sp-4);"></div>
+        <div class="bk-cluster" style="justify-content:flex-end;">
+          <button type="button" class="bk-btn bk-btn--ghost" id="eq-cancelar">Cancelar</button>
+          <button type="button" class="bk-btn bk-btn--forest" id="eq-crear">Crear invitación</button>
+        </div>
+      </div>
+
+      <div id="eq-modal-ok" hidden>
+        <p style="font-size:var(--fs-sm);color:var(--ink-2);line-height:1.6;">
+          Listo. Comparte este link con <strong id="eq-ok-mail"></strong> para que se registre.
+          Vence en 14 días y solo funciona con ese correo.
+        </p>
+        <div class="eq-link" id="eq-ok-link"></div>
+        <div class="bk-cluster" style="justify-content:flex-end;margin-top:var(--sp-4);">
+          <button type="button" class="bk-btn bk-btn--ghost" id="eq-cerrar-ok">Cerrar</button>
+          <button type="button" class="bk-btn bk-btn--forest" id="eq-copiar">Copiar link</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="app-shell.js" defer></script>
+<script>
+(function () {
+  'use strict';
+
+  // ── Catálogo de permisos ──────────────────────────────────────────────
+  // El orden importa: primero lo que de verdad protege al negocio.
+  // Debe coincidir con PERMISOS_VALIDOS de routers/organizaciones.py.
+  const PERMISOS = [
+    { clave: 'ver_telefonos', critico: true,
+      nombre: 'Ver teléfonos',
+      ayuda: 'Teléfonos y WhatsApp de propietarios y contactos. Apagado, los ve tachados.' },
+    { clave: 'ver_comisiones', critico: true,
+      nombre: 'Ver comisiones',
+      ayuda: 'Porcentaje de venta, meses de renta y comisión compartida.' },
+    { clave: 'gestionar_integraciones', critico: true,
+      nombre: 'Conectar cuentas',
+      ayuda: 'Conectar o desconectar EasyBroker y Facebook. Afecta a toda la inmobiliaria.' },
+    { clave: 'ver_inventario_completo',
+      nombre: 'Ver todo el inventario',
+      ayuda: 'Apagado, solo ve las propiedades que él capturó.' },
+    { clave: 'ver_contactos_equipo',
+      nombre: 'Ver contactos del equipo',
+      ayuda: 'Apagado, solo ve sus propios contactos.' },
+    { clave: 'ver_estadisticas_equipo',
+      nombre: 'Ver estadísticas del equipo',
+      ayuda: 'Números de toda la inmobiliaria, no solo los suyos.' },
+    { clave: 'exportar',
+      nombre: 'Descargar y exportar',
+      ayuda: 'Fichas técnicas, contratos y demás documentos en PDF.' },
+  ];
+
+  const API = window.API_BASE || 'https://api.broquer.app';
+
+  const $  = (s) => document.querySelector(s);
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g,
+    (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+  function token() {
+    return localStorage.getItem('sb_token') || '';
+  }
+
+  async function api(ruta, opciones) {
+    const o = opciones || {};
+    const r = await fetch(API + ruta, {
+      method: o.method || 'GET',
+      headers: {
+        'Authorization': 'Bearer ' + token(),
+        'Content-Type': 'application/json',
+      },
+      body: o.body ? JSON.stringify(o.body) : undefined,
+    });
+    const txt = await r.text();
+    let data = {};
+    try { data = txt ? JSON.parse(txt) : {}; } catch (e) { data = {}; }
+    if (!r.ok) throw new Error(data.detail || ('Error ' + r.status));
+    return data;
+  }
+
+  function iniciales(nombre, email) {
+    const base = (nombre || email || '?').trim();
+    const p = base.split(/\s+/);
+    return ((p[0] && p[0][0]) || '' ).concat((p[1] && p[1][0]) || '').toUpperCase() || '?';
+  }
+
+  const ETIQUETA_ROL = { owner: 'Dueño', admin: 'Administrador', agente: 'Agente' };
+
+  // ── Estado ────────────────────────────────────────────────────────────
+  let ORG = null;
+
+  // ── Pintar un miembro ─────────────────────────────────────────────────
+  function tarjetaMiembro(m, conPermisos) {
+    const card = document.createElement('article');
+    card.className = 'bk-card bk-card--pad bk-card--raise';
+
+    const esOwner = m.rol_org === 'owner';
+    const esAdmin = m.rol_org === 'admin' || esOwner;
+
+    const badge = esOwner ? 'bk-badge--success' : (esAdmin ? 'bk-badge--info' : '');
+    const inactivo = m.activo === false;
+
+    let acciones = '';
+    if (conPermisos && !esOwner && !m.soy_yo) {
+      acciones = `
+        <div class="bk-cluster" style="gap:var(--sp-2);">
+          <select class="bk-select bk-select--sm" data-rol="${esc(m.user_id)}" style="width:auto;">
+            <option value="agente" ${m.rol_org === 'agente' ? 'selected' : ''}>Agente</option>
+            <option value="admin"  ${m.rol_org === 'admin'  ? 'selected' : ''}>Administrador</option>
+          </select>
+          <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm"
+                  data-baja="${esc(m.user_id)}" data-activo="${inactivo ? '0' : '1'}">
+            ${inactivo ? 'Reactivar' : 'Dar de baja'}
+          </button>
+        </div>`;
+    }
+
+    card.innerHTML = `
+      <div class="eq-m__top">
+        <div class="eq-m__ini">${esc(iniciales(m.nombre, m.email))}</div>
+        <div class="eq-m__id">
+          <div class="eq-m__nom">${esc(m.nombre || m.email || 'Sin nombre')}${m.soy_yo ? ' · tú' : ''}</div>
+          <div class="eq-m__mail">${esc(m.email || '')}</div>
+        </div>
+        <div class="bk-cluster" style="gap:var(--sp-2);">
+          <span class="bk-badge ${badge}">${esc(ETIQUETA_ROL[m.rol_org] || m.rol_org)}</span>
+          ${inactivo ? '<span class="bk-badge bk-badge--danger">Dado de baja</span>' : ''}
+        </div>
+      </div>
+      ${acciones ? '<div style="margin-top:var(--sp-3);">' + acciones + '</div>' : ''}
+    `;
+
+    // Los admins ven todo por definición: no tiene caso enseñar switches.
+    if (conPermisos && !esAdmin && !inactivo) {
+      const cont = document.createElement('div');
+      cont.className = 'eq-perms';
+      cont.innerHTML = PERMISOS.map((p) => `
+        <div class="eq-perm ${p.critico ? 'eq-perm--critico' : ''}">
+          <div class="eq-perm__txt">
+            <div class="eq-perm__nom">${esc(p.nombre)}</div>
+            <div class="eq-perm__ayuda">${esc(p.ayuda)}</div>
+          </div>
+          <label class="bk-switch">
+            <input type="checkbox" data-perm="${esc(p.clave)}" data-user="${esc(m.user_id)}"
+                   ${(m.permisos && m.permisos[p.clave]) ? 'checked' : ''}/>
+            <span class="bk-switch__track"></span>
+          </label>
+        </div>
+      `).join('');
+      card.appendChild(cont);
+    } else if (conPermisos && esAdmin) {
+      const nota = document.createElement('div');
+      nota.className = 'eq-perms';
+      nota.innerHTML = `<div class="bk-hint" style="margin:0;">
+        Los administradores ven todo. Cámbialo a agente si quieres limitar lo que ve.
+      </div>`;
+      card.appendChild(nota);
+    }
+
+    return card;
+  }
+
+  // ── Guardar permisos ──────────────────────────────────────────────────
+  async function guardarPermisos(userId, card) {
+    const inputs = card.querySelectorAll('input[data-perm]');
+    const permisos = {};
+    inputs.forEach((i) => { permisos[i.dataset.perm] = i.checked; });
+    try {
+      await api('/org/miembro/permisos', { method: 'POST', body: { user_id: userId, permisos } });
+    } catch (e) {
+      alert('No se pudo guardar: ' + e.message);
+      cargar();
+    }
+  }
+
+  // ── Cargar todo ───────────────────────────────────────────────────────
+  async function cargar() {
+    try {
+      ORG = await api('/org');
+    } catch (e) {
+      $('#eq-cargando').textContent = 'No se pudo cargar tu equipo. Recarga la página.';
+      return;
+    }
+
+    $('#eq-cargando').hidden = true;
+
+    if (!ORG.tiene_org || !ORG.es_empresa) {
+      $('#eq-no-empresa').hidden = false;
+      return;
+    }
+
+    let data;
+    try {
+      data = await api('/org/miembros');
+    } catch (e) {
+      $('#eq-cargando').hidden = false;
+      $('#eq-cargando').textContent = 'No se pudo cargar la lista.';
+      return;
+    }
+
+    // ── Agente normal: solo ve quiénes son sus compañeros ──
+    if (!data.es_admin) {
+      $('#eq-no-admin').hidden = false;
+      $('#eq-no-admin-txt').textContent =
+        'Somos ' + data.miembros.length + ' en ' + (ORG.nombre || 'la cuenta') +
+        '. Solo el administrador puede cambiar roles y permisos.';
+      const cont = $('#eq-lista-simple');
+      cont.innerHTML = '';
+      data.miembros.forEach((m) => cont.appendChild(tarjetaMiembro(m, false)));
+      return;
+    }
+
+    // ── Administrador ──
+    $('#eq-admin').hidden = false;
+    const cont = $('#eq-lista');
+    cont.innerHTML = '';
+    data.miembros.forEach((m) => {
+      const card = tarjetaMiembro(m, true);
+      cont.appendChild(card);
+
+      card.querySelectorAll('input[data-perm]').forEach((i) => {
+        i.addEventListener('change', () => guardarPermisos(i.dataset.user, card));
+      });
+
+      const sel = card.querySelector('select[data-rol]');
+      if (sel) {
+        sel.addEventListener('change', async () => {
+          try {
+            await api('/org/miembro/rol', {
+              method: 'POST', body: { user_id: sel.dataset.rol, rol_org: sel.value },
+            });
+            cargar();
+          } catch (e) {
+            alert('No se pudo cambiar el rol: ' + e.message);
+            cargar();
+          }
+        });
+      }
+
+      const btn = card.querySelector('button[data-baja]');
+      if (btn) {
+        btn.addEventListener('click', async () => {
+          const reactivando = btn.dataset.activo === '0';
+          if (!reactivando &&
+              !confirm('Al darlo de baja deja de ver todo al instante. Sus propiedades y contactos ' +
+                       'se quedan en la inmobiliaria. ¿Continuamos?')) return;
+          try {
+            await api('/org/miembro/activo', {
+              method: 'POST', body: { user_id: btn.dataset.baja, activo: reactivando },
+            });
+            cargar();
+          } catch (e) {
+            alert('No se pudo: ' + e.message);
+          }
+        });
+      }
+    });
+
+    cargarInvitaciones();
+  }
+
+  async function cargarInvitaciones() {
+    let inv = [];
+    try {
+      inv = (await api('/org/invitaciones')).invitaciones || [];
+    } catch (e) { return; }
+
+    const bloque = $('#eq-bloque-inv');
+    const cont = $('#eq-lista-inv');
+    if (!inv.length) { bloque.hidden = true; return; }
+
+    bloque.hidden = false;
+    cont.innerHTML = '';
+    inv.forEach((i) => {
+      const card = document.createElement('article');
+      card.className = 'bk-card bk-card--pad';
+      card.innerHTML = `
+        <div class="eq-inv">
+          <div class="eq-inv__mail">${esc(i.email)}</div>
+          <span class="bk-badge ${i.vencida ? 'bk-badge--danger' : ''}">
+            ${i.vencida ? 'Vencida' : esc(ETIQUETA_ROL[i.rol_org] || i.rol_org)}
+          </span>
+          <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" data-copiar="${esc(i.link)}">
+            Copiar link
+          </button>
+          <button type="button" class="bk-btn bk-btn--quiet bk-btn--sm" data-cancelar="${esc(i.id)}">
+            Cancelar
+          </button>
+        </div>
+        <div class="eq-link">${esc(i.link)}</div>
+      `;
+      cont.appendChild(card);
+
+      card.querySelector('[data-copiar]').addEventListener('click', (ev) => {
+        navigator.clipboard.writeText(ev.target.dataset.copiar);
+        ev.target.textContent = 'Copiado';
+        setTimeout(() => { ev.target.textContent = 'Copiar link'; }, 1600);
+      });
+      card.querySelector('[data-cancelar]').addEventListener('click', async (ev) => {
+        if (!confirm('¿Cancelar esta invitación?')) return;
+        try {
+          await api('/org/invitacion/' + ev.target.dataset.cancelar, { method: 'DELETE' });
+          cargarInvitaciones();
+        } catch (e) { alert('No se pudo: ' + e.message); }
+      });
+    });
+  }
+
+  // ── Modal ─────────────────────────────────────────────────────────────
+  function abrirModal() {
+    $('#eq-modal').hidden = false;
+    $('#eq-modal-form').hidden = false;
+    $('#eq-modal-ok').hidden = true;
+    $('#eq-modal-err').hidden = true;
+    $('#eq-email').value = '';
+    $('#eq-rol').value = 'agente';
+    $('#eq-email').focus();
+  }
+  function cerrarModal() { $('#eq-modal').hidden = true; }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    $('#eq-btn-invitar').addEventListener('click', abrirModal);
+    $('#eq-cancelar').addEventListener('click', cerrarModal);
+    $('#eq-cerrar-ok').addEventListener('click', () => { cerrarModal(); cargarInvitaciones(); });
+
+    $('#eq-rol').addEventListener('change', (e) => {
+      $('#eq-rol-hint').textContent = e.target.value === 'admin'
+        ? 'Un administrador ve todo y puede invitar y quitar gente. Dáselo a quien de verdad dirija la operación.'
+        : 'Un agente ve el inventario, pero no los teléfonos de los propietarios ni las comisiones. Tú decides después qué le abres.';
+    });
+
+    $('#eq-crear').addEventListener('click', async () => {
+      const email = $('#eq-email').value.trim();
+      const err = $('#eq-modal-err');
+      err.hidden = true;
+      if (!email || email.indexOf('@') < 0) {
+        err.textContent = 'Escribe un correo válido.';
+        err.hidden = false;
+        return;
+      }
+      const btn = $('#eq-crear');
+      btn.disabled = true;
+      btn.textContent = 'Creando…';
+      try {
+        const r = await api('/org/invitar', {
+          method: 'POST', body: { email, rol_org: $('#eq-rol').value },
+        });
+        $('#eq-ok-mail').textContent = r.email;
+        $('#eq-ok-link').textContent = r.link;
+        $('#eq-copiar').dataset.link = r.link;
+        $('#eq-modal-form').hidden = true;
+        $('#eq-modal-ok').hidden = false;
+      } catch (e) {
+        err.textContent = e.message;
+        err.hidden = false;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Crear invitación';
+      }
+    });
+
+    $('#eq-copiar').addEventListener('click', (ev) => {
+      navigator.clipboard.writeText(ev.target.dataset.link || '');
+      ev.target.textContent = 'Copiado';
+      setTimeout(() => { ev.target.textContent = 'Copiar link'; }, 1600);
+    });
+
+    $('#eq-modal').addEventListener('click', (e) => {
+      if (e.target === $('#eq-modal')) cerrarModal();
+    });
+
+    cargar();
+  });
+})();
+</script>
+</body>
+</html>

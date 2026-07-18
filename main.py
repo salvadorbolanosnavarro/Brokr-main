@@ -593,7 +593,7 @@ def _track_gemini_image(user_id: str, modulo: str, herramienta: str, unidades: i
 MODULOS_VALIDOS = {
     "home", "props", "contactos", "contratos", "avm", "valor", "ficha",
     "ficha-manual", "isr", "image-cleaner", "facebook-ads", "guia",
-    "solicitud-arr", "admin", "blog", "verificador",
+    "solicitud-arr", "admin", "blog", "verificador", "equipo",
 }
 
 
