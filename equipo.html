@@ -222,20 +222,36 @@
     return localStorage.getItem('sb_token') || '';
   }
 
-  async function api(ruta, opciones) {
-    const o = opciones || {};
-    const r = await fetch(API + ruta, {
+  async function _pegar(ruta, o, tok) {
+    return fetch(API + ruta, {
       method: o.method || 'GET',
       headers: {
-        'Authorization': 'Bearer ' + (await token()),
+        'Authorization': 'Bearer ' + tok,
         'Content-Type': 'application/json',
       },
       body: o.body ? JSON.stringify(o.body) : undefined,
     });
+  }
+
+  async function api(ruta, opciones) {
+    const o = opciones || {};
+    let r = await _pegar(ruta, o, await token());
+
+    // ensureToken devuelve el token guardado aunque esté vencido; el backend
+    // lo valida en vivo contra Supabase y lo rechaza con 401. Si eso pasa,
+    // forzamos un refresh real y reintentamos una vez.
+    if (r.status === 401 && window.brokrSb && window.brokrSb.refreshNow) {
+      const nuevo = await window.brokrSb.refreshNow();
+      if (nuevo) r = await _pegar(ruta, o, nuevo);
+    }
+
     const txt = await r.text();
     let data = {};
     try { data = txt ? JSON.parse(txt) : {}; } catch (e) { data = {}; }
-    if (!r.ok) throw new Error(data.detail || ('Error ' + r.status));
+    if (!r.ok) {
+      if (r.status === 401) throw new Error('Tu sesión expiró. Cierra sesión y vuelve a entrar.');
+      throw new Error(data.detail || ('Error ' + r.status));
+    }
     return data;
   }
 
