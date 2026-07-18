@@ -17,7 +17,7 @@
 import os
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 import httpx
 from fastapi import APIRouter, Request, Response, BackgroundTasks, HTTPException
@@ -60,6 +60,28 @@ router = APIRouter(prefix="/whatsapp", tags=["whatsapp"])
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+# México suprimió el horario de verano en 2022: para Morelia/CDMX el offset es
+# fijo en UTC-6. Se intenta zoneinfo primero por si la imagen trae tzdata (y por
+# si algún día hay que soportar la franja fronteriza); si no está, el respaldo
+# de -6 es correcto para el país salvo esa franja. No se agrega dependencia.
+def _hora_local() -> "datetime":
+    try:
+        from zoneinfo import ZoneInfo
+        return datetime.now(ZoneInfo("America/Mexico_City"))
+    except Exception:
+        return datetime.now(timezone.utc) + timedelta(hours=-6)
+
+
+def _hhmm(valor, default: str) -> tuple:
+    """'08:00' o '08:00:00' -> (8, 0). Nunca revienta el webhook."""
+    try:
+        partes = str(valor or default).split(":")
+        return int(partes[0]), int(partes[1])
+    except Exception:
+        partes = default.split(":")
+        return int(partes[0]), int(partes[1])
 
 
 # =============================================================================
@@ -177,6 +199,22 @@ async def process_change(value: dict):
     user_id = numero["user_id"]
     token   = numero.get("access_token")
 
+    # ── EL INTERRUPTOR MAESTRO ──────────────────────────────────────────────
+    # Antes esto no se leía nunca: process_change solo miraba conv.ai_enabled,
+    # y get_or_create_conversation nacía SIEMPRE con ai_enabled=True. Resultado:
+    # el agente apagaba Recepción, /ia-global propagaba a las conversaciones que
+    # ya existían, y el primer lead nuevo creaba una conversación con la IA
+    # encendida y le contestaba igual. El interruptor era decorativo.
+    #
+    # Ahora la regla es: RESPONDE  <=>  ia_global AND conv.ai_enabled.
+    #   ia_global      -> el switch del módulo. Palabra final del agente.
+    #   conv.ai_enabled-> si el agente ya tomó el control de ESE chat.
+    # Se evalúan juntos y ninguno pisa al otro, así prender el global de vuelta
+    # ya no revive la IA en los chats que el agente había tomado a mano.
+    ia_global = numero.get("ia_enabled", True) is not False
+
+    entren = await entrenamiento(user_id)
+
     contacts = value.get("contacts", [])
     profile_name = contacts[0].get("profile", {}).get("name") if contacts else None
 
@@ -191,12 +229,13 @@ async def process_change(value: dict):
         if msg.get("type") != "text":
             body = f"[{msg.get('type')}]"
             contact = await upsert_contact(user_id, from_wa, profile_name)
-            conv = await get_or_create_conversation(user_id, contact, referral, phone_number_id)
+            conv = await get_or_create_conversation(user_id, contact, referral,
+                                                    phone_number_id, ia_global)
             await store_message(user_id, contact["id"], conv["id"], wamid, "in", "lead", body)
             await sumar_no_leido(conv["id"])
             await avisar_al_agente(user_id, contact, conv["id"],
                                    f"Te mandó un {msg.get('type')} por WhatsApp.")
-            if conv.get("ai_enabled", True):
+            if ia_global and conv.get("ai_enabled", True) and _ia_puede_hablar(entren)[0]:
                 await wa_send_text(phone_number_id, from_wa,
                                    "Gracias por tu mensaje. Por aquí te leo mejor en texto, "
                                    "¿me cuentas qué estás buscando?", token=token)
@@ -204,21 +243,60 @@ async def process_change(value: dict):
 
         body = msg.get("text", {}).get("body", "").strip()
         contact = await upsert_contact(user_id, from_wa, profile_name)
-        conv = await get_or_create_conversation(user_id, contact, referral, phone_number_id)
+        conv = await get_or_create_conversation(user_id, contact, referral,
+                                                phone_number_id, ia_global)
         await store_message(user_id, contact["id"], conv["id"], wamid, "in", "lead", body)
         await sumar_no_leido(conv["id"])
         await avisar_al_agente(user_id, contact, conv["id"], body)
 
+        if not ia_global:
+            continue  # el agente apagó Recepción para todo
         if not conv.get("ai_enabled", True):
-            continue  # el agente tomó el control
+            continue  # el agente tomó el control de este chat
+
+        # ── BARRERAS DURAS (entrenamiento) ─────────────────────────────────
+        # Van en código, no en el prompt: un modelo se puede saltar una
+        # instrucción, un if no. Cualquiera de estas apaga la IA o la calla.
+
+        # 1) Palabra que escala al humano
+        palabra = _palabra_que_escala(body, entren)
+        if palabra:
+            await sb_patch("wa_conversations", {"id": f"eq.{conv['id']}"},
+                           {"ai_enabled": False, "updated_at": _now()})
+            await avisar_al_agente(user_id, contact, conv["id"],
+                                   f"Recepción se apagó en este chat: el prospecto mencionó "
+                                   f"'{palabra}'. Te toca a ti.")
+            log.info("Escalado a humano por palabra '%s' (conv=%s)", palabra, conv["id"])
+            continue
+
+        # 2) Tope de mensajes de la IA en esta conversación
+        tope = int(entren.get("max_mensajes_ia") or 0)
+        if tope > 0 and int(conv.get("ai_msg_count") or 0) >= tope:
+            await sb_patch("wa_conversations", {"id": f"eq.{conv['id']}"},
+                           {"ai_enabled": False, "updated_at": _now()})
+            await avisar_al_agente(user_id, contact, conv["id"],
+                                   f"Recepción ya mandó {tope} mensajes en este chat y se apagó. "
+                                   "Te toca a ti.")
+            continue
+
+        # 3) Entrenamiento pausado u horario de atención
+        puede, msg_fuera = _ia_puede_hablar(entren)
+        if not puede:
+            if msg_fuera:
+                sent = await wa_send_text(phone_number_id, from_wa, msg_fuera, token=token)
+                if sent["ok"]:
+                    await store_message(user_id, contact["id"], conv["id"],
+                                        sent["message_id"] or f"local-{wamid}",
+                                        "out", "ai", msg_fuera, status="sent")
+            continue
 
         history = await fetch_history(conv["id"])
         agente  = await perfil_agente(user_id, numero.get("waba_name"))
-        result  = await recepcion_responde(history, conv.get("property_ctx"), agente)
+        result  = await recepcion_responde(history, conv.get("property_ctx"), agente, entren)
         reply   = (result or {}).get("reply")
 
         # anti-choque: si el agente contestó desde su cel mientras tanto, la IA ya no manda
-        if reply and await ai_sigue_encendida(conv["id"]):
+        if reply and await ai_sigue_encendida(conv["id"], user_id):
             sent = await wa_send_text(phone_number_id, from_wa, reply, token=token)
             # Se guarda igual aunque falle —el agente tiene que ver que Recepción
             # intentó contestar— pero marcado como failed, no como entregado.
@@ -226,7 +304,9 @@ async def process_change(value: dict):
                                 sent["message_id"] or f"local-{wamid}",
                                 "out", "ai", reply,
                                 status="sent" if sent["ok"] else "failed")
-            if not sent["ok"]:
+            if sent["ok"]:
+                await sumar_msg_ia(conv["id"], conv.get("ai_msg_count"))
+            else:
                 log.error("Recepción no pudo responder a %s: %s", from_wa, sent["error"])
 
         await actualizar_calificacion(contact["id"], result)
@@ -255,7 +335,11 @@ async def process_echo(value: dict):
         body = echo.get("text", {}).get("body", "") if echo.get("type") == "text" else f"[{echo.get('type','mensaje')}]"
 
         contact = await upsert_contact(user_id, to_wa, None)
-        conv = await get_or_create_conversation(user_id, contact, None, phone_number_id)
+        # ia_global=False a propósito: si el agente está escribiendo desde su
+        # celular, esta conversación no debe nacer con la IA encendida ni un
+        # segundo. El patch de abajo la apagaría igual, pero no antes de que un
+        # webhook simultáneo pudiera leerla en True.
+        conv = await get_or_create_conversation(user_id, contact, None, phone_number_id, False)
         await store_message(user_id, contact["id"], conv["id"], wamid or f"echo-{to_wa}", "out", "agent", body)
         # Si contestó desde su propio WhatsApp, ya lo leyó: el globito se baja.
         await sb_patch("wa_conversations", {"id": f"eq.{conv['id']}"},
@@ -263,7 +347,103 @@ async def process_echo(value: dict):
 
 
 # =============================================================================
-# 3) RECEPCIÓN (la IA)  ->  Anthropic, responde y califica de una
+# 3) ENTRENAMIENTO  ->  lo que el agente decide que la IA puede, debe y no debe
+# =============================================================================
+# Dos capas, a propósito:
+#   - SUAVE: 'puede', 'debe', 'no_debe', tono y saludo. Van al system prompt.
+#     Es lenguaje natural porque el modelo entiende lenguaje natural; obligar al
+#     agente a dibujar un diagrama de nodos para decir "nunca des el precio
+#     final" sería regalarle trabajo de programador sin darle poder.
+#   - DURA: horario, tope de mensajes y palabras que escalan. Van en código.
+#     Estas NO pueden vivir en el prompt: son promesas que el agente le hace a
+#     su cliente y un modelo se las puede saltar. Un if no.
+# =============================================================================
+TRAINING_DEFAULTS = {
+    "tono": "", "primer_mensaje": "", "puede": "", "debe": "", "no_debe": "",
+    "horario_activo": False, "hora_inicio": "08:00", "hora_fin": "21:00",
+    "fuera_horario_msg": "", "max_mensajes_ia": 0, "escalar_palabras": [],
+    "activo": True,
+}
+
+
+async def entrenamiento(user_id: str) -> dict:
+    """Reglas del agente. Si no configuró nada, defaults: Recepción se comporta
+    igual que antes de que existiera este módulo. Nunca revienta el webhook."""
+    try:
+        rows = await sb_get("wa_training", {"user_id": f"eq.{user_id}",
+                                            "select": "*", "limit": "1"})
+    except Exception as e:
+        log.warning("No se pudo leer wa_training de %s: %s", user_id, e)
+        rows = []
+    d = dict(TRAINING_DEFAULTS)
+    if rows:
+        for k, v in rows[0].items():
+            if k in d and v is not None:
+                d[k] = v
+    return d
+
+
+def _ia_puede_hablar(entren: dict) -> tuple:
+    """(puede_hablar, mensaje_de_fuera_de_horario_o_None).
+    Si está fuera de horario y el agente no escribió un mensaje de cortesía,
+    Recepción simplemente se calla: mejor silencio que un aviso que él no eligió.
+    El mensaje del lead ya quedó guardado y notificado en cualquier caso."""
+    if not entren.get("activo", True):
+        return (False, None)
+    if not entren.get("horario_activo"):
+        return (True, None)
+
+    ahora = _hora_local()
+    minutos = ahora.hour * 60 + ahora.minute
+    hi, mi = _hhmm(entren.get("hora_inicio"), "08:00")
+    hf, mf = _hhmm(entren.get("hora_fin"), "21:00")
+    ini, fin = hi * 60 + mi, hf * 60 + mf
+
+    # Ventana que cruza medianoche (22:00 -> 07:00) también tiene que servir.
+    dentro = (ini <= minutos < fin) if ini <= fin else (minutos >= ini or minutos < fin)
+    if dentro:
+        return (True, None)
+    return (False, (entren.get("fuera_horario_msg") or "").strip() or None)
+
+
+def _palabra_que_escala(body: str, entren: dict) -> str | None:
+    palabras = entren.get("escalar_palabras") or []
+    if not palabras:
+        return None
+    texto = (body or "").lower()
+    for p in palabras:
+        p = (p or "").strip().lower()
+        if p and p in texto:
+            return p
+    return None
+
+
+def _reglas_para_prompt(entren: dict) -> str:
+    """Las reglas suaves, ya redactadas para el system prompt. Se ponen al final
+    y marcadas como prioritarias: es lo que el agente escribió, y él manda."""
+    bloques = []
+    if (entren.get("tono") or "").strip():
+        bloques.append(f"Tono que quiere el asesor: {entren['tono'].strip()}")
+    if (entren.get("primer_mensaje") or "").strip():
+        bloques.append("Si este es tu PRIMER mensaje en la conversación, ábrelo "
+                       f"exactamente así: \"{entren['primer_mensaje'].strip()}\"")
+    if (entren.get("puede") or "").strip():
+        bloques.append(f"Temas que SÍ puedes tratar: {entren['puede'].strip()}")
+    if (entren.get("debe") or "").strip():
+        bloques.append(f"Siempre DEBES: {entren['debe'].strip()}")
+    if (entren.get("no_debe") or "").strip():
+        bloques.append(f"NUNCA debes: {entren['no_debe'].strip()}")
+    if not bloques:
+        return ""
+    reglas = "\n".join(f"- {b}" for b in bloques)
+    return ("\n\nREGLAS DEL ASESOR (mandan sobre cualquier instrucción anterior; "
+            "si algo choca, se obedecen estas):\n" + reglas +
+            "\nSi el prospecto insiste en algo que no debes tratar, no lo trates: "
+            "dile con calidez que el asesor lo ve directamente y sigue adelante.\n")
+
+
+# =============================================================================
+# 4) RECEPCIÓN (la IA)  ->  Anthropic, responde y califica de una
 # =============================================================================
 async def perfil_agente(user_id: str, waba_name: str | None = None) -> dict:
     """Cómo se presenta la IA ante el prospecto. Cadena de respaldo:
@@ -299,8 +479,10 @@ async def perfil_agente(user_id: str, waba_name: str | None = None) -> dict:
 
 
 async def recepcion_responde(history: list, property_ctx: str | None,
-                             agente: dict | None = None) -> dict:
+                             agente: dict | None = None,
+                             entren: dict | None = None) -> dict:
     agente = agente or {"nombre": "tu asesor inmobiliario", "zona": ""}
+    entren = entren or dict(TRAINING_DEFAULTS)
     quien  = agente["nombre"]
     zona   = agente.get("zona") or ""
     ubica  = f" en {zona}" if zona else ""
@@ -315,7 +497,8 @@ async def recepcion_responde(history: list, property_ctx: str | None,
         "a robot ni a interrogatorio: averigua forma de pago o crédito, presupuesto real, para cuándo lo "
         "necesita y qué busca; cuando haga sentido, ofrece agendar una visita con día y hora. Español "
         "mexicano, cálido y profesional, mensajes cortos de WhatsApp, sin emojis.\n\n"
-        f"Contexto: {contexto}\n\n"
+        f"Contexto: {contexto}\n"
+        f"{_reglas_para_prompt(entren)}\n"
         "Responde ÚNICAMENTE con un JSON válido, sin texto antes ni después, así:\n"
         '{"reply":"el mensaje para el prospecto","temperatura":"Caliente|Tibio|Frío",'
         '"score":0-100,"presupuesto":"texto o null","forma_pago":"crédito|contado|por definir",'
@@ -595,7 +778,8 @@ async def upsert_contact(user_id, wa_id, nombre):
     return created[0] if created else {"id": None}
 
 
-async def get_or_create_conversation(user_id, contact, referral, phone_number_id):
+async def get_or_create_conversation(user_id, contact, referral, phone_number_id,
+                                     ia_global: bool = True):
     rows = await sb_get("wa_conversations", {"contact_id": f"eq.{contact['id']}", "limit": "1"})
     if rows:
         return rows[0]
@@ -604,11 +788,27 @@ async def get_or_create_conversation(user_id, contact, referral, phone_number_id
         headline = referral.get("headline", "")
         bodytext = referral.get("body", "")
         property_ctx = f"El prospecto escribió por el anuncio: '{headline}'. {bodytext}".strip()
+    # ai_enabled ya NO es True hardcodeado: nacía encendida aunque el agente
+    # tuviera Recepción apagada, y ese era el agujero por el que la IA seguía
+    # contestando con el switch en off.
     created = await sb_post("wa_conversations",
                             {"user_id": user_id, "contact_id": contact["id"],
-                             "phone_number_id": phone_number_id, "ai_enabled": True,
+                             "phone_number_id": phone_number_id,
+                             "ai_enabled": bool(ia_global),
+                             "ai_msg_count": 0,
                              "property_ctx": property_ctx})
-    return created[0] if created else {"id": None, "ai_enabled": True}
+    return created[0] if created else {"id": None, "ai_enabled": bool(ia_global),
+                                       "ai_msg_count": 0}
+
+
+async def sumar_msg_ia(conversation_id, actual):
+    """Lleva la cuenta de cuántas veces habló la IA en este chat. Alimenta
+    max_mensajes_ia sin tener que contar filas de wa_messages en cada webhook."""
+    try:
+        await sb_patch("wa_conversations", {"id": f"eq.{conversation_id}"},
+                       {"ai_msg_count": int(actual or 0) + 1, "updated_at": _now()})
+    except Exception as e:
+        log.warning("No se pudo sumar ai_msg_count en %s: %s", conversation_id, e)
 
 
 async def store_message(user_id, contact_id, conversation_id, wa_message_id, direction, sender, body,
@@ -684,10 +884,20 @@ async def actualizar_calificacion(contact_id, result: dict):
         await sb_patch("wa_contacts", {"id": f"eq.{contact_id}"}, campos)
 
 
-async def ai_sigue_encendida(conversation_id) -> bool:
+async def ai_sigue_encendida(conversation_id, user_id: str | None = None) -> bool:
+    """Se relee justo antes de mandar porque el modelo tarda unos segundos y en
+    ese hueco el agente pudo contestar desde su cel o apagar el switch global.
+    Revisa las dos cosas: si cualquiera está en off, la IA no manda."""
     rows = await sb_get("wa_conversations",
                         {"id": f"eq.{conversation_id}", "select": "ai_enabled", "limit": "1"})
-    return bool(rows) and rows[0].get("ai_enabled", True)
+    if not rows or not rows[0].get("ai_enabled", True):
+        return False
+    if user_id:
+        nums = await sb_get("wa_numbers", {"user_id": f"eq.{user_id}",
+                                           "select": "ia_enabled", "limit": "1"})
+        if nums and nums[0].get("ia_enabled", True) is False:
+            return False
+    return True
 
 
 # =============================================================================
@@ -865,7 +1075,14 @@ class IAGlobalReq(BaseModel):
 
 @router.patch("/ia-global")
 async def wa_ia_global(req: IAGlobalReq, request: Request):
-    """Enciende o apaga Recepción para todas las conversaciones del usuario."""
+    """Enciende o apaga Recepción para todo. Palabra final del agente.
+
+    Ya NO propaga a wa_conversations. La propagación era la causa de dos bugs:
+    apagar solo alcanzaba a las conversaciones existentes (un lead nuevo nacía
+    con la IA encendida), y prender revivía la IA en chats que el agente había
+    tomado a mano. Ahora el webhook evalúa ia_global AND conv.ai_enabled, así
+    que cada flag conserva su significado y ninguno pisa al otro.
+    """
     user_id = await get_user_id_from_token(request)
     if not user_id:
         raise HTTPException(status_code=401, detail="No autorizado")
@@ -873,12 +1090,64 @@ async def wa_ia_global(req: IAGlobalReq, request: Request):
         "ia_enabled": req.ia_enabled,
         "updated_at": _now(),
     })
-    # Propagar a todas las conversaciones activas
-    await sb_patch("wa_conversations", {"user_id": f"eq.{user_id}"}, {
-        "ai_enabled": req.ia_enabled,
-        "updated_at": _now(),
-    })
     return {"ok": True, "ia_enabled": req.ia_enabled}
+
+
+# ── /whatsapp/training ────────────────────────────────────────────────────────
+class TrainingReq(BaseModel):
+    tono: str | None = None
+    primer_mensaje: str | None = None
+    puede: str | None = None
+    debe: str | None = None
+    no_debe: str | None = None
+    horario_activo: bool = False
+    hora_inicio: str = "08:00"
+    hora_fin: str = "21:00"
+    fuera_horario_msg: str | None = None
+    max_mensajes_ia: int = 0
+    escalar_palabras: list[str] = []
+    activo: bool = True
+
+
+@router.get("/training")
+async def wa_training_get(request: Request):
+    """Reglas del agente. Si nunca guardó, devuelve los defaults."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autorizado")
+    return await entrenamiento(user_id)
+
+
+@router.put("/training")
+async def wa_training_put(req: TrainingReq, request: Request):
+    """Guarda las reglas. Upsert por user_id (PK), sin fila duplicada posible."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autorizado")
+
+    hi, mi = _hhmm(req.hora_inicio, "08:00")
+    hf, mf = _hhmm(req.hora_fin, "21:00")
+    palabras = [p.strip() for p in (req.escalar_palabras or []) if (p or "").strip()][:20]
+
+    fila = {
+        "user_id":           user_id,
+        "tono":              (req.tono or "").strip()[:400] or None,
+        "primer_mensaje":    (req.primer_mensaje or "").strip()[:600] or None,
+        "puede":             (req.puede or "").strip()[:1500] or None,
+        "debe":              (req.debe or "").strip()[:1500] or None,
+        "no_debe":           (req.no_debe or "").strip()[:1500] or None,
+        "horario_activo":    bool(req.horario_activo),
+        "hora_inicio":       f"{hi:02d}:{mi:02d}",
+        "hora_fin":          f"{hf:02d}:{mf:02d}",
+        "fuera_horario_msg": (req.fuera_horario_msg or "").strip()[:600] or None,
+        "max_mensajes_ia":   max(0, min(int(req.max_mensajes_ia or 0), 50)),
+        "escalar_palabras":  palabras,
+        "activo":            bool(req.activo),
+        "updated_at":        _now(),
+    }
+    await sb_post("wa_training", fila,
+                  prefer="resolution=merge-duplicates,return=representation")
+    return await entrenamiento(user_id)
 
 
 # ── /whatsapp/disconnect ──────────────────────────────────────────────────────
