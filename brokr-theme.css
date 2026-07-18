@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════════════════════
-   BROQUER — Design System  ·  Edición "Editorial Estate"
+   BROQUER — Design System  ·  Edición "Navarro"
    Token-driven. Única fuente de verdad visual de la plataforma.
 
    Lenguaje: blanco dominante (70%), azul marino #00143B como
@@ -56,37 +56,37 @@
 
 :root {
   /* ── Surfaces (blanco dominante) ──────────── */
-  --paper:   #F6F8FC;     /* fondo del body */
-  --paper-2: #EEF3FA;     /* canvas / inset / hover / chips */
+  --paper:   #F4F7FD;     /* fondo del body */
+  --paper-2: #EDF2FB;     /* canvas / inset / hover / chips */
   --bone:    #FFFFFF;     /* superficie de card */
-  --shell:   #E8EEF7;     /* hover de input / superficie media */
+  --shell:   #F4F7FE;     /* hover de input / superficie media */
 
   /* ── Ink (azul marino como texto, no negro) ─ */
-  --ink:     #071A3D;     /* texto principal */
-  --ink-2:   #182B4D;
-  --ink-3:   #465977;     /* secundario */
-  --mute:    #53647E;     /* gris-azul secundario legible */
-  --mute-2:  #8796AE;
-  --mute-3:  #C5D0DF;
+  --ink:     #00143B;     /* texto principal */
+  --ink-2:   #1B2C4F;
+  --ink-3:   #4A5875;     /* secundario */
+  --mute:    #4A5875;     /* gris-azul secundario legible */
+  --mute-2:  #8592AB;
+  --mute-3:  #BFCADD;
 
   /* ── Hairlines (bordes del sistema) ───────── */
-  --line:     #E3EAF4;    /* borde claro / disabled */
-  --line-2:   #D4DEEC;    /* borde / input */
-  --line-3:   #BAC7D8;
+  --line:     #E6ECF6;    /* borde claro / disabled */
+  --line-2:   #D8E1EF;    /* borde / input */
+  --line-3:   #BFCADD;
 
   /* ── Accents (AZUL de acción) ─────────────── */
-  --forest:   #2F6FE4;    /* alias histórico → azul de acción */
-  --forest-2: #174EA6;    /* azul pressed (hover) */
-  --forest-soft: rgba(47,111,228,0.12);
+  --forest:   #1240A0;    /* alias histórico → azul de acción */
+  --forest-2: #0B2E78;    /* azul pressed (hover) */
+  --forest-soft: rgba(18,64,160,0.10);
 
   /* Marca Broquer */
-  --sky-navy:       #071A3D;  /* estructura: nav, footer, botón primario */
-  --sky-navy-mid:   #0E2E68;
-  --sky-navy-deep:  #031027;  /* sidebar, fondos navy profundos */
-  --sky-blue:       #2F6FE4;  /* acción */
-  --sky-blue-press: #174EA6;
-  --sky-blue-lift:  #74A8FF;  /* azul brillante, solo estados activos */
-  --sky-canvas:     #EAF2FF;
+  --sky-navy:       #00143B;  /* estructura: nav, footer, botón primario */
+  --sky-navy-mid:   #032873;
+  --sky-navy-deep:  #000D28;  /* sidebar, fondos navy profundos */
+  --sky-blue:       #1240A0;  /* acción */
+  --sky-blue-press: #0B2E78;
+  --sky-blue-lift:  #3A6FD8;  /* azul brillante, solo estados activos */
+  --sky-canvas:     #E8F0FE;
 
   --warn:     #B45309;
   --warn-soft:rgba(180,83,9,0.10);
@@ -99,11 +99,11 @@
 
   /* ── Geometry ─────────────────────────────── */
   --r-xs: 6px;     /* micro (check, tag) */
-  --r-sm: 12px;    /* BOTÓN */
-  --r:    14px;    /* INPUT / contenedor base */
-  --r-lg: 24px;    /* CARD */
-  --r-xl: 32px;    /* CARD GRANDE */
-  --r-modal: 32px; /* MODAL */
+  --r-sm: 8px;     /* BOTÓN */
+  --r:    10px;    /* INPUT / contenedor base */
+  --r-lg: 16px;    /* CARD */
+  --r-xl: 22px;    /* CARD GRANDE */
+  --r-modal: 24px; /* MODAL */
   --r-pill: 999px;
 
   /* ── Espaciado (escala base 4px) ────────── */
@@ -122,12 +122,12 @@
   --sp-24: 112px;   /* sección vertical desktop */
 
   /* ── Sombras (tinte navy, nunca negro fuerte) ── */
-  --shadow-xs: 0 2px 10px rgba(7,26,61,.05);
-  --shadow-sm: 0 10px 30px rgba(7,26,61,.07);
-  --shadow:    0 18px 50px rgba(7,26,61,.10);
-  --shadow-md: 0 20px 60px rgba(7,26,61,.12);
-  --shadow-lg: 0 28px 90px rgba(7,26,61,.14);
-  --shadow-xl: 0 36px 120px rgba(7,26,61,.18);
+  --shadow-xs: 0 2px 8px rgba(0,20,59,.04);
+  --shadow-sm: 0 6px 24px rgba(0,20,59,.06);
+  --shadow:    0 14px 40px rgba(0,20,59,.09);
+  --shadow-md: 0 14px 40px rgba(0,20,59,.11);
+  --shadow-lg: 0 24px 80px rgba(0,20,59,.12);
+  --shadow-xl: 0 32px 96px rgba(0,20,59,.16);
 
   /* ── Contrato de layout (anchos canónicos) ── */
   --page-max: 1280px;   /* módulos de datos (tablas, cards, dashboards) */
@@ -159,7 +159,7 @@
 
   /* ── Tipografía ─────────────────────────── */
   --font-sans: 'Manrope', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
-  --font-display: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --font-display: 'Manrope', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'Manrope', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; /* alias histórico → NO es monoespaciada */
   /* Serif editorial: EXCLUSIVA de landing/marketing. Prohibida en
      tablas, filtros, formularios, menús y módulos densos. */
@@ -167,10 +167,10 @@
 
   /* Escala tipográfica.
      Hero/landing usa --fs-hero. La app arranca en --fs-h1 (32-36). */
-  --fs-hero: clamp(4rem, 6vw, 7.4rem);       /* landing H1 (clamp aplicado en .bk-hero__title) */
-  --fs-display: clamp(2.5rem, 4vw, 5rem);    /* landing H2 / número protagonista */
-  --fs-h1: clamp(2.25rem, 3.4vw, 4.5rem);         /* app page title */
-  --fs-h2: clamp(1.875rem, 2.6vw, 3.5rem);         /* app section title */
+  --fs-hero: 64px;       /* landing H1 (clamp aplicado en .bk-hero__title) */
+  --fs-display: 42px;    /* landing H2 / número protagonista */
+  --fs-h1: 36px;         /* app page title */
+  --fs-h2: 24px;         /* app section title */
   --fs-h3: 20px;
   --fs-h5: 17px;
   --fs-body-lg: 18px;
@@ -185,9 +185,9 @@
   --fs-label-3: 12px;
 
   --lh-hero: 0.92;
-  --lh-display: .94;
-  --lh-h1: .96;
-  --lh-h2: 1.02;
+  --lh-display: 46px;
+  --lh-h1: 42px;
+  --lh-h2: 30px;
   --lh-h3: 26px;
   --lh-body: 24px;
   --lh-sm: 20px;
@@ -197,7 +197,6 @@
   --lh-snug:  1.3;
   --lh:       1.55;
   --lh-loose: 1.65;
-  --lh-body-copy: 1.7;
 
   /* ── Motion ─────────────────────────────── */
   --ease: cubic-bezier(.2,.8,.2,1);
@@ -205,17 +204,6 @@
   --dur-fast: .12s;
   --dur: .18s;
   --dur-slow: .28s;
-
-  /* ── Editorial/reference helpers ───────────────── */
-  --surface-white: var(--bone);
-  --surface-off: var(--paper);
-  --surface-cold: var(--paper-2);
-  --text-primary: var(--ink);
-  --text-secondary: var(--mute);
-  --glass-navy: rgba(7,26,61,0.72);
-  --glass-line: rgba(255,255,255,0.18);
-  --glass-blur: 18px;
-  --photo-filter: saturate(.9) contrast(1.04) brightness(1.02);
 
   /* ── Legacy aliases (NO TOCAR: el markup existente depende de
         estos. Mapean nombres viejos a los tokens actuales) ──── */
@@ -280,16 +268,16 @@ html, body {
 
 h1,h2,h3,h4,h5 {
   font-family: var(--font-display);
-  font-weight: 400;
-  letter-spacing: -0.045em;
+  font-weight: 700;
+  letter-spacing: -0.022em;
   line-height: 1.14;
   color: var(--ink);
 }
-h1 { font-size: var(--fs-h1); line-height: var(--lh-h1); letter-spacing: -0.045em; }
-h2 { font-size: var(--fs-h2); line-height: var(--lh-h2); letter-spacing: -0.04em; }
+h1 { font-size: var(--fs-h1); line-height: var(--lh-h1); letter-spacing: -0.03em; }
+h2 { font-size: var(--fs-h2); line-height: var(--lh-h2); letter-spacing: -0.026em; }
 h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); }
 
-p { line-height: var(--lh-body-copy); color: var(--ink-2); font-weight: 400; }
+p { line-height: var(--lh); color: var(--ink-2); font-weight: 400; }
 
 a { color: var(--ink); text-decoration: none; }
 a:hover { color: var(--forest); }
@@ -358,16 +346,6 @@ input, select, textarea, button {
 }
 .bk-card--navy h1, .bk-card--navy h2, .bk-card--navy h3 { color: var(--bone); }
 .bk-card--navy p { color: rgba(255,255,255,0.72); }
-.bk-card--glass-navy {
-  background: var(--glass-navy);
-  border-color: var(--glass-line);
-  color: var(--bone);
-  box-shadow: var(--shadow-xl);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-}
-.bk-card--glass-navy h1, .bk-card--glass-navy h2, .bk-card--glass-navy h3 { color: var(--bone); }
-.bk-card--glass-navy p { color: rgba(255,255,255,0.74); }
 
 /* ════════════════════════════════════════════════════════════
    BOTÓN
@@ -855,7 +833,7 @@ input, select, textarea, button {
 }
 .bk-prop-card:hover { box-shadow: var(--shadow); border-color: var(--line-3); transform: translateY(-1px); }
 .bk-prop-card__media { aspect-ratio: 4 / 3; background: var(--paper-2); position: relative; overflow: hidden; }
-.bk-prop-card__media img { width: 100%; height: 100%; object-fit: cover; display: block; filter: var(--photo-filter); }
+.bk-prop-card__media img { width: 100%; height: 100%; object-fit: cover; display: block; filter: saturate(.88) contrast(1.03) brightness(1.02); }
 .bk-prop-card__body { padding: var(--sp-5); display: flex; flex-direction: column; gap: var(--sp-1); }
 .bk-prop-card__price { font-family: var(--font-display); font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 800; letter-spacing: -0.025em; color: var(--ink); font-variant-numeric: tabular-nums; }
 .bk-prop-card__title { font-size: var(--fs-sm); color: var(--ink-2); }
