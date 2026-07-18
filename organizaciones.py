@@ -37,6 +37,7 @@ APP_URL              = os.getenv("APP_URL", "https://broquer.app").rstrip("/")
 # Si agregas uno aquí, agrégalo también en org_permiso() del SQL y en equipo.html.
 PERMISOS_VALIDOS = {
     "ver_telefonos",
+    "gestionar_integraciones",
     "ver_comisiones",
     "ver_inventario_completo",
     "ver_contactos_equipo",
@@ -50,6 +51,10 @@ ROLES_ORG_VALIDOS = {"owner", "admin", "agente"}
 # desincronizan, la UI enseña una cosa y la base hace otra.
 DEFAULTS_AGENTE = {
     "ver_telefonos": False,
+    # Conectar/desconectar EasyBroker y Facebook. La cuenta es de la EMPRESA:
+    # si un agente la desconecta, deja sin inventario a todo el equipo. Solo el
+    # dueño y quien él designe.
+    "gestionar_integraciones": False,
     "ver_comisiones": False,
     "ver_inventario_completo": True,
     "ver_contactos_equipo": True,
@@ -175,6 +180,28 @@ def permiso_efectivo(ctx: Dict[str, Any], clave: str) -> bool:
     if isinstance(override, bool):
         return override
     return DEFAULTS_AGENTE.get(clave, False)
+
+
+async def exigir_gestion_integraciones(request: Request) -> str:
+    """Portero de EasyBroker y Facebook. Lo importa main.py.
+
+    Estas cuentas son de la empresa, no de la persona: si un agente cualquiera
+    pudiera desconectarlas, deja al equipo entero sin inventario ni anuncios.
+    Pasan el dueño, los admins, y el agente a quien el dueño le haya prendido
+    `gestionar_integraciones`.
+    """
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Inicia sesión.")
+    ctx = await get_org_context(user_id)
+    if not ctx:
+        raise HTTPException(status_code=403, detail="Tu cuenta no está configurada. Contacta a soporte.")
+    if not permiso_efectivo(ctx, "gestionar_integraciones"):
+        raise HTTPException(
+            status_code=403,
+            detail="Solo el dueño de la cuenta puede conectar o desconectar EasyBroker y Facebook. "
+                   "Pídele que te dé el permiso desde Equipo.")
+    return user_id
 
 
 async def _exigir_admin_org(request: Request) -> Dict[str, Any]:

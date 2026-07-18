@@ -138,6 +138,14 @@ try:
 except Exception as _e:
     print(f"[agente] No se pudo montar el router agéntico: {_e}")
 
+# Broquer para empresas: miembros, invitaciones, roles y permisos.
+# Mismo import defensivo: si falla, el resto del backend sigue vivo.
+try:
+    from routers.organizaciones import router as org_router
+    app.include_router(org_router)
+except Exception as _e:
+    print(f"[org] No se pudo montar el router de organizaciones: {_e}")
+
 CONFIG_FILE = Path(__file__).parent / "config.json"
 
 def load_config() -> dict:
@@ -354,12 +362,41 @@ async def get_user_id_from_token(request: Request) -> str:
         pass
     return None
 
+# ════════════════════════════════════════════════════════════════
+# CONTEXTO DE ORGANIZACIÓN (Broquer para empresas)
+# Tras la migración, la RLS filtra por org_id — NO por user_id. Todo registro
+# que cree el backend debe llevar org_id o queda huérfano e invisible para
+# todos. El backend usa service key y se brinca la RLS, así que un olvido aquí
+# no truena: silenciosamente crea basura. Por eso va explícito en cada INSERT.
+# ════════════════════════════════════════════════════════════════
+try:
+    from routers.organizaciones import (
+        get_org_id_for_user, get_org_context, permiso_efectivo,
+        exigir_gestion_integraciones,
+    )
+except Exception as _e:
+    print(f"[org] No se pudo importar el contexto de organización: {_e}")
+    async def get_org_id_for_user(user_id: str):
+        return None
+    async def get_org_context(user_id: str):
+        return None
+    def permiso_efectivo(ctx, clave):
+        return False
+    async def exigir_gestion_integraciones(request):
+        return await get_user_id_from_token(request)
+
+
 # Helper: obtiene la EB key de un usuario desde Supabase
 # IMPORTANTE: NO hace fallback al EB_API_KEY global. Si el usuario no tiene
 # su propia key configurada, devuelve None. Esto blinda multi-tenant: ningún
 # usuario puede usar la cuenta de EasyBroker de otro.
 async def get_eb_key_for_user(user_id: str) -> str:
+    # Acordado con Chava: la cuenta de EasyBroker es UNA por empresa, no por
+    # agente. Buscamos por org_id para que todo el equipo use la misma.
     if not user_id or not SUPABASE_URL or not SUPABASE_KEY:
+        return None
+    org_id = await get_org_id_for_user(user_id)
+    if not org_id:
         return None
     try:
         async with httpx.AsyncClient(timeout=8) as client:
@@ -367,7 +404,7 @@ async def get_eb_key_for_user(user_id: str) -> str:
                 f"{SUPABASE_URL}/rest/v1/user_integrations",
                 headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
                          "Content-Type": "application/json"},
-                params={"user_id": f"eq.{user_id}", "provider": "eq.easybroker",
+                params={"org_id": f"eq.{org_id}", "provider": "eq.easybroker",
                         "select": "api_key", "limit": "1"}
             )
             if r.status_code == 200:
@@ -613,11 +650,8 @@ async def telemetria_sesion_modulo(req: TelemetriaSesionModuloReq, request: Requ
 
 @app.post("/config/eb-key")
 async def set_eb_key(req: EbKeyRequest, request: Request):
-    user_id = await get_user_id_from_token(request)
-
-    # Multi-tenant: exigir usuario autenticado. Ningún fallback a config global.
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Debes iniciar sesión para configurar tu API key de EasyBroker.")
+    # La cuenta de EasyBroker es de la EMPRESA. Solo el dueño o quien él designe.
+    user_id = await exigir_gestion_integraciones(request)
     if not SUPABASE_URL or not SUPABASE_KEY:
         raise HTTPException(status_code=500, detail="Supabase no está configurado en el servidor.")
 
@@ -639,6 +673,7 @@ async def set_eb_key(req: EbKeyRequest, request: Request):
 
     payload = {
         "user_id": user_id,
+        "org_id": await get_org_id_for_user(user_id),
         "provider": "easybroker",
         "api_key": req.key.strip(),
         "updated_at": datetime.utcnow().isoformat()
@@ -664,9 +699,8 @@ async def set_eb_key(req: EbKeyRequest, request: Request):
 # Endpoint para desconectar EasyBroker (borrar la API key del usuario)
 @app.delete("/config/eb-key")
 async def delete_eb_key(request: Request):
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Debes iniciar sesión.")
+    # Desconectar deja SIN INVENTARIO a todo el equipo. Solo el dueño o designado.
+    user_id = await exigir_gestion_integraciones(request)
     if not SUPABASE_URL or not SUPABASE_KEY:
         raise HTTPException(status_code=500, detail="Supabase no está configurado.")
     async with httpx.AsyncClient(timeout=10) as client:
@@ -674,7 +708,8 @@ async def delete_eb_key(request: Request):
             f"{SUPABASE_URL}/rest/v1/user_integrations",
             headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
                      "Content-Type": "application/json"},
-            params={"user_id": f"eq.{user_id}", "provider": "eq.easybroker"}
+            params={"org_id": f"eq.{await get_org_id_for_user(user_id)}",
+                    "provider": "eq.easybroker"}
         )
     return {"ok": True, "deleted": True}
 
@@ -766,10 +801,13 @@ async def get_profile_status(request: Request):
             }
         else:
             async with httpx.AsyncClient(timeout=6) as client:
+                # La suscripción cuelga de la ORG: en una empresa la paga el
+                # titular y la heredan todos sus agentes.
+                _oid = await get_org_id_for_user(user_id)
                 rs = await client.get(
                     f"{SUPABASE_URL}/rest/v1/suscripciones",
                     headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
-                    params={"user_id": f"eq.{user_id}", "select": "status,plan_nombre", "order": "updated_at.desc", "limit": "1"}
+                    params={"org_id": f"eq.{_oid}", "select": "status,plan_nombre", "order": "updated_at.desc", "limit": "1"}
                 )
                 if rs.status_code == 200 and rs.json():
                     row = rs.json()[0]
@@ -1805,6 +1843,12 @@ async def easybroker_import_all(request: Request):
     errores: list = []
     inmuebles_listos: list = []
 
+    # La empresa comparte UNA cuenta de EasyBroker. Sin esto, cada agente que
+    # importara crearía su propia copia del mismo inventario.
+    org_id_import = await get_org_id_for_user(user_id)
+    if not org_id_import:
+        raise HTTPException(status_code=403, detail="Tu cuenta no está configurada. Contacta a soporte.")
+
     async def fetch_one(client: httpx.AsyncClient, pid: str):
         try:
             rd = await client.get(
@@ -1816,6 +1860,7 @@ async def easybroker_import_all(request: Request):
                 return ("err", {"id": pid, "error": f"EB status {rd.status_code}"})
             prop_full = rd.json()
             inmueble = _eb_to_brokr(prop_full, user_id)
+            inmueble["org_id"] = org_id_import
             # Preservar notas y estatus del usuario si la fila ya existe
             prev = existentes_por_eb_id.get(pid)
             if prev:
@@ -1851,7 +1896,7 @@ async def easybroker_import_all(request: Request):
                     f"{SUPABASE_URL}/rest/v1/propiedades",
                     headers={**sb_headers,
                              "Prefer": "resolution=merge-duplicates,return=minimal"},
-                    params={"on_conflict": "user_id,eb_public_id"},
+                    params={"on_conflict": "org_id,eb_public_id"},
                     json=chunk
                 )
                 if ri.status_code in (200, 201, 204):
@@ -3734,6 +3779,7 @@ async def crear_machote(
         fila = {
             "id": machote_id,
             "user_id": user_id,
+            "org_id": await get_org_id_for_user(user_id),
             "titulo": titulo,
             "tipo": (tipo or "").strip() or "Personalizado",
             "storage_path": storage_path,
@@ -5119,8 +5165,10 @@ class FbSavePageRequest(BaseModel):
 async def facebook_save_page(req: FbSavePageRequest, request: Request):
     """Guarda el page_token, user_token y AUTO-SELECCIONA la cuenta publicitaria
     asociada a la página (la primera cuenta activa autorizada para anunciar
-    esa página). Esto elimina el riesgo de publicar en una cuenta equivocada."""
-    user_id = await get_user_id_from_token(request)
+    esa página). Esto elimina el riesgo de publicar en una cuenta equivocada.
+
+    La página de Facebook es de la EMPRESA: solo el dueño o quien él designe."""
+    user_id = await exigir_gestion_integraciones(request)
     if not user_id:
         raise HTTPException(status_code=401, detail="No autenticado")
     if not SUPABASE_URL or not SUPABASE_KEY:
@@ -5187,6 +5235,7 @@ async def facebook_save_page(req: FbSavePageRequest, request: Request):
     }
     payload = {
         "user_id": user_id,
+        "org_id": await get_org_id_for_user(user_id),
         "provider": "facebook",
         "api_key": req.page_token,
         "meta": json.dumps(meta),
@@ -5274,6 +5323,7 @@ async def _fb_patch_meta(user_id: str, updates: dict, new_page_token: str | None
     meta.update(updates)
     payload = {
         "user_id": user_id,
+        "org_id": await get_org_id_for_user(user_id),
         "provider": "facebook",
         "api_key": new_page_token if new_page_token is not None else cur.get("page_token", ""),
         "meta": json.dumps(meta),
@@ -5323,10 +5373,8 @@ class FbSelectPageRequest(BaseModel):
 
 @app.post("/facebook/select-page")
 async def facebook_select_page(req: FbSelectPageRequest, request: Request):
-    """Cambia la página activa del usuario (sin re-OAuth)."""
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autenticado")
+    """Cambia la página activa de la empresa (sin re-OAuth)."""
+    user_id = await exigir_gestion_integraciones(request)
     row = await _fb_get_meta_row(user_id)
     user_token = (row.get("meta") or {}).get("user_token", "")
     if not user_token:
@@ -5355,10 +5403,9 @@ class FbSelectAdAccountRequest(BaseModel):
 
 @app.post("/facebook/select-ad-account")
 async def facebook_select_ad_account(req: FbSelectAdAccountRequest, request: Request):
-    """Recuerda la última cuenta publicitaria elegida."""
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autenticado")
+    """Recuerda la última cuenta publicitaria elegida.
+    Toca dónde se cobran los anuncios: solo el dueño o quien él designe."""
+    user_id = await exigir_gestion_integraciones(request)
     await _fb_patch_meta(user_id, {
         "ad_account_id": req.account_id,
         "ad_account_name": req.account_name or req.account_id,
@@ -5367,10 +5414,9 @@ async def facebook_select_ad_account(req: FbSelectAdAccountRequest, request: Req
 
 @app.delete("/facebook/connection")
 async def facebook_disconnect(request: Request):
-    """Elimina la conexión de Facebook del usuario en Supabase."""
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autenticado")
+    """Elimina la conexión de Facebook de la EMPRESA en Supabase.
+    Deja al equipo entero sin anuncios: solo el dueño o quien él designe."""
+    user_id = await exigir_gestion_integraciones(request)
     if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
         raise HTTPException(status_code=500, detail="Supabase no configurado")
     async with httpx.AsyncClient(timeout=10) as client:
@@ -6447,6 +6493,7 @@ async def stripe_webhook(request: Request):
             plan_nombre = "AMPI" if plan_id == "ampi" else "Broquer Max"
             sb = {
                 "user_id": user_id,
+                "org_id": await get_org_id_for_user(user_id),
                 "plan_id": plan_id,
                 "plan_nombre": plan_nombre,
                 "stripe_subscription_id": subscription_id,
@@ -6540,6 +6587,7 @@ async def subscription_activate(request: Request):
 
     sb = {
         "user_id": user_id,
+        "org_id": await get_org_id_for_user(user_id),
         "plan_id": plan_id,
         "plan_nombre": plan_nombre,
         "stripe_customer_id": customer_id,
@@ -6582,6 +6630,27 @@ async def subscription_status(request: Request):
     if rol in ("equipo", "admin"):
         return {"active": True, "plan": "Equipo Interno" if rol == "equipo" else "Admin", "plan_id": rol, "status": "active"}
 
+    # Empresas: el precio se negocia caso por caso, así que no pasan por Stripe.
+    # Su acceso lo gobierna la propia organización (activo + vence_el), que tú
+    # activas a mano desde admin.html.
+    _ctx = await get_org_context(user_id)
+    if _ctx and _ctx.get("org_tipo") == "empresa":
+        _vigente = _ctx.get("org_activo", True)
+        _vence = _ctx.get("vence_el")
+        if _vigente and _vence:
+            try:
+                from datetime import timezone as _tz
+                _vigente = datetime.fromisoformat(str(_vence).replace("Z", "+00:00")) > datetime.now(_tz.utc)
+            except Exception:
+                pass
+        return {
+            "active": bool(_vigente),
+            "plan": _ctx.get("org_plan") or "Empresas",
+            "plan_id": "empresas",
+            "status": "active" if _vigente else "vencida",
+        }
+
+    _oid = await get_org_id_for_user(user_id)
     async with httpx.AsyncClient(timeout=8) as client:
         r = await client.get(
             f"{SUPABASE_URL}/rest/v1/suscripciones",
@@ -6589,7 +6658,7 @@ async def subscription_status(request: Request):
                 "apikey": SUPABASE_SERVICE_KEY,
                 "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
             },
-            params={"user_id": f"eq.{user_id}", "select": "*", "order": "updated_at.desc", "limit": "1"}
+            params={"org_id": f"eq.{_oid}", "select": "*", "order": "updated_at.desc", "limit": "1"}
         )
     if r.status_code != 200 or not r.json():
         return {"active": False, "plan": None, "status": "sin_suscripcion"}
@@ -6704,6 +6773,7 @@ async def revenuecat_webhook(request: Request):
     # 3. Upsert en la misma tabla que usa Stripe (merge por user_id)
     sb = {
         "user_id": user_id,
+        "org_id": await get_org_id_for_user(user_id),
         "plan_id": "max",
         "plan_nombre": "Broquer Max",
         "status": nuevo_status,
@@ -6832,6 +6902,7 @@ async def importar_contactos_eb(request: Request):
                     nuevo = {
                         "id": str(_uuid.uuid4()),
                         "user_id": user_id,
+                        "org_id": await get_org_id_for_user(user_id),
                         "nombre": nombre or "Sin nombre",
                         "telefono": telefono,
                         "email": email,
