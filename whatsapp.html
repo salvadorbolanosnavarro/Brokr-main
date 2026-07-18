@@ -11,22 +11,36 @@
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
 /* ═══════════════════════════════════════════════════════════════
-   WHATSAPP — un solo módulo, tres vistas.
-   Antes esto vivía partido en dos páginas (whatsapp.html y
-   bandeja.html) y el agente tenía que saber cuál era cuál. Ahora
-   Chats, Ajustes y Entrenamiento son pestañas de lo mismo, porque
-   es lo mismo: su número de WhatsApp.
+   WHATSAPP — un módulo, dos pestañas: Chats y Recepción.
 
-   Chats necesita alto completo y scroll por carril; Ajustes y
-   Entrenamiento son formularios centrados a 760px. La clase
-   .wa-chats en <body> conmuta entre las dos geometrías.
+   TESIS. La pantalla vieja abría con el número de teléfono en
+   tipografía gigante. El agente se sabe su número. Lo que no sabe
+   —y lo que le falló— es si Recepción está contestando. Ese es el
+   titular, y por eso el letrero es lo primero y lo único con peso.
+
+   METÁFORA. Un agente de 55 años no sabe qué es una API, pero sabe
+   qué es una recepcionista: contesta cuando él no puede, sigue
+   instrucciones y le pasa la llamada cuando se pone serio. Todas
+   las palabras de esta página salen de ahí.
+
+   DISCIPLINA. El letrero es la ÚNICA superficie. Todo lo demás es
+   tipografía sobre papel con filetes: cero cards. Toda la audacia
+   en un solo lugar, el resto callado.
+
+   GEOMETRÍA. Chats necesita alto completo y scroll por carril;
+   Recepción es una columna de lectura. La clase .wa-chats en <body>
+   conmuta entre las dos.
    ═══════════════════════════════════════════════════════════════ */
 body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-height:100vh}
-.wa-wrap{max-width:var(--form-max, 760px);margin:0 auto;padding:8px var(--pad-x, 36px) 120px}
+.wa-wrap{max-width:720px;margin:0 auto;padding:var(--sp-6) var(--pad-x, 40px) 140px}
+
+/* El encabezado del shell decía "Conecta y administra tu número de
+   WhatsApp Business". El letrero lo dice mejor y en el idioma del
+   agente. Dos atributos -> gana por especificidad, sin !important. */
+body[data-app="whatsapp"] .bk-ph{display:none}
 
 /* ─── Modo Chats: el shell deja de ser una página con scroll y pasa
-       a ser un contenedor de alto completo. Dos clases en el selector
-       -> gana por especificidad al shell, sin !important. ─── */
+       a ser un contenedor de alto completo. ─── */
 body[data-app="whatsapp"].wa-chats{--page-max:none}
 body[data-app="whatsapp"].wa-chats .bk-page{
   padding-bottom:0;
@@ -34,17 +48,15 @@ body[data-app="whatsapp"].wa-chats .bk-page{
   display:flex;
   flex-direction:column;
 }
-/* El encabezado canónico del shell dice "WhatsApp" y ya lo dice la
-   pestaña activa. En Chats solo robaría altura al hilo. */
-body[data-app="whatsapp"].wa-chats .bk-ph{display:none}
 .wa-view[hidden]{display:none}
 
 /* ═══════════════════════════════════════════════════════════
-   PESTAÑAS — solo aparecen cuando hay número conectado. Sin
-   número no hay nada que separar.
+   PESTAÑAS — dos, y las dos son sustantivos que el agente ya
+   posee. Solo aparecen con número conectado: sin número no hay
+   nada que separar.
    ═══════════════════════════════════════════════════════════ */
-.wa-tabs{border-bottom:1px solid var(--line);padding:0 var(--pad-x, 36px);background:var(--paper)}
-.wa-tabs__inner{max-width:var(--form-max, 760px);margin:0 auto;display:flex;gap:var(--sp-5)}
+.wa-tabs{border-bottom:1px solid var(--line);padding:0 var(--pad-x, 40px);background:var(--paper)}
+.wa-tabs__inner{max-width:720px;margin:0 auto;display:flex;gap:var(--sp-6)}
 body[data-app="whatsapp"].wa-chats .wa-tabs__inner{max-width:none}
 .wa-tab{
   position:relative;border:0;background:transparent;cursor:pointer;
@@ -66,89 +78,107 @@ body[data-app="whatsapp"].wa-chats .wa-tabs__inner{max-width:none}
 }
 .wa-tab__badge.on{display:inline-block}
 
-/* ═══════════════════════════════════════════════════════════
-   STAGE — la superficie navy de Broquer (misma ADN que los PDF:
-   card oscura, métrica protagonista, rejilla de apoyo).
-   Es el único elemento con peso visual de la pantalla.
-   ═══════════════════════════════════════════════════════════ */
-.wa-stage{
+/* ═══════════════════════════════════════════════════════════════
+   EL LETRERO — la firma de la página.
+   Un letrero de "en turno": luz, la frase que manda, y el switch.
+   Apagado, el letrero entero se muere: la luz se va, el brillo se
+   apaga y la frase dice la consecuencia real. La única animación
+   de la pantalla vive aquí, porque es lo único vivo que hay.
+   ═══════════════════════════════════════════════════════════════ */
+.wa-sign{
   position:relative;overflow:hidden;
-  background:linear-gradient(148deg, var(--sky-navy) 0%, var(--sky-navy-mid) 100%);
-  border-radius:var(--r-lg);
-  padding:var(--sp-8) var(--sp-8) var(--sp-7);
-  margin-bottom:var(--sp-5);
+  background:linear-gradient(152deg, var(--sky-navy) 0%, var(--sky-navy-mid) 100%);
+  border-radius:var(--r-xl);
+  padding:var(--sp-7) var(--sp-7) var(--sp-7);
+  transition:background var(--dur-slow) var(--ease);
 }
-.wa-stage::before{
-  content:"";position:absolute;right:-140px;top:-160px;
-  width:380px;height:380px;border-radius:50%;
-  background:radial-gradient(circle, rgba(91,164,255,.20) 0%, rgba(91,164,255,0) 68%);
+/* El halo: es el "encendido" del letrero, no adorno.
+   Florece DESDE la lámpara —arriba a la izquierda—, no de una esquina
+   cualquiera: una luz encendida ilumina desde donde está. Con
+   --brand-whatsapp-soft (10%) era literalmente invisible sobre navy. */
+.wa-sign::before{
+  content:"";position:absolute;left:-180px;top:-260px;
+  width:520px;height:520px;border-radius:50%;
+  background:radial-gradient(circle, rgba(37,211,102,.30) 0%, rgba(37,211,102,.07) 45%, rgba(37,211,102,0) 72%);
   pointer-events:none;
+  opacity:1;transition:opacity var(--dur-slow) var(--ease);
 }
-.wa-stage > *{position:relative}
+.wa-sign.is-off{background:linear-gradient(152deg, var(--sky-navy-deep) 0%, var(--sky-navy) 100%)}
+.wa-sign.is-off::before{opacity:0}
+.wa-sign > *{position:relative}
 
-.wa-stage__mark{
-  width:44px;height:44px;border-radius:var(--r);
+.wa-sign__top{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-4);margin-bottom:var(--sp-6)}
+
+/* La luz. Verde viva con pulso cuando atiende; gris muerta cuando no. */
+.wa-light{display:inline-flex;align-items:center;gap:var(--sp-3);min-width:0}
+.wa-light__dot{
+  position:relative;width:10px;height:10px;border-radius:50%;flex:none;
   background:var(--brand-whatsapp);
-  display:flex;align-items:center;justify-content:center;
-  margin-bottom:var(--sp-5);
+  box-shadow:0 0 12px var(--brand-whatsapp);
+  transition:background var(--dur-slow) var(--ease), box-shadow var(--dur-slow) var(--ease);
 }
-.wa-stage__mark svg{width:26px;height:26px}
-.wa-stage__eyebrow{
-  font-size:var(--fs-label-3);font-weight:700;color:var(--sky-blue-on-dark);
-  margin:0 0 var(--sp-2);
-}
-.wa-stage__title{
-  font-family:var(--font-display);font-size:var(--fs-h1);font-weight:700;
-  letter-spacing:-.03em;line-height:var(--lh-tight);color:#fff;
-  max-width:16ch;margin:0;
-}
-.wa-stage__title b{color:var(--sky-blue-on-dark);font-weight:700}
-.wa-stage__text{
-  font-size:var(--fs-sm);line-height:var(--lh-loose);
-  color:rgba(255,255,255,.72);max-width:46ch;margin:var(--sp-3) 0 0;
-}
-.wa-stage__cta{display:flex;flex-wrap:wrap;gap:var(--sp-3);margin-top:var(--sp-6)}
-.wa-stage__foot{
-  margin:var(--sp-6) 0 0;padding-top:var(--sp-5);
-  border-top:1px solid rgba(255,255,255,.14);
-  font-size:var(--fs-xs);line-height:var(--lh);color:rgba(255,255,255,.60);
-}
-.wa-stage__foot b{color:rgba(255,255,255,.92);font-weight:700}
-
-/* ─── Stage en modo conectado: el número es el protagonista ─── */
-.wa-live__top{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-6)}
-.wa-presence{display:inline-flex;align-items:center;gap:var(--sp-2);font-size:var(--fs-xs);font-weight:700;color:#fff}
-.wa-presence i{
-  position:relative;width:9px;height:9px;border-radius:50%;
-  background:var(--brand-whatsapp);flex:none;
-}
-.wa-presence i::after{
-  content:"";position:absolute;inset:-5px;border-radius:50%;
+.wa-light__dot::after{
+  content:"";position:absolute;inset:-6px;border-radius:50%;
   border:1.5px solid var(--brand-whatsapp);opacity:0;
-  animation:waPulse 2.6s var(--ease-out) infinite;
+  animation:waPulse 2.8s var(--ease-out) infinite;
 }
-@keyframes waPulse{0%{transform:scale(.7);opacity:.55}100%{transform:scale(1.35);opacity:0}}
-.wa-live__waba{font-size:var(--fs-xs);color:rgba(255,255,255,.60);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:50%}
+.wa-sign.is-off .wa-light__dot{background:var(--mute-2);box-shadow:none}
+.wa-sign.is-off .wa-light__dot::after{animation:none;opacity:0}
+.wa-light__txt{font-size:var(--fs-label-3);font-weight:700;color:rgba(255,255,255,.62);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@keyframes waPulse{0%{transform:scale(.7);opacity:.6}100%{transform:scale(1.5);opacity:0}}
 
-.wa-live__label{margin:0;font-size:var(--fs-label-3);font-weight:700;color:var(--sky-blue-on-dark)}
-.wa-live__number{
-  font-family:var(--font-display);font-size:var(--fs-display);font-weight:700;
-  letter-spacing:-.03em;line-height:var(--lh-tight);color:#fff;
-  font-variant-numeric:tabular-nums;margin:var(--sp-2) 0 0;
+/* El switch XL. Es el único control del letrero: no lleva etiqueta
+   propia porque el titular de abajo YA dice el estado. Una etiqueta
+   más aquí solo abre la duda de si describe el estado o la acción. */
+.wa-power{position:relative;width:62px;height:34px;flex:none;cursor:pointer}
+.wa-power input{position:absolute;opacity:0;width:0;height:0}
+.wa-power__track{
+  position:absolute;inset:0;border-radius:var(--r-pill);
+  background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.20);
+  transition:background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.wa-power input:checked + .wa-power__track{background:var(--brand-whatsapp);border-color:var(--brand-whatsapp)}
+.wa-power input:focus-visible + .wa-power__track{box-shadow:0 0 0 4px rgba(255,255,255,.30)} /* AUDIT-EXEMPT-LINE: foco sobre navy — --focus es azul y ahí es invisible; no hay token de foco sobre oscuro */
+.wa-power__thumb{
+  position:absolute;top:4px;left:4px;width:26px;height:26px;border-radius:50%;
+  background:#fff;pointer-events:none;box-shadow:var(--shadow-xs);
+  transition:transform var(--dur) var(--ease);
+}
+.wa-power input:checked ~ .wa-power__thumb{transform:translateX(28px)}
+
+/* El titular: la frase que manda. El estado va en color —verde vivo
+   o gris muerto— porque es la palabra que el agente lee de reojo. */
+.wa-sign__title{
+  font-family:var(--font-display);font-size:var(--fs-display);font-weight:800;
+  letter-spacing:-.035em;line-height:var(--lh-tight);color:#fff;
+  margin:0;max-width:13ch;
+}
+.wa-sign__state{color:var(--brand-whatsapp);transition:color var(--dur-slow) var(--ease)}
+/* Apagado el estado no se pinta con --mute-2: ese token es para fondos
+   claros. Sobre navy el gris azul pierde el sentido. Un blanco al 45% se
+   lee como la luz yéndose, que es exactamente lo que pasó. */
+.wa-sign.is-off .wa-sign__state{color:rgba(255,255,255,.45)}
+.wa-sign__text{
+  font-size:var(--fs-sm);line-height:var(--lh-loose);
+  color:rgba(255,255,255,.70);max-width:44ch;margin:var(--sp-4) 0 0;
 }
 
-.wa-live__grid{
-  display:grid;grid-template-columns:repeat(3,1fr);
-  margin-top:var(--sp-7);padding-top:var(--sp-5);
+.wa-sign__meta{
+  display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-4);
+  margin-top:var(--sp-6);padding-top:var(--sp-5);
   border-top:1px solid rgba(255,255,255,.14);
 }
-.wa-live__grid div{padding-right:var(--sp-4);border-right:1px solid rgba(255,255,255,.14)}
-.wa-live__grid div:last-child{border-right:0;padding-right:0}
-.wa-live__grid b{
-  display:block;font-family:var(--font-display);font-size:var(--fs-h2);font-weight:700;
-  color:#fff;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:var(--lh-tight);
+.wa-sign__meta dt{font-size:var(--fs-label-3);font-weight:700;color:rgba(255,255,255,.55);margin:0}
+.wa-sign__meta dd{
+  margin:0;font-family:var(--font-display);font-size:var(--fs-h5);font-weight:700;
+  color:#fff;font-variant-numeric:tabular-nums;letter-spacing:-.01em;
+  text-align:right;
 }
-.wa-live__grid span{display:block;margin-top:var(--sp-1);font-size:var(--fs-caption);color:rgba(255,255,255,.60);line-height:var(--lh-snug)}
+
+@media (prefers-reduced-motion: reduce){
+  .wa-light__dot::after{animation:none}
+  .wa-sign,.wa-sign::before,.wa-sign__state,.wa-power__track,.wa-power__thumb{transition:none}
+}
 
 /* ═══════════════════════════════════════════════════════════
    BOTONES
@@ -162,10 +192,9 @@ body[data-app="whatsapp"].wa-chats .wa-tabs__inner{max-width:none}
 }
 .wa-btn:active{transform:scale(.98)}
 .wa-btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.wa-btn:focus-visible{outline:none;box-shadow:var(--focus)}
 .wa-btn-green{background:var(--brand-whatsapp);border-color:var(--brand-whatsapp);color:var(--sky-navy)}
 .wa-btn-green:hover{background:var(--brand-whatsapp-press);border-color:var(--brand-whatsapp-press);color:var(--sky-navy)}
-.wa-btn-onnavy{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.26);color:#fff}
-.wa-btn-onnavy:hover{background:rgba(255,255,255,.18);color:#fff}
 .wa-btn-primary{background:var(--sky-blue);border-color:var(--sky-blue);color:#fff}
 .wa-btn-primary:hover{background:var(--sky-blue-press);border-color:var(--sky-blue-press);color:#fff}
 .wa-btn-ink{background:var(--sky-navy);border-color:var(--sky-navy);color:#fff}
@@ -176,33 +205,48 @@ body[data-app="whatsapp"].wa-chats .wa-tabs__inner{max-width:none}
 .wa-btn-danger:hover{background:var(--danger-soft)}
 .wa-btn--sm{height:var(--h-sm);padding:0 var(--sp-4);font-size:var(--fs-xs)}
 
-/* ═══════════════════════════════════════════════════════════
-   FLUJO EN TRES PASOS — es una secuencia real (conectar →
-   contestar → tomar el control), por eso va numerado. Rieles
-   con filete, no tres cajas iguales.
-   ═══════════════════════════════════════════════════════════ */
-.wa-flow{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-6)}
-.wa-flow li{padding-top:var(--sp-4);border-top:2px solid var(--sky-navy)}
-.wa-flow li:nth-child(2){border-top-color:var(--line-2)}
-.wa-flow li:nth-child(3){border-top-color:var(--line-2)}
-.wa-flow__n{display:block;font-family:var(--font-display);font-size:var(--fs-label-3);font-weight:700;color:var(--mute);font-variant-numeric:tabular-nums}
-.wa-flow h3{font-size:var(--fs-sm);font-weight:700;margin:var(--sp-2) 0 var(--sp-1);line-height:var(--lh-snug)}
-.wa-flow p{font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh);margin:0}
+/* El único botón que sigue al letrero: leer. Ancho completo porque
+   es lo que el agente viene a hacer. */
+.wa-go{display:block;width:100%;margin-top:var(--sp-5)}
 
 /* ═══════════════════════════════════════════════════════════
-   PANELES BLANCOS — todo lo que es control, no protagonista
+   SECCIONES — filete y tipografía sobre papel. Sin cards: la
+   única superficie de la página es el letrero. Cada encabezado
+   es una pregunta que el agente ya tiene en la cabeza, no un
+   sustantivo de sistema.
    ═══════════════════════════════════════════════════════════ */
-.wa-jump{display:flex;flex-wrap:wrap;gap:var(--sp-3);margin-bottom:var(--sp-6)}
-
-.wa-panel{
-  background:var(--bone);border:1px solid var(--line);border-radius:var(--r);
-  padding:var(--sp-5);margin-bottom:var(--sp-3);
+.wa-sec{margin-top:var(--sp-10)}
+.wa-sec__head{padding-bottom:var(--sp-4);border-bottom:1px solid var(--line-2)}
+.wa-sec__head h2{
+  font-family:var(--font-display);font-size:var(--fs-h3);font-weight:700;
+  letter-spacing:-.025em;line-height:var(--lh-snug);margin:0;color:var(--ink);
 }
-.wa-panel__head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp-4)}
-.wa-panel__head h3{font-size:var(--fs-h5);font-weight:700;letter-spacing:-.015em;margin:0;line-height:var(--lh-snug)}
-.wa-panel__head p{font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh);margin:var(--sp-1) 0 0;max-width:52ch}
+.wa-sec__head p{font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh);margin:var(--sp-2) 0 0;max-width:56ch}
+.wa-sec__body{padding-top:var(--sp-5)}
 
-/* Switch de Recepción */
+/* ─── Campos ─── */
+.wa-field{margin-bottom:var(--sp-6)}
+.wa-field:last-child{margin-bottom:0}
+.wa-field label{display:block;font-size:var(--fs-sm);font-weight:700;color:var(--ink);margin-bottom:var(--sp-1)}
+.wa-field .wa-help{display:block;font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh);margin-bottom:var(--sp-3);max-width:58ch}
+.wa-field input[type="text"],.wa-field input[type="time"],.wa-field input[type="number"],.wa-field textarea{
+  width:100%;height:var(--h);padding:0 var(--sp-4);
+  border:1px solid var(--line-2);border-radius:var(--r);
+  font-family:var(--font-sans);font-size:var(--fs-sm);color:var(--ink);background:var(--bone);
+  transition:border-color var(--dur-fast) var(--ease);
+}
+.wa-field textarea{height:auto;padding:var(--sp-3) var(--sp-4);min-height:84px;resize:vertical;line-height:var(--lh)}
+.wa-field input:hover,.wa-field textarea:hover{border-color:var(--line-3)}
+.wa-field input:focus,.wa-field textarea:focus{outline:none;border-color:var(--sky-blue);box-shadow:var(--focus)}
+.wa-field input::placeholder,.wa-field textarea::placeholder{color:var(--mute-2)}
+
+/* ─── Reglas: una frase y su control, separadas por filete ─── */
+.wa-rule{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-5);padding:var(--sp-5) 0;border-bottom:1px solid var(--line)}
+.wa-rule__txt{flex:1;min-width:0}
+.wa-rule__txt b{display:block;font-size:var(--fs-sm);font-weight:700;color:var(--ink)}
+.wa-rule__txt span{display:block;margin-top:var(--sp-1);font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh);max-width:50ch}
+.wa-rule__num{width:78px;flex:none}
+
 .wa-toggle{position:relative;width:46px;height:26px;flex:none;cursor:pointer}
 .wa-toggle input{position:absolute;opacity:0;width:0;height:0}
 .wa-toggle-track{position:absolute;inset:0;background:var(--line-2);border-radius:var(--r-pill);transition:background var(--dur) var(--ease)}
@@ -211,105 +255,17 @@ body[data-app="whatsapp"].wa-chats .wa-tabs__inner{max-width:none}
 .wa-toggle-thumb{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform var(--dur) var(--ease);pointer-events:none;box-shadow:var(--shadow-xs)}
 .wa-toggle input:checked ~ .wa-toggle-thumb{transform:translateX(20px)}
 
-/* Plantillas */
-.wa-tpl-list{display:flex;flex-direction:column;gap:var(--sp-2);margin-top:var(--sp-4)}
-.wa-tpl{
-  display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);
-  background:var(--paper);border:1px solid var(--line);border-radius:var(--r-sm);
-  padding:var(--sp-3) var(--sp-4);
-}
-.wa-tpl__name{font-size:var(--fs-sm);font-weight:700;color:var(--ink)}
-.wa-tpl__meta{font-size:var(--fs-caption);color:var(--mute);margin-top:2px}
-.wa-tpl__state{font-size:var(--fs-caption);font-weight:700;flex:none}
-.wa-note{font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh);padding:var(--sp-3) 0}
-
-/* Zona de desconexión — deliberadamente sin card: no compite */
-.wa-quiet{
-  display:flex;align-items:center;justify-content:space-between;gap:var(--sp-4);
-  padding:var(--sp-5) var(--sp-1) 0;margin-top:var(--sp-5);
-  border-top:1px solid var(--line);
-}
-.wa-quiet h4{font-size:var(--fs-sm);font-weight:700;margin:0;color:var(--ink)}
-.wa-quiet p{font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh);margin:var(--sp-1) 0 0;max-width:48ch}
-
-/* ═══════════════════════════════════════════════════════════
-   PIE — "Cómo funciona" dejó de ser un botón perdido junto a los
-   demás. Abajo, como fila completa, es una puerta clara a la guía
-   en vez de una pastilla que compite con las acciones reales.
-   ═══════════════════════════════════════════════════════════ */
-.wa-foot{margin-top:var(--sp-7);padding-top:var(--sp-6);border-top:1px solid var(--line)}
-
-.wa-howto{
-  display:flex;align-items:center;gap:var(--sp-4);
-  padding:var(--sp-5);border-radius:var(--r);text-decoration:none;
-  background:linear-gradient(148deg, var(--sky-navy) 0%, var(--sky-navy-mid) 100%);
-  position:relative;overflow:hidden;
-  transition:transform var(--dur-fast) var(--ease);
-}
-.wa-howto::before{
-  content:"";position:absolute;right:-90px;top:-110px;
-  width:250px;height:250px;border-radius:50%;
-  background:radial-gradient(circle, rgba(91,164,255,.22) 0%, rgba(91,164,255,0) 68%);
-  pointer-events:none;
-}
-.wa-howto > *{position:relative}
-.wa-howto:hover{transform:translateY(-1px)}
-.wa-howto:active{transform:none}
-.wa-howto:focus-visible{outline:none;box-shadow:var(--focus)}
-.wa-howto__ico{
-  width:42px;height:42px;border-radius:var(--r-sm);flex:none;
-  background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);
-  display:flex;align-items:center;justify-content:center;color:var(--sky-blue-on-dark);
-}
-.wa-howto__ico svg{width:21px;height:21px}
-.wa-howto__txt{flex:1;min-width:0}
-.wa-howto__txt b{display:block;font-family:var(--font-display);font-size:var(--fs-h5);font-weight:700;letter-spacing:-.015em;color:#fff;line-height:var(--lh-snug)}
-.wa-howto__txt span{display:block;margin-top:var(--sp-1);font-size:var(--fs-xs);color:rgba(255,255,255,.66);line-height:var(--lh)}
-.wa-howto__arrow{flex:none;width:20px;height:20px;color:rgba(255,255,255,.55);transition:transform var(--dur-fast) var(--ease)}
-.wa-howto:hover .wa-howto__arrow{transform:translateX(3px);color:#fff}
-
-/* Insignia Meta Tech Provider */
-.wa-badge{margin-top:var(--sp-6);display:flex;flex-direction:column;align-items:center;gap:var(--sp-2)}
-.wa-badge img{height:22px;width:auto;display:block;opacity:.45;transition:opacity var(--dur-fast) var(--ease)}
-.wa-badge:hover img{opacity:.75}
-.wa-badge p{margin:0;font-size:var(--fs-caption);color:var(--mute);text-align:center;line-height:var(--lh-snug)}
-
-/* ═══════════════════════════════════════════════════════════
-   ENTRENAMIENTO — dos bloques, y la diferencia entre ellos es
-   real, no cosmética: arriba lo que Recepción interpreta, abajo
-   lo que se cumple aunque el modelo quiera otra cosa.
-   ═══════════════════════════════════════════════════════════ */
-.wa-field{margin-bottom:var(--sp-5)}
-.wa-field:last-child{margin-bottom:0}
-.wa-field label{display:block;font-size:var(--fs-sm);font-weight:700;color:var(--ink);margin-bottom:var(--sp-1)}
-.wa-field .wa-help{display:block;font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh);margin-bottom:var(--sp-3);max-width:58ch}
-.wa-field input[type="text"],.wa-field input[type="time"],.wa-field input[type="number"],.wa-field textarea{
-  width:100%;height:var(--h);padding:0 var(--sp-4);
-  border:1px solid var(--line-2);border-radius:var(--r-sm);
-  font-family:var(--font-sans);font-size:var(--fs-sm);color:var(--ink);background:var(--paper);
-}
-.wa-field textarea{height:auto;padding:var(--sp-3) var(--sp-4);min-height:88px;resize:vertical;line-height:var(--lh)}
-.wa-field input:focus,.wa-field textarea:focus{outline:none;border-color:var(--sky-blue);box-shadow:var(--focus)}
-.wa-field input::placeholder,.wa-field textarea::placeholder{color:var(--mute-2)}
-
-.wa-rule{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp-4);padding:var(--sp-4) 0;border-bottom:1px solid var(--line)}
-.wa-rule:last-of-type{border-bottom:0}
-.wa-rule__txt{flex:1;min-width:0}
-.wa-rule__txt b{display:block;font-size:var(--fs-sm);font-weight:700;color:var(--ink)}
-.wa-rule__txt span{display:block;margin-top:var(--sp-1);font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh);max-width:52ch}
-
-.wa-horas{display:flex;align-items:flex-end;gap:var(--sp-3);margin-top:var(--sp-4)}
-.wa-horas > div{flex:1;min-width:0}
-.wa-horas label{font-size:var(--fs-xs)}
+.wa-sub{margin:0 0 var(--sp-3);padding:var(--sp-5) 0 var(--sp-2) var(--sp-5);border-left:2px solid var(--line-2)}
 .wa-sub[hidden]{display:none}
+.wa-horas{display:flex;gap:var(--sp-4);margin-bottom:var(--sp-5)}
+.wa-horas > div{flex:1;min-width:0}
 
-/* Palabras que escalan: fichas, no un campo de texto con comas que
-   el agente tiene que adivinar cómo separar. */
+/* ─── Fichas de palabras ─── */
 .wa-chips{display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-bottom:var(--sp-3)}
 .wa-chip{
   display:inline-flex;align-items:center;gap:var(--sp-2);
-  padding:5px var(--sp-2) 5px var(--sp-3);border-radius:var(--r-pill);
-  background:var(--paper);border:1px solid var(--line-2);
+  padding:6px var(--sp-2) 6px var(--sp-3);border-radius:var(--r-pill);
+  background:var(--sky-canvas);border:1px solid var(--line-2);
   font-size:var(--fs-xs);font-weight:700;color:var(--ink);
 }
 .wa-chip button{
@@ -321,26 +277,95 @@ body[data-app="whatsapp"].wa-chats .wa-tabs__inner{max-width:none}
 .wa-chip button svg{width:11px;height:11px}
 .wa-chips__empty{font-size:var(--fs-xs);color:var(--mute);margin:0 0 var(--sp-3)}
 
-.wa-save{
-  position:sticky;bottom:0;z-index:1;
+/* ─── Mensajes aprobados: renglones, no cards ─── */
+.wa-tpl-list{display:flex;flex-direction:column}
+.wa-tpl{
   display:flex;align-items:center;justify-content:space-between;gap:var(--sp-4);
-  margin-top:var(--sp-6);padding:var(--sp-4) 0;
-  background:var(--paper);border-top:1px solid var(--line);
+  padding:var(--sp-4) 0;border-bottom:1px solid var(--line);
 }
-.wa-save p{margin:0;font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh-snug)}
+.wa-tpl:last-child{border-bottom:0}
+.wa-tpl__name{font-size:var(--fs-sm);font-weight:700;color:var(--ink)}
+.wa-tpl__meta{font-size:var(--fs-xs);color:var(--mute);margin-top:2px}
+.wa-tpl__state{font-size:var(--fs-xs);font-weight:700;flex:none}
+.wa-note{font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh);padding:var(--sp-2) 0 var(--sp-5);max-width:56ch}
+
+/* ─── Renglón callado (desconectar): no compite ─── */
+.wa-quiet{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-5);padding-top:var(--sp-5)}
+.wa-quiet p{font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh);margin:0;max-width:48ch}
+
+/* ═══════════════════════════════════════════════════════════
+   BARRA DE GUARDADO — invisible hasta que hay algo que guardar.
+   Una barra permanente pidiendo "Guardar" en una pantalla que
+   no cambió es ruido; solo debe existir cuando es verdad.
+   ═══════════════════════════════════════════════════════════ */
+.wa-savebar{
+  position:fixed;left:0;right:0;bottom:0;z-index:var(--z-popover);
+  background:var(--sky-navy);
+  transform:translateY(100%);transition:transform var(--dur-slow) var(--ease);
+  padding-bottom:env(safe-area-inset-bottom, 0px);
+}
+.wa-savebar.is-on{transform:none}
+.wa-savebar__inner{
+  max-width:720px;margin:0 auto;padding:var(--sp-4) var(--pad-x, 40px);
+  display:flex;align-items:center;justify-content:space-between;gap:var(--sp-4);
+}
+.wa-savebar p{margin:0;font-size:var(--fs-xs);font-weight:700;color:rgba(255,255,255,.72)}
+@media (prefers-reduced-motion: reduce){ .wa-savebar{transition:none} }
+
+/* ═══════════════════════════════════════════════════════════
+   FLUJO EN TRES PASOS — sí es una secuencia real (conectar →
+   contestar → tomar el control), por eso va numerado. En el resto
+   de la página no hay números porque no hay orden que seguir.
+   ═══════════════════════════════════════════════════════════ */
+.wa-flow{list-style:none;margin:var(--sp-10) 0 0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-6)}
+.wa-flow li{padding-top:var(--sp-4);border-top:2px solid var(--sky-navy)}
+.wa-flow li:nth-child(2),.wa-flow li:nth-child(3){border-top-color:var(--line-2)}
+.wa-flow__n{display:block;font-family:var(--font-display);font-size:var(--fs-label-3);font-weight:700;color:var(--mute);font-variant-numeric:tabular-nums}
+.wa-flow h3{font-size:var(--fs-sm);font-weight:700;margin:var(--sp-2) 0 var(--sp-1);line-height:var(--lh-snug)}
+.wa-flow p{font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh);margin:0}
+
+/* ═══════════════════════════════════════════════════════════
+   PIE — "Cómo funciona" dejó de ser una pastilla perdida entre
+   otras. Abajo, como renglón completo, es una puerta clara.
+   ═══════════════════════════════════════════════════════════ */
+.wa-foot{margin-top:var(--sp-12);padding-top:var(--sp-6);border-top:1px solid var(--line-2)}
+.wa-howto{
+  display:flex;align-items:center;gap:var(--sp-4);
+  padding:var(--sp-5) var(--sp-5) var(--sp-5) 0;text-decoration:none;
+  border-bottom:1px solid var(--line);
+  transition:padding-left var(--dur) var(--ease);
+}
+.wa-howto:hover{padding-left:var(--sp-3)}
+.wa-howto__ico{
+  width:40px;height:40px;border-radius:var(--r-sm);flex:none;
+  background:var(--sky-navy);
+  display:flex;align-items:center;justify-content:center;color:var(--sky-blue-on-dark);
+}
+.wa-howto__ico svg{width:20px;height:20px}
+.wa-howto__txt{flex:1;min-width:0}
+.wa-howto__txt b{display:block;font-family:var(--font-display);font-size:var(--fs-h5);font-weight:700;letter-spacing:-.015em;color:var(--ink);line-height:var(--lh-snug)}
+.wa-howto__txt span{display:block;margin-top:var(--sp-1);font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh)}
+.wa-howto__arrow{flex:none;width:18px;height:18px;color:var(--mute);transition:transform var(--dur) var(--ease)}
+.wa-howto:hover .wa-howto__arrow{transform:translateX(4px);color:var(--ink)}
+@media (prefers-reduced-motion: reduce){ .wa-howto,.wa-howto__arrow{transition:none} }
+
+.wa-badge{margin-top:var(--sp-6);display:flex;flex-direction:column;align-items:center;gap:var(--sp-2)}
+.wa-badge img{height:20px;width:auto;display:block;opacity:.4;transition:opacity var(--dur-fast) var(--ease)}
+.wa-badge:hover img{opacity:.7}
+.wa-badge p{margin:0;font-size:var(--fs-caption);color:var(--mute);text-align:center;line-height:var(--lh-snug);max-width:44ch}
 
 /* ═══════════════════════════════════════════════════════════
    ESQUELETO DE CARGA — evita el parpadeo "desconectado"
    ═══════════════════════════════════════════════════════════ */
-.wa-boot{height:262px;border-radius:var(--r-lg);background:var(--paper-2);position:relative;overflow:hidden;margin-top:var(--sp-5)}
+.wa-boot{height:300px;border-radius:var(--r-xl);background:var(--paper-2);position:relative;overflow:hidden}
 .wa-boot::after{
   content:"";position:absolute;inset:0;
   background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.55) 50%, rgba(255,255,255,0) 100%);
   animation:waShimmer 1.3s linear infinite;
 }
 @keyframes waShimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+@media (prefers-reduced-motion: reduce){ .wa-boot::after{animation:none} }
 
-/* Spinner de botón */
 .wa-spinner{width:15px;height:15px;border:2px solid rgba(255,255,255,.35);border-top-color:currentColor;border-radius:50%;animation:waSpin .7s linear infinite;display:none}
 .wa-spinner.active{display:inline-block}
 @keyframes waSpin{to{transform:rotate(360deg)}}
@@ -348,22 +373,22 @@ body[data-app="whatsapp"].wa-chats .wa-tabs__inner{max-width:none}
 /* ═══════════════════════════════════════════════════════════
    MODALES
    ═══════════════════════════════════════════════════════════ */
-.wa-modal-bg{position:fixed;inset:0;background:rgba(5,32,60,.52);z-index:var(--z-modal);display:none;align-items:center;justify-content:center;padding:var(--sp-5)}
+.wa-modal-bg{position:fixed;inset:0;background:rgba(0,20,59,.55);z-index:var(--z-modal);display:none;align-items:center;justify-content:center;padding:var(--sp-5)}
 .wa-modal-bg.open{display:flex}
-.wa-modal{background:var(--bone);border-radius:var(--r-lg);padding:var(--sp-7);max-width:440px;width:100%;box-shadow:var(--shadow-lg)}
-.wa-modal h3{font-family:var(--font-display);font-size:var(--fs-h3);font-weight:700;letter-spacing:-.02em;margin:0 0 var(--sp-2)}
+.wa-modal{background:var(--bone);border-radius:var(--r-modal);padding:var(--sp-7);max-width:440px;width:100%;box-shadow:var(--shadow-lg);max-height:88vh;overflow-y:auto}
+.wa-modal h3{font-family:var(--font-display);font-size:var(--fs-h3);font-weight:700;letter-spacing:-.025em;margin:0 0 var(--sp-2)}
 .wa-modal > p{font-size:var(--fs-sm);color:var(--mute);line-height:var(--lh);margin:0 0 var(--sp-6)}
 .wa-modal-btns{display:flex;gap:var(--sp-2);justify-content:flex-end}
-.wa-form{display:flex;flex-direction:column;gap:var(--sp-4);margin-bottom:var(--sp-6)}
-.wa-form label{font-size:var(--fs-xs);font-weight:700;display:block;margin-bottom:var(--sp-1);color:var(--ink)}
+.wa-form{display:flex;flex-direction:column;gap:var(--sp-5);margin-bottom:var(--sp-6)}
+.wa-form label{font-size:var(--fs-sm);font-weight:700;display:block;margin-bottom:var(--sp-1);color:var(--ink)}
 .wa-form input,.wa-form select,.wa-form textarea{
   width:100%;height:var(--h);padding:0 var(--sp-4);
-  border:1px solid var(--line-2);border-radius:var(--r-sm);
+  border:1px solid var(--line-2);border-radius:var(--r);
   font-family:var(--font-sans);font-size:var(--fs-sm);color:var(--ink);background:var(--bone);
 }
-.wa-form textarea{height:auto;padding:var(--sp-3) var(--sp-4);min-height:96px;resize:vertical;line-height:var(--lh)}
+.wa-form textarea{height:auto;padding:var(--sp-3) var(--sp-4);min-height:92px;resize:vertical;line-height:var(--lh)}
 .wa-form input:focus,.wa-form select:focus,.wa-form textarea:focus{outline:none;border-color:var(--sky-blue);box-shadow:var(--focus)}
-.wa-form small{display:block;font-size:var(--fs-caption);color:var(--mute);margin-top:var(--sp-1);line-height:var(--lh-snug)}
+.wa-form small{display:block;font-size:var(--fs-xs);color:var(--mute);margin-top:var(--sp-2);line-height:var(--lh-snug)}
 
 /* ═══════════════════════════════════════════════════════════════
    VISTA CHATS — no es un clon de WhatsApp: es el escritorio donde
@@ -381,12 +406,8 @@ body[data-app="whatsapp"].wa-chats .wa-tabs__inner{max-width:none}
   display:flex;flex-direction:column;
   background:var(--bone);border-right:1px solid var(--line);
 }
-.bx-list__head{padding:var(--sp-5) var(--sp-5) var(--sp-3);border-bottom:1px solid var(--line)}
-.bx-list__title{display:flex;align-items:baseline;gap:var(--sp-2)}
-.bx-list__title h1{font-family:var(--font-display);font-size:var(--fs-h2);font-weight:700;letter-spacing:-.025em;line-height:var(--lh-tight);margin:0;color:var(--ink)}
-.bx-count{font-size:var(--fs-xs);color:var(--mute);font-variant-numeric:tabular-nums}
-
-.bx-search{position:relative;margin-top:var(--sp-4)}
+.bx-list__head{padding:var(--sp-4) var(--sp-5) var(--sp-3);border-bottom:1px solid var(--line)}
+.bx-search{position:relative}
 .bx-search svg{position:absolute;left:var(--sp-3);top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--mute);pointer-events:none}
 .bx-search input{
   width:100%;height:var(--h-sm);padding:0 var(--sp-3) 0 var(--sp-8);
@@ -627,27 +648,26 @@ body[data-app="whatsapp"].wa-chats .wa-tabs__inner{max-width:none}
 .bx-resumen p{font-size:var(--fs-xs);line-height:var(--lh-loose);color:var(--ink-2);margin:0}
 .bx-dossier__empty{font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh);margin:var(--sp-4) 0 0}
 
+
 /* ═══════════════════════════════════════════════════════════
    RESPONSIVE
    ═══════════════════════════════════════════════════════════ */
 @media(max-width:720px){
-  .wa-stage{padding:var(--sp-6) var(--sp-5)}
-  .wa-stage__title{font-size:var(--fs-h2);max-width:none}
-  .wa-live__number{font-size:var(--fs-h1)}
-  .wa-live__grid{grid-template-columns:1fr;gap:var(--sp-4)}
-  .wa-live__grid div{padding-right:0;border-right:0;display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-4)}
-  .wa-live__grid b{font-size:var(--fs-h3)}
-  .wa-live__grid span{margin-top:0;text-align:right}
+  .wa-wrap{padding:var(--sp-5) var(--sp-5) 160px}
+  .wa-tabs{padding:0 var(--sp-5)}
+  .wa-tabs__inner{gap:var(--sp-5)}
+  .wa-sign{padding:var(--sp-6) var(--sp-5) var(--sp-5)}
+  .wa-sign__title{font-size:var(--fs-h1);max-width:none}
+  .wa-sign__meta{flex-direction:column;align-items:flex-start;gap:var(--sp-1)}
+  .wa-sign__meta dd{text-align:left}
   .wa-flow{grid-template-columns:1fr;gap:var(--sp-4)}
-  .wa-stage__cta .wa-btn,.wa-jump .wa-btn{flex:1 1 100%}
-  .wa-quiet{flex-direction:column;align-items:flex-start}
-  .wa-tabs{padding:0 var(--sp-4)}
-  .wa-tabs__inner{gap:var(--sp-4)}
-  .wa-howto{padding:var(--sp-4);gap:var(--sp-3)}
+  .wa-rule{flex-wrap:wrap}
+  .wa-horas{flex-direction:column;gap:var(--sp-5)}
+  .wa-quiet{flex-direction:column;align-items:flex-start;gap:var(--sp-4)}
+  .wa-howto{padding-right:0}
   .wa-howto__arrow{display:none}
-  .wa-horas{flex-wrap:wrap}
-  .wa-save{flex-direction:column;align-items:stretch;gap:var(--sp-3)}
-  .wa-save .wa-btn{width:100%}
+  .wa-savebar__inner{padding:var(--sp-3) var(--sp-5) calc(var(--sp-3) + 74px)}
+  .wa-savebar p{font-size:var(--fs-caption)}
 }
 
 /* Bajo 1360px el expediente se vuelve un panel que se abre: mejor eso que
@@ -687,14 +707,13 @@ body[data-app="whatsapp"].wa-chats .wa-tabs__inner{max-width:none}
 </head>
 <body data-app="whatsapp">
 
-<!-- ═══ PESTAÑAS (solo con número conectado) ═══ -->
+<!-- ═══ PESTAÑAS · dos sustantivos que el agente ya posee ═══ -->
 <nav class="wa-tabs" id="wa-tabs" hidden>
   <div class="wa-tabs__inner">
     <button type="button" class="wa-tab is-active" data-tab="chats" onclick="irATab('chats')">
       Chats <span class="wa-tab__badge" id="wa-tab-badge">0</span>
     </button>
-    <button type="button" class="wa-tab" data-tab="ajustes" onclick="irATab('ajustes')">Ajustes</button>
-    <button type="button" class="wa-tab" data-tab="entrenamiento" onclick="irATab('entrenamiento')">Entrenamiento</button>
+    <button type="button" class="wa-tab" data-tab="recepcion" onclick="irATab('recepcion')">Recepción</button>
   </div>
 </nav>
 
@@ -706,10 +725,6 @@ body[data-app="whatsapp"].wa-chats .wa-tabs__inner{max-width:none}
   <!-- ═══ CARRIL 1 · LISTA ═══ -->
   <aside class="bx-list">
     <div class="bx-list__head">
-      <div class="bx-list__title">
-        <h1>Chats</h1>
-        <span class="bx-count" id="bxCount"></span>
-      </div>
       <div class="bx-search">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
         <input type="search" id="bxSearch" placeholder="Buscar por nombre o número" autocomplete="off" aria-label="Buscar conversación"/>
@@ -748,7 +763,7 @@ body[data-app="whatsapp"].wa-chats .wa-tabs__inner{max-width:none}
         </div>
         <div class="bx-ai">
           <span class="bx-ai__label" id="aiLabel">Recepción</span>
-          <label class="bx-switch" aria-label="Recepción automática en este chat">
+          <label class="bx-switch" aria-label="Recepción en este chat">
             <input type="checkbox" id="aiToggle" onchange="toggleAI()"/>
             <span class="bx-switch__track"></span>
             <span class="bx-switch__thumb"></span>
@@ -783,171 +798,134 @@ body[data-app="whatsapp"].wa-chats .wa-tabs__inner{max-width:none}
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════
-     VISTAS · CONEXIÓN / AJUSTES / ENTRENAMIENTO
+     VISTA · RECEPCIÓN  (y estado sin conectar)
      ═══════════════════════════════════════════════════════════ -->
 <div class="wa-wrap" id="wa-wrap">
 
   <div class="wa-boot" id="wa-boot"></div>
 
-  <!-- ═══ ESTADO: DESCONECTADO ═══ -->
+  <!-- ═══ SIN NÚMERO CONECTADO ═══ -->
   <div id="wa-not-connected" hidden>
 
-    <section class="wa-stage">
-      <div class="wa-stage__mark">
-        <svg viewBox="0 0 24 24" fill="#ffffff" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.857L.057 23.882a.5.5 0 00.614.612l6.115-1.598A11.947 11.947 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.967 0-3.805-.538-5.378-1.47l-.385-.23-3.993 1.044 1.012-3.9-.252-.403A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+    <section class="wa-sign">
+      <div class="wa-sign__top">
+        <span class="wa-light"><span class="wa-light__dot"></span><span class="wa-light__txt">Recepción</span></span>
       </div>
-      <p class="wa-stage__eyebrow">Recepción</p>
-      <h2 class="wa-stage__title">Ningún lead <b>sin respuesta</b>.</h2>
-      <p class="wa-stage__text">Conecta tu número de WhatsApp Business y Recepción contesta, califica y guarda cada prospecto en tu CRM. También de madrugada.</p>
-      <div class="wa-stage__cta">
-        <button class="wa-btn wa-btn-green" id="wa-connect-btn" onclick="startEmbeddedSignup()">
-          <span class="wa-spinner" id="wa-connect-spinner"></span>
-          <span id="wa-connect-text">Conectar WhatsApp</span>
-        </button>
-      </div>
-      <p class="wa-stage__foot"><b>Tu número se queda contigo.</b> Sigue funcionando en la app de WhatsApp de tu celular al mismo tiempo que en Broquer. No migras nada ni contratas un número nuevo.</p>
+      <h2 class="wa-sign__title">Ningún prospecto <span class="wa-sign__state">sin respuesta</span>.</h2>
+      <p class="wa-sign__text">Conecta tu número de WhatsApp y Recepción contesta por ti: saluda, pregunta lo que importa, califica al prospecto y lo guarda en tu CRM. También a las tres de la mañana.</p>
+      <dl class="wa-sign__meta">
+        <dt>Tu número se queda contigo</dt>
+        <dd>Sin migrar nada</dd>
+      </dl>
     </section>
+
+    <button class="wa-btn wa-btn-green wa-go" id="wa-connect-btn" onclick="startEmbeddedSignup()">
+      <span class="wa-spinner" id="wa-connect-spinner"></span>
+      <span id="wa-connect-text">Conectar mi WhatsApp</span>
+    </button>
 
     <ol class="wa-flow">
       <li>
         <span class="wa-flow__n">Paso 1</span>
         <h3>Conectas tu número</h3>
-        <p>Meta te guía en el proceso. Toma un par de minutos y lo haces una sola vez.</p>
+        <p>Meta te guía. Toma dos minutos y lo haces una sola vez. Tu WhatsApp sigue funcionando igual en tu celular.</p>
       </li>
       <li>
         <span class="wa-flow__n">Paso 2</span>
         <h3>Recepción contesta</h3>
-        <p>Saluda al lead, pregunta qué busca y con cuánto cuenta, y lo registra en tu CRM.</p>
+        <p>Saluda al prospecto, pregunta qué busca y con cuánto cuenta, y lo registra en tu CRM.</p>
       </li>
       <li>
         <span class="wa-flow__n">Paso 3</span>
         <h3>Tú tomas el control</h3>
-        <p>En cuanto escribes desde tu celular, la IA se apaga en ese chat. No estorba.</p>
+        <p>En cuanto escribes desde tu celular, Recepción se calla en ese chat. No estorba.</p>
       </li>
     </ol>
 
   </div>
 
-  <!-- ═══ VISTA · AJUSTES ═══ -->
-  <div class="wa-view" id="view-ajustes" hidden>
+  <!-- ═══ VISTA · RECEPCIÓN ═══ -->
+  <div class="wa-view" id="view-recepcion" hidden>
 
-    <section class="wa-stage wa-stage--live">
-      <div class="wa-live__top">
-        <span class="wa-presence"><i></i>En línea</span>
-        <span class="wa-live__waba" id="wa-waba-name">WhatsApp Business</span>
-      </div>
-      <p class="wa-live__label">Tu número conectado</p>
-      <p class="wa-live__number" id="wa-phone-display">—</p>
-      <div class="wa-live__grid" id="wa-metrics" hidden>
-        <div><b id="wa-m-convs">0</b><span>Conversaciones</span></div>
-        <div><b id="wa-m-auto">0</b><span>Con Recepción activa</span></div>
-        <div><b id="wa-m-hot">0</b><span>Leads calificados</span></div>
-      </div>
-    </section>
-
-    <div class="wa-jump">
-      <button type="button" class="wa-btn wa-btn-primary" onclick="irATab('chats')">Ir a tus chats</button>
-      <button type="button" class="wa-btn wa-btn-ink" onclick="irATab('entrenamiento')">Entrenar a Recepción</button>
-    </div>
-
-    <section class="wa-panel">
-      <div class="wa-panel__head">
-        <div>
-          <h3>Recepción automática</h3>
-          <p>Cuando está encendida, Recepción contesta a los leads nuevos. Se apaga sola en cada chat donde tú respondas. Si la apagas aquí, no contesta nada: ni los chats de siempre ni los que lleguen nuevos.</p>
-        </div>
-        <label class="wa-toggle" aria-label="Recepción automática">
+    <!-- ── EL LETRERO ── -->
+    <section class="wa-sign" id="wa-sign">
+      <div class="wa-sign__top">
+        <span class="wa-light">
+          <span class="wa-light__dot"></span>
+          <span class="wa-light__txt" id="wa-waba-name">WhatsApp Business</span>
+        </span>
+        <label class="wa-power" aria-label="Recepción">
           <input type="checkbox" id="wa-global-ia" onchange="toggleIAGlobal(this.checked)"/>
-          <span class="wa-toggle-track"></span>
-          <span class="wa-toggle-thumb"></span>
+          <span class="wa-power__track"></span>
+          <span class="wa-power__thumb"></span>
         </label>
       </div>
+      <h2 class="wa-sign__title">Recepción está <span class="wa-sign__state" id="wa-sign-state">atendiendo</span></h2>
+      <p class="wa-sign__text" id="wa-sign-text">Contesta a tus prospectos en cuanto te escriben, los califica y te los pasa. También de madrugada.</p>
+      <dl class="wa-sign__meta">
+        <dt>Tu número</dt>
+        <dd id="wa-phone-display">—</dd>
+      </dl>
     </section>
 
-    <section class="wa-panel">
-      <div class="wa-panel__head">
-        <div>
-          <h3>Plantillas de mensaje</h3>
-          <p>Meta solo te deja escribir primero, o reabrir un chat después de 24 horas, con un mensaje que ya aprobó.</p>
-        </div>
-        <button class="wa-btn wa-btn-ink wa-btn--sm" onclick="openTemplateModal()">Nueva plantilla</button>
+    <button type="button" class="wa-btn wa-btn-primary wa-go" onclick="irATab('chats')">Ir a tus chats</button>
+
+    <!-- ── SUS INSTRUCCIONES ── -->
+    <section class="wa-sec">
+      <div class="wa-sec__head">
+        <h2>Sus instrucciones</h2>
+        <p>Escríbelas como se las dirías a una asistente nueva. Recepción te entiende: no tienes que armar diagramas ni aprender nada raro. Déjalas vacías y contesta a su criterio.</p>
       </div>
-      <div class="wa-tpl-list" id="wa-templates-list">
-        <div class="wa-note">Cargando plantillas…</div>
-      </div>
-    </section>
+      <div class="wa-sec__body">
 
-    <div class="wa-quiet">
-      <div>
-        <h4>Desconectar WhatsApp</h4>
-        <p>Desvincula tu número de Broquer. Tus conversaciones y leads guardados no se borran.</p>
-      </div>
-      <button class="wa-btn wa-btn-danger wa-btn--sm" onclick="openDisconnectModal()">Desconectar</button>
-    </div>
-
-  </div>
-
-  <!-- ═══ VISTA · ENTRENAMIENTO ═══ -->
-  <div class="wa-view" id="view-entrenamiento" hidden>
-
-    <section class="wa-panel">
-      <div class="wa-panel__head">
-        <div>
-          <h3>Cómo habla Recepción</h3>
-          <p>Escríbelo como se lo dirías a un asistente nuevo. Recepción lo entiende: no tienes que armar diagramas ni aprender un lenguaje raro.</p>
-        </div>
-      </div>
-
-      <div style="margin-top:var(--sp-5)">
         <div class="wa-field">
-          <label for="tr-tono">Tono</label>
-          <span class="wa-help">Cómo quieres que suene contigo enfrente de un cliente.</span>
+          <label for="tr-primer">¿Con qué saluda?</label>
+          <span class="wa-help">Las primeras palabras que lee tu prospecto.</span>
+          <textarea id="tr-primer" placeholder="Hola, soy la recepción de Salvador Bolaños. ¿Sobre qué propiedad me escribes?"></textarea>
+        </div>
+
+        <div class="wa-field">
+          <label for="tr-tono">¿Cómo quieres que hable?</label>
+          <span class="wa-help">Con tus palabras, como si le explicaras a alguien cómo tratas a tus clientes.</span>
           <input type="text" id="tr-tono" placeholder="Cercano y breve, de usted, sin presionar"/>
         </div>
 
         <div class="wa-field">
-          <label for="tr-primer">Saludo de apertura</label>
-          <span class="wa-help">Las primeras palabras que lee el prospecto. Déjalo vacío y Recepción saluda a su manera.</span>
-          <textarea id="tr-primer" placeholder="Hola, soy la recepción de Salvador Bolaños. ¿En qué propiedad estás interesado?"></textarea>
+          <label for="tr-puede">De esto sí puede hablar</label>
+          <span class="wa-help">Los temas donde le das permiso de contestar sin preguntarte.</span>
+          <textarea id="tr-puede" placeholder="Colonia, metros, recámaras, si acepta Infonavit, y agendar la visita."></textarea>
         </div>
 
         <div class="wa-field">
-          <label for="tr-puede">Qué sí puede responder</label>
-          <span class="wa-help">Los temas donde le das permiso de hablar sin consultarte.</span>
-          <textarea id="tr-puede" placeholder="Ubicación por colonia, superficie, recámaras, si acepta crédito Infonavit, disponibilidad para agendar visita."></textarea>
+          <label for="tr-debe">Esto siempre lo pregunta</label>
+          <span class="wa-help">Lo que no se le puede olvidar en ninguna plática.</span>
+          <textarea id="tr-debe" placeholder="Si es crédito o contado. Para cuándo lo necesita. Cuánto trae de enganche."></textarea>
         </div>
 
         <div class="wa-field">
-          <label for="tr-debe">Qué siempre debe hacer</label>
-          <span class="wa-help">Lo que no se le puede olvidar en ninguna conversación.</span>
-          <textarea id="tr-debe" placeholder="Preguntar si es crédito o contado. Preguntar para cuándo lo necesita. Ofrecer visita cuando el lead se vea serio."></textarea>
+          <label for="tr-nodebe">Esto nunca lo dice</label>
+          <span class="wa-help">Lo que te costaría caro. Pesa más que cualquier otra instrucción.</span>
+          <textarea id="tr-nodebe" placeholder="El precio final. La dirección exacta antes de la cita. Que el crédito se aprueba. Tu comisión."></textarea>
         </div>
 
-        <div class="wa-field">
-          <label for="tr-nodebe">Qué nunca debe hacer</label>
-          <span class="wa-help">Lo que te costaría caro si lo dice. Esto pesa más que cualquier otra instrucción.</span>
-          <textarea id="tr-nodebe" placeholder="Dar el precio final ni negociar. Dar la dirección exacta antes de la cita. Prometer que el crédito se aprueba. Hablar de comisiones."></textarea>
-        </div>
       </div>
     </section>
 
-    <section class="wa-panel">
-      <div class="wa-panel__head">
-        <div>
-          <h3>Barreras</h3>
-          <p>Estas no son sugerencias: se cumplen antes de que Recepción abra la boca. Lo de arriba lo interpreta la IA; esto se ejecuta pase lo que pase.</p>
-        </div>
+    <!-- ── CUÁNDO TE PASA EL CHAT ── -->
+    <section class="wa-sec">
+      <div class="wa-sec__head">
+        <h2>Cuándo te pasa el chat</h2>
+        <p>Esto no son sugerencias. Se cumple antes de que Recepción abra la boca, aunque la plática vaya en otra dirección. Las instrucciones de arriba las interpreta; esto se ejecuta.</p>
       </div>
-
-      <div style="margin-top:var(--sp-3)">
+      <div class="wa-sec__body">
 
         <div class="wa-rule">
           <div class="wa-rule__txt">
-            <b>Horario de atención</b>
-            <span>Fuera de este rango Recepción no contesta. El mensaje del prospecto se guarda y te llega el aviso igual.</span>
+            <b>Fuera de tu horario no contesta</b>
+            <span>El mensaje se guarda y el aviso te llega igual. Solo se queda callada.</span>
           </div>
-          <label class="wa-toggle" aria-label="Horario de atención">
-            <input type="checkbox" id="tr-horario" onchange="pintarHorario()"/>
+          <label class="wa-toggle" aria-label="Fuera de tu horario no contesta">
+            <input type="checkbox" id="tr-horario" onchange="pintarHorario(); marcarSucio()"/>
             <span class="wa-toggle-track"></span>
             <span class="wa-toggle-thumb"></span>
           </label>
@@ -955,35 +933,37 @@ body[data-app="whatsapp"].wa-chats .wa-tabs__inner{max-width:none}
 
         <div class="wa-sub" id="tr-horario-sub" hidden>
           <div class="wa-horas">
-            <div>
-              <label for="tr-inicio">Desde</label>
+            <div class="wa-field">
+              <label for="tr-inicio">Empieza</label>
               <input type="time" id="tr-inicio" value="08:00"/>
             </div>
-            <div>
-              <label for="tr-fin">Hasta</label>
+            <div class="wa-field">
+              <label for="tr-fin">Termina</label>
               <input type="time" id="tr-fin" value="21:00"/>
             </div>
           </div>
-          <div class="wa-field" style="margin-top:var(--sp-4)">
-            <label for="tr-fuera">Mensaje fuera de horario</label>
-            <span class="wa-help">Opcional. Si lo dejas vacío, Recepción se queda callada en vez de mandar algo que tú no escribiste.</span>
+          <div class="wa-field">
+            <label for="tr-fuera">Qué contesta fuera de horario</label>
+            <span class="wa-help">Déjalo vacío y no manda nada. Mejor callada que mandando algo que tú no escribiste.</span>
             <textarea id="tr-fuera" placeholder="Gracias por escribir. Te contesto mañana a primera hora."></textarea>
           </div>
         </div>
 
         <div class="wa-rule">
           <div class="wa-rule__txt">
-            <b>Tope de mensajes</b>
-            <span>Después de este número de respuestas, Recepción se apaga en ese chat y te avisa. Cero significa sin tope.</span>
+            <b>Después de tantas respuestas, te lo pasa</b>
+            <span>Recepción se apaga en ese chat y te avisa. Déjalo en cero si no quieres tope.</span>
           </div>
-          <div style="width:96px;flex:none">
-            <input type="number" id="tr-tope" min="0" max="50" step="1" value="0" aria-label="Tope de mensajes de Recepción"/>
+          <div class="wa-rule__num">
+            <div class="wa-field">
+              <input type="number" id="tr-tope" min="0" max="50" step="1" value="0" aria-label="Respuestas antes de pasarte el chat"/>
+            </div>
           </div>
         </div>
 
-        <div class="wa-field" style="margin-top:var(--sp-5)">
-          <label for="tr-palabra">Palabras que te pasan el chat</label>
-          <span class="wa-help">Si el prospecto escribe alguna de estas, Recepción se apaga en ese chat y te manda el aviso. Escribe una y presiona Enter.</span>
+        <div class="wa-field" style="margin-top:var(--sp-6)">
+          <label for="tr-palabra">Si el cliente dice alguna de estas, te lo pasa</label>
+          <span class="wa-help">Escribe una palabra y presiona Enter. Recepción se apaga en ese chat y te manda el aviso.</span>
           <div class="wa-chips" id="tr-chips"></div>
           <p class="wa-chips__empty" id="tr-chips-empty">Todavía no agregas ninguna.</p>
           <input type="text" id="tr-palabra" placeholder="abogado" autocomplete="off"/>
@@ -992,25 +972,32 @@ body[data-app="whatsapp"].wa-chats .wa-tabs__inner{max-width:none}
       </div>
     </section>
 
-    <div class="wa-quiet">
-      <div>
-        <h4>Pausar el entrenamiento</h4>
-        <p>Recepción deja de contestar por completo, sin desconectar tu número ni perder lo que ya escribiste aquí.</p>
+    <!-- ── MENSAJES PARA ESCRIBIR PRIMERO ── -->
+    <section class="wa-sec">
+      <div class="wa-sec__head">
+        <h2>Mensajes para escribir primero</h2>
+        <p>WhatsApp no te deja empezar una plática, ni retomarla después de 24 horas, con lo que se te ocurra: solo con un texto que ya revisó. Aquí los pides una vez y los usas siempre.</p>
       </div>
-      <label class="wa-toggle" aria-label="Entrenamiento activo">
-        <input type="checkbox" id="tr-activo" checked/>
-        <span class="wa-toggle-track"></span>
-        <span class="wa-toggle-thumb"></span>
-      </label>
-    </div>
+      <div class="wa-sec__body">
+        <div class="wa-tpl-list" id="wa-templates-list">
+          <div class="wa-note">Cargando…</div>
+        </div>
+        <button class="wa-btn wa-btn-ink wa-btn--sm" onclick="openTemplateModal()" style="margin-top:var(--sp-5)">Pedir un mensaje</button>
+      </div>
+    </section>
 
-    <div class="wa-save">
-      <p>Los cambios aplican al siguiente mensaje que llegue.</p>
-      <button class="wa-btn wa-btn-primary" id="tr-save-btn" onclick="guardarEntrenamiento()">
-        <span class="wa-spinner" id="tr-save-spinner"></span>
-        <span id="tr-save-text">Guardar entrenamiento</span>
-      </button>
-    </div>
+    <!-- ── TU NÚMERO ── -->
+    <section class="wa-sec">
+      <div class="wa-sec__head">
+        <h2>Tu número</h2>
+      </div>
+      <div class="wa-sec__body">
+        <div class="wa-quiet">
+          <p>Desconectarlo lo desvincula de Broquer y Recepción deja de contestar. Tus chats y tus prospectos guardados no se borran, y puedes volver a conectarlo cuando quieras.</p>
+          <button class="wa-btn wa-btn-danger wa-btn--sm" onclick="openDisconnectModal()">Desconectar</button>
+        </div>
+      </div>
+    </section>
 
   </div>
 
@@ -1022,12 +1009,11 @@ body[data-app="whatsapp"].wa-chats .wa-tabs__inner{max-width:none}
       </span>
       <span class="wa-howto__txt">
         <b>Cómo funciona</b>
-        <span>Qué contesta Recepción, cuándo se apaga sola y cómo entrenarla para que hable como tú.</span>
+        <span>Qué contesta Recepción, cuándo se calla sola y cómo enseñarle a hablar como tú.</span>
       </span>
       <svg class="wa-howto__arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12l-7.5 7.5M21 12H3"/></svg>
     </a>
 
-    <!-- Se ve conectado o no: es lo que da confianza ANTES de conectar -->
     <div class="wa-badge"><!-- AUDIT-EXEMPT-LINE: insignia oficial de Meta (marca externa) -->
       <img src="meta-tech-provider.png" alt="Meta Tech Provider"/>
       <p>Broquer es Tech Provider de Meta. Tu número se conecta con la API oficial de WhatsApp Business.</p>
@@ -1036,11 +1022,22 @@ body[data-app="whatsapp"].wa-chats .wa-tabs__inner{max-width:none}
 
 </div>
 
+<!-- Barra de guardado: no existe hasta que hay algo que guardar -->
+<div class="wa-savebar" id="wa-savebar">
+  <div class="wa-savebar__inner">
+    <p>Cambios sin guardar</p>
+    <button class="wa-btn wa-btn-green wa-btn--sm" id="tr-save-btn" onclick="guardarEntrenamiento()">
+      <span class="wa-spinner" id="tr-save-spinner"></span>
+      <span id="tr-save-text">Guardar</span>
+    </button>
+  </div>
+</div>
+
 <!-- Modal desconectar -->
 <div class="wa-modal-bg" id="wa-modal-bg">
   <div class="wa-modal">
-    <h3>¿Desconectar WhatsApp?</h3>
-    <p>Tu número se desvincula de Broquer y Recepción deja de contestar. Tus conversaciones y leads guardados no se borran. Puedes volver a conectar cuando quieras.</p>
+    <h3>¿Desconectar tu número?</h3>
+    <p>Recepción deja de contestar y tu número se desvincula de Broquer. Tus chats y tus prospectos guardados no se borran. Puedes volver a conectarlo cuando quieras.</p>
     <div class="wa-modal-btns">
       <button class="wa-btn wa-btn-ghost" onclick="closeDisconnectModal()">Cancelar</button>
       <button class="wa-btn wa-btn-danger" id="wa-confirm-disconnect" onclick="disconnectWA()">
@@ -1051,37 +1048,37 @@ body[data-app="whatsapp"].wa-chats .wa-tabs__inner{max-width:none}
   </div>
 </div>
 
-<!-- Modal crear plantilla -->
+<!-- Modal pedir mensaje -->
 <div class="wa-modal-bg" id="wa-template-modal-bg">
   <div class="wa-modal">
-    <h3>Nueva plantilla</h3>
-    <p>Meta revisa cada plantilla antes de aprobarla. Puede tardar desde minutos hasta 24 horas.</p>
+    <h3>Pedir un mensaje</h3>
+    <p>WhatsApp revisa cada texto antes de dejarte usarlo. Suele tardar minutos, a veces hasta un día.</p>
 
     <div class="wa-form">
       <div>
-        <label for="tpl-name">Nombre interno</label>
+        <label for="tpl-name">¿Cómo lo quieres llamar?</label>
         <input type="text" id="tpl-name" placeholder="seguimiento_visita"/>
-        <small>Solo minúsculas y guion_bajo, sin espacios.</small>
+        <small>Solo tú lo ves. Minúsculas y guion_bajo, sin espacios ni acentos.</small>
       </div>
 
       <div>
-        <label for="tpl-category">Categoría</label>
+        <label for="tpl-category">¿Para qué es?</label>
         <select id="tpl-category">
-          <option value="UTILITY">Utilidad (seguimiento, confirmaciones)</option>
-          <option value="MARKETING">Marketing (promociones, novedades)</option>
+          <option value="UTILITY">Dar seguimiento a alguien que ya te escribió</option>
+          <option value="MARKETING">Promocionar una propiedad o una novedad</option>
         </select>
       </div>
 
       <div>
-        <label for="tpl-body">Texto del mensaje</label>
+        <label for="tpl-body">¿Qué va a decir?</label>
         <textarea id="tpl-body" rows="4" placeholder="Hola {{1}}, ¿sigues interesado en la propiedad que viste? Quedo al pendiente."></textarea>
-        <small>Usa {{1}}, {{2}}… para variables, por ejemplo el nombre del lead.</small>
+        <small>Escribe {{1}} donde vaya el nombre de tu cliente.</small>
       </div>
 
       <div id="tpl-example-wrap" hidden>
-        <label for="tpl-example">Ejemplo para la variable {{1}}</label>
+        <label for="tpl-example">¿Un ejemplo de lo que va en {{1}}?</label>
         <input type="text" id="tpl-example" placeholder="Juan"/>
-        <small>Meta pide un ejemplo real para aprobar la plantilla.</small>
+        <small>WhatsApp pide un ejemplo real para aprobarlo.</small>
       </div>
     </div>
 
@@ -1089,7 +1086,7 @@ body[data-app="whatsapp"].wa-chats .wa-tabs__inner{max-width:none}
       <button class="wa-btn wa-btn-ghost" onclick="closeTemplateModal()">Cancelar</button>
       <button class="wa-btn wa-btn-ink" id="tpl-submit-btn" onclick="submitTemplate()">
         <span class="wa-spinner" id="tpl-submit-spinner"></span>
-        <span id="tpl-submit-text">Enviar a revisión</span>
+        <span id="tpl-submit-text">Pedir aprobación</span>
       </button>
     </div>
   </div>
@@ -1120,10 +1117,9 @@ function getToken(){
 }
 
 /* ═════════════════════════════════════════════════════════
-   PESTAÑAS
-   La vista Chats vive fuera de .wa-wrap porque necesita alto
-   completo. La clase .wa-chats en <body> es la que conmuta la
-   geometría del shell; sin ella el hilo no tendría dónde crecer.
+   PESTAÑAS — dos. La vista Chats vive fuera de .wa-wrap
+   porque necesita alto completo; la clase .wa-chats en <body>
+   es la que conmuta la geometría del shell.
    ═════════════════════════════════════════════════════════ */
 let TAB = 'chats';
 let _chatsIniciado = false;
@@ -1131,21 +1127,20 @@ let _chatsIniciado = false;
 function irATab(tab){
   TAB = tab;
   document.querySelectorAll('.wa-tab').forEach(b => b.classList.toggle('is-active', b.dataset.tab === tab));
-  document.getElementById('view-chats').hidden         = tab !== 'chats';
-  document.getElementById('view-ajustes').hidden       = tab !== 'ajustes';
-  document.getElementById('view-entrenamiento').hidden = tab !== 'entrenamiento';
-  document.getElementById('wa-wrap').hidden            = tab === 'chats';
+  document.getElementById('view-chats').hidden     = tab !== 'chats';
+  document.getElementById('view-recepcion').hidden = tab !== 'recepcion';
+  document.getElementById('wa-wrap').hidden        = tab === 'chats';
   document.body.classList.toggle('wa-chats', tab === 'chats');
+  // La barra de guardado pertenece a Recepción: en Chats estorbaría.
+  document.getElementById('wa-savebar').classList.toggle('is-on', tab === 'recepcion' && SUCIO);
 
-  // El hash sobrevive a recargas y sirve de enlace profundo desde el shell y
-  // desde las notificaciones. El query (?c=<id>) va ANTES del hash: al revés
-  // queda '#chats?c=...' y deja de ser un query, con lo que el enlace de la
-  // notificación se pierde en la primera recarga. replaceState para no
-  // ensuciar el historial con cada cambio de pestaña.
+  // El query (?c=<id>) va ANTES del hash: al revés queda '#chats?c=...',
+  // deja de ser un query y el enlace de la notificación se pierde en la
+  // primera recarga. replaceState para no ensuciar el historial.
   try{ history.replaceState(null, '', location.pathname + location.search + '#' + tab); }catch(_){}
 
   if(tab === 'chats' && !_chatsIniciado){ _chatsIniciado = true; iniciarChats(); }
-  if(tab === 'entrenamiento') cargarEntrenamiento();
+  if(tab === 'recepcion') cargarEntrenamiento();
 }
 
 // ── Formato del número: +52 443 123 4567 ─────────────────
@@ -1156,6 +1151,22 @@ function fmtPhone(raw){
   if(d.length === 13 && d.startsWith('521')) return '+52 ' + d.slice(3,6) + ' ' + d.slice(6,9) + ' ' + d.slice(9);
   if(d.length === 10) return d.slice(0,3) + ' ' + d.slice(3,6) + ' ' + d.slice(6);
   return '+' + d;
+}
+
+/* ═════════════════════════════════════════════════════════
+   EL LETRERO
+   Una sola función pinta el estado en todos lados. El titular
+   ES la verdad: si el letrero dice "atendiendo", Recepción está
+   contestando. Se acabó adivinar por la posición del switch.
+   ═════════════════════════════════════════════════════════ */
+function pintarLetrero(){
+  const on = document.getElementById('wa-global-ia').checked;
+  document.getElementById('wa-sign').classList.toggle('is-off', !on);
+  document.getElementById('wa-sign-state').textContent = on ? 'atendiendo' : 'apagada';
+  document.getElementById('wa-sign-text').textContent = on
+    ? 'Contesta a tus prospectos en cuanto te escriben, los califica y te los pasa. También de madrugada.'
+    : 'Nadie contesta tus mensajes. Solo tú.';
+  if(_chatsIniciado){ pintarAi(); renderConvs(true); }
 }
 
 // ── Cargar estado al iniciar ─────────────────────────────
@@ -1172,9 +1183,9 @@ async function checkWAStatus(){
       document.getElementById('wa-phone-display').textContent = fmtPhone(d.phone_number);
       document.getElementById('wa-waba-name').textContent = d.waba_name || 'WhatsApp Business';
       document.getElementById('wa-global-ia').checked = d.ia_enabled !== false;
+      pintarLetrero();
       showState('connected');
       cargarTemplates();
-      cargarMetricas();
     } else {
       showState('not-connected');
     }
@@ -1189,12 +1200,12 @@ function showState(state){
   document.getElementById('wa-foot').hidden = false;
 
   if(!conectado){
-    // Sin número no hay chats ni entrenamiento que valgan: una sola pantalla.
+    // Sin número no hay chats ni instrucciones que valgan: una sola pantalla.
     document.body.classList.remove('wa-chats');
     document.getElementById('view-chats').hidden = true;
-    document.getElementById('view-ajustes').hidden = true;
-    document.getElementById('view-entrenamiento').hidden = true;
+    document.getElementById('view-recepcion').hidden = true;
     document.getElementById('wa-wrap').hidden = false;
+    document.getElementById('wa-savebar').classList.remove('is-on');
     return;
   }
 
@@ -1202,30 +1213,7 @@ function showState(state){
   // el agente entra el 95% de las veces.
   const hash = (location.hash || '').replace('#','');
   const cid  = new URLSearchParams(location.search).get('c');
-  irATab(cid ? 'chats' : (['chats','ajustes','entrenamiento'].includes(hash) ? hash : 'chats'));
-}
-
-// ── Métricas reales de los chats (Supabase, vía el shell) ───────
-// Si el shell aún no expone brokrSb o la consulta falla, la rejilla
-// simplemente no se muestra. Nunca se pintan ceros inventados.
-async function cargarMetricas(){
-  try{
-    for(let i=0; i<40 && !window.brokrSb; i++) await new Promise(r=>setTimeout(r,150));
-    if(!window.brokrSb) return;
-    const r = await window.brokrSb.fetch('rest/v1/wa_conversations?select=ai_enabled,wa_contacts(temperatura,score)');
-    if(!r.ok) return;
-    const convs = await r.json();
-    if(!Array.isArray(convs) || !convs.length) return;
-    const auto = convs.filter(c => c.ai_enabled).length;
-    const hot  = convs.filter(c => {
-      const ct = c.wa_contacts || {};
-      return (ct.score || 0) > 0 || (ct.temperatura && ct.temperatura !== 'Nuevo');
-    }).length;
-    document.getElementById('wa-m-convs').textContent = convs.length;
-    document.getElementById('wa-m-auto').textContent  = auto;
-    document.getElementById('wa-m-hot').textContent   = hot;
-    document.getElementById('wa-metrics').hidden = false;
-  }catch(e){ /* sin métricas: la rejilla se queda oculta */ }
+  irATab(cid ? 'chats' : (['chats','recepcion'].includes(hash) ? hash : 'chats'));
 }
 
 // ── Embedded Signup ──────────────────────────────────────
@@ -1259,13 +1247,13 @@ function startEmbeddedSignup(){
   const text    = document.getElementById('wa-connect-text');
 
   if(!window.FB){
-    toast('Aún cargando Meta. Intenta en un segundo.');
+    toast('Aún cargando. Intenta en un segundo.');
     return;
   }
 
   btn.disabled = true;
   spinner.classList.add('active');
-  text.textContent = 'Abriendo Meta…';
+  text.textContent = 'Abriendo…';
   _waSignupData = null;
 
   FB.login((response) => {
@@ -1309,7 +1297,7 @@ async function exchangeCode(code){
     const d = await r.json();
     if(r.ok && d.ok){
       await checkWAStatus();
-      toast('WhatsApp conectado correctamente.');
+      toast('Listo. Tu número ya está conectado.');
     } else {
       toast(d.detail || 'No se pudo completar la conexión. Intenta de nuevo.');
       resetConnectBtn();
@@ -1323,14 +1311,15 @@ async function exchangeCode(code){
 function resetConnectBtn(){
   document.getElementById('wa-connect-btn').disabled = false;
   document.getElementById('wa-connect-spinner').classList.remove('active');
-  document.getElementById('wa-connect-text').textContent = 'Conectar WhatsApp';
+  document.getElementById('wa-connect-text').textContent = 'Conectar mi WhatsApp';
 }
 
-// ── Toggle IA global ─────────────────────────────────────
-// Ya no propaga a cada conversación: el backend evalúa
-// ia_global AND conv.ai_enabled en cada mensaje entrante. Por eso
-// apagarlo aquí sí alcanza a los leads que todavía no existen.
+/* ── El interruptor ──
+   Ya no propaga a cada conversación: el backend evalúa
+   ia_global AND conv.ai_enabled en cada mensaje entrante. Por eso
+   apagarlo aquí sí alcanza a los prospectos que todavía no existen. */
 async function toggleIAGlobal(enabled){
+  pintarLetrero();   // el letrero responde al instante: es lo único que importa
   const tok = getToken();
   try{
     const r = await fetch(API_BASE + '/whatsapp/ia-global', {
@@ -1339,12 +1328,11 @@ async function toggleIAGlobal(enabled){
       body: JSON.stringify({ ia_enabled: enabled })
     });
     if(!r.ok) throw new Error('http ' + r.status);
-    toast(enabled ? 'Recepción activada.' : 'Recepción apagada. No contestará ningún chat.');
-    if(_chatsIniciado){ pintarAi(); renderConvs(true); }
   }catch(e){
-    // Si falló, el switch no debe mentir sobre el estado real.
+    // Si falló, el letrero no puede mentir sobre el estado real.
     document.getElementById('wa-global-ia').checked = !enabled;
-    toast('No se pudo actualizar. Intenta de nuevo.');
+    pintarLetrero();
+    toast('No se pudo cambiar. Revisa tu conexión e intenta de nuevo.');
   }
 }
 
@@ -1366,7 +1354,7 @@ async function disconnectWA(){
       headers:{ Authorization: 'Bearer ' + tok }
     });
     closeDisconnectModal();
-    if(r.ok){ showState('not-connected'); toast('Número desconectado.'); }
+    if(r.ok){ showState('not-connected'); toast('Tu número quedó desconectado.'); }
     else { toast('No se pudo desconectar. Intenta de nuevo.'); }
   }catch(e){ toast('Error de conexión.'); }
   finally{
@@ -1382,7 +1370,7 @@ function toast(msg){
   let el = document.getElementById('wa-toast');
   if(!el){
     el = document.createElement('div'); el.id = 'wa-toast';
-    el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--sky-navy);color:#fff;padding:12px 18px;border-radius:var(--r-pill);font-family:var(--font-sans);font-size:var(--fs-xs);font-weight:700;box-shadow:var(--shadow-md);z-index:var(--z-toast);opacity:0;transition:opacity .2s;max-width:90vw;text-align:center';
+    el.style.cssText = 'position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--sky-navy);color:#fff;padding:12px 18px;border-radius:var(--r-pill);font-family:var(--font-sans);font-size:var(--fs-xs);font-weight:700;box-shadow:var(--shadow-md);z-index:var(--z-toast);opacity:0;transition:opacity .2s;max-width:90vw;text-align:center';
     document.body.appendChild(el);
   }
   el.textContent = msg; el.style.opacity = '1';
@@ -1391,10 +1379,29 @@ function toast(msg){
 }
 
 /* ═════════════════════════════════════════════════════════
-   ENTRENAMIENTO
+   SUS INSTRUCCIONES
+   El switch del letrero guarda al instante porque es urgente.
+   Esto se guarda a mano porque es texto que se escribe a medias:
+   guardarlo tecla por tecla mandaría media instrucción al modelo.
+   La barra solo aparece cuando de verdad hay algo pendiente.
    ═════════════════════════════════════════════════════════ */
 let PALABRAS = [];
 let _trCargado = false;
+let SUCIO = false;
+// wa_training.activo existe en la tabla pero NO tiene control en pantalla:
+// dos interruptores que ambos callan a Recepción es exactamente la confusión
+// que hay que evitar. Manda uno solo, el del letrero.
+const TR_CAMPOS = ['tr-primer','tr-tono','tr-puede','tr-debe','tr-nodebe','tr-inicio','tr-fin','tr-fuera','tr-tope'];
+
+function marcarSucio(){
+  if(!_trCargado) return;   // pintar los valores al cargar no es un cambio
+  SUCIO = true;
+  document.getElementById('wa-savebar').classList.toggle('is-on', TAB === 'recepcion');
+}
+function marcarLimpio(){
+  SUCIO = false;
+  document.getElementById('wa-savebar').classList.remove('is-on');
+}
 
 function pintarHorario(){
   document.getElementById('tr-horario-sub').hidden = !document.getElementById('tr-horario').checked;
@@ -1411,7 +1418,7 @@ function pintarChips(){
     </span>`).join('');
 }
 
-function quitarPalabra(i){ PALABRAS.splice(i, 1); pintarChips(); }
+function quitarPalabra(i){ PALABRAS.splice(i, 1); pintarChips(); marcarSucio(); }
 
 function agregarPalabra(){
   const inp = document.getElementById('tr-palabra');
@@ -1422,6 +1429,7 @@ function agregarPalabra(){
   PALABRAS.push(v);
   inp.value = '';
   pintarChips();
+  marcarSucio();
 }
 
 async function cargarEntrenamiento(){
@@ -1432,7 +1440,6 @@ async function cargarEntrenamiento(){
     const r = await fetch(API_BASE + '/whatsapp/training', { headers:{ Authorization:'Bearer '+tok } });
     if(!r.ok) return;
     const d = await r.json();
-    _trCargado = true;
     document.getElementById('tr-tono').value    = d.tono || '';
     document.getElementById('tr-primer').value  = d.primer_mensaje || '';
     document.getElementById('tr-puede').value   = d.puede || '';
@@ -1444,11 +1451,12 @@ async function cargarEntrenamiento(){
     document.getElementById('tr-fin').value     = String(d.hora_fin || '21:00').slice(0,5);
     document.getElementById('tr-fuera').value   = d.fuera_horario_msg || '';
     document.getElementById('tr-tope').value    = Number(d.max_mensajes_ia) || 0;
-    document.getElementById('tr-activo').checked = d.activo !== false;
     PALABRAS = Array.isArray(d.escalar_palabras) ? d.escalar_palabras.slice() : [];
     pintarHorario();
     pintarChips();
-  }catch(e){ toast('No se pudo cargar el entrenamiento.'); }
+    _trCargado = true;   // hasta aquí: pintar no ensucia
+    marcarLimpio();
+  }catch(e){ toast('No se pudieron cargar las instrucciones.'); }
 }
 
 async function guardarEntrenamiento(){
@@ -1481,7 +1489,7 @@ async function guardarEntrenamiento(){
     fuera_horario_msg: document.getElementById('tr-fuera').value.trim(),
     max_mensajes_ia:   Math.max(0, Math.min(50, Number(document.getElementById('tr-tope').value) || 0)),
     escalar_palabras:  PALABRAS,
-    activo:            document.getElementById('tr-activo').checked,
+    activo:            true,
   };
 
   const tok = getToken();
@@ -1497,16 +1505,17 @@ async function guardarEntrenamiento(){
       toast(motivo);
       return;
     }
-    toast('Entrenamiento guardado. Aplica al siguiente mensaje.');
-  }catch(e){ toast('Error de conexión.'); }
+    marcarLimpio();
+    toast('Guardado. Recepción lo usa desde el siguiente mensaje.');
+  }catch(e){ toast('Error de conexión. Tus cambios siguen aquí, vuelve a intentar.'); }
   finally{
-    btn.disabled = false; spinner.classList.remove('active'); text.textContent = 'Guardar entrenamiento';
+    btn.disabled = false; spinner.classList.remove('active'); text.textContent = 'Guardar';
   }
 }
 
-// ── Plantillas de mensaje ────────────────────────────────
+// ── Mensajes aprobados ───────────────────────────────────
 const TPL_STATUS_LABEL = {
-  APPROVED: 'Aprobada', PENDING: 'En revisión', REJECTED: 'Rechazada'
+  APPROVED: 'Listo para usar', PENDING: 'En revisión', REJECTED: 'Rechazado'
 };
 const TPL_STATUS_COLOR = {
   APPROVED: 'var(--success)', PENDING: 'var(--warn)', REJECTED: 'var(--danger)'
@@ -1520,24 +1529,24 @@ async function cargarTemplates(){
     const r = await fetch(API_BASE + '/whatsapp/templates', {
       headers:{ Authorization: 'Bearer ' + tok }
     });
-    if(!r.ok){ list.innerHTML = '<div class="wa-note">No se pudieron cargar las plantillas.</div>'; return; }
+    if(!r.ok){ list.innerHTML = '<div class="wa-note">No se pudieron cargar. Recarga la página.</div>'; return; }
     const d = await r.json();
     const tpls = d.templates || [];
     if(tpls.length === 0){
-      list.innerHTML = '<div class="wa-note">Aún no tienes plantillas. Crea la primera para poder escribirle a tus leads fuera de la ventana de 24 horas.</div>';
+      list.innerHTML = '<div class="wa-note">Todavía no tienes ninguno. Pide el primero y podrás escribirle a un prospecto aunque hayan pasado más de 24 horas desde su último mensaje.</div>';
       return;
     }
     list.innerHTML = tpls.map(t => `
       <div class="wa-tpl">
         <div>
           <div class="wa-tpl__name">${escapeHtml(t.name)}</div>
-          <div class="wa-tpl__meta">${escapeHtml(t.category || '')} · ${escapeHtml(t.language || '')}</div>
+          <div class="wa-tpl__meta">${escapeHtml(t.category === 'MARKETING' ? 'Promoción' : 'Seguimiento')}</div>
         </div>
         <span class="wa-tpl__state" style="color:${TPL_STATUS_COLOR[t.status] || 'var(--mute)'}">${TPL_STATUS_LABEL[t.status] || escapeHtml(t.status || '')}</span>
       </div>
     `).join('');
   }catch(e){
-    list.innerHTML = '<div class="wa-note">Error de conexión.</div>';
+    list.innerHTML = '<div class="wa-note">No se pudieron cargar. Revisa tu conexión.</div>';
   }
 }
 
@@ -1567,7 +1576,7 @@ async function submitTemplate(){
   const body = document.getElementById('tpl-body').value.trim();
   const example = document.getElementById('tpl-example').value.trim();
 
-  if(!name || !body){ toast('Completa el nombre y el texto del mensaje.'); return; }
+  if(!name || !body){ toast('Falta el nombre o el texto del mensaje.'); return; }
 
   const btn = document.getElementById('tpl-submit-btn');
   const spinner = document.getElementById('tpl-submit-spinner');
@@ -1575,9 +1584,7 @@ async function submitTemplate(){
   btn.disabled = true; spinner.classList.add('active'); text.textContent = 'Enviando…';
 
   const tok = getToken();
-  const payload = {
-    name, category, language: 'es_MX', body_text: body,
-  };
+  const payload = { name, category, language: 'es_MX', body_text: body };
   if(body.includes('{{1}}') && example){
     payload.example_body_params = [example];
   }
@@ -1591,21 +1598,36 @@ async function submitTemplate(){
     const d = await r.json();
     if(r.ok && d.ok){
       closeTemplateModal();
-      toast('Plantilla enviada a revisión de Meta.');
+      toast('Enviado. WhatsApp te lo aprueba en un rato.');
       cargarTemplates();
     } else {
-      toast(d.detail || 'No se pudo crear la plantilla.');
+      toast(d.detail || 'No se pudo enviar.');
     }
   }catch(e){
     toast('Error de conexión.');
   }finally{
-    btn.disabled = false; spinner.classList.remove('active'); text.textContent = 'Enviar a revisión';
+    btn.disabled = false; spinner.classList.remove('active'); text.textContent = 'Pedir aprobación';
   }
 }
 
 // Cerrar modales al hacer clic fuera
 document.querySelectorAll('.wa-modal-bg').forEach(bg => {
   bg.addEventListener('click', e => { if(e.target === bg) bg.classList.remove('open'); });
+});
+
+// Cualquier tecla en las instrucciones enciende la barra de guardado
+TR_CAMPOS.forEach(id => {
+  const el = document.getElementById(id);
+  if(el) el.addEventListener('input', marcarSucio);
+});
+document.getElementById('tr-palabra').addEventListener('keydown', e => {
+  if(e.key === 'Enter' || e.key === ','){ e.preventDefault(); agregarPalabra(); }
+});
+// Salir con cambios sin guardar sería perderlos en silencio.
+window.addEventListener('beforeunload', e => {
+  if(!SUCIO) return;
+  e.preventDefault();
+  e.returnValue = '';
 });
 
 /* ═════════════════════════════════════════════════════════
@@ -1722,12 +1744,10 @@ function renderConvs(force){
   if(!force && sig === _sigConvs) return;
   _sigConvs = sig;
 
-  document.getElementById('bxCount').textContent = CONVS.length ? CONVS.length + (CONVS.length===1 ? ' conversación' : ' conversaciones') : '';
-
   const box = document.getElementById('convs');
 
   if(!CONVS.length){
-    box.innerHTML = '<div class="bx-list__empty"><p>Aún no llega ningún mensaje. En cuanto un prospecto te escriba por WhatsApp, la conversación aparece aquí.</p><button type="button" class="bx-cta" onclick="irATab(\'ajustes\')">Revisar ajustes</button></div>';
+    box.innerHTML = '<div class="bx-list__empty"><p>Todavía no te escribe nadie. En cuanto un prospecto mande un mensaje a tu WhatsApp, la plática aparece aquí.</p><button type="button" class="bx-cta" onclick="irATab(\'recepcion\')">Revisar Recepción</button></div>';
     return;
   }
   if(!lista.length){
@@ -2037,6 +2057,7 @@ async function iniciarChats(){
     document.getElementById('convs').innerHTML = '<div class="bx-list__empty"><p>'+esc(e.message)+'</p></div>';
   }
 }
+
 
 // ── Init ─────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', checkWAStatus);
