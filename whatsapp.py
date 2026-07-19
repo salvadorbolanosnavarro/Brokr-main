@@ -363,17 +363,27 @@ async def process_change(value: dict):
                 await sumar_msg_ia(conv["id"], conv.get("ai_msg_count"))
 
                 # Acciones grandes que pidió la IA. Solo si el aviso salió y la IA
-                # sigue encendida: no le mandamos inmuebles a un chat que el agente
-                # acaba de tomar.
+                # sigue encendida: no le mandamos inmuebles ni citas a un chat que
+                # el agente acaba de tomar.
                 accion = (result or {}).get("accion")
-                if isinstance(accion, dict) and accion.get("tipo") == "enviar_inmuebles":
-                    try:
-                        n = await _enviar_inmuebles(user_id, phone_number_id, from_wa,
-                                                    accion.get("filtros") or {}, contact,
-                                                    conv["id"], token, agente.get("nombre"))
-                        log.info("Recepción envió %s inmueble(s) a %s", n, from_wa)
-                    except Exception as e:
-                        log.exception("Falló enviar inmuebles a %s: %s", from_wa, e)
+                if isinstance(accion, dict):
+                    tipo = accion.get("tipo")
+                    if tipo == "enviar_inmuebles":
+                        try:
+                            n = await _enviar_inmuebles(user_id, phone_number_id, from_wa,
+                                                        accion.get("filtros") or {}, contact,
+                                                        conv["id"], token, agente.get("nombre"))
+                            log.info("Recepción envió %s inmueble(s) a %s", n, from_wa)
+                        except Exception as e:
+                            log.exception("Falló enviar inmuebles a %s: %s", from_wa, e)
+                    elif tipo == "agendar_visita":
+                        try:
+                            ok = await _accion_agendar_visita(user_id, phone_number_id, from_wa,
+                                                              accion, contact, conv["id"], token,
+                                                              agente.get("nombre"))
+                            log.info("Recepción agendó cita=%s con %s", ok, from_wa)
+                        except Exception as e:
+                            log.exception("Falló agendar visita con %s: %s", from_wa, e)
             else:
                 log.error("Recepción no pudo responder a %s: %s", from_wa, sent["error"])
 
@@ -616,6 +626,7 @@ async def recepcion_responde(history: list, property_ctx: str | None,
     quien  = agente["nombre"]
     zona   = agente.get("zona") or ""
     ubica  = f" en {zona}" if zona else ""
+    hoy    = _fmt_fecha_larga(_hora_local())
 
     contexto = property_ctx or (
         f"Atiendes prospectos de {quien}, asesor inmobiliario{ubica}. "
@@ -626,7 +637,8 @@ async def recepcion_responde(history: list, property_ctx: str | None,
         "Atiendes a un prospecto que escribió por un anuncio. Califícalo con calidez y rapidez, sin sonar "
         f"a robot ni a interrogatorio: averigua {_calificacion_para_prompt(entren)}; cuando haga sentido, "
         "ofrece agendar una visita con día y hora. Español "
-        "mexicano, cálido y profesional, mensajes cortos de WhatsApp, sin emojis.\n\n"
+        "mexicano, cálido y profesional, mensajes cortos de WhatsApp, sin emojis. "
+        f"Hoy es {hoy}, úsalo para entender cuándo dice 'mañana', 'el sábado', etc.\n\n"
         f"Contexto: {contexto}\n"
         f"{_saber_del_negocio(entren)}"
         f"{_reglas_para_prompt(entren)}\n"
@@ -636,15 +648,20 @@ async def recepcion_responde(history: list, property_ctx: str | None,
         "propiedades REALES del catálogo del asesor. En 'reply' avísale en una línea que se las vas a "
         "compartir. Usa esto solo cuando de verdad toque mostrar propiedades; si sigues calificando, "
         "deja 'accion' en null.\n"
+        "Cuando el prospecto acepte un día y una hora concretos para la visita, ponlo en 'accion' como "
+        "agendar_visita con la fecha (YYYY-MM-DD) y la hora (HH:MM en 24h); el sistema le manda la "
+        "invitación al calendario y le avisa al asesor. Si aún no hay día y hora firmes, no lo pongas.\n"
         "Responde ÚNICAMENTE con un JSON válido, sin texto antes ni después, así:\n"
         '{"reply":"el mensaje para el prospecto","temperatura":"Caliente|Tibio|Frío",'
         '"score":0-100,"presupuesto":"texto o null","forma_pago":"crédito|contado|por definir",'
         '"busca":"1 frase o null","listo_para_visita":true,"resumen":"1 frase para el agente",'
         '"accion":null}\n'
-        "El campo 'accion' es null casi siempre. SOLO cuando toque mostrar propiedades, ponlo así: "
+        "El campo 'accion' es null casi siempre. Cuando toque mostrar propiedades: "
         '{"tipo":"enviar_inmuebles","filtros":{"operacion":"venta|renta|null",'
         '"tipo":"casa|departamento|terreno u otro texto, o null","zona":"colonia o ciudad, o null",'
-        '"precio_max":numero o null,"recamaras":numero o null}}'
+        '"precio_max":numero o null,"recamaras":numero o null}}. '
+        "Cuando el prospecto ya aceptó día y hora: "
+        '{"tipo":"agendar_visita","fecha":"YYYY-MM-DD","hora":"HH:MM","inmueble":"texto o null"}'
     )
 
     # Anthropic exige que el hilo empiece en 'user': quitamos assistants iniciales
@@ -907,6 +924,174 @@ async def _enviar_inmuebles(user_id, phone_number_id, to, filtros, contact,
         else:
             log.warning("No se pudo enviar inmueble %s: %s", p.get("id"), sent.get("error"))
     return enviados
+
+
+# URL pública del backend, para la invitación .ics que el prospecto abre desde
+# WhatsApp. Se puede sobreescribir por env si algún día cambia el dominio.
+API_PUBLIC_BASE = os.environ.get("API_PUBLIC_BASE", "https://api.broquer.app")
+
+_DIAS  = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
+_MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
+          "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+
+
+def _fmt_fecha_larga(dt) -> str:
+    """'sábado 26 de julio, 5:00 PM' — para confirmarle al prospecto en claro."""
+    h = dt.hour % 12 or 12
+    ampm = "AM" if dt.hour < 12 else "PM"
+    return (f"{_DIAS[dt.weekday()]} {dt.day} de {_MESES[dt.month - 1]}, "
+            f"{h}:{dt.minute:02d} {ampm}")
+
+
+def _parse_cita(fecha, hora):
+    """'YYYY-MM-DD' + 'HH:MM' -> datetime con tz de México. None si no es válida
+    o si ya pasó: no agendamos en el pasado."""
+    try:
+        y, m, d = [int(x) for x in str(fecha).split("-")]
+        hh, mm = _hhmm(hora, "10:00")
+        try:
+            from zoneinfo import ZoneInfo
+            tz = ZoneInfo("America/Mexico_City")
+        except Exception:
+            tz = timezone(timedelta(hours=-6))
+        dt = datetime(y, m, d, hh, mm, tzinfo=tz)
+        if dt < datetime.now(tz) - timedelta(minutes=1):
+            return None
+        return dt
+    except Exception:
+        return None
+
+
+def _ics_de_cita(cita: dict, agente_nombre: str) -> str:
+    """Genera el .ics (VEVENT en UTC) que abre el prospecto con un toque. Sirve
+    igual en Calendario de Apple, Google Calendar y Outlook."""
+    def _z(dt_utc):
+        return dt_utc.strftime("%Y%m%dT%H%M%SZ")
+
+    starts = cita.get("starts_at")
+    if isinstance(starts, str):
+        try:
+            dt = datetime.fromisoformat(starts.replace("Z", "+00:00"))
+        except Exception:
+            dt = datetime.now(timezone.utc)
+    else:
+        dt = starts or datetime.now(timezone.utc)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    dt_utc = dt.astimezone(timezone.utc)
+    fin_utc = dt_utc + timedelta(minutes=int(cita.get("duracion_min") or 60))
+
+    inm = (cita.get("inmueble") or "").strip()
+    titulo = f"Visita: {inm}" if inm else "Visita de propiedad"
+    desc = f"Cita agendada con {agente_nombre} por WhatsApp."
+
+    def esc(t):
+        return (str(t or "").replace("\\", "\\\\").replace(",", "\\,")
+                .replace(";", "\\;").replace("\n", "\\n"))
+
+    return "\r\n".join([
+        "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Broquer//Recepcion//ES",
+        "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "BEGIN:VEVENT",
+        f"UID:{cita.get('id')}@broquer.app",
+        f"DTSTAMP:{_z(datetime.now(timezone.utc))}",
+        f"DTSTART:{_z(dt_utc)}", f"DTEND:{_z(fin_utc)}",
+        f"SUMMARY:{esc(titulo)}", f"DESCRIPTION:{esc(desc)}",
+        "END:VEVENT", "END:VCALENDAR",
+    ]) + "\r\n"
+
+
+async def wa_send_document(phone_number_id: str, to: str, doc_url: str, filename: str,
+                           caption: str | None = None, token: str | None = None) -> dict:
+    """Manda un documento por su URL pública (la usamos para el .ics de la cita).
+    Misma forma de retorno que wa_send_text."""
+    if not token:
+        row = await resolve_number(phone_number_id)
+        token = (row or {}).get("access_token") or WHATSAPP_TOKEN
+    if not token:
+        log.error("Sin token para phone_number_id=%s — no se envía documento", phone_number_id)
+        return {"ok": False, "message_id": None, "code": None,
+                "error": "No hay token de acceso para este número."}
+
+    to = _normaliza_mx(to)
+    url = f"{GRAPH_API}/{phone_number_id}/messages"
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    doc = {"link": doc_url, "filename": filename}
+    if caption:
+        doc["caption"] = caption[:1024]
+    data = {"messaging_product": "whatsapp", "to": to, "type": "document", "document": doc}
+    try:
+        async with httpx.AsyncClient(timeout=25) as c:
+            r = await c.post(url, headers=headers, json=data)
+            payload = r.json() if r.content else {}
+            if r.status_code >= 400:
+                err  = (payload.get("error") or {})
+                code = err.get("code")
+                msg  = err.get("message") or r.text[:200]
+                log.error("WhatsApp doc error %s (code=%s) a %s: %s",
+                          r.status_code, code, to, msg)
+                return {"ok": False, "message_id": None, "code": code,
+                        "error": _error_legible(code, msg)}
+            mid = (payload.get("messages") or [{}])[0].get("id")
+            return {"ok": bool(mid), "message_id": mid,
+                    "error": None if mid else "Meta no devolvió id de documento.", "code": None}
+    except Exception as e:
+        log.exception("Error enviando documento a %s: %s", to, e)
+        return {"ok": False, "message_id": None, "code": None,
+                "error": "No se pudo contactar a WhatsApp."}
+
+
+async def _accion_agendar_visita(user_id, phone_number_id, to, accion, contact,
+                                 conversation_id, token, agente_nombre) -> bool:
+    """Guarda la cita, la marca en el CRM, le manda al prospecto la invitación
+    universal (.ics) y le avisa al asesor. True si se agendó."""
+    dt = _parse_cita(accion.get("fecha"), accion.get("hora"))
+    if not dt:
+        # La IA quiso agendar pero la fecha/hora no sirve: que el asesor lo cierre
+        # a mano en vez de inventar una cita falsa.
+        await avisar_al_agente(user_id, contact, conversation_id,
+                               "El prospecto quiere agendar una visita. Ciérrale día y hora tú.")
+        return False
+
+    inmueble = (accion.get("inmueble") or "").strip()[:200] or None
+    dt_utc = dt.astimezone(timezone.utc)
+    creado = await sb_post("wa_citas", {
+        "user_id": user_id, "contact_id": contact["id"],
+        "conversation_id": conversation_id, "inmueble": inmueble,
+        "starts_at": dt_utc.isoformat(), "duracion_min": 60,
+    })
+    if not creado:
+        log.error("No se pudo guardar la cita de %s", to)
+        await avisar_al_agente(user_id, contact, conversation_id,
+                               "El prospecto aceptó una visita pero no pude guardarla. Coordínala tú.")
+        return False
+    cita = creado[0]
+
+    # Marca en el CRM: etapa Cita + próxima cita para el expediente.
+    await sb_patch("wa_contacts", {"id": f"eq.{contact['id']}"},
+                   {"etapa": "Cita", "cita_at": dt_utc.isoformat(), "updated_at": _now()})
+
+    cuando = _fmt_fecha_larga(dt)
+    lugar  = f" para ver {inmueble}" if inmueble else ""
+    ics_url = f"{API_PUBLIC_BASE}/whatsapp/cita/{cita['id']}.ics"
+    caption = (f"Tu visita quedó el {cuando}{lugar}. "
+               "Toca el archivo para agregarla a tu calendario.")
+    sent = await wa_send_document(phone_number_id, to, ics_url, "cita-broquer.ics",
+                                  caption, token=token)
+    if sent["ok"]:
+        await store_message(user_id, contact["id"], conversation_id,
+                            sent["message_id"] or f"local-cita-{cita['id']}",
+                            "out", "ai", f"[Cita] {cuando}{lugar}", status="sent")
+    else:
+        # Si el documento no salió, al menos confirma en texto para no dejarlo en el aire.
+        txt = f"Tu visita quedó el {cuando}{lugar}. ¡Ahí te esperamos!"
+        s2 = await wa_send_text(phone_number_id, to, txt, token=token)
+        if s2["ok"]:
+            await store_message(user_id, contact["id"], conversation_id,
+                                s2["message_id"] or f"local-cita-{cita['id']}",
+                                "out", "ai", f"[Cita] {cuando}{lugar}", status="sent")
+
+    await avisar_al_agente(user_id, contact, conversation_id, f"Nueva cita: {cuando}{lugar}.")
+    return True
 
 
 def _error_legible(code, msg: str) -> str:
@@ -1743,3 +1928,21 @@ async def send_template(req: TemplateSendReq, request: Request):
         raise HTTPException(status_code=400, detail="No se pudo enviar la plantilla")
 
     return {"ok": True, "wamid": r.json().get("messages", [{}])[0].get("id")}
+
+
+# =============================================================================
+# 7) INVITACIÓN DE CITA (.ics)  ->  la abre el prospecto desde WhatsApp
+# =============================================================================
+@router.get("/cita/{cita_id}.ics")
+async def descargar_cita_ics(cita_id: str):
+    """Sirve la invitación .ics de una cita. Es público a propósito: WhatsApp la
+    descarga sin credenciales y el prospecto la abre con un toque. El id es un
+    uuid al azar y el archivo solo trae día, hora y título —nada sensible."""
+    rows = await sb_get("wa_citas", {"id": f"eq.{cita_id}", "select": "*", "limit": "1"})
+    if not rows:
+        return Response(status_code=404, content="Cita no encontrada", media_type="text/plain")
+    cita = rows[0]
+    agente = await perfil_agente(cita.get("user_id"))
+    ics = _ics_de_cita(cita, agente.get("nombre") or "tu asesor")
+    return Response(content=ics, media_type="text/calendar; charset=utf-8",
+                    headers={"Content-Disposition": 'attachment; filename="cita-broquer.ics"'})

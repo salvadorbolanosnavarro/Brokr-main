@@ -1862,6 +1862,13 @@ function diaEtiqueta(iso){
   if(mismo(d,ayer)) return 'Ayer';
   return d.toLocaleDateString('es-MX',{day:'numeric',month:'long'});
 }
+function fmtCita(iso){
+  try{
+    return new Date(iso).toLocaleString('es-MX', {
+      weekday:'short', day:'numeric', month:'short', hour:'numeric', minute:'2-digit'
+    });
+  }catch(e){ return ''; }
+}
 function fmtTel(raw){
   const d = String(raw||'').replace(/\D/g,'');
   if(!d) return '';
@@ -2054,6 +2061,7 @@ function pintarDossier(ct){
     </div>`;
 
   const facts = [];
+  if(ct.cita_at)      facts.push(['Cita', esc(fmtCita(ct.cita_at))]);
   if(ct.presupuesto)  facts.push(['Presupuesto', esc(ct.presupuesto)]);
   if(ct.forma_pago)   facts.push(['Forma de pago', esc(ct.forma_pago)]);
   if(ct.etapa)        facts.push(['Etapa', esc(ct.etapa)]);
