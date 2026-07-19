@@ -361,6 +361,19 @@ async def process_change(value: dict):
                                 status="sent" if sent["ok"] else "failed")
             if sent["ok"]:
                 await sumar_msg_ia(conv["id"], conv.get("ai_msg_count"))
+
+                # Acciones grandes que pidió la IA. Solo si el aviso salió y la IA
+                # sigue encendida: no le mandamos inmuebles a un chat que el agente
+                # acaba de tomar.
+                accion = (result or {}).get("accion")
+                if isinstance(accion, dict) and accion.get("tipo") == "enviar_inmuebles":
+                    try:
+                        n = await _enviar_inmuebles(user_id, phone_number_id, from_wa,
+                                                    accion.get("filtros") or {}, contact,
+                                                    conv["id"], token, agente.get("nombre"))
+                        log.info("Recepción envió %s inmueble(s) a %s", n, from_wa)
+                    except Exception as e:
+                        log.exception("Falló enviar inmuebles a %s: %s", from_wa, e)
             else:
                 log.error("Recepción no pudo responder a %s: %s", from_wa, sent["error"])
 
@@ -617,10 +630,21 @@ async def recepcion_responde(history: list, property_ctx: str | None,
         f"Contexto: {contexto}\n"
         f"{_saber_del_negocio(entren)}"
         f"{_reglas_para_prompt(entren)}\n"
+        "Cuando el prospecto pida ver opciones, o cuando ya sepas lo suficiente para mostrarle "
+        "propiedades, NO inventes inmuebles ni des direcciones exactas: en 'accion' pide enviarle "
+        "opciones con los filtros que tengas (los que no sepas, déjalos en null) y el sistema le manda "
+        "propiedades REALES del catálogo del asesor. En 'reply' avísale en una línea que se las vas a "
+        "compartir. Usa esto solo cuando de verdad toque mostrar propiedades; si sigues calificando, "
+        "deja 'accion' en null.\n"
         "Responde ÚNICAMENTE con un JSON válido, sin texto antes ni después, así:\n"
         '{"reply":"el mensaje para el prospecto","temperatura":"Caliente|Tibio|Frío",'
         '"score":0-100,"presupuesto":"texto o null","forma_pago":"crédito|contado|por definir",'
-        '"busca":"1 frase o null","listo_para_visita":true,"resumen":"1 frase para el agente"}'
+        '"busca":"1 frase o null","listo_para_visita":true,"resumen":"1 frase para el agente",'
+        '"accion":null}\n'
+        "El campo 'accion' es null casi siempre. SOLO cuando toque mostrar propiedades, ponlo así: "
+        '{"tipo":"enviar_inmuebles","filtros":{"operacion":"venta|renta|null",'
+        '"tipo":"casa|departamento|terreno u otro texto, o null","zona":"colonia o ciudad, o null",'
+        '"precio_max":numero o null,"recamaras":numero o null}}'
     )
 
     # Anthropic exige que el hilo empiece en 'user': quitamos assistants iniciales
@@ -718,6 +742,171 @@ async def wa_send_text(phone_number_id: str, to: str, body: str,
         log.exception("Error enviando WhatsApp a %s: %s", to, e)
         return {"ok": False, "message_id": None, "code": None,
                 "error": "No se pudo contactar a WhatsApp. Intenta de nuevo."}
+
+
+async def wa_send_image(phone_number_id: str, to: str, image_url: str,
+                        caption: str | None = None, token: str | None = None) -> dict:
+    """Manda una imagen por su URL pública (así son las fotos del bucket) con pie
+    de foto opcional. Misma forma de retorno que wa_send_text para que quien
+    llama trate el éxito/fracaso igual."""
+    if not token:
+        row = await resolve_number(phone_number_id)
+        token = (row or {}).get("access_token") or WHATSAPP_TOKEN
+    if not token:
+        log.error("Sin token para phone_number_id=%s — no se envía imagen", phone_number_id)
+        return {"ok": False, "message_id": None, "code": None,
+                "error": "No hay token de acceso para este número."}
+
+    to = _normaliza_mx(to)
+    url = f"{GRAPH_API}/{phone_number_id}/messages"
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    img = {"link": image_url}
+    if caption:
+        img["caption"] = caption[:1024]
+    data = {"messaging_product": "whatsapp", "to": to, "type": "image", "image": img}
+    try:
+        async with httpx.AsyncClient(timeout=25) as c:
+            r = await c.post(url, headers=headers, json=data)
+            payload = r.json() if r.content else {}
+            if r.status_code >= 400:
+                err  = (payload.get("error") or {})
+                code = err.get("code")
+                msg  = err.get("message") or r.text[:200]
+                log.error("WhatsApp image error %s (code=%s) a %s: %s",
+                          r.status_code, code, to, msg)
+                return {"ok": False, "message_id": None, "code": code,
+                        "error": _error_legible(code, msg)}
+            mid = (payload.get("messages") or [{}])[0].get("id")
+            if not mid:
+                log.error("Meta 200 sin id en imagen: %s", json.dumps(payload)[:300])
+                return {"ok": False, "message_id": None, "code": None,
+                        "error": "Meta aceptó la imagen pero no devolvió un id."}
+            return {"ok": True, "message_id": mid, "error": None, "code": None}
+    except Exception as e:
+        log.exception("Error enviando imagen a %s: %s", to, e)
+        return {"ok": False, "message_id": None, "code": None,
+                "error": "No se pudo contactar a WhatsApp."}
+
+
+# =============================================================================
+# 4b) ACCIONES DE RECEPCIÓN  ->  cosas grandes que la IA puede pedir hacer
+# =============================================================================
+# La IA NO inventa inmuebles ni los saca de la nada: en su JSON pide una acción y
+# el backend la ejecuta contra Supabase con datos REALES. Mismo principio que
+# Broq: nunca afirmar inventario sin confirmarlo en la base.
+def _money_mx(v) -> str:
+    try:
+        return "$" + f"{float(v):,.0f}"
+    except Exception:
+        return str(v or "")
+
+
+# Estatus que NO se le mandan a un prospecto (ya no están disponibles).
+_ESTATUS_FUERA = {"vendido", "vendida", "rentado", "rentada", "baja",
+                  "inactivo", "inactiva", "no disponible", "cerrado", "pausado"}
+
+
+async def _buscar_inmuebles_para_enviar(user_id: str, filtros: dict) -> list:
+    """Hasta 3 propiedades reales del asesor que encajen con lo que pidió el
+    prospecto. Si un filtro no viene, no se aplica. Se descartan las que ya no
+    están disponibles. Devuelve [] solo si de verdad no hay coincidencias."""
+    sel = ("id,titulo,tipo,operacion,precio,moneda,colonia,ciudad,calle,"
+           "recamaras,banos,estacionamientos,m2_construccion,m2_terreno,estatus,fotos")
+    params = {"user_id": f"eq.{user_id}", "select": sel,
+              "order": "updated_at.desc", "limit": "12"}
+
+    op = str(filtros.get("operacion") or "").strip().lower()
+    if op in ("venta", "renta"):
+        params["operacion"] = f"eq.{op}"
+    tipo = str(filtros.get("tipo") or "").strip().lower()
+    if tipo:
+        params["tipo"] = f"ilike.*{tipo}*"
+    zona = str(filtros.get("zona") or "").strip()
+    if zona:
+        safe = zona.replace(",", " ").replace("(", " ").replace(")", " ")
+        params["or"] = (f"(titulo.ilike.*{safe}*,colonia.ilike.*{safe}*,"
+                        f"calle.ilike.*{safe}*,ciudad.ilike.*{safe}*)")
+    pmax = filtros.get("precio_max")
+    if pmax:
+        try:
+            params["precio"] = f"lte.{int(float(pmax))}"
+        except Exception:
+            pass
+    rec = filtros.get("recamaras")
+    if rec:
+        try:
+            params["recamaras"] = f"gte.{int(rec)}"
+        except Exception:
+            pass
+
+    rows = await sb_get("propiedades", params)
+    buenas = [p for p in (rows or [])
+              if str(p.get("estatus") or "").strip().lower() not in _ESTATUS_FUERA]
+    return buenas[:3]
+
+
+def _tarjeta_inmueble(p: dict) -> str:
+    """Pie de foto corto y claro para WhatsApp. Sin direcciones exactas: colonia
+    y ciudad bastan hasta que haya cita."""
+    lineas = [p.get("titulo") or p.get("tipo") or "Propiedad"]
+    ubic = " · ".join(x for x in [p.get("colonia"), p.get("ciudad")] if x)
+    if ubic:
+        lineas.append(ubic)
+    if p.get("precio"):
+        op = f" ({p['operacion']})" if p.get("operacion") else ""
+        lineas.append(f"{_money_mx(p['precio'])} {p.get('moneda') or 'MXN'}{op}")
+    det = []
+    if p.get("recamaras"):        det.append(f"{p['recamaras']} rec")
+    if p.get("banos"):            det.append(f"{p['banos']} baños")
+    if p.get("estacionamientos"): det.append(f"{p['estacionamientos']} autos")
+    if p.get("m2_construccion"):  det.append(f"{p['m2_construccion']} m² const")
+    if det:
+        lineas.append(" · ".join(det))
+    return "\n".join(lineas)[:1024]
+
+
+async def _enviar_inmuebles(user_id, phone_number_id, to, filtros, contact,
+                            conversation_id, token, agente_nombre) -> int:
+    """Manda al prospecto hasta 3 tarjetas de inmueble (foto + datos) y las guarda
+    en el hilo como mensajes de Recepción. Si no hay coincidencias, manda un texto
+    honesto y le avisa al asesor —nunca inventa ni deja al prospecto colgado."""
+    props = await _buscar_inmuebles_para_enviar(user_id, filtros or {})
+    if not props:
+        txt = ("Justo ahora no tengo algo que encaje exacto con eso, pero deja lo "
+               f"confirmo con {agente_nombre} y te comparto opciones enseguida.")
+        sent = await wa_send_text(phone_number_id, to, txt, token=token)
+        if sent["ok"]:
+            await store_message(user_id, contact["id"], conversation_id,
+                                sent["message_id"] or f"local-noinv-{to}",
+                                "out", "ai", txt, status="sent")
+        await avisar_al_agente(user_id, contact, conversation_id,
+                               "Recepción quiso mandar inmuebles y no halló coincidencias "
+                               "con lo que pidió el prospecto. Échale un ojo al chat.")
+        return 0
+
+    enviados = 0
+    for p in props:
+        caption = _tarjeta_inmueble(p)
+        fotos = p.get("fotos") or []
+        foto = None
+        if isinstance(fotos, list):
+            foto = next((f for f in fotos if isinstance(f, str) and f.strip()), None)
+        if foto:
+            sent = await wa_send_image(phone_number_id, to, foto, caption, token=token)
+            # Si la foto no pasó (URL pesada, formato que Meta no acepta), no
+            # dejamos al prospecto sin la opción: la mandamos en texto.
+            if not sent["ok"]:
+                sent = await wa_send_text(phone_number_id, to, caption, token=token)
+        else:
+            sent = await wa_send_text(phone_number_id, to, caption, token=token)
+        if sent["ok"]:
+            enviados += 1
+            await store_message(user_id, contact["id"], conversation_id,
+                                sent["message_id"] or f"local-inm-{p.get('id')}",
+                                "out", "ai", "[Inmueble] " + caption, status="sent")
+        else:
+            log.warning("No se pudo enviar inmueble %s: %s", p.get("id"), sent.get("error"))
+    return enviados
 
 
 def _error_legible(code, msg: str) -> str:
