@@ -245,7 +245,7 @@
     { key:'mi-sitio',     href:'mi-sitio.html',      label:'Mi sitio',        group:'main', icon:'globo' },
     { key:'blog',         href:'blog.html',          label:'Blog',            group:'main', icon:'feather' },
     { key:'guia',         href:'guia-agente.html',   label:'Ayuda', group:'main', icon:'question' },
-    { key:'equipo',       href:'equipo.html',        label:'Equipo',          group:'crm',  icon:'users' },
+    { key:'equipo',       href:'equipo.html',        label:'Equipo',          group:'crm',  icon:'users', enterpriseOnly:true },
     { key:'admin',        href:'admin.html',         label:'Admin',           group:'main', icon:'cog', adminOnly:true },
   ];
 
@@ -402,6 +402,25 @@
 
 /* Content area */
 .bk-content { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+
+/* Flecha de regreso a Inicio (misma en cada módulo, azul tenue) */
+.bk-back-wrap {
+  max-width: var(--page-max, 1180px);
+  margin: 0 auto;
+  padding: 14px var(--pad-x, 36px) 0;
+  box-sizing: border-box;
+}
+.bk-back-home {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 600;
+  color: var(--sky-blue); opacity: 0.55;
+  text-decoration: none;
+  transition: opacity var(--dur) var(--ease);
+}
+.bk-back-home:hover { opacity: 1; }
+.bk-back-home svg { flex: none; transition: transform var(--dur) var(--ease); }
+.bk-back-home:hover svg { transform: translateX(-2px); }
+@media (max-width: 720px) { .bk-back-wrap { padding: 10px var(--pad-x, 16px) 0; } }
 
 /* Mobile head */
 .bk-mobile-head {
@@ -1174,7 +1193,22 @@ body[data-app="facebook-ads"]{--page-max:980px}
       pageWrap.insertBefore(hd, pageWrap.firstChild);
     }
 
-    const crm   = MODS.filter(m => m.group === 'crm');
+    // ── Flecha sutil (azul tenue) de regreso a Inicio — en cada módulo, no en home ──
+    if (activeKey !== 'home') {
+      const backWrap = document.createElement('div');
+      backWrap.className = 'bk-back-wrap';
+      backWrap.innerHTML =
+        `<a href="index.html" class="bk-back-home" aria-label="Volver a Inicio">` +
+        `<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5m0 0l7 7m-7-7l7-7"/></svg>` +
+        `<span>Inicio</span></a>`;
+      pageWrap.insertBefore(backWrap, pageWrap.firstChild);
+    }
+
+    // "Equipo" solo se muestra a usuarios empresariales: los que pertenecen a una
+    // organización con tipo 'empresa' (es_empresa, expuesto por /org). Esto es
+    // independiente de usuarios.rol ('equipo' en Admin son tus agentes internos).
+    const isEnterprise = !!(profile?.esEmpresa || profile?.isAdmin);
+    const crm   = MODS.filter(m => m.group === 'crm' && (!m.enterpriseOnly || isEnterprise));
     const main  = MODS.filter(m => m.group === 'main' && (!m.adminOnly || profile?.isAdmin));
 
     const shell = document.createElement('div');
@@ -1256,8 +1290,8 @@ body[data-app="facebook-ads"]{--page-max:980px}
     const bnav = document.createElement('nav');
     bnav.className = 'bk-bnav';
     bnav.innerHTML =
-      `<a href="index.html" class="bk-bnav__item${activeKey === 'home' ? ' is-active' : ''}">${svg('home', 24)} <span>Inicio</span></a>` +
-      `<button class="bk-bnav__item${crmActive ? ' is-active' : ''}" id="bk-bnav-crm" type="button" aria-label="Módulos del CRM">${svg('funnel', 24)} <span>CRM</span></button>` +
+      // Menú (hamburguesa): abre la hoja con CRM + herramientas + Mi perfil.
+      `<button class="bk-bnav__item${crmActive ? ' is-active' : ''}" id="bk-bnav-crm" type="button" aria-label="Menú">${svg('homeList', 24)} <span>Menú</span></button>` +
       `<button class="bk-bnav__item bk-bnav__broquer" id="bk-bnav-shaark" type="button" aria-label="Abrir Broq">
          <img src="broq-icon.png" alt=""/> <span>Broq</span>
        </button>` +
@@ -1266,8 +1300,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
       `<a href="whatsapp.html#chats" class="bk-bnav__item${activeKey === 'whatsapp' ? ' is-active' : ''}" id="bk-bnav-chats" aria-label="Chats de WhatsApp">
          <span class="bk-bnav__ico">${svg('whatsapp', 24)}<i class="bk-badge" id="bk-bnav-badge"></i></span>
          <span>Chats</span>
-       </a>` +
-      `<button class="bk-bnav__item" id="bk-bnav-perfil" type="button" aria-label="Mi perfil">${svg('user', 24)} <span>Perfil</span></button>`;
+       </a>`;
     document.body.appendChild(bnav);
 
     // ── Hoja de módulos (móvil): CRM completo + resto de herramientas ──
@@ -1282,7 +1315,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
     sheet.setAttribute('role', 'dialog');
     sheet.setAttribute('aria-label', 'Módulos');
 
-    const crmMods  = MODS.filter(m => m.group === 'crm');
+    const crmMods  = MODS.filter(m => m.group === 'crm' && (!m.enterpriseOnly || isEnterprise));
     const toolMods = MODS.filter(m => m.group === 'main' && (!m.adminOnly || profile?.isAdmin));
 
     function sheetItem(m) {
@@ -1295,12 +1328,17 @@ body[data-app="facebook-ads"]{--page-max:980px}
       return `<a ${attrs} class="bk-sheet__item${act}"><span class="bk-sheet__ico">${svg(m.icon, 19)}${badge}</span><span>${m.label}</span></a>`;
     }
 
+    // "Mi perfil" vive dentro del menú (entre Blog y Ayuda), ya no en el bar inferior.
+    const profileSheetItem =
+      `<a href="javascript:void(0)" class="bk-sheet__item" onclick="window.bkToggleModsSheet&&window.bkToggleModsSheet(false);openProfileDrawer();">` +
+      `<span class="bk-sheet__ico">${svg('user', 19)}</span><span>Mi perfil</span></a>`;
+
     sheet.innerHTML =
       `<div class="bk-sheet__grip"></div>` +
       `<div class="bk-sheet__eyebrow">CRM</div>` +
       `<div class="bk-sheet__grid">${crmMods.map(sheetItem).join('')}</div>` +
       `<div class="bk-sheet__eyebrow">Herramientas</div>` +
-      `<div class="bk-sheet__grid">${toolMods.map(sheetItem).join('')}</div>`;
+      `<div class="bk-sheet__grid">${toolMods.map(m => sheetItem(m) + (m.key === 'blog' ? profileSheetItem : '')).join('')}</div>`;
     document.body.appendChild(sheet);
 
     function toggleSheet(force) {
@@ -1323,7 +1361,6 @@ body[data-app="facebook-ads"]{--page-max:980px}
     document.body.appendChild(fab);
 
     document.getElementById('bk-bnav-shaark').addEventListener('click', () => toggleShaarkPopup());
-    document.getElementById('bk-bnav-perfil').addEventListener('click', () => openProfileDrawer());
 
     const pop = document.createElement('div');
     pop.className = 'bk-shaark-popup';
@@ -3640,6 +3677,21 @@ body[data-app="facebook-ads"]{--page-max:980px}
     const subActive = await checkSubscriptionActive(profile);
     if (subActive === null) return; // sesión expirada — ya se redirigió
     window.__BK_SUB_ACTIVE = (subActive === true);
+
+    // ── ¿Usuario empresarial? (organización tipo 'empresa') ──
+    // Decide si el módulo "Equipo" aparece en el sidebar / menú. Fail-closed:
+    // si no podemos confirmarlo, no se muestra.
+    try {
+      const _tok = getToken();
+      const _orgRes = await fetch(API_BASE + '/org', {
+        headers: _tok ? { Authorization: 'Bearer ' + _tok } : {},
+      });
+      if (_orgRes.ok) {
+        const _org = await _orgRes.json();
+        profile.esEmpresa = !!(_org && _org.tiene_org && _org.es_empresa);
+      }
+    } catch (_) { /* sin confirmar → no se muestra Equipo */ }
+
     injectShell(profile);
     bkInstallFreemiumGate();
 
