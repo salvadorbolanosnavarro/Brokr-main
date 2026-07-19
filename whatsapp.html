@@ -277,6 +277,38 @@ body[data-app="whatsapp"].wa-chats .wa-tabs__inner{max-width:none}
 .wa-chip button svg{width:11px;height:11px}
 .wa-chips__empty{font-size:var(--fs-xs);color:var(--mute);margin:0 0 var(--sp-3)}
 
+/* Checklist de calificación: pastillas que se palomean con un toque */
+.wa-picks{display:flex;flex-wrap:wrap;gap:var(--sp-2)}
+.wa-pick{
+  display:inline-flex;align-items:center;gap:var(--sp-2);
+  padding:var(--sp-2) var(--sp-4);border-radius:var(--r-pill);
+  border:1px solid var(--line-2);background:var(--paper);
+  color:var(--ink-2);font-family:var(--font-sans);font-size:var(--fs-sm);
+  cursor:pointer;transition:border-color var(--dur) var(--ease),background var(--dur) var(--ease),color var(--dur) var(--ease)
+}
+.wa-pick:hover{border-color:var(--line-3)}
+.wa-pick.is-on{border-color:var(--sky-blue);background:var(--sky-canvas);color:var(--sky-navy);font-weight:700}
+.wa-pick__tick{width:14px;height:14px;flex:none;opacity:0;transition:opacity var(--dur) var(--ease)}
+.wa-pick.is-on .wa-pick__tick{opacity:1}
+
+/* Base de respuestas frecuentes (FAQ) */
+.wa-faq{display:flex;flex-direction:column;gap:var(--sp-3);margin-bottom:var(--sp-4)}
+.wa-faq__row{
+  position:relative;border:1px solid var(--line-2);border-radius:var(--r);
+  padding:var(--sp-3) var(--sp-4);background:var(--paper)
+}
+.wa-faq__q{font-size:var(--fs-sm);font-weight:700;color:var(--ink);margin:0 var(--sp-8) var(--sp-1) 0;line-height:var(--lh)}
+.wa-faq__a{font-size:var(--fs-sm);color:var(--ink-2);margin:0;line-height:var(--lh)}
+.wa-faq__del{
+  position:absolute;top:var(--sp-2);right:var(--sp-2);width:26px;height:26px;
+  display:grid;place-items:center;border:none;background:transparent;color:var(--mute);
+  border-radius:50%;cursor:pointer;transition:color var(--dur) var(--ease),background var(--dur) var(--ease)
+}
+.wa-faq__del:hover{color:var(--danger);background:var(--danger-soft)}
+.wa-faq__del svg{width:13px;height:13px}
+.wa-faq__empty{font-size:var(--fs-xs);color:var(--mute);margin:0 0 var(--sp-3)}
+.wa-faq__add{display:flex;flex-direction:column;gap:var(--sp-3);padding-top:var(--sp-2)}
+
 /* ─── Mensajes aprobados: renglones, no cards ─── */
 .wa-tpl-list{display:flex;flex-direction:column}
 .wa-tpl{
@@ -879,6 +911,18 @@ body[data-app="whatsapp"].wa-chats .wa-tabs__inner{max-width:none}
       <div class="wa-sec__body">
 
         <div class="wa-field">
+          <label for="tr-especialidad">¿A qué te dedicas?</label>
+          <span class="wa-help">Una frase. Le da a Recepción el contexto para no sonar genérica.</span>
+          <input type="text" id="tr-especialidad" placeholder="Casas y departamentos de 2 a 6 millones en Morelia, venta y preventa."/>
+        </div>
+
+        <div class="wa-field">
+          <label for="tr-objetivo">¿Qué quieres lograr en cada plática?</label>
+          <span class="wa-help">La meta hacia la que Recepción lleva la conversación, sin presionar.</span>
+          <input type="text" id="tr-objetivo" placeholder="Agendar una visita. Y si no se puede aún, dejar su presupuesto y para cuándo."/>
+        </div>
+
+        <div class="wa-field">
           <label for="tr-primer">¿Con qué saluda?</label>
           <span class="wa-help">Las primeras palabras que lee tu prospecto.</span>
           <textarea id="tr-primer" placeholder="Hola, soy la recepción de Salvador Bolaños. ¿Sobre qué propiedad me escribes?"></textarea>
@@ -908,6 +952,49 @@ body[data-app="whatsapp"].wa-chats .wa-tabs__inner{max-width:none}
           <textarea id="tr-nodebe" placeholder="El precio final. La dirección exacta antes de la cita. Que el crédito se aprueba. Tu comisión."></textarea>
         </div>
 
+      </div>
+    </section>
+
+    <!-- ── QUÉ DEBE AVERIGUAR ── -->
+    <section class="wa-sec">
+      <div class="wa-sec__head">
+        <h2>Qué debe averiguar</h2>
+        <p>Palomea lo que Recepción no debe dejar pasar de ningún prospecto. Lo pregunta con naturalidad, cuando cae. Si no palomeas nada, usa su criterio de siempre.</p>
+      </div>
+      <div class="wa-sec__body">
+        <div class="wa-field">
+          <div class="wa-picks" id="tr-calif"></div>
+        </div>
+        <div class="wa-field" style="margin-top:var(--sp-6)">
+          <label for="tr-pregunta">Tus propias preguntas</label>
+          <span class="wa-help">Algo que solo tú preguntas. Escríbela y presiona Enter. Hasta 5.</span>
+          <div class="wa-chips" id="tr-preg-chips"></div>
+          <p class="wa-chips__empty" id="tr-preg-empty">Todavía no agregas ninguna.</p>
+          <input type="text" id="tr-pregunta" placeholder="¿Ya está precalificado con el banco?" autocomplete="off"/>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── RESPUESTAS QUE YA SABES ── -->
+    <section class="wa-sec">
+      <div class="wa-sec__head">
+        <h2>Respuestas que ya sabes</h2>
+        <p>Las dudas que te repiten y su respuesta exacta. Recepción las contesta tal cual, sin inventar. Es lo que más la hace sonar como tú.</p>
+      </div>
+      <div class="wa-sec__body">
+        <div class="wa-faq" id="tr-faq-list"></div>
+        <p class="wa-faq__empty" id="tr-faq-empty">Todavía no agregas ninguna.</p>
+        <div class="wa-faq__add">
+          <div class="wa-field">
+            <label for="tr-faq-q">La pregunta</label>
+            <input type="text" id="tr-faq-q" placeholder="¿Aceptan Infonavit?" autocomplete="off"/>
+          </div>
+          <div class="wa-field">
+            <label for="tr-faq-a">Cómo la contesta</label>
+            <textarea id="tr-faq-a" placeholder="Sí, trabajamos crédito Infonavit y cofinavit. ¿Ya sabes cuánto te autorizaron?"></textarea>
+          </div>
+          <button type="button" class="wa-btn wa-btn-ink wa-btn--sm" onclick="agregarFaq()">Agregar respuesta</button>
+        </div>
       </div>
     </section>
 
@@ -1386,12 +1473,29 @@ function toast(msg){
    La barra solo aparece cuando de verdad hay algo pendiente.
    ═════════════════════════════════════════════════════════ */
 let PALABRAS = [];
+// Catálogo del checklist de calificación. La clave (k) tiene que ser idéntica a
+// la de CALIF_OPCIONES en whatsapp.py; el texto (t) es solo lo que se ve.
+const CALIF_UI = [
+  {k:'forma_pago',  t:'Crédito o contado'},
+  {k:'presupuesto', t:'Presupuesto'},
+  {k:'enganche',    t:'Enganche'},
+  {k:'zona',        t:'Zona que busca'},
+  {k:'tipo',        t:'Tipo de inmueble'},
+  {k:'recamaras',   t:'Recámaras'},
+  {k:'urgencia',    t:'Para cuándo'},
+  {k:'motivo',      t:'Vivir o invertir'},
+  {k:'credito_pre', t:'Ya precalificado'},
+  {k:'da_a_cuenta', t:'Da algo a cuenta'},
+];
+let CALIF = new Set();
+let PREGUNTAS = [];
+let FAQ = [];
 let _trCargado = false;
 let SUCIO = false;
 // wa_training.activo existe en la tabla pero NO tiene control en pantalla:
 // dos interruptores que ambos callan a Recepción es exactamente la confusión
 // que hay que evitar. Manda uno solo, el del letrero.
-const TR_CAMPOS = ['tr-primer','tr-tono','tr-puede','tr-debe','tr-nodebe','tr-inicio','tr-fin','tr-fuera','tr-tope'];
+const TR_CAMPOS = ['tr-especialidad','tr-objetivo','tr-primer','tr-tono','tr-puede','tr-debe','tr-nodebe','tr-inicio','tr-fin','tr-fuera','tr-tope'];
 
 function marcarSucio(){
   if(!_trCargado) return;   // pintar los valores al cargar no es un cambio
@@ -1432,6 +1536,71 @@ function agregarPalabra(){
   marcarSucio();
 }
 
+/* ── Checklist de calificación ── */
+function pintarCalif(){
+  const box = document.getElementById('tr-calif');
+  box.innerHTML = CALIF_UI.map(o => `
+    <button type="button" class="wa-pick ${CALIF.has(o.k) ? 'is-on' : ''}" onclick="togglePick('${o.k}')" aria-pressed="${CALIF.has(o.k)}">
+      <svg class="wa-pick__tick" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+      ${escapeHtml(o.t)}
+    </button>`).join('');
+}
+function togglePick(k){
+  if(CALIF.has(k)) CALIF.delete(k); else CALIF.add(k);
+  pintarCalif();
+  marcarSucio();
+}
+
+/* ── Preguntas propias (chips, igual que las palabras que escalan) ── */
+function pintarPreguntas(){
+  const box = document.getElementById('tr-preg-chips');
+  document.getElementById('tr-preg-empty').hidden = PREGUNTAS.length > 0;
+  box.innerHTML = PREGUNTAS.map((p, i) => `
+    <span class="wa-chip">${escapeHtml(p)}
+      <button type="button" onclick="quitarPregunta(${i})" aria-label="Quitar ${escapeHtml(p)}">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </span>`).join('');
+}
+function quitarPregunta(i){ PREGUNTAS.splice(i, 1); pintarPreguntas(); marcarSucio(); }
+function agregarPregunta(){
+  const inp = document.getElementById('tr-pregunta');
+  const v = inp.value.trim();
+  if(!v) return;
+  if(PREGUNTAS.length >= 5){ toast('Máximo 5 preguntas propias.'); return; }
+  if(PREGUNTAS.some(p => p.toLowerCase() === v.toLowerCase())){ inp.value = ''; return; }
+  PREGUNTAS.push(v.slice(0, 160));
+  inp.value = '';
+  pintarPreguntas();
+  marcarSucio();
+}
+
+/* ── Base de respuestas (FAQ) ── */
+function pintarFaq(){
+  const box = document.getElementById('tr-faq-list');
+  document.getElementById('tr-faq-empty').hidden = FAQ.length > 0;
+  box.innerHTML = FAQ.map((f, i) => `
+    <div class="wa-faq__row">
+      <button type="button" class="wa-faq__del" onclick="quitarFaq(${i})" aria-label="Quitar respuesta">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+      <p class="wa-faq__q">${escapeHtml(f.q)}</p>
+      <p class="wa-faq__a">${escapeHtml(f.a)}</p>
+    </div>`).join('');
+}
+function quitarFaq(i){ FAQ.splice(i, 1); pintarFaq(); marcarSucio(); }
+function agregarFaq(){
+  const q = document.getElementById('tr-faq-q').value.trim();
+  const a = document.getElementById('tr-faq-a').value.trim();
+  if(!q || !a){ toast('Escribe la pregunta y su respuesta.'); return; }
+  if(FAQ.length >= 20){ toast('Máximo 20 respuestas.'); return; }
+  FAQ.push({ q: q.slice(0, 160), a: a.slice(0, 600) });
+  document.getElementById('tr-faq-q').value = '';
+  document.getElementById('tr-faq-a').value = '';
+  pintarFaq();
+  marcarSucio();
+}
+
 async function cargarEntrenamiento(){
   if(_trCargado) return;
   const tok = getToken();
@@ -1452,8 +1621,18 @@ async function cargarEntrenamiento(){
     document.getElementById('tr-fuera').value   = d.fuera_horario_msg || '';
     document.getElementById('tr-tope').value    = Number(d.max_mensajes_ia) || 0;
     PALABRAS = Array.isArray(d.escalar_palabras) ? d.escalar_palabras.slice() : [];
+    document.getElementById('tr-especialidad').value = d.especialidad || '';
+    document.getElementById('tr-objetivo').value      = d.objetivo || '';
+    CALIF     = new Set(Array.isArray(d.datos_calificar) ? d.datos_calificar : []);
+    PREGUNTAS = Array.isArray(d.preguntas_extra) ? d.preguntas_extra.slice() : [];
+    FAQ       = Array.isArray(d.faq)
+                ? d.faq.filter(x => x && x.q && x.a).map(x => ({ q: x.q, a: x.a }))
+                : [];
     pintarHorario();
     pintarChips();
+    pintarCalif();
+    pintarPreguntas();
+    pintarFaq();
     _trCargado = true;   // hasta aquí: pintar no ensucia
     marcarLimpio();
   }catch(e){ toast('No se pudieron cargar las instrucciones.'); }
@@ -1474,6 +1653,9 @@ async function guardarEntrenamiento(){
   // Una palabra escrita y sin dar Enter se guarda igual: perderla en
   // silencio sería peor que asumir la intención obvia.
   agregarPalabra();
+  // Misma cortesía para la pregunta propia y la respuesta a medio escribir.
+  if(document.getElementById('tr-pregunta').value.trim()) agregarPregunta();
+  if(document.getElementById('tr-faq-q').value.trim() && document.getElementById('tr-faq-a').value.trim()) agregarFaq();
 
   btn.disabled = true; spinner.classList.add('active'); text.textContent = 'Guardando…';
 
@@ -1490,6 +1672,11 @@ async function guardarEntrenamiento(){
     max_mensajes_ia:   Math.max(0, Math.min(50, Number(document.getElementById('tr-tope').value) || 0)),
     escalar_palabras:  PALABRAS,
     activo:            true,
+    especialidad:      document.getElementById('tr-especialidad').value.trim(),
+    objetivo:          document.getElementById('tr-objetivo').value.trim(),
+    datos_calificar:   Array.from(CALIF),
+    preguntas_extra:   PREGUNTAS,
+    faq:               FAQ,
   };
 
   const tok = getToken();
@@ -1622,6 +1809,9 @@ TR_CAMPOS.forEach(id => {
 });
 document.getElementById('tr-palabra').addEventListener('keydown', e => {
   if(e.key === 'Enter' || e.key === ','){ e.preventDefault(); agregarPalabra(); }
+});
+document.getElementById('tr-pregunta')?.addEventListener('keydown', e => {
+  if(e.key === 'Enter'){ e.preventDefault(); agregarPregunta(); }
 });
 // Salir con cambios sin guardar sería perderlos en silencio.
 window.addEventListener('beforeunload', e => {

@@ -418,6 +418,10 @@ TRAINING_DEFAULTS = {
     "horario_activo": False, "hora_inicio": "08:00", "hora_fin": "21:00",
     "fuera_horario_msg": "", "max_mensajes_ia": 0, "escalar_palabras": [],
     "activo": True,
+    # Capa nueva: lo que hace a Recepción sonar como quien conoce el negocio y
+    # calificar con criterio del asesor, no genérico. Todo opcional.
+    "especialidad": "", "objetivo": "",
+    "datos_calificar": [], "preguntas_extra": [], "faq": [],
 }
 
 
@@ -497,6 +501,64 @@ def _reglas_para_prompt(entren: dict) -> str:
             "dile con calidez que el asesor lo ve directamente y sigue adelante.\n")
 
 
+# Catálogo de datos a calificar. La clave la manda la pantalla (checkbox); aquí
+# se traduce a la frase que entiende el modelo. El backend solo acepta claves de
+# este diccionario, así nadie inyecta texto raro por esta vía.
+CALIF_OPCIONES = {
+    "forma_pago":  "si va a pagar con crédito o de contado",
+    "presupuesto": "el presupuesto real que maneja",
+    "enganche":    "cuánto trae de enganche",
+    "zona":        "en qué zona o colonia busca",
+    "tipo":        "qué tipo de inmueble quiere (casa, departamento, terreno…)",
+    "recamaras":   "cuántas recámaras necesita",
+    "urgencia":    "para cuándo lo necesita",
+    "motivo":      "si es para vivir o para invertir",
+    "credito_pre": "si ya está precalificado con algún banco",
+    "da_a_cuenta": "si tiene una propiedad o algo que dar a cuenta",
+}
+
+
+def _calificacion_para_prompt(entren: dict) -> str:
+    """Qué debe averiguar Recepción, armado con lo que el asesor palomeó. Si no
+    palomeó nada, cae al set clásico para no bajar la calidad de siempre."""
+    claves = entren.get("datos_calificar") or []
+    frases = [CALIF_OPCIONES[k] for k in claves if k in CALIF_OPCIONES]
+    if not frases:
+        frases = [CALIF_OPCIONES["forma_pago"], CALIF_OPCIONES["presupuesto"],
+                  CALIF_OPCIONES["urgencia"], "qué está buscando"]
+    return "; ".join(frases)
+
+
+def _saber_del_negocio(entren: dict) -> str:
+    """Lo que hace a Recepción sonar como alguien que conoce el negocio:
+    especialidad, meta de la plática, preguntas propias del asesor y su base de
+    respuestas frecuentes. Todo opcional; lo vacío no aparece en el prompt."""
+    bloques = []
+    if (entren.get("especialidad") or "").strip():
+        bloques.append(f"A qué se dedica el asesor: {entren['especialidad'].strip()}")
+    if (entren.get("objetivo") or "").strip():
+        bloques.append(f"Tu meta en cada plática: {entren['objetivo'].strip()}. "
+                       "Llévala hacia ahí de forma natural, sin presionar.")
+    extra = [(p or "").strip() for p in (entren.get("preguntas_extra") or []) if (p or "").strip()]
+    if extra:
+        lista = " ".join(f"«{p}»" for p in extra)
+        bloques.append("Además de lo estándar, en algún momento natural pregunta: " + lista)
+    pares = []
+    for item in (entren.get("faq") or []):
+        if isinstance(item, dict):
+            q = (item.get("q") or "").strip()
+            a = (item.get("a") or "").strip()
+            if q and a:
+                pares.append(f"  · Si preguntan algo como «{q}», contesta: {a}")
+    if pares:
+        bloques.append("Respuestas que el asesor ya te dio y debes usar tal cual "
+                       "(no las inventes ni las cambies):\n" + "\n".join(pares))
+    if not bloques:
+        return ""
+    reglas = "\n".join(f"- {b}" for b in bloques)
+    return "\n\nLO QUE SABES DEL NEGOCIO:\n" + reglas + "\n"
+
+
 # =============================================================================
 # 4) RECEPCIÓN (la IA)  ->  Anthropic, responde y califica de una
 # =============================================================================
@@ -549,10 +611,11 @@ async def recepcion_responde(history: list, property_ctx: str | None,
     system = (
         f"Eres 'Recepción', el asistente de WhatsApp de {quien}, asesor inmobiliario{ubica}. "
         "Atiendes a un prospecto que escribió por un anuncio. Califícalo con calidez y rapidez, sin sonar "
-        "a robot ni a interrogatorio: averigua forma de pago o crédito, presupuesto real, para cuándo lo "
-        "necesita y qué busca; cuando haga sentido, ofrece agendar una visita con día y hora. Español "
+        f"a robot ni a interrogatorio: averigua {_calificacion_para_prompt(entren)}; cuando haga sentido, "
+        "ofrece agendar una visita con día y hora. Español "
         "mexicano, cálido y profesional, mensajes cortos de WhatsApp, sin emojis.\n\n"
         f"Contexto: {contexto}\n"
+        f"{_saber_del_negocio(entren)}"
         f"{_reglas_para_prompt(entren)}\n"
         "Responde ÚNICAMENTE con un JSON válido, sin texto antes ni después, así:\n"
         '{"reply":"el mensaje para el prospecto","temperatura":"Caliente|Tibio|Frío",'
@@ -1204,6 +1267,11 @@ class TrainingReq(BaseModel):
     max_mensajes_ia: int = 0
     escalar_palabras: list[str] = []
     activo: bool = True
+    especialidad: str | None = None
+    objetivo: str | None = None
+    datos_calificar: list[str] = []
+    preguntas_extra: list[str] = []
+    faq: list[dict] = []
 
 
 @router.get("/training")
@@ -1226,6 +1294,17 @@ async def wa_training_put(req: TrainingReq, request: Request):
     hf, mf = _hhmm(req.hora_fin, "21:00")
     palabras = [p.strip() for p in (req.escalar_palabras or []) if (p or "").strip()][:20]
 
+    # Solo claves válidas del catálogo; nada de texto libre entra por aquí.
+    calif = [k for k in (req.datos_calificar or []) if k in CALIF_OPCIONES][:12]
+    extra = [(p or "").strip()[:160] for p in (req.preguntas_extra or []) if (p or "").strip()][:5]
+    faq = []
+    for item in (req.faq or [])[:20]:
+        if isinstance(item, dict):
+            q = (item.get("q") or "").strip()[:160]
+            a = (item.get("a") or "").strip()[:600]
+            if q and a:
+                faq.append({"q": q, "a": a})
+
     fila = {
         "user_id":           user_id,
         "tono":              (req.tono or "").strip()[:400] or None,
@@ -1240,6 +1319,11 @@ async def wa_training_put(req: TrainingReq, request: Request):
         "max_mensajes_ia":   max(0, min(int(req.max_mensajes_ia or 0), 50)),
         "escalar_palabras":  palabras,
         "activo":            bool(req.activo),
+        "especialidad":      (req.especialidad or "").strip()[:400] or None,
+        "objetivo":          (req.objetivo or "").strip()[:300] or None,
+        "datos_calificar":   calif,
+        "preguntas_extra":   extra,
+        "faq":               faq,
         "updated_at":        _now(),
     }
     await sb_post("wa_training", fila,
