@@ -93,30 +93,85 @@ def _sb_headers() -> dict:
             "Content-Type": "application/json"}
 
 
+# Estos tres helpers son la única puerta a Supabase desde el webhook. Antes se
+# tragaban cualquier error (timeout, 5xx, saturación de IOPS del Micro) y
+# regresaban [] sin avisar: un mensaje que no se guardaba se volvía invisible en
+# la bandeja aunque el lead sí lo hubiera mandado. Ahora:
+#   - Reintentan UNA vez ante timeout/red/5xx. Es seguro: cada tabla de WhatsApp
+#     tiene llave única (wa_message_id, unique(user_id,wa_id), unique(contact_id)),
+#     así que un reintento tras un timeout que sí escribió choca en 409 y no
+#     duplica; quien llama relee la fila ya creada.
+#   - Loguean el motivo real cuando algo se pierde, para poder verlo en Railway.
+#   - Siempre devuelven LISTA (nunca el dict de error de PostgREST), para que los
+#     `x[0] if x else ...` de arriba no truenen con un KeyError.
 async def sb_get(table: str, params: dict) -> list:
-    async with httpx.AsyncClient(timeout=15) as c:
-        r = await c.get(f"{SUPABASE_URL}/rest/v1/{table}", headers=_sb_headers(), params=params)
-        return r.json() if r.status_code < 300 else []
+    ultimo = ""
+    for intento in (1, 2):
+        try:
+            async with httpx.AsyncClient(timeout=15) as c:
+                r = await c.get(f"{SUPABASE_URL}/rest/v1/{table}",
+                                headers=_sb_headers(), params=params)
+            if r.status_code < 300:
+                data = r.json()
+                return data if isinstance(data, list) else ([data] if data else [])
+            ultimo = f"{r.status_code}: {r.text[:300]}"
+            if r.status_code < 500:
+                break  # un 4xx no se arregla reintentando
+        except Exception as e:
+            ultimo = str(e)
+    log.error("sb_get %s falló -> %s", table, ultimo)
+    return []
 
 
 async def sb_post(table: str, body: dict, prefer: str = "return=representation") -> list:
-    async with httpx.AsyncClient(timeout=15) as c:
-        h = _sb_headers(); h["Prefer"] = prefer
-        r = await c.post(f"{SUPABASE_URL}/rest/v1/{table}", headers=h, json=body)
+    ultimo = ""
+    for intento in (1, 2):
         try:
-            return r.json()
-        except Exception:
-            return []
+            async with httpx.AsyncClient(timeout=15) as c:
+                h = _sb_headers(); h["Prefer"] = prefer
+                r = await c.post(f"{SUPABASE_URL}/rest/v1/{table}", headers=h, json=body)
+            if r.status_code < 300:
+                try:
+                    data = r.json()
+                except Exception:
+                    data = []
+                return data if isinstance(data, list) else ([data] if data else [])
+            # 409 = ya existe una fila con esa llave única. Es una carrera de dos
+            # webhooks del mismo lead nuevo, o un reintento tras un timeout que sí
+            # guardó. No es error que reintentar: quien llama va a releer.
+            if r.status_code == 409:
+                log.info("sb_post %s: la fila ya existe (409); quien llama la releerá.", table)
+                return []
+            ultimo = f"{r.status_code}: {r.text[:300]}"
+            if r.status_code < 500:
+                break
+        except Exception as e:
+            ultimo = str(e)
+    log.error("sb_post %s falló -> %s", table, ultimo)
+    return []
 
 
 async def sb_patch(table: str, params: dict, body: dict) -> list:
-    async with httpx.AsyncClient(timeout=15) as c:
-        h = _sb_headers(); h["Prefer"] = "return=representation"
-        r = await c.patch(f"{SUPABASE_URL}/rest/v1/{table}", headers=h, params=params, json=body)
+    ultimo = ""
+    for intento in (1, 2):
         try:
-            return r.json()
-        except Exception:
-            return []
+            async with httpx.AsyncClient(timeout=15) as c:
+                h = _sb_headers(); h["Prefer"] = "return=representation"
+                r = await c.patch(f"{SUPABASE_URL}/rest/v1/{table}",
+                                  headers=h, params=params, json=body)
+            if r.status_code < 300:
+                try:
+                    data = r.json()
+                except Exception:
+                    data = []
+                return data if isinstance(data, list) else ([data] if data else [])
+            ultimo = f"{r.status_code}: {r.text[:300]}"
+            if r.status_code < 500:
+                break
+        except Exception as e:
+            ultimo = str(e)
+    log.error("sb_patch %s falló -> %s", table, ultimo)
+    return []
 
 
 # Igual que tu helper en main.py: saca el user_id del token de Supabase
@@ -775,7 +830,20 @@ async def upsert_contact(user_id, wa_id, nombre):
                             {"user_id": user_id, "wa_id": wa_id, "nombre": nombre,
                              "contacto_id": contacto_id,
                              "temperatura": "Nuevo", "score": 0, "etapa": "Nuevo"})
-    return created[0] if created else {"id": None}
+    if created:
+        return created[0]
+
+    # El INSERT no devolvió fila. Casi siempre es una carrera: el mismo lead nuevo
+    # mandó varios mensajes de golpe y otro webhook ya creó el contacto (chocamos
+    # en unique(user_id, wa_id)). Releemos por esa llave: si ya existe, lo usamos.
+    # Así el chat NUNCA se queda sin contacto y sus mensajes no se pierden.
+    rows = await sb_get("wa_contacts",
+                        {"user_id": f"eq.{user_id}", "wa_id": f"eq.{wa_id}", "limit": "1"})
+    if rows:
+        return rows[0]
+    log.error("wa_contacts: no se pudo crear ni releer el contacto de %s (user %s)",
+              wa_id, user_id)
+    return {"id": None}
 
 
 async def get_or_create_conversation(user_id, contact, referral, phone_number_id,
@@ -797,8 +865,18 @@ async def get_or_create_conversation(user_id, contact, referral, phone_number_id
                              "ai_enabled": bool(ia_global),
                              "ai_msg_count": 0,
                              "property_ctx": property_ctx})
-    return created[0] if created else {"id": None, "ai_enabled": bool(ia_global),
-                                       "ai_msg_count": 0}
+    if created:
+        return created[0]
+
+    # Misma carrera que en contactos: unique(contact_id). Si otro webhook ya creó
+    # la conversación, la releemos y seguimos con ella en vez de devolver id nulo
+    # (que dejaría todos los mensajes de este chat huérfanos y sin guardar).
+    rows = await sb_get("wa_conversations", {"contact_id": f"eq.{contact['id']}", "limit": "1"})
+    if rows:
+        return rows[0]
+    log.error("wa_conversations: no se pudo crear ni releer la conversación de contacto %s",
+              contact["id"])
+    return {"id": None, "ai_enabled": bool(ia_global), "ai_msg_count": 0}
 
 
 async def sumar_msg_ia(conversation_id, actual):
@@ -816,11 +894,30 @@ async def store_message(user_id, contact_id, conversation_id, wa_message_id, dir
     """status: 'sent' | 'failed' | None (entrantes). La columna ya existía en el
     esquema pero nadie la escribía, así que un mensaje rechazado por Meta se veía
     idéntico a uno entregado."""
+    # Si el contacto o la conversación no se pudieron crear/releer arriba, sus ids
+    # llegan en None. Insertar así truena por NOT NULL y, peor, deja el mensaje
+    # perdido en silencio. Mejor abortar claro y dejarlo en el log.
+    if not conversation_id or not contact_id:
+        log.error("store_message abortado por ids nulos (conv=%s contact=%s sender=%s)",
+                  conversation_id, contact_id, sender)
+        return
+
     fila = {"user_id": user_id, "contact_id": contact_id, "conversation_id": conversation_id,
             "wa_message_id": wa_message_id, "direction": direction, "sender": sender, "body": body}
     if status:
         fila["status"] = status
-    await sb_post("wa_messages", fila, prefer="return=minimal")
+    # return=representation (no minimal) para poder VERIFICAR que la fila aterrizó.
+    guardado = await sb_post("wa_messages", fila)
+    if not guardado and wa_message_id and not str(wa_message_id).startswith("local-"):
+        # sb_post ya reintentó ante timeouts. Si aun así no hubo fila, puede ser
+        # un duplicado legítimo (Meta reentregó y ya estaba) o una pérdida real.
+        # Releemos por wa_message_id: si NO está, es que se perdió de verdad y hay
+        # que verlo en el log — es justo el "no se actualiza la conversación".
+        ya = await sb_get("wa_messages",
+                          {"wa_message_id": f"eq.{wa_message_id}", "select": "id", "limit": "1"})
+        if not ya:
+            log.error("wa_messages NO guardado (mensaje perdido): conv=%s sender=%s wamid=%s",
+                      conversation_id, sender, wa_message_id)
     await sb_patch("wa_conversations", {"id": f"eq.{conversation_id}"}, {"last_message_at": _now()})
 
 
