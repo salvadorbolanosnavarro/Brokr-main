@@ -134,14 +134,8 @@
           <input class="bk-input" id="eq-email" type="email" placeholder="agente@inmobiliaria.mx" autocomplete="off"/>
         </div>
         <div class="bk-field">
-          <label class="bk-label" for="eq-rol">Rol</label>
-          <select class="bk-select" id="eq-rol">
-            <option value="agente">Agente</option>
-            <option value="admin">Administrador</option>
-          </select>
           <div class="bk-hint" id="eq-rol-hint">
-            Un agente ve el inventario, pero no los teléfonos de los propietarios ni las comisiones.
-            Tú decides después qué le abres.
+            Entra como parte de tu equipo. Por defecto ve el inventario, pero no los teléfonos de los propietarios ni las comisiones. Tú decides qué información sensible le abres con los interruptores de su tarjeta.
           </div>
         </div>
         <div class="bk-alert bk-alert--danger" id="eq-modal-err" hidden style="margin-bottom:var(--sp-4);"></div>
@@ -281,10 +275,6 @@
     if (conPermisos && !esOwner && !m.soy_yo) {
       acciones = `
         <div class="bk-cluster" style="gap:var(--sp-2);">
-          <select class="bk-select bk-select--sm" data-rol="${esc(m.user_id)}" style="width:auto;">
-            <option value="agente" ${m.rol_org === 'agente' ? 'selected' : ''}>Agente</option>
-            <option value="admin"  ${m.rol_org === 'admin'  ? 'selected' : ''}>Administrador</option>
-          </select>
           <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm"
                   data-baja="${esc(m.user_id)}" data-activo="${inactivo ? '0' : '1'}">
             ${inactivo ? 'Reactivar' : 'Dar de baja'}
@@ -307,8 +297,8 @@
       ${acciones ? '<div style="margin-top:var(--sp-3);">' + acciones + '</div>' : ''}
     `;
 
-    // Los admins ven todo por definición: no tiene caso enseñar switches.
-    if (conPermisos && !esAdmin && !inactivo) {
+    // Interruptores de permiso: uno por cada miembro del equipo (no el dueño).
+    if (conPermisos && !esOwner && !inactivo) {
       const cont = document.createElement('div');
       cont.className = 'eq-perms';
       cont.innerHTML = PERMISOS.map((p) => `
@@ -325,11 +315,11 @@
         </div>
       `).join('');
       card.appendChild(cont);
-    } else if (conPermisos && esAdmin) {
+    } else if (esOwner) {
       const nota = document.createElement('div');
       nota.className = 'eq-perms';
       nota.innerHTML = `<div class="bk-hint" style="margin:0;">
-        Los administradores ven todo. Cámbialo a agente si quieres limitar lo que ve.
+        Como dueño de la cuenta, ves toda la información. Los permisos se controlan por cada miembro de tu equipo.
       </div>`;
       card.appendChild(nota);
     }
@@ -491,7 +481,6 @@
     $('#eq-modal-ok').hidden = true;
     $('#eq-modal-err').hidden = true;
     $('#eq-email').value = '';
-    $('#eq-rol').value = 'agente';
     $('#eq-email').focus();
   }
   function cerrarModal() { $('#eq-modal').classList.remove('is-open'); }
@@ -500,12 +489,6 @@
     $('#eq-btn-invitar').addEventListener('click', abrirModal);
     $('#eq-cancelar').addEventListener('click', cerrarModal);
     $('#eq-cerrar-ok').addEventListener('click', () => { cerrarModal(); cargarInvitaciones(); });
-
-    $('#eq-rol').addEventListener('change', (e) => {
-      $('#eq-rol-hint').textContent = e.target.value === 'admin'
-        ? 'Un administrador ve todo y puede invitar y quitar gente. Dáselo a quien de verdad dirija la operación.'
-        : 'Un agente ve el inventario, pero no los teléfonos de los propietarios ni las comisiones. Tú decides después qué le abres.';
-    });
 
     $('#eq-crear').addEventListener('click', async () => {
       const email = $('#eq-email').value.trim();
@@ -521,7 +504,7 @@
       btn.textContent = 'Creando…';
       try {
         const r = await api('/org/invitar', {
-          method: 'POST', body: { email, rol_org: $('#eq-rol').value },
+          method: 'POST', body: { email, rol_org: 'agente' },
         });
         $('#eq-ok-mail').textContent = r.email;
         $('#eq-ok-link').textContent = r.link;
