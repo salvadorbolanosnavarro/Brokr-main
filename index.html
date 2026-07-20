@@ -65,6 +65,17 @@
 }
 .ai-card__btn:hover { transform: translateX(2px); }
 
+/* ── Tarjeta de próximos pendientes/citas (misma tarjeta que Broq, reutiliza tokens) ── */
+#notif-lista { display: flex; flex-direction: column; gap: var(--sp-3); margin-bottom: var(--sp-4); }
+.notif-item {
+  display: flex; align-items: center; gap: var(--sp-3);
+  background: rgba(255,255,255,0.12); border-radius: var(--r); padding: var(--sp-3) var(--sp-4);
+}
+.notif-item__txt { flex: 1; min-width: 0; font-size: var(--fs-sm); font-weight: 600; color: var(--bone); }
+.notif-item__due { font-size: var(--fs-xs); color: rgba(255,255,255,0.85); white-space: nowrap; }
+.notif-item__due.is-overdue { color: #fff; font-weight: 700; }
+.notif-link { font-size: var(--fs-sm); font-weight: 700; color: var(--bone); text-decoration: underline; }
+
 /* ── App Store (navy, footer del dashboard) ── */
 .appstore-card {
   background: var(--sky-navy); color: var(--bone) !important; border-radius: var(--r-lg);
@@ -109,6 +120,12 @@
       <div class="sky-kpi"><div class="sky-kpi__value" id="kpi-horas">—</div><div class="sky-kpi__label">Horas ahorradas</div></div>
     </div>
   </section>
+
+  <!-- Próximas tareas y citas -->
+  <div class="ai-card" id="notif-card" hidden>
+    <h3>Tus próximos pendientes</h3>
+    <div id="notif-lista"></div>
+  </div>
 
   <!-- Espacio de video (se actualiza periódicamente: reemplaza videos/inicio.mp4) -->
   <section class="home-video">
@@ -227,7 +244,55 @@ window.addEventListener('brokr-shell-ready', async (e) => {
   const horas = Math.max(0, Math.round(Math.min(brutoHoras, topeHoras)));
   const horasEl = document.getElementById('kpi-horas');
   if (horasEl) horasEl.textContent = horas;
+
+  cargarNotificaciones();
 });
+
+/* ── Tus próximos pendientes/citas (tareas con fecha, sin completar) ── */
+async function cargarNotificaciones() {
+  const card = document.getElementById('notif-card');
+  const lista = document.getElementById('notif-lista');
+  try {
+    const path = 'tareas?select=id,titulo,fecha_entrega&completada=eq.false&fecha_entrega=not.is.null'
+      + '&order=fecha_entrega.asc&limit=6';
+    let filas;
+    if (window.brokrSb && window.brokrSb.rest) {
+      filas = await window.brokrSb.rest(path, { method: 'GET' });
+    } else {
+      const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
+      const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
+      const tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+      if (!tok) return;
+      const r = await fetch(SB_URL + '/rest/v1/' + path, {
+        headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok },
+      });
+      filas = r.ok ? await r.json() : [];
+    }
+    if (!Array.isArray(filas) || !filas.length) return; // sin pendientes con fecha: la tarjeta se queda oculta
+
+    const ahora = new Date();
+    const enUnaSemana = new Date(ahora.getTime() + 7 * 86400000);
+    const relevantes = filas.filter(t => {
+      const d = new Date(t.fecha_entrega);
+      return d < enUnaSemana; // vencidas + próximos 7 días
+    });
+    if (!relevantes.length) return;
+
+    lista.innerHTML = relevantes.map(t => {
+      const d = new Date(t.fecha_entrega);
+      const vencida = d < ahora;
+      const fmt = d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' }) + ' · ' +
+        d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+      return `<div class="notif-item">
+        <span class="notif-item__txt">${(t.titulo || '').replace(/</g, '&lt;')}</span>
+        <span class="notif-item__due${vencida ? ' is-overdue' : ''}">${vencida ? 'Vencida · ' : ''}${fmt}</span>
+      </div>`;
+    }).join('') + '<a class="notif-link" href="tareas.html">Ver todas en Tareas</a>';
+    card.hidden = false;
+  } catch (e) {
+    // Sin conexión o sesión: la tarjeta simplemente no aparece, no rompe el dashboard.
+  }
+}
 </script>
 </body>
 </html>

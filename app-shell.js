@@ -1589,6 +1589,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
       // ── ACCIONES DIRECTAS — ejecutan en la ventana del asistente ──
       case 'agregar_contacto':         agregarContactoDirecto(ac); break;
       case 'crear_inmueble_directo':    crearInmuebleDirecto(ac); break;
+      case 'crear_tarea_directo':      crearTareaDirecto(ac); break;
       case 'generar_contrato_directo': generarContratoDirecto(ac); break;
       case 'calcular_isr_directo':     calcularISRDirecto(ac); break;
       case 'estimar_valor_directo':    estimarValorDirecto(ac); break;
@@ -1739,6 +1740,59 @@ body[data-app="facebook-ads"]{--page-max:980px}
       }
     } catch (e) {
       _addAssistantBubble('No pude agregar el contacto: ' + (e.message || e));
+    }
+  }
+
+  async function crearTareaDirecto(ac) {
+    try {
+      const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
+      const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
+      const tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+      const userRaw = localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}';
+      const user = JSON.parse(userRaw);
+      if (!tok || !user.id) { _addAssistantBubble('No pude crear la tarea: tu sesión expiró.'); return; }
+      const titulo = (ac.titulo || '').trim();
+      if (!titulo) { _addAssistantBubble('Necesito un título para crear la tarea.'); return; }
+      const fecha = (ac.fecha || '').trim();
+      const hora = (ac.hora || '').trim() || '12:00';
+      const payload = {
+        user_id: user.id,
+        titulo,
+        fecha_entrega: fecha ? (fecha + 'T' + hora + ':00') : null,
+        notas: ac.notas || null,
+        contacto_id: ac.contacto_id || null,
+        propiedad_id: ac.propiedad_id || null,
+      };
+      const headersBase = {
+        'apikey': SB_KEY, 'Authorization': 'Bearer ' + tok, 'Content-Type': 'application/json',
+      };
+      const r = await fetch(`${SB_URL}/rest/v1/tareas`, {
+        method: 'POST',
+        headers: Object.assign({}, headersBase, { 'Prefer': 'return=representation' }),
+        body: JSON.stringify(payload)
+      });
+      if (!r.ok) { _addAssistantBubble('No pude crear la tarea. Revisa los datos e inténtalo otra vez.'); return; }
+      const filas = await r.json();
+      const nueva = Array.isArray(filas) ? filas[0] : filas;
+      // Además de la columna suelta, se deja el vínculo en las tablas de
+      // varios-a-varios (tareas_contactos / tareas_propiedades), así la tarea
+      // aparece también si más adelante se le agregan más vínculos desde ahí.
+      if (nueva && nueva.id) {
+        const vinculos = [];
+        if (ac.contacto_id) vinculos.push(fetch(`${SB_URL}/rest/v1/tareas_contactos`, {
+          method: 'POST', headers: Object.assign({}, headersBase, { 'Prefer': 'return=minimal' }),
+          body: JSON.stringify({ user_id: user.id, tarea_id: nueva.id, contacto_id: ac.contacto_id })
+        }).catch(() => {}));
+        if (ac.propiedad_id) vinculos.push(fetch(`${SB_URL}/rest/v1/tareas_propiedades`, {
+          method: 'POST', headers: Object.assign({}, headersBase, { 'Prefer': 'return=minimal' }),
+          body: JSON.stringify({ user_id: user.id, tarea_id: nueva.id, propiedad_id: ac.propiedad_id })
+        }).catch(() => {}));
+        if (vinculos.length) await Promise.all(vinculos);
+      }
+      const cuando = fecha ? (' para el ' + fecha + (ac.hora ? ' a las ' + hora : '')) : '';
+      _addAssistantBubble(`✓ Tarea creada: <strong>${titulo}</strong>${cuando}. Ya está en tu módulo de Tareas.`);
+    } catch (e) {
+      _addAssistantBubble('No pude crear la tarea: ' + (e.message || e));
     }
   }
 

@@ -412,19 +412,6 @@
 @media (min-width: 760px) {
   .prop-modal-box { border-radius: var(--r-xl); max-height: 88vh; }
 }
-
-/* ── Detalle de inmueble a pantalla completa (solo el detalle, no el editor) ── */
-#prop-detail-modal { align-items: stretch; padding: 0; }
-@media (min-width: 760px) { #prop-detail-modal { align-items: stretch; padding: 0; } }
-#prop-detail-modal .prop-detail-box {
-  max-width: 980px; width: 100%; height: 100dvh; max-height: 100dvh;
-  margin: 0 auto; border-radius: 0; animation: none;
-  display: flex; flex-direction: column; overflow: hidden;
-}
-#prop-detail-modal .prop-modal-hdr,
-#prop-detail-modal .pd-actions,
-#prop-detail-modal .pd-tabs { flex-shrink: 0; }
-#prop-detail-modal .prop-modal-body { flex: 1; overflow-y: auto; min-height: 0; }
 @keyframes slideUp {
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
@@ -1285,6 +1272,10 @@
           <input type="text" id="pd-tarea-input" placeholder="Nueva tarea… (ej. Subir fotos nuevas)" onkeydown="if(event.key==='Enter')pdAgregarTarea()"/>
           <input type="date" id="pd-tarea-fecha"/>
           <button class="go" id="pd-tarea-btn" onclick="pdAgregarTarea()">Agregar</button>
+        </div>
+        <div class="pd-composer">
+          <select id="pd-vinculo-tarea"></select>
+          <button class="go" onclick="pdVincularTareaExistente()">Vincular existente</button>
         </div>
         <div id="pd-tareas-feed"></div>
       </div>
@@ -2619,11 +2610,53 @@ async function pdCargarTareas() {
   const pid = currentDetailId; if (!pid) return;
   const feed = g('pd-tareas-feed');
   feed.innerHTML = '<div class="pd-empty">Cargando…</div>';
+  let legacy = [], vinculos = [];
   try {
-    _pdTareas = await sbFetch('tareas?select=*&propiedad_id=eq.' + encodeURIComponent(pid) + '&order=completada.asc,fecha_entrega.asc.nullslast,created_at.desc&limit=100');
-  } catch { _pdTareas = []; }
+    [legacy, vinculos] = await Promise.all([
+      sbFetch('tareas?select=*&propiedad_id=eq.' + encodeURIComponent(pid) + '&order=created_at.desc&limit=100'),
+      sbFetch('tareas_propiedades?select=*&propiedad_id=eq.' + encodeURIComponent(pid) + '&order=created_at.desc').catch(() => []),
+    ]);
+  } catch { legacy = []; vinculos = []; }
   if (currentDetailId !== pid) return;
+
+  _pdTareasVinculos = vinculos; // para poder quitar el vínculo correcto después
+  const idsYaVistos = new Set(legacy.map(t => String(t.id)));
+  const idsPorVinculo = vinculos.map(v => String(v.tarea_id)).filter(id => !idsYaVistos.has(id));
+  let extra = [];
+  if (idsPorVinculo.length) {
+    try { extra = await sbFetch('tareas?select=*&id=in.(' + idsPorVinculo.join(',') + ')'); } catch { extra = []; }
+  }
+  _pdTareas = [...legacy, ...extra].sort((a, b) => {
+    if (!!a.completada !== !!b.completada) return a.completada ? 1 : -1;
+    return new Date(a.fecha_entrega || '9999-12-31') - new Date(b.fecha_entrega || '9999-12-31');
+  });
+
+  // Selector de "vincular tarea existente": todas las que no estén ya ligadas de ninguna forma
+  const yaLigadas = new Set(_pdTareas.map(t => String(t.id)));
+  let todas = [];
+  try { todas = await sbFetch('tareas?select=id,titulo,completada&order=created_at.desc&limit=500'); } catch { todas = []; }
+  const disponibles = todas.filter(t => !yaLigadas.has(String(t.id)) && !t.completada);
+  const sel = g('pd-vinculo-tarea');
+  sel.innerHTML = disponibles.length
+    ? '<option value="">Elige una tarea…</option>' + disponibles.map(t => `<option value="${esc(String(t.id))}">${esc(t.titulo)}</option>`).join('')
+    : '<option value="">' + (todas.length ? 'Todas ya vinculadas' : 'No tienes tareas') + '</option>';
+
   pdRenderTareas();
+}
+
+let _pdTareasVinculos = [];
+
+async function pdVincularTareaExistente() {
+  const pid = currentDetailId; if (!pid) return;
+  const tareaId = g('pd-vinculo-tarea').value;
+  if (!tareaId) return;
+  const uid = getCurrentUserId();
+  if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
+  try {
+    await sbFetch('tareas_propiedades', 'POST', { user_id: uid, tarea_id: tareaId, propiedad_id: pid });
+    await pdCargarTareas();
+    mostrarToast('Tarea vinculada');
+  } catch (e) { alert('No se pudo vincular.\n\n' + e.message); }
 }
 
 function pdRenderTareas() {
@@ -2641,7 +2674,7 @@ function pdRenderTareas() {
             <div class="pd-item__txt">${esc(t.titulo)}</div>
             ${due ? `<div class="pd-item__due${vencida ? ' is-overdue' : ''}">${vencida ? 'Vencida · ' : ''}${pdFechaCorta(t.fecha_entrega)}</div>` : ''}
           </div>
-          <button class="pd-x" title="Eliminar tarea" onclick="pdEliminarTarea('${esc(String(t.id))}')">×</button>
+          <button class="pd-x" title="Quitar vínculo con este inmueble" onclick="pdQuitarVinculoTarea('${esc(String(t.id))}')">×</button>
         </div>`;
       }).join('')
     : '<div class="pd-empty">Sin tareas. Agrega la primera arriba.</div>';
@@ -2658,10 +2691,14 @@ async function pdAgregarTarea() {
   const fecha = g('pd-tarea-fecha').value || null;
   btn.disabled = true;
   try {
-    await sbFetch('tareas', 'POST', {
+    const creada = await sbFetch('tareas', 'POST', {
       user_id: uid, titulo: titulo, propiedad_id: pid,
       fecha_entrega: fecha ? fecha + 'T12:00:00' : null,
     });
+    const nueva = Array.isArray(creada) ? creada[0] : creada;
+    if (nueva && nueva.id) {
+      await sbFetch('tareas_propiedades', 'POST', { user_id: uid, tarea_id: nueva.id, propiedad_id: pid }).catch(() => {});
+    }
     inp.value = '';
     g('pd-tarea-fecha').value = '';
     await pdCargarTareas();
@@ -2694,13 +2731,19 @@ async function pdToggleTarea(tid) {
   }
 }
 
-async function pdEliminarTarea(tid) {
-  if (!confirm('¿Eliminar esta tarea?')) return;
+async function pdQuitarVinculoTarea(tid) {
+  const pid = currentDetailId; if (!pid) return;
   try {
-    await sbFetch('tareas?id=eq.' + encodeURIComponent(tid), 'DELETE');
-    _pdTareas = _pdTareas.filter(t => String(t.id) !== tid);
-    pdRenderTareas();
-  } catch (e) { alert('No se pudo eliminar la tarea.\n\n' + e.message); }
+    const vinculo = _pdTareasVinculos.find(v => String(v.tarea_id) === tid);
+    if (vinculo) {
+      await sbFetch('tareas_propiedades?id=eq.' + encodeURIComponent(vinculo.id), 'DELETE');
+    }
+    const t = _pdTareas.find(x => String(x.id) === tid);
+    if (t && String(t.propiedad_id) === String(pid)) {
+      await sbFetch('tareas?id=eq.' + encodeURIComponent(tid), 'PATCH', { propiedad_id: null });
+    }
+    await pdCargarTareas();
+  } catch (e) { alert('No se pudo quitar el vínculo.\n\n' + e.message); }
 }
 
 /* ════════════════════════════════════════════════════════════════

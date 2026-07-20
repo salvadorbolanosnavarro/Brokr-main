@@ -917,12 +917,23 @@ async def wa2_agendar(req: AgendarReq, request: Request):
         "user_id": dueño_id,
         "titulo": titulo,
         "fecha_entrega": f"{req.fecha}T{req.hora}:00",
+        "notas": req.notas or None,
         "propiedad_id": req.inmueble_id or None,
         "contacto_id": (contacto or {}).get("contacto_crm_id"),
     }
     creada = await sb_post("tareas", tarea)
     if not creada:
         raise HTTPException(status_code=500, detail="No se pudo crear la tarea. Intenta de nuevo.")
+    tarea_id = creada[0]["id"]
+
+    # Además de la columna suelta, se deja el vínculo en las tablas de
+    # varios-a-varios: así la tarea aparece también desde la pestaña de
+    # Tareas del Contacto/Inmueble aunque después se le agreguen más vínculos.
+    crm_id = (contacto or {}).get("contacto_crm_id")
+    if crm_id:
+        await sb_post("tareas_contactos", {"user_id": dueño_id, "tarea_id": tarea_id, "contacto_id": crm_id})
+    if req.inmueble_id:
+        await sb_post("tareas_propiedades", {"user_id": dueño_id, "tarea_id": tarea_id, "propiedad_id": req.inmueble_id})
 
     if contacto and numero:
         ics = _construir_ics(req.fecha, req.hora, titulo, req.notas or "")
@@ -1321,10 +1332,15 @@ async def _procesar_en_segundo_plano(item: dict):
                 titulo = f"Visita con {nombre_prospecto} (WhatsApp)"
                 if inmueble_txt:
                     titulo += f" — {inmueble_txt}"
-                await sb_post("tareas", {
+                crm_id = contacto.get("contacto_crm_id")
+                creada = await sb_post("tareas", {
                     "user_id": user_id, "titulo": titulo,
                     "fecha_entrega": f"{fecha}T{hora}:00",
-                    "contacto_id": contacto.get("contacto_crm_id")})
+                    "notas": inmueble_txt or None,
+                    "contacto_id": crm_id})
+                if creada and crm_id:
+                    await sb_post("tareas_contactos", {
+                        "user_id": user_id, "tarea_id": creada[0]["id"], "contacto_id": crm_id})
                 await sb_patch("wa2_contactos", {"id": f"eq.{item['contacto_id']}"}, {"etapa": "Cita"})
                 ics = _construir_ics(fecha, hora, titulo, inmueble_txt)
                 await _wa_send_document(numero, item["wa_id"], ics.encode("utf-8"),
@@ -1332,7 +1348,6 @@ async def _procesar_en_segundo_plano(item: dict):
                 await enviar_push(user_id, "Nueva cita agendada",
                                   f"{nombre_prospecto} — {fecha} {hora} (revísala en Tareas)",
                                   datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
-
 
         elif tipo == "pasar_a_humano":
             await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"}, {"ai_enabled": False})

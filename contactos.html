@@ -592,88 +592,6 @@ html, body { background: var(--paper); }
 .prob-opt.prob-baja.is-on  { background: var(--mute);     color: var(--paper); }
 .prob-opt.prob-media.is-on { background: var(--sky-navy); color: var(--paper); }
 .prob-opt.prob-alta.is-on  { background: var(--forest);   color: var(--paper); }
-.det-agente {
-  border: 1px solid var(--line); background: var(--bone); color: var(--ink);
-  border-radius: var(--r-pill); padding: 6px 13px;
-  font-size: var(--fs-sm); font-weight: 600; font-family: inherit;
-  cursor: pointer; max-width: 220px;
-}
-.det-agente:hover { border-color: var(--line-3); }
-
-/* ── Etapa y agente en la lista ── */
-.etapa-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; margin-right: 2px; }
-.etapa-dot.etapa-nuevo      { background: var(--info); }
-.etapa-dot.etapa-activo     { background: var(--warn); }
-.etapa-dot.etapa-contactado { background: var(--sky-navy); }
-.etapa-dot.etapa-cerrado    { background: var(--success); }
-.etapa-dot.etapa-descartado { background: var(--mute); }
-.agente-chip {
-  width: 26px; height: 26px; border-radius: 50%;
-  background: var(--sky-navy); color: var(--paper);
-  font-size: var(--fs-xs); font-weight: 700;
-  display: inline-flex; align-items: center; justify-content: center;
-  flex-shrink: 0; align-self: center;
-}
-
-/* ── Toggle Lista / Tablero ── */
-.vista-toggle { display: inline-flex; border: 1px solid var(--line); border-radius: var(--r-pill); overflow: hidden; flex-shrink: 0; }
-.vista-toggle button {
-  border: none; background: var(--bone); color: var(--ink-2);
-  padding: 8px 15px; font-size: var(--fs-sm); font-weight: 600;
-  font-family: inherit; cursor: pointer; transition: all .15s ease;
-}
-.vista-toggle button.is-on { background: var(--sky-navy); color: var(--paper); }
-
-/* ── Subfiltros etapa / agente ── */
-.subfilters { display: flex; gap: 8px; padding: 0 16px 10px; flex-wrap: wrap; }
-.subfilter-sel {
-  border: 1px solid var(--line); background: var(--bone); color: var(--ink);
-  border-radius: var(--r-pill); padding: 7px 14px;
-  font-size: var(--fs-sm); font-weight: 600; font-family: inherit; cursor: pointer;
-}
-.subfilter-sel:hover { border-color: var(--line-3); }
-
-/* ── Tablero Kanban ── */
-.board { display: flex; gap: 14px; overflow-x: auto; padding: 8px 16px 90px; align-items: flex-start; }
-.board-col {
-  flex: 0 0 264px; background: var(--bone); border: 1px solid var(--line);
-  border-radius: var(--r-lg); display: flex; flex-direction: column;
-  max-height: calc(100dvh - 210px); transition: border-color .12s ease, background .12s ease;
-}
-.board-col.drag-over { border-color: var(--sky-navy); background: var(--sky-canvas); }
-.board-col__head { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
-.board-col__dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-.board-col__title { font-weight: 700; font-size: var(--fs-sm); }
-.board-col__count { margin-left: auto; font-size: var(--fs-xs); color: var(--mute); font-weight: 600; background: var(--paper); border-radius: var(--r-pill); padding: 2px 9px; }
-.board-col__body { padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; min-height: 40px; }
-.board-card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r); padding: 11px 12px; cursor: grab; }
-.board-card:hover { border-color: var(--line-3); }
-.board-card.dragging { opacity: .45; }
-.board-card__name { font-weight: 600; font-size: var(--fs-sm); }
-.board-card__sub { font-size: var(--fs-xs); color: var(--mute); margin-top: 3px; }
-.board-card__foot { display: flex; align-items: center; gap: 6px; margin-top: 9px; }
-.board-card__foot:empty { display: none; }
-.board-prob { font-size: var(--fs-xs); font-weight: 600; padding: 2px 9px; border-radius: var(--r-pill); color: var(--paper); }
-.board-prob.prob-baja  { background: var(--mute); }
-.board-prob.prob-media { background: var(--sky-navy); }
-.board-prob.prob-alta  { background: var(--forest); }
-.board-empty { color: var(--mute); font-size: var(--fs-xs); padding: 10px; text-align: center; }
-
-/* ── Tareas del contacto ── */
-.tarea-item { display: flex; gap: 11px; padding: 11px 0; border-bottom: 1px solid var(--line); align-items: flex-start; }
-.tarea-item:last-child { border-bottom: none; }
-.tarea-check {
-  width: 24px; height: 24px; border-radius: 50%;
-  border: 1.5px solid var(--line-3); background: var(--paper);
-  cursor: pointer; flex-shrink: 0; padding: 0; color: transparent;
-  display: flex; align-items: center; justify-content: center;
-}
-.tarea-check:hover { border-color: var(--success); }
-.tarea-item.is-done .tarea-check { background: var(--success); border-color: var(--success); color: var(--paper); }
-.tarea-title { font-size: var(--fs-sm); color: var(--ink); line-height: 1.45; overflow-wrap: break-word; }
-.tarea-item.is-done .tarea-title { color: var(--mute); text-decoration: line-through; }
-.tarea-due { font-size: var(--fs-caption); color: var(--mute); margin-top: 3px; }
-.tarea-due.is-overdue { color: var(--danger); font-weight: 600; }
 .nota-box {
   background: var(--bone);
   border: 1px solid var(--line);
@@ -948,10 +866,6 @@ html, body { background: var(--paper); }
       <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--mute);"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
       <input type="search" id="search-input" placeholder="Buscar por nombre, teléfono o correo…" oninput="busquedaDebounced()"/>
     </div>
-    <div class="vista-toggle">
-      <button id="vt-lista" class="is-on" onclick="setVista('lista')">Lista</button>
-      <button id="vt-tablero" onclick="setVista('tablero')">Tablero</button>
-    </div>
   </div>
   <div class="tabs">
     <button class="ftab active" onclick="setFiltro('todos',this)">Todos</button>
@@ -963,24 +877,9 @@ html, body { background: var(--paper); }
     <button class="ftab" onclick="setFiltro('notario',this)">Notarios</button>
     <button class="ftab" onclick="setFiltro('otro',this)">Otros</button>
   </div>
-  <div class="subfilters">
-    <select id="filtro-etapa" class="subfilter-sel" onchange="setFiltroEtapa(this.value)">
-      <option value="">Todas las etapas</option>
-      <option value="nuevo">Nuevo</option>
-      <option value="activo">Activo</option>
-      <option value="contactado">Contactado</option>
-      <option value="cerrado">Cerrado</option>
-      <option value="descartado">Descartado</option>
-      <option value="__sin">Sin etapa</option>
-    </select>
-    <select id="filtro-agente" class="subfilter-sel" onchange="setFiltroAgente(this.value)" style="display:none">
-      <option value="">Todos los agentes</option>
-    </select>
-  </div>
 </header>
 
 <div class="list" id="lista"></div>
-<div class="board" id="tablero" style="display:none"></div>
 
 <button class="fab" onclick="abrirModal()" aria-label="Nuevo contacto">
   <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
@@ -1126,10 +1025,6 @@ html, body { background: var(--paper); }
         <span class="det-control-lbl">Probabilidad</span>
         <div class="det-prob" id="det-prob"></div>
       </div>
-      <div class="det-control-group" id="det-agente-group" style="display:none">
-        <span class="det-control-lbl">Agente asignado</span>
-        <select class="det-agente" id="det-agente" onchange="setAgente(this.value)"></select>
-      </div>
     </div>
     <div class="det-tabs">
       <button class="det-tab active" id="dtab-btn-info" onclick="setDetTab('info')">Información</button>
@@ -1159,10 +1054,14 @@ html, body { background: var(--paper); }
         <div id="props-feed"></div>
       </div>
       <div id="dtab-tareas" hidden>
-        <div class="composer">
-          <input type="text" id="tarea-input" placeholder="Nueva tarea… (ej. Llamar para agendar visita)" onkeydown="if(event.key==='Enter')crearTareaContacto()"/>
-          <input type="date" id="tarea-fecha"/>
-          <button id="tarea-btn" onclick="crearTareaContacto()">Agregar</button>
+        <div class="vinculo-form">
+          <input type="text" id="tarea-nueva-titulo" placeholder="Nueva tarea para este contacto…" onkeydown="if(event.key==='Enter')crearTareaVinculada()"/>
+          <input type="date" id="tarea-nueva-fecha"/>
+          <button onclick="crearTareaVinculada()">Crear</button>
+        </div>
+        <div class="vinculo-form">
+          <select id="vinculo-tarea"></select>
+          <button onclick="vincularTareaExistente()">Vincular existente</button>
         </div>
         <div id="tareas-feed"></div>
       </div>
@@ -1399,9 +1298,7 @@ function contactosFiltrados() {
   return todos.filter(c => {
     const okTipo = filtroActual === 'todos' || c.tipo === filtroActual;
     const okQ = !q || [c.nombre, c.telefono, c.email, c.empresa].some(v => (v||'').toLowerCase().includes(q));
-    const okEtapa = !filtroEtapa || (filtroEtapa === '__sin' ? !c.estatus : String(c.estatus||'').toLowerCase() === filtroEtapa);
-    const okAgente = !filtroAgente || (filtroAgente === '__sin' ? !c.agente_asignado : String(c.agente_asignado) === filtroAgente);
-    return okTipo && okQ && okEtapa && okAgente;
+    return okTipo && okQ;
   });
 }
 
@@ -1411,38 +1308,12 @@ function busquedaDebounced() {
   _busqT = setTimeout(renderActual, 200);
 }
 
-let filtroEtapa = '';
-let filtroAgente = '';
-function setFiltroEtapa(v) { filtroEtapa = v; renderActual(); }
-function setFiltroAgente(v) { filtroAgente = v; renderActual(); }
-function poblarFiltroAgente() {
-  const sel = document.getElementById('filtro-agente');
-  if (!sel) return;
-  if (!_miembros || _miembros.length === 0) { sel.style.display = 'none'; return; }
-  sel.style.display = '';
-  const opts = ['<option value="">Todos los agentes</option>', '<option value="__sin">Sin asignar</option>']
-    .concat(_miembros.map(m => `<option value="${esc(m.user_id)}">${esc(m.nombre || m.email || 'Miembro')}</option>`));
-  sel.innerHTML = opts.join('');
-  sel.value = filtroAgente;
-}
-
-let vistaActual = 'lista';
-function setVista(v) {
-  vistaActual = v;
-  document.getElementById('vt-lista').classList.toggle('is-on', v === 'lista');
-  document.getElementById('vt-tablero').classList.toggle('is-on', v === 'tablero');
-  document.getElementById('lista').style.display   = (v === 'lista')   ? '' : 'none';
-  document.getElementById('tablero').style.display = (v === 'tablero') ? 'flex' : 'none';
-  renderActual();
-}
-
 function renderActual() {
   const todos = cargar();
   const badge = document.getElementById('count-badge');
   badge.textContent = todos.length;
   badge.style.display = todos.length ? '' : 'none';
-  if (vistaActual === 'tablero') renderTablero();
-  else renderLista();
+  renderLista();
 }
 
 function pintarDetPotencial(activo) {
@@ -1475,7 +1346,6 @@ async function toggleDetPotencial() {
 
 /* ── Vista Lista ─────────────────────────────────────────────────── */
 function renderLista() {
-  if (!_miembrosLoaded) cargarMiembros().then(() => renderActual());
   const filtrados = contactosFiltrados();
   const lista = document.getElementById('lista');
   const q = gv('search-input');
@@ -1489,104 +1359,20 @@ function renderLista() {
   }
   lista.innerHTML = filtrados.map(c => {
     const sub = c.telefono || c.email || c.empresa || '';
-    const eInfo = c.estatus ? etapaInfo(c.estatus) : null;
-    const etapaDot = eInfo ? `<span class="etapa-dot" style="background:${eInfo.color}" title="${esc(eInfo.nombre)}"></span>` : '';
-    const agNom = (!IS_PICKER && c.agente_asignado) ? nombreAgente(c.agente_asignado) : '';
-    const agChip = agNom ? `<span class="agente-chip" title="Agente: ${esc(agNom)}">${esc(initials(agNom))}</span>` : '';
     const pickerCls = IS_PICKER ? ' picker-mode' : '';
     const clickFn = IS_PICKER ? 'seleccionarContacto(this.dataset.id)' : 'abrirDetalle(this.dataset.id)';
     return `<div class="contact-card${pickerCls}" data-id="${esc(c.id)}" onclick="${clickFn}">
       <div class="avatar ${avColor(c.nombre||'')}">${esc(initials(c.nombre||'??'))}</div>
       <div class="contact-info">
         <div class="contact-name">${esc(c.nombre)}${c.es_potencial ? ' <span class="pot-dot" title="Potencial"><svg width="11" height="11" style="vertical-align:-1px" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2l-6.1 3.4 1.4-6.8L2.2 9.1l6.9-.8L12 2z"/></svg></span>' : ''}</div>
-        <div class="contact-meta">${etapaDot}${rolBadge(c.tipo)}<span class="contact-sub">${esc(sub)}</span></div>
+        <div class="contact-meta">${rolBadge(c.tipo)}<span class="contact-sub">${esc(sub)}</span></div>
       </div>
-      ${agChip}
       ${!IS_PICKER ? `<div class="quick-acts" onclick="event.stopPropagation()">
         ${(c.telefono||c.wa) ? `<a class="qa qa-wa" href="https://wa.me/52${(c.wa||c.telefono).replace(/\D/g,'')}" target="_blank" title="WhatsApp"><svg width="16" height="16" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path fill="var(--brand-whatsapp)" d="M16 0C7.163 0 0 7.163 0 16c0 2.823.736 5.474 2.029 7.776L0 32l8.42-2.207A15.9 15.9 0 0016 32c8.837 0 16-7.163 16-16S24.837 0 16 0z"/><path fill="#FFF" d="M23.45 19.2c-.39-.196-2.31-1.142-2.668-1.273-.358-.13-.618-.196-.878.196-.26.39-1.008 1.272-1.236 1.532-.228.26-.456.293-.846.098-.39-.196-1.65-.61-3.143-1.94-1.162-1.037-1.948-2.318-2.176-2.708-.228-.39-.024-.6.171-.795.176-.175.39-.456.586-.683.196-.228.26-.39.39-.65.13-.26.065-.488-.033-.683-.098-.196-.878-2.117-1.203-2.9-.317-.762-.64-.66-.879-.672-.227-.012-.487-.014-.747-.014-.26 0-.683.098-1.04.488-.358.39-1.366 1.336-1.366 3.257 0 1.92 1.398 3.778 1.594 4.038.195.26 2.752 4.203 6.667 5.893.93.402 1.657.642 2.223.821.934.297 1.785.255 2.457.155.75-.112 2.31-.945 2.636-1.857.325-.911.325-1.692.228-1.857-.098-.165-.358-.26-.748-.456z"/></svg></a>` : ''}
         ${c.telefono ? `<a class="qa" href="tel:${esc(c.telefono)}" title="Llamar"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/></svg></a>` : ''}
       </div>` : '<div style="color:var(--forest);font-size: var(--fs-xs);font-weight:600;font-family:var(--font-mono);letter-spacing:.06em">SELECCIONAR →</div>'}
     </div>`;
   }).join('');
-}
-
-/* ── Tablero Kanban ──────────────────────────────────────────────── */
-function etapaColor(v) {
-  return v ? etapaInfo(v).color : 'var(--line-3)';
-}
-
-function renderTablero() {
-  if (!_miembrosLoaded) cargarMiembros().then(() => renderActual());
-  const cont = document.getElementById('tablero');
-  const cols = [{ clave: '', nombre: 'Sin etapa', color: 'var(--line-3)' }].concat(ETAPAS);
-  const grupos = {};
-  cols.forEach(col => { grupos[col.clave] = []; });
-  contactosFiltrados().forEach(c => {
-    const k = String(c.estatus || '').toLowerCase();
-    grupos[(k && grupos[k] !== undefined) ? k : ''].push(c);
-  });
-  cont.innerHTML = cols.map(col => {
-    const cards = grupos[col.clave];
-    const inner = cards.length
-      ? cards.map(c => tarjetaBoard(c)).join('')
-      : '<div class="board-empty">Vacío</div>';
-    return `<div class="board-col" data-etapa="${esc(col.clave)}"
-                 ondragover="boardDragOver(event,this)"
-                 ondragleave="this.classList.remove('drag-over')"
-                 ondrop="boardDrop(event,this)">
-      <div class="board-col__head">
-        <span class="board-col__dot" style="background:${col.color || etapaColor(col.clave)}"></span>
-        <span class="board-col__title">${esc(col.nombre)}</span>
-        <span class="board-col__count">${cards.length}</span>
-      </div>
-      <div class="board-col__body">${inner}</div>
-    </div>`;
-  }).join('');
-}
-
-function tarjetaBoard(c) {
-  const sub = c.telefono || c.email || c.empresa || '';
-  const ag = c.agente_asignado ? nombreAgente(c.agente_asignado) : '';
-  const agChip = ag ? `<span class="agente-chip" title="Agente: ${esc(ag)}">${esc(initials(ag))}</span>` : '';
-  const prob = c.probabilidad ? `<span class="board-prob prob-${esc(c.probabilidad)}">${esc(c.probabilidad)}</span>` : '';
-  return `<div class="board-card" draggable="true" data-id="${esc(c.id)}"
-               ondragstart="boardDragStart(event,this)" ondragend="this.classList.remove('dragging')"
-               onclick="abrirDetalle(this.dataset.id)">
-    <div class="board-card__name">${esc(c.nombre)}</div>
-    ${sub ? `<div class="board-card__sub">${esc(sub)}</div>` : ''}
-    <div class="board-card__foot">${agChip}${prob}</div>
-  </div>`;
-}
-
-let _dragId = null;
-function boardDragStart(e, el) {
-  _dragId = el.dataset.id;
-  el.classList.add('dragging');
-  try { e.dataTransfer.setData('text/plain', _dragId); e.dataTransfer.effectAllowed = 'move'; } catch (_) {}
-}
-function boardDragOver(e, col) {
-  e.preventDefault();
-  try { e.dataTransfer.dropEffect = 'move'; } catch (_) {}
-  col.classList.add('drag-over');
-}
-function boardDrop(e, col) {
-  e.preventDefault();
-  col.classList.remove('drag-over');
-  const id = _dragId || (e.dataTransfer && e.dataTransfer.getData('text/plain'));
-  _dragId = null;
-  if (id) moverEtapa(id, col.dataset.etapa || '');
-}
-
-async function moverEtapa(id, estatus) {
-  const c = _contactosMem.find(x => String(x.id) === String(id));
-  if (!c) return;
-  const prev = c.estatus || '';
-  if (String(prev).toLowerCase() === estatus) return;
-  c.estatus = estatus;
-  if (detContacto && String(detContacto.id) === String(id)) detContacto.estatus = estatus;
-  renderTablero();
-  try { await patchContacto(id, { estatus: estatus || null, fecha_cambio_estatus: new Date().toISOString() }); }
-  catch (e) { c.estatus = prev; renderTablero(); showToast('No se pudo mover el contacto'); }
 }
 
 function seleccionarContacto(id) {
@@ -1793,7 +1579,7 @@ function setDetTab(tab) {
   if (!detContacto) return;
   if (tab === 'hist')   cargarHistorial();
   if (tab === 'props')  cargarVinculos();
-  if (tab === 'tareas') cargarTareas();
+  if (tab === 'tareas') cargarTareasVinculadas();
 }
 
 function abrirDetalle(id) {
@@ -1822,7 +1608,6 @@ function abrirDetalle(id) {
 
   renderDetInfo(c);
   renderControles(c);
-  cargarMiembros().then(() => { if (detContacto && String(detContacto.id) === String(c.id)) renderAgente(c); });
   document.getElementById('hist-feed').innerHTML = '';
   document.getElementById('props-feed').innerHTML = '';
   document.getElementById('tareas-feed').innerHTML = '';
@@ -1834,108 +1619,23 @@ function abrirDetalle(id) {
   document.getElementById('detail-ov').classList.add('open');
 }
 
-/* Etapas del pipeline: mismo sistema que leads.html y estadísticas
-   (contactos.estatus + tabla pipeline_etapas personalizable). */
-const ETAPAS_DEFAULT = [
-  { clave: 'nuevo',      nombre: 'Nuevo',      color: 'var(--forest)'  },
-  { clave: 'activo',     nombre: 'Activo',     color: 'var(--success)' },
-  { clave: 'contactado', nombre: 'Contactado', color: 'var(--warn)'    },
-  { clave: 'cerrado',    nombre: 'Cerrado',    color: 'var(--ink-3)'   },
+const ETAPAS = [
+  { v: 'nuevo',      l: 'Nuevo' },
+  { v: 'activo',     l: 'Activo' },
+  { v: 'contactado', l: 'Contactado' },
+  { v: 'cerrado',    l: 'Cerrado' },
+  { v: 'descartado', l: 'Descartado' },
 ];
-let ETAPAS = ETAPAS_DEFAULT.slice();
-
-async function cargarEtapas() {
-  try {
-    const rows = await restGet('pipeline_etapas?select=nombre,orden,color&order=orden.asc');
-    if (Array.isArray(rows) && rows.length) {
-      ETAPAS = rows.map(r => ({
-        clave: String(r.nombre || '').toLowerCase().trim(),
-        nombre: r.nombre,
-        color: r.color || 'var(--forest)',
-      })).filter(e => e.clave);
-    }
-  } catch (e) { /* si falla, quedan las default */ }
-  poblarFiltroEtapa();
-}
-
-function etapaInfo(clave) {
-  const k = String(clave || '').toLowerCase();
-  return ETAPAS.find(e => e.clave === k) ||
-    { clave: k, nombre: k ? (k.charAt(0).toUpperCase() + k.slice(1)) : '', color: 'var(--mute)' };
-}
-
-function poblarFiltroEtapa() {
-  const sel = document.getElementById('filtro-etapa');
-  if (!sel) return;
-  const val = sel.value;
-  sel.innerHTML = '<option value="">Todas las etapas</option>' +
-    ETAPAS.map(e => `<option value="${esc(e.clave)}">${esc(e.nombre)}</option>`).join('') +
-    '<option value="__sin">Sin etapa</option>';
-  sel.value = val;
-}
-
 const PROBS = [
   { v: 'baja',  l: 'Baja' },
   { v: 'media', l: 'Media' },
   { v: 'alta',  l: 'Alta' },
 ];
 
-let _miembros = null;         // cache del equipo: [{user_id, nombre, email, activo}]
-let _miembrosLoaded = false;
-
-async function cargarMiembros() {
-  if (_miembrosLoaded) return _miembros;
-  _miembrosLoaded = true;
-  try {
-    const token = await _sb().ensureToken();
-    if (!token) { _miembros = null; return null; }
-    const r = await fetch('https://api.broquer.app/org/miembros', {
-      headers: { Authorization: 'Bearer ' + token }
-    });
-    if (!r.ok) { _miembros = null; return null; }
-    const d = await r.json();
-    _miembros = (d.miembros || []).filter(m => m.activo !== false);
-    poblarFiltroAgente();
-  } catch (e) { _miembros = null; }
-  return _miembros;
-}
-
-function nombreAgente(userId) {
-  if (!userId || !_miembros) return '';
-  const m = _miembros.find(x => String(x.user_id) === String(userId));
-  return m ? (m.nombre || m.email || '') : '';
-}
-
-function renderAgente(c) {
-  const wrap = document.getElementById('det-agente-group');
-  // Solo tiene sentido si hay equipo (cuenta empresa con miembros)
-  if (!_miembros || _miembros.length === 0) { wrap.style.display = 'none'; return; }
-  wrap.style.display = '';
-  const cur = c.agente_asignado || '';
-  const opts = ['<option value="">Sin asignar</option>'].concat(
-    _miembros.map(m => {
-      const nom = m.nombre || m.email || 'Miembro';
-      const sel = String(m.user_id) === String(cur) ? ' selected' : '';
-      return `<option value="${esc(m.user_id)}"${sel}>${esc(nom)}</option>`;
-    })
-  );
-  document.getElementById('det-agente').innerHTML = opts.join('');
-}
-
-async function setAgente(v) {
-  if (!detContacto) return;
-  const prev = detContacto.agente_asignado || '';
-  detContacto.agente_asignado = v || '';
-  try { await patchContacto(detContacto.id, { agente_asignado: v || null }); renderActual(); }
-  catch (e) { detContacto.agente_asignado = prev; renderAgente(detContacto); showToast('No se pudo asignar el agente'); }
-}
-
 function renderControles(c) {
-  const est = String(c.estatus || '').toLowerCase();
+  const etapa = c.etapa || '';
   document.getElementById('det-pipeline').innerHTML = ETAPAS.map(e =>
-    `<button type="button" class="etapa-pill ${est === e.clave ? 'is-on' : ''}"
-             style="${est === e.clave ? `background:${e.color};border-color:${e.color};color:var(--paper)` : ''}"
-             onclick="setEstatus('${esc(e.clave)}')">${esc(e.nombre)}</button>`
+    `<button type="button" class="etapa-pill ${etapa === e.v ? 'is-on' : ''}" onclick="setEtapa('${e.v}')">${e.l}</button>`
   ).join('');
   const prob = c.probabilidad || '';
   document.getElementById('det-prob').innerHTML = PROBS.map(p =>
@@ -1956,15 +1656,14 @@ async function patchContacto(id, fields) {
   if (c) Object.assign(c, fields);
 }
 
-async function setEstatus(v) {
+async function setEtapa(v) {
   if (!detContacto) return;
-  const prev = detContacto.estatus || '';
-  const nuevo = (String(prev).toLowerCase() === v) ? '' : v;   // volver a tocar la misma etapa la quita
-  detContacto.estatus = nuevo;
+  const prev = detContacto.etapa || '';
+  const nuevo = (prev === v) ? '' : v;   // volver a tocar la misma etapa la quita
+  detContacto.etapa = nuevo;
   renderControles(detContacto);
-  const campos = { estatus: nuevo || null, fecha_cambio_estatus: new Date().toISOString() };
-  try { await patchContacto(detContacto.id, campos); renderActual(); }
-  catch (e) { detContacto.estatus = prev; renderControles(detContacto); showToast('No se pudo guardar la etapa'); }
+  try { await patchContacto(detContacto.id, { etapa: nuevo || null }); renderActual(); }
+  catch (e) { detContacto.etapa = prev; renderControles(detContacto); showToast('No se pudo guardar la etapa'); }
 }
 
 async function setProbabilidad(v) {
@@ -2007,110 +1706,6 @@ function actIconClass(tipo) {
   if (tipo === 'cambio_estatus') return 'estatus';
   if (tipo === 'tarea_completada') return 'tarea';
   return 'nota';
-}
-
-/* ── Tab Tareas ──────────────────────────────────────────────────── */
-let _tareasCache = [];
-
-async function cargarTareas() {
-  if (!detContacto) return;
-  const feed = document.getElementById('tareas-feed');
-  feed.innerHTML = '<div class="mini-empty">Cargando…</div>';
-  const cid = detContacto.id;
-  let tareas = [];
-  try {
-    tareas = await restGet('tareas?select=*&contacto_id=eq.' + encodeURIComponent(cid) +
-      '&order=completada.asc,fecha_entrega.asc.nullslast,created_at.desc&limit=200');
-  } catch (e) { tareas = []; }
-  if (!detContacto || detContacto.id !== cid) return;
-  _tareasCache = Array.isArray(tareas) ? tareas : [];
-  renderTareasContacto();
-}
-
-function renderTareasContacto() {
-  const feed = document.getElementById('tareas-feed');
-  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
-  const pend = _tareasCache.filter(t => !t.completada).length;
-  document.getElementById('dtab-n-tareas').textContent = pend;
-  if (!_tareasCache.length) {
-    feed.innerHTML = '<div class="mini-empty">Sin tareas. Crea una arriba.</div>';
-    return;
-  }
-  feed.innerHTML = _tareasCache.map(t => {
-    const due = t.fecha_entrega ? new Date(t.fecha_entrega) : null;
-    const vencida = due && !t.completada && due < hoy;
-    return `<div class="tarea-item ${t.completada ? 'is-done' : ''}">
-      <button class="tarea-check" onclick="toggleTareaContacto('${esc(String(t.id))}')" title="${t.completada ? 'Reabrir' : 'Completar'}">
-        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-      </button>
-      <div style="flex:1;min-width:0">
-        <div class="tarea-title">${esc(t.titulo)}</div>
-        ${due ? `<div class="tarea-due ${vencida ? 'is-overdue' : ''}">${vencida ? 'Vencida · ' : ''}${esc(fechaCorta(t.fecha_entrega))}</div>` : ''}
-      </div>
-    </div>`;
-  }).join('');
-}
-
-async function crearTareaContacto() {
-  if (!detContacto) return;
-  const inp = document.getElementById('tarea-input');
-  const titulo = (inp.value || '').trim();
-  if (!titulo) { inp.focus(); return; }
-  const uid = await _userId();
-  if (!uid) { showToast('Tu sesión expiró'); return; }
-  const fecha = document.getElementById('tarea-fecha').value || null;
-  const btn = document.getElementById('tarea-btn');
-  btn.disabled = true;
-  const payload = {
-    user_id: uid, titulo,
-    fecha_entrega: fecha ? fecha + 'T12:00:00' : null,
-    contacto_id: detContacto.id, propiedad_id: null,
-  };
-  try {
-    const r = await _sb().fetch('rest/v1/tareas', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Prefer: 'return=representation' },
-      body: JSON.stringify(payload),
-    });
-    if (!r.ok) throw new Error('Error ' + r.status);
-    const rows = await r.json();
-    const nueva = Array.isArray(rows) ? rows[0] : rows;
-    if (nueva && nueva.id) _tareasCache.unshift(nueva);
-    inp.value = '';
-    document.getElementById('tarea-fecha').value = '';
-    renderTareasContacto();
-    showToast('Tarea creada');
-  } catch (e) { showToast('No se pudo crear la tarea'); }
-  finally { btn.disabled = false; }
-}
-
-async function toggleTareaContacto(id) {
-  const t = _tareasCache.find(x => String(x.id) === String(id));
-  if (!t) return;
-  const completar = !t.completada;
-  t.completada = completar;
-  renderTareasContacto();
-  try {
-    const r = await _sb().fetch('rest/v1/tareas?id=eq.' + encodeURIComponent(id), {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-      body: JSON.stringify({ completada: completar, fecha_completada: completar ? new Date().toISOString() : null }),
-    });
-    if (!r.ok) throw new Error('Error ' + r.status);
-    if (completar) {
-      const uid = await _userId();
-      if (uid) _sb().fetch('rest/v1/actividades', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-        body: JSON.stringify({
-          user_id: uid, tipo: 'tarea_completada',
-          texto: 'Tarea completada: ' + t.titulo,
-          contacto_id: t.contacto_id || (detContacto && detContacto.id) || null,
-          propiedad_id: null,
-        }),
-      }).catch(() => {});
-    }
-  } catch (e) { t.completada = !completar; renderTareasContacto(); showToast('No se pudo actualizar la tarea'); }
 }
 
 async function cargarHistorial() {
@@ -2227,6 +1822,100 @@ async function eliminarVinculo(id) {
   }
 }
 
+/* ── Tab Tareas — igual patrón que Propiedades, contra tareas_contactos ── */
+let _tareasMin = null;
+async function cargarTareasMin() {
+  if (_tareasMin) return _tareasMin;
+  try {
+    _tareasMin = await restGet('tareas?select=id,titulo,fecha_entrega,completada&order=created_at.desc&limit=500');
+  } catch { _tareasMin = []; }
+  return _tareasMin;
+}
+
+async function cargarTareasVinculadas() {
+  if (!detContacto) return;
+  const feed = document.getElementById('tareas-feed');
+  feed.innerHTML = '<div class="mini-empty">Cargando…</div>';
+  const cid = detContacto.id;
+
+  const [todas, vinculos] = await Promise.all([
+    cargarTareasMin(),
+    restGet('tareas_contactos?select=*&contacto_id=eq.' + encodeURIComponent(cid) + '&order=created_at.desc').catch(() => []),
+  ]);
+  if (!detContacto || detContacto.id !== cid) return;
+
+  const yaVinculadas = new Set(vinculos.map(v => String(v.tarea_id)));
+  const sel = document.getElementById('vinculo-tarea');
+  const disponibles = todas.filter(t => !yaVinculadas.has(String(t.id)) && !t.completada);
+  sel.innerHTML = disponibles.length
+    ? '<option value="">Elige una tarea…</option>' + disponibles.map(t => `<option value="${esc(String(t.id))}">${esc(t.titulo)}</option>`).join('')
+    : '<option value="">' + (todas.length ? 'Todas ya vinculadas' : 'No tienes tareas') + '</option>';
+
+  const porId = Object.fromEntries(todas.map(t => [String(t.id), t]));
+  feed.innerHTML = vinculos.length
+    ? vinculos.map(v => {
+        const t = porId[String(v.tarea_id)] || {};
+        return `<div class="prop-link-item">
+          <div class="prop-link-ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+          <a class="prop-link-title" href="tareas.html">${esc(t.titulo || 'Tarea')}${t.completada ? ' (completada)' : ''}</a>
+          <span class="rel-chip">${t.fecha_entrega ? new Date(t.fecha_entrega).toLocaleDateString('es-MX', {day:'2-digit',month:'short'}) : 'Sin fecha'}</span>
+          <button class="task-del" title="Quitar vínculo" onclick="eliminarVinculoTarea('${esc(String(v.id))}')">×</button>
+        </div>`;
+      }).join('')
+    : '<div class="mini-empty">Sin tareas vinculadas. Crea o vincula una arriba.</div>';
+  document.getElementById('dtab-n-tareas').textContent = vinculos.length;
+}
+
+async function crearTareaVinculada() {
+  if (!detContacto) return;
+  const titulo = (document.getElementById('tarea-nueva-titulo').value || '').trim();
+  if (!titulo) return;
+  const fecha = document.getElementById('tarea-nueva-fecha').value;
+  const uid = await userId();
+  if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
+  try {
+    const creada = await restPost('tareas', {
+      user_id: uid, titulo,
+      fecha_entrega: fecha ? fecha + 'T12:00:00' : null,
+      contacto_id: detContacto.id,
+    });
+    const nueva = Array.isArray(creada) ? creada[0] : creada;
+    if (nueva && nueva.id) {
+      await restPost('tareas_contactos', { user_id: uid, tarea_id: nueva.id, contacto_id: detContacto.id });
+    }
+    _tareasMin = null; // se creó una tarea nueva, refresca el catálogo
+    document.getElementById('tarea-nueva-titulo').value = '';
+    document.getElementById('tarea-nueva-fecha').value = '';
+    await cargarTareasVinculadas();
+    showToast('Tarea creada y vinculada');
+  } catch (e) {
+    alert('No se pudo crear la tarea.\n\n' + (e.message || e));
+  }
+}
+
+async function vincularTareaExistente() {
+  if (!detContacto) return;
+  const tareaId = document.getElementById('vinculo-tarea').value;
+  if (!tareaId) return;
+  const uid = await userId();
+  try {
+    await restPost('tareas_contactos', { user_id: uid, tarea_id: tareaId, contacto_id: detContacto.id });
+    await cargarTareasVinculadas();
+    showToast('Tarea vinculada');
+  } catch (e) {
+    alert('No se pudo vincular.\n\n' + (e.message || e));
+  }
+}
+
+async function eliminarVinculoTarea(id) {
+  try {
+    await restDelete('tareas_contactos', id);
+    await cargarTareasVinculadas();
+  } catch (e) {
+    alert('No se pudo quitar el vínculo.\n\n' + (e.message || e));
+  }
+}
+
 function cerrarDetalle() { document.getElementById('detail-ov').classList.remove('open'); detContacto = null; }
 
 function editarDesdeDetalle() {
@@ -2303,7 +1992,6 @@ async function _waitForShell(maxMs) {
 
   // 3) Contactos
   try {
-    await cargarEtapas();
     await cargarRemoto();
     renderActual();
     const params = new URLSearchParams(window.location.search);
