@@ -74,6 +74,26 @@ def _hora_local() -> "datetime":
         return datetime.now(timezone.utc) + timedelta(hours=-6)
 
 
+def _wa_ts(msg) -> str:
+    """La hora REAL en que el prospecto mandó el mensaje.
+
+    WhatsApp incluye en CADA mensaje un campo 'timestamp' (segundos Unix). Antes
+    se ignoraba y la fila nacía con el default now() de la columna: si el webhook
+    llegaba en lote o con retraso, o si en producción la columna quedó sin ese
+    default, todos los mensajes terminaban con la misma hora — la bandeja los
+    ordena por created_at, así que además de verse la hora mal, el hilo salía
+    revuelto y algún mensaje 'no aparecía'. Ahora sellamos la hora del propio
+    WhatsApp. Si viniera vacía o corrupta, caemos a la hora actual (nunca revienta
+    el webhook)."""
+    try:
+        ts = int(str((msg or {}).get("timestamp") or "").strip())
+        if ts > 0:
+            return datetime.fromtimestamp(ts, timezone.utc).isoformat()
+    except Exception:
+        pass
+    return _now()
+
+
 def _hhmm(valor, default: str) -> tuple:
     """'08:00' o '08:00:00' -> (8, 0). Nunca revienta el webhook."""
     try:
@@ -221,7 +241,25 @@ async def receive_webhook(request: Request, background: BackgroundTasks):
     except Exception:
         return Response(status_code=200)
 
-    background.add_task(process_payload, payload)   # contestamos 200 ya; procesamos atrás
+    # ── GUARDAR PRIMERO, CONTESTAR DESPUÉS ──────────────────────────────────
+    # Antes se contestaba 200 de inmediato y se guardaba atrás. Si Supabase
+    # estaba saturado en ese instante, el mensaje se perdía y Meta —que ya había
+    # recibido su 200— NUNCA lo reintentaba. Ahora persistimos lo entrante de
+    # forma síncrona: si algo crítico falla, devolvemos 5xx y Meta reintenta el
+    # aviso completo (los ya guardados se deduplican por wa_message_id, así que
+    # reintentar no duplica). Solo cuando el mensaje está a salvo contestamos 200
+    # y dejamos lo lento (IA, avisos, echoes) para segundo plano.
+    try:
+        ok, trabajo = await persistir_entrantes(payload)
+    except Exception as e:
+        log.exception("persistir_entrantes reventó, pido reintento a Meta: %s", e)
+        return Response(status_code=503)
+    if not ok:
+        return Response(status_code=503)
+
+    if trabajo:
+        background.add_task(procesar_ia, trabajo)     # respuesta de Recepción a lo NUEVO
+    background.add_task(process_payload, payload)      # echoes del agente / sync de historial
     return Response(status_code=200)
 
 
@@ -229,165 +267,232 @@ async def receive_webhook(request: Request, background: BackgroundTasks):
 # 2) PROCESAMIENTO
 # =============================================================================
 async def process_payload(payload: dict):
+    """Fase de COEXISTENCE, en segundo plano: echoes del agente (cuando escribe
+    desde la app de WhatsApp en su propio celular) y sync de historial. Los
+    mensajes ENTRANTES del prospecto NO se procesan aquí: ya los guardó
+    persistir_entrantes antes del 200, y su respuesta la maneja procesar_ia."""
     try:
         for entry in payload.get("entry", []):
             for change in entry.get("changes", []):
                 field = change.get("field")
                 value = change.get("value", {})
-                if field == "messages":
-                    await process_change(value)            # mensaje ENTRANTE del cliente
-                elif field == "smb_message_echoes":
+                if field == "smb_message_echoes":
                     await process_echo(value)              # COEXISTENCE: el agente desde su celular
                 elif field in ("history", "smb_app_state_sync"):
                     log.info("Coexistence sync '%s' recibido.", field)  # opcional: precargar historial
     except Exception as e:
-        log.exception("Error procesando webhook: %s", e)
+        log.exception("Error procesando echoes/sync: %s", e)
 
 
-async def process_change(value: dict):
-    metadata = value.get("metadata", {})
-    phone_number_id = metadata.get("phone_number_id")
-    numero = await resolve_number(phone_number_id)
-    if not numero:
-        log.warning("Número no registrado en wa_numbers: %s — ignorado", phone_number_id)
-        return
-    user_id = numero["user_id"]
-    token   = numero.get("access_token")
+async def persistir_entrantes(payload: dict):
+    """Fase RÁPIDA y SÍNCRONA: guarda los mensajes ENTRANTES del prospecto ANTES
+    de que el webhook conteste 200 a Meta. Devuelve (ok, trabajo).
 
-    # ── EL INTERRUPTOR MAESTRO ──────────────────────────────────────────────
-    # Antes esto no se leía nunca: process_change solo miraba conv.ai_enabled,
-    # y get_or_create_conversation nacía SIEMPRE con ai_enabled=True. Resultado:
-    # el agente apagaba Recepción, /ia-global propagaba a las conversaciones que
-    # ya existían, y el primer lead nuevo creaba una conversación con la IA
-    # encendida y le contestaba igual. El interruptor era decorativo.
-    #
-    # Ahora la regla es: RESPONDE  <=>  ia_global AND conv.ai_enabled.
-    #   ia_global      -> el switch del módulo. Palabra final del agente.
-    #   conv.ai_enabled-> si el agente ya tomó el control de ESE chat.
-    # Se evalúan juntos y ninguno pisa al otro, así prender el global de vuelta
-    # ya no revive la IA en los chats que el agente había tomado a mano.
-    ia_global = numero.get("ia_enabled", True) is not False
+      ok=False  -> algún guardado crítico falló (contacto/conversación/mensaje).
+                   El webhook responde 5xx y Meta REINTENTA el aviso completo;
+                   los que ya se guardaron se deduplican por wa_message_id, así
+                   que reintentar no duplica. Es lo que evita perder mensajes en
+                   un pico de saturación de Supabase.
+      trabajo   -> lista de mensajes NUEVOS para que procesar_ia los conteste
+                   atrás. Un mensaje ya visto (already_processed) NO entra: así un
+                   reintento de Meta no dispara una segunda respuesta de Recepción.
 
-    entren = await entrenamiento(user_id)
+    Aquí solo van escrituras rápidas (guardar el mensaje y subir el no-leído). La
+    IA, los avisos y las acciones —lo lento— quedan para procesar_ia, después del
+    200, para no arriesgar el timeout de Meta."""
+    trabajo = []
+    for entry in payload.get("entry", []):
+        for change in entry.get("changes", []):
+            if change.get("field") != "messages":
+                continue
+            value = change.get("value", {})
+            metadata = value.get("metadata", {})
+            phone_number_id = metadata.get("phone_number_id")
+            numero = await resolve_number(phone_number_id)
+            if not numero:
+                # No es un fallo re-intentable: el número no está registrado y
+                # reintentar no lo arregla. Se ignora este change y se sigue.
+                log.warning("Número no registrado en wa_numbers: %s — ignorado", phone_number_id)
+                continue
 
-    contacts = value.get("contacts", [])
-    profile_name = contacts[0].get("profile", {}).get("name") if contacts else None
+            user_id = numero["user_id"]
+            token   = numero.get("access_token")
+            # ── EL INTERRUPTOR MAESTRO ──────────────────────────────────────
+            # RESPONDE <=> ia_global AND conv.ai_enabled. ia_global es el switch
+            # del módulo; conv.ai_enabled es si el agente ya tomó ESE chat. Aquí
+            # solo se usa para nacer bien la conversación (ai_enabled inicial); la
+            # decisión de contestar la vuelve a tomar procesar_ia.
+            ia_global = numero.get("ia_enabled", True) is not False
 
-    for msg in value.get("messages", []):
-        wamid = msg.get("id")
-        if not wamid or await already_processed(wamid):
-            continue
+            contacts = value.get("contacts", [])
+            profile_name = contacts[0].get("profile", {}).get("name") if contacts else None
 
-        from_wa = msg.get("from")
-        referral = msg.get("referral")
+            for msg in value.get("messages", []):
+                wamid = msg.get("id")
+                if not wamid or await already_processed(wamid):
+                    continue  # sin id o ya guardado: nada que hacer (ni re-responder)
 
-        if msg.get("type") != "text":
-            body = f"[{msg.get('type')}]"
-            contact = await upsert_contact(user_id, from_wa, profile_name)
-            conv = await get_or_create_conversation(user_id, contact, referral,
-                                                    phone_number_id, ia_global)
-            await store_message(user_id, contact["id"], conv["id"], wamid, "in", "lead", body)
-            await sumar_no_leido(conv["id"])
-            await avisar_al_agente(user_id, contact, conv["id"],
-                                   f"Te mandó un {msg.get('type')} por WhatsApp.")
-            if ia_global and conv.get("ai_enabled", True) and _ia_puede_hablar(entren)[0]:
-                await wa_send_text(phone_number_id, from_wa,
-                                   "Gracias por tu mensaje. Por aquí te leo mejor en texto, "
-                                   "¿me cuentas qué estás buscando?", token=token)
-            continue
+                from_wa  = msg.get("from")
+                referral = msg.get("referral")
+                is_text  = msg.get("type") == "text"
+                body = msg.get("text", {}).get("body", "").strip() if is_text else f"[{msg.get('type')}]"
 
-        body = msg.get("text", {}).get("body", "").strip()
-        contact = await upsert_contact(user_id, from_wa, profile_name)
-        conv = await get_or_create_conversation(user_id, contact, referral,
-                                                phone_number_id, ia_global)
-        await store_message(user_id, contact["id"], conv["id"], wamid, "in", "lead", body)
-        await sumar_no_leido(conv["id"])
+                contact = await upsert_contact(user_id, from_wa, profile_name)
+                conv = await get_or_create_conversation(user_id, contact, referral,
+                                                        phone_number_id, ia_global)
+                if not contact.get("id") or not conv.get("id"):
+                    # No se pudo asegurar contacto/conversación. No guardamos a
+                    # medias: pedimos reintento para no perder el mensaje.
+                    log.error("persistir_entrantes: contacto/conv nulos para %s (user %s); pido reintento",
+                              from_wa, user_id)
+                    return (False, [])
+
+                guardado = await store_message(user_id, contact["id"], conv["id"], wamid,
+                                               "in", "lead", body, created_at=_wa_ts(msg))
+                if not guardado:
+                    log.error("persistir_entrantes: no se pudo guardar wamid=%s; pido reintento", wamid)
+                    return (False, [])
+
+                await sumar_no_leido(conv["id"])
+
+                trabajo.append({
+                    "user_id": user_id, "phone_number_id": phone_number_id, "token": token,
+                    "ia_global": ia_global, "waba_name": numero.get("waba_name"),
+                    "contact": contact, "conv": conv, "from_wa": from_wa,
+                    "body": body, "wamid": wamid, "is_text": is_text,
+                    "msg_type": msg.get("type"),
+                })
+    return (True, trabajo)
+
+
+async def procesar_ia(trabajo: list):
+    """Fase LENTA, en segundo plano (Meta ya recibió su 200): aviso al agente,
+    respuesta de Recepción y acciones. Cada mensaje va AISLADO: si uno truena, los
+    demás del mismo lote siguen. El mensaje del prospecto ya quedó guardado en
+    persistir_entrantes, así que un error aquí nunca borra el chat."""
+    cache_entren: dict = {}
+    for item in trabajo:
+        try:
+            await _ia_de_un_mensaje(item, cache_entren)
+        except Exception as e:
+            log.exception("Recepción falló con un mensaje (chat=%s): %s",
+                          (item.get("conv") or {}).get("id"), e)
+
+
+async def _ia_de_un_mensaje(item: dict, cache_entren: dict):
+    user_id         = item["user_id"]
+    phone_number_id = item["phone_number_id"]
+    token           = item["token"]
+    ia_global       = item["ia_global"]
+    contact         = item["contact"]
+    conv            = item["conv"]
+    from_wa         = item["from_wa"]
+    body            = item["body"]
+    wamid           = item["wamid"]
+
+    # Aviso al agente (best-effort; trae su propio try adentro).
+    if item["is_text"]:
         await avisar_al_agente(user_id, contact, conv["id"], body)
+    else:
+        await avisar_al_agente(user_id, contact, conv["id"],
+                               f"Te mandó un {item['msg_type']} por WhatsApp.")
 
-        if not ia_global:
-            continue  # el agente apagó Recepción para todo
-        if not conv.get("ai_enabled", True):
-            continue  # el agente tomó el control de este chat
+    if user_id not in cache_entren:
+        cache_entren[user_id] = await entrenamiento(user_id)
+    entren = cache_entren[user_id]
 
-        # ── BARRERAS DURAS (entrenamiento) ─────────────────────────────────
-        # Van en código, no en el prompt: un modelo se puede saltar una
-        # instrucción, un if no. Cualquiera de estas apaga la IA o la calla.
+    # No-texto (imagen, audio, etc.): solo cortesía si la IA puede hablar, y salir.
+    if not item["is_text"]:
+        if ia_global and conv.get("ai_enabled", True) and _ia_puede_hablar(entren)[0]:
+            await wa_send_text(phone_number_id, from_wa,
+                               "Gracias por tu mensaje. Por aquí te leo mejor en texto, "
+                               "¿me cuentas qué estás buscando?", token=token)
+        return
 
-        # 1) Palabra que escala al humano
-        palabra = _palabra_que_escala(body, entren)
-        if palabra:
-            await sb_patch("wa_conversations", {"id": f"eq.{conv['id']}"},
-                           {"ai_enabled": False, "updated_at": _now()})
-            await avisar_al_agente(user_id, contact, conv["id"],
-                                   f"Recepción se apagó en este chat: el prospecto mencionó "
-                                   f"'{palabra}'. Te toca a ti.")
-            log.info("Escalado a humano por palabra '%s' (conv=%s)", palabra, conv["id"])
-            continue
+    if not ia_global:
+        return  # el agente apagó Recepción para todo
+    if not conv.get("ai_enabled", True):
+        return  # el agente tomó el control de este chat
 
-        # 2) Tope de mensajes de la IA en esta conversación
-        tope = int(entren.get("max_mensajes_ia") or 0)
-        if tope > 0 and int(conv.get("ai_msg_count") or 0) >= tope:
-            await sb_patch("wa_conversations", {"id": f"eq.{conv['id']}"},
-                           {"ai_enabled": False, "updated_at": _now()})
-            await avisar_al_agente(user_id, contact, conv["id"],
-                                   f"Recepción ya mandó {tope} mensajes en este chat y se apagó. "
-                                   "Te toca a ti.")
-            continue
+    # ── BARRERAS DURAS (entrenamiento) ─────────────────────────────────────
+    # Van en código, no en el prompt: un modelo se puede saltar una instrucción,
+    # un if no. Cualquiera de estas apaga la IA o la calla.
 
-        # 3) Entrenamiento pausado u horario de atención
-        puede, msg_fuera = _ia_puede_hablar(entren)
-        if not puede:
-            if msg_fuera:
-                sent = await wa_send_text(phone_number_id, from_wa, msg_fuera, token=token)
-                if sent["ok"]:
-                    await store_message(user_id, contact["id"], conv["id"],
-                                        sent["message_id"] or f"local-{wamid}",
-                                        "out", "ai", msg_fuera, status="sent")
-            continue
+    # 1) Palabra que escala al humano
+    palabra = _palabra_que_escala(body, entren)
+    if palabra:
+        await sb_patch("wa_conversations", {"id": f"eq.{conv['id']}"},
+                       {"ai_enabled": False, "updated_at": _now()})
+        await avisar_al_agente(user_id, contact, conv["id"],
+                               f"Recepción se apagó en este chat: el prospecto mencionó "
+                               f"'{palabra}'. Te toca a ti.")
+        log.info("Escalado a humano por palabra '%s' (conv=%s)", palabra, conv["id"])
+        return
 
-        history = await fetch_history(conv["id"])
-        agente  = await perfil_agente(user_id, numero.get("waba_name"))
-        result  = await recepcion_responde(history, conv.get("property_ctx"), agente, entren)
-        reply   = (result or {}).get("reply")
+    # 2) Tope de mensajes de la IA en esta conversación
+    tope = int(entren.get("max_mensajes_ia") or 0)
+    if tope > 0 and int(conv.get("ai_msg_count") or 0) >= tope:
+        await sb_patch("wa_conversations", {"id": f"eq.{conv['id']}"},
+                       {"ai_enabled": False, "updated_at": _now()})
+        await avisar_al_agente(user_id, contact, conv["id"],
+                               f"Recepción ya mandó {tope} mensajes en este chat y se apagó. "
+                               "Te toca a ti.")
+        return
 
-        # anti-choque: si el agente contestó desde su cel mientras tanto, la IA ya no manda
-        if reply and await ai_sigue_encendida(conv["id"], user_id):
-            sent = await wa_send_text(phone_number_id, from_wa, reply, token=token)
-            # Se guarda igual aunque falle —el agente tiene que ver que Recepción
-            # intentó contestar— pero marcado como failed, no como entregado.
-            await store_message(user_id, contact["id"], conv["id"],
-                                sent["message_id"] or f"local-{wamid}",
-                                "out", "ai", reply,
-                                status="sent" if sent["ok"] else "failed")
+    # 3) Entrenamiento pausado u horario de atención
+    puede, msg_fuera = _ia_puede_hablar(entren)
+    if not puede:
+        if msg_fuera:
+            sent = await wa_send_text(phone_number_id, from_wa, msg_fuera, token=token)
             if sent["ok"]:
-                await sumar_msg_ia(conv["id"], conv.get("ai_msg_count"))
+                await store_message(user_id, contact["id"], conv["id"],
+                                    sent["message_id"] or f"local-{wamid}",
+                                    "out", "ai", msg_fuera, status="sent")
+        return
 
-                # Acciones grandes que pidió la IA. Solo si el aviso salió y la IA
-                # sigue encendida: no le mandamos inmuebles ni citas a un chat que
-                # el agente acaba de tomar.
-                accion = (result or {}).get("accion")
-                if isinstance(accion, dict):
-                    tipo = accion.get("tipo")
-                    if tipo == "enviar_inmuebles":
-                        try:
-                            n = await _enviar_inmuebles(user_id, phone_number_id, from_wa,
-                                                        accion.get("filtros") or {}, contact,
-                                                        conv["id"], token, agente.get("nombre"))
-                            log.info("Recepción envió %s inmueble(s) a %s", n, from_wa)
-                        except Exception as e:
-                            log.exception("Falló enviar inmuebles a %s: %s", from_wa, e)
-                    elif tipo == "agendar_visita":
-                        try:
-                            ok = await _accion_agendar_visita(user_id, phone_number_id, from_wa,
-                                                              accion, contact, conv["id"], token,
-                                                              agente.get("nombre"))
-                            log.info("Recepción agendó cita=%s con %s", ok, from_wa)
-                        except Exception as e:
-                            log.exception("Falló agendar visita con %s: %s", from_wa, e)
-            else:
-                log.error("Recepción no pudo responder a %s: %s", from_wa, sent["error"])
+    history = await fetch_history(conv["id"])
+    agente  = await perfil_agente(user_id, item.get("waba_name"))
+    result  = await recepcion_responde(history, conv.get("property_ctx"), agente, entren)
+    reply   = (result or {}).get("reply")
 
-        await actualizar_calificacion(contact["id"], result)
+    # anti-choque: si el agente contestó desde su cel mientras tanto, la IA ya no manda
+    if reply and await ai_sigue_encendida(conv["id"], user_id):
+        sent = await wa_send_text(phone_number_id, from_wa, reply, token=token)
+        # Se guarda igual aunque falle —el agente tiene que ver que Recepción
+        # intentó contestar— pero marcado como failed, no como entregado.
+        await store_message(user_id, contact["id"], conv["id"],
+                            sent["message_id"] or f"local-{wamid}",
+                            "out", "ai", reply,
+                            status="sent" if sent["ok"] else "failed")
+        if sent["ok"]:
+            await sumar_msg_ia(conv["id"], conv.get("ai_msg_count"))
+
+            # Acciones grandes que pidió la IA. Solo si el aviso salió y la IA
+            # sigue encendida: no le mandamos inmuebles ni citas a un chat que
+            # el agente acaba de tomar.
+            accion = (result or {}).get("accion")
+            if isinstance(accion, dict):
+                tipo = accion.get("tipo")
+                if tipo == "enviar_inmuebles":
+                    try:
+                        n = await _enviar_inmuebles(user_id, phone_number_id, from_wa,
+                                                    accion.get("filtros") or {}, contact,
+                                                    conv["id"], token, agente.get("nombre"))
+                        log.info("Recepción envió %s inmueble(s) a %s", n, from_wa)
+                    except Exception as e:
+                        log.exception("Falló enviar inmuebles a %s: %s", from_wa, e)
+                elif tipo == "agendar_visita":
+                    try:
+                        ok = await _accion_agendar_visita(user_id, phone_number_id, from_wa,
+                                                          accion, contact, conv["id"], token,
+                                                          agente.get("nombre"))
+                        log.info("Recepción agendó cita=%s con %s", ok, from_wa)
+                    except Exception as e:
+                        log.exception("Falló agendar visita con %s: %s", from_wa, e)
+        else:
+            log.error("Recepción no pudo responder a %s: %s", from_wa, sent["error"])
+
+    await actualizar_calificacion(contact["id"], result)
 
 
 async def process_echo(value: dict):
@@ -418,7 +523,8 @@ async def process_echo(value: dict):
         # segundo. El patch de abajo la apagaría igual, pero no antes de que un
         # webhook simultáneo pudiera leerla en True.
         conv = await get_or_create_conversation(user_id, contact, None, phone_number_id, False)
-        await store_message(user_id, contact["id"], conv["id"], wamid or f"echo-{to_wa}", "out", "agent", body)
+        await store_message(user_id, contact["id"], conv["id"], wamid or f"echo-{to_wa}", "out", "agent", body,
+                            created_at=_wa_ts(echo))
         # Si contestó desde su propio WhatsApp, ya lo leyó: el globito se baja.
         await sb_patch("wa_conversations", {"id": f"eq.{conv['id']}"},
                        {"ai_enabled": False, "unread_count": 0})
@@ -1327,35 +1433,52 @@ async def sumar_msg_ia(conversation_id, actual):
 
 
 async def store_message(user_id, contact_id, conversation_id, wa_message_id, direction, sender, body,
-                        status: str | None = None):
+                        status: str | None = None, created_at: str | None = None):
     """status: 'sent' | 'failed' | None (entrantes). La columna ya existía en el
     esquema pero nadie la escribía, así que un mensaje rechazado por Meta se veía
-    idéntico a uno entregado."""
+    idéntico a uno entregado.
+
+    created_at: la hora REAL del mensaje. Para entrantes es la que manda WhatsApp
+    (_wa_ts); para salientes (IA/agente) es ahora. Siempre se escribe de forma
+    explícita para NO depender del default de la columna: así la bandeja ordena
+    y muestra la hora correcta aunque el default se haya perdido en producción."""
     # Si el contacto o la conversación no se pudieron crear/releer arriba, sus ids
     # llegan en None. Insertar así truena por NOT NULL y, peor, deja el mensaje
     # perdido en silencio. Mejor abortar claro y dejarlo en el log.
     if not conversation_id or not contact_id:
         log.error("store_message abortado por ids nulos (conv=%s contact=%s sender=%s)",
                   conversation_id, contact_id, sender)
-        return
+        return False
 
     fila = {"user_id": user_id, "contact_id": contact_id, "conversation_id": conversation_id,
-            "wa_message_id": wa_message_id, "direction": direction, "sender": sender, "body": body}
+            "wa_message_id": wa_message_id, "direction": direction, "sender": sender, "body": body,
+            "created_at": created_at or _now()}
     if status:
         fila["status"] = status
     # return=representation (no minimal) para poder VERIFICAR que la fila aterrizó.
     guardado = await sb_post("wa_messages", fila)
+    ok = bool(guardado)
     if not guardado and wa_message_id and not str(wa_message_id).startswith("local-"):
         # sb_post ya reintentó ante timeouts. Si aun así no hubo fila, puede ser
         # un duplicado legítimo (Meta reentregó y ya estaba) o una pérdida real.
-        # Releemos por wa_message_id: si NO está, es que se perdió de verdad y hay
-        # que verlo en el log — es justo el "no se actualiza la conversación".
+        # Releemos por wa_message_id: si YA está, se guardó (carrera/reintento) y
+        # damos ok. Si NO está, se perdió de verdad: lo dejamos en el log y
+        # devolvemos False para que el webhook le pida reintento a Meta.
         ya = await sb_get("wa_messages",
                           {"wa_message_id": f"eq.{wa_message_id}", "select": "id", "limit": "1"})
-        if not ya:
+        if ya:
+            ok = True
+        else:
+            ok = False
             log.error("wa_messages NO guardado (mensaje perdido): conv=%s sender=%s wamid=%s",
                       conversation_id, sender, wa_message_id)
+    elif not guardado:
+        # id 'local-' (saliente de IA/agente sin id de Meta): no forzamos reintento
+        # del webhook por esto; el mensaje del prospecto —lo crítico— ya se guardó
+        # aparte. Lo damos por ok para no reprocesar de más.
+        ok = True
     await sb_patch("wa_conversations", {"id": f"eq.{conversation_id}"}, {"last_message_at": _now()})
+    return ok
 
 
 async def sumar_no_leido(conversation_id) -> int:
