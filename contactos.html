@@ -1399,7 +1399,7 @@ function contactosFiltrados() {
   return todos.filter(c => {
     const okTipo = filtroActual === 'todos' || c.tipo === filtroActual;
     const okQ = !q || [c.nombre, c.telefono, c.email, c.empresa].some(v => (v||'').toLowerCase().includes(q));
-    const okEtapa = !filtroEtapa || (filtroEtapa === '__sin' ? !c.etapa : c.etapa === filtroEtapa);
+    const okEtapa = !filtroEtapa || (filtroEtapa === '__sin' ? !c.estatus : String(c.estatus||'').toLowerCase() === filtroEtapa);
     const okAgente = !filtroAgente || (filtroAgente === '__sin' ? !c.agente_asignado : String(c.agente_asignado) === filtroAgente);
     return okTipo && okQ && okEtapa && okAgente;
   });
@@ -1489,7 +1489,8 @@ function renderLista() {
   }
   lista.innerHTML = filtrados.map(c => {
     const sub = c.telefono || c.email || c.empresa || '';
-    const etapaDot = c.etapa ? `<span class="etapa-dot etapa-${esc(c.etapa)}" title="${esc(etapaLabel(c.etapa))}"></span>` : '';
+    const eInfo = c.estatus ? etapaInfo(c.estatus) : null;
+    const etapaDot = eInfo ? `<span class="etapa-dot" style="background:${eInfo.color}" title="${esc(eInfo.nombre)}"></span>` : '';
     const agNom = (!IS_PICKER && c.agente_asignado) ? nombreAgente(c.agente_asignado) : '';
     const agChip = agNom ? `<span class="agente-chip" title="Agente: ${esc(agNom)}">${esc(initials(agNom))}</span>` : '';
     const pickerCls = IS_PICKER ? ' picker-mode' : '';
@@ -1511,34 +1512,31 @@ function renderLista() {
 
 /* ── Tablero Kanban ──────────────────────────────────────────────── */
 function etapaColor(v) {
-  return ({
-    nuevo: 'var(--info)', activo: 'var(--warn)', contactado: 'var(--sky-navy)',
-    cerrado: 'var(--success)', descartado: 'var(--mute)'
-  })[v] || 'var(--line-3)';
+  return v ? etapaInfo(v).color : 'var(--line-3)';
 }
 
 function renderTablero() {
   if (!_miembrosLoaded) cargarMiembros().then(() => renderActual());
   const cont = document.getElementById('tablero');
-  const cols = [{ v: '', l: 'Sin etapa' }].concat(ETAPAS);
+  const cols = [{ clave: '', nombre: 'Sin etapa', color: 'var(--line-3)' }].concat(ETAPAS);
   const grupos = {};
-  cols.forEach(col => { grupos[col.v] = []; });
+  cols.forEach(col => { grupos[col.clave] = []; });
   contactosFiltrados().forEach(c => {
-    const k = (c.etapa && grupos[c.etapa] !== undefined) ? c.etapa : '';
-    grupos[k].push(c);
+    const k = String(c.estatus || '').toLowerCase();
+    grupos[(k && grupos[k] !== undefined) ? k : ''].push(c);
   });
   cont.innerHTML = cols.map(col => {
-    const cards = grupos[col.v];
+    const cards = grupos[col.clave];
     const inner = cards.length
       ? cards.map(c => tarjetaBoard(c)).join('')
       : '<div class="board-empty">Vacío</div>';
-    return `<div class="board-col" data-etapa="${esc(col.v)}"
+    return `<div class="board-col" data-etapa="${esc(col.clave)}"
                  ondragover="boardDragOver(event,this)"
                  ondragleave="this.classList.remove('drag-over')"
                  ondrop="boardDrop(event,this)">
       <div class="board-col__head">
-        <span class="board-col__dot" style="background:${etapaColor(col.v)}"></span>
-        <span class="board-col__title">${esc(col.l)}</span>
+        <span class="board-col__dot" style="background:${col.color || etapaColor(col.clave)}"></span>
+        <span class="board-col__title">${esc(col.nombre)}</span>
         <span class="board-col__count">${cards.length}</span>
       </div>
       <div class="board-col__body">${inner}</div>
@@ -1579,16 +1577,16 @@ function boardDrop(e, col) {
   if (id) moverEtapa(id, col.dataset.etapa || '');
 }
 
-async function moverEtapa(id, etapa) {
+async function moverEtapa(id, estatus) {
   const c = _contactosMem.find(x => String(x.id) === String(id));
   if (!c) return;
-  const prev = c.etapa || '';
-  if (prev === etapa) return;
-  c.etapa = etapa;
-  if (detContacto && String(detContacto.id) === String(id)) detContacto.etapa = etapa;
+  const prev = c.estatus || '';
+  if (String(prev).toLowerCase() === estatus) return;
+  c.estatus = estatus;
+  if (detContacto && String(detContacto.id) === String(id)) detContacto.estatus = estatus;
   renderTablero();
-  try { await patchContacto(id, { etapa: etapa || null }); }
-  catch (e) { c.etapa = prev; renderTablero(); showToast('No se pudo mover el contacto'); }
+  try { await patchContacto(id, { estatus: estatus || null, fecha_cambio_estatus: new Date().toISOString() }); }
+  catch (e) { c.estatus = prev; renderTablero(); showToast('No se pudo mover el contacto'); }
 }
 
 function seleccionarContacto(id) {
@@ -1836,20 +1834,51 @@ function abrirDetalle(id) {
   document.getElementById('detail-ov').classList.add('open');
 }
 
-const ETAPAS = [
-  { v: 'nuevo',      l: 'Nuevo' },
-  { v: 'activo',     l: 'Activo' },
-  { v: 'contactado', l: 'Contactado' },
-  { v: 'cerrado',    l: 'Cerrado' },
-  { v: 'descartado', l: 'Descartado' },
+/* Etapas del pipeline: mismo sistema que leads.html y estadísticas
+   (contactos.estatus + tabla pipeline_etapas personalizable). */
+const ETAPAS_DEFAULT = [
+  { clave: 'nuevo',      nombre: 'Nuevo',      color: 'var(--forest)'  },
+  { clave: 'activo',     nombre: 'Activo',     color: 'var(--success)' },
+  { clave: 'contactado', nombre: 'Contactado', color: 'var(--warn)'    },
+  { clave: 'cerrado',    nombre: 'Cerrado',    color: 'var(--ink-3)'   },
 ];
+let ETAPAS = ETAPAS_DEFAULT.slice();
+
+async function cargarEtapas() {
+  try {
+    const rows = await restGet('pipeline_etapas?select=nombre,orden,color&order=orden.asc');
+    if (Array.isArray(rows) && rows.length) {
+      ETAPAS = rows.map(r => ({
+        clave: String(r.nombre || '').toLowerCase().trim(),
+        nombre: r.nombre,
+        color: r.color || 'var(--forest)',
+      })).filter(e => e.clave);
+    }
+  } catch (e) { /* si falla, quedan las default */ }
+  poblarFiltroEtapa();
+}
+
+function etapaInfo(clave) {
+  const k = String(clave || '').toLowerCase();
+  return ETAPAS.find(e => e.clave === k) ||
+    { clave: k, nombre: k ? (k.charAt(0).toUpperCase() + k.slice(1)) : '', color: 'var(--mute)' };
+}
+
+function poblarFiltroEtapa() {
+  const sel = document.getElementById('filtro-etapa');
+  if (!sel) return;
+  const val = sel.value;
+  sel.innerHTML = '<option value="">Todas las etapas</option>' +
+    ETAPAS.map(e => `<option value="${esc(e.clave)}">${esc(e.nombre)}</option>`).join('') +
+    '<option value="__sin">Sin etapa</option>';
+  sel.value = val;
+}
+
 const PROBS = [
   { v: 'baja',  l: 'Baja' },
   { v: 'media', l: 'Media' },
   { v: 'alta',  l: 'Alta' },
 ];
-
-function etapaLabel(v) { const e = ETAPAS.find(x => x.v === v); return e ? e.l : (v || ''); }
 
 let _miembros = null;         // cache del equipo: [{user_id, nombre, email, activo}]
 let _miembrosLoaded = false;
@@ -1902,9 +1931,11 @@ async function setAgente(v) {
 }
 
 function renderControles(c) {
-  const etapa = c.etapa || '';
+  const est = String(c.estatus || '').toLowerCase();
   document.getElementById('det-pipeline').innerHTML = ETAPAS.map(e =>
-    `<button type="button" class="etapa-pill ${etapa === e.v ? 'is-on' : ''}" onclick="setEtapa('${e.v}')">${e.l}</button>`
+    `<button type="button" class="etapa-pill ${est === e.clave ? 'is-on' : ''}"
+             style="${est === e.clave ? `background:${e.color};border-color:${e.color};color:var(--paper)` : ''}"
+             onclick="setEstatus('${esc(e.clave)}')">${esc(e.nombre)}</button>`
   ).join('');
   const prob = c.probabilidad || '';
   document.getElementById('det-prob').innerHTML = PROBS.map(p =>
@@ -1925,14 +1956,15 @@ async function patchContacto(id, fields) {
   if (c) Object.assign(c, fields);
 }
 
-async function setEtapa(v) {
+async function setEstatus(v) {
   if (!detContacto) return;
-  const prev = detContacto.etapa || '';
-  const nuevo = (prev === v) ? '' : v;   // volver a tocar la misma etapa la quita
-  detContacto.etapa = nuevo;
+  const prev = detContacto.estatus || '';
+  const nuevo = (String(prev).toLowerCase() === v) ? '' : v;   // volver a tocar la misma etapa la quita
+  detContacto.estatus = nuevo;
   renderControles(detContacto);
-  try { await patchContacto(detContacto.id, { etapa: nuevo || null }); renderActual(); }
-  catch (e) { detContacto.etapa = prev; renderControles(detContacto); showToast('No se pudo guardar la etapa'); }
+  const campos = { estatus: nuevo || null, fecha_cambio_estatus: new Date().toISOString() };
+  try { await patchContacto(detContacto.id, campos); renderActual(); }
+  catch (e) { detContacto.estatus = prev; renderControles(detContacto); showToast('No se pudo guardar la etapa'); }
 }
 
 async function setProbabilidad(v) {
@@ -2271,6 +2303,7 @@ async function _waitForShell(maxMs) {
 
   // 3) Contactos
   try {
+    await cargarEtapas();
     await cargarRemoto();
     renderActual();
     const params = new URLSearchParams(window.location.search);
