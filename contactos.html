@@ -592,6 +592,13 @@ html, body { background: var(--paper); }
 .prob-opt.prob-baja.is-on  { background: var(--mute);     color: var(--paper); }
 .prob-opt.prob-media.is-on { background: var(--sky-navy); color: var(--paper); }
 .prob-opt.prob-alta.is-on  { background: var(--forest);   color: var(--paper); }
+.det-agente {
+  border: 1px solid var(--line); background: var(--bone); color: var(--ink);
+  border-radius: var(--r-pill); padding: 6px 13px;
+  font-size: var(--fs-sm); font-weight: 600; font-family: inherit;
+  cursor: pointer; max-width: 220px;
+}
+.det-agente:hover { border-color: var(--line-3); }
 .nota-box {
   background: var(--bone);
   border: 1px solid var(--line);
@@ -1024,6 +1031,10 @@ html, body { background: var(--paper); }
       <div class="det-control-group">
         <span class="det-control-lbl">Probabilidad</span>
         <div class="det-prob" id="det-prob"></div>
+      </div>
+      <div class="det-control-group" id="det-agente-group" style="display:none">
+        <span class="det-control-lbl">Agente asignado</span>
+        <select class="det-agente" id="det-agente" onchange="setAgente(this.value)"></select>
       </div>
     </div>
     <div class="det-tabs">
@@ -1594,6 +1605,7 @@ function abrirDetalle(id) {
 
   renderDetInfo(c);
   renderControles(c);
+  cargarMiembros().then(() => { if (detContacto && String(detContacto.id) === String(c.id)) renderAgente(c); });
   document.getElementById('hist-feed').innerHTML = '';
   document.getElementById('props-feed').innerHTML = '';
   document.getElementById('dtab-n-hist').textContent = '·';
@@ -1615,6 +1627,55 @@ const PROBS = [
   { v: 'media', l: 'Media' },
   { v: 'alta',  l: 'Alta' },
 ];
+
+let _miembros = null;         // cache del equipo: [{user_id, nombre, email, activo}]
+let _miembrosLoaded = false;
+
+async function cargarMiembros() {
+  if (_miembrosLoaded) return _miembros;
+  _miembrosLoaded = true;
+  try {
+    const token = await _sb().ensureToken();
+    if (!token) { _miembros = null; return null; }
+    const r = await fetch('https://api.broquer.app/org/miembros', {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    if (!r.ok) { _miembros = null; return null; }
+    const d = await r.json();
+    _miembros = (d.miembros || []).filter(m => m.activo !== false);
+  } catch (e) { _miembros = null; }
+  return _miembros;
+}
+
+function nombreAgente(userId) {
+  if (!userId || !_miembros) return '';
+  const m = _miembros.find(x => String(x.user_id) === String(userId));
+  return m ? (m.nombre || m.email || '') : '';
+}
+
+function renderAgente(c) {
+  const wrap = document.getElementById('det-agente-group');
+  // Solo tiene sentido si hay equipo (cuenta empresa con miembros)
+  if (!_miembros || _miembros.length === 0) { wrap.style.display = 'none'; return; }
+  wrap.style.display = '';
+  const cur = c.agente_asignado || '';
+  const opts = ['<option value="">Sin asignar</option>'].concat(
+    _miembros.map(m => {
+      const nom = m.nombre || m.email || 'Miembro';
+      const sel = String(m.user_id) === String(cur) ? ' selected' : '';
+      return `<option value="${esc(m.user_id)}"${sel}>${esc(nom)}</option>`;
+    })
+  );
+  document.getElementById('det-agente').innerHTML = opts.join('');
+}
+
+async function setAgente(v) {
+  if (!detContacto) return;
+  const prev = detContacto.agente_asignado || '';
+  detContacto.agente_asignado = v || '';
+  try { await patchContacto(detContacto.id, { agente_asignado: v || null }); renderActual(); }
+  catch (e) { detContacto.agente_asignado = prev; renderAgente(detContacto); showToast('No se pudo asignar el agente'); }
+}
 
 function renderControles(c) {
   const etapa = c.etapa || '';
