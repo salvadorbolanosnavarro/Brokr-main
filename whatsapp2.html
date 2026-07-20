@@ -29,6 +29,7 @@
   .w2-chip-num__dot{ width:8px; height:8px; border-radius:50%; background:var(--mute-2); flex:none; }
   .w2-chip-num__dot.is-on{ background:var(--success); }
   .w2-chip-num.is-active .w2-chip-num__dot{ background:#fff; }
+  .w2-chip-num__warn{ color:var(--danger); font-weight:800; }
 
   /* ── Tabs internos ────────────────────────────────────────── */
   .w2-tabs{ display:flex; gap:var(--sp-2); margin-bottom:var(--sp-5); border-bottom:1px solid var(--line); }
@@ -323,9 +324,28 @@ async function w2ExchangeCode(code){
       })
     });
     const d = await r.json();
-    if(r.ok && d.ok){ toast('Número conectado.'); await w2CargarNumeros(); }
-    else{ toast(d.detail || 'No se pudo conectar el número.'); }
+    if(r.ok && d.ok){
+      if(d.webhook_verificado){
+        toast('Número conectado y verificado con Meta.');
+      } else {
+        toast(d.advertencia || 'Número guardado, pero Meta no confirmó la conexión todavía. Verifica en unos minutos.');
+      }
+      await w2CargarNumeros();
+    } else{ toast(d.detail || 'No se pudo conectar el número.'); }
   }catch(e){ toast('Error de conexión. Intenta de nuevo.'); }
+}
+
+async function w2VerificarNumero(id, ev){
+  if(ev) ev.stopPropagation();
+  toast('Verificando con Meta…');
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/numeros/' + id + '/verificar', { headers: w2Auth() });
+    const d = await r.json();
+    if(!r.ok){ toast(d.detail || 'No se pudo verificar.'); return; }
+    toast(d.webhook_verificado ? 'Confirmado: este número manda sus mensajes a WhatsApp 2.0.'
+                                : 'Meta dice que este número NO está apuntando a WhatsApp 2.0 todavía.');
+    await w2CargarNumeros();
+  }catch(e){ toast('No se pudo verificar.'); }
 }
 
 /* ── Estado ───────────────────────────────────────────────── */
@@ -364,8 +384,11 @@ function w2RenderNumeros(){
                 <span class="w2-chip-num__dot is-on"></span> Todos los números
               </button>`;
   for(const n of W2_NUMEROS){
+    const sinVerificar = !n.webhook_verificado;
     html += `<button class="w2-chip-num ${W2_NUMERO_ACTUAL===n.id?'is-active':''}" onclick="w2SeleccionarNumero('${n.id}')">
                <span class="w2-chip-num__dot ${n.ia_enabled!==false?'is-on':''}"></span> ${n.alias || n.display_number || 'Número'}
+               ${sinVerificar ? `<span class="w2-chip-num__warn" title="Meta no ha confirmado que este número mande sus mensajes aquí">sin verificar</span>
+               <span class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2VerificarNumero('${n.id}', event)">Verificar</span>` : ''}
              </button>`;
   }
   html += `<button class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2ConectarNumero()">+ Conectar número</button>`;

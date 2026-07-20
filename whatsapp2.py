@@ -318,13 +318,38 @@ async def wa2_connect(req: ConnectReq, request: Request):
         created = await sb_post("wa2_numeros", payload)
         numero_id = created[0]["id"] if created else None
 
-    # Suscribe la app a ESTA waba con callback ALTERNO -> nunca toca /whatsapp/webhook
+    if not numero_id:
+        # Antes esto seguía de largo y regresaba "ok":true aunque nada se hubiera
+        # guardado (ej. la tabla wa2_numeros aún no estaba visible para la API justo
+        # después de correr el SQL). Así el usuario creía tener el número conectado
+        # cuando en realidad no había ninguna fila — los mensajes entrantes nunca
+        # encontraban con quién hacer match y se perdían en silencio.
+        raise HTTPException(status_code=500,
+            detail="No se pudo guardar el número en la base de datos. Vuelve a intentar en un minuto "
+                   "(si acabas de correr el SQL de este módulo, Supabase a veces tarda en reconocer las "
+                   "tablas nuevas).")
+
+    # Suscribe la app a ESTA waba con callback ALTERNO -> nunca toca /whatsapp/webhook.
+    # Y LUEGO se verifica leyendo la propia suscripción: Meta puede aceptar la
+    # llamada (200) sin que el override realmente haya quedado activo, así que no
+    # basta con revisar el status code de la petición.
+    override_confirmado = False
     async with httpx.AsyncClient(timeout=15) as c:
         r = await c.post(f"{GRAPH_API}/{waba_id}/subscribed_apps",
                          params={"access_token": business_token},
                          json={"override_callback_uri": WA2_WEBHOOK_URL, "verify_token": WA2_VERIFY_TOKEN})
         if r.status_code >= 400:
             log.error("No se pudo suscribir override_callback_uri de %s: %s", waba_id, r.text)
+        r2 = await c.get(f"{GRAPH_API}/{waba_id}/subscribed_apps", params={"access_token": business_token})
+        if r2.status_code < 300:
+            for app_sub in r2.json().get("data", []):
+                if app_sub.get("override_callback_uri") == WA2_WEBHOOK_URL:
+                    override_confirmado = True
+                    break
+        else:
+            log.error("No se pudo verificar subscribed_apps de %s: %s", waba_id, r2.text)
+
+    await sb_patch("wa2_numeros", {"id": f"eq.{numero_id}"}, {"webhook_verificado": override_confirmado})
 
     if req.coexistence:
         log.info("Coexistencia: se omite /register para %s (ya registrado)", phone_number_id)
@@ -348,9 +373,50 @@ async def wa2_connect(req: ConnectReq, request: Request):
         fila["user_id"] = user_id
         await sb_post("wa2_entrenamiento", fila)
 
-    log.info("WhatsApp2 conectado: user=%s waba=%s phone=%s", user_id, waba_id, phone_number)
-    return {"ok": True, "numero_id": numero_id, "phone_number": phone_number,
-            "waba_name": waba_name, "alias": payload["alias"]}
+    log.info("WhatsApp2 conectado: user=%s waba=%s phone=%s verificado=%s",
+             user_id, waba_id, phone_number, override_confirmado)
+    resultado = {"ok": True, "numero_id": numero_id, "phone_number": phone_number,
+                "waba_name": waba_name, "alias": payload["alias"], "webhook_verificado": override_confirmado}
+    if not override_confirmado:
+        resultado["advertencia"] = (
+            "El número se guardó, pero Meta no confirmó que vaya a mandar los mensajes a "
+            "WhatsApp 2.0. Puede que sigan llegando al WhatsApp original. Usa el botón "
+            "'Verificar conexión' en unos minutos; si sigue en rojo, dímelo.")
+    return resultado
+
+
+@router.get("/numeros/{numero_id}/verificar")
+async def wa2_numero_verificar(numero_id: str, request: Request):
+    """Vuelve a preguntarle a Meta, EN VIVO, si este número de verdad está mandando
+    sus mensajes al webhook de WhatsApp 2.0. No confía en lo que se guardó al conectar:
+    ese estado pudo cambiar después (ej. alguien reconectó el mismo número en el
+    WhatsApp original, lo que le quita el override a este)."""
+    user_id = await _require_user(request)
+    rows = await sb_get("wa2_numeros", {"id": f"eq.{numero_id}", "user_id": f"eq.{user_id}",
+                                        "select": "waba_id,access_token", "limit": "1"})
+    if not rows or not rows[0].get("waba_id") or not rows[0].get("access_token"):
+        raise HTTPException(status_code=404, detail="Número no encontrado")
+    waba_id, token = rows[0]["waba_id"], rows[0]["access_token"]
+    verificado = False
+    callback_actual = None
+    try:
+        async with httpx.AsyncClient(timeout=15) as c:
+            r = await c.get(f"{GRAPH_API}/{waba_id}/subscribed_apps", params={"access_token": token})
+        if r.status_code < 300:
+            for app_sub in r.json().get("data", []):
+                callback_actual = app_sub.get("override_callback_uri")
+                if callback_actual == WA2_WEBHOOK_URL:
+                    verificado = True
+                    break
+        else:
+            raise HTTPException(status_code=502, detail=f"Meta respondió con error: {r.text[:200]}")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"No se pudo consultar a Meta: {e}")
+
+    await sb_patch("wa2_numeros", {"id": f"eq.{numero_id}"}, {"webhook_verificado": verificado})
+    return {"webhook_verificado": verificado, "callback_actual": callback_actual}
 
 
 @router.get("/numeros")
