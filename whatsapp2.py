@@ -62,6 +62,7 @@ WA2_REGISTER_PIN = os.environ.get("WA_REGISTER_PIN", "142857")
 # URL pública propia de este módulo (para el override_callback_uri al suscribir)
 WA2_WEBHOOK_URL  = os.environ.get("WA2_WEBHOOK_URL", "https://api.broquer.app/whatsapp2/webhook")
 
+BROQUER_API_BASE = os.environ.get("BROQUER_API_BASE", "https://api.broquer.app")
 HISTORY_LIMIT = 16
 router = APIRouter(prefix="/whatsapp2", tags=["whatsapp2"])
 
@@ -774,6 +775,80 @@ def _texto_inmueble(p: dict) -> str:
             f"{precio} {p.get('moneda') or 'MXN'}" + (" / mes" if p.get("operacion") == "renta" else ""))
 
 
+def _fotos_a_imagenes(fotos) -> list:
+    out = []
+    for f in (fotos or []):
+        if isinstance(f, str) and f.strip():
+            out.append({"url": f.strip()})
+        elif isinstance(f, dict):
+            u = f.get("url") or f.get("original")
+            if u:
+                out.append({"url": u})
+    return out
+
+
+def _propiedad_para_ficha(p: dict) -> dict:
+    """Mapea una fila de `propiedades` al formato que espera build_ficha_html
+    en main.py (el mismo motor Playwright que usa el módulo de fichas)."""
+    op_raw = (p.get("operacion") or "").strip().lower()
+    op_type = "rental" if op_raw == "renta" else "sale"
+    operations = []
+    if p.get("precio"):
+        operations.append({"type": op_type, "amount": p.get("precio"), "currency": p.get("moneda") or "MXN"})
+    calle = " ".join(filter(None, [str(p.get("calle") or "").strip(), str(p.get("num_exterior") or "").strip()])).strip()
+    return {
+        "public_id": p.get("id") or "", "id": p.get("id") or "",
+        "title": p.get("titulo") or p.get("tipo") or "Propiedad",
+        "property_type": p.get("tipo") or "Propiedad",
+        "operations": operations,
+        "location": {"name": p.get("colonia") or "", "city": p.get("ciudad") or ""},
+        "address": calle,
+        "bedrooms": p.get("recamaras"), "bathrooms": p.get("banos"),
+        "parking_spaces": p.get("estacionamientos"),
+        "construction_size": p.get("m2_construccion"), "lot_size": p.get("m2_terreno"),
+        "description": p.get("descripcion") or "",
+        "property_images": _fotos_a_imagenes(p.get("fotos")),
+    }
+
+
+async def _generar_ficha_pdf(p_ficha: dict) -> tuple[str | None, str | None]:
+    """Llama al MISMO generador de PDF (Playwright) que usa el módulo de
+    Ficha técnica — no se reescribe nada, solo se usa por HTTP. Devuelve
+    (url_publica, filename) o (None, None) si no se pudo generar a tiempo."""
+    try:
+        async with httpx.AsyncClient(timeout=45) as c:
+            r = await c.post(f"{BROQUER_API_BASE}/ficha-pdf", json=p_ficha)
+        if r.status_code >= 400:
+            log.warning("No se pudo generar la ficha PDF: %s %s", r.status_code, r.text[:200])
+            return None, None
+        d = r.json()
+        token = d.get("token")
+        if not token:
+            return None, None
+        return f"{BROQUER_API_BASE}/ficha-pdf/{token}", d.get("filename") or "ficha.pdf"
+    except Exception as e:
+        log.warning("Timeout/error generando ficha PDF: %s", e)
+        return None, None
+
+
+async def _wa_send_document_link(numero: dict, wa_id: str, url: str, filename: str, caption: str = "") -> str | None:
+    """Manda un documento por URL pública directa (sin subirlo primero) —
+    válido porque /ficha-pdf/{token} ya es una URL pública servida por Broquer."""
+    if not numero.get("access_token"):
+        return None
+    async with httpx.AsyncClient(timeout=20) as c:
+        r = await c.post(f"{GRAPH_API}/{numero['phone_number_id']}/messages",
+                         headers={"Authorization": f"Bearer {numero['access_token']}"},
+                         json={"messaging_product": "whatsapp", "to": wa_id, "type": "document",
+                               "document": {"link": url, "filename": filename, "caption": caption[:1024]}})
+        if r.status_code >= 400:
+            log.error("Envío de ficha PDF falló (%s): %s", numero["phone_number_id"], r.text[:300])
+            return None
+        d = r.json()
+        msgs = d.get("messages") or []
+        return msgs[0].get("id") if msgs else None
+
+
 # =============================================================================
 # 5) CITAS / AGENDA (calendario del usuario dentro de Broquer)
 # =============================================================================
@@ -1152,6 +1227,15 @@ async def _procesar_en_segundo_plano(item: dict):
                         wamid2 = await _wa_send_text(numero, item["wa_id"], caption)
                     await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"], wamid2,
                                           "out", "ia", caption, fotos[0] if fotos else None)
+                    # Ficha técnica completa (PDF con todas las fotos y datos):
+                    # mismo motor que usa el módulo de Ficha técnica, solo por HTTP.
+                    url_pdf, filename = await _generar_ficha_pdf(_propiedad_para_ficha(p))
+                    if url_pdf:
+                        wamid3 = await _wa_send_document_link(
+                            numero, item["wa_id"], url_pdf, filename or "ficha.pdf",
+                            f"Ficha técnica: {p.get('titulo') or p.get('tipo') or 'propiedad'}")
+                        await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"], wamid3,
+                                              "out", "ia", f"[ficha técnica adjunta] {filename}", url_pdf)
             elif zona_sin_resultados:
                 # De verdad no hay nada en la zona que pidió: se le dice tal
                 # cual, NUNCA se le manda una propiedad de otra ubicación
