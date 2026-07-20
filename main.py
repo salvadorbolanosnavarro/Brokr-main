@@ -1629,6 +1629,17 @@ _EB_TIPO_MAP = {
     "Casa uso de suelo": "casa",
 }
 
+# Mapeo: estatus EasyBroker → estatus Broquer.
+# Solo migramos estos cuatro: publicadas, apartadas, vendidas y rentadas
+# (las que ya cerraron cuentan como cerradas). El resto (no publicadas,
+# suspendidas, rechazadas) NO se importa.
+_EB_STATUS_MAP = {
+    "published": "activa",
+    "reserved":  "reservada",
+    "sold":      "vendida",
+    "rented":    "rentada",
+}
+
 def _eb_to_brokr(prop_full: dict, user_id: str) -> dict:
     """Mapea una propiedad de EasyBroker al esquema de la tabla propiedades de Brokr."""
     # Conversiones numéricas defensivas
@@ -1806,34 +1817,43 @@ async def easybroker_import_all(request: Request):
     except Exception as e:
         print(f"[import-all] Error leyendo existentes: {e}")
 
-    # ─── Paso 2: paginar listado de EB (solo PUBLISHED) ───
-    # IMPORTANTE: EasyBroker espera search[statuses][]=published.
-    # Mandar statuses[]=published se ignora y devuelve TODAS las propiedades.
-    pagina = 1
-    ids_published = []  # lista de public_ids (orden de EB)
+    # ─── Paso 2: paginar listado de EB por CADA estatus ───
+    # Traemos publicadas + apartadas + vendidas + rentadas. Paginamos por
+    # estatus para saber a qué estatus pertenece cada propiedad y reflejarlo
+    # bien en Broquer (una vendida no debe verse como activa).
+    # IMPORTANTE: EasyBroker espera search[statuses][]=<estatus>.
+    estatus_por_pid = {}     # public_id → estatus Broquer
+    conteo_por_estatus = {}  # estatus EB → cuántas llegaron
+    ids_published = []       # orden de llegada (nombre histórico, se conserva)
     async with httpx.AsyncClient(timeout=30) as client:
-        while pagina <= 200:  # tope duro: 10,000 propiedades
-            r = await client.get(
-                f"{EB_BASE}/properties",
-                headers=eb_headers(user_key),
-                params={"limit": 50, "page": pagina,
-                        "search[statuses][]": "published"}
-            )
-            if r.status_code == 401:
-                raise HTTPException(status_code=401, detail="Tu API key de EasyBroker fue rechazada. Reconéctala en Perfil.")
-            if r.status_code != 200:
-                break
-            data = r.json()
-            content = data.get("content", []) or []
-            if not content:
-                break
-            for p in content:
-                pid = p.get("public_id")
-                if pid:
-                    ids_published.append(pid)
-            if not data.get("pagination", {}).get("next_page"):
-                break
-            pagina += 1
+        for eb_status, brokr_status in _EB_STATUS_MAP.items():
+            pagina = 1
+            n_status = 0
+            while pagina <= 200:  # tope duro por estatus
+                r = await client.get(
+                    f"{EB_BASE}/properties",
+                    headers=eb_headers(user_key),
+                    params={"limit": 50, "page": pagina,
+                            "search[statuses][]": eb_status}
+                )
+                if r.status_code == 401:
+                    raise HTTPException(status_code=401, detail="Tu API key de EasyBroker fue rechazada. Reconéctala en Perfil.")
+                if r.status_code != 200:
+                    break
+                data = r.json()
+                content = data.get("content", []) or []
+                if not content:
+                    break
+                for p in content:
+                    pid = p.get("public_id")
+                    if pid and pid not in estatus_por_pid:
+                        estatus_por_pid[pid] = brokr_status
+                        ids_published.append(pid)
+                        n_status += 1
+                if not data.get("pagination", {}).get("next_page"):
+                    break
+                pagina += 1
+            conteo_por_estatus[eb_status] = n_status
 
     total_eb = len(ids_published)
 
@@ -1861,6 +1881,11 @@ async def easybroker_import_all(request: Request):
             prop_full = rd.json()
             inmueble = _eb_to_brokr(prop_full, user_id)
             inmueble["org_id"] = org_id_import
+            # Estatus según el bucket de EasyBroker de donde vino
+            # (activa / reservada / vendida / rentada).
+            eb_estatus = estatus_por_pid.get(pid)
+            if eb_estatus:
+                inmueble["estatus"] = eb_estatus
             # Preservar notas y estatus del usuario si la fila ya existe
             prev = existentes_por_eb_id.get(pid)
             if prev:
@@ -1918,7 +1943,181 @@ async def easybroker_import_all(request: Request):
         "importadas":       nuevas,           # nuevas filas creadas
         "actualizadas":     actualizadas,     # ya existían y se actualizaron
         "ya_existian":      actualizadas,     # backward-compat con frontend viejo
+        "por_estatus":      conteo_por_estatus,  # cuántas de cada estatus EB
         "errores":          errores
+    }
+
+
+# ════════════════════════════════════════════════════════════════
+# MIGRACIÓN DE FOTOS A STORAGE PROPIO
+# Baja las fotos que hoy viven en los servidores de EasyBroker (o cualquier
+# otro externo) y las re-sube al bucket fotos-propiedades del propio Broquer,
+# dejando en la columna `fotos` las URLs públicas de Broquer. Así las fotos
+# siguen funcionando aunque se cancele la cuenta de EasyBroker.
+#
+# Se procesa en TANDAS: el frontend llama en bucle mostrando progreso, con un
+# cursor (id de la última propiedad revisada). Es IDEMPOTENTE: una foto que ya
+# vive en Broquer se salta, y si una falla se conserva la URL original para
+# reintentarla en la próxima pasada. Sube de a poco (concurrencia baja) para
+# no saturar los IOPS de la instancia.
+# ════════════════════════════════════════════════════════════════
+
+_FOTOS_BUCKET = "fotos-propiedades"
+
+_EXT_POR_MIME = {
+    "image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png",
+    "image/webp": "webp", "image/gif": "gif", "image/heic": "heic",
+}
+
+def _foto_ya_es_de_broquer(url) -> bool:
+    """True si la foto ya vive en el Storage de Broquer (no hay que migrarla)."""
+    return isinstance(url, str) and bool(SUPABASE_URL) and SUPABASE_URL in url
+
+def _foto_migrable(url) -> bool:
+    """True si es una URL http externa que conviene bajar a Broquer."""
+    return (isinstance(url, str)
+            and url.startswith("http")
+            and not _foto_ya_es_de_broquer(url))
+
+
+@app.post("/easybroker/migrar-fotos")
+async def easybroker_migrar_fotos(request: Request):
+    """
+    Baja a Storage propio las fotos externas de las propiedades de la empresa.
+    Se llama por TANDAS desde el frontend (con cursor) para mostrar progreso
+    y no exceder tiempos. Devuelve cuántas propiedades quedan por revisar.
+
+    Body JSON opcional: { "cursor": <id de la última propiedad procesada> }
+    """
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Tu sesión expiró. Vuelve a iniciar sesión.")
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        raise HTTPException(status_code=500, detail="Supabase no está configurado en el servidor.")
+    org_id = await get_org_id_for_user(user_id)
+    if not org_id:
+        raise HTTPException(status_code=403, detail="Tu cuenta no está configurada. Contacta a soporte.")
+
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    cursor = (body or {}).get("cursor")
+
+    sb_headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+    }
+
+    CHUNK = 10  # propiedades por tanda
+
+    # ─── Traer una tanda de propiedades de la empresa (keyset por id) ───
+    params = {
+        "org_id": f"eq.{org_id}",
+        "select": "id,fotos",
+        "order":  "id.asc",
+        "limit":  str(CHUNK),
+    }
+    if cursor:
+        params["id"] = f"gt.{cursor}"
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            r = await client.get(f"{SUPABASE_URL}/rest/v1/propiedades",
+                                 headers=sb_headers, params=params)
+        if r.status_code != 200:
+            raise HTTPException(status_code=500, detail="No se pudo leer el inventario.")
+        filas = r.json() or []
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="No se pudo leer el inventario.")
+
+    propiedades_ok = 0
+    fotos_subidas  = 0
+    errores        = 0
+    ultimo_id      = cursor
+
+    async def _subir_una(client, url):
+        """Baja una foto externa y la sube a Storage. Devuelve la URL nueva o None."""
+        try:
+            rd = await client.get(url, timeout=30.0, follow_redirects=True)
+            if rd.status_code != 200 or not rd.content:
+                return None
+            mime = (rd.headers.get("content-type") or "image/jpeg").split(";")[0].strip().lower()
+            raw = rd.content
+        except Exception:
+            return None
+        ext = _EXT_POR_MIME.get(mime, "jpg")
+        nombre = f"{_uuid.uuid4().hex}.{ext}"
+        try:
+            ru = await client.post(
+                f"{SUPABASE_URL}/storage/v1/object/{_FOTOS_BUCKET}/{nombre}",
+                headers={**sb_headers, "Content-Type": mime},
+                content=raw, timeout=60.0,
+            )
+        except Exception:
+            return None
+        if ru.status_code not in (200, 201):
+            return None
+        return f"{SUPABASE_URL}/storage/v1/object/public/{_FOTOS_BUCKET}/{nombre}"
+
+    async def _resolver(client, f):
+        if _foto_migrable(f):
+            return (f, await _subir_una(client, f))
+        return (f, None)
+
+    async with httpx.AsyncClient(timeout=60) as client:
+        for fila in filas:
+            pid = fila.get("id")
+            ultimo_id = pid
+            fotos = fila.get("fotos") or []
+            if not isinstance(fotos, list) or not any(_foto_migrable(f) for f in fotos):
+                continue
+
+            nuevas = []
+            subidas_prop = 0
+            # Subir de a poco (concurrencia 4) para no saturar la instancia
+            i = 0
+            while i < len(fotos):
+                lote = fotos[i:i+4]
+                resultados = await asyncio.gather(*[_resolver(client, f) for f in lote])
+                for original, nueva in resultados:
+                    if _foto_migrable(original) and nueva:
+                        nuevas.append(nueva)
+                        subidas_prop += 1
+                    else:
+                        # No migrable, o falló (se conserva para reintentar)
+                        nuevas.append(original)
+                i += 4
+
+            if subidas_prop == 0:
+                continue
+
+            # Guardar el array nuevo (solo se toca esta propiedad)
+            try:
+                rp = await client.patch(
+                    f"{SUPABASE_URL}/rest/v1/propiedades",
+                    headers={**sb_headers, "Content-Type": "application/json",
+                             "Prefer": "return=minimal"},
+                    params={"id": f"eq.{pid}"},
+                    json={"fotos": nuevas},
+                )
+                if rp.status_code in (200, 204):
+                    propiedades_ok += 1
+                    fotos_subidas += subidas_prop
+                else:
+                    errores += 1
+            except Exception:
+                errores += 1
+
+    hay_mas = len(filas) == CHUNK
+
+    return {
+        "propiedades_actualizadas": propiedades_ok,
+        "fotos_subidas":            fotos_subidas,
+        "errores":                  errores,
+        "cursor":                   ultimo_id,
+        "hay_mas":                  hay_mas,
     }
 
 
