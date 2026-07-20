@@ -355,7 +355,7 @@
     try {
       ORG = await api('/org');
     } catch (e) {
-      $('#eq-cargando').textContent = 'No se pudo cargar tu equipo. Recarga la página.';
+      $('#eq-cargando').textContent = 'No se pudo cargar tu equipo: ' + (e.message || 'error desconocido') + '. (Mándale este mensaje a Claude.)';
       return;
     }
 
@@ -371,7 +371,7 @@
       data = await api('/org/miembros');
     } catch (e) {
       $('#eq-cargando').hidden = false;
-      $('#eq-cargando').textContent = 'No se pudo cargar la lista.';
+      $('#eq-cargando').textContent = 'No se pudo cargar la lista: ' + (e.message || 'error desconocido') + '. (Mándale este mensaje a Claude.)';
       return;
     }
 
