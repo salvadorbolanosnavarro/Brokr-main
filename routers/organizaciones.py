@@ -29,7 +29,9 @@ router = APIRouter()
 
 # ── Config (mismas env vars que main.py) ──────────────────────────────────
 SUPABASE_URL         = os.getenv("SUPABASE_URL", "").rstrip("/")
-SUPABASE_KEY         = os.getenv("SUPABASE_KEY", "")
+# La anon key en Railway se llama SUPABASE_ANON_KEY (igual que en main.py).
+# Se deja SUPABASE_KEY como respaldo por si en otro entorno tiene ese nombre.
+SUPABASE_KEY         = os.getenv("SUPABASE_ANON_KEY", "") or os.getenv("SUPABASE_KEY", "")
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
 APP_URL              = os.getenv("APP_URL", "https://broquer.app").rstrip("/")
 
