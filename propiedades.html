@@ -412,6 +412,19 @@
 @media (min-width: 760px) {
   .prop-modal-box { border-radius: var(--r-xl); max-height: 88vh; }
 }
+
+/* ── Detalle de inmueble a pantalla completa (solo el detalle, no el editor) ── */
+#prop-detail-modal { align-items: stretch; padding: 0; }
+@media (min-width: 760px) { #prop-detail-modal { align-items: stretch; padding: 0; } }
+#prop-detail-modal .prop-detail-box {
+  max-width: 980px; width: 100%; height: 100dvh; max-height: 100dvh;
+  margin: 0 auto; border-radius: 0; animation: none;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+#prop-detail-modal .prop-modal-hdr,
+#prop-detail-modal .pd-actions,
+#prop-detail-modal .pd-tabs { flex-shrink: 0; }
+#prop-detail-modal .prop-modal-body { flex: 1; overflow-y: auto; min-height: 0; }
 @keyframes slideUp {
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }

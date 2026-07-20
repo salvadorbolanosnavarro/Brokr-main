@@ -624,6 +624,15 @@ html, body { background: var(--paper); }
 }
 .vista-toggle button.is-on { background: var(--sky-navy); color: var(--paper); }
 
+/* ── Subfiltros etapa / agente ── */
+.subfilters { display: flex; gap: 8px; padding: 0 16px 10px; flex-wrap: wrap; }
+.subfilter-sel {
+  border: 1px solid var(--line); background: var(--bone); color: var(--ink);
+  border-radius: var(--r-pill); padding: 7px 14px;
+  font-size: var(--fs-sm); font-weight: 600; font-family: inherit; cursor: pointer;
+}
+.subfilter-sel:hover { border-color: var(--line-3); }
+
 /* ── Tablero Kanban ── */
 .board { display: flex; gap: 14px; overflow-x: auto; padding: 8px 16px 90px; align-items: flex-start; }
 .board-col {
@@ -953,6 +962,20 @@ html, body { background: var(--paper); }
     <button class="ftab" onclick="setFiltro('colega',this)">Colegas</button>
     <button class="ftab" onclick="setFiltro('notario',this)">Notarios</button>
     <button class="ftab" onclick="setFiltro('otro',this)">Otros</button>
+  </div>
+  <div class="subfilters">
+    <select id="filtro-etapa" class="subfilter-sel" onchange="setFiltroEtapa(this.value)">
+      <option value="">Todas las etapas</option>
+      <option value="nuevo">Nuevo</option>
+      <option value="activo">Activo</option>
+      <option value="contactado">Contactado</option>
+      <option value="cerrado">Cerrado</option>
+      <option value="descartado">Descartado</option>
+      <option value="__sin">Sin etapa</option>
+    </select>
+    <select id="filtro-agente" class="subfilter-sel" onchange="setFiltroAgente(this.value)" style="display:none">
+      <option value="">Todos los agentes</option>
+    </select>
   </div>
 </header>
 
@@ -1376,7 +1399,9 @@ function contactosFiltrados() {
   return todos.filter(c => {
     const okTipo = filtroActual === 'todos' || c.tipo === filtroActual;
     const okQ = !q || [c.nombre, c.telefono, c.email, c.empresa].some(v => (v||'').toLowerCase().includes(q));
-    return okTipo && okQ;
+    const okEtapa = !filtroEtapa || (filtroEtapa === '__sin' ? !c.etapa : c.etapa === filtroEtapa);
+    const okAgente = !filtroAgente || (filtroAgente === '__sin' ? !c.agente_asignado : String(c.agente_asignado) === filtroAgente);
+    return okTipo && okQ && okEtapa && okAgente;
   });
 }
 
@@ -1384,6 +1409,21 @@ let _busqT = null;
 function busquedaDebounced() {
   clearTimeout(_busqT);
   _busqT = setTimeout(renderActual, 200);
+}
+
+let filtroEtapa = '';
+let filtroAgente = '';
+function setFiltroEtapa(v) { filtroEtapa = v; renderActual(); }
+function setFiltroAgente(v) { filtroAgente = v; renderActual(); }
+function poblarFiltroAgente() {
+  const sel = document.getElementById('filtro-agente');
+  if (!sel) return;
+  if (!_miembros || _miembros.length === 0) { sel.style.display = 'none'; return; }
+  sel.style.display = '';
+  const opts = ['<option value="">Todos los agentes</option>', '<option value="__sin">Sin asignar</option>']
+    .concat(_miembros.map(m => `<option value="${esc(m.user_id)}">${esc(m.nombre || m.email || 'Miembro')}</option>`));
+  sel.innerHTML = opts.join('');
+  sel.value = filtroAgente;
 }
 
 let vistaActual = 'lista';
@@ -1826,6 +1866,7 @@ async function cargarMiembros() {
     if (!r.ok) { _miembros = null; return null; }
     const d = await r.json();
     _miembros = (d.miembros || []).filter(m => m.activo !== false);
+    poblarFiltroAgente();
   } catch (e) { _miembros = null; }
   return _miembros;
 }
