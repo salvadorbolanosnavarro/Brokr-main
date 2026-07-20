@@ -236,7 +236,7 @@ const TIPO_PROP_LBL = {
 const PALETA = ['var(--sky-blue)', 'var(--sky-navy-mid)', 'var(--forest-2)', 'var(--ink-3)', 'var(--sky-navy)', 'var(--mute)', 'var(--ink-2)', 'var(--mute-2)'];
 
 /* ── Estado ──────────────────────────────────────────────────────── */
-let contactos = [], props = [], interesRows = [];
+let contactos = [], props = [], interesRows = [], actividades = [];
 let periodoActual = 'todo';
 let tabActual = 'resumen';
 
@@ -260,11 +260,12 @@ async function cargarTodo() {
   const body = g('es-body');
   body.innerHTML = '<div class="es-loading">Cargando estadísticas…</div>';
   try {
-    const [et, c, p, ip] = await Promise.all([
+    const [et, c, p, ip, ac] = await Promise.all([
       sbFetch('pipeline_etapas?select=nombre,orden,color&order=orden.asc').catch(() => []),
       sbFetch('contactos?select=id,tipo,estatus,fuente,es_potencial,created_at,fecha_cambio_estatus&limit=5000'),
       sbFetch('propiedades?select=id,titulo,clave_interna,tipo,operacion,estatus,precio,moneda,archivada,created_at,updated_at&limit=3000'),
       sbFetch('contactos_propiedades?select=contacto_id,propiedad_id,relacion&relacion=eq.interes&limit=5000'),
+      sbFetch('actividades?select=tipo,created_at&order=created_at.desc&limit=10000').catch(() => []),
     ]);
     if (Array.isArray(et) && et.length) {
       ETAPAS = et.map(r => ({ clave: String(r.nombre || '').toLowerCase().trim(), nombre: r.nombre, color: r.color || 'var(--forest)' })).filter(e => e.clave);
@@ -272,6 +273,7 @@ async function cargarTodo() {
     contactos = Array.isArray(c) ? c : [];
     props = Array.isArray(p) ? p : [];
     interesRows = Array.isArray(ip) ? ip : [];
+    actividades = Array.isArray(ac) ? ac : [];
     render();
   } catch (e) {
     body.innerHTML = '<div class="es-empty"><p>No se pudieron cargar las estadísticas. ' + esc(e.message || '') + '</p></div>';
@@ -335,6 +337,15 @@ function calcResumenLeads() {
     tasaCierre, cerrados: cerradosEnP.length,
     diasProm, conCambio: conCambio.length,
   };
+}
+
+const ACT_LBL = { nota: 'Notas', cambio_estatus: 'Cambios de etapa', tarea_completada: 'Tareas completadas', otro: 'Otros' };
+function calcActividad() {
+  const enP = actividades.filter(a => enPeriodo(a.created_at));
+  const conteo = {};
+  enP.forEach(a => { const t = a.tipo || 'otro'; conteo[t] = (conteo[t] || 0) + 1; });
+  const arr = Object.entries(conteo).sort((a, b) => b[1] - a[1]);
+  return { total: enP.length, arr, enP };
 }
 
 function calcFuentesLeads() {
@@ -634,6 +645,10 @@ function panelResumen(RL, RP) {
   const serieLeads = countSeries(leadsNuevos, 'created_at', bb);
   const serieCaptadas = countSeries(props, 'created_at', bb);
 
+  const A = calcActividad();
+  const serieAct = countSeries(A.enP, 'created_at', bb);
+  const actEntries = A.arr.map(([tipo, n], i) => ({ label: ACT_LBL[tipo] || tipo, n, color: PALETA[i % PALETA.length] }));
+
   return `
     <div class="es-section">
       <div class="es-section__hdr"><span class="t">Resumen</span></div>
@@ -652,6 +667,16 @@ function panelResumen(RL, RP) {
         { label: 'Leads', color: 'var(--sky-blue)', counts: serieLeads },
         { label: 'Inmuebles', color: 'var(--sky-navy-mid)', counts: serieCaptadas },
       ])}</div>
+    </div>
+
+    <div class="es-section">
+      <div class="es-section__hdr"><span class="t">Actividad del equipo</span><span class="s">notas, cambios de etapa y tareas completadas en el periodo</span></div>
+      ${A.total ? `<div class="es-kpis" style="margin-bottom:14px">
+          <div class="es-kpi bk-card"><div class="es-kpi__n">${nf(A.total)}</div><div class="es-kpi__lbl">Movimientos registrados</div></div>
+        </div>
+        <div class="bk-card" style="margin-bottom:14px">${renderBarsList(actEntries)}</div>
+        <div class="es-trend-wrap bk-card">${renderTrendMulti(bb, [{ label: 'Actividad', color: 'var(--forest-2)', counts: serieAct }])}</div>`
+        : `<div class="es-empty bk-card"><p>Sin actividad registrada en este periodo. Cada nota, cambio de etapa o tarea completada dentro de un contacto o inmueble aparecerá aquí.</p></div>`}
     </div>
   `;
 }
