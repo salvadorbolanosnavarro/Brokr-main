@@ -990,6 +990,10 @@
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
             Importar de EasyBroker
           </button>
+          <button class="btn-import-eb" onclick="migrarFotosABroquer()" title="Baja las fotos de EasyBroker a tu propio servidor">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            Pasar fotos a Broquer
+          </button>
           <button class="btn-new-prop" onclick="openPropForm(null)">
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
             Nuevo inmueble
@@ -2238,6 +2242,100 @@ function cerrarImportEB() {
     fillEl.style.background = '';
     fillEl.style.width = '35%';
   }, 300);
+}
+
+async function migrarFotosABroquer() {
+  // Baja las fotos externas (EasyBroker) al Storage propio, en tandas.
+  const token = await getValidToken();
+  if (!token) {
+    alert('Tu sesión expiró. Vuelve a iniciar sesión.');
+    location.href = 'login.html';
+    return;
+  }
+
+  _ebImportDone = false;
+  const overlay = document.getElementById('eb-import-overlay');
+  const titleEl = document.getElementById('eb-import-title');
+  const msgEl   = document.getElementById('eb-import-msg');
+  const fillEl  = document.getElementById('eb-import-fill');
+  const countEl = document.getElementById('eb-import-count');
+  const sumEl   = document.getElementById('eb-import-summary');
+  const errsEl  = document.getElementById('eb-import-errs');
+  const btnEl   = document.getElementById('eb-import-btn');
+
+  titleEl.textContent = 'Pasando tus fotos a Broquer';
+  msgEl.textContent   = 'Estamos guardando tus fotos en tu propio servidor. Puede tardar varios minutos si tienes muchas propiedades. No cierres esta ventana.';
+  fillEl.classList.add('indet');
+  fillEl.style.width = '35%';
+  fillEl.style.background = '';
+  countEl.textContent = 'Preparando…';
+  sumEl.style.display = 'none';
+  errsEl.style.display = 'none';
+  btnEl.style.display = 'none';
+  overlay.classList.add('is-open');
+
+  let cursor = null;
+  let totalProps = 0, totalFotos = 0, totalErrores = 0, vueltas = 0;
+
+  try {
+    while (true) {
+      vueltas++;
+      if (vueltas > 3000) break;  // guarda dura contra un bucle infinito
+
+      const r = await fetch(API_BASE + '/easybroker/migrar-fotos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ cursor })
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.detail || 'Error al pasar las fotos');
+
+      totalProps   += data.propiedades_actualizadas || 0;
+      totalFotos   += data.fotos_subidas || 0;
+      totalErrores += data.errores || 0;
+      countEl.textContent = totalFotos + ' fotos guardadas · ' + totalProps + ' propiedades listas';
+
+      const nuevoCursor = data.cursor;
+      if (!data.hay_mas) break;
+      if (nuevoCursor === cursor) break;  // no avanzó: cortar por seguridad
+      cursor = nuevoCursor;
+    }
+
+    fillEl.classList.remove('indet');
+    fillEl.style.width = '100%';
+    titleEl.textContent = 'Fotos guardadas en Broquer';
+    msgEl.textContent = totalFotos > 0
+      ? 'Listo. Tus fotos ya viven en tu propio servidor y seguirán funcionando aunque canceles EasyBroker.'
+      : 'Tus fotos ya estaban en Broquer, no hubo nada que pasar.';
+    countEl.innerHTML = '&nbsp;';
+
+    sumEl.style.display = 'block';
+    sumEl.innerHTML =
+      '<div><b>' + totalFotos + '</b> fotos guardadas en tu servidor</div>' +
+      '<div><b>' + totalProps + '</b> propiedades actualizadas</div>';
+
+    if (totalErrores > 0) {
+      errsEl.style.display = 'block';
+      errsEl.innerHTML = '<b>' + totalErrores + ' fotos no se pudieron pasar.</b><br>Vuelve a apretar el botón más tarde: retoma solo las que faltaron, sin duplicar nada.';
+    }
+
+    btnEl.style.display = 'inline-block';
+    btnEl.textContent = 'Entendido';
+    _ebImportDone = true;
+
+    if (totalProps > 0) loadProps();
+
+  } catch (err) {
+    fillEl.classList.remove('indet');
+    fillEl.style.width = '100%';
+    fillEl.style.background = 'var(--danger)';
+    titleEl.textContent = 'Se interrumpió';
+    msgEl.textContent = (err.message || 'Error desconocido') + ' — lo que ya se guardó no se pierde. Puedes volver a apretar el botón para continuar donde se quedó.';
+    countEl.innerHTML = '&nbsp;';
+    btnEl.style.display = 'inline-block';
+    btnEl.textContent = 'Cerrar';
+    _ebImportDone = true;
+  }
 }
 
 /* ════════════════════════════════════════════════════════════════
