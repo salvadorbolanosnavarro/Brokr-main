@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Broquer — WhatsApp 2.0</title>
+<!--
+  Módulo oculto: no está en MODS de app-shell.js, así que no aparece en el
+  menú lateral. Solo se abre escribiendo whatsapp2.html en la barra del
+  navegador (o un link directo). El header sí lo pinta el shell, vía la
+  entrada 'whatsapp2' en PAGE_META.
+-->
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+  .w2-scroll{ padding:24px 28px 64px; max-width:1320px; margin:0 auto; }
+  @media (max-width:720px){ .w2-scroll{ padding:14px 12px 88px; } }
+
+  /* ── Barra de números ─────────────────────────────────────── */
+  .w2-numeros{ display:flex; align-items:center; gap:var(--sp-2); flex-wrap:wrap; margin-bottom:var(--sp-5); }
+  .w2-chip-num{
+    display:inline-flex; align-items:center; gap:var(--sp-2);
+    height:var(--h,44px); padding:0 var(--sp-4); border-radius:var(--r-pill);
+    border:1px solid var(--line); background:var(--bone); color:var(--ink);
+    font-size:var(--fs-sm); font-weight:600; cursor:pointer; white-space:nowrap;
+  }
+  .w2-chip-num.is-active{ background:var(--sky-blue); border-color:var(--sky-blue); color:#fff; }
+  .w2-chip-num__dot{ width:8px; height:8px; border-radius:50%; background:var(--mute-2); flex:none; }
+  .w2-chip-num__dot.is-on{ background:var(--success); }
+  .w2-chip-num.is-active .w2-chip-num__dot{ background:#fff; }
+
+  /* ── Tabs internos ────────────────────────────────────────── */
+  .w2-tabs{ display:flex; gap:var(--sp-2); margin-bottom:var(--sp-5); border-bottom:1px solid var(--line); }
+  .w2-tab{ padding:var(--sp-3) var(--sp-4); font-size:var(--fs-sm); font-weight:700; color:var(--mute);
+           border-bottom:2px solid transparent; cursor:pointer; background:none; border-left:0; border-right:0; border-top:0; }
+  .w2-tab.is-active{ color:var(--ink); border-bottom-color:var(--sky-blue); }
+
+  /* ── Chats ────────────────────────────────────────────────── */
+  .w2-chats{ display:grid; grid-template-columns:290px 1fr 300px; gap:var(--sp-4);
+             height:calc(100vh - 260px); min-height:520px; }
+  @media (max-width:1080px){ .w2-chats{ grid-template-columns:250px 1fr; } .w2-panel{ display:none; } }
+  @media (max-width:720px){ .w2-chats{ height:auto; grid-template-columns:1fr; } }
+
+  .w2-list{ overflow-y:auto; display:flex; flex-direction:column; gap:var(--sp-2); padding-right:4px; }
+  .w2-conv{ display:flex; gap:var(--sp-3); align-items:center; padding:var(--sp-3); border-radius:var(--r);
+            border:1px solid var(--line); background:var(--bone); cursor:pointer; }
+  .w2-conv.is-active{ border-color:var(--sky-blue); box-shadow:var(--focus); }
+  .w2-conv__ava{ width:38px; height:38px; border-radius:50%; background:var(--paper-2); color:var(--mute);
+                 display:flex; align-items:center; justify-content:center; font-weight:700; font-size:var(--fs-xs); flex:none; }
+  .w2-conv__body{ min-width:0; flex:1; }
+  .w2-conv__top{ display:flex; justify-content:space-between; gap:var(--sp-2); }
+  .w2-conv__name{ font-weight:700; font-size:var(--fs-sm); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .w2-conv__sub{ font-size:var(--fs-xs); color:var(--mute); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .w2-conv__unread{ min-width:18px; height:18px; padding:0 5px; border-radius:var(--r-pill); background:var(--sky-blue);
+                     color:#fff; font-size:var(--fs-caption); font-weight:800; display:flex; align-items:center; justify-content:center; }
+
+  .w2-thread{ display:flex; flex-direction:column; border:1px solid var(--line); border-radius:var(--r-lg);
+              background:var(--bone); overflow:hidden; }
+  .w2-thread__head{ padding:var(--sp-3) var(--sp-4); border-bottom:1px solid var(--line); display:flex;
+                     align-items:center; justify-content:space-between; gap:var(--sp-3); }
+  .w2-thread__msgs{ flex:1; overflow-y:auto; padding:var(--sp-4); display:flex; flex-direction:column; gap:var(--sp-2); }
+  .w2-bubble{ max-width:78%; padding:var(--sp-2) var(--sp-3); border-radius:var(--r); font-size:var(--fs-sm); line-height:1.4; }
+  .w2-bubble--in{ align-self:flex-start; background:var(--paper-2); color:var(--ink); }
+  .w2-bubble--out{ align-self:flex-end; background:var(--sky-blue); color:#fff; }
+  .w2-bubble--out.is-agente{ background:var(--forest-2); }
+  .w2-bubble__meta{ font-size:var(--fs-caption); opacity:.7; margin-top:4px; }
+  .w2-composer{ display:flex; gap:var(--sp-2); padding:var(--sp-3); border-top:1px solid var(--line); }
+  .w2-composer textarea{ flex:1; resize:none; }
+
+  .w2-panel{ overflow-y:auto; display:flex; flex-direction:column; gap:var(--sp-4); }
+  .w2-panel .bk-field{ margin-bottom:0; }
+  .w2-nota{ font-size:var(--fs-xs); padding:var(--sp-2); border-radius:var(--r); background:var(--paper-2); }
+  .w2-nota__meta{ color:var(--mute); font-size:var(--fs-caption); margin-top:2px; }
+
+  .w2-empty-thread{ flex:1; display:flex; align-items:center; justify-content:center; color:var(--mute); font-size:var(--fs-sm); }
+
+  /* ── Entrenamiento / Agenda ───────────────────────────────── */
+  .w2-form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-5); }
+  @media (max-width:820px){ .w2-form-grid{ grid-template-columns:1fr; } }
+  .w2-tags{ display:flex; flex-wrap:wrap; gap:var(--sp-2); margin-top:var(--sp-2); }
+
+  .w2-cita-row{ display:flex; align-items:center; gap:var(--sp-3); padding:var(--sp-3); border:1px solid var(--line);
+                border-radius:var(--r); background:var(--bone); margin-bottom:var(--sp-2); }
+  .w2-cita-row__fecha{ font-weight:800; font-size:var(--fs-sm); min-width:120px; }
+</style>
+</head>
+<body data-app="whatsapp2">
+
+<div class="w2-scroll">
+
+  <div class="w2-numeros" id="w2-numeros"></div>
+
+  <div class="w2-tabs">
+    <button class="w2-tab is-active" data-tab="chats" onclick="w2IrATab('chats')">Chats</button>
+    <button class="w2-tab" data-tab="entrenamiento" onclick="w2IrATab('entrenamiento')">Entrenamiento</button>
+    <button class="w2-tab" data-tab="agenda" onclick="w2IrATab('agenda')">Agenda</button>
+  </div>
+
+  <!-- ═══ CHATS ═══ -->
+  <div id="w2-view-chats">
+    <div class="w2-chats">
+      <div class="w2-list" id="w2-list"></div>
+
+      <div class="w2-thread" id="w2-thread">
+        <div class="w2-empty-thread" id="w2-thread-empty">Elige una conversación para verla aquí.</div>
+      </div>
+
+      <div class="w2-panel bk-card bk-card--pad" id="w2-panel" hidden>
+        <div>
+          <span class="bk-eyebrow">Prospecto</span>
+          <h3 style="font-size:var(--fs-h3);margin:var(--sp-2) 0 0;" id="w2-p-nombre">—</h3>
+        </div>
+        <div class="bk-cluster">
+          <span class="bk-badge" id="w2-p-temp">Nuevo</span>
+          <span class="bk-chip" id="w2-p-score">Score 0</span>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label">Etapa</label>
+          <select class="bk-select" id="w2-p-etapa" onchange="w2GuardarEtapa()">
+            <option>Nuevo</option><option>Contactado</option><option>Cita</option>
+            <option>Negociación</option><option>Cierre</option><option>Perdido</option>
+          </select>
+        </div>
+        <div class="bk-field"><label class="bk-label">Presupuesto</label><div class="bk-hint" id="w2-p-presupuesto">—</div></div>
+        <div class="bk-field"><label class="bk-label">Forma de pago</label><div class="bk-hint" id="w2-p-formapago">—</div></div>
+        <div class="bk-field"><label class="bk-label">Busca</label><div class="bk-hint" id="w2-p-busca">—</div></div>
+        <div class="bk-field"><label class="bk-label">Resumen para ti</label><div class="bk-hint" id="w2-p-resumen">—</div></div>
+
+        <div class="bk-cluster" style="justify-content:space-between;">
+          <label class="bk-check"><input type="checkbox" id="w2-p-ia" onchange="w2ToggleIaConv()"/> IA respondiendo</label>
+        </div>
+        <button class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2AbrirModalCita()">Agendar cita</button>
+
+        <div class="bk-divider"></div>
+        <span class="bk-eyebrow">Notas</span>
+        <div id="w2-notas" style="display:flex;flex-direction:column;gap:var(--sp-2);margin-top:var(--sp-2);"></div>
+        <div class="bk-field" style="margin-top:var(--sp-3);">
+          <textarea class="bk-textarea" id="w2-nota-nueva" placeholder="Escribe una nota…" rows="2"></textarea>
+        </div>
+        <button class="bk-btn bk-btn--forest bk-btn--sm" onclick="w2AgregarNota()">Guardar nota</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ENTRENAMIENTO ═══ -->
+  <div id="w2-view-entrenamiento" hidden>
+    <div class="bk-section-header"><h2>Cómo habla tu IA en este número</h2></div>
+    <form class="bk-card bk-card--pad bk-card--raise" onsubmit="event.preventDefault(); w2GuardarEntrenamiento();">
+      <div class="w2-form-grid">
+        <div>
+          <div class="bk-field">
+            <label class="bk-label" for="w2-t-nombre">Nombre con el que se presenta</label>
+            <input class="bk-input" id="w2-t-nombre" placeholder="Ej. Recepción"/>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="w2-t-identidad">Quién es (identidad)</label>
+            <textarea class="bk-textarea" id="w2-t-identidad" rows="3" placeholder="Ej. Eres 'Sofía', el asistente de WhatsApp de Chava, asesor inmobiliario en Morelia."></textarea>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="w2-t-tono">Tono</label>
+            <input class="bk-input" id="w2-t-tono" placeholder="Ej. cálido, directo, sin tecnicismos"/>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="w2-t-objetivo">Objetivo principal</label>
+            <input class="bk-input" id="w2-t-objetivo" placeholder="Ej. calificar y agendar una visita"/>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="w2-t-especialidad">Especialidad / zona</label>
+            <input class="bk-input" id="w2-t-especialidad" placeholder="Ej. casas en Morelia centro"/>
+          </div>
+        </div>
+        <div>
+          <div class="bk-field">
+            <label class="bk-label" for="w2-t-puede">Puede</label>
+            <textarea class="bk-textarea" id="w2-t-puede" rows="2"></textarea>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="w2-t-debe">Debe</label>
+            <textarea class="bk-textarea" id="w2-t-debe" rows="2"></textarea>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="w2-t-nodebe">Nunca</label>
+            <textarea class="bk-textarea" id="w2-t-nodebe" rows="2"></textarea>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="w2-t-datos">Qué debe calificar (separado por comas)</label>
+            <input class="bk-input" id="w2-t-datos" placeholder="presupuesto, forma de pago, para cuándo busca"/>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="w2-t-preguntas">Preguntas extra (separadas por comas)</label>
+            <input class="bk-input" id="w2-t-preguntas" placeholder="¿Ya vendiste tu propiedad actual?"/>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="w2-t-escalar">Palabras que lo pasan contigo (separadas por comas)</label>
+            <input class="bk-input" id="w2-t-escalar" placeholder="hablar con alguien, urgente"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="bk-divider"></div>
+      <div class="bk-field-row">
+        <div class="bk-field">
+          <label class="bk-check"><input type="checkbox" id="w2-t-horario"/> Solo responder en horario</label>
+        </div>
+        <div></div>
+      </div>
+      <div class="bk-field-row">
+        <div class="bk-field"><label class="bk-label">Hora inicio</label><input class="bk-input" type="time" id="w2-t-hi"/></div>
+        <div class="bk-field"><label class="bk-label">Hora fin</label><input class="bk-input" type="time" id="w2-t-hf"/></div>
+      </div>
+      <div class="bk-field">
+        <label class="bk-label" for="w2-t-fuera">Mensaje fuera de horario</label>
+        <input class="bk-input" id="w2-t-fuera" placeholder="Gracias por tu mensaje, en cuanto abramos te contesto."/>
+      </div>
+      <div class="bk-field">
+        <label class="bk-label" for="w2-t-max">Máximo de mensajes seguidos de la IA antes de pasarlo a ti (0 = sin límite)</label>
+        <input class="bk-input" type="number" min="0" id="w2-t-max" style="max-width:160px;"/>
+      </div>
+      <div class="bk-field">
+        <label class="bk-check"><input type="checkbox" id="w2-t-activo" checked/> IA activa en este número</label>
+      </div>
+
+      <div class="bk-cluster" style="justify-content:flex-end;">
+        <button type="submit" class="bk-btn bk-btn--forest">Guardar entrenamiento</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ═══ AGENDA ═══ -->
+  <div id="w2-view-agenda" hidden>
+    <div class="bk-section-header"><h2>Tu agenda</h2></div>
+    <div id="w2-citas"></div>
+    <div class="bk-empty" id="w2-citas-empty" hidden>
+      <div class="bk-empty__icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M16 3v4M8 3v4M3.5 10h17"/></svg></div>
+      <div class="bk-empty__title">Aún no tienes citas</div>
+      <div class="bk-empty__text">Cuando la IA agende una visita, o tú agendes una a mano, aparece aquí.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ Modal: agendar cita a mano ═══ -->
+<div class="bk-overlay" id="w2-modal-cita" hidden>
+  <div class="bk-modal">
+    <div class="bk-modal__head"><span class="bk-modal__title">Agendar cita</span></div>
+    <div class="bk-modal__body">
+      <div class="bk-field"><label class="bk-label">Título</label><input class="bk-input" id="w2-cita-titulo"/></div>
+      <div class="bk-field-row">
+        <div class="bk-field"><label class="bk-label">Fecha</label><input class="bk-input" type="date" id="w2-cita-fecha"/></div>
+        <div class="bk-field"><label class="bk-label">Hora</label><input class="bk-input" type="time" id="w2-cita-hora"/></div>
+      </div>
+      <div class="bk-field"><label class="bk-label">Notas</label><textarea class="bk-textarea" id="w2-cita-notas" rows="2"></textarea></div>
+    </div>
+    <div class="bk-modal__foot">
+      <button class="bk-btn bk-btn--ghost" onclick="w2CerrarModalCita()">Cancelar</button>
+      <button class="bk-btn bk-btn--forest" onclick="w2GuardarCitaManual()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script src="app-shell.js" defer></script>
+<script>
+const API_BASE = window.API_BASE || 'https://api.broquer.app';
+const META_APP_ID = '1709238933850389';
+const WA_CONFIG_ID = '1028338620073056';
+
+function getToken(){
+  return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || null;
+}
+function w2Auth(){ return { Authorization: 'Bearer ' + getToken() }; }
+function toast(msg){
+  if(window.bkToast) return window.bkToast(msg);
+  console.log(msg);
+}
+
+/* ── SDK de Facebook (Embedded Signup) ───────────────────── */
+window.fbAsyncInit = function(){ FB.init({ appId: META_APP_ID, cookie:true, xfbml:false, version:'v21.0' }); };
+(function(d,s,id){
+  if(d.getElementById(id)) return;
+  const js=d.createElement(s); js.id=id; js.src='https://connect.facebook.net/es_LA/sdk.js';
+  js.async=true; js.defer=true; js.crossOrigin='anonymous';
+  d.getElementsByTagName('head')[0].appendChild(js);
+})(document,'script','facebook-jssdk');
+
+let _w2SignupData = null;
+window.addEventListener('message', (e) => {
+  if(!/facebook\.com$/.test(new URL(e.origin).hostname)) return;
+  try{
+    const d = JSON.parse(e.data);
+    if(d.type !== 'WA_EMBEDDED_SIGNUP') return;
+    if(d.event === 'FINISH' || d.event === 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING'){
+      _w2SignupData = {
+        waba_id: d.data?.waba_id || null,
+        phone_number_id: d.data?.phone_number_id || null,
+        coexistence: d.event === 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING'
+      };
+    }
+  }catch(_){ /* mensajes no-JSON del iframe, se ignoran */ }
+});
+
+function w2ConectarNumero(){
+  if(!window.FB){ toast('Aún cargando. Intenta en un segundo.'); return; }
+  _w2SignupData = null;
+  FB.login((response) => {
+    const code = response?.authResponse?.code;
+    if(code){ w2ExchangeCode(code); }
+    else{ toast('Conexión cancelada.'); }
+  }, {
+    config_id: WA_CONFIG_ID, response_type: 'code', override_default_response_type: true,
+    extras: { setup:{}, featureType:'whatsapp_business_app_onboarding', sessionInfoVersion:'3' }
+  });
+}
+
+async function w2ExchangeCode(code){
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/connect', {
+      method:'POST', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({
+        code, waba_id: _w2SignupData?.waba_id || null,
+        phone_number_id: _w2SignupData?.phone_number_id || null,
+        coexistence: _w2SignupData?.coexistence || false
+      })
+    });
+    const d = await r.json();
+    if(r.ok && d.ok){ toast('Número conectado.'); await w2CargarNumeros(); }
+    else{ toast(d.detail || 'No se pudo conectar el número.'); }
+  }catch(e){ toast('Error de conexión. Intenta de nuevo.'); }
+}
+
+/* ── Estado ───────────────────────────────────────────────── */
+let W2_NUMEROS = [];
+let W2_NUMERO_ACTUAL = 'todos';
+let W2_CONVS = [];
+let W2_CONV_ACTUAL = null;
+let W2_TAB = 'chats';
+let W2_POLL = null;
+
+/* ── Tabs ─────────────────────────────────────────────────── */
+function w2IrATab(tab){
+  W2_TAB = tab;
+  document.querySelectorAll('.w2-tab').forEach(b => b.classList.toggle('is-active', b.dataset.tab === tab));
+  document.getElementById('w2-view-chats').hidden = tab !== 'chats';
+  document.getElementById('w2-view-entrenamiento').hidden = tab !== 'entrenamiento';
+  document.getElementById('w2-view-agenda').hidden = tab !== 'agenda';
+  if(tab === 'entrenamiento') w2CargarEntrenamiento();
+  if(tab === 'agenda') w2CargarAgenda();
+}
+
+/* ── Números ──────────────────────────────────────────────── */
+async function w2CargarNumeros(){
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/numeros', { headers: w2Auth() });
+    const d = await r.json();
+    W2_NUMEROS = d.numeros || [];
+  }catch(e){ W2_NUMEROS = []; }
+  w2RenderNumeros();
+  w2CargarConversaciones();
+}
+
+function w2RenderNumeros(){
+  const cont = document.getElementById('w2-numeros');
+  let html = `<button class="w2-chip-num ${W2_NUMERO_ACTUAL==='todos'?'is-active':''}" onclick="w2SeleccionarNumero('todos')">
+                <span class="w2-chip-num__dot is-on"></span> Todos los números
+              </button>`;
+  for(const n of W2_NUMEROS){
+    html += `<button class="w2-chip-num ${W2_NUMERO_ACTUAL===n.id?'is-active':''}" onclick="w2SeleccionarNumero('${n.id}')">
+               <span class="w2-chip-num__dot ${n.ia_enabled!==false?'is-on':''}"></span> ${n.alias || n.display_number || 'Número'}
+             </button>`;
+  }
+  html += `<button class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2ConectarNumero()">+ Conectar número</button>`;
+  cont.innerHTML = html;
+}
+
+function w2SeleccionarNumero(id){
+  W2_NUMERO_ACTUAL = id;
+  w2RenderNumeros();
+  w2CargarConversaciones();
+  if(W2_TAB === 'entrenamiento') w2CargarEntrenamiento();
+}
+
+/* ── Conversaciones ───────────────────────────────────────── */
+async function w2CargarConversaciones(){
+  try{
+    const qs = W2_NUMERO_ACTUAL !== 'todos' ? ('?numero_id=' + W2_NUMERO_ACTUAL) : '';
+    const r = await fetch(API_BASE + '/whatsapp2/conversaciones' + qs, { headers: w2Auth() });
+    const d = await r.json();
+    W2_CONVS = d.conversaciones || [];
+  }catch(e){ W2_CONVS = []; }
+  w2RenderLista();
+}
+
+function w2Iniciales(nombre){
+  if(!nombre) return '?';
+  return nombre.trim().split(/\s+/).slice(0,2).map(p=>p[0]).join('').toUpperCase();
+}
+
+function w2RenderLista(){
+  const cont = document.getElementById('w2-list');
+  if(!W2_CONVS.length){
+    cont.innerHTML = '<div class="bk-hint" style="padding:var(--sp-4);">Aún no hay conversaciones en este número.</div>';
+    return;
+  }
+  cont.innerHTML = W2_CONVS.map(c => {
+    const contacto = c.wa2_contactos || {};
+    const nombre = contacto.nombre || contacto.wa_id || 'Prospecto';
+    const activa = W2_CONV_ACTUAL && W2_CONV_ACTUAL.id === c.id;
+    return `<div class="w2-conv ${activa?'is-active':''}" onclick="w2AbrirConversacion('${c.id}')">
+              <div class="w2-conv__ava">${w2Iniciales(nombre)}</div>
+              <div class="w2-conv__body">
+                <div class="w2-conv__top">
+                  <span class="w2-conv__name">${nombre}</span>
+                  ${c.unread_count ? `<span class="w2-conv__unread">${c.unread_count}</span>` : ''}
+                </div>
+                <div class="w2-conv__sub">${contacto.resumen || contacto.busca || 'Sin calificar aún'}</div>
+              </div>
+            </div>`;
+  }).join('');
+}
+
+async function w2AbrirConversacion(id){
+  const conv = W2_CONVS.find(c => c.id === id);
+  if(!conv) return;
+  W2_CONV_ACTUAL = conv;
+  w2RenderLista();
+  document.getElementById('w2-panel').hidden = false;
+  w2PintarPanel(conv.wa2_contactos || {});
+  document.getElementById('w2-p-ia').checked = conv.ai_enabled !== false;
+  await w2CargarMensajes(id);
+}
+
+function w2PintarPanel(contacto){
+  document.getElementById('w2-p-nombre').textContent = contacto.nombre || contacto.wa_id || 'Prospecto';
+  document.getElementById('w2-p-temp').textContent = contacto.temperatura || 'Nuevo';
+  document.getElementById('w2-p-score').textContent = 'Score ' + (contacto.score ?? 0);
+  document.getElementById('w2-p-etapa').value = contacto.etapa || 'Nuevo';
+  document.getElementById('w2-p-presupuesto').textContent = contacto.presupuesto || '—';
+  document.getElementById('w2-p-formapago').textContent = contacto.forma_pago || '—';
+  document.getElementById('w2-p-busca').textContent = contacto.busca || '—';
+  document.getElementById('w2-p-resumen').textContent = contacto.resumen || '—';
+  const notas = contacto.notas || [];
+  document.getElementById('w2-notas').innerHTML = notas.length
+    ? notas.slice().reverse().map(n => `<div class="w2-nota">${n.texto}<div class="w2-nota__meta">${n.autor === 'ia' ? 'IA' : 'Tú'} · ${new Date(n.fecha).toLocaleString('es-MX')}</div></div>`).join('')
+    : '<div class="bk-hint">Sin notas todavía.</div>';
+}
+
+/* ── Mensajes ─────────────────────────────────────────────── */
+async function w2CargarMensajes(conversacion_id){
+  const thread = document.getElementById('w2-thread');
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/mensajes?conversacion_id=' + conversacion_id, { headers: w2Auth() });
+    const d = await r.json();
+    w2RenderThread(d.mensajes || []);
+  }catch(e){
+    thread.innerHTML = '<div class="w2-empty-thread">No se pudo cargar la conversación.</div>';
+  }
+}
+
+function w2RenderThread(mensajes){
+  const thread = document.getElementById('w2-thread');
+  const burbujas = mensajes.map(m => {
+    const out = m.direction === 'out';
+    const clsAgente = m.sender === 'agente' ? 'is-agente' : '';
+    const hora = new Date(m.created_at).toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
+    return `<div class="w2-bubble ${out ? 'w2-bubble--out '+clsAgente : 'w2-bubble--in'}">
+              ${(m.body || '').replace(/</g,'&lt;')}
+              <div class="w2-bubble__meta">${hora}${out ? (m.sender === 'ia' ? ' · IA' : ' · Tú') : ''}</div>
+            </div>`;
+  }).join('');
+  thread.innerHTML = `
+    <div class="w2-thread__head">
+      <strong>${(W2_CONV_ACTUAL?.wa2_contactos?.nombre) || (W2_CONV_ACTUAL?.wa2_contactos?.wa_id) || 'Conversación'}</strong>
+    </div>
+    <div class="w2-thread__msgs" id="w2-thread-msgs">${burbujas || '<div class="bk-hint">Sin mensajes.</div>'}</div>
+    <div class="w2-composer">
+      <textarea class="bk-textarea" id="w2-composer-texto" rows="1" placeholder="Escribe un mensaje…"></textarea>
+      <button class="bk-btn bk-btn--forest" onclick="w2EnviarManual()">Enviar</button>
+    </div>`;
+  const box = document.getElementById('w2-thread-msgs');
+  box.scrollTop = box.scrollHeight;
+}
+
+async function w2EnviarManual(){
+  const el = document.getElementById('w2-composer-texto');
+  const texto = (el.value || '').trim();
+  if(!texto || !W2_CONV_ACTUAL) return;
+  el.value = '';
+  try{
+    await fetch(API_BASE + '/whatsapp2/mensajes', {
+      method:'POST', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({ conversacion_id: W2_CONV_ACTUAL.id, texto })
+    });
+    await w2CargarMensajes(W2_CONV_ACTUAL.id);
+  }catch(e){ toast('No se pudo enviar el mensaje.'); }
+}
+
+async function w2ToggleIaConv(){
+  if(!W2_CONV_ACTUAL) return;
+  const on = document.getElementById('w2-p-ia').checked;
+  try{
+    await fetch(API_BASE + '/whatsapp2/conversaciones/' + W2_CONV_ACTUAL.id, {
+      method:'PATCH', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({ ai_enabled: on })
+    });
+  }catch(e){ toast('No se pudo actualizar.'); }
+}
+
+async function w2GuardarEtapa(){
+  if(!W2_CONV_ACTUAL) return;
+  const etapa = document.getElementById('w2-p-etapa').value;
+  try{
+    await fetch(API_BASE + '/whatsapp2/conversaciones/' + W2_CONV_ACTUAL.id, {
+      method:'PATCH', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({ etapa })
+    });
+  }catch(e){ toast('No se pudo guardar la etapa.'); }
+}
+
+async function w2AgregarNota(){
+  const el = document.getElementById('w2-nota-nueva');
+  const texto = (el.value || '').trim();
+  if(!texto || !W2_CONV_ACTUAL) return;
+  const contacto_id = W2_CONV_ACTUAL.contacto_id;
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/contactos/' + contacto_id + '/notas', {
+      method:'POST', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({ texto })
+    });
+    const d = await r.json();
+    el.value = '';
+    if(W2_CONV_ACTUAL.wa2_contactos) W2_CONV_ACTUAL.wa2_contactos.notas = d.notas;
+    w2PintarPanel(W2_CONV_ACTUAL.wa2_contactos || {});
+  }catch(e){ toast('No se pudo guardar la nota.'); }
+}
+
+/* ── Entrenamiento ────────────────────────────────────────── */
+async function w2CargarEntrenamiento(){
+  const numero_id = W2_NUMERO_ACTUAL !== 'todos' ? W2_NUMERO_ACTUAL : '';
+  try{
+    const qs = numero_id ? ('?numero_id=' + numero_id) : '';
+    const r = await fetch(API_BASE + '/whatsapp2/entrenamiento' + qs, { headers: w2Auth() });
+    const t = await r.json();
+    document.getElementById('w2-t-nombre').value = t.nombre_ia || '';
+    document.getElementById('w2-t-identidad').value = t.identidad || '';
+    document.getElementById('w2-t-tono').value = t.tono || '';
+    document.getElementById('w2-t-objetivo').value = t.objetivo || '';
+    document.getElementById('w2-t-especialidad').value = t.especialidad || '';
+    document.getElementById('w2-t-puede').value = t.puede || '';
+    document.getElementById('w2-t-debe').value = t.debe || '';
+    document.getElementById('w2-t-nodebe').value = t.no_debe || '';
+    document.getElementById('w2-t-datos').value = (t.datos_calificar || []).join(', ');
+    document.getElementById('w2-t-preguntas').value = (t.preguntas_extra || []).join(', ');
+    document.getElementById('w2-t-escalar').value = (t.escalar_palabras || []).join(', ');
+    document.getElementById('w2-t-horario').checked = !!t.horario_activo;
+    document.getElementById('w2-t-hi').value = t.hora_inicio || '08:00';
+    document.getElementById('w2-t-hf').value = t.hora_fin || '21:00';
+    document.getElementById('w2-t-fuera').value = t.fuera_horario_msg || '';
+    document.getElementById('w2-t-max').value = t.max_mensajes_ia || 0;
+    document.getElementById('w2-t-activo').checked = t.activo !== false;
+  }catch(e){ toast('No se pudo cargar el entrenamiento.'); }
+}
+
+function w2Lista(id){
+  return (document.getElementById(id).value || '').split(',').map(s => s.trim()).filter(Boolean);
+}
+
+async function w2GuardarEntrenamiento(){
+  const numero_id = W2_NUMERO_ACTUAL !== 'todos' ? W2_NUMERO_ACTUAL : null;
+  const body = {
+    numero_id,
+    nombre_ia: document.getElementById('w2-t-nombre').value.trim(),
+    identidad: document.getElementById('w2-t-identidad').value.trim(),
+    tono: document.getElementById('w2-t-tono').value.trim(),
+    objetivo: document.getElementById('w2-t-objetivo').value.trim(),
+    especialidad: document.getElementById('w2-t-especialidad').value.trim(),
+    puede: document.getElementById('w2-t-puede').value.trim(),
+    debe: document.getElementById('w2-t-debe').value.trim(),
+    no_debe: document.getElementById('w2-t-nodebe').value.trim(),
+    datos_calificar: w2Lista('w2-t-datos'),
+    preguntas_extra: w2Lista('w2-t-preguntas'),
+    escalar_palabras: w2Lista('w2-t-escalar'),
+    horario_activo: document.getElementById('w2-t-horario').checked,
+    hora_inicio: document.getElementById('w2-t-hi').value || '08:00',
+    hora_fin: document.getElementById('w2-t-hf').value || '21:00',
+    fuera_horario_msg: document.getElementById('w2-t-fuera').value.trim(),
+    max_mensajes_ia: parseInt(document.getElementById('w2-t-max').value || '0', 10),
+    activo: document.getElementById('w2-t-activo').checked,
+  };
+  try{
+    await fetch(API_BASE + '/whatsapp2/entrenamiento', {
+      method:'PUT', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify(body)
+    });
+    toast('Entrenamiento guardado.');
+  }catch(e){ toast('No se pudo guardar.'); }
+}
+
+/* ── Agenda ───────────────────────────────────────────────── */
+async function w2CargarAgenda(){
+  try{
+    const hoy = new Date().toISOString().slice(0,10);
+    const r = await fetch(API_BASE + '/whatsapp2/citas?desde=' + hoy, { headers: w2Auth() });
+    const d = await r.json();
+    w2RenderAgenda(d.citas || []);
+  }catch(e){ w2RenderAgenda([]); }
+}
+
+function w2RenderAgenda(citas){
+  const cont = document.getElementById('w2-citas');
+  document.getElementById('w2-citas-empty').hidden = citas.length !== 0;
+  cont.innerHTML = citas.map(c => `
+    <div class="w2-cita-row">
+      <div class="w2-cita-row__fecha">${c.fecha} · ${c.hora}</div>
+      <div style="flex:1;">
+        <div style="font-weight:700;font-size:var(--fs-sm);">${c.titulo || 'Visita'}</div>
+        <div class="bk-hint">${c.notas || ''}</div>
+      </div>
+      <span class="bk-chip ${c.estado==='confirmada'?'bk-chip--success':c.estado==='cancelada'?'bk-chip--danger':''}">${c.estado}</span>
+      <a class="bk-btn bk-btn--ghost bk-btn--sm" href="${API_BASE}/whatsapp2/citas/${c.id}/ics" target="_blank" rel="noopener">.ics</a>
+      ${c.estado==='pendiente' ? `<button class="bk-btn bk-btn--forest bk-btn--sm" onclick="w2CambiarEstadoCita('${c.id}','confirmada')">Confirmar</button>
+      <button class="bk-btn bk-btn--danger bk-btn--sm" onclick="w2CambiarEstadoCita('${c.id}','cancelada')">Cancelar</button>` : ''}
+    </div>`).join('');
+}
+
+async function w2CambiarEstadoCita(id, estado){
+  try{
+    await fetch(API_BASE + '/whatsapp2/citas/' + id, {
+      method:'PATCH', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({ estado })
+    });
+    w2CargarAgenda();
+  }catch(e){ toast('No se pudo actualizar la cita.'); }
+}
+
+function w2AbrirModalCita(){
+  document.getElementById('w2-cita-titulo').value = W2_CONV_ACTUAL?.wa2_contactos?.nombre
+    ? ('Visita con ' + W2_CONV_ACTUAL.wa2_contactos.nombre) : 'Visita';
+  document.getElementById('w2-cita-fecha').value = '';
+  document.getElementById('w2-cita-hora').value = '';
+  document.getElementById('w2-cita-notas').value = '';
+  document.getElementById('w2-modal-cita').hidden = false;
+}
+function w2CerrarModalCita(){ document.getElementById('w2-modal-cita').hidden = true; }
+
+async function w2GuardarCitaManual(){
+  const fecha = document.getElementById('w2-cita-fecha').value;
+  const hora = document.getElementById('w2-cita-hora').value;
+  if(!fecha || !hora){ toast('Falta fecha y hora.'); return; }
+  const body = {
+    contacto_id: W2_CONV_ACTUAL?.contacto_id || null,
+    numero_id: W2_CONV_ACTUAL?.numero_id || null,
+    titulo: document.getElementById('w2-cita-titulo').value.trim() || 'Visita',
+    fecha, hora,
+    notas: document.getElementById('w2-cita-notas').value.trim(),
+  };
+  try{
+    await fetch(API_BASE + '/whatsapp2/citas', {
+      method:'POST', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify(body)
+    });
+    w2CerrarModalCita();
+    toast('Cita guardada.');
+    if(W2_TAB === 'agenda') w2CargarAgenda();
+  }catch(e){ toast('No se pudo guardar la cita.'); }
+}
+
+/* ── Arranque ─────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  w2CargarNumeros();
+  // Refresco silencioso de la bandeja cada 12s (nuevos mensajes / IA respondiendo)
+  W2_POLL = setInterval(() => {
+    if(W2_TAB !== 'chats') return;
+    w2CargarConversaciones();
+    if(W2_CONV_ACTUAL) w2CargarMensajes(W2_CONV_ACTUAL.id);
+  }, 12000);
+});
+</script>
+</body>
+</html>

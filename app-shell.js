@@ -280,6 +280,7 @@
     'image-cleaner': { title:'Editor de imágenes',     sub:'Limpia y mejora las fotos de tus propiedades con IA.' },
     'facebook-ads':  { title:'Facebook Ads',           sub:'Crea, activa y mide anuncios de Facebook e Instagram.' },
     'whatsapp':      { title:'WhatsApp (Beta)',               sub:'Conecta y administra tu número de WhatsApp Business.' },
+    'whatsapp2':     { title:'WhatsApp 2.0',             sub:'Varios números, un solo lugar. La IA califica, agenda y te pasa al prospecto cuando toca.' },
     'verificador':   { title:'Verificador',            sub:'Revisión con IA para detectar problemas antes de firmar.' },
     'blog':          { title:'Blog',                   sub:'Recursos profesionales sobre PLD, legal y mercado.' },
     'mi-sitio':      { title:'Mi sitio',               sub:'El sitio web público que tus clientes ven cuando les compartes tu link.' },
