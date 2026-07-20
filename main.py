@@ -7025,7 +7025,7 @@ async def importar_contactos_eb(request: Request):
         r_existing = await client.get(
             f"{SUPABASE_URL}/rest/v1/contactos",
             headers=sb_headers,
-            params={"user_id": f"eq.{user_id}", "select": "id,telefono,email,nombre"}
+            params={"user_id": f"eq.{user_id}", "select": "id,telefono,email,nombre,empresa,notas,fuente,probabilidad,calle,mpio,cp,wa,etiquetas"}
         )
     existing = r_existing.json() if r_existing.status_code == 200 else []
     existing_by_tel = {c["telefono"]: c for c in existing if c.get("telefono")}
@@ -7039,6 +7039,55 @@ async def importar_contactos_eb(request: Request):
     total_eb = 0
     page = 1
 
+    org_id_import = await get_org_id_for_user(user_id)
+
+    # ── Mapeo EasyBroker → Broquer ──
+    _PROB = {"low": "baja", "medium": "media", "high": "alta"}
+
+    def _tel_wa(c):
+        """Del array phones de EB saca (teléfono principal, whatsapp)."""
+        tel, wa = "", ""
+        for p in (c.get("phones") or []):
+            num = re.sub(r"[^+\d]", "", p.get("phone") or "")
+            if not num:
+                continue
+            t = (p.get("type") or "").lower()
+            if t == "whatsapp" and not wa:
+                wa = num
+            if not tel or t in ("mobile", "whatsapp"):
+                tel = num  # preferir móvil / whatsapp como principal
+        return tel[:20], wa[:20]
+
+    def _first_email(c):
+        for e in (c.get("emails") or []):
+            if e.get("email"):
+                return e["email"].strip().lower()[:120]
+        return ""
+
+    def _mapear(c):
+        nombre = (c.get("full_name")
+                  or " ".join(x for x in [c.get("first_name"), c.get("last_name")] if x)
+                  or "").strip()[:120]
+        tel, wa = _tel_wa(c)
+        dirs = c.get("addresses") or []
+        dom = dirs[0] if dirs else {}
+        return {
+            "nombre":       nombre,
+            "telefono":     tel,
+            "wa":           wa,
+            "email":        _first_email(c),
+            "empresa":      (c.get("company") or "")[:120],
+            "notas":        (c.get("private_description") or "")[:2000],
+            "etiquetas":    [t for t in (c.get("tags") or []) if t][:40],
+            "fuente":       (c.get("source") or None),
+            "probabilidad": _PROB.get((c.get("probability") or "").lower()),
+            "calle":        (dom.get("street") or "")[:160],
+            "mpio":         (dom.get("city") or "")[:80],
+            "cp":           (dom.get("postal_code") or "")[:12],
+        }
+
+    # ── Fase 1: paginar la lista de contactos de EasyBroker (solo IDs) ──
+    eb_ids = []
     async with httpx.AsyncClient(timeout=20) as client:
         while True:
             r = await client.get(
@@ -7047,88 +7096,105 @@ async def importar_contactos_eb(request: Request):
                 params={"page": page, "limit": 50}
             )
             if r.status_code == 404:
-                # EasyBroker podría no tener /contacts en el plan
-                raise HTTPException(status_code=400, detail="Tu plan de EasyBroker no tiene acceso a contactos via API, o el endpoint no está disponible.")
+                raise HTTPException(status_code=400, detail="Tu plan de EasyBroker no tiene acceso a contactos vía API, o el endpoint no está disponible.")
             if r.status_code != 200:
                 raise HTTPException(status_code=502, detail=f"EasyBroker respondió {r.status_code}: {r.text[:300]}")
-
             data = r.json()
-            items = data.get("content", data.get("data", []))
+            items = data.get("content", data.get("data", [])) or []
             if not items:
                 break
-
-            total_eb += len(items)
-
-            for item in items:
-                # Mapear campos de EasyBroker a Brokr
-                nombre = (item.get("name") or item.get("nombre") or "").strip()[:120]
-                telefono = re.sub(r"[^+\d]", "", item.get("phone") or item.get("telefono") or "")[:20]
-                email = (item.get("email") or "").strip()[:120]
-
-                if not nombre and not telefono and not email:
-                    omitidos += 1
-                    continue
-
-                now_iso = datetime.utcnow().isoformat()
-
-                # Deduplicar
-                existente = existing_by_tel.get(telefono) or existing_by_email.get(email)
-
-                if existente:
-                    # Actualizar campos vacíos
-                    patch = {}
-                    if not existente.get("nombre") and nombre:
-                        patch["nombre"] = nombre
-                    if not existente.get("telefono") and telefono:
-                        patch["telefono"] = telefono
-                    if not existente.get("email") and email:
-                        patch["email"] = email
-                    if patch:
-                        patch["updated_at"] = now_iso
-                        rb = await client.patch(
-                            f"{SUPABASE_URL}/rest/v1/contactos?id=eq.{existente['id']}&user_id=eq.{user_id}",
-                            headers=sb_headers,
-                            json=patch
-                        )
-                        if rb.status_code in (200, 204):
-                            actualizados += 1
-                        else:
-                            errores += 1
-                    else:
-                        omitidos += 1
-                else:
-                    # Insertar nuevo
-                    nuevo = {
-                        "id": str(_uuid.uuid4()),
-                        "user_id": user_id,
-                        "org_id": await get_org_id_for_user(user_id),
-                        "nombre": nombre or "Sin nombre",
-                        "telefono": telefono,
-                        "email": email,
-                        "rol": "otro",
-                        "created_at": now_iso,
-                        "updated_at": now_iso,
-                    }
-                    ri = await client.post(
-                        f"{SUPABASE_URL}/rest/v1/contactos",
-                        headers={**sb_headers, "Prefer": "return=minimal"},
-                        json=nuevo
-                    )
-                    if ri.status_code in (200, 201):
-                        importados += 1
-                        # Añadir a índice local para evitar duplicados en la misma corrida
-                        if telefono:
-                            existing_by_tel[telefono] = nuevo
-                        if email:
-                            existing_by_email[email] = nuevo
-                    else:
-                        errores += 1
-
-            # Paginación: si vino menos de 50, llegamos al final
+            for it in items:
+                cid = it.get("id")
+                if cid is not None:
+                    eb_ids.append(cid)
             pagination = data.get("pagination", {})
             if len(items) < 50 or not pagination.get("next_page"):
                 break
             page += 1
+
+    total_eb = len(eb_ids)
+
+    # ── Fase 2: traer el detalle de cada contacto en lotes paralelos ──
+    # El detalle trae emails, phones, tags, source, probability, company, etc.
+    async def _detalle(client, cid):
+        try:
+            rd = await client.get(f"{EB_BASE}/contacts/{cid}", headers=eb_headers(eb_key))
+            if rd.status_code == 200:
+                return rd.json()
+        except Exception:
+            pass
+        return None
+
+    detalles = []
+    async with httpx.AsyncClient(timeout=20) as client:
+        for i in range(0, len(eb_ids), 10):
+            lote = eb_ids[i:i + 10]
+            res = await asyncio.gather(*[_detalle(client, cid) for cid in lote])
+            detalles.extend([d for d in res if d])
+
+    # ── Fase 3: mapear, deduplicar y guardar ──
+    async with httpx.AsyncClient(timeout=20) as client:
+        for c in detalles:
+            m = _mapear(c)
+            if not m["nombre"] and not m["telefono"] and not m["email"]:
+                omitidos += 1
+                continue
+
+            now_iso = datetime.utcnow().isoformat()
+            existente = existing_by_tel.get(m["telefono"]) or existing_by_email.get(m["email"])
+
+            if existente:
+                # Rellenar solo lo que Broquer tenga vacío; nunca pisar lo del usuario
+                patch = {}
+                for campo in ("nombre", "telefono", "email", "wa", "empresa",
+                              "notas", "fuente", "probabilidad", "calle", "mpio", "cp"):
+                    if not existente.get(campo) and m.get(campo):
+                        patch[campo] = m[campo]
+                # Etiquetas: unir sin duplicar
+                if m["etiquetas"]:
+                    prev = existente.get("etiquetas") or []
+                    union = list(dict.fromkeys([*prev, *m["etiquetas"]]))
+                    if union != prev:
+                        patch["etiquetas"] = union
+                if patch:
+                    patch["updated_at"] = now_iso
+                    rb = await client.patch(
+                        f"{SUPABASE_URL}/rest/v1/contactos?id=eq.{existente['id']}&user_id=eq.{user_id}",
+                        headers=sb_headers,
+                        json=patch
+                    )
+                    if rb.status_code in (200, 204):
+                        actualizados += 1
+                    else:
+                        errores += 1
+                else:
+                    omitidos += 1
+            else:
+                nuevo = {
+                    "id":         str(_uuid.uuid4()),
+                    "user_id":    user_id,
+                    "org_id":     org_id_import,
+                    "tipo":       "otro",
+                    "created_at": now_iso,
+                    "updated_at": now_iso,
+                    **m,
+                }
+                nuevo["nombre"] = m["nombre"] or "Sin nombre"
+                # No mandar vacíos que ensucien la fila
+                nuevo = {k: v for k, v in nuevo.items() if v not in ("", None, [])}
+                ri = await client.post(
+                    f"{SUPABASE_URL}/rest/v1/contactos",
+                    headers={**sb_headers, "Prefer": "return=minimal"},
+                    json=nuevo
+                )
+                if ri.status_code in (200, 201):
+                    importados += 1
+                    if m["telefono"]:
+                        existing_by_tel[m["telefono"]] = nuevo
+                    if m["email"]:
+                        existing_by_email[m["email"]] = nuevo
+                else:
+                    errores += 1
 
     return {
         "ok": True,
