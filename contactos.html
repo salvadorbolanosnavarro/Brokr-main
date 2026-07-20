@@ -649,6 +649,22 @@ html, body { background: var(--paper); }
 .board-prob.prob-media { background: var(--sky-navy); }
 .board-prob.prob-alta  { background: var(--forest); }
 .board-empty { color: var(--mute); font-size: var(--fs-xs); padding: 10px; text-align: center; }
+
+/* ── Tareas del contacto ── */
+.tarea-item { display: flex; gap: 11px; padding: 11px 0; border-bottom: 1px solid var(--line); align-items: flex-start; }
+.tarea-item:last-child { border-bottom: none; }
+.tarea-check {
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 1.5px solid var(--line-3); background: var(--paper);
+  cursor: pointer; flex-shrink: 0; padding: 0; color: transparent;
+  display: flex; align-items: center; justify-content: center;
+}
+.tarea-check:hover { border-color: var(--success); }
+.tarea-item.is-done .tarea-check { background: var(--success); border-color: var(--success); color: var(--paper); }
+.tarea-title { font-size: var(--fs-sm); color: var(--ink); line-height: 1.45; overflow-wrap: break-word; }
+.tarea-item.is-done .tarea-title { color: var(--mute); text-decoration: line-through; }
+.tarea-due { font-size: var(--fs-caption); color: var(--mute); margin-top: 3px; }
+.tarea-due.is-overdue { color: var(--danger); font-weight: 600; }
 .nota-box {
   background: var(--bone);
   border: 1px solid var(--line);
@@ -1096,6 +1112,7 @@ html, body { background: var(--paper); }
       <button class="det-tab active" id="dtab-btn-info" onclick="setDetTab('info')">Información</button>
       <button class="det-tab" id="dtab-btn-hist" onclick="setDetTab('hist')">Historial <span class="n" id="dtab-n-hist">0</span></button>
       <button class="det-tab" id="dtab-btn-props" onclick="setDetTab('props')">Propiedades <span class="n" id="dtab-n-props">0</span></button>
+      <button class="det-tab" id="dtab-btn-tareas" onclick="setDetTab('tareas')">Tareas <span class="n" id="dtab-n-tareas">0</span></button>
     </div>
     <div class="det-body">
       <div id="dtab-info"></div>
@@ -1117,6 +1134,14 @@ html, body { background: var(--paper); }
           <button onclick="agregarVinculo()">Vincular</button>
         </div>
         <div id="props-feed"></div>
+      </div>
+      <div id="dtab-tareas" hidden>
+        <div class="composer">
+          <input type="text" id="tarea-input" placeholder="Nueva tarea… (ej. Llamar para agendar visita)" onkeydown="if(event.key==='Enter')crearTareaContacto()"/>
+          <input type="date" id="tarea-fecha"/>
+          <button id="tarea-btn" onclick="crearTareaContacto()">Agregar</button>
+        </div>
+        <div id="tareas-feed"></div>
       </div>
     </div>
     <div class="det-acts">
@@ -1723,13 +1748,14 @@ async function confirmarEliminar() {
 /* ── Detalle con tabs ────────────────────────────────────────────── */
 function setDetTab(tab) {
   detTabActual = tab;
-  ['info','hist','props'].forEach(t => {
+  ['info','hist','props','tareas'].forEach(t => {
     document.getElementById('dtab-' + t).hidden = t !== tab;
     document.getElementById('dtab-btn-' + t).classList.toggle('active', t === tab);
   });
   if (!detContacto) return;
   if (tab === 'hist')   cargarHistorial();
   if (tab === 'props')  cargarVinculos();
+  if (tab === 'tareas') cargarTareas();
 }
 
 function abrirDetalle(id) {
@@ -1761,8 +1787,10 @@ function abrirDetalle(id) {
   cargarMiembros().then(() => { if (detContacto && String(detContacto.id) === String(c.id)) renderAgente(c); });
   document.getElementById('hist-feed').innerHTML = '';
   document.getElementById('props-feed').innerHTML = '';
+  document.getElementById('tareas-feed').innerHTML = '';
   document.getElementById('dtab-n-hist').textContent = '·';
   document.getElementById('dtab-n-props').textContent = '·';
+  document.getElementById('dtab-n-tareas').textContent = '·';
 
   setDetTab('info');
   document.getElementById('detail-ov').classList.add('open');
@@ -1906,6 +1934,110 @@ function actIconClass(tipo) {
   if (tipo === 'cambio_estatus') return 'estatus';
   if (tipo === 'tarea_completada') return 'tarea';
   return 'nota';
+}
+
+/* ── Tab Tareas ──────────────────────────────────────────────────── */
+let _tareasCache = [];
+
+async function cargarTareas() {
+  if (!detContacto) return;
+  const feed = document.getElementById('tareas-feed');
+  feed.innerHTML = '<div class="mini-empty">Cargando…</div>';
+  const cid = detContacto.id;
+  let tareas = [];
+  try {
+    tareas = await restGet('tareas?select=*&contacto_id=eq.' + encodeURIComponent(cid) +
+      '&order=completada.asc,fecha_entrega.asc.nullslast,created_at.desc&limit=200');
+  } catch (e) { tareas = []; }
+  if (!detContacto || detContacto.id !== cid) return;
+  _tareasCache = Array.isArray(tareas) ? tareas : [];
+  renderTareasContacto();
+}
+
+function renderTareasContacto() {
+  const feed = document.getElementById('tareas-feed');
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  const pend = _tareasCache.filter(t => !t.completada).length;
+  document.getElementById('dtab-n-tareas').textContent = pend;
+  if (!_tareasCache.length) {
+    feed.innerHTML = '<div class="mini-empty">Sin tareas. Crea una arriba.</div>';
+    return;
+  }
+  feed.innerHTML = _tareasCache.map(t => {
+    const due = t.fecha_entrega ? new Date(t.fecha_entrega) : null;
+    const vencida = due && !t.completada && due < hoy;
+    return `<div class="tarea-item ${t.completada ? 'is-done' : ''}">
+      <button class="tarea-check" onclick="toggleTareaContacto('${esc(String(t.id))}')" title="${t.completada ? 'Reabrir' : 'Completar'}">
+        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+      </button>
+      <div style="flex:1;min-width:0">
+        <div class="tarea-title">${esc(t.titulo)}</div>
+        ${due ? `<div class="tarea-due ${vencida ? 'is-overdue' : ''}">${vencida ? 'Vencida · ' : ''}${esc(fechaCorta(t.fecha_entrega))}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function crearTareaContacto() {
+  if (!detContacto) return;
+  const inp = document.getElementById('tarea-input');
+  const titulo = (inp.value || '').trim();
+  if (!titulo) { inp.focus(); return; }
+  const uid = await _userId();
+  if (!uid) { showToast('Tu sesión expiró'); return; }
+  const fecha = document.getElementById('tarea-fecha').value || null;
+  const btn = document.getElementById('tarea-btn');
+  btn.disabled = true;
+  const payload = {
+    user_id: uid, titulo,
+    fecha_entrega: fecha ? fecha + 'T12:00:00' : null,
+    contacto_id: detContacto.id, propiedad_id: null,
+  };
+  try {
+    const r = await _sb().fetch('rest/v1/tareas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Prefer: 'return=representation' },
+      body: JSON.stringify(payload),
+    });
+    if (!r.ok) throw new Error('Error ' + r.status);
+    const rows = await r.json();
+    const nueva = Array.isArray(rows) ? rows[0] : rows;
+    if (nueva && nueva.id) _tareasCache.unshift(nueva);
+    inp.value = '';
+    document.getElementById('tarea-fecha').value = '';
+    renderTareasContacto();
+    showToast('Tarea creada');
+  } catch (e) { showToast('No se pudo crear la tarea'); }
+  finally { btn.disabled = false; }
+}
+
+async function toggleTareaContacto(id) {
+  const t = _tareasCache.find(x => String(x.id) === String(id));
+  if (!t) return;
+  const completar = !t.completada;
+  t.completada = completar;
+  renderTareasContacto();
+  try {
+    const r = await _sb().fetch('rest/v1/tareas?id=eq.' + encodeURIComponent(id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ completada: completar, fecha_completada: completar ? new Date().toISOString() : null }),
+    });
+    if (!r.ok) throw new Error('Error ' + r.status);
+    if (completar) {
+      const uid = await _userId();
+      if (uid) _sb().fetch('rest/v1/actividades', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          user_id: uid, tipo: 'tarea_completada',
+          texto: 'Tarea completada: ' + t.titulo,
+          contacto_id: t.contacto_id || (detContacto && detContacto.id) || null,
+          propiedad_id: null,
+        }),
+      }).catch(() => {});
+    }
+  } catch (e) { t.completada = !completar; renderTareasContacto(); showToast('No se pudo actualizar la tarea'); }
 }
 
 async function cargarHistorial() {

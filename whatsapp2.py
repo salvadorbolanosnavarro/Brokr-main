@@ -690,45 +690,75 @@ async def recepcion2_responde(history: list, contexto: str, agente: dict, entren
 # =============================================================================
 # 4) BÚSQUEDA Y ENVÍO DE INMUEBLES (catálogo real del usuario)
 # =============================================================================
-async def _buscar_inmuebles(user_id: str, filtros: dict, limit: int = 3) -> list:
+async def _buscar_inmuebles(user_id: str, filtros: dict, limit: int = 3) -> tuple[list, bool]:
+    """Devuelve (propiedades, zona_sin_resultados). zona_sin_resultados es True
+    cuando el prospecto pidió una zona concreta y de verdad no hay nada ahí —
+    para que el mensaje sea honesto en vez de mandar propiedades de otro lado
+    como si fueran lo que se pidió."""
     sel = ("id,titulo,tipo,operacion,precio,moneda,colonia,ciudad,calle,"
            "num_exterior,recamaras,banos,m2_construccion,fotos,estatus")
     # OJO: los valores reales de "estatus" en Broquer son activa/reservada/
     # en_proceso/vendida/rentada/suspendida (ver propiedades.html) — "publicada"
     # nunca existe, así que filtrar por eso dejaba la búsqueda siempre vacía.
     # Lo correcto es EXCLUIR lo que de plano ya no se puede ofrecer.
-    params = {"user_id": f"eq.{user_id}", "select": sel,
-              "estatus": "not.in.(vendida,rentada,suspendida)",
-              "order": "updated_at.desc", "limit": str(limit)}
+    base = {"user_id": f"eq.{user_id}", "select": sel,
+            "estatus": "not.in.(vendida,rentada,suspendida)",
+            "order": "updated_at.desc", "limit": str(limit)}
     op = (filtros.get("operacion") or "").strip().lower()
     if op in ("venta", "renta"):
-        params["operacion"] = f"eq.{op}"
+        base["operacion"] = f"eq.{op}"
     tipo = (filtros.get("tipo") or "").strip()
     if tipo:
-        params["tipo"] = f"ilike.*{tipo}*"
-    zona = (filtros.get("zona") or "").strip().replace(",", " ")
+        base["tipo"] = f"ilike.*{tipo}*"
+    zona = (filtros.get("zona") or "").strip()
+
+    def _con_precio_recamaras(p: dict) -> dict:
+        p = dict(p)
+        if filtros.get("precio_max"):
+            try:
+                p["precio"] = f"lte.{int(filtros['precio_max'])}"
+            except Exception:
+                pass
+        if filtros.get("recamaras"):
+            try:
+                p["recamaras"] = f"gte.{int(filtros['recamaras'])}"
+            except Exception:
+                pass
+        return p
+
     if zona:
-        params["or"] = f"(colonia.ilike.*{zona}*,ciudad.ilike.*{zona}*)"
-    if filtros.get("precio_max"):
-        try:
-            params["precio"] = f"lte.{int(filtros['precio_max'])}"
-        except Exception:
-            pass
-    if filtros.get("recamaras"):
-        try:
-            params["recamaras"] = f"gte.{int(filtros['recamaras'])}"
-        except Exception:
-            pass
-    rows = await sb_get("propiedades", params)
-    if not rows and (zona or filtros.get("precio_max") or filtros.get("recamaras")):
-        # Los filtros finos (zona/precio/recámaras) los infiere la IA de la
-        # plática, y puede equivocarse (ej. colonia mal escrita). Antes de
-        # decirle al prospecto "no tengo nada", se reintenta solo con lo
-        # seguro (usuario + operación + tipo + disponibilidad).
-        for clave in ("or", "precio", "recamaras"):
-            params.pop(clave, None)
-        rows = await sb_get("propiedades", params)
-    return rows or []
+        zona_limpia = zona.replace(",", " ")
+        exacta = dict(base)
+        exacta["or"] = f"(colonia.ilike.*{zona_limpia}*,ciudad.ilike.*{zona_limpia}*,calle.ilike.*{zona_limpia}*)"
+        rows = await sb_get("propiedades", _con_precio_recamaras(exacta))
+        if rows:
+            return rows, False
+
+        # La colonia puede venir mal escrita o con solo parte del nombre real
+        # ("Tres Marías" vs "Álamos Tres Marías 3ra Sección"): se intenta
+        # palabra por palabra, siempre dentro de la MISMA zona, nunca fuera.
+        palabras = [w for w in re.split(r"\s+", zona_limpia) if len(w) >= 4]
+        if palabras:
+            ors = ",".join(f"colonia.ilike.*{w}*,ciudad.ilike.*{w}*,calle.ilike.*{w}*" for w in palabras)
+            relajada = dict(base)
+            relajada["or"] = f"({ors})"
+            rows = await sb_get("propiedades", _con_precio_recamaras(relajada))
+            if rows:
+                return rows, False
+
+        # De verdad no hay nada en esa zona: se avisa, no se manda otra cosa
+        # en su lugar disfrazada de lo que se pidió.
+        return [], True
+
+    # Sin zona pedida: aquí sí tiene sentido relajar precio/recámaras si son
+    # demasiado estrictos, porque no cambian LO QUE ES la propiedad, solo el
+    # rango — y de perdida se le enseña algo parecido a lo que busca.
+    rows = await sb_get("propiedades", _con_precio_recamaras(base))
+    if not rows and (filtros.get("precio_max") or filtros.get("recamaras")):
+        rows = await sb_get("propiedades", base)
+    return rows or [], False
+
+
 
 
 def _texto_inmueble(p: dict) -> str:
@@ -1110,7 +1140,8 @@ async def _procesar_en_segundo_plano(item: dict):
     if isinstance(accion, dict):
         tipo = accion.get("tipo")
         if tipo == "enviar_inmuebles":
-            props = await _buscar_inmuebles(user_id, accion.get("filtros") or {})
+            filtros_ia = accion.get("filtros") or {}
+            props, zona_sin_resultados = await _buscar_inmuebles(user_id, filtros_ia)
             if props:
                 for p in props[:3]:
                     fotos = p.get("fotos") or []
@@ -1121,6 +1152,19 @@ async def _procesar_en_segundo_plano(item: dict):
                         wamid2 = await _wa_send_text(numero, item["wa_id"], caption)
                     await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"], wamid2,
                                           "out", "ia", caption, fotos[0] if fotos else None)
+            elif zona_sin_resultados:
+                # De verdad no hay nada en la zona que pidió: se le dice tal
+                # cual, NUNCA se le manda una propiedad de otra ubicación
+                # como si fuera lo que preguntó.
+                zona_txt = (filtros_ia.get("zona") or "esa zona").strip()
+                aviso = (f"Por ahora no tengo nada disponible en {zona_txt}. "
+                         "Le aviso a mi asesor para que revise si tiene algo que no esté "
+                         "publicado, o si prefieres te comparto opciones en otra zona cercana.")
+                wamid2 = await _wa_send_text(numero, item["wa_id"], aviso)
+                await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"], wamid2, "out", "ia", aviso)
+                await enviar_push(user_id, "Un prospecto busca algo que no tienes publicado",
+                                  f"{contacto.get('nombre') or item['wa_id']} pidió {zona_txt} y no hay inventario ahí.",
+                                  datos={"tipo": "whatsapp2", "conversation_id": item["conversacion_id"]})
             else:
                 aviso = "Por ahora no tengo una opción exacta, pero le aviso a mi asesor para que te comparta algo a la medida."
                 wamid2 = await _wa_send_text(numero, item["wa_id"], aviso)
