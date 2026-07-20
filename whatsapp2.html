@@ -147,6 +147,7 @@
   <!-- ═══ ENTRENAMIENTO ═══ -->
   <div id="w2-view-entrenamiento" hidden>
     <div class="bk-section-header"><h2>Cómo habla tu IA en este número</h2></div>
+    <div class="bk-alert bk-alert--info" id="w2-t-contexto" style="margin-bottom:var(--sp-4);"></div>
     <form class="bk-card bk-card--pad bk-card--raise" onsubmit="event.preventDefault(); w2GuardarEntrenamiento();">
       <div class="w2-form-grid">
         <div>
@@ -559,9 +560,19 @@ async function w2AgregarNota(){
 /* ── Entrenamiento ────────────────────────────────────────── */
 async function w2CargarEntrenamiento(){
   const numero_id = W2_NUMERO_ACTUAL !== 'todos' ? W2_NUMERO_ACTUAL : '';
+  const numeroObj = W2_NUMEROS.find(n => n.id === W2_NUMERO_ACTUAL);
+  const contexto = document.getElementById('w2-t-contexto');
+  if(numero_id && numeroObj){
+    contexto.textContent = 'Estás editando el número "' + (numeroObj.alias || numeroObj.display_number) + '". Estos cambios solo afectan a este número.';
+  } else if(W2_NUMEROS.length){
+    contexto.textContent = 'Tienes seleccionado "Todos los números": esto NO edita ninguno de tus números ya conectados, es la plantilla que se usará cuando conectes uno nuevo. Elige un número arriba para editar el suyo.';
+  } else {
+    contexto.textContent = 'Aún no tienes ningún número conectado. Esto guarda la plantilla que usará el primer número que conectes.';
+  }
   try{
     const qs = numero_id ? ('?numero_id=' + numero_id) : '';
     const r = await fetch(API_BASE + '/whatsapp2/entrenamiento' + qs, { headers: w2Auth() });
+    if(!r.ok){ toast('No se pudo cargar el entrenamiento (error ' + r.status + ').'); return; }
     const t = await r.json();
     document.getElementById('w2-t-nombre').value = t.nombre_ia || '';
     document.getElementById('w2-t-identidad').value = t.identidad || '';
@@ -580,7 +591,7 @@ async function w2CargarEntrenamiento(){
     document.getElementById('w2-t-fuera').value = t.fuera_horario_msg || '';
     document.getElementById('w2-t-max').value = t.max_mensajes_ia || 0;
     document.getElementById('w2-t-activo').checked = t.activo !== false;
-  }catch(e){ toast('No se pudo cargar el entrenamiento.'); }
+  }catch(e){ toast('No se pudo cargar el entrenamiento (sin conexión).'); }
 }
 
 function w2Lista(id){
@@ -610,12 +621,21 @@ async function w2GuardarEntrenamiento(){
     activo: document.getElementById('w2-t-activo').checked,
   };
   try{
-    await fetch(API_BASE + '/whatsapp2/entrenamiento', {
+    const r = await fetch(API_BASE + '/whatsapp2/entrenamiento', {
       method:'PUT', headers:{ 'Content-Type':'application/json', ...w2Auth() },
       body: JSON.stringify(body)
     });
-    toast('Entrenamiento guardado.');
-  }catch(e){ toast('No se pudo guardar.'); }
+    let d = {};
+    try{ d = await r.json(); }catch(_){}
+    if(!r.ok){
+      toast(d.detail || ('No se guardó (error ' + r.status + '). Intenta de nuevo.'));
+      return;
+    }
+    toast(numero_id ? 'Guardado para este número.' : 'Guardada la plantilla para números nuevos.');
+    // Vuelve a leerlo del servidor para confirmar que de verdad quedó guardado,
+    // no solo que el navegador lo cree.
+    await w2CargarEntrenamiento();
+  }catch(e){ toast('No se pudo guardar (sin conexión). Intenta de nuevo.'); }
 }
 
 /* ── Agenda ───────────────────────────────────────────────── */

@@ -507,10 +507,16 @@ async def wa2_training_put(req: TrainingReq, request: Request):
     params["numero_id"] = f"eq.{req.numero_id}" if req.numero_id else "is.null"
     existing = await sb_get("wa2_entrenamiento", {**params, "select": "id", "limit": "1"})
     if existing:
-        await sb_patch("wa2_entrenamiento", {"id": f"eq.{existing[0]['id']}"}, fila)
+        guardado = await sb_patch("wa2_entrenamiento", {"id": f"eq.{existing[0]['id']}"}, fila)
     else:
         fila["created_at"] = _now()
-        await sb_post("wa2_entrenamiento", fila)
+        guardado = await sb_post("wa2_entrenamiento", fila)
+    if not guardado:
+        # sb_patch/sb_post ya reintentaron y loguearon el motivo; si aun así no hay
+        # fila de vuelta, algo de verdad no se guardó y hay que decirlo, no fingir.
+        raise HTTPException(status_code=500,
+            detail="No se pudo guardar el entrenamiento. Vuelve a intentar en un momento; "
+                   "si sigue sin guardar, es un problema de conexión con la base de datos.")
     return {"ok": True}
 
 
