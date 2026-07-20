@@ -126,17 +126,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from whatsapp import router as whatsapp_router
-app.include_router(whatsapp_router)
-
-# Módulo nuevo e independiente (tablas y webhook propios, ver whatsapp2.py).
-# Import defensivo: si algo le falta, el resto del backend sigue vivo.
+# whatsapp.py es el módulo de WhatsApp (multi-número, IA de recepción, webhook
+# propio bajo /whatsapp2 — el prefijo interno del router no cambió aunque el
+# archivo ya se llama whatsapp.py). Import defensivo: si algo le falta, el
+# resto del backend sigue vivo.
 try:
-    from whatsapp2 import router as whatsapp2_router
-    app.include_router(whatsapp2_router)
+    from whatsapp import router as whatsapp_router
+    app.include_router(whatsapp_router)
 except Exception as _e:
     import logging as _logging
-    _logging.getLogger("broquer.main").error("No se pudo cargar whatsapp2: %s", _e)
+    _logging.getLogger("broquer.main").error("No se pudo cargar whatsapp: %s", _e)
 
 # Motor agéntico de Broq (tool-use nativo + loop de varios pasos + voz Whisper).
 # Import defensivo: si por cualquier razón fallara la carga, el resto del backend

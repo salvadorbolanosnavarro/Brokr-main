@@ -235,7 +235,7 @@
     { key:'tareas',       href:'tareas.html',        label:'Tareas',          group:'crm',  icon:'check' },
     { key:'leads',        href:'leads.html',         label:'Leads',           group:'crm',  icon:'send' },
     { key:'estadisticas', href:'estadisticas.html',  label:'Estadísticas',    group:'crm',  icon:'chart' },
-    { key:'whatsapp',     href:'whatsapp.html',      label:'WhatsApp (Beta)', group:'main', icon:'whatsapp' },
+    { key:'whatsapp',     href:'whatsapp.html',      label:'WhatsApp',        group:'main', icon:'whatsapp' },
     { key:'contratos',    href:'contratos.html',     label:'Contratos',       group:'main', icon:'document' },
     { key:'avm',          href:'avm.html',           label:'Estimación de valor', group:'main', icon:'peso' },
     { key:'ficha-manual', href:'ficha-manual.html',  label:'Ficha técnica',   group:'main', icon:'landscape' },
@@ -265,7 +265,7 @@
     'image-cleaner':'Editor de imágenes — limpieza con IA',
     'admin':        'Panel administrativo',
     'facebook-ads': 'Meta Ads Express — crear, activar y medir anuncios de Facebook e Instagram',
-    'whatsapp':     'WhatsApp — chats de los prospectos, conexión del número, Recepción automática, entrenamiento de la IA y plantillas de mensaje',
+    'whatsapp':     'WhatsApp — varios números, chats, conexión, Recepción automática y entrenamiento de la IA',
   };
 
   /* ── Encabezado canónico por página (unificación de esqueleto) ──
@@ -279,8 +279,7 @@
     'isr':           { title:'Cálculo de ISR',         sub:'ISR por enajenación de inmuebles con el INPC vigente.' },
     'image-cleaner': { title:'Editor de imágenes',     sub:'Limpia y mejora las fotos de tus propiedades con IA.' },
     'facebook-ads':  { title:'Facebook Ads',           sub:'Crea, activa y mide anuncios de Facebook e Instagram.' },
-    'whatsapp':      { title:'WhatsApp (Beta)',               sub:'Conecta y administra tu número de WhatsApp Business.' },
-    'whatsapp2':     { title:'WhatsApp 2.0',             sub:'Varios números, un solo lugar. La IA califica, agenda y te pasa al prospecto cuando toca.' },
+    'whatsapp':      { title:'WhatsApp',                sub:'Varios números, un solo lugar. La IA califica, agenda y te pasa al prospecto cuando toca.' },
     'verificador':   { title:'Verificador',            sub:'Revisión con IA para detectar problemas antes de firmar.' },
     'blog':          { title:'Blog',                   sub:'Recursos profesionales sobre PLD, legal y mercado.' },
     'mi-sitio':      { title:'Mi sitio',               sub:'El sitio web público que tus clientes ven cuando les compartes tu link.' },
@@ -1007,7 +1006,7 @@ body[data-app] .btn,body[data-app] .btn-primary,body[data-app] .ui-btn,body[data
 body[data-app] .props-head__title h1,body[data-app] .page-head h1,body[data-app] .tk-head__title h1,body[data-app] .ms-head h1,body[data-app] .guide-title,body[data-app] .bx-list__title h1,body[data-app] .es-hero__brand{font-size:30px!important;font-weight:700!important;letter-spacing:-.02em!important;line-height:1.1!important}
 /* ── Alineación título↔cuerpo: el header canónico respeta el ancho del módulo ── */
 body[data-app] .bk-ph{max-width:var(--page-max,1180px)!important}
-body[data-app="isr"],body[data-app="ficha-manual"],body[data-app="avm"],body[data-app="contratos"],body[data-app="whatsapp"],body[data-app="mi-sitio"],body[data-app="image-cleaner"]{--page-max:var(--form-max,760px)}
+body[data-app="isr"],body[data-app="ficha-manual"],body[data-app="avm"],body[data-app="contratos"],body[data-app="mi-sitio"],body[data-app="image-cleaner"]{--page-max:var(--form-max,760px)}
 body[data-app="blog"]{--page-max:960px}
 body[data-app="facebook-ads"]{--page-max:980px}
 
