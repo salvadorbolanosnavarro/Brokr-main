@@ -486,6 +486,7 @@
   // ── Modal ─────────────────────────────────────────────────────────────
   function abrirModal() {
     $('#eq-modal').hidden = false;
+    $('#eq-modal').classList.add('is-open');
     $('#eq-modal-form').hidden = false;
     $('#eq-modal-ok').hidden = true;
     $('#eq-modal-err').hidden = true;
@@ -493,7 +494,7 @@
     $('#eq-rol').value = 'agente';
     $('#eq-email').focus();
   }
-  function cerrarModal() { $('#eq-modal').hidden = true; }
+  function cerrarModal() { $('#eq-modal').classList.remove('is-open'); }
 
   document.addEventListener('DOMContentLoaded', () => {
     $('#eq-btn-invitar').addEventListener('click', abrirModal);
