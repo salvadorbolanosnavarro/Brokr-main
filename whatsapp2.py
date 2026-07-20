@@ -34,6 +34,12 @@ except Exception:  # pragma: no cover — un push que falla no debe tumbar nada
     async def enviar_push(*a, **k):
         return False
 
+try:
+    from routers.organizaciones import get_org_context
+except Exception:  # pragma: no cover — si el módulo de equipo no carga, cada quien ve solo lo suyo
+    async def get_org_context(user_id):
+        return None
+
 log = logging.getLogger("broquer.whatsapp2")
 
 # -----------------------------------------------------------------------------
@@ -219,6 +225,27 @@ async def _require_user(request: Request) -> str:
     if not user_id:
         raise HTTPException(status_code=401, detail="No autorizado")
     return user_id
+
+
+async def _ids_visibles(user_id: str) -> list[str]:
+    """A qué user_id puede ver este usuario en WhatsApp 2.0.
+    Dueño o admin de una organización: él mismo + todo su equipo.
+    Agente normal, o alguien sin organización (cuenta personal): solo él mismo.
+    Los números y conversaciones se guardan bajo el user_id de quien conectó
+    CADA número (cada agente conecta el suyo); esto decide a cuáles de esos
+    user_id tiene permiso de asomarse quien pregunta."""
+    ctx = await get_org_context(user_id)
+    if not ctx or not ctx.get("org_id") or ctx.get("rol_org") not in ("owner", "admin"):
+        return [user_id]
+    miembros = await sb_get("organizacion_miembros", {
+        "org_id": f"eq.{ctx['org_id']}", "select": "user_id"})
+    ids = {m["user_id"] for m in miembros if m.get("user_id")}
+    ids.add(user_id)
+    return list(ids)
+
+
+def _in_filter(ids: list[str]) -> str:
+    return "in.(" + ",".join(ids) + ")"
 
 
 # =============================================================================
@@ -422,10 +449,12 @@ async def wa2_numero_verificar(numero_id: str, request: Request):
 @router.get("/numeros")
 async def wa2_numeros_list(request: Request):
     user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
     rows = await sb_get("wa2_numeros", {
-        "user_id": f"eq.{user_id}", "select": "*", "order": "created_at.asc"})
+        "user_id": _in_filter(ids), "select": "*", "order": "created_at.asc"})
     for r in rows:
         r.pop("access_token", None)
+        r["es_mio"] = r.get("user_id") == user_id
     return {"numeros": rows}
 
 
@@ -437,19 +466,21 @@ class NumeroPatchReq(BaseModel):
 @router.patch("/numeros/{numero_id}")
 async def wa2_numero_patch(numero_id: str, req: NumeroPatchReq, request: Request):
     user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
     body = {"updated_at": _now()}
     if req.alias is not None:
         body["alias"] = req.alias.strip()
     if req.ia_enabled is not None:
         body["ia_enabled"] = req.ia_enabled
-    await sb_patch("wa2_numeros", {"id": f"eq.{numero_id}", "user_id": f"eq.{user_id}"}, body)
+    await sb_patch("wa2_numeros", {"id": f"eq.{numero_id}", "user_id": _in_filter(ids)}, body)
     return {"ok": True}
 
 
 @router.delete("/numeros/{numero_id}")
 async def wa2_numero_delete(numero_id: str, request: Request):
     user_id = await _require_user(request)
-    rows = await sb_get("wa2_numeros", {"id": f"eq.{numero_id}", "user_id": f"eq.{user_id}",
+    ids = await _ids_visibles(user_id)
+    rows = await sb_get("wa2_numeros", {"id": f"eq.{numero_id}", "user_id": _in_filter(ids),
                                         "select": "waba_id,access_token", "limit": "1"})
     if rows and rows[0].get("waba_id") and rows[0].get("access_token"):
         try:
@@ -458,7 +489,7 @@ async def wa2_numero_delete(numero_id: str, request: Request):
                                params={"access_token": rows[0]["access_token"]})
         except Exception:
             pass
-    await sb_delete("wa2_numeros", {"id": f"eq.{numero_id}", "user_id": f"eq.{user_id}"})
+    await sb_delete("wa2_numeros", {"id": f"eq.{numero_id}", "user_id": _in_filter(ids)})
     return {"ok": True}
 
 
@@ -489,9 +520,16 @@ class TrainingReq(BaseModel):
 @router.get("/entrenamiento")
 async def wa2_training_get(request: Request, numero_id: str | None = None):
     user_id = await _require_user(request)
-    params = {"user_id": f"eq.{user_id}", "select": "*", "limit": "1"}
-    params["numero_id"] = f"eq.{numero_id}" if numero_id else "is.null"
-    rows = await sb_get("wa2_entrenamiento", params)
+    if numero_id:
+        ids = await _ids_visibles(user_id)
+        numero_rows = await sb_get("wa2_numeros", {"id": f"eq.{numero_id}", "user_id": _in_filter(ids),
+                                                    "select": "id", "limit": "1"})
+        if not numero_rows:
+            raise HTTPException(status_code=404, detail="Número no encontrado")
+        rows = await sb_get("wa2_entrenamiento", {"numero_id": f"eq.{numero_id}", "select": "*", "limit": "1"})
+    else:
+        rows = await sb_get("wa2_entrenamiento", {"user_id": f"eq.{user_id}", "numero_id": "is.null",
+                                                  "select": "*", "limit": "1"})
     if rows:
         return rows[0]
     return dict(TRAINING_DEFAULTS, numero_id=numero_id)
@@ -501,11 +539,25 @@ async def wa2_training_get(request: Request, numero_id: str | None = None):
 async def wa2_training_put(req: TrainingReq, request: Request):
     user_id = await _require_user(request)
     fila = req.dict()
-    fila["user_id"] = user_id
     fila["updated_at"] = _now()
-    params = {"user_id": f"eq.{user_id}"}
-    params["numero_id"] = f"eq.{req.numero_id}" if req.numero_id else "is.null"
-    existing = await sb_get("wa2_entrenamiento", {**params, "select": "id", "limit": "1"})
+
+    if req.numero_id:
+        # El entrenamiento de un número le pertenece a QUIEN CONECTÓ ese número
+        # (así lo relee correctamente el webhook), no a quien lo está editando.
+        # El dueño/admin puede editar el de su equipo; por eso se busca por el
+        # número real y no por el user_id de quien manda la petición.
+        ids = await _ids_visibles(user_id)
+        numero_rows = await sb_get("wa2_numeros", {"id": f"eq.{req.numero_id}", "user_id": _in_filter(ids),
+                                                    "select": "user_id", "limit": "1"})
+        if not numero_rows:
+            raise HTTPException(status_code=404, detail="Número no encontrado o no tienes permiso sobre él")
+        fila["user_id"] = numero_rows[0]["user_id"]
+        existing = await sb_get("wa2_entrenamiento", {"numero_id": f"eq.{req.numero_id}", "select": "id", "limit": "1"})
+    else:
+        fila["user_id"] = user_id
+        existing = await sb_get("wa2_entrenamiento", {"user_id": f"eq.{user_id}", "numero_id": "is.null",
+                                                      "select": "id", "limit": "1"})
+
     if existing:
         guardado = await sb_patch("wa2_entrenamiento", {"id": f"eq.{existing[0]['id']}"}, fila)
     else:
@@ -641,7 +693,12 @@ async def recepcion2_responde(history: list, contexto: str, agente: dict, entren
 async def _buscar_inmuebles(user_id: str, filtros: dict, limit: int = 3) -> list:
     sel = ("id,titulo,tipo,operacion,precio,moneda,colonia,ciudad,calle,"
            "num_exterior,recamaras,banos,m2_construccion,fotos,estatus")
-    params = {"user_id": f"eq.{user_id}", "select": sel, "estatus": "eq.publicada",
+    # OJO: los valores reales de "estatus" en Broquer son activa/reservada/
+    # en_proceso/vendida/rentada/suspendida (ver propiedades.html) — "publicada"
+    # nunca existe, así que filtrar por eso dejaba la búsqueda siempre vacía.
+    # Lo correcto es EXCLUIR lo que de plano ya no se puede ofrecer.
+    params = {"user_id": f"eq.{user_id}", "select": sel,
+              "estatus": "not.in.(vendida,rentada,suspendida)",
               "order": "updated_at.desc", "limit": str(limit)}
     op = (filtros.get("operacion") or "").strip().lower()
     if op in ("venta", "renta"):
@@ -663,9 +720,13 @@ async def _buscar_inmuebles(user_id: str, filtros: dict, limit: int = 3) -> list
         except Exception:
             pass
     rows = await sb_get("propiedades", params)
-    if not rows:
-        # segundo intento sin filtro de estatus, por si el usuario no la marcó
-        params.pop("estatus", None)
+    if not rows and (zona or filtros.get("precio_max") or filtros.get("recamaras")):
+        # Los filtros finos (zona/precio/recámaras) los infiere la IA de la
+        # plática, y puede equivocarse (ej. colonia mal escrita). Antes de
+        # decirle al prospecto "no tengo nada", se reintenta solo con lo
+        # seguro (usuario + operación + tipo + disponibilidad).
+        for clave in ("or", "precio", "recamaras"):
+            params.pop(clave, None)
         rows = await sb_get("propiedades", params)
     return rows or []
 
@@ -711,7 +772,8 @@ def _construir_ics(fecha: str, hora: str, titulo: str, descripcion: str) -> str:
 @router.get("/citas")
 async def wa2_citas_list(request: Request, desde: str | None = None):
     user_id = await _require_user(request)
-    params = {"user_id": f"eq.{user_id}", "select": "*", "order": "fecha.asc,hora.asc"}
+    ids = await _ids_visibles(user_id)
+    params = {"user_id": _in_filter(ids), "select": "*", "order": "fecha.asc,hora.asc"}
     if desde:
         params["fecha"] = f"gte.{desde}"
     rows = await sb_get("wa2_citas", params)
@@ -740,16 +802,18 @@ async def wa2_citas_crear(req: CitaReq, request: Request):
 @router.patch("/citas/{cita_id}")
 async def wa2_citas_patch(cita_id: str, request: Request):
     user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
     body = await request.json()
     permitido = {k: v for k, v in body.items() if k in ("estado", "fecha", "hora", "notas", "titulo")}
-    await sb_patch("wa2_citas", {"id": f"eq.{cita_id}", "user_id": f"eq.{user_id}"}, permitido)
+    await sb_patch("wa2_citas", {"id": f"eq.{cita_id}", "user_id": _in_filter(ids)}, permitido)
     return {"ok": True}
 
 
 @router.get("/citas/{cita_id}/ics")
 async def wa2_cita_ics(cita_id: str, request: Request):
     user_id = await _require_user(request)
-    rows = await sb_get("wa2_citas", {"id": f"eq.{cita_id}", "user_id": f"eq.{user_id}", "limit": "1"})
+    ids = await _ids_visibles(user_id)
+    rows = await sb_get("wa2_citas", {"id": f"eq.{cita_id}", "user_id": _in_filter(ids), "limit": "1"})
     if not rows:
         raise HTTPException(status_code=404, detail="Cita no encontrada")
     cita = rows[0]
@@ -1091,7 +1155,8 @@ async def _procesar_en_segundo_plano(item: dict):
 @router.get("/conversaciones")
 async def wa2_conversaciones_list(request: Request, numero_id: str | None = None):
     user_id = await _require_user(request)
-    params = {"user_id": f"eq.{user_id}", "select": "*,wa2_contactos(*)",
+    ids = await _ids_visibles(user_id)
+    params = {"user_id": _in_filter(ids), "select": "*,wa2_contactos(*)",
               "order": "last_message_at.desc", "limit": "200"}
     if numero_id and numero_id != "todos":
         params["numero_id"] = f"eq.{numero_id}"
@@ -1102,9 +1167,10 @@ async def wa2_conversaciones_list(request: Request, numero_id: str | None = None
 @router.get("/mensajes")
 async def wa2_mensajes_list(request: Request, conversacion_id: str):
     user_id = await _require_user(request)
-    rows = await sb_get("wa2_mensajes", {"conversacion_id": f"eq.{conversacion_id}", "user_id": f"eq.{user_id}",
+    ids = await _ids_visibles(user_id)
+    rows = await sb_get("wa2_mensajes", {"conversacion_id": f"eq.{conversacion_id}", "user_id": _in_filter(ids),
                                          "select": "*", "order": "created_at.asc", "limit": "300"})
-    await sb_patch("wa2_conversaciones", {"id": f"eq.{conversacion_id}", "user_id": f"eq.{user_id}"},
+    await sb_patch("wa2_conversaciones", {"id": f"eq.{conversacion_id}", "user_id": _in_filter(ids)},
                   {"unread_count": 0})
     return {"mensajes": rows}
 
@@ -1117,7 +1183,8 @@ class EnviarManualReq(BaseModel):
 @router.post("/mensajes")
 async def wa2_enviar_manual(req: EnviarManualReq, request: Request):
     user_id = await _require_user(request)
-    conv_rows = await sb_get("wa2_conversaciones", {"id": f"eq.{req.conversacion_id}", "user_id": f"eq.{user_id}",
+    ids = await _ids_visibles(user_id)
+    conv_rows = await sb_get("wa2_conversaciones", {"id": f"eq.{req.conversacion_id}", "user_id": _in_filter(ids),
                                                     "select": "*", "limit": "1"})
     if not conv_rows:
         raise HTTPException(status_code=404, detail="Conversación no encontrada")
@@ -1130,7 +1197,7 @@ async def wa2_enviar_manual(req: EnviarManualReq, request: Request):
     numero = numero_rows[0]
 
     wamid = await _wa_send_text(numero, contacto.get("wa_id"), req.texto)
-    await _guardar_mensaje(user_id, conv["contacto_id"], conv["id"], wamid, "out", "agente", req.texto)
+    await _guardar_mensaje(conv["user_id"], conv["contacto_id"], conv["id"], wamid, "out", "agente", req.texto)
     return {"ok": True}
 
 
@@ -1142,7 +1209,8 @@ class ConvPatchReq(BaseModel):
 @router.patch("/conversaciones/{conversacion_id}")
 async def wa2_conversacion_patch(conversacion_id: str, req: ConvPatchReq, request: Request):
     user_id = await _require_user(request)
-    conv_rows = await sb_get("wa2_conversaciones", {"id": f"eq.{conversacion_id}", "user_id": f"eq.{user_id}",
+    ids = await _ids_visibles(user_id)
+    conv_rows = await sb_get("wa2_conversaciones", {"id": f"eq.{conversacion_id}", "user_id": _in_filter(ids),
                                                     "select": "contacto_id", "limit": "1"})
     if not conv_rows:
         raise HTTPException(status_code=404, detail="Conversación no encontrada")
@@ -1160,7 +1228,8 @@ class NotaReq(BaseModel):
 @router.post("/contactos/{contacto_id}/notas")
 async def wa2_agregar_nota(contacto_id: str, req: NotaReq, request: Request):
     user_id = await _require_user(request)
-    rows = await sb_get("wa2_contactos", {"id": f"eq.{contacto_id}", "user_id": f"eq.{user_id}",
+    ids = await _ids_visibles(user_id)
+    rows = await sb_get("wa2_contactos", {"id": f"eq.{contacto_id}", "user_id": _in_filter(ids),
                                           "select": "notas", "limit": "1"})
     if not rows:
         raise HTTPException(status_code=404, detail="Contacto no encontrado")
@@ -1172,8 +1241,9 @@ async def wa2_agregar_nota(contacto_id: str, req: NotaReq, request: Request):
 @router.patch("/contactos/{contacto_id}")
 async def wa2_contacto_patch(contacto_id: str, request: Request):
     user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
     body = await request.json()
     permitido = {k: v for k, v in body.items()
                 if k in ("nombre", "presupuesto", "forma_pago", "busca", "temperatura", "score", "etapa", "resumen")}
-    await sb_patch("wa2_contactos", {"id": f"eq.{contacto_id}", "user_id": f"eq.{user_id}"}, permitido)
+    await sb_patch("wa2_contactos", {"id": f"eq.{contacto_id}", "user_id": _in_filter(ids)}, permitido)
     return {"ok": True}

@@ -17,19 +17,21 @@
   .w2-scroll{ padding:24px 28px 64px; max-width:1320px; margin:0 auto; }
   @media (max-width:720px){ .w2-scroll{ padding:14px 12px 88px; } }
 
-  /* ── Barra de números ─────────────────────────────────────── */
-  .w2-numeros{ display:flex; align-items:center; gap:var(--sp-2); flex-wrap:wrap; margin-bottom:var(--sp-5); }
-  .w2-chip-num{
-    display:inline-flex; align-items:center; gap:var(--sp-2);
-    height:var(--h,44px); padding:0 var(--sp-4); border-radius:var(--r-pill);
-    border:1px solid var(--line); background:var(--bone); color:var(--ink);
-    font-size:var(--fs-sm); font-weight:600; cursor:pointer; white-space:nowrap;
-  }
-  .w2-chip-num.is-active{ background:var(--sky-blue); border-color:var(--sky-blue); color:#fff; }
-  .w2-chip-num__dot{ width:8px; height:8px; border-radius:50%; background:var(--mute-2); flex:none; }
-  .w2-chip-num__dot.is-on{ background:var(--success); }
-  .w2-chip-num.is-active .w2-chip-num__dot{ background:#fff; }
-  .w2-chip-num__warn{ color:var(--danger); font-weight:800; }
+  /* ── Barra superior: números (panel compacto, sin botonzotes) ───── */
+  .w2-topbar{ display:flex; align-items:center; justify-content:space-between; gap:var(--sp-3);
+              flex-wrap:wrap; margin-bottom:var(--sp-5); }
+  .w2-select-filtro{ min-width:220px; }
+  .w2-numeros-link{ font-size:var(--fs-sm); font-weight:700; color:var(--forest); background:none;
+                     border:0; cursor:pointer; padding:0; }
+  .w2-numeros-panel{ display:flex; flex-direction:column; gap:var(--sp-2); margin-top:var(--sp-2); }
+  .w2-numero-row{ display:flex; align-items:center; gap:var(--sp-3); padding:var(--sp-3);
+                   border:1px solid var(--line); border-radius:var(--r); background:var(--bone); }
+  .w2-numero-row__dot{ width:8px; height:8px; border-radius:50%; background:var(--mute-2); flex:none; }
+  .w2-numero-row__dot.is-on{ background:var(--success); }
+  .w2-numero-row__info{ flex:1; min-width:0; }
+  .w2-numero-row__alias{ font-weight:700; font-size:var(--fs-sm); }
+  .w2-numero-row__sub{ font-size:var(--fs-xs); color:var(--mute); }
+  .w2-numero-row__warn{ color:var(--danger); font-size:var(--fs-xs); font-weight:700; }
 
   /* ── Tabs internos ────────────────────────────────────────── */
   .w2-tabs{ display:flex; gap:var(--sp-2); margin-bottom:var(--sp-5); border-bottom:1px solid var(--line); }
@@ -90,7 +92,22 @@
 
 <div class="w2-scroll">
 
-  <div class="w2-numeros" id="w2-numeros"></div>
+  <div class="w2-topbar">
+    <select class="bk-select w2-select-filtro" id="w2-filtro-numero" onchange="w2SeleccionarNumero(this.value)">
+      <option value="todos">Todos los números</option>
+    </select>
+    <button class="w2-numeros-link" onclick="w2ToggleNumerosPanel()">Administrar números</button>
+  </div>
+
+  <div class="bk-card bk-card--pad" id="w2-numeros-card" hidden>
+    <div class="bk-cluster" style="justify-content:space-between;">
+      <span class="bk-eyebrow">Tus números conectados</span>
+      <button class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2ConectarNumero()">+ Conectar número</button>
+    </div>
+    <div class="w2-numeros-panel" id="w2-numeros-panel"></div>
+  </div>
+
+  <div style="height:var(--sp-4);"></div>
 
   <div class="w2-tabs">
     <button class="w2-tab is-active" data-tab="chats" onclick="w2IrATab('chats')">Chats</button>
@@ -147,6 +164,12 @@
   <!-- ═══ ENTRENAMIENTO ═══ -->
   <div id="w2-view-entrenamiento" hidden>
     <div class="bk-section-header"><h2>Cómo habla tu IA en este número</h2></div>
+    <div class="bk-field" style="max-width:340px;">
+      <label class="bk-label" for="w2-t-numero-selector">Número a entrenar</label>
+      <select class="bk-select" id="w2-t-numero-selector" onchange="w2CambiarNumeroEntrenamiento(this.value)">
+        <option value="">Plantilla para números nuevos</option>
+      </select>
+    </div>
     <div class="bk-alert bk-alert--info" id="w2-t-contexto" style="margin-bottom:var(--sp-4);"></div>
     <form class="bk-card bk-card--pad bk-card--raise" onsubmit="event.preventDefault(); w2GuardarEntrenamiento();">
       <div class="w2-form-grid">
@@ -271,9 +294,22 @@ function getToken(){
   return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || null;
 }
 function w2Auth(){ return { Authorization: 'Bearer ' + getToken() }; }
+let _w2ToastTimer = null;
 function toast(msg){
-  if(window.bkToast) return window.bkToast(msg);
-  console.log(msg);
+  let el = document.getElementById('w2-toast');
+  if(!el){
+    el = document.createElement('div'); el.id = 'w2-toast';
+    el.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);'
+      + 'background:var(--sky-navy);color:#fff;padding:12px 18px;border-radius:var(--r-pill);'
+      + 'font-family:var(--font-sans);font-size:var(--fs-xs);font-weight:700;'
+      + 'box-shadow:var(--shadow-md);z-index:2147483000;opacity:0;transition:opacity .2s;'
+      + 'max-width:90vw;text-align:center;pointer-events:none;';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.opacity = '1';
+  if(_w2ToastTimer) clearTimeout(_w2ToastTimer);
+  _w2ToastTimer = setTimeout(() => { el.style.opacity = '0'; }, 3600);
 }
 
 /* ── SDK de Facebook (Embedded Signup) ───────────────────── */
@@ -336,22 +372,10 @@ async function w2ExchangeCode(code){
   }catch(e){ toast('Error de conexión. Intenta de nuevo.'); }
 }
 
-async function w2VerificarNumero(id, ev){
-  if(ev) ev.stopPropagation();
-  toast('Verificando con Meta…');
-  try{
-    const r = await fetch(API_BASE + '/whatsapp2/numeros/' + id + '/verificar', { headers: w2Auth() });
-    const d = await r.json();
-    if(!r.ok){ toast(d.detail || 'No se pudo verificar.'); return; }
-    toast(d.webhook_verificado ? 'Confirmado: este número manda sus mensajes a WhatsApp 2.0.'
-                                : 'Meta dice que este número NO está apuntando a WhatsApp 2.0 todavía.');
-    await w2CargarNumeros();
-  }catch(e){ toast('No se pudo verificar.'); }
-}
-
 /* ── Estado ───────────────────────────────────────────────── */
 let W2_NUMEROS = [];
-let W2_NUMERO_ACTUAL = 'todos';
+let W2_NUMERO_ACTUAL = 'todos';   // filtro de la pestaña Chats
+let W2_ENTREN_NUMERO = '';        // selector de la pestaña Entrenamiento ('' = plantilla)
 let W2_CONVS = [];
 let W2_CONV_ACTUAL = null;
 let W2_TAB = 'chats';
@@ -375,32 +399,82 @@ async function w2CargarNumeros(){
     const d = await r.json();
     W2_NUMEROS = d.numeros || [];
   }catch(e){ W2_NUMEROS = []; }
-  w2RenderNumeros();
+  w2PintarSelectFiltro();
+  w2PintarSelectEntrenamiento();
+  w2PintarPanelNumeros();
   w2CargarConversaciones();
 }
 
-function w2RenderNumeros(){
-  const cont = document.getElementById('w2-numeros');
-  let html = `<button class="w2-chip-num ${W2_NUMERO_ACTUAL==='todos'?'is-active':''}" onclick="w2SeleccionarNumero('todos')">
-                <span class="w2-chip-num__dot is-on"></span> Todos los números
-              </button>`;
-  for(const n of W2_NUMEROS){
-    const sinVerificar = !n.webhook_verificado;
-    html += `<button class="w2-chip-num ${W2_NUMERO_ACTUAL===n.id?'is-active':''}" onclick="w2SeleccionarNumero('${n.id}')">
-               <span class="w2-chip-num__dot ${n.ia_enabled!==false?'is-on':''}"></span> ${n.alias || n.display_number || 'Número'}
-               ${sinVerificar ? `<span class="w2-chip-num__warn" title="Meta no ha confirmado que este número mande sus mensajes aquí">sin verificar</span>
-               <span class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2VerificarNumero('${n.id}', event)">Verificar</span>` : ''}
-             </button>`;
+function w2PintarSelectFiltro(){
+  const sel = document.getElementById('w2-filtro-numero');
+  const actual = W2_NUMERO_ACTUAL;
+  sel.innerHTML = '<option value="todos">Todos los números</option>' +
+    W2_NUMEROS.map(n => `<option value="${n.id}">${n.alias || n.display_number || 'Número'}</option>`).join('');
+  sel.value = actual;
+}
+
+function w2PintarSelectEntrenamiento(){
+  const sel = document.getElementById('w2-t-numero-selector');
+  const actual = W2_ENTREN_NUMERO;
+  sel.innerHTML = '<option value="">Plantilla para números nuevos</option>' +
+    W2_NUMEROS.map(n => `<option value="${n.id}">${n.alias || n.display_number || 'Número'}</option>`).join('');
+  sel.value = actual;
+}
+
+function w2ToggleNumerosPanel(){
+  const card = document.getElementById('w2-numeros-card');
+  card.hidden = !card.hidden;
+}
+
+function w2PintarPanelNumeros(){
+  const cont = document.getElementById('w2-numeros-panel');
+  if(!W2_NUMEROS.length){
+    cont.innerHTML = '<div class="bk-hint">Aún no tienes ningún número conectado.</div>';
+    return;
   }
-  html += `<button class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2ConectarNumero()">+ Conectar número</button>`;
-  cont.innerHTML = html;
+  cont.innerHTML = W2_NUMEROS.map(n => `
+    <div class="w2-numero-row">
+      <span class="w2-numero-row__dot ${n.ia_enabled!==false?'is-on':''}"></span>
+      <div class="w2-numero-row__info">
+        <div class="w2-numero-row__alias">${n.alias || 'Sin nombre'} <span class="bk-hint">${n.display_number || ''}</span></div>
+        ${n.webhook_verificado ? '' : '<div class="w2-numero-row__warn">Meta no ha confirmado esta conexión — dale a Verificar.</div>'}
+        ${n.es_mio === false ? '<div class="bk-hint">Número de un compañero de equipo</div>' : ''}
+      </div>
+      <label class="bk-check"><input type="checkbox" ${n.ia_enabled!==false?'checked':''} onchange="w2ToggleIaNumero('${n.id}', this.checked)"/> IA</label>
+      ${!n.webhook_verificado ? `<button class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2VerificarNumero('${n.id}')">Verificar</button>` : ''}
+    </div>`).join('');
+}
+
+async function w2ToggleIaNumero(id, on){
+  try{
+    await fetch(API_BASE + '/whatsapp2/numeros/' + id, {
+      method:'PATCH', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({ ia_enabled: on })
+    });
+    await w2CargarNumeros();
+  }catch(e){ toast('No se pudo actualizar.'); }
 }
 
 function w2SeleccionarNumero(id){
   W2_NUMERO_ACTUAL = id;
-  w2RenderNumeros();
   w2CargarConversaciones();
-  if(W2_TAB === 'entrenamiento') w2CargarEntrenamiento();
+}
+
+function w2CambiarNumeroEntrenamiento(id){
+  W2_ENTREN_NUMERO = id;
+  w2CargarEntrenamiento();
+}
+
+async function w2VerificarNumero(id){
+  toast('Verificando con Meta…');
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/numeros/' + id + '/verificar', { headers: w2Auth() });
+    const d = await r.json();
+    if(!r.ok){ toast(d.detail || 'No se pudo verificar.'); return; }
+    toast(d.webhook_verificado ? 'Confirmado: este número manda sus mensajes a WhatsApp 2.0.'
+                                : 'Meta dice que este número NO está apuntando a WhatsApp 2.0 todavía.');
+    await w2CargarNumeros();
+  }catch(e){ toast('No se pudo verificar.'); }
 }
 
 /* ── Conversaciones ───────────────────────────────────────── */
@@ -559,13 +633,13 @@ async function w2AgregarNota(){
 
 /* ── Entrenamiento ────────────────────────────────────────── */
 async function w2CargarEntrenamiento(){
-  const numero_id = W2_NUMERO_ACTUAL !== 'todos' ? W2_NUMERO_ACTUAL : '';
-  const numeroObj = W2_NUMEROS.find(n => n.id === W2_NUMERO_ACTUAL);
+  const numero_id = W2_ENTREN_NUMERO || '';
+  const numeroObj = W2_NUMEROS.find(n => n.id === W2_ENTREN_NUMERO);
   const contexto = document.getElementById('w2-t-contexto');
   if(numero_id && numeroObj){
     contexto.textContent = 'Estás editando el número "' + (numeroObj.alias || numeroObj.display_number) + '". Estos cambios solo afectan a este número.';
   } else if(W2_NUMEROS.length){
-    contexto.textContent = 'Tienes seleccionado "Todos los números": esto NO edita ninguno de tus números ya conectados, es la plantilla que se usará cuando conectes uno nuevo. Elige un número arriba para editar el suyo.';
+    contexto.textContent = 'Tienes seleccionado "Plantilla para números nuevos": esto NO edita ninguno de tus números ya conectados, solo se usará cuando conectes uno nuevo. Elige un número arriba para editar el suyo.';
   } else {
     contexto.textContent = 'Aún no tienes ningún número conectado. Esto guarda la plantilla que usará el primer número que conectes.';
   }
@@ -599,7 +673,7 @@ function w2Lista(id){
 }
 
 async function w2GuardarEntrenamiento(){
-  const numero_id = W2_NUMERO_ACTUAL !== 'todos' ? W2_NUMERO_ACTUAL : null;
+  const numero_id = W2_ENTREN_NUMERO || null;
   const body = {
     numero_id,
     nombre_ia: document.getElementById('w2-t-nombre').value.trim(),
@@ -681,9 +755,18 @@ function w2AbrirModalCita(){
   document.getElementById('w2-cita-fecha').value = '';
   document.getElementById('w2-cita-hora').value = '';
   document.getElementById('w2-cita-notas').value = '';
-  document.getElementById('w2-modal-cita').hidden = false;
+  const modal = document.getElementById('w2-modal-cita');
+  modal.hidden = false;
+  // requestAnimationFrame para que el navegador registre "hidden=false" antes
+  // de aplicar is-open; si se agregan las dos cosas en el mismo tick, la
+  // transición de opacity/visibility del sistema de diseño no se anima.
+  requestAnimationFrame(() => modal.classList.add('is-open'));
 }
-function w2CerrarModalCita(){ document.getElementById('w2-modal-cita').hidden = true; }
+function w2CerrarModalCita(){
+  const modal = document.getElementById('w2-modal-cita');
+  modal.classList.remove('is-open');
+  setTimeout(() => { modal.hidden = true; }, 200);
+}
 
 async function w2GuardarCitaManual(){
   const fecha = document.getElementById('w2-cita-fecha').value;

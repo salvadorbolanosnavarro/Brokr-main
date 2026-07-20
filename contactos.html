@@ -614,6 +614,41 @@ html, body { background: var(--paper); }
   display: inline-flex; align-items: center; justify-content: center;
   flex-shrink: 0; align-self: center;
 }
+
+/* ── Toggle Lista / Tablero ── */
+.vista-toggle { display: inline-flex; border: 1px solid var(--line); border-radius: var(--r-pill); overflow: hidden; flex-shrink: 0; }
+.vista-toggle button {
+  border: none; background: var(--bone); color: var(--ink-2);
+  padding: 8px 15px; font-size: var(--fs-sm); font-weight: 600;
+  font-family: inherit; cursor: pointer; transition: all .15s ease;
+}
+.vista-toggle button.is-on { background: var(--sky-navy); color: var(--paper); }
+
+/* ── Tablero Kanban ── */
+.board { display: flex; gap: 14px; overflow-x: auto; padding: 8px 16px 90px; align-items: flex-start; }
+.board-col {
+  flex: 0 0 264px; background: var(--bone); border: 1px solid var(--line);
+  border-radius: var(--r-lg); display: flex; flex-direction: column;
+  max-height: calc(100dvh - 210px); transition: border-color .12s ease, background .12s ease;
+}
+.board-col.drag-over { border-color: var(--sky-navy); background: var(--sky-canvas); }
+.board-col__head { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.board-col__dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.board-col__title { font-weight: 700; font-size: var(--fs-sm); }
+.board-col__count { margin-left: auto; font-size: var(--fs-xs); color: var(--mute); font-weight: 600; background: var(--paper); border-radius: var(--r-pill); padding: 2px 9px; }
+.board-col__body { padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; min-height: 40px; }
+.board-card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r); padding: 11px 12px; cursor: grab; }
+.board-card:hover { border-color: var(--line-3); }
+.board-card.dragging { opacity: .45; }
+.board-card__name { font-weight: 600; font-size: var(--fs-sm); }
+.board-card__sub { font-size: var(--fs-xs); color: var(--mute); margin-top: 3px; }
+.board-card__foot { display: flex; align-items: center; gap: 6px; margin-top: 9px; }
+.board-card__foot:empty { display: none; }
+.board-prob { font-size: var(--fs-xs); font-weight: 600; padding: 2px 9px; border-radius: var(--r-pill); color: var(--paper); }
+.board-prob.prob-baja  { background: var(--mute); }
+.board-prob.prob-media { background: var(--sky-navy); }
+.board-prob.prob-alta  { background: var(--forest); }
+.board-empty { color: var(--mute); font-size: var(--fs-xs); padding: 10px; text-align: center; }
 .nota-box {
   background: var(--bone);
   border: 1px solid var(--line);
@@ -888,6 +923,10 @@ html, body { background: var(--paper); }
       <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--mute);"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
       <input type="search" id="search-input" placeholder="Buscar por nombre, teléfono o correo…" oninput="busquedaDebounced()"/>
     </div>
+    <div class="vista-toggle">
+      <button id="vt-lista" class="is-on" onclick="setVista('lista')">Lista</button>
+      <button id="vt-tablero" onclick="setVista('tablero')">Tablero</button>
+    </div>
   </div>
   <div class="tabs">
     <button class="ftab active" onclick="setFiltro('todos',this)">Todos</button>
@@ -902,6 +941,7 @@ html, body { background: var(--paper); }
 </header>
 
 <div class="list" id="lista"></div>
+<div class="board" id="tablero" style="display:none"></div>
 
 <button class="fab" onclick="abrirModal()" aria-label="Nuevo contacto">
   <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
@@ -1321,12 +1361,23 @@ function busquedaDebounced() {
   _busqT = setTimeout(renderActual, 200);
 }
 
+let vistaActual = 'lista';
+function setVista(v) {
+  vistaActual = v;
+  document.getElementById('vt-lista').classList.toggle('is-on', v === 'lista');
+  document.getElementById('vt-tablero').classList.toggle('is-on', v === 'tablero');
+  document.getElementById('lista').style.display   = (v === 'lista')   ? '' : 'none';
+  document.getElementById('tablero').style.display = (v === 'tablero') ? 'flex' : 'none';
+  renderActual();
+}
+
 function renderActual() {
   const todos = cargar();
   const badge = document.getElementById('count-badge');
   badge.textContent = todos.length;
   badge.style.display = todos.length ? '' : 'none';
-  renderLista();
+  if (vistaActual === 'tablero') renderTablero();
+  else renderLista();
 }
 
 function pintarDetPotencial(activo) {
@@ -1391,6 +1442,88 @@ function renderLista() {
       </div>` : '<div style="color:var(--forest);font-size: var(--fs-xs);font-weight:600;font-family:var(--font-mono);letter-spacing:.06em">SELECCIONAR →</div>'}
     </div>`;
   }).join('');
+}
+
+/* ── Tablero Kanban ──────────────────────────────────────────────── */
+function etapaColor(v) {
+  return ({
+    nuevo: 'var(--info)', activo: 'var(--warn)', contactado: 'var(--sky-navy)',
+    cerrado: 'var(--success)', descartado: 'var(--mute)'
+  })[v] || 'var(--line-3)';
+}
+
+function renderTablero() {
+  if (!_miembrosLoaded) cargarMiembros().then(() => renderActual());
+  const cont = document.getElementById('tablero');
+  const cols = [{ v: '', l: 'Sin etapa' }].concat(ETAPAS);
+  const grupos = {};
+  cols.forEach(col => { grupos[col.v] = []; });
+  contactosFiltrados().forEach(c => {
+    const k = (c.etapa && grupos[c.etapa] !== undefined) ? c.etapa : '';
+    grupos[k].push(c);
+  });
+  cont.innerHTML = cols.map(col => {
+    const cards = grupos[col.v];
+    const inner = cards.length
+      ? cards.map(c => tarjetaBoard(c)).join('')
+      : '<div class="board-empty">Vacío</div>';
+    return `<div class="board-col" data-etapa="${esc(col.v)}"
+                 ondragover="boardDragOver(event,this)"
+                 ondragleave="this.classList.remove('drag-over')"
+                 ondrop="boardDrop(event,this)">
+      <div class="board-col__head">
+        <span class="board-col__dot" style="background:${etapaColor(col.v)}"></span>
+        <span class="board-col__title">${esc(col.l)}</span>
+        <span class="board-col__count">${cards.length}</span>
+      </div>
+      <div class="board-col__body">${inner}</div>
+    </div>`;
+  }).join('');
+}
+
+function tarjetaBoard(c) {
+  const sub = c.telefono || c.email || c.empresa || '';
+  const ag = c.agente_asignado ? nombreAgente(c.agente_asignado) : '';
+  const agChip = ag ? `<span class="agente-chip" title="Agente: ${esc(ag)}">${esc(initials(ag))}</span>` : '';
+  const prob = c.probabilidad ? `<span class="board-prob prob-${esc(c.probabilidad)}">${esc(c.probabilidad)}</span>` : '';
+  return `<div class="board-card" draggable="true" data-id="${esc(c.id)}"
+               ondragstart="boardDragStart(event,this)" ondragend="this.classList.remove('dragging')"
+               onclick="abrirDetalle(this.dataset.id)">
+    <div class="board-card__name">${esc(c.nombre)}</div>
+    ${sub ? `<div class="board-card__sub">${esc(sub)}</div>` : ''}
+    <div class="board-card__foot">${agChip}${prob}</div>
+  </div>`;
+}
+
+let _dragId = null;
+function boardDragStart(e, el) {
+  _dragId = el.dataset.id;
+  el.classList.add('dragging');
+  try { e.dataTransfer.setData('text/plain', _dragId); e.dataTransfer.effectAllowed = 'move'; } catch (_) {}
+}
+function boardDragOver(e, col) {
+  e.preventDefault();
+  try { e.dataTransfer.dropEffect = 'move'; } catch (_) {}
+  col.classList.add('drag-over');
+}
+function boardDrop(e, col) {
+  e.preventDefault();
+  col.classList.remove('drag-over');
+  const id = _dragId || (e.dataTransfer && e.dataTransfer.getData('text/plain'));
+  _dragId = null;
+  if (id) moverEtapa(id, col.dataset.etapa || '');
+}
+
+async function moverEtapa(id, etapa) {
+  const c = _contactosMem.find(x => String(x.id) === String(id));
+  if (!c) return;
+  const prev = c.etapa || '';
+  if (prev === etapa) return;
+  c.etapa = etapa;
+  if (detContacto && String(detContacto.id) === String(id)) detContacto.etapa = etapa;
+  renderTablero();
+  try { await patchContacto(id, { etapa: etapa || null }); }
+  catch (e) { c.etapa = prev; renderTablero(); showToast('No se pudo mover el contacto'); }
 }
 
 function seleccionarContacto(id) {
