@@ -160,6 +160,17 @@ input{font-family:inherit}
 .adm-btn--save{background:var(--forest);color:var(--paper)}
 .adm-btn--save:hover{background:var(--forest-2)}
 .adm-btn--save:disabled{opacity:.4;cursor:not-allowed}
+/* Broquer para Empresas */
+.adm-emp-status{font-size:var(--fs-sm);font-weight:600;color:var(--mute);margin-bottom:6px}
+.adm-emp-status.is-emp{color:var(--forest)}
+.adm-emp-hint{font-size:var(--fs-caption);color:var(--mute);line-height:1.4;margin-bottom:10px}
+.adm-emp-grid{display:grid;grid-template-columns:1fr 110px;gap:8px;margin-bottom:10px}
+.adm-emp-grid input{width:100%;padding:9px 12px;background:var(--paper);border:1px solid var(--line-2);border-radius:var(--r);font-size:var(--fs-sm);color:var(--ink);outline:none}
+.adm-emp-grid input:focus{border-color:var(--ink)}
+.adm-emp-grid input::placeholder{color:var(--mute-2)}
+.adm-btn--emp{background:var(--forest);color:var(--paper);width:100%}
+.adm-btn--emp:hover{background:var(--forest-2)}
+.adm-btn--emp:disabled{opacity:.4;cursor:not-allowed}
 
 /* Toast */
 .adm-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--paper);padding:11px 22px;border-radius:var(--r-pill);font-size:var(--fs-sm);font-weight:500;z-index:9999;opacity:0;pointer-events:none;transition:all .25s ease;letter-spacing:-0.005em;max-width:90vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -267,6 +278,17 @@ input{font-family:inherit}
               <div class="adm-roloption__desc">Usuario regular. Necesita suscripción para entrar.</div>
             </button>
           </div>
+        </div>
+
+        <div class="adm-sec full" id="emp-sec">
+          <div class="adm-sec__title">Broquer para Empresas</div>
+          <div class="adm-emp-status" id="d-emp-status">—</div>
+          <div class="adm-emp-hint">Convierte esta cuenta en empresa para que pueda tener equipo, invitar agentes y compartir un mismo inventario. El titular queda como dueño y podrá invitar a su gente desde Equipo.</div>
+          <div class="adm-emp-grid">
+            <input type="text" id="d-emp-nombre" placeholder="Nombre de la inmobiliaria"/>
+            <input type="number" id="d-emp-asientos" min="1" placeholder="Asientos"/>
+          </div>
+          <button type="button" class="adm-btn adm-btn--emp" id="d-emp-btn" onclick="activarEmpresa()">Activar como empresa</button>
         </div>
 
         <div class="adm-sec">
@@ -409,6 +431,7 @@ let _polling = null;
 let _lastIds = new Set();
 let _usoRangeDias = 30;
 let _usoReqId = 0;  // race-guard: ignora respuestas de selecciones viejas
+let empresaOwners = new Map();  // owner_id → organización (para el bloque de Empresas)
 
 const MOD_LBL = {
   home:'Inicio', props:'Tus Inmuebles', contactos:'Contactos', contratos:'Contratos',
@@ -470,7 +493,22 @@ async function init(){
   }
 
   await loadUsers();
+  await cargarEmpresas();
   startPolling();
+}
+
+async function cargarEmpresas(){
+  try{
+    const r = await fetch(API + '/admin/org/lista', {
+      headers:{ Authorization:'Bearer '+token }
+    });
+    if(!r.ok) return;
+    const d = await r.json();
+    empresaOwners = new Map();
+    (d.organizaciones || []).forEach(o => {
+      if(o.owner_id) empresaOwners.set(o.owner_id, o);
+    });
+  }catch(_){}
 }
 
 /* ── Load data ────────────────────────────── */
@@ -640,6 +678,27 @@ function renderDetail(u){
 
   // Rol grid selection
   renderRolGrid();
+
+  // Broquer para Empresas
+  const emp        = empresaOwners.get(u.id);
+  const empStatus  = document.getElementById('d-emp-status');
+  const empNombre  = document.getElementById('d-emp-nombre');
+  const empAsient  = document.getElementById('d-emp-asientos');
+  const empBtn     = document.getElementById('d-emp-btn');
+  if(emp){
+    empStatus.textContent = 'Ya es empresa: ' + (emp.nombre || '—')
+      + (emp.miembros != null ? (' · ' + emp.miembros + ' miembros') : '');
+    empStatus.classList.add('is-emp');
+    empNombre.value = emp.nombre || (u.nombre || '');
+    empAsient.value = emp.asientos_max != null ? emp.asientos_max : '';
+    empBtn.textContent = 'Actualizar empresa';
+  } else {
+    empStatus.textContent = 'Cuenta individual';
+    empStatus.classList.remove('is-emp');
+    empNombre.value = u.nombre || '';
+    empAsient.value = '';
+    empBtn.textContent = 'Activar como empresa';
+  }
 }
 
 function renderRolGrid(){
@@ -730,6 +789,59 @@ async function saveChanges(){
   }finally{
     saveBtn.disabled = false;
     saveBtn.textContent = 'Guardar cambios';
+  }
+}
+
+/* ── Broquer para Empresas ────────────────── */
+async function activarEmpresa(){
+  if(!selId) return;
+  const u = users.find(x => x.id === selId);
+  if(!u) return;
+
+  const nombre = document.getElementById('d-emp-nombre').value.trim();
+  if(!nombre){ toast('Escribe el nombre de la inmobiliaria.', true); return; }
+  const asientosRaw = document.getElementById('d-emp-asientos').value.trim();
+  const asientos = asientosRaw ? parseInt(asientosRaw, 10) : null;
+
+  const btn  = document.getElementById('d-emp-btn');
+  const prev = btn.textContent;
+  btn.disabled  = true;
+  btn.innerHTML = '<span class="adm-spinner"></span>';
+
+  const body = { user_id: u.id, nombre };
+  if(asientos && asientos > 0) body.asientos_max = asientos;
+
+  async function enviar(){
+    return fetch(API + '/admin/org/convertir', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+token },
+      body: JSON.stringify(body)
+    });
+  }
+
+  try{
+    let r = await enviar();
+    if(r.status === 401){
+      const ok = await tryRefreshToken();
+      if(ok) r = await enviar();
+    }
+    if(!r.ok){
+      const e = await r.json().catch(()=>({}));
+      throw new Error(e.detail || ('Error '+r.status));
+    }
+    const d = await r.json();
+    const previo = empresaOwners.get(u.id) || {};
+    empresaOwners.set(u.id, {
+      id: d.org_id, nombre: d.nombre || nombre, owner_id: u.id,
+      asientos_max: asientos, miembros: previo.miembros
+    });
+    toast('Cuenta activada como empresa.');
+    renderDetail(u);
+  }catch(e){
+    toast('Error: ' + (e.message || 'No se pudo activar'), true);
+    btn.textContent = prev;
+  }finally{
+    btn.disabled = false;
   }
 }
 
