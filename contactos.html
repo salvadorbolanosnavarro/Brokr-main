@@ -987,6 +987,7 @@ html, body { background: var(--paper); }
 
       <div class="sec-lbl">Notas</div>
       <div class="f"><label>Observaciones</label><textarea id="m-notas" rows="3" placeholder="Prefiere WhatsApp. Calificado. Responde rápido…"></textarea></div>
+      <div class="f"><label>Descripción privada</label><textarea id="m-descripcion-privada" rows="3" placeholder="Se llena sola con lo que califica la IA de WhatsApp (score, presupuesto, etc.); también puedes editarla a mano."></textarea></div>
 
       <div style="margin-top:24px;padding-top:18px;border-top:1px solid var(--line);display:flex;gap:10px">
         <button class="btn-del" id="btn-del" onclick="confirmarEliminar()" style="display:none">Eliminar</button>
@@ -1407,6 +1408,7 @@ function abrirModal(id = null) {
     sv('m-calle', c.calle); sv('m-numext', c.num_ext); sv('m-numint', c.num_int);
     sv('m-colonia', c.colonia); sv('m-cp', c.cp); sv('m-mpio', c.mpio);
     sv('m-notas', c.notas);
+    sv('m-descripcion-privada', c.descripcion_privada);
     sv('m-fuente', c.fuente);
     sv('m-etiquetas', Array.isArray(c.etiquetas) ? c.etiquetas.join(', ') : '');
     document.getElementById('m-tipo').value = c.tipo || 'arrendador';
@@ -1417,7 +1419,7 @@ function abrirModal(id = null) {
     document.getElementById('btn-del').style.display = 'block';
   } else {
     document.getElementById('modal-title').textContent = 'Nuevo contacto';
-    ['m-nombre','m-tel','m-wa','m-email','m-empresa','m-calle','m-numext','m-numint','m-colonia','m-cp','m-notas','m-fuente','m-etiquetas'].forEach(i => sv(i,''));
+    ['m-nombre','m-tel','m-wa','m-email','m-empresa','m-calle','m-numext','m-numint','m-colonia','m-cp','m-notas','m-descripcion-privada','m-fuente','m-etiquetas'].forEach(i => sv(i,''));
     sv('m-mpio','MORELIA, MICHOACÁN');
     document.getElementById('m-tipo').value = 'arrendador';
     document.getElementById('m-potencial').checked = false;
@@ -1519,6 +1521,7 @@ async function guardarContacto() {
     cp: gv('m-cp'),
     mpio: gv('m-mpio'),
     notas: gv('m-notas'),
+    descripcion_privada: gv('m-descripcion-privada'),
     es_potencial: document.getElementById('m-potencial').checked,
     fuente: gv('m-fuente') || null,
     etiquetas: etiquetas,
@@ -1692,6 +1695,7 @@ function renderDetInfo(c) {
     html += `<div style="margin-top:16px"><div class="det-lbl" style="margin-bottom:8px">Etiquetas</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">${c.etiquetas.map(t => `<span class="tag-chip">${esc(t)}</span>`).join('')}</div></div>`;
   }
+  if (c.descripcion_privada) html += `<div style="margin-top:18px"><div class="det-lbl" style="margin-bottom:8px">Descripción privada</div><div class="nota-box">${esc(c.descripcion_privada)}</div></div>`;
   if (c.notas) html += `<div style="margin-top:18px"><div class="det-lbl" style="margin-bottom:8px">Notas</div><div class="nota-box">${esc(c.notas)}</div></div>`;
   document.getElementById('dtab-info').innerHTML = html;
 }

@@ -1103,10 +1103,12 @@ async def _crear_contacto_crm(user_id: str, wa_id: str, nombre: str | None) -> s
 
 async def _sincronizar_contacto_crm(user_id: str, contacto_wa2: dict, resultado_ia: dict | None = None) -> None:
     """Mantiene al día el Contacto real del CRM con lo que la IA va calificando:
-    agrega una línea a Observaciones (no la borra, la tabla solo tiene un campo
-    de texto) y ajusta el rol si ya se sabe qué busca. Nunca truena el webhook
-    si el CRM no responde — esto es un espejo, no la fuente de verdad de
-    WhatsApp 2.0."""
+    - Notas (historial): se le agrega una línea nueva cada vez (no se borra).
+    - Descripción privada: es una FOTO del momento — se sobrescribe con lo
+      último que se sabe del prospecto (temperatura, score, presupuesto,
+      forma de pago, qué busca, resumen). No es historial, es el estado actual.
+    Nunca truena el webhook si el CRM no responde — esto es un espejo, no la
+    fuente de verdad de WhatsApp 2.0."""
     crm_id = contacto_wa2.get("contacto_crm_id")
     if not crm_id or not resultado_ia:
         return
@@ -1123,6 +1125,17 @@ async def _sincronizar_contacto_crm(user_id: str, contacto_wa2: dict, resultado_
             previas = (rows[0].get("notas") or "") if rows else ""
             fecha = _hora_local().strftime("%d/%m %H:%M")
             cambios["notas"] = (previas + f"\n[{fecha} · WhatsApp 2.0] {nota}").strip()
+
+        renglones = []
+        if contacto_wa2.get("temperatura"): renglones.append(f"Temperatura: {contacto_wa2['temperatura']}")
+        if contacto_wa2.get("score") is not None: renglones.append(f"Score: {contacto_wa2['score']}")
+        if contacto_wa2.get("presupuesto"): renglones.append(f"Presupuesto: {contacto_wa2['presupuesto']}")
+        if contacto_wa2.get("forma_pago"): renglones.append(f"Forma de pago: {contacto_wa2['forma_pago']}")
+        if contacto_wa2.get("busca"): renglones.append(f"Busca: {contacto_wa2['busca']}")
+        if contacto_wa2.get("resumen"): renglones.append(f"Resumen: {contacto_wa2['resumen']}")
+        if renglones:
+            cambios["descripcion_privada"] = "\n".join(renglones)
+
         await sb_patch("contactos", {"id": f"eq.{crm_id}"}, cambios)
     except Exception as e:
         log.warning("No se pudo sincronizar el Contacto %s del CRM: %s", crm_id, e)
@@ -1314,7 +1327,7 @@ async def _procesar_en_segundo_plano(item: dict):
         "updated_at": _now(),
     }
     await sb_patch("wa2_contactos", {"id": f"eq.{item['contacto_id']}"}, update_contacto)
-    await _sincronizar_contacto_crm(user_id, contacto, resultado)
+    await _sincronizar_contacto_crm(user_id, dict(contacto, **update_contacto), resultado)
 
     accion = resultado.get("accion")
     if isinstance(accion, dict):
