@@ -4000,6 +4000,9 @@ body[data-app="facebook-ads"]{--page-max:980px}
     // caso sondear ni pedir notificaciones de un módulo que el agente no puede abrir.
     if (profile?.isAdmin) setupChatsBadge(profile);
 
+    // ─── Cita nueva agendada por la IA de WhatsApp: aviso inmediato (web) ──
+    if (profile?.isAdmin) setupCitasNotify(profile);
+
     window.dispatchEvent(new CustomEvent('brokr-shell-ready', { detail: { profile, activeKey } }));
   }
 
@@ -4120,6 +4123,57 @@ body[data-app="facebook-ads"]{--page-max:980px}
         tag: 'broquer-wa',
       });
       n.onclick = () => { window.focus(); location.href = 'whatsapp.html#chats'; };
+    } catch (e) {}
+  }
+
+  /* ─── Cita nueva agendada por la IA de WhatsApp: aviso inmediato (web) ───
+     En iOS la notificación real la manda APNs (ya se manda desde el backend
+     en cuanto se crea la tarea); esto es el aviso equivalente para web/PWA,
+     revisando cada 20s. Se guarda en localStorage cuál fue la última cita
+     que este dispositivo ya vio, para no re-avisar de todo el historial ni
+     duplicar avisos entre pestañas/dispositivos del mismo agente. */
+  function setupCitasNotify(profile) {
+    if (!profile?.user?.id) return;
+    const storageKey = 'bk_ultima_cita_vista_' + profile.user.id;
+
+    async function tick() {
+      try {
+        const rows = await sbFetch(
+          'tareas?select=id,titulo,fecha_entrega,created_at&titulo=ilike.*(WhatsApp)*' +
+          '&order=created_at.desc&limit=5'
+        );
+        if (!Array.isArray(rows) || !rows.length) return;
+        const ultimaVista = localStorage.getItem(storageKey);
+        if (!ultimaVista) {
+          // Primera vez en este dispositivo: solo marca desde dónde avisar
+          // de aquí en adelante, no avisa de todo lo que ya existía.
+          localStorage.setItem(storageKey, rows[0].created_at);
+          return;
+        }
+        const nuevas = rows.filter(t => t.created_at > ultimaVista);
+        if (!nuevas.length) return;
+        localStorage.setItem(storageKey, rows[0].created_at);
+        if (!IS_IOS_NATIVE) nuevas.reverse().forEach(_avisoCita);
+      } catch (e) {}
+    }
+
+    tick();
+    setInterval(() => { if (!document.hidden) tick(); }, 20000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+  }
+
+  function _avisoCita(t) {
+    try {
+      if (!('Notification' in window) || Notification.permission !== 'granted') return;
+      const cuando = t.fecha_entrega
+        ? new Date(t.fecha_entrega).toLocaleString('es-MX', { day:'2-digit', month:'short', hour:'numeric', minute:'2-digit' })
+        : '';
+      const n = new Notification('Broquer · Nueva cita agendada', {
+        body: t.titulo + (cuando ? ' — ' + cuando : ''),
+        icon: 'icon-192.png',
+        tag: 'broquer-cita-' + t.id,
+      });
+      n.onclick = () => { window.focus(); location.href = 'tareas.html'; };
     } catch (e) {}
   }
 

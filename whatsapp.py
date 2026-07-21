@@ -1352,6 +1352,23 @@ async def _guardar_mensaje(user_id: str, contacto_id: str, conversacion_id: str,
     await sb_patch("wa2_conversaciones", {"id": f"eq.{conversacion_id}"}, cambios_conv)
 
 
+def _resolver_inmueble_id(inmueble_txt: str, ultimas: list) -> str | None:
+    """Si el prospecto ya vio 1 sola propiedad en esta charla, es esa. Si vio
+    varias, se intenta encontrar cuál por el texto que puso la IA en 'inmueble'."""
+    if not ultimas:
+        return None
+    if len(ultimas) == 1:
+        return ultimas[0].get("id")
+    texto = (inmueble_txt or "").strip().lower()
+    if not texto:
+        return None
+    for p in ultimas:
+        titulo = (p.get("titulo") or "").strip().lower()
+        if titulo and (titulo in texto or texto in titulo):
+            return p.get("id")
+    return None
+
+
 async def _persistir_entrantes(payload: dict):
     trabajo = []
     for entry in payload.get("entry", []):
@@ -1500,6 +1517,7 @@ async def _procesar_en_segundo_plano(item: dict):
             filtros_ia = accion.get("filtros") or {}
             props, zona_sin_resultados = await _buscar_inmuebles(user_id, filtros_ia)
             if props:
+                enviados = []
                 for p in props[:3]:
                     fotos = p.get("fotos") or []
                     caption = _texto_inmueble(p)
@@ -1509,6 +1527,7 @@ async def _procesar_en_segundo_plano(item: dict):
                         wamid2 = await _wa_send_text(numero, item["wa_id"], caption)
                     await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"], wamid2,
                                           "out", "ia", caption, fotos[0] if fotos else None)
+                    enviados.append({"id": p.get("id"), "titulo": p.get("titulo") or p.get("tipo") or "propiedad"})
                     # Ficha técnica completa (PDF con todas las fotos y datos):
                     # mismo motor que usa el módulo de Ficha técnica, solo por HTTP.
                     url_pdf, filename = await _generar_ficha_pdf(_propiedad_para_ficha(p))
@@ -1518,6 +1537,10 @@ async def _procesar_en_segundo_plano(item: dict):
                             f"Ficha técnica: {p.get('titulo') or p.get('tipo') or 'propiedad'}")
                         await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"], wamid3,
                                               "out", "ia", f"[ficha técnica adjunta] {filename}", url_pdf)
+                # Se recuerdan aquí (no en el historial de mensajes) para poder
+                # adjuntar la propiedad correcta a la tarea si más adelante agenda una visita.
+                await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"},
+                              {"ultimas_propiedades": enviados})
             elif zona_sin_resultados:
                 # De verdad no hay nada en la zona que pidió: se le dice tal
                 # cual, NUNCA se le manda una propiedad de otra ubicación
@@ -1545,14 +1568,19 @@ async def _procesar_en_segundo_plano(item: dict):
                 if inmueble_txt:
                     titulo += f" — {inmueble_txt}"
                 crm_id = contacto.get("contacto_crm_id")
+                propiedad_id = _resolver_inmueble_id(inmueble_txt, conv.get("ultimas_propiedades") or [])
                 creada = await sb_post("tareas", {
                     "user_id": user_id, "titulo": titulo,
                     "fecha_entrega": _fecha_hora_utc_iso(fecha, hora, entren.get("zona_horaria")),
                     "notas": inmueble_txt or None,
+                    "propiedad_id": propiedad_id,
                     "contacto_id": crm_id})
                 if creada and crm_id:
                     await sb_post("tareas_contactos", {
                         "user_id": user_id, "tarea_id": creada[0]["id"], "contacto_id": crm_id})
+                if creada and propiedad_id:
+                    await sb_post("tareas_propiedades", {
+                        "user_id": user_id, "tarea_id": creada[0]["id"], "propiedad_id": propiedad_id})
                 await sb_patch("wa2_contactos", {"id": f"eq.{item['contacto_id']}"}, {"etapa": "Cita"})
                 ics = _construir_ics(fecha, hora, titulo, inmueble_txt, entren.get("zona_horaria"))
                 await _wa_send_document(numero, item["wa_id"], ics.encode("utf-8"),

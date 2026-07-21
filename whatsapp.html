@@ -239,7 +239,7 @@
       <div class="bk-divider"></div>
       <div class="bk-field-row">
         <div class="bk-field">
-          <label class="bk-check"><input type="checkbox" id="w2-t-horario"/> Solo responder en horario</label>
+          <label class="bk-switch"><input type="checkbox" id="w2-t-horario"/><span class="bk-switch__track"></span> Solo responder en horario</label>
         </div>
         <div></div>
       </div>
@@ -267,7 +267,7 @@
         <input class="bk-input" type="number" min="0" id="w2-t-max" style="max-width:160px;"/>
       </div>
       <div class="bk-field">
-        <label class="bk-check"><input type="checkbox" id="w2-t-activo" checked/> IA activa en este número</label>
+        <label class="bk-switch"><input type="checkbox" id="w2-t-activo" checked/><span class="bk-switch__track"></span> IA activa en este número</label>
       </div>
 
       <div class="bk-cluster" style="justify-content:flex-end;">
@@ -482,7 +482,7 @@ function w2PintarPanelNumeros(){
         ${n.webhook_verificado ? '' : '<div class="w2-numero-row__warn">Meta no ha confirmado esta conexión — dale a Verificar.</div>'}
         ${n.es_mio === false ? '<div class="bk-hint">Número de un compañero de equipo</div>' : ''}
       </div>
-      <label class="bk-check"><input type="checkbox" ${n.ia_enabled!==false?'checked':''} onchange="w2ToggleIaNumero('${n.id}', this.checked)"/> IA</label>
+      <label class="bk-switch"><input type="checkbox" ${n.ia_enabled!==false?'checked':''} onchange="w2ToggleIaNumero('${n.id}', this.checked)"/><span class="bk-switch__track"></span> IA</label>
       ${!n.webhook_verificado ? `<button class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2VerificarNumero('${n.id}')">Verificar</button>` : ''}
       <button class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2DesconectarNumero('${n.id}', '${(n.alias || n.display_number || 'este número').replace(/'/g,"")}')">Desconectar</button>
     </div>`).join('');
@@ -632,7 +632,7 @@ function w2RenderThread(mensajes){
         ${cal}
       </div>
       <div class="w2-thread__head-actions">
-        <label class="bk-check"><input type="checkbox" id="w2-p-ia" onchange="w2ToggleIaConv()" ${W2_CONV_ACTUAL?.ai_enabled !== false ? 'checked' : ''}/> IA</label>
+        <label class="bk-switch"><input type="checkbox" id="w2-p-ia" onchange="w2ToggleIaConv()" ${W2_CONV_ACTUAL?.ai_enabled !== false ? 'checked' : ''}/><span class="bk-switch__track"></span> IA</label>
         <button class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2AbrirModalCita()">Agendar</button>
         ${verContacto}
       </div>
