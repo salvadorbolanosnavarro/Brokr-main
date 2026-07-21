@@ -109,6 +109,7 @@
 
   <div class="w2-tabs">
     <button class="w2-tab is-active" data-tab="chats" onclick="w2IrATab('chats')">Chats</button>
+    <button class="w2-tab" data-tab="plantillas" onclick="w2IrATab('plantillas')">Plantillas</button>
     <button class="w2-tab" data-tab="entrenamiento" onclick="w2IrATab('entrenamiento')">Entrenamiento</button>
   </div>
 
@@ -121,6 +122,56 @@
         <div class="w2-empty-thread" id="w2-thread-empty">Elige una conversación para verla aquí.</div>
       </div>
     </div>
+  </div>
+
+  <!-- ═══ PLANTILLAS ═══ -->
+  <div id="w2-view-plantillas" hidden>
+    <div class="bk-section-header"><h2>Plantillas para mensajes fuera de la ventana de 24h</h2></div>
+    <div class="bk-alert bk-alert--info" style="margin-bottom:var(--sp-4);">
+      WhatsApp solo deja mandar texto libre durante 24 horas después del último mensaje del prospecto.
+      Pasado ese tiempo, la única forma de escribirle primero es con una plantilla aprobada por Meta.
+      La aprobación puede tardar de minutos a un par de días.
+    </div>
+    <div class="bk-field" style="max-width:340px;">
+      <label class="bk-label" for="w2-pl-numero-selector">Número</label>
+      <select class="bk-select" id="w2-pl-numero-selector" onchange="w2CargarPlantillas()"></select>
+    </div>
+
+    <div class="bk-divider"></div>
+    <span class="bk-eyebrow">Tus plantillas</span>
+    <div id="w2-pl-lista" style="display:flex;flex-direction:column;gap:var(--sp-2);margin:var(--sp-3) 0 var(--sp-5);"></div>
+
+    <div class="bk-divider"></div>
+    <span class="bk-eyebrow">Crear nueva plantilla</span>
+    <div class="w2-form-grid" style="margin-top:var(--sp-3);">
+      <div class="bk-field">
+        <label class="bk-label" for="w2-pl-nombre">Nombre interno (sin espacios ni acentos)</label>
+        <input class="bk-input" id="w2-pl-nombre" placeholder="Ej. seguimiento_visita"/>
+      </div>
+      <div class="bk-field">
+        <label class="bk-label" for="w2-pl-categoria">Categoría</label>
+        <select class="bk-select" id="w2-pl-categoria">
+          <option value="UTILITY">Utilidad (seguimiento, confirmaciones)</option>
+          <option value="MARKETING">Marketing (promociones, novedades)</option>
+        </select>
+      </div>
+    </div>
+    <div class="bk-field">
+      <label class="bk-label" for="w2-pl-cuerpo">Texto del mensaje</label>
+      <textarea class="bk-textarea" id="w2-pl-cuerpo" rows="3"
+        placeholder="Hola {{1}}, seguimos con lo de la propiedad que viste. ¿Sigue interesado?"></textarea>
+      <div class="bk-hint">Usa {{1}}, {{2}}… para lo que cambie en cada envío (nombre, propiedad, etc.). No pongas datos reales aquí, solo el molde.</div>
+    </div>
+    <div class="bk-field">
+      <label class="bk-label" for="w2-pl-ejemplo">Ejemplo de esas variables (separadas por coma)</label>
+      <input class="bk-input" id="w2-pl-ejemplo" placeholder="Ej. Juan Pérez"/>
+      <div class="bk-hint">Meta pide un ejemplo real para poder aprobarla — no se le manda a nadie, es solo para su revisión.</div>
+    </div>
+    <div class="bk-field">
+      <label class="bk-label" for="w2-pl-footer">Pie de página (opcional)</label>
+      <input class="bk-input" id="w2-pl-footer" placeholder="Ej. Broquer · Bienes raíces"/>
+    </div>
+    <button class="bk-btn bk-btn--forest" onclick="w2CrearPlantilla()">Enviar a Meta para aprobación</button>
   </div>
 
   <!-- ═══ ENTRENAMIENTO ═══ -->
@@ -247,6 +298,31 @@
   </div>
 </div>
 
+<div class="bk-overlay" id="w2-modal-plantilla" hidden>
+  <div class="bk-modal">
+    <div class="bk-modal__head"><span class="bk-modal__title">Enviar plantilla</span></div>
+    <div class="bk-modal__body">
+      <div class="bk-hint" style="margin-bottom:var(--sp-4);">Pasaron más de 24h desde el último mensaje del prospecto — solo una plantilla aprobada puede reabrir la conversación.</div>
+      <div class="bk-field">
+        <label class="bk-label" for="w2-plm-nombre">Plantilla aprobada</label>
+        <select class="bk-select" id="w2-plm-nombre" onchange="w2PintarPreviewPlantilla()"></select>
+      </div>
+      <div class="bk-field" id="w2-plm-preview-wrap" hidden>
+        <label class="bk-label">Vista previa</label>
+        <div class="bk-hint" id="w2-plm-preview">—</div>
+      </div>
+      <div class="bk-field">
+        <label class="bk-label" for="w2-plm-variables">Variables (separadas por coma, en el mismo orden de {{1}}, {{2}}…)</label>
+        <input class="bk-input" id="w2-plm-variables" placeholder="Ej. Juan Pérez, Casa en Chapultepec"/>
+      </div>
+    </div>
+    <div class="bk-modal__foot">
+      <button class="bk-btn bk-btn--ghost" onclick="w2CerrarModalPlantilla()">Cancelar</button>
+      <button class="bk-btn bk-btn--forest" onclick="w2EnviarPlantillaDesdeChat()">Enviar</button>
+    </div>
+  </div>
+</div>
+
 <script src="app-shell.js" defer></script>
 <script>
 const API_BASE = window.API_BASE || 'https://api.broquer.app';
@@ -349,7 +425,9 @@ function w2IrATab(tab){
   W2_TAB = tab;
   document.querySelectorAll('.w2-tab').forEach(b => b.classList.toggle('is-active', b.dataset.tab === tab));
   document.getElementById('w2-view-chats').hidden = tab !== 'chats';
+  document.getElementById('w2-view-plantillas').hidden = tab !== 'plantillas';
   document.getElementById('w2-view-entrenamiento').hidden = tab !== 'entrenamiento';
+  if(tab === 'plantillas') w2AbrirTabPlantillas();
   if(tab === 'entrenamiento') w2CargarEntrenamiento();
   // capacitor-bridge.js (iOS) decide si limpiar el globito de notificaciones
   // leyendo este hash, y push las manda con '#chats' para forzar esta pestaña.
@@ -531,6 +609,22 @@ function w2RenderThread(mensajes){
               <div class="w2-bubble__meta">${hora}${out ? (m.sender === 'ia' ? ' · IA' : ' · Tú') : ''}</div>
             </div>`;
   }).join('');
+
+  // La ventana de 24h de WhatsApp se cuenta desde el ÚLTIMO MENSAJE DEL
+  // PROSPECTO (last_inbound_at), no desde cualquier actividad. Pasadas las
+  // 24h, Meta rechaza texto libre — hay que ofrecer una plantilla en su lugar.
+  const li = W2_CONV_ACTUAL?.last_inbound_at;
+  const ventanaCerrada = !!li && (Date.now() - new Date(li).getTime()) > 24*60*60*1000;
+  const composer = ventanaCerrada
+    ? `<div class="w2-composer" style="align-items:center;">
+         <div class="bk-hint" style="flex:1;">La ventana de 24h está cerrada — usa una plantilla para escribirle.</div>
+         <button class="bk-btn bk-btn--forest bk-btn--sm" onclick="w2AbrirModalPlantilla()">Enviar plantilla</button>
+       </div>`
+    : `<div class="w2-composer">
+         <textarea class="bk-textarea" id="w2-composer-texto" rows="1" placeholder="Escribe un mensaje…"></textarea>
+         <button class="bk-btn bk-btn--forest" onclick="w2EnviarManual()">Enviar</button>
+       </div>`;
+
   thread.innerHTML = `
     <div class="w2-thread__head">
       <div class="w2-thread__head-id">
@@ -544,10 +638,7 @@ function w2RenderThread(mensajes){
       </div>
     </div>
     <div class="w2-thread__msgs" id="w2-thread-msgs">${burbujas || '<div class="bk-hint">Sin mensajes.</div>'}</div>
-    <div class="w2-composer">
-      <textarea class="bk-textarea" id="w2-composer-texto" rows="1" placeholder="Escribe un mensaje…"></textarea>
-      <button class="bk-btn bk-btn--forest" onclick="w2EnviarManual()">Enviar</button>
-    </div>`;
+    ${composer}`;
   const box = document.getElementById('w2-thread-msgs');
   box.scrollTop = box.scrollHeight;
 }
@@ -558,10 +649,23 @@ async function w2EnviarManual(){
   if(!texto || !W2_CONV_ACTUAL) return;
   el.value = '';
   try{
-    await fetch(API_BASE + '/whatsapp2/mensajes', {
+    const r = await fetch(API_BASE + '/whatsapp2/mensajes', {
       method:'POST', headers:{ 'Content-Type':'application/json', ...w2Auth() },
       body: JSON.stringify({ conversacion_id: W2_CONV_ACTUAL.id, texto })
     });
+    if(!r.ok){
+      const d = await r.json().catch(() => ({}));
+      const detalle = d.detail || {};
+      if(detalle.ventana_cerrada){
+        toast(detalle.mensaje || 'La ventana de 24h está cerrada.');
+        W2_CONV_ACTUAL.last_inbound_at = W2_CONV_ACTUAL.last_inbound_at || new Date(Date.now() - 25*60*60*1000).toISOString();
+        await w2CargarMensajes(W2_CONV_ACTUAL.id);
+        w2AbrirModalPlantilla();
+      } else {
+        toast(typeof detalle === 'string' ? detalle : 'No se pudo enviar el mensaje.');
+      }
+      return;
+    }
     await w2CargarMensajes(W2_CONV_ACTUAL.id);
   }catch(e){ toast('No se pudo enviar el mensaje.'); }
 }
@@ -579,6 +683,65 @@ async function w2ToggleIaConv(){
 }
 
 /* ── Entrenamiento ────────────────────────────────────────── */
+/* ── Plantillas ───────────────────────────────────────────── */
+function w2AbrirTabPlantillas(){
+  const sel = document.getElementById('w2-pl-numero-selector');
+  sel.innerHTML = W2_NUMEROS.map(n => `<option value="${n.id}">${n.alias || n.display_number || 'Número'}</option>`).join('');
+  if(W2_NUMEROS.length) w2CargarPlantillas();
+  else document.getElementById('w2-pl-lista').innerHTML = '<div class="bk-hint">Conecta un número primero.</div>';
+}
+
+async function w2CargarPlantillas(){
+  const numero_id = document.getElementById('w2-pl-numero-selector').value;
+  const cont = document.getElementById('w2-pl-lista');
+  if(!numero_id) return;
+  cont.innerHTML = '<div class="bk-hint">Cargando…</div>';
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/plantillas?numero_id=' + numero_id, { headers: w2Auth() });
+    const d = await r.json();
+    const plantillas = d.plantillas || [];
+    if(!plantillas.length){ cont.innerHTML = '<div class="bk-hint">Aún no tienes plantillas para este número.</div>'; return; }
+    const estatusTxt = { APPROVED:'Aprobada', PENDING:'En revisión', REJECTED:'Rechazada' };
+    cont.innerHTML = plantillas.map(p => `
+      <div class="w2-numero-row">
+        <div class="w2-numero-row__info">
+          <div class="w2-numero-row__alias">${p.nombre} <span class="bk-hint">${p.idioma}</span></div>
+          <div class="w2-numero-row__sub">${(p.cuerpo || '').slice(0,120)}</div>
+        </div>
+        <span class="bk-badge">${estatusTxt[p.estatus] || p.estatus}</span>
+      </div>`).join('');
+  }catch(e){ cont.innerHTML = '<div class="bk-hint">No se pudieron cargar las plantillas.</div>'; }
+}
+
+async function w2CrearPlantilla(){
+  const numero_id = document.getElementById('w2-pl-numero-selector').value;
+  const nombre = document.getElementById('w2-pl-nombre').value.trim();
+  const cuerpo = document.getElementById('w2-pl-cuerpo').value.trim();
+  if(!numero_id){ toast('Elige un número primero.'); return; }
+  if(!nombre || !cuerpo){ toast('Falta el nombre o el texto del mensaje.'); return; }
+  const body = {
+    numero_id,
+    nombre,
+    categoria: document.getElementById('w2-pl-categoria').value,
+    cuerpo,
+    variables_ejemplo: w2Lista('w2-pl-ejemplo'),
+    footer: document.getElementById('w2-pl-footer').value.trim() || null,
+  };
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/plantillas', {
+      method:'POST', headers:{ 'Content-Type':'application/json', ...w2Auth() }, body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if(!r.ok){ toast(d.detail || 'No se pudo crear la plantilla.'); return; }
+    toast('Plantilla enviada a Meta para aprobación.');
+    document.getElementById('w2-pl-nombre').value = '';
+    document.getElementById('w2-pl-cuerpo').value = '';
+    document.getElementById('w2-pl-ejemplo').value = '';
+    document.getElementById('w2-pl-footer').value = '';
+    await w2CargarPlantillas();
+  }catch(e){ toast('No se pudo crear la plantilla.'); }
+}
+
 async function w2CargarEntrenamiento(){
   const numero_id = W2_ENTREN_NUMERO || '';
   const numeroObj = W2_NUMEROS.find(n => n.id === W2_ENTREN_NUMERO);
@@ -700,6 +863,65 @@ async function w2GuardarCitaManual(){
     w2CerrarModalCita();
     toast('Listo — la cita ya está en tu módulo de Tareas.');
   }catch(e){ toast('No se pudo agendar (sin conexión).'); }
+}
+
+/* ── Modal de plantilla (mandar mensaje con la ventana de 24h cerrada) ──── */
+let W2_PLANTILLAS_CHAT = [];
+
+async function w2AbrirModalPlantilla(){
+  const sel = document.getElementById('w2-plm-nombre');
+  sel.innerHTML = '<option>Cargando…</option>';
+  document.getElementById('w2-plm-variables').value = '';
+  document.getElementById('w2-plm-preview-wrap').hidden = true;
+  const modal = document.getElementById('w2-modal-plantilla');
+  modal.hidden = false;
+  requestAnimationFrame(() => modal.classList.add('is-open'));
+
+  const numero_id = W2_CONV_ACTUAL?.numero_id;
+  if(!numero_id){ sel.innerHTML = '<option value="">Sin número</option>'; return; }
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/plantillas?numero_id=' + numero_id, { headers: w2Auth() });
+    const d = await r.json();
+    W2_PLANTILLAS_CHAT = (d.plantillas || []).filter(p => p.estatus === 'APPROVED');
+    sel.innerHTML = W2_PLANTILLAS_CHAT.length
+      ? W2_PLANTILLAS_CHAT.map(p => `<option value="${p.nombre}|${p.idioma}">${p.nombre}</option>`).join('')
+      : '<option value="">No hay plantillas aprobadas todavía</option>';
+    w2PintarPreviewPlantilla();
+  }catch(e){ sel.innerHTML = '<option value="">No se pudieron cargar</option>'; }
+}
+
+function w2PintarPreviewPlantilla(){
+  const sel = document.getElementById('w2-plm-nombre');
+  const [nombre] = (sel.value || '').split('|');
+  const p = W2_PLANTILLAS_CHAT.find(x => x.nombre === nombre);
+  const wrap = document.getElementById('w2-plm-preview-wrap');
+  if(!p){ wrap.hidden = true; return; }
+  wrap.hidden = false;
+  document.getElementById('w2-plm-preview').textContent = p.cuerpo || '—';
+}
+
+function w2CerrarModalPlantilla(){
+  const modal = document.getElementById('w2-modal-plantilla');
+  modal.classList.remove('is-open');
+  setTimeout(() => { modal.hidden = true; }, 200);
+}
+
+async function w2EnviarPlantillaDesdeChat(){
+  if(!W2_CONV_ACTUAL) return;
+  const [nombre, idioma] = (document.getElementById('w2-plm-nombre').value || '').split('|');
+  if(!nombre){ toast('Elige una plantilla aprobada.'); return; }
+  const variables = w2Lista('w2-plm-variables');
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/mensajes/plantilla', {
+      method:'POST', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({ conversacion_id: W2_CONV_ACTUAL.id, nombre, idioma, variables })
+    });
+    const d = await r.json();
+    if(!r.ok){ toast(d.detail || 'No se pudo enviar la plantilla.'); return; }
+    w2CerrarModalPlantilla();
+    await w2CargarMensajes(W2_CONV_ACTUAL.id);
+    toast('Plantilla enviada.');
+  }catch(e){ toast('No se pudo enviar (sin conexión).'); }
 }
 
 /* ── Arranque ─────────────────────────────────────────────── */

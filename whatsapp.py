@@ -962,9 +962,12 @@ async def wa2_agendar(req: AgendarReq, request: Request):
 # =============================================================================
 # 6) ENVÍO POR WHATSAPP (Cloud API)
 # =============================================================================
-async def _wa_send_text(numero: dict, wa_id: str, texto: str) -> str | None:
+async def _wa_send_text_detallado(numero: dict, wa_id: str, texto: str) -> tuple[str | None, dict | None]:
+    """Como _wa_send_text, pero además regresa el error real de Meta (código y
+    mensaje) cuando falla — necesario para distinguir 'ventana de 24h cerrada'
+    (código 131047) de cualquier otro problema, en vez de tragarse el error."""
     if not numero.get("access_token"):
-        return None
+        return None, {"code": None, "message": "Este número no tiene un token de acceso válido."}
     async with httpx.AsyncClient(timeout=20) as c:
         r = await c.post(f"{GRAPH_API}/{numero['phone_number_id']}/messages",
                          headers={"Authorization": f"Bearer {numero['access_token']}"},
@@ -972,10 +975,19 @@ async def _wa_send_text(numero: dict, wa_id: str, texto: str) -> str | None:
                                "type": "text", "text": {"body": texto, "preview_url": False}})
         if r.status_code >= 400:
             log.error("Envío de texto falló (%s): %s", numero["phone_number_id"], r.text[:300])
-            return None
+            try:
+                err = (r.json().get("error") or {})
+            except Exception:
+                err = {}
+            return None, {"code": err.get("code"), "message": err.get("message") or "No se pudo enviar el mensaje."}
         d = r.json()
         msgs = d.get("messages") or []
-        return msgs[0].get("id") if msgs else None
+        return (msgs[0].get("id") if msgs else None), None
+
+
+async def _wa_send_text(numero: dict, wa_id: str, texto: str) -> str | None:
+    wamid, _ = await _wa_send_text_detallado(numero, wa_id, texto)
+    return wamid
 
 
 async def _wa_send_image(numero: dict, wa_id: str, url: str, caption: str = "") -> str | None:
@@ -1013,6 +1025,134 @@ async def _wa_send_document(numero: dict, wa_id: str, contenido: bytes, filename
                               "document": {"id": media_id, "filename": filename, "caption": caption}})
     except Exception as e:
         log.warning("No se pudo mandar el .ics: %s", e)
+
+
+# =============================================================================
+# 6.5) PLANTILLAS — únicas que WhatsApp permite mandar fuera de la ventana de
+# 24h desde el último mensaje del prospecto. Se crean aquí, Meta las aprueba
+# (minutos a días) y luego se pueden usar para reabrir la conversación.
+# =============================================================================
+class PlantillaCrearReq(BaseModel):
+    numero_id: str
+    nombre: str
+    idioma: str = "es_MX"
+    categoria: str = "UTILITY"  # UTILITY | MARKETING | AUTHENTICATION
+    cuerpo: str
+    variables_ejemplo: list[str] = []
+    footer: str | None = None
+
+
+@router.get("/plantillas")
+async def wa2_plantillas_list(request: Request, numero_id: str):
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    numero_rows = await sb_get("wa2_numeros", {"id": f"eq.{numero_id}", "user_id": _in_filter(ids),
+                                                "select": "*", "limit": "1"})
+    if not numero_rows:
+        raise HTTPException(status_code=404, detail="Número no encontrado")
+    numero = numero_rows[0]
+    if not numero.get("waba_id") or not numero.get("access_token"):
+        return {"plantillas": []}
+    async with httpx.AsyncClient(timeout=20) as c:
+        r = await c.get(f"{GRAPH_API}/{numero['waba_id']}/message_templates",
+                        params={"access_token": numero["access_token"], "limit": 100})
+    if r.status_code >= 400:
+        log.error("No se pudieron listar plantillas (%s): %s", numero["waba_id"], r.text[:300])
+        raise HTTPException(status_code=502, detail="Meta no pudo listar las plantillas de este número.")
+    plantillas = []
+    for t in r.json().get("data", []):
+        cuerpo = next((c.get("text") for c in t.get("components", []) if c.get("type") == "BODY"), "")
+        plantillas.append({
+            "nombre": t.get("name"), "idioma": t.get("language"), "estatus": t.get("status"),
+            "categoria": t.get("category"), "cuerpo": cuerpo,
+        })
+    return {"plantillas": plantillas}
+
+
+@router.post("/plantillas")
+async def wa2_plantilla_crear(req: PlantillaCrearReq, request: Request):
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    numero_rows = await sb_get("wa2_numeros", {"id": f"eq.{req.numero_id}", "user_id": _in_filter(ids),
+                                                "select": "*", "limit": "1"})
+    if not numero_rows:
+        raise HTTPException(status_code=404, detail="Número no encontrado")
+    numero = numero_rows[0]
+    if not numero.get("waba_id") or not numero.get("access_token"):
+        raise HTTPException(status_code=400, detail="Este número todavía no está conectado del todo con Meta.")
+
+    nombre = re.sub(r"[^a-z0-9_]", "_", req.nombre.strip().lower())
+    componentes = [{"type": "BODY", "text": req.cuerpo}]
+    if req.variables_ejemplo:
+        componentes[0]["example"] = {"body_text": [req.variables_ejemplo]}
+    if req.footer:
+        componentes.append({"type": "FOOTER", "text": req.footer})
+
+    async with httpx.AsyncClient(timeout=20) as c:
+        r = await c.post(f"{GRAPH_API}/{numero['waba_id']}/message_templates",
+                         headers={"Authorization": f"Bearer {numero['access_token']}"},
+                         json={"name": nombre, "language": req.idioma,
+                               "category": req.categoria, "components": componentes})
+    if r.status_code >= 400:
+        log.error("No se pudo crear la plantilla (%s): %s", numero["waba_id"], r.text[:300])
+        try:
+            err = r.json().get("error", {})
+            msg = err.get("error_user_msg") or err.get("message")
+        except Exception:
+            msg = None
+        raise HTTPException(status_code=502,
+            detail=msg or "Meta rechazó la plantilla. Revisa que el texto no tenga datos personales sueltos "
+                          "(usa {{1}}, {{2}}… para lo que cambie en cada envío) y que no repita mucho espacio o salto de línea.")
+    return {"ok": True, "nombre": nombre}
+
+
+class PlantillaEnviarReq(BaseModel):
+    conversacion_id: str
+    nombre: str
+    idioma: str
+    variables: list[str] = []
+
+
+@router.post("/mensajes/plantilla")
+async def wa2_enviar_plantilla(req: PlantillaEnviarReq, request: Request):
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    conv_rows = await sb_get("wa2_conversaciones", {"id": f"eq.{req.conversacion_id}", "user_id": _in_filter(ids),
+                                                    "select": "*", "limit": "1"})
+    if not conv_rows:
+        raise HTTPException(status_code=404, detail="Conversación no encontrada")
+    conv = conv_rows[0]
+    contacto_rows = await sb_get("wa2_contactos", {"id": f"eq.{conv['contacto_id']}", "select": "*", "limit": "1"})
+    contacto = contacto_rows[0] if contacto_rows else {}
+    numero_rows = await sb_get("wa2_numeros", {"id": f"eq.{conv['numero_id']}", "select": "*", "limit": "1"})
+    if not numero_rows:
+        raise HTTPException(status_code=404, detail="Número no encontrado")
+    numero = numero_rows[0]
+
+    componentes = []
+    if req.variables:
+        componentes.append({"type": "body", "parameters": [{"type": "text", "text": v} for v in req.variables]})
+
+    async with httpx.AsyncClient(timeout=20) as c:
+        r = await c.post(f"{GRAPH_API}/{numero['phone_number_id']}/messages",
+                         headers={"Authorization": f"Bearer {numero['access_token']}"},
+                         json={"messaging_product": "whatsapp", "to": contacto.get("wa_id"), "type": "template",
+                               "template": {"name": req.nombre, "language": {"code": req.idioma},
+                                           "components": componentes}})
+    if r.status_code >= 400:
+        log.error("Envío de plantilla falló (%s): %s", numero["phone_number_id"], r.text[:300])
+        try:
+            msg = r.json().get("error", {}).get("message")
+        except Exception:
+            msg = None
+        raise HTTPException(status_code=502, detail=msg or "Meta no pudo mandar la plantilla. Revisa que esté aprobada.")
+
+    d = r.json()
+    msgs = d.get("messages") or []
+    wamid = msgs[0].get("id") if msgs else None
+    resumen = f"[Plantilla: {req.nombre}]" + (" " + " · ".join(req.variables) if req.variables else "")
+    await _guardar_mensaje(conv["user_id"], conv["contacto_id"], conv["id"], wamid, "out", "agente", resumen)
+    return {"ok": True}
 
 
 # =============================================================================
@@ -1185,7 +1325,13 @@ async def _guardar_mensaje(user_id: str, contacto_id: str, conversacion_id: str,
         ya = await sb_get("wa2_mensajes", {"wa_message_id": f"eq.{wamid}", "select": "id", "limit": "1"})
         if not ya:
             log.error("wa2_mensajes NO guardado: conv=%s sender=%s", conversacion_id, sender)
-    await sb_patch("wa2_conversaciones", {"id": f"eq.{conversacion_id}"}, {"last_message_at": _now()})
+    cambios_conv = {"last_message_at": _now()}
+    if direction == "in":
+        # Esto (no 'last_message_at') es lo que de verdad marca la ventana de
+        # 24h de WhatsApp: se cuenta desde el último mensaje del PROSPECTO,
+        # no desde el último mensaje de quien sea (agente, IA, prospecto).
+        cambios_conv["last_inbound_at"] = _now()
+    await sb_patch("wa2_conversaciones", {"id": f"eq.{conversacion_id}"}, cambios_conv)
 
 
 async def _persistir_entrantes(payload: dict):
@@ -1451,7 +1597,15 @@ async def wa2_enviar_manual(req: EnviarManualReq, request: Request):
         raise HTTPException(status_code=404, detail="Número no encontrado")
     numero = numero_rows[0]
 
-    wamid = await _wa_send_text(numero, contacto.get("wa_id"), req.texto)
+    wamid, error = await _wa_send_text_detallado(numero, contacto.get("wa_id"), req.texto)
+    if error:
+        if error.get("code") == 131047:
+            raise HTTPException(status_code=409, detail={
+                "ventana_cerrada": True,
+                "mensaje": "Pasaron más de 24 horas desde el último mensaje del prospecto. "
+                           "WhatsApp ya no deja mandar texto libre — usa una plantilla para reabrir la conversación.",
+            })
+        raise HTTPException(status_code=502, detail=error.get("message") or "No se pudo enviar el mensaje.")
     await _guardar_mensaje(conv["user_id"], conv["contacto_id"], conv["id"], wamid, "out", "agente", req.texto)
     return {"ok": True}
 
