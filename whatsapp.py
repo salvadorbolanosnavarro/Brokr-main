@@ -23,6 +23,7 @@ import logging
 import hmac
 import hashlib
 from datetime import datetime, timezone, timedelta, date
+from zoneinfo import ZoneInfo
 
 import httpx
 from fastapi import APIRouter, Request, Response, BackgroundTasks, HTTPException
@@ -82,6 +83,7 @@ TRAINING_DEFAULTS = {
     "fuera_horario_msg": None,
     "max_mensajes_ia": 0,
     "activo": True,
+    "zona_horaria": "America/Mexico_City",
 }
 
 
@@ -89,10 +91,12 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def _hora_local() -> datetime:
+def _hora_local(zona: str | None = None) -> datetime:
+    """Hora de AHORA en la zona del agente (por defecto Ciudad de México).
+    México tiene varias zonas horarias reales (Tijuana, Hermosillo, Cancún,
+    etc.), así que esto NUNCA debe asumir Ciudad de México para todo mundo."""
     try:
-        from zoneinfo import ZoneInfo
-        return datetime.now(ZoneInfo("America/Mexico_City"))
+        return datetime.now(ZoneInfo(zona or "America/Mexico_City"))
     except Exception:
         return datetime.now(timezone.utc) + timedelta(hours=-6)
 
@@ -516,6 +520,7 @@ class TrainingReq(BaseModel):
     fuera_horario_msg: str | None = None
     max_mensajes_ia: int = 0
     activo: bool = True
+    zona_horaria: str = "America/Mexico_City"
 
 
 @router.get("/entrenamiento")
@@ -608,7 +613,7 @@ def _en_horario(e: dict) -> bool:
     if not e.get("horario_activo"):
         return True
     try:
-        ahora = _hora_local().strftime("%H:%M")
+        ahora = _hora_local(e.get("zona_horaria")).strftime("%H:%M")
         return e.get("hora_inicio", "08:00") <= ahora <= e.get("hora_fin", "21:00")
     except Exception:
         return True
@@ -624,7 +629,7 @@ async def recepcion2_responde(history: list, contexto: str, agente: dict, entren
     nombre_ia = entren.get("nombre_ia") or "Recepción"
     identidad = entren.get("identidad") or f"Eres '{nombre_ia}', el asistente de WhatsApp de {quien}, asesor inmobiliario{ubica}."
     tono = entren.get("tono") or TRAINING_DEFAULTS["tono"]
-    hoy = _fmt_fecha_larga(_hora_local())
+    hoy = _fmt_fecha_larga(_hora_local(entren.get("zona_horaria")))
 
     system = (
         f"{identidad} Hablas en tono {tono}. Español mexicano, mensajes cortos de WhatsApp, sin emojis. "
@@ -852,14 +857,24 @@ async def _wa_send_document_link(numero: dict, wa_id: str, url: str, filename: s
 # =============================================================================
 # 5) CITAS / AGENDA (calendario del usuario dentro de Broquer)
 # =============================================================================
-def _construir_ics(fecha: str, hora: str, titulo: str, descripcion: str) -> str:
+def _construir_ics(fecha: str, hora: str, titulo: str, descripcion: str, zona: str | None = None) -> str:
+    zona = zona or "America/Mexico_City"
     try:
         y, m, d = (int(x) for x in fecha.split("-"))
         hh, mi = (int(x) for x in hora.split(":")[:2])
     except Exception:
-        ahora = _hora_local()
+        ahora = _hora_local(zona)
         y, m, d, hh, mi = ahora.year, ahora.month, ahora.day, ahora.hour, ahora.minute
-    inicio = datetime(y, m, d, hh, mi) + timedelta(hours=6)  # a UTC (México -6)
+    # OJO: fecha/hora vienen en la hora LOCAL del agente (la que entendió el
+    # prospecto), no en CDMX. Antes esto sumaba 6h fijas asumiendo Ciudad de
+    # México, lo cual está mal para Tijuana, Hermosillo, Cancún, etc. — cada
+    # una tiene su propio desfase contra UTC (y Tijuana además tiene horario
+    # de verano). zoneinfo lo resuelve bien para cualquier zona del país.
+    try:
+        local_dt = datetime(y, m, d, hh, mi, tzinfo=ZoneInfo(zona))
+    except Exception:
+        local_dt = datetime(y, m, d, hh, mi, tzinfo=ZoneInfo("America/Mexico_City"))
+    inicio = local_dt.astimezone(timezone.utc)
     fin = inicio + timedelta(hours=1)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     uid = f"{stamp}-{y}{m}{d}{hh}{mi}@broquer.app"
@@ -936,7 +951,8 @@ async def wa2_agendar(req: AgendarReq, request: Request):
         await sb_post("tareas_propiedades", {"user_id": dueño_id, "tarea_id": tarea_id, "propiedad_id": req.inmueble_id})
 
     if contacto and numero:
-        ics = _construir_ics(req.fecha, req.hora, titulo, req.notas or "")
+        entren_zona = await _entrenamiento_de(dueño_id, numero["id"])
+        ics = _construir_ics(req.fecha, req.hora, titulo, req.notas or "", entren_zona.get("zona_horaria"))
         await _wa_send_document(numero, contacto.get("wa_id"), ics.encode("utf-8"),
                                "cita.ics", "Toca el archivo para agregarla a tu calendario.")
 
@@ -1176,6 +1192,25 @@ async def _persistir_entrantes(payload: dict):
                 wa_id = msg.get("from")
                 if not wa_id:
                     continue
+
+                # SEGURIDAD: nunca proceses ni respondas mensajes de ANTES de
+                # que el número se conectara a Broquer. Meta puede reenviar
+                # eventos de mensajes viejos (coexistencia con un número que
+                # ya tenía historial, reintentos de webhook, etc.) y sin este
+                # filtro la IA le contestaría a un mensaje de hace semanas
+                # como si fuera de ahorita — sin que el agente lo autorizara.
+                try:
+                    msg_ts = int(msg.get("timestamp") or 0)
+                    creado_en = numero.get("created_at")
+                    if msg_ts and creado_en:
+                        creado_dt = datetime.fromisoformat(creado_en.replace("Z", "+00:00"))
+                        if datetime.fromtimestamp(msg_ts, timezone.utc) < creado_dt:
+                            log.warning("Mensaje anterior a la conexión del número %s — ignorado (%s)",
+                                       numero.get("phone_number_id"), msg.get("id"))
+                            continue
+                except Exception:
+                    pass
+
                 texto = ""
                 if msg.get("type") == "text":
                     texto = (msg.get("text") or {}).get("body", "")
@@ -1342,7 +1377,7 @@ async def _procesar_en_segundo_plano(item: dict):
                     await sb_post("tareas_contactos", {
                         "user_id": user_id, "tarea_id": creada[0]["id"], "contacto_id": crm_id})
                 await sb_patch("wa2_contactos", {"id": f"eq.{item['contacto_id']}"}, {"etapa": "Cita"})
-                ics = _construir_ics(fecha, hora, titulo, inmueble_txt)
+                ics = _construir_ics(fecha, hora, titulo, inmueble_txt, entren.get("zona_horaria"))
                 await _wa_send_document(numero, item["wa_id"], ics.encode("utf-8"),
                                        "cita.ics", "Toca el archivo para agregarla a tu calendario.")
                 await enviar_push(user_id, "Nueva cita agendada",

@@ -231,6 +231,17 @@
         <div class="bk-field"><label class="bk-label">Hora fin</label><input class="bk-input" type="time" id="w2-t-hf"/></div>
       </div>
       <div class="bk-field">
+        <label class="bk-label" for="w2-t-zona">Zona horaria (de dónde atiendes)</label>
+        <select class="bk-select" id="w2-t-zona">
+          <option value="America/Mexico_City">Centro — CDMX, Morelia, Guadalajara (UTC-6)</option>
+          <option value="America/Cancun">Sureste — Cancún, Quintana Roo (UTC-5)</option>
+          <option value="America/Chihuahua">Pacífico — Chihuahua, Mazatlán (UTC-6/-7)</option>
+          <option value="America/Hermosillo">Pacífico — Sonora (UTC-7, sin horario de verano)</option>
+          <option value="America/Tijuana">Noroeste — Baja California (UTC-7/-8)</option>
+        </select>
+        <div class="bk-hint">De esto depende que las citas y el horario de atención caigan a la hora correcta.</div>
+      </div>
+      <div class="bk-field">
         <label class="bk-label" for="w2-t-fuera">Mensaje fuera de horario</label>
         <input class="bk-input" id="w2-t-fuera" placeholder="Gracias por tu mensaje, en cuanto abramos te contesto."/>
       </div>
@@ -429,7 +440,18 @@ function w2PintarPanelNumeros(){
       </div>
       <label class="bk-check"><input type="checkbox" ${n.ia_enabled!==false?'checked':''} onchange="w2ToggleIaNumero('${n.id}', this.checked)"/> IA</label>
       ${!n.webhook_verificado ? `<button class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2VerificarNumero('${n.id}')">Verificar</button>` : ''}
+      <button class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2DesconectarNumero('${n.id}', '${(n.alias || n.display_number || 'este número').replace(/'/g,"")}')">Desconectar</button>
     </div>`).join('');
+}
+
+async function w2DesconectarNumero(id, nombre){
+  if(!confirm(`¿Desconectar ${nombre} de Broquer?\n\nDejará de recibir y responder mensajes por WhatsApp hasta que lo vuelvas a conectar desde cero.`)) return;
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/numeros/' + id, { method:'DELETE', headers: w2Auth() });
+    if(!r.ok){ toast('No se pudo desconectar. Intenta de nuevo.'); return; }
+    toast('Número desconectado.');
+    await w2CargarNumeros();
+  }catch(e){ toast('No se pudo desconectar. Intenta de nuevo.'); }
 }
 
 async function w2ToggleIaNumero(id, on){
@@ -656,6 +678,7 @@ async function w2CargarEntrenamiento(){
     document.getElementById('w2-t-horario').checked = !!t.horario_activo;
     document.getElementById('w2-t-hi').value = t.hora_inicio || '08:00';
     document.getElementById('w2-t-hf').value = t.hora_fin || '21:00';
+    document.getElementById('w2-t-zona').value = t.zona_horaria || 'America/Mexico_City';
     document.getElementById('w2-t-fuera').value = t.fuera_horario_msg || '';
     document.getElementById('w2-t-max').value = t.max_mensajes_ia || 0;
     document.getElementById('w2-t-activo').checked = t.activo !== false;
@@ -684,6 +707,7 @@ async function w2GuardarEntrenamiento(){
     horario_activo: document.getElementById('w2-t-horario').checked,
     hora_inicio: document.getElementById('w2-t-hi').value || '08:00',
     hora_fin: document.getElementById('w2-t-hf').value || '21:00',
+    zona_horaria: document.getElementById('w2-t-zona').value || 'America/Mexico_City',
     fuera_horario_msg: document.getElementById('w2-t-fuera').value.trim(),
     max_mensajes_ia: parseInt(document.getElementById('w2-t-max').value || '0', 10),
     activo: document.getElementById('w2-t-activo').checked,
