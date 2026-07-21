@@ -857,6 +857,24 @@ async def _wa_send_document_link(numero: dict, wa_id: str, url: str, filename: s
 # =============================================================================
 # 5) CITAS / AGENDA (calendario del usuario dentro de Broquer)
 # =============================================================================
+def _fecha_hora_utc_iso(fecha: str, hora: str, zona: str | None = None) -> str | None:
+    """Convierte fecha+hora LOCAL del agente (la que entendió el prospecto) a
+    un instante UTC real, con 'Z' explícita. CRÍTICO: nunca mandar
+    f"{fecha}T{hora}:00" pelón a una columna timestamptz — Postgres lo toma
+    como si ya fuera UTC, y la hora se corre (en México, 6h para atrás)."""
+    zona = zona or "America/Mexico_City"
+    try:
+        y, m, d = (int(x) for x in fecha.split("-"))
+        hh, mi = (int(x) for x in hora.split(":")[:2])
+    except Exception:
+        return None
+    try:
+        local_dt = datetime(y, m, d, hh, mi, tzinfo=ZoneInfo(zona))
+    except Exception:
+        local_dt = datetime(y, m, d, hh, mi, tzinfo=ZoneInfo("America/Mexico_City"))
+    return local_dt.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
 def _construir_ics(fecha: str, hora: str, titulo: str, descripcion: str, zona: str | None = None) -> str:
     zona = zona or "America/Mexico_City"
     try:
@@ -928,10 +946,11 @@ async def wa2_agendar(req: AgendarReq, request: Request):
     elif req.conversacion_id:
         titulo = f"{titulo} (WhatsApp)"
 
+    entren_zona = await _entrenamiento_de(dueño_id, (numero or {}).get("id", ""))
     tarea = {
         "user_id": dueño_id,
         "titulo": titulo,
-        "fecha_entrega": f"{req.fecha}T{req.hora}:00",
+        "fecha_entrega": _fecha_hora_utc_iso(req.fecha, req.hora, entren_zona.get("zona_horaria")),
         "notas": req.notas or None,
         "propiedad_id": req.inmueble_id or None,
         "contacto_id": (contacto or {}).get("contacto_crm_id"),
@@ -951,7 +970,6 @@ async def wa2_agendar(req: AgendarReq, request: Request):
         await sb_post("tareas_propiedades", {"user_id": dueño_id, "tarea_id": tarea_id, "propiedad_id": req.inmueble_id})
 
     if contacto and numero:
-        entren_zona = await _entrenamiento_de(dueño_id, numero["id"])
         ics = _construir_ics(req.fecha, req.hora, titulo, req.notas or "", entren_zona.get("zona_horaria"))
         await _wa_send_document(numero, contacto.get("wa_id"), ics.encode("utf-8"),
                                "cita.ics", "Toca el archivo para agregarla a tu calendario.")
@@ -1529,7 +1547,7 @@ async def _procesar_en_segundo_plano(item: dict):
                 crm_id = contacto.get("contacto_crm_id")
                 creada = await sb_post("tareas", {
                     "user_id": user_id, "titulo": titulo,
-                    "fecha_entrega": f"{fecha}T{hora}:00",
+                    "fecha_entrega": _fecha_hora_utc_iso(fecha, hora, entren.get("zona_horaria")),
                     "notas": inmueble_txt or None,
                     "contacto_id": crm_id})
                 if creada and crm_id:
