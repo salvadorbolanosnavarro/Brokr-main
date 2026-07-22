@@ -656,8 +656,19 @@ async def recepcion2_responde(history: list, contexto: str, agente: dict, entren
         '"accion":null}\n'
         "El campo 'accion' es null casi siempre. Para mostrar propiedades: "
         '{"tipo":"enviar_inmuebles","filtros":{"operacion":"venta|renta|null",'
-        '"tipo":"casa|departamento|terreno u otro texto, o null","zona":"colonia o ciudad, o null",'
+        '"tipo":"casa|departamento|terreno u otro texto, o null",'
+        '"colonia":"la colonia o fraccionamiento exacto que mencionó, o null",'
+        '"zona_amplia":"el nombre del desarrollo/zona más grande si lo mencionó además de la colonia '
+        '(ej. si dice \'El Olivar en Altozano\', colonia=\'El Olivar\' y zona_amplia=\'Altozano\'), o null",'
+        '"ciudad":"la ciudad o municipio que mencionó, o null si no la dijo",'
         '"precio_max":numero o null,"recamaras":numero o null}}. '
+        "Usa 'ciudad' ÚNICAMENTE si el prospecto la mencionó de forma explícita en ESTA conversación. "
+        "NUNCA la asumas ni la infieras de dónde opera el asesor, de su perfil, ni de nada fuera de lo que el "
+        "propio prospecto escribió — el catálogo que se consulta ya es solo el inventario de este asesor, así "
+        "que buscar nada más por colonia/zona (sin ciudad) es correcto y suficiente cuando el prospecto no dio "
+        "una ciudad. Si el prospecto solo dice una colonia o fraccionamiento, deja 'ciudad' en null y busca "
+        "igual — no le digas que no hay nada solo porque falta ese dato. Separa colonia y ciudad en sus propios "
+        "campos — nunca los mezcles en un solo texto.\n"
         "Para agendar: "
         '{"tipo":"agendar_visita","fecha":"YYYY-MM-DD","hora":"HH:MM","inmueble":"texto o null"}. '
         "Para pasar a humano: "
@@ -700,13 +711,19 @@ async def _buscar_inmuebles(user_id: str, filtros: dict, limit: int = 3) -> tupl
     """Devuelve (propiedades, zona_sin_resultados). zona_sin_resultados es True
     cuando el prospecto pidió una zona concreta y de verdad no hay nada ahí —
     para que el mensaje sea honesto en vez de mandar propiedades de otro lado
-    como si fueran lo que se pidió."""
+    como si fueran lo que se pidió.
+
+    IMPORTANTE sobre precisión: 'ciudad' es un filtro DURO — si el prospecto
+    dijo Morelia, jamás se relaja para buscar en otros municipios. 'colonia'
+    se intenta primero exacta y, si no hay nada, con el nombre del desarrollo/
+    fraccionamiento más amplio (zona_amplia) — pero SIEMPRE dentro de la misma
+    ciudad. Nunca se hace un OR suelto de palabras sin relación entre sí: eso
+    era lo que antes hacía que 'Morelia' por sí solo trajera cualquier cosa de
+    la ciudad, o que una palabra como 'Olivar' apareciera de casualidad en la
+    calle de un inmueble de otro municipio.
+    """
     sel = ("id,titulo,tipo,operacion,precio,moneda,colonia,ciudad,calle,"
            "num_exterior,recamaras,banos,m2_construccion,fotos,estatus")
-    # OJO: los valores reales de "estatus" en Broquer son activa/reservada/
-    # en_proceso/vendida/rentada/suspendida (ver propiedades.html) — "publicada"
-    # nunca existe, así que filtrar por eso dejaba la búsqueda siempre vacía.
-    # Lo correcto es EXCLUIR lo que de plano ya no se puede ofrecer.
     base = {"user_id": f"eq.{user_id}", "select": sel,
             "estatus": "not.in.(vendida,rentada,suspendida)",
             "order": "updated_at.desc", "limit": str(limit)}
@@ -716,7 +733,10 @@ async def _buscar_inmuebles(user_id: str, filtros: dict, limit: int = 3) -> tupl
     tipo = (filtros.get("tipo") or "").strip()
     if tipo:
         base["tipo"] = f"ilike.*{tipo}*"
-    zona = (filtros.get("zona") or "").strip()
+
+    ciudad = (filtros.get("ciudad") or "").strip()
+    colonia = (filtros.get("colonia") or "").strip()
+    zona_amplia = (filtros.get("zona_amplia") or "").strip()
 
     def _con_precio_recamaras(p: dict) -> dict:
         p = dict(p)
@@ -732,28 +752,35 @@ async def _buscar_inmuebles(user_id: str, filtros: dict, limit: int = 3) -> tupl
                 pass
         return p
 
-    if zona:
-        zona_limpia = zona.replace(",", " ")
-        exacta = dict(base)
-        exacta["or"] = f"(colonia.ilike.*{zona_limpia}*,ciudad.ilike.*{zona_limpia}*,calle.ilike.*{zona_limpia}*)"
-        rows = await sb_get("propiedades", _con_precio_recamaras(exacta))
-        if rows:
-            return rows, False
+    if ciudad or colonia or zona_amplia:
+        # La ciudad, si se pidió, es OBLIGATORIA en las tres pasadas — nunca
+        # se quita, así jamás se ofrece algo de un municipio distinto.
+        def _con_ciudad(p: dict) -> dict:
+            if ciudad:
+                p = dict(p)
+                p["ciudad"] = f"ilike.*{ciudad}*"
+            return p
 
-        # La colonia puede venir mal escrita o con solo parte del nombre real
-        # ("Tres Marías" vs "Álamos Tres Marías 3ra Sección"): se intenta
-        # palabra por palabra, siempre dentro de la MISMA zona, nunca fuera.
-        palabras = [w for w in re.split(r"\s+", zona_limpia) if len(w) >= 4]
-        if palabras:
-            ors = ",".join(f"colonia.ilike.*{w}*,ciudad.ilike.*{w}*,calle.ilike.*{w}*" for w in palabras)
-            relajada = dict(base)
-            relajada["or"] = f"({ors})"
-            rows = await sb_get("propiedades", _con_precio_recamaras(relajada))
+        intentos = []
+        if colonia:
+            intentos.append({"colonia": f"ilike.*{colonia}*"})
+        if zona_amplia and zona_amplia.lower() != colonia.lower():
+            intentos.append({"colonia": f"ilike.*{zona_amplia}*"})
+        if colonia:
+            # Por si el nombre del desarrollo está capturado en la calle y no
+            # en la colonia (pasa seguido con fraccionamientos nuevos).
+            intentos.append({"calle": f"ilike.*{colonia}*"})
+        if not intentos and ciudad:
+            intentos.append({})  # solo ciudad, sin colonia — caso "casas en Morelia"
+
+        for extra in intentos:
+            params = _con_ciudad({**base, **extra})
+            rows = await sb_get("propiedades", _con_precio_recamaras(params))
             if rows:
                 return rows, False
 
-        # De verdad no hay nada en esa zona: se avisa, no se manda otra cosa
-        # en su lugar disfrazada de lo que se pidió.
+        # De verdad no hay nada en esa zona/ciudad: se avisa, no se manda otra
+        # cosa en su lugar disfrazada de lo que se pidió.
         return [], True
 
     # Sin zona pedida: aquí sí tiene sentido relajar precio/recámaras si son
@@ -1519,24 +1546,22 @@ async def _procesar_en_segundo_plano(item: dict):
             if props:
                 enviados = []
                 for p in props[:3]:
-                    fotos = p.get("fotos") or []
-                    caption = _texto_inmueble(p)
-                    if fotos:
-                        wamid2 = await _wa_send_image(numero, item["wa_id"], fotos[0], caption)
-                    else:
-                        wamid2 = await _wa_send_text(numero, item["wa_id"], caption)
-                    await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"], wamid2,
-                                          "out", "ia", caption, fotos[0] if fotos else None)
-                    enviados.append({"id": p.get("id"), "titulo": p.get("titulo") or p.get("tipo") or "propiedad"})
-                    # Ficha técnica completa (PDF con todas las fotos y datos):
-                    # mismo motor que usa el módulo de Ficha técnica, solo por HTTP.
+                    # Antes se mandaba foto+texto Y la ficha técnica (redundante,
+                    # la ficha ya trae fotos y datos). Ahora solo la ficha.
+                    resumen = _texto_inmueble(p).replace("\n", " · ")
                     url_pdf, filename = await _generar_ficha_pdf(_propiedad_para_ficha(p))
                     if url_pdf:
-                        wamid3 = await _wa_send_document_link(
-                            numero, item["wa_id"], url_pdf, filename or "ficha.pdf",
-                            f"Ficha técnica: {p.get('titulo') or p.get('tipo') or 'propiedad'}")
-                        await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"], wamid3,
-                                              "out", "ia", f"[ficha técnica adjunta] {filename}", url_pdf)
+                        wamid = await _wa_send_document_link(
+                            numero, item["wa_id"], url_pdf, filename or "ficha.pdf", resumen)
+                        await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"], wamid,
+                                              "out", "ia", f"[ficha técnica] {resumen}", url_pdf)
+                    else:
+                        # Si por lo que sea no se pudo armar el PDF a tiempo, que
+                        # al menos le llegue la info en texto, no que no reciba nada.
+                        wamid = await _wa_send_text(numero, item["wa_id"], _texto_inmueble(p))
+                        await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"], wamid,
+                                              "out", "ia", _texto_inmueble(p))
+                    enviados.append({"id": p.get("id"), "titulo": p.get("titulo") or p.get("tipo") or "propiedad"})
                 # Se recuerdan aquí (no en el historial de mensajes) para poder
                 # adjuntar la propiedad correcta a la tarea si más adelante agenda una visita.
                 await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"},
@@ -1545,7 +1570,8 @@ async def _procesar_en_segundo_plano(item: dict):
                 # De verdad no hay nada en la zona que pidió: se le dice tal
                 # cual, NUNCA se le manda una propiedad de otra ubicación
                 # como si fuera lo que preguntó.
-                zona_txt = (filtros_ia.get("zona") or "esa zona").strip()
+                zona_txt = (filtros_ia.get("colonia") or filtros_ia.get("zona_amplia")
+                           or filtros_ia.get("ciudad") or "esa zona").strip()
                 aviso = (f"Por ahora no tengo nada disponible en {zona_txt}. "
                          "Le aviso a mi asesor para que revise si tiene algo que no esté "
                          "publicado, o si prefieres te comparto opciones en otra zona cercana.")
