@@ -723,7 +723,7 @@ async def _buscar_inmuebles(user_id: str, filtros: dict, limit: int = 3) -> tupl
     calle de un inmueble de otro municipio.
     """
     sel = ("id,titulo,tipo,operacion,precio,moneda,colonia,ciudad,calle,"
-           "num_exterior,recamaras,banos,m2_construccion,fotos,estatus")
+           "num_exterior,recamaras,banos,m2_construccion,fotos,estatus,descripcion")
     base = {"user_id": f"eq.{user_id}", "select": sel,
             "estatus": "not.in.(vendida,rentada,suspendida)",
             "order": "updated_at.desc", "limit": str(limit)}
