@@ -122,6 +122,25 @@ def _money(n) -> str:
         return str(n) if n else ""
 
 
+def _parsear_presupuesto(texto: str) -> int | None:
+    """Respaldo por si la IA no manda precio_max en 'filtros' aunque el
+    prospecto ya haya dado su presupuesto antes (queda guardado en su ficha
+    como texto libre, ej. '2 millones', '800 mil', '$1,200,000')."""
+    if not texto:
+        return None
+    t = texto.lower().replace(",", "").replace("$", "")
+    m = re.search(r"(\d+(?:\.\d+)?)\s*(millones|mill?on|mdp|m\b)", t)
+    if m:
+        return int(float(m.group(1)) * 1_000_000)
+    m = re.search(r"(\d+(?:\.\d+)?)\s*(mil|k\b)", t)
+    if m:
+        return int(float(m.group(1)) * 1_000)
+    m = re.search(r"(\d{5,})", t)  # un número ya completo, ej. "1200000"
+    if m:
+        return int(m.group(1))
+    return None
+
+
 # =============================================================================
 # Helpers de Supabase (REST) — con reintento ante timeout/5xx, igual patrón
 # probado que el resto del backend, pero self-contained en este archivo.
@@ -669,6 +688,12 @@ async def recepcion2_responde(history: list, contexto: str, agente: dict, entren
         "una ciudad. Si el prospecto solo dice una colonia o fraccionamiento, deja 'ciudad' en null y busca "
         "igual — no le digas que no hay nada solo porque falta ese dato. Separa colonia y ciudad en sus propios "
         "campos — nunca los mezcles en un solo texto.\n"
+        "'precio_max' es OBLIGATORIO si el prospecto mencionó un presupuesto EN CUALQUIER MOMENTO de esta "
+        "conversación, aunque el mensaje más reciente solo hable de ubicación — revisa todo el historial, no "
+        "nada más el último mensaje. Conviértelo siempre a un número entero de pesos sin signos ni texto "
+        "(\"2 millones\"→2000000, \"2.5 mdp\"→2500000, \"800 mil\"→800000, \"$1,200,000\"→1200000). Nunca mandes "
+        "propiedades por encima de un presupuesto que ya te dieron, salvo que el prospecto diga explícitamente "
+        "que es flexible o que puede subir el monto.\n"
         "Para agendar: "
         '{"tipo":"agendar_visita","fecha":"YYYY-MM-DD","hora":"HH:MM","inmueble":"texto o null"}. '
         "Para pasar a humano: "
@@ -1542,6 +1567,14 @@ async def _procesar_en_segundo_plano(item: dict):
         tipo = accion.get("tipo")
         if tipo == "enviar_inmuebles":
             filtros_ia = accion.get("filtros") or {}
+            if not filtros_ia.get("precio_max"):
+                # Respaldo: la IA no mandó precio_max en esta acción, pero si
+                # el prospecto ya dio su presupuesto antes (queda en su ficha),
+                # se usa de todos modos — no se le ofrece algo fuera de su rango
+                # solo porque el mensaje más reciente no repitió el monto.
+                respaldo = _parsear_presupuesto(resultado.get("presupuesto") or contacto.get("presupuesto") or "")
+                if respaldo:
+                    filtros_ia = {**filtros_ia, "precio_max": respaldo}
             props, zona_sin_resultados = await _buscar_inmuebles(user_id, filtros_ia)
             if props:
                 enviados = []
