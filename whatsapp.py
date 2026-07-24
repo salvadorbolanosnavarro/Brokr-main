@@ -66,6 +66,21 @@ WA2_WEBHOOK_URL  = os.environ.get("WA2_WEBHOOK_URL", "https://api.broquer.app/wh
 
 BROQUER_API_BASE = os.environ.get("BROQUER_API_BASE", "https://api.broquer.app")
 HISTORY_LIMIT = 16
+
+# TOPE DURO de respuestas de IA por conversación.
+# Cada mensaje entrante que contesta la IA es una llamada a Claude que paga
+# Broquer, no el agente. El campo `max_mensajes_ia` del entrenamiento lo puede
+# ajustar cada quien hacia ABAJO, pero nadie puede pasarse de este número ni
+# dejarlo en ilimitado — ni siquiera dejando el campo en 0, que es como están
+# hoy todas las filas viejas. Sin esto, un solo número con tráfico pesado
+# (o un prospecto necio, o un bot ajeno escribiéndole) puede generar una
+# cuenta abierta de API. Se puede subir sin tocar código con la variable
+# WA2_TOPE_IA en Railway.
+try:
+    WA2_TOPE_IA = max(1, int(os.environ.get("WA2_TOPE_IA", "25")))
+except Exception:
+    WA2_TOPE_IA = 25
+
 router = APIRouter(prefix="/whatsapp2", tags=["whatsapp2"])
 
 TRAINING_DEFAULTS = {
@@ -352,6 +367,9 @@ async def wa2_connect(req: ConnectReq, request: Request):
         "alias": (req.alias or waba_name or "Línea de WhatsApp").strip(),
         "access_token": business_token,
         "ia_enabled": True,
+        # Reconectar es justamente el arreglo cuando el token murió: limpia la marca.
+        "token_valido": True,
+        "token_error_at": None,
         "updated_at": _now(),
     }
     if expires_in:
@@ -1033,6 +1051,41 @@ async def wa2_agendar(req: AgendarReq, request: Request):
 # =============================================================================
 # 6) ENVÍO POR WHATSAPP (Cloud API)
 # =============================================================================
+async def _revisar_token(numero: dict, err: dict | None) -> None:
+    """Si Meta responde que el token ya no sirve, deja constancia y avisa.
+
+    El token de un número puede morir sin que nadie haga nada malo: el agente
+    revocó el permiso desde su Facebook, sacó a Broquer de su Business, o Meta
+    lo caducó. Cuando eso pasa NO hay forma de renovarlo solos — el token de
+    integración de negocio se emite una sola vez, en el Embedded Signup. El
+    único arreglo real es que el agente vuelva a apretar 'Conectar número'.
+
+    Así que lo que se puede hacer, y es lo que hace esto, es enterarse a la
+    primera y decírselo, en vez de dejar que los mensajes se pierdan en
+    silencio durante días. También apaga la IA de ese número: no tiene caso
+    quemar llamadas a Claude generando respuestas que nunca van a salir.
+    """
+    if not err or err.get("code") not in (190, 102):
+        return
+    numero_id = numero.get("id")
+    if not numero_id:
+        return
+    try:
+        if numero.get("token_valido") is False:
+            return  # ya estaba marcado, no repitas el aviso en cada mensaje
+        await sb_patch("wa2_numeros", {"id": f"eq.{numero_id}"},
+                      {"token_valido": False, "token_error_at": _now(), "ia_enabled": False})
+        numero["token_valido"] = False
+        await enviar_push(numero.get("user_id"), "Tu WhatsApp se desconectó",
+                          "Meta dejó de aceptar la conexión de tu número. Entra a WhatsApp en "
+                          "Broquer y vuelve a apretar 'Conectar número' para reactivarlo.",
+                          datos={"tipo": "whatsapp"})
+        log.error("Token inválido para el número %s (user %s): %s",
+                  numero.get("phone_number_id"), numero.get("user_id"), err.get("message"))
+    except Exception as e:  # pragma: no cover — avisar nunca debe tumbar el envío
+        log.warning("No se pudo marcar el token inválido de %s: %s", numero_id, e)
+
+
 async def _wa_send_text_detallado(numero: dict, wa_id: str, texto: str) -> tuple[str | None, dict | None]:
     """Como _wa_send_text, pero además regresa el error real de Meta (código y
     mensaje) cuando falla — necesario para distinguir 'ventana de 24h cerrada'
@@ -1050,7 +1103,9 @@ async def _wa_send_text_detallado(numero: dict, wa_id: str, texto: str) -> tuple
                 err = (r.json().get("error") or {})
             except Exception:
                 err = {}
-            return None, {"code": err.get("code"), "message": err.get("message") or "No se pudo enviar el mensaje."}
+            detalle = {"code": err.get("code"), "message": err.get("message") or "No se pudo enviar el mensaje."}
+            await _revisar_token(numero, detalle)
+            return None, detalle
         d = r.json()
         msgs = d.get("messages") or []
         return (msgs[0].get("id") if msgs else None), None
@@ -1519,13 +1574,23 @@ async def _procesar_en_segundo_plano(item: dict):
                           datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
         return
 
+    # El tope del entrenamiento manda solo si es MÁS estricto que el tope duro.
+    # Un 0 guardado (que antes significaba "ilimitado") ahora cae al tope duro.
     max_msj = entren.get("max_mensajes_ia") or 0
-    if max_msj:
-        conteo = await sb_get("wa2_mensajes", {"conversacion_id": f"eq.{item['conversacion_id']}",
-                                               "sender": "eq.ia", "select": "id"})
-        if len(conteo) >= max_msj:
-            await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"}, {"ai_enabled": False})
-            return
+    if max_msj <= 0 or max_msj > WA2_TOPE_IA:
+        max_msj = WA2_TOPE_IA
+    conteo = await sb_get("wa2_mensajes", {"conversacion_id": f"eq.{item['conversacion_id']}",
+                                           "sender": "eq.ia", "select": "id"})
+    if len(conteo) >= max_msj:
+        # Antes esto apagaba la IA y se salía en silencio: el prospecto se
+        # quedaba escribiendo al vacío y el agente nunca se enteraba de que
+        # ahora le tocaba a él. Ahora se le avisa.
+        await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"}, {"ai_enabled": False})
+        await enviar_push(user_id, "Un prospecto te está esperando",
+                          f"{contacto.get('nombre') or item['wa_id']} lleva rato platicando con la IA. "
+                          "Ya te toca a ti seguir la conversación.",
+                          datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
+        return
 
     historial_rows = await sb_get("wa2_mensajes", {
         "conversacion_id": f"eq.{item['conversacion_id']}", "select": "sender,body",

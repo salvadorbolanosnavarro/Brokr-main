@@ -235,7 +235,7 @@
     { key:'tareas',       href:'tareas.html',        label:'Tareas',          group:'crm',  icon:'check' },
     { key:'leads',        href:'leads.html',         label:'Leads',           group:'crm',  icon:'send' },
     { key:'estadisticas', href:'estadisticas.html',  label:'Estadísticas',    group:'crm',  icon:'chart' },
-    { key:'whatsapp',     href:'whatsapp.html',      label:'WhatsApp',        group:'main', icon:'whatsapp', adminOnly:true },
+    { key:'whatsapp',     href:'whatsapp.html',      label:'WhatsApp',        group:'main', icon:'whatsapp' },
     { key:'contratos',    href:'contratos.html',     label:'Contratos',       group:'main', icon:'document' },
     { key:'avm',          href:'avm.html',           label:'Estimación de valor', group:'main', icon:'peso' },
     { key:'ficha-manual', href:'ficha-manual.html',  label:'Ficha técnica',   group:'main', icon:'landscape' },
@@ -1377,12 +1377,12 @@ body[data-app="facebook-ads"]{--page-max:980px}
        </button>` +
       // El acceso del pulgar entra directo a la pestaña de chats, no a la de
       // ajustes: el agente aprieta esto para leer, no para configurar.
-      // WhatsApp está oculto para agentes normales (adminOnly) mientras se
-      // termina de probar a fondo, así que este botón solo se agrega si es admin.
-      (profile?.isAdmin ? `<a href="whatsapp.html#chats" class="bk-bnav__item${activeKey === 'whatsapp' ? ' is-active' : ''}" id="bk-bnav-chats" aria-label="Chats de WhatsApp">
+      // WhatsApp ya está abierto para todos los usuarios, así que este botón
+      // es fijo en la barra inferior.
+      `<a href="whatsapp.html#chats" class="bk-bnav__item${activeKey === 'whatsapp' ? ' is-active' : ''}" id="bk-bnav-chats" aria-label="Chats de WhatsApp">
          <span class="bk-bnav__ico">${svg('whatsapp', 24)}<i class="bk-badge" id="bk-bnav-badge"></i></span>
          <span>Chats</span>
-       </a>` : '');
+       </a>`;
     document.body.appendChild(bnav);
 
     // ── Hoja de módulos (móvil): CRM completo + resto de herramientas ──
@@ -4076,12 +4076,11 @@ body[data-app="facebook-ads"]{--page-max:980px}
     setupMiSitio(profile);
 
     // ─── Mensajes de WhatsApp sin leer: globito + notificación ────
-    // WhatsApp es adminOnly mientras se termina de probar a fondo: no tiene
-    // caso sondear ni pedir notificaciones de un módulo que el agente no puede abrir.
-    if (profile?.isAdmin) setupChatsBadge(profile);
+    // WhatsApp ya está abierto para todos: todo agente sondea sus no leídos.
+    setupChatsBadge(profile);
 
     // ─── Cita nueva agendada por la IA de WhatsApp: aviso inmediato (web) ──
-    if (profile?.isAdmin) setupCitasNotify(profile);
+    setupCitasNotify(profile);
 
     window.dispatchEvent(new CustomEvent('brokr-shell-ready', { detail: { profile, activeKey } }));
   }
