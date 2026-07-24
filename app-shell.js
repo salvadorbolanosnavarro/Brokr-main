@@ -346,31 +346,55 @@
 .bk-shell-root { display: flex; height: 100vh; min-height: 100vh; background: var(--paper); }
 .bk-shell-root.bk-narrow .bk-sidebar { display: none; }
 
-/* Sidebar (drawer) — fondo navy (estructura, como el header del sitio) */
+/* ── Sidebar (drawer) — edición premium ─────────────────────────────
+   Ya no es un rectángulo navy plano con un bloque azul sólido encima.
+   Ahora: degradado vertical del navy de marca al navy profundo, un
+   halo azul muy tenue arriba, canto de luz de 1px en el borde derecho,
+   y los estados construidos con blancos translúcidos + una barrita
+   azul de acento a la izquierda del módulo activo. */
 .bk-sidebar {
   width: 260px; flex-shrink: 0;
-  background: var(--sky-navy);
+  background: var(--sb-bg);
   border-right: none;
-  padding: 14px 14px;
-  display: flex; flex-direction: column;
+  box-shadow: inset -1px 0 0 var(--sb-edge);
+  padding: 18px 12px 22px;
+  display: flex; flex-direction: column; gap: 2px;
   overflow-y: auto;
+  position: relative;
 }
+/* Halo de luz superior: lo que le faltaba al azul para no verse plano */
+.bk-sidebar::before {
+  content: ''; position: absolute; inset: 0 0 auto 0; height: 240px;
+  background: radial-gradient(125% 100% at 0% 0%, rgba(58,111,216,0.22) 0%, rgba(58,111,216,0) 68%);
+  pointer-events: none; z-index: 0;
+}
+.bk-sidebar > * { position: relative; z-index: 1; }
 .bk-sidebar::-webkit-scrollbar { width: 0; }
 @media (max-width: 880px) { .bk-sidebar { display: none; } }
+
 .bk-sidebar__brand {
-  padding: 6px 10px 22px;
+  padding: 2px 10px 16px;
   border-bottom: none;
-  margin-bottom: 14px;
+  margin-bottom: 8px;
+  box-shadow: inset 0 -1px 0 var(--sb-edge);
   display: flex; align-items: center;
 }
 .bk-sidebar__brand a { display: flex; align-items: center; gap: 8px; text-decoration: none; }
-.bk-sidebar__brand img { height: 84px; width: auto; display: block; filter: brightness(0) invert(1); }
+.bk-sidebar__brand img {
+  height: 26px; width: auto; display: block;
+  filter: brightness(0) invert(1); opacity: .94;
+  transition: opacity var(--dur) var(--ease);
+}
+.bk-sidebar__brand a:hover img { opacity: 1; }
+
 .bk-sb-link {
-  display: flex !important; align-items: center; gap: 10px;
-  padding: 10px 12px;
+  position: relative;
+  display: flex !important; align-items: center; gap: 11px;
+  height: 40px; padding: 0 12px;
   border-radius: var(--r);
-  font-size: 14px; color: #FFFFFF !important;
-  cursor: pointer; transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+  font-size: 14px; color: var(--sb-txt) !important;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
   font-weight: 500; letter-spacing: -0.005em;
   text-decoration: none !important;
   visibility: visible !important;
@@ -378,27 +402,54 @@
 }
 .bk-sidebar .bk-sb-link,
 .bk-sidebar a.bk-sb-link {
-  color: #FFFFFF !important;
+  color: var(--sb-txt) !important;
   display: flex !important;
   visibility: visible !important;
   opacity: 1 !important;
   background: transparent;
 }
+.bk-sb-link svg, .bk-sidebar .bk-sb-link svg {
+  flex-shrink: 0; opacity: .62; color: #FFFFFF;
+  transition: opacity var(--dur) var(--ease);
+}
 .bk-sb-link:hover,
 .bk-sidebar .bk-sb-link:hover,
-.bk-sidebar a.bk-sb-link:hover { background: rgba(255,255,255,0.06) !important; color: var(--paper) !important; }
+.bk-sidebar a.bk-sb-link:hover { background: var(--sb-hover) !important; color: #FFFFFF !important; }
+.bk-sidebar .bk-sb-link:hover svg { opacity: 1; }
+
 .bk-sb-link.is-active,
 .bk-sidebar .bk-sb-link.is-active,
-.bk-sidebar a.bk-sb-link.is-active { background: var(--sky-blue) !important; color: #FFFFFF !important; }
-.bk-sb-link svg, .bk-sidebar .bk-sb-link svg { flex-shrink: 0; opacity: 1; color: #FFFFFF; }
+.bk-sidebar a.bk-sb-link.is-active {
+  background: var(--sb-active) !important; color: #FFFFFF !important; font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--sb-edge), var(--sb-glow);
+}
+.bk-sidebar .bk-sb-link.is-active svg { opacity: 1; }
+/* Barrita de acento pegada al canto izquierdo del drawer */
+.bk-sidebar .bk-sb-link.is-active::before {
+  content: ''; position: absolute; left: -12px; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 18px; border-radius: var(--r-pill);
+  background: var(--sky-blue-lift);
+}
+
 .bk-sb-group { display: flex; flex-direction: column; gap: 2px; }
-.bk-sb-group + .bk-sb-link { margin-top: 4px; }
+/* Separador de aire entre el bloque CRM y las herramientas */
+.bk-sb-group + .bk-sb-link { margin-top: 13px; }
+.bk-sb-group + .bk-sb-link::after {
+  content: ''; position: absolute; left: 0; right: 0; top: -7px; height: 1px;
+  background: var(--sb-edge);
+}
 .bk-sb-trigger { width: 100%; border: 0; background: transparent; font-family: inherit; text-align: left; }
-.bk-sb-trigger .bk-sb-chevron { margin-left: auto; transition: transform var(--dur) var(--ease); }
+.bk-sb-trigger .bk-sb-chevron { margin-left: auto; opacity: .55; transition: transform var(--dur) var(--ease); }
 .bk-sb-group.is-open .bk-sb-chevron { transform: rotate(180deg); }
-.bk-sb-submenu { display: none; flex-direction: column; gap: 2px; padding: 2px 0 6px 28px; }
+.bk-sb-submenu { display: none; flex-direction: column; gap: 2px; padding: 4px 0 8px 26px; position: relative; }
+/* Guía vertical que amarra visualmente el submenú con su grupo */
+.bk-sb-submenu::before {
+  content: ''; position: absolute; left: 21px; top: 2px; bottom: 8px;
+  width: 1px; background: var(--sb-edge);
+}
 .bk-sb-group.is-open .bk-sb-submenu { display: flex; }
-.bk-sb-submenu .bk-sb-link { font-size: 13px; padding: 8px 10px; }
+.bk-sb-submenu .bk-sb-link { font-size: 13px; height: 36px; padding: 0 10px; }
+.bk-sidebar .bk-sb-submenu .bk-sb-link.is-active::before { left: -5px; height: 14px; }
 
 /* Content area */
 .bk-content { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
@@ -1215,6 +1266,9 @@ body[data-app="facebook-ads"]{--page-max:980px}
     shell.className = 'bk-shell-root';
     shell.innerHTML = `
       <aside class="bk-sidebar" id="bk-sidebar">
+        <div class="bk-sidebar__brand">
+          <a href="index.html" aria-label="Ir al inicio Broquer"><img src="logotipo-white.png" alt="Broquer"/></a>
+        </div>
         ${buildCrmGroup(crm, activeKey)}
         ${buildMainSidebar(main, activeKey)}
       </aside>

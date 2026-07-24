@@ -14,6 +14,16 @@
    Solo se reasignan sus VALORES a la piel nueva. Todo módulo que
    ya consume var(--…) se rediseña solo, sin tocar su markup.
 
+   REVISIÓN 2026-07-b — "Lienzo blanco":
+   El fondo de la app deja de ser azul pálido y pasa a BLANCO PURO.
+   · --paper #F4F7FD → #FFFFFF (body de index y de todos los módulos).
+   · --paper-2 #EDF2FB → #F1F5FC (inset/hover: ahora sí contrasta).
+   · --shell #F4F7FE → #F7F9FE y los inputs pasan a usarlo como
+     relleno: sobre blanco puro un campo blanco no se encuentra.
+   · Hairlines un punto más firmes (--line, --line-2, --line-3) para
+     que la card siga leyéndose como card sobre fondo blanco.
+   Ningún nombre de variable cambia: los módulos se actualizan solos.
+
    REVISIÓN 2026-07 — "Navarro":
    Piel derivada por muestreo directo de la referencia visual
    aprobada. Cero cambios estructurales: solo se reasignan valores
@@ -56,10 +66,10 @@
 
 :root {
   /* ── Surfaces (blanco dominante) ──────────── */
-  --paper:   #F4F7FD;     /* fondo del body */
-  --paper-2: #EDF2FB;     /* canvas / inset / hover / chips */
+  --paper:   #FFFFFF;     /* fondo del body — BLANCO PURO (rev. 2026-07) */
+  --paper-2: #F1F5FC;     /* canvas / inset / hover / chips */
   --bone:    #FFFFFF;     /* superficie de card */
-  --shell:   #F4F7FE;     /* hover de input / superficie media */
+  --shell:   #F7F9FE;     /* relleno de input / superficie media */
 
   /* ── Ink (azul marino como texto, no negro) ─ */
   --ink:     #00143B;     /* texto principal */
@@ -70,9 +80,9 @@
   --mute-3:  #BFCADD;
 
   /* ── Hairlines (bordes del sistema) ───────── */
-  --line:     #E6ECF6;    /* borde claro / disabled */
-  --line-2:   #D8E1EF;    /* borde / input */
-  --line-3:   #BFCADD;
+  --line:     #E4EAF5;    /* borde claro / disabled */
+  --line-2:   #D5DFEF;    /* borde / input */
+  --line-3:   #BAC6DC;
 
   /* ── Accents (AZUL de acción) ─────────────── */
   --forest:   #1240A0;    /* alias histórico → azul de acción */
@@ -453,7 +463,7 @@ input, select, textarea, button {
 .bk-textarea,
 .bk-select {
   width: 100%;
-  background: var(--paper);
+  background: var(--shell);
   border: 1px solid var(--line-2);
   border-radius: var(--r);
   color: var(--ink);
@@ -988,6 +998,19 @@ input, select, textarea, button {
   --brand-whatsapp-soft:  rgba(37, 211, 102, 0.10);
   --brand-facebook:       #1877F2;
   --brand-facebook-press: #145FCC;
+
+  /* ── Sidebar premium (los consume app-shell.js) ─────────────
+     El drawer deja de ser un bloque navy plano: degradado vertical
+     del navy de marca al navy profundo, cantos de luz de 1px y
+     estados construidos con blancos translúcidos en vez de un
+     rectángulo azul sólido. */
+  --sb-bg:      linear-gradient(180deg, var(--sky-navy) 0%, var(--sky-navy-deep) 100%);
+  --sb-hover:   rgba(255,255,255,0.055);
+  --sb-active:  rgba(255,255,255,0.10);
+  --sb-edge:    rgba(255,255,255,0.08);
+  --sb-txt:     rgba(255,255,255,0.72);
+  --sb-txt-dim: rgba(255,255,255,0.42);
+  --sb-glow:    0 10px 30px rgba(0,0,0,0.22);
 
   /* Acento azul claro para texto sobre superficies navy (heros oscuros).
      El azul de acción #1240A0 no contrasta sobre --sky-navy. */

@@ -155,6 +155,14 @@ try:
 except Exception as _e:
     print(f"[org] No se pudo montar el router de organizaciones: {_e}")
 
+# Consola de dueño: panorama, ingresos, segmentos de marketing, correo y CFDI.
+# Mismo import defensivo: si falla, el resto del backend sigue vivo.
+try:
+    from routers.admin_consola import router as admin_consola_router
+    app.include_router(admin_consola_router)
+except Exception as _e:
+    print(f"[admin] No se pudo montar el router de la consola: {_e}")
+
 CONFIG_FILE = Path(__file__).parent / "config.json"
 
 def load_config() -> dict:

@@ -5,399 +5,738 @@
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>Broquer · Admin</title>
+<title>Broquer · Consola</title>
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:var(--paper);color:var(--ink);font-family:var(--font-sans);-webkit-font-smoothing:antialiased}
 button{font-family:inherit;border:none;background:none;cursor:pointer;color:inherit}
-input{font-family:inherit}
+input,textarea,select{font-family:inherit}
 
-/* ── Layout root ─────────────────────────── */
-.adm-root{display:grid;grid-template-columns:340px 1fr;height:100vh;overflow:hidden}
-@media(max-width:880px){.adm-root{grid-template-columns:1fr}}
+/* ══ Marco general ══════════════════════════════════════════ */
+.ac-root{display:flex;flex-direction:column;height:100vh;overflow:hidden}
 
-/* ── Sidebar (lista) ─────────────────────── */
-.adm-side{display:flex;flex-direction:column;border-right:1px solid var(--line);background:var(--bone);min-height:0}
-@media(max-width:880px){.adm-side{border-right:none;border-bottom:1px solid var(--line)}}
+.ac-top{
+  flex-shrink:0;display:flex;align-items:center;gap:var(--sp-4);
+  padding:0 var(--sp-6);height:var(--topbar-h);
+  background:var(--sky-navy);color:#fff;
+}
+.ac-top__brand{display:flex;align-items:center;gap:var(--sp-2);font-weight:700;font-size:var(--fs-body);letter-spacing:-0.02em}
+.ac-top__brand svg{opacity:.75}
+.ac-top__spacer{flex:1}
+.ac-top__back{
+  font-size:var(--fs-xs);font-weight:600;text-decoration:none;color:#fff;
+  padding:var(--sp-2) var(--sp-4);border-radius:var(--r-pill);
+  box-shadow:inset 0 0 0 1px var(--sb-edge);
+}
+.ac-top__back:hover{background:var(--sb-hover);color:#fff}
 
-.adm-side__top{padding:20px 18px 14px;border-bottom:1px solid var(--line);flex-shrink:0}
-.adm-side__head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-.adm-side__title{font-family:var(--font-display);font-size:var(--fs-h5);font-weight:700;letter-spacing:-0.02em;display:flex;align-items:center;gap:8px}
-.adm-side__back{font-size:var(--fs-xs);color:var(--mute);text-decoration:none;font-weight:500;padding:6px 10px;border-radius:var(--r-pill);border:1px solid var(--line-2);background:var(--paper)}
-.adm-side__back:hover{color:var(--ink);background:var(--paper-2)}
+.ac-range{display:inline-flex;padding:3px;gap:2px;border-radius:var(--r-pill);background:var(--sb-hover)}
+.ac-range__btn{padding:var(--sp-1) var(--sp-3);border-radius:var(--r-pill);font-size:var(--fs-caption);font-weight:700;color:var(--sb-txt)}
+.ac-range__btn:hover{color:#fff}
+.ac-range__btn.is-on{background:var(--sky-blue);color:#fff}
 
-.adm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px}
-.adm-stat{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:9px 6px;text-align:center}
+.ac-tabs{flex-shrink:0;display:flex;gap:var(--sp-6);padding:0 var(--sp-6);border-bottom:1px solid var(--line-2);background:var(--bone);overflow-x:auto;scrollbar-width:none}
+.ac-tabs::-webkit-scrollbar{display:none}
+.ac-tab{
+  padding:var(--sp-4) 0;font-size:var(--fs-sm);font-weight:600;color:var(--mute);
+  border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;
+  display:inline-flex;align-items:center;gap:var(--sp-2);
+}
+.ac-tab:hover{color:var(--ink-2)}
+.ac-tab.is-on{color:var(--ink);border-bottom-color:var(--sky-blue)}
+.ac-tab__n{
+  min-width:19px;padding:1px var(--sp-1);border-radius:var(--r-pill);
+  background:var(--danger);color:#fff;font-size:var(--fs-caption);font-weight:700;text-align:center;
+}
+.ac-tab__n.is-hidden{display:none}
+
+.ac-view{flex:1;min-height:0;overflow-y:auto;display:none}
+.ac-view.is-on{display:block}
+.ac-wrap{max-width:var(--page-max);margin:0 auto;padding:var(--sp-6) var(--pad-x) var(--sp-12)}
+
+.ac-h{font-family:var(--font-display);font-size:var(--fs-h2);font-weight:700;letter-spacing:-0.026em;margin-bottom:var(--sp-1)}
+.ac-sub{font-size:var(--fs-sm);color:var(--mute);margin-bottom:var(--sp-6);line-height:var(--lh)}
+.ac-sec{margin-top:var(--sp-8)}
+.ac-sec__h{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-4);margin-bottom:var(--sp-4)}
+.ac-sec__h h2{font-family:var(--font-display);font-size:var(--fs-h3);font-weight:700;letter-spacing:-0.02em}
+.ac-sec__h span{font-size:var(--fs-xs);color:var(--mute)}
+
+.ac-card{background:var(--bone);border:1px solid var(--line-2);border-radius:var(--r-lg);padding:var(--sp-5)}
+.ac-note{font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh);margin-top:var(--sp-3)}
+
+/* ══ KPIs ═══════════════════════════════════════════════════ */
+.ac-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--sp-3)}
+.ac-kpi{background:var(--bone);border:1px solid var(--line-2);border-radius:var(--r-lg);padding:var(--sp-5)}
+.ac-kpi__l{font-size:var(--fs-label-3);font-weight:600;color:var(--mute);letter-spacing:0.02em}
+.ac-kpi__v{font-family:var(--font-display);font-size:var(--fs-display);font-weight:800;letter-spacing:-0.03em;line-height:var(--lh-tight);margin-top:var(--sp-2);color:var(--ink)}
+.ac-kpi__d{font-size:var(--fs-xs);font-weight:600;margin-top:var(--sp-2);color:var(--mute)}
+.ac-kpi__d.up{color:var(--success)}
+.ac-kpi__d.down{color:var(--danger)}
+.ac-kpi--navy{background:var(--sky-navy);border-color:var(--sky-navy)}
+.ac-kpi--navy .ac-kpi__l{color:var(--sky-blue-on-dark)}
+.ac-kpi--navy .ac-kpi__v{color:#fff}
+.ac-kpi--navy .ac-kpi__d{color:var(--sb-txt)}
+
+/* ══ Gráfica de barras ══════════════════════════════════════ */
+.ac-chart{display:flex;align-items:flex-end;gap:2px;height:170px;padding:var(--sp-4) 0 0}
+.ac-chart__col{flex:1;min-width:2px;display:flex;flex-direction:column;justify-content:flex-end;height:100%}
+.ac-chart__bar{width:100%;background:var(--sky-blue);border-radius:var(--r-xs) var(--r-xs) 0 0;min-height:2px;transition:background var(--dur) var(--ease)}
+.ac-chart__col:hover .ac-chart__bar{background:var(--sky-navy)}
+.ac-chart__axis{display:flex;justify-content:space-between;font-size:var(--fs-caption);color:var(--mute);margin-top:var(--sp-2);border-top:1px solid var(--line);padding-top:var(--sp-2)}
+
+/* ══ Barras horizontales (embudo, módulos) ══════════════════ */
+.ac-bars{display:flex;flex-direction:column;gap:var(--sp-2)}
+.ac-bar{position:relative;padding:var(--sp-3);border-radius:var(--r-sm);overflow:hidden;background:var(--paper-2)}
+.ac-bar__fill{position:absolute;inset:0 auto 0 0;background:var(--sky-canvas);border-radius:var(--r-sm);z-index:0;transition:width var(--dur-slow) var(--ease)}
+.ac-bar__row{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-3)}
+.ac-bar__name{font-size:var(--fs-sm);font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ac-bar__val{font-size:var(--fs-xs);color:var(--mute);flex-shrink:0;font-variant-numeric:tabular-nums}
+.ac-bar__meta{position:relative;z-index:1;font-size:var(--fs-caption);color:var(--mute);margin-top:2px}
+
+/* ══ Tabla ══════════════════════════════════════════════════ */
+.ac-tablewrap{background:var(--bone);border:1px solid var(--line-2);border-radius:var(--r-lg);overflow:hidden}
+.ac-table{width:100%;border-collapse:collapse;font-size:var(--fs-sm)}
+.ac-table th{
+  text-align:left;font-size:var(--fs-caption);font-weight:700;letter-spacing:0.03em;
+  color:var(--mute);padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--line-2);
+  background:var(--bone);white-space:nowrap;position:sticky;top:0;z-index:1;
+}
+.ac-table td{padding:var(--sp-4);border-bottom:1px solid var(--line);color:var(--ink-2);vertical-align:middle}
+.ac-table tr:last-child td{border-bottom:none}
+.ac-table tbody tr:hover{background:var(--paper-2)}
+.ac-table .num{text-align:right;font-variant-numeric:tabular-nums}
+.ac-scrollx{overflow-x:auto}
+
+/* ══ Píldoras de estado ═════════════════════════════════════ */
+.ac-pill{display:inline-flex;align-items:center;gap:var(--sp-1);padding:2px var(--sp-2);border-radius:var(--r-pill);font-size:var(--fs-caption);font-weight:700;letter-spacing:0.01em;white-space:nowrap}
+.p-ok{background:var(--success-soft);color:var(--success)}
+.p-blue{background:var(--forest-soft);color:var(--forest-2)}
+.p-warn{background:var(--warn-soft);color:var(--warn)}
+.p-bad{background:var(--danger-soft);color:var(--danger)}
+.p-off{background:var(--paper-2);color:var(--mute)}
+
+/* ══ Botones ════════════════════════════════════════════════ */
+.ac-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2);
+  height:var(--h-sm);padding:0 var(--sp-4);border-radius:var(--r-sm);
+  font-size:var(--fs-xs);font-weight:700;letter-spacing:-0.005em;
+  background:var(--sky-navy);color:#fff;
+  transition:background var(--dur) var(--ease),opacity var(--dur) var(--ease);
+}
+.ac-btn:hover{background:var(--sky-navy-mid)}
+.ac-btn:disabled{opacity:.45;cursor:not-allowed}
+.ac-btn--blue{background:var(--sky-blue)}
+.ac-btn--blue:hover{background:var(--sky-blue-press)}
+.ac-btn--ghost{background:var(--bone);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line-2)}
+.ac-btn--ghost:hover{background:var(--paper-2)}
+.ac-btn--sm{height:32px;padding:0 var(--sp-3);font-size:var(--fs-caption)}
+.ac-btn--block{width:100%}
+
+.ac-input{
+  width:100%;height:var(--h);padding:0 var(--sp-4);
+  background:var(--shell);border:1px solid var(--line-2);border-radius:var(--r);
+  color:var(--ink);font-size:var(--fs-sm);outline:none;
+}
+.ac-input:focus{background:var(--bone);border-color:var(--sky-blue);box-shadow:var(--focus)}
+.ac-input::placeholder{color:var(--mute-2)}
+.ac-textarea{
+  width:100%;min-height:180px;padding:var(--sp-3) var(--sp-4);resize:vertical;line-height:var(--lh);
+  background:var(--shell);border:1px solid var(--line-2);border-radius:var(--r);
+  color:var(--ink);font-size:var(--fs-sm);outline:none;
+}
+.ac-textarea:focus{background:var(--bone);border-color:var(--sky-blue);box-shadow:var(--focus)}
+.ac-textarea::placeholder{color:var(--mute-2)}
+.ac-lbl{display:block;font-size:var(--fs-label-2);font-weight:600;color:var(--ink-2);margin-bottom:var(--sp-1)}
+.ac-field{margin-bottom:var(--sp-4)}
+.ac-field--top{margin-top:var(--sp-4)}
+.ac-row-acts{display:flex;gap:var(--sp-2);margin:var(--sp-4) 0}
+
+.ac-empty{padding:var(--sp-12) var(--sp-6);text-align:center;color:var(--mute);font-size:var(--fs-sm)}
+
+/* ══ Usuarios: dos paneles ══════════════════════════════════ */
+.adm-root{display:grid;grid-template-columns:340px 1fr;height:100%;overflow:hidden}
+@media(max-width:1000px){.adm-root{grid-template-columns:1fr}}
+
+.adm-side{display:flex;flex-direction:column;border-right:1px solid var(--line-2);background:var(--bone);min-height:0}
+.adm-side__top{padding:var(--sp-5) var(--sp-4) var(--sp-3);border-bottom:1px solid var(--line);flex-shrink:0}
+.adm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2);margin-bottom:var(--sp-3)}
+.adm-stat{background:var(--paper-2);border:1px solid var(--line);border-radius:var(--r);padding:var(--sp-2);text-align:center}
 .adm-stat__v{font-family:var(--font-display);font-size:var(--fs-h3);font-weight:700;letter-spacing:-0.02em;color:var(--ink)}
-.adm-stat__l{font-size:var(--fs-caption);color:var(--mute);margin-top:2px;letter-spacing:0.04em;}
+.adm-stat__l{font-size:var(--fs-caption);color:var(--mute);margin-top:2px}
 
 .adm-search{position:relative}
-.adm-search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--mute-2)}
-.adm-search input{width:100%;padding:9px 12px 9px 34px;background:var(--paper);border:1px solid var(--line-2);border-radius:var(--r);font-size:var(--fs-sm);color:var(--ink);outline:none}
-.adm-search input:focus{border-color:var(--ink)}
+.adm-search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--mute-2)}
+.adm-search input{width:100%;height:var(--h-sm);padding:0 var(--sp-3) 0 34px;background:var(--shell);border:1px solid var(--line-2);border-radius:var(--r);font-size:var(--fs-sm);color:var(--ink);outline:none}
+.adm-search input:focus{border-color:var(--sky-blue);background:var(--bone)}
 .adm-search input::placeholder{color:var(--mute-2)}
 
-.adm-filters{display:flex;gap:6px;overflow-x:auto;padding:10px 18px;border-bottom:1px solid var(--line);flex-shrink:0;scrollbar-width:none}
+.adm-filters{display:flex;gap:var(--sp-1);overflow-x:auto;padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--line);flex-shrink:0;scrollbar-width:none}
 .adm-filters::-webkit-scrollbar{display:none}
-.adm-chip{flex-shrink:0;padding:5px 12px;border-radius:var(--r-pill);font-size:var(--fs-caption);font-weight:600;border:1px solid var(--line-2);background:var(--paper);color:var(--mute);white-space:nowrap;letter-spacing:-0.005em}
+.adm-chip{flex-shrink:0;padding:var(--sp-1) var(--sp-3);border-radius:var(--r-pill);font-size:var(--fs-caption);font-weight:600;border:1px solid var(--line-2);background:var(--bone);color:var(--mute);white-space:nowrap}
 .adm-chip:hover{color:var(--ink)}
-.adm-chip.is-on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.adm-chip.is-on{background:var(--sky-blue);border-color:var(--sky-blue);color:#fff}
 
-.adm-list{flex:1;overflow-y:auto;padding:6px 8px 24px}
+.adm-list{flex:1;overflow-y:auto;padding:var(--sp-2) var(--sp-2) var(--sp-8)}
 .adm-list::-webkit-scrollbar{width:4px}
 .adm-list::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:var(--r-xs)}
-.adm-empty{padding:40px 16px;text-align:center;color:var(--mute);font-size:var(--fs-sm)}
+.adm-empty{padding:var(--sp-8) var(--sp-4);text-align:center;color:var(--mute);font-size:var(--fs-sm)}
 
-.adm-row{display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:var(--r);cursor:pointer;border:1px solid transparent;margin-bottom:2px}
+.adm-row{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-2) var(--sp-3);border-radius:var(--r);cursor:pointer;border:1px solid transparent;margin-bottom:2px}
 .adm-row:hover{background:var(--paper-2)}
-.adm-row.is-on{background:var(--ink);border-color:var(--ink)}
-.adm-row.is-on .adm-row__name{color:var(--paper)}
-.adm-row.is-on .adm-row__email{color:rgba(255,255,255,0.55)}
-
-.adm-row__av{width:34px;height:34px;border-radius:var(--r);background:var(--ink);color:var(--paper);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:var(--fs-sm);flex-shrink:0;letter-spacing:-0.005em}
-.adm-row__av.is-off{background:var(--mute-3);color:var(--paper)}
-.adm-row.is-on .adm-row__av{background:var(--paper);color:var(--ink)}
-
+.adm-row.is-on{background:var(--sky-canvas);border-color:var(--sky-blue)}
+.adm-row__av{width:34px;height:34px;border-radius:var(--r);background:var(--sky-navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:var(--fs-sm);flex-shrink:0}
+.adm-row__av.is-off{background:var(--mute-3)}
 .adm-row__info{flex:1;min-width:0}
-.adm-row__name{font-size:var(--fs-sm);font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-0.005em}
+.adm-row__name{font-size:var(--fs-sm);font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .adm-row__email{font-size:var(--fs-caption);color:var(--mute);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adm-row__tag{font-size:var(--fs-caption);font-weight:700;padding:2px var(--sp-2);border-radius:var(--r-pill);flex-shrink:0}
+.t-admin {background:var(--danger-soft);color:var(--danger)}
+.t-equipo{background:var(--forest-soft);color:var(--forest-2)}
+.t-active{background:var(--success-soft);color:var(--success)}
+.t-free  {background:var(--paper-2);color:var(--mute)}
+.t-off   {background:var(--paper-2);color:var(--mute)}
 
-.adm-row__tag{font-size: var(--fs-label-3);font-weight:700;letter-spacing: 0.02em;padding:3px 8px;border-radius:var(--r-pill);flex-shrink:0}
-.t-admin {background:rgba(231,8,102,0.12);color:var(--danger);border:1px solid rgba(231,8,102,0.2)}
-.t-equipo{background:rgba(0,98,227,0.10);color:var(--forest);border:1px solid rgba(0,98,227,0.2)}
-.t-active{background:rgba(0,98,227,0.10);color:var(--forest);border:1px solid rgba(0,98,227,0.2)}
-.t-free  {background:var(--paper-2);color:var(--mute);border:1px solid var(--line-2)}
-.t-off   {background:var(--paper-2);color: var(--mute);border:1px solid var(--line-2)}
-
-/* ── Detail panel ────────────────────────── */
 .adm-panel{display:flex;flex-direction:column;background:var(--paper);min-height:0;overflow-y:auto}
 .adm-panel::-webkit-scrollbar{width:4px}
 .adm-panel::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:var(--r-xs)}
-
-.adm-empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color: var(--mute);gap:14px;padding:24px;text-align:center}
+.adm-empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--mute);gap:var(--sp-3);padding:var(--sp-6);text-align:center}
 .adm-empty-state svg{color:var(--mute-3)}
 .adm-empty-state p{font-size:var(--fs-sm);color:var(--mute)}
 
 .adm-detail{display:none;flex-direction:column;min-height:100%}
 .adm-detail.is-on{display:flex}
-
-.adm-det__head{padding:24px 28px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-shrink:0;background:var(--bone)}
-.adm-det__av{width:50px;height:50px;border-radius:var(--r);background:var(--ink);color:var(--paper);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:var(--fs-h5);letter-spacing:-0.02em;flex-shrink:0}
+.adm-det__head{padding:var(--sp-6) var(--sp-7) var(--sp-5);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:var(--sp-4);flex-shrink:0;background:var(--bone)}
+.adm-det__av{width:50px;height:50px;border-radius:var(--r);background:var(--sky-navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:var(--fs-h5);flex-shrink:0}
 .adm-det__av.is-off{background:var(--mute-3)}
 .adm-det__info{flex:1;min-width:0}
 .adm-det__name{font-family:var(--font-display);font-size:var(--fs-h3);font-weight:700;letter-spacing:-0.025em;color:var(--ink)}
 .adm-det__email{font-size:var(--fs-sm);color:var(--mute);margin-top:2px}
-.adm-det__meta{display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap}
-.adm-pill{font-size:var(--fs-caption);font-weight:600;padding:3px 9px;border-radius:var(--r-pill);letter-spacing:-0.005em}
-.adm-pill.is-active{background:rgba(0,98,227,0.10);color:var(--forest);border:1px solid rgba(0,98,227,0.2)}
-.adm-pill.is-inactive{background:rgba(231,8,102,0.10);color:var(--danger);border:1px solid rgba(231,8,102,0.2)}
+.adm-det__meta{display:flex;align-items:center;gap:var(--sp-2);margin-top:var(--sp-1);flex-wrap:wrap}
+.adm-pill{font-size:var(--fs-caption);font-weight:700;padding:2px var(--sp-2);border-radius:var(--r-pill)}
+.adm-pill.is-active{background:var(--success-soft);color:var(--success)}
+.adm-pill.is-inactive{background:var(--danger-soft);color:var(--danger)}
 
-.adm-det__body{padding:24px 28px;display:grid;grid-template-columns:1fr 1fr;gap:16px;align-content:start}
-@media(max-width:1100px){.adm-det__body{grid-template-columns:1fr}}
-
-.adm-sec{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px}
+.adm-det__body{padding:var(--sp-6) var(--sp-7);display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4);align-content:start}
+@media(max-width:1200px){.adm-det__body{grid-template-columns:1fr}}
+.adm-sec{background:var(--bone);border:1px solid var(--line-2);border-radius:var(--r-lg);padding:var(--sp-5)}
 .adm-sec.full{grid-column:1/-1}
-.adm-sec__title{font-family:var(--font-mono);font-size: var(--fs-label-3);font-weight:500;letter-spacing: 0.02em;color: var(--mute);margin-bottom:14px}
-
-/* ── Uso y costos IA ─────────────────────── */
-.adm-sec__head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.adm-sec__title{font-size:var(--fs-label-3);font-weight:700;letter-spacing:0.03em;color:var(--mute);margin-bottom:var(--sp-4)}
+.adm-sec__head{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);flex-wrap:wrap;margin-bottom:var(--sp-4)}
 .adm-sec__head .adm-sec__title{margin-bottom:0}
+
 .adm-range{display:inline-flex;background:var(--paper-2);border:1px solid var(--line);border-radius:var(--r-pill);padding:3px}
-.adm-range__btn{padding:5px 12px;border-radius:var(--r-pill);font-size:var(--fs-caption);font-weight:600;color:var(--mute);letter-spacing:-0.005em;background:transparent}
+.adm-range__btn{padding:var(--sp-1) var(--sp-3);border-radius:var(--r-pill);font-size:var(--fs-caption);font-weight:600;color:var(--mute)}
 .adm-range__btn:hover{color:var(--ink)}
-.adm-range__btn.is-on{background:var(--sky-navy);color:var(--paper)}
-.adm-uso-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
-.adm-ust{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:12px}
-.adm-ust__v{font-family:var(--font-display);font-size:var(--fs-h3);font-weight:700;letter-spacing:-0.02em;color:var(--ink);line-height:1.05}
-.adm-ust__l{font-size:var(--fs-caption);color:var(--mute);margin-top:4px;letter-spacing:0.04em;}
-.adm-uso-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media(max-width:880px){.adm-uso-cols{grid-template-columns:1fr}}
-.adm-uso-sub{font-family:var(--font-mono);font-size: var(--fs-label-3);font-weight:500;letter-spacing: 0.02em;color: var(--mute);margin:0 0 8px 2px}
-.adm-uso-list{display:flex;flex-direction:column;gap:4px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:8px;min-height:80px}
-.adm-uso-empty{padding:16px 10px;text-align:center;color:var(--mute);font-size:var(--fs-xs)}
-.adm-bar{position:relative;padding:8px 10px;border-radius:var(--r-sm);overflow:hidden}
-.adm-bar::before{content:'';position:absolute;inset:0 auto 0 0;width:var(--w,0%);background:var(--paper-2);border-radius:var(--r-sm);z-index:0;transition:width .4s ease}
-.adm-bar > *{position:relative;z-index:1}
-.adm-bar__top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-.adm-bar__name{font-size:var(--fs-xs);font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-0.005em}
-.adm-bar__val{color:var(--mute);font-family:var(--font-mono);font-size:var(--fs-caption);flex-shrink:0}
-.adm-bar__meta{font-size: var(--fs-label-3);color: var(--mute);margin-top:2px;letter-spacing:0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.adm-uso-foot{font-size:var(--fs-caption);color: var(--mute);margin-top:10px;font-family:var(--font-mono);letter-spacing:0.04em;text-align:center}
+.adm-range__btn.is-on{background:var(--sky-navy);color:#fff}
+.adm-uso-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2);margin-bottom:var(--sp-4)}
+.adm-ust{background:var(--paper-2);border:1px solid var(--line);border-radius:var(--r);padding:var(--sp-3)}
+.adm-ust__v{font-family:var(--font-display);font-size:var(--fs-h3);font-weight:700;letter-spacing:-0.02em;color:var(--ink);line-height:var(--lh-tight)}
+.adm-ust__l{font-size:var(--fs-caption);color:var(--mute);margin-top:var(--sp-1)}
+.adm-uso-cols{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)}
+@media(max-width:900px){.adm-uso-cols{grid-template-columns:1fr}}
+.adm-uso-sub{font-size:var(--fs-label-3);font-weight:700;letter-spacing:0.03em;color:var(--mute);margin:0 0 var(--sp-2) 2px}
+.adm-uso-list{display:flex;flex-direction:column;gap:var(--sp-1);background:var(--paper-2);border:1px solid var(--line);border-radius:var(--r);padding:var(--sp-2);min-height:80px}
+.adm-uso-empty{padding:var(--sp-4);text-align:center;color:var(--mute);font-size:var(--fs-xs)}
+.adm-uso-foot{font-size:var(--fs-caption);color:var(--mute);margin-top:var(--sp-3);text-align:center}
 
-/* Rol selector — 3 botones */
-.adm-rolgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.adm-roloption{padding:14px 12px;border-radius:var(--r);border:1.5px solid var(--line-2);background:var(--paper);cursor:pointer;text-align:left;transition:all .15s ease}
-.adm-roloption:hover{border-color:var(--ink-3)}
-.adm-roloption__name{font-size:var(--fs-sm);font-weight:600;color:var(--ink);margin-bottom:3px;letter-spacing:-0.005em}
-.adm-roloption__desc{font-size:var(--fs-caption);color:var(--mute);line-height:1.4}
-.adm-roloption.is-sel-admin{border-color:var(--danger);background:rgba(231,8,102,0.04);box-shadow:inset 0 0 0 1px var(--danger)}
-.adm-roloption.is-sel-equipo{border-color:var(--forest);background:rgba(0,98,227,0.04);box-shadow:inset 0 0 0 1px var(--forest)}
-.adm-roloption.is-sel-agente{border-color:var(--ink);background:var(--paper-2);box-shadow:inset 0 0 0 1px var(--ink)}
+.adm-rolgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2)}
+@media(max-width:700px){.adm-rolgrid{grid-template-columns:1fr}}
+.adm-roloption{padding:var(--sp-4) var(--sp-3);border-radius:var(--r);border:1px solid var(--line-2);background:var(--bone);cursor:pointer;text-align:left}
+.adm-roloption:hover{border-color:var(--line-3)}
+.adm-roloption__name{font-size:var(--fs-sm);font-weight:700;color:var(--ink);margin-bottom:3px}
+.adm-roloption__desc{font-size:var(--fs-caption);color:var(--mute);line-height:var(--lh-snug)}
+.adm-roloption.is-sel-admin{border-color:var(--danger);background:var(--danger-soft)}
+.adm-roloption.is-sel-equipo{border-color:var(--forest);background:var(--forest-soft)}
+.adm-roloption.is-sel-agente{border-color:var(--sky-navy);background:var(--paper-2)}
 
-/* Activo toggle */
-.adm-toggle{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 14px;border:1px solid var(--line-2);background:var(--paper);border-radius:var(--r)}
-.adm-toggle__lbl{font-size:var(--fs-sm);font-weight:500;color:var(--ink)}
+.adm-toggle{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-4);padding:var(--sp-3) var(--sp-4);border:1px solid var(--line-2);background:var(--bone);border-radius:var(--r)}
+.adm-toggle__lbl{font-size:var(--fs-sm);font-weight:600;color:var(--ink)}
 .adm-toggle__sub{font-size:var(--fs-caption);color:var(--mute);margin-top:2px}
-.adm-switch{position:relative;width:42px;height:24px;border-radius:var(--r-pill);background:var(--mute-3);cursor:pointer;transition:background .2s ease;flex-shrink:0}
-.adm-switch::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--paper);transition:transform .2s ease;box-shadow:var(--shadow-sm)}
-.adm-switch.is-on{background:var(--forest)}
+.adm-switch{position:relative;width:42px;height:24px;border-radius:var(--r-pill);background:var(--mute-3);cursor:pointer;flex-shrink:0;transition:background var(--dur) var(--ease)}
+.adm-switch::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--bone);transition:transform var(--dur) var(--ease);box-shadow:var(--shadow-xs)}
+.adm-switch.is-on{background:var(--success)}
 .adm-switch.is-on::after{transform:translateX(18px)}
 
-/* Info rows */
 .adm-info{display:flex;flex-direction:column}
-.adm-info__row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:var(--fs-sm);gap:14px}
+.adm-info__row{display:flex;justify-content:space-between;align-items:center;padding:var(--sp-2) 0;border-bottom:1px solid var(--line);font-size:var(--fs-sm);gap:var(--sp-4)}
 .adm-info__row:last-child{border-bottom:none;padding-bottom:0}
 .adm-info__lbl{color:var(--mute);font-size:var(--fs-xs)}
-.adm-info__val{font-weight:500;color:var(--ink);text-align:right;word-break:break-word}
-.adm-mono{font-family:var(--font-mono);font-size:var(--fs-caption)}
+.adm-info__val{font-weight:600;color:var(--ink);text-align:right;word-break:break-word}
+.adm-mono{font-size:var(--fs-caption);font-variant-numeric:tabular-nums}
 
-/* Action bar bottom */
-.adm-actions{padding:16px 28px 24px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px;background:var(--bone);flex-shrink:0;position:sticky;bottom:0}
-.adm-btn{padding:10px 18px;border-radius:var(--r-pill);font-size:var(--fs-sm);font-weight:600;letter-spacing:-0.005em;transition:all .15s ease}
-.adm-btn--ghost{background:transparent;color:var(--ink);border:1px solid var(--line-2)}
-.adm-btn--ghost:hover{background:var(--paper-2)}
-.adm-btn--save{background:var(--forest);color:var(--paper)}
-.adm-btn--save:hover{background:var(--forest-2)}
-.adm-btn--save:disabled{opacity:.4;cursor:not-allowed}
-/* Broquer para Empresas */
-.adm-emp-status{font-size:var(--fs-sm);font-weight:600;color:var(--mute);margin-bottom:6px}
-.adm-emp-status.is-emp{color:var(--forest)}
-.adm-emp-hint{font-size:var(--fs-caption);color:var(--mute);line-height:1.4;margin-bottom:10px}
-.adm-emp-grid{display:grid;grid-template-columns:1fr 110px;gap:8px;margin-bottom:10px}
-.adm-emp-grid input{width:100%;padding:9px 12px;background:var(--paper);border:1px solid var(--line-2);border-radius:var(--r);font-size:var(--fs-sm);color:var(--ink);outline:none}
-.adm-emp-grid input:focus{border-color:var(--ink)}
+.adm-actions{padding:var(--sp-4) var(--sp-7) var(--sp-6);border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:var(--sp-2);background:var(--bone);flex-shrink:0;position:sticky;bottom:0}
+
+.adm-emp-status{font-size:var(--fs-sm);font-weight:600;color:var(--mute);margin-bottom:var(--sp-1)}
+.adm-emp-status.is-emp{color:var(--success)}
+.adm-emp-hint{font-size:var(--fs-caption);color:var(--mute);line-height:var(--lh-snug);margin-bottom:var(--sp-3)}
+.adm-emp-grid{display:grid;grid-template-columns:1fr 120px;gap:var(--sp-2);margin-bottom:var(--sp-3)}
+@media(max-width:700px){.adm-emp-grid{grid-template-columns:1fr}}
+.adm-emp-grid input{width:100%;height:var(--h-sm);padding:0 var(--sp-3);background:var(--shell);border:1px solid var(--line-2);border-radius:var(--r);font-size:var(--fs-sm);color:var(--ink);outline:none}
+.adm-emp-grid input:focus{border-color:var(--sky-blue);background:var(--bone)}
 .adm-emp-grid input::placeholder{color:var(--mute-2)}
-.adm-btn--emp{background:var(--forest);color:var(--paper);width:100%}
-.adm-btn--emp:hover{background:var(--forest-2)}
-.adm-btn--emp:disabled{opacity:.4;cursor:not-allowed}
 
-/* Toast */
-.adm-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--paper);padding:11px 22px;border-radius:var(--r-pill);font-size:var(--fs-sm);font-weight:500;z-index:9999;opacity:0;pointer-events:none;transition:all .25s ease;letter-spacing:-0.005em;max-width:90vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:1000px){
+  .adm-side.is-hidden{display:none}
+  .adm-panel{position:fixed;inset:var(--topbar-h) 0 0;background:var(--paper);z-index:var(--z-nav);display:none}
+  .adm-panel.is-open{display:flex}
+  .adm-det__body{padding:var(--sp-4);grid-template-columns:1fr}
+  .adm-actions{padding:var(--sp-4)}
+}
+
+/* ══ Correo ═════════════════════════════════════════════════ */
+.co-root{display:grid;grid-template-columns:380px 1fr;height:100%;overflow:hidden}
+@media(max-width:1000px){.co-root{grid-template-columns:1fr}.co-read{display:none}}
+.co-side{display:flex;flex-direction:column;border-right:1px solid var(--line-2);background:var(--bone);min-height:0}
+.co-side__top{padding:var(--sp-4);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:var(--sp-3);flex-shrink:0}
+.co-boxes{display:inline-flex;background:var(--paper-2);border:1px solid var(--line);border-radius:var(--r-pill);padding:3px;align-self:flex-start}
+.co-boxes__btn{padding:var(--sp-1) var(--sp-4);border-radius:var(--r-pill);font-size:var(--fs-caption);font-weight:700;color:var(--mute)}
+.co-boxes__btn.is-on{background:var(--sky-navy);color:#fff}
+.co-list{flex:1;overflow-y:auto;min-height:0}
+.co-item{padding:var(--sp-4);border-bottom:1px solid var(--line);cursor:pointer}
+.co-item:hover{background:var(--paper-2)}
+.co-item.is-on{background:var(--sky-canvas)}
+.co-item.is-new .co-item__de{color:var(--ink)}
+.co-item.is-new .co-item__asunto{font-weight:700;color:var(--ink)}
+.co-item__top{display:flex;justify-content:space-between;gap:var(--sp-2);align-items:baseline}
+.co-item__de{font-size:var(--fs-sm);font-weight:600;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.co-item__fecha{font-size:var(--fs-caption);color:var(--mute);flex-shrink:0}
+.co-item__asunto{font-size:var(--fs-sm);color:var(--ink-2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.co-item__prev{font-size:var(--fs-xs);color:var(--mute);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.co-read{display:flex;flex-direction:column;min-height:0;overflow-y:auto;background:var(--paper)}
+.co-read__head{padding:var(--sp-6) var(--sp-7);border-bottom:1px solid var(--line);background:var(--bone);flex-shrink:0}
+.co-read__asunto{font-family:var(--font-display);font-size:var(--fs-h3);font-weight:700;letter-spacing:-0.02em}
+.co-read__meta{font-size:var(--fs-xs);color:var(--mute);margin-top:var(--sp-2)}
+.co-read__body{padding:var(--sp-6) var(--sp-7);font-size:var(--fs-sm);line-height:var(--lh);color:var(--ink-2);white-space:pre-wrap;word-break:break-word}
+.co-read__acts{padding:0 var(--sp-7) var(--sp-8);display:flex;gap:var(--sp-2)}
+.is-hidden{display:none}
+
+/* ══ Marketing ══════════════════════════════════════════════ */
+.ac-segs{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:var(--sp-3)}
+.ac-seg{background:var(--bone);border:1px solid var(--line-2);border-radius:var(--r-lg);padding:var(--sp-5);text-align:left;cursor:pointer;transition:border-color var(--dur) var(--ease),box-shadow var(--dur) var(--ease)}
+.ac-seg:hover{border-color:var(--sky-blue);box-shadow:var(--shadow-sm)}
+.ac-seg__n{font-family:var(--font-display);font-size:var(--fs-display);font-weight:800;letter-spacing:-0.03em;line-height:var(--lh-tight);color:var(--ink)}
+.ac-seg__t{font-size:var(--fs-sm);font-weight:700;color:var(--ink);margin-top:var(--sp-2)}
+.ac-seg__d{font-size:var(--fs-xs);color:var(--mute);margin-top:var(--sp-1);line-height:var(--lh-snug)}
+
+/* ══ Modal ══════════════════════════════════════════════════ */
+.ac-ov{
+  position:fixed;inset:0;z-index:var(--z-overlay);
+  background:rgba(0,20,59,0.48);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;padding:var(--sp-4);
+  opacity:0;visibility:hidden;transition:opacity var(--dur) var(--ease),visibility var(--dur) var(--ease);
+}
+.ac-ov.is-on{opacity:1;visibility:visible}
+.ac-modal{
+  width:min(620px,100%);max-height:calc(100dvh - var(--sp-10));
+  background:var(--bone);border:1px solid var(--line-2);border-radius:var(--r-modal);
+  box-shadow:var(--shadow-xl);display:flex;flex-direction:column;overflow:hidden;
+}
+.ac-modal__head{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-4);padding:var(--sp-5) var(--sp-6);border-bottom:1px solid var(--line);flex-shrink:0}
+.ac-modal__title{font-family:var(--font-display);font-size:var(--fs-h3);font-weight:700;letter-spacing:-0.02em}
+.ac-modal__body{padding:var(--sp-5) var(--sp-6);overflow-y:auto}
+.ac-modal__foot{display:flex;justify-content:flex-end;gap:var(--sp-2);padding:var(--sp-4) var(--sp-6);border-top:1px solid var(--line);flex-shrink:0}
+.ac-x{width:32px;height:32px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;color:var(--mute)}
+.ac-x:hover{background:var(--paper-2);color:var(--ink)}
+
+/* ══ Toast y spinner ════════════════════════════════════════ */
+.adm-toast{
+  position:fixed;bottom:var(--sp-6);left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--sky-navy);color:#fff;padding:var(--sp-3) var(--sp-6);border-radius:var(--r-pill);
+  font-size:var(--fs-sm);font-weight:600;z-index:var(--z-toast);opacity:0;pointer-events:none;
+  transition:opacity var(--dur-slow) var(--ease),transform var(--dur-slow) var(--ease);
+  max-width:90vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
 .adm-toast.is-on{opacity:1;transform:translateX(-50%) translateY(0)}
 .adm-toast.is-err{background:var(--danger)}
-
-/* Loader */
-.adm-spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:var(--paper);border-radius:50%;animation:adm-spin .8s linear infinite}
+.adm-spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--line-3);border-top-color:var(--bone);border-radius:50%;animation:adm-spin .8s linear infinite}
 @keyframes adm-spin{to{transform:rotate(360deg)}}
-
-/* Mobile: detail as overlay */
-@media(max-width:880px){
-  .adm-side{height:100vh;display:flex}
-  .adm-side.is-hidden{display:none}
-  .adm-panel{position:fixed;inset:0;background:var(--paper);z-index:10;display:none}
-  .adm-panel.is-open{display:flex}
-  .adm-det__head{padding:18px 18px 16px;position:sticky;top:0;z-index:2}
-  .adm-det__head::before{content:'←';width:32px;height:32px;border-radius:var(--r);background:var(--paper-2);border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:var(--fs-body);color:var(--ink);flex-shrink:0;margin-right:6px}
-  .adm-det__body{padding:18px;grid-template-columns:1fr}
-  .adm-actions{padding:14px 18px calc(env(safe-area-inset-bottom,0px) + 14px)}
-}
 </style>
 </head>
 <body data-app="admin">
 
-<div class="adm-root" id="adm-root">
+<div class="ac-root">
 
-  <!-- ─── Sidebar: lista de usuarios ─── -->
-  <aside class="adm-side" id="adm-side">
-    <div class="adm-side__top">
-      <div class="adm-side__head">
-        <h1 class="adm-side__title">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 7l9 6 9-6"/></svg>
-          Admin
-        </h1>
-        <a class="adm-side__back" href="index.html">Volver</a>
-      </div>
-      <div class="adm-stats">
-        <div class="adm-stat"><div class="adm-stat__v" id="s-total">—</div><div class="adm-stat__l">Total</div></div>
-        <div class="adm-stat"><div class="adm-stat__v" id="s-pagados">—</div><div class="adm-stat__l">Activos</div></div>
-        <div class="adm-stat"><div class="adm-stat__v" id="s-inactivos">—</div><div class="adm-stat__l">Bloq.</div></div>
-      </div>
-      <div class="adm-search">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-        <input type="text" id="adm-search" placeholder="Buscar por nombre o correo…" oninput="onSearch()"/>
-      </div>
+  <!-- ═══ Barra superior ═══ -->
+  <header class="ac-top">
+    <div class="ac-top__brand">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+      Consola Broquer
     </div>
-
-    <div class="adm-filters" id="adm-filters">
-      <button class="adm-chip is-on" data-f="todos"   onclick="setFilter('todos')">Todos</button>
-      <button class="adm-chip"       data-f="admin"   onclick="setFilter('admin')">Admin</button>
-      <button class="adm-chip"       data-f="equipo"  onclick="setFilter('equipo')">Equipo</button>
-      <button class="adm-chip"       data-f="pagado"  onclick="setFilter('pagado')">Suscritos</button>
-      <button class="adm-chip"       data-f="agente"  onclick="setFilter('agente')">Sin suscripción</button>
-      <button class="adm-chip"       data-f="inactivo" onclick="setFilter('inactivo')">Bloqueados</button>
+    <div class="ac-top__spacer"></div>
+    <div class="ac-range" id="ac-range">
+      <button class="ac-range__btn" data-d="7" onclick="setRango(7)">7 días</button>
+      <button class="ac-range__btn is-on" data-d="30" onclick="setRango(30)">30 días</button>
+      <button class="ac-range__btn" data-d="90" onclick="setRango(90)">90 días</button>
     </div>
+    <a class="ac-top__back" href="index.html">Volver</a>
+  </header>
 
-    <div class="adm-list" id="adm-list">
-      <div class="adm-empty">Cargando…</div>
-    </div>
-  </aside>
+  <!-- ═══ Pestañas ═══ -->
+  <nav class="ac-tabs">
+    <button class="ac-tab is-on" data-v="panorama"  onclick="setTab('panorama')">Panorama</button>
+    <button class="ac-tab"       data-v="usuarios"  onclick="setTab('usuarios')">Usuarios</button>
+    <button class="ac-tab"       data-v="ingresos"  onclick="setTab('ingresos')">Ingresos y facturas</button>
+    <button class="ac-tab"       data-v="correo"    onclick="setTab('correo')">Correo <span class="ac-tab__n is-hidden" id="tab-correo-n">0</span></button>
+    <button class="ac-tab"       data-v="marketing" onclick="setTab('marketing')">Marketing</button>
+  </nav>
 
-  <!-- ─── Detail panel ─── -->
-  <section class="adm-panel" id="adm-panel">
+  <!-- ═══════════ PANORAMA ═══════════ -->
+  <section class="ac-view is-on" id="v-panorama">
+    <div class="ac-wrap">
+      <h1 class="ac-h">Panorama del negocio</h1>
+      <p class="ac-sub" id="pan-sub">Cargando…</p>
 
-    <div class="adm-empty-state" id="adm-empty-state">
-      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-        <circle cx="9" cy="7" r="4"/>
-        <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-      </svg>
-      <p>Selecciona un usuario para administrar su cuenta</p>
-    </div>
+      <div class="ac-kpis" id="pan-kpis"></div>
 
-    <div class="adm-detail" id="adm-detail" role="region" aria-label="Detalle de usuario">
-      <header class="adm-det__head">
-        <div class="adm-det__av" id="d-av" onclick="closeMobileDetail()">—</div>
-        <div class="adm-det__info">
-          <div class="adm-det__name" id="d-name">—</div>
-          <div class="adm-det__email" id="d-email">—</div>
-          <div class="adm-det__meta">
-            <span class="adm-pill is-active" id="d-pill-activo">—</span>
-            <span class="adm-row__tag" id="d-pill-rol">—</span>
-            <span class="adm-row__tag" id="d-pill-sub">—</span>
-          </div>
+      <div class="ac-sec">
+        <div class="ac-sec__h"><h2>Altas de usuarios</h2><span id="pan-altas-sub">—</span></div>
+        <div class="ac-card">
+          <div class="ac-chart" id="pan-chart"></div>
+          <div class="ac-chart__axis" id="pan-axis"></div>
         </div>
-      </header>
-
-      <div class="adm-det__body">
-
-        <div class="adm-sec full">
-          <div class="adm-sec__title">Rol</div>
-          <div class="adm-rolgrid">
-            <button type="button" class="adm-roloption" data-rol="admin" onclick="pickRol('admin')">
-              <div class="adm-roloption__name">Admin</div>
-              <div class="adm-roloption__desc">Acceso total al sistema y al panel de administración.</div>
-            </button>
-            <button type="button" class="adm-roloption" data-rol="equipo" onclick="pickRol('equipo')">
-              <div class="adm-roloption__name">Equipo</div>
-              <div class="adm-roloption__desc">Acceso completo gratis. Tus empleados internos.</div>
-            </button>
-            <button type="button" class="adm-roloption" data-rol="agente" onclick="pickRol('agente')">
-              <div class="adm-roloption__name">Agente</div>
-              <div class="adm-roloption__desc">Usuario regular. Necesita suscripción para entrar.</div>
-            </button>
-          </div>
-        </div>
-
-        <div class="adm-sec full" id="emp-sec">
-          <div class="adm-sec__title">Broquer para Empresas</div>
-          <div class="adm-emp-status" id="d-emp-status">—</div>
-          <div class="adm-emp-hint">Convierte esta cuenta en empresa para que pueda tener equipo, invitar agentes y compartir un mismo inventario. El titular queda como dueño y podrá invitar a su gente desde Equipo.</div>
-          <div class="adm-emp-grid">
-            <input type="text" id="d-emp-nombre" placeholder="Nombre de la inmobiliaria"/>
-            <input type="number" id="d-emp-asientos" min="1" placeholder="Asientos"/>
-          </div>
-          <button type="button" class="adm-btn adm-btn--emp" id="d-emp-btn" onclick="activarEmpresa()">Activar como empresa</button>
-        </div>
-
-        <div class="adm-sec">
-          <div class="adm-sec__title">Estado de la cuenta</div>
-          <div class="adm-toggle">
-            <div>
-              <div class="adm-toggle__lbl">Cuenta activa</div>
-              <div class="adm-toggle__sub" id="d-activo-sub">Puede iniciar sesión y usar el sistema.</div>
-            </div>
-            <div class="adm-switch" id="d-switch" onclick="toggleActivo()"></div>
-          </div>
-        </div>
-
-        <div class="adm-sec">
-          <div class="adm-sec__title">Suscripción de Stripe</div>
-          <div class="adm-info">
-            <div class="adm-info__row">
-              <span class="adm-info__lbl">Estado</span>
-              <span class="adm-info__val" id="d-sub-status">—</span>
-            </div>
-            <div class="adm-info__row">
-              <span class="adm-info__lbl">Plan</span>
-              <span class="adm-info__val" id="d-sub-plan">—</span>
-            </div>
-            <div class="adm-info__row">
-              <span class="adm-info__lbl">Actualizado</span>
-              <span class="adm-info__val adm-mono" id="d-sub-date">—</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="adm-sec full" id="uso-sec">
-          <div class="adm-sec__head">
-            <div class="adm-sec__title">Uso y costos IA</div>
-            <div class="adm-range" id="uso-range" role="tablist">
-              <button class="adm-range__btn" data-d="7"  onclick="setUsoRange(7)">7 días</button>
-              <button class="adm-range__btn is-on" data-d="30" onclick="setUsoRange(30)">30 días</button>
-              <button class="adm-range__btn" data-d="90" onclick="setUsoRange(90)">90 días</button>
-            </div>
-          </div>
-
-          <div class="adm-uso-stats">
-            <div class="adm-ust">
-              <div class="adm-ust__v" id="uso-costo">—</div>
-              <div class="adm-ust__l">Costo IA (USD)</div>
-            </div>
-            <div class="adm-ust">
-              <div class="adm-ust__v" id="uso-tiempo">—</div>
-              <div class="adm-ust__l">Tiempo activo</div>
-            </div>
-            <div class="adm-ust">
-              <div class="adm-ust__v" id="uso-llamadas">—</div>
-              <div class="adm-ust__l">Llamadas IA</div>
-            </div>
-          </div>
-
-          <div class="adm-uso-cols">
-            <div>
-              <div class="adm-uso-sub">Tiempo por módulo</div>
-              <div class="adm-uso-list" id="uso-modulos"><div class="adm-uso-empty">Selecciona un usuario.</div></div>
-            </div>
-            <div>
-              <div class="adm-uso-sub">Herramientas más usadas</div>
-              <div class="adm-uso-list" id="uso-herramientas"><div class="adm-uso-empty">Selecciona un usuario.</div></div>
-            </div>
-          </div>
-          <div class="adm-uso-foot">Costos calculados con tarifas públicas por proveedor · USD aproximado</div>
-        </div>
-
-        <div class="adm-sec full">
-          <div class="adm-sec__title">Información del usuario</div>
-          <div class="adm-info">
-            <div class="adm-info__row">
-              <span class="adm-info__lbl">Teléfono</span>
-              <span class="adm-info__val adm-mono" id="d-tel">—</span>
-            </div>
-            <div class="adm-info__row">
-              <span class="adm-info__lbl">Registro</span>
-              <span class="adm-info__val adm-mono" id="d-created">—</span>
-            </div>
-            <div class="adm-info__row">
-              <span class="adm-info__lbl">Stripe Customer</span>
-              <span class="adm-info__val adm-mono" id="d-stripe" style="font-size:var(--fs-caption)">—</span>
-            </div>
-            <div class="adm-info__row">
-              <span class="adm-info__lbl">ID</span>
-              <span class="adm-info__val adm-mono" id="d-id" style="font-size:var(--fs-caption);word-break:break-all">—</span>
-            </div>
-          </div>
-        </div>
-
       </div>
 
-      <div class="adm-actions">
-        <button class="adm-btn adm-btn--ghost" onclick="resetDetail()">Cancelar</button>
-        <button class="adm-btn adm-btn--save" id="d-save" onclick="saveChanges()">Guardar cambios</button>
+      <div class="ac-sec">
+        <div class="ac-sec__h"><h2>Embudo de activación</h2><span>De registrarse a pagar</span></div>
+        <div class="ac-card"><div class="ac-bars" id="pan-embudo"></div></div>
+      </div>
+
+      <div class="ac-sec">
+        <div class="ac-sec__h"><h2>Dónde pasan el tiempo</h2><span>Tiempo por módulo en el rango</span></div>
+        <div class="ac-card"><div class="ac-bars" id="pan-modulos"></div></div>
+      </div>
+
+      <div class="ac-sec">
+        <div class="ac-sec__h"><h2>Cohortes por mes de registro</h2><span>Retención y conversión</span></div>
+        <div class="ac-tablewrap ac-scrollx">
+          <table class="ac-table">
+            <thead><tr><th>Mes</th><th class="num">Registrados</th><th class="num">Siguen activos</th><th class="num">Retención</th><th class="num">Suscritos</th><th class="num">Conversión</th></tr></thead>
+            <tbody id="pan-cohortes"><tr><td colspan="6" class="ac-empty">Cargando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="ac-sec">
+        <div class="ac-sec__h"><h2>Quién te cuesta más en IA</h2><span>Para vigilar el margen por usuario</span></div>
+        <div class="ac-tablewrap ac-scrollx">
+          <table class="ac-table">
+            <thead><tr><th>Usuario</th><th class="num">Costo IA (USD)</th><th></th></tr></thead>
+            <tbody id="pan-costo"><tr><td colspan="3" class="ac-empty">Cargando…</td></tr></tbody>
+          </table>
+        </div>
       </div>
     </div>
-
   </section>
 
+  <!-- ═══════════ USUARIOS ═══════════ -->
+  <section class="ac-view" id="v-usuarios">
+    <div class="adm-root">
+
+      <aside class="adm-side" id="adm-side">
+        <div class="adm-side__top">
+          <div class="adm-stats">
+            <div class="adm-stat"><div class="adm-stat__v" id="s-total">—</div><div class="adm-stat__l">Total</div></div>
+            <div class="adm-stat"><div class="adm-stat__v" id="s-pagados">—</div><div class="adm-stat__l">Con acceso</div></div>
+            <div class="adm-stat"><div class="adm-stat__v" id="s-inactivos">—</div><div class="adm-stat__l">Bloqueados</div></div>
+          </div>
+          <div class="adm-search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input type="text" id="adm-search" placeholder="Buscar por nombre o correo…" oninput="onSearch()"/>
+          </div>
+        </div>
+
+        <div class="adm-filters" id="adm-filters">
+          <button class="adm-chip is-on" data-f="todos"    onclick="setFilter('todos')">Todos</button>
+          <button class="adm-chip"       data-f="admin"    onclick="setFilter('admin')">Admin</button>
+          <button class="adm-chip"       data-f="equipo"   onclick="setFilter('equipo')">Equipo</button>
+          <button class="adm-chip"       data-f="pagado"   onclick="setFilter('pagado')">Suscritos</button>
+          <button class="adm-chip"       data-f="agente"   onclick="setFilter('agente')">Sin suscripción</button>
+          <button class="adm-chip"       data-f="inactivo" onclick="setFilter('inactivo')">Bloqueados</button>
+          <button class="adm-chip"       onclick="exportarCsv()">Exportar CSV</button>
+        </div>
+
+        <div class="adm-list" id="adm-list"><div class="adm-empty">Cargando…</div></div>
+      </aside>
+
+      <section class="adm-panel" id="adm-panel">
+        <div class="adm-empty-state" id="adm-empty-state">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          <p>Selecciona un usuario para administrar su cuenta</p>
+        </div>
+
+        <div class="adm-detail" id="adm-detail" role="region" aria-label="Detalle de usuario">
+          <header class="adm-det__head">
+            <div class="adm-det__av" id="d-av" onclick="closeMobileDetail()">—</div>
+            <div class="adm-det__info">
+              <div class="adm-det__name" id="d-name">—</div>
+              <div class="adm-det__email" id="d-email">—</div>
+              <div class="adm-det__meta">
+                <span class="adm-pill is-active" id="d-pill-activo">—</span>
+                <span class="adm-row__tag" id="d-pill-rol">—</span>
+                <span class="adm-row__tag" id="d-pill-sub">—</span>
+              </div>
+            </div>
+            <button class="ac-btn ac-btn--ghost ac-btn--sm" onclick="escribirAUsuario()">Escribir correo</button>
+          </header>
+
+          <div class="adm-det__body">
+
+            <div class="adm-sec full">
+              <div class="adm-sec__title">Rol</div>
+              <div class="adm-rolgrid">
+                <button type="button" class="adm-roloption" data-rol="admin" onclick="pickRol('admin')">
+                  <div class="adm-roloption__name">Admin</div>
+                  <div class="adm-roloption__desc">Acceso total al sistema y a esta consola.</div>
+                </button>
+                <button type="button" class="adm-roloption" data-rol="equipo" onclick="pickRol('equipo')">
+                  <div class="adm-roloption__name">Equipo</div>
+                  <div class="adm-roloption__desc">Acceso completo gratis. Tus empleados internos.</div>
+                </button>
+                <button type="button" class="adm-roloption" data-rol="agente" onclick="pickRol('agente')">
+                  <div class="adm-roloption__name">Agente</div>
+                  <div class="adm-roloption__desc">Usuario regular. Necesita suscripción para entrar.</div>
+                </button>
+              </div>
+            </div>
+
+            <div class="adm-sec full" id="emp-sec">
+              <div class="adm-sec__title">Broquer para Empresas</div>
+              <div class="adm-emp-status" id="d-emp-status">—</div>
+              <div class="adm-emp-hint">Convierte esta cuenta en empresa para que pueda tener equipo, invitar agentes y compartir un mismo inventario. El titular queda como dueño y podrá invitar a su gente desde Equipo.</div>
+              <div class="adm-emp-grid">
+                <input type="text" id="d-emp-nombre" placeholder="Nombre de la inmobiliaria"/>
+                <input type="number" id="d-emp-asientos" min="1" placeholder="Asientos"/>
+              </div>
+              <button type="button" class="ac-btn ac-btn--blue ac-btn--block" id="d-emp-btn" onclick="activarEmpresa()">Activar como empresa</button>
+            </div>
+
+            <div class="adm-sec">
+              <div class="adm-sec__title">Estado de la cuenta</div>
+              <div class="adm-toggle">
+                <div>
+                  <div class="adm-toggle__lbl">Cuenta activa</div>
+                  <div class="adm-toggle__sub" id="d-activo-sub">Puede iniciar sesión y usar el sistema.</div>
+                </div>
+                <div class="adm-switch" id="d-switch" onclick="toggleActivo()"></div>
+              </div>
+            </div>
+
+            <div class="adm-sec">
+              <div class="adm-sec__title">Suscripción de Stripe</div>
+              <div class="adm-info">
+                <div class="adm-info__row"><span class="adm-info__lbl">Estado</span><span class="adm-info__val" id="d-sub-status">—</span></div>
+                <div class="adm-info__row"><span class="adm-info__lbl">Plan</span><span class="adm-info__val" id="d-sub-plan">—</span></div>
+                <div class="adm-info__row"><span class="adm-info__lbl">Actualizado</span><span class="adm-info__val adm-mono" id="d-sub-date">—</span></div>
+              </div>
+            </div>
+
+            <div class="adm-sec full" id="uso-sec">
+              <div class="adm-sec__head">
+                <div class="adm-sec__title">Uso y costos IA</div>
+                <div class="adm-range" id="uso-range">
+                  <button class="adm-range__btn" data-d="7" onclick="setUsoRange(7)">7 días</button>
+                  <button class="adm-range__btn is-on" data-d="30" onclick="setUsoRange(30)">30 días</button>
+                  <button class="adm-range__btn" data-d="90" onclick="setUsoRange(90)">90 días</button>
+                </div>
+              </div>
+              <div class="adm-uso-stats">
+                <div class="adm-ust"><div class="adm-ust__v" id="uso-costo">—</div><div class="adm-ust__l">Costo IA (USD)</div></div>
+                <div class="adm-ust"><div class="adm-ust__v" id="uso-tiempo">—</div><div class="adm-ust__l">Tiempo activo</div></div>
+                <div class="adm-ust"><div class="adm-ust__v" id="uso-llamadas">—</div><div class="adm-ust__l">Llamadas IA</div></div>
+              </div>
+              <div class="adm-uso-cols">
+                <div>
+                  <div class="adm-uso-sub">Tiempo por módulo</div>
+                  <div class="adm-uso-list" id="uso-modulos"><div class="adm-uso-empty">Selecciona un usuario.</div></div>
+                </div>
+                <div>
+                  <div class="adm-uso-sub">Herramientas más usadas</div>
+                  <div class="adm-uso-list" id="uso-herramientas"><div class="adm-uso-empty">Selecciona un usuario.</div></div>
+                </div>
+              </div>
+              <div class="adm-uso-foot">Costos calculados con tarifas públicas por proveedor · USD aproximado</div>
+            </div>
+
+            <div class="adm-sec full">
+              <div class="adm-sec__title">Información del usuario</div>
+              <div class="adm-info">
+                <div class="adm-info__row"><span class="adm-info__lbl">Teléfono</span><span class="adm-info__val adm-mono" id="d-tel">—</span></div>
+                <div class="adm-info__row"><span class="adm-info__lbl">Registro</span><span class="adm-info__val adm-mono" id="d-created">—</span></div>
+                <div class="adm-info__row"><span class="adm-info__lbl">Stripe Customer</span><span class="adm-info__val adm-mono" id="d-stripe">—</span></div>
+                <div class="adm-info__row"><span class="adm-info__lbl">ID</span><span class="adm-info__val adm-mono" id="d-id">—</span></div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="adm-actions">
+            <button class="ac-btn ac-btn--ghost" onclick="resetDetail()">Cancelar</button>
+            <button class="ac-btn ac-btn--blue" id="d-save" onclick="saveChanges()">Guardar cambios</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </section>
+
+  <!-- ═══════════ INGRESOS ═══════════ -->
+  <section class="ac-view" id="v-ingresos">
+    <div class="ac-wrap">
+      <h1 class="ac-h">Ingresos y facturación</h1>
+      <p class="ac-sub" id="ing-sub">Cargando…</p>
+
+      <div class="ac-kpis" id="ing-kpis"></div>
+
+      <div class="ac-sec">
+        <div class="ac-sec__h"><h2>Cobros del periodo</h2><span>Datos en vivo de Stripe</span></div>
+        <div class="ac-tablewrap ac-scrollx">
+          <table class="ac-table">
+            <thead><tr><th>Fecha</th><th>Cliente</th><th class="num">Monto</th><th>Cobro</th><th>CFDI</th><th></th></tr></thead>
+            <tbody id="ing-cobros"><tr><td colspan="6" class="ac-empty">Cargando…</td></tr></tbody>
+          </table>
+        </div>
+        <p class="ac-note">Marca el CFDI como emitido cuando ya lo timbraste. Broquer guarda el folio fiscal para que puedas encontrarlo después sin entrar a Stripe.</p>
+      </div>
+
+      <div class="ac-sec">
+        <div class="ac-sec__h"><h2>Pagos atrasados</h2><span>Cuentas que hay que perseguir</span></div>
+        <div class="ac-tablewrap ac-scrollx">
+          <table class="ac-table">
+            <thead><tr><th>Cliente</th><th>Plan</th><th>Desde</th><th></th></tr></thead>
+            <tbody id="ing-atrasados"><tr><td colspan="4" class="ac-empty">Cargando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ CORREO ═══════════ -->
+  <section class="ac-view" id="v-correo">
+    <div class="co-root">
+      <aside class="co-side">
+        <div class="co-side__top">
+          <div class="co-boxes">
+            <button class="co-boxes__btn is-on" data-b="entrada"  onclick="setBox('entrada')">Entrada</button>
+            <button class="co-boxes__btn"       data-b="enviados" onclick="setBox('enviados')">Enviados</button>
+          </div>
+          <input class="ac-input" type="text" id="co-q" placeholder="Buscar en el correo…" onchange="cargarCorreo()"/>
+          <button class="ac-btn ac-btn--blue" onclick="abrirCompositor()">Escribir correo</button>
+        </div>
+        <div class="co-list" id="co-list"><div class="ac-empty">Cargando…</div></div>
+      </aside>
+
+      <section class="co-read" id="co-read">
+        <div class="ac-empty" id="co-vacio">Selecciona un correo para leerlo.</div>
+        <div id="co-detalle" class="is-hidden">
+          <div class="co-read__head">
+            <div class="co-read__asunto" id="co-asunto">—</div>
+            <div class="co-read__meta" id="co-meta">—</div>
+          </div>
+          <div class="co-read__body" id="co-cuerpo">—</div>
+          <div class="co-read__acts">
+            <button class="ac-btn ac-btn--blue" onclick="responderCorreo()">Responder</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ═══════════ MARKETING ═══════════ -->
+  <section class="ac-view" id="v-marketing">
+    <div class="ac-wrap">
+      <h1 class="ac-h">Marketing</h1>
+      <p class="ac-sub">Segmentos vivos de tu base. Toca uno para ver a quién incluye y mandarle una campaña por correo en el momento.</p>
+      <div class="ac-segs" id="mk-segs"><div class="ac-empty">Cargando…</div></div>
+
+      <div class="ac-sec is-hidden" id="mk-detalle">
+        <div class="ac-sec__h"><h2 id="mk-titulo">—</h2><span id="mk-conteo">—</span></div>
+        <div class="ac-card">
+          <p class="ac-note" id="mk-desc"></p>
+          <div class="ac-row-acts">
+            <button class="ac-btn ac-btn--blue" onclick="abrirCampana()">Enviar campaña a este segmento</button>
+            <button class="ac-btn ac-btn--ghost" onclick="exportarSegmento()">Exportar CSV</button>
+          </div>
+          <div class="ac-tablewrap ac-scrollx">
+            <table class="ac-table">
+              <thead><tr><th>Nombre</th><th>Correo</th><th>Registro</th></tr></thead>
+              <tbody id="mk-lista"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══ Modal: escribir correo ═══ -->
+<div class="ac-ov" id="ov-correo">
+  <div class="ac-modal">
+    <div class="ac-modal__head">
+      <div class="ac-modal__title" id="mo-titulo">Escribir correo</div>
+      <button class="ac-x" onclick="cerrarModal('ov-correo')" aria-label="Cerrar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="ac-modal__body">
+      <div class="ac-field">
+        <label class="ac-lbl" for="mo-para">Para</label>
+        <input class="ac-input" type="text" id="mo-para" placeholder="correo@ejemplo.com"/>
+      </div>
+      <div class="ac-field">
+        <label class="ac-lbl" for="mo-asunto">Asunto</label>
+        <input class="ac-input" type="text" id="mo-asunto" placeholder="De qué se trata"/>
+      </div>
+      <div class="ac-field">
+        <label class="ac-lbl" for="mo-cuerpo">Mensaje</label>
+        <textarea class="ac-textarea" id="mo-cuerpo" placeholder="Escribe aquí…"></textarea>
+      </div>
+      <p class="ac-note" id="mo-nota"></p>
+    </div>
+    <div class="ac-modal__foot">
+      <button class="ac-btn ac-btn--ghost" onclick="cerrarModal('ov-correo')">Cancelar</button>
+      <button class="ac-btn ac-btn--blue" id="mo-enviar" onclick="enviarCorreo()">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Modal: CFDI ═══ -->
+<div class="ac-ov" id="ov-cfdi">
+  <div class="ac-modal">
+    <div class="ac-modal__head">
+      <div class="ac-modal__title">Registrar CFDI</div>
+      <button class="ac-x" onclick="cerrarModal('ov-cfdi')" aria-label="Cerrar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="ac-modal__body">
+      <p class="ac-note" id="cf-info"></p>
+      <div class="ac-field ac-field--top">
+        <label class="ac-lbl" for="cf-uuid">Folio fiscal del CFDI</label>
+        <input class="ac-input" type="text" id="cf-uuid" placeholder="Pega aquí el folio fiscal"/>
+      </div>
+      <div class="ac-field">
+        <label class="ac-lbl" for="cf-notas">Notas</label>
+        <input class="ac-input" type="text" id="cf-notas" placeholder="Opcional"/>
+      </div>
+    </div>
+    <div class="ac-modal__foot">
+      <button class="ac-btn ac-btn--ghost" onclick="guardarCfdi('no_requiere')">No requiere factura</button>
+      <button class="ac-btn ac-btn--blue" onclick="guardarCfdi('emitida')">Marcar como emitida</button>
+    </div>
+  </div>
 </div>
 
 <div class="adm-toast" id="toast"></div>
 
 <script>
 /* ════════════════════════════════════════════════════════════════
-   Broquer Admin Panel · 2026-05-20
-   Modelo: usuarios.rol (admin/equipo/agente) + usuarios.activo
+   Broquer · Consola de dueño
+   Pestañas: Panorama · Usuarios · Ingresos · Correo · Marketing
    ════════════════════════════════════════════════════════════════ */
 
 const API   = 'https://api.broquer.app';
@@ -406,53 +745,43 @@ const SBKEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
 
 const ROL_LBL = { admin:'Admin', equipo:'Equipo', agente:'Agente' };
 const ROL_CLS = { admin:'t-admin', equipo:'t-equipo', agente:'t-free' };
-
-const SUB_LBL = {
-  active:        'Suscrito',
-  trialing:      'Prueba',
-  canceled:      'Cancelada',
-  past_due:      'Atrasada',
-  sin_suscripcion:'—',
-  desactivada:   '—'
-};
-const SUB_CLS = {
-  active:'t-active', trialing:'t-active',
-  canceled:'t-off', past_due:'t-off',
-  sin_suscripcion:'t-free', desactivada:'t-off'
-};
-
-let token   = '';
-let users   = [];   // estado base (servidor)
-let filter  = 'todos';
-let search  = '';
-let selId   = null;
-let draft   = null; // edición pendiente del usuario seleccionado
-let _polling = null;
-let _lastIds = new Set();
-let _usoRangeDias = 30;
-let _usoReqId = 0;  // race-guard: ignora respuestas de selecciones viejas
-let empresaOwners = new Map();  // owner_id → organización (para el bloque de Empresas)
+const SUB_LBL = { active:'Suscrito', trialing:'Prueba', canceled:'Cancelada', past_due:'Atrasada', sin_suscripcion:'—', desactivada:'—' };
+const SUB_CLS = { active:'t-active', trialing:'t-active', canceled:'t-off', past_due:'t-off', sin_suscripcion:'t-free', desactivada:'t-off' };
 
 const MOD_LBL = {
   home:'Inicio', props:'Tus Inmuebles', contactos:'Contactos', contratos:'Contratos',
   avm:'AVM', valor:'Valor web', ficha:'Ficha EB', 'ficha-manual':'Ficha técnica',
   isr:'ISR', 'image-cleaner':'Editor imágenes', 'facebook-ads':'Facebook Ads',
-  guia:'Ayuda', 'solicitud-arr':'Solicitudes arrend.', admin:'Admin',
-  blog:'Blog', verificador:'Verificador', chat:'Asistente Broq', desconocido:'Desconocido'
+  guia:'Ayuda', 'solicitud-arr':'Solicitudes arrend.', admin:'Consola',
+  blog:'Blog', verificador:'Verificador', chat:'Asistente Broq',
+  whatsapp:'WhatsApp', leads:'Leads', tareas:'Tareas', equipo:'Equipo',
+  'mi-sitio':'Mi sitio', estadisticas:'Estadísticas', desconocido:'Desconocido'
 };
 
-/* ── Token & auth ─────────────────────────── */
-function getToken(){
-  return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || '';
-}
+let token = '';
+let tab = 'panorama';
+let rango = 30;
+let salud = {};
+
+/* usuarios */
+let users = [], filter = 'todos', search = '', selId = null, draft = null;
+let _polling = null, _lastIds = new Set(), _usoRangeDias = 30, _usoReqId = 0;
+let empresaOwners = new Map();
+
+/* ingresos / correo / marketing */
+let ingresos = null, cobroSel = null;
+let box = 'entrada', correos = [], correoSel = null;
+let segmentos = [], segSel = null, modoCampana = false;
+
+/* ── Autenticación ────────────────────────── */
+function getToken(){ return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || ''; }
 
 async function tryRefreshToken(){
   const ref = localStorage.getItem('sb_refresh');
   if(!ref) return false;
   try{
     const r = await fetch(SB + '/auth/v1/token?grant_type=refresh_token', {
-      method:'POST',
-      headers:{ 'Content-Type':'application/json', apikey: SBKEY },
+      method:'POST', headers:{ 'Content-Type':'application/json', apikey: SBKEY },
       body: JSON.stringify({ refresh_token: ref })
     });
     const d = await r.json();
@@ -467,97 +796,246 @@ async function tryRefreshToken(){
   return false;
 }
 
+async function api(ruta, opciones){
+  const o = opciones || {};
+  o.headers = Object.assign({ Authorization: 'Bearer ' + token }, o.headers || {});
+  let r = await fetch(API + ruta, o);
+  if(r.status === 401){
+    const ok = await tryRefreshToken();
+    if(ok){
+      o.headers.Authorization = 'Bearer ' + token;
+      r = await fetch(API + ruta, o);
+    }
+  }
+  return r;
+}
+
+async function apiJson(ruta, opciones){
+  const r = await api(ruta, opciones);
+  if(!r.ok){
+    let msg = 'Error ' + r.status;
+    try{ const e = await r.json(); if(e.detail) msg = e.detail; }catch(_){}
+    throw new Error(msg);
+  }
+  return r.json();
+}
+
 async function init(){
   token = getToken();
   if(!token){
     const ok = await tryRefreshToken();
     if(!ok){ location.href = 'login.html'; return; }
   }
-
-  // Verificar admin
   try{
-    const r = await fetch(API + '/admin/me', { headers:{ Authorization:'Bearer '+token } });
-    if(!r.ok){
-      if(r.status === 401){
-        const ok = await tryRefreshToken();
-        if(ok){ return init(); }
-      }
-      throw new Error('Acceso denegado');
-    }
-    const d = await r.json();
-    if(d.rol !== 'admin') throw new Error();
+    const d = await apiJson('/admin/me');
+    if(d.rol !== 'admin') throw new Error('no admin');
   }catch(e){
     alert('Acceso denegado. Solo administradores.');
     location.href = 'index.html';
     return;
   }
 
+  try{ salud = await apiJson('/admin/consola/salud'); }catch(_){ salud = {}; }
+
   await loadUsers();
-  await cargarEmpresas();
+  cargarEmpresas();
+  cargarPanorama();
+  cargarCorreo();
   startPolling();
 }
 
+/* ── Navegación ───────────────────────────── */
+function setTab(v){
+  tab = v;
+  document.querySelectorAll('.ac-tab').forEach(b => b.classList.toggle('is-on', b.dataset.v === v));
+  document.querySelectorAll('.ac-view').forEach(s => s.classList.toggle('is-on', s.id === 'v-' + v));
+  if(v === 'ingresos'  && !ingresos)         cargarIngresos();
+  if(v === 'marketing' && !segmentos.length) cargarSegmentos();
+  if(v === 'correo')                         cargarCorreo();
+}
+
+function setRango(d){
+  rango = d;
+  document.querySelectorAll('#ac-range .ac-range__btn').forEach(b =>
+    b.classList.toggle('is-on', parseInt(b.dataset.d, 10) === d));
+  cargarPanorama();
+  ingresos = null;
+  if(tab === 'ingresos') cargarIngresos();
+}
+
+/* ── Formatos ─────────────────────────────── */
+function nfmt(n){ return Number(n||0).toLocaleString('es-MX'); }
+function mxn(n){ return '$' + Number(n||0).toLocaleString('es-MX', {minimumFractionDigits:0, maximumFractionDigits:0}); }
+function usd(n){
+  const x = Number(n||0);
+  if(!isFinite(x) || x === 0) return '$0.00';
+  if(x < 0.01) return '$' + x.toFixed(4);
+  if(x < 1)    return '$' + x.toFixed(3);
+  return '$' + x.toFixed(2);
+}
+function _fmtSeg(s){
+  const n = Math.max(0, Math.floor(s||0));
+  if(n < 60) return n + ' s';
+  if(n < 3600) return Math.round(n/60) + ' min';
+  const h = Math.floor(n/3600), m = Math.round((n%3600)/60);
+  return m ? (h + ' h ' + m + ' min') : (h + ' h');
+}
+function fecha(v){
+  if(!v) return '—';
+  try{ return new Date(v).toLocaleDateString('es-MX',{year:'numeric',month:'short',day:'numeric'}); }
+  catch(_){ return '—'; }
+}
+function fechaCorta(v){
+  if(!v) return '';
+  try{
+    const d = new Date(v), hoy = new Date();
+    if(d.toDateString() === hoy.toDateString())
+      return d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+    return d.toLocaleDateString('es-MX',{day:'numeric',month:'short'});
+  }catch(_){ return ''; }
+}
+function escapeHtml(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ══════════════ PANORAMA ══════════════ */
+async function cargarPanorama(){
+  try{
+    const d = await apiJson('/admin/panorama?dias=' + rango);
+    renderPanorama(d);
+  }catch(e){
+    document.getElementById('pan-sub').textContent = 'No se pudo cargar el panorama: ' + e.message;
+  }
+}
+
+function kpi(label, valor, delta, clase, navy){
+  return '<div class="ac-kpi' + (navy ? ' ac-kpi--navy' : '') + '">' +
+    '<div class="ac-kpi__l">' + escapeHtml(label) + '</div>' +
+    '<div class="ac-kpi__v">' + valor + '</div>' +
+    (delta ? '<div class="ac-kpi__d ' + (clase||'') + '">' + escapeHtml(delta) + '</div>' : '') +
+  '</div>';
+}
+
+function renderPanorama(d){
+  const k = d.kpis;
+  document.getElementById('pan-sub').textContent =
+    'Últimos ' + d.dias + ' días · ' + nfmt(k.usuarios_total) + ' usuarios en total · ' +
+    nfmt(k.suscritos) + ' pagando · ' + nfmt(k.cortesia) + ' de cortesía';
+
+  let crec = '', clase = '';
+  if(k.crecimiento_pct !== null && k.crecimiento_pct !== undefined){
+    crec = (k.crecimiento_pct >= 0 ? '+' : '') + k.crecimiento_pct + '% vs periodo anterior';
+    clase = k.crecimiento_pct >= 0 ? 'up' : 'down';
+  }
+
+  document.getElementById('pan-kpis').innerHTML =
+    kpi('Ingreso mensual', mxn(k.mrr_mxn), 'ARPU ' + mxn(k.arpu_mxn), '', true) +
+    kpi('Usuarios nuevos', nfmt(k.nuevos), crec, clase) +
+    kpi('Base total', nfmt(k.usuarios_total), nfmt(k.bloqueados) + ' bloqueados') +
+    kpi('Activos en el rango', nfmt(k.activos), nfmt(k.wau) + ' en los últimos 7 días') +
+    kpi('Suscritos', nfmt(k.suscritos), k.conversion_pct + '% de la base') +
+    kpi('Activación', k.activacion_pct + '%', 'Ya cargaron inventario') +
+    kpi('Bajas', nfmt(k.cancelados), 'Churn ' + k.churn_pct + '%', k.churn_pct > 5 ? 'down' : '') +
+    kpi('Costo IA', usd(k.costo_ia_usd), 'Del periodo');
+
+  const altas = d.altas || [];
+  const max = Math.max.apply(null, altas.map(a => a.n).concat([1]));
+  document.getElementById('pan-chart').innerHTML = altas.map(a =>
+    '<div class="ac-chart__col" title="' + a.fecha + ': ' + a.n + '">' +
+      '<div class="ac-chart__bar" style="height:' + Math.max(2, Math.round(a.n*100/max)) + '%"></div>' +
+    '</div>').join('');
+  document.getElementById('pan-axis').innerHTML = altas.length
+    ? '<span>' + altas[0].fecha + '</span><span>' + altas[altas.length-1].fecha + '</span>' : '';
+  const totalAltas = altas.reduce((s,a) => s + a.n, 0);
+  document.getElementById('pan-altas-sub').textContent =
+    nfmt(totalAltas) + ' altas · pico de ' + nfmt(max) + ' en un día';
+
+  const emb = d.embudo || [];
+  const base = (emb[0] && emb[0].n) || 1;
+  document.getElementById('pan-embudo').innerHTML = emb.map(p => {
+    const pct = Math.round(p.n * 100 / base);
+    return '<div class="ac-bar">' +
+      '<div class="ac-bar__fill" style="width:' + pct + '%"></div>' +
+      '<div class="ac-bar__row"><span class="ac-bar__name">' + escapeHtml(p.paso) + '</span>' +
+      '<span class="ac-bar__val">' + nfmt(p.n) + ' · ' + pct + '%</span></div>' +
+    '</div>';
+  }).join('');
+
+  const mods = d.top_modulos || [];
+  if(!mods.length){
+    document.getElementById('pan-modulos').innerHTML = '<div class="ac-empty">Sin actividad registrada en este rango.</div>';
+  } else {
+    const maxs = Math.max.apply(null, mods.map(m => m.segundos).concat([1]));
+    document.getElementById('pan-modulos').innerHTML = mods.map(m => {
+      const pct = Math.round(m.segundos * 100 / maxs);
+      return '<div class="ac-bar">' +
+        '<div class="ac-bar__fill" style="width:' + pct + '%"></div>' +
+        '<div class="ac-bar__row"><span class="ac-bar__name">' + escapeHtml(MOD_LBL[m.modulo] || m.modulo) + '</span>' +
+        '<span class="ac-bar__val">' + _fmtSeg(m.segundos) + '</span></div>' +
+        '<div class="ac-bar__meta">' + nfmt(m.usuarios) + ' usuarios distintos</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  const co = d.cohortes || [];
+  document.getElementById('pan-cohortes').innerHTML = co.length ? co.map(c =>
+    '<tr><td>' + escapeHtml(c.mes) + '</td>' +
+    '<td class="num">' + nfmt(c.registrados) + '</td>' +
+    '<td class="num">' + nfmt(c.activos) + '</td>' +
+    '<td class="num">' + c.retencion_pct + '%</td>' +
+    '<td class="num">' + nfmt(c.suscritos) + '</td>' +
+    '<td class="num">' + c.conversion_pct + '%</td></tr>'
+  ).join('') : '<tr><td colspan="6" class="ac-empty">Sin datos todavía.</td></tr>';
+
+  const tc = d.top_costo || [];
+  document.getElementById('pan-costo').innerHTML = tc.length ? tc.map(u =>
+    '<tr><td>' + escapeHtml(u.nombre) + '</td>' +
+    '<td class="num">' + usd(u.costo_usd) + '</td>' +
+    '<td class="num"><button class="ac-btn ac-btn--ghost ac-btn--sm" onclick="verUsuario(\'' + u.user_id + '\')">Ver cuenta</button></td></tr>'
+  ).join('') : '<tr><td colspan="3" class="ac-empty">Sin consumo de IA en este rango.</td></tr>';
+}
+
+function verUsuario(uid){
+  setTab('usuarios');
+  selectUser(uid);
+}
+
+/* ══════════════ USUARIOS ══════════════ */
 async function cargarEmpresas(){
   try{
-    const r = await fetch(API + '/admin/org/lista', {
-      headers:{ Authorization:'Bearer '+token }
-    });
-    if(!r.ok) return;
-    const d = await r.json();
+    const d = await apiJson('/admin/org/lista');
     empresaOwners = new Map();
-    (d.organizaciones || []).forEach(o => {
-      if(o.owner_id) empresaOwners.set(o.owner_id, o);
-    });
+    (d.organizaciones || []).forEach(o => { if(o.owner_id) empresaOwners.set(o.owner_id, o); });
   }catch(_){}
 }
 
-/* ── Load data ────────────────────────────── */
 async function loadUsers(){
   try{
-    const r = await fetch(API + '/admin/users', {
-      headers:{ Authorization:'Bearer '+token }
-    });
-    if(!r.ok){
-      if(r.status === 401){
-        const ok = await tryRefreshToken();
-        if(ok) return loadUsers();
-      }
-      throw new Error('Error '+r.status);
-    }
-    const d = await r.json();
+    const d = await apiJson('/admin/users');
     users = d.users || [];
     users.forEach(u => _lastIds.add(u.id));
     renderAll();
   }catch(e){
     document.getElementById('adm-list').innerHTML =
-      '<div class="adm-empty">No se pudo cargar la lista.<br><small>'+ (e.message||'Error') +'</small></div>';
+      '<div class="adm-empty">No se pudo cargar la lista.<br>' + escapeHtml(e.message) + '</div>';
   }
 }
 
 function renderAll(){ updateStats(); renderList(); }
 
 function updateStats(){
-  const total     = users.length;
-  // "Activos" = cuentas activas con acceso real (admin/equipo/sub activa)
-  const activos   = users.filter(u =>
-    u.activo !== false && (
-      u.rol === 'admin' || u.rol === 'equipo' || u.sub_active
-    )
-  ).length;
+  const total = users.length;
+  const activos = users.filter(u => u.activo !== false && (u.rol === 'admin' || u.rol === 'equipo' || u.sub_active)).length;
   const inactivos = users.filter(u => u.activo === false).length;
-  document.getElementById('s-total').textContent     = total;
-  document.getElementById('s-pagados').textContent   = activos;
-  document.getElementById('s-inactivos').textContent = inactivos;
+  document.getElementById('s-total').textContent = nfmt(total);
+  document.getElementById('s-pagados').textContent = nfmt(activos);
+  document.getElementById('s-inactivos').textContent = nfmt(inactivos);
 }
 
-/* ── List ─────────────────────────────────── */
 function getFiltered(){
   return users.filter(u => {
     const q = (search||'').toLowerCase();
-    if(q){
-      const hit = ((u.nombre||'') + ' ' + (u.email||'')).toLowerCase().includes(q);
-      if(!hit) return false;
-    }
+    if(q && !((u.nombre||'') + ' ' + (u.email||'')).toLowerCase().includes(q)) return false;
     if(filter === 'todos') return true;
     if(filter === 'inactivo') return u.activo === false;
     if(filter === 'pagado')   return u.activo !== false && u.sub_active && u.rol === 'agente';
@@ -573,121 +1051,119 @@ function renderList(){
   const list = getFiltered();
   if(!list.length){ el.innerHTML = '<div class="adm-empty">Sin resultados.</div>'; return; }
   el.innerHTML = list.map(u => {
-    const rol  = u.rol || 'agente';
-    const off  = u.activo === false;
-    const ini  = (u.nombre || u.email || '?')[0].toUpperCase();
-    // El "tag" de la fila prioriza: admin/equipo > suscrito > inactivo > sin sub
+    const rol = u.rol || 'agente';
+    const off = u.activo === false;
+    const ini = (u.nombre || u.email || '?')[0].toUpperCase();
     let tagCls, tagLbl;
     if(off){ tagCls='t-off'; tagLbl='Bloqueado'; }
     else if(rol === 'admin'){  tagCls='t-admin';  tagLbl='Admin'; }
     else if(rol === 'equipo'){ tagCls='t-equipo'; tagLbl='Equipo'; }
     else if(u.sub_active){     tagCls='t-active'; tagLbl='Suscrito'; }
     else{                      tagCls='t-free';   tagLbl='Sin sub'; }
-
-    return `<div class="adm-row${u.id===selId?' is-on':''}" id="row-${u.id}" onclick="selectUser('${u.id}')">
-      <div class="adm-row__av${off?' is-off':''}">${escapeHtml(ini)}</div>
-      <div class="adm-row__info">
-        <div class="adm-row__name">${escapeHtml(u.nombre || '(Sin nombre)')}</div>
-        <div class="adm-row__email">${escapeHtml(u.email || '—')}</div>
-      </div>
-      <span class="adm-row__tag ${tagCls}">${tagLbl}</span>
-    </div>`;
+    return '<div class="adm-row' + (u.id===selId?' is-on':'') + '" id="row-' + u.id + '" onclick="selectUser(\'' + u.id + '\')">' +
+      '<div class="adm-row__av' + (off?' is-off':'') + '">' + escapeHtml(ini) + '</div>' +
+      '<div class="adm-row__info">' +
+        '<div class="adm-row__name">' + escapeHtml(u.nombre || '(Sin nombre)') + '</div>' +
+        '<div class="adm-row__email">' + escapeHtml(u.email || '—') + '</div>' +
+      '</div>' +
+      '<span class="adm-row__tag ' + tagCls + '">' + tagLbl + '</span>' +
+    '</div>';
   }).join('');
 }
 
 function setFilter(f){
   filter = f;
-  document.querySelectorAll('.adm-chip').forEach(c =>
-    c.classList.toggle('is-on', c.dataset.f === f));
+  document.querySelectorAll('.adm-chip').forEach(c => c.classList.toggle('is-on', c.dataset.f === f));
   renderList();
 }
-function onSearch(){
-  search = document.getElementById('adm-search').value.trim();
-  renderList();
+function onSearch(){ search = document.getElementById('adm-search').value.trim(); renderList(); }
+
+function exportarCsv(){
+  const list = getFiltered();
+  const filas = [['nombre','email','telefono','rol','estado','suscripcion','registro']];
+  list.forEach(u => filas.push([
+    u.nombre||'', u.email||'', u.telefono||'', u.rol||'agente',
+    u.activo === false ? 'bloqueado' : 'activo',
+    u.sub_status || 'sin suscripcion', (u.created_at||'').slice(0,10)
+  ]));
+  descargarCsv(filas, 'usuarios-broquer.csv');
 }
 
-/* ── Detail ───────────────────────────────── */
+function descargarCsv(filas, nombre){
+  const csv = filas.map(f => f.map(c => '"' + String(c==null?'':c).replace(/"/g,'""') + '"').join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], {type:'text/csv;charset=utf-8'}));
+  a.download = nombre;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('Archivo descargado.');
+}
+
 function selectUser(uid){
   const u = users.find(x => x.id === uid);
   if(!u) return;
   selId = uid;
-  // draft = copia editable
   draft = { id: u.id, rol: u.rol || 'agente', activo: u.activo !== false };
-
-  // Highlight row
   document.querySelectorAll('.adm-row').forEach(r => r.classList.remove('is-on'));
-  document.getElementById('row-'+uid)?.classList.add('is-on');
-
-  document.getElementById('adm-empty-state').style.display = 'none';
+  const fila = document.getElementById('row-'+uid);
+  if(fila) fila.classList.add('is-on');
+  document.getElementById('adm-empty-state').classList.add('is-hidden');
   document.getElementById('adm-detail').classList.add('is-on');
-
-  // Mobile: show detail overlay
-  if(window.matchMedia('(max-width:880px)').matches){
+  if(window.matchMedia('(max-width:1000px)').matches)
     document.getElementById('adm-panel').classList.add('is-open');
-  }
-
   renderDetail(u);
   loadUsoCostos(uid, _usoRangeDias);
 }
 
 function renderDetail(u){
   const ini = (u.nombre || u.email || '?')[0].toUpperCase();
-  const av  = document.getElementById('d-av');
+  const av = document.getElementById('d-av');
   av.textContent = ini;
   av.className = 'adm-det__av' + (draft.activo ? '' : ' is-off');
 
-  document.getElementById('d-name').textContent  = u.nombre  || '(Sin nombre)';
-  document.getElementById('d-email').textContent = u.email   || '—';
-  document.getElementById('d-tel').textContent   = u.telefono || '—';
-  document.getElementById('d-id').textContent    = u.id;
-  document.getElementById('d-stripe').textContent= u.stripe_customer_id || '—';
-  document.getElementById('d-created').textContent = u.created_at
-    ? new Date(u.created_at).toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'})
-    : '—';
+  document.getElementById('d-name').textContent = u.nombre || '(Sin nombre)';
+  document.getElementById('d-email').textContent = u.email || '—';
+  document.getElementById('d-tel').textContent = u.telefono || '—';
+  document.getElementById('d-id').textContent = u.id;
+  document.getElementById('d-stripe').textContent = u.stripe_customer_id || '—';
+  document.getElementById('d-created').textContent = fecha(u.created_at);
 
-  // Pills
   const pa = document.getElementById('d-pill-activo');
   pa.textContent = draft.activo ? 'Activa' : 'Bloqueada';
-  pa.className   = 'adm-pill ' + (draft.activo ? 'is-active' : 'is-inactive');
+  pa.className = 'adm-pill ' + (draft.activo ? 'is-active' : 'is-inactive');
 
   const pr = document.getElementById('d-pill-rol');
   pr.textContent = ROL_LBL[draft.rol] || draft.rol;
-  pr.className   = 'adm-row__tag ' + (ROL_CLS[draft.rol] || 't-free');
+  pr.className = 'adm-row__tag ' + (ROL_CLS[draft.rol] || 't-free');
 
   const ps = document.getElementById('d-pill-sub');
   if(draft.rol === 'agente'){
     ps.textContent = SUB_LBL[u.sub_status] || u.sub_status || '—';
-    ps.className   = 'adm-row__tag ' + (SUB_CLS[u.sub_status] || 't-free');
-    ps.style.display = '';
+    ps.className = 'adm-row__tag ' + (SUB_CLS[u.sub_status] || 't-free');
+    ps.classList.remove('is-hidden');
   } else {
-    ps.style.display = 'none';
+    ps.classList.add('is-hidden');
   }
 
-  // Sub info
   document.getElementById('d-sub-status').textContent = SUB_LBL[u.sub_status] || u.sub_status || '—';
-  document.getElementById('d-sub-plan').textContent   = u.sub_plan || '—';
-  document.getElementById('d-sub-date').textContent   = u.sub_updated_at
-    ? new Date(u.sub_updated_at).toLocaleDateString('es-MX',{year:'numeric',month:'short',day:'numeric'})
-    : '—';
+  document.getElementById('d-sub-plan').textContent = u.sub_plan || '—';
+  document.getElementById('d-sub-date').textContent = fecha(u.sub_updated_at);
 
-  // Toggle activo
   document.getElementById('d-switch').classList.toggle('is-on', draft.activo);
   document.getElementById('d-activo-sub').textContent = draft.activo
     ? 'Puede iniciar sesión y usar el sistema.'
     : 'No podrá iniciar sesión hasta que la reactives.';
 
-  // Rol grid selection
   renderRolGrid();
 
-  // Broquer para Empresas
-  const emp        = empresaOwners.get(u.id);
-  const empStatus  = document.getElementById('d-emp-status');
-  const empNombre  = document.getElementById('d-emp-nombre');
-  const empAsient  = document.getElementById('d-emp-asientos');
-  const empBtn     = document.getElementById('d-emp-btn');
+  const emp = empresaOwners.get(u.id);
+  const empStatus = document.getElementById('d-emp-status');
+  const empNombre = document.getElementById('d-emp-nombre');
+  const empAsient = document.getElementById('d-emp-asientos');
+  const empBtn = document.getElementById('d-emp-btn');
   if(emp){
-    empStatus.textContent = 'Ya es empresa: ' + (emp.nombre || '—')
-      + (emp.miembros != null ? (' · ' + emp.miembros + ' miembros') : '');
+    empStatus.textContent = 'Ya es empresa: ' + (emp.nombre || '—') +
+      (emp.miembros != null ? (' · ' + emp.miembros + ' miembros') : '');
     empStatus.classList.add('is-emp');
     empNombre.value = emp.nombre || (u.nombre || '');
     empAsient.value = emp.asientos_max != null ? emp.asientos_max : '';
@@ -702,28 +1178,24 @@ function renderDetail(u){
 }
 
 function renderRolGrid(){
-  document.querySelectorAll('.adm-roloption').forEach(b => {
-    b.classList.remove('is-sel-admin','is-sel-equipo','is-sel-agente');
-  });
-  const sel = document.querySelector(`.adm-roloption[data-rol="${draft.rol}"]`);
+  document.querySelectorAll('.adm-roloption').forEach(b =>
+    b.classList.remove('is-sel-admin','is-sel-equipo','is-sel-agente'));
+  const sel = document.querySelector('.adm-roloption[data-rol="' + draft.rol + '"]');
   if(sel) sel.classList.add('is-sel-'+draft.rol);
 }
 
 function pickRol(rol){
   if(!draft) return;
   draft.rol = rol;
-  // Re-render header pills + grid
   const u = users.find(x => x.id === selId);
   if(u) renderDetail(u);
 }
-
 function toggleActivo(){
   if(!draft) return;
   draft.activo = !draft.activo;
   const u = users.find(x => x.id === selId);
   if(u) renderDetail(u);
 }
-
 function resetDetail(){
   if(!selId){ closeMobileDetail(); return; }
   const u = users.find(x => x.id === selId);
@@ -731,218 +1203,139 @@ function resetDetail(){
   draft = { id: u.id, rol: u.rol || 'agente', activo: u.activo !== false };
   renderDetail(u);
 }
-
 function closeMobileDetail(){
-  if(window.matchMedia('(max-width:880px)').matches){
+  if(window.matchMedia('(max-width:1000px)').matches)
     document.getElementById('adm-panel').classList.remove('is-open');
-  }
 }
 
-/* ── Save ─────────────────────────────────── */
 async function saveChanges(){
   if(!draft) return;
   const u = users.find(x => x.id === selId);
   if(!u) return;
 
   const changes = [];
-  if((u.rol || 'agente') !== draft.rol)            changes.push('rol');
-  if((u.activo !== false) !== draft.activo)        changes.push('activo');
-
+  if((u.rol || 'agente') !== draft.rol) changes.push('rol');
+  if((u.activo !== false) !== draft.activo) changes.push('activo');
   if(!changes.length){ toast('No hay cambios.'); return; }
 
   const saveBtn = document.getElementById('d-save');
   saveBtn.disabled = true;
   saveBtn.innerHTML = '<span class="adm-spinner"></span>';
-
   try{
     if(changes.includes('rol')){
-      const r = await fetch(API + '/admin/user/rol', {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+token },
+      await apiJson('/admin/user/rol', {
+        method:'POST', headers:{ 'Content-Type':'application/json' },
         body: JSON.stringify({ user_id: u.id, rol: draft.rol })
       });
-      if(!r.ok){
-        const e = await r.json().catch(()=>({}));
-        throw new Error(e.detail || ('Error '+r.status));
-      }
     }
     if(changes.includes('activo')){
-      const r = await fetch(API + '/admin/user/activo', {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+token },
+      await apiJson('/admin/user/activo', {
+        method:'POST', headers:{ 'Content-Type':'application/json' },
         body: JSON.stringify({ user_id: u.id, activo: draft.activo })
       });
-      if(!r.ok){
-        const e = await r.json().catch(()=>({}));
-        throw new Error(e.detail || ('Error '+r.status));
-      }
     }
-
-    // Aplicar al estado local
-    u.rol    = draft.rol;
+    u.rol = draft.rol;
     u.activo = draft.activo;
     toast('Cambios guardados.');
     renderAll();
     renderDetail(u);
   }catch(e){
-    toast('Error: ' + (e.message || 'No se pudo guardar'), true);
+    toast('Error: ' + e.message, true);
   }finally{
     saveBtn.disabled = false;
     saveBtn.textContent = 'Guardar cambios';
   }
 }
 
-/* ── Broquer para Empresas ────────────────── */
 async function activarEmpresa(){
   if(!selId) return;
   const u = users.find(x => x.id === selId);
   if(!u) return;
-
   const nombre = document.getElementById('d-emp-nombre').value.trim();
   if(!nombre){ toast('Escribe el nombre de la inmobiliaria.', true); return; }
   const asientosRaw = document.getElementById('d-emp-asientos').value.trim();
   const asientos = asientosRaw ? parseInt(asientosRaw, 10) : null;
 
-  const btn  = document.getElementById('d-emp-btn');
+  const btn = document.getElementById('d-emp-btn');
   const prev = btn.textContent;
-  btn.disabled  = true;
+  btn.disabled = true;
   btn.innerHTML = '<span class="adm-spinner"></span>';
 
   const body = { user_id: u.id, nombre };
   if(asientos && asientos > 0) body.asientos_max = asientos;
 
-  async function enviar(){
-    return fetch(API + '/admin/org/convertir', {
-      method:'POST',
-      headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+token },
-      body: JSON.stringify(body)
-    });
-  }
-
   try{
-    let r = await enviar();
-    if(r.status === 401){
-      const ok = await tryRefreshToken();
-      if(ok) r = await enviar();
-    }
-    if(!r.ok){
-      const e = await r.json().catch(()=>({}));
-      throw new Error(e.detail || ('Error '+r.status));
-    }
-    const d = await r.json();
-    const previo = empresaOwners.get(u.id) || {};
-    empresaOwners.set(u.id, {
-      id: d.org_id, nombre: d.nombre || nombre, owner_id: u.id,
-      asientos_max: asientos, miembros: previo.miembros
+    const d = await apiJson('/admin/org/convertir', {
+      method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(body)
     });
+    const previo = empresaOwners.get(u.id) || {};
+    empresaOwners.set(u.id, { id: d.org_id, nombre: d.nombre || nombre, owner_id: u.id, asientos_max: asientos, miembros: previo.miembros });
     toast('Cuenta activada como empresa.');
     renderDetail(u);
   }catch(e){
-    toast('Error: ' + (e.message || 'No se pudo activar'), true);
+    toast('Error: ' + e.message, true);
     btn.textContent = prev;
   }finally{
     btn.disabled = false;
   }
 }
 
-/* ── Uso y costos IA ──────────────────────── */
-function _fmtSeg(s){
-  const n = Math.max(0, Math.floor(s||0));
-  if(n < 60) return n + ' s';
-  if(n < 3600) return Math.round(n/60) + ' min';
-  const h = Math.floor(n/3600);
-  const m = Math.round((n%3600)/60);
-  return m ? (h + ' h ' + m + ' min') : (h + ' h');
-}
-function _fmtUsd(n){
-  const x = Number(n||0);
-  if(!isFinite(x) || x === 0) return '$0.00';
-  if(x < 0.01) return '$' + x.toFixed(4);
-  if(x < 1)    return '$' + x.toFixed(3);
-  return '$' + x.toFixed(2);
-}
-function _fmtNum(n){ return Number(n||0).toLocaleString('es-MX'); }
-
 async function loadUsoCostos(uid, dias){
-  const $costo  = document.getElementById('uso-costo');
-  const $tiempo = document.getElementById('uso-tiempo');
-  const $llam   = document.getElementById('uso-llamadas');
-  const $mod    = document.getElementById('uso-modulos');
-  const $her    = document.getElementById('uso-herramientas');
-  if($costo)  $costo.textContent  = '—';
-  if($tiempo) $tiempo.textContent = '—';
-  if($llam)   $llam.textContent   = '—';
-  if($mod)    $mod.innerHTML = '<div class="adm-uso-empty">Cargando…</div>';
-  if($her)    $her.innerHTML = '<div class="adm-uso-empty">Cargando…</div>';
+  const $c = document.getElementById('uso-costo'), $t = document.getElementById('uso-tiempo');
+  const $l = document.getElementById('uso-llamadas'), $m = document.getElementById('uso-modulos');
+  const $h = document.getElementById('uso-herramientas');
+  $c.textContent = '—'; $t.textContent = '—'; $l.textContent = '—';
+  $m.innerHTML = '<div class="adm-uso-empty">Cargando…</div>';
+  $h.innerHTML = '<div class="adm-uso-empty">Cargando…</div>';
 
   const myReq = ++_usoReqId;
   try{
-    const r = await fetch(API + '/admin/user/' + encodeURIComponent(uid) + '/uso?dias=' + dias, {
-      headers:{ Authorization:'Bearer ' + token }
-    });
-    if(!r.ok){
-      if(r.status === 401){
-        const ok = await tryRefreshToken();
-        if(ok) return loadUsoCostos(uid, dias);
-      }
-      throw new Error('Error ' + r.status);
-    }
-    const d = await r.json();
-    if(myReq !== _usoReqId || uid !== selId) return; // selección cambió
+    const d = await apiJson('/admin/user/' + encodeURIComponent(uid) + '/uso?dias=' + dias);
+    if(myReq !== _usoReqId || uid !== selId) return;
     renderUsoCostos(d);
-  } catch(e){
+  }catch(e){
     if(myReq !== _usoReqId) return;
-    if($mod) $mod.innerHTML = '<div class="adm-uso-empty">No se pudo cargar.</div>';
-    if($her) $her.innerHTML = '';
+    $m.innerHTML = '<div class="adm-uso-empty">No se pudo cargar.</div>';
+    $h.innerHTML = '';
   }
 }
 
 function renderUsoCostos(d){
-  document.getElementById('uso-costo').textContent    = _fmtUsd(d.costo_total_usd);
-  document.getElementById('uso-tiempo').textContent   = _fmtSeg(d.tiempo_total_seg);
-  document.getElementById('uso-llamadas').textContent = _fmtNum(d.llamadas_total);
+  document.getElementById('uso-costo').textContent = usd(d.costo_total_usd);
+  document.getElementById('uso-tiempo').textContent = _fmtSeg(d.tiempo_total_seg);
+  document.getElementById('uso-llamadas').textContent = nfmt(d.llamadas_total);
 
-  const $mod = document.getElementById('uso-modulos');
+  const $m = document.getElementById('uso-modulos');
   const mods = d.por_modulo || [];
   if(!mods.length){
-    $mod.innerHTML = '<div class="adm-uso-empty">Aún sin actividad en este rango.</div>';
+    $m.innerHTML = '<div class="adm-uso-empty">Aún sin actividad en este rango.</div>';
   } else {
     const maxSeg = Math.max.apply(null, mods.map(m => m.segundos || 0).concat([1]));
-    $mod.innerHTML = mods.map(m => {
+    $m.innerHTML = mods.map(m => {
       const pct = Math.min(100, Math.round(((m.segundos||0)/maxSeg) * 100));
-      const lbl = MOD_LBL[m.modulo] || m.modulo;
-      return '<div class="adm-bar" style="--w:' + pct + '%">' +
-        '<div class="adm-bar__top">' +
-          '<span class="adm-bar__name">' + escapeHtml(lbl) + '</span>' +
-          '<span class="adm-bar__val">' + _fmtSeg(m.segundos) + '</span>' +
-        '</div>' +
-        '<div class="adm-bar__meta">' + _fmtUsd(m.costo_usd) + ' · ' + _fmtNum(m.llamadas) + ' llamadas IA</div>' +
-      '</div>';
+      return '<div class="ac-bar"><div class="ac-bar__fill" style="width:' + pct + '%"></div>' +
+        '<div class="ac-bar__row"><span class="ac-bar__name">' + escapeHtml(MOD_LBL[m.modulo] || m.modulo) + '</span>' +
+        '<span class="ac-bar__val">' + _fmtSeg(m.segundos) + '</span></div>' +
+        '<div class="ac-bar__meta">' + usd(m.costo_usd) + ' · ' + nfmt(m.llamadas) + ' llamadas IA</div></div>';
     }).join('');
   }
 
-  const $her = document.getElementById('uso-herramientas');
+  const $h = document.getElementById('uso-herramientas');
   const herr = d.por_herramienta || [];
   if(!herr.length){
-    $her.innerHTML = '<div class="adm-uso-empty">Aún sin llamadas IA en este rango.</div>';
+    $h.innerHTML = '<div class="adm-uso-empty">Aún sin llamadas IA en este rango.</div>';
   } else {
     const maxCosto = Math.max.apply(null, herr.map(h => h.costo_usd || 0).concat([0.0001]));
-    $her.innerHTML = herr.slice(0, 12).map(h => {
+    $h.innerHTML = herr.slice(0, 12).map(h => {
       const pct = Math.min(100, Math.round(((h.costo_usd||0)/maxCosto) * 100));
-      const name = h.herramienta || '—';
       const tokens = (h.tokens_in + h.tokens_out) > 0
-        ? (_fmtNum(h.tokens_in) + ' in · ' + _fmtNum(h.tokens_out) + ' out')
-        : (h.unidades ? (_fmtNum(h.unidades) + ' unidades') : '—');
-      const meta = (h.proveedor || '') +
-                   (h.modelo ? (' · ' + h.modelo) : '') +
-                   ' · ' + _fmtNum(h.llamadas) + ' llam · ' + tokens;
-      return '<div class="adm-bar" style="--w:' + pct + '%">' +
-        '<div class="adm-bar__top">' +
-          '<span class="adm-bar__name">' + escapeHtml(name) + '</span>' +
-          '<span class="adm-bar__val">' + _fmtUsd(h.costo_usd) + '</span>' +
-        '</div>' +
-        '<div class="adm-bar__meta">' + escapeHtml(meta) + '</div>' +
-      '</div>';
+        ? (nfmt(h.tokens_in) + ' in · ' + nfmt(h.tokens_out) + ' out')
+        : (h.unidades ? (nfmt(h.unidades) + ' unidades') : '—');
+      const meta = (h.proveedor || '') + (h.modelo ? (' · ' + h.modelo) : '') + ' · ' + nfmt(h.llamadas) + ' llam · ' + tokens;
+      return '<div class="ac-bar"><div class="ac-bar__fill" style="width:' + pct + '%"></div>' +
+        '<div class="ac-bar__row"><span class="ac-bar__name">' + escapeHtml(h.herramienta || '—') + '</span>' +
+        '<span class="ac-bar__val">' + usd(h.costo_usd) + '</span></div>' +
+        '<div class="ac-bar__meta">' + escapeHtml(meta) + '</div></div>';
     }).join('');
   }
 }
@@ -950,42 +1343,306 @@ function renderUsoCostos(d){
 function setUsoRange(dias){
   _usoRangeDias = dias;
   document.querySelectorAll('#uso-range .adm-range__btn').forEach(b =>
-    b.classList.toggle('is-on', parseInt(b.dataset.d, 10) === dias)
-  );
+    b.classList.toggle('is-on', parseInt(b.dataset.d, 10) === dias));
   if(selId) loadUsoCostos(selId, dias);
 }
 
-/* ── Polling para nuevos usuarios ─────────── */
+/* ══════════════ INGRESOS ══════════════ */
+async function cargarIngresos(){
+  try{
+    ingresos = await apiJson('/admin/ingresos?dias=' + rango);
+    renderIngresos(ingresos);
+  }catch(e){
+    document.getElementById('ing-sub').textContent = 'No se pudo cargar: ' + e.message;
+  }
+}
+
+function renderIngresos(d){
+  const r = d.resumen;
+  document.getElementById('ing-sub').textContent = d.stripe_conectado
+    ? ('Últimos ' + d.dias + ' días · datos en vivo de Stripe')
+    : ('Últimos ' + d.dias + ' días · Stripe no respondió, los montos son estimados con el precio de lista');
+
+  document.getElementById('ing-kpis').innerHTML =
+    kpi('Ingreso mensual', mxn(r.mrr_mxn), 'Anualizado ' + mxn(r.arr_mxn), '', true) +
+    kpi('Cobrado en el periodo', mxn(r.ingresos_periodo), 'Facturas pagadas') +
+    kpi('Suscripciones activas', nfmt(r.suscripciones_activas), 'ARPU ' + mxn(r.arpu_mxn)) +
+    kpi('Atrasadas', nfmt(r.atrasadas), 'Requieren cobranza', r.atrasadas > 0 ? 'down' : '') +
+    kpi('Canceladas', nfmt(r.canceladas), 'Histórico') +
+    kpi('CFDI pendientes', nfmt(r.cfdi_pendientes), 'Cobros pagados sin factura', r.cfdi_pendientes > 0 ? 'down' : '');
+
+  const cobros = d.cobros || [];
+  document.getElementById('ing-cobros').innerHTML = cobros.length ? cobros.map(c => {
+    const estado = c.estado === 'paid' ? '<span class="ac-pill p-ok">Pagado</span>'
+      : c.estado === 'open' ? '<span class="ac-pill p-warn">Pendiente</span>'
+      : '<span class="ac-pill p-off">' + escapeHtml(c.estado || '—') + '</span>';
+    const cfdi = c.cfdi_estado === 'emitida' ? '<span class="ac-pill p-blue">Emitida</span>'
+      : c.cfdi_estado === 'no_requiere' ? '<span class="ac-pill p-off">No requiere</span>'
+      : '<span class="ac-pill p-warn">Pendiente</span>';
+    return '<tr><td>' + escapeHtml(c.fecha) + '</td>' +
+      '<td>' + escapeHtml(c.nombre) + '<br><span class="ac-bar__meta">' + escapeHtml(c.email || '') + '</span></td>' +
+      '<td class="num">' + mxn(c.monto) + ' ' + escapeHtml(c.moneda) + '</td>' +
+      '<td>' + estado + '</td><td>' + cfdi + '</td>' +
+      '<td class="num"><button class="ac-btn ac-btn--ghost ac-btn--sm" onclick="abrirCfdi(\'' + c.id + '\')">CFDI</button></td></tr>';
+  }).join('') : '<tr><td colspan="6" class="ac-empty">Sin cobros en este periodo.</td></tr>';
+
+  const atr = d.atrasadas || [];
+  document.getElementById('ing-atrasados').innerHTML = atr.length ? atr.map(a =>
+    '<tr><td>' + escapeHtml(a.nombre) + '</td><td>' + escapeHtml(a.plan || '—') + '</td>' +
+    '<td>' + fecha(a.desde) + '</td>' +
+    '<td class="num"><button class="ac-btn ac-btn--ghost ac-btn--sm" onclick="verUsuario(\'' + a.user_id + '\')">Ver cuenta</button></td></tr>'
+  ).join('') : '<tr><td colspan="4" class="ac-empty">Nadie atrasado. Todo al corriente.</td></tr>';
+}
+
+function abrirCfdi(idCobro){
+  const lista = (ingresos && ingresos.cobros) || [];
+  const c = lista.find(x => x.id === idCobro);
+  if(!c) return;
+  cobroSel = c;
+  document.getElementById('cf-info').textContent =
+    c.nombre + ' · ' + mxn(c.monto) + ' ' + c.moneda + ' · ' + c.fecha;
+  document.getElementById('cf-uuid').value = c.cfdi_uuid || '';
+  document.getElementById('cf-notas').value = '';
+  abrirModal('ov-cfdi');
+}
+
+async function guardarCfdi(estado){
+  if(!cobroSel) return;
+  try{
+    await apiJson('/admin/facturas/marcar', {
+      method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        stripe_invoice_id: cobroSel.id,
+        user_id: cobroSel.user_id || null,
+        uuid_cfdi: document.getElementById('cf-uuid').value.trim() || null,
+        notas: document.getElementById('cf-notas').value.trim() || null,
+        monto: cobroSel.monto,
+        estado: estado
+      })
+    });
+    cobroSel.cfdi_estado = estado;
+    cobroSel.cfdi_uuid = document.getElementById('cf-uuid').value.trim();
+    cerrarModal('ov-cfdi');
+    renderIngresos(ingresos);
+    toast('Factura registrada.');
+  }catch(e){
+    toast('Error: ' + e.message, true);
+  }
+}
+
+/* ══════════════ CORREO ══════════════ */
+function setBox(b){
+  box = b;
+  document.querySelectorAll('.co-boxes__btn').forEach(x => x.classList.toggle('is-on', x.dataset.b === b));
+  cargarCorreo();
+}
+
+async function cargarCorreo(){
+  const campo = document.getElementById('co-q');
+  const q = campo ? campo.value : '';
+  try{
+    const d = await apiJson('/admin/correo?box=' + box + '&q=' + encodeURIComponent(q));
+    correos = d.correos || [];
+    renderCorreo();
+    const badge = document.getElementById('tab-correo-n');
+    badge.textContent = d.sin_leer || 0;
+    badge.classList.toggle('is-hidden', !d.sin_leer);
+  }catch(e){
+    document.getElementById('co-list').innerHTML = '<div class="ac-empty">No se pudo cargar: ' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+function renderCorreo(){
+  const el = document.getElementById('co-list');
+  if(!correos.length){
+    el.innerHTML = '<div class="ac-empty">' +
+      (box === 'entrada'
+        ? 'No hay correos recibidos todavía.'
+        : 'Todavía no has enviado ningún correo desde aquí.') + '</div>';
+    return;
+  }
+  el.innerHTML = correos.map(c => {
+    const quien = box === 'entrada' ? (c.de_nombre || c.de_email || '—') : (c.para_email || '—');
+    return '<div class="co-item' + (c.leido ? '' : ' is-new') + (correoSel && correoSel.id === c.id ? ' is-on' : '') +
+      '" onclick="abrirCorreo(\'' + c.id + '\')">' +
+      '<div class="co-item__top"><span class="co-item__de">' + escapeHtml(quien) + '</span>' +
+      '<span class="co-item__fecha">' + fechaCorta(c.created_at) + '</span></div>' +
+      '<div class="co-item__asunto">' + escapeHtml(c.asunto || '(sin asunto)') + '</div>' +
+      '<div class="co-item__prev">' + escapeHtml((c.cuerpo || '').slice(0, 90)) + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+async function abrirCorreo(id){
+  const c = correos.find(x => x.id === id);
+  if(!c) return;
+  correoSel = c;
+  document.getElementById('co-vacio').classList.add('is-hidden');
+  document.getElementById('co-detalle').classList.remove('is-hidden');
+  document.getElementById('co-asunto').textContent = c.asunto || '(sin asunto)';
+  document.getElementById('co-meta').textContent =
+    'De: ' + (c.de_nombre ? (c.de_nombre + ' · ') : '') + (c.de_email || '—') +
+    '   ·   Para: ' + (c.para_email || '—') + '   ·   ' + fecha(c.created_at);
+  document.getElementById('co-cuerpo').textContent = c.cuerpo || '';
+  renderCorreo();
+  if(!c.leido){
+    try{
+      await apiJson('/admin/correo/leido', {
+        method:'POST', headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ id: c.id, leido: true })
+      });
+      c.leido = true;
+      cargarCorreo();
+    }catch(_){}
+  }
+}
+
+function responderCorreo(){
+  if(!correoSel) return;
+  abrirCompositor(correoSel.de_email, 'Re: ' + (correoSel.asunto || ''));
+}
+
+function escribirAUsuario(){
+  const u = users.find(x => x.id === selId);
+  if(!u || !u.email){ toast('Ese usuario no tiene correo registrado.', true); return; }
+  abrirCompositor(u.email, '');
+}
+
+function abrirCompositor(para, asunto){
+  modoCampana = false;
+  document.getElementById('mo-titulo').textContent = 'Escribir correo';
+  const campoPara = document.getElementById('mo-para');
+  campoPara.value = para || '';
+  campoPara.disabled = false;
+  document.getElementById('mo-asunto').value = asunto || '';
+  document.getElementById('mo-cuerpo').value = '';
+  document.getElementById('mo-nota').textContent = salud.resend
+    ? 'El correo sale desde tu dominio de Broquer. Las respuestas llegan a la pestaña Entrada.'
+    : 'Falta configurar la llave de Resend en el servidor para poder enviar.';
+  abrirModal('ov-correo');
+}
+
+function abrirCampana(){
+  if(!segSel) return;
+  modoCampana = true;
+  document.getElementById('mo-titulo').textContent = 'Campaña · ' + segSel.titulo;
+  const campoPara = document.getElementById('mo-para');
+  campoPara.value = segSel.total + ' destinatarios de este segmento';
+  campoPara.disabled = true;
+  document.getElementById('mo-asunto').value = '';
+  document.getElementById('mo-cuerpo').value = '';
+  document.getElementById('mo-nota').textContent =
+    'Cada persona recibe el correo por separado: nadie ve la lista de los demás. Con ' +
+    segSel.total + ' destinatarios el envío puede tardar un par de minutos.';
+  abrirModal('ov-correo');
+}
+
+async function enviarCorreo(){
+  const asunto = document.getElementById('mo-asunto').value.trim();
+  const cuerpo = document.getElementById('mo-cuerpo').value.trim();
+  if(!asunto){ toast('Falta el asunto.', true); return; }
+  if(!cuerpo){ toast('El mensaje está vacío.', true); return; }
+
+  const btn = document.getElementById('mo-enviar');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="adm-spinner"></span>';
+  try{
+    if(modoCampana){
+      const d = await apiJson('/admin/correo/masivo', {
+        method:'POST', headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ emails: segSel.emails, asunto: asunto, cuerpo: cuerpo, segmento: segSel.titulo })
+      });
+      toast('Campaña enviada a ' + d.enviados + ' de ' + d.total + '.');
+    } else {
+      const para = document.getElementById('mo-para').value.split(',').map(s => s.trim()).filter(Boolean);
+      const d = await apiJson('/admin/correo/enviar', {
+        method:'POST', headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ para: para, asunto: asunto, cuerpo: cuerpo, user_id: selId })
+      });
+      toast('Correo enviado a ' + d.enviados + '.');
+    }
+    cerrarModal('ov-correo');
+    if(tab === 'correo') cargarCorreo();
+  }catch(e){
+    toast('Error: ' + e.message, true);
+  }finally{
+    btn.disabled = false;
+    btn.textContent = 'Enviar';
+  }
+}
+
+/* ══════════════ MARKETING ══════════════ */
+async function cargarSegmentos(){
+  try{
+    const d = await apiJson('/admin/segmentos');
+    segmentos = d.segmentos || [];
+    renderSegmentos();
+  }catch(e){
+    document.getElementById('mk-segs').innerHTML = '<div class="ac-empty">No se pudo cargar: ' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+function renderSegmentos(){
+  document.getElementById('mk-segs').innerHTML = segmentos.map(s =>
+    '<button class="ac-seg" onclick="verSegmento(\'' + s.clave + '\')">' +
+      '<div class="ac-seg__n">' + nfmt(s.total) + '</div>' +
+      '<div class="ac-seg__t">' + escapeHtml(s.titulo) + '</div>' +
+      '<div class="ac-seg__d">' + escapeHtml(s.desc) + '</div>' +
+    '</button>').join('');
+}
+
+function verSegmento(clave){
+  const s = segmentos.find(x => x.clave === clave);
+  if(!s) return;
+  segSel = s;
+  const caja = document.getElementById('mk-detalle');
+  caja.classList.remove('is-hidden');
+  document.getElementById('mk-titulo').textContent = s.titulo;
+  document.getElementById('mk-conteo').textContent = nfmt(s.total) + ' personas';
+  document.getElementById('mk-desc').textContent = s.desc;
+  const lista = s.usuarios || [];
+  document.getElementById('mk-lista').innerHTML = lista.length ? lista.map(u =>
+    '<tr><td>' + escapeHtml(u.nombre) + '</td><td>' + escapeHtml(u.email || '—') + '</td>' +
+    '<td>' + fecha(u.created_at) + '</td></tr>').join('')
+    : '<tr><td colspan="3" class="ac-empty">Este segmento está vacío ahora mismo.</td></tr>';
+  caja.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function exportarSegmento(){
+  if(!segSel) return;
+  const filas = [['nombre','email','registro']];
+  (segSel.usuarios || []).forEach(u => filas.push([u.nombre||'', u.email||'', (u.created_at||'').slice(0,10)]));
+  descargarCsv(filas, 'segmento-' + segSel.clave + '.csv');
+}
+
+/* ══════════════ Modales, polling y avisos ══════════════ */
+function abrirModal(id){ document.getElementById(id).classList.add('is-on'); }
+function cerrarModal(id){ document.getElementById(id).classList.remove('is-on'); }
+
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){ cerrarModal('ov-correo'); cerrarModal('ov-cfdi'); }
+});
+
 function startPolling(){
   if(_polling) return;
   _polling = setInterval(async () => {
     try{
-      const r = await fetch(API + '/admin/users', {
-        headers:{ Authorization:'Bearer '+token }
-      });
-      if(!r.ok) return;
-      const d = await r.json();
+      const d = await apiJson('/admin/users');
       const fresh = d.users || [];
       const nuevos = fresh.filter(u => !_lastIds.has(u.id));
-      if(nuevos.length && _lastIds.size){
-        nuevos.forEach(u => toast('Nuevo usuario: ' + (u.nombre || u.email)));
-      }
+      if(nuevos.length && _lastIds.size) nuevos.forEach(u => toast('Nuevo usuario: ' + (u.nombre || u.email)));
       users = fresh;
       users.forEach(u => _lastIds.add(u.id));
       renderAll();
-      // Si el detalle está abierto, refrescar
       if(selId){
         const u = users.find(x => x.id === selId);
         if(u) renderDetail(u);
       }
     }catch(_){}
-  }, 30000);
+    cargarCorreo();
+  }, 45000);
 }
 
-/* ── Helpers ──────────────────────────────── */
-function escapeHtml(s){
-  return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
 let _t;
 function toast(msg, isErr){
   const t = document.getElementById('toast');
@@ -994,16 +1651,6 @@ function toast(msg, isErr){
   clearTimeout(_t);
   _t = setTimeout(() => t.classList.remove('is-on'), 3200);
 }
-
-/* Mobile: tapar el avatar del detalle para volver a la lista */
-document.addEventListener('click', e => {
-  if(e.target.closest('.adm-det__head') && window.matchMedia('(max-width:880px)').matches){
-    // sólo si tocan exactamente la cabecera del detalle (no inputs/etc)
-    if(e.target.classList.contains('adm-det__head') || e.target === document.getElementById('d-av')){
-      closeMobileDetail();
-    }
-  }
-});
 
 document.addEventListener('DOMContentLoaded', init);
 </script>
