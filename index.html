@@ -16,27 +16,48 @@
 .dash-scroll { padding: 24px 28px 48px; max-width: 1180px; margin: 0 auto; }
 @media (max-width: 720px) { .dash-scroll { padding: 16px 14px 40px; } }
 
-/* ── HERO navy (estructura) ── */
+/* ── HERO de saludo (estructura navy) ──
+   Todo el texto va en BLANCO; la única excepción es el nombre del
+   usuario, que conserva el azul claro de acento. La separación entre
+   el saludo y los indicadores se hace con bloques translúcidos y
+   aire, igual que en el sidebar: cero líneas divisorias. */
 .sky-hero {
-  background: var(--sky-navy); color: var(--bone) !important;
-  border-radius: var(--r-lg); padding: 28px 28px 22px;
+  background: var(--sky-navy); color: #fff !important;
+  border-radius: var(--r-xl); padding: 30px 28px 26px;
+  position: relative; overflow: hidden;
+  background-image: radial-gradient(120% 70% at 100% 0%, rgba(255,255,255,0.16), rgba(255,255,255,0) 58%);
 }
+.sky-hero > * { position: relative; }
 .sky-hero__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
 .sky-hero__eyebrow {
-  font-family: var(--font-mono); font-size: var(--fs-label-3); letter-spacing: 0.02em;
-   color: rgba(255,255,255,0.6); margin-bottom: 8px;
+  font-family: var(--font-sans); font-size: var(--fs-label-3); font-weight: 600; letter-spacing: 0.02em;
+  color: #fff; margin-bottom: 10px;
 }
-.sky-hero__title { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 700; letter-spacing: -0.02em; color: var(--bone); line-height: 1.05; }
-#dash-greet { color: var(--bone); }
+.sky-hero__title { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 800; letter-spacing: -0.025em; color: #fff; line-height: 1.05; }
+#dash-greet { color: #fff; }
+/* Única excepción de color dentro de la tarjeta: el nombre del usuario */
 .sky-hero__title em { font-style: normal; color: var(--sky-blue-on-dark); }
-.sky-hero__date { text-align: right; font-family: var(--font-mono); font-size: var(--fs-xs); color: rgba(255,255,255,0.7); }
-.sky-hero__date .label { display: block; font-size: var(--fs-label-3); letter-spacing: 0.02em;  color: rgba(255,255,255,0.5); margin-bottom: 3px; }
-.sky-hero__kpis { display: flex; gap: 0; margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.14); padding-top: 18px; }
-.sky-kpi { flex: 1; padding-right: 20px; }
-.sky-kpi + .sky-kpi { border-left: 1px solid rgba(255,255,255,0.14); padding-left: 20px; }
-.sky-kpi__value { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 700; color: var(--bone); line-height: 1; letter-spacing: -0.02em; }
-.sky-kpi__label { font-size: var(--fs-xs); color: rgba(255,255,255,0.65); margin-top: 6px; }
-@media (max-width: 560px) { .sky-hero__title { font-size: var(--fs-h2); } .sky-kpi__value { font-size: var(--fs-h3); } .sky-hero__date { text-align: left; } }
+/* La fecha deja de ser texto suelto: vive en su propio bloque */
+.sky-hero__date {
+  text-align: right; font-family: var(--font-sans); font-size: var(--fs-sm); font-weight: 700; color: #fff;
+  background: rgba(255,255,255,0.09); border-radius: var(--r); padding: 10px 14px;
+}
+.sky-hero__date .label { display: block; font-size: var(--fs-label-3); font-weight: 600; letter-spacing: 0.02em; color: #fff; margin-bottom: 3px; }
+/* Indicadores: un bloque por dato, separados por aire */
+.sky-hero__kpis {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;
+  margin-top: 26px; border-top: none; padding-top: 0;
+}
+.sky-kpi { background: rgba(255,255,255,0.09); border-radius: var(--r-lg); padding: 18px 20px; }
+.sky-kpi + .sky-kpi { border-left: none; padding-left: 20px; }
+.sky-kpi__value { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 800; color: #fff; line-height: 1; letter-spacing: -0.025em; }
+.sky-kpi__label { font-size: var(--fs-xs); font-weight: 600; color: #fff; margin-top: 8px; }
+@media (max-width: 560px) {
+  .sky-hero { padding: 24px 20px 22px; }
+  .sky-hero__title { font-size: var(--fs-h2); }
+  .sky-kpi__value { font-size: var(--fs-h3); }
+  .sky-hero__date { text-align: left; }
+}
 
 
 
