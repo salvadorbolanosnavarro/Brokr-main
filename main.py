@@ -231,7 +231,7 @@ def eb_headers(key: str = None):
 # ────────────────────────────────────────────
 @app.get("/")
 def root():
-    return {"status": "Brokr API activa", "version": "4.4"}
+    return {"status": "Brokr API activa", "version": "4.5"}
 
 # Endpoint para keep-alive (UptimeRobot u otro monitor cada 4 minutos).
 # No hace queries, no toca DB — solo evita que Railway duerma el servidor.
@@ -1839,7 +1839,7 @@ async def easybroker_diagnostico(request: Request):
     if not user_key:
         raise HTTPException(status_code=400, detail="No tienes API key de EasyBroker configurada.")
 
-    out = {"version_api": "4.4"}
+    out = {"version_api": "4.5"}
 
     def _total(d):
         pag = d.get("pagination") or {}
@@ -2106,24 +2106,30 @@ async def easybroker_import_all(request: Request):
     async with httpx.AsyncClient(timeout=60) as client:
         for i in range(0, len(inmuebles_listos), UPSERT_BATCH):
             chunk = inmuebles_listos[i:i+UPSERT_BATCH]
-            try:
-                ri = await client.post(
-                    f"{SUPABASE_URL}/rest/v1/propiedades",
-                    headers={**sb_headers,
-                             "Prefer": "resolution=merge-duplicates,return=minimal"},
-                    params={"on_conflict": "org_id,eb_public_id"},
-                    json=chunk
-                )
-                if ri.status_code in (200, 201, 204):
-                    upserted += len(chunk)
-                else:
-                    # Si el lote falla, registrar como error global del lote
-                    errores.append({
-                        "id": f"lote_{i // UPSERT_BATCH}",
-                        "error": f"Supabase {ri.status_code}: {ri.text[:200]}"
-                    })
-            except Exception as e:
-                errores.append({"id": f"lote_{i // UPSERT_BATCH}", "error": str(e)[:200]})
+            ultimo_fallo = "sin respuesta"
+            guardado = False
+            for intento in range(3):
+                try:
+                    ri = await client.post(
+                        f"{SUPABASE_URL}/rest/v1/propiedades",
+                        headers={**sb_headers,
+                                 "Prefer": "resolution=merge-duplicates,return=minimal"},
+                        params={"on_conflict": "org_id,eb_public_id"},
+                        json=chunk
+                    )
+                    if ri.status_code in (200, 201, 204):
+                        upserted += len(chunk)
+                        guardado = True
+                        break
+                    ultimo_fallo = f"Supabase {ri.status_code}: {ri.text[:200]}"
+                except Exception as e:
+                    ultimo_fallo = str(e)[:200]
+                await asyncio.sleep(1.5 * (2 ** intento))
+            if not guardado:
+                errores.append({
+                    "id": f"lote_{i // UPSERT_BATCH}",
+                    "error": ultimo_fallo
+                })
 
     nuevas      = sum(1 for inm in inmuebles_listos if inm["eb_public_id"] not in existentes_por_eb_id)
     actualizadas = upserted - nuevas if upserted >= nuevas else 0
@@ -7292,12 +7298,20 @@ async def importar_contactos_eb(request: Request):
         "Prefer": "return=minimal",
     }
 
-    # Obtener contactos existentes del usuario para deduplicar
+    # La empresa comparte UNA cuenta de EasyBroker. Si deduplicamos por agente,
+    # cada agente que importe crea su propia copia del mismo directorio. Por eso
+    # el universo de comparación es la empresa completa.
+    org_id_import = await get_org_id_for_user(user_id)
+
+    # Obtener contactos existentes (de la empresa si la hay, si no del agente)
+    filtro_existentes = ({"org_id": f"eq.{org_id_import}"} if org_id_import
+                         else {"user_id": f"eq.{user_id}"})
     async with httpx.AsyncClient(timeout=15) as client:
         r_existing = await client.get(
             f"{SUPABASE_URL}/rest/v1/contactos",
             headers=sb_headers,
-            params={"user_id": f"eq.{user_id}", "select": "id,telefono,email,nombre,empresa,notas,fuente,probabilidad,calle,mpio,cp,wa,etiquetas"}
+            params={**filtro_existentes,
+                    "select": "id,telefono,email,nombre,empresa,notas,fuente,probabilidad,calle,mpio,cp,wa,etiquetas"}
         )
     existing = r_existing.json() if r_existing.status_code == 200 else []
     existing_by_tel = {c["telefono"]: c for c in existing if c.get("telefono")}
@@ -7310,8 +7324,6 @@ async def importar_contactos_eb(request: Request):
     errores = 0
     total_eb = 0
     page = 1
-
-    org_id_import = await get_org_id_for_user(user_id)
 
     # ── Mapeo EasyBroker → Broquer ──
     _PROB = {"low": "baja", "medium": "media", "high": "alta"}
@@ -7430,8 +7442,10 @@ async def importar_contactos_eb(request: Request):
                         patch["etiquetas"] = union
                 if patch:
                     patch["updated_at"] = now_iso
+                    filtro_patch = (f"org_id=eq.{org_id_import}" if org_id_import
+                                    else f"user_id=eq.{user_id}")
                     rb = await client.patch(
-                        f"{SUPABASE_URL}/rest/v1/contactos?id=eq.{existente['id']}&user_id=eq.{user_id}",
+                        f"{SUPABASE_URL}/rest/v1/contactos?id=eq.{existente['id']}&{filtro_patch}",
                         headers=sb_headers,
                         json=patch
                     )

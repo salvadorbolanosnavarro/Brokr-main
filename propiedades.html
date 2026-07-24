@@ -123,18 +123,6 @@
   margin-top: 10px; padding: 0 10px; line-height: 1.5;
 }
 .eb-pick-actions { text-align: center; }
-.eb-diag-link {
-  color: var(--mute); text-decoration: underline; cursor: pointer;
-  font-size: var(--fs-caption);
-}
-.eb-diag-link:hover { color: var(--ink); }
-.eb-diag-box {
-  margin-top: 12px; padding: 10px; text-align: left;
-  border: 1px solid var(--line); border-radius: var(--r-sm);
-  background: var(--paper-2); color: var(--ink);
-  font-size: var(--fs-caption); line-height: 1.5;
-  max-height: 220px; overflow: auto; white-space: pre-wrap; word-break: break-word;
-}
 .eb-import-errs {
   font-size: var(--fs-caption); color: var(--danger); text-align: left;
   max-height: 80px; overflow-y: auto; margin-top: 10px;
@@ -2199,22 +2187,6 @@ async function importarDesdeEasyBroker() {
   overlay.classList.add('is-open');
 }
 
-async function ebDiagnostico() {
-  const box = document.getElementById('eb-diag-box');
-  box.style.display = 'block';
-  box.textContent = 'Consultando a EasyBroker…';
-  try {
-    const token = await getValidToken();
-    const r = await fetch(API_BASE + '/easybroker/diagnostico', {
-      headers: { Authorization: 'Bearer ' + token }
-    });
-    const data = await r.json();
-    box.textContent = JSON.stringify(data, null, 2);
-  } catch (err) {
-    box.textContent = 'No se pudo obtener el diagnóstico: ' + (err.message || 'error');
-  }
-}
-
 async function ebEjecutarImport() {
   const token = await getValidToken();
   if (!token) {
@@ -2986,9 +2958,7 @@ else { window.addEventListener('brokr-shell-ready', loadProps, { once: true }); 
       <div class="eb-pick-note">Se importan como máximo 1,000 propiedades por vez.</div>
       <div class="eb-pick-actions">
         <button class="eb-import-btn" id="eb-pick-btn" onclick="ebEjecutarImport()">Importar</button>
-        <div class="eb-pick-note"><span class="eb-diag-link" onclick="ebDiagnostico()">Ver diagnóstico de conexión</span></div>
       </div>
-      <div class="eb-diag-box" id="eb-diag-box" style="display:none"></div>
     </div>
     <div class="eb-import-bar" id="eb-import-bar"><div class="eb-import-bar__fill indet" id="eb-import-fill" style="width:35%"></div></div>
     <div class="eb-import-count" id="eb-import-count">&nbsp;</div>
