@@ -197,21 +197,23 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
 
 /* ── Precios ────────────────────────────────────────────────── */
 .ld-planes {
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--sp-5); max-width: 940px; margin: 0 auto; align-items: start;
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-5); max-width: 1180px; margin: 0 auto; align-items: stretch;
 }
-@media (max-width: 800px) { .ld-planes { grid-template-columns: 1fr; max-width: 480px; } }
+@media (max-width: 1000px) { .ld-planes { grid-template-columns: 1fr; max-width: 480px; } }
 
 .ld-price {
   max-width: 480px; margin: 0 auto; width: 100%;
   background: var(--bone); border: 1px solid var(--line); border-radius: var(--r-lg);
   box-shadow: var(--shadow-md); overflow: hidden; text-align: center;
+  display: flex; flex-direction: column;
 }
+.ld-price__head { display: flex; flex-direction: column; justify-content: flex-end; min-height: 148px; }
 .ld-price__head { background: var(--sky-blue); color: var(--bone) !important; padding: 26px 28px; background-image: radial-gradient(120% 160% at 100% 0%, rgba(255,255,255,.16), transparent 55%); }
 .ld-price__head .name { font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 700; letter-spacing: -.02em; }
 .ld-price__head .sub { font-size: var(--fs-sm); color: rgba(255,255,255,.85); margin-top: 4px; }
-.ld-price__body { padding: 26px 30px 30px; }
-.ld-price__list { list-style: none; margin: 0 0 24px; padding: 0; text-align: left; }
+.ld-price__body { padding: 26px 30px 30px; flex: 1; display: flex; flex-direction: column; }
+.ld-price__list { list-style: none; margin: 0 0 24px; padding: 0; text-align: left; flex: 1; }
 .ld-price__list li {
   font-size: var(--fs-sm); color: var(--ink-2); padding: 9px 0 9px 28px; position: relative;
   border-bottom: 1px solid var(--line);
@@ -230,10 +232,20 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
   background: var(--sky-navy);
   background-image: radial-gradient(120% 160% at 100% 0%, rgba(0,98,227,.34), transparent 55%);
 }
+/* Free: cabecera clara para distinguirlo sin jerarquizarlo. */
+.ld-price--free .ld-price__head {
+  background: var(--paper-2); background-image: none;
+  border-bottom: 1px solid var(--line);
+}
+.ld-price--free .ld-price__head .name { color: var(--ink); }
+.ld-price--free .ld-price__head .sub { color: var(--mute); }
+.ld-price--free .ld-price__precio { color: var(--ink); }
+
 .ld-price__precio {
   font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 700;
   color: var(--bone); letter-spacing: -.02em; margin-top: 6px;
 }
+.ld-price__precio-sub { font-size: var(--fs-sm); color: rgba(255,255,255,.80); margin-top: 4px; }
 
 /* ── CTA final ──────────────────────────────────────────────── */
 .ld-final {
@@ -458,9 +470,29 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
     <div class="ld-sec-head" style="text-align:center;margin-left:auto;margin-right:auto;">
       <div class="eyebrow">Precios</div>
       <h2>Para ti o para toda tu inmobiliaria.</h2>
-      <p>Todo el ecosistema por $899 al mes. Si son varios, hablamos.</p>
+      <p>Empieza gratis con el CRM completo. Cuando lo necesites, abre todo el ecosistema.</p>
     </div>
     <div class="ld-planes">
+    <div class="ld-price ld-price--free">
+      <div class="ld-price__head">
+        <div class="name">Free</div>
+        <div class="sub">Tu CRM completo, sin costo</div>
+        <div class="ld-price__precio">$0 al mes</div>
+      </div>
+      <div class="ld-price__body">
+        <ul class="ld-price__list">
+          <li>Tus Inmuebles: todo tu inventario con fotos, precios y ubicación</li>
+          <li>Contactos: tu base de clientes con notas, etiquetas e historial</li>
+          <li>Leads: los prospectos nuevos ordenados por etapa</li>
+          <li>Tareas: pendientes y recordatorios ligados a cada contacto o propiedad</li>
+          <li>Estadísticas: cómo va tu operación mes con mes</li>
+          <li>Tu cuenta en iPhone y iPad</li>
+        </ul>
+        <a class="ld-btn-blue" href="registro.html" style="width:100%;justify-content:center;padding:14px 22px;font-size:var(--fs-body);border-radius:var(--r);">Crear mi cuenta gratis</a>
+        <div class="ld-price__note">Sin tarjeta. Sin límite de tiempo.</div>
+      </div>
+    </div>
+
     <div class="ld-price">
       <div class="ld-price__head">
         <div class="name">Broquer Max</div>
@@ -479,7 +511,7 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
           <li>CRM completo: contactos, leads, tareas e inventario, etc.</li>
         </ul>
         <a class="ld-btn-blue" href="registro.html" style="width:100%;justify-content:center;padding:14px 22px;font-size:var(--fs-body);border-radius:var(--r);">Crear mi cuenta</a>
-        <div class="ld-price__note">Crea tu cuenta y comienza a usar tu CRM gratis hoy mismo</div>
+        <div class="ld-price__note">Incluye todo lo del plan Free, más las herramientas de arriba</div>
       </div>
     </div>
 
@@ -487,12 +519,13 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
       <div class="ld-price__head">
         <div class="name">Broquer para empresas</div>
         <div class="sub">Para tu agencia inmobiliaria</div>
-        <div class="ld-price__precio">Contáctanos</div>
+        <div class="ld-price__precio">$3,499 por 5 usuarios</div>
+        <div class="ld-price__precio-sub">Usuario adicional: $599</div>
       </div>
       <div class="ld-price__body">
         <ul class="ld-price__list">
           <li>Broquer Max para cada agente de tu equipo</li>
-          <li>Mismo inventario para todo el eqipo</li>
+          <li>Mismo inventario para todo el equipo</li>
           <li>Tú decides qué información sensible puede ver tu equipo</li>
           <li>Solo tú puedes conectar Facebook o API keys</li>
           <li>Puedes conectar varios números de WhatsApp</li>

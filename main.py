@@ -231,7 +231,7 @@ def eb_headers(key: str = None):
 # ────────────────────────────────────────────
 @app.get("/")
 def root():
-    return {"status": "Brokr API activa", "version": "4.5"}
+    return {"status": "Brokr API activa", "version": "4.6"}
 
 # Endpoint para keep-alive (UptimeRobot u otro monitor cada 4 minutos).
 # No hace queries, no toca DB — solo evita que Railway duerma el servidor.
@@ -1839,7 +1839,7 @@ async def easybroker_diagnostico(request: Request):
     if not user_key:
         raise HTTPException(status_code=400, detail="No tienes API key de EasyBroker configurada.")
 
-    out = {"version_api": "4.5"}
+    out = {"version_api": "4.6"}
 
     def _total(d):
         pag = d.get("pagination") or {}
@@ -2134,6 +2134,17 @@ async def easybroker_import_all(request: Request):
     nuevas      = sum(1 for inm in inmuebles_listos if inm["eb_public_id"] not in existentes_por_eb_id)
     actualizadas = upserted - nuevas if upserted >= nuevas else 0
 
+    # Guardar las fotos en Broquer, solo, sin que el usuario espere ni deje
+    # la pestaña abierta. Si ya hay un proceso corriendo para esta empresa,
+    # el propio trabajador se ignora a sí mismo.
+    fotos_lanzado = False
+    if org_id_import and upserted:
+        try:
+            asyncio.create_task(_migrar_fotos_org(org_id_import))
+            fotos_lanzado = True
+        except Exception as e:
+            print(f"[import-all] No se pudo lanzar el guardado de fotos: {e}")
+
     return {
         "total_easybroker": total_eb,
         "importadas":       nuevas,           # nuevas filas creadas
@@ -2144,6 +2155,7 @@ async def easybroker_import_all(request: Request):
         "descartadas":      descartadas_estatus, # EB las mandó pero no se pidieron
         "limite":           _EB_LIMITE_PROPIEDADES,
         "limite_alcanzado": limite_alcanzado,
+        "fotos_en_proceso": fotos_lanzado,
         "errores":          errores
     }
 
@@ -2178,6 +2190,182 @@ def _foto_migrable(url) -> bool:
     return (isinstance(url, str)
             and url.startswith("http")
             and not _foto_ya_es_de_broquer(url))
+
+
+# ── Compresión ──────────────────────────────────────────────────
+# Las fotos de EasyBroker vienen a resolución completa (1-3 MB cada una).
+# A 1600 px de lado mayor se ven idénticas en pantalla y en los PDFs, pero
+# pesan una fracción. Esto baja el almacenamiento y, sobre todo, el tráfico,
+# que es el recurso que primero se agota.
+_FOTO_MAX_LADO = 1600
+_FOTO_CALIDAD  = 82
+
+def _comprimir_imagen(raw: bytes):
+    """
+    Devuelve (bytes, mime, ext) ya optimizado, o (None, None, None) si no se
+    pudo mejorar. Es CPU-intensivo: llamar siempre con asyncio.to_thread.
+    """
+    try:
+        from PIL import Image, ImageOps
+        im = Image.open(io.BytesIO(raw))
+        im = ImageOps.exif_transpose(im)
+        if im.mode not in ("RGB", "L"):
+            im = im.convert("RGB")
+        im.thumbnail((_FOTO_MAX_LADO, _FOTO_MAX_LADO), Image.LANCZOS)
+        buf = io.BytesIO()
+        im.save(buf, format="JPEG", quality=_FOTO_CALIDAD,
+                optimize=True, progressive=True)
+        datos = buf.getvalue()
+        if datos and len(datos) < len(raw):
+            return (datos, "image/jpeg", "jpg")
+    except Exception:
+        pass
+    return (None, None, None)
+
+
+async def _foto_a_storage(client: httpx.AsyncClient, url: str, sb_headers: dict):
+    """
+    Baja una foto externa, la comprime y la sube al Storage de Broquer.
+    Devuelve la URL pública nueva, o None si algo falló (se conserva la
+    original para reintentarla en la siguiente pasada).
+    """
+    try:
+        rd = await client.get(url, timeout=30.0, follow_redirects=True)
+        if rd.status_code != 200 or not rd.content:
+            return None
+        mime = (rd.headers.get("content-type") or "image/jpeg").split(";")[0].strip().lower()
+        raw = rd.content
+    except Exception:
+        return None
+
+    ext = _EXT_POR_MIME.get(mime, "jpg")
+    comp, mime_c, ext_c = await asyncio.to_thread(_comprimir_imagen, raw)
+    if comp:
+        raw, mime, ext = comp, mime_c, ext_c
+
+    nombre = f"{_uuid.uuid4().hex}.{ext}"
+    try:
+        ru = await client.post(
+            f"{SUPABASE_URL}/storage/v1/object/{_FOTOS_BUCKET}/{nombre}",
+            headers={**sb_headers, "Content-Type": mime},
+            content=raw, timeout=60.0,
+        )
+    except Exception:
+        return None
+    if ru.status_code not in (200, 201):
+        return None
+    return f"{SUPABASE_URL}/storage/v1/object/public/{_FOTOS_BUCKET}/{nombre}"
+
+
+# ── Trabajador en segundo plano ─────────────────────────────────
+# Arranca solo al terminar una importación. El usuario no tiene que apretar
+# nada ni dejar la pestaña abierta. Es idempotente y reanudable: si el
+# servidor se reinicia a medias, la siguiente importación retoma lo que faltó.
+_fotos_en_proceso = set()   # org_id que ya tienen un trabajador corriendo
+
+async def _migrar_fotos_org(org_id: str):
+    """Recorre todas las propiedades de la empresa y guarda sus fotos externas."""
+    if not org_id or org_id in _fotos_en_proceso:
+        return
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return
+    _fotos_en_proceso.add(org_id)
+    sb_headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+    }
+    cursor = None
+    total_fotos = 0
+    total_props = 0
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            while True:
+                params = {
+                    "org_id": f"eq.{org_id}",
+                    "select": "id,fotos",
+                    "order":  "id.asc",
+                    "limit":  "10",
+                }
+                if cursor:
+                    params["id"] = f"gt.{cursor}"
+                try:
+                    r = await client.get(f"{SUPABASE_URL}/rest/v1/propiedades",
+                                         headers=sb_headers, params=params, timeout=30.0)
+                    if r.status_code != 200:
+                        break
+                    filas = r.json() or []
+                except Exception:
+                    break
+                if not filas:
+                    break
+
+                for fila in filas:
+                    cursor = fila.get("id")
+                    fotos = fila.get("fotos") or []
+                    if not isinstance(fotos, list) or not any(_foto_migrable(f) for f in fotos):
+                        continue
+                    nuevas = []
+                    subidas = 0
+                    for f in fotos:
+                        if not _foto_migrable(f):
+                            nuevas.append(f)
+                            continue
+                        nueva = await _foto_a_storage(client, f, sb_headers)
+                        if nueva:
+                            nuevas.append(nueva)
+                            subidas += 1
+                        else:
+                            nuevas.append(f)  # se reintenta la próxima vez
+                    if not subidas:
+                        continue
+                    try:
+                        await client.patch(
+                            f"{SUPABASE_URL}/rest/v1/propiedades",
+                            headers={**sb_headers, "Content-Type": "application/json",
+                                     "Prefer": "return=minimal"},
+                            params={"id": f"eq.{fila.get('id')}"},
+                            json={"fotos": nuevas}, timeout=30.0,
+                        )
+                        total_props += 1
+                        total_fotos += subidas
+                    except Exception:
+                        pass
+                    # Respiro para no saturar la instancia con IOPS de Storage
+                    await asyncio.sleep(0.3)
+    except Exception as e:
+        print(f"[fotos] Error en segundo plano para org {org_id}: {e}")
+    finally:
+        _fotos_en_proceso.discard(org_id)
+        print(f"[fotos] org {org_id}: {total_fotos} fotos guardadas en {total_props} propiedades")
+
+
+@app.get("/easybroker/fotos-pendientes")
+async def easybroker_fotos_pendientes(request: Request):
+    """Cuántas propiedades de la empresa siguen con fotos fuera de Broquer."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Tu sesión expiró. Vuelve a iniciar sesión.")
+    org_id = await get_org_id_for_user(user_id)
+    if not org_id:
+        return {"pendientes": 0, "en_proceso": False}
+    sb_headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+    }
+    pendientes = 0
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            r = await client.get(f"{SUPABASE_URL}/rest/v1/propiedades",
+                                 headers=sb_headers,
+                                 params={"org_id": f"eq.{org_id}", "select": "fotos"})
+            if r.status_code == 200:
+                for fila in (r.json() or []):
+                    fotos = fila.get("fotos") or []
+                    if isinstance(fotos, list) and any(_foto_migrable(f) for f in fotos):
+                        pendientes += 1
+    except Exception:
+        pass
+    return {"pendientes": pendientes, "en_proceso": org_id in _fotos_en_proceso}
 
 
 @app.post("/easybroker/migrar-fotos")
