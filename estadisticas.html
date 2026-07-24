@@ -212,6 +212,9 @@ html, body { background: var(--paper); }
 .es-empty p { font-size: var(--fs-sm); margin: 0; max-width: 380px; line-height: var(--lh); color: var(--mute); }
 .es-note { font-size: var(--fs-caption); color: var(--mute); margin-top: 8px; line-height: var(--lh-snug); }
 .es-note--pad { padding: 0 var(--sp-5) var(--sp-4); margin-top: 0; }
+.es-aviso { padding: var(--sp-5); border-left: 3px solid var(--warn); }
+.es-aviso__t { font-size: var(--fs-sm); font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+.es-aviso p { font-size: var(--fs-xs); color: var(--ink-2); margin: 0 0 8px; }
 .es-diag { font-size: var(--fs-caption); color: var(--mute); background: var(--paper-2);
   border-radius: var(--r); padding: 8px 12px; max-width: 560px; word-break: break-word; }
 .es-loading { padding: 60px 20px; text-align: center; color: var(--mute); font-size: var(--fs-sm); }
@@ -319,7 +322,7 @@ function col(i) { return PALETA[i % PALETA.length]; }
    Estado
    ════════════════════════════════════════════════════════════ */
 let contactos = [], props = [], interes = [], actividades = [], tareas = [];
-let wa = null, waErr = null, waCargando = true;
+let wa = null, waErr = null, waCargando = true, waFuente = '', waDetalle = '';
 let periodo = 'todo';
 let tab = 'resumen';
 let propSel = '';
@@ -380,33 +383,201 @@ async function cargarTodo() {
   }
 }
 
+/* ════════════════════════════════════════════════════════════
+   WhatsApp — dos caminos, para que la pestaña SIEMPRE tenga datos.
+
+   Camino 1 (completo): /whatsapp2/estadisticas. Da volumen de mensajes,
+   mapa de calor de horarios, tiempos de respuesta y carga de la IA.
+
+   Camino 2 (respaldo): /whatsapp2/conversaciones — el MISMO endpoint que
+   ya usa tu bandeja de WhatsApp todos los días. Si el primero falla por
+   lo que sea (servidor sin actualizar, permisos, una columna que falta),
+   se cae a este y de todos modos se dibujan conversaciones, temperatura,
+   etapas, score, forma de pago, números e inmuebles preguntados.
+   ════════════════════════════════════════════════════════════ */
+async function tokenFresco() {
+  try {
+    if (window.brokrSb && window.brokrSb.ensureToken) {
+      const t = await window.brokrSb.ensureToken();
+      if (t) return t;
+    }
+  } catch (e) { /* si el refresh falla, se intenta con el guardado */ }
+  return getToken();
+}
+
+async function pedirApi(ruta, tk) {
+  const ctrl = new AbortController();
+  const reloj = setTimeout(() => ctrl.abort(), 120000);
+  try {
+    return await fetch(API_BASE + ruta, {
+      headers: { Authorization: 'Bearer ' + tk }, signal: ctrl.signal,
+    });
+  } finally { clearTimeout(reloj); }
+}
+
+function motivo(e) {
+  const m = (e && e.message) ? e.message : '';
+  if (e && e.name === 'AbortError') return 'la consulta tardó demasiado';
+  if (/failed to fetch|networkerror|load failed/i.test(m)) return 'no hubo respuesta del servidor';
+  return m || 'error desconocido';
+}
+
 async function cargarWhatsApp() {
   waCargando = true;
+  waFuente = '';
+  const notas = [];
+  let tk = null;
   try {
-    const tk = getToken();
-    if (!tk) throw new Error('Tu sesión no está disponible; vuelve a entrar a Broquer.');
-    const ctrl = new AbortController();
-    const reloj = setTimeout(() => ctrl.abort(), 120000);
-    let r;
-    try {
-      r = await fetch(API_BASE + '/whatsapp2/estadisticas', {
-        headers: { Authorization: 'Bearer ' + tk }, signal: ctrl.signal,
-      });
-    } finally { clearTimeout(reloj); }
-    if (r.status === 404) throw new Error('El servidor todavía no tiene la última versión instalada.');
-    if (r.status === 401) throw new Error('Tu sesión expiró; vuelve a entrar a Broquer.');
-    if (!r.ok) throw new Error('El servidor respondió con un error (' + r.status + ').');
+    tk = await tokenFresco();
+  } catch (e) { /* abajo se reporta */ }
+  if (!tk) {
+    wa = null; waErr = 'No hay sesión activa; vuelve a entrar a Broquer.';
+    waCargando = false; render(); return;
+  }
+
+  /* ── Camino 1: estadísticas completas ── */
+  try {
+    let r = await pedirApi('/whatsapp2/estadisticas', tk);
+    if (r.status === 401 && window.brokrSb && window.brokrSb.refreshNow) {
+      const nuevo = await window.brokrSb.refreshNow();
+      if (nuevo) { tk = nuevo; r = await pedirApi('/whatsapp2/estadisticas', tk); }
+    }
+    if (r.ok) {
+      const j = await r.json();
+      const dg = (j && j.diagnostico) || null;
+      const hay = dg ? !!(dg.mensajes || dg.conversaciones || dg.contactos)
+                     : !!(j && j.ventanas && j.ventanas.todo && j.ventanas.todo.totales.mensajes);
+      if (j && j.ventanas && hay) {
+        wa = j; waErr = null; waFuente = 'completo';
+        waCargando = false; render(); return;
+      }
+      notas.push('estadísticas: respondió sin datos'
+        + (dg && dg.errores && Object.keys(dg.errores).length
+            ? ' (' + Object.keys(dg.errores).map(k => k + ': ' + dg.errores[k]).join('; ') + ')' : ''));
+    } else {
+      notas.push('estadísticas: HTTP ' + r.status
+        + (r.status === 404 ? ' (el servidor todavía no tiene la última versión)' : ''));
+    }
+  } catch (e) {
+    notas.push('estadísticas: ' + motivo(e));
+  }
+
+  /* ── Camino 2: la bandeja, que ya funciona ── */
+  try {
+    let r = await pedirApi('/whatsapp2/conversaciones', tk);
+    if (r.status === 401 && window.brokrSb && window.brokrSb.refreshNow) {
+      const nuevo = await window.brokrSb.refreshNow();
+      if (nuevo) { tk = nuevo; r = await pedirApi('/whatsapp2/conversaciones', tk); }
+    }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
     const j = await r.json();
-    wa = (j && j.ventanas) ? j : null;
-    waErr = wa ? null : 'Sin datos de WhatsApp.';
+    const convs = (j && j.conversaciones) || [];
+    if (!convs.length) {
+      wa = null;
+      waErr = 'Tu número está conectado, pero todavía no hay ninguna conversación guardada. '
+        + 'Revisa en el módulo de WhatsApp que la conexión esté verificada: si los mensajes le siguen '
+        + 'llegando al WhatsApp original, aquí no se guarda nada.';
+      waDetalle = notas.join(' · ') + ' · bandeja: 0 conversaciones';
+    } else {
+      wa = { ventanas: ventanasDeConversaciones(convs), parcial: true, totalConvs: convs.length };
+      waErr = null; waFuente = 'bandeja';
+      waDetalle = notas.join(' · ') + ' · bandeja: ' + convs.length + ' conversaciones';
+    }
   } catch (e) {
     wa = null;
-    const m = e && e.message ? e.message : '';
-    waErr = (e && e.name === 'AbortError') ? 'La consulta tardó demasiado.'
-      : (/failed to fetch|networkerror|load failed/i.test(m) ? 'No hubo respuesta del servidor.' : (m || 'Sin datos de WhatsApp.'));
+    waErr = 'No pude leer tus datos de WhatsApp por ninguna de las dos vías.';
+    waDetalle = notas.concat(['bandeja: ' + motivo(e)]).join(' · ');
   }
   waCargando = false;
   render();
+}
+
+/* Arma las cuatro ventanas a partir de las conversaciones de la bandeja.
+   No hay mensajes individuales aquí, así que las gráficas de volumen,
+   horarios y tiempos de respuesta se marcan como no disponibles. */
+function dentroDe(iso, p) {
+  if (p === 'todo') return !!iso;
+  if (!iso) return false;
+  const d = new Date(); d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - PERIODO_DIAS[p]);
+  return new Date(iso) >= d;
+}
+function ventanasDeConversaciones(convs) {
+  const out = {};
+  ['semana', 'mes', 'trimestre', 'todo'].forEach(p => {
+    const nuevas = convs.filter(c => dentroDe(c.created_at, p));
+    const movidas = convs.filter(c => dentroDe(c.last_message_at || c.created_at, p));
+    const hace24 = Date.now() - 86400000;
+
+    const temperatura = {}, etapa = {}, forma_pago = {};
+    const buckets = { '0-24': 0, '25-49': 0, '50-74': 0, '75-100': 0 };
+    let sumaScore = 0, conScore = 0;
+    convs.forEach(c => {
+      const ct = c.wa2_contactos || c.contacto || {};
+      const t = (ct.temperatura || 'Nuevo').trim() || 'Nuevo';
+      temperatura[t] = (temperatura[t] || 0) + 1;
+      const e = (ct.etapa || 'Nuevo').trim() || 'Nuevo';
+      etapa[e] = (etapa[e] || 0) + 1;
+      const f = (ct.forma_pago || 'Por definir').trim() || 'Por definir';
+      forma_pago[f] = (forma_pago[f] || 0) + 1;
+      const s = Number(ct.score);
+      if (!isNaN(s) && ct.score != null) {
+        sumaScore += s; conScore++;
+        if (s < 25) buckets['0-24']++;
+        else if (s < 50) buckets['25-49']++;
+        else if (s < 75) buckets['50-74']++;
+        else buckets['75-100']++;
+      }
+    });
+
+    const porDia = {};
+    nuevas.forEach(c => {
+      const k = new Date(c.created_at).toISOString().slice(0, 10);
+      porDia[k] = (porDia[k] || 0) + 1;
+    });
+
+    const propiedades = {};
+    movidas.forEach(c => {
+      (c.ultimas_propiedades || []).forEach(x => {
+        const pid = (x && x.id) ? String(x.id) : null;
+        if (!pid) return;
+        propiedades[pid] = propiedades[pid] || { conversaciones: 0, titulo: (x && x.titulo) || null };
+        propiedades[pid].conversaciones++;
+      });
+    });
+
+    const porNum = {};
+    movidas.forEach(c => {
+      const k = String(c.numero_id || 'sin-numero');
+      porNum[k] = (porNum[k] || 0) + 1;
+    });
+    const numeros = Object.keys(porNum).map(k => ({
+      id: k, alias: 'Número ' + k.slice(0, 6), conversaciones: porNum[k],
+      nuevas: nuevas.filter(c => String(c.numero_id) === k).length,
+      mensajes: 0, entrantes: 0, pct_ia: 0,
+    })).sort((a, b) => b.conversaciones - a.conversaciones);
+
+    out[p] = {
+      parcial: true,
+      totales: {
+        mensajes: 0, entrantes: 0, salientes: 0, ia: 0, agente: 0,
+        conversaciones_nuevas: nuevas.length,
+        conversaciones_activas_24h: convs.filter(c => c.last_message_at && new Date(c.last_message_at).getTime() >= hace24).length,
+        contactos_nuevos: nuevas.length,
+        handoffs: movidas.filter(c => c.ia_enabled === false).length,
+        sin_responder: convs.reduce((a, c) => a + (Number(c.unread_count) > 0 ? 1 : 0), 0),
+        pct_ia: 0, msgs_por_conversacion: 0,
+      },
+      serie: Object.keys(porDia).sort().map(k => ({ fecha: k, entrantes: porDia[k], ia: 0, agente: 0 })),
+      heat: null,
+      temperatura: temperatura, etapa: etapa, forma_pago: forma_pago,
+      score: { promedio: conScore ? Math.round(sumaScore / conScore) : null, buckets: buckets },
+      respuesta_min: { mediana: null, mediana_ia: null, mediana_agente: null, n: 0 },
+      numeros: numeros,
+      propiedades: propiedades,
+    };
+  });
+  return out;
 }
 
 function W() { return (wa && wa.ventanas) ? (wa.ventanas[periodo] || null) : null; }
@@ -898,7 +1069,7 @@ function panelResumen() {
     { label: 'Leads captados', color: 'var(--sky-blue)', counts: sLeads },
     { label: 'Inmuebles captados', color: 'var(--sky-navy-mid)', counts: sProps },
   ];
-  if (sWa) series.push({ label: 'Mensajes de WhatsApp', color: 'var(--success)', counts: sWa });
+  if (sWa) series.push({ label: w && w.parcial ? 'Conversaciones de WhatsApp' : 'Mensajes de WhatsApp', color: 'var(--success)', counts: sWa });
 
   const calificados = w ? Object.entries(w.temperatura || {}).filter(par => /caliente|tibio/i.test(par[0])).reduce((a, par) => a + par[1], 0) : 0;
   const citas = w ? ((w.etapa || {})['Cita'] || 0) : 0;
@@ -921,8 +1092,12 @@ function panelResumen() {
       + kpi(fmtMoneyShort(P.comision, ''), 'Comisión potencial del inventario')
       + kpi(L.tasa + '%', 'Tasa de cierre de leads', L.tasa >= 20 ? 'is-good' : (L.tasa < 5 ? 'is-warn' : ''))
       + kpi(nf(P.cerradas), 'Inmuebles cerrados ' + PERIODO_LBL[periodo], 'is-good')
-      + kpi(w ? nf(w.totales.mensajes) : (waCargando ? '…' : '—'), 'Mensajes de WhatsApp')
-      + kpi(w ? w.totales.pct_ia + '%' : (waCargando ? '…' : '—'), 'Atendido por la IA', 'is-good')
+      + (w && w.parcial
+          ? kpi(nf(w.totales.conversaciones_nuevas), 'Conversaciones de WhatsApp')
+          : kpi(w ? nf(w.totales.mensajes) : (waCargando ? '…' : '—'), 'Mensajes de WhatsApp'))
+      + (w && w.parcial
+          ? kpi(nf(w.totales.conversaciones_activas_24h), 'Chats activos en 24 horas')
+          : kpi(w ? w.totales.pct_ia + '%' : (waCargando ? '…' : '—'), 'Atendido por la IA', 'is-good'))
       + kpi(nf(vencidas), 'Tareas vencidas', vencidas ? 'is-bad' : '')
       + '</div>')
 
@@ -1110,44 +1285,23 @@ function panelWhatsApp() {
   if (waCargando) return '<div class="es-sec"><div class="es-card es-skel"></div></div>';
   const w = W();
   if (!w) {
-    return '<div class="es-card es-empty"><p>Todavía no puedo leer tus estadísticas de WhatsApp. '
-      + esc(waErr || '') + ' Si aún no conectas un número, hazlo desde el módulo de WhatsApp y aquí verás todo el detalle.</p></div>';
+    return '<div class="es-card es-empty"><p>' + esc(waErr || 'Todavía no puedo leer tus estadísticas de WhatsApp.') + '</p>'
+      + (waDetalle ? '<p class="es-diag">' + esc(waDetalle) + '</p>' : '') + '</div>';
   }
-  const dg = wa.diagnostico || null;
-  const errores = (dg && dg.errores) || {};
-  const clavesErr = Object.keys(errores);
-  const hayDatos = dg ? !!(dg.mensajes || dg.conversaciones || dg.contactos)
-                      : !!(w.totales && w.totales.mensajes);
-  if (clavesErr.length || !hayDatos) {
-    let msg, detalle = '';
-    if (clavesErr.length) {
-      msg = 'El servidor no pudo leer una parte de tus datos de WhatsApp. Mándame este detalle y lo corrijo:';
-      detalle = clavesErr.map(k => k + ' → ' + errores[k]).join(' | ');
-    } else if (dg && !dg.numeros) {
-      msg = 'No encuentro ningún número de WhatsApp dado de alta bajo tu cuenta. Si ya lo conectaste, puede estar guardado bajo otro usuario de tu organización.';
-      detalle = 'Cuentas revisadas: ' + nf(dg.user_ids || 0) + ' · números encontrados: 0';
-    } else {
-      msg = 'Tu número está conectado pero todavía no hay conversaciones ni mensajes guardados. En cuanto entre el primer mensaje, todas las gráficas se llenan solas.';
-      detalle = dg ? ('Números: ' + nf(dg.numeros) + ' · conversaciones: ' + nf(dg.conversaciones || 0)
-        + ' · contactos: ' + nf(dg.contactos || 0) + ' · mensajes: ' + nf(dg.mensajes || 0))
-        : 'El servidor todavía no manda el detalle; actualiza whatsapp.py.';
-    }
-    return '<div class="es-card es-empty"><p>' + esc(msg) + '</p>'
-      + '<p class="es-diag">' + esc(detalle) + '</p></div>';
-  }
+  const parcial = !!w.parcial;
   const t = w.totales;
   const bb = buildBuckets();
-  const sIn = serieDeMapa(w.serie.map(r => ({ fecha: r.fecha, valor: r.entrantes })), bb);
-  const sIa = serieDeMapa(w.serie.map(r => ({ fecha: r.fecha, valor: r.ia })), bb);
-  const sAg = serieDeMapa(w.serie.map(r => ({ fecha: r.fecha, valor: r.agente })), bb);
 
   const temp = Object.entries(w.temperatura || {}).sort((a, b) => b[1] - a[1])
     .map(par => ({ label: par[0], n: par[1], color: TEMP_COLOR[par[0]] || 'var(--mute)' }));
   const etapaOrden = ['Nuevo', 'Contactado', 'Cita', 'Negociación', 'Cierre'];
-  const etapas = etapaOrden.map((k, i) => ({ nombre: k, n: (w.etapa || {})[k] || 0, color: col(i) }));
-  const scoreB = Object.entries(w.score.buckets || {}).map((par, i) => ({ label: par[0] + ' de score', n: par[1], color: col(i) }));
+  const etapasBase = etapaOrden.map((k, i) => ({ nombre: k, n: (w.etapa || {})[k] || 0, color: col(i) }));
+  const extras = Object.keys(w.etapa || {}).filter(k => etapaOrden.indexOf(k) < 0)
+    .map((k, i) => ({ nombre: k, n: w.etapa[k], color: col(i + 5) }));
+  const etapas = etapasBase.concat(extras);
+  const scoreB = Object.entries((w.score && w.score.buckets) || {}).map((par, i) => ({ label: par[0] + ' de score', n: par[1], color: col(i) }));
   const pago = Object.entries(w.forma_pago || {}).sort((a, b) => b[1] - a[1]).map((par, i) => ({ label: par[0], n: par[1], color: col(i + 3) }));
-  const nums = (w.numeros || []).map((n, i) => ({ label: n.alias, n: n.mensajes, color: col(i) }));
+  const nums = (w.numeros || []).map((n, i) => ({ label: n.alias, n: parcial ? n.conversaciones : n.mensajes, color: col(i) }));
 
   const propsIdx = {};
   props.forEach(p => { propsIdx[String(p.id)] = p; });
@@ -1155,48 +1309,74 @@ function panelWhatsApp() {
     .map(par => ({ id: par[0], n: par[1].conversaciones, titulo: (propsIdx[par[0]] && propsIdx[par[0]].titulo) || par[1].titulo || 'Inmueble' }))
     .sort((a, b) => b.n - a.n).slice(0, 10);
 
-  return ''
-    + sec('Recepción de WhatsApp', PERIODO_LBL[periodo],
-      '<div class="es-kpis">'
-      + kpi(nf(t.conversaciones_nuevas), 'Conversaciones nuevas')
-      + kpi(nf(t.mensajes), 'Mensajes totales', '', nf(t.entrantes) + ' entrantes · ' + nf(t.salientes) + ' salientes')
-      + kpi(t.pct_ia + '%', 'Respondido por la IA', 'is-good')
-      + kpi(fmtMin(w.respuesta_min.mediana), 'Tiempo mediano de respuesta',
-          (w.respuesta_min.mediana != null && w.respuesta_min.mediana <= 5) ? 'is-good' : 'is-warn')
-      + kpi(nf(t.sin_responder), 'Conversaciones sin responder', t.sin_responder ? 'is-bad' : 'is-good')
-      + kpi(nf(t.handoffs), 'Pasadas a un humano')
-      + kpi(nf(t.conversaciones_activas_24h), 'Activas en 24 horas')
-      + kpi(nf(t.msgs_por_conversacion), 'Mensajes por conversación')
-      + '</div>')
+  const sConv = serieDeMapa((w.serie || []).map(r => ({ fecha: r.fecha, valor: r.entrantes })), bb);
 
-    + sec('Volumen de conversación', 'quién contesta qué, ' + PERIODO_LBL[periodo], tarjetaGrafica(chLine(bb, [
-        { label: 'Entrantes del prospecto', color: 'var(--sky-blue)', counts: sIn },
-        { label: 'Respondidos por la IA', color: 'var(--success)', counts: sIa },
-        { label: 'Respondidos por ti', color: 'var(--sky-navy-mid)', counts: sAg },
+  let html = '';
+
+  if (parcial) {
+    html += '<div class="es-sec"><div class="es-card es-aviso">'
+      + '<div class="es-aviso__t">Estás viendo la vista de conversaciones</div>'
+      + '<p>Estos números salen de tu bandeja de WhatsApp, que es la fuente que ya está funcionando. '
+      + 'El volumen de mensajes, el mapa de horarios, los tiempos de respuesta y la carga de la IA '
+      + 'necesitan la lectura profunda del servidor, que en este momento no está devolviendo datos.</p>'
+      + (waDetalle ? '<p class="es-diag">' + esc(waDetalle) + '</p>' : '')
+      + '</div></div>';
+  }
+
+  html += sec('Recepción de WhatsApp', PERIODO_LBL[periodo],
+    '<div class="es-kpis">'
+    + kpi(nf(t.conversaciones_nuevas), 'Conversaciones nuevas')
+    + (parcial ? kpi(nf(wa.totalConvs || 0), 'Conversaciones en tu bandeja')
+               : kpi(nf(t.mensajes), 'Mensajes totales', '', nf(t.entrantes) + ' entrantes · ' + nf(t.salientes) + ' salientes'))
+    + (parcial ? '' : kpi(t.pct_ia + '%', 'Respondido por la IA', 'is-good'))
+    + (parcial ? '' : kpi(fmtMin(w.respuesta_min.mediana), 'Tiempo mediano de respuesta',
+        (w.respuesta_min.mediana != null && w.respuesta_min.mediana <= 5) ? 'is-good' : 'is-warn'))
+    + kpi(nf(t.sin_responder), parcial ? 'Conversaciones sin leer' : 'Conversaciones sin responder', t.sin_responder ? 'is-bad' : 'is-good')
+    + kpi(nf(t.handoffs), 'Pasadas a un humano')
+    + kpi(nf(t.conversaciones_activas_24h), 'Activas en 24 horas')
+    + (parcial ? kpi((w.score && w.score.promedio != null) ? nf(w.score.promedio) : '—', 'Score promedio del prospecto')
+               : kpi(nf(t.msgs_por_conversacion), 'Mensajes por conversación'))
+    + '</div>');
+
+  html += parcial
+    ? sec('Conversaciones nuevas', 'por periodo', tarjetaGrafica(chBarsV(bb, [
+        { label: 'Conversaciones', color: 'var(--sky-blue)', counts: sConv },
       ])))
+    : sec('Volumen de conversación', 'quién contesta qué, ' + PERIODO_LBL[periodo], tarjetaGrafica(chLine(bb, [
+        { label: 'Entrantes del prospecto', color: 'var(--sky-blue)', counts: sConv },
+        { label: 'Respondidos por la IA', color: 'var(--success)', counts: serieDeMapa(w.serie.map(r => ({ fecha: r.fecha, valor: r.ia })), bb) },
+        { label: 'Respondidos por ti', color: 'var(--sky-navy-mid)', counts: serieDeMapa(w.serie.map(r => ({ fecha: r.fecha, valor: r.agente })), bb) },
+      ])));
 
-    + sec('Cuándo te escriben', 'mensajes entrantes por hora y día — aquí decides horarios y pauta', chHeat(w.heat, 'Menos'))
+  if (!parcial && w.heat) {
+    html += sec('Cuándo te escriben', 'mensajes entrantes por hora y día — aquí decides horarios y pauta', chHeat(w.heat, 'Menos'));
+  }
 
-    + '<div class="es-duo">'
-      + sec('Carga que se lleva la IA', 'de todo lo que sale de tu número',
+  html += '<div class="es-duo">'
+    + (parcial
+      ? sec('Calidad del prospecto', 'score que asigna la IA', tarjetaBarras(scoreB.filter(x => x.n > 0), 'Sin prospectos calificados todavía.'))
+      : sec('Carga que se lleva la IA', 'de todo lo que sale de tu número',
         '<div class="es-card es-donut">' + chGauge(t.pct_ia, 'atendido por IA', 'var(--success)')
         + '<div class="es-leg">'
         + '<div class="es-leg__row"><span class="es-leg__dot" style="background:var(--success)"></span><span class="es-leg__lbl">Respuestas de la IA</span><span class="es-leg__n">' + nf(t.ia) + '</span></div>'
         + '<div class="es-leg__row"><span class="es-leg__dot" style="background:var(--sky-navy-mid)"></span><span class="es-leg__lbl">Respuestas tuyas</span><span class="es-leg__n">' + nf(t.agente) + '</span></div>'
         + '<div class="es-leg__row"><span class="es-leg__dot" style="background:var(--mute)"></span><span class="es-leg__lbl">Mensajes del prospecto</span><span class="es-leg__n">' + nf(t.entrantes) + '</span></div>'
-        + '</div></div>')
-      + sec('Temperatura de los prospectos', 'como los califica la IA hoy',
-        tarjetaDonut(temp, nf(temp.reduce((a, x) => a + x.n, 0)), 'prospectos', 'Aún no hay prospectos calificados.'))
-    + '</div>'
+        + '</div></div>'))
+    + sec('Temperatura de los prospectos', 'como los califica la IA hoy',
+      tarjetaDonut(temp, nf(temp.reduce((a, x) => a + x.n, 0)), 'prospectos', 'Aún no hay prospectos calificados.'))
+    + '</div>';
 
-    + sec('Etapa de los prospectos de WhatsApp', 'del primer mensaje al cierre', chFunnel(etapas))
+  html += sec('Etapa de los prospectos de WhatsApp', 'del primer mensaje al cierre', chFunnel(etapas));
 
-    + '<div class="es-duo">'
-      + sec('Calidad del prospecto', 'score que asigna la IA', tarjetaBarras(scoreB, 'Sin prospectos calificados.'))
-      + sec('Forma de pago declarada', 'crédito, contado o por definir', tarjetaBarras(pago, 'Sin forma de pago declarada.'))
-    + '</div>'
+  html += '<div class="es-duo">'
+    + (parcial
+      ? sec('Por número conectado', 'cuál trae más conversaciones', tarjetaBarras(nums, 'Sin números conectados todavía.'))
+      : sec('Calidad del prospecto', 'score que asigna la IA', tarjetaBarras(scoreB, 'Sin prospectos calificados.')))
+    + sec('Forma de pago declarada', 'crédito, contado o por definir', tarjetaBarras(pago, 'Sin forma de pago declarada.'))
+    + '</div>';
 
-    + '<div class="es-duo">'
+  if (!parcial) {
+    html += '<div class="es-duo">'
       + sec('Velocidad de respuesta', 'mediana en minutos',
         '<div class="es-card">' + chBarsH([
           { label: 'La IA', n: w.respuesta_min.mediana_ia || 0, color: 'var(--success)' },
@@ -1204,16 +1384,22 @@ function panelWhatsApp() {
         ], { sinPct: true, fmt: v => fmtMin(v) }) + '</div>'
         + '<div class="es-note">Sobre ' + nf(w.respuesta_min.n) + ' respuestas medidas. Un prospecto contestado en menos de 5 minutos convierte varias veces mejor que uno contestado al día siguiente.</div>')
       + sec('Por número conectado', 'cuál trabaja más', tarjetaBarras(nums, 'Sin números conectados todavía.'))
-    + '</div>'
+      + '</div>';
+  }
 
-    + sec('Inmuebles más preguntados por WhatsApp', 'lo que de verdad está pidiendo el mercado', topProps.length
-      ? '<div class="es-rows">' + topProps.map((x, i) =>
-          '<div class="es-card es-row es-row--link" onclick="verInmueble(\'' + esc(x.id) + '\')">'
-          + '<div class="es-row__rank">' + (i + 1) + '</div>'
-          + '<div class="es-row__info"><div class="es-row__t">' + esc(x.titulo) + '</div>'
-          + '<div class="es-row__s">' + nf(x.n) + ' conversaciones donde se compartió</div></div>'
-          + '<div class="es-row__n">' + nf(x.n) + '</div></div>').join('') + '</div>'
-      : '<div class="es-card es-empty"><p>Cuando la IA comparta fichas de tus inmuebles por WhatsApp, aquí verás cuáles son los más solicitados.</p></div>');
+  html += sec('Inmuebles más preguntados por WhatsApp', 'lo que de verdad está pidiendo el mercado', topProps.length
+    ? '<div class="es-rows">' + topProps.map((x, i) =>
+        '<div class="es-card es-row es-row--link" onclick="verInmueble(\'' + esc(x.id) + '\')">'
+        + '<div class="es-row__rank">' + (i + 1) + '</div>'
+        + '<div class="es-row__info"><div class="es-row__t">' + esc(x.titulo) + '</div>'
+        + '<div class="es-row__s">' + nf(x.n) + ' conversaciones donde se compartió</div></div>'
+        + '<div class="es-row__n">' + nf(x.n) + '</div></div>').join('') + '</div>'
+    : '<div class="es-card es-empty"><p>Cuando la IA comparta fichas de tus inmuebles por WhatsApp, aquí verás cuáles son los más solicitados.</p></div>');
+
+  if (!parcial && waDetalle) {
+    html += '<div class="es-sec"><p class="es-diag">' + esc(waDetalle) + '</p></div>';
+  }
+  return html;
 }
 
 function panelMarketing() {
@@ -1282,7 +1468,7 @@ function panelMarketing() {
       + '</div>')
 
     + sec('Entrada de prospectos por canal', 'volumen comparado', tarjetaGrafica(chLine(bb, [
-        { label: 'Mensajes de WhatsApp', color: 'var(--success)', counts: sWa },
+        { label: (w && w.parcial) ? 'Conversaciones de WhatsApp' : 'Mensajes de WhatsApp', color: 'var(--success)', counts: sWa },
         { label: 'Leads del CRM', color: 'var(--sky-blue)', counts: sLeads },
       ])))
 
@@ -1317,7 +1503,7 @@ function panelMarketing() {
         : '<div class="es-card es-empty"><p>Sin datos suficientes.</p></div>')
     + '</div>'
 
-    + (w ? sec('Horarios de mayor demanda', 'cuándo lanzar campañas y cuándo tener a alguien contestando', chHeat(w.heat, 'Menos')) : '');
+    + ((w && w.heat) ? sec('Horarios de mayor demanda', 'cuándo lanzar campañas y cuándo tener a alguien contestando', chHeat(w.heat, 'Menos')) : '');
 }
 
 function inmuebleSel() {
