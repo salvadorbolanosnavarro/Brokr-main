@@ -212,6 +212,8 @@ html, body { background: var(--paper); }
 .es-empty p { font-size: var(--fs-sm); margin: 0; max-width: 380px; line-height: var(--lh); color: var(--mute); }
 .es-note { font-size: var(--fs-caption); color: var(--mute); margin-top: 8px; line-height: var(--lh-snug); }
 .es-note--pad { padding: 0 var(--sp-5) var(--sp-4); margin-top: 0; }
+.es-diag { font-size: var(--fs-caption); color: var(--mute); background: var(--paper-2);
+  border-radius: var(--r); padding: 8px 12px; max-width: 560px; word-break: break-word; }
 .es-loading { padding: 60px 20px; text-align: center; color: var(--mute); font-size: var(--fs-sm); }
 .es-skel { height: 190px; border-radius: var(--r-lg); background: var(--paper-2); }
 .es-kpis--inset { margin: 0; padding: var(--sp-5); }
@@ -1110,6 +1112,28 @@ function panelWhatsApp() {
   if (!w) {
     return '<div class="es-card es-empty"><p>Todavía no puedo leer tus estadísticas de WhatsApp. '
       + esc(waErr || '') + ' Si aún no conectas un número, hazlo desde el módulo de WhatsApp y aquí verás todo el detalle.</p></div>';
+  }
+  const dg = wa.diagnostico || null;
+  const errores = (dg && dg.errores) || {};
+  const clavesErr = Object.keys(errores);
+  const hayDatos = dg ? !!(dg.mensajes || dg.conversaciones || dg.contactos)
+                      : !!(w.totales && w.totales.mensajes);
+  if (clavesErr.length || !hayDatos) {
+    let msg, detalle = '';
+    if (clavesErr.length) {
+      msg = 'El servidor no pudo leer una parte de tus datos de WhatsApp. Mándame este detalle y lo corrijo:';
+      detalle = clavesErr.map(k => k + ' → ' + errores[k]).join(' | ');
+    } else if (dg && !dg.numeros) {
+      msg = 'No encuentro ningún número de WhatsApp dado de alta bajo tu cuenta. Si ya lo conectaste, puede estar guardado bajo otro usuario de tu organización.';
+      detalle = 'Cuentas revisadas: ' + nf(dg.user_ids || 0) + ' · números encontrados: 0';
+    } else {
+      msg = 'Tu número está conectado pero todavía no hay conversaciones ni mensajes guardados. En cuanto entre el primer mensaje, todas las gráficas se llenan solas.';
+      detalle = dg ? ('Números: ' + nf(dg.numeros) + ' · conversaciones: ' + nf(dg.conversaciones || 0)
+        + ' · contactos: ' + nf(dg.contactos || 0) + ' · mensajes: ' + nf(dg.mensajes || 0))
+        : 'El servidor todavía no manda el detalle; actualiza whatsapp.py.';
+    }
+    return '<div class="es-card es-empty"><p>' + esc(msg) + '</p>'
+      + '<p class="es-diag">' + esc(detalle) + '</p></div>';
   }
   const t = w.totales;
   const bb = buildBuckets();

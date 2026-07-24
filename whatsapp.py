@@ -1776,13 +1776,31 @@ async def wa2_contacto_patch(contacto_id: str, request: Request):
 _VENTANAS_ESTAD = {"semana": 7, "mes": 30, "trimestre": 90, "todo": 0}
 
 
+async def _sb_diag(table: str, params: dict) -> tuple[list, str]:
+    """Igual que sb_get pero DEVUELVE el error en vez de tragárselo.
+    sb_get regresa [] tanto si no hay filas como si la consulta falló: para
+    estadísticas eso es fatal, porque una columna que no existe se veía
+    exactamente igual que 'no tienes datos'."""
+    try:
+        async with httpx.AsyncClient(timeout=25) as c:
+            r = await c.get(f"{SUPABASE_URL}/rest/v1/{table}", headers=_sb_headers(), params=params)
+        if r.status_code < 300:
+            data = r.json()
+            return (data if isinstance(data, list) else ([data] if data else [])), ""
+        return [], f"{r.status_code}: {r.text[:200]}"
+    except Exception as e:
+        return [], str(e)[:200]
+
+
 async def _sb_get_paginado(table: str, params: dict, tope: int = 40000,
-                           paralelo: int = 6) -> list:
+                           paralelo: int = 6) -> tuple[list, str]:
     """PostgREST corta en 1000 filas. Para estadísticas necesitamos el historial
     completo, así que se pagina — pero EN PARALELO. En serie, un historial de
     30 mil mensajes son 30 viajes de ida y vuelta y Railway corta la conexión
-    antes de terminar (el navegador lo ve como 'Failed to fetch')."""
+    antes de terminar (el navegador lo ve como 'Failed to fetch').
+    Devuelve (filas, error)."""
     salida: list = []
+    error = ""
     pagina = 1000
     bloque = 0
     while len(salida) < tope and bloque < 40:
@@ -1791,18 +1809,25 @@ async def _sb_get_paginado(table: str, params: dict, tope: int = 40000,
             p = dict(params)
             p["limit"] = str(pagina)
             p["offset"] = str((bloque * paralelo + k) * pagina)
-            tareas.append(sb_get(table, p))
+            tareas.append(_sb_diag(table, p))
         resultados = await asyncio.gather(*tareas, return_exceptions=True)
         traidas = 0
-        for filas in resultados:
-            if isinstance(filas, Exception) or not filas:
+        for res in resultados:
+            if isinstance(res, Exception):
+                error = error or str(res)[:200]
+                continue
+            filas, err = res
+            if err:
+                error = error or err
                 continue
             salida.extend(filas)
             traidas += len(filas)
+        if error and not salida:
+            break
         if traidas < pagina * paralelo:
             break
         bloque += 1
-    return salida[:tope]
+    return salida[:tope], error
 
 
 def _dt(valor) -> datetime | None:
@@ -2028,22 +2053,42 @@ async def wa2_estadisticas(request: Request, zona: str | None = None):
     filtro = _in_filter(ids)
     zona = zona or _ZONA_DEFAULT
 
-    # Las cuatro consultas salen al mismo tiempo. El orden es por id (la llave
-    # primaria, siempre indexada) porque ordenar por created_at obliga a
-    # Postgres a ordenar toda la tabla en cada página.
-    numeros, contactos, conversaciones, mensajes = await asyncio.gather(
-        sb_get("wa2_numeros", {
-            "user_id": filtro, "select": "id,alias,display_number,ia_enabled,created_at"}),
-        _sb_get_paginado("wa2_contactos", {
-            "user_id": filtro, "order": "id.asc",
-            "select": "id,created_at,temperatura,score,etapa,forma_pago,numero_id"}, tope=20000),
-        _sb_get_paginado("wa2_conversaciones", {
-            "user_id": filtro, "order": "id.asc",
-            "select": "id,contacto_id,numero_id,created_at,last_message_at,ia_enabled,ultimas_propiedades"}, tope=20000),
+    # Las tablas chicas se piden con select=* a propósito: si una columna
+    # opcional todavía no existe en la base del agente (una migración que no se
+    # corrió), un select con nombres explícitos devuelve 400 y TODO se ve en
+    # cero sin decir por qué. Con * no hay columna que pueda faltar.
+    (numeros, e_num), (contactos, e_con), (conversaciones, e_conv), (mensajes, e_msg) = await asyncio.gather(
+        _sb_diag("wa2_numeros", {"user_id": filtro, "select": "*"}),
+        _sb_get_paginado("wa2_contactos", {"user_id": filtro, "order": "id.asc", "select": "*"}, tope=20000),
+        _sb_get_paginado("wa2_conversaciones", {"user_id": filtro, "order": "id.asc", "select": "*"}, tope=20000),
         _sb_get_paginado("wa2_mensajes", {
             "user_id": filtro, "order": "id.asc",
             "select": "conversacion_id,direction,sender,created_at"}),
     )
+    # Respaldo: si el select angosto de mensajes falló (nombre de columna
+    # distinto), se reintenta con * antes de darse por vencido.
+    if e_msg and not mensajes:
+        mensajes, e_msg2 = await _sb_get_paginado(
+            "wa2_mensajes", {"user_id": filtro, "order": "id.asc", "select": "*"})
+        if mensajes:
+            e_msg = ""
+        else:
+            e_msg = e_msg2 or e_msg
+
+    for n in numeros:
+        n.pop("access_token", None)
+
+    diagnostico = {
+        "user_ids": len(ids),
+        "numeros": len(numeros), "contactos": len(contactos),
+        "conversaciones": len(conversaciones), "mensajes": len(mensajes),
+        "errores": {k: v for k, v in {
+            "wa2_numeros": e_num, "wa2_contactos": e_con,
+            "wa2_conversaciones": e_conv, "wa2_mensajes": e_msg,
+        }.items() if v},
+    }
+    if diagnostico["errores"]:
+        log.error("estadisticas whatsapp2: %s", diagnostico["errores"])
 
     ahora = datetime.now(timezone.utc)
     ventanas = {
@@ -2055,5 +2100,6 @@ async def wa2_estadisticas(request: Request, zona: str | None = None):
         "zona": zona,
         "generado": _now(),
         "numeros_conectados": len(numeros),
+        "diagnostico": diagnostico,
         "ventanas": ventanas,
     }

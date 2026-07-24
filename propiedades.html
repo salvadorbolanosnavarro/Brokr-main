@@ -110,6 +110,19 @@
   cursor: pointer;
 }
 .eb-import-btn:hover { background: var(--ink-2); }
+.eb-import-picker { text-align: left; margin-bottom: 4px; }
+.eb-pick-opt {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px; border-radius: var(--r-sm);
+  font-size: var(--fs-sm); color: var(--ink); cursor: pointer;
+}
+.eb-pick-opt:hover { background: var(--paper-2); }
+.eb-pick-opt input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--ink); }
+.eb-pick-note {
+  font-size: var(--fs-caption); color: var(--mute);
+  margin-top: 10px; padding: 0 10px; line-height: 1.5;
+}
+.eb-pick-actions { text-align: center; }
 .eb-import-errs {
   font-size: var(--fs-caption); color: var(--danger); text-align: left;
   max-height: 80px; overflow-y: auto; margin-top: 10px;
@@ -2160,11 +2173,44 @@ async function importarDesdeEasyBroker() {
     return;
   }
 
-  // Mostrar modal de carga (indeterminado, no sabemos cuántas hay aún)
+  // Paso 1: elegir qué estatus importar. El modal se puede cerrar aquí.
+  _ebImportDone = true;
+  const overlay = document.getElementById('eb-import-overlay');
+  document.getElementById('eb-import-title').textContent = 'Importar desde EasyBroker';
+  document.getElementById('eb-import-msg').textContent   = 'Elige qué propiedades quieres traer a Broquer.';
+  document.getElementById('eb-import-picker').style.display  = 'block';
+  document.getElementById('eb-import-bar').style.display     = 'none';
+  document.getElementById('eb-import-count').style.display   = 'none';
+  document.getElementById('eb-import-summary').style.display = 'none';
+  document.getElementById('eb-import-errs').style.display    = 'none';
+  document.getElementById('eb-import-btn').style.display     = 'none';
+  overlay.classList.add('is-open');
+}
+
+async function ebEjecutarImport() {
+  const token = await getValidToken();
+  if (!token) {
+    alert('Tu sesión expiró. Vuelve a iniciar sesión.');
+    location.href = 'login.html';
+    return;
+  }
+
+  const statuses = Array.from(
+    document.querySelectorAll('#eb-import-picker input[type=checkbox]:checked')
+  ).map(el => el.value);
+
+  if (!statuses.length) {
+    alert('Elige al menos un tipo de propiedad para importar.');
+    return;
+  }
+
+  // Paso 2: importar. Aquí el modal ya no se puede cerrar.
   _ebImportDone = false;
   const overlay  = document.getElementById('eb-import-overlay');
   const titleEl  = document.getElementById('eb-import-title');
   const msgEl    = document.getElementById('eb-import-msg');
+  const pickEl   = document.getElementById('eb-import-picker');
+  const barEl    = document.getElementById('eb-import-bar');
   const fillEl   = document.getElementById('eb-import-fill');
   const countEl  = document.getElementById('eb-import-count');
   const sumEl    = document.getElementById('eb-import-summary');
@@ -2172,9 +2218,12 @@ async function importarDesdeEasyBroker() {
   const btnEl    = document.getElementById('eb-import-btn');
 
   titleEl.textContent = 'Importando desde EasyBroker';
-  msgEl.textContent   = 'Estamos trayendo tus propiedades publicadas. Esto debería tardar menos de un minuto. No cierres esta ventana.';
+  msgEl.textContent   = 'Estamos trayendo tus propiedades. Esto puede tardar un poco. No cierres esta ventana.';
+  pickEl.style.display = 'none';
+  barEl.style.display  = 'block';
   fillEl.style.width = '35%';
   fillEl.classList.add('indet');
+  countEl.style.display = 'block';
   countEl.innerHTML = '&nbsp;';
   sumEl.style.display = 'none';
   errsEl.style.display = 'none';
@@ -2184,7 +2233,8 @@ async function importarDesdeEasyBroker() {
   try {
     const r = await fetch(API_BASE + '/easybroker/import-all', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ statuses: statuses })
     });
     const data = await r.json();
     if (!r.ok) {
@@ -2199,7 +2249,7 @@ async function importarDesdeEasyBroker() {
     fillEl.classList.remove('indet');
     fillEl.style.width = '100%';
     titleEl.textContent = 'Importación completada';
-    msgEl.textContent = 'Tus propiedades publicadas ya están en Mis Inmuebles.';
+    msgEl.textContent = 'Tus propiedades ya están en Mis Inmuebles.';
     countEl.innerHTML = '&nbsp;';
 
     const nuevas       = data.importadas || 0;
@@ -2208,7 +2258,10 @@ async function importarDesdeEasyBroker() {
     sumEl.innerHTML =
       '<div><b>' + nuevas + '</b> propiedades nuevas importadas</div>' +
       '<div><b>' + actualizadas + '</b> actualizadas con datos más recientes</div>' +
-      '<div style="color:var(--line-2);margin-top:4px;font-size:var(--fs-xs)">Total publicadas en tu EasyBroker: ' + data.total_easybroker + '</div>';
+      '<div style="color:var(--line-2);margin-top:4px;font-size:var(--fs-xs)">Encontradas en tu EasyBroker: ' + data.total_easybroker + '</div>' +
+      (data.limite_alcanzado
+        ? '<div style="color:var(--mute);margin-top:6px;font-size:var(--fs-xs)">Se alcanzó el máximo de ' + (data.limite || 1000) + ' propiedades por importación. Vuelve a importar para traer el resto.</div>'
+        : '');
 
     if (data.errores && data.errores.length) {
       errsEl.style.display = 'block';
@@ -2896,7 +2949,18 @@ else { window.addEventListener('brokr-shell-ready', loadProps, { once: true }); 
   <div class="eb-import-modal">
     <div class="eb-import-title" id="eb-import-title">Importando desde EasyBroker</div>
     <div class="eb-import-msg" id="eb-import-msg">Conectando con tu cuenta…</div>
-    <div class="eb-import-bar"><div class="eb-import-bar__fill indet" id="eb-import-fill" style="width:35%"></div></div>
+    <div class="eb-import-picker" id="eb-import-picker" style="display:none">
+      <label class="eb-pick-opt"><input type="checkbox" value="published" checked> Publicadas</label>
+      <label class="eb-pick-opt"><input type="checkbox" value="not_published"> No publicadas</label>
+      <label class="eb-pick-opt"><input type="checkbox" value="reserved" checked> Reservadas</label>
+      <label class="eb-pick-opt"><input type="checkbox" value="sold" checked> Vendidas</label>
+      <label class="eb-pick-opt"><input type="checkbox" value="rented" checked> Rentadas</label>
+      <div class="eb-pick-note">Se importan como máximo 1,000 propiedades por vez.</div>
+      <div class="eb-pick-actions">
+        <button class="eb-import-btn" id="eb-pick-btn" onclick="ebEjecutarImport()">Importar</button>
+      </div>
+    </div>
+    <div class="eb-import-bar" id="eb-import-bar"><div class="eb-import-bar__fill indet" id="eb-import-fill" style="width:35%"></div></div>
     <div class="eb-import-count" id="eb-import-count">&nbsp;</div>
     <div class="eb-import-summary" id="eb-import-summary" style="display:none"></div>
     <div class="eb-import-errs" id="eb-import-errs" style="display:none"></div>
