@@ -231,7 +231,7 @@ def eb_headers(key: str = None):
 # ────────────────────────────────────────────
 @app.get("/")
 def root():
-    return {"status": "Brokr API activa", "version": "4.3"}
+    return {"status": "Brokr API activa", "version": "4.4"}
 
 # Endpoint para keep-alive (UptimeRobot u otro monitor cada 4 minutos).
 # No hace queries, no toca DB — solo evita que Railway duerma el servidor.
@@ -1839,7 +1839,7 @@ async def easybroker_diagnostico(request: Request):
     if not user_key:
         raise HTTPException(status_code=400, detail="No tienes API key de EasyBroker configurada.")
 
-    out = {"version_api": "4.3"}
+    out = {"version_api": "4.4"}
 
     def _total(d):
         pag = d.get("pagination") or {}
@@ -1979,66 +1979,62 @@ async def easybroker_import_all(request: Request):
     except Exception as e:
         print(f"[import-all] Error leyendo existentes: {e}")
 
-    # ─── Paso 2: paginar el listado de EasyBroker ───
-    # OJO: no confiamos en que EasyBroker respete search[statuses][]. Si el
-    # filtro no le llega bien, su API devuelve TODO el catálogo. Por eso
-    # además de pedirle el filtro, verificamos el estatus real que viene en
-    # cada propiedad y descartamos las que el usuario no eligió.
-    estatus_por_pid = {}     # public_id → estatus Broquer (o None si EB no lo dijo)
-    conteo_por_estatus = {}  # estatus EB → cuántas se aceptaron
+    # ─── Paso 2: paginar el listado de EasyBroker, un estatus a la vez ───
+    # IMPORTANTE: EasyBroker NO incluye el estatus dentro de cada propiedad,
+    # ni en el listado ni en el detalle. La única forma de saber de qué estatus
+    # es una propiedad es preguntarle por ese estatus y etiquetar lo que venga.
+    # Por eso paginamos un estatus a la vez. (Verificado con /easybroker/diagnostico)
+    estatus_por_pid = {}     # public_id → estatus Broquer
+    conteo_por_estatus = {}  # estatus EB → cuántas llegaron
     ids_published = []       # orden de llegada (nombre histórico, se conserva)
     limite_alcanzado = False
-    descartadas_estatus = 0  # devueltas por EB pero de un estatus no elegido
+    descartadas_estatus = 0  # repetidas entre estatus (ya contadas en otro)
     for s in statuses_elegidos:
         conteo_por_estatus[s] = 0
 
     async with httpx.AsyncClient(timeout=30) as client:
-        pagina = 1
-        while pagina <= 400:  # tope duro de seguridad
-            params_lista = [("limit", 50), ("page", pagina)]
-            params_lista += [("search[statuses][]", s) for s in statuses_elegidos]
-            r = await _eb_get_reintentos(
-                client,
-                f"{EB_BASE}/properties",
-                eb_headers(user_key),
-                params_lista,
-                timeout=30.0,
-            )
-            if r is None:
-                break
-            if r.status_code == 401:
-                raise HTTPException(status_code=401, detail="Tu API key de EasyBroker fue rechazada. Reconéctala en Perfil.")
-            if r.status_code != 200:
-                break
-            data = r.json()
-            content = data.get("content", []) or []
-            if not content:
-                break
-            for p in content:
-                if len(ids_published) >= _EB_LIMITE_PROPIEDADES:
-                    limite_alcanzado = True
-                    break
-                pid = p.get("public_id")
-                if not pid or pid in estatus_por_pid:
-                    continue
-                est_eb = (p.get("status") or "").strip().lower()
-                if est_eb in _EB_STATUS_MAP:
-                    # EasyBroker sí nos dijo el estatus: mandamos nosotros.
-                    if est_eb not in statuses_elegidos:
-                        descartadas_estatus += 1
-                        continue
-                    estatus_por_pid[pid] = _EB_STATUS_MAP[est_eb]
-                    conteo_por_estatus[est_eb] = conteo_por_estatus.get(est_eb, 0) + 1
-                else:
-                    # EasyBroker no incluyó el estatus en el listado. Se decide
-                    # más adelante, con el detalle de la propiedad.
-                    estatus_por_pid[pid] = None
-                ids_published.append(pid)
+        for eb_status in statuses_elegidos:
             if limite_alcanzado:
                 break
-            if not data.get("pagination", {}).get("next_page"):
-                break
-            pagina += 1
+            brokr_status = _EB_STATUS_MAP[eb_status]
+            pagina = 1
+            while pagina <= 400:  # tope duro de seguridad
+                r = await _eb_get_reintentos(
+                    client,
+                    f"{EB_BASE}/properties",
+                    eb_headers(user_key),
+                    [("limit", 50), ("page", pagina),
+                     ("search[statuses][]", eb_status)],
+                    timeout=30.0,
+                )
+                if r is None:
+                    break
+                if r.status_code == 401:
+                    raise HTTPException(status_code=401, detail="Tu API key de EasyBroker fue rechazada. Reconéctala en Perfil.")
+                if r.status_code != 200:
+                    break
+                data = r.json()
+                content = data.get("content", []) or []
+                if not content:
+                    break
+                for p in content:
+                    if len(ids_published) >= _EB_LIMITE_PROPIEDADES:
+                        limite_alcanzado = True
+                        break
+                    pid = p.get("public_id")
+                    if not pid:
+                        continue
+                    if pid in estatus_por_pid:
+                        descartadas_estatus += 1
+                        continue
+                    estatus_por_pid[pid] = brokr_status
+                    conteo_por_estatus[eb_status] = conteo_por_estatus.get(eb_status, 0) + 1
+                    ids_published.append(pid)
+                if limite_alcanzado:
+                    break
+                if not data.get("pagination", {}).get("next_page"):
+                    break
+                pagina += 1
 
     total_eb = len(ids_published)
 
@@ -2067,19 +2063,13 @@ async def easybroker_import_all(request: Request):
             if rd.status_code != 200:
                 return ("err", {"id": pid, "error": f"EB status {rd.status_code}"})
             prop_full = rd.json()
-            # Filtro definitivo: el detalle SIEMPRE trae el estatus real.
-            # Si no es de los que el usuario eligió, no entra.
-            est_real = (prop_full.get("status") or "").strip().lower()
-            if est_real in _EB_STATUS_MAP and est_real not in statuses_elegidos:
-                return ("skip", None)
             inmueble = _eb_to_brokr(prop_full, user_id)
             inmueble["org_id"] = org_id_import
-            # Estatus según lo que dice EasyBroker
-            # (activa / suspendida / reservada / vendida / rentada).
-            if est_real in _EB_STATUS_MAP:
-                inmueble["estatus"] = _EB_STATUS_MAP[est_real]
-            elif estatus_por_pid.get(pid):
-                inmueble["estatus"] = estatus_por_pid[pid]
+            # EasyBroker no manda el estatus dentro de la propiedad. Usamos el
+            # estatus por el que preguntamos para traerla.
+            eb_estatus = estatus_por_pid.get(pid)
+            if eb_estatus:
+                inmueble["estatus"] = eb_estatus
             # Preservar notas y estatus del usuario si la fila ya existe
             prev = existentes_por_eb_id.get(pid)
             if prev:
@@ -2105,8 +2095,6 @@ async def easybroker_import_all(request: Request):
             for status, payload in results:
                 if status == "ok":
                     inmuebles_listos.append(payload)
-                elif status == "skip":
-                    descartadas_estatus += 1
                 else:
                     errores.append(payload)
 
