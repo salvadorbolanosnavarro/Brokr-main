@@ -178,6 +178,23 @@ html, body { background: var(--paper); }
 }
 .es-select:focus { border-color: var(--sky-blue); box-shadow: var(--focus); }
 
+/* Buscador de inmuebles del reporte */
+.es-select--wide { min-width: 360px; flex: 1; }
+.es-tool--fuerte { background: var(--sky-blue); border-color: var(--sky-blue); color: var(--bone); height: var(--h-sm); font-weight: 700; }
+.es-tool--fuerte:hover { background: var(--sky-blue-press); border-color: var(--sky-blue-press); color: var(--bone); }
+.es-tool--fuerte[disabled] { opacity: .6; cursor: default; }
+.es-hits { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px; margin-bottom: 6px; }
+.es-hit {
+  display: flex; flex-direction: column; gap: 3px; align-items: flex-start; text-align: left;
+  background: var(--bone); border: 1px solid var(--line); border-radius: var(--r);
+  padding: 11px 14px; cursor: pointer; font-family: inherit;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.es-hit:hover { border-color: var(--sky-blue); }
+.es-hit.is-active { border-color: var(--sky-blue); background: var(--sky-canvas); }
+.es-hit__t { font-size: var(--fs-sm); font-weight: 600; color: var(--ink); }
+.es-hit__s { font-size: var(--fs-caption); color: var(--mute); }
+
 /* Cabecera del reporte al propietario */
 .es-report-head { padding: var(--sp-6); border-bottom: 1px solid var(--line); }
 .es-report-head .k { font-size: var(--fs-xs); color: var(--mute); }
@@ -219,10 +236,6 @@ html, body { background: var(--paper); }
   <div class="page-head__row">
     <h1>Estadísticas</h1>
     <span class="page-head__count" id="count-badge">Cargando…</span>
-    <button class="es-tool" onclick="window.print()">
-      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.83c-.24.03-.48.06-.72.1m.72-.1c1.75-.22 3.5-.33 5.28-.33 1.99 0 3.95.11 5.88.33m-11.16 0a2.25 2.25 0 00-2.09 2.24v3.17M17.88 13.83c.24.03.48.06.72.1m-.72-.1a2.25 2.25 0 012.09 2.24v3.17m0 0A48.11 48.11 0 0112 21c-2.79 0-5.52-.24-8.17-.69M19.5 8.25V6.11c0-1.14-.85-2.1-1.98-2.19-.37-.03-.75-.06-1.12-.08m-9.8 0c-.38.02-.75.05-1.13.08C5.35 4.01 4.5 4.97 4.5 6.11v2.14"/></svg>
-      Imprimir
-    </button>
   </div>
   <div class="filters-row">
     <div class="es-seg" id="es-periodo">
@@ -309,6 +322,8 @@ let periodo = 'todo';
 let tab = 'resumen';
 let propSel = '';
 let filtroTabla = '';
+let buscaInmueble = '';
+let generandoPdf = false;
 
 const PERIODO_LBL = { semana:'esta semana', mes:'este mes', trimestre:'este trimestre', todo:'en total' };
 const PERIODO_DIAS = { semana:7, mes:30, trimestre:90, todo:0 };
@@ -342,7 +357,7 @@ async function cargarTodo() {
       sbFetch('propiedades?select=id,titulo,clave_interna,tipo,operacion,estatus,precio,moneda,archivada,created_at,updated_at,colonia,ciudad,estado,m2_construccion,m2_terreno,recamaras,banos,estacionamientos,anio_construccion,comision_venta_pct,comision_renta_meses&limit=3000'),
       sbFetch('contactos_propiedades?select=contacto_id,propiedad_id,relacion&limit=8000').catch(() => []),
       sbFetch('actividades?select=tipo,created_at,propiedad_id,contacto_id&order=created_at.desc&limit=10000').catch(() => []),
-      sbFetch('tareas?select=id,completada,fecha_entrega,created_at,propiedad_id,contacto_id&limit=3000').catch(() => []),
+      sbFetch('tareas?select=id,titulo,completada,fecha_entrega,created_at,propiedad_id,contacto_id&limit=3000').catch(() => []),
     ]);
     if (Array.isArray(et) && et.length) {
       ETAPAS = et.map((r, i) => ({
@@ -367,14 +382,26 @@ async function cargarWhatsApp() {
   waCargando = true;
   try {
     const tk = getToken();
-    if (!tk) throw new Error('Sesión no disponible.');
-    const r = await fetch(API_BASE + '/whatsapp2/estadisticas', { headers: { Authorization: 'Bearer ' + tk } });
-    if (!r.ok) throw new Error('No se pudieron leer los datos de WhatsApp.');
+    if (!tk) throw new Error('Tu sesión no está disponible; vuelve a entrar a Broquer.');
+    const ctrl = new AbortController();
+    const reloj = setTimeout(() => ctrl.abort(), 120000);
+    let r;
+    try {
+      r = await fetch(API_BASE + '/whatsapp2/estadisticas', {
+        headers: { Authorization: 'Bearer ' + tk }, signal: ctrl.signal,
+      });
+    } finally { clearTimeout(reloj); }
+    if (r.status === 404) throw new Error('El servidor todavía no tiene la última versión instalada.');
+    if (r.status === 401) throw new Error('Tu sesión expiró; vuelve a entrar a Broquer.');
+    if (!r.ok) throw new Error('El servidor respondió con un error (' + r.status + ').');
     const j = await r.json();
     wa = (j && j.ventanas) ? j : null;
     waErr = wa ? null : 'Sin datos de WhatsApp.';
   } catch (e) {
-    wa = null; waErr = e.message || 'Sin datos de WhatsApp.';
+    wa = null;
+    const m = e && e.message ? e.message : '';
+    waErr = (e && e.name === 'AbortError') ? 'La consulta tardó demasiado.'
+      : (/failed to fetch|networkerror|load failed/i.test(m) ? 'No hubo respuesta del servidor.' : (m || 'Sin datos de WhatsApp.'));
   }
   waCargando = false;
   render();
@@ -393,8 +420,7 @@ function setTab(t) {
   window.scrollTo({ top: 0, behavior: 'auto' });
   render();
 }
-function verInmueble(id) { propSel = String(id); setTab('inmueble'); }
-function setPropSel(v) { propSel = v; render(); }
+function verInmueble(id) { propSel = String(id); buscaInmueble = ''; setTab('inmueble'); }
 function setFiltroTabla(v) {
   filtroTabla = (v || '').toLowerCase();
   const cuerpo = g('tabla-inm-body');
@@ -819,15 +845,36 @@ function tareasPorProp() {
   tareas.filter(t => t.propiedad_id).forEach(t => { const k = String(t.propiedad_id); m[k] = (m[k] || 0) + 1; });
   return m;
 }
+
+/* Una visita es una tarea del inmueble cuyo título habla de mostrarlo.
+   Si está marcada como completada, la visita se dio; si no, sigue agendada. */
+const RE_VISITA = /visita|cita|recorrido|mostrar|muestra|ense[nñ]ar|showing|tour/i;
+function esVisita(t) { return RE_VISITA.test(String(t.titulo || '')); }
+function visitasPorProp() {
+  const m = {};
+  tareas.filter(t => t.propiedad_id && esVisita(t)).forEach(t => {
+    const k = String(t.propiedad_id);
+    m[k] = m[k] || { agendadas: 0, realizadas: 0, pendientes: 0 };
+    m[k].agendadas++;
+    if (t.completada) m[k].realizadas++; else m[k].pendientes++;
+  });
+  return m;
+}
+function visitasDe(id) {
+  const v = visitasPorProp()[String(id)];
+  return v || { agendadas: 0, realizadas: 0, pendientes: 0 };
+}
+
 function rankingInmuebles() {
-  const I = interesPorProp(), WP = waPorProp(), A = actPorProp(), T = tareasPorProp();
+  const I = interesPorProp(), WP = waPorProp(), A = actPorProp(), T = tareasPorProp(), V = visitasPorProp();
   return props.map(p => {
     const id = String(p.id);
     const inter = I[id] || 0, chats = WP[id] || 0, acts = A[id] || 0, tks = T[id] || 0;
+    const vis = V[id] || { agendadas: 0, realizadas: 0, pendientes: 0 };
     return {
-      p: p, id: id, inter: inter, chats: chats, acts: acts, tareas: tks,
+      p: p, id: id, inter: inter, chats: chats, acts: acts, tareas: tks, visitas: vis,
       diasInv: diasEntre(p.created_at),
-      demanda: inter * 3 + chats * 2 + acts,
+      demanda: inter * 3 + chats * 2 + vis.realizadas * 4 + acts,
     };
   }).sort((a, b) => (b.demanda - a.demanda) || (b.inter - a.inter));
 }
@@ -1034,7 +1081,8 @@ function panelInmuebles() {
       + '</div>'
       + '<div class="es-card es-tablewrap"><table class="es-table"><thead><tr>'
       + '<th>Inmueble</th><th>Zona</th><th class="num">Precio</th><th class="num">Interesados</th>'
-      + '<th class="num">Chats</th><th class="num">Movimientos</th><th class="num">Días</th><th class="num">Demanda</th>'
+      + '<th class="num">Chats</th><th class="num">Visitas</th><th class="num">Movimientos</th>'
+      + '<th class="num">Días</th><th class="num">Demanda</th>'
       + '</tr></thead><tbody id="tabla-inm-body">' + filasTablaInmuebles() + '</tbody></table></div>');
 }
 
@@ -1043,13 +1091,14 @@ function filasTablaInmuebles() {
     if (!filtroTabla) return true;
     return ((x.p.titulo || '') + (x.p.clave_interna || '') + (x.p.colonia || '') + (x.p.ciudad || '')).toLowerCase().indexOf(filtroTabla) >= 0;
   });
-  if (!rank.length) return '<tr><td colspan="8">Sin resultados.</td></tr>';
+  if (!rank.length) return '<tr><td colspan="9">Sin resultados.</td></tr>';
   return rank.map(x => '<tr onclick="verInmueble(\'' + esc(x.id) + '\')">'
     + '<td class="t">' + esc(x.p.clave_interna ? x.p.clave_interna + ' · ' : '') + esc(x.p.titulo || 'Sin título') + '</td>'
     + '<td>' + esc(x.p.colonia || '—') + '</td>'
     + '<td class="num">' + (x.p.precio ? fmtMoneyShort(x.p.precio, x.p.moneda) : '—') + '</td>'
     + '<td class="num">' + nf(x.inter) + '</td>'
     + '<td class="num">' + nf(x.chats) + '</td>'
+    + '<td class="num">' + nf(x.visitas.realizadas) + '</td>'
     + '<td class="num">' + nf(x.acts) + '</td>'
     + '<td class="num">' + (x.diasInv != null ? nf(x.diasInv) : '—') + '</td>'
     + '<td class="num"><b>' + nf(x.demanda) + '</b></td></tr>').join('');
@@ -1247,100 +1296,343 @@ function panelMarketing() {
     + (w ? sec('Horarios de mayor demanda', 'cuándo lanzar campañas y cuándo tener a alguien contestando', chHeat(w.heat, 'Menos')) : '');
 }
 
-function panelInmueble() {
-  if (!props.length) return '<div class="es-card es-empty"><p>Todavía no tienes inmuebles capturados.</p></div>';
-  let p = null;
-  for (let i = 0; i < props.length; i++) { if (String(props[i].id) === String(propSel)) { p = props[i]; break; } }
-  if (!p) p = props[0];
+function inmuebleSel() {
+  if (!props.length) return null;
+  for (let i = 0; i < props.length; i++) { if (String(props[i].id) === String(propSel)) return props[i]; }
+  return props[0];
+}
+function coincide(p, q) {
+  if (!q) return true;
+  return ((p.titulo || '') + ' ' + (p.clave_interna || '') + ' ' + (p.colonia || '') + ' '
+    + (p.ciudad || '') + ' ' + (p.tipo || '')).toLowerCase().indexOf(q) >= 0;
+}
+function setBuscaInmueble(v) {
+  buscaInmueble = (v || '').toLowerCase().trim();
+  const cont = g('busca-res');
+  if (cont) cont.innerHTML = listaBusqueda();
+}
+function elegirInmueble(id) {
+  propSel = String(id);
+  buscaInmueble = '';
+  render();
+}
+function listaBusqueda() {
+  const sel = inmuebleSel();
+  const hallados = props.filter(p => coincide(p, buscaInmueble));
+  if (!hallados.length) return '<div class="es-card es-empty"><p>Ningún inmueble coincide con esa búsqueda.</p></div>';
+  const lista = hallados.slice(0, 40);
+  return '<div class="es-hits">' + lista.map(p => {
+    const activo = sel && String(p.id) === String(sel.id);
+    return '<button type="button" class="es-hit' + (activo ? ' is-active' : '') + '" onclick="elegirInmueble(\'' + esc(p.id) + '\')">'
+      + '<span class="es-hit__t">' + esc(p.clave_interna ? p.clave_interna + ' · ' : '') + esc(p.titulo || 'Sin título') + '</span>'
+      + '<span class="es-hit__s">' + esc([p.colonia, p.ciudad].filter(Boolean).join(', ') || 'Sin ubicación')
+      + (p.precio ? ' · ' + fmtMoneyShort(p.precio, p.moneda) : '') + '</span></button>';
+  }).join('')
+  + (hallados.length > lista.length ? '<div class="es-note">Se muestran los primeros 40 de ' + nf(hallados.length) + '. Afina la búsqueda para encontrar el que buscas.</div>' : '')
+  + '</div>';
+}
+
+/* Todos los números de un inmueble, en un solo lugar: lo usan la pestaña y el PDF. */
+function datosInmueble(p) {
   const id = String(p.id);
-  const I = interesPorProp(), WP = waPorProp();
-  const inter = I[id] || 0, chats = WP[id] || 0;
+  const inter = interesPorProp()[id] || 0;
+  const chats = waPorProp()[id] || 0;
   const actsProp = actividades.filter(a => String(a.propiedad_id) === id);
   const tareasProp = tareas.filter(t => String(t.propiedad_id) === id);
+  const vis = visitasDe(id);
   const diasInv = diasEntre(p.created_at);
-  const bb = buildBuckets();
 
   const comps = activos().filter(x => x.tipo === p.tipo && x.operacion === p.operacion && Number(x.precio) > 0);
   const precios = comps.map(x => Number(x.precio)).sort((a, b) => a - b);
   const precio = Number(p.precio) || 0;
   const posicion = (precios.length > 1 && precio) ? pct(precios.filter(v => v < precio).length, precios.length) : null;
-  const minP = precios.length ? precios[0] : 0;
-  const maxP = precios.length ? precios[precios.length - 1] : 0;
-  const medP = precios.length ? precios[Math.floor(precios.length / 2)] : 0;
-
   const m2 = Number(p.m2_construccion) || 0;
   const precioM2 = m2 ? precio / m2 : 0;
   const compsM2 = comps.filter(x => Number(x.m2_construccion) > 0).map(x => Number(x.precio) / Number(x.m2_construccion));
   const promM2 = compsM2.length ? compsM2.reduce((a, b) => a + b, 0) / compsM2.length : 0;
 
-  const puntos = comps.filter(x => Number(x.m2_construccion) > 0).map(x => ({
+  return {
+    id: id, p: p, inter: inter, chats: chats,
+    actsProp: actsProp, tareasProp: tareasProp, visitas: vis, diasInv: diasInv,
+    comps: comps, precios: precios, precio: precio, posicion: posicion,
+    minP: precios.length ? precios[0] : 0,
+    maxP: precios.length ? precios[precios.length - 1] : 0,
+    medP: precios.length ? precios[Math.floor(precios.length / 2)] : 0,
+    m2: m2, precioM2: precioM2, promM2: promM2,
+    visitasLista: tareasProp.filter(esVisita),
+    ubic: [p.colonia, p.ciudad, p.estado].filter(Boolean).join(', '),
+    specs: [
+      p.recamaras ? p.recamaras + ' recámaras' : null,
+      p.banos ? p.banos + ' baños' : null,
+      m2 ? nf(m2) + ' m² construidos' : null,
+      p.m2_terreno ? nf(p.m2_terreno) + ' m² de terreno' : null,
+      p.estacionamientos ? p.estacionamientos + ' estacionamientos' : null,
+      p.anio_construccion ? 'construido en ' + p.anio_construccion : null,
+    ].filter(Boolean).join(' · '),
+  };
+}
+
+function panelInmueble() {
+  if (!props.length) return '<div class="es-card es-empty"><p>Todavía no tienes inmuebles capturados.</p></div>';
+  const p = inmuebleSel();
+  const D = datosInmueble(p);
+  const bb = buildBuckets();
+
+  const puntos = D.comps.filter(x => Number(x.m2_construccion) > 0).map(x => ({
     x: Number(x.m2_construccion), y: Number(x.precio),
     label: x.titulo || x.clave_interna || 'Inmueble',
-    destacado: String(x.id) === id,
+    destacado: String(x.id) === D.id,
   }));
 
-  const opciones = props.map(x => '<option value="' + esc(x.id) + '"' + (String(x.id) === id ? ' selected' : '') + '>'
-    + esc(x.clave_interna ? x.clave_interna + ' · ' : '') + esc(x.titulo || 'Sin título') + '</option>').join('');
-
-  const ubic = [p.colonia, p.ciudad, p.estado].filter(Boolean).join(', ');
-  const specs = [
-    p.recamaras ? p.recamaras + ' recámaras' : null,
-    p.banos ? p.banos + ' baños' : null,
-    m2 ? nf(m2) + ' m² construidos' : null,
-    p.m2_terreno ? nf(p.m2_terreno) + ' m² de terreno' : null,
-    p.estacionamientos ? p.estacionamientos + ' estacionamientos' : null,
-  ].filter(Boolean).join(' · ');
-
   return ''
+    + '<div class="es-sec">'
     + '<div class="es-picker">'
-    + '<select class="es-select" onchange="setPropSel(this.value)">' + opciones + '</select>'
-    + '<button class="es-tool" onclick="window.print()">Imprimir reporte para el propietario</button>'
+    + '<input class="es-select es-select--wide" type="search" id="busca-inm" placeholder="Busca el inmueble por título, clave, colonia o ciudad…"'
+    + ' value="' + esc(buscaInmueble) + '" oninput="setBuscaInmueble(this.value)"/>'
+    + '<button class="es-tool es-tool--fuerte" id="btn-reporte" onclick="descargarReporte()">Descargar reporte para el propietario</button>'
+    + '</div>'
+    + '<div id="busca-res">' + listaBusqueda() + '</div>'
     + '</div>'
 
     + '<div class="es-sec"><div class="es-card">'
     + '<div class="es-report-head">'
     + '<div class="k">Reporte de desempeño' + (p.clave_interna ? ' · ' + esc(p.clave_interna) : '') + '</div>'
     + '<div class="t">' + esc(p.titulo || 'Sin título') + '</div>'
-    + '<div class="m">' + esc(ubic || 'Sin ubicación capturada') + (specs ? ' — ' + esc(specs) : '') + '</div>'
-    + '<div class="m">' + (precio ? fmtMoney(precio, p.moneda || 'MXN') : 'Sin precio') + ' · '
+    + '<div class="m">' + esc(D.ubic || 'Sin ubicación capturada') + (D.specs ? ' — ' + esc(D.specs) : '') + '</div>'
+    + '<div class="m">' + (D.precio ? fmtMoney(D.precio, p.moneda || 'MXN') : 'Sin precio') + ' · '
     + esc(p.operacion === 'renta' ? 'Renta' : 'Venta') + ' · ' + esc(ESTATUS_PROP_LBL[p.estatus] || p.estatus || '—') + '</div>'
     + '</div>'
     + '<div class="es-kpis es-kpis--inset">'
-    + kpi(nf(inter), 'Interesados registrados', inter ? 'is-good' : '')
-    + kpi(nf(chats), 'Conversaciones de WhatsApp')
-    + kpi(nf(actsProp.length), 'Movimientos registrados')
-    + kpi(nf(tareasProp.length), 'Tareas asociadas', '', tareasProp.filter(t => t.completada).length + ' completadas')
-    + kpi(diasInv != null ? nf(diasInv) : '—', 'Días en tu inventario', (diasInv != null && diasInv > 180) ? 'is-warn' : '')
-    + kpi(precioM2 ? fmtMoneyShort(precioM2, '') : '—', 'Precio por m²', (promM2 && precioM2 > promM2 * 1.15) ? 'is-warn' : '')
+    + kpi(nf(D.inter), 'Interesados registrados', D.inter ? 'is-good' : '')
+    + kpi(nf(D.chats), 'Conversaciones de WhatsApp')
+    + kpi(nf(D.visitas.realizadas), 'Visitas realizadas', D.visitas.realizadas ? 'is-good' : '')
+    + kpi(nf(D.visitas.pendientes), 'Visitas agendadas por hacer')
+    + kpi(nf(D.actsProp.length), 'Movimientos registrados')
+    + kpi(nf(D.tareasProp.length), 'Tareas asociadas', '', D.tareasProp.filter(t => t.completada).length + ' completadas')
+    + kpi(D.diasInv != null ? nf(D.diasInv) : '—', 'Días en tu inventario', (D.diasInv != null && D.diasInv > 180) ? 'is-warn' : '')
+    + kpi(D.precioM2 ? fmtMoneyShort(D.precioM2, '') : '—', 'Precio por m²', (D.promM2 && D.precioM2 > D.promM2 * 1.15) ? 'is-warn' : '')
     + '</div></div></div>'
 
     + sec('Actividad de este inmueble', 'movimientos por periodo', tarjetaGrafica(chBarsV(bb, [
-        { label: 'Movimientos', color: 'var(--sky-blue)', counts: serieDe(actsProp, 'created_at', bb) },
+        { label: 'Movimientos', color: 'var(--sky-blue)', counts: serieDe(D.actsProp, 'created_at', bb) },
       ])))
 
-    + (posicion != null ? sec('Posición de precio contra inmuebles similares',
-        comps.length + ' comparables de tu inventario del mismo tipo y operación',
+    + (D.posicion != null ? sec('Posición de precio contra inmuebles similares',
+        D.comps.length + ' comparables de tu inventario del mismo tipo y operación',
         '<div class="es-card es-pos">'
-        + '<div class="es-pos__track"><div class="es-pos__pin" style="left:' + posicion + '%"></div></div>'
-        + '<div class="es-pos__ends"><span>Más barato: ' + fmtMoneyShort(minP, p.moneda) + '</span>'
-        + '<span>Mediana: ' + fmtMoneyShort(medP, p.moneda) + '</span>'
-        + '<span>Más caro: ' + fmtMoneyShort(maxP, p.moneda) + '</span></div>'
-        + '<div class="es-note">Este inmueble está por encima del ' + posicion + '% de los comparables de tu propio inventario.'
-        + ((promM2 && precioM2) ? ' Su precio por m² es ' + fmtMoneyShort(precioM2, '') + ' contra ' + fmtMoneyShort(promM2, '') + ' del promedio.' : '')
+        + '<div class="es-pos__track"><div class="es-pos__pin" style="left:' + D.posicion + '%"></div></div>'
+        + '<div class="es-pos__ends"><span>Más barato: ' + fmtMoneyShort(D.minP, p.moneda) + '</span>'
+        + '<span>Mediana: ' + fmtMoneyShort(D.medP, p.moneda) + '</span>'
+        + '<span>Más caro: ' + fmtMoneyShort(D.maxP, p.moneda) + '</span></div>'
+        + '<div class="es-note">Este inmueble está por encima del ' + D.posicion + '% de los comparables del mismo inventario.'
+        + ((D.promM2 && D.precioM2) ? ' Su precio por m² es ' + fmtMoneyShort(D.precioM2, '') + ' contra ' + fmtMoneyShort(D.promM2, '') + ' del promedio.' : '')
         + '</div></div>') : '')
 
     + (puntos.length >= 3 ? sec('Dónde cae contra sus comparables', 'el punto rojo es este inmueble',
         chScatter(puntos, 'm² de construcción', 'precio')) : '')
 
-    + sec('Bitácora', 'lo último que se hizo con este inmueble', actsProp.length
+    + sec('Visitas', 'tareas de visita ligadas a este inmueble', D.visitasLista.length
+      ? '<div class="es-card es-tablewrap"><table class="es-table">'
+        + '<thead><tr><th>Fecha</th><th>Visita</th><th class="num">Estado</th></tr></thead><tbody>'
+        + D.visitasLista.map(t => '<tr><td>'
+          + esc(t.fecha_entrega ? new Date(t.fecha_entrega).toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric' }) : 'Sin fecha')
+          + '</td><td class="t">' + esc(t.titulo || 'Visita') + '</td>'
+          + '<td class="num">' + (t.completada ? 'Realizada' : 'Pendiente') + '</td></tr>').join('')
+        + '</tbody></table></div>'
+      : '<div class="es-card es-empty"><p>Sin visitas registradas. Cuando crees una tarea de visita ligada a este inmueble, aparecerá aquí y en el reporte del propietario.</p></div>')
+
+    + sec('Bitácora', 'lo último que se hizo con este inmueble', D.actsProp.length
       ? '<div class="es-card es-tablewrap"><table class="es-table">'
         + '<thead><tr><th>Fecha</th><th>Movimiento</th></tr></thead><tbody>'
-        + actsProp.slice(0, 25).map(a => '<tr><td>'
+        + D.actsProp.slice(0, 25).map(a => '<tr><td>'
           + esc(new Date(a.created_at).toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric' }))
           + '</td><td class="t">' + esc(ACT_LBL[a.tipo] || a.tipo || 'Movimiento') + '</td></tr>').join('')
         + '</tbody></table></div>'
       : '<div class="es-card es-empty"><p>Sin movimientos registrados para este inmueble.</p></div>');
 }
+/* ═══════════════ AUDIT-EXEMPT: el reporte del propietario es un DOCUMENTO
+   INDEPENDIENTE que se manda a convertir en PDF. No corre dentro de la app,
+   así que no tiene acceso a brokr-theme.css: necesita su propia tipografía,
+   su propia escala en px y su propia paleta declarada. Aquí no aplican los
+   tokens de la hoja de diseño. ═══════════════ */
+
+function _slug(s) {
+  return String(s || 'inmueble').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 48) || 'inmueble';
+}
+
+function _reporteCss() {
+  return ':root{'
+    + '--ink:rgb(0,20,59);--ink-2:rgb(27,44,79);--ink-3:rgb(74,88,117);--mute:rgb(74,88,117);'
+    + '--bone:rgb(255,255,255);--paper:rgb(244,247,253);--paper-2:rgb(237,242,251);'
+    + '--line:rgb(230,236,246);--line-2:rgb(216,225,239);'
+    + '--sky-blue:rgb(18,64,160);--sky-blue-lift:rgb(58,111,216);--sky-navy:rgb(0,20,59);'
+    + '--sky-navy-mid:rgb(3,40,115);--sky-canvas:rgb(232,240,254);'
+    + '--success:rgb(12,122,94);--warn:rgb(180,83,9);--danger:rgb(198,40,57);'
+    + '--r-xs:6px;--fs-caption:11px;'
+    + '}'
+    + '*{box-sizing:border-box}'
+    + 'body{margin:0;font-family:Helvetica,Arial,sans-serif;color:var(--ink);font-size:12px;line-height:1.5;'
+    + '-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    + '.doc{max-width:760px;margin:0 auto}'
+    + '.hd{border-bottom:2px solid var(--sky-blue);padding-bottom:16px;margin-bottom:22px}'
+    + '.hd .kicker{font-size:11px;color:var(--mute);letter-spacing:.04em}'
+    + '.hd h1{font-size:26px;margin:6px 0 8px;letter-spacing:-.02em;line-height:1.2}'
+    + '.hd .sub{font-size:12px;color:var(--ink-2)}'
+    + '.hd .precio{font-size:18px;font-weight:700;margin-top:10px}'
+    + 'h2{font-size:15px;margin:26px 0 10px;letter-spacing:-.01em}'
+    + 'p{margin:0 0 10px;color:var(--ink-2)}'
+    + '.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:6px}'
+    + '.box{border:1px solid var(--line);border-radius:10px;padding:12px}'
+    + '.box .n{font-size:20px;font-weight:700;line-height:1.1}'
+    + '.box .l{font-size:10px;color:var(--mute);margin-top:4px;line-height:1.3}'
+    + '.good{color:var(--success)}.warn{color:var(--warn)}'
+    + 'table{width:100%;border-collapse:collapse;margin-top:6px}'
+    + 'th{text-align:left;font-size:10px;color:var(--mute);padding:8px 10px;border-bottom:1px solid var(--line-2)}'
+    + 'td{padding:9px 10px;border-bottom:1px solid var(--line);font-size:11px;color:var(--ink-2)}'
+    + 'td.t{color:var(--ink);font-weight:600}'
+    + 'th.num,td.num{text-align:right}'
+    + '.card{border:1px solid var(--line);border-radius:10px;padding:14px}'
+    + '.pos{position:relative;height:10px;border-radius:999px;background:linear-gradient(90deg,var(--success),var(--warn),var(--danger))}'
+    + '.pin{position:absolute;top:-7px;width:4px;height:24px;border-radius:999px;background:var(--ink)}'
+    + '.ends{display:flex;justify-content:space-between;margin-top:10px;font-size:10px;color:var(--mute)}'
+    + '.note{font-size:10px;color:var(--mute);margin-top:8px;line-height:1.45}'
+    + '.es-axis{font-size:9px;fill:var(--mute)}'
+    + '.es-chart__legend{display:flex;gap:14px;margin-bottom:8px;flex-wrap:wrap}'
+    + '.es-chart__legend .i{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--ink-2);font-weight:600}'
+    + '.es-chart__legend .sw{width:9px;height:9px;border-radius:3px}'
+    + 'svg{width:100%;height:auto;display:block}'
+    + '.pie{margin-top:34px;padding-top:12px;border-top:1px solid var(--line);'
+    + 'display:flex;justify-content:space-between;font-size:10px;color:var(--mute)}'
+    + '.avoid{page-break-inside:avoid}';
+}
+
+function _reporteHtml(D) {
+  const p = D.p;
+  const hoy = new Date();
+  const fecha = hoy.toLocaleDateString('es-MX', { day:'2-digit', month:'long', year:'numeric' });
+  const bb = buildBuckets();
+  const serieAct = serieDe(D.actsProp, 'created_at', bb);
+  const hayGrafica = serieAct.some(n => n > 0);
+
+  const resumen = 'Al ' + fecha + ', este inmueble lleva '
+    + (D.diasInv != null ? nf(D.diasInv) + ' días' : 'un tiempo no registrado')
+    + ' en promoción. En ese lapso se registraron ' + nf(D.inter) + ' interesados, '
+    + nf(D.chats) + ' conversaciones de WhatsApp y ' + nf(D.visitas.realizadas)
+    + ' visitas realizadas'
+    + (D.visitas.pendientes ? ', con ' + nf(D.visitas.pendientes) + ' visitas más ya agendadas' : '')
+    + '. Se documentaron ' + nf(D.actsProp.length) + ' movimientos de gestión.'
+    + (D.posicion != null
+        ? ' Frente a inmuebles comparables del mismo tipo y operación, su precio se ubica por encima del '
+          + D.posicion + '% de ellos.'
+        : '');
+
+  const recomendacion = (D.posicion != null && D.posicion >= 75 && D.visitas.realizadas < 3)
+    ? 'El precio está en la parte alta del rango de comparables y el número de visitas todavía es bajo. Un ajuste de precio o un refuerzo de promoción aceleraría el cierre.'
+    : (D.diasInv != null && D.diasInv > 180
+      ? 'El inmueble lleva más de seis meses en promoción. Conviene revisar precio, fotografías y alcance de la difusión.'
+      : (D.visitas.realizadas >= 3
+        ? 'El inmueble tiene un flujo de visitas sano. La recomendación es sostener la promoción y dar seguimiento puntual a cada interesado.'
+        : 'La promoción está en marcha. Se mantiene el seguimiento a interesados y la generación de visitas.'));
+
+  let html = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/>'
+    + '<title>Reporte de desempeño</title><style>' + _reporteCss() + '</style></head><body><div class="doc">';
+
+  html += '<div class="hd">'
+    + '<div class="kicker">Reporte de desempeño del inmueble' + (p.clave_interna ? ' · ' + esc(p.clave_interna) : '') + '</div>'
+    + '<h1>' + esc(p.titulo || 'Sin título') + '</h1>'
+    + '<div class="sub">' + esc(D.ubic || 'Sin ubicación capturada') + (D.specs ? '<br/>' + esc(D.specs) : '') + '</div>'
+    + '<div class="precio">' + (D.precio ? fmtMoney(D.precio, p.moneda || 'MXN') : 'Sin precio') + '</div>'
+    + '<div class="sub">' + esc(p.operacion === 'renta' ? 'En renta' : 'En venta') + ' · '
+    + esc(ESTATUS_PROP_LBL[p.estatus] || p.estatus || 'Activa') + ' · Corte al ' + esc(fecha) + '</div>'
+    + '</div>';
+
+  html += '<h2>Resumen</h2><p>' + esc(resumen) + '</p>';
+
+  html += '<h2>Indicadores</h2><div class="grid avoid">'
+    + '<div class="box"><div class="n">' + (D.diasInv != null ? nf(D.diasInv) : '—') + '</div><div class="l">Días en promoción</div></div>'
+    + '<div class="box"><div class="n good">' + nf(D.inter) + '</div><div class="l">Interesados registrados</div></div>'
+    + '<div class="box"><div class="n">' + nf(D.chats) + '</div><div class="l">Conversaciones de WhatsApp</div></div>'
+    + '<div class="box"><div class="n good">' + nf(D.visitas.realizadas) + '</div><div class="l">Visitas realizadas</div></div>'
+    + '<div class="box"><div class="n">' + nf(D.visitas.pendientes) + '</div><div class="l">Visitas agendadas por realizar</div></div>'
+    + '<div class="box"><div class="n">' + nf(D.actsProp.length) + '</div><div class="l">Movimientos de gestión</div></div>'
+    + '<div class="box"><div class="n">' + nf(D.tareasProp.length) + '</div><div class="l">Tareas de seguimiento</div></div>'
+    + '<div class="box"><div class="n">' + (D.precioM2 ? fmtMoneyShort(D.precioM2, '') : '—') + '</div><div class="l">Precio por m²</div></div>'
+    + '</div>';
+
+  if (hayGrafica) {
+    html += '<h2>Actividad de promoción</h2><div class="card avoid">'
+      + chBarsV(bb, [{ label: 'Movimientos', color: 'var(--sky-blue)', counts: serieAct }])
+      + '</div>';
+  }
+
+  if (D.posicion != null) {
+    html += '<h2>Posición de precio</h2><div class="card avoid">'
+      + '<div class="pos"><div class="pin" style="left:' + D.posicion + '%"></div></div>'
+      + '<div class="ends"><span>Más accesible: ' + fmtMoneyShort(D.minP, p.moneda) + '</span>'
+      + '<span>Mediana: ' + fmtMoneyShort(D.medP, p.moneda) + '</span>'
+      + '<span>Más alto: ' + fmtMoneyShort(D.maxP, p.moneda) + '</span></div>'
+      + '<div class="note">Comparación contra ' + D.comps.length + ' inmuebles del mismo tipo y operación en promoción.'
+      + ((D.promM2 && D.precioM2) ? ' El precio por m² de este inmueble es ' + fmtMoneyShort(D.precioM2, '')
+          + ' contra ' + fmtMoneyShort(D.promM2, '') + ' del promedio comparable.' : '')
+      + '</div></div>';
+  }
+
+  if (D.visitasLista.length) {
+    html += '<h2>Visitas</h2><table class="avoid"><thead><tr><th>Fecha</th><th>Detalle</th><th class="num">Estado</th></tr></thead><tbody>'
+      + D.visitasLista.map(t => '<tr><td>'
+        + esc(t.fecha_entrega ? new Date(t.fecha_entrega).toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric' }) : 'Sin fecha')
+        + '</td><td class="t">' + esc(t.titulo || 'Visita') + '</td>'
+        + '<td class="num">' + (t.completada ? 'Realizada' : 'Agendada') + '</td></tr>').join('')
+      + '</tbody></table>';
+  }
+
+  if (D.actsProp.length) {
+    html += '<h2>Bitácora de gestión</h2><table class="avoid"><thead><tr><th>Fecha</th><th>Movimiento</th></tr></thead><tbody>'
+      + D.actsProp.slice(0, 20).map(a => '<tr><td>'
+        + esc(new Date(a.created_at).toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric' }))
+        + '</td><td class="t">' + esc(ACT_LBL[a.tipo] || a.tipo || 'Movimiento') + '</td></tr>').join('')
+      + '</tbody></table>';
+  }
+
+  html += '<h2>Recomendación</h2><p>' + esc(recomendacion) + '</p>';
+
+  html += '<div class="pie"><span>Powered by Broquer</span><span>' + esc(fecha) + '</span></div>';
+  html += '</div></body></html>';
+  return html;
+}
+
+async function descargarReporte() {
+  if (generandoPdf) return;
+  const p = inmuebleSel();
+  if (!p) return;
+  const btn = g('btn-reporte');
+  generandoPdf = true;
+  if (btn) { btn.disabled = true; btn.textContent = 'Generando el reporte…'; }
+  try {
+    const D = datosInmueble(p);
+    const nombre = 'Reporte_' + _slug(p.clave_interna || p.titulo) + '_'
+      + new Date().toISOString().slice(0, 10) + '.pdf';
+    const r = await fetch(API_BASE + '/isr-pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ html: _reporteHtml(D), filename: nombre }),
+    });
+    if (!r.ok) throw new Error('El servidor no pudo generar el archivo (' + r.status + ').');
+    const j = await r.json();
+    if (!j || !j.token) throw new Error('El servidor no devolvió el archivo.');
+    window.location.assign(API_BASE + '/isr-pdf/' + j.token);
+    if (btn) btn.textContent = 'Reporte descargado';
+    setTimeout(() => { if (btn) btn.textContent = 'Descargar reporte para el propietario'; }, 3000);
+  } catch (e) {
+    if (btn) btn.textContent = 'No se pudo generar: ' + (e.message || 'error');
+    setTimeout(() => { if (btn) btn.textContent = 'Descargar reporte para el propietario'; }, 5000);
+  } finally {
+    generandoPdf = false;
+    if (btn) btn.disabled = false;
+  }
+}
+/* ═══════════════ /AUDIT-EXEMPT ═══════════════ */
 
 function panelActividad() {
   const bb = buildBuckets();

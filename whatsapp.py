@@ -19,6 +19,7 @@
 import os
 import re
 import json
+import asyncio
 import logging
 import hmac
 import hashlib
@@ -1775,22 +1776,33 @@ async def wa2_contacto_patch(contacto_id: str, request: Request):
 _VENTANAS_ESTAD = {"semana": 7, "mes": 30, "trimestre": 90, "todo": 0}
 
 
-async def _sb_get_paginado(table: str, params: dict, tope: int = 60000) -> list:
+async def _sb_get_paginado(table: str, params: dict, tope: int = 40000,
+                           paralelo: int = 6) -> list:
     """PostgREST corta en 1000 filas. Para estadísticas necesitamos el historial
-    completo, así que se pagina hasta el tope (protege la RAM del contenedor)."""
+    completo, así que se pagina — pero EN PARALELO. En serie, un historial de
+    30 mil mensajes son 30 viajes de ida y vuelta y Railway corta la conexión
+    antes de terminar (el navegador lo ve como 'Failed to fetch')."""
     salida: list = []
     pagina = 1000
-    while len(salida) < tope:
-        p = dict(params)
-        p["limit"] = str(pagina)
-        p["offset"] = str(len(salida))
-        filas = await sb_get(table, p)
-        if not filas:
+    bloque = 0
+    while len(salida) < tope and bloque < 40:
+        tareas = []
+        for k in range(paralelo):
+            p = dict(params)
+            p["limit"] = str(pagina)
+            p["offset"] = str((bloque * paralelo + k) * pagina)
+            tareas.append(sb_get(table, p))
+        resultados = await asyncio.gather(*tareas, return_exceptions=True)
+        traidas = 0
+        for filas in resultados:
+            if isinstance(filas, Exception) or not filas:
+                continue
+            salida.extend(filas)
+            traidas += len(filas)
+        if traidas < pagina * paralelo:
             break
-        salida.extend(filas)
-        if len(filas) < pagina:
-            break
-    return salida
+        bloque += 1
+    return salida[:tope]
 
 
 def _dt(valor) -> datetime | None:
@@ -2016,17 +2028,22 @@ async def wa2_estadisticas(request: Request, zona: str | None = None):
     filtro = _in_filter(ids)
     zona = zona or _ZONA_DEFAULT
 
-    numeros = await sb_get("wa2_numeros", {
-        "user_id": filtro, "select": "id,alias,display_number,ia_enabled,created_at"})
-    contactos = await _sb_get_paginado("wa2_contactos", {
-        "user_id": filtro, "order": "created_at.asc",
-        "select": "id,created_at,temperatura,score,etapa,forma_pago,numero_id"})
-    conversaciones = await _sb_get_paginado("wa2_conversaciones", {
-        "user_id": filtro, "order": "created_at.asc",
-        "select": "id,contacto_id,numero_id,created_at,last_message_at,ia_enabled,ultimas_propiedades"})
-    mensajes = await _sb_get_paginado("wa2_mensajes", {
-        "user_id": filtro, "order": "created_at.asc",
-        "select": "conversacion_id,direction,sender,created_at"})
+    # Las cuatro consultas salen al mismo tiempo. El orden es por id (la llave
+    # primaria, siempre indexada) porque ordenar por created_at obliga a
+    # Postgres a ordenar toda la tabla en cada página.
+    numeros, contactos, conversaciones, mensajes = await asyncio.gather(
+        sb_get("wa2_numeros", {
+            "user_id": filtro, "select": "id,alias,display_number,ia_enabled,created_at"}),
+        _sb_get_paginado("wa2_contactos", {
+            "user_id": filtro, "order": "id.asc",
+            "select": "id,created_at,temperatura,score,etapa,forma_pago,numero_id"}, tope=20000),
+        _sb_get_paginado("wa2_conversaciones", {
+            "user_id": filtro, "order": "id.asc",
+            "select": "id,contacto_id,numero_id,created_at,last_message_at,ia_enabled,ultimas_propiedades"}, tope=20000),
+        _sb_get_paginado("wa2_mensajes", {
+            "user_id": filtro, "order": "id.asc",
+            "select": "conversacion_id,direction,sender,created_at"}),
+    )
 
     ahora = datetime.now(timezone.utc)
     ventanas = {
