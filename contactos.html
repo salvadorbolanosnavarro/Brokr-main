@@ -160,6 +160,74 @@ html, body { background: var(--paper); }
 .contact-card:active { transform: scale(.99); }
 .contact-card.picker-mode { border-color: var(--forest-soft); }
 .contact-card.picker-mode:hover { border-color: var(--forest); background: var(--forest-soft); }
+.contact-check {
+  flex: 0 0 auto; width: 22px; height: 22px; margin-right: 4px;
+  border: 1.5px solid var(--line-2); border-radius: var(--r-sm);
+  background: var(--paper); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .12s ease, border-color .12s ease;
+}
+.contact-check:hover { border-color: var(--ink); }
+.contact-check svg { width: 13px; height: 13px; color: white; opacity: 0; transition: opacity .12s ease; }
+.contact-card.is-selected { border-color: var(--ink); background: var(--paper-2); }
+.contact-card.is-selected .contact-check { background: var(--ink); border-color: var(--ink); }
+.contact-card.is-selected .contact-check svg { opacity: 1; }
+
+.contacts-select-all {
+  display: none; align-items: center; gap: 8px; cursor: pointer;
+  padding: 7px 12px; border: 1px solid var(--line); border-radius: var(--r-pill);
+  font-size: var(--fs-sm); color: var(--ink); background: var(--paper); white-space: nowrap;
+}
+.contacts-select-all.is-shown { display: flex; }
+.contacts-select-all:hover { border-color: var(--ink); }
+.contacts-select-all .check-box {
+  width: 17px; height: 17px; border: 1.5px solid var(--line-2);
+  border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center;
+}
+.contacts-select-all .check-box svg { width: 11px; height: 11px; color: white; opacity: 0; }
+.contacts-select-all.is-active .check-box { background: var(--ink); border-color: var(--ink); }
+.contacts-select-all.is-active .check-box svg { opacity: 1; }
+
+.cbulk-bar {
+  position: fixed; bottom: 26px; left: 50%; z-index: 9998;
+  transform: translateX(-50%) translateY(140%);
+  transition: transform .22s var(--ease);
+  display: flex; align-items: center; gap: 14px;
+  padding: 10px 12px 10px 20px; border-radius: var(--r-pill);
+  background: var(--ink); color: white; box-shadow: var(--shadow-xl);
+  font-size: var(--fs-sm); font-family: var(--font);
+}
+.cbulk-bar.is-visible { transform: translateX(-50%) translateY(0); }
+.cbulk-bar__sep { width: 1px; height: 18px; background: rgba(255,255,255,.2); }
+.cbulk-bar__btn {
+  display: flex; align-items: center; gap: 6px; border: none; cursor: pointer;
+  padding: 8px 15px; border-radius: var(--r-pill);
+  font-size: var(--fs-sm); font-weight: 600; font-family: var(--font);
+}
+.cbulk-bar__btn--danger { background: var(--danger); color: white; }
+.cbulk-bar__btn--ghost { background: transparent; color: rgba(255,255,255,.85); }
+.cbulk-bar__btn--ghost:hover { background: rgba(255,255,255,.1); color: white; }
+
+.cdel-overlay {
+  position: fixed; inset: 0; background: rgba(20,28,48,.55); z-index: 9999;
+  display: none; align-items: center; justify-content: center;
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+}
+.cdel-overlay.is-open { display: flex; }
+.cdel-box {
+  background: var(--bone); border-radius: var(--r-lg);
+  width: min(400px, 92vw); padding: 26px 24px 20px;
+  box-shadow: var(--shadow-xl); text-align: center; font-family: var(--font);
+}
+.cdel-title { font-size: var(--fs-h3); font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+.cdel-msg { font-size: var(--fs-sm); color: var(--mute); line-height: 1.6; margin-bottom: 20px; }
+.cdel-actions { display: flex; gap: 10px; justify-content: center; }
+.cdel-btn {
+  height: 38px; padding: 0 20px; border: none; border-radius: var(--r-pill);
+  font-size: var(--fs-sm); font-weight: 600; font-family: var(--font); cursor: pointer;
+}
+.cdel-btn--cancel { background: var(--paper-2); color: var(--ink); }
+.cdel-btn--del { background: var(--danger); color: white; }
+.cdel-btn:disabled { opacity: .6; cursor: default; }
 
 .avatar {
   width: 44px; height: 44px;
@@ -866,6 +934,12 @@ html, body { background: var(--paper); }
       <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--mute);"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
       <input type="search" id="search-input" placeholder="Buscar por nombre, teléfono o correo…" oninput="busquedaDebounced()"/>
     </div>
+    <div class="contacts-select-all" id="c-select-all" onclick="cToggleSelectAll()">
+      <div class="check-box">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+      </div>
+      <span id="c-select-all-label">Seleccionar todo</span>
+    </div>
   </div>
   <div class="tabs">
     <button class="ftab active" onclick="setFiltro('todos',this)">Todos</button>
@@ -880,6 +954,29 @@ html, body { background: var(--paper); }
 </header>
 
 <div class="list" id="lista"></div>
+
+<!-- ── Barra flotante de selección múltiple ─────────────────── -->
+<div class="cbulk-bar" id="c-bulk-bar">
+  <span id="c-bulk-count">0 seleccionados</span>
+  <span class="cbulk-bar__sep"></span>
+  <button class="cbulk-bar__btn cbulk-bar__btn--danger" onclick="cConfirmarBorrar()">
+    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9M18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79h14.456"/></svg>
+    Eliminar
+  </button>
+  <button class="cbulk-bar__btn cbulk-bar__btn--ghost" onclick="cDeseleccionarTodo()">Cancelar</button>
+</div>
+
+<!-- ── Confirmación de borrado ──────────────────────────────── -->
+<div class="cdel-overlay" id="c-del-overlay" onclick="if(event.target===this)cCerrarConfirm()">
+  <div class="cdel-box">
+    <div class="cdel-title" id="c-del-title">¿Eliminar contactos?</div>
+    <div class="cdel-msg" id="c-del-msg"></div>
+    <div class="cdel-actions">
+      <button class="cdel-btn cdel-btn--cancel" onclick="cCerrarConfirm()">Cancelar</button>
+      <button class="cdel-btn cdel-btn--del" id="c-del-btn" onclick="cBorrarSeleccionados()">Eliminar</button>
+    </div>
+  </div>
+</div>
 
 <button class="fab" onclick="abrirModal()" aria-label="Nuevo contacto">
   <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
@@ -1314,7 +1411,11 @@ function renderActual() {
   const badge = document.getElementById('count-badge');
   badge.textContent = todos.length;
   badge.style.display = todos.length ? '' : 'none';
+  // Soltar de la selección lo que ya no existe (borrados, filtros)
+  const vivos = new Set(todos.map(c => String(c.id)));
+  for (const id of Array.from(cSel)) if (!vivos.has(id)) cSel.delete(id);
   renderLista();
+  cActualizarBarra();
 }
 
 function pintarDetPotencial(activo) {
@@ -1345,6 +1446,126 @@ async function toggleDetPotencial() {
   }
 }
 
+/* ── Selección múltiple y borrado ────────────────────────────────── */
+const C_API = 'https://api.broquer.app';
+let cSel = new Set();          // ids de contactos seleccionados
+let cPuedeEliminar = false;    // arranca en false: si la consulta falla, no se muestra nada
+
+async function cCargarPermiso() {
+  try {
+    const tok = await _sb().ensureToken();
+    if (!tok) return;
+    const r = await fetch(C_API + '/org', { headers: { Authorization: 'Bearer ' + tok } });
+    if (!r.ok) return;
+    const org = await r.json();
+    cPuedeEliminar = !org.es_empresa || org.es_admin === true;
+  } catch (e) {
+    cPuedeEliminar = false;
+  }
+  const ctrl = document.getElementById('c-select-all');
+  if (ctrl) ctrl.classList.toggle('is-shown', cPuedeEliminar && !IS_PICKER);
+}
+
+function cCardClick(id) {
+  if (!cPuedeEliminar || IS_PICKER) { abrirDetalle(id); return; }
+  if (cSel.size > 0) cToggleSel(id);
+  else abrirDetalle(id);
+}
+
+function cToggleSel(id) {
+  if (!cPuedeEliminar) return;
+  if (cSel.has(id)) cSel.delete(id);
+  else cSel.add(id);
+  renderLista();
+  cActualizarBarra();
+}
+
+function cToggleSelectAll() {
+  if (!cPuedeEliminar) return;
+  const ids = contactosFiltrados().map(c => String(c.id));
+  const todosMarcados = ids.length > 0 && ids.every(id => cSel.has(id));
+  if (todosMarcados) ids.forEach(id => cSel.delete(id));
+  else ids.forEach(id => cSel.add(id));
+  renderLista();
+  cActualizarBarra();
+}
+
+function cDeseleccionarTodo() {
+  cSel.clear();
+  renderLista();
+  cActualizarBarra();
+}
+
+function cActualizarBarra() {
+  const bar = document.getElementById('c-bulk-bar');
+  const cnt = document.getElementById('c-bulk-count');
+  if (bar && cnt) {
+    cnt.textContent = cSel.size + (cSel.size === 1 ? ' seleccionado' : ' seleccionados');
+    bar.classList.toggle('is-visible', cSel.size > 0);
+  }
+  const ctrl = document.getElementById('c-select-all');
+  const lbl = document.getElementById('c-select-all-label');
+  if (ctrl && lbl) {
+    const ids = contactosFiltrados().map(c => String(c.id));
+    const todosMarcados = ids.length > 0 && ids.every(id => cSel.has(id));
+    ctrl.classList.toggle('is-active', todosMarcados);
+    lbl.textContent = todosMarcados ? 'Quitar selección' : 'Seleccionar todo';
+  }
+}
+
+function cConfirmarBorrar() {
+  if (!cPuedeEliminar || cSel.size === 0) return;
+  const n = cSel.size;
+  document.getElementById('c-del-title').textContent =
+    '¿Eliminar ' + n + (n === 1 ? ' contacto?' : ' contactos?');
+  document.getElementById('c-del-msg').innerHTML =
+    'Esta acción no se puede deshacer. Se perderán sus notas, etiquetas y todo su historial dentro de Broquer.<br><br><strong>Eliminar de Broquer no elimina de EasyBroker.</strong>';
+  document.getElementById('c-del-btn').textContent = 'Eliminar ' + n;
+  document.getElementById('c-del-overlay').classList.add('is-open');
+}
+
+function cCerrarConfirm() {
+  document.getElementById('c-del-overlay').classList.remove('is-open');
+}
+
+async function cBorrarSeleccionados() {
+  const ids = Array.from(cSel);
+  if (!ids.length) return;
+  const btn = document.getElementById('c-del-btn');
+  const etiqueta = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Eliminando…';
+  try {
+    const tok = await _sb().ensureToken();
+    if (!tok) throw new Error('Tu sesión expiró. Vuelve a iniciar sesión.');
+    const r = await fetch(C_API + '/contactos/eliminar-masivo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+      body: JSON.stringify({ ids: ids })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || 'No se pudo eliminar');
+    cSel.clear();
+    cCerrarConfirm();
+    await cargarRemoto();
+    renderActual();
+    cActualizarBarra();
+  } catch (e) {
+    alert(e.message || 'No se pudo eliminar');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = etiqueta;
+  }
+}
+
+// Tecla Escape: cerrar el modal o cancelar la selección
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  const ov = document.getElementById('c-del-overlay');
+  if (ov && ov.classList.contains('is-open')) cCerrarConfirm();
+  else if (cSel.size > 0) cDeseleccionarTodo();
+});
+
 /* ── Vista Lista ─────────────────────────────────────────────────── */
 function renderLista() {
   const filtrados = contactosFiltrados();
@@ -1361,8 +1582,14 @@ function renderLista() {
   lista.innerHTML = filtrados.map(c => {
     const sub = c.telefono || c.email || c.empresa || '';
     const pickerCls = IS_PICKER ? ' picker-mode' : '';
-    const clickFn = IS_PICKER ? 'seleccionarContacto(this.dataset.id)' : 'abrirDetalle(this.dataset.id)';
-    return `<div class="contact-card${pickerCls}" data-id="${esc(c.id)}" onclick="${clickFn}">
+    const selCls = cSel.has(String(c.id)) ? ' is-selected' : '';
+    const clickFn = IS_PICKER ? 'seleccionarContacto(this.dataset.id)' : 'cCardClick(this.dataset.id)';
+    const check = (cPuedeEliminar && !IS_PICKER)
+      ? `<div class="contact-check" onclick="event.stopPropagation();cToggleSel('${esc(c.id)}')">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        </div>` : '';
+    return `<div class="contact-card${pickerCls}${selCls}" data-id="${esc(c.id)}" onclick="${clickFn}">
+      ${check}
       <div class="avatar ${avColor(c.nombre||'')}">${esc(initials(c.nombre||'??'))}</div>
       <div class="contact-info">
         <div class="contact-name">${esc(c.nombre)}${c.es_potencial ? ' <span class="pot-dot" title="Potencial"><svg width="11" height="11" style="vertical-align:-1px" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2l-6.1 3.4 1.4-6.8L2.2 9.1l6.9-.8L12 2z"/></svg></span>' : ''}</div>
@@ -1997,6 +2224,7 @@ async function _waitForShell(maxMs) {
   // 3) Contactos
   try {
     await cargarRemoto();
+    await cCargarPermiso();
     renderActual();
     const params = new URLSearchParams(window.location.search);
     const openId = params.get('id') || params.get('contacto');
