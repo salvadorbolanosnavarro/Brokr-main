@@ -231,7 +231,7 @@ def eb_headers(key: str = None):
 # ────────────────────────────────────────────
 @app.get("/")
 def root():
-    return {"status": "Brokr API activa", "version": "4.6"}
+    return {"status": "Brokr API activa", "version": "4.7"}
 
 # Endpoint para keep-alive (UptimeRobot u otro monitor cada 4 minutos).
 # No hace queries, no toca DB — solo evita que Railway duerma el servidor.
@@ -1839,7 +1839,7 @@ async def easybroker_diagnostico(request: Request):
     if not user_key:
         raise HTTPException(status_code=400, detail="No tienes API key de EasyBroker configurada.")
 
-    out = {"version_api": "4.6"}
+    out = {"version_api": "4.7"}
 
     def _total(d):
         pag = d.get("pagination") or {}
@@ -2507,6 +2507,227 @@ async def easybroker_migrar_fotos(request: Request):
         "cursor":                   ultimo_id,
         "hay_mas":                  hay_mas,
     }
+
+
+# ════════════════════════════════════════════════════════════════
+# BORRADO MASIVO
+# Permite vaciar el inventario o el directorio de contactos de un jalón.
+# Reglas de seguridad:
+#  - Un agente normal solo puede borrar SUS propios registros.
+#  - Solo el dueño o un administrador de la empresa puede borrar los de
+#    todo el equipo.
+#  - Al borrar propiedades se borran también sus fotos del almacenamiento,
+#    porque si no seguiríamos pagando archivos que ya no le sirven a nadie.
+# ════════════════════════════════════════════════════════════════
+
+async def _alcance_borrado(user_id: str):
+    """Devuelve (filtro_supabase, es_admin). El filtro decide qué puede borrar."""
+    ctx = await get_org_context(user_id)
+    org_id = (ctx or {}).get("org_id")
+    es_admin = (ctx or {}).get("rol_org") in ("owner", "admin")
+    if org_id and es_admin:
+        return ({"org_id": f"eq.{org_id}"}, True)
+    return ({"user_id": f"eq.{user_id}"}, False)
+
+
+def _nombre_archivo_foto(url: str):
+    """De una URL pública de Broquer saca el nombre del archivo en el bucket."""
+    marca = f"/object/public/{_FOTOS_BUCKET}/"
+    if isinstance(url, str) and marca in url:
+        return url.split(marca, 1)[1].split("?")[0]
+    return None
+
+
+async def _borrar_fotos_storage(nombres: list):
+    """Borra archivos del bucket en lotes. Se ejecuta en segundo plano."""
+    if not nombres or not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return
+    sb_headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+    }
+    borradas = 0
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            for i in range(0, len(nombres), 100):
+                lote = nombres[i:i+100]
+                try:
+                    r = await client.request(
+                        "DELETE",
+                        f"{SUPABASE_URL}/storage/v1/object/{_FOTOS_BUCKET}",
+                        headers=sb_headers,
+                        json={"prefixes": lote},
+                    )
+                    if r.status_code in (200, 204):
+                        borradas += len(lote)
+                except Exception:
+                    pass
+                await asyncio.sleep(0.2)
+    finally:
+        print(f"[borrado] {borradas} fotos eliminadas del almacenamiento")
+
+
+@app.post("/propiedades/eliminar-masivo")
+async def propiedades_eliminar_masivo(request: Request):
+    """
+    Borra varias propiedades de un jalón.
+    Body: {"ids": ["...", "..."]}  o  {"todos": true}
+    """
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Tu sesión expiró. Vuelve a iniciar sesión.")
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        raise HTTPException(status_code=500, detail="Supabase no está configurado en el servidor.")
+
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    ids = (body or {}).get("ids") or []
+    todos = bool((body or {}).get("todos"))
+    if not todos and not ids:
+        raise HTTPException(status_code=400, detail="No seleccionaste ninguna propiedad.")
+    if not todos and len(ids) > 2000:
+        raise HTTPException(status_code=400, detail="Demasiadas propiedades a la vez. Hazlo en partes.")
+
+    filtro, es_admin = await _alcance_borrado(user_id)
+    sb_headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    params = dict(filtro)
+    if not todos:
+        lista = ",".join(f'"{str(x)}"' for x in ids)
+        params["id"] = f"in.({lista})"
+
+    # 1) Leer lo que sí se puede borrar (el filtro ya limita el alcance)
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            r = await client.get(f"{SUPABASE_URL}/rest/v1/propiedades",
+                                 headers=sb_headers,
+                                 params={**params, "select": "id,fotos"})
+            if r.status_code != 200:
+                raise HTTPException(status_code=500, detail="No se pudo leer el inventario.")
+            filas = r.json() or []
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="No se pudo leer el inventario.")
+
+    if not filas:
+        return {"eliminadas": 0, "fotos_programadas": 0, "alcance": "empresa" if es_admin else "propias"}
+
+    # 2) Juntar los nombres de archivo de las fotos que viven en Broquer
+    nombres = []
+    for fila in filas:
+        for f in (fila.get("fotos") or []):
+            n = _nombre_archivo_foto(f)
+            if n:
+                nombres.append(n)
+
+    # 3) Borrar las filas, en lotes, respetando siempre el alcance
+    ids_reales = [str(fila.get("id")) for fila in filas if fila.get("id")]
+    eliminadas = 0
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            for i in range(0, len(ids_reales), 200):
+                lote = ids_reales[i:i+200]
+                lista = ",".join(f'"{x}"' for x in lote)
+                rd = await client.delete(
+                    f"{SUPABASE_URL}/rest/v1/propiedades",
+                    headers={**sb_headers, "Prefer": "return=minimal"},
+                    params={**filtro, "id": f"in.({lista})"},
+                )
+                if rd.status_code in (200, 204):
+                    eliminadas += len(lote)
+    except Exception:
+        raise HTTPException(status_code=500, detail="No se pudieron borrar todas las propiedades.")
+
+    # 4) Las fotos se borran en segundo plano: son miles y no vale la pena
+    #    hacer esperar al usuario por archivos que ya nadie va a ver.
+    if nombres:
+        try:
+            asyncio.create_task(_borrar_fotos_storage(nombres))
+        except Exception:
+            pass
+
+    return {
+        "eliminadas":        eliminadas,
+        "fotos_programadas": len(nombres),
+        "alcance":           "empresa" if es_admin else "propias",
+    }
+
+
+@app.post("/contactos/eliminar-masivo")
+async def contactos_eliminar_masivo(request: Request):
+    """
+    Borra varios contactos de un jalón.
+    Body: {"ids": ["...", "..."]}  o  {"todos": true}
+    """
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Tu sesión expiró. Vuelve a iniciar sesión.")
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        raise HTTPException(status_code=500, detail="Supabase no está configurado en el servidor.")
+
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    ids = (body or {}).get("ids") or []
+    todos = bool((body or {}).get("todos"))
+    if not todos and not ids:
+        raise HTTPException(status_code=400, detail="No seleccionaste ningún contacto.")
+
+    filtro, es_admin = await _alcance_borrado(user_id)
+    sb_headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    params = dict(filtro)
+    if not todos:
+        lista = ",".join(f'"{str(x)}"' for x in ids)
+        params["id"] = f"in.({lista})"
+
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            r = await client.get(f"{SUPABASE_URL}/rest/v1/contactos",
+                                 headers=sb_headers,
+                                 params={**params, "select": "id"})
+            if r.status_code != 200:
+                raise HTTPException(status_code=500, detail="No se pudo leer el directorio.")
+            filas = r.json() or []
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="No se pudo leer el directorio.")
+
+    ids_reales = [str(fila.get("id")) for fila in filas if fila.get("id")]
+    if not ids_reales:
+        return {"eliminados": 0, "alcance": "empresa" if es_admin else "propios"}
+
+    eliminados = 0
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            for i in range(0, len(ids_reales), 200):
+                lote = ids_reales[i:i+200]
+                lista = ",".join(f'"{x}"' for x in lote)
+                rd = await client.delete(
+                    f"{SUPABASE_URL}/rest/v1/contactos",
+                    headers={**sb_headers, "Prefer": "return=minimal"},
+                    params={**filtro, "id": f"in.({lista})"},
+                )
+                if rd.status_code in (200, 204):
+                    eliminados += len(lote)
+    except Exception:
+        raise HTTPException(status_code=500, detail="No se pudieron borrar todos los contactos.")
+
+    return {"eliminados": eliminados, "alcance": "empresa" if es_admin else "propios"}
 
 
 @app.get("/propiedades")
