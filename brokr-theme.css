@@ -999,18 +999,20 @@ input, select, textarea, button {
   --brand-facebook:       #1877F2;
   --brand-facebook-press: #145FCC;
 
-  /* ── Sidebar premium (los consume app-shell.js) ─────────────
-     El drawer deja de ser un bloque navy plano: degradado vertical
-     del navy de marca al navy profundo, cantos de luz de 1px y
-     estados construidos con blancos translúcidos en vez de un
-     rectángulo azul sólido. */
-  --sb-bg:      linear-gradient(180deg, var(--sky-navy) 0%, var(--sky-navy-deep) 100%);
-  --sb-hover:   rgba(255,255,255,0.055);
-  --sb-active:  rgba(255,255,255,0.10);
-  --sb-edge:    rgba(255,255,255,0.08);
-  --sb-txt:     rgba(255,255,255,0.72);
-  --sb-txt-dim: rgba(255,255,255,0.42);
-  --sb-glow:    0 10px 30px rgba(0,0,0,0.22);
+  /* ── Sidebar (los consume app-shell.js) ────────────────────
+     El drawer usa el MISMO azul de la tarjeta de pendientes/Broq
+     del inicio (--sky-blue + destello blanco arriba), no el navy.
+     Los módulos van en blanco y en negritas, agrupados en bloques
+     translúcidos: la separación se hace con aire y con paneles,
+     nunca con líneas. */
+  --sb-bg:      var(--sky-blue);
+  --sb-panel:   rgba(255,255,255,0.09);
+  --sb-hover:   rgba(255,255,255,0.14);
+  --sb-active:  rgba(255,255,255,0.22);
+  --sb-edge:    rgba(255,255,255,0.16);
+  --sb-txt:     #FFFFFF;
+  --sb-txt-dim: rgba(255,255,255,0.66);
+  --sb-glow:    0 8px 24px rgba(0,20,59,0.20);
 
   /* Acento azul claro para texto sobre superficies navy (heros oscuros).
      El azul de acción #1240A0 no contrasta sobre --sky-navy. */

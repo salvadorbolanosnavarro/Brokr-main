@@ -346,26 +346,24 @@
 .bk-shell-root { display: flex; height: 100vh; min-height: 100vh; background: var(--paper); }
 .bk-shell-root.bk-narrow .bk-sidebar { display: none; }
 
-/* ── Sidebar (drawer) — edición premium ─────────────────────────────
-   Ya no es un rectángulo navy plano con un bloque azul sólido encima.
-   Ahora: degradado vertical del navy de marca al navy profundo, un
-   halo azul muy tenue arriba, canto de luz de 1px en el borde derecho,
-   y los estados construidos con blancos translúcidos + una barrita
-   azul de acento a la izquierda del módulo activo. */
+/* ── Sidebar (drawer) ───────────────────────────────────────────────
+   Mismo azul de la tarjeta de pendientes del inicio, con el destello
+   blanco arriba. Los módulos van en BLANCO y en NEGRITAS. La lista se
+   agrupa en tres bloques translúcidos (CRM · herramientas · cuenta)
+   separados por aire: nada de líneas divisorias. */
 .bk-sidebar {
-  width: 260px; flex-shrink: 0;
+  width: 268px; flex-shrink: 0;
   background: var(--sb-bg);
   border-right: none;
-  box-shadow: inset -1px 0 0 var(--sb-edge);
-  padding: 18px 12px 22px;
-  display: flex; flex-direction: column; gap: 2px;
+  padding: 18px 12px 20px;
+  display: flex; flex-direction: column;
   overflow-y: auto;
   position: relative;
 }
-/* Halo de luz superior: lo que le faltaba al azul para no verse plano */
+/* Destello superior — el mismo de .ai-card en index.html */
 .bk-sidebar::before {
-  content: ''; position: absolute; inset: 0 0 auto 0; height: 240px;
-  background: radial-gradient(125% 100% at 0% 0%, rgba(58,111,216,0.22) 0%, rgba(58,111,216,0) 68%);
+  content: ''; position: absolute; inset: 0;
+  background-image: radial-gradient(120% 70% at 100% 0%, rgba(255,255,255,0.18), rgba(255,255,255,0) 58%);
   pointer-events: none; z-index: 0;
 }
 .bk-sidebar > * { position: relative; z-index: 1; }
@@ -373,83 +371,82 @@
 @media (max-width: 880px) { .bk-sidebar { display: none; } }
 
 .bk-sidebar__brand {
-  padding: 2px 10px 16px;
+  padding: 4px 10px 20px;
   border-bottom: none;
-  margin-bottom: 8px;
-  box-shadow: inset 0 -1px 0 var(--sb-edge);
+  margin-bottom: 4px;
   display: flex; align-items: center;
 }
 .bk-sidebar__brand a { display: flex; align-items: center; gap: 8px; text-decoration: none; }
 .bk-sidebar__brand img {
-  height: 26px; width: auto; display: block;
-  filter: brightness(0) invert(1); opacity: .94;
+  height: 27px; width: auto; display: block;
+  filter: brightness(0) invert(1); opacity: .96;
   transition: opacity var(--dur) var(--ease);
 }
 .bk-sidebar__brand a:hover img { opacity: 1; }
 
+/* Bloque: la unidad que agrupa módulos sin usar una línea */
+.bk-sb-block {
+  background: var(--sb-panel);
+  border-radius: var(--r-lg);
+  padding: 6px;
+  margin-bottom: 12px;
+  display: flex; flex-direction: column; gap: 5px;
+}
+/* El bloque de cuenta (Mi perfil en adelante) se va hasta abajo:
+   el aire hace la separación, no una raya. */
+.bk-sb-block--cuenta { margin-top: auto; margin-bottom: 0; }
+
 .bk-sb-link {
   position: relative;
-  display: flex !important; align-items: center; gap: 11px;
-  height: 40px; padding: 0 12px;
+  display: flex !important; align-items: center; gap: 12px;
+  height: 44px; padding: 0 12px;
   border-radius: var(--r);
-  font-size: 14px; color: var(--sb-txt) !important;
+  font-size: 14px; color: #FFFFFF !important;
   cursor: pointer;
-  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
-  font-weight: 500; letter-spacing: -0.005em;
+  transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+  font-weight: 700; letter-spacing: -0.01em;
   text-decoration: none !important;
   visibility: visible !important;
   opacity: 1 !important;
 }
 .bk-sidebar .bk-sb-link,
 .bk-sidebar a.bk-sb-link {
-  color: var(--sb-txt) !important;
+  color: #FFFFFF !important;
   display: flex !important;
   visibility: visible !important;
   opacity: 1 !important;
   background: transparent;
+  font-weight: 700;
 }
 .bk-sb-link svg, .bk-sidebar .bk-sb-link svg {
-  flex-shrink: 0; opacity: .62; color: #FFFFFF;
-  transition: opacity var(--dur) var(--ease);
+  flex-shrink: 0; opacity: 1; color: #FFFFFF;
+  stroke-width: 2.1;
 }
 .bk-sb-link:hover,
 .bk-sidebar .bk-sb-link:hover,
 .bk-sidebar a.bk-sb-link:hover { background: var(--sb-hover) !important; color: #FFFFFF !important; }
-.bk-sidebar .bk-sb-link:hover svg { opacity: 1; }
 
 .bk-sb-link.is-active,
 .bk-sidebar .bk-sb-link.is-active,
 .bk-sidebar a.bk-sb-link.is-active {
-  background: var(--sb-active) !important; color: #FFFFFF !important; font-weight: 600;
+  background: var(--sb-active) !important; color: #FFFFFF !important; font-weight: 800;
   box-shadow: inset 0 0 0 1px var(--sb-edge), var(--sb-glow);
 }
-.bk-sidebar .bk-sb-link.is-active svg { opacity: 1; }
-/* Barrita de acento pegada al canto izquierdo del drawer */
+/* Marca del módulo activo: barrita blanca, sin líneas divisorias */
 .bk-sidebar .bk-sb-link.is-active::before {
-  content: ''; position: absolute; left: -12px; top: 50%; transform: translateY(-50%);
-  width: 3px; height: 18px; border-radius: var(--r-pill);
-  background: var(--sky-blue-lift);
+  content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 20px; border-radius: var(--r-pill);
+  background: #FFFFFF;
 }
 
-.bk-sb-group { display: flex; flex-direction: column; gap: 2px; }
-/* Separador de aire entre el bloque CRM y las herramientas */
-.bk-sb-group + .bk-sb-link { margin-top: 13px; }
-.bk-sb-group + .bk-sb-link::after {
-  content: ''; position: absolute; left: 0; right: 0; top: -7px; height: 1px;
-  background: var(--sb-edge);
-}
+.bk-sb-group { display: flex; flex-direction: column; gap: 5px; }
 .bk-sb-trigger { width: 100%; border: 0; background: transparent; font-family: inherit; text-align: left; }
-.bk-sb-trigger .bk-sb-chevron { margin-left: auto; opacity: .55; transition: transform var(--dur) var(--ease); }
+.bk-sb-trigger .bk-sb-chevron { margin-left: auto; opacity: .8; transition: transform var(--dur) var(--ease); }
 .bk-sb-group.is-open .bk-sb-chevron { transform: rotate(180deg); }
-.bk-sb-submenu { display: none; flex-direction: column; gap: 2px; padding: 4px 0 8px 26px; position: relative; }
-/* Guía vertical que amarra visualmente el submenú con su grupo */
-.bk-sb-submenu::before {
-  content: ''; position: absolute; left: 21px; top: 2px; bottom: 8px;
-  width: 1px; background: var(--sb-edge);
-}
+.bk-sb-submenu { display: none; flex-direction: column; gap: 5px; padding: 2px 0 2px 22px; }
 .bk-sb-group.is-open .bk-sb-submenu { display: flex; }
-.bk-sb-submenu .bk-sb-link { font-size: 13px; height: 36px; padding: 0 10px; }
-.bk-sidebar .bk-sb-submenu .bk-sb-link.is-active::before { left: -5px; height: 14px; }
+.bk-sb-submenu .bk-sb-link { height: 40px; padding: 0 10px; }
+.bk-sidebar .bk-sb-submenu .bk-sb-link.is-active::before { left: -6px; height: 16px; }
 
 /* Content area */
 .bk-content { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
@@ -1201,7 +1198,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
   }
   function buildCrmGroup(items, active) {
     const isOpen = items.some(m => m.key === active);
-    return `<div class="bk-sb-group${isOpen ? ' is-open' : ''}" id="bk-sb-crm-group">
+    return `<div class="bk-sb-block bk-sb-group${isOpen ? ' is-open' : ''}" id="bk-sb-crm-group">
       <button class="bk-sb-link bk-sb-trigger${isOpen ? ' is-active' : ''}" id="bk-sb-crm-trigger" type="button" aria-expanded="${isOpen ? 'true' : 'false'}" aria-controls="bk-sb-crm-submenu">
         ${svg('funnel')} CRM ${svg('chevron', 16, 2, 'bk-sb-chevron')}
       </button>
@@ -1210,9 +1207,15 @@ body[data-app="facebook-ads"]{--page-max:980px}
       </div>
     </div>`;
   }
+  // Todo lo que va de "Mi perfil" hacia abajo vive en su propio bloque,
+  // pegado al fondo del drawer. La separación es por aire, no por raya.
+  const SB_CUENTA_KEYS = new Set(['blog', 'guia', 'admin']);
   function buildMainSidebar(items, active) {
     const profileLink = `<a href="javascript:void(0)" class="bk-sb-link" onclick="openProfileDrawer()">${svg('user')} Mi perfil</a>`;
-    return items.map(m => buildSidebarLink(m, active) + (m.key === 'mi-sitio' ? profileLink : '')).join('');
+    const herramientas = items.filter(m => !SB_CUENTA_KEYS.has(m.key));
+    const cuenta       = items.filter(m =>  SB_CUENTA_KEYS.has(m.key));
+    return `<div class="bk-sb-block">${herramientas.map(m => buildSidebarLink(m, active)).join('')}</div>` +
+           `<div class="bk-sb-block bk-sb-block--cuenta">${profileLink}${cuenta.map(m => buildSidebarLink(m, active)).join('')}</div>`;
   }
   function buildBnavItem(m, active) {
     return `<a href="${m.href}" class="bk-bnav__item${m.key === active ? ' is-active' : ''}">${svg(m.icon, 22)} <span>${m.label.split(' ')[0]}</span></a>`;
