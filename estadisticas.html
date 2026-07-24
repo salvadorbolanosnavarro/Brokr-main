@@ -10,215 +10,270 @@
 <meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
-/* layout owned by app-shell.js (.bk-page is the scroll container) */
+html, body { background: var(--paper); }
 
-.es-body { padding: 0 0 120px; }
-
-/* ── Hero: la tesis de la página, cambia según el tab activo ─────── */
-.es-hero {
-  position: relative;
-  background: var(--sky-navy);
-  color: var(--bone);
-  padding: 34px 28px 30px;
-  overflow: hidden;
-  isolation: isolate;
-}
-.es-hero::before {
-  content: '';
-  position: absolute; inset: -40% -10% auto auto;
-  width: 620px; height: 620px;
-  background: radial-gradient(circle, rgba(0,98,227,.55) 0%, rgba(0,98,227,0) 68%);
-  z-index: -1;
-  pointer-events: none;
-}
-.es-hero::after {
-  content: '';
-  position: absolute; inset: auto auto -50% -8%;
-  width: 420px; height: 420px;
-  background: radial-gradient(circle, rgba(0,85,204,.35) 0%, rgba(0,85,204,0) 70%);
-  z-index: -1;
-  pointer-events: none;
-}
-.es-hero__top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
-.es-hero__brand { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 700; letter-spacing: -0.03em; }
-.es-hero__sub { font-size: var(--fs-sm); color: rgba(255,255,255,.62); margin-top: 3px; }
-
-.es-periodo.bk-seg { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.14); }
-.es-periodo.bk-seg .bk-seg__btn { color: rgba(255,255,255,.68); }
-.es-periodo.bk-seg .bk-seg__btn:hover { color: var(--bone); }
-.es-periodo.bk-seg .bk-seg__btn.is-active { background: var(--bone); color: var(--ink); }
-
-.es-hero__main { display: flex; align-items: flex-end; gap: 36px; flex-wrap: wrap; }
-.es-hero__figure { font-family: var(--font-display); font-size: 76px; /* AUDIT-EXEMPT-LINE: numeral display del hero de datos */ font-weight: 700; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
-.es-hero__lbl { font-size: var(--fs-body); color: rgba(255,255,255,.72); margin-top: 8px; max-width: 30ch; }
-.es-hero__minis { display: flex; gap: 30px; flex-wrap: wrap; padding-bottom: 6px; }
-.es-hero__mini-n { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-.es-hero__mini-lbl { font-size: var(--fs-xs); color: rgba(255,255,255,.6); margin-top: 2px; }
-
-@media (max-width: 720px) {
-  .es-hero { padding: 24px 16px 26px; }
-  .es-hero__figure { font-size: 52px; } /* AUDIT-EXEMPT-LINE: numeral display del hero (móvil) */
-  .es-hero__main { gap: 20px; }
-  .es-hero__minis { gap: 20px; }
-}
-
-/* ── Menú de estadísticas (tabs) ───────────────────────────────── */
-.es-tabsbar {
-  position: sticky; top: 0; z-index: 5;
+/* ════════════════════════════════════════════════════════════
+   Cabecera — mismo componente que Contactos / Leads / Inmuebles.
+   Estadísticas ya no tiene hero propio: es un módulo hermano.
+   ════════════════════════════════════════════════════════════ */
+.page-head {
   background: var(--paper);
   border-bottom: 1px solid var(--line);
-  padding: 0 28px;
+  padding: 18px 36px 0;
+  position: sticky; top: 0; z-index: 12;
 }
-.es-tabsbar .bk-tabs { border-bottom: none; overflow-x: auto; scrollbar-width: none; }
-.es-tabsbar .bk-tabs::-webkit-scrollbar { display: none; }
-.es-tabsbar .bk-tab { padding-top: var(--sp-4); white-space: nowrap; display: inline-flex; align-items: center; gap: 7px; }
-@media (max-width: 720px) { .es-tabsbar { padding: 0 16px; } }
+@media (max-width: 720px) { .page-head { padding: 12px 16px 0; } }
 
-.es-panel { padding: 24px 28px 0; max-width: var(--page-max, 1180px); }
-@media (max-width: 720px) { .es-panel { padding: 16px 16px 0; } }
-.es-panel[hidden] { display: none; }
+.page-head__row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; }
+.page-head h1 { font-family: var(--font-display); font-size: var(--fs-display); font-weight: 700; letter-spacing: -0.03em; flex: 1; }
+@media (max-width: 720px) { .page-head h1 { font-size: var(--fs-h2); } }
+.page-head__count {
+  font-size: var(--fs-xs); color: var(--mute);
+  background: var(--bone); border: 1px solid var(--line);
+  border-radius: var(--r-pill); padding: 4px 10px;
+  font-variant-numeric: tabular-nums;
+}
 
-/* Sección */
-.es-section { margin-bottom: 34px; }
-.es-section__hdr { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
-.es-section__hdr .t { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 700; letter-spacing: -0.02em; color: var(--ink); }
-.es-section__hdr .s { font-size: var(--fs-xs); color: var(--mute); }
+.filters-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+
+.es-seg { display: inline-flex; background: var(--bone); border: 1px solid var(--line); border-radius: var(--r-pill); padding: 3px; gap: 2px; }
+.es-seg button {
+  border: none; background: none; cursor: pointer;
+  padding: 7px 15px; border-radius: var(--r-pill);
+  font-family: inherit; font-size: var(--fs-xs); font-weight: 600;
+  color: var(--mute); letter-spacing: -0.005em;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.es-seg button:hover { color: var(--ink); }
+.es-seg button.is-active { background: var(--sky-blue); color: var(--bone); }
+
+.es-tool {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--bone); border: 1px solid var(--line);
+  border-radius: var(--r-pill); height: 36px; padding: 0 14px;
+  font-family: inherit; font-size: var(--fs-xs); font-weight: 600;
+  color: var(--ink-2); cursor: pointer;
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.es-tool:hover { border-color: var(--sky-blue); color: var(--sky-blue); }
+
+.tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--line); }
+.tabs::-webkit-scrollbar { display: none; }
+.ftab {
+  flex-shrink: 0; border: none; background: none;
+  padding: 12px 14px; font-family: inherit; font-size: var(--fs-sm); font-weight: 500;
+  color: var(--mute); cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  letter-spacing: -0.005em;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.ftab:hover { color: var(--ink); }
+.ftab.active { color: var(--ink); border-bottom-color: var(--sky-blue); font-weight: 700; }
+
+/* ── Lienzo ─────────────────────────────────────────────────── */
+.es-scroll { padding: 24px 36px 120px; max-width: var(--page-max); }
+@media (max-width: 720px) { .es-scroll { padding: 16px 16px 120px; } }
+
+.es-sec { margin-bottom: 34px; }
+.es-sec__hdr { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.es-sec__hdr .t { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 700; letter-spacing: -0.02em; color: var(--ink); }
+.es-sec__hdr .s { font-size: var(--fs-xs); color: var(--mute); }
+
+.es-card { background: var(--bone); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-xs); }
 
 /* KPIs */
-.es-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 18px; }
-.es-kpi { padding: var(--sp-5) var(--sp-5); }
-.es-kpi__n { font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 700; letter-spacing: -0.02em; color: var(--ink); font-variant-numeric: tabular-nums; }
-.es-kpi__lbl { font-size: var(--fs-xs); color: var(--mute); margin-top: 3px; }
+.es-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); gap: 10px; margin-bottom: 18px; }
+.es-kpi { padding: var(--sp-5); }
+.es-kpi__n { font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 700; letter-spacing: -0.025em; color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.es-kpi__lbl { font-size: var(--fs-xs); color: var(--mute); margin-top: 4px; line-height: var(--lh-snug); }
 .es-kpi__n.is-good { color: var(--success); }
 .es-kpi__n.is-warn { color: var(--warn); }
+.es-kpi__n.is-bad  { color: var(--danger); }
+.es-kpi__foot { font-size: var(--fs-caption); color: var(--mute); margin-top: 6px; font-variant-numeric: tabular-nums; }
 
-/* Barras horizontales (fuente / etapa / tipo) */
+/* Grid de dos columnas para gráficas pareadas */
+.es-duo { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 14px; }
+
+/* Barras horizontales */
 .es-bars { padding: 4px var(--sp-5); }
-.es-bar-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
-.es-bar-row:last-child { border-bottom: none; }
-.es-bar-row__dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-.es-bar-row__lbl { width: 152px; flex-shrink: 0; font-size: var(--fs-sm); font-weight: 500; color: var(--ink); letter-spacing: -0.005em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
-.es-bar-track { flex: 1; height: 8px; background: var(--paper-2); border-radius: var(--r-xs); overflow: hidden; }
-.es-bar-fill { height: 100%; border-radius: var(--r-xs); transition: width .6s var(--ease); }
-.es-bar-row__n { width: 96px; flex-shrink: 0; text-align: right; font-size: var(--fs-xs); color: var(--mute); font-variant-numeric: tabular-nums; }
-.es-bar-row__n b { color: var(--ink); font-weight: 700; }
+.es-bar { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--line); }
+.es-bar:last-child { border-bottom: none; }
+.es-bar__dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.es-bar__lbl { width: 160px; flex-shrink: 0; font-size: var(--fs-sm); font-weight: 500; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+.es-bar__track { flex: 1; height: 8px; background: var(--paper-2); border-radius: var(--r-xs); overflow: hidden; min-width: 40px; }
+.es-bar__fill { height: 100%; border-radius: var(--r-xs); transition: width .6s var(--ease); }
+.es-bar__n { width: 104px; flex-shrink: 0; text-align: right; font-size: var(--fs-xs); color: var(--mute); font-variant-numeric: tabular-nums; }
+.es-bar__n b { color: var(--ink); font-weight: 700; }
 
 /* Donut + leyenda */
-.es-donut-wrap { padding: var(--sp-6); display: flex; align-items: center; gap: 30px; flex-wrap: wrap; }
-.es-donut-svg circle { transition: stroke-dashoffset .7s var(--ease), stroke-dasharray .7s var(--ease); }
-.es-legend { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 10px; }
-.es-legend-row { display: flex; align-items: center; gap: 10px; }
-.es-legend-row__dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.es-legend-row__lbl { flex: 1; font-size: var(--fs-sm); color: var(--ink); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.es-legend-row__pct { font-size: var(--fs-xs); color: var(--mute); font-variant-numeric: tabular-nums; }
-.es-legend-row__n { font-size: var(--fs-xs); color: var(--ink-2); font-weight: 700; width: 30px; text-align: right; font-variant-numeric: tabular-nums; }
+.es-donut { padding: var(--sp-6); display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+.es-donut svg circle { transition: stroke-dasharray .7s var(--ease); }
+.es-leg { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 9px; }
+.es-leg__row { display: flex; align-items: center; gap: 10px; }
+.es-leg__dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.es-leg__lbl { flex: 1; font-size: var(--fs-sm); color: var(--ink); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.es-leg__pct { font-size: var(--fs-xs); color: var(--mute); font-variant-numeric: tabular-nums; }
+.es-leg__n { font-size: var(--fs-xs); color: var(--ink-2); font-weight: 700; width: 40px; text-align: right; font-variant-numeric: tabular-nums; }
 
 /* Embudo */
-.es-funnel { display: flex; flex-direction: column; gap: 6px; }
-.es-funnel-row { display: flex; align-items: center; gap: 14px; }
-.es-funnel-row__lbl { width: 112px; flex-shrink: 0; font-size: var(--fs-xs); font-weight: 700; color: var(--ink-2); text-align: right; }
-.es-funnel-bar-wrap { flex: 1; display: flex; justify-content: center; }
-.es-funnel-bar {
-  height: 38px; border-radius: var(--r); display: flex; align-items: center; justify-content: center;
+.es-funnel { display: flex; flex-direction: column; gap: 6px; padding: var(--sp-5); }
+.es-fn { display: flex; align-items: center; gap: 12px; }
+.es-fn__lbl { width: 138px; flex-shrink: 0; font-size: var(--fs-xs); font-weight: 700; color: var(--ink-2); text-align: right; }
+.es-fn__wrap { flex: 1; display: flex; justify-content: flex-start; }
+.es-fn__bar {
+  height: 38px; border-radius: var(--r); display: flex; align-items: center; justify-content: flex-end;
   color: var(--bone); font-size: var(--fs-sm); font-weight: 700; font-variant-numeric: tabular-nums;
-  transition: width .6s var(--ease); min-width: 46px; letter-spacing: -0.01em;
-  box-shadow: var(--shadow-xs);
+  transition: width .6s var(--ease); min-width: 54px; padding-right: 12px;
 }
-.es-funnel-row__pct { width: 54px; flex-shrink: 0; font-size: var(--fs-caption); color: var(--mute); text-align: left; font-variant-numeric: tabular-nums; }
+.es-fn__pct { width: 92px; flex-shrink: 0; font-size: var(--fs-caption); color: var(--mute); text-align: left; font-variant-numeric: tabular-nums; }
 
-/* Tendencia */
-.es-trend-wrap { padding: var(--sp-5) var(--sp-5) var(--sp-3); }
-.es-trend-legend { display: flex; gap: 18px; margin-bottom: 6px; flex-wrap: wrap; }
-.es-trend-legend__item { display: flex; align-items: center; gap: 7px; font-size: var(--fs-xs); color: var(--ink-2); font-weight: 600; }
-.es-trend-legend__sw { width: 10px; height: 10px; border-radius: var(--r-xs); }
-.es-trend-svg { width: 100%; height: auto; display: block; }
-.es-trend-tip { font-size: var(--fs-caption); fill: var(--mute); font-family: var(--font-mono); }
+/* Gráficas SVG */
+.es-chart { padding: var(--sp-5) var(--sp-5) var(--sp-3); }
+.es-chart svg { width: 100%; height: auto; display: block; }
+.es-chart__legend { display: flex; gap: 18px; margin-bottom: 10px; flex-wrap: wrap; }
+.es-chart__legend .i { display: flex; align-items: center; gap: 7px; font-size: var(--fs-xs); color: var(--ink-2); font-weight: 600; }
+.es-chart__legend .sw { width: 10px; height: 10px; border-radius: var(--r-xs); }
+.es-axis { font-size: var(--fs-caption); fill: var(--mute); }
 
-/* Lista de inmuebles top */
-.es-props { display: flex; flex-direction: column; gap: 8px; }
-.es-prop-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; }
-.es-prop-row__rank { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; background: var(--paper-2); color: var(--ink-2); display: flex; align-items: center; justify-content: center; font-size: var(--fs-xs); font-weight: 700; }
-.es-prop-row__info { flex: 1; min-width: 0; }
-.es-prop-row__title { font-size: var(--fs-sm); font-weight: 600; color: var(--ink); letter-spacing: -0.005em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.es-prop-row__sub { font-size: var(--fs-caption); color: var(--mute); margin-top: 1px; }
-.es-prop-row__n { font-family: var(--font-display); font-size: var(--fs-sm); color: var(--forest); font-weight: 700; flex-shrink: 0; }
+/* Heatmap */
+.es-heat { padding: var(--sp-5); overflow-x: auto; }
+.es-heat__scale { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: var(--fs-caption); color: var(--mute); }
+.es-heat__scale i { display: block; width: 22px; height: 10px; border-radius: var(--r-xs); background: var(--sky-blue); }
 
-.es-empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 32px 20px; gap: 6px; color: var(--mute); }
-.es-empty p { font-size: var(--fs-sm); margin: 0; max-width: 340px; line-height: var(--lh); }
+/* Ranking */
+.es-rows { display: flex; flex-direction: column; gap: 8px; }
+.es-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; }
+.es-row__rank { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; background: var(--paper-2); color: var(--ink-2); display: flex; align-items: center; justify-content: center; font-size: var(--fs-xs); font-weight: 700; }
+.es-row__info { flex: 1; min-width: 0; }
+.es-row__t { font-size: var(--fs-sm); font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.es-row__s { font-size: var(--fs-caption); color: var(--mute); margin-top: 2px; }
+.es-row__n { font-size: var(--fs-sm); color: var(--sky-blue); font-weight: 700; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.es-row__spark { width: 88px; flex-shrink: 0; }
+.es-row--link { cursor: pointer; transition: border-color var(--dur) var(--ease); }
+.es-row--link:hover { border-color: var(--sky-blue); }
 
+/* Tabla densa */
+.es-table { width: 100%; border-collapse: collapse; }
+.es-table th {
+  text-align: left; font-size: var(--fs-caption); font-weight: 700; color: var(--mute);
+  padding: 10px 12px; border-bottom: 1px solid var(--line-2); white-space: nowrap;
+}
+.es-table td { padding: 11px 12px; border-bottom: 1px solid var(--line); font-size: var(--fs-xs); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.es-table tr:last-child td { border-bottom: none; }
+.es-table td.t { color: var(--ink); font-weight: 600; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.es-table td.num, .es-table th.num { text-align: right; }
+.es-tablewrap { overflow-x: auto; }
+.es-table tbody tr { cursor: pointer; }
+.es-table tbody tr:hover td { background: var(--paper-2); }
+
+/* Selector del reporte por inmueble */
+.es-picker { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
+.es-select {
+  background: var(--bone); border: 1px solid var(--line-2); border-radius: var(--r);
+  height: var(--h-sm); padding: 0 34px 0 14px; min-width: 280px; max-width: 100%;
+  font-family: inherit; font-size: var(--fs-sm); color: var(--ink);
+  outline: none; cursor: pointer; -webkit-appearance: none; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgb(74,88,117)' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center;
+}
+.es-select:focus { border-color: var(--sky-blue); box-shadow: var(--focus); }
+
+/* Cabecera del reporte al propietario */
+.es-report-head { padding: var(--sp-6); border-bottom: 1px solid var(--line); }
+.es-report-head .k { font-size: var(--fs-xs); color: var(--mute); }
+.es-report-head .t { font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 700; letter-spacing: -0.025em; color: var(--ink); margin: 4px 0 6px; }
+.es-report-head .m { font-size: var(--fs-sm); color: var(--ink-2); }
+
+/* Marcador de posición de precio */
+.es-pos { padding: var(--sp-6) var(--sp-5); }
+.es-pos__track { position: relative; height: 10px; border-radius: var(--r-pill); background: linear-gradient(90deg, var(--success), var(--warn), var(--danger)); }
+.es-pos__pin { position: absolute; top: -7px; width: 4px; height: 24px; border-radius: var(--r-pill); background: var(--ink); transform: translateX(-2px); }
+.es-pos__ends { display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; font-size: var(--fs-caption); color: var(--mute); }
+
+/* Avisos y vacíos */
+.es-empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 30px 20px; gap: 6px; color: var(--mute); }
+.es-empty p { font-size: var(--fs-sm); margin: 0; max-width: 380px; line-height: var(--lh); color: var(--mute); }
+.es-note { font-size: var(--fs-caption); color: var(--mute); margin-top: 8px; line-height: var(--lh-snug); }
+.es-note--pad { padding: 0 var(--sp-5) var(--sp-4); margin-top: 0; }
 .es-loading { padding: 60px 20px; text-align: center; color: var(--mute); font-size: var(--fs-sm); }
+.es-skel { height: 190px; border-radius: var(--r-lg); background: var(--paper-2); }
+.es-kpis--inset { margin: 0; padding: var(--sp-5); }
 
 @media (max-width: 620px) {
-  .es-funnel-row__lbl { width: 78px; font-size: var(--fs-caption); }
-  .es-bar-row__lbl { width: 108px; }
-  .es-donut-wrap { flex-direction: column; }
+  .es-bar__lbl { width: 112px; }
+  .es-fn__lbl { width: 92px; }
+  .es-donut { flex-direction: column; align-items: flex-start; }
+  .es-row__spark { display: none; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .es-bar-fill, .es-funnel-bar, .es-donut-svg circle { transition: none !important; }
+@media print {
+  .page-head, .es-tool, .es-picker { display: none; }
+  .es-scroll { padding: 0; }
+  .es-card { box-shadow: none; }
 }
 </style>
 </head>
 <body data-app="estadisticas">
 
-<div class="es-hero" id="es-hero">
-  <div class="es-hero__top">
-    <div>
-      <div class="es-hero__brand">Estadísticas</div>
-      <div class="es-hero__sub" id="hero-sub">Cargando…</div>
-    </div>
-    <div class="es-periodo bk-seg" id="es-periodo">
-      <button class="bk-seg__btn" data-p="semana" onclick="setPeriodo('semana')">Semana</button>
-      <button class="bk-seg__btn" data-p="mes" onclick="setPeriodo('mes')">Mes</button>
-      <button class="bk-seg__btn" data-p="trimestre" onclick="setPeriodo('trimestre')">Trimestre</button>
-      <button class="bk-seg__btn is-active" data-p="todo" onclick="setPeriodo('todo')">Todo</button>
+<header class="page-head">
+  <div class="page-head__row">
+    <h1>Estadísticas</h1>
+    <span class="page-head__count" id="count-badge">Cargando…</span>
+    <button class="es-tool" onclick="window.print()">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.83c-.24.03-.48.06-.72.1m.72-.1c1.75-.22 3.5-.33 5.28-.33 1.99 0 3.95.11 5.88.33m-11.16 0a2.25 2.25 0 00-2.09 2.24v3.17M17.88 13.83c.24.03.48.06.72.1m-.72-.1a2.25 2.25 0 012.09 2.24v3.17m0 0A48.11 48.11 0 0112 21c-2.79 0-5.52-.24-8.17-.69M19.5 8.25V6.11c0-1.14-.85-2.1-1.98-2.19-.37-.03-.75-.06-1.12-.08m-9.8 0c-.38.02-.75.05-1.13.08C5.35 4.01 4.5 4.97 4.5 6.11v2.14"/></svg>
+      Imprimir
+    </button>
+  </div>
+  <div class="filters-row">
+    <div class="es-seg" id="es-periodo">
+      <button data-p="semana" onclick="setPeriodo('semana')">Semana</button>
+      <button data-p="mes" onclick="setPeriodo('mes')">Mes</button>
+      <button data-p="trimestre" onclick="setPeriodo('trimestre')">Trimestre</button>
+      <button data-p="todo" class="is-active" onclick="setPeriodo('todo')">Todo</button>
     </div>
   </div>
-  <div class="es-hero__main">
-    <div>
-      <div class="es-hero__figure" id="hero-figure">—</div>
-      <div class="es-hero__lbl" id="hero-lbl">&nbsp;</div>
-    </div>
-    <div class="es-hero__minis" id="hero-minis"></div>
+  <div class="tabs" id="es-tabs">
+    <button class="ftab active" data-tab="resumen" onclick="setTab('resumen')">Resumen</button>
+    <button class="ftab" data-tab="leads" onclick="setTab('leads')">Leads</button>
+    <button class="ftab" data-tab="inmuebles" onclick="setTab('inmuebles')">Inmuebles</button>
+    <button class="ftab" data-tab="whatsapp" onclick="setTab('whatsapp')">WhatsApp</button>
+    <button class="ftab" data-tab="marketing" onclick="setTab('marketing')">Marketing</button>
+    <button class="ftab" data-tab="inmueble" onclick="setTab('inmueble')">Por inmueble</button>
+    <button class="ftab" data-tab="actividad" onclick="setTab('actividad')">Actividad</button>
   </div>
-</div>
+</header>
 
-<div class="es-tabsbar">
-  <div class="bk-tabs" id="es-tabs">
-    <button class="bk-tab is-active" data-tab="resumen" onclick="setTab('resumen')">Resumen</button>
-    <button class="bk-tab" data-tab="leads" onclick="setTab('leads')">Leads</button>
-    <button class="bk-tab" data-tab="propiedades" onclick="setTab('propiedades')">Propiedades</button>
-  </div>
-</div>
-
-<div class="es-body" id="es-body">
+<div class="es-scroll" id="es-body">
   <div class="es-loading">Cargando estadísticas…</div>
 </div>
 
 <script src="app-shell.js" defer></script>
 
 <script>
+const API_BASE = window.API_BASE || 'https://api.broquer.app';
+
 function g(id) { return document.getElementById(id); }
 function esc(s) {
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
-const REDUCE_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function nf(n) { return Number(n || 0).toLocaleString('es-MX'); }
+function getToken() { return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || null; }
 
 async function sbFetch(path) {
-  if (!window.brokrSb || !window.brokrSb.rest) {
-    throw new Error('La app aún se está cargando. Intenta de nuevo en un segundo.');
-  }
+  if (!window.brokrSb || !window.brokrSb.rest) throw new Error('La app aún se está cargando. Intenta de nuevo en un segundo.');
   return await window.brokrSb.rest(path, { method: 'GET' });
 }
 
-/* ── Etapas del pipeline — mismo criterio que contactos.html/leads.html ── */
+/* ════════════════════════════════════════════════════════════
+   Catálogos y paleta (todo sale de tokens de marca)
+   ════════════════════════════════════════════════════════════ */
 const ETAPAS_DEFAULT = [
-  { clave:'nuevo',      nombre:'Nuevo',      color:'var(--forest)'  },
-  { clave:'activo',     nombre:'Activo',     color:'var(--success)' },
-  { clave:'contactado', nombre:'Contactado', color:'var(--warn)'    },
-  { clave:'cerrado',    nombre:'Cerrado',    color:'var(--ink-3)'   },
+  { clave:'nuevo',      nombre:'Nuevo',      color:'var(--sky-blue-lift)' },
+  { clave:'activo',     nombre:'Activo',     color:'var(--sky-blue)'      },
+  { clave:'contactado', nombre:'Contactado', color:'var(--sky-navy-mid)'  },
+  { clave:'cerrado',    nombre:'Cerrado',    color:'var(--sky-navy)'      },
 ];
 let ETAPAS = ETAPAS_DEFAULT.slice();
 
@@ -229,222 +284,158 @@ const ROLES_LBL = {
 };
 const TIPO_PROP_LBL = {
   casa: 'Casa', departamento: 'Departamento', terreno: 'Terreno',
-  local: 'Local comercial', oficina: 'Oficina', bodega: 'Bodega',
+  local: 'Local comercial', oficina: 'Oficina', bodega: 'Bodega', otro: 'Otro',
 };
+const ESTATUS_PROP_LBL = {
+  activa: 'Activa', reservada: 'Reservada', en_proceso: 'En proceso',
+  vendida: 'Vendida', rentada: 'Rentada', suspendida: 'Suspendida',
+};
+const ACT_LBL = { nota: 'Notas', cambio_estatus: 'Cambios de etapa', tarea_completada: 'Tareas completadas', otro: 'Otros' };
+const TEMP_COLOR = { 'Caliente': 'var(--danger)', 'Tibio': 'var(--warn)', 'Frío': 'var(--sky-blue)', 'Frio': 'var(--sky-blue)', 'Nuevo': 'var(--mute)' };
+const DOW = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 
-/* Paleta de acento tomada 1:1 de los tokens de marca (brokr-theme.css) */
-const PALETA = ['var(--sky-blue)', 'var(--sky-navy-mid)', 'var(--forest-2)', 'var(--ink-3)', 'var(--sky-navy)', 'var(--mute)', 'var(--ink-2)', 'var(--mute-2)'];
+const PALETA = [
+  'var(--sky-blue)', 'var(--sky-navy-mid)', 'var(--sky-blue-lift)', 'var(--success)',
+  'var(--sky-navy)', 'var(--warn)', 'var(--ink-3)', 'var(--danger)',
+];
+function col(i) { return PALETA[i % PALETA.length]; }
 
-/* ── Estado ──────────────────────────────────────────────────────── */
-let contactos = [], props = [], interesRows = [], actividades = [];
-let periodoActual = 'todo';
-let tabActual = 'resumen';
+/* ════════════════════════════════════════════════════════════
+   Estado
+   ════════════════════════════════════════════════════════════ */
+let contactos = [], props = [], interes = [], actividades = [], tareas = [];
+let wa = null, waErr = null, waCargando = true;
+let periodo = 'todo';
+let tab = 'resumen';
+let propSel = '';
+let filtroTabla = '';
 
-function fechaDesde(periodo) {
-  if (periodo === 'todo') return null;
-  const d = new Date();
-  d.setHours(0,0,0,0);
-  const dias = periodo === 'semana' ? 7 : periodo === 'mes' ? 30 : 90;
-  d.setDate(d.getDate() - dias);
+const PERIODO_LBL = { semana:'esta semana', mes:'este mes', trimestre:'este trimestre', todo:'en total' };
+const PERIODO_DIAS = { semana:7, mes:30, trimestre:90, todo:0 };
+
+function fechaDesde(p) {
+  if (p === 'todo') return null;
+  const d = new Date(); d.setHours(0,0,0,0);
+  d.setDate(d.getDate() - PERIODO_DIAS[p]);
   return d;
 }
 function enPeriodo(iso) {
-  if (periodoActual === 'todo') return true;
+  if (periodo === 'todo') return true;
   if (!iso) return false;
-  const desde = fechaDesde(periodoActual);
-  return new Date(iso) >= desde;
+  return new Date(iso) >= fechaDesde(periodo);
+}
+function diasEntre(desde, hasta) {
+  if (!desde) return null;
+  return Math.max(0, Math.round((new Date(hasta || Date.now()) - new Date(desde)) / 86400000));
 }
 
-/* ── Carga: un solo lote paralelo ─────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════
+   Carga
+   ════════════════════════════════════════════════════════════ */
 async function cargarTodo() {
   const body = g('es-body');
   body.innerHTML = '<div class="es-loading">Cargando estadísticas…</div>';
   try {
-    const [et, c, p, ip, ac] = await Promise.all([
+    const [et, c, p, ip, ac, tk] = await Promise.all([
       sbFetch('pipeline_etapas?select=nombre,orden,color&order=orden.asc').catch(() => []),
       sbFetch('contactos?select=id,tipo,estatus,fuente,es_potencial,created_at,fecha_cambio_estatus&limit=5000'),
-      sbFetch('propiedades?select=id,titulo,clave_interna,tipo,operacion,estatus,precio,moneda,archivada,created_at,updated_at&limit=3000'),
-      sbFetch('contactos_propiedades?select=contacto_id,propiedad_id,relacion&relacion=eq.interes&limit=5000'),
-      sbFetch('actividades?select=tipo,created_at&order=created_at.desc&limit=10000').catch(() => []),
+      sbFetch('propiedades?select=id,titulo,clave_interna,tipo,operacion,estatus,precio,moneda,archivada,created_at,updated_at,colonia,ciudad,estado,m2_construccion,m2_terreno,recamaras,banos,estacionamientos,anio_construccion,comision_venta_pct,comision_renta_meses&limit=3000'),
+      sbFetch('contactos_propiedades?select=contacto_id,propiedad_id,relacion&limit=8000').catch(() => []),
+      sbFetch('actividades?select=tipo,created_at,propiedad_id,contacto_id&order=created_at.desc&limit=10000').catch(() => []),
+      sbFetch('tareas?select=id,completada,fecha_entrega,created_at,propiedad_id,contacto_id&limit=3000').catch(() => []),
     ]);
     if (Array.isArray(et) && et.length) {
-      ETAPAS = et.map(r => ({ clave: String(r.nombre || '').toLowerCase().trim(), nombre: r.nombre, color: r.color || 'var(--forest)' })).filter(e => e.clave);
+      ETAPAS = et.map((r, i) => ({
+        clave: String(r.nombre || '').toLowerCase().trim(),
+        nombre: r.nombre, color: r.color || col(i),
+      })).filter(e => e.clave);
     }
     contactos = Array.isArray(c) ? c : [];
     props = Array.isArray(p) ? p : [];
-    interesRows = Array.isArray(ip) ? ip : [];
+    interes = Array.isArray(ip) ? ip : [];
     actividades = Array.isArray(ac) ? ac : [];
+    tareas = Array.isArray(tk) ? tk : [];
+    if (!propSel && props.length) propSel = String(props[0].id);
     render();
+    cargarWhatsApp();
   } catch (e) {
-    body.innerHTML = '<div class="es-empty"><p>No se pudieron cargar las estadísticas. ' + esc(e.message || '') + '</p></div>';
+    body.innerHTML = '<div class="es-card es-empty"><p>No se pudieron cargar las estadísticas. ' + esc(e.message || '') + '</p></div>';
   }
 }
 
+async function cargarWhatsApp() {
+  waCargando = true;
+  try {
+    const tk = getToken();
+    if (!tk) throw new Error('Sesión no disponible.');
+    const r = await fetch(API_BASE + '/whatsapp2/estadisticas', { headers: { Authorization: 'Bearer ' + tk } });
+    if (!r.ok) throw new Error('No se pudieron leer los datos de WhatsApp.');
+    const j = await r.json();
+    wa = (j && j.ventanas) ? j : null;
+    waErr = wa ? null : 'Sin datos de WhatsApp.';
+  } catch (e) {
+    wa = null; waErr = e.message || 'Sin datos de WhatsApp.';
+  }
+  waCargando = false;
+  render();
+}
+
+function W() { return (wa && wa.ventanas) ? (wa.ventanas[periodo] || null) : null; }
+
 function setPeriodo(p) {
-  periodoActual = p;
+  periodo = p;
   document.querySelectorAll('#es-periodo button').forEach(b => b.classList.toggle('is-active', b.dataset.p === p));
   render();
 }
-
 function setTab(t) {
-  tabActual = t;
-  document.querySelectorAll('#es-tabs .bk-tab').forEach(b => b.classList.toggle('is-active', b.dataset.tab === t));
+  tab = t;
+  document.querySelectorAll('#es-tabs .ftab').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
+  window.scrollTo({ top: 0, behavior: 'auto' });
   render();
 }
-
-/* ── Utilidades numéricas ──────────────────────────────────────────── */
-function sumPorMoneda(items, campo) {
-  const out = {};
-  items.forEach(p => { const m = p.moneda || 'MXN'; out[m] = (out[m] || 0) + (Number(p[campo]) || 0); });
-  return out;
+function verInmueble(id) { propSel = String(id); setTab('inmueble'); }
+function setPropSel(v) { propSel = v; render(); }
+function setFiltroTabla(v) {
+  filtroTabla = (v || '').toLowerCase();
+  const cuerpo = g('tabla-inm-body');
+  if (cuerpo) cuerpo.innerHTML = filasTablaInmuebles();
 }
+
+/* ════════════════════════════════════════════════════════════
+   Formato
+   ════════════════════════════════════════════════════════════ */
 function fmtMoneyShort(n, moneda) {
   n = Math.round(n || 0);
-  const sign = n < 0 ? '-' : '';
+  const signo = n < 0 ? '-' : '';
   const abs = Math.abs(n);
   let s;
-  if (abs >= 1e6) s = (abs/1e6).toFixed(abs >= 1e7 ? 0 : 1) + 'M';
-  else if (abs >= 1e3) s = Math.round(abs/1e3) + 'k';
+  if (abs >= 1e6) s = (abs / 1e6).toFixed(abs >= 1e7 ? 0 : 1) + 'M';
+  else if (abs >= 1e3) s = Math.round(abs / 1e3) + 'k';
   else s = String(abs);
-  return sign + '$' + s + ' ' + (moneda || 'MXN');
+  return signo + '$' + s + (moneda ? ' ' + moneda : '');
 }
-function nf(n) { return Number(n || 0).toLocaleString('es-MX'); }
-
-/* ── Cálculos: Leads ───────────────────────────────────────────────
-   "leads" = es_potencial true HOY (snapshot). Un lead que ya se cerró
-   pierde esa bandera, así que las fuentes/tipo no arrastran historial
-   de contactos que ya se convirtieron — es una limitación conocida
-   del esquema actual, no del cálculo. */
-function calcResumenLeads() {
-  const nuevosEnP = contactos.filter(c => enPeriodo(c.created_at));
-  const leadsActivos = contactos.filter(c => c.es_potencial);
-  const leadsNuevosEnP = leadsActivos.filter(c => enPeriodo(c.created_at));
-  const ultimaEtapa = ETAPAS.length ? ETAPAS[ETAPAS.length - 1].clave : 'cerrado';
-  const cerradosEnP = nuevosEnP.filter(c => String(c.estatus||'nuevo').toLowerCase() === ultimaEtapa);
-  const tasaCierre = nuevosEnP.length ? Math.round((cerradosEnP.length / nuevosEnP.length) * 100) : 0;
-
-  const conCambio = nuevosEnP.filter(c => c.fecha_cambio_estatus && c.created_at && c.fecha_cambio_estatus !== c.created_at);
-  let diasProm = null;
-  if (conCambio.length) {
-    const totalDias = conCambio.reduce((acc, c) => acc + (new Date(c.fecha_cambio_estatus) - new Date(c.created_at)) / 86400000, 0);
-    diasProm = Math.round(totalDias / conCambio.length);
-  }
-  return {
-    contactosTotales: contactos.length,
-    contactosNuevos: nuevosEnP.length,
-    leadsActivos: leadsActivos.length,
-    leadsNuevos: leadsNuevosEnP.length,
-    tasaCierre, cerrados: cerradosEnP.length,
-    diasProm, conCambio: conCambio.length,
-  };
+function fmtMoney(n, moneda) {
+  return '$' + Number(Math.round(n || 0)).toLocaleString('es-MX') + (moneda ? ' ' + moneda : '');
 }
-
-const ACT_LBL = { nota: 'Notas', cambio_estatus: 'Cambios de etapa', tarea_completada: 'Tareas completadas', otro: 'Otros' };
-function calcActividad() {
-  const enP = actividades.filter(a => enPeriodo(a.created_at));
-  const conteo = {};
-  enP.forEach(a => { const t = a.tipo || 'otro'; conteo[t] = (conteo[t] || 0) + 1; });
-  const arr = Object.entries(conteo).sort((a, b) => b[1] - a[1]);
-  return { total: enP.length, arr, enP };
+function fmtMin(m) {
+  if (m == null) return '—';
+  if (m < 60) return Math.round(m) + ' min';
+  if (m < 1440) return (m / 60).toFixed(1) + ' h';
+  return Math.round(m / 1440) + ' d';
 }
+function pct(a, b) { return b ? Math.round((a / b) * 100) : 0; }
 
-function calcFuentesLeads() {
-  const leads = contactos.filter(c => c.es_potencial);
-  const enP = leads.filter(c => enPeriodo(c.created_at));
-  const porFuente = {};
-  enP.forEach(c => { const f = c.fuente || 'Sin especificar'; porFuente[f] = (porFuente[f] || 0) + 1; });
-  const arr = Object.entries(porFuente).sort((a,b) => b[1]-a[1]);
-  return { total: enP.length, arr };
+/* ════════════════════════════════════════════════════════════
+   Kit de gráficas — SVG puro, sin librerías
+   ════════════════════════════════════════════════════════════ */
+function bucketCfg() {
+  if (periodo === 'semana')    return { unit:'day',   n:7,  fmt: d => DOW[(d.getDay() + 6) % 7] };
+  if (periodo === 'mes')       return { unit:'day',   n:30, fmt: d => d.getDate() + '/' + (d.getMonth() + 1) };
+  if (periodo === 'trimestre') return { unit:'week',  n:13, fmt: d => d.getDate() + '/' + (d.getMonth() + 1) };
+  return { unit:'month', n:12, fmt: d => d.toLocaleDateString('es-MX', { month:'short' }) };
 }
-
-function calcTipoLeads() {
-  const leads = contactos.filter(c => c.es_potencial);
-  const enP = leads.filter(c => enPeriodo(c.created_at));
-  const porTipo = {};
-  enP.forEach(c => { const t = c.tipo || 'otro'; porTipo[t] = (porTipo[t] || 0) + 1; });
-  const arr = Object.entries(porTipo).sort((a,b) => b[1]-a[1]);
-  return { total: enP.length, arr };
-}
-
-function calcEmbudo() {
-  const enP = contactos.filter(c => enPeriodo(c.created_at));
-  const porEtapa = {};
-  enP.forEach(c => { const k = String(c.estatus || 'nuevo').toLowerCase(); porEtapa[k] = (porEtapa[k] || 0) + 1; });
-  const stages = ETAPAS.map(e => ({ ...e, n: porEtapa[e.clave] || 0 }));
-  return { total: enP.length, stages };
-}
-
-/* ── Cálculos: Propiedades ─────────────────────────────────────────
-   "cerradas" (vendida/rentada) se detecta con estatus + updated_at
-   como aproximación de la fecha de cierre: no hay columna dedicada de
-   fecha de venta en el esquema actual, así que updated_at puede
-   moverse por otras ediciones del inmueble. Es la mejor señal
-   disponible sin agregar una columna nueva. */
-function calcResumenPropiedades() {
-  const captadasEnP = props.filter(p => enPeriodo(p.created_at));
-  const cerradas = props.filter(p => ['vendida','rentada'].includes(p.estatus) && enPeriodo(p.updated_at));
-  const vendidas = cerradas.filter(p => p.estatus === 'vendida');
-  const rentadas = cerradas.filter(p => p.estatus === 'rentada');
-  const valorPorMoneda = sumPorMoneda(cerradas, 'precio');
-  const inventarioActivo = props.filter(p => !p.archivada && p.estatus === 'activa').length;
-
-  const conAmbasFechas = cerradas.filter(p => p.created_at && p.updated_at);
-  let diasMercadoProm = null;
-  if (conAmbasFechas.length) {
-    const totalDias = conAmbasFechas.reduce((acc,p) => acc + (new Date(p.updated_at) - new Date(p.created_at))/86400000, 0);
-    diasMercadoProm = Math.round(totalDias / conAmbasFechas.length);
-  }
-  return {
-    captadas: captadasEnP.length,
-    cerradas: cerradas.length, vendidas: vendidas.length, rentadas: rentadas.length,
-    valorPorMoneda, diasMercadoProm,
-    inventarioActivo, inventarioTotal: props.filter(p => !p.archivada).length,
-  };
-}
-
-function calcTipoPropiedadesCaptadas() {
-  const enP = props.filter(p => enPeriodo(p.created_at));
-  const porTipo = {};
-  enP.forEach(p => { const t = p.tipo || 'otro'; porTipo[t] = (porTipo[t] || 0) + 1; });
-  const arr = Object.entries(porTipo).sort((a,b) => b[1]-a[1]);
-  return { total: enP.length, arr };
-}
-
-function calcCierreVentaRenta() {
-  const cerradas = props.filter(p => ['vendida','rentada'].includes(p.estatus) && enPeriodo(p.updated_at));
-  const vendidas = cerradas.filter(p => p.estatus === 'vendida').length;
-  const rentadas = cerradas.filter(p => p.estatus === 'rentada').length;
-  return { total: cerradas.length, vendidas, rentadas };
-}
-
-function calcInmuebles() {
-  const activos = props.filter(p => !p.archivada).length;
-  const contactoIdx = Object.fromEntries(contactos.map(c => [String(c.id), c]));
-  const conteo = {}, conteoPot = {};
-  interesRows.forEach(r => {
-    const pid = String(r.propiedad_id);
-    conteo[pid] = (conteo[pid] || 0) + 1;
-    const contacto = contactoIdx[String(r.contacto_id)];
-    if (contacto && contacto.es_potencial) conteoPot[pid] = (conteoPot[pid] || 0) + 1;
-  });
-  const propIdx = Object.fromEntries(props.map(p => [String(p.id), p]));
-  const top = Object.entries(conteo)
-    .map(([id, n]) => ({ prop: propIdx[String(id)], n, potenciales: conteoPot[id] || 0 }))
-    .filter(x => x.prop)
-    .sort((a,b) => b.n - a.n)
-    .slice(0, 8);
-  return { activos, total: props.length, top };
-}
-
-/* ── Series temporales compartidas (leads / propiedades) ──────────── */
-function bucketConfig(periodo) {
-  if (periodo === 'semana') return { unit:'day', n:7,  fmt: d => d.toLocaleDateString('es-MX',{weekday:'short'}) };
-  if (periodo === 'mes')    return { unit:'day', n:30, fmt: d => d.getDate() + '/' + (d.getMonth()+1) };
-  if (periodo === 'trimestre') return { unit:'week', n:13, fmt: d => d.getDate() + '/' + (d.getMonth()+1) };
-  return { unit:'month', n:12, fmt: d => d.toLocaleDateString('es-MX',{month:'short'}) };
-}
-function buildBuckets(periodo) {
-  const cfg = bucketConfig(periodo);
+function buildBuckets() {
+  const cfg = bucketCfg();
   const hoy = new Date(); hoy.setHours(0,0,0,0);
   const buckets = [];
   for (let i = cfg.n - 1; i >= 0; i--) {
@@ -456,353 +447,955 @@ function buildBuckets(periodo) {
   }
   return { cfg, buckets };
 }
-function countSeries(items, dateField, bb) {
-  const { cfg, buckets } = bb;
-  const counts = new Array(buckets.length).fill(0);
+function idxBucket(fecha, bb) {
+  const cfg = bb.cfg, buckets = bb.buckets;
+  const cd = new Date(fecha);
+  for (let i = buckets.length - 1; i >= 0; i--) {
+    const b = buckets[i].date;
+    if (cfg.unit === 'day') { if (cd.toDateString() === b.toDateString()) return i; }
+    else if (cfg.unit === 'week') { const fin = new Date(b); fin.setDate(fin.getDate() + 7); if (cd >= b && cd < fin) return i; }
+    else if (cd.getFullYear() === b.getFullYear() && cd.getMonth() === b.getMonth()) return i;
+  }
+  return -1;
+}
+function serieDe(items, campo, bb) {
+  const out = new Array(bb.buckets.length).fill(0);
   items.forEach(it => {
-    const raw = it[dateField];
-    if (!raw) return;
-    const cd = new Date(raw);
-    for (let i = buckets.length - 1; i >= 0; i--) {
-      const b = buckets[i];
-      let within;
-      if (cfg.unit === 'day') within = cd.toDateString() === b.date.toDateString();
-      else if (cfg.unit === 'week') { const start = new Date(b.date); const end = new Date(b.date); end.setDate(end.getDate()+7); within = cd >= start && cd < end; }
-      else within = cd.getFullYear() === b.date.getFullYear() && cd.getMonth() === b.date.getMonth();
-      if (within) { counts[i]++; break; }
-    }
+    const v = it[campo];
+    if (!v) return;
+    const i = idxBucket(v, bb);
+    if (i >= 0) out[i]++;
   });
-  return counts;
+  return out;
+}
+function serieDeMapa(filas, bb) {
+  const out = new Array(bb.buckets.length).fill(0);
+  filas.forEach(r => {
+    const i = idxBucket(r.fecha + 'T12:00:00', bb);
+    if (i >= 0) out[i] += r.valor;
+  });
+  return out;
 }
 
-/* ── Helpers de render ─────────────────────────────────────────────── */
-function barra(color, pct) {
-  return `<div class="es-bar-track"><div class="es-bar-fill" style="width:${Math.max(pct,3)}%;background:${color}"></div></div>`;
-}
+let _gradN = 0;
 
-function renderDonut(entries, centroLbl, centroSub) {
-  const total = entries.reduce((a,x) => a + x.n, 0);
-  const R = 52, C = 2 * Math.PI * R;
-  let offset = 0;
-  const segs = !total ? '' : entries.map(e => {
-    const frac = e.n / total;
-    const len = frac * C;
-    const dasharray = `${len} ${C - len}`;
-    const dashoffset = -offset;
-    offset += len;
-    return `<circle cx="70" cy="70" r="${R}" fill="none" stroke="${e.color}" stroke-width="18"
-      stroke-dasharray="${dasharray}" stroke-dashoffset="${dashoffset}" transform="rotate(-90 70 70)">
-      <title>${esc(e.label)}: ${e.n} (${Math.round(frac*100)}%)</title>
-    </circle>`;
+/* Línea / área multi-serie con rejilla y eje Y */
+function chLine(bb, series, opts) {
+  opts = opts || {};
+  const buckets = bb.buckets, cfg = bb.cfg;
+  const W = 940, H = opts.alto || 240, PL = 48, PB = 26, PT = 14, PR = 12;
+  const iw = W - PL - PR, ih = H - PT - PB;
+  const maxRaw = Math.max(1, ...series.reduce((a, s) => a.concat(s.counts), []));
+  const paso = Math.pow(10, Math.floor(Math.log10(maxRaw)));
+  const max = Math.max(paso, Math.ceil(maxRaw / paso) * paso);
+  const stepX = buckets.length > 1 ? iw / (buckets.length - 1) : iw;
+
+  let grid = '', ticks = '';
+  for (let k = 0; k <= 4; k++) {
+    const y = PT + ih - (k / 4) * ih;
+    grid += '<line x1="' + PL + '" y1="' + y.toFixed(1) + '" x2="' + (W - PR) + '" y2="' + y.toFixed(1) + '" stroke="var(--line)" stroke-width="1"/>';
+    ticks += '<text x="' + (PL - 8) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end" class="es-axis">' + nf(Math.round(max * k / 4)) + '</text>';
+  }
+
+  const cuerpo = series.map(s => {
+    const gid = 'grd' + (_gradN++);
+    const pts = s.counts.map((n, i) => [PL + i * stepX, PT + ih - (n / max) * ih]);
+    const linea = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+    let area = '';
+    if (series.length <= 2) {
+      area = '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0%" stop-color="' + s.color + '" stop-opacity="0.22"/>'
+        + '<stop offset="100%" stop-color="' + s.color + '" stop-opacity="0"/></linearGradient></defs>'
+        + '<path d="' + linea + ' L' + pts[pts.length - 1][0].toFixed(1) + ',' + (PT + ih)
+        + ' L' + pts[0][0].toFixed(1) + ',' + (PT + ih) + ' Z" fill="url(#' + gid + ')" stroke="none"/>';
+    }
+    const dots = pts.map((p, i) => '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="3.2" fill="' + s.color + '">'
+      + '<title>' + esc(s.label) + ' · ' + esc(cfg.fmt(buckets[i].date)) + ': ' + nf(s.counts[i]) + '</title></circle>').join('');
+    return area + '<path d="' + linea + '" fill="none" stroke="' + s.color + '" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>' + dots;
   }).join('');
-  return `<svg viewBox="0 0 140 140" width="140" height="140" class="es-donut-svg">
-    <circle cx="70" cy="70" r="${R}" fill="none" stroke="var(--paper-2)" stroke-width="18"/>
-    ${segs}
-    <text x="70" y="66" text-anchor="middle" font-family="var(--font-display)" font-size="22" font-weight="700" fill="var(--ink)">${esc(centroLbl)}</text>
-    <text x="70" y="84" text-anchor="middle" font-family="var(--font-sans)" font-size="10" fill="var(--mute)">${esc(centroSub)}</text>
-  </svg>`;
+
+  const cada = Math.ceil(buckets.length / 9);
+  const labels = buckets.map((b, i) => (i % cada && i !== buckets.length - 1) ? '' :
+    '<text x="' + (PL + i * stepX).toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle" class="es-axis">' + esc(cfg.fmt(b.date)) + '</text>').join('');
+
+  const leyendaHtml = series.length > 1
+    ? '<div class="es-chart__legend">' + series.map(s => '<span class="i"><span class="sw" style="background:' + s.color + '"></span>' + esc(s.label) + '</span>').join('') + '</div>'
+    : '';
+
+  return leyendaHtml + '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img">' + grid + ticks + cuerpo + labels + '</svg>';
 }
 
-function renderLegend(entries) {
-  const total = entries.reduce((a,x) => a + x.n, 0) || 1;
-  return `<div class="es-legend">${entries.map(e => `
-    <div class="es-legend-row">
-      <span class="es-legend-row__dot" style="background:${e.color}"></span>
-      <span class="es-legend-row__lbl">${esc(e.label)}</span>
-      <span class="es-legend-row__pct">${Math.round((e.n/total)*100)}%</span>
-      <span class="es-legend-row__n">${e.n}</span>
-    </div>`).join('')}</div>`;
+/* Barras verticales agrupadas */
+function chBarsV(bb, series, opts) {
+  opts = opts || {};
+  const buckets = bb.buckets, cfg = bb.cfg;
+  const W = 940, H = opts.alto || 230, PL = 48, PB = 26, PT = 14, PR = 12;
+  const iw = W - PL - PR, ih = H - PT - PB;
+  const max = Math.max(1, ...series.reduce((a, s) => a.concat(s.counts), []));
+  const grupo = iw / buckets.length;
+  const ancho = Math.max(3, (grupo * 0.66) / series.length);
+
+  let grid = '', ticks = '';
+  for (let k = 0; k <= 4; k++) {
+    const y = PT + ih - (k / 4) * ih;
+    grid += '<line x1="' + PL + '" y1="' + y.toFixed(1) + '" x2="' + (W - PR) + '" y2="' + y.toFixed(1) + '" stroke="var(--line)" stroke-width="1"/>';
+    ticks += '<text x="' + (PL - 8) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end" class="es-axis">' + nf(Math.round(max * k / 4)) + '</text>';
+  }
+  let barras = '';
+  buckets.forEach((b, i) => {
+    series.forEach((s, si) => {
+      const h = (s.counts[i] / max) * ih;
+      const x = PL + i * grupo + (grupo - ancho * series.length) / 2 + si * ancho;
+      barras += '<rect x="' + x.toFixed(1) + '" y="' + (PT + ih - h).toFixed(1) + '" width="' + (ancho - 1.5).toFixed(1)
+        + '" height="' + Math.max(h, 0).toFixed(1) + '" rx="2" fill="' + s.color + '">'
+        + '<title>' + esc(s.label) + ' · ' + esc(cfg.fmt(b.date)) + ': ' + nf(s.counts[i]) + '</title></rect>';
+    });
+  });
+  const cada = Math.ceil(buckets.length / 9);
+  const labels = buckets.map((b, i) => (i % cada && i !== buckets.length - 1) ? '' :
+    '<text x="' + (PL + i * grupo + grupo / 2).toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle" class="es-axis">' + esc(cfg.fmt(b.date)) + '</text>').join('');
+  const leyendaHtml = series.length > 1
+    ? '<div class="es-chart__legend">' + series.map(s => '<span class="i"><span class="sw" style="background:' + s.color + '"></span>' + esc(s.label) + '</span>').join('') + '</div>'
+    : '';
+  return leyendaHtml + '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img">' + grid + ticks + barras + labels + '</svg>';
 }
 
-function renderBarsList(entries, opts) {
+/* Donut */
+function chDonut(entries, centro, sub) {
+  const total = entries.reduce((a, x) => a + x.n, 0);
+  const R = 54, C = 2 * Math.PI * R;
+  let off = 0;
+  const segs = !total ? '' : entries.map(e => {
+    const len = (e.n / total) * C;
+    const s = '<circle cx="72" cy="72" r="' + R + '" fill="none" stroke="' + e.color + '" stroke-width="19"'
+      + ' stroke-dasharray="' + len + ' ' + (C - len) + '" stroke-dashoffset="' + (-off) + '" transform="rotate(-90 72 72)">'
+      + '<title>' + esc(e.label) + ': ' + nf(e.n) + ' (' + Math.round((e.n / total) * 100) + '%)</title></circle>';
+    off += len;
+    return s;
+  }).join('');
+  return '<svg viewBox="0 0 144 144" width="144" height="144" role="img">'
+    + '<circle cx="72" cy="72" r="' + R + '" fill="none" stroke="var(--paper-2)" stroke-width="19"/>' + segs
+    + '<text x="72" y="68" text-anchor="middle" font-size="23" font-weight="700" fill="var(--ink)">' + esc(centro) + '</text>'
+    + '<text x="72" y="87" text-anchor="middle" font-size="10" fill="var(--mute)">' + esc(sub) + '</text></svg>';
+}
+function leyendaLista(entries) {
+  const total = entries.reduce((a, x) => a + x.n, 0) || 1;
+  return '<div class="es-leg">' + entries.map(e =>
+    '<div class="es-leg__row"><span class="es-leg__dot" style="background:' + e.color + '"></span>'
+    + '<span class="es-leg__lbl">' + esc(e.label) + '</span>'
+    + '<span class="es-leg__pct">' + Math.round((e.n / total) * 100) + '%</span>'
+    + '<span class="es-leg__n">' + nf(e.n) + '</span></div>').join('') + '</div>';
+}
+function tarjetaDonut(entries, centro, sub, vacio) {
+  if (!entries.length) return '<div class="es-card es-empty"><p>' + esc(vacio) + '</p></div>';
+  return '<div class="es-card es-donut">' + chDonut(entries, centro, sub) + leyendaLista(entries) + '</div>';
+}
+
+/* Barras horizontales de ranking */
+function chBarsH(entries, opts) {
   opts = opts || {};
   const max = Math.max(1, ...entries.map(e => e.n));
-  const total = entries.reduce((a,x)=>a+x.n,0) || 1;
-  return `<div class="es-bars">${entries.map(e => `
-    <div class="es-bar-row">
-      <div class="es-bar-row__lbl"><span class="es-bar-row__dot" style="background:${e.color}"></span>${esc(e.label)}</div>
-      ${barra(e.color, (e.n/max)*100)}
-      <div class="es-bar-row__n"><b>${e.n}</b> · ${Math.round((e.n/total)*100)}%</div>
-    </div>`).join('')}</div>`;
+  const total = entries.reduce((a, x) => a + x.n, 0) || 1;
+  return '<div class="es-bars">' + entries.map(e =>
+    '<div class="es-bar"><div class="es-bar__lbl"><span class="es-bar__dot" style="background:' + e.color + '"></span>' + esc(e.label) + '</div>'
+    + '<div class="es-bar__track"><div class="es-bar__fill" style="width:' + Math.max((e.n / max) * 100, 2) + '%;background:' + e.color + '"></div></div>'
+    + '<div class="es-bar__n"><b>' + (opts.fmt ? opts.fmt(e.n) : nf(e.n)) + '</b>'
+    + (opts.sinPct ? '' : ' · ' + Math.round((e.n / total) * 100) + '%') + '</div></div>').join('') + '</div>';
+}
+function tarjetaBarras(entries, vacio, opts) {
+  if (!entries.length) return '<div class="es-card es-empty"><p>' + esc(vacio) + '</p></div>';
+  return '<div class="es-card">' + chBarsH(entries, opts) + '</div>';
 }
 
-function renderTrendMulti(bb, series) {
-  const { buckets, cfg } = bb;
-  const W = 900, H = 210, PAD_L = 30, PAD_B = 24, PAD_T = 14, PAD_R = 10;
-  const innerW = W - PAD_L - PAD_R, innerH = H - PAD_T - PAD_B;
-  const maxN = Math.max(1, ...series.flatMap(s => s.counts));
-  const stepX = buckets.length > 1 ? innerW / (buckets.length - 1) : innerW;
+/* Embudo */
+function chFunnel(stages) {
+  const max = Math.max(1, ...stages.map(s => s.n));
+  const base = stages.length ? stages[0].n : 0;
+  return '<div class="es-card es-funnel">' + stages.map((s, i) =>
+    '<div class="es-fn"><div class="es-fn__lbl">' + esc(s.nombre) + '</div>'
+    + '<div class="es-fn__wrap"><div class="es-fn__bar" style="width:' + Math.max((s.n / max) * 100, 8) + '%;background:' + (s.color || col(i)) + '">' + nf(s.n) + '</div></div>'
+    + '<div class="es-fn__pct">' + (base ? Math.round((s.n / base) * 100) : 0) + '% del inicio</div></div>').join('') + '</div>';
+}
 
-  const seriesSvg = series.map((s, si) => {
-    const pts = s.counts.map((n, i) => {
-      const x = PAD_L + i * stepX;
-      const y = PAD_T + innerH - (n / maxN) * innerH;
-      return [x, y];
-    });
-    const line = pts.map((p,i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
-    let fillPath = '';
-    if (series.length === 1) {
-      fillPath = `<path d="${line} L${pts[pts.length-1][0].toFixed(1)},${PAD_T+innerH} L${pts[0][0].toFixed(1)},${PAD_T+innerH} Z" fill="url(#trendGrad${si})" stroke="none"/>`;
+/* Heatmap 7 x 24 */
+function chHeat(matriz, titulo) {
+  const plano = matriz.reduce((a, f) => a.concat(f), []);
+  const max = Math.max(1, ...plano);
+  const cw = 34, ch = 26, PL = 44, PT = 22;
+  let celdas = '', horas = '', diasTxt = '';
+  for (let h = 0; h < 24; h++) {
+    if (h % 3 === 0) horas += '<text x="' + (PL + h * cw + cw / 2) + '" y="14" text-anchor="middle" class="es-axis">' + h + 'h</text>';
+  }
+  for (let d = 0; d < 7; d++) {
+    diasTxt += '<text x="' + (PL - 8) + '" y="' + (PT + d * ch + ch / 2 + 4) + '" text-anchor="end" class="es-axis">' + DOW[d] + '</text>';
+    for (let h = 0; h < 24; h++) {
+      const v = (matriz[d] && matriz[d][h]) || 0;
+      const op = v ? (0.14 + 0.86 * (v / max)) : 1;
+      celdas += '<rect x="' + (PL + h * cw) + '" y="' + (PT + d * ch) + '" width="' + (cw - 3) + '" height="' + (ch - 3) + '" rx="3"'
+        + ' fill="' + (v ? 'var(--sky-blue)' : 'var(--paper-2)') + '" fill-opacity="' + op.toFixed(2) + '">'
+        + '<title>' + DOW[d] + ' ' + h + ':00 — ' + nf(v) + ' mensajes</title></rect>';
     }
-    const dots = pts.map((p,i) => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3" fill="${s.color}"><title>${esc(s.label)} · ${esc(cfg.fmt(buckets[i].date))}: ${s.counts[i]}</title></circle>`).join('');
-    return `
-      <defs><linearGradient id="trendGrad${si}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="${s.color}" stop-opacity="0.28"/>
-        <stop offset="100%" stop-color="${s.color}" stop-opacity="0"/>
-      </linearGradient></defs>
-      ${fillPath}
-      <path d="${line}" fill="none" stroke="${s.color}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-      ${dots}`;
-  }).join('');
-
-  const showEvery = Math.ceil(buckets.length / 8);
-  const labels = buckets.map((b,i) => {
-    if (i % showEvery !== 0 && i !== buckets.length-1) return '';
-    const x = PAD_L + i * stepX;
-    return `<text x="${x.toFixed(1)}" y="${H-6}" text-anchor="middle" class="es-trend-tip">${esc(cfg.fmt(b.date))}</text>`;
-  }).join('');
-
-  const legend = series.length > 1 ? `<div class="es-trend-legend">${series.map(s => `
-    <div class="es-trend-legend__item"><span class="es-trend-legend__sw" style="background:${s.color}"></span>${esc(s.label)}</div>
-  `).join('')}</div>` : '';
-
-  return legend + `<svg viewBox="0 0 ${W} ${H}" class="es-trend-svg" preserveAspectRatio="none">
-    <line x1="${PAD_L}" y1="${PAD_T}" x2="${PAD_L}" y2="${PAD_T+innerH}" stroke="var(--line)" stroke-width="1"/>
-    <line x1="${PAD_L}" y1="${PAD_T+innerH}" x2="${W-PAD_R}" y2="${PAD_T+innerH}" stroke="var(--line)" stroke-width="1"/>
-    ${seriesSvg}
-    ${labels}
-  </svg>`;
-}
-
-/* ── Animación de conteo (respeta prefers-reduced-motion) ─────────── */
-function animateNumber(el, to, fmt) {
-  fmt = fmt || (n => nf(n));
-  if (REDUCE_MOTION || to === 0) { el.textContent = fmt(to); return; }
-  const dur = 800;
-  const t0 = performance.now();
-  function frame(t) {
-    const p = Math.min((t - t0) / dur, 1);
-    const eased = 1 - Math.pow(1 - p, 3);
-    el.textContent = fmt(Math.round(to * eased));
-    if (p < 1) requestAnimationFrame(frame);
   }
-  requestAnimationFrame(frame);
+  const W = PL + 24 * cw + 8, H = PT + 7 * ch + 6;
+  return '<div class="es-card es-heat"><svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" role="img">'
+    + horas + diasTxt + celdas + '</svg>'
+    + '<div class="es-heat__scale"><span>' + esc(titulo || 'Menos') + '</span>'
+    + '<i style="opacity:.2"></i><i style="opacity:.5"></i><i style="opacity:.8"></i><i></i><span>Más</span></div></div>';
 }
 
-/* ── Hero: cambia de tesis según el tab activo ────────────────────── */
-function renderHero(RL, RP) {
-  const figure = g('hero-figure');
-  const lbl = g('hero-lbl');
-  const sub = g('hero-sub');
-  const minis = g('hero-minis');
-  const periodoLbl = { semana:'esta semana', mes:'este mes', trimestre:'este trimestre', todo:'en total' }[periodoActual];
+/* Sparkline */
+function chSpark(counts, color) {
+  if (!counts.length) return '';
+  const W = 88, H = 24, max = Math.max(1, ...counts);
+  const stepX = counts.length > 1 ? W / (counts.length - 1) : W;
+  const pts = counts.map((n, i) => [i * stepX, H - (n / max) * (H - 4) - 2]);
+  const d = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '">'
+    + '<path d="' + d + '" fill="none" stroke="' + (color || 'var(--sky-blue)') + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
 
-  if (tabActual === 'propiedades') {
-    sub.textContent = 'Lo que se movió ' + periodoLbl + ' en tu inventario';
-    const monedas = Object.keys(RP.valorPorMoneda);
-    const principal = monedas.sort((a,b) => RP.valorPorMoneda[b]-RP.valorPorMoneda[a])[0] || 'MXN';
-    const valor = RP.valorPorMoneda[principal] || 0;
-    animateNumber(figure, valor, n => fmtMoneyShort(n, principal));
-    lbl.textContent = 'cerrado en ventas y rentas ' + periodoLbl;
-    minis.innerHTML = `
-      <div><div class="es-hero__mini-n" id="hm-1">0</div><div class="es-hero__mini-lbl">Captadas ${periodoLbl}</div></div>
-      <div><div class="es-hero__mini-n" id="hm-2">0</div><div class="es-hero__mini-lbl">Cerradas ${periodoLbl}</div></div>
-      <div><div class="es-hero__mini-n" id="hm-3">0</div><div class="es-hero__mini-lbl">Días prom. en mercado</div></div>`;
-    animateNumber(g('hm-1'), RP.captadas);
-    animateNumber(g('hm-2'), RP.cerradas);
-    g('hm-3').textContent = RP.diasMercadoProm != null ? RP.diasMercadoProm : '—';
-  } else if (tabActual === 'leads') {
-    sub.textContent = 'Tu pipeline de clientes potenciales, ahora mismo';
-    animateNumber(figure, RL.leadsActivos);
-    lbl.textContent = 'leads activos en tu bandeja';
-    minis.innerHTML = `
-      <div><div class="es-hero__mini-n" id="hm-1">0</div><div class="es-hero__mini-lbl">Nuevos ${periodoLbl}</div></div>
-      <div><div class="es-hero__mini-n" id="hm-2">0%</div><div class="es-hero__mini-lbl">Tasa de cierre</div></div>
-      <div><div class="es-hero__mini-n" id="hm-3">0</div><div class="es-hero__mini-lbl">Días prom. 1er contacto</div></div>`;
-    animateNumber(g('hm-1'), RL.leadsNuevos);
-    animateNumber(g('hm-2'), RL.tasaCierre, n => n + '%');
-    g('hm-3').textContent = RL.diasProm != null ? RL.diasProm : '—';
-  } else {
-    sub.textContent = 'Tu negocio de un vistazo, ' + periodoLbl;
-    animateNumber(figure, RL.leadsActivos);
-    lbl.textContent = 'leads activos ahora mismo';
-    const monedas = Object.keys(RP.valorPorMoneda);
-    const principal = monedas.sort((a,b) => RP.valorPorMoneda[b]-RP.valorPorMoneda[a])[0] || 'MXN';
-    minis.innerHTML = `
-      <div><div class="es-hero__mini-n" id="hm-1">0</div><div class="es-hero__mini-lbl">Leads nuevos ${periodoLbl}</div></div>
-      <div><div class="es-hero__mini-n" id="hm-2">0</div><div class="es-hero__mini-lbl">Inmuebles captados ${periodoLbl}</div></div>
-      <div><div class="es-hero__mini-n" id="hm-3">0</div><div class="es-hero__mini-lbl">Inmuebles cerrados ${periodoLbl}</div></div>`;
-    animateNumber(g('hm-1'), RL.leadsNuevos);
-    animateNumber(g('hm-2'), RP.captadas);
-    animateNumber(g('hm-3'), RP.cerradas);
+/* Anillo de porcentaje */
+function chGauge(p, etiqueta, color) {
+  const R = 46, C = 2 * Math.PI * R, len = (Math.max(0, Math.min(100, p)) / 100) * C;
+  return '<svg viewBox="0 0 120 120" width="120" height="120" role="img">'
+    + '<circle cx="60" cy="60" r="' + R + '" fill="none" stroke="var(--paper-2)" stroke-width="14"/>'
+    + '<circle cx="60" cy="60" r="' + R + '" fill="none" stroke="' + (color || 'var(--sky-blue)') + '" stroke-width="14"'
+    + ' stroke-linecap="round" stroke-dasharray="' + len + ' ' + (C - len) + '" transform="rotate(-90 60 60)"/>'
+    + '<text x="60" y="58" text-anchor="middle" font-size="24" font-weight="700" fill="var(--ink)">' + Math.round(p) + '%</text>'
+    + '<text x="60" y="76" text-anchor="middle" font-size="10" fill="var(--mute)">' + esc(etiqueta) + '</text></svg>';
+}
+
+/* Dispersión precio contra superficie */
+function chScatter(puntos, ejeX, ejeY) {
+  if (puntos.length < 3) return '<div class="es-card es-empty"><p>Necesitas al menos 3 inmuebles con precio y metros capturados para ver esta gráfica.</p></div>';
+  const W = 940, H = 300, PL = 60, PB = 32, PT = 14, PR = 14;
+  const iw = W - PL - PR, ih = H - PT - PB;
+  const maxX = Math.max.apply(null, puntos.map(p => p.x)) * 1.05 || 1;
+  const maxY = Math.max.apply(null, puntos.map(p => p.y)) * 1.05 || 1;
+  let grid = '', ticksY = '', ticksX = '';
+  for (let k = 0; k <= 4; k++) {
+    const y = PT + ih - (k / 4) * ih;
+    grid += '<line x1="' + PL + '" y1="' + y.toFixed(1) + '" x2="' + (W - PR) + '" y2="' + y.toFixed(1) + '" stroke="var(--line)" stroke-width="1"/>';
+    ticksY += '<text x="' + (PL - 8) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end" class="es-axis">' + fmtMoneyShort(maxY * k / 4, '') + '</text>';
+    const x = PL + (k / 4) * iw;
+    ticksX += '<text x="' + x.toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" class="es-axis">' + Math.round(maxX * k / 4) + ' m²</text>';
   }
+  const pts = puntos.map(p => {
+    const cx = PL + (p.x / maxX) * iw, cy = PT + ih - (p.y / maxY) * ih;
+    return '<circle cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="' + (p.destacado ? 7 : 5) + '"'
+      + ' fill="' + (p.destacado ? 'var(--danger)' : 'var(--sky-blue)') + '" fill-opacity="' + (p.destacado ? 1 : 0.55) + '">'
+      + '<title>' + esc(p.label) + ' — ' + fmtMoney(p.y) + ' · ' + nf(p.x) + ' m²</title></circle>';
+  }).join('');
+  return '<div class="es-card es-chart">'
+    + '<div class="es-chart__legend"><span class="i"><span class="sw" style="background:var(--sky-blue)"></span>' + esc(ejeY) + ' contra ' + esc(ejeX) + '</span></div>'
+    + '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img">' + grid + ticksY + ticksX + pts + '</svg></div>';
 }
 
-/* ── Render de cada panel ──────────────────────────────────────────── */
-function panelResumen(RL, RP) {
-  const bb = buildBuckets(periodoActual);
-  const leadsNuevos = contactos.filter(c => c.es_potencial);
-  const serieLeads = countSeries(leadsNuevos, 'created_at', bb);
-  const serieCaptadas = countSeries(props, 'created_at', bb);
+/* Bloques */
+function kpi(n, lbl, clase, pie) {
+  return '<div class="es-card es-kpi"><div class="es-kpi__n ' + (clase || '') + '">' + n + '</div>'
+    + '<div class="es-kpi__lbl">' + esc(lbl) + '</div>'
+    + (pie ? '<div class="es-kpi__foot">' + esc(pie) + '</div>' : '') + '</div>';
+}
+function sec(titulo, sub, contenido) {
+  return '<div class="es-sec"><div class="es-sec__hdr"><span class="t">' + esc(titulo) + '</span>'
+    + (sub ? '<span class="s">' + esc(sub) + '</span>' : '') + '</div>' + contenido + '</div>';
+}
+function tarjetaGrafica(contenido) { return '<div class="es-card es-chart">' + contenido + '</div>'; }
 
-  const A = calcActividad();
-  const serieAct = countSeries(A.enP, 'created_at', bb);
-  const actEntries = A.arr.map(([tipo, n], i) => ({ label: ACT_LBL[tipo] || tipo, n, color: PALETA[i % PALETA.length] }));
-
-  return `
-    <div class="es-section">
-      <div class="es-section__hdr"><span class="t">Resumen</span></div>
-      <div class="es-kpis">
-        <div class="es-kpi bk-card"><div class="es-kpi__n is-good">${nf(RL.leadsActivos)}</div><div class="es-kpi__lbl">Leads activos ahora</div></div>
-        <div class="es-kpi bk-card"><div class="es-kpi__n">${nf(RP.inventarioActivo)}</div><div class="es-kpi__lbl">Inmuebles activos</div></div>
-        <div class="es-kpi bk-card"><div class="es-kpi__n ${RL.tasaCierre >= 20 ? 'is-good' : RL.tasaCierre < 5 ? 'is-warn' : ''}">${RL.tasaCierre}%</div><div class="es-kpi__lbl">Tasa de cierre de leads</div></div>
-        <div class="es-kpi bk-card"><div class="es-kpi__n">${nf(RP.cerradas)}</div><div class="es-kpi__lbl">Inmuebles cerrados en el periodo</div></div>
-        <div class="es-kpi bk-card"><div class="es-kpi__n">${nf(RL.contactosTotales)}</div><div class="es-kpi__lbl">Contactos totales</div></div>
-      </div>
-    </div>
-
-    <div class="es-section">
-      <div class="es-section__hdr"><span class="t">Leads captados vs. inmuebles captados</span><span class="s">por ${bb.cfg.unit === 'day' ? 'día' : bb.cfg.unit === 'week' ? 'semana' : 'mes'}</span></div>
-      <div class="es-trend-wrap bk-card">${renderTrendMulti(bb, [
-        { label: 'Leads', color: 'var(--sky-blue)', counts: serieLeads },
-        { label: 'Inmuebles', color: 'var(--sky-navy-mid)', counts: serieCaptadas },
-      ])}</div>
-    </div>
-
-    <div class="es-section">
-      <div class="es-section__hdr"><span class="t">Actividad del equipo</span><span class="s">notas, cambios de etapa y tareas completadas en el periodo</span></div>
-      ${A.total ? `<div class="es-kpis" style="margin-bottom:14px">
-          <div class="es-kpi bk-card"><div class="es-kpi__n">${nf(A.total)}</div><div class="es-kpi__lbl">Movimientos registrados</div></div>
-        </div>
-        <div class="bk-card" style="margin-bottom:14px">${renderBarsList(actEntries)}</div>
-        <div class="es-trend-wrap bk-card">${renderTrendMulti(bb, [{ label: 'Actividad', color: 'var(--forest-2)', counts: serieAct }])}</div>`
-        : `<div class="es-empty bk-card"><p>Sin actividad registrada en este periodo. Cada nota, cambio de etapa o tarea completada dentro de un contacto o inmueble aparecerá aquí.</p></div>`}
-    </div>
-  `;
+/* ════════════════════════════════════════════════════════════
+   Cálculos — CRM
+   ════════════════════════════════════════════════════════════ */
+function calcLeads() {
+  const nuevosP = contactos.filter(c => enPeriodo(c.created_at));
+  const activosLeads = contactos.filter(c => c.es_potencial);
+  const nuevosLeads = activosLeads.filter(c => enPeriodo(c.created_at));
+  const ultima = ETAPAS.length ? ETAPAS[ETAPAS.length - 1].clave : 'cerrado';
+  const cerrados = nuevosP.filter(c => String(c.estatus || 'nuevo').toLowerCase() === ultima);
+  const conCambio = nuevosP.filter(c => c.fecha_cambio_estatus && c.created_at && c.fecha_cambio_estatus !== c.created_at);
+  let diasProm = null;
+  if (conCambio.length) {
+    diasProm = Math.round(conCambio.reduce((a, c) => a + (new Date(c.fecha_cambio_estatus) - new Date(c.created_at)) / 86400000, 0) / conCambio.length);
+  }
+  return {
+    totales: contactos.length, nuevos: nuevosP.length,
+    activos: activosLeads.length, nuevosLeads: nuevosLeads.length,
+    cerrados: cerrados.length, tasa: pct(cerrados.length, nuevosP.length),
+    diasProm: diasProm,
+  };
+}
+function conteo(items, fn) {
+  const m = {};
+  items.forEach(x => { const k = fn(x); if (k == null) return; m[k] = (m[k] || 0) + 1; });
+  return Object.entries(m).sort((a, b) => b[1] - a[1]);
+}
+function entradas(pares, lblFn, desde) {
+  return pares.map((par, i) => ({ label: lblFn ? (lblFn[par[0]] || par[0]) : par[0], n: par[1], color: col(i + (desde || 0)) }));
+}
+function calcFuentes() {
+  return conteo(contactos.filter(c => c.es_potencial && enPeriodo(c.created_at)), c => c.fuente || 'Sin especificar');
+}
+function conversionPorFuente() {
+  const ultima = ETAPAS.length ? ETAPAS[ETAPAS.length - 1].clave : 'cerrado';
+  const porFuente = {};
+  contactos.filter(c => enPeriodo(c.created_at)).forEach(c => {
+    const f = c.fuente || 'Sin especificar';
+    porFuente[f] = porFuente[f] || { total: 0, cerrados: 0 };
+    porFuente[f].total++;
+    if (String(c.estatus || '').toLowerCase() === ultima) porFuente[f].cerrados++;
+  });
+  return Object.entries(porFuente)
+    .map(par => ({ fuente: par[0], total: par[1].total, cerrados: par[1].cerrados, tasa: pct(par[1].cerrados, par[1].total) }))
+    .sort((a, b) => (b.tasa - a.tasa) || (b.total - a.total));
+}
+function calcEmbudoEtapas() {
+  const enP = contactos.filter(c => enPeriodo(c.created_at));
+  const porEtapa = {};
+  enP.forEach(c => { const k = String(c.estatus || 'nuevo').toLowerCase(); porEtapa[k] = (porEtapa[k] || 0) + 1; });
+  return { total: enP.length, stages: ETAPAS.map((e, i) => ({ nombre: e.nombre, color: e.color || col(i), n: porEtapa[e.clave] || 0 })) };
 }
 
-function panelLeads(RL) {
-  const F = calcFuentesLeads();
-  const T = calcTipoLeads();
-  const E = calcEmbudo();
-  const bb = buildBuckets(periodoActual);
-  const leadsNuevos = contactos.filter(c => c.es_potencial);
-  const serie = countSeries(leadsNuevos, 'created_at', bb);
+/* ════════════════════════════════════════════════════════════
+   Cálculos — Inmuebles
+   ════════════════════════════════════════════════════════════ */
+const CERRADOS = ['vendida', 'rentada'];
+function activos() { return props.filter(p => !p.archivada && CERRADOS.indexOf(p.estatus) < 0); }
 
-  const fuenteEntries = F.arr.map(([label, n], i) => ({ label, n, color: PALETA[i % PALETA.length] }));
-  const tipoEntries = T.arr.map(([tipo, n], i) => ({ label: ROLES_LBL[tipo] || tipo, n, color: PALETA[(i+3) % PALETA.length] }));
-  const maxEmbudo = Math.max(1, ...E.stages.map(s => s.n));
-
-  return `
-    <div class="es-section">
-      <div class="es-section__hdr"><span class="t">Fuentes de leads</span><span class="s">de dónde vienen tus clientes potenciales</span></div>
-      ${fuenteEntries.length ? `<div class="es-donut-wrap bk-card">
-        ${renderDonut(fuenteEntries, F.total, 'leads')}
-        ${renderLegend(fuenteEntries)}
-      </div>` : `<div class="es-empty bk-card"><p>Sin leads con fuente registrada en este periodo. Captúrala al crear un lead (Facebook, Referido, Portal, etc.) y aquí verás de dónde viene tu negocio.</p></div>`}
-    </div>
-
-    <div class="es-section">
-      <div class="es-section__hdr"><span class="t">Tendencia de captación de leads</span><span class="s">nuevos por ${bb.cfg.unit === 'day' ? 'día' : bb.cfg.unit === 'week' ? 'semana' : 'mes'}</span></div>
-      <div class="es-trend-wrap bk-card">${renderTrendMulti(bb, [{ label:'Leads', color:'var(--sky-blue)', counts: serie }])}</div>
-    </div>
-
-    <div class="es-section">
-      <div class="es-section__hdr"><span class="t">Distribución por etapa</span><span class="s">dónde están hoy tus contactos del periodo</span></div>
-      ${E.total ? `<div class="es-bars bk-card"><div class="es-funnel">
-        ${E.stages.map(s => `<div class="es-funnel-row">
-          <div class="es-funnel-row__lbl">${esc(s.nombre)}</div>
-          <div class="es-funnel-bar-wrap"><div class="es-funnel-bar" style="width:${Math.max((s.n/maxEmbudo)*100,6)}%;background:${s.color}">${s.n || ''}</div></div>
-          <div class="es-funnel-row__pct">${E.total ? Math.round((s.n/E.total)*100) : 0}%</div>
-        </div>`).join('')}
-      </div></div>` : `<div class="es-empty bk-card"><p>Sin contactos en este periodo.</p></div>`}
-    </div>
-
-    <div class="es-section">
-      <div class="es-section__hdr"><span class="t">Tipo de cliente</span><span class="s">perfil de tus leads del periodo</span></div>
-      ${tipoEntries.length ? `<div class="bk-card">${renderBarsList(tipoEntries)}</div>` : `<div class="es-empty bk-card"><p>Sin leads en este periodo.</p></div>`}
-    </div>
-  `;
+function calcProps() {
+  const captadas = props.filter(p => enPeriodo(p.created_at));
+  const cerradas = props.filter(p => CERRADOS.indexOf(p.estatus) >= 0 && enPeriodo(p.updated_at));
+  const act = activos();
+  const valorInv = {};
+  act.forEach(p => { const m = p.moneda || 'MXN'; valorInv[m] = (valorInv[m] || 0) + (Number(p.precio) || 0); });
+  const valorCerr = {};
+  cerradas.forEach(p => { const m = p.moneda || 'MXN'; valorCerr[m] = (valorCerr[m] || 0) + (Number(p.precio) || 0); });
+  let diasMercado = null;
+  const conFecha = cerradas.filter(p => p.created_at && p.updated_at);
+  if (conFecha.length) diasMercado = Math.round(conFecha.reduce((a, p) => a + diasEntre(p.created_at, p.updated_at), 0) / conFecha.length);
+  const conPrecio = act.filter(p => Number(p.precio) > 0);
+  const precioProm = conPrecio.length ? conPrecio.reduce((a, p) => a + Number(p.precio), 0) / conPrecio.length : 0;
+  let comision = 0;
+  act.forEach(p => {
+    const precio = Number(p.precio) || 0;
+    if (!precio) return;
+    if (p.operacion === 'renta') comision += precio * (Number(p.comision_renta_meses) || 0);
+    else comision += precio * ((Number(p.comision_venta_pct) || 0) / 100);
+  });
+  const conM2 = act.filter(p => Number(p.m2_construccion) > 0);
+  const m2Prom = conM2.length ? Math.round(conM2.reduce((a, p) => a + Number(p.m2_construccion), 0) / conM2.length) : 0;
+  const antig = act.map(p => diasEntre(p.created_at)).filter(d => d != null);
+  const antProm = antig.length ? Math.round(antig.reduce((a, b) => a + b, 0) / antig.length) : 0;
+  return {
+    captadas: captadas.length, cerradas: cerradas.length,
+    vendidas: cerradas.filter(p => p.estatus === 'vendida').length,
+    rentadas: cerradas.filter(p => p.estatus === 'rentada').length,
+    inventario: act.length, total: props.length,
+    valorInv: valorInv, valorCerr: valorCerr,
+    diasMercado: diasMercado, precioProm: precioProm, comision: comision,
+    m2Prom: m2Prom, antProm: antProm,
+  };
+}
+function interesPorProp() {
+  const m = {};
+  interes.filter(r => (r.relacion || 'interes') === 'interes').forEach(r => {
+    const k = String(r.propiedad_id); m[k] = (m[k] || 0) + 1;
+  });
+  return m;
+}
+function waPorProp() {
+  const w = W(), m = {};
+  if (w && w.propiedades) Object.entries(w.propiedades).forEach(par => { m[par[0]] = par[1].conversaciones || 0; });
+  return m;
+}
+function actPorProp() {
+  const m = {};
+  actividades.filter(a => a.propiedad_id && enPeriodo(a.created_at)).forEach(a => {
+    const k = String(a.propiedad_id); m[k] = (m[k] || 0) + 1;
+  });
+  return m;
+}
+function tareasPorProp() {
+  const m = {};
+  tareas.filter(t => t.propiedad_id).forEach(t => { const k = String(t.propiedad_id); m[k] = (m[k] || 0) + 1; });
+  return m;
+}
+function rankingInmuebles() {
+  const I = interesPorProp(), WP = waPorProp(), A = actPorProp(), T = tareasPorProp();
+  return props.map(p => {
+    const id = String(p.id);
+    const inter = I[id] || 0, chats = WP[id] || 0, acts = A[id] || 0, tks = T[id] || 0;
+    return {
+      p: p, id: id, inter: inter, chats: chats, acts: acts, tareas: tks,
+      diasInv: diasEntre(p.created_at),
+      demanda: inter * 3 + chats * 2 + acts,
+    };
+  }).sort((a, b) => (b.demanda - a.demanda) || (b.inter - a.inter));
 }
 
-function panelPropiedades(RP) {
-  const TP = calcTipoPropiedadesCaptadas();
-  const VR = calcCierreVentaRenta();
-  const I = calcInmuebles();
-  const bb = buildBuckets(periodoActual);
-  const serieCaptadas = countSeries(props, 'created_at', bb);
-  const serieCerradas = countSeries(props.filter(p => ['vendida','rentada'].includes(p.estatus)), 'updated_at', bb);
+/* ════════════════════════════════════════════════════════════
+   Paneles
+   ════════════════════════════════════════════════════════════ */
+function panelResumen() {
+  const L = calcLeads(), P = calcProps(), w = W();
+  const bb = buildBuckets();
+  const sLeads = serieDe(contactos.filter(c => c.es_potencial), 'created_at', bb);
+  const sProps = serieDe(props, 'created_at', bb);
+  const sWa = w ? serieDeMapa(w.serie.map(r => ({ fecha: r.fecha, valor: r.entrantes })), bb) : null;
 
-  const tipoEntries = TP.arr.map(([tipo, n], i) => ({ label: TIPO_PROP_LBL[tipo] || tipo, n, color: PALETA[i % PALETA.length] }));
-  const vrEntries = [
-    { label: 'Vendida', n: VR.vendidas, color: 'var(--sky-blue)' },
-    { label: 'Rentada', n: VR.rentadas, color: 'var(--sky-navy-mid)' },
-  ].filter(e => e.n > 0);
+  const monedaInv = Object.keys(P.valorInv).sort((a, b) => P.valorInv[b] - P.valorInv[a])[0] || 'MXN';
+  const vencidas = tareas.filter(t => !t.completada && t.fecha_entrega && new Date(t.fecha_entrega) < new Date()).length;
 
-  const monedas = Object.keys(RP.valorPorMoneda);
+  const series = [
+    { label: 'Leads captados', color: 'var(--sky-blue)', counts: sLeads },
+    { label: 'Inmuebles captados', color: 'var(--sky-navy-mid)', counts: sProps },
+  ];
+  if (sWa) series.push({ label: 'Mensajes de WhatsApp', color: 'var(--success)', counts: sWa });
 
-  return `
-    <div class="es-section">
-      <div class="es-section__hdr"><span class="t">Captación y cierre</span></div>
-      <div class="es-kpis">
-        <div class="es-kpi bk-card"><div class="es-kpi__n">${nf(RP.captadas)}</div><div class="es-kpi__lbl">Inmuebles captados (nuevos)</div></div>
-        <div class="es-kpi bk-card"><div class="es-kpi__n is-good">${nf(RP.cerradas)}</div><div class="es-kpi__lbl">Vendidos + rentados</div></div>
-        ${monedas.length ? monedas.map(m => `<div class="es-kpi bk-card"><div class="es-kpi__n is-good">${fmtMoneyShort(RP.valorPorMoneda[m], m)}</div><div class="es-kpi__lbl">Valor cerrado (${m})</div></div>`).join('') : `<div class="es-kpi bk-card"><div class="es-kpi__n">—</div><div class="es-kpi__lbl">Valor cerrado</div></div>`}
-        <div class="es-kpi bk-card"><div class="es-kpi__n">${RP.diasMercadoProm != null ? RP.diasMercadoProm : '—'}</div><div class="es-kpi__lbl">Días prom. en mercado</div></div>
-        <div class="es-kpi bk-card"><div class="es-kpi__n">${nf(RP.inventarioActivo)}</div><div class="es-kpi__lbl">Inventario activo</div></div>
-      </div>
-    </div>
+  const calificados = w ? Object.entries(w.temperatura || {}).filter(par => /caliente|tibio/i.test(par[0])).reduce((a, par) => a + par[1], 0) : 0;
+  const citas = w ? ((w.etapa || {})['Cita'] || 0) : 0;
+  const embudo = [
+    { nombre: 'Conversaciones', n: w ? w.totales.conversaciones_nuevas : 0, color: 'var(--sky-blue-lift)' },
+    { nombre: 'Prospectos calificados', n: calificados, color: 'var(--sky-blue)' },
+    { nombre: 'Citas agendadas', n: citas, color: 'var(--sky-navy-mid)' },
+    { nombre: 'Leads en el CRM', n: L.activos, color: 'var(--sky-navy)' },
+    { nombre: 'Inmuebles cerrados', n: P.cerradas, color: 'var(--success)' },
+  ];
 
-    <div class="es-section">
-      <div class="es-section__hdr"><span class="t">Captadas vs. cerradas</span><span class="s">por ${bb.cfg.unit === 'day' ? 'día' : bb.cfg.unit === 'week' ? 'semana' : 'mes'} · el cierre se aproxima con la última edición del inmueble</span></div>
-      <div class="es-trend-wrap bk-card">${renderTrendMulti(bb, [
-        { label:'Captadas', color:'var(--sky-blue)', counts: serieCaptadas },
-        { label:'Cerradas', color:'var(--forest-2)', counts: serieCerradas },
-      ])}</div>
-    </div>
+  const rank = rankingInmuebles().slice(0, 6);
 
-    <div class="es-section">
-      <div class="es-section__hdr"><span class="t">Tipo de inmueble captado</span></div>
-      ${tipoEntries.length ? `<div class="bk-card">${renderBarsList(tipoEntries)}</div>` : `<div class="es-empty bk-card"><p>Sin inmuebles captados en este periodo.</p></div>`}
-    </div>
+  return ''
+    + sec('El negocio de un vistazo', PERIODO_LBL[periodo],
+      '<div class="es-kpis">'
+      + kpi(nf(L.activos), 'Leads activos ahora', 'is-good')
+      + kpi(nf(P.inventario), 'Inmuebles en inventario', '', P.antProm ? P.antProm + ' días de antigüedad promedio' : '')
+      + kpi(fmtMoneyShort(P.valorInv[monedaInv] || 0, monedaInv), 'Valor del inventario')
+      + kpi(fmtMoneyShort(P.comision, ''), 'Comisión potencial del inventario')
+      + kpi(L.tasa + '%', 'Tasa de cierre de leads', L.tasa >= 20 ? 'is-good' : (L.tasa < 5 ? 'is-warn' : ''))
+      + kpi(nf(P.cerradas), 'Inmuebles cerrados ' + PERIODO_LBL[periodo], 'is-good')
+      + kpi(w ? nf(w.totales.mensajes) : (waCargando ? '…' : '—'), 'Mensajes de WhatsApp')
+      + kpi(w ? w.totales.pct_ia + '%' : (waCargando ? '…' : '—'), 'Atendido por la IA', 'is-good')
+      + kpi(nf(vencidas), 'Tareas vencidas', vencidas ? 'is-bad' : '')
+      + '</div>')
 
-    <div class="es-section">
-      <div class="es-section__hdr"><span class="t">Venta vs. renta</span><span class="s">de lo cerrado en el periodo</span></div>
-      ${vrEntries.length ? `<div class="es-donut-wrap bk-card">
-        ${renderDonut(vrEntries, VR.total, 'cerrados')}
-        ${renderLegend(vrEntries)}
-      </div>` : `<div class="es-empty bk-card"><p>Sin cierres en este periodo.</p></div>`}
-    </div>
+    + sec('Motor del negocio', 'lo que entra por cada canal, ' + PERIODO_LBL[periodo], tarjetaGrafica(chLine(bb, series)))
 
-    <div class="es-section">
-      <div class="es-section__hdr"><span class="t">Inmuebles con más interés</span></div>
-      ${I.top.length ? `<div class="es-props">
-        ${I.top.map((x, i) => `<div class="es-prop-row bk-card">
-          <div class="es-prop-row__rank">${i+1}</div>
-          <div class="es-prop-row__info">
-            <div class="es-prop-row__title">${esc(x.prop.clave_interna ? x.prop.clave_interna + ' · ' + (x.prop.titulo||'') : (x.prop.titulo || 'Sin título'))}</div>
-            <div class="es-prop-row__sub">${x.n} interesado${x.n===1?'':'s'}${x.potenciales ? ' · ' + x.potenciales + ' lead' + (x.potenciales===1?'':'s') + ' activo' + (x.potenciales===1?'':'s') : ''}</div>
-          </div>
-          <div class="es-prop-row__n">${x.n}</div>
-        </div>`).join('')}
-      </div>` : `<div class="es-empty bk-card"><p>Todavía no hay interesados vinculados a tus inmuebles. Cuando marques un contacto como interesado en una propiedad, aquí verás el ranking.</p></div>`}
-    </div>
-  `;
+    + sec('Embudo comercial completo', 'de la primera conversación al cierre',
+      chFunnel(embudo) + '<div class="es-note">Las conversaciones y los prospectos calificados salen de WhatsApp; los leads y los cierres, del CRM.</div>')
+
+    + '<div class="es-duo">'
+      + sec('Inventario por operación', '', tarjetaDonut(
+        entradas(conteo(activos(), p => p.operacion === 'renta' ? 'Renta' : 'Venta')),
+        nf(activos().length), 'activos', 'Aún no tienes inmuebles activos.'))
+      + sec('Leads por etapa', '', chFunnel(calcEmbudoEtapas().stages))
+    + '</div>'
+
+    + sec('Tus inmuebles con más demanda', 'interesados, chats de WhatsApp y movimientos', rank.length
+      ? '<div class="es-rows">' + rank.map((x, i) =>
+          '<div class="es-card es-row es-row--link" onclick="verInmueble(\'' + esc(x.id) + '\')">'
+          + '<div class="es-row__rank">' + (i + 1) + '</div>'
+          + '<div class="es-row__info"><div class="es-row__t">'
+          + esc(x.p.clave_interna ? x.p.clave_interna + ' · ' : '') + esc(x.p.titulo || 'Sin título') + '</div>'
+          + '<div class="es-row__s">' + nf(x.inter) + ' interesados · ' + nf(x.chats) + ' chats · ' + nf(x.acts) + ' movimientos'
+          + (x.diasInv != null ? ' · ' + nf(x.diasInv) + ' días en inventario' : '') + '</div></div>'
+          + '<div class="es-row__spark">' + chSpark(serieDe(actividades.filter(a => String(a.propiedad_id) === x.id), 'created_at', bb)) + '</div>'
+          + '<div class="es-row__n">' + nf(x.demanda) + '</div></div>').join('') + '</div>'
+      : '<div class="es-card es-empty"><p>Todavía no hay demanda registrada. En cuanto vincules interesados o te escriban por WhatsApp preguntando por un inmueble, aparecerá aquí.</p></div>');
 }
 
-/* ── Render principal ─────────────────────────────────────────────── */
+function panelLeads() {
+  const L = calcLeads();
+  const bb = buildBuckets();
+  const sLeads = serieDe(contactos.filter(c => c.es_potencial), 'created_at', bb);
+  const sTodos = serieDe(contactos, 'created_at', bb);
+  const F = calcFuentes();
+  const E = calcEmbudoEtapas();
+  const T = conteo(contactos.filter(c => c.es_potencial && enPeriodo(c.created_at)), c => c.tipo || 'otro');
+  const CF = conversionPorFuente();
+
+  return ''
+    + sec('Pipeline de clientes potenciales', PERIODO_LBL[periodo],
+      '<div class="es-kpis">'
+      + kpi(nf(L.activos), 'Leads activos ahora', 'is-good')
+      + kpi(nf(L.nuevosLeads), 'Leads nuevos ' + PERIODO_LBL[periodo])
+      + kpi(nf(L.nuevos), 'Contactos nuevos ' + PERIODO_LBL[periodo])
+      + kpi(L.tasa + '%', 'Tasa de cierre', L.tasa >= 20 ? 'is-good' : (L.tasa < 5 ? 'is-warn' : ''))
+      + kpi(L.diasProm != null ? nf(L.diasProm) : '—', 'Días promedio hasta el primer avance')
+      + kpi(nf(L.totales), 'Contactos totales en tu CRM')
+      + '</div>')
+
+    + sec('Captación de leads', 'nuevos por periodo', tarjetaGrafica(chLine(bb, [
+        { label: 'Leads', color: 'var(--sky-blue)', counts: sLeads },
+        { label: 'Todos los contactos', color: 'var(--ink-3)', counts: sTodos },
+      ])))
+
+    + sec('Distribución por etapa', 'dónde está hoy cada contacto que entró en el periodo', E.total
+        ? chFunnel(E.stages)
+        : '<div class="es-card es-empty"><p>Sin contactos en este periodo.</p></div>')
+
+    + '<div class="es-duo">'
+      + sec('Fuentes de leads', 'de dónde viene tu negocio', tarjetaDonut(entradas(F),
+          nf(F.reduce((a, x) => a + x[1], 0)), 'leads',
+          'Sin leads con fuente registrada. Captúrala al crear el lead y aquí verás qué canal te está dando de comer.'))
+      + sec('Tipo de cliente', 'perfil de tus leads', tarjetaBarras(entradas(T, ROLES_LBL, 2), 'Sin leads en este periodo.'))
+    + '</div>'
+
+    + sec('Conversión por fuente', 'qué canal cierra, no solo cuál trae volumen', CF.length
+      ? '<div class="es-card es-tablewrap"><table class="es-table">'
+        + '<thead><tr><th>Fuente</th><th class="num">Contactos</th><th class="num">Cerrados</th><th class="num">Tasa</th><th>Comparativa</th></tr></thead><tbody>'
+        + CF.map((r, i) => '<tr><td class="t">' + esc(r.fuente) + '</td>'
+          + '<td class="num">' + nf(r.total) + '</td><td class="num">' + nf(r.cerrados) + '</td>'
+          + '<td class="num"><b>' + r.tasa + '%</b></td>'
+          + '<td><div class="es-bar__track"><div class="es-bar__fill" style="width:' + Math.max(r.tasa, 2) + '%;background:' + col(i) + '"></div></div></td></tr>').join('')
+        + '</tbody></table></div>'
+      : '<div class="es-card es-empty"><p>Sin datos suficientes para comparar fuentes.</p></div>');
+}
+
+function panelInmuebles() {
+  const P = calcProps();
+  const bb = buildBuckets();
+  const act = activos();
+  const sCap = serieDe(props, 'created_at', bb);
+  const sCer = serieDe(props.filter(p => CERRADOS.indexOf(p.estatus) >= 0), 'updated_at', bb);
+  const monedaInv = Object.keys(P.valorInv).sort((a, b) => P.valorInv[b] - P.valorInv[a])[0] || 'MXN';
+
+  const porTipo = entradas(conteo(act, p => p.tipo || 'otro'), TIPO_PROP_LBL);
+  const porEstatus = entradas(conteo(props.filter(p => !p.archivada), p => p.estatus || 'activa'), ESTATUS_PROP_LBL, 1);
+  const porColonia = entradas(conteo(act, p => (p.colonia || 'Sin colonia').trim()).slice(0, 10), null, 2);
+  const porCiudad = entradas(conteo(act, p => (p.ciudad || 'Sin ciudad').trim()).slice(0, 8), null, 4);
+
+  const precios = act.map(p => Number(p.precio) || 0).filter(v => v > 0).sort((a, b) => a - b);
+  let hist = [];
+  if (precios.length >= 3) {
+    const maxP = precios[precios.length - 1];
+    const nb = 6, ancho = maxP / nb;
+    const cubetas = new Array(nb).fill(0);
+    precios.forEach(v => { cubetas[Math.min(nb - 1, Math.floor(v / ancho))]++; });
+    hist = cubetas.map((n, i) => ({
+      label: fmtMoneyShort(i * ancho, '') + ' a ' + fmtMoneyShort((i + 1) * ancho, ''),
+      n: n, color: col(i),
+    }));
+  }
+
+  const rangos = [
+    { label: 'Menos de 30 días', min: 0, max: 30 },
+    { label: '30 a 90 días', min: 30, max: 90 },
+    { label: '90 a 180 días', min: 90, max: 180 },
+    { label: 'Más de 180 días', min: 180, max: 1e9 },
+  ].map((r, i) => ({
+    label: r.label,
+    color: i === 3 ? 'var(--danger)' : (i === 2 ? 'var(--warn)' : col(i)),
+    n: act.filter(p => { const d = diasEntre(p.created_at); return d != null && d >= r.min && d < r.max; }).length,
+  }));
+
+  const puntos = act.filter(p => Number(p.m2_construccion) > 0 && Number(p.precio) > 0 && p.operacion !== 'renta')
+    .map(p => ({ x: Number(p.m2_construccion), y: Number(p.precio), label: p.titulo || p.clave_interna || 'Inmueble' }));
+
+  return ''
+    + sec('Inventario y cierre', PERIODO_LBL[periodo],
+      '<div class="es-kpis">'
+      + kpi(nf(P.inventario), 'Inmuebles activos')
+      + kpi(fmtMoneyShort(P.valorInv[monedaInv] || 0, monedaInv), 'Valor total del inventario')
+      + kpi(fmtMoneyShort(P.comision, ''), 'Comisión potencial', 'is-good')
+      + kpi(nf(P.captadas), 'Captados ' + PERIODO_LBL[periodo])
+      + kpi(nf(P.cerradas), 'Vendidos y rentados', 'is-good', P.vendidas + ' vendidos · ' + P.rentadas + ' rentados')
+      + kpi(P.diasMercado != null ? nf(P.diasMercado) : '—', 'Días promedio en mercado')
+      + kpi(fmtMoneyShort(P.precioProm, ''), 'Precio promedio del inventario')
+      + kpi(P.m2Prom ? nf(P.m2Prom) + ' m²' : '—', 'Superficie promedio construida')
+      + '</div>')
+
+    + sec('Captación contra cierre', 'el cierre se aproxima con la última edición del inmueble', tarjetaGrafica(chBarsV(bb, [
+        { label: 'Captados', color: 'var(--sky-blue)', counts: sCap },
+        { label: 'Cerrados', color: 'var(--success)', counts: sCer },
+      ])))
+
+    + '<div class="es-duo">'
+      + sec('Por tipo de inmueble', '', tarjetaDonut(porTipo, nf(act.length), 'activos', 'Sin inmuebles activos.'))
+      + sec('Por estatus', '', tarjetaBarras(porEstatus, 'Sin inmuebles capturados.'))
+    + '</div>'
+
+    + '<div class="es-duo">'
+      + sec('Zonas donde tienes producto', 'las 10 colonias con más inventario', tarjetaBarras(porColonia, 'Sin colonias capturadas.'))
+      + sec('Ciudades', '', tarjetaBarras(porCiudad, 'Sin ciudades capturadas.'))
+    + '</div>'
+
+    + '<div class="es-duo">'
+      + sec('Rangos de precio de tu inventario', 'dónde se concentra tu producto', hist.length
+          ? tarjetaBarras(hist, '')
+          : '<div class="es-card es-empty"><p>Necesitas al menos 3 inmuebles con precio para ver el histograma.</p></div>')
+      + sec('Antigüedad del inventario', 'lo que lleva demasiado tiempo parado', tarjetaBarras(rangos, 'Sin inmuebles activos.'))
+    + '</div>'
+
+    + sec('Precio contra superficie', 'inmuebles en venta — los que se salen de la nube están mal precificados',
+        chScatter(puntos, 'm² de construcción', 'precio'))
+
+    + sec('Todos tus inmuebles', 'toca cualquier renglón para ver su reporte completo',
+      '<div class="es-picker">'
+      + '<input class="es-select" type="search" placeholder="Filtrar por título, clave o colonia…" oninput="setFiltroTabla(this.value)"/>'
+      + '</div>'
+      + '<div class="es-card es-tablewrap"><table class="es-table"><thead><tr>'
+      + '<th>Inmueble</th><th>Zona</th><th class="num">Precio</th><th class="num">Interesados</th>'
+      + '<th class="num">Chats</th><th class="num">Movimientos</th><th class="num">Días</th><th class="num">Demanda</th>'
+      + '</tr></thead><tbody id="tabla-inm-body">' + filasTablaInmuebles() + '</tbody></table></div>');
+}
+
+function filasTablaInmuebles() {
+  const rank = rankingInmuebles().filter(x => {
+    if (!filtroTabla) return true;
+    return ((x.p.titulo || '') + (x.p.clave_interna || '') + (x.p.colonia || '') + (x.p.ciudad || '')).toLowerCase().indexOf(filtroTabla) >= 0;
+  });
+  if (!rank.length) return '<tr><td colspan="8">Sin resultados.</td></tr>';
+  return rank.map(x => '<tr onclick="verInmueble(\'' + esc(x.id) + '\')">'
+    + '<td class="t">' + esc(x.p.clave_interna ? x.p.clave_interna + ' · ' : '') + esc(x.p.titulo || 'Sin título') + '</td>'
+    + '<td>' + esc(x.p.colonia || '—') + '</td>'
+    + '<td class="num">' + (x.p.precio ? fmtMoneyShort(x.p.precio, x.p.moneda) : '—') + '</td>'
+    + '<td class="num">' + nf(x.inter) + '</td>'
+    + '<td class="num">' + nf(x.chats) + '</td>'
+    + '<td class="num">' + nf(x.acts) + '</td>'
+    + '<td class="num">' + (x.diasInv != null ? nf(x.diasInv) : '—') + '</td>'
+    + '<td class="num"><b>' + nf(x.demanda) + '</b></td></tr>').join('');
+}
+
+function panelWhatsApp() {
+  if (waCargando) return '<div class="es-sec"><div class="es-card es-skel"></div></div>';
+  const w = W();
+  if (!w) {
+    return '<div class="es-card es-empty"><p>Todavía no puedo leer tus estadísticas de WhatsApp. '
+      + esc(waErr || '') + ' Si aún no conectas un número, hazlo desde el módulo de WhatsApp y aquí verás todo el detalle.</p></div>';
+  }
+  const t = w.totales;
+  const bb = buildBuckets();
+  const sIn = serieDeMapa(w.serie.map(r => ({ fecha: r.fecha, valor: r.entrantes })), bb);
+  const sIa = serieDeMapa(w.serie.map(r => ({ fecha: r.fecha, valor: r.ia })), bb);
+  const sAg = serieDeMapa(w.serie.map(r => ({ fecha: r.fecha, valor: r.agente })), bb);
+
+  const temp = Object.entries(w.temperatura || {}).sort((a, b) => b[1] - a[1])
+    .map(par => ({ label: par[0], n: par[1], color: TEMP_COLOR[par[0]] || 'var(--mute)' }));
+  const etapaOrden = ['Nuevo', 'Contactado', 'Cita', 'Negociación', 'Cierre'];
+  const etapas = etapaOrden.map((k, i) => ({ nombre: k, n: (w.etapa || {})[k] || 0, color: col(i) }));
+  const scoreB = Object.entries(w.score.buckets || {}).map((par, i) => ({ label: par[0] + ' de score', n: par[1], color: col(i) }));
+  const pago = Object.entries(w.forma_pago || {}).sort((a, b) => b[1] - a[1]).map((par, i) => ({ label: par[0], n: par[1], color: col(i + 3) }));
+  const nums = (w.numeros || []).map((n, i) => ({ label: n.alias, n: n.mensajes, color: col(i) }));
+
+  const propsIdx = {};
+  props.forEach(p => { propsIdx[String(p.id)] = p; });
+  const topProps = Object.entries(w.propiedades || {})
+    .map(par => ({ id: par[0], n: par[1].conversaciones, titulo: (propsIdx[par[0]] && propsIdx[par[0]].titulo) || par[1].titulo || 'Inmueble' }))
+    .sort((a, b) => b.n - a.n).slice(0, 10);
+
+  return ''
+    + sec('Recepción de WhatsApp', PERIODO_LBL[periodo],
+      '<div class="es-kpis">'
+      + kpi(nf(t.conversaciones_nuevas), 'Conversaciones nuevas')
+      + kpi(nf(t.mensajes), 'Mensajes totales', '', nf(t.entrantes) + ' entrantes · ' + nf(t.salientes) + ' salientes')
+      + kpi(t.pct_ia + '%', 'Respondido por la IA', 'is-good')
+      + kpi(fmtMin(w.respuesta_min.mediana), 'Tiempo mediano de respuesta',
+          (w.respuesta_min.mediana != null && w.respuesta_min.mediana <= 5) ? 'is-good' : 'is-warn')
+      + kpi(nf(t.sin_responder), 'Conversaciones sin responder', t.sin_responder ? 'is-bad' : 'is-good')
+      + kpi(nf(t.handoffs), 'Pasadas a un humano')
+      + kpi(nf(t.conversaciones_activas_24h), 'Activas en 24 horas')
+      + kpi(nf(t.msgs_por_conversacion), 'Mensajes por conversación')
+      + '</div>')
+
+    + sec('Volumen de conversación', 'quién contesta qué, ' + PERIODO_LBL[periodo], tarjetaGrafica(chLine(bb, [
+        { label: 'Entrantes del prospecto', color: 'var(--sky-blue)', counts: sIn },
+        { label: 'Respondidos por la IA', color: 'var(--success)', counts: sIa },
+        { label: 'Respondidos por ti', color: 'var(--sky-navy-mid)', counts: sAg },
+      ])))
+
+    + sec('Cuándo te escriben', 'mensajes entrantes por hora y día — aquí decides horarios y pauta', chHeat(w.heat, 'Menos'))
+
+    + '<div class="es-duo">'
+      + sec('Carga que se lleva la IA', 'de todo lo que sale de tu número',
+        '<div class="es-card es-donut">' + chGauge(t.pct_ia, 'atendido por IA', 'var(--success)')
+        + '<div class="es-leg">'
+        + '<div class="es-leg__row"><span class="es-leg__dot" style="background:var(--success)"></span><span class="es-leg__lbl">Respuestas de la IA</span><span class="es-leg__n">' + nf(t.ia) + '</span></div>'
+        + '<div class="es-leg__row"><span class="es-leg__dot" style="background:var(--sky-navy-mid)"></span><span class="es-leg__lbl">Respuestas tuyas</span><span class="es-leg__n">' + nf(t.agente) + '</span></div>'
+        + '<div class="es-leg__row"><span class="es-leg__dot" style="background:var(--mute)"></span><span class="es-leg__lbl">Mensajes del prospecto</span><span class="es-leg__n">' + nf(t.entrantes) + '</span></div>'
+        + '</div></div>')
+      + sec('Temperatura de los prospectos', 'como los califica la IA hoy',
+        tarjetaDonut(temp, nf(temp.reduce((a, x) => a + x.n, 0)), 'prospectos', 'Aún no hay prospectos calificados.'))
+    + '</div>'
+
+    + sec('Etapa de los prospectos de WhatsApp', 'del primer mensaje al cierre', chFunnel(etapas))
+
+    + '<div class="es-duo">'
+      + sec('Calidad del prospecto', 'score que asigna la IA', tarjetaBarras(scoreB, 'Sin prospectos calificados.'))
+      + sec('Forma de pago declarada', 'crédito, contado o por definir', tarjetaBarras(pago, 'Sin forma de pago declarada.'))
+    + '</div>'
+
+    + '<div class="es-duo">'
+      + sec('Velocidad de respuesta', 'mediana en minutos',
+        '<div class="es-card">' + chBarsH([
+          { label: 'La IA', n: w.respuesta_min.mediana_ia || 0, color: 'var(--success)' },
+          { label: 'Tú o tu equipo', n: w.respuesta_min.mediana_agente || 0, color: 'var(--sky-navy-mid)' },
+        ], { sinPct: true, fmt: v => fmtMin(v) }) + '</div>'
+        + '<div class="es-note">Sobre ' + nf(w.respuesta_min.n) + ' respuestas medidas. Un prospecto contestado en menos de 5 minutos convierte varias veces mejor que uno contestado al día siguiente.</div>')
+      + sec('Por número conectado', 'cuál trabaja más', tarjetaBarras(nums, 'Sin números conectados todavía.'))
+    + '</div>'
+
+    + sec('Inmuebles más preguntados por WhatsApp', 'lo que de verdad está pidiendo el mercado', topProps.length
+      ? '<div class="es-rows">' + topProps.map((x, i) =>
+          '<div class="es-card es-row es-row--link" onclick="verInmueble(\'' + esc(x.id) + '\')">'
+          + '<div class="es-row__rank">' + (i + 1) + '</div>'
+          + '<div class="es-row__info"><div class="es-row__t">' + esc(x.titulo) + '</div>'
+          + '<div class="es-row__s">' + nf(x.n) + ' conversaciones donde se compartió</div></div>'
+          + '<div class="es-row__n">' + nf(x.n) + '</div></div>').join('') + '</div>'
+      : '<div class="es-card es-empty"><p>Cuando la IA comparta fichas de tus inmuebles por WhatsApp, aquí verás cuáles son los más solicitados.</p></div>');
+}
+
+function panelMarketing() {
+  const w = W();
+  const bb = buildBuckets();
+  const F = calcFuentes();
+  const CF = conversionPorFuente();
+  const act = activos();
+
+  const leadsCrm = contactos.filter(c => c.es_potencial && enPeriodo(c.created_at)).length;
+  const leadsWa = w ? w.totales.conversaciones_nuevas : 0;
+  const canales = [
+    { label: 'Prospectos por WhatsApp', n: leadsWa, color: 'var(--success)' },
+    { label: 'Leads capturados en el CRM', n: leadsCrm, color: 'var(--sky-blue)' },
+  ].filter(x => x.n > 0);
+
+  const propsIdx = {};
+  props.forEach(p => { propsIdx[String(p.id)] = p; });
+
+  const oferta = {}, demanda = {};
+  act.forEach(p => { const k = TIPO_PROP_LBL[p.tipo] || p.tipo || 'Otro'; oferta[k] = (oferta[k] || 0) + 1; });
+  if (w && w.propiedades) {
+    Object.entries(w.propiedades).forEach(par => {
+      const p = propsIdx[par[0]];
+      const k = p ? (TIPO_PROP_LBL[p.tipo] || p.tipo || 'Otro') : 'Otro';
+      demanda[k] = (demanda[k] || 0) + (par[1].conversaciones || 0);
+    });
+  }
+  interes.forEach(r => {
+    const p = propsIdx[String(r.propiedad_id)];
+    if (!p) return;
+    const k = TIPO_PROP_LBL[p.tipo] || p.tipo || 'Otro';
+    demanda[k] = (demanda[k] || 0) + 1;
+  });
+  const tipos = Object.keys(oferta).concat(Object.keys(demanda)).filter((v, i, a) => a.indexOf(v) === i);
+  const totOferta = Object.values(oferta).reduce((a, b) => a + b, 0) || 1;
+  const totDemanda = Object.values(demanda).reduce((a, b) => a + b, 0) || 1;
+  const brecha = tipos.map(k => ({
+    tipo: k, oferta: oferta[k] || 0, demanda: demanda[k] || 0,
+    pctOferta: pct(oferta[k] || 0, totOferta), pctDemanda: pct(demanda[k] || 0, totDemanda),
+  })).sort((a, b) => (b.pctDemanda - b.pctOferta) - (a.pctDemanda - a.pctOferta));
+
+  const zonaDemanda = {};
+  interes.forEach(r => {
+    const p = propsIdx[String(r.propiedad_id)];
+    if (!p) return;
+    const k = (p.colonia || 'Sin colonia').trim();
+    zonaDemanda[k] = (zonaDemanda[k] || 0) + 1;
+  });
+  const zonas = Object.entries(zonaDemanda).sort((a, b) => b[1] - a[1]).slice(0, 10)
+    .map((par, i) => ({ label: par[0], n: par[1], color: col(i) }));
+
+  const sLeads = serieDe(contactos.filter(c => c.es_potencial), 'created_at', bb);
+  const sWa = w ? serieDeMapa(w.serie.map(r => ({ fecha: r.fecha, valor: r.entrantes })), bb) : new Array(bb.buckets.length).fill(0);
+
+  return ''
+    + sec('Demanda del mercado', PERIODO_LBL[periodo],
+      '<div class="es-kpis">'
+      + kpi(nf(leadsWa + leadsCrm), 'Prospectos totales que entraron')
+      + kpi(nf(leadsWa), 'Por WhatsApp', 'is-good')
+      + kpi(nf(leadsCrm), 'Capturados a mano en el CRM')
+      + kpi(w ? fmtMin(w.respuesta_min.mediana) : '—', 'Tiempo de primera respuesta',
+          (w && w.respuesta_min.mediana != null && w.respuesta_min.mediana <= 5) ? 'is-good' : 'is-warn')
+      + kpi(CF.length ? esc(CF[0].fuente) : '—', 'Fuente que mejor cierra', 'is-good', CF.length ? CF[0].tasa + '% de cierre' : '')
+      + kpi(nf(act.length), 'Inmuebles disponibles para ofrecer')
+      + '</div>')
+
+    + sec('Entrada de prospectos por canal', 'volumen comparado', tarjetaGrafica(chLine(bb, [
+        { label: 'Mensajes de WhatsApp', color: 'var(--success)', counts: sWa },
+        { label: 'Leads del CRM', color: 'var(--sky-blue)', counts: sLeads },
+      ])))
+
+    + '<div class="es-duo">'
+      + sec('Canales de entrada', '', tarjetaDonut(canales, nf(leadsWa + leadsCrm), 'prospectos', 'Sin prospectos en este periodo.'))
+      + sec('Fuentes declaradas', 'lo que capturas al dar de alta el lead',
+        tarjetaBarras(entradas(F), 'Captura la fuente al crear cada lead para saber qué campaña sirve.'))
+    + '</div>'
+
+    + sec('Oferta contra demanda por tipo', 'dónde te falta producto y dónde te sobra', brecha.length
+      ? '<div class="es-card es-tablewrap"><table class="es-table"><thead><tr>'
+        + '<th>Tipo</th><th class="num">Tienes</th><th class="num">% de tu oferta</th>'
+        + '<th class="num">Solicitudes</th><th class="num">% de la demanda</th><th class="num">Brecha</th>'
+        + '</tr></thead><tbody>'
+        + brecha.map(r => {
+            const d = r.pctDemanda - r.pctOferta;
+            const c = d > 5 ? 'var(--danger)' : (d < -5 ? 'var(--warn)' : 'var(--mute)');
+            return '<tr><td class="t">' + esc(r.tipo) + '</td>'
+              + '<td class="num">' + nf(r.oferta) + '</td><td class="num">' + r.pctOferta + '%</td>'
+              + '<td class="num">' + nf(r.demanda) + '</td><td class="num">' + r.pctDemanda + '%</td>'
+              + '<td class="num" style="color:' + c + ';font-weight:700">' + (d > 0 ? '+' : '') + d + '%</td></tr>';
+          }).join('')
+        + '</tbody></table>'
+        + '<div class="es-note es-note--pad">Brecha positiva significa que te piden más de lo que tienes: ahí hay que captar. Brecha negativa significa inventario parado que nadie está pidiendo.</div></div>'
+      : '<div class="es-card es-empty"><p>Sin demanda registrada todavía.</p></div>')
+
+    + '<div class="es-duo">'
+      + sec('Zonas más solicitadas', 'dónde te están buscando',
+        tarjetaBarras(zonas, 'Vincula interesados a tus inmuebles para saber qué zonas piden.'))
+      + sec('Conversión por fuente', 'a quién sí le sigues invirtiendo', CF.length
+        ? tarjetaBarras(CF.slice(0, 8).map((r, i) => ({ label: r.fuente, n: r.tasa, color: col(i) })), '', { sinPct: true, fmt: v => v + '%' })
+        : '<div class="es-card es-empty"><p>Sin datos suficientes.</p></div>')
+    + '</div>'
+
+    + (w ? sec('Horarios de mayor demanda', 'cuándo lanzar campañas y cuándo tener a alguien contestando', chHeat(w.heat, 'Menos')) : '');
+}
+
+function panelInmueble() {
+  if (!props.length) return '<div class="es-card es-empty"><p>Todavía no tienes inmuebles capturados.</p></div>';
+  let p = null;
+  for (let i = 0; i < props.length; i++) { if (String(props[i].id) === String(propSel)) { p = props[i]; break; } }
+  if (!p) p = props[0];
+  const id = String(p.id);
+  const I = interesPorProp(), WP = waPorProp();
+  const inter = I[id] || 0, chats = WP[id] || 0;
+  const actsProp = actividades.filter(a => String(a.propiedad_id) === id);
+  const tareasProp = tareas.filter(t => String(t.propiedad_id) === id);
+  const diasInv = diasEntre(p.created_at);
+  const bb = buildBuckets();
+
+  const comps = activos().filter(x => x.tipo === p.tipo && x.operacion === p.operacion && Number(x.precio) > 0);
+  const precios = comps.map(x => Number(x.precio)).sort((a, b) => a - b);
+  const precio = Number(p.precio) || 0;
+  const posicion = (precios.length > 1 && precio) ? pct(precios.filter(v => v < precio).length, precios.length) : null;
+  const minP = precios.length ? precios[0] : 0;
+  const maxP = precios.length ? precios[precios.length - 1] : 0;
+  const medP = precios.length ? precios[Math.floor(precios.length / 2)] : 0;
+
+  const m2 = Number(p.m2_construccion) || 0;
+  const precioM2 = m2 ? precio / m2 : 0;
+  const compsM2 = comps.filter(x => Number(x.m2_construccion) > 0).map(x => Number(x.precio) / Number(x.m2_construccion));
+  const promM2 = compsM2.length ? compsM2.reduce((a, b) => a + b, 0) / compsM2.length : 0;
+
+  const puntos = comps.filter(x => Number(x.m2_construccion) > 0).map(x => ({
+    x: Number(x.m2_construccion), y: Number(x.precio),
+    label: x.titulo || x.clave_interna || 'Inmueble',
+    destacado: String(x.id) === id,
+  }));
+
+  const opciones = props.map(x => '<option value="' + esc(x.id) + '"' + (String(x.id) === id ? ' selected' : '') + '>'
+    + esc(x.clave_interna ? x.clave_interna + ' · ' : '') + esc(x.titulo || 'Sin título') + '</option>').join('');
+
+  const ubic = [p.colonia, p.ciudad, p.estado].filter(Boolean).join(', ');
+  const specs = [
+    p.recamaras ? p.recamaras + ' recámaras' : null,
+    p.banos ? p.banos + ' baños' : null,
+    m2 ? nf(m2) + ' m² construidos' : null,
+    p.m2_terreno ? nf(p.m2_terreno) + ' m² de terreno' : null,
+    p.estacionamientos ? p.estacionamientos + ' estacionamientos' : null,
+  ].filter(Boolean).join(' · ');
+
+  return ''
+    + '<div class="es-picker">'
+    + '<select class="es-select" onchange="setPropSel(this.value)">' + opciones + '</select>'
+    + '<button class="es-tool" onclick="window.print()">Imprimir reporte para el propietario</button>'
+    + '</div>'
+
+    + '<div class="es-sec"><div class="es-card">'
+    + '<div class="es-report-head">'
+    + '<div class="k">Reporte de desempeño' + (p.clave_interna ? ' · ' + esc(p.clave_interna) : '') + '</div>'
+    + '<div class="t">' + esc(p.titulo || 'Sin título') + '</div>'
+    + '<div class="m">' + esc(ubic || 'Sin ubicación capturada') + (specs ? ' — ' + esc(specs) : '') + '</div>'
+    + '<div class="m">' + (precio ? fmtMoney(precio, p.moneda || 'MXN') : 'Sin precio') + ' · '
+    + esc(p.operacion === 'renta' ? 'Renta' : 'Venta') + ' · ' + esc(ESTATUS_PROP_LBL[p.estatus] || p.estatus || '—') + '</div>'
+    + '</div>'
+    + '<div class="es-kpis es-kpis--inset">'
+    + kpi(nf(inter), 'Interesados registrados', inter ? 'is-good' : '')
+    + kpi(nf(chats), 'Conversaciones de WhatsApp')
+    + kpi(nf(actsProp.length), 'Movimientos registrados')
+    + kpi(nf(tareasProp.length), 'Tareas asociadas', '', tareasProp.filter(t => t.completada).length + ' completadas')
+    + kpi(diasInv != null ? nf(diasInv) : '—', 'Días en tu inventario', (diasInv != null && diasInv > 180) ? 'is-warn' : '')
+    + kpi(precioM2 ? fmtMoneyShort(precioM2, '') : '—', 'Precio por m²', (promM2 && precioM2 > promM2 * 1.15) ? 'is-warn' : '')
+    + '</div></div></div>'
+
+    + sec('Actividad de este inmueble', 'movimientos por periodo', tarjetaGrafica(chBarsV(bb, [
+        { label: 'Movimientos', color: 'var(--sky-blue)', counts: serieDe(actsProp, 'created_at', bb) },
+      ])))
+
+    + (posicion != null ? sec('Posición de precio contra inmuebles similares',
+        comps.length + ' comparables de tu inventario del mismo tipo y operación',
+        '<div class="es-card es-pos">'
+        + '<div class="es-pos__track"><div class="es-pos__pin" style="left:' + posicion + '%"></div></div>'
+        + '<div class="es-pos__ends"><span>Más barato: ' + fmtMoneyShort(minP, p.moneda) + '</span>'
+        + '<span>Mediana: ' + fmtMoneyShort(medP, p.moneda) + '</span>'
+        + '<span>Más caro: ' + fmtMoneyShort(maxP, p.moneda) + '</span></div>'
+        + '<div class="es-note">Este inmueble está por encima del ' + posicion + '% de los comparables de tu propio inventario.'
+        + ((promM2 && precioM2) ? ' Su precio por m² es ' + fmtMoneyShort(precioM2, '') + ' contra ' + fmtMoneyShort(promM2, '') + ' del promedio.' : '')
+        + '</div></div>') : '')
+
+    + (puntos.length >= 3 ? sec('Dónde cae contra sus comparables', 'el punto rojo es este inmueble',
+        chScatter(puntos, 'm² de construcción', 'precio')) : '')
+
+    + sec('Bitácora', 'lo último que se hizo con este inmueble', actsProp.length
+      ? '<div class="es-card es-tablewrap"><table class="es-table">'
+        + '<thead><tr><th>Fecha</th><th>Movimiento</th></tr></thead><tbody>'
+        + actsProp.slice(0, 25).map(a => '<tr><td>'
+          + esc(new Date(a.created_at).toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric' }))
+          + '</td><td class="t">' + esc(ACT_LBL[a.tipo] || a.tipo || 'Movimiento') + '</td></tr>').join('')
+        + '</tbody></table></div>'
+      : '<div class="es-card es-empty"><p>Sin movimientos registrados para este inmueble.</p></div>');
+}
+
+function panelActividad() {
+  const bb = buildBuckets();
+  const enP = actividades.filter(a => enPeriodo(a.created_at));
+  const porTipo = entradas(conteo(enP, a => a.tipo || 'otro'), ACT_LBL);
+  const tareasP = tareas.filter(t => enPeriodo(t.created_at));
+  const completadas = tareasP.filter(t => t.completada).length;
+  const vencidas = tareas.filter(t => !t.completada && t.fecha_entrega && new Date(t.fecha_entrega) < new Date()).length;
+  const pendientes = tareas.filter(t => !t.completada).length;
+  const cumpl = pct(completadas, tareasP.length);
+
+  return ''
+    + sec('Actividad del equipo', PERIODO_LBL[periodo],
+      '<div class="es-kpis">'
+      + kpi(nf(enP.length), 'Movimientos registrados')
+      + kpi(nf(tareasP.length), 'Tareas creadas')
+      + kpi(nf(completadas), 'Tareas completadas', 'is-good')
+      + kpi(nf(pendientes), 'Tareas pendientes')
+      + kpi(nf(vencidas), 'Tareas vencidas', vencidas ? 'is-bad' : 'is-good')
+      + kpi(cumpl + '%', 'Cumplimiento de tareas', cumpl >= 70 ? 'is-good' : 'is-warn')
+      + '</div>')
+
+    + sec('Ritmo de trabajo', 'movimientos y tareas por periodo', tarjetaGrafica(chLine(bb, [
+        { label: 'Movimientos', color: 'var(--sky-blue)', counts: serieDe(enP, 'created_at', bb) },
+        { label: 'Tareas creadas', color: 'var(--sky-navy-mid)', counts: serieDe(tareasP, 'created_at', bb) },
+      ])))
+
+    + sec('Tipo de movimiento', '', tarjetaBarras(porTipo,
+        'Sin actividad registrada en este periodo. Cada nota, cambio de etapa o tarea completada aparecerá aquí.'));
+}
+
+/* ════════════════════════════════════════════════════════════
+   Render
+   ════════════════════════════════════════════════════════════ */
 function render() {
-  const RL = calcResumenLeads();
-  const RP = calcResumenPropiedades();
-  renderHero(RL, RP);
-
   const body = g('es-body');
-  if (tabActual === 'leads') body.innerHTML = panelLeads(RL);
-  else if (tabActual === 'propiedades') body.innerHTML = panelPropiedades(RP);
-  else body.innerHTML = panelResumen(RL, RP);
+  if (!body) return;
+  const badge = g('count-badge');
+  const w = W();
+  if (badge) {
+    badge.textContent = nf(props.length) + ' inmuebles · ' + nf(contactos.length) + ' contactos'
+      + (w ? ' · ' + nf(w.totales.mensajes) + ' mensajes' : '');
+  }
+  let html = '';
+  if (tab === 'leads') html = panelLeads();
+  else if (tab === 'inmuebles') html = panelInmuebles();
+  else if (tab === 'whatsapp') html = panelWhatsApp();
+  else if (tab === 'marketing') html = panelMarketing();
+  else if (tab === 'inmueble') html = panelInmueble();
+  else if (tab === 'actividad') html = panelActividad();
+  else html = panelResumen();
+  body.innerHTML = html;
 }
 
-/* ── Init: espera al shell ───────────────────────────────────────── */
+/* ── Init: espera al shell ───────────────────────────────────── */
 if (window.__brokrShellLoaded) { cargarTodo(); }
 else { window.addEventListener('brokr-shell-ready', cargarTodo, { once: true }); }
 </script>
