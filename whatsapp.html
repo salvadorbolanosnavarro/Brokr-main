@@ -39,46 +39,119 @@
            border-bottom:2px solid transparent; cursor:pointer; background:none; border-left:0; border-right:0; border-top:0; }
   .w2-tab.is-active{ color:var(--ink); border-bottom-color:var(--sky-blue); }
 
-  /* ── Chats ────────────────────────────────────────────────── */
-  .w2-chats{ display:grid; grid-template-columns:340px 1fr; gap:var(--sp-4);
-             height:calc(100vh - 200px); min-height:680px; }
-  @media (max-width:1080px){ .w2-chats{ grid-template-columns:290px 1fr; } }
-  @media (max-width:720px){ .w2-chats{ height:auto; grid-template-columns:1fr; } }
+  /* ── Chats: consola conversacional ────────────────────────── */
+  .w2-app{ display:grid; grid-template-columns:360px 1fr; height:calc(100vh - 250px); min-height:620px;
+           border:1px solid var(--line); border-radius:var(--r-lg); overflow:hidden;
+           background:var(--bone); box-shadow:var(--shadow-xs); }
+  @media (max-width:1080px){ .w2-app{ grid-template-columns:308px 1fr; } }
 
-  .w2-list{ overflow-y:auto; display:flex; flex-direction:column; gap:10px; padding-right:4px; min-width:0; }
-  .w2-conv{ display:flex; gap:14px; align-items:center; padding:16px; border-radius:var(--r);
-            border:1px solid var(--line); background:var(--bone); cursor:pointer; }
-  .w2-conv.is-active{ border-color:var(--sky-blue); box-shadow:var(--focus); }
-  .w2-conv__ava{ width:50px; height:50px; border-radius:50%; background:var(--paper-2); color:var(--mute);
-                 display:flex; align-items:center; justify-content:center; font-weight:700; font-size:var(--fs-h5); flex:none; }
+  .w2-side{ display:flex; flex-direction:column; min-width:0; border-right:1px solid var(--line); background:var(--bone); }
+  .w2-side__head{ padding:14px 16px 12px; display:flex; flex-direction:column; gap:10px; border-bottom:1px solid var(--line); }
+  .w2-search{ position:relative; }
+  .w2-search input{ width:100%; height:var(--h-sm); padding:0 14px 0 40px; border:1px solid var(--line);
+                    border-radius:var(--r-pill); background:var(--shell); font-size:var(--fs-sm);
+                    font-family:inherit; color:var(--ink); }
+  .w2-search input:focus{ outline:none; border-color:var(--sky-blue); box-shadow:var(--focus); }
+  .w2-search svg{ position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--mute); }
+  .w2-chips{ display:flex; gap:6px; flex-wrap:wrap; }
+  .w2-chip{ border:1px solid var(--line); background:var(--bone); color:var(--mute); font-size:var(--fs-xs);
+            font-weight:700; padding:5px 12px; border-radius:var(--r-pill); cursor:pointer; font-family:inherit; }
+  .w2-chip.is-on{ background:var(--sky-canvas); border-color:var(--sky-blue); color:var(--sky-blue); }
+
+  .w2-list{ flex:1; overflow-y:auto; min-width:0; }
+  .w2-conv{ display:flex; gap:12px; align-items:center; padding:12px 16px; cursor:pointer;
+            border-bottom:1px solid var(--line); background:var(--bone); }
+  .w2-conv:hover{ background:var(--shell); }
+  .w2-conv.is-active{ background:var(--sky-canvas); }
+  .w2-conv__ava{ width:48px; height:48px; border-radius:50%; color:#fff; display:flex; align-items:center;
+                 justify-content:center; font-weight:800; font-size:var(--fs-sm); flex:none; background:var(--sky-blue); }
+  .w2-ava-1{ background:var(--sky-blue); }
+  .w2-ava-2{ background:var(--sky-navy-mid); }
+  .w2-ava-3{ background:var(--success); }
+  .w2-ava-4{ background:var(--info); }
+  .w2-ava-5{ background:var(--sky-blue-lift); }
   .w2-conv__body{ min-width:0; flex:1; }
-  .w2-conv__top{ display:flex; justify-content:space-between; gap:var(--sp-2); }
-  .w2-conv__name{ font-weight:700; font-size:var(--fs-body); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .w2-conv__top{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+  .w2-conv__name{ font-weight:700; font-size:var(--fs-body); color:var(--ink);
+                  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .w2-conv__time{ font-size:var(--fs-caption); color:var(--mute); flex:none; }
+  .w2-conv__bot{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:3px; }
   .w2-conv__sub{ font-size:var(--fs-sm); color:var(--mute); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .w2-conv__unread{ min-width:22px; height:22px; padding:0 6px; border-radius:var(--r-pill); background:var(--sky-blue);
-                     color:#fff; font-size:var(--fs-xs); font-weight:800; display:flex; align-items:center; justify-content:center; }
+  .w2-conv__unread{ min-width:20px; height:20px; padding:0 6px; border-radius:var(--r-pill); background:var(--success);
+                    color:#fff; font-size:var(--fs-caption); font-weight:800; flex:none;
+                    display:flex; align-items:center; justify-content:center; }
+  .w2-conv__ia{ width:8px; height:8px; border-radius:50%; background:var(--success); flex:none; }
 
-  .w2-thread{ display:flex; flex-direction:column; border:1px solid var(--line); border-radius:var(--r-lg);
-              background:var(--bone); overflow:hidden; min-width:0; }
-  .w2-thread__head{ padding:18px 24px; border-bottom:1px solid var(--line); display:flex;
-                     align-items:center; justify-content:space-between; gap:var(--sp-3); flex-wrap:wrap; }
-  .w2-thread__head-id{ display:flex; align-items:center; gap:var(--sp-3); min-width:0; font-size:var(--fs-h5); }
-  .w2-thread__head-id strong{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .w2-thread__head-actions{ display:flex; align-items:center; gap:var(--sp-3); flex-wrap:wrap; }
-  /* Calificación: solo un vistazo rápido (temperatura · score), no una tarjeta —
-     el detalle completo ya vive en Contactos/Leads. */
-  .w2-cal-badge{ font-size:var(--fs-xs); font-weight:700; color:var(--mute); background:var(--paper-2);
-                 padding:4px 10px; border-radius:var(--r-pill); white-space:nowrap; }
-  .w2-thread__msgs{ flex:1; overflow-y:auto; padding:28px; display:flex; flex-direction:column; gap:14px; }
-  .w2-bubble{ max-width:70%; padding:14px 18px; border-radius:var(--r-lg); font-size:var(--fs-body); line-height:1.55; }
-  .w2-bubble--in{ align-self:flex-start; background:var(--paper-2); color:var(--ink); }
-  .w2-bubble--out{ align-self:flex-end; background:var(--sky-blue); color:#fff; }
-  .w2-bubble--out.is-agente{ background:var(--forest-2); }
-  .w2-bubble__meta{ font-size:var(--fs-xs); opacity:.7; margin-top:6px; }
-  .w2-composer{ display:flex; gap:var(--sp-2); padding:16px; border-top:1px solid var(--line); }
-  .w2-composer textarea{ flex:1; resize:none; font-size:var(--fs-body); min-height:48px; padding:12px 14px; }
+  /* ── Hilo ─────────────────────────────────────────────────── */
+  .w2-thread{ display:flex; flex-direction:column; min-width:0; position:relative; background:var(--shell); }
+  .w2-thread__head{ padding:10px 16px; background:var(--bone); border-bottom:1px solid var(--line);
+                    display:flex; align-items:center; gap:12px; }
+  .w2-back{ display:none; background:none; border:0; color:var(--ink); cursor:pointer; padding:6px; }
+  .w2-thread__id{ min-width:0; flex:1; }
+  .w2-thread__name{ font-weight:700; font-size:var(--fs-body); color:var(--ink);
+                    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .w2-thread__sub{ font-size:var(--fs-xs); color:var(--mute); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .w2-thread__acts{ display:flex; align-items:center; gap:4px; flex:none; }
+  .w2-iconbtn{ width:40px; height:40px; border-radius:50%; border:0; background:none; color:var(--mute);
+               cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .w2-iconbtn:hover{ background:var(--shell); color:var(--ink); }
+  .w2-cal-badge{ font-size:var(--fs-caption); font-weight:700; color:var(--mute); background:var(--shell);
+                 padding:3px 9px; border-radius:var(--r-pill); white-space:nowrap; }
 
-  .w2-empty-thread{ flex:1; display:flex; align-items:center; justify-content:center; color:var(--mute); font-size:var(--fs-body); }
+  .w2-msgs{ flex:1; overflow-y:auto; padding:18px 24px 14px; display:flex; flex-direction:column;
+            background-color:var(--shell);
+            background-image:radial-gradient(rgba(0,20,59,.05) 1px, transparent 1px);
+            background-size:22px 22px; }
+  .w2-day{ align-self:center; background:var(--bone); border:1px solid var(--line); color:var(--mute);
+           font-size:var(--fs-caption); font-weight:700; padding:4px 12px; border-radius:var(--r-pill);
+           margin:10px 0 12px; box-shadow:var(--shadow-xs); }
+  .w2-loadmore{ align-self:center; color:var(--mute); font-size:var(--fs-xs); padding:6px 0 12px; }
+  .w2-row{ display:flex; margin-top:2px; }
+  .w2-row--grupo{ margin-top:12px; }
+  .w2-row--in{ justify-content:flex-start; }
+  .w2-row--out{ justify-content:flex-end; }
+  .w2-bubble{ max-width:min(74%, 560px); padding:9px 13px 6px; font-size:var(--fs-body); line-height:var(--lh);
+              box-shadow:var(--shadow-xs); overflow-wrap:anywhere; white-space:pre-wrap; }
+  .w2-row--in .w2-bubble{ background:var(--bone); color:var(--ink); border:1px solid var(--line);
+                          border-radius:var(--r-lg); }
+  .w2-row--in.w2-row--grupo .w2-bubble{ border-radius:var(--r-xs) var(--r-lg) var(--r-lg) var(--r-lg); }
+  .w2-row--out .w2-bubble{ background:var(--sky-blue); color:#fff; border-radius:var(--r-lg); }
+  .w2-row--out.w2-row--grupo .w2-bubble{ border-radius:var(--r-lg) var(--r-xs) var(--r-lg) var(--r-lg); }
+  .w2-row--out.is-ia .w2-bubble{ background:var(--sky-navy-mid); }
+  .w2-bubble__meta{ font-size:var(--fs-caption); margin-top:4px; display:flex; gap:5px;
+                    align-items:center; justify-content:flex-end; }
+  .w2-row--in .w2-bubble__meta{ color:var(--mute); }
+  .w2-row--out .w2-bubble__meta{ color:rgba(255,255,255,.78); }
+  .w2-bubble--pend{ opacity:.65; }
+
+  .w2-nuevos{ position:absolute; left:50%; transform:translateX(-50%); bottom:96px; background:var(--sky-blue);
+              color:#fff; border:0; border-radius:var(--r-pill); padding:8px 16px; font-size:var(--fs-xs);
+              font-weight:700; cursor:pointer; box-shadow:var(--shadow-sm); font-family:inherit; z-index:var(--z-fab); }
+
+  .w2-composer{ display:flex; gap:10px; align-items:flex-end; padding:12px 16px;
+                background:var(--bone); border-top:1px solid var(--line); }
+  .w2-composer textarea{ flex:1; resize:none; max-height:132px; min-height:44px; padding:11px 16px;
+                         border:1px solid var(--line); border-radius:var(--r-xl); background:var(--shell);
+                         font-family:inherit; font-size:var(--fs-body); line-height:var(--lh-body); color:var(--ink); }
+  .w2-composer textarea:focus{ outline:none; border-color:var(--sky-blue); box-shadow:var(--focus); }
+  .w2-send{ width:46px; height:46px; border-radius:50%; border:0; background:var(--sky-blue); color:#fff;
+            cursor:pointer; display:flex; align-items:center; justify-content:center; flex:none; }
+  .w2-send:hover{ background:var(--sky-blue-press); }
+
+  .w2-empty-thread{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+                    gap:10px; color:var(--mute); font-size:var(--fs-sm); text-align:center; padding:40px; }
+
+  @media (max-width:820px){
+    .w2-app{ grid-template-columns:1fr; height:calc(100vh - 210px); min-height:0; }
+    .w2-side{ border-right:0; }
+    .w2-thread{ display:none; }
+    .w2-app.is-chat .w2-side{ display:none; }
+    .w2-app.is-chat .w2-thread{ display:flex; }
+    .w2-back{ display:flex; }
+    .w2-msgs{ padding:14px 12px 10px; }
+    .w2-bubble{ max-width:86%; }
+    .w2-composer{ padding:10px 12px; }
+  }
 
   /* ── Entrenamiento / Agenda ───────────────────────────────── */
   .w2-form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-5); }
@@ -115,12 +188,25 @@
 
   <!-- ═══ CHATS ═══ -->
   <div id="w2-view-chats">
-    <div class="w2-chats">
-      <div class="w2-list" id="w2-list"></div>
+    <div class="w2-app" id="w2-app">
+      <aside class="w2-side">
+        <div class="w2-side__head">
+          <div class="w2-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.4-3.4"/></svg>
+            <input id="w2-buscar" type="search" placeholder="Buscar conversación" oninput="w2RenderLista()"/>
+          </div>
+          <div class="w2-chips">
+            <button class="w2-chip is-on" data-filtro="todos" onclick="w2Filtrar('todos')">Todos</button>
+            <button class="w2-chip" data-filtro="nuevos" onclick="w2Filtrar('nuevos')">Sin leer</button>
+            <button class="w2-chip" data-filtro="ia" onclick="w2Filtrar('ia')">IA activa</button>
+          </div>
+        </div>
+        <div class="w2-list" id="w2-list"></div>
+      </aside>
 
-      <div class="w2-thread" id="w2-thread">
+      <section class="w2-thread" id="w2-thread">
         <div class="w2-empty-thread" id="w2-thread-empty">Elige una conversación para verla aquí.</div>
-      </div>
+      </section>
     </div>
   </div>
 
@@ -419,6 +505,12 @@ let W2_CONVS = [];
 let W2_CONV_ACTUAL = null;
 let W2_TAB = 'chats';
 let W2_POLL = null;
+let W2_MSGS = [];                 // mensajes cargados del chat abierto (viejo → nuevo)
+let W2_HAY_MAS = false;           // ¿quedan mensajes más antiguos por cargar?
+let W2_CARGANDO_MAS = false;
+let W2_FILTRO = 'todos';
+let W2_VENTANA_CERRADA = null;
+const W2_PAGINA = 30;             // cuántos mensajes se traen por tanda
 
 /* ── Tabs ─────────────────────────────────────────────────── */
 function w2IrATab(tab){
@@ -538,6 +630,14 @@ async function w2CargarConversaciones(){
     const d = await r.json();
     W2_CONVS = d.conversaciones || [];
   }catch(e){ W2_CONVS = []; }
+  // Mantener sincronizado el chat abierto (ventana de 24h, IA, datos del contacto)
+  if(W2_CONV_ACTUAL){
+    const fresca = W2_CONVS.find(c => c.id === W2_CONV_ACTUAL.id);
+    if(fresca){
+      W2_CONV_ACTUAL = fresca;
+      if(w2VentanaCerrada() !== W2_VENTANA_CERRADA) w2RenderThread();
+    }
+  }
   w2RenderLista();
 }
 
@@ -546,24 +646,85 @@ function w2Iniciales(nombre){
   return nombre.trim().split(/\s+/).slice(0,2).map(p=>p[0]).join('').toUpperCase();
 }
 
+function w2Esc(t){
+  return String(t == null ? '' : t)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function w2AvaClase(txt){
+  let n = 0;
+  for(const ch of String(txt || '?')) n = (n + ch.charCodeAt(0)) % 5;
+  return 'w2-ava-' + (n + 1);
+}
+
+function w2Hora(iso){
+  try{ return new Date(iso).toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'}); }
+  catch(e){ return ''; }
+}
+
+function w2MismoDia(a, b){
+  return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+}
+
+function w2EtiquetaDia(iso){
+  const f = new Date(iso), hoy = new Date(), ayer = new Date(Date.now() - 864e5);
+  if(w2MismoDia(f, hoy)) return 'Hoy';
+  if(w2MismoDia(f, ayer)) return 'Ayer';
+  return f.toLocaleDateString('es-MX', {day:'numeric', month:'long', year:'numeric'});
+}
+
+function w2HoraLista(iso){
+  if(!iso) return '';
+  const f = new Date(iso), hoy = new Date(), ayer = new Date(Date.now() - 864e5);
+  if(w2MismoDia(f, hoy)) return w2Hora(iso);
+  if(w2MismoDia(f, ayer)) return 'Ayer';
+  return f.toLocaleDateString('es-MX', {day:'2-digit', month:'2-digit'});
+}
+
+function w2Filtrar(f){
+  W2_FILTRO = f;
+  document.querySelectorAll('.w2-chip').forEach(b => b.classList.toggle('is-on', b.dataset.filtro === f));
+  w2RenderLista();
+}
+
 function w2RenderLista(){
   const cont = document.getElementById('w2-list');
-  if(!W2_CONVS.length){
-    cont.innerHTML = '<div class="bk-hint" style="padding:var(--sp-4);">Aún no hay conversaciones en este número.</div>';
+  if(!cont) return;
+  const q = (document.getElementById('w2-buscar')?.value || '').trim().toLowerCase();
+
+  const lista = W2_CONVS.filter(c => {
+    const ct = c.wa2_contactos || {};
+    if(W2_FILTRO === 'nuevos' && !c.unread_count) return false;
+    if(W2_FILTRO === 'ia' && c.ai_enabled === false) return false;
+    if(!q) return true;
+    return [ct.nombre, ct.wa_id, c.preview_texto, ct.resumen].some(v => (v || '').toLowerCase().includes(q));
+  });
+
+  if(!lista.length){
+    cont.innerHTML = '<div class="bk-hint" style="padding:var(--sp-4);">' +
+      (q || W2_FILTRO !== 'todos' ? 'Ningún chat coincide con lo que buscas.' : 'Aún no hay conversaciones en este número.') +
+      '</div>';
     return;
   }
-  cont.innerHTML = W2_CONVS.map(c => {
-    const contacto = c.wa2_contactos || {};
-    const nombre = contacto.nombre || contacto.wa_id || 'Prospecto';
+
+  cont.innerHTML = lista.map(c => {
+    const ct = c.wa2_contactos || {};
+    const nombre = ct.nombre || ct.wa_id || 'Prospecto';
     const activa = W2_CONV_ACTUAL && W2_CONV_ACTUAL.id === c.id;
+    let prev = c.preview_texto || ct.resumen || ct.busca || 'Sin mensajes aún';
+    if(c.preview_direction === 'out') prev = (c.preview_sender === 'ia' ? 'IA: ' : 'Tú: ') + prev;
     return `<div class="w2-conv ${activa?'is-active':''}" onclick="w2AbrirConversacion('${c.id}')">
-              <div class="w2-conv__ava">${w2Iniciales(nombre)}</div>
+              <div class="w2-conv__ava ${w2AvaClase(nombre)}">${w2Esc(w2Iniciales(nombre))}</div>
               <div class="w2-conv__body">
                 <div class="w2-conv__top">
-                  <span class="w2-conv__name">${nombre}</span>
-                  ${c.unread_count ? `<span class="w2-conv__unread">${c.unread_count}</span>` : ''}
+                  <span class="w2-conv__name">${w2Esc(nombre)}</span>
+                  <span class="w2-conv__time">${w2HoraLista(c.last_message_at)}</span>
                 </div>
-                <div class="w2-conv__sub">${contacto.resumen || contacto.busca || 'Sin calificar aún'}</div>
+                <div class="w2-conv__bot">
+                  <span class="w2-conv__sub">${w2Esc(prev)}</span>
+                  ${c.unread_count ? `<span class="w2-conv__unread">${c.unread_count}</span>`
+                                   : (c.ai_enabled !== false ? '<span class="w2-conv__ia" title="IA activa"></span>' : '')}
+                </div>
               </div>
             </div>`;
   }).join('');
@@ -573,81 +734,206 @@ async function w2AbrirConversacion(id){
   const conv = W2_CONVS.find(c => c.id === id);
   if(!conv) return;
   W2_CONV_ACTUAL = conv;
+  conv.unread_count = 0;
+  document.getElementById('w2-app')?.classList.add('is-chat');
   w2RenderLista();
+  w2RenderThread();
   await w2CargarMensajes(id);
 }
 
-/* ── Mensajes ─────────────────────────────────────────────── */
-async function w2CargarMensajes(conversacion_id){
-  const thread = document.getElementById('w2-thread');
-  try{
-    const r = await fetch(API_BASE + '/whatsapp2/mensajes?conversacion_id=' + conversacion_id, { headers: w2Auth() });
-    const d = await r.json();
-    w2RenderThread(d.mensajes || []);
-  }catch(e){
-    thread.innerHTML = '<div class="w2-empty-thread">No se pudo cargar la conversación.</div>';
-  }
+function w2VolverALista(){
+  document.getElementById('w2-app')?.classList.remove('is-chat');
 }
 
-function w2RenderThread(mensajes){
-  const thread = document.getElementById('w2-thread');
-  const contacto = W2_CONV_ACTUAL?.wa2_contactos || {};
-  const nombre = contacto.nombre || contacto.wa_id || 'Conversación';
-  // Calificación: solo un vistazo (temperatura · score) — el detalle completo
-  // ya está en Contactos/Leads, aquí no se repite ni se vuelve tarjeta.
-  const cal = (contacto.temperatura || contacto.score != null)
-    ? `<span class="w2-cal-badge">${contacto.temperatura || 'Nuevo'} · Score ${contacto.score ?? 0}</span>` : '';
-  const verContacto = contacto.contacto_crm_id
-    ? `<a class="bk-btn bk-btn--ghost bk-btn--sm" href="contactos.html?id=${encodeURIComponent(contacto.contacto_crm_id)}" target="_blank" rel="noopener">Ver contacto</a>` : '';
-
-  const burbujas = mensajes.map(m => {
-    const out = m.direction === 'out';
-    const clsAgente = m.sender === 'agente' ? 'is-agente' : '';
-    const hora = new Date(m.created_at).toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
-    return `<div class="w2-bubble ${out ? 'w2-bubble--out '+clsAgente : 'w2-bubble--in'}">
-              ${(m.body || '').replace(/</g,'&lt;')}
-              <div class="w2-bubble__meta">${hora}${out ? (m.sender === 'ia' ? ' · IA' : ' · Tú') : ''}</div>
-            </div>`;
-  }).join('');
-
+/* ── Hilo de mensajes ─────────────────────────────────────── */
+function w2VentanaCerrada(){
   // La ventana de 24h de WhatsApp se cuenta desde el ÚLTIMO MENSAJE DEL
-  // PROSPECTO (last_inbound_at), no desde cualquier actividad. Pasadas las
-  // 24h, Meta rechaza texto libre — hay que ofrecer una plantilla en su lugar.
+  // PROSPECTO (last_inbound_at), no desde cualquier actividad del chat.
   const li = W2_CONV_ACTUAL?.last_inbound_at;
-  const ventanaCerrada = !!li && (Date.now() - new Date(li).getTime()) > 24*60*60*1000;
-  const composer = ventanaCerrada
+  return !!li && (Date.now() - new Date(li).getTime()) > 24*60*60*1000;
+}
+
+function w2RenderThread(){
+  const thread = document.getElementById('w2-thread');
+  if(!thread) return;
+  if(!W2_CONV_ACTUAL){
+    thread.innerHTML = '<div class="w2-empty-thread">Elige una conversación para verla aquí.</div>';
+    return;
+  }
+  const ct = W2_CONV_ACTUAL.wa2_contactos || {};
+  const nombre = ct.nombre || ct.wa_id || 'Conversación';
+  const iaOn = W2_CONV_ACTUAL.ai_enabled !== false;
+  const sub = [ct.wa_id || '', iaOn ? 'La IA está respondiendo' : 'Respondes tú'].filter(Boolean).join(' · ');
+  // Calificación: solo un vistazo (temperatura · score) — el detalle completo
+  // ya vive en Contactos/Leads, aquí no se repite ni se vuelve tarjeta.
+  const cal = (ct.temperatura || ct.score != null)
+    ? `<span class="w2-cal-badge">${w2Esc(ct.temperatura || 'Nuevo')} · ${ct.score ?? 0}</span>` : '';
+  const verContacto = ct.contacto_crm_id
+    ? `<a class="w2-iconbtn" title="Ver contacto" href="contactos.html?id=${encodeURIComponent(ct.contacto_crm_id)}" target="_blank" rel="noopener">
+         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.6 3.1-5.6 7-5.6s7 2 7 5.6"/></svg>
+       </a>` : '';
+
+  W2_VENTANA_CERRADA = w2VentanaCerrada();
+  const composer = W2_VENTANA_CERRADA
     ? `<div class="w2-composer" style="align-items:center;">
-         <div class="bk-hint" style="flex:1;">La ventana de 24h está cerrada — usa una plantilla para escribirle.</div>
+         <div class="bk-hint" style="flex:1;">Pasaron más de 24 horas desde su último mensaje — usa una plantilla para escribirle.</div>
          <button class="bk-btn bk-btn--forest bk-btn--sm" onclick="w2AbrirModalPlantilla()">Enviar plantilla</button>
        </div>`
     : `<div class="w2-composer">
-         <textarea class="bk-textarea" id="w2-composer-texto" rows="1" placeholder="Escribe un mensaje…"></textarea>
-         <button class="bk-btn bk-btn--forest" onclick="w2EnviarManual()">Enviar</button>
+         <textarea id="w2-composer-texto" rows="1" placeholder="Escribe un mensaje"></textarea>
+         <button class="w2-send" title="Enviar" onclick="w2EnviarManual()">
+           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12 20 4l-3 8 3 8z"/><path d="M4 12h13"/></svg>
+         </button>
        </div>`;
 
   thread.innerHTML = `
     <div class="w2-thread__head">
-      <div class="w2-thread__head-id">
-        <strong>${nombre}</strong>
-        ${cal}
+      <button class="w2-back" title="Volver" onclick="w2VolverALista()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <div class="w2-conv__ava ${w2AvaClase(nombre)}" style="width:40px;height:40px;">${w2Esc(w2Iniciales(nombre))}</div>
+      <div class="w2-thread__id">
+        <div class="w2-thread__name">${w2Esc(nombre)} ${cal}</div>
+        <div class="w2-thread__sub">${w2Esc(sub)}</div>
       </div>
-      <div class="w2-thread__head-actions">
-        <label class="bk-switch"><input type="checkbox" id="w2-p-ia" onchange="w2ToggleIaConv()" ${W2_CONV_ACTUAL?.ai_enabled !== false ? 'checked' : ''}/><span class="bk-switch__track"></span> IA</label>
-        <button class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2AbrirModalCita()">Agendar</button>
+      <div class="w2-thread__acts">
+        <label class="bk-switch" title="Respuesta automática"><input type="checkbox" id="w2-p-ia" onchange="w2ToggleIaConv()" ${iaOn ? 'checked' : ''}/><span class="bk-switch__track"></span> IA</label>
+        <button class="w2-iconbtn" title="Agendar cita" onclick="w2AbrirModalCita()">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3.5v3M16 3.5v3"/></svg>
+        </button>
         ${verContacto}
       </div>
     </div>
-    <div class="w2-thread__msgs" id="w2-thread-msgs">${burbujas || '<div class="bk-hint">Sin mensajes.</div>'}</div>
+    <div class="w2-msgs" id="w2-thread-msgs"></div>
+    <button class="w2-nuevos" id="w2-nuevos" hidden onclick="w2IrAlFinal(true)">Mensajes nuevos</button>
     ${composer}`;
+
   const box = document.getElementById('w2-thread-msgs');
-  box.scrollTop = box.scrollHeight;
+  box.addEventListener('scroll', () => {
+    if(box.scrollTop < 80) w2CargarMasAntiguos();
+    if(w2AlFondo(box)) document.getElementById('w2-nuevos').hidden = true;
+  });
+
+  const ta = document.getElementById('w2-composer-texto');
+  if(ta){
+    ta.addEventListener('input', () => { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 132) + 'px'; });
+    ta.addEventListener('keydown', e => {
+      if(e.key === 'Enter' && !e.shiftKey && !e.isComposing){ e.preventDefault(); w2EnviarManual(); }
+    });
+  }
+  w2PintarMensajes();
+}
+
+function w2AlFondo(box){
+  return (box.scrollHeight - box.scrollTop - box.clientHeight) < 90;
+}
+
+function w2IrAlFinal(ocultarAviso){
+  const box = document.getElementById('w2-thread-msgs');
+  if(box) box.scrollTop = box.scrollHeight;
+  if(ocultarAviso){ const p = document.getElementById('w2-nuevos'); if(p) p.hidden = true; }
+}
+
+function w2PintarMensajes(){
+  const box = document.getElementById('w2-thread-msgs');
+  if(!box) return;
+  if(!W2_MSGS.length){
+    box.innerHTML = '<div class="w2-loadmore">Todavía no hay mensajes en este chat.</div>';
+    return;
+  }
+  let html = W2_HAY_MAS
+    ? '<div class="w2-loadmore">' + (W2_CARGANDO_MAS ? 'Cargando mensajes anteriores…' : 'Desliza hacia arriba para ver mensajes anteriores') + '</div>'
+    : '<div class="w2-loadmore">Este es el inicio de la conversación.</div>';
+  let diaPrevio = '', remitentePrevio = '';
+  for(const m of W2_MSGS){
+    const dia = w2EtiquetaDia(m.created_at);
+    let grupo = false;
+    if(dia !== diaPrevio){ html += `<div class="w2-day">${w2Esc(dia)}</div>`; diaPrevio = dia; grupo = true; }
+    const out = m.direction === 'out';
+    const quien = out ? (m.sender === 'ia' ? 'ia' : 'agente') : 'in';
+    if(quien !== remitentePrevio) grupo = true;
+    remitentePrevio = quien;
+    const firma = out ? (m.sender === 'ia' ? 'IA' : 'Tú') : '';
+    html += `<div class="w2-row ${out ? 'w2-row--out' : 'w2-row--in'} ${m.sender === 'ia' ? 'is-ia' : ''} ${grupo ? 'w2-row--grupo' : ''}">
+               <div class="w2-bubble ${m._pendiente ? 'w2-bubble--pend' : ''}">${w2Esc(m.body)}<div class="w2-bubble__meta">${firma ? w2Esc(firma) + ' ·' : ''} ${w2Hora(m.created_at)}${m._pendiente ? ' · enviando' : ''}</div></div>
+             </div>`;
+  }
+  box.innerHTML = html;
+}
+
+async function w2CargarMensajes(conversacion_id){
+  W2_MSGS = []; W2_HAY_MAS = false;
+  const box = document.getElementById('w2-thread-msgs');
+  if(box) box.innerHTML = '<div class="w2-loadmore">Cargando…</div>';
+  try{
+    const r = await fetch(`${API_BASE}/whatsapp2/mensajes?conversacion_id=${encodeURIComponent(conversacion_id)}&limit=${W2_PAGINA}`, { headers: w2Auth() });
+    const d = await r.json();
+    W2_MSGS = d.mensajes || [];
+    W2_HAY_MAS = !!d.hay_mas_antiguos;
+    w2PintarMensajes();
+    w2IrAlFinal(true);
+    // Si la tanda no llenó la pantalla no habría cómo hacer scroll: se rellena.
+    const caja = document.getElementById('w2-thread-msgs');
+    if(caja && W2_HAY_MAS && caja.scrollHeight <= caja.clientHeight + 20) await w2CargarMasAntiguos();
+  }catch(e){
+    if(box) box.innerHTML = '<div class="w2-loadmore">No se pudo cargar la conversación.</div>';
+  }
+}
+
+async function w2CargarMasAntiguos(){
+  if(W2_CARGANDO_MAS || !W2_HAY_MAS || !W2_CONV_ACTUAL || !W2_MSGS.length) return;
+  W2_CARGANDO_MAS = true;
+  const box = document.getElementById('w2-thread-msgs');
+  const altoAntes = box.scrollHeight, topAntes = box.scrollTop;
+  try{
+    const before = encodeURIComponent(W2_MSGS[0].created_at);
+    const r = await fetch(`${API_BASE}/whatsapp2/mensajes?conversacion_id=${encodeURIComponent(W2_CONV_ACTUAL.id)}&limit=${W2_PAGINA}&before=${before}`, { headers: w2Auth() });
+    const d = await r.json();
+    const viejos = d.mensajes || [];
+    W2_HAY_MAS = !!d.hay_mas_antiguos;
+    if(viejos.length) W2_MSGS = viejos.concat(W2_MSGS);
+    w2PintarMensajes();
+    // Se conserva la posición de lectura: lo que crece se compensa hacia abajo.
+    box.scrollTop = topAntes + (box.scrollHeight - altoAntes);
+  }catch(e){ /* sin conexión: se reintenta en el siguiente scroll */ }
+  W2_CARGANDO_MAS = false;
+}
+
+function w2UltimoTsReal(){
+  for(let i = W2_MSGS.length - 1; i >= 0; i--){ if(!W2_MSGS[i]._pendiente) return W2_MSGS[i].created_at; }
+  return null;
+}
+
+async function w2RefrescarMensajes(){
+  if(!W2_CONV_ACTUAL) return;
+  const box = document.getElementById('w2-thread-msgs');
+  if(!box) return;
+  const desde = w2UltimoTsReal();
+  if(!desde){ await w2CargarMensajes(W2_CONV_ACTUAL.id); return; }
+  try{
+    const r = await fetch(`${API_BASE}/whatsapp2/mensajes?conversacion_id=${encodeURIComponent(W2_CONV_ACTUAL.id)}&after=${encodeURIComponent(desde)}`, { headers: w2Auth() });
+    const d = await r.json();
+    const vistos = new Set(W2_MSGS.map(m => m.id));
+    const nuevos = (d.mensajes || []).filter(m => !vistos.has(m.id));
+    if(!nuevos.length) return;
+    const pegado = w2AlFondo(box);
+    const topAntes = box.scrollTop;
+    W2_MSGS = W2_MSGS.filter(m => !m._pendiente).concat(nuevos);
+    w2PintarMensajes();
+    if(pegado){ w2IrAlFinal(true); }
+    else { box.scrollTop = topAntes; document.getElementById('w2-nuevos').hidden = false; }
+  }catch(e){ /* silencioso: es un refresco de fondo */ }
 }
 
 async function w2EnviarManual(){
   const el = document.getElementById('w2-composer-texto');
-  const texto = (el.value || '').trim();
+  const texto = (el?.value || '').trim();
   if(!texto || !W2_CONV_ACTUAL) return;
-  el.value = '';
+  el.value = ''; el.style.height = 'auto';
+  // Se pinta de inmediato (como WhatsApp) y se confirma al responder el servidor.
+  W2_MSGS.push({ id:'tmp-' + Date.now(), direction:'out', sender:'agente', body:texto,
+                 created_at:new Date().toISOString(), _pendiente:true });
+  w2PintarMensajes(); w2IrAlFinal(true);
   try{
     const r = await fetch(API_BASE + '/whatsapp2/mensajes', {
       method:'POST', headers:{ 'Content-Type':'application/json', ...w2Auth() },
@@ -656,24 +942,34 @@ async function w2EnviarManual(){
     if(!r.ok){
       const d = await r.json().catch(() => ({}));
       const detalle = d.detail || {};
+      W2_MSGS = W2_MSGS.filter(m => !m._pendiente);
+      w2PintarMensajes();
       if(detalle.ventana_cerrada){
         toast(detalle.mensaje || 'La ventana de 24h está cerrada.');
         W2_CONV_ACTUAL.last_inbound_at = W2_CONV_ACTUAL.last_inbound_at || new Date(Date.now() - 25*60*60*1000).toISOString();
-        await w2CargarMensajes(W2_CONV_ACTUAL.id);
+        w2RenderThread();
         w2AbrirModalPlantilla();
       } else {
         toast(typeof detalle === 'string' ? detalle : 'No se pudo enviar el mensaje.');
       }
       return;
     }
-    await w2CargarMensajes(W2_CONV_ACTUAL.id);
-  }catch(e){ toast('No se pudo enviar el mensaje.'); }
+    await w2RefrescarMensajes();
+    w2IrAlFinal(true);
+  }catch(e){
+    W2_MSGS = W2_MSGS.filter(m => !m._pendiente);
+    w2PintarMensajes();
+    toast('No se pudo enviar el mensaje.');
+  }
 }
 
 async function w2ToggleIaConv(){
   if(!W2_CONV_ACTUAL) return;
   const on = document.getElementById('w2-p-ia').checked;
   W2_CONV_ACTUAL.ai_enabled = on;
+  const sub = document.querySelector('.w2-thread__sub');
+  const ct = W2_CONV_ACTUAL.wa2_contactos || {};
+  if(sub) sub.textContent = [ct.wa_id || '', on ? 'La IA está respondiendo' : 'Respondes tú'].filter(Boolean).join(' · ');
   try{
     await fetch(API_BASE + '/whatsapp2/conversaciones/' + W2_CONV_ACTUAL.id, {
       method:'PATCH', headers:{ 'Content-Type':'application/json', ...w2Auth() },
@@ -940,9 +1236,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Refresco silencioso de la bandeja cada 12s (nuevos mensajes / IA respondiendo)
   W2_POLL = setInterval(() => {
-    if(W2_TAB !== 'chats') return;
+    if(W2_TAB !== 'chats' || document.hidden) return;
     w2CargarConversaciones();
-    if(W2_CONV_ACTUAL) w2CargarMensajes(W2_CONV_ACTUAL.id);
+    w2RefrescarMensajes();   // solo baja lo nuevo, no vuelve a cargar el chat entero
   }, 12000);
 });
 </script>

@@ -231,7 +231,7 @@ def eb_headers(key: str = None):
 # ────────────────────────────────────────────
 @app.get("/")
 def root():
-    return {"status": "Brokr API activa", "version": "4.7"}
+    return {"status": "Brokr API activa", "version": "4.8"}
 
 # Endpoint para keep-alive (UptimeRobot u otro monitor cada 4 minutos).
 # No hace queries, no toca DB — solo evita que Railway duerma el servidor.
@@ -1839,7 +1839,7 @@ async def easybroker_diagnostico(request: Request):
     if not user_key:
         raise HTTPException(status_code=400, detail="No tienes API key de EasyBroker configurada.")
 
-    out = {"version_api": "4.7"}
+    out = {"version_api": "4.8"}
 
     def _total(d):
         pag = d.get("pagination") or {}
@@ -2521,13 +2521,33 @@ async def easybroker_migrar_fotos(request: Request):
 # ════════════════════════════════════════════════════════════════
 
 async def _alcance_borrado(user_id: str):
-    """Devuelve (filtro_supabase, es_admin). El filtro decide qué puede borrar."""
+    """
+    Decide si este usuario puede borrar y qué.
+    Devuelve (filtro_supabase, alcance) o (None, None) si no puede borrar nada.
+
+    Regla, decidida por Chava y sin excepciones:
+      - En una EMPRESA, un agente NO puede borrar nada. Ni lo que él capturó.
+        Solo el dueño o un administrador.
+      - En una cuenta personal (un agente por su cuenta), esa organización es
+        suya y él es su propio dueño, así que sí puede borrar lo suyo.
+    """
     ctx = await get_org_context(user_id)
-    org_id = (ctx or {}).get("org_id")
-    es_admin = (ctx or {}).get("rol_org") in ("owner", "admin")
-    if org_id and es_admin:
-        return ({"org_id": f"eq.{org_id}"}, True)
-    return ({"user_id": f"eq.{user_id}"}, False)
+    if not ctx:
+        return (None, None)
+    org_id = ctx.get("org_id")
+    if not org_id:
+        return (None, None)
+    es_admin = ctx.get("rol_org") in ("owner", "admin")
+    es_empresa = (ctx.get("org_tipo") or "personal") == "empresa"
+
+    if es_empresa and not es_admin:
+        return (None, None)          # agente en empresa: no borra NADA
+    return ({"org_id": f"eq.{org_id}"}, "empresa" if es_empresa else "personal")
+
+
+_MSG_SIN_PERMISO = ("No tienes permiso para eliminar. En Broquer para Empresas solo "
+                    "el dueño de la cuenta o un administrador puede eliminar registros. "
+                    "Si necesitas quitar algo, pídeselo a quien administra tu cuenta.")
 
 
 def _nombre_archivo_foto(url: str):
@@ -2591,7 +2611,9 @@ async def propiedades_eliminar_masivo(request: Request):
     if not todos and len(ids) > 2000:
         raise HTTPException(status_code=400, detail="Demasiadas propiedades a la vez. Hazlo en partes.")
 
-    filtro, es_admin = await _alcance_borrado(user_id)
+    filtro, alcance = await _alcance_borrado(user_id)
+    if not filtro:
+        raise HTTPException(status_code=403, detail=_MSG_SIN_PERMISO)
     sb_headers = {
         "apikey": SUPABASE_SERVICE_KEY,
         "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
@@ -2618,7 +2640,7 @@ async def propiedades_eliminar_masivo(request: Request):
         raise HTTPException(status_code=500, detail="No se pudo leer el inventario.")
 
     if not filas:
-        return {"eliminadas": 0, "fotos_programadas": 0, "alcance": "empresa" if es_admin else "propias"}
+        return {"eliminadas": 0, "fotos_programadas": 0, "alcance": alcance}
 
     # 2) Juntar los nombres de archivo de las fotos que viven en Broquer
     nombres = []
@@ -2657,7 +2679,7 @@ async def propiedades_eliminar_masivo(request: Request):
     return {
         "eliminadas":        eliminadas,
         "fotos_programadas": len(nombres),
-        "alcance":           "empresa" if es_admin else "propias",
+        "alcance":           alcance,
     }
 
 
@@ -2682,7 +2704,9 @@ async def contactos_eliminar_masivo(request: Request):
     if not todos and not ids:
         raise HTTPException(status_code=400, detail="No seleccionaste ningún contacto.")
 
-    filtro, es_admin = await _alcance_borrado(user_id)
+    filtro, alcance = await _alcance_borrado(user_id)
+    if not filtro:
+        raise HTTPException(status_code=403, detail=_MSG_SIN_PERMISO)
     sb_headers = {
         "apikey": SUPABASE_SERVICE_KEY,
         "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
@@ -2709,7 +2733,7 @@ async def contactos_eliminar_masivo(request: Request):
 
     ids_reales = [str(fila.get("id")) for fila in filas if fila.get("id")]
     if not ids_reales:
-        return {"eliminados": 0, "alcance": "empresa" if es_admin else "propios"}
+        return {"eliminados": 0, "alcance": alcance}
 
     eliminados = 0
     try:
@@ -2727,7 +2751,7 @@ async def contactos_eliminar_masivo(request: Request):
     except Exception:
         raise HTTPException(status_code=500, detail="No se pudieron borrar todos los contactos.")
 
-    return {"eliminados": eliminados, "alcance": "empresa" if es_admin else "propios"}
+    return {"eliminados": eliminados, "alcance": alcance}
 
 
 @app.get("/propiedades")

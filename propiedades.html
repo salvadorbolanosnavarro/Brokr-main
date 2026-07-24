@@ -1303,6 +1303,23 @@ let allProps = [];
 let editingPropId = null;
 let uploadedFotoUrls = [];
 let selectedIds = new Set();  // IDs de propiedades seleccionadas para borrado masivo
+// ¿Este usuario puede eliminar? En una empresa, solo el dueño o un
+// administrador. Arranca en false a propósito: si la consulta falla, no se
+// muestran los botones de borrar. Más vale esconder de más que de menos.
+let puedeEliminar = false;
+
+async function cargarPermisoEliminar() {
+  try {
+    const token = await getValidToken();
+    if (!token) return;
+    const r = await fetch(API_BASE + '/org', { headers: { Authorization: 'Bearer ' + token } });
+    if (!r.ok) return;
+    const org = await r.json();
+    puedeEliminar = !org.es_empresa || org.es_admin === true;
+  } catch (e) {
+    puedeEliminar = false;
+  }
+}
 
 function g(id) { return document.getElementById(id); }
 function getRawNum(val) { return parseFloat((val||'').replace(/[$,]/g,'').trim()) || 0; }
@@ -1378,6 +1395,7 @@ async function loadProps() {
   const grid = g('props-grid');
   grid.innerHTML = '<div class="props-empty"><h3>Cargando inmuebles…</h3></div>';
   g('props-pager').style.display = 'none';
+  await cargarPermisoEliminar();
   try {
     // Sin límite duro: traemos todo (Supabase devuelve max 1000 por default,
     // suficiente para casi cualquier agencia). Si necesitas más, abrimos paginación server-side.
@@ -1497,9 +1515,9 @@ function renderProps(props, totalForCount) {
           <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           Ficha
         </button>
-        <button class="prop-act-btn prop-act-del" onclick="event.stopPropagation();deleteProp('${p.id}')">
+        ${puedeEliminar ? `<button class="prop-act-btn prop-act-del" onclick="event.stopPropagation();deleteProp('${p.id}')">
           <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
-        </button>
+        </button>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -1793,6 +1811,7 @@ async function publicarEnFacebook(prop) {
 // Click en una card: si hay algo seleccionado, click toggle selección.
 // Si no hay nada seleccionado, click abre el detalle como siempre.
 function onPropCardClick(event, id) {
+  if (!puedeEliminar) { openPropDetail(id); return; }
   if (selectedIds.size > 0) {
     event.stopPropagation();
     toggleSelectProp(id);
@@ -1802,12 +1821,14 @@ function onPropCardClick(event, id) {
 }
 
 function toggleSelectProp(id) {
+  if (!puedeEliminar) return;
   if (selectedIds.has(id)) selectedIds.delete(id);
   else selectedIds.add(id);
   updateSelectionUI();
 }
 
 function toggleSelectAll() {
+  if (!puedeEliminar) return;
   // Selecciona/deselecciona TODAS las propiedades que coinciden con el filtro
   // actual (no solo las visibles en la página). Esto incluye páginas siguientes.
   const filteredIds = (filteredProps || []).map(p => p.id);
@@ -1866,6 +1887,7 @@ function updateSelectionUI() {
 
 // Modal de confirmación
 function confirmarBorrarSeleccionados() {
+  if (!puedeEliminar) return;
   if (selectedIds.size === 0) return;
   const n = selectedIds.size;
   g('confirm-del-title').textContent = `¿Eliminar ${n} ${n === 1 ? 'inmueble' : 'inmuebles'}?`;
@@ -1878,7 +1900,10 @@ function cerrarConfirmDel() {
   g('confirm-del-overlay').classList.remove('is-open');
 }
 
-// Borrado masivo en lotes a Supabase + limpia fotos del Storage
+// Borrado masivo. Lo ejecuta el servidor, no el navegador: así el permiso
+// se revisa del lado seguro (un agente solo puede borrar lo suyo; el
+// inventario de toda la empresa solo el dueño o un administrador) y las
+// fotos se limpian del almacenamiento sin que el usuario tenga que esperar.
 async function borrarSeleccionados() {
   const ids = Array.from(selectedIds);
   if (ids.length === 0) return;
@@ -1889,63 +1914,38 @@ async function borrarSeleccionados() {
   btn.textContent = 'Eliminando…';
 
   try {
-    // Paso 1: traer las propiedades para conocer las URLs de fotos a borrar del Storage.
-    // Guard: fotos que también usa una propiedad NO seleccionada (ej. duplicados) se conservan.
-    const propsABorrar = allProps.filter(p => selectedIds.has(p.id));
-    const enUsoPorRestantes = new Set(allProps.filter(p => !selectedIds.has(p.id)).flatMap(p => p.fotos || []));
-    const fotoUrls = propsABorrar.flatMap(p => p.fotos || []).filter(u => !enUsoPorRestantes.has(u));
-
-    // Paso 2: borrar en LOTES de 100 ids para no rebasar el límite de URL.
-    // PostgREST acepta id=in.("uuid1","uuid2",...) — los UUIDs van entrecomillados
-    // para que no choquen con caracteres reservados.
-    const BATCH_DEL = 100;
-    let borradas = 0;
-    for (let i = 0; i < ids.length; i += BATCH_DEL) {
-      btn.textContent = `Eliminando… ${Math.min(i + BATCH_DEL, ids.length)} / ${ids.length}`;
-      const chunk = ids.slice(i, i + BATCH_DEL);
-      const idsCsv = chunk.map(id => `"${encodeURIComponent(id)}"`).join(',');
-      await sbFetch(`propiedades?id=in.(${idsCsv})`, 'DELETE');
-      borradas += chunk.length;
+    const token = await getValidToken();
+    if (!token) {
+      alert('Tu sesión expiró. Vuelve a iniciar sesión.');
+      location.href = 'login.html';
+      return;
     }
 
-    // Paso 3: borrar fotos del Storage (silencioso, no bloquea si falla)
-    if (fotoUrls.length) {
-      borrarFotosDelStorage(fotoUrls).catch(e => console.warn('Fotos no borradas del Storage:', e));
-    }
+    const r = await fetch(API_BASE + '/propiedades/eliminar-masivo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ ids: ids })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'No se pudo eliminar');
 
-    // Limpieza UI
+    const borradas = data.eliminadas || 0;
+
     selectedIds.clear();
     cerrarConfirmDel();
     await loadProps();
 
-    // Toast de confirmación
-    mostrarToast(`${borradas} ${borradas === 1 ? 'inmueble eliminado' : 'inmuebles eliminados'}`);
+    if (borradas < ids.length) {
+      mostrarToast(borradas + ' de ' + ids.length + ' eliminados. El resto no era tuyo.');
+    } else {
+      mostrarToast(borradas + (borradas === 1 ? ' inmueble eliminado' : ' inmuebles eliminados'));
+    }
   } catch (err) {
-    alert('Error al eliminar: ' + err.message);
+    alert('Error al eliminar: ' + (err.message || 'desconocido'));
   } finally {
     btn.disabled = false;
     btn.textContent = originalLabel;
   }
-}
-
-// Borra los objetos de Storage extrayendo el path de cada URL pública
-async function borrarFotosDelStorage(urls) {
-  const token = await getValidToken();
-  if (!token) return;
-  const prefix = `${SB_URL}/storage/v1/object/public/fotos-propiedades/`;
-  const objects = urls
-    .filter(u => u && u.startsWith(prefix))
-    .map(u => u.substring(prefix.length));
-  if (!objects.length) return;
-  await fetch(`${SB_URL}/storage/v1/object/fotos-propiedades`, {
-    method: 'DELETE',
-    headers: {
-      'apikey': SB_KEY,
-      'Authorization': 'Bearer ' + token,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ prefixes: objects })
-  });
 }
 
 function mostrarToast(text) {
@@ -2000,17 +2000,20 @@ function crearFichaDesde(id) {
 async function deleteProp(id) {
   if (!confirm('¿Eliminar este inmueble? Las fotos también se eliminarán.\n\nEliminar de Broquer no elimina de tu página de Facebook.')) return;
   try {
-    // Conocer las URLs antes de borrar para limpiar el Storage.
-    // Guard: si otra propiedad (ej. un duplicado) usa la misma foto, NO se borra del Storage.
-    const p = allProps.find(x => x.id === id);
-    const enUsoPorOtras = new Set(allProps.filter(x => x.id !== id).flatMap(x => x.fotos || []));
-    const fotoUrls = (p?.fotos || []).filter(u => !enUsoPorOtras.has(u));
-
-    await sbFetch(`propiedades?id=eq.${id}`, 'DELETE');
-
-    if (fotoUrls.length) {
-      borrarFotosDelStorage(fotoUrls).catch(e => console.warn('Fotos no borradas:', e));
+    const token = await getValidToken();
+    if (!token) {
+      alert('Tu sesión expiró. Vuelve a iniciar sesión.');
+      location.href = 'login.html';
+      return;
     }
+    const r = await fetch(API_BASE + '/propiedades/eliminar-masivo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ ids: [id] })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'No se pudo eliminar');
+    if (!data.eliminadas) throw new Error('No tienes permiso para eliminar este inmueble.');
     await loadProps();
   }
   catch(e) { alert('Error: ' + e.message); }
