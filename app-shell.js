@@ -772,8 +772,8 @@ body[data-app="verificador"] .top-header { display: none !important; }
   max-height: min(600px, calc(100dvh - 140px));
   background: var(--paper);
   border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  box-shadow: 0 24px 64px rgba(22,22,22,.18), 0 8px 16px rgba(22,22,22,.08);
+  border-radius: 20px;
+  box-shadow: 0 32px 80px rgba(0,20,59,0.28), 0 10px 24px rgba(0,20,59,0.12);
   flex-direction: column; overflow: hidden;
   animation: bkShkIn .26s cubic-bezier(.16,1,.3,1);
 }
@@ -782,20 +782,42 @@ body[data-app="verificador"] .top-header { display: none !important; }
 @media (max-width: 880px) {
   .bk-shaark-popup { right: 12px; left: 12px; bottom: 84px; width: auto; }
 }
+/* Cabecera del chat — mismo azul del sidebar, con el destello superior.
+   Separa visualmente la identidad de Broq de la zona de conversación. */
 .bk-shk-head {
   display: flex; align-items: center; gap: 12px;
-  padding: 14px 16px; border-bottom: 1px solid var(--line);
+  padding: 16px 16px 15px; border-bottom: none;
+  background: var(--sb-bg);
+  background-image: radial-gradient(120% 90% at 100% 0%, rgba(255,255,255,0.20), rgba(255,255,255,0) 62%);
+  position: relative; flex-shrink: 0;
+}
+.bk-shk-head::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
+  background: rgba(255,255,255,0.14); pointer-events: none;
 }
 .bk-shk-avatar {
-  width: 36px; height: 36px; border-radius: 50%;
-  background: var(--bone); border: 1px solid var(--line);
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(255,255,255,0.96);
+  border: 1px solid rgba(255,255,255,0.55);
+  box-shadow: 0 2px 10px rgba(0,20,59,0.28), inset 0 1px 0 rgba(255,255,255,0.9);
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   overflow: hidden;
 }
 .bk-shk-avatar img { height: 62%; width: auto; object-fit: contain; }
-.bk-shk-name { font-family: var(--font-display); font-size: 14px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); }
-.bk-shk-status { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--mute); font-family: var(--font-mono); letter-spacing: .04em; }
-.bk-shk-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--forest); }
+.bk-shk-name { font-family: var(--font-display); font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: rgba(255,255,255,1); line-height: 1.25; }
+.bk-shk-status { display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: rgba(255,255,255,0.72); font-family: inherit; letter-spacing: 0; font-weight: 500; margin-top: 1px; }
+/* Punto "en línea": núcleo verde con halo suave que respira */
+.bk-shk-status::before {
+  content: ''; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(52,211,153,1);
+  box-shadow: 0 0 0 3px rgba(52,211,153,0.20), 0 0 8px rgba(52,211,153,0.55);
+  animation: bkShkOnline 2.4s ease-in-out infinite;
+}
+@keyframes bkShkOnline {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(52,211,153,0.18), 0 0 8px rgba(52,211,153,0.45); }
+  50%      { box-shadow: 0 0 0 5px rgba(52,211,153,0.08), 0 0 12px rgba(52,211,153,0.70); }
+}
+@media (prefers-reduced-motion: reduce) { .bk-shk-status::before { animation: none; } }
 .bk-shk-wake {
   background: none; border: 1px solid var(--line-2);
   border-radius: var(--r-pill);
@@ -807,17 +829,18 @@ body[data-app="verificador"] .top-header { display: none !important; }
 .bk-shk-wake:hover { color: var(--ink); }
 .bk-shk-wake.is-on { color: var(--forest); border-color: var(--forest); }
 .bk-shk-close {
-  width: 28px; height: 28px;
-  background: transparent; border: none; cursor: pointer;
-  border-radius: 8px; color: var(--mute);
+  width: 30px; height: 30px;
+  background: rgba(255,255,255,0.10); border: none; cursor: pointer;
+  border-radius: 9px; color: rgba(255,255,255,0.75);
   display: flex; align-items: center; justify-content: center;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-.bk-shk-close:hover { background: var(--paper-2); color: var(--ink); }
-.bk-shk-msgs { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.bk-shk-close:hover { background: rgba(255,255,255,0.20); color: rgba(255,255,255,1); }
+.bk-shk-msgs { flex: 1; overflow-y: auto; padding: 16px 16px; display: flex; flex-direction: column; gap: 10px; background: var(--paper); }
 .bk-shk-msgs::-webkit-scrollbar { width: 4px; } .bk-shk-msgs::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 4px; }
-.bk-shk-bubble { max-width: 88%; padding: 10px 13px; border-radius: 14px; font-size: 13.5px; line-height: 1.5; letter-spacing: -0.005em; white-space: pre-wrap; }
-.bk-shk-bubble.bot { background: var(--bone); color: var(--ink); border: 1px solid var(--line); border-bottom-left-radius: 5px; align-self: flex-start; }
-.bk-shk-bubble.user { background: var(--ink); color: var(--paper); border-bottom-right-radius: 5px; align-self: flex-end; }
+.bk-shk-bubble { max-width: 88%; padding: 11px 14px; border-radius: 16px; font-size: 13.5px; line-height: 1.55; letter-spacing: -0.005em; white-space: pre-wrap; }
+.bk-shk-bubble.bot { background: var(--paper-2); color: var(--ink); border: 1px solid var(--line); border-bottom-left-radius: 6px; align-self: flex-start; }
+.bk-shk-bubble.user { background: var(--sky-blue); color: #FFFFFF; border-bottom-right-radius: 6px; align-self: flex-end; box-shadow: 0 2px 8px rgba(18,64,160,0.22); } /* AUDIT-EXEMPT-LINE */
 .bk-shk-bubble.toast { background: transparent; border: none; color: var(--mute); font-size: 12px; padding: 4px 10px; align-self: center; }
 /* Pasos del agente — "lo que está haciendo" en vivo */
 .bk-shk-bubble.step { background: transparent; border: none; color: var(--mute); font-size: 12px; padding: 3px 8px 3px 22px; align-self: flex-start; position: relative; opacity: 0.95; }
@@ -841,9 +864,9 @@ body[data-app="verificador"] .top-header { display: none !important; }
   transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 .bk-shk-chip:hover { background: var(--paper-2); border-color: var(--ink); }
-.bk-shk-input-row { display: flex; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--line); align-items: center; }
-.bk-shk-input { flex: 1; min-width: 0; background: var(--bone); border: 1px solid var(--line-2); border-radius: var(--r-pill); padding: 10px 14px; font-size: 14px; outline: none; font-family: inherit; color: var(--ink); }
-.bk-shk-input:focus { border-color: var(--ink); background: var(--paper); }
+.bk-shk-input-row { display: flex; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--line); align-items: center; background: var(--paper); }
+.bk-shk-input { flex: 1; min-width: 0; background: var(--paper-2); border: 1px solid var(--line-2); border-radius: var(--r-pill); padding: 11px 15px; font-size: 14px; outline: none; font-family: inherit; color: var(--ink); transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease); }
+.bk-shk-input:focus { border-color: var(--sky-blue); background: var(--paper); box-shadow: 0 0 0 3px rgba(18,64,160,0.12); }
 .bk-shk-mic, .bk-shk-send {
   width: 40px; height: 40px; border-radius: 50%;
   border: none; cursor: pointer; flex-shrink: 0;
@@ -853,8 +876,8 @@ body[data-app="verificador"] .top-header { display: none !important; }
 .bk-shk-mic:hover { background: var(--ink); color: var(--paper); }
 .bk-shk-mic.listening { background: var(--danger); color: white; border-color: var(--danger); animation: bkMicPulse 1.2s ease-in-out infinite; }
 @keyframes bkMicPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(231,8,102,.5); } 50% { box-shadow: 0 0 0 8px rgba(231,8,102,0); } }
-.bk-shk-send { background: var(--ink); color: var(--paper); }
-.bk-shk-send:hover { opacity: .9; }
+.bk-shk-send { background: var(--sky-blue); color: #FFFFFF; box-shadow: 0 3px 10px rgba(18,64,160,0.30); transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease); } /* AUDIT-EXEMPT-LINE */
+.bk-shk-send:hover { background: var(--sky-blue-press); box-shadow: 0 5px 14px rgba(18,64,160,0.38); }
 @media (hover: hover) and (pointer: fine) { .bk-shk-mic { display: none; } }
 
 /* ── Profile Drawer ─────────────────────────────────────────── */
