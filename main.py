@@ -155,14 +155,6 @@ try:
 except Exception as _e:
     print(f"[org] No se pudo montar el router de organizaciones: {_e}")
 
-# Consola de dueño: panorama, ingresos, segmentos de marketing, correo y CFDI.
-# Mismo import defensivo: si falla, el resto del backend sigue vivo.
-try:
-    from routers.admin_consola import router as admin_consola_router
-    app.include_router(admin_consola_router)
-except Exception as _e:
-    print(f"[admin] No se pudo montar el router de la consola: {_e}")
-
 CONFIG_FILE = Path(__file__).parent / "config.json"
 
 def load_config() -> dict:
@@ -1784,6 +1776,45 @@ def _split_street(s: str):
         return (ext_match.group(1).strip(), ext_match.group(2).strip(), num_int)
     return (s, None, num_int)
 
+# EasyBroker limita su API a 20 peticiones por segundo. Si nos pasamos,
+# responde 429 y las propiedades se pierden. Estos valores nos dejan por
+# debajo del límite con margen.
+_EB_LOTE          = 8     # peticiones simultáneas
+_EB_PAUSA_LOTE    = 0.5   # segundos mínimos entre lotes → máx ~16 req/s
+_EB_REINTENTOS    = 4
+_EB_ESPERA_BASE   = 1.5   # segundos; se duplica en cada reintento
+_EB_ESPERA_MAX    = 20.0
+
+
+async def _eb_get_reintentos(client: httpx.AsyncClient, url: str,
+                             headers: dict, params: dict = None,
+                             timeout: float = 20.0):
+    """
+    GET a EasyBroker que reintenta cuando la API rechaza por exceso de
+    peticiones (429) o falla del lado de ellos (5xx). Respeta la cabecera
+    Retry-After si viene. Devuelve la respuesta, o None si nunca respondió.
+    """
+    ultimo = None
+    for intento in range(_EB_REINTENTOS):
+        try:
+            r = await client.get(url, headers=headers, params=params, timeout=timeout)
+            ultimo = r
+            if r.status_code == 429 or r.status_code >= 500:
+                try:
+                    espera = float(r.headers.get("Retry-After") or 0)
+                except (TypeError, ValueError):
+                    espera = 0.0
+                if espera <= 0:
+                    espera = _EB_ESPERA_BASE * (2 ** intento)
+                await asyncio.sleep(min(espera, _EB_ESPERA_MAX))
+                continue
+            return r
+        except Exception:
+            ultimo = None
+            await asyncio.sleep(min(_EB_ESPERA_BASE * (2 ** intento), _EB_ESPERA_MAX))
+    return ultimo
+
+
 @app.post("/easybroker/import-all")
 async def easybroker_import_all(request: Request):
     """
@@ -1847,12 +1878,16 @@ async def easybroker_import_all(request: Request):
             pagina = 1
             n_status = 0
             while pagina <= 200:  # tope duro por estatus
-                r = await client.get(
+                r = await _eb_get_reintentos(
+                    client,
                     f"{EB_BASE}/properties",
-                    headers=eb_headers(user_key),
-                    params={"limit": 50, "page": pagina,
-                            "search[statuses][]": eb_status}
+                    eb_headers(user_key),
+                    {"limit": 50, "page": pagina,
+                     "search[statuses][]": eb_status},
+                    timeout=30.0,
                 )
+                if r is None:
+                    break
                 if r.status_code == 401:
                     raise HTTPException(status_code=401, detail="Tu API key de EasyBroker fue rechazada. Reconéctala en Perfil.")
                 if r.status_code != 200:
@@ -1888,11 +1923,14 @@ async def easybroker_import_all(request: Request):
 
     async def fetch_one(client: httpx.AsyncClient, pid: str):
         try:
-            rd = await client.get(
+            rd = await _eb_get_reintentos(
+                client,
                 f"{EB_BASE}/properties/{pid}",
-                headers=eb_headers(user_key),
-                timeout=20.0
+                eb_headers(user_key),
+                timeout=20.0,
             )
+            if rd is None:
+                return ("err", {"id": pid, "error": "EasyBroker no respondió tras varios intentos"})
             if rd.status_code != 200:
                 return ("err", {"id": pid, "error": f"EB status {rd.status_code}"})
             prop_full = rd.json()
@@ -1914,11 +1952,17 @@ async def easybroker_import_all(request: Request):
         except Exception as e:
             return ("err", {"id": pid, "error": str(e)[:120]})
 
-    BATCH = 10
+    BATCH = _EB_LOTE
     async with httpx.AsyncClient(timeout=30) as client:
         for i in range(0, len(ids_published), BATCH):
             chunk = ids_published[i:i+BATCH]
+            inicio_lote = time.monotonic()
             results = await asyncio.gather(*[fetch_one(client, pid) for pid in chunk])
+            # Mantener el ritmo por debajo del límite de EasyBroker: si el lote
+            # tardó menos que la pausa mínima, esperamos la diferencia.
+            resto = _EB_PAUSA_LOTE - (time.monotonic() - inicio_lote)
+            if resto > 0 and i + BATCH < len(ids_published):
+                await asyncio.sleep(resto)
             for status, payload in results:
                 if status == "ok":
                     inmuebles_listos.append(payload)
