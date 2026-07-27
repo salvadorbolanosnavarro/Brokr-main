@@ -748,6 +748,69 @@ async def wa2_probar(req: ProbarReq, request: Request):
     }
 
 
+async def _alta_inmueble(user_id: str, datos: dict, wa_id: str, fotos: list | None = None) -> str | None:
+    """Da de alta un inmueble que un tercero le mandó al asesor por WhatsApp.
+
+    Nace SIEMPRE con estatus 'no_activa': no aparece en el sitio público del
+    asesor, no se le ofrece a ningún comprador y no se sincroniza a ningún
+    lado. Es un borrador que espera revisión humana. Un dato que llegó por
+    WhatsApp de alguien que no conocemos no puede tratarse como inventario
+    real: ni el precio, ni la titularidad, ni siquiera que la casa exista
+    están verificados.
+    """
+    tipo = (datos.get("tipo") or "").strip() or "Propiedad"
+    colonia = (datos.get("colonia") or "").strip()
+    operacion = (datos.get("operacion") or "").strip().lower()
+    if operacion not in ("venta", "renta"):
+        operacion = "venta"
+
+    titulo = (datos.get("titulo") or "").strip() or \
+        " ".join(x for x in [tipo, "en", operacion, ("· " + colonia) if colonia else ""] if x).strip()
+
+    try:
+        precio = float(datos.get("precio")) if datos.get("precio") not in (None, "") else None
+    except Exception:
+        precio = None
+
+    def _entero(v):
+        try:
+            return int(float(v))
+        except Exception:
+            return None
+
+    fila = {
+        "user_id": user_id,
+        "titulo": titulo[:200],
+        "tipo": tipo,
+        "operacion": operacion,
+        "precio": precio,
+        "moneda": (datos.get("moneda") or "MXN").upper()[:4],
+        "colonia": colonia or None,
+        "ciudad": (datos.get("ciudad") or "").strip() or None,
+        "calle": (datos.get("calle") or "").strip() or None,
+        "recamaras": _entero(datos.get("recamaras")),
+        "banos": _entero(datos.get("banos")),
+        "estacionamientos": _entero(datos.get("estacionamientos")),
+        "m2_construccion": _entero(datos.get("m2_construccion")),
+        "m2_terreno": _entero(datos.get("m2_terreno")),
+        "descripcion": (datos.get("descripcion") or "").strip() or None,
+        "fotos": [f for f in (fotos or []) if f][:20],
+        "estatus": "no_activa",
+        "descripcion_privada": (
+            f"Alta automática desde WhatsApp ({_normaliza_mx(wa_id)}) el "
+            f"{_hora_local().strftime('%d/%m/%Y %H:%M')}. "
+            "Datos proporcionados por un tercero, SIN VERIFICAR. "
+            "Revisa precio, ubicación, medidas y titularidad antes de activarla."),
+        "created_at": _now(),
+        "updated_at": _now(),
+    }
+    creada = await sb_post("propiedades", fila)
+    if not creada:
+        log.error("No se pudo dar de alta el inmueble de WhatsApp (user=%s)", user_id)
+        return None
+    return creada[0].get("id")
+
+
 async def _entrenamiento_de(user_id: str, numero_id: str) -> dict:
     rows = await sb_get("wa2_entrenamiento", {
         "user_id": f"eq.{user_id}", "numero_id": f"eq.{numero_id}", "select": "*", "limit": "1"})
@@ -836,6 +899,15 @@ async def recepcion2_responde(history: list, contexto: str, agente: dict, entren
         "Si el prospecto pide explícitamente hablar con una persona, se molesta, o el caso se sale de tus manos, "
         "pon 'accion' como pasar_a_humano con un motivo breve; el sistema apaga la IA de esta conversación y "
         "avisa al asesor de inmediato.\n"
+        "NO TODO EL QUE ESCRIBE ES COMPRADOR. Antes de calificar, entiende con quién hablas: hay propietarios "
+        "que quieren VENDER o RENTAR su inmueble, y colegas que traen una propiedad. A ésos no les preguntes "
+        "presupuesto ni forma de pago — eso es absurdo y se nota. A ellos pídeles los datos del inmueble.\n"
+        "Cuando alguien te ofrezca un inmueble (te manda fotos, o te lo describe), y el asesor te haya pedido "
+        "registrarlos, junta lo que puedas: tipo, si es venta o renta, precio, colonia, ciudad, recámaras, "
+        "baños, estacionamientos, metros de construcción y de terreno. Lo que falte, pregúntalo con naturalidad "
+        "y de poquito en poquito, no de golpe. Cuando ya tengas al menos tipo, operación y colonia, ponlo en "
+        "'accion' como registrar_inmueble. Después de registrarlo NO le prometas publicación, revisión ni "
+        "plazos: el sistema le contesta lo justo y el asesor decide.\n"
         "Responde ÚNICAMENTE con un JSON válido, sin texto antes ni después, así:\n"
         '{"reply":"mensaje para el prospecto","temperatura":"Caliente|Tibio|Frío",'
         '"score":0-100,"presupuesto":"texto o null","forma_pago":"crédito|contado|por definir",'
@@ -865,7 +937,19 @@ async def recepcion2_responde(history: list, contexto: str, agente: dict, entren
         "Para agendar: "
         '{"tipo":"agendar_visita","fecha":"YYYY-MM-DD","hora":"HH:MM","inmueble":"texto o null"}. '
         "Para pasar a humano: "
-        '{"tipo":"pasar_a_humano","motivo":"texto"}'
+        '{"tipo":"pasar_a_humano","motivo":"texto"}\n'
+        "Para registrar un inmueble que te ofrecieron: "
+        '{"tipo":"registrar_inmueble","datos":{"titulo":"texto o null","tipo":"casa|departamento|terreno|local u otro",'
+        '"operacion":"venta|renta","precio":numero o null,"moneda":"MXN","colonia":"texto o null",'
+        '"ciudad":"texto o null","calle":"texto o null","recamaras":numero o null,"banos":numero o null,'
+        '"estacionamientos":numero o null,"m2_construccion":numero o null,"m2_terreno":numero o null,'
+        '"descripcion":"lo que te contaron del inmueble, en tus palabras"}}\n'
+        "NUNCA PROMETAS LO QUE NO PUEDES HACER. Tus únicas capacidades reales son: contestar con la "
+        "información de arriba, mandar propiedades del catálogo, agendar visitas, registrar un inmueble que te "
+        "ofrezcan y pasarle la conversación al asesor. Si te piden cualquier otra cosa —mandar un contrato, "
+        "cotizar un crédito, cobrar, hacer un avalúo, apartar— NO digas que la vas a hacer ni que 'ahorita se "
+        "la preparo'. Di que se lo comentas al asesor y pon 'accion' como pasar_a_humano. Prometer algo que "
+        "nunca llega es peor que decir que no."
     )
 
     msgs = list(history)
@@ -956,8 +1040,13 @@ async def _buscar_inmuebles(user_id: str, filtros: dict, limit: int = 3) -> tupl
     # propiedad con el estatus vacío quedaba invisible para la IA — y muchas
     # propiedades importadas o capturadas rápido no traen estatus. El agente
     # tenía inventario y la IA le decía al prospecto que no había nada.
+    #
+    # 'no_activa' es el estatus de los inmuebles que la propia IA dio de alta
+    # con lo que le mandó un tercero por WhatsApp. Esos NUNCA se le ofrecen a
+    # un comprador: nadie ha verificado el precio, la titularidad ni que la
+    # propiedad exista. Solo salen del cajón cuando el asesor los activa.
     base = {"user_id": f"eq.{user_id}", "select": sel,
-            "or": "(estatus.is.null,estatus.not.in.(vendida,rentada,suspendida))",
+            "or": "(estatus.is.null,estatus.not.in.(vendida,rentada,suspendida,no_activa))",
             "order": "updated_at.desc", "limit": str(limit)}
     op = (filtros.get("operacion") or "").strip().lower()
     if op in ("venta", "renta"):
@@ -2200,6 +2289,43 @@ async def _responder_conversacion(item: dict, numero: dict, user_id: str):
                                        "cita.ics", "Toca el archivo para agregarla a tu calendario.")
                 await enviar_push(user_id, "Nueva cita agendada",
                                   f"{nombre_prospecto} — {fecha} {hora} (revísala en Tareas)",
+                                  datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
+
+        elif tipo == "registrar_inmueble":
+            datos = accion.get("datos") or {}
+            # Se recuperan las fotos que el remitente mandó EN ESTA conversación
+            # para adjuntarlas al inmueble. Ya viven en el almacenamiento de
+            # Broquer, así que son ligas propias y permanentes.
+            fotos_rows = await sb_get("wa2_mensajes", {
+                "conversacion_id": f"eq.{item['conversacion_id']}", "direction": "eq.in",
+                "media_url": "not.is.null", "select": "body,media_url",
+                "order": "created_at.desc", "limit": "20"})
+            fotos = [f["media_url"] for f in fotos_rows
+                     if (f.get("body") or "").lower().startswith("[foto")]
+            fotos.reverse()
+
+            inmueble_id = await _alta_inmueble(user_id, datos, item["wa_id"], fotos)
+            if inmueble_id:
+                # Al remitente NADA de promesas: un "gracias" y punto. Si se le
+                # dijera "ya quedó registrada" creería que está publicada.
+                gracias = "¡Muchas gracias!"
+                wamid3 = await _wa_send_text(numero, item["wa_id"], gracias)
+                await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"],
+                                       wamid3, "out", "ia", gracias)
+                await sb_patch("wa2_contactos", {"id": f"eq.{item['contacto_id']}"},
+                               {"etapa": "Propietario"})
+                etiqueta = " · ".join(x for x in [datos.get("tipo"), datos.get("colonia"),
+                                                  _money(datos.get("precio"))] if x)
+                await enviar_push(user_id, "Te mandaron un inmueble",
+                                  f"{contacto.get('nombre') or item['wa_id']}: {etiqueta or 'un inmueble'}. "
+                                  "Quedó guardado como No activo — revísalo en Mis Inmuebles.",
+                                  datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
+            else:
+                await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"},
+                               {"ai_enabled": False})
+                await enviar_push(user_id, "No se pudo guardar un inmueble",
+                                  f"{contacto.get('nombre') or item['wa_id']} te mandó una propiedad y "
+                                  "no se pudo registrar. Entra a la conversación.",
                                   datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
 
         elif tipo == "pasar_a_humano":

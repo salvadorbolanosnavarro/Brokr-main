@@ -926,6 +926,7 @@
 /* Badges de estatus adicionales */
 .badge-reservada  { background: var(--info-soft);  color: var(--info); }
 .badge-en_proceso { background: var(--warn-soft); color: var(--warn); }
+.badge-no_activa  { background: var(--paper-2);  color: var(--ink-3); }
 
 /* CSV import */
 .csv-drop {
@@ -1048,6 +1049,7 @@
             <label class="props-est-option"><input type="checkbox" value="vendida" onchange="filterProps()"> Vendida</label>
             <label class="props-est-option"><input type="checkbox" value="rentada" onchange="filterProps()"> Rentada</label>
             <label class="props-est-option"><input type="checkbox" value="suspendida" onchange="filterProps()"> Suspendida</label>
+            <label class="props-est-option"><input type="checkbox" value="no_activa" onchange="filterProps()"> No activo (por revisar)</label>
           </div>
         </div>
 
@@ -1103,7 +1105,7 @@
         <div class="pf-row">
           <div class="pf-field"><label>Tipo</label><select name="tipo" required><option value="">Seleccionar</option><option value="casa">Casa</option><option value="departamento">Departamento</option><option value="terreno">Terreno</option><option value="local">Local comercial</option><option value="oficina">Oficina</option><option value="bodega">Bodega</option></select></div>
           <div class="pf-field"><label>Operación</label><select name="operacion" required onchange="pfActualizarComision(this.value)"><option value="">Seleccionar</option><option value="venta">Venta</option><option value="renta">Renta</option></select></div>
-          <div class="pf-field"><label>Estatus</label><select name="estatus"><option value="activa">Activa</option><option value="reservada">Reservada</option><option value="en_proceso">En proceso</option><option value="vendida">Vendida</option><option value="rentada">Rentada</option><option value="suspendida">Suspendida</option></select></div>
+          <div class="pf-field"><label>Estatus</label><select name="estatus"><option value="activa">Activa</option><option value="reservada">Reservada</option><option value="en_proceso">En proceso</option><option value="vendida">Vendida</option><option value="rentada">Rentada</option><option value="suspendida">Suspendida</option><option value="no_activa">No activo (por revisar)</option></select></div>
         </div>
         <div class="pf-row">
           <div class="pf-field"><label>Precio</label><input type="text" name="precio" placeholder="$2,500,000" oninput="propFmtMoney(this)" required/></div>
@@ -1238,6 +1240,7 @@
         <option value="vendida">Vendida</option>
         <option value="rentada">Rentada</option>
         <option value="suspendida">Suspendida</option>
+        <option value="no_activa">No activo (por revisar)</option>
       </select>
       <div class="spacer"></div>
       <button class="prop-act-btn" style="flex:0 0 auto" onclick="duplicarProp()" title="Crear una copia de este inmueble">
@@ -1553,7 +1556,7 @@ function updateEstLabel() {
   if (selected.length === 0) {
     label.textContent = 'Todos los estatus';
   } else if (selected.length === 1) {
-    const map = { activa: 'Activa', vendida: 'Vendida', rentada: 'Rentada', suspendida: 'Suspendida' };
+    const map = { activa: 'Activa', reservada: 'Reservada', en_proceso: 'En proceso', vendida: 'Vendida', rentada: 'Rentada', suspendida: 'Suspendida', no_activa: 'No activo' };
     label.textContent = map[selected[0]] || selected[0];
   } else {
     label.textContent = selected.length + ' estatus';
