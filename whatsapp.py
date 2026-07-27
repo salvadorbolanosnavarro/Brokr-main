@@ -67,6 +67,51 @@ WA2_WEBHOOK_URL  = os.environ.get("WA2_WEBHOOK_URL", "https://api.broquer.app/wh
 BROQUER_API_BASE = os.environ.get("BROQUER_API_BASE", "https://api.broquer.app")
 HISTORY_LIMIT = 16
 
+# Zona horaria por defecto de todo el módulo. ESTA CONSTANTE FALTABA: el
+# endpoint /whatsapp2/estadisticas la usaba sin que existiera en ningún lado,
+# así que reventaba con NameError (error 500) en CUALQUIER llamada que no
+# mandara ?zona=... — que es exactamente como la llama estadisticas.html.
+# Resultado: la pestaña de WhatsApp en Estadísticas nunca funcionó.
+_ZONA_DEFAULT = os.environ.get("WA2_ZONA_DEFAULT", "America/Mexico_City")
+
+# Segundos que se espera antes de contestar, para AGRUPAR mensajes seguidos.
+# En WhatsApp la gente no escribe un párrafo: escribe "hola", "busco casa",
+# "en Altozano" en tres mensajes de tres segundos. Sin esto se disparaban tres
+# respuestas de la IA en paralelo —incoherentes entre sí y pagando tres veces—
+# y el prospecto veía a un bot atropellado. Con esto, solo el ÚLTIMO mensaje
+# del ráfaga contesta, y contesta ya con los tres en el historial.
+try:
+    WA2_DEBOUNCE = max(0, int(os.environ.get("WA2_DEBOUNCE_SEG", "8")))
+except Exception:
+    WA2_DEBOUNCE = 8
+
+# WhatsApp corta los mensajes de texto en 4096 caracteres; arriba de eso Meta
+# rechaza el envío completo y el prospecto no recibe NADA.
+WA_MAX_TEXTO = 4000
+
+# Cajón de Supabase donde viven las fotos, audios y documentos de WhatsApp.
+WA_MEDIA_BUCKET = os.environ.get("WA_MEDIA_BUCKET", "wa-media")
+
+# Transcripción de notas de voz (mismo Groq/Whisper que ya usa el resto).
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+GROQ_BASE    = os.environ.get("GROQ_BASE", "https://api.groq.com/openai/v1")
+
+# Candado por conversación: dos mensajes del mismo prospecto jamás deben
+# generar dos respuestas al mismo tiempo.
+_LOCKS: dict = {}
+
+
+def _lock_conv(conversacion_id: str) -> asyncio.Lock:
+    lock = _LOCKS.get(conversacion_id)
+    if lock is None:
+        lock = asyncio.Lock()
+        _LOCKS[conversacion_id] = lock
+        if len(_LOCKS) > 5000:  # no dejar que crezca para siempre
+            for k in list(_LOCKS.keys())[:1000]:
+                if not _LOCKS[k].locked():
+                    _LOCKS.pop(k, None)
+    return lock
+
 # TOPE DURO de respuestas de IA por conversación.
 # Cada mensaje entrante que contesta la IA es una llamada a Claude que paga
 # Broquer, no el agente. El campo `max_mensajes_ia` del entrenamiento lo puede
@@ -89,6 +134,11 @@ TRAINING_DEFAULTS = {
     "debe": "preguntar presupuesto, forma de pago y para cuándo busca",
     "no_debe": "inventar direcciones exactas o precios que no existan en el catálogo",
     "especialidad": "",
+    # Base de conocimiento del negocio: lo que la IA NO puede adivinar del
+    # catálogo (comisiones, si aceptan Infonavit, dónde está la oficina, qué
+    # papeles piden para rentar, etc.). Sin esto, ante cualquier pregunta que
+    # no sea "muéstrame casas" la IA se queda muda o —peor— inventa.
+    "conocimiento": "",
     "objetivo": "calificar al prospecto y agendar una visita",
     "datos_calificar": ["presupuesto", "forma de pago", "para cuándo busca", "zona de interés"],
     "preguntas_extra": [],
@@ -548,6 +598,7 @@ class TrainingReq(BaseModel):
     debe: str | None = None
     no_debe: str | None = None
     especialidad: str | None = None
+    conocimiento: str | None = None
     objetivo: str | None = None
     datos_calificar: list[str] = []
     preguntas_extra: list[str] = []
@@ -616,6 +667,87 @@ async def wa2_training_put(req: TrainingReq, request: Request):
     return {"ok": True}
 
 
+class ProbarReq(BaseModel):
+    numero_id: str | None = None
+    historial: list = []          # [{"rol":"prospecto"|"ia","texto":"..."}]
+    mensaje: str
+
+
+@router.post("/probar")
+async def wa2_probar(req: ProbarReq, request: Request):
+    """Banco de pruebas: platica con la IA EXACTAMENTE como lo haría un
+    prospecto, con el entrenamiento y el catálogo reales, pero sin mandar un
+    solo WhatsApp a nadie, sin crear contactos y sin tocar la base.
+
+    Hasta ahora la única forma de saber si el entrenamiento quedó bien era
+    esperar a que llegara un prospecto de verdad y rezar. Eso es justo lo que
+    no puede pasar el día del lanzamiento con AMPI."""
+    user_id = await _require_user(request)
+
+    numero_id = req.numero_id or ""
+    if numero_id:
+        ids = await _ids_visibles(user_id)
+        n = await sb_get("wa2_numeros", {"id": f"eq.{numero_id}", "user_id": _in_filter(ids),
+                                         "select": "id,user_id", "limit": "1"})
+        if not n:
+            raise HTTPException(status_code=404, detail="Número no encontrado")
+        dueño = n[0]["user_id"]
+    else:
+        dueño = user_id
+
+    entren = await _entrenamiento_de(dueño, numero_id)
+    agente = await _perfil_agente(dueño)
+
+    history = []
+    for h in (req.historial or [])[-HISTORY_LIMIT:]:
+        texto = (h.get("texto") or "").strip()
+        if not texto:
+            continue
+        history.append({"role": "assistant" if h.get("rol") == "ia" else "user", "content": texto})
+    history.append({"role": "user", "content": req.mensaje})
+
+    contexto = (f"Atiendes prospectos de {agente['nombre']}, asesor inmobiliario"
+                f"{(' en ' + agente['zona']) if agente['zona'] else ''}. "
+                "Si no sabes por qué propiedad escribe, pregúntale qué busca.")
+
+    resultado = await recepcion2_responde(history, contexto, agente, entren)
+
+    # Si la IA quiso mandar propiedades, se hace la MISMA búsqueda real contra
+    # el catálogo, para que se vea si de verdad encuentra lo que debería.
+    propiedades, aviso = [], None
+    accion = resultado.get("accion")
+    if isinstance(accion, dict) and accion.get("tipo") == "enviar_inmuebles":
+        filtros = accion.get("filtros") or {}
+        if not filtros.get("precio_max"):
+            respaldo = _parsear_presupuesto(resultado.get("presupuesto") or "")
+            if respaldo:
+                filtros = {**filtros, "precio_max": respaldo}
+        props, sin_resultados = await _buscar_inmuebles(dueño, filtros)
+        propiedades = [{"id": p.get("id"), "titulo": p.get("titulo") or p.get("tipo"),
+                        "resumen": _texto_inmueble(p).replace("\n", " · ")} for p in props[:3]]
+        if sin_resultados:
+            aviso = ("La IA buscó en tu catálogo y no encontró nada en esa zona. "
+                     "Al prospecto real le avisaría con honestidad, sin ofrecerle otra ubicación.")
+        filtros_usados = filtros
+    else:
+        filtros_usados = None
+
+    return {
+        "reply": resultado.get("reply"),
+        "temperatura": resultado.get("temperatura"),
+        "score": resultado.get("score"),
+        "presupuesto": resultado.get("presupuesto"),
+        "forma_pago": resultado.get("forma_pago"),
+        "busca": resultado.get("busca"),
+        "resumen": resultado.get("resumen"),
+        "accion": accion,
+        "filtros": filtros_usados,
+        "propiedades": propiedades,
+        "aviso": aviso,
+        "falla_tecnica": bool(resultado.get("_falla_tecnica")),
+    }
+
+
 async def _entrenamiento_de(user_id: str, numero_id: str) -> dict:
     rows = await sb_get("wa2_entrenamiento", {
         "user_id": f"eq.{user_id}", "numero_id": f"eq.{numero_id}", "select": "*", "limit": "1"})
@@ -638,6 +770,18 @@ def _reglas_para_prompt(e: dict) -> str:
         if preguntas:
             partes.append("Además pregunta cuando venga al caso: " + "; ".join(preguntas) + ".")
     return " ".join(partes)
+
+
+def _conocimiento_para_prompt(e: dict) -> str:
+    """Bloque de información del negocio que el agente escribió con sus
+    palabras. Es la fuente de verdad para todo lo que NO está en el catálogo:
+    comisiones, créditos que aceptan, requisitos, ubicación de la oficina,
+    formas de pago, política de apartado, etc."""
+    txt = (e.get("conocimiento") or "").strip()
+    if not txt:
+        return ""
+    return ("INFORMACIÓN DEL NEGOCIO (fuente de verdad, úsala tal cual y NUNCA la contradigas):\n"
+            f"{txt[:6000]}\n")
 
 
 def _calificacion_para_prompt(e: dict) -> str:
@@ -676,6 +820,11 @@ async def recepcion2_responde(history: list, contexto: str, agente: dict, entren
         f"Hoy es {hoy}, úsalo para entender 'mañana', 'el sábado', etc.\n\n"
         f"Contexto: {contexto}\n"
         f"{_reglas_para_prompt(entren)}\n"
+        f"{_conocimiento_para_prompt(entren)}"
+        "REGLA DURA: si te preguntan algo que no viene ni en la información del negocio de arriba ni en "
+        "el catálogo, NO lo inventes y NO lo supongas. Di con naturalidad que lo confirmas con el asesor "
+        "y sigue la conversación. Inventar una comisión, un requisito, una fecha de entrega o una "
+        "dirección es el peor error que puedes cometer.\n"
         "Cuando el prospecto pida ver opciones, o cuando ya sepas lo suficiente para mostrarle propiedades, "
         "NO inventes inmuebles ni des direcciones exactas: en 'accion' pide enviarle opciones con los filtros "
         "que tengas (deja en null lo que no sepas) y el sistema le manda propiedades REALES del catálogo del "
@@ -725,27 +874,61 @@ async def recepcion2_responde(history: list, contexto: str, agente: dict, entren
     if not msgs:
         msgs = [{"role": "user", "content": "Hola"}]
 
-    try:
-        async with httpx.AsyncClient(timeout=40) as c:
-            r = await c.post(f"{ANTHROPIC_BASE}/messages",
-                             headers={"x-api-key": ANTHROPIC_API_KEY,
-                                      "anthropic-version": "2023-06-01",
-                                      "Content-Type": "application/json"},
-                             json={"model": WA2_MODEL, "max_tokens": 700, "system": system, "messages": msgs})
+    # Antes esto NO revisaba el status code de Anthropic. Cuando la API venía
+    # saturada (429 / 529, cosa normal y pasajera) o tardaba, se caía directo al
+    # respaldo — y el respaldo era un saludo de bienvenida. O sea: al prospecto
+    # que llevaba diez mensajes platicando le llegaba de la nada "¡Hola! ¿Me
+    # cuentas qué estás buscando?", como si la IA hubiera perdido la memoria.
+    # Ahora se reintenta (esos errores casi siempre se arreglan solos en
+    # segundos) y el respaldo se adapta a si la charla ya venía empezada.
+    ultimo_error = ""
+    for intento in (1, 2, 3):
+        try:
+            async with httpx.AsyncClient(timeout=45) as c:
+                r = await c.post(f"{ANTHROPIC_BASE}/messages",
+                                 headers={"x-api-key": ANTHROPIC_API_KEY,
+                                          "anthropic-version": "2023-06-01",
+                                          "Content-Type": "application/json"},
+                                 json={"model": WA2_MODEL, "max_tokens": 700,
+                                       "system": system, "messages": msgs})
+            if r.status_code in (408, 429, 500, 502, 503, 504, 529):
+                ultimo_error = f"{r.status_code}: {r.text[:200]}"
+                await asyncio.sleep(2 * intento)
+                continue
+            if r.status_code >= 400:
+                ultimo_error = f"{r.status_code}: {r.text[:200]}"
+                break
             data = r.json()
             text = "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text").strip()
             if not text:
-                raise ValueError("respuesta vacía de Anthropic")
+                ultimo_error = "respuesta vacía de Anthropic"
+                await asyncio.sleep(2 * intento)
+                continue
             t = text.replace("```json", "").replace("```", "").strip()
             s, e = t.find("{"), t.rfind("}")
             if s != -1 and e != -1:
                 t = t[s:e + 1]
-            return json.loads(t)
-    except Exception as e:
-        log.exception("Error en Recepción 2.0 (Anthropic): %s", e)
-        return {"reply": "¡Hola! Gracias por escribir. ¿Me cuentas qué estás buscando y para cuándo, y con gusto te ayudo?",
-                "temperatura": "Tibio", "score": 50, "presupuesto": None, "forma_pago": "por definir",
-                "busca": None, "resumen": "Prospecto nuevo, sin calificar aún.", "nota": None, "accion": None}
+            salida = json.loads(t)
+            if isinstance(salida, dict) and (salida.get("reply") or "").strip():
+                return salida
+            ultimo_error = "la respuesta no traía 'reply'"
+        except Exception as e:
+            ultimo_error = str(e)[:200]
+            await asyncio.sleep(2 * intento)
+
+    log.error("Recepción 2.0: Anthropic no respondió bien tras 3 intentos -> %s", ultimo_error)
+    ya_venia_platicando = len([m for m in msgs if m.get("role") == "user"]) > 1
+    if ya_venia_platicando:
+        # A media conversación NUNCA hay que saludar de nuevo: eso es lo que
+        # delata al bot y espanta al prospecto.
+        reply = "Permíteme un momento, por favor, y te confirmo eso enseguida."
+        resumen = "La IA no pudo responder por una falla técnica; requiere seguimiento del asesor."
+    else:
+        reply = "¡Hola! Gracias por escribir. ¿Me cuentas qué estás buscando y para cuándo, y con gusto te ayudo?"
+        resumen = "Prospecto nuevo, sin calificar aún."
+    return {"reply": reply, "temperatura": "Tibio", "score": 50, "presupuesto": None,
+            "forma_pago": "por definir", "busca": None, "resumen": resumen,
+            "nota": None, "accion": None, "_falla_tecnica": True}
 
 
 # =============================================================================
@@ -768,8 +951,13 @@ async def _buscar_inmuebles(user_id: str, filtros: dict, limit: int = 3) -> tupl
     """
     sel = ("id,titulo,tipo,operacion,precio,moneda,colonia,ciudad,calle,"
            "num_exterior,recamaras,banos,m2_construccion,fotos,estatus,descripcion")
+    # OJO con el estatus: antes esto era `estatus=not.in.(...)` a secas, y en
+    # Postgres una comparación contra NULL nunca da verdadero. Es decir, TODA
+    # propiedad con el estatus vacío quedaba invisible para la IA — y muchas
+    # propiedades importadas o capturadas rápido no traen estatus. El agente
+    # tenía inventario y la IA le decía al prospecto que no había nada.
     base = {"user_id": f"eq.{user_id}", "select": sel,
-            "estatus": "not.in.(vendida,rentada,suspendida)",
+            "or": "(estatus.is.null,estatus.not.in.(vendida,rentada,suspendida))",
             "order": "updated_at.desc", "limit": str(limit)}
     op = (filtros.get("operacion") or "").strip().lower()
     if op in ("venta", "renta"):
@@ -1112,8 +1300,169 @@ async def _wa_send_text_detallado(numero: dict, wa_id: str, texto: str) -> tuple
 
 
 async def _wa_send_text(numero: dict, wa_id: str, texto: str) -> str | None:
-    wamid, _ = await _wa_send_text_detallado(numero, wa_id, texto)
-    return wamid
+    """Manda texto. Si se pasa del tope de WhatsApp lo parte en varios mensajes:
+    antes, un texto de más de 4096 caracteres hacía que Meta rechazara el envío
+    COMPLETO y el prospecto no recibiera absolutamente nada."""
+    texto = (texto or "").strip()
+    if not texto:
+        return None
+    if len(texto) <= WA_MAX_TEXTO:
+        wamid, _ = await _wa_send_text_detallado(numero, wa_id, texto)
+        return wamid
+    partes, actual = [], ""
+    for parrafo in texto.split("\n"):
+        if len(actual) + len(parrafo) + 1 > WA_MAX_TEXTO:
+            if actual:
+                partes.append(actual)
+            actual = parrafo[:WA_MAX_TEXTO]
+        else:
+            actual = (actual + "\n" + parrafo) if actual else parrafo
+    if actual:
+        partes.append(actual)
+    ultimo = None
+    for parte in partes:
+        ultimo, _ = await _wa_send_text_detallado(numero, wa_id, parte)
+    return ultimo
+
+
+async def _wa_marcar_leido(numero: dict, wamid: str | None, escribiendo: bool = True) -> None:
+    """Pone la palomita azul y muestra 'escribiendo…' del lado del prospecto.
+
+    Sin esto la conversación se siente falsa por los dos lados: el prospecto ve
+    que sus mensajes nunca se marcan como leídos y luego, de golpe, aparece una
+    respuesta larguísima escrita en cero segundos. Con esto se lee igual que un
+    humano contestando desde su celular. Nunca debe tumbar nada si falla."""
+    if not wamid or not numero.get("access_token"):
+        return
+    cuerpo = {"messaging_product": "whatsapp", "status": "read", "message_id": wamid}
+    if escribiendo:
+        cuerpo["typing_indicator"] = {"type": "text"}
+    try:
+        async with httpx.AsyncClient(timeout=10) as c:
+            await c.post(f"{GRAPH_API}/{numero['phone_number_id']}/messages",
+                         headers={"Authorization": f"Bearer {numero['access_token']}"},
+                         json=cuerpo)
+    except Exception as e:
+        log.debug("No se pudo marcar como leído: %s", e)
+
+
+async def _descargar_media(numero: dict, media_id: str) -> tuple[bytes | None, str]:
+    """Baja un archivo que mandó el prospecto (nota de voz, foto, documento).
+    Meta lo entrega en dos pasos: primero la URL temporal, luego el binario —
+    y ambos requieren el token del número. Devuelve (bytes, mime)."""
+    if not media_id or not numero.get("access_token"):
+        return None, ""
+    headers = {"Authorization": f"Bearer {numero['access_token']}"}
+    try:
+        async with httpx.AsyncClient(timeout=30, follow_redirects=True) as c:
+            r = await c.get(f"{GRAPH_API}/{media_id}", headers=headers)
+            if r.status_code >= 400:
+                log.warning("No se pudo obtener la media %s: %s", media_id, r.text[:200])
+                return None, ""
+            info = r.json()
+            url, mime = info.get("url"), info.get("mime_type") or ""
+            if not url:
+                return None, ""
+            rb = await c.get(url, headers=headers)
+            if rb.status_code >= 400 or not rb.content:
+                return None, ""
+            return rb.content, mime
+    except Exception as e:
+        log.warning("Error bajando media %s: %s", media_id, e)
+        return None, ""
+
+
+async def _guardar_archivo(user_id: str, conversacion_id: str, contenido: bytes,
+                           mime: str, sufijo: str) -> tuple[str | None, str | None]:
+    """Sube a Supabase el archivo que mandó el prospecto y devuelve
+    (url_publica, ruta_interna).
+
+    Hace falta guardarlo porque la liga que da Meta caduca en minutos y además
+    exige el token del número: si solo se guardara esa liga, mañana estaría
+    muerta y el agente no podría volver a ver la foto que le mandaron.
+    La ruta interna se conserva aparte para poder BORRAR el archivo después."""
+    if not contenido or not SUPABASE_URL:
+        return None, None
+    ext = (mime.split("/")[-1] or "bin").split(";")[0][:8] or "bin"
+    ruta = f"{user_id}/{conversacion_id}/{int(datetime.now(timezone.utc).timestamp()*1000)}-{sufijo}.{ext}"
+    try:
+        h = {k: v for k, v in _sb_headers().items() if k != "Content-Type"}
+        h["Content-Type"] = mime or "application/octet-stream"
+        h["x-upsert"] = "true"
+        async with httpx.AsyncClient(timeout=40) as c:
+            r = await c.post(f"{SUPABASE_URL}/storage/v1/object/{WA_MEDIA_BUCKET}/{ruta}",
+                             headers=h, content=contenido)
+        if r.status_code >= 300:
+            log.warning("No se pudo guardar el archivo de WhatsApp: %s %s", r.status_code, r.text[:200])
+            return None, None
+        return f"{SUPABASE_URL}/storage/v1/object/public/{WA_MEDIA_BUCKET}/{ruta}", ruta
+    except Exception as e:
+        log.warning("Error guardando archivo de WhatsApp: %s", e)
+        return None, None
+
+
+async def _transcribir_audio(contenido: bytes, mime: str) -> str:
+    """Convierte una nota de voz en texto con Whisper (el mismo Groq que ya usa
+    Broquer). Esto NO es un lujo: en México el prospecto manda audios todo el
+    tiempo, y hasta ahora la IA solo veía la palabra '[audio]' y contestaba a
+    ciegas —o peor, contestaba cualquier cosa— sin haber oído nada."""
+    if not GROQ_API_KEY or not contenido:
+        return ""
+    ext = "ogg"
+    if "mp4" in mime or "m4a" in mime:
+        ext = "m4a"
+    elif "mpeg" in mime or "mp3" in mime:
+        ext = "mp3"
+    elif "wav" in mime:
+        ext = "wav"
+    try:
+        async with httpx.AsyncClient(timeout=60) as c:
+            r = await c.post(f"{GROQ_BASE}/audio/transcriptions",
+                             headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
+                             data={"model": "whisper-large-v3", "language": "es",
+                                   "response_format": "json"},
+                             files={"file": (f"nota.{ext}", contenido, mime or "audio/ogg")})
+        if r.status_code >= 400:
+            log.warning("Whisper falló: %s %s", r.status_code, r.text[:200])
+            return ""
+        return (r.json().get("text") or "").strip()
+    except Exception as e:
+        log.warning("Error transcribiendo audio: %s", e)
+        return ""
+
+
+async def _describir_imagen(contenido: bytes, mime: str) -> str:
+    """Le pide a Claude que lea la foto que mandó el prospecto (una captura de
+    un anuncio, la fachada de la casa que quiere vender, un comprobante…).
+    Antes la IA recibía literalmente '[image]' y le respondía de adivinanza."""
+    if not ANTHROPIC_API_KEY or not contenido or len(contenido) > 4_500_000:
+        return ""
+    import base64
+    if mime not in ("image/jpeg", "image/png", "image/gif", "image/webp"):
+        mime = "image/jpeg"
+    try:
+        async with httpx.AsyncClient(timeout=40) as c:
+            r = await c.post(f"{ANTHROPIC_BASE}/messages",
+                             headers={"x-api-key": ANTHROPIC_API_KEY,
+                                      "anthropic-version": "2023-06-01",
+                                      "Content-Type": "application/json"},
+                             json={"model": WA2_MODEL, "max_tokens": 300, "messages": [{
+                                 "role": "user", "content": [
+                                     {"type": "image", "source": {"type": "base64",
+                                      "media_type": mime,
+                                      "data": base64.b64encode(contenido).decode()}},
+                                     {"type": "text", "text":
+                                      "Describe en dos o tres frases, en español, qué se ve en esta "
+                                      "imagen que un prospecto le mandó por WhatsApp a un asesor "
+                                      "inmobiliario. Si hay texto legible (precios, direcciones, datos), "
+                                      "transcríbelo. Solo la descripción, sin preámbulo."}]}]})
+        if r.status_code >= 400:
+            return ""
+        data = r.json()
+        return "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text").strip()
+    except Exception as e:
+        log.warning("No se pudo describir la imagen: %s", e)
+        return ""
 
 
 async def _wa_send_image(numero: dict, wa_id: str, url: str, caption: str = "") -> str | None:
@@ -1312,6 +1661,15 @@ def wa2_verify_webhook(request: Request):
 async def wa2_receive_webhook(request: Request, background: BackgroundTasks):
     raw = await request.body()
 
+    if not WA2_APP_SECRET:
+        # Sin el secreto de la app, este webhook le cree a CUALQUIERA que le
+        # escriba desde internet: se podrían inyectar mensajes falsos, hacer
+        # que la IA conteste solita y quemar la cuenta de Anthropic. Configura
+        # WA_APP_SECRET en Railway (Meta > Configuración de la app > Clave
+        # secreta) y esto se apaga solo.
+        log.error("WA_APP_SECRET NO configurado: el webhook de WhatsApp está aceptando "
+                  "mensajes SIN verificar que vengan de Meta.")
+
     if WA2_APP_SECRET:
         sig = request.headers.get("X-Hub-Signature-256", "")
         expected = "sha256=" + hmac.new(WA2_APP_SECRET.encode(), raw, hashlib.sha256).hexdigest()
@@ -1440,10 +1798,11 @@ async def _get_o_crea_conversacion(user_id: str, numero_id: str, contacto_id: st
 
 
 async def _guardar_mensaje(user_id: str, contacto_id: str, conversacion_id: str, wamid: str | None,
-                          direction: str, sender: str, body: str, media_url: str | None = None) -> None:
+                          direction: str, sender: str, body: str, media_url: str | None = None,
+                          media_path: str | None = None) -> None:
     fila = {"user_id": user_id, "contacto_id": contacto_id, "conversacion_id": conversacion_id,
             "direction": direction, "sender": sender, "body": body, "media_url": media_url,
-            "created_at": _now()}
+            "media_path": media_path, "created_at": _now()}
     if wamid:
         fila["wa_message_id"] = wamid
     guardado = await sb_post("wa2_mensajes", fila)
@@ -1513,43 +1872,153 @@ async def _persistir_entrantes(payload: dict):
                 except Exception:
                     pass
 
-                texto = ""
-                if msg.get("type") == "text":
-                    texto = (msg.get("text") or {}).get("body", "")
-                elif msg.get("type") in ("image", "document", "audio", "video"):
-                    texto = f"[{msg['type']}]"
-                else:
-                    texto = "[mensaje no soportado]"
-
+                # La revisión de duplicados va ANTES de tocar la media: Meta
+                # reenvía el mismo webhook cuando no le contestamos rápido, y
+                # transcribir dos veces la misma nota de voz se paga dos veces.
                 existe = await sb_get("wa2_mensajes", {"wa_message_id": f"eq.{msg.get('id')}",
                                                        "select": "id", "limit": "1"})
                 if existe:
                     continue
 
+                tipo_msg = msg.get("type")
+                texto = ""
+                media_bytes: bytes | None = None
+                media_mime = ""
+                media_sufijo = "archivo"
+                if tipo_msg == "text":
+                    texto = (msg.get("text") or {}).get("body", "")
+                elif tipo_msg in ("audio", "voice"):
+                    # Nota de voz: se oye de verdad. Antes se guardaba "[audio]"
+                    # y la IA le contestaba al prospecto sin tener idea de lo
+                    # que le dijo — la peor tontería posible frente a un cliente.
+                    media_id = (msg.get(tipo_msg) or {}).get("id")
+                    media_bytes, media_mime = await _descargar_media(numero, media_id)
+                    media_sufijo = "nota-de-voz"
+                    dicho = await _transcribir_audio(media_bytes, media_mime) if media_bytes else ""
+                    texto = f"[nota de voz] {dicho}" if dicho else \
+                        "[nota de voz que no se pudo transcribir]"
+                elif tipo_msg == "image":
+                    media_id = (msg.get("image") or {}).get("id")
+                    pie = (msg.get("image") or {}).get("caption") or ""
+                    media_bytes, media_mime = await _descargar_media(numero, media_id)
+                    media_sufijo = "foto"
+                    visto = await _describir_imagen(media_bytes, media_mime) if media_bytes else ""
+                    texto = "[foto] " + " ".join(x for x in [pie, visto] if x).strip()
+                    if not visto and not pie:
+                        texto = "[foto que no se pudo leer]"
+                elif tipo_msg == "location":
+                    loc = msg.get("location") or {}
+                    partes_loc = [loc.get("name"), loc.get("address"),
+                                  f"{loc.get('latitude')},{loc.get('longitude')}"]
+                    texto = "[ubicación] " + " · ".join(str(x) for x in partes_loc if x)
+                elif tipo_msg == "document":
+                    doc = msg.get("document") or {}
+                    media_bytes, media_mime = await _descargar_media(numero, doc.get("id"))
+                    media_sufijo = re.sub(r"[^A-Za-z0-9._-]", "_", (doc.get("filename") or "documento"))[:60]
+                    texto = f"[documento] {doc.get('filename') or ''} {doc.get('caption') or ''}".strip()
+                elif tipo_msg == "video":
+                    vid = msg.get("video") or {}
+                    media_bytes, media_mime = await _descargar_media(numero, vid.get("id"))
+                    media_sufijo = "video"
+                    texto = f"[video] {vid.get('caption') or ''}".strip()
+                elif tipo_msg == "contacts":
+                    texto = "[el prospecto compartió una tarjeta de contacto]"
+                elif tipo_msg in ("button", "interactive"):
+                    inter = msg.get("interactive") or {}
+                    texto = ((msg.get("button") or {}).get("text")
+                             or (inter.get("button_reply") or {}).get("title")
+                             or (inter.get("list_reply") or {}).get("title")
+                             or "[respuesta a un botón]")
+                else:
+                    texto = f"[mensaje de tipo {tipo_msg or 'desconocido'}]"
+
                 contacto = await _get_o_crea_contacto(numero["user_id"], numero["id"], wa_id,
                                                       contactos_meta.get(wa_id))
                 conv = await _get_o_crea_conversacion(numero["user_id"], numero["id"], contacto["id"])
+
+                media_url, media_path = (None, None)
+                if media_bytes:
+                    media_url, media_path = await _guardar_archivo(
+                        numero["user_id"], conv["id"], media_bytes, media_mime, media_sufijo)
+
                 await _guardar_mensaje(numero["user_id"], contacto["id"], conv["id"], msg.get("id"),
-                                      "in", "lead", texto)
+                                      "in", "lead", texto, media_url, media_path)
                 await sb_patch("wa2_conversaciones", {"id": f"eq.{conv['id']}"},
                               {"unread_count": (conv.get("unread_count") or 0) + 1})
 
                 trabajo.append({"numero": numero, "contacto_id": contacto["id"],
-                               "conversacion_id": conv["id"], "wa_id": wa_id, "texto": texto})
+                               "conversacion_id": conv["id"], "wa_id": wa_id, "texto": texto,
+                               "wa_message_id": msg.get("id")})
+
+            # ── Acuses de Meta (enviado / entregado / leído / FALLIDO) ──────
+            # Esto se ignoraba por completo. Lo grave no es perderse la
+            # palomita: es que cuando Meta RECHAZA un mensaje (número dado de
+            # baja, plantilla no aprobada, ventana cerrada, límite de la
+            # cuenta) el agente creía que su mensaje salió y nunca salió.
+            for st in val.get("statuses", []):
+                estado = st.get("status")
+                if estado != "failed":
+                    continue
+                errs = st.get("errors") or [{}]
+                err0 = errs[0] if errs else {}
+                log.error("Mensaje NO entregado (%s): %s %s",
+                          numero.get("phone_number_id"), err0.get("code"), err0.get("title"))
+                await _revisar_token(numero, {"code": err0.get("code"),
+                                              "message": err0.get("title") or ""})
+                try:
+                    await sb_patch("wa2_mensajes", {"wa_message_id": f"eq.{st.get('id')}"},
+                                   {"entrega_error": (err0.get("title") or "No se pudo entregar")[:200]})
+                except Exception:
+                    pass
+                await enviar_push(numero.get("user_id"), "Un mensaje no se pudo entregar",
+                                  err0.get("title") or "WhatsApp rechazó el envío. Revisa la conversación.",
+                                  datos={"tipo": "whatsapp"})
     return True, trabajo
 
 
 async def _procesar_en_segundo_plano(item: dict):
     numero = item["numero"]
     user_id = numero["user_id"]
+
+    # Palomita azul + "escribiendo…" de inmediato, antes de pensar la respuesta.
+    await _wa_marcar_leido(numero, item.get("wa_message_id"))
+
+    # El aviso al celular del agente va ANTES de agrupar: aunque esta tarea se
+    # retire por ráfaga, el agente tiene que enterarse de TODOS los mensajes.
+    contacto_push = await sb_get("wa2_contactos", {"id": f"eq.{item['contacto_id']}",
+                                                   "select": "nombre", "limit": "1"})
+    await enviar_push(user_id,
+                      (contacto_push[0].get("nombre") if contacto_push else None) or "Nuevo mensaje de WhatsApp",
+                      item["texto"], datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
+
+    # ── AGRUPAR RÁFAGAS ──────────────────────────────────────────────────
+    # La gente escribe en WhatsApp a pedacitos. Se espera unos segundos y, si
+    # mientras tanto entró otro mensaje del prospecto, ESTA tarea se retira:
+    # la que atienda el último mensaje contestará una sola vez y ya con todo
+    # el contexto. Sin esto salían tres respuestas encimadas, se contradecían
+    # entre sí y se pagaban tres llamadas a la IA por una sola pregunta.
+    if WA2_DEBOUNCE:
+        await asyncio.sleep(WA2_DEBOUNCE)
+        ultimos = await sb_get("wa2_mensajes", {
+            "conversacion_id": f"eq.{item['conversacion_id']}", "direction": "eq.in",
+            "select": "wa_message_id", "order": "created_at.desc", "limit": "1"})
+        if ultimos and item.get("wa_message_id") and \
+           ultimos[0].get("wa_message_id") != item["wa_message_id"]:
+            log.info("Ráfaga: se descarta la respuesta al mensaje %s, ya llegó uno más nuevo",
+                     item["wa_message_id"])
+            return
+
+    async with _lock_conv(item["conversacion_id"]):
+        await _responder_conversacion(item, numero, user_id)
+
+
+async def _responder_conversacion(item: dict, numero: dict, user_id: str):
     conv_rows = await sb_get("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}", "select": "*", "limit": "1"})
     conv = conv_rows[0] if conv_rows else {}
     contacto_rows = await sb_get("wa2_contactos", {"id": f"eq.{item['contacto_id']}", "select": "*", "limit": "1"})
     contacto = contacto_rows[0] if contacto_rows else {}
 
-    # Notifica siempre que llega un mensaje nuevo
-    await enviar_push(user_id, contacto.get("nombre") or "Nuevo mensaje (WhatsApp 2.0)",
-                      item["texto"], datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
+    # (El aviso al celular ya se mandó en _procesar_en_segundo_plano.)
 
     if not numero.get("ia_enabled", True) or not conv.get("ai_enabled", True):
         return  # el humano tiene el control
@@ -1611,6 +2080,17 @@ async def _procesar_en_segundo_plano(item: dict):
     wamid = await _wa_send_text(numero, item["wa_id"], reply)
     await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"], wamid, "out", "ia", reply)
 
+    if resultado.get("_falla_tecnica"):
+        # La IA no pudo pensar la respuesta (la API venía caída o saturada).
+        # Se le pasa la conversación al humano y se le avisa: un prospecto
+        # esperando a un bot descompuesto es un prospecto perdido.
+        await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"}, {"ai_enabled": False})
+        await enviar_push(user_id, "La IA no pudo contestar",
+                          f"{contacto.get('nombre') or item['wa_id']} está esperando respuesta. "
+                          "Entra a la conversación tú.",
+                          datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
+        return
+
     # Actualiza la ficha del prospecto con lo que la IA acaba de calificar
     notas_actuales = contacto.get("notas") or []
     if resultado.get("nota"):
@@ -1644,11 +2124,19 @@ async def _procesar_en_segundo_plano(item: dict):
             props, zona_sin_resultados = await _buscar_inmuebles(user_id, filtros_ia)
             if props:
                 enviados = []
-                for p in props[:3]:
+                # Las fichas se arman EN PARALELO. En serie eran hasta 45
+                # segundos por cada una: el prospecto leía "ahorita te las
+                # comparto" y las recibía dos minutos y medio después, cuando
+                # ya se había ido a otro anuncio.
+                fichas = await asyncio.gather(
+                    *[_generar_ficha_pdf(_propiedad_para_ficha(p)) for p in props[:3]],
+                    return_exceptions=True)
+                for idx, p in enumerate(props[:3]):
                     # Antes se mandaba foto+texto Y la ficha técnica (redundante,
                     # la ficha ya trae fotos y datos). Ahora solo la ficha.
                     resumen = _texto_inmueble(p).replace("\n", " · ")
-                    url_pdf, filename = await _generar_ficha_pdf(_propiedad_para_ficha(p))
+                    ficha = fichas[idx] if idx < len(fichas) else None
+                    url_pdf, filename = ficha if isinstance(ficha, tuple) else (None, None)
                     if url_pdf:
                         wamid = await _wa_send_document_link(
                             numero, item["wa_id"], url_pdf, filename or "ficha.pdf", resumen)
@@ -1823,7 +2311,15 @@ async def wa2_enviar_manual(req: EnviarManualReq, request: Request):
         raise HTTPException(status_code=404, detail="Número no encontrado")
     numero = numero_rows[0]
 
-    wamid, error = await _wa_send_text_detallado(numero, contacto.get("wa_id"), req.texto)
+    texto = (req.texto or "").strip()
+    if not texto:
+        raise HTTPException(status_code=400, detail="El mensaje viene vacío.")
+    if len(texto) > WA_MAX_TEXTO:
+        raise HTTPException(status_code=400,
+            detail=f"El mensaje es demasiado largo ({len(texto)} caracteres). "
+                   f"WhatsApp solo permite {WA_MAX_TEXTO}. Mándalo en dos partes.")
+
+    wamid, error = await _wa_send_text_detallado(numero, contacto.get("wa_id"), texto)
     if error:
         if error.get("code") == 131047:
             raise HTTPException(status_code=409, detail={
@@ -1832,8 +2328,17 @@ async def wa2_enviar_manual(req: EnviarManualReq, request: Request):
                            "WhatsApp ya no deja mandar texto libre — usa una plantilla para reabrir la conversación.",
             })
         raise HTTPException(status_code=502, detail=error.get("message") or "No se pudo enviar el mensaje.")
-    await _guardar_mensaje(conv["user_id"], conv["contacto_id"], conv["id"], wamid, "out", "agente", req.texto)
-    return {"ok": True}
+    await _guardar_mensaje(conv["user_id"], conv["contacto_id"], conv["id"], wamid, "out", "agente", texto)
+
+    # En cuanto el asesor escribe con sus propias manos, la IA se hace a un
+    # lado en ESA conversación. Si no, pasa lo más ridículo que puede pasar:
+    # el prospecto contesta y le responden dos "personas" distintas, con
+    # criterios distintos, en el mismo chat. Se reactiva con el switch de IA.
+    ia_pausada = False
+    if conv.get("ai_enabled", True):
+        await sb_patch("wa2_conversaciones", {"id": f"eq.{conv['id']}"}, {"ai_enabled": False})
+        ia_pausada = True
+    return {"ok": True, "ia_pausada": ia_pausada}
 
 
 class ConvPatchReq(BaseModel):
@@ -1854,6 +2359,77 @@ async def wa2_conversacion_patch(conversacion_id: str, req: ConvPatchReq, reques
     if req.etapa is not None:
         await sb_patch("wa2_contactos", {"id": f"eq.{conv_rows[0]['contacto_id']}"}, {"etapa": req.etapa})
     return {"ok": True}
+
+
+@router.delete("/mensajes/{mensaje_id}")
+async def wa2_borrar_mensaje(mensaje_id: str, request: Request):
+    """Borra UN mensaje de la bandeja (y su archivo, si lo tenía).
+
+    Esto no existía. Sin esto, cuando un prospecto ejerce su derecho de
+    cancelación —o cuando manda sin que nadie se lo pida una foto de su INE o
+    un audio con datos delicados— el agente no tenía absolutamente ninguna
+    forma de sacar eso de Broquer. El plazo del artículo 31 de la LFPDPPP le
+    corría encima sin poder cumplir.
+
+    Nota: solo borra la copia de Broquer. El mensaje sigue existiendo en el
+    WhatsApp de las dos personas; eso no lo controla nadie más que ellas."""
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    rows = await sb_get("wa2_mensajes", {"id": f"eq.{mensaje_id}", "user_id": _in_filter(ids),
+                                         "select": "id,media_path", "limit": "1"})
+    if not rows:
+        raise HTTPException(status_code=404, detail="Mensaje no encontrado")
+    await _borrar_archivos([rows[0].get("media_path")])
+    if not await sb_delete("wa2_mensajes", {"id": f"eq.{mensaje_id}", "user_id": _in_filter(ids)}):
+        raise HTTPException(status_code=500, detail="No se pudo borrar el mensaje. Intenta de nuevo.")
+    return {"ok": True}
+
+
+@router.delete("/conversaciones/{conversacion_id}")
+async def wa2_borrar_conversacion(conversacion_id: str, request: Request):
+    """Borra una conversación completa: sus mensajes, sus archivos y la ficha
+    del prospecto en WhatsApp. El Contacto del CRM NO se toca — ese es un
+    registro aparte que el agente decide si conserva o no desde Contactos."""
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    conv = await sb_get("wa2_conversaciones", {"id": f"eq.{conversacion_id}", "user_id": _in_filter(ids),
+                                               "select": "id,contacto_id", "limit": "1"})
+    if not conv:
+        raise HTTPException(status_code=404, detail="Conversación no encontrada")
+
+    archivos, pagina = [], 0
+    while pagina < 40:
+        lote = await sb_get("wa2_mensajes", {"conversacion_id": f"eq.{conversacion_id}",
+                                             "select": "media_path", "limit": "1000",
+                                             "offset": str(pagina * 1000)})
+        archivos.extend(m.get("media_path") for m in lote)
+        if len(lote) < 1000:
+            break
+        pagina += 1
+    await _borrar_archivos(archivos)
+
+    await sb_delete("wa2_mensajes", {"conversacion_id": f"eq.{conversacion_id}"})
+    await sb_delete("wa2_conversaciones", {"id": f"eq.{conversacion_id}"})
+    if conv[0].get("contacto_id"):
+        await sb_delete("wa2_contactos", {"id": f"eq.{conv[0]['contacto_id']}"})
+    log.info("Conversación %s eliminada por el usuario %s", conversacion_id, user_id)
+    return {"ok": True}
+
+
+async def _borrar_archivos(rutas: list) -> None:
+    """Borra del almacenamiento los archivos de los mensajes que se eliminan.
+    Si esto no se hiciera, la foto seguiría viva en una liga pública aunque el
+    mensaje ya no apareciera en ningún lado — que es justo lo contrario de lo
+    que promete una supresión."""
+    rutas = [r for r in (rutas or []) if r]
+    if not rutas:
+        return
+    try:
+        async with httpx.AsyncClient(timeout=20) as c:
+            await c.request("DELETE", f"{SUPABASE_URL}/storage/v1/object/{WA_MEDIA_BUCKET}",
+                            headers=_sb_headers(), json={"prefixes": rutas})
+    except Exception as e:
+        log.warning("No se pudieron borrar %s archivo(s) del almacenamiento: %s", len(rutas), e)
 
 
 class NotaReq(BaseModel):

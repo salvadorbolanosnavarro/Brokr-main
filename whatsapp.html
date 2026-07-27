@@ -126,6 +126,38 @@
   .w2-row--in .w2-bubble__meta{ color:var(--mute); }
   .w2-row--out .w2-bubble__meta{ color:rgba(255,255,255,.78); }
   .w2-bubble--pend{ opacity:.65; }
+  .w2-media{ display:block; margin-bottom:6px; }
+  .w2-media img{ display:block; width:100%; max-width:260px; border-radius:var(--r-sm);
+                 cursor:zoom-in; background:var(--paper-2); }
+  .w2-media audio{ display:block; width:min(260px, 100%); margin-bottom:2px; }
+  .w2-media__doc{ display:inline-flex; align-items:center; gap:var(--sp-2);
+                  padding:var(--sp-2) var(--sp-3); border-radius:var(--r-sm);
+                  background:var(--paper-2); color:var(--ink); text-decoration:none;
+                  font-size:var(--fs-caption); max-width:260px; }
+  .w2-row--out .w2-media__doc{ background:rgba(255,255,255,.16); color:#fff; }
+  .w2-media__baja{ font-size:var(--fs-caption); text-decoration:underline; opacity:.85; }
+  .w2-row--in .w2-media__baja{ color:var(--ink-3); }
+  .w2-row--out .w2-media__baja{ color:rgba(255,255,255,.85); }
+  .w2-bubble__x{ background:none; border:0; cursor:pointer; padding:0; font:inherit;
+                 font-size:var(--fs-caption); opacity:.7; }
+  .w2-row--in .w2-bubble__x{ color:var(--ink-3); }
+  .w2-row--out .w2-bubble__x{ color:rgba(255,255,255,.85); }
+  .w2-lightbox{ position:fixed; inset:0; background:rgba(0,20,59,.9); z-index:90;
+                display:flex; align-items:center; justify-content:center; padding:var(--sp-5);
+                cursor:zoom-out; }
+  .w2-lightbox img{ max-width:100%; max-height:100%; border-radius:var(--r-sm); }
+  .w2-prueba{ display:flex; flex-direction:column; gap:var(--sp-2); min-height:120px;
+              max-height:380px; overflow-y:auto; padding:var(--sp-3);
+              background:var(--paper-2); border-radius:var(--r-md); }
+  .w2-prueba__vacio{ color:var(--mute); font-size:var(--fs-caption); margin:auto; text-align:center; }
+  .w2-prueba__msg{ max-width:min(80%, 480px); padding:8px 12px; border-radius:var(--r-lg);
+                   font-size:var(--fs-body); line-height:var(--lh); white-space:pre-wrap; }
+  .w2-prueba__msg--yo{ align-self:flex-end; background:var(--sky-blue); color:#fff; }
+  .w2-prueba__msg--ia{ align-self:flex-start; background:var(--paper);
+                       border:1px solid var(--line); color:var(--ink); }
+  .w2-prueba__ficha{ align-self:flex-start; max-width:min(90%, 520px); font-size:var(--fs-caption);
+                     color:var(--ink-3); background:var(--paper); border:1px dashed var(--line);
+                     border-radius:var(--r-sm); padding:var(--sp-2) var(--sp-3); }
 
   .w2-nuevos{ position:absolute; left:50%; transform:translateX(-50%); bottom:96px; background:var(--sky-blue);
               color:#fff; border:0; border-radius:var(--r-pill); padding:8px 16px; font-size:var(--fs-xs);
@@ -296,6 +328,12 @@
             <label class="bk-label" for="w2-t-especialidad">Especialidad / zona</label>
             <input class="bk-input" id="w2-t-especialidad" placeholder="Ej. casas en Morelia centro"/>
           </div>
+          <div class="bk-field" style="grid-column:1/-1;">
+            <label class="bk-label">Información de tu negocio</label>
+            <textarea class="bk-textarea" id="w2-t-conocimiento" rows="8"
+              placeholder="Todo lo que tu asistente no puede adivinar de tus inmuebles. Escríbelo con tus palabras, como se lo explicarías a alguien nuevo en tu oficina.&#10;&#10;Ej.&#10;Aceptamos Infonavit, Fovissste y crédito bancario.&#10;La comisión es del 5% más IVA y la paga quien vende.&#10;Para apartar se piden 20 mil pesos, reembolsables 15 días.&#10;La oficina está en Av. Camelinas 1234, atendemos de 9 a 7."></textarea>
+            <div class="bk-hint">Lo que escribas aquí es la verdad para tu asistente. Si le preguntan algo que no esté, no lo va a inventar: dirá que lo confirma contigo.</div>
+          </div>
         </div>
         <div>
           <div class="bk-field">
@@ -363,6 +401,23 @@
         <button type="submit" class="bk-btn bk-btn--forest">Guardar entrenamiento</button>
       </div>
     </form>
+  </div>
+
+  <div class="bk-card bk-card--pad" style="margin-top:var(--sp-5);">
+    <div class="bk-card__head">
+      <div>
+        <h2 class="bk-card__title">Probar tu asistente</h2>
+        <div class="bk-hint">Escríbele como si fueras un prospecto. Usa tu entrenamiento y tu catálogo reales, pero no le manda WhatsApp a nadie ni guarda nada.</div>
+      </div>
+      <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2ReiniciarPrueba()">Empezar de nuevo</button>
+    </div>
+    <div class="w2-prueba" id="w2-prueba-hilo"></div>
+    <div class="bk-cluster" style="margin-top:var(--sp-3);">
+      <input class="bk-input" id="w2-prueba-texto" style="flex:1;"
+             placeholder="Ej. Hola, vi una casa en Altozano, ¿me pasas precio?"
+             onkeydown="if(event.key==='Enter'){event.preventDefault();w2EnviarPrueba();}"/>
+      <button type="button" class="bk-btn bk-btn--forest" onclick="w2EnviarPrueba()">Enviar</button>
+    </div>
   </div>
 
 </div>
@@ -805,6 +860,9 @@ function w2RenderThread(){
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3.5v3M16 3.5v3"/></svg>
         </button>
         ${verContacto}
+        <button class="w2-iconbtn" title="Eliminar esta conversación de Broquer" onclick="w2BorrarConversacion()">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9.5 7V4.8h5V7M6.5 7l.9 12.2h9.2L17.5 7"/></svg>
+        </button>
       </div>
     </div>
     <div class="w2-msgs" id="w2-thread-msgs"></div>
@@ -837,6 +895,61 @@ function w2IrAlFinal(ocultarAviso){
   if(ocultarAviso){ const p = document.getElementById('w2-nuevos'); if(p) p.hidden = true; }
 }
 
+function w2Adjunto(m){
+  const url = m.media_url;
+  if(!url) return '';
+  const u = w2Esc(url);
+  const cuerpo = (m.body || '').toLowerCase();
+  if(/^\[foto/.test(cuerpo) || /\.(jpe?g|png|gif|webp)(\?|$)/i.test(url)){
+    return `<span class="w2-media"><img src="${u}" alt="Foto que envió el prospecto" loading="lazy" onclick="w2Ampliar('${u}')"/>
+            <a class="w2-media__baja" href="${u}" download target="_blank" rel="noopener">Descargar</a></span>`;
+  }
+  if(/^\[nota de voz/.test(cuerpo) || /\.(ogg|mp3|m4a|wav|opus)(\?|$)/i.test(url)){
+    return `<span class="w2-media"><audio controls preload="none" src="${u}"></audio>
+            <a class="w2-media__baja" href="${u}" download target="_blank" rel="noopener">Descargar audio</a></span>`;
+  }
+  if(/^\[video/.test(cuerpo)){
+    return `<span class="w2-media"><a class="w2-media__doc" href="${u}" target="_blank" rel="noopener">Ver video</a></span>`;
+  }
+  return `<span class="w2-media"><a class="w2-media__doc" href="${u}" download target="_blank" rel="noopener">Descargar archivo</a></span>`;
+}
+
+function w2Ampliar(url){
+  const d = document.createElement('div');
+  d.className = 'w2-lightbox';
+  d.innerHTML = `<img src="${url}" alt="Foto ampliada"/>`;
+  d.onclick = () => d.remove();
+  document.body.appendChild(d);
+}
+
+async function w2BorrarMensaje(id){
+  if(!confirm('¿Eliminar este mensaje de Broquer? También se borra el archivo adjunto. '
+            + 'No se puede deshacer y no afecta el WhatsApp del prospecto.')) return;
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/mensajes/' + encodeURIComponent(id),
+                          { method:'DELETE', headers: w2Auth() });
+    if(!r.ok) throw new Error();
+    W2_MSGS = W2_MSGS.filter(m => m.id !== id);
+    w2PintarMensajes();
+    toast('Mensaje eliminado');
+  }catch(e){ toast('No se pudo eliminar el mensaje'); }
+}
+
+async function w2BorrarConversacion(){
+  if(!W2_CONV_ACTUAL) return;
+  if(!confirm('¿Eliminar toda esta conversación de Broquer? Se borran los mensajes y los archivos. '
+            + 'El contacto en tu CRM no se toca. No se puede deshacer.')) return;
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/conversaciones/' + encodeURIComponent(W2_CONV_ACTUAL.id),
+                          { method:'DELETE', headers: w2Auth() });
+    if(!r.ok) throw new Error();
+    W2_CONV_ACTUAL = null;
+    toast('Conversación eliminada');
+    await w2CargarConversaciones();
+    w2VolverALista();
+  }catch(e){ toast('No se pudo eliminar la conversación'); }
+}
+
 function w2PintarMensajes(){
   const box = document.getElementById('w2-thread-msgs');
   if(!box) return;
@@ -859,8 +972,13 @@ function w2PintarMensajes(){
     if(quien !== remitentePrevio) grupo = true;
     remitentePrevio = quien;
     const firma = out ? (m.sender === 'ia' ? 'IA' : 'Tú') : '';
+    const borrar = m.id && !m._pendiente
+      ? `<button class="w2-bubble__x" title="Eliminar este mensaje de Broquer" onclick="w2BorrarMensaje('${w2Esc(m.id)}')">Eliminar</button>`
+      : '';
+    const fallo = m.entrega_error
+      ? `<span title="${w2Esc(m.entrega_error)}">· no se entregó</span>` : '';
     html += `<div class="w2-row ${out ? 'w2-row--out' : 'w2-row--in'} ${m.sender === 'ia' ? 'is-ia' : ''} ${grupo ? 'w2-row--grupo' : ''}">
-               <div class="w2-bubble ${m._pendiente ? 'w2-bubble--pend' : ''}">${w2Esc(m.body)}<div class="w2-bubble__meta">${firma ? w2Esc(firma) + ' ·' : ''} ${w2Hora(m.created_at)}${m._pendiente ? ' · enviando' : ''}</div></div>
+               <div class="w2-bubble ${m._pendiente ? 'w2-bubble--pend' : ''}">${w2Adjunto(m)}${w2Esc(m.body)}<div class="w2-bubble__meta">${firma ? w2Esc(firma) + ' ·' : ''} ${w2Hora(m.created_at)}${m._pendiente ? ' · enviando' : ''} ${fallo} ${borrar}</div></div>
              </div>`;
   }
   box.innerHTML = html;
@@ -958,6 +1076,18 @@ async function w2EnviarManual(){
         toast(typeof detalle === 'string' ? detalle : 'No se pudo enviar el mensaje.');
       }
       return;
+    }
+    const ok = await r.json().catch(() => ({}));
+    if(ok.ia_pausada){
+      // El servidor apaga la IA en cuanto escribes tú, para que no contesten
+      // los dos en el mismo chat. Aquí solo se refleja en pantalla.
+      W2_CONV_ACTUAL.ai_enabled = false;
+      const sw = document.getElementById('w2-p-ia');
+      if(sw) sw.checked = false;
+      const sub = document.querySelector('.w2-thread__sub');
+      const ct = W2_CONV_ACTUAL.wa2_contactos || {};
+      if(sub) sub.textContent = [ct.wa_id || '', 'Respondes tú'].filter(Boolean).join(' · ');
+      toast('Tomaste esta conversación. La IA se pausó aquí; préndela cuando quieras.');
     }
     await w2RefrescarMensajes();
     w2IrAlFinal(true);
@@ -1064,6 +1194,7 @@ async function w2CargarEntrenamiento(){
     document.getElementById('w2-t-tono').value = t.tono || '';
     document.getElementById('w2-t-objetivo').value = t.objetivo || '';
     document.getElementById('w2-t-especialidad').value = t.especialidad || '';
+    document.getElementById('w2-t-conocimiento').value = t.conocimiento || '';
     document.getElementById('w2-t-puede').value = t.puede || '';
     document.getElementById('w2-t-debe').value = t.debe || '';
     document.getElementById('w2-t-nodebe').value = t.no_debe || '';
@@ -1080,6 +1211,73 @@ async function w2CargarEntrenamiento(){
   }catch(e){ toast('No se pudo cargar el entrenamiento (sin conexión).'); }
 }
 
+/* ── Simulador ────────────────────────────────────────────── */
+let W2_PRUEBA = [];
+let W2_PRUEBA_OCUPADO = false;
+
+function w2ReiniciarPrueba(){ W2_PRUEBA = []; w2PintarPrueba(); }
+
+function w2PintarPrueba(pensando){
+  const box = document.getElementById('w2-prueba-hilo');
+  if(!box) return;
+  if(!W2_PRUEBA.length && !pensando){
+    box.innerHTML = '<div class="w2-prueba__vacio">Escribe abajo lo que diría un prospecto y mira cómo contesta tu asistente.</div>';
+    return;
+  }
+  let html = '';
+  for(const m of W2_PRUEBA){
+    html += `<div class="w2-prueba__msg w2-prueba__msg--${m.rol === 'ia' ? 'ia' : 'yo'}">${w2Esc(m.texto)}</div>`;
+    if(m.ficha) html += `<div class="w2-prueba__ficha">${w2Esc(m.ficha)}</div>`;
+  }
+  if(pensando) html += '<div class="w2-prueba__msg w2-prueba__msg--ia">Escribiendo…</div>';
+  box.innerHTML = html;
+  box.scrollTop = box.scrollHeight;
+}
+
+async function w2EnviarPrueba(){
+  if(W2_PRUEBA_OCUPADO) return;
+  const input = document.getElementById('w2-prueba-texto');
+  const texto = (input.value || '').trim();
+  if(!texto) return;
+  input.value = '';
+  W2_PRUEBA.push({ rol:'prospecto', texto });
+  W2_PRUEBA_OCUPADO = true;
+  w2PintarPrueba(true);
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/probar', {
+      method:'POST', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({
+        numero_id: W2_ENTREN_NUMERO || null,
+        historial: W2_PRUEBA.slice(0, -1).map(m => ({ rol: m.rol, texto: m.texto })),
+        mensaje: texto,
+      })
+    });
+    const d = await r.json();
+    if(!r.ok){ toast((d && d.detail) || 'No se pudo probar el asistente.'); W2_PRUEBA.pop(); w2PintarPrueba(); return; }
+
+    const detalle = [];
+    if(d.temperatura) detalle.push('Lo calificó como ' + d.temperatura + (d.score != null ? ' (' + d.score + ')' : ''));
+    if(d.presupuesto) detalle.push('Presupuesto: ' + d.presupuesto);
+    if(d.accion && d.accion.tipo === 'agendar_visita') detalle.push('Agendaría visita el ' + (d.accion.fecha || '') + ' a las ' + (d.accion.hora || ''));
+    if(d.accion && d.accion.tipo === 'pasar_a_humano') detalle.push('Te pasaría la conversación: ' + (d.accion.motivo || ''));
+    if(d.propiedades && d.propiedades.length){
+      detalle.push('Le mandaría ' + d.propiedades.length + ' inmueble(s) de tu catálogo: '
+                   + d.propiedades.map(p => p.titulo).join(' · '));
+    }
+    if(d.aviso) detalle.push(d.aviso);
+    if(d.falla_tecnica) detalle.push('Ojo: la IA no pudo responder bien en este intento. Vuelve a probar.');
+
+    W2_PRUEBA.push({ rol:'ia', texto: d.reply || '', ficha: detalle.join(' — ') || '' });
+    w2PintarPrueba();
+  }catch(e){
+    toast('No se pudo probar el asistente.');
+    W2_PRUEBA.pop();
+    w2PintarPrueba();
+  }finally{
+    W2_PRUEBA_OCUPADO = false;
+  }
+}
+
 function w2Lista(id){
   return (document.getElementById(id).value || '').split(',').map(s => s.trim()).filter(Boolean);
 }
@@ -1093,6 +1291,7 @@ async function w2GuardarEntrenamiento(){
     tono: document.getElementById('w2-t-tono').value.trim(),
     objetivo: document.getElementById('w2-t-objetivo').value.trim(),
     especialidad: document.getElementById('w2-t-especialidad').value.trim(),
+    conocimiento: document.getElementById('w2-t-conocimiento').value.trim(),
     puede: document.getElementById('w2-t-puede').value.trim(),
     debe: document.getElementById('w2-t-debe').value.trim(),
     no_debe: document.getElementById('w2-t-nodebe').value.trim(),
