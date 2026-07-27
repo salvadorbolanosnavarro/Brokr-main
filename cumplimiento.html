@@ -1,0 +1,1652 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Broquer — Cumplimiento</title>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+  /* Solo lo específico de este módulo. Todo compone tokens del sistema.
+     El encabezado de página lo inyecta el shell desde PAGE_META. */
+  .cp-scroll { padding: 24px 28px 48px; max-width: 1180px; margin: 0 auto; }
+  @media (max-width: 720px) { .cp-scroll { padding: 16px 14px 40px; } }
+
+  /* ── Leyenda legal: por qué existe este módulo ────────────────── */
+  .cp-ley {
+    background: var(--sky-navy);
+    color: #fff;
+    border-radius: var(--r-lg);
+    padding: var(--sp-6) var(--sp-7);
+    margin-bottom: var(--sp-6);
+    box-shadow: var(--shadow-sm);
+  }
+  .cp-ley__top { display: flex; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-3); }
+  .cp-ley__tile {
+    width: 32px; height: 32px; flex-shrink: 0;
+    display: grid; place-items: center;
+    border-radius: var(--r-sm);
+    background: var(--sky-navy-mid);
+    color: var(--sky-blue-on-dark);
+  }
+  .cp-ley__eyebrow {
+    font-size: var(--fs-label-3);
+    font-weight: 700;
+    color: var(--sky-blue-on-dark);
+  }
+  .cp-ley p { font-size: var(--fs-sm); line-height: var(--lh); margin: 0; color: #fff; }
+  .cp-ley p + p { margin-top: var(--sp-3); }
+  .cp-ley strong { font-weight: 700; color: var(--sky-blue-on-dark); }
+  .cp-ley__pie {
+    margin-top: var(--sp-4);
+    padding-top: var(--sp-4);
+    border-top: 1px solid var(--sky-navy-mid);
+    font-size: var(--fs-caption);
+    color: var(--sky-blue-on-dark);
+  }
+  @media (max-width: 720px) { .cp-ley { padding: var(--sp-5); } }
+
+  /* ── Tarjetas de estado ───────────────────────────────────────── */
+  .cp-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: var(--sp-4);
+    margin-bottom: var(--sp-6);
+  }
+  .cp-kpi { padding: var(--sp-5); }
+  .cp-kpi__label { font-size: var(--fs-label-3); font-weight: 700; color: var(--mute); }
+  .cp-kpi__valor {
+    font-family: var(--font-display);
+    font-size: var(--fs-h2);
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.1;
+    margin-top: var(--sp-2);
+    font-variant-numeric: tabular-nums;
+  }
+  .cp-kpi__pie { font-size: var(--fs-caption); color: var(--mute); margin-top: var(--sp-2); }
+  .cp-kpi--alerta .cp-kpi__valor { color: var(--danger); }
+  .cp-kpi--aviso  .cp-kpi__valor { color: var(--warn); }
+
+  /* ── Barra de completitud ─────────────────────────────────────── */
+  .cp-barra {
+    height: 6px;
+    width: 100%;
+    max-width: 120px;
+    background: var(--paper-2);
+    border-radius: var(--r-pill);
+    overflow: hidden;
+  }
+  .cp-barra__fill { height: 100%; background: var(--forest); border-radius: var(--r-pill); transition: width var(--dur) var(--ease); }
+  .cp-barra__fill.is-bajo { background: var(--danger); }
+  .cp-barra__fill.is-medio { background: var(--warn); }
+  .cp-barra__fill.is-listo { background: var(--success); }
+
+  /* ── Tablas y listas ──────────────────────────────────────────── */
+  .cp-tabla-wrap { overflow-x: auto; }
+  .cp-toolbar {
+    display: flex; flex-wrap: wrap; gap: var(--sp-3);
+    align-items: center; margin-bottom: var(--sp-5);
+  }
+  .cp-toolbar .bk-input { max-width: 300px; }
+  .cp-fila { cursor: pointer; }
+  .cp-nombre { font-weight: 700; color: var(--ink); }
+  .cp-sub { font-size: var(--fs-caption); color: var(--mute); }
+
+  /* ── Semáforo de la operación ─────────────────────────────────── */
+  .cp-semaforo {
+    border-radius: var(--r);
+    padding: var(--sp-5);
+    margin-top: var(--sp-4);
+    border: 1px solid var(--line-2);
+    background: var(--paper-2);
+  }
+  .cp-semaforo.is-avisa { background: var(--warn-soft); border-color: var(--warn); }
+  .cp-semaforo.is-limpio { background: var(--success-soft); border-color: var(--success); }
+  .cp-semaforo__titulo { font-weight: 700; font-size: var(--fs-label-2); margin-bottom: var(--sp-2); }
+  .cp-semaforo.is-avisa .cp-semaforo__titulo { color: var(--warn); }
+  .cp-semaforo.is-limpio .cp-semaforo__titulo { color: var(--success); }
+  .cp-semaforo__detalle { font-size: var(--fs-caption); color: var(--ink-2); line-height: var(--lh); }
+  .cp-cifras { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); margin-top: var(--sp-3); }
+  .cp-cifra__l { font-size: var(--fs-caption); color: var(--mute); }
+  .cp-cifra__v { font-size: var(--fs-label-2); font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  /* ── Checklist de documentos ──────────────────────────────────── */
+  .cp-docs { display: grid; gap: var(--sp-3); }
+  .cp-doc {
+    display: flex; align-items: center; gap: var(--sp-3);
+    padding: var(--sp-4);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    background: var(--bone);
+  }
+  .cp-doc.is-ok { border-color: var(--success); background: var(--success-soft); }
+  .cp-doc__ico { width: 22px; height: 22px; flex-shrink: 0; display: grid; place-items: center; color: var(--mute); }
+  .cp-doc.is-ok .cp-doc__ico { color: var(--success); }
+  .cp-doc__txt { flex: 1; min-width: 0; }
+  .cp-doc__n { font-size: var(--fs-sm); font-weight: 700; color: var(--ink); }
+  .cp-doc__e { font-size: var(--fs-caption); color: var(--mute); }
+
+  /* ── Formularios en rejilla ───────────────────────────────────── */
+  .cp-rejilla { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); }
+  .cp-rejilla .cp-ancho { grid-column: 1 / -1; }
+  @media (max-width: 640px) { .cp-rejilla { grid-template-columns: 1fr; } .cp-cifras { grid-template-columns: 1fr; } }
+
+  .cp-bloque { margin-top: var(--sp-6); }
+  .cp-bloque__t {
+    font-family: var(--font-display);
+    font-size: var(--fs-h5);
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: var(--sp-2);
+  }
+  .cp-bloque__d { font-size: var(--fs-caption); color: var(--mute); margin-bottom: var(--sp-4); line-height: var(--lh); }
+
+  /* ── Bitácora ─────────────────────────────────────────────────── */
+  .cp-evento {
+    display: flex; gap: var(--sp-4);
+    padding: var(--sp-4) 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .cp-evento:last-child { border-bottom: none; }
+  .cp-evento__punto {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--forest); flex-shrink: 0; margin-top: 6px;
+  }
+  .cp-evento__c { flex: 1; min-width: 0; }
+  .cp-evento__a { font-size: var(--fs-sm); font-weight: 700; color: var(--ink); }
+  .cp-evento__d { font-size: var(--fs-caption); color: var(--ink-2); line-height: var(--lh); margin-top: 2px; }
+  .cp-evento__m { font-size: var(--fs-caption); color: var(--mute); margin-top: 2px; }
+
+  .cp-oculto { display: none; }
+  .cp-liga {
+    display: flex; gap: var(--sp-2); align-items: center;
+    padding: var(--sp-4); border-radius: var(--r);
+    background: var(--info-soft); margin-top: var(--sp-4);
+  }
+  .cp-liga input { flex: 1; min-width: 0; }
+</style>
+</head>
+<body data-app="cumplimiento">
+
+<div class="cp-scroll">
+
+  <!-- ════════════════════════════════════════════════════════════
+       LEYENDA: por qué existe este módulo.
+       Texto conservador a propósito: dice lo que dice la ley y la
+       consecuencia real, sin dramatizar. Si asusta de más, el agente
+       lo cierra y no vuelve.
+       ════════════════════════════════════════════════════════════ -->
+  <section class="cp-ley">
+    <div class="cp-ley__top">
+      <span class="cp-ley__tile">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/>
+        </svg>
+      </span>
+      <span class="cp-ley__eyebrow">Por qué importa</span>
+    </div>
+    <p>
+      La intermediación inmobiliaria es una <strong>actividad vulnerable</strong> según la
+      Ley Federal para la Prevención e Identificación de Operaciones con Recursos de
+      Procedencia Ilícita (artículo 17, fracción V). Como asesor eres sujeto obligado, y
+      eso se traduce en tres deberes concretos: <strong>identificar</strong> a tu cliente e
+      integrar su expediente, <strong>conservarlo</strong> por diez años, y
+      <strong>presentar aviso</strong> ante la UIF cuando la operación rebasa el umbral
+      vigente, a más tardar el día 17 del mes siguiente.
+    </p>
+    <p>
+      Las operaciones también se suman: varias del mismo cliente dentro de una ventana de
+      seis meses pueden rebasar el umbral aunque ninguna lo haga por separado. Omitir un
+      aviso o no integrar el expediente se sanciona con multa administrativa, y el
+      cumplimiento se comprueba con documentos fechados, no con explicaciones.
+    </p>
+    <div class="cp-ley__pie" id="cp-ley-pie">
+      Umbral vigente de aviso: calculando…
+    </div>
+  </section>
+
+  <!-- Alerta de operaciones inusuales: plazo de 24 horas -->
+  <div class="bk-alert bk-alert--error cp-oculto" id="cp-alerta-24h" style="margin-bottom:var(--sp-5);">
+    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
+    </svg>
+    <span id="cp-alerta-24h-txt"></span>
+  </div>
+
+  <!-- Aviso de configuración incompleta -->
+  <div class="bk-alert bk-alert--warn cp-oculto" id="cp-alerta-config" style="margin-bottom:var(--sp-5);">
+    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
+    </svg>
+    <span>Falta capturar tu folio del padrón del SAT y tu encargado de cumplimiento. Sin eso no se puede generar un aviso.</span>
+  </div>
+
+  <!-- Tarjetas de estado -->
+  <div class="cp-kpis" id="cp-kpis">
+    <article class="bk-card cp-kpi">
+      <div class="cp-kpi__label">Expedientes</div>
+      <div class="cp-kpi__valor" id="cp-k-exp">—</div>
+      <div class="cp-kpi__pie" id="cp-k-exp-pie">Cargando</div>
+    </article>
+    <article class="bk-card cp-kpi cp-kpi--aviso">
+      <div class="cp-kpi__label">Por reportar</div>
+      <div class="cp-kpi__valor" id="cp-k-ops">—</div>
+      <div class="cp-kpi__pie">Operaciones que generan aviso</div>
+    </article>
+    <article class="bk-card cp-kpi">
+      <div class="cp-kpi__label">Próxima fecha límite</div>
+      <div class="cp-kpi__valor" id="cp-k-lim">—</div>
+      <div class="cp-kpi__pie" id="cp-k-lim-pie">Sin avisos pendientes</div>
+    </article>
+    <article class="bk-card cp-kpi">
+      <div class="cp-kpi__label">Umbral de aviso</div>
+      <div class="cp-kpi__valor" id="cp-k-umb">—</div>
+      <div class="cp-kpi__pie" id="cp-k-umb-pie">Con la UMA vigente</div>
+    </article>
+  </div>
+
+  <!-- Pestañas -->
+  <div class="bk-tabs" id="cp-tabs" style="margin-bottom:var(--sp-6);">
+    <button class="bk-tab is-active" data-vista="expedientes" type="button">Expedientes</button>
+    <button class="bk-tab" data-vista="operaciones" type="button">Operaciones</button>
+    <button class="bk-tab" data-vista="avisos" type="button">Avisos</button>
+    <button class="bk-tab" data-vista="bitacora" type="button">Bitácora</button>
+    <button class="bk-tab" data-vista="ajustes" type="button">Ajustes</button>
+  </div>
+
+  <!-- ═══════════════ EXPEDIENTES ═══════════════ -->
+  <section id="v-expedientes">
+    <div class="cp-toolbar">
+      <input class="bk-input" id="cp-buscar" type="search" placeholder="Buscar por nombre, RFC o CURP"/>
+      <select class="bk-select" id="cp-filtro-estatus" style="max-width:190px;">
+        <option value="">Todos</option>
+        <option value="incompleto">Incompletos</option>
+        <option value="completo">Completos</option>
+      </select>
+      <button class="bk-btn bk-btn--forest" id="cp-nuevo-exp" type="button">Nuevo expediente</button>
+    </div>
+
+    <div class="bk-card cp-tabla-wrap" id="cp-exp-card">
+      <table class="bk-table">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Tipo</th>
+            <th>Expediente</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="cp-exp-body"></tbody>
+      </table>
+    </div>
+
+    <div class="bk-empty cp-oculto" id="cp-exp-vacio">
+      <div class="bk-empty__icon">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+        </svg>
+      </div>
+      <div class="bk-empty__title">Aún no tienes expedientes</div>
+      <div class="bk-empty__text">Crea el expediente de tu primer cliente. Puedes mandarle una liga para que él mismo lo llene desde su celular.</div>
+      <button class="bk-btn bk-btn--forest bk-empty__action" id="cp-nuevo-exp-2" type="button">Crear el primero</button>
+    </div>
+  </section>
+
+  <!-- ═══════════════ OPERACIONES ═══════════════ -->
+  <section id="v-operaciones" class="cp-oculto">
+    <div class="cp-toolbar">
+      <button class="bk-btn bk-btn--forest" id="cp-nueva-op" type="button">Registrar operación</button>
+    </div>
+    <div class="bk-card cp-tabla-wrap">
+      <table class="bk-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Cliente</th>
+            <th>Tipo</th>
+            <th class="num">Monto</th>
+            <th>Aviso</th>
+          </tr>
+        </thead>
+        <tbody id="cp-op-body"></tbody>
+      </table>
+    </div>
+    <div class="bk-empty cp-oculto" id="cp-op-vacio">
+      <div class="bk-empty__icon">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16 7.5c0-1.5-1.5-2.5-4-2.5s-4 1-4 2.5S9.5 10 12 10.5s4 1 4 2.5-1.5 3-4 3-4-1-4-2.5"/>
+        </svg>
+      </div>
+      <div class="bk-empty__title">Sin operaciones registradas</div>
+      <div class="bk-empty__text">Registra una operación y el sistema te dice al momento si genera aviso, tomando en cuenta lo que ese cliente ya acumuló.</div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ AVISOS ═══════════════ -->
+  <section id="v-avisos" class="cp-oculto">
+    <div class="bk-section-header"><h2>Periodos por presentar</h2></div>
+    <div id="cp-periodos" style="display:grid;gap:var(--sp-4);margin-bottom:var(--sp-8);"></div>
+
+    <div class="bk-section-header"><h2>Avisos generados</h2></div>
+    <div class="bk-card cp-tabla-wrap">
+      <table class="bk-table">
+        <thead>
+          <tr>
+            <th>Periodo</th>
+            <th>Referencia</th>
+            <th class="num">Operaciones</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="cp-avisos-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ═══════════════ BITÁCORA ═══════════════ -->
+  <section id="v-bitacora" class="cp-oculto">
+    <div class="bk-alert bk-alert--info" style="margin-bottom:var(--sp-5);">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
+      </svg>
+      <span>Este historial no se puede editar ni borrar, ni siquiera desde tu cuenta. Es la evidencia de que cumpliste en su momento.</span>
+    </div>
+    <div class="bk-card bk-card--pad" id="cp-bitacora"></div>
+  </section>
+
+  <!-- ═══════════════ AJUSTES ═══════════════ -->
+  <section id="v-ajustes" class="cp-oculto">
+    <div class="bk-card bk-card--pad" style="max-width:760px;">
+
+      <div class="cp-bloque" style="margin-top:0;">
+        <div class="cp-bloque__t">Tu alta ante el SAT</div>
+        <div class="cp-bloque__d">Estos datos van dentro de cada aviso. Sin ellos el portal lo rechaza.</div>
+        <div class="cp-rejilla">
+          <div class="bk-field cp-ancho">
+            <label class="bk-check">
+              <input type="checkbox" id="cf-alta"/>
+              <span>Ya estoy dado de alta en el padrón de actividades vulnerables</span>
+            </label>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="cf-folio">Folio del padrón</label>
+            <input class="bk-input" id="cf-folio" type="text" placeholder="El que te dio el SAT"/>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="cf-fecha-alta">Fecha de alta</label>
+            <input class="bk-input" id="cf-fecha-alta" type="date"/>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="cf-fraccion">Fracción del artículo 17</label>
+            <select class="bk-select" id="cf-fraccion">
+              <option value="V">V — Intermediación inmobiliaria</option>
+              <option value="V Bis">V Bis — Recepción de recursos para desarrollo</option>
+              <option value="XI">XI — Servicios profesionales independientes</option>
+              <option value="XV">XV — Arrendamiento de inmuebles</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="cp-bloque">
+        <div class="cp-bloque__t">Encargado de cumplimiento</div>
+        <div class="cp-bloque__d">La persona responsable ante la autoridad. Puedes ser tú mismo.</div>
+        <div class="cp-rejilla">
+          <div class="bk-field">
+            <label class="bk-label" for="cf-resp-nombre">Nombre completo</label>
+            <input class="bk-input" id="cf-resp-nombre" type="text"/>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="cf-resp-rfc">RFC</label>
+            <input class="bk-input" id="cf-resp-rfc" type="text"/>
+          </div>
+          <div class="bk-field cp-ancho">
+            <label class="bk-label" for="cf-resp-email">Correo</label>
+            <input class="bk-input" id="cf-resp-email" type="email"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="cp-bloque">
+        <div class="cp-bloque__t">Montos vigentes</div>
+        <div class="cp-bloque__d">
+          El umbral se calcula multiplicando las UMA por su valor diario. Cuando el INEGI
+          publique la UMA del año, actualiza el valor aquí y todo el módulo se ajusta solo.
+        </div>
+        <div class="cp-rejilla">
+          <div class="bk-field">
+            <label class="bk-label" for="cf-uma">Valor diario de la UMA</label>
+            <input class="bk-input" id="cf-uma" type="number" step="0.01"/>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="cf-vig">Vigente desde</label>
+            <input class="bk-input" id="cf-vig" type="date"/>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="cf-umbral">Umbral de aviso, en UMA</label>
+            <input class="bk-input" id="cf-umbral" type="number" step="1"/>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="cf-meses">Ventana de acumulación, en meses</label>
+            <input class="bk-input" id="cf-meses" type="number" step="1"/>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="cf-dia">Día límite del mes siguiente</label>
+            <input class="bk-input" id="cf-dia" type="number" step="1"/>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="cf-ret">Años de conservación</label>
+            <input class="bk-input" id="cf-ret" type="number" step="1"/>
+          </div>
+          <div class="bk-field cp-ancho">
+            <div class="cp-semaforo" id="cf-preview">Umbral resultante: —</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bk-cluster" style="justify-content:flex-end;margin-top:var(--sp-6);">
+        <button class="bk-btn bk-btn--forest" id="cf-guardar" type="button">Guardar ajustes</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══════════════ MODAL: EXPEDIENTE ═══════════════ -->
+<div class="bk-overlay" id="m-exp">
+  <div class="bk-modal" style="max-width:840px;">
+    <div class="bk-modal__head">
+      <div class="bk-modal__title" id="m-exp-titulo">Expediente</div>
+      <button class="bk-icon-btn" data-cerrar="m-exp" type="button" aria-label="Cerrar">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+          <path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/>
+        </svg>
+      </button>
+    </div>
+    <div class="bk-modal__body">
+
+      <div class="bk-seg" id="m-exp-seg" style="margin-bottom:var(--sp-5);">
+        <button class="bk-seg__btn is-active" data-paso="datos" type="button">Datos</button>
+        <button class="bk-seg__btn" data-paso="docs" type="button">Documentos</button>
+        <button class="bk-seg__btn" data-paso="riesgo" type="button">Dueño real y PEP</button>
+      </div>
+
+      <!-- Paso: datos -->
+      <div id="p-datos">
+        <div class="cp-rejilla">
+          <div class="bk-field">
+            <label class="bk-label" for="e-tipo">Tipo de persona</label>
+            <select class="bk-select" id="e-tipo">
+              <option value="fisica">Persona física</option>
+              <option value="moral">Persona moral (empresa)</option>
+              <option value="fideicomiso">Fideicomiso</option>
+            </select>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="e-rol">Papel en la operación</label>
+            <select class="bk-select" id="e-rol">
+              <option value="comprador">Comprador</option>
+              <option value="vendedor">Vendedor</option>
+              <option value="arrendatario">Arrendatario</option>
+              <option value="arrendador">Arrendador</option>
+              <option value="cliente">Cliente</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Persona física -->
+        <div id="e-bloque-fisica">
+          <div class="cp-bloque">
+            <div class="cp-bloque__t">Identificación</div>
+            <div class="cp-rejilla">
+              <div class="bk-field"><label class="bk-label" for="e-nombre">Nombre(s)</label><input class="bk-input" id="e-nombre" type="text"/></div>
+              <div class="bk-field"><label class="bk-label" for="e-ap">Apellido paterno</label><input class="bk-input" id="e-ap" type="text"/></div>
+              <div class="bk-field"><label class="bk-label" for="e-am">Apellido materno</label><input class="bk-input" id="e-am" type="text"/></div>
+              <div class="bk-field"><label class="bk-label" for="e-fnac">Fecha de nacimiento</label><input class="bk-input" id="e-fnac" type="date"/></div>
+              <div class="bk-field"><label class="bk-label" for="e-curp">CURP</label><input class="bk-input" id="e-curp" type="text" maxlength="18"/></div>
+              <div class="bk-field"><label class="bk-label" for="e-rfc">RFC</label><input class="bk-input" id="e-rfc" type="text" maxlength="13"/></div>
+              <div class="bk-field"><label class="bk-label" for="e-nac">Nacionalidad</label><input class="bk-input" id="e-nac" type="text"/></div>
+              <div class="bk-field"><label class="bk-label" for="e-ocup">Ocupación</label><input class="bk-input" id="e-ocup" type="text"/></div>
+              <div class="bk-field"><label class="bk-label" for="e-act">Actividad económica</label><input class="bk-input" id="e-act" type="text"/></div>
+              <div class="bk-field"><label class="bk-label" for="e-tel">Teléfono</label><input class="bk-input" id="e-tel" type="tel"/></div>
+              <div class="bk-field"><label class="bk-label" for="e-mail">Correo</label><input class="bk-input" id="e-mail" type="email"/></div>
+            </div>
+          </div>
+
+          <div class="cp-bloque">
+            <div class="cp-bloque__t">Identificación oficial presentada</div>
+            <div class="cp-rejilla">
+              <div class="bk-field">
+                <label class="bk-label" for="e-idtipo">Tipo</label>
+                <select class="bk-select" id="e-idtipo">
+                  <option value="">Selecciona</option>
+                  <option value="INE">Credencial para votar (INE)</option>
+                  <option value="pasaporte">Pasaporte</option>
+                  <option value="cedula">Cédula profesional</option>
+                  <option value="licencia">Licencia de conducir</option>
+                  <option value="migratorio">Documento migratorio</option>
+                </select>
+              </div>
+              <div class="bk-field"><label class="bk-label" for="e-idnum">Número o clave</label><input class="bk-input" id="e-idnum" type="text"/></div>
+              <div class="bk-field"><label class="bk-label" for="e-idaut">Autoridad que la emitió</label><input class="bk-input" id="e-idaut" type="text"/></div>
+              <div class="bk-field"><label class="bk-label" for="e-idvig">Vigencia</label><input class="bk-input" id="e-idvig" type="date"/></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Persona moral -->
+        <div id="e-bloque-moral" class="cp-oculto">
+          <div class="cp-bloque">
+            <div class="cp-bloque__t">Datos de la empresa</div>
+            <div class="cp-rejilla">
+              <div class="bk-field cp-ancho"><label class="bk-label" for="e-razon">Denominación o razón social</label><input class="bk-input" id="e-razon" type="text"/></div>
+              <div class="bk-field"><label class="bk-label" for="e-fcons">Fecha de constitución</label><input class="bk-input" id="e-fcons" type="date"/></div>
+              <div class="bk-field"><label class="bk-label" for="e-rfcm">RFC</label><input class="bk-input" id="e-rfcm" type="text" maxlength="12"/></div>
+              <div class="bk-field"><label class="bk-label" for="e-folio">Folio mercantil</label><input class="bk-input" id="e-folio" type="text"/></div>
+              <div class="bk-field"><label class="bk-label" for="e-giro">Giro mercantil</label><input class="bk-input" id="e-giro" type="text"/></div>
+            </div>
+          </div>
+          <div class="cp-bloque">
+            <div class="cp-bloque__t">Representante legal</div>
+            <div class="cp-rejilla">
+              <div class="bk-field"><label class="bk-label" for="e-rnom">Nombre(s)</label><input class="bk-input" id="e-rnom" type="text"/></div>
+              <div class="bk-field"><label class="bk-label" for="e-rap">Apellido paterno</label><input class="bk-input" id="e-rap" type="text"/></div>
+              <div class="bk-field"><label class="bk-label" for="e-ram">Apellido materno</label><input class="bk-input" id="e-ram" type="text"/></div>
+              <div class="bk-field"><label class="bk-label" for="e-rcurp">CURP</label><input class="bk-input" id="e-rcurp" type="text" maxlength="18"/></div>
+              <div class="bk-field"><label class="bk-label" for="e-rrfc">RFC</label><input class="bk-input" id="e-rrfc" type="text" maxlength="13"/></div>
+              <div class="bk-field"><label class="bk-label" for="e-ridnum">Número de identificación</label><input class="bk-input" id="e-ridnum" type="text"/></div>
+              <div class="bk-field"><label class="bk-label" for="e-rpoder">Número de escritura del poder</label><input class="bk-input" id="e-rpoder" type="text"/></div>
+              <div class="bk-field"><label class="bk-label" for="e-rnot">Notario</label><input class="bk-input" id="e-rnot" type="text"/></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cp-bloque">
+          <div class="cp-bloque__t">Domicilio</div>
+          <div class="cp-rejilla">
+            <div class="bk-field cp-ancho"><label class="bk-label" for="e-calle">Calle</label><input class="bk-input" id="e-calle" type="text"/></div>
+            <div class="bk-field"><label class="bk-label" for="e-next">Número exterior</label><input class="bk-input" id="e-next" type="text"/></div>
+            <div class="bk-field"><label class="bk-label" for="e-nint">Número interior</label><input class="bk-input" id="e-nint" type="text"/></div>
+            <div class="bk-field"><label class="bk-label" for="e-col">Colonia</label><input class="bk-input" id="e-col" type="text"/></div>
+            <div class="bk-field"><label class="bk-label" for="e-cp">Código postal</label><input class="bk-input" id="e-cp" type="text" maxlength="5"/></div>
+            <div class="bk-field"><label class="bk-label" for="e-mun">Municipio</label><input class="bk-input" id="e-mun" type="text"/></div>
+            <div class="bk-field"><label class="bk-label" for="e-edo">Estado</label><input class="bk-input" id="e-edo" type="text"/></div>
+          </div>
+        </div>
+
+        <div class="cp-bloque">
+          <div class="cp-bloque__t">Conocimiento del cliente</div>
+          <div class="cp-bloque__d">De dónde salen los recursos y para qué es la operación.</div>
+          <div class="cp-rejilla">
+            <div class="bk-field cp-ancho">
+              <label class="bk-label" for="e-origen">Origen de los recursos</label>
+              <textarea class="bk-textarea" id="e-origen" rows="2"></textarea>
+            </div>
+            <div class="bk-field cp-ancho">
+              <label class="bk-label" for="e-prop">Propósito de la operación</label>
+              <textarea class="bk-textarea" id="e-prop" rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Paso: documentos -->
+      <div id="p-docs" class="cp-oculto">
+        <div class="cp-bloque" style="margin-top:0;">
+          <div class="cp-bloque__t">Documentos del expediente</div>
+          <div class="cp-bloque__d">Fotos o PDF, hasta 10 MB cada uno. Se guardan en un almacén privado: solo tú los puedes abrir.</div>
+          <div class="cp-docs" id="e-docs"></div>
+        </div>
+        <input type="file" id="e-file" class="cp-oculto" accept="image/jpeg,image/png,image/webp,image/heic,application/pdf"/>
+      </div>
+
+      <!-- Paso: riesgo -->
+      <div id="p-riesgo" class="cp-oculto">
+        <div class="cp-bloque" style="margin-top:0;">
+          <div class="cp-bloque__t">Dueño real (beneficiario controlador)</div>
+          <div class="cp-bloque__d">
+            Quién se queda con el beneficio de la operación. Si el cliente compra para sí
+            mismo, es él mismo. Si compra a través de una empresa o para otra persona,
+            hay que decir quién es.
+          </div>
+          <label class="bk-check" style="margin-bottom:var(--sp-4);">
+            <input type="checkbox" id="e-bc-mismo" checked/>
+            <span>El cliente es el dueño real de la operación</span>
+          </label>
+          <div class="cp-rejilla cp-oculto" id="e-bc-campos">
+            <div class="bk-field"><label class="bk-label" for="e-bcnom">Nombre(s)</label><input class="bk-input" id="e-bcnom" type="text"/></div>
+            <div class="bk-field"><label class="bk-label" for="e-bcap">Apellido paterno</label><input class="bk-input" id="e-bcap" type="text"/></div>
+            <div class="bk-field"><label class="bk-label" for="e-bcam">Apellido materno</label><input class="bk-input" id="e-bcam" type="text"/></div>
+            <div class="bk-field"><label class="bk-label" for="e-bcfnac">Fecha de nacimiento</label><input class="bk-input" id="e-bcfnac" type="date"/></div>
+            <div class="bk-field"><label class="bk-label" for="e-bccurp">CURP</label><input class="bk-input" id="e-bccurp" type="text" maxlength="18"/></div>
+            <div class="bk-field"><label class="bk-label" for="e-bcrfc">RFC</label><input class="bk-input" id="e-bcrfc" type="text" maxlength="13"/></div>
+            <div class="bk-field"><label class="bk-label" for="e-bcpct">Porcentaje de participación</label><input class="bk-input" id="e-bcpct" type="number" step="0.01"/></div>
+          </div>
+        </div>
+
+        <div class="cp-bloque">
+          <div class="cp-bloque__t">Persona políticamente expuesta</div>
+          <div class="cp-bloque__d">
+            Un funcionario público, alguien que lo fue, o un familiar cercano. No impide la
+            operación: solo hay que declararlo y dejar constancia de que se revisó.
+          </div>
+          <label class="bk-check" style="margin-bottom:var(--sp-4);">
+            <input type="checkbox" id="e-pep"/>
+            <span>El cliente es o fue funcionario público, o es familiar de uno</span>
+          </label>
+          <div class="cp-rejilla cp-oculto" id="e-pep-campos">
+            <div class="bk-field"><label class="bk-label" for="e-pepcargo">Cargo</label><input class="bk-input" id="e-pepcargo" type="text"/></div>
+            <div class="bk-field"><label class="bk-label" for="e-pepdep">Dependencia</label><input class="bk-input" id="e-pepdep" type="text"/></div>
+            <div class="bk-field cp-ancho"><label class="bk-label" for="e-peppar">Parentesco, si aplica</label><input class="bk-input" id="e-peppar" type="text"/></div>
+          </div>
+          <div class="bk-cluster" style="margin-top:var(--sp-4);">
+            <button class="bk-btn bk-btn--ghost bk-btn--sm" id="e-pep-revisar" type="button">Marcar revisión como hecha</button>
+            <span class="cp-sub" id="e-pep-estado"></span>
+          </div>
+        </div>
+
+        <div class="cp-bloque">
+          <div class="cp-bloque__t">Pedirle los datos al cliente</div>
+          <div class="cp-bloque__d">
+            Genera una liga y mándasela por WhatsApp. La abre en su celular, llena lo que
+            falta, toma foto de sus documentos y firma. Caduca en 14 días.
+          </div>
+          <button class="bk-btn bk-btn--ghost" id="e-liga" type="button">Generar liga para el cliente</button>
+          <div class="cp-liga cp-oculto" id="e-liga-box">
+            <input class="bk-input" id="e-liga-url" type="text" readonly/>
+            <button class="bk-btn bk-btn--sm" id="e-liga-copiar" type="button">Copiar</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="bk-modal__foot">
+      <div class="cp-sub" id="m-exp-estado"></div>
+      <div class="bk-cluster" style="margin-left:auto;">
+        <button class="bk-btn bk-btn--ghost" data-cerrar="m-exp" type="button">Cerrar</button>
+        <button class="bk-btn bk-btn--forest" id="e-guardar" type="button">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODAL: OPERACIÓN ═══════════════ -->
+<div class="bk-overlay" id="m-op">
+  <div class="bk-modal" style="max-width:620px;">
+    <div class="bk-modal__head">
+      <div class="bk-modal__title">Registrar operación</div>
+      <button class="bk-icon-btn" data-cerrar="m-op" type="button" aria-label="Cerrar">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+          <path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/>
+        </svg>
+      </button>
+    </div>
+    <div class="bk-modal__body">
+      <div class="cp-rejilla">
+        <div class="bk-field cp-ancho">
+          <label class="bk-label" for="o-exp">Cliente</label>
+          <select class="bk-select" id="o-exp"></select>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="o-tipo">Tipo de operación</label>
+          <select class="bk-select" id="o-tipo">
+            <option value="compraventa">Compraventa</option>
+            <option value="promesa">Promesa de compraventa</option>
+            <option value="arrendamiento">Arrendamiento</option>
+            <option value="aportacion">Aportación para desarrollo</option>
+          </select>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="o-fecha">Fecha</label>
+          <input class="bk-input" id="o-fecha" type="date"/>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="o-monto">Monto total</label>
+          <input class="bk-input" id="o-monto" type="number" step="0.01" placeholder="2400000"/>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="o-siniva">Monto sin IVA</label>
+          <input class="bk-input" id="o-siniva" type="number" step="0.01" placeholder="Si aplica"/>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="o-pago">Forma de pago</label>
+          <select class="bk-select" id="o-pago">
+            <option value="transferencia">Transferencia</option>
+            <option value="cheque">Cheque</option>
+            <option value="credito">Crédito hipotecario</option>
+            <option value="efectivo">Efectivo</option>
+            <option value="mixto">Mixta</option>
+          </select>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="o-efectivo">De ese monto, en efectivo</label>
+          <input class="bk-input" id="o-efectivo" type="number" step="0.01" value="0"/>
+        </div>
+        <div class="bk-field cp-ancho">
+          <label class="bk-check">
+            <input type="checkbox" id="o-inusual"/>
+            <span>Marcar como operación inusual (activa el plazo de 24 horas)</span>
+          </label>
+        </div>
+        <div class="bk-field cp-ancho cp-oculto" id="o-inusual-box">
+          <label class="bk-label" for="o-inusual-motivo">¿Qué te pareció inusual?</label>
+          <textarea class="bk-textarea" id="o-inusual-motivo" rows="2"></textarea>
+        </div>
+      </div>
+
+      <div class="cp-semaforo" id="o-semaforo">
+        <div class="cp-semaforo__titulo">Captura el cliente y el monto</div>
+        <div class="cp-semaforo__detalle">Al escribir, te digo si esta operación genera aviso.</div>
+      </div>
+    </div>
+    <div class="bk-modal__foot">
+      <div class="bk-cluster" style="margin-left:auto;">
+        <button class="bk-btn bk-btn--ghost" data-cerrar="m-op" type="button">Cancelar</button>
+        <button class="bk-btn bk-btn--forest" id="o-guardar" type="button">Guardar operación</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODAL: AVISO GENERADO ═══════════════ -->
+<div class="bk-overlay" id="m-aviso">
+  <div class="bk-modal" style="max-width:620px;">
+    <div class="bk-modal__head">
+      <div class="bk-modal__title">Aviso generado</div>
+      <button class="bk-icon-btn" data-cerrar="m-aviso" type="button" aria-label="Cerrar">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+          <path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/>
+        </svg>
+      </button>
+    </div>
+    <div class="bk-modal__body" id="m-aviso-body"></div>
+    <div class="bk-modal__foot">
+      <div class="bk-cluster" style="margin-left:auto;">
+        <button class="bk-btn bk-btn--ghost" data-cerrar="m-aviso" type="button">Cerrar</button>
+        <button class="bk-btn bk-btn--forest" id="a-descargar" type="button">Descargar XML</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="bk-toast-stack" id="cp-toasts"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   Broquer · Cumplimiento PLD / UIF
+   El semáforo y la generación del aviso viven en el backend a
+   propósito: si vivieran aquí, se podrían apagar desde la consola
+   del navegador y el expediente perdería su valor probatorio.
+   ══════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  var API_BASE = 'https://api.broquer.app';
+
+  function g(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function pesos(n) {
+    var v = Number(n || 0);
+    return v.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 2 });
+  }
+  function fechaCorta(iso) {
+    if (!iso) return '—';
+    try { return new Date(iso + (String(iso).length === 10 ? 'T12:00:00' : ''))
+      .toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }); }
+    catch (e) { return String(iso); }
+  }
+  function toast(msg, tipo) {
+    var stack = g('cp-toasts');
+    if (!stack) return;
+    var t = document.createElement('div');
+    t.className = 'bk-toast' + (tipo ? ' bk-toast--' + tipo : '');
+    t.textContent = msg;
+    stack.appendChild(t);
+    setTimeout(function () { t.remove(); }, 4200);
+  }
+
+  /* ── Llamadas ─────────────────────────────────────────────────── */
+  async function api(path, opts) {
+    opts = opts || {};
+    var sb = window.brokrSb;
+    if (!sb || !sb.ensureToken) throw new Error('La app aún se está cargando. Intenta en un segundo.');
+    var tok = await sb.ensureToken();
+    var headers = Object.assign({}, opts.headers || {});
+    if (tok) headers['Authorization'] = 'Bearer ' + tok;
+    var body = opts.body;
+    if (opts.json !== undefined) {
+      headers['Content-Type'] = 'application/json';
+      body = JSON.stringify(opts.json);
+    }
+    var r = await fetch(API_BASE + path, { method: opts.method || 'GET', headers: headers, body: body });
+    var data = null;
+    try { data = await r.json(); } catch (e) { data = null; }
+    if (!r.ok) throw new Error((data && data.detail) || 'No se pudo completar la acción.');
+    return data;
+  }
+  async function sb(path, method, body) {
+    if (!window.brokrSb || !window.brokrSb.rest) throw new Error('La app aún se está cargando.');
+    return await window.brokrSb.rest(path, { method: method || 'GET', body: body });
+  }
+  var _uid = null;
+  async function userId() {
+    if (_uid) return _uid;
+    var s = window.brokrSb;
+    var tok = await s.ensureToken();
+    if (!tok) return null;
+    var r = await fetch(s.url + '/auth/v1/user', { headers: { apikey: s.key, Authorization: 'Bearer ' + tok } });
+    if (!r.ok) return null;
+    _uid = (await r.json()).id;
+    return _uid;
+  }
+
+  /* ── Documentos exigibles. Espejo consciente de DOCS_REQUERIDOS
+       en routers/cumplimiento.py: allá manda, aquí solo se pintan
+       los pendientes junto con los ya cumplidos. ──────────────── */
+  var DOCS = {
+    fisica: [
+      ['ine', 'Identificación oficial'],
+      ['curp', 'CURP'],
+      ['rfc', 'Constancia de situación fiscal'],
+      ['comprobante_domicilio', 'Comprobante de domicilio']
+    ],
+    moral: [
+      ['acta_constitutiva', 'Acta constitutiva'],
+      ['rfc', 'Constancia de situación fiscal'],
+      ['comprobante_domicilio', 'Comprobante de domicilio'],
+      ['poder', 'Poder del representante'],
+      ['ine', 'Identificación del representante']
+    ],
+    fideicomiso: [
+      ['acta_constitutiva', 'Contrato de fideicomiso'],
+      ['rfc', 'Constancia de situación fiscal'],
+      ['comprobante_domicilio', 'Comprobante de domicilio'],
+      ['ine', 'Identificación del fiduciario']
+    ]
+  };
+
+  /* ── Estado ───────────────────────────────────────────────────── */
+  var EXPEDIENTES = [];
+  var OPERACIONES = [];
+  var RESUMEN = null;
+  var CONFIG = null;
+  var expActual = null;
+  var docsActual = [];
+  var xmlActual = '';
+  var xmlNombre = 'aviso.xml';
+
+  /* ══════════════ CARGA ══════════════ */
+  async function cargar() {
+    try {
+      RESUMEN = await api('/pld/resumen');
+      CONFIG = RESUMEN.config || {};
+      pintarLeyenda();
+      pintarKpis();
+      pintarPeriodos();
+      pintarAvisos();
+      llenarAjustes();
+    } catch (e) {
+      toast(e.message, 'error');
+    }
+    try {
+      EXPEDIENTES = await sb('pld_expedientes?select=*&order=updated_at.desc') || [];
+      pintarExpedientes();
+      llenarSelectorClientes();
+    } catch (e) { /* la tabla puede estar vacía */ }
+    try {
+      OPERACIONES = await sb('pld_operaciones?select=*&order=fecha_operacion.desc&limit=200') || [];
+      pintarOperaciones();
+    } catch (e) { /* idem */ }
+  }
+
+  function pintarLeyenda() {
+    var u = RESUMEN ? RESUMEN.umbral_pesos : 0;
+    var c = CONFIG || {};
+    g('cp-ley-pie').textContent =
+      'Umbral vigente de aviso: ' + pesos(u) + ' — equivale a ' +
+      Number(c.umbral_aviso_uma || 8025).toLocaleString('es-MX') + ' UMA a ' +
+      pesos(c.valor_uma || 0) + ' diarios. Ventana de acumulación: ' +
+      (c.meses_acumulacion || 6) + ' meses. Conservación: ' + (c.retencion_anios || 10) + ' años.';
+  }
+
+  function pintarKpis() {
+    if (!RESUMEN) return;
+    var e = RESUMEN.expedientes || {};
+    g('cp-k-exp').textContent = e.total || 0;
+    g('cp-k-exp-pie').textContent = (e.incompletos || 0) + ' por completar' +
+      (e.pep ? ' · ' + e.pep + ' con PEP' : '');
+    g('cp-k-ops').textContent = RESUMEN.operaciones_por_reportar || 0;
+    g('cp-k-umb').textContent = pesos(RESUMEN.umbral_pesos);
+
+    var ps = RESUMEN.periodos_pendientes || [];
+    if (ps.length) {
+      var p = ps[0];
+      g('cp-k-lim').textContent = fechaCorta(p.fecha_limite);
+      g('cp-k-lim-pie').textContent = p.vencido
+        ? 'Vencido hace ' + Math.abs(p.dias_restantes) + ' días'
+        : 'Faltan ' + p.dias_restantes + ' días · periodo ' + p.periodo;
+      g('cp-kpis').children[2].classList.toggle('cp-kpi--alerta', p.vencido || p.dias_restantes <= 7);
+    } else {
+      g('cp-k-lim').textContent = 'Al día';
+      g('cp-k-lim-pie').textContent = 'Sin avisos pendientes';
+    }
+
+    var urg = RESUMEN.inusuales_urgentes || [];
+    if (urg.length) {
+      g('cp-alerta-24h').classList.remove('cp-oculto');
+      var h = urg[0].horas_restantes;
+      g('cp-alerta-24h-txt').textContent =
+        urg.length + ' operación(es) marcada(s) como inusual sin reportar. ' +
+        (h != null && h > 0 ? 'Quedan aproximadamente ' + h + ' horas del plazo.'
+                            : 'El plazo de 24 horas ya se cumplió.');
+    } else {
+      g('cp-alerta-24h').classList.add('cp-oculto');
+    }
+
+    g('cp-alerta-config').classList.toggle('cp-oculto', !!RESUMEN.listo_para_avisar);
+  }
+
+  /* ══════════════ EXPEDIENTES ══════════════ */
+  function nombreDe(e) {
+    if (!e) return 'Sin nombre';
+    if (e.tipo_persona === 'fisica') {
+      var n = [e.nombre, e.apellido_paterno, e.apellido_materno].filter(Boolean).join(' ');
+      return n || 'Sin nombre';
+    }
+    return e.razon_social || 'Sin razón social';
+  }
+
+  function claseBarra(pct) {
+    if (pct >= 100) return 'is-listo';
+    if (pct >= 60) return 'is-medio';
+    return 'is-bajo';
+  }
+
+  function pintarExpedientes() {
+    var q = (g('cp-buscar').value || '').toLowerCase().trim();
+    var f = g('cp-filtro-estatus').value;
+    var lista = EXPEDIENTES.filter(function (e) {
+      if (f === 'completo' && e.estatus !== 'completo') return false;
+      if (f === 'incompleto' && e.estatus === 'completo') return false;
+      if (!q) return true;
+      return (nombreDe(e) + ' ' + (e.rfc || '') + ' ' + (e.rfc_moral || '') + ' ' + (e.curp || ''))
+        .toLowerCase().indexOf(q) !== -1;
+    });
+
+    g('cp-exp-vacio').classList.toggle('cp-oculto', EXPEDIENTES.length > 0);
+    g('cp-exp-card').classList.toggle('cp-oculto', EXPEDIENTES.length === 0);
+
+    g('cp-exp-body').innerHTML = lista.map(function (e) {
+      var pct = e.completitud || 0;
+      var badge = e.estatus === 'completo'
+        ? '<span class="bk-badge bk-badge--success">Completo</span>'
+        : '<span class="bk-badge bk-badge--warn">Incompleto</span>';
+      var pep = e.es_pep ? ' <span class="bk-badge bk-badge--info">PEP</span>' : '';
+      var tipo = e.tipo_persona === 'moral' ? 'Empresa'
+               : (e.tipo_persona === 'fideicomiso' ? 'Fideicomiso' : 'Persona física');
+      return '<tr class="cp-fila" data-id="' + esc(e.id) + '">' +
+        '<td><div class="cp-nombre">' + esc(nombreDe(e)) + '</div>' +
+        '<div class="cp-sub">' + esc(e.rfc || e.rfc_moral || 'Sin RFC') + '</div></td>' +
+        '<td>' + esc(tipo) + '</td>' +
+        '<td><div class="cp-barra"><div class="cp-barra__fill ' + claseBarra(pct) +
+        '" style="width:' + pct + '%"></div></div>' +
+        '<div class="cp-sub">' + pct + '%</div></td>' +
+        '<td>' + badge + pep + '</td>' +
+        '<td style="text-align:right;"><span class="cp-sub">Abrir</span></td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  function llenarSelectorClientes() {
+    g('o-exp').innerHTML = '<option value="">Selecciona un cliente</option>' +
+      EXPEDIENTES.map(function (e) {
+        return '<option value="' + esc(e.id) + '">' + esc(nombreDe(e)) + '</option>';
+      }).join('');
+  }
+
+  /* ── Modal de expediente ─────────────────────────────────────── */
+  function abrirModal(id) { g(id).classList.add('is-open'); }
+  function cerrarModal(id) { g(id).classList.remove('is-open'); }
+
+  function val(id, v) {
+    var el = g(id);
+    if (!el) return '';
+    if (v === undefined) return el.type === 'checkbox' ? el.checked : el.value;
+    if (el.type === 'checkbox') el.checked = !!v; else el.value = (v == null ? '' : v);
+    return v;
+  }
+
+  async function abrirExpediente(id) {
+    expActual = EXPEDIENTES.filter(function (e) { return e.id === id; })[0] || null;
+    if (!expActual) return;
+    g('m-exp-titulo').textContent = nombreDe(expActual);
+
+    val('e-tipo', expActual.tipo_persona || 'fisica');
+    val('e-rol', expActual.rol || 'cliente');
+    var map = {
+      'e-nombre': 'nombre', 'e-ap': 'apellido_paterno', 'e-am': 'apellido_materno',
+      'e-fnac': 'fecha_nacimiento', 'e-curp': 'curp', 'e-rfc': 'rfc',
+      'e-nac': 'nacionalidad', 'e-ocup': 'ocupacion', 'e-act': 'actividad_economica',
+      'e-tel': 'telefono', 'e-mail': 'email',
+      'e-idtipo': 'id_tipo', 'e-idnum': 'id_numero', 'e-idaut': 'id_autoridad', 'e-idvig': 'id_vigencia',
+      'e-razon': 'razon_social', 'e-fcons': 'fecha_constitucion', 'e-rfcm': 'rfc_moral',
+      'e-folio': 'folio_mercantil', 'e-giro': 'giro_mercantil',
+      'e-rnom': 'rep_nombre', 'e-rap': 'rep_apellido_paterno', 'e-ram': 'rep_apellido_materno',
+      'e-rcurp': 'rep_curp', 'e-rrfc': 'rep_rfc', 'e-ridnum': 'rep_id_numero',
+      'e-rpoder': 'rep_poder_numero', 'e-rnot': 'rep_poder_notario',
+      'e-calle': 'dom_calle', 'e-next': 'dom_num_ext', 'e-nint': 'dom_num_int',
+      'e-col': 'dom_colonia', 'e-cp': 'dom_cp', 'e-mun': 'dom_municipio', 'e-edo': 'dom_estado',
+      'e-origen': 'origen_recursos', 'e-prop': 'proposito_operacion',
+      'e-bcnom': 'bc_nombre', 'e-bcap': 'bc_apellido_paterno', 'e-bcam': 'bc_apellido_materno',
+      'e-bcfnac': 'bc_fecha_nacimiento', 'e-bccurp': 'bc_curp', 'e-bcrfc': 'bc_rfc',
+      'e-bcpct': 'bc_porcentaje',
+      'e-pepcargo': 'pep_cargo', 'e-pepdep': 'pep_dependencia', 'e-peppar': 'pep_parentesco'
+    };
+    Object.keys(map).forEach(function (k) { val(k, expActual[map[k]]); });
+    val('e-bc-mismo', expActual.bc_es_el_mismo !== false);
+    val('e-pep', !!expActual.es_pep);
+    g('e-pep-estado').textContent = expActual.pep_revisado_at
+      ? 'Revisado el ' + fechaCorta(expActual.pep_revisado_at) : 'Sin revisar';
+
+    alternarTipo();
+    alternarBc();
+    alternarPep();
+    g('e-liga-box').classList.add('cp-oculto');
+    verPaso('datos');
+
+    try {
+      docsActual = await sb('pld_documentos?expediente_id=eq.' + encodeURIComponent(id) + '&select=*') || [];
+    } catch (e) { docsActual = []; }
+    pintarDocs();
+    await refrescarEstado(id);
+    abrirModal('m-exp');
+  }
+
+  async function refrescarEstado(id) {
+    try {
+      var r = await api('/pld/expedientes/' + encodeURIComponent(id) + '/revision');
+      var falta = (r.campos_faltantes || []).length + (r.documentos_faltantes || []).length
+                + (r.beneficiario_faltante || []).length + (r.pep_faltante || []).length;
+      g('m-exp-estado').textContent = r.completo
+        ? 'Expediente completo'
+        : 'Completo al ' + r.completitud + '% · faltan ' + falta + ' puntos';
+      var idx = EXPEDIENTES.findIndex(function (e) { return e.id === id; });
+      if (idx >= 0) { EXPEDIENTES[idx].completitud = r.completitud; EXPEDIENTES[idx].estatus = r.estatus; }
+      pintarExpedientes();
+    } catch (e) { /* no bloquea */ }
+  }
+
+  function pintarDocs() {
+    var tipo = val('e-tipo') || 'fisica';
+    var reqs = DOCS[tipo] || DOCS.fisica;
+    var tiene = {};
+    docsActual.forEach(function (d) { tiene[d.tipo] = d; });
+    g('e-docs').innerHTML = reqs.map(function (r) {
+      var d = tiene[r[0]];
+      var ok = !!d;
+      return '<div class="cp-doc' + (ok ? ' is-ok' : '') + '">' +
+        '<span class="cp-doc__ico">' +
+        (ok
+          ? '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>'
+          : '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>') +
+        '</span>' +
+        '<span class="cp-doc__txt"><span class="cp-doc__n">' + esc(r[1]) + '</span>' +
+        '<span class="cp-doc__e">' + (ok ? 'Agregado el ' + fechaCorta(d.created_at) : 'Pendiente') + '</span></span>' +
+        (ok
+          ? '<button class="bk-btn bk-btn--quiet bk-btn--sm" data-ver="' + esc(d.id) + '" type="button">Ver</button>'
+          : '') +
+        '<button class="bk-btn bk-btn--ghost bk-btn--sm" data-subir="' + esc(r[0]) + '" type="button">' +
+        (ok ? 'Reemplazar' : 'Subir') + '</button>' +
+        '</div>';
+    }).join('');
+  }
+
+  function alternarTipo() {
+    var t = val('e-tipo');
+    g('e-bloque-fisica').classList.toggle('cp-oculto', t !== 'fisica');
+    g('e-bloque-moral').classList.toggle('cp-oculto', t === 'fisica');
+    pintarDocs();
+  }
+  function alternarBc() { g('e-bc-campos').classList.toggle('cp-oculto', !!val('e-bc-mismo')); }
+  function alternarPep() { g('e-pep-campos').classList.toggle('cp-oculto', !val('e-pep')); }
+
+  function verPaso(p) {
+    ['datos', 'docs', 'riesgo'].forEach(function (x) {
+      g('p-' + x).classList.toggle('cp-oculto', x !== p);
+    });
+    Array.prototype.forEach.call(g('m-exp-seg').children, function (b) {
+      b.classList.toggle('is-active', b.dataset.paso === p);
+    });
+  }
+
+  async function guardarExpediente() {
+    var uid = await userId();
+    if (!uid) { toast('Vuelve a iniciar sesión.', 'error'); return; }
+    var p = {
+      user_id: uid,
+      tipo_persona: val('e-tipo'), rol: val('e-rol'),
+      nombre: val('e-nombre'), apellido_paterno: val('e-ap'), apellido_materno: val('e-am'),
+      fecha_nacimiento: val('e-fnac') || null, curp: val('e-curp'), rfc: val('e-rfc'),
+      nacionalidad: val('e-nac'), ocupacion: val('e-ocup'), actividad_economica: val('e-act'),
+      telefono: val('e-tel'), email: val('e-mail'),
+      id_tipo: val('e-idtipo'), id_numero: val('e-idnum'), id_autoridad: val('e-idaut'),
+      id_vigencia: val('e-idvig') || null,
+      razon_social: val('e-razon'), fecha_constitucion: val('e-fcons') || null,
+      rfc_moral: val('e-rfcm'), folio_mercantil: val('e-folio'), giro_mercantil: val('e-giro'),
+      rep_nombre: val('e-rnom'), rep_apellido_paterno: val('e-rap'), rep_apellido_materno: val('e-ram'),
+      rep_curp: val('e-rcurp'), rep_rfc: val('e-rrfc'), rep_id_numero: val('e-ridnum'),
+      rep_poder_numero: val('e-rpoder'), rep_poder_notario: val('e-rnot'),
+      dom_calle: val('e-calle'), dom_num_ext: val('e-next'), dom_num_int: val('e-nint'),
+      dom_colonia: val('e-col'), dom_cp: val('e-cp'), dom_municipio: val('e-mun'),
+      dom_estado: val('e-edo'),
+      origen_recursos: val('e-origen'), proposito_operacion: val('e-prop'),
+      bc_es_el_mismo: val('e-bc-mismo'),
+      bc_nombre: val('e-bcnom'), bc_apellido_paterno: val('e-bcap'), bc_apellido_materno: val('e-bcam'),
+      bc_fecha_nacimiento: val('e-bcfnac') || null, bc_curp: val('e-bccurp'), bc_rfc: val('e-bcrfc'),
+      bc_porcentaje: val('e-bcpct') ? Number(val('e-bcpct')) : null,
+      bc_declarado_at: new Date().toISOString(),
+      es_pep: val('e-pep'), pep_cargo: val('e-pepcargo'),
+      pep_dependencia: val('e-pepdep'), pep_parentesco: val('e-peppar'),
+      updated_at: new Date().toISOString()
+    };
+    try {
+      var filas;
+      if (expActual && expActual.id) {
+        filas = await sb('pld_expedientes?id=eq.' + encodeURIComponent(expActual.id), 'PATCH', p);
+      } else {
+        p.created_at = new Date().toISOString();
+        filas = await sb('pld_expedientes', 'POST', p);
+      }
+      var fila = Array.isArray(filas) ? filas[0] : filas;
+      if (fila && fila.id) {
+        expActual = fila;
+        var i = EXPEDIENTES.findIndex(function (e) { return e.id === fila.id; });
+        if (i >= 0) EXPEDIENTES[i] = fila; else EXPEDIENTES.unshift(fila);
+        await refrescarEstado(fila.id);
+      }
+      llenarSelectorClientes();
+      toast('Expediente guardado.', 'success');
+    } catch (e) {
+      toast('No se pudo guardar: ' + e.message, 'error');
+    }
+  }
+
+  /* ══════════════ OPERACIONES ══════════════ */
+  function pintarOperaciones() {
+    g('cp-op-vacio').classList.toggle('cp-oculto', OPERACIONES.length > 0);
+    var nombres = {};
+    EXPEDIENTES.forEach(function (e) { nombres[e.id] = nombreDe(e); });
+    g('cp-op-body').innerHTML = OPERACIONES.map(function (o) {
+      var badge = o.genera_aviso
+        ? '<span class="bk-badge bk-badge--warn">' +
+          ({ umbral: 'Por umbral', acumulacion: 'Por acumulación', inusual: 'Inusual' }[o.motivo_aviso] || 'Sí') +
+          '</span>'
+        : '<span class="bk-badge">No requiere</span>';
+      var presentado = o.aviso_id ? ' <span class="bk-badge bk-badge--success">En aviso</span>' : '';
+      return '<tr><td>' + fechaCorta(o.fecha_operacion) + '</td>' +
+        '<td>' + esc(nombres[o.expediente_id] || 'Cliente') + '</td>' +
+        '<td>' + esc(o.tipo_operacion || '') + '</td>' +
+        '<td class="num">' + pesos(o.monto) + '</td>' +
+        '<td>' + badge + presentado + '</td></tr>';
+    }).join('');
+  }
+
+  var temporizador = null;
+  function pedirSemaforo() {
+    clearTimeout(temporizador);
+    temporizador = setTimeout(async function () {
+      var exp = val('o-exp'), monto = Number(val('o-monto') || 0);
+      if (!exp || !monto) return;
+      try {
+        var r = await api('/pld/operaciones/simular', {
+          method: 'POST',
+          json: {
+            expediente_id: exp,
+            fecha_operacion: val('o-fecha') || new Date().toISOString().slice(0, 10),
+            monto: monto,
+            monto_sin_iva: val('o-siniva') ? Number(val('o-siniva')) : null,
+            inusual: val('o-inusual')
+          }
+        });
+        pintarSemaforo(r);
+      } catch (e) { /* no interrumpe la captura */ }
+    }, 420);
+  }
+
+  function pintarSemaforo(r) {
+    var box = g('o-semaforo');
+    box.classList.remove('is-avisa', 'is-limpio');
+    var titulo, detalle;
+    if (r.genera_aviso) {
+      box.classList.add('is-avisa');
+      titulo = 'Esta operación genera aviso';
+      detalle = {
+        umbral: 'Por sí sola rebasa el umbral de ' + pesos(r.umbral_pesos) + '.',
+        acumulacion: 'Por separado no lo rebasa, pero sumada con las ' + r.operaciones_en_ventana +
+          ' operación(es) de este cliente desde el ' + fechaCorta(r.ventana_desde) +
+          ' llega a ' + pesos(r.monto_acumulado) + ', arriba del umbral.',
+        inusual: 'Está marcada como inusual, así que se reporta sin importar el monto. Corre el plazo de 24 horas.'
+      }[r.motivo_aviso] || 'Rebasa el umbral vigente.';
+    } else {
+      box.classList.add('is-limpio');
+      titulo = 'No genera aviso';
+      detalle = 'Le faltan ' + pesos(r.faltante_para_umbral) + ' para el umbral. ' +
+        'Ojo: si este cliente hace otra operación en los próximos meses, se suman.';
+    }
+    box.innerHTML = '<div class="cp-semaforo__titulo">' + esc(titulo) + '</div>' +
+      '<div class="cp-semaforo__detalle">' + esc(detalle) + '</div>' +
+      '<div class="cp-cifras">' +
+      '<div><div class="cp-cifra__l">Esta operación</div><div class="cp-cifra__v">' + pesos(r.monto_operacion) + '</div></div>' +
+      '<div><div class="cp-cifra__l">Acumulado del cliente</div><div class="cp-cifra__v">' + pesos(r.monto_acumulado) + '</div></div>' +
+      '</div>';
+  }
+
+  async function guardarOperacion() {
+    var exp = val('o-exp');
+    if (!exp) { toast('Elige el cliente.', 'error'); return; }
+    var monto = Number(val('o-monto') || 0);
+    if (!monto) { toast('Captura el monto.', 'error'); return; }
+    try {
+      var r = await api('/pld/operaciones', {
+        method: 'POST',
+        json: {
+          expediente_id: exp,
+          tipo_operacion: val('o-tipo'),
+          fecha_operacion: val('o-fecha') || new Date().toISOString().slice(0, 10),
+          monto: monto,
+          monto_sin_iva: val('o-siniva') ? Number(val('o-siniva')) : null,
+          forma_pago: val('o-pago'),
+          monto_efectivo: Number(val('o-efectivo') || 0),
+          inusual: val('o-inusual'),
+          inusual_motivo: val('o-inusual-motivo') || null
+        }
+      });
+      if (r && r.operacion) OPERACIONES.unshift(r.operacion);
+      pintarOperaciones();
+      cerrarModal('m-op');
+      toast(r.evaluacion && r.evaluacion.genera_aviso
+        ? 'Operación guardada. Genera aviso.'
+        : 'Operación guardada.', 'success');
+      cargar();
+    } catch (e) {
+      toast('No se pudo guardar: ' + e.message, 'error');
+    }
+  }
+
+  /* ══════════════ AVISOS ══════════════ */
+  function pintarPeriodos() {
+    var ps = (RESUMEN && RESUMEN.periodos_pendientes) || [];
+    if (!ps.length) {
+      g('cp-periodos').innerHTML =
+        '<div class="bk-card bk-card--pad"><div class="cp-sub">No hay operaciones pendientes de reportar.</div></div>';
+      return;
+    }
+    g('cp-periodos').innerHTML = ps.map(function (p) {
+      var urg = p.vencido || p.dias_restantes <= 7;
+      return '<div class="bk-card bk-card--pad">' +
+        '<div class="bk-cluster" style="justify-content:space-between;flex-wrap:wrap;gap:var(--sp-4);">' +
+        '<div><div class="cp-nombre">Periodo ' + esc(p.periodo) + '</div>' +
+        '<div class="cp-sub">' + p.operaciones + ' operación(es) · ' + pesos(p.monto) + '</div>' +
+        '<div class="cp-sub">Fecha límite: ' + fechaCorta(p.fecha_limite) + ' · ' +
+        (p.vencido ? 'vencido hace ' + Math.abs(p.dias_restantes) + ' días'
+                   : 'faltan ' + p.dias_restantes + ' días') + '</div></div>' +
+        '<div class="bk-cluster">' +
+        (urg ? '<span class="bk-badge bk-badge--danger">Urgente</span>' : '') +
+        '<button class="bk-btn bk-btn--forest bk-btn--sm" data-generar="' + esc(p.periodo) + '" type="button">Generar aviso</button>' +
+        '</div></div></div>';
+    }).join('');
+  }
+
+  function pintarAvisos() {
+    var avisos = (RESUMEN && RESUMEN.avisos) || [];
+    g('cp-avisos-body').innerHTML = avisos.map(function (a) {
+      var badge = {
+        borrador: '<span class="bk-badge">Borrador</span>',
+        generado: '<span class="bk-badge bk-badge--warn">Por presentar</span>',
+        presentado: '<span class="bk-badge bk-badge--success">Presentado</span>',
+        rechazado: '<span class="bk-badge bk-badge--danger">Rechazado</span>'
+      }[a.estatus] || '<span class="bk-badge">' + esc(a.estatus || '') + '</span>';
+      return '<tr><td>' + esc(a.periodo) + '</td>' +
+        '<td><span class="cp-sub">' + esc(a.referencia || '') + '</span></td>' +
+        '<td class="num">' + (a.num_operaciones || 0) + '</td>' +
+        '<td>' + badge + '</td>' +
+        '<td style="text-align:right;">' +
+        (a.estatus !== 'presentado'
+          ? '<button class="bk-btn bk-btn--quiet bk-btn--sm" data-acuse="' + esc(a.id) + '" type="button">Registrar acuse</button>'
+          : '<span class="cp-sub">' + esc(a.acuse_folio || '') + '</span>') +
+        '</td></tr>';
+    }).join('');
+  }
+
+  async function generarAviso(periodo) {
+    try {
+      var r = await api('/pld/avisos/generar', { method: 'POST', json: { periodo: periodo } });
+      xmlActual = r.xml || '';
+      xmlNombre = 'aviso-' + periodo + '.xml';
+      var incompletos = r.expedientes_incompletos || [];
+      g('m-aviso-body').innerHTML =
+        '<p style="font-size:var(--fs-sm);color:var(--ink-2);line-height:var(--lh);">' +
+        'Se armó el aviso del periodo <strong>' + esc(periodo) + '</strong> con ' +
+        r.num_operaciones + ' operación(es) por ' + pesos(r.monto_total) +
+        '. Fecha límite: <strong>' + fechaCorta(r.fecha_limite) + '</strong>.</p>' +
+        (incompletos.length
+          ? '<div class="bk-alert bk-alert--warn" style="margin-top:var(--sp-4);">' +
+            '<span>Hay ' + incompletos.length + ' expediente(s) incompleto(s) en este aviso: ' +
+            esc(incompletos.join(', ')) + '. Complétalos antes de presentarlo.</span></div>'
+          : '') +
+        (r.advertencia
+          ? '<div class="bk-alert bk-alert--info" style="margin-top:var(--sp-4);"><span>' +
+            esc(r.advertencia) + '</span></div>'
+          : '') +
+        '<p style="font-size:var(--fs-caption);color:var(--mute);margin-top:var(--sp-4);">' +
+        'Descarga el archivo y súbelo al portal del SAT. Cuando tengas el acuse, regístralo aquí.</p>';
+      abrirModal('m-aviso');
+      cargar();
+    } catch (e) {
+      toast(e.message, 'error');
+    }
+  }
+
+  async function registrarAcuse(id) {
+    var folio = window.prompt('Folio del acuse que te dio el portal del SAT:');
+    if (!folio) return;
+    try {
+      await api('/pld/avisos/' + encodeURIComponent(id) + '/presentado',
+                { method: 'POST', json: { acuse_folio: folio } });
+      toast('Acuse registrado.', 'success');
+      cargar();
+    } catch (e) { toast(e.message, 'error'); }
+  }
+
+  /* ══════════════ BITÁCORA ══════════════ */
+  var ACCIONES = {
+    expediente_creado: 'Expediente creado',
+    config_actualizada: 'Ajustes modificados',
+    documento_subido: 'Documento agregado',
+    documento_consultado: 'Documento consultado',
+    liga_enviada: 'Liga enviada al cliente',
+    cliente_actualizo: 'El cliente capturó datos',
+    cliente_firmo: 'El cliente firmó',
+    pep_revisado: 'Revisión de PEP',
+    operacion_registrada: 'Operación registrada',
+    operacion_actualizada: 'Operación modificada',
+    umbral_rebasado: 'Umbral rebasado',
+    inusual_detectada: 'Operación inusual detectada',
+    aviso_generado: 'Aviso generado',
+    aviso_presentado: 'Aviso presentado'
+  };
+
+  async function cargarBitacora() {
+    try {
+      var r = await api('/pld/bitacora?limit=200');
+      var ev = r.eventos || [];
+      if (!ev.length) {
+        g('cp-bitacora').innerHTML = '<div class="cp-sub">Todavía no hay movimientos registrados.</div>';
+        return;
+      }
+      g('cp-bitacora').innerHTML = ev.map(function (e) {
+        return '<div class="cp-evento"><span class="cp-evento__punto"></span>' +
+          '<div class="cp-evento__c">' +
+          '<div class="cp-evento__a">' + esc(ACCIONES[e.accion] || e.accion) + '</div>' +
+          (e.detalle ? '<div class="cp-evento__d">' + esc(e.detalle) + '</div>' : '') +
+          '<div class="cp-evento__m">' + fechaCorta(e.created_at) +
+          (e.actor ? ' · ' + esc(e.actor) : '') + '</div>' +
+          '</div></div>';
+      }).join('');
+    } catch (e) {
+      g('cp-bitacora').innerHTML = '<div class="cp-sub">No se pudo cargar la bitácora.</div>';
+    }
+  }
+
+  /* ══════════════ AJUSTES ══════════════ */
+  function llenarAjustes() {
+    var c = CONFIG || {};
+    val('cf-alta', c.alta_sppld); val('cf-folio', c.folio_padron);
+    val('cf-fecha-alta', c.fecha_alta); val('cf-fraccion', c.fraccion || 'V');
+    val('cf-resp-nombre', c.responsable_nombre); val('cf-resp-rfc', c.responsable_rfc);
+    val('cf-resp-email', c.responsable_email);
+    val('cf-uma', c.valor_uma); val('cf-vig', c.vigencia_uma);
+    val('cf-umbral', c.umbral_aviso_uma); val('cf-meses', c.meses_acumulacion);
+    val('cf-dia', c.dia_limite_aviso); val('cf-ret', c.retencion_anios);
+    previewUmbral();
+  }
+
+  function previewUmbral() {
+    var u = Number(val('cf-uma') || 0) * Number(val('cf-umbral') || 0);
+    g('cf-preview').textContent = 'Umbral resultante: ' + pesos(u);
+  }
+
+  async function guardarAjustes() {
+    try {
+      var r = await api('/pld/config', {
+        method: 'PUT',
+        json: {
+          alta_sppld: val('cf-alta'), folio_padron: val('cf-folio') || null,
+          fecha_alta: val('cf-fecha-alta') || null, fraccion: val('cf-fraccion'),
+          responsable_nombre: val('cf-resp-nombre') || null,
+          responsable_rfc: val('cf-resp-rfc') || null,
+          responsable_email: val('cf-resp-email') || null,
+          valor_uma: Number(val('cf-uma') || 0) || null,
+          vigencia_uma: val('cf-vig') || null,
+          umbral_aviso_uma: Number(val('cf-umbral') || 0) || null,
+          meses_acumulacion: Number(val('cf-meses') || 0) || null,
+          dia_limite_aviso: Number(val('cf-dia') || 0) || null,
+          retencion_anios: Number(val('cf-ret') || 0) || null
+        }
+      });
+      CONFIG = r.config;
+      toast('Ajustes guardados.', 'success');
+      cargar();
+    } catch (e) { toast(e.message, 'error'); }
+  }
+
+  /* ══════════════ EVENTOS ══════════════ */
+  function conectar() {
+    g('cp-tabs').addEventListener('click', function (ev) {
+      var b = ev.target.closest('.bk-tab');
+      if (!b) return;
+      Array.prototype.forEach.call(g('cp-tabs').children, function (x) { x.classList.remove('is-active'); });
+      b.classList.add('is-active');
+      ['expedientes', 'operaciones', 'avisos', 'bitacora', 'ajustes'].forEach(function (v) {
+        g('v-' + v).classList.toggle('cp-oculto', v !== b.dataset.vista);
+      });
+      if (b.dataset.vista === 'bitacora') cargarBitacora();
+    });
+
+    g('cp-buscar').addEventListener('input', pintarExpedientes);
+    g('cp-filtro-estatus').addEventListener('change', pintarExpedientes);
+
+    function nuevo() {
+      expActual = null;
+      docsActual = [];
+      g('m-exp-titulo').textContent = 'Nuevo expediente';
+      g('m-exp-estado').textContent = '';
+      ['e-nombre','e-ap','e-am','e-fnac','e-curp','e-rfc','e-nac','e-ocup','e-act','e-tel','e-mail',
+       'e-idtipo','e-idnum','e-idaut','e-idvig','e-razon','e-fcons','e-rfcm','e-folio','e-giro',
+       'e-rnom','e-rap','e-ram','e-rcurp','e-rrfc','e-ridnum','e-rpoder','e-rnot','e-calle','e-next',
+       'e-nint','e-col','e-cp','e-mun','e-edo','e-origen','e-prop','e-bcnom','e-bcap','e-bcam',
+       'e-bcfnac','e-bccurp','e-bcrfc','e-bcpct','e-pepcargo','e-pepdep','e-peppar']
+        .forEach(function (k) { val(k, ''); });
+      val('e-tipo', 'fisica'); val('e-rol', 'cliente');
+      val('e-nac', 'Mexicana'); val('e-edo', 'Michoacán');
+      val('e-bc-mismo', true); val('e-pep', false);
+      g('e-pep-estado').textContent = 'Sin revisar';
+      g('e-liga-box').classList.add('cp-oculto');
+      alternarTipo(); alternarBc(); alternarPep(); verPaso('datos');
+      abrirModal('m-exp');
+    }
+    g('cp-nuevo-exp').addEventListener('click', nuevo);
+    g('cp-nuevo-exp-2').addEventListener('click', nuevo);
+
+    g('cp-exp-body').addEventListener('click', function (ev) {
+      var tr = ev.target.closest('tr[data-id]');
+      if (tr) abrirExpediente(tr.dataset.id);
+    });
+
+    g('m-exp-seg').addEventListener('click', function (ev) {
+      var b = ev.target.closest('.bk-seg__btn');
+      if (b) verPaso(b.dataset.paso);
+    });
+
+    g('e-tipo').addEventListener('change', alternarTipo);
+    g('e-bc-mismo').addEventListener('change', alternarBc);
+    g('e-pep').addEventListener('change', alternarPep);
+    g('e-guardar').addEventListener('click', guardarExpediente);
+
+    g('e-pep-revisar').addEventListener('click', async function () {
+      if (!expActual || !expActual.id) { toast('Guarda el expediente primero.', 'error'); return; }
+      try {
+        await sb('pld_expedientes?id=eq.' + encodeURIComponent(expActual.id), 'PATCH',
+                 { pep_revisado_at: new Date().toISOString() });
+        expActual.pep_revisado_at = new Date().toISOString();
+        g('e-pep-estado').textContent = 'Revisado el ' + fechaCorta(expActual.pep_revisado_at);
+        await refrescarEstado(expActual.id);
+        toast('Revisión registrada.', 'success');
+      } catch (e) { toast(e.message, 'error'); }
+    });
+
+    /* Documentos */
+    var tipoPendiente = null;
+    g('e-docs').addEventListener('click', async function (ev) {
+      var subir = ev.target.closest('[data-subir]');
+      if (subir) {
+        if (!expActual || !expActual.id) { toast('Guarda el expediente antes de subir documentos.', 'error'); return; }
+        tipoPendiente = subir.dataset.subir;
+        g('e-file').click();
+        return;
+      }
+      var ver = ev.target.closest('[data-ver]');
+      if (ver) {
+        try {
+          var r = await api('/pld/documentos/' + encodeURIComponent(ver.dataset.ver) + '/ver');
+          window.open(r.url, '_blank', 'noopener');
+        } catch (e) { toast(e.message, 'error'); }
+      }
+    });
+
+    g('e-file').addEventListener('change', async function () {
+      var f = this.files && this.files[0];
+      this.value = '';
+      if (!f || !tipoPendiente || !expActual) return;
+      var fd = new FormData();
+      fd.append('tipo', tipoPendiente);
+      fd.append('archivo', f);
+      try {
+        var tok = await window.brokrSb.ensureToken();
+        var r = await fetch(API_BASE + '/pld/expedientes/' + encodeURIComponent(expActual.id) + '/documentos',
+          { method: 'POST', headers: { Authorization: 'Bearer ' + tok }, body: fd });
+        var d = await r.json();
+        if (!r.ok) throw new Error(d.detail || 'No se pudo subir.');
+        docsActual = docsActual.filter(function (x) { return x.tipo !== tipoPendiente; });
+        if (d.documento) docsActual.push(d.documento);
+        pintarDocs();
+        await refrescarEstado(expActual.id);
+        toast('Documento agregado.', 'success');
+      } catch (e) { toast(e.message, 'error'); }
+      tipoPendiente = null;
+    });
+
+    /* Liga del cliente */
+    g('e-liga').addEventListener('click', async function () {
+      if (!expActual || !expActual.id) { toast('Guarda el expediente primero.', 'error'); return; }
+      try {
+        var r = await api('/pld/expedientes/' + encodeURIComponent(expActual.id) + '/liga', { method: 'POST' });
+        g('e-liga-url').value = r.url;
+        g('e-liga-box').classList.remove('cp-oculto');
+        toast('Liga lista, vigente ' + r.dias + ' días.', 'success');
+      } catch (e) { toast(e.message, 'error'); }
+    });
+    g('e-liga-copiar').addEventListener('click', function () {
+      var i = g('e-liga-url');
+      i.select();
+      try { document.execCommand('copy'); toast('Liga copiada.', 'success'); }
+      catch (e) { toast('Copia la liga a mano.', 'error'); }
+    });
+
+    /* Operaciones */
+    function nuevaOp() {
+      val('o-exp', ''); val('o-tipo', 'compraventa');
+      val('o-fecha', new Date().toISOString().slice(0, 10));
+      val('o-monto', ''); val('o-siniva', ''); val('o-pago', 'transferencia');
+      val('o-efectivo', '0'); val('o-inusual', false); val('o-inusual-motivo', '');
+      g('o-inusual-box').classList.add('cp-oculto');
+      g('o-semaforo').className = 'cp-semaforo';
+      g('o-semaforo').innerHTML =
+        '<div class="cp-semaforo__titulo">Captura el cliente y el monto</div>' +
+        '<div class="cp-semaforo__detalle">Al escribir, te digo si esta operación genera aviso.</div>';
+      abrirModal('m-op');
+    }
+    g('cp-nueva-op').addEventListener('click', function () {
+      if (!EXPEDIENTES.length) { toast('Primero crea el expediente del cliente.', 'error'); return; }
+      nuevaOp();
+    });
+    ['o-exp', 'o-monto', 'o-siniva', 'o-fecha'].forEach(function (k) {
+      g(k).addEventListener('input', pedirSemaforo);
+      g(k).addEventListener('change', pedirSemaforo);
+    });
+    g('o-inusual').addEventListener('change', function () {
+      g('o-inusual-box').classList.toggle('cp-oculto', !this.checked);
+      pedirSemaforo();
+    });
+    g('o-guardar').addEventListener('click', guardarOperacion);
+
+    /* Avisos */
+    g('cp-periodos').addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-generar]');
+      if (b) generarAviso(b.dataset.generar);
+    });
+    g('cp-avisos-body').addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-acuse]');
+      if (b) registrarAcuse(b.dataset.acuse);
+    });
+    g('a-descargar').addEventListener('click', function () {
+      if (!xmlActual) return;
+      var blob = new Blob([xmlActual], { type: 'application/xml' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = xmlNombre;
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+    });
+
+    /* Ajustes */
+    ['cf-uma', 'cf-umbral'].forEach(function (k) { g(k).addEventListener('input', previewUmbral); });
+    g('cf-guardar').addEventListener('click', guardarAjustes);
+
+    /* Cierre de modales */
+    document.addEventListener('click', function (ev) {
+      var c = ev.target.closest('[data-cerrar]');
+      if (c) cerrarModal(c.dataset.cerrar);
+    });
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape') ['m-exp', 'm-op', 'm-aviso'].forEach(cerrarModal);
+    });
+  }
+
+  function arrancar() {
+    conectar();
+    var intentos = 0;
+    (function esperar() {
+      if (window.brokrSb && window.brokrSb.rest) { cargar(); return; }
+      if (++intentos > 60) { toast('No se pudo conectar. Recarga la página.', 'error'); return; }
+      setTimeout(esperar, 250);
+    })();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', arrancar);
+  else arrancar();
+})();
+</script>
+
+<script src="app-shell.js" defer></script>
+</body>
+</html>
