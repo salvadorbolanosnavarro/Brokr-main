@@ -120,25 +120,28 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
 }
 .ld-sec-head p { font-size: var(--fs-body); line-height: 1.6; color: var(--mute); }
 
-/* ── Módulos: un video al centro, los módulos orbitando ─────── */
-/* Antes eran 8 tarjetas con video propio. Cada video tenía que
-   vivir en el repositorio y GitHub no acepta archivos grandes.
-   Ahora hay un solo recorrido alojado en YouTube y los módulos se
-   acomodan alrededor del marco, ligeramente desalineados para que
-   se sienta armado a mano y no una rejilla más. */
+/* ── Módulos: el video manda, los módulos lo rodean ─────────── */
+/* Antes eran 8 tarjetas con video propio, cada una alojada en el
+   repositorio. Ahora hay un solo recorrido en YouTube y se le da
+   todo el ancho posible: en columnas laterales el video se quedaba
+   con menos de la mitad del espacio. Los módulos bajaron y se
+   encogieron, regados con ángulos distintos para que la banda se
+   lea acomodada a mano y no como otra rejilla. */
 
 .mv-head { max-width: 700px; margin-left: auto; margin-right: auto; text-align: center; }
 
-.mv-orbit {
-  display: grid;
-  grid-template-columns: 1fr minmax(0, 1.35fr) 1fr;
-  gap: 28px;
-  align-items: center;
+.mv-orbit { margin-top: 8px; }
+/* Arriba de 1380px el conjunto se sale del contenedor para ganar 120px
+   más de ancho. Debajo de eso no cabe sin provocar barra horizontal.
+   Se aplica al conjunto, no solo al video, para que la banda de
+   módulos quede alineada con los bordes del marco. */
+@media (min-width: 1380px) {
+  .mv-orbit { width: calc(100% + 120px); margin-left: -60px; margin-right: -60px; }
 }
-.mv-col { display: grid; gap: 18px; }
 
 /* ── El marco del video ─────────────────────────────────────── */
-.mv-stage { display: flex; flex-direction: column; align-items: center; }
+.mv-stage { width: 100%; }
+
 .mv-frame {
   position: relative;
   width: 100%;
@@ -146,7 +149,7 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
   border-radius: var(--r-lg);
   overflow: hidden;
   background: var(--sky-navy);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-xl);
 }
 .mv-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
 
@@ -175,7 +178,7 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
 .mv-poster__velo {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, var(--sky-navy), rgba(5,32,60,.15));
+  background: linear-gradient(to top, var(--sky-navy), rgba(5,32,60,.12));
 }
 .mv-poster__c {
   position: absolute;
@@ -184,13 +187,13 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: 16px;
   padding: 24px;
   text-align: center;
 }
 .mv-poster__play {
-  width: 74px;
-  height: 74px;
+  width: 88px;
+  height: 88px;
   border-radius: 50%;
   background: var(--bone);
   color: var(--sky-blue);
@@ -199,43 +202,47 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
   box-shadow: var(--shadow-lg);
   transition: transform .22s ease;
 }
-.mv-poster__play svg { width: 30px; height: 30px; margin-left: 4px; }
+.mv-poster__play svg { width: 36px; height: 36px; margin-left: 5px; }
 .mv-poster:hover .mv-poster__play { transform: scale(1.08); }
 .mv-poster__t {
   font-family: var(--font-display);
-  font-size: clamp(19px, 2.1vw, 25px);
+  font-size: clamp(21px, 2.4vw, 32px);
   font-weight: 700;
   letter-spacing: -.02em;
   color: var(--bone);
 }
-.mv-poster__d { font-size: var(--fs-sm); color: rgba(255,255,255,.78); max-width: 320px; line-height: 1.5; }
-.mv-pie {
-  font-size: var(--fs-caption);
-  color: var(--mute);
-  margin-top: 14px;
-  text-align: center;
-}
+.mv-poster__d { font-size: var(--fs-body); color: rgba(255,255,255,.80); max-width: 420px; line-height: 1.5; }
 
-/* ── Las fichas de módulo ───────────────────────────────────── */
+/* ── La banda de módulos ────────────────────────────────────── */
+.mv-nube {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: stretch;
+  gap: 14px;
+  margin-top: 34px;
+}
 .mv-chip {
   display: flex;
-  gap: 13px;
+  gap: 11px;
   align-items: flex-start;
+  flex: 1 1 236px;
+  max-width: 310px;
   background: var(--bone);
   border: 1px solid var(--line-2);
   border-radius: var(--r);
-  padding: 16px 18px;
+  padding: 13px 15px;
   box-shadow: var(--shadow-sm);
   transition: transform .24s ease, box-shadow .24s ease, border-color .24s ease;
 }
 .mv-chip:hover {
-  transform: rotate(0deg) translateX(0) translateY(-3px);
+  transform: rotate(0deg) translateY(-4px);
   box-shadow: var(--shadow-md);
   border-color: var(--sky-blue);
 }
 .mv-chip__ico {
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   flex-shrink: 0;
   border-radius: var(--r-sm);
   background: var(--sky-canvas);
@@ -243,7 +250,7 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
   display: grid;
   place-items: center;
 }
-.mv-chip__ico svg { width: 19px; height: 19px; }
+.mv-chip__ico svg { width: 17px; height: 17px; }
 .mv-chip__c { min-width: 0; }
 .mv-chip__tag {
   display: inline-block;
@@ -253,50 +260,50 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
   font-weight: 600;
   color: var(--sky-blue);
   background: var(--sky-canvas);
-  padding: 2px 8px;
+  padding: 1px 7px;
   border-radius: var(--r-pill);
-  margin-bottom: 5px;
+  margin-bottom: 4px;
 }
 .mv-chip__tag.free { color: var(--success); background: var(--success-soft); }
 .mv-chip__tag.nuevo { color: var(--forest); background: var(--forest-soft); }
 .mv-chip h3 {
   font-family: var(--font-display);
-  font-size: var(--fs-h5);
+  font-size: var(--fs-sm);
   font-weight: 700;
-  letter-spacing: -.02em;
+  letter-spacing: -.01em;
   color: var(--ink);
-  margin-bottom: 3px;
+  margin-bottom: 2px;
+  line-height: 1.25;
 }
-.mv-chip p { font-size: var(--fs-caption); line-height: 1.5; color: var(--mute); }
+.mv-chip p { font-size: var(--fs-caption); line-height: 1.45; color: var(--mute); }
 .mv-chip.is-nuevo { border-color: var(--forest); }
 
-/* El desorden. Cada ficha con su propio ángulo y corrimiento, para
-   que la columna no se lea como una lista alineada. */
-.mv-chip--a { transform: rotate(-1.6deg) translateX(6px); }
-.mv-chip--b { transform: rotate(1.1deg)  translateX(-10px); }
-.mv-chip--c { transform: rotate(-.7deg)  translateX(14px); }
-.mv-chip--d { transform: rotate(1.9deg)  translateX(-6px); }
-.mv-chip--e { transform: rotate(-1.2deg) translateX(10px); }
-.mv-chip--f { transform: rotate(1.4deg)  translateX(-8px); }
-.mv-chip--g { transform: rotate(-1.9deg) translateX(12px); }
-.mv-chip--h { transform: rotate(.8deg)   translateX(-14px); }
-.mv-chip--i { transform: rotate(-1.1deg) translateX(4px); }
-.mv-chip--j { transform: rotate(1.7deg)  translateX(-10px); }
+/* El desorden: cada ficha con su propio ángulo y su corrimiento. */
+.mv-chip--a { transform: rotate(-1.6deg) translateY(5px); }
+.mv-chip--b { transform: rotate(1.2deg)  translateY(-4px); }
+.mv-chip--c { transform: rotate(-.8deg)  translateY(7px); }
+.mv-chip--d { transform: rotate(1.9deg)  translateY(-3px); }
+.mv-chip--e { transform: rotate(-1.3deg) translateY(4px); }
+.mv-chip--f { transform: rotate(1.5deg)  translateY(6px); }
+.mv-chip--g { transform: rotate(-1.9deg) translateY(-5px); }
+.mv-chip--h { transform: rotate(.9deg)   translateY(5px); }
+.mv-chip--i { transform: rotate(-1.1deg) translateY(-4px); }
+.mv-chip--j { transform: rotate(1.7deg)  translateY(3px); }
 
-/* En pantallas medianas el video se va arriba y las fichas quedan
-   en dos columnas debajo. El ángulo se conserva pero sin corrimiento,
-   que en poco ancho se sentiría descuadrado en lugar de espontáneo. */
-@media (max-width: 1080px) {
-  .mv-orbit { grid-template-columns: 1fr 1fr; gap: 20px; }
-  .mv-stage { grid-column: 1 / -1; order: -1; margin-bottom: 12px; }
-  .mv-col { align-content: start; }
-  .mv-chip { transform: none; }
-  .mv-chip:hover { transform: translateY(-3px); }
+/* En tablet, dos por renglón: cinco renglones parejos. Dejarlo suelto
+   daba un último renglón de una sola ficha, que se lee como sobrante. */
+@media (max-width: 1180px) and (min-width: 701px) {
+  .mv-chip { flex: 1 1 calc(50% - 7px); max-width: none; }
 }
-@media (max-width: 640px) {
-  .mv-orbit { grid-template-columns: 1fr; }
-  .mv-poster__play { width: 60px; height: 60px; }
-  .mv-poster__play svg { width: 24px; height: 24px; }
+
+/* En celular las fichas se enderezan: con poco ancho, el ángulo se
+   lee como descuadre y no como intención. */
+@media (max-width: 700px) {
+  .mv-nube { gap: 10px; margin-top: 26px; }
+  .mv-chip { flex: 1 1 100%; transform: none; }
+  .mv-chip:hover { transform: translateY(-3px); }
+  .mv-poster__play { width: 62px; height: 62px; }
+  .mv-poster__play svg { width: 25px; height: 25px; }
   .mv-poster__d { display: none; }
 }
 
@@ -476,65 +483,7 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
 
     <div class="mv-orbit">
 
-      <!-- Columna izquierda -->
-      <div class="mv-col">
-        <article class="mv-chip mv-chip--a">
-          <span class="mv-chip__ico">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
-          </span>
-          <div class="mv-chip__c">
-            <span class="mv-chip__tag free">Gratis</span>
-            <h3>CRM inmobiliario</h3>
-            <p>Contactos, leads, tareas y tu inventario, en un solo lugar.</p>
-          </div>
-        </article>
-
-        <article class="mv-chip mv-chip--b">
-          <span class="mv-chip__ico">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/></svg>
-          </span>
-          <div class="mv-chip__c">
-            <span class="mv-chip__tag">Broquer Max</span>
-            <h3>Broq, tu asistente con IA</h3>
-            <p>Pregúntale por tu inventario, pídele fichas o cálculos. Por voz o texto.</p>
-          </div>
-        </article>
-
-        <article class="mv-chip mv-chip--c">
-          <span class="mv-chip__ico">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"/></svg>
-          </span>
-          <div class="mv-chip__c">
-            <span class="mv-chip__tag">Broquer Max</span>
-            <h3>WhatsApp con IA</h3>
-            <p>Contesta, califica y agenda por ti, a cualquier hora del día.</p>
-          </div>
-        </article>
-
-        <article class="mv-chip mv-chip--d">
-          <span class="mv-chip__ico">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
-          </span>
-          <div class="mv-chip__c">
-            <span class="mv-chip__tag">Broquer Max</span>
-            <h3>Valuación inteligente</h3>
-            <p>Comparables reales y análisis con IA. Llega a la captación con números.</p>
-          </div>
-        </article>
-
-        <article class="mv-chip mv-chip--e">
-          <span class="mv-chip__ico">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V13.5zm0 2.25h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V18zm2.498-6.75h.007v.008h-.007v-.008zm0 2.25h.007v.008h-.007V13.5zm0 2.25h.007v.008h-.007v-.008zm0 2.25h.007v.008h-.007V18zm2.504-6.75h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V13.5zm0 2.25h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V18zm2.498-6.75h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V13.5zM8.25 6h7.5v2.25h-7.5V6zM12 2.25c-1.892 0-3.758.11-5.593.322C5.307 2.7 4.5 3.65 4.5 4.757V19.5a2.25 2.25 0 002.25 2.25h10.5a2.25 2.25 0 002.25-2.25V4.757c0-1.108-.806-2.057-1.907-2.185A48.507 48.507 0 0012 2.25z"/></svg>
-          </span>
-          <div class="mv-chip__c">
-            <span class="mv-chip__tag">Broquer Max</span>
-            <h3>Calculadora de ISR</h3>
-            <p>El impuesto por enajenación con deducciones y exenciones, en minutos.</p>
-          </div>
-        </article>
-      </div>
-
-      <!-- El video -->
+      <!-- El video manda: se lleva todo el ancho disponible -->
       <div class="mv-stage">
         <!-- Para publicarlo: sustituye REEMPLAZA_CON_TU_ID por el
              identificador del video de YouTube. Es lo que aparece
@@ -552,11 +501,65 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
             </span>
           </button>
         </div>
-        <p class="mv-pie">Un solo recorrido, todos los módulos. Sin registro, sin correo.</p>
       </div>
 
-      <!-- Columna derecha -->
-      <div class="mv-col">
+      <!-- Los diez módulos, regados alrededor del marco -->
+      <div class="mv-nube">
+        <article class="mv-chip mv-chip--a">
+          <span class="mv-chip__ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+          </span>
+          <div class="mv-chip__c">
+            <span class="mv-chip__tag free">Gratis</span>
+            <h3>CRM inmobiliario</h3>
+            <p>Contactos, leads, tareas e inventario en un solo lugar.</p>
+          </div>
+        </article>
+
+        <article class="mv-chip mv-chip--b">
+          <span class="mv-chip__ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/></svg>
+          </span>
+          <div class="mv-chip__c">
+            <span class="mv-chip__tag">Broquer Max</span>
+            <h3>Broq, tu asistente con IA</h3>
+            <p>Pregúntale por tu inventario. Por voz o texto.</p>
+          </div>
+        </article>
+
+        <article class="mv-chip mv-chip--c">
+          <span class="mv-chip__ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"/></svg>
+          </span>
+          <div class="mv-chip__c">
+            <span class="mv-chip__tag">Broquer Max</span>
+            <h3>WhatsApp con IA</h3>
+            <p>Contesta, califica y agenda por ti a cualquier hora.</p>
+          </div>
+        </article>
+
+        <article class="mv-chip mv-chip--d">
+          <span class="mv-chip__ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
+          </span>
+          <div class="mv-chip__c">
+            <span class="mv-chip__tag">Broquer Max</span>
+            <h3>Valuación inteligente</h3>
+            <p>Comparables reales y análisis con inteligencia artificial.</p>
+          </div>
+        </article>
+
+        <article class="mv-chip mv-chip--e">
+          <span class="mv-chip__ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V13.5zm0 2.25h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V18zm2.498-6.75h.007v.008h-.007v-.008zm0 2.25h.007v.008h-.007V13.5zm0 2.25h.007v.008h-.007v-.008zm0 2.25h.007v.008h-.007V18zm2.504-6.75h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V13.5zm0 2.25h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V18zm2.498-6.75h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V13.5zM8.25 6h7.5v2.25h-7.5V6zM12 2.25c-1.892 0-3.758.11-5.593.322C5.307 2.7 4.5 3.65 4.5 4.757V19.5a2.25 2.25 0 002.25 2.25h10.5a2.25 2.25 0 002.25-2.25V4.757c0-1.108-.806-2.057-1.907-2.185A48.507 48.507 0 0012 2.25z"/></svg>
+          </span>
+          <div class="mv-chip__c">
+            <span class="mv-chip__tag">Broquer Max</span>
+            <h3>Calculadora de ISR</h3>
+            <p>El impuesto por enajenación, con deducciones, en minutos.</p>
+          </div>
+        </article>
+
         <article class="mv-chip mv-chip--f">
           <span class="mv-chip__ico">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
@@ -564,7 +567,7 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
           <div class="mv-chip__c">
             <span class="mv-chip__tag">Broquer Max</span>
             <h3>Contratos en minutos</h3>
-            <p>Compraventa y arrendamiento listos para revisión, con tus datos ya puestos.</p>
+            <p>Compraventa y arrendamiento listos para revisión.</p>
           </div>
         </article>
 
@@ -575,7 +578,7 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
           <div class="mv-chip__c">
             <span class="mv-chip__tag">Broquer Max</span>
             <h3>Fichas técnicas</h3>
-            <p>Cualquier propiedad en un PDF impecable, listo para mandar por WhatsApp.</p>
+            <p>Cualquier propiedad en un PDF listo para WhatsApp.</p>
           </div>
         </article>
 
@@ -586,7 +589,7 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
           <div class="mv-chip__c">
             <span class="mv-chip__tag">Broquer Max</span>
             <h3>Editor de imágenes con IA</h3>
-            <p>Limpia y mejora las fotos de tus propiedades. Sin contratar diseñador.</p>
+            <p>Fotos que venden, sin contratar diseñador.</p>
           </div>
         </article>
 
@@ -597,7 +600,7 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
           <div class="mv-chip__c">
             <span class="mv-chip__tag">Broquer Max</span>
             <h3>Anuncios en Facebook</h3>
-            <p>Campañas de captación desde la plataforma, con textos generados por IA.</p>
+            <p>Campañas de captación con textos generados por IA.</p>
           </div>
         </article>
 
@@ -608,7 +611,7 @@ body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); lette
           <div class="mv-chip__c">
             <span class="mv-chip__tag nuevo">Nuevo</span>
             <h3>Cumplimiento PLD/UIF</h3>
-            <p>El expediente de cada cliente, el control de umbrales y los avisos a la UIF.</p>
+            <p>Expedientes, control de umbrales y avisos a la UIF.</p>
           </div>
         </article>
       </div>
