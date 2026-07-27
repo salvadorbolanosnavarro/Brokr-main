@@ -155,6 +155,14 @@ try:
 except Exception as _e:
     print(f"[org] No se pudo montar el router de organizaciones: {_e}")
 
+# Cumplimiento PLD/UIF: expediente único, umbrales, avisos y bitácora.
+# Mismo import defensivo: si falla, el resto del backend sigue vivo.
+try:
+    from routers.cumplimiento import router as pld_router
+    app.include_router(pld_router)
+except Exception as _e:
+    print(f"[pld] No se pudo montar el router de cumplimiento: {_e}")
+
 CONFIG_FILE = Path(__file__).parent / "config.json"
 
 def load_config() -> dict:

@@ -237,6 +237,7 @@
     { key:'estadisticas', href:'estadisticas.html',  label:'Estadísticas',    group:'crm',  icon:'chart' },
     { key:'whatsapp',     href:'whatsapp.html',      label:'WhatsApp',        group:'main', icon:'whatsapp' },
     { key:'contratos',    href:'contratos.html',     label:'Contratos',       group:'main', icon:'document' },
+    { key:'cumplimiento', href:'cumplimiento.html',  label:'Cumplimiento',    group:'main', icon:'shield' },
     { key:'avm',          href:'avm.html',           label:'Estimación de valor', group:'main', icon:'peso' },
     { key:'ficha-manual', href:'ficha-manual.html',  label:'Ficha técnica',   group:'main', icon:'landscape' },
     { key:'isr',          href:'isr.html',           label:'ISR',             group:'main', icon:'calculator' },
@@ -259,6 +260,7 @@
     'estadisticas': 'Estadísticas — captación, pipeline e inmuebles con más interés',
     'mi-sitio':     'Mi sitio — perfil público, plantilla y sitio web del agente',
     'contratos':    'Contratos — arrendamiento y promesa de compraventa',
+    'cumplimiento': 'Cumplimiento PLD/UIF — expediente único de identificación del cliente, umbrales de aviso, acumulación de operaciones, avisos al SPPLD y bitácora',
     'avm':          'Estimación de valor AVM — avalúo de mercado automatizado',
     'ficha-manual': 'Ficha Técnica Manual — crear ficha sin EasyBroker',
     'isr':          'Calculadora ISR por enajenación de inmuebles',
@@ -274,6 +276,7 @@
   const PAGE_META = {
     'equipo':        { title:'Equipo',                 sub:'Quién trabaja en tu cuenta y qué puede ver cada quien.' },
     'contratos':     { title:'Contratos',              sub:'Genera contratos listos para firma en minutos.' },
+    'cumplimiento':  { title:'Cumplimiento',           sub:'El expediente de identificación de cada cliente, el control de umbrales y los avisos a la UIF, en un solo lugar.' },
     'avm':           { title:'Estimación de valor',    sub:'Avalúo automático con comparables de tu zona.' },
     'ficha-manual':  { title:'Ficha técnica',          sub:'Crea fichas profesionales de tus propiedades.' },
     'isr':           { title:'Cálculo de ISR',         sub:'ISR por enajenación de inmuebles con el INPC vigente.' },
@@ -332,6 +335,7 @@
   const SHAARK_CHIPS_MAP = {
     home:         [{l:_CICO('document')+'Contratos', m:'Generar un contrato'}, {l:_CICO('calculator')+'Calc. ISR', m:'Calcular ISR'}, {l:_CICO('tag')+'Fichas téc.', m:'Crear ficha técnica'}, {l:_CICO('building')+'Tus Inmuebles', m:'Ver tus inmuebles'}],
     contratos:    [{l:_CICO('pencil')+'Arrendamiento', m:'Genera un contrato de arrendamiento'}, {l:_CICO('handshake')+'Promesa', m:'Genera una promesa de compraventa'}, {l:_CICO('question')+'¿Cómo funciona?', m:'¿Qué tipos de contrato puedo generar?'}],
+    cumplimiento: [{l:_CICO('shield')+'¿Genera aviso?', m:'¿Una operación de 900 mil pesos genera aviso?'}, {l:_CICO('users')+'Expediente', m:'¿Qué documentos necesito de un cliente persona moral?'}, {l:_CICO('question')+'Acumulación', m:'¿Cómo funciona la acumulación de 6 meses?'}],
     avm:          [{l:_CICO('chart')+'Valuación', m:'Valúa una casa de 3 recámaras en'}, {l:_CICO('question')+'¿Cuánto vale?', m:'¿Cuánto vale una propiedad en esta colonia?'}, {l:_CICO('building')+'Comparables', m:'¿Cómo agrego comparables?'}],
     isr:          [{l:_CICO('calculator')+'Calc. ISR', m:'Calcula el ISR para una venta de'}, {l:_CICO('document')+'Descargar PDF', m:'Descarga el reporte de ISR'}, {l:_CICO('question')+'Exención', m:'¿Cuándo aplica la exención de casa habitación?'}],
     ficha:        [{l:_CICO('search')+'Buscar prop.', m:'Genera la ficha para la propiedad EB-'}, {l:_CICO('image')+'Con fotos', m:'¿Cómo se agregan fotos a la ficha?'}],
