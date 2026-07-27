@@ -27,6 +27,7 @@ import time
 import asyncio
 import httpx
 from typing import List, Optional
+from limites import exigir_cupo, exigir_sesion
 from fastapi import APIRouter, Request, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 
@@ -716,6 +717,8 @@ async def agent(req: AgentRequest, request: Request):
     if not ANTHROPIC_API_KEY:
         raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY no configurada en el servidor.")
     user_id = await _get_user_id(request)
+    exigir_cupo(request, user_id)
+    exigir_sesion(request, user_id)
 
     system = _build_system(req.context, req.nombre)
     # Solo mensajes de usuario/asistente (sin system embebido)
@@ -839,6 +842,9 @@ _VOICE_FIXES = [
 
 @router.post("/transcribir")
 async def transcribir(request: Request, audio: UploadFile = File(...), idioma: str = Form("es")):
+    _uid = await _get_user_id(request)
+    exigir_cupo(request, _uid)
+    exigir_sesion(request, _uid)
     if not GROQ_API_KEY:
         raise HTTPException(status_code=500, detail="GROQ_API_KEY no configurada en el servidor.")
     raw = await audio.read()
