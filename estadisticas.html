@@ -1823,9 +1823,11 @@ async function descargarReporte() {
     const D = datosInmueble(p);
     const nombre = 'Reporte_' + _slug(p.clave_interna || p.titulo) + '_'
       + new Date().toISOString().slice(0, 10) + '.pdf';
+    const _tk = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || '';
     const r = await fetch(API_BASE + '/isr-pdf', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: Object.assign({ 'Content-Type': 'application/json' },
+                             _tk ? { Authorization: 'Bearer ' + _tk } : {}),
       body: JSON.stringify({ html: _reporteHtml(D), filename: nombre }),
     });
     if (!r.ok) throw new Error('El servidor no pudo generar el archivo (' + r.status + ').');

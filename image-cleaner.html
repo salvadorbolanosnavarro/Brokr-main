@@ -511,8 +511,10 @@ async function cleanAll() {
       const timeout = setTimeout(() => controller.abort(), 120000); // 2 min timeout
 
       try {
+        const _tk = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || '';
         const r = await fetch(API_BASE + '/images/clean', {
           method: 'POST',
+          headers: _tk ? { Authorization: 'Bearer ' + _tk } : {},
           body: fd,
           signal: controller.signal
         });

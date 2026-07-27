@@ -954,9 +954,11 @@ async function generarDescripcion(){
     : 'Eres un agente inmobiliario experto en México. Redacta una descripción comercial atractiva y profesional para esta propiedad. Máximo 180 palabras. Sin emojis. Sin mencionar precio.\n\nDatos:\n' + lineas + '\n\nRedacta solo la descripción:';
 
   try{
+    const _tk2 = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || '';
     const r = await fetch(API + '/chat', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: Object.assign({'Content-Type': 'application/json'},
+                             _tk2 ? { Authorization: 'Bearer ' + _tk2 } : {}),
       body: JSON.stringify({ messages: [{role:'user', content: prompt}], max_tokens: 400, temperature: 0.7 })
     });
     const txt = await r.text();
@@ -1221,9 +1223,11 @@ async function generarFicha(){
       property_images: fotos.map(f => ({ url: f.url, original: f.url }))
     };
 
+    const _tk = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || '';
     const res = await fetch(API + '/ficha-pdf', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: Object.assign({'Content-Type': 'application/json'},
+                             _tk ? { Authorization: 'Bearer ' + _tk } : {}),
       body: JSON.stringify(propData)
     });
     if(!res.ok) throw new Error('Error servidor: ' + res.status);

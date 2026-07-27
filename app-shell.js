@@ -1576,9 +1576,13 @@ body[data-app="facebook-ads"]{--page-max:980px}
 
     let data = null, usedFallback = false;
     try {
+      const _tokAgente = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || '';
       const r = await fetch(API_BASE + '/agent', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        // Se manda la sesión para que el backend sepa quién pregunta. Sin esto,
+        // Broq quedaba abierto a cualquiera en internet con nuestra cuenta.
+        headers: Object.assign({ 'Content-Type': 'application/json' },
+                               _tokAgente ? { Authorization: 'Bearer ' + _tokAgente } : {}),
         body: JSON.stringify({
           messages: shaarkMsgs,
           context: getCurrentContext(),
@@ -1601,9 +1605,11 @@ body[data-app="facebook-ads"]{--page-max:980px}
     // ── Fallback al chat clásico (/chat-claude) si /agent no está disponible ──
     if (usedFallback) {
       try {
+        const _tokChat = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || '';
         const r2 = await fetch(API_BASE + '/chat-claude', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: Object.assign({ 'Content-Type': 'application/json' },
+                                 _tokChat ? { Authorization: 'Bearer ' + _tokChat } : {}),
           body: JSON.stringify({ max_tokens: 1200, messages: shaarkMsgs, context: getCurrentContext() }),
         });
         const d2 = await r2.json();
@@ -2047,9 +2053,11 @@ body[data-app="facebook-ads"]{--page-max:980px}
         comentarios: ac.comentarios || '',
       };
       // 1) Pedir la estimación con comparables
+      const _tokAvm = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || '';
       const r1 = await fetch(API + '/api/avm-websearch', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: Object.assign({ 'Content-Type': 'application/json' },
+                               _tokAvm ? { Authorization: 'Bearer ' + _tokAvm } : {}),
         body: JSON.stringify(body),
       });
       const resultado = await r1.json();
@@ -2390,7 +2398,12 @@ body[data-app="facebook-ads"]{--page-max:980px}
       const fd = new FormData();
       fd.append('audio', blob, 'voz.' + ext);
       fd.append('idioma', 'es');
-      const r = await fetch(API_BASE + '/transcribir', { method: 'POST', body: fd });
+      const _tokVoz = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || '';
+      const r = await fetch(API_BASE + '/transcribir', {
+        method: 'POST',
+        headers: _tokVoz ? { Authorization: 'Bearer ' + _tokVoz } : {},
+        body: fd,
+      });
       if (!r.ok) throw new Error('status ' + r.status);
       const data = await r.json();
       const texto = (data.texto || '').trim();

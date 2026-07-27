@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Query, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from limites import exigir_cupo, exigir_sesion
 from pydantic import BaseModel
 import httpx
 import os
@@ -858,6 +859,9 @@ class ChatRequest(BaseModel):
 
 @app.post("/chat")
 async def chat_proxy(req: ChatRequest, request: Request):
+    _uid = await get_user_id_from_token(request)
+    exigir_cupo(request, _uid)
+    exigir_sesion(request, _uid)
     if not GROQ_API_KEY:
         raise HTTPException(status_code=500, detail="GROQ_API_KEY no configurada en el servidor")
     user_id = await get_user_id_from_token(request)
@@ -1197,6 +1201,9 @@ class ClaudeChatRequest(BaseModel):
 
 @app.post("/chat-claude")
 async def chat_claude_proxy(req: ClaudeChatRequest, request: Request):
+    _uid = await get_user_id_from_token(request)
+    exigir_cupo(request, _uid)
+    exigir_sesion(request, _uid)
     if not ANTHROPIC_API_KEY:
         raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY no configurada en el servidor")
     user_id = await get_user_id_from_token(request)
@@ -1577,8 +1584,11 @@ Reglas estrictas:
 
 
 @app.post("/isr-pdf")
-async def generar_isr_pdf(p: dict):
+async def generar_isr_pdf(p: dict, request: Request):
     """Recibe HTML del cálculo ISR y lo convierte a PDF con Playwright."""
+    _uid = await get_user_id_from_token(request)
+    exigir_cupo(request, _uid)
+    exigir_sesion(request, _uid)
     from playwright.async_api import async_playwright  # noqa: re-import ok here (lazy)
     html = p.get("html", "")
     if not html:
@@ -3264,6 +3274,9 @@ class AvmClaudeRequest(BaseModel):
 
 @app.post("/api/avm-claude")
 async def avm_claude(req: AvmClaudeRequest, request: Request):
+    _uid = await get_user_id_from_token(request)
+    exigir_cupo(request, _uid)
+    exigir_sesion(request, _uid)
     if not ANTHROPIC_API_KEY:
         raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY no configurada en el servidor")
     user_id = await get_user_id_from_token(request)
@@ -3986,6 +3999,8 @@ Responde ÚNICAMENTE JSON válido con esta estructura:
 async def avm_websearch(req: AvmWebSearchRequest, request: Request):
     """Opinión de valor con búsqueda web controlada: search API → URLs candidatas → extracción mínima → IA limpia y calcula."""
     user_id = await get_user_id_from_token(request)
+    exigir_cupo(request, user_id)
+    exigir_sesion(request, user_id)
     tipo_labels = {
         "casa": "Casa habitación", "departamento": "Departamento/Condominio",
         "terreno": "Terreno", "local": "Local comercial",
@@ -5331,6 +5346,9 @@ async def get_noticias():
 @app.post("/ficha-manual/descripcion")
 async def generar_descripcion_ficha_manual(data: dict, request: Request):
     """Generate AI description for ficha manual — uses same httpx pattern as rest of backend."""
+    _uid = await get_user_id_from_token(request)
+    exigir_cupo(request, _uid)
+    exigir_sesion(request, _uid)
     if not ANTHROPIC_API_KEY:
         raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY no configurada")
     user_id = await get_user_id_from_token(request)
@@ -5397,8 +5415,11 @@ async def generar_descripcion_ficha_manual(data: dict, request: Request):
 
 
 @app.post("/ficha-pdf")
-async def generar_ficha_pdf(p: dict):
+async def generar_ficha_pdf(p: dict, request: Request):
     """Generate PDF from property data dict using Playwright."""
+    _uid = await get_user_id_from_token(request)
+    exigir_cupo(request, _uid)
+    exigir_sesion(request, _uid)
     import httpx
     
     # Collect all image URLs
@@ -6012,6 +6033,8 @@ async def clean_images(
     remove_furniture: str = _Form("false"),
 ):
     user_id = await get_user_id_from_token(request)
+    exigir_cupo(request, user_id)
+    exigir_sesion(request, user_id)
     use_gemini = bool(prompt.strip()) and bool(GEMINI_API_KEY)
 
     async def process_one(uf: UploadFile):
