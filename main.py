@@ -358,6 +358,15 @@ async def api_udis(fecha: str):
 class EbKeyRequest(BaseModel):
     key: str
 
+# Helper: compara dos secretos en tiempo constante (evita adivinarlos byte a
+# byte midiendo cuánto tarda la respuesta). Devuelve False si alguno va vacío.
+def hmac_compare(recibido: str, esperado: str) -> bool:
+    import hmac as _h
+    if not recibido or not esperado:
+        return False
+    return _h.compare_digest(str(recibido), str(esperado))
+
+
 # Helper: extrae el user_id del token de Supabase
 async def get_user_id_from_token(request: Request) -> str:
     auth = request.headers.get("Authorization", "")
@@ -4326,26 +4335,10 @@ class ContratoRequest(BaseModel):
     clausulas_especiales: list = []  # plain-language clauses to be drafted by AI
 
 
-@app.get("/img")
-async def proxy_image(url: str):
-    """Proxy image from EasyBroker to avoid CORS issues in PDF printing."""
-    import base64
-    from fastapi.responses import Response
-    try:
-        headers = {
-            "User-Agent": "Mozilla/5.0",
-            "Referer": "https://www.easybroker.com/",
-        }
-        async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
-            r = await client.get(url, headers=headers)
-            if r.status_code == 200:
-                content_type = r.headers.get("content-type", "image/jpeg")
-                return Response(content=r.content, media_type=content_type,
-                    headers={"Access-Control-Allow-Origin": "*",
-                             "Cache-Control": "public, max-age=3600"})
-    except Exception as e:
-        pass
-    raise HTTPException(status_code=404, detail="Image not available")
+# El proxy abierto /img se eliminó por seguridad. Bajaba CUALQUIER dirección que
+# le pasaran, así que servía para usar nuestro servidor como escondite y para
+# alcanzar servicios internos de Railway desde fuera. Ya no lo llamaba nadie:
+# las fichas en PDF bajan las fotos directo desde el propio backend.
 
 @app.post("/contrato")
 async def generar_contrato(req: ContratoRequest, request: Request):
@@ -7429,7 +7422,12 @@ async def stripe_webhook(request: Request):
     payload = await request.body()
     sig_header = request.headers.get("stripe-signature", "")
 
-    # Verificar firma del webhook
+    # Verificar firma del webhook. Sin secreto NO se procesa: antes, si la
+    # variable faltaba en Railway, cualquiera podía mandar un evento inventado
+    # de "pago exitoso" y activarse el plan.
+    if not STRIPE_WEBHOOK_SECRET:
+        print("[stripe] STRIPE_WEBHOOK_SECRET no configurado: webhook cerrado.")
+        raise HTTPException(status_code=503, detail="Webhook no disponible.")
     if STRIPE_WEBHOOK_SECRET:
         try:
             import hmac as _hmac, hashlib as _hashlib, time as _time
@@ -7520,8 +7518,12 @@ async def subscription_activate(request: Request):
     ACTIVATE_SECRET = os.environ.get("ACTIVATE_SECRET", "")
     body = await request.json()
 
-    # Verificar clave secreta
-    if ACTIVATE_SECRET and body.get("secret") != ACTIVATE_SECRET:
+    # Sin clave configurada NO se activa nada. Antes, si la variable faltaba en
+    # Railway, este endpoint regalaba suscripciones a cualquiera que lo llamara.
+    if not ACTIVATE_SECRET:
+        print("[subscription] ACTIVATE_SECRET no configurado: endpoint cerrado.")
+        raise HTTPException(status_code=503, detail="Activación no disponible.")
+    if not hmac_compare(body.get("secret", ""), ACTIVATE_SECRET):
         raise HTTPException(status_code=403, detail="No autorizado.")
 
     customer_id = body.get("customer_id", "").strip()
@@ -7704,7 +7706,12 @@ async def revenuecat_webhook(request: Request):
     """
     # 1. Validar el header de autorización compartido (anti-spoofing)
     expected_auth = os.environ.get("REVENUECAT_WEBHOOK_AUTH", "")
-    if expected_auth and request.headers.get("Authorization", "") != expected_auth:
+    # Sin secreto NO se procesa. Antes, con la variable vacía, cualquiera podía
+    # mandar un "INITIAL_PURCHASE" falso con el user_id que quisiera.
+    if not expected_auth:
+        print("[revenuecat] REVENUECAT_WEBHOOK_AUTH no configurado: webhook cerrado.")
+        raise HTTPException(status_code=503, detail="Webhook no disponible.")
+    if not hmac_compare(request.headers.get("Authorization", ""), expected_auth):
         raise HTTPException(status_code=403, detail="No autorizado.")
 
     body = await request.json()

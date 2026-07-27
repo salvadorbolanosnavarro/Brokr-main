@@ -59,7 +59,10 @@ GRAPH_API       = "https://graph.facebook.com/v21.0"
 META_APP_ID     = os.environ.get("META_APP_ID", "1709238933850389")
 META_APP_SECRET = os.environ.get("META_APP_SECRET", "")
 WA2_VERIFY_TOKEN = os.environ.get("WA2_VERIFY_TOKEN", "broquer2_verify")
-WA2_APP_SECRET   = os.environ.get("WA_APP_SECRET", "")  # misma app de Meta, misma firma
+# Es la MISMA app de Meta que se usa para el OAuth, así que la firma es la
+# misma clave secreta. Si alguien no puso WA_APP_SECRET en Railway, caemos
+# a META_APP_SECRET en vez de quedarnos sin verificar nada.
+WA2_APP_SECRET   = os.environ.get("WA_APP_SECRET", "") or META_APP_SECRET
 WA2_REGISTER_PIN = os.environ.get("WA_REGISTER_PIN", "142857")
 # URL pública propia de este módulo (para el override_callback_uri al suscribir)
 WA2_WEBHOOK_URL  = os.environ.get("WA2_WEBHOOK_URL", "https://api.broquer.app/whatsapp2/webhook")
@@ -1750,21 +1753,20 @@ def wa2_verify_webhook(request: Request):
 async def wa2_receive_webhook(request: Request, background: BackgroundTasks):
     raw = await request.body()
 
+    # Sin secreto NO se procesa nada. Antes esto dejaba pasar todo cuando la
+    # variable faltaba: cualquiera en internet podía inyectar mensajes falsos,
+    # hacer que la IA contestara sola y quemar la cuenta de Anthropic.
+    # Ahora se cierra la puerta y se grita en el log.
     if not WA2_APP_SECRET:
-        # Sin el secreto de la app, este webhook le cree a CUALQUIERA que le
-        # escriba desde internet: se podrían inyectar mensajes falsos, hacer
-        # que la IA conteste solita y quemar la cuenta de Anthropic. Configura
-        # WA_APP_SECRET en Railway (Meta > Configuración de la app > Clave
-        # secreta) y esto se apaga solo.
-        log.error("WA_APP_SECRET NO configurado: el webhook de WhatsApp está aceptando "
-                  "mensajes SIN verificar que vengan de Meta.")
+        log.error("WA_APP_SECRET y META_APP_SECRET vacíos: el webhook de WhatsApp "
+                  "queda CERRADO hasta que se configure uno de los dos en Railway.")
+        return Response(status_code=503)
 
-    if WA2_APP_SECRET:
-        sig = request.headers.get("X-Hub-Signature-256", "")
-        expected = "sha256=" + hmac.new(WA2_APP_SECRET.encode(), raw, hashlib.sha256).hexdigest()
-        if not hmac.compare_digest(sig, expected):
-            log.warning("Firma de webhook 2.0 inválida")
-            return Response(status_code=403)
+    sig = request.headers.get("X-Hub-Signature-256", "")
+    expected = "sha256=" + hmac.new(WA2_APP_SECRET.encode(), raw, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(sig, expected):
+        log.warning("Firma de webhook 2.0 inválida")
+        return Response(status_code=403)
 
     try:
         payload = json.loads(raw)
