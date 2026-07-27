@@ -7284,6 +7284,79 @@ STRIPE_WEBHOOK_SECRET  = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 STRIPE_PRICE_PRO       = os.environ.get("STRIPE_PRICE_PRO", "")       # Plan Broquer Pro
 STRIPE_PRICE_AMPI      = os.environ.get("STRIPE_PRICE_AMPI", "")      # Plan AMPI (precio especial)
 
+# ── Broquer para Empresas ────────────────────────────────────────
+# Se cobra en DOS líneas dentro de la misma suscripción de Stripe:
+#   · base  → paquete de 5 usuarios, cantidad siempre 1
+#   · extra → usuario adicional, cantidad = asientos - 5
+# Así el dueño puede subir o bajar lugares sin cambiar de suscripción.
+STRIPE_PRICE_EMPRESA_MENSUAL       = os.environ.get("STRIPE_PRICE_EMPRESA_MENSUAL", "")
+STRIPE_PRICE_EMPRESA_ANUAL         = os.environ.get("STRIPE_PRICE_EMPRESA_ANUAL", "")
+STRIPE_PRICE_EMPRESA_EXTRA_MENSUAL = os.environ.get("STRIPE_PRICE_EMPRESA_EXTRA_MENSUAL", "")
+STRIPE_PRICE_EMPRESA_EXTRA_ANUAL   = os.environ.get("STRIPE_PRICE_EMPRESA_EXTRA_ANUAL", "")
+
+EMPRESA_ASIENTOS_BASE = 5      # lugares incluidos en el precio base
+EMPRESA_ASIENTOS_MAX  = 500    # tope duro para no crear cargos absurdos por error
+
+# Solo para pintar la pantalla. El cobro real siempre lo manda Stripe.
+EMPRESA_TARIFAS = {
+    "mensual": {"base": 3499, "extra": 599, "etiqueta": "al mes"},
+    "anual":   {"base": 38489, "extra": 6589, "etiqueta": "al año"},   # 11 meses
+}
+
+
+def _precio_empresa(periodo: str, extra: bool = False) -> str:
+    """Devuelve el price_id de Stripe para el periodo pedido."""
+    if periodo == "anual":
+        return STRIPE_PRICE_EMPRESA_EXTRA_ANUAL if extra else STRIPE_PRICE_EMPRESA_ANUAL
+    return STRIPE_PRICE_EMPRESA_EXTRA_MENSUAL if extra else STRIPE_PRICE_EMPRESA_MENSUAL
+
+
+async def _sb_service_get(tabla: str, params: dict) -> list:
+    """GET a Supabase con service key. Devuelve [] si algo falla."""
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.get(
+            f"{SUPABASE_URL}/rest/v1/{tabla}",
+            headers={"apikey": SUPABASE_SERVICE_KEY,
+                     "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
+            params=params,
+        )
+    if r.status_code != 200:
+        return []
+    try:
+        return r.json()
+    except Exception:
+        return []
+
+
+async def _sb_service_patch(tabla: str, params: dict, payload: dict) -> None:
+    """PATCH a Supabase con service key."""
+    async with httpx.AsyncClient(timeout=10) as client:
+        await client.patch(
+            f"{SUPABASE_URL}/rest/v1/{tabla}",
+            headers={"apikey": SUPABASE_SERVICE_KEY,
+                     "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                     "Content-Type": "application/json",
+                     "Prefer": "return=minimal"},
+            params=params, json=payload,
+        )
+
+
+async def _exigir_admin_de_org(request: Request) -> dict:
+    """Quien contrata o modifica el plan de la empresa tiene que ser el dueño
+    (o un administrador) de su propia cuenta. Un agente invitado no puede."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Inicia sesión.")
+    ctx = await get_org_context(user_id)
+    if not ctx:
+        raise HTTPException(status_code=403, detail="Tu cuenta no está configurada. Contacta a soporte.")
+    if ctx.get("rol_org") not in ("owner", "admin"):
+        raise HTTPException(
+            status_code=403,
+            detail="Solo el dueño de la cuenta puede contratar o cambiar el plan de la empresa.")
+    ctx["user_id"] = user_id
+    return ctx
+
 # Código promocional para el plan AMPI (válido en Supabase tabla promo_codes)
 PROMO_CODE_AMPI = "ampi2026"
 
@@ -7433,6 +7506,269 @@ async def subscription_checkout(req: CheckoutRequest, request: Request):
     return {"ok": True, "checkout_url": session.get("url"), "session_id": session.get("id")}
 
 
+# ════════════════════════════════════════════════════════════════
+# BROQUER PARA EMPRESAS — contratación y lugares
+# ════════════════════════════════════════════════════════════════
+
+class EmpresaCheckoutRequest(BaseModel):
+    asientos: int = EMPRESA_ASIENTOS_BASE
+    periodo: str = "mensual"        # mensual | anual
+    nombre_empresa: str = ""
+    success_url: str = ""
+    cancel_url: str = ""
+
+
+class EmpresaAsientosRequest(BaseModel):
+    asientos: int
+
+
+def _valida_asientos(n: int) -> int:
+    try:
+        n = int(n)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Número de lugares inválido.")
+    if n < EMPRESA_ASIENTOS_BASE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"El plan de empresas empieza en {EMPRESA_ASIENTOS_BASE} lugares.")
+    if n > EMPRESA_ASIENTOS_MAX:
+        raise HTTPException(status_code=400, detail="Para más lugares escríbenos a soporte.")
+    return n
+
+
+async def _ocupacion_org(org_id: str) -> dict:
+    """Cuántos lugares están usados: miembros activos + invitaciones pendientes."""
+    miembros = await _sb_service_get("organizacion_miembros",
+                                     {"org_id": f"eq.{org_id}", "activo": "eq.true", "select": "id"})
+    invitaciones = await _sb_service_get("organizacion_invitaciones",
+                                         {"org_id": f"eq.{org_id}", "aceptada_el": "is.null", "select": "id"})
+    return {"miembros": len(miembros), "invitaciones": len(invitaciones),
+            "usados": len(miembros) + len(invitaciones)}
+
+
+@app.get("/subscription/empresa/plan")
+async def empresa_plan(request: Request):
+    """Estado del plan de empresa del usuario. Alimenta la pantalla de compra:
+    tarifas, lugares contratados y cuántos ya están ocupados."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Inicia sesión.")
+    ctx = await get_org_context(user_id)
+    if not ctx:
+        return {"tiene_org": False, "tarifas": EMPRESA_TARIFAS,
+                "asientos_base": EMPRESA_ASIENTOS_BASE, "asientos_max": EMPRESA_ASIENTOS_MAX}
+
+    ocup = await _ocupacion_org(ctx["org_id"])
+    sub = await _sb_service_get("suscripciones", {
+        "org_id": f"eq.{ctx['org_id']}", "select": "plan_id,plan_nombre,status,periodo,updated_at",
+        "order": "updated_at.desc", "limit": "1",
+    })
+    sub = sub[0] if sub else {}
+
+    return {
+        "tiene_org": True,
+        "org_id": ctx["org_id"],
+        "nombre": ctx.get("org_nombre"),
+        "es_empresa": ctx.get("org_tipo") == "empresa",
+        "es_admin": ctx.get("rol_org") in ("owner", "admin"),
+        "activa": bool(ctx.get("org_activo", True)) and sub.get("status") in ("active", "trialing"),
+        "status": sub.get("status"),
+        "periodo": sub.get("periodo"),
+        "plan_id": sub.get("plan_id"),
+        "asientos_contratados": ctx.get("asientos_max"),
+        "asientos_base": EMPRESA_ASIENTOS_BASE,
+        "asientos_max": EMPRESA_ASIENTOS_MAX,
+        "ocupacion": ocup,
+        "tarifas": EMPRESA_TARIFAS,
+    }
+
+
+@app.post("/subscription/empresa/checkout")
+async def empresa_checkout(req: EmpresaCheckoutRequest, request: Request):
+    """Crea la Checkout Session de Broquer para Empresas.
+    Cobro web únicamente: la app de iOS nunca abre este flujo (regla 3.1.3(c))."""
+    if not STRIPE_SECRET_KEY:
+        raise HTTPException(status_code=500, detail="Stripe no configurado en el servidor.")
+
+    ctx = await _exigir_admin_de_org(request)
+    user_id = ctx["user_id"]
+
+    periodo = (req.periodo or "mensual").strip().lower()
+    if periodo not in ("mensual", "anual"):
+        raise HTTPException(status_code=400, detail="El periodo debe ser mensual o anual.")
+
+    asientos = _valida_asientos(req.asientos)
+    price_base  = _precio_empresa(periodo, extra=False)
+    price_extra = _precio_empresa(periodo, extra=True)
+    if not price_base:
+        raise HTTPException(status_code=500,
+                            detail=f"Falta configurar el precio de empresas ({periodo}) en Stripe.")
+    extras = asientos - EMPRESA_ASIENTOS_BASE
+    if extras > 0 and not price_extra:
+        raise HTTPException(status_code=500,
+                            detail=f"Falta configurar el precio de usuario adicional ({periodo}) en Stripe.")
+
+    # Nunca dejar la empresa con menos lugares de los que ya usa.
+    ocup = await _ocupacion_org(ctx["org_id"])
+    if asientos < ocup["usados"]:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Ya tienes {ocup['usados']} lugares ocupados. Contrata al menos esa cantidad.")
+
+    auth_tok = request.headers.get("Authorization", "")[7:]
+    async with httpx.AsyncClient(timeout=10) as client:
+        r_user = await client.get(
+            f"{SUPABASE_URL}/auth/v1/user",
+            headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {auth_tok}"})
+    if r_user.status_code != 200:
+        raise HTTPException(status_code=401, detail="No se pudo verificar el usuario.")
+    email = r_user.json().get("email", "")
+
+    filas = await _sb_service_get("usuarios", {"id": f"eq.{user_id}", "select": "nombre"})
+    nombre = (filas[0] if filas else {}).get("nombre") or email
+
+    customer_id = await _get_or_create_stripe_customer(user_id, email, nombre)
+
+    origin = request.headers.get("origin", "https://broquer.app")
+    success_url = req.success_url or f"{origin}/equipo.html?empresa=ok"
+    cancel_url  = req.cancel_url  or f"{origin}/empresas.html?empresa=cancelada"
+
+    nombre_empresa = (req.nombre_empresa or "").strip()[:120] or (ctx.get("org_nombre") or nombre)
+
+    data = {
+        "mode": "subscription",
+        "customer": customer_id,
+        "line_items[0][price]": price_base,
+        "line_items[0][quantity]": "1",
+        "success_url": success_url,
+        "cancel_url": cancel_url,
+        "metadata[user_id]": user_id,
+        "metadata[plan_id]": "empresas",
+        "metadata[org_id]": ctx["org_id"],
+        "metadata[asientos]": str(asientos),
+        "metadata[periodo]": periodo,
+        "metadata[nombre_empresa]": nombre_empresa,
+        "subscription_data[metadata][user_id]": user_id,
+        "subscription_data[metadata][plan_id]": "empresas",
+        "subscription_data[metadata][org_id]": ctx["org_id"],
+        "allow_promotion_codes": "true",
+        "locale": "es",
+    }
+    if extras > 0:
+        data["line_items[1][price]"] = price_extra
+        data["line_items[1][quantity]"] = str(extras)
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        r_cs = await client.post("https://api.stripe.com/v1/checkout/sessions",
+                                 headers=_stripe_headers(), data=data)
+    if r_cs.status_code not in (200, 201):
+        raise HTTPException(status_code=502, detail=f"Stripe checkout session: {r_cs.text}")
+
+    session = r_cs.json()
+    return {"ok": True, "checkout_url": session.get("url"), "session_id": session.get("id"),
+            "asientos": asientos, "periodo": periodo}
+
+
+async def _activar_empresa(org_id: str, user_id: str, asientos: int,
+                           nombre_empresa: str = "") -> None:
+    """Deja la organización lista para operar como empresa tras el pago."""
+    payload = {
+        "tipo": "empresa",
+        "plan": "Broquer para Empresas",
+        "asientos_max": int(asientos),
+        "activo": True,
+        "vence_el": None,
+        "updated_at": datetime.utcnow().isoformat(),
+    }
+    if nombre_empresa:
+        payload["nombre"] = nombre_empresa[:120]
+    await _sb_service_patch("organizaciones", {"id": f"eq.{org_id}"}, payload)
+    # El titular tiene que ser owner para poder invitar a su equipo.
+    await _sb_service_patch("organizacion_miembros",
+                            {"user_id": f"eq.{user_id}", "org_id": f"eq.{org_id}"},
+                            {"rol_org": "owner"})
+
+
+@app.post("/subscription/empresa/asientos")
+async def empresa_asientos(req: EmpresaAsientosRequest, request: Request):
+    """Sube o baja los lugares contratados sin cambiar de suscripción.
+    Stripe prorratea la diferencia en la siguiente factura."""
+    if not STRIPE_SECRET_KEY:
+        raise HTTPException(status_code=500, detail="Stripe no configurado en el servidor.")
+
+    ctx = await _exigir_admin_de_org(request)
+    asientos = _valida_asientos(req.asientos)
+
+    ocup = await _ocupacion_org(ctx["org_id"])
+    if asientos < ocup["usados"]:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Tienes {ocup['usados']} lugares ocupados. Da de baja a alguien antes de reducir.")
+
+    filas = await _sb_service_get("suscripciones", {
+        "org_id": f"eq.{ctx['org_id']}", "plan_id": "eq.empresas",
+        "select": "stripe_subscription_id,periodo,status",
+        "order": "updated_at.desc", "limit": "1"})
+    row = filas[0] if filas else {}
+    sub_id = row.get("stripe_subscription_id")
+    if not sub_id:
+        raise HTTPException(status_code=404, detail="No encontré una suscripción de empresa activa.")
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        r_sub = await client.get(f"https://api.stripe.com/v1/subscriptions/{sub_id}",
+                                 headers=_stripe_headers())
+    if r_sub.status_code != 200:
+        raise HTTPException(status_code=502, detail=f"Stripe suscripción: {r_sub.text}")
+    items = r_sub.json().get("items", {}).get("data", [])
+
+    periodo = row.get("periodo") or "mensual"
+    price_base  = _precio_empresa(periodo, extra=False)
+    price_extra = _precio_empresa(periodo, extra=True)
+    # Si el periodo guardado no cuadra con lo que hay en Stripe, se deduce.
+    if not any((it.get("price") or {}).get("id") == price_base for it in items):
+        for alt in ("mensual", "anual"):
+            if any((it.get("price") or {}).get("id") == _precio_empresa(alt) for it in items):
+                periodo = alt
+                price_base  = _precio_empresa(alt, extra=False)
+                price_extra = _precio_empresa(alt, extra=True)
+                break
+
+    item_extra = next((it for it in items if (it.get("price") or {}).get("id") == price_extra), None)
+    extras = asientos - EMPRESA_ASIENTOS_BASE
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        if item_extra and extras > 0:
+            r = await client.post(
+                f"https://api.stripe.com/v1/subscription_items/{item_extra['id']}",
+                headers=_stripe_headers(),
+                data={"quantity": str(extras), "proration_behavior": "create_prorations"})
+        elif item_extra and extras == 0:
+            r = await client.delete(
+                f"https://api.stripe.com/v1/subscription_items/{item_extra['id']}",
+                headers=_stripe_headers(),
+                params={"proration_behavior": "create_prorations"})
+        elif extras > 0:
+            if not price_extra:
+                raise HTTPException(status_code=500,
+                                    detail="Falta configurar el precio de usuario adicional en Stripe.")
+            r = await client.post(
+                "https://api.stripe.com/v1/subscription_items",
+                headers=_stripe_headers(),
+                data={"subscription": sub_id, "price": price_extra, "quantity": str(extras),
+                      "proration_behavior": "create_prorations"})
+        else:
+            r = None
+
+    if r is not None and r.status_code not in (200, 201):
+        raise HTTPException(status_code=502, detail=f"Stripe lugares: {r.text}")
+
+    await _sb_service_patch("organizaciones", {"id": f"eq.{ctx['org_id']}"},
+                            {"asientos_max": asientos,
+                             "updated_at": datetime.utcnow().isoformat()})
+
+    return {"ok": True, "asientos": asientos, "periodo": periodo, "ocupacion": ocup}
+
+
 @app.post("/subscription/webhook")
 async def stripe_webhook(request: Request):
     """
@@ -7469,15 +7805,17 @@ async def stripe_webhook(request: Request):
     obj = event.get("data", {}).get("object", {})
 
     if event_type == "checkout.session.completed":
-        user_id = obj.get("metadata", {}).get("user_id")
-        plan_id = obj.get("metadata", {}).get("plan_id", "max")
+        meta = obj.get("metadata", {}) or {}
+        user_id = meta.get("user_id")
+        plan_id = meta.get("plan_id", "max")
         subscription_id = obj.get("subscription")
         customer_id = obj.get("customer")
         if user_id and subscription_id:
-            plan_nombre = "AMPI" if plan_id == "ampi" else "Broquer Max"
+            plan_nombre = {"ampi": "AMPI", "empresas": "Broquer para Empresas"}.get(plan_id, "Broquer Max")
+            _org_id = meta.get("org_id") or await get_org_id_for_user(user_id)
             sb = {
                 "user_id": user_id,
-                "org_id": await get_org_id_for_user(user_id),
+                "org_id": _org_id,
                 "plan_id": plan_id,
                 "plan_nombre": plan_nombre,
                 "stripe_subscription_id": subscription_id,
@@ -7485,6 +7823,18 @@ async def stripe_webhook(request: Request):
                 "status": "active",
                 "updated_at": datetime.utcnow().isoformat(),
             }
+            if plan_id == "empresas":
+                # El plan de empresas guarda periodo y lugares: se necesitan
+                # después para prorratear altas y bajas de usuarios.
+                try:
+                    _asientos = int(meta.get("asientos") or EMPRESA_ASIENTOS_BASE)
+                except Exception:
+                    _asientos = EMPRESA_ASIENTOS_BASE
+                sb["periodo"] = meta.get("periodo") or "mensual"
+                sb["asientos"] = _asientos
+                if _org_id:
+                    await _activar_empresa(_org_id, user_id, _asientos,
+                                           meta.get("nombre_empresa") or "")
             async with httpx.AsyncClient(timeout=10) as client:
                 await client.post(
                     f"{SUPABASE_URL}/rest/v1/suscripciones",
@@ -7500,6 +7850,8 @@ async def stripe_webhook(request: Request):
     elif event_type in ("customer.subscription.updated", "customer.subscription.deleted"):
         subscription_id = obj.get("id")
         new_status = obj.get("status", "canceled")
+        if event_type == "customer.subscription.deleted":
+            new_status = "canceled"
         if subscription_id:
             async with httpx.AsyncClient(timeout=8) as client:
                 await client.patch(
@@ -7512,6 +7864,16 @@ async def stripe_webhook(request: Request):
                     },
                     json={"status": new_status, "updated_at": datetime.utcnow().isoformat()}
                 )
+            # En empresas el acceso de TODO el equipo cuelga de organizaciones.activo.
+            _filas = await _sb_service_get("suscripciones", {
+                "stripe_subscription_id": f"eq.{subscription_id}",
+                "select": "org_id,plan_id", "limit": "1"})
+            _fila = _filas[0] if _filas else {}
+            if _fila.get("plan_id") == "empresas" and _fila.get("org_id"):
+                await _sb_service_patch(
+                    "organizaciones", {"id": f"eq.{_fila['org_id']}"},
+                    {"activo": new_status in ("active", "trialing"),
+                     "updated_at": datetime.utcnow().isoformat()})
 
     elif event_type == "invoice.payment_failed":
         subscription_id = obj.get("subscription")
@@ -7618,9 +7980,10 @@ async def subscription_status(request: Request):
     if rol in ("equipo", "admin"):
         return {"active": True, "plan": "Equipo Interno" if rol == "equipo" else "Admin", "plan_id": rol, "status": "active"}
 
-    # Empresas: el precio se negocia caso por caso, así que no pasan por Stripe.
-    # Su acceso lo gobierna la propia organización (activo + vence_el), que tú
-    # activas a mano desde admin.html.
+    # Empresas: el acceso de todo el equipo cuelga de la organización
+    # (activo + vence_el). Lo enciende y apaga el webhook de Stripe cuando el
+    # dueño contrata, cambia lugares o deja de pagar; y admin.html puede
+    # activarlo a mano para casos negociados.
     _ctx = await get_org_context(user_id)
     if _ctx and _ctx.get("org_tipo") == "empresa":
         _vigente = _ctx.get("org_activo", True)

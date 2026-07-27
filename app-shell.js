@@ -2856,6 +2856,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
                   <div class="bk-pd-sub-info" id="pd-sub-info">Activa tu suscripción para acceder a todas las funciones de Broquer.</div>
                   <button class="bk-pd-btn bk-pd-btn-primary" id="pd-sub-btn" onclick="startCheckout()">Activar Broquer Max</button>
                   <button class="bk-pd-btn bk-pd-btn-outline" id="pd-sub-cancel-btn" onclick="cancelSubscription()" style="display:none">Cancelar suscripción</button>
+                  <a href="empresas.html" style="display:block;margin-top:12px;font-size:var(--fs-label-3);color:var(--mute);text-decoration:underline;line-height:1.5">¿Tienes equipo? Conoce Broquer para Empresas</a>
                   <div class="bk-pd-toast" id="pd-toast-sub"></div>
                 </div>
               </div>

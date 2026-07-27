@@ -196,6 +196,17 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .fa-field .fa-city-confirmed input,.fa-field .fa-city-confirmed input:focus{border-color:var(--success);padding-right:32px}
 .fa-city-confirmed .fa-city-clear{color:var(--success)}
 .fa-city-msg{padding:11px 12px;font-size:var(--fs-xs);color:var(--mute);line-height:1.5;display:flex;align-items:center;gap:8px}
+
+/* ─── Selector de inmueble del catálogo ──────────────────── */
+.fa-prop-opt{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;font-size:var(--fs-sm);cursor:pointer;transition:background .1s}
+.fa-prop-opt:hover{background:var(--bone)}
+.fa-prop-opt-main{min-width:0;flex:1}
+.fa-prop-opt-main strong{display:block;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fa-prop-opt-main span{display:block;font-size:var(--fs-caption);color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fa-prop-opt-precio{flex:none;font-size:var(--fs-xs);font-weight:700;color:var(--ink-2)}
+.fa-prop-sel{display:flex;align-items:center;gap:8px;background:var(--success-soft);border:1px solid var(--success);border-radius:var(--r);padding:9px 12px;margin-top:8px;font-size:var(--fs-xs);color:var(--ink);line-height:1.45}
+.fa-prop-sel strong{font-weight:700}
+.fa-prop-sel button{flex:none;margin-left:auto;background:transparent;border:none;color:var(--mute);font-size:var(--fs-sm);font-weight:700;font-family:var(--font-sans);cursor:pointer;text-decoration:underline}
 .fa-city-spin{width:13px;height:13px;flex:none;border:2px solid var(--line-2);border-top-color:var(--ink);border-radius:50%;animation:faspin .7s linear infinite}
 
 /* ─── Responsive ─────────────────────────────────────────── */
@@ -291,6 +302,16 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
             <div class="fa-card-head">
               <div class="fa-card-title">Tu anuncio</div>
               <div class="fa-card-sub">Lo mínimo necesario para que Facebook lo entregue.</div>
+            </div>
+
+            <div class="fa-field">
+              <label for="fa-prop-input">Inmueble de tu catálogo</label>
+              <div class="fa-city-wrap" id="fa-prop-wrap">
+                <input id="fa-prop-input" type="text" autocomplete="off" placeholder="Busca por título, clave, colonia o ciudad…" oninput="onPropInput(this.value)" onfocus="onPropFocus()" onblur="onPropBlur()"/>
+                <div class="fa-city-dropdown" id="fa-prop-dropdown"></div>
+              </div>
+              <div id="fa-prop-sel" class="fa-prop-sel" style="display:none"></div>
+              <div class="fa-hint">Al elegirlo, Broquer llena el título, el texto y sus primeras fotos. Puedes modificar todo antes de publicar.</div>
             </div>
 
             <div class="fa-field">
@@ -468,6 +489,10 @@ let _citySearchTimer = null;  // debounce para búsqueda de ciudades
 let _cityFocusIdx = -1;       // índice de opción enfocada con teclado
 let _cityLoading = false;     // hay una búsqueda de ciudad en vuelo
 let _cityResults = [];        // resultados actuales del dropdown
+let _props = [];              // catálogo de inmuebles del agente
+let _propsCargados = false;   // ya se leyó Supabase al menos una vez
+let _propSel = null;          // inmueble elegido para este anuncio
+let _propBusyTimer = null;    // debounce del buscador de inmuebles
 let _carIdx = 0;              // tarjeta visible del carrusel en la vista previa
 let _previewTextExpanded = false; // "Ver más" del texto en la vista previa
 
@@ -738,6 +763,205 @@ function preloadFromEditor(){
   const sobrantes = imgs.length - añadidas;
   toast(`${añadidas} imagen${añadidas !== 1 ? 'es' : ''} del editor cargada${añadidas !== 1 ? 's' : ''}` +
         (sobrantes > 0 ? ` — ${sobrantes} no cupieron (máximo 10).` : '.'));
+}
+
+// ── Inmueble del catálogo ───────────────────────────────────
+// Trae el inventario del agente desde Supabase (RLS: solo lo suyo) y
+// precarga título, texto y fotos del inmueble que elija. Todo es editable.
+async function cargarInmuebles(){
+  if(_propsCargados) return;
+  if(!window.brokrSb || !window.brokrSb.rest) return;
+  try{
+    const filas = await window.brokrSb.rest(
+      'propiedades?select=id,titulo,descripcion,clave_interna,tipo,operacion,estatus,archivada,'
+      + 'precio,moneda,colonia,ciudad,estado,recamaras,banos,m2_construccion,m2_terreno,'
+      + 'estacionamientos,fotos&order=updated_at.desc&limit=1000',
+      { method:'GET' }
+    );
+    _props = Array.isArray(filas) ? filas.filter(p => !p.archivada) : [];
+  }catch(e){
+    _props = [];
+  }
+  _propsCargados = true;
+}
+
+function propMoney(n, moneda){
+  const v = Number(n)||0;
+  if(!v) return '';
+  return '$' + v.toLocaleString('es-MX', { maximumFractionDigits: 0 }) + (moneda && moneda !== 'MXN' ? ' ' + moneda : '');
+}
+
+function propUbicacion(p){
+  return [p.colonia, p.ciudad, p.estado].filter(Boolean).join(', ');
+}
+
+function filtrarInmuebles(q){
+  const t = (q||'').toLowerCase().trim();
+  if(!t) return _props.slice(0, 8);
+  return _props.filter(p => (
+    (p.titulo||'') + ' ' + (p.clave_interna||'') + ' ' + (p.colonia||'') + ' ' +
+    (p.ciudad||'') + ' ' + (p.estado||'') + ' ' + (p.tipo||'')
+  ).toLowerCase().indexOf(t) >= 0).slice(0, 8);
+}
+
+function renderPropDropdown(lista){
+  const dd = document.getElementById('fa-prop-dropdown');
+  if(!dd) return;
+  if(!_propsCargados){
+    dd.innerHTML = '<div class="fa-city-msg"><span class="fa-city-spin"></span>Cargando tu inventario…</div>';
+    dd.classList.add('open'); return;
+  }
+  if(!_props.length){
+    dd.innerHTML = '<div class="fa-city-msg">Todavía no tienes inmuebles capturados en Broquer.</div>';
+    dd.classList.add('open'); return;
+  }
+  if(!lista.length){
+    dd.innerHTML = '<div class="fa-city-msg">Ningún inmueble coincide con esa búsqueda.</div>';
+    dd.classList.add('open'); return;
+  }
+  dd.innerHTML = lista.map(p =>
+    `<div class="fa-prop-opt" onmousedown="elegirInmuebleAnuncio('${escapeHtml(String(p.id))}')">
+       <span class="fa-prop-opt-main">
+         <strong>${escapeHtml((p.clave_interna ? p.clave_interna + ' · ' : '') + (p.titulo || 'Sin título'))}</strong>
+         <span>${escapeHtml(propUbicacion(p) || 'Sin ubicación')}</span>
+       </span>
+       <span class="fa-prop-opt-precio">${escapeHtml(propMoney(p.precio, p.moneda) || '—')}</span>
+     </div>`
+  ).join('');
+  dd.classList.add('open');
+}
+
+function closePropDropdown(){
+  const dd = document.getElementById('fa-prop-dropdown');
+  if(dd) dd.classList.remove('open');
+}
+
+async function onPropFocus(){
+  renderPropDropdown([]);
+  await cargarInmuebles();
+  const inp = document.getElementById('fa-prop-input');
+  renderPropDropdown(filtrarInmuebles(inp ? inp.value : ''));
+}
+
+function onPropBlur(){
+  setTimeout(closePropDropdown, 140);
+}
+
+function onPropInput(v){
+  if(_propBusyTimer) clearTimeout(_propBusyTimer);
+  _propBusyTimer = setTimeout(async () => {
+    await cargarInmuebles();
+    renderPropDropdown(filtrarInmuebles(v));
+  }, 120);
+}
+
+function textoDeInmueble(p){
+  const desc = (p.descripcion||'').trim();
+  if(desc) return desc.slice(0, 2200);
+  const specs = [
+    p.recamaras ? p.recamaras + ' recámaras' : '',
+    p.banos ? p.banos + ' baños' : '',
+    p.m2_construccion ? Number(p.m2_construccion).toLocaleString('es-MX') + ' m² de construcción' : '',
+    p.m2_terreno ? Number(p.m2_terreno).toLocaleString('es-MX') + ' m² de terreno' : '',
+    p.estacionamientos ? p.estacionamientos + ' estacionamientos' : '',
+  ].filter(Boolean).join(' · ');
+  const op = p.operacion === 'renta' ? 'en renta' : 'en venta';
+  const partes = [
+    [(p.titulo || 'Inmueble'), op].join(' ') + (propUbicacion(p) ? ' en ' + propUbicacion(p) : '') + '.',
+    specs,
+    propMoney(p.precio, p.moneda) ? 'Precio: ' + propMoney(p.precio, p.moneda) + '.' : '',
+    'Escríbeme por aquí y con gusto te agendo una visita.',
+  ].filter(Boolean);
+  return partes.join('\n\n').slice(0, 2200);
+}
+
+// Baja las fotos del inmueble y las convierte a base64 para el carrusel.
+async function cargarFotosDeInmueble(p){
+  const urls = (Array.isArray(p.fotos) ? p.fotos : []).filter(Boolean).slice(0, 10);
+  if(!urls.length){
+    resetImages();
+    toast('Ese inmueble no tiene fotos cargadas. Sube las imágenes del anuncio a mano.');
+    return;
+  }
+  const counter = document.getElementById('fa-img-count');
+  if(counter) counter.innerHTML = 'Cargando fotos del inmueble…';
+  const nuevas = [];
+  let fallaron = 0;
+  for(let i = 0; i < urls.length; i++){
+    try{
+      const r = await fetch(urls[i]);
+      if(!r.ok) throw new Error('http ' + r.status);
+      const blob = await r.blob();
+      if(blob.size > 8 * 1024 * 1024){ fallaron++; continue; }
+      const dataUrl = await new Promise((res, rej) => {
+        const fr = new FileReader();
+        fr.onload = () => res(fr.result);
+        fr.onerror = () => rej(new Error('read'));
+        fr.readAsDataURL(blob);
+      });
+      const b64 = String(dataUrl).split(',')[1] || '';
+      if(!b64){ fallaron++; continue; }
+      nuevas.push({ dataUrl, b64, mime: blob.type || 'image/jpeg', name: 'inmueble-' + (i+1) + '.jpg' });
+    }catch(e){ fallaron++; }
+  }
+  _images = nuevas;
+  _carIdx = 0;
+  renderImagesGrid();
+  syncPreview();
+  if(!nuevas.length){
+    toast('No pude bajar las fotos de ese inmueble. Súbelas a mano desde tu equipo.');
+  }else if(fallaron){
+    toast(`${nuevas.length} foto(s) cargadas. ${fallaron} no se pudieron traer.`);
+  }else{
+    toast(`${nuevas.length} foto(s) del inmueble cargadas.`);
+  }
+}
+
+function pintarInmuebleElegido(){
+  const caja = document.getElementById('fa-prop-sel');
+  const inp  = document.getElementById('fa-prop-input');
+  if(!caja) return;
+  if(!_propSel){
+    caja.style.display = 'none';
+    caja.innerHTML = '';
+    if(inp) inp.value = '';
+    return;
+  }
+  caja.style.display = 'flex';
+  caja.innerHTML =
+    `<span><strong>${escapeHtml((_propSel.clave_interna ? _propSel.clave_interna + ' · ' : '') + (_propSel.titulo || 'Sin título'))}</strong>` +
+    (propUbicacion(_propSel) ? ' — ' + escapeHtml(propUbicacion(_propSel)) : '') + `</span>` +
+    `<button type="button" onclick="quitarInmuebleAnuncio()">Quitar</button>`;
+  if(inp) inp.value = '';
+}
+
+async function elegirInmuebleAnuncio(id){
+  closePropDropdown();
+  const p = _props.find(x => String(x.id) === String(id));
+  if(!p) return;
+  _propSel = p;
+  pintarInmuebleElegido();
+
+  const nombre = document.getElementById('fa-campaign-name');
+  const texto  = document.getElementById('fa-ad-text');
+  const titulo = document.getElementById('fa-ad-headline');
+
+  if(nombre) nombre.value = (p.clave_interna ? p.clave_interna + ' — ' : '') + (p.titulo || 'Anuncio');
+  if(texto)  texto.value  = textoDeInmueble(p);
+  if(titulo) titulo.value = String(p.titulo || '').slice(0, 40);
+
+  updateCharCount();
+  updateAiBtn();
+  syncSummary();
+  _previewTextExpanded = false;
+  syncPreview();
+
+  await cargarFotosDeInmueble(p);
+}
+
+function quitarInmuebleAnuncio(){
+  _propSel = null;
+  pintarInmuebleElegido();
 }
 
 // ── IA: mejorar texto ───────────────────────────────────────
@@ -1100,6 +1324,9 @@ document.addEventListener('DOMContentLoaded', () => {
   preloadFromEditor();
   syncPreview();
   checkConnection();
+  // El catálogo necesita el cliente de Supabase que monta app-shell.js.
+  if(window.brokrSb && window.brokrSb.rest) cargarInmuebles();
+  else window.addEventListener('brokr-shell-ready', () => { cargarInmuebles(); }, { once: true });
 });
 </script>
 <script src="app-shell.js" defer></script>

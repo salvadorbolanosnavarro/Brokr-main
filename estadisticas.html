@@ -183,17 +183,23 @@ html, body { background: var(--paper); }
 .es-tool--fuerte { background: var(--sky-blue); border-color: var(--sky-blue); color: var(--bone); height: var(--h-sm); font-weight: 700; }
 .es-tool--fuerte:hover { background: var(--sky-blue-press); border-color: var(--sky-blue-press); color: var(--bone); }
 .es-tool--fuerte[disabled] { opacity: .6; cursor: default; }
-.es-hits { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px; margin-bottom: 6px; }
-.es-hit {
-  display: flex; flex-direction: column; gap: 3px; align-items: flex-start; text-align: left;
-  background: var(--bone); border: 1px solid var(--line); border-radius: var(--r);
-  padding: 11px 14px; cursor: pointer; font-family: inherit;
-  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+.es-select--precio { min-width: 0; width: 150px; padding: 0 14px; background-image: none; cursor: text; }
+.es-actual { font-size: var(--fs-xs); color: var(--mute); margin: -8px 0 12px; line-height: var(--lh-snug); }
+.es-actual b { color: var(--ink); font-weight: 600; }
+.es-res { background: var(--bone); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; margin-bottom: 6px; }
+.es-res__row {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+  background: transparent; border: 0; border-bottom: 1px solid var(--line);
+  padding: 10px 14px; cursor: pointer; font-family: inherit;
+  transition: background var(--dur) var(--ease);
 }
-.es-hit:hover { border-color: var(--sky-blue); }
-.es-hit.is-active { border-color: var(--sky-blue); background: var(--sky-canvas); }
-.es-hit__t { font-size: var(--fs-sm); font-weight: 600; color: var(--ink); }
-.es-hit__s { font-size: var(--fs-caption); color: var(--mute); }
+.es-res__row:last-child { border-bottom: 0; }
+.es-res__row:hover { background: var(--paper-2); }
+.es-res__row.is-active { background: var(--sky-canvas); }
+.es-res__main { min-width: 0; flex: 1; }
+.es-res__t { display: block; font-size: var(--fs-sm); font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.es-res__s { display: block; font-size: var(--fs-caption); color: var(--mute); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.es-res__p { flex: none; font-size: var(--fs-xs); font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 
 /* Cabecera del reporte al propietario */
 .es-report-head { padding: var(--sp-6); border-bottom: 1px solid var(--line); }
@@ -328,6 +334,8 @@ let tab = 'resumen';
 let propSel = '';
 let filtroTabla = '';
 let buscaInmueble = '';
+let precioMinInm = '';   /* filtro de precio del buscador por inmueble */
+let precioMaxInm = '';
 let generandoPdf = false;
 
 const PERIODO_LBL = { semana:'esta semana', mes:'este mes', trimestre:'este trimestre', todo:'en total' };
@@ -593,7 +601,7 @@ function setTab(t) {
   window.scrollTo({ top: 0, behavior: 'auto' });
   render();
 }
-function verInmueble(id) { propSel = String(id); buscaInmueble = ''; setTab('inmueble'); }
+function verInmueble(id) { propSel = String(id); buscaInmueble = ''; precioMinInm = ''; precioMaxInm = ''; setTab('inmueble'); }
 function setFiltroTabla(v) {
   filtroTabla = (v || '').toLowerCase();
   const cuerpo = g('tabla-inm-body');
@@ -1512,34 +1520,57 @@ function inmuebleSel() {
   return props[0];
 }
 function coincide(p, q) {
-  if (!q) return true;
-  return ((p.titulo || '') + ' ' + (p.clave_interna || '') + ' ' + (p.colonia || '') + ' '
-    + (p.ciudad || '') + ' ' + (p.tipo || '')).toLowerCase().indexOf(q) >= 0;
+  if (q) {
+    const heno = ((p.titulo || '') + ' ' + (p.clave_interna || '') + ' ' + (p.colonia || '') + ' '
+      + (p.ciudad || '') + ' ' + (p.estado || '') + ' ' + (p.tipo || '')).toLowerCase();
+    if (heno.indexOf(q) < 0) return false;
+  }
+  const min = Number(precioMinInm), max = Number(precioMaxInm);
+  if (min || max) {
+    const pr = Number(p.precio) || 0;
+    if (!pr) return false;
+    if (min && pr < min) return false;
+    if (max && pr > max) return false;
+  }
+  return true;
 }
-function setBuscaInmueble(v) {
-  buscaInmueble = (v || '').toLowerCase().trim();
+function hayFiltroInm() {
+  return !!(buscaInmueble || Number(precioMinInm) || Number(precioMaxInm));
+}
+function repintaBusqueda() {
   const cont = g('busca-res');
   if (cont) cont.innerHTML = listaBusqueda();
 }
+function setBuscaInmueble(v) {
+  buscaInmueble = (v || '').toLowerCase().trim();
+  repintaBusqueda();
+}
+function setPrecioMinInm(v) { precioMinInm = (v || '').trim(); repintaBusqueda(); }
+function setPrecioMaxInm(v) { precioMaxInm = (v || '').trim(); repintaBusqueda(); }
 function elegirInmueble(id) {
   propSel = String(id);
   buscaInmueble = '';
+  precioMinInm = '';
+  precioMaxInm = '';
   render();
 }
 function listaBusqueda() {
+  if (!hayFiltroInm()) return '';
   const sel = inmuebleSel();
   const hallados = props.filter(p => coincide(p, buscaInmueble));
   if (!hallados.length) return '<div class="es-card es-empty"><p>Ningún inmueble coincide con esa búsqueda.</p></div>';
   const lista = hallados.slice(0, 40);
-  return '<div class="es-hits">' + lista.map(p => {
+  return '<div class="es-res">' + lista.map(p => {
     const activo = sel && String(p.id) === String(sel.id);
-    return '<button type="button" class="es-hit' + (activo ? ' is-active' : '') + '" onclick="elegirInmueble(\'' + esc(p.id) + '\')">'
-      + '<span class="es-hit__t">' + esc(p.clave_interna ? p.clave_interna + ' · ' : '') + esc(p.titulo || 'Sin título') + '</span>'
-      + '<span class="es-hit__s">' + esc([p.colonia, p.ciudad].filter(Boolean).join(', ') || 'Sin ubicación')
-      + (p.precio ? ' · ' + fmtMoneyShort(p.precio, p.moneda) : '') + '</span></button>';
-  }).join('')
-  + (hallados.length > lista.length ? '<div class="es-note">Se muestran los primeros 40 de ' + nf(hallados.length) + '. Afina la búsqueda para encontrar el que buscas.</div>' : '')
-  + '</div>';
+    return '<button type="button" class="es-res__row' + (activo ? ' is-active' : '') + '" onclick="elegirInmueble(\'' + esc(p.id) + '\')">'
+      + '<span class="es-res__main">'
+      + '<span class="es-res__t">' + esc(p.clave_interna ? p.clave_interna + ' · ' : '') + esc(p.titulo || 'Sin título') + '</span>'
+      + '<span class="es-res__s">' + esc([p.colonia, p.ciudad].filter(Boolean).join(', ') || 'Sin ubicación') + '</span>'
+      + '</span>'
+      + '<span class="es-res__p">' + (p.precio ? fmtMoneyShort(p.precio, p.moneda) : '—') + '</span>'
+      + '</button>';
+  }).join('') + '</div>'
+  + (hallados.length > lista.length ? '<div class="es-note">Se muestran los primeros 40 de ' + nf(hallados.length) + '. Afina la búsqueda para encontrar el que buscas.</div>' : '');
 }
 
 /* Todos los números de un inmueble, en un solo lugar: lo usan la pestaña y el PDF. */
@@ -1597,10 +1628,15 @@ function panelInmueble() {
   return ''
     + '<div class="es-sec">'
     + '<div class="es-picker">'
-    + '<input class="es-select es-select--wide" type="search" id="busca-inm" placeholder="Busca el inmueble por título, clave, colonia o ciudad…"'
+    + '<input class="es-select es-select--wide" type="search" id="busca-inm" placeholder="Busca por título, clave, colonia, ciudad o tipo…"'
     + ' value="' + esc(buscaInmueble) + '" oninput="setBuscaInmueble(this.value)"/>'
+    + '<input class="es-select es-select--precio" type="number" min="0" step="1000" id="busca-precio-min" placeholder="Precio desde"'
+    + ' value="' + esc(precioMinInm) + '" oninput="setPrecioMinInm(this.value)"/>'
+    + '<input class="es-select es-select--precio" type="number" min="0" step="1000" id="busca-precio-max" placeholder="Precio hasta"'
+    + ' value="' + esc(precioMaxInm) + '" oninput="setPrecioMaxInm(this.value)"/>'
     + '<button class="es-tool es-tool--fuerte" id="btn-reporte" onclick="descargarReporte()">Descargar reporte para el propietario</button>'
     + '</div>'
+    + '<div class="es-actual">Estás viendo <b>' + esc(p.clave_interna ? p.clave_interna + ' · ' : '') + esc(p.titulo || 'Sin título') + '</b>. Busca por palabra o precio para cambiar de inmueble.</div>'
     + '<div id="busca-res">' + listaBusqueda() + '</div>'
     + '</div>'
 
