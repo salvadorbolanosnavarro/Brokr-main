@@ -6609,6 +6609,7 @@ class FbCreateAdRequest(BaseModel):
     age_max: int = 0
     country: str = "MX"
     city: str = ""              # key de ciudad/region para geo-targeting
+    city_type: str = "city"     # "city" | "region" | "neighborhood" | "subcity"
     page_id: str = ""
     objective: str = "OUTCOME_ENGAGEMENT"
     publish_now: bool = False   # si True, crea y activa; si False, queda en PAUSED
@@ -6806,7 +6807,15 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
         # para un agente inmobiliario anunciar en todo un país.
         if not req.city:
             raise HTTPException(status_code=400, detail="Debes seleccionar una ciudad para el anuncio.")
-        geo: dict = {"cities": [{"key": req.city}]}
+        # Meta exige que la key vaya en el bucket correcto: una key de estado
+        # dentro de "cities" hace fallar la creación del conjunto de anuncios.
+        _geo_bucket = {
+            "city": "cities",
+            "region": "regions",
+            "neighborhood": "neighborhoods",
+            "subcity": "subcities",
+        }.get((req.city_type or "city").lower(), "cities")
+        geo: dict = {_geo_bucket: [{"key": req.city}]}
         targeting: dict = {
             "age_min": req.age_min,
             "geo_locations": geo,
@@ -7032,23 +7041,59 @@ async def facebook_city_search(q: str = "", request: Request = None):
     meta = await _get_fb_meta(user_id)
     user_token = meta.get("user_token", "")
     if not user_token:
-        raise HTTPException(status_code=400, detail="Reconecta tu Facebook.")
-    async with httpx.AsyncClient(timeout=10) as client:
-        r = await client.get(
-            "https://graph.facebook.com/v21.0/search",
-            params={
-                "access_token": user_token,
-                "type": "adgeolocation",
-                "location_types": "city,region",
-                "q": q,
-                "country_code": "MX",
-                "limit": "8",
-            }
-        )
+        raise HTTPException(status_code=400, detail="Reconecta tu Facebook desde tu perfil.")
+
+    # IMPORTANTE: Meta exige location_types como ARRAY JSON, no como lista
+    # separada por comas. Enviar "city,region" devuelve error 100 y el
+    # buscador de ciudades queda mudo.
+    base_params = {
+        "access_token": user_token,
+        "type": "adgeolocation",
+        "q": q,
+        "country_code": "MX",
+        "limit": "10",
+    }
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            r = await client.get(
+                "https://graph.facebook.com/v21.0/search",
+                params={**base_params, "location_types": json.dumps(["city", "region"])}
+            )
+            # Fallback: si Meta rechaza el filtro, repetimos sin él para no
+            # dejar al agente sin resultados.
+            if r.status_code != 200:
+                r = await client.get(
+                    "https://graph.facebook.com/v21.0/search",
+                    params=base_params
+                )
+    except Exception:
+        raise HTTPException(status_code=502, detail="No se pudo conectar con Facebook. Intenta de nuevo.")
+
     if r.status_code != 200:
-        return {"results": []}
-    data = r.json().get("data", [])
-    results = [{"key": d["key"], "name": d["name"], "type": d.get("type",""), "region": d.get("region","")} for d in data]
+        try:
+            _msg = r.json().get("error", {}).get("message", "")
+        except Exception:
+            _msg = ""
+        raise HTTPException(
+            status_code=502,
+            detail=f"Facebook no pudo buscar ciudades: {_msg}" if _msg
+                   else "Facebook no pudo buscar ciudades. Reconecta tu cuenta desde tu perfil."
+        )
+
+    allowed = {"city", "region", "neighborhood", "subcity"}
+    results = []
+    for d in r.json().get("data", []):
+        if not d.get("key") or not d.get("name"):
+            continue
+        if d.get("type") and d["type"] not in allowed:
+            continue
+        results.append({
+            "key": d["key"],
+            "name": d["name"],
+            "type": d.get("type", ""),
+            "region": d.get("region", ""),
+            "country_name": d.get("country_name", ""),
+        })
     return {"results": results}
 
 
