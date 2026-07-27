@@ -44,7 +44,27 @@
     border-top: 1px solid var(--sky-navy-mid);
     font-size: var(--fs-caption);
     color: var(--sky-blue-on-dark);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
   }
+  .cp-ley__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    font-size: var(--fs-caption);
+    font-weight: 700;
+    color: #fff;
+    text-decoration: none;
+    padding: var(--sp-2) var(--sp-4);
+    border: 1px solid var(--sky-blue-on-dark);
+    border-radius: var(--r-pill);
+    white-space: nowrap;
+    transition: background var(--dur-fast) var(--ease);
+  }
+  .cp-ley__link:hover { background: var(--sky-navy-mid); }
   @media (max-width: 720px) { .cp-ley { padding: var(--sp-5); } }
 
   /* ── Tarjetas de estado ───────────────────────────────────────── */
@@ -160,6 +180,46 @@
   .cp-evento__m { font-size: var(--fs-caption); color: var(--mute); margin-top: 2px; }
 
   .cp-oculto { display: none; }
+
+  /* ── Selector de contacto del CRM ─────────────────────────────── */
+  .cp-buscador { position: relative; }
+  .cp-sugerencias {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    z-index: 20;
+    max-height: 260px;
+    overflow-y: auto;
+    background: var(--bone);
+    border: 1px solid var(--line-2);
+    border-radius: var(--r);
+    box-shadow: var(--shadow-md);
+  }
+  .cp-sugerencia {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: var(--sp-3) var(--sp-4);
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    border-bottom: 1px solid var(--line);
+  }
+  .cp-sugerencia:last-child { border-bottom: none; }
+  .cp-sugerencia:hover { background: var(--paper-2); }
+  .cp-sugerencia__n { font-size: var(--fs-sm); font-weight: 700; color: var(--ink); }
+  .cp-sugerencia__d { font-size: var(--fs-caption); color: var(--mute); margin-top: 2px; }
+  .cp-vinculo {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-4);
+    border-radius: var(--r);
+    background: var(--info-soft);
+    border: 1px solid var(--line-2);
+  }
+  .cp-vinculo__c { flex: 1; min-width: 0; }
   .cp-liga {
     display: flex; gap: var(--sp-2); align-items: center;
     padding: var(--sp-4); border-radius: var(--r);
@@ -202,8 +262,14 @@
       aviso o no integrar el expediente se sanciona con multa administrativa, y el
       cumplimiento se comprueba con documentos fechados, no con explicaciones.
     </p>
-    <div class="cp-ley__pie" id="cp-ley-pie">
-      Umbral vigente de aviso: calculando…
+    <div class="cp-ley__pie">
+      <span id="cp-ley-pie">Umbral vigente de aviso: calculando…</span>
+      <a class="cp-ley__link" href="guia-agente.html#cumplimiento">
+        Cómo darte de alta y qué más te obliga la ley
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/>
+        </svg>
+      </a>
     </div>
   </section>
 
@@ -478,6 +544,27 @@
 
       <!-- Paso: datos -->
       <div id="p-datos">
+
+        <!-- Traer al cliente del CRM en vez de recapturarlo -->
+        <div class="bk-field cp-ancho" style="margin-bottom:var(--sp-5);">
+          <label class="bk-label" for="e-buscar-contacto">Cliente</label>
+          <div class="cp-buscador" id="e-buscador">
+            <input class="bk-input" id="e-buscar-contacto" type="search" autocomplete="off"
+                   placeholder="Busca en tus contactos y leads, o captura desde cero abajo"/>
+            <div class="cp-sugerencias cp-oculto" id="e-sugerencias"></div>
+          </div>
+          <div class="cp-vinculo cp-oculto" id="e-vinculo">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"/>
+            </svg>
+            <span class="cp-vinculo__c">
+              <span class="cp-nombre" id="e-vinculo-n"></span>
+              <span class="cp-sub" id="e-vinculo-d"></span>
+            </span>
+            <button class="bk-btn bk-btn--quiet bk-btn--sm" id="e-desvincular" type="button">Quitar</button>
+          </div>
+        </div>
+
         <div class="cp-rejilla">
           <div class="bk-field">
             <label class="bk-label" for="e-tipo">Tipo de persona</label>
@@ -877,12 +964,33 @@
   /* ── Estado ───────────────────────────────────────────────────── */
   var EXPEDIENTES = [];
   var OPERACIONES = [];
+  var CONTACTOS = [];
   var RESUMEN = null;
   var CONFIG = null;
   var expActual = null;
+  var contactoLigado = null;
   var docsActual = [];
   var xmlActual = '';
   var xmlNombre = 'aviso.xml';
+
+  /* ── Nombres mexicanos ────────────────────────────────────────────
+     En el CRM el nombre viene en un solo campo; en el expediente va
+     separado porque así lo pide el aviso. La convención mexicana es
+     dos apellidos al final, así que se parte por ahí. No es infalible
+     ("María de los Ángeles Gómez" o apellidos compuestos la rompen),
+     por eso los tres campos quedan editables: esto ahorra tecleo, no
+     sustituye el criterio del agente. */
+  function partirNombre(completo) {
+    var t = String(completo || '').trim().replace(/\s+/g, ' ').split(' ');
+    if (t.length === 0 || !t[0]) return { nombre: '', ap: '', am: '' };
+    if (t.length === 1) return { nombre: t[0], ap: '', am: '' };
+    if (t.length === 2) return { nombre: t[0], ap: t[1], am: '' };
+    return {
+      nombre: t.slice(0, t.length - 2).join(' '),
+      ap: t[t.length - 2],
+      am: t[t.length - 1]
+    };
+  }
 
   /* ══════════════ CARGA ══════════════ */
   async function cargar() {
@@ -906,6 +1014,10 @@
       OPERACIONES = await sb('pld_operaciones?select=*&order=fecha_operacion.desc&limit=200') || [];
       pintarOperaciones();
     } catch (e) { /* idem */ }
+    try {
+      CONTACTOS = await sb('contactos?select=id,nombre,telefono,email,tipo,empresa,etapa,' +
+                           'calle,num_ext,num_int,colonia,cp,mpio&order=nombre.asc') || [];
+    } catch (e) { CONTACTOS = []; }
   }
 
   function pintarLeyenda() {
@@ -969,6 +1081,90 @@
     if (pct >= 100) return 'is-listo';
     if (pct >= 60) return 'is-medio';
     return 'is-bajo';
+  }
+
+  /* ══════════════ SELECTOR DE CONTACTO ══════════════ */
+  function pintarVinculo() {
+    var hay = !!contactoLigado;
+    g('e-vinculo').classList.toggle('cp-oculto', !hay);
+    g('e-buscador').classList.toggle('cp-oculto', hay);
+    if (!hay) return;
+    g('e-vinculo-n').textContent = contactoLigado.nombre || 'Contacto';
+    var partes = [];
+    if (contactoLigado.telefono) partes.push(contactoLigado.telefono);
+    if (contactoLigado.email) partes.push(contactoLigado.email);
+    if (contactoLigado.etapa) partes.push(contactoLigado.etapa);
+    g('e-vinculo-d').textContent = partes.join(' · ') || 'Ligado a tu CRM';
+  }
+
+  function buscarContactos(q) {
+    q = (q || '').toLowerCase().trim();
+    if (!q) return [];
+    return CONTACTOS.filter(function (c) {
+      return ((c.nombre || '') + ' ' + (c.telefono || '') + ' ' +
+              (c.email || '') + ' ' + (c.empresa || '')).toLowerCase().indexOf(q) !== -1;
+    }).slice(0, 8);
+  }
+
+  function pintarSugerencias(lista) {
+    var caja = g('e-sugerencias');
+    if (!lista.length) { caja.classList.add('cp-oculto'); return; }
+    caja.innerHTML = lista.map(function (c) {
+      // Si ya tiene expediente, se avisa aquí para no duplicarlo.
+      var ya = EXPEDIENTES.filter(function (e) { return e.contacto_id === c.id; })[0];
+      var det = [c.telefono, c.email, c.etapa].filter(Boolean).join(' · ');
+      return '<button class="cp-sugerencia" data-c="' + esc(c.id) + '" type="button">' +
+        '<span class="cp-sugerencia__n">' + esc(c.nombre || 'Sin nombre') + '</span>' +
+        '<span class="cp-sugerencia__d">' +
+        (ya ? 'Ya tiene expediente — se abrirá el existente' : esc(det || 'Sin datos de contacto')) +
+        '</span></button>';
+    }).join('');
+    caja.classList.remove('cp-oculto');
+  }
+
+  /* Trae del CRM lo que sirva y deja lo demás en paz. Nunca pisa un
+     dato que el agente ya haya capturado en el expediente: el
+     expediente manda, el CRM solo adelanta trabajo. */
+  function prellenarDesde(c) {
+    if (!val('e-tel')) val('e-tel', c.telefono || '');
+    if (!val('e-mail')) val('e-mail', c.email || '');
+    if (val('e-tipo') === 'fisica') {
+      var p = partirNombre(c.nombre);
+      if (!val('e-nombre')) val('e-nombre', p.nombre);
+      if (!val('e-ap')) val('e-ap', p.ap);
+      if (!val('e-am')) val('e-am', p.am);
+    } else {
+      if (!val('e-razon')) val('e-razon', c.empresa || c.nombre || '');
+      if (!val('e-rnom')) {
+        var r = partirNombre(c.nombre);
+        val('e-rnom', r.nombre); val('e-rap', r.ap); val('e-ram', r.am);
+      }
+    }
+    if (!val('e-calle')) val('e-calle', c.calle || '');
+    if (!val('e-next')) val('e-next', c.num_ext || '');
+    if (!val('e-nint')) val('e-nint', c.num_int || '');
+    if (!val('e-col')) val('e-col', c.colonia || '');
+    if (!val('e-cp')) val('e-cp', c.cp || '');
+    if (!val('e-mun')) val('e-mun', c.mpio || '');
+  }
+
+  async function elegirContacto(id) {
+    var c = CONTACTOS.filter(function (x) { return x.id === id; })[0];
+    if (!c) return;
+    g('e-sugerencias').classList.add('cp-oculto');
+    g('e-buscar-contacto').value = '';
+
+    // Si ese contacto ya tiene expediente, se abre en vez de duplicarlo.
+    var ya = EXPEDIENTES.filter(function (e) { return e.contacto_id === id; })[0];
+    if (ya && (!expActual || expActual.id !== ya.id)) {
+      toast('Ese contacto ya tiene expediente. Te lo abro.');
+      await abrirExpediente(ya.id);
+      return;
+    }
+    contactoLigado = c;
+    pintarVinculo();
+    prellenarDesde(c);
+    toast('Datos traídos de tu CRM. Revísalos antes de guardar.', 'success');
   }
 
   function pintarExpedientes() {
@@ -1060,6 +1256,12 @@
     alternarTipo();
     alternarBc();
     alternarPep();
+    contactoLigado = expActual.contacto_id
+      ? (CONTACTOS.filter(function (c) { return c.id === expActual.contacto_id; })[0] || null)
+      : null;
+    g('e-buscar-contacto').value = '';
+    g('e-sugerencias').classList.add('cp-oculto');
+    pintarVinculo();
     g('e-liga-box').classList.add('cp-oculto');
     verPaso('datos');
 
@@ -1133,6 +1335,7 @@
     if (!uid) { toast('Vuelve a iniciar sesión.', 'error'); return; }
     var p = {
       user_id: uid,
+      contacto_id: contactoLigado ? contactoLigado.id : null,
       tipo_persona: val('e-tipo'), rol: val('e-rol'),
       nombre: val('e-nombre'), apellido_paterno: val('e-ap'), apellido_materno: val('e-am'),
       fecha_nacimiento: val('e-fnac') || null, curp: val('e-curp'), rfc: val('e-rfc'),
@@ -1479,6 +1682,10 @@
       val('e-tipo', 'fisica'); val('e-rol', 'cliente');
       val('e-nac', 'Mexicana'); val('e-edo', 'Michoacán');
       val('e-bc-mismo', true); val('e-pep', false);
+      contactoLigado = null;
+      g('e-buscar-contacto').value = '';
+      g('e-sugerencias').classList.add('cp-oculto');
+      pintarVinculo();
       g('e-pep-estado').textContent = 'Sin revisar';
       g('e-liga-box').classList.add('cp-oculto');
       alternarTipo(); alternarBc(); alternarPep(); verPaso('datos');
@@ -1501,6 +1708,26 @@
     g('e-bc-mismo').addEventListener('change', alternarBc);
     g('e-pep').addEventListener('change', alternarPep);
     g('e-guardar').addEventListener('click', guardarExpediente);
+
+    /* Selector de contacto */
+    g('e-buscar-contacto').addEventListener('input', function () {
+      pintarSugerencias(buscarContactos(this.value));
+    });
+    g('e-buscar-contacto').addEventListener('focus', function () {
+      if (this.value) pintarSugerencias(buscarContactos(this.value));
+    });
+    g('e-sugerencias').addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-c]');
+      if (b) elegirContacto(b.dataset.c);
+    });
+    g('e-desvincular').addEventListener('click', function () {
+      contactoLigado = null;
+      pintarVinculo();
+      toast('Expediente desligado del contacto. Los datos capturados se quedan.');
+    });
+    document.addEventListener('click', function (ev) {
+      if (!ev.target.closest('#e-buscador')) g('e-sugerencias').classList.add('cp-oculto');
+    });
 
     g('e-pep-revisar').addEventListener('click', async function () {
       if (!expActual || !expActual.id) { toast('Guarda el expediente primero.', 'error'); return; }
