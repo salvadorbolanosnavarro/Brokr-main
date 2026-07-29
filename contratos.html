@@ -1227,6 +1227,12 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
     </svg>
     Generar contrato en Word
   </button>
+  <button class="gen-btn" id="firma-btn" onclick="mandarAFirma()" style="margin-top:10px;">
+    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zM19.5 12v6.75A2.25 2.25 0 0117.25 21H6.75A2.25 2.25 0 014.5 18.75V8.25A2.25 2.25 0 016.75 6H13.5"/>
+    </svg>
+    Mandar a firma electrónica
+  </button>
   <div class="loading" id="loading"><div class="spinner"></div><span>Generando contrato...</span></div>
   <div class="err" id="err"></div>
   <div class="success" id="success">
@@ -2351,7 +2357,7 @@ function validatePromesa(){
 }
 
 // ── Generate ──
-async function generarContrato(){
+async function generarContrato(soloDatos){
   document.getElementById('err').classList.remove('show');
   document.getElementById('success').classList.remove('show');
 
@@ -2528,6 +2534,11 @@ async function generarContrato(){
     };
   }
 
+  // Mandar a firma reutiliza exactamente esta misma recolección y validación:
+  // así el PDF que se firma sale de los mismos datos que el Word que se
+  // descarga, sin una segunda ruta que se pueda desincronizar.
+  if (soloDatos) return datos;
+
   // Show loading
   const btn = document.getElementById('gen-btn');
   btn.disabled = true;
@@ -2567,6 +2578,43 @@ async function generarContrato(){
     el.classList.add('show');
   } finally {
     btn.disabled = false;
+    document.getElementById('loading').classList.remove('show');
+  }
+}
+
+// ── MANDAR A FIRMA ──
+// Reutiliza la recolección y la validación de generarContrato. El backend
+// arma el mismo DOCX de siempre, lo convierte a PDF y precarga a las partes
+// con los nombres que ya están capturados aquí.
+async function mandarAFirma(){
+  const datos = await generarContrato(true);
+  if(!datos) return;                       // la validación ya pintó el error
+
+  const esp = getClausulasTexto();
+  if(esp.length) datos.clausulas_especiales = esp;
+
+  const btn = document.getElementById('firma-btn');
+  btn.disabled = true;
+  document.getElementById('err').classList.remove('show');
+  document.getElementById('loading').classList.add('show');
+
+  try{
+    const tok = window.brokrSb ? await window.brokrSb.ensureToken() : null;
+    const res = await fetch(`${API}/firmas/desde-contrato`, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json',
+                 ...(tok ? { Authorization: 'Bearer ' + tok } : {}) },
+      body: JSON.stringify({ tipo: tipoActual, datos })
+    });
+    const j = await res.json().catch(()=>({}));
+    if(!res.ok) throw new Error(j.detail || 'No se pudo preparar el documento para firma.');
+    location.href = 'firmas.html?d=' + encodeURIComponent(j.documento_id);
+  } catch(e){
+    const el = document.getElementById('err');
+    el.textContent = e.message || 'No se pudo preparar el documento para firma.';
+    el.classList.add('show');
+    btn.disabled = false;
+  } finally {
     document.getElementById('loading').classList.remove('show');
   }
 }

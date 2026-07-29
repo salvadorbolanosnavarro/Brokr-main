@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Broquer — Firmar documento</title>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="apple-touch-icon" href="isotipo-black.png"/>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+<meta name="robots" content="noindex,nofollow"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+  /* ════════════════════════════════════════════════════════════════
+     Página pública de firma. NO lleva app-shell.js: quien la abre es
+     el cliente del agente, no un usuario de Broquer. No hay sesión,
+     no hay menú, no hay nada más que hacer aquí.
+
+     Pensada para el celular primero, que es donde se va a abrir el
+     90% de las veces, y para alguien que probablemente nunca ha
+     firmado nada en línea. Por eso el orden es: primero se le explica,
+     luego lee, luego decide. El botón de firmar aparece hasta el
+     final y solo cuando ya pasó por todo lo anterior.
+     ════════════════════════════════════════════════════════════════ */
+  html, body { background: var(--paper); min-height: 100%; }
+  body { overflow-y: auto; }
+
+  .fm-wrap { max-width: 580px; margin: 0 auto; padding: 20px 16px 80px; }
+
+  .fm-marca { display: flex; justify-content: center; padding: var(--sp-6) 0 var(--sp-5); }
+  .fm-marca img { height: 40px; width: auto; }
+
+  .fm-hed {
+    font-family: var(--font-display);
+    font-size: var(--fs-h2);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    line-height: var(--lh-h2);
+    text-align: center;
+  }
+  .fm-sub {
+    font-size: var(--fs-sm);
+    color: var(--mute);
+    text-align: center;
+    line-height: var(--lh);
+    margin-top: var(--sp-3);
+  }
+
+  /* Quién te manda esto y qué es. Es lo primero que quiere saber
+     alguien que recibe una liga inesperada. */
+  .fm-quien {
+    background: var(--sky-navy);
+    color: #fff;
+    border-radius: var(--r-lg);
+    padding: var(--sp-6);
+    margin: var(--sp-6) 0;
+  }
+  .fm-quien__t {
+    font-size: var(--fs-label-3);
+    font-weight: 700;
+    color: var(--sky-blue-on-dark);
+    margin-bottom: var(--sp-3);
+  }
+  .fm-quien__doc { font-size: var(--fs-body-lg); font-weight: 700; line-height: var(--lh-snug); }
+  .fm-quien__meta { font-size: var(--fs-sm); color: var(--sky-blue-on-dark); margin-top: var(--sp-2); }
+  .fm-quien__msg {
+    font-size: var(--fs-sm); line-height: var(--lh); margin-top: var(--sp-4);
+    padding-top: var(--sp-4); border-top: 1px solid var(--sky-navy-mid); color: #fff;
+  }
+
+  /* Progreso. Cuatro pasos: leer, identificarte, firmar, listo. */
+  .fm-pasos { display: flex; gap: var(--sp-2); margin-bottom: var(--sp-3); }
+  .fm-paso { flex: 1; height: 4px; border-radius: var(--r-pill); background: var(--line-2); }
+  .fm-paso.is-hecho { background: var(--forest); }
+  .fm-paso-nom {
+    font-size: var(--fs-label-3); font-weight: 700; color: var(--mute);
+    text-align: center; margin-bottom: var(--sp-6);
+  }
+
+  .fm-tarjeta {
+    background: var(--bone);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    padding: var(--sp-6);
+    margin-bottom: var(--sp-5);
+  }
+  .fm-tarjeta__t {
+    font-size: var(--fs-label-2); font-weight: 700; color: var(--ink);
+    margin-bottom: var(--sp-2);
+  }
+  .fm-tarjeta__d {
+    font-size: var(--fs-sm); color: var(--mute); line-height: var(--lh);
+    margin-bottom: var(--sp-4);
+  }
+
+  /* El visor. En iOS un iframe con PDF a veces no scrollea bien, así
+     que siempre hay un botón para abrirlo aparte. Nadie debe firmar
+     algo que no pudo leer. */
+  .fm-visor {
+    width: 100%; height: 420px; border: 1px solid var(--line);
+    border-radius: var(--r); background: var(--paper); display: block;
+  }
+  @media (max-width: 560px) { .fm-visor { height: 300px; } }
+
+  .fm-partes { display: flex; flex-direction: column; gap: var(--sp-3); }
+  .fm-parte {
+    display: flex; align-items: center; gap: var(--sp-3);
+    padding: var(--sp-3) 0; border-bottom: 1px solid var(--line);
+  }
+  .fm-parte:last-child { border-bottom: 0; }
+  .fm-parte__ini {
+    width: 32px; height: 32px; border-radius: 50%; flex: none;
+    background: var(--navy-soft); color: var(--sky-navy);
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--fs-label-3); font-weight: 700;
+  }
+  .fm-parte__n { flex: 1; min-width: 0; }
+  .fm-parte__nom { font-size: var(--fs-sm); font-weight: 600; color: var(--ink); }
+  .fm-parte__rol { font-size: var(--fs-label-3); color: var(--mute); }
+  .fm-parte.is-tu .fm-parte__ini { background: var(--sky-navy); color: #fff; }
+
+  /* Identificación */
+  .fm-ine { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); }
+  .fm-ine__caja {
+    border: 1px dashed var(--line-3); border-radius: var(--r);
+    background: var(--paper); padding: var(--sp-5) var(--sp-3);
+    text-align: center; cursor: pointer; min-height: 112px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: var(--sp-2); transition: border-color var(--dur) var(--ease);
+  }
+  .fm-ine__caja:hover { border-color: var(--sky-blue); }
+  .fm-ine__caja.is-listo { border-style: solid; border-color: var(--forest); background: var(--forest-soft); }
+  .fm-ine__ico { color: var(--mute); display: flex; }
+  .fm-ine__caja.is-listo .fm-ine__ico { color: var(--forest); }
+  .fm-ine__lbl { font-size: var(--fs-label-3); font-weight: 700; color: var(--ink); }
+  .fm-ine__hint { font-size: var(--fs-xs); color: var(--mute); }
+
+  /* El recuadro de firma. Alto generoso: con el dedo en un celular
+     una caja chica produce un garabato ilegible. */
+  .fm-canvas-caja { position: relative; }
+  .fm-canvas {
+    width: 100%; height: 190px; display: block;
+    border: 1px solid var(--line-3); border-radius: var(--r);
+    background: var(--paper); touch-action: none; cursor: crosshair;
+  }
+  .fm-canvas-guia {
+    position: absolute; left: var(--sp-6); right: var(--sp-6); bottom: 46px;
+    border-bottom: 1px solid var(--line-2); pointer-events: none;
+  }
+  .fm-canvas-pista {
+    position: absolute; left: 0; right: 0; bottom: 20px; text-align: center;
+    font-size: var(--fs-xs); color: var(--mute); pointer-events: none;
+  }
+  .fm-canvas-caja.is-firmado .fm-canvas-guia,
+  .fm-canvas-caja.is-firmado .fm-canvas-pista { display: none; }
+
+  /* Consentimiento. El texto completo se muestra, no se esconde tras
+     un "ver términos": si no lo lee es su decisión, pero tuvo que
+     estar enfrente. */
+  .fm-legal {
+    background: var(--paper); border: 1px solid var(--line);
+    border-radius: var(--r); padding: var(--sp-4);
+    font-size: var(--fs-xs); line-height: var(--lh-loose); color: var(--ink-2);
+    max-height: 168px; overflow-y: auto; margin-bottom: var(--sp-4);
+  }
+
+  .fm-acepto {
+    display: flex; gap: var(--sp-3); align-items: flex-start;
+    padding: var(--sp-4); border: 1px solid var(--line);
+    border-radius: var(--r); background: var(--paper); cursor: pointer;
+  }
+  .fm-acepto input { margin-top: 2px; width: 20px; height: 20px; flex: none; accent-color: var(--forest); }
+  .fm-acepto span { font-size: var(--fs-sm); line-height: var(--lh); color: var(--ink); }
+
+  /* Código */
+  .fm-otp {
+    width: 100%; text-align: center; letter-spacing: 0.42em;
+    font-size: var(--fs-h2); font-weight: 700; font-family: var(--font-sans);
+  }
+  .fm-otp-info {
+    font-size: var(--fs-sm); color: var(--mute); text-align: center;
+    line-height: var(--lh); margin-top: var(--sp-3);
+  }
+
+  .fm-hecho { text-align: center; padding: var(--sp-8) 0; }
+  .fm-hecho__ico {
+    width: 64px; height: 64px; border-radius: 50%; margin: 0 auto var(--sp-5);
+    background: var(--forest-soft); color: var(--forest);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .fm-folio {
+    font-size: var(--fs-h3); font-weight: 700; color: var(--sky-navy);
+    letter-spacing: 0.06em; margin-top: var(--sp-2);
+  }
+
+  .fm-pie {
+    text-align: center; font-size: var(--fs-xs); color: var(--mute);
+    line-height: var(--lh); margin-top: var(--sp-8);
+    padding-top: var(--sp-6); border-top: 1px solid var(--line);
+  }
+  .fm-pie a { color: var(--sky-blue); text-decoration: none; }
+
+  .fm-oculto { display: none; }
+</style>
+</head>
+<body>
+
+<div class="fm-wrap">
+
+  <div class="fm-marca"><img src="logotipo-broquer.png" alt="Broquer"/></div>
+
+  <!-- ── Cargando ─────────────────────────────────────────────── -->
+  <div id="fm-cargando" style="text-align:center;padding:var(--sp-12) 0;">
+    <div class="bk-spinner"></div>
+    <div style="font-size:var(--fs-sm);color:var(--mute);margin-top:var(--sp-4);">Abriendo tu documento…</div>
+  </div>
+
+  <!-- ── Error ────────────────────────────────────────────────── -->
+  <div id="fm-error" class="fm-oculto">
+    <h1 class="fm-hed">No pudimos abrir esto</h1>
+    <p class="fm-sub" id="fm-error-txt"></p>
+    <p class="fm-sub">Ponte en contacto con la persona que te compartió la liga.</p>
+  </div>
+
+  <!-- ── Flujo ────────────────────────────────────────────────── -->
+  <div id="fm-app" class="fm-oculto">
+
+    <h1 class="fm-hed" id="fm-titulo">Tienes un documento para firmar</h1>
+    <p class="fm-sub" id="fm-saludo"></p>
+
+    <div class="fm-quien">
+      <div class="fm-quien__t">Documento</div>
+      <div class="fm-quien__doc" id="fm-doc-titulo"></div>
+      <div class="fm-quien__meta" id="fm-doc-meta"></div>
+      <div class="fm-quien__msg fm-oculto" id="fm-doc-msg"></div>
+    </div>
+
+    <div class="fm-pasos">
+      <div class="fm-paso" id="fm-p1"></div>
+      <div class="fm-paso" id="fm-p2"></div>
+      <div class="fm-paso" id="fm-p3"></div>
+      <div class="fm-paso" id="fm-p4"></div>
+    </div>
+    <div class="fm-paso-nom" id="fm-paso-nom">Paso 1 de 4 — Lee el documento</div>
+
+    <!-- Aviso de turno -->
+    <div class="bk-alert bk-alert--info fm-oculto" id="fm-turno" style="margin-bottom:var(--sp-5);">
+      Todavía no es tu turno. Faltan firmas antes que la tuya; te avisaremos en cuanto puedas firmar.
+    </div>
+
+    <!-- PASO 1 · LEER -->
+    <section class="fm-tarjeta" id="fm-s-leer">
+      <div class="fm-tarjeta__t">1. Lee el documento completo</div>
+      <div class="fm-tarjeta__d">
+        Tómate el tiempo que necesites. Si algo no te queda claro, pregúntale a
+        quien te lo mandó antes de continuar.
+      </div>
+      <iframe class="fm-visor" id="fm-visor" title="Documento"></iframe>
+      <div class="bk-cluster" style="margin-top:var(--sp-4);">
+        <a class="bk-btn bk-btn--ghost bk-btn--sm" id="fm-abrir" target="_blank" rel="noopener">Abrir en otra pestaña</a>
+        <button class="bk-btn bk-btn--forest bk-btn--sm" type="button" id="fm-lei">Ya lo leí, continuar</button>
+      </div>
+    </section>
+
+    <!-- Las otras partes -->
+    <section class="fm-tarjeta" id="fm-s-partes">
+      <div class="fm-tarjeta__t">Quiénes firman</div>
+      <div class="fm-partes" id="fm-partes"></div>
+    </section>
+
+    <!-- PASO 2 · IDENTIFICACIÓN -->
+    <section class="fm-tarjeta fm-oculto" id="fm-s-ine">
+      <div class="fm-tarjeta__t">2. Tu identificación oficial</div>
+      <div class="fm-tarjeta__d">
+        Toma una foto de tu identificación por ambos lados. Se guarda cifrada y
+        solo la ve la persona que te pidió firmar.
+      </div>
+      <div class="fm-ine">
+        <div class="fm-ine__caja" id="fm-ine-frente" role="button" tabindex="0">
+          <span class="fm-ine__ico">
+            <svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/>
+            </svg>
+          </span>
+          <span class="fm-ine__lbl">Frente</span>
+          <span class="fm-ine__hint" id="fm-ine-frente-h">Toca para tomar la foto</span>
+        </div>
+        <div class="fm-ine__caja" id="fm-ine-reverso" role="button" tabindex="0">
+          <span class="fm-ine__ico">
+            <svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/>
+            </svg>
+          </span>
+          <span class="fm-ine__lbl">Reverso</span>
+          <span class="fm-ine__hint" id="fm-ine-reverso-h">Toca para tomar la foto</span>
+        </div>
+      </div>
+      <input type="file" accept="image/*" capture="environment" id="fm-ine-file" class="fm-oculto"/>
+    </section>
+
+    <!-- PASO 3 · FIRMAR -->
+    <section class="fm-tarjeta fm-oculto" id="fm-s-firma">
+      <div class="fm-tarjeta__t" id="fm-firma-t">3. Tu firma</div>
+      <div class="fm-tarjeta__d">Traza tu firma con el dedo o con el mouse.</div>
+
+      <div class="fm-canvas-caja" id="fm-canvas-caja">
+        <canvas class="fm-canvas" id="fm-canvas"></canvas>
+        <div class="fm-canvas-guia"></div>
+        <div class="fm-canvas-pista">Firma aquí</div>
+      </div>
+      <div class="bk-cluster" style="margin-top:var(--sp-3);justify-content:flex-end;">
+        <button class="bk-btn bk-btn--quiet bk-btn--sm" type="button" id="fm-borrar">Borrar y repetir</button>
+      </div>
+
+      <div class="bk-divider" style="margin:var(--sp-6) 0;"></div>
+
+      <div class="fm-tarjeta__t">Lo que estás aceptando</div>
+      <div class="fm-legal" id="fm-legal"></div>
+
+      <label class="fm-acepto">
+        <input type="checkbox" id="fm-acepto"/>
+        <span>Leí y acepto lo anterior. Es mi voluntad firmar este documento.</span>
+      </label>
+
+      <button class="bk-btn bk-btn--forest bk-btn--block bk-btn--lg" type="button"
+              id="fm-pedir-codigo" style="margin-top:var(--sp-5);" disabled>
+        Continuar
+      </button>
+
+      <div style="text-align:center;margin-top:var(--sp-5);">
+        <button class="bk-btn bk-btn--quiet bk-btn--sm" type="button" id="fm-rechazar">No quiero firmar</button>
+      </div>
+    </section>
+
+    <!-- PASO 4 · CÓDIGO -->
+    <section class="fm-tarjeta fm-oculto" id="fm-s-codigo">
+      <div class="fm-tarjeta__t">4. Confirma que eres tú</div>
+      <div class="fm-tarjeta__d" id="fm-codigo-d"></div>
+
+      <div class="bk-field">
+        <label class="bk-label" for="fm-codigo">Código de verificación</label>
+        <input class="bk-input fm-otp" id="fm-codigo" type="text" inputmode="numeric"
+               autocomplete="one-time-code" maxlength="6" placeholder="······"/>
+      </div>
+
+      <button class="bk-btn bk-btn--forest bk-btn--block bk-btn--lg" type="button" id="fm-firmar">
+        Firmar documento
+      </button>
+
+      <div class="fm-otp-info">
+        ¿No te llegó? <button class="bk-btn bk-btn--quiet bk-btn--sm" type="button" id="fm-reenviar">Enviar de nuevo</button>
+      </div>
+      <div class="fm-otp-info" style="margin-top:var(--sp-4);">
+        No le compartas este código a nadie, ni siquiera a tu asesor.
+      </div>
+    </section>
+
+    <!-- LISTO -->
+    <section class="fm-oculto" id="fm-s-listo">
+      <div class="fm-hecho">
+        <div class="fm-hecho__ico">
+          <svg width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+          </svg>
+        </div>
+        <h2 class="fm-hed">Listo, ya firmaste</h2>
+        <p class="fm-sub" id="fm-listo-txt"></p>
+        <div class="fm-folio" id="fm-listo-folio"></div>
+      </div>
+      <div class="fm-tarjeta">
+        <div class="fm-tarjeta__t">Tu copia</div>
+        <div class="fm-tarjeta__d" id="fm-listo-copia">
+          Cuando firmen todas las partes, el documento quedará disponible aquí con
+          su constancia de firma. Te avisaremos por el mismo medio.
+        </div>
+        <a class="bk-btn bk-btn--forest bk-btn--block fm-oculto" id="fm-descargar" target="_blank" rel="noopener">
+          Descargar documento firmado
+        </a>
+      </div>
+    </section>
+
+    <!-- RECHAZADO -->
+    <section class="fm-oculto" id="fm-s-rechazado">
+      <div class="fm-hecho">
+        <h2 class="fm-hed">No firmaste este documento</h2>
+        <p class="fm-sub">Le avisamos a quien te lo envió. Si fue un error, pídele que te mande la liga otra vez.</p>
+      </div>
+    </section>
+
+    <div class="fm-pie">
+      Firma electrónica procesada por Broquer conforme a los artículos 89 a 114 del
+      Código de Comercio.<br/>
+      Verifica cualquier documento en <a href="verificar-firma.html">broquer.app/verificar-firma</a>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal de rechazo -->
+<div class="bk-overlay fm-oculto" id="fm-m-rechazo">
+  <div class="bk-modal" role="dialog" aria-modal="true" aria-labelledby="fm-m-rechazo-t">
+    <div class="bk-modal__head">
+      <div class="bk-modal__title" id="fm-m-rechazo-t">¿Prefieres no firmar?</div>
+    </div>
+    <div class="bk-modal__body">
+      <p style="font-size:var(--fs-sm);color:var(--mute);line-height:var(--lh);margin:0 0 var(--sp-4);">
+        No pasa nada. Le avisaremos a quien te mandó el documento. Si quieres,
+        cuéntale por qué — le ayuda a resolverlo.
+      </p>
+      <div class="bk-field">
+        <label class="bk-label" for="fm-motivo">Motivo (opcional)</label>
+        <textarea class="bk-textarea" id="fm-motivo" rows="3"
+                  placeholder="Ej. Hay un dato equivocado en el domicilio"></textarea>
+      </div>
+    </div>
+    <div class="bk-modal__foot">
+      <button class="bk-btn bk-btn--ghost" type="button" id="fm-rechazo-cancelar">Volver</button>
+      <button class="bk-btn bk-btn--danger" type="button" id="fm-rechazo-ok">No firmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="bk-toast-stack" id="fm-toasts"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   Página pública de firma.
+
+   Todo lo que importa se decide en el servidor: si le toca firmar,
+   si el código es correcto, si ya firmó. Aquí solo se pinta y se
+   recolecta. Nada de lo que se valide en este archivo tiene valor
+   probatorio: si viviera aquí, se podría saltar desde la consola
+   del navegador.
+   ══════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  var API_BASE = 'https://api.broquer.app';
+
+  var TOKEN = new URLSearchParams(location.search).get('t') || '';
+  var DATOS = null;
+  var GEO = { lat: null, lng: null, prec: null };
+  var TRAZADO = false;
+  var CARA_ACTUAL = '';
+  var INE = { frente: false, reverso: false };
+
+  function g(id) { return document.getElementById(id); }
+  function ver(id, mostrar) { g(id).classList.toggle('fm-oculto', !mostrar); }
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function toast(msg, tipo) {
+    var stack = g('fm-toasts');
+    if (!stack) return;
+    var t = document.createElement('div');
+    t.className = 'bk-toast' + (tipo ? ' bk-toast--' + tipo : '');
+    t.textContent = msg;
+    stack.appendChild(t);
+    setTimeout(function () { t.remove(); }, 4600);
+  }
+
+  async function api(path, opts) {
+    opts = opts || {};
+    var headers = Object.assign({}, opts.headers || {});
+    var body = opts.body;
+    if (opts.json !== undefined) {
+      headers['Content-Type'] = 'application/json';
+      body = JSON.stringify(opts.json);
+    }
+    var r = await fetch(API_BASE + path, { method: opts.method || 'GET', headers: headers, body: body });
+    var data = null;
+    try { data = await r.json(); } catch (e) { data = null; }
+    if (!r.ok) throw new Error((data && data.detail) || 'No se pudo completar la acción.');
+    return data;
+  }
+
+  /* ── Progreso ─────────────────────────────────────────────────── */
+  var NOMBRES_PASO = [
+    'Paso 1 de 4 — Lee el documento',
+    'Paso 2 de 4 — Tu identificación',
+    'Paso 3 de 4 — Tu firma',
+    'Paso 4 de 4 — Confirma que eres tú'
+  ];
+  function paso(n) {
+    for (var i = 1; i <= 4; i++) g('fm-p' + i).classList.toggle('is-hecho', i <= n);
+    g('fm-paso-nom').textContent = NOMBRES_PASO[Math.min(n, 4) - 1] || '';
+  }
+
+  /* ── El recuadro de firma ─────────────────────────────────────── */
+  var cv, ctx, dibujando = false, ultimo = null;
+
+  function prepararCanvas() {
+    cv = g('fm-canvas');
+    var dpr = window.devicePixelRatio || 1;
+    var caja = cv.getBoundingClientRect();
+    // El canvas se dibuja a resolución del dispositivo: si no, en un
+    // celular moderno el trazo sale pixeleado y la firma se ve fea en
+    // la constancia, que es donde va a vivir para siempre.
+    cv.width = Math.round(caja.width * dpr);
+    cv.height = Math.round(caja.height * dpr);
+    ctx = cv.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.lineWidth = 2.2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#0f1b2a'; /* AUDIT-EXEMPT-LINE: canvas 2D no acepta var(); tinta del trazo */
+  }
+
+  function punto(ev) {
+    var caja = cv.getBoundingClientRect();
+    var t = (ev.touches && ev.touches[0]) || ev;
+    return { x: t.clientX - caja.left, y: t.clientY - caja.top };
+  }
+  function iniciar(ev) {
+    ev.preventDefault();
+    dibujando = true;
+    ultimo = punto(ev);
+  }
+  function mover(ev) {
+    if (!dibujando) return;
+    ev.preventDefault();
+    var p = punto(ev);
+    ctx.beginPath();
+    ctx.moveTo(ultimo.x, ultimo.y);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    ultimo = p;
+    if (!TRAZADO) {
+      TRAZADO = true;
+      g('fm-canvas-caja').classList.add('is-firmado');
+      revisarListo();
+    }
+  }
+  function soltar() { dibujando = false; ultimo = null; }
+
+  function limpiarCanvas() {
+    if (!ctx) return;
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    TRAZADO = false;
+    g('fm-canvas-caja').classList.remove('is-firmado');
+    revisarListo();
+  }
+
+  function revisarListo() {
+    var ok = TRAZADO && g('fm-acepto').checked;
+    g('fm-pedir-codigo').disabled = !ok;
+  }
+
+  /* ── Identificación ───────────────────────────────────────────── */
+  function abrirCamara(cara) {
+    CARA_ACTUAL = cara;
+    g('fm-ine-file').value = '';
+    g('fm-ine-file').click();
+  }
+
+  async function subirINE(archivo) {
+    if (!archivo || !CARA_ACTUAL) return;
+    var caja = g('fm-ine-' + CARA_ACTUAL);
+    var hint = g('fm-ine-' + CARA_ACTUAL + '-h');
+    hint.textContent = 'Subiendo…';
+    var fd = new FormData();
+    fd.append('cara', CARA_ACTUAL);
+    fd.append('archivo', archivo);
+    try {
+      await api('/firmas/publico/' + encodeURIComponent(TOKEN) + '/ine',
+                { method: 'POST', body: fd });
+      INE[CARA_ACTUAL] = true;
+      caja.classList.add('is-listo');
+      hint.textContent = 'Listo';
+      revisarINE();
+    } catch (e) {
+      hint.textContent = 'Toca para intentar de nuevo';
+      toast(e.message, 'error');
+    }
+  }
+
+  function revisarINE() {
+    if (INE.frente && INE.reverso) {
+      ver('fm-s-firma', true);
+      paso(3);
+      g('fm-s-firma').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(prepararCanvas, 350);
+    }
+  }
+
+  /* ── Ubicación ────────────────────────────────────────────────── */
+  function pedirUbicacion() {
+    // Opcional a propósito: si la niega, se firma igual. Un flujo que
+    // exige GPS deja fuera a quien tiene el permiso apagado y no sabe
+    // cómo prenderlo.
+    if (!navigator.geolocation) return;
+    try {
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        GEO.lat = pos.coords.latitude;
+        GEO.lng = pos.coords.longitude;
+        GEO.prec = pos.coords.accuracy;
+      }, function () {}, { enableHighAccuracy: false, timeout: 8000, maximumAge: 120000 });
+    } catch (e) { /* sin ubicación se firma igual */ }
+  }
+
+  /* ── Pintado ──────────────────────────────────────────────────── */
+  function pintar(d) {
+    DATOS = d;
+    var doc = d.documento, f = d.firmante;
+
+    g('fm-saludo').textContent = 'Hola ' + (f.nombre || '') + '. ' + d.agente +
+      ' te compartió este documento para que lo revises y, si estás de acuerdo, lo firmes.';
+    g('fm-doc-titulo').textContent = doc.titulo || '';
+    g('fm-doc-meta').textContent = doc.tipo_label + ' · Firmas como ' + f.rol_label +
+      ' · Folio ' + (doc.folio || '');
+
+    if (doc.mensaje) {
+      g('fm-doc-msg').textContent = doc.mensaje;
+      ver('fm-doc-msg', true);
+    }
+
+    g('fm-legal').textContent = d.consentimiento || '';
+
+    var html = (d.partes || []).map(function (p) {
+      var ini = (p.nombre || '?').trim().charAt(0).toUpperCase();
+      return '<div class="fm-parte' + (p.es_tu ? ' is-tu' : '') + '">' +
+        '<div class="fm-parte__ini">' + esc(ini) + '</div>' +
+        '<div class="fm-parte__n">' +
+          '<div class="fm-parte__nom">' + esc(p.nombre) + (p.es_tu ? ' (tú)' : '') + '</div>' +
+          '<div class="fm-parte__rol">' + esc(p.rol_label) + '</div>' +
+        '</div>' +
+        '<span class="bk-badge ' + (p.firmado ? 'bk-badge--success' : '') + '">' +
+          (p.firmado ? 'Firmó' : 'Pendiente') + '</span>' +
+      '</div>';
+    }).join('');
+    g('fm-partes').innerHTML = html;
+
+    ver('fm-cargando', false);
+    ver('fm-app', true);
+
+    // Ya firmó: se le enseña su acuse y ya.
+    if (f.estado === 'firmado') {
+      ver('fm-s-leer', false);
+      ver('fm-s-listo', true);
+      g('fm-titulo').textContent = 'Ya firmaste este documento';
+      g('fm-saludo').textContent = '';
+      g('fm-listo-folio').textContent = doc.folio || '';
+      paso(4);
+      if (doc.estado === 'completo') {
+        g('fm-listo-txt').textContent = 'Todas las partes firmaron.';
+        g('fm-listo-copia').textContent = 'Tu documento ya está listo con su constancia de firma.';
+        cargarDescarga();
+      } else {
+        g('fm-listo-txt').textContent = 'Falta que firmen las demás partes.';
+      }
+      return;
+    }
+
+    if (f.estado === 'rechazado') {
+      ver('fm-s-leer', false);
+      ver('fm-s-partes', false);
+      ver('fm-s-rechazado', true);
+      g('fm-titulo').textContent = '';
+      g('fm-saludo').textContent = '';
+      return;
+    }
+
+    if (!d.le_toca) {
+      ver('fm-turno', true);
+      g('fm-lei').disabled = true;
+    }
+
+    paso(1);
+    cargarVisor();
+    pedirUbicacion();
+  }
+
+  async function cargarVisor() {
+    try {
+      var r = await api('/firmas/publico/' + encodeURIComponent(TOKEN) + '/archivo');
+      g('fm-visor').src = r.url;
+      g('fm-abrir').href = r.url;
+    } catch (e) {
+      toast('No se pudo abrir el documento. Recarga la página.', 'error');
+    }
+  }
+
+  async function cargarDescarga() {
+    try {
+      var r = await api('/firmas/publico/' + encodeURIComponent(TOKEN) + '/archivo');
+      g('fm-descargar').href = r.url;
+      ver('fm-descargar', true);
+    } catch (e) { /* sin descarga; el correo también la lleva */ }
+  }
+
+  /* ── Acciones ─────────────────────────────────────────────────── */
+  async function pedirCodigo(reenvio) {
+    var btn = reenvio ? g('fm-reenviar') : g('fm-pedir-codigo');
+    btn.disabled = true;
+    try {
+      var fd = new FormData();
+      fd.append('canal', '');
+      var r = await api('/firmas/publico/' + encodeURIComponent(TOKEN) + '/codigo',
+                        { method: 'POST', body: fd });
+      var via = r.canal === 'whatsapp' ? 'por WhatsApp' : 'por correo';
+      g('fm-codigo-d').textContent = 'Te mandamos un código de ' + '6 dígitos ' + via +
+        ' a ' + (r.destino || '') + '. Vence en ' + r.minutos + ' minutos.';
+      ver('fm-s-codigo', true);
+      paso(4);
+      g('fm-s-codigo').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      g('fm-codigo').focus();
+      if (reenvio) toast('Te reenviamos el código.', 'success');
+    } catch (e) {
+      toast(e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      revisarListo();
+    }
+  }
+
+  async function firmar() {
+    var codigo = (g('fm-codigo').value || '').replace(/\D/g, '');
+    if (codigo.length < 6) { toast('Escribe los 6 dígitos del código.', 'error'); return; }
+    if (!TRAZADO) { toast('Falta tu firma. Trázala arriba.', 'error'); return; }
+
+    var btn = g('fm-firmar');
+    btn.disabled = true;
+    btn.textContent = 'Firmando…';
+    try {
+      var r = await api('/firmas/publico/' + encodeURIComponent(TOKEN) + '/firmar', {
+        method: 'POST',
+        json: {
+          codigo: codigo,
+          trazo: cv.toDataURL('image/png'),
+          acepto: true,
+          geo_lat: GEO.lat, geo_lng: GEO.lng, geo_precision: GEO.prec
+        }
+      });
+      ['fm-s-leer', 'fm-s-partes', 'fm-s-ine', 'fm-s-firma', 'fm-s-codigo'].forEach(function (id) {
+        ver(id, false);
+      });
+      ver('fm-s-listo', true);
+      g('fm-titulo').textContent = '';
+      g('fm-saludo').textContent = '';
+      g('fm-listo-folio').textContent = (DATOS.documento.folio || '');
+      g('fm-listo-txt').textContent = r.completo
+        ? 'Todas las partes firmaron. El documento quedó cerrado.'
+        : 'Falta que firmen las demás partes. Te avisaremos cuando esté completo.';
+      if (r.completo) {
+        g('fm-listo-copia').textContent = 'Tu documento ya está listo con su constancia de firma.';
+        setTimeout(cargarDescarga, 2500);
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (e) {
+      toast(e.message, 'error');
+      btn.disabled = false;
+      btn.textContent = 'Firmar documento';
+    }
+  }
+
+  async function rechazar() {
+    var btn = g('fm-rechazo-ok');
+    btn.disabled = true;
+    try {
+      await api('/firmas/publico/' + encodeURIComponent(TOKEN) + '/rechazar', {
+        method: 'POST',
+        json: { motivo: g('fm-motivo').value || '' }
+      });
+      ver('fm-m-rechazo', false);
+      ['fm-s-leer', 'fm-s-partes', 'fm-s-ine', 'fm-s-firma', 'fm-s-codigo'].forEach(function (id) {
+        ver(id, false);
+      });
+      ver('fm-s-rechazado', true);
+      g('fm-titulo').textContent = '';
+      g('fm-saludo').textContent = '';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (e) {
+      toast(e.message, 'error');
+      btn.disabled = false;
+    }
+  }
+
+  /* ── Conexión ─────────────────────────────────────────────────── */
+  function conectar() {
+    g('fm-lei').addEventListener('click', function () {
+      var doc = DATOS.documento;
+      if (doc.exige_ine && !DATOS.firmante.tiene_ine) {
+        ver('fm-s-ine', true);
+        paso(2);
+        g('fm-s-ine').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        if (doc.exige_ine) { INE.frente = true; INE.reverso = true; }
+        g('fm-firma-t').textContent = doc.exige_ine ? '3. Tu firma' : '2. Tu firma';
+        ver('fm-s-firma', true);
+        paso(3);
+        g('fm-s-firma').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setTimeout(prepararCanvas, 350);
+      }
+    });
+
+    g('fm-ine-frente').addEventListener('click', function () { abrirCamara('frente'); });
+    g('fm-ine-reverso').addEventListener('click', function () { abrirCamara('reverso'); });
+    g('fm-ine-file').addEventListener('change', function (ev) {
+      subirINE(ev.target.files && ev.target.files[0]);
+    });
+
+    var c = g('fm-canvas');
+    c.addEventListener('mousedown', iniciar);
+    c.addEventListener('mousemove', mover);
+    window.addEventListener('mouseup', soltar);
+    c.addEventListener('touchstart', iniciar, { passive: false });
+    c.addEventListener('touchmove', mover, { passive: false });
+    c.addEventListener('touchend', soltar);
+
+    g('fm-borrar').addEventListener('click', limpiarCanvas);
+    g('fm-acepto').addEventListener('change', revisarListo);
+    g('fm-pedir-codigo').addEventListener('click', function () { pedirCodigo(false); });
+    g('fm-reenviar').addEventListener('click', function () { pedirCodigo(true); });
+    g('fm-firmar').addEventListener('click', firmar);
+
+    g('fm-rechazar').addEventListener('click', function () { ver('fm-m-rechazo', true); });
+    g('fm-rechazo-cancelar').addEventListener('click', function () { ver('fm-m-rechazo', false); });
+    g('fm-rechazo-ok').addEventListener('click', rechazar);
+
+    g('fm-codigo').addEventListener('input', function (ev) {
+      ev.target.value = (ev.target.value || '').replace(/\D/g, '').slice(0, 6);
+    });
+
+    // Si gira el teléfono, el canvas cambia de ancho y el trazo se
+    // deforma. Se vuelve a preparar y se pide firmar de nuevo: mejor
+    // eso que guardar una firma estirada.
+    var t = null;
+    window.addEventListener('resize', function () {
+      if (!cv || g('fm-s-firma').classList.contains('fm-oculto')) return;
+      clearTimeout(t);
+      t = setTimeout(function () {
+        var tenia = TRAZADO;
+        prepararCanvas();
+        limpiarCanvas();
+        if (tenia) toast('Gira el teléfono cambió el recuadro. Vuelve a firmar.', 'error');
+      }, 260);
+    });
+  }
+
+  async function arrancar() {
+    if (!TOKEN) {
+      ver('fm-cargando', false);
+      g('fm-error-txt').textContent = 'La liga está incompleta.';
+      ver('fm-error', true);
+      return;
+    }
+    conectar();
+    try {
+      var d = await api('/firmas/publico/' + encodeURIComponent(TOKEN));
+      pintar(d);
+    } catch (e) {
+      ver('fm-cargando', false);
+      g('fm-error-txt').textContent = e.message;
+      ver('fm-error', true);
+    }
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', arrancar);
+  else arrancar();
+})();
+</script>
+
+</body>
+</html>

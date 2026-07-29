@@ -164,6 +164,15 @@ try:
 except Exception as _e:
     print(f"[pld] No se pudo montar el router de cumplimiento: {_e}")
 
+# Firma electrónica: documentos, firmantes, código de verificación, constancia
+# y verificación pública por folio. Mismo import defensivo: si falla, el resto
+# del backend sigue vivo.
+try:
+    from routers.firmas import router as firmas_router
+    app.include_router(firmas_router)
+except Exception as _e:
+    print(f"[firmas] No se pudo montar el router de firma electrónica: {_e}")
+
 CONFIG_FILE = Path(__file__).parent / "config.json"
 
 def load_config() -> dict:

@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Broquer — Verificar documento firmado</title>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="apple-touch-icon" href="isotipo-black.png"/>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+  /* ════════════════════════════════════════════════════════════════
+     Verificación pública. Sin sesión y sin token: la abre un notario,
+     un abogado, la contraparte o un juez que tiene el PDF en la mano
+     y quiere saber si es auténtico.
+
+     La comprobación de integridad ocurre EN EL NAVEGADOR: el archivo
+     nunca se sube a ningún lado. Se calcula su SHA-256 con la API de
+     criptografía del propio navegador y se compara contra el que
+     quedó registrado al firmarse. Quien verifica no tiene que
+     confiar en nosotros para hacer la comparación — puede repetirla
+     con cualquier herramienta y le va a dar lo mismo.
+     ════════════════════════════════════════════════════════════════ */
+  html, body { background: var(--paper); min-height: 100%; }
+  body { overflow-y: auto; }
+
+  .vf-wrap { max-width: 620px; margin: 0 auto; padding: 20px 16px 72px; }
+
+  .vf-marca { display: flex; justify-content: center; padding: var(--sp-6) 0 var(--sp-5); }
+  .vf-marca img { height: 40px; width: auto; }
+
+  .vf-hed {
+    font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 700;
+    letter-spacing: -0.02em; color: var(--ink); line-height: var(--lh-h2);
+    text-align: center;
+  }
+  .vf-sub {
+    font-size: var(--fs-sm); color: var(--mute); text-align: center;
+    line-height: var(--lh); margin-top: var(--sp-3);
+  }
+
+  .vf-buscador {
+    display: flex; gap: var(--sp-3); margin: var(--sp-8) 0 var(--sp-6);
+  }
+  .vf-buscador .bk-input {
+    text-align: center; letter-spacing: 0.14em; font-weight: 700;
+    text-transform: uppercase;
+  }
+  @media (max-width: 520px) {
+    .vf-buscador { flex-direction: column; }
+  }
+
+  .vf-tarjeta {
+    background: var(--bone); border: 1px solid var(--line);
+    border-radius: var(--r-lg); padding: var(--sp-6); margin-bottom: var(--sp-5);
+  }
+  .vf-tarjeta__t {
+    font-size: var(--fs-label-2); font-weight: 700; color: var(--ink);
+    margin-bottom: var(--sp-4);
+  }
+
+  /* El veredicto. Grande y sin ambigüedad: quien llega aquí quiere
+     una respuesta de sí o no, no un informe. */
+  .vf-veredicto {
+    display: flex; gap: var(--sp-4); align-items: flex-start;
+    border-radius: var(--r-lg); padding: var(--sp-6); margin-bottom: var(--sp-6);
+  }
+  .vf-veredicto--si { background: var(--forest-soft); border: 1px solid var(--forest); }
+  .vf-veredicto--proceso { background: var(--warn-soft); border: 1px solid var(--warn); }
+  .vf-veredicto--no { background: var(--danger-soft); border: 1px solid var(--danger-bd); }
+  .vf-veredicto__ico { flex: none; margin-top: 2px; }
+  .vf-veredicto--si .vf-veredicto__ico { color: var(--forest); }
+  .vf-veredicto--proceso .vf-veredicto__ico { color: var(--amber); }
+  .vf-veredicto--no .vf-veredicto__ico { color: var(--danger); }
+  .vf-veredicto__t {
+    font-size: var(--fs-body-lg); font-weight: 700; color: var(--ink);
+    line-height: var(--lh-snug);
+  }
+  .vf-veredicto__d {
+    font-size: var(--fs-sm); color: var(--ink-2); line-height: var(--lh);
+    margin-top: var(--sp-2);
+  }
+
+  .vf-dato {
+    display: flex; justify-content: space-between; gap: var(--sp-4);
+    padding: var(--sp-3) 0; border-bottom: 1px solid var(--line);
+    font-size: var(--fs-sm);
+  }
+  .vf-dato:last-child { border-bottom: 0; }
+  .vf-dato__k { color: var(--mute); flex: none; }
+  .vf-dato__v { color: var(--ink); font-weight: 600; text-align: right; }
+
+  .vf-firmante {
+    display: flex; align-items: center; gap: var(--sp-3);
+    padding: var(--sp-3) 0; border-bottom: 1px solid var(--line);
+  }
+  .vf-firmante:last-child { border-bottom: 0; }
+  .vf-firmante__ini {
+    width: 32px; height: 32px; border-radius: 50%; flex: none;
+    background: var(--navy-soft); color: var(--sky-navy);
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--fs-label-3); font-weight: 700;
+  }
+  .vf-firmante__ini.is-firmado { background: var(--forest); color: #fff; }
+  .vf-firmante__c { flex: 1; min-width: 0; }
+  .vf-firmante__n { font-size: var(--fs-sm); font-weight: 600; color: var(--ink); }
+  .vf-firmante__r { font-size: var(--fs-label-3); color: var(--mute); }
+
+  .vf-hash {
+    font-size: var(--fs-xs); color: var(--mute); word-break: break-all;
+    line-height: var(--lh-loose); background: var(--paper);
+    border: 1px solid var(--line); border-radius: var(--r-sm);
+    padding: var(--sp-3); margin-top: var(--sp-2);
+  }
+  .vf-hash.is-igual { border-color: var(--forest); color: var(--ink); }
+  .vf-hash.is-distinto { border-color: var(--danger-bd); color: var(--ink); }
+
+  .vf-zona {
+    border: 1px dashed var(--line-3); border-radius: var(--r-lg);
+    background: var(--paper); padding: var(--sp-7) var(--sp-5);
+    text-align: center; cursor: pointer;
+    transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+  }
+  .vf-zona:hover, .vf-zona.is-encima { border-color: var(--sky-blue); background: var(--navy-soft); }
+  .vf-zona__ico { color: var(--mute); margin-bottom: var(--sp-3); display: flex; justify-content: center; }
+  .vf-zona__t { font-size: var(--fs-sm); font-weight: 700; color: var(--ink); }
+  .vf-zona__d { font-size: var(--fs-label-3); color: var(--mute); margin-top: var(--sp-2); }
+
+  .vf-pie {
+    text-align: center; font-size: var(--fs-xs); color: var(--mute);
+    line-height: var(--lh); margin-top: var(--sp-8);
+    padding-top: var(--sp-6); border-top: 1px solid var(--line);
+  }
+
+  .vf-oculto { display: none; }
+</style>
+</head>
+<body>
+
+<div class="vf-wrap">
+
+  <div class="vf-marca"><img src="logotipo-broquer.png" alt="Broquer"/></div>
+
+  <h1 class="vf-hed">Verificar un documento firmado</h1>
+  <p class="vf-sub">
+    Teclea el folio que aparece en la constancia de firma para confirmar que el
+    documento existe, quién lo firmó y que no fue alterado.
+  </p>
+
+  <div class="vf-buscador">
+    <input class="bk-input" id="vf-folio" type="text" maxlength="12"
+           placeholder="BRQ-XXXXXXXX" autocomplete="off" spellcheck="false"/>
+    <button class="bk-btn bk-btn--forest" type="button" id="vf-buscar">Verificar</button>
+  </div>
+
+  <!-- Cargando -->
+  <div class="vf-oculto" id="vf-cargando" style="text-align:center;padding:var(--sp-8) 0;">
+    <div class="bk-spinner"></div>
+  </div>
+
+  <!-- No encontrado -->
+  <div class="vf-oculto" id="vf-nada">
+    <div class="vf-veredicto vf-veredicto--no">
+      <span class="vf-veredicto__ico">
+        <svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
+        </svg>
+      </span>
+      <div>
+        <div class="vf-veredicto__t">No encontramos ese folio</div>
+        <div class="vf-veredicto__d" id="vf-nada-txt"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resultado -->
+  <div class="vf-oculto" id="vf-res">
+
+    <div class="vf-veredicto" id="vf-veredicto">
+      <span class="vf-veredicto__ico" id="vf-veredicto-ico"></span>
+      <div>
+        <div class="vf-veredicto__t" id="vf-veredicto-t"></div>
+        <div class="vf-veredicto__d" id="vf-veredicto-d"></div>
+      </div>
+    </div>
+
+    <div class="vf-tarjeta">
+      <div class="vf-tarjeta__t">El documento</div>
+      <div class="vf-dato">
+        <span class="vf-dato__k">Folio</span>
+        <span class="vf-dato__v" id="vf-r-folio"></span>
+      </div>
+      <div class="vf-dato">
+        <span class="vf-dato__k">Título</span>
+        <span class="vf-dato__v" id="vf-r-titulo"></span>
+      </div>
+      <div class="vf-dato">
+        <span class="vf-dato__k">Naturaleza</span>
+        <span class="vf-dato__v" id="vf-r-tipo"></span>
+      </div>
+      <div class="vf-dato">
+        <span class="vf-dato__k">Páginas del original</span>
+        <span class="vf-dato__v" id="vf-r-paginas"></span>
+      </div>
+      <div class="vf-dato">
+        <span class="vf-dato__k">Puesto a firma</span>
+        <span class="vf-dato__v" id="vf-r-creado"></span>
+      </div>
+      <div class="vf-dato" id="vf-r-completado-fila">
+        <span class="vf-dato__k">Firma completada</span>
+        <span class="vf-dato__v" id="vf-r-completado"></span>
+      </div>
+    </div>
+
+    <div class="vf-tarjeta">
+      <div class="vf-tarjeta__t">Quiénes firmaron</div>
+      <div id="vf-r-firmantes"></div>
+    </div>
+
+    <!-- Comprobación de integridad -->
+    <div class="vf-tarjeta">
+      <div class="vf-tarjeta__t">Comprobar que el archivo no fue alterado</div>
+      <p style="font-size:var(--fs-sm);color:var(--mute);line-height:var(--lh);margin:0 0 var(--sp-4);">
+        Si tienes el PDF, suéltalo aquí. Se calcula su huella digital
+        <strong>en tu propio dispositivo</strong> y se compara con la registrada.
+        El archivo no se envía a ningún servidor.
+      </p>
+
+      <div class="vf-zona" id="vf-zona" role="button" tabindex="0">
+        <div class="vf-zona__ico">
+          <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/>
+          </svg>
+        </div>
+        <div class="vf-zona__t" id="vf-zona-t">Arrastra el PDF aquí</div>
+        <div class="vf-zona__d" id="vf-zona-d">o toca para elegirlo</div>
+      </div>
+      <input type="file" accept="application/pdf" id="vf-archivo" class="vf-oculto"/>
+
+      <div class="vf-oculto" id="vf-cotejo" style="margin-top:var(--sp-5);">
+        <div style="font-size:var(--fs-label-3);color:var(--mute);">Huella del archivo que subiste</div>
+        <div class="vf-hash" id="vf-hash-tuyo"></div>
+      </div>
+
+      <div style="margin-top:var(--sp-5);">
+        <div style="font-size:var(--fs-label-3);color:var(--mute);">
+          Huella registrada del documento firmado (SHA-256)
+        </div>
+        <div class="vf-hash" id="vf-hash-firmado"></div>
+      </div>
+
+      <div style="margin-top:var(--sp-4);">
+        <div style="font-size:var(--fs-label-3);color:var(--mute);">
+          Huella registrada del original, antes de firmarse
+        </div>
+        <div class="vf-hash" id="vf-hash-original"></div>
+      </div>
+    </div>
+
+    <!-- Alcance -->
+    <div class="vf-tarjeta">
+      <div class="vf-tarjeta__t">Qué acredita y qué no</div>
+      <p style="font-size:var(--fs-sm);color:var(--ink-2);line-height:var(--lh);margin:0;">
+        Esta verificación acredita que el documento fue procesado por Broquer, quiénes
+        manifestaron su consentimiento, en qué momento lo hicieron y que el archivo
+        conserva la misma huella digital que tenía al firmarse. La firma electrónica se
+        recaba al amparo de los artículos 89 a 114 del Código de Comercio.
+      </p>
+      <p style="font-size:var(--fs-sm);color:var(--ink-2);line-height:var(--lh);margin:var(--sp-4) 0 0;">
+        No constituye una certificación de identidad ni fe pública sobre las personas
+        firmantes, ni sustituye la intervención de fedatario público donde la ley la
+        exija. Los datos de cada firma — dirección IP, dispositivo, ubicación y medio
+        de verificación — constan en la constancia anexa al documento, no aquí.
+      </p>
+    </div>
+
+  </div>
+
+  <div class="vf-pie">
+    Servicio de verificación de Broquer · broquer.app<br/>
+    El folio aparece en la última hoja del documento firmado.
+  </div>
+
+</div>
+
+<div class="bk-toast-stack" id="vf-toasts"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   Verificación pública por folio.
+
+   Lo único que este archivo calcula por su cuenta es el SHA-256 del
+   PDF que arrastre el usuario, y lo hace con crypto.subtle del propio
+   navegador. Esa es justamente la gracia: quien verifica no tiene que
+   confiar en que nosotros comparamos bien. El resto son datos que
+   vienen del servidor y que aquí solo se pintan.
+   ══════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  var API_BASE = 'https://api.broquer.app';
+  var DOC = null;
+
+  var ICO_OK = '<svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" ' +
+    'stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" ' +
+    'd="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+  var ICO_RELOJ = '<svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" ' +
+    'stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" ' +
+    'd="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+  var ICO_ALTO = '<svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" ' +
+    'stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" ' +
+    'd="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>';
+
+  function g(id) { return document.getElementById(id); }
+  function ver(id, mostrar) { g(id).classList.toggle('vf-oculto', !mostrar); }
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function fechaHora(iso) {
+    if (!iso) return '—';
+    try {
+      return new Date(iso).toLocaleString('es-MX',
+        { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    } catch (e) { return String(iso); }
+  }
+  function toast(msg, tipo) {
+    var stack = g('vf-toasts');
+    if (!stack) return;
+    var t = document.createElement('div');
+    t.className = 'bk-toast' + (tipo ? ' bk-toast--' + tipo : '');
+    t.textContent = msg;
+    stack.appendChild(t);
+    setTimeout(function () { t.remove(); }, 4400);
+  }
+
+  function normalizar(v) {
+    v = (v || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (v.indexOf('BRQ') === 0) v = v.slice(3);
+    return v ? 'BRQ-' + v.slice(0, 8) : '';
+  }
+
+  async function buscar() {
+    var folio = normalizar(g('vf-folio').value);
+    if (folio.length !== 12) {
+      toast('El folio se ve así: BRQ-7K2M4XQP', 'error');
+      return;
+    }
+    g('vf-folio').value = folio;
+    ver('vf-res', false);
+    ver('vf-nada', false);
+    ver('vf-cargando', true);
+
+    try {
+      var r = await fetch(API_BASE + '/firmas/verificar/' + encodeURIComponent(folio));
+      var d = null;
+      try { d = await r.json(); } catch (e) { d = null; }
+      ver('vf-cargando', false);
+      if (!r.ok) {
+        g('vf-nada-txt').textContent = (d && d.detail) ||
+          'Revisa que lo hayas tecleado igual que en la constancia.';
+        ver('vf-nada', true);
+        return;
+      }
+      DOC = d;
+      pintar(d);
+      try {
+        history.replaceState(null, '', location.pathname + '?f=' + folio);
+      } catch (e) { /* sin history no pasa nada */ }
+    } catch (e) {
+      ver('vf-cargando', false);
+      g('vf-nada-txt').textContent = 'No pudimos conectar. Revisa tu internet e intenta de nuevo.';
+      ver('vf-nada', true);
+    }
+  }
+
+  function pintar(d) {
+    var caja = g('vf-veredicto');
+    caja.className = 'vf-veredicto';
+
+    if (d.estado === 'completo') {
+      caja.classList.add('vf-veredicto--si');
+      g('vf-veredicto-ico').innerHTML = ICO_OK;
+      g('vf-veredicto-t').textContent = 'Documento firmado por todas las partes';
+      g('vf-veredicto-d').textContent =
+        'Este folio corresponde a un documento existente cuyo proceso de firma se completó.';
+    } else if (d.estado === 'cancelado' || d.estado === 'rechazado') {
+      caja.classList.add('vf-veredicto--no');
+      g('vf-veredicto-ico').innerHTML = ICO_ALTO;
+      g('vf-veredicto-t').textContent = d.estado === 'cancelado'
+        ? 'Este documento fue cancelado'
+        : 'Un firmante rechazó este documento';
+      g('vf-veredicto-d').textContent =
+        'El proceso de firma no llegó a completarse. No lo tomes como un documento firmado.';
+    } else {
+      caja.classList.add('vf-veredicto--proceso');
+      g('vf-veredicto-ico').innerHTML = ICO_RELOJ;
+      g('vf-veredicto-t').textContent = 'Firma en proceso';
+      g('vf-veredicto-d').textContent =
+        'El documento existe pero todavía faltan firmas. Aún no está cerrado.';
+    }
+
+    g('vf-r-folio').textContent = d.folio || '';
+    g('vf-r-titulo').textContent = d.titulo || '';
+    g('vf-r-tipo').textContent = d.tipo_label || '';
+    g('vf-r-paginas').textContent = d.paginas || '—';
+    g('vf-r-creado').textContent = fechaHora(d.creado_at);
+    g('vf-r-completado').textContent = fechaHora(d.completado_at);
+    g('vf-r-completado-fila').style.display = d.completado_at ? '' : 'none';
+
+    g('vf-r-firmantes').innerHTML = (d.firmantes || []).map(function (f) {
+      var ini = (f.nombre || '?').trim().charAt(0).toUpperCase();
+      var firmo = f.estado === 'firmado';
+      var badge = firmo
+        ? '<span class="bk-badge bk-badge--success">Firmó</span>'
+        : (f.estado === 'rechazado'
+            ? '<span class="bk-badge bk-badge--danger">Rechazó</span>'
+            : '<span class="bk-badge">Pendiente</span>');
+      return '<div class="vf-firmante">' +
+        '<div class="vf-firmante__ini' + (firmo ? ' is-firmado' : '') + '">' + esc(ini) + '</div>' +
+        '<div class="vf-firmante__c">' +
+          '<div class="vf-firmante__n">' + esc(f.nombre) + '</div>' +
+          '<div class="vf-firmante__r">' + esc(f.rol_label) +
+            (firmo && f.firmado_at ? ' · ' + fechaHora(f.firmado_at) : '') + '</div>' +
+        '</div>' + badge +
+      '</div>';
+    }).join('');
+
+    g('vf-hash-firmado').textContent = d.hash_firmado || 'Se genera al completarse la firma';
+    g('vf-hash-original').textContent = d.hash_original || '—';
+    g('vf-hash-firmado').className = 'vf-hash';
+    ver('vf-cotejo', false);
+
+    ver('vf-res', true);
+  }
+
+  /* ── Huella local ─────────────────────────────────────────────── */
+  async function huella(archivo) {
+    if (!archivo) return;
+    if (!window.crypto || !window.crypto.subtle) {
+      toast('Tu navegador no puede calcular la huella. Prueba en otro.', 'error');
+      return;
+    }
+    g('vf-zona-t').textContent = 'Calculando…';
+    g('vf-zona-d').textContent = archivo.name;
+    try {
+      var buf = await archivo.arrayBuffer();
+      var hash = await crypto.subtle.digest('SHA-256', buf);
+      var hex = Array.prototype.map.call(new Uint8Array(hash), function (b) {
+        return b.toString(16).padStart(2, '0');
+      }).join('');
+
+      g('vf-hash-tuyo').textContent = hex;
+      ver('vf-cotejo', true);
+
+      var esFirmado = DOC && DOC.hash_firmado && hex === DOC.hash_firmado;
+      var esOriginal = DOC && DOC.hash_original && hex === DOC.hash_original;
+
+      g('vf-hash-tuyo').className = 'vf-hash ' + (esFirmado || esOriginal ? 'is-igual' : 'is-distinto');
+      g('vf-hash-firmado').className = 'vf-hash ' + (esFirmado ? 'is-igual' : '');
+
+      if (esFirmado) {
+        g('vf-zona-t').textContent = 'Coincide: el archivo es el documento firmado';
+        g('vf-zona-d').textContent = 'No fue alterado después de la firma.';
+        toast('El archivo coincide con el registro. No fue alterado.', 'success');
+      } else if (esOriginal) {
+        g('vf-zona-t').textContent = 'Coincide con el original, sin la constancia';
+        g('vf-zona-d').textContent =
+          'Es el archivo tal como se presentó a firma, antes de anexarle la constancia.';
+        toast('Coincide con el original previo a la firma.', 'success');
+      } else {
+        g('vf-zona-t').textContent = 'No coincide';
+        g('vf-zona-d').textContent =
+          'Este archivo no es el que quedó registrado con ese folio, o fue modificado.';
+        toast('La huella no coincide con la registrada.', 'error');
+      }
+    } catch (e) {
+      g('vf-zona-t').textContent = 'No se pudo leer el archivo';
+      g('vf-zona-d').textContent = 'Intenta de nuevo.';
+    }
+  }
+
+  /* ── Arranque ─────────────────────────────────────────────────── */
+  function arrancar() {
+    g('vf-buscar').addEventListener('click', buscar);
+    g('vf-folio').addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter') buscar();
+    });
+
+    g('vf-zona').addEventListener('click', function () { g('vf-archivo').click(); });
+    g('vf-archivo').addEventListener('change', function (ev) {
+      huella(ev.target.files && ev.target.files[0]);
+      ev.target.value = '';
+    });
+    ['dragenter', 'dragover'].forEach(function (t) {
+      g('vf-zona').addEventListener(t, function (ev) {
+        ev.preventDefault();
+        g('vf-zona').classList.add('is-encima');
+      });
+    });
+    ['dragleave', 'drop'].forEach(function (t) {
+      g('vf-zona').addEventListener(t, function (ev) {
+        ev.preventDefault();
+        g('vf-zona').classList.remove('is-encima');
+      });
+    });
+    g('vf-zona').addEventListener('drop', function (ev) {
+      huella(ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0]);
+    });
+
+    var f = new URLSearchParams(location.search).get('f');
+    if (f) {
+      g('vf-folio').value = normalizar(f);
+      buscar();
+    }
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', arrancar);
+  else arrancar();
+})();
+</script>
+
+</body>
+</html>
