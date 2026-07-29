@@ -1345,7 +1345,39 @@ async def publico_leer(request: Request, token: str):
                     "es_tu": f["id"] == firmante["id"]} for f in todos],
         "le_toca": _le_toca(firmante, todos),
         "consentimiento": CONSENTIMIENTO,
+        # Dónde va a quedar su firma. Firmar sin saber en qué parte del
+        # documento va a aparecer el trazo es firmar a ciegas.
+        "colocacion": await _donde_firma(doc["id"], firmante["id"]),
     }
+
+
+async def _donde_firma(documento_id: str, firmante_id: str) -> dict:
+    """Resume en una frase dónde va a quedar la firma de esta persona."""
+    campos = await _sb_get("firma_campos", {
+        "documento_id": f"eq.{documento_id}", "firmante_id": f"eq.{firmante_id}",
+        "select": "pagina,tipo"})
+    if not campos:
+        return {"hay": False, "texto": ""}
+
+    firmas_p = sorted({int(c["pagina"]) for c in campos if c.get("tipo") == "firma"})
+    rubricas = sorted({int(c["pagina"]) for c in campos if c.get("tipo") == "rubrica"})
+
+    partes = []
+    if firmas_p:
+        if len(firmas_p) == 1:
+            partes.append(f"tu firma en la hoja {firmas_p[0]}")
+        else:
+            partes.append("tu firma en las hojas " + ", ".join(str(p) for p in firmas_p))
+    if rubricas:
+        if len(rubricas) == 1:
+            partes.append(f"tu rúbrica al margen de la hoja {rubricas[0]}")
+        elif rubricas == list(range(rubricas[0], rubricas[-1] + 1)):
+            partes.append(f"tu rúbrica al margen de las {len(rubricas)} hojas")
+        else:
+            partes.append("tu rúbrica al margen de las hojas " +
+                          ", ".join(str(p) for p in rubricas))
+
+    return {"hay": True, "texto": "Al firmar se colocará " + " y ".join(partes) + "."}
 
 
 @router.get("/publico/{token}/archivo")
@@ -1739,7 +1771,8 @@ def _fila_dato(etiqueta: str, valor: str) -> str:
 
 
 def _constancia_html(doc: dict, firmantes: List[dict], eventos: List[dict],
-                     trazos: Dict[str, str], agente: str) -> str:
+                     trazos: Dict[str, str], agente: str,
+                     campos: Optional[List[dict]] = None) -> str:
     tipo_label = TIPOS.get(doc.get("tipo") or "otro", "Documento")
     verificar = f"{APP_URL}/verificar-firma.html?f={doc.get('folio')}"
 
@@ -1796,6 +1829,45 @@ def _constancia_html(doc: dict, firmantes: List[dict], eventos: List[dict],
             f'<td class="ip">{html.escape(e.get("ip") or "—")}</td></tr>')
 
     consent = firmantes[0].get("consentimiento_texto") if firmantes else CONSENTIMIENTO
+
+    # Dónde quedó cada firma dentro del documento. Esto es lo que sostiene el
+    # argumento: no se dice "el archivo es idéntico", se dice "esto se leyó,
+    # esto se le agregó, en esta página y en esta posición".
+    colocacion = ""
+    if campos:
+        nombres = {f["id"]: f.get("nombre") or "" for f in firmantes}
+        ETIQUETA = {"firma": "Firma", "rubrica": "Rúbrica al margen",
+                    "nombre": "Nombre impreso", "fecha": "Fecha"}
+        filas_c = []
+        # Se agrupan las rúbricas: decir "hojas 1 a 9" es legible; listar
+        # nueve renglones idénticos no lo es.
+        agrupado: Dict[Any, List[int]] = {}
+        for c in campos:
+            clave = (c.get("firmante_id"), c.get("tipo") or "firma")
+            agrupado.setdefault(clave, []).append(int(c.get("pagina") or 1))
+        for (fid, tipo), paginas in agrupado.items():
+            paginas = sorted(set(paginas))
+            if len(paginas) == 1:
+                donde = f"Hoja {paginas[0]}"
+            elif paginas == list(range(paginas[0], paginas[-1] + 1)):
+                donde = f"Hojas {paginas[0]} a {paginas[-1]}"
+            else:
+                donde = "Hojas " + ", ".join(str(p) for p in paginas)
+            filas_c.append(
+                f'<tr><td class="k">{html.escape(nombres.get(fid, "—"))}</td>'
+                f'<td class="v">{html.escape(ETIQUETA.get(tipo, "Firma"))} · {donde}</td></tr>')
+        if filas_c:
+            colocacion = f"""
+  <h2>Dónde quedó cada firma en el documento</h2>
+  <table class="resumen">{''.join(filas_c)}</table>
+  <div class="nota">
+    Las firmas que anteceden se colocaron sobre el documento como una capa
+    superpuesta, en las posiciones que las partes tenían marcadas al momento
+    de firmar. <strong>El texto del documento no fue reescrito ni modificado.</strong>
+    El archivo original, sin las firmas superpuestas, se conserva íntegro y su
+    huella SHA-256 es la asentada al principio de esta constancia; puede
+    cotejarse por separado en la página de verificación.
+  </div>"""
 
     return f"""<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -1885,6 +1957,8 @@ def _constancia_html(doc: dict, firmantes: List[dict], eventos: List[dict],
   <h2>Quién firmó y cómo</h2>
   {''.join(bloques) if bloques else '<p>Sin firmas registradas.</p>'}
 
+  {colocacion}
+
   <h2>Lo que aceptó cada firmante</h2>
   <div class="nota">{html.escape(consent or CONSENTIMIENTO)}</div>
 
@@ -1912,6 +1986,145 @@ def _constancia_html(doc: dict, firmantes: List[dict], eventos: List[dict],
   </div>
 
 </body></html>"""
+
+
+def _capa_html(ancho_pt: float, alto_pt: float, marcas: List[dict]) -> str:
+    """La hoja transparente que se pone ENCIMA del contrato.
+
+    Sin fondo y sin margen: lo único que lleva son las firmas en su lugar.
+    Playwright la imprime sin pintar blanco, así que el texto del contrato
+    sigue viéndose completo debajo. Probado: el original no se tapa."""
+    piezas = []
+    for m in marcas:
+        estilo = (f"left:{m['x'] * 100:.4f}%;top:{m['y'] * 100:.4f}%;"
+                  f"width:{m['ancho'] * 100:.4f}%;height:{m['alto'] * 100:.4f}%")
+        if m["tipo"] == "rubrica":
+            piezas.append(
+                f'<div class="m" style="{estilo}">'
+                f'<img class="t" src="{m["trazo"]}" alt=""/>'
+                f'</div>')
+        elif m["tipo"] == "nombre":
+            piezas.append(f'<div class="m txt" style="{estilo}">'
+                          f'{html.escape(m.get("texto") or "")}</div>')
+        elif m["tipo"] == "fecha":
+            piezas.append(f'<div class="m txt" style="{estilo}">'
+                          f'{html.escape(m.get("texto") or "")}</div>')
+        else:
+            piezas.append(
+                f'<div class="m firma" style="{estilo}">'
+                f'<img class="t" src="{m["trazo"]}" alt=""/>'
+                f'<div class="pie">{html.escape(m.get("texto") or "")}</div>'
+                f'</div>')
+
+    ancho_in = ancho_pt / 72.0
+    alto_in = alto_pt / 72.0
+    return f"""<!DOCTYPE html><html><head><meta charset="utf-8"/><style>
+  @page {{ size: {ancho_in:.4f}in {alto_in:.4f}in; margin: 0; }}
+  html, body {{
+    margin: 0; padding: 0; background: transparent;
+    width: {ancho_in:.4f}in; height: {alto_in:.4f}in; position: relative;
+  }}
+  .m {{ position: absolute; display: flex; flex-direction: column;
+        align-items: center; justify-content: flex-end; overflow: hidden; }}
+  .t {{ width: 100%; height: 100%; object-fit: contain; object-position: bottom center; }}
+  .firma .t {{ height: 74%; }}
+  .pie {{ font-family: Helvetica, Arial, sans-serif; font-size: 6pt;
+          color: #333; width: 100%; text-align: center;
+          border-top: 0.6pt solid #333; padding-top: 1.5pt;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }}
+  .txt {{ font-family: Helvetica, Arial, sans-serif; font-size: 8pt;
+          color: #111; justify-content: center; }}
+</style></head><body>{''.join(piezas)}</body></html>"""
+
+
+async def _estampar(pdf: bytes, doc: dict, firmantes: List[dict],
+                    trazos: Dict[str, str]) -> Tuple[bytes, List[dict]]:
+    """Pone las firmas donde el agente las colocó. Devuelve el PDF y el
+    detalle de dónde quedó cada una, para que la constancia lo asiente.
+
+    Si no hay campos colocados, devuelve el PDF tal cual: la colocación es
+    opcional. Muchos agentes van a subir su contrato y darle enviar sin
+    ponerse a arrastrar recuadros, y eso tiene que seguir funcionando."""
+    import pypdf
+    from playwright.async_api import async_playwright
+
+    campos = await _sb_get("firma_campos", {
+        "documento_id": f"eq.{doc['id']}", "select": "*", "order": "pagina.asc"})
+    if not campos:
+        return pdf, []
+
+    por_id = {f["id"]: f for f in firmantes}
+    lector = pypdf.PdfReader(io.BytesIO(pdf))
+
+    # Se agrupan por hoja: una sola capa por página, no una por firma.
+    por_pagina: Dict[int, List[dict]] = {}
+    asentado: List[dict] = []
+    for c in campos:
+        f = por_id.get(c.get("firmante_id"))
+        if not f or f.get("estado") != "firmado":
+            continue
+        trazo = trazos.get(f["id"])
+        if not trazo:
+            continue
+        pagina = int(c.get("pagina") or 1)
+        if pagina < 1 or pagina > len(lector.pages):
+            continue
+
+        texto = ""
+        if c.get("tipo") == "firma":
+            texto = f.get("nombre") or ""
+        elif c.get("tipo") == "nombre":
+            texto = f.get("nombre") or ""
+        elif c.get("tipo") == "fecha":
+            texto = _fecha_larga(f.get("firmado_at")).split(",")[0]
+
+        por_pagina.setdefault(pagina, []).append({
+            "tipo": c.get("tipo") or "firma",
+            "x": float(c.get("x") or 0), "y": float(c.get("y") or 0),
+            "ancho": float(c.get("ancho") or 0.2), "alto": float(c.get("alto") or 0.06),
+            "trazo": trazo, "texto": texto,
+        })
+        asentado.append({
+            "firmante": f.get("nombre"), "pagina": pagina,
+            "tipo": c.get("tipo") or "firma",
+        })
+
+    if not por_pagina:
+        return pdf, []
+
+    salida = pypdf.PdfWriter()
+    async with async_playwright() as pw:
+        navegador = await pw.chromium.launch(args=["--no-sandbox", "--disable-dev-shm-usage"])
+        pagina_web = await navegador.new_page()
+        try:
+            for i, pag in enumerate(lector.pages, 1):
+                marcas = por_pagina.get(i)
+                if marcas:
+                    caja = pag.mediabox
+                    ancho_pt = float(caja.width)
+                    alto_pt = float(caja.height)
+                    await pagina_web.set_content(
+                        _capa_html(ancho_pt, alto_pt, marcas), wait_until="domcontentloaded")
+                    await pagina_web.wait_for_timeout(120)
+                    capa = await pagina_web.pdf(
+                        width=f"{ancho_pt / 72.0:.4f}in",
+                        height=f"{alto_pt / 72.0:.4f}in",
+                        print_background=False,
+                        margin={"top": "0", "right": "0", "bottom": "0", "left": "0"})
+                    try:
+                        pag.merge_page(pypdf.PdfReader(io.BytesIO(capa)).pages[0])
+                    except Exception as e:
+                        # Que falle una hoja no debe tirar el documento entero:
+                        # esa hoja queda sin la firma encima, pero la firma
+                        # sigue asentada en la constancia.
+                        log.warning("no se pudo estampar la hoja %s: %s", i, e)
+                salida.add_page(pag)
+        finally:
+            await navegador.close()
+
+    buf = io.BytesIO()
+    salida.write(buf)
+    return buf.getvalue(), asentado
 
 
 async def _sellar(documento_id: str) -> None:
@@ -1944,7 +2157,12 @@ async def _sellar(documento_id: str) -> None:
                 log.warning("no se pudo leer el trazo de %s: %s", f.get("nombre"), e)
 
     agente = await _nombre_agente(doc["user_id"])
-    html_constancia = _constancia_html(doc, firmantes, eventos, trazos, agente)
+
+    # Se consulta antes de armar la constancia para poder asentar en ella
+    # dónde quedó cada firma dentro del documento.
+    campos = await _sb_get("firma_campos", {
+        "documento_id": f"eq.{documento_id}", "select": "*", "order": "pagina.asc"})
+    html_constancia = _constancia_html(doc, firmantes, eventos, trazos, agente, campos)
 
     # Pie con folio y numeración: una hoja de la constancia que se separe del
     # resto tiene que poder identificarse sola. Es lo primero que se pierde
@@ -1975,8 +2193,14 @@ async def _sellar(documento_id: str) -> None:
 
     original = await _bajar_bytes(doc["archivo_ruta"])
 
+    # Las firmas se ponen ENCIMA del original, sin reescribir su texto. El
+    # archivo original se conserva intacto en su ruta y su huella no cambia:
+    # al final existen dos archivos y dos huellas, el que se leyó y el que se
+    # firmó, y la constancia asienta ambas.
+    estampado, colocadas = await _estampar(original, doc, firmantes, trazos)
+
     salida = pypdf.PdfWriter()
-    salida.append(pypdf.PdfReader(io.BytesIO(original)))
+    salida.append(pypdf.PdfReader(io.BytesIO(estampado)))
     salida.append(pypdf.PdfReader(io.BytesIO(pdf_constancia)))
     salida.add_metadata({
         "/Title": (doc.get("titulo") or "Documento firmado")[:120],
@@ -2018,6 +2242,245 @@ async def resellar(request: Request, documento_id: str):
         raise HTTPException(409, "Todavía faltan firmas. El documento se arma cuando firman todos.")
     await _sellar(documento_id)
     return {"ok": True}
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# DÓNDE VA CADA FIRMA
+# ══════════════════════════════════════════════════════════════════════════
+# Los contratos dicen "lo firman al margen de cada página y al calce de esta".
+# Si las firmas solo viven en la constancia, el documento se contradice solo.
+# Y como los agentes suben sus propios machotes, no se puede resolver
+# cambiando el texto: hay que dejar que marquen dónde va cada firma.
+#
+# Las coordenadas van normalizadas de 0 a 1 con el origen arriba a la
+# izquierda, igual que se ven en pantalla. Así la misma colocación sirve para
+# Carta y para A4, y la vista previa del navegador coincide con el PDF final
+# sin importar a qué resolución se haya pintado la hoja.
+
+# A qué resolución se pintan las hojas para colocar los campos. 110 DPI es
+# suficiente para leer el contrato en pantalla y pesa la tercera parte que 200.
+DPI_VISTA = 110
+
+
+async def _paginas_a_imagen(doc: dict) -> List[dict]:
+    """Convierte cada hoja del PDF en una imagen, una sola vez. A partir de
+    ahí la pantalla de colocación abre al instante."""
+    import tempfile
+    import shutil
+    import subprocess
+    import glob as _glob
+
+    ya = await _sb_get("firma_paginas", {
+        "documento_id": f"eq.{doc['id']}", "select": "*", "order": "pagina.asc"})
+    if ya and len(ya) == (doc.get("paginas") or 0):
+        return ya
+
+    if not doc.get("archivo_ruta"):
+        raise HTTPException(400, "Todavía no hay documento que mostrar.")
+    if not shutil.which("pdftoppm"):
+        raise HTTPException(503, "El servidor no puede convertir las hojas a imagen. "
+                                 "Falta poppler-utils.")
+
+    pdf = await _bajar_bytes(doc["archivo_ruta"])
+    carpeta = tempfile.mkdtemp(prefix="firmapag-")
+    salida = []
+    try:
+        entrada = os.path.join(carpeta, "doc.pdf")
+        with open(entrada, "wb") as f:
+            f.write(pdf)
+
+        r = subprocess.run(
+            ["pdftoppm", "-png", "-r", str(DPI_VISTA), entrada,
+             os.path.join(carpeta, "hoja")],
+            capture_output=True, timeout=120)
+        if r.returncode != 0:
+            log.error("pdftoppm falló: %s", (r.stderr or b"")[:300])
+            raise HTTPException(500, "No se pudieron preparar las hojas del documento.")
+
+        # El tamaño real de cada hoja se saca del PDF, no de la imagen: es lo
+        # que hace falta para estampar después en el lugar correcto.
+        import pypdf
+        lector = pypdf.PdfReader(io.BytesIO(pdf))
+
+        for archivo in sorted(_glob.glob(os.path.join(carpeta, "hoja-*.png"))):
+            try:
+                num = int(re.search(r"hoja-0*(\d+)\.png$", archivo).group(1))
+            except Exception:
+                continue
+            with open(archivo, "rb") as f:
+                png = f.read()
+
+            caja = lector.pages[num - 1].mediabox
+            ancho_pt = float(caja.width)
+            alto_pt = float(caja.height)
+
+            ruta = f"{doc['user_id']}/{doc['id']}/hoja-{num:03d}.png"
+            await _subir_bytes(ruta, png, "image/png")
+            filas = await _sb_post("firma_paginas", {
+                "user_id": doc["user_id"], "documento_id": doc["id"],
+                "pagina": num, "ruta": ruta,
+                "ancho_pt": ancho_pt, "alto_pt": alto_pt,
+            }, prefer="return=representation,resolution=merge-duplicates")
+            salida.append(filas[0] if filas else {
+                "pagina": num, "ruta": ruta, "ancho_pt": ancho_pt, "alto_pt": alto_pt})
+    finally:
+        shutil.rmtree(carpeta, ignore_errors=True)
+
+    salida.sort(key=lambda p: p.get("pagina") or 0)
+    return salida
+
+
+@router.get("/documentos/{documento_id}/paginas")
+async def ver_paginas(request: Request, documento_id: str):
+    """Las hojas en imagen, con liga firmada, para poder colocar los campos."""
+    uid = await _uid(request)
+    doc = await _doc_del_usuario(documento_id, uid)
+    paginas = await _paginas_a_imagen(doc)
+    salida = []
+    for p in paginas:
+        try:
+            url = await _liga_firmada(p["ruta"], FIRMA_SEGUNDOS)
+        except Exception:
+            continue
+        salida.append({"pagina": p.get("pagina"), "url": url,
+                       "ancho_pt": p.get("ancho_pt"), "alto_pt": p.get("alto_pt")})
+    return {"paginas": salida, "total": doc.get("paginas")}
+
+
+class CampoIn(BaseModel):
+    firmante_id: str
+    pagina: int
+    x: float
+    y: float
+    ancho: float
+    alto: float
+    tipo: Optional[str] = None
+
+
+def _acotar(v: float, minimo: float = 0.0, maximo: float = 1.0) -> float:
+    return max(minimo, min(maximo, float(v)))
+
+
+@router.get("/documentos/{documento_id}/campos")
+async def listar_campos(request: Request, documento_id: str):
+    uid = await _uid(request)
+    await _doc_del_usuario(documento_id, uid)
+    campos = await _sb_get("firma_campos", {
+        "documento_id": f"eq.{documento_id}", "select": "*",
+        "order": "pagina.asc,y.asc"})
+    return {"campos": campos}
+
+
+@router.post("/documentos/{documento_id}/campos")
+async def crear_campo(request: Request, documento_id: str, body: CampoIn):
+    uid = await _uid(request)
+    doc = await _doc_del_usuario(documento_id, uid)
+    if doc.get("estado") not in ("borrador",):
+        raise HTTPException(409, "Ya no puedes mover las firmas: el documento salió a firma.")
+
+    firmantes = await _sb_get("firma_firmantes", {
+        "id": f"eq.{body.firmante_id}", "documento_id": f"eq.{documento_id}",
+        "select": "id", "limit": "1"})
+    if not firmantes:
+        raise HTTPException(404, "Ese firmante no es de este documento.")
+
+    total = doc.get("paginas") or 1
+    if body.pagina < 1 or body.pagina > total:
+        raise HTTPException(400, f"Ese documento solo tiene {total} páginas.")
+
+    tipo = (body.tipo or "firma").strip()
+    if tipo not in ("firma", "rubrica", "nombre", "fecha"):
+        tipo = "firma"
+
+    filas = await _sb_post("firma_campos", {
+        "user_id": uid, "documento_id": documento_id,
+        "firmante_id": body.firmante_id, "pagina": body.pagina, "tipo": tipo,
+        "x": _acotar(body.x), "y": _acotar(body.y),
+        "ancho": _acotar(body.ancho, 0.02), "alto": _acotar(body.alto, 0.01),
+    })
+    await _sb_patch("firma_documentos", {"id": f"eq.{documento_id}"},
+                    {"campos_colocados": True, "updated_at": _ahora()})
+    return {"campo": filas[0] if filas else {}}
+
+
+@router.delete("/campos/{campo_id}")
+async def borrar_campo(request: Request, campo_id: str):
+    uid = await _uid(request)
+    filas = await _sb_get("firma_campos",
+                          {"id": f"eq.{campo_id}", "user_id": f"eq.{uid}",
+                           "select": "documento_id", "limit": "1"})
+    if not filas:
+        raise HTTPException(404, "No encontré ese campo.")
+    doc_id = filas[0]["documento_id"]
+    await _sb_delete("firma_campos", {"id": f"eq.{campo_id}", "user_id": f"eq.{uid}"})
+
+    quedan = await _sb_get("firma_campos",
+                           {"documento_id": f"eq.{doc_id}", "select": "id", "limit": "1"})
+    if not quedan:
+        await _sb_patch("firma_documentos", {"id": f"eq.{doc_id}"},
+                        {"campos_colocados": False, "rubrica_todas": False,
+                         "updated_at": _ahora()})
+    return {"ok": True}
+
+
+class RubricarIn(BaseModel):
+    firmante_id: Optional[str] = None
+    activar: bool = True
+
+
+@router.post("/documentos/{documento_id}/rubricar-todas")
+async def rubricar_todas(request: Request, documento_id: str, body: RubricarIn):
+    """Una rúbrica chica al margen de cada hoja, para todos los firmantes.
+    Hacerlo a mano en un contrato de nueve hojas sería un martirio, y es
+    justo lo que pide el texto de los contratos: "al margen de cada página"."""
+    uid = await _uid(request)
+    doc = await _doc_del_usuario(documento_id, uid)
+    if doc.get("estado") not in ("borrador",):
+        raise HTTPException(409, "Ya no puedes mover las firmas: el documento salió a firma.")
+
+    total = doc.get("paginas") or 0
+    if total < 1:
+        raise HTTPException(400, "Primero sube el PDF.")
+
+    firmantes = await _firmantes(documento_id)
+    if body.firmante_id:
+        firmantes = [f for f in firmantes if f["id"] == body.firmante_id]
+    if not firmantes:
+        raise HTTPException(400, "Agrega por lo menos un firmante.")
+
+    # Se limpian las rúbricas anteriores para que no se encimen al repetir.
+    await _sb_delete("firma_campos",
+                     {"documento_id": f"eq.{documento_id}", "tipo": "eq.rubrica"})
+
+    if not body.activar:
+        await _sb_patch("firma_documentos", {"id": f"eq.{documento_id}"},
+                        {"rubrica_todas": False, "updated_at": _ahora()})
+        return {"ok": True, "creados": 0}
+
+    # Al margen derecho, apiladas hacia arriba desde abajo. Cada firmante
+    # tiene su renglón para que no se empalmen.
+    ALTO = 0.045
+    ANCHO = 0.16
+    nuevos = []
+    for pagina in range(1, total + 1):
+        for i, f in enumerate(firmantes):
+            nuevos.append({
+                "user_id": uid, "documento_id": documento_id,
+                "firmante_id": f["id"], "pagina": pagina, "tipo": "rubrica",
+                "x": 0.80,
+                "y": 0.90 - (i * (ALTO + 0.012)),
+                "ancho": ANCHO, "alto": ALTO,
+            })
+    if nuevos:
+        await _sb_post("firma_campos", nuevos, prefer="return=minimal")
+
+    await _sb_patch("firma_documentos", {"id": f"eq.{documento_id}"},
+                    {"rubrica_todas": True, "campos_colocados": True,
+                     "updated_at": _ahora()})
+    await evento(uid, "documento_creado",
+                 f"Se marcó rúbrica al margen en las {total} hojas.",
+                 documento_id=documento_id, actor="agente", ip=_ip(request))
+    return {"ok": True, "creados": len(nuevos)}
 
 
 # ══════════════════════════════════════════════════════════════════════════
