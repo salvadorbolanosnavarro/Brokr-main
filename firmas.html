@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>Broquer — Firma electrónica</title>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
@@ -254,6 +254,62 @@
     margin-bottom: var(--sp-4);
   }
 
+  /* ── Colocar las firmas sobre el documento ──
+     El contrato dice "lo firman al margen de cada página y al calce de esta".
+     Aquí el agente marca dónde va cada quien, arrastrando sobre la hoja. */
+  .fr-quien-coloca {
+    display: flex; flex-wrap: wrap; gap: var(--sp-2);
+    margin-bottom: var(--sp-4);
+  }
+  .fr-pluma {
+    display: inline-flex; align-items: center; gap: var(--sp-2);
+    font-size: var(--fs-label-3); font-weight: 700;
+    background: var(--paper); color: var(--ink-2);
+    border: 1px solid var(--line-3); border-radius: var(--r-pill);
+    padding: var(--sp-2) var(--sp-4); cursor: pointer;
+    transition: all var(--dur) var(--ease);
+  }
+  .fr-pluma:hover { border-color: var(--sky-blue); }
+  .fr-pluma.is-active { background: var(--sky-navy); color: #fff; border-color: var(--sky-navy); }
+  .fr-pluma__pt { width: 8px; height: 8px; border-radius: 50%; background: var(--sky-blue); }
+
+  .fr-hojas { display: flex; flex-direction: column; gap: var(--sp-5); }
+  .fr-hoja {
+    position: relative; border: 1px solid var(--line);
+    border-radius: var(--r); overflow: hidden; background: var(--paper);
+    box-shadow: var(--shadow-xs);
+  }
+  .fr-hoja img { width: 100%; display: block; }
+  .fr-hoja.is-armado { cursor: crosshair; }
+  .fr-hoja__n {
+    position: absolute; top: var(--sp-2); left: var(--sp-2);
+    background: var(--sky-navy); color: #fff;
+    font-size: var(--fs-label-3); font-weight: 700;
+    border-radius: var(--r-pill); padding: 2px var(--sp-3);
+  }
+
+  /* Cada recuadro colocado. Se ve encima de la hoja, igual que va a
+     quedar en el PDF final. */
+  .fr-campo {
+    position: absolute;
+    border: 1.5px dashed var(--sky-blue);
+    background: var(--navy-soft);
+    border-radius: var(--r-xs);
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--fs-label-3); font-weight: 700; color: var(--sky-navy);
+    overflow: hidden; cursor: pointer;
+  }
+  .fr-campo:hover { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); }
+  .fr-campo__x { font-size: var(--fs-label-3); }
+  .fr-campo--rubrica { border-style: dotted; }
+
+  .fr-pista {
+    background: var(--info-soft); border-radius: var(--r);
+    padding: var(--sp-4); font-size: var(--fs-sm);
+    color: var(--ink-2); line-height: var(--lh);
+    margin-bottom: var(--sp-4);
+  }
+
   .fr-oculto { display: none; }
 </style>
 </head>
@@ -399,6 +455,36 @@
           </label>
           <div class="bk-hint">
             Quien ya tenga expediente de cumplimiento no la vuelve a subir: se hereda del que ya tienes.
+          </div>
+        </div>
+
+        <div class="bk-card bk-card--pad fr-oculto" id="fr-d-colocar">
+          <div class="bk-section-header">
+            <h2>Dónde firman</h2>
+            <a href="#" id="fr-colocar-toggle">Mostrar hojas</a>
+          </div>
+
+          <div class="fr-pista">
+            Si tu contrato dice que se firma al margen de cada hoja y al calce,
+            márcalo aquí y las firmas se van a colocar ahí. Si no marcas nada,
+            las firmas quedan solo en la constancia anexa — que también es válido.
+          </div>
+
+          <div class="bk-cluster" style="margin-bottom:var(--sp-5);">
+            <button class="bk-btn bk-btn--ghost bk-btn--sm" type="button" id="fr-rubricar">
+              Rubricar todas las hojas
+            </button>
+            <button class="bk-btn bk-btn--quiet bk-btn--sm fr-oculto" type="button" id="fr-quitar-todo">
+              Quitar todas las marcas
+            </button>
+          </div>
+
+          <div class="fr-oculto" id="fr-colocar-caja">
+            <div style="font-size:var(--fs-label-3);font-weight:700;color:var(--mute);margin-bottom:var(--sp-3);">
+              Elige de quién es la firma y toca la hoja donde va
+            </div>
+            <div class="fr-quien-coloca" id="fr-plumas"></div>
+            <div class="fr-hojas" id="fr-hojas"></div>
           </div>
         </div>
 
@@ -737,6 +823,7 @@
   async function abrir(id) {
     try {
       var r = await api('/firmas/documentos/' + encodeURIComponent(id));
+      if (!ACTUAL || ACTUAL.documento.id !== id) { HOJAS = []; HOJAS_ABIERTAS = false; }
       ACTUAL = r;
       pintarDetalle();
       g('fr-vista-lista').classList.add('is-oculto');
@@ -801,6 +888,7 @@
 
     ver('fr-aviso', false);
     pintarFirmantes(fs, esBorrador);
+    cargarColocacion();
     pintarAcciones(d, fs, esBorrador);
     pintarBitacora(ACTUAL.eventos || []);
   }
@@ -929,6 +1017,196 @@
         '<div class="fr-ev__d">' + esc(txt) + '</div>' +
       '</div>';
     }).join('');
+  }
+
+  /* ══ COLOCAR LAS FIRMAS SOBRE EL DOCUMENTO ═════════════════ */
+  /* Las coordenadas se guardan de 0 a 1 sobre el tamaño de la hoja, con el
+     origen arriba a la izquierda. Así lo que se ve aquí coincide exacto con
+     el PDF final, sin importar a qué tamaño se esté viendo la imagen ni si
+     la hoja es Carta o A4. */
+
+  var HOJAS = [];
+  var CAMPOS = [];
+  var PLUMA = null;          // de quién es la firma que se está colocando
+  var HOJAS_ABIERTAS = false;
+
+  // Qué tan grande queda el recuadro al tocar la hoja. Proporción de la
+  // hoja, no pixeles: una firma al calce ocupa como un tercio del ancho.
+  var TAM = { firma: { a: 0.30, h: 0.075 }, rubrica: { a: 0.16, h: 0.045 } };
+
+  async function cargarColocacion() {
+    if (!ACTUAL) return;
+    var d = ACTUAL.documento;
+    var esBorrador = d.estado === 'borrador';
+    ver('fr-d-colocar', esBorrador && !!d.archivo_ruta);
+    if (!esBorrador || !d.archivo_ruta) return;
+
+    try {
+      var r = await api('/firmas/documentos/' + encodeURIComponent(d.id) + '/campos');
+      CAMPOS = r.campos || [];
+    } catch (e) { CAMPOS = []; }
+
+    ver('fr-quitar-todo', CAMPOS.length > 0);
+    pintarPlumas();
+    if (HOJAS_ABIERTAS) pintarHojas();
+  }
+
+  function pintarPlumas() {
+    var fs = (ACTUAL && ACTUAL.firmantes) || [];
+    if (!fs.length) {
+      g('fr-plumas').innerHTML =
+        '<div style="font-size:var(--fs-sm);color:var(--mute);">' +
+        'Primero agrega a las partes, abajo.</div>';
+      PLUMA = null;
+      return;
+    }
+    if (!PLUMA || !fs.some(function (f) { return f.id === PLUMA; })) PLUMA = fs[0].id;
+
+    g('fr-plumas').innerHTML = fs.map(function (f) {
+      var n = CAMPOS.filter(function (c) { return c.firmante_id === f.id; }).length;
+      return '<button type="button" class="fr-pluma' +
+        (f.id === PLUMA ? ' is-active' : '') + '" data-pluma="' + esc(f.id) + '">' +
+        '<span class="fr-pluma__pt"></span>' + esc(f.nombre) +
+        (n ? ' · ' + n : '') + '</button>';
+    }).join('');
+
+    Array.prototype.forEach.call(g('fr-plumas').querySelectorAll('[data-pluma]'), function (b) {
+      b.addEventListener('click', function () {
+        PLUMA = b.getAttribute('data-pluma');
+        pintarPlumas();
+      });
+    });
+  }
+
+  async function abrirHojas() {
+    if (!ACTUAL) return;
+    HOJAS_ABIERTAS = !HOJAS_ABIERTAS;
+    g('fr-colocar-toggle').textContent = HOJAS_ABIERTAS ? 'Ocultar hojas' : 'Mostrar hojas';
+    ver('fr-colocar-caja', HOJAS_ABIERTAS);
+    if (!HOJAS_ABIERTAS) return;
+
+    if (!HOJAS.length) {
+      g('fr-hojas').innerHTML =
+        '<div style="text-align:center;padding:var(--sp-8) 0;">' +
+        '<div class="bk-spinner"></div>' +
+        '<div style="font-size:var(--fs-sm);color:var(--mute);margin-top:var(--sp-3);">' +
+        'Preparando las hojas…</div></div>';
+      try {
+        var r = await api('/firmas/documentos/' +
+                          encodeURIComponent(ACTUAL.documento.id) + '/paginas');
+        HOJAS = r.paginas || [];
+      } catch (e) {
+        g('fr-hojas').innerHTML =
+          '<div style="font-size:var(--fs-sm);color:var(--mute);">' + esc(e.message) + '</div>';
+        return;
+      }
+    }
+    pintarHojas();
+  }
+
+  function pintarHojas() {
+    if (!HOJAS.length) {
+      g('fr-hojas').innerHTML =
+        '<div style="font-size:var(--fs-sm);color:var(--mute);">No se pudieron preparar las hojas.</div>';
+      return;
+    }
+    g('fr-hojas').innerHTML = HOJAS.map(function (p) {
+      var marcas = CAMPOS.filter(function (c) { return c.pagina === p.pagina; })
+        .map(function (c) {
+          var f = ((ACTUAL.firmantes || []).filter(function (x) {
+            return x.id === c.firmante_id; })[0]) || {};
+          var ini = (f.nombre || '?').trim().charAt(0).toUpperCase();
+          return '<div class="fr-campo' + (c.tipo === 'rubrica' ? ' fr-campo--rubrica' : '') +
+            '" data-campo="' + esc(c.id) + '" title="Quitar la marca de ' + esc(f.nombre || '') + '"' +
+            ' style="left:' + (c.x * 100) + '%;top:' + (c.y * 100) + '%;' +
+            'width:' + (c.ancho * 100) + '%;height:' + (c.alto * 100) + '%;">' +
+            esc(c.tipo === 'rubrica' ? ini : (f.nombre || '')) + '</div>';
+        }).join('');
+      return '<div class="fr-hoja is-armado" data-pagina="' + p.pagina + '">' +
+        '<span class="fr-hoja__n">Hoja ' + p.pagina + '</span>' +
+        '<img src="' + esc(p.url) + '" alt="Hoja ' + p.pagina + '" draggable="false"/>' +
+        marcas + '</div>';
+    }).join('');
+
+    Array.prototype.forEach.call(g('fr-hojas').querySelectorAll('.fr-hoja'), function (hoja) {
+      hoja.addEventListener('click', function (ev) {
+        // Tocar un recuadro ya puesto lo quita; tocar la hoja pone uno nuevo.
+        var marca = ev.target.closest('.fr-campo');
+        if (marca) {
+          ev.stopPropagation();
+          quitarCampo(marca.getAttribute('data-campo'));
+          return;
+        }
+        colocarCampo(hoja, ev);
+      });
+    });
+  }
+
+  async function colocarCampo(hoja, ev) {
+    if (!PLUMA) { toast('Primero elige de quién es la firma.', 'error'); return; }
+    var caja = hoja.getBoundingClientRect();
+    var t = TAM.firma;
+    // El toque marca el CENTRO del recuadro, que es lo que uno espera.
+    var x = (ev.clientX - caja.left) / caja.width - t.a / 2;
+    var y = (ev.clientY - caja.top) / caja.height - t.h / 2;
+    x = Math.max(0, Math.min(1 - t.a, x));
+    y = Math.max(0, Math.min(1 - t.h, y));
+
+    try {
+      var r = await api('/firmas/documentos/' + encodeURIComponent(ACTUAL.documento.id) + '/campos', {
+        method: 'POST',
+        json: {
+          firmante_id: PLUMA, pagina: parseInt(hoja.getAttribute('data-pagina'), 10),
+          tipo: 'firma', x: x, y: y, ancho: t.a, alto: t.h
+        }
+      });
+      CAMPOS.push(r.campo);
+      ver('fr-quitar-todo', true);
+      pintarPlumas();
+      pintarHojas();
+    } catch (e) { toast(e.message, 'error'); }
+  }
+
+  async function quitarCampo(id) {
+    try {
+      await api('/firmas/campos/' + encodeURIComponent(id), { method: 'DELETE' });
+      CAMPOS = CAMPOS.filter(function (c) { return c.id !== id; });
+      ver('fr-quitar-todo', CAMPOS.length > 0);
+      pintarPlumas();
+      pintarHojas();
+    } catch (e) { toast(e.message, 'error'); }
+  }
+
+  async function rubricarTodas() {
+    if (!ACTUAL) return;
+    if (!(ACTUAL.firmantes || []).length) {
+      toast('Primero agrega a las partes.', 'error');
+      return;
+    }
+    var btn = g('fr-rubricar');
+    btn.disabled = true;
+    try {
+      await api('/firmas/documentos/' + encodeURIComponent(ACTUAL.documento.id) + '/rubricar-todas',
+                { method: 'POST', json: { activar: true } });
+      await cargarColocacion();
+      if (!HOJAS_ABIERTAS) abrirHojas();
+      toast('Listo: rúbrica al margen de cada hoja.', 'success');
+    } catch (e) {
+      toast(e.message, 'error');
+    } finally { btn.disabled = false; }
+  }
+
+  async function quitarTodo() {
+    if (!window.confirm('¿Quitar todas las marcas de firma del documento?')) return;
+    try {
+      for (var i = 0; i < CAMPOS.length; i++) {
+        await api('/firmas/campos/' + encodeURIComponent(CAMPOS[i].id), { method: 'DELETE' });
+      }
+      CAMPOS = [];
+      ver('fr-quitar-todo', false);
+      pintarPlumas();
+      pintarHojas();
+    } catch (e) { toast(e.message, 'error'); }
   }
 
   /* ══ ACCIONES ═══════════════════════════════════════════════ */
@@ -1188,6 +1466,11 @@
     g('fr-f-nom').addEventListener('blur', autollenarContacto);
 
     g('fr-aviso-x').addEventListener('click', function () { ver('fr-aviso', false); });
+    g('fr-colocar-toggle').addEventListener('click', function (ev) {
+      ev.preventDefault(); abrirHojas();
+    });
+    g('fr-rubricar').addEventListener('click', rubricarTodas);
+    g('fr-quitar-todo').addEventListener('click', quitarTodo);
     g('fr-cancelar-no').addEventListener('click', function () { ver('fr-m-cancelar', false); });
     g('fr-cancelar-si').addEventListener('click', cancelar);
 

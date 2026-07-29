@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>Broquer — Firmar documento</title>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
@@ -306,6 +306,8 @@
     <section class="fm-tarjeta fm-oculto" id="fm-s-firma">
       <div class="fm-tarjeta__t" id="fm-firma-t">3. Tu firma</div>
       <div class="fm-tarjeta__d">Traza tu firma con el dedo o con el mouse.</div>
+      <div class="bk-alert bk-alert--info fm-oculto" id="fm-colocacion"
+           style="margin-bottom:var(--sp-4);"></div>
 
       <div class="fm-canvas-caja" id="fm-canvas-caja">
         <canvas class="fm-canvas" id="fm-canvas"></canvas>
@@ -626,6 +628,12 @@
     }
 
     g('fm-legal').textContent = d.consentimiento || '';
+
+    // Dónde va a quedar su trazo. Firmar sin saberlo es firmar a ciegas.
+    if (d.colocacion && d.colocacion.hay) {
+      g('fm-colocacion').textContent = d.colocacion.texto;
+      ver('fm-colocacion', true);
+    }
 
     var html = (d.partes || []).map(function (p) {
       var ini = (p.nombre || '?').trim().charAt(0).toUpperCase();
