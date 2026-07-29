@@ -326,6 +326,28 @@ input, select, textarea, button {
   input, select, textarea { font-size: max(16px, var(--fs-body)) !important; }
 }
 
+/* ────────────────────────────────────────────────────────────
+   GUARDAS MOVIL / iOS
+   En WKWebView (la app de iPhone) no hay barra de navegador, asi que
+   cualquier ampliacion accidental se queda pegada: el usuario no tiene
+   como volver al tamano normal. Estas reglas evitan las tres causas:
+   1) el autoinflado de texto de iOS cuando un contenedor desborda,
+   2) el zoom por doble tap,
+   3) el desborde horizontal que dispara (1).
+   ──────────────────────────────────────────────────────────── */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+@media (max-width: 768px) {
+  /* clip en vez de hidden: hidden rompe position:sticky en los
+     encabezados de tabla y en las barras de filtros. */
+  html, body { overflow-x: clip; }
+  body { touch-action: manipulation; }
+  iframe, video, canvas { max-width: 100%; }
+}
+
 /* ════════════════════════════════════════════════════════════
    PRIMITIVAS DE SUPERFICIE
    ════════════════════════════════════════════════════════════ */

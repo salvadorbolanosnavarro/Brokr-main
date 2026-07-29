@@ -5,7 +5,7 @@
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
   <title>Broquer — AVM</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
@@ -279,6 +279,17 @@
     .opinion-section { margin-bottom: 20px; }
     .opinion-section-title { font-size: var(--fs-caption); font-weight: 700; color: var(--teal);  letter-spacing: 1px; padding-bottom: 5px; border-bottom: 1px solid var(--gray-200); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
     .opinion-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 22px; }
+
+    /* Confort en telefono: la ficha de opinion y la reja de tipos venian
+       calculadas para escritorio y en 390px quedaban apretadas. */
+    @media (max-width: 560px) {
+      .tipo-grid { grid-template-columns: repeat(2, 1fr); }
+      .opinion-page { padding: 18px 16px; }
+      .opinion-grid { grid-template-columns: 1fr; gap: 7px; }
+      .opinion-firma { grid-template-columns: 1fr; gap: 12px; }
+      .metric-row { grid-template-columns: 1fr; }
+      .comp-auto-top { flex-wrap: wrap; }
+    }
     .opinion-field-label { font-size: var(--fs-caption); color: var(--gray-400);  letter-spacing: 0.5px; margin-bottom: 2px; }
     .opinion-field-value { font-size: var(--fs-xs); font-weight: 600; color: var(--text); }
     .opinion-valor-hero { background: var(--ink); border-radius: var(--r-sm); padding: 12px 16px; color: var(--bone); margin-bottom: 14px; display: inline-block; }

@@ -4294,3 +4294,20 @@ body[data-app="facebook-ads"]{--page-max:980px}
     boot();
   }
 })();
+
+/* ── Guarda de escala en iOS ─────────────────────────────────
+   Un pellizco sobre el visor PDF de firma, sobre una grafica o sobre
+   una tabla amplia deja la vista ampliada y en la app no hay barra de
+   navegador para restaurarla. Se bloquea el gesto de escala y, si el
+   sistema alcanzo a cambiarla, se devuelve a 1 al soltar. */
+(function () {
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(function (t) {
+    document.addEventListener(t, function (ev) { ev.preventDefault(); }, { passive: false });
+  });
+  document.addEventListener('touchend', function () {
+    if (window.visualViewport && window.visualViewport.scale > 1.01) {
+      document.body.style.zoom = '';
+      window.scrollTo(window.scrollX, window.scrollY);
+    }
+  }, { passive: true });
+})();
