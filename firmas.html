@@ -22,42 +22,101 @@
   .fr-lista { display: flex; flex-direction: column; gap: var(--sp-3); }
 
   .fr-doc {
-    display: flex; align-items: center; gap: var(--sp-4);
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    gap: var(--sp-4);
     background: var(--paper); border: 1px solid var(--line);
-    border-radius: var(--r-lg); padding: var(--sp-5);
-    cursor: pointer; transition: border-color var(--dur) var(--ease),
-                                 box-shadow var(--dur) var(--ease);
+    border-radius: var(--r-lg); padding: var(--sp-5) var(--sp-6);
+    cursor: pointer;
+    transition: border-color var(--dur) var(--ease),
+                box-shadow var(--dur) var(--ease),
+                transform var(--dur) var(--ease);
   }
-  .fr-doc:hover { border-color: var(--sky-blue); box-shadow: var(--shadow-sm); }
+  .fr-doc:hover {
+    border-color: var(--sky-blue);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+  }
+  /* Tile navy, como manda el sistema para los iconos. */
   .fr-doc__ico {
-    width: 40px; height: 40px; border-radius: var(--r-sm); flex: none;
-    background: var(--navy-soft); color: var(--sky-navy);
+    width: 44px; height: 44px; border-radius: var(--r); flex: none;
+    background: var(--sky-navy); color: #fff;
     display: flex; align-items: center; justify-content: center;
+    align-self: start;
   }
-  .fr-doc__c { flex: 1; min-width: 0; }
+  .fr-doc__c { min-width: 0; }
+
+  /* El título ya NO se recorta. Si es largo se va a dos renglones:
+     "Promesa de compraventa — Cipres 167, Melchor Ocampo" tiene que
+     poder leerse completo o la lista no sirve de nada. */
   .fr-doc__t {
     font-size: var(--fs-body); font-weight: 700; color: var(--ink);
-    line-height: var(--lh-snug);
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    line-height: var(--lh-snug); margin-bottom: var(--sp-2);
   }
-  .fr-doc__m { font-size: var(--fs-label-3); color: var(--mute); margin-top: var(--sp-1); }
-  .fr-doc__d { text-align: right; flex: none; }
+  .fr-doc__m {
+    font-size: var(--fs-label-3); color: var(--mute);
+    display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-3);
+    align-items: center;
+  }
+  .fr-doc__m span { display: inline-flex; align-items: center; gap: var(--sp-1); }
+  .fr-doc__sep { color: var(--line-3); }
+
+  /* Las partes se ven desde la lista. Antes había que entrar al
+     documento para saber quién faltaba de firmar. */
+  .fr-doc__partes {
+    display: flex; flex-wrap: wrap; gap: var(--sp-2);
+    margin-top: var(--sp-3);
+  }
+  .fr-parte-chip {
+    display: inline-flex; align-items: center; gap: var(--sp-2);
+    font-size: var(--fs-label-3); color: var(--mute);
+    background: var(--bone); border: 1px solid var(--line);
+    border-radius: var(--r-pill); padding: 3px var(--sp-3) 3px 4px;
+  }
+  .fr-parte-chip__p {
+    width: 16px; height: 16px; border-radius: 50%; flex: none;
+    background: var(--line-2);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--paper);
+  }
+  .fr-parte-chip.is-firmado {
+    background: var(--forest-soft); border-color: var(--forest);
+    color: var(--ink-2);
+  }
+  .fr-parte-chip.is-firmado .fr-parte-chip__p { background: var(--forest); }
+  .fr-parte-chip.is-rechazado { background: var(--danger-soft); border-color: var(--danger-bd); }
+  .fr-parte-chip.is-rechazado .fr-parte-chip__p { background: var(--danger); }
+
+  .fr-doc__d {
+    text-align: right; flex: none;
+    display: flex; flex-direction: column; align-items: flex-end; gap: var(--sp-2);
+  }
   .fr-doc__folio {
-    font-size: var(--fs-label-3); color: var(--mute); letter-spacing: 0.04em;
-    margin-top: var(--sp-2);
+    font-size: var(--fs-label-3); color: var(--mute); letter-spacing: 0.06em;
   }
-  @media (max-width: 620px) {
-    .fr-doc { flex-wrap: wrap; }
-    .fr-doc__d { text-align: left; width: 100%; }
+  .fr-doc__conteo { font-size: var(--fs-label-3); color: var(--mute); }
+  .fr-doc__conteo b { color: var(--ink); }
+
+  @media (max-width: 680px) {
+    .fr-doc { grid-template-columns: 36px minmax(0, 1fr); padding: var(--sp-5); }
+    .fr-doc__ico { width: 36px; height: 36px; }
+    .fr-doc__d {
+      grid-column: 1 / -1; flex-direction: row; align-items: center;
+      justify-content: space-between; text-align: left;
+      padding-top: var(--sp-3); border-top: 1px solid var(--line);
+    }
   }
 
-  /* Barra de avance de firmas */
+  /* Barra de avance */
   .fr-avance {
-    height: 5px; border-radius: var(--r-pill); background: var(--line-2);
-    overflow: hidden; margin-top: var(--sp-3); width: 140px;
+    height: 4px; border-radius: var(--r-pill); background: var(--line-2);
+    overflow: hidden; margin-top: var(--sp-3); width: 120px;
   }
-  .fr-avance__f { height: 100%; background: var(--forest); border-radius: var(--r-pill); }
-  @media (max-width: 620px) { .fr-avance { width: 100%; } }
+  .fr-avance__f {
+    height: 100%; background: var(--forest); border-radius: var(--r-pill);
+    transition: width var(--dur) var(--ease);
+  }
+  @media (max-width: 680px) { .fr-avance { width: 100%; } }
 
   /* ── Detalle a pantalla completa ── */
   /* No es modal a propósito: aquí se revisa evidencia, se leen fechas
@@ -105,7 +164,15 @@
   .fr-firmante__c { flex: 1; min-width: 0; }
   .fr-firmante__n { font-size: var(--fs-sm); font-weight: 700; color: var(--ink); }
   .fr-firmante__r { font-size: var(--fs-label-3); color: var(--mute); margin-top: var(--sp-1); }
-  .fr-firmante__x { font-size: var(--fs-label-3); color: var(--mute); margin-top: var(--sp-2); }
+  /* Los datos de contacto van uno por renglón y con la palabra completa.
+     Amontonarlos separados por puntos hacía que un correo largo se cortara
+     justo donde importa. */
+  .fr-firmante__x {
+    font-size: var(--fs-label-3); color: var(--mute); margin-top: var(--sp-3);
+    display: flex; flex-direction: column; gap: var(--sp-1);
+  }
+  .fr-firmante__x span { word-break: break-word; }
+  .fr-firmante__x b { color: var(--ink-2); font-weight: 700; }
 
   /* Bitácora */
   .fr-bita { position: relative; padding-left: var(--sp-6); }
@@ -146,11 +213,32 @@
   .fr-zona__t { font-size: var(--fs-sm); font-weight: 700; color: var(--ink); }
   .fr-zona__d { font-size: var(--fs-label-3); color: var(--mute); margin-top: var(--sp-2); }
 
+  /* Dos renglones en vez de cinco columnas apretadas. Un correo como
+     "maria.lopez.hernandez@gmail.com" no cabe en un quinto de pantalla,
+     y un campo donde no ves lo que escribiste no sirve. */
   .fr-nuevo-firmante {
-    display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr auto; gap: var(--sp-3);
-    align-items: end;
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: var(--sp-4);
   }
-  @media (max-width: 860px) { .fr-nuevo-firmante { grid-template-columns: 1fr 1fr; } }
+  .fr-nuevo-firmante .bk-field { margin: 0; }
+  .fr-nuevo-firmante__pie {
+    grid-column: 1 / -1;
+    display: flex; justify-content: space-between; align-items: center;
+    gap: var(--sp-4); flex-wrap: wrap;
+  }
+  @media (max-width: 700px) { .fr-nuevo-firmante { grid-template-columns: 1fr; } }
+
+  /* Caja del alta: se distingue de la lista de quienes ya están. */
+  .fr-alta-caja {
+    background: var(--bone); border: 1px solid var(--line);
+    border-radius: var(--r-lg); padding: var(--sp-5);
+    margin-top: var(--sp-5);
+  }
+  .fr-alta-caja__t {
+    font-size: var(--fs-label-3); font-weight: 700; color: var(--mute);
+    margin-bottom: var(--sp-4);
+  }
 
   .fr-oculto { display: none; }
 </style>
@@ -168,7 +256,7 @@
                placeholder="Buscar por título, folio o firmante"/>
       </div>
       <div class="bk-seg" id="fr-filtros">
-        <button class="bk-seg__btn is-activo" type="button" data-f="">Todos</button>
+        <button class="bk-seg__btn is-active" type="button" data-f="">Todos</button>
         <button class="bk-seg__btn" type="button" data-f="borrador">Borradores</button>
         <button class="bk-seg__btn" type="button" data-f="pendiente">En firma</button>
         <button class="bk-seg__btn" type="button" data-f="completo">Firmados</button>
@@ -229,6 +317,20 @@
       <div class="bk-cluster" id="fr-d-acciones"></div>
     </div>
 
+    <div class="bk-alert bk-alert--error fr-oculto" id="fr-aviso"
+         style="margin-bottom:var(--sp-6);">
+      <div style="flex:1;">
+        <div style="font-weight:700;" id="fr-aviso-t"></div>
+        <div style="font-size:var(--fs-sm);margin-top:var(--sp-2);line-height:var(--lh);"
+             id="fr-aviso-d"></div>
+        <div style="font-size:var(--fs-label-3);margin-top:var(--sp-3);">
+          Mientras lo resuelves, usa «Copiar liga» en cada parte y mándasela tú
+          por WhatsApp. La firma funciona igual.
+        </div>
+      </div>
+      <button class="bk-btn bk-btn--quiet bk-btn--sm" type="button" id="fr-aviso-x">Cerrar</button>
+    </div>
+
     <div class="fr-cols">
 
       <!-- Columna izquierda -->
@@ -278,7 +380,7 @@
 
           <label class="bk-check">
             <input type="checkbox" id="fr-d-ine"/>
-            <span class="bk-check__box"></span>
+            <span class="bk-check__box"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></span>
             <span>Pedir identificación oficial a quien no tenga expediente</span>
           </label>
           <div class="bk-hint">
@@ -292,37 +394,44 @@
 
           <div id="fr-firmantes"></div>
 
-          <div id="fr-alta-firmante" style="margin-top:var(--sp-5);padding-top:var(--sp-5);border-top:1px solid var(--line);">
-            <div class="fr-nuevo-firmante">
-              <div class="bk-field">
-                <label class="bk-label" for="fr-f-nom">Nombre completo</label>
-                <input class="bk-input" id="fr-f-nom" type="text" list="fr-contactos" placeholder="Juan Pérez García"/>
-                <datalist id="fr-contactos"></datalist>
+          <div id="fr-alta-firmante">
+            <div class="fr-alta-caja">
+              <div class="fr-alta-caja__t">Agregar a una parte</div>
+              <div class="fr-nuevo-firmante">
+                <div class="bk-field">
+                  <label class="bk-label" for="fr-f-nom">Nombre completo</label>
+                  <input class="bk-input" id="fr-f-nom" type="text" list="fr-contactos"
+                         placeholder="Juan Pérez García" autocomplete="off"/>
+                  <datalist id="fr-contactos"></datalist>
+                </div>
+                <div class="bk-field">
+                  <label class="bk-label" for="fr-f-rol">Firma como</label>
+                  <select class="bk-select" id="fr-f-rol"></select>
+                </div>
+                <div class="bk-field">
+                  <label class="bk-label" for="fr-f-mail">Correo</label>
+                  <input class="bk-input" id="fr-f-mail" type="email"
+                         placeholder="juan.perez@correo.com" autocomplete="off"/>
+                </div>
+                <div class="bk-field">
+                  <label class="bk-label" for="fr-f-wa">WhatsApp</label>
+                  <input class="bk-input" id="fr-f-wa" type="tel"
+                         placeholder="443 123 4567" autocomplete="off"/>
+                </div>
+                <div class="fr-nuevo-firmante__pie">
+                  <div class="bk-hint" style="margin:0;">
+                    Con el correo basta para empezar.
+                  </div>
+                  <button class="bk-btn bk-btn--forest" type="button" id="fr-f-add">
+                    Agregar parte
+                  </button>
+                </div>
               </div>
-              <div class="bk-field">
-                <label class="bk-label" for="fr-f-rol">Firma como</label>
-                <select class="bk-select" id="fr-f-rol"></select>
-              </div>
-              <div class="bk-field">
-                <label class="bk-label" for="fr-f-wa">WhatsApp</label>
-                <input class="bk-input" id="fr-f-wa" type="tel" placeholder="443 123 4567"/>
-              </div>
-              <div class="bk-field">
-                <label class="bk-label" for="fr-f-mail">Correo</label>
-                <input class="bk-input" id="fr-f-mail" type="email" placeholder="juan@correo.com"/>
-              </div>
-              <div class="bk-field">
-                <button class="bk-btn bk-btn--ghost" type="button" id="fr-f-add">Agregar</button>
-              </div>
-            </div>
-            <div class="bk-hint">
-              Con correo o WhatsApp basta. Si pones los dos, la liga va por ambos y el
-              código por WhatsApp.
             </div>
 
-            <label class="bk-check" style="margin-top:var(--sp-4);">
+            <label class="bk-check" style="margin-top:var(--sp-5);">
               <input type="checkbox" id="fr-cascada"/>
-              <span class="bk-check__box"></span>
+              <span class="bk-check__box"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></span>
               <span>Firmar en orden, uno tras otro</span>
             </label>
             <div class="bk-hint">
@@ -473,6 +582,16 @@
     setTimeout(function () { t.remove(); }, 4400);
   }
 
+  /* Un toast se va solo en 4 segundos y el motivo de una falla de envío
+     hay que poder leerlo con calma. Este se queda hasta que lo cierres. */
+  function avisoFalla(titulo, detalle) {
+    var caja = g('fr-aviso');
+    g('fr-aviso-t').textContent = titulo;
+    g('fr-aviso-d').textContent = detalle;
+    caja.classList.remove('fr-oculto');
+    caja.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
   async function api(path, opts) {
     opts = opts || {};
     var sb = window.brokrSb;
@@ -547,11 +666,27 @@
       return;
     }
 
+    var ICO_PALOMA = '<svg width="9" height="9" fill="none" viewBox="0 0 24 24" ' +
+      'stroke="currentColor" stroke-width="3.5"><path stroke-linecap="round" ' +
+      'stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>';
+
     g('fr-lista').innerHTML = visibles.map(function (d) {
       var e = ESTADOS[d.estado] || ['—', ''];
       var total = d.total_firmantes || 0;
       var hechas = d.ya_firmaron || 0;
       var pct = total ? Math.round((hechas / total) * 100) : 0;
+
+      // Quién firma y quién ya firmó, visible sin tener que entrar.
+      var chips = (d.firmantes || []).map(function (f) {
+        var cls = f.estado === 'firmado' ? ' is-firmado'
+                : (f.estado === 'rechazado' ? ' is-rechazado' : '');
+        var rol = (ROLES.filter(function (r) { return r[0] === f.rol; })[0] || ['', ''])[1];
+        return '<span class="fr-parte-chip' + cls + '" title="' + esc(rol) + '">' +
+          '<span class="fr-parte-chip__p">' +
+            (f.estado === 'firmado' ? ICO_PALOMA : '') + '</span>' +
+          esc(f.nombre) + '</span>';
+      }).join('');
+
       return '' +
         '<article class="fr-doc" data-id="' + esc(d.id) + '">' +
           '<div class="fr-doc__ico">' +
@@ -560,12 +695,19 @@
           '</div>' +
           '<div class="fr-doc__c">' +
             '<div class="fr-doc__t">' + esc(d.titulo) + '</div>' +
-            '<div class="fr-doc__m">' + esc(TIPOS[d.tipo] || 'Documento') +
-              ' · ' + hechas + ' de ' + total + ' firmas · ' + fecha(d.created_at) + '</div>' +
+            '<div class="fr-doc__m">' +
+              '<span>' + esc(TIPOS[d.tipo] || 'Documento') + '</span>' +
+              '<span class="fr-doc__sep">·</span>' +
+              '<span>' + esc(fecha(d.created_at)) + '</span>' +
+              (d.paginas ? '<span class="fr-doc__sep">·</span><span>' +
+                           d.paginas + ' páginas</span>' : '') +
+            '</div>' +
+            (chips ? '<div class="fr-doc__partes">' + chips + '</div>' : '') +
             '<div class="fr-avance"><div class="fr-avance__f" style="width:' + pct + '%;"></div></div>' +
           '</div>' +
           '<div class="fr-doc__d">' +
             '<span class="bk-badge ' + e[1] + '">' + esc(e[0]) + '</span>' +
+            '<div class="fr-doc__conteo"><b>' + hechas + '</b> de ' + total + ' firmas</div>' +
             '<div class="fr-doc__folio">' + esc(d.folio || '') + '</div>' +
           '</div>' +
         '</article>';
@@ -643,6 +785,7 @@
     g('fr-d-hash-o').textContent = d.hash_original || 'Se calcula al subir el PDF';
     g('fr-d-hash-f').textContent = d.hash_firmado || 'Se genera al completarse la firma';
 
+    ver('fr-aviso', false);
     pintarFirmantes(fs, esBorrador);
     pintarAcciones(d, fs, esBorrador);
     pintarBitacora(ACTUAL.eventos || []);
@@ -668,12 +811,17 @@
       else estado = '<span class="bk-badge">Pendiente</span>';
 
       var extra = [];
-      if (f.telefono) extra.push(esc(f.telefono));
-      if (f.email) extra.push(esc(f.email));
-      if (f.identificado) extra.push('Expediente de cumplimiento completo');
-      else if (f.ine_frente_ruta) extra.push('Identificación subida');
-      if (firmo) extra.push('Firmó el ' + fechaHora(f.firmado_at));
-      if (f.estado === 'rechazado' && f.motivo_rechazo) extra.push('Motivo: ' + esc(f.motivo_rechazo));
+      if (f.email) extra.push('<span><b>Correo:</b> ' + esc(f.email) + '</span>');
+      if (f.telefono) extra.push('<span><b>WhatsApp:</b> ' + esc(f.telefono) + '</span>');
+      if (!f.email && !f.telefono) {
+        extra.push('<span><b>Sin correo ni WhatsApp.</b> No se le puede avisar.</span>');
+      }
+      if (f.identificado) extra.push('<span>Ya tiene expediente de cumplimiento completo</span>');
+      else if (f.ine_frente_ruta) extra.push('<span>Subió su identificación</span>');
+      if (firmo) extra.push('<span><b>Firmó:</b> ' + esc(fechaHora(f.firmado_at)) + '</span>');
+      if (f.estado === 'rechazado' && f.motivo_rechazo) {
+        extra.push('<span><b>Motivo:</b> ' + esc(f.motivo_rechazo) + '</span>');
+      }
 
       var btns = '';
       if (esBorrador) {
@@ -693,7 +841,7 @@
             '<div class="fr-firmante__n">' + esc(f.nombre) +
               (f.orden ? ' · turno ' + f.orden : '') + '</div>' +
             '<div class="fr-firmante__r">' + esc(rol) + '</div>' +
-            (extra.length ? '<div class="fr-firmante__x">' + extra.join(' · ') + '</div>' : '') +
+            (extra.length ? '<div class="fr-firmante__x">' + extra.join('') + '</div>' : '') +
             (btns ? '<div class="bk-cluster" style="margin-top:var(--sp-3);">' + btns + '</div>' : '') +
           '</div>' +
           '<div>' + estado + '</div>' +
@@ -881,9 +1029,11 @@
         return !x.enviado && x.canal !== 'en espera de turno';
       });
       if (fallaron.length) {
-        toast('Se envió, pero no llegó a: ' +
-              fallaron.map(function (x) { return x.firmante; }).join(', ') +
-              '. Copia su liga y mándasela tú.', 'error');
+        // El motivo real, no un "no se pudo" que deja adivinando.
+        var det = fallaron.map(function (x) {
+          return x.firmante + ': ' + (x.motivo || 'motivo desconocido');
+        }).join('  |  ');
+        avisoFalla('No se pudo entregar la invitación', det);
       } else {
         toast('Documento enviado a firma.', 'success');
       }
@@ -1019,6 +1169,7 @@
     g('fr-f-nom').addEventListener('change', autollenarContacto);
     g('fr-f-nom').addEventListener('blur', autollenarContacto);
 
+    g('fr-aviso-x').addEventListener('click', function () { ver('fr-aviso', false); });
     g('fr-cancelar-no').addEventListener('click', function () { ver('fr-m-cancelar', false); });
     g('fr-cancelar-si').addEventListener('click', cancelar);
 
@@ -1056,9 +1207,9 @@
     Array.prototype.forEach.call(g('fr-filtros').querySelectorAll('.bk-seg__btn'), function (b) {
       b.addEventListener('click', function () {
         Array.prototype.forEach.call(g('fr-filtros').querySelectorAll('.bk-seg__btn'), function (x) {
-          x.classList.remove('is-activo');
+          x.classList.remove('is-active');
         });
-        b.classList.add('is-activo');
+        b.classList.add('is-active');
         FILTRO = b.getAttribute('data-f') || '';
         pintarLista();
       });

@@ -134,9 +134,13 @@ def docx_a_html(ruta_docx: str, titulo: str = "Documento") -> str:
 <style>
   @page {{ size: Letter; margin: 25mm 22mm; }}
   * {{ box-sizing: border-box; }}
+  /* Mismas fuentes que genera_contrato.py pone en el .docx (Calibri y
+     Cambria), para que el PDF que se firma se vea igual que el Word que el
+     agente descarga. Carlito y Caladea son sus equivalentes libres en Linux
+     y miden exactamente lo mismo, así que los saltos de página coinciden. */
   body {{
-    font-family: Georgia, "Times New Roman", Times, serif;
-    font-size: 11pt; line-height: 1.55; color: #000; margin: 0;
+    font-family: Calibri, Carlito, Helvetica, Arial, sans-serif;
+    font-size: 10.5pt; line-height: 1.5; color: #000; margin: 0;
     -webkit-font-smoothing: antialiased;
   }}
   p {{ margin: 0; orphans: 3; widows: 3; }}
@@ -144,6 +148,7 @@ def docx_a_html(ruta_docx: str, titulo: str = "Documento") -> str:
   u {{ text-underline-offset: 2px; }}
   .tbl {{ width: 100%; border-collapse: collapse; margin: 10pt 0; font-size: 10pt; }}
   .tbl td {{ border: 1px solid #000; padding: 5pt 7pt; vertical-align: top; }}
+  strong {{ font-family: Cambria, Caladea, "Times New Roman", serif; }}
 </style></head><body>
 {''.join(bloques)}
 </body></html>"""
@@ -166,7 +171,7 @@ async def docx_a_pdf(ruta_docx: str, titulo: str = "Documento") -> bytes:
             header_template="<div></div>",
             footer_template=(
                 '<div style="width:100%;font-size:8pt;color:#666;padding:0 22mm;'
-                'font-family:Georgia,serif;text-align:center;">'
+                'font-family:Calibri,Carlito,Helvetica,Arial,sans-serif;text-align:center;">'
                 '<span class="pageNumber"></span> de <span class="totalPages"></span>'
                 "</div>"
             ),
