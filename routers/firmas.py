@@ -399,9 +399,15 @@ def _mask_email(v: str) -> str:
 # ENVÍO DE MENSAJES
 # ══════════════════════════════════════════════════════════════════════════
 
-async def _mail(para: str, asunto: str, cuerpo_html: str) -> bool:
-    if not RESEND_API_KEY or not _email_ok(para):
-        return False
+async def _mail(para: str, asunto: str, cuerpo_html: str) -> Tuple[bool, str]:
+    """Devuelve (salió, motivo). El motivo importa: decirle al agente
+    "no se pudo enviar" y ya lo deja adivinando entre un correo mal escrito,
+    un dominio sin verificar y una cuenta en modo prueba. Son problemas muy
+    distintos y solo uno lo puede resolver él."""
+    if not RESEND_API_KEY:
+        return False, "Falta configurar el correo en el servidor (RESEND_API_KEY)."
+    if not _email_ok(para):
+        return False, "El correo está mal escrito."
     try:
         async with httpx.AsyncClient(timeout=25) as c:
             r = await c.post("https://api.resend.com/emails",
@@ -409,13 +415,35 @@ async def _mail(para: str, asunto: str, cuerpo_html: str) -> bool:
                                       "Content-Type": "application/json"},
                              json={"from": RESEND_FROM, "to": [para],
                                    "subject": asunto, "html": cuerpo_html})
-        if r.status_code not in (200, 201, 202):
-            log.warning("resend -> %s %s", r.status_code, r.text[:200])
-            return False
-        return True
+        if r.status_code in (200, 201, 202):
+            return True, ""
+
+        log.warning("resend -> %s %s", r.status_code, r.text[:300])
+        try:
+            crudo = (r.json() or {}).get("message") or r.text[:200]
+        except Exception:
+            crudo = r.text[:200]
+
+        # El error más común de todos, traducido a algo accionable. Con el
+        # dominio sin verificar, Resend solo deja mandar correos a la propia
+        # cuenta y rechaza todo lo demás — que es justo el caso de un
+        # comprador o un inquilino.
+        bajo = (crudo or "").lower()
+        if "testing emails" in bajo or "own email" in bajo:
+            motivo = ("El dominio broquer.app no está verificado en Resend, así que solo "
+                      "deja mandar correos a tu propia cuenta. Verifícalo en Resend > Domains.")
+        elif "domain is not verified" in bajo or "not verified" in bajo:
+            motivo = "El dominio del remitente no está verificado en Resend."
+        elif r.status_code == 401 or r.status_code == 403:
+            motivo = f"Resend rechazó la credencial: {crudo}"
+        elif r.status_code == 429:
+            motivo = "Resend está limitando el envío por volumen. Intenta en un minuto."
+        else:
+            motivo = f"Resend respondió {r.status_code}: {crudo}"
+        return False, motivo
     except Exception as e:
         log.warning("resend falló: %s", e)
-        return False
+        return False, f"No se pudo contactar al servicio de correo: {e}"
 
 
 async def _wa_numero(user_id: str) -> Optional[dict]:
@@ -495,7 +523,7 @@ def _mail_layout(titulo: str, cuerpo: str, boton_texto: str = "", boton_url: str
     return f"""<!DOCTYPE html><html><body style="margin:0;padding:0;background:#F4F6F8;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#F4F6F8;padding:32px 16px;">
 <tr><td align="center">
-<table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:14px;padding:36px 32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#0F1B2A;">
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:14px;padding:36px 32px;font-family:'DM Sans',Helvetica,Arial,sans-serif;color:#0F1B2A;">
 <tr><td style="font-size:20px;font-weight:700;letter-spacing:-0.02em;padding-bottom:14px;">{html.escape(titulo)}</td></tr>
 <tr><td style="font-size:15px;line-height:1.6;color:#3C4A5A;">{cuerpo}</td></tr>
 {boton}
@@ -1102,17 +1130,21 @@ async def _liga_de(firmante: dict) -> str:
     return f"{APP_URL}/firmar.html?t={firmante.get('token') or ''}"
 
 
-async def _invitar(doc: dict, firmante: dict, agente: str) -> Tuple[bool, str]:
-    """Manda la liga. Devuelve (llegó, por dónde). Se intenta WhatsApp primero
-    porque es donde la gente sí lee, y se cae a correo sin drama."""
+async def _invitar(doc: dict, firmante: dict, agente: str) -> Tuple[bool, str, str]:
+    """Manda la liga. Devuelve (llegó, por dónde, motivo si no llegó).
+    Se intenta WhatsApp primero porque es donde la gente sí lee, y se cae a
+    correo sin drama."""
     url = await _liga_de(firmante)
     tipo_label = TIPOS.get(doc.get("tipo") or "otro", "Documento")
     rol_label = ROLES.get(firmante.get("rol") or "otro", "Firmante")
     canales = []
+    fallas = []
 
     if firmante.get("telefono"):
         numero = await _wa_numero(doc["user_id"])
-        if numero:
+        if not numero:
+            fallas.append("no tienes ningún número de WhatsApp conectado")
+        else:
             texto = (
                 f"Hola {firmante.get('nombre', '')}.\n\n"
                 f"{agente} te comparte un documento para firmar: "
@@ -1123,6 +1155,9 @@ async def _invitar(doc: dict, firmante: dict, agente: str) -> Tuple[bool, str]:
             )
             if await _wa_texto(numero, firmante["telefono"], texto):
                 canales.append("whatsapp")
+            else:
+                fallas.append("por WhatsApp no salió porque esa persona nunca te ha escrito "
+                              "(la ventana de 24 horas está cerrada)")
 
     if firmante.get("email"):
         cuerpo = (
@@ -1136,11 +1171,19 @@ async def _invitar(doc: dict, firmante: dict, agente: str) -> Tuple[bool, str]:
             f"Te pediremos un código de verificación para confirmar que eres tú.</p>"
             f"<p style='font-size:13px;color:#8A97A6;'>No compartas esta liga: es solo tuya.</p>"
         )
-        if await _mail(firmante["email"], f"Documento para firmar — {doc.get('titulo')}",
-                       _mail_layout("Tienes un documento para firmar", cuerpo, "Abrir y revisar", url)):
+        ok_mail, motivo_mail = await _mail(
+            firmante["email"], f"Documento para firmar — {doc.get('titulo')}",
+            _mail_layout("Tienes un documento para firmar", cuerpo, "Abrir y revisar", url))
+        if ok_mail:
             canales.append("correo")
+        else:
+            fallas.append(motivo_mail)
+    elif not firmante.get("telefono"):
+        fallas.append("no tiene correo ni WhatsApp capturado")
 
-    return (bool(canales), " y ".join(canales) if canales else "")
+    return (bool(canales),
+            " y ".join(canales) if canales else "",
+            " · ".join(f for f in fallas if f))
 
 
 async def _nombre_agente(user_id: str) -> str:
@@ -1181,10 +1224,12 @@ async def enviar_a_firma(request: Request, documento_id: str):
         if not _le_toca(f, firmantes):
             resultados.append({"firmante": f["nombre"], "enviado": False, "canal": "en espera de turno"})
             continue
-        ok, canal = await _invitar(doc, f, agente)
-        resultados.append({"firmante": f["nombre"], "enviado": ok, "canal": canal})
+        ok, canal, motivo = await _invitar(doc, f, agente)
+        resultados.append({"firmante": f["nombre"], "enviado": ok,
+                           "canal": canal, "motivo": motivo})
         await evento(uid, "enviado",
-                     f"Invitación a {f['nombre']}" + (f" por {canal}." if ok else " no se pudo entregar."),
+                     f"Invitación a {f['nombre']}" +
+                     (f" por {canal}." if ok else f" NO se pudo entregar: {motivo}"),
                      documento_id=documento_id, firmante_id=f["id"], actor="agente",
                      ip=_ip(request), ua=_ua(request))
 
@@ -1211,13 +1256,14 @@ async def recordar(request: Request, firmante_id: str):
     if not _le_toca(f, todos):
         raise HTTPException(409, "Todavía no le toca a esta persona: faltan firmas anteriores.")
 
-    ok, canal = await _invitar(doc, f, await _nombre_agente(uid))
+    ok, canal, motivo = await _invitar(doc, f, await _nombre_agente(uid))
     await evento(uid, "recordatorio",
-                 f"Recordatorio a {f['nombre']}" + (f" por {canal}." if ok else " no se pudo entregar."),
+                 f"Recordatorio a {f['nombre']}" +
+                 (f" por {canal}." if ok else f" NO se pudo entregar: {motivo}"),
                  documento_id=doc["id"], firmante_id=f["id"], actor="agente",
                  ip=_ip(request), ua=_ua(request))
     if not ok:
-        raise HTTPException(502, "No se pudo entregar el recordatorio. Revisa el correo o el WhatsApp del firmante.")
+        raise HTTPException(502, motivo or "No se pudo entregar el recordatorio.")
     return {"ok": True, "canal": canal}
 
 
@@ -1409,9 +1455,12 @@ async def publico_pedir_codigo(request: Request, token: str, canal: str = Form("
             f"<p><strong>No le compartas este código a nadie, ni siquiera a tu asesor.</strong> "
             f"Es la prueba de que fuiste tú quien firmó.</p>"
         )
-        if await _mail(firmante["email"], f"Tu código de firma: {codigo}",
-                       _mail_layout("Código de verificación", cuerpo)):
+        ok_mail, motivo_mail = await _mail(firmante["email"], f"Tu código de firma: {codigo}",
+                                           _mail_layout("Código de verificación", cuerpo))
+        if ok_mail:
             usado = "correo"
+        else:
+            log.warning("otp por correo falló: %s", motivo_mail)
 
     if not usado:
         await evento(doc["user_id"], "otp_fallido",
@@ -1631,9 +1680,10 @@ async def _avisar_siguiente_turno(documento_id: str) -> None:
             continue
         if f.get("otp_enviado_at") or f.get("estado") == "abierto":
             continue
-        ok, canal = await _invitar(doc, f, agente)
+        ok, canal, motivo = await _invitar(doc, f, agente)
         await evento(doc["user_id"], "enviado",
-                     f"Le tocó su turno a {f['nombre']}" + (f"; avisado por {canal}." if ok else "."),
+                     f"Le tocó su turno a {f['nombre']}" +
+                     (f"; avisado por {canal}." if ok else f"; NO se le pudo avisar: {motivo}"),
                      documento_id=documento_id, firmante_id=f["id"], actor="sistema")
 
 
@@ -1748,10 +1798,12 @@ def _constancia_html(doc: dict, firmantes: List[dict], eventos: List[dict],
     consent = firmantes[0].get("consentimiento_texto") if firmantes else CONSENTIMIENTO
 
     return f"""<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700&display=swap" rel="stylesheet"/>
 <style>
   @page {{ size: A4; }}
   * {{ box-sizing: border-box; }}
-  body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  body {{ font-family: "DM Sans", Helvetica, Arial, sans-serif;
          color: #0F1B2A; font-size: 9.5pt; line-height: 1.5; margin: 0; }}
   .hd {{ border-bottom: 2px solid #05203C; padding-bottom: 10px; margin-bottom: 16px;
          display: flex; justify-content: space-between; align-items: flex-end; }}
@@ -1764,8 +1816,10 @@ def _constancia_html(doc: dict, firmantes: List[dict], eventos: List[dict],
   .resumen td {{ padding: 5px 0; vertical-align: top; border-bottom: 1px solid #EEF1F4; }}
   .resumen .k, .datos .k {{ width: 38%; color: #5A6875; }}
   .resumen .v, .datos .v {{ font-weight: 600; }}
-  .hash {{ font-family: "Courier New", Courier, monospace; font-size: 7.5pt;
-           word-break: break-all; line-height: 1.4; }}
+  /* Sin monoespaciada: el sistema la tiene prohibida. Se separa con
+     letter-spacing para que el hash se pueda cotejar carácter por carácter. */
+  .hash {{ font-size: 7.5pt; letter-spacing: 0.06em;
+           word-break: break-all; line-height: 1.5; }}
   .firmante {{ border: 1px solid #D9E0E6; border-radius: 6px; padding: 12px 14px;
                margin-bottom: 12px; page-break-inside: avoid; }}
   .firmante__hd {{ display: flex; gap: 10px; align-items: center;
@@ -2006,6 +2060,25 @@ async def verificar(folio: str):
         } for f in firmantes],
         "nom151": bool(doc.get("nom151_folio")),
     }
+
+
+class PruebaCorreoIn(BaseModel):
+    email: str
+
+
+@router.post("/probar-correo")
+async def probar_correo(request: Request, body: PruebaCorreoIn):
+    """Manda un correo de prueba y dice exactamente qué pasó. Existe para que
+    el agente pueda averiguar si el problema es su configuración SIN tener que
+    crear un documento y molestar a un cliente real para descubrirlo."""
+    await _uid(request)
+    destino = (body.email or "").strip()
+    ok, motivo = await _mail(
+        destino, "Prueba de correo de Broquer",
+        _mail_layout("Tu correo está funcionando",
+                     "<p>Si estás leyendo esto, Broquer puede mandarle correos a esta "
+                     "dirección. Las invitaciones a firmar van a llegar bien.</p>"))
+    return {"ok": ok, "motivo": motivo, "destino": destino, "remitente": RESEND_FROM}
 
 
 @router.get("/salud")
