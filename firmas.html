@@ -145,7 +145,13 @@
   }
   .fr-det__m { font-size: var(--fs-sm); color: var(--mute); margin-top: var(--sp-2); }
 
-  .fr-cols { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: var(--sp-6); }
+  .fr-cols {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    gap: var(--sp-6);
+    align-items: start;
+  }
+  .fr-cols > * { min-width: 0; }
   @media (max-width: 900px) { .fr-cols { grid-template-columns: 1fr; } }
 
   /* Firmantes */
@@ -175,7 +181,7 @@
   .fr-firmante__x b { color: var(--ink-2); font-weight: 700; }
 
   /* Bitácora */
-  .fr-bita { position: relative; padding-left: var(--sp-6); }
+  .fr-bita { position: relative; padding-left: var(--sp-6); min-width: 0; }
   .fr-bita::before {
     content: ''; position: absolute; left: 5px; top: 6px; bottom: 6px;
     width: 1px; background: var(--line-2);
@@ -189,13 +195,21 @@
   }
   .fr-ev.is-clave::before { background: var(--forest); }
   .fr-ev__t { font-size: var(--fs-label-3); color: var(--mute); }
-  .fr-ev__d { font-size: var(--fs-sm); color: var(--ink); line-height: var(--lh); margin-top: var(--sp-1); }
+  /* El SHA-256 son 64 caracteres seguidos sin un solo espacio: sin esto el
+     navegador no lo parte y se desborda fuera de la tarjeta. */
+  .fr-ev__d {
+    font-size: var(--fs-sm); color: var(--ink); line-height: var(--lh);
+    margin-top: var(--sp-1); overflow-wrap: anywhere; word-break: break-word;
+  }
 
   /* Hash: es dato técnico, se muestra con la fuente del sistema pero
      partido para que se pueda copiar y comparar sin scroll horizontal. */
   .fr-hash {
-    font-size: var(--fs-xs); color: var(--mute); word-break: break-all;
+    font-size: var(--fs-xs); color: var(--mute);
+    word-break: break-all; overflow-wrap: anywhere;
+    letter-spacing: 0.04em;
     line-height: var(--lh-loose); background: var(--bone);
+    border: 1px solid var(--line);
     border-radius: var(--r-sm); padding: var(--sp-3); margin-top: var(--sp-2);
   }
 
@@ -905,10 +919,14 @@
     }
     var CLAVE = { firmado: 1, sellado: 1, rechazado: 1, otp_verificado: 1 };
     g('fr-d-bitacora').innerHTML = evs.slice().reverse().map(function (ev) {
+      // La huella completa vive en la tarjeta de Integridad, ahí arriba. En
+      // la bitácora estorba: son 64 caracteres que empujan todo lo demás.
+      var txt = String(ev.detalle || ev.tipo || '')
+        .replace(/\b([0-9a-f]{16})[0-9a-f]{32,}\b/gi, '$1…');
       return '<div class="fr-ev' + (CLAVE[ev.tipo] ? ' is-clave' : '') + '">' +
         '<div class="fr-ev__t">' + esc(fechaHora(ev.created_at)) +
           (ev.ip ? ' · ' + esc(ev.ip) : '') + '</div>' +
-        '<div class="fr-ev__d">' + esc(ev.detalle || ev.tipo) + '</div>' +
+        '<div class="fr-ev__d">' + esc(txt) + '</div>' +
       '</div>';
     }).join('');
   }
