@@ -3710,7 +3710,8 @@ body[data-app="facebook-ads"]{--page-max:980px}
     'isr.html':            ['#calc-btn'],
     'avm.html':            ['#btn-analizar-ia'],
     'image-cleaner.html':  ['#btn-clean'],
-    'contratos.html':      ['#gen-btn'],
+    'contratos.html':      ['#gen-btn', '#firma-btn'],
+    'firmas.html':         ['#fr-nuevo', '#fr-vacio-btn', '#fr-a-enviar', '#fr-rubricar'],
     'ficha-manual.html':   ['#ai-btn', '#pdf-btn'],
     'facebook-ads.html':   ['#fa-ai-btn', '#fa-submit-btn'],
     'whatsapp.html':       ['#wa-connect-btn', '#tpl-submit-btn'],
@@ -4293,21 +4294,4 @@ body[data-app="facebook-ads"]{--page-max:980px}
   } else {
     boot();
   }
-})();
-
-/* ── Guarda de escala en iOS ─────────────────────────────────
-   Un pellizco sobre el visor PDF de firma, sobre una grafica o sobre
-   una tabla amplia deja la vista ampliada y en la app no hay barra de
-   navegador para restaurarla. Se bloquea el gesto de escala y, si el
-   sistema alcanzo a cambiarla, se devuelve a 1 al soltar. */
-(function () {
-  ['gesturestart', 'gesturechange', 'gestureend'].forEach(function (t) {
-    document.addEventListener(t, function (ev) { ev.preventDefault(); }, { passive: false });
-  });
-  document.addEventListener('touchend', function () {
-    if (window.visualViewport && window.visualViewport.scale > 1.01) {
-      document.body.style.zoom = '';
-      window.scrollTo(window.scrollX, window.scrollY);
-    }
-  }, { passive: true });
 })();

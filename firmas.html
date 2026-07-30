@@ -332,6 +332,7 @@
         <button class="bk-seg__btn" type="button" data-f="completo">Firmados</button>
       </div>
       <button class="bk-btn bk-btn--forest" type="button" id="fr-nuevo">Nuevo documento</button>
+      <span class="bk-badge fr-oculto" id="fr-max">Broquer Max</span>
     </div>
 
     <div class="bk-metric-grid" style="margin-bottom:var(--sp-6);">
@@ -1525,6 +1526,14 @@
   }
 
   async function cargar() {
+    // Si no tiene Broquer Max se le avisa desde arriba. El bloqueo real vive
+    // en el backend; esto es para que no llene un documento entero y hasta el
+    // final se entere de que no puede mandarlo.
+    try {
+      var acc = await api('/firmas/mi-acceso');
+      if (acc && acc.activa === false) ver('fr-max', true);
+    } catch (e) { /* si no se puede saber, se deja pasar */ }
+
     await cargarContactos();
     await cargarLista();
     // Enlace directo desde el correo de "documento completo".
