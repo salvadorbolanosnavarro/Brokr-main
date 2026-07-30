@@ -241,6 +241,67 @@ async def _uid(request: Request) -> str:
     return uid
 
 
+async def _suscripcion_activa(user_id: str) -> bool:
+    """Misma lógica que /subscription/status. Se importa en caliente porque
+    main.py importa este archivo: hacerlo arriba sería un círculo, aquí no
+    porque cuando esto corre main.py ya terminó de cargar.
+
+    Falla ABIERTO a propósito. Si Supabase parpadea, un agente que sí paga
+    no puede quedarse sin poder mandar un contrato a firma. Cobrar de más
+    por un blip de red es peor que regalar un uso."""
+    try:
+        from main import get_user_access_state, get_org_context, get_org_id_for_user
+    except Exception:
+        return True
+
+    try:
+        acceso = await get_user_access_state(user_id)
+        if not acceso.get("activo", True):
+            return False
+        if acceso.get("rol") in ("equipo", "admin"):
+            return True
+
+        ctx = await get_org_context(user_id)
+        if ctx and ctx.get("org_tipo") == "empresa":
+            vigente = ctx.get("org_activo", True)
+            vence = ctx.get("vence_el")
+            if vigente and vence:
+                try:
+                    vigente = datetime.fromisoformat(
+                        str(vence).replace("Z", "+00:00")) > datetime.now(timezone.utc)
+                except Exception:
+                    pass
+            return bool(vigente)
+
+        oid = await get_org_id_for_user(user_id)
+        filas = await _sb_get("suscripciones", {
+            "org_id": f"eq.{oid}", "select": "status",
+            "order": "updated_at.desc", "limit": "1"})
+        if not filas:
+            return False
+        return filas[0].get("status") in ("active", "trialing")
+    except Exception as e:
+        log.warning("no se pudo verificar la suscripción de %s: %s", user_id, e)
+        return True
+
+
+async def _uid_max(request: Request) -> str:
+    """Para las acciones que cuestan dinero de verdad: renderizar hojas,
+    armar PDFs, mandar correos. Ver y descargar lo que ya existe NO pasa por
+    aquí, y las páginas públicas del firmante tampoco: el cliente que firma
+    no es suscriptor de nadie.
+
+    Tampoco se bloquea completar un documento ya enviado. Si a alguien se le
+    vence el plan a media firma, el trámite legal en curso se termina; lo que
+    se corta es empezar uno nuevo."""
+    uid = await _uid(request)
+    if not await _suscripcion_activa(uid):
+        raise HTTPException(
+            402, "La firma electrónica es parte de Broquer Max. Suscríbete para "
+                 "mandar documentos a firma.")
+    return uid
+
+
 def _ip(request: Request) -> str:
     fwd = request.headers.get("x-forwarded-for", "")
     if fwd:
@@ -636,7 +697,7 @@ async def listar_documentos(request: Request, estado: str = "", limite: int = 10
 
 @router.post("/documentos")
 async def crear_documento(request: Request, body: DocumentoIn):
-    uid = await _uid(request)
+    uid = await _uid_max(request)
     titulo = (body.titulo or "").strip()
     if not titulo:
         raise HTTPException(400, "Ponle un título al documento.")
@@ -768,7 +829,7 @@ async def subir_archivo(request: Request, documento_id: str, archivo: UploadFile
     """El PDF que se va a firmar. Aquí se le saca el hash y ese hash es el que
     va a aparecer en la constancia: a partir de este momento el archivo queda
     congelado."""
-    uid = await _uid(request)
+    uid = await _uid_max(request)
     doc = await _doc_del_usuario(documento_id, uid)
     if doc.get("estado") not in ("borrador",):
         raise HTTPException(409, "Ya no puedes cambiar el archivo: el documento salió a firma.")
@@ -883,7 +944,7 @@ async def desde_contrato(request: Request, body: DesdeContratoIn):
     import tempfile
     import subprocess
 
-    uid = await _uid(request)
+    uid = await _uid_max(request)
     tipo = (body.tipo or "").strip().lower()
     if tipo not in ("promesa", "arrendamiento"):
         raise HTTPException(400, "Solo se puede mandar a firma una promesa o un arrendamiento.")
@@ -1199,7 +1260,7 @@ async def _nombre_agente(user_id: str) -> str:
 
 @router.post("/documentos/{documento_id}/enviar")
 async def enviar_a_firma(request: Request, documento_id: str):
-    uid = await _uid(request)
+    uid = await _uid_max(request)
     doc = await _doc_del_usuario(documento_id, uid)
     if doc.get("estado") not in ("borrador",):
         raise HTTPException(409, "Este documento ya se envió.")
@@ -1240,7 +1301,7 @@ async def enviar_a_firma(request: Request, documento_id: str):
 
 @router.post("/firmantes/{firmante_id}/recordar")
 async def recordar(request: Request, firmante_id: str):
-    uid = await _uid(request)
+    uid = await _uid_max(request)
     filas = await _sb_get("firma_firmantes",
                           {"id": f"eq.{firmante_id}", "user_id": f"eq.{uid}", "limit": "1"})
     if not filas:
@@ -2333,7 +2394,7 @@ async def _paginas_a_imagen(doc: dict) -> List[dict]:
 @router.get("/documentos/{documento_id}/paginas")
 async def ver_paginas(request: Request, documento_id: str):
     """Las hojas en imagen, con liga firmada, para poder colocar los campos."""
-    uid = await _uid(request)
+    uid = await _uid_max(request)
     doc = await _doc_del_usuario(documento_id, uid)
     paginas = await _paginas_a_imagen(doc)
     salida = []
@@ -2542,6 +2603,13 @@ async def probar_correo(request: Request, body: PruebaCorreoIn):
                      "<p>Si estás leyendo esto, Broquer puede mandarle correos a esta "
                      "dirección. Las invitaciones a firmar van a llegar bien.</p>"))
     return {"ok": ok, "motivo": motivo, "destino": destino, "remitente": RESEND_FROM}
+
+
+@router.get("/mi-acceso")
+async def mi_acceso(request: Request):
+    """Le dice a la pantalla si este agente puede mandar documentos a firma."""
+    uid = await _uid(request)
+    return {"activa": await _suscripcion_activa(uid)}
 
 
 @router.get("/salud")
