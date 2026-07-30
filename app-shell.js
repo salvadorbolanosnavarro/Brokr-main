@@ -3710,8 +3710,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
     'isr.html':            ['#calc-btn'],
     'avm.html':            ['#btn-analizar-ia'],
     'image-cleaner.html':  ['#btn-clean'],
-    'contratos.html':      ['#gen-btn', '#firma-btn'],
-    'firmas.html':         ['#fr-nuevo', '#fr-vacio-btn', '#fr-a-enviar', '#fr-rubricar'],
+    'contratos.html':      ['#gen-btn'],
     'ficha-manual.html':   ['#ai-btn', '#pdf-btn'],
     'facebook-ads.html':   ['#fa-ai-btn', '#fa-submit-btn'],
     'whatsapp.html':       ['#wa-connect-btn', '#tpl-submit-btn'],
@@ -4158,7 +4157,8 @@ body[data-app="facebook-ads"]{--page-max:980px}
      CHATS — globito de mensajes sin leer + notificación
      El conteo vive en wa2_conversaciones.unread_count: el webhook lo sube
      cuando entra un mensaje del prospecto y la pestaña de chats lo baja
-     a 0 al abrir el chat. Aquí solo lo leemos cada 20 s.
+     a 0 solo cuando el agente abre el chat (o lo vuelve a subir si lo marca
+     como no leído). Aquí solo lo leemos cada 20 s.
      En iOS la notificación real la manda APNs (ver capacitor-bridge.js);
      esto es el respaldo para web y PWA.
      ════════════════════════════════════════════════════════════════ */
@@ -4166,9 +4166,11 @@ body[data-app="facebook-ads"]{--page-max:980px}
 
   async function _leerNoLeidos() {
     try {
-      const rows = await sbFetch('wa2_conversaciones?select=unread_count');
+      const rows = await sbFetch('wa2_conversaciones?select=unread_count,no_leida');
       if (!Array.isArray(rows)) return 0;
-      return rows.reduce((a, c) => a + (Number(c.unread_count) || 0), 0);
+      // Una conversación que el agente marcó como no leída a mano cuenta como
+      // pendiente aunque su contador vaya en cero.
+      return rows.reduce((a, c) => a + (Number(c.unread_count) || (c.no_leida ? 1 : 0)), 0);
     } catch (e) { return 0; }
   }
 
@@ -4294,4 +4296,21 @@ body[data-app="facebook-ads"]{--page-max:980px}
   } else {
     boot();
   }
+})();
+
+/* ── Guarda de escala en iOS ─────────────────────────────────
+   Un pellizco sobre el visor PDF de firma, sobre una grafica o sobre
+   una tabla amplia deja la vista ampliada y en la app no hay barra de
+   navegador para restaurarla. Se bloquea el gesto de escala y, si el
+   sistema alcanzo a cambiarla, se devuelve a 1 al soltar. */
+(function () {
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(function (t) {
+    document.addEventListener(t, function (ev) { ev.preventDefault(); }, { passive: false });
+  });
+  document.addEventListener('touchend', function () {
+    if (window.visualViewport && window.visualViewport.scale > 1.01) {
+      document.body.style.zoom = '';
+      window.scrollTo(window.scrollX, window.scrollY);
+    }
+  }, { passive: true });
 })();

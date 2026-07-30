@@ -80,6 +80,9 @@
   .w2-conv__unread{ min-width:20px; height:20px; padding:0 6px; border-radius:var(--r-pill); background:var(--success);
                     color:#fff; font-size:var(--fs-caption); font-weight:800; flex:none;
                     display:flex; align-items:center; justify-content:center; }
+  .w2-conv__unread--punto{ min-width:12px; width:12px; height:12px; padding:0; }
+  .w2-conv.is-pendiente .w2-conv__name{ font-weight:800; }
+  .w2-conv.is-pendiente .w2-conv__sub{ color:var(--ink-2); }
   .w2-conv__ia{ width:8px; height:8px; border-radius:50%; background:var(--success); flex:none; }
 
   /* ── Hilo ─────────────────────────────────────────────────── */
@@ -568,6 +571,7 @@ let W2_HAY_MAS = false;           // ¿quedan mensajes más antiguos por cargar?
 let W2_CARGANDO_MAS = false;
 let W2_FILTRO = 'todos';
 let W2_VENTANA_CERRADA = null;
+let W2_EN_HILO = false;           // ¿el agente está viendo el hilo abierto?
 const W2_PAGINA = 30;             // cuántos mensajes se traen por tanda
 
 /* ── Tabs ─────────────────────────────────────────────────── */
@@ -752,7 +756,7 @@ function w2RenderLista(){
 
   const lista = W2_CONVS.filter(c => {
     const ct = c.wa2_contactos || {};
-    if(W2_FILTRO === 'nuevos' && !c.unread_count) return false;
+    if(W2_FILTRO === 'nuevos' && !w2Pendiente(c)) return false;
     if(W2_FILTRO === 'ia' && c.ai_enabled === false) return false;
     if(!q) return true;
     return [ct.nombre, ct.wa_id, c.preview_texto, ct.resumen].some(v => (v || '').toLowerCase().includes(q));
@@ -769,9 +773,14 @@ function w2RenderLista(){
     const ct = c.wa2_contactos || {};
     const nombre = ct.nombre || ct.wa_id || 'Prospecto';
     const activa = W2_CONV_ACTUAL && W2_CONV_ACTUAL.id === c.id;
+    const pend = w2Pendiente(c);
+    const sinLeer = Number(c.unread_count) || 0;
+    const globito = pend
+      ? `<span class="w2-conv__unread ${sinLeer ? '' : 'w2-conv__unread--punto'}">${sinLeer ? (sinLeer > 99 ? '99+' : sinLeer) : ''}</span>`
+      : (c.ai_enabled !== false ? '<span class="w2-conv__ia" title="IA activa"></span>' : '');
     let prev = c.preview_texto || ct.resumen || ct.busca || 'Sin mensajes aún';
     if(c.preview_direction === 'out') prev = (c.preview_sender === 'ia' ? 'IA: ' : 'Tú: ') + prev;
-    return `<div class="w2-conv ${activa?'is-active':''}" onclick="w2AbrirConversacion('${c.id}')">
+    return `<div class="w2-conv ${activa?'is-active':''} ${pend?'is-pendiente':''}" onclick="w2AbrirConversacion('${c.id}')">
               <div class="w2-conv__ava ${w2AvaClase(nombre)}">${w2Esc(w2Iniciales(nombre))}</div>
               <div class="w2-conv__body">
                 <div class="w2-conv__top">
@@ -780,26 +789,61 @@ function w2RenderLista(){
                 </div>
                 <div class="w2-conv__bot">
                   <span class="w2-conv__sub">${w2Esc(prev)}</span>
-                  ${c.unread_count ? `<span class="w2-conv__unread">${c.unread_count}</span>`
-                                   : (c.ai_enabled !== false ? '<span class="w2-conv__ia" title="IA activa"></span>' : '')}
+                  ${globito}
                 </div>
               </div>
             </div>`;
   }).join('');
 }
 
+/* Una conversación está pendiente si trae mensajes sin leer o si el agente
+   la marcó como no leída a mano. Eso es lo único que pinta el globito. */
+function w2Pendiente(c){
+  return !!(Number(c.unread_count) || c.no_leida);
+}
+
+/* Marcar leído/no leído SIEMPRE pasa por aquí. La lectura dejó de ser un
+   efecto secundario de bajar los mensajes: solo cuenta cuando el agente
+   abre la conversación o la marca él mismo. */
+async function w2Lectura(id, noLeida){
+  const conv = W2_CONVS.find(c => c.id === id);
+  if(conv){ conv.no_leida = !!noLeida; conv.unread_count = noLeida ? Math.max(1, Number(conv.unread_count) || 0) : 0; }
+  w2RenderLista();
+  try{
+    await fetch(`${API_BASE}/whatsapp2/conversaciones/${encodeURIComponent(id)}/lectura`, {
+      method:'POST', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({ no_leida: !!noLeida })
+    });
+  }catch(e){ /* se reintenta al siguiente refresco de la bandeja */ }
+  // El globito de la barra inferior vive en el shell: se le avisa.
+  window.dispatchEvent(new Event('brokr-chats-leidos'));
+}
+
 async function w2AbrirConversacion(id){
   const conv = W2_CONVS.find(c => c.id === id);
   if(!conv) return;
   W2_CONV_ACTUAL = conv;
-  conv.unread_count = 0;
+  W2_EN_HILO = true;
   document.getElementById('w2-app')?.classList.add('is-chat');
   w2RenderLista();
   w2RenderThread();
+  await w2Lectura(id, false);
   await w2CargarMensajes(id);
 }
 
+async function w2MarcarNoLeida(){
+  if(!W2_CONV_ACTUAL) return;
+  const id = W2_CONV_ACTUAL.id;
+  W2_CONV_ACTUAL = null;
+  W2_EN_HILO = false;
+  document.getElementById('w2-app')?.classList.remove('is-chat');
+  await w2Lectura(id, true);
+  w2RenderThread();
+  toast('Conversación marcada como no leída.');
+}
+
 function w2VolverALista(){
+  W2_EN_HILO = false;
   document.getElementById('w2-app')?.classList.remove('is-chat');
 }
 
@@ -860,6 +904,9 @@ function w2RenderThread(){
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3.5v3M16 3.5v3"/></svg>
         </button>
         ${verContacto}
+        <button class="w2-iconbtn" title="Marcar como no leída" onclick="w2MarcarNoLeida()">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7.5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><path d="m3.9 7.1 8.1 6 8.1-6"/></svg>
+        </button>
         <button class="w2-iconbtn" title="Eliminar esta conversación de Broquer" onclick="w2BorrarConversacion()">
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9.5 7V4.8h5V7M6.5 7l.9 12.2h9.2L17.5 7"/></svg>
         </button>
@@ -1045,6 +1092,9 @@ async function w2RefrescarMensajes(){
     w2PintarMensajes();
     if(pegado){ w2IrAlFinal(true); }
     else { box.scrollTop = topAntes; document.getElementById('w2-nuevos').hidden = false; }
+    // Si el agente tiene el hilo enfrente, lo que acaba de entrar cuenta como
+    // leído. Si se regresó a la lista, NO: ahí sí debe quedar el globito.
+    if(W2_EN_HILO && nuevos.some(m => m.direction === 'in')) await w2Lectura(W2_CONV_ACTUAL.id, false);
   }catch(e){ /* silencioso: es un refresco de fondo */ }
 }
 

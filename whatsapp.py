@@ -1907,6 +1907,11 @@ async def _guardar_mensaje(user_id: str, contacto_id: str, conversacion_id: str,
         # 24h de WhatsApp: se cuenta desde el último mensaje del PROSPECTO,
         # no desde el último mensaje de quien sea (agente, IA, prospecto).
         cambios_conv["last_inbound_at"] = _now()
+        # Se guarda el id de Meta del último mensaje del prospecto: es lo que
+        # se necesita para mandarle la palomita azul cuando el agente abra la
+        # conversación en Broquer (no antes).
+        if wamid:
+            cambios_conv["last_inbound_wamid"] = wamid
     await sb_patch("wa2_conversaciones", {"id": f"eq.{conversacion_id}"}, cambios_conv)
 
 
@@ -2071,8 +2076,12 @@ async def _procesar_en_segundo_plano(item: dict):
     numero = item["numero"]
     user_id = numero["user_id"]
 
-    # Palomita azul + "escribiendo…" de inmediato, antes de pensar la respuesta.
-    await _wa_marcar_leido(numero, item.get("wa_message_id"))
+    # OJO: aquí YA NO se manda la palomita azul. Antes se mandaba en cuanto
+    # entraba el mensaje, aunque la IA estuviera apagada o el chat lo tuviera
+    # que atender el agente: el prospecto veía "leído" sin que nadie lo hubiera
+    # leído, y del lado de Broquer todo aparecía como atendido. Ahora la
+    # palomita se manda solo cuando la IA de verdad va a contestar (más abajo,
+    # en _responder_conversacion) o cuando el agente abre el chat en Broquer.
 
     # El aviso al celular del agente va ANTES de agrupar: aunque esta tarea se
     # retire por ráfaga, el agente tiene que enterarse de TODOS los mensajes.
@@ -2119,6 +2128,7 @@ async def _responder_conversacion(item: dict, numero: dict, user_id: str):
         return
     if not _en_horario(entren):
         msg_fuera = entren.get("fuera_horario_msg") or "Gracias por tu mensaje, en cuanto abramos te contesto."
+        await _wa_marcar_leido(numero, item.get("wa_message_id"))
         wamid = await _wa_send_text(numero, item["wa_id"], msg_fuera)
         await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"], wamid,
                               "out", "ia", msg_fuera)
@@ -2151,6 +2161,10 @@ async def _responder_conversacion(item: dict, numero: dict, user_id: str):
                           "Ya te toca a ti seguir la conversación.",
                           datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
         return
+
+    # Ya se decidió que la IA sí va a contestar: hasta ahora se vale poner la
+    # palomita azul y el "escribiendo…" del lado del prospecto.
+    await _wa_marcar_leido(numero, item.get("wa_message_id"))
 
     historial_rows = await sb_get("wa2_mensajes", {
         "conversacion_id": f"eq.{item['conversacion_id']}", "select": "sender,body",
@@ -2398,8 +2412,6 @@ async def wa2_mensajes_list(request: Request, conversacion_id: str,
     if after:
         rows = await sb_get("wa2_mensajes", {**base, "created_at": f"gt.{after}",
                                              "order": "created_at.asc", "limit": "200"})
-        await sb_patch("wa2_conversaciones", {"id": f"eq.{conversacion_id}", "user_id": _in_filter(ids)},
-                       {"unread_count": 0})
         return {"mensajes": rows, "hay_mas_antiguos": False, "incremental": True}
 
     params = {**base, "order": "created_at.desc", "limit": str(limit + 1)}
@@ -2412,9 +2424,9 @@ async def wa2_mensajes_list(request: Request, conversacion_id: str,
         rows = rows[:limit]
     rows.reverse()
 
-    if not before:
-        await sb_patch("wa2_conversaciones", {"id": f"eq.{conversacion_id}", "user_id": _in_filter(ids)},
-                       {"unread_count": 0})
+    # Bajar los mensajes ya NO marca la conversación como leída. Leer es un
+    # acto del agente, no un efecto secundario de que el navegador refresque:
+    # de eso se encarga POST /conversaciones/{id}/lectura.
     return {"mensajes": rows, "hay_mas_antiguos": hay_mas, "incremental": False}
 
 
@@ -2467,6 +2479,48 @@ async def wa2_enviar_manual(req: EnviarManualReq, request: Request):
         await sb_patch("wa2_conversaciones", {"id": f"eq.{conv['id']}"}, {"ai_enabled": False})
         ia_pausada = True
     return {"ok": True, "ia_pausada": ia_pausada}
+
+
+class LecturaReq(BaseModel):
+    no_leida: bool = False
+
+
+@router.post("/conversaciones/{conversacion_id}/lectura")
+async def wa2_lectura(conversacion_id: str, req: LecturaReq, request: Request):
+    """Marca la conversación como leída o como NO leída, a mano.
+
+    · no_leida=False → se pone en cero el contador y, ahora sí, se le manda la
+      palomita azul al prospecto: alguien de verdad abrió su mensaje.
+    · no_leida=True  → el agente la deja pendiente aunque ya la haya abierto,
+      igual que en WhatsApp. La palomita azul que ya se mandó no se puede
+      quitar (Meta no lo permite), pero en Broquer la conversación vuelve a
+      aparecer sin leer.
+    """
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    conv_rows = await sb_get("wa2_conversaciones", {"id": f"eq.{conversacion_id}", "user_id": _in_filter(ids),
+                                                    "select": "*", "limit": "1"})
+    if not conv_rows:
+        raise HTTPException(status_code=404, detail="Conversación no encontrada")
+    conv = conv_rows[0]
+
+    if req.no_leida:
+        await sb_patch("wa2_conversaciones", {"id": f"eq.{conversacion_id}"},
+                       {"no_leida": True, "unread_count": max(1, int(conv.get("unread_count") or 0))})
+        return {"ok": True, "no_leida": True}
+
+    await sb_patch("wa2_conversaciones", {"id": f"eq.{conversacion_id}"},
+                   {"no_leida": False, "unread_count": 0})
+
+    # Palomita azul al prospecto, sin "escribiendo…": lo leyó un humano, no la IA.
+    wamid = conv.get("last_inbound_wamid")
+    if wamid:
+        numero_rows = await sb_get("wa2_numeros", {"id": f"eq.{conv.get('numero_id')}",
+                                                   "select": "*", "limit": "1"})
+        if numero_rows:
+            await _wa_marcar_leido(numero_rows[0], wamid, escribiendo=False)
+
+    return {"ok": True, "no_leida": False}
 
 
 class ConvPatchReq(BaseModel):
