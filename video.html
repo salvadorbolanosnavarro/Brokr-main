@@ -7,14 +7,8 @@
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
-  .vid-scroll { padding: var(--sp-6) var(--pad-x) var(--sp-10); max-width: var(--page-max); margin: 0 auto; }
-  @media (max-width: 720px) { .vid-scroll { padding: var(--sp-4) var(--sp-4) var(--sp-8); } }
-
-  /* Filete de acento bajo el titulo de seccion. El azul de marca no puede
-     terminar en el sidebar: sin esto el area de contenido no tiene un solo
-     punto de color y se lee como documento, no como producto. */
-  .vid-rule { width: 38px; height: 3px; border-radius: 0; background: var(--sky-blue);
-              margin: calc(var(--sp-5) * -1) 0 var(--sp-5); }
+  .vid-scroll { padding: 24px 28px 48px; max-width: 1180px; margin: 0 auto; }
+  @media (max-width: 720px) { .vid-scroll { padding: 16px 14px 40px; } }
 
   /* Buscador de inmueble — mismo comportamiento que en Facebook Ads */
   .vid-buscar { position: relative; max-width: 640px; }
@@ -47,10 +41,42 @@
   .vid-elegido__m { font-size: var(--fs-xs); color: var(--mute); margin-top: 2px; }
 
   /* Tira de fotos del recorrido */
-  .vid-tira { display: flex; gap: var(--sp-2); overflow-x: auto; padding-bottom: var(--sp-2); }
+  .vid-tira { display: flex; gap: var(--sp-3); overflow-x: auto; padding-bottom: var(--sp-2); }
   .vid-toma { flex: 0 0 auto; width: 116px; }
+  .vid-toma__marco { position: relative; }
   .vid-toma img { width: 116px; height: 74px; object-fit: cover; border-radius: var(--r); border: 1px solid var(--line); display: block; }
+  .vid-toma.is-amueblada img { border-color: var(--sky-blue); }
   .vid-toma__n { display: block; font-size: var(--fs-caption); color: var(--mute); margin-top: var(--sp-1); }
+  .vid-toma__badge {
+    position: absolute; left: 4px; bottom: 4px;
+    font-size: var(--fs-caption); font-weight: 600; line-height: 1;
+    color: var(--paper); background: var(--sky-navy);
+    padding: 3px 6px; border-radius: var(--r-sm); opacity: .92;
+  }
+  .vid-toma__amueblar {
+    display: block; width: 100%; margin-top: var(--sp-1);
+    font-size: var(--fs-caption); font-weight: 600; color: var(--sky-blue);
+    background: none; border: 1px solid var(--line); border-radius: var(--r-sm);
+    padding: 4px 0; cursor: pointer;
+    transition: border-color var(--dur) var(--ease);
+  }
+  .vid-toma__amueblar:hover { border-color: var(--sky-blue); }
+  .vid-toma__amueblar:disabled { color: var(--mute); cursor: default; border-color: var(--line); }
+  .vid-toma.is-cargando .vid-toma__marco::after {
+    content: ''; position: absolute; inset: 0; border-radius: var(--r);
+    background: var(--paper); opacity: .55;
+  }
+
+  /* Estilos de amueblado */
+  .vid-estilos { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+  .vid-estilo {
+    font-size: var(--fs-xs); font-weight: 600; color: var(--ink);
+    background: var(--paper); border: 1px solid var(--line);
+    border-radius: var(--r-pill); padding: 6px 14px; cursor: pointer;
+    transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+  }
+  .vid-estilo:hover { border-color: var(--sky-blue); }
+  .vid-estilo.is-sel { border-color: var(--sky-blue); background: var(--sky-canvas); color: var(--sky-blue); }
 
   /* Formatos */
   .vid-formatos { display: flex; gap: var(--sp-3); flex-wrap: wrap; }
@@ -68,20 +94,11 @@
   .vid-fmt__s { font-size: var(--fs-caption); color: var(--mute); margin-top: 2px; }
 
   /* Guía de fotos */
-  .vid-guia { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--sp-7); }
-  .vid-guia h4 { display: flex; align-items: center; gap: var(--sp-3);
-                 font-size: var(--fs-h5); font-weight: 700; color: var(--ink);
-                 letter-spacing: -0.01em; margin-bottom: var(--sp-4); }
-  .vid-guia h4 span { flex: 0 0 auto; width: 28px; height: 28px; border-radius: var(--r-sm);
-                      background: var(--sky-navy); color: var(--bone);
-                      display: flex; align-items: center; justify-content: center; }
-  .vid-guia h4 svg { width: 16px; height: 16px; }
+  .vid-guia { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--sp-6); }
+  .vid-guia h4 { font-size: var(--fs-sm); font-weight: 700; color: var(--ink); margin-bottom: var(--sp-3); }
   .vid-guia ul { list-style: none; padding: 0; margin: 0; }
-  /* El bullet era un '·' heredando 13px: un punto de 2px, y era todo el color
-     del modulo. Ahora un filete con superficie real. */
-  .vid-guia li { font-size: var(--fs-sm); color: var(--ink-2); line-height: 1.6;
-                 padding-left: var(--sp-4); border-left: 2px solid var(--sky-canvas);
-                 border-radius: 0; margin-bottom: var(--sp-4); }
+  .vid-guia li { font-size: var(--fs-xs); color: var(--mute); line-height: 1.55; padding-left: 16px; position: relative; margin-bottom: var(--sp-2); }
+  .vid-guia li::before { content: '·'; position: absolute; left: 4px; color: var(--sky-blue); }
 
   /* Resultado */
   .vid-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--sp-5); }
@@ -98,9 +115,7 @@
   @keyframes vid-gira { to { transform: rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) { .vid-spin { animation: none; } }
 
-  .vid-nota { font-size: var(--fs-body); color: var(--ink-2); line-height: 1.65; max-width: 62ch; }
-  /* Microcopy real (pies de foto, contadores): ahi si 13px y --mute. */
-  .vid-nota--micro { font-size: var(--fs-xs); color: var(--mute); line-height: 1.55; }
+  .vid-nota { font-size: var(--fs-xs); color: var(--mute); line-height: 1.55; }
 </style>
 </head>
 <body data-app="video">
@@ -113,7 +128,7 @@
            placeholder="Busca por título, clave, colonia, ciudad, tipo o precio…"/>
     <div class="vid-dd" id="vid-dd"></div>
   </div>
-  <p class="vid-nota vid-nota--micro" style="margin-top:var(--sp-2)" id="vid-q-nota"></p>
+  <p class="vid-nota" style="margin-top:var(--sp-2)" id="vid-q-nota"></p>
 
   <!-- Paso 2 · Armar -->
   <section id="vid-armar" hidden>
@@ -133,7 +148,26 @@
     </div>
     <div class="bk-card bk-card--pad bk-card--raise">
       <div class="vid-tira" id="vid-tira"></div>
-      <p class="vid-nota vid-nota--micro" style="margin-top:var(--sp-3)" id="vid-tira-nota"></p>
+      <p class="vid-nota" style="margin-top:var(--sp-3)" id="vid-tira-nota"></p>
+    </div>
+
+    <div class="bk-section-header" style="margin-top:var(--sp-8)">
+      <h2>Amueblado virtual</h2>
+    </div>
+    <div class="bk-card bk-card--pad bk-card--raise">
+      <p class="vid-nota" style="margin-bottom:var(--sp-4);max-width:70ch">
+        ¿Espacios vacíos? Elige un estilo y toca «Amueblar» sobre la toma. La IA
+        agrega muebles y decoración sin tocar muros, pisos, ventanas ni
+        dimensiones, y cada imagen sale con la leyenda «Amueblado virtual ·
+        imagen ilustrativa» integrada — es lo que la hace publicidad honesta y
+        no engañosa. Puedes regresar a la foto original cuando quieras.
+      </p>
+      <div class="vid-estilos" id="vid-estilos">
+        <button class="vid-estilo is-sel" type="button" data-estilo="moderno">Moderno</button>
+        <button class="vid-estilo" type="button" data-estilo="mexicano">Mexicano contemporáneo</button>
+        <button class="vid-estilo" type="button" data-estilo="minimalista">Minimalista</button>
+        <button class="vid-estilo" type="button" data-estilo="clasico">Clásico</button>
+      </div>
     </div>
 
     <div class="bk-section-header" style="margin-top:var(--sp-8)">
@@ -179,7 +213,6 @@
   <div class="bk-section-header" style="margin-top:var(--sp-10)">
     <h2>Qué fotos hacen un buen recorrido</h2>
   </div>
-  <div class="vid-rule"></div>
   <div class="bk-card bk-card--pad bk-card--raise">
     <p class="vid-nota" style="margin-bottom:var(--sp-6);max-width:70ch">
       El recorrido no arregla una foto mala: la deja diez veces más tiempo en pantalla.
@@ -189,7 +222,7 @@
     </p>
     <div class="vid-guia">
       <div>
-        <h4><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/></svg></span>Lo que más se nota</h4>
+        <h4>Lo que más se nota</h4>
         <ul>
           <li>Resolución alta. Abajo de 1600 px de ancho, el zoom revela el pixel. Una foto de cámara o de celular reciente sobra; una descargada de un anuncio viejo, no.</li>
           <li>Horizontales. El recorrido se mueve de lado: una foto horizontal tiene a dónde moverse, una vertical no y se recorta.</li>
@@ -197,7 +230,7 @@
         </ul>
       </div>
       <div>
-        <h4><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span>El orden importa</h4>
+        <h4>El orden importa</h4>
         <ul>
           <li>El recorrido respeta el orden de la ficha. Reordena ahí y se reordena aquí.</li>
           <li>Empieza por la fachada: es la que ubica al que ve el video.</li>
@@ -206,7 +239,7 @@
         </ul>
       </div>
       <div>
-        <h4><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg></span>Qué dejar fuera</h4>
+        <h4>Qué dejar fuera</h4>
         <ul>
           <li>Fotos con logo, marca de agua o texto encima: el zoom las deforma y se ve pirata.</li>
           <li>Planos y documentos. No se leen en movimiento.</li>
@@ -219,8 +252,10 @@
     <p class="vid-nota" style="margin-top:var(--sp-6);max-width:70ch">
       Con cinco o seis fotos buenas sale mejor que con ocho de relleno. El video se arma
       con tus fotos tal como están — paneo y zoom lento, sin alterar un pixel del
-      inmueble — y sale sin música a propósito: ponle el audio desde Instagram al
-      publicar, así agarras audio de tendencia y evitas que te tumben el alcance por
+      inmueble. La única excepción es el amueblado virtual, que tú pides toma por toma
+      y siempre sale con su leyenda a la vista: el espacio se enseña con potencial, pero
+      declarado. Y el video sale sin música a propósito: ponle el audio desde Instagram
+      al publicar, así agarras audio de tendencia y evitas que te tumben el alcance por
       derechos de autor.
     </p>
   </div>
@@ -243,6 +278,10 @@
   let polling = null;
   let timerBusca = null;
   let pendientesEditor = null;
+  let estiloSel = 'moderno';
+  // Cada toma recuerda su foto original y, si el agente la amuebló, la
+  // versión con muebles y cuál de las dos va al video.
+  let tomas = [];
 
   const $ = id => document.getElementById(id);
 
@@ -424,12 +463,8 @@
     $('vid-el-t').textContent = sel.titulo || sel.clave_interna || 'Sin título';
     $('vid-el-m').textContent = resumen(sel);
 
-    $('vid-tira').innerHTML = fs.map((u, i) =>
-      '<div class="vid-toma">' +
-        '<img src="' + esc(u) + '" alt="" loading="lazy" decoding="async"/>' +
-        '<span class="vid-toma__n">Toma ' + (i + 1) + '</span>' +
-      '</div>'
-    ).join('');
+    tomas = fs.map(u => ({ original: u, amueblada: null, usar: 'original', cargando: false }));
+    pintarTira();
 
     const seg = Math.round(fs.length * 5.5 - (fs.length - 1) * 0.7);
     $('vid-tira-nota').textContent = todas.length > MAX_FOTOS
@@ -440,6 +475,83 @@
     notaFormato();
     cargarHechos();
   }
+
+  // ── Amueblado virtual ──────────────────────────────────────────────────
+  function fotosVideo() {
+    return tomas.map(t => (t.usar === 'amueblada' && t.amueblada) ? t.amueblada : t.original);
+  }
+
+  function hayAmuebladas() {
+    return tomas.some(t => t.usar === 'amueblada' && t.amueblada);
+  }
+
+  function pintarTira() {
+    $('vid-tira').innerHTML = tomas.map((t, i) => {
+      const activa = t.usar === 'amueblada' && t.amueblada;
+      const url = activa ? t.amueblada : t.original;
+      // Las fotos del Editor de imágenes llegan como data: y el backend no
+      // puede bajarlas — para esas tomas el amueblado no se ofrece.
+      const esHttp = t.original.indexOf('http') === 0;
+      let btn = '';
+      if (esHttp) {
+        if (t.cargando) {
+          btn = '<button class="vid-toma__amueblar" type="button" disabled>Amueblando…</button>';
+        } else if (t.amueblada) {
+          btn = '<button class="vid-toma__amueblar" type="button" data-i="' + i + '" data-acc="toggle">' +
+                (activa ? 'Ver original' : 'Ver amueblada') + '</button>';
+        } else {
+          btn = '<button class="vid-toma__amueblar" type="button" data-i="' + i + '" data-acc="amueblar">Amueblar</button>';
+        }
+      }
+      return '<div class="vid-toma' + (activa ? ' is-amueblada' : '') + (t.cargando ? ' is-cargando' : '') + '">' +
+        '<div class="vid-toma__marco">' +
+          '<img src="' + esc(url) + '" alt="" loading="lazy" decoding="async"/>' +
+          (activa ? '<span class="vid-toma__badge">Amueblada</span>' : '') +
+        '</div>' +
+        '<span class="vid-toma__n">Toma ' + (i + 1) + '</span>' +
+        btn +
+      '</div>';
+    }).join('');
+    $('vid-tira').querySelectorAll('.vid-toma__amueblar[data-i]').forEach(b => {
+      b.addEventListener('click', () => {
+        const i = parseInt(b.getAttribute('data-i'), 10);
+        if (b.getAttribute('data-acc') === 'toggle') { alternar(i); } else { amueblar(i); }
+      });
+    });
+  }
+
+  async function amueblar(i) {
+    const t = tomas[i];
+    if (!t || t.cargando) return;
+    t.cargando = true;
+    pintarTira();
+    try {
+      const r = await api('/staging/amueblar', {
+        method: 'POST',
+        body: JSON.stringify({ foto_url: t.original, estilo: estiloSel }),
+      });
+      t.amueblada = r.url;
+      t.usar = 'amueblada';
+    } catch (e) {
+      alert(e.message);
+    }
+    t.cargando = false;
+    pintarTira();
+  }
+
+  function alternar(i) {
+    const t = tomas[i];
+    if (!t || !t.amueblada) return;
+    t.usar = t.usar === 'amueblada' ? 'original' : 'amueblada';
+    pintarTira();
+  }
+
+  $('vid-estilos').querySelectorAll('.vid-estilo').forEach(btn => {
+    btn.addEventListener('click', () => {
+      estiloSel = btn.getAttribute('data-estilo');
+      $('vid-estilos').querySelectorAll('.vid-estilo').forEach(b => b.classList.toggle('is-sel', b === btn));
+    });
+  });
 
   function notaFormato() {
     $('vid-fmt-nota').textContent = formato === '9:16'
@@ -470,6 +582,9 @@
       } else {
         cuerpo.propiedad_id = sel.id;
         cuerpo.titulo = sel.titulo || sel.clave_interna || null;
+        // Si hay tomas amuebladas, las fotos van explícitas: el backend usa
+        // esta lista tal cual y el propiedad_id se queda para el historial.
+        if (hayAmuebladas()) { cuerpo.fotos = fotosVideo(); }
       }
       const r = await api('/video/generar', { method: 'POST', body: JSON.stringify(cuerpo) });
       vigilar(r.job_id);
@@ -569,10 +684,8 @@
     $('vid-el-img').src = imagenes[0].url;
     $('vid-el-t').textContent = 'Fotos del Editor de imágenes';
     $('vid-el-m').textContent = imagenes.length + ' fotos · sin inmueble asignado';
-    $('vid-tira').innerHTML = imagenes.map((im, i) =>
-      '<div class="vid-toma"><img src="' + esc(im.url) + '" alt=""/>' +
-      '<span class="vid-toma__n">Toma ' + (i + 1) + '</span></div>'
-    ).join('');
+    tomas = imagenes.map(im => ({ original: im.url, amueblada: null, usar: 'original', cargando: false }));
+    pintarTira();
     const seg = Math.round(imagenes.length * 5.5 - (imagenes.length - 1) * 0.7);
     $('vid-tira-nota').textContent = imagenes.length + ' fotos, en el orden del editor. ' +
       'Duración aproximada: ' + seg + ' segundos. Este video no se guarda en el historial ' +
