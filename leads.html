@@ -293,6 +293,7 @@ html, body { background: var(--paper); }
   background: var(--paper-2);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
+  overflow: hidden;
   display: flex; flex-direction: column;
   max-height: calc(100vh - 300px);
   min-height: 180px;
@@ -307,6 +308,7 @@ html, body { background: var(--paper); }
   flex-shrink: 0;
 }
 .kb-col__dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.kb-col__rule { height: 3px; border-radius: 0; flex-shrink: 0; }
 .kb-col__name {
   font-size: var(--fs-sm); font-weight: 600;
   color: var(--ink);
@@ -1380,10 +1382,11 @@ function rolBadge(tipo) {
    se usan estas por defecto. El valor guardado en contactos.estatus
    es la clave (nombre en minúsculas). */
 const ETAPAS_DEFAULT = [
-  { clave:'nuevo',      nombre:'Nuevo',      color:'var(--forest)'  },
-  { clave:'activo',     nombre:'Activo',     color:'var(--success)' },
-  { clave:'contactado', nombre:'Contactado', color:'var(--warn)'    },
-  { clave:'cerrado',    nombre:'Cerrado',    color:'var(--ink-3)'   },
+  { clave:'nuevo',      nombre:'Nuevo',      color:'var(--etapa-nuevo)'      },
+  { clave:'activo',     nombre:'Activo',     color:'var(--etapa-activo)'     },
+  { clave:'contactado', nombre:'Contactado', color:'var(--etapa-contactado)' },
+  { clave:'cerrado',    nombre:'Cerrado',    color:'var(--etapa-cerrado)'    },
+  { clave:'descartado', nombre:'Descartado', color:'var(--etapa-descartado)' },
 ];
 let ETAPAS = ETAPAS_DEFAULT.slice();
 
@@ -1394,7 +1397,7 @@ async function cargarEtapas() {
       ETAPAS = rows.map(r => ({
         clave: String(r.nombre || '').toLowerCase().trim(),
         nombre: r.nombre,
-        color: r.color || 'var(--forest)',
+        color: r.color || 'var(--etapa-activo)',
       })).filter(e => e.clave);
     }
   } catch { /* si falla, se quedan las default */ }
@@ -1539,6 +1542,7 @@ function renderPipeline() {
       : `<div class="kb-empty">Arrastra leads aquí</div>`;
     return `<div class="kb-col" data-etapa="${esc(e.clave)}"
       ondragover="kbDragOver(event, this)" ondragleave="kbDragLeave(this)" ondrop="kbDrop(event, this)">
+      <div class="kb-col__rule" style="background:${e.color}"></div>
       <div class="kb-col__head">
         <span class="kb-col__dot" style="background:${e.color}"></span>
         <span class="kb-col__name">${esc(e.nombre)}</span>

@@ -294,10 +294,10 @@ async function sbFetch(path) {
    Catálogos y paleta (todo sale de tokens de marca)
    ════════════════════════════════════════════════════════════ */
 const ETAPAS_DEFAULT = [
-  { clave:'nuevo',      nombre:'Nuevo',      color:'var(--sky-blue-lift)' },
-  { clave:'activo',     nombre:'Activo',     color:'var(--sky-blue)'      },
-  { clave:'contactado', nombre:'Contactado', color:'var(--sky-navy-mid)'  },
-  { clave:'cerrado',    nombre:'Cerrado',    color:'var(--sky-navy)'      },
+  { clave:'nuevo',      nombre:'Nuevo',      color:'var(--etapa-nuevo)'      },
+  { clave:'activo',     nombre:'Activo',     color:'var(--etapa-activo)'     },
+  { clave:'contactado', nombre:'Contactado', color:'var(--etapa-contactado)' },
+  { clave:'cerrado',    nombre:'Cerrado',    color:'var(--etapa-cerrado)'    },
 ];
 let ETAPAS = ETAPAS_DEFAULT.slice();
 
@@ -319,8 +319,8 @@ const TEMP_COLOR = { 'Caliente': 'var(--danger)', 'Tibio': 'var(--warn)', 'Frío
 const DOW = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 
 const PALETA = [
-  'var(--sky-blue)', 'var(--sky-navy-mid)', 'var(--sky-blue-lift)', 'var(--success)',
-  'var(--sky-navy)', 'var(--warn)', 'var(--ink-3)', 'var(--danger)',
+  'var(--data-1)', 'var(--data-2)', 'var(--data-3)', 'var(--data-4)',
+  'var(--data-5)', 'var(--data-6)', 'var(--data-7)', 'var(--data-8)',
 ];
 function col(i) { return PALETA[i % PALETA.length]; }
 
@@ -1074,10 +1074,10 @@ function panelResumen() {
   const vencidas = tareas.filter(t => !t.completada && t.fecha_entrega && new Date(t.fecha_entrega) < new Date()).length;
 
   const series = [
-    { label: 'Leads captados', color: 'var(--sky-blue)', counts: sLeads },
-    { label: 'Inmuebles captados', color: 'var(--sky-navy-mid)', counts: sProps },
+    { label: 'Leads captados', color: 'var(--data-1)', counts: sLeads },
+    { label: 'Inmuebles captados', color: 'var(--data-2)', counts: sProps },
   ];
-  if (sWa) series.push({ label: w && w.parcial ? 'Conversaciones de WhatsApp' : 'Mensajes de WhatsApp', color: 'var(--success)', counts: sWa });
+  if (sWa) series.push({ label: w && w.parcial ? 'Conversaciones de WhatsApp' : 'Mensajes de WhatsApp', color: 'var(--data-3)', counts: sWa });
 
   const calificados = w ? Object.entries(w.temperatura || {}).filter(par => /caliente|tibio/i.test(par[0])).reduce((a, par) => a + par[1], 0) : 0;
   const citas = w ? ((w.etapa || {})['Cita'] || 0) : 0;
@@ -1086,7 +1086,7 @@ function panelResumen() {
     { nombre: 'Prospectos calificados', n: calificados, color: 'var(--sky-blue)' },
     { nombre: 'Citas agendadas', n: citas, color: 'var(--sky-navy-mid)' },
     { nombre: 'Leads en el CRM', n: L.activos, color: 'var(--sky-navy)' },
-    { nombre: 'Inmuebles cerrados', n: P.cerradas, color: 'var(--success)' },
+    { nombre: 'Inmuebles cerrados', n: P.cerradas, color: 'var(--etapa-cerrado)' },
   ];
 
   const rank = rankingInmuebles().slice(0, 6);
@@ -1215,7 +1215,7 @@ function panelInmuebles() {
     { label: 'Más de 180 días', min: 180, max: 1e9 },
   ].map((r, i) => ({
     label: r.label,
-    color: i === 3 ? 'var(--danger)' : (i === 2 ? 'var(--warn)' : col(i)),
+    color: ['var(--success)', 'var(--data-7)', 'var(--data-2)', 'var(--danger)'][i],
     n: act.filter(p => { const d = diasEntre(p.created_at); return d != null && d >= r.min && d < r.max; }).length,
   }));
 
@@ -1236,8 +1236,8 @@ function panelInmuebles() {
       + '</div>')
 
     + sec('Captación contra cierre', 'el cierre se aproxima con la última edición del inmueble', tarjetaGrafica(chBarsV(bb, [
-        { label: 'Captados', color: 'var(--sky-blue)', counts: sCap },
-        { label: 'Cerrados', color: 'var(--success)', counts: sCer },
+        { label: 'Captados', color: 'var(--data-1)', counts: sCap },
+        { label: 'Cerrados', color: 'var(--etapa-cerrado)', counts: sCer },
       ])))
 
     + '<div class="es-duo">'

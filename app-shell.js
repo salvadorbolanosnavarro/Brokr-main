@@ -379,7 +379,7 @@
      CSS injection
      ════════════════════════════════════════════════════════════════ */
   const css = `
-.bk-shell-root { display: flex; height: 100vh; min-height: 100vh; background: var(--paper); }
+.bk-shell-root { display: flex; height: 100vh; min-height: 100vh; background: var(--canvas); }
 .bk-shell-root.bk-narrow .bk-sidebar { display: none; }
 
 /* ── Sidebar (drawer) ───────────────────────────────────────────────
@@ -510,7 +510,7 @@
 .bk-mobile-head {
   display: none;
   padding: 14px 16px 12px;
-  background: var(--paper);
+  background: var(--canvas);
   border-bottom: none;
   align-items: center; justify-content: space-between;
 }
@@ -530,7 +530,7 @@
   gap: 16px;
   padding: 18px 36px;
   border-bottom: none;
-  background: var(--paper);
+  background: var(--canvas);
   flex-shrink: 0;
   position: relative;
 }

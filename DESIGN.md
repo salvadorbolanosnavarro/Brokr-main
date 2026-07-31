@@ -21,10 +21,16 @@ lo inyecta **`app-shell.js`**. Un módulo solo aporta *su contenido*.
 1. **Cero hex a mano.** Ningún color literal (`#00AA6C`, `rgba(0,0,0,.1)`…). Todo
    color sale de un token `var(--…)`. Única excepción: `#fff`/`#000` puros y los
    tokens de **marca externa** (`--brand-whatsapp`, `--brand-facebook`).
-2. **Paleta restringida:** navy `--sky-navy` = estructura, azul `--sky-blue`/
-   `--forest` = acción. Texto `--ink`, secundario `--mute`, líneas `--line`.
-   Estados solo con `--success / --warn / --danger / --info`. **Nada de verdes
-   `#00AA6C`, ámbar `#E8910C`, morados, teal decorativo, ni azules distintos.**
+2. **Dos paletas, no una.**
+   · **Paleta de INTERFAZ (restringida):** navy `--sky-navy` = estructura, azul
+     `--sky-blue`/`--forest` = acción. Texto `--ink`, secundario `--mute`, líneas
+     `--line`. Estados solo con `--success / --warn / --danger / --info`. **Nada
+     de verdes `#00AA6C`, ámbar `#E8910C`, morados, teal decorativo, ni azules
+     distintos.** Si el azul de acción deja de ser el único azul de acción, el
+     usuario pierde la señal de "esto se clickea".
+   · **Paleta de DATOS (`--data-1…8`):** ver §2.1. Prohibida en botones, links,
+     foco, bordes, fondos de card y headings. Permitida **solo donde el color
+     ES el dato**.
 3. **Una sola tipografía:** DM Sans vía `--font-sans` / `--font-display`. Nunca
    `Inter`, `Segoe UI`, `Georgia`, `ui-monospace`, ni `-apple-system` suelto.
    Pesos **400 y 700** únicamente (700 en headings/labels).
@@ -70,6 +76,38 @@ lo inyecta **`app-shell.js`**. Un módulo solo aporta *su contenido*.
 
 Los colores de marca externa **solo** van en el botón/icono de esa integración
 (“Conectar WhatsApp”, “Conectar Facebook”). Prohibido usarlos como acento general.
+**Excepción única:** dentro del módulo `whatsapp.html`, el verde es el acento del
+módulo (tokens `--wa-*`), porque ahí el verde *es* el contexto.
+
+### 2.1 Paleta de datos — `--data-1 … --data-8`
+
+Existe porque una gráfica de tres series pintada con tres azules no es fea: no
+funciona. El color aquí no decora, **codifica**.
+
+| Uso | Token |
+|-----|-------|
+| Series categóricas de gráficas | `--data-1…8` (+ `-soft` para rellenos al 12%) |
+| Etapas de pipeline / kanban | `--etapa-{nuevo,activo,contactado,cerrado,descartado}` |
+| Módulo WhatsApp | `--wa-{canvas,out,ia,out-meta}` |
+
+Reglas:
+- La rampa está **ordenada por distinguibilidad**: los primeros cuatro son los
+  más separados entre sí, porque casi toda gráfica usa 2-4 series. Empieza en
+  `--data-1` y avanza; nunca elijas por gusto.
+- **Nunca uses `--success/--warn/--danger` como color categórico.** Si una
+  categoría sale roja, el usuario lee "error". Esos tokens son solo semánticos.
+- Las etapas son **ordinales**, no categóricas: van de frío a comprometido,
+  cierran en verde (ganado) y descartan en gris (muerto).
+- **Si la escala es ordinal (embudo, antigüedad, temperatura), un degradado de
+  un solo tono o una progresión verde→ámbar→rojo es lo correcto.** Meterle
+  colores categóricos a una escala ordinal es peor que dejarla monocromática.
+
+### 2.2 Lienzo — `--canvas`
+
+`--paper` es **blanco** y lo consumen superficies flotantes (topbar, dropdowns,
+popovers, menús): si se tiñe, se tiñen ellas. El lienzo de la app es su propio
+token, `--canvas`, y va **teñido**. Sin esto `.bk-card` (que es `--bone`, blanco)
+desaparece sobre un fondo blanco y la card se vuelve un borde vacío.
 
 ## 3. Tipografía — escala `--fs-*`
 

@@ -7,8 +7,14 @@
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
-  .vid-scroll { padding: 24px 28px 48px; max-width: 1180px; margin: 0 auto; }
-  @media (max-width: 720px) { .vid-scroll { padding: 16px 14px 40px; } }
+  .vid-scroll { padding: var(--sp-6) var(--pad-x) var(--sp-10); max-width: var(--page-max); margin: 0 auto; }
+  @media (max-width: 720px) { .vid-scroll { padding: var(--sp-4) var(--sp-4) var(--sp-8); } }
+
+  /* Filete de acento bajo el titulo de seccion. El azul de marca no puede
+     terminar en el sidebar: sin esto el area de contenido no tiene un solo
+     punto de color y se lee como documento, no como producto. */
+  .vid-rule { width: 38px; height: 3px; border-radius: 0; background: var(--sky-blue);
+              margin: calc(var(--sp-5) * -1) 0 var(--sp-5); }
 
   /* Buscador de inmueble — mismo comportamiento que en Facebook Ads */
   .vid-buscar { position: relative; max-width: 640px; }
@@ -62,11 +68,20 @@
   .vid-fmt__s { font-size: var(--fs-caption); color: var(--mute); margin-top: 2px; }
 
   /* Guía de fotos */
-  .vid-guia { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--sp-6); }
-  .vid-guia h4 { font-size: var(--fs-sm); font-weight: 700; color: var(--ink); margin-bottom: var(--sp-3); }
+  .vid-guia { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--sp-7); }
+  .vid-guia h4 { display: flex; align-items: center; gap: var(--sp-3);
+                 font-size: var(--fs-h5); font-weight: 700; color: var(--ink);
+                 letter-spacing: -0.01em; margin-bottom: var(--sp-4); }
+  .vid-guia h4 span { flex: 0 0 auto; width: 28px; height: 28px; border-radius: var(--r-sm);
+                      background: var(--sky-navy); color: var(--bone);
+                      display: flex; align-items: center; justify-content: center; }
+  .vid-guia h4 svg { width: 16px; height: 16px; }
   .vid-guia ul { list-style: none; padding: 0; margin: 0; }
-  .vid-guia li { font-size: var(--fs-xs); color: var(--mute); line-height: 1.55; padding-left: 16px; position: relative; margin-bottom: var(--sp-2); }
-  .vid-guia li::before { content: '·'; position: absolute; left: 4px; color: var(--sky-blue); }
+  /* El bullet era un '·' heredando 13px: un punto de 2px, y era todo el color
+     del modulo. Ahora un filete con superficie real. */
+  .vid-guia li { font-size: var(--fs-sm); color: var(--ink-2); line-height: 1.6;
+                 padding-left: var(--sp-4); border-left: 2px solid var(--sky-canvas);
+                 border-radius: 0; margin-bottom: var(--sp-4); }
 
   /* Resultado */
   .vid-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--sp-5); }
@@ -83,7 +98,9 @@
   @keyframes vid-gira { to { transform: rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) { .vid-spin { animation: none; } }
 
-  .vid-nota { font-size: var(--fs-xs); color: var(--mute); line-height: 1.55; }
+  .vid-nota { font-size: var(--fs-body); color: var(--ink-2); line-height: 1.65; max-width: 62ch; }
+  /* Microcopy real (pies de foto, contadores): ahi si 13px y --mute. */
+  .vid-nota--micro { font-size: var(--fs-xs); color: var(--mute); line-height: 1.55; }
 </style>
 </head>
 <body data-app="video">
@@ -96,7 +113,7 @@
            placeholder="Busca por título, clave, colonia, ciudad, tipo o precio…"/>
     <div class="vid-dd" id="vid-dd"></div>
   </div>
-  <p class="vid-nota" style="margin-top:var(--sp-2)" id="vid-q-nota"></p>
+  <p class="vid-nota vid-nota--micro" style="margin-top:var(--sp-2)" id="vid-q-nota"></p>
 
   <!-- Paso 2 · Armar -->
   <section id="vid-armar" hidden>
@@ -116,7 +133,7 @@
     </div>
     <div class="bk-card bk-card--pad bk-card--raise">
       <div class="vid-tira" id="vid-tira"></div>
-      <p class="vid-nota" style="margin-top:var(--sp-3)" id="vid-tira-nota"></p>
+      <p class="vid-nota vid-nota--micro" style="margin-top:var(--sp-3)" id="vid-tira-nota"></p>
     </div>
 
     <div class="bk-section-header" style="margin-top:var(--sp-8)">
@@ -162,6 +179,7 @@
   <div class="bk-section-header" style="margin-top:var(--sp-10)">
     <h2>Qué fotos hacen un buen recorrido</h2>
   </div>
+  <div class="vid-rule"></div>
   <div class="bk-card bk-card--pad bk-card--raise">
     <p class="vid-nota" style="margin-bottom:var(--sp-6);max-width:70ch">
       El recorrido no arregla una foto mala: la deja diez veces más tiempo en pantalla.
@@ -171,7 +189,7 @@
     </p>
     <div class="vid-guia">
       <div>
-        <h4>Lo que más se nota</h4>
+        <h4><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/></svg></span>Lo que más se nota</h4>
         <ul>
           <li>Resolución alta. Abajo de 1600 px de ancho, el zoom revela el pixel. Una foto de cámara o de celular reciente sobra; una descargada de un anuncio viejo, no.</li>
           <li>Horizontales. El recorrido se mueve de lado: una foto horizontal tiene a dónde moverse, una vertical no y se recorta.</li>
@@ -179,7 +197,7 @@
         </ul>
       </div>
       <div>
-        <h4>El orden importa</h4>
+        <h4><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span>El orden importa</h4>
         <ul>
           <li>El recorrido respeta el orden de la ficha. Reordena ahí y se reordena aquí.</li>
           <li>Empieza por la fachada: es la que ubica al que ve el video.</li>
@@ -188,7 +206,7 @@
         </ul>
       </div>
       <div>
-        <h4>Qué dejar fuera</h4>
+        <h4><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg></span>Qué dejar fuera</h4>
         <ul>
           <li>Fotos con logo, marca de agua o texto encima: el zoom las deforma y se ve pirata.</li>
           <li>Planos y documentos. No se leen en movimiento.</li>

@@ -647,7 +647,26 @@ html, body { background: var(--paper); }
   letter-spacing: -0.005em; cursor: pointer; transition: all .15s ease;
 }
 .etapa-pill:hover { border-color: var(--line-3); }
-.etapa-pill.is-on { background: var(--sky-navy); color: var(--paper); border-color: var(--sky-navy); }
+/* La etapa activa toma el color de SU etapa, no un navy generico igual
+   para las cinco: el color dice en que parte del embudo esta el contacto. */
+.etapa-pill.is-on { background: var(--etapa-activo); color: var(--paper); border-color: var(--etapa-activo); }
+.etapa-pill--nuevo.is-on      { background: var(--etapa-nuevo);      border-color: var(--etapa-nuevo); }
+.etapa-pill--activo.is-on     { background: var(--etapa-activo);     border-color: var(--etapa-activo); }
+.etapa-pill--contactado.is-on { background: var(--etapa-contactado); border-color: var(--etapa-contactado); }
+.etapa-pill--cerrado.is-on    { background: var(--etapa-cerrado);    border-color: var(--etapa-cerrado); }
+.etapa-pill--descartado.is-on { background: var(--etapa-descartado); border-color: var(--etapa-descartado); }
+/* En reposo, un punto del color de la etapa: el embudo se lee completo
+   sin tener que seleccionar nada. */
+.etapa-pill::before {
+  content: ''; display: inline-block; width: 7px; height: 7px;
+  border-radius: 50%; margin-right: 7px; vertical-align: 1px;
+  background: var(--etapa-activo);
+}
+.etapa-pill--nuevo::before      { background: var(--etapa-nuevo); }
+.etapa-pill--contactado::before { background: var(--etapa-contactado); }
+.etapa-pill--cerrado::before    { background: var(--etapa-cerrado); }
+.etapa-pill--descartado::before { background: var(--etapa-descartado); }
+.etapa-pill.is-on::before       { background: var(--paper); }
 .det-prob { display: inline-flex; border: 1px solid var(--line); border-radius: var(--r-pill); overflow: hidden; }
 .prob-opt {
   border: none; border-right: 1px solid var(--line);
@@ -1865,7 +1884,7 @@ const PROBS = [
 function renderControles(c) {
   const etapa = c.etapa || '';
   document.getElementById('det-pipeline').innerHTML = ETAPAS.map(e =>
-    `<button type="button" class="etapa-pill ${etapa === e.v ? 'is-on' : ''}" onclick="setEtapa('${e.v}')">${e.l}</button>`
+    `<button type="button" class="etapa-pill etapa-pill--${e.v} ${etapa === e.v ? 'is-on' : ''}" onclick="setEtapa('${e.v}')">${e.l}</button>`
   ).join('');
   const prob = c.probabilidad || '';
   document.getElementById('det-prob').innerHTML = PROBS.map(p =>

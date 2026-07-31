@@ -1039,4 +1039,72 @@ html {
   /* Acento azul claro para texto sobre superficies navy (heros oscuros).
      El azul de acción #1240A0 no contrasta sobre --sky-navy. */
   --sky-blue-on-dark: #7FA8F0;
+
+  /* ════════════════════════════════════════════════════════════
+     CANVAS DE APLICACION
+     --paper sigue siendo BLANCO porque lo consumen superficies
+     flotantes (topbar, dropdowns, popovers, menus): si se tine,
+     se tinen ellas. El lienzo de la app es su propio token.
+     Con el canvas tenido, .bk-card (--bone, blanco) por fin se
+     lee como card en vez de desaparecer sobre el fondo.
+     ════════════════════════════════════════════════════════════ */
+  --canvas: #F4F7FD;
+
+  /* ════════════════════════════════════════════════════════════
+     PALETA DE DATOS  (--data-1 … --data-8)
+     NO es paleta de interfaz. Prohibida en botones, links, foco,
+     bordes, fondos de card y headings: ahi el azul de accion debe
+     seguir siendo el unico azul de accion.
+     Se usa SOLO donde el color ES el dato: series de graficas,
+     etapas de pipeline, origenes de lead, categorias y tags.
+     Ordenada por distinguibilidad: los primeros cuatro son los
+     mas separados entre si porque casi toda grafica usa 2-4 series.
+     ════════════════════════════════════════════════════════════ */
+  --data-1: #1240A0;   /* azul     — serie principal (= azul de accion) */
+  --data-2: #C2410C;   /* naranja quemado */
+  --data-3: #0E8C8C;   /* teal */
+  --data-4: #6D28D9;   /* violeta */
+  --data-5: #15803D;   /* verde */
+  --data-6: #BE185D;   /* magenta */
+  --data-7: #A16207;   /* ambar oscuro */
+  --data-8: #3A6FD8;   /* azul claro */
+
+  /* Rellenos translucidos de la misma rampa (areas, heatmaps, fondos
+     de badge). Mismo indice = mismo color, solo que al 12%. */
+  --data-1-soft: rgba(18, 64, 160, 0.12);
+  --data-2-soft: rgba(194, 65, 12, 0.12);
+  --data-3-soft: rgba(14, 140, 140, 0.12);
+  --data-4-soft: rgba(109, 40, 217, 0.12);
+  --data-5-soft: rgba(21, 128, 61, 0.12);
+  --data-6-soft: rgba(190, 24, 93, 0.12);
+  --data-7-soft: rgba(161, 98, 7, 0.12);
+  --data-8-soft: rgba(58, 111, 216, 0.12);
+
+  /* ── Etapas de pipeline ────────────────────────────────────
+     No es una rampa categorica: es ORDINAL. Va de frio a
+     comprometido, cierra en verde (ganado) y descarta en gris
+     (muerto). El color dice en que parte del embudo estas sin
+     que tengas que leer la etiqueta. */
+  --etapa-nuevo:      #3A6FD8;
+  --etapa-activo:     #1240A0;
+  --etapa-contactado: #6D28D9;
+  --etapa-cerrado:    #15803D;
+  --etapa-descartado: #8592AB;
+  --etapa-nuevo-soft:      rgba(58, 111, 216, 0.12);
+  --etapa-activo-soft:     rgba(18, 64, 160, 0.12);
+  --etapa-contactado-soft: rgba(109, 40, 217, 0.12);
+  --etapa-cerrado-soft:    rgba(21, 128, 61, 0.12);
+  --etapa-descartado-soft: rgba(133, 146, 171, 0.12);
+
+  /* ── Modulo WhatsApp ───────────────────────────────────────
+     Unico modulo donde el verde de marca deja de ser solo el
+     boton de conectar y pasa a ser el acento del modulo: ahi el
+     verde ES el contexto. El punto critico es que la burbuja del
+     AGENTE y la de BROQ no se confundan — antes eran dos azules.
+     Ahora: verde = lo mandaste tu, violeta = lo mando Broq. */
+  --wa-canvas:     #EFE7DE;   /* lienzo del hilo, no blanco */
+  --wa-out:        #1EA65A;   /* burbuja del agente (verde legible con #fff) */
+  --wa-out-meta:   rgba(255,255,255,0.82);
+  --wa-ia:         #6D28D9;   /* burbuja de Broq — inconfundible vs la tuya */
+  --wa-ia-soft:    rgba(109, 40, 217, 0.12);
 }
