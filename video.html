@@ -224,6 +224,7 @@
   let formato = '16:9';
   let polling = null;
   let timerBusca = null;
+  let pendientesEditor = null;
 
   const $ = id => document.getElementById(id);
 
@@ -272,6 +273,17 @@
     if (!v) return '';
     return '$' + v.toLocaleString('es-MX', { maximumFractionDigits: 0 }) +
            (moneda && moneda !== 'MXN' ? ' ' + moneda : '');
+  }
+
+  // El atributo download del navegador se ignora cuando el archivo vive en
+  // otro origen — y Storage de Supabase lo es. El botón abría el video en una
+  // pestaña en vez de bajarlo. El parámetro ?download= hace que Supabase
+  // mande Content-Disposition: attachment, que sí lo baja.
+  function ligaDescarga(v) {
+    const nombre = ((v.titulo || 'video').replace(/[^A-Za-z0-9._-]+/g, '-').slice(0, 60) || 'video') +
+                   '-' + v.formato.replace(':', 'x') + '.mp4';
+    return v.video_url + (v.video_url.indexOf('?') >= 0 ? '&' : '?') +
+           'download=' + encodeURIComponent(nombre);
   }
 
   function ubicacion(p) {
@@ -427,19 +439,21 @@
 
   // ── Generar ────────────────────────────────────────────────────────────
   $('vid-generar').addEventListener('click', async () => {
-    if (!sel) return;
+    if (!sel && !pendientesEditor) return;
     $('vid-generar').disabled = true;
     $('vid-estado').hidden = false;
     $('vid-estado-txt').textContent = 'Armando el recorrido…';
     try {
-      const r = await api('/video/generar', {
-        method: 'POST',
-        body: JSON.stringify({
-          propiedad_id: sel.id,
-          formato: formato,
-          titulo: sel.titulo || sel.clave_interna || null,
-        }),
-      });
+      const cuerpo = { formato: formato };
+      if (pendientesEditor) {
+        cuerpo.fotos = await subirDesdeEditor(pendientesEditor);
+        cuerpo.titulo = 'Editor de imágenes';
+        $('vid-estado-txt').textContent = 'Armando el recorrido…';
+      } else {
+        cuerpo.propiedad_id = sel.id;
+        cuerpo.titulo = sel.titulo || sel.clave_interna || null;
+      }
+      const r = await api('/video/generar', { method: 'POST', body: JSON.stringify(cuerpo) });
       vigilar(r.job_id);
     } catch (e) {
       terminar(e.message);
@@ -458,7 +472,11 @@
       }
       try {
         const j = await api('/video/estado/' + jobId);
-        if (j.estado === 'listo') { clearInterval(polling); terminar(null); cargarHechos(); }
+        if (j.estado === 'listo') {
+          clearInterval(polling);
+          terminar(null);
+          if (pendientesEditor) { mostrarSuelto(j); } else { cargarHechos(); }
+        }
         else if (j.estado === 'error') { clearInterval(polling); terminar(j.error || 'No se pudo armar el video.'); }
       } catch (e) { /* un fallo suelto de red no cancela la vigilancia */ }
     }, 3000);
@@ -468,6 +486,23 @@
     $('vid-estado').hidden = true;
     $('vid-generar').disabled = false;
     if (mensaje) alert(mensaje);
+  }
+
+  function tarjeta(v) {
+    return '<div class="bk-card bk-card--pad bk-card--raise vid-item">' +
+      '<video src="' + esc(v.video_url) + '" controls playsinline preload="metadata"></video>' +
+      '<div class="vid-item__pie">' +
+        '<span class="vid-item__meta">' + esc(v.formato) + ' \u00b7 ' + Math.round(v.duracion_seg || 0) + ' s</span>' +
+        '<a class="bk-btn bk-btn--ghost" href="' + esc(ligaDescarga(v)) + '">Descargar</a>' +
+      '</div>' +
+    '</div>';
+  }
+
+  // Un video hecho con fotos del editor no pertenece a ninguna ficha, así que
+  // no lo trae /video/propiedad. Se pinta directo.
+  function mostrarSuelto(v) {
+    $('vid-hechos').hidden = false;
+    $('vid-lista').innerHTML = tarjeta(v);
   }
 
   // ── Videos ya hechos ───────────────────────────────────────────────────
@@ -481,21 +516,71 @@
 
     if (!videos.length) { $('vid-hechos').hidden = true; return; }
     $('vid-hechos').hidden = false;
-    $('vid-lista').innerHTML = videos.map(v =>
-      '<div class="bk-card bk-card--pad bk-card--raise vid-item">' +
-        '<video src="' + esc(v.video_url) + '" controls playsinline preload="metadata"></video>' +
-        '<div class="vid-item__pie">' +
-          '<span class="vid-item__meta">' + esc(v.formato) + ' \u00b7 ' + Math.round(v.duracion_seg || 0) + ' s</span>' +
-          '<a class="bk-btn bk-btn--ghost" href="' + esc(v.video_url) + '" download target="_blank" rel="noopener">Descargar</a>' +
-        '</div>' +
-      '</div>'
+    $('vid-lista').innerHTML = videos.map(tarjeta).join('');
+  }
+
+  // ── Fotos que llegan del Editor de imágenes ────────────────────────────
+  // El editor entrega data: URLs. El backend baja las fotos con httpx y no
+  // puede leer un data:, así que hay que subirlas a Storage primero y pasar
+  // ligas de verdad. Van al mismo bucket de fotos, en su propia carpeta.
+  async function subirDesdeEditor(imagenes) {
+    const uid = (window.__BK_PROFILE && window.__BK_PROFILE.user && window.__BK_PROFILE.user.id) || null;
+    if (!uid) throw new Error('Sesión no lista.');
+    const sello = Date.now();
+    const urls = [];
+    for (let i = 0; i < imagenes.length; i++) {
+      const resp = await fetch(imagenes[i].url);
+      const blob = await resp.blob();
+      const ruta = uid + '/video-fuentes/' + sello + '-' + i + '.jpg';
+      const r = await window.brokrSb.fetch('storage/v1/object/fotos-propiedades/' + ruta, {
+        method: 'POST',
+        body: blob,
+        headers: { 'Content-Type': blob.type || 'image/jpeg', 'x-upsert': 'true' },
+      });
+      if (!r.ok) throw new Error('No se pudo subir la foto ' + (i + 1) + '.');
+      urls.push(window.brokrSb.url + '/storage/v1/object/public/fotos-propiedades/' + ruta);
+      $('vid-estado-txt').textContent = 'Subiendo fotos… ' + (i + 1) + ' de ' + imagenes.length;
+    }
+    return urls;
+  }
+
+  async function desdeEditor(imagenes) {
+    $('vid-q-nota').textContent = imagenes.length +
+      ' fotos llegaron del Editor de imágenes. Elige el formato y genera el recorrido.';
+
+    $('vid-el-img').src = imagenes[0].url;
+    $('vid-el-t').textContent = 'Fotos del Editor de imágenes';
+    $('vid-el-m').textContent = imagenes.length + ' fotos · sin inmueble asignado';
+    $('vid-tira').innerHTML = imagenes.map((im, i) =>
+      '<div class="vid-toma"><img src="' + esc(im.url) + '" alt=""/>' +
+      '<span class="vid-toma__n">Toma ' + (i + 1) + '</span></div>'
     ).join('');
+    const seg = Math.round(imagenes.length * 5.5 - (imagenes.length - 1) * 0.7);
+    $('vid-tira-nota').textContent = imagenes.length + ' fotos, en el orden del editor. ' +
+      'Duración aproximada: ' + seg + ' segundos. Este video no se guarda en el historial ' +
+      'de ningún inmueble porque las fotos no vienen de una ficha.';
+
+    sel = null;
+    pendientesEditor = imagenes;
+    $('vid-armar').hidden = false;
+    notaFormato();
   }
 
   // ── Arranque ───────────────────────────────────────────────────────────
   // El evento se dispara en window, NO en document, y el guard de "ya cargó"
   // es window.__brokrShellLoaded. Mismo patrón de propiedades.html.
   async function arranque() {
+    // Si venimos del Editor de imágenes, esas fotos mandan: no hace falta
+    // inventario ni buscador.
+    try {
+      const crudo = sessionStorage.getItem('broquer_editor_images_video');
+      if (crudo) {
+        sessionStorage.removeItem('broquer_editor_images_video');
+        const imgs = JSON.parse(crudo);
+        if (Array.isArray(imgs) && imgs.length >= MIN_FOTOS) { desdeEditor(imgs); return; }
+      }
+    } catch (e) {}
+
     try {
       await cargar();
       $('vid-q-nota').textContent = props.length

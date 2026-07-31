@@ -2435,7 +2435,20 @@ const PD_ICONS = {
   nota: '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.862 4.487z"/></svg>',
   cambio_estatus: '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16l-4-4m0 0l4-4m-4 4h18M17 8l4 4m0 0l-4 4"/></svg>',
   tarea_completada: '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+  video: '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="6" width="12.5" height="12" rx="2" stroke-linejoin="round"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5l5-3v9l-5-3"/></svg>',
 };
+
+/* El módulo de Video escribe su actividad como "…texto… https://…". El feed
+   escapa todo el texto, así que sin esto la liga quedaba como texto muerto.
+   Se separa la URL, se escapa el resto y solo la liga se vuelve <a>. */
+function pdTextoActividad(a) {
+  const txt = a.texto || '';
+  const m = txt.match(/https?:\/\/\S+/);
+  if (!m) return esc(txt);
+  const url = m[0];
+  return esc(txt.slice(0, m.index)).trim() +
+    ' <a href="' + esc(url) + '" target="_blank" rel="noopener">Ver el video</a>';
+}
 function pdIconClass(tipo) {
   if (tipo === 'cambio_estatus') return 'estatus';
   if (tipo === 'tarea_completada') return 'tarea';
@@ -2468,7 +2481,7 @@ async function pdCargarHistorial() {
     ? acts.map(a => `<div class="pd-item">
         <div class="pd-item__ico ${pdIconClass(a.tipo)}">${PD_ICONS[a.tipo] || PD_ICONS.nota}</div>
         <div style="flex:1;min-width:0">
-          <div class="pd-item__txt">${esc(a.texto || '')}</div>
+          <div class="pd-item__txt">${pdTextoActividad(a)}</div>
           <div class="pd-item__date">${pdFechaHora(a.created_at)}</div>
         </div>
       </div>`).join('')
