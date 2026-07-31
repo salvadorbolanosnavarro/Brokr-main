@@ -177,6 +177,13 @@
     return null;
   }
 
+  // El inventario se lee de Supabase directo, igual que propiedades.html.
+  // brokrSb.rest ya trae el auto-refresh y el reintento en 401.
+  async function sbRest(ruta) {
+    if (!window.brokrSb || !window.brokrSb.rest) throw new Error('Sesión no lista.');
+    return await window.brokrSb.rest(ruta, { method: 'GET' });
+  }
+
   async function api(ruta, opciones) {
     const opts = opciones || {};
     let tok = await token();
@@ -218,8 +225,10 @@
   async function cargarPropiedades() {
     let filas = [];
     try {
-      const d = await api('/propiedades');
-      filas = Array.isArray(d) ? d : (d.propiedades || d.data || []);
+      // select=* a propósito: hay cuentas donde alguna migración no corrió y
+      // pedir columnas por nombre revienta el request completo.
+      const d = await sbRest('propiedades?select=*&order=created_at.desc&limit=1000');
+      filas = Array.isArray(d) ? d : [];
     } catch (e) {
       filas = [];
     }
