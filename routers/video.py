@@ -55,6 +55,7 @@ import asyncio
 import logging
 import tempfile
 import subprocess
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List
 
 import httpx
@@ -76,7 +77,7 @@ BUCKET               = "videos-fichas"
 SEG_POR_FOTO   = 5.5    # menos se siente apurado, más aburre
 FPS            = 30
 ZOOM_MAX       = 1.18   # más que esto se ve el pixel de una foto de celular
-OVERSAMPLE     = 1.33   # cuánto se agranda la foto antes del zoom (ver abajo)
+OVERSAMPLE     = 2.0    # cuánto se agranda la foto antes del zoom (ver abajo)
 CRUCE_SEG      = 0.7    # duración del xfade entre tomas
 MAX_FOTOS      = 8      # ~44 s. Arriba de eso nadie lo termina de ver
 MIN_FOTOS      = 2
@@ -125,11 +126,16 @@ async def _sb_post(tabla: str, payload, prefer: str = "return=representation") -
 
 
 async def _sb_patch(tabla: str, params: dict, payload: dict) -> None:
+    """Levanta si falla. Antes solo lo anotaba en el log, y por eso un PATCH
+    rechazado dejaba el job clavado en 'procesando' sin que nadie se enterara:
+    el video terminaba de renderizar, se subía bien, y el frontend seguía
+    girando. Un error silencioso aquí es peor que uno ruidoso."""
     async with httpx.AsyncClient(timeout=20) as c:
         r = await c.patch(f"{SUPABASE_URL}/rest/v1/{tabla}",
                           headers=_headers("return=minimal"), params=params, json=payload)
         if r.status_code not in (200, 204):
-            log.warning("PATCH %s -> %s %s", tabla, r.status_code, r.text[:180])
+            log.warning("PATCH %s -> %s %s", tabla, r.status_code, r.text[:300])
+            raise RuntimeError(f"No se pudo actualizar el registro del video ({r.status_code}).")
 
 
 async def get_user_id_from_token(request: Request) -> Optional[str]:
@@ -171,6 +177,13 @@ async def _subir_video(ruta: str, contenido: bytes) -> str:
     return f"{SUPABASE_URL}/storage/v1/object/public/{BUCKET}/{ruta}"
 
 
+def _ahora() -> str:
+    """PostgREST manda el valor tal cual a Postgres. La cadena "now()" NO es
+    un timestamptz válido — el PATCH completo se rechaza con 400 y el job se
+    queda en 'procesando' para siempre aunque el video ya esté subido. Va ISO."""
+    return datetime.now(timezone.utc).isoformat()
+
+
 def _limpio(nombre: str) -> str:
     base = re.sub(r"[^A-Za-z0-9._-]+", "_", (nombre or "video").strip())[:60]
     return base or "video"
@@ -189,12 +202,18 @@ def _filtro_ken_burns(idx: int, ancho: int, alto: int) -> str:
 
     Tres detalles que se ven obvios ya explicados y que costaron pruebas:
 
-      · Escalar ANTES del zoompan. Si el zoom se calcula sobre el tamaño
-        final, la imagen tiembla — es el error clásico. Pero escalar a 2x
-        (4K) cuesta carísimo: en la prueba, una sola toma tardó 281 segundos
-        contra 6 al oversamplear a 1.33x, y a simple vista se ven igual.
-        Por eso OVERSAMPLE es 1.33 y no 2: es donde se cruza "ya no tiembla"
-        con "todavía es barato".
+      · Escalar ANTES del zoompan, y escalar BIEN: a 2x. En una medición
+        anterior pareció que 2x costaba 281 segundos por toma, pero eso era
+        culpa del bug de duración de abajo (se estaban codificando 154
+        segundos de video, no 5.5) más el preset 'medium'. Ya corregido, 2x
+        cuesta lo mismo que 1.33x — unos 10 segundos por toma — y tiembla
+        bastante menos. No hay razón para escatimar aquí.
+      · El zoom va como función del número de cuadro, NO como 'zoom+paso'.
+        La forma incremental arrastra el valor redondeado del cuadro anterior
+        y avanza a brincos: eso es exactamente lo que se ve como vibración.
+        Escrito como 1+(k*on/frames) cada cuadro se calcula solo y el
+        movimiento sale parejo. Medido: la desviación del cambio cuadro a
+        cuadro baja casi a la mitad.
       · Recortar a 'cover', nunca rellenar con barras negras. Las barras se
         ven mal en el feed y Meta las trata como contenido de baja calidad.
       · La entrada tiene que ser UN solo cuadro (-framerate 1 -t 1). zoompan
@@ -207,7 +226,6 @@ def _filtro_ken_burns(idx: int, ancho: int, alto: int) -> str:
     frames = int(SEG_POR_FOTO * FPS)
     gran_w = int(ancho * OVERSAMPLE) // 2 * 2
     gran_h = int(alto * OVERSAMPLE) // 2 * 2
-    paso = (ZOOM_MAX - 1.0) / frames
 
     base = (
         f"scale={gran_w}:{gran_h}:force_original_aspect_ratio=increase,"
@@ -216,11 +234,11 @@ def _filtro_ken_burns(idx: int, ancho: int, alto: int) -> str:
 
     modo = idx % 4
     if modo == 0:      # zoom lento hacia el centro
-        mov = f"z='min(zoom+{paso:.6f},{ZOOM_MAX})':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+        mov = f"z='1+{ZOOM_MAX - 1.0:.4f}*on/{frames}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
     elif modo == 1:    # paneo a la derecha, con el zoom ya puesto
         mov = f"z='{ZOOM_MAX}':x='(iw-iw/zoom)*(on/{frames})':y='ih/2-(ih/zoom/2)'"
     elif modo == 2:    # zoom lento con encuadre bajo (mira hacia el piso/isla)
-        mov = f"z='min(zoom+{paso:.6f},{ZOOM_MAX})':x='iw/2-(iw/zoom/2)':y='ih*0.60-(ih/zoom/2)'"
+        mov = f"z='1+{ZOOM_MAX - 1.0:.4f}*on/{frames}':x='iw/2-(iw/zoom/2)':y='ih*0.60-(ih/zoom/2)'"
     else:              # paneo a la izquierda
         mov = f"z='{ZOOM_MAX}':x='(iw-iw/zoom)*(1-on/{frames})':y='ih/2-(ih/zoom/2)'"
 
@@ -330,7 +348,7 @@ async def _procesar(job_id: str, user_id: str, fotos: List[str], formato: str) -
             "estado": "listo",
             "video_url": url,
             "duracion_seg": _duracion(len(locales)),
-            "terminado_en": "now()",
+            "terminado_en": _ahora(),
         })
         log.info("[video] job %s listo (%s fotos, %s)", job_id, len(locales), formato)
 
@@ -340,7 +358,7 @@ async def _procesar(job_id: str, user_id: str, fotos: List[str], formato: str) -
             await _sb_patch("video_jobs", {"id": f"eq.{job_id}"}, {
                 "estado": "error",
                 "error": str(e)[:400],
-                "terminado_en": "now()",
+                "terminado_en": _ahora(),
             })
         except Exception:
             pass
