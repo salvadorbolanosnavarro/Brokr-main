@@ -291,7 +291,33 @@ def _duracion(n_fotos: int) -> float:
     return round(n_fotos * SEG_POR_FOTO - (n_fotos - 1) * CRUCE_SEG, 2)
 
 
-async def _procesar(job_id: str, user_id: str, fotos: List[str], formato: str) -> None:
+async def _registrar_en_historial(user_id: str, propiedad_id: Optional[str],
+                                  formato: str, segundos: float, url: str) -> None:
+    """Deja el video en el historial de la ficha (tabla 'actividades', la misma
+    que usa el detalle del inmueble en propiedades.html).
+
+    Es lo que hace que el video no se pierda: dentro de tres meses nadie va a
+    volver al módulo de Video a buscar qué se generó, pero sí va a abrir la
+    ficha. Si falla, se anota y ya — un historial incompleto no justifica
+    tirar un video que ya está bien hecho y subido.
+    """
+    if not propiedad_id:
+        return
+    etiqueta = "vertical 9:16" if formato == "9:16" else "horizontal 16:9"
+    texto = f"Video {etiqueta} de {int(round(segundos))} s generado. {url}"
+    try:
+        await _sb_post("actividades", {
+            "user_id": user_id,
+            "propiedad_id": propiedad_id,
+            "tipo": "video",
+            "texto": texto,
+        }, prefer="return=minimal")
+    except Exception as e:
+        log.warning("[video] no se pudo escribir en el historial: %s", e)
+
+
+async def _procesar(job_id: str, user_id: str, propiedad_id: Optional[str],
+                    fotos: List[str], formato: str) -> None:
     """Corre en segundo plano. Nunca levanta: todo error termina en la fila."""
     tmp = tempfile.mkdtemp(prefix="bkvideo_")
     try:
@@ -344,12 +370,14 @@ async def _procesar(job_id: str, user_id: str, fotos: List[str], formato: str) -
         ruta_remota = f"{user_id}/{job_id}.mp4"
         url = await _subir_video(ruta_remota, contenido)
 
+        segundos = _duracion(len(locales))
         await _sb_patch("video_jobs", {"id": f"eq.{job_id}"}, {
             "estado": "listo",
             "video_url": url,
-            "duracion_seg": _duracion(len(locales)),
+            "duracion_seg": segundos,
             "terminado_en": _ahora(),
         })
+        await _registrar_en_historial(user_id, propiedad_id, formato, segundos, url)
         log.info("[video] job %s listo (%s fotos, %s)", job_id, len(locales), formato)
 
     except Exception as e:
@@ -421,7 +449,7 @@ async def generar(body: GenerarBody, request: Request, tareas: BackgroundTasks):
         raise HTTPException(500, "No se pudo encolar el video.")
 
     job = filas[0]
-    tareas.add_task(_procesar, job["id"], uid, fotos, body.formato)
+    tareas.add_task(_procesar, job["id"], uid, body.propiedad_id, fotos, body.formato)
 
     return {
         "job_id": job["id"],
