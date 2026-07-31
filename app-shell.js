@@ -224,31 +224,57 @@
   })();
 
   /* ── Configuración de módulos ──
-     'whatsapp' abre el grupo 'main': es lo primero que ve el agente al salir
-     del CRM y lo que más abre en el día. Antes estaba partido en dos entradas
-     ('bandeja' dentro del CRM y 'whatsapp' perdido entre las herramientas),
-     y el agente tenía que aprender que una era el chat y la otra el número.
-     Es lo mismo: su WhatsApp. Ahora es un módulo con pestañas. */
+     Antes el menú era "CRM" más una lista larga de herramientas sueltas. Con
+     dieciocho módulos esa lista dejó de leerse: el agente bajaba buscando,
+     y buscar en un menú es la señal de que el menú ya no sirve.
+
+     Ahora cada módulo vive en el grupo que corresponde al momento de la
+     operación en que se usa — captar, dar seguimiento, documentar, calcular,
+     promover — y cada grupo se abre y se cierra igual que CRM, que es el
+     patrón que ya conocía el agente. Ningún módulo cambió de dirección: solo
+     cambió dónde se encuentra.
+
+     'Equipo' salió del menú y se fue a Perfil. No es una herramienta de
+     trabajo diario, es configuración de la cuenta, y vivía en el CRM nada más
+     porque no había dónde más ponerlo.
+
+     WhatsApp queda en 'Seguimiento', pero el botón de Chats de la barra
+     inferior se queda tal cual: eso no es una entrada de menú duplicada, es
+     un atajo al chat, que es lo que el agente abre veinte veces al día. */
+  const GRUPOS = [
+    { key:'crm',         label:'CRM',         icon:'funnel' },
+    { key:'seguimiento', label:'Seguimiento', icon:'handshake' },
+    { key:'documentos',  label:'Documentos',  icon:'document' },
+    { key:'numeros',     label:'Números',     icon:'peso' },
+    { key:'marketing',   label:'Marketing',   icon:'send' },
+  ];
+
   const MODS = [
-    { key:'props',        href:'propiedades.html',   label:'Tus Inmuebles',   group:'crm',  icon:'building' },
-    { key:'contactos',    href:'contactos.html',     label:'Contactos',       group:'crm',  icon:'users' },
-    { key:'tareas',       href:'tareas.html',        label:'Tareas',          group:'crm',  icon:'check' },
-    { key:'leads',        href:'leads.html',         label:'Leads',           group:'crm',  icon:'send' },
-    { key:'estadisticas', href:'estadisticas.html',  label:'Estadísticas',    group:'crm',  icon:'chart' },
-    { key:'whatsapp',     href:'whatsapp.html',      label:'WhatsApp',        group:'main', icon:'whatsapp' },
-    { key:'contratos',    href:'contratos.html',     label:'Contratos',       group:'main', icon:'document' },
-    { key:'cumplimiento', href:'cumplimiento.html',  label:'Cumplimiento',    group:'main', icon:'shield' },
-    { key:'firmas',       href:'firmas.html',        label:'Firma electrónica', group:'main', icon:'pencil' },
-    { key:'avm',          href:'avm.html',           label:'Estimación de valor', group:'main', icon:'peso' },
-    { key:'ficha-manual', href:'ficha-manual.html',  label:'Ficha técnica',   group:'main', icon:'landscape' },
-    { key:'isr',          href:'isr.html',           label:'ISR',             group:'main', icon:'calculator' },
-    { key:'image-cleaner',href:'image-cleaner.html', label:'Editor imágenes', group:'main', icon:'image' },
-    { key:'facebook-ads', href:'facebook-ads.html',  label:'Facebook Ads', group:'main', icon:'facebook' },
-    { key:'mi-sitio',     href:'mi-sitio.html',      label:'Mi sitio',        group:'main', icon:'globo' },
-    { key:'blog',         href:'blog.html',          label:'Blog',            group:'main', icon:'feather' },
-    { key:'guia',         href:'guia-agente.html',   label:'Ayuda', group:'main', icon:'question' },
-    { key:'equipo',       href:'equipo.html',        label:'Equipo',          group:'crm',  icon:'users', enterpriseOnly:true },
-    { key:'admin',        href:'admin.html',         label:'Admin',           group:'main', icon:'cog', adminOnly:true },
+    // CRM — el inventario y la gente.
+    { key:'props',        href:'propiedades.html',   label:'Tus Inmuebles',       group:'crm',         icon:'building' },
+    { key:'contactos',    href:'contactos.html',     label:'Contactos',           group:'crm',         icon:'users' },
+    { key:'tareas',       href:'tareas.html',        label:'Tareas',              group:'crm',         icon:'check' },
+    { key:'estadisticas', href:'estadisticas.html',  label:'Estadísticas',        group:'crm',         icon:'chart' },
+    // Seguimiento — hablar con el prospecto hasta que se convierte en cliente.
+    { key:'whatsapp',     href:'whatsapp.html',      label:'WhatsApp',            group:'seguimiento', icon:'whatsapp' },
+    { key:'leads',        href:'leads.html',         label:'Leads',               group:'seguimiento', icon:'send' },
+    // Documentos — en el orden real de la operación: se redacta, se firma, se reporta.
+    { key:'contratos',    href:'contratos.html',     label:'Contratos',           group:'documentos',  icon:'document' },
+    { key:'firmas',       href:'firmas.html',        label:'Firma electrónica',   group:'documentos',  icon:'pencil' },
+    { key:'cumplimiento', href:'cumplimiento.html',  label:'Cumplimiento',        group:'documentos',  icon:'shield' },
+    // Números.
+    { key:'avm',          href:'avm.html',           label:'Estimación de valor', group:'numeros',     icon:'peso' },
+    { key:'isr',          href:'isr.html',           label:'ISR',                 group:'numeros',     icon:'calculator' },
+    // Marketing — de la foto cruda al anuncio publicado.
+    { key:'image-cleaner',href:'image-cleaner.html', label:'Editor imágenes',     group:'marketing',   icon:'image' },
+    { key:'ficha-manual', href:'ficha-manual.html',  label:'Ficha técnica',       group:'marketing',   icon:'landscape' },
+    { key:'facebook-ads', href:'facebook-ads.html',  label:'Facebook Ads',        group:'marketing',   icon:'facebook' },
+    { key:'video',        href:'video.html',         label:'Video',               group:'marketing',   icon:'video' },
+    { key:'mi-sitio',     href:'mi-sitio.html',      label:'Mi sitio',            group:'marketing',   icon:'globo' },
+    // Cuenta — fuera de los grupos, pegado al fondo del menú.
+    { key:'blog',         href:'blog.html',          label:'Blog',                group:'cuenta',      icon:'feather' },
+    { key:'guia',         href:'guia-agente.html',   label:'Ayuda',               group:'cuenta',      icon:'question' },
+    { key:'admin',        href:'admin.html',         label:'Admin',               group:'cuenta',      icon:'cog', adminOnly:true },
   ];
 
   const CONTEXT_LABELS = {
@@ -267,6 +293,7 @@
     'ficha-manual': 'Ficha Técnica Manual — crear ficha sin EasyBroker',
     'isr':          'Calculadora ISR por enajenación de inmuebles',
     'image-cleaner':'Editor de imágenes — limpieza con IA',
+    'video':        'Video — recorrido en video armado con las fotos de la ficha, para reels, stories y feed',
     'admin':        'Panel administrativo',
     'facebook-ads': 'Meta Ads Express — crear, activar y medir anuncios de Facebook e Instagram',
     'whatsapp':     'WhatsApp — varios números, chats, conexión, Recepción automática y entrenamiento de la IA',
@@ -289,6 +316,7 @@
     'verificador':   { title:'Verificador',            sub:'Revisión con IA para detectar problemas antes de firmar.' },
     'blog':          { title:'Blog',                   sub:'Recursos profesionales sobre PLD, legal y mercado.' },
     'mi-sitio':      { title:'Mi sitio',               sub:'El sitio web público que tus clientes ven cuando les compartes tu link.' },
+    'video':         { title:'Video',                   sub:'Tus fotos se vuelven un recorrido listo para reels, stories y WhatsApp.' },
   };
   const ICONS = {
     home:       '<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/>',
@@ -315,6 +343,7 @@
     send:       '<path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/>',
     close:      '<path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/>',
     homeList:   '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6h16.5M3.75 12h16.5M3.75 18h16.5"/>',
+    video:      '<rect x="2.25" y="6" width="13.5" height="12" rx="2.25" ry="2.25" stroke-linejoin="round"/><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-2.83a.75.75 0 011.13.64v7.38a.75.75 0 01-1.13.64l-4.72-2.83"/>',
     handshake:  '<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l3-3 3 3 4-4 5 5-3 3-2-2-4 4-2-2-2 2-2-2 0-4z"/>',
     question:   '<path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/>',
     check:      '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>',
@@ -1226,26 +1255,27 @@ body[data-app="facebook-ads"]{--page-max:980px}
   function buildSidebarLink(m, active) {
     return `<a href="${m.href}" class="bk-sb-link${m.key === active ? ' is-active' : ''}">${svg(m.icon)} ${m.label}</a>`;
   }
-  function buildCrmGroup(items, active) {
+  // Un grupo del sidebar: mismo acordeón que ya tenía CRM, ahora para los
+  // cinco. Arranca abierto solo el grupo donde está el módulo que se está
+  // viendo; los demás cerrados, para que el menú quepa en una pantalla.
+  function buildSidebarGroup(grupo, items, active) {
+    if (!items.length) return '';
     const isOpen = items.some(m => m.key === active);
-    return `<div class="bk-sb-block bk-sb-group${isOpen ? ' is-open' : ''}" id="bk-sb-crm-group">
-      <button class="bk-sb-link bk-sb-trigger${isOpen ? ' is-active' : ''}" id="bk-sb-crm-trigger" type="button" aria-expanded="${isOpen ? 'true' : 'false'}" aria-controls="bk-sb-crm-submenu">
-        ${svg('funnel')} CRM ${svg('chevron', 16, 2, 'bk-sb-chevron')}
+    const gid = 'bk-sb-g-' + grupo.key;
+    return `<div class="bk-sb-block bk-sb-group${isOpen ? ' is-open' : ''}" id="${gid}">
+      <button class="bk-sb-link bk-sb-trigger${isOpen ? ' is-active' : ''}" data-sb-group="${grupo.key}" type="button" aria-expanded="${isOpen ? 'true' : 'false'}" aria-controls="${gid}-sub">
+        ${svg(grupo.icon)} ${grupo.label} ${svg('chevron', 16, 2, 'bk-sb-chevron')}
       </button>
-      <div class="bk-sb-submenu" id="bk-sb-crm-submenu">
+      <div class="bk-sb-submenu" id="${gid}-sub">
         ${items.map(m => buildSidebarLink(m, active)).join('')}
       </div>
     </div>`;
   }
   // Todo lo que va de "Mi perfil" hacia abajo vive en su propio bloque,
   // pegado al fondo del drawer. La separación es por aire, no por raya.
-  const SB_CUENTA_KEYS = new Set(['blog', 'guia', 'admin']);
-  function buildMainSidebar(items, active) {
+  function buildCuentaSidebar(items, active) {
     const profileLink = `<a href="javascript:void(0)" class="bk-sb-link" onclick="openProfileDrawer()">${svg('user')} Mi perfil</a>`;
-    const herramientas = items.filter(m => !SB_CUENTA_KEYS.has(m.key));
-    const cuenta       = items.filter(m =>  SB_CUENTA_KEYS.has(m.key));
-    return `<div class="bk-sb-block">${herramientas.map(m => buildSidebarLink(m, active)).join('')}</div>` +
-           `<div class="bk-sb-block bk-sb-block--cuenta">${profileLink}${cuenta.map(m => buildSidebarLink(m, active)).join('')}</div>`;
+    return `<div class="bk-sb-block bk-sb-block--cuenta">${profileLink}${items.map(m => buildSidebarLink(m, active)).join('')}</div>`;
   }
   function buildBnavItem(m, active) {
     return `<a href="${m.href}" class="bk-bnav__item${m.key === active ? ' is-active' : ''}">${svg(m.icon, 22)} <span>${m.label.split(' ')[0]}</span></a>`;
@@ -1288,12 +1318,14 @@ body[data-app="facebook-ads"]{--page-max:980px}
       pageWrap.insertBefore(backWrap, pageWrap.firstChild);
     }
 
-    // "Equipo" solo se muestra a usuarios empresariales: los que pertenecen a una
-    // organización con tipo 'empresa' (es_empresa, expuesto por /org). Esto es
-    // independiente de usuarios.rol ('equipo' en Admin son tus agentes internos).
-    const isEnterprise = !!(profile?.esEmpresa || profile?.isAdmin);
-    const crm   = MODS.filter(m => m.group === 'crm' && (!m.enterpriseOnly || isEnterprise));
-    const main  = MODS.filter(m => m.group === 'main' && (!m.adminOnly || profile?.isAdmin));
+    // "Equipo" ya no vive en el menú: se movió a Perfil, que es donde vive el
+    // resto de la configuración de la cuenta. Se sigue mostrando solo a
+    // usuarios empresariales — los que pertenecen a una organización con tipo
+    // 'empresa' (es_empresa, expuesto por /org) — pero eso ahora lo decide el
+    // drawer de perfil, no el sidebar.
+    const visible = m => (!m.adminOnly || profile?.isAdmin);
+    const porGrupo = k => MODS.filter(m => m.group === k && visible(m));
+    const cuenta   = porGrupo('cuenta');
 
     const shell = document.createElement('div');
     shell.className = 'bk-shell-root';
@@ -1302,8 +1334,8 @@ body[data-app="facebook-ads"]{--page-max:980px}
         <div class="bk-sidebar__brand">
           <a href="index.html" aria-label="Ir al inicio Broquer"><img src="logotipo-white.png" alt="Broquer"/></a>
         </div>
-        ${buildCrmGroup(crm, activeKey)}
-        ${buildMainSidebar(main, activeKey)}
+        ${GRUPOS.map(g => buildSidebarGroup(g, porGrupo(g.key), activeKey)).join('')}
+        ${buildCuentaSidebar(cuenta, activeKey)}
       </aside>
 
       <main class="bk-content">
@@ -1328,16 +1360,27 @@ body[data-app="facebook-ads"]{--page-max:980px}
     `;
     document.body.appendChild(shell);
 
-    const crmTrigger = document.getElementById('bk-sb-crm-trigger');
-    const crmGroup = document.getElementById('bk-sb-crm-group');
-    if (crmTrigger && crmGroup) {
-      crmTrigger.addEventListener('click', () => {
-        const open = !crmGroup.classList.contains('is-open');
-        crmGroup.classList.toggle('is-open', open);
-        crmTrigger.classList.toggle('is-active', open);
-        crmTrigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    // Acordeón de los grupos del sidebar. Abrir uno cierra los demás: son
+    // cinco, y con dos abiertos al mismo tiempo ya hay que hacer scroll.
+    shell.querySelectorAll('.bk-sb-trigger[data-sb-group]').forEach(trigger => {
+      trigger.addEventListener('click', () => {
+        const bloque = trigger.closest('.bk-sb-group');
+        if (!bloque) return;
+        const open = !bloque.classList.contains('is-open');
+        shell.querySelectorAll('.bk-sb-group').forEach(otro => {
+          if (otro === bloque) return;
+          otro.classList.remove('is-open');
+          const t = otro.querySelector('.bk-sb-trigger');
+          if (t) {
+            t.classList.remove('is-active');
+            t.setAttribute('aria-expanded', 'false');
+          }
+        });
+        bloque.classList.toggle('is-open', open);
+        trigger.classList.toggle('is-active', open);
+        trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
       });
-    }
+    });
 
     // ── Diagnóstico de cascada CSS del sidebar ──
     // Si algún módulo override el color de los links del drawer, lo detectamos
@@ -1371,8 +1414,10 @@ body[data-app="facebook-ads"]{--page-max:980px}
 
     // Bottom nav
     // PWA bottom nav (liquid glass): Inicio · Broquer (isotipo) · Perfil
-    const crmKeys = new Set(MODS.filter(m => m.group === 'crm').map(m => m.key));
-    const crmActive = crmKeys.has(activeKey);
+    // El botón "Menú" se marca activo cuando estás dentro de cualquier módulo
+    // agrupado, no solo del CRM.
+    const grupoKeys = new Set(GRUPOS.map(g => g.key));
+    const crmActive = MODS.some(m => m.key === activeKey && grupoKeys.has(m.group));
 
     const bnav = document.createElement('nav');
     bnav.className = 'bk-bnav';
@@ -1404,9 +1449,6 @@ body[data-app="facebook-ads"]{--page-max:980px}
     sheet.setAttribute('role', 'dialog');
     sheet.setAttribute('aria-label', 'Módulos');
 
-    const crmMods  = MODS.filter(m => m.group === 'crm' && (!m.enterpriseOnly || isEnterprise));
-    const toolMods = MODS.filter(m => m.group === 'main' && (!m.adminOnly || profile?.isAdmin));
-
     function sheetItem(m) {
       const act = m.key === activeKey ? ' is-active' : '';
       const badge = m.key === 'whatsapp' ? '<i class="bk-badge" id="bk-sheet-badge"></i>' : '';
@@ -1422,12 +1464,19 @@ body[data-app="facebook-ads"]{--page-max:980px}
       `<a href="javascript:void(0)" class="bk-sheet__item" onclick="window.bkToggleModsSheet&&window.bkToggleModsSheet(false);openProfileDrawer();">` +
       `<span class="bk-sheet__ico">${svg('user', 19)}</span><span>Mi perfil</span></a>`;
 
+    // Los mismos grupos del sidebar, en el mismo orden. Que el agente encuentre
+    // Cumplimiento en el mismo lugar en la compu y en el celular es medio punto
+    // del rediseño.
+    const seccion = (titulo, items, extra) =>
+      items.length
+        ? `<div class="bk-sheet__eyebrow">${titulo}</div>` +
+          `<div class="bk-sheet__grid">${items.map(sheetItem).join('')}${extra || ''}</div>`
+        : '';
+
     sheet.innerHTML =
       `<div class="bk-sheet__grip"></div>` +
-      `<div class="bk-sheet__eyebrow">CRM</div>` +
-      `<div class="bk-sheet__grid">${crmMods.map(sheetItem).join('')}</div>` +
-      `<div class="bk-sheet__eyebrow">Herramientas</div>` +
-      `<div class="bk-sheet__grid">${toolMods.map(m => sheetItem(m) + (m.key === 'blog' ? profileSheetItem : '')).join('')}</div>`;
+      GRUPOS.map(g => seccion(g.label, porGrupo(g.key))).join('') +
+      seccion('Cuenta', cuenta, profileSheetItem);
     document.body.appendChild(sheet);
 
     function toggleSheet(force) {
@@ -2916,6 +2965,31 @@ body[data-app="facebook-ads"]{--page-max:980px}
             </div>
           </div>
 
+          <!-- Equipo (solo cuentas empresariales) -->
+          <!-- Vivía en el menú lateral, dentro de CRM. No es una herramienta de
+               trabajo diario: es configuración de la cuenta — quién entra, qué
+               ve, qué puede tocar — y se consulta dos veces al mes. Su lugar es
+               aquí, junto a suscripción y datos fiscales. -->
+          <div class="bk-pd-menu-item" id="pdsec-equipo" style="display:none">
+            <button class="bk-pd-menu-trigger" onclick="togglePdSection('equipo')">
+              <span class="bk-pd-menu-trigger-left">
+                <span class="bk-pd-menu-icon">${svg('users', 16)}</span>
+                Equipo
+              </span>
+              <svg class="bk-pd-menu-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="bk-pd-menu-panel">
+              <div class="bk-pd-menu-panel-inner">
+                <div class="bk-pd-card">
+                  <p style="font-size:13px;color:var(--mute);line-height:1.5;margin-bottom:12px">Quién trabaja en tu cuenta, qué puede ver cada quien e invitaciones pendientes.</p>
+                  <a href="equipo.html" style="text-decoration:none">
+                    <button class="bk-pd-btn bk-pd-btn-outline" style="width:100%">Administrar equipo</button>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Admin (solo admin) -->
           <div class="bk-pd-menu-item" id="pdsec-admin" style="display:none">
             <button class="bk-pd-menu-trigger" onclick="togglePdSection('admin')">
@@ -3100,6 +3174,14 @@ body[data-app="facebook-ads"]{--page-max:980px}
 
     const badge = document.getElementById('pd-role-badge');
     const adminSec = document.getElementById('pdsec-admin');
+
+    // Equipo: mismo criterio fail-closed que tenía en el sidebar. Si no se
+    // pudo confirmar que la cuenta es empresarial, no se muestra.
+    const equipoSec = document.getElementById('pdsec-equipo');
+    if (equipoSec) {
+      const esEmp = !!(window.__BK_PROFILE?.esEmpresa || p.rol === 'admin');
+      equipoSec.style.display = esEmp ? 'block' : 'none';
+    }
     if (badge) {
       if (p.rol === 'admin') {
         badge.textContent = 'Admin';
@@ -3848,6 +3930,10 @@ body[data-app="facebook-ads"]{--page-max:980px}
         profile.esEmpresa = !!(_org && _org.tiene_org && _org.es_empresa);
       }
     } catch (_) { /* sin confirmar → no se muestra Equipo */ }
+
+    // El drawer de perfil necesita saber si la cuenta es empresarial para
+    // decidir si muestra la sección de Equipo, y se arma después del shell.
+    window.__BK_PROFILE = profile;
 
     injectShell(profile);
     bkInstallFreemiumGate();
