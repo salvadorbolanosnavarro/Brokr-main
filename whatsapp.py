@@ -905,12 +905,15 @@ async def recepcion2_responde(history: list, contexto: str, agente: dict, entren
         "NO TODO EL QUE ESCRIBE ES COMPRADOR. Antes de calificar, entiende con quién hablas: hay propietarios "
         "que quieren VENDER o RENTAR su inmueble, y colegas que traen una propiedad. A ésos no les preguntes "
         "presupuesto ni forma de pago — eso es absurdo y se nota. A ellos pídeles los datos del inmueble.\n"
-        "Cuando alguien te ofrezca un inmueble (te manda fotos, o te lo describe), y el asesor te haya pedido "
-        "registrarlos, junta lo que puedas: tipo, si es venta o renta, precio, colonia, ciudad, recámaras, "
+        "Cuando alguien te ofrezca un inmueble (te manda fotos, o te lo describe), junta lo que puedas: tipo, si es venta o renta, precio, colonia, ciudad, recámaras, "
         "baños, estacionamientos, metros de construcción y de terreno. Lo que falte, pregúntalo con naturalidad "
         "y de poquito en poquito, no de golpe. Cuando ya tengas al menos tipo, operación y colonia, ponlo en "
-        "'accion' como registrar_inmueble. Después de registrarlo NO le prometas publicación, revisión ni "
-        "plazos: el sistema le contesta lo justo y el asesor decide.\n"
+        "'accion' como registrar_inmueble. REGLA DURA DEL REGISTRO: cada dato del inmueble (colonia, ciudad, "
+        "precio, medidas, todo) sale ÚNICA Y EXCLUSIVAMENTE de lo que el remitente escribió o de lo que se ve "
+        "en sus fotos. NUNCA tomes la ubicación de la zona donde opera el asesor, de su perfil ni de ninguna "
+        "otra parte: que el asesor trabaje en una zona no significa que el inmueble esté ahí. Si el remitente "
+        "no ha dicho dónde está, pregúntaselo; deja en null lo que no te hayan dicho. Después de registrarlo "
+        "NO le prometas publicación, revisión ni plazos: el sistema le contesta lo justo y el asesor decide.\n"
         "Responde ÚNICAMENTE con un JSON válido, sin texto antes ni después, así:\n"
         '{"reply":"mensaje para el prospecto","temperatura":"Caliente|Tibio|Frío",'
         '"score":0-100,"presupuesto":"texto o null","forma_pago":"crédito|contado|por definir",'
@@ -976,7 +979,7 @@ async def recepcion2_responde(history: list, contexto: str, agente: dict, entren
                                  headers={"x-api-key": ANTHROPIC_API_KEY,
                                           "anthropic-version": "2023-06-01",
                                           "Content-Type": "application/json"},
-                                 json={"model": WA2_MODEL, "max_tokens": 700,
+                                 json={"model": WA2_MODEL, "max_tokens": 1600,
                                        "system": system, "messages": msgs})
             if r.status_code in (408, 429, 500, 502, 503, 504, 529):
                 ultimo_error = f"{r.status_code}: {r.text[:200]}"
@@ -1008,7 +1011,7 @@ async def recepcion2_responde(history: list, contexto: str, agente: dict, entren
     if ya_venia_platicando:
         # A media conversación NUNCA hay que saludar de nuevo: eso es lo que
         # delata al bot y espanta al prospecto.
-        reply = "Permíteme un momento, por favor, y te confirmo eso enseguida."
+        reply = "Dame un momento, por favor."
         resumen = "La IA no pudo responder por una falla técnica; requiere seguimiento del asesor."
     else:
         reply = "¡Hola! Gracias por escribir. ¿Me cuentas qué estás buscando y para cuándo, y con gusto te ayudo?"
