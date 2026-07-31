@@ -10,31 +10,41 @@
   .vid-scroll { padding: 24px 28px 48px; max-width: 1180px; margin: 0 auto; }
   @media (max-width: 720px) { .vid-scroll { padding: 16px 14px 40px; } }
 
-  /* Selector de propiedad */
-  .vid-props { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: var(--sp-4); }
-  .vid-prop {
-    text-align: left; padding: 0; overflow: hidden; cursor: pointer;
-    background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-lg);
-    box-shadow: var(--shadow-xs); transition: box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  /* Buscador de inmueble — mismo comportamiento que en Facebook Ads */
+  .vid-buscar { position: relative; max-width: 640px; }
+  .vid-dd {
+    position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 30;
+    background: var(--paper); border: 1px solid var(--line); border-radius: var(--r);
+    box-shadow: var(--shadow); max-height: 380px; overflow-y: auto; display: none;
   }
-  .vid-prop:hover { box-shadow: var(--shadow-sm); }
-  .vid-prop.is-sel { border-color: var(--sky-blue); box-shadow: var(--shadow-sm); }
-  .vid-prop__img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; background: var(--paper-2); }
-  .vid-prop__none {
-    display: flex; align-items: center; justify-content: center;
-    width: 100%; aspect-ratio: 16 / 10; background: var(--paper-2);
-    font-size: var(--fs-xs); color: var(--mute);
+  .vid-dd.is-open { display: block; }
+  .vid-op {
+    display: flex; gap: var(--sp-3); align-items: center; width: 100%;
+    padding: var(--sp-3); background: none; border: 0; border-bottom: 1px solid var(--line);
+    cursor: pointer; text-align: left;
   }
-  .vid-prop__body { padding: var(--sp-3) var(--sp-4) var(--sp-4); }
-  .vid-prop__t { font-size: var(--fs-sm); font-weight: 600; color: var(--ink); line-height: 1.35; }
-  .vid-prop__m { font-size: var(--fs-caption); color: var(--mute); margin-top: var(--sp-1); }
+  .vid-op:last-child { border-bottom: 0; }
+  .vid-op:hover { background: var(--paper-2); }
+  .vid-op__img { width: 56px; height: 40px; flex: 0 0 auto; object-fit: cover; border-radius: var(--r); background: var(--paper-2); }
+  .vid-op__c { min-width: 0; flex: 1; }
+  .vid-op__t {
+    display: block; font-size: var(--fs-sm); font-weight: 600; color: var(--ink);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .vid-op__m { display: block; font-size: var(--fs-caption); color: var(--mute); margin-top: 2px; }
+  .vid-dd__msg { padding: var(--sp-4); font-size: var(--fs-xs); color: var(--mute); }
 
-  /* Tira de fotos que entran al recorrido */
+  /* Inmueble elegido */
+  .vid-elegido { display: flex; gap: var(--sp-4); align-items: center; }
+  .vid-elegido__img { width: 92px; height: 66px; flex: 0 0 auto; object-fit: cover; border-radius: var(--r); background: var(--paper-2); }
+  .vid-elegido__t { font-size: var(--fs-h5); font-weight: 700; color: var(--ink); }
+  .vid-elegido__m { font-size: var(--fs-xs); color: var(--mute); margin-top: 2px; }
+
+  /* Tira de fotos del recorrido */
   .vid-tira { display: flex; gap: var(--sp-2); overflow-x: auto; padding-bottom: var(--sp-2); }
-  .vid-tira img {
-    width: 104px; height: 68px; object-fit: cover; flex: 0 0 auto;
-    border-radius: var(--r); border: 1px solid var(--line);
-  }
+  .vid-toma { flex: 0 0 auto; width: 116px; }
+  .vid-toma img { width: 116px; height: 74px; object-fit: cover; border-radius: var(--r); border: 1px solid var(--line); display: block; }
+  .vid-toma__n { display: block; font-size: var(--fs-caption); color: var(--mute); margin-top: var(--sp-1); }
 
   /* Formatos */
   .vid-formatos { display: flex; gap: var(--sp-3); flex-wrap: wrap; }
@@ -50,6 +60,13 @@
   .vid-fmt__box--v { width: 19px; height: 34px; }
   .vid-fmt__t { font-size: var(--fs-sm); font-weight: 600; color: var(--ink); }
   .vid-fmt__s { font-size: var(--fs-caption); color: var(--mute); margin-top: 2px; }
+
+  /* Guía de fotos */
+  .vid-guia { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--sp-6); }
+  .vid-guia h4 { font-size: var(--fs-sm); font-weight: 700; color: var(--ink); margin-bottom: var(--sp-3); }
+  .vid-guia ul { list-style: none; padding: 0; margin: 0; }
+  .vid-guia li { font-size: var(--fs-xs); color: var(--mute); line-height: 1.55; padding-left: 16px; position: relative; margin-bottom: var(--sp-2); }
+  .vid-guia li::before { content: '·'; position: absolute; left: 4px; color: var(--sky-blue); }
 
   /* Resultado */
   .vid-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--sp-5); }
@@ -73,32 +90,26 @@
 
 <div class="vid-scroll">
 
-  <!-- Paso 1 · Propiedad -->
-  <div class="bk-section-header">
-    <h2>Elige la propiedad</h2>
+  <!-- Paso 1 · Buscar el inmueble -->
+  <div class="vid-buscar">
+    <input class="bk-input" id="vid-q" type="text" autocomplete="off"
+           placeholder="Busca por título, clave, colonia, ciudad, tipo o precio…"/>
+    <div class="vid-dd" id="vid-dd"></div>
   </div>
-
-  <div id="vid-cargando" class="vid-progreso" style="margin-bottom:var(--sp-5)">
-    <span class="vid-spin"></span>
-    <span class="vid-nota">Cargando tu inventario…</span>
-  </div>
-
-  <div class="vid-props" id="vid-props"></div>
-
-  <div class="bk-empty" hidden id="vid-sin-props">
-    <div class="bk-empty__icon">
-      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
-        <rect x="2.5" y="6" width="13" height="12" rx="2" ry="2" stroke-linejoin="round"/>
-        <path stroke-linecap="round" stroke-linejoin="round" d="M15.5 10.5l4.7-2.8v8.6l-4.7-2.8"/>
-      </svg>
-    </div>
-    <div class="bk-empty__title">Ninguna ficha tiene fotos suficientes</div>
-    <div class="bk-empty__text">El recorrido necesita al menos dos fotos. Súbelas desde la ficha del inmueble y regresa.</div>
-    <a href="propiedades.html" style="text-decoration:none"><button class="bk-btn bk-btn--forest bk-empty__action" type="button">Ir a Tus Inmuebles</button></a>
-  </div>
+  <p class="vid-nota" style="margin-top:var(--sp-2)" id="vid-q-nota"></p>
 
   <!-- Paso 2 · Armar -->
   <section id="vid-armar" hidden>
+
+    <div class="bk-card bk-card--pad bk-card--raise" style="margin-top:var(--sp-6)">
+      <div class="vid-elegido">
+        <img class="vid-elegido__img" id="vid-el-img" src="" alt=""/>
+        <div>
+          <div class="vid-elegido__t" id="vid-el-t"></div>
+          <div class="vid-elegido__m" id="vid-el-m"></div>
+        </div>
+      </div>
+    </div>
 
     <div class="bk-section-header" style="margin-top:var(--sp-8)">
       <h2>Fotos del recorrido</h2>
@@ -137,13 +148,6 @@
       </span>
     </div>
 
-    <p class="vid-nota" style="margin-top:var(--sp-5);max-width:62ch">
-      El video se arma con tus fotos tal como están: paneo y zoom lento, sin alterar
-      un solo pixel del inmueble. Sale sin música a propósito — ponle el audio desde
-      Instagram al publicar, así agarras audio de tendencia y evitas que te tumben el
-      alcance por derechos de autor.
-    </p>
-
   </section>
 
   <!-- Videos ya hechos -->
@@ -153,6 +157,55 @@
     </div>
     <div class="vid-lista" id="vid-lista"></div>
   </section>
+
+  <!-- Guía de fotos -->
+  <div class="bk-section-header" style="margin-top:var(--sp-10)">
+    <h2>Qué fotos hacen un buen recorrido</h2>
+  </div>
+  <div class="bk-card bk-card--pad bk-card--raise">
+    <p class="vid-nota" style="margin-bottom:var(--sp-6);max-width:70ch">
+      El recorrido no arregla una foto mala: la deja diez veces más tiempo en pantalla.
+      Una foto que en la ficha pasa desapercibida, aquí se ve cinco segundos y medio
+      completos. Casi siempre que un video sale flojo, el problema son las fotos, no el
+      recorrido.
+    </p>
+    <div class="vid-guia">
+      <div>
+        <h4>Lo que más se nota</h4>
+        <ul>
+          <li>Resolución alta. Abajo de 1600 px de ancho, el zoom revela el pixel. Una foto de cámara o de celular reciente sobra; una descargada de un anuncio viejo, no.</li>
+          <li>Horizontales. El recorrido se mueve de lado: una foto horizontal tiene a dónde moverse, una vertical no y se recorta.</li>
+          <li>Cuartos amplios y con luz de día. El paneo lento sobre un espacio abierto es justo lo que vende; sobre un cuarto chico y oscuro solo alarga la incomodidad.</li>
+        </ul>
+      </div>
+      <div>
+        <h4>El orden importa</h4>
+        <ul>
+          <li>El recorrido respeta el orden de la ficha. Reordena ahí y se reordena aquí.</li>
+          <li>Empieza por la fachada: es la que ubica al que ve el video.</li>
+          <li>Sigue el camino real de una visita — entrada, sala, comedor, cocina, recámaras. Brincar de la cocina al jardín y de vuelta a la recámara desorienta.</li>
+          <li>Cierra con lo mejor que tenga: alberca, terraza, vista.</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Qué dejar fuera</h4>
+        <ul>
+          <li>Fotos con logo, marca de agua o texto encima: el zoom las deforma y se ve pirata.</li>
+          <li>Planos y documentos. No se leen en movimiento.</li>
+          <li>Detalles cerrados — una llave, un apagador, una esquina. En pantalla completa por cinco segundos no dicen nada.</li>
+          <li>Fotos borrosas, chuecas o de noche con flash. El movimiento las delata más que la ficha.</li>
+          <li>Dos fotos casi iguales del mismo cuarto: parece que el video se trabó.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="vid-nota" style="margin-top:var(--sp-6);max-width:70ch">
+      Con cinco o seis fotos buenas sale mejor que con ocho de relleno. El video se arma
+      con tus fotos tal como están — paneo y zoom lento, sin alterar un pixel del
+      inmueble — y sale sin música a propósito: ponle el audio desde Instagram al
+      publicar, así agarras audio de tendencia y evitas que te tumben el alcance por
+      derechos de autor.
+    </p>
+  </div>
 
 </div>
 
@@ -165,20 +218,21 @@
   const MIN_FOTOS = 2;
   const MAX_FOTOS = 8;
 
-  let propiedades = [];
+  let props = [];
+  let cargadas = false;
   let sel = null;
   let formato = '16:9';
   let polling = null;
+  let timerBusca = null;
 
   const $ = id => document.getElementById(id);
 
-  async function token() {
-    if (window.brokrSb && window.brokrSb.ensureToken) return await window.brokrSb.ensureToken();
-    return null;
+  function esc(t) {
+    return String(t == null ? '' : t).replace(/[&<>"']/g, c => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    ));
   }
 
-  // El inventario se lee de Supabase directo, igual que propiedades.html.
-  // brokrSb.rest ya trae el auto-refresh y el reintento en 401.
   async function sbRest(ruta) {
     if (!window.brokrSb || !window.brokrSb.rest) throw new Error('Sesión no lista.');
     return await window.brokrSb.rest(ruta, { method: 'GET' });
@@ -186,7 +240,7 @@
 
   async function api(ruta, opciones) {
     const opts = opciones || {};
-    let tok = await token();
+    let tok = window.brokrSb ? await window.brokrSb.ensureToken() : null;
     const pega = async t => fetch(API_BASE + ruta, Object.assign({}, opts, {
       headers: Object.assign(
         { 'Content-Type': 'application/json' },
@@ -195,8 +249,6 @@
       ),
     }));
     let r = await pega(tok);
-    // Token vencido: se refresca una vez y se reintenta. Es el mismo patrón
-    // del resto de los módulos.
     if (r.status === 401 && window.brokrSb && window.brokrSb.refreshNow) {
       tok = await window.brokrSb.refreshNow();
       r = await pega(tok);
@@ -209,107 +261,166 @@
     return await r.json();
   }
 
-  function esc(t) {
-    return String(t == null ? '' : t).replace(/[&<>"']/g, c => (
-      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
-    ));
-  }
-
   function fotosDe(p) {
     const f = p && p.fotos;
     if (!Array.isArray(f)) return [];
     return f.filter(u => typeof u === 'string' && u.indexOf('http') === 0);
   }
 
+  function money(n, moneda) {
+    const v = Number(n) || 0;
+    if (!v) return '';
+    return '$' + v.toLocaleString('es-MX', { maximumFractionDigits: 0 }) +
+           (moneda && moneda !== 'MXN' ? ' ' + moneda : '');
+  }
+
+  function ubicacion(p) {
+    return [p.colonia, p.ciudad, p.estado].filter(Boolean).join(', ');
+  }
+
+  function resumen(p) {
+    return [money(p.precio, p.moneda), ubicacion(p), fotosDe(p).length + ' fotos']
+      .filter(Boolean).join(' \u00b7 ');
+  }
+
   // ── Inventario ─────────────────────────────────────────────────────────
-  async function cargarPropiedades() {
-    let filas = null;
-    try {
-      // select=* a propósito: hay cuentas donde alguna migración no corrió y
-      // pedir columnas por nombre revienta el request completo.
-      const d = await sbRest('propiedades?select=*&order=created_at.desc&limit=1000');
-      filas = Array.isArray(d) ? d : [];
-    } catch (e) {
-      // Falla de red o sesión: NO es lo mismo que "no tienes inventario".
-      // Decir "ninguna ficha tiene fotos" cuando lo que falló fue la petición
-      // manda al agente a buscar el problema donde no está.
-      $('vid-cargando').innerHTML = '';
-      const aviso = document.createElement('span');
-      aviso.className = 'vid-nota';
-      aviso.textContent = 'No se pudo leer tu inventario: ' + e.message + ' Recarga la página.';
-      $('vid-cargando').appendChild(aviso);
-      return;
+  async function cargar() {
+    if (cargadas) return;
+    // select=* a propósito: hay cuentas donde alguna migración no corrió y
+    // pedir columnas por nombre revienta el request completo.
+    const filas = await sbRest('propiedades?select=*&order=updated_at.desc&limit=1000');
+    props = (Array.isArray(filas) ? filas : [])
+      .filter(p => !p.archivada && fotosDe(p).length >= MIN_FOTOS);
+    cargadas = true;
+  }
+
+  // Busca por texto libre y también por precio: si escribes "3500000" o
+  // "3.5m", filtra por lo que cuesta, no por lo que dice el título.
+  function filtrar(q) {
+    const t = (q || '').toLowerCase().trim();
+    if (!t) return props.slice(0, 8);
+
+    const num = t.replace(/[^0-9.]/g, '');
+    const esPrecio = num.length >= 3 && /^[0-9.,\s$mk]+$/i.test(t);
+    let objetivo = 0;
+    if (esPrecio) {
+      objetivo = parseFloat(num) || 0;
+      if (/m/.test(t)) objetivo *= 1000000;
+      else if (/k/.test(t)) objetivo *= 1000;
     }
 
-    propiedades = filas.filter(p => fotosDe(p).length >= MIN_FOTOS);
-    $('vid-cargando').hidden = true;
+    return props.filter(p => {
+      if (esPrecio && objetivo) {
+        const v = Number(p.precio) || 0;
+        // Rango de ±20%: nadie se acuerda del precio exacto.
+        if (v && v >= objetivo * 0.8 && v <= objetivo * 1.2) return true;
+      }
+      const heno = [p.titulo, p.clave_interna, p.colonia, p.ciudad, p.estado,
+                    p.tipo, p.operacion].filter(Boolean).join(' ').toLowerCase();
+      return heno.indexOf(t) >= 0;
+    }).slice(0, 8);
+  }
 
-    if (!propiedades.length) {
-      $('vid-sin-props').hidden = false;
+  function pintarDd(lista) {
+    const dd = $('vid-dd');
+    if (!cargadas) {
+      dd.innerHTML = '<div class="vid-dd__msg">Cargando tu inventario…</div>';
+      dd.classList.add('is-open');
       return;
     }
-
-    $('vid-props').innerHTML = propiedades.map((p, i) => {
-      const fs = fotosDe(p);
-      const titulo = p.titulo || p.nombre || p.direccion || 'Sin título';
-      const portada = fs[0]
-        ? '<img class="vid-prop__img" src="' + esc(fs[0]) + '" alt="" loading="lazy" decoding="async"/>'
-        : '<div class="vid-prop__none">Sin foto</div>';
-      return '<button class="vid-prop" type="button" data-i="' + i + '">' +
-        portada +
-        '<span class="vid-prop__body">' +
-          '<span class="vid-prop__t">' + esc(titulo) + '</span>' +
-          '<span class="vid-prop__m">' + fs.length + ' fotos</span>' +
+    if (!props.length) {
+      dd.innerHTML = '<div class="vid-dd__msg">Ninguna ficha tiene al menos dos fotos. Súbelas desde Tus Inmuebles y regresa.</div>';
+      dd.classList.add('is-open');
+      return;
+    }
+    if (!lista.length) {
+      dd.innerHTML = '<div class="vid-dd__msg">Nada con esa búsqueda.</div>';
+      dd.classList.add('is-open');
+      return;
+    }
+    dd.innerHTML = lista.map(p => {
+      const f = fotosDe(p)[0];
+      return '<button class="vid-op" type="button" data-id="' + esc(p.id) + '">' +
+        (f ? '<img class="vid-op__img" src="' + esc(f) + '" alt="" loading="lazy" decoding="async"/>'
+           : '<span class="vid-op__img"></span>') +
+        '<span class="vid-op__c">' +
+          '<span class="vid-op__t">' + esc(p.titulo || p.clave_interna || 'Sin título') + '</span>' +
+          '<span class="vid-op__m">' + esc(resumen(p)) + '</span>' +
         '</span>' +
       '</button>';
     }).join('');
-
-    $('vid-props').querySelectorAll('.vid-prop').forEach(btn => {
-      btn.addEventListener('click', () => elegir(+btn.getAttribute('data-i')));
+    dd.classList.add('is-open');
+    // mousedown y no click: el blur del input cierra el menú antes de que el
+    // click alcance a dispararse.
+    dd.querySelectorAll('.vid-op').forEach(b => {
+      b.addEventListener('mousedown', e => {
+        e.preventDefault();
+        elegir(b.getAttribute('data-id'));
+      });
     });
   }
 
-  // ── Selección ──────────────────────────────────────────────────────────
-  function elegir(i) {
-    sel = propiedades[i];
-    $('vid-props').querySelectorAll('.vid-prop').forEach((b, j) => {
-      b.classList.toggle('is-sel', j === i);
-    });
+  function cerrarDd() { $('vid-dd').classList.remove('is-open'); }
 
-    const fs = fotosDe(sel).slice(0, MAX_FOTOS);
-    $('vid-tira').innerHTML = fs.map(u =>
-      '<img src="' + esc(u) + '" alt="" loading="lazy" decoding="async"/>'
+  async function abrir() {
+    pintarDd([]);
+    try { await cargar(); } catch (e) {
+      $('vid-dd').innerHTML = '<div class="vid-dd__msg">No se pudo leer tu inventario: ' +
+        esc(e.message) + ' Recarga la página.</div>';
+      return;
+    }
+    pintarDd(filtrar($('vid-q').value));
+  }
+
+  $('vid-q').addEventListener('focus', abrir);
+  $('vid-q').addEventListener('blur', () => setTimeout(cerrarDd, 140));
+  $('vid-q').addEventListener('input', () => {
+    clearTimeout(timerBusca);
+    timerBusca = setTimeout(abrir, 160);
+  });
+
+  // ── Selección ──────────────────────────────────────────────────────────
+  function elegir(id) {
+    sel = props.find(p => String(p.id) === String(id));
+    if (!sel) return;
+    cerrarDd();
+    $('vid-q').value = sel.titulo || sel.clave_interna || '';
+    $('vid-q-nota').textContent = '';
+
+    const todas = fotosDe(sel);
+    const fs = todas.slice(0, MAX_FOTOS);
+
+    $('vid-el-img').src = fs[0] || '';
+    $('vid-el-t').textContent = sel.titulo || sel.clave_interna || 'Sin título';
+    $('vid-el-m').textContent = resumen(sel);
+
+    $('vid-tira').innerHTML = fs.map((u, i) =>
+      '<div class="vid-toma">' +
+        '<img src="' + esc(u) + '" alt="" loading="lazy" decoding="async"/>' +
+        '<span class="vid-toma__n">Toma ' + (i + 1) + '</span>' +
+      '</div>'
     ).join('');
 
-    const total = fotosDe(sel).length;
     const seg = Math.round(fs.length * 5.5 - (fs.length - 1) * 0.7);
-    $('vid-tira-nota').textContent = total > MAX_FOTOS
-      ? 'Se usan las primeras ' + MAX_FOTOS + ' de ' + total + ' fotos, en el orden de la ficha. Duración aproximada: ' + seg + ' segundos. Reordena las fotos desde la ficha si quieres otro recorrido.'
+    $('vid-tira-nota').textContent = todas.length > MAX_FOTOS
+      ? 'Se usan las primeras ' + MAX_FOTOS + ' de ' + todas.length + ' fotos, en el orden de la ficha. Duración aproximada: ' + seg + ' segundos.'
       : fs.length + ' fotos, en el orden de la ficha. Duración aproximada: ' + seg + ' segundos.';
 
     $('vid-armar').hidden = false;
-    $('vid-armar').scrollIntoView({ behavior: 'smooth', block: 'start' });
     notaFormato();
     cargarHechos();
   }
 
-  // El 9:16 con fotos horizontales recorta justo lo que vende: la amplitud.
-  // Se deja disponible, pero avisando.
   function notaFormato() {
-    const nota = $('vid-fmt-nota');
-    if (formato === '9:16') {
-      nota.textContent = 'El vertical recorta los lados de cada foto. Si tus fotos son horizontales, se pierde la amplitud de los interiores — el 16:9 se ve mucho mejor.';
-    } else {
-      nota.textContent = '';
-    }
+    $('vid-fmt-nota').textContent = formato === '9:16'
+      ? 'El vertical recorta los lados de cada foto. Si tus fotos son horizontales, se pierde la amplitud de los interiores — el 16:9 se ve mucho mejor.'
+      : '';
   }
 
   $('vid-formatos').querySelectorAll('.vid-fmt').forEach(btn => {
     btn.addEventListener('click', () => {
       formato = btn.getAttribute('data-fmt');
-      $('vid-formatos').querySelectorAll('.vid-fmt').forEach(b => {
-        b.classList.toggle('is-sel', b === btn);
-      });
+      $('vid-formatos').querySelectorAll('.vid-fmt').forEach(b => b.classList.toggle('is-sel', b === btn));
       notaFormato();
     });
   });
@@ -317,35 +428,34 @@
   // ── Generar ────────────────────────────────────────────────────────────
   $('vid-generar').addEventListener('click', async () => {
     if (!sel) return;
-    const boton = $('vid-generar');
-    boton.disabled = true;
+    $('vid-generar').disabled = true;
     $('vid-estado').hidden = false;
     $('vid-estado-txt').textContent = 'Armando el recorrido…';
-
     try {
       const r = await api('/video/generar', {
         method: 'POST',
         body: JSON.stringify({
           propiedad_id: sel.id,
           formato: formato,
-          titulo: sel.titulo || sel.nombre || null,
+          titulo: sel.titulo || sel.clave_interna || null,
         }),
       });
       vigilar(r.job_id);
     } catch (e) {
-      $('vid-estado').hidden = true;
-      boton.disabled = false;
-      alert(e.message);
+      terminar(e.message);
     }
   });
 
-  // El render tarda entre 20 y 60 segundos. Se pregunta cada 3.
   function vigilar(jobId) {
     clearInterval(polling);
     let intentos = 0;
     polling = setInterval(async () => {
       intentos++;
-      if (intentos > 100) { clearInterval(polling); terminar('Está tardando más de lo normal. Recarga en un momento.'); return; }
+      if (intentos > 100) {
+        clearInterval(polling);
+        terminar('Está tardando más de lo normal. Recarga la página en un momento.');
+        return;
+      }
       try {
         const j = await api('/video/estado/' + jobId);
         if (j.estado === 'listo') { clearInterval(polling); terminar(null); cargarHechos(); }
@@ -370,13 +480,12 @@
     } catch (e) { return; }
 
     if (!videos.length) { $('vid-hechos').hidden = true; return; }
-
     $('vid-hechos').hidden = false;
     $('vid-lista').innerHTML = videos.map(v =>
       '<div class="bk-card bk-card--pad bk-card--raise vid-item">' +
         '<video src="' + esc(v.video_url) + '" controls playsinline preload="metadata"></video>' +
         '<div class="vid-item__pie">' +
-          '<span class="vid-item__meta">' + esc(v.formato) + ' · ' + Math.round(v.duracion_seg || 0) + ' s</span>' +
+          '<span class="vid-item__meta">' + esc(v.formato) + ' \u00b7 ' + Math.round(v.duracion_seg || 0) + ' s</span>' +
           '<a class="bk-btn bk-btn--ghost" href="' + esc(v.video_url) + '" download target="_blank" rel="noopener">Descargar</a>' +
         '</div>' +
       '</div>'
@@ -384,23 +493,24 @@
   }
 
   // ── Arranque ───────────────────────────────────────────────────────────
-  // El shell resuelve la sesión y avisa cuando ya hay token. Antes de eso
-  // cualquier llamada rebota con 401.
-  //
-  // OJO: el evento se dispara en window, NO en document, y el guard de
-  // "ya cargó" es window.__brokrShellLoaded. Es el mismo patrón exacto de
-  // propiedades.html, tareas.html y estadisticas.html.
+  // El evento se dispara en window, NO en document, y el guard de "ya cargó"
+  // es window.__brokrShellLoaded. Mismo patrón de propiedades.html.
   async function arranque() {
-    await cargarPropiedades();
+    try {
+      await cargar();
+      $('vid-q-nota').textContent = props.length
+        ? props.length + ' inmuebles con fotos suficientes. Escribe para buscar.'
+        : 'Ninguna ficha tiene al menos dos fotos. Súbelas desde Tus Inmuebles y regresa.';
+    } catch (e) {
+      $('vid-q-nota').textContent = 'No se pudo leer tu inventario: ' + e.message + ' Recarga la página.';
+      return;
+    }
 
-    // Si se llegó desde la ficha de un inmueble, ya viene elegido.
     try {
       const pre = sessionStorage.getItem('prefill_video');
       if (!pre) return;
       sessionStorage.removeItem('prefill_video');
-      const dato = JSON.parse(pre);
-      const i = propiedades.findIndex(p => p.id === dato.propiedad_id);
-      if (i >= 0) elegir(i);
+      elegir(JSON.parse(pre).propiedad_id);
     } catch (e) {}
   }
 
