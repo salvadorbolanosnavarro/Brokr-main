@@ -182,15 +182,6 @@ try:
 except Exception as _e:
     print(f"[video] No se pudo montar el router de video: {_e}")
 
-# Amueblado virtual: amuebla con IA las fotos de espacios vacíos para el
-# módulo de Video, con marca de agua legal quemada en la imagen. Mismo
-# import defensivo: si falla, el resto del backend sigue vivo.
-try:
-    from routers.staging import router as staging_router
-    app.include_router(staging_router)
-except Exception as _e:
-    print(f"[staging] No se pudo montar el router de amueblado virtual: {_e}")
-
 CONFIG_FILE = Path(__file__).parent / "config.json"
 
 def load_config() -> dict:
