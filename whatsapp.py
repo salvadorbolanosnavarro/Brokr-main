@@ -2325,6 +2325,17 @@ async def _responder_conversacion(item: dict, numero: dict, user_id: str):
 
             inmueble_id = await _alta_inmueble(user_id, datos, item["wa_id"], fotos)
             if inmueble_id:
+                # Quien mandó el inmueble queda vinculado como su Propietario en
+                # el CRM (contactos_propiedades), para que al abrirlo en Mis
+                # Inmuebles se sepa de inmediato de quién es y cómo contactarlo.
+                crm_id_prop = contacto.get("contacto_crm_id")
+                if crm_id_prop:
+                    vinculo = await sb_post("contactos_propiedades", {
+                        "user_id": user_id, "contacto_id": crm_id_prop,
+                        "propiedad_id": inmueble_id, "relacion": "propietario"})
+                    if not vinculo:
+                        log.warning("No se pudo vincular al propietario %s con el inmueble %s",
+                                    crm_id_prop, inmueble_id)
                 # Al remitente NADA de promesas: un "gracias" y punto. Si se le
                 # dijera "ya quedó registrada" creería que está publicada.
                 gracias = "¡Muchas gracias!"
