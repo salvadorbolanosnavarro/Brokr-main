@@ -15,7 +15,7 @@
   --txt:var(--ink-2);--mut:var(--mute);--wh:var(--bone);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-height:100vh;padding-bottom:80px;letter-spacing:-0.005em}
+body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-height:100vh;padding-bottom:80px;letter-spacing:-0.005em}
 #wrap{max-width:var(--page-max, 760px);margin:0 auto;padding:32px var(--pad-x, 36px) 60px}
 
 /* Nav */
@@ -70,7 +70,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .f textarea{background:var(--bone);border:1px solid var(--line-2);border-radius:var(--r);padding:var(--sp-3) var(--sp-4);min-height:96px;font-family:inherit;font-size:var(--fs-sm);color:var(--ink);outline:none;width:100%;transition:border .15s;resize:vertical;line-height:var(--lh)}
 .f input:focus,.f select:focus,.f textarea:focus{border-color:var(--forest);box-shadow:var(--focus);background:var(--wh)}
 .f input::placeholder{color:var(--mut)}
-.f-note{font-size:var(--fs-caption);color:var(--mut);margin-top:3px;font-style:italic}
+.f-note{font-size:var(--fs-sm);color:var(--ink-2);line-height:1.6;margin-top:var(--sp-2);max-width:68ch}
 
 /* Money input */
 .money-wrap{position:relative}
@@ -212,7 +212,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .mach-file-chip.show{display:flex}
 .mach-file-chip button{margin-left:auto;background:none;border:none;color:var(--danger);cursor:pointer;font-size:var(--fs-sm);font-weight:700}
 
-.mach-hint{font-size:var(--fs-xs);color:var(--mut);line-height:1.55;margin-top:10px}
+.mach-hint{font-size:var(--fs-sm);color:var(--ink-2);line-height:1.6;margin-top:var(--sp-3);max-width:68ch}
 .mach-hint b{color:var(--ink-3);font-weight:600}
 
 .mach-list-empty{text-align:center;padding:34px 16px;color:var(--mut);font-size:var(--fs-sm)}
