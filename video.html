@@ -223,14 +223,22 @@
 
   // ── Inventario ─────────────────────────────────────────────────────────
   async function cargarPropiedades() {
-    let filas = [];
+    let filas = null;
     try {
       // select=* a propósito: hay cuentas donde alguna migración no corrió y
       // pedir columnas por nombre revienta el request completo.
       const d = await sbRest('propiedades?select=*&order=created_at.desc&limit=1000');
       filas = Array.isArray(d) ? d : [];
     } catch (e) {
-      filas = [];
+      // Falla de red o sesión: NO es lo mismo que "no tienes inventario".
+      // Decir "ninguna ficha tiene fotos" cuando lo que falló fue la petición
+      // manda al agente a buscar el problema donde no está.
+      $('vid-cargando').innerHTML = '';
+      const aviso = document.createElement('span');
+      aviso.className = 'vid-nota';
+      aviso.textContent = 'No se pudo leer tu inventario: ' + e.message + ' Recarga la página.';
+      $('vid-cargando').appendChild(aviso);
+      return;
     }
 
     propiedades = filas.filter(p => fotosDe(p).length >= MIN_FOTOS);
@@ -378,22 +386,26 @@
   // ── Arranque ───────────────────────────────────────────────────────────
   // El shell resuelve la sesión y avisa cuando ya hay token. Antes de eso
   // cualquier llamada rebota con 401.
-  document.addEventListener('brokr-shell-ready', () => {
-    cargarPropiedades();
+  //
+  // OJO: el evento se dispara en window, NO en document, y el guard de
+  // "ya cargó" es window.__brokrShellLoaded. Es el mismo patrón exacto de
+  // propiedades.html, tareas.html y estadisticas.html.
+  async function arranque() {
+    await cargarPropiedades();
 
     // Si se llegó desde la ficha de un inmueble, ya viene elegido.
     try {
       const pre = sessionStorage.getItem('prefill_video');
-      if (pre) {
-        sessionStorage.removeItem('prefill_video');
-        const dato = JSON.parse(pre);
-        setTimeout(() => {
-          const i = propiedades.findIndex(p => p.id === dato.propiedad_id);
-          if (i >= 0) elegir(i);
-        }, 400);
-      }
+      if (!pre) return;
+      sessionStorage.removeItem('prefill_video');
+      const dato = JSON.parse(pre);
+      const i = propiedades.findIndex(p => p.id === dato.propiedad_id);
+      if (i >= 0) elegir(i);
     } catch (e) {}
-  });
+  }
+
+  if (window.__brokrShellLoaded) { arranque(); }
+  else { window.addEventListener('brokr-shell-ready', arranque, { once: true }); }
 
 })();
 </script>
