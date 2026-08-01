@@ -2335,7 +2335,22 @@ ASESOR_TOOLS = [
 ]
 
 
-async def _asesor_ejecutar_tool(user_id: str, name: str, args: dict, zona: str | None) -> str:
+async def _asesor_ctx_guardar(conversacion_id: str, cambios: dict) -> None:
+    """Memoria corta del modo asesor: guarda en la conversación el id y nombre
+    de lo último que se creó o tocó, para que 'esa misma tarea' o 'ese contacto'
+    resuelvan bien en el siguiente mensaje aunque el historial no traiga ids."""
+    try:
+        rows = await sb_get("wa2_conversaciones", {"id": f"eq.{conversacion_id}",
+                                                   "select": "asesor_ctx", "limit": "1"})
+        ctx = (rows[0].get("asesor_ctx") or {}) if rows else {}
+        ctx.update(cambios)
+        await sb_patch("wa2_conversaciones", {"id": f"eq.{conversacion_id}"}, {"asesor_ctx": ctx})
+    except Exception as e:
+        log.warning("No se pudo guardar el contexto del modo asesor: %s", e)
+
+
+async def _asesor_ejecutar_tool(user_id: str, name: str, args: dict, zona: str | None,
+                                conversacion_id: str) -> str:
     if name == "buscar_contactos":
         q = (args.get("query") or "").replace(",", " ").strip()
         params = {"user_id": f"eq.{user_id}", "select": "id,nombre,telefono,tipo",
@@ -2353,7 +2368,7 @@ async def _asesor_ejecutar_tool(user_id: str, name: str, args: dict, zona: str |
     if name == "buscar_tareas":
         q = (args.get("query") or "").replace(",", " ").strip()
         params = {"user_id": f"eq.{user_id}", "select": "id,titulo,fecha_entrega,completada",
-                  "order": "fecha_entrega.desc.nullslast", "limit": "8"}
+                  "order": "created_at.desc", "limit": "8"}
         if q:
             params["or"] = f"(titulo.ilike.*{q}*,notas.ilike.*{q}*)"
         rows = await sb_get("tareas", params)
@@ -2388,10 +2403,12 @@ async def _asesor_ejecutar_tool(user_id: str, name: str, args: dict, zona: str |
         if destino not in ("contacto", "tarea", "propiedad") or not fila_id or not comentario:
             return "Faltan datos: necesito destino (contacto, tarea o propiedad), id y comentario."
         tabla = {"contacto": "contactos", "tarea": "tareas", "propiedad": "propiedades"}[destino]
+        campo_nombre = "nombre" if tabla == "contactos" else "titulo"
         rows = await sb_get(tabla, {"id": f"eq.{fila_id}", "user_id": f"eq.{user_id}",
-                                    "select": "id,notas", "limit": "1"})
+                                    "select": f"id,notas,{campo_nombre}", "limit": "1"})
         if not rows:
             return f"No encontré ese {destino} (id={fila_id}). Búscalo primero para usar el id exacto."
+        etiqueta = rows[0].get(campo_nombre) or fila_id
         linea = f"[{_hora_local(zona).strftime('%d/%m %H:%M')} · Broq] {comentario}"
         notas = ((rows[0].get("notas") or "") + "\n" + linea).strip()
         cuerpo = {"notas": notas}
@@ -2400,7 +2417,9 @@ async def _asesor_ejecutar_tool(user_id: str, name: str, args: dict, zona: str |
         ok = await sb_patch(tabla, {"id": f"eq.{fila_id}", "user_id": f"eq.{user_id}"}, cuerpo)
         if not ok:
             return "No se pudo guardar el comentario. Intenta de nuevo."
-        return f"Listo, comentario agregado al {destino}: {linea}"
+        await _asesor_ctx_guardar(conversacion_id, {f"ultimo_{destino}_id": fila_id,
+                                                    f"ultimo_{destino}_nombre": etiqueta})
+        return f"Listo, comentario agregado a {destino} '{etiqueta}': {linea}"
 
     if name == "crear_tarea":
         titulo = (args.get("titulo") or "").strip()
@@ -2422,8 +2441,10 @@ async def _asesor_ejecutar_tool(user_id: str, name: str, args: dict, zona: str |
         if tarea_id and fila.get("propiedad_id"):
             await sb_post("tareas_propiedades", {"user_id": user_id, "tarea_id": tarea_id,
                                                  "propiedad_id": fila["propiedad_id"]})
-        return f"Tarea creada: {titulo}" + (f" para el {args['fecha']} {args.get('hora') or ''}".rstrip()
-                                            if args.get("fecha") else "")
+        await _asesor_ctx_guardar(conversacion_id, {"ultima_tarea_id": tarea_id,
+                                                    "ultima_tarea_titulo": titulo})
+        return f"Tarea creada (id={tarea_id}): {titulo}" + (
+            f" para el {args['fecha']} {args.get('hora') or ''}".rstrip() if args.get("fecha") else "")
 
     return "No reconozco esa herramienta."
 
@@ -2431,6 +2452,24 @@ async def _asesor_ejecutar_tool(user_id: str, name: str, args: dict, zona: str |
 async def _broq_asesor(item: dict, numero: dict, user_id: str):
     entren = await _entrenamiento_de(user_id, numero["id"])
     zona = entren.get("zona_horaria")
+
+    conv_rows = await sb_get("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}",
+                                                    "select": "asesor_ctx", "limit": "1"})
+    ctx = (conv_rows[0].get("asesor_ctx") or {}) if conv_rows else {}
+    ctx_txt = ""
+    if ctx:
+        partes_ctx = []
+        if ctx.get("ultima_tarea_id"):
+            partes_ctx.append(f"la última tarea creada o tocada es id={ctx['ultima_tarea_id']} "
+                              f"('{ctx.get('ultima_tarea_titulo') or ''}')")
+        for d in ("contacto", "propiedad", "tarea"):
+            if ctx.get(f"ultimo_{d}_id"):
+                partes_ctx.append(f"el último {d} tocado es id={ctx[f'ultimo_{d}_id']} "
+                                  f"('{ctx.get(f'ultimo_{d}_nombre') or ''}')")
+        if partes_ctx:
+            ctx_txt = ("\nMEMORIA DE ESTA CHARLA: " + "; ".join(partes_ctx) +
+                       ". Cuando el asesor diga 'esa misma tarea', 'ese contacto', 'esa casa', "
+                       "usa ESTOS ids directo, sin volver a buscar.")
 
     hist = await sb_get("wa2_mensajes", {"conversacion_id": f"eq.{item['conversacion_id']}",
                                          "select": "direction,body",
@@ -2462,8 +2501,10 @@ async def _broq_asesor(item: dict, numero: dict, user_id: str):
         "varios coinciden, pregunta cuál en una línea. Si no encuentras nada, dilo tal cual — NUNCA "
         "inventes contactos, tareas, propiedades ni ids. NUNCA digas que algo quedó registrado si el "
         "resultado de la herramienta no lo confirmó.\n"
-        "Después de ejecutar, confirma en UNA línea qué quedó registrado y dónde. Si el asesor pide algo "
-        "fuera de tus herramientas, dile que eso se hace en la app de Broquer y en qué módulo."
+        "Después de ejecutar, confirma en UNA línea qué quedó registrado y EN QUIÉN o EN QUÉ (el nombre "
+        "viene en el tool_result). Si el asesor pide algo fuera de tus herramientas, dile que eso se hace "
+        "en la app de Broquer y en qué módulo."
+        + ctx_txt
     )
 
     reply = ""
@@ -2494,7 +2535,8 @@ async def _broq_asesor(item: dict, numero: dict, user_id: str):
                         continue
                     try:
                         res = await _asesor_ejecutar_tool(user_id, b.get("name"),
-                                                          b.get("input") or {}, zona)
+                                                          b.get("input") or {}, zona,
+                                                          item["conversacion_id"])
                     except Exception as e:
                         res = f"La herramienta falló: {str(e)[:120]}"
                     resultados.append({"type": "tool_result", "tool_use_id": b.get("id"),
