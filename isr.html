@@ -776,7 +776,7 @@ html, body {
       <div class="row1"><div class="field">
         <label>Mejoras y ampliaciones (MXN)</label>
         <input type="text" id="f-mej" placeholder="Ej. $200,000" oninput="fmtMoneyField(this)" autocomplete="off"/>
-        <span class="field-hint">Sólo si el vendedor tiene <strong>CFDI/factura</strong> a su nombre. Sin factura el notario no la deducirá. Captura el monto <strong>con IVA incluido</strong>.</span>
+        <span class="field-hint">Sólo si el vendedor tiene <strong>CFDI/factura</strong> a su nombre. Sin factura el notario no la deducirá. Captura el monto <strong>con IVA incluido</strong>. Se deprecia 3% anual igual que la construcción (art. 124 LISR).</span>
       </div></div>
       <div class="row1"><div class="field">
         <label>Escrituración cuando adquirió (MXN)</label>
@@ -1115,7 +1115,7 @@ async function calcISR() {
   }
 
   const mN=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  const preAnio1981=anioC<1981; // siempre false aquí — preservado para PDF legacy
+  const preAnio1981=false; // pre-1982 se bloquea arriba — preservado para PDF legacy
 
   // ── Banxico SIE: INPC adquisición + INPC mes anterior a firma + UDIS del día firma ──
   const originalBtnHTML = calcBtn.innerHTML;
@@ -1159,6 +1159,9 @@ async function calcISR() {
   const factor=Math.max(factorINPC,factorTabla);
   const factorUsado=factor===factorTabla&&factorTabla>factorINPC?'tabla':'inpc';
 
+  // Art. 124 LISR: depreciación 3% anual, costo no menor al 20% del inicial → tope 80%.
+  const depPct=Math.min(0.80,anios*0.03);
+
   let costoAct=0, debugTerreno=null;
   if (tipo==='terreno') {
     costoAct=compra*factor;
@@ -1167,18 +1170,27 @@ async function calcISR() {
     const pctC=1-pctT;
     const valT=compra*pctT, valC=compra*pctC;
     const anosConst=anios;
-    // Art. 124 LISR: depreciación 3% anual, costo no menor al 20% del inicial → tope 80%.
-    const depPct=Math.min(0.80,anosConst*0.03);
     const valCDep=valC*(1-depPct);
     const terrenoAct=valT*factor, constAct=valCDep*factor;
     costoAct=terrenoAct+constAct;
     debugTerreno={pctT,pctC,valT,valC,anosConst,depPct,valCDep,terrenoAct,constAct};
   }
 
-  const mejA=mej*factor;
-  const deducTotal=costoAct+mejA+com+esc;
-  // Costo mínimo: 10% del precio de enajenación (art. 121 fr. I LISR)
-  const deducFinal=Math.max(deducTotal,venta*0.10);
+  // Piso del costo — art. 124 LISR primer párrafo: el COSTO DE ADQUISICIÓN será
+  // cuando menos el 10% del monto de la enajenación. El piso aplica al costo
+  // (no a las deducciones totales) y se toma en pesos de hoy, sin actualizar.
+  const pisoCosto=venta*0.10;
+  const pisoAplicado=costoAct<pisoCosto;
+  const costoFinal=Math.max(costoAct,pisoCosto);
+
+  // Mejoras — art. 124 LISR: las construcciones, mejoras y ampliaciones se
+  // deprecian 3% anual (residual mínimo 20%) igual que la construcción, y se
+  // actualizan. La UI no captura la fecha de cada mejora, así que se asume
+  // hecha en la adquisición (mismo factor y misma depreciación — conservador).
+  const mejA=mej*(1-depPct)*factor;
+
+  const deducTotal=costoFinal+mejA+com+esc;
+  const deducFinal=deducTotal;
   const ganTotal=venta-deducFinal;
 
   // LIMITE_EX dinámico: UDIS del día de firma × 700,000 (art. 93 fr. XIX LISR).
@@ -1206,7 +1218,9 @@ async function calcISR() {
     isrTotal=isrAcum*anios;
   }
 
-  const isrEstatal=baseGrav>0?baseGrav*0.05:0;
+  // Art. 127 LISR: el pago a la entidad es el 5% de la ganancia, SIN exceder
+  // el pago provisional del art. 126. Se acredita contra el federal.
+  const isrEstatal=baseGrav>0?Math.min(baseGrav*0.05,isrTotal):0;
   const isrFederal=Math.max(0,isrTotal-isrEstatal);
   const tasaEfecPct=baseGrav>0?(isrTotal/baseGrav)*100:0;
 
@@ -1220,7 +1234,7 @@ async function calcISR() {
     ivaMonto=ivaBase*0.16;
   }
 
-  _isrData={tipo,venta,compra,costoAct,mej,mejA,com,esc,deducTotal,deducFinal,ganTotal,factor,factorINPC,factorTabla,factorUsado,inpcAdq,inpcVenta,mesC,anioC,mesV,anioV,mesEnajINPC,anioEnajINPC,inpcVentaFallback,inpcVentaMesSolicitado,inpcVentaAnioSolicitado,mN,baseGrav,ganAcum,isrAcum,isrTotal,isrFederal,isrEstatal,anios,tasaEfec,tasaEfecPct,exenta,exentaParcial,nota,preAnio1981,LIMITE_EX,debugTerreno,ivaBase,ivaMonto};
+  _isrData={tipo,venta,compra,costoAct,costoFinal,pisoAplicado,depPct,mej,mejA,com,esc,deducTotal,deducFinal,ganTotal,factor,factorINPC,factorTabla,factorUsado,inpcAdq,inpcVenta,mesC,anioC,mesV,anioV,mesEnajINPC,anioEnajINPC,inpcVentaFallback,inpcVentaMesSolicitado,inpcVentaAnioSolicitado,mN,baseGrav,ganAcum,isrAcum,isrTotal,isrFederal,isrEstatal,anios,tasaEfec,tasaEfecPct,exenta,exentaParcial,nota,preAnio1981,LIMITE_EX,debugTerreno,ivaBase,ivaMonto};
   renderResult(_isrData);
 }
 
@@ -1260,8 +1274,13 @@ function renderResult(d) {
     bd+=`<div class="br sub"><span class="bl">Construcción dep. × factor</span><span class="bv">${fmt(dt.constAct)}</span></div>`;
   }
 
-  bd+=`<div class="br"><span class="bl">Costo adquisición actualizado</span><span class="bv">− ${fmt(d.costoAct)}</span></div>`;
-  if(d.mej) bd+=`<div class="br"><span class="bl">Mejoras actualizadas (art. 121 fr. II)</span><span class="bv">− ${fmt(d.mejA)}</span></div>`;
+  if(d.pisoAplicado){
+    bd+=`<div class="br sub"><span class="bl">Costo actualizado ${fmt(d.costoAct)} &lt; piso 10% de la venta</span><span class="bv"></span></div>`;
+    bd+=`<div class="br"><span class="bl">Costo adquisición — piso 10% (art. 124 LISR)</span><span class="bv">− ${fmt(d.costoFinal)}</span></div>`;
+  } else {
+    bd+=`<div class="br"><span class="bl">Costo adquisición actualizado</span><span class="bv">− ${fmt(d.costoAct)}</span></div>`;
+  }
+  if(d.mej) bd+=`<div class="br"><span class="bl">Mejoras dep. ${(d.depPct*100).toFixed(0)}% y actualizadas (arts. 121 fr. II, 124)</span><span class="bv">− ${fmt(d.mejA)}</span></div>`;
   if(d.com) bd+=`<div class="br"><span class="bl">Comisión del agente</span><span class="bv">− ${fmt(d.com)}</span></div>`;
   if(d.esc) bd+=`<div class="br"><span class="bl">Gastos de escrituración</span><span class="bv">− ${fmt(d.esc)}</span></div>`;
   bd+=`<div class="br tot"><span class="bl">${d.ganTotal>=0?'Ganancia total':'Pérdida fiscal'}</span><span class="bv">${fmt(Math.abs(d.ganTotal))}</span></div>`;
