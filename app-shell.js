@@ -243,10 +243,12 @@
      un atajo al chat, que es lo que el agente abre veinte veces al día. */
   const GRUPOS = [
     { key:'crm',         label:'CRM',         icon:'funnel' },
-    { key:'seguimiento', label:'Seguimiento', icon:'handshake' },
+    { key:'seguimiento', label:'Seguimiento', icon:'send' },
     { key:'documentos',  label:'Documentos',  icon:'document' },
     { key:'numeros',     label:'Números',     icon:'peso' },
-    { key:'marketing',   label:'Marketing',   icon:'send' },
+    { key:'marketing',   label:'Marketing',   icon:'megaphone' },
+    // "Más" agrupa lo que no es trabajo diario: perfil, blog, ayuda (y admin).
+    { key:'mas',         label:'Más',         icon:'plus' },
   ];
 
   const MODS = [
@@ -255,7 +257,6 @@
     { key:'contactos',    href:'contactos.html',     label:'Contactos',           group:'crm',         icon:'users' },
     { key:'tareas',       href:'tareas.html',        label:'Tareas',              group:'crm',         icon:'check' },
     { key:'estadisticas', href:'estadisticas.html',  label:'Estadísticas',        group:'crm',         icon:'chart' },
-    { key:'bolsa',        href:'bolsa.html',         label:'Bolsa inmobiliaria',  group:'crm',         icon:'handshake' },
     // Seguimiento — hablar con el prospecto hasta que se convierte en cliente.
     { key:'whatsapp',     href:'whatsapp.html',      label:'WhatsApp',            group:'seguimiento', icon:'whatsapp' },
     { key:'leads',        href:'leads.html',         label:'Leads',               group:'seguimiento', icon:'send' },
@@ -272,10 +273,10 @@
     { key:'facebook-ads', href:'facebook-ads.html',  label:'Facebook Ads',        group:'marketing',   icon:'facebook' },
     { key:'video',        href:'video.html',         label:'Video',               group:'marketing',   icon:'video' },
     { key:'mi-sitio',     href:'mi-sitio.html',      label:'Mi sitio',            group:'marketing',   icon:'globo' },
-    // Cuenta — fuera de los grupos, pegado al fondo del menú.
-    { key:'blog',         href:'blog.html',          label:'Blog',                group:'cuenta',      icon:'feather' },
-    { key:'guia',         href:'guia-agente.html',   label:'Ayuda',               group:'cuenta',      icon:'question' },
-    { key:'admin',        href:'admin.html',         label:'Admin',               group:'cuenta',      icon:'cog', adminOnly:true },
+    // Más — cuenta y recursos, pegado al fondo del menú.
+    { key:'blog',         href:'blog.html',          label:'Blog',                group:'mas',         icon:'feather' },
+    { key:'guia',         href:'guia-agente.html',   label:'Ayuda',               group:'mas',         icon:'question' },
+    { key:'admin',        href:'admin.html',         label:'Admin',               group:'mas',         icon:'cog', adminOnly:true },
   ];
 
   const CONTEXT_LABELS = {
@@ -286,7 +287,6 @@
     'tareas':       'Tareas — pendientes y actividad del CRM',
     'leads':        'Leads — contactos marcados como potenciales, aún sin cerrar',
     'estadisticas': 'Estadísticas — captación, pipeline e inmuebles con más interés',
-    'bolsa':        'Bolsa inmobiliaria — propiedades compartidas entre agentes Broquer con comisión compartida; publicar inmuebles propios y contactar al agente captador',
     'mi-sitio':     'Mi sitio — perfil público, plantilla y sitio web del agente',
     'contratos':    'Contratos — arrendamiento y promesa de compraventa',
     'cumplimiento': 'Cumplimiento PLD/UIF — expediente único de identificación del cliente, umbrales de aviso, acumulación de operaciones, avisos al SPPLD y bitácora',
@@ -306,7 +306,6 @@
      en posición/tamaño/estilo. 'home' se excluye (tiene su propio hero). */
   const PAGE_META = {
     'equipo':        { title:'Equipo',                 sub:'Quién trabaja en tu cuenta y qué puede ver cada quien.' },
-    'bolsa':         { title:'Bolsa inmobiliaria',     sub:'Comparte inventario con otros agentes Broquer y cierra en equipo con comisión compartida.' },
     'contratos':     { title:'Contratos',              sub:'Genera contratos listos para firma en minutos.' },
     'cumplimiento':  { title:'Cumplimiento',           sub:'El expediente de identificación de cada cliente, el control de umbrales y los avisos a la UIF, en un solo lugar.' },
     'firmas':        { title:'Firma electrónica',      sub:'Manda el contrato, cada parte firma desde su celular y te regresa con constancia.' },
@@ -356,6 +355,7 @@
        Es la excepción reconocida a la regla de iconos de trazo. */
     whatsapp:   '<path fill="currentColor" stroke="none" d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.857L.057 23.882a.5.5 0 00.614.612l6.115-1.598A11.947 11.947 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.967 0-3.805-.538-5.378-1.47l-.385-.23-3.993 1.044 1.012-3.9-.252-.403A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/><path fill="currentColor" stroke="none" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>',
     funnel:     '<path stroke-linecap="round" stroke-linejoin="round" d="M3 4.5h18l-7.25 8.25v5.1l-3.5 1.75v-6.85L3 4.5z"/>',
+    megaphone:  '<path stroke-linecap="round" stroke-linejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 01-1.44-4.282m3.102.069a18.03 18.03 0 01-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 018.835 2.535M10.34 6.66a23.847 23.847 0 008.835-2.535m0 0A23.74 23.74 0 0018.795 3m.38 1.125a23.91 23.91 0 011.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 001.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 010 3.46"/>',
     chevron:    '<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>',
     lock:       '<path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>',
     trash:      '<path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>',
@@ -387,9 +387,9 @@
 
 /* ── Sidebar (drawer) ───────────────────────────────────────────────
    Mismo azul de la tarjeta de pendientes del inicio, con el destello
-   blanco arriba. Los módulos van en BLANCO y en NEGRITAS. La lista se
-   agrupa en tres bloques translúcidos (CRM · herramientas · cuenta)
-   separados por aire: nada de líneas divisorias. */
+   blanco arriba y una aurora que deriva abajo (la misma luz del hero).
+   Los módulos van en BLANCO y en NEGRITAS, agrupados en bloques
+   translúcidos separados por aire: nada de líneas divisorias. */
 .bk-sidebar {
   width: 268px; flex-shrink: 0;
   background: var(--sb-bg);
@@ -405,6 +405,16 @@
   background-image: radial-gradient(120% 70% at 100% 0%, rgba(255,255,255,0.18), rgba(255,255,255,0) 58%);
   pointer-events: none; z-index: 0;
 }
+/* Aurora inferior — la misma luz del hero del inicio, derivando despacio */
+.bk-sidebar::after {
+  content: ''; position: absolute; z-index: 0; pointer-events: none;
+  width: 420px; height: 420px; left: -170px; bottom: -190px;
+  border-radius: 50%; filter: blur(70px);
+  background: radial-gradient(circle, rgba(255,255,255,0.12), rgba(255,255,255,0) 70%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--sky-blue-on-dark) 28%, transparent), transparent 70%);
+  animation: bk-sb-drift 26s var(--ease) infinite alternate;
+}
+@keyframes bk-sb-drift { to { transform: translate(70px, -110px) scale(1.12); } }
 .bk-sidebar > * { position: relative; z-index: 1; }
 .bk-sidebar::-webkit-scrollbar { width: 0; }
 @media (max-width: 880px) { .bk-sidebar { display: none; } }
@@ -430,8 +440,17 @@
   padding: 6px;
   margin-bottom: 12px;
   display: flex; flex-direction: column; gap: 5px;
+  animation: bk-sb-rise 0.55s var(--ease-out) backwards;
 }
-/* El bloque de cuenta (Mi perfil en adelante) se va hasta abajo:
+/* Cada bloque sube con un pequeño desfase, como los KPIs del inicio */
+.bk-sidebar .bk-sb-block:nth-child(2) { animation-delay: 0.05s; }
+.bk-sidebar .bk-sb-block:nth-child(3) { animation-delay: 0.10s; }
+.bk-sidebar .bk-sb-block:nth-child(4) { animation-delay: 0.15s; }
+.bk-sidebar .bk-sb-block:nth-child(5) { animation-delay: 0.20s; }
+.bk-sidebar .bk-sb-block:nth-child(6) { animation-delay: 0.25s; }
+.bk-sidebar .bk-sb-block:nth-child(7) { animation-delay: 0.30s; }
+@keyframes bk-sb-rise { from { opacity: 0; transform: translateY(10px); } }
+/* El bloque "Más" (Mi perfil, Blog, Ayuda) se va hasta abajo:
    el aire hace la separación, no una raya. */
 .bk-sb-block--cuenta { margin-top: auto; margin-bottom: 0; }
 
@@ -442,7 +461,7 @@
   border-radius: var(--r);
   font-size: 14px; color: #FFFFFF !important;
   cursor: pointer;
-  transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+  transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease);
   font-weight: 700; letter-spacing: -0.01em;
   text-decoration: none !important;
   visibility: visible !important;
@@ -471,11 +490,12 @@
   background: var(--sb-active) !important; color: #FFFFFF !important; font-weight: 800;
   box-shadow: inset 0 0 0 1px var(--sb-edge), var(--sb-glow);
 }
-/* Marca del módulo activo: barrita blanca, sin líneas divisorias */
+/* Marca del módulo activo: barrita con la luz de acento del hero */
 .bk-sidebar .bk-sb-link.is-active::before {
   content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
   width: 3px; height: 20px; border-radius: var(--r-pill);
   background: #FFFFFF;
+  background: linear-gradient(180deg, #FFFFFF, var(--sky-blue-on-dark));
 }
 
 .bk-sb-group { display: flex; flex-direction: column; gap: 5px; }
@@ -483,9 +503,18 @@
 .bk-sb-trigger .bk-sb-chevron { margin-left: auto; opacity: .8; transition: transform var(--dur) var(--ease); }
 .bk-sb-group.is-open .bk-sb-chevron { transform: rotate(180deg); }
 .bk-sb-submenu { display: none; flex-direction: column; gap: 5px; padding: 2px 0 2px 22px; }
-.bk-sb-group.is-open .bk-sb-submenu { display: flex; }
+.bk-sb-group.is-open .bk-sb-submenu { display: flex; animation: bk-sb-sub-in 0.28s var(--ease-out); }
+@keyframes bk-sb-sub-in { from { opacity: 0; transform: translateY(-5px); } }
 .bk-sb-submenu .bk-sb-link { height: 40px; padding: 0 10px; }
+.bk-sidebar .bk-sb-submenu .bk-sb-link:hover { transform: translateX(3px); }
 .bk-sidebar .bk-sb-submenu .bk-sb-link.is-active::before { left: -6px; height: 16px; }
+/* El indicador de "Más" es su propio "+": abierto, gira y se vuelve "×" */
+.bk-sb-group--mas.is-open .bk-sb-plus { transform: rotate(45deg); }
+
+@media (prefers-reduced-motion: reduce) {
+  .bk-sidebar::after, .bk-sb-block, .bk-sb-group.is-open .bk-sb-submenu { animation: none; }
+  .bk-sidebar .bk-sb-submenu .bk-sb-link:hover { transform: none; }
+}
 
 /* Content area */
 .bk-content { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
@@ -1262,23 +1291,26 @@ body[data-app="facebook-ads"]{--page-max:980px}
   // cinco. Arranca abierto solo el grupo donde está el módulo que se está
   // viendo; los demás cerrados, para que el menú quepa en una pantalla.
   function buildSidebarGroup(grupo, items, active) {
-    if (!items.length) return '';
+    const esMas = grupo.key === 'mas';
+    if (!items.length && !esMas) return '';
     const isOpen = items.some(m => m.key === active);
     const gid = 'bk-sb-g-' + grupo.key;
-    return `<div class="bk-sb-block bk-sb-group${isOpen ? ' is-open' : ''}" id="${gid}">
+    // "Más" lleva a Mi perfil como primer renglón (abre el drawer, no navega)
+    // y su indicador es el propio "+", que gira a "×" al abrirse.
+    const perfilLink = esMas
+      ? `<a href="javascript:void(0)" class="bk-sb-link" onclick="openProfileDrawer()">${svg('user')} Mi perfil</a>`
+      : '';
+    const indicador = esMas
+      ? svg('plus', 16, 2, 'bk-sb-chevron bk-sb-plus')
+      : svg('chevron', 16, 2, 'bk-sb-chevron');
+    return `<div class="bk-sb-block bk-sb-group${esMas ? ' bk-sb-block--cuenta bk-sb-group--mas' : ''}${isOpen ? ' is-open' : ''}" id="${gid}">
       <button class="bk-sb-link bk-sb-trigger${isOpen ? ' is-active' : ''}" data-sb-group="${grupo.key}" type="button" aria-expanded="${isOpen ? 'true' : 'false'}" aria-controls="${gid}-sub">
-        ${svg(grupo.icon)} ${grupo.label} ${svg('chevron', 16, 2, 'bk-sb-chevron')}
+        ${svg(grupo.icon)} ${grupo.label} ${indicador}
       </button>
       <div class="bk-sb-submenu" id="${gid}-sub">
-        ${items.map(m => buildSidebarLink(m, active)).join('')}
+        ${perfilLink}${items.map(m => buildSidebarLink(m, active)).join('')}
       </div>
     </div>`;
-  }
-  // Todo lo que va de "Mi perfil" hacia abajo vive en su propio bloque,
-  // pegado al fondo del drawer. La separación es por aire, no por raya.
-  function buildCuentaSidebar(items, active) {
-    const profileLink = `<a href="javascript:void(0)" class="bk-sb-link" onclick="openProfileDrawer()">${svg('user')} Mi perfil</a>`;
-    return `<div class="bk-sb-block bk-sb-block--cuenta">${profileLink}${items.map(m => buildSidebarLink(m, active)).join('')}</div>`;
   }
   function buildBnavItem(m, active) {
     return `<a href="${m.href}" class="bk-bnav__item${m.key === active ? ' is-active' : ''}">${svg(m.icon, 22)} <span>${m.label.split(' ')[0]}</span></a>`;
@@ -1328,7 +1360,6 @@ body[data-app="facebook-ads"]{--page-max:980px}
     // drawer de perfil, no el sidebar.
     const visible = m => (!m.adminOnly || profile?.isAdmin);
     const porGrupo = k => MODS.filter(m => m.group === k && visible(m));
-    const cuenta   = porGrupo('cuenta');
 
     const shell = document.createElement('div');
     shell.className = 'bk-shell-root';
@@ -1338,7 +1369,6 @@ body[data-app="facebook-ads"]{--page-max:980px}
           <a href="index.html" aria-label="Ir al inicio Broquer"><img src="logotipo-white.png" alt="Broquer"/></a>
         </div>
         ${GRUPOS.map(g => buildSidebarGroup(g, porGrupo(g.key), activeKey)).join('')}
-        ${buildCuentaSidebar(cuenta, activeKey)}
       </aside>
 
       <main class="bk-content">
@@ -1462,7 +1492,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
       return `<a ${attrs} class="bk-sheet__item${act}"><span class="bk-sheet__ico">${svg(m.icon, 19)}${badge}</span><span>${m.label}</span></a>`;
     }
 
-    // "Mi perfil" vive dentro del menú (entre Blog y Ayuda), ya no en el bar inferior.
+    // "Mi perfil" vive dentro de la sección "Más", igual que en el sidebar.
     const profileSheetItem =
       `<a href="javascript:void(0)" class="bk-sheet__item" onclick="window.bkToggleModsSheet&&window.bkToggleModsSheet(false);openProfileDrawer();">` +
       `<span class="bk-sheet__ico">${svg('user', 19)}</span><span>Mi perfil</span></a>`;
@@ -1473,13 +1503,12 @@ body[data-app="facebook-ads"]{--page-max:980px}
     const seccion = (titulo, items, extra) =>
       items.length
         ? `<div class="bk-sheet__eyebrow">${titulo}</div>` +
-          `<div class="bk-sheet__grid">${items.map(sheetItem).join('')}${extra || ''}</div>`
+          `<div class="bk-sheet__grid">${extra || ''}${items.map(sheetItem).join('')}</div>`
         : '';
 
     sheet.innerHTML =
       `<div class="bk-sheet__grip"></div>` +
-      GRUPOS.map(g => seccion(g.label, porGrupo(g.key))).join('') +
-      seccion('Cuenta', cuenta, profileSheetItem);
+      GRUPOS.map(g => seccion(g.label, porGrupo(g.key), g.key === 'mas' ? profileSheetItem : '')).join('');
     document.body.appendChild(sheet);
 
     function toggleSheet(force) {

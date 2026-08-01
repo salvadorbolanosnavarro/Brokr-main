@@ -16,6 +16,9 @@
   /* Filtros */
   .bl-filtros { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: var(--sp-3); margin-bottom: var(--sp-5); }
   @media (max-width: 860px) { .bl-filtros { grid-template-columns: 1fr 1fr; } .bl-filtros .bl-f-q { grid-column: 1 / -1; } }
+  .bl-filtros-mas { display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--sp-3); margin: calc(var(--sp-3) * -1) 0 var(--sp-5); }
+  @media (max-width: 860px) { .bl-filtros-mas { grid-template-columns: 1fr 1fr; } }
+  .bl-mas-btn { justify-self: start; }
 
   /* Grid de tarjetas */
   .bl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--sp-4); }
@@ -98,6 +101,49 @@
         </select>
       </div>
       <button class="bk-btn bk-btn--forest" id="bl-f-buscar" type="button">Buscar</button>
+    </div>
+
+    <div class="bk-cluster" style="margin:calc(var(--sp-3) * -1) 0 var(--sp-4);">
+      <button class="bk-btn bk-btn--ghost bl-mas-btn" id="bl-f-mas" type="button">Más filtros</button>
+    </div>
+
+    <div class="bl-filtros-mas" id="bl-filtros-mas" hidden>
+      <div class="bk-field" style="margin:0;">
+        <label class="bk-label" for="bl-f-estado">Estado</label>
+        <input class="bk-input" id="bl-f-estado" type="text" placeholder="Michoacán"/>
+      </div>
+      <div class="bk-field" style="margin:0;">
+        <label class="bk-label" for="bl-f-pmin">Precio desde</label>
+        <input class="bk-input" id="bl-f-pmin" type="number" min="0" placeholder="0"/>
+      </div>
+      <div class="bk-field" style="margin:0;">
+        <label class="bk-label" for="bl-f-pmax">Precio hasta</label>
+        <input class="bk-input" id="bl-f-pmax" type="number" min="0" placeholder="Sin tope"/>
+      </div>
+      <div class="bk-field" style="margin:0;">
+        <label class="bk-label" for="bl-f-rec">Recámaras mín.</label>
+        <select class="bk-select" id="bl-f-rec">
+          <option value="">Cualquiera</option>
+          <option value="1">1+</option><option value="2">2+</option>
+          <option value="3">3+</option><option value="4">4+</option>
+        </select>
+      </div>
+      <div class="bk-field" style="margin:0;">
+        <label class="bk-label" for="bl-f-ban">Baños mín.</label>
+        <select class="bk-select" id="bl-f-ban">
+          <option value="">Cualquiera</option>
+          <option value="1">1+</option><option value="2">2+</option><option value="3">3+</option>
+        </select>
+      </div>
+      <div class="bk-field" style="margin:0;">
+        <label class="bk-label" for="bl-f-orden">Ordenar por</label>
+        <select class="bk-select" id="bl-f-orden">
+          <option value="reciente">Más recientes</option>
+          <option value="precio_asc">Precio: menor a mayor</option>
+          <option value="precio_desc">Precio: mayor a menor</option>
+          <option value="comision">Mayor comisión compartida</option>
+        </select>
+      </div>
     </div>
 
     <div class="bl-grid" id="bl-grid"></div>
@@ -262,6 +308,12 @@
     var c = el('bl-f-ciudad').value.trim(); if (c) qs.set('ciudad', c);
     var t = el('bl-f-tipo').value; if (t) qs.set('tipo', t);
     var o = el('bl-f-op').value; if (o) qs.set('operacion', o);
+    var edo = el('bl-f-estado').value.trim(); if (edo) qs.set('estado', edo);
+    var pmin = el('bl-f-pmin').value; if (pmin) qs.set('precio_min', pmin);
+    var pmax = el('bl-f-pmax').value; if (pmax) qs.set('precio_max', pmax);
+    var rec = el('bl-f-rec').value; if (rec) qs.set('recamaras_min', rec);
+    var ban = el('bl-f-ban').value; if (ban) qs.set('banos_min', ban);
+    var ord = el('bl-f-orden').value; if (ord && ord !== 'reciente') qs.set('orden', ord);
     try {
       var data = await api('/bolsa/propiedades?' + qs.toString());
       var props = data.propiedades || [];
@@ -285,6 +337,12 @@
     }
   }
 
+  el('bl-f-mas').onclick = function () {
+    var fila = el('bl-filtros-mas');
+    fila.hidden = !fila.hidden;
+    el('bl-f-mas').textContent = fila.hidden ? 'Más filtros' : 'Menos filtros';
+  };
+  el('bl-f-orden').addEventListener('change', function () { pagina = 1; cargarBolsa(); });
   el('bl-f-buscar').onclick = function () { pagina = 1; cargarBolsa(); };
   el('bl-f-q').addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { pagina = 1; cargarBolsa(); } });
   el('bl-prev').onclick = function () { if (pagina > 1) { pagina--; cargarBolsa(); } };
