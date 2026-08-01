@@ -367,7 +367,7 @@ async function cargarTodo() {
     const [et, c, p, ip, ac, tk] = await Promise.all([
       sbFetch('pipeline_etapas?select=nombre,orden,color&order=orden.asc').catch(() => []),
       sbFetch('contactos?select=id,tipo,estatus,fuente,es_potencial,created_at,fecha_cambio_estatus&limit=5000'),
-      sbFetch('propiedades?select=id,titulo,clave_interna,tipo,operacion,estatus,precio,moneda,archivada,created_at,updated_at,colonia,ciudad,estado,m2_construccion,m2_terreno,recamaras,banos,estacionamientos,anio_construccion,comision_venta_pct,comision_renta_meses&limit=3000'),
+      sbFetch('propiedades?select=id,titulo,clave_interna,tipo,operacion,estatus,precio,moneda,archivada,created_at,updated_at,colonia,ciudad,estado,m2_construccion,m2_terreno,recamaras,banos,estacionamientos,anio_construccion,comision_venta_pct,comision_renta_meses,comision_real&limit=3000'),
       sbFetch('contactos_propiedades?select=contacto_id,propiedad_id,relacion&limit=8000').catch(() => []),
       sbFetch('actividades?select=tipo,created_at,propiedad_id,contacto_id&order=created_at.desc&limit=10000').catch(() => []),
       sbFetch('tareas?select=id,titulo,completada,fecha_entrega,created_at,propiedad_id,contacto_id&limit=3000').catch(() => []),
@@ -988,6 +988,14 @@ function calcProps() {
     if (p.operacion === 'renta') comision += precio * (Number(p.comision_renta_meses) || 0);
     else comision += precio * ((Number(p.comision_venta_pct) || 0) / 100);
   });
+  let comisionGanada = 0;
+  cerradas.forEach(p => {
+    if (p.comision_real != null && p.comision_real !== '') { comisionGanada += Number(p.comision_real) || 0; return; }
+    const precio = Number(p.precio) || 0;
+    if (!precio) return;
+    if (p.operacion === 'renta') comisionGanada += precio * (Number(p.comision_renta_meses) || 0);
+    else comisionGanada += precio * ((Number(p.comision_venta_pct) || 0) / 100);
+  });
   const conM2 = act.filter(p => Number(p.m2_construccion) > 0);
   const m2Prom = conM2.length ? Math.round(conM2.reduce((a, p) => a + Number(p.m2_construccion), 0) / conM2.length) : 0;
   const antig = act.map(p => diasEntre(p.created_at)).filter(d => d != null);
@@ -998,7 +1006,7 @@ function calcProps() {
     rentadas: cerradas.filter(p => p.estatus === 'rentada').length,
     inventario: act.length, total: props.length,
     valorInv: valorInv, valorCerr: valorCerr,
-    diasMercado: diasMercado, precioProm: precioProm, comision: comision,
+    diasMercado: diasMercado, precioProm: precioProm, comision: comision, comisionGanada: comisionGanada,
     m2Prom: m2Prom, antProm: antProm,
   };
 }
@@ -1100,6 +1108,7 @@ function panelResumen() {
       + kpi(fmtMoneyShort(P.comision, ''), 'Comisión potencial del inventario')
       + kpi(L.tasa + '%', 'Tasa de cierre de leads', L.tasa >= 20 ? 'is-good' : (L.tasa < 5 ? 'is-warn' : ''))
       + kpi(nf(P.cerradas), 'Inmuebles cerrados ' + PERIODO_LBL[periodo], 'is-good')
+      + kpi(fmtMoneyShort(P.comisionGanada, ''), 'Comisión ganada ' + PERIODO_LBL[periodo], 'is-good')
       + (w && w.parcial
           ? kpi(nf(w.totales.conversaciones_nuevas), 'Conversaciones de WhatsApp')
           : kpi(w ? nf(w.totales.mensajes) : (waCargando ? '…' : '—'), 'Mensajes de WhatsApp'))
@@ -1230,6 +1239,7 @@ function panelInmuebles() {
       + kpi(fmtMoneyShort(P.comision, ''), 'Comisión potencial', 'is-good')
       + kpi(nf(P.captadas), 'Captados ' + PERIODO_LBL[periodo])
       + kpi(nf(P.cerradas), 'Vendidos y rentados', 'is-good', P.vendidas + ' vendidos · ' + P.rentadas + ' rentados')
+      + kpi(fmtMoneyShort(P.comisionGanada, ''), 'Comisión ganada ' + PERIODO_LBL[periodo], 'is-good')
       + kpi(P.diasMercado != null ? nf(P.diasMercado) : '—', 'Días promedio en mercado')
       + kpi(fmtMoneyShort(P.precioProm, ''), 'Precio promedio del inventario')
       + kpi(P.m2Prom ? nf(P.m2Prom) + ' m²' : '—', 'Superficie promedio construida')
