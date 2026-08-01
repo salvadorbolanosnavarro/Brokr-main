@@ -635,8 +635,10 @@ function w2PintarPanelNumeros(){
         <div class="w2-numero-row__alias">${n.alias || 'Sin nombre'} <span class="bk-hint">${n.display_number || ''}</span></div>
         ${n.webhook_verificado ? '' : '<div class="w2-numero-row__warn">Meta no ha confirmado esta conexión — dale a Verificar.</div>'}
         ${n.es_mio === false ? '<div class="bk-hint">Número de un compañero de equipo</div>' : ''}
+        ${n.numero_personal ? `<div class="bk-hint">Broq personal: +${n.numero_personal}</div>` : ''}
       </div>
       <label class="bk-switch"><input type="checkbox" ${n.ia_enabled!==false?'checked':''} onchange="w2ToggleIaNumero('${n.id}', this.checked)"/><span class="bk-switch__track"></span> IA</label>
+      <button class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2BroqPersonal('${n.id}', '${(n.numero_personal || '').replace(/'/g,"")}')">Broq personal</button>
       ${!n.webhook_verificado ? `<button class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2VerificarNumero('${n.id}')">Verificar</button>` : ''}
       <button class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2DesconectarNumero('${n.id}', '${(n.alias || n.display_number || 'este número').replace(/'/g,"")}')">Desconectar</button>
     </div>`).join('');
@@ -650,6 +652,30 @@ async function w2DesconectarNumero(id, nombre){
     toast('Número desconectado.');
     await w2CargarNumeros();
   }catch(e){ toast('No se pudo desconectar. Intenta de nuevo.'); }
+}
+
+async function w2BroqPersonal(id, actual){
+  const num = prompt(
+    'Tu número personal de WhatsApp (10 dígitos, con lada de tu ciudad).\n\n' +
+    'Cuando le escribas a tu número de Broquer DESDE este número, te atenderá Broq ' +
+    'en modo asesor (agregar comentarios a contactos o citas, crear pendientes, ' +
+    'consultar tu CRM) por texto o nota de voz — en lugar de la recepcionista.\n\n' +
+    'Déjalo vacío y acepta para quitarlo.',
+    actual || ''
+  );
+  if(num === null) return; // canceló
+  const limpio = num.replace(/\D/g, '');
+  if(limpio && limpio.length < 10){ toast('El número debe tener al menos 10 dígitos.'); return; }
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/numeros/' + id, {
+      method:'PATCH', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({ numero_personal: limpio })
+    });
+    if(!r.ok){ toast('No se pudo guardar. Intenta de nuevo.'); return; }
+    toast(limpio ? 'Listo. Escríbele a tu número de Broquer desde tu personal y te contesta Broq.'
+                 : 'Número personal quitado.');
+    await w2CargarNumeros();
+  }catch(e){ toast('No se pudo guardar. Intenta de nuevo.'); }
 }
 
 async function w2ToggleIaNumero(id, on){

@@ -33,3 +33,8 @@ ALTER TABLE wa2_agenda ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS wa2_agenda_owner ON wa2_agenda;
 CREATE POLICY wa2_agenda_owner ON wa2_agenda
   FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- Número PERSONAL del asesor: desde ahí le escribe a su número de Broquer y
+-- lo atiende Broq en modo asesor (en coexistencia no es posible mandarse
+-- mensajes a uno mismo, así que este es el disparador real del modo asesor).
+ALTER TABLE wa2_numeros ADD COLUMN IF NOT EXISTS numero_personal text;

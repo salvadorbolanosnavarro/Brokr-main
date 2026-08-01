@@ -229,6 +229,74 @@ async def _tool_buscar_contactos(user_id: str, args: dict) -> str:
     return f"Encontré {len(rows)} contacto(s):\n" + "\n".join(out)
 
 
+async def _tool_buscar_tareas(user_id: str, args: dict) -> str:
+    """Busca en las tareas/citas del usuario (tabla `tareas`)."""
+    if not user_id:
+        return "No hay sesión activa."
+    query = (args.get("query") or "").strip().replace(",", " ")
+    params = {"user_id": f"eq.{user_id}",
+              "select": "id,titulo,fecha_entrega,completada,notas",
+              "order": "fecha_entrega.desc.nullslast", "limit": "10"}
+    if query:
+        params["or"] = f"(titulo.ilike.*{query}*,notas.ilike.*{query}*)"
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.get(f"{SUPABASE_URL}/rest/v1/tareas",
+                                 headers=_sb_headers(), params=params)
+        rows = r.json() if r.status_code == 200 else []
+    except Exception as e:
+        return f"No pude consultar las tareas: {str(e)[:120]}"
+    if not rows:
+        return "No encontré tareas que coincidan."
+    out = []
+    for t in rows:
+        estado = "completada" if t.get("completada") else "pendiente"
+        fecha = (t.get("fecha_entrega") or "")[:16].replace("T", " ")
+        linea = f"• id={t['id']} · {t.get('titulo') or 'Sin título'} · {estado}"
+        if fecha:
+            linea += f" · {fecha} UTC"
+        if t.get("notas"):
+            linea += " — " + (t["notas"] or "")[:100]
+        out.append(linea)
+    return f"Encontré {len(rows)} tarea(s):\n" + "\n".join(out)
+
+
+async def _tool_agregar_comentario(user_id: str, args: dict) -> str:
+    """Agrega un comentario fechado a las notas de un contacto o de una tarea.
+    El comentario se APILA (nunca borra lo que ya había en las notas)."""
+    if not user_id:
+        return "No hay sesión activa."
+    destino = (args.get("destino") or "").strip().lower()
+    fila_id = (args.get("id") or "").strip()
+    comentario = (args.get("comentario") or "").strip()
+    if destino not in ("contacto", "tarea") or not fila_id or not comentario:
+        return "Faltan datos: necesito destino (contacto o tarea), id y comentario."
+    tabla = "contactos" if destino == "contacto" else "tareas"
+    from datetime import datetime, timezone, timedelta
+    ahora = datetime.now(timezone(timedelta(hours=-6)))  # hora del centro de México
+    linea = f"[{ahora.strftime('%d/%m %H:%M')} · Broq] {comentario}"
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.get(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_sb_headers(),
+                                 params={"id": f"eq.{fila_id}", "user_id": f"eq.{user_id}",
+                                         "select": "id,notas", "limit": "1"})
+            rows = r.json() if r.status_code == 200 else []
+            if not rows:
+                return f"No encontré ese {destino} (id={fila_id}) en la cuenta del usuario. Búscalo primero para obtener el id exacto."
+            notas = ((rows[0].get("notas") or "") + "\n" + linea).strip()
+            cuerpo = {"notas": notas}
+            if tabla == "contactos":
+                cuerpo["updated_at"] = datetime.now(timezone.utc).isoformat()
+            r2 = await client.patch(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_sb_headers(),
+                                    params={"id": f"eq.{fila_id}", "user_id": f"eq.{user_id}"},
+                                    json=cuerpo)
+            if r2.status_code >= 300:
+                return f"No se pudo guardar el comentario: {r2.text[:120]}"
+    except Exception as e:
+        return f"No pude guardar el comentario: {str(e)[:120]}"
+    return f"Listo, comentario agregado al {destino}: {linea}"
+
+
 async def _tool_resumen_cartera(user_id: str, args: dict) -> str:
     """Resumen del inventario del usuario: totales por operación/tipo y valor."""
     if not user_id:
@@ -372,6 +440,8 @@ SERVER_TOOLS = {
     "buscar_propiedades": _tool_buscar_propiedades,
     "detalle_propiedad":  _tool_detalle_propiedad,
     "buscar_contactos":   _tool_buscar_contactos,
+    "buscar_tareas":      _tool_buscar_tareas,
+    "agregar_comentario": _tool_agregar_comentario,
     "resumen_cartera":    _tool_resumen_cartera,
     "resumen_estadisticas": _tool_resumen_estadisticas,
 }
@@ -414,6 +484,29 @@ TOOLS_SCHEMA = [
                 "query": {"type": "string", "description": "Nombre, teléfono, email o palabra clave."},
                 "limit": {"type": "integer"}
             }
+        }
+    },
+    {
+        "name": "buscar_tareas",
+        "description": "Busca en las tareas/citas del usuario por título o notas. Úsala SIEMPRE antes de agregar un comentario a una tarea, para obtener su id exacto. También para '¿qué pendientes tengo?', 'mi cita de mañana'.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Palabra clave del título o las notas. Vacío = las más recientes."}
+            }
+        }
+    },
+    {
+        "name": "agregar_comentario",
+        "description": "Agrega un comentario con fecha a las notas de un contacto o de una tarea, sin borrar lo que ya había. Úsala para 'agrégale un comentario a…', 'anota en la cita de…', 'apunta que el cliente dijo…'. SIEMPRE busca primero con buscar_contactos o buscar_tareas para usar el id exacto; si hay varios que coinciden, pregunta cuál.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "destino": {"type": "string", "enum": ["contacto", "tarea"]},
+                "id": {"type": "string", "description": "id exacto devuelto por buscar_contactos o buscar_tareas."},
+                "comentario": {"type": "string"}
+            },
+            "required": ["destino", "id", "comentario"]
         }
     },
     {
@@ -661,6 +754,8 @@ _STEP_LABELS = {
     "buscar_contactos":       "Buscando en tu CRM…",
     "resumen_cartera":        "Analizando tu inventario…",
     "resumen_estadisticas":   "Leyendo tus estadísticas…",
+    "buscar_tareas":          "Revisando tus tareas…",
+    "agregar_comentario":     "Registrando el comentario…",
     "calcular_isr":           "Calculando el ISR y preparando el PDF…",
     "estimar_valor":          "Buscando comparables y estimando el valor…",
     "generar_contrato":       "Generando el contrato…",
@@ -683,7 +778,8 @@ def _build_system(context: str, nombre: str = "") -> str:
 CÓMO ACTÚAS:
 - Eres un SUPER ASISTENTE OPERATIVO: entiendes comandos escritos y de voz, razonas con datos reales de la app y ejecutas acciones completas cuando tienes lo necesario.
 - Tienes herramientas reales. Cuando el usuario pide algo que puedes hacer, HAZLO con la herramienta correspondiente. No le digas "ve al módulo X y dale al botón Y": tú lo ejecutas.
-- Puedes encadenar pasos: primero busca datos (buscar_propiedades, detalle_propiedad, buscar_contactos, resumen_cartera, resumen_estadisticas) y luego actúa (crear_contacto, crear_inmueble, crear_tarea, generar_contrato, crear_ficha_manual, estimar_valor, calcular_isr, generar_reporte_estadisticas, crear_campana_facebook, abrir_modulo o prellenar_formulario). Usa los datos reales que obtengas; nunca inventes precios, m², direcciones ni nombres.
+- Puedes encadenar pasos: primero busca datos (buscar_propiedades, detalle_propiedad, buscar_contactos, buscar_tareas, resumen_cartera, resumen_estadisticas) y luego actúa (agregar_comentario, crear_contacto, crear_inmueble, crear_tarea, generar_contrato, crear_ficha_manual, estimar_valor, calcular_isr, generar_reporte_estadisticas, crear_campana_facebook, abrir_modulo o prellenar_formulario). Usa los datos reales que obtengas; nunca inventes precios, m², direcciones ni nombres.
+- Para "agrégale un comentario a…" (un contacto o una tarea/cita), por texto o por voz: busca primero el contacto o la tarea para obtener su id exacto y ejecuta agregar_comentario DIRECTO, sin pedir confirmación. El comentario queda con fecha en las notas y no borra nada. Si hay varios que coinciden, pregunta cuál.
 - Si el usuario pide crear un contacto o inmueble y ya dio los datos obligatorios, créalo directo. Si falta un dato obligatorio, pregunta SOLO el siguiente dato faltante.
 - Antes de una acción que produce un documento o un cambio, reúne los datos OBLIGATORIOS preguntando de UNO EN UNO de forma conversacional. Nunca ejecutes con datos incompletos. Los opcionales que el usuario no sepa: déjalos en 0 o "".
 - Las acciones que generan un archivo (ISR, estimación de valor, contrato, ficha) o que crean algo se ejecutan en el dispositivo del usuario. Cuando lances una de esas, NO digas "ya está descargado": di que la estás preparando y que aparecerá en un momento. El sistema le confirma al usuario cuando termina.

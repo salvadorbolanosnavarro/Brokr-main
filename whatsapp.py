@@ -557,6 +557,7 @@ async def wa2_numeros_list(request: Request):
 class NumeroPatchReq(BaseModel):
     alias: str | None = None
     ia_enabled: bool | None = None
+    numero_personal: str | None = None
 
 
 @router.patch("/numeros/{numero_id}")
@@ -568,6 +569,11 @@ async def wa2_numero_patch(numero_id: str, req: NumeroPatchReq, request: Request
         body["alias"] = req.alias.strip()
     if req.ia_enabled is not None:
         body["ia_enabled"] = req.ia_enabled
+    if req.numero_personal is not None:
+        # El número PERSONAL del asesor: desde ahí le escribe a su propio número
+        # de Broquer y lo atiende Broq (modo asesor), no la recepcionista.
+        # Cadena vacía = quitarlo. Se guarda normalizado (solo dígitos, 52 fijo).
+        body["numero_personal"] = _normaliza_mx(req.numero_personal) or None
     await sb_patch("wa2_numeros", {"id": f"eq.{numero_id}", "user_id": _in_filter(ids)}, body)
     return {"ok": True}
 
@@ -1868,6 +1874,22 @@ def _solo_digitos(t: str) -> str:
     return re.sub(r"\D", "", t or "")
 
 
+def _es_asesor(numero: dict, wa_id: str) -> bool:
+    """True si quien escribe es el DUEÑO del número de Broquer, escribiendo
+    desde su NÚMERO PERSONAL registrado (en coexistencia no es posible mandarse
+    mensajes a uno mismo, así que el asesor registra su celular personal y desde
+    ahí le habla a Broq). Se comparan los últimos 10 dígitos para brincarse el
+    lío 52/521. También cubre el caso teórico de un auto-mensaje directo."""
+    ajeno = _normaliza_mx(wa_id or "")
+    if len(ajeno) < 10:
+        return False
+    for campo in ("numero_personal", "phone_number"):
+        propio = _normaliza_mx((numero or {}).get(campo) or "")
+        if propio and propio[-10:] == ajeno[-10:]:
+            return True
+    return False
+
+
 async def _agenda_upsert(user_id: str, numero_id: str, telefono: str,
                          nombre: str | None = None, conocido: bool | None = None) -> None:
     """Agenda del celular del asesor (wa2_agenda): el nombre con el que ÉL tiene
@@ -1892,7 +1914,8 @@ async def _agenda_upsert(user_id: str, numero_id: str, telefono: str,
         log.warning("wa2_agenda no se pudo actualizar (%s): %s", telefono, e)
 
 
-async def _get_o_crea_contacto(user_id: str, numero_id: str, wa_id: str, nombre: str | None) -> dict:
+async def _get_o_crea_contacto(user_id: str, numero_id: str, wa_id: str, nombre: str | None,
+                               crear_crm: bool = True) -> dict:
     rows = await sb_get("wa2_contactos", {"numero_id": f"eq.{numero_id}", "wa_id": f"eq.{wa_id}",
                                           "select": "*", "limit": "1"})
     if rows:
@@ -1907,7 +1930,7 @@ async def _get_o_crea_contacto(user_id: str, numero_id: str, wa_id: str, nombre:
     nombre_agenda = (agenda[0].get("nombre") or "").strip() if agenda else ""
     conocido = bool(agenda and agenda[0].get("conocido"))
     display = nombre_agenda or (nombre or "").strip() or None
-    contacto_crm_id = await _crear_contacto_crm(user_id, wa_id, display)
+    contacto_crm_id = await _crear_contacto_crm(user_id, wa_id, display) if crear_crm else None
     created = await sb_post("wa2_contactos", {
         "user_id": user_id, "numero_id": numero_id, "wa_id": wa_id,
         "nombre": display, "nombre_agenda": nombre_agenda or None,
@@ -2018,6 +2041,23 @@ async def _persistir_entrantes(payload: dict):
                     cuerpo = (eco.get("text") or {}).get("body", "")
                 else:
                     cuerpo = f"[{eco.get('type') or 'mensaje'} enviado por el asesor desde su celular]"
+                # Eco hacia el NÚMERO PERSONAL del asesor: es él mismo
+                # tecleando desde su celular de negocio dentro de su chat con
+                # Broq. Se guarda para que la conversación quede completa, pero
+                # NO es un comando (los comandos son los que MANDA desde su
+                # número personal y llegan como entrantes) — Broq no responde
+                # a esto ni se dispara la lógica de pausa/conocidos.
+                if _es_asesor(numero, wa_dest):
+                    contacto_self = await _get_o_crea_contacto(numero["user_id"], numero["id"],
+                                                               wa_dest, "Tú · Broq", crear_crm=False)
+                    if not contacto_self:
+                        continue
+                    conv_self = await _get_o_crea_conversacion(numero["user_id"], numero["id"],
+                                                               contacto_self["id"], ia_default=False)
+                    await _guardar_mensaje(numero["user_id"], contacto_self["id"], conv_self["id"],
+                                          eco.get("id"), "out", "agente", cuerpo)
+                    continue
+
                 contacto_eco = await _get_o_crea_contacto(numero["user_id"], numero["id"], wa_dest, None)
                 if not contacto_eco:
                     continue
@@ -2153,10 +2193,19 @@ async def _persistir_entrantes(payload: dict):
                 else:
                     texto = f"[mensaje de tipo {tipo_msg or 'desconocido'}]"
 
-                contacto = await _get_o_crea_contacto(numero["user_id"], numero["id"], wa_id,
-                                                      contactos_meta.get(wa_id))
-                conv = await _get_o_crea_conversacion(numero["user_id"], numero["id"], contacto["id"],
-                                                     ia_default=not contacto.get("conocido"))
+                es_asesor = _es_asesor(numero, wa_id)
+                if es_asesor:
+                    # Escribe el DUEÑO desde su número personal registrado: es
+                    # una orden para Broq (modo asesor), nunca un prospecto.
+                    contacto = await _get_o_crea_contacto(numero["user_id"], numero["id"], wa_id,
+                                                          "Tú · Broq", crear_crm=False)
+                    conv = await _get_o_crea_conversacion(numero["user_id"], numero["id"],
+                                                          contacto["id"], ia_default=False)
+                else:
+                    contacto = await _get_o_crea_contacto(numero["user_id"], numero["id"], wa_id,
+                                                          contactos_meta.get(wa_id))
+                    conv = await _get_o_crea_conversacion(numero["user_id"], numero["id"], contacto["id"],
+                                                         ia_default=not contacto.get("conocido"))
 
                 media_url, media_path = (None, None)
                 if media_bytes:
@@ -2164,13 +2213,14 @@ async def _persistir_entrantes(payload: dict):
                         numero["user_id"], conv["id"], media_bytes, media_mime, media_sufijo)
 
                 await _guardar_mensaje(numero["user_id"], contacto["id"], conv["id"], msg.get("id"),
-                                      "in", "lead", texto, media_url, media_path)
-                await sb_patch("wa2_conversaciones", {"id": f"eq.{conv['id']}"},
-                              {"unread_count": (conv.get("unread_count") or 0) + 1})
+                                      "in", "agente" if es_asesor else "lead", texto, media_url, media_path)
+                if not es_asesor:
+                    await sb_patch("wa2_conversaciones", {"id": f"eq.{conv['id']}"},
+                                  {"unread_count": (conv.get("unread_count") or 0) + 1})
 
                 trabajo.append({"numero": numero, "contacto_id": contacto["id"],
                                "conversacion_id": conv["id"], "wa_id": wa_id, "texto": texto,
-                               "wa_message_id": msg.get("id")})
+                               "wa_message_id": msg.get("id"), "es_asesor": es_asesor})
 
             # ── Acuses de Meta (enviado / entregado / leído / FALLIDO) ──────
             # Esto se ignoraba por completo. Lo grave no es perderse la
@@ -2211,11 +2261,12 @@ async def _procesar_en_segundo_plano(item: dict):
 
     # El aviso al celular del agente va ANTES de agrupar: aunque esta tarea se
     # retire por ráfaga, el agente tiene que enterarse de TODOS los mensajes.
-    contacto_push = await sb_get("wa2_contactos", {"id": f"eq.{item['contacto_id']}",
-                                                   "select": "nombre", "limit": "1"})
-    await enviar_push(user_id,
-                      (contacto_push[0].get("nombre") if contacto_push else None) or "Nuevo mensaje de WhatsApp",
-                      item["texto"], datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
+    if not item.get("es_asesor"):  # avisarle al asesor de su propio mensaje no tiene caso
+        contacto_push = await sb_get("wa2_contactos", {"id": f"eq.{item['contacto_id']}",
+                                                       "select": "nombre", "limit": "1"})
+        await enviar_push(user_id,
+                          (contacto_push[0].get("nombre") if contacto_push else None) or "Nuevo mensaje de WhatsApp",
+                          item["texto"], datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
 
     # ── AGRUPAR RÁFAGAS ──────────────────────────────────────────────────
     # La gente escribe en WhatsApp a pedacitos. Se espera unos segundos y, si
@@ -2235,7 +2286,193 @@ async def _procesar_en_segundo_plano(item: dict):
             return
 
     async with _lock_conv(item["conversacion_id"]):
-        await _responder_conversacion(item, numero, user_id)
+        if item.get("es_asesor"):
+            await _broq_asesor(item, numero, user_id)
+        else:
+            await _responder_conversacion(item, numero, user_id)
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# MODO ASESOR — el dueño del número le escribe a su propio número de Broquer
+# DESDE SU NÚMERO PERSONAL registrado (texto o nota de voz, que ya llega
+# transcrita) y Broq lo atiende: comentarios en contactos o tareas, pendientes
+# nuevos y consultas del CRM. Jamás se activa para un lead: solo cuando el
+# remitente es el número personal registrado del dueño (o el propio número).
+# ══════════════════════════════════════════════════════════════════════════
+ASESOR_TOOLS = [
+    {"name": "buscar_contactos",
+     "description": "Busca en el CRM del asesor por nombre, teléfono, email o notas. Úsala SIEMPRE antes de agregar un comentario a un contacto, para obtener su id exacto.",
+     "input_schema": {"type": "object",
+                      "properties": {"query": {"type": "string"}},
+                      "required": ["query"]}},
+    {"name": "buscar_tareas",
+     "description": "Busca en las tareas/citas del asesor por título o notas. Úsala SIEMPRE antes de agregar un comentario a una tarea, para obtener su id exacto.",
+     "input_schema": {"type": "object",
+                      "properties": {"query": {"type": "string"}},
+                      "required": ["query"]}},
+    {"name": "agregar_comentario",
+     "description": "Agrega un comentario con fecha a las notas de un contacto o de una tarea, sin borrar lo que ya había. Usa el id exacto que devolvió buscar_contactos o buscar_tareas.",
+     "input_schema": {"type": "object",
+                      "properties": {"destino": {"type": "string", "enum": ["contacto", "tarea"]},
+                                     "id": {"type": "string"},
+                                     "comentario": {"type": "string"}},
+                      "required": ["destino", "id", "comentario"]}},
+    {"name": "crear_tarea",
+     "description": "Crea una tarea o pendiente para el asesor, con fecha y hora opcionales.",
+     "input_schema": {"type": "object",
+                      "properties": {"titulo": {"type": "string"},
+                                     "fecha": {"type": "string", "description": "YYYY-MM-DD, opcional"},
+                                     "hora": {"type": "string", "description": "HH:MM en 24h, opcional"},
+                                     "notas": {"type": "string"}},
+                      "required": ["titulo"]}},
+]
+
+
+async def _asesor_ejecutar_tool(user_id: str, name: str, args: dict, zona: str | None) -> str:
+    if name == "buscar_contactos":
+        q = (args.get("query") or "").replace(",", " ").strip()
+        params = {"user_id": f"eq.{user_id}", "select": "id,nombre,telefono,tipo",
+                  "order": "updated_at.desc", "limit": "8"}
+        if q:
+            params["or"] = f"(nombre.ilike.*{q}*,telefono.ilike.*{q}*,email.ilike.*{q}*,notas.ilike.*{q}*)"
+        rows = await sb_get("contactos", params)
+        if not rows:
+            return "No encontré contactos que coincidan."
+        return "\n".join(f"• id={c['id']} · {c.get('nombre') or 'Sin nombre'}"
+                          + (f" · {c['telefono']}" if c.get("telefono") else "")
+                          + (f" · {c['tipo']}" if c.get("tipo") else "")
+                          for c in rows)
+
+    if name == "buscar_tareas":
+        q = (args.get("query") or "").replace(",", " ").strip()
+        params = {"user_id": f"eq.{user_id}", "select": "id,titulo,fecha_entrega,completada",
+                  "order": "fecha_entrega.desc.nullslast", "limit": "8"}
+        if q:
+            params["or"] = f"(titulo.ilike.*{q}*,notas.ilike.*{q}*)"
+        rows = await sb_get("tareas", params)
+        if not rows:
+            return "No encontré tareas que coincidan."
+        return "\n".join(f"• id={t['id']} · {t.get('titulo') or 'Sin título'}"
+                          + (" · completada" if t.get("completada") else " · pendiente")
+                          + (f" · {str(t['fecha_entrega'])[:16].replace('T', ' ')} UTC"
+                             if t.get("fecha_entrega") else "")
+                          for t in rows)
+
+    if name == "agregar_comentario":
+        destino = (args.get("destino") or "").strip().lower()
+        fila_id = (args.get("id") or "").strip()
+        comentario = (args.get("comentario") or "").strip()
+        if destino not in ("contacto", "tarea") or not fila_id or not comentario:
+            return "Faltan datos: necesito destino (contacto o tarea), id y comentario."
+        tabla = "contactos" if destino == "contacto" else "tareas"
+        rows = await sb_get(tabla, {"id": f"eq.{fila_id}", "user_id": f"eq.{user_id}",
+                                    "select": "id,notas", "limit": "1"})
+        if not rows:
+            return f"No encontré ese {destino} (id={fila_id}). Búscalo primero para usar el id exacto."
+        linea = f"[{_hora_local(zona).strftime('%d/%m %H:%M')} · Broq] {comentario}"
+        notas = ((rows[0].get("notas") or "") + "\n" + linea).strip()
+        cuerpo = {"notas": notas}
+        if tabla == "contactos":
+            cuerpo["updated_at"] = _now()
+        ok = await sb_patch(tabla, {"id": f"eq.{fila_id}", "user_id": f"eq.{user_id}"}, cuerpo)
+        if not ok:
+            return "No se pudo guardar el comentario. Intenta de nuevo."
+        return f"Listo, comentario agregado al {destino}: {linea}"
+
+    if name == "crear_tarea":
+        titulo = (args.get("titulo") or "").strip()
+        if not titulo:
+            return "Falta el título de la tarea."
+        fila = {"user_id": user_id, "titulo": titulo, "notas": (args.get("notas") or "").strip() or None}
+        if args.get("fecha"):
+            fila["fecha_entrega"] = _fecha_hora_utc_iso(args["fecha"], args.get("hora") or "09:00", zona)
+        creada = await sb_post("tareas", fila)
+        if not creada:
+            return "No se pudo crear la tarea. Intenta de nuevo."
+        return f"Tarea creada: {titulo}" + (f" para el {args['fecha']} {args.get('hora') or ''}".rstrip()
+                                            if args.get("fecha") else "")
+
+    return "No reconozco esa herramienta."
+
+
+async def _broq_asesor(item: dict, numero: dict, user_id: str):
+    entren = await _entrenamiento_de(user_id, numero["id"])
+    zona = entren.get("zona_horaria")
+
+    hist = await sb_get("wa2_mensajes", {"conversacion_id": f"eq.{item['conversacion_id']}",
+                                         "select": "direction,body",
+                                         "order": "created_at.desc", "limit": str(HISTORY_LIMIT)})
+    hist.reverse()
+    crudos = [{"role": "user" if m.get("direction") == "in" else "assistant",
+               "content": m.get("body") or ""} for m in hist if (m.get("body") or "").strip()]
+    while crudos and crudos[0]["role"] != "user":
+        crudos.pop(0)
+    if not crudos:
+        crudos = [{"role": "user", "content": item["texto"]}]
+    # Mensajes seguidos del mismo lado se funden en uno: la API exige turnos.
+    messages: list = []
+    for m in crudos:
+        if messages and messages[-1]["role"] == m["role"] and isinstance(messages[-1]["content"], str):
+            messages[-1]["content"] += "\n" + m["content"]
+        else:
+            messages.append(dict(m))
+
+    system = (
+        "Eres Broq, el asistente personal del asesor inmobiliario DENTRO de su propio WhatsApp. "
+        "Quien te escribe es EL ASESOR dueño del número (NO un cliente): te escribe desde su número "
+        "personal, por texto o nota de voz, para dictarte acciones rápidas en Broquer.\n"
+        f"Hoy es {_fmt_fecha_larga(_hora_local(zona))}. Español mexicano, directo, mensajes cortos de "
+        "WhatsApp, sin emojis.\n"
+        "Tus herramientas: buscar contactos y tareas, agregar comentarios con fecha a un contacto o a una "
+        "tarea, y crear tareas nuevas. Antes de agregar un comentario BUSCA el contacto o la tarea para "
+        "usar su id exacto; si varios coinciden, pregunta cuál en una línea. Si no encuentras nada, dilo "
+        "tal cual — NUNCA inventes contactos, tareas ni ids.\n"
+        "Después de ejecutar, confirma en UNA línea qué quedó registrado y dónde. Si el asesor pide algo "
+        "fuera de tus herramientas, dile que eso se hace en la app de Broquer y en qué módulo."
+    )
+
+    reply = ""
+    try:
+        async with httpx.AsyncClient(timeout=90) as c:
+            for _vuelta in range(6):
+                r = await c.post(f"{ANTHROPIC_BASE}/messages",
+                                 headers={"x-api-key": ANTHROPIC_API_KEY,
+                                          "anthropic-version": "2023-06-01",
+                                          "Content-Type": "application/json"},
+                                 json={"model": WA2_MODEL, "max_tokens": 900, "system": system,
+                                       "messages": messages, "tools": ASESOR_TOOLS})
+                if r.status_code != 200:
+                    log.error("Modo asesor: Anthropic %s %s", r.status_code, r.text[:200])
+                    break
+                data = r.json()
+                content = data.get("content", []) or []
+                texto_turno = "".join(b.get("text", "") for b in content
+                                      if b.get("type") == "text").strip()
+                if texto_turno:
+                    reply = texto_turno
+                if data.get("stop_reason") != "tool_use":
+                    break
+                messages.append({"role": "assistant", "content": content})
+                resultados = []
+                for b in content:
+                    if b.get("type") != "tool_use":
+                        continue
+                    try:
+                        res = await _asesor_ejecutar_tool(user_id, b.get("name"),
+                                                          b.get("input") or {}, zona)
+                    except Exception as e:
+                        res = f"La herramienta falló: {str(e)[:120]}"
+                    resultados.append({"type": "tool_result", "tool_use_id": b.get("id"),
+                                       "content": res})
+                messages.append({"role": "user", "content": resultados})
+    except Exception as e:
+        log.exception("Modo asesor reventó: %s", e)
+
+    if not reply:
+        reply = "No pude procesar tu instrucción ahorita. Mándamela de nuevo en un momento."
+    wamid = await _wa_send_text(numero, item["wa_id"], reply)
+    await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"], wamid,
+                          "out", "ia", reply)
 
 
 async def _responder_conversacion(item: dict, numero: dict, user_id: str):
