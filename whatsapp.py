@@ -915,7 +915,9 @@ async def recepcion2_responde(history: list, contexto: str, agente: dict, entren
         "no ha dicho dónde está, pregúntaselo; deja en null lo que no te hayan dicho. Después de registrarlo "
         "NO le prometas publicación, revisión ni plazos: el sistema le contesta lo justo y el asesor decide.\n"
         "Responde ÚNICAMENTE con un JSON válido, sin texto antes ni después, así:\n"
-        '{"reply":"mensaje para el prospecto","temperatura":"Caliente|Tibio|Frío",'
+        '{"reply":"mensaje para el prospecto",'
+        '"nombre":"el nombre del prospecto ÚNICAMENTE si él mismo lo dijo en el chat (nunca lo inventes ni lo saques de otro lado), o null",'
+        '"temperatura":"Caliente|Tibio|Frío",'
         '"score":0-100,"presupuesto":"texto o null","forma_pago":"crédito|contado|por definir",'
         '"busca":"1 frase o null","resumen":"1 frase para el agente","nota":"1 frase para la bitácora o null",'
         '"accion":null}\n'
@@ -1837,6 +1839,9 @@ async def _sincronizar_contacto_crm(user_id: str, contacto_wa2: dict, resultado_
             cambios["tipo"] = "arrendatario"
         elif busca:
             cambios["tipo"] = "comprador"
+        nombre_chat_crm = (resultado_ia.get("nombre") or "").strip()
+        if nombre_chat_crm:
+            cambios["nombre"] = nombre_chat_crm.upper()
         nota = resultado_ia.get("nota") or resultado_ia.get("resumen")
         if nota:
             rows = await sb_get("contactos", {"id": f"eq.{crm_id}", "select": "notas", "limit": "1"})
@@ -1859,15 +1864,55 @@ async def _sincronizar_contacto_crm(user_id: str, contacto_wa2: dict, resultado_
         log.warning("No se pudo sincronizar el Contacto %s del CRM: %s", crm_id, e)
 
 
+def _solo_digitos(t: str) -> str:
+    return re.sub(r"\D", "", t or "")
+
+
+async def _agenda_upsert(user_id: str, numero_id: str, telefono: str,
+                         nombre: str | None = None, conocido: bool | None = None) -> None:
+    """Agenda del celular del asesor (wa2_agenda): el nombre con el que ÉL tiene
+    registrada a cada persona y si ya la conocía de antes de conectar el número.
+    Nunca truena el webhook: la agenda es un apoyo, no la fuente de verdad."""
+    try:
+        rows = await sb_get("wa2_agenda", {"numero_id": f"eq.{numero_id}",
+                                           "telefono": f"eq.{telefono}", "select": "*", "limit": "1"})
+        if rows:
+            cambios = {"updated_at": _now()}
+            if nombre:
+                cambios["nombre"] = nombre
+            if conocido is not None:
+                cambios["conocido"] = conocido
+            await sb_patch("wa2_agenda", {"id": f"eq.{rows[0]['id']}"}, cambios)
+        else:
+            await sb_post("wa2_agenda", {"user_id": user_id, "numero_id": numero_id,
+                                         "telefono": telefono, "nombre": nombre,
+                                         "conocido": bool(conocido),
+                                         "created_at": _now(), "updated_at": _now()})
+    except Exception as e:
+        log.warning("wa2_agenda no se pudo actualizar (%s): %s", telefono, e)
+
+
 async def _get_o_crea_contacto(user_id: str, numero_id: str, wa_id: str, nombre: str | None) -> dict:
     rows = await sb_get("wa2_contactos", {"numero_id": f"eq.{numero_id}", "wa_id": f"eq.{wa_id}",
                                           "select": "*", "limit": "1"})
     if rows:
         return rows[0]
-    contacto_crm_id = await _crear_contacto_crm(user_id, wa_id, nombre)
+    # Prioridad de nombre del lead: 1) cómo se presentó él mismo en el chat (lo
+    # llena la IA cuando lo diga), 2) cómo lo tiene el asesor en la agenda de su
+    # celular, 3) el nombre que el lead se puso en WhatsApp SOLO como último
+    # recurso, cuando no existen los otros dos.
+    agenda = await sb_get("wa2_agenda", {"numero_id": f"eq.{numero_id}",
+                                         "telefono": f"eq.{_solo_digitos(wa_id)}",
+                                         "select": "*", "limit": "1"})
+    nombre_agenda = (agenda[0].get("nombre") or "").strip() if agenda else ""
+    conocido = bool(agenda and agenda[0].get("conocido"))
+    display = nombre_agenda or (nombre or "").strip() or None
+    contacto_crm_id = await _crear_contacto_crm(user_id, wa_id, display)
     created = await sb_post("wa2_contactos", {
         "user_id": user_id, "numero_id": numero_id, "wa_id": wa_id,
-        "nombre": nombre, "contacto_crm_id": contacto_crm_id,
+        "nombre": display, "nombre_agenda": nombre_agenda or None,
+        "nombre_wa": (nombre or None), "conocido": conocido,
+        "contacto_crm_id": contacto_crm_id,
         "created_at": _now(), "updated_at": _now(),
     })
     if created:
@@ -1877,12 +1922,17 @@ async def _get_o_crea_contacto(user_id: str, numero_id: str, wa_id: str, nombre:
     return rows[0] if rows else {}
 
 
-async def _get_o_crea_conversacion(user_id: str, numero_id: str, contacto_id: str) -> dict:
+async def _get_o_crea_conversacion(user_id: str, numero_id: str, contacto_id: str,
+                                   ia_default: bool = True) -> dict:
     rows = await sb_get("wa2_conversaciones", {"contacto_id": f"eq.{contacto_id}", "select": "*", "limit": "1"})
     if rows:
         return rows[0]
+    # Un CONOCIDO del asesor (agenda del celular o historial previo) arranca con
+    # la IA apagada: la recepcionista es para prospectos nuevos, no para caerle
+    # en frío a un cliente de años. El asesor la puede prender en esa conversación.
     created = await sb_post("wa2_conversaciones", {
         "user_id": user_id, "numero_id": numero_id, "contacto_id": contacto_id,
+        "ai_enabled": ia_default,
         "created_at": _now(), "last_message_at": _now(),
     })
     if created:
@@ -1948,6 +1998,78 @@ async def _persistir_entrantes(payload: dict):
                 log.warning("Número no registrado en wa2_numeros: %s — ignorado", phone_number_id)
                 continue
             contactos_meta = {c["wa_id"]: c.get("profile", {}).get("name") for c in val.get("contacts", [])}
+
+            # ── COEXISTENCIA: ecos de lo que el asesor manda DESDE SU CELULAR ──
+            # Cuando el número coexiste con la app de WhatsApp Business, lo que
+            # el asesor contesta desde su teléfono llega aquí como message_echoes
+            # (campo smb_message_echoes). Sin esto Broquer nunca se enteraba de
+            # que el asesor ya respondió y la IA le contestaba ENCIMA al mismo
+            # prospecto. El eco se guarda en la bandeja como mensaje del agente
+            # y apaga la IA de esa conversación, igual que el envío manual.
+            for eco in (val.get("message_echoes") or []):
+                wa_dest = _solo_digitos(eco.get("to") or "")
+                if not wa_dest:
+                    continue
+                ya = await sb_get("wa2_mensajes", {"wa_message_id": f"eq.{eco.get('id')}",
+                                                   "select": "id", "limit": "1"})
+                if ya:
+                    continue
+                if eco.get("type") == "text":
+                    cuerpo = (eco.get("text") or {}).get("body", "")
+                else:
+                    cuerpo = f"[{eco.get('type') or 'mensaje'} enviado por el asesor desde su celular]"
+                contacto_eco = await _get_o_crea_contacto(numero["user_id"], numero["id"], wa_dest, None)
+                if not contacto_eco:
+                    continue
+                conv_eco = await _get_o_crea_conversacion(numero["user_id"], numero["id"],
+                                                          contacto_eco["id"], ia_default=False)
+                await _guardar_mensaje(numero["user_id"], contacto_eco["id"], conv_eco["id"],
+                                      eco.get("id"), "out", "agente", cuerpo)
+                if conv_eco.get("ai_enabled", True):
+                    await sb_patch("wa2_conversaciones", {"id": f"eq.{conv_eco['id']}"},
+                                   {"ai_enabled": False})
+                if not contacto_eco.get("conocido"):
+                    await sb_patch("wa2_contactos", {"id": f"eq.{contacto_eco['id']}"},
+                                   {"conocido": True, "updated_at": _now()})
+                    await _agenda_upsert(numero["user_id"], numero["id"], wa_dest, conocido=True)
+
+            # ── COEXISTENCIA: agenda del celular del asesor ────────────────────
+            # Meta sincroniza los contactos del teléfono (smb_app_state_sync).
+            # Ese nombre — el que el asesor le puso a la persona en SU agenda —
+            # es la fuente correcta para nombrar leads en Broquer; el nombre que
+            # el lead se puso a sí mismo en WhatsApp es el último recurso.
+            for sync in (val.get("state_sync") or []):
+                if sync.get("type") != "contact":
+                    continue
+                cont_s = sync.get("contact") or {}
+                tel_s = _solo_digitos(cont_s.get("phone_number") or "")
+                nombre_s = (cont_s.get("full_name") or cont_s.get("first_name") or "").strip()
+                if not tel_s or (sync.get("action") or "add") == "remove":
+                    continue
+                await _agenda_upsert(numero["user_id"], numero["id"], tel_s, nombre=nombre_s or None)
+                filas_c = await sb_get("wa2_contactos", {"numero_id": f"eq.{numero['id']}",
+                                                         "wa_id": f"eq.{tel_s}",
+                                                         "select": "*", "limit": "1"})
+                if filas_c and nombre_s:
+                    c0 = filas_c[0]
+                    cambios_c = {"nombre_agenda": nombre_s, "updated_at": _now()}
+                    # El nombre de agenda solo manda si el lead no se ha
+                    # presentado él mismo en el chat (esa es la prioridad 1).
+                    if not (c0.get("nombre_chat") or "").strip():
+                        cambios_c["nombre"] = nombre_s
+                    await sb_patch("wa2_contactos", {"id": f"eq.{c0['id']}"}, cambios_c)
+
+            # ── COEXISTENCIA: historial de chats previos a la conexión ─────────
+            # En el onboarding Meta manda los chats que el número ya tenía
+            # (campo history). No se importan esos mensajes: solo sirve para
+            # marcar a esas personas como CONOCIDAS del asesor, para que la
+            # recepcionista jamás les caiga en frío como a un prospecto nuevo.
+            for bloque_h in (val.get("history") or []):
+                for hilo in (bloque_h.get("threads") or []):
+                    tel_h = _solo_digitos(str(hilo.get("id") or ""))
+                    if tel_h:
+                        await _agenda_upsert(numero["user_id"], numero["id"], tel_h, conocido=True)
+
             for msg in val.get("messages", []):
                 wa_id = msg.get("from")
                 if not wa_id:
@@ -2033,7 +2155,8 @@ async def _persistir_entrantes(payload: dict):
 
                 contacto = await _get_o_crea_contacto(numero["user_id"], numero["id"], wa_id,
                                                       contactos_meta.get(wa_id))
-                conv = await _get_o_crea_conversacion(numero["user_id"], numero["id"], contacto["id"])
+                conv = await _get_o_crea_conversacion(numero["user_id"], numero["id"], contacto["id"],
+                                                     ia_default=not contacto.get("conocido"))
 
                 media_url, media_path = (None, None)
                 if media_bytes:
@@ -2203,6 +2326,9 @@ async def _responder_conversacion(item: dict, numero: dict, user_id: str):
     notas_actuales = contacto.get("notas") or []
     if resultado.get("nota"):
         notas_actuales = notas_actuales + [{"texto": resultado["nota"], "autor": "ia", "fecha": _now()}]
+    # El nombre con el que el prospecto SE PRESENTÓ en el chat es la prioridad 1
+    # (arriba de la agenda del celular y del nombre de WhatsApp).
+    nombre_chat = (resultado.get("nombre") or "").strip() or (contacto.get("nombre_chat") or "").strip()
     update_contacto = {
         "temperatura": resultado.get("temperatura") or contacto.get("temperatura") or "Nuevo",
         "score": resultado.get("score") if resultado.get("score") is not None else contacto.get("score", 0),
@@ -2213,6 +2339,9 @@ async def _responder_conversacion(item: dict, numero: dict, user_id: str):
         "notas": notas_actuales,
         "updated_at": _now(),
     }
+    if nombre_chat:
+        update_contacto["nombre_chat"] = nombre_chat
+        update_contacto["nombre"] = nombre_chat
     await sb_patch("wa2_contactos", {"id": f"eq.{item['contacto_id']}"}, update_contacto)
     await _sincronizar_contacto_crm(user_id, dict(contacto, **update_contacto), resultado)
 
