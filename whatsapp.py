@@ -2310,20 +2310,27 @@ ASESOR_TOOLS = [
      "input_schema": {"type": "object",
                       "properties": {"query": {"type": "string"}},
                       "required": ["query"]}},
-    {"name": "agregar_comentario",
-     "description": "Agrega un comentario con fecha a las notas de un contacto o de una tarea, sin borrar lo que ya había. Usa el id exacto que devolvió buscar_contactos o buscar_tareas.",
+    {"name": "buscar_propiedades",
+     "description": "Busca en la cartera de inmuebles del asesor por título, colonia, calle, ciudad o clave interna. Úsala SIEMPRE antes de agregar un comentario a una propiedad, para obtener su id exacto.",
      "input_schema": {"type": "object",
-                      "properties": {"destino": {"type": "string", "enum": ["contacto", "tarea"]},
+                      "properties": {"query": {"type": "string"}},
+                      "required": ["query"]}},
+    {"name": "agregar_comentario",
+     "description": "Agrega un comentario con fecha a las notas de un contacto, una tarea o una propiedad, sin borrar lo que ya había. Usa el id exacto que devolvió buscar_contactos, buscar_tareas o buscar_propiedades.",
+     "input_schema": {"type": "object",
+                      "properties": {"destino": {"type": "string", "enum": ["contacto", "tarea", "propiedad"]},
                                      "id": {"type": "string"},
                                      "comentario": {"type": "string"}},
                       "required": ["destino", "id", "comentario"]}},
     {"name": "crear_tarea",
-     "description": "Crea una tarea o pendiente para el asesor, con fecha y hora opcionales.",
+     "description": "Crea una tarea o pendiente para el asesor, con fecha y hora opcionales, y opcionalmente vinculada a un contacto y/o un inmueble (usa sus ids exactos de las búsquedas).",
      "input_schema": {"type": "object",
                       "properties": {"titulo": {"type": "string"},
                                      "fecha": {"type": "string", "description": "YYYY-MM-DD, opcional"},
                                      "hora": {"type": "string", "description": "HH:MM en 24h, opcional"},
-                                     "notas": {"type": "string"}},
+                                     "notas": {"type": "string"},
+                                     "contacto_id": {"type": "string"},
+                                     "propiedad_id": {"type": "string"}},
                       "required": ["titulo"]}},
 ]
 
@@ -2358,13 +2365,29 @@ async def _asesor_ejecutar_tool(user_id: str, name: str, args: dict, zona: str |
                              if t.get("fecha_entrega") else "")
                           for t in rows)
 
+    if name == "buscar_propiedades":
+        q = (args.get("query") or "").replace(",", " ").strip()
+        params = {"user_id": f"eq.{user_id}", "select": "id,titulo,colonia,ciudad,operacion,precio",
+                  "order": "updated_at.desc", "limit": "8"}
+        if q:
+            params["or"] = (f"(titulo.ilike.*{q}*,colonia.ilike.*{q}*,calle.ilike.*{q}*,"
+                            f"ciudad.ilike.*{q}*,clave_interna.ilike.*{q}*)")
+        rows = await sb_get("propiedades", params)
+        if not rows:
+            return "No encontré propiedades que coincidan."
+        return "\n".join(f"• id={p['id']} · {p.get('titulo') or 'Sin título'}"
+                          + (f" · {p['colonia']}" if p.get("colonia") else "")
+                          + (f", {p['ciudad']}" if p.get("ciudad") else "")
+                          + (f" · {p['operacion']}" if p.get("operacion") else "")
+                          for p in rows)
+
     if name == "agregar_comentario":
         destino = (args.get("destino") or "").strip().lower()
         fila_id = (args.get("id") or "").strip()
         comentario = (args.get("comentario") or "").strip()
-        if destino not in ("contacto", "tarea") or not fila_id or not comentario:
-            return "Faltan datos: necesito destino (contacto o tarea), id y comentario."
-        tabla = "contactos" if destino == "contacto" else "tareas"
+        if destino not in ("contacto", "tarea", "propiedad") or not fila_id or not comentario:
+            return "Faltan datos: necesito destino (contacto, tarea o propiedad), id y comentario."
+        tabla = {"contacto": "contactos", "tarea": "tareas", "propiedad": "propiedades"}[destino]
         rows = await sb_get(tabla, {"id": f"eq.{fila_id}", "user_id": f"eq.{user_id}",
                                     "select": "id,notas", "limit": "1"})
         if not rows:
@@ -2372,7 +2395,7 @@ async def _asesor_ejecutar_tool(user_id: str, name: str, args: dict, zona: str |
         linea = f"[{_hora_local(zona).strftime('%d/%m %H:%M')} · Broq] {comentario}"
         notas = ((rows[0].get("notas") or "") + "\n" + linea).strip()
         cuerpo = {"notas": notas}
-        if tabla == "contactos":
+        if tabla in ("contactos", "propiedades"):
             cuerpo["updated_at"] = _now()
         ok = await sb_patch(tabla, {"id": f"eq.{fila_id}", "user_id": f"eq.{user_id}"}, cuerpo)
         if not ok:
@@ -2383,12 +2406,22 @@ async def _asesor_ejecutar_tool(user_id: str, name: str, args: dict, zona: str |
         titulo = (args.get("titulo") or "").strip()
         if not titulo:
             return "Falta el título de la tarea."
-        fila = {"user_id": user_id, "titulo": titulo, "notas": (args.get("notas") or "").strip() or None}
+        fila = {"user_id": user_id, "titulo": titulo,
+                "notas": (args.get("notas") or "").strip() or None,
+                "contacto_id": (args.get("contacto_id") or "").strip() or None,
+                "propiedad_id": (args.get("propiedad_id") or "").strip() or None}
         if args.get("fecha"):
             fila["fecha_entrega"] = _fecha_hora_utc_iso(args["fecha"], args.get("hora") or "09:00", zona)
         creada = await sb_post("tareas", fila)
         if not creada:
             return "No se pudo crear la tarea. Intenta de nuevo."
+        tarea_id = creada[0].get("id")
+        if tarea_id and fila.get("contacto_id"):
+            await sb_post("tareas_contactos", {"user_id": user_id, "tarea_id": tarea_id,
+                                               "contacto_id": fila["contacto_id"]})
+        if tarea_id and fila.get("propiedad_id"):
+            await sb_post("tareas_propiedades", {"user_id": user_id, "tarea_id": tarea_id,
+                                                 "propiedad_id": fila["propiedad_id"]})
         return f"Tarea creada: {titulo}" + (f" para el {args['fecha']} {args.get('hora') or ''}".rstrip()
                                             if args.get("fecha") else "")
 
@@ -2423,10 +2456,12 @@ async def _broq_asesor(item: dict, numero: dict, user_id: str):
         "personal, por texto o nota de voz, para dictarte acciones rápidas en Broquer.\n"
         f"Hoy es {_fmt_fecha_larga(_hora_local(zona))}. Español mexicano, directo, mensajes cortos de "
         "WhatsApp, sin emojis.\n"
-        "Tus herramientas: buscar contactos y tareas, agregar comentarios con fecha a un contacto o a una "
-        "tarea, y crear tareas nuevas. Antes de agregar un comentario BUSCA el contacto o la tarea para "
-        "usar su id exacto; si varios coinciden, pregunta cuál en una línea. Si no encuentras nada, dilo "
-        "tal cual — NUNCA inventes contactos, tareas ni ids.\n"
+        "Tus herramientas: buscar contactos, tareas y propiedades; agregar comentarios con fecha a un "
+        "contacto, una tarea o una propiedad; y crear tareas nuevas (con vínculo opcional a un contacto "
+        "y/o inmueble). Antes de agregar un comentario o vincular algo, BUSCA para usar el id exacto; si "
+        "varios coinciden, pregunta cuál en una línea. Si no encuentras nada, dilo tal cual — NUNCA "
+        "inventes contactos, tareas, propiedades ni ids. NUNCA digas que algo quedó registrado si el "
+        "resultado de la herramienta no lo confirmó.\n"
         "Después de ejecutar, confirma en UNA línea qué quedó registrado y dónde. Si el asesor pide algo "
         "fuera de tus herramientas, dile que eso se hace en la app de Broquer y en qué módulo."
     )

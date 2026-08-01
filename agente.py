@@ -269,9 +269,9 @@ async def _tool_agregar_comentario(user_id: str, args: dict) -> str:
     destino = (args.get("destino") or "").strip().lower()
     fila_id = (args.get("id") or "").strip()
     comentario = (args.get("comentario") or "").strip()
-    if destino not in ("contacto", "tarea") or not fila_id or not comentario:
-        return "Faltan datos: necesito destino (contacto o tarea), id y comentario."
-    tabla = "contactos" if destino == "contacto" else "tareas"
+    if destino not in ("contacto", "tarea", "propiedad") or not fila_id or not comentario:
+        return "Faltan datos: necesito destino (contacto, tarea o propiedad), id y comentario."
+    tabla = {"contacto": "contactos", "tarea": "tareas", "propiedad": "propiedades"}[destino]
     from datetime import datetime, timezone, timedelta
     ahora = datetime.now(timezone(timedelta(hours=-6)))  # hora del centro de México
     linea = f"[{ahora.strftime('%d/%m %H:%M')} · Broq] {comentario}"
@@ -285,7 +285,7 @@ async def _tool_agregar_comentario(user_id: str, args: dict) -> str:
                 return f"No encontré ese {destino} (id={fila_id}) en la cuenta del usuario. Búscalo primero para obtener el id exacto."
             notas = ((rows[0].get("notas") or "") + "\n" + linea).strip()
             cuerpo = {"notas": notas}
-            if tabla == "contactos":
+            if tabla in ("contactos", "propiedades"):
                 cuerpo["updated_at"] = datetime.now(timezone.utc).isoformat()
             r2 = await client.patch(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_sb_headers(),
                                     params={"id": f"eq.{fila_id}", "user_id": f"eq.{user_id}"},
@@ -295,6 +295,54 @@ async def _tool_agregar_comentario(user_id: str, args: dict) -> str:
     except Exception as e:
         return f"No pude guardar el comentario: {str(e)[:120]}"
     return f"Listo, comentario agregado al {destino}: {linea}"
+
+
+async def _tool_crear_tarea(user_id: str, args: dict) -> str:
+    """Crea la tarea DE VERDAD en la tabla `tareas`, con vínculos opcionales a
+    un contacto y/o un inmueble (tablas varios-a-varios). Antes esto era una
+    acción de cliente: si el navegador fallaba, Broq decía 'ya quedó' y no
+    había quedado nada."""
+    if not user_id:
+        return "No hay sesión activa."
+    titulo = (args.get("titulo") or "").strip()
+    if not titulo:
+        return "Falta el título de la tarea."
+    fila = {"user_id": user_id, "titulo": titulo,
+            "notas": (args.get("notas") or "").strip() or None,
+            "contacto_id": (args.get("contacto_id") or "").strip() or None,
+            "propiedad_id": (args.get("propiedad_id") or "").strip() or None}
+    if args.get("fecha"):
+        try:
+            from datetime import datetime as _dt
+            from zoneinfo import ZoneInfo
+            y, m, d = (int(x) for x in str(args["fecha"]).split("-"))
+            hh, mi = (int(x) for x in str(args.get("hora") or "09:00").split(":")[:2])
+            local = _dt(y, m, d, hh, mi, tzinfo=ZoneInfo("America/Mexico_City"))
+            from datetime import timezone as _tz
+            fila["fecha_entrega"] = local.astimezone(_tz.utc).isoformat().replace("+00:00", "Z")
+        except Exception:
+            return "La fecha u hora no se entendieron. Usa fecha YYYY-MM-DD y hora HH:MM."
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            h = _sb_headers(); h["Prefer"] = "return=representation"
+            r = await client.post(f"{SUPABASE_URL}/rest/v1/tareas", headers=h, json=fila)
+            if r.status_code >= 300:
+                return f"No se pudo crear la tarea: {r.text[:120]}"
+            tarea_id = (r.json() or [{}])[0].get("id")
+            # Vínculos varios-a-varios para que la tarea aparezca también en la
+            # pestaña de Tareas del contacto/inmueble.
+            if tarea_id and fila.get("contacto_id"):
+                await client.post(f"{SUPABASE_URL}/rest/v1/tareas_contactos", headers=_sb_headers(),
+                                  json={"user_id": user_id, "tarea_id": tarea_id,
+                                        "contacto_id": fila["contacto_id"]})
+            if tarea_id and fila.get("propiedad_id"):
+                await client.post(f"{SUPABASE_URL}/rest/v1/tareas_propiedades", headers=_sb_headers(),
+                                  json={"user_id": user_id, "tarea_id": tarea_id,
+                                        "propiedad_id": fila["propiedad_id"]})
+    except Exception as e:
+        return f"No se pudo crear la tarea: {str(e)[:120]}"
+    cuando = f" para el {args['fecha']} {args.get('hora') or ''}".rstrip() if args.get("fecha") else ""
+    return f"Tarea creada de verdad en el módulo de Tareas: {titulo}{cuando}."
 
 
 async def _tool_resumen_cartera(user_id: str, args: dict) -> str:
@@ -442,6 +490,7 @@ SERVER_TOOLS = {
     "buscar_contactos":   _tool_buscar_contactos,
     "buscar_tareas":      _tool_buscar_tareas,
     "agregar_comentario": _tool_agregar_comentario,
+    "crear_tarea":        _tool_crear_tarea,
     "resumen_cartera":    _tool_resumen_cartera,
     "resumen_estadisticas": _tool_resumen_estadisticas,
 }
@@ -498,12 +547,12 @@ TOOLS_SCHEMA = [
     },
     {
         "name": "agregar_comentario",
-        "description": "Agrega un comentario con fecha a las notas de un contacto o de una tarea, sin borrar lo que ya había. Úsala para 'agrégale un comentario a…', 'anota en la cita de…', 'apunta que el cliente dijo…'. SIEMPRE busca primero con buscar_contactos o buscar_tareas para usar el id exacto; si hay varios que coinciden, pregunta cuál.",
+        "description": "Agrega un comentario con fecha a las notas de un contacto, una tarea o una propiedad, sin borrar lo que ya había. Úsala para 'agrégale un comentario a…', 'anota en la cita de…', 'apunta en la casa de… que…'. SIEMPRE busca primero (buscar_contactos, buscar_tareas o buscar_propiedades) para usar el id exacto; si hay varios que coinciden, pregunta cuál.",
         "input_schema": {
             "type": "object",
             "properties": {
-                "destino": {"type": "string", "enum": ["contacto", "tarea"]},
-                "id": {"type": "string", "description": "id exacto devuelto por buscar_contactos o buscar_tareas."},
+                "destino": {"type": "string", "enum": ["contacto", "tarea", "propiedad"]},
+                "id": {"type": "string", "description": "id exacto devuelto por buscar_contactos, buscar_tareas o buscar_propiedades."},
                 "comentario": {"type": "string"}
             },
             "required": ["destino", "id", "comentario"]
@@ -725,8 +774,6 @@ def _to_client_action(name: str, args: dict) -> Optional[dict]:
         a = {"tipo": "agregar_contacto"}; a.update(args); return a
     if name == "crear_inmueble":
         a = {"tipo": "crear_inmueble_directo"}; a.update(args); return a
-    if name == "crear_tarea":
-        a = {"tipo": "crear_tarea_directo"}; a.update(args); return a
     if name == "crear_ficha_easybroker":
         return {"tipo": "crear_ficha", "id_easybroker": args.get("id_easybroker", "")}
     if name == "crear_ficha_manual":
@@ -778,8 +825,9 @@ def _build_system(context: str, nombre: str = "") -> str:
 CÓMO ACTÚAS:
 - Eres un SUPER ASISTENTE OPERATIVO: entiendes comandos escritos y de voz, razonas con datos reales de la app y ejecutas acciones completas cuando tienes lo necesario.
 - Tienes herramientas reales. Cuando el usuario pide algo que puedes hacer, HAZLO con la herramienta correspondiente. No le digas "ve al módulo X y dale al botón Y": tú lo ejecutas.
-- Puedes encadenar pasos: primero busca datos (buscar_propiedades, detalle_propiedad, buscar_contactos, buscar_tareas, resumen_cartera, resumen_estadisticas) y luego actúa (agregar_comentario, crear_contacto, crear_inmueble, crear_tarea, generar_contrato, crear_ficha_manual, estimar_valor, calcular_isr, generar_reporte_estadisticas, crear_campana_facebook, abrir_modulo o prellenar_formulario). Usa los datos reales que obtengas; nunca inventes precios, m², direcciones ni nombres.
-- Para "agrégale un comentario a…" (un contacto o una tarea/cita), por texto o por voz: busca primero el contacto o la tarea para obtener su id exacto y ejecuta agregar_comentario DIRECTO, sin pedir confirmación. El comentario queda con fecha en las notas y no borra nada. Si hay varios que coinciden, pregunta cuál.
+- Puedes encadenar pasos: primero busca datos (buscar_propiedades, detalle_propiedad, buscar_contactos, buscar_tareas, resumen_cartera, resumen_estadisticas) y luego actúa. agregar_comentario y crear_tarea se ejecutan EN EL SERVIDOR y su tool_result te dice si de verdad quedaron — confírmalo al usuario solo con base en ese resultado. Las demás acciones (crear_contacto, crear_inmueble, generar_contrato, crear_ficha_manual, estimar_valor, calcular_isr, generar_reporte_estadisticas, crear_campana_facebook, abrir_modulo o prellenar_formulario). Usa los datos reales que obtengas; nunca inventes precios, m², direcciones ni nombres.
+- Para "agrégale un comentario / una nota a…" (un contacto, una tarea/cita o una propiedad), por texto o por voz: busca primero para obtener el id exacto y ejecuta agregar_comentario DIRECTO, sin pedir confirmación. El comentario queda con fecha en las notas y no borra nada. Si hay varios que coinciden, pregunta cuál. NUNCA uses crear_contacto ni crear_inmueble para "agregar una nota" a algo que YA EXISTE — eso duplica registros.
+- HONESTIDAD DURA: jamás digas "quedó registrado", "ya lo agregué" ni nada parecido si la herramienta no devolvió una confirmación real. Si el tool_result dice que falló, dile al usuario exactamente eso y qué faltó.
 - Si el usuario pide crear un contacto o inmueble y ya dio los datos obligatorios, créalo directo. Si falta un dato obligatorio, pregunta SOLO el siguiente dato faltante.
 - Antes de una acción que produce un documento o un cambio, reúne los datos OBLIGATORIOS preguntando de UNO EN UNO de forma conversacional. Nunca ejecutes con datos incompletos. Los opcionales que el usuario no sepa: déjalos en 0 o "".
 - Las acciones que generan un archivo (ISR, estimación de valor, contrato, ficha) o que crean algo se ejecutan en el dispositivo del usuario. Cuando lances una de esas, NO digas "ya está descargado": di que la estás preparando y que aparecerá en un momento. El sistema le confirma al usuario cuando termina.
