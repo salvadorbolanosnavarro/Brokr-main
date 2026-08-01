@@ -16,49 +16,161 @@
 .dash-scroll { padding: 24px 28px 48px; max-width: 1180px; margin: 0 auto; }
 @media (max-width: 720px) { .dash-scroll { padding: 16px 14px 40px; } }
 
-/* ── HERO de saludo (estructura navy) ──
-   Todo el texto va en BLANCO; la única excepción es el nombre del
-   usuario, que conserva el azul claro de acento. La separación entre
-   el saludo y los indicadores se hace con bloques translúcidos y
-   aire, igual que en el sidebar: cero líneas divisorias. */
+/* ── HERO de saludo — "Amanecer sobre navy" ──
+   Una sola pieza protagonista: el saludo. Dos masas de luz (aurora)
+   derivan lentamente detrás del contenido; el nombre del usuario es
+   la única nota de color, con un subrayado que se dibuja al llegar.
+   La fecha vive en un chip-calendario y los KPIs en bloques de vidrio
+   con icono, número tabular y conteo animado. Cero líneas divisorias:
+   solo aire, luz y jerarquía tipográfica. Todos los colores derivan
+   de tokens vía color-mix; sin hex nuevos. */
 .sky-hero {
-  background: var(--sky-navy); color: #fff !important;
-  border-radius: var(--r-xl); padding: 30px 28px 26px;
-  position: relative; overflow: hidden;
-  background-image: radial-gradient(120% 70% at 100% 0%, rgba(255,255,255,0.16), rgba(255,255,255,0) 58%);
+  background: var(--sky-navy); color: #fff;
+  border-radius: var(--r-xl); padding: 36px 32px 30px;
+  position: relative; overflow: hidden; isolation: isolate;
 }
+/* Aurora: luz fría arriba-derecha, profundidad abajo-izquierda */
+.sky-hero::before, .sky-hero::after {
+  content: ""; position: absolute; z-index: -1; pointer-events: none;
+  border-radius: 50%; filter: blur(72px);
+}
+.sky-hero::before {
+  width: 640px; height: 640px; top: -380px; right: -160px;
+  background: radial-gradient(circle, rgba(255,255,255,0.20), transparent 66%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--sky-blue-on-dark) 42%, transparent), transparent 66%);
+  animation: hero-drift-a 18s var(--ease) infinite alternate;
+}
+.sky-hero::after {
+  width: 520px; height: 520px; bottom: -340px; left: -140px;
+  background: radial-gradient(circle, rgba(255,255,255,0.12), transparent 70%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--sky-blue-lift) 30%, transparent), transparent 70%);
+  animation: hero-drift-b 24s var(--ease) infinite alternate;
+}
+@keyframes hero-drift-a { to { transform: translate(-60px, 44px) scale(1.08); } }
+@keyframes hero-drift-b { to { transform: translate(70px, -40px) scale(1.12); } }
 .sky-hero > * { position: relative; }
+
 .sky-hero__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
 .sky-hero__eyebrow {
-  font-family: var(--font-sans); font-size: var(--fs-label-3); font-weight: 600; letter-spacing: 0.02em;
-  color: #fff; margin-bottom: 10px;
+  font-family: var(--font-sans); font-size: var(--fs-label-3); font-weight: 600; letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.78); margin-bottom: 14px;
+  display: inline-flex; align-items: center; gap: 8px;
 }
-.sky-hero__title { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 800; letter-spacing: -0.025em; color: #fff; line-height: 1.05; }
+.sky-hero__eyebrow::before {
+  content: ""; width: 22px; height: 2px; border-radius: var(--r-pill);
+  background: linear-gradient(90deg, var(--sky-blue-on-dark), transparent);
+}
+.sky-hero__title {
+  font-family: var(--font-display);
+  font-size: clamp(var(--fs-h1), 3.6vw, var(--fs-display));
+  font-weight: 800; letter-spacing: -0.028em; color: #fff; line-height: 1.04;
+  text-wrap: balance;
+}
 #dash-greet { color: #fff; }
-/* Única excepción de color dentro de la tarjeta: el nombre del usuario */
-.sky-hero__title em { font-style: normal; color: var(--sky-blue-on-dark); }
-/* La fecha deja de ser texto suelto: vive en su propio bloque */
+/* Única nota de color: el nombre del usuario, en gradiente de acento
+   con subrayado que se dibuja al cargar el perfil */
+.sky-hero__title em {
+  font-style: normal; position: relative; white-space: nowrap;
+  background: linear-gradient(94deg, var(--sky-blue-on-dark) 20%, #fff 140%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.sky-hero__title em::after {
+  content: ""; position: absolute; left: 2%; right: 98%; bottom: -6px; height: 3px;
+  border-radius: var(--r-pill);
+  background: linear-gradient(90deg, var(--sky-blue-on-dark), var(--sky-blue-lift));
+  transition: right 0.9s var(--ease-out) 0.2s;
+}
+.sky-hero__title em.is-on::after { right: 2%; }
+
+/* Chip-calendario: mismo dato de siempre, presentado como objeto */
 .sky-hero__date {
-  text-align: right; font-family: var(--font-sans); font-size: var(--fs-sm); font-weight: 700; color: #fff;
-  background: rgba(255,255,255,0.09); border-radius: var(--r); padding: 10px 14px;
+  text-align: center; font-family: var(--font-sans); color: #fff;
+  background: rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: var(--r-lg); padding: 12px 20px 14px; min-width: 108px;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
 }
-.sky-hero__date .label { display: block; font-size: var(--fs-label-3); font-weight: 600; letter-spacing: 0.02em; color: #fff; margin-bottom: 3px; }
-/* Indicadores: un bloque por dato, separados por aire */
-.sky-hero__kpis {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;
-  margin-top: 26px; border-top: none; padding-top: 0;
+.sky-hero__date .label {
+  display: block; font-size: var(--fs-label-3); font-weight: 600; letter-spacing: 0.05em;
+  color: rgba(255,255,255,0.70); margin-bottom: 4px;
 }
-.sky-kpi { background: rgba(255,255,255,0.09); border-radius: var(--r-lg); padding: 18px 20px; }
-.sky-kpi + .sky-kpi { border-left: none; padding-left: 20px; }
-.sky-kpi__value { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 800; color: #fff; line-height: 1; letter-spacing: -0.025em; }
-.sky-kpi__label { font-size: var(--fs-xs); font-weight: 600; color: #fff; margin-top: 8px; }
-@media (max-width: 560px) {
-  .sky-hero { padding: 24px 20px 22px; }
-  .sky-hero__title { font-size: var(--fs-h2); }
-  .sky-kpi__value { font-size: var(--fs-h3); }
-  .sky-hero__date { text-align: left; }
+.sky-hero__date-dia {
+  display: block; font-family: var(--font-display); font-size: var(--fs-h1);
+  font-weight: 800; line-height: 1; letter-spacing: -0.02em; color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.sky-hero__date-mes {
+  display: block; font-size: var(--fs-xs); font-weight: 600;
+  color: rgba(255,255,255,0.82); margin-top: 5px;
 }
 
+/* KPIs: bloques de vidrio con icono, acento superior y número tabular */
+.sky-hero__kpis {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px;
+  margin-top: 30px;
+}
+.sky-kpi {
+  position: relative; overflow: hidden;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--r-lg); padding: 18px 20px 16px;
+  transition: transform 0.25s var(--ease), background 0.25s var(--ease), border-color 0.25s var(--ease);
+}
+.sky-kpi::before {
+  content: ""; position: absolute; top: 0; left: 20px; width: 30px; height: 3px;
+  border-radius: 0 0 var(--r-xs) var(--r-xs);
+  background: linear-gradient(90deg, var(--sky-blue-on-dark), var(--sky-blue-lift));
+  opacity: 0.9;
+}
+.sky-kpi:hover {
+  transform: translateY(-3px);
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.22);
+}
+.sky-kpi__ico {
+  width: 34px; height: 34px; border-radius: var(--r);
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.09);
+  color: var(--sky-blue-on-dark); margin-bottom: 12px;
+}
+.sky-kpi__ico svg { display: block; }
+.sky-kpi__value {
+  font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 800;
+  color: #fff; line-height: 1; letter-spacing: -0.025em; font-variant-numeric: tabular-nums;
+}
+.sky-kpi__label { font-size: var(--fs-xs); font-weight: 600; color: rgba(255,255,255,0.80); margin-top: 8px; }
+
+/* Entrada orquestada: cada pieza sube con un pequeño desfase */
+.sky-hero__eyebrow, .sky-hero__title, .sky-hero__date, .sky-kpi {
+  animation: hero-rise 0.7s var(--ease-out) backwards;
+}
+.sky-hero__title { animation-delay: 0.08s; }
+.sky-hero__date { animation-delay: 0.16s; }
+.sky-kpi:nth-child(1) { animation-delay: 0.24s; }
+.sky-kpi:nth-child(2) { animation-delay: 0.32s; }
+.sky-kpi:nth-child(3) { animation-delay: 0.40s; }
+@keyframes hero-rise { from { opacity: 0; transform: translateY(14px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .sky-hero::before, .sky-hero::after,
+  .sky-hero__eyebrow, .sky-hero__title, .sky-hero__date, .sky-kpi { animation: none; }
+  .sky-hero__title em::after { transition: none; }
+  .sky-kpi, .sky-kpi:hover { transform: none; }
+}
+
+@media (max-width: 560px) {
+  .sky-hero { padding: 26px 20px 24px; }
+  .sky-hero__title { font-size: var(--fs-h2); }
+  .sky-hero__title em { white-space: normal; }
+  .sky-kpi__value { font-size: var(--fs-h3); }
+  .sky-hero__date {
+    min-width: 0; width: 100%; text-align: left;
+    display: flex; align-items: baseline; gap: 10px; padding: 10px 16px;
+  }
+  .sky-hero__date .label { margin-bottom: 0; }
+  .sky-hero__date-dia { font-size: var(--fs-h3); }
+  .sky-hero__date-mes { margin-top: 0; }
+}
 
 
 /* ── Espacio de video (reemplaza las tarjetas de módulos) ── */
@@ -128,17 +240,27 @@
     <div class="sky-hero__top">
       <div>
         <div class="sky-hero__eyebrow">Todo profesional inmobiliario necesita un copiloto</div>
-        <h1 class="sky-hero__title"><span id="dash-greet">Buenos días,</span> <em id="dash-firstname">—</em></h1>
+        <h1 class="sky-hero__title"><span id="dash-greet">Buenos días</span><span id="dash-greet-coma" hidden>,</span> <em id="dash-firstname" hidden></em></h1>
       </div>
       <div class="sky-hero__date">
         <span class="label">Hoy</span>
-        <span id="dash-date">— —</span>
+        <span class="sky-hero__date-dia" id="dash-date-dia">—</span>
+        <span class="sky-hero__date-mes" id="dash-date-mes">—</span>
       </div>
     </div>
     <div class="sky-hero__kpis">
-      <div class="sky-kpi"><div class="sky-kpi__value" id="kpi-props">—</div><div class="sky-kpi__label">Inmuebles activos</div></div>
-      <div class="sky-kpi"><div class="sky-kpi__value" id="kpi-contacts">—</div><div class="sky-kpi__label">Contactos</div></div>
-      <div class="sky-kpi"><div class="sky-kpi__value" id="kpi-horas">—</div><div class="sky-kpi__label">Horas ahorradas</div></div>
+      <div class="sky-kpi">
+        <span class="sky-kpi__ico"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5M5 9.5V21h5v-6h4v6h5V9.5"/></svg></span>
+        <div class="sky-kpi__value" id="kpi-props">—</div><div class="sky-kpi__label">Inmuebles activos</div>
+      </div>
+      <div class="sky-kpi">
+        <span class="sky-kpi__ico"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM22 21v-2a4 4 0 00-3-3.87M15.5 3.13a4 4 0 010 7.75"/></svg></span>
+        <div class="sky-kpi__value" id="kpi-contacts">—</div><div class="sky-kpi__label">Contactos</div>
+      </div>
+      <div class="sky-kpi">
+        <span class="sky-kpi__ico"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3.5 2"/></svg></span>
+        <div class="sky-kpi__value" id="kpi-horas">—</div><div class="sky-kpi__label">Horas ahorradas</div>
+      </div>
     </div>
   </section>
 
@@ -188,21 +310,36 @@
 /* Date + greeting (no-auth, runs immediately) */
 (function(){
   const d = new Date();
-  const fmt = d.toLocaleDateString('es-MX', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-  const dateEl = document.getElementById('dash-date');
-  if (dateEl) dateEl.textContent = fmt.charAt(0).toUpperCase() + fmt.slice(1);
+  const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
+  const diaEl = document.getElementById('dash-date-dia');
+  if (diaEl) diaEl.textContent = d.getDate();
+  const mesEl = document.getElementById('dash-date-mes');
+  if (mesEl) {
+    const semana = cap(d.toLocaleDateString('es-MX', { weekday: 'long' }));
+    const mes = cap(d.toLocaleDateString('es-MX', { month: 'long' }));
+    mesEl.textContent = semana + ' · ' + mes + ' ' + d.getFullYear();
+  }
   const h = d.getHours();
   const greet = h < 12 ? 'Buenos días' : (h < 19 ? 'Buenas tardes' : 'Buenas noches');
   const gEl = document.getElementById('dash-greet');
-  if (gEl) gEl.textContent = `${greet},`;
+  if (gEl) gEl.textContent = greet;
 })();
 
 /* When the shell finishes auth, populate first name + KPIs */
 window.addEventListener('brokr-shell-ready', async (e) => {
   const profile = e.detail?.profile;
-  const first = (profile?.fullName || '').split(' ')[0];
+  // Saluda solo con el nombre capturado en el perfil ("Pedro Pérez" → "Pedro").
+  // Si el usuario aún no completa su perfil, saluda sin nombre — nunca con el correo.
+  const nombrePerfil = (profile?.profile?.nombre || '').trim();
+  const first = nombrePerfil.split(/\s+/)[0] || '';
   const fnEl = document.getElementById('dash-firstname');
-  if (fnEl) fnEl.textContent = first || '—';
+  const comaEl = document.getElementById('dash-greet-coma');
+  if (fnEl && first) {
+    fnEl.textContent = first;
+    fnEl.hidden = false;
+    if (comaEl) comaEl.hidden = false;
+    requestAnimationFrame(() => fnEl.classList.add('is-on'));
+  }
 
   const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
   const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
@@ -268,6 +405,33 @@ window.addEventListener('brokr-shell-ready', async (e) => {
 
   cargarNotificaciones();
 });
+
+/* ── Conteo animado de los KPIs del hero (solo presentación) ──
+   Observa cada valor una vez: cuando la lógica de datos escribe el número
+   final, lo anima de 0 al total. Respeta prefers-reduced-motion. */
+(function(){
+  const reducido = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const easeOut = t => 1 - Math.pow(1 - t, 3);
+  ['kpi-props', 'kpi-contacts', 'kpi-horas'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const mo = new MutationObserver(() => {
+      const fin = Number(el.textContent);
+      if (!Number.isFinite(fin)) return;
+      mo.disconnect(); // una sola animación por KPI
+      if (reducido || fin === 0) return;
+      const t0 = performance.now(), dur = 900;
+      el.textContent = '0';
+      function paso(t) {
+        const p = Math.min(1, (t - t0) / dur);
+        el.textContent = Math.round(fin * easeOut(p));
+        if (p < 1) requestAnimationFrame(paso);
+      }
+      requestAnimationFrame(paso);
+    });
+    mo.observe(el, { childList: true, characterData: true, subtree: true });
+  });
+})();
 
 /* ── Tus próximos pendientes/citas (tareas con fecha, sin completar) ── */
 async function cargarNotificaciones() {
