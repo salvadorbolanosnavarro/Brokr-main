@@ -915,19 +915,9 @@ const TABLA_ISR = [
   {li:1702567.98,ls:5107703.92,  cf:444116.23,  tasa:0.3400},
   {li:5107703.93,ls:Infinity,    cf:1601862.46, tasa:0.3500}
 ];
-const TABLA_ISR_2024 = [
-  {li:0.01,      ls:8952.49,     cf:0,          tasa:0.0192},
-  {li:8952.50,   ls:75984.55,    cf:171.88,     tasa:0.0640},
-  {li:75984.56,  ls:133536.07,   cf:3959.25,    tasa:0.1088},
-  {li:133536.08, ls:155229.80,   cf:10220.86,   tasa:0.1600},
-  {li:155229.81, ls:185852.57,   cf:13526.70,   tasa:0.1792},
-  {li:185852.58, ls:374837.88,   cf:18785.54,   tasa:0.2136},
-  {li:374837.89, ls:590795.99,   cf:57325.95,   tasa:0.2352},
-  {li:590796.00, ls:1127926.84,  cf:108014.74,  tasa:0.3000},
-  {li:1127926.85,ls:1503902.46,  cf:269260.94,  tasa:0.3200},
-  {li:1503902.47,ls:4511707.37,  cf:388012.14,  tasa:0.3400},
-  {li:4511707.38,ls:Infinity,    cf:1409354.09, tasa:0.3500}
-];
+// Tarifa anual 2024 — identica a la 2025 (no hubo actualizacion entre ambas;
+// la inflacion acumulada no rebaso el 10% del art. 152 hasta nov 2025).
+const TABLA_ISR_2024 = TABLA_ISR_2025;
 
 let _isrData = null;
 
