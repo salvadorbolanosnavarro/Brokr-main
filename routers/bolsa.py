@@ -136,18 +136,49 @@ async def _agentes_por_id(client: httpx.AsyncClient, ids: list) -> dict:
 # ══════════════════════════════════════════════════════════════════════════
 # EXPLORAR LA BOLSA
 # ══════════════════════════════════════════════════════════════════════════
+def _patron_sin_acentos(token: str) -> str:
+    """Vuelve el token insensible a acentos para ilike: cada vocal (con o sin
+    acento) y la n/ñ se sustituyen por el comodín de UN carácter (_ en LIKE).
+    Así "michoacan" encuentra "Michoacán" y "penon" encuentra "Peñón" aunque
+    Postgres no tenga unaccent habilitado. Al ser comodín de un solo carácter,
+    no abre la búsqueda de más."""
+    return re.sub(r"[aeiouáéíóúüñn]", "_", token, flags=re.IGNORECASE)
+
+
+# Columnas de texto donde busca el buscador libre
+_COLS_BUSQUEDA = ("titulo", "colonia", "ciudad", "estado", "descripcion", "tipo")
+
+# Órdenes permitidos (lo que manda el frontend → sintaxis PostgREST)
+_ORDENES = {
+    "reciente":     "bolsa_fecha.desc.nullslast",
+    "precio_asc":   "precio.asc.nullslast",
+    "precio_desc":  "precio.desc.nullslast",
+    "comision":     "bolsa_comision.desc.nullslast",
+}
+
+
 @router.get("/propiedades")
 async def bolsa_propiedades(
     request: Request,
     page: int = Query(1, ge=1),
     q: str = "",
     ciudad: str = "",
+    estado: str = "",
     tipo: str = "",
     operacion: str = "",
     precio_min: Optional[float] = None,
     precio_max: Optional[float] = None,
+    recamaras_min: Optional[int] = None,
+    banos_min: Optional[float] = None,
+    m2_min: Optional[float] = None,
+    orden: str = "reciente",
 ):
-    """Listado nacional de propiedades en bolsa, con filtros y paginación."""
+    """Listado nacional de propiedades en bolsa, con filtros y paginación.
+
+    El buscador libre (q) parte la frase en palabras: TODAS deben aparecer,
+    cada una en cualquiera de título, colonia, ciudad, estado, descripción o
+    tipo, sin importar acentos. "depa amueblado morelia" encuentra un
+    departamento en Morelia cuya descripción diga amueblado."""
     uid = await _uid(request)
     if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
         raise HTTPException(500, "Supabase no está configurado en el servidor.")
@@ -156,30 +187,39 @@ async def bolsa_propiedades(
         "en_bolsa": "eq.true",
         "estatus":  "eq.activa",
         "select":   "*",
-        "order":    "bolsa_fecha.desc.nullslast",
+        "order":    _ORDENES.get(orden, _ORDENES["reciente"]),
         "limit":    str(PAGINA),
         "offset":   str((page - 1) * PAGINA),
     }
     if ciudad:
-        params["ciudad"] = f"ilike.*{_limpia_filtro(ciudad)}*"
+        params["ciudad"] = f"ilike.*{_patron_sin_acentos(_limpia_filtro(ciudad))}*"
+    if estado:
+        params["estado"] = f"ilike.*{_patron_sin_acentos(_limpia_filtro(estado))}*"
     if tipo:
         params["tipo"] = f"eq.{_limpia_filtro(tipo)}"
     if operacion:
         params["operacion"] = f"eq.{_limpia_filtro(operacion)}"
+    if recamaras_min is not None and recamaras_min > 0:
+        params["recamaras"] = f"gte.{recamaras_min}"
+    if banos_min is not None and banos_min > 0:
+        params["banos"] = f"gte.{banos_min}"
+    if m2_min is not None and m2_min > 0:
+        params["m2_construccion"] = f"gte.{m2_min}"
+
+    # Rango de precio + búsqueda libre viven juntos en un solo and=()
+    condiciones = []
     if precio_min is not None:
-        params["precio"] = f"gte.{precio_min}"
+        condiciones.append(f"precio.gte.{precio_min}")
     if precio_max is not None:
-        # PostgREST admite repetir la columna con and=; para no complicar,
-        # si ya hay gte se combina con and=()
-        if "precio" in params:
-            params.pop("precio")
-            params["and"] = f"(precio.gte.{precio_min},precio.lte.{precio_max})"
-        else:
-            params["precio"] = f"lte.{precio_max}"
+        condiciones.append(f"precio.lte.{precio_max}")
     if q:
-        t = _limpia_filtro(q)
-        if t:
-            params["or"] = f"(titulo.ilike.*{t}*,colonia.ilike.*{t}*,ciudad.ilike.*{t}*)"
+        tokens = [t for t in _limpia_filtro(q).split() if len(t) >= 2][:6]
+        for t in tokens:
+            pat = _patron_sin_acentos(t)
+            grupo = ",".join(f"{col}.ilike.*{pat}*" for col in _COLS_BUSQUEDA)
+            condiciones.append(f"or({grupo})")
+    if condiciones:
+        params["and"] = f"({','.join(condiciones)})"
 
     try:
         async with httpx.AsyncClient(timeout=20) as client:
