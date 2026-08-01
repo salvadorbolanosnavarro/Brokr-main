@@ -257,6 +257,7 @@
     { key:'contactos',    href:'contactos.html',     label:'Contactos',           group:'crm',         icon:'users' },
     { key:'tareas',       href:'tareas.html',        label:'Tareas',              group:'crm',         icon:'check' },
     { key:'estadisticas', href:'estadisticas.html',  label:'Estadísticas',        group:'crm',         icon:'chart' },
+    { key:'bolsa',        href:'bolsa.html',         label:'Bolsa inmobiliaria',  group:'crm',         icon:'handshake' },
     // Seguimiento — hablar con el prospecto hasta que se convierte en cliente.
     { key:'whatsapp',     href:'whatsapp.html',      label:'WhatsApp',            group:'seguimiento', icon:'whatsapp' },
     { key:'leads',        href:'leads.html',         label:'Leads',               group:'seguimiento', icon:'send' },
@@ -287,6 +288,7 @@
     'tareas':       'Tareas — pendientes y actividad del CRM',
     'leads':        'Leads — contactos marcados como potenciales, aún sin cerrar',
     'estadisticas': 'Estadísticas — captación, pipeline e inmuebles con más interés',
+    'bolsa':        'Bolsa inmobiliaria — propiedades compartidas entre agentes Broquer con comisión compartida; publicar inmuebles propios y contactar al agente captador',
     'mi-sitio':     'Mi sitio — perfil público, plantilla y sitio web del agente',
     'contratos':    'Contratos — arrendamiento y promesa de compraventa',
     'cumplimiento': 'Cumplimiento PLD/UIF — expediente único de identificación del cliente, umbrales de aviso, acumulación de operaciones, avisos al SPPLD y bitácora',
@@ -306,6 +308,7 @@
      en posición/tamaño/estilo. 'home' se excluye (tiene su propio hero). */
   const PAGE_META = {
     'equipo':        { title:'Equipo',                 sub:'Quién trabaja en tu cuenta y qué puede ver cada quien.' },
+    'bolsa':         { title:'Bolsa inmobiliaria',     sub:'Comparte inventario con otros agentes Broquer y cierra en equipo con comisión compartida.' },
     'contratos':     { title:'Contratos',              sub:'Genera contratos listos para firma en minutos.' },
     'cumplimiento':  { title:'Cumplimiento',           sub:'El expediente de identificación de cada cliente, el control de umbrales y los avisos a la UIF, en un solo lugar.' },
     'firmas':        { title:'Firma electrónica',      sub:'Manda el contrato, cada parte firma desde su celular y te regresa con constancia.' },
