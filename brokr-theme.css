@@ -300,6 +300,7 @@ input, select, textarea, button {
 
 /* Foco visible accesible y consistente para todo componente del sistema */
 .bk-btn:focus-visible,
+.bk-chip:focus-visible,
 .bk-input:focus-visible,
 .bk-textarea:focus-visible,
 .bk-select:focus-visible,
