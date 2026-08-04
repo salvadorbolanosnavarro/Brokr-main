@@ -92,6 +92,21 @@ except Exception:
 # rechaza el envío completo y el prospecto no recibe NADA.
 WA_MAX_TEXTO = 4000
 
+# Palabras EXACTAS con las que un prospecto se da de baja de las campañas.
+# Al detectarlas, el contacto se marca opt_out y ninguna campaña vuelve a
+# tocarlo — puede seguir chateando normal, solo queda fuera de los masivos.
+_OPT_OUT_PALABRAS = {"baja", "stop", "alto", "cancelar", "no molestar",
+                     "darme de baja", "no me escribas", "unsubscribe"}
+
+# TOPE DURO de contactos por campaña. Meta limita cuántas conversaciones de
+# marketing puede abrir un número según su nivel (250 / 1,000 / 10,000...);
+# pasarse hace que Meta rechace envíos y hasta baje la calidad del número.
+# Se puede subir sin tocar código con WA2_CAMPANA_TOPE en Railway.
+try:
+    WA2_CAMPANA_TOPE = max(1, int(os.environ.get("WA2_CAMPANA_TOPE", "250")))
+except Exception:
+    WA2_CAMPANA_TOPE = 250
+
 # Cajón de Supabase donde viven las fotos, audios y documentos de WhatsApp.
 WA_MEDIA_BUCKET = os.environ.get("WA_MEDIA_BUCKET", "wa-media")
 
@@ -2218,6 +2233,19 @@ async def _persistir_entrantes(payload: dict):
                     await sb_patch("wa2_conversaciones", {"id": f"eq.{conv['id']}"},
                                   {"unread_count": (conv.get("unread_count") or 0) + 1})
 
+                # ── BAJA de campañas por palabra clave (opt-out) ──────────
+                # Si el mensaje ES exactamente una palabra de baja, el
+                # contacto queda fuera de todas las campañas para siempre.
+                # Nunca truena el webhook: si la columna no existe todavía
+                # (migración pendiente), simplemente no pasa nada.
+                if (not es_asesor and tipo_msg == "text"
+                        and texto.strip().lower().rstrip(".!") in _OPT_OUT_PALABRAS):
+                    try:
+                        await sb_patch("wa2_contactos", {"id": f"eq.{contacto['id']}"},
+                                       {"opt_out": True, "updated_at": _now()})
+                    except Exception:
+                        pass
+
                 trabajo.append({"numero": numero, "contacto_id": contacto["id"],
                                "conversacion_id": conv["id"], "wa_id": wa_id, "texto": texto,
                                "wa_message_id": msg.get("id"), "es_asesor": es_asesor})
@@ -3095,9 +3123,250 @@ async def wa2_contacto_patch(contacto_id: str, request: Request):
     ids = await _ids_visibles(user_id)
     body = await request.json()
     permitido = {k: v for k, v in body.items()
-                if k in ("nombre", "presupuesto", "forma_pago", "busca", "temperatura", "score", "etapa", "resumen")}
+                if k in ("nombre", "presupuesto", "forma_pago", "busca", "temperatura", "score", "etapa", "resumen", "opt_out")}
+    # Etiquetas: solo lista de textos cortos, sin repetidos y con tope, para
+    # que un cliente no pueda meter basura enorme por el API.
+    if "etiquetas" in body and isinstance(body["etiquetas"], list):
+        limpias = []
+        for e in body["etiquetas"]:
+            t = str(e).strip()[:40]
+            if t and t not in limpias:
+                limpias.append(t)
+        permitido["etiquetas"] = limpias[:20]
+    if not permitido:
+        return {"ok": True}
+    permitido["updated_at"] = _now()
     await sb_patch("wa2_contactos", {"id": f"eq.{contacto_id}", "user_id": _in_filter(ids)}, permitido)
     return {"ok": True}
+
+
+# =============================================================================
+# 9.5) CAMPAÑAS — envío masivo de una plantilla aprobada a una audiencia
+#
+# La audiencia son los contactos de UN número (todos, o solo los que tengan
+# cierta etiqueta), quitando siempre: gente sin wa_id, gente dada de baja
+# (opt_out) y el propio asesor. El envío corre en segundo plano, uno por uno
+# con una pausa corta, y cada envío queda registrado en wa2_campana_envios.
+# Cada mensaje que sale también se guarda en su conversación de la bandeja,
+# para que el agente vea qué se le mandó a quién.
+# =============================================================================
+class CampanaAudienciaReq(BaseModel):
+    numero_id: str
+    etiqueta: str | None = None
+
+
+class CampanaCrearReq(BaseModel):
+    numero_id: str
+    nombre: str
+    plantilla: str
+    idioma: str = "es_MX"
+    variables: list[str] = []
+    etiqueta: str | None = None
+
+
+async def _audiencia_campana(numero: dict, etiqueta: str | None) -> list:
+    params = {"numero_id": f"eq.{numero['id']}",
+              "user_id": f"eq.{numero['user_id']}",
+              "select": "id,wa_id,nombre,opt_out,etiquetas",
+              "limit": "5000"}
+    if etiqueta:
+        # PostgREST: jsonb "contiene" — la etiqueta debe estar en el array.
+        params["etiquetas"] = "cs." + json.dumps([etiqueta])
+    rows = await sb_get("wa2_contactos", params)
+    audiencia = []
+    for c in rows:
+        if not c.get("wa_id") or c.get("opt_out"):
+            continue
+        if _es_asesor(numero, c["wa_id"]):
+            continue
+        audiencia.append(c)
+    return audiencia
+
+
+async def _numero_visible(request: Request, numero_id: str) -> tuple[str, dict]:
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    rows = await sb_get("wa2_numeros", {"id": f"eq.{numero_id}",
+                                        "user_id": _in_filter(ids),
+                                        "select": "*", "limit": "1"})
+    if not rows:
+        raise HTTPException(status_code=404, detail="Número no encontrado")
+    return user_id, rows[0]
+
+
+@router.get("/etiquetas")
+async def wa2_etiquetas_list(request: Request):
+    """Todas las etiquetas distintas que el usuario ha puesto a sus contactos
+    de WhatsApp — alimenta el selector de audiencia de campañas."""
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    rows = await sb_get("wa2_contactos", {"user_id": _in_filter(ids),
+                                          "select": "etiquetas", "limit": "5000"})
+    etiquetas = sorted({str(e).strip() for c in rows
+                        for e in (c.get("etiquetas") or []) if str(e).strip()})
+    return {"etiquetas": etiquetas}
+
+
+@router.post("/campanas/audiencia")
+async def wa2_campana_audiencia(req: CampanaAudienciaReq, request: Request):
+    """Cuenta (sin enviar nada) a cuánta gente le llegaría la campaña."""
+    _, numero = await _numero_visible(request, req.numero_id)
+    audiencia = await _audiencia_campana(numero, (req.etiqueta or "").strip() or None)
+    return {"total": len(audiencia), "tope": WA2_CAMPANA_TOPE}
+
+
+@router.get("/campanas")
+async def wa2_campanas_list(request: Request):
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    rows = await sb_get("wa2_campanas", {"user_id": _in_filter(ids), "select": "*",
+                                         "order": "created_at.desc", "limit": "30"})
+    return {"campanas": rows}
+
+
+@router.get("/campanas/{campana_id}")
+async def wa2_campana_detalle(campana_id: str, request: Request):
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    rows = await sb_get("wa2_campanas", {"id": f"eq.{campana_id}",
+                                         "user_id": _in_filter(ids),
+                                         "select": "*", "limit": "1"})
+    if not rows:
+        raise HTTPException(status_code=404, detail="Campaña no encontrada")
+    fallidos = await sb_get("wa2_campana_envios", {"campana_id": f"eq.{campana_id}",
+                                                   "estado": "eq.fallido",
+                                                   "select": "nombre,wa_id,error",
+                                                   "limit": "200"})
+    return {"campana": rows[0], "fallidos": fallidos}
+
+
+@router.post("/campanas")
+async def wa2_campana_crear(req: CampanaCrearReq, request: Request, background: BackgroundTasks):
+    _, numero = await _numero_visible(request, req.numero_id)
+
+    nombre = (req.nombre or "").strip()[:80]
+    plantilla = (req.plantilla or "").strip()
+    if not nombre or not plantilla:
+        raise HTTPException(status_code=400, detail="Falta el nombre de la campaña o la plantilla.")
+
+    etiqueta = (req.etiqueta or "").strip() or None
+    audiencia = await _audiencia_campana(numero, etiqueta)
+    if not audiencia:
+        raise HTTPException(status_code=400,
+                            detail="No hay contactos en esa audiencia (o todos pidieron baja).")
+    if len(audiencia) > WA2_CAMPANA_TOPE:
+        raise HTTPException(status_code=400,
+                            detail=f"La audiencia tiene {len(audiencia)} contactos y el tope por "
+                                   f"campaña es {WA2_CAMPANA_TOPE}. Usa una etiqueta para segmentarla.")
+
+    variables = [str(v)[:200] for v in (req.variables or [])][:10]
+    fila = {"user_id": numero["user_id"], "numero_id": numero["id"], "nombre": nombre,
+            "plantilla": plantilla, "idioma": (req.idioma or "es_MX")[:12],
+            "variables": variables, "etiqueta": etiqueta, "estado": "enviando",
+            "total": len(audiencia), "enviados": 0, "fallidos": 0, "created_at": _now()}
+    creado = await sb_post("wa2_campanas", fila)
+    if not creado:
+        raise HTTPException(status_code=500,
+                            detail="No se pudo crear la campaña. ¿Ya corriste la migración de campañas?")
+    campana_id = (creado[0] if isinstance(creado, list) else creado).get("id")
+
+    background.add_task(_correr_campana, campana_id, numero, audiencia,
+                        plantilla, (req.idioma or "es_MX"), variables)
+    return {"ok": True, "campana_id": campana_id, "total": len(audiencia)}
+
+
+def _variables_para(contacto: dict, variables: list) -> list:
+    """Sustituye el comodín {nombre} por el primer nombre real del contacto —
+    la única personalización automática de la capa estándar."""
+    listas = []
+    for v in variables:
+        if str(v).strip().lower() in ("{nombre}", "{{nombre}}"):
+            primero = (contacto.get("nombre") or "").strip().split(" ")[0]
+            listas.append(primero.title() if primero else "Hola")
+        else:
+            listas.append(str(v))
+    return listas
+
+
+async def _correr_campana(campana_id: str, numero: dict, audiencia: list,
+                          plantilla: str, idioma: str, variables: list):
+    enviados = fallidos = 0
+    async with httpx.AsyncClient(timeout=20) as c:
+        for i, ct in enumerate(audiencia):
+            vars_ct = _variables_para(ct, variables)
+            componentes = []
+            if vars_ct:
+                componentes.append({"type": "body",
+                                    "parameters": [{"type": "text", "text": v} for v in vars_ct]})
+            wamid, err = None, ""
+            try:
+                r = await c.post(f"{GRAPH_API}/{numero['phone_number_id']}/messages",
+                                 headers={"Authorization": f"Bearer {numero['access_token']}"},
+                                 json={"messaging_product": "whatsapp", "to": ct["wa_id"],
+                                       "type": "template",
+                                       "template": {"name": plantilla,
+                                                    "language": {"code": idioma},
+                                                    "components": componentes}})
+                if r.status_code < 400:
+                    msgs = r.json().get("messages") or []
+                    wamid = msgs[0].get("id") if msgs else None
+                else:
+                    try:
+                        err = (r.json().get("error", {}).get("message") or "")[:200]
+                    except Exception:
+                        err = r.text[:200]
+                    if not err:
+                        err = f"Meta respondió {r.status_code}"
+            except Exception as e:
+                err = str(e)[:200]
+
+            ok = not err
+            try:
+                await sb_post("wa2_campana_envios",
+                              {"campana_id": campana_id, "user_id": numero["user_id"],
+                               "contacto_id": ct["id"], "wa_id": ct.get("wa_id"),
+                               "nombre": ct.get("nombre"),
+                               "estado": "enviado" if ok else "fallido",
+                               "error": err or None, "created_at": _now()})
+            except Exception:
+                pass
+
+            if ok:
+                enviados += 1
+                # Reflejar el envío en la bandeja, en la conversación de esa
+                # persona (si no tenía, se crea con la IA apagada: fue un
+                # masivo, no una conversación que la IA deba retomar sola).
+                try:
+                    conv = await _get_o_crea_conversacion(numero["user_id"], numero["id"],
+                                                          ct["id"], ia_default=False)
+                    resumen = f"[Campaña · plantilla {plantilla}]"
+                    await _guardar_mensaje(numero["user_id"], ct["id"], conv["id"],
+                                          wamid, "out", "agente", resumen)
+                except Exception:
+                    pass
+            else:
+                fallidos += 1
+                log.warning("Campaña %s: fallo con %s: %s", campana_id, ct.get("wa_id"), err)
+
+            if (i + 1) % 10 == 0:
+                try:
+                    await sb_patch("wa2_campanas", {"id": f"eq.{campana_id}"},
+                                   {"enviados": enviados, "fallidos": fallidos})
+                except Exception:
+                    pass
+            # Pausa corta entre envíos: no saturar el API de Meta ni parecer spam.
+            await asyncio.sleep(0.5)
+
+    try:
+        await sb_patch("wa2_campanas", {"id": f"eq.{campana_id}"},
+                       {"enviados": enviados, "fallidos": fallidos,
+                        "estado": "terminada", "terminado_at": _now()})
+    except Exception:
+        pass
+    await enviar_push(numero.get("user_id"), "Campaña terminada",
+                      f"Se enviaron {enviados} mensajes"
+                      + (f" ({fallidos} fallaron)" if fallidos else "") + ".",
+                      datos={"tipo": "whatsapp"})
 
 
 # =============================================================================

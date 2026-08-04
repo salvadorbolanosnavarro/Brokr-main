@@ -38,6 +38,29 @@
   .w2-tab{ padding:var(--sp-3) var(--sp-4); font-size:var(--fs-sm); font-weight:700; color:var(--mute);
            border-bottom:2px solid transparent; cursor:pointer; background:none; border-left:0; border-right:0; border-top:0; }
   .w2-tab.is-active{ color:var(--ink); border-bottom-color:var(--sky-blue); }
+  .w2-tabs .w2-avanzado{ margin-left:auto; display:flex; align-items:center; gap:var(--sp-2);
+    font-size:var(--fs-xs); color:var(--mute); padding-bottom:var(--sp-2); }
+
+  /* Etiquetas del contacto dentro del hilo */
+  .w2-thread__tags{ display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-1); margin-top:2px; }
+  .w2-tag{ display:inline-flex; align-items:center; gap:4px; font-size:var(--fs-xs); color:var(--ink);
+    background:var(--canvas); border:1px solid var(--line); border-radius:var(--r-pill, 999px);
+    padding:1px var(--sp-2); }
+  .w2-tag button{ border:0; background:none; color:var(--mute); cursor:pointer; padding:0;
+    font-size:var(--fs-xs); line-height:1; }
+  .w2-tag-add{ border:1px dashed var(--line); background:none; border-radius:var(--r-pill, 999px);
+    font-size:var(--fs-xs); color:var(--mute); padding:1px var(--sp-2); width:92px; }
+  .w2-tag-add:focus{ outline:none; border-color:var(--sky-blue); color:var(--ink); }
+
+  /* Campañas */
+  .w2-cp-preview{ margin-top:var(--sp-2); padding:var(--sp-3); background:var(--canvas);
+    border:1px solid var(--line); border-radius:var(--r-md, 10px); font-size:var(--fs-sm);
+    color:var(--ink); white-space:pre-wrap; }
+  .w2-cp-row{ display:flex; align-items:center; gap:var(--sp-3); padding:var(--sp-3);
+    border:1px solid var(--line); border-radius:var(--r-md, 10px); background:var(--paper); }
+  .w2-cp-row__info{ flex:1; min-width:0; }
+  .w2-cp-row__nombre{ font-weight:700; font-size:var(--fs-sm); color:var(--ink); }
+  .w2-cp-row__sub{ font-size:var(--fs-xs); color:var(--mute); margin-top:2px; }
 
   /* ── Chats: consola conversacional ────────────────────────── */
   .w2-app{ display:grid; grid-template-columns:360px 1fr; height:calc(100vh - 250px); min-height:620px;
@@ -220,8 +243,13 @@
 
   <div class="w2-tabs">
     <button class="w2-tab is-active" data-tab="chats" onclick="w2IrATab('chats')">Chats</button>
+    <button class="w2-tab" data-tab="campanas" onclick="w2IrATab('campanas')">Campañas</button>
     <button class="w2-tab" data-tab="plantillas" onclick="w2IrATab('plantillas')">Plantillas</button>
     <button class="w2-tab" data-tab="entrenamiento" onclick="w2IrATab('entrenamiento')">Entrenamiento</button>
+    <label class="w2-avanzado bk-switch" title="Muestra las opciones técnicas del módulo">
+      <input type="checkbox" id="w2-avanzado-check" onchange="w2ToggleAvanzado(this.checked)"/>
+      <span class="bk-switch__track"></span> Modo avanzado
+    </label>
   </div>
 
   <!-- ═══ CHATS ═══ -->
@@ -248,6 +276,46 @@
     </div>
   </div>
 
+  <!-- ═══ CAMPAÑAS ═══ -->
+  <div id="w2-view-campanas" hidden>
+    <div class="bk-section-header"><h2>Campañas de WhatsApp</h2></div>
+    <div class="bk-alert bk-alert--info" style="margin-bottom:var(--sp-4);">
+      Una campaña le manda la misma plantilla aprobada a un grupo de tus contactos, uno por uno.
+      Nunca le llega a quien pidió darse de baja escribiendo "baja" o "stop".
+    </div>
+
+    <div class="bk-card bk-card--pad" style="margin-bottom:var(--sp-5);">
+      <span class="bk-eyebrow">Nueva campaña</span>
+      <div class="w2-form-grid" style="margin-top:var(--sp-3);">
+        <div class="bk-field">
+          <label class="bk-label" for="w2-cp-numero">Desde el número</label>
+          <select class="bk-select" id="w2-cp-numero" onchange="w2CampCambioNumero()"></select>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="w2-cp-audiencia">A quién le llega</label>
+          <select class="bk-select" id="w2-cp-audiencia" onchange="w2CampActualizarAudiencia()">
+            <option value="">Todos mis contactos de este número</option>
+          </select>
+          <div class="bk-hint" id="w2-cp-audiencia-hint">Elige un número para calcular la audiencia.</div>
+        </div>
+      </div>
+      <div class="bk-field">
+        <label class="bk-label" for="w2-cp-plantilla">Plantilla aprobada</label>
+        <select class="bk-select" id="w2-cp-plantilla" onchange="w2CampCambioPlantilla()"></select>
+        <div class="w2-cp-preview" id="w2-cp-preview" hidden></div>
+      </div>
+      <div id="w2-cp-variables"></div>
+      <div class="bk-field">
+        <label class="bk-label" for="w2-cp-nombre">Nombre de la campaña (solo lo ves tú)</label>
+        <input class="bk-input" id="w2-cp-nombre" placeholder="Ej. Seguimiento expo septiembre"/>
+      </div>
+      <button class="bk-btn bk-btn--forest" id="w2-cp-enviar" onclick="w2CampEnviar()">Enviar campaña</button>
+    </div>
+
+    <span class="bk-eyebrow">Campañas anteriores</span>
+    <div id="w2-cp-historial" style="display:flex;flex-direction:column;gap:var(--sp-2);margin-top:var(--sp-3);"></div>
+  </div>
+
   <!-- ═══ PLANTILLAS ═══ -->
   <div id="w2-view-plantillas" hidden>
     <div class="bk-section-header"><h2>Plantillas para mensajes fuera de la ventana de 24h</h2></div>
@@ -265,6 +333,7 @@
     <span class="bk-eyebrow">Tus plantillas</span>
     <div id="w2-pl-lista" style="display:flex;flex-direction:column;gap:var(--sp-2);margin:var(--sp-3) 0 var(--sp-5);"></div>
 
+    <div id="w2-pl-crear" hidden>
     <div class="bk-divider"></div>
     <span class="bk-eyebrow">Crear nueva plantilla</span>
     <div class="w2-form-grid" style="margin-top:var(--sp-3);">
@@ -296,6 +365,8 @@
       <input class="bk-input" id="w2-pl-footer" placeholder="Ej. Broquer · Bienes raíces"/>
     </div>
     <button class="bk-btn bk-btn--forest" onclick="w2CrearPlantilla()">Enviar a Meta para aprobación</button>
+    </div>
+    <div class="bk-hint" id="w2-pl-crear-aviso">Crear plantillas nuevas es parte del modo avanzado — actívalo arriba a la derecha si necesitas una.</div>
   </div>
 
   <!-- ═══ ENTRENAMIENTO ═══ -->
@@ -579,8 +650,10 @@ function w2IrATab(tab){
   W2_TAB = tab;
   document.querySelectorAll('.w2-tab').forEach(b => b.classList.toggle('is-active', b.dataset.tab === tab));
   document.getElementById('w2-view-chats').hidden = tab !== 'chats';
+  document.getElementById('w2-view-campanas').hidden = tab !== 'campanas';
   document.getElementById('w2-view-plantillas').hidden = tab !== 'plantillas';
   document.getElementById('w2-view-entrenamiento').hidden = tab !== 'entrenamiento';
+  if(tab === 'campanas') w2AbrirTabCampanas();
   if(tab === 'plantillas') w2AbrirTabPlantillas();
   if(tab === 'entrenamiento') w2CargarEntrenamiento();
   // capacitor-bridge.js (iOS) decide si limpiar el globito de notificaciones
@@ -923,6 +996,7 @@ function w2RenderThread(){
       <div class="w2-thread__id">
         <div class="w2-thread__name">${w2Esc(nombre)} ${cal}</div>
         <div class="w2-thread__sub">${w2Esc(sub)}</div>
+        <div class="w2-thread__tags" id="w2-thread-tags"></div>
       </div>
       <div class="w2-thread__acts">
         <label class="bk-switch" title="Respuesta automática"><input type="checkbox" id="w2-p-ia" onchange="w2ToggleIaConv()" ${iaOn ? 'checked' : ''}/><span class="bk-switch__track"></span> IA</label>
@@ -956,6 +1030,7 @@ function w2RenderThread(){
     });
   }
   w2PintarMensajes();
+  w2PintarEtiquetas();
 }
 
 function w2AlFondo(box){
@@ -1500,8 +1575,237 @@ async function w2EnviarPlantillaDesdeChat(){
   }catch(e){ toast('No se pudo enviar (sin conexión).'); }
 }
 
+/* ── Modo avanzado ────────────────────────────────────────── */
+/* La capa estándar muestra solo lo de uso diario; lo técnico (como crear
+   plantillas nuevas para aprobación de Meta) vive detrás de este switch. */
+function w2Avanzado(){ try{ return localStorage.getItem('w2_avanzado') === '1'; }catch(_){ return false; } }
+function w2ToggleAvanzado(on){
+  try{ localStorage.setItem('w2_avanzado', on ? '1' : '0'); }catch(_){}
+  w2AplicarAvanzado();
+}
+function w2AplicarAvanzado(){
+  const on = w2Avanzado();
+  const check = document.getElementById('w2-avanzado-check');
+  if(check) check.checked = on;
+  const crear = document.getElementById('w2-pl-crear');
+  if(crear) crear.hidden = !on;
+  const aviso = document.getElementById('w2-pl-crear-aviso');
+  if(aviso) aviso.hidden = on;
+}
+
+/* ── Etiquetas del contacto (segmentan las campañas) ──────── */
+function w2PintarEtiquetas(){
+  const cont = document.getElementById('w2-thread-tags');
+  if(!cont || !W2_CONV_ACTUAL) return;
+  const ct = W2_CONV_ACTUAL.wa2_contactos || {};
+  const tags = Array.isArray(ct.etiquetas) ? ct.etiquetas : [];
+  cont.innerHTML = tags.map((t, i) =>
+    `<span class="w2-tag">${w2Esc(t)}<button title="Quitar etiqueta" onclick="w2QuitarEtiqueta(${i})">×</button></span>`
+  ).join('') + `<input class="w2-tag-add" id="w2-tag-add" placeholder="+ etiqueta" maxlength="40"/>`;
+  const input = document.getElementById('w2-tag-add');
+  input.addEventListener('keydown', e => {
+    if(e.key === 'Enter' && !e.isComposing){ e.preventDefault(); w2AgregarEtiqueta(input.value); }
+  });
+}
+
+async function w2GuardarEtiquetas(nuevas){
+  const ct = W2_CONV_ACTUAL?.wa2_contactos;
+  if(!ct?.id) return;
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/contactos/' + ct.id, {
+      method:'PATCH', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({ etiquetas: nuevas })
+    });
+    if(!r.ok){ toast('No se pudo guardar la etiqueta.'); return; }
+    ct.etiquetas = nuevas;
+    w2PintarEtiquetas();
+  }catch(e){ toast('No se pudo guardar (sin conexión).'); }
+}
+
+function w2AgregarEtiqueta(texto){
+  const t = (texto || '').trim();
+  if(!t) return;
+  const ct = W2_CONV_ACTUAL?.wa2_contactos || {};
+  const tags = Array.isArray(ct.etiquetas) ? ct.etiquetas.slice() : [];
+  if(tags.includes(t)){ toast('Esa etiqueta ya está puesta.'); return; }
+  tags.push(t);
+  w2GuardarEtiquetas(tags);
+}
+
+function w2QuitarEtiqueta(i){
+  const ct = W2_CONV_ACTUAL?.wa2_contactos || {};
+  const tags = Array.isArray(ct.etiquetas) ? ct.etiquetas.slice() : [];
+  tags.splice(i, 1);
+  w2GuardarEtiquetas(tags);
+}
+
+/* ── Campañas ─────────────────────────────────────────────── */
+let W2_CP_PLANTILLAS = [];
+let W2_CP_POLL = null;
+
+function w2AbrirTabCampanas(){
+  const sel = document.getElementById('w2-cp-numero');
+  sel.innerHTML = W2_NUMEROS.map(n => `<option value="${n.id}">${n.alias || n.display_number || 'Número'}</option>`).join('');
+  if(W2_NUMEROS.length){ w2CampCambioNumero(); }
+  else{
+    document.getElementById('w2-cp-audiencia-hint').textContent = 'Conecta un número primero.';
+    document.getElementById('w2-cp-plantilla').innerHTML = '';
+  }
+  w2CampCargarHistorial();
+}
+
+async function w2CampCambioNumero(){
+  await Promise.all([w2CampCargarEtiquetas(), w2CampCargarPlantillasAprobadas()]);
+  w2CampActualizarAudiencia();
+}
+
+async function w2CampCargarEtiquetas(){
+  const sel = document.getElementById('w2-cp-audiencia');
+  const actual = sel.value;
+  let etiquetas = [];
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/etiquetas', { headers: w2Auth() });
+    const d = await r.json();
+    etiquetas = d.etiquetas || [];
+  }catch(e){}
+  sel.innerHTML = '<option value="">Todos mis contactos de este número</option>'
+    + etiquetas.map(t => `<option value="${w2Esc(t)}">Solo con la etiqueta: ${w2Esc(t)}</option>`).join('');
+  if(etiquetas.includes(actual)) sel.value = actual;
+}
+
+async function w2CampCargarPlantillasAprobadas(){
+  const numero_id = document.getElementById('w2-cp-numero').value;
+  const sel = document.getElementById('w2-cp-plantilla');
+  if(!numero_id){ sel.innerHTML = ''; return; }
+  sel.innerHTML = '<option value="">Cargando…</option>';
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/plantillas?numero_id=' + numero_id, { headers: w2Auth() });
+    const d = await r.json();
+    W2_CP_PLANTILLAS = (d.plantillas || []).filter(p => p.estatus === 'APPROVED');
+    sel.innerHTML = W2_CP_PLANTILLAS.length
+      ? W2_CP_PLANTILLAS.map(p => `<option value="${w2Esc(p.nombre)}|${w2Esc(p.idioma)}">${w2Esc(p.nombre)}</option>`).join('')
+      : '<option value="">No hay plantillas aprobadas para este número</option>';
+  }catch(e){ sel.innerHTML = '<option value="">No se pudieron cargar</option>'; }
+  w2CampCambioPlantilla();
+}
+
+function w2CampCambioPlantilla(){
+  const [nombre] = (document.getElementById('w2-cp-plantilla').value || '').split('|');
+  const p = W2_CP_PLANTILLAS.find(x => x.nombre === nombre);
+  const prev = document.getElementById('w2-cp-preview');
+  const varsCont = document.getElementById('w2-cp-variables');
+  if(!p){ prev.hidden = true; varsCont.innerHTML = ''; return; }
+  prev.hidden = false;
+  prev.textContent = p.cuerpo || '—';
+  const cuantas = new Set(((p.cuerpo || '').match(/\{\{(\d+)\}\}/g) || [])).size;
+  varsCont.innerHTML = '';
+  for(let i = 1; i <= cuantas; i++){
+    varsCont.innerHTML += `
+      <div class="bk-field">
+        <label class="bk-label" for="w2-cp-var-${i}">Valor para {{${i}}}</label>
+        <input class="bk-input" id="w2-cp-var-${i}" placeholder="Escribe {nombre} para poner el nombre de cada persona"/>
+      </div>`;
+  }
+}
+
+let W2_CP_AUD_TIMER = null;
+function w2CampActualizarAudiencia(){
+  clearTimeout(W2_CP_AUD_TIMER);
+  W2_CP_AUD_TIMER = setTimeout(async () => {
+    const numero_id = document.getElementById('w2-cp-numero').value;
+    const hint = document.getElementById('w2-cp-audiencia-hint');
+    const btn = document.getElementById('w2-cp-enviar');
+    if(!numero_id){ hint.textContent = 'Conecta un número primero.'; btn.disabled = true; return; }
+    hint.textContent = 'Calculando audiencia…';
+    try{
+      const r = await fetch(API_BASE + '/whatsapp2/campanas/audiencia', {
+        method:'POST', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+        body: JSON.stringify({ numero_id, etiqueta: document.getElementById('w2-cp-audiencia').value || null })
+      });
+      const d = await r.json();
+      const total = d.total || 0;
+      btn.disabled = total === 0;
+      hint.textContent = total === 0
+        ? 'No hay contactos en esa audiencia todavía.'
+        : `Le llegará a ${total} contacto${total === 1 ? '' : 's'}.`
+          + (total > (d.tope || 250) ? ` Pasa del tope de ${d.tope} por campaña — segmenta con una etiqueta.` : '');
+    }catch(e){ hint.textContent = 'No se pudo calcular la audiencia.'; }
+  }, 250);
+}
+
+async function w2CampEnviar(){
+  const numero_id = document.getElementById('w2-cp-numero').value;
+  const [plantilla, idioma] = (document.getElementById('w2-cp-plantilla').value || '').split('|');
+  const nombre = document.getElementById('w2-cp-nombre').value.trim();
+  if(!numero_id){ toast('Conecta un número primero.'); return; }
+  if(!plantilla){ toast('Elige una plantilla aprobada.'); return; }
+  if(!nombre){ toast('Ponle un nombre a la campaña.'); return; }
+  const variables = [];
+  for(let i = 1; i <= 10; i++){
+    const inp = document.getElementById('w2-cp-var-' + i);
+    if(!inp) break;
+    variables.push(inp.value.trim());
+  }
+  if(variables.some(v => !v)){ toast('Llena todas las variables de la plantilla.'); return; }
+  const hint = document.getElementById('w2-cp-audiencia-hint').textContent;
+  if(!confirm('Se va a enviar la campaña "' + nombre + '". ' + hint + ' ¿Seguro?')) return;
+  const btn = document.getElementById('w2-cp-enviar');
+  btn.disabled = true;
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/campanas', {
+      method:'POST', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({ numero_id, nombre, plantilla, idioma: idioma || 'es_MX',
+                             variables, etiqueta: document.getElementById('w2-cp-audiencia').value || null })
+    });
+    const d = await r.json();
+    if(!r.ok){ toast(d.detail || 'No se pudo enviar la campaña.'); btn.disabled = false; return; }
+    toast('Campaña en camino — se envía en segundo plano.');
+    document.getElementById('w2-cp-nombre').value = '';
+    await w2CampCargarHistorial();
+  }catch(e){ toast('No se pudo enviar (sin conexión).'); }
+  btn.disabled = false;
+}
+
+async function w2CampCargarHistorial(){
+  const cont = document.getElementById('w2-cp-historial');
+  let campanas = [];
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/campanas', { headers: w2Auth() });
+    const d = await r.json();
+    campanas = d.campanas || [];
+  }catch(e){}
+  if(!campanas.length){
+    cont.innerHTML = '<div class="bk-hint">Aquí van a aparecer tus campañas enviadas.</div>';
+  }else{
+    cont.innerHTML = campanas.map(c => {
+      const enviando = c.estado === 'enviando';
+      const sub = [
+        c.plantilla ? 'Plantilla ' + w2Esc(c.plantilla) : '',
+        c.etiqueta ? 'Etiqueta: ' + w2Esc(c.etiqueta) : 'Todos los contactos',
+        `${c.enviados || 0} de ${c.total || 0} enviados` + ((c.fallidos || 0) ? ` · ${c.fallidos} fallaron` : '')
+      ].filter(Boolean).join(' · ');
+      return `
+        <div class="w2-cp-row">
+          <div class="w2-cp-row__info">
+            <div class="w2-cp-row__nombre">${w2Esc(c.nombre)}</div>
+            <div class="w2-cp-row__sub">${sub}</div>
+          </div>
+          <span class="bk-badge">${enviando ? 'Enviando…' : 'Terminada'}</span>
+        </div>`;
+    }).join('');
+  }
+  clearInterval(W2_CP_POLL);
+  if(campanas.some(c => c.estado === 'enviando')){
+    W2_CP_POLL = setInterval(() => {
+      if(W2_TAB !== 'campanas' || document.hidden){ clearInterval(W2_CP_POLL); return; }
+      w2CampCargarHistorial();
+    }, 5000);
+  }
+}
+
 /* ── Arranque ─────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', async () => {
+  w2AplicarAvanzado();
   await w2CargarNumeros();
 
   // Enlace directo desde una notificación push o la barra inferior de la app:
