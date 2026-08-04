@@ -307,3 +307,60 @@ body{ font-family:var(--bq-font); background:var(--bq-surface); color:var(--bq-i
   .mv-chip,.ld-price,.ld-btn-white,.ld-btn-blue,.ld-btn-ghost{ transition:none; }
   .mv-chip:hover,.ld-price:hover,.ld-final .ld-btn-white:hover{ transform:none; }
 }
+
+/* ════════════════════════════════════════════════════════════════
+   4. SKIN DE MÓDULOS DE LA APP (piloto: WhatsApp)
+   Scoped a body[data-app]: solo aplica dentro de la aplicación,
+   nunca en landing. Remapea los tokens del tema "Sky" a la paleta
+   Zillow del landing; shell y componentes bk- heredan solos.
+   ════════════════════════════════════════════════════════════════ */
+body[data-app]{
+  /* Tipografía: la misma del landing */
+  --font-sans:'Inter',-apple-system,'SF Pro Text',sans-serif;
+  --font-display:'Inter',-apple-system,'SF Pro Text',sans-serif;
+  --font-mono:'Inter',-apple-system,'SF Pro Text',sans-serif;
+
+  /* Acción: azul Zillow en lugar del azul Sky */
+  --sky-blue:var(--bq-blue);
+  --sky-blue-press:var(--bq-blue-2);
+  --sky-blue-lift:#338AFF;
+  --forest:var(--bq-blue);
+  --forest-2:var(--bq-blue-2);
+  --forest-soft:rgba(0,106,255,.10);
+  --focus:0 0 0 4px rgba(0,106,255,.16);
+  --focus-forest:0 0 0 4px rgba(0,106,255,.16);
+
+  /* Neutrales: paleta Zillow */
+  --ink:var(--bq-ink);
+  --ink-2:#3B3B45;
+  --ink-3:var(--bq-dim);
+  --mute:var(--bq-dim);
+  --line:#E1E5E9;
+  --line-2:var(--bq-line);
+  --shell:var(--bq-bg);
+  --paper-2:var(--bq-bg);
+  --canvas:var(--bq-bg);
+  --sky-canvas:var(--bq-blue-soft);
+
+  /* Marca: el navy Broquer se queda para sidebar y estructura */
+  --sky-navy:var(--bq-navy);
+
+  /* WhatsApp: hilo claro, burbuja saliente azul suave (identidad) */
+  --wa-canvas:#F2F6FC;
+  --wa-out:#DCEAFF;
+  --wa-out-ink:var(--bq-navy);
+  --wa-out-meta:#4A6285;
+  --wa-ia:var(--bq-blue);
+  --wa-ia-soft:#FFFFFF;
+}
+
+/* Ajustes quirúrgicos sobre el módulo (solo apariencia) */
+body[data-app] .w2-row--out .w2-bubble{ border-color:rgba(0,106,255,.14); }
+body[data-app] .w2-row--out.is-ia .w2-bubble{ border-color:rgba(0,106,255,.30); }
+body[data-app] .w2-conv__unread{ background:var(--bq-blue); }
+body[data-app] .w2-conv__ia{ background:var(--bq-blue); }
+body[data-app] .w2-app{ border-color:var(--bq-line); box-shadow:var(--bq-shadow-sm); }
+body[data-app] .w2-tab{ font-weight:600; }
+body[data-app] .w2-tab.is-active{ color:var(--bq-blue); border-bottom-width:3px; }
+body[data-app] .w2-chip{ font-weight:600; }
+body[data-app] .w2-numero-row__dot.is-on{ background:var(--bq-success); }
