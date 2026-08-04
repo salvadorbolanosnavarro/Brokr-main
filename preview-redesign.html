@@ -11,7 +11,144 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap"/>
-<link rel="stylesheet" href="broquer-2.css"/>
+<style>
+/* ════════════════════════════════════════════════════════════════
+   BROQUER 2 — Sistema de diseño "Blanca"
+   Semilla del rediseño total. Sustituye a brokr-theme.css.
+
+   Dirección: mundo blanco a la Zillow. La página es papel; el azul
+   es la única voz de acción; las tarjetas flotan con sombra suave;
+   todo es redondo y amable. El acento cantera viene de la piedra
+   rosa de Morelia: se usa poquito, solo para señalar lo nuevo.
+
+   Tipografía: Bricolage Grotesque (display, con carácter) +
+   Figtree (cuerpo, humanista y cálida). Nada de monoespaciadas.
+   ════════════════════════════════════════════════════════════════ */
+
+/* ═══ AUDIT-EXEMPT: definición de tokens del sistema (solo en preview; en producción viven en broquer-2.css) ═══ */
+:root {
+  /* ── Color ─────────────────────────────────────────────────── */
+  --b2-blue:        #0D6BF0;   /* acción: botones, enlaces, énfasis */
+  --b2-blue-press:  #0A56C4;   /* acción presionada */
+  --b2-blue-deep:   #08419A;   /* fondos azules profundos (CTA final) */
+  --b2-blue-soft:   #EAF2FE;   /* lecho de iconos, canvas de acento */
+  --b2-ink:         #1B2733;   /* texto principal (grafito azulado) */
+  --b2-mute:        #5A6B7C;   /* texto secundario */
+  --b2-paper:       #FFFFFF;   /* superficie base */
+  --b2-canvas:      #F6F8FB;   /* secciones alternas (gris frío) */
+  --b2-line:        #E3E9F0;   /* bordes hairline */
+  --b2-green:       #0E8F62;   /* etiqueta Gratis, éxito */
+  --b2-green-soft:  #E7F5EF;
+  --b2-cantera:     #A85D62;   /* piedra rosa de Morelia: etiqueta Nuevo */
+  --b2-cantera-soft:#F9EEEC;
+
+  /* Utilidades sobre azul */
+  --b2-on-blue:        #FFFFFF;
+  --b2-on-blue-dim:    rgba(255,255,255,.78);
+  --b2-on-blue-faint:  rgba(255,255,255,.55);
+  --b2-line-on-blue:   rgba(255,255,255,.22);
+
+  /* ── Tipografía ────────────────────────────────────────────── */
+  --font-display: 'Bricolage Grotesque', 'Figtree', system-ui, sans-serif;
+  --font-sans:    'Figtree', system-ui, -apple-system, sans-serif;
+
+  /* Escala */
+  --fs2-caption: 12px;
+  --fs2-sm:      14px;
+  --fs2-body:    16px;
+  --fs2-lg:      18px;
+  --fs2-h3:      20px;
+  --fs2-h2:      clamp(28px, 3.4vw, 42px);
+  --fs2-h1:      clamp(38px, 5.4vw, 64px);
+  --fs2-stat:    clamp(26px, 3vw, 36px);
+
+  /* ── Forma ─────────────────────────────────────────────────── */
+  --r2-sm:   10px;
+  --r2:      14px;
+  --r2-lg:   22px;
+  --r2-xl:   28px;
+  --r2-pill: 999px;
+
+  /* ── Sombra (ambiente suave, nunca dura) ───────────────────── */
+  --sh2-card:  0 1px 2px rgba(27,39,51,.05), 0 8px 24px rgba(27,39,51,.07);
+  --sh2-lift:  0 2px 4px rgba(27,39,51,.06), 0 16px 40px rgba(27,39,51,.12);
+  --sh2-bar:   0 2px 6px rgba(27,39,51,.06), 0 14px 44px rgba(13,107,240,.16);
+  --sh2-media: 0 8px 20px rgba(27,39,51,.08), 0 32px 80px rgba(27,39,51,.14);
+
+  /* ── Movimiento ────────────────────────────────────────────── */
+  --ease2: cubic-bezier(.22,.61,.36,1);
+}
+/* ═══ /AUDIT-EXEMPT ═══ */
+
+/* ── Base ─────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--b2-paper);
+  color: var(--b2-ink);
+  font-family: var(--font-sans);
+  font-size: var(--fs2-body);
+  line-height: 1.55;
+  letter-spacing: -0.005em;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); color: var(--b2-ink); }
+p { margin: 0; }
+a { color: var(--b2-blue); }
+img, svg, video { display: block; max-width: 100%; }
+button { font-family: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--b2-blue);
+  outline-offset: 2px;
+  border-radius: var(--r2-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms; animation-iteration-count: 1; transition-duration: .01ms; }
+  html { scroll-behavior: auto; }
+}
+
+/* ── Contenedor ───────────────────────────────────────────────── */
+.b2-wrap { max-width: 1180px; margin: 0 auto; padding: 0 28px; }
+@media (max-width: 720px) { .b2-wrap { padding: 0 18px; } }
+
+/* ── Botones ──────────────────────────────────────────────────── */
+.b2-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: var(--font-sans); font-size: var(--fs2-body); font-weight: 700;
+  padding: 13px 24px; border-radius: var(--r2-pill);
+  text-decoration: none; border: 0; cursor: pointer;
+  transition: background .18s var(--ease2), transform .18s var(--ease2), box-shadow .18s var(--ease2);
+}
+.b2-btn--blue { background: var(--b2-blue); color: var(--b2-on-blue); }
+.b2-btn--blue:hover { background: var(--b2-blue-press); transform: translateY(-1px); }
+.b2-btn--ghost { background: var(--b2-paper); color: var(--b2-ink); border: 1px solid var(--b2-line); }
+.b2-btn--ghost:hover { border-color: var(--b2-ink); }
+.b2-btn--white { background: var(--b2-paper); color: var(--b2-blue-deep); }
+.b2-btn--white:hover { transform: translateY(-1px); box-shadow: var(--sh2-card); }
+.b2-btn--sm { font-size: var(--fs2-sm); padding: 10px 18px; }
+
+/* ── Etiquetas ────────────────────────────────────────────────── */
+.b2-tag {
+  display: inline-flex; align-items: center;
+  font-size: var(--fs2-caption); font-weight: 700; line-height: 1;
+  padding: 5px 10px; border-radius: var(--r2-pill);
+  background: var(--b2-blue-soft); color: var(--b2-blue-press);
+}
+.b2-tag--free   { background: var(--b2-green-soft);   color: var(--b2-green); }
+.b2-tag--nuevo  { background: var(--b2-cantera-soft); color: var(--b2-cantera); }
+
+/* ── Tarjeta base ─────────────────────────────────────────────── */
+.b2-card {
+  background: var(--b2-paper);
+  border: 1px solid var(--b2-line);
+  border-radius: var(--r2-lg);
+  box-shadow: var(--sh2-card);
+}
+
+</style>
 <style>
 /* ════════════════════════════════════════════════════════════════
    BROQUER — Landing comercial · Rediseño "Blanca"
