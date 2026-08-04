@@ -98,7 +98,11 @@ Un módulo solo aporta *su contenido*.
   muerto). A una escala ordinal le corresponde degradado de un tono o
   progresión verde→ámbar→rojo, no colores categóricos.
 - WhatsApp es el único módulo donde el verde deja de ser solo el botón de
-  conectar: verde `--wa-out` = mensaje del agente, violeta `--wa-ia` = Broq.
+  conectar. Las burbujas son CLARAS con texto oscuro (nunca color sólido +
+  blanco): verde claro `--wa-out`/`--wa-out-ink` = mensaje del agente,
+  violeta claro `--wa-ia-soft` con tinta y meta `--wa-ia` = Broq, blanco con
+  hairline = el cliente. El lienzo del hilo es `--wa-canvas` (frío, hermano
+  de `--canvas`), sin patrones de puntos.
 
 ## 3. Tipografía — escala `--fs-*`
 

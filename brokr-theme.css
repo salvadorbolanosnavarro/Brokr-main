@@ -1103,9 +1103,11 @@ html {
      verde ES el contexto. El punto critico es que la burbuja del
      AGENTE y la de BROQ no se confundan — antes eran dos azules.
      Ahora: verde = lo mandaste tu, violeta = lo mando Broq. */
-  --wa-canvas:     #EFE7DE;   /* lienzo del hilo, no blanco */
-  --wa-out:        #1EA65A;   /* burbuja del agente (verde legible con #fff) */
-  --wa-out-meta:   rgba(255,255,255,0.82);
-  --wa-ia:         #6D28D9;   /* burbuja de Broq — inconfundible vs la tuya */
-  --wa-ia-soft:    rgba(109, 40, 217, 0.12);
+  --wa-canvas:   #EEF3FB;   /* lienzo del hilo: frio, hermano del --canvas */
+  --wa-out:      #CFEEDD;   /* burbuja del agente: verde CLARO, texto oscuro
+                               (el verde solido #1EA65A con blanco daba 2.8:1) */
+  --wa-out-ink:  #0B4A2F;   /* texto sobre la burbuja verde (8.4:1) */
+  --wa-out-meta: #2F5F45;   /* hora/estado sobre la burbuja verde (5.9:1) */
+  --wa-ia:       #6D28D9;   /* violeta Broq: texto/acentos de sus burbujas */
+  --wa-ia-soft:  #F0EAFB;   /* burbuja de Broq: violeta claro, texto en tinta */
 }
