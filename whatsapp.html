@@ -255,7 +255,7 @@
     <button class="w2-tab" data-tab="automatizaciones" onclick="w2IrATab('automatizaciones')">Automatizaciones</button>
     <button class="w2-tab" data-tab="plantillas" onclick="w2IrATab('plantillas')">Plantillas</button>
     <button class="w2-tab" data-tab="entrenamiento" onclick="w2IrATab('entrenamiento')">Entrenamiento</button>
-    <label class="w2-avanzado bk-switch" title="Muestra las opciones técnicas del módulo">
+    <label class="w2-avanzado bk-switch" title="Muestra las opciones técnicas del módulo" hidden>
       <input type="checkbox" id="w2-avanzado-check" onchange="w2ToggleAvanzado(this.checked)"/>
       <span class="bk-switch__track"></span> Modo avanzado
     </label>
@@ -1641,9 +1641,13 @@ function w2ToggleAvanzado(on){
   w2AplicarAvanzado();
 }
 function w2AplicarAvanzado(){
-  const on = w2Avanzado();
+  // El switch está oculto por ahora: todo se comporta como capa estándar y la
+  // creación de plantillas se muestra siempre (sin ella no habría campañas).
+  // Para reactivar el modo avanzado: quitar el hidden del label w2-avanzado
+  // y regresar esta función a leer w2Avanzado().
+  const on = true;
   const check = document.getElementById('w2-avanzado-check');
-  if(check) check.checked = on;
+  if(check) check.checked = w2Avanzado();
   const crear = document.getElementById('w2-pl-crear');
   if(crear) crear.hidden = !on;
   const aviso = document.getElementById('w2-pl-crear-aviso');
