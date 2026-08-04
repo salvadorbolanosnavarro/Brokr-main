@@ -519,7 +519,7 @@ async function checkConnection(){
     if(!d.connected){
       show('fa-not-connected'); hide('fa-no-ads-token'); hide('fa-no-account-saved'); hide('fa-connected'); return;
     }
-    if(!d.user_token){
+    if(!d.tiene_token_ads){
       hide('fa-not-connected'); show('fa-no-ads-token'); hide('fa-no-account-saved'); hide('fa-connected'); return;
     }
     if(!d.ad_account_id){
