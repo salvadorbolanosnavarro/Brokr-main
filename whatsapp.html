@@ -34,7 +34,7 @@
   .w2-numero-row__warn{ color:var(--danger); font-size:var(--fs-xs); font-weight:700; }
 
   /* ── Tabs internos ────────────────────────────────────────── */
-  .w2-tabs{ display:flex; gap:var(--sp-2); margin-bottom:var(--sp-5); border-bottom:1px solid var(--line); }
+  .w2-tabs{ display:flex; flex-wrap:wrap; gap:var(--sp-2); margin-bottom:var(--sp-5); border-bottom:1px solid var(--line); }
   .w2-tab{ padding:var(--sp-3) var(--sp-4); font-size:var(--fs-sm); font-weight:700; color:var(--mute);
            border-bottom:2px solid transparent; cursor:pointer; background:none; border-left:0; border-right:0; border-top:0; }
   .w2-tab.is-active{ color:var(--ink); border-bottom-color:var(--sky-blue); }
@@ -61,6 +61,14 @@
   .w2-cp-row__info{ flex:1; min-width:0; }
   .w2-cp-row__nombre{ font-weight:700; font-size:var(--fs-sm); color:var(--ink); }
   .w2-cp-row__sub{ font-size:var(--fs-xs); color:var(--mute); margin-top:2px; }
+
+  /* Automatizaciones (recetas) */
+  .w2-au-paso{ display:flex; align-items:center; gap:var(--sp-2); margin-bottom:var(--sp-2); }
+  .w2-au-paso .bk-select{ max-width:240px; }
+  .w2-au-paso input{ flex:1; }
+  .w2-au-quitar{ border:0; background:none; color:var(--mute); cursor:pointer;
+    font-size:var(--fs-md); line-height:1; padding:var(--sp-1); }
+  .w2-au-quitar:hover{ color:var(--ink); }
 
   /* ── Chats: consola conversacional ────────────────────────── */
   .w2-app{ display:grid; grid-template-columns:360px 1fr; height:calc(100vh - 250px); min-height:620px;
@@ -244,6 +252,7 @@
   <div class="w2-tabs">
     <button class="w2-tab is-active" data-tab="chats" onclick="w2IrATab('chats')">Chats</button>
     <button class="w2-tab" data-tab="campanas" onclick="w2IrATab('campanas')">Campañas</button>
+    <button class="w2-tab" data-tab="automatizaciones" onclick="w2IrATab('automatizaciones')">Automatizaciones</button>
     <button class="w2-tab" data-tab="plantillas" onclick="w2IrATab('plantillas')">Plantillas</button>
     <button class="w2-tab" data-tab="entrenamiento" onclick="w2IrATab('entrenamiento')">Entrenamiento</button>
     <label class="w2-avanzado bk-switch" title="Muestra las opciones técnicas del módulo">
@@ -314,6 +323,52 @@
 
     <span class="bk-eyebrow">Campañas anteriores</span>
     <div id="w2-cp-historial" style="display:flex;flex-direction:column;gap:var(--sp-2);margin-top:var(--sp-3);"></div>
+  </div>
+
+  <!-- ═══ AUTOMATIZACIONES ═══ -->
+  <div id="w2-view-automatizaciones" hidden>
+    <div class="bk-section-header"><h2>Automatizaciones</h2></div>
+    <div class="bk-alert bk-alert--info" style="margin-bottom:var(--sp-4);">
+      Una automatización es una receta: cuando pasa algo (llega cierta palabra, o escribe alguien nuevo),
+      Broquer hace los pasos que tú definas al instante. Si la receta responde por ti o te pasa el chat,
+      la IA ya no contesta encima.
+    </div>
+
+    <div class="bk-card bk-card--pad" style="margin-bottom:var(--sp-5);">
+      <span class="bk-eyebrow">Nueva automatización</span>
+      <div class="w2-form-grid" style="margin-top:var(--sp-3);">
+        <div class="bk-field">
+          <label class="bk-label" for="w2-au-nombre">Nombre (solo lo ves tú)</label>
+          <input class="bk-input" id="w2-au-nombre" placeholder="Ej. Responder precio al instante"/>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="w2-au-numero">Aplica en</label>
+          <select class="bk-select" id="w2-au-numero"></select>
+        </div>
+      </div>
+      <div class="w2-form-grid">
+        <div class="bk-field">
+          <label class="bk-label" for="w2-au-disparador">Cuando pasa esto</label>
+          <select class="bk-select" id="w2-au-disparador" onchange="w2AuCambioDisparador()">
+            <option value="palabra">El mensaje contiene una palabra</option>
+            <option value="nuevo">Escribe alguien nuevo por primera vez</option>
+          </select>
+        </div>
+        <div class="bk-field" id="w2-au-palabras-wrap">
+          <label class="bk-label" for="w2-au-palabras">Palabras que la disparan (separadas por coma)</label>
+          <input class="bk-input" id="w2-au-palabras" placeholder="Ej. precio, cuánto cuesta, costo"/>
+        </div>
+      </div>
+      <div class="bk-field">
+        <label class="bk-label">Pasos que hace, en orden</label>
+        <div id="w2-au-pasos"></div>
+        <button class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2AuAgregarPaso()">+ Agregar paso</button>
+      </div>
+      <button class="bk-btn bk-btn--forest" onclick="w2AuGuardar()">Guardar automatización</button>
+    </div>
+
+    <span class="bk-eyebrow">Tus automatizaciones</span>
+    <div id="w2-au-lista" style="display:flex;flex-direction:column;gap:var(--sp-2);margin-top:var(--sp-3);"></div>
   </div>
 
   <!-- ═══ PLANTILLAS ═══ -->
@@ -651,9 +706,11 @@ function w2IrATab(tab){
   document.querySelectorAll('.w2-tab').forEach(b => b.classList.toggle('is-active', b.dataset.tab === tab));
   document.getElementById('w2-view-chats').hidden = tab !== 'chats';
   document.getElementById('w2-view-campanas').hidden = tab !== 'campanas';
+  document.getElementById('w2-view-automatizaciones').hidden = tab !== 'automatizaciones';
   document.getElementById('w2-view-plantillas').hidden = tab !== 'plantillas';
   document.getElementById('w2-view-entrenamiento').hidden = tab !== 'entrenamiento';
   if(tab === 'campanas') w2AbrirTabCampanas();
+  if(tab === 'automatizaciones') w2AbrirTabAutomatizaciones();
   if(tab === 'plantillas') w2AbrirTabPlantillas();
   if(tab === 'entrenamiento') w2CargarEntrenamiento();
   // capacitor-bridge.js (iOS) decide si limpiar el globito de notificaciones
@@ -1637,6 +1694,137 @@ function w2QuitarEtiqueta(i){
   const tags = Array.isArray(ct.etiquetas) ? ct.etiquetas.slice() : [];
   tags.splice(i, 1);
   w2GuardarEtiquetas(tags);
+}
+
+/* ── Automatizaciones (recetas) ───────────────────────────── */
+const W2_AU_TIPOS = {
+  mensaje:  'Responder con un mensaje',
+  etiqueta: 'Ponerle una etiqueta al contacto',
+  humano:   'Apagar la IA y avisarme a mí',
+};
+
+function w2AbrirTabAutomatizaciones(){
+  const sel = document.getElementById('w2-au-numero');
+  sel.innerHTML = '<option value="">Todos mis números</option>'
+    + W2_NUMEROS.map(n => `<option value="${n.id}">${n.alias || n.display_number || 'Número'}</option>`).join('');
+  if(!document.querySelector('#w2-au-pasos .w2-au-paso')) w2AuAgregarPaso();
+  w2AuCambioDisparador();
+  w2AuCargarLista();
+}
+
+function w2AuCambioDisparador(){
+  const esPalabra = document.getElementById('w2-au-disparador').value === 'palabra';
+  document.getElementById('w2-au-palabras-wrap').hidden = !esPalabra;
+}
+
+function w2AuAgregarPaso(){
+  const cont = document.getElementById('w2-au-pasos');
+  if(cont.querySelectorAll('.w2-au-paso').length >= 5){ toast('Máximo 5 pasos por receta.'); return; }
+  const div = document.createElement('div');
+  div.className = 'w2-au-paso';
+  div.innerHTML = `
+    <select class="bk-select" onchange="w2AuCambioTipo(this)">
+      ${Object.entries(W2_AU_TIPOS).map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}
+    </select>
+    <input class="bk-input" placeholder="El texto que se le responde"/>
+    <button class="w2-au-quitar" title="Quitar este paso" onclick="this.parentElement.remove()">×</button>`;
+  cont.appendChild(div);
+}
+
+function w2AuCambioTipo(sel){
+  const input = sel.parentElement.querySelector('input');
+  const tipo = sel.value;
+  input.hidden = tipo === 'humano';
+  input.placeholder = tipo === 'mensaje' ? 'El texto que se le responde' : 'La etiqueta que se le pone';
+  input.maxLength = tipo === 'mensaje' ? 1000 : 40;
+}
+
+async function w2AuGuardar(){
+  const nombre = document.getElementById('w2-au-nombre').value.trim();
+  if(!nombre){ toast('Ponle un nombre a la automatización.'); return; }
+  const disparador = document.getElementById('w2-au-disparador').value;
+  const palabras = document.getElementById('w2-au-palabras').value
+    .split(',').map(p => p.trim()).filter(Boolean);
+  if(disparador === 'palabra' && !palabras.length){ toast('Escribe al menos una palabra que la dispare.'); return; }
+  const acciones = [];
+  document.querySelectorAll('#w2-au-pasos .w2-au-paso').forEach(p => {
+    const tipo = p.querySelector('select').value;
+    const valor = p.querySelector('input').value.trim();
+    if(tipo === 'humano' || valor) acciones.push({ tipo, valor });
+  });
+  if(!acciones.length){ toast('Agrega al menos un paso con contenido.'); return; }
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/automatizaciones', {
+      method:'POST', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({ nombre, numero_id: document.getElementById('w2-au-numero').value || null,
+                             disparador, palabras, acciones, activa: true })
+    });
+    const d = await r.json();
+    if(!r.ok){ toast(d.detail || 'No se pudo guardar.'); return; }
+    toast('Automatización guardada — ya está trabajando.');
+    document.getElementById('w2-au-nombre').value = '';
+    document.getElementById('w2-au-palabras').value = '';
+    document.getElementById('w2-au-pasos').innerHTML = '';
+    w2AuAgregarPaso();
+    await w2AuCargarLista();
+  }catch(e){ toast('No se pudo guardar (sin conexión).'); }
+}
+
+function w2AuResumen(a){
+  const numero = W2_NUMEROS.find(n => n.id === a.numero_id);
+  const donde = numero ? (numero.alias || numero.display_number) : 'Todos los números';
+  const cuando = a.disparador === 'nuevo'
+    ? 'Cuando escribe alguien nuevo'
+    : 'Cuando el mensaje contiene: ' + (a.palabras || []).join(', ');
+  const pasos = (a.acciones || []).map(x =>
+    x.tipo === 'mensaje' ? 'responder' : (x.tipo === 'etiqueta' ? `etiquetar "${x.valor}"` : 'pasármela a mí')
+  ).join(' → ');
+  const usos = a.veces_usada ? ` · Se ha usado ${a.veces_usada} ${a.veces_usada === 1 ? 'vez' : 'veces'}` : '';
+  return `${donde} · ${cuando} → ${pasos}${usos}`;
+}
+
+async function w2AuCargarLista(){
+  const cont = document.getElementById('w2-au-lista');
+  let autos = [];
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/automatizaciones', { headers: w2Auth() });
+    const d = await r.json();
+    autos = d.automatizaciones || [];
+  }catch(e){}
+  if(!autos.length){
+    cont.innerHTML = '<div class="bk-hint">Todavía no tienes automatizaciones. Crea la primera arriba.</div>';
+    return;
+  }
+  cont.innerHTML = autos.map(a => `
+    <div class="w2-cp-row">
+      <div class="w2-cp-row__info">
+        <div class="w2-cp-row__nombre">${w2Esc(a.nombre)}</div>
+        <div class="w2-cp-row__sub">${w2Esc(w2AuResumen(a))}</div>
+      </div>
+      <label class="bk-switch" title="Encender o apagar esta automatización">
+        <input type="checkbox" ${a.activa ? 'checked' : ''} onchange="w2AuToggle('${a.id}', this.checked)"/>
+        <span class="bk-switch__track"></span>
+      </label>
+      <button class="w2-au-quitar" title="Eliminar automatización" onclick="w2AuEliminar('${a.id}', '${w2Esc(a.nombre)}')">×</button>
+    </div>`).join('');
+}
+
+async function w2AuToggle(id, activa){
+  try{
+    await fetch(API_BASE + '/whatsapp2/automatizaciones/' + id, {
+      method:'PATCH', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({ activa })
+    });
+    toast(activa ? 'Automatización encendida.' : 'Automatización apagada.');
+  }catch(e){ toast('No se pudo cambiar (sin conexión).'); }
+}
+
+async function w2AuEliminar(id, nombre){
+  if(!confirm('Se va a eliminar la automatización "' + nombre + '". ¿Seguro?')) return;
+  try{
+    await fetch(API_BASE + '/whatsapp2/automatizaciones/' + id, { method:'DELETE', headers: w2Auth() });
+    await w2AuCargarLista();
+  }catch(e){ toast('No se pudo eliminar (sin conexión).'); }
 }
 
 /* ── Campañas ─────────────────────────────────────────────── */

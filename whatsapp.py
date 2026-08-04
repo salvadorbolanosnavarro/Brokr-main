@@ -2296,6 +2296,18 @@ async def _procesar_en_segundo_plano(item: dict):
                           (contacto_push[0].get("nombre") if contacto_push else None) or "Nuevo mensaje de WhatsApp",
                           item["texto"], datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
 
+    # ── AUTOMATIZACIONES (recetas) ───────────────────────────────────────
+    # Corren ANTES de agrupar ráfagas y antes de la IA: si el mensaje dispara
+    # una receta que responde o pasa el chat al humano, esa receta contesta al
+    # instante y la IA ya no dice nada encima. Si la receta solo pone
+    # etiquetas, el flujo normal (IA incluida) sigue igual.
+    if not item.get("es_asesor"):
+        try:
+            if await _correr_automatizaciones(item, numero, user_id):
+                return
+        except Exception as e:
+            log.warning("Automatizaciones fallaron (se sigue normal): %s", e)
+
     # ── AGRUPAR RÁFAGAS ──────────────────────────────────────────────────
     # La gente escribe en WhatsApp a pedacitos. Se espera unos segundos y, si
     # mientras tanto entró otro mensaje del prospecto, ESTA tarea se retira:
@@ -3138,6 +3150,198 @@ async def wa2_contacto_patch(contacto_id: str, request: Request):
     permitido["updated_at"] = _now()
     await sb_patch("wa2_contactos", {"id": f"eq.{contacto_id}", "user_id": _in_filter(ids)}, permitido)
     return {"ok": True}
+
+
+# =============================================================================
+# 9.4) AUTOMATIZACIONES — recetas simples: disparador + pasos
+#
+# El agente arma recetas sin saber nada técnico: "cuando el mensaje contenga
+# la palabra PRECIO → responde este texto → ponle la etiqueta interesado".
+# Disparadores: 'palabra' (el texto contiene alguna palabra de la lista) o
+# 'nuevo' (primer mensaje de un contacto que nunca había escrito).
+# Pasos: 'mensaje' (responder un texto fijo), 'etiqueta' (etiquetar al
+# contacto) y 'humano' (apagar la IA de esa conversación y avisar al agente).
+# Si la receta responde o pasa al humano, la IA ya no contesta ese mensaje.
+# =============================================================================
+_AUTO_TIPOS = ("mensaje", "etiqueta", "humano")
+
+# Candado anti-metralleta: la misma receta no se dispara dos veces en la misma
+# conversación en menos de este tiempo, aunque el prospecto repita la palabra
+# en tres mensajes seguidos. Vive en memoria: suficiente con una instancia.
+_AUTO_COOLDOWN_SEG = 120
+_AUTO_ULTIMA: dict = {}
+
+
+class AutomatizacionReq(BaseModel):
+    nombre: str
+    numero_id: str | None = None
+    disparador: str = "palabra"
+    palabras: list[str] = []
+    acciones: list[dict] = []
+    activa: bool = True
+
+
+def _limpiar_automatizacion(req: AutomatizacionReq) -> dict:
+    nombre = (req.nombre or "").strip()[:80]
+    if not nombre:
+        raise HTTPException(status_code=400, detail="Ponle un nombre a la automatización.")
+    disparador = req.disparador if req.disparador in ("palabra", "nuevo") else "palabra"
+    palabras = []
+    for p in (req.palabras or []):
+        t = str(p).strip().lower()[:60]
+        if t and t not in palabras:
+            palabras.append(t)
+    palabras = palabras[:15]
+    if disparador == "palabra" and not palabras:
+        raise HTTPException(status_code=400, detail="Escribe al menos una palabra que la dispare.")
+    acciones = []
+    for a in (req.acciones or []):
+        tipo = str((a or {}).get("tipo") or "").strip()
+        valor = str((a or {}).get("valor") or "").strip()
+        if tipo not in _AUTO_TIPOS:
+            continue
+        if tipo == "mensaje":
+            valor = valor[:1000]
+            if not valor:
+                continue
+        elif tipo == "etiqueta":
+            valor = valor[:40]
+            if not valor:
+                continue
+        else:
+            valor = ""
+        acciones.append({"tipo": tipo, "valor": valor})
+    acciones = acciones[:5]
+    if not acciones:
+        raise HTTPException(status_code=400, detail="Agrega al menos un paso a la automatización.")
+    return {"nombre": nombre, "numero_id": req.numero_id or None, "disparador": disparador,
+            "palabras": palabras, "acciones": acciones, "activa": bool(req.activa)}
+
+
+@router.get("/automatizaciones")
+async def wa2_automatizaciones_list(request: Request):
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    rows = await sb_get("wa2_automatizaciones", {"user_id": _in_filter(ids), "select": "*",
+                                                 "order": "created_at.desc", "limit": "100"})
+    return {"automatizaciones": rows}
+
+
+@router.post("/automatizaciones")
+async def wa2_automatizacion_crear(req: AutomatizacionReq, request: Request):
+    user_id = await _require_user(request)
+    fila = _limpiar_automatizacion(req)
+    if fila["numero_id"]:
+        ids = await _ids_visibles(user_id)
+        n = await sb_get("wa2_numeros", {"id": f"eq.{fila['numero_id']}",
+                                         "user_id": _in_filter(ids), "select": "id", "limit": "1"})
+        if not n:
+            raise HTTPException(status_code=404, detail="Número no encontrado")
+    fila.update({"user_id": user_id, "veces_usada": 0,
+                 "created_at": _now(), "updated_at": _now()})
+    creado = await sb_post("wa2_automatizaciones", fila)
+    if not creado:
+        raise HTTPException(status_code=500,
+                            detail="No se pudo guardar. ¿Ya corriste la migración de automatizaciones?")
+    return {"ok": True}
+
+
+@router.patch("/automatizaciones/{auto_id}")
+async def wa2_automatizacion_patch(auto_id: str, request: Request):
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    body = await request.json()
+    permitido = {}
+    if "activa" in body:
+        permitido["activa"] = bool(body["activa"])
+    if not permitido:
+        return {"ok": True}
+    permitido["updated_at"] = _now()
+    await sb_patch("wa2_automatizaciones", {"id": f"eq.{auto_id}", "user_id": _in_filter(ids)}, permitido)
+    return {"ok": True}
+
+
+@router.delete("/automatizaciones/{auto_id}")
+async def wa2_automatizacion_delete(auto_id: str, request: Request):
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    await sb_delete("wa2_automatizaciones", {"id": f"eq.{auto_id}", "user_id": _in_filter(ids)})
+    return {"ok": True}
+
+
+async def _correr_automatizaciones(item: dict, numero: dict, user_id: str) -> bool:
+    """Evalúa las recetas del usuario para este mensaje. Devuelve True si
+    alguna receta respondió o pasó el chat al humano (la IA ya no contesta)."""
+    autos = await sb_get("wa2_automatizaciones",
+                         {"user_id": f"eq.{numero['user_id']}", "activa": "eq.true",
+                          "or": f"(numero_id.is.null,numero_id.eq.{numero['id']})",
+                          "select": "*", "limit": "100"})
+    if not autos:
+        return False
+
+    texto = (item.get("texto") or "").lower()
+    es_nuevo = None  # se calcula solo si alguna receta lo necesita
+    silenciar_ia = False
+    ahora = datetime.now(timezone.utc).timestamp()
+
+    for auto in autos:
+        if auto.get("disparador") == "nuevo":
+            if es_nuevo is None:
+                entrantes = await sb_get("wa2_mensajes",
+                                         {"conversacion_id": f"eq.{item['conversacion_id']}",
+                                          "direction": "eq.in", "select": "id", "limit": "2"})
+                es_nuevo = len(entrantes) <= 1
+            if not es_nuevo:
+                continue
+        else:
+            palabras = auto.get("palabras") or []
+            if not any(p and str(p).lower() in texto for p in palabras):
+                continue
+
+        llave = f"{item['conversacion_id']}|{auto['id']}"
+        if ahora - _AUTO_ULTIMA.get(llave, 0) < _AUTO_COOLDOWN_SEG:
+            continue
+        _AUTO_ULTIMA[llave] = ahora
+        if len(_AUTO_ULTIMA) > 5000:
+            for k in list(_AUTO_ULTIMA.keys())[:1000]:
+                _AUTO_ULTIMA.pop(k, None)
+
+        for accion in (auto.get("acciones") or []):
+            tipo = (accion or {}).get("tipo")
+            valor = (accion or {}).get("valor") or ""
+            try:
+                if tipo == "mensaje" and valor:
+                    await _wa_marcar_leido(numero, item.get("wa_message_id"))
+                    wamid = await _wa_send_text(numero, item["wa_id"], valor[:WA_MAX_TEXTO])
+                    await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"],
+                                          wamid, "out", "agente", valor[:WA_MAX_TEXTO])
+                    silenciar_ia = True
+                elif tipo == "etiqueta" and valor:
+                    rows = await sb_get("wa2_contactos", {"id": f"eq.{item['contacto_id']}",
+                                                          "select": "etiquetas", "limit": "1"})
+                    tags = (rows[0].get("etiquetas") or []) if rows else []
+                    if valor not in tags:
+                        tags = (tags + [valor])[:20]
+                        await sb_patch("wa2_contactos", {"id": f"eq.{item['contacto_id']}"},
+                                       {"etiquetas": tags, "updated_at": _now()})
+                elif tipo == "humano":
+                    await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"},
+                                   {"ai_enabled": False})
+                    await enviar_push(user_id, "Una automatización te pasó un chat",
+                                      f"La receta '{auto.get('nombre')}' apagó la IA. Ya te toca a ti.",
+                                      datos={"tipo": "whatsapp",
+                                             "conversation_id": item["conversacion_id"]})
+                    silenciar_ia = True
+            except Exception as e:
+                log.warning("Paso de automatización %s falló: %s", auto.get("id"), e)
+
+        try:
+            await sb_patch("wa2_automatizaciones", {"id": f"eq.{auto['id']}"},
+                           {"veces_usada": (auto.get("veces_usada") or 0) + 1, "updated_at": _now()})
+        except Exception:
+            pass
+
+    return silenciar_ia
 
 
 # =============================================================================
