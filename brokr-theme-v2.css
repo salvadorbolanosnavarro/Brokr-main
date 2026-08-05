@@ -1031,7 +1031,7 @@ html {
      Con el canvas tenido, .bk-card (--bone, blanco) por fin se
      lee como card en vez de desaparecer sobre el fondo.
      ════════════════════════════════════════════════════════════ */
-  --canvas: #F7F8F9;
+  --canvas: #FFFFFF;  /* decision de Chava (canon): fondo blanco puro en toda la app */
 
   /* ════════════════════════════════════════════════════════════
      PALETA DE DATOS  (--data-1 … --data-8)
