@@ -7,44 +7,98 @@
 <link rel="manifest" href="manifest.json"/>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
-<meta name="theme-color" content="#0041D9"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy (Vista v2) -->
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-title" content="Broquer"/>
-<link rel="stylesheet" href="brokr-theme-v2.css"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap"/>
 <style>
-/* ─── Dashboard — sistema visual "Sky" ─────────────────────────── */
-.dash-scroll { padding: 24px 28px 48px; max-width: 1180px; margin: 0 auto; }
+/* ─── Dashboard — rediseño "Blanca" ──────────────────────────────
+   El contenido del dashboard vive ya en el mundo nuevo. El cascarón
+   (barra lateral y topbar) lo pinta app-shell.js con brokr-theme.css
+   y se rediseñará en su propio paso; por eso el theme viejo sigue
+   enlazado y estos estilos solo visten el área de contenido. */
+
+/* ═══ AUDIT-EXEMPT: tokens del sistema nuevo (migrarán a broquer-2.css; sufijo 2 para no chocar con el theme del shell) ═══ */
+:root {
+  --b2-blue:        #0D6BF0;
+  --b2-blue-press:  #0A56C4;
+  --b2-blue-deep:   #08419A;
+  --b2-blue-soft:   #EAF2FE;
+  --b2-ink:         #1B2733;
+  --b2-mute:        #5A6B7C;
+  --b2-paper:       #FFFFFF;
+  --b2-canvas:      #F6F8FB;
+  --b2-line:        #E3E9F0;
+
+  --b2-on-blue:       #FFFFFF;
+  --b2-on-blue-dim:   rgba(255,255,255,.78);
+  --b2-on-blue-faint: rgba(255,255,255,.55);
+  --b2-line-on-blue:  rgba(255,255,255,.16);
+  --b2-vidrio:        rgba(255,255,255,.09);
+  --b2-vidrio-hover:  rgba(255,255,255,.14);
+  --b2-glow:          rgba(13,107,240,.50);
+  --b2-glow-2:        rgba(110,166,246,.28);
+
+  --font-display2: 'Bricolage Grotesque', 'Figtree', system-ui, sans-serif;
+  --font-sans2:    'Figtree', system-ui, -apple-system, sans-serif;
+
+  --fs2-caption: 12px;
+  --fs2-sm:      14px;
+  --fs2-body:    16px;
+  --fs2-lg:      18px;
+  --fs2-h3:      20px;
+  --fs2-h2:      clamp(22px, 2.4vw, 28px);
+  --fs2-saludo:  clamp(28px, 3.4vw, 44px);
+  --fs2-kpi:     clamp(26px, 2.8vw, 34px);
+
+  --r2-xs:   6px;
+  --r2-sm:   10px;
+  --r2:      14px;
+  --r2-lg:   22px;
+  --r2-xl:   28px;
+  --r2-pill: 999px;
+
+  --sh2-card:  0 1px 2px rgba(27,39,51,.05), 0 8px 24px rgba(27,39,51,.07);
+  --sh2-media: 0 8px 20px rgba(27,39,51,.08), 0 32px 80px rgba(27,39,51,.14);
+
+  --ease2: cubic-bezier(.22,.61,.36,1);
+}
+/* ═══ /AUDIT-EXEMPT ═══ */
+
+.dash-scroll {
+  padding: 24px 28px 48px; max-width: 1180px; margin: 0 auto;
+  font-family: var(--font-sans2);
+  color: var(--b2-ink);
+  letter-spacing: -0.005em;
+}
 @media (max-width: 720px) { .dash-scroll { padding: 16px 14px 40px; } }
 
-/* ── HERO de saludo — "Amanecer sobre navy" ──
-   Una sola pieza protagonista: el saludo. Dos masas de luz (aurora)
-   derivan lentamente detrás del contenido; el nombre del usuario es
-   la única nota de color, con un subrayado que se dibuja al llegar.
-   La fecha vive en un chip-calendario y los KPIs en bloques de vidrio
-   con icono, número tabular y conteo animado. Cero líneas divisorias:
-   solo aire, luz y jerarquía tipográfica. Todos los colores derivan
-   de tokens vía color-mix; sin hex nuevos. */
+/* ── HERO de saludo: azul profundo con resplandor ──
+   La misma pieza protagonista, en el mundo nuevo: el panel azul
+   profundo del landing y el login, con dos masas de luz derivando
+   detrás. El nombre sigue siendo la única nota de color con su
+   subrayado que se dibuja al llegar. */
 .sky-hero {
-  background: linear-gradient(135deg, var(--sky-navy), var(--sky-blue) 55%, var(--sky-blue-lift)); color: #fff;
-  border-radius: var(--r-xl); padding: 36px 32px 30px;
+  background: var(--b2-blue-deep); color: var(--b2-on-blue);
+  border-radius: var(--r2-xl); padding: 36px 32px 30px;
   position: relative; overflow: hidden; isolation: isolate;
 }
-/* Aurora: luz fría arriba-derecha, profundidad abajo-izquierda */
 .sky-hero::before, .sky-hero::after {
   content: ""; position: absolute; z-index: -1; pointer-events: none;
   border-radius: 50%; filter: blur(72px);
 }
 .sky-hero::before {
   width: 640px; height: 640px; top: -380px; right: -160px;
-  background: radial-gradient(circle, rgba(255,255,255,0.20), transparent 66%);
-  background: radial-gradient(circle, color-mix(in srgb, var(--sky-blue-on-dark) 42%, transparent), transparent 66%);
-  animation: hero-drift-a 18s var(--ease) infinite alternate;
+  background: radial-gradient(circle, var(--b2-glow), transparent 66%);
+  animation: hero-drift-a 18s var(--ease2) infinite alternate;
 }
 .sky-hero::after {
   width: 520px; height: 520px; bottom: -340px; left: -140px;
-  background: radial-gradient(circle, rgba(255,255,255,0.12), transparent 70%);
-  background: radial-gradient(circle, color-mix(in srgb, var(--sky-blue-lift) 30%, transparent), transparent 70%);
-  animation: hero-drift-b 24s var(--ease) infinite alternate;
+  background: radial-gradient(circle, var(--b2-glow-2), transparent 70%);
+  animation: hero-drift-b 24s var(--ease2) infinite alternate;
 }
 @keyframes hero-drift-a { to { transform: translate(-60px, 44px) scale(1.08); } }
 @keyframes hero-drift-b { to { transform: translate(70px, -40px) scale(1.12); } }
@@ -52,97 +106,95 @@
 
 .sky-hero__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
 .sky-hero__eyebrow {
-  font-family: var(--font-sans); font-size: var(--fs-label-3); font-weight: 600; letter-spacing: 0.06em;
-  color: rgba(255,255,255,0.78); margin-bottom: 14px;
+  font-family: var(--font-sans2); font-size: var(--fs2-caption); font-weight: 600;
+  color: var(--b2-on-blue-dim); margin-bottom: 14px;
   display: inline-flex; align-items: center; gap: 8px;
 }
 .sky-hero__eyebrow::before {
-  content: ""; width: 22px; height: 2px; border-radius: var(--r-pill);
-  background: linear-gradient(90deg, var(--sky-blue-on-dark), transparent);
+  content: ""; width: 22px; height: 2px; border-radius: var(--r2-pill);
+  background: linear-gradient(90deg, var(--b2-blue-soft), transparent);
 }
 .sky-hero__title {
-  font-family: var(--font-display);
-  font-size: clamp(var(--fs-h1), 3.6vw, var(--fs-display));
-  font-weight: 800; letter-spacing: -0.028em; color: #fff; line-height: 1.04;
+  font-family: var(--font-display2);
+  font-size: var(--fs2-saludo);
+  font-weight: 800; letter-spacing: -0.032em; color: var(--b2-on-blue); line-height: 1.04;
   text-wrap: balance;
 }
-#dash-greet { color: #fff; }
-/* Única nota de color: el nombre del usuario, en gradiente de acento
-   con subrayado que se dibuja al cargar el perfil */
+#dash-greet { color: var(--b2-on-blue); }
+/* Única nota de color: el nombre, con subrayado que se dibuja */
 .sky-hero__title em {
   font-style: normal; position: relative; white-space: nowrap;
-  background: linear-gradient(94deg, var(--sky-blue-on-dark) 20%, #fff 140%);
-  -webkit-background-clip: text; background-clip: text; color: transparent;
+  color: var(--b2-blue-soft);
 }
 .sky-hero__title em::after {
   content: ""; position: absolute; left: 2%; right: 98%; bottom: -6px; height: 3px;
-  border-radius: var(--r-pill);
-  background: linear-gradient(90deg, var(--sky-blue-on-dark), var(--sky-blue-lift));
-  transition: right 0.9s var(--ease-out) 0.2s;
+  border-radius: var(--r2-pill);
+  background: linear-gradient(90deg, var(--b2-blue-soft), var(--b2-on-blue-faint));
+  transition: right 0.9s var(--ease2) 0.2s;
 }
 .sky-hero__title em.is-on::after { right: 2%; }
 
-/* Chip-calendario: mismo dato de siempre, presentado como objeto */
+/* Chip-calendario */
 .sky-hero__date {
-  text-align: center; font-family: var(--font-sans); color: #fff;
-  background: rgba(255,255,255,0.09);
-  border: 1px solid rgba(255,255,255,0.14);
-  border-radius: var(--r-lg); padding: 12px 20px 14px; min-width: 108px;
+  text-align: center; font-family: var(--font-sans2); color: var(--b2-on-blue);
+  background: var(--b2-vidrio);
+  border: 1px solid var(--b2-line-on-blue);
+  border-radius: var(--r2-lg); padding: 12px 20px 14px; min-width: 108px;
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
 }
 .sky-hero__date .label {
-  display: block; font-size: var(--fs-label-3); font-weight: 600; letter-spacing: 0.05em;
-  color: rgba(255,255,255,0.70); margin-bottom: 4px;
+  display: block; font-size: var(--fs2-caption); font-weight: 600;
+  color: var(--b2-on-blue-faint); margin-bottom: 4px;
 }
 .sky-hero__date-dia {
-  display: block; font-family: var(--font-display); font-size: var(--fs-h1);
-  font-weight: 800; line-height: 1; letter-spacing: -0.02em; color: #fff;
+  display: block; font-family: var(--font-display2); font-size: var(--fs2-kpi);
+  font-weight: 800; line-height: 1; letter-spacing: -0.02em; color: var(--b2-on-blue);
   font-variant-numeric: tabular-nums;
 }
 .sky-hero__date-mes {
-  display: block; font-size: var(--fs-xs); font-weight: 600;
-  color: rgba(255,255,255,0.82); margin-top: 5px;
+  display: block; font-size: var(--fs2-caption); font-weight: 600;
+  color: var(--b2-on-blue-dim); margin-top: 5px;
 }
 
-/* KPIs: bloques de vidrio con icono, acento superior y número tabular */
+/* KPIs: bloques de vidrio */
 .sky-hero__kpis {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px;
   margin-top: 30px;
 }
 .sky-kpi {
   position: relative; overflow: hidden;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: var(--r-lg); padding: 18px 20px 16px;
-  transition: transform 0.25s var(--ease), background 0.25s var(--ease), border-color 0.25s var(--ease);
+  background: var(--b2-vidrio);
+  border: 1px solid var(--b2-line-on-blue);
+  border-radius: var(--r2-lg); padding: 18px 20px 16px;
+  transition: transform 0.25s var(--ease2), background 0.25s var(--ease2), border-color 0.25s var(--ease2);
 }
 .sky-kpi::before {
   content: ""; position: absolute; top: 0; left: 20px; width: 30px; height: 3px;
-  border-radius: 0 0 var(--r-xs) var(--r-xs);
-  background: linear-gradient(90deg, var(--sky-blue-on-dark), var(--sky-blue-lift));
+  border-radius: 0 0 var(--r2-xs) var(--r2-xs);
+  background: linear-gradient(90deg, var(--b2-blue-soft), var(--b2-on-blue-faint));
   opacity: 0.9;
 }
 .sky-kpi:hover {
   transform: translateY(-3px);
-  background: rgba(255,255,255,0.12);
-  border-color: rgba(255,255,255,0.22);
+  background: var(--b2-vidrio-hover);
+  border-color: var(--b2-on-blue-faint);
 }
 .sky-kpi__ico {
-  width: 34px; height: 34px; border-radius: var(--r);
+  width: 34px; height: 34px; border-radius: var(--r2-sm);
   display: inline-flex; align-items: center; justify-content: center;
-  background: rgba(255,255,255,0.09);
-  color: var(--sky-blue-on-dark); margin-bottom: 12px;
+  background: var(--b2-vidrio);
+  color: var(--b2-blue-soft); margin-bottom: 12px;
 }
 .sky-kpi__ico svg { display: block; }
 .sky-kpi__value {
-  font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 800;
-  color: #fff; line-height: 1; letter-spacing: -0.025em; font-variant-numeric: tabular-nums;
+  font-family: var(--font-display2); font-size: var(--fs2-kpi); font-weight: 800;
+  color: var(--b2-on-blue); line-height: 1; letter-spacing: -0.025em; font-variant-numeric: tabular-nums;
 }
-.sky-kpi__label { font-size: var(--fs-xs); font-weight: 600; color: rgba(255,255,255,0.80); margin-top: 8px; }
+.sky-kpi__label { font-size: var(--fs2-caption); font-weight: 600; color: var(--b2-on-blue-dim); margin-top: 8px; }
 
-/* Entrada orquestada: cada pieza sube con un pequeño desfase */
+/* Entrada orquestada */
 .sky-hero__eyebrow, .sky-hero__title, .sky-hero__date, .sky-kpi {
-  animation: hero-rise 0.7s var(--ease-out) backwards;
+  animation: hero-rise 0.7s var(--ease2) backwards;
 }
 .sky-hero__title { animation-delay: 0.08s; }
 .sky-hero__date { animation-delay: 0.16s; }
@@ -160,75 +212,86 @@
 
 @media (max-width: 560px) {
   .sky-hero { padding: 26px 20px 24px; }
-  .sky-hero__title { font-size: var(--fs-h2); }
+  .sky-hero__title { font-size: var(--fs2-h2); }
   .sky-hero__title em { white-space: normal; }
-  .sky-kpi__value { font-size: var(--fs-h3); }
+  .sky-kpi__value { font-size: var(--fs2-h3); }
   .sky-hero__date {
     min-width: 0; width: 100%; text-align: left;
     display: flex; align-items: baseline; gap: 10px; padding: 10px 16px;
   }
   .sky-hero__date .label { margin-bottom: 0; }
-  .sky-hero__date-dia { font-size: var(--fs-h3); }
+  .sky-hero__date-dia { font-size: var(--fs2-h3); }
   .sky-hero__date-mes { margin-top: 0; }
 }
 
-
-/* ── Espacio de video (reemplaza las tarjetas de módulos) ── */
+/* ── Espacio de video ── */
 .home-video { margin-top: 24px; }
 .home-video__el {
   display: block; width: 100%; aspect-ratio: 16 / 9;
-  border-radius: var(--r-lg); background: var(--sky-navy);
-  object-fit: cover; border: 1px solid var(--line);
-  box-shadow: var(--shadow-sm);
+  border-radius: var(--r2-xl); background: var(--b2-blue-deep);
+  object-fit: cover; border: 1px solid var(--b2-line);
+  box-shadow: var(--sh2-media);
 }
 @media (max-width: 560px) { .home-video { margin-top: 18px; } }
 
-/* ── CTA azul (Broq) ── */
+/* ── CTA azul (Broq y pendientes) ── */
 .ai-card {
-  background: var(--sky-blue); color: var(--bone) !important; border-radius: var(--r-lg);
-  padding: 30px 28px; margin-top: 34px; position: relative; overflow: hidden;
-  background-image: radial-gradient(120% 160% at 100% 0%, rgba(255,255,255,0.16), transparent 55%);
+  background: var(--b2-blue); color: var(--b2-on-blue); border-radius: var(--r2-lg);
+  padding: 30px 28px; margin-top: 30px; position: relative; overflow: hidden;
+  background-image: radial-gradient(120% 160% at 100% 0%, var(--b2-line-on-blue), transparent 55%);
 }
-.ai-card h3 { font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 700; letter-spacing: -0.02em; color: var(--bone); margin-bottom: 8px; line-height: 1.1; }
-.ai-card p { font-size: var(--fs-body); color: rgba(255,255,255,0.9); line-height: 1.5; margin-bottom: 18px; max-width: 60ch; }
+.ai-card h3 {
+  font-family: var(--font-display2); font-size: var(--fs2-h2); font-weight: 800;
+  letter-spacing: -0.025em; color: var(--b2-on-blue); margin: 0 0 8px; line-height: 1.12;
+}
+.ai-card p { font-size: var(--fs2-body); color: var(--b2-on-blue-dim); line-height: 1.55; margin: 0 0 18px; max-width: 60ch; }
 .ai-card__btn {
-  background: var(--bone); color: var(--sky-blue); border: none; height: 46px; padding: 0 22px;
-  border-radius: var(--r-pill); font-size: var(--fs-body); font-weight: 700; cursor: pointer; font-family: inherit;
-  display: inline-flex; align-items: center; gap: 8px; transition: transform 0.18s var(--ease);
+  background: var(--b2-paper); color: var(--b2-blue-press); border: none; height: 46px; padding: 0 22px;
+  border-radius: var(--r2-pill); font-size: var(--fs2-body); font-weight: 700; cursor: pointer; font-family: inherit;
+  display: inline-flex; align-items: center; gap: 8px;
+  transition: transform 0.18s var(--ease2), box-shadow 0.18s var(--ease2);
 }
-.ai-card__btn:hover { transform: translateX(2px); }
+.ai-card__btn:hover { transform: translateX(2px); box-shadow: var(--sh2-card); }
 
-/* ── Tarjeta de próximos pendientes/citas (misma tarjeta que Broq, reutiliza tokens) ── */
-#notif-lista { display: flex; flex-direction: column; gap: var(--sp-3); margin-bottom: var(--sp-4); }
+/* ── Próximos pendientes (misma tarjeta azul) ── */
+#notif-lista { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
 .notif-item {
-  display: flex; align-items: center; gap: var(--sp-3);
-  background: rgba(255,255,255,0.12); border-radius: var(--r); padding: var(--sp-3) var(--sp-4);
+  display: flex; align-items: center; gap: 12px;
+  background: var(--b2-vidrio-hover); border-radius: var(--r2); padding: 12px 16px;
 }
-.notif-item__txt { flex: 1; min-width: 0; font-size: var(--fs-sm); font-weight: 600; color: var(--bone); }
-.notif-item__due { font-size: var(--fs-xs); color: rgba(255,255,255,0.85); white-space: nowrap; }
-.notif-item__due.is-overdue { color: #fff; font-weight: 700; }
-.notif-link { font-size: var(--fs-sm); font-weight: 700; color: var(--bone); text-decoration: underline; }
+.notif-item__txt { flex: 1; min-width: 0; font-size: var(--fs2-sm); font-weight: 600; color: var(--b2-on-blue); }
+.notif-item__due { font-size: var(--fs2-caption); color: var(--b2-on-blue-dim); white-space: nowrap; }
+.notif-item__due.is-overdue { color: var(--b2-on-blue); font-weight: 700; }
+.notif-link { font-size: var(--fs2-sm); font-weight: 700; color: var(--b2-on-blue); text-decoration: underline; text-underline-offset: 3px; }
 
-/* ── App Store (navy, footer del dashboard) ── */
+/* ── App Store: azul profundo ── */
 .appstore-card {
-  background: var(--sky-navy); color: var(--bone) !important; border-radius: var(--r-lg);
+  background: var(--b2-blue-deep); color: var(--b2-on-blue); border-radius: var(--r2-lg);
   padding: 22px 26px; margin-top: 16px;
   display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
+  background-image: radial-gradient(120% 160% at 50% 0%, var(--b2-glow-2), transparent 60%);
 }
-.appstore-card__eyebrow { font-family: var(--font-mono); font-size: var(--fs-label-3); letter-spacing: 0.02em;  color: rgba(255,255,255,0.55); margin-bottom: 4px; }
-.appstore-card__title { font-family: var(--font-display); font-size: var(--fs-h5); font-weight: 700; letter-spacing: -0.015em; color: var(--bone); }
+.appstore-card__eyebrow {
+  font-family: var(--font-sans2); font-size: var(--fs2-caption); font-weight: 600;
+  color: var(--b2-on-blue-faint); margin-bottom: 4px;
+}
+.appstore-card__title {
+  font-family: var(--font-display2); font-size: var(--fs2-lg); font-weight: 700;
+  letter-spacing: -0.015em; color: var(--b2-on-blue);
+}
 .appstore-card__badge { display: block; line-height: 0; flex-shrink: 0; }
 .appstore-card__badge img { height: 42px; width: auto; display: block; }
-@media (max-width: 560px) { .appstore-card { padding: 18px 20px; } .appstore-card__title { font-size: var(--fs-sm); } }
+@media (max-width: 560px) { .appstore-card { padding: 18px 20px; } .appstore-card__title { font-size: var(--fs2-sm); } }
 
-/* ── Pie discreto: insignia Meta Tech Provider ── */
+/* ── Pie discreto ── */
 .dash-foot {
   margin-top: 22px; padding-top: 18px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--b2-line);
   display: flex; align-items: center; justify-content: center; gap: 12px;
 }
-.dash-foot img { height: 22px; width: auto; display: block; opacity: .45; transition: opacity 0.18s var(--ease); }
+.dash-foot img { height: 22px; width: auto; display: block; opacity: .45; transition: opacity 0.18s var(--ease2); }
 .dash-foot:hover img { opacity: .75; }
+
 </style>
 </head>
 <body data-app="home">
