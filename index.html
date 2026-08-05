@@ -52,7 +52,7 @@
   --fs2-h3:      20px;
   --fs2-h2:      clamp(22px, 2.4vw, 28px);
   --fs2-saludo:  clamp(28px, 3.4vw, 44px);
-  --fs2-kpi:     clamp(26px, 2.8vw, 34px);
+  --fs2-kpi:     clamp(20px, 1.9vw, 26px);
 
   --r2-xs:   6px;
   --r2-sm:   10px;
@@ -69,7 +69,7 @@
 /* ═══ /AUDIT-EXEMPT ═══ */
 
 .dash-scroll {
-  padding: 24px 28px 48px; max-width: 1180px; margin: 0 auto;
+  padding: 14px 28px 48px; max-width: 1180px; margin: 0 auto;
   font-family: var(--font-sans2);
   color: var(--b2-ink);
   letter-spacing: -0.005em;
@@ -77,7 +77,7 @@
 @media (max-width: 720px) { .dash-scroll { padding: 16px 14px 40px; } }
 
 /* ── Cabecera del dashboard: lápiz de personalización ── */
-.dash-head { position: relative; display: flex; justify-content: flex-end; margin-bottom: 10px; }
+.dash-head { position: relative; display: flex; justify-content: flex-end; margin-bottom: 4px; }
 .dash-pencil {
   position: relative;
   width: 38px; height: 38px; border-radius: var(--r2-pill);
@@ -110,7 +110,7 @@
 .dash-panel__opt input { accent-color: var(--b2-blue); width: 16px; height: 16px; }
 
 /* ── Fila superior: saludo y pendientes lado a lado, compactos ── */
-.dash-top { display: grid; grid-template-columns: 1.3fr 1fr; gap: 14px; align-items: stretch; }
+.dash-top { display: grid; grid-template-columns: 1.3fr 1fr; gap: 14px; align-items: start; }
 .dash-top:has(#notif-card[hidden]) { grid-template-columns: 1fr; }
 @media (max-width: 900px) { .dash-top { grid-template-columns: 1fr; } }
 .ai-card--pend { margin-top: 0; display: flex; flex-direction: column; }
@@ -180,7 +180,7 @@
   text-align: center; font-family: var(--font-sans2); color: var(--b2-on-blue);
   background: var(--b2-vidrio);
   border: 1px solid var(--b2-line-on-blue);
-  border-radius: var(--r2-lg); padding: 12px 20px 14px; min-width: 108px;
+  border-radius: var(--r2-lg); padding: 8px 14px 10px; min-width: 88px;
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
 }
 .sky-hero__date .label {
@@ -199,8 +199,8 @@
 
 /* KPIs: bloques de vidrio */
 .sky-hero__kpis {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;
-  margin-top: 18px;
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;
+  margin-top: 16px;
 }
 .sky-kpi {
   position: relative; overflow: hidden;
@@ -285,10 +285,10 @@
 .ai-card__btn:hover { transform: translateX(2px); box-shadow: var(--sh2-card); }
 
 /* ── Próximos pendientes (misma tarjeta azul) ── */
-#notif-lista { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+#notif-lista { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; max-height: 260px; overflow-y: auto; }
 .notif-item {
   display: flex; align-items: center; gap: 12px;
-  background: var(--b2-vidrio-hover); border-radius: var(--r2); padding: 12px 16px;
+  background: var(--b2-vidrio-hover); border-radius: var(--r2); padding: 10px 12px;
 }
 .notif-item__txt { flex: 1; min-width: 0; font-size: var(--fs2-sm); font-weight: 600; color: var(--b2-on-blue); }
 .notif-item__due { font-size: var(--fs2-caption); color: var(--b2-on-blue-dim); white-space: nowrap; }
