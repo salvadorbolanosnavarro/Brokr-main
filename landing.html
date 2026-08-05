@@ -346,6 +346,27 @@ button { font-family: inherit; }
 .ln-mod h3 { font-size: var(--fs2-h3); font-weight: 700; letter-spacing: -.015em; }
 .ln-mod p { font-size: var(--fs2-sm); line-height: 1.55; color: var(--b2-mute); }
 
+/* ── Instagram ──────────────────────────────────────────────── */
+.ig-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+@media (max-width: 900px) { .ig-grid { grid-template-columns: repeat(2, 1fr); } }
+.ig-post {
+  position: relative; display: block; aspect-ratio: 1 / 1;
+  border-radius: var(--r2-lg); overflow: hidden;
+  border: 1px solid var(--b2-line); box-shadow: var(--sh2-card);
+  background: var(--b2-canvas);
+  transition: transform .2s var(--ease2), box-shadow .2s var(--ease2);
+}
+.ig-post:hover { transform: translateY(-3px); box-shadow: var(--sh2-lift); }
+.ig-post img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ig-post__play {
+  position: absolute; top: 10px; right: 10px;
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--b2-paper); color: var(--b2-blue);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--sh2-card);
+}
+.ig-post__play svg { width: 13px; height: 13px; margin-left: 2px; }
+
 /* ── Nosotros ───────────────────────────────────────────────── */
 .ln-about { display: grid; grid-template-columns: 1.15fr .85fr; gap: 40px; align-items: start; }
 @media (max-width: 860px) { .ln-about { grid-template-columns: 1fr; } }
@@ -686,6 +707,18 @@ button { font-family: inherit; }
   </div>
 </section>
 
+<!-- ── INSTAGRAM ───────────────────────────────────────────── -->
+<section class="ln-sec" id="ig-sec" hidden>
+  <div class="b2-wrap">
+    <div class="ln-sec-head">
+      <div class="eyebrow">Aprende con nosotros</div>
+      <h2>Broquer en 60 segundos</h2>
+      <p>Videos explicativos directo de nuestro Instagram.</p>
+    </div>
+    <div class="ig-grid" id="ig-grid"></div>
+  </div>
+</section>
+
 <!-- ── NOSOTROS ────────────────────────────────────────────── -->
 <section class="ln-sec" id="nosotros">
   <div class="b2-wrap">
@@ -830,6 +863,28 @@ button { font-family: inherit; }
 </footer>
 
 <script>
+/* Cuadrícula de Instagram: si el backend no responde, la sección
+   simplemente no aparece. */
+(function () {
+  var sec = document.getElementById('ig-sec');
+  var grid = document.getElementById('ig-grid');
+  if (!sec || !grid) return;
+  fetch('https://api.broquer.app/instagram/feed')
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) {
+      if (!d || !d.posts || !d.posts.length) return;
+      grid.innerHTML = d.posts.slice(0, 8).map(function (p) {
+        var play = p.tipo === 'VIDEO'
+          ? '<span class="ig-post__play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.14v13.72a.5.5 0 00.77.42l10.5-6.86a.5.5 0 000-.84L8.77 4.72a.5.5 0 00-.77.42z"/></svg></span>'
+          : '';
+        return '<a class="ig-post" href="' + p.liga + '" target="_blank" rel="noopener">' +
+               '<img src="' + p.portada + '" alt="" loading="lazy"/>' + play + '</a>';
+      }).join('');
+      sec.hidden = false;
+    })
+    .catch(function () {});
+})();
+
 /* La barra de Broq escribe sola ejemplos reales de lo que hace la
    plataforma. Si la persona pidió menos movimiento, se queda quieto
    el primer ejemplo. */
