@@ -7,45 +7,61 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
 <title>Estadísticas · Broquer</title>
 <link rel="manifest" href="manifest.json"/>
-<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+<meta name="theme-color" content="#0041D9"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy (Vista v2) -->
 <link rel="stylesheet" href="brokr-theme-v2.css"/>
 <style>
-html, body { background: var(--paper); }
+html, body { background: var(--canvas); }
 
 /* ════════════════════════════════════════════════════════════
-   Cabecera — mismo componente que Contactos / Leads / Inmuebles.
-   Estadísticas ya no tiene hero propio: es un módulo hermano.
+   Hero — edición "Vista": banda con degradado de marca y la
+   navegación del módulo flotando sobre su borde, como tarjeta.
+   El saludo, el conteo y el periodo viven en el hero; las
+   pestañas, en la tarjeta flotante.
    ════════════════════════════════════════════════════════════ */
-.page-head {
-  background: var(--paper);
-  border-bottom: 1px solid var(--line);
-  padding: 18px 36px 0;
-  position: sticky; top: 0; z-index: 12;
+.es-hero {
+  background: linear-gradient(135deg, var(--sky-navy), var(--sky-blue) 55%, var(--sky-blue-lift));
+  color: var(--bone);
+  padding: 30px 36px 74px;
 }
-@media (max-width: 720px) { .page-head { padding: 12px 16px 0; } }
-
-.page-head__row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; }
-.page-head h1 { font-family: var(--font-display); font-size: var(--fs-display); font-weight: 700; letter-spacing: -0.03em; flex: 1; }
-@media (max-width: 720px) { .page-head h1 { font-size: var(--fs-h2); } }
-.page-head__count {
-  font-size: var(--fs-xs); color: var(--mute);
-  background: var(--bone); border: 1px solid var(--line);
-  border-radius: var(--r-pill); padding: 4px 10px;
-  font-variant-numeric: tabular-nums;
+@media (max-width: 720px) { .es-hero { padding: 20px 16px 66px; } }
+.es-hero__row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.es-hero h1 {
+  font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 800;
+  letter-spacing: -0.028em; color: var(--bone); flex: 1; line-height: var(--lh-tight);
+}
+@media (max-width: 720px) { .es-hero h1 { font-size: var(--fs-h2); } }
+.es-hero__sub { font-size: var(--fs-sm); color: var(--bone); opacity: .88; margin-top: 6px; max-width: 560px; }
+.es-hero__count {
+  font-size: var(--fs-xs); color: var(--bone);
+  background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.22);
+  border-radius: var(--r-pill); padding: 5px 12px;
+  font-variant-numeric: tabular-nums; font-weight: 600;
 }
 
-.filters-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
-
-.es-seg { display: inline-flex; background: var(--bone); border: 1px solid var(--line); border-radius: var(--r-pill); padding: 3px; gap: 2px; }
+/* Selector de periodo sobre el degradado */
+.es-seg { display: inline-flex; background: rgba(255,255,255,.16); border-radius: var(--r-pill); padding: 3px; gap: 2px; margin-top: 16px; }
 .es-seg button {
   border: none; background: none; cursor: pointer;
-  padding: 7px 15px; border-radius: var(--r-pill);
-  font-family: inherit; font-size: var(--fs-xs); font-weight: 600;
-  color: var(--mute); letter-spacing: -0.005em;
-  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+  padding: 7px 16px; border-radius: var(--r-pill);
+  font-family: inherit; font-size: var(--fs-xs); font-weight: 700;
+  color: var(--bone); opacity: .78; letter-spacing: -0.005em;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), opacity var(--dur) var(--ease);
 }
-.es-seg button:hover { color: var(--ink); }
-.es-seg button.is-active { background: var(--sky-blue); color: var(--bone); }
+.es-seg button:hover { opacity: 1; }
+.es-seg button.is-active { background: var(--bone); color: var(--sky-blue-press); opacity: 1; }
+.es-seg button:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(255,255,255,.45); } /* AUDIT-EXEMPT-LINE: anillo de foco blanco sobre degradado; --focus (azul) es invisible ahí */
+
+/* Tarjeta de navegación flotante sobre el borde del hero */
+.es-nav {
+  position: sticky; top: 10px; z-index: 12;
+  margin: -46px 36px 0;
+}
+@media (max-width: 720px) { .es-nav { margin: -46px 12px 0; } }
+.es-nav__card {
+  background: var(--bone); border-radius: var(--r-lg);
+  box-shadow: var(--shadow-md); border: 1px solid var(--line);
+  padding: 6px 8px; max-width: calc(var(--page-max) - 72px);
+}
 
 .es-tool {
   display: inline-flex; align-items: center; gap: 7px;
@@ -57,21 +73,21 @@ html, body { background: var(--paper); }
 }
 .es-tool:hover { border-color: var(--sky-blue); color: var(--sky-blue); }
 
-.tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--line); }
+.tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
 .tabs::-webkit-scrollbar { display: none; }
 .ftab {
   flex-shrink: 0; border: none; background: none;
-  padding: 12px 14px; font-family: inherit; font-size: var(--fs-sm); font-weight: 500;
-  color: var(--mute); cursor: pointer;
-  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  padding: 10px 14px; font-family: inherit; font-size: var(--fs-sm); font-weight: 600;
+  color: var(--mute); cursor: pointer; border-radius: var(--r-sm);
   letter-spacing: -0.005em;
-  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
 }
-.ftab:hover { color: var(--ink); }
-.ftab.active { color: var(--ink); border-bottom-color: var(--sky-blue); font-weight: 700; }
+.ftab:hover { color: var(--ink); background: var(--paper-2); }
+.ftab.active { color: var(--sky-blue-press); background: var(--sky-canvas); font-weight: 700; }
+.ftab:focus-visible { outline: none; box-shadow: var(--focus); }
 
 /* ── Lienzo ─────────────────────────────────────────────────── */
-.es-scroll { padding: 24px 36px 120px; max-width: var(--page-max); }
+.es-scroll { padding: 22px 36px 120px; max-width: var(--page-max); }
 @media (max-width: 720px) { .es-scroll { padding: 16px 16px 120px; } }
 
 .es-sec { margin-bottom: 34px; }
@@ -83,8 +99,9 @@ html, body { background: var(--paper); }
 
 /* KPIs */
 .es-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); gap: 10px; margin-bottom: 18px; }
-.es-kpi { padding: var(--sp-5); }
-.es-kpi__n { font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 700; letter-spacing: -0.025em; color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.es-kpi { padding: var(--sp-5); transition: box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease); }
+.es-kpi:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+.es-kpi__n { font-family: var(--font-display); font-size: var(--fs-display); font-weight: 800; letter-spacing: -0.03em; color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1.05; }
 .es-kpi__lbl { font-size: var(--fs-xs); color: var(--mute); margin-top: 4px; line-height: var(--lh-snug); }
 .es-kpi__n.is-good { color: var(--success); }
 .es-kpi__n.is-warn { color: var(--warn); }
@@ -126,6 +143,27 @@ html, body { background: var(--paper); }
   transition: width .6s var(--ease); min-width: 54px; padding-right: 12px;
 }
 .es-fn__pct { width: 92px; flex-shrink: 0; font-size: var(--fs-caption); color: var(--mute); text-align: left; font-variant-numeric: tabular-nums; }
+
+/* ── Embudo como tablero (firma "Vista") ─────────────────────
+   Cada etapa es una columna; cada lead, una tarjeta. La barra
+   bajo el encabezado compara el volumen de la etapa contra la
+   más llena. Máximo dos tarjetas por columna + "n más". ── */
+.es-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); gap: 12px; align-items: start; }
+.es-col { background: var(--paper-2); border-radius: var(--r-lg); padding: 10px; }
+.es-col__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 2px 6px 8px; }
+.es-col__name { font-size: var(--fs-xs); font-weight: 700; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.es-col__count { font-size: var(--fs-caption); font-weight: 700; background: var(--line); color: var(--ink-2); border-radius: var(--r-pill); padding: 2px 9px; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.es-col__bar { height: 5px; border-radius: var(--r-pill); background: var(--line); overflow: hidden; margin: 0 6px 10px; }
+.es-col__fill { display: block; height: 100%; border-radius: var(--r-pill); transition: width .7s var(--ease); }
+.es-cardlet {
+  background: var(--bone); border-radius: var(--r-sm); box-shadow: var(--shadow-sm);
+  padding: 9px 11px; margin-bottom: 7px;
+  transition: box-shadow var(--dur) var(--ease);
+}
+.es-cardlet:hover { box-shadow: var(--shadow); }
+.es-cardlet__t { font-size: var(--fs-xs); font-weight: 700; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.es-cardlet__chip { display: inline-block; font-size: var(--fs-caption); font-weight: 700; border-radius: var(--r-xs); padding: 1px 7px; margin-top: 5px; background: var(--sky-canvas); color: var(--sky-blue-press); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.es-col__more { font-size: var(--fs-caption); font-weight: 600; color: var(--mute); padding: 2px 6px; }
 
 /* Gráficas SVG */
 .es-chart { padding: var(--sp-5) var(--sp-5) var(--sp-3); }
@@ -235,7 +273,7 @@ html, body { background: var(--paper); }
 }
 
 @media print {
-  .page-head, .es-tool, .es-picker { display: none; }
+  .es-hero, .es-nav, .es-tool, .es-picker { display: none; }
   .es-scroll { padding: 0; }
   .es-card { box-shadow: none; }
 }
@@ -243,19 +281,21 @@ html, body { background: var(--paper); }
 </head>
 <body data-app="estadisticas">
 
-<header class="page-head">
-  <div class="page-head__row">
+<header class="es-hero">
+  <div class="es-hero__row">
     <h1>Estadísticas</h1>
-    <span class="page-head__count" id="count-badge">Cargando…</span>
+    <span class="es-hero__count" id="count-badge">Cargando…</span>
   </div>
-  <div class="filters-row">
-    <div class="es-seg" id="es-periodo">
-      <button data-p="semana" onclick="setPeriodo('semana')">Semana</button>
-      <button data-p="mes" onclick="setPeriodo('mes')">Mes</button>
-      <button data-p="trimestre" onclick="setPeriodo('trimestre')">Trimestre</button>
-      <button data-p="todo" class="is-active" onclick="setPeriodo('todo')">Todo</button>
-    </div>
+  <div class="es-hero__sub">Así va tu negocio: leads, inventario, WhatsApp y cierres, todo en un solo lugar.</div>
+  <div class="es-seg" id="es-periodo">
+    <button data-p="semana" onclick="setPeriodo('semana')">Semana</button>
+    <button data-p="mes" onclick="setPeriodo('mes')">Mes</button>
+    <button data-p="trimestre" onclick="setPeriodo('trimestre')">Trimestre</button>
+    <button data-p="todo" class="is-active" onclick="setPeriodo('todo')">Todo</button>
   </div>
+</header>
+
+<nav class="es-nav"><div class="es-nav__card">
   <div class="tabs" id="es-tabs">
     <button class="ftab active" data-tab="resumen" onclick="setTab('resumen')">Resumen</button>
     <button class="ftab" data-tab="leads" onclick="setTab('leads')">Leads</button>
@@ -265,7 +305,7 @@ html, body { background: var(--paper); }
     <button class="ftab" data-tab="inmueble" onclick="setTab('inmueble')">Por inmueble</button>
     <button class="ftab" data-tab="actividad" onclick="setTab('actividad')">Actividad</button>
   </div>
-</header>
+</div></nav>
 
 <div class="es-scroll" id="es-body">
   <div class="es-loading">Cargando estadísticas…</div>
@@ -366,7 +406,7 @@ async function cargarTodo() {
   try {
     const [et, c, p, ip, ac, tk] = await Promise.all([
       sbFetch('pipeline_etapas?select=nombre,orden,color&order=orden.asc').catch(() => []),
-      sbFetch('contactos?select=id,tipo,estatus,fuente,es_potencial,created_at,fecha_cambio_estatus&limit=5000'),
+      sbFetch('contactos?select=id,nombre,tipo,estatus,fuente,es_potencial,created_at,fecha_cambio_estatus&limit=5000'),
       sbFetch('propiedades?select=id,titulo,clave_interna,tipo,operacion,estatus,precio,moneda,archivada,created_at,updated_at,colonia,ciudad,estado,m2_construccion,m2_terreno,recamaras,banos,estacionamientos,anio_construccion,comision_venta_pct,comision_renta_meses,comision_real&limit=3000'),
       sbFetch('contactos_propiedades?select=contacto_id,propiedad_id,relacion&limit=8000').catch(() => []),
       sbFetch('actividades?select=tipo,created_at,propiedad_id,contacto_id&order=created_at.desc&limit=10000').catch(() => []),
@@ -815,6 +855,34 @@ function tarjetaBarras(entries, vacio, opts) {
 }
 
 /* Embudo */
+/* Tablero de etapas: columnas con conteo, barra comparativa y
+   hasta dos leads recientes reales por etapa como tarjetas. */
+function chBoard() {
+  const E = calcEmbudoEtapas();
+  if (!E.total) return '<div class="es-card es-empty"><p>Sin contactos en este periodo.</p></div>';
+  const enP = contactos.filter(c => enPeriodo(c.created_at))
+    .slice().sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  const porEtapa = {};
+  enP.forEach(c => {
+    const k = String(c.estatus || 'nuevo').toLowerCase();
+    (porEtapa[k] = porEtapa[k] || []).push(c);
+  });
+  const max = Math.max(1, ...E.stages.map(x => x.n));
+  return '<div class="es-board">' + ETAPAS.map((e, i) => {
+    const st = E.stages[i] || { n: 0, color: col(i) };
+    const leads = (porEtapa[e.clave] || []).slice(0, 2);
+    const resto = st.n - leads.length;
+    return '<div class="es-col">'
+      + '<div class="es-col__head"><span class="es-col__name">' + esc(e.nombre) + '</span>'
+      + '<span class="es-col__count">' + nf(st.n) + '</span></div>'
+      + '<div class="es-col__bar"><span class="es-col__fill" style="width:' + Math.round((st.n / max) * 100) + '%;background:' + (st.color || col(i)) + '"></span></div>'
+      + leads.map(c => '<div class="es-cardlet"><div class="es-cardlet__t">' + esc(c.nombre || 'Sin nombre') + '</div>'
+          + (c.fuente ? '<span class="es-cardlet__chip">' + esc(c.fuente) + '</span>' : '') + '</div>').join('')
+      + (resto > 0 ? '<div class="es-col__more">+ ' + nf(resto) + ' más</div>' : '')
+      + '</div>';
+  }).join('') + '</div>';
+}
+
 function chFunnel(stages) {
   const max = Math.max(1, ...stages.map(s => s.n));
   const base = stages.length ? stages[0].n : 0;
@@ -913,16 +981,39 @@ function tarjetaGrafica(contenido) { return '<div class="es-card es-chart">' + c
 /* ════════════════════════════════════════════════════════════
    Cálculos — CRM
    ════════════════════════════════════════════════════════════ */
+/* La etapa que cuenta como cierre NO es ciegamente la última del
+   pipeline: si el usuario agregó "Descartado" o "Perdido" al final,
+   la tasa de cierre se iba a 0%. Se busca por significado y, solo
+   si no hay ninguna con nombre de cierre, se cae a la última que
+   no signifique descarte. */
+const RE_CIERRE = /cerrad|ganad|vendid|rentad|escritur|firmad/i;
+const RE_DESCARTE = /descart|perdid|muert|basura|no calif/i;
+function etapaCierre() {
+  const porNombre = ETAPAS.find(e => RE_CIERRE.test(e.clave));
+  if (porNombre) return porNombre.clave;
+  const sinDescarte = ETAPAS.filter(e => !RE_DESCARTE.test(e.clave));
+  const ult = sinDescarte.length ? sinDescarte[sinDescarte.length - 1] : ETAPAS[ETAPAS.length - 1];
+  return ult ? ult.clave : 'cerrado';
+}
+
 function calcLeads() {
   const nuevosP = contactos.filter(c => enPeriodo(c.created_at));
   const activosLeads = contactos.filter(c => c.es_potencial);
   const nuevosLeads = activosLeads.filter(c => enPeriodo(c.created_at));
-  const ultima = ETAPAS.length ? ETAPAS[ETAPAS.length - 1].clave : 'cerrado';
+  const ultima = etapaCierre();
   const cerrados = nuevosP.filter(c => String(c.estatus || 'nuevo').toLowerCase() === ultima);
-  const conCambio = nuevosP.filter(c => c.fecha_cambio_estatus && c.created_at && c.fecha_cambio_estatus !== c.created_at);
+  /* Mediana, no promedio: un puñado de contactos importados con
+     fechas viejas inflaba el promedio a miles de días. Se ignoran
+     además los negativos y los mayores a 5 años (datos corruptos). */
+  const difs = nuevosP
+    .filter(c => c.fecha_cambio_estatus && c.created_at && c.fecha_cambio_estatus !== c.created_at)
+    .map(c => (new Date(c.fecha_cambio_estatus) - new Date(c.created_at)) / 86400000)
+    .filter(d => d >= 0 && d <= 1825)
+    .sort((a, b) => a - b);
   let diasProm = null;
-  if (conCambio.length) {
-    diasProm = Math.round(conCambio.reduce((a, c) => a + (new Date(c.fecha_cambio_estatus) - new Date(c.created_at)) / 86400000, 0) / conCambio.length);
+  if (difs.length) {
+    const mitad = Math.floor(difs.length / 2);
+    diasProm = Math.round(difs.length % 2 ? difs[mitad] : (difs[mitad - 1] + difs[mitad]) / 2);
   }
   return {
     totales: contactos.length, nuevos: nuevosP.length,
@@ -943,7 +1034,7 @@ function calcFuentes() {
   return conteo(contactos.filter(c => c.es_potencial && enPeriodo(c.created_at)), c => c.fuente || 'Sin especificar');
 }
 function conversionPorFuente() {
-  const ultima = ETAPAS.length ? ETAPAS[ETAPAS.length - 1].clave : 'cerrado';
+  const ultima = etapaCierre();
   const porFuente = {};
   contactos.filter(c => enPeriodo(c.created_at)).forEach(c => {
     const f = c.fuente || 'Sin especificar';
@@ -1123,12 +1214,11 @@ function panelResumen() {
     + sec('Embudo comercial completo', 'de la primera conversación al cierre',
       chFunnel(embudo) + '<div class="es-note">Las conversaciones y los prospectos calificados salen de WhatsApp; los leads y los cierres, del CRM.</div>')
 
-    + '<div class="es-duo">'
-      + sec('Inventario por operación', '', tarjetaDonut(
+    + sec('Leads por etapa', 'cada lead es una tarjeta', chBoard())
+
+    + sec('Inventario por operación', '', tarjetaDonut(
         entradas(conteo(activos(), p => p.operacion === 'renta' ? 'Renta' : 'Venta')),
         nf(activos().length), 'activos', 'Aún no tienes inmuebles activos.'))
-      + sec('Leads por etapa', '', chFunnel(calcEmbudoEtapas().stages))
-    + '</div>'
 
     + sec('Tus inmuebles con más demanda', 'interesados, chats de WhatsApp y movimientos', rank.length
       ? '<div class="es-rows">' + rank.map((x, i) =>
@@ -1160,7 +1250,7 @@ function panelLeads() {
       + kpi(nf(L.nuevosLeads), 'Leads nuevos ' + PERIODO_LBL[periodo])
       + kpi(nf(L.nuevos), 'Contactos nuevos ' + PERIODO_LBL[periodo])
       + kpi(L.tasa + '%', 'Tasa de cierre', L.tasa >= 20 ? 'is-good' : (L.tasa < 5 ? 'is-warn' : ''))
-      + kpi(L.diasProm != null ? nf(L.diasProm) : '—', 'Días promedio hasta el primer avance')
+      + kpi(L.diasProm != null ? nf(L.diasProm) : '—', 'Días (mediana) hasta el primer avance')
       + kpi(nf(L.totales), 'Contactos totales en tu CRM')
       + '</div>')
 
@@ -1169,9 +1259,7 @@ function panelLeads() {
         { label: 'Todos los contactos', color: 'var(--ink-3)', counts: sTodos },
       ])))
 
-    + sec('Distribución por etapa', 'dónde está hoy cada contacto que entró en el periodo', E.total
-        ? chFunnel(E.stages)
-        : '<div class="es-card es-empty"><p>Sin contactos en este periodo.</p></div>')
+    + sec('Distribución por etapa', 'dónde está hoy cada contacto que entró en el periodo', chBoard())
 
     + '<div class="es-duo">'
       + sec('Fuentes de leads', 'de dónde viene tu negocio', tarjetaDonut(entradas(F),
