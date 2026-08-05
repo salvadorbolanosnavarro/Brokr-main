@@ -905,6 +905,12 @@ async def get_profile_status(request: Request):
     except Exception:
         pass
 
+    if sub_state.get("status") == "sin_suscripcion":
+        try:
+            sub_state["trial_disponible"] = await _trial_max_disponible(user_id)
+        except Exception:
+            sub_state["trial_disponible"] = False
+
     return {"eb": eb_state, "fb": fb_state, "sub": sub_state}
 
 # ────────────────────────────────────────────
@@ -9963,6 +9969,25 @@ def _stripe_headers() -> dict:
         "Content-Type": "application/x-www-form-urlencoded",
     }
 
+TRIAL_MAX_DIAS = 7
+
+async def _trial_max_disponible(user_id: str) -> bool:
+    """El regalo de 7 días de Broquer Max es UNA sola vez por cuenta.
+    No aplica si el usuario ya tuvo cualquier suscripción (activa, cancelada
+    o en prueba) ni si ya quemó su trial aunque la fila se haya borrado."""
+    try:
+        u = await _sb_service_get("usuarios", {
+            "id": f"eq.{user_id}", "select": "trial_max_usado", "limit": "1"})
+        if u and u[0].get("trial_max_usado"):
+            return False
+        subs = await _sb_service_get("suscripciones", {
+            "user_id": f"eq.{user_id}", "select": "id", "limit": "1"})
+        return not subs
+    except Exception:
+        # Ante la duda NO se regala el trial: es dinero.
+        return False
+
+
 class CheckoutRequest(BaseModel):
     plan_id: str         # "max" o "ampi"
     promo_code: str = "" # código promocional para plan AMPI
@@ -10077,6 +10102,11 @@ async def subscription_checkout(req: CheckoutRequest, request: Request):
     success_url = req.success_url or f"{origin}/index.html?suscripcion=ok"
     cancel_url  = req.cancel_url  or f"{origin}/index.html?suscripcion=cancelada"
 
+    # ¿Le toca el regalo de bienvenida? 7 días de Broquer Max sin costo,
+    # solo para quien nunca ha tenido suscripción. Stripe pide la tarjeta
+    # pero no cobra nada hasta que termina la prueba.
+    con_trial = await _trial_max_disponible(user_id)
+
     # Crear Checkout Session
     data = {
         "mode": "subscription",
@@ -10090,6 +10120,9 @@ async def subscription_checkout(req: CheckoutRequest, request: Request):
         "allow_promotion_codes": "true",
         "locale": "es",
     }
+    if con_trial:
+        data["subscription_data[trial_period_days]"] = str(TRIAL_MAX_DIAS)
+        data["metadata[trial]"] = "1"
     async with httpx.AsyncClient(timeout=15) as client:
         r_cs = await client.post(
             "https://api.stripe.com/v1/checkout/sessions",
@@ -10410,6 +10443,7 @@ async def stripe_webhook(request: Request):
         if user_id and subscription_id:
             plan_nombre = {"ampi": "AMPI", "empresas": "Broquer para Empresas"}.get(plan_id, "Broquer Max")
             _org_id = meta.get("org_id") or await get_org_id_for_user(user_id)
+            _es_trial = meta.get("trial") == "1"
             sb = {
                 "user_id": user_id,
                 "org_id": _org_id,
@@ -10417,9 +10451,14 @@ async def stripe_webhook(request: Request):
                 "plan_nombre": plan_nombre,
                 "stripe_subscription_id": subscription_id,
                 "stripe_customer_id": customer_id,
-                "status": "active",
+                "status": "trialing" if _es_trial else "active",
                 "updated_at": datetime.utcnow().isoformat(),
             }
+            if _es_trial:
+                # Se quema el trial de por vida, aunque después cancele o
+                # se borre la fila de suscripciones.
+                await _sb_service_patch("usuarios", {"id": f"eq.{user_id}"},
+                                        {"trial_max_usado": True})
             if plan_id == "empresas":
                 # El plan de empresas guarda periodo y lugares: se necesitan
                 # después para prorratear altas y bajas de usuarios.
@@ -10609,7 +10648,8 @@ async def subscription_status(request: Request):
             params={"org_id": f"eq.{_oid}", "select": "*", "order": "updated_at.desc", "limit": "1"}
         )
     if r.status_code != 200 or not r.json():
-        return {"active": False, "plan": None, "status": "sin_suscripcion"}
+        return {"active": False, "plan": None, "status": "sin_suscripcion",
+                "trial_disponible": await _trial_max_disponible(user_id)}
 
     row = r.json()[0]
     return {
