@@ -76,6 +76,47 @@
 }
 @media (max-width: 720px) { .dash-scroll { padding: 16px 14px 40px; } }
 
+/* ── Cabecera del dashboard: lápiz de personalización ── */
+.dash-head { position: relative; display: flex; justify-content: flex-end; margin-bottom: 10px; }
+.dash-pencil {
+  position: relative;
+  width: 38px; height: 38px; border-radius: var(--r2-pill);
+  border: 1px solid var(--b2-line); background: var(--b2-paper);
+  color: var(--b2-mute); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: color .15s var(--ease2), border-color .15s var(--ease2);
+}
+.dash-pencil:hover { color: var(--b2-blue); border-color: var(--b2-blue); }
+.dash-pencil__tip {
+  position: absolute; top: calc(100% + 8px); right: 0;
+  background: var(--b2-ink); color: var(--b2-paper);
+  font-size: var(--fs2-caption); font-weight: 600;
+  padding: 5px 10px; border-radius: var(--r2-sm);
+  white-space: nowrap; opacity: 0; pointer-events: none;
+  transition: opacity .15s var(--ease2);
+}
+.dash-pencil:hover .dash-pencil__tip { opacity: 1; }
+.dash-panel {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 50;
+  background: var(--b2-paper); border: 1px solid var(--b2-line);
+  border-radius: var(--r2-lg); box-shadow: var(--sh2-card);
+  padding: 14px 16px; min-width: 230px;
+}
+.dash-panel__t { font-family: var(--font-display2); font-size: var(--fs2-sm); font-weight: 800; margin-bottom: 10px; }
+.dash-panel__opt {
+  display: flex; align-items: center; gap: 9px;
+  font-size: var(--fs2-sm); color: var(--b2-ink); padding: 6px 0; cursor: pointer;
+}
+.dash-panel__opt input { accent-color: var(--b2-blue); width: 16px; height: 16px; }
+
+/* ── Fila superior: saludo y pendientes lado a lado, compactos ── */
+.dash-top { display: grid; grid-template-columns: 1.3fr 1fr; gap: 14px; align-items: stretch; }
+.dash-top:has(#notif-card[hidden]) { grid-template-columns: 1fr; }
+@media (max-width: 900px) { .dash-top { grid-template-columns: 1fr; } }
+.ai-card--pend { margin-top: 0; display: flex; flex-direction: column; }
+.ai-card--pend h3 { font-size: var(--fs2-lg); }
+[data-widget].is-off { display: none; }
+
 /* ── HERO de saludo: azul profundo con resplandor ──
    La misma pieza protagonista, en el mundo nuevo: el panel azul
    profundo del landing y el login, con dos masas de luz derivando
@@ -83,7 +124,7 @@
    subrayado que se dibuja al llegar. */
 .sky-hero {
   background: var(--b2-blue-deep); color: var(--b2-on-blue);
-  border-radius: var(--r2-xl); padding: 36px 32px 30px;
+  border-radius: var(--r2-xl); padding: 24px 26px 22px;
   position: relative; overflow: hidden; isolation: isolate;
 }
 .sky-hero::before, .sky-hero::after {
@@ -116,7 +157,7 @@
 }
 .sky-hero__title {
   font-family: var(--font-display2);
-  font-size: var(--fs2-saludo);
+  font-size: clamp(24px, 2.6vw, 34px);
   font-weight: 800; letter-spacing: -0.032em; color: var(--b2-on-blue); line-height: 1.04;
   text-wrap: balance;
 }
@@ -158,14 +199,14 @@
 
 /* KPIs: bloques de vidrio */
 .sky-hero__kpis {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px;
-  margin-top: 30px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;
+  margin-top: 18px;
 }
 .sky-kpi {
   position: relative; overflow: hidden;
   background: var(--b2-vidrio);
   border: 1px solid var(--b2-line-on-blue);
-  border-radius: var(--r2-lg); padding: 18px 20px 16px;
+  border-radius: var(--r2-lg); padding: 13px 16px 12px;
   transition: transform 0.25s var(--ease2), background 0.25s var(--ease2), border-color 0.25s var(--ease2);
 }
 .sky-kpi::before {
@@ -224,20 +265,10 @@
   .sky-hero__date-mes { margin-top: 0; }
 }
 
-/* ── Espacio de video ── */
-.home-video { margin-top: 24px; }
-.home-video__el {
-  display: block; width: 100%; aspect-ratio: 16 / 9;
-  border-radius: var(--r2-xl); background: var(--b2-blue-deep);
-  object-fit: cover; border: 1px solid var(--b2-line);
-  box-shadow: var(--sh2-media);
-}
-@media (max-width: 560px) { .home-video { margin-top: 18px; } }
-
 /* ── CTA azul (Broq y pendientes) ── */
 .ai-card {
   background: var(--b2-blue); color: var(--b2-on-blue); border-radius: var(--r2-lg);
-  padding: 30px 28px; margin-top: 30px; position: relative; overflow: hidden;
+  padding: 22px 24px; margin-top: 16px; position: relative; overflow: hidden;
   background-image: radial-gradient(120% 160% at 100% 0%, var(--b2-line-on-blue), transparent 55%);
 }
 .ai-card h3 {
@@ -298,7 +329,21 @@
 
 <div class="dash-scroll">
 
-  <!-- HERO navy -->
+  <div class="dash-head">
+    <button class="dash-pencil" id="dash-pencil" type="button" aria-label="Personalizar">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"/></svg>
+      <span class="dash-pencil__tip">Personalizar</span>
+    </button>
+    <div class="dash-panel" id="dash-panel" hidden>
+      <div class="dash-panel__t">Tu inicio, a tu manera</div>
+      <label class="dash-panel__opt"><input type="checkbox" data-w="pendientes" checked/> Próximos pendientes</label>
+      <label class="dash-panel__opt"><input type="checkbox" data-w="broq" checked/> Tarjeta de Broq</label>
+      <label class="dash-panel__opt"><input type="checkbox" data-w="appstore" checked/> App para iPhone</label>
+    </div>
+  </div>
+
+  <!-- HERO + pendientes en la misma fila -->
+  <div class="dash-top">
   <section class="sky-hero">
     <div class="sky-hero__top">
       <div>
@@ -328,18 +373,14 @@
   </section>
 
   <!-- Próximas tareas y citas -->
-  <div class="ai-card" id="notif-card" hidden>
+  <div class="ai-card ai-card--pend" id="notif-card" data-widget="pendientes" hidden>
     <h3>Tus próximos pendientes</h3>
     <div id="notif-lista"></div>
   </div>
-
-  <!-- Espacio de video (se actualiza periódicamente: reemplaza videos/inicio.mp4) -->
-  <section class="home-video">
-    <video class="home-video__el" src="videos/inicio.mp4" autoplay muted loop playsinline preload="metadata" controls></video>
-  </section>
+  </div><!-- /dash-top -->
 
   <!-- CTA Broq -->
-  <div class="ai-card">
+  <div class="ai-card" data-widget="broq">
     <h3>Broq, tu asistente inmobiliario, listo cuando lo necesites.</h3>
     <p>Pregúntame sobre valuaciones, ISR, contratos o cualquier duda del mercado. Estoy aquí para ayudarte a cerrar más rápido.</p>
     <button class="ai-card__btn" type="button" onclick="window.toggleShaarkPopup ? window.toggleShaarkPopup(true) : document.getElementById('bk-shaark-fab')?.click()">
@@ -349,7 +390,7 @@
   </div>
 
   <!-- App Store -->
-  <div class="appstore-card">
+  <div class="appstore-card" data-widget="appstore">
     <div class="appstore-card__txt">
       <div class="appstore-card__eyebrow">También disponible en iOS</div>
       <div class="appstore-card__title">Lleva Broquer contigo a todas partes</div>
@@ -370,6 +411,38 @@
 <script src="capacitor-bridge.js" defer></script>
 
 <script>
+/* ── Personalizar el inicio: qué tarjetas se muestran ──
+   La preferencia vive en el navegador (localStorage). "Pendientes"
+   respeta además su propia lógica: solo aparece si hay tareas. */
+(function(){
+  const KEY = 'brokr_dash_widgets';
+  let prefs = {};
+  try { prefs = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch(_){}
+  const apagado = w => prefs[w] === false;
+
+  document.querySelectorAll('[data-widget]').forEach(el => {
+    if (apagado(el.dataset.widget)) el.classList.add('is-off');
+  });
+
+  const btn = document.getElementById('dash-pencil');
+  const panel = document.getElementById('dash-panel');
+  if (!btn || !panel) return;
+  panel.querySelectorAll('input[data-w]').forEach(chk => {
+    chk.checked = !apagado(chk.dataset.w);
+    chk.addEventListener('change', () => {
+      prefs[chk.dataset.w] = chk.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(prefs)); } catch(_){}
+      document.querySelectorAll('[data-widget="' + chk.dataset.w + '"]').forEach(el => {
+        el.classList.toggle('is-off', !chk.checked);
+      });
+    });
+  });
+  btn.addEventListener('click', e => { e.stopPropagation(); panel.hidden = !panel.hidden; });
+  document.addEventListener('click', e => {
+    if (!panel.hidden && !panel.contains(e.target)) panel.hidden = true;
+  });
+})();
+
 /* Date + greeting (no-auth, runs immediately) */
 (function(){
   const d = new Date();

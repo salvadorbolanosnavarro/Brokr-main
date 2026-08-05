@@ -245,7 +245,7 @@
     { key:'crm',         label:'CRM',         icon:'funnel' },
     { key:'seguimiento', label:'Seguimiento', icon:'send' },
     { key:'documentos',  label:'Documentos',  icon:'document' },
-    { key:'numeros',     label:'Números',     icon:'peso' },
+    { key:'numeros',     label:'Números',     icon:'nums123' },
     { key:'marketing',   label:'Marketing',   icon:'megaphone' },
     // "Más" agrupa lo que no es trabajo diario: perfil, blog, ayuda (y admin).
     { key:'mas',         label:'Más',         icon:'plus' },
@@ -325,6 +325,7 @@
   };
   const ICONS = {
     home:       '<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/>',
+    nums123:    '<text x="12" y="16.5" text-anchor="middle" font-size="11.5" font-weight="800" fill="currentColor" stroke="none" font-family="inherit">123</text>',
     building:   '<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.121 0L22.28 12M4.5 9.75v10.125a1.125 1.125 0 001.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125a1.125 1.125 0 001.125-1.125V9.75"/>',
     users:      '<path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>',
     document:   '<path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>',
@@ -577,11 +578,12 @@
 .bk-topbar__quote {
   flex: 1;
   min-width: 0;
+  text-align: center;
   font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  color: var(--ink-2);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--sky-blue-press);
   line-height: 1.4;
   opacity: 0;
   transition: opacity .5s ease;
@@ -600,9 +602,10 @@
 .bk-topbar__quote.is-visible { opacity: 1; }
 .bk-topbar__quote .quote-author {
   color: var(--mute);
-  font-weight: 400;
-  font-size: 13px;
-  margin-left: 6px;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 12px;
+  margin-left: 8px;
   /* El autor puede romper si el span entero no cabe en la línea */
   display: inline;
   white-space: normal;
@@ -1314,8 +1317,9 @@ body[data-app="facebook-ads"]{--page-max:980px}
     const perfilLink = esMas
       ? `<a href="javascript:void(0)" class="bk-sb-link" onclick="openProfileDrawer()">${svg('user')} Mi perfil</a>`
       : '';
+    // "Más" ya trae el "+" como icono del grupo: sin indicador duplicado.
     const indicador = esMas
-      ? svg('plus', 16, 2, 'bk-sb-chevron bk-sb-plus')
+      ? ''
       : svg('chevron', 16, 2, 'bk-sb-chevron');
     return `<div class="bk-sb-block bk-sb-group${esMas ? ' bk-sb-block--cuenta bk-sb-group--mas' : ''}${isOpen ? ' is-open' : ''}" id="${gid}">
       <button class="bk-sb-link bk-sb-trigger${isOpen ? ' is-active' : ''}" data-sb-group="${grupo.key}" type="button" aria-expanded="${isOpen ? 'true' : 'false'}" aria-controls="${gid}-sub">
