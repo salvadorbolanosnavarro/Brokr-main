@@ -1043,13 +1043,13 @@ html {
   --brand-facebook-press: #145FCC;
 
   /* ── Sidebar (los consume app-shell.js) ────────────────────
-     El drawer usa el azul MAS hondo del canon (--sky-navy-deep,
-     #050F2E): un paso mas oscuro que las cards navy (#081C4E)
-     para que el sidebar y el hero del inicio contrasten entre si.
+     Decision de Chava: el drawer usa el azul BRILLANTE de accion
+     (--sky-blue) con destello blanco arriba. Contrasta contra el
+     hero navy del inicio y contra el canvas blanco.
      Los módulos van en blanco y en negritas, agrupados en bloques
      translúcidos: la separación se hace con aire y con paneles,
      nunca con líneas. */
-  --sb-bg:      var(--sky-navy-deep);
+  --sb-bg:      var(--sky-blue);
   --sb-panel:   rgba(255,255,255,0.09);
   --sb-hover:   rgba(255,255,255,0.14);
   --sb-active:  rgba(255,255,255,0.22);
