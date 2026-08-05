@@ -33,7 +33,6 @@
   --dx-glow-2:        rgba(143,176,245,.22);
 
   --dx-fs-title: clamp(26px, 2.8vw, 38px);
-  --dx-fs-kpi:   clamp(20px, 1.9vw, 26px);
   --dx-fs-pct:   clamp(26px, 2.2vw, 32px);
 }
 /* ═══ /AUDIT-EXEMPT ═══ */
@@ -153,71 +152,31 @@
 .rings__dot--cierre { background: var(--data-4); }
 .rings__n { font-family: var(--font-display); font-weight: 800; color: var(--dx-on-navy); font-variant-numeric: tabular-nums; }
 
-/* KPIs: bloques de vidrio bajo el hero */
-.sky-hero__kpis {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;
-  margin-top: 18px;
-}
-.sky-kpi {
-  position: relative; overflow: hidden;
-  background: var(--dx-vidrio);
-  border: 1px solid var(--dx-line-on-navy);
-  border-radius: var(--r-lg); padding: 13px 16px 12px;
-  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-  transition: transform var(--dur-slow) var(--ease), background var(--dur-slow) var(--ease), border-color var(--dur-slow) var(--ease);
-}
-.sky-kpi:hover {
-  transform: translateY(-3px);
-  background: var(--dx-vidrio-hover);
-  border-color: var(--dx-on-navy-faint);
-}
-.sky-kpi__ico {
-  width: 34px; height: 34px; border-radius: var(--r-sm);
-  display: inline-flex; align-items: center; justify-content: center;
-  background: var(--dx-vidrio);
-  color: var(--sky-blue-on-dark); margin-bottom: 12px;
-}
-.sky-kpi__ico svg { display: block; }
-.sky-kpi__value {
-  font-family: var(--font-display); font-size: var(--dx-fs-kpi); font-weight: 800;
-  color: var(--dx-on-navy); line-height: 1; letter-spacing: -0.025em; font-variant-numeric: tabular-nums;
-}
-.sky-kpi__label { font-size: var(--fs-caption); font-weight: 600; color: var(--dx-on-navy-dim); margin-top: 8px; }
-
 /* Entrada orquestada */
-.sky-hero__eyebrow, .sky-hero__title, .sky-hero__sub, .rings, .sky-kpi {
+.sky-hero__eyebrow, .sky-hero__title, .sky-hero__sub, .rings {
   animation: hero-rise 0.7s var(--ease-out) backwards;
 }
 .sky-hero__title { animation-delay: 0.08s; }
 .sky-hero__sub { animation-delay: 0.14s; }
 .rings { animation-delay: 0.2s; }
-.sky-kpi:nth-child(1) { animation-delay: 0.26s; }
-.sky-kpi:nth-child(2) { animation-delay: 0.34s; }
-.sky-kpi:nth-child(3) { animation-delay: 0.42s; }
 @keyframes hero-rise { from { opacity: 0; transform: translateY(14px); } }
 
 @media (prefers-reduced-motion: reduce) {
   .sky-hero::before, .sky-hero::after,
-  .sky-hero__eyebrow, .sky-hero__title, .sky-hero__sub, .rings, .sky-kpi { animation: none; }
-  .sky-kpi, .sky-kpi:hover { transform: none; }
+  .sky-hero__eyebrow, .sky-hero__title, .sky-hero__sub, .rings { animation: none; }
   .rings__svg .arc { transition: none !important; } /* AUDIT-EXEMPT-LINE: quality floor de reduced-motion */
 }
 
 @media (max-width: 560px) {
   .sky-hero { padding: 24px 20px 22px; }
-  .sky-kpi__value { font-size: var(--fs-h3); }
 }
 
-/* ── Fila superior: hero y pendientes lado a lado ── */
-.dash-top { display: grid; grid-template-columns: 1.5fr 1fr; gap: 14px; align-items: stretch; }
-.dash-top:has(#notif-card[hidden]) { grid-template-columns: 1fr; }
-@media (max-width: 900px) { .dash-top { grid-template-columns: 1fr; } }
 [data-widget].is-off { display: none; }
 
 /* ── Pendientes: card blanca canon con hairline ── */
 .pend-card {
   background: var(--bone); border: 1px solid var(--line-2);
-  border-radius: var(--r-xl); padding: 20px 22px;
+  border-radius: var(--r-xl); padding: 20px 22px; margin-top: 16px;
   display: flex; flex-direction: column;
 }
 .pend-card h3 {
@@ -307,8 +266,7 @@
     </div>
   </div>
 
-  <!-- HERO + pendientes en la misma fila -->
-  <div class="dash-top">
+  <!-- HERO canon: la tarjeta de saludo, sola y protagonista -->
   <section class="sky-hero">
     <div class="sky-hero__grid">
       <div>
@@ -336,29 +294,14 @@
         </div>
       </div>
     </div>
-    <div class="sky-hero__kpis">
-      <div class="sky-kpi">
-        <span class="sky-kpi__ico"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5M5 9.5V21h5v-6h4v6h5V9.5"/></svg></span>
-        <div class="sky-kpi__value" id="kpi-props">—</div><div class="sky-kpi__label">Inmuebles activos</div>
-      </div>
-      <div class="sky-kpi">
-        <span class="sky-kpi__ico"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM22 21v-2a4 4 0 00-3-3.87M15.5 3.13a4 4 0 010 7.75"/></svg></span>
-        <div class="sky-kpi__value" id="kpi-contacts">—</div><div class="sky-kpi__label">Contactos</div>
-      </div>
-      <div class="sky-kpi">
-        <span class="sky-kpi__ico"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3.5 2"/></svg></span>
-        <div class="sky-kpi__value" id="kpi-horas">—</div><div class="sky-kpi__label">Horas ahorradas</div>
-      </div>
-    </div>
   </section>
 
-  <!-- Próximas tareas y citas -->
+  <!-- Próximas tareas y citas: debajo del hero -->
   <div class="pend-card" id="notif-card" data-widget="pendientes" hidden>
     <h3>Tus próximos pendientes</h3>
     <div id="notif-lista"></div>
     <a class="notif-link" href="tareas.html">Ver todas en Tareas →</a>
   </div>
-  </div><!-- /dash-top -->
 
   <!-- CTA Broq -->
   <div class="ai-card" data-widget="broq">
@@ -509,35 +452,6 @@ window.addEventListener('brokr-shell-ready', async (e) => {
     } catch (err) { return 0; }
   }
 
-  let nProps = 0, nContacts = 0, nContratos = 0;
-  try {
-    nProps = await fxCount('propiedades?estatus=eq.activa&select=id');
-    document.getElementById('kpi-props').textContent = nProps;
-  } catch (e) {}
-  try {
-    nContacts = await fxCount('contactos?select=id');
-    document.getElementById('kpi-contacts').textContent = nContacts;
-  } catch (e) {}
-  try {
-    nContratos = await fxCount('contratos?select=id');
-  } catch (e) {}
-
-  // Horas ahorradas: estimación realista, con tope de 3.5 h/día desde el alta.
-  //   Inmueble activo (ficha + fotos + datos):  9 min  → 0.15 h
-  //   Contacto en CRM (alta + seguimiento):    1.2 min → 0.02 h
-  //   Contrato generado (redacción + formato):15 min  → 0.25 h
-  const brutoHoras = nProps * 0.15 + nContacts * 0.02 + nContratos * 0.25;
-  // Tope diario: nunca más de 3.5 h/día desde la fecha de alta.
-  const created = profile?.user?.created_at;
-  let topeHoras = Infinity;
-  if (created) {
-    const diasUso = Math.max(1, (Date.now() - new Date(created).getTime()) / 86400000);
-    topeHoras = diasUso * 3.5;
-  }
-  const horas = Math.max(0, Math.round(Math.min(brutoHoras, topeHoras)));
-  const horasEl = document.getElementById('kpi-horas');
-  if (horasEl) horasEl.textContent = horas;
-
   cargarAnillos();
   cargarNotificaciones();
 
@@ -604,33 +518,6 @@ window.addEventListener('brokr-shell-ready', async (e) => {
     }
   }
 });
-
-/* ── Conteo animado de los KPIs del hero (solo presentación) ──
-   Observa cada valor una vez: cuando la lógica de datos escribe el número
-   final, lo anima de 0 al total. Respeta prefers-reduced-motion. */
-(function(){
-  const reducido = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const easeOut = t => 1 - Math.pow(1 - t, 3);
-  ['kpi-props', 'kpi-contacts', 'kpi-horas'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const mo = new MutationObserver(() => {
-      const fin = Number(el.textContent);
-      if (!Number.isFinite(fin)) return;
-      mo.disconnect(); // una sola animación por KPI
-      if (reducido || fin === 0) return;
-      const t0 = performance.now(), dur = 900;
-      el.textContent = '0';
-      function paso(t) {
-        const p = Math.min(1, (t - t0) / dur);
-        el.textContent = Math.round(fin * easeOut(p));
-        if (p < 1) requestAnimationFrame(paso);
-      }
-      requestAnimationFrame(paso);
-    });
-    mo.observe(el, { childList: true, characterData: true, subtree: true });
-  });
-})();
 
 /* ── Tus próximos pendientes/citas (tareas con fecha, sin completar) ── */
 async function cargarNotificaciones() {
