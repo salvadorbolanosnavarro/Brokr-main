@@ -20,8 +20,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
 <title>Broquer — Acceso</title>
 <link rel="manifest" href="manifest.json"/>
-<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
-<link rel="stylesheet" href="brokr-theme.css"/>
+<meta name="theme-color" content="#0041D9"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy (Vista v2) -->
+<link rel="stylesheet" href="brokr-theme-v2.css"/>
 <style>
 html, body { background: var(--paper); min-height: 100%; }
 body { overflow-y: auto; }
@@ -39,7 +39,7 @@ body { overflow-y: auto; }
 /* ── LEFT: editorial hero (desktop only) ─────── */
 .bk-hero {
   display: none;
-  background: var(--sky-navy);
+  background: linear-gradient(150deg, var(--sky-navy), var(--sky-blue) 58%, var(--sky-blue-lift));
   color: #FFFFFF !important;
   padding: 56px 56px 40px;
   position: relative;
@@ -50,7 +50,7 @@ body { overflow-y: auto; }
   content: '';
   position: absolute; inset: 0;
   background:
-    radial-gradient(circle at 85% 8%, rgba(0,98,227,.30), transparent 50%),
+    radial-gradient(circle at 85% 8%, rgba(255,255,255,.14), transparent 50%),
     radial-gradient(circle at 0% 100%, rgba(255,255,255,.05), transparent 45%);
   pointer-events: none;
 }

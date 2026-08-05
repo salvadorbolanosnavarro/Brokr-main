@@ -7,10 +7,10 @@
 <link rel="manifest" href="manifest.json"/>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
-<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+<meta name="theme-color" content="#0041D9"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy (Vista v2) -->
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-title" content="Broquer"/>
-<link rel="stylesheet" href="brokr-theme.css"/>
+<link rel="stylesheet" href="brokr-theme-v2.css"/>
 <style>
 /* ─── Dashboard — sistema visual "Sky" ─────────────────────────── */
 .dash-scroll { padding: 24px 28px 48px; max-width: 1180px; margin: 0 auto; }
@@ -25,7 +25,7 @@
    solo aire, luz y jerarquía tipográfica. Todos los colores derivan
    de tokens vía color-mix; sin hex nuevos. */
 .sky-hero {
-  background: var(--sky-navy); color: #fff;
+  background: linear-gradient(135deg, var(--sky-navy), var(--sky-blue) 55%, var(--sky-blue-lift)); color: #fff;
   border-radius: var(--r-xl); padding: 36px 32px 30px;
   position: relative; overflow: hidden; isolation: isolate;
 }
