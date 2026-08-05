@@ -20,13 +20,84 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
 <title>Broquer — Acceso</title>
 <link rel="manifest" href="manifest.json"/>
-<meta name="theme-color" content="#0041D9"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy (Vista v2) -->
-<link rel="stylesheet" href="brokr-theme-v2.css"/>
+<meta name="theme-color" content="#FFFFFF"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --b2-paper -->
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap"/>
 <style>
-html, body { background: var(--paper); min-height: 100%; }
-body { overflow-y: auto; }
+/* ════════════════════════════════════════════════════════════════
+   BROQUER — Acceso · Rediseño "Blanca"
+   Piel nueva sobre la misma estructura y lógica. Los nombres de
+   clase se conservan porque el JavaScript depende de ellos.
+   ════════════════════════════════════════════════════════════════ */
 
-/* ── Page shell ─────────────────────────────── */
+/* ═══ AUDIT-EXEMPT: definición de tokens del sistema (en producción migrarán a broquer-2.css) ═══ */
+:root {
+  --b2-blue:        #0D6BF0;
+  --b2-blue-press:  #0A56C4;
+  --b2-blue-deep:   #08419A;
+  --b2-blue-soft:   #EAF2FE;
+  --b2-blue-ring:   rgba(13,107,240,.18);
+  --b2-ink:         #1B2733;
+  --b2-mute:        #5A6B7C;
+  --b2-paper:       #FFFFFF;
+  --b2-canvas:      #F6F8FB;
+  --b2-line:        #E3E9F0;
+  --b2-bien:        #0E8F62;
+  --b2-bien-soft:   #E7F5EF;
+  --b2-baja:        #A85D62;
+  --b2-baja-soft:   #F9EEEC;
+
+  --b2-on-blue:       #FFFFFF;
+  --b2-on-blue-dim:   rgba(255,255,255,.75);
+  --b2-on-blue-faint: rgba(255,255,255,.50);
+  --b2-line-on-blue:  rgba(255,255,255,.14);
+  --b2-glow:          rgba(13,107,240,.45);
+
+  --font-display: 'Bricolage Grotesque', 'Figtree', system-ui, sans-serif;
+  --font-sans:    'Figtree', system-ui, -apple-system, sans-serif;
+
+  --fs2-caption: 12px;
+  --fs2-sm:      14px;
+  --fs2-body:    16px;
+  --fs2-lg:      18px;
+  --fs2-h3:      20px;
+  --fs2-h2:      clamp(24px, 2.6vw, 30px);
+  --fs2-hero:    clamp(34px, 3.6vw, 48px);
+  --fs2-stat:    clamp(22px, 2.4vw, 30px);
+
+  --r2-sm:   10px;
+  --r2:      14px;
+  --r2-lg:   22px;
+  --r2-pill: 999px;
+
+  --sh2-card: 0 1px 2px rgba(27,39,51,.05), 0 8px 24px rgba(27,39,51,.07);
+  --sh2-bar:  0 2px 6px rgba(27,39,51,.06), 0 14px 44px rgba(13,107,240,.16);
+
+  --ease2: cubic-bezier(.22,.61,.36,1);
+}
+/* ═══ /AUDIT-EXEMPT ═══ */
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { background: var(--b2-paper); min-height: 100%; margin: 0; }
+body {
+  overflow-y: auto;
+  color: var(--b2-ink);
+  font-family: var(--font-sans);
+  font-size: var(--fs2-body);
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2 { margin: 0; }
+p { margin: 0; }
+a { color: var(--b2-blue); }
+:focus-visible { outline: 2px solid var(--b2-blue); outline-offset: 2px; border-radius: var(--r2-sm); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms; animation-iteration-count: 1; transition-duration: .01ms; }
+}
+
+/* ── Cascarón de la página ──────────────────────────────────── */
 .bk-auth {
   min-height: 100vh;
   display: grid;
@@ -36,12 +107,12 @@ body { overflow-y: auto; }
   .bk-auth { grid-template-columns: 1fr 1.05fr; }
 }
 
-/* ── LEFT: editorial hero (desktop only) ─────── */
+/* ── Izquierda: panel azul profundo (solo escritorio) ───────── */
 .bk-hero {
   display: none;
-  background: linear-gradient(150deg, var(--sky-navy), var(--sky-blue) 58%, var(--sky-blue-lift));
-  color: #FFFFFF !important;
-  padding: 56px 56px 40px;
+  background: var(--b2-blue-deep);
+  color: var(--b2-on-blue);
+  padding: 52px 56px 44px;
   position: relative;
   overflow: hidden;
 }
@@ -49,279 +120,261 @@ body { overflow-y: auto; }
 .bk-hero::after {
   content: '';
   position: absolute; inset: 0;
-  background:
-    radial-gradient(circle at 85% 8%, rgba(255,255,255,.14), transparent 50%),
-    radial-gradient(circle at 0% 100%, rgba(255,255,255,.05), transparent 45%);
+  background: radial-gradient(120% 130% at 85% 0%, var(--b2-glow), transparent 55%);
   pointer-events: none;
 }
 .bk-hero__top { display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; }
-.bk-hero__mark {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: var(--fs-h3);
-  letter-spacing: -0.03em;
-  color: var(--paper);
-}
-.bk-hero__nav {
-  font-family: var(--font-mono);
-  font-size: var(--fs-h3);
-  letter-spacing: 0.02em;
-  
-  color: rgba(255,255,255,.55);
-}
+.bk-hero__mark { line-height: 0; }
 .bk-hero__body { position: relative; z-index: 1; max-width: 520px; }
-.bk-hero__eyebrow {
-  font-family: var(--font-mono);
-  font-size: var(--fs-h3);
-  letter-spacing: 0.02em;
-  
-  color: rgba(255,255,255,.55);
-  margin-bottom: 20px;
-}
 .bk-hero__hed {
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: var(--fs-display);
-  line-height: 1.02;
+  font-weight: 800;
+  font-size: var(--fs2-hero);
+  line-height: 1.04;
   letter-spacing: -0.035em;
-  color: var(--paper);
-  margin-bottom: 20px;
+  color: var(--b2-on-blue);
+  margin-bottom: 18px;
 }
-.bk-hero__hed em { font-style: normal; color: var(--sky-blue-on-dark); }
+.bk-hero__hed em { font-style: normal; color: var(--b2-blue-soft); }
 .bk-hero__sub {
-  font-size: var(--fs-body);
-  line-height: 1.5;
-  color: rgba(255,255,255,.65);
+  font-size: var(--fs2-body);
+  line-height: 1.6;
+  color: var(--b2-on-blue-dim);
   max-width: 440px;
 }
 .bk-hero__foot {
   position: relative; z-index: 1;
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
-  padding-top: 32px;
-  border-top: 1px solid rgba(255,255,255,.10);
+  padding-top: 30px;
+  border-top: 1px solid var(--b2-line-on-blue);
 }
 .bk-hero__stat .v {
   font-family: var(--font-display);
-  font-size: var(--fs-h2); font-weight: 600;
+  font-size: var(--fs2-stat); font-weight: 800;
   letter-spacing: -0.03em;
-  color: var(--paper);
+  color: var(--b2-on-blue);
 }
 .bk-hero__stat .l {
-  font-family: var(--font-mono);
-  font-size: var(--fs-h3); letter-spacing: 0.02em;
-   color: rgba(255,255,255,.50);
+  font-size: var(--fs2-caption);
+  color: var(--b2-on-blue-faint);
   margin-top: 4px;
 }
 
-/* ── RIGHT: form panel ────────────────────────── */
+/* ── Derecha: el formulario ─────────────────────────────────── */
 .bk-form-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 32px 20px 64px;
-  background: var(--paper);
+  background: var(--b2-paper);
 }
-.bk-form {
-  width: 100%;
-  max-width: 420px;
-}
-.bk-form__brand {
-  display: flex; align-items: center; gap: 10px;
-  margin-bottom: 40px;
-}
+.bk-form { width: 100%; max-width: 420px; }
+.bk-form__brand { display: flex; align-items: center; gap: 10px; margin-bottom: 36px; }
 .bk-form__brand img { height: 44px; width: auto; }
-.bk-form__brand .tag {
-  font-family: var(--font-mono);
-  font-size: var(--fs-h3); letter-spacing: 0.02em;
-  color: var(--mute); 
-  padding-left: 12px; margin-left: 2px;
-  border-left: 1px solid var(--line-2);
-}
-@media (min-width: 980px) {
-  .bk-form__brand { display: none; }
-}
+@media (min-width: 980px) { .bk-form__brand { display: none; } }
 
 .bk-form__hed {
   font-family: var(--font-display);
-  font-size: var(--fs-h1); font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--ink);
-  margin-bottom: 8px;
+  font-size: var(--fs2-h2); font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--b2-ink);
+  margin-bottom: 6px;
   line-height: 1.05;
 }
-.bk-form__sub {
-  font-size: var(--fs-sm); color: var(--mute);
-  margin-bottom: 32px;
-}
+.bk-form__sub { font-size: var(--fs2-sm); color: var(--b2-mute); margin-bottom: 28px; }
 
-/* Tabs (segmented) */
+/* Pestañas: control segmentado del mundo nuevo */
 .bk-seg {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  background: var(--paper-2);
+  background: var(--b2-paper);
   padding: 4px;
-  border-radius: var(--r-pill);
-  margin-bottom: 28px;
-  border: 1px solid var(--line);
+  border-radius: var(--r2-pill);
+  margin-bottom: 26px;
+  border: 1px solid var(--b2-line);
 }
 .bk-seg__btn {
   appearance: none;
   border: none; background: transparent;
-  height: 38px;
-  border-radius: var(--r-pill);
-  font-size: var(--fs-xs); font-weight: 500;
-  color: var(--mute);
+  height: 40px;
+  border-radius: var(--r2-pill);
+  font-family: var(--font-sans);
+  font-size: var(--fs2-sm); font-weight: 600;
+  color: var(--b2-mute);
   cursor: pointer;
-  transition: all var(--dur) var(--ease);
+  transition: background .18s var(--ease2), color .18s var(--ease2);
   letter-spacing: -0.005em;
 }
-.bk-seg__btn.is-active { background: var(--bone); color: var(--ink); font-weight: 600; box-shadow: var(--shadow-xs); }
+.bk-seg__btn:hover { color: var(--b2-ink); }
+.bk-seg__btn.is-active { background: var(--b2-blue); color: var(--b2-on-blue); font-weight: 700; }
 
-/* Field */
-.bk-field { margin-bottom: 16px; }
-.bk-field label { display: block; font-size: var(--fs-xs); font-weight: 500; color: var(--ink-2); margin-bottom: 6px; letter-spacing: -0.005em; }
+/* Campos */
+.bk-field { margin-bottom: 14px; }
+.bk-field label {
+  display: block;
+  font-size: var(--fs2-caption); font-weight: 700;
+  color: var(--b2-mute);
+  margin-bottom: 6px;
+  letter-spacing: .01em;
+}
+.bk-input {
+  width: 100%;
+  height: 50px;
+  padding: 0 16px;
+  background: var(--b2-paper);
+  border: 1.5px solid var(--b2-line);
+  border-radius: var(--r2);
+  font-family: var(--font-sans);
+  font-size: var(--fs2-body);
+  color: var(--b2-ink);
+  transition: border-color .18s var(--ease2), box-shadow .18s var(--ease2);
+}
+.bk-input::placeholder { color: var(--b2-mute); opacity: .7; }
+.bk-input:focus {
+  outline: none;
+  border-color: var(--b2-blue);
+  box-shadow: 0 0 0 4px var(--b2-blue-ring);
+}
 
-/* Forgot row */
-.bk-forgot { font-size: var(--fs-xs); color: var(--mute); text-align: right; margin: -4px 0 18px; }
-.bk-forgot a { color: var(--ink); font-weight: 500; }
-.bk-forgot a:hover { color: var(--forest); }
+/* Olvidé mi contraseña */
+.bk-forgot { font-size: var(--fs2-caption); text-align: right; margin: -2px 0 18px; }
+.bk-forgot a { color: var(--b2-blue); font-weight: 600; text-decoration: none; }
+.bk-forgot a:hover { color: var(--b2-blue-press); text-decoration: underline; text-underline-offset: 3px; }
 
-/* Buttons */
+/* Botón principal: la pastilla azul del mundo nuevo */
 .bk-submit {
   width: 100%;
   height: 52px;
   border: none;
-  background: var(--sky-blue);
-  color: #FFFFFF !important;
-  border-radius: var(--r);
-  font-size: var(--fs-sm); font-weight: 700;
+  background: var(--b2-blue);
+  color: var(--b2-on-blue);
+  border-radius: var(--r2-pill);
+  font-family: var(--font-sans);
+  font-size: var(--fs2-body); font-weight: 700;
   letter-spacing: -0.005em;
   cursor: pointer;
-  transition: background var(--dur) var(--ease), transform var(--dur) var(--ease);
+  transition: background .18s var(--ease2), transform .18s var(--ease2), box-shadow .18s var(--ease2);
   margin-top: 6px;
 }
-.bk-submit:hover { background: var(--sky-blue-press); }
+.bk-submit:hover { background: var(--b2-blue-press); box-shadow: var(--sh2-bar); }
 .bk-submit:active { transform: scale(.985); }
-.bk-submit:disabled { opacity: .5; cursor: not-allowed; }
+.bk-submit:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
 
 .bk-divider {
   display: flex; align-items: center; gap: 14px;
-  margin: 26px 0 18px;
-  color: var(--mute);
-  font-size: var(--fs-h2);
-  font-family: var(--font-mono);
-  letter-spacing: 0.02em;
-  
+  margin: 24px 0 16px;
+  color: var(--b2-mute);
+  font-size: var(--fs2-caption);
+  font-weight: 600;
 }
 .bk-divider::before, .bk-divider::after {
-  content: ''; flex: 1; height: 1px; background: var(--line);
+  content: ''; flex: 1; height: 1px; background: var(--b2-line);
 }
 
 .bk-oauth {
   width: 100%; height: 50px;
   display: flex; align-items: center; justify-content: center;
   gap: 10px;
-  background: var(--bone); color: var(--ink);
-  border: 1px solid var(--line-2);
-  border-radius: var(--r);
-  font-size: var(--fs-sm); font-weight: 500;
+  background: var(--b2-paper); color: var(--b2-ink);
+  border: 1px solid var(--b2-line);
+  border-radius: var(--r2-pill);
+  font-family: var(--font-sans);
+  font-size: var(--fs2-sm); font-weight: 600;
   cursor: pointer;
-  transition: all var(--dur) var(--ease);
+  transition: border-color .18s var(--ease2), background .18s var(--ease2);
 }
-.bk-oauth:hover { background: var(--paper-2); border-color: var(--line-3); }
+.bk-oauth:hover { border-color: var(--b2-ink); background: var(--b2-canvas); }
 
-/* ── App nativa iOS: ocultar OAuth de Google y su separador ──
-   En el WebView de iOS el login es solo correo + contraseña.
-   Apple rechaza apps con botones de inicio de sesión de terceros
-   que no cumplan su guideline; al tener correo/contraseña quedamos
-   exentos, así que simplemente no mostramos estos botones en iOS. */
-.is-ios-native .bk-oauth { display: none !important; }
-.is-ios-native .bk-divider { display: none !important; }
+/* App nativa iOS: sin OAuth de Google (lineamientos de Apple).
+   La especificidad de dos clases basta; no se necesita forzar nada. */
+.is-ios-native .bk-oauth { display: none; }
+.is-ios-native .bk-divider { display: none; }
+
 .bk-faceid {
-  text-align: center; font-size: var(--fs-xs); color: var(--mute);
-  margin-top: 22px;
+  text-align: center; font-size: var(--fs2-caption); color: var(--b2-mute);
+  margin-top: 20px;
   display: flex; justify-content: center; align-items: center; gap: 6px;
 }
 
+/* Mensajes con color semántico */
 .bk-msg {
-  padding: 12px 14px; border-radius: var(--r);
-  font-size: var(--fs-xs); line-height: 1.5;
+  padding: 12px 16px; border-radius: var(--r2);
+  font-size: var(--fs2-sm); line-height: 1.5;
   margin-bottom: 16px; display: none;
   border: 1px solid transparent;
 }
-.bk-msg.is-err { display: block; background: var(--danger-soft); color: var(--danger); border-color: rgba(231,8,102,.20); }
-.bk-msg.is-ok  { display: block; background: var(--success-soft); color: var(--success); border-color: rgba(0,170,108,.25); }
+.bk-msg.is-err { display: block; background: var(--b2-baja-soft); color: var(--b2-baja); border-color: var(--b2-baja-soft); }
+.bk-msg.is-ok  { display: block; background: var(--b2-bien-soft); color: var(--b2-bien); border-color: var(--b2-bien-soft); }
 
+/* Legal */
 .bk-legal-check {
   display: flex; align-items: flex-start; gap: 10px;
   margin: 14px 0 6px;
-  font-size: var(--fs-xs); color: var(--mute); line-height: 1.5;
+  font-size: var(--fs2-caption); color: var(--b2-mute); line-height: 1.55;
   cursor: pointer;
 }
 .bk-legal-check input[type=checkbox] {
   width: 16px; height: 16px; margin-top: 2px;
-  accent-color: var(--sky-blue); cursor: pointer; flex-shrink: 0;
+  accent-color: var(--b2-blue); cursor: pointer; flex-shrink: 0;
 }
 .bk-legal-check a {
-  color: var(--ink); font-weight: 600;
+  color: var(--b2-ink); font-weight: 600;
   text-decoration: underline; text-underline-offset: 2px;
 }
-
 .bk-legal {
   margin-top: 18px;
-  font-size: var(--fs-xs);
-  color: var(--mute);
+  font-size: var(--fs2-caption);
+  color: var(--b2-mute);
   text-align: center;
   line-height: 1.55;
 }
 .bk-legal a {
-  color: var(--ink); text-decoration: underline; text-underline-offset: 2px;
+  color: var(--b2-ink); text-decoration: underline; text-underline-offset: 2px;
   font-weight: 600;
 }
-.bk-legal a:hover { color: var(--forest); }
+.bk-legal a:hover { color: var(--b2-blue); }
 
-/* Insignia Meta Tech Provider — discreta, bajo el aviso legal */
+/* Insignia de Meta, discreta */
 .bk-meta {
   margin-top: 20px;
   display: flex; justify-content: center; line-height: 0;
-  opacity: .5; transition: opacity .18s ease;
+  opacity: .5; transition: opacity .18s var(--ease2);
 }
 .bk-meta:hover { opacity: .8; }
 .bk-meta img { height: 24px; width: auto; display: block; }
 
 .bk-foot {
-  margin-top: 32px;
-  font-size: var(--fs-h2);
-  color: var(--mute);
+  margin-top: 30px;
+  font-size: var(--fs2-caption);
+  color: var(--b2-mute);
   text-align: center;
-  font-family: var(--font-mono);
-  letter-spacing: 0.02em;
-  
 }
 
-/* Spinner */
-.bk-spin { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.3); border-top-color: var(--paper); border-radius: 50%; animation: bk-spin .7s linear infinite; }
+/* Spinner del botón */
+.bk-spin {
+  display: inline-block; width: 18px; height: 18px;
+  border: 2px solid var(--b2-line-on-blue);
+  border-top-color: var(--b2-on-blue);
+  border-radius: 50%;
+  animation: bk-spin .7s linear infinite;
+}
 @keyframes bk-spin { to { transform: rotate(360deg); } }
 
 /* Splash */
 #splash {
   position: fixed; inset: 0;
-  background: var(--paper);
+  background: var(--b2-paper);
   display: flex; align-items: center; justify-content: center;
   z-index: 9999;
-  transition: opacity .6s var(--ease);
+  transition: opacity .6s var(--ease2);
 }
-#splash .mark {
-  width: min(44vw, 220px);
-  animation: pulseIn .9s var(--ease);
-}
-#splash .mark img {
-  width: 100%; height: auto; display: block;
-}
+#splash .mark { width: min(44vw, 220px); animation: pulseIn .9s var(--ease2); }
+#splash .mark img { width: 100%; height: auto; display: block; }
 @keyframes pulseIn {
   0% { opacity: 0; transform: translateY(8px); }
   100% { opacity: 1; transform: translateY(0); }
 }
+
 </style>
 </head>
 <body>
