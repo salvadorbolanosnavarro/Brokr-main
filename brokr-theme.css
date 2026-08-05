@@ -1,6 +1,15 @@
 /* ════════════════════════════════════════════════════════════
-   BROQUER — Design System  ·  Edición "Blanca"
-   REVISIÓN 2026-08 — "Blanca": mundo blanco a la Zillow con un solo
+   BROQUER — Design System  ·  Edición "Canon"
+   REVISIÓN 2026-08-b — "Canon" (dirección oficial del rediseño):
+   azul manda, blanco respira, negro precisa. Estructura #081C4E,
+   acción #0A5DE0, tinta #0B0B0F. Vidrio esmerilado, hairlines 1px,
+   radios continuos 22-28, sombras de luz real, Inter con tracking
+   apretado. Acentos semánticos verde/naranja/rosa. La paleta de
+   datos es CATEGÓRICA y VIVA (azul, verde, naranja, rosa, violeta,
+   cian, amarillo): en gráficas y chats el color diferencia
+   conceptos — nunca ocho azules. Regla de oro intacta: solo VALORES.
+
+   HISTÓRICO — REVISIÓN 2026-08 — "Blanca": mundo blanco a la Zillow con un solo
    azul de acción #0D6BF0, tinta grafito #1B2733, Bricolage Grotesque
    (display) + Figtree (interfaz), semánticos verde/ámbar/cantera y
    paleta de datos contenida. Regla de oro intacta: solo VALORES.
@@ -67,58 +76,58 @@
    · El alias legacy --sky apunta a var(--sky-blue): un solo azul.
    ════════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&display=swap');
 
 :root {
   /* ── Surfaces (blanco dominante) ──────────── */
   --paper:   #FFFFFF;     /* fondo del body — BLANCO PURO (rev. 2026-07) */
-  --paper-2: #F6F8FB;     /* canvas / inset / hover / chips */
+  --paper-2: #F4F6FB;     /* canvas / inset / hover / chips */
   --bone:    #FFFFFF;     /* superficie de card */
-  --shell:   #F6F8FB;     /* relleno de input / superficie media */
+  --shell:   #F5F7FC;     /* relleno de input / superficie media */
 
   /* ── Ink (azul marino como texto, no negro) ─ */
-  --ink:     #1B2733;     /* texto principal (grafito azulado Blanca) */
-  --ink-2:   #2A3947;
-  --ink-3:   #5A6B7C;     /* secundario */
-  --mute:    #5A6B7C;     /* gris-azul secundario legible */
-  --mute-2:  #8A97A5;
-  --mute-3:  #C3CCD6;
+  --ink:     #0B0B0F;     /* texto principal — negro canon */
+  --ink-2:   #2A3142;
+  --ink-3:   #57607A;     /* secundario */
+  --mute:    #57607A;     /* gris-azul secundario legible */
+  --mute-2:  #8A93A9;
+  --mute-3:  #C6CCDA;
 
   /* ── Hairlines (bordes del sistema) ───────── */
-  --line:     #E3E9F0;    /* borde claro / disabled */
-  --line-2:   #D6DEE8;    /* borde / input */
-  --line-3:   #B9C4D1;
+  --line:     #E7EBF4;    /* borde claro / disabled */
+  --line-2:   #DBE1EE;    /* borde / input */
+  --line-3:   #BEC7DA;
 
   /* ── Accents (AZUL de acción) ─────────────── */
-  --forest:   #0D6BF0;    /* alias histórico → azul de acción Blanca */
-  --forest-2: #0A56C4;    /* azul pressed (hover) */
-  --forest-soft: rgba(13,107,240,0.10);
+  --forest:   #0A5DE0;    /* alias histórico → azul de acción canon */
+  --forest-2: #084BB8;    /* azul pressed (hover) */
+  --forest-soft: rgba(10,93,224,0.10);
 
   /* Marca Broquer */
-  --sky-navy:       #08419A;  /* estructura: nav, footer, botón primario */
-  --sky-navy-mid:   #0A56C4;
-  --sky-navy-deep:  #063075;  /* sidebar, fondos navy profundos */
-  --sky-blue:       #0D6BF0;  /* acción */
-  --sky-blue-press: #0A56C4;
-  --sky-blue-lift:  #6EA6F6;  /* azul brillante, solo estados activos */
-  --sky-canvas:     #EAF2FE;
+  --sky-navy:       #081C4E;  /* estructura canon: nav, footer, botón primario */
+  --sky-navy-mid:   #10307E;
+  --sky-navy-deep:  #050F2E;  /* sidebar, fondos navy profundos */
+  --sky-blue:       #0A5DE0;  /* acción canon */
+  --sky-blue-press: #084BB8;
+  --sky-blue-lift:  #6F9FF2;  /* azul brillante, solo estados activos */
+  --sky-canvas:     #E9F0FD;
 
-  --warn:     #9A6A08;
-  --warn-soft:rgba(154,106,8,0.12);
-  --danger:   #A85D62;
-  --danger-soft:rgba(168,93,98,0.12);
-  --success:  #0E8F62;
-  --success-soft:rgba(14,143,98,0.12);
-  --info:     #0A56C4;
-  --info-soft:rgba(10,86,196,0.10);
+  --warn:     #B34E0B;   /* naranja canon */
+  --warn-soft:rgba(243,116,13,0.14);
+  --danger:   #D42A62;   /* rosa canon */
+  --danger-soft:rgba(212,42,98,0.12);
+  --success:  #0E9F6E;   /* verde canon */
+  --success-soft:rgba(14,159,110,0.12);
+  --info:     #0A5DE0;
+  --info-soft:rgba(10,93,224,0.10);
 
   /* ── Geometry ─────────────────────────────── */
-  --r-xs: 6px;     /* micro (check, tag) */
-  --r-sm: 8px;     /* BOTÓN */
-  --r:    10px;    /* INPUT / contenedor base */
-  --r-lg: 16px;    /* CARD */
-  --r-xl: 22px;    /* CARD GRANDE */
-  --r-modal: 24px; /* MODAL */
+  --r-xs: 8px;     /* micro (check, tag) */
+  --r-sm: 12px;    /* BOTÓN */
+  --r:    14px;    /* INPUT / contenedor base */
+  --r-lg: 22px;    /* CARD */
+  --r-xl: 26px;    /* CARD GRANDE */
+  --r-modal: 28px; /* MODAL */
   --r-pill: 999px;
 
   /* ── Espaciado (escala base 4px) ────────── */
@@ -137,12 +146,12 @@
   --sp-24: 112px;   /* sección vertical desktop */
 
   /* ── Sombras (tinte navy, nunca negro fuerte) ── */
-  --shadow-xs: 0 2px 8px rgba(27,39,51,.04);
-  --shadow-sm: 0 6px 24px rgba(27,39,51,.06);
-  --shadow:    0 14px 40px rgba(27,39,51,.09);
-  --shadow-md: 0 14px 40px rgba(27,39,51,.11);
-  --shadow-lg: 0 24px 80px rgba(27,39,51,.12);
-  --shadow-xl: 0 32px 96px rgba(27,39,51,.16);
+  --shadow-xs: 0 1px 2px rgba(8,28,78,.05);
+  --shadow-sm: 0 2px 6px rgba(8,28,78,.05), 0 10px 28px rgba(8,28,78,.06);
+  --shadow:    0 4px 12px rgba(8,28,78,.06), 0 18px 44px rgba(8,28,78,.09);
+  --shadow-md: 0 6px 16px rgba(8,28,78,.07), 0 22px 52px rgba(8,28,78,.10);
+  --shadow-lg: 0 10px 24px rgba(8,28,78,.08), 0 32px 88px rgba(8,28,78,.12);
+  --shadow-xl: 0 14px 32px rgba(8,28,78,.10), 0 42px 110px rgba(8,28,78,.16);
 
   /* ── Contrato de layout (anchos canónicos) ── */
   --page-max: 1280px;   /* módulos de datos (tablas, cards, dashboards) */
@@ -158,9 +167,15 @@
   --touch-min: 44px;
 
   /* ── Anillo de foco ─────────────────────── */
-  --focus:        0 0 0 4px rgba(13,107,240,0.18);
-  --focus-forest: 0 0 0 4px rgba(13,107,240,0.18);
-  --focus-danger: 0 0 0 4px rgba(168,93,98,0.16);
+  --focus:        0 0 0 4px rgba(10,93,224,0.20);
+  --focus-forest: 0 0 0 4px rgba(10,93,224,0.20);
+  --focus-danger: 0 0 0 4px rgba(212,42,98,0.16);
+
+  /* ── Vidrio esmerilado (canon) ──────────── */
+  --glass-bg:   rgba(255,255,255,0.62);  /* vidrio claro sobre canvas */
+  --glass-brd:  rgba(255,255,255,0.55);
+  --glass-navy: rgba(8,28,78,0.55);      /* vidrio azul sobre foto/hero */
+  --glass-blur: blur(22px) saturate(170%);
 
   /* ── Z-index (alineado con app-shell.js) ── */
   --z-base:    1;
@@ -173,12 +188,12 @@
   --z-toast:   320;
 
   /* ── Tipografía ─────────────────────────── */
-  --font-sans: 'Figtree', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
-  --font-display: 'Bricolage Grotesque', 'Figtree', -apple-system, system-ui, sans-serif;
-  --font-mono: 'Figtree', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; /* alias histórico → NO es monoespaciada */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; /* alias histórico → NO es monoespaciada */
   /* Serif editorial: EXCLUSIVA de landing/marketing. Prohibida en
      tablas, filtros, formularios, menús y módulos densos. */
-  --font-serif: 'Bricolage Grotesque', 'Figtree', system-ui, sans-serif; /* la serif salió del sistema: display Blanca */
+  --font-serif: 'Inter', system-ui, sans-serif; /* la serif salió del sistema: una sola familia, Inter */
 
   /* Escala tipográfica.
      Hero/landing usa --fs-hero. La app arranca en --fs-h1 (32-36). */
@@ -271,7 +286,7 @@ html, body {
   font-size: var(--fs-body);
   font-weight: 400;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.011em;
+  letter-spacing: -0.014em;
   background: var(--paper);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
@@ -1028,23 +1043,23 @@ html {
   --brand-facebook-press: #145FCC;
 
   /* ── Sidebar (los consume app-shell.js) ────────────────────
-     El drawer usa el MISMO azul de la tarjeta de pendientes/Broq
-     del inicio (--sky-blue + destello blanco arriba), no el navy.
+     El drawer usa el azul hondo de ESTRUCTURA del canon
+     (#081C4E) con destello blanco arriba: vidrio azul.
      Los módulos van en blanco y en negritas, agrupados en bloques
      translúcidos: la separación se hace con aire y con paneles,
      nunca con líneas. */
-  --sb-bg:      var(--sky-blue);
+  --sb-bg:      var(--sky-navy);
   --sb-panel:   rgba(255,255,255,0.09);
   --sb-hover:   rgba(255,255,255,0.14);
   --sb-active:  rgba(255,255,255,0.22);
   --sb-edge:    rgba(255,255,255,0.16);
   --sb-txt:     #FFFFFF;
   --sb-txt-dim: rgba(255,255,255,0.66);
-  --sb-glow:    0 8px 24px rgba(27,39,51,0.20);
+  --sb-glow:    0 8px 24px rgba(4,12,40,0.35);
 
   /* Acento azul claro para texto sobre superficies navy (heros oscuros).
      El azul de acción #1240A0 no contrasta sobre --sky-navy. */
-  --sky-blue-on-dark: #7FA8F0;
+  --sky-blue-on-dark: #8FB0F5;
 
   /* ════════════════════════════════════════════════════════════
      CANVAS DE APLICACION
@@ -1054,7 +1069,7 @@ html {
      Con el canvas tenido, .bk-card (--bone, blanco) por fin se
      lee como card en vez de desaparecer sobre el fondo.
      ════════════════════════════════════════════════════════════ */
-  --canvas: #F4F7FD;
+  --canvas: #F3F6FC;
 
   /* ════════════════════════════════════════════════════════════
      PALETA DE DATOS  (--data-1 … --data-8)
@@ -1065,42 +1080,44 @@ html {
      etapas de pipeline, origenes de lead, categorias y tags.
      Ordenada por distinguibilidad: los primeros cuatro son los
      mas separados entre si porque casi toda grafica usa 2-4 series.
+     Decision de Chava: la paleta es VIVA y variada — una grafica
+     jamas debe verse como ocho tonos de azul.
      ════════════════════════════════════════════════════════════ */
-  --data-1: #0D6BF0;   /* azul     — serie principal (= azul de accion) */
-  --data-2: #00A6C0;   /* teal frio */
-  --data-3: #7A5AF8;   /* violeta */
-  --data-4: #E8A13A;   /* ambar */
-  --data-5: #0E8F62;   /* verde */
-  --data-6: #A85D62;   /* cantera */
-  --data-7: #5A6B7C;   /* gris */
-  --data-8: #6EA6F6;   /* azul claro */
+  --data-1: #0A5DE0;   /* azul     — serie principal (= azul de accion) */
+  --data-2: #12A150;   /* verde */
+  --data-3: #F7740D;   /* naranja */
+  --data-4: #ED4C86;   /* rosa */
+  --data-5: #7A4DF0;   /* violeta */
+  --data-6: #0AA6C8;   /* cian */
+  --data-7: #D9A406;   /* amarillo */
+  --data-8: #64708C;   /* gris azulado — "otros" */
 
   /* Rellenos translucidos de la misma rampa (areas, heatmaps, fondos
      de badge). Mismo indice = mismo color, solo que al 12%. */
-  --data-1-soft: rgba(13, 107, 240, 0.12);
-  --data-2-soft: rgba(0, 166, 192, 0.12);
-  --data-3-soft: rgba(122, 90, 248, 0.12);
-  --data-4-soft: rgba(232, 161, 58, 0.12);
-  --data-5-soft: rgba(14, 143, 98, 0.12);
-  --data-6-soft: rgba(168, 93, 98, 0.12);
-  --data-7-soft: rgba(90, 107, 124, 0.12);
-  --data-8-soft: rgba(110, 166, 246, 0.12);
+  --data-1-soft: rgba(10, 93, 224, 0.12);
+  --data-2-soft: rgba(18, 161, 80, 0.13);
+  --data-3-soft: rgba(247, 116, 13, 0.13);
+  --data-4-soft: rgba(237, 76, 134, 0.13);
+  --data-5-soft: rgba(122, 77, 240, 0.12);
+  --data-6-soft: rgba(10, 166, 200, 0.13);
+  --data-7-soft: rgba(217, 164, 6, 0.15);
+  --data-8-soft: rgba(100, 112, 140, 0.12);
 
   /* ── Etapas de pipeline ────────────────────────────────────
      No es una rampa categorica: es ORDINAL. Va de frio a
      comprometido, cierra en verde (ganado) y descarta en gris
      (muerto). El color dice en que parte del embudo estas sin
      que tengas que leer la etiqueta. */
-  --etapa-nuevo:      #6EA6F6;
-  --etapa-activo:     #0D6BF0;
-  --etapa-contactado: #7A5AF8;
-  --etapa-cerrado:    #0E8F62;
-  --etapa-descartado: #8A97A5;
-  --etapa-nuevo-soft:      rgba(110, 166, 246, 0.14);
-  --etapa-activo-soft:     rgba(13, 107, 240, 0.12);
-  --etapa-contactado-soft: rgba(122, 90, 248, 0.12);
-  --etapa-cerrado-soft:    rgba(21, 128, 61, 0.12);
-  --etapa-descartado-soft: rgba(133, 146, 171, 0.12);
+  --etapa-nuevo:      #0AA6C8;
+  --etapa-activo:     #0A5DE0;
+  --etapa-contactado: #7A4DF0;
+  --etapa-cerrado:    #12A150;
+  --etapa-descartado: #8A93A9;
+  --etapa-nuevo-soft:      rgba(10, 166, 200, 0.13);
+  --etapa-activo-soft:     rgba(10, 93, 224, 0.12);
+  --etapa-contactado-soft: rgba(122, 77, 240, 0.12);
+  --etapa-cerrado-soft:    rgba(18, 161, 80, 0.13);
+  --etapa-descartado-soft: rgba(138, 147, 169, 0.13);
 
   /* ── Modulo WhatsApp ───────────────────────────────────────
      Unico modulo donde el verde de marca deja de ser solo el

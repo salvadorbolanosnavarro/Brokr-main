@@ -5,7 +5,11 @@
    REVISIÓN 2026-08 — "Vista" (v2, archivo paralelo):
    Piel nueva aprobada sobre los previews de Estadísticas y
    WhatsApp: estructura y calidez tipo Trello, azul de acción
-   Zillow (#006AFF). Este archivo convive con brokr-theme.css:
+   Zillow (#006AFF — HISTÓRICO). Este archivo convive con brokr-theme.css:
+   REVISIÓN 2026-08-b — "Canon": retinte a la dirección oficial —
+   estructura #081C4E, acción #0A5DE0, tinta #0B0B0F, Inter única,
+   semánticos verde/naranja/rosa y paleta de datos viva. Pendiente:
+   migrar estadisticas.html a brokr-theme.css y retirar este archivo.
    cada módulo migra cambiando UNA línea (el <link> del tema).
    Cuando el último módulo migre, el tema viejo se elimina.
 
@@ -40,7 +44,7 @@
      blanco/#0041D9 8.8 · on-dark/#0041D9 7.1
    ════════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&display=swap');
 
 :root {
   /* ── Surfaces (blanco dominante) ──────────── */
@@ -50,39 +54,39 @@
   --shell:   #F7F8F9;     /* relleno de input / superficie media */
 
   /* ── Ink (azul marino como texto, no negro) ─ */
-  --ink:     #172B4D;     /* texto principal */
-  --ink-2:   #33415F;
-  --ink-3:   #44546F;     /* secundario */
-  --mute:    #44546F;     /* gris-azul secundario legible */
-  --mute-2:  #7A8699;
+  --ink:     #0B0B0F;     /* texto principal — negro canon */
+  --ink-2:   #2A3142;
+  --ink-3:   #57607A;     /* secundario */
+  --mute:    #57607A;     /* gris-azul secundario legible */
+  --mute-2:  #8A93A9;
   --mute-3:  #B3B9C4;
 
   /* ── Hairlines (bordes del sistema) ───────── */
-  --line:     #DCDFE4;    /* borde claro / disabled */
-  --line-2:   #CFD4DB;    /* borde / input */
+  --line:     #E7EBF4;    /* borde claro / disabled */
+  --line-2:   #DBE1EE;    /* borde / input */
   --line-3:   #B3B9C4;
 
   /* ── Accents (AZUL de acción) ─────────────── */
-  --forest:   #006AFF;    /* alias histórico → azul de acción */
-  --forest-2: #0041D9;    /* azul pressed (hover) */
-  --forest-soft: rgba(0,106,255,0.10);
+  --forest:   #0A5DE0;    /* alias histórico → azul de acción canon */
+  --forest-2: #084BB8;    /* azul pressed (hover) */
+  --forest-soft: rgba(10,93,224,0.10);
 
   /* Marca Broquer */
-  --sky-navy:       #0041D9;  /* estructura: nav, footer, botón primario */
-  --sky-navy-mid:   #0A53D8;
-  --sky-navy-deep:  #002B96;  /* sidebar, fondos navy profundos */
-  --sky-blue:       #006AFF;  /* acción */
-  --sky-blue-press: #0041D9;
-  --sky-blue-lift:  #2F8FFF;  /* azul brillante, solo estados activos */
+  --sky-navy:       #081C4E;  /* estructura canon: nav, footer, botón primario */
+  --sky-navy-mid:   #10307E;
+  --sky-navy-deep:  #050F2E;  /* sidebar, fondos navy profundos */
+  --sky-blue:       #0A5DE0;  /* acción canon */
+  --sky-blue-press: #084BB8;
+  --sky-blue-lift:  #6F9FF2;  /* azul brillante, solo estados activos */
   --sky-canvas:     #E8F1FF;
 
-  --warn:     #A16207;
+  --warn:     #B34E0B;   /* naranja canon */
   --warn-soft:rgba(161,98,7,0.10);
-  --danger:   #C9372C;
+  --danger:   #D42A62;   /* rosa canon */
   --danger-soft:rgba(201,55,44,0.10);
-  --success:  #1F845A;
+  --success:  #0E9F6E;   /* verde canon */
   --success-soft:rgba(31,132,90,0.10);
-  --info:     #0041D9;
+  --info:     #0A5DE0;
   --info-soft:rgba(0,65,217,0.10);
 
   /* ── Geometry ─────────────────────────────── */
@@ -146,12 +150,12 @@
   --z-toast:   320;
 
   /* ── Tipografía ─────────────────────────── */
-  --font-sans: 'Figtree', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
-  --font-display: 'Figtree', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'Figtree', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; /* alias histórico → NO es monoespaciada */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; /* alias histórico → NO es monoespaciada */
   /* Serif editorial: EXCLUSIVA de landing/marketing. Prohibida en
      tablas, filtros, formularios, menús y módulos densos. */
-  --font-serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --font-serif: 'Inter', system-ui, sans-serif; /* la serif salió del sistema: una sola familia, Inter */
 
   /* Escala tipográfica.
      Hero/landing usa --fs-hero. La app arranca en --fs-h1 (32-36). */
@@ -1017,7 +1021,7 @@ html {
 
   /* Acento azul claro para texto sobre superficies navy (heros oscuros).
      El azul de acción #006AFF no contrasta sobre --sky-navy. */
-  --sky-blue-on-dark: #9CC2FF;
+  --sky-blue-on-dark: #8FB0F5;
 
   /* ════════════════════════════════════════════════════════════
      CANVAS DE APLICACION
@@ -1039,41 +1043,41 @@ html {
      Ordenada por distinguibilidad: los primeros cuatro son los
      mas separados entre si porque casi toda grafica usa 2-4 series.
      ════════════════════════════════════════════════════════════ */
-  --data-1: #006AFF;   /* azul     — serie principal (= azul de accion) */
-  --data-2: #E56910;   /* naranja quemado */
-  --data-3: #227D9B;   /* teal */
-  --data-4: #6E5DC6;   /* violeta */
-  --data-5: #1F845A;   /* verde */
-  --data-6: #AE4787;   /* magenta */
-  --data-7: #946F00;   /* ambar oscuro */
-  --data-8: #2F8FFF;   /* azul claro */
+  --data-1: #0A5DE0;   /* azul     — serie principal (= azul de accion) */
+  --data-2: #12A150;   /* verde */
+  --data-3: #F7740D;   /* naranja */
+  --data-4: #ED4C86;   /* rosa */
+  --data-5: #7A4DF0;   /* violeta */
+  --data-6: #0AA6C8;   /* cian */
+  --data-7: #D9A406;   /* amarillo */
+  --data-8: #64708C;   /* gris azulado — "otros" */
 
   /* Rellenos translucidos de la misma rampa (areas, heatmaps, fondos
      de badge). Mismo indice = mismo color, solo que al 12%. */
-  --data-1-soft: rgba(0, 106, 255, 0.12);
-  --data-2-soft: rgba(229, 105, 16, 0.12);
-  --data-3-soft: rgba(34, 125, 155, 0.12);
-  --data-4-soft: rgba(110, 93, 198, 0.12);
-  --data-5-soft: rgba(31, 132, 90, 0.12);
-  --data-6-soft: rgba(174, 71, 135, 0.12);
-  --data-7-soft: rgba(148, 111, 0, 0.12);
-  --data-8-soft: rgba(47, 143, 255, 0.12);
+  --data-1-soft: rgba(10, 93, 224, 0.12);
+  --data-2-soft: rgba(18, 161, 80, 0.13);
+  --data-3-soft: rgba(247, 116, 13, 0.13);
+  --data-4-soft: rgba(237, 76, 134, 0.13);
+  --data-5-soft: rgba(122, 77, 240, 0.12);
+  --data-6-soft: rgba(10, 166, 200, 0.13);
+  --data-7-soft: rgba(217, 164, 6, 0.15);
+  --data-8-soft: rgba(100, 112, 140, 0.12);
 
   /* ── Etapas de pipeline ────────────────────────────────────
      No es una rampa categorica: es ORDINAL. Va de frio a
      comprometido, cierra en verde (ganado) y descarta en gris
      (muerto). El color dice en que parte del embudo estas sin
      que tengas que leer la etiqueta. */
-  --etapa-nuevo:      #2F8FFF;
-  --etapa-activo:     #006AFF;
-  --etapa-contactado: #6E5DC6;
-  --etapa-cerrado:    #1F845A;
-  --etapa-descartado: #7A8699;
-  --etapa-nuevo-soft:      rgba(47, 143, 255, 0.12);
-  --etapa-activo-soft:     rgba(0, 106, 255, 0.12);
-  --etapa-contactado-soft: rgba(110, 93, 198, 0.12);
-  --etapa-cerrado-soft:    rgba(31, 132, 90, 0.12);
-  --etapa-descartado-soft: rgba(122, 134, 153, 0.12);
+  --etapa-nuevo:      #0AA6C8;
+  --etapa-activo:     #0A5DE0;
+  --etapa-contactado: #7A4DF0;
+  --etapa-cerrado:    #12A150;
+  --etapa-descartado: #8A93A9;
+  --etapa-nuevo-soft:      rgba(10, 166, 200, 0.13);
+  --etapa-activo-soft:     rgba(10, 93, 224, 0.12);
+  --etapa-contactado-soft: rgba(122, 77, 240, 0.12);
+  --etapa-cerrado-soft:    rgba(18, 161, 80, 0.13);
+  --etapa-descartado-soft: rgba(138, 147, 169, 0.13);
 
   /* ── Modulo WhatsApp ───────────────────────────────────────
      Unico modulo donde el verde de marca deja de ser solo el
@@ -1086,6 +1090,6 @@ html {
                                (el verde solido #1EA65A con blanco daba 2.8:1) */
   --wa-out-ink:  #0B4A2F;   /* texto sobre la burbuja verde (8.4:1) */
   --wa-out-meta: #2F5F45;   /* hora/estado sobre la burbuja verde (5.9:1) */
-  --wa-ia:       #0041D9;   /* violeta Broq: texto/acentos de sus burbujas */
+  --wa-ia:       #6D28D9;   /* violeta Broq: texto/acentos de sus burbujas */
   --wa-ia-soft:  #E3EBFF;   /* burbuja de Broq: violeta claro, texto en tinta */
 }
