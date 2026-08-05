@@ -1128,6 +1128,10 @@ body[data-app]{background:var(--paper)!important;color:var(--ink)!important;font
 body[data-app] main,body[data-app] .app-main,body[data-app] .screen,body[data-app] .container,body[data-app] .wrap{background:transparent!important}
 body[data-app] .card,body[data-app] .ui-card,body[data-app] .panel,body[data-app] .box,body[data-app] .module,body[data-app] .section,body[data-app] .pf-card,body[data-app] .res-card,body[data-app] .form-card,body[data-app] .calc-card,body[data-app] .result-card{background:var(--bone)!important;border:1px solid var(--line)!important;border-radius:var(--r-lg)!important;box-shadow:var(--shadow-xs)!important;color:var(--ink)!important}
 body[data-app] h1,body[data-app] h2,body[data-app] h3,body[data-app] .title,body[data-app] .card-title,body[data-app] .section-title{font-family:var(--font-display)!important;color:var(--ink)!important;letter-spacing:-.02em!important;font-weight:700!important}
+/* Excepción: dentro de superficies azules (tarjetas de acción, hero,
+   App Store) los títulos vuelven a blanco. Sin esto, la regla genérica
+   de arriba los pinta de tinta oscura sobre azul. */
+body[data-app] .ai-card h1,body[data-app] .ai-card h2,body[data-app] .ai-card h3,body[data-app] .ai-card .title,body[data-app] .appstore-card h1,body[data-app] .appstore-card h2,body[data-app] .appstore-card h3,body[data-app] .appstore-card .title,body[data-app] .appstore-card__title,body[data-app] .sky-hero h1,body[data-app] .sky-hero h2,body[data-app] .sky-hero h3,body[data-app] .sky-hero .title{color:var(--bone)!important}
 body[data-app] label,body[data-app] .label,body[data-app] .field-label,body[data-app] .sec-lbl{color:var(--mute)!important;font-size:11px!important;font-weight:700!important;letter-spacing:.01em!important}
 body[data-app] input,body[data-app] select,body[data-app] textarea{background:var(--bone)!important;border:1px solid var(--line-2)!important;border-radius:var(--r)!important;color:var(--ink)!important;box-shadow:none!important;min-height:44px}
 body[data-app] input:focus,body[data-app] select:focus,body[data-app] textarea:focus{border-color:var(--sky-blue)!important;box-shadow:var(--focus)!important;outline:none!important}
@@ -3120,7 +3124,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
       }
     } catch(e) {
       if (toast) { toast.textContent = e.message || 'No pude conectar con el servidor de pagos. Revisa api.broquer.app, SSL y CORS.'; toast.className = 'bk-pd-toast err'; }
-      if (btn) { btn.disabled = false; btn.textContent = window.__BK_TRIAL_DISPONIBLE ? 'Probar Broquer Max gratis 7 días' : 'Activar Broquer Max'; }
+      if (btn) { btn.disabled = false; btn.textContent = 'Activar Broquer Max'; }
     }
   }
   window.startCheckout = startCheckout;
@@ -3287,17 +3291,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
         badge2.textContent = active ? (data.sub.plan || 'Broquer Max') : 'Sin plan activo';
         badge2.className = 'bk-pd-sub-badge' + (active ? '' : ' inactive');
       }
-      if (active && data.sub.status === 'trialing') {
-        if (badge2) badge2.textContent = (data.sub.plan || 'Broquer Max') + ' — periodo de prueba';
-        if (info) info.textContent = 'Estás en tus 7 días de prueba gratis. Al terminar, tu suscripción continúa automáticamente.';
-      } else if (info) {
-        info.textContent = active ? 'Tu suscripción está activa.'
-          : (data.sub.trial_disponible
-              ? 'Prueba Broquer Max 7 días sin costo. Cancela cuando quieras.'
-              : 'Activa tu suscripción para acceder a todas las funciones.');
-      }
-      if (!active && btn) btn.textContent = data.sub.trial_disponible ? 'Probar Broquer Max gratis 7 días' : 'Activar Broquer Max';
-      window.__BK_TRIAL_DISPONIBLE = !!(!active && data.sub.trial_disponible);
+      if (info) info.textContent = active ? 'Tu suscripción está activa.' : 'Activa tu suscripción para acceder a todas las funciones.';
       if (btn) btn.style.display = active ? 'none' : 'flex';
       if (cancelBtn) cancelBtn.style.display = active ? 'flex' : 'none';
     }
@@ -3680,7 +3674,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
       window.location.href = d.checkout_url;
     } catch (e) {
       if (msg) msg.textContent = (e && e.message) ? e.message : 'No pude conectar con el servidor de pagos. Revisa que api.broquer.app tenga DNS y SSL correctos.';
-      if (btn) { btn.disabled = false; btn.textContent = window.__BK_TRIAL_DISPONIBLE ? 'Probar gratis 7 días' : 'Suscribirme ahora'; }
+      if (btn) { btn.disabled = false; btn.textContent = 'Suscribirme ahora'; }
     }
   }
   window.startSubscriptionCheckoutFromGate = startSubscriptionCheckoutFromGate;
@@ -3811,7 +3805,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
     const buyBtn = IS_IOS_NATIVE
       ? `<button id="bk-iap-buy" onclick="rcBuy()" disabled style="width:100%;height:48px;border:none;border-radius:12px;background:var(--sky-blue);color:#FFFFFF;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Cargando…</button>
          <button id="bk-iap-restore" onclick="rcRestore()" style="width:100%;height:42px;border:1px solid var(--line-2);border-radius:12px;background:transparent;color:var(--ink);font-weight:600;font-size:13px;cursor:pointer;margin-top:10px;font-family:inherit;">Restaurar compras</button>`
-      : `<button id="bk-gate-sub-btn" onclick="startSubscriptionCheckoutFromGate()" style="width:100%;height:48px;border:none;border-radius:12px;background:var(--sky-blue);color:#FFFFFF;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">${window.__BK_TRIAL_DISPONIBLE ? 'Probar gratis 7 días' : 'Suscribirme a Broquer Max'}</button>`;
+      : `<button id="bk-gate-sub-btn" onclick="startSubscriptionCheckoutFromGate()" style="width:100%;height:48px;border:none;border-radius:12px;background:var(--sky-blue);color:#FFFFFF;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Suscribirme a Broquer Max</button>`;
     const legal = IS_IOS_NATIVE
       ? `<div style="margin-top:14px;font-size:11px;color:var(--mute);line-height:1.5;">Broquer Max es una suscripción mensual: el pago se cobra a tu cuenta de Apple al confirmar y se renueva automáticamente cada mes, salvo que la canceles desde Ajustes de iOS al menos 24 h antes del fin del periodo. Al continuar aceptas los <a href="legal.html" style="color:var(--mute);text-decoration:underline;">Términos de uso</a> y el <a href="legal.html" style="color:var(--mute);text-decoration:underline;">Aviso de Privacidad</a>.</div>`
       : '';
@@ -3823,7 +3817,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
         <button onclick="closeBroquerMaxModal()" aria-label="Cerrar" style="position:absolute;top:12px;right:14px;border:none;background:transparent;color:var(--mute);font-size:26px;line-height:1;cursor:pointer;padding:4px 8px;font-family:inherit;">&times;</button>
         <img src="isotipo-black.png" alt="Broquer" style="width:52px;height:52px;object-fit:contain;margin-bottom:14px;"/>
         <h2 style="font-family:var(--font-display);font-size:24px;line-height:1.1;margin:0 0 10px;color:var(--ink);letter-spacing:-.02em;">Broquer Max</h2>
-        <p style="color:var(--mute);font-size:14px;line-height:1.55;margin:0 0 20px;">${(!IS_IOS_NATIVE && window.__BK_TRIAL_DISPONIBLE) ? 'Prueba estos módulos exclusivos 7 días sin costo. Cancela cuando quieras.' : 'Para hacer uso de estos módulos exclusivos de Broquer por favor suscríbete a Broquer Max.'}</p>
+        <p style="color:var(--mute);font-size:14px;line-height:1.55;margin:0 0 20px;">Para hacer uso de estos módulos exclusivos de Broquer por favor suscríbete a Broquer Max.</p>
         ${buyBtn}
         <button onclick="closeBroquerMaxModal()" style="width:100%;height:40px;border:none;background:transparent;color:var(--mute);font-weight:600;font-size:13px;cursor:pointer;margin-top:8px;font-family:inherit;">Ahora no</button>
         <div id="bk-gate-msg" style="margin-top:8px;font-size:12px;color:var(--danger);min-height:18px;"></div>
@@ -3943,7 +3937,6 @@ body[data-app="facebook-ads"]{--page-max:980px}
             return true;
           }
           confirmedInactive = true;
-          window.__BK_TRIAL_DISPONIBLE = !!d.trial_disponible;
         }
         // 5xx u otros: reintentar silenciosamente.
       } catch (_) { /* red intermitente — reintentar */ }
