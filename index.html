@@ -7,72 +7,42 @@
 <link rel="manifest" href="manifest.json"/>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
-<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+<meta name="theme-color" content="#081C4E"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-title" content="Broquer"/>
 <link rel="stylesheet" href="brokr-theme.css"/>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap"/>
 <style>
-/* ─── Dashboard — rediseño "Blanca" ──────────────────────────────
-   El contenido del dashboard vive ya en el mundo nuevo. El cascarón
-   (barra lateral y topbar) lo pinta app-shell.js con brokr-theme.css
-   y se rediseñará en su propio paso; por eso el theme viejo sigue
-   enlazado y estos estilos solo visten el área de contenido. */
+/* ─── Dashboard — canon ───────────────────────────────────────────
+   Módulo insignia de la dirección "Canon": azul manda, blanco
+   respira, negro precisa. El hero es el azul hondo de estructura
+   con los TRES ANILLOS DEL DÍA a la derecha: cada anillo se cierra
+   con datos reales — pendientes de hoy (azul), prospectos nuevos de
+   la semana (verde) y cierres del mes (rosa). Cerrar anillos =
+   cerrar tratos. Todo lo demás son cards blancas con hairlines. */
 
-/* ═══ AUDIT-EXEMPT: tokens del sistema nuevo (migrarán a broquer-2.css; sufijo 2 para no chocar con el theme del shell) ═══ */
+/* ═══ AUDIT-EXEMPT: alfas sobre navy y tamaños fluidos del hero (no existen como token global) ═══ */
 :root {
-  --b2-blue:        #0D6BF0;
-  --b2-blue-press:  #0A56C4;
-  --b2-blue-deep:   #08419A;
-  --b2-blue-soft:   #EAF2FE;
-  --b2-ink:         #1B2733;
-  --b2-mute:        #5A6B7C;
-  --b2-paper:       #FFFFFF;
-  --b2-canvas:      #F6F8FB;
-  --b2-line:        #E3E9F0;
+  --dx-on-navy:       #FFFFFF;
+  --dx-on-navy-dim:   rgba(255,255,255,.76);
+  --dx-on-navy-faint: rgba(255,255,255,.52);
+  --dx-line-on-navy:  rgba(255,255,255,.14);
+  --dx-vidrio:        rgba(255,255,255,.08);
+  --dx-vidrio-hover:  rgba(255,255,255,.13);
+  --dx-ring-track:    rgba(255,255,255,.13);
+  --dx-glow:          rgba(10,93,224,.55);
+  --dx-glow-2:        rgba(143,176,245,.22);
 
-  --b2-on-blue:       #FFFFFF;
-  --b2-on-blue-dim:   rgba(255,255,255,.78);
-  --b2-on-blue-faint: rgba(255,255,255,.55);
-  --b2-line-on-blue:  rgba(255,255,255,.16);
-  --b2-vidrio:        rgba(255,255,255,.09);
-  --b2-vidrio-hover:  rgba(255,255,255,.14);
-  --b2-glow:          rgba(13,107,240,.50);
-  --b2-glow-2:        rgba(110,166,246,.28);
-
-  --font-display2: 'Bricolage Grotesque', 'Figtree', system-ui, sans-serif;
-  --font-sans2:    'Figtree', system-ui, -apple-system, sans-serif;
-
-  --fs2-caption: 12px;
-  --fs2-sm:      14px;
-  --fs2-body:    16px;
-  --fs2-lg:      18px;
-  --fs2-h3:      20px;
-  --fs2-h2:      clamp(22px, 2.4vw, 28px);
-  --fs2-saludo:  clamp(28px, 3.4vw, 44px);
-  --fs2-kpi:     clamp(20px, 1.9vw, 26px);
-
-  --r2-xs:   6px;
-  --r2-sm:   10px;
-  --r2:      14px;
-  --r2-lg:   22px;
-  --r2-xl:   28px;
-  --r2-pill: 999px;
-
-  --sh2-card:  0 1px 2px rgba(27,39,51,.05), 0 8px 24px rgba(27,39,51,.07);
-  --sh2-media: 0 8px 20px rgba(27,39,51,.08), 0 32px 80px rgba(27,39,51,.14);
-
-  --ease2: cubic-bezier(.22,.61,.36,1);
+  --dx-fs-title: clamp(26px, 2.8vw, 38px);
+  --dx-fs-kpi:   clamp(20px, 1.9vw, 26px);
+  --dx-fs-pct:   clamp(26px, 2.2vw, 32px);
 }
 /* ═══ /AUDIT-EXEMPT ═══ */
 
 .dash-scroll {
   padding: 14px 28px 48px; max-width: 1180px; margin: 0 auto;
-  font-family: var(--font-sans2);
-  color: var(--b2-ink);
-  letter-spacing: -0.005em;
+  font-family: var(--font-sans);
+  color: var(--ink);
+  letter-spacing: -0.012em;
 }
 @media (max-width: 720px) { .dash-scroll { padding: 16px 14px 40px; } }
 
@@ -80,51 +50,39 @@
 .dash-head { position: relative; display: flex; justify-content: flex-end; margin-bottom: 4px; }
 .dash-pencil {
   position: relative;
-  width: 38px; height: 38px; border-radius: var(--r2-pill);
-  border: 1px solid var(--b2-line); background: var(--b2-paper);
-  color: var(--b2-mute); cursor: pointer;
+  width: 38px; height: 38px; border-radius: var(--r-pill);
+  border: 1px solid var(--line-2); background: var(--paper);
+  color: var(--mute); cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
-  transition: color .15s var(--ease2), border-color .15s var(--ease2);
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
-.dash-pencil:hover { color: var(--b2-blue); border-color: var(--b2-blue); }
+.dash-pencil:hover { color: var(--sky-blue); border-color: var(--sky-blue); }
 .dash-pencil__tip {
   position: absolute; top: calc(100% + 8px); right: 0;
-  background: var(--b2-ink); color: var(--b2-paper);
-  font-size: var(--fs2-caption); font-weight: 600;
-  padding: 5px 10px; border-radius: var(--r2-sm);
+  background: var(--ink); color: var(--paper);
+  font-size: var(--fs-caption); font-weight: 600;
+  padding: 5px 10px; border-radius: var(--r-sm);
   white-space: nowrap; opacity: 0; pointer-events: none;
-  transition: opacity .15s var(--ease2);
+  transition: opacity var(--dur) var(--ease);
 }
 .dash-pencil:hover .dash-pencil__tip { opacity: 1; }
 .dash-panel {
   position: absolute; top: calc(100% + 8px); right: 0; z-index: 50;
-  background: var(--b2-paper); border: 1px solid var(--b2-line);
-  border-radius: var(--r2-lg); box-shadow: var(--sh2-card);
+  background: var(--paper); border: 1px solid var(--line-2);
+  border-radius: var(--r-lg); box-shadow: var(--shadow-sm);
   padding: 14px 16px; min-width: 230px;
 }
-.dash-panel__t { font-family: var(--font-display2); font-size: var(--fs2-sm); font-weight: 800; margin-bottom: 10px; }
+.dash-panel__t { font-family: var(--font-display); font-size: var(--fs-sm); font-weight: 800; margin-bottom: 10px; }
 .dash-panel__opt {
   display: flex; align-items: center; gap: 9px;
-  font-size: var(--fs2-sm); color: var(--b2-ink); padding: 6px 0; cursor: pointer;
+  font-size: var(--fs-sm); color: var(--ink); padding: 6px 0; cursor: pointer;
 }
-.dash-panel__opt input { accent-color: var(--b2-blue); width: 16px; height: 16px; }
+.dash-panel__opt input { accent-color: var(--sky-blue); width: 16px; height: 16px; }
 
-/* ── Fila superior: saludo y pendientes lado a lado, compactos ── */
-.dash-top { display: grid; grid-template-columns: 1.3fr 1fr; gap: 14px; align-items: start; }
-.dash-top:has(#notif-card[hidden]) { grid-template-columns: 1fr; }
-@media (max-width: 900px) { .dash-top { grid-template-columns: 1fr; } }
-.ai-card--pend { margin-top: 0; display: flex; flex-direction: column; }
-.ai-card--pend h3 { font-size: var(--fs2-lg); }
-[data-widget].is-off { display: none; }
-
-/* ── HERO de saludo: azul profundo con resplandor ──
-   La misma pieza protagonista, en el mundo nuevo: el panel azul
-   profundo del landing y el login, con dos masas de luz derivando
-   detrás. El nombre sigue siendo la única nota de color con su
-   subrayado que se dibuja al llegar. */
+/* ── HERO canon: azul hondo de estructura con los anillos del día ── */
 .sky-hero {
-  background: var(--b2-blue-deep); color: var(--b2-on-blue);
-  border-radius: var(--r2-xl); padding: 24px 26px 22px;
+  background: var(--sky-navy); color: var(--dx-on-navy);
+  border-radius: var(--r-xl); padding: 26px 28px 24px;
   position: relative; overflow: hidden; isolation: isolate;
 }
 .sky-hero::before, .sky-hero::after {
@@ -133,194 +91,201 @@
 }
 .sky-hero::before {
   width: 640px; height: 640px; top: -380px; right: -160px;
-  background: radial-gradient(circle, var(--b2-glow), transparent 66%);
-  animation: hero-drift-a 18s var(--ease2) infinite alternate;
+  background: radial-gradient(circle, var(--dx-glow), transparent 66%);
+  animation: hero-drift-a 18s var(--ease) infinite alternate;
 }
 .sky-hero::after {
   width: 520px; height: 520px; bottom: -340px; left: -140px;
-  background: radial-gradient(circle, var(--b2-glow-2), transparent 70%);
-  animation: hero-drift-b 24s var(--ease2) infinite alternate;
+  background: radial-gradient(circle, var(--dx-glow-2), transparent 70%);
+  animation: hero-drift-b 24s var(--ease) infinite alternate;
 }
 @keyframes hero-drift-a { to { transform: translate(-60px, 44px) scale(1.08); } }
 @keyframes hero-drift-b { to { transform: translate(70px, -40px) scale(1.12); } }
 .sky-hero > * { position: relative; }
 
-.sky-hero__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.sky-hero__grid {
+  display: grid; grid-template-columns: 1.25fr auto; gap: 22px; align-items: center;
+}
+@media (max-width: 640px) { .sky-hero__grid { grid-template-columns: 1fr; } }
+
 .sky-hero__eyebrow {
-  font-family: var(--font-sans2); font-size: var(--fs2-caption); font-weight: 600;
-  color: var(--b2-on-blue-dim); margin-bottom: 14px;
+  font-size: var(--fs-caption); font-weight: 600;
+  color: var(--dx-on-navy-dim); margin-bottom: 12px;
   display: inline-flex; align-items: center; gap: 8px;
 }
 .sky-hero__eyebrow::before {
-  content: ""; width: 22px; height: 2px; border-radius: var(--r2-pill);
-  background: linear-gradient(90deg, var(--b2-blue-soft), transparent);
+  content: ""; width: 22px; height: 2px; border-radius: var(--r-pill);
+  background: linear-gradient(90deg, var(--sky-blue-on-dark), transparent);
 }
 .sky-hero__title {
-  font-family: var(--font-display2);
-  font-size: clamp(24px, 2.6vw, 34px);
-  font-weight: 800; letter-spacing: -0.032em; color: var(--b2-on-blue); line-height: 1.04;
-  text-wrap: balance;
+  font-family: var(--font-display);
+  font-size: var(--dx-fs-title);
+  font-weight: 800; letter-spacing: -0.032em; color: var(--dx-on-navy); line-height: 1.05;
+  text-wrap: balance; margin: 0;
 }
-#dash-greet { color: var(--b2-on-blue); }
-/* Única nota de color: el nombre, con subrayado que se dibuja */
-.sky-hero__title em {
-  font-style: normal; position: relative; white-space: nowrap;
-  color: var(--b2-blue-soft);
+.sky-hero__title em { font-style: normal; color: var(--sky-blue-on-dark); }
+.sky-hero__sub {
+  font-size: var(--fs-sm); color: var(--dx-on-navy-dim);
+  line-height: var(--lh-snug); margin: 10px 0 0; max-width: 46ch;
 }
-.sky-hero__title em::after {
-  content: ""; position: absolute; left: 2%; right: 98%; bottom: -6px; height: 3px;
-  border-radius: var(--r2-pill);
-  background: linear-gradient(90deg, var(--b2-blue-soft), var(--b2-on-blue-faint));
-  transition: right 0.9s var(--ease2) 0.2s;
-}
-.sky-hero__title em.is-on::after { right: 2%; }
+.sky-hero__sub b { color: var(--dx-on-navy); font-weight: 700; }
 
-/* Chip-calendario */
-.sky-hero__date {
-  text-align: center; font-family: var(--font-sans2); color: var(--b2-on-blue);
-  background: var(--b2-vidrio);
-  border: 1px solid var(--b2-line-on-blue);
-  border-radius: var(--r2-lg); padding: 8px 14px 10px; min-width: 88px;
-  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+/* ── Los anillos del día ── */
+.rings { display: flex; align-items: center; gap: 18px; justify-self: end; }
+@media (max-width: 640px) { .rings { justify-self: start; margin-top: 6px; } }
+.rings__svg { display: block; }
+.rings__svg .track { stroke: var(--dx-ring-track); }
+.rings__svg .arc { stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; }
+.rings__svg .arc--pend  { stroke: var(--sky-blue-lift); }
+.rings__svg .arc--pros  { stroke: var(--data-2); }
+.rings__svg .arc--cierre{ stroke: var(--data-4); }
+.rings__pct {
+  font-family: var(--font-display); font-size: var(--dx-fs-pct); font-weight: 800;
+  fill: var(--dx-on-navy); letter-spacing: -0.02em;
 }
-.sky-hero__date .label {
-  display: block; font-size: var(--fs2-caption); font-weight: 600;
-  color: var(--b2-on-blue-faint); margin-bottom: 4px;
-}
-.sky-hero__date-dia {
-  display: block; font-family: var(--font-display2); font-size: var(--fs2-kpi);
-  font-weight: 800; line-height: 1; letter-spacing: -0.02em; color: var(--b2-on-blue);
-  font-variant-numeric: tabular-nums;
-}
-.sky-hero__date-mes {
-  display: block; font-size: var(--fs2-caption); font-weight: 600;
-  color: var(--b2-on-blue-dim); margin-top: 5px;
-}
+.rings__pct-sub { font-size: var(--fs-caption); font-weight: 600; fill: var(--dx-on-navy-faint); }
 
-/* KPIs: bloques de vidrio */
+.rings__leg { display: flex; flex-direction: column; gap: 9px; }
+.rings__item { display: flex; align-items: baseline; gap: 8px; font-size: var(--fs-xs); font-weight: 600; color: var(--dx-on-navy-dim); white-space: nowrap; }
+.rings__dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; align-self: center; }
+.rings__dot--pend   { background: var(--sky-blue-lift); }
+.rings__dot--pros   { background: var(--data-2); }
+.rings__dot--cierre { background: var(--data-4); }
+.rings__n { font-family: var(--font-display); font-weight: 800; color: var(--dx-on-navy); font-variant-numeric: tabular-nums; }
+
+/* KPIs: bloques de vidrio bajo el hero */
 .sky-hero__kpis {
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;
-  margin-top: 16px;
+  margin-top: 18px;
 }
 .sky-kpi {
   position: relative; overflow: hidden;
-  background: var(--b2-vidrio);
-  border: 1px solid var(--b2-line-on-blue);
-  border-radius: var(--r2-lg); padding: 13px 16px 12px;
-  transition: transform 0.25s var(--ease2), background 0.25s var(--ease2), border-color 0.25s var(--ease2);
-}
-.sky-kpi::before {
-  content: ""; position: absolute; top: 0; left: 20px; width: 30px; height: 3px;
-  border-radius: 0 0 var(--r2-xs) var(--r2-xs);
-  background: linear-gradient(90deg, var(--b2-blue-soft), var(--b2-on-blue-faint));
-  opacity: 0.9;
+  background: var(--dx-vidrio);
+  border: 1px solid var(--dx-line-on-navy);
+  border-radius: var(--r-lg); padding: 13px 16px 12px;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  transition: transform var(--dur-slow) var(--ease), background var(--dur-slow) var(--ease), border-color var(--dur-slow) var(--ease);
 }
 .sky-kpi:hover {
   transform: translateY(-3px);
-  background: var(--b2-vidrio-hover);
-  border-color: var(--b2-on-blue-faint);
+  background: var(--dx-vidrio-hover);
+  border-color: var(--dx-on-navy-faint);
 }
 .sky-kpi__ico {
-  width: 34px; height: 34px; border-radius: var(--r2-sm);
+  width: 34px; height: 34px; border-radius: var(--r-sm);
   display: inline-flex; align-items: center; justify-content: center;
-  background: var(--b2-vidrio);
-  color: var(--b2-blue-soft); margin-bottom: 12px;
+  background: var(--dx-vidrio);
+  color: var(--sky-blue-on-dark); margin-bottom: 12px;
 }
 .sky-kpi__ico svg { display: block; }
 .sky-kpi__value {
-  font-family: var(--font-display2); font-size: var(--fs2-kpi); font-weight: 800;
-  color: var(--b2-on-blue); line-height: 1; letter-spacing: -0.025em; font-variant-numeric: tabular-nums;
+  font-family: var(--font-display); font-size: var(--dx-fs-kpi); font-weight: 800;
+  color: var(--dx-on-navy); line-height: 1; letter-spacing: -0.025em; font-variant-numeric: tabular-nums;
 }
-.sky-kpi__label { font-size: var(--fs2-caption); font-weight: 600; color: var(--b2-on-blue-dim); margin-top: 8px; }
+.sky-kpi__label { font-size: var(--fs-caption); font-weight: 600; color: var(--dx-on-navy-dim); margin-top: 8px; }
 
 /* Entrada orquestada */
-.sky-hero__eyebrow, .sky-hero__title, .sky-hero__date, .sky-kpi {
-  animation: hero-rise 0.7s var(--ease2) backwards;
+.sky-hero__eyebrow, .sky-hero__title, .sky-hero__sub, .rings, .sky-kpi {
+  animation: hero-rise 0.7s var(--ease-out) backwards;
 }
 .sky-hero__title { animation-delay: 0.08s; }
-.sky-hero__date { animation-delay: 0.16s; }
-.sky-kpi:nth-child(1) { animation-delay: 0.24s; }
-.sky-kpi:nth-child(2) { animation-delay: 0.32s; }
-.sky-kpi:nth-child(3) { animation-delay: 0.40s; }
+.sky-hero__sub { animation-delay: 0.14s; }
+.rings { animation-delay: 0.2s; }
+.sky-kpi:nth-child(1) { animation-delay: 0.26s; }
+.sky-kpi:nth-child(2) { animation-delay: 0.34s; }
+.sky-kpi:nth-child(3) { animation-delay: 0.42s; }
 @keyframes hero-rise { from { opacity: 0; transform: translateY(14px); } }
 
 @media (prefers-reduced-motion: reduce) {
   .sky-hero::before, .sky-hero::after,
-  .sky-hero__eyebrow, .sky-hero__title, .sky-hero__date, .sky-kpi { animation: none; }
-  .sky-hero__title em::after { transition: none; }
+  .sky-hero__eyebrow, .sky-hero__title, .sky-hero__sub, .rings, .sky-kpi { animation: none; }
   .sky-kpi, .sky-kpi:hover { transform: none; }
+  .rings__svg .arc { transition: none !important; } /* AUDIT-EXEMPT-LINE: quality floor de reduced-motion */
 }
 
 @media (max-width: 560px) {
-  .sky-hero { padding: 26px 20px 24px; }
-  .sky-hero__title { font-size: var(--fs2-h2); }
-  .sky-hero__title em { white-space: normal; }
-  .sky-kpi__value { font-size: var(--fs2-h3); }
-  .sky-hero__date {
-    min-width: 0; width: 100%; text-align: left;
-    display: flex; align-items: baseline; gap: 10px; padding: 10px 16px;
-  }
-  .sky-hero__date .label { margin-bottom: 0; }
-  .sky-hero__date-dia { font-size: var(--fs2-h3); }
-  .sky-hero__date-mes { margin-top: 0; }
+  .sky-hero { padding: 24px 20px 22px; }
+  .sky-kpi__value { font-size: var(--fs-h3); }
 }
 
-/* ── CTA azul (Broq y pendientes) ── */
-.ai-card {
-  background: var(--b2-blue); color: var(--b2-on-blue); border-radius: var(--r2-lg);
-  padding: 22px 24px; margin-top: 16px; position: relative; overflow: hidden;
-  background-image: radial-gradient(120% 160% at 100% 0%, var(--b2-line-on-blue), transparent 55%);
-}
-.ai-card h3 {
-  font-family: var(--font-display2); font-size: var(--fs2-h2); font-weight: 800;
-  letter-spacing: -0.025em; color: var(--b2-on-blue); margin: 0 0 8px; line-height: 1.12;
-}
-.ai-card p { font-size: var(--fs2-body); color: var(--b2-on-blue-dim); line-height: 1.55; margin: 0 0 18px; max-width: 60ch; }
-.ai-card__btn {
-  background: var(--b2-paper); color: var(--b2-blue-press); border: none; height: 46px; padding: 0 22px;
-  border-radius: var(--r2-pill); font-size: var(--fs2-body); font-weight: 700; cursor: pointer; font-family: inherit;
-  display: inline-flex; align-items: center; gap: 8px;
-  transition: transform 0.18s var(--ease2), box-shadow 0.18s var(--ease2);
-}
-.ai-card__btn:hover { transform: translateX(2px); box-shadow: var(--sh2-card); }
+/* ── Fila superior: hero y pendientes lado a lado ── */
+.dash-top { display: grid; grid-template-columns: 1.5fr 1fr; gap: 14px; align-items: stretch; }
+.dash-top:has(#notif-card[hidden]) { grid-template-columns: 1fr; }
+@media (max-width: 900px) { .dash-top { grid-template-columns: 1fr; } }
+[data-widget].is-off { display: none; }
 
-/* ── Próximos pendientes (misma tarjeta azul) ── */
-#notif-lista { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; max-height: 260px; overflow-y: auto; }
+/* ── Pendientes: card blanca canon con hairline ── */
+.pend-card {
+  background: var(--bone); border: 1px solid var(--line-2);
+  border-radius: var(--r-xl); padding: 20px 22px;
+  display: flex; flex-direction: column;
+}
+.pend-card h3 {
+  font-family: var(--font-display); font-size: var(--fs-h5); font-weight: 800;
+  letter-spacing: -0.02em; color: var(--ink); margin: 0 0 12px;
+}
+#notif-lista { display: flex; flex-direction: column; gap: 0; margin-bottom: 12px; max-height: 260px; overflow-y: auto; }
 .notif-item {
   display: flex; align-items: center; gap: 12px;
-  background: var(--b2-vidrio-hover); border-radius: var(--r2); padding: 10px 12px;
+  padding: 10px 2px;
+  border-bottom: 1px solid var(--line);
 }
-.notif-item__txt { flex: 1; min-width: 0; font-size: var(--fs2-sm); font-weight: 600; color: var(--b2-on-blue); }
-.notif-item__due { font-size: var(--fs2-caption); color: var(--b2-on-blue-dim); white-space: nowrap; }
-.notif-item__due.is-overdue { color: var(--b2-on-blue); font-weight: 700; }
-.notif-link { font-size: var(--fs2-sm); font-weight: 700; color: var(--b2-on-blue); text-decoration: underline; text-underline-offset: 3px; }
+.notif-item:last-of-type { border-bottom: none; }
+.notif-item__txt { flex: 1; min-width: 0; font-size: var(--fs-sm); font-weight: 600; color: var(--ink); }
+.notif-item__due { font-size: var(--fs-caption); color: var(--mute); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.notif-item__due.is-overdue { color: var(--danger); font-weight: 700; }
+.notif-link {
+  margin-top: auto;
+  font-size: var(--fs-sm); font-weight: 700; color: var(--sky-blue);
+  text-decoration: none;
+}
+.notif-link:hover { color: var(--sky-blue-press); }
 
-/* ── App Store: azul profundo ── */
+/* ── CTA Broq: azul de acción canon ── */
+.ai-card {
+  background: var(--sky-blue); color: var(--dx-on-navy); border-radius: var(--r-xl);
+  padding: 22px 24px; margin-top: 16px; position: relative; overflow: hidden;
+  background-image: radial-gradient(120% 160% at 100% 0%, var(--dx-line-on-navy), transparent 55%);
+}
+.ai-card h3 {
+  font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 800;
+  letter-spacing: -0.025em; color: var(--dx-on-navy); margin: 0 0 8px; line-height: 1.12;
+}
+.ai-card p { font-size: var(--fs-body); color: var(--dx-on-navy-dim); line-height: var(--lh); margin: 0 0 18px; max-width: 60ch; }
+.ai-card__btn {
+  background: var(--paper); color: var(--sky-blue-press); border: none; height: 46px; padding: 0 22px;
+  border-radius: var(--r-pill); font-size: var(--fs-body); font-weight: 700; cursor: pointer; font-family: inherit;
+  display: inline-flex; align-items: center; gap: 8px;
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.ai-card__btn:hover { transform: translateX(2px); box-shadow: var(--shadow-sm); }
+
+/* ── App Store: navy profundo ── */
 .appstore-card {
-  background: var(--b2-blue-deep); color: var(--b2-on-blue); border-radius: var(--r2-lg);
+  background: var(--sky-navy); color: var(--dx-on-navy); border-radius: var(--r-xl);
   padding: 22px 26px; margin-top: 16px;
   display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
-  background-image: radial-gradient(120% 160% at 50% 0%, var(--b2-glow-2), transparent 60%);
+  background-image: radial-gradient(120% 160% at 50% 0%, var(--dx-glow-2), transparent 60%);
 }
 .appstore-card__eyebrow {
-  font-family: var(--font-sans2); font-size: var(--fs2-caption); font-weight: 600;
-  color: var(--b2-on-blue-faint); margin-bottom: 4px;
+  font-size: var(--fs-caption); font-weight: 600;
+  color: var(--dx-on-navy-faint); margin-bottom: 4px;
 }
 .appstore-card__title {
-  font-family: var(--font-display2); font-size: var(--fs2-lg); font-weight: 700;
-  letter-spacing: -0.015em; color: var(--b2-on-blue);
+  font-family: var(--font-display); font-size: var(--fs-body-lg); font-weight: 700;
+  letter-spacing: -0.015em; color: var(--dx-on-navy);
 }
 .appstore-card__badge { display: block; line-height: 0; flex-shrink: 0; }
 .appstore-card__badge img { height: 42px; width: auto; display: block; }
-@media (max-width: 560px) { .appstore-card { padding: 18px 20px; } .appstore-card__title { font-size: var(--fs2-sm); } }
+@media (max-width: 560px) { .appstore-card { padding: 18px 20px; } .appstore-card__title { font-size: var(--fs-sm); } }
 
 /* ── Pie discreto ── */
 .dash-foot {
   margin-top: 22px; padding-top: 18px;
-  border-top: 1px solid var(--b2-line);
+  border-top: 1px solid var(--line);
   display: flex; align-items: center; justify-content: center; gap: 12px;
 }
-.dash-foot img { height: 22px; width: auto; display: block; opacity: .45; transition: opacity 0.18s var(--ease2); }
+.dash-foot img { height: 22px; width: auto; display: block; opacity: .45; transition: opacity var(--dur) var(--ease); }
 .dash-foot:hover img { opacity: .75; }
 
 </style>
@@ -345,15 +310,30 @@
   <!-- HERO + pendientes en la misma fila -->
   <div class="dash-top">
   <section class="sky-hero">
-    <div class="sky-hero__top">
+    <div class="sky-hero__grid">
       <div>
-        <div class="sky-hero__eyebrow">Todo profesional inmobiliario necesita un copiloto</div>
-        <h1 class="sky-hero__title"><span id="dash-greet">Buenos días</span><span id="dash-greet-coma" hidden>,</span> <em id="dash-firstname" hidden></em></h1>
+        <div class="sky-hero__eyebrow"><span id="dash-greet">Buenos días</span><span id="dash-greet-coma" hidden>,</span>&nbsp;<span id="dash-firstname" hidden></span></div>
+        <h1 class="sky-hero__title">Tu día, listo<br/>para <em>cerrarse.</em></h1>
+        <p class="sky-hero__sub" id="dash-sub">Cada pendiente resuelto, cada prospecto nuevo y cada cierre avanzan tus anillos. <b id="dash-date-mes">—</b></p>
       </div>
-      <div class="sky-hero__date">
-        <span class="label">Hoy</span>
-        <span class="sky-hero__date-dia" id="dash-date-dia">—</span>
-        <span class="sky-hero__date-mes" id="dash-date-mes">—</span>
+      <div class="rings">
+        <svg class="rings__svg" width="164" height="164" viewBox="0 0 164 164" role="img" aria-label="Anillos del día">
+          <!-- pistas -->
+          <circle class="track" cx="82" cy="82" r="72" fill="none" stroke-width="9"/>
+          <circle class="track" cx="82" cy="82" r="58" fill="none" stroke-width="9"/>
+          <circle class="track" cx="82" cy="82" r="44" fill="none" stroke-width="9"/>
+          <!-- arcos (se cierran con datos reales) -->
+          <circle class="arc arc--pend"   id="ring-pend"   cx="82" cy="82" r="72" fill="none" stroke-width="9"/>
+          <circle class="arc arc--pros"   id="ring-pros"   cx="82" cy="82" r="58" fill="none" stroke-width="9"/>
+          <circle class="arc arc--cierre" id="ring-cierre" cx="82" cy="82" r="44" fill="none" stroke-width="9"/>
+          <text class="rings__pct" id="rings-pct" x="82" y="80" text-anchor="middle" dominant-baseline="middle">—</text>
+          <text class="rings__pct-sub" x="82" y="103" text-anchor="middle">del día</text>
+        </svg>
+        <div class="rings__leg">
+          <div class="rings__item"><span class="rings__dot rings__dot--pend"></span>Pendientes <span class="rings__n" id="leg-pend">—</span></div>
+          <div class="rings__item"><span class="rings__dot rings__dot--pros"></span>Prospectos <span class="rings__n" id="leg-pros">—</span></div>
+          <div class="rings__item"><span class="rings__dot rings__dot--cierre"></span>Cierres <span class="rings__n" id="leg-cierre">—</span></div>
+        </div>
       </div>
     </div>
     <div class="sky-hero__kpis">
@@ -373,9 +353,10 @@
   </section>
 
   <!-- Próximas tareas y citas -->
-  <div class="ai-card ai-card--pend" id="notif-card" data-widget="pendientes" hidden>
+  <div class="pend-card" id="notif-card" data-widget="pendientes" hidden>
     <h3>Tus próximos pendientes</h3>
     <div id="notif-lista"></div>
+    <a class="notif-link" href="tareas.html">Ver todas en Tareas →</a>
   </div>
   </div><!-- /dash-top -->
 
@@ -443,17 +424,15 @@
   });
 })();
 
-/* Date + greeting (no-auth, runs immediately) */
+/* Fecha + saludo (sin auth, corre de inmediato) */
 (function(){
   const d = new Date();
   const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
-  const diaEl = document.getElementById('dash-date-dia');
-  if (diaEl) diaEl.textContent = d.getDate();
   const mesEl = document.getElementById('dash-date-mes');
   if (mesEl) {
     const semana = cap(d.toLocaleDateString('es-MX', { weekday: 'long' }));
-    const mes = cap(d.toLocaleDateString('es-MX', { month: 'long' }));
-    mesEl.textContent = semana + ' · ' + mes + ' ' + d.getFullYear();
+    const mes = d.toLocaleDateString('es-MX', { month: 'long' });
+    mesEl.textContent = 'Hoy es ' + semana.toLowerCase() + ' ' + d.getDate() + ' de ' + mes + '.';
   }
   const h = d.getHours();
   const greet = h < 12 ? 'Buenos días' : (h < 19 ? 'Buenas tardes' : 'Buenas noches');
@@ -461,7 +440,28 @@
   if (gEl) gEl.textContent = greet;
 })();
 
-/* When the shell finishes auth, populate first name + KPIs */
+/* ── Anillos del día: geometría ──
+   Cada arco es un círculo con dasharray = circunferencia y
+   dashoffset animado hasta el porcentaje real. */
+(function(){
+  window.brokrRings = {};
+  document.querySelectorAll('.rings__svg .arc').forEach(el => {
+    const c = 2 * Math.PI * Number(el.getAttribute('r'));
+    el.style.strokeDasharray = c;
+    el.style.strokeDashoffset = c; // arranca en cero avance
+    el.style.transition = 'stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1)';
+  });
+  /* pct: 0..1 */
+  window.brokrRings.set = function(id, pct) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const c = 2 * Math.PI * Number(el.getAttribute('r'));
+    const p = Math.max(0, Math.min(1, pct));
+    requestAnimationFrame(() => { el.style.strokeDashoffset = c * (1 - p); });
+  };
+})();
+
+/* Cuando el shell termina la autenticación: nombre, KPIs y anillos */
 window.addEventListener('brokr-shell-ready', async (e) => {
   const profile = e.detail?.profile;
   // Saluda solo con el nombre capturado en el perfil ("Pedro Pérez" → "Pedro").
@@ -474,7 +474,6 @@ window.addEventListener('brokr-shell-ready', async (e) => {
     fnEl.textContent = first;
     fnEl.hidden = false;
     if (comaEl) comaEl.hidden = false;
-    requestAnimationFrame(() => fnEl.classList.add('is-on'));
   }
 
   const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
@@ -539,7 +538,71 @@ window.addEventListener('brokr-shell-ready', async (e) => {
   const horasEl = document.getElementById('kpi-horas');
   if (horasEl) horasEl.textContent = horas;
 
+  cargarAnillos();
   cargarNotificaciones();
+
+  /* ── Los tres anillos del día, con datos reales ──
+     · Pendientes (azul):  tareas de hoy completadas / totales de hoy.
+       Sin tareas hoy y sin vencidas = día limpio: anillo cerrado.
+     · Prospectos (verde): contactos creados esta semana vs meta (5).
+     · Cierres (rosa):     contratos creados este mes vs meta (2).
+     Las metas viven en localStorage para poder ajustarse después. */
+  async function cargarAnillos() {
+    const iso = d => d.toISOString();
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    const manana = new Date(hoy.getTime() + 86400000);
+    const lunes = new Date(hoy); lunes.setDate(hoy.getDate() - ((hoy.getDay() + 6) % 7));
+    const mes1 = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+
+    let metaPros = 5, metaCierre = 2;
+    try {
+      metaPros = Number(localStorage.getItem('brokr_meta_prospectos')) || 5;
+      metaCierre = Number(localStorage.getItem('brokr_meta_cierres')) || 2;
+    } catch(_){}
+
+    const fHoy = '&fecha_entrega=gte.' + encodeURIComponent(iso(hoy)) + '&fecha_entrega=lt.' + encodeURIComponent(iso(manana));
+    const [tHoy, tHoyDone, tVencidas, pros, cierres] = await Promise.all([
+      fxCount('tareas?select=id' + fHoy),
+      fxCount('tareas?select=id&completada=eq.true' + fHoy),
+      fxCount('tareas?select=id&completada=eq.false&fecha_entrega=lt.' + encodeURIComponent(iso(hoy))),
+      fxCount('contactos?select=id&created_at=gte.' + encodeURIComponent(iso(lunes))),
+      fxCount('contratos?select=id&created_at=gte.' + encodeURIComponent(iso(mes1))),
+    ]);
+
+    // Pendientes: si no hay tareas hoy ni vencidas, el día está limpio (100%).
+    let pctPend;
+    if (tHoy === 0) pctPend = tVencidas > 0 ? 0 : 1;
+    else pctPend = tHoyDone / tHoy;
+    const pctPros = Math.min(1, pros / metaPros);
+    const pctCierre = Math.min(1, cierres / metaCierre);
+
+    window.brokrRings.set('ring-pend', pctPend);
+    window.brokrRings.set('ring-pros', pctPros);
+    window.brokrRings.set('ring-cierre', pctCierre);
+
+    const legPend = document.getElementById('leg-pend');
+    if (legPend) legPend.textContent = tHoy === 0 ? (tVencidas > 0 ? tVencidas + ' vencidas' : 'al día') : tHoyDone + '/' + tHoy;
+    const legPros = document.getElementById('leg-pros');
+    if (legPros) legPros.textContent = pros + '/' + metaPros;
+    const legCierre = document.getElementById('leg-cierre');
+    if (legCierre) legCierre.textContent = cierres + '/' + metaCierre;
+
+    // Centro: promedio de los tres, animado.
+    const fin = Math.round(((pctPend + pctPros + pctCierre) / 3) * 100);
+    const pctEl = document.getElementById('rings-pct');
+    if (pctEl) {
+      const reducido = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reducido) { pctEl.textContent = fin + '%'; return; }
+      const t0 = performance.now(), dur = 1100;
+      const easeOut = t => 1 - Math.pow(1 - t, 3);
+      function paso(t) {
+        const p = Math.min(1, (t - t0) / dur);
+        pctEl.textContent = Math.round(fin * easeOut(p)) + '%';
+        if (p < 1) requestAnimationFrame(paso);
+      }
+      requestAnimationFrame(paso);
+    }
+  }
 });
 
 /* ── Conteo animado de los KPIs del hero (solo presentación) ──
@@ -608,7 +671,7 @@ async function cargarNotificaciones() {
         <span class="notif-item__txt">${(t.titulo || '').replace(/</g, '&lt;')}</span>
         <span class="notif-item__due${vencida ? ' is-overdue' : ''}">${vencida ? 'Vencida · ' : ''}${fmt}</span>
       </div>`;
-    }).join('') + '<a class="notif-link" href="tareas.html">Ver todas en Tareas</a>';
+    }).join('');
     card.hidden = false;
   } catch (e) {
     // Sin conexión o sesión: la tarjeta simplemente no aparece, no rompe el dashboard.
