@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#FFFFFF"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --b2-paper -->
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&display=swap"/>
 <style>
 /* ════════════════════════════════════════════════════════════════
    BROQUER 2 — Sistema de diseño "Blanca"
@@ -21,26 +21,26 @@
    todo es redondo y amable. El acento cantera viene de la piedra
    rosa de Morelia: se usa poquito, solo para señalar lo nuevo.
 
-   Tipografía: Bricolage Grotesque (display, con carácter) +
-   Figtree (cuerpo, humanista y cálida). Nada de monoespaciadas.
+   Tipografía canon: Inter única, con tracking apretado.
+   Nada de monoespaciadas.
    ════════════════════════════════════════════════════════════════ */
 
 /* ═══ AUDIT-EXEMPT: definición de tokens del sistema (solo en preview; en producción viven en broquer-2.css) ═══ */
 :root {
   /* ── Color ─────────────────────────────────────────────────── */
-  --b2-blue:        #0D6BF0;   /* acción: botones, enlaces, énfasis */
-  --b2-blue-press:  #0A56C4;   /* acción presionada */
-  --b2-blue-deep:   #08419A;   /* fondos azules profundos (CTA final) */
-  --b2-blue-soft:   #EAF2FE;   /* lecho de iconos, canvas de acento */
-  --b2-ink:         #1B2733;   /* texto principal (grafito azulado) */
-  --b2-mute:        #5A6B7C;   /* texto secundario */
+  --b2-blue:        #0A5DE0;   /* acción canon: botones, enlaces, énfasis */
+  --b2-blue-press:  #084BB8;   /* acción presionada */
+  --b2-blue-deep:   #081C4E;   /* estructura canon: fondos azules profundos (CTA final) */
+  --b2-blue-soft:   #E9F0FD;   /* lecho de iconos, canvas de acento */
+  --b2-ink:         #0B0B0F;   /* texto principal — negro canon */
+  --b2-mute:        #57607A;   /* texto secundario */
   --b2-paper:       #FFFFFF;   /* superficie base */
-  --b2-canvas:      #F6F8FB;   /* secciones alternas (gris frío) */
-  --b2-line:        #E3E9F0;   /* bordes hairline */
-  --b2-green:       #0E8F62;   /* etiqueta Gratis, éxito */
+  --b2-canvas:      #F4F6FB;   /* secciones alternas (gris frío) */
+  --b2-line:        #E7EBF4;   /* bordes hairline */
+  --b2-green:       #0E9F6E;   /* etiqueta Gratis, éxito */
   --b2-green-soft:  #E7F5EF;
-  --b2-cantera:     #A85D62;   /* piedra rosa de Morelia: etiqueta Nuevo */
-  --b2-cantera-soft:#F9EEEC;
+  --b2-cantera:     #D42A62;   /* rosa canon: etiqueta Nuevo */
+  --b2-cantera-soft:#FBEAF1;
 
   /* Utilidades sobre azul */
   --b2-on-blue:        #FFFFFF;
@@ -49,8 +49,8 @@
   --b2-line-on-blue:   rgba(255,255,255,.22);
 
   /* ── Tipografía ────────────────────────────────────────────── */
-  --font-display: 'Bricolage Grotesque', 'Figtree', system-ui, sans-serif;
-  --font-sans:    'Figtree', system-ui, -apple-system, sans-serif;
+  --font-display: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans:    'Inter', system-ui, -apple-system, sans-serif;
 
   /* Escala */
   --fs2-caption: 12px;
@@ -70,10 +70,10 @@
   --r2-pill: 999px;
 
   /* ── Sombra (ambiente suave, nunca dura) ───────────────────── */
-  --sh2-card:  0 1px 2px rgba(27,39,51,.05), 0 8px 24px rgba(27,39,51,.07);
-  --sh2-lift:  0 2px 4px rgba(27,39,51,.06), 0 16px 40px rgba(27,39,51,.12);
-  --sh2-bar:   0 2px 6px rgba(27,39,51,.06), 0 14px 44px rgba(13,107,240,.16);
-  --sh2-media: 0 8px 20px rgba(27,39,51,.08), 0 32px 80px rgba(27,39,51,.14);
+  --sh2-card:  0 1px 2px rgba(8,28,78,.05), 0 8px 24px rgba(8,28,78,.07);
+  --sh2-lift:  0 2px 4px rgba(8,28,78,.06), 0 16px 40px rgba(8,28,78,.12);
+  --sh2-bar:   0 2px 6px rgba(8,28,78,.06), 0 14px 44px rgba(10,93,224,.16);
+  --sh2-media: 0 8px 20px rgba(8,28,78,.08), 0 32px 80px rgba(8,28,78,.14);
 
   /* ── Movimiento ────────────────────────────────────────────── */
   --ease2: cubic-bezier(.22,.61,.36,1);
