@@ -893,14 +893,20 @@ async def get_profile_status(request: Request):
                 rs = await client.get(
                     f"{SUPABASE_URL}/rest/v1/suscripciones",
                     headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
-                    params={"org_id": f"eq.{_oid}", "select": "status,plan_nombre", "order": "updated_at.desc", "limit": "1"}
+                    params={"org_id": f"eq.{_oid}", "select": "*", "order": "updated_at.desc", "limit": "1"}
                 )
                 if rs.status_code == 200 and rs.json():
                     row = rs.json()[0]
+                    _st = row.get("status")
+                    _act = _st in ("active", "trialing")
+                    if _st == "trialing" and row.get("trial_hasta") and _trial_ya_vencio(row.get("trial_hasta")):
+                        _act = False
+                        _st = "trial_vencido"
+                        asyncio.create_task(_expirar_trial_suscripcion(row.get("id")))
                     sub_state = {
-                        "active": row.get("status") in ("active", "trialing"),
+                        "active": _act,
                         "plan": row.get("plan_nombre"),
-                        "status": row.get("status"),
+                        "status": _st,
                     }
     except Exception:
         pass
@@ -10652,13 +10658,195 @@ async def subscription_status(request: Request):
                 "trial_disponible": await _trial_max_disponible(user_id)}
 
     row = r.json()[0]
+    estado = row.get("status")
+    activo_sub = estado in ("active", "trialing")
+    # Trial sin tarjeta: al vencer trial_hasta el candado se cierra solo.
+    # Las suscripciones de Stripe/RevenueCat no traen trial_hasta y no se tocan.
+    if estado == "trialing" and row.get("trial_hasta") and _trial_ya_vencio(row.get("trial_hasta")):
+        activo_sub = False
+        estado = "trial_vencido"
+        asyncio.create_task(_expirar_trial_suscripcion(row.get("id")))
     return {
-        "active": row.get("status") in ("active", "trialing"),
+        "active": activo_sub,
         "plan": row.get("plan_nombre"),
         "plan_id": row.get("plan_id"),
-        "status": row.get("status"),
+        "status": estado,
+        "trial_hasta": row.get("trial_hasta"),
         "updated_at": row.get("updated_at"),
+        "trial_disponible": (await _trial_max_disponible(user_id)) if not activo_sub else False,
     }
+
+
+# ════════════════════════════════════════════════════════════════
+# Trial de Broquer Max SIN tarjeta (7 días, una sola vez por cuenta)
+# ════════════════════════════════════════════════════════════════
+
+def _trial_ya_vencio(trial_hasta) -> bool:
+    """True si la fecha de vencimiento del trial ya pasó."""
+    try:
+        return datetime.fromisoformat(str(trial_hasta).replace("Z", "+00:00")) <= datetime.now(timezone.utc)
+    except Exception:
+        return False
+
+
+async def _expirar_trial_suscripcion(sub_id) -> None:
+    """Marca la fila del trial como expirada. Fallar aquí no es grave:
+    el status endpoint la seguirá reportando inactiva de todos modos."""
+    if not sub_id:
+        return
+    try:
+        async with httpx.AsyncClient(timeout=8) as client:
+            await client.patch(
+                f"{SUPABASE_URL}/rest/v1/suscripciones?id=eq.{sub_id}",
+                headers={
+                    "apikey": SUPABASE_SERVICE_KEY,
+                    "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                    "Content-Type": "application/json",
+                    "Prefer": "return=minimal",
+                },
+                json={"status": "expired", "updated_at": datetime.utcnow().isoformat()},
+            )
+    except Exception:
+        pass
+
+
+@app.post("/subscription/trial-max")
+async def subscription_trial_max(request: Request):
+    """Activa 7 días de Broquer Max sin pedir tarjeta.
+    Una sola vez por cuenta (mismo regalo que el trial de Stripe: si ya se
+    usó cualquiera de los dos, no hay otro). Al vencer trial_hasta el acceso
+    se corta solo en /subscription/status y /profile/status."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autenticado.")
+    exigir_cupo(request, user_id)
+
+    if not await _trial_max_disponible(user_id):
+        raise HTTPException(
+            status_code=403,
+            detail="Tu cuenta ya usó su periodo de prueba de Broquer Max.")
+
+    hasta = datetime.now(timezone.utc) + timedelta(days=TRIAL_MAX_DIAS)
+    fila = {
+        "user_id": user_id,
+        "org_id": await get_org_id_for_user(user_id),
+        "plan_id": "max",
+        "plan_nombre": "Broquer Max",
+        "status": "trialing",
+        "trial_hasta": hasta.isoformat(),
+        "updated_at": datetime.utcnow().isoformat(),
+    }
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.post(
+            f"{SUPABASE_URL}/rest/v1/suscripciones",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                "Content-Type": "application/json",
+                "Prefer": "return=minimal",
+            },
+            json=fila,
+        )
+        if r.status_code not in (200, 201):
+            raise HTTPException(status_code=502, detail="No se pudo activar la prueba. Intenta de nuevo.")
+        # Quemar el regalo: aunque la fila se borre después, no se repite.
+        await client.patch(
+            f"{SUPABASE_URL}/rest/v1/usuarios?id=eq.{user_id}",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                "Content-Type": "application/json",
+                "Prefer": "return=minimal",
+            },
+            json={"trial_max_usado": True},
+        )
+    return {"ok": True, "plan": "Broquer Max", "trial_hasta": hasta.isoformat(), "dias": TRIAL_MAX_DIAS}
+
+
+# ════════════════════════════════════════════════════════════════
+# Agendar demo (público: landing e index) — guarda y avisa por correo
+# ════════════════════════════════════════════════════════════════
+
+DEMO_NOTIF_EMAIL = os.environ.get("DEMO_NOTIF_EMAIL", "hola@broquer.app")
+_RESEND_KEY_DEMO = os.environ.get("RESEND_API_KEY", "")
+_RESEND_FROM_DEMO = os.environ.get("RESEND_FROM", "Broquer <hola@broquer.app>")
+
+
+class DemoRequest(BaseModel):
+    nombre: str
+    contacto: str        # teléfono o correo
+    fecha: str           # YYYY-MM-DD
+    hora: str            # HH:MM
+    mensaje: str = ""
+    origen: str = ""     # landing | index
+
+
+@app.post("/demo/agendar")
+async def demo_agendar(req: DemoRequest, request: Request):
+    """Recibe la solicitud de demo, la guarda en Supabase y avisa por correo.
+    Es público (la landing no tiene sesión); el tope por IP de limites.py
+    corta cualquier abuso."""
+    user_id = await get_user_id_from_token(request)
+    exigir_cupo(request, user_id)
+
+    nombre = (req.nombre or "").strip()[:120]
+    contacto = (req.contacto or "").strip()[:160]
+    fecha = (req.fecha or "").strip()[:10]
+    hora = (req.hora or "").strip()[:5]
+    mensaje = (req.mensaje or "").strip()[:800]
+    origen = (req.origen or "").strip()[:20]
+
+    if not nombre or not contacto:
+        raise HTTPException(status_code=400, detail="Escribe tu nombre y un teléfono o correo.")
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", fecha):
+        raise HTTPException(status_code=400, detail="Elige una fecha válida.")
+    if not re.fullmatch(r"\d{2}:\d{2}", hora):
+        raise HTTPException(status_code=400, detail="Elige una hora válida.")
+    try:
+        if date.fromisoformat(fecha) < date.today():
+            raise HTTPException(status_code=400, detail="La fecha ya pasó. Elige otra.")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Elige una fecha válida.")
+
+    fila = {"nombre": nombre, "contacto": contacto, "fecha": fecha, "hora": hora,
+            "mensaje": mensaje, "origen": origen, "user_id": user_id}
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.post(
+            f"{SUPABASE_URL}/rest/v1/demos_agendadas",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                "Content-Type": "application/json",
+                "Prefer": "return=minimal",
+            },
+            json=fila,
+        )
+        if r.status_code not in (200, 201):
+            raise HTTPException(status_code=502, detail="No se pudo agendar. Intenta de nuevo en un momento.")
+
+    # Aviso por correo. Si Resend falla, la demo ya quedó guardada: no se rompe.
+    if _RESEND_KEY_DEMO:
+        cuerpo = (
+            f"<h2>Nueva demo agendada</h2>"
+            f"<p><strong>Nombre:</strong> {nombre}</p>"
+            f"<p><strong>Contacto:</strong> {contacto}</p>"
+            f"<p><strong>Fecha:</strong> {fecha} a las {hora}</p>"
+            f"<p><strong>Mensaje:</strong> {mensaje or '—'}</p>"
+            f"<p><strong>Origen:</strong> {origen or 'web'}</p>")
+        try:
+            async with httpx.AsyncClient(timeout=15) as client:
+                await client.post(
+                    "https://api.resend.com/emails",
+                    headers={"Authorization": f"Bearer {_RESEND_KEY_DEMO}",
+                             "Content-Type": "application/json"},
+                    json={"from": _RESEND_FROM_DEMO, "to": [DEMO_NOTIF_EMAIL],
+                          "subject": f"Demo agendada: {nombre} — {fecha} {hora}",
+                          "html": cuerpo},
+                )
+        except Exception:
+            pass
+
+    return {"ok": True}
 
 
 @app.post("/subscription/cancel")
