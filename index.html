@@ -569,6 +569,7 @@ async function cargarNotificaciones() {
 
 <!-- ═══ Agendar demo ═══ -->
 <style>
+  .dx-ov[hidden] { display: none; }
   .dx-ov { position: fixed; inset: 0; z-index: 2147483645; background: rgba(8,28,78,.46);
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     display: flex; align-items: center; justify-content: center; padding: 20px;
@@ -593,17 +594,27 @@ async function cargarNotificaciones() {
   .dx-msg { min-height: 18px; font-size: var(--fs-label-3); margin-top: var(--sp-2); }
 
   /* ═══ Promo: 7 días de Broquer MAX gratis ═══ */
-  .dxm-card { width: 100%; max-width: 500px; background: var(--sky-navy); color: var(--paper);
-    border-radius: var(--r-modal); padding: var(--sp-8) var(--sp-7); text-align: center; position: relative;
+  .dxm-card { width: 100%; max-width: 480px; background: var(--sky-navy);
+    border: 1px solid rgba(255,255,255,.22); border-radius: var(--r-modal);
+    padding: var(--sp-10) var(--sp-8) var(--sp-8); text-align: center; position: relative;
     box-shadow: var(--shadow-xl); }
-  .dxm-card h2 { font-size: var(--fs-h1); line-height: 1.08; letter-spacing: -.02em; margin: 0 0 var(--sp-3); }
-  .dxm-card h2 em { font-style: normal; text-decoration: underline;
-    text-decoration-thickness: 3px; text-underline-offset: 6px; }
-  .dxm-card p { font-size: var(--fs-body); opacity: .85; line-height: 1.55; margin: 0 0 var(--sp-6);
-    color: var(--paper); }
-  .dxm-x { position: absolute; top: 12px; right: 14px; border: none; background: transparent;
-    color: var(--paper); opacity: .7; font-size: var(--fs-h2); line-height: 1; cursor: pointer;
-    padding: 4px 8px; font-family: inherit; }
+  .dxm-tag { display: inline-flex; align-items: center; gap: 7px;
+    border: 1px solid rgba(255,255,255,.22); border-radius: var(--r-pill);
+    padding: 6px 14px; font-size: var(--fs-caption); font-weight: 700;
+    color: rgba(255,255,255,.78); margin-bottom: var(--sp-4); }
+  .dxm-tag::before { content: ""; width: 7px; height: 7px; border-radius: var(--r-pill);
+    background: var(--sky-blue-on-dark); }
+  .dxm-card h2 { font-size: var(--fs-h1); line-height: 1.1; letter-spacing: -.025em;
+    color: var(--paper); margin: 0 0 var(--sp-3); }
+  .dxm-card h2 em { font-style: normal; color: var(--paper); text-decoration: underline;
+    text-decoration-thickness: 3px; text-underline-offset: 7px;
+    text-decoration-color: var(--sky-blue-on-dark); }
+  .dxm-card p { font-size: var(--fs-body-lg); color: rgba(255,255,255,.78); line-height: 1.5;
+    margin: 0 0 var(--sp-6); }
+  .dxm-x { position: absolute; top: 14px; right: 16px; border: none; background: transparent;
+    color: rgba(255,255,255,.55); font-size: var(--fs-h3); line-height: 1; cursor: pointer;
+    padding: 4px 8px; font-family: inherit; transition: color .15s; }
+  .dxm-x:hover { color: var(--paper); }
   .dxm-btn { width: 100%; height: 50px; border: none; border-radius: var(--r-sm);
     background: var(--sky-blue-on-dark); color: var(--sky-navy); font-weight: 800;
     font-size: var(--fs-sm); cursor: pointer; font-family: inherit; }
@@ -648,8 +659,9 @@ async function cargarNotificaciones() {
 <div class="dx-ov" id="dx-max-ov" hidden>
   <div class="dxm-card">
     <button class="dxm-x" type="button" onclick="dashCerrarMax()" aria-label="Cerrar">&times;</button>
+    <span class="dxm-tag">Sin tarjeta · Se desactiva solo</span>
     <h2>Obtén 7 días de Broquer MAX <em>completamente GRATIS</em></h2>
-    <p>Todos los módulos abiertos: WhatsApp con IA, contratos, firmas, estimación de valor, ISR, Facebook Ads y más. Sin tarjeta. Se desactiva solo a los 7 días.</p>
+    <p>Acceso ilimitado.</p>
     <button class="dxm-btn" id="dx-max-btn" type="button" onclick="dashActivarMax()">Activar mis 7 días gratis</button>
     <div class="dx-msg" id="dx-max-msg" style="color:var(--paper);opacity:.85;"></div>
   </div>

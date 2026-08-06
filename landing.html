@@ -964,6 +964,7 @@ button { font-family: inherit; }
 
 <!-- ═══ Agendar demo ═══ -->
 <style>
+  .ln-demo-ov[hidden], .ln-max-ov[hidden] { display: none; }
   .ln-demo-ov { position: fixed; inset: 0; z-index: 90; background: rgba(8,28,78,.46);
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     display: flex; align-items: center; justify-content: center; padding: 20px; }
@@ -990,16 +991,26 @@ button { font-family: inherit; }
   .ln-max-ov { position: fixed; inset: 0; z-index: 95; background: rgba(8,28,78,.55);
     backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     display: flex; align-items: center; justify-content: center; padding: 20px; }
-  .ln-max-card { width: 100%; max-width: 520px; background: var(--b2-blue-deep); color: var(--b2-paper);
-    border-radius: var(--r2-xl); padding: 44px 36px; text-align: center; position: relative;
-    box-shadow: var(--sh2-lg); }
-  .ln-max-card h2 { font-size: var(--fs2-h2); line-height: 1.08; letter-spacing: -.02em; margin: 0 0 12px; }
-  .ln-max-card h2 em { font-style: normal; color: var(--b2-paper); text-decoration: underline;
-    text-decoration-thickness: 3px; text-underline-offset: 6px; }
-  .ln-max-card p { font-size: var(--fs2-body); opacity: .85; line-height: 1.55; margin: 0 0 24px; }
-  .ln-max-x { position: absolute; top: 12px; right: 14px; border: none; background: transparent;
-    color: var(--b2-paper); opacity: .7; font-size: var(--fs2-h3); line-height: 1; cursor: pointer;
-    padding: 4px 8px; font-family: inherit; }
+  .ln-max-card { width: 100%; max-width: 480px; background: var(--b2-blue-deep);
+    border: 1px solid var(--b2-line-on-blue); border-radius: var(--r2-xl);
+    padding: 48px 40px 40px; text-align: center; position: relative; box-shadow: var(--sh2-lg); }
+  .ln-max-tag { display: inline-flex; align-items: center; gap: 7px;
+    border: 1px solid var(--b2-line-on-blue); border-radius: var(--r2-pill);
+    padding: 6px 14px; font-size: var(--fs2-caption); font-weight: 700;
+    color: var(--b2-on-blue-dim); margin-bottom: 18px; }
+  .ln-max-tag::before { content: ""; width: 7px; height: 7px; border-radius: var(--r2-pill);
+    background: var(--b2-green); }
+  .ln-max-card h2 { font-size: var(--fs2-h2); line-height: 1.1; letter-spacing: -.025em;
+    color: var(--b2-on-blue); margin: 0 0 14px; }
+  .ln-max-card h2 em { font-style: normal; color: var(--b2-on-blue); text-decoration: underline;
+    text-decoration-thickness: 3px; text-underline-offset: 7px;
+    text-decoration-color: var(--b2-green); }
+  .ln-max-card p { font-size: var(--fs2-lg); color: var(--b2-on-blue-dim); line-height: 1.5;
+    margin: 0 0 28px; }
+  .ln-max-x { position: absolute; top: 14px; right: 16px; border: none; background: transparent;
+    color: var(--b2-on-blue-faint); font-size: var(--fs2-h3); line-height: 1; cursor: pointer;
+    padding: 4px 8px; font-family: inherit; transition: color .15s; }
+  .ln-max-x:hover { color: var(--b2-on-blue); }
 </style>
 
 <div class="ln-demo-ov" id="ln-demo-ov" hidden>
@@ -1041,8 +1052,9 @@ button { font-family: inherit; }
 <div class="ln-max-ov" id="ln-max-ov" hidden>
   <div class="ln-max-card">
     <button class="ln-max-x" type="button" onclick="lnCerrarMax()" aria-label="Cerrar">&times;</button>
+    <span class="ln-max-tag">Sin tarjeta · Se desactiva solo</span>
     <h2>Obtén 7 días de Broquer MAX <em>completamente GRATIS</em></h2>
-    <p>Todos los módulos abiertos: WhatsApp con IA, contratos, firmas, estimación de valor, ISR, Facebook Ads y más. Sin tarjeta. Se desactiva solo a los 7 días.</p>
+    <p>Acceso ilimitado.</p>
     <a class="b2-btn b2-btn--blue" href="registro.html" style="width:100%;box-sizing:border-box;">Crear mi cuenta y empezar gratis</a>
   </div>
 </div>
@@ -1108,14 +1120,14 @@ button { font-family: inherit; }
 /* ── Promo: 7 días de Broquer MAX gratis (una vez cada 24 h) ── */
 (function () {
   var LLAVE = 'bk_max_promo_landing';
-  try {
-    var visto = Number(localStorage.getItem(LLAVE) || 0);
-    if (Date.now() - visto < 24 * 60 * 60 * 1000) return;
-  } catch (e) {}
   window.lnCerrarMax = function () {
     document.getElementById('ln-max-ov').hidden = true;
     try { localStorage.setItem(LLAVE, String(Date.now())); } catch (e) {}
   };
+  try {
+    var visto = Number(localStorage.getItem(LLAVE) || 0);
+    if (Date.now() - visto < 24 * 60 * 60 * 1000) return;
+  } catch (e) {}
   setTimeout(function () {
     var ov = document.getElementById('ln-max-ov');
     ov.hidden = false;
