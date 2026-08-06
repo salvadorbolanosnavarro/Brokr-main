@@ -1,15 +1,15 @@
 /* ════════════════════════════════════════════════════════════════
-   BROQUER — Sitios públicos de agente · rediseño 2026-07
+   BROQUER — Sitios públicos de agente · canon 2026-08
    Dos plantillas, misma anatomía, dos caracteres:
    · editorial  → galería en blanco puro, tinta negra, punto azul
    · ejecutiva  → corporativa en papel claro con estructura navy
    Cada tema vive en sus variables; los componentes se definen una vez.
    ════════════════════════════════════════════════════════════════ */
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700;9..40,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..900&display=swap');
 
 :root{
-  --font:'DM Sans',-apple-system,BlinkMacSystemFont,system-ui,Roboto,'Helvetica Neue',sans-serif;
-  --azul:#0055CC;
+  --font:'Inter',-apple-system,BlinkMacSystemFont,system-ui,Roboto,'Helvetica Neue',sans-serif;
+  --azul:#0A5DE0;
   --wa:#25D366;
   --max:1240px;
   --pad:max(32px, calc((100vw - var(--max)) / 2));
@@ -18,35 +18,35 @@
 /* ── Tema: EDITORIAL (galería blanca) ─────────────────────────── */
 body[data-template="editorial"]{
   --t-bg:#FFFFFF; --t-surface:#FFFFFF; --t-surface-2:#FAFBFC;
-  --t-ink:#0A0B0D; --t-ink-2:#2B2F35;
-  --t-mute:#5C636C; --t-mute-2:#71787F;
-  --t-line:rgba(10,11,13,.10); --t-line-2:rgba(10,11,13,.16);
+  --t-ink:#0B0B0F; --t-ink-2:#2A2F3A;
+  --t-mute:#57607A; --t-mute-2:#8A93A9;
+  --t-line:rgba(11,11,15,.10); --t-line-2:rgba(11,11,15,.16);
   --t-accent:var(--azul);
-  --t-btn-bg:#0A0B0D; --t-btn-ink:#FFFFFF;
+  --t-btn-bg:#0B0B0F; --t-btn-ink:#FFFFFF;
   --t-nav-bg:rgba(255,255,255,.86);
   --t-panel:linear-gradient(200deg,#EDEFF2 0%,#DFE3E8 55%,#CDD3DA 100%);
   --t-panel-ink:#9AA6B4;
-  --t-glow:rgba(0,85,204,.06);
-  --t-card-hover:0 24px 60px rgba(10,11,13,.10);
+  --t-glow:rgba(10,93,224,.06);
+  --t-card-hover:0 6px 16px rgba(8,28,78,.06), 0 24px 60px rgba(8,28,78,.10);
   --t-card-shadow:none;
-  --t-badge-bg:rgba(10,11,13,.78);
+  --t-badge-bg:rgba(11,11,15,.78);
 }
 
 /* ── Tema: EJECUTIVA (corporativa navy) ───────────────────────── */
 body[data-template="ejecutiva"]{
-  --t-bg:#F8F9FA; --t-surface:#FFFFFF; --t-surface-2:#FFFFFF;
-  --t-ink:#0B1B2E; --t-ink-2:#22354C;
-  --t-mute:#5C6B7E; --t-mute-2:#69788C;
-  --t-line:rgba(5,32,60,.12); --t-line-2:rgba(5,32,60,.18);
+  --t-bg:#F7F9FD; --t-surface:#FFFFFF; --t-surface-2:#FFFFFF;
+  --t-ink:#0A1832; --t-ink-2:#22314E;
+  --t-mute:#57607A; --t-mute-2:#7A87A0;
+  --t-line:rgba(8,28,78,.12); --t-line-2:rgba(8,28,78,.18);
   --t-accent:var(--azul);
-  --t-btn-bg:#05203C; --t-btn-ink:#FFFFFF;
-  --t-nav-bg:rgba(248,249,250,.85);
-  --t-panel:linear-gradient(200deg,#0E2A4A 0%,#05203C 55%,#031324 100%);
-  --t-panel-ink:#5B8DD6;
-  --t-glow:rgba(0,85,204,.10);
-  --t-card-hover:0 22px 56px rgba(0,85,204,.14);
-  --t-card-shadow:0 6px 20px rgba(0,85,204,.06);
-  --t-badge-bg:rgba(5,32,60,.78);
+  --t-btn-bg:#081C4E; --t-btn-ink:#FFFFFF;
+  --t-nav-bg:rgba(247,249,253,.85);
+  --t-panel:linear-gradient(200deg,#10307E 0%,#081C4E 55%,#050F2E 100%);
+  --t-panel-ink:#8FB0F5;
+  --t-glow:rgba(10,93,224,.10);
+  --t-card-hover:0 6px 16px rgba(10,93,224,.08), 0 22px 56px rgba(10,93,224,.14);
+  --t-card-shadow:0 6px 20px rgba(10,93,224,.06);
+  --t-badge-bg:rgba(8,28,78,.78);
 }
 
 /* ── Base ─────────────────────────────────────────────────────── */
