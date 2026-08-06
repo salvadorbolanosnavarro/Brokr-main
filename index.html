@@ -598,12 +598,6 @@ async function cargarNotificaciones() {
     border: 1px solid rgba(255,255,255,.22); border-radius: var(--r-modal);
     padding: var(--sp-10) var(--sp-8) var(--sp-8); text-align: center; position: relative;
     box-shadow: var(--shadow-xl); }
-  .dxm-tag { display: inline-flex; align-items: center; gap: 7px;
-    border: 1px solid rgba(255,255,255,.22); border-radius: var(--r-pill);
-    padding: 6px 14px; font-size: var(--fs-caption); font-weight: 700;
-    color: rgba(255,255,255,.78); margin-bottom: var(--sp-4); }
-  .dxm-tag::before { content: ""; width: 7px; height: 7px; border-radius: var(--r-pill);
-    background: var(--sky-blue-on-dark); }
   .dxm-card h2 { font-size: var(--fs-h1); line-height: 1.1; letter-spacing: -.025em;
     color: var(--paper); margin: 0 0 var(--sp-3); }
   .dxm-card h2 em { font-style: normal; color: var(--paper); text-decoration: underline;
@@ -731,12 +725,10 @@ async function cargarNotificaciones() {
     }
   };
 
-  /* ── Promo: 7 días de Broquer MAX gratis, solo si el trial está disponible ── */
-  var LLAVE = 'bk_max_promo_index';
-
+  /* ── Promo: 7 días de Broquer MAX gratis, solo si el trial está disponible.
+     Sale en cada carga mientras siga disponible; al activarse ya no vuelve. ── */
   window.dashCerrarMax = function () {
     document.getElementById('dx-max-ov').hidden = true;
-    try { localStorage.setItem(LLAVE, String(Date.now())); } catch (e) {}
   };
 
   window.dashActivarMax = async function () {
@@ -753,7 +745,6 @@ async function cargarNotificaciones() {
       if (!r.ok) throw new Error(d.detail || 'No se pudo activar la prueba.');
       btn.textContent = 'Broquer Max activado';
       msg.textContent = 'Listo: tienes 7 días con todo abierto. Recargando…';
-      try { localStorage.setItem(LLAVE, String(Date.now())); } catch (e) {}
       setTimeout(function () { location.reload(); }, 1600);
     } catch (e) {
       msg.textContent = (e && e.message) ? e.message : 'No se pudo activar. Intenta de nuevo.';
@@ -762,10 +753,6 @@ async function cargarNotificaciones() {
   };
 
   window.addEventListener('brokr-shell-ready', async function () {
-    try {
-      var visto = Number(localStorage.getItem(LLAVE) || 0);
-      if (Date.now() - visto < 24 * 60 * 60 * 1000) return;
-    } catch (e) {}
     try {
       var tok = await dxToken();
       if (!tok) return;
