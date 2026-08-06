@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
 <title>Leads · Broquer</title>
 <link rel="manifest" href="manifest.json"/>
 <meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
@@ -293,6 +293,7 @@ html, body { background: var(--paper); }
   background: var(--paper-2);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
+  overflow: hidden;
   display: flex; flex-direction: column;
   max-height: calc(100vh - 300px);
   min-height: 180px;
@@ -307,6 +308,7 @@ html, body { background: var(--paper); }
   flex-shrink: 0;
 }
 .kb-col__dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.kb-col__rule { height: 3px; border-radius: 0; flex-shrink: 0; }
 .kb-col__name {
   font-size: var(--fs-sm); font-weight: 600;
   color: var(--ink);
@@ -1120,6 +1122,7 @@ html, body { background: var(--paper); }
 
       <div class="sec-lbl">Notas</div>
       <div class="f"><label>Observaciones</label><textarea id="m-notas" rows="3" placeholder="Prefiere WhatsApp. Calificado. Responde rápido…"></textarea></div>
+      <div class="f"><label>Descripción privada</label><textarea id="m-descripcion-privada" rows="3" placeholder="Se llena sola con lo que califica la IA de WhatsApp (score, presupuesto, etc.); también puedes editarla a mano."></textarea></div>
 
       <div style="margin-top:24px;padding-top:18px;border-top:1px solid var(--line);display:flex;gap:10px">
         <button class="btn-del" id="btn-del" onclick="confirmarEliminar()" style="display:none">Eliminar</button>
@@ -1379,10 +1382,11 @@ function rolBadge(tipo) {
    se usan estas por defecto. El valor guardado en contactos.estatus
    es la clave (nombre en minúsculas). */
 const ETAPAS_DEFAULT = [
-  { clave:'nuevo',      nombre:'Nuevo',      color:'var(--forest)'  },
-  { clave:'activo',     nombre:'Activo',     color:'var(--success)' },
-  { clave:'contactado', nombre:'Contactado', color:'var(--warn)'    },
-  { clave:'cerrado',    nombre:'Cerrado',    color:'var(--ink-3)'   },
+  { clave:'nuevo',      nombre:'Nuevo',      color:'var(--etapa-nuevo)'      },
+  { clave:'activo',     nombre:'Activo',     color:'var(--etapa-activo)'     },
+  { clave:'contactado', nombre:'Contactado', color:'var(--etapa-contactado)' },
+  { clave:'cerrado',    nombre:'Cerrado',    color:'var(--etapa-cerrado)'    },
+  { clave:'descartado', nombre:'Descartado', color:'var(--etapa-descartado)' },
 ];
 let ETAPAS = ETAPAS_DEFAULT.slice();
 
@@ -1393,7 +1397,7 @@ async function cargarEtapas() {
       ETAPAS = rows.map(r => ({
         clave: String(r.nombre || '').toLowerCase().trim(),
         nombre: r.nombre,
-        color: r.color || 'var(--forest)',
+        color: r.color || 'var(--etapa-activo)',
       })).filter(e => e.clave);
     }
   } catch { /* si falla, se quedan las default */ }
@@ -1538,6 +1542,7 @@ function renderPipeline() {
       : `<div class="kb-empty">Arrastra leads aquí</div>`;
     return `<div class="kb-col" data-etapa="${esc(e.clave)}"
       ondragover="kbDragOver(event, this)" ondragleave="kbDragLeave(this)" ondrop="kbDrop(event, this)">
+      <div class="kb-col__rule" style="background:${e.color}"></div>
       <div class="kb-col__head">
         <span class="kb-col__dot" style="background:${e.color}"></span>
         <span class="kb-col__name">${esc(e.nombre)}</span>
@@ -1704,6 +1709,7 @@ async function abrirModal(id = null) {
     sv('m-calle', c.calle); sv('m-numext', c.num_ext); sv('m-numint', c.num_int);
     sv('m-colonia', c.colonia); sv('m-cp', c.cp); sv('m-mpio', c.mpio);
     sv('m-notas', c.notas);
+    sv('m-descripcion-privada', c.descripcion_privada);
     sv('m-fuente', c.fuente);
     sv('m-etiquetas', Array.isArray(c.etiquetas) ? c.etiquetas.join(', ') : '');
     document.getElementById('m-tipo').value = c.tipo || 'comprador';
@@ -1718,7 +1724,7 @@ async function abrirModal(id = null) {
     document.getElementById('btn-del').style.display = 'block';
   } else {
     document.getElementById('modal-title').textContent = 'Nuevo lead';
-    ['m-nombre','m-tel','m-wa','m-email','m-empresa','m-calle','m-numext','m-numint','m-colonia','m-cp','m-notas','m-fuente','m-etiquetas'].forEach(i => sv(i,''));
+    ['m-nombre','m-tel','m-wa','m-email','m-empresa','m-calle','m-numext','m-numint','m-colonia','m-cp','m-notas','m-descripcion-privada','m-fuente','m-etiquetas'].forEach(i => sv(i,''));
     sv('m-mpio','MORELIA, MICHOACÁN');
     document.getElementById('m-tipo').value = 'comprador';
     document.getElementById('m-estatus').value = ETAPAS[0] ? ETAPAS[0].clave : 'nuevo';
@@ -1758,6 +1764,7 @@ async function guardarContacto() {
     cp: gv('m-cp'),
     mpio: gv('m-mpio'),
     notas: gv('m-notas'),
+    descripcion_privada: gv('m-descripcion-privada'),
     estatus: document.getElementById('m-estatus').value || 'nuevo',
     probabilidad: document.getElementById('m-probabilidad').value || null,
     es_potencial: document.getElementById('m-potencial').checked,
@@ -1882,6 +1889,7 @@ function renderDetInfo(c) {
     html += `<div style="margin-top:16px"><div class="det-lbl" style="margin-bottom:8px">Etiquetas</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">${c.etiquetas.map(t => `<span class="tag-chip">${esc(t)}</span>`).join('')}</div></div>`;
   }
+  if (c.descripcion_privada) html += `<div style="margin-top:18px"><div class="det-lbl" style="margin-bottom:8px">Descripción privada</div><div class="nota-box">${esc(c.descripcion_privada)}</div></div>`;
   if (c.notas) html += `<div style="margin-top:18px"><div class="det-lbl" style="margin-bottom:8px">Notas</div><div class="nota-box">${esc(c.notas)}</div></div>`;
   document.getElementById('dtab-info').innerHTML = html;
 }

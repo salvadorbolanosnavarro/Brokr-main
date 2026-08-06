@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
 <title>Broquer — Guía del Agente</title>
 <link rel="manifest" href="manifest.json"/>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
@@ -78,7 +78,7 @@
   font-size:var(--fs-caption); font-weight: 700; font-family: var(--font-mono);
   display: flex; align-items: center; justify-content: center;
 }
-.guide-step-lbl { flex: 1; font-size: var(--fs-xs); font-weight: 600; color: var(--ink); }
+.guide-step-lbl { flex: 1; font-size: var(--fs-sm); font-weight: 600; color: var(--ink); }
 .guide-step-arr { color: var(--mute); transition: transform .2s; flex-shrink: 0; }
 .guide-step.open .guide-step-arr { transform: rotate(180deg); }
 .guide-step-body {
@@ -140,7 +140,7 @@
   font-family: var(--font-display); font-size: var(--fs-h5); font-weight: 700;
   letter-spacing: -0.015em; color: var(--danger); margin-bottom: 4px;
 }
-.guide-danger p { font-size:var(--fs-xs); color: var(--mute); }
+.guide-danger p { font-size:var(--fs-sm); color: var(--ink-2); line-height: 1.6; }
 .guide-danger-btn {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 11px 22px; background: var(--danger); color: #fff;
@@ -173,10 +173,11 @@
 
 .wa-block { margin-bottom: 28px; }
 .wa-block h3 {
-  font-family: var(--font-display); font-size: var(--fs-h5); font-weight: 700;
-  letter-spacing: -0.02em; color: var(--ink); margin-bottom: 6px;
+  font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 700;
+  letter-spacing: -0.02em; color: var(--ink); margin-bottom: var(--sp-3);
 }
-.wa-block > p { font-size: var(--fs-xs); color: var(--ink-2); line-height: 1.65; margin-bottom: 12px; }
+.wa-block > p { font-size: var(--fs-body); color: var(--ink-2); line-height: 1.7;
+                margin-bottom: var(--sp-4); max-width: 68ch; }
 
 /* Checklist previo */
 .wa-check { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
@@ -204,10 +205,10 @@
   display: flex; align-items: center; justify-content: center;
 }
 .wa-walk h4 {
-  font-size: var(--fs-sm); font-weight: 700; color: var(--ink);
-  margin: 0 0 5px; letter-spacing: -0.01em; line-height: 1.35;
+  font-size: var(--fs-body); font-weight: 700; color: var(--ink);
+  margin: 0 0 var(--sp-2); letter-spacing: -0.01em; line-height: 1.35;
 }
-.wa-walk p { font-size: var(--fs-xs); color: var(--ink-2); line-height: 1.65; margin: 0 0 7px; }
+.wa-walk p { font-size: var(--fs-sm); color: var(--ink-2); line-height: 1.65; margin: 0 0 var(--sp-2); }
 .wa-walk p:last-child { margin-bottom: 0; }
 .wa-walk b { color: var(--ink); }
 .wa-walk em { color: var(--ink); font-style: normal; font-weight: 600; }
@@ -215,8 +216,8 @@
 /* Avisos */
 .wa-note, .wa-warn {
   display: flex; gap: 11px; align-items: flex-start;
-  padding: 12px 14px; border-radius: var(--r-sm);
-  font-size: var(--fs-xs); line-height: 1.6; margin-top: 10px;
+  padding: var(--sp-3) var(--sp-4); border-radius: var(--r-sm);
+  font-size: var(--fs-sm); line-height: 1.6; margin-top: var(--sp-3);
 }
 .wa-note { background: var(--paper-2); border-left: 3px solid var(--forest); color: var(--ink-2); }
 .wa-warn { background: var(--bone); border: 1px solid var(--line); border-left: 3px solid var(--warn); color: var(--ink-2); }
@@ -226,7 +227,7 @@
 .wa-note b, .wa-warn b { color: var(--ink); }
 
 /* Tabla de cambios */
-.wa-tbl { width: 100%; border-collapse: collapse; font-size: var(--fs-xs); }
+.wa-tbl { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 .wa-tbl th {
   text-align: left; padding: 9px 12px; color: var(--mute);
   font-size: var(--fs-label-3); font-weight: 600; letter-spacing: 0.01em;

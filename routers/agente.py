@@ -27,6 +27,7 @@ import time
 import asyncio
 import httpx
 from typing import List, Optional
+from limites import exigir_cupo, exigir_sesion
 from fastapi import APIRouter, Request, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 
@@ -229,6 +230,124 @@ async def _tool_buscar_contactos(user_id: str, args: dict) -> str:
     return f"Encontré {len(rows)} contacto(s):\n" + "\n".join(out)
 
 
+async def _tool_buscar_tareas(user_id: str, args: dict) -> str:
+    """Busca en las tareas/citas del usuario (tabla `tareas`). Se ordena por
+    fecha de CREACIÓN: 'la tarea que acabas de crear' debe salir primero,
+    tenga o no fecha de entrega."""
+    if not user_id:
+        return "No hay sesión activa."
+    query = (args.get("query") or "").strip().replace(",", " ")
+    params = {"user_id": f"eq.{user_id}",
+              "select": "id,titulo,fecha_entrega,completada,notas",
+              "order": "created_at.desc", "limit": "10"}
+    if query:
+        params["or"] = f"(titulo.ilike.*{query}*,notas.ilike.*{query}*)"
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.get(f"{SUPABASE_URL}/rest/v1/tareas",
+                                 headers=_sb_headers(), params=params)
+        rows = r.json() if r.status_code == 200 else []
+    except Exception as e:
+        return f"No pude consultar las tareas: {str(e)[:120]}"
+    if not rows:
+        return "No encontré tareas que coincidan."
+    out = []
+    for t in rows:
+        estado = "completada" if t.get("completada") else "pendiente"
+        fecha = (t.get("fecha_entrega") or "")[:16].replace("T", " ")
+        linea = f"• id={t['id']} · {t.get('titulo') or 'Sin título'} · {estado}"
+        if fecha:
+            linea += f" · {fecha} UTC"
+        if t.get("notas"):
+            linea += " — " + (t["notas"] or "")[:100]
+        out.append(linea)
+    return f"Encontré {len(rows)} tarea(s), la más reciente primero:\n" + "\n".join(out)
+
+
+async def _tool_agregar_comentario(user_id: str, args: dict) -> str:
+    """Agrega un comentario fechado a las notas de un contacto, una tarea o una
+    propiedad. El comentario se APILA (nunca borra lo que ya había). La
+    confirmación regresa el NOMBRE/TÍTULO real del registro tocado, para que el
+    modelo se lo diga al usuario y un destino equivocado salte a la vista."""
+    if not user_id:
+        return "No hay sesión activa."
+    destino = (args.get("destino") or "").strip().lower()
+    fila_id = (args.get("id") or "").strip()
+    comentario = (args.get("comentario") or "").strip()
+    if destino not in ("contacto", "tarea", "propiedad") or not fila_id or not comentario:
+        return "Faltan datos: necesito destino (contacto, tarea o propiedad), id y comentario."
+    tabla = {"contacto": "contactos", "tarea": "tareas", "propiedad": "propiedades"}[destino]
+    campo_nombre = "nombre" if tabla == "contactos" else "titulo"
+    from datetime import datetime, timezone, timedelta
+    ahora = datetime.now(timezone(timedelta(hours=-6)))  # hora del centro de México
+    linea = f"[{ahora.strftime('%d/%m %H:%M')} · Broq] {comentario}"
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.get(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_sb_headers(),
+                                 params={"id": f"eq.{fila_id}", "user_id": f"eq.{user_id}",
+                                         "select": f"id,notas,{campo_nombre}", "limit": "1"})
+            rows = r.json() if r.status_code == 200 else []
+            if not rows:
+                return f"No encontré ese {destino} (id={fila_id}) en la cuenta del usuario. Búscalo primero para obtener el id exacto."
+            etiqueta = rows[0].get(campo_nombre) or fila_id
+            notas = ((rows[0].get("notas") or "") + "\n" + linea).strip()
+            cuerpo = {"notas": notas}
+            if tabla in ("contactos", "propiedades"):
+                cuerpo["updated_at"] = datetime.now(timezone.utc).isoformat()
+            r2 = await client.patch(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_sb_headers(),
+                                    params={"id": f"eq.{fila_id}", "user_id": f"eq.{user_id}"},
+                                    json=cuerpo)
+            if r2.status_code >= 300:
+                return f"No se pudo guardar el comentario: {r2.text[:120]}"
+    except Exception as e:
+        return f"No pude guardar el comentario: {str(e)[:120]}"
+    return f"Listo, comentario agregado a {destino} '{etiqueta}': {linea}"
+
+
+async def _tool_crear_tarea(user_id: str, args: dict) -> str:
+    """Crea la tarea DE VERDAD en la tabla `tareas`, con vínculos opcionales a
+    un contacto y/o un inmueble (tablas varios-a-varios). Regresa el id creado
+    para que el resto de la conversación pueda referirse a 'esa misma tarea'."""
+    if not user_id:
+        return "No hay sesión activa."
+    titulo = (args.get("titulo") or "").strip()
+    if not titulo:
+        return "Falta el título de la tarea."
+    fila = {"user_id": user_id, "titulo": titulo,
+            "notas": (args.get("notas") or "").strip() or None,
+            "contacto_id": (args.get("contacto_id") or "").strip() or None,
+            "propiedad_id": (args.get("propiedad_id") or "").strip() or None}
+    if args.get("fecha"):
+        try:
+            from datetime import datetime as _dt, timezone as _tz
+            from zoneinfo import ZoneInfo
+            y, m, d = (int(x) for x in str(args["fecha"]).split("-"))
+            hh, mi = (int(x) for x in str(args.get("hora") or "09:00").split(":")[:2])
+            local = _dt(y, m, d, hh, mi, tzinfo=ZoneInfo("America/Mexico_City"))
+            fila["fecha_entrega"] = local.astimezone(_tz.utc).isoformat().replace("+00:00", "Z")
+        except Exception:
+            return "La fecha u hora no se entendieron. Usa fecha YYYY-MM-DD y hora HH:MM."
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            h = _sb_headers(); h["Prefer"] = "return=representation"
+            r = await client.post(f"{SUPABASE_URL}/rest/v1/tareas", headers=h, json=fila)
+            if r.status_code >= 300:
+                return f"No se pudo crear la tarea: {r.text[:120]}"
+            tarea_id = (r.json() or [{}])[0].get("id")
+            if tarea_id and fila.get("contacto_id"):
+                await client.post(f"{SUPABASE_URL}/rest/v1/tareas_contactos", headers=_sb_headers(),
+                                  json={"user_id": user_id, "tarea_id": tarea_id,
+                                        "contacto_id": fila["contacto_id"]})
+            if tarea_id and fila.get("propiedad_id"):
+                await client.post(f"{SUPABASE_URL}/rest/v1/tareas_propiedades", headers=_sb_headers(),
+                                  json={"user_id": user_id, "tarea_id": tarea_id,
+                                        "propiedad_id": fila["propiedad_id"]})
+    except Exception as e:
+        return f"No se pudo crear la tarea: {str(e)[:120]}"
+    cuando = f" para el {args['fecha']} {args.get('hora') or ''}".rstrip() if args.get("fecha") else ""
+    return f"Tarea creada de verdad en el módulo de Tareas (id={tarea_id}): {titulo}{cuando}."
+
+
 async def _tool_resumen_cartera(user_id: str, args: dict) -> str:
     """Resumen del inventario del usuario: totales por operación/tipo y valor."""
     if not user_id:
@@ -372,6 +491,9 @@ SERVER_TOOLS = {
     "buscar_propiedades": _tool_buscar_propiedades,
     "detalle_propiedad":  _tool_detalle_propiedad,
     "buscar_contactos":   _tool_buscar_contactos,
+    "buscar_tareas":      _tool_buscar_tareas,
+    "agregar_comentario": _tool_agregar_comentario,
+    "crear_tarea":        _tool_crear_tarea,
     "resumen_cartera":    _tool_resumen_cartera,
     "resumen_estadisticas": _tool_resumen_estadisticas,
 }
@@ -414,6 +536,45 @@ TOOLS_SCHEMA = [
                 "query": {"type": "string", "description": "Nombre, teléfono, email o palabra clave."},
                 "limit": {"type": "integer"}
             }
+        }
+    },
+    {
+        "name": "buscar_tareas",
+        "description": "Busca en las tareas/citas del usuario por título o notas (la más reciente primero). Úsala SIEMPRE antes de agregar un comentario a una tarea, para obtener su id exacto. También para '¿qué pendientes tengo?', 'la tarea que acabas de crear'.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Palabra clave del título o las notas. Vacío = las más recientes."}
+            }
+        }
+    },
+    {
+        "name": "agregar_comentario",
+        "description": "Agrega un comentario con fecha a las notas de un contacto, una tarea o una propiedad, sin borrar lo que ya había. Úsala para 'agrégale un comentario/nota a…', 'anota en la cita de…', 'apunta en la casa de… que…'. SIEMPRE busca primero (buscar_contactos, buscar_tareas o buscar_propiedades) para usar el id exacto; si hay varios que coinciden, pregunta cuál.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "destino": {"type": "string", "enum": ["contacto", "tarea", "propiedad"]},
+                "id": {"type": "string", "description": "id exacto devuelto por buscar_contactos, buscar_tareas o buscar_propiedades."},
+                "comentario": {"type": "string"}
+            },
+            "required": ["destino", "id", "comentario"]
+        }
+    },
+    {
+        "name": "crear_tarea",
+        "description": "Crea una tarea/pendiente REAL en el módulo de Tareas del usuario, opcionalmente vinculada a un contacto y/o a un inmueble. Si el usuario menciona el contacto o el inmueble por nombre, usa antes buscar_contactos / buscar_propiedades para obtener el id exacto.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "titulo": {"type": "string"},
+                "fecha": {"type": "string", "description": "YYYY-MM-DD, opcional"},
+                "hora": {"type": "string", "description": "HH:MM en 24h, opcional"},
+                "notas": {"type": "string"},
+                "contacto_id": {"type": "string", "description": "id de un contacto ya existente, opcional"},
+                "propiedad_id": {"type": "string", "description": "id de un inmueble ya existente, opcional"}
+            },
+            "required": ["titulo"]
         }
     },
     {
@@ -643,6 +804,9 @@ _STEP_LABELS = {
     "buscar_contactos":       "Buscando en tu CRM…",
     "resumen_cartera":        "Analizando tu inventario…",
     "resumen_estadisticas":   "Leyendo tus estadísticas…",
+    "buscar_tareas":          "Revisando tus tareas…",
+    "agregar_comentario":     "Registrando el comentario…",
+    "crear_tarea":            "Agregando la tarea…",
     "calcular_isr":           "Calculando el ISR y preparando el PDF…",
     "estimar_valor":          "Buscando comparables y estimando el valor…",
     "generar_contrato":       "Generando el contrato…",
@@ -664,7 +828,9 @@ def _build_system(context: str, nombre: str = "") -> str:
 CÓMO ACTÚAS:
 - Eres un SUPER ASISTENTE OPERATIVO: entiendes comandos escritos y de voz, razonas con datos reales de la app y ejecutas acciones completas cuando tienes lo necesario.
 - Tienes herramientas reales. Cuando el usuario pide algo que puedes hacer, HAZLO con la herramienta correspondiente. No le digas "ve al módulo X y dale al botón Y": tú lo ejecutas.
-- Puedes encadenar pasos: primero busca datos (buscar_propiedades, detalle_propiedad, buscar_contactos, resumen_cartera, resumen_estadisticas) y luego actúa (crear_contacto, crear_inmueble, generar_contrato, crear_ficha_manual, estimar_valor, calcular_isr, generar_reporte_estadisticas, crear_campana_facebook, abrir_modulo o prellenar_formulario). Usa los datos reales que obtengas; nunca inventes precios, m², direcciones ni nombres.
+- Puedes encadenar pasos: primero busca datos (buscar_propiedades, detalle_propiedad, buscar_contactos, buscar_tareas, resumen_cartera, resumen_estadisticas) y luego actúa. agregar_comentario y crear_tarea se ejecutan EN EL SERVIDOR y su tool_result te dice si de verdad quedaron — confírmalo al usuario solo con base en ese resultado. Las demás acciones (crear_contacto, crear_inmueble, generar_contrato, crear_ficha_manual, estimar_valor, calcular_isr, generar_reporte_estadisticas, crear_campana_facebook, abrir_modulo o prellenar_formulario). Usa los datos reales que obtengas; nunca inventes precios, m², direcciones ni nombres.
+- Para "agrégale un comentario / una nota a…" (un contacto, una tarea/cita o una propiedad), por texto o por voz: busca primero para obtener el id exacto y ejecuta agregar_comentario DIRECTO, sin pedir confirmación. El comentario queda con fecha en las notas y no borra nada. Si hay varios que coinciden, pregunta cuál. NUNCA uses crear_contacto ni crear_inmueble para "agregar una nota" a algo que YA EXISTE — eso duplica registros.
+- HONESTIDAD DURA: jamás digas "quedó registrado", "ya lo agregué" ni nada parecido si la herramienta no devolvió una confirmación real. Si el tool_result dice que falló, dile al usuario exactamente eso y qué faltó. Al confirmar un comentario, di el NOMBRE del contacto/tarea/propiedad al que quedó agregado (viene en el tool_result), para que el usuario detecte al instante si era otro.
 - Si el usuario pide crear un contacto o inmueble y ya dio los datos obligatorios, créalo directo. Si falta un dato obligatorio, pregunta SOLO el siguiente dato faltante.
 - Antes de una acción que produce un documento o un cambio, reúne los datos OBLIGATORIOS preguntando de UNO EN UNO de forma conversacional. Nunca ejecutes con datos incompletos. Los opcionales que el usuario no sepa: déjalos en 0 o "".
 - Las acciones que generan un archivo (ISR, estimación de valor, contrato, ficha) o que crean algo se ejecutan en el dispositivo del usuario. Cuando lances una de esas, NO digas "ya está descargado": di que la estás preparando y que aparecerá en un momento. El sistema le confirma al usuario cuando termina.
@@ -716,6 +882,8 @@ async def agent(req: AgentRequest, request: Request):
     if not ANTHROPIC_API_KEY:
         raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY no configurada en el servidor.")
     user_id = await _get_user_id(request)
+    exigir_cupo(request, user_id)
+    exigir_sesion(request, user_id)
 
     system = _build_system(req.context, req.nombre)
     # Solo mensajes de usuario/asistente (sin system embebido)
@@ -839,6 +1007,9 @@ _VOICE_FIXES = [
 
 @router.post("/transcribir")
 async def transcribir(request: Request, audio: UploadFile = File(...), idioma: str = Form("es")):
+    _uid = await _get_user_id(request)
+    exigir_cupo(request, _uid)
+    exigir_sesion(request, _uid)
     if not GROQ_API_KEY:
         raise HTTPException(status_code=500, detail="GROQ_API_KEY no configurada en el servidor.")
     raw = await audio.read()

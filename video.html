@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
+<title>Broquer — Video</title>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+  .vid-scroll { padding: 24px 28px 48px; max-width: 1180px; margin: 0 auto; }
+  @media (max-width: 720px) { .vid-scroll { padding: 16px 14px 40px; } }
+
+  /* Buscador de inmueble — mismo comportamiento que en Facebook Ads */
+  .vid-buscar { position: relative; max-width: 640px; }
+  .vid-dd {
+    position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 30;
+    background: var(--paper); border: 1px solid var(--line); border-radius: var(--r);
+    box-shadow: var(--shadow); max-height: 380px; overflow-y: auto; display: none;
+  }
+  .vid-dd.is-open { display: block; }
+  .vid-op {
+    display: flex; gap: var(--sp-3); align-items: center; width: 100%;
+    padding: var(--sp-3); background: none; border: 0; border-bottom: 1px solid var(--line);
+    cursor: pointer; text-align: left;
+  }
+  .vid-op:last-child { border-bottom: 0; }
+  .vid-op:hover { background: var(--paper-2); }
+  .vid-op__img { width: 56px; height: 40px; flex: 0 0 auto; object-fit: cover; border-radius: var(--r); background: var(--paper-2); }
+  .vid-op__c { min-width: 0; flex: 1; }
+  .vid-op__t {
+    display: block; font-size: var(--fs-sm); font-weight: 600; color: var(--ink);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .vid-op__m { display: block; font-size: var(--fs-caption); color: var(--mute); margin-top: 2px; }
+  .vid-dd__msg { padding: var(--sp-4); font-size: var(--fs-xs); color: var(--mute); }
+
+  /* Inmueble elegido */
+  .vid-elegido { display: flex; gap: var(--sp-4); align-items: center; }
+  .vid-elegido__img { width: 92px; height: 66px; flex: 0 0 auto; object-fit: cover; border-radius: var(--r); background: var(--paper-2); }
+  .vid-elegido__t { font-size: var(--fs-h5); font-weight: 700; color: var(--ink); }
+  .vid-elegido__m { font-size: var(--fs-xs); color: var(--mute); margin-top: 2px; }
+
+  /* Tira de fotos del recorrido */
+  .vid-tira { display: flex; gap: var(--sp-2); overflow-x: auto; padding-bottom: var(--sp-2); }
+  .vid-toma { flex: 0 0 auto; width: 116px; }
+  .vid-toma__marco { position: relative; }
+  .vid-toma img { width: 116px; height: 74px; object-fit: cover; border-radius: var(--r); border: 1px solid var(--line); display: block; }
+  .vid-toma.is-editada img { border-color: var(--sky-blue); }
+  .vid-toma__n { display: block; font-size: var(--fs-caption); color: var(--mute); margin-top: var(--sp-1); }
+  .vid-toma__badge {
+    position: absolute; left: 4px; bottom: 4px;
+    font-size: var(--fs-caption); font-weight: 600; line-height: 1;
+    color: var(--paper); background: var(--sky-navy);
+    padding: 3px 6px; border-radius: var(--r-sm); opacity: .92;
+  }
+
+  /* Editor de imágenes embebido — réplica del Editor de imágenes, dentro
+     de Video, para dejar las fotos a placer antes de generar el recorrido. */
+  .vid-ed-prompt {
+    width: 100%; border: 1px solid var(--line); border-radius: var(--r);
+    padding: var(--sp-3); font-size: var(--fs-xs); font-family: var(--font-sans);
+    color: var(--ink); background: var(--paper-2); resize: vertical;
+    min-height: 68px; outline: none; line-height: 1.5;
+    transition: border-color var(--dur) var(--ease);
+  }
+  .vid-ed-prompt:focus { border-color: var(--sky-blue); background: var(--paper); }
+  .vid-ed-presets { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-3); }
+  .vid-ed-preset {
+    font-size: var(--fs-caption); font-weight: 600; color: var(--mute);
+    background: var(--paper-2); border: 1px solid var(--line);
+    border-radius: var(--r-pill); padding: 5px 12px; cursor: pointer;
+    white-space: nowrap; font-family: var(--font-sans);
+    transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+  }
+  .vid-ed-preset:hover, .vid-ed-preset.is-sel { border-color: var(--sky-blue); color: var(--sky-blue); }
+  .vid-ed-barra { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; margin-top: var(--sp-4); }
+  .vid-ed-cuenta { font-size: var(--fs-xs); font-weight: 600; color: var(--mute); }
+  .vid-ed-prog { background: var(--line); border-radius: var(--r-pill); height: 6px; overflow: hidden; margin-top: var(--sp-4); display: none; }
+  .vid-ed-prog__b { height: 100%; background: var(--sky-blue); border-radius: var(--r-pill); width: 0; transition: width .3s var(--ease); }
+  .vid-ed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--sp-4); margin-top: var(--sp-5); }
+  .vid-ed-card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+  .vid-ed-card.is-sel { border-color: var(--sky-blue); box-shadow: 0 0 0 1px var(--sky-blue); }
+  .vid-ed-card__imgs { display: grid; grid-template-columns: 1fr 1fr; cursor: pointer; }
+  .vid-ed-card__wrap { position: relative; overflow: hidden; background: var(--paper-2); }
+  .vid-ed-card__wrap img { width: 100%; height: 150px; object-fit: cover; display: block; }
+  .vid-ed-card__lbl {
+    position: absolute; bottom: 5px; left: 5px;
+    font-size: var(--fs-caption); font-weight: 600; line-height: 1;
+    color: var(--paper); background: var(--sky-navy); opacity: .92;
+    padding: 3px 6px; border-radius: var(--r-sm);
+  }
+  .vid-ed-card__pie { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); padding: var(--sp-2) var(--sp-3); border-top: 1px solid var(--line); }
+  .vid-ed-card__est { font-size: var(--fs-caption); color: var(--mute); font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vid-ed-card__est.ok { color: var(--success); font-weight: 600; }
+  .vid-ed-card__est.err { color: var(--danger); font-weight: 600; }
+  .vid-ed-card__est.run { color: var(--sky-blue); font-weight: 600; }
+  .vid-ed-card__usar {
+    flex: 0 0 auto; font-size: var(--fs-caption); font-weight: 600; color: var(--sky-blue);
+    background: none; border: 1px solid var(--line); border-radius: var(--r-sm);
+    padding: 4px 9px; cursor: pointer; font-family: var(--font-sans);
+    transition: border-color var(--dur) var(--ease);
+  }
+  .vid-ed-card__usar:hover { border-color: var(--sky-blue); }
+  .vid-ed-chk {
+    position: absolute; top: 6px; right: 6px; width: 20px; height: 20px;
+    border-radius: var(--r-sm); border: 2px solid var(--paper);
+    background: var(--sky-navy); opacity: .55;
+    display: flex; align-items: center; justify-content: center; pointer-events: none;
+  }
+  .vid-ed-card.is-sel .vid-ed-chk { background: var(--sky-blue); opacity: 1; }
+  .vid-ed-chk svg { width: 12px; height: 12px; stroke: var(--paper); fill: none; opacity: 0; }
+  .vid-ed-card.is-sel .vid-ed-chk svg { opacity: 1; }
+
+  /* Formatos */
+  .vid-formatos { display: flex; gap: var(--sp-3); flex-wrap: wrap; }
+  .vid-fmt {
+    display: flex; align-items: center; gap: var(--sp-3); cursor: pointer;
+    padding: var(--sp-3) var(--sp-4); background: var(--paper);
+    border: 1px solid var(--line); border-radius: var(--r); min-width: 210px;
+    transition: border-color var(--dur) var(--ease);
+  }
+  .vid-fmt.is-sel { border-color: var(--sky-blue); }
+  .vid-fmt__box { flex: 0 0 auto; background: var(--paper-2); border: 1px solid var(--line); border-radius: var(--r); }
+  .vid-fmt__box--h { width: 34px; height: 19px; }
+  .vid-fmt__box--v { width: 19px; height: 34px; }
+  .vid-fmt__t { font-size: var(--fs-sm); font-weight: 600; color: var(--ink); }
+  .vid-fmt__s { font-size: var(--fs-caption); color: var(--mute); margin-top: 2px; }
+
+  /* Guía de fotos */
+  .vid-guia { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--sp-6); }
+  .vid-guia h4 { font-size: var(--fs-sm); font-weight: 700; color: var(--ink); margin-bottom: var(--sp-3); }
+  .vid-guia ul { list-style: none; padding: 0; margin: 0; }
+  .vid-guia li { font-size: var(--fs-xs); color: var(--mute); line-height: 1.55; padding-left: 16px; position: relative; margin-bottom: var(--sp-2); }
+  .vid-guia li::before { content: '·'; position: absolute; left: 4px; color: var(--sky-blue); }
+
+  /* Resultado */
+  .vid-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--sp-5); }
+  .vid-item video { width: 100%; display: block; border-radius: var(--r); background: var(--sky-navy); }
+  .vid-item__pie { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); margin-top: var(--sp-3); }
+  .vid-item__meta { font-size: var(--fs-caption); color: var(--mute); }
+
+  .vid-progreso { display: flex; align-items: center; gap: var(--sp-3); }
+  .vid-spin {
+    width: 16px; height: 16px; flex: 0 0 auto;
+    border: 2px solid var(--line); border-top-color: var(--sky-blue);
+    border-radius: 50%; animation: vid-gira .8s linear infinite;
+  }
+  @keyframes vid-gira { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .vid-spin { animation: none; } }
+
+  .vid-nota { font-size: var(--fs-xs); color: var(--mute); line-height: 1.55; }
+</style>
+</head>
+<body data-app="video">
+
+<div class="vid-scroll">
+
+  <!-- Paso 1 · Buscar el inmueble -->
+  <div class="vid-buscar">
+    <input class="bk-input" id="vid-q" type="text" autocomplete="off"
+           placeholder="Busca por título, clave, colonia, ciudad, tipo o precio…"/>
+    <div class="vid-dd" id="vid-dd"></div>
+  </div>
+  <p class="vid-nota" style="margin-top:var(--sp-2)" id="vid-q-nota"></p>
+
+  <!-- Paso 2 · Armar -->
+  <section id="vid-armar" hidden>
+
+    <div class="bk-card bk-card--pad bk-card--raise" style="margin-top:var(--sp-6)">
+      <div class="vid-elegido">
+        <img class="vid-elegido__img" id="vid-el-img" src="" alt=""/>
+        <div>
+          <div class="vid-elegido__t" id="vid-el-t"></div>
+          <div class="vid-elegido__m" id="vid-el-m"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bk-section-header" style="margin-top:var(--sp-8)">
+      <h2>Fotos del recorrido</h2>
+    </div>
+    <div class="bk-card bk-card--pad bk-card--raise">
+      <div class="vid-tira" id="vid-tira"></div>
+      <p class="vid-nota" style="margin-top:var(--sp-3)" id="vid-tira-nota"></p>
+      <div class="bk-cluster" style="margin-top:var(--sp-4)">
+        <button class="bk-btn bk-btn--ghost" type="button" id="vid-ed-abrir">Editar imágenes</button>
+      </div>
+    </div>
+
+    <!-- Editor de imágenes embebido: mismas fotos, misma IA que el Editor
+         de imágenes, pero sin salir de Video. Se edita primero, se genera
+         el recorrido después, ya con las fotos como el agente las quiere. -->
+    <section id="vid-editor" hidden>
+      <div class="bk-section-header" style="margin-top:var(--sp-8)">
+        <h2>Editar imágenes</h2>
+      </div>
+      <div class="bk-card bk-card--pad bk-card--raise">
+        <textarea class="vid-ed-prompt" id="vid-ed-prompt"
+          placeholder="Describe qué quieres hacer con las fotos seleccionadas. Ej: Amuebla este espacio vacío con estilo moderno y mejora la iluminación."></textarea>
+        <div class="vid-ed-presets" id="vid-ed-presets">
+          <button class="vid-ed-preset" type="button" data-p="Foto profesional de bienes raíces: mejora iluminación, contraste y nitidez. Deja el espacio limpio y atractivo.">Mejorar calidad</button>
+          <button class="vid-ed-preset" type="button" data-p="Amuebla este espacio vacío con muebles y decoración fotorrealistas de estilo moderno: líneas limpias, paleta neutra con acentos de madera cálida. Solo AGREGA muebles y decoración. NO modifiques, muevas ni elimines muros, pisos, techos, ventanas, puertas, vistas ni dimensiones, y conserva exactamente el ángulo de cámara y la iluminación natural.">Amueblar moderno</button>
+          <button class="vid-ed-preset" type="button" data-p="Amuebla este espacio vacío con muebles y decoración fotorrealistas de estilo mexicano contemporáneo: texturas artesanales, tonos tierra cálidos, madera, textiles tejidos y plantas. Solo AGREGA muebles y decoración. NO modifiques, muevas ni elimines muros, pisos, techos, ventanas, puertas, vistas ni dimensiones, y conserva exactamente el ángulo de cámara y la iluminación natural.">Amueblar mexicano</button>
+          <button class="vid-ed-preset" type="button" data-p="Elimina todos los muebles no fijos: camas, sofás, sillas, mesas, alfombras, cortinas, lámparas y decoraciones. Conserva paredes, pisos, techos, ventanas y puertas. Muestra el cuarto vacío y limpio.">Retirar muebles</button>
+          <button class="vid-ed-preset" type="button" data-p="Corrige la iluminación: aumenta brillo en zonas oscuras, reduce brillos, mejora el balance de blancos para que la foto luzca natural y profesional.">Corregir iluminación</button>
+          <button class="vid-ed-preset" type="button" data-p="Mejora esta foto de jardín o exterior: cielo más azul, vegetación más verde y vibrante, iluminación natural cálida, aspecto de día soleado.">Exterior vibrante</button>
+        </div>
+        <p class="vid-nota" style="margin-top:var(--sp-3);max-width:70ch">
+          Toca las fotos para elegir cuáles editar. Si amueblas o alteras un
+          espacio, preséntalo a tus clientes como imagen ilustrativa: enseñar el
+          potencial está bien, ocultarlo no.
+        </p>
+        <div class="vid-ed-barra">
+          <span class="vid-ed-cuenta" id="vid-ed-cuenta"></span>
+          <button class="bk-btn bk-btn--forest" type="button" id="vid-ed-editar">Editar fotos</button>
+        </div>
+        <div class="vid-ed-prog" id="vid-ed-prog"><div class="vid-ed-prog__b" id="vid-ed-prog-b"></div></div>
+        <div class="vid-ed-grid" id="vid-ed-grid"></div>
+      </div>
+    </section>
+
+    <div class="bk-section-header" style="margin-top:var(--sp-8)">
+      <h2>Formato</h2>
+    </div>
+    <div class="vid-formatos" id="vid-formatos">
+      <button class="vid-fmt is-sel" type="button" data-fmt="16:9">
+        <span class="vid-fmt__box vid-fmt__box--h"></span>
+        <span>
+          <span class="vid-fmt__t">Horizontal 16:9</span>
+          <span class="vid-fmt__s">Feed de Facebook, YouTube, WhatsApp</span>
+        </span>
+      </button>
+      <button class="vid-fmt" type="button" data-fmt="9:16">
+        <span class="vid-fmt__box vid-fmt__box--v"></span>
+        <span>
+          <span class="vid-fmt__t">Vertical 9:16</span>
+          <span class="vid-fmt__s">Reels, stories, TikTok</span>
+        </span>
+      </button>
+    </div>
+    <p class="vid-nota" id="vid-fmt-nota" style="margin-top:var(--sp-3)"></p>
+
+    <div class="bk-cluster" style="margin-top:var(--sp-6);gap:var(--sp-4)">
+      <button class="bk-btn bk-btn--forest" type="button" id="vid-generar">Generar video</button>
+      <span class="vid-progreso" id="vid-estado" hidden>
+        <span class="vid-spin"></span>
+        <span class="vid-nota" id="vid-estado-txt"></span>
+      </span>
+    </div>
+
+  </section>
+
+  <!-- Videos ya hechos -->
+  <section id="vid-hechos" hidden>
+    <div class="bk-section-header" style="margin-top:var(--sp-10)">
+      <h2>Tus videos</h2>
+    </div>
+    <div class="vid-lista" id="vid-lista"></div>
+  </section>
+
+  <!-- Guía de fotos -->
+  <div class="bk-section-header" style="margin-top:var(--sp-10)">
+    <h2>Qué fotos hacen un buen recorrido</h2>
+  </div>
+  <div class="bk-card bk-card--pad bk-card--raise">
+    <p class="vid-nota" style="margin-bottom:var(--sp-6);max-width:70ch">
+      El recorrido no arregla una foto mala: la deja diez veces más tiempo en pantalla.
+      Una foto que en la ficha pasa desapercibida, aquí se ve cinco segundos y medio
+      completos. Casi siempre que un video sale flojo, el problema son las fotos, no el
+      recorrido.
+    </p>
+    <div class="vid-guia">
+      <div>
+        <h4>Lo que más se nota</h4>
+        <ul>
+          <li>Resolución alta. Abajo de 1600 px de ancho, el zoom revela el pixel. Una foto de cámara o de celular reciente sobra; una descargada de un anuncio viejo, no.</li>
+          <li>Horizontales. El recorrido se mueve de lado: una foto horizontal tiene a dónde moverse, una vertical no y se recorta.</li>
+          <li>Cuartos amplios y con luz de día. El paneo lento sobre un espacio abierto es justo lo que vende; sobre un cuarto chico y oscuro solo alarga la incomodidad.</li>
+        </ul>
+      </div>
+      <div>
+        <h4>El orden importa</h4>
+        <ul>
+          <li>El recorrido respeta el orden de la ficha. Reordena ahí y se reordena aquí.</li>
+          <li>Empieza por la fachada: es la que ubica al que ve el video.</li>
+          <li>Sigue el camino real de una visita — entrada, sala, comedor, cocina, recámaras. Brincar de la cocina al jardín y de vuelta a la recámara desorienta.</li>
+          <li>Cierra con lo mejor que tenga: alberca, terraza, vista.</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Qué dejar fuera</h4>
+        <ul>
+          <li>Fotos con logo, marca de agua o texto encima: el zoom las deforma y se ve pirata.</li>
+          <li>Planos y documentos. No se leen en movimiento.</li>
+          <li>Detalles cerrados — una llave, un apagador, una esquina. En pantalla completa por cinco segundos no dicen nada.</li>
+          <li>Fotos borrosas, chuecas o de noche con flash. El movimiento las delata más que la ficha.</li>
+          <li>Dos fotos casi iguales del mismo cuarto: parece que el video se trabó.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="vid-nota" style="margin-top:var(--sp-6);max-width:70ch">
+      Con cinco o seis fotos buenas sale mejor que con ocho de relleno. El recorrido
+      usa tus fotos tal como se ven en la tira: si quieres mejorarlas, amueblarlas o
+      limpiarlas antes, hazlo desde «Editar imágenes» aquí mismo — y si amueblas un
+      espacio, preséntalo como imagen ilustrativa ante tus clientes. El video sale sin
+      música a propósito: ponle el audio desde Instagram al publicar, así agarras
+      audio de tendencia y evitas que te tumben el alcance por derechos de autor.
+    </p>
+  </div>
+
+</div>
+
+<script src="app-shell.js" defer></script>
+<script>
+(function () {
+  'use strict';
+
+  const API_BASE = 'https://api.broquer.app';
+  const MIN_FOTOS = 2;
+  const MAX_FOTOS = 8;
+
+  let props = [];
+  let cargadas = false;
+  let sel = null;
+  let formato = '16:9';
+  let polling = null;
+  let timerBusca = null;
+  let pendientesEditor = null;
+  // Cada toma recuerda su foto original, la versión editada (si el agente
+  // pasó por el editor embebido), cuál de las dos va al video, el archivo
+  // ya bajado para mandarlo al editor, y si está seleccionada para editar.
+  let tomas = [];
+  let editando = false;
+
+  const $ = id => document.getElementById(id);
+
+  function esc(t) {
+    return String(t == null ? '' : t).replace(/[&<>"']/g, c => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    ));
+  }
+
+  async function sbRest(ruta) {
+    if (!window.brokrSb || !window.brokrSb.rest) throw new Error('Sesión no lista.');
+    return await window.brokrSb.rest(ruta, { method: 'GET' });
+  }
+
+  async function api(ruta, opciones) {
+    const opts = opciones || {};
+    let tok = window.brokrSb ? await window.brokrSb.ensureToken() : null;
+    const pega = async t => fetch(API_BASE + ruta, Object.assign({}, opts, {
+      headers: Object.assign(
+        { 'Content-Type': 'application/json' },
+        opts.headers || {},
+        t ? { Authorization: 'Bearer ' + t } : {}
+      ),
+    }));
+    let r = await pega(tok);
+    if (r.status === 401 && window.brokrSb && window.brokrSb.refreshNow) {
+      tok = await window.brokrSb.refreshNow();
+      r = await pega(tok);
+    }
+    if (!r.ok) {
+      let msg = 'No se pudo completar la operación.';
+      try { const j = await r.json(); if (j && j.detail) msg = j.detail; } catch (e) {}
+      throw new Error(msg);
+    }
+    return await r.json();
+  }
+
+  // Igual que api(), pero para multipart: el editor manda archivos, no JSON.
+  // El Content-Type lo pone el navegador solo (con su boundary).
+  async function apiForm(ruta, fd) {
+    let tok = window.brokrSb ? await window.brokrSb.ensureToken() : null;
+    const pega = async t => fetch(API_BASE + ruta, {
+      method: 'POST',
+      body: fd,
+      headers: t ? { Authorization: 'Bearer ' + t } : {},
+    });
+    let r = await pega(tok);
+    if (r.status === 401 && window.brokrSb && window.brokrSb.refreshNow) {
+      tok = await window.brokrSb.refreshNow();
+      r = await pega(tok);
+    }
+    if (!r.ok) {
+      let msg = 'No se pudo completar la operación.';
+      try { const j = await r.json(); if (j && j.detail) msg = j.detail; } catch (e) {}
+      throw new Error(msg);
+    }
+    return await r.json();
+  }
+
+  function fotosDe(p) {
+    const f = p && p.fotos;
+    if (!Array.isArray(f)) return [];
+    return f.filter(u => typeof u === 'string' && u.indexOf('http') === 0);
+  }
+
+  function money(n, moneda) {
+    const v = Number(n) || 0;
+    if (!v) return '';
+    return '$' + v.toLocaleString('es-MX', { maximumFractionDigits: 0 }) +
+           (moneda && moneda !== 'MXN' ? ' ' + moneda : '');
+  }
+
+  // El atributo download del navegador se ignora cuando el archivo vive en
+  // otro origen — y Storage de Supabase lo es. El botón abría el video en una
+  // pestaña en vez de bajarlo. El parámetro ?download= hace que Supabase
+  // mande Content-Disposition: attachment, que sí lo baja.
+  function ligaDescarga(v) {
+    const nombre = ((v.titulo || 'video').replace(/[^A-Za-z0-9._-]+/g, '-').slice(0, 60) || 'video') +
+                   '-' + v.formato.replace(':', 'x') + '.mp4';
+    return v.video_url + (v.video_url.indexOf('?') >= 0 ? '&' : '?') +
+           'download=' + encodeURIComponent(nombre);
+  }
+
+  function ubicacion(p) {
+    return [p.colonia, p.ciudad, p.estado].filter(Boolean).join(', ');
+  }
+
+  function resumen(p) {
+    return [money(p.precio, p.moneda), ubicacion(p), fotosDe(p).length + ' fotos']
+      .filter(Boolean).join(' \u00b7 ');
+  }
+
+  // ── Inventario ─────────────────────────────────────────────────────────
+  async function cargar() {
+    if (cargadas) return;
+    // select=* a propósito: hay cuentas donde alguna migración no corrió y
+    // pedir columnas por nombre revienta el request completo.
+    const filas = await sbRest('propiedades?select=*&order=updated_at.desc&limit=1000');
+    props = (Array.isArray(filas) ? filas : [])
+      .filter(p => !p.archivada && fotosDe(p).length >= MIN_FOTOS);
+    cargadas = true;
+  }
+
+  // Busca por texto libre y también por precio: si escribes "3500000" o
+  // "3.5m", filtra por lo que cuesta, no por lo que dice el título.
+  function filtrar(q) {
+    const t = (q || '').toLowerCase().trim();
+    if (!t) return props.slice(0, 8);
+
+    const num = t.replace(/[^0-9.]/g, '');
+    const esPrecio = num.length >= 3 && /^[0-9.,\s$mk]+$/i.test(t);
+    let objetivo = 0;
+    if (esPrecio) {
+      objetivo = parseFloat(num) || 0;
+      if (/m/.test(t)) objetivo *= 1000000;
+      else if (/k/.test(t)) objetivo *= 1000;
+    }
+
+    return props.filter(p => {
+      if (esPrecio && objetivo) {
+        const v = Number(p.precio) || 0;
+        // Rango de ±20%: nadie se acuerda del precio exacto.
+        if (v && v >= objetivo * 0.8 && v <= objetivo * 1.2) return true;
+      }
+      const heno = [p.titulo, p.clave_interna, p.colonia, p.ciudad, p.estado,
+                    p.tipo, p.operacion].filter(Boolean).join(' ').toLowerCase();
+      return heno.indexOf(t) >= 0;
+    }).slice(0, 8);
+  }
+
+  function pintarDd(lista) {
+    const dd = $('vid-dd');
+    if (!cargadas) {
+      dd.innerHTML = '<div class="vid-dd__msg">Cargando tu inventario…</div>';
+      dd.classList.add('is-open');
+      return;
+    }
+    if (!props.length) {
+      dd.innerHTML = '<div class="vid-dd__msg">Ninguna ficha tiene al menos dos fotos. Súbelas desde Tus Inmuebles y regresa.</div>';
+      dd.classList.add('is-open');
+      return;
+    }
+    if (!lista.length) {
+      dd.innerHTML = '<div class="vid-dd__msg">Nada con esa búsqueda.</div>';
+      dd.classList.add('is-open');
+      return;
+    }
+    dd.innerHTML = lista.map(p => {
+      const f = fotosDe(p)[0];
+      return '<button class="vid-op" type="button" data-id="' + esc(p.id) + '">' +
+        (f ? '<img class="vid-op__img" src="' + esc(f) + '" alt="" loading="lazy" decoding="async"/>'
+           : '<span class="vid-op__img"></span>') +
+        '<span class="vid-op__c">' +
+          '<span class="vid-op__t">' + esc(p.titulo || p.clave_interna || 'Sin título') + '</span>' +
+          '<span class="vid-op__m">' + esc(resumen(p)) + '</span>' +
+        '</span>' +
+      '</button>';
+    }).join('');
+    dd.classList.add('is-open');
+    // mousedown y no click: el blur del input cierra el menú antes de que el
+    // click alcance a dispararse.
+    dd.querySelectorAll('.vid-op').forEach(b => {
+      b.addEventListener('mousedown', e => {
+        e.preventDefault();
+        elegir(b.getAttribute('data-id'));
+      });
+    });
+  }
+
+  function cerrarDd() { $('vid-dd').classList.remove('is-open'); }
+
+  async function abrir() {
+    pintarDd([]);
+    try { await cargar(); } catch (e) {
+      $('vid-dd').innerHTML = '<div class="vid-dd__msg">No se pudo leer tu inventario: ' +
+        esc(e.message) + ' Recarga la página.</div>';
+      return;
+    }
+    pintarDd(filtrar($('vid-q').value));
+  }
+
+  $('vid-q').addEventListener('focus', abrir);
+  $('vid-q').addEventListener('blur', () => setTimeout(cerrarDd, 140));
+  $('vid-q').addEventListener('input', () => {
+    clearTimeout(timerBusca);
+    timerBusca = setTimeout(abrir, 160);
+  });
+
+  // ── Selección ──────────────────────────────────────────────────────────
+  function elegir(id) {
+    sel = props.find(p => String(p.id) === String(id));
+    if (!sel) return;
+    cerrarDd();
+    $('vid-q').value = sel.titulo || sel.clave_interna || '';
+    $('vid-q-nota').textContent = '';
+
+    const todas = fotosDe(sel);
+    const fs = todas.slice(0, MAX_FOTOS);
+
+    $('vid-el-img').src = fs[0] || '';
+    $('vid-el-t').textContent = sel.titulo || sel.clave_interna || 'Sin título';
+    $('vid-el-m').textContent = resumen(sel);
+
+    tomas = fs.map(u => ({ original: u, editada: null, usar: 'original',
+                           file: null, sel: true, estado: '', errCarga: false }));
+    pintarTira();
+    $('vid-editor').hidden = true;
+
+    const seg = Math.round(fs.length * 5.5 - (fs.length - 1) * 0.7);
+    $('vid-tira-nota').textContent = todas.length > MAX_FOTOS
+      ? 'Se usan las primeras ' + MAX_FOTOS + ' de ' + todas.length + ' fotos, en el orden de la ficha. Duración aproximada: ' + seg + ' segundos.'
+      : fs.length + ' fotos, en el orden de la ficha. Duración aproximada: ' + seg + ' segundos.';
+
+    $('vid-armar').hidden = false;
+    notaFormato();
+    cargarHechos();
+  }
+
+  // ── Tira y editor embebido ─────────────────────────────────────────────
+  function fotoActual(t) {
+    return (t.usar === 'editada' && t.editada) ? t.editada : t.original;
+  }
+
+  function fotosVideo() { return tomas.map(fotoActual); }
+
+  function hayEditadas() {
+    return tomas.some(t => t.usar === 'editada' && t.editada);
+  }
+
+  function pintarTira() {
+    $('vid-tira').innerHTML = tomas.map((t, i) => {
+      const activa = t.usar === 'editada' && t.editada;
+      return '<div class="vid-toma' + (activa ? ' is-editada' : '') + '">' +
+        '<div class="vid-toma__marco">' +
+          '<img src="' + esc(fotoActual(t)) + '" alt="" loading="lazy" decoding="async"/>' +
+          (activa ? '<span class="vid-toma__badge">Editada</span>' : '') +
+        '</div>' +
+        '<span class="vid-toma__n">Toma ' + (i + 1) + '</span>' +
+      '</div>';
+    }).join('');
+  }
+
+  // Baja cada foto como archivo para poder mandarla al editor. Las fotos en
+  // servidores externos pueden negar la lectura desde el navegador (CORS):
+  // esa toma no se puede editar aquí, pero el video con ella sí sale.
+  async function cargarArchivos() {
+    await Promise.all(tomas.map(async (t, i) => {
+      if (t.file || t.errCarga) return;
+      try {
+        const r = await fetch(t.original);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const b = await r.blob();
+        t.file = new File([b], 'toma-' + (i + 1) + '.jpg', { type: b.type || 'image/jpeg' });
+      } catch (e) {
+        t.errCarga = true;
+        t.sel = false;
+        t.estado = 'No se pudo leer para edición';
+      }
+      pintarEditor();
+    }));
+  }
+
+  function cuentaSel() {
+    const n = tomas.filter(t => t.sel && t.file).length;
+    $('vid-ed-cuenta').textContent = n + ' de ' + tomas.length +
+      (n === 1 ? ' foto seleccionada' : ' fotos seleccionadas');
+    $('vid-ed-editar').disabled = editando || n === 0;
+  }
+
+  function pintarEditor() {
+    $('vid-ed-grid').innerHTML = tomas.map((t, i) => {
+      let est = t.estado || (t.file ? 'Lista para editar' : 'Cargando…');
+      let clase = '';
+      if (t.errCarga) { clase = 'err'; }
+      else if (t.estado === 'Editando…' || t.estado === 'Reintentando…') { clase = 'run'; }
+      else if (t.editada) { clase = 'ok'; }
+      else if ((t.estado || '').indexOf('Error') === 0) { clase = 'err'; }
+      const activa = t.usar === 'editada' && t.editada;
+      const btnUsar = t.editada
+        ? '<button class="vid-ed-card__usar" type="button" data-i="' + i + '">' +
+          (activa ? 'Usar original' : 'Usar editada') + '</button>'
+        : '';
+      return '<div class="vid-ed-card' + (t.sel && t.file ? ' is-sel' : '') + '" data-card="' + i + '">' +
+        '<div class="vid-ed-card__imgs">' +
+          '<div class="vid-ed-card__wrap">' +
+            '<img src="' + esc(t.original) + '" alt="" loading="lazy" decoding="async"/>' +
+            '<span class="vid-ed-card__lbl">Original</span>' +
+            '<span class="vid-ed-chk"><svg viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>' +
+          '</div>' +
+          '<div class="vid-ed-card__wrap">' +
+            '<img src="' + esc(t.editada || t.original) + '" alt="" loading="lazy" decoding="async"/>' +
+            '<span class="vid-ed-card__lbl">' + (t.editada ? 'Editada' : 'Sin editar') + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="vid-ed-card__pie">' +
+          '<span class="vid-ed-card__est ' + clase + '">' + esc(est) + '</span>' +
+          btnUsar +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    $('vid-ed-grid').querySelectorAll('.vid-ed-card__imgs').forEach((el, idx) => {
+      el.addEventListener('click', () => {
+        const t = tomas[idx];
+        if (editando || !t || !t.file) return;
+        t.sel = !t.sel;
+        pintarEditor();
+      });
+    });
+    $('vid-ed-grid').querySelectorAll('.vid-ed-card__usar').forEach(b => {
+      b.addEventListener('click', e => {
+        e.stopPropagation();
+        const t = tomas[parseInt(b.getAttribute('data-i'), 10)];
+        if (!t || !t.editada) return;
+        t.usar = t.usar === 'editada' ? 'original' : 'editada';
+        pintarEditor();
+        pintarTira();
+      });
+    });
+    cuentaSel();
+  }
+
+  $('vid-ed-abrir').addEventListener('click', async () => {
+    const secc = $('vid-editor');
+    secc.hidden = !secc.hidden;
+    if (secc.hidden) return;
+    pintarEditor();
+    secc.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    await cargarArchivos();
+  });
+
+  $('vid-ed-presets').querySelectorAll('.vid-ed-preset').forEach(btn => {
+    btn.addEventListener('click', () => {
+      $('vid-ed-presets').querySelectorAll('.vid-ed-preset').forEach(b => b.classList.toggle('is-sel', b === btn));
+      $('vid-ed-prompt').value = btn.getAttribute('data-p');
+    });
+  });
+
+  // Una foto por petición cuando hay IA (mismo criterio que el Editor de
+  // imágenes): la generación tarda y mandar varias juntas es pedir timeout.
+  $('vid-ed-editar').addEventListener('click', async () => {
+    if (editando) return;
+    const indices = tomas.map((t, i) => (t.sel && t.file) ? i : -1).filter(i => i >= 0);
+    if (!indices.length) return;
+    const prompt = $('vid-ed-prompt').value.trim();
+
+    editando = true;
+    cuentaSel();
+    $('vid-ed-prog').style.display = 'block';
+    $('vid-ed-prog-b').style.width = '0%';
+
+    let hechas = 0;
+    for (const i of indices) {
+      const t = tomas[i];
+      let logrado = false;
+      for (let intento = 0; intento < 2 && !logrado; intento++) {
+        t.estado = intento === 0 ? 'Editando…' : 'Reintentando…';
+        pintarEditor();
+        try {
+          const fd = new FormData();
+          fd.append('files', t.file);
+          fd.append('prompt', prompt);
+          const d = await apiForm('/images/clean', fd);
+          const res = (d.images || [])[0] || {};
+          if (res.cleaned_b64) {
+            t.editada = 'data:' + (res.content_type || 'image/jpeg') + ';base64,' + res.cleaned_b64;
+            t.usar = 'editada';
+            t.estado = res.used_gemini ? 'Mejorada con Broquer AI' : 'Mejorada';
+            logrado = true;
+          } else {
+            t.estado = 'Error: ' + String(res.error || 'sin resultado').slice(0, 60);
+          }
+        } catch (e) {
+          t.estado = 'Error: ' + String(e.message || e).slice(0, 60);
+        }
+      }
+      hechas++;
+      $('vid-ed-prog-b').style.width = Math.round(hechas / indices.length * 100) + '%';
+      pintarEditor();
+    }
+
+    editando = false;
+    pintarEditor();
+    pintarTira();
+    setTimeout(() => { $('vid-ed-prog').style.display = 'none'; }, 800);
+  });
+
+  function notaFormato() {
+    $('vid-fmt-nota').textContent = formato === '9:16'
+      ? 'El vertical recorta los lados de cada foto. Si tus fotos son horizontales, se pierde la amplitud de los interiores — el 16:9 se ve mucho mejor.'
+      : '';
+  }
+
+  $('vid-formatos').querySelectorAll('.vid-fmt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      formato = btn.getAttribute('data-fmt');
+      $('vid-formatos').querySelectorAll('.vid-fmt').forEach(b => b.classList.toggle('is-sel', b === btn));
+      notaFormato();
+    });
+  });
+
+  // ── Generar ────────────────────────────────────────────────────────────
+  $('vid-generar').addEventListener('click', async () => {
+    if (!sel && !pendientesEditor) return;
+    $('vid-generar').disabled = true;
+    $('vid-estado').hidden = false;
+    $('vid-estado-txt').textContent = 'Armando el recorrido…';
+    try {
+      const cuerpo = { formato: formato };
+      if (pendientesEditor || hayEditadas()) {
+        // Las fotos van explícitas: las editadas viven como data: y hay que
+        // subirlas a Storage antes, porque el backend no puede bajar un data:.
+        cuerpo.fotos = await subirDataUrls(fotosVideo());
+        cuerpo.titulo = sel ? (sel.titulo || sel.clave_interna || null) : 'Editor de imágenes';
+        if (sel) { cuerpo.propiedad_id = sel.id; }
+        $('vid-estado-txt').textContent = 'Armando el recorrido…';
+      } else {
+        cuerpo.propiedad_id = sel.id;
+        cuerpo.titulo = sel.titulo || sel.clave_interna || null;
+      }
+      const r = await api('/video/generar', { method: 'POST', body: JSON.stringify(cuerpo) });
+      vigilar(r.job_id);
+    } catch (e) {
+      terminar(e.message);
+    }
+  });
+
+  function vigilar(jobId) {
+    clearInterval(polling);
+    let intentos = 0;
+    polling = setInterval(async () => {
+      intentos++;
+      if (intentos > 100) {
+        clearInterval(polling);
+        terminar('Está tardando más de lo normal. Recarga la página en un momento.');
+        return;
+      }
+      try {
+        const j = await api('/video/estado/' + jobId);
+        if (j.estado === 'listo') {
+          clearInterval(polling);
+          terminar(null);
+          if (pendientesEditor) { mostrarSuelto(j); } else { cargarHechos(); }
+        }
+        else if (j.estado === 'error') { clearInterval(polling); terminar(j.error || 'No se pudo armar el video.'); }
+      } catch (e) { /* un fallo suelto de red no cancela la vigilancia */ }
+    }, 3000);
+  }
+
+  function terminar(mensaje) {
+    $('vid-estado').hidden = true;
+    $('vid-generar').disabled = false;
+    if (mensaje) alert(mensaje);
+  }
+
+  function tarjeta(v) {
+    return '<div class="bk-card bk-card--pad bk-card--raise vid-item">' +
+      '<video src="' + esc(v.video_url) + '" controls playsinline preload="metadata"></video>' +
+      '<div class="vid-item__pie">' +
+        '<span class="vid-item__meta">' + esc(v.formato) + ' \u00b7 ' + Math.round(v.duracion_seg || 0) + ' s</span>' +
+        '<a class="bk-btn bk-btn--ghost" href="' + esc(ligaDescarga(v)) + '">Descargar</a>' +
+      '</div>' +
+    '</div>';
+  }
+
+  // Un video hecho con fotos del editor no pertenece a ninguna ficha, así que
+  // no lo trae /video/propiedad. Se pinta directo.
+  function mostrarSuelto(v) {
+    $('vid-hechos').hidden = false;
+    $('vid-lista').innerHTML = tarjeta(v);
+  }
+
+  // ── Videos ya hechos ───────────────────────────────────────────────────
+  async function cargarHechos() {
+    if (!sel) return;
+    let videos = [];
+    try {
+      const d = await api('/video/propiedad/' + sel.id);
+      videos = (d.videos || []).filter(v => v.estado === 'listo' && v.video_url);
+    } catch (e) { return; }
+
+    if (!videos.length) { $('vid-hechos').hidden = true; return; }
+    $('vid-hechos').hidden = false;
+    $('vid-lista').innerHTML = videos.map(tarjeta).join('');
+  }
+
+  // ── Fotos que viven como data: (editadas aquí o llegadas del Editor) ───
+  // El backend baja las fotos con httpx y no puede leer un data:, así que
+  // hay que subirlas a Storage primero y mandar ligas de verdad. Las que ya
+  // son http pasan tal cual. Van al mismo bucket de fotos, en su carpeta.
+  async function subirDataUrls(lista) {
+    const uid = (window.__BK_PROFILE && window.__BK_PROFILE.user && window.__BK_PROFILE.user.id) || null;
+    if (!uid) throw new Error('Sesión no lista.');
+    const sello = Date.now();
+    const urls = [];
+    let subidas = 0;
+    const total = lista.filter(u => u.indexOf('data:') === 0).length;
+    for (let i = 0; i < lista.length; i++) {
+      if (lista[i].indexOf('data:') !== 0) { urls.push(lista[i]); continue; }
+      const resp = await fetch(lista[i]);
+      const blob = await resp.blob();
+      const ruta = uid + '/video-fuentes/' + sello + '-' + i + '.jpg';
+      const r = await window.brokrSb.fetch('storage/v1/object/fotos-propiedades/' + ruta, {
+        method: 'POST',
+        body: blob,
+        headers: { 'Content-Type': blob.type || 'image/jpeg', 'x-upsert': 'true' },
+      });
+      if (!r.ok) throw new Error('No se pudo subir la foto ' + (i + 1) + '.');
+      urls.push(window.brokrSb.url + '/storage/v1/object/public/fotos-propiedades/' + ruta);
+      subidas++;
+      $('vid-estado-txt').textContent = 'Subiendo fotos… ' + subidas + ' de ' + total;
+    }
+    return urls;
+  }
+
+  async function desdeEditor(imagenes) {
+    $('vid-q-nota').textContent = imagenes.length +
+      ' fotos llegaron del Editor de imágenes. Elige el formato y genera el recorrido.';
+
+    $('vid-el-img').src = imagenes[0].url;
+    $('vid-el-t').textContent = 'Fotos del Editor de imágenes';
+    $('vid-el-m').textContent = imagenes.length + ' fotos · sin inmueble asignado';
+    tomas = imagenes.map(im => ({ original: im.url, editada: null, usar: 'original',
+                                  file: null, sel: true, estado: '', errCarga: false }));
+    pintarTira();
+    $('vid-editor').hidden = true;
+    const seg = Math.round(imagenes.length * 5.5 - (imagenes.length - 1) * 0.7);
+    $('vid-tira-nota').textContent = imagenes.length + ' fotos, en el orden del editor. ' +
+      'Duración aproximada: ' + seg + ' segundos. Este video no se guarda en el historial ' +
+      'de ningún inmueble porque las fotos no vienen de una ficha.';
+
+    sel = null;
+    pendientesEditor = imagenes;
+    $('vid-armar').hidden = false;
+    notaFormato();
+  }
+
+  // ── Arranque ───────────────────────────────────────────────────────────
+  // El evento se dispara en window, NO en document, y el guard de "ya cargó"
+  // es window.__brokrShellLoaded. Mismo patrón de propiedades.html.
+  async function arranque() {
+    // Si venimos del Editor de imágenes, esas fotos mandan: no hace falta
+    // inventario ni buscador.
+    try {
+      const crudo = sessionStorage.getItem('broquer_editor_images_video');
+      if (crudo) {
+        sessionStorage.removeItem('broquer_editor_images_video');
+        const imgs = JSON.parse(crudo);
+        if (Array.isArray(imgs) && imgs.length >= MIN_FOTOS) { desdeEditor(imgs); return; }
+      }
+    } catch (e) {}
+
+    try {
+      await cargar();
+      $('vid-q-nota').textContent = props.length
+        ? props.length + ' inmuebles con fotos suficientes. Escribe para buscar.'
+        : 'Ninguna ficha tiene al menos dos fotos. Súbelas desde Tus Inmuebles y regresa.';
+    } catch (e) {
+      $('vid-q-nota').textContent = 'No se pudo leer tu inventario: ' + e.message + ' Recarga la página.';
+      return;
+    }
+
+    try {
+      const pre = sessionStorage.getItem('prefill_video');
+      if (!pre) return;
+      sessionStorage.removeItem('prefill_video');
+      elegir(JSON.parse(pre).propiedad_id);
+    } catch (e) {}
+  }
+
+  if (window.__brokrShellLoaded) { arranque(); }
+  else { window.addEventListener('brokr-shell-ready', arranque, { once: true }); }
+
+})();
+</script>
+</body>
+</html>

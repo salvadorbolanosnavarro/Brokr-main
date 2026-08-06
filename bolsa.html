@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
+<title>Broquer — Bolsa inmobiliaria</title>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+  .bl-scroll { padding: 24px 28px 48px; max-width: 1180px; margin: 0 auto; }
+  @media (max-width: 720px) { .bl-scroll { padding: 16px 14px 40px; } }
+
+  .bl-top { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); flex-wrap: wrap; margin-bottom: var(--sp-5); }
+
+  /* Filtros */
+  .bl-filtros { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: var(--sp-3); margin-bottom: var(--sp-5); }
+  @media (max-width: 860px) { .bl-filtros { grid-template-columns: 1fr 1fr; } .bl-filtros .bl-f-q { grid-column: 1 / -1; } }
+  .bl-filtros-mas { display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--sp-3); margin: calc(var(--sp-3) * -1) 0 var(--sp-5); }
+  @media (max-width: 860px) { .bl-filtros-mas { grid-template-columns: 1fr 1fr; } }
+  .bl-mas-btn { justify-self: start; }
+
+  /* Grid de tarjetas */
+  .bl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--sp-4); }
+  .bl-card { display: flex; flex-direction: column; overflow: hidden; }
+  .bl-foto { position: relative; aspect-ratio: 4 / 3; background: var(--paper-2); }
+  .bl-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .bl-foto .bl-com { position: absolute; top: var(--sp-2); left: var(--sp-2); }
+  .bl-body { padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-2); flex: 1; }
+  .bl-precio { font-size: var(--fs-h3); font-weight: 700; color: var(--ink); }
+  .bl-titulo { font-size: var(--fs-sm); color: var(--ink-2); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .bl-ubi { font-size: var(--fs-xs); color: var(--mute); }
+  .bl-specs { display: flex; gap: var(--sp-3); flex-wrap: wrap; font-size: var(--fs-xs); color: var(--mute); }
+  .bl-agente { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); border-top: 1px solid var(--line-2); padding: var(--sp-3) var(--sp-4); }
+  .bl-agente .n { font-size: var(--fs-xs); color: var(--ink-2); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bl-wa {
+    display: inline-flex; align-items: center; gap: var(--sp-1);
+    background: var(--brand-whatsapp); color: #fff; border: none; cursor: pointer;
+    font-size: var(--fs-xs); font-weight: 600; padding: 8px 12px; border-radius: var(--r-pill);
+    text-decoration: none; flex-shrink: 0;
+  }
+  .bl-wa:hover { background: var(--brand-whatsapp-press); }
+  .bl-notas { font-size: var(--fs-xs); color: var(--mute); background: var(--paper-2); border-radius: var(--r-sm); padding: var(--sp-2) var(--sp-3); }
+
+  /* Mis publicaciones */
+  .bl-mia { display: flex; gap: var(--sp-4); align-items: flex-start; }
+  .bl-mia .th { width: 84px; height: 64px; border-radius: var(--r-sm); object-fit: cover; background: var(--paper-2); flex-shrink: 0; }
+  .bl-mia .info { flex: 1; min-width: 0; }
+  .bl-mia .acciones { display: flex; gap: var(--sp-2); align-items: flex-end; flex-wrap: wrap; }
+  .bl-mia .acciones .bk-field { margin: 0; }
+  .bl-com-input { width: 110px; }
+  @media (max-width: 720px) {
+    .bl-mia { flex-direction: column; }
+    .bl-mia .th { width: 100%; height: 140px; }
+  }
+  .bl-lista { display: flex; flex-direction: column; gap: var(--sp-3); }
+
+  .bl-pag { display: flex; justify-content: center; gap: var(--sp-2); margin-top: var(--sp-6); align-items: center; }
+  .bl-pag span { font-size: var(--fs-sm); color: var(--mute); }
+
+  .bl-skel { height: 320px; background: var(--paper-2); border-radius: var(--r-md); }
+</style>
+</head>
+<body data-app="bolsa">
+
+<div class="bl-scroll">
+
+  <div class="bl-top">
+    <div class="bk-seg" role="tablist">
+      <button class="bk-seg__btn is-active" id="bl-tab-explorar" type="button">Explorar bolsa</button>
+      <button class="bk-seg__btn" id="bl-tab-mis" type="button">Mis publicaciones</button>
+    </div>
+  </div>
+
+  <!-- ═══ PANEL: EXPLORAR ═══ -->
+  <section id="bl-panel-explorar">
+
+    <div class="bl-filtros">
+      <div class="bk-field bl-f-q" style="margin:0;">
+        <input class="bk-input" id="bl-f-q" type="search" placeholder="Buscar por título, colonia o ciudad"/>
+      </div>
+      <div class="bk-field" style="margin:0;">
+        <input class="bk-input" id="bl-f-ciudad" type="text" placeholder="Ciudad"/>
+      </div>
+      <div class="bk-field" style="margin:0;">
+        <select class="bk-select" id="bl-f-tipo">
+          <option value="">Tipo</option>
+          <option value="casa">Casa</option>
+          <option value="departamento">Departamento</option>
+          <option value="terreno">Terreno</option>
+          <option value="local">Local</option>
+          <option value="oficina">Oficina</option>
+          <option value="bodega">Bodega</option>
+        </select>
+      </div>
+      <div class="bk-field" style="margin:0;">
+        <select class="bk-select" id="bl-f-op">
+          <option value="">Operación</option>
+          <option value="venta">Venta</option>
+          <option value="renta">Renta</option>
+        </select>
+      </div>
+      <button class="bk-btn bk-btn--forest" id="bl-f-buscar" type="button">Buscar</button>
+    </div>
+
+    <div class="bk-cluster" style="margin:calc(var(--sp-3) * -1) 0 var(--sp-4);">
+      <button class="bk-btn bk-btn--ghost bl-mas-btn" id="bl-f-mas" type="button">Más filtros</button>
+    </div>
+
+    <div class="bl-filtros-mas" id="bl-filtros-mas" hidden>
+      <div class="bk-field" style="margin:0;">
+        <label class="bk-label" for="bl-f-estado">Estado</label>
+        <input class="bk-input" id="bl-f-estado" type="text" placeholder="Michoacán"/>
+      </div>
+      <div class="bk-field" style="margin:0;">
+        <label class="bk-label" for="bl-f-pmin">Precio desde</label>
+        <input class="bk-input" id="bl-f-pmin" type="number" min="0" placeholder="0"/>
+      </div>
+      <div class="bk-field" style="margin:0;">
+        <label class="bk-label" for="bl-f-pmax">Precio hasta</label>
+        <input class="bk-input" id="bl-f-pmax" type="number" min="0" placeholder="Sin tope"/>
+      </div>
+      <div class="bk-field" style="margin:0;">
+        <label class="bk-label" for="bl-f-rec">Recámaras mín.</label>
+        <select class="bk-select" id="bl-f-rec">
+          <option value="">Cualquiera</option>
+          <option value="1">1+</option><option value="2">2+</option>
+          <option value="3">3+</option><option value="4">4+</option>
+        </select>
+      </div>
+      <div class="bk-field" style="margin:0;">
+        <label class="bk-label" for="bl-f-ban">Baños mín.</label>
+        <select class="bk-select" id="bl-f-ban">
+          <option value="">Cualquiera</option>
+          <option value="1">1+</option><option value="2">2+</option><option value="3">3+</option>
+        </select>
+      </div>
+      <div class="bk-field" style="margin:0;">
+        <label class="bk-label" for="bl-f-orden">Ordenar por</label>
+        <select class="bk-select" id="bl-f-orden">
+          <option value="reciente">Más recientes</option>
+          <option value="precio_asc">Precio: menor a mayor</option>
+          <option value="precio_desc">Precio: mayor a menor</option>
+          <option value="comision">Mayor comisión compartida</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="bl-grid" id="bl-grid"></div>
+
+    <div class="bk-empty" hidden id="bl-empty">
+      <div class="bk-empty__icon">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75"/>
+        </svg>
+      </div>
+      <div class="bk-empty__title">La bolsa aún no tiene propiedades con estos filtros</div>
+      <div class="bk-empty__text">Sé el primero: publica un inmueble de tu inventario desde la pestaña Mis publicaciones.</div>
+    </div>
+
+    <div class="bl-pag" id="bl-pag" hidden>
+      <button class="bk-btn bk-btn--ghost" id="bl-prev" type="button">Anterior</button>
+      <span id="bl-pag-txt"></span>
+      <button class="bk-btn bk-btn--ghost" id="bl-next" type="button">Siguiente</button>
+    </div>
+
+  </section>
+
+  <!-- ═══ PANEL: MIS PUBLICACIONES ═══ -->
+  <section id="bl-panel-mis" hidden>
+
+    <div class="bk-card bk-card--pad" style="margin-bottom:var(--sp-4);">
+      <p style="font-size:var(--fs-sm);color:var(--mute);margin:0;">
+        Publica inmuebles de tu inventario a la bolsa Broquer para que otros agentes
+        de la plataforma los vean y te traigan comprador. Tú decides qué porcentaje
+        de tu comisión compartes. Tu dirección exacta nunca se muestra: solo colonia y ciudad.
+      </p>
+    </div>
+
+    <div class="bl-lista" id="bl-mis-lista"></div>
+
+    <div class="bk-empty" hidden id="bl-mis-empty">
+      <div class="bk-empty__icon">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+      </div>
+      <div class="bk-empty__title">No tienes propiedades activas</div>
+      <div class="bk-empty__text">Agrega inmuebles en Tus Inmuebles y regresa aquí para publicarlos en la bolsa.</div>
+      <a class="bk-btn bk-btn--forest bk-empty__action" href="propiedades.html">Ir a Tus Inmuebles</a>
+    </div>
+
+  </section>
+
+</div>
+
+<script src="app-shell.js" defer></script>
+<script>
+(function () {
+  'use strict';
+  var API_BASE = 'https://api.broquer.app';
+
+  /* ── fetch autenticado (mismo patrón que cumplimiento.html) ── */
+  async function api(path, opts) {
+    opts = opts || {};
+    var sb = window.brokrSb;
+    if (!sb || !sb.ensureToken) throw new Error('La app aún se está cargando. Intenta en un segundo.');
+    var tok = await sb.ensureToken();
+    var headers = Object.assign({}, opts.headers || {});
+    if (tok) headers['Authorization'] = 'Bearer ' + tok;
+    var body = opts.body;
+    if (opts.json !== undefined) {
+      headers['Content-Type'] = 'application/json';
+      body = JSON.stringify(opts.json);
+    }
+    var r = await fetch(API_BASE + path, { method: opts.method || 'GET', headers: headers, body: body });
+    if (r.status === 401 && sb.refreshNow) {
+      tok = await sb.refreshNow();
+      if (tok) {
+        headers['Authorization'] = 'Bearer ' + tok;
+        r = await fetch(API_BASE + path, { method: opts.method || 'GET', headers: headers, body: body });
+      }
+    }
+    var data = null;
+    try { data = await r.json(); } catch (e) { data = null; }
+    if (!r.ok) throw new Error((data && data.detail) || 'No se pudo completar la acción.');
+    return data;
+  }
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function dinero(v, moneda) {
+    if (v == null) return 'Precio a tratar';
+    var n = Number(v);
+    var s = n.toLocaleString('es-MX', { maximumFractionDigits: 0 });
+    return '$' + s + ' ' + (moneda || 'MXN');
+  }
+  var TIPOS = { casa: 'Casa', departamento: 'Departamento', terreno: 'Terreno', local: 'Local', oficina: 'Oficina', bodega: 'Bodega' };
+  function tipoTxt(t) { return TIPOS[t] || (t ? t.charAt(0).toUpperCase() + t.slice(1) : 'Inmueble'); }
+
+  /* ── Tabs ── */
+  var tabExp = el('bl-tab-explorar'), tabMis = el('bl-tab-mis');
+  var panExp = el('bl-panel-explorar'), panMis = el('bl-panel-mis');
+  var misCargadas = false;
+  tabExp.onclick = function () {
+    tabExp.classList.add('is-active'); tabMis.classList.remove('is-active');
+    panExp.hidden = false; panMis.hidden = true;
+  };
+  tabMis.onclick = function () {
+    tabMis.classList.add('is-active'); tabExp.classList.remove('is-active');
+    panMis.hidden = false; panExp.hidden = true;
+    if (!misCargadas) cargarMis();
+  };
+
+  /* ══ EXPLORAR ══ */
+  var pagina = 1, paginas = 1;
+
+  function specs(p) {
+    var out = [];
+    if (p.recamaras) out.push(p.recamaras + ' rec');
+    if (p.banos) out.push(p.banos + ' baños');
+    if (p.m2_construccion) out.push(Math.round(p.m2_construccion) + ' m² const.');
+    if (p.m2_terreno) out.push(Math.round(p.m2_terreno) + ' m² terreno');
+    if (p.estacionamientos) out.push(p.estacionamientos + ' autos');
+    return out.map(function (s) { return '<span>' + esc(s) + '</span>'; }).join('');
+  }
+
+  function tarjeta(p) {
+    var foto = (p.fotos && p.fotos[0]) ? p.fotos[0] : '';
+    var ubi = [p.colonia, p.ciudad, p.estado].filter(Boolean).join(', ');
+    var com = (p.bolsa_comision != null)
+      ? '<span class="bk-badge bk-badge--success bl-com">Comparte ' + esc(p.bolsa_comision) + '%</span>' : '';
+    var wa = '';
+    if (p.propia) {
+      wa = '<span class="bk-badge">Tuya</span>';
+    } else if (p.agente && p.agente.telefono) {
+      var msg = encodeURIComponent('Hola ' + (p.agente.nombre || '') + ', vi tu propiedad "' + (p.titulo || '') + '" en la bolsa Broquer y tengo un cliente interesado.');
+      var num = p.agente.telefono.length === 10 ? '52' + p.agente.telefono : p.agente.telefono;
+      wa = '<a class="bl-wa" target="_blank" rel="noopener" href="https://wa.me/' + esc(num) + '?text=' + msg + '">' +
+           '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.5 0 1.47 1.07 2.9 1.22 3.1.15.2 2.1 3.2 5.1 4.49.71.31 1.27.49 1.7.63.72.23 1.37.2 1.88.12.57-.09 1.76-.72 2.01-1.42.25-.7.25-1.3.17-1.42-.07-.12-.27-.2-.57-.35zM12.05 21.8h-.01a9.87 9.87 0 01-5.03-1.38l-.36-.21-3.74.98 1-3.65-.24-.37a9.86 9.86 0 01-1.51-5.26c0-5.45 4.44-9.88 9.9-9.88a9.83 9.83 0 016.99 2.9 9.82 9.82 0 012.9 7c0 5.45-4.44 9.88-9.9 9.88zm8.42-18.3A11.8 11.8 0 0012.05 0C5.5 0 .16 5.33.16 11.9c0 2.1.55 4.14 1.59 5.94L.06 24l6.3-1.65a11.9 11.9 0 005.68 1.45h.01c6.55 0 11.89-5.33 11.89-11.9a11.82 11.82 0 00-3.47-8.4z"/></svg>' +
+           'WhatsApp</a>';
+    }
+    var notas = p.bolsa_notas ? '<div class="bl-notas">' + esc(p.bolsa_notas) + '</div>' : '';
+    return '<article class="bk-card bk-card--raise bk-card--hover bl-card">' +
+      '<div class="bl-foto">' + (foto ? '<img loading="lazy" src="' + esc(foto) + '" alt=""/>' : '') + com + '</div>' +
+      '<div class="bl-body">' +
+        '<div class="bl-precio">' + esc(dinero(p.precio, p.moneda)) + (p.operacion === 'renta' ? ' <span style="font-size:var(--fs-xs);color:var(--mute);font-weight:400;">/ mes</span>' : '') + '</div>' +
+        '<div class="bl-titulo">' + esc(p.titulo || tipoTxt(p.tipo)) + '</div>' +
+        '<div class="bl-ubi">' + esc(ubi) + '</div>' +
+        '<div class="bl-specs">' + specs(p) + '</div>' +
+        notas +
+      '</div>' +
+      '<div class="bl-agente"><span class="n">' + esc((p.agente && p.agente.nombre) || 'Agente Broquer') + '</span>' + wa + '</div>' +
+    '</article>';
+  }
+
+  async function cargarBolsa() {
+    var grid = el('bl-grid');
+    grid.innerHTML = '<div class="bl-skel"></div><div class="bl-skel"></div><div class="bl-skel"></div>';
+    el('bl-empty').hidden = true;
+    el('bl-pag').hidden = true;
+    var qs = new URLSearchParams({ page: String(pagina) });
+    var q = el('bl-f-q').value.trim(); if (q) qs.set('q', q);
+    var c = el('bl-f-ciudad').value.trim(); if (c) qs.set('ciudad', c);
+    var t = el('bl-f-tipo').value; if (t) qs.set('tipo', t);
+    var o = el('bl-f-op').value; if (o) qs.set('operacion', o);
+    var edo = el('bl-f-estado').value.trim(); if (edo) qs.set('estado', edo);
+    var pmin = el('bl-f-pmin').value; if (pmin) qs.set('precio_min', pmin);
+    var pmax = el('bl-f-pmax').value; if (pmax) qs.set('precio_max', pmax);
+    var rec = el('bl-f-rec').value; if (rec) qs.set('recamaras_min', rec);
+    var ban = el('bl-f-ban').value; if (ban) qs.set('banos_min', ban);
+    var ord = el('bl-f-orden').value; if (ord && ord !== 'reciente') qs.set('orden', ord);
+    try {
+      var data = await api('/bolsa/propiedades?' + qs.toString());
+      var props = data.propiedades || [];
+      paginas = data.paginas || 1;
+      if (!props.length) {
+        grid.innerHTML = '';
+        el('bl-empty').hidden = false;
+        return;
+      }
+      grid.innerHTML = props.map(tarjeta).join('');
+      if (paginas > 1) {
+        el('bl-pag').hidden = false;
+        el('bl-pag-txt').textContent = 'Página ' + (data.page || pagina) + ' de ' + paginas;
+        el('bl-prev').disabled = pagina <= 1;
+        el('bl-next').disabled = pagina >= paginas;
+      }
+    } catch (e) {
+      grid.innerHTML = '';
+      el('bl-empty').hidden = false;
+      el('bl-empty').querySelector('.bk-empty__title').textContent = e.message || 'No se pudo cargar la bolsa';
+    }
+  }
+
+  el('bl-f-mas').onclick = function () {
+    var fila = el('bl-filtros-mas');
+    fila.hidden = !fila.hidden;
+    el('bl-f-mas').textContent = fila.hidden ? 'Más filtros' : 'Menos filtros';
+  };
+  el('bl-f-orden').addEventListener('change', function () { pagina = 1; cargarBolsa(); });
+  el('bl-f-buscar').onclick = function () { pagina = 1; cargarBolsa(); };
+  el('bl-f-q').addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { pagina = 1; cargarBolsa(); } });
+  el('bl-prev').onclick = function () { if (pagina > 1) { pagina--; cargarBolsa(); } };
+  el('bl-next').onclick = function () { if (pagina < paginas) { pagina++; cargarBolsa(); } };
+
+  /* ══ MIS PUBLICACIONES ══ */
+  function filaMia(p) {
+    var foto = (p.fotos && p.fotos[0]) ? '<img class="th" loading="lazy" src="' + esc(p.fotos[0]) + '" alt=""/>' : '<div class="th"></div>';
+    var estado = p.en_bolsa
+      ? '<span class="bk-badge bk-badge--success">En bolsa · comparte ' + esc(p.bolsa_comision != null ? p.bolsa_comision : 0) + '%</span>'
+      : '<span class="bk-badge">Sin publicar</span>';
+    var acciones;
+    if (p.en_bolsa) {
+      acciones = '<button class="bk-btn bk-btn--ghost" type="button" data-retirar="' + esc(p.id) + '">Retirar de la bolsa</button>';
+    } else {
+      acciones =
+        '<div class="bk-field"><label class="bk-label" for="com-' + esc(p.id) + '">Comisión que compartes</label>' +
+        '<input class="bk-input bl-com-input" id="com-' + esc(p.id) + '" type="number" min="0" max="100" step="0.5" value="50" aria-describedby="com-' + esc(p.id) + '"/></div>' +
+        '<div class="bk-field" style="flex:1;min-width:180px;"><label class="bk-label" for="not-' + esc(p.id) + '">Notas para otros agentes (opcional)</label>' +
+        '<input class="bk-input" id="not-' + esc(p.id) + '" type="text" maxlength="600" placeholder="Ej. 50/50 sobre comisión total del 5%"/></div>' +
+        '<button class="bk-btn bk-btn--forest" type="button" data-publicar="' + esc(p.id) + '">Publicar</button>';
+    }
+    var ubi = [p.colonia, p.ciudad].filter(Boolean).join(', ');
+    return '<article class="bk-card bk-card--pad bk-card--raise bl-mia" data-prop="' + esc(p.id) + '">' +
+      foto +
+      '<div class="info">' +
+        '<div class="bk-cluster" style="margin-bottom:var(--sp-1);">' + estado + '</div>' +
+        '<h3 style="font-size:var(--fs-base);margin:0 0 2px;">' + esc(p.titulo || tipoTxt(p.tipo)) + '</h3>' +
+        '<div class="bl-ubi" style="margin-bottom:var(--sp-3);">' + esc(dinero(p.precio, p.moneda)) + (ubi ? ' · ' + esc(ubi) : '') + '</div>' +
+        '<div class="acciones">' + acciones + '</div>' +
+      '</div>' +
+    '</article>';
+  }
+
+  async function cargarMis() {
+    misCargadas = true;
+    var lista = el('bl-mis-lista');
+    lista.innerHTML = '<div class="bl-skel" style="height:120px;"></div>';
+    el('bl-mis-empty').hidden = true;
+    try {
+      var data = await api('/bolsa/mis');
+      var props = data.propiedades || [];
+      if (!props.length) {
+        lista.innerHTML = '';
+        el('bl-mis-empty').hidden = false;
+        return;
+      }
+      lista.innerHTML = props.map(filaMia).join('');
+    } catch (e) {
+      lista.innerHTML = '';
+      el('bl-mis-empty').hidden = false;
+      el('bl-mis-empty').querySelector('.bk-empty__title').textContent = e.message || 'No se pudo leer tu inventario';
+    }
+  }
+
+  el('bl-mis-lista').addEventListener('click', async function (ev) {
+    var btn = ev.target.closest('button[data-publicar], button[data-retirar]');
+    if (!btn) return;
+    var pubId = btn.getAttribute('data-publicar');
+    var retId = btn.getAttribute('data-retirar');
+    btn.disabled = true;
+    try {
+      if (pubId) {
+        var com = parseFloat((el('com-' + pubId) || {}).value);
+        if (isNaN(com) || com < 0 || com > 100) {
+          alert('La comisión compartida debe estar entre 0 y 100.');
+          btn.disabled = false;
+          return;
+        }
+        var notas = (el('not-' + pubId) || {}).value || '';
+        await api('/bolsa/publicar', { method: 'POST', json: { propiedad_id: pubId, comision: com, notas: notas } });
+      } else {
+        await api('/bolsa/retirar', { method: 'POST', json: { propiedad_id: retId } });
+      }
+      await cargarMis();
+    } catch (e) {
+      alert(e.message || 'No se pudo completar la acción.');
+      btn.disabled = false;
+    }
+  });
+
+  /* ── Arranque: espera al shell ── */
+  function arrancar() { cargarBolsa(); }
+  if (window.brokrSb && window.brokrSb.ensureToken) arrancar();
+  else document.addEventListener('brokr-shell-ready', arrancar, { once: true });
+})();
+</script>
+</body>
+</html>

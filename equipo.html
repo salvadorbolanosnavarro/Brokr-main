@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
 <title>Broquer — Equipo</title>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
@@ -81,9 +81,12 @@
         Con Broquer para empresas tu inmobiliaria trabaja sobre un mismo inventario, y tú decides
         qué ve cada agente. Los teléfonos de tus propietarios y tus comisiones quedan bajo tu control.
       </p>
-      <a class="bk-btn bk-btn--forest" href="mailto:hola@broquer.app?subject=Broquer%20para%20empresas">
-        Contáctanos
+      <a class="bk-btn bk-btn--forest" href="empresas.html">
+        Contratar Broquer para empresas
       </a>
+      <p style="font-size:var(--fs-xs);color:var(--mute);line-height:1.6;margin-top:var(--sp-3);">
+        Desde 5 usuarios. Agregas o quitas lugares cuando quieras.
+      </p>
     </div>
   </div>
 
@@ -100,6 +103,11 @@
 
   <!-- ═══ Vista de administrador ═══ -->
   <div id="eq-admin" hidden>
+
+    <div class="bk-alert bk-alert--info" id="eq-lugares" hidden style="margin-bottom:var(--sp-5);">
+      <span id="eq-lugares-txt"></span>
+      <a href="empresas.html" style="font-weight:600;text-decoration:underline;">Administrar lugares</a>
+    </div>
 
     <div class="bk-section-header">
       <h2>Miembros</h2>
@@ -379,6 +387,15 @@
 
     // ── Administrador ──
     $('#eq-admin').hidden = false;
+
+    // Lugares contratados contra lugares usados. El dueño los cambia en empresas.html.
+    if (data.asientos_max) {
+      const activos = data.miembros.filter((m) => m.activo).length;
+      $('#eq-lugares-txt').textContent =
+        'Usas ' + activos + ' de ' + data.asientos_max + ' lugares contratados. ';
+      $('#eq-lugares').hidden = false;
+    }
+
     const cont = $('#eq-lista');
     cont.innerHTML = '';
     data.miembros.forEach((m) => {

@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
 <title>Inmuebles — Broquer</title>
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
@@ -110,6 +110,19 @@
   cursor: pointer;
 }
 .eb-import-btn:hover { background: var(--ink-2); }
+.eb-import-picker { text-align: left; margin-bottom: 4px; }
+.eb-pick-opt {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px; border-radius: var(--r-sm);
+  font-size: var(--fs-sm); color: var(--ink); cursor: pointer;
+}
+.eb-pick-opt:hover { background: var(--paper-2); }
+.eb-pick-opt input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--ink); }
+.eb-pick-note {
+  font-size: var(--fs-caption); color: var(--mute);
+  margin-top: 10px; padding: 0 10px; line-height: 1.5;
+}
+.eb-pick-actions { text-align: center; }
 .eb-import-errs {
   font-size: var(--fs-caption); color: var(--danger); text-align: left;
   max-height: 80px; overflow-y: auto; margin-top: 10px;
@@ -913,6 +926,7 @@
 /* Badges de estatus adicionales */
 .badge-reservada  { background: var(--info-soft);  color: var(--info); }
 .badge-en_proceso { background: var(--warn-soft); color: var(--warn); }
+.badge-no_activa  { background: var(--paper-2);  color: var(--ink-3); }
 
 /* CSV import */
 .csv-drop {
@@ -990,10 +1004,6 @@
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
             Importar de EasyBroker
           </button>
-          <button class="btn-import-eb" onclick="migrarFotosABroquer()" title="Baja las fotos de EasyBroker a tu propio servidor">
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            Pasar fotos a Broquer
-          </button>
           <button class="btn-new-prop" onclick="openPropForm(null)">
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
             Nuevo inmueble
@@ -1039,6 +1049,7 @@
             <label class="props-est-option"><input type="checkbox" value="vendida" onchange="filterProps()"> Vendida</label>
             <label class="props-est-option"><input type="checkbox" value="rentada" onchange="filterProps()"> Rentada</label>
             <label class="props-est-option"><input type="checkbox" value="suspendida" onchange="filterProps()"> Suspendida</label>
+            <label class="props-est-option"><input type="checkbox" value="no_activa" onchange="filterProps()"> No activo (por revisar)</label>
           </div>
         </div>
 
@@ -1094,7 +1105,7 @@
         <div class="pf-row">
           <div class="pf-field"><label>Tipo</label><select name="tipo" required><option value="">Seleccionar</option><option value="casa">Casa</option><option value="departamento">Departamento</option><option value="terreno">Terreno</option><option value="local">Local comercial</option><option value="oficina">Oficina</option><option value="bodega">Bodega</option></select></div>
           <div class="pf-field"><label>Operación</label><select name="operacion" required onchange="pfActualizarComision(this.value)"><option value="">Seleccionar</option><option value="venta">Venta</option><option value="renta">Renta</option></select></div>
-          <div class="pf-field"><label>Estatus</label><select name="estatus"><option value="activa">Activa</option><option value="reservada">Reservada</option><option value="en_proceso">En proceso</option><option value="vendida">Vendida</option><option value="rentada">Rentada</option><option value="suspendida">Suspendida</option></select></div>
+          <div class="pf-field"><label>Estatus</label><select name="estatus"><option value="activa">Activa</option><option value="reservada">Reservada</option><option value="en_proceso">En proceso</option><option value="vendida">Vendida</option><option value="rentada">Rentada</option><option value="suspendida">Suspendida</option><option value="no_activa">No activo (por revisar)</option></select></div>
         </div>
         <div class="pf-row">
           <div class="pf-field"><label>Precio</label><input type="text" name="precio" placeholder="$2,500,000" oninput="propFmtMoney(this)" required/></div>
@@ -1161,6 +1172,16 @@
           <div class="pf-field"><label>Comisión compartida</label><select name="comision_compartida_sel" id="pf-comp-sel"><option value="">No indicado</option><option value="si">Sí</option><option value="no">No</option></select></div>
         </div>
         <div class="pf-row"><div class="pf-field full"><label>Condiciones para compartir</label><input type="text" name="condiciones_compartir" placeholder="50/50 con colegas de AMPI…"/></div></div>
+        <div class="pf-row"><div class="pf-field full">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:var(--fs-sm);color:var(--ink);text-transform:none;letter-spacing:normal">
+            <input type="checkbox" name="en_bolsa" id="pf-en-bolsa" onchange="pfToggleBolsa(this.checked)" style="width:18px;height:18px;cursor:pointer;accent-color:var(--ink)"/>
+            <span><strong>Publicar en la bolsa Broquer</strong> <span style="color:var(--mute)">— otros agentes de la plataforma podrán verla y traerte comprador. Tu dirección exacta no se muestra: solo colonia y ciudad.</span></span>
+          </label>
+        </div></div>
+        <div class="pf-row" id="pf-bolsa-row" style="display:none">
+          <div class="pf-field"><label>Comisión que compartes (%)</label><input type="number" name="bolsa_comision" id="pf-bolsa-comision" placeholder="50" min="0" max="100" step="0.5"/></div>
+          <div class="pf-field full" style="grid-column:span 2"><label>Notas para otros agentes</label><input type="text" name="bolsa_notas" maxlength="600" placeholder="Ej. 50/50 sobre comisión total del 5%"/></div>
+        </div>
 
         <div class="pf-section">Etiquetas y control interno</div>
         <div class="pf-row">
@@ -1229,6 +1250,7 @@
         <option value="vendida">Vendida</option>
         <option value="rentada">Rentada</option>
         <option value="suspendida">Suspendida</option>
+        <option value="no_activa">No activo (por revisar)</option>
       </select>
       <div class="spacer"></div>
       <button class="prop-act-btn" style="flex:0 0 auto" onclick="duplicarProp()" title="Crear una copia de este inmueble">
@@ -1243,7 +1265,7 @@
     <div class="pd-tabs">
       <button class="pd-tab is-active" id="pd-tab-btn-detalles" onclick="pdSetTab('detalles')">Detalles</button>
       <button class="pd-tab" id="pd-tab-btn-hist" onclick="pdSetTab('hist')">Historial <span class="n" id="pd-n-hist">·</span></button>
-      <button class="pd-tab" id="pd-tab-btn-int" onclick="pdSetTab('int')">Interesados <span class="n" id="pd-n-int">·</span></button>
+      <button class="pd-tab" id="pd-tab-btn-int" onclick="pdSetTab('int')">Contactos <span class="n" id="pd-n-int">·</span></button>
       <button class="pd-tab" id="pd-tab-btn-tareas" onclick="pdSetTab('tareas')">Tareas <span class="n" id="pd-n-tareas">·</span></button>
     </div>
     <div class="prop-modal-body">
@@ -1273,6 +1295,10 @@
           <input type="date" id="pd-tarea-fecha"/>
           <button class="go" id="pd-tarea-btn" onclick="pdAgregarTarea()">Agregar</button>
         </div>
+        <div class="pd-composer">
+          <select id="pd-vinculo-tarea"></select>
+          <button class="go" onclick="pdVincularTareaExistente()">Vincular existente</button>
+        </div>
         <div id="pd-tareas-feed"></div>
       </div>
     </div>
@@ -1290,6 +1316,23 @@ let allProps = [];
 let editingPropId = null;
 let uploadedFotoUrls = [];
 let selectedIds = new Set();  // IDs de propiedades seleccionadas para borrado masivo
+// ¿Este usuario puede eliminar? En una empresa, solo el dueño o un
+// administrador. Arranca en false a propósito: si la consulta falla, no se
+// muestran los botones de borrar. Más vale esconder de más que de menos.
+let puedeEliminar = false;
+
+async function cargarPermisoEliminar() {
+  try {
+    const token = await getValidToken();
+    if (!token) return;
+    const r = await fetch(API_BASE + '/org', { headers: { Authorization: 'Bearer ' + token } });
+    if (!r.ok) return;
+    const org = await r.json();
+    puedeEliminar = !org.es_empresa || org.es_admin === true;
+  } catch (e) {
+    puedeEliminar = false;
+  }
+}
 
 function g(id) { return document.getElementById(id); }
 function getRawNum(val) { return parseFloat((val||'').replace(/[$,]/g,'').trim()) || 0; }
@@ -1365,6 +1408,7 @@ async function loadProps() {
   const grid = g('props-grid');
   grid.innerHTML = '<div class="props-empty"><h3>Cargando inmuebles…</h3></div>';
   g('props-pager').style.display = 'none';
+  await cargarPermisoEliminar();
   try {
     // Sin límite duro: traemos todo (Supabase devuelve max 1000 por default,
     // suficiente para casi cualquier agencia). Si necesitas más, abrimos paginación server-side.
@@ -1484,9 +1528,9 @@ function renderProps(props, totalForCount) {
           <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           Ficha
         </button>
-        <button class="prop-act-btn prop-act-del" onclick="event.stopPropagation();deleteProp('${p.id}')">
+        ${puedeEliminar ? `<button class="prop-act-btn prop-act-del" onclick="event.stopPropagation();deleteProp('${p.id}')">
           <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
-        </button>
+        </button>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -1522,7 +1566,7 @@ function updateEstLabel() {
   if (selected.length === 0) {
     label.textContent = 'Todos los estatus';
   } else if (selected.length === 1) {
-    const map = { activa: 'Activa', vendida: 'Vendida', rentada: 'Rentada', suspendida: 'Suspendida' };
+    const map = { activa: 'Activa', reservada: 'Reservada', en_proceso: 'En proceso', vendida: 'Vendida', rentada: 'Rentada', suspendida: 'Suspendida', no_activa: 'No activo' };
     label.textContent = map[selected[0]] || selected[0];
   } else {
     label.textContent = selected.length + ' estatus';
@@ -1608,6 +1652,7 @@ function openPropForm(id) {
     }
     if (form.elements['mostrar_precio']) form.elements['mostrar_precio'].checked = p.mostrar_precio !== false;
     if (form.elements['mostrar_ubicacion_exacta']) form.elements['mostrar_ubicacion_exacta'].checked = p.mostrar_ubicacion_exacta === true;
+    if (form.elements['en_bolsa']) { form.elements['en_bolsa'].checked = p.en_bolsa === true; pfToggleBolsa(p.en_bolsa === true); }
     const compSel = g('pf-comp-sel');
     if (compSel) compSel.value = p.comision_compartida === true ? 'si' : (p.comision_compartida === false ? 'no' : '');
     pfActualizarComision(p.operacion || '');
@@ -1632,6 +1677,7 @@ function openPropForm(id) {
     g('prop-modal-title').textContent = 'Nuevo inmueble';
     form.elements['prop_id'].value = '';
     pfActualizarComision('');
+    pfToggleBolsa(false);
   }
   // El checkbox de FB solo aplica a propiedades NUEVAS y solo si el usuario tiene FB conectado
   const fbRow = document.getElementById('fb-publish-row');
@@ -1664,6 +1710,12 @@ async function checkFbConnectionForForm() {
 }
 
 function closePropModal() { g('prop-modal').style.display = 'none'; }
+function pfToggleBolsa(on) {
+  const row = g('pf-bolsa-row');
+  if (row) row.style.display = on ? '' : 'none';
+  const com = g('pf-bolsa-comision');
+  if (com && on && !com.value) com.value = '50';
+}
 
 async function saveProp(e) {
   e.preventDefault();
@@ -1691,6 +1743,21 @@ async function saveProp(e) {
   // Checkboxes: si no vienen en FormData es que están desmarcados
   data.mostrar_precio = 'mostrar_precio' in data;
   data.mostrar_ubicacion_exacta = 'mostrar_ubicacion_exacta' in data;
+  // Bolsa Broquer: checkbox → boolean; al publicar se sella la fecha
+  data.en_bolsa = 'en_bolsa' in data;
+  if (data.en_bolsa) {
+    const bc = Number(data.bolsa_comision);
+    if (isNaN(bc) || bc < 0 || bc > 100) {
+      alert('Para publicar en la bolsa, la comisión compartida debe estar entre 0 y 100.');
+      return;
+    }
+    data.bolsa_comision = bc;
+    data.bolsa_notas = (data.bolsa_notas || '').trim() || null;
+    data.bolsa_fecha = new Date().toISOString();
+  } else {
+    delete data.bolsa_comision;
+    delete data.bolsa_notas;
+  }
   // Comisión contextual: el input es uno, la columna depende de la operación
   {
     const comVal = data.comision_venta_pct !== undefined ? Number(data.comision_venta_pct) : null;
@@ -1780,6 +1847,7 @@ async function publicarEnFacebook(prop) {
 // Click en una card: si hay algo seleccionado, click toggle selección.
 // Si no hay nada seleccionado, click abre el detalle como siempre.
 function onPropCardClick(event, id) {
+  if (!puedeEliminar) { openPropDetail(id); return; }
   if (selectedIds.size > 0) {
     event.stopPropagation();
     toggleSelectProp(id);
@@ -1789,12 +1857,14 @@ function onPropCardClick(event, id) {
 }
 
 function toggleSelectProp(id) {
+  if (!puedeEliminar) return;
   if (selectedIds.has(id)) selectedIds.delete(id);
   else selectedIds.add(id);
   updateSelectionUI();
 }
 
 function toggleSelectAll() {
+  if (!puedeEliminar) return;
   // Selecciona/deselecciona TODAS las propiedades que coinciden con el filtro
   // actual (no solo las visibles en la página). Esto incluye páginas siguientes.
   const filteredIds = (filteredProps || []).map(p => p.id);
@@ -1853,6 +1923,7 @@ function updateSelectionUI() {
 
 // Modal de confirmación
 function confirmarBorrarSeleccionados() {
+  if (!puedeEliminar) return;
   if (selectedIds.size === 0) return;
   const n = selectedIds.size;
   g('confirm-del-title').textContent = `¿Eliminar ${n} ${n === 1 ? 'inmueble' : 'inmuebles'}?`;
@@ -1865,7 +1936,10 @@ function cerrarConfirmDel() {
   g('confirm-del-overlay').classList.remove('is-open');
 }
 
-// Borrado masivo en lotes a Supabase + limpia fotos del Storage
+// Borrado masivo. Lo ejecuta el servidor, no el navegador: así el permiso
+// se revisa del lado seguro (un agente solo puede borrar lo suyo; el
+// inventario de toda la empresa solo el dueño o un administrador) y las
+// fotos se limpian del almacenamiento sin que el usuario tenga que esperar.
 async function borrarSeleccionados() {
   const ids = Array.from(selectedIds);
   if (ids.length === 0) return;
@@ -1876,63 +1950,38 @@ async function borrarSeleccionados() {
   btn.textContent = 'Eliminando…';
 
   try {
-    // Paso 1: traer las propiedades para conocer las URLs de fotos a borrar del Storage.
-    // Guard: fotos que también usa una propiedad NO seleccionada (ej. duplicados) se conservan.
-    const propsABorrar = allProps.filter(p => selectedIds.has(p.id));
-    const enUsoPorRestantes = new Set(allProps.filter(p => !selectedIds.has(p.id)).flatMap(p => p.fotos || []));
-    const fotoUrls = propsABorrar.flatMap(p => p.fotos || []).filter(u => !enUsoPorRestantes.has(u));
-
-    // Paso 2: borrar en LOTES de 100 ids para no rebasar el límite de URL.
-    // PostgREST acepta id=in.("uuid1","uuid2",...) — los UUIDs van entrecomillados
-    // para que no choquen con caracteres reservados.
-    const BATCH_DEL = 100;
-    let borradas = 0;
-    for (let i = 0; i < ids.length; i += BATCH_DEL) {
-      btn.textContent = `Eliminando… ${Math.min(i + BATCH_DEL, ids.length)} / ${ids.length}`;
-      const chunk = ids.slice(i, i + BATCH_DEL);
-      const idsCsv = chunk.map(id => `"${encodeURIComponent(id)}"`).join(',');
-      await sbFetch(`propiedades?id=in.(${idsCsv})`, 'DELETE');
-      borradas += chunk.length;
+    const token = await getValidToken();
+    if (!token) {
+      alert('Tu sesión expiró. Vuelve a iniciar sesión.');
+      location.href = 'login.html';
+      return;
     }
 
-    // Paso 3: borrar fotos del Storage (silencioso, no bloquea si falla)
-    if (fotoUrls.length) {
-      borrarFotosDelStorage(fotoUrls).catch(e => console.warn('Fotos no borradas del Storage:', e));
-    }
+    const r = await fetch(API_BASE + '/propiedades/eliminar-masivo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ ids: ids })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'No se pudo eliminar');
 
-    // Limpieza UI
+    const borradas = data.eliminadas || 0;
+
     selectedIds.clear();
     cerrarConfirmDel();
     await loadProps();
 
-    // Toast de confirmación
-    mostrarToast(`${borradas} ${borradas === 1 ? 'inmueble eliminado' : 'inmuebles eliminados'}`);
+    if (borradas < ids.length) {
+      mostrarToast(borradas + ' de ' + ids.length + ' eliminados. El resto no era tuyo.');
+    } else {
+      mostrarToast(borradas + (borradas === 1 ? ' inmueble eliminado' : ' inmuebles eliminados'));
+    }
   } catch (err) {
-    alert('Error al eliminar: ' + err.message);
+    alert('Error al eliminar: ' + (err.message || 'desconocido'));
   } finally {
     btn.disabled = false;
     btn.textContent = originalLabel;
   }
-}
-
-// Borra los objetos de Storage extrayendo el path de cada URL pública
-async function borrarFotosDelStorage(urls) {
-  const token = await getValidToken();
-  if (!token) return;
-  const prefix = `${SB_URL}/storage/v1/object/public/fotos-propiedades/`;
-  const objects = urls
-    .filter(u => u && u.startsWith(prefix))
-    .map(u => u.substring(prefix.length));
-  if (!objects.length) return;
-  await fetch(`${SB_URL}/storage/v1/object/fotos-propiedades`, {
-    method: 'DELETE',
-    headers: {
-      'apikey': SB_KEY,
-      'Authorization': 'Bearer ' + token,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ prefixes: objects })
-  });
 }
 
 function mostrarToast(text) {
@@ -1987,17 +2036,20 @@ function crearFichaDesde(id) {
 async function deleteProp(id) {
   if (!confirm('¿Eliminar este inmueble? Las fotos también se eliminarán.\n\nEliminar de Broquer no elimina de tu página de Facebook.')) return;
   try {
-    // Conocer las URLs antes de borrar para limpiar el Storage.
-    // Guard: si otra propiedad (ej. un duplicado) usa la misma foto, NO se borra del Storage.
-    const p = allProps.find(x => x.id === id);
-    const enUsoPorOtras = new Set(allProps.filter(x => x.id !== id).flatMap(x => x.fotos || []));
-    const fotoUrls = (p?.fotos || []).filter(u => !enUsoPorOtras.has(u));
-
-    await sbFetch(`propiedades?id=eq.${id}`, 'DELETE');
-
-    if (fotoUrls.length) {
-      borrarFotosDelStorage(fotoUrls).catch(e => console.warn('Fotos no borradas:', e));
+    const token = await getValidToken();
+    if (!token) {
+      alert('Tu sesión expiró. Vuelve a iniciar sesión.');
+      location.href = 'login.html';
+      return;
     }
+    const r = await fetch(API_BASE + '/propiedades/eliminar-masivo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ ids: [id] })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'No se pudo eliminar');
+    if (!data.eliminadas) throw new Error('No tienes permiso para eliminar este inmueble.');
     await loadProps();
   }
   catch(e) { alert('Error: ' + e.message); }
@@ -2156,11 +2208,44 @@ async function importarDesdeEasyBroker() {
     return;
   }
 
-  // Mostrar modal de carga (indeterminado, no sabemos cuántas hay aún)
+  // Paso 1: elegir qué estatus importar. El modal se puede cerrar aquí.
+  _ebImportDone = true;
+  const overlay = document.getElementById('eb-import-overlay');
+  document.getElementById('eb-import-title').textContent = 'Importar desde EasyBroker';
+  document.getElementById('eb-import-msg').textContent   = 'Elige qué propiedades quieres traer a Broquer.';
+  document.getElementById('eb-import-picker').style.display  = 'block';
+  document.getElementById('eb-import-bar').style.display     = 'none';
+  document.getElementById('eb-import-count').style.display   = 'none';
+  document.getElementById('eb-import-summary').style.display = 'none';
+  document.getElementById('eb-import-errs').style.display    = 'none';
+  document.getElementById('eb-import-btn').style.display     = 'none';
+  overlay.classList.add('is-open');
+}
+
+async function ebEjecutarImport() {
+  const token = await getValidToken();
+  if (!token) {
+    alert('Tu sesión expiró. Vuelve a iniciar sesión.');
+    location.href = 'login.html';
+    return;
+  }
+
+  const statuses = Array.from(
+    document.querySelectorAll('#eb-import-picker input[type=checkbox]:checked')
+  ).map(el => el.value);
+
+  if (!statuses.length) {
+    alert('Elige al menos un tipo de propiedad para importar.');
+    return;
+  }
+
+  // Paso 2: importar. Aquí el modal ya no se puede cerrar.
   _ebImportDone = false;
   const overlay  = document.getElementById('eb-import-overlay');
   const titleEl  = document.getElementById('eb-import-title');
   const msgEl    = document.getElementById('eb-import-msg');
+  const pickEl   = document.getElementById('eb-import-picker');
+  const barEl    = document.getElementById('eb-import-bar');
   const fillEl   = document.getElementById('eb-import-fill');
   const countEl  = document.getElementById('eb-import-count');
   const sumEl    = document.getElementById('eb-import-summary');
@@ -2168,9 +2253,12 @@ async function importarDesdeEasyBroker() {
   const btnEl    = document.getElementById('eb-import-btn');
 
   titleEl.textContent = 'Importando desde EasyBroker';
-  msgEl.textContent   = 'Estamos trayendo tus propiedades publicadas. Esto debería tardar menos de un minuto. No cierres esta ventana.';
+  msgEl.textContent   = 'Estamos trayendo tus propiedades. Esto puede tardar un poco. No cierres esta ventana.';
+  pickEl.style.display = 'none';
+  barEl.style.display  = 'block';
   fillEl.style.width = '35%';
   fillEl.classList.add('indet');
+  countEl.style.display = 'block';
   countEl.innerHTML = '&nbsp;';
   sumEl.style.display = 'none';
   errsEl.style.display = 'none';
@@ -2180,7 +2268,8 @@ async function importarDesdeEasyBroker() {
   try {
     const r = await fetch(API_BASE + '/easybroker/import-all', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ statuses: statuses })
     });
     const data = await r.json();
     if (!r.ok) {
@@ -2195,7 +2284,7 @@ async function importarDesdeEasyBroker() {
     fillEl.classList.remove('indet');
     fillEl.style.width = '100%';
     titleEl.textContent = 'Importación completada';
-    msgEl.textContent = 'Tus propiedades publicadas ya están en Mis Inmuebles.';
+    msgEl.textContent = 'Tus propiedades ya están en Mis Inmuebles.';
     countEl.innerHTML = '&nbsp;';
 
     const nuevas       = data.importadas || 0;
@@ -2204,7 +2293,13 @@ async function importarDesdeEasyBroker() {
     sumEl.innerHTML =
       '<div><b>' + nuevas + '</b> propiedades nuevas importadas</div>' +
       '<div><b>' + actualizadas + '</b> actualizadas con datos más recientes</div>' +
-      '<div style="color:var(--line-2);margin-top:4px;font-size:var(--fs-xs)">Total publicadas en tu EasyBroker: ' + data.total_easybroker + '</div>';
+      '<div style="color:var(--line-2);margin-top:4px;font-size:var(--fs-xs)">Encontradas en tu EasyBroker: ' + data.total_easybroker + '</div>' +
+      (data.limite_alcanzado
+        ? '<div style="color:var(--mute);margin-top:6px;font-size:var(--fs-xs)">Se alcanzó el máximo de ' + (data.limite || 1000) + ' propiedades por importación. Vuelve a importar para traer el resto.</div>'
+        : '') +
+      (data.fotos_en_proceso
+        ? '<div style="color:var(--mute);margin-top:6px;font-size:var(--fs-xs)">Las fotos se están guardando en Broquer en segundo plano. Puedes cerrar esta ventana y seguir trabajando.</div>'
+        : '');
 
     if (data.errores && data.errores.length) {
       errsEl.style.display = 'block';
@@ -2244,100 +2339,6 @@ function cerrarImportEB() {
   }, 300);
 }
 
-async function migrarFotosABroquer() {
-  // Baja las fotos externas (EasyBroker) al Storage propio, en tandas.
-  const token = await getValidToken();
-  if (!token) {
-    alert('Tu sesión expiró. Vuelve a iniciar sesión.');
-    location.href = 'login.html';
-    return;
-  }
-
-  _ebImportDone = false;
-  const overlay = document.getElementById('eb-import-overlay');
-  const titleEl = document.getElementById('eb-import-title');
-  const msgEl   = document.getElementById('eb-import-msg');
-  const fillEl  = document.getElementById('eb-import-fill');
-  const countEl = document.getElementById('eb-import-count');
-  const sumEl   = document.getElementById('eb-import-summary');
-  const errsEl  = document.getElementById('eb-import-errs');
-  const btnEl   = document.getElementById('eb-import-btn');
-
-  titleEl.textContent = 'Pasando tus fotos a Broquer';
-  msgEl.textContent   = 'Estamos guardando tus fotos en tu propio servidor. Puede tardar varios minutos si tienes muchas propiedades. No cierres esta ventana.';
-  fillEl.classList.add('indet');
-  fillEl.style.width = '35%';
-  fillEl.style.background = '';
-  countEl.textContent = 'Preparando…';
-  sumEl.style.display = 'none';
-  errsEl.style.display = 'none';
-  btnEl.style.display = 'none';
-  overlay.classList.add('is-open');
-
-  let cursor = null;
-  let totalProps = 0, totalFotos = 0, totalErrores = 0, vueltas = 0;
-
-  try {
-    while (true) {
-      vueltas++;
-      if (vueltas > 3000) break;  // guarda dura contra un bucle infinito
-
-      const r = await fetch(API_BASE + '/easybroker/migrar-fotos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-        body: JSON.stringify({ cursor })
-      });
-      const data = await r.json();
-      if (!r.ok) throw new Error(data.detail || 'Error al pasar las fotos');
-
-      totalProps   += data.propiedades_actualizadas || 0;
-      totalFotos   += data.fotos_subidas || 0;
-      totalErrores += data.errores || 0;
-      countEl.textContent = totalFotos + ' fotos guardadas · ' + totalProps + ' propiedades listas';
-
-      const nuevoCursor = data.cursor;
-      if (!data.hay_mas) break;
-      if (nuevoCursor === cursor) break;  // no avanzó: cortar por seguridad
-      cursor = nuevoCursor;
-    }
-
-    fillEl.classList.remove('indet');
-    fillEl.style.width = '100%';
-    titleEl.textContent = 'Fotos guardadas en Broquer';
-    msgEl.textContent = totalFotos > 0
-      ? 'Listo. Tus fotos ya viven en tu propio servidor y seguirán funcionando aunque canceles EasyBroker.'
-      : 'Tus fotos ya estaban en Broquer, no hubo nada que pasar.';
-    countEl.innerHTML = '&nbsp;';
-
-    sumEl.style.display = 'block';
-    sumEl.innerHTML =
-      '<div><b>' + totalFotos + '</b> fotos guardadas en tu servidor</div>' +
-      '<div><b>' + totalProps + '</b> propiedades actualizadas</div>';
-
-    if (totalErrores > 0) {
-      errsEl.style.display = 'block';
-      errsEl.innerHTML = '<b>' + totalErrores + ' fotos no se pudieron pasar.</b><br>Vuelve a apretar el botón más tarde: retoma solo las que faltaron, sin duplicar nada.';
-    }
-
-    btnEl.style.display = 'inline-block';
-    btnEl.textContent = 'Entendido';
-    _ebImportDone = true;
-
-    if (totalProps > 0) loadProps();
-
-  } catch (err) {
-    fillEl.classList.remove('indet');
-    fillEl.style.width = '100%';
-    fillEl.style.background = 'var(--danger)';
-    titleEl.textContent = 'Se interrumpió';
-    msgEl.textContent = (err.message || 'Error desconocido') + ' — lo que ya se guardó no se pierde. Puedes volver a apretar el botón para continuar donde se quedó.';
-    countEl.innerHTML = '&nbsp;';
-    btnEl.style.display = 'inline-block';
-    btnEl.textContent = 'Cerrar';
-    _ebImportDone = true;
-  }
-}
-
 /* ════════════════════════════════════════════════════════════════
    CRM DEL INMUEBLE — tabs del detalle, estatus, duplicar, archivar
    ════════════════════════════════════════════════════════════════ */
@@ -2374,11 +2375,45 @@ async function pdCambiarEstatus(nuevo) {
       }).catch(() => {});
     }
     mostrarToast('Estatus: ' + nuevo);
+    if (nuevo === 'vendida' || nuevo === 'rentada') abrirComisionModal(p);
   } catch (e) {
     p.estatus = previo;
     g('pd-estatus').value = previo || 'activa';
     renderPage();
     alert('No se pudo cambiar el estatus.\n\n' + e.message);
+  }
+}
+
+/* ── Comisión real al cerrar (vendida/rentada) ─────────────────── */
+let comisionPropId = null;
+function abrirComisionModal(p) {
+  comisionPropId = p.id;
+  const precio = Number(p.precio) || 0;
+  let estimada = 0;
+  if (p.operacion === 'renta') estimada = precio * (Number(p.comision_renta_meses) || 0);
+  else estimada = precio * ((Number(p.comision_venta_pct) || 0) / 100);
+  const input = g('comision-real-input');
+  input.value = (p.comision_real != null && p.comision_real !== '') ? p.comision_real : (estimada ? Math.round(estimada) : '');
+  g('comision-modal').style.display = 'flex';
+  setTimeout(() => input.focus(), 50);
+}
+function cerrarComisionModal() {
+  g('comision-modal').style.display = 'none';
+  comisionPropId = null;
+}
+async function guardarComisionReal() {
+  const id = comisionPropId; if (!id) return;
+  const monto = Number(g('comision-real-input').value);
+  if (!(monto >= 0)) { alert('Escribe un monto válido.'); return; }
+  try {
+    await sbFetch('propiedades?id=eq.' + encodeURIComponent(id), 'PATCH',
+      { comision_real: monto, updated_at: new Date().toISOString() });
+    const p = allProps.find(x => x.id === id);
+    if (p) p.comision_real = monto;
+    cerrarComisionModal();
+    mostrarToast('Comisión registrada');
+  } catch (e) {
+    alert('No se pudo guardar la comisión.\n\n' + e.message);
   }
 }
 
@@ -2467,7 +2502,20 @@ const PD_ICONS = {
   nota: '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.862 4.487z"/></svg>',
   cambio_estatus: '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16l-4-4m0 0l4-4m-4 4h18M17 8l4 4m0 0l-4 4"/></svg>',
   tarea_completada: '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+  video: '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="6" width="12.5" height="12" rx="2" stroke-linejoin="round"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5l5-3v9l-5-3"/></svg>',
 };
+
+/* El módulo de Video escribe su actividad como "…texto… https://…". El feed
+   escapa todo el texto, así que sin esto la liga quedaba como texto muerto.
+   Se separa la URL, se escapa el resto y solo la liga se vuelve <a>. */
+function pdTextoActividad(a) {
+  const txt = a.texto || '';
+  const m = txt.match(/https?:\/\/\S+/);
+  if (!m) return esc(txt);
+  const url = m[0];
+  return esc(txt.slice(0, m.index)).trim() +
+    ' <a href="' + esc(url) + '" target="_blank" rel="noopener">Ver el video</a>';
+}
 function pdIconClass(tipo) {
   if (tipo === 'cambio_estatus') return 'estatus';
   if (tipo === 'tarea_completada') return 'tarea';
@@ -2500,7 +2548,7 @@ async function pdCargarHistorial() {
     ? acts.map(a => `<div class="pd-item">
         <div class="pd-item__ico ${pdIconClass(a.tipo)}">${PD_ICONS[a.tipo] || PD_ICONS.nota}</div>
         <div style="flex:1;min-width:0">
-          <div class="pd-item__txt">${esc(a.texto || '')}</div>
+          <div class="pd-item__txt">${pdTextoActividad(a)}</div>
           <div class="pd-item__date">${pdFechaHora(a.created_at)}</div>
         </div>
       </div>`).join('')
@@ -2606,11 +2654,53 @@ async function pdCargarTareas() {
   const pid = currentDetailId; if (!pid) return;
   const feed = g('pd-tareas-feed');
   feed.innerHTML = '<div class="pd-empty">Cargando…</div>';
+  let legacy = [], vinculos = [];
   try {
-    _pdTareas = await sbFetch('tareas?select=*&propiedad_id=eq.' + encodeURIComponent(pid) + '&order=completada.asc,fecha_entrega.asc.nullslast,created_at.desc&limit=100');
-  } catch { _pdTareas = []; }
+    [legacy, vinculos] = await Promise.all([
+      sbFetch('tareas?select=*&propiedad_id=eq.' + encodeURIComponent(pid) + '&order=created_at.desc&limit=100'),
+      sbFetch('tareas_propiedades?select=*&propiedad_id=eq.' + encodeURIComponent(pid) + '&order=created_at.desc').catch(() => []),
+    ]);
+  } catch { legacy = []; vinculos = []; }
   if (currentDetailId !== pid) return;
+
+  _pdTareasVinculos = vinculos; // para poder quitar el vínculo correcto después
+  const idsYaVistos = new Set(legacy.map(t => String(t.id)));
+  const idsPorVinculo = vinculos.map(v => String(v.tarea_id)).filter(id => !idsYaVistos.has(id));
+  let extra = [];
+  if (idsPorVinculo.length) {
+    try { extra = await sbFetch('tareas?select=*&id=in.(' + idsPorVinculo.join(',') + ')'); } catch { extra = []; }
+  }
+  _pdTareas = [...legacy, ...extra].sort((a, b) => {
+    if (!!a.completada !== !!b.completada) return a.completada ? 1 : -1;
+    return new Date(a.fecha_entrega || '9999-12-31') - new Date(b.fecha_entrega || '9999-12-31');
+  });
+
+  // Selector de "vincular tarea existente": todas las que no estén ya ligadas de ninguna forma
+  const yaLigadas = new Set(_pdTareas.map(t => String(t.id)));
+  let todas = [];
+  try { todas = await sbFetch('tareas?select=id,titulo,completada&order=created_at.desc&limit=500'); } catch { todas = []; }
+  const disponibles = todas.filter(t => !yaLigadas.has(String(t.id)) && !t.completada);
+  const sel = g('pd-vinculo-tarea');
+  sel.innerHTML = disponibles.length
+    ? '<option value="">Elige una tarea…</option>' + disponibles.map(t => `<option value="${esc(String(t.id))}">${esc(t.titulo)}</option>`).join('')
+    : '<option value="">' + (todas.length ? 'Todas ya vinculadas' : 'No tienes tareas') + '</option>';
+
   pdRenderTareas();
+}
+
+let _pdTareasVinculos = [];
+
+async function pdVincularTareaExistente() {
+  const pid = currentDetailId; if (!pid) return;
+  const tareaId = g('pd-vinculo-tarea').value;
+  if (!tareaId) return;
+  const uid = getCurrentUserId();
+  if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
+  try {
+    await sbFetch('tareas_propiedades', 'POST', { user_id: uid, tarea_id: tareaId, propiedad_id: pid });
+    await pdCargarTareas();
+    mostrarToast('Tarea vinculada');
+  } catch (e) { alert('No se pudo vincular.\n\n' + e.message); }
 }
 
 function pdRenderTareas() {
@@ -2628,7 +2718,7 @@ function pdRenderTareas() {
             <div class="pd-item__txt">${esc(t.titulo)}</div>
             ${due ? `<div class="pd-item__due${vencida ? ' is-overdue' : ''}">${vencida ? 'Vencida · ' : ''}${pdFechaCorta(t.fecha_entrega)}</div>` : ''}
           </div>
-          <button class="pd-x" title="Eliminar tarea" onclick="pdEliminarTarea('${esc(String(t.id))}')">×</button>
+          <button class="pd-x" title="Quitar vínculo con este inmueble" onclick="pdQuitarVinculoTarea('${esc(String(t.id))}')">×</button>
         </div>`;
       }).join('')
     : '<div class="pd-empty">Sin tareas. Agrega la primera arriba.</div>';
@@ -2645,10 +2735,14 @@ async function pdAgregarTarea() {
   const fecha = g('pd-tarea-fecha').value || null;
   btn.disabled = true;
   try {
-    await sbFetch('tareas', 'POST', {
+    const creada = await sbFetch('tareas', 'POST', {
       user_id: uid, titulo: titulo, propiedad_id: pid,
       fecha_entrega: fecha ? fecha + 'T12:00:00' : null,
     });
+    const nueva = Array.isArray(creada) ? creada[0] : creada;
+    if (nueva && nueva.id) {
+      await sbFetch('tareas_propiedades', 'POST', { user_id: uid, tarea_id: nueva.id, propiedad_id: pid }).catch(() => {});
+    }
     inp.value = '';
     g('pd-tarea-fecha').value = '';
     await pdCargarTareas();
@@ -2681,13 +2775,19 @@ async function pdToggleTarea(tid) {
   }
 }
 
-async function pdEliminarTarea(tid) {
-  if (!confirm('¿Eliminar esta tarea?')) return;
+async function pdQuitarVinculoTarea(tid) {
+  const pid = currentDetailId; if (!pid) return;
   try {
-    await sbFetch('tareas?id=eq.' + encodeURIComponent(tid), 'DELETE');
-    _pdTareas = _pdTareas.filter(t => String(t.id) !== tid);
-    pdRenderTareas();
-  } catch (e) { alert('No se pudo eliminar la tarea.\n\n' + e.message); }
+    const vinculo = _pdTareasVinculos.find(v => String(v.tarea_id) === tid);
+    if (vinculo) {
+      await sbFetch('tareas_propiedades?id=eq.' + encodeURIComponent(vinculo.id), 'DELETE');
+    }
+    const t = _pdTareas.find(x => String(x.id) === tid);
+    if (t && String(t.propiedad_id) === String(pid)) {
+      await sbFetch('tareas?id=eq.' + encodeURIComponent(tid), 'PATCH', { propiedad_id: null });
+    }
+    await pdCargarTareas();
+  } catch (e) { alert('No se pudo quitar el vínculo.\n\n' + e.message); }
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -2840,7 +2940,18 @@ else { window.addEventListener('brokr-shell-ready', loadProps, { once: true }); 
   <div class="eb-import-modal">
     <div class="eb-import-title" id="eb-import-title">Importando desde EasyBroker</div>
     <div class="eb-import-msg" id="eb-import-msg">Conectando con tu cuenta…</div>
-    <div class="eb-import-bar"><div class="eb-import-bar__fill indet" id="eb-import-fill" style="width:35%"></div></div>
+    <div class="eb-import-picker" id="eb-import-picker" style="display:none">
+      <label class="eb-pick-opt"><input type="checkbox" value="published" checked> Publicadas</label>
+      <label class="eb-pick-opt"><input type="checkbox" value="not_published"> No publicadas</label>
+      <label class="eb-pick-opt"><input type="checkbox" value="reserved" checked> Reservadas</label>
+      <label class="eb-pick-opt"><input type="checkbox" value="sold" checked> Vendidas</label>
+      <label class="eb-pick-opt"><input type="checkbox" value="rented" checked> Rentadas</label>
+      <div class="eb-pick-note">Se importan como máximo 1,000 propiedades por vez.</div>
+      <div class="eb-pick-actions">
+        <button class="eb-import-btn" id="eb-pick-btn" onclick="ebEjecutarImport()">Importar</button>
+      </div>
+    </div>
+    <div class="eb-import-bar" id="eb-import-bar"><div class="eb-import-bar__fill indet" id="eb-import-fill" style="width:35%"></div></div>
     <div class="eb-import-count" id="eb-import-count">&nbsp;</div>
     <div class="eb-import-summary" id="eb-import-summary" style="display:none"></div>
     <div class="eb-import-errs" id="eb-import-errs" style="display:none"></div>
@@ -2849,6 +2960,24 @@ else { window.addEventListener('brokr-shell-ready', loadProps, { once: true }); 
 </div>
 
 <!-- ── MODAL: IMPORTAR CSV ─────────────────────────────────── -->
+<!-- Modal: comisión real al cerrar una operación -->
+<div id="comision-modal" class="prop-modal-overlay" onclick="if(event.target===this)cerrarComisionModal()">
+  <div class="prop-modal-box" onclick="event.stopPropagation()" style="max-width:420px">
+    <div class="prop-modal-hdr">
+      <h3>Registrar comisión</h3>
+      <button onclick="cerrarComisionModal()" class="prop-modal-close" aria-label="Cerrar"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="prop-modal-body">
+      <p style="margin:0 0 14px;color:var(--mute);font-size:var(--fs-sm)">¿Cuánto cobraste de comisión en esta operación? Se refleja en tus estadísticas. Puedes omitirlo y se usará la comisión pactada.</p>
+      <div class="pf-field"><label>Comisión cobrada</label><input type="number" id="comision-real-input" min="0" step="any" inputmode="decimal" placeholder="0"/></div>
+      <div class="pf-actions" style="position:static;margin-top:16px">
+        <button type="button" class="pf-cancel-btn" onclick="cerrarComisionModal()">Omitir</button>
+        <button type="button" class="pf-save-btn" onclick="guardarComisionReal()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="csv-modal" class="prop-modal-overlay" onclick="if(event.target===this)cerrarCsvModal()">
   <div class="prop-modal-box" onclick="event.stopPropagation()" style="max-width:520px">
     <div class="prop-modal-hdr">

@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
 <title>Blog — Broquer</title>
 <link rel="manifest" href="manifest.json"/>
 <meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
@@ -189,6 +189,97 @@
    ═══════════════════════════════════════════════════════ */
 
 const ARTICULOS = [
+  {
+    id: 'alta-padron-actividades-vulnerables',
+    titulo: 'C\u00f3mo darte de alta ante el SAT como actividad vulnerable: la gu\u00eda que el portal oficial no te da en una sola p\u00e1gina',
+    subtitulo: 'El registro en el padr\u00f3n del SPPLD es gratuito, se hace en l\u00ednea con tu e.firma y toma menos de una hora. No hacerlo es la infracci\u00f3n m\u00e1s f\u00e1cil de detectar de toda la ley antilavado.',
+    categoria: 'PLD / Compliance',
+    catKey: 'pld',
+    tags: ['PLD', 'LFPIORPI', 'SAT', 'SPPLD', 'Alta', 'Padr\u00f3n', 'e.firma', 'Antilavado', 'UIF'],
+    autor: 'Broquer Research',
+    fecha: '1 de agosto de 2026',
+    lectura: '8 min',
+    resumen: 'Si intermedias compraventas de inmuebles de forma habitual, la LFPIORPI te considera actividad vulnerable y el primer deber formal es darte de alta en el padr\u00f3n del SAT a trav\u00e9s del portal SPPLD. Aqu\u00ed est\u00e1 el tr\u00e1mite completo: requisitos, pasos, bajo qu\u00e9 fracci\u00f3n te registras, qu\u00e9 pasa despu\u00e9s del alta y qu\u00e9 cambi\u00f3 con la reforma de julio de 2025. Todo con fuentes oficiales al pie.',
+    fuentes: [
+      { texto: 'SAT \u2014 Tr\u00e1mite oficial: \u201cDate de alta en el Portal de Lavado de Dinero\u201d (requisitos y fundamento)', url: 'https://www.sat.gob.mx/tramites/85869/date-de-alta-en-el-portal-de-lavado-de-dinero' },
+      { texto: 'SAT \u2014 Portal SPPLD (Sistema del Portal en Internet de Prevenci\u00f3n de Lavado de Dinero)', url: 'https://sppld.sat.gob.mx/' },
+      { texto: 'SAT \u2014 SPPLD: umbrales oficiales vigentes tras la reforma DOF 16 jul 2025', url: 'https://sppld.sat.gob.mx/pld/interiores/umbrales.html' },
+      { texto: 'SAT \u2014 Minisitio de Actividades Vulnerables (folletos y formatos por fracci\u00f3n)', url: 'https://www.sat.gob.mx/minisitio/ActividadesVulnerables/index.html' },
+      { texto: 'LFPIORPI \u2014 texto vigente, \u00faltima reforma DOF 16 jul 2025 (C\u00e1mara de Diputados)', url: 'https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPIORPI.pdf' },
+      { texto: 'INEGI \u2014 Valor de la UMA 2026: $117.31 diarios (DOF 9 ene 2026)', url: 'https://www.inegi.org.mx/temas/uma/' },
+    ],
+    contenido: `
+<div class="bl-art-head">
+  <div class="bl-art-head__cat">PLD / Compliance</div>
+  <h1>C\u00f3mo darte de alta ante el SAT como actividad vulnerable: la gu\u00eda que el portal oficial no te da en una sola p\u00e1gina</h1>
+  <p class="bl-art-head__sub">El registro en el padr\u00f3n del SPPLD es gratuito, se hace en l\u00ednea con tu e.firma y toma menos de una hora. No hacerlo es la infracci\u00f3n m\u00e1s f\u00e1cil de detectar de toda la ley antilavado.</p>
+  <div class="bl-art-head__meta">
+    <span>Broquer Research</span>
+    <span class="dot"></span>
+    <span>1 de agosto de 2026</span>
+    <span class="dot"></span>
+    <span>8 min de lectura</span>
+  </div>
+</div>
+
+<div class="bl-art-body">
+
+<h2>Primero: confirma que la ley habla de ti</h2>
+<p>El art\u00edculo 17, fracci\u00f3n V de la <strong>Ley Federal para la Prevenci\u00f3n e Identificaci\u00f3n de Operaciones con Recursos de Procedencia Il\u00edcita</strong> (LFPIORPI) considera actividad vulnerable la prestaci\u00f3n habitual o profesional de servicios de construcci\u00f3n o desarrollo de bienes inmuebles, o de <strong>intermediaci\u00f3n en la transmisi\u00f3n de la propiedad o constituci\u00f3n de derechos sobre dichos bienes</strong>, en los que se involucren operaciones de compra o venta por cuenta o a favor de clientes.</p>
+<p>Traducci\u00f3n: si te dedicas a cerrar compraventas de inmuebles para tus clientes \u2014no como algo que te pas\u00f3 una vez, sino como tu profesi\u00f3n\u2014, <strong>eres sujeto obligado</strong>. No importa si eres persona f\u00edsica o moral, si trabajas solo o con equipo, ni si facturas poco. La habitualidad es lo que te mete, no el volumen.</p>
+<p>En el portal del SAT esta actividad aparece bajo el nombre oficial de <strong>\u201cTransmisi\u00f3n de derechos sobre bienes inmuebles\u201d</strong>. \u00daselo como referencia al momento de seleccionar tu fracci\u00f3n en el sistema, porque el cat\u00e1logo no dice \u201casesor inmobiliario\u201d por ning\u00fan lado.</p>
+
+<div class="bl-callout info">
+  <div class="bl-callout__label">Ojo con la fracci\u00f3n V Bis</div>
+  <p>La reforma publicada en el DOF el 16 de julio de 2025 separ\u00f3 el <strong>desarrollo inmobiliario</strong> (recibir recursos para construir con fin de venta o renta) en su propia fracci\u00f3n, la V Bis. Si adem\u00e1s de intermediar desarrollas proyectos, puedes estar obligado bajo las dos fracciones a la vez, y cada una se registra por separado en el padr\u00f3n.</p>
+</div>
+
+<h2>Lo que necesitas antes de empezar</h2>
+<p>El tr\u00e1mite oficial del SAT (\u201cDate de alta en el Portal de Lavado de Dinero\u201d) pide exactamente dos cosas. Sin ellas el sistema no te deja avanzar:</p>
+<ol>
+  <li><strong>Estar inscrito en el RFC</strong>, con tu situaci\u00f3n fiscal al corriente y una actividad econ\u00f3mica registrada que corresponda a lo que haces.</li>
+  <li><strong>Contar con e.firma vigente</strong> (los archivos .cer y .key con su contrase\u00f1a). Si la tuya expir\u00f3, primero renu\u00e9vala; ese es otro tr\u00e1mite y s\u00ed puede requerir cita.</li>
+</ol>
+<p>Si eres <strong>persona moral</strong>, hay un tercer requisito de fondo: la ley te obliga a designar ante la Secretar\u00eda de Hacienda a una <strong>persona representante encargada del cumplimiento</strong>, y a mantener vigente esa designaci\u00f3n en el mismo portal. Esa persona debe estar inscrita en el RFC y contar con su propia e.firma. Mientras no la designes, responde el \u00f3rgano de administraci\u00f3n completo, lo cual a ning\u00fan socio le hace gracia.</p>
+
+<h2>El tr\u00e1mite, paso a paso</h2>
+<ol>
+  <li><strong>Entra al portal SPPLD</strong> (sppld.sat.gob.mx). Es el sistema oficial del SAT para todo lo relacionado con actividades vulnerables: alta, avisos, informes en cero y acuses.</li>
+  <li><strong>Autent\u00edcate con tu e.firma.</strong> Carga tu archivo .cer, tu archivo .key y captura la contrase\u00f1a de la clave privada.</li>
+  <li><strong>Selecciona el alta al padr\u00f3n</strong> y elige tu actividad: fracci\u00f3n V, \u201cTransmisi\u00f3n de derechos sobre bienes inmuebles\u201d. Si tambi\u00e9n desarrollas, agrega la V Bis.</li>
+  <li><strong>Llena el cuestionario</strong> con tus datos de identificaci\u00f3n, domicilio y, en su caso, los del encargado de cumplimiento.</li>
+  <li><strong>Firma electr\u00f3nicamente y descarga tu acuse.</strong> El \u201cAcuse de Registro de Actividades Vulnerables\u201d es tu constancia. Gu\u00e1rdalo: el cumplimiento se demuestra con documentos fechados, no con explicaciones.</li>
+</ol>
+<p>El tr\u00e1mite es <strong>gratuito</strong> y no requiere ir a ninguna oficina. El fundamento del registro est\u00e1 en el art\u00edculo 18, fracci\u00f3n IV Bis de la LFPIORPI, los art\u00edculos 12 y 13 de su Reglamento y las Reglas de Car\u00e1cter General.</p>
+
+<div class="bl-callout warn">
+  <div class="bl-callout__label">\u00bfCu\u00e1ndo debes hacerlo?</div>
+  <p>Conforme al art\u00edculo 20 de la ley y al tr\u00e1mite oficial del SAT: <strong>en el momento en que inicies el desarrollo de la actividad vulnerable</strong>. No cuando cierres tu primera operaci\u00f3n grande, no cuando el SAT te escriba. Si ya llevas a\u00f1os intermediando sin registro, darte de alta hoy es infinitamente mejor que ser detectado ma\u00f1ana: la omisi\u00f3n del registro es visible con un simple cruce de tu RFC contra el padr\u00f3n.</p>
+</div>
+
+<h2>Qu\u00e9 te obliga la ley una vez dado de alta</h2>
+<p>El alta es el bolet\u00edn de entrada, no el cumplimiento completo. A partir de ah\u00ed, tus deberes permanentes como intermediario son estos:</p>
+<ul>
+  <li><strong>Identificar a cada cliente</strong> e integrar su expediente de identificaci\u00f3n con documentaci\u00f3n oficial, antes de cerrar la operaci\u00f3n.</li>
+  <li><strong>Conservar cada expediente y su soporte durante diez a\u00f1os.</strong> La reforma de 2025 ampli\u00f3 el plazo, que antes era de cinco.</li>
+  <li><strong>Presentar aviso ante la UIF</strong>, a trav\u00e9s del mismo portal SPPLD, cuando la operaci\u00f3n alcance el umbral de aviso vigente \u2014para la fracci\u00f3n V, <strong>8,025 UMA</strong>, que en 2026 equivalen a <strong>$941,412.75</strong> con la UMA de $117.31 diarios\u2014, a m\u00e1s tardar el <strong>d\u00eda 17 del mes siguiente</strong>.</li>
+  <li><strong>Acumular operaciones del mismo cliente</strong> dentro de una ventana de seis meses: varias operaciones que por separado no rebasan el umbral pueden rebasarlo sumadas, y entonces el aviso tambi\u00e9n es obligatorio.</li>
+  <li><strong>Avisar en 24 horas las operaciones inusuales.</strong> Otra novedad de la reforma: si detectas indicios de que los recursos son de procedencia il\u00edcita, el aviso no espera al d\u00eda 17.</li>
+  <li><strong>Mantener tus datos del padr\u00f3n actualizados</strong>, incluida la designaci\u00f3n del encargado de cumplimiento si eres persona moral.</li>
+</ul>
+<p>La reforma de julio de 2025 tambi\u00e9n incorpor\u00f3 al art\u00edculo 18 obligaciones de <strong>enfoque basado en riesgos</strong>, mecanismos automatizados de detecci\u00f3n y capacitaci\u00f3n anual del personal expuesto. Varias de ellas se detallan en Reglas de Car\u00e1cter General; el punto pr\u00e1ctico es que la tendencia regulatoria va en una sola direcci\u00f3n: m\u00e1s trazabilidad, no menos.</p>
+
+<h2>Qu\u00e9 pasa si no te das de alta</h2>
+<p>Omitir el registro, no integrar expedientes o no presentar avisos se sanciona con <strong>multa administrativa</strong>, calculada en UMA y escalable seg\u00fan la infracci\u00f3n y la reincidencia. Y hay un detalle que conviene interiorizar: de todas las obligaciones de la ley, <strong>el registro es la m\u00e1s barata de cumplir y la m\u00e1s f\u00e1cil de fiscalizar</strong>. No requiere criterio, ni interpretaci\u00f3n, ni un solo peso. Solo requiere hacerse.</p>
+
+<div class="bl-callout success">
+  <div class="bl-callout__label">D\u00f3nde entra Broquer</div>
+  <p>El alta en el padr\u00f3n la haces t\u00fa, una sola vez, con tu e.firma. Todo lo que viene despu\u00e9s \u2014expediente de identificaci\u00f3n por cliente, control de umbrales y acumulaci\u00f3n a seis meses, alertas de plazo y generaci\u00f3n del XML para el aviso en el SPPLD\u2014 es exactamente lo que el m\u00f3dulo de Cumplimiento de Broquer lleva por ti.</p>
+</div>
+
+</div>
+`
+  },
   {
     id: 'whatsapp-recepcion-speed-to-lead',
     titulo: 'El primero que contesta se lleva el trato: qué hace realmente un WhatsApp con recepción automática',

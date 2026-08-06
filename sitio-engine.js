@@ -130,7 +130,10 @@ async function cargarSitio() {
   let props = [], testimonios = [];
   try {
     [props, testimonios] = await Promise.all([
-      sbPublic('propiedades_publicas?user_id=eq.' + encodeURIComponent(perfil.id) + '&select=*&order=updated_at.desc&limit=200'),
+      sbPublic('propiedades_publicas?user_id=eq.' + encodeURIComponent(perfil.id)
+        // 'no_activa' son inmuebles que la IA dio de alta con lo que le mando
+        // un tercero por WhatsApp: sin verificar. Jamas se publican.
+        + '&estatus=not.in.(no_activa)&select=*&order=updated_at.desc&limit=200'),
       sbPublic('testimonios_publicos?user_id=eq.' + encodeURIComponent(perfil.id) + '&select=*&order=created_at.desc&limit=50'),
     ]);
   } catch (e) { /* si truena, mostramos el sitio igual sin esas secciones */ }

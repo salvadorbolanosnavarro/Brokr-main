@@ -4,13 +4,13 @@
 <meta charset="UTF-8"/>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
 <title>Facebook Ads — Broquer</title>
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-height:100vh}
-.fa-wrap{max-width:980px;margin:0 auto;padding:28px 24px 120px}
+body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-height:100vh}
+.fa-wrap{max-width:1180px;margin:0 auto;padding:28px 24px 120px}
 
 /* ─── Hero ───────────────────────────────────────────────── */
 .fa-hero{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:26px 26px 22px;margin-bottom:16px;position:relative;overflow:hidden}
@@ -53,7 +53,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .fa-tab.active{background:var(--paper);color:var(--ink);box-shadow:var(--shadow-xs)}
 
 /* ─── Layout principal ───────────────────────────────────── */
-.fa-layout{display:grid;grid-template-columns:1.55fr .85fr;gap:18px;align-items:start}
+.fa-layout{display:grid;grid-template-columns:1.15fr .85fr;gap:22px;align-items:start}
 .fa-card{background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;margin-bottom:14px}
 .fa-card-head{margin-bottom:16px}
 .fa-card-title{font-family:var(--font-display);font-size:var(--fs-h3);font-weight:600;letter-spacing:-.025em}
@@ -64,9 +64,10 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .fa-field:last-child{margin-bottom:0}
 .fa-field label{font-size:var(--fs-xs);font-weight:700;color:var(--ink);letter-spacing:-.01em;display:block;margin-bottom:6px}
 .fa-field input,.fa-field textarea{width:100%;background:var(--paper);border:1px solid var(--line-2);border-radius:var(--r);padding:11px 12px;font:14px var(--font-sans);color:var(--ink);outline:none;-webkit-appearance:none;appearance:none}
-.fa-field textarea{min-height:104px;resize:vertical;line-height:1.5}
+.fa-field textarea{min-height:150px;resize:vertical;line-height:1.5}
 .fa-field input:focus,.fa-field textarea:focus{border-color:var(--ink)}
 .fa-field .fa-hint{font-size:var(--fs-caption);color:var(--mute);line-height:1.45;margin-top:5px}
+.fa-link{color:var(--sky-blue);font-weight:700;text-decoration:underline}
 .fa-char-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:6px}
 .fa-char-count{font-size:var(--fs-caption);color:var(--mute)}
 .fa-char-count.warn{color:var(--warn)}
@@ -103,20 +104,50 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .fa-summary-item span{font-size:var(--fs-caption);color:var(--mute);letter-spacing:.08em}
 .fa-summary-item strong{font-family:var(--font-display);font-size:var(--fs-h3);font-weight:600;text-align:right}
 
-/* ─── Vista previa estilo Facebook ───────────────────────── */
-.fa-preview{background:#fff;border:1px solid var(--paper-2);border-radius:var(--r);overflow:hidden;font-family:var(--font-sans);color:var(--ink-2);box-shadow:var(--shadow-xs)}
-.fa-preview-head{display:flex;align-items:center;gap:8px;padding:10px 12px}
-.fa-preview-pp{width:36px;height:36px;border-radius:50%;background:var(--paper-2) center/cover no-repeat;flex:none}
-.fa-preview-page{font-size:var(--fs-sm);font-weight:700;color:var(--ink)}
-.fa-preview-sponsored{font-size:var(--fs-caption);color:var(--mute);line-height:1.3}
-.fa-preview-msg{padding:0 12px 8px;font-size:var(--fs-sm);line-height:1.34;color:var(--ink);white-space:pre-wrap;word-wrap:break-word}
-.fa-preview-img{width:100%;aspect-ratio:1.91;background:var(--paper-2) center/cover no-repeat;display:block}
-.fa-preview-imgph{width:100%;aspect-ratio:1.91;background:var(--paper-2);display:flex;align-items:center;justify-content:center;color:var(--mute);font-size:var(--fs-xs)}
-.fa-preview-link{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#FFFFFF;gap:12px}
-.fa-preview-link-info{min-width:0}
-.fa-preview-link-domain{font-size:var(--fs-caption);color:var(--mute);letter-spacing:.04em;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fa-preview-link-title{font-size:var(--fs-sm);font-weight:600;color:var(--ink);line-height:1.25;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.fa-preview-cta{background:var(--brand-facebook);border:0;border-radius:var(--r-sm);padding:8px 14px;font-size:var(--fs-sm);font-weight:700;color:#fff;flex:none;cursor:default}
+/* ─── Vista previa estilo Facebook (panel protagonista) ──── */
+.fa-preview-panel{background:var(--sky-navy);border-radius:var(--r-xl);padding:22px 20px 20px;box-shadow:var(--shadow-lg);position:relative;overflow:hidden}
+.fa-preview-panel:after{content:"";position:absolute;left:-70px;bottom:-120px;width:260px;height:260px;border-radius:50%;background:rgba(58,111,216,.28)}
+.fa-preview-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px;position:relative;z-index:2}
+.fa-preview-kicker{display:flex;align-items:center;gap:6px;font-size:var(--fs-label-3);letter-spacing:.02em;font-weight:700;color:var(--sky-blue-lift)}
+.fa-preview-live{width:7px;height:7px;border-radius:50%;background:var(--sky-blue-lift);animation:falive 1.6s ease-in-out infinite}
+@keyframes falive{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.8)}}
+.fa-preview-h{font-family:var(--font-display);font-size:var(--fs-h2);font-weight:700;letter-spacing:-.03em;color:var(--paper);margin-top:4px;line-height:1.1}
+.fa-preview-badge{flex:none;background:rgba(255,255,255,.12);color:var(--paper);border-radius:var(--r-pill);padding:5px 11px;font-size:var(--fs-label-3);font-weight:700;letter-spacing:.02em}
+
+/* Marco de teléfono */
+.fa-phone{position:relative;z-index:2;margin:0 auto;max-width:352px;background:var(--sky-navy-deep);border-radius:var(--r-modal);padding:9px;box-shadow:var(--shadow-xl)}
+.fa-phone-bar{width:62px;height:4px;border-radius:var(--r-pill);background:rgba(255,255,255,.22);margin:1px auto 8px}
+.fa-preview{background:#fff;border-radius:var(--r-lg);overflow:hidden;font-family:var(--font-sans);color:var(--ink-2)}
+.fa-preview-head{display:flex;align-items:center;gap:9px;padding:12px 13px 9px}
+.fa-preview-pp{width:38px;height:38px;border-radius:50%;background:var(--paper-2) center/cover no-repeat;flex:none}
+.fa-preview-page{font-size:var(--fs-sm);font-weight:700;color:var(--ink);line-height:1.2}
+.fa-preview-sponsored{font-size:var(--fs-caption);color:var(--mute);line-height:1.3;margin-top:1px}
+.fa-preview-msg{padding:0 13px 10px;font-size:var(--fs-sm);line-height:1.4;color:var(--ink);white-space:pre-wrap;word-wrap:break-word}
+.fa-preview-more{color:var(--mute);cursor:pointer;font-weight:600}
+
+/* Carrusel */
+.fa-car{position:relative;overflow:hidden;background:var(--paper-2)}
+.fa-car-track{display:flex;transition:transform .32s cubic-bezier(.22,.61,.36,1);will-change:transform}
+.fa-car-slide{flex:0 0 88%;padding-right:6px;box-sizing:border-box}
+.fa-car-slide:last-child{padding-right:0}
+.fa-car-img{width:100%;aspect-ratio:1;background:var(--paper-2) center/cover no-repeat;display:block}
+.fa-car-card{background:#fff;padding:9px 11px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid var(--line)}
+.fa-car-card-title{font-size:var(--fs-xs);font-weight:700;color:var(--ink);line-height:1.25;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.fa-preview-cta{background:var(--brand-facebook);border:0;border-radius:var(--r-sm);padding:7px 12px;font-size:var(--fs-caption);font-weight:700;color:#fff;flex:none;cursor:default;white-space:nowrap}
+.fa-car-nav{position:absolute;top:38%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.94);border:1px solid var(--line-2);display:none;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow-xs);z-index:3;padding:0;color:var(--ink)}
+.fa-car-nav.show{display:flex}
+.fa-car-nav:disabled{opacity:.3;cursor:default}
+.fa-car-nav.prev{left:7px}
+.fa-car-nav.next{right:7px}
+.fa-car-dots{display:flex;gap:5px;justify-content:center;padding:9px 0 3px;background:#fff}
+.fa-car-dot{width:6px;height:6px;border-radius:50%;background:var(--line-3);transition:background .15s,width .15s}
+.fa-car-dot.on{background:var(--brand-facebook);width:16px;border-radius:var(--r-pill)}
+.fa-preview-ph{width:100%;aspect-ratio:1;background:var(--paper-2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--mute);font-size:var(--fs-xs);text-align:center;padding:20px}
+.fa-preview-ph svg{width:30px;height:30px;color:var(--mute-2)}
+.fa-preview-social{display:flex;align-items:center;gap:16px;padding:9px 13px 12px;border-top:1px solid var(--line);color:var(--mute);font-size:var(--fs-caption);font-weight:600}
+.fa-preview-social span{display:flex;align-items:center;gap:5px}
+.fa-preview-social svg{width:14px;height:14px}
+.fa-preview-foot{position:relative;z-index:2;margin-top:14px;text-align:center;font-size:var(--fs-caption);color:var(--mute-3);line-height:1.5}
 
 /* ─── Resultado / spinner ────────────────────────────────── */
 .fa-spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.35);border-top-color:var(--paper);border-radius:50%;animation:faspin .7s linear infinite;display:none}
@@ -162,8 +193,21 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 .fa-city-opt span{font-size:var(--fs-caption);color:var(--mute)}
 .fa-city-clear{position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--mute);font-size:var(--fs-body);line-height:1;padding:2px 4px;display:none}
 .fa-city-clear.visible{display:block}
-.fa-city-confirmed input{border-color:var(--success) !important;padding-right:32px}
+.fa-field .fa-city-confirmed input,.fa-field .fa-city-confirmed input:focus{border-color:var(--success);padding-right:32px}
 .fa-city-confirmed .fa-city-clear{color:var(--success)}
+.fa-city-msg{padding:11px 12px;font-size:var(--fs-xs);color:var(--mute);line-height:1.5;display:flex;align-items:center;gap:8px}
+
+/* ─── Selector de inmueble del catálogo ──────────────────── */
+.fa-prop-opt{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;font-size:var(--fs-sm);cursor:pointer;transition:background .1s}
+.fa-prop-opt:hover{background:var(--bone)}
+.fa-prop-opt-main{min-width:0;flex:1}
+.fa-prop-opt-main strong{display:block;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fa-prop-opt-main span{display:block;font-size:var(--fs-caption);color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fa-prop-opt-precio{flex:none;font-size:var(--fs-xs);font-weight:700;color:var(--ink-2)}
+.fa-prop-sel{display:flex;align-items:center;gap:8px;background:var(--success-soft);border:1px solid var(--success);border-radius:var(--r);padding:9px 12px;margin-top:8px;font-size:var(--fs-xs);color:var(--ink);line-height:1.45}
+.fa-prop-sel strong{font-weight:700}
+.fa-prop-sel button{flex:none;margin-left:auto;background:transparent;border:none;color:var(--mute);font-size:var(--fs-sm);font-weight:700;font-family:var(--font-sans);cursor:pointer;text-decoration:underline}
+.fa-city-spin{width:13px;height:13px;flex:none;border:2px solid var(--line-2);border-top-color:var(--ink);border-radius:50%;animation:faspin .7s linear infinite}
 
 /* ─── Responsive ─────────────────────────────────────────── */
 @media(max-width:900px){
@@ -261,6 +305,16 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
             </div>
 
             <div class="fa-field">
+              <label for="fa-prop-input">Inmueble de tu catálogo</label>
+              <div class="fa-city-wrap" id="fa-prop-wrap">
+                <input id="fa-prop-input" type="text" autocomplete="off" placeholder="Busca por título, clave, colonia o ciudad…" oninput="onPropInput(this.value)" onfocus="onPropFocus()" onblur="onPropBlur()"/>
+                <div class="fa-city-dropdown" id="fa-prop-dropdown"></div>
+              </div>
+              <div id="fa-prop-sel" class="fa-prop-sel" style="display:none"></div>
+              <div class="fa-hint">Al elegirlo, Broquer llena el título, el texto y sus primeras fotos. Puedes modificar todo antes de publicar.</div>
+            </div>
+
+            <div class="fa-field">
               <label for="fa-campaign-name">Nombre interno</label>
               <input id="fa-campaign-name" type="text" autocomplete="off" placeholder="Ej. Casa Chapultepec — junio" oninput="syncSummary()"/>
               <div class="fa-hint">Solo lo ves tú. Te ayuda a identificarla en "Tus campañas".</div>
@@ -268,11 +322,12 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
 
             <div class="fa-field">
               <label for="fa-ad-text">Texto principal</label>
-              <textarea id="fa-ad-text" maxlength="180" oninput="updateCharCount();syncPreview();updateAiBtn()" placeholder="Ej. Casa iluminada en Chapultepec, cerca de servicios y con jardín. Agenda tu visita hoy."></textarea>
+              <textarea id="fa-ad-text" maxlength="2200" oninput="updateCharCount();syncPreview();updateAiBtn()" placeholder="Ej. Casa iluminada en Chapultepec, cerca de servicios y con jardín. 3 recámaras, 2.5 baños, cochera para 2 autos. Agenda tu visita hoy."></textarea>
               <div class="fa-char-row">
                 <button class="fa-btn fa-btn-ghost" id="fa-ai-btn" type="button" onclick="improveText()" disabled>Mejorar con IA</button>
-                <span id="fa-char-count" class="fa-char-count">0 / 180</span>
+                <span id="fa-char-count" class="fa-char-count">0 / 2,200</span>
               </div>
+              <div class="fa-hint">Facebook permite hasta 2,200 caracteres. Los primeros 125 son los que se ven sin tocar "Ver más": pon ahí lo más importante.</div>
             </div>
 
             <div class="fa-field">
@@ -290,7 +345,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
               </div>
               <div id="fa-images-grid" class="fa-images-grid" style="display:none"></div>
               <div class="fa-img-count" id="fa-img-count"></div>
-              <div class="fa-hint">Entre 1 y 10 imágenes. Cada una se convierte en una tarjeta del carrusel.</div>
+              <div class="fa-hint">Entre 1 y 10 imágenes. Cada una se convierte en una tarjeta del carrusel. ¿Quieres mejorarlas primero? <a href="image-cleaner.html" class="fa-link">Ábrelas en el Editor de imágenes</a> y regrésalas aquí con un clic.</div>
             </div>
           </div>
 
@@ -303,7 +358,7 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
             <div class="fa-field">
               <label for="fa-city-input">Ciudad objetivo</label>
               <div class="fa-city-wrap" id="fa-city-wrap">
-                <input id="fa-city-input" type="text" autocomplete="off" placeholder="Busca una ciudad…" oninput="onCityInput(this.value)" onkeydown="onCityKeydown(event)" onblur="onCityBlur()"/>
+                <input id="fa-city-input" type="text" autocomplete="off" placeholder="Busca una ciudad…" oninput="onCityInput(this.value)" onkeydown="onCityKeydown(event)" onfocus="onCityFocus()" onblur="onCityBlur()"/>
                 <button type="button" class="fa-city-clear" id="fa-city-clear" onclick="clearCity()" title="Quitar ciudad">×</button>
                 <div class="fa-city-dropdown" id="fa-city-dropdown"></div>
               </div>
@@ -355,29 +410,47 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
             </div>
           </div>
 
-          <div class="fa-card" style="margin:0">
-            <div class="fa-card-title" style="margin-bottom:12px">Vista previa</div>
-            <div class="fa-preview" id="fa-preview">
-              <div class="fa-preview-head">
-                <div class="fa-preview-pp" id="fa-preview-pp"></div>
-                <div>
-                  <div class="fa-preview-page" id="fa-preview-page">Tu página</div>
-                  <div class="fa-preview-sponsored">Publicidad · <svg width="12" height="12" style="vertical-align:-2px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18 15 15 0 010-18z"/></svg></div>
-                </div>
+          <div class="fa-preview-panel">
+            <div class="fa-preview-panel-head">
+              <div>
+                <div class="fa-preview-kicker"><span class="fa-preview-live"></span>Vista previa en vivo</div>
+                <div class="fa-preview-h">Así se verá tu anuncio</div>
               </div>
-              <div class="fa-preview-msg" id="fa-preview-msg">Texto del anuncio…</div>
-              <div id="fa-preview-image-wrap">
-                <div class="fa-preview-imgph" id="fa-preview-imgph">Sin imágenes</div>
-                <img class="fa-preview-img" id="fa-preview-img" alt="" style="display:none"/>
-              </div>
-              <div class="fa-preview-link">
-                <div class="fa-preview-link-info">
-                  <div class="fa-preview-link-domain" id="fa-preview-domain" style="display:none"></div>
-                  <div class="fa-preview-link-title" id="fa-preview-title">Título del anuncio</div>
+              <div class="fa-preview-badge" id="fa-preview-badge">Carrusel</div>
+            </div>
+
+            <div class="fa-phone">
+              <div class="fa-phone-bar"></div>
+              <div class="fa-preview" id="fa-preview">
+                <div class="fa-preview-head">
+                  <div class="fa-preview-pp" id="fa-preview-pp"></div>
+                  <div>
+                    <div class="fa-preview-page" id="fa-preview-page">Tu página</div>
+                    <div class="fa-preview-sponsored">Publicidad · <svg width="12" height="12" style="vertical-align:-2px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18 15 15 0 010-18z"/></svg></div>
+                  </div>
                 </div>
-                <button class="fa-preview-cta" type="button" tabindex="-1">Enviar mensaje</button>
+                <div class="fa-preview-msg" id="fa-preview-msg">Texto del anuncio…</div>
+
+                <div class="fa-car" id="fa-car">
+                  <div class="fa-car-track" id="fa-car-track"></div>
+                  <button type="button" class="fa-car-nav prev" id="fa-car-prev" onclick="carouselNav(-1)" aria-label="Anterior">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </button>
+                  <button type="button" class="fa-car-nav next" id="fa-car-next" onclick="carouselNav(1)" aria-label="Siguiente">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                  </button>
+                </div>
+                <div class="fa-car-dots" id="fa-car-dots"></div>
+
+                <div class="fa-preview-social">
+                  <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v11H3V10zM7 10l4.5-7a2 2 0 013.4 1.9L14 9h5.3a2 2 0 012 2.4l-1.4 7A2 2 0 0118 20H7"/></svg>Me gusta</span>
+                  <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 01-9 8.4 9 9 0 01-3.9-.9L3 20.5l1.5-4.4A8.4 8.4 0 013 11.5a8.4 8.4 0 019-8.4 8.4 8.4 0 019 8.4z"/></svg>Comentar</span>
+                  <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7M16 6l-4-4-4 4M12 2v14"/></svg>Compartir</span>
+                </div>
               </div>
             </div>
+
+            <div class="fa-preview-foot" id="fa-preview-foot">Se entrega en Facebook e Instagram. Al tocar el botón, la persona te escribe directo por Messenger.</div>
           </div>
         </aside>
       </div>
@@ -410,9 +483,18 @@ let _connection = null;     // {page_id, page_name, page_pic, ad_account_id, ad_
 // _images: array de {dataUrl, b64, mime, name} — carrusel hasta 10
 let _images = [];
 let _campaignsPollTimer = null;
-let _selectedCityKey = '';   // key de ciudad Meta para geo-targeting
-let _citySearchTimer = null; // debounce para búsqueda de ciudades
-let _cityFocusIdx = -1;      // índice de opción enfocada con teclado
+let _selectedCityKey = '';    // key de ciudad Meta para geo-targeting
+let _selectedCityType = 'city'; // city | region | neighborhood | subcity
+let _citySearchTimer = null;  // debounce para búsqueda de ciudades
+let _cityFocusIdx = -1;       // índice de opción enfocada con teclado
+let _cityLoading = false;     // hay una búsqueda de ciudad en vuelo
+let _cityResults = [];        // resultados actuales del dropdown
+let _props = [];              // catálogo de inmuebles del agente
+let _propsCargados = false;   // ya se leyó Supabase al menos una vez
+let _propSel = null;          // inmueble elegido para este anuncio
+let _propBusyTimer = null;    // debounce del buscador de inmuebles
+let _carIdx = 0;              // tarjeta visible del carrusel en la vista previa
+let _previewTextExpanded = false; // "Ver más" del texto en la vista previa
 
 // ── Utilidades ──────────────────────────────────────────────
 function getToken(){return localStorage.getItem('sb_token')||sessionStorage.getItem('sb_token')||null;}
@@ -426,10 +508,6 @@ function show(id){const el=document.getElementById(id); if(el) el.style.display=
 function hide(id){const el=document.getElementById(id); if(el) el.style.display='none';}
 function money(n){return '$'+Math.round(Number(n)||0).toLocaleString('es-MX');}
 function escapeHtml(s){return String(s||'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
-function domainOf(url){
-  try { return new URL(url).hostname.replace(/^www\./,''); }
-  catch(e){ return url ? url.replace(/^https?:\/\//,'').split('/')[0] : 'tu-sitio.com'; }
-}
 
 // ── Inicio: leer conexión del server (única fuente de verdad) ──
 async function checkConnection(){
@@ -441,7 +519,7 @@ async function checkConnection(){
     if(!d.connected){
       show('fa-not-connected'); hide('fa-no-ads-token'); hide('fa-no-account-saved'); hide('fa-connected'); return;
     }
-    if(!d.user_token){
+    if(!d.tiene_token_ads){
       hide('fa-not-connected'); show('fa-no-ads-token'); hide('fa-no-account-saved'); hide('fa-connected'); return;
     }
     if(!d.ad_account_id){
@@ -495,6 +573,8 @@ function syncSummary(){
   document.getElementById('fa-summary-status').textContent = document.getElementById('fa-publish-now').checked ? 'Activo' : 'Pausa';
 }
 
+const PREVIEW_FOLD = 125;   // Facebook corta el texto y muestra "Ver más"
+
 function syncPreview(){
   const pageName = _connection && _connection.page_name ? _connection.page_name : 'Tu página';
   const pagePic  = _connection && _connection.page_pic ? _connection.page_pic : '';
@@ -502,20 +582,75 @@ function syncPreview(){
   const pp = document.getElementById('fa-preview-pp');
   pp.style.backgroundImage = pagePic ? `url('${pagePic}')` : '';
 
-  const text  = document.getElementById('fa-ad-text').value.trim() || 'Texto del anuncio…';
-  const title = document.getElementById('fa-ad-headline').value.trim() || 'Título del anuncio';
-  document.getElementById('fa-preview-msg').textContent = text;
-  document.getElementById('fa-preview-title').textContent = title;
-  // Vista previa: mostrar la primera imagen del carrusel si existe
-  const img = document.getElementById('fa-preview-img');
-  const ph  = document.getElementById('fa-preview-imgph');
-  if(_images.length > 0){
-    img.src = _images[0].dataUrl;
-    img.style.display = 'block'; ph.style.display = 'none';
+  // ── Texto con corte "Ver más" igual que Facebook ──
+  const rawText = document.getElementById('fa-ad-text').value.trim();
+  const text    = rawText || 'Aquí va el texto de tu anuncio…';
+  const msgEl   = document.getElementById('fa-preview-msg');
+  if(!_previewTextExpanded && text.length > PREVIEW_FOLD){
+    msgEl.innerHTML = escapeHtml(text.slice(0, PREVIEW_FOLD)) +
+      '… <span class="fa-preview-more" onclick="expandPreviewText()">Ver más</span>';
   } else {
-    img.style.display = 'none'; ph.style.display = '';
-    ph.textContent = 'Sin imágenes';
+    msgEl.textContent = text;
   }
+
+  // ── Tarjetas del carrusel ──
+  const title = document.getElementById('fa-ad-headline').value.trim() || 'Título de la tarjeta';
+  const track = document.getElementById('fa-car-track');
+  const dots  = document.getElementById('fa-car-dots');
+  const badge = document.getElementById('fa-preview-badge');
+
+  if(!_images.length){
+    _carIdx = 0;
+    track.innerHTML =
+      `<div class="fa-car-slide" style="flex:0 0 100%;padding-right:0">
+         <div class="fa-preview-ph">
+           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+           Sube tus fotos y aparecerán aquí
+         </div>
+       </div>`;
+    dots.innerHTML = '';
+    badge.textContent = 'Carrusel';
+  } else {
+    if(_carIdx > _images.length - 1) _carIdx = _images.length - 1;
+    if(_carIdx < 0) _carIdx = 0;
+    const solo = _images.length === 1;
+    track.innerHTML = _images.map(img =>
+      `<div class="fa-car-slide"${solo ? ' style="flex:0 0 100%;padding-right:0"' : ''}>
+         <img class="fa-car-img" src="${img.dataUrl}" alt=""/>
+         <div class="fa-car-card">
+           <div class="fa-car-card-title">${escapeHtml(title)}</div>
+           <button class="fa-preview-cta" type="button" tabindex="-1">Enviar mensaje</button>
+         </div>
+       </div>`
+    ).join('');
+    dots.innerHTML = solo ? '' : _images.map((_, i) =>
+      `<span class="fa-car-dot${i === _carIdx ? ' on' : ''}"></span>`).join('');
+    badge.textContent = solo ? '1 tarjeta' : _images.length + ' tarjetas';
+  }
+  applyCarouselOffset();
+}
+
+function expandPreviewText(){ _previewTextExpanded = true; syncPreview(); }
+
+function applyCarouselOffset(){
+  const track = document.getElementById('fa-car-track');
+  const prev  = document.getElementById('fa-car-prev');
+  const next  = document.getElementById('fa-car-next');
+  const multi = _images.length > 1;
+  prev.classList.toggle('show', multi);
+  next.classList.toggle('show', multi);
+  if(!multi){ track.style.transform = 'translateX(0)'; return; }
+  prev.disabled = _carIdx === 0;
+  next.disabled = _carIdx >= _images.length - 1;
+  track.style.transform = `translateX(-${_carIdx * 88}%)`;
+}
+
+function carouselNav(dir){
+  if(_images.length < 2) return;
+  _carIdx = Math.max(0, Math.min(_images.length - 1, _carIdx + dir));
+  const dots = document.getElementById('fa-car-dots').children;
+  for(let i = 0; i < dots.length; i++) dots[i].classList.toggle('on', i === _carIdx);
+  applyCarouselOffset();
 }
 
 // ── Caracteres ──────────────────────────────────────────────
@@ -523,8 +658,8 @@ function updateCharCount(){
   const ta = document.getElementById('fa-ad-text');
   const cc = document.getElementById('fa-char-count');
   const len = ta.value.length;
-  cc.textContent = len + ' / 180';
-  cc.className = 'fa-char-count' + (len > 160 ? ' warn' : '') + (len >= 180 ? ' over' : '');
+  cc.textContent = len.toLocaleString('es-MX') + ' / 2,200';
+  cc.className = 'fa-char-count' + (len > 2000 ? ' warn' : '') + (len >= 2200 ? ' over' : '');
 }
 
 // ── Imágenes carrusel (multi) ───────────────────────────────
@@ -583,11 +718,7 @@ function renderImagesGrid(){
       <button type="button" class="fa-img-thumb-del" onclick="removeImage(${i})" title="Quitar">&times;</button>
     </div>`
   ).join('') + (_images.length < 10 ?
-    `<div class="fa-img-add" onclick="document.getElementById('fa-image-input').click()">
-      <input type="file" id="fa-image-input" accept="image/jpeg,image/png,image/webp" multiple onchange="onImagesSelected(this)" style="display:none"/>
-      +
-    </div>` :
-    `<input type="file" id="fa-image-input" accept="image/jpeg,image/png,image/webp" multiple onchange="onImagesSelected(this)" style="display:none"/>`
+    `<div class="fa-img-add" onclick="document.getElementById('fa-image-input').click()">+</div>` : ''
   );
   const n = _images.length;
   counter.innerHTML = `<span class="${n >= 1 ? 'ok' : ''}">${n} imagen${n !== 1 ? 'es' : ''}</span> de 10 máximo.`;
@@ -602,8 +733,235 @@ function removeImage(idx){
 
 function resetImages(){
   _images = [];
+  _carIdx = 0;
   renderImagesGrid();
   syncPreview();
+}
+
+// ── Imágenes que llegan del Editor de imágenes ──────────────
+// El editor guarda en sessionStorage y navega hacia acá.
+function preloadFromEditor(){
+  let raw = null;
+  try { raw = sessionStorage.getItem('broquer_editor_images_fb'); } catch(_){ return; }
+  if(!raw) return;
+  try { sessionStorage.removeItem('broquer_editor_images_fb'); } catch(_){}
+  let imgs = [];
+  try { imgs = JSON.parse(raw); } catch(_){ return; }
+  if(!Array.isArray(imgs) || !imgs.length) return;
+
+  let añadidas = 0;
+  imgs.forEach(img => {
+    if(!img || !img.url || _images.length >= 10) return;
+    const m = /^data:([^;,]+);base64,(.+)$/.exec(img.url);
+    if(!m) return;
+    _images.push({ dataUrl: img.url, b64: m[2], mime: m[1], name: img.name || 'editada.jpg' });
+    añadidas++;
+  });
+  if(!añadidas) return;
+  renderImagesGrid();
+  syncPreview();
+  const sobrantes = imgs.length - añadidas;
+  toast(`${añadidas} imagen${añadidas !== 1 ? 'es' : ''} del editor cargada${añadidas !== 1 ? 's' : ''}` +
+        (sobrantes > 0 ? ` — ${sobrantes} no cupieron (máximo 10).` : '.'));
+}
+
+// ── Inmueble del catálogo ───────────────────────────────────
+// Trae el inventario del agente desde Supabase (RLS: solo lo suyo) y
+// precarga título, texto y fotos del inmueble que elija. Todo es editable.
+async function cargarInmuebles(){
+  if(_propsCargados) return;
+  if(!window.brokrSb || !window.brokrSb.rest) return;
+  try{
+    const filas = await window.brokrSb.rest(
+      'propiedades?select=id,titulo,descripcion,clave_interna,tipo,operacion,estatus,archivada,'
+      + 'precio,moneda,colonia,ciudad,estado,recamaras,banos,m2_construccion,m2_terreno,'
+      + 'estacionamientos,fotos&order=updated_at.desc&limit=1000',
+      { method:'GET' }
+    );
+    _props = Array.isArray(filas) ? filas.filter(p => !p.archivada) : [];
+  }catch(e){
+    _props = [];
+  }
+  _propsCargados = true;
+}
+
+function propMoney(n, moneda){
+  const v = Number(n)||0;
+  if(!v) return '';
+  return '$' + v.toLocaleString('es-MX', { maximumFractionDigits: 0 }) + (moneda && moneda !== 'MXN' ? ' ' + moneda : '');
+}
+
+function propUbicacion(p){
+  return [p.colonia, p.ciudad, p.estado].filter(Boolean).join(', ');
+}
+
+function filtrarInmuebles(q){
+  const t = (q||'').toLowerCase().trim();
+  if(!t) return _props.slice(0, 8);
+  return _props.filter(p => (
+    (p.titulo||'') + ' ' + (p.clave_interna||'') + ' ' + (p.colonia||'') + ' ' +
+    (p.ciudad||'') + ' ' + (p.estado||'') + ' ' + (p.tipo||'')
+  ).toLowerCase().indexOf(t) >= 0).slice(0, 8);
+}
+
+function renderPropDropdown(lista){
+  const dd = document.getElementById('fa-prop-dropdown');
+  if(!dd) return;
+  if(!_propsCargados){
+    dd.innerHTML = '<div class="fa-city-msg"><span class="fa-city-spin"></span>Cargando tu inventario…</div>';
+    dd.classList.add('open'); return;
+  }
+  if(!_props.length){
+    dd.innerHTML = '<div class="fa-city-msg">Todavía no tienes inmuebles capturados en Broquer.</div>';
+    dd.classList.add('open'); return;
+  }
+  if(!lista.length){
+    dd.innerHTML = '<div class="fa-city-msg">Ningún inmueble coincide con esa búsqueda.</div>';
+    dd.classList.add('open'); return;
+  }
+  dd.innerHTML = lista.map(p =>
+    `<div class="fa-prop-opt" onmousedown="elegirInmuebleAnuncio('${escapeHtml(String(p.id))}')">
+       <span class="fa-prop-opt-main">
+         <strong>${escapeHtml((p.clave_interna ? p.clave_interna + ' · ' : '') + (p.titulo || 'Sin título'))}</strong>
+         <span>${escapeHtml(propUbicacion(p) || 'Sin ubicación')}</span>
+       </span>
+       <span class="fa-prop-opt-precio">${escapeHtml(propMoney(p.precio, p.moneda) || '—')}</span>
+     </div>`
+  ).join('');
+  dd.classList.add('open');
+}
+
+function closePropDropdown(){
+  const dd = document.getElementById('fa-prop-dropdown');
+  if(dd) dd.classList.remove('open');
+}
+
+async function onPropFocus(){
+  renderPropDropdown([]);
+  await cargarInmuebles();
+  const inp = document.getElementById('fa-prop-input');
+  renderPropDropdown(filtrarInmuebles(inp ? inp.value : ''));
+}
+
+function onPropBlur(){
+  setTimeout(closePropDropdown, 140);
+}
+
+function onPropInput(v){
+  if(_propBusyTimer) clearTimeout(_propBusyTimer);
+  _propBusyTimer = setTimeout(async () => {
+    await cargarInmuebles();
+    renderPropDropdown(filtrarInmuebles(v));
+  }, 120);
+}
+
+function textoDeInmueble(p){
+  const desc = (p.descripcion||'').trim();
+  if(desc) return desc.slice(0, 2200);
+  const specs = [
+    p.recamaras ? p.recamaras + ' recámaras' : '',
+    p.banos ? p.banos + ' baños' : '',
+    p.m2_construccion ? Number(p.m2_construccion).toLocaleString('es-MX') + ' m² de construcción' : '',
+    p.m2_terreno ? Number(p.m2_terreno).toLocaleString('es-MX') + ' m² de terreno' : '',
+    p.estacionamientos ? p.estacionamientos + ' estacionamientos' : '',
+  ].filter(Boolean).join(' · ');
+  const op = p.operacion === 'renta' ? 'en renta' : 'en venta';
+  const partes = [
+    [(p.titulo || 'Inmueble'), op].join(' ') + (propUbicacion(p) ? ' en ' + propUbicacion(p) : '') + '.',
+    specs,
+    propMoney(p.precio, p.moneda) ? 'Precio: ' + propMoney(p.precio, p.moneda) + '.' : '',
+    'Escríbeme por aquí y con gusto te agendo una visita.',
+  ].filter(Boolean);
+  return partes.join('\n\n').slice(0, 2200);
+}
+
+// Baja las fotos del inmueble y las convierte a base64 para el carrusel.
+async function cargarFotosDeInmueble(p){
+  const urls = (Array.isArray(p.fotos) ? p.fotos : []).filter(Boolean).slice(0, 10);
+  if(!urls.length){
+    resetImages();
+    toast('Ese inmueble no tiene fotos cargadas. Sube las imágenes del anuncio a mano.');
+    return;
+  }
+  const counter = document.getElementById('fa-img-count');
+  if(counter) counter.innerHTML = 'Cargando fotos del inmueble…';
+  const nuevas = [];
+  let fallaron = 0;
+  for(let i = 0; i < urls.length; i++){
+    try{
+      const r = await fetch(urls[i]);
+      if(!r.ok) throw new Error('http ' + r.status);
+      const blob = await r.blob();
+      if(blob.size > 8 * 1024 * 1024){ fallaron++; continue; }
+      const dataUrl = await new Promise((res, rej) => {
+        const fr = new FileReader();
+        fr.onload = () => res(fr.result);
+        fr.onerror = () => rej(new Error('read'));
+        fr.readAsDataURL(blob);
+      });
+      const b64 = String(dataUrl).split(',')[1] || '';
+      if(!b64){ fallaron++; continue; }
+      nuevas.push({ dataUrl, b64, mime: blob.type || 'image/jpeg', name: 'inmueble-' + (i+1) + '.jpg' });
+    }catch(e){ fallaron++; }
+  }
+  _images = nuevas;
+  _carIdx = 0;
+  renderImagesGrid();
+  syncPreview();
+  if(!nuevas.length){
+    toast('No pude bajar las fotos de ese inmueble. Súbelas a mano desde tu equipo.');
+  }else if(fallaron){
+    toast(`${nuevas.length} foto(s) cargadas. ${fallaron} no se pudieron traer.`);
+  }else{
+    toast(`${nuevas.length} foto(s) del inmueble cargadas.`);
+  }
+}
+
+function pintarInmuebleElegido(){
+  const caja = document.getElementById('fa-prop-sel');
+  const inp  = document.getElementById('fa-prop-input');
+  if(!caja) return;
+  if(!_propSel){
+    caja.style.display = 'none';
+    caja.innerHTML = '';
+    if(inp) inp.value = '';
+    return;
+  }
+  caja.style.display = 'flex';
+  caja.innerHTML =
+    `<span><strong>${escapeHtml((_propSel.clave_interna ? _propSel.clave_interna + ' · ' : '') + (_propSel.titulo || 'Sin título'))}</strong>` +
+    (propUbicacion(_propSel) ? ' — ' + escapeHtml(propUbicacion(_propSel)) : '') + `</span>` +
+    `<button type="button" onclick="quitarInmuebleAnuncio()">Quitar</button>`;
+  if(inp) inp.value = '';
+}
+
+async function elegirInmuebleAnuncio(id){
+  closePropDropdown();
+  const p = _props.find(x => String(x.id) === String(id));
+  if(!p) return;
+  _propSel = p;
+  pintarInmuebleElegido();
+
+  const nombre = document.getElementById('fa-campaign-name');
+  const texto  = document.getElementById('fa-ad-text');
+  const titulo = document.getElementById('fa-ad-headline');
+
+  if(nombre) nombre.value = (p.clave_interna ? p.clave_interna + ' — ' : '') + (p.titulo || 'Anuncio');
+  if(texto)  texto.value  = textoDeInmueble(p);
+  if(titulo) titulo.value = String(p.titulo || '').slice(0, 40);
+
+  updateCharCount();
+  updateAiBtn();
+  syncSummary();
+  _previewTextExpanded = false;
+  syncPreview();
+
+  await cargarFotosDeInmueble(p);
+}
+
+function quitarInmuebleAnuncio(){
+  _propSel = null;
+  pintarInmuebleElegido();
 }
 
 // ── IA: mejorar texto ───────────────────────────────────────
@@ -626,7 +984,7 @@ async function improveText(){
     });
     const d = await r.json();
     if(d.text){
-      document.getElementById('fa-ad-text').value = d.text.slice(0, 180);
+      document.getElementById('fa-ad-text').value = d.text.slice(0, 2200);
       updateCharCount();
       syncPreview();
     }
@@ -640,64 +998,104 @@ async function improveText(){
 // Si el input pierde el foco sin selección confirmada, se limpia solo.
 // Así es imposible enviar texto libre sin key válida de Meta.
 
+function cityMsg(html){
+  const dropdown = document.getElementById('fa-city-dropdown');
+  dropdown.innerHTML = `<div class="fa-city-msg">${html}</div>`;
+  dropdown.classList.add('open');
+}
+
 function onCityInput(val){
   clearTimeout(_citySearchTimer);
   const dropdown = document.getElementById('fa-city-dropdown');
   // Cualquier edición invalida la selección anterior
   _selectedCityKey = '';
+  _selectedCityType = 'city';
+  _cityResults = [];
   document.getElementById('fa-city-wrap').classList.remove('fa-city-confirmed');
   document.getElementById('fa-city-clear').classList.remove('visible');
-  if(!val || val.length < 2){
+  if(!val || val.trim().length < 2){
+    _cityLoading = false;
     dropdown.innerHTML = '';
     dropdown.classList.remove('open');
     return;
   }
-  _citySearchTimer = setTimeout(() => searchCities(val), 320);
+  _cityLoading = true;
+  cityMsg('<span class="fa-city-spin"></span>Buscando ciudades…');
+  _citySearchTimer = setTimeout(() => searchCities(val.trim()), 300);
+}
+
+function onCityFocus(){
+  const val = document.getElementById('fa-city-input').value.trim();
+  if(!_selectedCityKey && val.length >= 2 && _cityResults.length){
+    renderCityDropdown(_cityResults);
+  }
 }
 
 function onCityBlur(){
-  // Delay para que onmousedown del dropdown alcance a disparar antes del blur
+  // Delay para que el mousedown del dropdown alcance a disparar antes del blur
   setTimeout(() => {
-    if(!_selectedCityKey){
-      document.getElementById('fa-city-input').value = '';
+    if(!_selectedCityKey && !_cityLoading){
       document.getElementById('fa-city-dropdown').classList.remove('open');
     }
-  }, 200);
+  }, 220);
 }
 
 async function searchCities(q){
+  const tok = getToken();
   try{
-    const tok = getToken();
     const r = await fetch(`${API_BASE}/facebook/city-search?q=${encodeURIComponent(q)}`, {
       headers:{ Authorization: 'Bearer ' + tok }
     });
-    if(!r.ok) return;
-    const d = await r.json();
-    renderCityDropdown(d.results || []);
-  }catch(e){}
+    _cityLoading = false;
+    let d = {};
+    try { d = await r.json(); } catch(_){}
+    if(!r.ok){
+      _cityResults = [];
+      cityMsg(escapeHtml(d.detail || 'Facebook no respondió. Reconecta tu cuenta desde tu perfil e intenta de nuevo.'));
+      return;
+    }
+    _cityResults = d.results || [];
+    renderCityDropdown(_cityResults);
+  }catch(e){
+    _cityLoading = false;
+    _cityResults = [];
+    cityMsg('No hay conexión con el servidor. Revisa tu internet e intenta de nuevo.');
+  }
 }
+
+const CITY_TYPE_LABEL = { region:'Estado', neighborhood:'Colonia', subcity:'Delegación', city:'Ciudad' };
 
 function renderCityDropdown(results){
   const dropdown = document.getElementById('fa-city-dropdown');
   _cityFocusIdx = -1;
   if(!results.length){
-    dropdown.innerHTML = '<div class="fa-city-opt"><span>No se encontraron ciudades. Intenta con otro nombre.</span></div>';
-    dropdown.classList.add('open');
+    cityMsg('No encontramos esa ciudad. Intenta escribirla sin acentos o con otro nombre.');
     return;
   }
   dropdown.innerHTML = results.map((r, i) => {
-    const tipo = r.type === 'region' ? 'Estado' : 'Ciudad';
-    const sub  = [tipo, r.region].filter(Boolean).join(' · ');
-    return `<div class="fa-city-opt" data-key="${r.key}" data-name="${r.name}" data-idx="${i}" onmousedown="selectCity('${r.key}','${r.name.replace(/'/g,"\'")}')">
-      <strong>${r.name}</strong>${sub ? `<span>${sub}</span>` : ''}
+    const tipo = CITY_TYPE_LABEL[r.type] || 'Ciudad';
+    const sub  = [tipo, r.region, r.country_name].filter(Boolean).join(' · ');
+    return `<div class="fa-city-opt" data-idx="${i}">
+      <strong>${escapeHtml(r.name)}</strong>${sub ? `<span>${escapeHtml(sub)}</span>` : ''}
     </div>`;
   }).join('');
+  // Delegación de eventos: nada de interpolar nombres dentro de onmousedown
+  // (los apóstrofos de "Villa O'Higgins" rompían el handler).
+  dropdown.querySelectorAll('.fa-city-opt[data-idx]').forEach(el => {
+    el.addEventListener('mousedown', ev => {
+      ev.preventDefault();
+      selectCity(parseInt(el.dataset.idx, 10));
+    });
+  });
   dropdown.classList.add('open');
 }
 
-function selectCity(key, name){
-  _selectedCityKey = key;
-  document.getElementById('fa-city-input').value = name;
+function selectCity(idx){
+  const r = _cityResults[idx];
+  if(!r) return;
+  _selectedCityKey  = r.key;
+  _selectedCityType = r.type || 'city';
+  document.getElementById('fa-city-input').value = r.name;
   document.getElementById('fa-city-dropdown').classList.remove('open');
   document.getElementById('fa-city-clear').classList.add('visible');
   document.getElementById('fa-city-wrap').classList.add('fa-city-confirmed');
@@ -705,6 +1103,8 @@ function selectCity(key, name){
 
 function clearCity(){
   _selectedCityKey = '';
+  _selectedCityType = 'city';
+  _cityResults = [];
   document.getElementById('fa-city-input').value = '';
   document.getElementById('fa-city-clear').classList.remove('visible');
   document.getElementById('fa-city-wrap').classList.remove('fa-city-confirmed');
@@ -715,7 +1115,7 @@ function clearCity(){
 function onCityKeydown(e){
   const dropdown = document.getElementById('fa-city-dropdown');
   if(!dropdown.classList.contains('open')) return;
-  const opts = dropdown.querySelectorAll('.fa-city-opt[data-key]');
+  const opts = dropdown.querySelectorAll('.fa-city-opt[data-idx]');
   if(!opts.length) return;
   if(e.key === 'ArrowDown'){
     e.preventDefault();
@@ -726,8 +1126,7 @@ function onCityKeydown(e){
   } else if(e.key === 'Enter'){
     e.preventDefault();
     if(_cityFocusIdx >= 0 && opts[_cityFocusIdx]){
-      const opt = opts[_cityFocusIdx];
-      selectCity(opt.dataset.key, opt.dataset.name);
+      selectCity(parseInt(opts[_cityFocusIdx].dataset.idx, 10));
     }
     return;
   } else if(e.key === 'Escape'){
@@ -779,7 +1178,8 @@ async function createAd(){
     duration_days: duration,
     age_min:  25,
     age_max:  60,
-    city:     _selectedCityKey,
+    city:      _selectedCityKey,
+    city_type: _selectedCityType || 'city',
     publish_now: document.getElementById('fa-publish-now').checked,
   };
 
@@ -811,6 +1211,7 @@ async function createAd(){
       document.getElementById('fa-campaign-name').value = '';
       document.getElementById('fa-ad-text').value = '';
       document.getElementById('fa-ad-headline').value = '';
+      _previewTextExpanded = false;
       resetImages();
       clearCity();
       updateCharCount(); syncPreview();
@@ -920,8 +1321,12 @@ window.addEventListener('beforeunload', () => { stopCampaignsPolling(); });
 document.addEventListener('DOMContentLoaded', () => {
   syncSummary();
   updateCharCount();
+  preloadFromEditor();
   syncPreview();
   checkConnection();
+  // El catálogo necesita el cliente de Supabase que monta app-shell.js.
+  if(window.brokrSb && window.brokrSb.rest) cargarInmuebles();
+  else window.addEventListener('brokr-shell-ready', () => { cargarInmuebles(); }, { once: true });
 });
 </script>
 <script src="app-shell.js" defer></script>

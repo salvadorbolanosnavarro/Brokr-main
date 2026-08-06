@@ -6,7 +6,7 @@
 <meta charset="UTF-8">
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
 <title>Editor de imágenes — Broquer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <style>
@@ -59,7 +59,18 @@ body{font-family:var(--font-sans);background:var(--bg);color:var(--txt);min-heig
 .btn-outline:hover{background:var(--teal-bg);border-color:var(--teal)}
 .btn-outline:disabled{opacity:.5;cursor:not-allowed}
 .btn-danger{background:var(--white);color:var(--red);border:1.5px solid var(--danger-soft)}
+.btn-facebook{background:var(--brand-facebook);color:white}
+.btn-facebook:hover{background:var(--brand-facebook-press)}
+.btn-facebook:disabled{opacity:.5;cursor:not-allowed}
 .btn-danger:hover{background:var(--danger-soft)}
+/* Menú "Utilizar en…" — tres destinos, un solo botón. Antes eran dos botones
+   sueltos en la barra y cada destino nuevo la alargaba más. */
+.usar-wrap{position:relative;display:inline-flex}
+.usar-menu{position:absolute;bottom:calc(100% + 6px);right:0;z-index:40;min-width:210px;background:var(--white);border:1px solid var(--gray2);border-radius:var(--r);box-shadow:var(--shadow);padding:4px;display:none}
+.usar-menu.is-open{display:block}
+.usar-item{display:flex;align-items:center;gap:9px;width:100%;padding:9px 10px;background:none;border:0;border-radius:var(--r-sm);cursor:pointer;text-align:left;font-family:var(--font-sans);font-size:var(--fs-xs);font-weight:600;color:var(--navy2)}
+.usar-item:hover{background:var(--gray)}
+.usar-item svg{flex-shrink:0;width:15px;height:15px}
 
 .action-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 
@@ -173,10 +184,26 @@ body{font-family:var(--font-sans);background:var(--bg);color:var(--txt);min-heig
           <svg width="15" height="15" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
           Descargar selección
         </button>
-        <button class="btn btn-primary" id="btn-use-ficha" onclick="useInFicha()">
-          <svg width="15" height="15" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><rect x="7" y="12" width="10" height="6" rx="1"/><path d="M7 17l3-3 2 2 2-3 3 3"/></svg>
-          Utilizar en ficha
-        </button>
+        <div class="usar-wrap">
+          <button class="btn btn-primary" id="btn-usar" onclick="toggleUsarMenu()" aria-haspopup="true" aria-expanded="false">
+            <svg width="15" height="15" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7"/><polyline points="8 7 12 3 16 7"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Utilizar en…
+          </button>
+          <div class="usar-menu" id="usar-menu" role="menu">
+            <button class="usar-item" type="button" role="menuitem" onclick="useInFicha()">
+              <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><rect x="7" y="12" width="10" height="6" rx="1"/><path d="M7 17l3-3 2 2 2-3 3 3"/></svg>
+              Ficha técnica
+            </button>
+            <button class="usar-item" type="button" role="menuitem" onclick="useInFacebookAds()">
+              <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.269h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+              Facebook Ads
+            </button>
+            <button class="usar-item" type="button" role="menuitem" onclick="useInVideo()">
+              <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="13" height="12" rx="2"/><path d="M15 10.5l5-3v9l-5-3"/></svg>
+              Video
+            </button>
+          </div>
+        </div>
       </div>
       <!-- Process button -->
       <button class="btn btn-primary" id="btn-clean" onclick="cleanAll()">
@@ -504,8 +531,10 @@ async function cleanAll() {
       const timeout = setTimeout(() => controller.abort(), 120000); // 2 min timeout
 
       try {
+        const _tk = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || '';
         const r = await fetch(API_BASE + '/images/clean', {
           method: 'POST',
+          headers: _tk ? { Authorization: 'Bearer ' + _tk } : {},
           body: fd,
           signal: controller.signal
         });
@@ -672,6 +701,7 @@ async function downloadSelected() {
 
 // ── Utilizar en ficha ─────────────────────────────────────────────────────────
 function useInFicha() {
+  toggleUsarMenu(false);
   const imagesToUse = results
     .map((res, i) => res && res.cleaned_b64
       ? { url: 'data:' + res.content_type + ';base64,' + res.cleaned_b64,
@@ -697,6 +727,78 @@ function useInFicha() {
     location.href = 'ficha-manual.html';
   } catch(e) {
     showToast('No se pudieron transferir las imágenes');
+  }
+}
+
+// ── Utilizar en Facebook Ads ──────────────────────────────────────────────────
+function collectEditedImages() {
+  return results
+    .map((res, i) => res && res.cleaned_b64
+      ? { url: 'data:' + res.content_type + ';base64,' + res.cleaned_b64,
+          name: (() => { const n = files[i].name; const e = n.split('.').pop(); const b = n.substring(0, n.lastIndexOf('.')) || n; return b + '_editada.' + e; })() }
+      : null)
+    .filter(Boolean);
+}
+
+function useInFacebookAds() {
+  toggleUsarMenu(false);
+  const imagesToUse = collectEditedImages();
+  if (!imagesToUse.length) { showToast('No hay fotos editadas aún'); return; }
+
+  // Facebook permite máximo 10 tarjetas por carrusel.
+  const enviadas = imagesToUse.slice(0, 10);
+  const sobrantes = imagesToUse.length - enviadas.length;
+
+  try {
+    sessionStorage.setItem('broquer_editor_images_fb', JSON.stringify(enviadas));
+  } catch (e) {
+    showToast('Las fotos pesan demasiado para transferirlas. Descárgalas y súbelas manualmente.');
+    return;
+  }
+  if (sobrantes > 0) {
+    showToast(`Enviando 10 fotos a Facebook Ads — ${sobrantes} no caben en un carrusel.`, 2000);
+    setTimeout(() => { location.href = 'facebook-ads.html'; }, 1400);
+  } else {
+    location.href = 'facebook-ads.html';
+  }
+}
+
+// ── Menú "Utilizar en…" ──────────────────────────────────────────────────────
+function toggleUsarMenu(forzar) {
+  const menu = document.getElementById('usar-menu');
+  const btn  = document.getElementById('btn-usar');
+  const abrir = (typeof forzar === 'boolean') ? forzar : !menu.classList.contains('is-open');
+  menu.classList.toggle('is-open', abrir);
+  if (btn) btn.setAttribute('aria-expanded', abrir ? 'true' : 'false');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.usar-wrap')) toggleUsarMenu(false);
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') toggleUsarMenu(false); });
+
+// ── Utilizar en Video ─────────────────────────────────────────────────────────
+// El recorrido necesita mínimo 2 fotos y usa máximo 8: más de eso nadie lo
+// termina de ver. El módulo de Video sube estas fotos a Storage antes de
+// renderizar, porque llegan como data: y el backend no puede leerlas así.
+function useInVideo() {
+  toggleUsarMenu(false);
+  const imagesToUse = collectEditedImages();
+  if (imagesToUse.length < 2) { showToast('El recorrido necesita al menos 2 fotos editadas'); return; }
+
+  const enviadas = imagesToUse.slice(0, 8);
+  const sobrantes = imagesToUse.length - enviadas.length;
+
+  try {
+    sessionStorage.setItem('broquer_editor_images_video', JSON.stringify(enviadas));
+  } catch (e) {
+    showToast('Las fotos pesan demasiado para transferirlas. Descárgalas y súbelas a la ficha.');
+    return;
+  }
+  if (sobrantes > 0) {
+    showToast('Enviando 8 fotos a Video — ' + sobrantes + ' no caben en un recorrido.', 2000);
+    setTimeout(() => { location.href = 'video.html'; }, 1400);
+  } else {
+    location.href = 'video.html';
   }
 }
 

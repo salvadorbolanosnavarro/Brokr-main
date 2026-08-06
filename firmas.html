@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Broquer — Firma electrónica</title>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+  /* Solo lo específico de este módulo. Todo compone tokens del sistema. */
+  .fr-scroll { padding: 24px 28px 64px; max-width: 1180px; margin: 0 auto; }
+  @media (max-width: 720px) { .fr-scroll { padding: 16px 14px 48px; } }
+
+  /* ── Lista ── */
+  .fr-barra {
+    display: flex; gap: var(--sp-3); align-items: center;
+    flex-wrap: wrap; margin-bottom: var(--sp-5);
+  }
+  .fr-barra__crece { flex: 1; min-width: 200px; }
+
+  .fr-lista { display: flex; flex-direction: column; gap: var(--sp-3); }
+
+  .fr-doc {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    gap: var(--sp-4);
+    background: var(--paper); border: 1px solid var(--line);
+    border-radius: var(--r-lg); padding: var(--sp-5) var(--sp-6);
+    cursor: pointer;
+    transition: border-color var(--dur) var(--ease),
+                box-shadow var(--dur) var(--ease),
+                transform var(--dur) var(--ease);
+  }
+  .fr-doc:hover {
+    border-color: var(--sky-blue);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+  }
+  /* Tile navy, como manda el sistema para los iconos. */
+  .fr-doc__ico {
+    width: 44px; height: 44px; border-radius: var(--r); flex: none;
+    background: var(--sky-navy); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    align-self: start;
+  }
+  .fr-doc__c { min-width: 0; }
+
+  /* El título ya NO se recorta. Si es largo se va a dos renglones:
+     "Promesa de compraventa — Cipres 167, Melchor Ocampo" tiene que
+     poder leerse completo o la lista no sirve de nada. */
+  .fr-doc__t {
+    font-size: var(--fs-body); font-weight: 700; color: var(--ink);
+    line-height: var(--lh-snug); margin-bottom: var(--sp-2);
+  }
+  .fr-doc__m {
+    font-size: var(--fs-label-3); color: var(--mute);
+    display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-3);
+    align-items: center;
+  }
+  .fr-doc__m span { display: inline-flex; align-items: center; gap: var(--sp-1); }
+  .fr-doc__sep { color: var(--line-3); }
+
+  /* Las partes se ven desde la lista. Antes había que entrar al
+     documento para saber quién faltaba de firmar. */
+  .fr-doc__partes {
+    display: flex; flex-wrap: wrap; gap: var(--sp-2);
+    margin-top: var(--sp-3);
+  }
+  .fr-parte-chip {
+    display: inline-flex; align-items: center; gap: var(--sp-2);
+    font-size: var(--fs-label-3); color: var(--mute);
+    background: var(--bone); border: 1px solid var(--line);
+    border-radius: var(--r-pill); padding: 3px var(--sp-3) 3px 4px;
+  }
+  .fr-parte-chip__p {
+    width: 16px; height: 16px; border-radius: 50%; flex: none;
+    background: var(--line-2);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--paper);
+  }
+  .fr-parte-chip.is-firmado {
+    background: var(--forest-soft); border-color: var(--forest);
+    color: var(--ink-2);
+  }
+  .fr-parte-chip.is-firmado .fr-parte-chip__p { background: var(--forest); }
+  .fr-parte-chip.is-rechazado { background: var(--danger-soft); border-color: var(--danger-bd); }
+  .fr-parte-chip.is-rechazado .fr-parte-chip__p { background: var(--danger); }
+
+  .fr-doc__d {
+    text-align: right; flex: none;
+    display: flex; flex-direction: column; align-items: flex-end; gap: var(--sp-2);
+  }
+  .fr-doc__folio {
+    font-size: var(--fs-label-3); color: var(--mute); letter-spacing: 0.06em;
+  }
+  .fr-doc__conteo { font-size: var(--fs-label-3); color: var(--mute); }
+  .fr-doc__conteo b { color: var(--ink); }
+
+  @media (max-width: 680px) {
+    .fr-doc { grid-template-columns: 36px minmax(0, 1fr); padding: var(--sp-5); }
+    .fr-doc__ico { width: 36px; height: 36px; }
+    .fr-doc__d {
+      grid-column: 1 / -1; flex-direction: row; align-items: center;
+      justify-content: space-between; text-align: left;
+      padding-top: var(--sp-3); border-top: 1px solid var(--line);
+    }
+  }
+
+  /* Barra de avance */
+  .fr-avance {
+    height: 4px; border-radius: var(--r-pill); background: var(--line-2);
+    overflow: hidden; margin-top: var(--sp-3); width: 120px;
+  }
+  .fr-avance__f {
+    height: 100%; background: var(--forest); border-radius: var(--r-pill);
+    transition: width var(--dur) var(--ease);
+  }
+  @media (max-width: 680px) { .fr-avance { width: 100%; } }
+
+  /* ── Detalle a pantalla completa ── */
+  /* No es modal a propósito: aquí se revisa evidencia, se leen fechas
+     y se copian folios. Una ventanita encima de la lista obliga a
+     cerrar y volver a abrir cada vez. */
+  .fr-det { display: none; }
+  .fr-det.is-abierto { display: block; }
+  .fr-lista-vista.is-oculto { display: none; }
+
+  .fr-volver {
+    display: inline-flex; align-items: center; gap: var(--sp-2);
+    font-size: var(--fs-sm); font-weight: 600; color: var(--mute);
+    background: none; border: 0; cursor: pointer; padding: 0;
+    margin-bottom: var(--sp-5);
+  }
+  .fr-volver:hover { color: var(--ink); }
+
+  .fr-det__hd {
+    display: flex; gap: var(--sp-5); align-items: flex-start;
+    flex-wrap: wrap; margin-bottom: var(--sp-6);
+    padding-bottom: var(--sp-6); border-bottom: 1px solid var(--line);
+  }
+  .fr-det__t {
+    font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 700;
+    letter-spacing: -0.02em; color: var(--ink); line-height: var(--lh-h2);
+  }
+  .fr-det__m { font-size: var(--fs-sm); color: var(--mute); margin-top: var(--sp-2); }
+
+  .fr-cols {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    gap: var(--sp-6);
+    align-items: start;
+  }
+  .fr-cols > * { min-width: 0; }
+  @media (max-width: 900px) { .fr-cols { grid-template-columns: 1fr; } }
+
+  /* Firmantes */
+  .fr-firmante {
+    display: flex; gap: var(--sp-4); align-items: flex-start;
+    padding: var(--sp-4) 0; border-bottom: 1px solid var(--line);
+  }
+  .fr-firmante:last-child { border-bottom: 0; }
+  .fr-firmante__ini {
+    width: 36px; height: 36px; border-radius: 50%; flex: none;
+    background: var(--navy-soft); color: var(--sky-navy);
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--fs-label-3); font-weight: 700;
+  }
+  .fr-firmante__ini.is-firmado { background: var(--forest); color: #fff; }
+  .fr-firmante__c { flex: 1; min-width: 0; }
+  .fr-firmante__n { font-size: var(--fs-sm); font-weight: 700; color: var(--ink); }
+  .fr-firmante__r { font-size: var(--fs-label-3); color: var(--mute); margin-top: var(--sp-1); }
+  /* Los datos de contacto van uno por renglón y con la palabra completa.
+     Amontonarlos separados por puntos hacía que un correo largo se cortara
+     justo donde importa. */
+  .fr-firmante__x {
+    font-size: var(--fs-label-3); color: var(--mute); margin-top: var(--sp-3);
+    display: flex; flex-direction: column; gap: var(--sp-1);
+  }
+  .fr-firmante__x span { word-break: break-word; }
+  .fr-firmante__x b { color: var(--ink-2); font-weight: 700; }
+
+  /* Bitácora */
+  .fr-bita { position: relative; padding-left: var(--sp-6); min-width: 0; }
+  .fr-bita::before {
+    content: ''; position: absolute; left: 5px; top: 6px; bottom: 6px;
+    width: 1px; background: var(--line-2);
+  }
+  .fr-ev { position: relative; padding-bottom: var(--sp-5); }
+  .fr-ev:last-child { padding-bottom: 0; }
+  .fr-ev::before {
+    content: ''; position: absolute; left: calc(-1 * var(--sp-6) + 2px); top: 5px;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--line-3); border: 2px solid var(--paper);
+  }
+  .fr-ev.is-clave::before { background: var(--forest); }
+  .fr-ev__t { font-size: var(--fs-label-3); color: var(--mute); }
+  /* El SHA-256 son 64 caracteres seguidos sin un solo espacio: sin esto el
+     navegador no lo parte y se desborda fuera de la tarjeta. */
+  .fr-ev__d {
+    font-size: var(--fs-sm); color: var(--ink); line-height: var(--lh);
+    margin-top: var(--sp-1); overflow-wrap: anywhere; word-break: break-word;
+  }
+
+  /* Hash: es dato técnico, se muestra con la fuente del sistema pero
+     partido para que se pueda copiar y comparar sin scroll horizontal. */
+  .fr-hash {
+    font-size: var(--fs-xs); color: var(--mute);
+    word-break: break-all; overflow-wrap: anywhere;
+    letter-spacing: 0.04em;
+    line-height: var(--lh-loose); background: var(--bone);
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm); padding: var(--sp-3); margin-top: var(--sp-2);
+  }
+
+  /* Alta */
+  .fr-zona {
+    border: 1px dashed var(--line-3); border-radius: var(--r-lg);
+    background: var(--bone); padding: var(--sp-8) var(--sp-5);
+    text-align: center; cursor: pointer;
+    transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+  }
+  .fr-zona:hover, .fr-zona.is-encima { border-color: var(--sky-blue); background: var(--navy-soft); }
+  .fr-zona.is-listo { border-style: solid; border-color: var(--forest); background: var(--forest-soft); }
+  .fr-zona__ico { color: var(--mute); margin-bottom: var(--sp-3); display: flex; justify-content: center; }
+  .fr-zona.is-listo .fr-zona__ico { color: var(--forest); }
+  .fr-zona__t { font-size: var(--fs-sm); font-weight: 700; color: var(--ink); }
+  .fr-zona__d { font-size: var(--fs-label-3); color: var(--mute); margin-top: var(--sp-2); }
+
+  /* Dos renglones en vez de cinco columnas apretadas. Un correo como
+     "maria.lopez.hernandez@gmail.com" no cabe en un quinto de pantalla,
+     y un campo donde no ves lo que escribiste no sirve. */
+  .fr-nuevo-firmante {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: var(--sp-4);
+  }
+  .fr-nuevo-firmante .bk-field { margin: 0; }
+  .fr-nuevo-firmante__pie {
+    grid-column: 1 / -1;
+    display: flex; justify-content: space-between; align-items: center;
+    gap: var(--sp-4); flex-wrap: wrap;
+  }
+  @media (max-width: 700px) { .fr-nuevo-firmante { grid-template-columns: 1fr; } }
+
+  /* Caja del alta: se distingue de la lista de quienes ya están. */
+  .fr-alta-caja {
+    background: var(--bone); border: 1px solid var(--line);
+    border-radius: var(--r-lg); padding: var(--sp-5);
+    margin-top: var(--sp-5);
+  }
+  .fr-alta-caja__t {
+    font-size: var(--fs-label-3); font-weight: 700; color: var(--mute);
+    margin-bottom: var(--sp-4);
+  }
+
+  /* ── Colocar las firmas sobre el documento ──
+     El contrato dice "lo firman al margen de cada página y al calce de esta".
+     Aquí el agente marca dónde va cada quien, arrastrando sobre la hoja. */
+  .fr-quien-coloca {
+    display: flex; flex-wrap: wrap; gap: var(--sp-2);
+    margin-bottom: var(--sp-4);
+  }
+  .fr-pluma {
+    display: inline-flex; align-items: center; gap: var(--sp-2);
+    font-size: var(--fs-label-3); font-weight: 700;
+    background: var(--paper); color: var(--ink-2);
+    border: 1px solid var(--line-3); border-radius: var(--r-pill);
+    padding: var(--sp-2) var(--sp-4); cursor: pointer;
+    transition: all var(--dur) var(--ease);
+  }
+  .fr-pluma:hover { border-color: var(--sky-blue); }
+  .fr-pluma.is-active { background: var(--sky-navy); color: #fff; border-color: var(--sky-navy); }
+  .fr-pluma__pt { width: 8px; height: 8px; border-radius: 50%; background: var(--sky-blue); }
+
+  .fr-hojas { display: flex; flex-direction: column; gap: var(--sp-5); }
+  .fr-hoja {
+    position: relative; border: 1px solid var(--line);
+    border-radius: var(--r); overflow: hidden; background: var(--paper);
+    box-shadow: var(--shadow-xs);
+  }
+  .fr-hoja img { width: 100%; display: block; }
+  .fr-hoja.is-armado { cursor: crosshair; }
+  .fr-hoja__n {
+    position: absolute; top: var(--sp-2); left: var(--sp-2);
+    background: var(--sky-navy); color: #fff;
+    font-size: var(--fs-label-3); font-weight: 700;
+    border-radius: var(--r-pill); padding: 2px var(--sp-3);
+  }
+
+  /* Cada recuadro colocado. Se ve encima de la hoja, igual que va a
+     quedar en el PDF final. */
+  .fr-campo {
+    position: absolute;
+    border: 1.5px dashed var(--sky-blue);
+    background: var(--navy-soft);
+    border-radius: var(--r-xs);
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--fs-label-3); font-weight: 700; color: var(--sky-navy);
+    overflow: hidden; cursor: pointer;
+  }
+  .fr-campo:hover { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); }
+  .fr-campo__x { font-size: var(--fs-label-3); }
+  .fr-campo--rubrica { border-style: dotted; }
+
+  .fr-pista {
+    background: var(--info-soft); border-radius: var(--r);
+    padding: var(--sp-4); font-size: var(--fs-sm);
+    color: var(--ink-2); line-height: var(--lh);
+    margin-bottom: var(--sp-4);
+  }
+
+  .fr-oculto { display: none; }
+</style>
+</head>
+<body data-app="firmas">
+
+<div class="fr-scroll">
+
+  <!-- ══ LISTA ══════════════════════════════════════════════════ -->
+  <div class="fr-lista-vista" id="fr-vista-lista">
+
+    <div class="fr-barra">
+      <div class="fr-barra__crece">
+        <input class="bk-input" id="fr-buscar" type="search"
+               placeholder="Buscar por título, folio o firmante"/>
+      </div>
+      <div class="bk-seg" id="fr-filtros">
+        <button class="bk-seg__btn is-active" type="button" data-f="">Todos</button>
+        <button class="bk-seg__btn" type="button" data-f="borrador">Borradores</button>
+        <button class="bk-seg__btn" type="button" data-f="pendiente">En firma</button>
+        <button class="bk-seg__btn" type="button" data-f="completo">Firmados</button>
+      </div>
+      <button class="bk-btn bk-btn--forest" type="button" id="fr-nuevo">Nuevo documento</button>
+      <span class="bk-badge fr-oculto" id="fr-max">Broquer Max</span>
+    </div>
+
+    <div class="bk-metric-grid" style="margin-bottom:var(--sp-6);">
+      <div class="bk-metric">
+        <div class="bk-metric__label">En espera de firma</div>
+        <div class="bk-metric__value" id="fr-k-pendientes">—</div>
+      </div>
+      <div class="bk-metric">
+        <div class="bk-metric__label">Firmados este mes</div>
+        <div class="bk-metric__value" id="fr-k-mes">—</div>
+      </div>
+      <div class="bk-metric">
+        <div class="bk-metric__label">Firmas recabadas</div>
+        <div class="bk-metric__value" id="fr-k-firmas">—</div>
+      </div>
+    </div>
+
+    <div class="fr-lista" id="fr-lista"></div>
+
+    <div class="bk-empty fr-oculto" id="fr-vacio">
+      <div class="bk-empty__icon">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zM19.5 12v6.75A2.25 2.25 0 0117.25 21H6.75A2.25 2.25 0 014.5 18.75V8.25A2.25 2.25 0 016.75 6H13.5"/>
+        </svg>
+      </div>
+      <div class="bk-empty__title">Todavía no mandas nada a firmar</div>
+      <div class="bk-empty__text">
+        Sube el PDF de una promesa, un arrendamiento o una exclusiva, agrega a las
+        partes y cada quien firma desde su celular.
+      </div>
+      <button class="bk-btn bk-btn--forest bk-empty__action" type="button" id="fr-vacio-btn">
+        Crear el primero
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ══ DETALLE ════════════════════════════════════════════════ -->
+  <div class="fr-det" id="fr-vista-det">
+
+    <button class="fr-volver" type="button" id="fr-volver">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/>
+      </svg>
+      Volver a documentos
+    </button>
+
+    <div class="fr-det__hd">
+      <div style="flex:1;min-width:240px;">
+        <div class="fr-det__t" id="fr-d-titulo"></div>
+        <div class="fr-det__m" id="fr-d-meta"></div>
+      </div>
+      <div class="bk-cluster" id="fr-d-acciones"></div>
+    </div>
+
+    <div class="bk-alert bk-alert--error fr-oculto" id="fr-aviso"
+         style="margin-bottom:var(--sp-6);">
+      <div style="flex:1;">
+        <div style="font-weight:700;" id="fr-aviso-t"></div>
+        <div style="font-size:var(--fs-sm);margin-top:var(--sp-2);line-height:var(--lh);"
+             id="fr-aviso-d"></div>
+        <div style="font-size:var(--fs-label-3);margin-top:var(--sp-3);">
+          Mientras lo resuelves, usa «Copiar liga» en cada parte y mándasela tú
+          por WhatsApp. La firma funciona igual.
+        </div>
+      </div>
+      <button class="bk-btn bk-btn--quiet bk-btn--sm" type="button" id="fr-aviso-x">Cerrar</button>
+    </div>
+
+    <div class="fr-cols">
+
+      <!-- Columna izquierda -->
+      <div class="bk-stack">
+
+        <div class="bk-card bk-card--pad" id="fr-d-alta">
+          <div class="bk-section-header"><h2>El documento</h2></div>
+
+          <div class="fr-zona" id="fr-zona" role="button" tabindex="0">
+            <div class="fr-zona__ico">
+              <svg width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+              </svg>
+            </div>
+            <div class="fr-zona__t" id="fr-zona-t">Sube el documento que se va a firmar</div>
+            <div class="fr-zona__d" id="fr-zona-d">
+              Arrástralo aquí o toca para elegirlo. Acepta PDF y Word: el Word se
+              convierte solo, porque lo que se firma es el PDF.
+            </div>
+          </div>
+          <input type="file" id="fr-archivo" class="fr-oculto"
+           accept="application/pdf,.pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"/>
+
+          <div class="bk-field-row" style="margin-top:var(--sp-5);">
+            <div class="bk-field">
+              <label class="bk-label" for="fr-d-tit">Título</label>
+              <input class="bk-input" id="fr-d-tit" type="text" placeholder="Promesa de compraventa — Cipres 167"/>
+            </div>
+            <div class="bk-field">
+              <label class="bk-label" for="fr-d-tipo">Tipo</label>
+              <select class="bk-select" id="fr-d-tipo">
+                <option value="promesa">Promesa de compraventa</option>
+                <option value="arrendamiento">Contrato de arrendamiento</option>
+                <option value="exclusiva">Contrato de exclusiva / mediación</option>
+                <option value="carta_intencion">Carta de intención</option>
+                <option value="convenio">Convenio de colaboración</option>
+                <option value="otro">Otro documento</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="bk-field">
+            <label class="bk-label" for="fr-d-msg">Mensaje para los firmantes (opcional)</label>
+            <textarea class="bk-textarea" id="fr-d-msg" rows="2"
+                      placeholder="Cualquier duda me marcas antes de firmar."></textarea>
+          </div>
+
+          <label class="bk-check">
+            <input type="checkbox" id="fr-d-ine"/>
+            <span class="bk-check__box"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></span>
+            <span>Pedir identificación oficial a quien no tenga expediente</span>
+          </label>
+          <div class="bk-hint">
+            Quien ya tenga expediente de cumplimiento no la vuelve a subir: se hereda del que ya tienes.
+          </div>
+        </div>
+
+        <div class="bk-card bk-card--pad fr-oculto" id="fr-d-colocar">
+          <div class="bk-section-header">
+            <h2>Dónde firman</h2>
+            <a href="#" id="fr-colocar-toggle">Mostrar hojas</a>
+          </div>
+
+          <div class="fr-pista">
+            Si tu contrato dice que se firma al margen de cada hoja y al calce,
+            márcalo aquí y las firmas se van a colocar ahí. Si no marcas nada,
+            las firmas quedan solo en la constancia anexa — que también es válido.
+          </div>
+
+          <div class="bk-cluster" style="margin-bottom:var(--sp-5);">
+            <button class="bk-btn bk-btn--ghost bk-btn--sm" type="button" id="fr-rubricar">
+              Rubricar todas las hojas
+            </button>
+            <button class="bk-btn bk-btn--quiet bk-btn--sm fr-oculto" type="button" id="fr-quitar-todo">
+              Quitar todas las marcas
+            </button>
+          </div>
+
+          <div class="fr-oculto" id="fr-colocar-caja">
+            <div style="font-size:var(--fs-label-3);font-weight:700;color:var(--mute);margin-bottom:var(--sp-3);">
+              Elige de quién es la firma y toca la hoja donde va
+            </div>
+            <div class="fr-quien-coloca" id="fr-plumas"></div>
+            <div class="fr-hojas" id="fr-hojas"></div>
+          </div>
+        </div>
+
+        <div class="bk-card bk-card--pad">
+          <div class="bk-section-header"><h2>Quién firma</h2></div>
+          <div class="bk-hint" id="fr-agente-nota" style="margin-bottom:var(--sp-4);"></div>
+
+          <div id="fr-firmantes"></div>
+
+          <div id="fr-alta-firmante">
+            <div class="fr-alta-caja">
+              <div class="fr-alta-caja__t">Agregar a una parte</div>
+              <div class="fr-nuevo-firmante">
+                <div class="bk-field">
+                  <label class="bk-label" for="fr-f-nom">Nombre completo</label>
+                  <input class="bk-input" id="fr-f-nom" type="text" list="fr-contactos"
+                         placeholder="Juan Pérez García" autocomplete="off"/>
+                  <datalist id="fr-contactos"></datalist>
+                </div>
+                <div class="bk-field">
+                  <label class="bk-label" for="fr-f-rol">Firma como</label>
+                  <select class="bk-select" id="fr-f-rol"></select>
+                </div>
+                <div class="bk-field">
+                  <label class="bk-label" for="fr-f-mail">Correo</label>
+                  <input class="bk-input" id="fr-f-mail" type="email"
+                         placeholder="juan.perez@correo.com" autocomplete="off"/>
+                </div>
+                <div class="bk-field">
+                  <label class="bk-label" for="fr-f-wa">WhatsApp</label>
+                  <input class="bk-input" id="fr-f-wa" type="tel"
+                         placeholder="443 123 4567" autocomplete="off"/>
+                </div>
+                <div class="fr-nuevo-firmante__pie">
+                  <div class="bk-hint" style="margin:0;">
+                    Con el correo basta para empezar.
+                  </div>
+                  <button class="bk-btn bk-btn--forest" type="button" id="fr-f-add">
+                    Agregar parte
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <label class="bk-check" style="margin-top:var(--sp-5);">
+              <input type="checkbox" id="fr-cascada"/>
+              <span class="bk-check__box"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></span>
+              <span>Firmar en orden, uno tras otro</span>
+            </label>
+            <div class="bk-hint">
+              Útil cuando hay fiador: solo se le avisa cuando los principales ya firmaron.
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Columna derecha -->
+      <div class="bk-stack">
+
+        <div class="bk-card bk-card--pad" id="fr-d-integridad">
+          <div class="bk-section-header"><h2>Integridad</h2></div>
+          <div style="font-size:var(--fs-label-3);color:var(--mute);">Huella del original (SHA-256)</div>
+          <div class="fr-hash" id="fr-d-hash-o">—</div>
+          <div style="font-size:var(--fs-label-3);color:var(--mute);margin-top:var(--sp-4);">
+            Huella del documento firmado
+          </div>
+          <div class="fr-hash" id="fr-d-hash-f">Se genera al completarse la firma</div>
+          <div class="bk-hint" style="margin-top:var(--sp-4);">
+            El PDF original no se modifica. El documento final es ese mismo archivo con
+            la constancia anexada al final.
+          </div>
+        </div>
+
+        <div class="bk-card bk-card--pad" id="fr-d-bitacora-caja">
+          <div class="bk-section-header"><h2>Bitácora</h2></div>
+          <div class="fr-bita" id="fr-d-bitacora"></div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal de cancelación -->
+<div class="bk-overlay fr-oculto" id="fr-m-cancelar">
+  <div class="bk-modal" role="dialog" aria-modal="true" aria-labelledby="fr-m-cancelar-t">
+    <div class="bk-modal__head">
+      <div class="bk-modal__title" id="fr-m-cancelar-t">Cancelar el documento</div>
+    </div>
+    <div class="bk-modal__body">
+      <p style="font-size:var(--fs-sm);color:var(--mute);line-height:var(--lh);margin:0 0 var(--sp-4);">
+        Las ligas de quienes todavía no firman dejan de servir en el acto. Las firmas
+        que ya se hayan recabado se conservan en la bitácora: no se borran.
+      </p>
+      <div class="bk-field">
+        <label class="bk-label" for="fr-cancelar-motivo">Motivo</label>
+        <input class="bk-input" id="fr-cancelar-motivo" type="text"
+               placeholder="Ej. Se corrigió el precio pactado"/>
+      </div>
+    </div>
+    <div class="bk-modal__foot">
+      <button class="bk-btn bk-btn--ghost" type="button" id="fr-cancelar-no">Volver</button>
+      <button class="bk-btn bk-btn--danger" type="button" id="fr-cancelar-si">Cancelar documento</button>
+    </div>
+  </div>
+</div>
+
+<div class="bk-toast-stack" id="fr-toasts"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   Módulo de firma electrónica — vista del agente.
+
+   Igual que en cumplimiento: aquí no se decide nada con valor
+   probatorio. Los estados, los turnos y la validación del código
+   viven en routers/firmas.py. Esta pantalla pinta y dispara.
+   ══════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  var API_BASE = 'https://api.broquer.app';
+
+  var DOCS = [];
+  var ACTUAL = null;
+  var CONTACTOS = [];
+  var FILTRO = '';
+  var BUSCA = '';
+
+  var ROLES = [
+    ['promitente_vendedor', 'Promitente vendedor'],
+    ['promitente_comprador', 'Promitente comprador'],
+    ['arrendador', 'Arrendador'],
+    ['arrendatario', 'Arrendatario'],
+    ['fiador', 'Fiador'],
+    ['obligado_solidario', 'Obligado solidario'],
+    ['copropietario', 'Copropietario'],
+    ['conyuge', 'Cónyuge'],
+    ['propietario', 'Propietario'],
+    ['agente_mediador', 'Asesor inmobiliario'],
+    ['otro', 'Firmante']
+  ];
+  var TIPOS = {
+    promesa: 'Promesa de compraventa',
+    arrendamiento: 'Contrato de arrendamiento',
+    exclusiva: 'Contrato de exclusiva / mediación',
+    carta_intencion: 'Carta de intención',
+    convenio: 'Convenio de colaboración',
+    otro: 'Documento'
+  };
+  // En estos el agente sí es parte del contrato. En los demás no debe
+  // aparecer como firmante: es intermediario, no parte.
+  var TIPOS_CON_AGENTE = { exclusiva: 1, convenio: 1 };
+
+  var ESTADOS = {
+    borrador:  ['Borrador', ''],
+    enviado:   ['Esperando firmas', 'bk-badge--info'],
+    parcial:   ['Firma parcial', 'bk-badge--warn'],
+    completo:  ['Firmado', 'bk-badge--success'],
+    rechazado: ['Rechazado', 'bk-badge--danger'],
+    cancelado: ['Cancelado', 'bk-badge--danger'],
+    vencido:   ['Vencido', 'bk-badge--warn']
+  };
+
+  function g(id) { return document.getElementById(id); }
+  function ver(id, mostrar) { g(id).classList.toggle('fr-oculto', !mostrar); }
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function fecha(iso) {
+    if (!iso) return '—';
+    try {
+      return new Date(iso).toLocaleDateString('es-MX',
+        { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch (e) { return String(iso); }
+  }
+  function fechaHora(iso) {
+    if (!iso) return '—';
+    try {
+      return new Date(iso).toLocaleString('es-MX',
+        { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+    } catch (e) { return String(iso); }
+  }
+  function toast(msg, tipo) {
+    var stack = g('fr-toasts');
+    if (!stack) return;
+    var t = document.createElement('div');
+    t.className = 'bk-toast' + (tipo ? ' bk-toast--' + tipo : '');
+    t.textContent = msg;
+    stack.appendChild(t);
+    setTimeout(function () { t.remove(); }, 4400);
+  }
+
+  /* Un toast se va solo en 4 segundos y el motivo de una falla de envío
+     hay que poder leerlo con calma. Este se queda hasta que lo cierres. */
+  function avisoFalla(titulo, detalle) {
+    var caja = g('fr-aviso');
+    g('fr-aviso-t').textContent = titulo;
+    g('fr-aviso-d').textContent = detalle;
+    caja.classList.remove('fr-oculto');
+    caja.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  async function api(path, opts) {
+    opts = opts || {};
+    var sb = window.brokrSb;
+    if (!sb || !sb.ensureToken) throw new Error('La app aún se está cargando. Intenta en un segundo.');
+    var tok = await sb.ensureToken();
+    var headers = Object.assign({}, opts.headers || {});
+    if (tok) headers['Authorization'] = 'Bearer ' + tok;
+    var body = opts.body;
+    if (opts.json !== undefined) {
+      headers['Content-Type'] = 'application/json';
+      body = JSON.stringify(opts.json);
+    }
+    var r = await fetch(API_BASE + path, { method: opts.method || 'GET', headers: headers, body: body });
+    var data = null;
+    try { data = await r.json(); } catch (e) { data = null; }
+    if (!r.ok) throw new Error((data && data.detail) || 'No se pudo completar la acción.');
+    return data;
+  }
+
+  /* ══ LISTA ══════════════════════════════════════════════════ */
+
+  async function cargarLista() {
+    try {
+      var r = await api('/firmas/documentos');
+      DOCS = r.documentos || [];
+    } catch (e) {
+      toast(e.message, 'error');
+      DOCS = [];
+    }
+    pintarKpis();
+    pintarLista();
+  }
+
+  function pintarKpis() {
+    var pend = DOCS.filter(function (d) {
+      return d.estado === 'enviado' || d.estado === 'parcial';
+    }).length;
+    var mes = new Date(); mes.setDate(1); mes.setHours(0, 0, 0, 0);
+    var delMes = DOCS.filter(function (d) {
+      return d.estado === 'completo' && d.completado_at && new Date(d.completado_at) >= mes;
+    }).length;
+    var firmas = DOCS.reduce(function (a, d) { return a + (d.ya_firmaron || 0); }, 0);
+    g('fr-k-pendientes').textContent = pend;
+    g('fr-k-mes').textContent = delMes;
+    g('fr-k-firmas').textContent = firmas;
+  }
+
+  function pasaFiltro(d) {
+    if (FILTRO === 'pendiente') {
+      if (d.estado !== 'enviado' && d.estado !== 'parcial') return false;
+    } else if (FILTRO && d.estado !== FILTRO) {
+      return false;
+    }
+    if (!BUSCA) return true;
+    var q = BUSCA.toLowerCase();
+    if ((d.titulo || '').toLowerCase().indexOf(q) >= 0) return true;
+    if ((d.folio || '').toLowerCase().indexOf(q) >= 0) return true;
+    return (d.firmantes || []).some(function (f) {
+      return (f.nombre || '').toLowerCase().indexOf(q) >= 0;
+    });
+  }
+
+  function pintarLista() {
+    var visibles = DOCS.filter(pasaFiltro);
+    ver('fr-vacio', DOCS.length === 0);
+    if (DOCS.length === 0) { g('fr-lista').innerHTML = ''; return; }
+
+    if (visibles.length === 0) {
+      g('fr-lista').innerHTML =
+        '<div class="bk-card bk-card--pad" style="text-align:center;color:var(--mute);' +
+        'font-size:var(--fs-sm);">Ningún documento coincide con lo que buscas.</div>';
+      return;
+    }
+
+    var ICO_PALOMA = '<svg width="9" height="9" fill="none" viewBox="0 0 24 24" ' +
+      'stroke="currentColor" stroke-width="3.5"><path stroke-linecap="round" ' +
+      'stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>';
+
+    g('fr-lista').innerHTML = visibles.map(function (d) {
+      var e = ESTADOS[d.estado] || ['—', ''];
+      var total = d.total_firmantes || 0;
+      var hechas = d.ya_firmaron || 0;
+      var pct = total ? Math.round((hechas / total) * 100) : 0;
+
+      // Quién firma y quién ya firmó, visible sin tener que entrar.
+      var chips = (d.firmantes || []).map(function (f) {
+        var cls = f.estado === 'firmado' ? ' is-firmado'
+                : (f.estado === 'rechazado' ? ' is-rechazado' : '');
+        var rol = (ROLES.filter(function (r) { return r[0] === f.rol; })[0] || ['', ''])[1];
+        return '<span class="fr-parte-chip' + cls + '" title="' + esc(rol) + '">' +
+          '<span class="fr-parte-chip__p">' +
+            (f.estado === 'firmado' ? ICO_PALOMA : '') + '</span>' +
+          esc(f.nombre) + '</span>';
+      }).join('');
+
+      return '' +
+        '<article class="fr-doc" data-id="' + esc(d.id) + '">' +
+          '<div class="fr-doc__ico">' +
+            '<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">' +
+            '<path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zM19.5 12v6.75A2.25 2.25 0 0117.25 21H6.75A2.25 2.25 0 014.5 18.75V8.25A2.25 2.25 0 016.75 6H13.5"/></svg>' +
+          '</div>' +
+          '<div class="fr-doc__c">' +
+            '<div class="fr-doc__t">' + esc(d.titulo) + '</div>' +
+            '<div class="fr-doc__m">' +
+              '<span>' + esc(TIPOS[d.tipo] || 'Documento') + '</span>' +
+              '<span class="fr-doc__sep">·</span>' +
+              '<span>' + esc(fecha(d.created_at)) + '</span>' +
+              (d.paginas ? '<span class="fr-doc__sep">·</span><span>' +
+                           d.paginas + ' páginas</span>' : '') +
+            '</div>' +
+            (chips ? '<div class="fr-doc__partes">' + chips + '</div>' : '') +
+            '<div class="fr-avance"><div class="fr-avance__f" style="width:' + pct + '%;"></div></div>' +
+          '</div>' +
+          '<div class="fr-doc__d">' +
+            '<span class="bk-badge ' + e[1] + '">' + esc(e[0]) + '</span>' +
+            '<div class="fr-doc__conteo"><b>' + hechas + '</b> de ' + total + ' firmas</div>' +
+            '<div class="fr-doc__folio">' + esc(d.folio || '') + '</div>' +
+          '</div>' +
+        '</article>';
+    }).join('');
+
+    Array.prototype.forEach.call(g('fr-lista').querySelectorAll('.fr-doc'), function (el) {
+      el.addEventListener('click', function () { abrir(el.getAttribute('data-id')); });
+    });
+  }
+
+  /* ══ DETALLE ════════════════════════════════════════════════ */
+
+  async function abrir(id) {
+    try {
+      var r = await api('/firmas/documentos/' + encodeURIComponent(id));
+      if (!ACTUAL || ACTUAL.documento.id !== id) { HOJAS = []; HOJAS_ABIERTAS = false; }
+      ACTUAL = r;
+      pintarDetalle();
+      g('fr-vista-lista').classList.add('is-oculto');
+      g('fr-vista-det').classList.add('is-abierto');
+      window.scrollTo({ top: 0 });
+    } catch (e) {
+      toast(e.message, 'error');
+    }
+  }
+
+  function cerrar() {
+    ACTUAL = null;
+    g('fr-vista-det').classList.remove('is-abierto');
+    g('fr-vista-lista').classList.remove('is-oculto');
+    cargarLista();
+  }
+
+  function pintarDetalle() {
+    var d = ACTUAL.documento;
+    var fs = ACTUAL.firmantes || [];
+    var esBorrador = d.estado === 'borrador';
+
+    g('fr-d-titulo').textContent = d.titulo || '';
+    var e = ESTADOS[ACTUAL.estado_calculado] || ESTADOS[d.estado] || ['—', ''];
+    g('fr-d-meta').innerHTML =
+      '<span class="bk-badge ' + e[1] + '">' + esc(e[0]) + '</span>' +
+      ' &nbsp; ' + esc(TIPOS[d.tipo] || 'Documento') +
+      ' · Folio ' + esc(d.folio || '') +
+      (d.paginas ? ' · ' + d.paginas + ' páginas' : '') +
+      (d.vence_at && !esBorrador ? ' · vence ' + fecha(d.vence_at) : '');
+
+    // Campos de alta: solo se pueden tocar mientras es borrador.
+    g('fr-d-tit').value = d.titulo || '';
+    g('fr-d-tipo').value = d.tipo || 'otro';
+    g('fr-d-msg').value = d.mensaje || '';
+    g('fr-d-ine').checked = !!d.exige_ine;
+    ['fr-d-tit', 'fr-d-tipo', 'fr-d-msg', 'fr-d-ine'].forEach(function (id) {
+      g(id).disabled = !esBorrador;
+    });
+    ver('fr-alta-firmante', esBorrador);
+
+    if (d.archivo_nombre) {
+      g('fr-zona').classList.add('is-listo');
+      g('fr-zona-t').textContent = d.archivo_nombre;
+      g('fr-zona-d').textContent = (d.paginas || '?') + ' páginas · ' +
+        Math.round((d.archivo_bytes || 0) / 1024) + ' KB' +
+        (esBorrador ? ' · toca para reemplazarlo' : '');
+    } else {
+      g('fr-zona').classList.remove('is-listo');
+      g('fr-zona-t').textContent = 'Sube el documento que se va a firmar';
+      g('fr-zona-d').textContent =
+        'Arrástralo aquí o toca para elegirlo. Acepta PDF y Word.';
+    }
+    g('fr-zona').style.cursor = esBorrador ? 'pointer' : 'default';
+
+    g('fr-agente-nota').textContent = TIPOS_CON_AGENTE[d.tipo]
+      ? 'En este tipo de contrato tú sí eres parte: agrégate como firmante.'
+      : 'Aquí firman las partes del contrato, no tú. Eres el intermediario.';
+
+    g('fr-d-hash-o').textContent = d.hash_original || 'Se calcula al subir el PDF';
+    g('fr-d-hash-f').textContent = d.hash_firmado || 'Se genera al completarse la firma';
+
+    ver('fr-aviso', false);
+    pintarFirmantes(fs, esBorrador);
+    cargarColocacion();
+    pintarAcciones(d, fs, esBorrador);
+    pintarBitacora(ACTUAL.eventos || []);
+  }
+
+  function pintarFirmantes(fs, esBorrador) {
+    if (!fs.length) {
+      g('fr-firmantes').innerHTML =
+        '<div style="font-size:var(--fs-sm);color:var(--mute);">' +
+        'Todavía no agregas a nadie.</div>';
+      return;
+    }
+    g('fr-firmantes').innerHTML = fs.map(function (f) {
+      var rol = (ROLES.filter(function (r) { return r[0] === f.rol; })[0] || ['', 'Firmante'])[1];
+      var ini = (f.nombre || '?').trim().charAt(0).toUpperCase();
+      var firmo = f.estado === 'firmado';
+
+      var estado;
+      if (firmo) estado = '<span class="bk-badge bk-badge--success">Firmó</span>';
+      else if (f.estado === 'rechazado') estado = '<span class="bk-badge bk-badge--danger">Rechazó</span>';
+      else if (!f.le_toca) estado = '<span class="bk-badge">En espera de turno</span>';
+      else if (f.estado === 'abierto') estado = '<span class="bk-badge bk-badge--info">Abrió la liga</span>';
+      else estado = '<span class="bk-badge">Pendiente</span>';
+
+      var extra = [];
+      if (f.email) extra.push('<span><b>Correo:</b> ' + esc(f.email) + '</span>');
+      if (f.telefono) extra.push('<span><b>WhatsApp:</b> ' + esc(f.telefono) + '</span>');
+      if (!f.email && !f.telefono) {
+        extra.push('<span><b>Sin correo ni WhatsApp.</b> No se le puede avisar.</span>');
+      }
+      if (f.identificado) extra.push('<span>Ya tiene expediente de cumplimiento completo</span>');
+      else if (f.ine_frente_ruta) extra.push('<span>Subió su identificación</span>');
+      if (firmo) extra.push('<span><b>Firmó:</b> ' + esc(fechaHora(f.firmado_at)) + '</span>');
+      if (f.estado === 'rechazado' && f.motivo_rechazo) {
+        extra.push('<span><b>Motivo:</b> ' + esc(f.motivo_rechazo) + '</span>');
+      }
+
+      var btns = '';
+      if (esBorrador) {
+        btns = '<button class="bk-btn bk-btn--quiet bk-btn--sm" type="button" ' +
+               'data-quitar="' + esc(f.id) + '">Quitar</button>';
+      } else if (!firmo && f.estado !== 'rechazado' && f.le_toca) {
+        btns = '<button class="bk-btn bk-btn--ghost bk-btn--sm" type="button" ' +
+               'data-recordar="' + esc(f.id) + '">Recordar</button>' +
+               '<button class="bk-btn bk-btn--quiet bk-btn--sm" type="button" ' +
+               'data-copiar="' + esc(f.id) + '">Copiar liga</button>';
+      }
+
+      return '' +
+        '<div class="fr-firmante">' +
+          '<div class="fr-firmante__ini' + (firmo ? ' is-firmado' : '') + '">' + esc(ini) + '</div>' +
+          '<div class="fr-firmante__c">' +
+            '<div class="fr-firmante__n">' + esc(f.nombre) +
+              (f.orden ? ' · turno ' + f.orden : '') + '</div>' +
+            '<div class="fr-firmante__r">' + esc(rol) + '</div>' +
+            (extra.length ? '<div class="fr-firmante__x">' + extra.join('') + '</div>' : '') +
+            (btns ? '<div class="bk-cluster" style="margin-top:var(--sp-3);">' + btns + '</div>' : '') +
+          '</div>' +
+          '<div>' + estado + '</div>' +
+        '</div>';
+    }).join('');
+
+    var caja = g('fr-firmantes');
+    Array.prototype.forEach.call(caja.querySelectorAll('[data-quitar]'), function (b) {
+      b.addEventListener('click', function () { quitarFirmante(b.getAttribute('data-quitar')); });
+    });
+    Array.prototype.forEach.call(caja.querySelectorAll('[data-recordar]'), function (b) {
+      b.addEventListener('click', function () { recordar(b.getAttribute('data-recordar'), b); });
+    });
+    Array.prototype.forEach.call(caja.querySelectorAll('[data-copiar]'), function (b) {
+      b.addEventListener('click', function () { copiarLiga(b.getAttribute('data-copiar')); });
+    });
+  }
+
+  function pintarAcciones(d, fs, esBorrador) {
+    var b = [];
+    if (esBorrador) {
+      b.push('<button class="bk-btn bk-btn--ghost" type="button" id="fr-a-guardar">Guardar cambios</button>');
+      b.push('<button class="bk-btn bk-btn--forest" type="button" id="fr-a-enviar">Enviar a firma</button>');
+      b.push('<button class="bk-btn bk-btn--quiet" type="button" id="fr-a-borrar">Borrar</button>');
+    } else {
+      if (d.archivo_ruta) {
+        b.push('<button class="bk-btn bk-btn--ghost" type="button" id="fr-a-ver">Ver original</button>');
+      }
+      if (d.firmado_ruta) {
+        b.push('<button class="bk-btn bk-btn--forest" type="button" id="fr-a-firmado">Descargar firmado</button>');
+      }
+      var todosFirmaron = fs.length && fs.filter(function (f) { return f.obligatorio !== false; })
+        .every(function (f) { return f.estado === 'firmado'; });
+      if (todosFirmaron && !d.firmado_ruta) {
+        b.push('<button class="bk-btn bk-btn--ghost" type="button" id="fr-a-sellar">Rearmar documento</button>');
+      }
+      if (d.estado !== 'completo' && d.estado !== 'cancelado') {
+        b.push('<button class="bk-btn bk-btn--quiet" type="button" id="fr-a-cancelar">Cancelar</button>');
+      }
+    }
+    g('fr-d-acciones').innerHTML = b.join('');
+
+    var m = {
+      'fr-a-guardar': guardar, 'fr-a-enviar': enviar, 'fr-a-borrar': borrar,
+      'fr-a-ver': function () { verArchivo('original'); },
+      'fr-a-firmado': function () { verArchivo('firmado'); },
+      'fr-a-sellar': resellar,
+      'fr-a-cancelar': function () { ver('fr-m-cancelar', true); }
+    };
+    Object.keys(m).forEach(function (id) {
+      var el = g(id);
+      if (el) el.addEventListener('click', m[id]);
+    });
+  }
+
+  function pintarBitacora(evs) {
+    if (!evs.length) {
+      g('fr-d-bitacora').innerHTML =
+        '<div style="font-size:var(--fs-sm);color:var(--mute);">Sin movimientos todavía.</div>';
+      return;
+    }
+    var CLAVE = { firmado: 1, sellado: 1, rechazado: 1, otp_verificado: 1 };
+    g('fr-d-bitacora').innerHTML = evs.slice().reverse().map(function (ev) {
+      // La huella completa vive en la tarjeta de Integridad, ahí arriba. En
+      // la bitácora estorba: son 64 caracteres que empujan todo lo demás.
+      var txt = String(ev.detalle || ev.tipo || '')
+        .replace(/\b([0-9a-f]{16})[0-9a-f]{32,}\b/gi, '$1…');
+      return '<div class="fr-ev' + (CLAVE[ev.tipo] ? ' is-clave' : '') + '">' +
+        '<div class="fr-ev__t">' + esc(fechaHora(ev.created_at)) +
+          (ev.ip ? ' · ' + esc(ev.ip) : '') + '</div>' +
+        '<div class="fr-ev__d">' + esc(txt) + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  /* ══ COLOCAR LAS FIRMAS SOBRE EL DOCUMENTO ═════════════════ */
+  /* Las coordenadas se guardan de 0 a 1 sobre el tamaño de la hoja, con el
+     origen arriba a la izquierda. Así lo que se ve aquí coincide exacto con
+     el PDF final, sin importar a qué tamaño se esté viendo la imagen ni si
+     la hoja es Carta o A4. */
+
+  var HOJAS = [];
+  var CAMPOS = [];
+  var PLUMA = null;          // de quién es la firma que se está colocando
+  var HOJAS_ABIERTAS = false;
+
+  // Qué tan grande queda el recuadro al tocar la hoja. Proporción de la
+  // hoja, no pixeles: una firma al calce ocupa como un tercio del ancho.
+  var TAM = { firma: { a: 0.30, h: 0.075 }, rubrica: { a: 0.16, h: 0.045 } };
+
+  async function cargarColocacion() {
+    if (!ACTUAL) return;
+    var d = ACTUAL.documento;
+    var esBorrador = d.estado === 'borrador';
+    ver('fr-d-colocar', esBorrador && !!d.archivo_ruta);
+    if (!esBorrador || !d.archivo_ruta) return;
+
+    try {
+      var r = await api('/firmas/documentos/' + encodeURIComponent(d.id) + '/campos');
+      CAMPOS = r.campos || [];
+    } catch (e) { CAMPOS = []; }
+
+    ver('fr-quitar-todo', CAMPOS.length > 0);
+    pintarPlumas();
+    if (HOJAS_ABIERTAS) pintarHojas();
+  }
+
+  function pintarPlumas() {
+    var fs = (ACTUAL && ACTUAL.firmantes) || [];
+    if (!fs.length) {
+      g('fr-plumas').innerHTML =
+        '<div style="font-size:var(--fs-sm);color:var(--mute);">' +
+        'Primero agrega a las partes, abajo.</div>';
+      PLUMA = null;
+      return;
+    }
+    if (!PLUMA || !fs.some(function (f) { return f.id === PLUMA; })) PLUMA = fs[0].id;
+
+    g('fr-plumas').innerHTML = fs.map(function (f) {
+      var n = CAMPOS.filter(function (c) { return c.firmante_id === f.id; }).length;
+      return '<button type="button" class="fr-pluma' +
+        (f.id === PLUMA ? ' is-active' : '') + '" data-pluma="' + esc(f.id) + '">' +
+        '<span class="fr-pluma__pt"></span>' + esc(f.nombre) +
+        (n ? ' · ' + n : '') + '</button>';
+    }).join('');
+
+    Array.prototype.forEach.call(g('fr-plumas').querySelectorAll('[data-pluma]'), function (b) {
+      b.addEventListener('click', function () {
+        PLUMA = b.getAttribute('data-pluma');
+        pintarPlumas();
+      });
+    });
+  }
+
+  async function abrirHojas() {
+    if (!ACTUAL) return;
+    HOJAS_ABIERTAS = !HOJAS_ABIERTAS;
+    g('fr-colocar-toggle').textContent = HOJAS_ABIERTAS ? 'Ocultar hojas' : 'Mostrar hojas';
+    ver('fr-colocar-caja', HOJAS_ABIERTAS);
+    if (!HOJAS_ABIERTAS) return;
+
+    if (!HOJAS.length) {
+      g('fr-hojas').innerHTML =
+        '<div style="text-align:center;padding:var(--sp-8) 0;">' +
+        '<div class="bk-spinner"></div>' +
+        '<div style="font-size:var(--fs-sm);color:var(--mute);margin-top:var(--sp-3);">' +
+        'Preparando las hojas…</div></div>';
+      try {
+        var r = await api('/firmas/documentos/' +
+                          encodeURIComponent(ACTUAL.documento.id) + '/paginas');
+        HOJAS = r.paginas || [];
+      } catch (e) {
+        g('fr-hojas').innerHTML =
+          '<div style="font-size:var(--fs-sm);color:var(--mute);">' + esc(e.message) + '</div>';
+        return;
+      }
+    }
+    pintarHojas();
+  }
+
+  function pintarHojas() {
+    if (!HOJAS.length) {
+      g('fr-hojas').innerHTML =
+        '<div style="font-size:var(--fs-sm);color:var(--mute);">No se pudieron preparar las hojas.</div>';
+      return;
+    }
+    g('fr-hojas').innerHTML = HOJAS.map(function (p) {
+      var marcas = CAMPOS.filter(function (c) { return c.pagina === p.pagina; })
+        .map(function (c) {
+          var f = ((ACTUAL.firmantes || []).filter(function (x) {
+            return x.id === c.firmante_id; })[0]) || {};
+          var ini = (f.nombre || '?').trim().charAt(0).toUpperCase();
+          return '<div class="fr-campo' + (c.tipo === 'rubrica' ? ' fr-campo--rubrica' : '') +
+            '" data-campo="' + esc(c.id) + '" title="Quitar la marca de ' + esc(f.nombre || '') + '"' +
+            ' style="left:' + (c.x * 100) + '%;top:' + (c.y * 100) + '%;' +
+            'width:' + (c.ancho * 100) + '%;height:' + (c.alto * 100) + '%;">' +
+            esc(c.tipo === 'rubrica' ? ini : (f.nombre || '')) + '</div>';
+        }).join('');
+      return '<div class="fr-hoja is-armado" data-pagina="' + p.pagina + '">' +
+        '<span class="fr-hoja__n">Hoja ' + p.pagina + '</span>' +
+        '<img src="' + esc(p.url) + '" alt="Hoja ' + p.pagina + '" draggable="false"/>' +
+        marcas + '</div>';
+    }).join('');
+
+    Array.prototype.forEach.call(g('fr-hojas').querySelectorAll('.fr-hoja'), function (hoja) {
+      hoja.addEventListener('click', function (ev) {
+        // Tocar un recuadro ya puesto lo quita; tocar la hoja pone uno nuevo.
+        var marca = ev.target.closest('.fr-campo');
+        if (marca) {
+          ev.stopPropagation();
+          quitarCampo(marca.getAttribute('data-campo'));
+          return;
+        }
+        colocarCampo(hoja, ev);
+      });
+    });
+  }
+
+  async function colocarCampo(hoja, ev) {
+    if (!PLUMA) { toast('Primero elige de quién es la firma.', 'error'); return; }
+    var caja = hoja.getBoundingClientRect();
+    var t = TAM.firma;
+    // El toque marca el CENTRO del recuadro, que es lo que uno espera.
+    var x = (ev.clientX - caja.left) / caja.width - t.a / 2;
+    var y = (ev.clientY - caja.top) / caja.height - t.h / 2;
+    x = Math.max(0, Math.min(1 - t.a, x));
+    y = Math.max(0, Math.min(1 - t.h, y));
+
+    try {
+      var r = await api('/firmas/documentos/' + encodeURIComponent(ACTUAL.documento.id) + '/campos', {
+        method: 'POST',
+        json: {
+          firmante_id: PLUMA, pagina: parseInt(hoja.getAttribute('data-pagina'), 10),
+          tipo: 'firma', x: x, y: y, ancho: t.a, alto: t.h
+        }
+      });
+      CAMPOS.push(r.campo);
+      ver('fr-quitar-todo', true);
+      pintarPlumas();
+      pintarHojas();
+    } catch (e) { toast(e.message, 'error'); }
+  }
+
+  async function quitarCampo(id) {
+    try {
+      await api('/firmas/campos/' + encodeURIComponent(id), { method: 'DELETE' });
+      CAMPOS = CAMPOS.filter(function (c) { return c.id !== id; });
+      ver('fr-quitar-todo', CAMPOS.length > 0);
+      pintarPlumas();
+      pintarHojas();
+    } catch (e) { toast(e.message, 'error'); }
+  }
+
+  async function rubricarTodas() {
+    if (!ACTUAL) return;
+    if (!(ACTUAL.firmantes || []).length) {
+      toast('Primero agrega a las partes.', 'error');
+      return;
+    }
+    var btn = g('fr-rubricar');
+    btn.disabled = true;
+    try {
+      await api('/firmas/documentos/' + encodeURIComponent(ACTUAL.documento.id) + '/rubricar-todas',
+                { method: 'POST', json: { activar: true } });
+      await cargarColocacion();
+      if (!HOJAS_ABIERTAS) abrirHojas();
+      toast('Listo: rúbrica al margen de cada hoja.', 'success');
+    } catch (e) {
+      toast(e.message, 'error');
+    } finally { btn.disabled = false; }
+  }
+
+  async function quitarTodo() {
+    if (!window.confirm('¿Quitar todas las marcas de firma del documento?')) return;
+    try {
+      for (var i = 0; i < CAMPOS.length; i++) {
+        await api('/firmas/campos/' + encodeURIComponent(CAMPOS[i].id), { method: 'DELETE' });
+      }
+      CAMPOS = [];
+      ver('fr-quitar-todo', false);
+      pintarPlumas();
+      pintarHojas();
+    } catch (e) { toast(e.message, 'error'); }
+  }
+
+  /* ══ ACCIONES ═══════════════════════════════════════════════ */
+
+  async function crear() {
+    try {
+      var r = await api('/firmas/documentos', {
+        method: 'POST',
+        json: { titulo: 'Documento sin título', tipo: 'promesa' }
+      });
+      await abrir(r.documento.id);
+      g('fr-d-tit').focus();
+      g('fr-d-tit').select();
+    } catch (e) { toast(e.message, 'error'); }
+  }
+
+  async function guardar() {
+    if (!ACTUAL) return;
+    try {
+      await api('/firmas/documentos/' + encodeURIComponent(ACTUAL.documento.id), {
+        method: 'PATCH',
+        json: {
+          titulo: g('fr-d-tit').value,
+          tipo: g('fr-d-tipo').value,
+          mensaje: g('fr-d-msg').value,
+          exige_ine: g('fr-d-ine').checked
+        }
+      });
+      toast('Guardado.', 'success');
+      await abrir(ACTUAL.documento.id);
+    } catch (e) { toast(e.message, 'error'); }
+  }
+
+  async function subirArchivo(archivo) {
+    if (!archivo || !ACTUAL) return;
+    var nom = (archivo.name || '').toLowerCase();
+    if (archivo.type !== 'application/pdf' && !/\.(pdf|docx)$/.test(nom)) {
+      toast('Solo se aceptan archivos PDF o Word (.docx).', 'error');
+      return;
+    }
+    g('fr-zona-t').textContent = 'Subiendo…';
+    g('fr-zona-d').textContent = archivo.name;
+    var fd = new FormData();
+    fd.append('archivo', archivo);
+    try {
+      await api('/firmas/documentos/' + encodeURIComponent(ACTUAL.documento.id) + '/archivo',
+                { method: 'POST', body: fd });
+      // Si el título sigue siendo el de fábrica, se toma el del archivo:
+      // nadie quiere escribir dos veces lo mismo.
+      if (g('fr-d-tit').value === 'Documento sin título') {
+        g('fr-d-tit').value = archivo.name.replace(/\.pdf$/i, '').replace(/[_-]+/g, ' ');
+        await guardar();
+        return;
+      }
+      await abrir(ACTUAL.documento.id);
+      toast('PDF cargado.', 'success');
+    } catch (e) {
+      toast(e.message, 'error');
+      pintarDetalle();
+    }
+  }
+
+  async function agregarFirmante() {
+    if (!ACTUAL) return;
+    var nom = (g('fr-f-nom').value || '').trim();
+    var wa = (g('fr-f-wa').value || '').trim();
+    var mail = (g('fr-f-mail').value || '').trim();
+    if (!nom) { toast('Falta el nombre.', 'error'); return; }
+    if (!wa && !mail) { toast('Pon al menos un WhatsApp o un correo.', 'error'); return; }
+
+    var orden = null;
+    if (g('fr-cascada').checked) orden = (ACTUAL.firmantes || []).length + 1;
+
+    // Si el nombre coincide con un contacto del CRM, se amarra: así hereda
+    // el expediente de cumplimiento si ya lo tiene.
+    var cont = CONTACTOS.filter(function (c) {
+      return (c.nombre || '').toLowerCase() === nom.toLowerCase();
+    })[0];
+
+    try {
+      await api('/firmas/documentos/' + encodeURIComponent(ACTUAL.documento.id) + '/firmantes', {
+        method: 'POST',
+        json: {
+          nombre: nom, telefono: wa, email: mail,
+          rol: g('fr-f-rol').value, orden: orden,
+          contacto_id: cont ? cont.id : null
+        }
+      });
+      ['fr-f-nom', 'fr-f-wa', 'fr-f-mail'].forEach(function (id) { g(id).value = ''; });
+      g('fr-f-nom').focus();
+      await abrir(ACTUAL.documento.id);
+    } catch (e) { toast(e.message, 'error'); }
+  }
+
+  async function quitarFirmante(id) {
+    try {
+      await api('/firmas/firmantes/' + encodeURIComponent(id), { method: 'DELETE' });
+      await abrir(ACTUAL.documento.id);
+    } catch (e) { toast(e.message, 'error'); }
+  }
+
+  async function enviar() {
+    if (!ACTUAL) return;
+    var d = ACTUAL.documento;
+    if (!d.archivo_ruta) { toast('Primero sube el PDF.', 'error'); return; }
+    if (!(ACTUAL.firmantes || []).length) { toast('Agrega por lo menos un firmante.', 'error'); return; }
+
+    var btn = g('fr-a-enviar');
+    btn.disabled = true;
+    btn.textContent = 'Enviando…';
+    try {
+      await guardarSilencioso();
+      var r = await api('/firmas/documentos/' + encodeURIComponent(d.id) + '/enviar',
+                        { method: 'POST' });
+      var fallaron = (r.resultados || []).filter(function (x) {
+        return !x.enviado && x.canal !== 'en espera de turno';
+      });
+      if (fallaron.length) {
+        // El motivo real, no un "no se pudo" que deja adivinando.
+        var det = fallaron.map(function (x) {
+          return x.firmante + ': ' + (x.motivo || 'motivo desconocido');
+        }).join('  |  ');
+        avisoFalla('No se pudo entregar la invitación', det);
+      } else {
+        toast('Documento enviado a firma.', 'success');
+      }
+      await abrir(d.id);
+    } catch (e) {
+      toast(e.message, 'error');
+      btn.disabled = false;
+      btn.textContent = 'Enviar a firma';
+    }
+  }
+
+  async function guardarSilencioso() {
+    try {
+      await api('/firmas/documentos/' + encodeURIComponent(ACTUAL.documento.id), {
+        method: 'PATCH',
+        json: {
+          titulo: g('fr-d-tit').value,
+          tipo: g('fr-d-tipo').value,
+          mensaje: g('fr-d-msg').value,
+          exige_ine: g('fr-d-ine').checked
+        }
+      });
+    } catch (e) { /* si falla el guardado previo, el envío igual procede */ }
+  }
+
+  async function recordar(id, btn) {
+    btn.disabled = true;
+    try {
+      var r = await api('/firmas/firmantes/' + encodeURIComponent(id) + '/recordar',
+                        { method: 'POST' });
+      toast('Recordatorio enviado por ' + r.canal + '.', 'success');
+    } catch (e) {
+      toast(e.message, 'error');
+    } finally { btn.disabled = false; }
+  }
+
+  function copiarLiga(id) {
+    var f = (ACTUAL.firmantes || []).filter(function (x) { return x.id === id; })[0];
+    if (!f || !f.token) { toast('Esa liga todavía no existe.', 'error'); return; }
+    var url = location.origin + '/firmar.html?t=' + f.token;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function () {
+        toast('Liga copiada. Mándasela solo a ' + f.nombre + '.', 'success');
+      }, function () { window.prompt('Copia la liga:', url); });
+    } else {
+      window.prompt('Copia la liga:', url);
+    }
+  }
+
+  async function verArchivo(cual) {
+    try {
+      var r = await api('/firmas/documentos/' + encodeURIComponent(ACTUAL.documento.id) +
+                        '/archivo?cual=' + cual);
+      window.open(r.url, '_blank', 'noopener');
+    } catch (e) { toast(e.message, 'error'); }
+  }
+
+  async function resellar() {
+    var btn = g('fr-a-sellar');
+    btn.disabled = true;
+    btn.textContent = 'Armando…';
+    try {
+      await api('/firmas/documentos/' + encodeURIComponent(ACTUAL.documento.id) + '/sellar',
+                { method: 'POST' });
+      toast('Documento armado con su constancia.', 'success');
+      await abrir(ACTUAL.documento.id);
+    } catch (e) {
+      toast(e.message, 'error');
+      btn.disabled = false;
+      btn.textContent = 'Rearmar documento';
+    }
+  }
+
+  async function borrar() {
+    if (!window.confirm('¿Borrar este borrador? Todavía no sale a firma, así que no se pierde evidencia.')) return;
+    try {
+      await api('/firmas/documentos/' + encodeURIComponent(ACTUAL.documento.id), { method: 'DELETE' });
+      cerrar();
+    } catch (e) { toast(e.message, 'error'); }
+  }
+
+  async function cancelar() {
+    var btn = g('fr-cancelar-si');
+    btn.disabled = true;
+    try {
+      await api('/firmas/documentos/' + encodeURIComponent(ACTUAL.documento.id) + '/cancelar', {
+        method: 'POST',
+        json: { motivo: g('fr-cancelar-motivo').value || '' }
+      });
+      ver('fr-m-cancelar', false);
+      g('fr-cancelar-motivo').value = '';
+      await abrir(ACTUAL.documento.id);
+    } catch (e) {
+      toast(e.message, 'error');
+    } finally { btn.disabled = false; }
+  }
+
+  /* ══ CONTACTOS ══════════════════════════════════════════════ */
+
+  async function cargarContactos() {
+    try {
+      if (!window.brokrSb || !window.brokrSb.rest) return;
+      var r = await window.brokrSb.rest(
+        'rest/v1/contactos?select=id,nombre,telefono,email,wa&order=updated_at.desc&limit=500');
+      CONTACTOS = Array.isArray(r) ? r : (r && r.data) || [];
+      g('fr-contactos').innerHTML = CONTACTOS.map(function (c) {
+        return '<option value="' + esc(c.nombre) + '"></option>';
+      }).join('');
+    } catch (e) { /* sin contactos se captura a mano */ }
+  }
+
+  function autollenarContacto() {
+    var nom = (g('fr-f-nom').value || '').trim().toLowerCase();
+    var c = CONTACTOS.filter(function (x) {
+      return (x.nombre || '').toLowerCase() === nom;
+    })[0];
+    if (!c) return;
+    if (!g('fr-f-wa').value) g('fr-f-wa').value = c.wa || c.telefono || '';
+    if (!g('fr-f-mail').value) g('fr-f-mail').value = c.email || '';
+  }
+
+  /* ══ ARRANQUE ═══════════════════════════════════════════════ */
+
+  function conectar() {
+    g('fr-f-rol').innerHTML = ROLES.map(function (r) {
+      return '<option value="' + r[0] + '">' + esc(r[1]) + '</option>';
+    }).join('');
+
+    g('fr-nuevo').addEventListener('click', crear);
+    g('fr-vacio-btn').addEventListener('click', crear);
+    g('fr-volver').addEventListener('click', cerrar);
+    g('fr-f-add').addEventListener('click', agregarFirmante);
+    g('fr-f-nom').addEventListener('change', autollenarContacto);
+    g('fr-f-nom').addEventListener('blur', autollenarContacto);
+
+    g('fr-aviso-x').addEventListener('click', function () { ver('fr-aviso', false); });
+    g('fr-colocar-toggle').addEventListener('click', function (ev) {
+      ev.preventDefault(); abrirHojas();
+    });
+    g('fr-rubricar').addEventListener('click', rubricarTodas);
+    g('fr-quitar-todo').addEventListener('click', quitarTodo);
+    g('fr-cancelar-no').addEventListener('click', function () { ver('fr-m-cancelar', false); });
+    g('fr-cancelar-si').addEventListener('click', cancelar);
+
+    g('fr-zona').addEventListener('click', function () {
+      if (ACTUAL && ACTUAL.documento.estado === 'borrador') g('fr-archivo').click();
+    });
+    g('fr-archivo').addEventListener('change', function (ev) {
+      subirArchivo(ev.target.files && ev.target.files[0]);
+      ev.target.value = '';
+    });
+    ['dragenter', 'dragover'].forEach(function (t) {
+      g('fr-zona').addEventListener(t, function (ev) {
+        ev.preventDefault();
+        if (ACTUAL && ACTUAL.documento.estado === 'borrador') {
+          g('fr-zona').classList.add('is-encima');
+        }
+      });
+    });
+    ['dragleave', 'drop'].forEach(function (t) {
+      g('fr-zona').addEventListener(t, function (ev) {
+        ev.preventDefault();
+        g('fr-zona').classList.remove('is-encima');
+      });
+    });
+    g('fr-zona').addEventListener('drop', function (ev) {
+      if (!ACTUAL || ACTUAL.documento.estado !== 'borrador') return;
+      var f = ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0];
+      subirArchivo(f);
+    });
+
+    g('fr-buscar').addEventListener('input', function (ev) {
+      BUSCA = ev.target.value || '';
+      pintarLista();
+    });
+    Array.prototype.forEach.call(g('fr-filtros').querySelectorAll('.bk-seg__btn'), function (b) {
+      b.addEventListener('click', function () {
+        Array.prototype.forEach.call(g('fr-filtros').querySelectorAll('.bk-seg__btn'), function (x) {
+          x.classList.remove('is-active');
+        });
+        b.classList.add('is-active');
+        FILTRO = b.getAttribute('data-f') || '';
+        pintarLista();
+      });
+    });
+
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape') {
+        if (!g('fr-m-cancelar').classList.contains('fr-oculto')) { ver('fr-m-cancelar', false); return; }
+        if (g('fr-vista-det').classList.contains('is-abierto')) cerrar();
+      }
+    });
+  }
+
+  async function cargar() {
+    // Si no tiene Broquer Max se le avisa desde arriba. El bloqueo real vive
+    // en el backend; esto es para que no llene un documento entero y hasta el
+    // final se entere de que no puede mandarlo.
+    try {
+      var acc = await api('/firmas/mi-acceso');
+      if (acc && acc.activa === false) ver('fr-max', true);
+    } catch (e) { /* si no se puede saber, se deja pasar */ }
+
+    await cargarContactos();
+    await cargarLista();
+    // Enlace directo desde el correo de "documento completo".
+    var id = new URLSearchParams(location.search).get('d');
+    if (id) abrir(id);
+  }
+
+  function arrancar() {
+    conectar();
+    var intentos = 0;
+    (function esperar() {
+      if (window.brokrSb && window.brokrSb.rest) { cargar(); return; }
+      if (++intentos > 60) { toast('No se pudo conectar. Recarga la página.', 'error'); return; }
+      setTimeout(esperar, 250);
+    })();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', arrancar);
+  else arrancar();
+})();
+</script>
+
+<script src="app-shell.js" defer></script>
+</body>
+</html>

@@ -1,5 +1,19 @@
 /* ════════════════════════════════════════════════════════════
-   BROQUER — Design System  ·  Edición "Navarro"
+   BROQUER — Design System  ·  Edición "Canon"
+   REVISIÓN 2026-08-b — "Canon" (dirección oficial del rediseño):
+   azul manda, blanco respira, negro precisa. Estructura #081C4E,
+   acción #0A5DE0, tinta #0B0B0F. Vidrio esmerilado, hairlines 1px,
+   radios continuos 22-28, sombras de luz real, Inter con tracking
+   apretado. Acentos semánticos verde/naranja/rosa. La paleta de
+   datos es CATEGÓRICA y VIVA (azul, verde, naranja, rosa, violeta,
+   cian, amarillo): en gráficas y chats el color diferencia
+   conceptos — nunca ocho azules. Regla de oro intacta: solo VALORES.
+
+   HISTÓRICO — REVISIÓN 2026-08 — "Blanca": mundo blanco a la Zillow con un solo
+   azul de acción #0D6BF0, tinta grafito #1B2733, Bricolage Grotesque
+   (display) + Figtree (interfaz), semánticos verde/ámbar/cantera y
+   paleta de datos contenida. Regla de oro intacta: solo VALORES.
+   (Histórico: Edición "Navarro")
    Token-driven. Única fuente de verdad visual de la plataforma.
 
    Lenguaje: blanco dominante (70%), azul marino #00143B como
@@ -13,6 +27,16 @@
    REGLA DE ORO DE ESTA HOJA: los nombres de variable NO cambian.
    Solo se reasignan sus VALORES a la piel nueva. Todo módulo que
    ya consume var(--…) se rediseña solo, sin tocar su markup.
+
+   REVISIÓN 2026-07-b — "Lienzo blanco":
+   El fondo de la app deja de ser azul pálido y pasa a BLANCO PURO.
+   · --paper #F4F7FD → #FFFFFF (body de index y de todos los módulos).
+   · --paper-2 #EDF2FB → #F1F5FC (inset/hover: ahora sí contrasta).
+   · --shell #F4F7FE → #F7F9FE y los inputs pasan a usarlo como
+     relleno: sobre blanco puro un campo blanco no se encuentra.
+   · Hairlines un punto más firmes (--line, --line-2, --line-3) para
+     que la card siga leyéndose como card sobre fondo blanco.
+   Ningún nombre de variable cambia: los módulos se actualizan solos.
 
    REVISIÓN 2026-07 — "Navarro":
    Piel derivada por muestreo directo de la referencia visual
@@ -52,58 +76,58 @@
    · El alias legacy --sky apunta a var(--sky-blue): un solo azul.
    ════════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&display=swap');
 
 :root {
   /* ── Surfaces (blanco dominante) ──────────── */
-  --paper:   #F4F7FD;     /* fondo del body */
-  --paper-2: #EDF2FB;     /* canvas / inset / hover / chips */
+  --paper:   #FFFFFF;     /* fondo del body — BLANCO PURO (rev. 2026-07) */
+  --paper-2: #F4F6FB;     /* canvas / inset / hover / chips */
   --bone:    #FFFFFF;     /* superficie de card */
-  --shell:   #F4F7FE;     /* hover de input / superficie media */
+  --shell:   #F5F7FC;     /* relleno de input / superficie media */
 
   /* ── Ink (azul marino como texto, no negro) ─ */
-  --ink:     #00143B;     /* texto principal */
-  --ink-2:   #1B2C4F;
-  --ink-3:   #4A5875;     /* secundario */
-  --mute:    #4A5875;     /* gris-azul secundario legible */
-  --mute-2:  #8592AB;
-  --mute-3:  #BFCADD;
+  --ink:     #0B0B0F;     /* texto principal — negro canon */
+  --ink-2:   #2A3142;
+  --ink-3:   #57607A;     /* secundario */
+  --mute:    #57607A;     /* gris-azul secundario legible */
+  --mute-2:  #8A93A9;
+  --mute-3:  #C6CCDA;
 
   /* ── Hairlines (bordes del sistema) ───────── */
-  --line:     #E6ECF6;    /* borde claro / disabled */
-  --line-2:   #D8E1EF;    /* borde / input */
-  --line-3:   #BFCADD;
+  --line:     #E7EBF4;    /* borde claro / disabled */
+  --line-2:   #DBE1EE;    /* borde / input */
+  --line-3:   #BEC7DA;
 
   /* ── Accents (AZUL de acción) ─────────────── */
-  --forest:   #1240A0;    /* alias histórico → azul de acción */
-  --forest-2: #0B2E78;    /* azul pressed (hover) */
-  --forest-soft: rgba(18,64,160,0.10);
+  --forest:   #0A5DE0;    /* alias histórico → azul de acción canon */
+  --forest-2: #084BB8;    /* azul pressed (hover) */
+  --forest-soft: rgba(10,93,224,0.10);
 
   /* Marca Broquer */
-  --sky-navy:       #00143B;  /* estructura: nav, footer, botón primario */
-  --sky-navy-mid:   #032873;
-  --sky-navy-deep:  #000D28;  /* sidebar, fondos navy profundos */
-  --sky-blue:       #1240A0;  /* acción */
-  --sky-blue-press: #0B2E78;
-  --sky-blue-lift:  #3A6FD8;  /* azul brillante, solo estados activos */
-  --sky-canvas:     #E8F0FE;
+  --sky-navy:       #081C4E;  /* estructura canon: nav, footer, botón primario */
+  --sky-navy-mid:   #10307E;
+  --sky-navy-deep:  #050F2E;  /* sidebar, fondos navy profundos */
+  --sky-blue:       #0A5DE0;  /* acción canon */
+  --sky-blue-press: #084BB8;
+  --sky-blue-lift:  #6F9FF2;  /* azul brillante, solo estados activos */
+  --sky-canvas:     #E9F0FD;
 
-  --warn:     #B45309;
-  --warn-soft:rgba(180,83,9,0.10);
-  --danger:   #C62839;
-  --danger-soft:rgba(198,40,57,0.10);
-  --success:  #0C7A5E;
-  --success-soft:rgba(12,122,94,0.10);
-  --info:     #0B2E78;
-  --info-soft:rgba(11,46,120,0.10);
+  --warn:     #B34E0B;   /* naranja canon */
+  --warn-soft:rgba(243,116,13,0.14);
+  --danger:   #D42A62;   /* rosa canon */
+  --danger-soft:rgba(212,42,98,0.12);
+  --success:  #0E9F6E;   /* verde canon */
+  --success-soft:rgba(14,159,110,0.12);
+  --info:     #0A5DE0;
+  --info-soft:rgba(10,93,224,0.10);
 
   /* ── Geometry ─────────────────────────────── */
-  --r-xs: 6px;     /* micro (check, tag) */
-  --r-sm: 8px;     /* BOTÓN */
-  --r:    10px;    /* INPUT / contenedor base */
-  --r-lg: 16px;    /* CARD */
-  --r-xl: 22px;    /* CARD GRANDE */
-  --r-modal: 24px; /* MODAL */
+  --r-xs: 8px;     /* micro (check, tag) */
+  --r-sm: 12px;    /* BOTÓN */
+  --r:    14px;    /* INPUT / contenedor base */
+  --r-lg: 22px;    /* CARD */
+  --r-xl: 26px;    /* CARD GRANDE */
+  --r-modal: 28px; /* MODAL */
   --r-pill: 999px;
 
   /* ── Espaciado (escala base 4px) ────────── */
@@ -122,12 +146,12 @@
   --sp-24: 112px;   /* sección vertical desktop */
 
   /* ── Sombras (tinte navy, nunca negro fuerte) ── */
-  --shadow-xs: 0 2px 8px rgba(0,20,59,.04);
-  --shadow-sm: 0 6px 24px rgba(0,20,59,.06);
-  --shadow:    0 14px 40px rgba(0,20,59,.09);
-  --shadow-md: 0 14px 40px rgba(0,20,59,.11);
-  --shadow-lg: 0 24px 80px rgba(0,20,59,.12);
-  --shadow-xl: 0 32px 96px rgba(0,20,59,.16);
+  --shadow-xs: 0 1px 2px rgba(8,28,78,.05);
+  --shadow-sm: 0 2px 6px rgba(8,28,78,.05), 0 10px 28px rgba(8,28,78,.06);
+  --shadow:    0 4px 12px rgba(8,28,78,.06), 0 18px 44px rgba(8,28,78,.09);
+  --shadow-md: 0 6px 16px rgba(8,28,78,.07), 0 22px 52px rgba(8,28,78,.10);
+  --shadow-lg: 0 10px 24px rgba(8,28,78,.08), 0 32px 88px rgba(8,28,78,.12);
+  --shadow-xl: 0 14px 32px rgba(8,28,78,.10), 0 42px 110px rgba(8,28,78,.16);
 
   /* ── Contrato de layout (anchos canónicos) ── */
   --page-max: 1280px;   /* módulos de datos (tablas, cards, dashboards) */
@@ -143,9 +167,15 @@
   --touch-min: 44px;
 
   /* ── Anillo de foco ─────────────────────── */
-  --focus:        0 0 0 4px rgba(18,64,160,0.16);
-  --focus-forest: 0 0 0 4px rgba(18,64,160,0.16);
-  --focus-danger: 0 0 0 4px rgba(198,40,57,0.16);
+  --focus:        0 0 0 4px rgba(10,93,224,0.20);
+  --focus-forest: 0 0 0 4px rgba(10,93,224,0.20);
+  --focus-danger: 0 0 0 4px rgba(212,42,98,0.16);
+
+  /* ── Vidrio esmerilado (canon) ──────────── */
+  --glass-bg:   rgba(255,255,255,0.62);  /* vidrio claro sobre canvas */
+  --glass-brd:  rgba(255,255,255,0.55);
+  --glass-navy: rgba(8,28,78,0.55);      /* vidrio azul sobre foto/hero */
+  --glass-blur: blur(22px) saturate(170%);
 
   /* ── Z-index (alineado con app-shell.js) ── */
   --z-base:    1;
@@ -158,12 +188,12 @@
   --z-toast:   320;
 
   /* ── Tipografía ─────────────────────────── */
-  --font-sans: 'Manrope', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
-  --font-display: 'Manrope', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'Manrope', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; /* alias histórico → NO es monoespaciada */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; /* alias histórico → NO es monoespaciada */
   /* Serif editorial: EXCLUSIVA de landing/marketing. Prohibida en
      tablas, filtros, formularios, menús y módulos densos. */
-  --font-serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --font-serif: 'Inter', system-ui, sans-serif; /* la serif salió del sistema: una sola familia, Inter */
 
   /* Escala tipográfica.
      Hero/landing usa --fs-hero. La app arranca en --fs-h1 (32-36). */
@@ -213,7 +243,7 @@
   --teal: var(--forest);
   --teal2: var(--forest-2);
   --teal-dark: var(--forest);
-  --teal-glow: rgba(18,64,160,0.12);
+  --teal-glow: rgba(13,107,240,0.12);
   --white: var(--bone);
   --gray-100: var(--paper-2);
   --gray-200: var(--line);
@@ -256,7 +286,7 @@ html, body {
   font-size: var(--fs-body);
   font-weight: 400;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.011em;
+  letter-spacing: -0.014em;
   background: var(--paper);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
@@ -290,6 +320,7 @@ input, select, textarea, button {
 
 /* Foco visible accesible y consistente para todo componente del sistema */
 .bk-btn:focus-visible,
+.bk-chip:focus-visible,
 .bk-input:focus-visible,
 .bk-textarea:focus-visible,
 .bk-select:focus-visible,
@@ -314,6 +345,28 @@ input, select, textarea, button {
 /* iOS input zoom guard */
 @media (max-width: 768px) {
   input, select, textarea { font-size: max(16px, var(--fs-body)) !important; }
+}
+
+/* ────────────────────────────────────────────────────────────
+   GUARDAS MOVIL / iOS
+   En WKWebView (la app de iPhone) no hay barra de navegador, asi que
+   cualquier ampliacion accidental se queda pegada: el usuario no tiene
+   como volver al tamano normal. Estas reglas evitan las tres causas:
+   1) el autoinflado de texto de iOS cuando un contenedor desborda,
+   2) el zoom por doble tap,
+   3) el desborde horizontal que dispara (1).
+   ──────────────────────────────────────────────────────────── */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+@media (max-width: 768px) {
+  /* clip en vez de hidden: hidden rompe position:sticky en los
+     encabezados de tabla y en las barras de filtros. */
+  html, body { overflow-x: clip; }
+  body { touch-action: manipulation; }
+  iframe, video, canvas { max-width: 100%; }
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -453,7 +506,7 @@ input, select, textarea, button {
 .bk-textarea,
 .bk-select {
   width: 100%;
-  background: var(--paper);
+  background: var(--shell);
   border: 1px solid var(--line-2);
   border-radius: var(--r);
   color: var(--ink);
@@ -690,7 +743,7 @@ input, select, textarea, button {
    ════════════════════════════════════════════════════════════ */
 .bk-overlay {
   position: fixed; inset: 0; z-index: var(--z-overlay);
-  background: rgba(0,20,59,0.48);
+  background: rgba(27,39,51,0.48);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   display: flex; align-items: center; justify-content: center;
@@ -958,7 +1011,7 @@ input, select, textarea, button {
   --font: var(--font-sans);
 
   /* Fondo navy tenue — para chips/badges "navy" (contactos/leads roles) */
-  --navy-soft: rgba(0, 20, 59, 0.06);
+  --navy-soft: rgba(8, 65, 154, 0.06);
 
   /* Superficies / bordes legacy (verificador, contratos, otros) */
   --wh:      var(--bone);      /* superficie blanca de card   */
@@ -989,7 +1042,96 @@ input, select, textarea, button {
   --brand-facebook:       #1877F2;
   --brand-facebook-press: #145FCC;
 
+  /* ── Sidebar (los consume app-shell.js) ────────────────────
+     Decision de Chava: el drawer usa el azul BRILLANTE de accion
+     (--sky-blue) con destello blanco arriba. Contrasta contra el
+     hero navy del inicio y contra el canvas blanco.
+     Los módulos van en blanco y en negritas, agrupados en bloques
+     translúcidos: la separación se hace con aire y con paneles,
+     nunca con líneas. */
+  --sb-bg:      var(--sky-blue);
+  --sb-panel:   rgba(255,255,255,0.09);
+  --sb-hover:   rgba(255,255,255,0.14);
+  --sb-active:  rgba(255,255,255,0.22);
+  --sb-edge:    rgba(255,255,255,0.16);
+  --sb-txt:     #FFFFFF;
+  --sb-txt-dim: rgba(255,255,255,0.66);
+  --sb-glow:    0 8px 24px rgba(4,12,40,0.35);
+
   /* Acento azul claro para texto sobre superficies navy (heros oscuros).
      El azul de acción #1240A0 no contrasta sobre --sky-navy. */
-  --sky-blue-on-dark: #7FA8F0;
+  --sky-blue-on-dark: #8FB0F5;
+
+  /* ════════════════════════════════════════════════════════════
+     CANVAS DE APLICACION
+     --paper sigue siendo BLANCO porque lo consumen superficies
+     flotantes (topbar, dropdowns, popovers, menus): si se tine,
+     se tinen ellas. El lienzo de la app es su propio token.
+     Decision de Chava (canon): el fondo de la app es BLANCO PURO
+     en todas partes. Las cards se leen por su hairline de 1px y
+     su sombra de luz real, no por tinte del fondo.
+     ════════════════════════════════════════════════════════════ */
+  --canvas: #FFFFFF;
+
+  /* ════════════════════════════════════════════════════════════
+     PALETA DE DATOS  (--data-1 … --data-8)
+     NO es paleta de interfaz. Prohibida en botones, links, foco,
+     bordes, fondos de card y headings: ahi el azul de accion debe
+     seguir siendo el unico azul de accion.
+     Se usa SOLO donde el color ES el dato: series de graficas,
+     etapas de pipeline, origenes de lead, categorias y tags.
+     Ordenada por distinguibilidad: los primeros cuatro son los
+     mas separados entre si porque casi toda grafica usa 2-4 series.
+     Decision de Chava: la paleta es VIVA y variada — una grafica
+     jamas debe verse como ocho tonos de azul.
+     ════════════════════════════════════════════════════════════ */
+  --data-1: #0A5DE0;   /* azul     — serie principal (= azul de accion) */
+  --data-2: #12A150;   /* verde */
+  --data-3: #F7740D;   /* naranja */
+  --data-4: #ED4C86;   /* rosa */
+  --data-5: #7A4DF0;   /* violeta */
+  --data-6: #0AA6C8;   /* cian */
+  --data-7: #D9A406;   /* amarillo */
+  --data-8: #64708C;   /* gris azulado — "otros" */
+
+  /* Rellenos translucidos de la misma rampa (areas, heatmaps, fondos
+     de badge). Mismo indice = mismo color, solo que al 12%. */
+  --data-1-soft: rgba(10, 93, 224, 0.12);
+  --data-2-soft: rgba(18, 161, 80, 0.13);
+  --data-3-soft: rgba(247, 116, 13, 0.13);
+  --data-4-soft: rgba(237, 76, 134, 0.13);
+  --data-5-soft: rgba(122, 77, 240, 0.12);
+  --data-6-soft: rgba(10, 166, 200, 0.13);
+  --data-7-soft: rgba(217, 164, 6, 0.15);
+  --data-8-soft: rgba(100, 112, 140, 0.12);
+
+  /* ── Etapas de pipeline ────────────────────────────────────
+     No es una rampa categorica: es ORDINAL. Va de frio a
+     comprometido, cierra en verde (ganado) y descarta en gris
+     (muerto). El color dice en que parte del embudo estas sin
+     que tengas que leer la etiqueta. */
+  --etapa-nuevo:      #0AA6C8;
+  --etapa-activo:     #0A5DE0;
+  --etapa-contactado: #7A4DF0;
+  --etapa-cerrado:    #12A150;
+  --etapa-descartado: #8A93A9;
+  --etapa-nuevo-soft:      rgba(10, 166, 200, 0.13);
+  --etapa-activo-soft:     rgba(10, 93, 224, 0.12);
+  --etapa-contactado-soft: rgba(122, 77, 240, 0.12);
+  --etapa-cerrado-soft:    rgba(18, 161, 80, 0.13);
+  --etapa-descartado-soft: rgba(138, 147, 169, 0.13);
+
+  /* ── Modulo WhatsApp ───────────────────────────────────────
+     Unico modulo donde el verde de marca deja de ser solo el
+     boton de conectar y pasa a ser el acento del modulo: ahi el
+     verde ES el contexto. El punto critico es que la burbuja del
+     AGENTE y la de BROQ no se confundan — antes eran dos azules.
+     Ahora: verde = lo mandaste tu, violeta = lo mando Broq. */
+  --wa-canvas:   #EEF3FB;   /* lienzo del hilo: frio, hermano del --canvas */
+  --wa-out:      #CFEEDD;   /* burbuja del agente: verde CLARO, texto oscuro
+                               (el verde solido #1EA65A con blanco daba 2.8:1) */
+  --wa-out-ink:  #0B4A2F;   /* texto sobre la burbuja verde (8.4:1) */
+  --wa-out-meta: #2F5F45;   /* hora/estado sobre la burbuja verde (5.9:1) */
+  --wa-ia:       #6D28D9;   /* violeta Broq: texto/acentos de sus burbujas */
+  --wa-ia-soft:  #F0EAFB;   /* burbuja de Broq: violeta claro, texto en tinta */
 }

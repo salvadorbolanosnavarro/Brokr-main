@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
 <title>Tareas · Broquer</title>
 <link rel="manifest" href="manifest.json"/>
 <meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
@@ -177,6 +177,12 @@
 .tk-check:hover { border-color: var(--success); }
 .tk-item.is-done .tk-check { background: var(--success); border-color: var(--success); color: #fff; }
 .tk-item.is-done .tk-title { text-decoration: line-through; color: var(--mute); }
+.tke-chips{ display:flex; flex-wrap:wrap; gap:var(--sp-2); }
+.tke-chip{ display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:var(--r-pill);
+           background:var(--paper-2); font-size:var(--fs-xs); font-weight:600; }
+.tke-chip button{ background:none; border:0; cursor:pointer; color:var(--mute); font-size:var(--fs-sm); line-height:1; padding:0; }
+.tk-edit{ background:none; border:0; cursor:pointer; color:var(--mute); padding:4px; }
+.tk-edit:hover{ color:var(--ink); }
 .tk-main { flex: 1; min-width: 0; }
 .tk-title { font-size: var(--fs-sm); font-weight: 500; color: var(--ink); letter-spacing: -0.005em; overflow-wrap: break-word; }
 .tk-meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
@@ -302,6 +308,42 @@
   </div>
 </div>
 
+<!-- ═══ Modal: editar tarea ═══ -->
+<div class="bk-overlay" id="tk-modal-editar">
+  <div class="bk-modal">
+    <div class="bk-modal__head"><span class="bk-modal__title">Editar tarea</span></div>
+    <div class="bk-modal__body">
+      <div class="bk-field"><label class="bk-label">Título</label><input class="bk-input" id="tke-titulo"/></div>
+      <div class="bk-field-row">
+        <div class="bk-field"><label class="bk-label">Fecha</label><input class="bk-input" type="date" id="tke-fecha"/></div>
+        <div class="bk-field"><label class="bk-label">Hora</label><input class="bk-input" type="time" id="tke-hora"/></div>
+      </div>
+      <div class="bk-field"><label class="bk-label">Notas</label><textarea class="bk-textarea" id="tke-notas" rows="2"></textarea></div>
+
+      <div class="bk-divider"></div>
+      <span class="bk-eyebrow">Contactos vinculados</span>
+      <div class="tke-chips" id="tke-contactos-chips" style="margin:var(--sp-2) 0;"></div>
+      <div class="bk-field-row">
+        <select class="bk-select" id="tke-agregar-contacto"><option value="">Agregar contacto…</option></select>
+        <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="tkAgregarContacto()">Agregar</button>
+      </div>
+
+      <div class="bk-divider"></div>
+      <span class="bk-eyebrow">Inmuebles vinculados</span>
+      <div class="tke-chips" id="tke-propiedades-chips" style="margin:var(--sp-2) 0;"></div>
+      <div class="bk-field-row">
+        <select class="bk-select" id="tke-agregar-propiedad"><option value="">Agregar inmueble…</option></select>
+        <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="tkAgregarPropiedad()">Agregar</button>
+      </div>
+    </div>
+    <div class="bk-modal__foot">
+      <button class="bk-btn bk-btn--danger" onclick="tkEliminarDesdeModal()">Eliminar tarea</button>
+      <button class="bk-btn bk-btn--ghost" onclick="tkCerrarEditar()">Cancelar</button>
+      <button class="bk-btn bk-btn--forest" onclick="tkGuardarEdicion()">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="app-shell.js" defer></script>
@@ -354,6 +396,11 @@ function fechaCorta(iso) {
   try { return new Date(iso).toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric' }); }
   catch { return ''; }
 }
+function horaCorta(iso) {
+  if (!iso) return '';
+  try { return new Date(iso).toLocaleTimeString('es-MX', { hour:'numeric', minute:'2-digit' }); }
+  catch { return ''; }
+}
 function fechaHora(iso) {
   if (!iso) return '';
   try {
@@ -364,18 +411,42 @@ function fechaHora(iso) {
 }
 
 /* ── Carga inicial: TODO en un solo lote paralelo ────────────── */
+let VINCULOS = { contactos: {}, propiedades: {} };
+
+function construirVinculos(tareasList, filasContactos, filasPropiedades) {
+  const v = { contactos: {}, propiedades: {} };
+  // Los vínculos "viejos" (columna suelta contacto_id/propiedad_id de antes
+  // de que existieran las tablas de varios-a-varios) se muestran igual,
+  // para que ninguna tarea antigua "pierda" su vínculo de vista.
+  for (const t of tareasList) {
+    if (t.contacto_id) (v.contactos[t.id] = v.contactos[t.id] || new Set()).add(String(t.contacto_id));
+    if (t.propiedad_id) (v.propiedades[t.id] = v.propiedades[t.id] || new Set()).add(String(t.propiedad_id));
+  }
+  for (const fila of filasContactos) {
+    (v.contactos[fila.tarea_id] = v.contactos[fila.tarea_id] || new Set()).add(String(fila.contacto_id));
+  }
+  for (const fila of filasPropiedades) {
+    (v.propiedades[fila.tarea_id] = v.propiedades[fila.tarea_id] || new Set()).add(String(fila.propiedad_id));
+  }
+  const aArrays = (obj) => Object.fromEntries(Object.entries(obj).map(([k, s]) => [k, Array.from(s)]));
+  return { contactos: aArrays(v.contactos), propiedades: aArrays(v.propiedades) };
+}
+
 async function cargarTodo() {
   const lista = g('tk-lista');
   lista.innerHTML = '<div class="tk-empty"><h3>Cargando tareas…</h3></div>';
   try {
-    const [t, c, p] = await Promise.all([
+    const [t, c, p, vc, vp] = await Promise.all([
       sbFetch('tareas?select=*&order=completada.asc,fecha_entrega.asc.nullslast,created_at.desc&limit=500'),
       sbFetch('contactos?select=id,nombre&limit=1000'),
       sbFetch('propiedades?select=id,titulo,clave_interna&order=updated_at.desc&limit=1000'),
+      sbFetch('tareas_contactos?select=tarea_id,contacto_id&limit=2000').catch(() => []),
+      sbFetch('tareas_propiedades?select=tarea_id,propiedad_id&limit=2000').catch(() => []),
     ]);
     tareas = Array.isArray(t) ? t : [];
     contactosMin = Array.isArray(c) ? c : [];
     propsMin = Array.isArray(p) ? p : [];
+    VINCULOS = construirVinculos(tareas, Array.isArray(vc) ? vc : [], Array.isArray(vp) ? vp : []);
     poblarSelectVinculo();
     renderTareas();
   } catch (e) {
@@ -445,21 +516,24 @@ function agrupar(lista) {
 }
 
 function vinculoChip(t) {
-  if (t.contacto_id) {
-    const c = contactoIdx[String(t.contacto_id)];
-    return `<a class="tk-link" href="contactos.html?id=${encodeURIComponent(String(t.contacto_id))}" title="Ver en Contactos">
+  const contactos = (VINCULOS.contactos[t.id] || []);
+  const propiedades = (VINCULOS.propiedades[t.id] || []);
+  let html = '';
+  for (const cid of contactos) {
+    const c = contactoIdx[String(cid)];
+    html += `<a class="tk-link" href="contactos.html?id=${encodeURIComponent(String(cid))}" title="Ver en Contactos">
       <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.5-1.632z"/></svg>
       <span>${esc(c ? c.nombre : 'Contacto')}</span>
     </a>`;
   }
-  if (t.propiedad_id) {
-    const p = propIdx[String(t.propiedad_id)];
-    return `<a class="tk-link" href="propiedades.html?id=${encodeURIComponent(String(t.propiedad_id))}" title="Ver en Inmuebles">
+  for (const pid of propiedades) {
+    const p = propIdx[String(pid)];
+    html += `<a class="tk-link" href="propiedades.html?id=${encodeURIComponent(String(pid))}" title="Ver en Inmuebles">
       <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg>
       <span>${esc(p ? (p.clave_interna || p.titulo || 'Inmueble') : 'Inmueble')}</span>
     </a>`;
   }
-  return '';
+  return html;
 }
 
 function filaTarea(t, mostrarVencida) {
@@ -473,10 +547,13 @@ function filaTarea(t, mostrarVencida) {
     <div class="tk-main">
       <div class="tk-title">${esc(t.titulo)}</div>
       <div class="tk-meta">
-        ${due ? `<span class="tk-due${vencida ? ' is-overdue' : ''}">${vencida ? 'Vencida · ' : ''}${fechaCorta(t.fecha_entrega)}</span>` : ''}
+        ${due ? `<span class="tk-due${vencida ? ' is-overdue' : ''}">${vencida ? 'Vencida · ' : ''}${fechaCorta(t.fecha_entrega)} · ${horaCorta(t.fecha_entrega)}</span>` : ''}
         ${vinculoChip(t)}
       </div>
     </div>
+    <button class="tk-edit" title="Editar tarea" onclick="tkAbrirEditar('${esc(String(t.id))}')">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"/></svg>
+    </button>
     <button class="tk-x" title="Eliminar tarea" onclick="eliminarTarea('${esc(String(t.id))}')">×</button>
   </div>`;
 }
@@ -538,7 +615,11 @@ async function crearTarea() {
   const payload = {
     user_id: uid,
     titulo: titulo,
-    fecha_entrega: fecha ? fecha + 'T12:00:00' : null,
+    // OJO: nunca mandar "fecha+'T12:00:00'" pelón — la columna es timestamptz
+    // y Postgres lo toma como si YA fuera UTC, corriendo la hora real hasta
+    // 6h para atrás. new Date(...) interpreta el texto en la hora LOCAL del
+    // navegador, y toISOString() sí da el instante UTC correcto.
+    fecha_entrega: fecha ? new Date(fecha + 'T12:00:00').toISOString() : null,
     contacto_id: vinculo.startsWith('c:') ? vinculo.slice(2) : null,
     propiedad_id: vinculo.startsWith('p:') ? vinculo.slice(2) : null,
   };
@@ -593,6 +674,149 @@ async function eliminarTarea(id) {
     renderTareas();
   } catch (e) {
     alert('No se pudo eliminar la tarea.\n\n' + (e.message || e));
+  }
+}
+
+/* ── Editar tarea (título, fecha/hora, notas, vínculos múltiples) ──── */
+let TKE_ID = null; // id de la tarea que se está editando
+
+function tkPintarSelectAgregar(selectId, opciones, yaVinculados) {
+  const sel = g(selectId);
+  const disponibles = opciones.filter(o => !yaVinculados.includes(String(o.id)));
+  sel.innerHTML = '<option value="">' + (disponibles.length ? 'Elegir…' : 'No hay más para agregar') + '</option>' +
+    disponibles.map(o => `<option value="${esc(String(o.id))}">${esc(o.label)}</option>`).join('');
+}
+
+function tkPintarChips() {
+  const contactos = VINCULOS.contactos[TKE_ID] || [];
+  const propiedades = VINCULOS.propiedades[TKE_ID] || [];
+  g('tke-contactos-chips').innerHTML = contactos.length
+    ? contactos.map(cid => {
+        const c = contactoIdx[String(cid)];
+        return `<span class="tke-chip">${esc(c ? c.nombre : 'Contacto')}<button onclick="tkQuitarContacto('${esc(String(cid))}')" title="Quitar">×</button></span>`;
+      }).join('')
+    : '<span class="bk-hint">Ninguno todavía.</span>';
+  g('tke-propiedades-chips').innerHTML = propiedades.length
+    ? propiedades.map(pid => {
+        const p = propIdx[String(pid)];
+        const nombre = p ? (p.clave_interna || p.titulo || 'Inmueble') : 'Inmueble';
+        return `<span class="tke-chip">${esc(nombre)}<button onclick="tkQuitarPropiedad('${esc(String(pid))}')" title="Quitar">×</button></span>`;
+      }).join('')
+    : '<span class="bk-hint">Ninguno todavía.</span>';
+  tkPintarSelectAgregar('tke-agregar-contacto',
+    contactosMin.map(c => ({ id: c.id, label: c.nombre || 'Sin nombre' })), contactos);
+  tkPintarSelectAgregar('tke-agregar-propiedad',
+    propsMin.map(p => ({ id: p.id, label: p.clave_interna ? p.clave_interna + ' · ' + (p.titulo||'') : (p.titulo || 'Sin título') })), propiedades);
+}
+
+function tkAbrirEditar(id) {
+  const t = tareas.find(x => String(x.id) === id);
+  if (!t) return;
+  TKE_ID = id;
+  g('tke-titulo').value = t.titulo || '';
+  if (t.fecha_entrega) {
+    const d = new Date(t.fecha_entrega);
+    const pad = n => String(n).padStart(2, '0');
+    // Fecha y hora deben leerse AMBAS en hora local (no mezclar toISOString
+    // -que da el día en UTC- con toTimeString -que da la hora local-, porque
+    // cerca de medianoche eso puede mostrar el día equivocado).
+    g('tke-fecha').value = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    g('tke-hora').value = pad(d.getHours()) + ':' + pad(d.getMinutes());
+  } else {
+    g('tke-fecha').value = '';
+    g('tke-hora').value = '';
+  }
+  g('tke-notas').value = t.notas || '';
+  tkPintarChips();
+  g('tk-modal-editar').classList.add('is-open');
+}
+
+function tkCerrarEditar() {
+  g('tk-modal-editar').classList.remove('is-open');
+  TKE_ID = null;
+}
+
+async function tkGuardarEdicion() {
+  if (!TKE_ID) return;
+  const titulo = g('tke-titulo').value.trim();
+  if (!titulo) { alert('El título es obligatorio.'); return; }
+  const fecha = g('tke-fecha').value;
+  const hora = g('tke-hora').value || '12:00';
+  const cambios = {
+    titulo,
+    // Mismo arreglo: construir con Date (hora LOCAL del navegador) y usar
+    // toISOString() para el instante UTC real, en vez de mandar el texto
+    // "fecha+T+hora" pelón que Postgres confundiría con UTC.
+    fecha_entrega: fecha ? new Date(fecha + 'T' + hora + ':00').toISOString() : null,
+    notas: g('tke-notas').value.trim() || null,
+  };
+  try {
+    await sbFetch('tareas?id=eq.' + encodeURIComponent(TKE_ID), 'PATCH', cambios);
+    const t = tareas.find(x => String(x.id) === TKE_ID);
+    if (t) Object.assign(t, cambios);
+    tkCerrarEditar();
+    renderTareas();
+    showToast('Tarea actualizada');
+  } catch (e) {
+    alert('No se pudo guardar.\n\n' + (e.message || e));
+  }
+}
+
+function tkEliminarDesdeModal() {
+  const id = TKE_ID;
+  tkCerrarEditar();
+  if (id) eliminarTarea(id);
+}
+
+async function tkAgregarContacto() {
+  const cid = g('tke-agregar-contacto').value;
+  if (!cid || !TKE_ID) return;
+  const uid = await userId();
+  try {
+    await sbFetch('tareas_contactos', 'POST', { user_id: uid, tarea_id: TKE_ID, contacto_id: cid });
+    (VINCULOS.contactos[TKE_ID] = VINCULOS.contactos[TKE_ID] || []).push(String(cid));
+    tkPintarChips();
+    renderTareas();
+  } catch (e) {
+    alert('No se pudo vincular el contacto.\n\n' + (e.message || e));
+  }
+}
+
+async function tkQuitarContacto(cid) {
+  if (!TKE_ID) return;
+  try {
+    await sbFetch('tareas_contactos?tarea_id=eq.' + encodeURIComponent(TKE_ID) + '&contacto_id=eq.' + encodeURIComponent(cid), 'DELETE');
+    VINCULOS.contactos[TKE_ID] = (VINCULOS.contactos[TKE_ID] || []).filter(x => x !== String(cid));
+    tkPintarChips();
+    renderTareas();
+  } catch (e) {
+    alert('No se pudo quitar el vínculo.\n\n' + (e.message || e));
+  }
+}
+
+async function tkAgregarPropiedad() {
+  const pid = g('tke-agregar-propiedad').value;
+  if (!pid || !TKE_ID) return;
+  const uid = await userId();
+  try {
+    await sbFetch('tareas_propiedades', 'POST', { user_id: uid, tarea_id: TKE_ID, propiedad_id: pid });
+    (VINCULOS.propiedades[TKE_ID] = VINCULOS.propiedades[TKE_ID] || []).push(String(pid));
+    tkPintarChips();
+    renderTareas();
+  } catch (e) {
+    alert('No se pudo vincular el inmueble.\n\n' + (e.message || e));
+  }
+}
+
+async function tkQuitarPropiedad(pid) {
+  if (!TKE_ID) return;
+  try {
+    await sbFetch('tareas_propiedades?tarea_id=eq.' + encodeURIComponent(TKE_ID) + '&propiedad_id=eq.' + encodeURIComponent(pid), 'DELETE');
+    VINCULOS.propiedades[TKE_ID] = (VINCULOS.propiedades[TKE_ID] || []).filter(x => x !== String(pid));
+    tkPintarChips();
+    renderTareas();
+  } catch (e) {
+    alert('No se pudo quitar el vínculo.\n\n' + (e.message || e));
   }
 }
 

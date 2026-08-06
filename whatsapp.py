@@ -1,40 +1,51 @@
 # =============================================================================
-# Broquer · Módulo WhatsApp (Recepción) — versión amarrada a TU stack
+# Broquer · Módulo WhatsApp 2.0 (multi-número + IA de recepción)
 # -----------------------------------------------------------------------------
-# Hecho con tus mismos patrones de main.py:
-#   - httpx (async) para todo  ->  CERO dependencias nuevas
-#   - Supabase por REST directo (apikey + service key), igual que tus helpers
-#   - El cerebro corre en Anthropic (claude-sonnet-4-6), tu misma llamada
-#   - Reusa el patrón de get_user_id_from_token para la bandeja
+# Módulo construido DESDE CERO. No reutiliza código ni tablas de whatsapp.py.
+# Vive en su propio prefijo /whatsapp2 y su propio set de tablas (wa2_*).
+#
+# Cómo llegan los mensajes de VARIOS números al MISMO webhook de este módulo,
+# sin tocar el webhook del módulo viejo: Meta permite fijar un "callback URL"
+# alterno por WABA con override_callback_uri al suscribir la app
+# (POST /{waba_id}/subscribed_apps). Este módulo siempre se suscribe con ese
+# override apuntando a /whatsapp2/webhook, así que los números conectados aquí
+# jamás tocan el webhook de whatsapp.py y viceversa.
 #
 # Conectar en main.py:
-#   from whatsapp import router as whatsapp_router
-#   app.include_router(whatsapp_router)
-#
-# Webhook:  https://TU-APP.railway.app/whatsapp/webhook
+#   from whatsapp2 import router as whatsapp2_router
+#   app.include_router(whatsapp2_router)
 # =============================================================================
 
 import os
+import re
 import json
+import asyncio
 import logging
-from datetime import datetime, timezone, timedelta
+import hmac
+import hashlib
+from datetime import datetime, timezone, timedelta, date
+from zoneinfo import ZoneInfo
 
 import httpx
 from fastapi import APIRouter, Request, Response, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 
-# Notificaciones al iPhone del agente. Si push.py no está o le faltan sus
-# variables de entorno, el import falla suave y WhatsApp sigue igual de bien.
 try:
-    from push import avisar_mensaje_whatsapp
-except Exception:  # pragma: no cover
-    async def avisar_mensaje_whatsapp(*a, **k):
+    from push import enviar_push
+except Exception:  # pragma: no cover — un push que falla no debe tumbar nada
+    async def enviar_push(*a, **k):
+        return False
+
+try:
+    from routers.organizaciones import get_org_context
+except Exception:  # pragma: no cover — si el módulo de equipo no carga, cada quien ve solo lo suyo
+    async def get_org_context(user_id):
         return None
 
-log = logging.getLogger("broquer.whatsapp")
+log = logging.getLogger("broquer.whatsapp2")
 
 # -----------------------------------------------------------------------------
-# CONFIG  (tus mismos nombres de variables de entorno)
+# CONFIG
 # -----------------------------------------------------------------------------
 SUPABASE_URL         = os.environ.get("SUPABASE_URL", "").rstrip("/")
 SUPABASE_ANON_KEY    = os.environ.get("SUPABASE_ANON_KEY", "")
@@ -42,70 +53,181 @@ SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "") or SUPABASE_AN
 
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 ANTHROPIC_BASE    = os.environ.get("ANTHROPIC_BASE", "https://api.anthropic.com/v1")
-RECEPCION_MODEL   = os.environ.get("RECEPCION_MODEL", "claude-sonnet-4-6")
+WA2_MODEL         = os.environ.get("WA2_MODEL", "claude-sonnet-4-6")
 
-GRAPH_API        = "https://graph.facebook.com/v21.0"
-WHATSAPP_TOKEN   = os.environ.get("WHATSAPP_TOKEN", "")
-WA_VERIFY_TOKEN  = os.environ.get("WA_VERIFY_TOKEN", "broquer_verify")
-WA_APP_SECRET    = os.environ.get("WA_APP_SECRET", "")
-WA_REGISTER_PIN  = os.environ.get("WA_REGISTER_PIN", "142857")  # PIN de 6 dígitos para 2FA del número
+GRAPH_API       = "https://graph.facebook.com/v21.0"
+META_APP_ID     = os.environ.get("META_APP_ID", "1709238933850389")
+META_APP_SECRET = os.environ.get("META_APP_SECRET", "")
+WA2_VERIFY_TOKEN = os.environ.get("WA2_VERIFY_TOKEN", "broquer2_verify")
+# Es la MISMA app de Meta que se usa para el OAuth, así que la firma es la
+# misma clave secreta. Si alguien no puso WA_APP_SECRET en Railway, caemos
+# a META_APP_SECRET en vez de quedarnos sin verificar nada.
+WA2_APP_SECRET   = os.environ.get("WA_APP_SECRET", "") or META_APP_SECRET
+WA2_REGISTER_PIN = os.environ.get("WA_REGISTER_PIN", "142857")
+# URL pública propia de este módulo (para el override_callback_uri al suscribir)
+WA2_WEBHOOK_URL  = os.environ.get("WA2_WEBHOOK_URL", "https://api.broquer.app/whatsapp2/webhook")
 
-# Piloto (Grupo Navarro): si un número no está mapeado en wa_numbers, usamos esto
-DEFAULT_USER_ID = os.environ.get("DEFAULT_USER_ID", "")
-DEFAULT_AGENCIA = os.environ.get("DEFAULT_AGENCIA", "Grupo Navarro")
+BROQUER_API_BASE = os.environ.get("BROQUER_API_BASE", "https://api.broquer.app")
+HISTORY_LIMIT = 16
 
-HISTORY_LIMIT = 14
-router = APIRouter(prefix="/whatsapp", tags=["whatsapp"])
+# Zona horaria por defecto de todo el módulo. ESTA CONSTANTE FALTABA: el
+# endpoint /whatsapp2/estadisticas la usaba sin que existiera en ningún lado,
+# así que reventaba con NameError (error 500) en CUALQUIER llamada que no
+# mandara ?zona=... — que es exactamente como la llama estadisticas.html.
+# Resultado: la pestaña de WhatsApp en Estadísticas nunca funcionó.
+_ZONA_DEFAULT = os.environ.get("WA2_ZONA_DEFAULT", "America/Mexico_City")
+
+# Segundos que se espera antes de contestar, para AGRUPAR mensajes seguidos.
+# En WhatsApp la gente no escribe un párrafo: escribe "hola", "busco casa",
+# "en Altozano" en tres mensajes de tres segundos. Sin esto se disparaban tres
+# respuestas de la IA en paralelo —incoherentes entre sí y pagando tres veces—
+# y el prospecto veía a un bot atropellado. Con esto, solo el ÚLTIMO mensaje
+# del ráfaga contesta, y contesta ya con los tres en el historial.
+try:
+    WA2_DEBOUNCE = max(0, int(os.environ.get("WA2_DEBOUNCE_SEG", "8")))
+except Exception:
+    WA2_DEBOUNCE = 8
+
+# WhatsApp corta los mensajes de texto en 4096 caracteres; arriba de eso Meta
+# rechaza el envío completo y el prospecto no recibe NADA.
+WA_MAX_TEXTO = 4000
+
+# Palabras EXACTAS con las que un prospecto se da de baja de las campañas.
+# Al detectarlas, el contacto se marca opt_out y ninguna campaña vuelve a
+# tocarlo — puede seguir chateando normal, solo queda fuera de los masivos.
+_OPT_OUT_PALABRAS = {"baja", "stop", "alto", "cancelar", "no molestar",
+                     "darme de baja", "no me escribas", "unsubscribe"}
+
+# TOPE DURO de contactos por campaña. Meta limita cuántas conversaciones de
+# marketing puede abrir un número según su nivel (250 / 1,000 / 10,000...);
+# pasarse hace que Meta rechace envíos y hasta baje la calidad del número.
+# Se puede subir sin tocar código con WA2_CAMPANA_TOPE en Railway.
+try:
+    WA2_CAMPANA_TOPE = max(1, int(os.environ.get("WA2_CAMPANA_TOPE", "250")))
+except Exception:
+    WA2_CAMPANA_TOPE = 250
+
+# Cajón de Supabase donde viven las fotos, audios y documentos de WhatsApp.
+WA_MEDIA_BUCKET = os.environ.get("WA_MEDIA_BUCKET", "wa-media")
+
+# Transcripción de notas de voz (mismo Groq/Whisper que ya usa el resto).
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+GROQ_BASE    = os.environ.get("GROQ_BASE", "https://api.groq.com/openai/v1")
+
+# Candado por conversación: dos mensajes del mismo prospecto jamás deben
+# generar dos respuestas al mismo tiempo.
+_LOCKS: dict = {}
+
+
+def _lock_conv(conversacion_id: str) -> asyncio.Lock:
+    lock = _LOCKS.get(conversacion_id)
+    if lock is None:
+        lock = asyncio.Lock()
+        _LOCKS[conversacion_id] = lock
+        if len(_LOCKS) > 5000:  # no dejar que crezca para siempre
+            for k in list(_LOCKS.keys())[:1000]:
+                if not _LOCKS[k].locked():
+                    _LOCKS.pop(k, None)
+    return lock
+
+# TOPE DURO de respuestas de IA por conversación.
+# Cada mensaje entrante que contesta la IA es una llamada a Claude que paga
+# Broquer, no el agente. El campo `max_mensajes_ia` del entrenamiento lo puede
+# ajustar cada quien hacia ABAJO, pero nadie puede pasarse de este número ni
+# dejarlo en ilimitado — ni siquiera dejando el campo en 0, que es como están
+# hoy todas las filas viejas. Sin esto, un solo número con tráfico pesado
+# (o un prospecto necio, o un bot ajeno escribiéndole) puede generar una
+# cuenta abierta de API. Se puede subir sin tocar código con la variable
+# WA2_TOPE_IA en Railway.
+try:
+    WA2_TOPE_IA = max(1, int(os.environ.get("WA2_TOPE_IA", "25")))
+except Exception:
+    WA2_TOPE_IA = 25
+
+router = APIRouter(prefix="/whatsapp2", tags=["whatsapp2"])
+
+TRAINING_DEFAULTS = {
+    "tono": "cálido y profesional",
+    "puede": "resolver dudas del inmueble, mandar fotos y precio, y proponer visitas",
+    "debe": "preguntar presupuesto, forma de pago y para cuándo busca",
+    "no_debe": "inventar direcciones exactas o precios que no existan en el catálogo",
+    "especialidad": "",
+    # Base de conocimiento del negocio: lo que la IA NO puede adivinar del
+    # catálogo (comisiones, si aceptan Infonavit, dónde está la oficina, qué
+    # papeles piden para rentar, etc.). Sin esto, ante cualquier pregunta que
+    # no sea "muéstrame casas" la IA se queda muda o —peor— inventa.
+    "conocimiento": "",
+    "objetivo": "calificar al prospecto y agendar una visita",
+    "datos_calificar": ["presupuesto", "forma de pago", "para cuándo busca", "zona de interés"],
+    "preguntas_extra": [],
+    "escalar_palabras": ["quiero hablar con una persona", "hablar con alguien", "es urgente"],
+    "horario_activo": False,
+    "hora_inicio": "08:00",
+    "hora_fin": "21:00",
+    "fuera_horario_msg": None,
+    "max_mensajes_ia": 0,
+    "activo": True,
+    "zona_horaria": "America/Mexico_City",
+}
 
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-# México suprimió el horario de verano en 2022: para Morelia/CDMX el offset es
-# fijo en UTC-6. Se intenta zoneinfo primero por si la imagen trae tzdata (y por
-# si algún día hay que soportar la franja fronteriza); si no está, el respaldo
-# de -6 es correcto para el país salvo esa franja. No se agrega dependencia.
-def _hora_local() -> "datetime":
+def _hora_local(zona: str | None = None) -> datetime:
+    """Hora de AHORA en la zona del agente (por defecto Ciudad de México).
+    México tiene varias zonas horarias reales (Tijuana, Hermosillo, Cancún,
+    etc.), así que esto NUNCA debe asumir Ciudad de México para todo mundo."""
     try:
-        from zoneinfo import ZoneInfo
-        return datetime.now(ZoneInfo("America/Mexico_City"))
+        return datetime.now(ZoneInfo(zona or "America/Mexico_City"))
     except Exception:
         return datetime.now(timezone.utc) + timedelta(hours=-6)
 
 
-def _wa_ts(msg) -> str:
-    """La hora REAL en que el prospecto mandó el mensaje.
+def _fmt_fecha_larga(dt: datetime) -> str:
+    dias = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
+    meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
+             "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+    return f"{dias[dt.weekday()]} {dt.day} de {meses[dt.month-1]} de {dt.year}, {dt.strftime('%H:%M')}"
 
-    WhatsApp incluye en CADA mensaje un campo 'timestamp' (segundos Unix). Antes
-    se ignoraba y la fila nacía con el default now() de la columna: si el webhook
-    llegaba en lote o con retraso, o si en producción la columna quedó sin ese
-    default, todos los mensajes terminaban con la misma hora — la bandeja los
-    ordena por created_at, así que además de verse la hora mal, el hilo salía
-    revuelto y algún mensaje 'no aparecía'. Ahora sellamos la hora del propio
-    WhatsApp. Si viniera vacía o corrupta, caemos a la hora actual (nunca revienta
-    el webhook)."""
+
+def _normaliza_mx(num: str) -> str:
+    n = "".join(ch for ch in str(num) if ch.isdigit())
+    if n.startswith("521") and len(n) == 13:
+        n = "52" + n[3:]
+    return n
+
+
+def _money(n) -> str:
     try:
-        ts = int(str((msg or {}).get("timestamp") or "").strip())
-        if ts > 0:
-            return datetime.fromtimestamp(ts, timezone.utc).isoformat()
+        return "$" + f"{int(round(float(n))):,}"
     except Exception:
-        pass
-    return _now()
+        return str(n) if n else ""
 
 
-def _hhmm(valor, default: str) -> tuple:
-    """'08:00' o '08:00:00' -> (8, 0). Nunca revienta el webhook."""
-    try:
-        partes = str(valor or default).split(":")
-        return int(partes[0]), int(partes[1])
-    except Exception:
-        partes = default.split(":")
-        return int(partes[0]), int(partes[1])
+def _parsear_presupuesto(texto: str) -> int | None:
+    """Respaldo por si la IA no manda precio_max en 'filtros' aunque el
+    prospecto ya haya dado su presupuesto antes (queda guardado en su ficha
+    como texto libre, ej. '2 millones', '800 mil', '$1,200,000')."""
+    if not texto:
+        return None
+    t = texto.lower().replace(",", "").replace("$", "")
+    m = re.search(r"(\d+(?:\.\d+)?)\s*(millones|mill?on|mdp|m\b)", t)
+    if m:
+        return int(float(m.group(1)) * 1_000_000)
+    m = re.search(r"(\d+(?:\.\d+)?)\s*(mil|k\b)", t)
+    if m:
+        return int(float(m.group(1)) * 1_000)
+    m = re.search(r"(\d{5,})", t)  # un número ya completo, ej. "1200000"
+    if m:
+        return int(m.group(1))
+    return None
 
 
 # =============================================================================
-# Helpers de Supabase (REST, con tu mismo patrón de headers)
+# Helpers de Supabase (REST) — con reintento ante timeout/5xx, igual patrón
+# probado que el resto del backend, pero self-contained en este archivo.
 # =============================================================================
 def _sb_headers() -> dict:
     return {"apikey": SUPABASE_SERVICE_KEY,
@@ -113,30 +235,18 @@ def _sb_headers() -> dict:
             "Content-Type": "application/json"}
 
 
-# Estos tres helpers son la única puerta a Supabase desde el webhook. Antes se
-# tragaban cualquier error (timeout, 5xx, saturación de IOPS del Micro) y
-# regresaban [] sin avisar: un mensaje que no se guardaba se volvía invisible en
-# la bandeja aunque el lead sí lo hubiera mandado. Ahora:
-#   - Reintentan UNA vez ante timeout/red/5xx. Es seguro: cada tabla de WhatsApp
-#     tiene llave única (wa_message_id, unique(user_id,wa_id), unique(contact_id)),
-#     así que un reintento tras un timeout que sí escribió choca en 409 y no
-#     duplica; quien llama relee la fila ya creada.
-#   - Loguean el motivo real cuando algo se pierde, para poder verlo en Railway.
-#   - Siempre devuelven LISTA (nunca el dict de error de PostgREST), para que los
-#     `x[0] if x else ...` de arriba no truenen con un KeyError.
 async def sb_get(table: str, params: dict) -> list:
     ultimo = ""
     for intento in (1, 2):
         try:
             async with httpx.AsyncClient(timeout=15) as c:
-                r = await c.get(f"{SUPABASE_URL}/rest/v1/{table}",
-                                headers=_sb_headers(), params=params)
+                r = await c.get(f"{SUPABASE_URL}/rest/v1/{table}", headers=_sb_headers(), params=params)
             if r.status_code < 300:
                 data = r.json()
                 return data if isinstance(data, list) else ([data] if data else [])
             ultimo = f"{r.status_code}: {r.text[:300]}"
             if r.status_code < 500:
-                break  # un 4xx no se arregla reintentando
+                break
         except Exception as e:
             ultimo = str(e)
     log.error("sb_get %s falló -> %s", table, ultimo)
@@ -156,11 +266,8 @@ async def sb_post(table: str, body: dict, prefer: str = "return=representation")
                 except Exception:
                     data = []
                 return data if isinstance(data, list) else ([data] if data else [])
-            # 409 = ya existe una fila con esa llave única. Es una carrera de dos
-            # webhooks del mismo lead nuevo, o un reintento tras un timeout que sí
-            # guardó. No es error que reintentar: quien llama va a releer.
             if r.status_code == 409:
-                log.info("sb_post %s: la fila ya existe (409); quien llama la releerá.", table)
+                log.info("sb_post %s: la fila ya existe (409).", table)
                 return []
             ultimo = f"{r.status_code}: {r.text[:300]}"
             if r.status_code < 500:
@@ -177,8 +284,7 @@ async def sb_patch(table: str, params: dict, body: dict) -> list:
         try:
             async with httpx.AsyncClient(timeout=15) as c:
                 h = _sb_headers(); h["Prefer"] = "return=representation"
-                r = await c.patch(f"{SUPABASE_URL}/rest/v1/{table}",
-                                  headers=h, params=params, json=body)
+                r = await c.patch(f"{SUPABASE_URL}/rest/v1/{table}", headers=h, params=params, json=body)
             if r.status_code < 300:
                 try:
                     data = r.json()
@@ -194,7 +300,16 @@ async def sb_patch(table: str, params: dict, body: dict) -> list:
     return []
 
 
-# Igual que tu helper en main.py: saca el user_id del token de Supabase
+async def sb_delete(table: str, params: dict) -> bool:
+    try:
+        async with httpx.AsyncClient(timeout=15) as c:
+            r = await c.delete(f"{SUPABASE_URL}/rest/v1/{table}", headers=_sb_headers(), params=params)
+        return r.status_code < 300
+    except Exception as e:
+        log.error("sb_delete %s falló -> %s", table, e)
+        return False
+
+
 async def get_user_id_from_token(request: Request) -> str | None:
     auth = request.headers.get("Authorization", "")
     if not auth.startswith("Bearer "):
@@ -213,1434 +328,75 @@ async def get_user_id_from_token(request: Request) -> str | None:
     return None
 
 
-# =============================================================================
-# 1) WEBHOOK
-# =============================================================================
-@router.get("/webhook")
-def verify_webhook(request: Request):
-    p = request.query_params
-    if p.get("hub.mode") == "subscribe" and p.get("hub.verify_token") == WA_VERIFY_TOKEN:
-        return Response(content=p.get("hub.challenge", ""), media_type="text/plain")
-    return Response(content="forbidden", status_code=403)
-
-
-@router.post("/webhook")
-async def receive_webhook(request: Request, background: BackgroundTasks):
-    raw = await request.body()
-
-    if WA_APP_SECRET:
-        import hmac, hashlib
-        sig = request.headers.get("X-Hub-Signature-256", "")
-        expected = "sha256=" + hmac.new(WA_APP_SECRET.encode(), raw, hashlib.sha256).hexdigest()
-        if not hmac.compare_digest(sig, expected):
-            log.warning("Firma de webhook inválida")
-            return Response(status_code=403)
-
-    try:
-        payload = json.loads(raw)
-    except Exception:
-        return Response(status_code=200)
-
-    # ── GUARDAR PRIMERO, CONTESTAR DESPUÉS ──────────────────────────────────
-    # Antes se contestaba 200 de inmediato y se guardaba atrás. Si Supabase
-    # estaba saturado en ese instante, el mensaje se perdía y Meta —que ya había
-    # recibido su 200— NUNCA lo reintentaba. Ahora persistimos lo entrante de
-    # forma síncrona: si algo crítico falla, devolvemos 5xx y Meta reintenta el
-    # aviso completo (los ya guardados se deduplican por wa_message_id, así que
-    # reintentar no duplica). Solo cuando el mensaje está a salvo contestamos 200
-    # y dejamos lo lento (IA, avisos, echoes) para segundo plano.
-    try:
-        ok, trabajo = await persistir_entrantes(payload)
-    except Exception as e:
-        log.exception("persistir_entrantes reventó, pido reintento a Meta: %s", e)
-        return Response(status_code=503)
-    if not ok:
-        return Response(status_code=503)
-
-    if trabajo:
-        background.add_task(procesar_ia, trabajo)     # respuesta de Recepción a lo NUEVO
-    background.add_task(process_payload, payload)      # echoes del agente / sync de historial
-    return Response(status_code=200)
-
-
-# =============================================================================
-# 2) PROCESAMIENTO
-# =============================================================================
-async def process_payload(payload: dict):
-    """Fase de COEXISTENCE, en segundo plano: echoes del agente (cuando escribe
-    desde la app de WhatsApp en su propio celular) y sync de historial. Los
-    mensajes ENTRANTES del prospecto NO se procesan aquí: ya los guardó
-    persistir_entrantes antes del 200, y su respuesta la maneja procesar_ia."""
-    try:
-        for entry in payload.get("entry", []):
-            for change in entry.get("changes", []):
-                field = change.get("field")
-                value = change.get("value", {})
-                if field == "smb_message_echoes":
-                    await process_echo(value)              # COEXISTENCE: el agente desde su celular
-                elif field in ("history", "smb_app_state_sync"):
-                    log.info("Coexistence sync '%s' recibido.", field)  # opcional: precargar historial
-    except Exception as e:
-        log.exception("Error procesando echoes/sync: %s", e)
-
-
-async def persistir_entrantes(payload: dict):
-    """Fase RÁPIDA y SÍNCRONA: guarda los mensajes ENTRANTES del prospecto ANTES
-    de que el webhook conteste 200 a Meta. Devuelve (ok, trabajo).
-
-      ok=False  -> algún guardado crítico falló (contacto/conversación/mensaje).
-                   El webhook responde 5xx y Meta REINTENTA el aviso completo;
-                   los que ya se guardaron se deduplican por wa_message_id, así
-                   que reintentar no duplica. Es lo que evita perder mensajes en
-                   un pico de saturación de Supabase.
-      trabajo   -> lista de mensajes NUEVOS para que procesar_ia los conteste
-                   atrás. Un mensaje ya visto (already_processed) NO entra: así un
-                   reintento de Meta no dispara una segunda respuesta de Recepción.
-
-    Aquí solo van escrituras rápidas (guardar el mensaje y subir el no-leído). La
-    IA, los avisos y las acciones —lo lento— quedan para procesar_ia, después del
-    200, para no arriesgar el timeout de Meta."""
-    trabajo = []
-    for entry in payload.get("entry", []):
-        for change in entry.get("changes", []):
-            if change.get("field") != "messages":
-                continue
-            value = change.get("value", {})
-            metadata = value.get("metadata", {})
-            phone_number_id = metadata.get("phone_number_id")
-            numero = await resolve_number(phone_number_id)
-            if not numero:
-                # No es un fallo re-intentable: el número no está registrado y
-                # reintentar no lo arregla. Se ignora este change y se sigue.
-                log.warning("Número no registrado en wa_numbers: %s — ignorado", phone_number_id)
-                continue
-
-            user_id = numero["user_id"]
-            token   = numero.get("access_token")
-            # ── EL INTERRUPTOR MAESTRO ──────────────────────────────────────
-            # RESPONDE <=> ia_global AND conv.ai_enabled. ia_global es el switch
-            # del módulo; conv.ai_enabled es si el agente ya tomó ESE chat. Aquí
-            # solo se usa para nacer bien la conversación (ai_enabled inicial); la
-            # decisión de contestar la vuelve a tomar procesar_ia.
-            ia_global = numero.get("ia_enabled", True) is not False
-
-            contacts = value.get("contacts", [])
-            profile_name = contacts[0].get("profile", {}).get("name") if contacts else None
-
-            for msg in value.get("messages", []):
-                wamid = msg.get("id")
-                if not wamid or await already_processed(wamid):
-                    continue  # sin id o ya guardado: nada que hacer (ni re-responder)
-
-                from_wa  = msg.get("from")
-                referral = msg.get("referral")
-                is_text  = msg.get("type") == "text"
-                body = msg.get("text", {}).get("body", "").strip() if is_text else f"[{msg.get('type')}]"
-
-                contact = await upsert_contact(user_id, from_wa, profile_name)
-                conv = await get_or_create_conversation(user_id, contact, referral,
-                                                        phone_number_id, ia_global)
-                if not contact.get("id") or not conv.get("id"):
-                    # No se pudo asegurar contacto/conversación. No guardamos a
-                    # medias: pedimos reintento para no perder el mensaje.
-                    log.error("persistir_entrantes: contacto/conv nulos para %s (user %s); pido reintento",
-                              from_wa, user_id)
-                    return (False, [])
-
-                guardado = await store_message(user_id, contact["id"], conv["id"], wamid,
-                                               "in", "lead", body, created_at=_wa_ts(msg))
-                if not guardado:
-                    log.error("persistir_entrantes: no se pudo guardar wamid=%s; pido reintento", wamid)
-                    return (False, [])
-
-                await sumar_no_leido(conv["id"])
-
-                trabajo.append({
-                    "user_id": user_id, "phone_number_id": phone_number_id, "token": token,
-                    "ia_global": ia_global, "waba_name": numero.get("waba_name"),
-                    "contact": contact, "conv": conv, "from_wa": from_wa,
-                    "body": body, "wamid": wamid, "is_text": is_text,
-                    "msg_type": msg.get("type"),
-                })
-    return (True, trabajo)
-
-
-async def procesar_ia(trabajo: list):
-    """Fase LENTA, en segundo plano (Meta ya recibió su 200): aviso al agente,
-    respuesta de Recepción y acciones. Cada mensaje va AISLADO: si uno truena, los
-    demás del mismo lote siguen. El mensaje del prospecto ya quedó guardado en
-    persistir_entrantes, así que un error aquí nunca borra el chat."""
-    cache_entren: dict = {}
-    for item in trabajo:
-        try:
-            await _ia_de_un_mensaje(item, cache_entren)
-        except Exception as e:
-            log.exception("Recepción falló con un mensaje (chat=%s): %s",
-                          (item.get("conv") or {}).get("id"), e)
-
-
-async def _ia_de_un_mensaje(item: dict, cache_entren: dict):
-    user_id         = item["user_id"]
-    phone_number_id = item["phone_number_id"]
-    token           = item["token"]
-    ia_global       = item["ia_global"]
-    contact         = item["contact"]
-    conv            = item["conv"]
-    from_wa         = item["from_wa"]
-    body            = item["body"]
-    wamid           = item["wamid"]
-
-    # Aviso al agente (best-effort; trae su propio try adentro).
-    if item["is_text"]:
-        await avisar_al_agente(user_id, contact, conv["id"], body)
-    else:
-        await avisar_al_agente(user_id, contact, conv["id"],
-                               f"Te mandó un {item['msg_type']} por WhatsApp.")
-
-    if user_id not in cache_entren:
-        cache_entren[user_id] = await entrenamiento(user_id)
-    entren = cache_entren[user_id]
-
-    # No-texto (imagen, audio, etc.): solo cortesía si la IA puede hablar, y salir.
-    if not item["is_text"]:
-        if ia_global and conv.get("ai_enabled", True) and _ia_puede_hablar(entren)[0]:
-            await wa_send_text(phone_number_id, from_wa,
-                               "Gracias por tu mensaje. Por aquí te leo mejor en texto, "
-                               "¿me cuentas qué estás buscando?", token=token)
-        return
-
-    if not ia_global:
-        return  # el agente apagó Recepción para todo
-    if not conv.get("ai_enabled", True):
-        return  # el agente tomó el control de este chat
-
-    # ── BARRERAS DURAS (entrenamiento) ─────────────────────────────────────
-    # Van en código, no en el prompt: un modelo se puede saltar una instrucción,
-    # un if no. Cualquiera de estas apaga la IA o la calla.
-
-    # 1) Palabra que escala al humano
-    palabra = _palabra_que_escala(body, entren)
-    if palabra:
-        await sb_patch("wa_conversations", {"id": f"eq.{conv['id']}"},
-                       {"ai_enabled": False, "updated_at": _now()})
-        await avisar_al_agente(user_id, contact, conv["id"],
-                               f"Recepción se apagó en este chat: el prospecto mencionó "
-                               f"'{palabra}'. Te toca a ti.")
-        log.info("Escalado a humano por palabra '%s' (conv=%s)", palabra, conv["id"])
-        return
-
-    # 2) Tope de mensajes de la IA en esta conversación
-    tope = int(entren.get("max_mensajes_ia") or 0)
-    if tope > 0 and int(conv.get("ai_msg_count") or 0) >= tope:
-        await sb_patch("wa_conversations", {"id": f"eq.{conv['id']}"},
-                       {"ai_enabled": False, "updated_at": _now()})
-        await avisar_al_agente(user_id, contact, conv["id"],
-                               f"Recepción ya mandó {tope} mensajes en este chat y se apagó. "
-                               "Te toca a ti.")
-        return
-
-    # 3) Entrenamiento pausado u horario de atención
-    puede, msg_fuera = _ia_puede_hablar(entren)
-    if not puede:
-        if msg_fuera:
-            sent = await wa_send_text(phone_number_id, from_wa, msg_fuera, token=token)
-            if sent["ok"]:
-                await store_message(user_id, contact["id"], conv["id"],
-                                    sent["message_id"] or f"local-{wamid}",
-                                    "out", "ai", msg_fuera, status="sent")
-        return
-
-    history = await fetch_history(conv["id"])
-    agente  = await perfil_agente(user_id, item.get("waba_name"))
-    result  = await recepcion_responde(history, conv.get("property_ctx"), agente, entren)
-    reply   = (result or {}).get("reply")
-
-    # anti-choque: si el agente contestó desde su cel mientras tanto, la IA ya no manda
-    if reply and await ai_sigue_encendida(conv["id"], user_id):
-        sent = await wa_send_text(phone_number_id, from_wa, reply, token=token)
-        # Se guarda igual aunque falle —el agente tiene que ver que Recepción
-        # intentó contestar— pero marcado como failed, no como entregado.
-        await store_message(user_id, contact["id"], conv["id"],
-                            sent["message_id"] or f"local-{wamid}",
-                            "out", "ai", reply,
-                            status="sent" if sent["ok"] else "failed")
-        if sent["ok"]:
-            await sumar_msg_ia(conv["id"], conv.get("ai_msg_count"))
-
-            # Acciones grandes que pidió la IA. Solo si el aviso salió y la IA
-            # sigue encendida: no le mandamos inmuebles ni citas a un chat que
-            # el agente acaba de tomar.
-            accion = (result or {}).get("accion")
-            if isinstance(accion, dict):
-                tipo = accion.get("tipo")
-                if tipo == "enviar_inmuebles":
-                    try:
-                        n = await _enviar_inmuebles(user_id, phone_number_id, from_wa,
-                                                    accion.get("filtros") or {}, contact,
-                                                    conv["id"], token, agente.get("nombre"))
-                        log.info("Recepción envió %s inmueble(s) a %s", n, from_wa)
-                    except Exception as e:
-                        log.exception("Falló enviar inmuebles a %s: %s", from_wa, e)
-                elif tipo == "agendar_visita":
-                    try:
-                        ok = await _accion_agendar_visita(user_id, phone_number_id, from_wa,
-                                                          accion, contact, conv["id"], token,
-                                                          agente.get("nombre"))
-                        log.info("Recepción agendó cita=%s con %s", ok, from_wa)
-                    except Exception as e:
-                        log.exception("Falló agendar visita con %s: %s", from_wa, e)
-        else:
-            log.error("Recepción no pudo responder a %s: %s", from_wa, sent["error"])
-
-    await actualizar_calificacion(contact["id"], result)
-
-
-async def process_echo(value: dict):
-    """COEXISTENCE: el agente respondió desde la app de WhatsApp en su celular.
-    Lo guardamos como mensaje del agente y APAGAMOS la IA en esa conversación.
-    (La estructura del echo puede variar; se lee defensivo y se loguea el crudo.)"""
-    metadata = value.get("metadata", {})
-    phone_number_id = metadata.get("phone_number_id")
-    user_id = await resolve_user(phone_number_id)
-    if not user_id:
-        return
-
-    echoes = value.get("message_echoes") or value.get("messages") or []
-    if not echoes:
-        log.info("Echo sin mensajes (revisar estructura): %s", json.dumps(value)[:600])
-        return
-
-    for echo in echoes:
-        wamid = echo.get("id")
-        to_wa = echo.get("to") or echo.get("recipient_id")
-        if not to_wa or (wamid and await already_processed(wamid)):
-            continue
-        body = echo.get("text", {}).get("body", "") if echo.get("type") == "text" else f"[{echo.get('type','mensaje')}]"
-
-        contact = await upsert_contact(user_id, to_wa, None)
-        # ia_global=False a propósito: si el agente está escribiendo desde su
-        # celular, esta conversación no debe nacer con la IA encendida ni un
-        # segundo. El patch de abajo la apagaría igual, pero no antes de que un
-        # webhook simultáneo pudiera leerla en True.
-        conv = await get_or_create_conversation(user_id, contact, None, phone_number_id, False)
-        await store_message(user_id, contact["id"], conv["id"], wamid or f"echo-{to_wa}", "out", "agent", body,
-                            created_at=_wa_ts(echo))
-        # Si contestó desde su propio WhatsApp, ya lo leyó: el globito se baja.
-        await sb_patch("wa_conversations", {"id": f"eq.{conv['id']}"},
-                       {"ai_enabled": False, "unread_count": 0})
-
-
-# =============================================================================
-# 3) ENTRENAMIENTO  ->  lo que el agente decide que la IA puede, debe y no debe
-# =============================================================================
-# Dos capas, a propósito:
-#   - SUAVE: 'puede', 'debe', 'no_debe', tono y saludo. Van al system prompt.
-#     Es lenguaje natural porque el modelo entiende lenguaje natural; obligar al
-#     agente a dibujar un diagrama de nodos para decir "nunca des el precio
-#     final" sería regalarle trabajo de programador sin darle poder.
-#   - DURA: horario, tope de mensajes y palabras que escalan. Van en código.
-#     Estas NO pueden vivir en el prompt: son promesas que el agente le hace a
-#     su cliente y un modelo se las puede saltar. Un if no.
-# =============================================================================
-TRAINING_DEFAULTS = {
-    "tono": "", "primer_mensaje": "", "puede": "", "debe": "", "no_debe": "",
-    "horario_activo": False, "hora_inicio": "08:00", "hora_fin": "21:00",
-    "fuera_horario_msg": "", "max_mensajes_ia": 0, "escalar_palabras": [],
-    "activo": True,
-    # Capa nueva: lo que hace a Recepción sonar como quien conoce el negocio y
-    # calificar con criterio del asesor, no genérico. Todo opcional.
-    "especialidad": "", "objetivo": "",
-    "datos_calificar": [], "preguntas_extra": [], "faq": [],
-}
-
-
-async def entrenamiento(user_id: str) -> dict:
-    """Reglas del agente. Si no configuró nada, defaults: Recepción se comporta
-    igual que antes de que existiera este módulo. Nunca revienta el webhook."""
-    try:
-        rows = await sb_get("wa_training", {"user_id": f"eq.{user_id}",
-                                            "select": "*", "limit": "1"})
-    except Exception as e:
-        log.warning("No se pudo leer wa_training de %s: %s", user_id, e)
-        rows = []
-    d = dict(TRAINING_DEFAULTS)
-    if rows:
-        for k, v in rows[0].items():
-            if k in d and v is not None:
-                d[k] = v
-    return d
-
-
-def _ia_puede_hablar(entren: dict) -> tuple:
-    """(puede_hablar, mensaje_de_fuera_de_horario_o_None).
-    Si está fuera de horario y el agente no escribió un mensaje de cortesía,
-    Recepción simplemente se calla: mejor silencio que un aviso que él no eligió.
-    El mensaje del lead ya quedó guardado y notificado en cualquier caso."""
-    if not entren.get("activo", True):
-        return (False, None)
-    if not entren.get("horario_activo"):
-        return (True, None)
-
-    ahora = _hora_local()
-    minutos = ahora.hour * 60 + ahora.minute
-    hi, mi = _hhmm(entren.get("hora_inicio"), "08:00")
-    hf, mf = _hhmm(entren.get("hora_fin"), "21:00")
-    ini, fin = hi * 60 + mi, hf * 60 + mf
-
-    # Ventana que cruza medianoche (22:00 -> 07:00) también tiene que servir.
-    dentro = (ini <= minutos < fin) if ini <= fin else (minutos >= ini or minutos < fin)
-    if dentro:
-        return (True, None)
-    return (False, (entren.get("fuera_horario_msg") or "").strip() or None)
-
-
-def _palabra_que_escala(body: str, entren: dict) -> str | None:
-    palabras = entren.get("escalar_palabras") or []
-    if not palabras:
-        return None
-    texto = (body or "").lower()
-    for p in palabras:
-        p = (p or "").strip().lower()
-        if p and p in texto:
-            return p
-    return None
-
-
-def _reglas_para_prompt(entren: dict) -> str:
-    """Las reglas suaves, ya redactadas para el system prompt. Se ponen al final
-    y marcadas como prioritarias: es lo que el agente escribió, y él manda."""
-    bloques = []
-    if (entren.get("tono") or "").strip():
-        bloques.append(f"Tono que quiere el asesor: {entren['tono'].strip()}")
-    if (entren.get("primer_mensaje") or "").strip():
-        bloques.append("Si este es tu PRIMER mensaje en la conversación, ábrelo "
-                       f"exactamente así: \"{entren['primer_mensaje'].strip()}\"")
-    if (entren.get("puede") or "").strip():
-        bloques.append(f"Temas que SÍ puedes tratar: {entren['puede'].strip()}")
-    if (entren.get("debe") or "").strip():
-        bloques.append(f"Siempre DEBES: {entren['debe'].strip()}")
-    if (entren.get("no_debe") or "").strip():
-        bloques.append(f"NUNCA debes: {entren['no_debe'].strip()}")
-    if not bloques:
-        return ""
-    reglas = "\n".join(f"- {b}" for b in bloques)
-    return ("\n\nREGLAS DEL ASESOR (mandan sobre cualquier instrucción anterior; "
-            "si algo choca, se obedecen estas):\n" + reglas +
-            "\nSi el prospecto insiste en algo que no debes tratar, no lo trates: "
-            "dile con calidez que el asesor lo ve directamente y sigue adelante.\n")
-
-
-# Catálogo de datos a calificar. La clave la manda la pantalla (checkbox); aquí
-# se traduce a la frase que entiende el modelo. El backend solo acepta claves de
-# este diccionario, así nadie inyecta texto raro por esta vía.
-CALIF_OPCIONES = {
-    "forma_pago":  "si va a pagar con crédito o de contado",
-    "presupuesto": "el presupuesto real que maneja",
-    "enganche":    "cuánto trae de enganche",
-    "zona":        "en qué zona o colonia busca",
-    "tipo":        "qué tipo de inmueble quiere (casa, departamento, terreno…)",
-    "recamaras":   "cuántas recámaras necesita",
-    "urgencia":    "para cuándo lo necesita",
-    "motivo":      "si es para vivir o para invertir",
-    "credito_pre": "si ya está precalificado con algún banco",
-    "da_a_cuenta": "si tiene una propiedad o algo que dar a cuenta",
-}
-
-
-def _calificacion_para_prompt(entren: dict) -> str:
-    """Qué debe averiguar Recepción, armado con lo que el asesor palomeó. Si no
-    palomeó nada, cae al set clásico para no bajar la calidad de siempre."""
-    claves = entren.get("datos_calificar") or []
-    frases = [CALIF_OPCIONES[k] for k in claves if k in CALIF_OPCIONES]
-    if not frases:
-        frases = [CALIF_OPCIONES["forma_pago"], CALIF_OPCIONES["presupuesto"],
-                  CALIF_OPCIONES["urgencia"], "qué está buscando"]
-    return "; ".join(frases)
-
-
-def _saber_del_negocio(entren: dict) -> str:
-    """Lo que hace a Recepción sonar como alguien que conoce el negocio:
-    especialidad, meta de la plática, preguntas propias del asesor y su base de
-    respuestas frecuentes. Todo opcional; lo vacío no aparece en el prompt."""
-    bloques = []
-    if (entren.get("especialidad") or "").strip():
-        bloques.append(f"A qué se dedica el asesor: {entren['especialidad'].strip()}")
-    if (entren.get("objetivo") or "").strip():
-        bloques.append(f"Tu meta en cada plática: {entren['objetivo'].strip()}. "
-                       "Llévala hacia ahí de forma natural, sin presionar.")
-    extra = [(p or "").strip() for p in (entren.get("preguntas_extra") or []) if (p or "").strip()]
-    if extra:
-        lista = " ".join(f"«{p}»" for p in extra)
-        bloques.append("Además de lo estándar, en algún momento natural pregunta: " + lista)
-    pares = []
-    for item in (entren.get("faq") or []):
-        if isinstance(item, dict):
-            q = (item.get("q") or "").strip()
-            a = (item.get("a") or "").strip()
-            if q and a:
-                pares.append(f"  · Si preguntan algo como «{q}», contesta: {a}")
-    if pares:
-        bloques.append("Respuestas que el asesor ya te dio y debes usar tal cual "
-                       "(no las inventes ni las cambies):\n" + "\n".join(pares))
-    if not bloques:
-        return ""
-    reglas = "\n".join(f"- {b}" for b in bloques)
-    return "\n\nLO QUE SABES DEL NEGOCIO:\n" + reglas + "\n"
-
-
-# =============================================================================
-# 4) RECEPCIÓN (la IA)  ->  Anthropic, responde y califica de una
-# =============================================================================
-async def perfil_agente(user_id: str, waba_name: str | None = None) -> dict:
-    """Cómo se presenta la IA ante el prospecto. Cadena de respaldo:
-        1. usuarios.nombre_publico  — lo que el agente configuró en Mi Sitio
-        2. waba_name                — el nombre de SU cuenta de WhatsApp Business
-        3. genérico neutro          — nunca el nombre de otra inmobiliaria
-
-    El default global NO puede ser una empresa real: un agente sin perfil
-    terminaba presentándose como Grupo Navarro ante sus propios prospectos.
-    Un respaldo que se confunde con un valor legítimo además hace imposible
-    detectar en logs quién no ha llenado su perfil."""
-    nombre = ""
-    zona   = ""
-    try:
-        rows = await sb_get("usuarios", {
-            "id": f"eq.{user_id}",
-            "select": "nombre_publico,zona_cobertura",
-            "limit": "1",
-        })
-        if rows:
-            nombre = (rows[0].get("nombre_publico") or "").strip()
-            zona   = (rows[0].get("zona_cobertura") or "").strip()
-    except Exception as e:
-        log.warning("No se pudo leer el perfil de %s: %s", user_id, e)
-
-    if not nombre:
-        nombre = (waba_name or "").strip()
-    if not nombre:
-        nombre = "tu asesor inmobiliario"
-        log.info("Usuario %s sin nombre_publico ni waba_name — la IA usa genérico", user_id)
-
-    return {"nombre": nombre, "zona": zona}
-
-
-async def recepcion_responde(history: list, property_ctx: str | None,
-                             agente: dict | None = None,
-                             entren: dict | None = None) -> dict:
-    agente = agente or {"nombre": "tu asesor inmobiliario", "zona": ""}
-    entren = entren or dict(TRAINING_DEFAULTS)
-    quien  = agente["nombre"]
-    zona   = agente.get("zona") or ""
-    ubica  = f" en {zona}" if zona else ""
-    hoy    = _fmt_fecha_larga(_hora_local())
-
-    contexto = property_ctx or (
-        f"Atiendes prospectos de {quien}, asesor inmobiliario{ubica}. "
-        "Si no sabes por qué propiedad escribe, pregúntale qué busca."
-    )
-    system = (
-        f"Eres 'Recepción', el asistente de WhatsApp de {quien}, asesor inmobiliario{ubica}. "
-        "Atiendes a un prospecto que escribió por un anuncio. Califícalo con calidez y rapidez, sin sonar "
-        f"a robot ni a interrogatorio: averigua {_calificacion_para_prompt(entren)}; cuando haga sentido, "
-        "ofrece agendar una visita con día y hora. Español "
-        "mexicano, cálido y profesional, mensajes cortos de WhatsApp, sin emojis. "
-        f"Hoy es {hoy}, úsalo para entender cuándo dice 'mañana', 'el sábado', etc.\n\n"
-        f"Contexto: {contexto}\n"
-        f"{_saber_del_negocio(entren)}"
-        f"{_reglas_para_prompt(entren)}\n"
-        "Cuando el prospecto pida ver opciones, o cuando ya sepas lo suficiente para mostrarle "
-        "propiedades, NO inventes inmuebles ni des direcciones exactas: en 'accion' pide enviarle "
-        "opciones con los filtros que tengas (los que no sepas, déjalos en null) y el sistema le manda "
-        "propiedades REALES del catálogo del asesor. En 'reply' avísale en una línea que se las vas a "
-        "compartir. Usa esto solo cuando de verdad toque mostrar propiedades; si sigues calificando, "
-        "deja 'accion' en null.\n"
-        "Cuando el prospecto acepte un día y una hora concretos para la visita, ponlo en 'accion' como "
-        "agendar_visita con la fecha (YYYY-MM-DD) y la hora (HH:MM en 24h); el sistema le manda la "
-        "invitación al calendario y le avisa al asesor. Si aún no hay día y hora firmes, no lo pongas.\n"
-        "Responde ÚNICAMENTE con un JSON válido, sin texto antes ni después, así:\n"
-        '{"reply":"el mensaje para el prospecto","temperatura":"Caliente|Tibio|Frío",'
-        '"score":0-100,"presupuesto":"texto o null","forma_pago":"crédito|contado|por definir",'
-        '"busca":"1 frase o null","listo_para_visita":true,"resumen":"1 frase para el agente",'
-        '"accion":null}\n'
-        "El campo 'accion' es null casi siempre. Cuando toque mostrar propiedades: "
-        '{"tipo":"enviar_inmuebles","filtros":{"operacion":"venta|renta|null",'
-        '"tipo":"casa|departamento|terreno u otro texto, o null","zona":"colonia o ciudad, o null",'
-        '"precio_max":numero o null,"recamaras":numero o null}}. '
-        "Cuando el prospecto ya aceptó día y hora: "
-        '{"tipo":"agendar_visita","fecha":"YYYY-MM-DD","hora":"HH:MM","inmueble":"texto o null"}'
-    )
-
-    # Anthropic exige que el hilo empiece en 'user': quitamos assistants iniciales
-    msgs = list(history)
-    while msgs and msgs[0]["role"] != "user":
-        msgs.pop(0)
-    if not msgs:
-        msgs = [{"role": "user", "content": "Hola"}]
-
-    try:
-        async with httpx.AsyncClient(timeout=40) as c:
-            r = await c.post(
-                f"{ANTHROPIC_BASE}/messages",
-                headers={"x-api-key": ANTHROPIC_API_KEY,
-                         "anthropic-version": "2023-06-01",
-                         "Content-Type": "application/json"},
-                json={"model": RECEPCION_MODEL, "max_tokens": 600, "system": system, "messages": msgs},
-            )
-            data = r.json()
-            text = "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text").strip()
-            if not text:
-                log.error("Anthropic sin texto (status %s): %s", r.status_code, json.dumps(data)[:500])
-                raise ValueError("respuesta vacia de Anthropic")
-            t = text.replace("```json", "").replace("```", "").strip()
-            s, e = t.find("{"), t.rfind("}")           # extrae el JSON aunque venga con texto alrededor
-            if s != -1 and e != -1:
-                t = t[s:e + 1]
-            return json.loads(t)
-    except Exception as e:
-        log.exception("Error en Recepción (Anthropic): %s", e)
-        return {"reply": "¡Hola! Gracias por escribir. ¿Me cuentas qué estás buscando y para cuándo, "
-                         "y con gusto te ayudo?",
-                "temperatura": "Tibio", "score": 50, "presupuesto": None,
-                "forma_pago": "por definir", "busca": None,
-                "listo_para_visita": False, "resumen": "Prospecto nuevo, sin calificar aún."}
-
-
-# =============================================================================
-# 4) ENVÍO POR WHATSAPP (Cloud API)
-# =============================================================================
-def _normaliza_mx(num: str) -> str:
-    """México: el wa_id que manda WhatsApp a veces trae un '1' extra después del 52
-    (52 1 XXXXXXXXXX = 13 dígitos). Para ENVIAR hay que usar 52 + 10 dígitos, sin ese 1.
-    Si no, Meta lo trata como número distinto (y en la sandbox, 'no autorizado')."""
-    n = "".join(ch for ch in str(num) if ch.isdigit())
-    if n.startswith("521") and len(n) == 13:
-        n = "52" + n[3:]
-    return n
-
-
-async def wa_send_text(phone_number_id: str, to: str, body: str,
-                       token: str | None = None) -> dict:
-    """Envía y REPORTA si se pudo. Devuelve siempre la misma forma:
-        {"ok": bool, "message_id": str|None, "error": str|None, "code": int|None}
-
-    Antes devolvía el JSON crudo de Meta y quien llamaba deducía el éxito de si
-    venía o no un id. Un rechazo (p. ej. #131037, nombre visible sin aprobar)
-    era indistinguible de un envío bueno, así que la bandeja guardaba mensajes
-    que jamás salieron y /send contestaba 200 OK. Nunca más."""
-    if not token:
-        row = await resolve_number(phone_number_id)
-        token = (row or {}).get("access_token") or WHATSAPP_TOKEN
-    if not token:
-        log.error("Sin token para phone_number_id=%s — no se envía", phone_number_id)
-        return {"ok": False, "message_id": None, "code": None,
-                "error": "No hay token de acceso para este número."}
-
-    to = _normaliza_mx(to)
-    url = f"{GRAPH_API}/{phone_number_id}/messages"
-    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
-    data = {"messaging_product": "whatsapp", "to": to, "type": "text", "text": {"body": body}}
-    try:
-        async with httpx.AsyncClient(timeout=20) as c:
-            r = await c.post(url, headers=headers, json=data)
-            payload = r.json() if r.content else {}
-
-            if r.status_code >= 400:
-                err  = (payload.get("error") or {})
-                code = err.get("code")
-                msg  = err.get("message") or r.text[:200]
-                log.error("WhatsApp send error %s (code=%s) a %s: %s",
-                          r.status_code, code, to, msg)
-                return {"ok": False, "message_id": None, "code": code,
-                        "error": _error_legible(code, msg)}
-
-            mid = (payload.get("messages") or [{}])[0].get("id")
-            if not mid:
-                log.error("Meta respondió 200 sin message id: %s", json.dumps(payload)[:300])
-                return {"ok": False, "message_id": None, "code": None,
-                        "error": "Meta aceptó la petición pero no devolvió un id de mensaje."}
-
-            log.info("WhatsApp enviado a %s (%s)", to, mid)
-            return {"ok": True, "message_id": mid, "error": None, "code": None}
-    except Exception as e:
-        log.exception("Error enviando WhatsApp a %s: %s", to, e)
-        return {"ok": False, "message_id": None, "code": None,
-                "error": "No se pudo contactar a WhatsApp. Intenta de nuevo."}
-
-
-async def wa_send_image(phone_number_id: str, to: str, image_url: str,
-                        caption: str | None = None, token: str | None = None) -> dict:
-    """Manda una imagen por su URL pública (así son las fotos del bucket) con pie
-    de foto opcional. Misma forma de retorno que wa_send_text para que quien
-    llama trate el éxito/fracaso igual."""
-    if not token:
-        row = await resolve_number(phone_number_id)
-        token = (row or {}).get("access_token") or WHATSAPP_TOKEN
-    if not token:
-        log.error("Sin token para phone_number_id=%s — no se envía imagen", phone_number_id)
-        return {"ok": False, "message_id": None, "code": None,
-                "error": "No hay token de acceso para este número."}
-
-    to = _normaliza_mx(to)
-    url = f"{GRAPH_API}/{phone_number_id}/messages"
-    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
-    img = {"link": image_url}
-    if caption:
-        img["caption"] = caption[:1024]
-    data = {"messaging_product": "whatsapp", "to": to, "type": "image", "image": img}
-    try:
-        async with httpx.AsyncClient(timeout=25) as c:
-            r = await c.post(url, headers=headers, json=data)
-            payload = r.json() if r.content else {}
-            if r.status_code >= 400:
-                err  = (payload.get("error") or {})
-                code = err.get("code")
-                msg  = err.get("message") or r.text[:200]
-                log.error("WhatsApp image error %s (code=%s) a %s: %s",
-                          r.status_code, code, to, msg)
-                return {"ok": False, "message_id": None, "code": code,
-                        "error": _error_legible(code, msg)}
-            mid = (payload.get("messages") or [{}])[0].get("id")
-            if not mid:
-                log.error("Meta 200 sin id en imagen: %s", json.dumps(payload)[:300])
-                return {"ok": False, "message_id": None, "code": None,
-                        "error": "Meta aceptó la imagen pero no devolvió un id."}
-            return {"ok": True, "message_id": mid, "error": None, "code": None}
-    except Exception as e:
-        log.exception("Error enviando imagen a %s: %s", to, e)
-        return {"ok": False, "message_id": None, "code": None,
-                "error": "No se pudo contactar a WhatsApp."}
-
-
-# =============================================================================
-# 4b) ACCIONES DE RECEPCIÓN  ->  cosas grandes que la IA puede pedir hacer
-# =============================================================================
-# La IA NO inventa inmuebles ni los saca de la nada: en su JSON pide una acción y
-# el backend la ejecuta contra Supabase con datos REALES. Mismo principio que
-# Broq: nunca afirmar inventario sin confirmarlo en la base.
-def _money_mx(v) -> str:
-    try:
-        return "$" + f"{float(v):,.0f}"
-    except Exception:
-        return str(v or "")
-
-
-# Estatus que NO se le mandan a un prospecto (ya no están disponibles).
-_ESTATUS_FUERA = {"vendido", "vendida", "rentado", "rentada", "baja",
-                  "inactivo", "inactiva", "no disponible", "cerrado", "pausado"}
-
-
-async def _buscar_inmuebles_para_enviar(user_id: str, filtros: dict) -> list:
-    """Hasta 3 propiedades reales del asesor que encajen con lo que pidió el
-    prospecto. Si un filtro no viene, no se aplica. Se descartan las que ya no
-    están disponibles. Devuelve [] solo si de verdad no hay coincidencias."""
-    sel = ("id,titulo,tipo,operacion,precio,moneda,colonia,ciudad,calle,"
-           "recamaras,banos,estacionamientos,m2_construccion,m2_terreno,estatus,fotos")
-    params = {"user_id": f"eq.{user_id}", "select": sel,
-              "order": "updated_at.desc", "limit": "12"}
-
-    op = str(filtros.get("operacion") or "").strip().lower()
-    if op in ("venta", "renta"):
-        params["operacion"] = f"eq.{op}"
-    tipo = str(filtros.get("tipo") or "").strip().lower()
-    if tipo:
-        params["tipo"] = f"ilike.*{tipo}*"
-    zona = str(filtros.get("zona") or "").strip()
-    if zona:
-        safe = zona.replace(",", " ").replace("(", " ").replace(")", " ")
-        params["or"] = (f"(titulo.ilike.*{safe}*,colonia.ilike.*{safe}*,"
-                        f"calle.ilike.*{safe}*,ciudad.ilike.*{safe}*)")
-    pmax = filtros.get("precio_max")
-    if pmax:
-        try:
-            params["precio"] = f"lte.{int(float(pmax))}"
-        except Exception:
-            pass
-    rec = filtros.get("recamaras")
-    if rec:
-        try:
-            params["recamaras"] = f"gte.{int(rec)}"
-        except Exception:
-            pass
-
-    rows = await sb_get("propiedades", params)
-    buenas = [p for p in (rows or [])
-              if str(p.get("estatus") or "").strip().lower() not in _ESTATUS_FUERA]
-    return buenas[:3]
-
-
-def _tarjeta_inmueble(p: dict) -> str:
-    """Pie de foto corto y claro para WhatsApp. Sin direcciones exactas: colonia
-    y ciudad bastan hasta que haya cita."""
-    lineas = [p.get("titulo") or p.get("tipo") or "Propiedad"]
-    ubic = " · ".join(x for x in [p.get("colonia"), p.get("ciudad")] if x)
-    if ubic:
-        lineas.append(ubic)
-    if p.get("precio"):
-        op = f" ({p['operacion']})" if p.get("operacion") else ""
-        lineas.append(f"{_money_mx(p['precio'])} {p.get('moneda') or 'MXN'}{op}")
-    det = []
-    if p.get("recamaras"):        det.append(f"{p['recamaras']} rec")
-    if p.get("banos"):            det.append(f"{p['banos']} baños")
-    if p.get("estacionamientos"): det.append(f"{p['estacionamientos']} autos")
-    if p.get("m2_construccion"):  det.append(f"{p['m2_construccion']} m² const")
-    if det:
-        lineas.append(" · ".join(det))
-    return "\n".join(lineas)[:1024]
-
-
-async def _enviar_inmuebles(user_id, phone_number_id, to, filtros, contact,
-                            conversation_id, token, agente_nombre) -> int:
-    """Manda al prospecto hasta 3 tarjetas de inmueble (foto + datos) y las guarda
-    en el hilo como mensajes de Recepción. Si no hay coincidencias, manda un texto
-    honesto y le avisa al asesor —nunca inventa ni deja al prospecto colgado."""
-    props = await _buscar_inmuebles_para_enviar(user_id, filtros or {})
-    if not props:
-        txt = ("Justo ahora no tengo algo que encaje exacto con eso, pero deja lo "
-               f"confirmo con {agente_nombre} y te comparto opciones enseguida.")
-        sent = await wa_send_text(phone_number_id, to, txt, token=token)
-        if sent["ok"]:
-            await store_message(user_id, contact["id"], conversation_id,
-                                sent["message_id"] or f"local-noinv-{to}",
-                                "out", "ai", txt, status="sent")
-        await avisar_al_agente(user_id, contact, conversation_id,
-                               "Recepción quiso mandar inmuebles y no halló coincidencias "
-                               "con lo que pidió el prospecto. Échale un ojo al chat.")
-        return 0
-
-    enviados = 0
-    for p in props:
-        caption = _tarjeta_inmueble(p)
-        fotos = p.get("fotos") or []
-        foto = None
-        if isinstance(fotos, list):
-            foto = next((f for f in fotos if isinstance(f, str) and f.strip()), None)
-        if foto:
-            sent = await wa_send_image(phone_number_id, to, foto, caption, token=token)
-            # Si la foto no pasó (URL pesada, formato que Meta no acepta), no
-            # dejamos al prospecto sin la opción: la mandamos en texto.
-            if not sent["ok"]:
-                sent = await wa_send_text(phone_number_id, to, caption, token=token)
-        else:
-            sent = await wa_send_text(phone_number_id, to, caption, token=token)
-        if sent["ok"]:
-            enviados += 1
-            await store_message(user_id, contact["id"], conversation_id,
-                                sent["message_id"] or f"local-inm-{p.get('id')}",
-                                "out", "ai", "[Inmueble] " + caption, status="sent")
-        else:
-            log.warning("No se pudo enviar inmueble %s: %s", p.get("id"), sent.get("error"))
-    return enviados
-
-
-# URL pública del backend, para la invitación .ics que el prospecto abre desde
-# WhatsApp. Se puede sobreescribir por env si algún día cambia el dominio.
-API_PUBLIC_BASE = os.environ.get("API_PUBLIC_BASE", "https://api.broquer.app")
-
-_DIAS  = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
-_MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
-          "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
-
-
-def _fmt_fecha_larga(dt) -> str:
-    """'sábado 26 de julio, 5:00 PM' — para confirmarle al prospecto en claro."""
-    h = dt.hour % 12 or 12
-    ampm = "AM" if dt.hour < 12 else "PM"
-    return (f"{_DIAS[dt.weekday()]} {dt.day} de {_MESES[dt.month - 1]}, "
-            f"{h}:{dt.minute:02d} {ampm}")
-
-
-def _parse_cita(fecha, hora):
-    """'YYYY-MM-DD' + 'HH:MM' -> datetime con tz de México. None si no es válida
-    o si ya pasó: no agendamos en el pasado."""
-    try:
-        y, m, d = [int(x) for x in str(fecha).split("-")]
-        hh, mm = _hhmm(hora, "10:00")
-        try:
-            from zoneinfo import ZoneInfo
-            tz = ZoneInfo("America/Mexico_City")
-        except Exception:
-            tz = timezone(timedelta(hours=-6))
-        dt = datetime(y, m, d, hh, mm, tzinfo=tz)
-        if dt < datetime.now(tz) - timedelta(minutes=1):
-            return None
-        return dt
-    except Exception:
-        return None
-
-
-def _ics_de_cita(cita: dict, agente_nombre: str) -> str:
-    """Genera el .ics (VEVENT en UTC) que abre el prospecto con un toque. Sirve
-    igual en Calendario de Apple, Google Calendar y Outlook."""
-    def _z(dt_utc):
-        return dt_utc.strftime("%Y%m%dT%H%M%SZ")
-
-    starts = cita.get("starts_at")
-    if isinstance(starts, str):
-        try:
-            dt = datetime.fromisoformat(starts.replace("Z", "+00:00"))
-        except Exception:
-            dt = datetime.now(timezone.utc)
-    else:
-        dt = starts or datetime.now(timezone.utc)
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    dt_utc = dt.astimezone(timezone.utc)
-    fin_utc = dt_utc + timedelta(minutes=int(cita.get("duracion_min") or 60))
-
-    inm = (cita.get("inmueble") or "").strip()
-    titulo = f"Visita: {inm}" if inm else "Visita de propiedad"
-    desc = f"Cita agendada con {agente_nombre} por WhatsApp."
-
-    def esc(t):
-        return (str(t or "").replace("\\", "\\\\").replace(",", "\\,")
-                .replace(";", "\\;").replace("\n", "\\n"))
-
-    return "\r\n".join([
-        "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Broquer//Recepcion//ES",
-        "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "BEGIN:VEVENT",
-        f"UID:{cita.get('id')}@broquer.app",
-        f"DTSTAMP:{_z(datetime.now(timezone.utc))}",
-        f"DTSTART:{_z(dt_utc)}", f"DTEND:{_z(fin_utc)}",
-        f"SUMMARY:{esc(titulo)}", f"DESCRIPTION:{esc(desc)}",
-        "END:VEVENT", "END:VCALENDAR",
-    ]) + "\r\n"
-
-
-async def wa_send_document(phone_number_id: str, to: str, doc_url: str, filename: str,
-                           caption: str | None = None, token: str | None = None) -> dict:
-    """Manda un documento por su URL pública (la usamos para el .ics de la cita).
-    Misma forma de retorno que wa_send_text."""
-    if not token:
-        row = await resolve_number(phone_number_id)
-        token = (row or {}).get("access_token") or WHATSAPP_TOKEN
-    if not token:
-        log.error("Sin token para phone_number_id=%s — no se envía documento", phone_number_id)
-        return {"ok": False, "message_id": None, "code": None,
-                "error": "No hay token de acceso para este número."}
-
-    to = _normaliza_mx(to)
-    url = f"{GRAPH_API}/{phone_number_id}/messages"
-    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
-    doc = {"link": doc_url, "filename": filename}
-    if caption:
-        doc["caption"] = caption[:1024]
-    data = {"messaging_product": "whatsapp", "to": to, "type": "document", "document": doc}
-    try:
-        async with httpx.AsyncClient(timeout=25) as c:
-            r = await c.post(url, headers=headers, json=data)
-            payload = r.json() if r.content else {}
-            if r.status_code >= 400:
-                err  = (payload.get("error") or {})
-                code = err.get("code")
-                msg  = err.get("message") or r.text[:200]
-                log.error("WhatsApp doc error %s (code=%s) a %s: %s",
-                          r.status_code, code, to, msg)
-                return {"ok": False, "message_id": None, "code": code,
-                        "error": _error_legible(code, msg)}
-            mid = (payload.get("messages") or [{}])[0].get("id")
-            return {"ok": bool(mid), "message_id": mid,
-                    "error": None if mid else "Meta no devolvió id de documento.", "code": None}
-    except Exception as e:
-        log.exception("Error enviando documento a %s: %s", to, e)
-        return {"ok": False, "message_id": None, "code": None,
-                "error": "No se pudo contactar a WhatsApp."}
-
-
-async def _accion_agendar_visita(user_id, phone_number_id, to, accion, contact,
-                                 conversation_id, token, agente_nombre) -> bool:
-    """Guarda la cita, la marca en el CRM, le manda al prospecto la invitación
-    universal (.ics) y le avisa al asesor. True si se agendó."""
-    dt = _parse_cita(accion.get("fecha"), accion.get("hora"))
-    if not dt:
-        # La IA quiso agendar pero la fecha/hora no sirve: que el asesor lo cierre
-        # a mano en vez de inventar una cita falsa.
-        await avisar_al_agente(user_id, contact, conversation_id,
-                               "El prospecto quiere agendar una visita. Ciérrale día y hora tú.")
-        return False
-
-    inmueble = (accion.get("inmueble") or "").strip()[:200] or None
-    dt_utc = dt.astimezone(timezone.utc)
-    creado = await sb_post("wa_citas", {
-        "user_id": user_id, "contact_id": contact["id"],
-        "conversation_id": conversation_id, "inmueble": inmueble,
-        "starts_at": dt_utc.isoformat(), "duracion_min": 60,
-    })
-    if not creado:
-        log.error("No se pudo guardar la cita de %s", to)
-        await avisar_al_agente(user_id, contact, conversation_id,
-                               "El prospecto aceptó una visita pero no pude guardarla. Coordínala tú.")
-        return False
-    cita = creado[0]
-
-    # Marca en el CRM: etapa Cita + próxima cita para el expediente.
-    await sb_patch("wa_contacts", {"id": f"eq.{contact['id']}"},
-                   {"etapa": "Cita", "cita_at": dt_utc.isoformat(), "updated_at": _now()})
-
-    cuando = _fmt_fecha_larga(dt)
-    lugar  = f" para ver {inmueble}" if inmueble else ""
-    ics_url = f"{API_PUBLIC_BASE}/whatsapp/cita/{cita['id']}.ics"
-    caption = (f"Tu visita quedó el {cuando}{lugar}. "
-               "Toca el archivo para agregarla a tu calendario.")
-    sent = await wa_send_document(phone_number_id, to, ics_url, "cita-broquer.ics",
-                                  caption, token=token)
-    if sent["ok"]:
-        await store_message(user_id, contact["id"], conversation_id,
-                            sent["message_id"] or f"local-cita-{cita['id']}",
-                            "out", "ai", f"[Cita] {cuando}{lugar}", status="sent")
-    else:
-        # Si el documento no salió, al menos confirma en texto para no dejarlo en el aire.
-        txt = f"Tu visita quedó el {cuando}{lugar}. ¡Ahí te esperamos!"
-        s2 = await wa_send_text(phone_number_id, to, txt, token=token)
-        if s2["ok"]:
-            await store_message(user_id, contact["id"], conversation_id,
-                                s2["message_id"] or f"local-cita-{cita['id']}",
-                                "out", "ai", f"[Cita] {cuando}{lugar}", status="sent")
-
-    await avisar_al_agente(user_id, contact, conversation_id, f"Nueva cita: {cuando}{lugar}.")
-    return True
-
-
-def _error_legible(code, msg: str) -> str:
-    """Traduce los rechazos más comunes de Meta a algo que el agente entienda
-    y pueda accionar. Si no lo conocemos, se pasa el mensaje de Meta tal cual."""
-    conocidos = {
-        131037: ("Tu número aún no tiene el nombre visible aprobado por Meta. "
-                 "Ve a WhatsApp Manager y mándalo a aprobación: hasta entonces "
-                 "puedes recibir mensajes, pero no responder."),
-        131047: ("Pasaron más de 24 horas desde el último mensaje del prospecto. "
-                 "Para reabrir la conversación hay que enviar una plantilla."),
-        131026: "El número del destinatario no tiene WhatsApp o no puede recibir mensajes.",
-        131031: "Meta bloqueó tu cuenta de WhatsApp. Revisa WhatsApp Manager.",
-        190:    "La conexión con WhatsApp caducó. Vuelve a conectar tu número.",
-        131049: "Meta limitó el envío a este usuario para cuidar la experiencia.",
-        130429: "Estás enviando demasiado rápido. Espera un momento.",
-    }
-    return conocidos.get(code, msg)
-
-
-# =============================================================================
-# 5) ENDPOINT PARA LA BANDEJA  ->  el agente manda un mensaje a mano
-# =============================================================================
-class SendReq(BaseModel):
-    conversation_id: str
-    body: str
-
-
-@router.post("/send")
-async def agent_send(req: SendReq, request: Request):
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Sesión inválida")
-
-    convs = await sb_get("wa_conversations",
-                         {"id": f"eq.{req.conversation_id}", "user_id": f"eq.{user_id}", "limit": "1"})
-    if not convs:
-        raise HTTPException(status_code=404, detail="Conversación no encontrada")
-    conv = convs[0]
-
-    cs = await sb_get("wa_contacts", {"id": f"eq.{conv['contact_id']}", "select": "wa_id", "limit": "1"})
-    if not cs:
-        raise HTTPException(status_code=404, detail="Contacto no encontrado")
-    to = cs[0]["wa_id"]
-
-    sent = await wa_send_text(conv["phone_number_id"], to, req.body)
-
-    if not sent["ok"]:
-        # NO se guarda el mensaje ni se apaga la IA: el prospecto no recibió nada,
-        # así que Recepción debe seguir a cargo. Antes esto devolvía 200 OK, el
-        # mensaje aparecía en la bandeja y la IA quedaba apagada — el peor caso:
-        # el agente creía haber contestado y nadie estaba atendiendo al lead.
-        raise HTTPException(status_code=502, detail=sent["error"])
-
-    await store_message(user_id, conv["contact_id"], conv["id"],
-                        sent["message_id"], "out", "agent", req.body, status="sent")
-    # el humano contestó -> apagamos la IA en esta conversación
-    await sb_patch("wa_conversations", {"id": f"eq.{conv['id']}"}, {"ai_enabled": False})
-    return {"ok": True, "wa_message_id": sent["message_id"]}
-
-
-# =============================================================================
-# 6) Funciones de datos
-# =============================================================================
-async def resolve_number(phone_number_id: str | None) -> dict | None:
-    """Devuelve la fila completa de wa_numbers (user_id, access_token, ia_enabled...).
-    SIN fallback a DEFAULT_USER_ID: un número no mapeado se ignora. Antes caía en la
-    cuenta del piloto, lo que en multi-tenant es una fuga de datos entre clientes."""
-    if not phone_number_id:
-        return None
-    rows = await sb_get("wa_numbers", {
-        "phone_number_id": f"eq.{phone_number_id}",
-        "select": "user_id,access_token,ia_enabled,waba_id,waba_name",
-        "limit": "1",
-    })
-    return rows[0] if rows else None
-
-
-async def resolve_user(phone_number_id: str | None) -> str | None:
-    row = await resolve_number(phone_number_id)
-    return row["user_id"] if row else None
-
-
-async def already_processed(wamid: str) -> bool:
-    rows = await sb_get("wa_messages", {"wa_message_id": f"eq.{wamid}", "select": "id", "limit": "1"})
-    return bool(rows)
-
-
-def _norm10(num: str) -> str:
-    """Últimos 10 dígitos. Es la llave con la que se cruza WhatsApp contra
-    Contactos: aguanta +52, el 1 de móvil, 044/045, espacios y guiones.
-    Regla mexicana — revisar cuando entre Colombia."""
-    d = "".join(ch for ch in str(num or "") if ch.isdigit())
-    return d[-10:] if len(d) >= 10 else ""
-
-
-def _nuevo_contacto_id() -> str:
-    """contactos.id NO se autogenera: lo arma el frontend como 'c_' + Date.now()
-    (contactos.html:1380). El backend debe seguir la misma convención o el
-    insert truena por not-null."""
-    return "c_" + str(int(datetime.now(timezone.utc).timestamp() * 1000))
-
-
-async def vincular_contacto(user_id: str, wa_id: str, nombre: str | None) -> str | None:
-    """Devuelve el id de contactos para este número de WhatsApp.
-    Si ya existe (por teléfono o por el campo wa), lo reutiliza y NO lo pisa:
-    los datos que el agente capturó a mano mandan sobre lo que diga WhatsApp.
-    Si no existe, lo crea marcado como potencial y con fuente WhatsApp."""
-    norm = _norm10(wa_id)
-    if not norm:
-        return None
-
-    try:
-        # Busca en el universo de ESE agente, contra los dos campos de teléfono
-        rows = await sb_get("contactos", {
-            "user_id": f"eq.{user_id}",
-            "or":      f"(tel_norm.eq.{norm},wa_norm.eq.{norm})",
-            "select":  "id",
-            "order":   "updated_at.desc",
-            "limit":   "1",
-        })
-        if isinstance(rows, list) and rows:
-            return rows[0]["id"]
-
-        creado = await sb_post("contactos", {
-            "id":           _nuevo_contacto_id(),
-            "user_id":      user_id,
-            "nombre":       (nombre or "").strip() or f"WhatsApp {norm[-4:]}",
-            "telefono":     norm,
-            "wa":           norm,
-            "tipo":         "prospecto",
-            "es_potencial": True,
-            "fuente":       "WhatsApp",
-            "notas":        "Creado automáticamente por Recepción al recibir el primer mensaje.",
-        })
-        # sb_post devuelve r.json() tal cual: si PostgREST rechaza, es un DICT de
-        # error, no una lista. Sin este chequeo el fallo real quedaba enterrado
-        # bajo un KeyError genérico y el log no servía para nada.
-        if isinstance(creado, dict):
-            log.error("Supabase rechazó el contacto para %s: %s", wa_id, json.dumps(creado)[:400])
-            return None
-        if isinstance(creado, list) and creado:
-            log.info("Contacto creado desde WhatsApp: %s -> %s", norm, creado[0].get("id"))
-            return creado[0]["id"]
-        log.error("Supabase no devolvió el contacto creado para %s: %r", wa_id, creado)
-    except Exception as e:
-        # Nunca tumbar la conversación por un fallo del CRM: el lead se atiende
-        # igual y queda en wa_contacts; el enlace se puede reparar después.
-        log.exception("No se pudo vincular contacto para %s: %s", wa_id, e)
-    return None
-
-
-async def upsert_contact(user_id, wa_id, nombre):
-    rows = await sb_get("wa_contacts",
-                        {"user_id": f"eq.{user_id}", "wa_id": f"eq.{wa_id}", "limit": "1"})
-    if rows:
-        contact = rows[0]
-        patch = {}
-        if nombre and not contact.get("nombre"):
-            patch["nombre"] = nombre
-        # Repara el enlace si falta (contacto creado a mano después, o backfill fallido)
-        if not contact.get("contacto_id"):
-            cid = await vincular_contacto(user_id, wa_id, nombre or contact.get("nombre"))
-            if cid:
-                patch["contacto_id"] = cid
-        if patch:
-            await sb_patch("wa_contacts", {"id": f"eq.{contact['id']}"}, patch)
-            contact.update(patch)
-        return contact
-
-    contacto_id = await vincular_contacto(user_id, wa_id, nombre)
-    created = await sb_post("wa_contacts",
-                            {"user_id": user_id, "wa_id": wa_id, "nombre": nombre,
-                             "contacto_id": contacto_id,
-                             "temperatura": "Nuevo", "score": 0, "etapa": "Nuevo"})
-    if created:
-        return created[0]
-
-    # El INSERT no devolvió fila. Casi siempre es una carrera: el mismo lead nuevo
-    # mandó varios mensajes de golpe y otro webhook ya creó el contacto (chocamos
-    # en unique(user_id, wa_id)). Releemos por esa llave: si ya existe, lo usamos.
-    # Así el chat NUNCA se queda sin contacto y sus mensajes no se pierden.
-    rows = await sb_get("wa_contacts",
-                        {"user_id": f"eq.{user_id}", "wa_id": f"eq.{wa_id}", "limit": "1"})
-    if rows:
-        return rows[0]
-    log.error("wa_contacts: no se pudo crear ni releer el contacto de %s (user %s)",
-              wa_id, user_id)
-    return {"id": None}
-
-
-async def get_or_create_conversation(user_id, contact, referral, phone_number_id,
-                                     ia_global: bool = True):
-    rows = await sb_get("wa_conversations", {"contact_id": f"eq.{contact['id']}", "limit": "1"})
-    if rows:
-        return rows[0]
-    property_ctx = None
-    if referral:
-        headline = referral.get("headline", "")
-        bodytext = referral.get("body", "")
-        property_ctx = f"El prospecto escribió por el anuncio: '{headline}'. {bodytext}".strip()
-    # ai_enabled ya NO es True hardcodeado: nacía encendida aunque el agente
-    # tuviera Recepción apagada, y ese era el agujero por el que la IA seguía
-    # contestando con el switch en off.
-    created = await sb_post("wa_conversations",
-                            {"user_id": user_id, "contact_id": contact["id"],
-                             "phone_number_id": phone_number_id,
-                             "ai_enabled": bool(ia_global),
-                             "ai_msg_count": 0,
-                             "property_ctx": property_ctx})
-    if created:
-        return created[0]
-
-    # Misma carrera que en contactos: unique(contact_id). Si otro webhook ya creó
-    # la conversación, la releemos y seguimos con ella en vez de devolver id nulo
-    # (que dejaría todos los mensajes de este chat huérfanos y sin guardar).
-    rows = await sb_get("wa_conversations", {"contact_id": f"eq.{contact['id']}", "limit": "1"})
-    if rows:
-        return rows[0]
-    log.error("wa_conversations: no se pudo crear ni releer la conversación de contacto %s",
-              contact["id"])
-    return {"id": None, "ai_enabled": bool(ia_global), "ai_msg_count": 0}
-
-
-async def sumar_msg_ia(conversation_id, actual):
-    """Lleva la cuenta de cuántas veces habló la IA en este chat. Alimenta
-    max_mensajes_ia sin tener que contar filas de wa_messages en cada webhook."""
-    try:
-        await sb_patch("wa_conversations", {"id": f"eq.{conversation_id}"},
-                       {"ai_msg_count": int(actual or 0) + 1, "updated_at": _now()})
-    except Exception as e:
-        log.warning("No se pudo sumar ai_msg_count en %s: %s", conversation_id, e)
-
-
-async def store_message(user_id, contact_id, conversation_id, wa_message_id, direction, sender, body,
-                        status: str | None = None, created_at: str | None = None):
-    """status: 'sent' | 'failed' | None (entrantes). La columna ya existía en el
-    esquema pero nadie la escribía, así que un mensaje rechazado por Meta se veía
-    idéntico a uno entregado.
-
-    created_at: la hora REAL del mensaje. Para entrantes es la que manda WhatsApp
-    (_wa_ts); para salientes (IA/agente) es ahora. Siempre se escribe de forma
-    explícita para NO depender del default de la columna: así la bandeja ordena
-    y muestra la hora correcta aunque el default se haya perdido en producción."""
-    # Si el contacto o la conversación no se pudieron crear/releer arriba, sus ids
-    # llegan en None. Insertar así truena por NOT NULL y, peor, deja el mensaje
-    # perdido en silencio. Mejor abortar claro y dejarlo en el log.
-    if not conversation_id or not contact_id:
-        log.error("store_message abortado por ids nulos (conv=%s contact=%s sender=%s)",
-                  conversation_id, contact_id, sender)
-        return False
-
-    fila = {"user_id": user_id, "contact_id": contact_id, "conversation_id": conversation_id,
-            "wa_message_id": wa_message_id, "direction": direction, "sender": sender, "body": body,
-            "created_at": created_at or _now()}
-    if status:
-        fila["status"] = status
-    # return=representation (no minimal) para poder VERIFICAR que la fila aterrizó.
-    guardado = await sb_post("wa_messages", fila)
-    ok = bool(guardado)
-    if not guardado and wa_message_id and not str(wa_message_id).startswith("local-"):
-        # sb_post ya reintentó ante timeouts. Si aun así no hubo fila, puede ser
-        # un duplicado legítimo (Meta reentregó y ya estaba) o una pérdida real.
-        # Releemos por wa_message_id: si YA está, se guardó (carrera/reintento) y
-        # damos ok. Si NO está, se perdió de verdad: lo dejamos en el log y
-        # devolvemos False para que el webhook le pida reintento a Meta.
-        ya = await sb_get("wa_messages",
-                          {"wa_message_id": f"eq.{wa_message_id}", "select": "id", "limit": "1"})
-        if ya:
-            ok = True
-        else:
-            ok = False
-            log.error("wa_messages NO guardado (mensaje perdido): conv=%s sender=%s wamid=%s",
-                      conversation_id, sender, wa_message_id)
-    elif not guardado:
-        # id 'local-' (saliente de IA/agente sin id de Meta): no forzamos reintento
-        # del webhook por esto; el mensaje del prospecto —lo crítico— ya se guardó
-        # aparte. Lo damos por ok para no reprocesar de más.
-        ok = True
-    await sb_patch("wa_conversations", {"id": f"eq.{conversation_id}"}, {"last_message_at": _now()})
-    return ok
-
-
-async def sumar_no_leido(conversation_id) -> int:
-    """Sube en 1 el contador de mensajes sin leer de la conversación y lo
-    regresa. La bandeja lo baja a 0 cuando el agente abre el chat.
-    Postgres no tiene 'incrementa' por REST, así que se lee y se escribe."""
-    try:
-        filas = await sb_get("wa_conversations",
-                             {"id": f"eq.{conversation_id}", "select": "unread_count", "limit": "1"})
-        actual = int((filas[0] or {}).get("unread_count") or 0) if filas else 0
-        nuevo = actual + 1
-        await sb_patch("wa_conversations", {"id": f"eq.{conversation_id}"}, {"unread_count": nuevo})
-        return nuevo
-    except Exception as e:
-        log.warning("No se pudo actualizar unread_count: %s", e)
-        return 0
-
-
-async def total_no_leidos(user_id) -> int:
-    """Suma de todos los chats sin leer del agente: es el número que va en el
-    globito rojo del ícono de la app."""
-    try:
-        filas = await sb_get("wa_conversations", {"user_id": f"eq.{user_id}", "select": "unread_count"})
-        return sum(int(f.get("unread_count") or 0) for f in (filas or []))
-    except Exception:
-        return 0
-
-
-async def avisar_al_agente(user_id, contact, conversation_id, texto):
-    """Notificación push al iPhone del agente. Envuelto en try porque un aviso
-    que no sale JAMÁS debe tumbar el webhook de Meta (Meta reintentaría y se
-    duplicarían mensajes)."""
-    try:
-        nombre = (contact or {}).get("nombre") or _norm10((contact or {}).get("wa_id", "")) or "Nuevo mensaje"
-        badge = await total_no_leidos(user_id)
-        await avisar_mensaje_whatsapp(user_id, nombre, texto, str(conversation_id), badge=badge)
-    except Exception as e:
-        log.warning("Push no enviado: %s", e)
-
-
-async def fetch_history(conversation_id) -> list:
-    rows = await sb_get("wa_messages",
-                        {"conversation_id": f"eq.{conversation_id}", "select": "sender,body",
-                         "order": "created_at.desc", "limit": str(HISTORY_LIMIT)})
-    rows = list(reversed(rows or []))
-    return [{"role": "user" if r["sender"] == "lead" else "assistant", "content": r["body"]} for r in rows]
-
-
-async def actualizar_calificacion(contact_id, result: dict):
-    if not result:
-        return
-    campos = {}
-    for k in ("temperatura", "score", "presupuesto", "forma_pago", "busca", "resumen"):
-        if result.get(k) is not None:
-            campos[k] = result[k]
-    if result.get("listo_para_visita"):
-        campos["etapa"] = "Cita"
-    if campos:
-        campos["updated_at"] = _now()
-        await sb_patch("wa_contacts", {"id": f"eq.{contact_id}"}, campos)
-
-
-async def ai_sigue_encendida(conversation_id, user_id: str | None = None) -> bool:
-    """Se relee justo antes de mandar porque el modelo tarda unos segundos y en
-    ese hueco el agente pudo contestar desde su cel o apagar el switch global.
-    Revisa las dos cosas: si cualquiera está en off, la IA no manda."""
-    rows = await sb_get("wa_conversations",
-                        {"id": f"eq.{conversation_id}", "select": "ai_enabled", "limit": "1"})
-    if not rows or not rows[0].get("ai_enabled", True):
-        return False
-    if user_id:
-        nums = await sb_get("wa_numbers", {"user_id": f"eq.{user_id}",
-                                           "select": "ia_enabled", "limit": "1"})
-        if nums and nums[0].get("ia_enabled", True) is False:
-            return False
-    return True
-
-
-# =============================================================================
-# 6) ENDPOINTS PARA EL MÓDULO WHATSAPP (conexión por agente)
-# =============================================================================
-
-META_APP_ID     = os.environ.get("META_APP_ID", "")
-META_APP_SECRET = os.environ.get("META_APP_SECRET", "") or WA_APP_SECRET
-
-
-# ── /whatsapp/status ─────────────────────────────────────────────────────────
-@router.get("/status")
-async def wa_status(request: Request):
-    """Devuelve si el usuario tiene un número conectado."""
+async def _require_user(request: Request) -> str:
     user_id = await get_user_id_from_token(request)
     if not user_id:
         raise HTTPException(status_code=401, detail="No autorizado")
-    rows = await sb_get("wa_numbers", {"user_id": f"eq.{user_id}", "select": "*", "limit": "1"})
-    if not rows:
-        return {"connected": False}
-    row = rows[0]
-    return {
-        "connected":    True,
-        "phone_number": row.get("display_number", ""),
-        "waba_name":    row.get("waba_name", "WhatsApp Business"),
-        "ia_enabled":   row.get("ia_enabled", True),
-    }
+    return user_id
 
 
-# ── /whatsapp/connect ─────────────────────────────────────────────────────────
+async def _ids_visibles(user_id: str) -> list[str]:
+    """A qué user_id puede ver este usuario en WhatsApp 2.0.
+    Dueño o admin de una organización: él mismo + todo su equipo.
+    Agente normal, o alguien sin organización (cuenta personal): solo él mismo.
+    Los números y conversaciones se guardan bajo el user_id de quien conectó
+    CADA número (cada agente conecta el suyo); esto decide a cuáles de esos
+    user_id tiene permiso de asomarse quien pregunta."""
+    ctx = await get_org_context(user_id)
+    if not ctx or not ctx.get("org_id") or ctx.get("rol_org") not in ("owner", "admin"):
+        return [user_id]
+    miembros = await sb_get("organizacion_miembros", {
+        "org_id": f"eq.{ctx['org_id']}", "select": "user_id"})
+    ids = {m["user_id"] for m in miembros if m.get("user_id")}
+    ids.add(user_id)
+    return list(ids)
+
+
+def _in_filter(ids: list[str]) -> str:
+    return "in.(" + ",".join(ids) + ")"
+
+
+# =============================================================================
+# 1) CONEXIÓN DE NÚMEROS (Embedded Signup) — igual flujo de Meta, tabla propia
+# =============================================================================
 class ConnectReq(BaseModel):
     code: str
     waba_id: str | None = None
     phone_number_id: str | None = None
     coexistence: bool = False
+    alias: str | None = None
 
 
 @router.post("/connect")
-async def wa_connect(req: ConnectReq, request: Request):
-    """Cierra el Embedded Signup: intercambia el code por un business token y
-    registra el número del cliente.
-
-    OJO — esto NO es el OAuth clásico:
-      · El intercambio va SIN redirect_uri (el ES usa el SDK de JS, no redirect).
-      · El token que regresa es un business integration system user access token,
-        ligado a la integración, no un user token de 2 horas.
-      · waba_id y phone_number_id los devuelve el propio flujo de ES al frontend;
-        no hay que ir a adivinarlos recorriendo /me/businesses.
-    """
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autorizado")
-
+async def wa2_connect(req: ConnectReq, request: Request):
+    user_id = await _require_user(request)
     if not META_APP_ID or not META_APP_SECRET:
         raise HTTPException(status_code=500, detail="META_APP_ID o META_APP_SECRET no configurados")
 
-    # 1) code -> business token  (sin redirect_uri: es Embedded Signup)
     async with httpx.AsyncClient(timeout=20) as c:
         r = await c.get(f"{GRAPH_API}/oauth/access_token", params={
-            "client_id":     META_APP_ID,
-            "client_secret": META_APP_SECRET,
-            "code":          req.code,
+            "client_id": META_APP_ID, "client_secret": META_APP_SECRET, "code": req.code,
         })
         if r.status_code != 200:
             log.error("Meta token error %s: %s", r.status_code, r.text)
             raise HTTPException(status_code=400, detail="No se pudo obtener el token de Meta")
         tok = r.json()
         business_token = tok.get("access_token", "")
-        expires_in     = tok.get("expires_in")
+        expires_in = tok.get("expires_in")
 
     if not business_token:
         raise HTTPException(status_code=400, detail="Meta no devolvió un token de acceso")
 
-    waba_id         = (req.waba_id or "").strip()
+    waba_id = (req.waba_id or "").strip()
     phone_number_id = (req.phone_number_id or "").strip()
 
-    # 2) Si el frontend no los mandó, se leen con el business token (fallback)
     if not waba_id:
         async with httpx.AsyncClient(timeout=20) as c:
             r = await c.get(f"{GRAPH_API}/debug_token", params={
-                "input_token":  business_token,
-                "access_token": f"{META_APP_ID}|{META_APP_SECRET}",
+                "input_token": business_token, "access_token": f"{META_APP_ID}|{META_APP_SECRET}",
             })
             if r.status_code == 200:
-                scopes = r.json().get("data", {}).get("granular_scopes", [])
-                for s in scopes:
+                for s in r.json().get("data", {}).get("granular_scopes", []):
                     if s.get("scope") == "whatsapp_business_management":
                         ids = s.get("target_ids") or []
                         if ids:
@@ -1649,14 +405,12 @@ async def wa_connect(req: ConnectReq, request: Request):
     if not waba_id:
         raise HTTPException(status_code=400, detail="No se pudo identificar la cuenta de WhatsApp Business")
 
-    # 3) Datos del número
-    waba_name    = "WhatsApp Business"
+    waba_name = "WhatsApp Business"
     phone_number = ""
     async with httpx.AsyncClient(timeout=20) as c:
         r = await c.get(f"{GRAPH_API}/{waba_id}", params={"access_token": business_token, "fields": "name"})
         if r.status_code == 200:
             waba_name = r.json().get("name") or waba_name
-
         r = await c.get(f"{GRAPH_API}/{waba_id}/phone_numbers",
                         params={"access_token": business_token, "fields": "id,display_phone_number"})
         phones = r.json().get("data", []) if r.status_code == 200 else []
@@ -1667,23 +421,24 @@ async def wa_connect(req: ConnectReq, request: Request):
             phone_number = (match.get("display_phone_number") or "").replace("+", "").replace(" ", "")
     elif phones:
         phone_number_id = phones[0].get("id", "")
-        phone_number    = (phones[0].get("display_phone_number") or "").replace("+", "").replace(" ", "")
+        phone_number = (phones[0].get("display_phone_number") or "").replace("+", "").replace(" ", "")
 
     if not phone_number_id:
-        raise HTTPException(status_code=400,
-                            detail="No se encontró un número en tu cuenta de WhatsApp Business")
+        raise HTTPException(status_code=400, detail="No se encontró un número en tu cuenta de WhatsApp Business")
 
-    # 4) Guardar. El upsert va por phone_number_id (tiene unique), NO por user_id:
-    #    así un número que cambia de dueño no duplica fila.
     payload = {
-        "user_id":         user_id,
+        "user_id": user_id,
         "phone_number_id": phone_number_id,
-        "display_number":  phone_number,
-        "waba_id":         waba_id,
-        "waba_name":       waba_name,
-        "access_token":    business_token,
-        "ia_enabled":      True,
-        "updated_at":      _now(),
+        "display_number": phone_number,
+        "waba_id": waba_id,
+        "waba_name": waba_name,
+        "alias": (req.alias or waba_name or "Línea de WhatsApp").strip(),
+        "access_token": business_token,
+        "ia_enabled": True,
+        # Reconectar es justamente el arreglo cuando el token murió: limpia la marca.
+        "token_valido": True,
+        "token_error_at": None,
+        "updated_at": _now(),
     }
     if expires_in:
         try:
@@ -1692,380 +447,3467 @@ async def wa_connect(req: ConnectReq, request: Request):
         except Exception:
             pass
 
-    existing = await sb_get("wa_numbers",
-                            {"phone_number_id": f"eq.{phone_number_id}", "select": "id", "limit": "1"})
+    existing = await sb_get("wa2_numeros", {"phone_number_id": f"eq.{phone_number_id}", "select": "id", "limit": "1"})
     if existing:
-        await sb_patch("wa_numbers", {"phone_number_id": f"eq.{phone_number_id}"}, payload)
+        await sb_patch("wa2_numeros", {"phone_number_id": f"eq.{phone_number_id}"}, payload)
+        numero_id = existing[0]["id"]
     else:
         payload["created_at"] = _now()
-        await sb_post("wa_numbers", payload)
+        created = await sb_post("wa2_numeros", payload)
+        numero_id = created[0]["id"] if created else None
 
-    # 5) Suscribir la app al webhook de ESA WABA (sin esto no llegan mensajes)
+    if not numero_id:
+        # Antes esto seguía de largo y regresaba "ok":true aunque nada se hubiera
+        # guardado (ej. la tabla wa2_numeros aún no estaba visible para la API justo
+        # después de correr el SQL). Así el usuario creía tener el número conectado
+        # cuando en realidad no había ninguna fila — los mensajes entrantes nunca
+        # encontraban con quién hacer match y se perdían en silencio.
+        raise HTTPException(status_code=500,
+            detail="No se pudo guardar el número en la base de datos. Vuelve a intentar en un minuto "
+                   "(si acabas de correr el SQL de este módulo, Supabase a veces tarda en reconocer las "
+                   "tablas nuevas).")
+
+    # Suscribe la app a ESTA waba con callback ALTERNO -> nunca toca /whatsapp/webhook.
+    # Y LUEGO se verifica leyendo la propia suscripción: Meta puede aceptar la
+    # llamada (200) sin que el override realmente haya quedado activo, así que no
+    # basta con revisar el status code de la petición.
+    override_confirmado = False
     async with httpx.AsyncClient(timeout=15) as c:
         r = await c.post(f"{GRAPH_API}/{waba_id}/subscribed_apps",
-                         params={"access_token": business_token})
+                         params={"access_token": business_token},
+                         json={"override_callback_uri": WA2_WEBHOOK_URL, "verify_token": WA2_VERIFY_TOKEN})
         if r.status_code >= 400:
-            log.error("No se pudo suscribir el webhook de %s: %s", waba_id, r.text)
+            log.error("No se pudo suscribir override_callback_uri de %s: %s", waba_id, r.text)
+        r2 = await c.get(f"{GRAPH_API}/{waba_id}/subscribed_apps", params={"access_token": business_token})
+        if r2.status_code < 300:
+            for app_sub in r2.json().get("data", []):
+                if app_sub.get("override_callback_uri") == WA2_WEBHOOK_URL:
+                    override_confirmado = True
+                    break
+        else:
+            log.error("No se pudo verificar subscribed_apps de %s: %s", waba_id, r2.text)
 
-    # 6) Registrar el número en Cloud API.
-    #    En COEXISTENCIA se SALTA: el número ya está registrado por la app de
-    #    WhatsApp Business y llamar a /register aquí rompe el vínculo.
+    await sb_patch("wa2_numeros", {"id": f"eq.{numero_id}"}, {"webhook_verificado": override_confirmado})
+
     if req.coexistence:
         log.info("Coexistencia: se omite /register para %s (ya registrado)", phone_number_id)
     else:
         async with httpx.AsyncClient(timeout=20) as c:
             r = await c.post(f"{GRAPH_API}/{phone_number_id}/register",
                              params={"access_token": business_token},
-                             json={"messaging_product": "whatsapp", "pin": WA_REGISTER_PIN})
+                             json={"messaging_product": "whatsapp", "pin": WA2_REGISTER_PIN})
             if r.status_code >= 400:
                 log.warning("Registro de %s: %s", phone_number_id, r.text)
 
-    log.info("WhatsApp conectado: user=%s waba=%s phone=%s coex=%s",
-             user_id, waba_id, phone_number, req.coexistence)
-    return {"ok": True, "phone_number": phone_number, "waba_name": waba_name,
-            "coexistence": req.coexistence}
+    # Entrenamiento por default para el número nuevo, si aún no tiene uno propio
+    tiene_entren = await sb_get("wa2_entrenamiento", {
+        "user_id": f"eq.{user_id}", "numero_id": f"eq.{numero_id}", "select": "id", "limit": "1"})
+    if not tiene_entren and numero_id:
+        base = await sb_get("wa2_entrenamiento", {
+            "user_id": f"eq.{user_id}", "numero_id": "is.null", "select": "*", "limit": "1"})
+        fila = dict(base[0]) if base else dict(TRAINING_DEFAULTS)
+        fila.pop("id", None); fila.pop("created_at", None); fila.pop("updated_at", None)
+        fila["numero_id"] = numero_id
+        fila["user_id"] = user_id
+        await sb_post("wa2_entrenamiento", fila)
+
+    log.info("WhatsApp2 conectado: user=%s waba=%s phone=%s verificado=%s",
+             user_id, waba_id, phone_number, override_confirmado)
+    resultado = {"ok": True, "numero_id": numero_id, "phone_number": phone_number,
+                "waba_name": waba_name, "alias": payload["alias"], "webhook_verificado": override_confirmado}
+    if not override_confirmado:
+        resultado["advertencia"] = (
+            "El número se guardó, pero Meta no confirmó que vaya a mandar los mensajes a "
+            "WhatsApp 2.0. Puede que sigan llegando al WhatsApp original. Usa el botón "
+            "'Verificar conexión' en unos minutos; si sigue en rojo, dímelo.")
+    return resultado
 
 
-# ── /whatsapp/ia-global ───────────────────────────────────────────────────────
-class IAGlobalReq(BaseModel):
-    ia_enabled: bool
+@router.get("/numeros/{numero_id}/verificar")
+async def wa2_numero_verificar(numero_id: str, request: Request):
+    """Vuelve a preguntarle a Meta, EN VIVO, si este número de verdad está mandando
+    sus mensajes al webhook de WhatsApp 2.0. No confía en lo que se guardó al conectar:
+    ese estado pudo cambiar después (ej. alguien reconectó el mismo número en el
+    WhatsApp original, lo que le quita el override a este)."""
+    user_id = await _require_user(request)
+    rows = await sb_get("wa2_numeros", {"id": f"eq.{numero_id}", "user_id": f"eq.{user_id}",
+                                        "select": "waba_id,access_token", "limit": "1"})
+    if not rows or not rows[0].get("waba_id") or not rows[0].get("access_token"):
+        raise HTTPException(status_code=404, detail="Número no encontrado")
+    waba_id, token = rows[0]["waba_id"], rows[0]["access_token"]
+    verificado = False
+    callback_actual = None
+    try:
+        async with httpx.AsyncClient(timeout=15) as c:
+            r = await c.get(f"{GRAPH_API}/{waba_id}/subscribed_apps", params={"access_token": token})
+        if r.status_code < 300:
+            for app_sub in r.json().get("data", []):
+                callback_actual = app_sub.get("override_callback_uri")
+                if callback_actual == WA2_WEBHOOK_URL:
+                    verificado = True
+                    break
+        else:
+            raise HTTPException(status_code=502, detail=f"Meta respondió con error: {r.text[:200]}")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"No se pudo consultar a Meta: {e}")
 
-@router.patch("/ia-global")
-async def wa_ia_global(req: IAGlobalReq, request: Request):
-    """Enciende o apaga Recepción para todo. Palabra final del agente.
-
-    Ya NO propaga a wa_conversations. La propagación era la causa de dos bugs:
-    apagar solo alcanzaba a las conversaciones existentes (un lead nuevo nacía
-    con la IA encendida), y prender revivía la IA en chats que el agente había
-    tomado a mano. Ahora el webhook evalúa ia_global AND conv.ai_enabled, así
-    que cada flag conserva su significado y ninguno pisa al otro.
-    """
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autorizado")
-    await sb_patch("wa_numbers", {"user_id": f"eq.{user_id}"}, {
-        "ia_enabled": req.ia_enabled,
-        "updated_at": _now(),
-    })
-    return {"ok": True, "ia_enabled": req.ia_enabled}
+    await sb_patch("wa2_numeros", {"id": f"eq.{numero_id}"}, {"webhook_verificado": verificado})
+    return {"webhook_verificado": verificado, "callback_actual": callback_actual}
 
 
-# ── /whatsapp/training ────────────────────────────────────────────────────────
+@router.get("/numeros")
+async def wa2_numeros_list(request: Request):
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    rows = await sb_get("wa2_numeros", {
+        "user_id": _in_filter(ids), "select": "*", "order": "created_at.asc"})
+    for r in rows:
+        r.pop("access_token", None)
+        r["es_mio"] = r.get("user_id") == user_id
+    return {"numeros": rows}
+
+
+class NumeroPatchReq(BaseModel):
+    alias: str | None = None
+    ia_enabled: bool | None = None
+    numero_personal: str | None = None
+
+
+@router.patch("/numeros/{numero_id}")
+async def wa2_numero_patch(numero_id: str, req: NumeroPatchReq, request: Request):
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    body = {"updated_at": _now()}
+    if req.alias is not None:
+        body["alias"] = req.alias.strip()
+    if req.ia_enabled is not None:
+        body["ia_enabled"] = req.ia_enabled
+    if req.numero_personal is not None:
+        # El número PERSONAL del asesor: desde ahí le escribe a su propio número
+        # de Broquer y lo atiende Broq (modo asesor), no la recepcionista.
+        # Cadena vacía = quitarlo. Se guarda normalizado (solo dígitos, 52 fijo).
+        body["numero_personal"] = _normaliza_mx(req.numero_personal) or None
+    await sb_patch("wa2_numeros", {"id": f"eq.{numero_id}", "user_id": _in_filter(ids)}, body)
+    return {"ok": True}
+
+
+@router.delete("/numeros/{numero_id}")
+async def wa2_numero_delete(numero_id: str, request: Request):
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    rows = await sb_get("wa2_numeros", {"id": f"eq.{numero_id}", "user_id": _in_filter(ids),
+                                        "select": "waba_id,access_token", "limit": "1"})
+    if rows and rows[0].get("waba_id") and rows[0].get("access_token"):
+        try:
+            async with httpx.AsyncClient(timeout=15) as c:
+                await c.delete(f"{GRAPH_API}/{rows[0]['waba_id']}/subscribed_apps",
+                               params={"access_token": rows[0]["access_token"]})
+        except Exception:
+            pass
+    await sb_delete("wa2_numeros", {"id": f"eq.{numero_id}", "user_id": _in_filter(ids)})
+    return {"ok": True}
+
+
+# =============================================================================
+# 2) ENTRENAMIENTO (identidad de la IA, por número o plantilla default)
+# =============================================================================
 class TrainingReq(BaseModel):
+    numero_id: str | None = None
+    nombre_ia: str | None = None
     tono: str | None = None
-    primer_mensaje: str | None = None
+    identidad: str | None = None
     puede: str | None = None
     debe: str | None = None
     no_debe: str | None = None
+    especialidad: str | None = None
+    conocimiento: str | None = None
+    objetivo: str | None = None
+    datos_calificar: list[str] = []
+    preguntas_extra: list[str] = []
+    escalar_palabras: list[str] = []
     horario_activo: bool = False
     hora_inicio: str = "08:00"
     hora_fin: str = "21:00"
     fuera_horario_msg: str | None = None
     max_mensajes_ia: int = 0
-    escalar_palabras: list[str] = []
     activo: bool = True
-    especialidad: str | None = None
-    objetivo: str | None = None
-    datos_calificar: list[str] = []
-    preguntas_extra: list[str] = []
-    faq: list[dict] = []
+    zona_horaria: str = "America/Mexico_City"
 
 
-@router.get("/training")
-async def wa_training_get(request: Request):
-    """Reglas del agente. Si nunca guardó, devuelve los defaults."""
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autorizado")
-    return await entrenamiento(user_id)
+@router.get("/entrenamiento")
+async def wa2_training_get(request: Request, numero_id: str | None = None):
+    user_id = await _require_user(request)
+    if numero_id:
+        ids = await _ids_visibles(user_id)
+        numero_rows = await sb_get("wa2_numeros", {"id": f"eq.{numero_id}", "user_id": _in_filter(ids),
+                                                    "select": "id", "limit": "1"})
+        if not numero_rows:
+            raise HTTPException(status_code=404, detail="Número no encontrado")
+        rows = await sb_get("wa2_entrenamiento", {"numero_id": f"eq.{numero_id}", "select": "*", "limit": "1"})
+    else:
+        rows = await sb_get("wa2_entrenamiento", {"user_id": f"eq.{user_id}", "numero_id": "is.null",
+                                                  "select": "*", "limit": "1"})
+    if rows:
+        return rows[0]
+    return dict(TRAINING_DEFAULTS, numero_id=numero_id)
 
 
-@router.put("/training")
-async def wa_training_put(req: TrainingReq, request: Request):
-    """Guarda las reglas. Upsert por user_id (PK), sin fila duplicada posible."""
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autorizado")
+@router.put("/entrenamiento")
+async def wa2_training_put(req: TrainingReq, request: Request):
+    user_id = await _require_user(request)
+    fila = req.dict()
+    fila["updated_at"] = _now()
 
-    hi, mi = _hhmm(req.hora_inicio, "08:00")
-    hf, mf = _hhmm(req.hora_fin, "21:00")
-    palabras = [p.strip() for p in (req.escalar_palabras or []) if (p or "").strip()][:20]
+    if req.numero_id:
+        # El entrenamiento de un número le pertenece a QUIEN CONECTÓ ese número
+        # (así lo relee correctamente el webhook), no a quien lo está editando.
+        # El dueño/admin puede editar el de su equipo; por eso se busca por el
+        # número real y no por el user_id de quien manda la petición.
+        ids = await _ids_visibles(user_id)
+        numero_rows = await sb_get("wa2_numeros", {"id": f"eq.{req.numero_id}", "user_id": _in_filter(ids),
+                                                    "select": "user_id", "limit": "1"})
+        if not numero_rows:
+            raise HTTPException(status_code=404, detail="Número no encontrado o no tienes permiso sobre él")
+        fila["user_id"] = numero_rows[0]["user_id"]
+        existing = await sb_get("wa2_entrenamiento", {"numero_id": f"eq.{req.numero_id}", "select": "id", "limit": "1"})
+    else:
+        fila["user_id"] = user_id
+        existing = await sb_get("wa2_entrenamiento", {"user_id": f"eq.{user_id}", "numero_id": "is.null",
+                                                      "select": "id", "limit": "1"})
 
-    # Solo claves válidas del catálogo; nada de texto libre entra por aquí.
-    calif = [k for k in (req.datos_calificar or []) if k in CALIF_OPCIONES][:12]
-    extra = [(p or "").strip()[:160] for p in (req.preguntas_extra or []) if (p or "").strip()][:5]
-    faq = []
-    for item in (req.faq or [])[:20]:
-        if isinstance(item, dict):
-            q = (item.get("q") or "").strip()[:160]
-            a = (item.get("a") or "").strip()[:600]
-            if q and a:
-                faq.append({"q": q, "a": a})
+    if existing:
+        guardado = await sb_patch("wa2_entrenamiento", {"id": f"eq.{existing[0]['id']}"}, fila)
+    else:
+        fila["created_at"] = _now()
+        guardado = await sb_post("wa2_entrenamiento", fila)
+    if not guardado:
+        # sb_patch/sb_post ya reintentaron y loguearon el motivo; si aun así no hay
+        # fila de vuelta, algo de verdad no se guardó y hay que decirlo, no fingir.
+        raise HTTPException(status_code=500,
+            detail="No se pudo guardar el entrenamiento. Vuelve a intentar en un momento; "
+                   "si sigue sin guardar, es un problema de conexión con la base de datos.")
+    return {"ok": True}
+
+
+class ProbarReq(BaseModel):
+    numero_id: str | None = None
+    historial: list = []          # [{"rol":"prospecto"|"ia","texto":"..."}]
+    mensaje: str
+
+
+@router.post("/probar")
+async def wa2_probar(req: ProbarReq, request: Request):
+    """Banco de pruebas: platica con la IA EXACTAMENTE como lo haría un
+    prospecto, con el entrenamiento y el catálogo reales, pero sin mandar un
+    solo WhatsApp a nadie, sin crear contactos y sin tocar la base.
+
+    Hasta ahora la única forma de saber si el entrenamiento quedó bien era
+    esperar a que llegara un prospecto de verdad y rezar. Eso es justo lo que
+    no puede pasar el día del lanzamiento con AMPI."""
+    user_id = await _require_user(request)
+
+    numero_id = req.numero_id or ""
+    if numero_id:
+        ids = await _ids_visibles(user_id)
+        n = await sb_get("wa2_numeros", {"id": f"eq.{numero_id}", "user_id": _in_filter(ids),
+                                         "select": "id,user_id", "limit": "1"})
+        if not n:
+            raise HTTPException(status_code=404, detail="Número no encontrado")
+        dueño = n[0]["user_id"]
+    else:
+        dueño = user_id
+
+    entren = await _entrenamiento_de(dueño, numero_id)
+    agente = await _perfil_agente(dueño)
+
+    history = []
+    for h in (req.historial or [])[-HISTORY_LIMIT:]:
+        texto = (h.get("texto") or "").strip()
+        if not texto:
+            continue
+        history.append({"role": "assistant" if h.get("rol") == "ia" else "user", "content": texto})
+    history.append({"role": "user", "content": req.mensaje})
+
+    contexto = (f"Atiendes prospectos de {agente['nombre']}, asesor inmobiliario"
+                f"{(' en ' + agente['zona']) if agente['zona'] else ''}. "
+                "Si no sabes por qué propiedad escribe, pregúntale qué busca.")
+
+    resultado = await recepcion2_responde(history, contexto, agente, entren)
+
+    # Si la IA quiso mandar propiedades, se hace la MISMA búsqueda real contra
+    # el catálogo, para que se vea si de verdad encuentra lo que debería.
+    propiedades, aviso = [], None
+    accion = resultado.get("accion")
+    if isinstance(accion, dict) and accion.get("tipo") == "enviar_inmuebles":
+        filtros = accion.get("filtros") or {}
+        if not filtros.get("precio_max"):
+            respaldo = _parsear_presupuesto(resultado.get("presupuesto") or "")
+            if respaldo:
+                filtros = {**filtros, "precio_max": respaldo}
+        props, sin_resultados = await _buscar_inmuebles(dueño, filtros)
+        propiedades = [{"id": p.get("id"), "titulo": p.get("titulo") or p.get("tipo"),
+                        "resumen": _texto_inmueble(p).replace("\n", " · ")} for p in props[:3]]
+        if sin_resultados:
+            aviso = ("La IA buscó en tu catálogo y no encontró nada en esa zona. "
+                     "Al prospecto real le avisaría con honestidad, sin ofrecerle otra ubicación.")
+        filtros_usados = filtros
+    else:
+        filtros_usados = None
+
+    return {
+        "reply": resultado.get("reply"),
+        "temperatura": resultado.get("temperatura"),
+        "score": resultado.get("score"),
+        "presupuesto": resultado.get("presupuesto"),
+        "forma_pago": resultado.get("forma_pago"),
+        "busca": resultado.get("busca"),
+        "resumen": resultado.get("resumen"),
+        "accion": accion,
+        "filtros": filtros_usados,
+        "propiedades": propiedades,
+        "aviso": aviso,
+        "falla_tecnica": bool(resultado.get("_falla_tecnica")),
+    }
+
+
+async def _alta_inmueble(user_id: str, datos: dict, wa_id: str, fotos: list | None = None) -> str | None:
+    """Da de alta un inmueble que un tercero le mandó al asesor por WhatsApp.
+
+    Nace SIEMPRE con estatus 'no_activa': no aparece en el sitio público del
+    asesor, no se le ofrece a ningún comprador y no se sincroniza a ningún
+    lado. Es un borrador que espera revisión humana. Un dato que llegó por
+    WhatsApp de alguien que no conocemos no puede tratarse como inventario
+    real: ni el precio, ni la titularidad, ni siquiera que la casa exista
+    están verificados.
+    """
+    tipo = (datos.get("tipo") or "").strip() or "Propiedad"
+    colonia = (datos.get("colonia") or "").strip()
+    operacion = (datos.get("operacion") or "").strip().lower()
+    if operacion not in ("venta", "renta"):
+        operacion = "venta"
+
+    titulo = (datos.get("titulo") or "").strip() or \
+        " ".join(x for x in [tipo, "en", operacion, ("· " + colonia) if colonia else ""] if x).strip()
+
+    try:
+        precio = float(datos.get("precio")) if datos.get("precio") not in (None, "") else None
+    except Exception:
+        precio = None
+
+    def _entero(v):
+        try:
+            return int(float(v))
+        except Exception:
+            return None
 
     fila = {
-        "user_id":           user_id,
-        "tono":              (req.tono or "").strip()[:400] or None,
-        "primer_mensaje":    (req.primer_mensaje or "").strip()[:600] or None,
-        "puede":             (req.puede or "").strip()[:1500] or None,
-        "debe":              (req.debe or "").strip()[:1500] or None,
-        "no_debe":           (req.no_debe or "").strip()[:1500] or None,
-        "horario_activo":    bool(req.horario_activo),
-        "hora_inicio":       f"{hi:02d}:{mi:02d}",
-        "hora_fin":          f"{hf:02d}:{mf:02d}",
-        "fuera_horario_msg": (req.fuera_horario_msg or "").strip()[:600] or None,
-        "max_mensajes_ia":   max(0, min(int(req.max_mensajes_ia or 0), 50)),
-        "escalar_palabras":  palabras,
-        "activo":            bool(req.activo),
-        "especialidad":      (req.especialidad or "").strip()[:400] or None,
-        "objetivo":          (req.objetivo or "").strip()[:300] or None,
-        "datos_calificar":   calif,
-        "preguntas_extra":   extra,
-        "faq":               faq,
-        "updated_at":        _now(),
+        "user_id": user_id,
+        "titulo": titulo[:200],
+        "tipo": tipo,
+        "operacion": operacion,
+        "precio": precio,
+        "moneda": (datos.get("moneda") or "MXN").upper()[:4],
+        "colonia": colonia or None,
+        "ciudad": (datos.get("ciudad") or "").strip() or None,
+        "calle": (datos.get("calle") or "").strip() or None,
+        "recamaras": _entero(datos.get("recamaras")),
+        "banos": _entero(datos.get("banos")),
+        "estacionamientos": _entero(datos.get("estacionamientos")),
+        "m2_construccion": _entero(datos.get("m2_construccion")),
+        "m2_terreno": _entero(datos.get("m2_terreno")),
+        "descripcion": (datos.get("descripcion") or "").strip() or None,
+        "fotos": [f for f in (fotos or []) if f][:20],
+        "estatus": "no_activa",
+        "descripcion_privada": (
+            f"Alta automática desde WhatsApp ({_normaliza_mx(wa_id)}) el "
+            f"{_hora_local().strftime('%d/%m/%Y %H:%M')}. "
+            "Datos proporcionados por un tercero, SIN VERIFICAR. "
+            "Revisa precio, ubicación, medidas y titularidad antes de activarla."),
+        "created_at": _now(),
+        "updated_at": _now(),
     }
-    await sb_post("wa_training", fila,
-                  prefer="resolution=merge-duplicates,return=representation")
-    return await entrenamiento(user_id)
+    creada = await sb_post("propiedades", fila)
+    if not creada:
+        log.error("No se pudo dar de alta el inmueble de WhatsApp (user=%s)", user_id)
+        return None
+    return creada[0].get("id")
 
 
-# ── /whatsapp/disconnect ──────────────────────────────────────────────────────
-@router.delete("/disconnect")
-async def wa_disconnect(request: Request):
-    """Desvincula el número de WhatsApp del usuario. No elimina conversaciones."""
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autorizado")
-
-    # Obtener info antes de borrar (para revocar token en Meta)
-    rows = await sb_get("wa_numbers", {"user_id": f"eq.{user_id}", "select": "*", "limit": "1"})
+async def _entrenamiento_de(user_id: str, numero_id: str) -> dict:
+    rows = await sb_get("wa2_entrenamiento", {
+        "user_id": f"eq.{user_id}", "numero_id": f"eq.{numero_id}", "select": "*", "limit": "1"})
     if rows:
-        token = rows[0].get("access_token", "")
-        # Intentar revocar en Meta (best-effort, no bloquea si falla)
-        if token:
+        return rows[0]
+    rows = await sb_get("wa2_entrenamiento", {
+        "user_id": f"eq.{user_id}", "numero_id": "is.null", "select": "*", "limit": "1"})
+    if rows:
+        return rows[0]
+    return dict(TRAINING_DEFAULTS)
+
+
+def _reglas_para_prompt(e: dict) -> str:
+    partes = []
+    if e.get("puede"): partes.append(f"Puedes: {e['puede']}.")
+    if e.get("debe"): partes.append(f"Debes: {e['debe']}.")
+    if e.get("no_debe"): partes.append(f"Nunca: {e['no_debe']}.")
+    if e.get("preguntas_extra"):
+        preguntas = e["preguntas_extra"] if isinstance(e["preguntas_extra"], list) else []
+        if preguntas:
+            partes.append("Además pregunta cuando venga al caso: " + "; ".join(preguntas) + ".")
+    return " ".join(partes)
+
+
+def _conocimiento_para_prompt(e: dict) -> str:
+    """Bloque de información del negocio que el agente escribió con sus
+    palabras. Es la fuente de verdad para todo lo que NO está en el catálogo:
+    comisiones, créditos que aceptan, requisitos, ubicación de la oficina,
+    formas de pago, política de apartado, etc."""
+    txt = (e.get("conocimiento") or "").strip()
+    if not txt:
+        return ""
+    return ("INFORMACIÓN DEL NEGOCIO (fuente de verdad, úsala tal cual y NUNCA la contradigas):\n"
+            f"{txt[:6000]}\n")
+
+
+def _calificacion_para_prompt(e: dict) -> str:
+    datos = e.get("datos_calificar") or TRAINING_DEFAULTS["datos_calificar"]
+    if isinstance(datos, str):
+        datos = [d.strip() for d in datos.split(",") if d.strip()]
+    return ", ".join(datos) if datos else "presupuesto, forma de pago y para cuándo busca"
+
+
+def _en_horario(e: dict) -> bool:
+    if not e.get("horario_activo"):
+        return True
+    try:
+        ahora = _hora_local(e.get("zona_horaria")).strftime("%H:%M")
+        return e.get("hora_inicio", "08:00") <= ahora <= e.get("hora_fin", "21:00")
+    except Exception:
+        return True
+
+
+# =============================================================================
+# 3) EL CEREBRO — Anthropic, con JSON estructurado + acciones
+# =============================================================================
+async def recepcion2_responde(history: list, contexto: str, agente: dict, entren: dict) -> dict:
+    quien = agente.get("nombre") or "tu asesor inmobiliario"
+    zona = agente.get("zona") or ""
+    ubica = f" en {zona}" if zona else ""
+    nombre_ia = entren.get("nombre_ia") or "Recepción"
+    identidad = entren.get("identidad") or f"Eres '{nombre_ia}', el asistente de WhatsApp de {quien}, asesor inmobiliario{ubica}."
+    tono = entren.get("tono") or TRAINING_DEFAULTS["tono"]
+    hoy = _fmt_fecha_larga(_hora_local(entren.get("zona_horaria")))
+
+    system = (
+        f"{identidad} Hablas en tono {tono}. Español mexicano, mensajes cortos de WhatsApp, sin emojis. "
+        f"Atiendes a un prospecto real. Califícalo con calidez y rapidez, sin sonar a robot ni a interrogatorio: "
+        f"averigua {_calificacion_para_prompt(entren)}; cuando haga sentido, ofrece agendar una visita con día y hora. "
+        f"Hoy es {hoy}, úsalo para entender 'mañana', 'el sábado', etc.\n\n"
+        f"Contexto: {contexto}\n"
+        f"{_reglas_para_prompt(entren)}\n"
+        f"{_conocimiento_para_prompt(entren)}"
+        "REGLA DURA: si te preguntan algo que no viene ni en la información del negocio de arriba ni en "
+        "el catálogo, NO lo inventes y NO lo supongas. Di con naturalidad que lo confirmas con el asesor "
+        "y sigue la conversación. Inventar una comisión, un requisito, una fecha de entrega o una "
+        "dirección es el peor error que puedes cometer.\n"
+        "Cuando el prospecto pida ver opciones, o cuando ya sepas lo suficiente para mostrarle propiedades, "
+        "NO inventes inmuebles ni des direcciones exactas: en 'accion' pide enviarle opciones con los filtros "
+        "que tengas (deja en null lo que no sepas) y el sistema le manda propiedades REALES del catálogo del "
+        "asesor. En 'reply' avísale en una línea que se las vas a compartir. Usa esto solo cuando de verdad "
+        "toque mostrar propiedades; si sigues calificando, deja 'accion' en null.\n"
+        "Cuando el prospecto acepte un día y hora concretos para la visita, ponlo en 'accion' como "
+        "agendar_visita con fecha (YYYY-MM-DD) y hora (HH:MM 24h); el sistema le manda la invitación y avisa "
+        "al asesor. Si no hay día y hora firmes, no lo pongas.\n"
+        "Si el prospecto pide explícitamente hablar con una persona, se molesta, o el caso se sale de tus manos, "
+        "pon 'accion' como pasar_a_humano con un motivo breve; el sistema apaga la IA de esta conversación y "
+        "avisa al asesor de inmediato.\n"
+        "NO TODO EL QUE ESCRIBE ES COMPRADOR. Antes de calificar, entiende con quién hablas: hay propietarios "
+        "que quieren VENDER o RENTAR su inmueble, y colegas que traen una propiedad. A ésos no les preguntes "
+        "presupuesto ni forma de pago — eso es absurdo y se nota. A ellos pídeles los datos del inmueble.\n"
+        "Cuando alguien te ofrezca un inmueble (te manda fotos, o te lo describe), junta lo que puedas: tipo, si es venta o renta, precio, colonia, ciudad, recámaras, "
+        "baños, estacionamientos, metros de construcción y de terreno. Lo que falte, pregúntalo con naturalidad "
+        "y de poquito en poquito, no de golpe. Cuando ya tengas al menos tipo, operación y colonia, ponlo en "
+        "'accion' como registrar_inmueble. REGLA DURA DEL REGISTRO: cada dato del inmueble (colonia, ciudad, "
+        "precio, medidas, todo) sale ÚNICA Y EXCLUSIVAMENTE de lo que el remitente escribió o de lo que se ve "
+        "en sus fotos. NUNCA tomes la ubicación de la zona donde opera el asesor, de su perfil ni de ninguna "
+        "otra parte: que el asesor trabaje en una zona no significa que el inmueble esté ahí. Si el remitente "
+        "no ha dicho dónde está, pregúntaselo; deja en null lo que no te hayan dicho. Después de registrarlo "
+        "NO le prometas publicación, revisión ni plazos: el sistema le contesta lo justo y el asesor decide.\n"
+        "Responde ÚNICAMENTE con un JSON válido, sin texto antes ni después, así:\n"
+        '{"reply":"mensaje para el prospecto",'
+        '"nombre":"el nombre del prospecto ÚNICAMENTE si él mismo lo dijo en el chat (nunca lo inventes ni lo saques de otro lado), o null",'
+        '"temperatura":"Caliente|Tibio|Frío",'
+        '"score":0-100,"presupuesto":"texto o null","forma_pago":"crédito|contado|por definir",'
+        '"busca":"1 frase o null","resumen":"1 frase para el agente","nota":"1 frase para la bitácora o null",'
+        '"accion":null}\n'
+        "El campo 'accion' es null casi siempre. Para mostrar propiedades: "
+        '{"tipo":"enviar_inmuebles","filtros":{"operacion":"venta|renta|null",'
+        '"tipo":"casa|departamento|terreno u otro texto, o null",'
+        '"colonia":"la colonia o fraccionamiento exacto que mencionó, o null",'
+        '"zona_amplia":"el nombre del desarrollo/zona más grande si lo mencionó además de la colonia '
+        '(ej. si dice \'El Olivar en Altozano\', colonia=\'El Olivar\' y zona_amplia=\'Altozano\'), o null",'
+        '"ciudad":"la ciudad o municipio que mencionó, o null si no la dijo",'
+        '"precio_max":numero o null,"recamaras":numero o null}}. '
+        "Usa 'ciudad' ÚNICAMENTE si el prospecto la mencionó de forma explícita en ESTA conversación. "
+        "NUNCA la asumas ni la infieras de dónde opera el asesor, de su perfil, ni de nada fuera de lo que el "
+        "propio prospecto escribió — el catálogo que se consulta ya es solo el inventario de este asesor, así "
+        "que buscar nada más por colonia/zona (sin ciudad) es correcto y suficiente cuando el prospecto no dio "
+        "una ciudad. Si el prospecto solo dice una colonia o fraccionamiento, deja 'ciudad' en null y busca "
+        "igual — no le digas que no hay nada solo porque falta ese dato. Separa colonia y ciudad en sus propios "
+        "campos — nunca los mezcles en un solo texto.\n"
+        "'precio_max' es OBLIGATORIO si el prospecto mencionó un presupuesto EN CUALQUIER MOMENTO de esta "
+        "conversación, aunque el mensaje más reciente solo hable de ubicación — revisa todo el historial, no "
+        "nada más el último mensaje. Conviértelo siempre a un número entero de pesos sin signos ni texto "
+        "(\"2 millones\"→2000000, \"2.5 mdp\"→2500000, \"800 mil\"→800000, \"$1,200,000\"→1200000). Nunca mandes "
+        "propiedades por encima de un presupuesto que ya te dieron, salvo que el prospecto diga explícitamente "
+        "que es flexible o que puede subir el monto.\n"
+        "Para agendar: "
+        '{"tipo":"agendar_visita","fecha":"YYYY-MM-DD","hora":"HH:MM","inmueble":"texto o null"}. '
+        "Para pasar a humano: "
+        '{"tipo":"pasar_a_humano","motivo":"texto"}\n'
+        "Para registrar un inmueble que te ofrecieron: "
+        '{"tipo":"registrar_inmueble","datos":{"titulo":"texto o null","tipo":"casa|departamento|terreno|local u otro",'
+        '"operacion":"venta|renta","precio":numero o null,"moneda":"MXN","colonia":"texto o null",'
+        '"ciudad":"texto o null","calle":"texto o null","recamaras":numero o null,"banos":numero o null,'
+        '"estacionamientos":numero o null,"m2_construccion":numero o null,"m2_terreno":numero o null,'
+        '"descripcion":"lo que te contaron del inmueble, en tus palabras"}}\n'
+        "NUNCA PROMETAS LO QUE NO PUEDES HACER. Tus únicas capacidades reales son: contestar con la "
+        "información de arriba, mandar propiedades del catálogo, agendar visitas, registrar un inmueble que te "
+        "ofrezcan y pasarle la conversación al asesor. Si te piden cualquier otra cosa —mandar un contrato, "
+        "cotizar un crédito, cobrar, hacer un avalúo, apartar— NO digas que la vas a hacer ni que 'ahorita se "
+        "la preparo'. Di que se lo comentas al asesor y pon 'accion' como pasar_a_humano. Prometer algo que "
+        "nunca llega es peor que decir que no."
+    )
+
+    msgs = list(history)
+    while msgs and msgs[0]["role"] != "user":
+        msgs.pop(0)
+    if not msgs:
+        msgs = [{"role": "user", "content": "Hola"}]
+
+    # Antes esto NO revisaba el status code de Anthropic. Cuando la API venía
+    # saturada (429 / 529, cosa normal y pasajera) o tardaba, se caía directo al
+    # respaldo — y el respaldo era un saludo de bienvenida. O sea: al prospecto
+    # que llevaba diez mensajes platicando le llegaba de la nada "¡Hola! ¿Me
+    # cuentas qué estás buscando?", como si la IA hubiera perdido la memoria.
+    # Ahora se reintenta (esos errores casi siempre se arreglan solos en
+    # segundos) y el respaldo se adapta a si la charla ya venía empezada.
+    ultimo_error = ""
+    for intento in (1, 2, 3):
+        try:
+            async with httpx.AsyncClient(timeout=45) as c:
+                r = await c.post(f"{ANTHROPIC_BASE}/messages",
+                                 headers={"x-api-key": ANTHROPIC_API_KEY,
+                                          "anthropic-version": "2023-06-01",
+                                          "Content-Type": "application/json"},
+                                 json={"model": WA2_MODEL, "max_tokens": 1600,
+                                       "system": system, "messages": msgs})
+            if r.status_code in (408, 429, 500, 502, 503, 504, 529):
+                ultimo_error = f"{r.status_code}: {r.text[:200]}"
+                await asyncio.sleep(2 * intento)
+                continue
+            if r.status_code >= 400:
+                ultimo_error = f"{r.status_code}: {r.text[:200]}"
+                break
+            data = r.json()
+            text = "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text").strip()
+            if not text:
+                ultimo_error = "respuesta vacía de Anthropic"
+                await asyncio.sleep(2 * intento)
+                continue
+            t = text.replace("```json", "").replace("```", "").strip()
+            s, e = t.find("{"), t.rfind("}")
+            if s != -1 and e != -1:
+                t = t[s:e + 1]
+            salida = json.loads(t)
+            if isinstance(salida, dict) and (salida.get("reply") or "").strip():
+                return salida
+            ultimo_error = "la respuesta no traía 'reply'"
+        except Exception as e:
+            ultimo_error = str(e)[:200]
+            await asyncio.sleep(2 * intento)
+
+    log.error("Recepción 2.0: Anthropic no respondió bien tras 3 intentos -> %s", ultimo_error)
+    ya_venia_platicando = len([m for m in msgs if m.get("role") == "user"]) > 1
+    if ya_venia_platicando:
+        # A media conversación NUNCA hay que saludar de nuevo: eso es lo que
+        # delata al bot y espanta al prospecto.
+        reply = "Dame un momento, por favor."
+        resumen = "La IA no pudo responder por una falla técnica; requiere seguimiento del asesor."
+    else:
+        reply = "¡Hola! Gracias por escribir. ¿Me cuentas qué estás buscando y para cuándo, y con gusto te ayudo?"
+        resumen = "Prospecto nuevo, sin calificar aún."
+    return {"reply": reply, "temperatura": "Tibio", "score": 50, "presupuesto": None,
+            "forma_pago": "por definir", "busca": None, "resumen": resumen,
+            "nota": None, "accion": None, "_falla_tecnica": True}
+
+
+# =============================================================================
+# 4) BÚSQUEDA Y ENVÍO DE INMUEBLES (catálogo real del usuario)
+# =============================================================================
+async def _buscar_inmuebles(user_id: str, filtros: dict, limit: int = 3) -> tuple[list, bool]:
+    """Devuelve (propiedades, zona_sin_resultados). zona_sin_resultados es True
+    cuando el prospecto pidió una zona concreta y de verdad no hay nada ahí —
+    para que el mensaje sea honesto en vez de mandar propiedades de otro lado
+    como si fueran lo que se pidió.
+
+    IMPORTANTE sobre precisión: 'ciudad' es un filtro DURO — si el prospecto
+    dijo Morelia, jamás se relaja para buscar en otros municipios. 'colonia'
+    se intenta primero exacta y, si no hay nada, con el nombre del desarrollo/
+    fraccionamiento más amplio (zona_amplia) — pero SIEMPRE dentro de la misma
+    ciudad. Nunca se hace un OR suelto de palabras sin relación entre sí: eso
+    era lo que antes hacía que 'Morelia' por sí solo trajera cualquier cosa de
+    la ciudad, o que una palabra como 'Olivar' apareciera de casualidad en la
+    calle de un inmueble de otro municipio.
+    """
+    sel = ("id,titulo,tipo,operacion,precio,moneda,colonia,ciudad,calle,"
+           "num_exterior,recamaras,banos,m2_construccion,fotos,estatus,descripcion")
+    # OJO con el estatus: antes esto era `estatus=not.in.(...)` a secas, y en
+    # Postgres una comparación contra NULL nunca da verdadero. Es decir, TODA
+    # propiedad con el estatus vacío quedaba invisible para la IA — y muchas
+    # propiedades importadas o capturadas rápido no traen estatus. El agente
+    # tenía inventario y la IA le decía al prospecto que no había nada.
+    #
+    # 'no_activa' es el estatus de los inmuebles que la propia IA dio de alta
+    # con lo que le mandó un tercero por WhatsApp. Esos NUNCA se le ofrecen a
+    # un comprador: nadie ha verificado el precio, la titularidad ni que la
+    # propiedad exista. Solo salen del cajón cuando el asesor los activa.
+    base = {"user_id": f"eq.{user_id}", "select": sel,
+            "or": "(estatus.is.null,estatus.not.in.(vendida,rentada,suspendida,no_activa))",
+            "order": "updated_at.desc", "limit": str(limit)}
+    op = (filtros.get("operacion") or "").strip().lower()
+    if op in ("venta", "renta"):
+        base["operacion"] = f"eq.{op}"
+    tipo = (filtros.get("tipo") or "").strip()
+    if tipo:
+        base["tipo"] = f"ilike.*{tipo}*"
+
+    ciudad = (filtros.get("ciudad") or "").strip()
+    colonia = (filtros.get("colonia") or "").strip()
+    zona_amplia = (filtros.get("zona_amplia") or "").strip()
+
+    def _con_precio_recamaras(p: dict) -> dict:
+        p = dict(p)
+        if filtros.get("precio_max"):
             try:
-                async with httpx.AsyncClient(timeout=10) as c:
-                    await c.delete(f"https://graph.facebook.com/v21.0/me/permissions",
-                                   params={"access_token": token})
+                p["precio"] = f"lte.{int(filtros['precio_max'])}"
+            except Exception:
+                pass
+        if filtros.get("recamaras"):
+            try:
+                p["recamaras"] = f"gte.{int(filtros['recamaras'])}"
+            except Exception:
+                pass
+        return p
+
+    if ciudad or colonia or zona_amplia:
+        # La ciudad, si se pidió, es OBLIGATORIA en las tres pasadas — nunca
+        # se quita, así jamás se ofrece algo de un municipio distinto.
+        def _con_ciudad(p: dict) -> dict:
+            if ciudad:
+                p = dict(p)
+                p["ciudad"] = f"ilike.*{ciudad}*"
+            return p
+
+        intentos = []
+        if colonia:
+            intentos.append({"colonia": f"ilike.*{colonia}*"})
+        if zona_amplia and zona_amplia.lower() != colonia.lower():
+            intentos.append({"colonia": f"ilike.*{zona_amplia}*"})
+        if colonia:
+            # Por si el nombre del desarrollo está capturado en la calle y no
+            # en la colonia (pasa seguido con fraccionamientos nuevos).
+            intentos.append({"calle": f"ilike.*{colonia}*"})
+        if not intentos and ciudad:
+            intentos.append({})  # solo ciudad, sin colonia — caso "casas en Morelia"
+
+        for extra in intentos:
+            params = _con_ciudad({**base, **extra})
+            rows = await sb_get("propiedades", _con_precio_recamaras(params))
+            if rows:
+                return rows, False
+
+        # De verdad no hay nada en esa zona/ciudad: se avisa, no se manda otra
+        # cosa en su lugar disfrazada de lo que se pidió.
+        return [], True
+
+    # Sin zona pedida: aquí sí tiene sentido relajar precio/recámaras si son
+    # demasiado estrictos, porque no cambian LO QUE ES la propiedad, solo el
+    # rango — y de perdida se le enseña algo parecido a lo que busca.
+    rows = await sb_get("propiedades", _con_precio_recamaras(base))
+    if not rows and (filtros.get("precio_max") or filtros.get("recamaras")):
+        rows = await sb_get("propiedades", base)
+    return rows or [], False
+
+
+
+
+def _texto_inmueble(p: dict) -> str:
+    direccion = ", ".join(x for x in [p.get("calle"), p.get("colonia"), p.get("ciudad")] if x)
+    det = []
+    if p.get("recamaras"): det.append(f"{p['recamaras']} rec")
+    if p.get("banos"): det.append(f"{p['banos']} baños")
+    if p.get("m2_construccion"): det.append(f"{p['m2_construccion']} m2")
+    precio = _money(p.get("precio"))
+    return (f"*{p.get('titulo') or p.get('tipo') or 'Propiedad'}*\n"
+            f"{direccion or 'Ubicación a consultar'}\n"
+            f"{' · '.join(det)}\n"
+            f"{precio} {p.get('moneda') or 'MXN'}" + (" / mes" if p.get("operacion") == "renta" else ""))
+
+
+def _fotos_a_imagenes(fotos) -> list:
+    out = []
+    for f in (fotos or []):
+        if isinstance(f, str) and f.strip():
+            out.append({"url": f.strip()})
+        elif isinstance(f, dict):
+            u = f.get("url") or f.get("original")
+            if u:
+                out.append({"url": u})
+    return out
+
+
+def _propiedad_para_ficha(p: dict) -> dict:
+    """Mapea una fila de `propiedades` al formato que espera build_ficha_html
+    en main.py (el mismo motor Playwright que usa el módulo de fichas)."""
+    op_raw = (p.get("operacion") or "").strip().lower()
+    op_type = "rental" if op_raw == "renta" else "sale"
+    operations = []
+    if p.get("precio"):
+        operations.append({"type": op_type, "amount": p.get("precio"), "currency": p.get("moneda") or "MXN"})
+    calle = " ".join(filter(None, [str(p.get("calle") or "").strip(), str(p.get("num_exterior") or "").strip()])).strip()
+    return {
+        "public_id": p.get("id") or "", "id": p.get("id") or "",
+        "title": p.get("titulo") or p.get("tipo") or "Propiedad",
+        "property_type": p.get("tipo") or "Propiedad",
+        "operations": operations,
+        "location": {"name": p.get("colonia") or "", "city": p.get("ciudad") or ""},
+        "address": calle,
+        "bedrooms": p.get("recamaras"), "bathrooms": p.get("banos"),
+        "parking_spaces": p.get("estacionamientos"),
+        "construction_size": p.get("m2_construccion"), "lot_size": p.get("m2_terreno"),
+        "description": p.get("descripcion") or "",
+        "property_images": _fotos_a_imagenes(p.get("fotos")),
+    }
+
+
+async def _generar_ficha_pdf(p_ficha: dict) -> tuple[str | None, str | None]:
+    """Llama al MISMO generador de PDF (Playwright) que usa el módulo de
+    Ficha técnica — no se reescribe nada, solo se usa por HTTP. Devuelve
+    (url_publica, filename) o (None, None) si no se pudo generar a tiempo."""
+    try:
+        async with httpx.AsyncClient(timeout=45) as c:
+            r = await c.post(f"{BROQUER_API_BASE}/ficha-pdf", json=p_ficha)
+        if r.status_code >= 400:
+            log.warning("No se pudo generar la ficha PDF: %s %s", r.status_code, r.text[:200])
+            return None, None
+        d = r.json()
+        token = d.get("token")
+        if not token:
+            return None, None
+        return f"{BROQUER_API_BASE}/ficha-pdf/{token}", d.get("filename") or "ficha.pdf"
+    except Exception as e:
+        log.warning("Timeout/error generando ficha PDF: %s", e)
+        return None, None
+
+
+async def _wa_send_document_link(numero: dict, wa_id: str, url: str, filename: str, caption: str = "") -> str | None:
+    """Manda un documento por URL pública directa (sin subirlo primero) —
+    válido porque /ficha-pdf/{token} ya es una URL pública servida por Broquer."""
+    if not numero.get("access_token"):
+        return None
+    async with httpx.AsyncClient(timeout=20) as c:
+        r = await c.post(f"{GRAPH_API}/{numero['phone_number_id']}/messages",
+                         headers={"Authorization": f"Bearer {numero['access_token']}"},
+                         json={"messaging_product": "whatsapp", "to": wa_id, "type": "document",
+                               "document": {"link": url, "filename": filename, "caption": caption[:1024]}})
+        if r.status_code >= 400:
+            log.error("Envío de ficha PDF falló (%s): %s", numero["phone_number_id"], r.text[:300])
+            return None
+        d = r.json()
+        msgs = d.get("messages") or []
+        return msgs[0].get("id") if msgs else None
+
+
+# =============================================================================
+# 5) CITAS / AGENDA (calendario del usuario dentro de Broquer)
+# =============================================================================
+def _fecha_hora_utc_iso(fecha: str, hora: str, zona: str | None = None) -> str | None:
+    """Convierte fecha+hora LOCAL del agente (la que entendió el prospecto) a
+    un instante UTC real, con 'Z' explícita. CRÍTICO: nunca mandar
+    f"{fecha}T{hora}:00" pelón a una columna timestamptz — Postgres lo toma
+    como si ya fuera UTC, y la hora se corre (en México, 6h para atrás)."""
+    zona = zona or "America/Mexico_City"
+    try:
+        y, m, d = (int(x) for x in fecha.split("-"))
+        hh, mi = (int(x) for x in hora.split(":")[:2])
+    except Exception:
+        return None
+    try:
+        local_dt = datetime(y, m, d, hh, mi, tzinfo=ZoneInfo(zona))
+    except Exception:
+        local_dt = datetime(y, m, d, hh, mi, tzinfo=ZoneInfo("America/Mexico_City"))
+    return local_dt.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _construir_ics(fecha: str, hora: str, titulo: str, descripcion: str, zona: str | None = None) -> str:
+    zona = zona or "America/Mexico_City"
+    try:
+        y, m, d = (int(x) for x in fecha.split("-"))
+        hh, mi = (int(x) for x in hora.split(":")[:2])
+    except Exception:
+        ahora = _hora_local(zona)
+        y, m, d, hh, mi = ahora.year, ahora.month, ahora.day, ahora.hour, ahora.minute
+    # OJO: fecha/hora vienen en la hora LOCAL del agente (la que entendió el
+    # prospecto), no en CDMX. Antes esto sumaba 6h fijas asumiendo Ciudad de
+    # México, lo cual está mal para Tijuana, Hermosillo, Cancún, etc. — cada
+    # una tiene su propio desfase contra UTC (y Tijuana además tiene horario
+    # de verano). zoneinfo lo resuelve bien para cualquier zona del país.
+    try:
+        local_dt = datetime(y, m, d, hh, mi, tzinfo=ZoneInfo(zona))
+    except Exception:
+        local_dt = datetime(y, m, d, hh, mi, tzinfo=ZoneInfo("America/Mexico_City"))
+    inicio = local_dt.astimezone(timezone.utc)
+    fin = inicio + timedelta(hours=1)
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    uid = f"{stamp}-{y}{m}{d}{hh}{mi}@broquer.app"
+    lines = [
+        "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Broquer//WhatsApp2//ES",
+        "BEGIN:VEVENT", f"UID:{uid}", f"DTSTAMP:{stamp}",
+        f"DTSTART:{inicio.strftime('%Y%m%dT%H%M%SZ')}",
+        f"DTEND:{fin.strftime('%Y%m%dT%H%M%SZ')}",
+        f"SUMMARY:{titulo}", f"DESCRIPTION:{descripcion}",
+        "END:VEVENT", "END:VCALENDAR",
+    ]
+    return "\r\n".join(lines)
+
+
+class AgendarReq(BaseModel):
+    conversacion_id: str | None = None
+    inmueble_id: str | None = None
+    titulo: str
+    fecha: str
+    hora: str
+    notas: str | None = None
+
+
+@router.post("/agendar")
+async def wa2_agendar(req: AgendarReq, request: Request):
+    """Agenda una visita: crea la tarea en el módulo de Tareas (ahí se
+    concentran todas, no solo las de WhatsApp) y, si la cita viene de una
+    conversación con un prospecto real, le manda la invitación .ics."""
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+
+    dueño_id = user_id
+    contacto = None
+    numero = None
+    if req.conversacion_id:
+        conv_rows = await sb_get("wa2_conversaciones", {"id": f"eq.{req.conversacion_id}", "user_id": _in_filter(ids),
+                                                        "select": "*", "limit": "1"})
+        if not conv_rows:
+            raise HTTPException(status_code=404, detail="Conversación no encontrada")
+        conv = conv_rows[0]
+        dueño_id = conv["user_id"]
+        contacto_rows = await sb_get("wa2_contactos", {"id": f"eq.{conv['contacto_id']}", "select": "*", "limit": "1"})
+        contacto = contacto_rows[0] if contacto_rows else None
+        numero_rows = await sb_get("wa2_numeros", {"id": f"eq.{conv['numero_id']}", "select": "*", "limit": "1"})
+        numero = numero_rows[0] if numero_rows else None
+        await sb_patch("wa2_contactos", {"id": f"eq.{conv['contacto_id']}"}, {"etapa": "Cita"})
+
+    titulo = req.titulo.strip() or "Visita"
+    if contacto and contacto.get("nombre") and contacto["nombre"] not in titulo:
+        titulo = f"{titulo} — {contacto['nombre']} (WhatsApp)"
+    elif req.conversacion_id:
+        titulo = f"{titulo} (WhatsApp)"
+
+    entren_zona = await _entrenamiento_de(dueño_id, (numero or {}).get("id", ""))
+    tarea = {
+        "user_id": dueño_id,
+        "titulo": titulo,
+        "fecha_entrega": _fecha_hora_utc_iso(req.fecha, req.hora, entren_zona.get("zona_horaria")),
+        "notas": req.notas or None,
+        "propiedad_id": req.inmueble_id or None,
+        "contacto_id": (contacto or {}).get("contacto_crm_id"),
+    }
+    creada = await sb_post("tareas", tarea)
+    if not creada:
+        raise HTTPException(status_code=500, detail="No se pudo crear la tarea. Intenta de nuevo.")
+    tarea_id = creada[0]["id"]
+
+    # Además de la columna suelta, se deja el vínculo en las tablas de
+    # varios-a-varios: así la tarea aparece también desde la pestaña de
+    # Tareas del Contacto/Inmueble aunque después se le agreguen más vínculos.
+    crm_id = (contacto or {}).get("contacto_crm_id")
+    if crm_id:
+        await sb_post("tareas_contactos", {"user_id": dueño_id, "tarea_id": tarea_id, "contacto_id": crm_id})
+    if req.inmueble_id:
+        await sb_post("tareas_propiedades", {"user_id": dueño_id, "tarea_id": tarea_id, "propiedad_id": req.inmueble_id})
+
+    if contacto and numero:
+        ics = _construir_ics(req.fecha, req.hora, titulo, req.notas or "", entren_zona.get("zona_horaria"))
+        await _wa_send_document(numero, contacto.get("wa_id"), ics.encode("utf-8"),
+                               "cita.ics", "Toca el archivo para agregarla a tu calendario.")
+
+    return {"ok": True, "tarea": creada[0]}
+
+
+# =============================================================================
+# 6) ENVÍO POR WHATSAPP (Cloud API)
+# =============================================================================
+async def _revisar_token(numero: dict, err: dict | None) -> None:
+    """Si Meta responde que el token ya no sirve, deja constancia y avisa.
+
+    El token de un número puede morir sin que nadie haga nada malo: el agente
+    revocó el permiso desde su Facebook, sacó a Broquer de su Business, o Meta
+    lo caducó. Cuando eso pasa NO hay forma de renovarlo solos — el token de
+    integración de negocio se emite una sola vez, en el Embedded Signup. El
+    único arreglo real es que el agente vuelva a apretar 'Conectar número'.
+
+    Así que lo que se puede hacer, y es lo que hace esto, es enterarse a la
+    primera y decírselo, en vez de dejar que los mensajes se pierdan en
+    silencio durante días. También apaga la IA de ese número: no tiene caso
+    quemar llamadas a Claude generando respuestas que nunca van a salir.
+    """
+    if not err or err.get("code") not in (190, 102):
+        return
+    numero_id = numero.get("id")
+    if not numero_id:
+        return
+    try:
+        if numero.get("token_valido") is False:
+            return  # ya estaba marcado, no repitas el aviso en cada mensaje
+        await sb_patch("wa2_numeros", {"id": f"eq.{numero_id}"},
+                      {"token_valido": False, "token_error_at": _now(), "ia_enabled": False})
+        numero["token_valido"] = False
+        await enviar_push(numero.get("user_id"), "Tu WhatsApp se desconectó",
+                          "Meta dejó de aceptar la conexión de tu número. Entra a WhatsApp en "
+                          "Broquer y vuelve a apretar 'Conectar número' para reactivarlo.",
+                          datos={"tipo": "whatsapp"})
+        log.error("Token inválido para el número %s (user %s): %s",
+                  numero.get("phone_number_id"), numero.get("user_id"), err.get("message"))
+    except Exception as e:  # pragma: no cover — avisar nunca debe tumbar el envío
+        log.warning("No se pudo marcar el token inválido de %s: %s", numero_id, e)
+
+
+async def _wa_send_text_detallado(numero: dict, wa_id: str, texto: str) -> tuple[str | None, dict | None]:
+    """Como _wa_send_text, pero además regresa el error real de Meta (código y
+    mensaje) cuando falla — necesario para distinguir 'ventana de 24h cerrada'
+    (código 131047) de cualquier otro problema, en vez de tragarse el error."""
+    if not numero.get("access_token"):
+        return None, {"code": None, "message": "Este número no tiene un token de acceso válido."}
+    async with httpx.AsyncClient(timeout=20) as c:
+        r = await c.post(f"{GRAPH_API}/{numero['phone_number_id']}/messages",
+                         headers={"Authorization": f"Bearer {numero['access_token']}"},
+                         json={"messaging_product": "whatsapp", "to": wa_id,
+                               "type": "text", "text": {"body": texto, "preview_url": False}})
+        if r.status_code >= 400:
+            log.error("Envío de texto falló (%s): %s", numero["phone_number_id"], r.text[:300])
+            try:
+                err = (r.json().get("error") or {})
+            except Exception:
+                err = {}
+            detalle = {"code": err.get("code"), "message": err.get("message") or "No se pudo enviar el mensaje."}
+            await _revisar_token(numero, detalle)
+            return None, detalle
+        d = r.json()
+        msgs = d.get("messages") or []
+        return (msgs[0].get("id") if msgs else None), None
+
+
+async def _wa_send_text(numero: dict, wa_id: str, texto: str) -> str | None:
+    """Manda texto. Si se pasa del tope de WhatsApp lo parte en varios mensajes:
+    antes, un texto de más de 4096 caracteres hacía que Meta rechazara el envío
+    COMPLETO y el prospecto no recibiera absolutamente nada."""
+    texto = (texto or "").strip()
+    if not texto:
+        return None
+    if len(texto) <= WA_MAX_TEXTO:
+        wamid, _ = await _wa_send_text_detallado(numero, wa_id, texto)
+        return wamid
+    partes, actual = [], ""
+    for parrafo in texto.split("\n"):
+        if len(actual) + len(parrafo) + 1 > WA_MAX_TEXTO:
+            if actual:
+                partes.append(actual)
+            actual = parrafo[:WA_MAX_TEXTO]
+        else:
+            actual = (actual + "\n" + parrafo) if actual else parrafo
+    if actual:
+        partes.append(actual)
+    ultimo = None
+    for parte in partes:
+        ultimo, _ = await _wa_send_text_detallado(numero, wa_id, parte)
+    return ultimo
+
+
+async def _wa_marcar_leido(numero: dict, wamid: str | None, escribiendo: bool = True) -> None:
+    """Pone la palomita azul y muestra 'escribiendo…' del lado del prospecto.
+
+    Sin esto la conversación se siente falsa por los dos lados: el prospecto ve
+    que sus mensajes nunca se marcan como leídos y luego, de golpe, aparece una
+    respuesta larguísima escrita en cero segundos. Con esto se lee igual que un
+    humano contestando desde su celular. Nunca debe tumbar nada si falla."""
+    if not wamid or not numero.get("access_token"):
+        return
+    cuerpo = {"messaging_product": "whatsapp", "status": "read", "message_id": wamid}
+    if escribiendo:
+        cuerpo["typing_indicator"] = {"type": "text"}
+    try:
+        async with httpx.AsyncClient(timeout=10) as c:
+            await c.post(f"{GRAPH_API}/{numero['phone_number_id']}/messages",
+                         headers={"Authorization": f"Bearer {numero['access_token']}"},
+                         json=cuerpo)
+    except Exception as e:
+        log.debug("No se pudo marcar como leído: %s", e)
+
+
+async def _descargar_media(numero: dict, media_id: str) -> tuple[bytes | None, str]:
+    """Baja un archivo que mandó el prospecto (nota de voz, foto, documento).
+    Meta lo entrega en dos pasos: primero la URL temporal, luego el binario —
+    y ambos requieren el token del número. Devuelve (bytes, mime)."""
+    if not media_id or not numero.get("access_token"):
+        return None, ""
+    headers = {"Authorization": f"Bearer {numero['access_token']}"}
+    try:
+        async with httpx.AsyncClient(timeout=30, follow_redirects=True) as c:
+            r = await c.get(f"{GRAPH_API}/{media_id}", headers=headers)
+            if r.status_code >= 400:
+                log.warning("No se pudo obtener la media %s: %s", media_id, r.text[:200])
+                return None, ""
+            info = r.json()
+            url, mime = info.get("url"), info.get("mime_type") or ""
+            if not url:
+                return None, ""
+            rb = await c.get(url, headers=headers)
+            if rb.status_code >= 400 or not rb.content:
+                return None, ""
+            return rb.content, mime
+    except Exception as e:
+        log.warning("Error bajando media %s: %s", media_id, e)
+        return None, ""
+
+
+async def _guardar_archivo(user_id: str, conversacion_id: str, contenido: bytes,
+                           mime: str, sufijo: str) -> tuple[str | None, str | None]:
+    """Sube a Supabase el archivo que mandó el prospecto y devuelve
+    (url_publica, ruta_interna).
+
+    Hace falta guardarlo porque la liga que da Meta caduca en minutos y además
+    exige el token del número: si solo se guardara esa liga, mañana estaría
+    muerta y el agente no podría volver a ver la foto que le mandaron.
+    La ruta interna se conserva aparte para poder BORRAR el archivo después."""
+    if not contenido or not SUPABASE_URL:
+        return None, None
+    ext = (mime.split("/")[-1] or "bin").split(";")[0][:8] or "bin"
+    ruta = f"{user_id}/{conversacion_id}/{int(datetime.now(timezone.utc).timestamp()*1000)}-{sufijo}.{ext}"
+    try:
+        h = {k: v for k, v in _sb_headers().items() if k != "Content-Type"}
+        h["Content-Type"] = mime or "application/octet-stream"
+        h["x-upsert"] = "true"
+        async with httpx.AsyncClient(timeout=40) as c:
+            r = await c.post(f"{SUPABASE_URL}/storage/v1/object/{WA_MEDIA_BUCKET}/{ruta}",
+                             headers=h, content=contenido)
+        if r.status_code >= 300:
+            log.warning("No se pudo guardar el archivo de WhatsApp: %s %s", r.status_code, r.text[:200])
+            return None, None
+        return f"{SUPABASE_URL}/storage/v1/object/public/{WA_MEDIA_BUCKET}/{ruta}", ruta
+    except Exception as e:
+        log.warning("Error guardando archivo de WhatsApp: %s", e)
+        return None, None
+
+
+async def _transcribir_audio(contenido: bytes, mime: str) -> str:
+    """Convierte una nota de voz en texto con Whisper (el mismo Groq que ya usa
+    Broquer). Esto NO es un lujo: en México el prospecto manda audios todo el
+    tiempo, y hasta ahora la IA solo veía la palabra '[audio]' y contestaba a
+    ciegas —o peor, contestaba cualquier cosa— sin haber oído nada."""
+    if not GROQ_API_KEY or not contenido:
+        return ""
+    ext = "ogg"
+    if "mp4" in mime or "m4a" in mime:
+        ext = "m4a"
+    elif "mpeg" in mime or "mp3" in mime:
+        ext = "mp3"
+    elif "wav" in mime:
+        ext = "wav"
+    try:
+        async with httpx.AsyncClient(timeout=60) as c:
+            r = await c.post(f"{GROQ_BASE}/audio/transcriptions",
+                             headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
+                             data={"model": "whisper-large-v3", "language": "es",
+                                   "response_format": "json"},
+                             files={"file": (f"nota.{ext}", contenido, mime or "audio/ogg")})
+        if r.status_code >= 400:
+            log.warning("Whisper falló: %s %s", r.status_code, r.text[:200])
+            return ""
+        return (r.json().get("text") or "").strip()
+    except Exception as e:
+        log.warning("Error transcribiendo audio: %s", e)
+        return ""
+
+
+async def _describir_imagen(contenido: bytes, mime: str) -> str:
+    """Le pide a Claude que lea la foto que mandó el prospecto (una captura de
+    un anuncio, la fachada de la casa que quiere vender, un comprobante…).
+    Antes la IA recibía literalmente '[image]' y le respondía de adivinanza."""
+    if not ANTHROPIC_API_KEY or not contenido or len(contenido) > 4_500_000:
+        return ""
+    import base64
+    if mime not in ("image/jpeg", "image/png", "image/gif", "image/webp"):
+        mime = "image/jpeg"
+    try:
+        async with httpx.AsyncClient(timeout=40) as c:
+            r = await c.post(f"{ANTHROPIC_BASE}/messages",
+                             headers={"x-api-key": ANTHROPIC_API_KEY,
+                                      "anthropic-version": "2023-06-01",
+                                      "Content-Type": "application/json"},
+                             json={"model": WA2_MODEL, "max_tokens": 300, "messages": [{
+                                 "role": "user", "content": [
+                                     {"type": "image", "source": {"type": "base64",
+                                      "media_type": mime,
+                                      "data": base64.b64encode(contenido).decode()}},
+                                     {"type": "text", "text":
+                                      "Describe en dos o tres frases, en español, qué se ve en esta "
+                                      "imagen que un prospecto le mandó por WhatsApp a un asesor "
+                                      "inmobiliario. Si hay texto legible (precios, direcciones, datos), "
+                                      "transcríbelo. Solo la descripción, sin preámbulo."}]}]})
+        if r.status_code >= 400:
+            return ""
+        data = r.json()
+        return "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text").strip()
+    except Exception as e:
+        log.warning("No se pudo describir la imagen: %s", e)
+        return ""
+
+
+async def _wa_send_image(numero: dict, wa_id: str, url: str, caption: str = "") -> str | None:
+    if not numero.get("access_token"):
+        return None
+    async with httpx.AsyncClient(timeout=20) as c:
+        r = await c.post(f"{GRAPH_API}/{numero['phone_number_id']}/messages",
+                         headers={"Authorization": f"Bearer {numero['access_token']}"},
+                         json={"messaging_product": "whatsapp", "to": wa_id,
+                               "type": "image", "image": {"link": url, "caption": caption[:1024]}})
+        if r.status_code >= 400:
+            log.error("Envío de imagen falló (%s): %s", numero["phone_number_id"], r.text[:300])
+            return None
+        d = r.json()
+        msgs = d.get("messages") or []
+        return msgs[0].get("id") if msgs else None
+
+
+async def _wa_send_document(numero: dict, wa_id: str, contenido: bytes, filename: str, caption: str) -> None:
+    """Sube el .ics como media y lo manda como documento adjunto."""
+    if not numero.get("access_token"):
+        return
+    try:
+        async with httpx.AsyncClient(timeout=20) as c:
+            up = await c.post(f"{GRAPH_API}/{numero['phone_number_id']}/media",
+                              headers={"Authorization": f"Bearer {numero['access_token']}"},
+                              data={"messaging_product": "whatsapp", "type": "text/calendar"},
+                              files={"file": (filename, contenido, "text/calendar")})
+            media_id = up.json().get("id") if up.status_code < 300 else None
+            if not media_id:
+                return
+            await c.post(f"{GRAPH_API}/{numero['phone_number_id']}/messages",
+                        headers={"Authorization": f"Bearer {numero['access_token']}"},
+                        json={"messaging_product": "whatsapp", "to": wa_id, "type": "document",
+                              "document": {"id": media_id, "filename": filename, "caption": caption}})
+    except Exception as e:
+        log.warning("No se pudo mandar el .ics: %s", e)
+
+
+# =============================================================================
+# 6.5) PLANTILLAS — únicas que WhatsApp permite mandar fuera de la ventana de
+# 24h desde el último mensaje del prospecto. Se crean aquí, Meta las aprueba
+# (minutos a días) y luego se pueden usar para reabrir la conversación.
+# =============================================================================
+class PlantillaCrearReq(BaseModel):
+    numero_id: str
+    nombre: str
+    idioma: str = "es_MX"
+    categoria: str = "UTILITY"  # UTILITY | MARKETING | AUTHENTICATION
+    cuerpo: str
+    variables_ejemplo: list[str] = []
+    footer: str | None = None
+
+
+@router.get("/plantillas")
+async def wa2_plantillas_list(request: Request, numero_id: str):
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    numero_rows = await sb_get("wa2_numeros", {"id": f"eq.{numero_id}", "user_id": _in_filter(ids),
+                                                "select": "*", "limit": "1"})
+    if not numero_rows:
+        raise HTTPException(status_code=404, detail="Número no encontrado")
+    numero = numero_rows[0]
+    if not numero.get("waba_id") or not numero.get("access_token"):
+        return {"plantillas": []}
+    async with httpx.AsyncClient(timeout=20) as c:
+        r = await c.get(f"{GRAPH_API}/{numero['waba_id']}/message_templates",
+                        params={"access_token": numero["access_token"], "limit": 100})
+    if r.status_code >= 400:
+        log.error("No se pudieron listar plantillas (%s): %s", numero["waba_id"], r.text[:300])
+        raise HTTPException(status_code=502, detail="Meta no pudo listar las plantillas de este número.")
+    plantillas = []
+    for t in r.json().get("data", []):
+        cuerpo = next((c.get("text") for c in t.get("components", []) if c.get("type") == "BODY"), "")
+        plantillas.append({
+            "nombre": t.get("name"), "idioma": t.get("language"), "estatus": t.get("status"),
+            "categoria": t.get("category"), "cuerpo": cuerpo,
+        })
+    return {"plantillas": plantillas}
+
+
+@router.post("/plantillas")
+async def wa2_plantilla_crear(req: PlantillaCrearReq, request: Request):
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    numero_rows = await sb_get("wa2_numeros", {"id": f"eq.{req.numero_id}", "user_id": _in_filter(ids),
+                                                "select": "*", "limit": "1"})
+    if not numero_rows:
+        raise HTTPException(status_code=404, detail="Número no encontrado")
+    numero = numero_rows[0]
+    if not numero.get("waba_id") or not numero.get("access_token"):
+        raise HTTPException(status_code=400, detail="Este número todavía no está conectado del todo con Meta.")
+
+    nombre = re.sub(r"[^a-z0-9_]", "_", req.nombre.strip().lower())
+    componentes = [{"type": "BODY", "text": req.cuerpo}]
+    if req.variables_ejemplo:
+        componentes[0]["example"] = {"body_text": [req.variables_ejemplo]}
+    if req.footer:
+        componentes.append({"type": "FOOTER", "text": req.footer})
+
+    async with httpx.AsyncClient(timeout=20) as c:
+        r = await c.post(f"{GRAPH_API}/{numero['waba_id']}/message_templates",
+                         headers={"Authorization": f"Bearer {numero['access_token']}"},
+                         json={"name": nombre, "language": req.idioma,
+                               "category": req.categoria, "components": componentes})
+    if r.status_code >= 400:
+        log.error("No se pudo crear la plantilla (%s): %s", numero["waba_id"], r.text[:300])
+        try:
+            err = r.json().get("error", {})
+            msg = err.get("error_user_msg") or err.get("message")
+        except Exception:
+            msg = None
+        raise HTTPException(status_code=502,
+            detail=msg or "Meta rechazó la plantilla. Revisa que el texto no tenga datos personales sueltos "
+                          "(usa {{1}}, {{2}}… para lo que cambie en cada envío) y que no repita mucho espacio o salto de línea.")
+    return {"ok": True, "nombre": nombre}
+
+
+class PlantillaEnviarReq(BaseModel):
+    conversacion_id: str
+    nombre: str
+    idioma: str
+    variables: list[str] = []
+
+
+@router.post("/mensajes/plantilla")
+async def wa2_enviar_plantilla(req: PlantillaEnviarReq, request: Request):
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    conv_rows = await sb_get("wa2_conversaciones", {"id": f"eq.{req.conversacion_id}", "user_id": _in_filter(ids),
+                                                    "select": "*", "limit": "1"})
+    if not conv_rows:
+        raise HTTPException(status_code=404, detail="Conversación no encontrada")
+    conv = conv_rows[0]
+    contacto_rows = await sb_get("wa2_contactos", {"id": f"eq.{conv['contacto_id']}", "select": "*", "limit": "1"})
+    contacto = contacto_rows[0] if contacto_rows else {}
+    numero_rows = await sb_get("wa2_numeros", {"id": f"eq.{conv['numero_id']}", "select": "*", "limit": "1"})
+    if not numero_rows:
+        raise HTTPException(status_code=404, detail="Número no encontrado")
+    numero = numero_rows[0]
+
+    componentes = []
+    if req.variables:
+        componentes.append({"type": "body", "parameters": [{"type": "text", "text": v} for v in req.variables]})
+
+    async with httpx.AsyncClient(timeout=20) as c:
+        r = await c.post(f"{GRAPH_API}/{numero['phone_number_id']}/messages",
+                         headers={"Authorization": f"Bearer {numero['access_token']}"},
+                         json={"messaging_product": "whatsapp", "to": contacto.get("wa_id"), "type": "template",
+                               "template": {"name": req.nombre, "language": {"code": req.idioma},
+                                           "components": componentes}})
+    if r.status_code >= 400:
+        log.error("Envío de plantilla falló (%s): %s", numero["phone_number_id"], r.text[:300])
+        try:
+            msg = r.json().get("error", {}).get("message")
+        except Exception:
+            msg = None
+        raise HTTPException(status_code=502, detail=msg or "Meta no pudo mandar la plantilla. Revisa que esté aprobada.")
+
+    d = r.json()
+    msgs = d.get("messages") or []
+    wamid = msgs[0].get("id") if msgs else None
+    resumen = f"[Plantilla: {req.nombre}]" + (" " + " · ".join(req.variables) if req.variables else "")
+    await _guardar_mensaje(conv["user_id"], conv["contacto_id"], conv["id"], wamid, "out", "agente", resumen)
+    return {"ok": True}
+
+
+# =============================================================================
+# 7) PERFIL DEL AGENTE (nombre público y zona, para que la IA se presente bien)
+# =============================================================================
+async def _perfil_agente(user_id: str) -> dict:
+    nombre, zona = "", ""
+    try:
+        rows = await sb_get("usuarios", {"id": f"eq.{user_id}",
+                                        "select": "nombre_publico,zona_cobertura", "limit": "1"})
+        if rows:
+            nombre = (rows[0].get("nombre_publico") or "").strip()
+            zona = (rows[0].get("zona_cobertura") or "").strip()
+    except Exception:
+        pass
+    return {"nombre": nombre or "tu asesor inmobiliario", "zona": zona}
+
+
+# =============================================================================
+# 8) WEBHOOK — recibe TODOS los números conectados a este módulo
+# =============================================================================
+@router.get("/webhook")
+def wa2_verify_webhook(request: Request):
+    p = request.query_params
+    if p.get("hub.mode") == "subscribe" and p.get("hub.verify_token") == WA2_VERIFY_TOKEN:
+        return Response(content=p.get("hub.challenge", ""), media_type="text/plain")
+    return Response(content="forbidden", status_code=403)
+
+
+@router.post("/webhook")
+async def wa2_receive_webhook(request: Request, background: BackgroundTasks):
+    raw = await request.body()
+
+    # Sin secreto NO se procesa nada. Antes esto dejaba pasar todo cuando la
+    # variable faltaba: cualquiera en internet podía inyectar mensajes falsos,
+    # hacer que la IA contestara sola y quemar la cuenta de Anthropic.
+    # Ahora se cierra la puerta y se grita en el log.
+    if not WA2_APP_SECRET:
+        log.error("WA_APP_SECRET y META_APP_SECRET vacíos: el webhook de WhatsApp "
+                  "queda CERRADO hasta que se configure uno de los dos en Railway.")
+        return Response(status_code=503)
+
+    sig = request.headers.get("X-Hub-Signature-256", "")
+    expected = "sha256=" + hmac.new(WA2_APP_SECRET.encode(), raw, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(sig, expected):
+        log.warning("Firma de webhook 2.0 inválida")
+        return Response(status_code=403)
+
+    try:
+        payload = json.loads(raw)
+    except Exception:
+        return Response(status_code=200)
+
+    try:
+        ok, trabajo = await _persistir_entrantes(payload)
+    except Exception as e:
+        log.exception("persistir_entrantes (2.0) reventó, pido reintento a Meta: %s", e)
+        return Response(status_code=503)
+    if not ok:
+        return Response(status_code=503)
+
+    for item in trabajo:
+        background.add_task(_procesar_en_segundo_plano, item)
+
+    return Response(status_code=200)
+
+
+async def _get_numero(phone_number_id: str) -> dict | None:
+    rows = await sb_get("wa2_numeros", {"phone_number_id": f"eq.{phone_number_id}", "select": "*", "limit": "1"})
+    return rows[0] if rows else None
+
+
+async def _crear_contacto_crm(user_id: str, wa_id: str, nombre: str | None) -> str | None:
+    """Crea el Contacto real en el CRM (tabla `contactos`, la misma de
+    Contactos/Leads/Estadísticas) para un prospecto nuevo de WhatsApp 2.0.
+    Sigue la MISMA convención de id que usa contactos.html ('c_' + timestamp
+    en milisegundos), porque esa columna es TEXT, no uuid."""
+    contacto_id = f"c_{int(datetime.now(timezone.utc).timestamp() * 1000)}"
+    telefono = _normaliza_mx(wa_id)
+    fila = {
+        "id": contacto_id, "user_id": user_id,
+        "nombre": (nombre or telefono or "Prospecto de WhatsApp").upper(),
+        "telefono": telefono, "wa": telefono,
+        "tipo": "comprador", "fuente": "WhatsApp",
+        "notas": "Prospecto creado automáticamente por WhatsApp 2.0.",
+        "es_potencial": True, "etiquetas": ["WhatsApp 2.0"],
+        "operaciones": [],
+        "created_at": _now(), "updated_at": _now(),
+    }
+    creado = await sb_post("contactos", fila)
+    if not creado:
+        log.error("No se pudo crear el Contacto en el CRM para wa_id=%s (user=%s)", wa_id, user_id)
+        return None
+    return contacto_id
+
+
+async def _sincronizar_contacto_crm(user_id: str, contacto_wa2: dict, resultado_ia: dict | None = None) -> None:
+    """Mantiene al día el Contacto real del CRM con lo que la IA va calificando:
+    - Notas (historial): se le agrega una línea nueva cada vez (no se borra).
+    - Descripción privada: es una FOTO del momento — se sobrescribe con lo
+      último que se sabe del prospecto (temperatura, score, presupuesto,
+      forma de pago, qué busca, resumen). No es historial, es el estado actual.
+    Nunca truena el webhook si el CRM no responde — esto es un espejo, no la
+    fuente de verdad de WhatsApp 2.0."""
+    crm_id = contacto_wa2.get("contacto_crm_id")
+    if not crm_id or not resultado_ia:
+        return
+    try:
+        cambios = {"updated_at": _now()}
+        busca = (resultado_ia.get("busca") or "").strip().lower()
+        if "rent" in busca:
+            cambios["tipo"] = "arrendatario"
+        elif busca:
+            cambios["tipo"] = "comprador"
+        nombre_chat_crm = (resultado_ia.get("nombre") or "").strip()
+        if nombre_chat_crm:
+            cambios["nombre"] = nombre_chat_crm.upper()
+        nota = resultado_ia.get("nota") or resultado_ia.get("resumen")
+        if nota:
+            rows = await sb_get("contactos", {"id": f"eq.{crm_id}", "select": "notas", "limit": "1"})
+            previas = (rows[0].get("notas") or "") if rows else ""
+            fecha = _hora_local().strftime("%d/%m %H:%M")
+            cambios["notas"] = (previas + f"\n[{fecha} · WhatsApp 2.0] {nota}").strip()
+
+        renglones = []
+        if contacto_wa2.get("temperatura"): renglones.append(f"Temperatura: {contacto_wa2['temperatura']}")
+        if contacto_wa2.get("score") is not None: renglones.append(f"Score: {contacto_wa2['score']}")
+        if contacto_wa2.get("presupuesto"): renglones.append(f"Presupuesto: {contacto_wa2['presupuesto']}")
+        if contacto_wa2.get("forma_pago"): renglones.append(f"Forma de pago: {contacto_wa2['forma_pago']}")
+        if contacto_wa2.get("busca"): renglones.append(f"Busca: {contacto_wa2['busca']}")
+        if contacto_wa2.get("resumen"): renglones.append(f"Resumen: {contacto_wa2['resumen']}")
+        if renglones:
+            cambios["descripcion_privada"] = "\n".join(renglones)
+
+        await sb_patch("contactos", {"id": f"eq.{crm_id}"}, cambios)
+    except Exception as e:
+        log.warning("No se pudo sincronizar el Contacto %s del CRM: %s", crm_id, e)
+
+
+def _solo_digitos(t: str) -> str:
+    return re.sub(r"\D", "", t or "")
+
+
+def _es_asesor(numero: dict, wa_id: str) -> bool:
+    """True si quien escribe es el DUEÑO del número de Broquer, escribiendo
+    desde su NÚMERO PERSONAL registrado (en coexistencia no es posible mandarse
+    mensajes a uno mismo, así que el asesor registra su celular personal y desde
+    ahí le habla a Broq). Se comparan los últimos 10 dígitos para brincarse el
+    lío 52/521. También cubre el caso teórico de un auto-mensaje directo."""
+    ajeno = _normaliza_mx(wa_id or "")
+    if len(ajeno) < 10:
+        return False
+    for campo in ("numero_personal", "phone_number"):
+        propio = _normaliza_mx((numero or {}).get(campo) or "")
+        if propio and propio[-10:] == ajeno[-10:]:
+            return True
+    return False
+
+
+async def _agenda_upsert(user_id: str, numero_id: str, telefono: str,
+                         nombre: str | None = None, conocido: bool | None = None) -> None:
+    """Agenda del celular del asesor (wa2_agenda): el nombre con el que ÉL tiene
+    registrada a cada persona y si ya la conocía de antes de conectar el número.
+    Nunca truena el webhook: la agenda es un apoyo, no la fuente de verdad."""
+    try:
+        rows = await sb_get("wa2_agenda", {"numero_id": f"eq.{numero_id}",
+                                           "telefono": f"eq.{telefono}", "select": "*", "limit": "1"})
+        if rows:
+            cambios = {"updated_at": _now()}
+            if nombre:
+                cambios["nombre"] = nombre
+            if conocido is not None:
+                cambios["conocido"] = conocido
+            await sb_patch("wa2_agenda", {"id": f"eq.{rows[0]['id']}"}, cambios)
+        else:
+            await sb_post("wa2_agenda", {"user_id": user_id, "numero_id": numero_id,
+                                         "telefono": telefono, "nombre": nombre,
+                                         "conocido": bool(conocido),
+                                         "created_at": _now(), "updated_at": _now()})
+    except Exception as e:
+        log.warning("wa2_agenda no se pudo actualizar (%s): %s", telefono, e)
+
+
+async def _get_o_crea_contacto(user_id: str, numero_id: str, wa_id: str, nombre: str | None,
+                               crear_crm: bool = True) -> dict:
+    rows = await sb_get("wa2_contactos", {"numero_id": f"eq.{numero_id}", "wa_id": f"eq.{wa_id}",
+                                          "select": "*", "limit": "1"})
+    if rows:
+        return rows[0]
+    # Prioridad de nombre del lead: 1) cómo se presentó él mismo en el chat (lo
+    # llena la IA cuando lo diga), 2) cómo lo tiene el asesor en la agenda de su
+    # celular, 3) el nombre que el lead se puso en WhatsApp SOLO como último
+    # recurso, cuando no existen los otros dos.
+    agenda = await sb_get("wa2_agenda", {"numero_id": f"eq.{numero_id}",
+                                         "telefono": f"eq.{_solo_digitos(wa_id)}",
+                                         "select": "*", "limit": "1"})
+    nombre_agenda = (agenda[0].get("nombre") or "").strip() if agenda else ""
+    conocido = bool(agenda and agenda[0].get("conocido"))
+    display = nombre_agenda or (nombre or "").strip() or None
+    contacto_crm_id = await _crear_contacto_crm(user_id, wa_id, display) if crear_crm else None
+    created = await sb_post("wa2_contactos", {
+        "user_id": user_id, "numero_id": numero_id, "wa_id": wa_id,
+        "nombre": display, "nombre_agenda": nombre_agenda or None,
+        "nombre_wa": (nombre or None), "conocido": conocido,
+        "contacto_crm_id": contacto_crm_id,
+        "created_at": _now(), "updated_at": _now(),
+    })
+    if created:
+        return created[0]
+    rows = await sb_get("wa2_contactos", {"numero_id": f"eq.{numero_id}", "wa_id": f"eq.{wa_id}",
+                                          "select": "*", "limit": "1"})
+    return rows[0] if rows else {}
+
+
+async def _get_o_crea_conversacion(user_id: str, numero_id: str, contacto_id: str,
+                                   ia_default: bool = True) -> dict:
+    rows = await sb_get("wa2_conversaciones", {"contacto_id": f"eq.{contacto_id}", "select": "*", "limit": "1"})
+    if rows:
+        return rows[0]
+    # Un CONOCIDO del asesor (agenda del celular o historial previo) arranca con
+    # la IA apagada: la recepcionista es para prospectos nuevos, no para caerle
+    # en frío a un cliente de años. El asesor la puede prender en esa conversación.
+    created = await sb_post("wa2_conversaciones", {
+        "user_id": user_id, "numero_id": numero_id, "contacto_id": contacto_id,
+        "ai_enabled": ia_default,
+        "created_at": _now(), "last_message_at": _now(),
+    })
+    if created:
+        return created[0]
+    rows = await sb_get("wa2_conversaciones", {"contacto_id": f"eq.{contacto_id}", "select": "*", "limit": "1"})
+    return rows[0] if rows else {}
+
+
+async def _guardar_mensaje(user_id: str, contacto_id: str, conversacion_id: str, wamid: str | None,
+                          direction: str, sender: str, body: str, media_url: str | None = None,
+                          media_path: str | None = None) -> None:
+    fila = {"user_id": user_id, "contacto_id": contacto_id, "conversacion_id": conversacion_id,
+            "direction": direction, "sender": sender, "body": body, "media_url": media_url,
+            "media_path": media_path, "created_at": _now()}
+    if wamid:
+        fila["wa_message_id"] = wamid
+    guardado = await sb_post("wa2_mensajes", fila)
+    if not guardado and wamid:
+        ya = await sb_get("wa2_mensajes", {"wa_message_id": f"eq.{wamid}", "select": "id", "limit": "1"})
+        if not ya:
+            log.error("wa2_mensajes NO guardado: conv=%s sender=%s", conversacion_id, sender)
+    cambios_conv = {"last_message_at": _now()}
+    if direction == "in":
+        # Esto (no 'last_message_at') es lo que de verdad marca la ventana de
+        # 24h de WhatsApp: se cuenta desde el último mensaje del PROSPECTO,
+        # no desde el último mensaje de quien sea (agente, IA, prospecto).
+        cambios_conv["last_inbound_at"] = _now()
+        # Se guarda el id de Meta del último mensaje del prospecto: es lo que
+        # se necesita para mandarle la palomita azul cuando el agente abra la
+        # conversación en Broquer (no antes).
+        if wamid:
+            cambios_conv["last_inbound_wamid"] = wamid
+    await sb_patch("wa2_conversaciones", {"id": f"eq.{conversacion_id}"}, cambios_conv)
+
+
+def _resolver_inmueble_id(inmueble_txt: str, ultimas: list) -> str | None:
+    """Si el prospecto ya vio 1 sola propiedad en esta charla, es esa. Si vio
+    varias, se intenta encontrar cuál por el texto que puso la IA en 'inmueble'."""
+    if not ultimas:
+        return None
+    if len(ultimas) == 1:
+        return ultimas[0].get("id")
+    texto = (inmueble_txt or "").strip().lower()
+    if not texto:
+        return None
+    for p in ultimas:
+        titulo = (p.get("titulo") or "").strip().lower()
+        if titulo and (titulo in texto or texto in titulo):
+            return p.get("id")
+    return None
+
+
+async def _persistir_entrantes(payload: dict):
+    trabajo = []
+    for entry in payload.get("entry", []):
+        for change in entry.get("changes", []):
+            val = change.get("value", {})
+            phone_number_id = (val.get("metadata") or {}).get("phone_number_id")
+            if not phone_number_id:
+                continue
+            numero = await _get_numero(phone_number_id)
+            if not numero:
+                log.warning("Número no registrado en wa2_numeros: %s — ignorado", phone_number_id)
+                continue
+            contactos_meta = {c["wa_id"]: c.get("profile", {}).get("name") for c in val.get("contacts", [])}
+
+            # ── COEXISTENCIA: ecos de lo que el asesor manda DESDE SU CELULAR ──
+            # Cuando el número coexiste con la app de WhatsApp Business, lo que
+            # el asesor contesta desde su teléfono llega aquí como message_echoes
+            # (campo smb_message_echoes). Sin esto Broquer nunca se enteraba de
+            # que el asesor ya respondió y la IA le contestaba ENCIMA al mismo
+            # prospecto. El eco se guarda en la bandeja como mensaje del agente
+            # y apaga la IA de esa conversación, igual que el envío manual.
+            for eco in (val.get("message_echoes") or []):
+                wa_dest = _solo_digitos(eco.get("to") or "")
+                if not wa_dest:
+                    continue
+                ya = await sb_get("wa2_mensajes", {"wa_message_id": f"eq.{eco.get('id')}",
+                                                   "select": "id", "limit": "1"})
+                if ya:
+                    continue
+                if eco.get("type") == "text":
+                    cuerpo = (eco.get("text") or {}).get("body", "")
+                else:
+                    cuerpo = f"[{eco.get('type') or 'mensaje'} enviado por el asesor desde su celular]"
+                # Eco hacia el NÚMERO PERSONAL del asesor: es él mismo
+                # tecleando desde su celular de negocio dentro de su chat con
+                # Broq. Se guarda para que la conversación quede completa, pero
+                # NO es un comando (los comandos son los que MANDA desde su
+                # número personal y llegan como entrantes) — Broq no responde
+                # a esto ni se dispara la lógica de pausa/conocidos.
+                if _es_asesor(numero, wa_dest):
+                    contacto_self = await _get_o_crea_contacto(numero["user_id"], numero["id"],
+                                                               wa_dest, "Tú · Broq", crear_crm=False)
+                    if not contacto_self:
+                        continue
+                    conv_self = await _get_o_crea_conversacion(numero["user_id"], numero["id"],
+                                                               contacto_self["id"], ia_default=False)
+                    await _guardar_mensaje(numero["user_id"], contacto_self["id"], conv_self["id"],
+                                          eco.get("id"), "out", "agente", cuerpo)
+                    continue
+
+                contacto_eco = await _get_o_crea_contacto(numero["user_id"], numero["id"], wa_dest, None)
+                if not contacto_eco:
+                    continue
+                conv_eco = await _get_o_crea_conversacion(numero["user_id"], numero["id"],
+                                                          contacto_eco["id"], ia_default=False)
+                await _guardar_mensaje(numero["user_id"], contacto_eco["id"], conv_eco["id"],
+                                      eco.get("id"), "out", "agente", cuerpo)
+                if conv_eco.get("ai_enabled", True):
+                    await sb_patch("wa2_conversaciones", {"id": f"eq.{conv_eco['id']}"},
+                                   {"ai_enabled": False})
+                if not contacto_eco.get("conocido"):
+                    await sb_patch("wa2_contactos", {"id": f"eq.{contacto_eco['id']}"},
+                                   {"conocido": True, "updated_at": _now()})
+                    await _agenda_upsert(numero["user_id"], numero["id"], wa_dest, conocido=True)
+
+            # ── COEXISTENCIA: agenda del celular del asesor ────────────────────
+            # Meta sincroniza los contactos del teléfono (smb_app_state_sync).
+            # Ese nombre — el que el asesor le puso a la persona en SU agenda —
+            # es la fuente correcta para nombrar leads en Broquer; el nombre que
+            # el lead se puso a sí mismo en WhatsApp es el último recurso.
+            for sync in (val.get("state_sync") or []):
+                if sync.get("type") != "contact":
+                    continue
+                cont_s = sync.get("contact") or {}
+                tel_s = _solo_digitos(cont_s.get("phone_number") or "")
+                nombre_s = (cont_s.get("full_name") or cont_s.get("first_name") or "").strip()
+                if not tel_s or (sync.get("action") or "add") == "remove":
+                    continue
+                await _agenda_upsert(numero["user_id"], numero["id"], tel_s, nombre=nombre_s or None)
+                filas_c = await sb_get("wa2_contactos", {"numero_id": f"eq.{numero['id']}",
+                                                         "wa_id": f"eq.{tel_s}",
+                                                         "select": "*", "limit": "1"})
+                if filas_c and nombre_s:
+                    c0 = filas_c[0]
+                    cambios_c = {"nombre_agenda": nombre_s, "updated_at": _now()}
+                    # El nombre de agenda solo manda si el lead no se ha
+                    # presentado él mismo en el chat (esa es la prioridad 1).
+                    if not (c0.get("nombre_chat") or "").strip():
+                        cambios_c["nombre"] = nombre_s
+                    await sb_patch("wa2_contactos", {"id": f"eq.{c0['id']}"}, cambios_c)
+
+            # ── COEXISTENCIA: historial de chats previos a la conexión ─────────
+            # En el onboarding Meta manda los chats que el número ya tenía
+            # (campo history). No se importan esos mensajes: solo sirve para
+            # marcar a esas personas como CONOCIDAS del asesor, para que la
+            # recepcionista jamás les caiga en frío como a un prospecto nuevo.
+            for bloque_h in (val.get("history") or []):
+                for hilo in (bloque_h.get("threads") or []):
+                    tel_h = _solo_digitos(str(hilo.get("id") or ""))
+                    if tel_h:
+                        await _agenda_upsert(numero["user_id"], numero["id"], tel_h, conocido=True)
+
+            for msg in val.get("messages", []):
+                wa_id = msg.get("from")
+                if not wa_id:
+                    continue
+
+                # SEGURIDAD: nunca proceses ni respondas mensajes de ANTES de
+                # que el número se conectara a Broquer. Meta puede reenviar
+                # eventos de mensajes viejos (coexistencia con un número que
+                # ya tenía historial, reintentos de webhook, etc.) y sin este
+                # filtro la IA le contestaría a un mensaje de hace semanas
+                # como si fuera de ahorita — sin que el agente lo autorizara.
+                try:
+                    msg_ts = int(msg.get("timestamp") or 0)
+                    creado_en = numero.get("created_at")
+                    if msg_ts and creado_en:
+                        creado_dt = datetime.fromisoformat(creado_en.replace("Z", "+00:00"))
+                        if datetime.fromtimestamp(msg_ts, timezone.utc) < creado_dt:
+                            log.warning("Mensaje anterior a la conexión del número %s — ignorado (%s)",
+                                       numero.get("phone_number_id"), msg.get("id"))
+                            continue
+                except Exception:
+                    pass
+
+                # La revisión de duplicados va ANTES de tocar la media: Meta
+                # reenvía el mismo webhook cuando no le contestamos rápido, y
+                # transcribir dos veces la misma nota de voz se paga dos veces.
+                existe = await sb_get("wa2_mensajes", {"wa_message_id": f"eq.{msg.get('id')}",
+                                                       "select": "id", "limit": "1"})
+                if existe:
+                    continue
+
+                tipo_msg = msg.get("type")
+                texto = ""
+                media_bytes: bytes | None = None
+                media_mime = ""
+                media_sufijo = "archivo"
+                if tipo_msg == "text":
+                    texto = (msg.get("text") or {}).get("body", "")
+                elif tipo_msg in ("audio", "voice"):
+                    # Nota de voz: se oye de verdad. Antes se guardaba "[audio]"
+                    # y la IA le contestaba al prospecto sin tener idea de lo
+                    # que le dijo — la peor tontería posible frente a un cliente.
+                    media_id = (msg.get(tipo_msg) or {}).get("id")
+                    media_bytes, media_mime = await _descargar_media(numero, media_id)
+                    media_sufijo = "nota-de-voz"
+                    dicho = await _transcribir_audio(media_bytes, media_mime) if media_bytes else ""
+                    texto = f"[nota de voz] {dicho}" if dicho else \
+                        "[nota de voz que no se pudo transcribir]"
+                elif tipo_msg == "image":
+                    media_id = (msg.get("image") or {}).get("id")
+                    pie = (msg.get("image") or {}).get("caption") or ""
+                    media_bytes, media_mime = await _descargar_media(numero, media_id)
+                    media_sufijo = "foto"
+                    visto = await _describir_imagen(media_bytes, media_mime) if media_bytes else ""
+                    texto = "[foto] " + " ".join(x for x in [pie, visto] if x).strip()
+                    if not visto and not pie:
+                        texto = "[foto que no se pudo leer]"
+                elif tipo_msg == "location":
+                    loc = msg.get("location") or {}
+                    partes_loc = [loc.get("name"), loc.get("address"),
+                                  f"{loc.get('latitude')},{loc.get('longitude')}"]
+                    texto = "[ubicación] " + " · ".join(str(x) for x in partes_loc if x)
+                elif tipo_msg == "document":
+                    doc = msg.get("document") or {}
+                    media_bytes, media_mime = await _descargar_media(numero, doc.get("id"))
+                    media_sufijo = re.sub(r"[^A-Za-z0-9._-]", "_", (doc.get("filename") or "documento"))[:60]
+                    texto = f"[documento] {doc.get('filename') or ''} {doc.get('caption') or ''}".strip()
+                elif tipo_msg == "video":
+                    vid = msg.get("video") or {}
+                    media_bytes, media_mime = await _descargar_media(numero, vid.get("id"))
+                    media_sufijo = "video"
+                    texto = f"[video] {vid.get('caption') or ''}".strip()
+                elif tipo_msg == "contacts":
+                    texto = "[el prospecto compartió una tarjeta de contacto]"
+                elif tipo_msg in ("button", "interactive"):
+                    inter = msg.get("interactive") or {}
+                    texto = ((msg.get("button") or {}).get("text")
+                             or (inter.get("button_reply") or {}).get("title")
+                             or (inter.get("list_reply") or {}).get("title")
+                             or "[respuesta a un botón]")
+                else:
+                    texto = f"[mensaje de tipo {tipo_msg or 'desconocido'}]"
+
+                es_asesor = _es_asesor(numero, wa_id)
+                if es_asesor:
+                    # Escribe el DUEÑO desde su número personal registrado: es
+                    # una orden para Broq (modo asesor), nunca un prospecto.
+                    contacto = await _get_o_crea_contacto(numero["user_id"], numero["id"], wa_id,
+                                                          "Tú · Broq", crear_crm=False)
+                    conv = await _get_o_crea_conversacion(numero["user_id"], numero["id"],
+                                                          contacto["id"], ia_default=False)
+                else:
+                    contacto = await _get_o_crea_contacto(numero["user_id"], numero["id"], wa_id,
+                                                          contactos_meta.get(wa_id))
+                    conv = await _get_o_crea_conversacion(numero["user_id"], numero["id"], contacto["id"],
+                                                         ia_default=not contacto.get("conocido"))
+
+                media_url, media_path = (None, None)
+                if media_bytes:
+                    media_url, media_path = await _guardar_archivo(
+                        numero["user_id"], conv["id"], media_bytes, media_mime, media_sufijo)
+
+                await _guardar_mensaje(numero["user_id"], contacto["id"], conv["id"], msg.get("id"),
+                                      "in", "agente" if es_asesor else "lead", texto, media_url, media_path)
+                if not es_asesor:
+                    await sb_patch("wa2_conversaciones", {"id": f"eq.{conv['id']}"},
+                                  {"unread_count": (conv.get("unread_count") or 0) + 1})
+
+                # ── BAJA de campañas por palabra clave (opt-out) ──────────
+                # Si el mensaje ES exactamente una palabra de baja, el
+                # contacto queda fuera de todas las campañas para siempre.
+                # Nunca truena el webhook: si la columna no existe todavía
+                # (migración pendiente), simplemente no pasa nada.
+                if (not es_asesor and tipo_msg == "text"
+                        and texto.strip().lower().rstrip(".!") in _OPT_OUT_PALABRAS):
+                    try:
+                        await sb_patch("wa2_contactos", {"id": f"eq.{contacto['id']}"},
+                                       {"opt_out": True, "updated_at": _now()})
+                    except Exception:
+                        pass
+
+                trabajo.append({"numero": numero, "contacto_id": contacto["id"],
+                               "conversacion_id": conv["id"], "wa_id": wa_id, "texto": texto,
+                               "wa_message_id": msg.get("id"), "es_asesor": es_asesor})
+
+            # ── Acuses de Meta (enviado / entregado / leído / FALLIDO) ──────
+            # Esto se ignoraba por completo. Lo grave no es perderse la
+            # palomita: es que cuando Meta RECHAZA un mensaje (número dado de
+            # baja, plantilla no aprobada, ventana cerrada, límite de la
+            # cuenta) el agente creía que su mensaje salió y nunca salió.
+            for st in val.get("statuses", []):
+                estado = st.get("status")
+                if estado != "failed":
+                    continue
+                errs = st.get("errors") or [{}]
+                err0 = errs[0] if errs else {}
+                log.error("Mensaje NO entregado (%s): %s %s",
+                          numero.get("phone_number_id"), err0.get("code"), err0.get("title"))
+                await _revisar_token(numero, {"code": err0.get("code"),
+                                              "message": err0.get("title") or ""})
+                try:
+                    await sb_patch("wa2_mensajes", {"wa_message_id": f"eq.{st.get('id')}"},
+                                   {"entrega_error": (err0.get("title") or "No se pudo entregar")[:200]})
+                except Exception:
+                    pass
+                await enviar_push(numero.get("user_id"), "Un mensaje no se pudo entregar",
+                                  err0.get("title") or "WhatsApp rechazó el envío. Revisa la conversación.",
+                                  datos={"tipo": "whatsapp"})
+    return True, trabajo
+
+
+async def _procesar_en_segundo_plano(item: dict):
+    numero = item["numero"]
+    user_id = numero["user_id"]
+
+    # OJO: aquí YA NO se manda la palomita azul. Antes se mandaba en cuanto
+    # entraba el mensaje, aunque la IA estuviera apagada o el chat lo tuviera
+    # que atender el agente: el prospecto veía "leído" sin que nadie lo hubiera
+    # leído, y del lado de Broquer todo aparecía como atendido. Ahora la
+    # palomita se manda solo cuando la IA de verdad va a contestar (más abajo,
+    # en _responder_conversacion) o cuando el agente abre el chat en Broquer.
+
+    # El aviso al celular del agente va ANTES de agrupar: aunque esta tarea se
+    # retire por ráfaga, el agente tiene que enterarse de TODOS los mensajes.
+    if not item.get("es_asesor"):  # avisarle al asesor de su propio mensaje no tiene caso
+        contacto_push = await sb_get("wa2_contactos", {"id": f"eq.{item['contacto_id']}",
+                                                       "select": "nombre", "limit": "1"})
+        await enviar_push(user_id,
+                          (contacto_push[0].get("nombre") if contacto_push else None) or "Nuevo mensaje de WhatsApp",
+                          item["texto"], datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
+
+    # ── AUTOMATIZACIONES (recetas) ───────────────────────────────────────
+    # Corren ANTES de agrupar ráfagas y antes de la IA: si el mensaje dispara
+    # una receta que responde o pasa el chat al humano, esa receta contesta al
+    # instante y la IA ya no dice nada encima. Si la receta solo pone
+    # etiquetas, el flujo normal (IA incluida) sigue igual.
+    if not item.get("es_asesor"):
+        try:
+            if await _correr_automatizaciones(item, numero, user_id):
+                return
+        except Exception as e:
+            log.warning("Automatizaciones fallaron (se sigue normal): %s", e)
+
+    # ── AGRUPAR RÁFAGAS ──────────────────────────────────────────────────
+    # La gente escribe en WhatsApp a pedacitos. Se espera unos segundos y, si
+    # mientras tanto entró otro mensaje del prospecto, ESTA tarea se retira:
+    # la que atienda el último mensaje contestará una sola vez y ya con todo
+    # el contexto. Sin esto salían tres respuestas encimadas, se contradecían
+    # entre sí y se pagaban tres llamadas a la IA por una sola pregunta.
+    if WA2_DEBOUNCE:
+        await asyncio.sleep(WA2_DEBOUNCE)
+        ultimos = await sb_get("wa2_mensajes", {
+            "conversacion_id": f"eq.{item['conversacion_id']}", "direction": "eq.in",
+            "select": "wa_message_id", "order": "created_at.desc", "limit": "1"})
+        if ultimos and item.get("wa_message_id") and \
+           ultimos[0].get("wa_message_id") != item["wa_message_id"]:
+            log.info("Ráfaga: se descarta la respuesta al mensaje %s, ya llegó uno más nuevo",
+                     item["wa_message_id"])
+            return
+
+    async with _lock_conv(item["conversacion_id"]):
+        if item.get("es_asesor"):
+            await _broq_asesor(item, numero, user_id)
+        else:
+            await _responder_conversacion(item, numero, user_id)
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# MODO ASESOR — el dueño del número le escribe a su propio número de Broquer
+# DESDE SU NÚMERO PERSONAL registrado (texto o nota de voz, que ya llega
+# transcrita) y Broq lo atiende: comentarios en contactos o tareas, pendientes
+# nuevos y consultas del CRM. Jamás se activa para un lead: solo cuando el
+# remitente es el número personal registrado del dueño (o el propio número).
+# ══════════════════════════════════════════════════════════════════════════
+ASESOR_TOOLS = [
+    {"name": "buscar_contactos",
+     "description": "Busca en el CRM del asesor por nombre, teléfono, email o notas. Úsala SIEMPRE antes de agregar un comentario a un contacto, para obtener su id exacto.",
+     "input_schema": {"type": "object",
+                      "properties": {"query": {"type": "string"}},
+                      "required": ["query"]}},
+    {"name": "buscar_tareas",
+     "description": "Busca en las tareas/citas del asesor por título o notas. Úsala SIEMPRE antes de agregar un comentario a una tarea, para obtener su id exacto.",
+     "input_schema": {"type": "object",
+                      "properties": {"query": {"type": "string"}},
+                      "required": ["query"]}},
+    {"name": "buscar_propiedades",
+     "description": "Busca en la cartera de inmuebles del asesor por título, colonia, calle, ciudad o clave interna. Úsala SIEMPRE antes de agregar un comentario a una propiedad, para obtener su id exacto.",
+     "input_schema": {"type": "object",
+                      "properties": {"query": {"type": "string"}},
+                      "required": ["query"]}},
+    {"name": "agregar_comentario",
+     "description": "Agrega un comentario con fecha a las notas de un contacto, una tarea o una propiedad, sin borrar lo que ya había. Usa el id exacto que devolvió buscar_contactos, buscar_tareas o buscar_propiedades.",
+     "input_schema": {"type": "object",
+                      "properties": {"destino": {"type": "string", "enum": ["contacto", "tarea", "propiedad"]},
+                                     "id": {"type": "string"},
+                                     "comentario": {"type": "string"}},
+                      "required": ["destino", "id", "comentario"]}},
+    {"name": "crear_tarea",
+     "description": "Crea una tarea o pendiente para el asesor, con fecha y hora opcionales, y opcionalmente vinculada a un contacto y/o un inmueble (usa sus ids exactos de las búsquedas).",
+     "input_schema": {"type": "object",
+                      "properties": {"titulo": {"type": "string"},
+                                     "fecha": {"type": "string", "description": "YYYY-MM-DD, opcional"},
+                                     "hora": {"type": "string", "description": "HH:MM en 24h, opcional"},
+                                     "notas": {"type": "string"},
+                                     "contacto_id": {"type": "string"},
+                                     "propiedad_id": {"type": "string"}},
+                      "required": ["titulo"]}},
+]
+
+
+async def _asesor_ctx_guardar(conversacion_id: str, cambios: dict) -> None:
+    """Memoria corta del modo asesor: guarda en la conversación el id y nombre
+    de lo último que se creó o tocó, para que 'esa misma tarea' o 'ese contacto'
+    resuelvan bien en el siguiente mensaje aunque el historial no traiga ids."""
+    try:
+        rows = await sb_get("wa2_conversaciones", {"id": f"eq.{conversacion_id}",
+                                                   "select": "asesor_ctx", "limit": "1"})
+        ctx = (rows[0].get("asesor_ctx") or {}) if rows else {}
+        ctx.update(cambios)
+        await sb_patch("wa2_conversaciones", {"id": f"eq.{conversacion_id}"}, {"asesor_ctx": ctx})
+    except Exception as e:
+        log.warning("No se pudo guardar el contexto del modo asesor: %s", e)
+
+
+async def _asesor_ejecutar_tool(user_id: str, name: str, args: dict, zona: str | None,
+                                conversacion_id: str) -> str:
+    if name == "buscar_contactos":
+        q = (args.get("query") or "").replace(",", " ").strip()
+        params = {"user_id": f"eq.{user_id}", "select": "id,nombre,telefono,tipo",
+                  "order": "updated_at.desc", "limit": "8"}
+        if q:
+            params["or"] = f"(nombre.ilike.*{q}*,telefono.ilike.*{q}*,email.ilike.*{q}*,notas.ilike.*{q}*)"
+        rows = await sb_get("contactos", params)
+        if not rows:
+            return "No encontré contactos que coincidan."
+        return "\n".join(f"• id={c['id']} · {c.get('nombre') or 'Sin nombre'}"
+                          + (f" · {c['telefono']}" if c.get("telefono") else "")
+                          + (f" · {c['tipo']}" if c.get("tipo") else "")
+                          for c in rows)
+
+    if name == "buscar_tareas":
+        q = (args.get("query") or "").replace(",", " ").strip()
+        params = {"user_id": f"eq.{user_id}", "select": "id,titulo,fecha_entrega,completada",
+                  "order": "created_at.desc", "limit": "8"}
+        if q:
+            params["or"] = f"(titulo.ilike.*{q}*,notas.ilike.*{q}*)"
+        rows = await sb_get("tareas", params)
+        if not rows:
+            return "No encontré tareas que coincidan."
+        return "\n".join(f"• id={t['id']} · {t.get('titulo') or 'Sin título'}"
+                          + (" · completada" if t.get("completada") else " · pendiente")
+                          + (f" · {str(t['fecha_entrega'])[:16].replace('T', ' ')} UTC"
+                             if t.get("fecha_entrega") else "")
+                          for t in rows)
+
+    if name == "buscar_propiedades":
+        q = (args.get("query") or "").replace(",", " ").strip()
+        params = {"user_id": f"eq.{user_id}", "select": "id,titulo,colonia,ciudad,operacion,precio",
+                  "order": "updated_at.desc", "limit": "8"}
+        if q:
+            params["or"] = (f"(titulo.ilike.*{q}*,colonia.ilike.*{q}*,calle.ilike.*{q}*,"
+                            f"ciudad.ilike.*{q}*,clave_interna.ilike.*{q}*)")
+        rows = await sb_get("propiedades", params)
+        if not rows:
+            return "No encontré propiedades que coincidan."
+        return "\n".join(f"• id={p['id']} · {p.get('titulo') or 'Sin título'}"
+                          + (f" · {p['colonia']}" if p.get("colonia") else "")
+                          + (f", {p['ciudad']}" if p.get("ciudad") else "")
+                          + (f" · {p['operacion']}" if p.get("operacion") else "")
+                          for p in rows)
+
+    if name == "agregar_comentario":
+        destino = (args.get("destino") or "").strip().lower()
+        fila_id = (args.get("id") or "").strip()
+        comentario = (args.get("comentario") or "").strip()
+        if destino not in ("contacto", "tarea", "propiedad") or not fila_id or not comentario:
+            return "Faltan datos: necesito destino (contacto, tarea o propiedad), id y comentario."
+        tabla = {"contacto": "contactos", "tarea": "tareas", "propiedad": "propiedades"}[destino]
+        campo_nombre = "nombre" if tabla == "contactos" else "titulo"
+        rows = await sb_get(tabla, {"id": f"eq.{fila_id}", "user_id": f"eq.{user_id}",
+                                    "select": f"id,notas,{campo_nombre}", "limit": "1"})
+        if not rows:
+            return f"No encontré ese {destino} (id={fila_id}). Búscalo primero para usar el id exacto."
+        etiqueta = rows[0].get(campo_nombre) or fila_id
+        linea = f"[{_hora_local(zona).strftime('%d/%m %H:%M')} · Broq] {comentario}"
+        notas = ((rows[0].get("notas") or "") + "\n" + linea).strip()
+        cuerpo = {"notas": notas}
+        if tabla in ("contactos", "propiedades"):
+            cuerpo["updated_at"] = _now()
+        ok = await sb_patch(tabla, {"id": f"eq.{fila_id}", "user_id": f"eq.{user_id}"}, cuerpo)
+        if not ok:
+            return "No se pudo guardar el comentario. Intenta de nuevo."
+        await _asesor_ctx_guardar(conversacion_id, {f"ultimo_{destino}_id": fila_id,
+                                                    f"ultimo_{destino}_nombre": etiqueta})
+        return f"Listo, comentario agregado a {destino} '{etiqueta}': {linea}"
+
+    if name == "crear_tarea":
+        titulo = (args.get("titulo") or "").strip()
+        if not titulo:
+            return "Falta el título de la tarea."
+        fila = {"user_id": user_id, "titulo": titulo,
+                "notas": (args.get("notas") or "").strip() or None,
+                "contacto_id": (args.get("contacto_id") or "").strip() or None,
+                "propiedad_id": (args.get("propiedad_id") or "").strip() or None}
+        if args.get("fecha"):
+            fila["fecha_entrega"] = _fecha_hora_utc_iso(args["fecha"], args.get("hora") or "09:00", zona)
+        creada = await sb_post("tareas", fila)
+        if not creada:
+            return "No se pudo crear la tarea. Intenta de nuevo."
+        tarea_id = creada[0].get("id")
+        if tarea_id and fila.get("contacto_id"):
+            await sb_post("tareas_contactos", {"user_id": user_id, "tarea_id": tarea_id,
+                                               "contacto_id": fila["contacto_id"]})
+        if tarea_id and fila.get("propiedad_id"):
+            await sb_post("tareas_propiedades", {"user_id": user_id, "tarea_id": tarea_id,
+                                                 "propiedad_id": fila["propiedad_id"]})
+        await _asesor_ctx_guardar(conversacion_id, {"ultima_tarea_id": tarea_id,
+                                                    "ultima_tarea_titulo": titulo})
+        return f"Tarea creada (id={tarea_id}): {titulo}" + (
+            f" para el {args['fecha']} {args.get('hora') or ''}".rstrip() if args.get("fecha") else "")
+
+    return "No reconozco esa herramienta."
+
+
+async def _broq_asesor(item: dict, numero: dict, user_id: str):
+    entren = await _entrenamiento_de(user_id, numero["id"])
+    zona = entren.get("zona_horaria")
+
+    conv_rows = await sb_get("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}",
+                                                    "select": "asesor_ctx", "limit": "1"})
+    ctx = (conv_rows[0].get("asesor_ctx") or {}) if conv_rows else {}
+    ctx_txt = ""
+    if ctx:
+        partes_ctx = []
+        if ctx.get("ultima_tarea_id"):
+            partes_ctx.append(f"la última tarea creada o tocada es id={ctx['ultima_tarea_id']} "
+                              f"('{ctx.get('ultima_tarea_titulo') or ''}')")
+        for d in ("contacto", "propiedad", "tarea"):
+            if ctx.get(f"ultimo_{d}_id"):
+                partes_ctx.append(f"el último {d} tocado es id={ctx[f'ultimo_{d}_id']} "
+                                  f"('{ctx.get(f'ultimo_{d}_nombre') or ''}')")
+        if partes_ctx:
+            ctx_txt = ("\nMEMORIA DE ESTA CHARLA: " + "; ".join(partes_ctx) +
+                       ". Cuando el asesor diga 'esa misma tarea', 'ese contacto', 'esa casa', "
+                       "usa ESTOS ids directo, sin volver a buscar.")
+
+    hist = await sb_get("wa2_mensajes", {"conversacion_id": f"eq.{item['conversacion_id']}",
+                                         "select": "direction,body",
+                                         "order": "created_at.desc", "limit": str(HISTORY_LIMIT)})
+    hist.reverse()
+    crudos = [{"role": "user" if m.get("direction") == "in" else "assistant",
+               "content": m.get("body") or ""} for m in hist if (m.get("body") or "").strip()]
+    while crudos and crudos[0]["role"] != "user":
+        crudos.pop(0)
+    if not crudos:
+        crudos = [{"role": "user", "content": item["texto"]}]
+    # Mensajes seguidos del mismo lado se funden en uno: la API exige turnos.
+    messages: list = []
+    for m in crudos:
+        if messages and messages[-1]["role"] == m["role"] and isinstance(messages[-1]["content"], str):
+            messages[-1]["content"] += "\n" + m["content"]
+        else:
+            messages.append(dict(m))
+
+    system = (
+        "Eres Broq, el asistente personal del asesor inmobiliario DENTRO de su propio WhatsApp. "
+        "Quien te escribe es EL ASESOR dueño del número (NO un cliente): te escribe desde su número "
+        "personal, por texto o nota de voz, para dictarte acciones rápidas en Broquer.\n"
+        f"Hoy es {_fmt_fecha_larga(_hora_local(zona))}. Español mexicano, directo, mensajes cortos de "
+        "WhatsApp, sin emojis.\n"
+        "Tus herramientas: buscar contactos, tareas y propiedades; agregar comentarios con fecha a un "
+        "contacto, una tarea o una propiedad; y crear tareas nuevas (con vínculo opcional a un contacto "
+        "y/o inmueble). Antes de agregar un comentario o vincular algo, BUSCA para usar el id exacto; si "
+        "varios coinciden, pregunta cuál en una línea. Si no encuentras nada, dilo tal cual — NUNCA "
+        "inventes contactos, tareas, propiedades ni ids. NUNCA digas que algo quedó registrado si el "
+        "resultado de la herramienta no lo confirmó.\n"
+        "Después de ejecutar, confirma en UNA línea qué quedó registrado y EN QUIÉN o EN QUÉ (el nombre "
+        "viene en el tool_result). Si el asesor pide algo fuera de tus herramientas, dile que eso se hace "
+        "en la app de Broquer y en qué módulo."
+        + ctx_txt
+    )
+
+    reply = ""
+    try:
+        async with httpx.AsyncClient(timeout=90) as c:
+            for _vuelta in range(6):
+                r = await c.post(f"{ANTHROPIC_BASE}/messages",
+                                 headers={"x-api-key": ANTHROPIC_API_KEY,
+                                          "anthropic-version": "2023-06-01",
+                                          "Content-Type": "application/json"},
+                                 json={"model": WA2_MODEL, "max_tokens": 900, "system": system,
+                                       "messages": messages, "tools": ASESOR_TOOLS})
+                if r.status_code != 200:
+                    log.error("Modo asesor: Anthropic %s %s", r.status_code, r.text[:200])
+                    break
+                data = r.json()
+                content = data.get("content", []) or []
+                texto_turno = "".join(b.get("text", "") for b in content
+                                      if b.get("type") == "text").strip()
+                if texto_turno:
+                    reply = texto_turno
+                if data.get("stop_reason") != "tool_use":
+                    break
+                messages.append({"role": "assistant", "content": content})
+                resultados = []
+                for b in content:
+                    if b.get("type") != "tool_use":
+                        continue
+                    try:
+                        res = await _asesor_ejecutar_tool(user_id, b.get("name"),
+                                                          b.get("input") or {}, zona,
+                                                          item["conversacion_id"])
+                    except Exception as e:
+                        res = f"La herramienta falló: {str(e)[:120]}"
+                    resultados.append({"type": "tool_result", "tool_use_id": b.get("id"),
+                                       "content": res})
+                messages.append({"role": "user", "content": resultados})
+    except Exception as e:
+        log.exception("Modo asesor reventó: %s", e)
+
+    if not reply:
+        reply = "No pude procesar tu instrucción ahorita. Mándamela de nuevo en un momento."
+    wamid = await _wa_send_text(numero, item["wa_id"], reply)
+    await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"], wamid,
+                          "out", "ia", reply)
+
+
+async def _responder_conversacion(item: dict, numero: dict, user_id: str):
+    conv_rows = await sb_get("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}", "select": "*", "limit": "1"})
+    conv = conv_rows[0] if conv_rows else {}
+    contacto_rows = await sb_get("wa2_contactos", {"id": f"eq.{item['contacto_id']}", "select": "*", "limit": "1"})
+    contacto = contacto_rows[0] if contacto_rows else {}
+
+    # (El aviso al celular ya se mandó en _procesar_en_segundo_plano.)
+
+    if not numero.get("ia_enabled", True) or not conv.get("ai_enabled", True):
+        return  # el humano tiene el control
+
+    entren = await _entrenamiento_de(user_id, numero["id"])
+    if not entren.get("activo", True):
+        return
+    if not _en_horario(entren):
+        msg_fuera = entren.get("fuera_horario_msg") or "Gracias por tu mensaje, en cuanto abramos te contesto."
+        await _wa_marcar_leido(numero, item.get("wa_message_id"))
+        wamid = await _wa_send_text(numero, item["wa_id"], msg_fuera)
+        await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"], wamid,
+                              "out", "ia", msg_fuera)
+        return
+
+    palabras = entren.get("escalar_palabras") or []
+    if isinstance(palabras, str):
+        palabras = [p.strip() for p in palabras.split(",") if p.strip()]
+    if any(p.lower() in item["texto"].lower() for p in palabras if p):
+        await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"}, {"ai_enabled": False})
+        await enviar_push(user_id, "Un prospecto pidió hablar contigo",
+                          f"{contacto.get('nombre') or item['wa_id']}: {item['texto'][:100]}",
+                          datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
+        return
+
+    # El tope del entrenamiento manda solo si es MÁS estricto que el tope duro.
+    # Un 0 guardado (que antes significaba "ilimitado") ahora cae al tope duro.
+    max_msj = entren.get("max_mensajes_ia") or 0
+    if max_msj <= 0 or max_msj > WA2_TOPE_IA:
+        max_msj = WA2_TOPE_IA
+    conteo = await sb_get("wa2_mensajes", {"conversacion_id": f"eq.{item['conversacion_id']}",
+                                           "sender": "eq.ia", "select": "id"})
+    if len(conteo) >= max_msj:
+        # Antes esto apagaba la IA y se salía en silencio: el prospecto se
+        # quedaba escribiendo al vacío y el agente nunca se enteraba de que
+        # ahora le tocaba a él. Ahora se le avisa.
+        await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"}, {"ai_enabled": False})
+        await enviar_push(user_id, "Un prospecto te está esperando",
+                          f"{contacto.get('nombre') or item['wa_id']} lleva rato platicando con la IA. "
+                          "Ya te toca a ti seguir la conversación.",
+                          datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
+        return
+
+    # Ya se decidió que la IA sí va a contestar: hasta ahora se vale poner la
+    # palomita azul y el "escribiendo…" del lado del prospecto.
+    await _wa_marcar_leido(numero, item.get("wa_message_id"))
+
+    historial_rows = await sb_get("wa2_mensajes", {
+        "conversacion_id": f"eq.{item['conversacion_id']}", "select": "sender,body",
+        "order": "created_at.desc", "limit": str(HISTORY_LIMIT)})
+    historial_rows.reverse()
+    history = [{"role": "assistant" if m["sender"] in ("ia", "agente") else "user", "content": m.get("body") or ""}
+              for m in historial_rows]
+
+    agente = await _perfil_agente(user_id)
+    contexto = conv.get("property_ctx") or (
+        f"Atiendes prospectos de {agente['nombre']}, asesor inmobiliario"
+        f"{(' en ' + agente['zona']) if agente['zona'] else ''}. "
+        "Si no sabes por qué propiedad escribe, pregúntale qué busca.")
+
+    resultado = await recepcion2_responde(history, contexto, agente, entren)
+
+    reply = resultado.get("reply") or "Gracias por tu mensaje."
+    wamid = await _wa_send_text(numero, item["wa_id"], reply)
+    await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"], wamid, "out", "ia", reply)
+
+    if resultado.get("_falla_tecnica"):
+        # La IA no pudo pensar la respuesta (la API venía caída o saturada).
+        # Se le pasa la conversación al humano y se le avisa: un prospecto
+        # esperando a un bot descompuesto es un prospecto perdido.
+        await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"}, {"ai_enabled": False})
+        await enviar_push(user_id, "La IA no pudo contestar",
+                          f"{contacto.get('nombre') or item['wa_id']} está esperando respuesta. "
+                          "Entra a la conversación tú.",
+                          datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
+        return
+
+    # Actualiza la ficha del prospecto con lo que la IA acaba de calificar
+    notas_actuales = contacto.get("notas") or []
+    if resultado.get("nota"):
+        notas_actuales = notas_actuales + [{"texto": resultado["nota"], "autor": "ia", "fecha": _now()}]
+    # El nombre con el que el prospecto SE PRESENTÓ en el chat es la prioridad 1
+    # (arriba de la agenda del celular y del nombre de WhatsApp).
+    nombre_chat = (resultado.get("nombre") or "").strip() or (contacto.get("nombre_chat") or "").strip()
+    update_contacto = {
+        "temperatura": resultado.get("temperatura") or contacto.get("temperatura") or "Nuevo",
+        "score": resultado.get("score") if resultado.get("score") is not None else contacto.get("score", 0),
+        "presupuesto": resultado.get("presupuesto") or contacto.get("presupuesto"),
+        "forma_pago": resultado.get("forma_pago") or contacto.get("forma_pago"),
+        "busca": resultado.get("busca") or contacto.get("busca"),
+        "resumen": resultado.get("resumen") or contacto.get("resumen"),
+        "notas": notas_actuales,
+        "updated_at": _now(),
+    }
+    if nombre_chat:
+        update_contacto["nombre_chat"] = nombre_chat
+        update_contacto["nombre"] = nombre_chat
+    await sb_patch("wa2_contactos", {"id": f"eq.{item['contacto_id']}"}, update_contacto)
+    await _sincronizar_contacto_crm(user_id, dict(contacto, **update_contacto), resultado)
+
+    accion = resultado.get("accion")
+    if isinstance(accion, dict):
+        tipo = accion.get("tipo")
+        if tipo == "enviar_inmuebles":
+            filtros_ia = accion.get("filtros") or {}
+            if not filtros_ia.get("precio_max"):
+                # Respaldo: la IA no mandó precio_max en esta acción, pero si
+                # el prospecto ya dio su presupuesto antes (queda en su ficha),
+                # se usa de todos modos — no se le ofrece algo fuera de su rango
+                # solo porque el mensaje más reciente no repitió el monto.
+                respaldo = _parsear_presupuesto(resultado.get("presupuesto") or contacto.get("presupuesto") or "")
+                if respaldo:
+                    filtros_ia = {**filtros_ia, "precio_max": respaldo}
+            props, zona_sin_resultados = await _buscar_inmuebles(user_id, filtros_ia)
+            if props:
+                enviados = []
+                # Las fichas se arman EN PARALELO. En serie eran hasta 45
+                # segundos por cada una: el prospecto leía "ahorita te las
+                # comparto" y las recibía dos minutos y medio después, cuando
+                # ya se había ido a otro anuncio.
+                fichas = await asyncio.gather(
+                    *[_generar_ficha_pdf(_propiedad_para_ficha(p)) for p in props[:3]],
+                    return_exceptions=True)
+                for idx, p in enumerate(props[:3]):
+                    # Antes se mandaba foto+texto Y la ficha técnica (redundante,
+                    # la ficha ya trae fotos y datos). Ahora solo la ficha.
+                    resumen = _texto_inmueble(p).replace("\n", " · ")
+                    ficha = fichas[idx] if idx < len(fichas) else None
+                    url_pdf, filename = ficha if isinstance(ficha, tuple) else (None, None)
+                    if url_pdf:
+                        wamid = await _wa_send_document_link(
+                            numero, item["wa_id"], url_pdf, filename or "ficha.pdf", resumen)
+                        await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"], wamid,
+                                              "out", "ia", f"[ficha técnica] {resumen}", url_pdf)
+                    else:
+                        # Si por lo que sea no se pudo armar el PDF a tiempo, que
+                        # al menos le llegue la info en texto, no que no reciba nada.
+                        wamid = await _wa_send_text(numero, item["wa_id"], _texto_inmueble(p))
+                        await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"], wamid,
+                                              "out", "ia", _texto_inmueble(p))
+                    enviados.append({"id": p.get("id"), "titulo": p.get("titulo") or p.get("tipo") or "propiedad"})
+                # Se recuerdan aquí (no en el historial de mensajes) para poder
+                # adjuntar la propiedad correcta a la tarea si más adelante agenda una visita.
+                await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"},
+                              {"ultimas_propiedades": enviados})
+            elif zona_sin_resultados:
+                # De verdad no hay nada en la zona que pidió: se le dice tal
+                # cual, NUNCA se le manda una propiedad de otra ubicación
+                # como si fuera lo que preguntó.
+                zona_txt = (filtros_ia.get("colonia") or filtros_ia.get("zona_amplia")
+                           or filtros_ia.get("ciudad") or "esa zona").strip()
+                aviso = (f"Por ahora no tengo nada disponible en {zona_txt}. "
+                         "Le aviso a mi asesor para que revise si tiene algo que no esté "
+                         "publicado, o si prefieres te comparto opciones en otra zona cercana.")
+                wamid2 = await _wa_send_text(numero, item["wa_id"], aviso)
+                await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"], wamid2, "out", "ia", aviso)
+                await enviar_push(user_id, "Un prospecto busca algo que no tienes publicado",
+                                  f"{contacto.get('nombre') or item['wa_id']} pidió {zona_txt} y no hay inventario ahí.",
+                                  datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
+            else:
+                aviso = "Por ahora no tengo una opción exacta, pero le aviso a mi asesor para que te comparta algo a la medida."
+                wamid2 = await _wa_send_text(numero, item["wa_id"], aviso)
+                await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"], wamid2, "out", "ia", aviso)
+
+        elif tipo == "agendar_visita":
+            fecha = accion.get("fecha"); hora = accion.get("hora")
+            if fecha and hora:
+                nombre_prospecto = contacto.get("nombre") or item["wa_id"]
+                inmueble_txt = (accion.get("inmueble") or "").strip()
+                titulo = f"Visita con {nombre_prospecto} (WhatsApp)"
+                if inmueble_txt:
+                    titulo += f" — {inmueble_txt}"
+                crm_id = contacto.get("contacto_crm_id")
+                propiedad_id = _resolver_inmueble_id(inmueble_txt, conv.get("ultimas_propiedades") or [])
+                creada = await sb_post("tareas", {
+                    "user_id": user_id, "titulo": titulo,
+                    "fecha_entrega": _fecha_hora_utc_iso(fecha, hora, entren.get("zona_horaria")),
+                    "notas": inmueble_txt or None,
+                    "propiedad_id": propiedad_id,
+                    "contacto_id": crm_id})
+                if creada and crm_id:
+                    await sb_post("tareas_contactos", {
+                        "user_id": user_id, "tarea_id": creada[0]["id"], "contacto_id": crm_id})
+                if creada and propiedad_id:
+                    await sb_post("tareas_propiedades", {
+                        "user_id": user_id, "tarea_id": creada[0]["id"], "propiedad_id": propiedad_id})
+                await sb_patch("wa2_contactos", {"id": f"eq.{item['contacto_id']}"}, {"etapa": "Cita"})
+                ics = _construir_ics(fecha, hora, titulo, inmueble_txt, entren.get("zona_horaria"))
+                await _wa_send_document(numero, item["wa_id"], ics.encode("utf-8"),
+                                       "cita.ics", "Toca el archivo para agregarla a tu calendario.")
+                await enviar_push(user_id, "Nueva cita agendada",
+                                  f"{nombre_prospecto} — {fecha} {hora} (revísala en Tareas)",
+                                  datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
+
+        elif tipo == "registrar_inmueble":
+            datos = accion.get("datos") or {}
+            # Se recuperan las fotos que el remitente mandó EN ESTA conversación
+            # para adjuntarlas al inmueble. Ya viven en el almacenamiento de
+            # Broquer, así que son ligas propias y permanentes.
+            fotos_rows = await sb_get("wa2_mensajes", {
+                "conversacion_id": f"eq.{item['conversacion_id']}", "direction": "eq.in",
+                "media_url": "not.is.null", "select": "body,media_url",
+                "order": "created_at.desc", "limit": "20"})
+            fotos = [f["media_url"] for f in fotos_rows
+                     if (f.get("body") or "").lower().startswith("[foto")]
+            fotos.reverse()
+
+            inmueble_id = await _alta_inmueble(user_id, datos, item["wa_id"], fotos)
+            if inmueble_id:
+                # Quien mandó el inmueble queda vinculado como su Propietario en
+                # el CRM (contactos_propiedades), para que al abrirlo en Mis
+                # Inmuebles se sepa de inmediato de quién es y cómo contactarlo.
+                crm_id_prop = contacto.get("contacto_crm_id")
+                if crm_id_prop:
+                    vinculo = await sb_post("contactos_propiedades", {
+                        "user_id": user_id, "contacto_id": crm_id_prop,
+                        "propiedad_id": inmueble_id, "relacion": "propietario"})
+                    if not vinculo:
+                        log.warning("No se pudo vincular al propietario %s con el inmueble %s",
+                                    crm_id_prop, inmueble_id)
+                # Al remitente NADA de promesas: un "gracias" y punto. Si se le
+                # dijera "ya quedó registrada" creería que está publicada.
+                gracias = "¡Muchas gracias!"
+                wamid3 = await _wa_send_text(numero, item["wa_id"], gracias)
+                await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"],
+                                       wamid3, "out", "ia", gracias)
+                await sb_patch("wa2_contactos", {"id": f"eq.{item['contacto_id']}"},
+                               {"etapa": "Propietario"})
+                etiqueta = " · ".join(x for x in [datos.get("tipo"), datos.get("colonia"),
+                                                  _money(datos.get("precio"))] if x)
+                await enviar_push(user_id, "Te mandaron un inmueble",
+                                  f"{contacto.get('nombre') or item['wa_id']}: {etiqueta or 'un inmueble'}. "
+                                  "Quedó guardado como No activo — revísalo en Mis Inmuebles.",
+                                  datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
+            else:
+                await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"},
+                               {"ai_enabled": False})
+                await enviar_push(user_id, "No se pudo guardar un inmueble",
+                                  f"{contacto.get('nombre') or item['wa_id']} te mandó una propiedad y "
+                                  "no se pudo registrar. Entra a la conversación.",
+                                  datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
+
+        elif tipo == "pasar_a_humano":
+            await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"}, {"ai_enabled": False})
+            await enviar_push(user_id, "Un prospecto necesita de ti",
+                              accion.get("motivo") or "La IA te pasó esta conversación.",
+                              datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
+
+
+# =============================================================================
+# 9) BANDEJA — conversaciones, mensajes, notas, handoff manual, envío manual
+# =============================================================================
+@router.get("/conversaciones")
+async def wa2_conversaciones_list(request: Request, numero_id: str | None = None):
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    params = {"user_id": _in_filter(ids), "select": "*,wa2_contactos(*)",
+              "order": "last_message_at.desc", "limit": "200"}
+    if numero_id and numero_id != "todos":
+        params["numero_id"] = f"eq.{numero_id}"
+    rows = await sb_get("wa2_conversaciones", params)
+
+    # Vista previa del último mensaje de cada chat (como WhatsApp). Se resuelve
+    # con UNA sola consulta: se traen los mensajes recientes del usuario en
+    # orden descendente y se toma el primero que aparece de cada conversación.
+    if rows:
+        try:
+            recientes = await sb_get("wa2_mensajes", {
+                "user_id": _in_filter(ids),
+                "select": "conversacion_id,body,direction,sender,created_at",
+                "order": "created_at.desc", "limit": "1000",
+            })
+            vistos: dict = {}
+            for m in recientes:
+                cid = m.get("conversacion_id")
+                if cid and cid not in vistos:
+                    vistos[cid] = m
+            for c in rows:
+                ult = vistos.get(c.get("id"))
+                if ult:
+                    c["preview_texto"] = (ult.get("body") or "")[:120]
+                    c["preview_direction"] = ult.get("direction")
+                    c["preview_sender"] = ult.get("sender")
+        except Exception:
+            log.warning("No se pudo calcular la vista previa de las conversaciones")
+
+    return {"conversaciones": rows}
+
+
+@router.get("/mensajes")
+async def wa2_mensajes_list(request: Request, conversacion_id: str,
+                            limit: int = 30, before: str | None = None, after: str | None = None):
+    """Mensajes de una conversación, paginados como WhatsApp.
+
+    · Sin parámetros: devuelve los ÚLTIMOS `limit` mensajes (los más recientes),
+      ya ordenados del más viejo al más nuevo para pintarlos de corrido.
+    · `before=<created_at>`: devuelve la página ANTERIOR (mensajes más viejos),
+      que es lo que se pide al hacer scroll hacia arriba.
+    · `after=<created_at>`: solo lo que llegó después de esa marca — se usa en el
+      refresco automático para no volver a bajar toda la conversación.
+    """
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    limit = max(1, min(int(limit or 30), 100))
+
+    base = {"conversacion_id": f"eq.{conversacion_id}", "user_id": _in_filter(ids), "select": "*"}
+
+    if after:
+        rows = await sb_get("wa2_mensajes", {**base, "created_at": f"gt.{after}",
+                                             "order": "created_at.asc", "limit": "200"})
+        return {"mensajes": rows, "hay_mas_antiguos": False, "incremental": True}
+
+    params = {**base, "order": "created_at.desc", "limit": str(limit + 1)}
+    if before:
+        params["created_at"] = f"lt.{before}"
+    rows = await sb_get("wa2_mensajes", params)
+
+    hay_mas = len(rows) > limit
+    if hay_mas:
+        rows = rows[:limit]
+    rows.reverse()
+
+    # Bajar los mensajes ya NO marca la conversación como leída. Leer es un
+    # acto del agente, no un efecto secundario de que el navegador refresque:
+    # de eso se encarga POST /conversaciones/{id}/lectura.
+    return {"mensajes": rows, "hay_mas_antiguos": hay_mas, "incremental": False}
+
+
+class EnviarManualReq(BaseModel):
+    conversacion_id: str
+    texto: str
+
+
+@router.post("/mensajes")
+async def wa2_enviar_manual(req: EnviarManualReq, request: Request):
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    conv_rows = await sb_get("wa2_conversaciones", {"id": f"eq.{req.conversacion_id}", "user_id": _in_filter(ids),
+                                                    "select": "*", "limit": "1"})
+    if not conv_rows:
+        raise HTTPException(status_code=404, detail="Conversación no encontrada")
+    conv = conv_rows[0]
+    contacto_rows = await sb_get("wa2_contactos", {"id": f"eq.{conv['contacto_id']}", "select": "*", "limit": "1"})
+    contacto = contacto_rows[0] if contacto_rows else {}
+    numero_rows = await sb_get("wa2_numeros", {"id": f"eq.{conv['numero_id']}", "select": "*", "limit": "1"})
+    if not numero_rows:
+        raise HTTPException(status_code=404, detail="Número no encontrado")
+    numero = numero_rows[0]
+
+    texto = (req.texto or "").strip()
+    if not texto:
+        raise HTTPException(status_code=400, detail="El mensaje viene vacío.")
+    if len(texto) > WA_MAX_TEXTO:
+        raise HTTPException(status_code=400,
+            detail=f"El mensaje es demasiado largo ({len(texto)} caracteres). "
+                   f"WhatsApp solo permite {WA_MAX_TEXTO}. Mándalo en dos partes.")
+
+    wamid, error = await _wa_send_text_detallado(numero, contacto.get("wa_id"), texto)
+    if error:
+        if error.get("code") == 131047:
+            raise HTTPException(status_code=409, detail={
+                "ventana_cerrada": True,
+                "mensaje": "Pasaron más de 24 horas desde el último mensaje del prospecto. "
+                           "WhatsApp ya no deja mandar texto libre — usa una plantilla para reabrir la conversación.",
+            })
+        raise HTTPException(status_code=502, detail=error.get("message") or "No se pudo enviar el mensaje.")
+    await _guardar_mensaje(conv["user_id"], conv["contacto_id"], conv["id"], wamid, "out", "agente", texto)
+
+    # En cuanto el asesor escribe con sus propias manos, la IA se hace a un
+    # lado en ESA conversación. Si no, pasa lo más ridículo que puede pasar:
+    # el prospecto contesta y le responden dos "personas" distintas, con
+    # criterios distintos, en el mismo chat. Se reactiva con el switch de IA.
+    ia_pausada = False
+    if conv.get("ai_enabled", True):
+        await sb_patch("wa2_conversaciones", {"id": f"eq.{conv['id']}"}, {"ai_enabled": False})
+        ia_pausada = True
+    return {"ok": True, "ia_pausada": ia_pausada}
+
+
+class LecturaReq(BaseModel):
+    no_leida: bool = False
+
+
+@router.post("/conversaciones/{conversacion_id}/lectura")
+async def wa2_lectura(conversacion_id: str, req: LecturaReq, request: Request):
+    """Marca la conversación como leída o como NO leída, a mano.
+
+    · no_leida=False → se pone en cero el contador y, ahora sí, se le manda la
+      palomita azul al prospecto: alguien de verdad abrió su mensaje.
+    · no_leida=True  → el agente la deja pendiente aunque ya la haya abierto,
+      igual que en WhatsApp. La palomita azul que ya se mandó no se puede
+      quitar (Meta no lo permite), pero en Broquer la conversación vuelve a
+      aparecer sin leer.
+    """
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    conv_rows = await sb_get("wa2_conversaciones", {"id": f"eq.{conversacion_id}", "user_id": _in_filter(ids),
+                                                    "select": "*", "limit": "1"})
+    if not conv_rows:
+        raise HTTPException(status_code=404, detail="Conversación no encontrada")
+    conv = conv_rows[0]
+
+    if req.no_leida:
+        await sb_patch("wa2_conversaciones", {"id": f"eq.{conversacion_id}"},
+                       {"no_leida": True, "unread_count": max(1, int(conv.get("unread_count") or 0))})
+        return {"ok": True, "no_leida": True}
+
+    await sb_patch("wa2_conversaciones", {"id": f"eq.{conversacion_id}"},
+                   {"no_leida": False, "unread_count": 0})
+
+    # Palomita azul al prospecto, sin "escribiendo…": lo leyó un humano, no la IA.
+    wamid = conv.get("last_inbound_wamid")
+    if wamid:
+        numero_rows = await sb_get("wa2_numeros", {"id": f"eq.{conv.get('numero_id')}",
+                                                   "select": "*", "limit": "1"})
+        if numero_rows:
+            await _wa_marcar_leido(numero_rows[0], wamid, escribiendo=False)
+
+    return {"ok": True, "no_leida": False}
+
+
+class ConvPatchReq(BaseModel):
+    ai_enabled: bool | None = None
+    etapa: str | None = None
+
+
+@router.patch("/conversaciones/{conversacion_id}")
+async def wa2_conversacion_patch(conversacion_id: str, req: ConvPatchReq, request: Request):
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    conv_rows = await sb_get("wa2_conversaciones", {"id": f"eq.{conversacion_id}", "user_id": _in_filter(ids),
+                                                    "select": "contacto_id", "limit": "1"})
+    if not conv_rows:
+        raise HTTPException(status_code=404, detail="Conversación no encontrada")
+    if req.ai_enabled is not None:
+        await sb_patch("wa2_conversaciones", {"id": f"eq.{conversacion_id}"}, {"ai_enabled": req.ai_enabled})
+    if req.etapa is not None:
+        await sb_patch("wa2_contactos", {"id": f"eq.{conv_rows[0]['contacto_id']}"}, {"etapa": req.etapa})
+    return {"ok": True}
+
+
+@router.delete("/mensajes/{mensaje_id}")
+async def wa2_borrar_mensaje(mensaje_id: str, request: Request):
+    """Borra UN mensaje de la bandeja (y su archivo, si lo tenía).
+
+    Esto no existía. Sin esto, cuando un prospecto ejerce su derecho de
+    cancelación —o cuando manda sin que nadie se lo pida una foto de su INE o
+    un audio con datos delicados— el agente no tenía absolutamente ninguna
+    forma de sacar eso de Broquer. El plazo del artículo 31 de la LFPDPPP le
+    corría encima sin poder cumplir.
+
+    Nota: solo borra la copia de Broquer. El mensaje sigue existiendo en el
+    WhatsApp de las dos personas; eso no lo controla nadie más que ellas."""
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    rows = await sb_get("wa2_mensajes", {"id": f"eq.{mensaje_id}", "user_id": _in_filter(ids),
+                                         "select": "id,media_path", "limit": "1"})
+    if not rows:
+        raise HTTPException(status_code=404, detail="Mensaje no encontrado")
+    await _borrar_archivos([rows[0].get("media_path")])
+    if not await sb_delete("wa2_mensajes", {"id": f"eq.{mensaje_id}", "user_id": _in_filter(ids)}):
+        raise HTTPException(status_code=500, detail="No se pudo borrar el mensaje. Intenta de nuevo.")
+    return {"ok": True}
+
+
+@router.delete("/conversaciones/{conversacion_id}")
+async def wa2_borrar_conversacion(conversacion_id: str, request: Request):
+    """Borra una conversación completa: sus mensajes, sus archivos y la ficha
+    del prospecto en WhatsApp. El Contacto del CRM NO se toca — ese es un
+    registro aparte que el agente decide si conserva o no desde Contactos."""
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    conv = await sb_get("wa2_conversaciones", {"id": f"eq.{conversacion_id}", "user_id": _in_filter(ids),
+                                               "select": "id,contacto_id", "limit": "1"})
+    if not conv:
+        raise HTTPException(status_code=404, detail="Conversación no encontrada")
+
+    archivos, pagina = [], 0
+    while pagina < 40:
+        lote = await sb_get("wa2_mensajes", {"conversacion_id": f"eq.{conversacion_id}",
+                                             "select": "media_path", "limit": "1000",
+                                             "offset": str(pagina * 1000)})
+        archivos.extend(m.get("media_path") for m in lote)
+        if len(lote) < 1000:
+            break
+        pagina += 1
+    await _borrar_archivos(archivos)
+
+    await sb_delete("wa2_mensajes", {"conversacion_id": f"eq.{conversacion_id}"})
+    await sb_delete("wa2_conversaciones", {"id": f"eq.{conversacion_id}"})
+    if conv[0].get("contacto_id"):
+        await sb_delete("wa2_contactos", {"id": f"eq.{conv[0]['contacto_id']}"})
+    log.info("Conversación %s eliminada por el usuario %s", conversacion_id, user_id)
+    return {"ok": True}
+
+
+async def _borrar_archivos(rutas: list) -> None:
+    """Borra del almacenamiento los archivos de los mensajes que se eliminan.
+    Si esto no se hiciera, la foto seguiría viva en una liga pública aunque el
+    mensaje ya no apareciera en ningún lado — que es justo lo contrario de lo
+    que promete una supresión."""
+    rutas = [r for r in (rutas or []) if r]
+    if not rutas:
+        return
+    try:
+        async with httpx.AsyncClient(timeout=20) as c:
+            await c.request("DELETE", f"{SUPABASE_URL}/storage/v1/object/{WA_MEDIA_BUCKET}",
+                            headers=_sb_headers(), json={"prefixes": rutas})
+    except Exception as e:
+        log.warning("No se pudieron borrar %s archivo(s) del almacenamiento: %s", len(rutas), e)
+
+
+class NotaReq(BaseModel):
+    texto: str
+
+
+@router.post("/contactos/{contacto_id}/notas")
+async def wa2_agregar_nota(contacto_id: str, req: NotaReq, request: Request):
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    rows = await sb_get("wa2_contactos", {"id": f"eq.{contacto_id}", "user_id": _in_filter(ids),
+                                          "select": "notas,contacto_crm_id", "limit": "1"})
+    if not rows:
+        raise HTTPException(status_code=404, detail="Contacto no encontrado")
+    notas = (rows[0].get("notas") or []) + [{"texto": req.texto, "autor": "agente", "fecha": _now()}]
+    await sb_patch("wa2_contactos", {"id": f"eq.{contacto_id}"}, {"notas": notas, "updated_at": _now()})
+    await _sincronizar_contacto_crm(user_id, rows[0], {"nota": req.texto})
+    return {"ok": True, "notas": notas}
+
+
+@router.patch("/contactos/{contacto_id}")
+async def wa2_contacto_patch(contacto_id: str, request: Request):
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    body = await request.json()
+    permitido = {k: v for k, v in body.items()
+                if k in ("nombre", "presupuesto", "forma_pago", "busca", "temperatura", "score", "etapa", "resumen", "opt_out")}
+    # Etiquetas: solo lista de textos cortos, sin repetidos y con tope, para
+    # que un cliente no pueda meter basura enorme por el API.
+    if "etiquetas" in body and isinstance(body["etiquetas"], list):
+        limpias = []
+        for e in body["etiquetas"]:
+            t = str(e).strip()[:40]
+            if t and t not in limpias:
+                limpias.append(t)
+        permitido["etiquetas"] = limpias[:20]
+    if not permitido:
+        return {"ok": True}
+    permitido["updated_at"] = _now()
+    await sb_patch("wa2_contactos", {"id": f"eq.{contacto_id}", "user_id": _in_filter(ids)}, permitido)
+    return {"ok": True}
+
+
+# =============================================================================
+# 9.4) AUTOMATIZACIONES — recetas simples: disparador + pasos
+#
+# El agente arma recetas sin saber nada técnico: "cuando el mensaje contenga
+# la palabra PRECIO → responde este texto → ponle la etiqueta interesado".
+# Disparadores: 'palabra' (el texto contiene alguna palabra de la lista) o
+# 'nuevo' (primer mensaje de un contacto que nunca había escrito).
+# Pasos: 'mensaje' (responder un texto fijo), 'etiqueta' (etiquetar al
+# contacto) y 'humano' (apagar la IA de esa conversación y avisar al agente).
+# Si la receta responde o pasa al humano, la IA ya no contesta ese mensaje.
+# =============================================================================
+_AUTO_TIPOS = ("mensaje", "etiqueta", "humano")
+
+# Candado anti-metralleta: la misma receta no se dispara dos veces en la misma
+# conversación en menos de este tiempo, aunque el prospecto repita la palabra
+# en tres mensajes seguidos. Vive en memoria: suficiente con una instancia.
+_AUTO_COOLDOWN_SEG = 120
+_AUTO_ULTIMA: dict = {}
+
+
+class AutomatizacionReq(BaseModel):
+    nombre: str
+    numero_id: str | None = None
+    disparador: str = "palabra"
+    palabras: list[str] = []
+    acciones: list[dict] = []
+    activa: bool = True
+
+
+def _limpiar_automatizacion(req: AutomatizacionReq) -> dict:
+    nombre = (req.nombre or "").strip()[:80]
+    if not nombre:
+        raise HTTPException(status_code=400, detail="Ponle un nombre a la automatización.")
+    disparador = req.disparador if req.disparador in ("palabra", "nuevo") else "palabra"
+    palabras = []
+    for p in (req.palabras or []):
+        t = str(p).strip().lower()[:60]
+        if t and t not in palabras:
+            palabras.append(t)
+    palabras = palabras[:15]
+    if disparador == "palabra" and not palabras:
+        raise HTTPException(status_code=400, detail="Escribe al menos una palabra que la dispare.")
+    acciones = []
+    for a in (req.acciones or []):
+        tipo = str((a or {}).get("tipo") or "").strip()
+        valor = str((a or {}).get("valor") or "").strip()
+        if tipo not in _AUTO_TIPOS:
+            continue
+        if tipo == "mensaje":
+            valor = valor[:1000]
+            if not valor:
+                continue
+        elif tipo == "etiqueta":
+            valor = valor[:40]
+            if not valor:
+                continue
+        else:
+            valor = ""
+        acciones.append({"tipo": tipo, "valor": valor})
+    acciones = acciones[:5]
+    if not acciones:
+        raise HTTPException(status_code=400, detail="Agrega al menos un paso a la automatización.")
+    return {"nombre": nombre, "numero_id": req.numero_id or None, "disparador": disparador,
+            "palabras": palabras, "acciones": acciones, "activa": bool(req.activa)}
+
+
+@router.get("/automatizaciones")
+async def wa2_automatizaciones_list(request: Request):
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    rows = await sb_get("wa2_automatizaciones", {"user_id": _in_filter(ids), "select": "*",
+                                                 "order": "created_at.desc", "limit": "100"})
+    return {"automatizaciones": rows}
+
+
+@router.post("/automatizaciones")
+async def wa2_automatizacion_crear(req: AutomatizacionReq, request: Request):
+    user_id = await _require_user(request)
+    fila = _limpiar_automatizacion(req)
+    if fila["numero_id"]:
+        ids = await _ids_visibles(user_id)
+        n = await sb_get("wa2_numeros", {"id": f"eq.{fila['numero_id']}",
+                                         "user_id": _in_filter(ids), "select": "id", "limit": "1"})
+        if not n:
+            raise HTTPException(status_code=404, detail="Número no encontrado")
+    fila.update({"user_id": user_id, "veces_usada": 0,
+                 "created_at": _now(), "updated_at": _now()})
+    creado = await sb_post("wa2_automatizaciones", fila)
+    if not creado:
+        raise HTTPException(status_code=500,
+                            detail="No se pudo guardar. ¿Ya corriste la migración de automatizaciones?")
+    return {"ok": True}
+
+
+@router.patch("/automatizaciones/{auto_id}")
+async def wa2_automatizacion_patch(auto_id: str, request: Request):
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    body = await request.json()
+    permitido = {}
+    if "activa" in body:
+        permitido["activa"] = bool(body["activa"])
+    if not permitido:
+        return {"ok": True}
+    permitido["updated_at"] = _now()
+    await sb_patch("wa2_automatizaciones", {"id": f"eq.{auto_id}", "user_id": _in_filter(ids)}, permitido)
+    return {"ok": True}
+
+
+@router.delete("/automatizaciones/{auto_id}")
+async def wa2_automatizacion_delete(auto_id: str, request: Request):
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    await sb_delete("wa2_automatizaciones", {"id": f"eq.{auto_id}", "user_id": _in_filter(ids)})
+    return {"ok": True}
+
+
+async def _correr_automatizaciones(item: dict, numero: dict, user_id: str) -> bool:
+    """Evalúa las recetas del usuario para este mensaje. Devuelve True si
+    alguna receta respondió o pasó el chat al humano (la IA ya no contesta)."""
+    autos = await sb_get("wa2_automatizaciones",
+                         {"user_id": f"eq.{numero['user_id']}", "activa": "eq.true",
+                          "or": f"(numero_id.is.null,numero_id.eq.{numero['id']})",
+                          "select": "*", "limit": "100"})
+    if not autos:
+        return False
+
+    texto = (item.get("texto") or "").lower()
+    es_nuevo = None  # se calcula solo si alguna receta lo necesita
+    silenciar_ia = False
+    ahora = datetime.now(timezone.utc).timestamp()
+
+    for auto in autos:
+        if auto.get("disparador") == "nuevo":
+            if es_nuevo is None:
+                entrantes = await sb_get("wa2_mensajes",
+                                         {"conversacion_id": f"eq.{item['conversacion_id']}",
+                                          "direction": "eq.in", "select": "id", "limit": "2"})
+                es_nuevo = len(entrantes) <= 1
+            if not es_nuevo:
+                continue
+        else:
+            palabras = auto.get("palabras") or []
+            if not any(p and str(p).lower() in texto for p in palabras):
+                continue
+
+        llave = f"{item['conversacion_id']}|{auto['id']}"
+        if ahora - _AUTO_ULTIMA.get(llave, 0) < _AUTO_COOLDOWN_SEG:
+            continue
+        _AUTO_ULTIMA[llave] = ahora
+        if len(_AUTO_ULTIMA) > 5000:
+            for k in list(_AUTO_ULTIMA.keys())[:1000]:
+                _AUTO_ULTIMA.pop(k, None)
+
+        for accion in (auto.get("acciones") or []):
+            tipo = (accion or {}).get("tipo")
+            valor = (accion or {}).get("valor") or ""
+            try:
+                if tipo == "mensaje" and valor:
+                    await _wa_marcar_leido(numero, item.get("wa_message_id"))
+                    wamid = await _wa_send_text(numero, item["wa_id"], valor[:WA_MAX_TEXTO])
+                    await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"],
+                                          wamid, "out", "agente", valor[:WA_MAX_TEXTO])
+                    silenciar_ia = True
+                elif tipo == "etiqueta" and valor:
+                    rows = await sb_get("wa2_contactos", {"id": f"eq.{item['contacto_id']}",
+                                                          "select": "etiquetas", "limit": "1"})
+                    tags = (rows[0].get("etiquetas") or []) if rows else []
+                    if valor not in tags:
+                        tags = (tags + [valor])[:20]
+                        await sb_patch("wa2_contactos", {"id": f"eq.{item['contacto_id']}"},
+                                       {"etiquetas": tags, "updated_at": _now()})
+                elif tipo == "humano":
+                    await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"},
+                                   {"ai_enabled": False})
+                    await enviar_push(user_id, "Una automatización te pasó un chat",
+                                      f"La receta '{auto.get('nombre')}' apagó la IA. Ya te toca a ti.",
+                                      datos={"tipo": "whatsapp",
+                                             "conversation_id": item["conversacion_id"]})
+                    silenciar_ia = True
+            except Exception as e:
+                log.warning("Paso de automatización %s falló: %s", auto.get("id"), e)
+
+        try:
+            await sb_patch("wa2_automatizaciones", {"id": f"eq.{auto['id']}"},
+                           {"veces_usada": (auto.get("veces_usada") or 0) + 1, "updated_at": _now()})
+        except Exception:
+            pass
+
+    return silenciar_ia
+
+
+# =============================================================================
+# 9.5) CAMPAÑAS — envío masivo de una plantilla aprobada a una audiencia
+#
+# La audiencia son los contactos de UN número (todos, o solo los que tengan
+# cierta etiqueta), quitando siempre: gente sin wa_id, gente dada de baja
+# (opt_out) y el propio asesor. El envío corre en segundo plano, uno por uno
+# con una pausa corta, y cada envío queda registrado en wa2_campana_envios.
+# Cada mensaje que sale también se guarda en su conversación de la bandeja,
+# para que el agente vea qué se le mandó a quién.
+# =============================================================================
+class CampanaAudienciaReq(BaseModel):
+    numero_id: str
+    etiqueta: str | None = None
+
+
+class CampanaCrearReq(BaseModel):
+    numero_id: str
+    nombre: str
+    plantilla: str
+    idioma: str = "es_MX"
+    variables: list[str] = []
+    etiqueta: str | None = None
+
+
+async def _audiencia_campana(numero: dict, etiqueta: str | None) -> list:
+    params = {"numero_id": f"eq.{numero['id']}",
+              "user_id": f"eq.{numero['user_id']}",
+              "select": "id,wa_id,nombre,opt_out,etiquetas",
+              "limit": "5000"}
+    if etiqueta:
+        # PostgREST: jsonb "contiene" — la etiqueta debe estar en el array.
+        params["etiquetas"] = "cs." + json.dumps([etiqueta])
+    rows = await sb_get("wa2_contactos", params)
+    audiencia = []
+    for c in rows:
+        if not c.get("wa_id") or c.get("opt_out"):
+            continue
+        if _es_asesor(numero, c["wa_id"]):
+            continue
+        audiencia.append(c)
+    return audiencia
+
+
+async def _numero_visible(request: Request, numero_id: str) -> tuple[str, dict]:
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    rows = await sb_get("wa2_numeros", {"id": f"eq.{numero_id}",
+                                        "user_id": _in_filter(ids),
+                                        "select": "*", "limit": "1"})
+    if not rows:
+        raise HTTPException(status_code=404, detail="Número no encontrado")
+    return user_id, rows[0]
+
+
+@router.get("/etiquetas")
+async def wa2_etiquetas_list(request: Request):
+    """Todas las etiquetas distintas que el usuario ha puesto a sus contactos
+    de WhatsApp — alimenta el selector de audiencia de campañas."""
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    rows = await sb_get("wa2_contactos", {"user_id": _in_filter(ids),
+                                          "select": "etiquetas", "limit": "5000"})
+    etiquetas = sorted({str(e).strip() for c in rows
+                        for e in (c.get("etiquetas") or []) if str(e).strip()})
+    return {"etiquetas": etiquetas}
+
+
+@router.post("/campanas/audiencia")
+async def wa2_campana_audiencia(req: CampanaAudienciaReq, request: Request):
+    """Cuenta (sin enviar nada) a cuánta gente le llegaría la campaña."""
+    _, numero = await _numero_visible(request, req.numero_id)
+    audiencia = await _audiencia_campana(numero, (req.etiqueta or "").strip() or None)
+    return {"total": len(audiencia), "tope": WA2_CAMPANA_TOPE}
+
+
+@router.get("/campanas")
+async def wa2_campanas_list(request: Request):
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    rows = await sb_get("wa2_campanas", {"user_id": _in_filter(ids), "select": "*",
+                                         "order": "created_at.desc", "limit": "30"})
+    return {"campanas": rows}
+
+
+@router.get("/campanas/{campana_id}")
+async def wa2_campana_detalle(campana_id: str, request: Request):
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    rows = await sb_get("wa2_campanas", {"id": f"eq.{campana_id}",
+                                         "user_id": _in_filter(ids),
+                                         "select": "*", "limit": "1"})
+    if not rows:
+        raise HTTPException(status_code=404, detail="Campaña no encontrada")
+    fallidos = await sb_get("wa2_campana_envios", {"campana_id": f"eq.{campana_id}",
+                                                   "estado": "eq.fallido",
+                                                   "select": "nombre,wa_id,error",
+                                                   "limit": "200"})
+    return {"campana": rows[0], "fallidos": fallidos}
+
+
+@router.post("/campanas")
+async def wa2_campana_crear(req: CampanaCrearReq, request: Request, background: BackgroundTasks):
+    _, numero = await _numero_visible(request, req.numero_id)
+
+    nombre = (req.nombre or "").strip()[:80]
+    plantilla = (req.plantilla or "").strip()
+    if not nombre or not plantilla:
+        raise HTTPException(status_code=400, detail="Falta el nombre de la campaña o la plantilla.")
+
+    etiqueta = (req.etiqueta or "").strip() or None
+    audiencia = await _audiencia_campana(numero, etiqueta)
+    if not audiencia:
+        raise HTTPException(status_code=400,
+                            detail="No hay contactos en esa audiencia (o todos pidieron baja).")
+    if len(audiencia) > WA2_CAMPANA_TOPE:
+        raise HTTPException(status_code=400,
+                            detail=f"La audiencia tiene {len(audiencia)} contactos y el tope por "
+                                   f"campaña es {WA2_CAMPANA_TOPE}. Usa una etiqueta para segmentarla.")
+
+    variables = [str(v)[:200] for v in (req.variables or [])][:10]
+    fila = {"user_id": numero["user_id"], "numero_id": numero["id"], "nombre": nombre,
+            "plantilla": plantilla, "idioma": (req.idioma or "es_MX")[:12],
+            "variables": variables, "etiqueta": etiqueta, "estado": "enviando",
+            "total": len(audiencia), "enviados": 0, "fallidos": 0, "created_at": _now()}
+    creado = await sb_post("wa2_campanas", fila)
+    if not creado:
+        raise HTTPException(status_code=500,
+                            detail="No se pudo crear la campaña. ¿Ya corriste la migración de campañas?")
+    campana_id = (creado[0] if isinstance(creado, list) else creado).get("id")
+
+    background.add_task(_correr_campana, campana_id, numero, audiencia,
+                        plantilla, (req.idioma or "es_MX"), variables)
+    return {"ok": True, "campana_id": campana_id, "total": len(audiencia)}
+
+
+def _variables_para(contacto: dict, variables: list) -> list:
+    """Sustituye el comodín {nombre} por el primer nombre real del contacto —
+    la única personalización automática de la capa estándar."""
+    listas = []
+    for v in variables:
+        if str(v).strip().lower() in ("{nombre}", "{{nombre}}"):
+            primero = (contacto.get("nombre") or "").strip().split(" ")[0]
+            listas.append(primero.title() if primero else "Hola")
+        else:
+            listas.append(str(v))
+    return listas
+
+
+async def _correr_campana(campana_id: str, numero: dict, audiencia: list,
+                          plantilla: str, idioma: str, variables: list):
+    enviados = fallidos = 0
+    async with httpx.AsyncClient(timeout=20) as c:
+        for i, ct in enumerate(audiencia):
+            vars_ct = _variables_para(ct, variables)
+            componentes = []
+            if vars_ct:
+                componentes.append({"type": "body",
+                                    "parameters": [{"type": "text", "text": v} for v in vars_ct]})
+            wamid, err = None, ""
+            try:
+                r = await c.post(f"{GRAPH_API}/{numero['phone_number_id']}/messages",
+                                 headers={"Authorization": f"Bearer {numero['access_token']}"},
+                                 json={"messaging_product": "whatsapp", "to": ct["wa_id"],
+                                       "type": "template",
+                                       "template": {"name": plantilla,
+                                                    "language": {"code": idioma},
+                                                    "components": componentes}})
+                if r.status_code < 400:
+                    msgs = r.json().get("messages") or []
+                    wamid = msgs[0].get("id") if msgs else None
+                else:
+                    try:
+                        err = (r.json().get("error", {}).get("message") or "")[:200]
+                    except Exception:
+                        err = r.text[:200]
+                    if not err:
+                        err = f"Meta respondió {r.status_code}"
+            except Exception as e:
+                err = str(e)[:200]
+
+            ok = not err
+            try:
+                await sb_post("wa2_campana_envios",
+                              {"campana_id": campana_id, "user_id": numero["user_id"],
+                               "contacto_id": ct["id"], "wa_id": ct.get("wa_id"),
+                               "nombre": ct.get("nombre"),
+                               "estado": "enviado" if ok else "fallido",
+                               "error": err or None, "created_at": _now()})
             except Exception:
                 pass
 
-    # Eliminar el registro (las conversaciones y contactos se quedan)
-    async with httpx.AsyncClient(timeout=15) as c:
-        h = _sb_headers()
-        await c.delete(f"{SUPABASE_URL}/rest/v1/wa_numbers",
-                       headers=h, params={"user_id": f"eq.{user_id}"})
+            if ok:
+                enviados += 1
+                # Reflejar el envío en la bandeja, en la conversación de esa
+                # persona (si no tenía, se crea con la IA apagada: fue un
+                # masivo, no una conversación que la IA deba retomar sola).
+                try:
+                    conv = await _get_o_crea_conversacion(numero["user_id"], numero["id"],
+                                                          ct["id"], ia_default=False)
+                    resumen = f"[Campaña · plantilla {plantilla}]"
+                    await _guardar_mensaje(numero["user_id"], ct["id"], conv["id"],
+                                          wamid, "out", "agente", resumen)
+                except Exception:
+                    pass
+            else:
+                fallidos += 1
+                log.warning("Campaña %s: fallo con %s: %s", campana_id, ct.get("wa_id"), err)
 
-    log.info("WhatsApp desconectado: user=%s", user_id)
-    return {"ok": True}
+            if (i + 1) % 10 == 0:
+                try:
+                    await sb_patch("wa2_campanas", {"id": f"eq.{campana_id}"},
+                                   {"enviados": enviados, "fallidos": fallidos})
+                except Exception:
+                    pass
+            # Pausa corta entre envíos: no saturar el API de Meta ni parecer spam.
+            await asyncio.sleep(0.5)
+
+    try:
+        await sb_patch("wa2_campanas", {"id": f"eq.{campana_id}"},
+                       {"enviados": enviados, "fallidos": fallidos,
+                        "estado": "terminada", "terminado_at": _now()})
+    except Exception:
+        pass
+    await enviar_push(numero.get("user_id"), "Campaña terminada",
+                      f"Se enviaron {enviados} mensajes"
+                      + (f" ({fallidos} fallaron)" if fallidos else "") + ".",
+                      datos={"tipo": "whatsapp"})
 
 
 # =============================================================================
-# 7) PLANTILLAS DE MENSAJE (Message Templates)
+# 10) ESTADÍSTICAS — agregados para el módulo de Estadísticas
+#
+# El módulo de Estadísticas no puede pegarle directo a wa2_* desde el navegador
+# (esas tablas viven detrás del service key, igual que el resto de la bandeja).
+# Este endpoint devuelve TODO ya agregado y para las cuatro ventanas de tiempo
+# de un solo golpe, para que el frontend cambie de periodo sin volver a pedir.
 # =============================================================================
-# Las plantillas son obligatorias para escribirle primero a un contacto
-# (fuera de la ventana de 24h) y para los mensajes de seguimiento/marketing.
-# Meta las revisa y aprueba antes de poder usarlas.
-
-class TemplateComponent(BaseModel):
-    type: str          # "BODY", "HEADER", "FOOTER", "BUTTONS"
-    text: str | None = None
-    format: str | None = None   # para HEADER: "TEXT", "IMAGE", "VIDEO", "DOCUMENT"
-    buttons: list[dict] | None = None
-
-class TemplateCreateReq(BaseModel):
-    name: str                      # solo minúsculas, números y guion_bajo
-    category: str                  # "UTILITY", "MARKETING", "AUTHENTICATION"
-    language: str = "es_MX"
-    body_text: str                 # texto del cuerpo, puede incluir {{1}}, {{2}}...
-    header_text: str | None = None
-    footer_text: str | None = None
-    example_body_params: list[str] | None = None   # ejemplo para cada {{n}} del cuerpo
+_VENTANAS_ESTAD = {"semana": 7, "mes": 30, "trimestre": 90, "todo": 0}
 
 
-async def _waba_id_y_token(user_id: str) -> tuple[str, str]:
-    """Obtiene el waba_id y el token de acceso del usuario."""
-    rows = await sb_get("wa_numbers", {"user_id": f"eq.{user_id}", "select": "waba_id,access_token", "limit": "1"})
-    if not rows or not rows[0].get("waba_id"):
-        raise HTTPException(status_code=400, detail="No tienes un número de WhatsApp conectado")
-    waba_id = rows[0]["waba_id"]
-    token = rows[0].get("access_token") or WHATSAPP_TOKEN
-    if not token:
-        raise HTTPException(status_code=400, detail="No hay token de acceso configurado")
-    return waba_id, token
+async def _sb_diag(table: str, params: dict) -> tuple[list, str]:
+    """Igual que sb_get pero DEVUELVE el error en vez de tragárselo.
+    sb_get regresa [] tanto si no hay filas como si la consulta falló: para
+    estadísticas eso es fatal, porque una columna que no existe se veía
+    exactamente igual que 'no tienes datos'."""
+    try:
+        async with httpx.AsyncClient(timeout=25) as c:
+            r = await c.get(f"{SUPABASE_URL}/rest/v1/{table}", headers=_sb_headers(), params=params)
+        if r.status_code < 300:
+            data = r.json()
+            return (data if isinstance(data, list) else ([data] if data else [])), ""
+        return [], f"{r.status_code}: {r.text[:200]}"
+    except Exception as e:
+        return [], str(e)[:200]
 
 
-# ── GET /whatsapp/templates — listar plantillas existentes ───────────────────
-@router.get("/templates")
-async def list_templates(request: Request):
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autorizado")
+async def _sb_get_paginado(table: str, params: dict, tope: int = 40000,
+                           paralelo: int = 6) -> tuple[list, str]:
+    """PostgREST corta en 1000 filas. Para estadísticas necesitamos el historial
+    completo, así que se pagina — pero EN PARALELO. En serie, un historial de
+    30 mil mensajes son 30 viajes de ida y vuelta y Railway corta la conexión
+    antes de terminar (el navegador lo ve como 'Failed to fetch').
+    Devuelve (filas, error)."""
+    salida: list = []
+    error = ""
+    pagina = 1000
+    bloque = 0
+    while len(salida) < tope and bloque < 40:
+        tareas = []
+        for k in range(paralelo):
+            p = dict(params)
+            p["limit"] = str(pagina)
+            p["offset"] = str((bloque * paralelo + k) * pagina)
+            tareas.append(_sb_diag(table, p))
+        resultados = await asyncio.gather(*tareas, return_exceptions=True)
+        traidas = 0
+        for res in resultados:
+            if isinstance(res, Exception):
+                error = error or str(res)[:200]
+                continue
+            filas, err = res
+            if err:
+                error = error or err
+                continue
+            salida.extend(filas)
+            traidas += len(filas)
+        if error and not salida:
+            break
+        if traidas < pagina * paralelo:
+            break
+        bloque += 1
+    return salida[:tope], error
 
-    waba_id, token = await _waba_id_y_token(user_id)
 
-    async with httpx.AsyncClient(timeout=20) as c:
-        r = await c.get(
-            f"{GRAPH_API}/{waba_id}/message_templates",
-            params={"access_token": token, "limit": "50"},
-        )
-    if r.status_code != 200:
-        log.error("Error listando templates: %s", r.text)
-        raise HTTPException(status_code=400, detail="No se pudieron obtener las plantillas")
+def _dt(valor) -> datetime | None:
+    """Parsea un timestamptz de Postgres a datetime con zona. Nunca revienta."""
+    if not valor:
+        return None
+    try:
+        txt = str(valor).replace("Z", "+00:00")
+        d = datetime.fromisoformat(txt)
+        return d if d.tzinfo else d.replace(tzinfo=timezone.utc)
+    except Exception:
+        return None
 
-    data = r.json().get("data", [])
-    out = []
-    for t in data:
-        out.append({
-            "id":       t.get("id"),
-            "name":     t.get("name"),
-            "status":   t.get("status"),       # APPROVED / PENDING / REJECTED
-            "category": t.get("category"),
-            "language": t.get("language"),
+
+def _mediana(nums: list) -> float | None:
+    if not nums:
+        return None
+    s = sorted(nums)
+    n = len(s)
+    medio = n // 2
+    return float(s[medio]) if n % 2 else (s[medio - 1] + s[medio]) / 2.0
+
+
+def _agrega_ventana(dias: int, ahora_utc: datetime, zona: str,
+                    contactos: list, conversaciones: list, mensajes: list,
+                    numeros: list) -> dict:
+    """Todos los números de WhatsApp para una ventana de tiempo."""
+    try:
+        tz = ZoneInfo(zona)
+    except Exception:
+        tz = timezone.utc
+    corte = ahora_utc - timedelta(days=dias) if dias else None
+
+    def dentro(d: datetime | None) -> bool:
+        if corte is None:
+            return d is not None
+        return d is not None and d >= corte
+
+    # ── Mensajes ────────────────────────────────────────────────────────
+    serie: dict = {}                 # fecha local -> {entrantes, ia, agente}
+    heat = [[0] * 24 for _ in range(7)]   # [día de semana][hora] de entrantes
+    tot = {"mensajes": 0, "entrantes": 0, "salientes": 0, "ia": 0, "agente": 0}
+    por_conv: dict = {}
+    for m in mensajes:
+        d = _dt(m.get("created_at"))
+        if not dentro(d):
+            continue
+        local = d.astimezone(tz)
+        clave = local.date().isoformat()
+        fila = serie.setdefault(clave, {"entrantes": 0, "ia": 0, "agente": 0})
+        entrante = (m.get("direction") or "") == "in"
+        sender = (m.get("sender") or "").lower()
+        tot["mensajes"] += 1
+        if entrante:
+            tot["entrantes"] += 1
+            fila["entrantes"] += 1
+            heat[local.weekday()][local.hour] += 1
+        else:
+            tot["salientes"] += 1
+            if sender == "ia":
+                tot["ia"] += 1
+                fila["ia"] += 1
+            else:
+                tot["agente"] += 1
+                fila["agente"] += 1
+        cid = m.get("conversacion_id")
+        if cid:
+            por_conv.setdefault(cid, []).append((d, entrante, sender))
+
+    # ── Tiempo de primera respuesta (minutos) ───────────────────────────
+    resp_todas, resp_ia, resp_agente, sin_responder = [], [], [], 0
+    for cid, filas in por_conv.items():
+        filas.sort(key=lambda x: x[0])
+        if filas and filas[-1][1]:
+            sin_responder += 1
+        esperando = None
+        for fecha, entrante, sender in filas:
+            if entrante:
+                if esperando is None:
+                    esperando = fecha
+            elif esperando is not None:
+                minutos = max(0.0, (fecha - esperando).total_seconds() / 60.0)
+                if minutos <= 60 * 72:      # más de 3 días ya no es "respuesta"
+                    resp_todas.append(minutos)
+                    (resp_ia if sender == "ia" else resp_agente).append(minutos)
+                esperando = None
+
+    # ── Contactos (calificación de la IA) ───────────────────────────────
+    temperatura: dict = {}
+    etapa: dict = {}
+    forma_pago: dict = {}
+    scores: list = []
+    score_buckets = {"0-24": 0, "25-49": 0, "50-74": 0, "75-100": 0}
+    contactos_nuevos = 0
+    for c in contactos:
+        if dentro(_dt(c.get("created_at"))):
+            contactos_nuevos += 1
+        # el estado de calificación es SIEMPRE el de hoy, no el del periodo:
+        # un prospecto caliente lo es ahora, no "la semana pasada".
+        t = (c.get("temperatura") or "Nuevo").strip() or "Nuevo"
+        temperatura[t] = temperatura.get(t, 0) + 1
+        e = (c.get("etapa") or "Nuevo").strip() or "Nuevo"
+        etapa[e] = etapa.get(e, 0) + 1
+        fp = (c.get("forma_pago") or "Por definir").strip() or "Por definir"
+        forma_pago[fp] = forma_pago.get(fp, 0) + 1
+        sc = c.get("score")
+        if isinstance(sc, (int, float)):
+            scores.append(float(sc))
+            if sc < 25:
+                score_buckets["0-24"] += 1
+            elif sc < 50:
+                score_buckets["25-49"] += 1
+            elif sc < 75:
+                score_buckets["50-74"] += 1
+            else:
+                score_buckets["75-100"] += 1
+
+    # ── Conversaciones ──────────────────────────────────────────────────
+    convs_nuevas = 0
+    convs_activas = 0
+    handoffs = 0
+    propiedades: dict = {}
+    por_numero: dict = {}
+    dia_24h = ahora_utc - timedelta(hours=24)
+    for cv in conversaciones:
+        creada = _dt(cv.get("created_at"))
+        ultimo = _dt(cv.get("last_message_at"))
+        nueva = dentro(creada)
+        movida = dentro(ultimo)
+        if nueva:
+            convs_nuevas += 1
+        if ultimo and ultimo >= dia_24h:
+            convs_activas += 1
+        if movida and cv.get("ia_enabled") is False:
+            handoffs += 1
+        if movida:
+            for p in (cv.get("ultimas_propiedades") or []):
+                pid = p.get("id") if isinstance(p, dict) else p
+                if not pid:
+                    continue
+                reg = propiedades.setdefault(str(pid), {"conversaciones": 0, "titulo": None})
+                reg["conversaciones"] += 1
+                if isinstance(p, dict) and p.get("titulo"):
+                    reg["titulo"] = p.get("titulo")
+        nid = cv.get("numero_id")
+        if nid:
+            reg = por_numero.setdefault(str(nid), {"conversaciones": 0, "nuevas": 0})
+            if movida:
+                reg["conversaciones"] += 1
+            if nueva:
+                reg["nuevas"] += 1
+
+    # mensajes por número (vía conversación)
+    conv_numero = {str(cv.get("id")): str(cv.get("numero_id") or "") for cv in conversaciones}
+    msg_numero: dict = {}
+    for cid, filas in por_conv.items():
+        nid = conv_numero.get(str(cid))
+        if not nid:
+            continue
+        reg = msg_numero.setdefault(nid, {"mensajes": 0, "entrantes": 0, "ia": 0})
+        for _f, entrante, sender in filas:
+            reg["mensajes"] += 1
+            if entrante:
+                reg["entrantes"] += 1
+            elif sender == "ia":
+                reg["ia"] += 1
+
+    numeros_out = []
+    for n in numeros:
+        nid = str(n.get("id"))
+        a = por_numero.get(nid, {"conversaciones": 0, "nuevas": 0})
+        b = msg_numero.get(nid, {"mensajes": 0, "entrantes": 0, "ia": 0})
+        salientes_n = b["mensajes"] - b["entrantes"]
+        numeros_out.append({
+            "id": nid,
+            "alias": n.get("alias") or n.get("display_number") or "Número",
+            "display_number": n.get("display_number"),
+            "ia_enabled": n.get("ia_enabled") is not False,
+            "conversaciones": a["conversaciones"],
+            "nuevas": a["nuevas"],
+            "mensajes": b["mensajes"],
+            "entrantes": b["entrantes"],
+            "pct_ia": round((b["ia"] / salientes_n) * 100) if salientes_n else 0,
         })
-    return {"templates": out}
+    numeros_out.sort(key=lambda x: x["mensajes"], reverse=True)
 
-
-# ── POST /whatsapp/templates — crear una plantilla nueva ─────────────────────
-@router.post("/templates")
-async def create_template(req: TemplateCreateReq, request: Request):
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autorizado")
-
-    nombre = "".join(ch for ch in req.name.lower().strip().replace(" ", "_") if ch.isalnum() or ch == "_")
-    if not nombre:
-        raise HTTPException(status_code=400, detail="Nombre de plantilla inválido")
-
-    waba_id, token = await _waba_id_y_token(user_id)
-
-    components = []
-
-    if req.header_text:
-        components.append({"type": "HEADER", "format": "TEXT", "text": req.header_text})
-
-    body_comp = {"type": "BODY", "text": req.body_text}
-    if req.example_body_params:
-        body_comp["example"] = {"body_text": [req.example_body_params]}
-    components.append(body_comp)
-
-    if req.footer_text:
-        components.append({"type": "FOOTER", "text": req.footer_text})
-
-    payload = {
-        "name":       nombre,
-        "category":   req.category.upper(),
-        "language":   req.language,
-        "components": components,
-    }
-
-    async with httpx.AsyncClient(timeout=20) as c:
-        r = await c.post(
-            f"{GRAPH_API}/{waba_id}/message_templates",
-            params={"access_token": token},
-            json=payload,
-        )
-
-    if r.status_code not in (200, 201):
-        log.error("Error creando template: %s", r.text)
-        try:
-            detail = r.json().get("error", {}).get("error_user_msg") or r.json().get("error", {}).get("message")
-        except Exception:
-            detail = "Meta rechazó la plantilla"
-        raise HTTPException(status_code=400, detail=detail or "No se pudo crear la plantilla")
-
-    data = r.json()
-    log.info("Template creado: user=%s name=%s id=%s", user_id, nombre, data.get("id"))
-    return {"ok": True, "id": data.get("id"), "status": data.get("status", "PENDING"), "name": nombre}
-
-
-# ── DELETE /whatsapp/templates/{name} — eliminar plantilla ───────────────────
-@router.delete("/templates/{name}")
-async def delete_template(name: str, request: Request):
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autorizado")
-
-    waba_id, token = await _waba_id_y_token(user_id)
-
-    async with httpx.AsyncClient(timeout=20) as c:
-        r = await c.delete(
-            f"{GRAPH_API}/{waba_id}/message_templates",
-            params={"access_token": token, "name": name},
-        )
-
-    if r.status_code != 200:
-        log.error("Error borrando template: %s", r.text)
-        raise HTTPException(status_code=400, detail="No se pudo eliminar la plantilla")
-
-    return {"ok": True}
-
-
-# ── POST /whatsapp/templates/{name}/send — enviar una plantilla a un contacto ─
-class TemplateSendReq(BaseModel):
-    to: str
-    template_name: str
-    language: str = "es_MX"
-    body_params: list[str] | None = None
-
-@router.post("/templates/send")
-async def send_template(req: TemplateSendReq, request: Request):
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autorizado")
-
-    rows = await sb_get("wa_numbers", {"user_id": f"eq.{user_id}", "select": "phone_number_id,access_token", "limit": "1"})
-    if not rows:
-        raise HTTPException(status_code=400, detail="No tienes un número de WhatsApp conectado")
-    phone_number_id = rows[0]["phone_number_id"]
-    token = rows[0].get("access_token") or WHATSAPP_TOKEN
-
-    to = _normaliza_mx(req.to)
-
-    components = []
-    if req.body_params:
-        components.append({
-            "type": "body",
-            "parameters": [{"type": "text", "text": p} for p in req.body_params],
-        })
-
-    payload = {
-        "messaging_product": "whatsapp",
-        "to": to,
-        "type": "template",
-        "template": {
-            "name": req.template_name,
-            "language": {"code": req.language},
-            "components": components,
+    salientes = tot["salientes"]
+    return {
+        "totales": {
+            **tot,
+            "conversaciones_nuevas": convs_nuevas,
+            "conversaciones_activas_24h": convs_activas,
+            "contactos_nuevos": contactos_nuevos,
+            "handoffs": handoffs,
+            "sin_responder": sin_responder,
+            "pct_ia": round((tot["ia"] / salientes) * 100) if salientes else 0,
+            "msgs_por_conversacion": round(tot["mensajes"] / len(por_conv), 1) if por_conv else 0,
         },
+        "serie": [{"fecha": k, **v} for k, v in sorted(serie.items())],
+        "heat": heat,
+        "temperatura": temperatura,
+        "etapa": etapa,
+        "forma_pago": forma_pago,
+        "score": {
+            "promedio": round(sum(scores) / len(scores)) if scores else None,
+            "buckets": score_buckets,
+        },
+        "respuesta_min": {
+            "mediana": round(_mediana(resp_todas), 1) if resp_todas else None,
+            "mediana_ia": round(_mediana(resp_ia), 1) if resp_ia else None,
+            "mediana_agente": round(_mediana(resp_agente), 1) if resp_agente else None,
+            "n": len(resp_todas),
+        },
+        "numeros": numeros_out,
+        "propiedades": propiedades,
     }
 
-    async with httpx.AsyncClient(timeout=20) as c:
-        r = await c.post(
-            f"{GRAPH_API}/{phone_number_id}/messages",
-            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
-            json=payload,
-        )
 
-    if r.status_code != 200:
-        log.error("Error enviando template: %s", r.text)
-        raise HTTPException(status_code=400, detail="No se pudo enviar la plantilla")
+@router.get("/estadisticas")
+async def wa2_estadisticas(request: Request, zona: str | None = None):
+    user_id = await _require_user(request)
+    ids = await _ids_visibles(user_id)
+    filtro = _in_filter(ids)
+    zona = zona or _ZONA_DEFAULT
 
-    return {"ok": True, "wamid": r.json().get("messages", [{}])[0].get("id")}
+    # Las tablas chicas se piden con select=* a propósito: si una columna
+    # opcional todavía no existe en la base del agente (una migración que no se
+    # corrió), un select con nombres explícitos devuelve 400 y TODO se ve en
+    # cero sin decir por qué. Con * no hay columna que pueda faltar.
+    (numeros, e_num), (contactos, e_con), (conversaciones, e_conv), (mensajes, e_msg) = await asyncio.gather(
+        _sb_diag("wa2_numeros", {"user_id": filtro, "select": "*"}),
+        _sb_get_paginado("wa2_contactos", {"user_id": filtro, "order": "id.asc", "select": "*"}, tope=20000),
+        _sb_get_paginado("wa2_conversaciones", {"user_id": filtro, "order": "id.asc", "select": "*"}, tope=20000),
+        _sb_get_paginado("wa2_mensajes", {
+            "user_id": filtro, "order": "id.asc",
+            "select": "conversacion_id,direction,sender,created_at"}),
+    )
+    # Respaldo: si el select angosto de mensajes falló (nombre de columna
+    # distinto), se reintenta con * antes de darse por vencido.
+    if e_msg and not mensajes:
+        mensajes, e_msg2 = await _sb_get_paginado(
+            "wa2_mensajes", {"user_id": filtro, "order": "id.asc", "select": "*"})
+        if mensajes:
+            e_msg = ""
+        else:
+            e_msg = e_msg2 or e_msg
 
+    for n in numeros:
+        n.pop("access_token", None)
 
-# =============================================================================
-# 7) INVITACIÓN DE CITA (.ics)  ->  la abre el prospecto desde WhatsApp
-# =============================================================================
-@router.get("/cita/{cita_id}.ics")
-async def descargar_cita_ics(cita_id: str):
-    """Sirve la invitación .ics de una cita. Es público a propósito: WhatsApp la
-    descarga sin credenciales y el prospecto la abre con un toque. El id es un
-    uuid al azar y el archivo solo trae día, hora y título —nada sensible."""
-    rows = await sb_get("wa_citas", {"id": f"eq.{cita_id}", "select": "*", "limit": "1"})
-    if not rows:
-        return Response(status_code=404, content="Cita no encontrada", media_type="text/plain")
-    cita = rows[0]
-    agente = await perfil_agente(cita.get("user_id"))
-    ics = _ics_de_cita(cita, agente.get("nombre") or "tu asesor")
-    return Response(content=ics, media_type="text/calendar; charset=utf-8",
-                    headers={"Content-Disposition": 'attachment; filename="cita-broquer.ics"'})
+    diagnostico = {
+        "user_ids": len(ids),
+        "numeros": len(numeros), "contactos": len(contactos),
+        "conversaciones": len(conversaciones), "mensajes": len(mensajes),
+        "errores": {k: v for k, v in {
+            "wa2_numeros": e_num, "wa2_contactos": e_con,
+            "wa2_conversaciones": e_conv, "wa2_mensajes": e_msg,
+        }.items() if v},
+    }
+    if diagnostico["errores"]:
+        log.error("estadisticas whatsapp2: %s", diagnostico["errores"])
+
+    ahora = datetime.now(timezone.utc)
+    ventanas = {
+        nombre: _agrega_ventana(dias, ahora, zona, contactos, conversaciones, mensajes, numeros)
+        for nombre, dias in _VENTANAS_ESTAD.items()
+    }
+    return {
+        "ok": True,
+        "zona": zona,
+        "generado": _now(),
+        "numeros_conectados": len(numeros),
+        "diagnostico": diagnostico,
+        "ventanas": ventanas,
+    }

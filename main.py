@@ -1,18 +1,23 @@
-from fastapi import FastAPI, HTTPException, Query, Request, UploadFile, File
+from fastapi import (FastAPI, HTTPException, Query, Request, UploadFile, File,
+                     BackgroundTasks, Response)
 from fastapi.middleware.cors import CORSMiddleware
+from limites import exigir_cupo, exigir_sesion
 from pydantic import BaseModel
 import httpx
 import os
 import time
 import re
 import asyncio
+import logging
 import base64
+import hmac
+import hashlib
 import uuid as _uuid
 import io
 import json
 import concurrent.futures
 from typing import Optional, List, Dict, Any
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from pathlib import Path
 
 try:
@@ -60,23 +65,23 @@ _theme_tokens_cache: Optional[str] = None
 
 # Respaldo por si el CSS no se puede leer (archivo movido, permisos).
 # Un PDF que no se genera es peor que un PDF con el color de ayer.
-# Espejo del :root de la edición "Navarro".
+# Espejo del :root de la edición "Canon".
 _THEME_TOKENS_FALLBACK = """
-  --paper:#F4F7FD; --paper-2:#EDF2FB; --bone:#FFFFFF; --shell:#F4F7FE;
-  --ink:#00143B; --ink-2:#1B2C4F; --ink-3:#4A5875;
-  --mute:#4A5875; --mute-2:#8592AB; --mute-3:#BFCADD;
-  --line:#E6ECF6; --line-2:#D8E1EF; --line-3:#BFCADD;
-  --forest:#1240A0; --forest-2:#0B2E78; --forest-soft:rgba(18,64,160,0.10);
-  --sky-navy:#00143B; --sky-navy-mid:#032873; --sky-navy-deep:#000D28;
-  --sky-blue:#1240A0; --sky-blue-press:#0B2E78; --sky-blue-lift:#3A6FD8;
-  --sky-canvas:#E8F0FE; --sky-blue-on-dark:#7FA8F0;
-  --warn:#B45309; --warn-soft:rgba(180,83,9,0.10);
-  --danger:#C62839; --danger-soft:rgba(198,40,57,0.10);
-  --success:#0C7A5E; --success-soft:rgba(12,122,94,0.10);
-  --info:#0B2E78; --info-soft:rgba(11,46,120,0.10);
-  --r-xs:6px; --r-sm:8px; --r:10px; --r-lg:16px; --r-xl:22px; --r-pill:999px;
-  --font-sans:'Manrope',-apple-system,BlinkMacSystemFont,system-ui,Roboto,'Helvetica Neue',sans-serif;
-  --font-display:'Manrope',-apple-system,BlinkMacSystemFont,system-ui,Roboto,sans-serif;
+  --paper:#FFFFFF; --paper-2:#F4F6FB; --bone:#FFFFFF; --shell:#F5F7FC;
+  --ink:#0B0B0F; --ink-2:#2A3142; --ink-3:#57607A;
+  --mute:#57607A; --mute-2:#8A93A9; --mute-3:#C6CCDA;
+  --line:#E7EBF4; --line-2:#DBE1EE; --line-3:#BEC7DA;
+  --forest:#0A5DE0; --forest-2:#084BB8; --forest-soft:rgba(10,93,224,0.10);
+  --sky-navy:#081C4E; --sky-navy-mid:#10307E; --sky-navy-deep:#050F2E;
+  --sky-blue:#0A5DE0; --sky-blue-press:#084BB8; --sky-blue-lift:#6F9FF2;
+  --sky-canvas:#E9F0FD; --sky-blue-on-dark:#8FB0F5;
+  --warn:#B34E0B; --warn-soft:rgba(243,116,13,0.14);
+  --danger:#D42A62; --danger-soft:rgba(212,42,98,0.12);
+  --success:#0E9F6E; --success-soft:rgba(14,159,110,0.12);
+  --info:#0A5DE0; --info-soft:rgba(10,93,224,0.10);
+  --r-xs:8px; --r-sm:12px; --r:14px; --r-lg:22px; --r-xl:26px; --r-pill:999px;
+  --font-sans:'Inter',-apple-system,BlinkMacSystemFont,system-ui,Roboto,'Helvetica Neue',sans-serif;
+  --font-display:'Inter',-apple-system,BlinkMacSystemFont,system-ui,Roboto,sans-serif;
 """
 
 
@@ -110,7 +115,7 @@ def theme_css_for_pdf(extra: str = "") -> str:
     al final, así que gana sobre todo lo anterior."""
     return (
         "@import url('https://fonts.googleapis.com/css2?"
-        "family=Manrope:wght@400;500;600;700;800&display=swap');\n"
+        "family=Inter:opsz,wght@14..32,400..800&display=swap');\n"
         ":root{\n" + _theme_tokens() + "\n}\n"
         "/* Overrides del documento impreso: el papel es blanco (el canvas\n"
         "   azul de la app no aplica) y los radios son de documento. */\n"
@@ -126,8 +131,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from whatsapp import router as whatsapp_router
-app.include_router(whatsapp_router)
+# whatsapp.py es el módulo de WhatsApp (multi-número, IA de recepción, webhook
+# propio bajo /whatsapp2 — el prefijo interno del router no cambió aunque el
+# archivo ya se llama whatsapp.py). Import defensivo: si algo le falta, el
+# resto del backend sigue vivo.
+try:
+    from whatsapp import router as whatsapp_router
+    app.include_router(whatsapp_router)
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("broquer.main").error("No se pudo cargar whatsapp: %s", _e)
 
 # Motor agéntico de Broq (tool-use nativo + loop de varios pasos + voz Whisper).
 # Import defensivo: si por cualquier razón fallara la carga, el resto del backend
@@ -152,6 +165,40 @@ try:
     app.include_router(whatsapp_chatgpt_router)
 except Exception as _e:
     print(f"[whatsapp-chatgpt] No se pudo montar el router: {_e}")
+# Cumplimiento PLD/UIF: expediente único, umbrales, avisos y bitácora.
+# Mismo import defensivo: si falla, el resto del backend sigue vivo.
+try:
+    from routers.cumplimiento import router as pld_router
+    app.include_router(pld_router)
+except Exception as _e:
+    print(f"[pld] No se pudo montar el router de cumplimiento: {_e}")
+
+# Firma electrónica: documentos, firmantes, código de verificación, constancia
+# y verificación pública por folio. Mismo import defensivo: si falla, el resto
+# del backend sigue vivo.
+try:
+    from routers.firmas import router as firmas_router
+    app.include_router(firmas_router)
+except Exception as _e:
+    print(f"[firmas] No se pudo montar el router de firma electrónica: {_e}")
+
+# Video de ficha: arma un recorrido con ffmpeg a partir de las fotos que ya
+# viven en la propiedad. Mismo import defensivo: si falla, el resto del
+# backend sigue vivo.
+try:
+    from routers.video import router as video_router
+    app.include_router(video_router)
+except Exception as _e:
+    print(f"[video] No se pudo montar el router de video: {_e}")
+
+# Bolsa inmobiliaria: inventario compartido entre agentes Broquer con
+# comisión compartida. Mismo import defensivo: si falla, el resto del
+# backend sigue vivo.
+try:
+    from routers.bolsa import router as bolsa_router
+    app.include_router(bolsa_router)
+except Exception as _e:
+    print(f"[bolsa] No se pudo montar el router de la bolsa: {_e}")
 
 CONFIG_FILE = Path(__file__).parent / "config.json"
 
@@ -229,7 +276,7 @@ def eb_headers(key: str = None):
 # ────────────────────────────────────────────
 @app.get("/")
 def root():
-    return {"status": "Brokr API activa", "version": "4.0"}
+    return {"status": "Brokr API activa", "version": "4.8"}
 
 # Endpoint para keep-alive (UptimeRobot u otro monitor cada 4 minutos).
 # No hace queries, no toca DB — solo evita que Railway duerma el servidor.
@@ -300,15 +347,40 @@ async def api_inpc(anio: int, mes: int):
     fecha_ini = f"{anio}-{mes:02d}-01"
     fecha_fin = f"{anio}-{mes:02d}-{last_day:02d}"
     datos = await _banxico_fetch(BANXICO_SERIE_INPC, fecha_ini, fecha_fin)
+    fallback = False
+    anio_real, mes_real = anio, mes
+    if not datos:
+        # Art. 17-A CFF (sexto parrafo): cuando el INPC del mes mas reciente aun no
+        # se publica (INEGI lo libera ~dia 9-10 del mes siguiente), se aplica el
+        # ULTIMO indice mensual publicado. Retrocedemos hasta 3 meses buscandolo.
+        for _ in range(3):
+            mes_real -= 1
+            if mes_real < 1:
+                mes_real = 12
+                anio_real -= 1
+            if mes_real == 12:
+                ld = 31
+            else:
+                ld = (date(anio_real, mes_real + 1, 1) - timedelta(days=1)).day
+            datos = await _banxico_fetch(
+                BANXICO_SERIE_INPC,
+                f"{anio_real}-{mes_real:02d}-01",
+                f"{anio_real}-{mes_real:02d}-{ld:02d}")
+            if datos:
+                fallback = True
+                break
     if not datos:
         raise HTTPException(status_code=404, detail=f"INPC no publicado para {anio}-{mes:02d}")
     valor = float(str(datos[-1]["dato"]).replace(",", ""))
     fecha_pub = datos[-1]["fecha"]
-    result = {"anio": anio, "mes": mes, "valor": valor,
-              "fecha_publicacion": fecha_pub, "fuente": "banxico_sie"}
+    result = {"anio": anio_real, "mes": mes_real, "valor": valor,
+              "fecha_publicacion": fecha_pub, "fuente": "banxico_sie",
+              "fallback": fallback,
+              "anio_solicitado": anio, "mes_solicitado": mes}
     now = datetime.now()
     is_past = (anio < now.year) or (anio == now.year and mes < now.month)
-    cache_set(key, result, ttl=30 * 86400 if is_past else 6 * 3600)
+    # Un resultado fallback caduca pronto: en cuanto INEGI publique, se toma el real.
+    cache_set(key, result, ttl=6 * 3600 if fallback else (30 * 86400 if is_past else 6 * 3600))
     return result
 
 @app.get("/api/udis/{fecha}")
@@ -347,6 +419,15 @@ async def api_udis(fecha: str):
 # ────────────────────────────────────────────
 class EbKeyRequest(BaseModel):
     key: str
+
+# Helper: compara dos secretos en tiempo constante (evita adivinarlos byte a
+# byte midiendo cuánto tarda la respuesta). Devuelve False si alguno va vacío.
+def hmac_compare(recibido: str, esperado: str) -> bool:
+    import hmac as _h
+    if not recibido or not esperado:
+        return False
+    return _h.compare_digest(str(recibido), str(esperado))
+
 
 # Helper: extrae el user_id del token de Supabase
 async def get_user_id_from_token(request: Request) -> str:
@@ -785,11 +866,15 @@ async def get_profile_status(request: Request):
                 meta = json.loads(meta_str) if isinstance(meta_str, str) else (meta_str or {})
             except Exception:
                 meta = {}
+            # El token NO viaja al navegador: solo se dice si existe. (Además,
+            # ahora está cifrado en reposo, así que mandarlo tampoco serviría
+            # de nada al frontend.)
             fb_state = {
                 "connected": True,
                 "page_id": meta.get("page_id", ""),
                 "page_name": meta.get("page_name", "Página conectada"),
-                "user_token": meta.get("user_token", ""),
+                "tiene_token_ads": bool(meta.get("user_token")),
+                "token": _fb_estado_token(meta),
             }
 
     # Suscripcion
@@ -814,17 +899,29 @@ async def get_profile_status(request: Request):
                 rs = await client.get(
                     f"{SUPABASE_URL}/rest/v1/suscripciones",
                     headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
-                    params={"org_id": f"eq.{_oid}", "select": "status,plan_nombre", "order": "updated_at.desc", "limit": "1"}
+                    params={"org_id": f"eq.{_oid}", "select": "*", "order": "updated_at.desc", "limit": "1"}
                 )
                 if rs.status_code == 200 and rs.json():
                     row = rs.json()[0]
+                    _st = row.get("status")
+                    _act = _st in ("active", "trialing")
+                    if _st == "trialing" and row.get("trial_hasta") and _trial_ya_vencio(row.get("trial_hasta")):
+                        _act = False
+                        _st = "trial_vencido"
+                        asyncio.create_task(_expirar_trial_suscripcion(row.get("id")))
                     sub_state = {
-                        "active": row.get("status") in ("active", "trialing"),
+                        "active": _act,
                         "plan": row.get("plan_nombre"),
-                        "status": row.get("status"),
+                        "status": _st,
                     }
     except Exception:
         pass
+
+    if sub_state.get("status") == "sin_suscripcion":
+        try:
+            sub_state["trial_disponible"] = await _trial_max_disponible(user_id)
+        except Exception:
+            sub_state["trial_disponible"] = False
 
     return {"eb": eb_state, "fb": fb_state, "sub": sub_state}
 
@@ -839,6 +936,9 @@ class ChatRequest(BaseModel):
 
 @app.post("/chat")
 async def chat_proxy(req: ChatRequest, request: Request):
+    _uid = await get_user_id_from_token(request)
+    exigir_cupo(request, _uid)
+    exigir_sesion(request, _uid)
     if not GROQ_API_KEY:
         raise HTTPException(status_code=500, detail="GROQ_API_KEY no configurada en el servidor")
     user_id = await get_user_id_from_token(request)
@@ -1178,6 +1278,9 @@ class ClaudeChatRequest(BaseModel):
 
 @app.post("/chat-claude")
 async def chat_claude_proxy(req: ClaudeChatRequest, request: Request):
+    _uid = await get_user_id_from_token(request)
+    exigir_cupo(request, _uid)
+    exigir_sesion(request, _uid)
     if not ANTHROPIC_API_KEY:
         raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY no configurada en el servidor")
     user_id = await get_user_id_from_token(request)
@@ -1558,8 +1661,11 @@ Reglas estrictas:
 
 
 @app.post("/isr-pdf")
-async def generar_isr_pdf(p: dict):
+async def generar_isr_pdf(p: dict, request: Request):
     """Recibe HTML del cálculo ISR y lo convierte a PDF con Playwright."""
+    _uid = await get_user_id_from_token(request)
+    exigir_cupo(request, _uid)
+    exigir_sesion(request, _uid)
     from playwright.async_api import async_playwright  # noqa: re-import ok here (lazy)
     html = p.get("html", "")
     if not html:
@@ -1641,11 +1747,20 @@ _EB_TIPO_MAP = {
 # (las que ya cerraron cuentan como cerradas). El resto (no publicadas,
 # suspendidas, rechazadas) NO se importa.
 _EB_STATUS_MAP = {
-    "published": "activa",
-    "reserved":  "reservada",
-    "sold":      "vendida",
-    "rented":    "rentada",
+    "published":     "activa",
+    "not_published": "suspendida",
+    "reserved":      "reservada",
+    "sold":          "vendida",
+    "rented":        "rentada",
 }
+
+# Estatus que se importan cuando el usuario no elige ninguno (apps viejas
+# que todavía no mandan la selección). Se conserva el comportamiento previo:
+# no se traen las no publicadas si nadie las pidió.
+_EB_STATUS_DEFAULT = ["published", "reserved", "sold", "rented"]
+
+# Tope de propiedades por importación.
+_EB_LIMITE_PROPIEDADES = 1000
 
 def _eb_to_brokr(prop_full: dict, user_id: str) -> dict:
     """Mapea una propiedad de EasyBroker al esquema de la tabla propiedades de Brokr."""
@@ -1774,6 +1889,134 @@ def _split_street(s: str):
         return (ext_match.group(1).strip(), ext_match.group(2).strip(), num_int)
     return (s, None, num_int)
 
+# EasyBroker limita su API a 20 peticiones por segundo. Si nos pasamos,
+# responde 429 y las propiedades se pierden. Estos valores nos dejan por
+# debajo del límite con margen.
+_EB_LOTE          = 8     # peticiones simultáneas
+_EB_PAUSA_LOTE    = 0.5   # segundos mínimos entre lotes → máx ~16 req/s
+_EB_REINTENTOS    = 4
+_EB_ESPERA_BASE   = 1.5   # segundos; se duplica en cada reintento
+_EB_ESPERA_MAX    = 20.0
+
+
+async def _eb_get_reintentos(client: httpx.AsyncClient, url: str,
+                             headers: dict, params: dict = None,
+                             timeout: float = 20.0):
+    """
+    GET a EasyBroker que reintenta cuando la API rechaza por exceso de
+    peticiones (429) o falla del lado de ellos (5xx). Respeta la cabecera
+    Retry-After si viene. Devuelve la respuesta, o None si nunca respondió.
+    """
+    ultimo = None
+    for intento in range(_EB_REINTENTOS):
+        try:
+            r = await client.get(url, headers=headers, params=params, timeout=timeout)
+            ultimo = r
+            if r.status_code == 429 or r.status_code >= 500:
+                try:
+                    espera = float(r.headers.get("Retry-After") or 0)
+                except (TypeError, ValueError):
+                    espera = 0.0
+                if espera <= 0:
+                    espera = _EB_ESPERA_BASE * (2 ** intento)
+                await asyncio.sleep(min(espera, _EB_ESPERA_MAX))
+                continue
+            return r
+        except Exception:
+            ultimo = None
+            await asyncio.sleep(min(_EB_ESPERA_BASE * (2 ** intento), _EB_ESPERA_MAX))
+    return ultimo
+
+
+@app.get("/easybroker/diagnostico")
+async def easybroker_diagnostico(request: Request):
+    """
+    Herramienta de diagnóstico. Le hace a EasyBroker las mismas preguntas que
+    hace la importación y reporta EXACTAMENTE qué contesta, para saber si
+    respeta el filtro de estatus y con qué nombre manda cada dato.
+    No guarda nada.
+    """
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Tu sesión expiró. Vuelve a iniciar sesión.")
+    user_key = await get_eb_key_for_user(user_id)
+    if not user_key:
+        raise HTTPException(status_code=400, detail="No tienes API key de EasyBroker configurada.")
+
+    out = {"version_api": "4.8"}
+
+    def _total(d):
+        pag = d.get("pagination") or {}
+        return pag.get("total") or pag.get("total_entries") or pag.get("count")
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        # 1) Sin ningún filtro
+        try:
+            r0 = await client.get(f"{EB_BASE}/properties",
+                                  headers=eb_headers(user_key),
+                                  params={"limit": 50, "page": 1})
+            d0 = r0.json() if r0.status_code == 200 else {}
+            out["sin_filtro_http"] = r0.status_code
+            out["sin_filtro_total"] = _total(d0)
+            contenido = d0.get("content") or []
+            out["sin_filtro_en_pagina"] = len(contenido)
+            if contenido:
+                primera = contenido[0]
+                out["campos_del_listado"] = sorted(primera.keys())
+                out["status_en_listado"] = primera.get("status")
+                out["primer_public_id"] = primera.get("public_id")
+                # Qué valores de estatus aparecen en esta página
+                vistos = {}
+                for p in contenido:
+                    v = str(p.get("status"))
+                    vistos[v] = vistos.get(v, 0) + 1
+                out["status_vistos_en_pagina"] = vistos
+        except Exception as e:
+            out["sin_filtro_error"] = str(e)[:200]
+
+        # 2) Con filtro, probando las dos formas de escribirlo
+        for etiqueta, params in (
+            ("corchetes", [("limit", 50), ("page", 1), ("search[statuses][]", "published")]),
+            ("sin_corchetes", [("limit", 50), ("page", 1), ("search[statuses]", "published")]),
+        ):
+            try:
+                r1 = await client.get(f"{EB_BASE}/properties",
+                                      headers=eb_headers(user_key), params=params)
+                d1 = r1.json() if r1.status_code == 200 else {}
+                out[f"filtro_{etiqueta}_http"] = r1.status_code
+                out[f"filtro_{etiqueta}_total"] = _total(d1)
+            except Exception as e:
+                out[f"filtro_{etiqueta}_error"] = str(e)[:200]
+
+        # 3) Filtro por vendidas, para comparar contra el total
+        try:
+            r2 = await client.get(f"{EB_BASE}/properties",
+                                  headers=eb_headers(user_key),
+                                  params=[("limit", 50), ("page", 1),
+                                          ("search[statuses][]", "sold")])
+            d2 = r2.json() if r2.status_code == 200 else {}
+            out["filtro_vendidas_http"] = r2.status_code
+            out["filtro_vendidas_total"] = _total(d2)
+        except Exception as e:
+            out["filtro_vendidas_error"] = str(e)[:200]
+
+        # 4) Detalle de una propiedad: qué campos trae y cómo llama al estatus
+        pid = out.get("primer_public_id")
+        if pid:
+            try:
+                rd = await client.get(f"{EB_BASE}/properties/{pid}",
+                                      headers=eb_headers(user_key))
+                out["detalle_http"] = rd.status_code
+                if rd.status_code == 200:
+                    det = rd.json()
+                    out["campos_del_detalle"] = sorted(det.keys())
+                    out["status_en_detalle"] = det.get("status")
+            except Exception as e:
+                out["detalle_error"] = str(e)[:200]
+
+    return out
+
+
 @app.post("/easybroker/import-all")
 async def easybroker_import_all(request: Request):
     """
@@ -1795,6 +2038,22 @@ async def easybroker_import_all(request: Request):
         raise HTTPException(status_code=400, detail="Configura tu API key de EasyBroker en Perfil → Integración EasyBroker antes de importar.")
     if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
         raise HTTPException(status_code=500, detail="Supabase no está configurado en el servidor.")
+
+    # ─── Estatus elegidos por el usuario ───
+    # Body opcional: {"statuses": ["published", "sold", ...]}
+    try:
+        body_imp = await request.json()
+    except Exception:
+        body_imp = {}
+    pedidos = (body_imp or {}).get("statuses")
+    if isinstance(pedidos, str):
+        pedidos = [pedidos]
+    if isinstance(pedidos, list):
+        statuses_elegidos = [s for s in _EB_STATUS_MAP if s in pedidos]
+    else:
+        statuses_elegidos = []
+    if not statuses_elegidos:
+        statuses_elegidos = list(_EB_STATUS_DEFAULT)
 
     sb_headers = {
         "apikey": SUPABASE_SERVICE_KEY,
@@ -1824,25 +2083,36 @@ async def easybroker_import_all(request: Request):
     except Exception as e:
         print(f"[import-all] Error leyendo existentes: {e}")
 
-    # ─── Paso 2: paginar listado de EB por CADA estatus ───
-    # Traemos publicadas + apartadas + vendidas + rentadas. Paginamos por
-    # estatus para saber a qué estatus pertenece cada propiedad y reflejarlo
-    # bien en Broquer (una vendida no debe verse como activa).
-    # IMPORTANTE: EasyBroker espera search[statuses][]=<estatus>.
+    # ─── Paso 2: paginar el listado de EasyBroker, un estatus a la vez ───
+    # IMPORTANTE: EasyBroker NO incluye el estatus dentro de cada propiedad,
+    # ni en el listado ni en el detalle. La única forma de saber de qué estatus
+    # es una propiedad es preguntarle por ese estatus y etiquetar lo que venga.
+    # Por eso paginamos un estatus a la vez. (Verificado con /easybroker/diagnostico)
     estatus_por_pid = {}     # public_id → estatus Broquer
     conteo_por_estatus = {}  # estatus EB → cuántas llegaron
     ids_published = []       # orden de llegada (nombre histórico, se conserva)
+    limite_alcanzado = False
+    descartadas_estatus = 0  # repetidas entre estatus (ya contadas en otro)
+    for s in statuses_elegidos:
+        conteo_por_estatus[s] = 0
+
     async with httpx.AsyncClient(timeout=30) as client:
-        for eb_status, brokr_status in _EB_STATUS_MAP.items():
+        for eb_status in statuses_elegidos:
+            if limite_alcanzado:
+                break
+            brokr_status = _EB_STATUS_MAP[eb_status]
             pagina = 1
-            n_status = 0
-            while pagina <= 200:  # tope duro por estatus
-                r = await client.get(
+            while pagina <= 400:  # tope duro de seguridad
+                r = await _eb_get_reintentos(
+                    client,
                     f"{EB_BASE}/properties",
-                    headers=eb_headers(user_key),
-                    params={"limit": 50, "page": pagina,
-                            "search[statuses][]": eb_status}
+                    eb_headers(user_key),
+                    [("limit", 50), ("page", pagina),
+                     ("search[statuses][]", eb_status)],
+                    timeout=30.0,
                 )
+                if r is None:
+                    break
                 if r.status_code == 401:
                     raise HTTPException(status_code=401, detail="Tu API key de EasyBroker fue rechazada. Reconéctala en Perfil.")
                 if r.status_code != 200:
@@ -1852,15 +2122,23 @@ async def easybroker_import_all(request: Request):
                 if not content:
                     break
                 for p in content:
+                    if len(ids_published) >= _EB_LIMITE_PROPIEDADES:
+                        limite_alcanzado = True
+                        break
                     pid = p.get("public_id")
-                    if pid and pid not in estatus_por_pid:
-                        estatus_por_pid[pid] = brokr_status
-                        ids_published.append(pid)
-                        n_status += 1
+                    if not pid:
+                        continue
+                    if pid in estatus_por_pid:
+                        descartadas_estatus += 1
+                        continue
+                    estatus_por_pid[pid] = brokr_status
+                    conteo_por_estatus[eb_status] = conteo_por_estatus.get(eb_status, 0) + 1
+                    ids_published.append(pid)
+                if limite_alcanzado:
+                    break
                 if not data.get("pagination", {}).get("next_page"):
                     break
                 pagina += 1
-            conteo_por_estatus[eb_status] = n_status
 
     total_eb = len(ids_published)
 
@@ -1878,18 +2156,21 @@ async def easybroker_import_all(request: Request):
 
     async def fetch_one(client: httpx.AsyncClient, pid: str):
         try:
-            rd = await client.get(
+            rd = await _eb_get_reintentos(
+                client,
                 f"{EB_BASE}/properties/{pid}",
-                headers=eb_headers(user_key),
-                timeout=20.0
+                eb_headers(user_key),
+                timeout=20.0,
             )
+            if rd is None:
+                return ("err", {"id": pid, "error": "EasyBroker no respondió tras varios intentos"})
             if rd.status_code != 200:
                 return ("err", {"id": pid, "error": f"EB status {rd.status_code}"})
             prop_full = rd.json()
             inmueble = _eb_to_brokr(prop_full, user_id)
             inmueble["org_id"] = org_id_import
-            # Estatus según el bucket de EasyBroker de donde vino
-            # (activa / reservada / vendida / rentada).
+            # EasyBroker no manda el estatus dentro de la propiedad. Usamos el
+            # estatus por el que preguntamos para traerla.
             eb_estatus = estatus_por_pid.get(pid)
             if eb_estatus:
                 inmueble["estatus"] = eb_estatus
@@ -1904,11 +2185,17 @@ async def easybroker_import_all(request: Request):
         except Exception as e:
             return ("err", {"id": pid, "error": str(e)[:120]})
 
-    BATCH = 10
+    BATCH = _EB_LOTE
     async with httpx.AsyncClient(timeout=30) as client:
         for i in range(0, len(ids_published), BATCH):
             chunk = ids_published[i:i+BATCH]
+            inicio_lote = time.monotonic()
             results = await asyncio.gather(*[fetch_one(client, pid) for pid in chunk])
+            # Mantener el ritmo por debajo del límite de EasyBroker: si el lote
+            # tardó menos que la pausa mínima, esperamos la diferencia.
+            resto = _EB_PAUSA_LOTE - (time.monotonic() - inicio_lote)
+            if resto > 0 and i + BATCH < len(ids_published):
+                await asyncio.sleep(resto)
             for status, payload in results:
                 if status == "ok":
                     inmuebles_listos.append(payload)
@@ -1923,27 +2210,44 @@ async def easybroker_import_all(request: Request):
     async with httpx.AsyncClient(timeout=60) as client:
         for i in range(0, len(inmuebles_listos), UPSERT_BATCH):
             chunk = inmuebles_listos[i:i+UPSERT_BATCH]
-            try:
-                ri = await client.post(
-                    f"{SUPABASE_URL}/rest/v1/propiedades",
-                    headers={**sb_headers,
-                             "Prefer": "resolution=merge-duplicates,return=minimal"},
-                    params={"on_conflict": "org_id,eb_public_id"},
-                    json=chunk
-                )
-                if ri.status_code in (200, 201, 204):
-                    upserted += len(chunk)
-                else:
-                    # Si el lote falla, registrar como error global del lote
-                    errores.append({
-                        "id": f"lote_{i // UPSERT_BATCH}",
-                        "error": f"Supabase {ri.status_code}: {ri.text[:200]}"
-                    })
-            except Exception as e:
-                errores.append({"id": f"lote_{i // UPSERT_BATCH}", "error": str(e)[:200]})
+            ultimo_fallo = "sin respuesta"
+            guardado = False
+            for intento in range(3):
+                try:
+                    ri = await client.post(
+                        f"{SUPABASE_URL}/rest/v1/propiedades",
+                        headers={**sb_headers,
+                                 "Prefer": "resolution=merge-duplicates,return=minimal"},
+                        params={"on_conflict": "org_id,eb_public_id"},
+                        json=chunk
+                    )
+                    if ri.status_code in (200, 201, 204):
+                        upserted += len(chunk)
+                        guardado = True
+                        break
+                    ultimo_fallo = f"Supabase {ri.status_code}: {ri.text[:200]}"
+                except Exception as e:
+                    ultimo_fallo = str(e)[:200]
+                await asyncio.sleep(1.5 * (2 ** intento))
+            if not guardado:
+                errores.append({
+                    "id": f"lote_{i // UPSERT_BATCH}",
+                    "error": ultimo_fallo
+                })
 
     nuevas      = sum(1 for inm in inmuebles_listos if inm["eb_public_id"] not in existentes_por_eb_id)
     actualizadas = upserted - nuevas if upserted >= nuevas else 0
+
+    # Guardar las fotos en Broquer, solo, sin que el usuario espere ni deje
+    # la pestaña abierta. Si ya hay un proceso corriendo para esta empresa,
+    # el propio trabajador se ignora a sí mismo.
+    fotos_lanzado = False
+    if org_id_import and upserted:
+        try:
+            asyncio.create_task(_migrar_fotos_org(org_id_import))
+            fotos_lanzado = True
+        except Exception as e:
+            print(f"[import-all] No se pudo lanzar el guardado de fotos: {e}")
 
     return {
         "total_easybroker": total_eb,
@@ -1951,6 +2255,11 @@ async def easybroker_import_all(request: Request):
         "actualizadas":     actualizadas,     # ya existían y se actualizaron
         "ya_existian":      actualizadas,     # backward-compat con frontend viejo
         "por_estatus":      conteo_por_estatus,  # cuántas de cada estatus EB
+        "statuses":         statuses_elegidos,   # estatus que se importaron
+        "descartadas":      descartadas_estatus, # EB las mandó pero no se pidieron
+        "limite":           _EB_LIMITE_PROPIEDADES,
+        "limite_alcanzado": limite_alcanzado,
+        "fotos_en_proceso": fotos_lanzado,
         "errores":          errores
     }
 
@@ -1985,6 +2294,182 @@ def _foto_migrable(url) -> bool:
     return (isinstance(url, str)
             and url.startswith("http")
             and not _foto_ya_es_de_broquer(url))
+
+
+# ── Compresión ──────────────────────────────────────────────────
+# Las fotos de EasyBroker vienen a resolución completa (1-3 MB cada una).
+# A 1600 px de lado mayor se ven idénticas en pantalla y en los PDFs, pero
+# pesan una fracción. Esto baja el almacenamiento y, sobre todo, el tráfico,
+# que es el recurso que primero se agota.
+_FOTO_MAX_LADO = 1600
+_FOTO_CALIDAD  = 82
+
+def _comprimir_imagen(raw: bytes):
+    """
+    Devuelve (bytes, mime, ext) ya optimizado, o (None, None, None) si no se
+    pudo mejorar. Es CPU-intensivo: llamar siempre con asyncio.to_thread.
+    """
+    try:
+        from PIL import Image, ImageOps
+        im = Image.open(io.BytesIO(raw))
+        im = ImageOps.exif_transpose(im)
+        if im.mode not in ("RGB", "L"):
+            im = im.convert("RGB")
+        im.thumbnail((_FOTO_MAX_LADO, _FOTO_MAX_LADO), Image.LANCZOS)
+        buf = io.BytesIO()
+        im.save(buf, format="JPEG", quality=_FOTO_CALIDAD,
+                optimize=True, progressive=True)
+        datos = buf.getvalue()
+        if datos and len(datos) < len(raw):
+            return (datos, "image/jpeg", "jpg")
+    except Exception:
+        pass
+    return (None, None, None)
+
+
+async def _foto_a_storage(client: httpx.AsyncClient, url: str, sb_headers: dict):
+    """
+    Baja una foto externa, la comprime y la sube al Storage de Broquer.
+    Devuelve la URL pública nueva, o None si algo falló (se conserva la
+    original para reintentarla en la siguiente pasada).
+    """
+    try:
+        rd = await client.get(url, timeout=30.0, follow_redirects=True)
+        if rd.status_code != 200 or not rd.content:
+            return None
+        mime = (rd.headers.get("content-type") or "image/jpeg").split(";")[0].strip().lower()
+        raw = rd.content
+    except Exception:
+        return None
+
+    ext = _EXT_POR_MIME.get(mime, "jpg")
+    comp, mime_c, ext_c = await asyncio.to_thread(_comprimir_imagen, raw)
+    if comp:
+        raw, mime, ext = comp, mime_c, ext_c
+
+    nombre = f"{_uuid.uuid4().hex}.{ext}"
+    try:
+        ru = await client.post(
+            f"{SUPABASE_URL}/storage/v1/object/{_FOTOS_BUCKET}/{nombre}",
+            headers={**sb_headers, "Content-Type": mime},
+            content=raw, timeout=60.0,
+        )
+    except Exception:
+        return None
+    if ru.status_code not in (200, 201):
+        return None
+    return f"{SUPABASE_URL}/storage/v1/object/public/{_FOTOS_BUCKET}/{nombre}"
+
+
+# ── Trabajador en segundo plano ─────────────────────────────────
+# Arranca solo al terminar una importación. El usuario no tiene que apretar
+# nada ni dejar la pestaña abierta. Es idempotente y reanudable: si el
+# servidor se reinicia a medias, la siguiente importación retoma lo que faltó.
+_fotos_en_proceso = set()   # org_id que ya tienen un trabajador corriendo
+
+async def _migrar_fotos_org(org_id: str):
+    """Recorre todas las propiedades de la empresa y guarda sus fotos externas."""
+    if not org_id or org_id in _fotos_en_proceso:
+        return
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return
+    _fotos_en_proceso.add(org_id)
+    sb_headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+    }
+    cursor = None
+    total_fotos = 0
+    total_props = 0
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            while True:
+                params = {
+                    "org_id": f"eq.{org_id}",
+                    "select": "id,fotos",
+                    "order":  "id.asc",
+                    "limit":  "10",
+                }
+                if cursor:
+                    params["id"] = f"gt.{cursor}"
+                try:
+                    r = await client.get(f"{SUPABASE_URL}/rest/v1/propiedades",
+                                         headers=sb_headers, params=params, timeout=30.0)
+                    if r.status_code != 200:
+                        break
+                    filas = r.json() or []
+                except Exception:
+                    break
+                if not filas:
+                    break
+
+                for fila in filas:
+                    cursor = fila.get("id")
+                    fotos = fila.get("fotos") or []
+                    if not isinstance(fotos, list) or not any(_foto_migrable(f) for f in fotos):
+                        continue
+                    nuevas = []
+                    subidas = 0
+                    for f in fotos:
+                        if not _foto_migrable(f):
+                            nuevas.append(f)
+                            continue
+                        nueva = await _foto_a_storage(client, f, sb_headers)
+                        if nueva:
+                            nuevas.append(nueva)
+                            subidas += 1
+                        else:
+                            nuevas.append(f)  # se reintenta la próxima vez
+                    if not subidas:
+                        continue
+                    try:
+                        await client.patch(
+                            f"{SUPABASE_URL}/rest/v1/propiedades",
+                            headers={**sb_headers, "Content-Type": "application/json",
+                                     "Prefer": "return=minimal"},
+                            params={"id": f"eq.{fila.get('id')}"},
+                            json={"fotos": nuevas}, timeout=30.0,
+                        )
+                        total_props += 1
+                        total_fotos += subidas
+                    except Exception:
+                        pass
+                    # Respiro para no saturar la instancia con IOPS de Storage
+                    await asyncio.sleep(0.3)
+    except Exception as e:
+        print(f"[fotos] Error en segundo plano para org {org_id}: {e}")
+    finally:
+        _fotos_en_proceso.discard(org_id)
+        print(f"[fotos] org {org_id}: {total_fotos} fotos guardadas en {total_props} propiedades")
+
+
+@app.get("/easybroker/fotos-pendientes")
+async def easybroker_fotos_pendientes(request: Request):
+    """Cuántas propiedades de la empresa siguen con fotos fuera de Broquer."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Tu sesión expiró. Vuelve a iniciar sesión.")
+    org_id = await get_org_id_for_user(user_id)
+    if not org_id:
+        return {"pendientes": 0, "en_proceso": False}
+    sb_headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+    }
+    pendientes = 0
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            r = await client.get(f"{SUPABASE_URL}/rest/v1/propiedades",
+                                 headers=sb_headers,
+                                 params={"org_id": f"eq.{org_id}", "select": "fotos"})
+            if r.status_code == 200:
+                for fila in (r.json() or []):
+                    fotos = fila.get("fotos") or []
+                    if isinstance(fotos, list) and any(_foto_migrable(f) for f in fotos):
+                        pendientes += 1
+    except Exception:
+        pass
+    return {"pendientes": pendientes, "en_proceso": org_id in _fotos_en_proceso}
 
 
 @app.post("/easybroker/migrar-fotos")
@@ -2126,6 +2611,251 @@ async def easybroker_migrar_fotos(request: Request):
         "cursor":                   ultimo_id,
         "hay_mas":                  hay_mas,
     }
+
+
+# ════════════════════════════════════════════════════════════════
+# BORRADO MASIVO
+# Permite vaciar el inventario o el directorio de contactos de un jalón.
+# Reglas de seguridad:
+#  - Un agente normal solo puede borrar SUS propios registros.
+#  - Solo el dueño o un administrador de la empresa puede borrar los de
+#    todo el equipo.
+#  - Al borrar propiedades se borran también sus fotos del almacenamiento,
+#    porque si no seguiríamos pagando archivos que ya no le sirven a nadie.
+# ════════════════════════════════════════════════════════════════
+
+async def _alcance_borrado(user_id: str):
+    """
+    Decide si este usuario puede borrar y qué.
+    Devuelve (filtro_supabase, alcance) o (None, None) si no puede borrar nada.
+
+    Regla, decidida por Chava y sin excepciones:
+      - En una EMPRESA, un agente NO puede borrar nada. Ni lo que él capturó.
+        Solo el dueño o un administrador.
+      - En una cuenta personal (un agente por su cuenta), esa organización es
+        suya y él es su propio dueño, así que sí puede borrar lo suyo.
+    """
+    ctx = await get_org_context(user_id)
+    if not ctx:
+        return (None, None)
+    org_id = ctx.get("org_id")
+    if not org_id:
+        return (None, None)
+    es_admin = ctx.get("rol_org") in ("owner", "admin")
+    es_empresa = (ctx.get("org_tipo") or "personal") == "empresa"
+
+    if es_empresa and not es_admin:
+        return (None, None)          # agente en empresa: no borra NADA
+    return ({"org_id": f"eq.{org_id}"}, "empresa" if es_empresa else "personal")
+
+
+_MSG_SIN_PERMISO = ("No tienes permiso para eliminar. En Broquer para Empresas solo "
+                    "el dueño de la cuenta o un administrador puede eliminar registros. "
+                    "Si necesitas quitar algo, pídeselo a quien administra tu cuenta.")
+
+
+def _nombre_archivo_foto(url: str):
+    """De una URL pública de Broquer saca el nombre del archivo en el bucket."""
+    marca = f"/object/public/{_FOTOS_BUCKET}/"
+    if isinstance(url, str) and marca in url:
+        return url.split(marca, 1)[1].split("?")[0]
+    return None
+
+
+async def _borrar_fotos_storage(nombres: list):
+    """Borra archivos del bucket en lotes. Se ejecuta en segundo plano."""
+    if not nombres or not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return
+    sb_headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+    }
+    borradas = 0
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            for i in range(0, len(nombres), 100):
+                lote = nombres[i:i+100]
+                try:
+                    r = await client.request(
+                        "DELETE",
+                        f"{SUPABASE_URL}/storage/v1/object/{_FOTOS_BUCKET}",
+                        headers=sb_headers,
+                        json={"prefixes": lote},
+                    )
+                    if r.status_code in (200, 204):
+                        borradas += len(lote)
+                except Exception:
+                    pass
+                await asyncio.sleep(0.2)
+    finally:
+        print(f"[borrado] {borradas} fotos eliminadas del almacenamiento")
+
+
+@app.post("/propiedades/eliminar-masivo")
+async def propiedades_eliminar_masivo(request: Request):
+    """
+    Borra varias propiedades de un jalón.
+    Body: {"ids": ["...", "..."]}  o  {"todos": true}
+    """
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Tu sesión expiró. Vuelve a iniciar sesión.")
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        raise HTTPException(status_code=500, detail="Supabase no está configurado en el servidor.")
+
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    ids = (body or {}).get("ids") or []
+    todos = bool((body or {}).get("todos"))
+    if not todos and not ids:
+        raise HTTPException(status_code=400, detail="No seleccionaste ninguna propiedad.")
+    if not todos and len(ids) > 2000:
+        raise HTTPException(status_code=400, detail="Demasiadas propiedades a la vez. Hazlo en partes.")
+
+    filtro, alcance = await _alcance_borrado(user_id)
+    if not filtro:
+        raise HTTPException(status_code=403, detail=_MSG_SIN_PERMISO)
+    sb_headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    params = dict(filtro)
+    if not todos:
+        lista = ",".join(f'"{str(x)}"' for x in ids)
+        params["id"] = f"in.({lista})"
+
+    # 1) Leer lo que sí se puede borrar (el filtro ya limita el alcance)
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            r = await client.get(f"{SUPABASE_URL}/rest/v1/propiedades",
+                                 headers=sb_headers,
+                                 params={**params, "select": "id,fotos"})
+            if r.status_code != 200:
+                raise HTTPException(status_code=500, detail="No se pudo leer el inventario.")
+            filas = r.json() or []
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="No se pudo leer el inventario.")
+
+    if not filas:
+        return {"eliminadas": 0, "fotos_programadas": 0, "alcance": alcance}
+
+    # 2) Juntar los nombres de archivo de las fotos que viven en Broquer
+    nombres = []
+    for fila in filas:
+        for f in (fila.get("fotos") or []):
+            n = _nombre_archivo_foto(f)
+            if n:
+                nombres.append(n)
+
+    # 3) Borrar las filas, en lotes, respetando siempre el alcance
+    ids_reales = [str(fila.get("id")) for fila in filas if fila.get("id")]
+    eliminadas = 0
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            for i in range(0, len(ids_reales), 200):
+                lote = ids_reales[i:i+200]
+                lista = ",".join(f'"{x}"' for x in lote)
+                rd = await client.delete(
+                    f"{SUPABASE_URL}/rest/v1/propiedades",
+                    headers={**sb_headers, "Prefer": "return=minimal"},
+                    params={**filtro, "id": f"in.({lista})"},
+                )
+                if rd.status_code in (200, 204):
+                    eliminadas += len(lote)
+    except Exception:
+        raise HTTPException(status_code=500, detail="No se pudieron borrar todas las propiedades.")
+
+    # 4) Las fotos se borran en segundo plano: son miles y no vale la pena
+    #    hacer esperar al usuario por archivos que ya nadie va a ver.
+    if nombres:
+        try:
+            asyncio.create_task(_borrar_fotos_storage(nombres))
+        except Exception:
+            pass
+
+    return {
+        "eliminadas":        eliminadas,
+        "fotos_programadas": len(nombres),
+        "alcance":           alcance,
+    }
+
+
+@app.post("/contactos/eliminar-masivo")
+async def contactos_eliminar_masivo(request: Request):
+    """
+    Borra varios contactos de un jalón.
+    Body: {"ids": ["...", "..."]}  o  {"todos": true}
+    """
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Tu sesión expiró. Vuelve a iniciar sesión.")
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        raise HTTPException(status_code=500, detail="Supabase no está configurado en el servidor.")
+
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    ids = (body or {}).get("ids") or []
+    todos = bool((body or {}).get("todos"))
+    if not todos and not ids:
+        raise HTTPException(status_code=400, detail="No seleccionaste ningún contacto.")
+
+    filtro, alcance = await _alcance_borrado(user_id)
+    if not filtro:
+        raise HTTPException(status_code=403, detail=_MSG_SIN_PERMISO)
+    sb_headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    params = dict(filtro)
+    if not todos:
+        lista = ",".join(f'"{str(x)}"' for x in ids)
+        params["id"] = f"in.({lista})"
+
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            r = await client.get(f"{SUPABASE_URL}/rest/v1/contactos",
+                                 headers=sb_headers,
+                                 params={**params, "select": "id"})
+            if r.status_code != 200:
+                raise HTTPException(status_code=500, detail="No se pudo leer el directorio.")
+            filas = r.json() or []
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="No se pudo leer el directorio.")
+
+    ids_reales = [str(fila.get("id")) for fila in filas if fila.get("id")]
+    if not ids_reales:
+        return {"eliminados": 0, "alcance": alcance}
+
+    eliminados = 0
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            for i in range(0, len(ids_reales), 200):
+                lote = ids_reales[i:i+200]
+                lista = ",".join(f'"{x}"' for x in lote)
+                rd = await client.delete(
+                    f"{SUPABASE_URL}/rest/v1/contactos",
+                    headers={**sb_headers, "Prefer": "return=minimal"},
+                    params={**filtro, "id": f"in.({lista})"},
+                )
+                if rd.status_code in (200, 204):
+                    eliminados += len(lote)
+    except Exception:
+        raise HTTPException(status_code=500, detail="No se pudieron borrar todos los contactos.")
+
+    return {"eliminados": eliminados, "alcance": alcance}
 
 
 @app.get("/propiedades")
@@ -2621,6 +3351,9 @@ class AvmClaudeRequest(BaseModel):
 
 @app.post("/api/avm-claude")
 async def avm_claude(req: AvmClaudeRequest, request: Request):
+    _uid = await get_user_id_from_token(request)
+    exigir_cupo(request, _uid)
+    exigir_sesion(request, _uid)
     if not ANTHROPIC_API_KEY:
         raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY no configurada en el servidor")
     user_id = await get_user_id_from_token(request)
@@ -3343,6 +4076,8 @@ Responde ÚNICAMENTE JSON válido con esta estructura:
 async def avm_websearch(req: AvmWebSearchRequest, request: Request):
     """Opinión de valor con búsqueda web controlada: search API → URLs candidatas → extracción mínima → IA limpia y calcula."""
     user_id = await get_user_id_from_token(request)
+    exigir_cupo(request, user_id)
+    exigir_sesion(request, user_id)
     tipo_labels = {
         "casa": "Casa habitación", "departamento": "Departamento/Condominio",
         "terreno": "Terreno", "local": "Local comercial",
@@ -3692,26 +4427,10 @@ class ContratoRequest(BaseModel):
     clausulas_especiales: list = []  # plain-language clauses to be drafted by AI
 
 
-@app.get("/img")
-async def proxy_image(url: str):
-    """Proxy image from EasyBroker to avoid CORS issues in PDF printing."""
-    import base64
-    from fastapi.responses import Response
-    try:
-        headers = {
-            "User-Agent": "Mozilla/5.0",
-            "Referer": "https://www.easybroker.com/",
-        }
-        async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
-            r = await client.get(url, headers=headers)
-            if r.status_code == 200:
-                content_type = r.headers.get("content-type", "image/jpeg")
-                return Response(content=r.content, media_type=content_type,
-                    headers={"Access-Control-Allow-Origin": "*",
-                             "Cache-Control": "public, max-age=3600"})
-    except Exception as e:
-        pass
-    raise HTTPException(status_code=404, detail="Image not available")
+# El proxy abierto /img se eliminó por seguridad. Bajaba CUALQUIER dirección que
+# le pasaran, así que servía para usar nuestro servidor como escondite y para
+# alcanzar servicios internos de Railway desde fuera. Ya no lo llamaba nadie:
+# las fichas en PDF bajan las fotos directo desde el propio backend.
 
 @app.post("/contrato")
 async def generar_contrato(req: ContratoRequest, request: Request):
@@ -3825,6 +4544,84 @@ def _sb_headers(extra: dict = None) -> dict:
     if extra:
         h.update(extra)
     return h
+
+
+# =============================================================================
+# RECORDATORIOS DE TAREAS/CITAS
+# -----------------------------------------------------------------------------
+# Cada 5 minutos revisa las tareas con fecha_entrega próxima y manda UN push
+# por tarea (se marca recordatorio_enviado para no repetirlo). No depende de
+# ningún módulo específico: aplica a cualquier tarea, la haya creado el
+# usuario a mano, Broq, o WhatsApp 2.0 al agendar una visita.
+# =============================================================================
+_recordatorios_log = logging.getLogger("broquer.recordatorios")
+
+
+async def _revisar_recordatorios():
+    try:
+        from push import enviar_push
+    except Exception:
+        return  # sin push.py configurado no hay nada que hacer aquí
+
+    ahora = datetime.now(timezone.utc)
+    try:
+        async with httpx.AsyncClient(timeout=15) as c:
+            r = await c.get(f"{SUPABASE_URL}/rest/v1/tareas", headers=_sb_headers(), params={
+                "select": "id,user_id,titulo,fecha_entrega,recordatorio_minutos_antes",
+                "completada": "eq.false", "recordatorio_enviado": "eq.false",
+                "fecha_entrega": "not.is.null", "limit": "200",
+            })
+        if r.status_code >= 300:
+            _recordatorios_log.warning("No se pudo leer tareas para recordatorios: %s", r.text[:200])
+            return
+        tareas = r.json()
+    except Exception as e:
+        _recordatorios_log.error("Error consultando tareas para recordatorios: %s", e)
+        return
+
+    for t in tareas:
+        try:
+            fecha = datetime.fromisoformat(str(t["fecha_entrega"]).replace("Z", "+00:00"))
+            if fecha.tzinfo is None:
+                fecha = fecha.replace(tzinfo=timezone.utc)
+        except Exception:
+            continue
+        if fecha < ahora:
+            continue  # ya pasó y nadie la marcó — no tiene caso avisar tarde
+        minutos_antes = t.get("recordatorio_minutos_antes") or 60
+        disparo = fecha - timedelta(minutes=minutos_antes)
+        if disparo > ahora:
+            continue  # todavía no toca avisar de esta
+
+        cuerpo = f"{t['titulo']} — en {minutos_antes} minutos" if minutos_antes >= 15 else f"{t['titulo']} — está por comenzar"
+        try:
+            await enviar_push(t["user_id"], "Recordatorio de cita", cuerpo,
+                              datos={"tipo": "tarea", "tarea_id": t["id"]})
+        except Exception as e:
+            _recordatorios_log.warning("No se pudo mandar el push de la tarea %s: %s", t["id"], e)
+            continue
+
+        try:
+            async with httpx.AsyncClient(timeout=15) as c:
+                await c.patch(f"{SUPABASE_URL}/rest/v1/tareas",
+                              headers=_sb_headers({"Content-Type": "application/json"}),
+                              params={"id": f"eq.{t['id']}"}, json={"recordatorio_enviado": True})
+        except Exception as e:
+            _recordatorios_log.warning("No se pudo marcar recordatorio_enviado de %s: %s", t["id"], e)
+
+
+async def _recordatorios_loop():
+    while True:
+        try:
+            await _revisar_recordatorios()
+        except Exception as e:
+            _recordatorios_log.error("Fallo el ciclo de recordatorios: %s", e)
+        await asyncio.sleep(300)  # cada 5 minutos
+
+
+@app.on_event("startup")
+async def _iniciar_recordatorios():
+    asyncio.create_task(_recordatorios_loop())
 
 
 _MACHOTE_SELECT = ("id,titulo,tipo,campos,motor,patron_usado,descartados,"
@@ -4626,6 +5423,9 @@ async def get_noticias():
 @app.post("/ficha-manual/descripcion")
 async def generar_descripcion_ficha_manual(data: dict, request: Request):
     """Generate AI description for ficha manual — uses same httpx pattern as rest of backend."""
+    _uid = await get_user_id_from_token(request)
+    exigir_cupo(request, _uid)
+    exigir_sesion(request, _uid)
     if not ANTHROPIC_API_KEY:
         raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY no configurada")
     user_id = await get_user_id_from_token(request)
@@ -4692,8 +5492,11 @@ async def generar_descripcion_ficha_manual(data: dict, request: Request):
 
 
 @app.post("/ficha-pdf")
-async def generar_ficha_pdf(p: dict):
+async def generar_ficha_pdf(p: dict, request: Request):
     """Generate PDF from property data dict using Playwright."""
+    _uid = await get_user_id_from_token(request)
+    exigir_cupo(request, _uid)
+    exigir_sesion(request, _uid)
     import httpx
     
     # Collect all image URLs
@@ -5307,6 +6110,8 @@ async def clean_images(
     remove_furniture: str = _Form("false"),
 ):
     user_id = await get_user_id_from_token(request)
+    exigir_cupo(request, user_id)
+    exigir_sesion(request, user_id)
     use_gemini = bool(prompt.strip()) and bool(GEMINI_API_KEY)
 
     async def process_one(uf: UploadFile):
@@ -5356,6 +6161,649 @@ async def clean_images(
     return {"images": list(results)}
 
 
+# ════════════════════════════════════════════════════════════════
+# META GRAPH API — capa común
+# ════════════════════════════════════════════════════════════════
+# Todas las llamadas al Graph API de Meta (Facebook) pasan por aquí.
+# Antes cada endpoint hacía su propio httpx.get/post: la versión de la API
+# estaba escrita a mano en ~40 lugares (y una se quedó en v18.0), nadie
+# reintentaba cuando Meta contestaba 429, y los errores se devolvían como
+# texto crudo. Esta capa arregla las tres cosas de un solo lugar.
+#
+# Es el espejo de _eb_get_reintentos() (EasyBroker), pero para Meta:
+# Meta además codifica el motivo real del rechazo en `error.code`, no solo
+# en el status HTTP, y publica su presupuesto de llamadas en la cabecera
+# X-Business-Use-Case-Usage. Ambas cosas se honran abajo.
+
+_fb_log = logging.getLogger("broquer.facebook")
+
+
+# ─── Cifrado de tokens en reposo ──────────────────────────────────────────────
+# Los tokens de Meta (página y usuario) vivían en texto plano en Supabase.
+# Quien leyera esa tabla —un respaldo filtrado, una service_role key expuesta,
+# un empleado con acceso a la consola— podía publicar y GASTAR en nombre del
+# agente. Ahora se guardan cifrados con Fernet (AES-128-CBC + HMAC).
+#
+# Compatibilidad: los valores viejos siguen en claro y se leen igual. Se
+# vuelven a escribir cifrados en cuanto la fila se actualiza, o de un jalón con
+# POST /facebook/encrypt-tokens.
+#
+# Sin TOKEN_ENC_KEY configurada todo sigue funcionando en claro (y se avisa una
+# vez en el log). Generar una llave:
+#     python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+
+_PREFIJO_CIFRADO = "enc:v1:"
+_TOKEN_ENC_KEY = os.environ.get("TOKEN_ENC_KEY", "").strip()
+_fermet_aviso_dado = False
+
+try:
+    from cryptography.fernet import Fernet, InvalidToken
+    _FERNET = Fernet(_TOKEN_ENC_KEY.encode()) if _TOKEN_ENC_KEY else None
+except Exception as _e:
+    _FERNET = None
+    InvalidToken = Exception  # type: ignore
+    if _TOKEN_ENC_KEY:
+        logging.getLogger("broquer.facebook").error(
+            "TOKEN_ENC_KEY inválida (%s). Los tokens seguirán en texto plano. "
+            "Genera una con: python3 -c \"from cryptography.fernet import Fernet; "
+            "print(Fernet.generate_key().decode())\"", _e)
+
+
+def cifrar_secreto(valor: str) -> str:
+    """Cifra un token. Si no hay llave configurada, lo devuelve tal cual."""
+    global _fermet_aviso_dado
+    if not valor:
+        return valor
+    if valor.startswith(_PREFIJO_CIFRADO):
+        return valor                      # ya venía cifrado
+    if not _FERNET:
+        if not _fermet_aviso_dado:
+            _fb_log.warning("TOKEN_ENC_KEY no configurada: los tokens de Meta se "
+                            "guardan en texto plano en Supabase.")
+            _fermet_aviso_dado = True
+        return valor
+    try:
+        return _PREFIJO_CIFRADO + _FERNET.encrypt(valor.encode("utf-8")).decode("ascii")
+    except Exception as e:
+        _fb_log.error("No se pudo cifrar el token: %s", e)
+        return valor
+
+
+def descifrar_secreto(valor: str) -> str:
+    """Descifra si hace falta. Los valores en claro (de antes) pasan derecho."""
+    if not valor or not isinstance(valor, str):
+        return valor or ""
+    if not valor.startswith(_PREFIJO_CIFRADO):
+        return valor
+    if not _FERNET:
+        # Hay datos cifrados pero se borró la llave: eso NO se puede adivinar.
+        _fb_log.error("Hay tokens cifrados en la base pero TOKEN_ENC_KEY no está "
+                      "configurada. Restaura la llave o el usuario tendrá que reconectar.")
+        return ""
+    try:
+        return _FERNET.decrypt(valor[len(_PREFIJO_CIFRADO):].encode("ascii")).decode("utf-8")
+    except InvalidToken:
+        _fb_log.error("Token cifrado con OTRA llave (TOKEN_ENC_KEY cambió). "
+                      "El usuario tendrá que reconectar Facebook.")
+        return ""
+    except Exception as e:
+        _fb_log.error("No se pudo descifrar el token: %s", e)
+        return ""
+
+FB_API_VERSION = os.environ.get("FB_API_VERSION", "v21.0")
+FB_GRAPH       = f"https://graph.facebook.com/{FB_API_VERSION}"
+
+_FB_REINTENTOS  = 4
+_FB_ESPERA_BASE = 1.5    # segundos; se duplica en cada reintento
+_FB_ESPERA_MAX  = 30.0   # techo por espera individual
+
+# Códigos de error de Meta que significan "vuelve a intentar", NO "estás mal".
+#   1     · API Unknown (error transitorio del lado de Meta)
+#   2     · API Service (servicio temporalmente caído)
+#   4     · Application request limit reached (límite de la app)
+#   17    · User request limit reached (límite del usuario)
+#   32    · Page-level throttling
+#   341   · Application limit reached (límite temporal)
+#   613   · Calls to this API have exceeded the rate limit
+#   80000-80006 · Rate limits por caso de uso (80004 = ads_management)
+_FB_CODIGOS_REINTENTABLES = {1, 2, 4, 17, 32, 341, 613,
+                             80000, 80001, 80002, 80003, 80004, 80005, 80006}
+
+# Códigos que significan "el token murió" — reintentar no sirve de nada.
+_FB_CODIGOS_TOKEN = {102, 190, 463, 467}
+
+# Interruptor de emergencia: si el appsecret_proof rompiera algo en producción
+# se apaga con FB_APPSECRET_PROOF=0 en Railway sin tocar código.
+_FB_USAR_PROOF = os.environ.get("FB_APPSECRET_PROOF", "1").strip().lower() not in ("0", "false", "no")
+
+
+def _fb_appsecret_proof(token: str) -> str:
+    """Firma HMAC del token con el secreto de la app.
+
+    Meta recomienda mandarla en TODA llamada server-side: si alguien roba un
+    token de la base de datos, sin el app secret no puede usarlo contra la API.
+    """
+    if not token or not FB_APP_SECRET:
+        return ""
+    try:
+        return hmac.new(FB_APP_SECRET.encode("utf-8"),
+                        token.encode("utf-8"),
+                        hashlib.sha256).hexdigest()
+    except Exception:
+        return ""
+
+
+def _fb_parse_error(resp: "httpx.Response | None") -> dict:
+    """Extrae el objeto `error` de una respuesta de Meta. Siempre devuelve dict."""
+    if resp is None:
+        return {"message": "Facebook no respondió.", "code": None, "error_subcode": None}
+    try:
+        payload = resp.json()
+    except Exception:
+        return {"message": (resp.text or "")[:300], "code": None, "error_subcode": None}
+    if isinstance(payload, dict) and isinstance(payload.get("error"), dict):
+        return payload["error"]
+    return {}
+
+
+# Errores de Meta traducidos a español de negocio. La llave es el
+# error_subcode (o el code si no hay subcode) que manda Meta.
+_FB_ERRORES_COMUNES = {
+    1487888: "Tu cuenta publicitaria requiere un Píxel de Facebook configurado para optimizar conversiones. Contacta soporte de Broquer.",
+    4834011: "La cuenta tiene 'Optimización del presupuesto de campaña' activada. Desactívala en Business Manager o crea el anuncio directamente en Ads Manager.",
+    2069013: "La imagen no cumple los requisitos de Facebook (mínimo 600x600, sin texto excesivo). Usa otra imagen.",
+    1815245: "Para anuncios inmobiliarios en EE.UU./Canadá, Meta exige la categoría especial 'Vivienda'. En México no aplica — verifica tu ubicación de cuenta.",
+    1815111: "El público objetivo es muy pequeño. Amplía la edad, la ciudad o quita filtros.",
+    368:     "Facebook bloqueó la acción por seguridad. Espera unos minutos y reintenta, o reconecta tu cuenta.",
+    190:     "Tu sesión de Facebook expiró o fue revocada. Reconecta tu Facebook desde tu perfil.",
+    102:     "Tu sesión de Facebook expiró. Reconecta tu Facebook desde tu perfil.",
+    4:       "Facebook está limitando las peticiones de Broquer en este momento. Espera unos minutos y reintenta.",
+    17:      "Facebook está limitando las peticiones de tu cuenta. Espera unos minutos y reintenta.",
+    613:     "Alcanzaste el límite de peticiones de Facebook. Espera unos minutos y reintenta.",
+    80004:   "Alcanzaste el límite de peticiones de la API de anuncios. Espera unos minutos y reintenta.",
+}
+
+
+def _fb_friendly_error(resp_text: str, prefix: str) -> str:
+    """Convierte el JSON de error de Meta en un mensaje que el agente entienda.
+
+    Recibe TEXTO (no Response) para no romper a los llamadores que ya lo usaban
+    así. Si no reconoce el error, degrada al mensaje crudo recortado.
+    """
+    try:
+        payload = json.loads(resp_text or "{}")
+        err = (payload.get("error") or {}) if isinstance(payload, dict) else {}
+        sub = err.get("error_subcode") or err.get("code")
+        user_title = err.get("error_user_title") or ""
+        user_msg = err.get("error_user_msg") or err.get("message") or ""
+        if sub in _FB_ERRORES_COMUNES:
+            return f"{prefix}: {_FB_ERRORES_COMUNES[sub]}"
+        if user_title or user_msg:
+            return f"{prefix}: {user_title}. {user_msg}".strip(". ").strip()
+        return f"{prefix}: {err.get('message') or (resp_text or '')[:300]}"
+    except Exception:
+        return f"{prefix}: {(resp_text or '')[:300]}"
+
+
+def _fb_espera_por_uso(headers) -> float:
+    """Lee X-Business-Use-Case-Usage y decide cuánto esperar.
+
+    Meta publica ahí cuánto del presupuesto llevamos gastado (0-100) y, cuando
+    ya nos bloqueó, `estimated_time_to_regain_access` EN MINUTOS. Devolver ese
+    número tal cual serviría de poco (puede ser 60 min), así que lo usamos solo
+    como señal: si nos bloqueó, esperamos el techo; si vamos raspando el límite,
+    frenamos tantito antes de seguir.
+    """
+    raw = ""
+    try:
+        raw = headers.get("X-Business-Use-Case-Usage") or headers.get("x-business-use-case-usage") or ""
+    except Exception:
+        return 0.0
+    if not raw:
+        return 0.0
+    try:
+        data = json.loads(raw)
+    except Exception:
+        return 0.0
+    peor_uso = 0
+    bloqueado = False
+    for entradas in (data or {}).values():
+        for e in (entradas or []):
+            if not isinstance(e, dict):
+                continue
+            for k in ("call_count", "total_cputime", "total_time"):
+                try:
+                    peor_uso = max(peor_uso, int(e.get(k) or 0))
+                except (TypeError, ValueError):
+                    pass
+            try:
+                if float(e.get("estimated_time_to_regain_access") or 0) > 0:
+                    bloqueado = True
+            except (TypeError, ValueError):
+                pass
+    if bloqueado:
+        return _FB_ESPERA_MAX
+    if peor_uso >= 95:
+        return 5.0
+    if peor_uso >= 80:
+        return 1.0
+    return 0.0
+
+
+def _fb_debe_reintentar(resp: "httpx.Response") -> bool:
+    """True si vale la pena repetir la llamada."""
+    if resp.status_code == 429 or resp.status_code >= 500:
+        return True
+    if resp.status_code == 400 or resp.status_code == 403:
+        # Meta manda los límites de tasa como 400/403 con un code específico.
+        err = _fb_parse_error(resp)
+        code = err.get("code")
+        if code in _FB_CODIGOS_TOKEN:
+            return False
+        try:
+            return int(code) in _FB_CODIGOS_REINTENTABLES
+        except (TypeError, ValueError):
+            return False
+    return False
+
+
+async def _fb_request(client: httpx.AsyncClient, method: str, path: str, *,
+                      token: str = "", params: dict = None, json_body: dict = None,
+                      data: dict = None, files=None,
+                      timeout: float = 30.0,
+                      reintentos: int = _FB_REINTENTOS,
+                      espera_base: float = None,
+                      espera_max: float = None) -> "httpx.Response":
+    """Llamada única al Graph API de Meta, con reintentos y backoff.
+
+    - `path` puede ser una URL completa o un nodo/arista ("act_123/campaigns").
+    - Inyecta access_token y appsecret_proof automáticamente.
+    - Reintenta en 429, 5xx y los códigos de límite de Meta (4/17/32/613/80004…),
+      respetando Retry-After y X-Business-Use-Case-Usage.
+    - NUNCA lanza por status: devuelve la Response para que el llamador decida.
+      Si la red falló en todos los intentos, devuelve la última Response o None.
+    """
+    url = path if path.startswith("http") else f"{FB_GRAPH}/{path.lstrip('/')}"
+    base = _FB_ESPERA_BASE if espera_base is None else espera_base
+    techo = _FB_ESPERA_MAX if espera_max is None else espera_max
+    p = dict(params or {})
+    if token:
+        p.setdefault("access_token", token)
+    proof = _fb_appsecret_proof(p.get("access_token", ""))
+    if proof and _FB_USAR_PROOF:
+        p.setdefault("appsecret_proof", proof)
+
+    ultimo = None
+    for intento in range(max(1, reintentos)):
+        try:
+            r = await client.request(method.upper(), url, params=p, json=json_body,
+                                     data=data, files=files, timeout=timeout)
+            ultimo = r
+
+            # El app secret proof puede fallar si la app cambió de secreto.
+            # Antes que dejar al usuario tirado, reintentamos una vez sin él.
+            if (r.status_code in (400, 403) and "appsecret_proof" in p
+                    and "appsecret_proof" in (r.text or "")):
+                _fb_log.warning("appsecret_proof rechazado por Meta; reintento sin él")
+                p.pop("appsecret_proof", None)
+                continue
+
+            if not _fb_debe_reintentar(r) or intento == reintentos - 1:
+                return r
+
+            try:
+                espera = float(r.headers.get("Retry-After") or 0)
+            except (TypeError, ValueError):
+                espera = 0.0
+            espera = max(espera, _fb_espera_por_uso(r.headers))
+            if espera <= 0:
+                espera = base * (2 ** intento)
+            espera = min(espera, techo)
+            _fb_log.warning("Meta %s %s → %s; reintento %s/%s en %.1fs",
+                            method.upper(), url.split("?")[0], r.status_code,
+                            intento + 1, reintentos, espera)
+            await asyncio.sleep(espera)
+        except (httpx.TimeoutException, httpx.TransportError) as e:
+            _fb_log.warning("Fallo de red hablando con Meta (%s); intento %s/%s: %s",
+                            url.split("?")[0], intento + 1, reintentos, e)
+            ultimo = None
+            if intento == reintentos - 1:
+                break
+            await asyncio.sleep(min(base * (2 ** intento), techo))
+    return ultimo
+
+
+def _fb_exigir_ok(resp: "httpx.Response | None", prefix: str,
+                  status_code: int = 502) -> dict:
+    """Devuelve el JSON de una respuesta de Meta, o lanza HTTPException legible."""
+    if resp is None:
+        raise HTTPException(status_code=504,
+                            detail=f"{prefix}: Facebook no respondió después de varios intentos.")
+    if resp.status_code not in (200, 201, 204):
+        err = _fb_parse_error(resp)
+        code = err.get("code")
+        # Token muerto → 401 para que el frontend mande a reconectar.
+        sc = 401 if code in _FB_CODIGOS_TOKEN else status_code
+        raise HTTPException(status_code=sc, detail=_fb_friendly_error(resp.text, prefix))
+    try:
+        return resp.json() or {}
+    except Exception:
+        return {}
+
+
+async def _fb_get_json(client: httpx.AsyncClient, path: str, *, token: str,
+                       params: dict = None, prefix: str = "Error de Facebook",
+                       timeout: float = 30.0) -> dict:
+    """GET + validación en una línea. Lanza HTTPException si Meta falla."""
+    r = await _fb_request(client, "GET", path, token=token, params=params, timeout=timeout)
+    return _fb_exigir_ok(r, prefix)
+
+
+async def _fb_paginate(client: httpx.AsyncClient, path: str, *, token: str,
+                       params: dict = None, max_paginas: int = 10,
+                       max_items: int = 500, prefix: str = "Error de Facebook",
+                       timeout: float = 30.0, espera_base: float = None,
+                       espera_max: float = None) -> list:
+    """Recorre `paging.next` y devuelve TODOS los elementos de una arista.
+
+    Sin esto, un `limit=20` cortaba la lista en silencio y el agente creía que
+    solo tenía 20 campañas. Los topes evitan que una cuenta enorme cuelgue la
+    petición: si se alcanzan, se devuelve lo que se alcanzó a leer.
+    """
+    items: list = []
+    afinado = {"espera_base": espera_base, "espera_max": espera_max}
+    r = await _fb_request(client, "GET", path, token=token, params=params,
+                          timeout=timeout, **afinado)
+    data = _fb_exigir_ok(r, prefix)
+    items.extend(data.get("data") or [])
+    paginas = 1
+    while paginas < max_paginas and len(items) < max_items:
+        siguiente = ((data.get("paging") or {}).get("next")) or ""
+        if not siguiente:
+            break
+        # La URL `next` ya trae token, cursor y appsecret_proof: se usa tal cual.
+        r = await _fb_request(client, "GET", siguiente, timeout=timeout, **afinado)
+        if r is None or r.status_code != 200:
+            break
+        try:
+            data = r.json() or {}
+        except Exception:
+            break
+        nuevos = data.get("data") or []
+        if not nuevos:
+            break
+        items.extend(nuevos)
+        paginas += 1
+    return items[:max_items]
+
+
+# ─── Tokens: vida, permisos y avisos de expiración ────────────────────────────
+
+# Los tokens de larga duración de Meta duran ~60 días. Cuando Meta no manda
+# expires_in (tokens de página, que no expiran solos), asumimos este valor para
+# poder avisar de todas formas.
+_FB_TOKEN_VIDA_DEFECTO = 60 * 24 * 3600  # 60 días en segundos
+
+# Días antes de la expiración en que empezamos a avisar en la UI.
+_FB_AVISO_DIAS = 14
+
+# Permisos sin los cuales el módulo de anuncios no puede funcionar.
+_FB_SCOPES_REQUERIDOS = [
+    "ads_management",        # crear/leer/pausar campañas
+    "pages_show_list",       # ver las páginas del usuario
+    "pages_read_engagement", # leer publicaciones para promocionarlas
+    "leads_retrieval",       # bajar los leads de los Lead Ads
+]
+
+
+async def _fb_debug_token(client: httpx.AsyncClient, token: str) -> dict:
+    """Pregunta a Meta qué es realmente este token (tipo, permisos, expiración).
+
+    Usa el app token (`APP_ID|APP_SECRET`) como credencial, que es lo que exige
+    /debug_token. Nunca lanza: si falla, devuelve {} y el llamador decide.
+    """
+    if not token or not FB_APP_ID or not FB_APP_SECRET:
+        return {}
+    try:
+        r = await _fb_request(client, "GET", "debug_token",
+                              params={"input_token": token,
+                                      "access_token": f"{FB_APP_ID}|{FB_APP_SECRET}"},
+                              reintentos=2)
+        if r is None or r.status_code != 200:
+            return {}
+        return (r.json() or {}).get("data") or {}
+    except Exception:
+        return {}
+
+
+def _fb_estado_token(meta: dict) -> dict:
+    """Traduce token_expires_at a algo que la UI pueda enseñar.
+
+    Devuelve dict con días restantes, si urge reconectar y un mensaje listo.
+    Si no hay fecha guardada (conexiones viejas, de antes de este cambio) se
+    devuelve `desconocido` en vez de inventar un estado sano.
+    """
+    raw = (meta or {}).get("token_expires_at") or ""
+    if not raw:
+        return {"conocido": False, "dias_restantes": None, "expirado": False,
+                "por_expirar": False, "mensaje": ""}
+    try:
+        venc = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+        if venc.tzinfo is None:
+            venc = venc.replace(tzinfo=timezone.utc)
+    except Exception:
+        return {"conocido": False, "dias_restantes": None, "expirado": False,
+                "por_expirar": False, "mensaje": ""}
+
+    dias = (venc - datetime.now(timezone.utc)).total_seconds() / 86400.0
+    # Se redondea hacia arriba: a 4.9 días le quedan "5 días", no "4".
+    # Decirle a alguien que le quedan menos días de los que tiene no ayuda.
+    dias_int = int(-(-dias // 1)) if dias > 0 else int(dias // 1)
+    if dias <= 0:
+        msg = ("Tu conexión con Facebook expiró. Reconéctala desde tu perfil o "
+               "tus anuncios dejarán de actualizarse.")
+    elif dias <= _FB_AVISO_DIAS:
+        msg = (f"Tu conexión con Facebook expira en {max(dias_int, 1)} día(s). "
+               f"Reconéctala desde tu perfil para no perder tus campañas de vista.")
+    else:
+        msg = ""
+    return {
+        "conocido": True,
+        "expira_en": venc.isoformat(),
+        "dias_restantes": dias_int,
+        "expirado": dias <= 0,
+        "por_expirar": 0 < dias <= _FB_AVISO_DIAS,
+        "mensaje": msg,
+    }
+
+
+async def _fb_batch(client: httpx.AsyncClient, token: str, peticiones: list,
+                    timeout: float = 60.0, espera_base: float = None,
+                    espera_max: float = None) -> list:
+    """Ejecuta hasta 50 llamadas al Graph en UNA sola petición HTTP.
+
+    `peticiones` = [{"method": "POST", "relative_url": "123", "body": "status=PAUSED"}, …]
+    Devuelve una lista paralela de {"code": int, "body": dict|str} — un elemento
+    por petición, en el mismo orden. Si el batch entero falla, devuelve
+    elementos con code=0 para que el llamador reporte fallo parcial honesto.
+    """
+    salida: list = []
+    for i in range(0, len(peticiones), 50):
+        lote = peticiones[i:i + 50]
+        r = await _fb_request(client, "POST", "", token=token,
+                              data={"batch": json.dumps(lote),
+                                    "include_headers": "false"},
+                              timeout=timeout, espera_base=espera_base,
+                              espera_max=espera_max)
+        if r is None or r.status_code != 200:
+            detalle = _fb_friendly_error(r.text if r is not None else "", "Batch")
+            salida.extend([{"code": 0, "body": detalle} for _ in lote])
+            continue
+        try:
+            resultados = r.json()
+        except Exception:
+            salida.extend([{"code": 0, "body": "Respuesta ilegible de Facebook"} for _ in lote])
+            continue
+        if not isinstance(resultados, list):
+            salida.extend([{"code": 0, "body": "Respuesta inesperada de Facebook"} for _ in lote])
+            continue
+        for res in resultados:
+            if not isinstance(res, dict):
+                salida.append({"code": 0, "body": "Elemento inesperado"})
+                continue
+            cuerpo = res.get("body")
+            try:
+                cuerpo = json.loads(cuerpo) if isinstance(cuerpo, str) else cuerpo
+            except Exception:
+                pass
+            salida.append({"code": int(res.get("code") or 0), "body": cuerpo})
+    return salida
+
+
+# ════════════════════════════════════════════════════════════════
+# META — memoria de lo que Broquer creó (tabla fb_ad_entities)
+# ════════════════════════════════════════════════════════════════
+# Antes, crear un anuncio era una operación sin memoria: si el flujo se rompía
+# a la mitad, los IDs se perdían y los recursos quedaban huérfanos en la cuenta
+# publicitaria sin que nadie supiera que existían. Y un doble clic creaba dos
+# campañas cobrando en paralelo.
+#
+# Todo esto degrada con elegancia: si la tabla no existe todavía (migración sin
+# correr), se registra un aviso en el log y el anuncio se crea igual. Perder la
+# bitácora no puede ser motivo para no poder anunciar.
+
+_FB_TABLA_ENTIDADES = "fb_ad_entities"
+_fb_aviso_tabla_dado = False
+
+
+def _sb_headers(extra: dict = None) -> dict:
+    h = {"apikey": SUPABASE_SERVICE_KEY,
+         "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+         "Content-Type": "application/json"}
+    if extra:
+        h.update(extra)
+    return h
+
+
+def _fb_tabla_falta(resp) -> bool:
+    """True si Supabase contesta 'esa tabla no existe' (migración pendiente)."""
+    if resp is None:
+        return False
+    if resp.status_code not in (404, 400):
+        return False
+    texto = (resp.text or "").lower()
+    return ("does not exist" in texto or "could not find the table" in texto
+            or "pgrst205" in texto)
+
+
+def _fb_avisa_migracion(donde: str, resp=None) -> None:
+    global _fb_aviso_tabla_dado
+    if not _fb_aviso_tabla_dado:
+        _fb_log.warning(
+            "La tabla %s no existe (en %s). Corre migracion-facebook-ads.sql en "
+            "Supabase para habilitar idempotencia, reconciliación y limpieza de "
+            "huérfanos. Los anuncios se siguen creando sin ella.",
+            _FB_TABLA_ENTIDADES, donde)
+        _fb_aviso_tabla_dado = True
+
+
+async def _fb_reservar_creacion(user_id: str, org_id, datos: dict,
+                                idempotency_key: str = "") -> dict:
+    """Aparta el lugar ANTES de tocar Meta.
+
+    Devuelve:
+      {"modo": "nuevo",      "row_id": …}  → sigue adelante
+      {"modo": "duplicado",  "row": {…}}   → ya existía: devuelve lo de antes
+      {"modo": "sin_tabla"}                → migración pendiente, sigue sin memoria
+
+    El INSERT con la llave de idempotencia es lo que hace el trabajo: si dos
+    peticiones llegan a la vez, el índice único deja pasar una sola.
+    """
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return {"modo": "sin_tabla"}
+
+    fila = {
+        "id": str(_uuid.uuid4()),
+        "user_id": user_id,
+        "org_id": org_id,
+        "status": "CREANDO",
+        **datos,
+    }
+    if idempotency_key:
+        fila["idempotency_key"] = idempotency_key
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            r = await client.post(
+                f"{SUPABASE_URL}/rest/v1/{_FB_TABLA_ENTIDADES}",
+                headers=_sb_headers({"Prefer": "return=representation"}),
+                json=fila,
+            )
+        if r.status_code in (200, 201):
+            filas = r.json() if r.text else []
+            return {"modo": "nuevo", "row_id": (filas[0]["id"] if filas else fila["id"])}
+
+        if _fb_tabla_falta(r):
+            _fb_avisa_migracion("reservar creación", r)
+            return {"modo": "sin_tabla"}
+
+        # 409 = chocó con el índice único → ya hay una creación con esa llave.
+        if r.status_code == 409 and idempotency_key:
+            previa = await _fb_buscar_por_idempotencia(user_id, idempotency_key)
+            if previa:
+                return {"modo": "duplicado", "row": previa}
+
+        _fb_log.error("No se pudo registrar la creación en %s: %s %s",
+                      _FB_TABLA_ENTIDADES, r.status_code, (r.text or "")[:300])
+    except Exception as e:
+        _fb_log.error("Error registrando la creación en %s: %s", _FB_TABLA_ENTIDADES, e)
+    return {"modo": "sin_tabla"}
+
+
+async def _fb_buscar_por_idempotencia(user_id: str, idempotency_key: str) -> dict:
+    """Devuelve la creación previa con esa llave, o {}."""
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY or not idempotency_key:
+        return {}
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            r = await client.get(
+                f"{SUPABASE_URL}/rest/v1/{_FB_TABLA_ENTIDADES}",
+                headers=_sb_headers(),
+                params={"user_id": f"eq.{user_id}",
+                        "idempotency_key": f"eq.{idempotency_key}",
+                        "limit": "1"},
+            )
+        if r.status_code == 200 and r.json():
+            return r.json()[0]
+        if _fb_tabla_falta(r):
+            _fb_avisa_migracion("buscar idempotencia", r)
+    except Exception as e:
+        _fb_log.error("Error buscando idempotencia: %s", e)
+    return {}
+
+
+async def _fb_actualizar_entidad(row_id: str, updates: dict) -> None:
+    """Anota el resultado de la creación. Nunca lanza: es bitácora, no el trabajo."""
+    if not row_id or not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            r = await client.patch(
+                f"{SUPABASE_URL}/rest/v1/{_FB_TABLA_ENTIDADES}",
+                headers=_sb_headers({"Prefer": "return=minimal"}),
+                params={"id": f"eq.{row_id}"},
+                json={**updates, "updated_at": datetime.now(timezone.utc).isoformat()},
+            )
+        if r.status_code not in (200, 204):
+            if _fb_tabla_falta(r):
+                _fb_avisa_migracion("actualizar entidad", r)
+            else:
+                _fb_log.error("No se pudo actualizar %s: %s %s",
+                              _FB_TABLA_ENTIDADES, r.status_code, (r.text or "")[:300])
+    except Exception as e:
+        _fb_log.error("Error actualizando %s: %s", _FB_TABLA_ENTIDADES, e)
+
+
 # ─── FACEBOOK OAUTH ───────────────────────────────────────────────────────────
 
 # ────────────────────────────────────────────
@@ -5366,6 +6814,7 @@ class FbSavePageRequest(BaseModel):
     page_name: str
     page_token: str
     user_token: str = ""  # token de usuario (larga duración) — requerido para Ads API
+    token_expires_at: str = ""  # ISO-8601; lo calcula /facebook/callback
 
 @app.post("/facebook/save-page")
 async def facebook_save_page(req: FbSavePageRequest, request: Request):
@@ -5380,6 +6829,29 @@ async def facebook_save_page(req: FbSavePageRequest, request: Request):
     if not SUPABASE_URL or not SUPABASE_KEY:
         raise HTTPException(status_code=500, detail="Supabase no configurado")
 
+    # ── Verificar el token antes de guardarlo ──────────────────────────
+    # Si el frontend no mandó la fecha de expiración (o mandó basura), se la
+    # preguntamos a Meta. Guardar un token sin saber cuándo muere es lo que
+    # hacía que el módulo se apagara solo sin aviso.
+    token_expires_at = (req.token_expires_at or "").strip()
+    scopes: list = []
+    if req.user_token:
+        try:
+            async with httpx.AsyncClient(timeout=10) as client_t:
+                info = await _fb_debug_token(client_t, req.user_token)
+            scopes = info.get("scopes") or []
+            expira_ts = info.get("expires_at")
+            if not token_expires_at and expira_ts:
+                token_expires_at = datetime.fromtimestamp(int(expira_ts), timezone.utc).isoformat()
+            elif not token_expires_at and info.get("data_access_expires_at"):
+                token_expires_at = datetime.fromtimestamp(
+                    int(info["data_access_expires_at"]), timezone.utc).isoformat()
+        except Exception:
+            pass
+    if not token_expires_at:
+        token_expires_at = (datetime.now(timezone.utc)
+                            + timedelta(seconds=_FB_TOKEN_VIDA_DEFECTO)).isoformat()
+
     # ── Auto-seleccionar cuenta publicitaria compatible con la página ──
     ad_account_id = ""
     ad_account_name = ""
@@ -5388,37 +6860,35 @@ async def facebook_save_page(req: FbSavePageRequest, request: Request):
         async with httpx.AsyncClient(timeout=15) as client_a:
             # 1) Foto de la página (mejora UI)
             try:
-                rpic = await client_a.get(
-                    f"https://graph.facebook.com/v21.0/{req.page_id}",
-                    params={"access_token": req.user_token, "fields": "picture.type(square)"}
-                )
-                if rpic.status_code == 200:
+                rpic = await _fb_request(client_a, "GET", req.page_id,
+                                         token=req.user_token,
+                                         params={"fields": "picture.type(square)"})
+                if rpic is not None and rpic.status_code == 200:
                     page_pic = ((rpic.json().get("picture") or {}).get("data") or {}).get("url", "")
             except Exception:
                 page_pic = ""
 
-            # 2) Cuentas publicitarias del usuario
-            ra = await client_a.get(
-                "https://graph.facebook.com/v21.0/me/adaccounts",
-                params={"access_token": req.user_token, "fields": "id,name,account_status,currency", "limit": "50"}
+            # 2) Cuentas publicitarias del usuario (todas: sin paginar, una
+            #    empresa con >50 cuentas perdía las de la cola)
+            cuentas_raw = await _fb_paginate(
+                client_a, "me/adaccounts", token=req.user_token,
+                params={"fields": "id,name,account_status,currency", "limit": "50"},
+                prefix="Error leyendo cuentas publicitarias",
             )
-            accounts = []
-            if ra.status_code == 200:
-                accounts = [a for a in ra.json().get("data", []) if a.get("account_status") == 1]
+            accounts = [a for a in cuentas_raw if a.get("account_status") == 1]
 
             # 3) Para cada cuenta, ver si puede anunciar nuestra página
             chosen = None
             for a in accounts:
                 try:
-                    rp = await client_a.get(
-                        f"https://graph.facebook.com/v21.0/{a['id']}/promote_pages",
-                        params={"access_token": req.user_token, "fields": "id", "limit": "100"}
+                    pids = await _fb_paginate(
+                        client_a, f"{a['id']}/promote_pages", token=req.user_token,
+                        params={"fields": "id", "limit": "100"},
+                        prefix="Error leyendo páginas promocionables",
                     )
-                    if rp.status_code == 200:
-                        pids = [p.get("id") for p in rp.json().get("data", []) if p.get("id")]
-                        if req.page_id in pids:
-                            chosen = a
-                            break
+                    if req.page_id in [p.get("id") for p in pids if p.get("id")]:
+                        chosen = a
+                        break
                 except Exception:
                     continue
             # Fallback: si ninguna está autorizada explícitamente, usar la primera activa
@@ -5435,15 +6905,18 @@ async def facebook_save_page(req: FbSavePageRequest, request: Request):
         "page_id": req.page_id,
         "page_name": req.page_name,
         "page_pic": page_pic,
-        "user_token": req.user_token,
+        "user_token": cifrar_secreto(req.user_token),
         "ad_account_id": ad_account_id,
         "ad_account_name": ad_account_name,
+        "token_expires_at": token_expires_at,
+        "scopes": scopes,
+        "connected_at": datetime.now(timezone.utc).isoformat(),
     }
     payload = {
         "user_id": user_id,
         "org_id": await get_org_id_for_user(user_id),
         "provider": "facebook",
-        "api_key": req.page_token,
+        "api_key": cifrar_secreto(req.page_token),
         "meta": json.dumps(meta),
         "updated_at": datetime.utcnow().isoformat()
     }
@@ -5461,6 +6934,8 @@ async def facebook_save_page(req: FbSavePageRequest, request: Request):
         "page_name": req.page_name,
         "ad_account_id": ad_account_id,
         "ad_account_name": ad_account_name,
+        "token_expires_at": token_expires_at,
+        "scopes_faltantes": [s for s in _FB_SCOPES_REQUERIDOS if s not in scopes] if scopes else [],
     }
 
 @app.get("/facebook/connection")
@@ -5485,15 +6960,27 @@ async def facebook_get_connection(request: Request):
                         meta = json.loads(meta_str) if isinstance(meta_str, str) else meta_str
                     except Exception:
                         meta = {}
+                    estado_token = _fb_estado_token(meta)
                     return {
                         "connected": True,
                         "page_id": meta.get("page_id", ""),
                         "page_name": meta.get("page_name", "Página conectada"),
                         "page_pic": meta.get("page_pic", ""),
-                        "page_token": rows[0]["api_key"],
-                        "user_token": meta.get("user_token", ""),
+                        # Los tokens YA NO viajan al navegador. El frontend solo
+                        # los usaba para saber si existían; mandarlos era regalar
+                        # permiso de gastar a cualquier extensión o XSS que
+                        # leyera la respuesta. El backend los saca de Supabase
+                        # cuando los necesita.
+                        "tiene_token_ads": bool(meta.get("user_token")),
                         "ad_account_id": meta.get("ad_account_id", ""),
                         "ad_account_name": meta.get("ad_account_name", ""),
+                        # Estado del token: la UI avisa ANTES de que expire, en
+                        # vez de que el agente descubra el corte cuando ya no
+                        # puede pausar una campaña que está gastando.
+                        "token": estado_token,
+                        "scopes_faltantes": [s for s in _FB_SCOPES_REQUERIDOS
+                                             if s not in (meta.get("scopes") or [])]
+                                            if meta.get("scopes") else [],
                     }
     except Exception:
         pass
@@ -5519,19 +7006,30 @@ async def _fb_get_meta_row(user_id: str) -> dict:
         meta = json.loads(meta_raw) if isinstance(meta_raw, str) else meta_raw
     except Exception:
         meta = {}
-    return {"page_token": row.get("api_key", ""), "meta": meta}
+    # Los tokens salen ya descifrados: quien llame a este helper no tiene por
+    # qué saber si están cifrados en reposo o no.
+    if meta.get("user_token"):
+        meta["user_token"] = descifrar_secreto(meta["user_token"])
+    return {"page_token": descifrar_secreto(row.get("api_key", "")), "meta": meta}
 
 
 async def _fb_patch_meta(user_id: str, updates: dict, new_page_token: str | None = None) -> None:
-    """Actualiza la fila de Facebook del usuario fusionando 'updates' en meta."""
+    """Actualiza la fila de Facebook del usuario fusionando 'updates' en meta.
+
+    Al reescribir, los tokens quedan cifrados aunque hubieran entrado en claro:
+    así las conexiones viejas se van migrando solas con el uso normal.
+    """
     cur = await _fb_get_meta_row(user_id)
     meta = cur.get("meta") or {}
     meta.update(updates)
+    if meta.get("user_token"):
+        meta["user_token"] = cifrar_secreto(meta["user_token"])
+    page_token = new_page_token if new_page_token is not None else cur.get("page_token", "")
     payload = {
         "user_id": user_id,
         "org_id": await get_org_id_for_user(user_id),
         "provider": "facebook",
-        "api_key": new_page_token if new_page_token is not None else cur.get("page_token", ""),
+        "api_key": cifrar_secreto(page_token),
         "meta": json.dumps(meta),
         "updated_at": datetime.utcnow().isoformat(),
     }
@@ -5556,15 +7054,11 @@ async def facebook_list_pages(request: Request):
     if not user_token:
         raise HTTPException(status_code=400, detail="Reconecta tu Facebook para habilitar el cambio de página.")
     async with httpx.AsyncClient(timeout=15) as client:
-        r = await client.get(
-            "https://graph.facebook.com/v21.0/me/accounts",
-            params={"access_token": user_token,
-                    "fields": "id,name,access_token,picture.type(square)",
-                    "limit": "200"},
+        data = await _fb_paginate(
+            client, "me/accounts", token=user_token,
+            params={"fields": "id,name,access_token,picture.type(square)", "limit": "100"},
+            prefix="Error leyendo tus páginas",
         )
-    if r.status_code != 200:
-        raise HTTPException(status_code=502, detail=f"Error de Facebook: {r.text}")
-    data = r.json().get("data", []) or []
     pages = [{
         "id": p.get("id", ""),
         "name": p.get("name", p.get("id", "")),
@@ -5587,13 +7081,12 @@ async def facebook_select_page(req: FbSelectPageRequest, request: Request):
         raise HTTPException(status_code=400, detail="Reconecta tu Facebook.")
     # Buscar la página en /me/accounts para obtener su page_token específico
     async with httpx.AsyncClient(timeout=10) as client:
-        r = await client.get(
-            "https://graph.facebook.com/v21.0/me/accounts",
-            params={"access_token": user_token, "fields": "id,name,access_token", "limit": "200"},
+        paginas = await _fb_paginate(
+            client, "me/accounts", token=user_token,
+            params={"fields": "id,name,access_token", "limit": "100"},
+            prefix="Error leyendo tus páginas",
         )
-    if r.status_code != 200:
-        raise HTTPException(status_code=502, detail=f"Error de Facebook: {r.text}")
-    target = next((p for p in r.json().get("data", []) if p.get("id") == req.page_id), None)
+    target = next((p for p in paginas if p.get("id") == req.page_id), None)
     if not target:
         raise HTTPException(status_code=400, detail="No administras esa página o ya no es accesible.")
     page_token = target.get("access_token", "")
@@ -5617,6 +7110,85 @@ async def facebook_select_ad_account(req: FbSelectAdAccountRequest, request: Req
         "ad_account_name": req.account_name or req.account_id,
     })
     return {"ok": True, "account_id": req.account_id}
+
+@app.post("/facebook/encrypt-tokens")
+async def facebook_encrypt_tokens(request: Request):
+    """Cifra los tokens que quedaron en texto plano de antes de este cambio.
+
+    Es idempotente: correrlo dos veces no hace daño. Cada dueño lo corre para
+    su propia conexión; no toca la de nadie más.
+    """
+    user_id = await exigir_gestion_integraciones(request)
+    if not _FERNET:
+        raise HTTPException(
+            status_code=503,
+            detail="Falta configurar TOKEN_ENC_KEY en el servidor. Genera una con: "
+                   "python3 -c \"from cryptography.fernet import Fernet; "
+                   "print(Fernet.generate_key().decode())\"")
+    fila = await _fb_get_meta_row(user_id)
+    if not fila:
+        raise HTTPException(status_code=400, detail="No hay conexión de Facebook.")
+    # _fb_patch_meta ya cifra al reescribir; basta con forzar una reescritura.
+    await _fb_patch_meta(user_id, {"tokens_cifrados_at": datetime.now(timezone.utc).isoformat()})
+    return {"ok": True, "mensaje": "Tus tokens de Facebook quedaron cifrados en reposo."}
+
+
+@app.post("/facebook/refresh-token")
+async def facebook_refresh_token(request: Request):
+    """Renueva el token de larga duración sin volver a pasar por el OAuth.
+
+    Meta deja re-intercambiar un token de larga duración por otro nuevo con el
+    mismo `fb_exchange_token`, siempre que el actual siga vivo. La UI llama a
+    esto sola cuando faltan pocos días para que expire, así el agente nunca ve
+    el módulo apagado. Si el token ya murió, no hay nada que renovar y hay que
+    reconectar de verdad — eso se dice claro, no se disfraza.
+    """
+    user_id = await exigir_gestion_integraciones(request)
+    if not FB_APP_ID or not FB_APP_SECRET:
+        raise HTTPException(status_code=500, detail="FB_APP_ID o FB_APP_SECRET no configurados.")
+    row = await _fb_get_meta_row(user_id)
+    meta = row.get("meta") or {}
+    user_token = meta.get("user_token", "")
+    if not user_token:
+        raise HTTPException(status_code=400, detail="No hay conexión de Facebook que renovar.")
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        r = await _fb_request(
+            client, "GET", "oauth/access_token",
+            params={"grant_type": "fb_exchange_token",
+                    "client_id": FB_APP_ID,
+                    "client_secret": FB_APP_SECRET,
+                    "fb_exchange_token": user_token},
+        )
+        if r is None or r.status_code != 200:
+            raise HTTPException(
+                status_code=502,
+                detail=_fb_friendly_error(
+                    r.text if r is not None else "",
+                    "No se pudo renovar la conexión con Facebook. Reconéctala desde tu perfil"),
+            )
+        datos = r.json() or {}
+        nuevo = datos.get("access_token", "")
+        if not nuevo:
+            raise HTTPException(status_code=502,
+                                detail="Facebook no devolvió un token nuevo. Reconecta desde tu perfil.")
+        try:
+            expires_in = int(datos.get("expires_in") or 0)
+        except (TypeError, ValueError):
+            expires_in = 0
+        info = await _fb_debug_token(client, nuevo)
+
+    vence = (datetime.now(timezone.utc)
+             + timedelta(seconds=expires_in or _FB_TOKEN_VIDA_DEFECTO)).isoformat()
+    await _fb_patch_meta(user_id, {
+        "user_token": nuevo,
+        "token_expires_at": vence,
+        "scopes": info.get("scopes") or meta.get("scopes") or [],
+        "token_refreshed_at": datetime.now(timezone.utc).isoformat(),
+    })
+    return {"ok": True, "token_expires_at": vence,
+            "dias_restantes": int((expires_in or _FB_TOKEN_VIDA_DEFECTO) / 86400)}
+
 
 @app.delete("/facebook/connection")
 async def facebook_disconnect(request: Request):
@@ -5653,13 +7225,16 @@ async def facebook_publish_property(request: Request):
     fotos = body.get("fotos", [])
     descripcion = body.get("descripcion", "")
 
-    # Obtener conexión de Facebook del usuario
-    fb = await facebook_get_connection(request)
-    if not fb.get("connected"):
+    # Obtener conexión de Facebook del usuario. El page_token se saca de la
+    # fila directa (_fb_get_meta_row), no de /facebook/connection: ese endpoint
+    # ya no devuelve tokens porque su respuesta viaja al navegador.
+    fila = await _fb_get_meta_row(user_id)
+    meta_fb = fila.get("meta") or {}
+    page_id = meta_fb.get("page_id", "")
+    page_token = fila.get("page_token", "")
+    if not page_id or not page_token:
         raise HTTPException(status_code=400, detail="Facebook no conectado. Ve a tu perfil para conectar tu página.")
-
-    page_id = fb["page_id"]
-    page_token = fb["page_token"]
+    fb = {"page_name": meta_fb.get("page_name", "")}
 
     # Construir mensaje
     precio_fmt = f"${int(precio):,}" if precio else ""
@@ -5685,42 +7260,44 @@ async def facebook_publish_property(request: Request):
         photo_ids = []
         for url in (fotos or [])[:5]:
             try:
-                r = await client.post(
-                    f"https://graph.facebook.com/v21.0/{page_id}/photos",
-                    params={"access_token": page_token},
-                    json={"url": url, "published": False},
-                )
-                if r.status_code == 200:
+                r = await _fb_request(client, "POST", f"{page_id}/photos",
+                                      token=page_token,
+                                      json_body={"url": url, "published": False})
+                if r is not None and r.status_code in (200, 201):
                     pid = r.json().get("id")
                     if pid: photo_ids.append({"media_fbid": pid})
             except Exception:
                 pass
 
-        payload: dict = {"message": mensaje, "access_token": page_token}
+        payload: dict = {"message": mensaje}
         if photo_ids:
             payload["attached_media"] = photo_ids
 
-        r_post = await client.post(
-            f"https://graph.facebook.com/v21.0/{page_id}/feed",
-            params={"access_token": page_token},
-            json=payload,
-        )
+        r_post = await _fb_request(client, "POST", f"{page_id}/feed",
+                                   token=page_token, json_body=payload)
 
-    if r_post.status_code not in (200, 201):
-        err = r_post.text
-        raise HTTPException(status_code=502, detail=f"Error de Facebook: {err}")
-
-    return {"ok": True, "post_id": r_post.json().get("id"), "page_name": fb.get("page_name", "")}
+    datos = _fb_exigir_ok(r_post, "Error publicando en Facebook")
+    return {"ok": True, "post_id": datos.get("id"), "page_name": fb.get("page_name", "")}
 
 
 @app.get("/facebook/callback")
 async def facebook_callback(code: str = Query(...), state: str = Query(None), redirect_uri: str = Query(None)):
-    """Intercambia el code de OAuth por un token de página de Facebook."""
+    """Intercambia el code de OAuth por un token de página de Facebook.
+
+    Regla dura: si NO se consigue un token de larga duración, esto falla con
+    error HTTP y no devuelve nada guardable. Antes, cuando fb_exchange_token
+    fallaba, se caía al token corto (≈1 hora), el frontend lo guardaba tan
+    contento y los anuncios dejaban de funcionar esa misma tarde sin que nadie
+    entendiera por qué. Un error ruidoso hoy vale más que un módulo muerto mañana.
+    """
+    if not FB_APP_ID or not FB_APP_SECRET:
+        raise HTTPException(status_code=500,
+                            detail="FB_APP_ID o FB_APP_SECRET no configurados en el servidor.")
     redirect_uri = redirect_uri or (FRONTEND_URL + "/facebook/callback")
     async with httpx.AsyncClient(timeout=15) as client:
         # 1. Token de usuario (corta duración)
-        r = await client.get(
-            "https://graph.facebook.com/v21.0/oauth/access_token",
+        r = await _fb_request(
+            client, "GET", "oauth/access_token",
             params={
                 "client_id": FB_APP_ID,
                 "client_secret": FB_APP_SECRET,
@@ -5728,13 +7305,15 @@ async def facebook_callback(code: str = Query(...), state: str = Query(None), re
                 "code": code,
             },
         )
-        if r.status_code != 200:
-            return {"error": r.text}
-        short_token = r.json().get("access_token", "")
+        short_token = _fb_exigir_ok(r, "No se pudo completar la conexión con Facebook",
+                                    status_code=400).get("access_token", "")
+        if not short_token:
+            raise HTTPException(status_code=502,
+                                detail="Facebook no devolvió un token de acceso. Intenta conectar de nuevo.")
 
-        # 2. Token de larga duración
-        r2 = await client.get(
-            "https://graph.facebook.com/v21.0/oauth/access_token",
+        # 2. Token de larga duración (≈60 días). Obligatorio.
+        r2 = await _fb_request(
+            client, "GET", "oauth/access_token",
             params={
                 "grant_type": "fb_exchange_token",
                 "client_id": FB_APP_ID,
@@ -5742,33 +7321,66 @@ async def facebook_callback(code: str = Query(...), state: str = Query(None), re
                 "fb_exchange_token": short_token,
             },
         )
-        long_token = r2.json().get("access_token", short_token)
+        if r2 is None or r2.status_code != 200:
+            _fb_log.error("fb_exchange_token falló: %s",
+                          (r2.text if r2 is not None else "sin respuesta")[:400])
+            raise HTTPException(
+                status_code=502,
+                detail=_fb_friendly_error(
+                    r2.text if r2 is not None else "",
+                    "Facebook no entregó un token de larga duración, así que no se guardó "
+                    "la conexión (con el token corto los anuncios dejarían de funcionar en "
+                    "una hora). Intenta conectar de nuevo"),
+            )
+        datos_token = r2.json() or {}
+        long_token = datos_token.get("access_token", "")
+        if not long_token:
+            raise HTTPException(status_code=502,
+                                detail="Facebook no devolvió el token de larga duración. Intenta conectar de nuevo.")
 
-        # 3. Lista de páginas administradas
-        r3 = await client.get(
-            "https://graph.facebook.com/v21.0/me/accounts",
-            params={"access_token": long_token},
-        )
-        pages = r3.json().get("data", [])
+        # expires_in viene en segundos. Si Meta no lo manda, el token es de los
+        # que no expiran solos — se asume el estándar de 60 días para poder
+        # avisar a tiempo de todos modos.
+        try:
+            expires_in = int(datos_token.get("expires_in") or 0)
+        except (TypeError, ValueError):
+            expires_in = 0
+        token_expires_at = (datetime.now(timezone.utc)
+                            + timedelta(seconds=expires_in or _FB_TOKEN_VIDA_DEFECTO)).isoformat()
 
-    if not pages:
-        return {"error": "No se encontraron páginas administradas en esta cuenta de Facebook."}
+        # 3. Verificar el token contra /debug_token: es la única forma de saber
+        #    de verdad si quedó de larga duración y con qué permisos.
+        info_token = await _fb_debug_token(client, long_token)
+        faltantes = [s for s in _FB_SCOPES_REQUERIDOS if s not in (info_token.get("scopes") or [])]
+
+        # 4. Lista de páginas administradas
+        paginas = await _fb_paginate(client, "me/accounts", token=long_token,
+                                     params={"fields": "id,name,access_token", "limit": "100"},
+                                     prefix="Error leyendo tus páginas")
+
+    if not paginas:
+        raise HTTPException(
+            status_code=400,
+            detail="No se encontraron páginas administradas en esta cuenta de Facebook. "
+                   "Crea o pide acceso a una página antes de conectar.")
 
     # Usar la primera página
-    page = pages[0]
-    page_token = page.get("access_token", "")
-    page_id    = page.get("id", "")
-    page_name  = page.get("name", "")
+    page = paginas[0]
 
     # Devolver datos para que el frontend los guarde en Supabase
     # user_token (long_token) se necesita para la Ads API — distinto al page_token
     return {
         "ok": True,
-        "page_id": page_id,
-        "page_name": page_name,
-        "page_token": page_token,
+        "page_id": page.get("id", ""),
+        "page_name": page.get("name", ""),
+        "page_token": page.get("access_token", ""),
         "user_token": long_token,
-        "pages": [{"id": p.get("id"), "name": p.get("name"), "access_token": p.get("access_token")} for p in pages],
+        "token_expires_at": token_expires_at,
+        "token_expires_in": expires_in,
+        "scopes": info_token.get("scopes") or [],
+        "scopes_faltantes": faltantes,
+        "pages": [{"id": p.get("id"), "name": p.get("name"), "access_token": p.get("access_token")}
+                  for p in paginas],
     }
 
 
@@ -5785,34 +7397,25 @@ async def facebook_publish(req: FbPublishRequest):
     async with httpx.AsyncClient(timeout=30) as client:
         # Subir fotos como no publicadas
         for url in req.photo_urls[:10]:
-            r = await client.post(
-                f"https://graph.facebook.com/v21.0/{req.page_id}/photos",
-                params={"access_token": req.page_token},
-                json={"url": url, "published": False},
-            )
-            if r.status_code == 200:
+            r = await _fb_request(client, "POST", f"{req.page_id}/photos",
+                                  token=req.page_token,
+                                  json_body={"url": url, "published": False})
+            if r is not None and r.status_code in (200, 201):
                 pid = r.json().get("id")
                 if pid:
                     photo_ids.append({"media_fbid": pid})
 
-        # Crear el post
-        payload: dict = {
-            "message": req.message,
-            "access_token": req.page_token,
-        }
+        # Crear el post. (Este endpoint iba en v18.0 mientras el resto del
+        # módulo ya usaba v21.0; ahora la versión sale de FB_API_VERSION.)
+        payload: dict = {"message": req.message}
         if photo_ids:
             payload["attached_media"] = photo_ids
 
-        r_post = await client.post(
-            f"https://graph.facebook.com/v18.0/{req.page_id}/feed",
-            params={"access_token": req.page_token},
-            json=payload,
-        )
+        r_post = await _fb_request(client, "POST", f"{req.page_id}/feed",
+                                   token=req.page_token, json_body=payload)
 
-    if r_post.status_code not in (200, 201):
-        raise HTTPException(status_code=502, detail=r_post.text)
-
-    return {"ok": True, "post_id": r_post.json().get("id")}
+    datos = _fb_exigir_ok(r_post, "Error publicando en Facebook")
+    return {"ok": True, "post_id": datos.get("id")}
 
 
 
@@ -5825,61 +7428,55 @@ async def facebook_ad_accounts(request: Request):
     if not user_id:
         raise HTTPException(status_code=401, detail="No autenticado")
 
-    # Recuperar user_token guardado en meta
-    async with httpx.AsyncClient(timeout=10) as client:
-        r = await client.get(
-            f"{SUPABASE_URL}/rest/v1/user_integrations",
-            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
-            params={"user_id": f"eq.{user_id}", "provider": "eq.facebook", "select": "meta", "limit": "1"}
-        )
-    if r.status_code != 200 or not r.json():
-        raise HTTPException(status_code=400, detail="Facebook no conectado")
-
-    meta_raw = r.json()[0].get("meta", "{}")
-    try:
-        meta = json.loads(meta_raw) if isinstance(meta_raw, str) else meta_raw
-    except Exception:
-        meta = {}
-
+    # Recuperar user_token guardado en meta. Via _get_fb_meta() para que el
+    # descifrado ocurra en un solo lugar.
+    meta = await _get_fb_meta(user_id)
     user_token = meta.get("user_token", "")
     if not user_token:
         raise HTTPException(status_code=400, detail="Token de usuario sin permisos de ads. Reconecta tu Facebook.")
 
     async with httpx.AsyncClient(timeout=15) as client:
-        r2 = await client.get(
-            "https://graph.facebook.com/v21.0/me/adaccounts",
-            params={"access_token": user_token, "fields": "id,name,account_status,currency", "limit": "50"}
+        accounts = await _fb_paginate(
+            client, "me/adaccounts", token=user_token,
+            params={"fields": "id,name,account_status,currency", "limit": "50"},
+            prefix="Error leyendo cuentas publicitarias",
         )
-
-    if r2.status_code != 200:
-        raise HTTPException(status_code=502, detail=f"Error de Facebook: {r2.text}")
-
-    accounts = r2.json().get("data", [])
     # Solo cuentas activas (account_status == 1)
     active_raw = [a for a in accounts if a.get("account_status", 0) == 1]
 
     # Para cada cuenta activa, traer las páginas que puede anunciar (promote_pages).
     # Esto permite al frontend auto-seleccionar la cuenta correcta para la página
     # conectada del usuario y marcar las que no pueden anunciar esa página.
+    #
+    # Va en UNA sola petición (batch). Antes era un loop N+1: con 30 cuentas
+    # publicitarias eran 30 viajes a Meta y la pantalla tardaba una eternidad.
+    paginas_por_cuenta: dict = {}
+    if active_raw:
+        async with httpx.AsyncClient(timeout=30) as client:
+            resultados = await _fb_batch(client, user_token, [
+                {"method": "GET",
+                 "relative_url": f"{a['id']}/promote_pages?fields=id&limit=100"}
+                for a in active_raw
+            ])
+            for cuenta, res in zip(active_raw, resultados):
+                ids: list[str] = []
+                cuerpo = res.get("body")
+                if res.get("code") == 200 and isinstance(cuerpo, dict):
+                    ids = [p["id"] for p in (cuerpo.get("data") or []) if p.get("id")]
+                elif res.get("code") != 200:
+                    _fb_log.warning("promote_pages falló para %s: %s",
+                                    cuenta.get("id"), str(cuerpo)[:200])
+                paginas_por_cuenta[cuenta["id"]] = ids
+
     active: list[dict] = []
-    async with httpx.AsyncClient(timeout=10) as client:
-        for a in active_raw:
-            page_ids: list[str] = []
-            try:
-                rp = await client.get(
-                    f"https://graph.facebook.com/v21.0/{a['id']}/promote_pages",
-                    params={"access_token": user_token, "fields": "id", "limit": "100"}
-                )
-                if rp.status_code == 200:
-                    page_ids = [p["id"] for p in rp.json().get("data", []) if "id" in p]
-            except Exception:
-                page_ids = []
-            active.append({
-                "id": a["id"],
-                "name": a.get("name", a["id"]),
-                "currency": a.get("currency", "MXN"),
-                "promote_pages": page_ids,
-            })
+    for a in active_raw:
+        page_ids: list[str] = paginas_por_cuenta.get(a["id"], [])
+        active.append({
+            "id": a["id"],
+            "name": a.get("name", a["id"]),
+            "currency": a.get("currency", "MXN"),
+            "promote_pages": page_ids,
+        })
     return {"accounts": active}
 
 
@@ -5897,10 +7494,17 @@ class FbCreateAdRequest(BaseModel):
     age_max: int = 0
     country: str = "MX"
     city: str = ""              # key de ciudad/region para geo-targeting
+    city_type: str = "city"     # "city" | "region" | "neighborhood" | "subcity"
     page_id: str = ""
     objective: str = "OUTCOME_ENGAGEMENT"
     publish_now: bool = False   # si True, crea y activa; si False, queda en PAUSED
     post_id: str = ""           # si viene, promociona una publicacion existente (formato pageid_postid)
+    # Llave de idempotencia del cliente: mismo valor = misma campaña. Evita que
+    # un doble clic (o un reintento por red lenta) cree DOS campañas cobrando.
+    idempotency_key: str = ""
+    # Públicos personalizados/similares a incluir o excluir en el targeting.
+    custom_audience_ids: list = []
+    excluded_audience_ids: list = []
 
 
 @app.post("/facebook/create-ad")
@@ -5917,22 +7521,11 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
     if not user_id:
         raise HTTPException(status_code=401, detail="No autenticado")
 
-    # Recuperar user_token
-    async with httpx.AsyncClient(timeout=10) as client:
-        r = await client.get(
-            f"{SUPABASE_URL}/rest/v1/user_integrations",
-            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
-            params={"user_id": f"eq.{user_id}", "provider": "eq.facebook", "select": "api_key,meta", "limit": "1"}
-        )
-    if r.status_code != 200 or not r.json():
+    # Recuperar user_token (descifrado por el helper)
+    row = await _fb_get_meta_row(user_id)
+    if not row:
         raise HTTPException(status_code=400, detail="Facebook no conectado")
-
-    row = r.json()[0]
-    meta_raw = row.get("meta", "{}")
-    try:
-        meta = json.loads(meta_raw) if isinstance(meta_raw, str) else meta_raw
-    except Exception:
-        meta = {}
+    meta = row.get("meta") or {}
 
     user_token = meta.get("user_token", "")
     if not user_token:
@@ -5958,12 +7551,11 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
     # rechazar ANTES de crear nada para evitar el bug "publica en otra página".
     try:
         async with httpx.AsyncClient(timeout=10) as client_v:
-            rp = await client_v.get(
-                f"https://graph.facebook.com/v21.0/{req.account_id}/promote_pages",
-                params={"access_token": user_token, "fields": "id", "limit": "100"}
-            )
-        if rp.status_code == 200:
-            promote_ids = [p.get("id") for p in rp.json().get("data", []) if p.get("id")]
+            promote_ids = [p.get("id") for p in await _fb_paginate(
+                client_v, f"{req.account_id}/promote_pages", token=user_token,
+                params={"fields": "id", "limit": "100"},
+                prefix="Error validando la página",
+            ) if p.get("id")]
             if promote_ids and page_id not in promote_ids:
                 raise HTTPException(
                     status_code=400,
@@ -5990,236 +7582,343 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
 
     # Normalizar account_id (asegurar prefijo act_)
     account_id = req.account_id if req.account_id.startswith("act_") else f"act_{req.account_id}"
-    base_url = f"https://graph.facebook.com/v21.0/{account_id}"
-    params_base = {"access_token": user_token}
+    # (base_url/params_base ya no hacen falta: _fb_request arma la URL con
+    #  FB_API_VERSION e inyecta access_token + appsecret_proof.)
 
     # Presupuesto diario en centavos
     daily_budget_cents = int(req.daily_budget_mxn * 100)
 
-    # ── Helper: extrae mensaje legible de un error JSON de Meta ──────
-    def _fb_friendly_error(resp_text: str, prefix: str) -> str:
-        try:
-            payload = json.loads(resp_text or "{}")
-            err = (payload.get("error") or {})
-            sub = err.get("error_subcode") or err.get("code")
-            user_title = err.get("error_user_title") or ""
-            user_msg = err.get("error_user_msg") or err.get("message") or ""
-            # Errores comunes traducidos
-            COMMON = {
-                1487888: "Tu cuenta publicitaria requiere un Píxel de Facebook configurado para optimizar conversiones. Contacta soporte de Broquer.",
-                4834011: "La cuenta tiene 'Optimización del presupuesto de campaña' activada. Desactívala en Business Manager o crea el anuncio directamente en Ads Manager.",
-                2069013: "La imagen no cumple los requisitos de Facebook (mínimo 600x600, sin texto excesivo). Usa otra imagen.",
-                1815245: "Para anuncios inmobiliarios en EE.UU./Canadá, Meta exige la categoría especial 'Vivienda'. En México no aplica — verifica tu ubicación de cuenta.",
-                1815111: "El público objetivo es muy pequeño. Amplía la edad, la ciudad o quita filtros.",
-                368:    "Facebook bloqueó la acción por seguridad. Espera unos minutos y reintenta, o reconecta tu cuenta.",
-            }
-            if sub in COMMON:
-                return f"{prefix}: {COMMON[sub]}"
-            if user_title or user_msg:
-                return f"{prefix}: {user_title}. {user_msg}".strip(". ").strip()
-            return f"{prefix}: {err.get('message') or resp_text[:300]}"
-        except Exception:
-            return f"{prefix}: {resp_text[:300]}"
+    # _fb_friendly_error() vive ahora en la capa común de Meta (arriba en este
+    # archivo), para que TODOS los endpoints traduzcan igual los errores.
 
-    async with httpx.AsyncClient(timeout=60) as client:
+    # ── Idempotencia + bitácora ────────────────────────────────────────
+    # Se aparta el lugar ANTES de tocar Meta. Si el agente da doble clic (o el
+    # celular reintenta por red lenta), la segunda petición choca contra el
+    # índice único y devuelve la campaña que ya existe en vez de crear otra
+    # cobrando en paralelo.
+    idem = (req.idempotency_key or "").strip()[:120]
+    reserva = await _fb_reservar_creacion(
+        user_id,
+        await get_org_id_for_user(user_id),
+        {
+            "ad_account_id": account_id,
+            "page_id": page_id,
+            "campaign_name": (req.campaign_name or "Campaña Broquer")[:120],
+            "objective": "OUTCOME_ENGAGEMENT",
+            "daily_budget_mxn": req.daily_budget_mxn,
+            "duration_days": req.duration_days,
+            "meta": {"city": req.city, "city_type": req.city_type,
+                     "imagenes": len(req.images_b64 or []),
+                     "post_id": req.post_id, "publish_now": bool(req.publish_now)},
+        },
+        idempotency_key=idem,
+    )
 
-        # ── 0. Validar imágenes ────────────────────────────────────────
-        images_b64 = [b for b in (req.images_b64 or []) if b]
-        images_mime = list(req.images_mime or [])
-        if not req.post_id and not images_b64:
-            raise HTTPException(status_code=400, detail="Sube al menos una imagen para el anuncio.")
-        if len(images_b64) > 10:
-            images_b64 = images_b64[:10]
-            images_mime = images_mime[:10]
-        # Completar mimes si faltan
-        while len(images_mime) < len(images_b64):
-            images_mime.append("image/jpeg")
-
-        # ── 0b. Subir todas las imágenes a Meta ANTES de crear campaña ──
-        # Si cualquier imagen falla, abortamos sin dejar basura en la cuenta.
-        image_hashes = []
-        if not req.post_id:
-            for idx, b64 in enumerate(images_b64):
-                r_img = await client.post(
-                    f"{base_url}/adimages",
-                    params=params_base,
-                    json={"bytes": b64}
-                )
-                if r_img.status_code in (200, 201):
-                    for v in r_img.json().get("images", {}).values():
-                        h = v.get("hash")
-                        if h:
-                            image_hashes.append(h)
-                        break
-                if not image_hashes or len(image_hashes) < idx + 1:
-                    raise HTTPException(
-                        status_code=502,
-                        detail=_fb_friendly_error(
-                            r_img.text,
-                            f"No se pudo subir la imagen {idx + 1}"
-                        )
-                    )
-
-        # ── Recortar campos a límites Meta ─────────────────────────────
-        ad_text = (req.ad_text or "")[:2200]
-        headline = (req.headline or "")[:40]      # recomendado <40 para carrusel
-        campaign_name = (req.campaign_name or "Campaña Broquer")[:120]
-
-        # ── 1. Crear Campaign (siempre en PAUSED; activamos al final) ──
-        r_camp = await client.post(
-            f"{base_url}/campaigns",
-            params=params_base,
-            json={
-                "name": campaign_name,
-                "objective": "OUTCOME_ENGAGEMENT",
-                "status": "PAUSED",
-                "special_ad_categories": [],
-                "buying_type": "AUCTION",
-                "is_adset_budget_sharing_enabled": False,
-            }
-        )
-        if r_camp.status_code not in (200, 201):
-            raise HTTPException(status_code=502, detail=_fb_friendly_error(r_camp.text, "Error creando campaña"))
-        campaign_id = r_camp.json().get("id")
-
-        # Cleanup helper: borra recursos creados si algo falla a medio camino
-        async def _cleanup(*ids):
-            for rid in ids:
-                if not rid: continue
-                try: await client.delete(f"https://graph.facebook.com/v21.0/{rid}", params=params_base)
-                except Exception: pass
-
-        # ── 2. Crear AdSet ─────────────────────────────────────────────
-        # Siempre se segmenta por ciudad. No se usa countries — no tiene sentido
-        # para un agente inmobiliario anunciar en todo un país.
-        if not req.city:
-            raise HTTPException(status_code=400, detail="Debes seleccionar una ciudad para el anuncio.")
-        geo: dict = {"cities": [{"key": req.city}]}
-        targeting: dict = {
-            "age_min": req.age_min,
-            "geo_locations": geo,
-            # Meta requiere desde 2024 que se declare EXPLÍCITAMENTE si se usa
-            # Advantage Audience. 0 = desactivado (público controlado por el agente).
-            "targeting_automation": {"advantage_audience": 0},
-        }
-        if req.age_max and req.age_max > 0:
-            targeting["age_max"] = req.age_max
-
-        adset_payload: dict = {
-            "name": f"{campaign_name} — AdSet",
-            "campaign_id": campaign_id,
-            "daily_budget": daily_budget_cents,
-            "billing_event": billing_event,
-            "optimization_goal": optimization_goal,
-            "bid_strategy": "LOWEST_COST_WITHOUT_CAP",
-            "targeting": targeting,
-            "status": "PAUSED",
-            # Click-to-Messenger: promoted_object apunta a la página.
-            "promoted_object": {"page_id": page_id},
-            # destination_type = MESSENGER indica a Meta que el destino es Messenger.
-            # Esto es obligatorio para anuncios Click-to-Messenger.
-            "destination_type": "MESSENGER",
-        }
-
-        if req.duration_days and req.duration_days > 0:
-            from datetime import timedelta
-            end_dt = datetime.utcnow() + timedelta(days=req.duration_days)
-            adset_payload["end_time"] = end_dt.strftime("%Y-%m-%dT%H:%M:%S+0000")
-
-        r_adset = await client.post(
-            f"{base_url}/adsets",
-            params=params_base,
-            json=adset_payload
-        )
-        if r_adset.status_code not in (200, 201):
-            await _cleanup(campaign_id)
-            raise HTTPException(status_code=502, detail=_fb_friendly_error(r_adset.text, "Error creando conjunto de anuncios"))
-        adset_id = r_adset.json().get("id")
-
-        # ── 3. Crear AdCreative (carrusel Click-to-Messenger) ──────────
-        if req.post_id:
-            # Modo boost de publicación existente (no carrusel)
-            creative_payload: dict = {
-                "name": f"{campaign_name} — Boost",
-                "object_story_id": req.post_id,
-            }
+    if reserva.get("modo") == "duplicado":
+        previa = reserva.get("row") or {}
+        estado_previo = previa.get("status") or ""
+        if estado_previo == "CREANDO":
+            raise HTTPException(
+                status_code=409,
+                detail="Ese anuncio ya se está creando en este momento. Espera unos "
+                       "segundos y revisa «Tus campañas» antes de volver a enviarlo.")
+        if estado_previo == "FALLIDO":
+            # El intento anterior no dejó nada creado: se deja pasar de nuevo.
+            _fb_log.info("Reintento tras fallo previo (idempotency_key=%s)", idem)
+            reserva = {"modo": "nuevo", "row_id": previa.get("id")}
         else:
-            # Construir child_attachments: una tarjeta por imagen.
-            # CTA = MESSAGE_PAGE abre Messenger sin URL de destino.
-            child_attachments = []
-            for i, img_hash in enumerate(image_hashes):
-                attachment: dict = {
-                    "name": headline,
-                    "image_hash": img_hash,
+            acct_prev = (previa.get("ad_account_id") or account_id).replace("act_", "")
+            return {
+                "ok": True,
+                "duplicado": True,
+                "status": estado_previo,
+                "campaign_id": previa.get("campaign_id"),
+                "adset_id": previa.get("adset_id"),
+                "creative_id": previa.get("creative_id"),
+                "ad_id": previa.get("ad_id"),
+                "ads_manager_url": (
+                    f"https://www.facebook.com/adsmanager/manage/campaigns"
+                    f"?act={acct_prev}&selected_campaign_ids={previa.get('campaign_id')}"),
+                "warning": "Este anuncio ya se había creado. No se cobró dos veces.",
+            }
+
+    row_id = reserva.get("row_id", "")
+
+    async def _marcar_fallo(detalle: str) -> None:
+        """Deja la bitácora en FALLIDO para que un reintento pueda proceder."""
+        if row_id:
+            await _fb_actualizar_entidad(row_id, {"status": "FALLIDO",
+                                                  "error_detail": detalle[:1000]})
+
+    # Cualquier fallo a partir de aquí deja la bitácora en FALLIDO, para que
+    # un reintento con la misma llave de idempotencia pueda proceder en vez
+    # de quedarse trabado creyendo que hay una creación en curso.
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+
+            # ── 0. Validar imágenes ────────────────────────────────────────
+            images_b64 = [b for b in (req.images_b64 or []) if b]
+            images_mime = list(req.images_mime or [])
+            if not req.post_id and not images_b64:
+                raise HTTPException(status_code=400, detail="Sube al menos una imagen para el anuncio.")
+            if len(images_b64) > 10:
+                images_b64 = images_b64[:10]
+                images_mime = images_mime[:10]
+            # Completar mimes si faltan
+            while len(images_mime) < len(images_b64):
+                images_mime.append("image/jpeg")
+
+            # ── 0a. Validar la ciudad ANTES de tocar Meta ──────────────────
+            # Esta validación vivía después de crear la campaña: si el agente
+            # mandaba el formulario sin ciudad, la campaña ya existía en la cuenta
+            # y se quedaba huérfana para siempre. Ahora corta antes de crear nada.
+            if not req.city:
+                raise HTTPException(status_code=400, detail="Debes seleccionar una ciudad para el anuncio.")
+
+            # ── 0b. Subir todas las imágenes a Meta ANTES de crear campaña ──
+            # Si cualquier imagen falla, abortamos sin dejar basura en la cuenta.
+            image_hashes = []
+            if not req.post_id:
+                for idx, b64 in enumerate(images_b64):
+                    r_img = await _fb_request(client, "POST", f"{account_id}/adimages",
+                                              token=user_token, json_body={"bytes": b64})
+                    if r_img is not None and r_img.status_code in (200, 201):
+                        for v in (r_img.json().get("images") or {}).values():
+                            h = v.get("hash")
+                            if h:
+                                image_hashes.append(h)
+                            break
+                    if len(image_hashes) < idx + 1:
+                        raise HTTPException(
+                            status_code=502,
+                            detail=_fb_friendly_error(
+                                r_img.text if r_img is not None else "",
+                                f"No se pudo subir la imagen {idx + 1}"
+                            )
+                        )
+
+            # ── Recortar campos a límites Meta ─────────────────────────────
+            ad_text = (req.ad_text or "")[:2200]
+            headline = (req.headline or "")[:40]      # recomendado <40 para carrusel
+            campaign_name = (req.campaign_name or "Campaña Broquer")[:120]
+
+            # ── 1. Crear Campaign (siempre en PAUSED; activamos al final) ──
+            r_camp = await _fb_request(
+                client, "POST", f"{account_id}/campaigns", token=user_token,
+                json_body={
+                    "name": campaign_name,
+                    "objective": "OUTCOME_ENGAGEMENT",
+                    "status": "PAUSED",
+                    "special_ad_categories": [],
+                    "buying_type": "AUCTION",
+                    "is_adset_budget_sharing_enabled": False,
+                }
+            )
+            campaign_id = _fb_exigir_ok(r_camp, "Error creando campaña").get("id")
+
+            # Cleanup helper: borra recursos creados si algo falla a medio camino.
+            # Devuelve los ids que NO se pudieron borrar, para poder avisar en vez
+            # de dejar huérfanos silenciosos cobrando en la cuenta.
+            async def _cleanup(*ids) -> list:
+                huerfanos = []
+                for rid in ids:
+                    if not rid:
+                        continue
+                    try:
+                        rr = await _fb_request(client, "DELETE", str(rid),
+                                               token=user_token, reintentos=2)
+                        if rr is None or rr.status_code not in (200, 204):
+                            huerfanos.append(rid)
+                    except Exception:
+                        huerfanos.append(rid)
+                if huerfanos:
+                    _fb_log.error("No se pudieron borrar recursos de Meta: %s", huerfanos)
+                return huerfanos
+
+            def _detalle_con_huerfanos(base: str, huerfanos: list) -> str:
+                if not huerfanos:
+                    return base
+                return (f"{base} · Aviso: quedaron recursos sin borrar en tu cuenta "
+                        f"({', '.join(str(h) for h in huerfanos)}). Revísalos en Ads Manager.")
+
+            # ── 2. Crear AdSet ─────────────────────────────────────────────
+            # Siempre se segmenta por ciudad. No se usa countries — no tiene sentido
+            # para un agente inmobiliario anunciar en todo un país.
+            # Meta exige que la key vaya en el bucket correcto: una key de estado
+            # dentro de "cities" hace fallar la creación del conjunto de anuncios.
+            _geo_bucket = {
+                "city": "cities",
+                "region": "regions",
+                "neighborhood": "neighborhoods",
+                "subcity": "subcities",
+            }.get((req.city_type or "city").lower(), "cities")
+            geo: dict = {_geo_bucket: [{"key": req.city}]}
+            targeting: dict = {
+                "age_min": req.age_min,
+                "geo_locations": geo,
+                # Meta requiere desde 2024 que se declare EXPLÍCITAMENTE si se usa
+                # Advantage Audience. 0 = desactivado (público controlado por el agente).
+                "targeting_automation": {"advantage_audience": 0},
+            }
+            if req.age_max and req.age_max > 0:
+                targeting["age_max"] = req.age_max
+
+            # Públicos personalizados / similares creados desde el CRM.
+            incluidos = [str(a).strip() for a in (req.custom_audience_ids or []) if str(a).strip()]
+            excluidos = [str(a).strip() for a in (req.excluded_audience_ids or []) if str(a).strip()]
+            if incluidos:
+                targeting["custom_audiences"] = [{"id": a} for a in incluidos]
+            if excluidos:
+                targeting["excluded_custom_audiences"] = [{"id": a} for a in excluidos]
+
+            adset_payload: dict = {
+                "name": f"{campaign_name} — AdSet",
+                "campaign_id": campaign_id,
+                "daily_budget": daily_budget_cents,
+                "billing_event": billing_event,
+                "optimization_goal": optimization_goal,
+                "bid_strategy": "LOWEST_COST_WITHOUT_CAP",
+                "targeting": targeting,
+                "status": "PAUSED",
+                # Click-to-Messenger: promoted_object apunta a la página.
+                "promoted_object": {"page_id": page_id},
+                # destination_type = MESSENGER indica a Meta que el destino es Messenger.
+                # Esto es obligatorio para anuncios Click-to-Messenger.
+                "destination_type": "MESSENGER",
+            }
+
+            if req.duration_days and req.duration_days > 0:
+                from datetime import timedelta
+                end_dt = datetime.utcnow() + timedelta(days=req.duration_days)
+                adset_payload["end_time"] = end_dt.strftime("%Y-%m-%dT%H:%M:%S+0000")
+
+            r_adset = await _fb_request(client, "POST", f"{account_id}/adsets",
+                                        token=user_token, json_body=adset_payload)
+            if r_adset is None or r_adset.status_code not in (200, 201):
+                huerfanos = await _cleanup(campaign_id)
+                raise HTTPException(status_code=502, detail=_detalle_con_huerfanos(
+                    _fb_friendly_error(r_adset.text if r_adset is not None else "",
+                                       "Error creando conjunto de anuncios"), huerfanos))
+            adset_id = r_adset.json().get("id")
+
+            # ── 3. Crear AdCreative (carrusel Click-to-Messenger) ──────────
+            if req.post_id:
+                # Modo boost de publicación existente (no carrusel)
+                creative_payload: dict = {
+                    "name": f"{campaign_name} — Boost",
+                    "object_story_id": req.post_id,
+                }
+            else:
+                # Construir child_attachments: una tarjeta por imagen.
+                # CTA = MESSAGE_PAGE abre Messenger sin URL de destino.
+                child_attachments = []
+                for i, img_hash in enumerate(image_hashes):
+                    attachment: dict = {
+                        "name": headline,
+                        "image_hash": img_hash,
+                        "call_to_action": {
+                            "type": "MESSAGE_PAGE",
+                            "value": {"app_destination": "MESSENGER"},
+                        },
+                    }
+                    child_attachments.append(attachment)
+
+                # link_data del carrusel: message global + tarjetas hijas.
+                # link es obligatorio en link_data pero para Click-to-Messenger
+                # apuntamos a la página de Facebook (no a un sitio web).
+                link_data: dict = {
+                    "message": ad_text,
+                    "link": f"https://www.facebook.com/{page_id}",
+                    "child_attachments": child_attachments,
                     "call_to_action": {
                         "type": "MESSAGE_PAGE",
                         "value": {"app_destination": "MESSENGER"},
                     },
                 }
-                child_attachments.append(attachment)
 
-            # link_data del carrusel: message global + tarjetas hijas.
-            # link es obligatorio en link_data pero para Click-to-Messenger
-            # apuntamos a la página de Facebook (no a un sitio web).
-            link_data: dict = {
-                "message": ad_text,
-                "link": f"https://www.facebook.com/{page_id}",
-                "child_attachments": child_attachments,
-                "call_to_action": {
-                    "type": "MESSAGE_PAGE",
-                    "value": {"app_destination": "MESSENGER"},
-                },
-            }
+                creative_payload = {
+                    "name": f"{campaign_name} — Creative",
+                    "object_story_spec": {
+                        "page_id": page_id,
+                        "link_data": link_data,
+                    },
+                }
 
-            creative_payload = {
-                "name": f"{campaign_name} — Creative",
-                "object_story_spec": {
-                    "page_id": page_id,
-                    "link_data": link_data,
-                },
-            }
+            r_creative = await _fb_request(client, "POST", f"{account_id}/adcreatives",
+                                           token=user_token, json_body=creative_payload)
+            if r_creative is None or r_creative.status_code not in (200, 201):
+                huerfanos = await _cleanup(adset_id, campaign_id)
+                raise HTTPException(status_code=502, detail=_detalle_con_huerfanos(
+                    _fb_friendly_error(r_creative.text if r_creative is not None else "",
+                                       "Error creando creativo"), huerfanos))
+            creative_id = r_creative.json().get("id")
 
-        r_creative = await client.post(
-            f"{base_url}/adcreatives",
-            params=params_base,
-            json=creative_payload
-        )
-        if r_creative.status_code not in (200, 201):
-            await _cleanup(adset_id, campaign_id)
-            raise HTTPException(status_code=502, detail=_fb_friendly_error(r_creative.text, "Error creando creativo"))
-        creative_id = r_creative.json().get("id")
+            # ── 4. Crear Ad (PAUSED; activamos en cascada al final) ────────
+            r_ad = await _fb_request(
+                client, "POST", f"{account_id}/ads", token=user_token,
+                json_body={
+                    "name": f"{campaign_name} — Ad",
+                    "adset_id": adset_id,
+                    "creative": {"creative_id": creative_id},
+                    "status": "PAUSED",
+                }
+            )
+            if r_ad is None or r_ad.status_code not in (200, 201):
+                # El creativo también se borra: sin él, quedaba colgado en la cuenta.
+                huerfanos = await _cleanup(creative_id, adset_id, campaign_id)
+                raise HTTPException(status_code=502, detail=_detalle_con_huerfanos(
+                    _fb_friendly_error(r_ad.text if r_ad is not None else "",
+                                       "Error creando anuncio"), huerfanos))
+            ad_id = r_ad.json().get("id")
 
-        # ── 4. Crear Ad (PAUSED; activamos en cascada al final) ────────
-        r_ad = await client.post(
-            f"{base_url}/ads",
-            params=params_base,
-            json={
-                "name": f"{campaign_name} — Ad",
-                "adset_id": adset_id,
-                "creative": {"creative_id": creative_id},
-                "status": "PAUSED",
-            }
-        )
-        if r_ad.status_code not in (200, 201):
-            await _cleanup(adset_id, campaign_id)
-            raise HTTPException(status_code=502, detail=_fb_friendly_error(r_ad.text, "Error creando anuncio"))
-        ad_id = r_ad.json().get("id")
+            # ── 5. Activar en cascada si el usuario marcó "Publicar ahora" ──
+            # Orden: ad → adset → campaign (Meta exige hijos activos primero).
+            # Si CUALQUIER nivel falla, revertimos los que sí se activaron: dejar
+            # media cascada activa hace que el usuario vea "Activa" mientras el
+            # anuncio no entrega nada, o peor, que entregue creyendo que está en
+            # pausa. El estado que devolvemos tiene que ser el estado REAL.
+            aviso_activacion = ""
+            if target_status == "ACTIVE":
+                activados: list = []
+                fallo = None
+                for nivel, rid in (("anuncio", ad_id), ("conjunto", adset_id), ("campaña", campaign_id)):
+                    rr = await _fb_request(client, "POST", str(rid), token=user_token,
+                                           json_body={"status": "ACTIVE"})
+                    if rr is None or rr.status_code not in (200, 201):
+                        fallo = (nivel, _fb_friendly_error(rr.text if rr is not None else "",
+                                                           f"No se pudo activar el {nivel}"))
+                        break
+                    activados.append(rid)
 
-        # ── 5. Activar en cascada si el usuario marcó "Publicar ahora" ──
-        if target_status == "ACTIVE":
-            # Orden: ad → adset → campaign (Meta exige hijos activos primero)
-            r_a1 = await client.post(f"https://graph.facebook.com/v21.0/{ad_id}",       params=params_base, json={"status": "ACTIVE"})
-            r_a2 = await client.post(f"https://graph.facebook.com/v21.0/{adset_id}",    params=params_base, json={"status": "ACTIVE"})
-            r_a3 = await client.post(f"https://graph.facebook.com/v21.0/{campaign_id}", params=params_base, json={"status": "ACTIVE"})
-            # Si la activación falla, no eliminamos lo creado — solo cambiamos el
-            # estado a "PAUSED" y devolvemos un aviso para que el usuario lo
-            # active manualmente desde "Tus campañas" después de revisar.
-            if any(rr.status_code not in (200, 201) for rr in (r_a1, r_a2, r_a3)):
-                # Detectar primer error para reportarlo
-                fail = next((rr for rr in (r_a1, r_a2, r_a3) if rr.status_code not in (200, 201)), None)
-                if fail is not None:
+                if fallo:
+                    for rid in reversed(activados):
+                        try:
+                            await _fb_request(client, "POST", str(rid), token=user_token,
+                                              json_body={"status": "PAUSED"}, reintentos=2)
+                        except Exception:
+                            _fb_log.error("No se pudo revertir a PAUSED: %s", rid)
                     target_status = "PAUSED"
-                    # No raise: la campaña existe en pausa, el usuario puede activarla.
+                    aviso_activacion = (
+                        f"{fallo[1]}. La campaña quedó creada y EN PAUSA: revísala y "
+                        f"actívala desde «Tus campañas» cuando esté lista."
+                    )
+    except HTTPException as e:
+        await _marcar_fallo(str(e.detail))
+        raise
+    except Exception as e:
+        await _marcar_fallo(f"Error inesperado: {e}")
+        raise
+
+    # Bitácora: los IDs quedan guardados en Broquer. Es lo que permite después
+    # reconciliar, pollear el estado de revisión y detectar huérfanos.
+    await _fb_actualizar_entidad(row_id, {
+        "campaign_id": campaign_id,
+        "adset_id": adset_id,
+        "creative_id": creative_id,
+        "ad_id": ad_id,
+        "status": target_status,
+        "error_detail": aviso_activacion or None,
+    })
 
     # account_id sin prefijo act_ para el deep-link al Ads Manager
     acct_short = account_id.replace("act_", "")
@@ -6236,6 +7935,7 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
         "creative_id": creative_id,
         "ad_id": ad_id,
         "ads_manager_url": ads_manager_url,
+        "warning": aviso_activacion,
     }
 
 
@@ -6251,9 +7951,12 @@ async def _get_fb_meta(user_id: str) -> dict:
         raise HTTPException(status_code=400, detail="Facebook no conectado")
     meta_raw = r.json()[0].get("meta", "{}")
     try:
-        return json.loads(meta_raw) if isinstance(meta_raw, str) else meta_raw
+        meta = json.loads(meta_raw) if isinstance(meta_raw, str) else meta_raw
     except Exception:
         return {}
+    if meta.get("user_token"):
+        meta["user_token"] = descifrar_secreto(meta["user_token"])
+    return meta
 
 
 @app.post("/facebook/ad-description")
@@ -6310,8 +8013,13 @@ async def facebook_ad_description(request: Request):
 
 
 @app.get("/facebook/city-search")
-async def facebook_city_search(q: str = "", request: Request = None):
-    """Busca ciudades/regiones en Meta para targeting geográfico."""
+async def facebook_city_search(request: Request, q: str = ""):
+    """Busca ciudades/regiones en Meta para targeting geográfico.
+
+    `request` va primero y sin valor por defecto: antes era `request: Request = None`
+    detrás de un parámetro sin default, así que una llamada interna sin request
+    reventaba con AttributeError en vez de dar un 401 honesto.
+    """
     user_id = await get_user_id_from_token(request)
     if not user_id:
         raise HTTPException(status_code=401, detail="No autenticado")
@@ -6320,29 +8028,158 @@ async def facebook_city_search(q: str = "", request: Request = None):
     meta = await _get_fb_meta(user_id)
     user_token = meta.get("user_token", "")
     if not user_token:
-        raise HTTPException(status_code=400, detail="Reconecta tu Facebook.")
-    async with httpx.AsyncClient(timeout=10) as client:
-        r = await client.get(
-            "https://graph.facebook.com/v21.0/search",
-            params={
-                "access_token": user_token,
-                "type": "adgeolocation",
-                "location_types": "city,region",
-                "q": q,
-                "country_code": "MX",
-                "limit": "8",
-            }
-        )
+        raise HTTPException(status_code=400, detail="Reconecta tu Facebook desde tu perfil.")
+
+    # IMPORTANTE: Meta exige location_types como ARRAY JSON, no como lista
+    # separada por comas. Enviar "city,region" devuelve error 100 y el
+    # buscador de ciudades queda mudo.
+    base_params = {
+        "type": "adgeolocation",
+        "q": q,
+        "country_code": "MX",
+        "limit": "10",
+    }
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            r = await _fb_request(
+                client, "GET", "search", token=user_token,
+                params={**base_params, "location_types": json.dumps(["city", "region"])}
+            )
+            # Fallback: si Meta rechaza el filtro, repetimos sin él para no
+            # dejar al agente sin resultados.
+            if r is None or r.status_code != 200:
+                r = await _fb_request(client, "GET", "search",
+                                      token=user_token, params=base_params)
+    except Exception:
+        raise HTTPException(status_code=502, detail="No se pudo conectar con Facebook. Intenta de nuevo.")
+
+    if r is None:
+        raise HTTPException(status_code=504, detail="Facebook no respondió al buscar ciudades. Intenta de nuevo.")
     if r.status_code != 200:
-        return {"results": []}
-    data = r.json().get("data", [])
-    results = [{"key": d["key"], "name": d["name"], "type": d.get("type",""), "region": d.get("region","")} for d in data]
+        try:
+            _msg = r.json().get("error", {}).get("message", "")
+        except Exception:
+            _msg = ""
+        raise HTTPException(
+            status_code=502,
+            detail=f"Facebook no pudo buscar ciudades: {_msg}" if _msg
+                   else "Facebook no pudo buscar ciudades. Reconecta tu cuenta desde tu perfil."
+        )
+
+    allowed = {"city", "region", "neighborhood", "subcity"}
+    results = []
+    for d in r.json().get("data", []):
+        if not d.get("key") or not d.get("name"):
+            continue
+        if d.get("type") and d["type"] not in allowed:
+            continue
+        results.append({
+            "key": d["key"],
+            "name": d["name"],
+            "type": d.get("type", ""),
+            "region": d.get("region", ""),
+            "country_name": d.get("country_name", ""),
+        })
     return {"results": results}
+
+
+# Periodos que Meta acepta en `date_preset`. Se valida contra esta lista para
+# no reenviar a Meta cualquier cosa que llegue por query string.
+_FB_DATE_PRESETS = {
+    "today", "yesterday", "this_week_mon_today", "last_week_mon_sun",
+    "last_7d", "last_14d", "last_28d", "last_30d", "last_90d",
+    "this_month", "last_month", "this_quarter", "last_quarter",
+    "this_year", "last_year", "maximum",
+}
+
+# Breakdowns soportados. Meta no deja combinar cualquiera con cualquiera; esta
+# lista es la que el módulo ofrece y sabe pintar.
+_FB_BREAKDOWNS = {"age", "gender", "publisher_platform", "platform_position",
+                  "impression_device", "region", "country"}
+
+# Las acciones que de verdad importan para un anuncio Click-to-Messenger.
+# El KPI real del agente inmobiliario NO son las impresiones: son las
+# conversaciones abiertas en Messenger y lo que cuesta cada una.
+_FB_ACCIONES_CLAVE = {
+    "onsite_conversion.messaging_conversation_started_7d": "conversaciones",
+    "onsite_conversion.total_messaging_connection": "mensajes",
+    "link_click": "clics_enlace",
+    "post_engagement": "engagement",
+    "landing_page_view": "vistas_destino",
+    "lead": "leads",
+    "leadgen_grouped": "leads_formulario",
+}
+
+_FB_INSIGHTS_FIELDS = ("impressions,reach,clicks,ctr,cpc,cpm,spend,frequency,"
+                       "actions,cost_per_action_type,objective,date_start,date_stop")
+
+
+def _fb_normaliza_insights(ins: dict) -> dict:
+    """Aplana un registro de insights de Meta a números que la UI pueda pintar.
+
+    `actions` y `cost_per_action_type` vienen como listas de {action_type, value}
+    — inservibles tal cual. Aquí se convierten en campos planos, incluyendo el
+    dato que de verdad importa: conversaciones de Messenger y su costo.
+    """
+    ins = ins or {}
+    # Meta a veces mete elementos que no son dicts en estas listas (o valores
+    # que no son números). Un AttributeError aquí tumbaba toda la pantalla de
+    # campañas, así que se filtra defensivamente.
+    def _a_mapa(lista) -> dict:
+        salida = {}
+        for item in (lista or []):
+            if not isinstance(item, dict):
+                continue
+            tipo = item.get("action_type")
+            if not tipo:
+                continue
+            try:
+                salida[tipo] = float(item.get("value") or 0)
+            except (TypeError, ValueError):
+                continue
+        return salida
+
+    acciones = _a_mapa(ins.get("actions"))
+    costos = _a_mapa(ins.get("cost_per_action_type"))
+
+    out = {
+        "impressions": ins.get("impressions", "0"),
+        "reach": ins.get("reach", "0"),
+        "clicks": ins.get("clicks", "0"),
+        "ctr": ins.get("ctr", "0"),
+        "cpc": ins.get("cpc", "0"),
+        "cpm": ins.get("cpm", "0"),
+        "spend": ins.get("spend", "0"),
+        "frequency": ins.get("frequency", "0"),
+        "date_start": ins.get("date_start", ""),
+        "date_stop": ins.get("date_stop", ""),
+        # Crudos, por si la UI quiere enseñar el detalle completo.
+        "actions": ins.get("actions") or [],
+        "cost_per_action_type": ins.get("cost_per_action_type") or [],
+    }
+    for clave, nombre in _FB_ACCIONES_CLAVE.items():
+        out[nombre] = acciones.get(clave, 0)
+        out[f"costo_{nombre}"] = costos.get(clave, 0)
+    # `engagement` se llamaba así en la respuesta vieja: se conserva el nombre
+    # para no romper la UI actual.
+    out["engagement"] = out.get("engagement", 0) or acciones.get("post_engagement", 0)
+    return out
 
 
 @app.get("/facebook/campaigns")
 async def facebook_campaigns_list(request: Request):
-    """Lista las campañas con estadísticas básicas de los últimos 7 días."""
+    """Lista las campañas con sus métricas reales.
+
+    Antes esto hacía 1 + N peticiones (una por campaña) y solo traía métricas de
+    vanidad. Ahora pide TODOS los insights en UNA sola llamada a nivel cuenta
+    (`level=campaign`) e incluye conversaciones de Messenger y su costo, que es
+    lo que el agente realmente necesita para decidir si el anuncio sirve.
+
+    Query params:
+      account_id  (requerido)
+      date_preset (opcional, default last_7d)
+      status      (opcional: ACTIVE|PAUSED|ALL, default ALL)
+    """
     user_id = await get_user_id_from_token(request)
     if not user_id:
         raise HTTPException(status_code=401, detail="No autenticado")
@@ -6354,36 +8191,1034 @@ async def facebook_campaigns_list(request: Request):
     if not account_id_raw:
         raise HTTPException(status_code=400, detail="account_id requerido")
     account_id = account_id_raw if account_id_raw.startswith("act_") else f"act_{account_id_raw}"
-    async with httpx.AsyncClient(timeout=20) as client:
-        r_camps = await client.get(
-            f"https://graph.facebook.com/v21.0/{account_id}/campaigns",
-            params={"access_token": user_token, "fields": "id,name,status,objective,created_time", "limit": "20"}
+
+    date_preset = (request.query_params.get("date_preset") or "last_7d").strip()
+    if date_preset not in _FB_DATE_PRESETS:
+        raise HTTPException(status_code=400,
+                            detail=f"Periodo no válido. Usa uno de: {', '.join(sorted(_FB_DATE_PRESETS))}")
+
+    async with httpx.AsyncClient(timeout=40) as client:
+        # 1. Campañas (paginadas: el limit=20 escondía las demás)
+        campaigns = await _fb_paginate(
+            client, f"{account_id}/campaigns", token=user_token,
+            params={"fields": "id,name,status,effective_status,objective,created_time,"
+                              "daily_budget,lifetime_budget,stop_time",
+                    "limit": "50"},
+            max_items=200, prefix="Error obteniendo campañas",
         )
-        if r_camps.status_code != 200:
-            raise HTTPException(status_code=502, detail=f"Error obteniendo campañas: {r_camps.text}")
-        campaigns = r_camps.json().get("data", [])
-        results = []
-        for camp in campaigns:
-            cid = camp["id"]
-            r_ins = await client.get(
-                f"https://graph.facebook.com/v21.0/{cid}/insights",
-                params={"access_token": user_token,
-                        "fields": "impressions,reach,clicks,ctr,post_engagement,spend",
-                        "date_preset": "last_7d"}
+
+        # 2. TODOS los insights de un jalón, a nivel campaña.
+        insights_por_campana: dict = {}
+        try:
+            filas = await _fb_paginate(
+                client, f"{account_id}/insights", token=user_token,
+                params={"level": "campaign",
+                        "fields": _FB_INSIGHTS_FIELDS + ",campaign_id",
+                        "date_preset": date_preset,
+                        "limit": "200"},
+                max_items=500, prefix="Error obteniendo métricas",
             )
-            ins_data = r_ins.json().get("data", []) if r_ins.status_code == 200 else []
-            ins = ins_data[0] if ins_data else {}
-            results.append({
-                "id": cid, "name": camp["name"], "status": camp["status"],
-                "created_time": camp.get("created_time", ""),
-                "impressions": ins.get("impressions", "0"),
-                "reach": ins.get("reach", "0"),
-                "clicks": ins.get("clicks", "0"),
-                "ctr": ins.get("ctr", "0"),
-                "engagement": ins.get("post_engagement", "0"),
-                "spend": ins.get("spend", "0"),
+            for fila in filas:
+                cid = fila.get("campaign_id")
+                if cid:
+                    insights_por_campana[cid] = _fb_normaliza_insights(fila)
+        except HTTPException as e:
+            # Sin métricas la lista sigue sirviendo (se puede pausar/activar),
+            # así que se degrada con aviso en vez de tumbar la pantalla.
+            _fb_log.warning("Insights no disponibles para %s: %s", account_id, e.detail)
+
+    vacio = _fb_normaliza_insights({})
+    results = []
+    for camp in campaigns:
+        cid = camp.get("id", "")
+        results.append({
+            "id": cid,
+            "name": camp.get("name", ""),
+            "status": camp.get("status", ""),
+            "effective_status": camp.get("effective_status", ""),
+            "objective": camp.get("objective", ""),
+            "created_time": camp.get("created_time", ""),
+            "stop_time": camp.get("stop_time", ""),
+            "daily_budget": camp.get("daily_budget", ""),
+            **insights_por_campana.get(cid, vacio),
+        })
+    return {"campaigns": results, "date_preset": date_preset,
+            "con_metricas": bool(insights_por_campana)}
+
+
+@app.get("/facebook/insights")
+async def facebook_insights(request: Request):
+    """Insights a cualquier nivel, con desgloses. Es la vista de análisis.
+
+    Query params:
+      object_id   (requerido) — act_XXX, campaign_id, adset_id o ad_id
+      level       account|campaign|adset|ad     (default: campaign)
+      date_preset (default last_7d)
+      breakdowns  lista separada por comas: age, gender, publisher_platform,
+                  platform_position, impression_device, region, country
+    """
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autenticado")
+    meta = await _get_fb_meta(user_id)
+    user_token = meta.get("user_token", "")
+    if not user_token:
+        raise HTTPException(status_code=400, detail="Reconecta tu Facebook.")
+
+    qp = request.query_params
+    object_id = (qp.get("object_id") or "").strip()
+    if not object_id:
+        raise HTTPException(status_code=400, detail="object_id requerido")
+
+    level = (qp.get("level") or "campaign").strip().lower()
+    if level not in ("account", "campaign", "adset", "ad"):
+        raise HTTPException(status_code=400, detail="level debe ser account, campaign, adset o ad")
+
+    date_preset = (qp.get("date_preset") or "last_7d").strip()
+    if date_preset not in _FB_DATE_PRESETS:
+        raise HTTPException(status_code=400,
+                            detail=f"Periodo no válido. Usa uno de: {', '.join(sorted(_FB_DATE_PRESETS))}")
+
+    breakdowns_raw = [b.strip() for b in (qp.get("breakdowns") or "").split(",") if b.strip()]
+    invalidos = [b for b in breakdowns_raw if b not in _FB_BREAKDOWNS]
+    if invalidos:
+        raise HTTPException(status_code=400,
+                            detail=f"Desglose no soportado: {', '.join(invalidos)}. "
+                                   f"Disponibles: {', '.join(sorted(_FB_BREAKDOWNS))}")
+
+    params = {
+        "level": level,
+        "fields": _FB_INSIGHTS_FIELDS + ",campaign_id,campaign_name,adset_id,adset_name,ad_id,ad_name",
+        "date_preset": date_preset,
+        "limit": "200",
+    }
+    if breakdowns_raw:
+        params["breakdowns"] = ",".join(breakdowns_raw)
+
+    async with httpx.AsyncClient(timeout=60) as client:
+        filas = await _fb_paginate(client, f"{object_id}/insights", token=user_token,
+                                   params=params, max_items=1000,
+                                   prefix="Error obteniendo métricas")
+
+    salida = []
+    for fila in filas:
+        registro = _fb_normaliza_insights(fila)
+        for k in ("campaign_id", "campaign_name", "adset_id", "adset_name", "ad_id", "ad_name"):
+            if fila.get(k):
+                registro[k] = fila[k]
+        # Las columnas del desglose (age, gender, region…) vienen sueltas.
+        for b in breakdowns_raw:
+            if b in fila:
+                registro[b] = fila[b]
+        salida.append(registro)
+
+    return {"rows": salida, "level": level, "date_preset": date_preset,
+            "breakdowns": breakdowns_raw, "total": len(salida)}
+
+
+# Traducción de los effective_status de Meta. Un anuncio puede decir ACTIVE y
+# no entregar nada porque Meta lo rechazó: sin esto el agente solo ve que "no
+# llegan mensajes" y no sabe por qué.
+_FB_ESTADOS_EFECTIVOS = {
+    "ACTIVE":               ("ok",     "Entregando"),
+    "PAUSED":               ("neutro", "Pausado por ti"),
+    "DELETED":              ("neutro", "Eliminado"),
+    "ARCHIVED":             ("neutro", "Archivado"),
+    "PENDING_REVIEW":       ("aviso",  "En revisión por Meta (suele tardar menos de 24 h)"),
+    "IN_PROCESS":           ("aviso",  "Meta lo está procesando"),
+    "PREAPPROVED":          ("aviso",  "Preaprobado, aún no entrega"),
+    "DISAPPROVED":          ("error",  "Rechazado por Meta"),
+    "WITH_ISSUES":          ("error",  "Con observaciones de Meta"),
+    "PENDING_BILLING_INFO": ("error",  "Falta método de pago en la cuenta publicitaria"),
+    "CAMPAIGN_PAUSED":      ("neutro", "La campaña padre está pausada"),
+    "ADSET_PAUSED":         ("neutro", "El conjunto padre está pausado"),
+}
+
+
+@app.get("/facebook/campaign/review")
+async def facebook_campaign_review(request: Request):
+    """Estado de revisión real de una campaña, anuncio por anuncio.
+
+    Meta puede rechazar un anuncio y dejar la campaña en ACTIVE: en Broquer se
+    veía "Activa" sin entregar nada y sin explicación. Aquí se lee
+    effective_status + ad_review_feedback + issues_info de cada anuncio y se
+    devuelve el motivo del rechazo en español.
+    """
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autenticado")
+    campaign_id = (request.query_params.get("campaign_id") or "").strip()
+    if not campaign_id:
+        raise HTTPException(status_code=400, detail="campaign_id requerido")
+    meta = await _get_fb_meta(user_id)
+    user_token = meta.get("user_token", "")
+    if not user_token:
+        raise HTTPException(status_code=400, detail="Reconecta tu Facebook.")
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        campana = await _fb_get_json(client, campaign_id, token=user_token,
+                                     params={"fields": "id,name,status,effective_status"},
+                                     prefix="Error leyendo la campaña")
+        anuncios = await _fb_paginate(
+            client, f"{campaign_id}/ads", token=user_token,
+            params={"fields": "id,name,status,effective_status,"
+                              "ad_review_feedback,issues_info,adset_id",
+                    "limit": "50"},
+            prefix="Error leyendo los anuncios",
+        )
+
+    def _motivos(ad: dict) -> list:
+        """Junta los motivos de rechazo en frases sueltas y legibles."""
+        salida = []
+        feedback = ad.get("ad_review_feedback") or {}
+        # Meta anida esto como {"global": {...}} o {"placement": {...}}
+        for bloque in feedback.values():
+            if isinstance(bloque, dict):
+                salida.extend(str(v) for v in bloque.values() if v)
+            elif bloque:
+                salida.append(str(bloque))
+        for issue in (ad.get("issues_info") or []):
+            if not isinstance(issue, dict):
+                continue
+            texto = issue.get("error_summary") or issue.get("error_message") or ""
+            if texto:
+                salida.append(str(texto))
+        # Sin duplicar, conservando el orden.
+        return list(dict.fromkeys([s for s in salida if s.strip()]))
+
+    detalle = []
+    for ad in anuncios:
+        eff = ad.get("effective_status", "")
+        severidad, etiqueta = _FB_ESTADOS_EFECTIVOS.get(eff, ("neutro", eff or "Desconocido"))
+        detalle.append({
+            "ad_id": ad.get("id", ""),
+            "adset_id": ad.get("adset_id", ""),
+            "name": ad.get("name", ""),
+            "status": ad.get("status", ""),
+            "effective_status": eff,
+            "severidad": severidad,
+            "etiqueta": etiqueta,
+            "motivos": _motivos(ad),
+            "apelable": eff in ("DISAPPROVED", "WITH_ISSUES"),
+        })
+
+    eff_camp = campana.get("effective_status", "")
+    sev_camp, etq_camp = _FB_ESTADOS_EFECTIVOS.get(eff_camp, ("neutro", eff_camp or "Desconocido"))
+    rechazados = [d for d in detalle if d["severidad"] == "error"]
+
+    return {
+        "campaign_id": campaign_id,
+        "name": campana.get("name", ""),
+        "status": campana.get("status", ""),
+        "effective_status": eff_camp,
+        "severidad": "error" if rechazados else sev_camp,
+        "etiqueta": etq_camp,
+        "ads": detalle,
+        "con_problemas": len(rechazados),
+        # Meta no expone la apelación por API: el agente tiene que entrar.
+        "url_revision": f"https://www.facebook.com/adsmanager/manage/ads?selected_campaign_ids={campaign_id}",
+    }
+
+
+# ════════════════════════════════════════════════════════════════
+# META — Lead Ads: webhook y captura automática de prospectos
+# ════════════════════════════════════════════════════════════════
+# Un "Lead Ad" es el anuncio con formulario dentro de Facebook: la persona
+# llena sus datos sin salir de la app. Meta avisa por webhook y hay que ir a
+# recoger el lead con el token de la página.
+#
+# Sin esto, los leads se quedaban en Meta hasta que alguien se acordaba de
+# bajarlos a mano — y un prospecto inmobiliario que espera dos días ya le
+# compró a alguien más.
+
+# Token que Meta usa para verificar la suscripción. Si no está configurado, el
+# webhook queda cerrado (no se acepta ninguna suscripción a ciegas).
+FB_VERIFY_TOKEN = (os.environ.get("FB_VERIFY_TOKEN", "")
+                   or os.environ.get("META_VERIFY_TOKEN", ""))
+# Secreto para validar la firma. Se cae a FB_APP_SECRET porque los Lead Ads
+# viven en la misma app de Meta que los anuncios.
+_FB_WEBHOOK_SECRET = os.environ.get("FB_WEBHOOK_SECRET", "") or FB_APP_SECRET
+
+
+@app.get("/facebook/leadgen/webhook")
+async def facebook_leadgen_verify(request: Request):
+    """Handshake de verificación de Meta (hub.challenge)."""
+    p = request.query_params
+    if not FB_VERIFY_TOKEN:
+        _fb_log.error("FB_VERIFY_TOKEN no configurado: el webhook de Lead Ads está cerrado.")
+        return Response(content="not configured", status_code=503)
+    if p.get("hub.mode") == "subscribe" and p.get("hub.verify_token") == FB_VERIFY_TOKEN:
+        return Response(content=p.get("hub.challenge", ""), media_type="text/plain")
+    return Response(content="forbidden", status_code=403)
+
+
+@app.post("/facebook/leadgen/webhook")
+async def facebook_leadgen_webhook(request: Request, background: BackgroundTasks):
+    """Recibe el aviso de Meta y encola la captura del lead.
+
+    Se contesta 200 rápido (Meta reintenta y deja de mandar si tardamos) y el
+    trabajo pesado —ir por los datos del lead y crear el contacto— se hace en
+    segundo plano.
+
+    Sin secreto configurado NO se procesa nada: si no, cualquiera en internet
+    podría inyectar prospectos falsos en el CRM del agente.
+    """
+    raw = await request.body()
+
+    if not _FB_WEBHOOK_SECRET:
+        _fb_log.error("FB_APP_SECRET/FB_WEBHOOK_SECRET vacíos: el webhook de Lead Ads "
+                      "queda CERRADO hasta que se configure uno en Railway.")
+        return Response(status_code=503)
+
+    firma = request.headers.get("X-Hub-Signature-256", "")
+    esperada = "sha256=" + hmac.new(_FB_WEBHOOK_SECRET.encode(), raw, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(firma, esperada):
+        _fb_log.warning("Firma inválida en el webhook de Lead Ads")
+        return Response(status_code=403)
+
+    try:
+        payload = json.loads(raw)
+    except Exception:
+        return Response(status_code=200)   # basura: no pedir reintento
+
+    pendientes = []
+    for entrada in (payload.get("entry") or []):
+        for cambio in (entrada.get("changes") or []):
+            if cambio.get("field") != "leadgen":
+                continue
+            valor = cambio.get("value") or {}
+            if valor.get("leadgen_id"):
+                pendientes.append(valor)
+
+    for valor in pendientes:
+        background.add_task(_fb_procesar_lead, valor)
+
+    return Response(status_code=200)
+
+
+async def _fb_buscar_dueno_de_pagina(page_id: str) -> dict:
+    """Encuentra a qué usuario de Broquer pertenece una página de Facebook.
+
+    meta se guarda como JSON serializado en una columna de texto, así que no se
+    puede filtrar con el operador -> de PostgREST. Se prefiltra con LIKE y se
+    confirma en Python; el universo son las filas de Facebook, que son pocas.
+    """
+    if not page_id or not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return {}
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.get(
+                f"{SUPABASE_URL}/rest/v1/user_integrations",
+                headers=_sb_headers(),
+                params={"provider": "eq.facebook",
+                        "select": "user_id,org_id,api_key,meta",
+                        "meta": f"like.*{page_id}*",
+                        "limit": "20"})
+            filas = r.json() if r.status_code == 200 else []
+            if not filas:
+                # Respaldo: si el LIKE no aplica (columna jsonb), se revisa todo.
+                r2 = await client.get(
+                    f"{SUPABASE_URL}/rest/v1/user_integrations",
+                    headers=_sb_headers(),
+                    params={"provider": "eq.facebook",
+                            "select": "user_id,org_id,api_key,meta", "limit": "500"})
+                filas = r2.json() if r2.status_code == 200 else []
+    except Exception as e:
+        _fb_log.error("Error buscando al dueño de la página %s: %s", page_id, e)
+        return {}
+
+    for fila in filas:
+        meta_raw = fila.get("meta") or "{}"
+        try:
+            meta = json.loads(meta_raw) if isinstance(meta_raw, str) else meta_raw
+        except Exception:
+            continue
+        if meta.get("page_id") == page_id:
+            return {"user_id": fila.get("user_id"), "org_id": fila.get("org_id"),
+                    "page_token": descifrar_secreto(fila.get("api_key", "")), "meta": meta}
+    return {}
+
+
+# Cómo se llaman los campos estándar de Meta y a qué columna del CRM van.
+_FB_CAMPOS_LEAD = {
+    "full_name": "nombre", "first_name": "_nombre_pila", "last_name": "_apellido",
+    "email": "email", "phone_number": "telefono", "company_name": "empresa",
+    "city": "mpio", "street_address": "calle", "post_code": "cp",
+}
+
+
+async def _fb_procesar_lead(valor: dict) -> None:
+    """Baja un lead de Meta y lo guarda como contacto potencial en el CRM.
+
+    Corre en segundo plano. Nunca lanza: un error aquí no puede tumbar el
+    webhook (Meta desuscribe apps que fallan seguido). Todo queda anotado en
+    fb_leads_recibidos, incluso los que fallan, para poder reintentar a mano.
+    """
+    leadgen_id = str(valor.get("leadgen_id") or "")
+    page_id = str(valor.get("page_id") or "")
+    if not leadgen_id:
+        return
+
+    bitacora = {
+        "leadgen_id": leadgen_id, "page_id": page_id,
+        "form_id": str(valor.get("form_id") or ""),
+        "ad_id": str(valor.get("ad_id") or ""),
+        "adset_id": str(valor.get("adgroup_id") or valor.get("adset_id") or ""),
+        "campaign_id": str(valor.get("campaign_id") or ""),
+        "payload": valor,
+        "procesado": False,
+    }
+
+    async def _anota(extra: dict) -> None:
+        """Escribe la bitácora. El unique en leadgen_id es el anti-duplicado:
+        si Meta reenvía el mismo aviso, el INSERT choca y no se crea otro
+        contacto."""
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                r = await client.post(
+                    f"{SUPABASE_URL}/rest/v1/fb_leads_recibidos",
+                    headers=_sb_headers({"Prefer": "return=minimal"}),
+                    json={**bitacora, **extra})
+            if r.status_code not in (200, 201, 204) and not _fb_tabla_falta(r):
+                if r.status_code != 409:
+                    _fb_log.error("No se pudo anotar el lead %s: %s %s",
+                                  leadgen_id, r.status_code, (r.text or "")[:200])
+        except Exception as e:
+            _fb_log.error("Error anotando el lead %s: %s", leadgen_id, e)
+
+    # ── 0. ¿Ya lo procesamos? Meta reintenta y no queremos duplicados ──
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            r = await client.get(
+                f"{SUPABASE_URL}/rest/v1/fb_leads_recibidos",
+                headers=_sb_headers(),
+                params={"leadgen_id": f"eq.{leadgen_id}", "select": "id,procesado", "limit": "1"})
+        if r.status_code == 200 and r.json():
+            if (r.json()[0] or {}).get("procesado"):
+                _fb_log.info("Lead %s ya procesado; se ignora el reenvío.", leadgen_id)
+                return
+        elif _fb_tabla_falta(r):
+            _fb_avisa_migracion("procesar lead", r)
+    except Exception:
+        pass
+
+    # ── 1. ¿De quién es esta página? ───────────────────────────────────
+    dueno = await _fb_buscar_dueno_de_pagina(page_id)
+    if not dueno.get("user_id"):
+        _fb_log.warning("Llegó un lead de la página %s pero ningún usuario de "
+                        "Broquer la tiene conectada.", page_id)
+        await _anota({"error_detail": "Página no conectada a ningún usuario de Broquer."})
+        return
+
+    user_id = dueno["user_id"]
+    org_id = dueno.get("org_id")
+    page_token = dueno.get("page_token", "")
+    bitacora["user_id"] = user_id
+    bitacora["org_id"] = org_id
+
+    if not page_token:
+        await _anota({"error_detail": "No hay token de página para leer el lead."})
+        return
+
+    # ── 2. Bajar los datos del lead ────────────────────────────────────
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            r = await _fb_request(client, "GET", leadgen_id, token=page_token,
+                                  params={"fields": "id,created_time,field_data,"
+                                                    "ad_id,adset_id,campaign_id,form_id"})
+        if r is None or r.status_code != 200:
+            detalle = _fb_friendly_error(r.text if r is not None else "", "No se pudo leer el lead")
+            _fb_log.error("Lead %s: %s", leadgen_id, detalle)
+            await _anota({"error_detail": detalle})
+            return
+        lead = r.json() or {}
+    except Exception as e:
+        await _anota({"error_detail": f"Error leyendo el lead: {e}"})
+        return
+
+    # ── 3. Mapear los campos del formulario al CRM ─────────────────────
+    campos: dict = {}
+    extras: list = []
+    for campo in (lead.get("field_data") or []):
+        nombre_campo = (campo.get("name") or "").lower()
+        valores = campo.get("values") or []
+        valor_txt = str(valores[0]).strip() if valores else ""
+        if not valor_txt:
+            continue
+        destino = _FB_CAMPOS_LEAD.get(nombre_campo)
+        if destino:
+            campos[destino] = valor_txt
+        else:
+            # Preguntas personalizadas del formulario: se guardan como nota.
+            etiqueta = (campo.get("name") or "").replace("_", " ").capitalize()
+            extras.append(f"{etiqueta}: {valor_txt}")
+
+    # Nombre: se arma con lo que haya.
+    nombre = campos.pop("nombre", "") or " ".join(
+        x for x in (campos.pop("_nombre_pila", ""), campos.pop("_apellido", "")) if x).strip()
+    campos.pop("_nombre_pila", None)
+    campos.pop("_apellido", None)
+
+    telefono = campos.get("telefono", "")
+    email = campos.get("email", "")
+    if not nombre and not telefono and not email:
+        await _anota({"error_detail": "El formulario no traía nombre, teléfono ni correo."})
+        return
+
+    notas = ["Llegó por un anuncio de Facebook (Lead Ad)."]
+    if lead.get("created_time"):
+        notas.append(f"Fecha del formulario: {lead['created_time']}")
+    if lead.get("campaign_id"):
+        notas.append(f"Campaña: {lead['campaign_id']}")
+    notas.extend(extras)
+
+    ahora = datetime.now(timezone.utc).isoformat()
+    contacto = {
+        "id": str(_uuid.uuid4()),
+        "user_id": user_id,
+        "org_id": org_id,
+        "nombre": nombre or "Prospecto de Facebook",
+        "tipo": "otro",
+        "es_potencial": True,
+        "fuente": "Facebook Lead Ads",
+        "etiquetas": ["Facebook", "Lead Ad"],
+        "notas": "\n".join(notas),
+        "created_at": ahora,
+        "updated_at": ahora,
+        **{k: v for k, v in campos.items() if v},
+    }
+    if telefono and not contacto.get("wa"):
+        contacto["wa"] = telefono
+
+    # ── 4. Deduplicar contra los contactos que ya tiene el agente ──────
+    try:
+        filtro = {"select": "id,nombre,email,telefono", "limit": "1"}
+        if org_id:
+            filtro["org_id"] = f"eq.{org_id}"
+        else:
+            filtro["user_id"] = f"eq.{user_id}"
+        if telefono:
+            filtro["telefono"] = f"eq.{telefono}"
+        elif email:
+            filtro["email"] = f"eq.{email}"
+
+        async with httpx.AsyncClient(timeout=15) as client:
+            rx = await client.get(f"{SUPABASE_URL}/rest/v1/contactos",
+                                  headers=_sb_headers(), params=filtro)
+            existente = rx.json()[0] if (rx.status_code == 200 and rx.json()) else None
+
+            if existente:
+                # No se pisa lo que el agente ya escribió: solo se marca como
+                # potencial y se agrega la nota del anuncio.
+                await client.patch(
+                    f"{SUPABASE_URL}/rest/v1/contactos",
+                    headers=_sb_headers({"Prefer": "return=minimal"}),
+                    params={"id": f"eq.{existente['id']}"},
+                    json={"es_potencial": True, "updated_at": ahora})
+                await _anota({"procesado": True, "contacto_id": existente["id"],
+                              "error_detail": "Contacto ya existía; se marcó como potencial."})
+                _fb_log.info("Lead %s emparejado con el contacto %s", leadgen_id, existente["id"])
+                return
+
+            rc = await client.post(
+                f"{SUPABASE_URL}/rest/v1/contactos",
+                headers=_sb_headers({"Prefer": "return=minimal"}),
+                json={k: v for k, v in contacto.items() if v not in ("", None, [])})
+        if rc.status_code not in (200, 201, 204):
+            await _anota({"error_detail": f"No se pudo crear el contacto: {(rc.text or '')[:200]}"})
+            return
+    except Exception as e:
+        await _anota({"error_detail": f"Error guardando el contacto: {e}"})
+        return
+
+    await _anota({"procesado": True, "contacto_id": contacto["id"]})
+    _fb_log.info("Lead %s guardado como contacto %s del usuario %s",
+                 leadgen_id, contacto["id"], user_id)
+
+
+@app.post("/facebook/leadgen/subscribe")
+async def facebook_leadgen_subscribe(request: Request):
+    """Suscribe la página del agente a los avisos de Lead Ads."""
+    user_id = await exigir_gestion_integraciones(request)
+    if not FB_VERIFY_TOKEN:
+        raise HTTPException(
+            status_code=503,
+            detail="Falta configurar FB_VERIFY_TOKEN en el servidor. Sin él, Meta no "
+                   "puede verificar el webhook y los leads no llegarían.")
+    fila = await _fb_get_meta_row(user_id)
+    meta = fila.get("meta") or {}
+    page_id = meta.get("page_id", "")
+    page_token = fila.get("page_token", "")
+    if not page_id or not page_token:
+        raise HTTPException(status_code=400, detail="Conecta tu página de Facebook primero.")
+
+    async with httpx.AsyncClient(timeout=20) as client:
+        r = await _fb_request(client, "POST", f"{page_id}/subscribed_apps",
+                              token=page_token,
+                              json_body={"subscribed_fields": ["leadgen"]})
+        _fb_exigir_ok(r, "No se pudo activar la captura de prospectos")
+
+        # Confirmar contra Meta: que conteste 200 no siempre significa que quedó.
+        confirmacion = await _fb_paginate(client, f"{page_id}/subscribed_apps",
+                                          token=page_token,
+                                          params={"fields": "id,name,subscribed_fields"},
+                                          max_paginas=1,
+                                          prefix="No se pudo verificar la suscripción")
+
+    suscrito = any("leadgen" in (a.get("subscribed_fields") or []) for a in confirmacion)
+    if not suscrito:
+        raise HTTPException(
+            status_code=502,
+            detail="Meta aceptó la petición pero la página no quedó suscrita a 'leadgen'. "
+                   "Revisa que tu app tenga el permiso leads_retrieval aprobado.")
+
+    await _fb_patch_meta(user_id, {"leadgen_suscrito": True,
+                                   "leadgen_suscrito_at": datetime.now(timezone.utc).isoformat()})
+    return {"ok": True, "page_id": page_id, "suscrito": True,
+            "nota": "A partir de ahora, los prospectos de tus anuncios con formulario "
+                    "entran solos a tu lista de prospectos."}
+
+
+@app.get("/facebook/leadgen/status")
+async def facebook_leadgen_status(request: Request):
+    """Dice si la página está capturando prospectos automáticamente."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autenticado")
+    fila = await _fb_get_meta_row(user_id)
+    meta = fila.get("meta") or {}
+    page_id = meta.get("page_id", "")
+    page_token = fila.get("page_token", "")
+    if not page_id or not page_token:
+        return {"configurado": False, "suscrito": False,
+                "motivo": "No hay página de Facebook conectada."}
+    if not FB_VERIFY_TOKEN or not _FB_WEBHOOK_SECRET:
+        return {"configurado": False, "suscrito": False,
+                "motivo": "El servidor no tiene FB_VERIFY_TOKEN o FB_APP_SECRET configurados."}
+
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            apps = await _fb_paginate(client, f"{page_id}/subscribed_apps", token=page_token,
+                                      params={"fields": "id,name,subscribed_fields"},
+                                      max_paginas=1, prefix="Error consultando la suscripción")
+    except HTTPException as e:
+        return {"configurado": True, "suscrito": False, "motivo": str(e.detail)}
+
+    suscrito = any("leadgen" in (a.get("subscribed_fields") or []) for a in apps)
+    return {"configurado": True, "suscrito": suscrito, "page_id": page_id,
+            "motivo": "" if suscrito else "La página no está suscrita a los avisos de prospectos.",
+            "webhook_url": f"{FRONTEND_URL.rstrip('/')}/facebook/leadgen/webhook"}
+
+
+# ════════════════════════════════════════════════════════════════
+# META — públicos personalizados y similares (desde el CRM)
+# ════════════════════════════════════════════════════════════════
+# Sube los contactos del agente a Meta HASHEADOS (SHA-256) para poder
+# anunciarle a su propia cartera, y para generar "públicos similares"
+# (lookalikes): gente parecida a quienes ya le compraron.
+#
+# Meta NUNCA recibe datos en claro: el hash se hace aquí y es irreversible.
+# Aun así, subir datos de clientes exige que el dueño de la cuenta haya
+# aceptado las Condiciones de Públicos Personalizados en Business Manager;
+# si no lo hizo, Meta rechaza con el código 2654 y aquí se traduce a
+# instrucciones concretas en vez de un error críptico.
+
+def _hash_meta(valor: str) -> str:
+    """SHA-256 en minúsculas, como exige Meta para el matching."""
+    if not valor:
+        return ""
+    return hashlib.sha256(valor.strip().lower().encode("utf-8")).hexdigest()
+
+
+def _normaliza_email(email: str) -> str:
+    """Valida y hashea. Un correo mal formado ensucia el público sin aportar."""
+    email = (email or "").strip().lower()
+    if email.count("@") != 1:
+        return ""
+    local, _, dominio = email.partition("@")
+    # Hace falta parte local, dominio con punto y algo después del punto.
+    if not local or "." not in dominio:
+        return ""
+    if not dominio.split(".")[0] or len(dominio.rsplit(".", 1)[-1]) < 2:
+        return ""
+    return _hash_meta(email)
+
+
+def _normaliza_telefono(tel: str, lada_pais: str = "52") -> str:
+    """Deja el teléfono en E.164 sin '+' y lo hashea.
+
+    México: 10 dígitos → se antepone 52. Si ya trae 52 delante (12 dígitos) se
+    respeta. También se limpia el viejo '1' de celular (521…) que Meta no espera.
+    """
+    digitos = re.sub(r"\D", "", tel or "")
+    if not digitos:
+        return ""
+    if len(digitos) == 10:
+        digitos = lada_pais + digitos
+    elif len(digitos) == 13 and digitos.startswith(lada_pais + "1"):
+        digitos = lada_pais + digitos[3:]
+    if len(digitos) < 11 or len(digitos) > 15:
+        return ""
+    return _hash_meta(digitos)
+
+
+class FbAudienceRequest(BaseModel):
+    nombre: str = ""
+    solo_potenciales: bool = False   # True = solo contactos marcados como potenciales
+    etiquetas: list = []             # filtrar por etiquetas del CRM
+    descripcion: str = ""
+
+
+@app.post("/facebook/audiences/from-contacts")
+async def facebook_audience_from_contacts(req: FbAudienceRequest, request: Request):
+    """Crea un público personalizado con los contactos del CRM (hasheados).
+
+    Meta necesita ~100 coincidencias para que un público sea utilizable; abajo
+    se avisa cuando no se llega, en vez de dejar al agente esperando resultados
+    de un público que nunca va a servir.
+    """
+    user_id = await exigir_gestion_integraciones(request)
+    meta_fb = await _get_fb_meta(user_id)
+    user_token = meta_fb.get("user_token", "")
+    account_id = meta_fb.get("ad_account_id", "")
+    if not user_token or not account_id:
+        raise HTTPException(status_code=400, detail="Reconecta tu Facebook desde tu perfil.")
+    account_id = account_id if account_id.startswith("act_") else f"act_{account_id}"
+
+    # ── 1. Traer los contactos del agente (o de su empresa) ────────────
+    org_id = await get_org_id_for_user(user_id)
+    filtros = {"select": "id,nombre,email,telefono,wa,etiquetas,es_potencial", "limit": "5000"}
+    if org_id:
+        filtros["org_id"] = f"eq.{org_id}"
+    else:
+        filtros["user_id"] = f"eq.{user_id}"
+    if req.solo_potenciales:
+        filtros["es_potencial"] = "eq.true"
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        rc = await client.get(f"{SUPABASE_URL}/rest/v1/contactos",
+                              headers=_sb_headers(), params=filtros)
+    if rc.status_code != 200:
+        raise HTTPException(status_code=502, detail="No se pudieron leer tus contactos.")
+    contactos = rc.json() or []
+
+    etiquetas_filtro = {str(e).strip().lower() for e in (req.etiquetas or []) if str(e).strip()}
+    if etiquetas_filtro:
+        contactos = [c for c in contactos
+                     if etiquetas_filtro & {str(e).lower() for e in (c.get("etiquetas") or [])}]
+
+    # ── 2. Hashear. Cada fila es [email, teléfono]; "" si no hay dato. ──
+    datos: list = []
+    for c in contactos:
+        h_mail = _normaliza_email(c.get("email") or "")
+        h_tel = _normaliza_telefono(c.get("telefono") or c.get("wa") or "")
+        if h_mail or h_tel:
+            datos.append([h_mail, h_tel])
+
+    if not datos:
+        raise HTTPException(
+            status_code=400,
+            detail="Ninguno de tus contactos tiene correo o teléfono utilizable. "
+                   "Completa esos datos en el CRM antes de crear el público.")
+
+    nombre = (req.nombre or f"Broquer · Contactos {datetime.now(timezone.utc):%Y-%m-%d}")[:100]
+
+    async with httpx.AsyncClient(timeout=60) as client:
+        # ── 3. Crear el público vacío ──────────────────────────────────
+        r_aud = await _fb_request(
+            client, "POST", f"{account_id}/customaudiences", token=user_token,
+            json_body={
+                "name": nombre,
+                "subtype": "CUSTOM",
+                "description": (req.descripcion or "Contactos del CRM de Broquer")[:200],
+                "customer_file_source": "USER_PROVIDED_ONLY",
             })
-    return {"campaigns": results}
+        if r_aud is None or r_aud.status_code not in (200, 201):
+            texto = r_aud.text if r_aud is not None else ""
+            if "2654" in texto or "terms of service" in texto.lower():
+                raise HTTPException(
+                    status_code=400,
+                    detail="Falta aceptar las Condiciones de Públicos Personalizados de Meta. "
+                           "Entra a business.facebook.com → Configuración del negocio → "
+                           "Cuentas publicitarias → tu cuenta → Condiciones de públicos "
+                           "personalizados, acéptalas y vuelve a intentar.")
+            raise HTTPException(status_code=502,
+                                detail=_fb_friendly_error(texto, "Error creando el público"))
+        audience_id = r_aud.json().get("id", "")
+
+        # ── 4. Subir los hashes en lotes de 5,000 (tope de Meta) ───────
+        subidos = 0
+        fallos = []
+        for i in range(0, len(datos), 5000):
+            lote = datos[i:i + 5000]
+            r_up = await _fb_request(
+                client, "POST", f"{audience_id}/users", token=user_token,
+                json_body={"payload": {"schema": ["EMAIL", "PHONE"], "data": lote}},
+                timeout=90)
+            if r_up is not None and r_up.status_code in (200, 201):
+                subidos += len(lote)
+            else:
+                fallos.append(_fb_friendly_error(r_up.text if r_up is not None else "",
+                                                 f"Lote {i // 5000 + 1}"))
+
+        if not subidos:
+            # Público vacío = basura en la cuenta. Se limpia.
+            await _fb_request(client, "DELETE", audience_id, token=user_token, reintentos=2)
+            raise HTTPException(
+                status_code=502,
+                detail="No se pudo subir ningún contacto a Meta: " + ("; ".join(fallos) or "error desconocido"))
+
+    await _fb_guardar_audiencia(user_id, org_id, {
+        "ad_account_id": account_id, "audience_id": audience_id,
+        "nombre": nombre, "tipo": "CUSTOM", "contactos_enviados": subidos,
+    })
+
+    aviso = ""
+    if subidos < 100:
+        aviso = (f"Solo se subieron {subidos} contactos. Meta necesita alrededor de 100 "
+                 f"coincidencias para que un público se pueda usar en un anuncio; "
+                 f"este puede quedar inutilizable hasta que crezca tu cartera.")
+    elif fallos:
+        aviso = "Algunos lotes fallaron: " + "; ".join(fallos)
+
+    return {"ok": True, "audience_id": audience_id, "nombre": nombre,
+            "contactos_enviados": subidos, "contactos_totales": len(datos),
+            "warning": aviso,
+            "nota": "Meta tarda entre 30 minutos y varias horas en procesar el público."}
+
+
+class FbLookalikeRequest(BaseModel):
+    origin_audience_id: str
+    nombre: str = ""
+    ratio: float = 0.01   # 1% = el más parecido; hasta 0.20
+    pais: str = "MX"
+
+
+@app.post("/facebook/audiences/lookalike")
+async def facebook_audience_lookalike(req: FbLookalikeRequest, request: Request):
+    """Crea un público similar (lookalike) a partir de uno existente."""
+    user_id = await exigir_gestion_integraciones(request)
+    meta_fb = await _get_fb_meta(user_id)
+    user_token = meta_fb.get("user_token", "")
+    account_id = meta_fb.get("ad_account_id", "")
+    if not user_token or not account_id:
+        raise HTTPException(status_code=400, detail="Reconecta tu Facebook desde tu perfil.")
+    account_id = account_id if account_id.startswith("act_") else f"act_{account_id}"
+
+    if not req.origin_audience_id:
+        raise HTTPException(status_code=400, detail="Falta el público de origen.")
+    ratio = req.ratio if 0.01 <= req.ratio <= 0.20 else 0.01
+    pais = (req.pais or "MX").upper()[:2]
+    nombre = (req.nombre or f"Broquer · Similar {int(ratio * 100)}% {pais}")[:100]
+
+    async with httpx.AsyncClient(timeout=60) as client:
+        r = await _fb_request(
+            client, "POST", f"{account_id}/customaudiences", token=user_token,
+            json_body={
+                "name": nombre,
+                "subtype": "LOOKALIKE",
+                "origin_audience_id": req.origin_audience_id,
+                "lookalike_spec": {"ratio": ratio, "country": pais, "type": "similarity"},
+            })
+    datos = _fb_exigir_ok(r, "Error creando el público similar")
+    audience_id = datos.get("id", "")
+
+    await _fb_guardar_audiencia(user_id, await get_org_id_for_user(user_id), {
+        "ad_account_id": account_id, "audience_id": audience_id, "nombre": nombre,
+        "tipo": "LOOKALIKE", "origen_id": req.origin_audience_id,
+        "pais": pais, "ratio": ratio,
+    })
+
+    return {"ok": True, "audience_id": audience_id, "nombre": nombre,
+            "ratio": ratio, "pais": pais,
+            "nota": "Meta tarda entre 6 y 24 horas en construir un público similar. "
+                    "Hasta entonces no lo podrás usar en un anuncio."}
+
+
+@app.get("/facebook/audiences")
+async def facebook_audiences_list(request: Request):
+    """Lista los públicos de la cuenta, con su estado real en Meta."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autenticado")
+    meta_fb = await _get_fb_meta(user_id)
+    user_token = meta_fb.get("user_token", "")
+    account_id = meta_fb.get("ad_account_id", "")
+    if not user_token or not account_id:
+        raise HTTPException(status_code=400, detail="Reconecta tu Facebook desde tu perfil.")
+    account_id = account_id if account_id.startswith("act_") else f"act_{account_id}"
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        filas = await _fb_paginate(
+            client, f"{account_id}/customaudiences", token=user_token,
+            params={"fields": "id,name,subtype,approximate_count_lower_bound,"
+                              "approximate_count_upper_bound,operation_status,"
+                              "delivery_status,time_created",
+                    "limit": "100"},
+            prefix="Error leyendo tus públicos")
+
+    salida = []
+    for a in filas:
+        entrega = (a.get("delivery_status") or {})
+        operacion = (a.get("operation_status") or {})
+        listo = entrega.get("code") == 200
+        salida.append({
+            "id": a.get("id", ""),
+            "nombre": a.get("name", ""),
+            "tipo": a.get("subtype", ""),
+            "tamano_min": a.get("approximate_count_lower_bound"),
+            "tamano_max": a.get("approximate_count_upper_bound"),
+            "listo": listo,
+            "estado": entrega.get("description") or operacion.get("description") or "",
+            "creado": a.get("time_created", ""),
+        })
+    return {"audiences": salida}
+
+
+async def _fb_guardar_audiencia(user_id: str, org_id, datos: dict) -> None:
+    """Bitácora del público creado. Nunca lanza: no es el trabajo principal."""
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            r = await client.post(
+                f"{SUPABASE_URL}/rest/v1/fb_audiences",
+                headers=_sb_headers({"Prefer": "resolution=merge-duplicates,return=minimal"}),
+                json={"user_id": user_id, "org_id": org_id, **datos})
+        if r.status_code not in (200, 201, 204):
+            if _fb_tabla_falta(r):
+                _fb_avisa_migracion("guardar público", r)
+            else:
+                _fb_log.error("No se pudo guardar el público: %s %s",
+                              r.status_code, (r.text or "")[:200])
+    except Exception as e:
+        _fb_log.error("Error guardando el público: %s", e)
+
+
+@app.post("/facebook/reconcile")
+async def facebook_reconcile(request: Request):
+    """Cuadra lo que Broquer cree que creó contra lo que Meta realmente tiene.
+
+    Para qué sirve, en corto: si una creación se rompió a medias (se cayó la red
+    justo después de crear la campaña), quedó una campaña en la cuenta que nadie
+    ve en Broquer. Esto la encuentra y la borra, o la marca como buena si sí
+    llegó a existir completa. También refresca effective_status para saber si
+    Meta rechazó algo.
+
+    Por seguridad NO borra nada que Meta reporte como entregando: si una
+    campaña está ACTIVE se marca para revisión manual y se deja en paz.
+
+    Body opcional: {"limpiar": true} para borrar los huérfanos encontrados.
+    """
+    user_id = await exigir_gestion_integraciones(request)
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    limpiar = bool(body.get("limpiar"))
+
+    meta_fb = await _get_fb_meta(user_id)
+    user_token = meta_fb.get("user_token", "")
+    if not user_token:
+        raise HTTPException(status_code=400, detail="Reconecta tu Facebook.")
+
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        raise HTTPException(status_code=500, detail="Supabase no configurado")
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        r = await client.get(
+            f"{SUPABASE_URL}/rest/v1/{_FB_TABLA_ENTIDADES}",
+            headers=_sb_headers(),
+            params={"user_id": f"eq.{user_id}", "order": "created_at.desc", "limit": "200"},
+        )
+    if _fb_tabla_falta(r):
+        _fb_avisa_migracion("reconciliar", r)
+        raise HTTPException(
+            status_code=503,
+            detail="Falta correr migracion-facebook-ads.sql en Supabase. Sin esa tabla "
+                   "Broquer no lleva registro de lo que creó y no puede reconciliar.")
+    if r.status_code != 200:
+        raise HTTPException(status_code=502, detail="No se pudo leer el registro de campañas.")
+
+    filas = r.json() or []
+    sanas, huerfanas, revisar, corregidas = [], [], [], []
+
+    async with httpx.AsyncClient(timeout=40) as client:
+        for fila in filas:
+            cid = fila.get("campaign_id")
+            row_id = fila.get("id")
+
+            # Caso 1: quedó en CREANDO sin campaign_id → nunca llegó a crear nada.
+            if not cid:
+                if fila.get("status") == "CREANDO":
+                    await _fb_actualizar_entidad(row_id, {
+                        "status": "FALLIDO",
+                        "error_detail": "Creación interrumpida antes de crear la campaña."})
+                    corregidas.append({"row_id": row_id, "accion": "marcada como fallida"})
+                continue
+
+            # Caso 2: hay campaign_id → preguntarle a Meta si sigue existiendo.
+            rc = await _fb_request(client, "GET", str(cid), token=user_token,
+                                   params={"fields": "id,name,status,effective_status"},
+                                   reintentos=2)
+            existe = rc is not None and rc.status_code == 200
+            datos = rc.json() if existe else {}
+
+            if not existe:
+                await _fb_actualizar_entidad(row_id, {
+                    "status": "ELIMINADO",
+                    "last_checked_at": datetime.now(timezone.utc).isoformat()})
+                corregidas.append({"row_id": row_id, "campaign_id": cid,
+                                   "accion": "ya no existe en Meta"})
+                continue
+
+            eff = datos.get("effective_status", "")
+            estado_meta = datos.get("status", "")
+            await _fb_actualizar_entidad(row_id, {
+                "status": estado_meta or fila.get("status"),
+                "effective_status": eff,
+                "last_checked_at": datetime.now(timezone.utc).isoformat()})
+
+            # Caso 3: la creación se rompió a medias (no hay ad_id) pero la
+            # campaña sí existe en Meta → es huérfana: cobra estructura sin
+            # anuncio y nadie la ve en Broquer.
+            incompleta = not fila.get("ad_id")
+            if incompleta:
+                entrega = eff in ("ACTIVE", "PENDING_REVIEW", "IN_PROCESS")
+                if entrega:
+                    # Jamás borramos algo que Meta reporta entregando.
+                    revisar.append({"campaign_id": cid, "name": datos.get("name", ""),
+                                    "effective_status": eff,
+                                    "motivo": "Incompleta en Broquer pero activa en Meta. "
+                                              "Revísala a mano antes de borrar."})
+                elif limpiar:
+                    rd = await _fb_request(client, "DELETE", str(cid),
+                                           token=user_token, reintentos=2)
+                    if rd is not None and rd.status_code in (200, 204):
+                        await _fb_actualizar_entidad(row_id, {"status": "ELIMINADO"})
+                        huerfanas.append({"campaign_id": cid, "name": datos.get("name", ""),
+                                          "borrada": True})
+                    else:
+                        huerfanas.append({"campaign_id": cid, "name": datos.get("name", ""),
+                                          "borrada": False,
+                                          "detalle": _fb_friendly_error(
+                                              rd.text if rd is not None else "", "No se pudo borrar")})
+                else:
+                    huerfanas.append({"campaign_id": cid, "name": datos.get("name", ""),
+                                      "borrada": False,
+                                      "detalle": "Manda {\"limpiar\": true} para borrarla."})
+            else:
+                sanas.append(cid)
+
+    return {
+        "ok": True,
+        "revisadas": len(filas),
+        "sanas": len(sanas),
+        "huerfanas": huerfanas,
+        "requieren_revision_manual": revisar,
+        "corregidas": corregidas,
+        "limpieza_aplicada": limpiar,
+    }
 
 
 @app.get("/facebook/page-posts")
@@ -6414,13 +9249,12 @@ async def facebook_page_posts(request: Request, page_id: str = ""):
         if not user_token:
             raise HTTPException(status_code=400, detail="Reconecta tu Facebook.")
         async with httpx.AsyncClient(timeout=10) as client:
-            rp = await client.get(
-                "https://graph.facebook.com/v21.0/me/accounts",
-                params={"access_token": user_token, "fields": "id,access_token", "limit": "200"},
+            paginas = await _fb_paginate(
+                client, "me/accounts", token=user_token,
+                params={"fields": "id,access_token", "limit": "100"},
+                prefix="No se pudieron resolver las páginas",
             )
-        if rp.status_code != 200:
-            raise HTTPException(status_code=502, detail="No se pudieron resolver las páginas.")
-        match = next((p for p in rp.json().get("data", []) if p.get("id") == target_page_id), None)
+        match = next((p for p in paginas if p.get("id") == target_page_id), None)
         if not match:
             raise HTTPException(status_code=400, detail="No administras esa página.")
         page_token = match.get("access_token", "")
@@ -6431,20 +9265,19 @@ async def facebook_page_posts(request: Request, page_id: str = ""):
 
     # Traer las últimas 25 publicaciones de la página con campos útiles para la galería
     async with httpx.AsyncClient(timeout=15) as client:
-        rp = await client.get(
-            f"https://graph.facebook.com/v21.0/{page_id}/posts",
+        posts = await _fb_paginate(
+            client, f"{page_id}/posts", token=page_token,
             params={
-                "access_token": page_token,
                 "fields": "id,message,created_time,full_picture,permalink_url,"
                           "reactions.summary(true),comments.summary(true),shares,is_published",
                 "limit": "25",
-            }
+            },
+            max_paginas=1, max_items=25,
+            prefix="Error obteniendo publicaciones",
         )
-    if rp.status_code != 200:
-        raise HTTPException(status_code=502, detail=f"Error obteniendo publicaciones: {rp.text}")
 
     items = []
-    for p in rp.json().get("data", []):
+    for p in posts:
         if p.get("is_published") is False:
             continue
         msg = (p.get("message") or "").strip()
@@ -6465,39 +9298,594 @@ async def facebook_page_posts(request: Request, page_id: str = ""):
 
 @app.post("/facebook/campaign/toggle")
 async def facebook_campaign_toggle(request: Request):
-    """Activa o pausa una campaña y todos sus adsets y ads hijos."""
+    """Activa o pausa una campaña y todos sus adsets y ads hijos.
+
+    Este endpoint mueve DINERO: si dice "pausada" y no pausó, el agente sigue
+    pagando sin saberlo. Por eso:
+      1. Se revisa el resultado de CADA POST (antes se ignoraban todos y se
+         devolvía {"ok": True} pasara lo que pasara).
+      2. Los hijos se actualizan en batch (una petición HTTP en vez de N).
+      3. Al final se RELEE effective_status desde Meta y se devuelve el estado
+         verificado, no el que pedimos.
+      4. Si algo quedó fuera, se devuelve 207 con el detalle de qué falló.
+    """
     user_id = await get_user_id_from_token(request)
     if not user_id:
         raise HTTPException(status_code=401, detail="No autenticado")
     body = await request.json()
-    campaign_id = body.get("campaign_id", "")
+    campaign_id = str(body.get("campaign_id", "") or "").strip()
     new_status = body.get("status", "PAUSED")
+    if not campaign_id:
+        raise HTTPException(status_code=400, detail="campaign_id requerido")
     if new_status not in ("ACTIVE", "PAUSED"):
         raise HTTPException(status_code=400, detail="status debe ser ACTIVE o PAUSED")
     meta = await _get_fb_meta(user_id)
     user_token = meta.get("user_token", "")
     if not user_token:
         raise HTTPException(status_code=400, detail="Reconecta tu Facebook.")
-    tok = {"access_token": user_token}
-    async with httpx.AsyncClient(timeout=20) as client:
-        # 1. Actualizar campaña
-        await client.post(f"https://graph.facebook.com/v21.0/{campaign_id}", params=tok, json={"status": new_status})
-        # 2. Obtener adsets
-        r_adsets = await client.get(
-            f"https://graph.facebook.com/v21.0/{campaign_id}/adsets",
-            params={**tok, "fields": "id", "limit": "50"}
-        )
-        adset_ids = [a["id"] for a in r_adsets.json().get("data", [])] if r_adsets.status_code == 200 else []
-        # 3. Actualizar cada adset y sus ads
+
+    fallos: list[dict] = []
+
+    def _anota_fallo(nivel: str, rid: str, resp) -> None:
+        fallos.append({
+            "nivel": nivel,
+            "id": rid,
+            "detalle": _fb_friendly_error(resp.text if resp is not None else "",
+                                          f"No se pudo cambiar el {nivel}"),
+        })
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        # ── 1. Inventario de hijos (paginado: un limit=50 dejaba adsets fuera)
+        adsets = await _fb_paginate(client, f"{campaign_id}/adsets", token=user_token,
+                                    params={"fields": "id", "limit": "50"},
+                                    prefix="Error leyendo los conjuntos de anuncios")
+        adset_ids = [a["id"] for a in adsets if a.get("id")]
+
+        ad_ids: list[str] = []
         for adset_id in adset_ids:
-            await client.post(f"https://graph.facebook.com/v21.0/{adset_id}", params=tok, json={"status": new_status})
-            r_ads = await client.get(
-                f"https://graph.facebook.com/v21.0/{adset_id}/ads",
-                params={**tok, "fields": "id", "limit": "50"}
-            )
-            for ad in r_ads.json().get("data", []) if r_ads.status_code == 200 else []:
-                await client.post(f"https://graph.facebook.com/v21.0/{ad['id']}", params=tok, json={"status": new_status})
-    return {"ok": True, "campaign_id": campaign_id, "status": new_status}
+            try:
+                ads = await _fb_paginate(client, f"{adset_id}/ads", token=user_token,
+                                         params={"fields": "id", "limit": "50"},
+                                         prefix="Error leyendo los anuncios")
+                ad_ids.extend([a["id"] for a in ads if a.get("id")])
+            except HTTPException as e:
+                fallos.append({"nivel": "anuncios", "id": adset_id, "detalle": str(e.detail)})
+
+        # ── 2. Aplicar el cambio ───────────────────────────────────────
+        # Al ACTIVAR se va de abajo hacia arriba (Meta exige hijos activos
+        # antes que el padre); al PAUSAR, de arriba hacia abajo, para cortar el
+        # gasto en la campaña lo antes posible aunque falle algún hijo.
+        if new_status == "ACTIVE":
+            orden = [("anuncio", ad_ids), ("conjunto", adset_ids), ("campaña", [campaign_id])]
+        else:
+            orden = [("campaña", [campaign_id]), ("conjunto", adset_ids), ("anuncio", ad_ids)]
+
+        for nivel, ids in orden:
+            if not ids:
+                continue
+            if len(ids) == 1:
+                rr = await _fb_request(client, "POST", str(ids[0]), token=user_token,
+                                       json_body={"status": new_status})
+                if rr is None or rr.status_code not in (200, 201):
+                    _anota_fallo(nivel, ids[0], rr)
+                continue
+            # En el batch de Meta, los parámetros de un POST van en `body`
+            # (form-encoded), no en el query string del relative_url.
+            resultados = await _fb_batch(client, user_token, [
+                {"method": "POST", "relative_url": str(rid),
+                 "body": f"status={new_status}"} for rid in ids
+            ])
+            for rid, res in zip(ids, resultados):
+                if res.get("code") not in (200, 201):
+                    cuerpo = res.get("body")
+                    fallos.append({
+                        "nivel": nivel, "id": rid,
+                        "detalle": _fb_friendly_error(
+                            json.dumps(cuerpo) if isinstance(cuerpo, dict) else str(cuerpo),
+                            f"No se pudo cambiar el {nivel}"),
+                    })
+
+        # ── 3. Verificar contra Meta lo que realmente quedó ────────────
+        verificado = {}
+        try:
+            rv = await _fb_request(client, "GET", campaign_id, token=user_token,
+                                   params={"fields": "status,effective_status"})
+            if rv is not None and rv.status_code == 200:
+                verificado = rv.json() or {}
+        except Exception:
+            pass
+
+    estado_real = verificado.get("status") or ""
+    ok = not fallos and (estado_real == new_status if estado_real else False)
+
+    respuesta = {
+        "ok": ok,
+        "campaign_id": campaign_id,
+        "status": estado_real or new_status,
+        "status_solicitado": new_status,
+        "effective_status": verificado.get("effective_status", ""),
+        "adsets": len(adset_ids),
+        "ads": len(ad_ids),
+        "fallos": fallos,
+    }
+    if not ok:
+        from fastapi.responses import JSONResponse
+        # 207 Multi-Status: parte se aplicó y parte no. El frontend DEBE
+        # enseñar esto — antes decía "listo" con la campaña todavía activa.
+        resumen = "; ".join(f["detalle"] for f in fallos[:3]) or (
+            f"Facebook reporta la campaña en {estado_real or 'estado desconocido'}, "
+            f"no en {new_status}.")
+        respuesta["detail"] = (
+            f"El cambio quedó incompleto: {resumen}. "
+            f"Revisa la campaña en Ads Manager antes de confiar en el estado."
+        )
+        return JSONResponse(status_code=207, content=respuesta)
+    return respuesta
+
+
+# ════════════════════════════════════════════════════════════════
+# META — AUTODIAGNÓSTICO (solo contra cuenta de PRUEBAS)
+# ════════════════════════════════════════════════════════════════
+# Ejercita la integración de punta a punta contra una TEST AD ACCOUNT de Meta:
+# crea campaña, conjunto, creativo y anuncio de verdad, los lee, los prende y
+# apaga, y al final los borra. Las cuentas de prueba de Meta NO cobran.
+#
+# Tres candados para que esto no pueda correr contra producción:
+#   1. FB_QA_ENABLED=1 en el entorno.
+#   2. FB_QA_AD_ACCOUNT_ID apuntando explícitamente a la cuenta de pruebas.
+#   3. Verificación CONTRA META de que esa cuenta aparece en la lista de
+#      cuentas de prueba de la app (/{app_id}/adaccounts). Si no aparece, se
+#      aborta. No hay bandera para saltarse este candado.
+
+FB_QA_ENABLED = os.environ.get("FB_QA_ENABLED", "").strip().lower() in ("1", "true", "yes")
+FB_QA_AD_ACCOUNT_ID = os.environ.get("FB_QA_AD_ACCOUNT_ID", "").strip()
+FB_QA_PAGE_ID = os.environ.get("FB_QA_PAGE_ID", "").strip()
+
+
+def _qa_imagen_jpeg(color=(120, 150, 200), tam=(600, 600)) -> str:
+    """JPEG mínimo válido en base64. 600x600 es el mínimo que acepta Meta."""
+    if not PIL_AVAILABLE:
+        raise HTTPException(status_code=500, detail="Pillow no disponible para generar imágenes de prueba.")
+    buf = io.BytesIO()
+    Image.new("RGB", tam, color).save(buf, format="JPEG", quality=80)
+    return base64.b64encode(buf.getvalue()).decode()
+
+
+async def _qa_es_cuenta_de_pruebas(client: httpx.AsyncClient, token: str,
+                                   account_id: str) -> tuple:
+    """(es_de_pruebas, explicación). Le pregunta a Meta, no confía en el entorno."""
+    if not FB_APP_ID or not FB_APP_SECRET:
+        return False, "FB_APP_ID/FB_APP_SECRET no configurados: no se puede verificar."
+    try:
+        cuentas = await _fb_paginate(
+            client, f"{FB_APP_ID}/adaccounts",
+            token=f"{FB_APP_ID}|{FB_APP_SECRET}",
+            params={"limit": "200"}, prefix="Error listando cuentas de prueba")
+    except HTTPException as e:
+        return False, f"No se pudo consultar la lista de cuentas de prueba: {e.detail}"
+
+    ids = set()
+    for c in cuentas:
+        cid = str(c.get("id") or c.get("account_id") or "")
+        if cid:
+            ids.add(cid if cid.startswith("act_") else f"act_{cid}")
+    if account_id in ids:
+        return True, "Confirmada como cuenta de prueba de la app."
+    return False, (
+        f"{account_id} NO aparece en las cuentas de prueba de la app "
+        f"({len(ids)} encontradas). El autodiagnóstico se niega a correr contra "
+        f"una cuenta que podría ser de producción.")
+
+
+@app.post("/facebook/qa-selfcheck")
+async def facebook_qa_selfcheck(request: Request):
+    """Ejercita la integración de Meta de punta a punta. Solo cuenta de pruebas.
+
+    Devuelve un reporte paso por paso. Cada paso trae ok/detalle, así que si algo
+    se rompe se ve exactamente dónde. No lanza en el primer fallo: sigue para
+    dar el cuadro completo, salvo que falte una precondición.
+
+    Body opcional:
+      {"pasos": ["tokens","crear","insights","toggle","negativos","throttle","limpieza"]}
+    """
+    user_id = await exigir_gestion_integraciones(request)
+
+    if not FB_QA_ENABLED:
+        raise HTTPException(
+            status_code=403,
+            detail="El autodiagnóstico está apagado. Enciéndelo con FB_QA_ENABLED=1 "
+                   "y FB_QA_AD_ACCOUNT_ID apuntando a tu cuenta publicitaria de PRUEBAS.")
+    if not FB_QA_AD_ACCOUNT_ID:
+        raise HTTPException(status_code=400,
+                            detail="Falta FB_QA_AD_ACCOUNT_ID (la cuenta de pruebas de Meta).")
+
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    pedidos = set(body.get("pasos") or
+                  ["tokens", "crear", "insights", "toggle", "negativos", "throttle", "limpieza"])
+
+    meta_fb = await _get_fb_meta(user_id)
+    user_token = meta_fb.get("user_token", "")
+    if not user_token:
+        raise HTTPException(status_code=400, detail="Reconecta tu Facebook antes de correr el autodiagnóstico.")
+
+    account_id = (FB_QA_AD_ACCOUNT_ID if FB_QA_AD_ACCOUNT_ID.startswith("act_")
+                  else f"act_{FB_QA_AD_ACCOUNT_ID}")
+    page_id = FB_QA_PAGE_ID or meta_fb.get("page_id", "")
+
+    reporte: list = []
+    creados: dict = {}
+
+    def paso(nombre: str, ok: bool, detalle="", datos=None) -> None:
+        reporte.append({"paso": nombre, "ok": bool(ok), "detalle": detalle,
+                        "datos": datos if datos is not None else {}})
+
+    async with httpx.AsyncClient(timeout=90) as client:
+
+        # ── CANDADO: ¿es de verdad una cuenta de pruebas? ──────────────
+        es_prueba, motivo = await _qa_es_cuenta_de_pruebas(client, user_token, account_id)
+        paso("candado_cuenta_de_pruebas", es_prueba, motivo, {"account_id": account_id})
+        if not es_prueba:
+            return {"ok": False, "abortado": True, "account_id": account_id,
+                    "motivo": motivo, "reporte": reporte}
+
+        # ── 1. Tokens y permisos ───────────────────────────────────────
+        if "tokens" in pedidos:
+            info = await _fb_debug_token(client, user_token)
+            if not info:
+                paso("token_debug", False, "Meta no devolvió información del token.")
+            else:
+                scopes = info.get("scopes") or []
+                faltantes = [s for s in _FB_SCOPES_REQUERIDOS if s not in scopes]
+                expira = info.get("expires_at") or 0
+                # 0 = no expira; si expira, debe faltar bastante más que una hora.
+                segundos_restantes = (int(expira) - int(time.time())) if expira else -1
+                larga_duracion = (expira == 0) or segundos_restantes > 7 * 24 * 3600
+                paso("token_es_larga_duracion", larga_duracion,
+                     "El token no expira (page token) o le quedan semanas." if larga_duracion
+                     else f"El token expira en {max(segundos_restantes, 0) // 3600} h: "
+                          f"NO es de larga duración.",
+                     {"expires_at": expira, "segundos_restantes": segundos_restantes})
+                paso("token_scopes", not faltantes,
+                     "Todos los permisos requeridos están concedidos." if not faltantes
+                     else f"Faltan permisos: {', '.join(faltantes)}",
+                     {"scopes": scopes, "faltantes": faltantes})
+                paso("token_es_valido", bool(info.get("is_valid")),
+                     "Meta reporta el token como válido." if info.get("is_valid")
+                     else "Meta reporta el token como INVÁLIDO.")
+
+        # ── 2. Crear el anuncio completo ───────────────────────────────
+        if "crear" in pedidos:
+            if not page_id:
+                paso("crear_anuncio", False,
+                     "No hay page_id: define FB_QA_PAGE_ID o conecta una página.")
+            else:
+                nombre = f"[QA Broquer] {datetime.now(timezone.utc):%Y-%m-%d %H:%M:%S}"
+                try:
+                    # 2a. Subir 3 imágenes
+                    hashes = []
+                    for i, color in enumerate([(200, 80, 80), (80, 200, 120), (80, 120, 200)]):
+                        r = await _fb_request(client, "POST", f"{account_id}/adimages",
+                                              token=user_token,
+                                              json_body={"bytes": _qa_imagen_jpeg(color)})
+                        if r is not None and r.status_code in (200, 201):
+                            for v in (r.json().get("images") or {}).values():
+                                if v.get("hash"):
+                                    hashes.append(v["hash"])
+                                break
+                    paso("subir_3_imagenes", len(hashes) == 3,
+                         f"{len(hashes)} de 3 imágenes subidas.", {"hashes": hashes})
+
+                    # 2b. Campaña
+                    r = await _fb_request(client, "POST", f"{account_id}/campaigns",
+                                          token=user_token,
+                                          json_body={"name": nombre,
+                                                     "objective": "OUTCOME_ENGAGEMENT",
+                                                     "status": "PAUSED",
+                                                     "special_ad_categories": [],
+                                                     "buying_type": "AUCTION"})
+                    cid = (r.json().get("id") if r is not None and r.status_code in (200, 201) else "")
+                    if cid:
+                        creados["campaign_id"] = cid
+                    paso("crear_campana", bool(cid),
+                         "Campaña creada." if cid else
+                         _fb_friendly_error(r.text if r is not None else "", "Falló"),
+                         {"campaign_id": cid})
+
+                    # 2c. Conjunto de anuncios
+                    aid = ""
+                    if cid:
+                        fin = datetime.utcnow() + timedelta(days=7)
+                        r = await _fb_request(
+                            client, "POST", f"{account_id}/adsets", token=user_token,
+                            json_body={
+                                "name": f"{nombre} — AdSet", "campaign_id": cid,
+                                "daily_budget": 5000, "billing_event": "IMPRESSIONS",
+                                "optimization_goal": "CONVERSATIONS",
+                                "bid_strategy": "LOWEST_COST_WITHOUT_CAP",
+                                "status": "PAUSED",
+                                "promoted_object": {"page_id": page_id},
+                                "destination_type": "MESSENGER",
+                                "end_time": fin.strftime("%Y-%m-%dT%H:%M:%S+0000"),
+                                "targeting": {
+                                    "age_min": 25,
+                                    "geo_locations": {"countries": ["MX"]},
+                                    "targeting_automation": {"advantage_audience": 0},
+                                },
+                            })
+                        aid = (r.json().get("id") if r is not None and r.status_code in (200, 201) else "")
+                        if aid:
+                            creados["adset_id"] = aid
+                        paso("crear_conjunto", bool(aid),
+                             "Conjunto creado." if aid else
+                             _fb_friendly_error(r.text if r is not None else "", "Falló"),
+                             {"adset_id": aid})
+
+                    # 2d. Creativo carrusel
+                    crid = ""
+                    if aid and hashes:
+                        hijos = [{"name": "QA", "image_hash": h,
+                                  "call_to_action": {"type": "MESSAGE_PAGE",
+                                                     "value": {"app_destination": "MESSENGER"}}}
+                                 for h in hashes]
+                        r = await _fb_request(
+                            client, "POST", f"{account_id}/adcreatives", token=user_token,
+                            json_body={"name": f"{nombre} — Creative",
+                                       "object_story_spec": {
+                                           "page_id": page_id,
+                                           "link_data": {
+                                               "message": "Prueba automática de Broquer.",
+                                               "link": f"https://www.facebook.com/{page_id}",
+                                               "child_attachments": hijos,
+                                               "call_to_action": {
+                                                   "type": "MESSAGE_PAGE",
+                                                   "value": {"app_destination": "MESSENGER"}},
+                                           }}})
+                        crid = (r.json().get("id") if r is not None and r.status_code in (200, 201) else "")
+                        if crid:
+                            creados["creative_id"] = crid
+                        paso("crear_creativo", bool(crid),
+                             "Creativo carrusel creado." if crid else
+                             _fb_friendly_error(r.text if r is not None else "", "Falló"),
+                             {"creative_id": crid})
+
+                    # 2e. Anuncio
+                    adid = ""
+                    if aid and crid:
+                        r = await _fb_request(client, "POST", f"{account_id}/ads",
+                                              token=user_token,
+                                              json_body={"name": f"{nombre} — Ad",
+                                                         "adset_id": aid,
+                                                         "creative": {"creative_id": crid},
+                                                         "status": "PAUSED"})
+                        adid = (r.json().get("id") if r is not None and r.status_code in (200, 201) else "")
+                        if adid:
+                            creados["ad_id"] = adid
+                        paso("crear_anuncio", bool(adid),
+                             "Anuncio creado." if adid else
+                             _fb_friendly_error(r.text if r is not None else "", "Falló"),
+                             {"ad_id": adid})
+
+                    # 2f. Todo debe nacer en PAUSED
+                    if adid:
+                        d = await _fb_get_json(client, adid, token=user_token,
+                                               params={"fields": "status,effective_status"},
+                                               prefix="Error releyendo el anuncio")
+                        paso("nace_en_pausa", d.get("status") == "PAUSED",
+                             f"status={d.get('status')} effective_status={d.get('effective_status')}",
+                             d)
+                except HTTPException as e:
+                    paso("crear_anuncio", False, f"Excepción: {e.detail}")
+
+        # ── 3. Insights ────────────────────────────────────────────────
+        if "insights" in pedidos:
+            try:
+                filas = await _fb_paginate(
+                    client, f"{account_id}/insights", token=user_token,
+                    params={"level": "campaign",
+                            "fields": _FB_INSIGHTS_FIELDS + ",campaign_id",
+                            "date_preset": "last_30d", "limit": "50"},
+                    prefix="Error leyendo métricas")
+                # Una cuenta de pruebas casi nunca tiene datos: lo que se
+                # verifica es que la LLAMADA funcione y que el normalizador
+                # entregue las llaves esperadas, no que haya gasto.
+                muestra = _fb_normaliza_insights(filas[0] if filas else {})
+                esperadas = {"impressions", "reach", "spend", "conversaciones",
+                             "costo_conversaciones", "actions"}
+                paso("insights_llamada", True,
+                     f"{len(filas)} fila(s) devueltas por Meta.", {"filas": len(filas)})
+                paso("insights_normalizados", esperadas <= set(muestra.keys()),
+                     "El normalizador entrega spend/reach/actions/conversaciones.",
+                     {"llaves_faltantes": sorted(esperadas - set(muestra.keys()))})
+            except HTTPException as e:
+                paso("insights_llamada", False, str(e.detail))
+
+        # ── 4. Prender y apagar, verificando en cada nivel ─────────────
+        if "toggle" in pedidos and creados.get("campaign_id"):
+            cid = creados["campaign_id"]
+            for objetivo in ("ACTIVE", "PAUSED"):
+                errores = []
+                for nivel, rid in (("anuncio", creados.get("ad_id")),
+                                   ("conjunto", creados.get("adset_id")),
+                                   ("campaña", cid)):
+                    if not rid:
+                        continue
+                    r = await _fb_request(client, "POST", str(rid), token=user_token,
+                                          json_body={"status": objetivo})
+                    if r is None or r.status_code not in (200, 201):
+                        errores.append(f"{nivel}: " + _fb_friendly_error(
+                            r.text if r is not None else "", "falló"))
+
+                # Releer de Meta lo que REALMENTE quedó, nivel por nivel.
+                estados = {}
+                for nivel, rid in (("ad", creados.get("ad_id")),
+                                   ("adset", creados.get("adset_id")),
+                                   ("campaign", cid)):
+                    if not rid:
+                        continue
+                    try:
+                        estados[nivel] = await _fb_get_json(
+                            client, str(rid), token=user_token,
+                            params={"fields": "status,effective_status"},
+                            prefix="Error releyendo")
+                    except HTTPException as e:
+                        estados[nivel] = {"error": str(e.detail)}
+
+                coinciden = all(v.get("status") == objetivo for v in estados.values() if "error" not in v)
+                paso(f"toggle_{objetivo.lower()}", coinciden and not errores,
+                     "Los tres niveles quedaron en el estado pedido."
+                     if coinciden and not errores
+                     else "; ".join(errores) or "Algún nivel no quedó en el estado pedido.",
+                     estados)
+
+        # ── 5. Casos negativos ─────────────────────────────────────────
+        if "negativos" in pedidos:
+            # 5a. Imagen inválida → debe fallar con mensaje traducido
+            r = await _fb_request(client, "POST", f"{account_id}/adimages",
+                                  token=user_token,
+                                  json_body={"bytes": base64.b64encode(b"esto no es una imagen").decode()},
+                                  reintentos=1)
+            rechazada = r is None or r.status_code not in (200, 201)
+            mensaje = _fb_friendly_error(r.text if r is not None else "", "Imagen inválida")
+            paso("negativo_imagen_invalida", rechazada,
+                 mensaje if rechazada else "Meta ACEPTÓ una imagen inválida (inesperado).")
+            paso("negativo_imagen_mensaje_legible", rechazada and "Imagen inválida" in mensaje,
+                 "El error se traduce a un mensaje entendible.", {"mensaje": mensaje})
+
+            # 5b. Presupuesto absurdo → debe fallar SIN dejar campaña huérfana
+            nombre_h = f"[QA huérfana] {datetime.now(timezone.utc):%H:%M:%S}"
+            r = await _fb_request(client, "POST", f"{account_id}/campaigns",
+                                  token=user_token,
+                                  json_body={"name": nombre_h, "objective": "OUTCOME_ENGAGEMENT",
+                                             "status": "PAUSED", "special_ad_categories": [],
+                                             "buying_type": "AUCTION"})
+            cid_h = (r.json().get("id") if r is not None and r.status_code in (200, 201) else "")
+            if cid_h:
+                r2 = await _fb_request(
+                    client, "POST", f"{account_id}/adsets", token=user_token,
+                    json_body={"name": f"{nombre_h} — AdSet", "campaign_id": cid_h,
+                               "daily_budget": 99999999999,   # absurdo a propósito
+                               "billing_event": "IMPRESSIONS",
+                               "optimization_goal": "CONVERSATIONS",
+                               "status": "PAUSED",
+                               "targeting": {"geo_locations": {"countries": ["MX"]},
+                                             "targeting_automation": {"advantage_audience": 0}}},
+                    reintentos=1)
+                fallo_esperado = r2 is None or r2.status_code not in (200, 201)
+                # Limpieza igual que hace create-ad: la campaña NO debe quedarse.
+                rd = await _fb_request(client, "DELETE", cid_h, token=user_token, reintentos=2)
+                borrada = rd is not None and rd.status_code in (200, 204)
+                rv = await _fb_request(client, "GET", cid_h, token=user_token,
+                                       params={"fields": "id"}, reintentos=1)
+                desaparecio = rv is None or rv.status_code != 200
+                paso("negativo_presupuesto_excesivo", fallo_esperado,
+                     _fb_friendly_error(r2.text if r2 is not None else "", "Presupuesto excesivo")
+                     if fallo_esperado else "Meta aceptó un presupuesto absurdo (inesperado).")
+                paso("negativo_sin_huerfanos", borrada and desaparecio,
+                     "La campaña del intento fallido se borró y ya no existe."
+                     if borrada and desaparecio
+                     else f"QUEDÓ HUÉRFANA: {cid_h}. Bórrala a mano en Ads Manager.",
+                     {"campaign_id": cid_h, "borrada": borrada, "desaparecio": desaparecio})
+            else:
+                paso("negativo_presupuesto_excesivo", False,
+                     "No se pudo crear la campaña de prueba para el caso negativo.")
+
+            # 5c. Página que la cuenta no puede anunciar
+            try:
+                promocionables = [p.get("id") for p in await _fb_paginate(
+                    client, f"{account_id}/promote_pages", token=user_token,
+                    params={"fields": "id", "limit": "100"}, prefix="promote_pages")]
+                detecta = bool(promocionables) and page_id in promocionables
+                paso("negativo_pagina_cuenta_correcta", True,
+                     f"La cuenta puede anunciar {len(promocionables)} página(s); "
+                     f"la configurada {'SÍ' if detecta else 'NO'} está entre ellas.",
+                     {"promote_pages": promocionables, "page_id": page_id})
+            except HTTPException as e:
+                paso("negativo_pagina_cuenta_correcta", False, str(e.detail))
+
+        # ── 6. Limpieza ────────────────────────────────────────────────
+        if "limpieza" in pedidos and creados.get("campaign_id"):
+            cid = creados["campaign_id"]
+            rd = await _fb_request(client, "DELETE", cid, token=user_token, reintentos=3)
+            borrada = rd is not None and rd.status_code in (200, 204)
+            rv = await _fb_request(client, "GET", cid, token=user_token,
+                                   params={"fields": "id"}, reintentos=1)
+            desaparecio = rv is None or rv.status_code != 200
+            paso("limpieza_campana_borrada", borrada and desaparecio,
+                 "La campaña de prueba se borró y ya no existe en Meta."
+                 if borrada and desaparecio
+                 else f"NO se pudo borrar {cid}. Bórrala a mano en Ads Manager.",
+                 {"campaign_id": cid, "borrada": borrada, "ya_no_existe": desaparecio})
+
+    # ── 7. Backoff ante 429 (en proceso, sin tocar Meta) ───────────────
+    if "throttle" in pedidos:
+        resultado = await _qa_probar_backoff()
+        paso("throttle_backoff_429", resultado["ok"], resultado["detalle"], resultado)
+
+    fallidos = [p for p in reporte if not p["ok"]]
+    return {
+        "ok": not fallidos,
+        "account_id": account_id,
+        "page_id": page_id,
+        "total": len(reporte),
+        "fallidos": len(fallidos),
+        "resumen": ("Todo en orden." if not fallidos
+                    else "Fallaron: " + ", ".join(p["paso"] for p in fallidos)),
+        "recursos_creados": creados,
+        "reporte": reporte,
+    }
+
+
+async def _qa_probar_backoff() -> dict:
+    """Comprueba que _fb_request se recupera de un 429 sin salir a internet.
+
+    Se le pone un transporte falso que contesta 429 con Retry-After las
+    primeras veces y luego 200. Si el wrapper reintenta y respeta la espera,
+    la llamada termina en 200.
+    """
+    intentos = {"n": 0}
+
+    def responder(req: httpx.Request) -> httpx.Response:
+        intentos["n"] += 1
+        if intentos["n"] <= 2:
+            return httpx.Response(
+                429,
+                headers={"Retry-After": "0",
+                         "X-Business-Use-Case-Usage": json.dumps(
+                             {"1": [{"type": "ads_management", "call_count": 100,
+                                     "total_cputime": 100, "total_time": 100,
+                                     "estimated_time_to_regain_access": 0}]})},
+                json={"error": {"message": "User request limit reached",
+                                "code": 17, "type": "OAuthException"}})
+        return httpx.Response(200, json={"data": [], "ok": True})
+
+    inicio = time.monotonic()
+    try:
+        transporte = httpx.MockTransport(responder)
+        async with httpx.AsyncClient(transport=transporte) as client:
+            # espera_base corta para que el diagnóstico no tarde. Va como
+            # parámetro, no tocando el global: si dos diagnósticos corren a la
+            # vez no se pisan la configuración de reintentos del resto de la app.
+            r = await _fb_request(client, "GET", "me/adaccounts", token="fake",
+                                  espera_base=0.05, espera_max=0.2)
+    except Exception as e:
+        return {"ok": False, "detalle": f"El wrapper lanzó excepción: {e}", "intentos": intentos["n"]}
+
+    duracion = time.monotonic() - inicio
+    ok = r is not None and r.status_code == 200 and intentos["n"] == 3
+    return {
+        "ok": ok,
+        "detalle": (f"Se recuperó del 429 tras {intentos['n']} intentos "
+                    f"({duracion:.2f}s) y terminó en 200."
+                    if ok else
+                    f"No se recuperó: {intentos['n']} intentos, "
+                    f"status final {getattr(r, 'status_code', 'ninguno')}."),
+        "intentos": intentos["n"],
+        "status_final": getattr(r, "status_code", None),
+        "segundos": round(duracion, 3),
+    }
 
 
 # ════════════════════════════════════════════════════════════════
@@ -6511,6 +9899,79 @@ STRIPE_WEBHOOK_SECRET  = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 STRIPE_PRICE_PRO       = os.environ.get("STRIPE_PRICE_PRO", "")       # Plan Broquer Pro
 STRIPE_PRICE_AMPI      = os.environ.get("STRIPE_PRICE_AMPI", "")      # Plan AMPI (precio especial)
 
+# ── Broquer para Empresas ────────────────────────────────────────
+# Se cobra en DOS líneas dentro de la misma suscripción de Stripe:
+#   · base  → paquete de 5 usuarios, cantidad siempre 1
+#   · extra → usuario adicional, cantidad = asientos - 5
+# Así el dueño puede subir o bajar lugares sin cambiar de suscripción.
+STRIPE_PRICE_EMPRESA_MENSUAL       = os.environ.get("STRIPE_PRICE_EMPRESA_MENSUAL", "")
+STRIPE_PRICE_EMPRESA_ANUAL         = os.environ.get("STRIPE_PRICE_EMPRESA_ANUAL", "")
+STRIPE_PRICE_EMPRESA_EXTRA_MENSUAL = os.environ.get("STRIPE_PRICE_EMPRESA_EXTRA_MENSUAL", "")
+STRIPE_PRICE_EMPRESA_EXTRA_ANUAL   = os.environ.get("STRIPE_PRICE_EMPRESA_EXTRA_ANUAL", "")
+
+EMPRESA_ASIENTOS_BASE = 5      # lugares incluidos en el precio base
+EMPRESA_ASIENTOS_MAX  = 500    # tope duro para no crear cargos absurdos por error
+
+# Solo para pintar la pantalla. El cobro real siempre lo manda Stripe.
+EMPRESA_TARIFAS = {
+    "mensual": {"base": 3499, "extra": 599, "etiqueta": "al mes"},
+    "anual":   {"base": 38489, "extra": 6589, "etiqueta": "al año"},   # 11 meses
+}
+
+
+def _precio_empresa(periodo: str, extra: bool = False) -> str:
+    """Devuelve el price_id de Stripe para el periodo pedido."""
+    if periodo == "anual":
+        return STRIPE_PRICE_EMPRESA_EXTRA_ANUAL if extra else STRIPE_PRICE_EMPRESA_ANUAL
+    return STRIPE_PRICE_EMPRESA_EXTRA_MENSUAL if extra else STRIPE_PRICE_EMPRESA_MENSUAL
+
+
+async def _sb_service_get(tabla: str, params: dict) -> list:
+    """GET a Supabase con service key. Devuelve [] si algo falla."""
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.get(
+            f"{SUPABASE_URL}/rest/v1/{tabla}",
+            headers={"apikey": SUPABASE_SERVICE_KEY,
+                     "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
+            params=params,
+        )
+    if r.status_code != 200:
+        return []
+    try:
+        return r.json()
+    except Exception:
+        return []
+
+
+async def _sb_service_patch(tabla: str, params: dict, payload: dict) -> None:
+    """PATCH a Supabase con service key."""
+    async with httpx.AsyncClient(timeout=10) as client:
+        await client.patch(
+            f"{SUPABASE_URL}/rest/v1/{tabla}",
+            headers={"apikey": SUPABASE_SERVICE_KEY,
+                     "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                     "Content-Type": "application/json",
+                     "Prefer": "return=minimal"},
+            params=params, json=payload,
+        )
+
+
+async def _exigir_admin_de_org(request: Request) -> dict:
+    """Quien contrata o modifica el plan de la empresa tiene que ser el dueño
+    (o un administrador) de su propia cuenta. Un agente invitado no puede."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Inicia sesión.")
+    ctx = await get_org_context(user_id)
+    if not ctx:
+        raise HTTPException(status_code=403, detail="Tu cuenta no está configurada. Contacta a soporte.")
+    if ctx.get("rol_org") not in ("owner", "admin"):
+        raise HTTPException(
+            status_code=403,
+            detail="Solo el dueño de la cuenta puede contratar o cambiar el plan de la empresa.")
+    ctx["user_id"] = user_id
+    return ctx
+
 # Código promocional para el plan AMPI (válido en Supabase tabla promo_codes)
 PROMO_CODE_AMPI = "ampi2026"
 
@@ -6519,6 +9980,25 @@ def _stripe_headers() -> dict:
         "Authorization": f"Bearer {STRIPE_SECRET_KEY}",
         "Content-Type": "application/x-www-form-urlencoded",
     }
+
+TRIAL_MAX_DIAS = 7
+
+async def _trial_max_disponible(user_id: str) -> bool:
+    """El regalo de 7 días de Broquer Max es UNA sola vez por cuenta.
+    No aplica si el usuario ya tuvo cualquier suscripción (activa, cancelada
+    o en prueba) ni si ya quemó su trial aunque la fila se haya borrado."""
+    try:
+        u = await _sb_service_get("usuarios", {
+            "id": f"eq.{user_id}", "select": "trial_max_usado", "limit": "1"})
+        if u and u[0].get("trial_max_usado"):
+            return False
+        subs = await _sb_service_get("suscripciones", {
+            "user_id": f"eq.{user_id}", "select": "id", "limit": "1"})
+        return not subs
+    except Exception:
+        # Ante la duda NO se regala el trial: es dinero.
+        return False
+
 
 class CheckoutRequest(BaseModel):
     plan_id: str         # "max" o "ampi"
@@ -6634,6 +10114,11 @@ async def subscription_checkout(req: CheckoutRequest, request: Request):
     success_url = req.success_url or f"{origin}/index.html?suscripcion=ok"
     cancel_url  = req.cancel_url  or f"{origin}/index.html?suscripcion=cancelada"
 
+    # ¿Le toca el regalo de bienvenida? 7 días de Broquer Max sin costo,
+    # solo para quien nunca ha tenido suscripción. Stripe pide la tarjeta
+    # pero no cobra nada hasta que termina la prueba.
+    con_trial = await _trial_max_disponible(user_id)
+
     # Crear Checkout Session
     data = {
         "mode": "subscription",
@@ -6647,6 +10132,9 @@ async def subscription_checkout(req: CheckoutRequest, request: Request):
         "allow_promotion_codes": "true",
         "locale": "es",
     }
+    if con_trial:
+        data["subscription_data[trial_period_days]"] = str(TRIAL_MAX_DIAS)
+        data["metadata[trial]"] = "1"
     async with httpx.AsyncClient(timeout=15) as client:
         r_cs = await client.post(
             "https://api.stripe.com/v1/checkout/sessions",
@@ -6658,6 +10146,269 @@ async def subscription_checkout(req: CheckoutRequest, request: Request):
 
     session = r_cs.json()
     return {"ok": True, "checkout_url": session.get("url"), "session_id": session.get("id")}
+
+
+# ════════════════════════════════════════════════════════════════
+# BROQUER PARA EMPRESAS — contratación y lugares
+# ════════════════════════════════════════════════════════════════
+
+class EmpresaCheckoutRequest(BaseModel):
+    asientos: int = EMPRESA_ASIENTOS_BASE
+    periodo: str = "mensual"        # mensual | anual
+    nombre_empresa: str = ""
+    success_url: str = ""
+    cancel_url: str = ""
+
+
+class EmpresaAsientosRequest(BaseModel):
+    asientos: int
+
+
+def _valida_asientos(n: int) -> int:
+    try:
+        n = int(n)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Número de lugares inválido.")
+    if n < EMPRESA_ASIENTOS_BASE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"El plan de empresas empieza en {EMPRESA_ASIENTOS_BASE} lugares.")
+    if n > EMPRESA_ASIENTOS_MAX:
+        raise HTTPException(status_code=400, detail="Para más lugares escríbenos a soporte.")
+    return n
+
+
+async def _ocupacion_org(org_id: str) -> dict:
+    """Cuántos lugares están usados: miembros activos + invitaciones pendientes."""
+    miembros = await _sb_service_get("organizacion_miembros",
+                                     {"org_id": f"eq.{org_id}", "activo": "eq.true", "select": "id"})
+    invitaciones = await _sb_service_get("organizacion_invitaciones",
+                                         {"org_id": f"eq.{org_id}", "aceptada_el": "is.null", "select": "id"})
+    return {"miembros": len(miembros), "invitaciones": len(invitaciones),
+            "usados": len(miembros) + len(invitaciones)}
+
+
+@app.get("/subscription/empresa/plan")
+async def empresa_plan(request: Request):
+    """Estado del plan de empresa del usuario. Alimenta la pantalla de compra:
+    tarifas, lugares contratados y cuántos ya están ocupados."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Inicia sesión.")
+    ctx = await get_org_context(user_id)
+    if not ctx:
+        return {"tiene_org": False, "tarifas": EMPRESA_TARIFAS,
+                "asientos_base": EMPRESA_ASIENTOS_BASE, "asientos_max": EMPRESA_ASIENTOS_MAX}
+
+    ocup = await _ocupacion_org(ctx["org_id"])
+    sub = await _sb_service_get("suscripciones", {
+        "org_id": f"eq.{ctx['org_id']}", "select": "plan_id,plan_nombre,status,periodo,updated_at",
+        "order": "updated_at.desc", "limit": "1",
+    })
+    sub = sub[0] if sub else {}
+
+    return {
+        "tiene_org": True,
+        "org_id": ctx["org_id"],
+        "nombre": ctx.get("org_nombre"),
+        "es_empresa": ctx.get("org_tipo") == "empresa",
+        "es_admin": ctx.get("rol_org") in ("owner", "admin"),
+        "activa": bool(ctx.get("org_activo", True)) and sub.get("status") in ("active", "trialing"),
+        "status": sub.get("status"),
+        "periodo": sub.get("periodo"),
+        "plan_id": sub.get("plan_id"),
+        "asientos_contratados": ctx.get("asientos_max"),
+        "asientos_base": EMPRESA_ASIENTOS_BASE,
+        "asientos_max": EMPRESA_ASIENTOS_MAX,
+        "ocupacion": ocup,
+        "tarifas": EMPRESA_TARIFAS,
+    }
+
+
+@app.post("/subscription/empresa/checkout")
+async def empresa_checkout(req: EmpresaCheckoutRequest, request: Request):
+    """Crea la Checkout Session de Broquer para Empresas.
+    Cobro web únicamente: la app de iOS nunca abre este flujo (regla 3.1.3(c))."""
+    if not STRIPE_SECRET_KEY:
+        raise HTTPException(status_code=500, detail="Stripe no configurado en el servidor.")
+
+    ctx = await _exigir_admin_de_org(request)
+    user_id = ctx["user_id"]
+
+    periodo = (req.periodo or "mensual").strip().lower()
+    if periodo not in ("mensual", "anual"):
+        raise HTTPException(status_code=400, detail="El periodo debe ser mensual o anual.")
+
+    asientos = _valida_asientos(req.asientos)
+    price_base  = _precio_empresa(periodo, extra=False)
+    price_extra = _precio_empresa(periodo, extra=True)
+    if not price_base:
+        raise HTTPException(status_code=500,
+                            detail=f"Falta configurar el precio de empresas ({periodo}) en Stripe.")
+    extras = asientos - EMPRESA_ASIENTOS_BASE
+    if extras > 0 and not price_extra:
+        raise HTTPException(status_code=500,
+                            detail=f"Falta configurar el precio de usuario adicional ({periodo}) en Stripe.")
+
+    # Nunca dejar la empresa con menos lugares de los que ya usa.
+    ocup = await _ocupacion_org(ctx["org_id"])
+    if asientos < ocup["usados"]:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Ya tienes {ocup['usados']} lugares ocupados. Contrata al menos esa cantidad.")
+
+    auth_tok = request.headers.get("Authorization", "")[7:]
+    async with httpx.AsyncClient(timeout=10) as client:
+        r_user = await client.get(
+            f"{SUPABASE_URL}/auth/v1/user",
+            headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {auth_tok}"})
+    if r_user.status_code != 200:
+        raise HTTPException(status_code=401, detail="No se pudo verificar el usuario.")
+    email = r_user.json().get("email", "")
+
+    filas = await _sb_service_get("usuarios", {"id": f"eq.{user_id}", "select": "nombre"})
+    nombre = (filas[0] if filas else {}).get("nombre") or email
+
+    customer_id = await _get_or_create_stripe_customer(user_id, email, nombre)
+
+    origin = request.headers.get("origin", "https://broquer.app")
+    success_url = req.success_url or f"{origin}/equipo.html?empresa=ok"
+    cancel_url  = req.cancel_url  or f"{origin}/empresas.html?empresa=cancelada"
+
+    nombre_empresa = (req.nombre_empresa or "").strip()[:120] or (ctx.get("org_nombre") or nombre)
+
+    data = {
+        "mode": "subscription",
+        "customer": customer_id,
+        "line_items[0][price]": price_base,
+        "line_items[0][quantity]": "1",
+        "success_url": success_url,
+        "cancel_url": cancel_url,
+        "metadata[user_id]": user_id,
+        "metadata[plan_id]": "empresas",
+        "metadata[org_id]": ctx["org_id"],
+        "metadata[asientos]": str(asientos),
+        "metadata[periodo]": periodo,
+        "metadata[nombre_empresa]": nombre_empresa,
+        "subscription_data[metadata][user_id]": user_id,
+        "subscription_data[metadata][plan_id]": "empresas",
+        "subscription_data[metadata][org_id]": ctx["org_id"],
+        "allow_promotion_codes": "true",
+        "locale": "es",
+    }
+    if extras > 0:
+        data["line_items[1][price]"] = price_extra
+        data["line_items[1][quantity]"] = str(extras)
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        r_cs = await client.post("https://api.stripe.com/v1/checkout/sessions",
+                                 headers=_stripe_headers(), data=data)
+    if r_cs.status_code not in (200, 201):
+        raise HTTPException(status_code=502, detail=f"Stripe checkout session: {r_cs.text}")
+
+    session = r_cs.json()
+    return {"ok": True, "checkout_url": session.get("url"), "session_id": session.get("id"),
+            "asientos": asientos, "periodo": periodo}
+
+
+async def _activar_empresa(org_id: str, user_id: str, asientos: int,
+                           nombre_empresa: str = "") -> None:
+    """Deja la organización lista para operar como empresa tras el pago."""
+    payload = {
+        "tipo": "empresa",
+        "plan": "Broquer para Empresas",
+        "asientos_max": int(asientos),
+        "activo": True,
+        "vence_el": None,
+        "updated_at": datetime.utcnow().isoformat(),
+    }
+    if nombre_empresa:
+        payload["nombre"] = nombre_empresa[:120]
+    await _sb_service_patch("organizaciones", {"id": f"eq.{org_id}"}, payload)
+    # El titular tiene que ser owner para poder invitar a su equipo.
+    await _sb_service_patch("organizacion_miembros",
+                            {"user_id": f"eq.{user_id}", "org_id": f"eq.{org_id}"},
+                            {"rol_org": "owner"})
+
+
+@app.post("/subscription/empresa/asientos")
+async def empresa_asientos(req: EmpresaAsientosRequest, request: Request):
+    """Sube o baja los lugares contratados sin cambiar de suscripción.
+    Stripe prorratea la diferencia en la siguiente factura."""
+    if not STRIPE_SECRET_KEY:
+        raise HTTPException(status_code=500, detail="Stripe no configurado en el servidor.")
+
+    ctx = await _exigir_admin_de_org(request)
+    asientos = _valida_asientos(req.asientos)
+
+    ocup = await _ocupacion_org(ctx["org_id"])
+    if asientos < ocup["usados"]:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Tienes {ocup['usados']} lugares ocupados. Da de baja a alguien antes de reducir.")
+
+    filas = await _sb_service_get("suscripciones", {
+        "org_id": f"eq.{ctx['org_id']}", "plan_id": "eq.empresas",
+        "select": "stripe_subscription_id,periodo,status",
+        "order": "updated_at.desc", "limit": "1"})
+    row = filas[0] if filas else {}
+    sub_id = row.get("stripe_subscription_id")
+    if not sub_id:
+        raise HTTPException(status_code=404, detail="No encontré una suscripción de empresa activa.")
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        r_sub = await client.get(f"https://api.stripe.com/v1/subscriptions/{sub_id}",
+                                 headers=_stripe_headers())
+    if r_sub.status_code != 200:
+        raise HTTPException(status_code=502, detail=f"Stripe suscripción: {r_sub.text}")
+    items = r_sub.json().get("items", {}).get("data", [])
+
+    periodo = row.get("periodo") or "mensual"
+    price_base  = _precio_empresa(periodo, extra=False)
+    price_extra = _precio_empresa(periodo, extra=True)
+    # Si el periodo guardado no cuadra con lo que hay en Stripe, se deduce.
+    if not any((it.get("price") or {}).get("id") == price_base for it in items):
+        for alt in ("mensual", "anual"):
+            if any((it.get("price") or {}).get("id") == _precio_empresa(alt) for it in items):
+                periodo = alt
+                price_base  = _precio_empresa(alt, extra=False)
+                price_extra = _precio_empresa(alt, extra=True)
+                break
+
+    item_extra = next((it for it in items if (it.get("price") or {}).get("id") == price_extra), None)
+    extras = asientos - EMPRESA_ASIENTOS_BASE
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        if item_extra and extras > 0:
+            r = await client.post(
+                f"https://api.stripe.com/v1/subscription_items/{item_extra['id']}",
+                headers=_stripe_headers(),
+                data={"quantity": str(extras), "proration_behavior": "create_prorations"})
+        elif item_extra and extras == 0:
+            r = await client.delete(
+                f"https://api.stripe.com/v1/subscription_items/{item_extra['id']}",
+                headers=_stripe_headers(),
+                params={"proration_behavior": "create_prorations"})
+        elif extras > 0:
+            if not price_extra:
+                raise HTTPException(status_code=500,
+                                    detail="Falta configurar el precio de usuario adicional en Stripe.")
+            r = await client.post(
+                "https://api.stripe.com/v1/subscription_items",
+                headers=_stripe_headers(),
+                data={"subscription": sub_id, "price": price_extra, "quantity": str(extras),
+                      "proration_behavior": "create_prorations"})
+        else:
+            r = None
+
+    if r is not None and r.status_code not in (200, 201):
+        raise HTTPException(status_code=502, detail=f"Stripe lugares: {r.text}")
+
+    await _sb_service_patch("organizaciones", {"id": f"eq.{ctx['org_id']}"},
+                            {"asientos_max": asientos,
+                             "updated_at": datetime.utcnow().isoformat()})
+
+    return {"ok": True, "asientos": asientos, "periodo": periodo, "ocupacion": ocup}
 
 
 @app.post("/subscription/webhook")
@@ -6672,7 +10423,12 @@ async def stripe_webhook(request: Request):
     payload = await request.body()
     sig_header = request.headers.get("stripe-signature", "")
 
-    # Verificar firma del webhook
+    # Verificar firma del webhook. Sin secreto NO se procesa: antes, si la
+    # variable faltaba en Railway, cualquiera podía mandar un evento inventado
+    # de "pago exitoso" y activarse el plan.
+    if not STRIPE_WEBHOOK_SECRET:
+        print("[stripe] STRIPE_WEBHOOK_SECRET no configurado: webhook cerrado.")
+        raise HTTPException(status_code=503, detail="Webhook no disponible.")
     if STRIPE_WEBHOOK_SECRET:
         try:
             import hmac as _hmac, hashlib as _hashlib, time as _time
@@ -6691,22 +10447,42 @@ async def stripe_webhook(request: Request):
     obj = event.get("data", {}).get("object", {})
 
     if event_type == "checkout.session.completed":
-        user_id = obj.get("metadata", {}).get("user_id")
-        plan_id = obj.get("metadata", {}).get("plan_id", "max")
+        meta = obj.get("metadata", {}) or {}
+        user_id = meta.get("user_id")
+        plan_id = meta.get("plan_id", "max")
         subscription_id = obj.get("subscription")
         customer_id = obj.get("customer")
         if user_id and subscription_id:
-            plan_nombre = "AMPI" if plan_id == "ampi" else "Broquer Max"
+            plan_nombre = {"ampi": "AMPI", "empresas": "Broquer para Empresas"}.get(plan_id, "Broquer Max")
+            _org_id = meta.get("org_id") or await get_org_id_for_user(user_id)
+            _es_trial = meta.get("trial") == "1"
             sb = {
                 "user_id": user_id,
-                "org_id": await get_org_id_for_user(user_id),
+                "org_id": _org_id,
                 "plan_id": plan_id,
                 "plan_nombre": plan_nombre,
                 "stripe_subscription_id": subscription_id,
                 "stripe_customer_id": customer_id,
-                "status": "active",
+                "status": "trialing" if _es_trial else "active",
                 "updated_at": datetime.utcnow().isoformat(),
             }
+            if _es_trial:
+                # Se quema el trial de por vida, aunque después cancele o
+                # se borre la fila de suscripciones.
+                await _sb_service_patch("usuarios", {"id": f"eq.{user_id}"},
+                                        {"trial_max_usado": True})
+            if plan_id == "empresas":
+                # El plan de empresas guarda periodo y lugares: se necesitan
+                # después para prorratear altas y bajas de usuarios.
+                try:
+                    _asientos = int(meta.get("asientos") or EMPRESA_ASIENTOS_BASE)
+                except Exception:
+                    _asientos = EMPRESA_ASIENTOS_BASE
+                sb["periodo"] = meta.get("periodo") or "mensual"
+                sb["asientos"] = _asientos
+                if _org_id:
+                    await _activar_empresa(_org_id, user_id, _asientos,
+                                           meta.get("nombre_empresa") or "")
             async with httpx.AsyncClient(timeout=10) as client:
                 await client.post(
                     f"{SUPABASE_URL}/rest/v1/suscripciones",
@@ -6722,6 +10498,8 @@ async def stripe_webhook(request: Request):
     elif event_type in ("customer.subscription.updated", "customer.subscription.deleted"):
         subscription_id = obj.get("id")
         new_status = obj.get("status", "canceled")
+        if event_type == "customer.subscription.deleted":
+            new_status = "canceled"
         if subscription_id:
             async with httpx.AsyncClient(timeout=8) as client:
                 await client.patch(
@@ -6734,6 +10512,16 @@ async def stripe_webhook(request: Request):
                     },
                     json={"status": new_status, "updated_at": datetime.utcnow().isoformat()}
                 )
+            # En empresas el acceso de TODO el equipo cuelga de organizaciones.activo.
+            _filas = await _sb_service_get("suscripciones", {
+                "stripe_subscription_id": f"eq.{subscription_id}",
+                "select": "org_id,plan_id", "limit": "1"})
+            _fila = _filas[0] if _filas else {}
+            if _fila.get("plan_id") == "empresas" and _fila.get("org_id"):
+                await _sb_service_patch(
+                    "organizaciones", {"id": f"eq.{_fila['org_id']}"},
+                    {"activo": new_status in ("active", "trialing"),
+                     "updated_at": datetime.utcnow().isoformat()})
 
     elif event_type == "invoice.payment_failed":
         subscription_id = obj.get("subscription")
@@ -6763,8 +10551,12 @@ async def subscription_activate(request: Request):
     ACTIVATE_SECRET = os.environ.get("ACTIVATE_SECRET", "")
     body = await request.json()
 
-    # Verificar clave secreta
-    if ACTIVATE_SECRET and body.get("secret") != ACTIVATE_SECRET:
+    # Sin clave configurada NO se activa nada. Antes, si la variable faltaba en
+    # Railway, este endpoint regalaba suscripciones a cualquiera que lo llamara.
+    if not ACTIVATE_SECRET:
+        print("[subscription] ACTIVATE_SECRET no configurado: endpoint cerrado.")
+        raise HTTPException(status_code=503, detail="Activación no disponible.")
+    if not hmac_compare(body.get("secret", ""), ACTIVATE_SECRET):
         raise HTTPException(status_code=403, detail="No autorizado.")
 
     customer_id = body.get("customer_id", "").strip()
@@ -6836,9 +10628,10 @@ async def subscription_status(request: Request):
     if rol in ("equipo", "admin"):
         return {"active": True, "plan": "Equipo Interno" if rol == "equipo" else "Admin", "plan_id": rol, "status": "active"}
 
-    # Empresas: el precio se negocia caso por caso, así que no pasan por Stripe.
-    # Su acceso lo gobierna la propia organización (activo + vence_el), que tú
-    # activas a mano desde admin.html.
+    # Empresas: el acceso de todo el equipo cuelga de la organización
+    # (activo + vence_el). Lo enciende y apaga el webhook de Stripe cuando el
+    # dueño contrata, cambia lugares o deja de pagar; y admin.html puede
+    # activarlo a mano para casos negociados.
     _ctx = await get_org_context(user_id)
     if _ctx and _ctx.get("org_tipo") == "empresa":
         _vigente = _ctx.get("org_activo", True)
@@ -6867,16 +10660,199 @@ async def subscription_status(request: Request):
             params={"org_id": f"eq.{_oid}", "select": "*", "order": "updated_at.desc", "limit": "1"}
         )
     if r.status_code != 200 or not r.json():
-        return {"active": False, "plan": None, "status": "sin_suscripcion"}
+        return {"active": False, "plan": None, "status": "sin_suscripcion",
+                "trial_disponible": await _trial_max_disponible(user_id)}
 
     row = r.json()[0]
+    estado = row.get("status")
+    activo_sub = estado in ("active", "trialing")
+    # Trial sin tarjeta: al vencer trial_hasta el candado se cierra solo.
+    # Las suscripciones de Stripe/RevenueCat no traen trial_hasta y no se tocan.
+    if estado == "trialing" and row.get("trial_hasta") and _trial_ya_vencio(row.get("trial_hasta")):
+        activo_sub = False
+        estado = "trial_vencido"
+        asyncio.create_task(_expirar_trial_suscripcion(row.get("id")))
     return {
-        "active": row.get("status") in ("active", "trialing"),
+        "active": activo_sub,
         "plan": row.get("plan_nombre"),
         "plan_id": row.get("plan_id"),
-        "status": row.get("status"),
+        "status": estado,
+        "trial_hasta": row.get("trial_hasta"),
         "updated_at": row.get("updated_at"),
+        "trial_disponible": (await _trial_max_disponible(user_id)) if not activo_sub else False,
     }
+
+
+# ════════════════════════════════════════════════════════════════
+# Trial de Broquer Max SIN tarjeta (7 días, una sola vez por cuenta)
+# ════════════════════════════════════════════════════════════════
+
+def _trial_ya_vencio(trial_hasta) -> bool:
+    """True si la fecha de vencimiento del trial ya pasó."""
+    try:
+        return datetime.fromisoformat(str(trial_hasta).replace("Z", "+00:00")) <= datetime.now(timezone.utc)
+    except Exception:
+        return False
+
+
+async def _expirar_trial_suscripcion(sub_id) -> None:
+    """Marca la fila del trial como expirada. Fallar aquí no es grave:
+    el status endpoint la seguirá reportando inactiva de todos modos."""
+    if not sub_id:
+        return
+    try:
+        async with httpx.AsyncClient(timeout=8) as client:
+            await client.patch(
+                f"{SUPABASE_URL}/rest/v1/suscripciones?id=eq.{sub_id}",
+                headers={
+                    "apikey": SUPABASE_SERVICE_KEY,
+                    "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                    "Content-Type": "application/json",
+                    "Prefer": "return=minimal",
+                },
+                json={"status": "expired", "updated_at": datetime.utcnow().isoformat()},
+            )
+    except Exception:
+        pass
+
+
+@app.post("/subscription/trial-max")
+async def subscription_trial_max(request: Request):
+    """Activa 7 días de Broquer Max sin pedir tarjeta.
+    Una sola vez por cuenta (mismo regalo que el trial de Stripe: si ya se
+    usó cualquiera de los dos, no hay otro). Al vencer trial_hasta el acceso
+    se corta solo en /subscription/status y /profile/status."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No autenticado.")
+    exigir_cupo(request, user_id)
+
+    if not await _trial_max_disponible(user_id):
+        raise HTTPException(
+            status_code=403,
+            detail="Tu cuenta ya usó su periodo de prueba de Broquer Max.")
+
+    hasta = datetime.now(timezone.utc) + timedelta(days=TRIAL_MAX_DIAS)
+    fila = {
+        "user_id": user_id,
+        "org_id": await get_org_id_for_user(user_id),
+        "plan_id": "max",
+        "plan_nombre": "Broquer Max",
+        "status": "trialing",
+        "trial_hasta": hasta.isoformat(),
+        "updated_at": datetime.utcnow().isoformat(),
+    }
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.post(
+            f"{SUPABASE_URL}/rest/v1/suscripciones",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                "Content-Type": "application/json",
+                "Prefer": "return=minimal",
+            },
+            json=fila,
+        )
+        if r.status_code not in (200, 201):
+            raise HTTPException(status_code=502, detail="No se pudo activar la prueba. Intenta de nuevo.")
+        # Quemar el regalo: aunque la fila se borre después, no se repite.
+        await client.patch(
+            f"{SUPABASE_URL}/rest/v1/usuarios?id=eq.{user_id}",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                "Content-Type": "application/json",
+                "Prefer": "return=minimal",
+            },
+            json={"trial_max_usado": True},
+        )
+    return {"ok": True, "plan": "Broquer Max", "trial_hasta": hasta.isoformat(), "dias": TRIAL_MAX_DIAS}
+
+
+# ════════════════════════════════════════════════════════════════
+# Agendar demo (público: landing e index) — guarda y avisa por correo
+# ════════════════════════════════════════════════════════════════
+
+DEMO_NOTIF_EMAIL = os.environ.get("DEMO_NOTIF_EMAIL", "hola@broquer.app")
+_RESEND_KEY_DEMO = os.environ.get("RESEND_API_KEY", "")
+_RESEND_FROM_DEMO = os.environ.get("RESEND_FROM", "Broquer <hola@broquer.app>")
+
+
+class DemoRequest(BaseModel):
+    nombre: str
+    contacto: str        # teléfono o correo
+    fecha: str           # YYYY-MM-DD
+    hora: str            # HH:MM
+    mensaje: str = ""
+    origen: str = ""     # landing | index
+
+
+@app.post("/demo/agendar")
+async def demo_agendar(req: DemoRequest, request: Request):
+    """Recibe la solicitud de demo, la guarda en Supabase y avisa por correo.
+    Es público (la landing no tiene sesión); el tope por IP de limites.py
+    corta cualquier abuso."""
+    user_id = await get_user_id_from_token(request)
+    exigir_cupo(request, user_id)
+
+    nombre = (req.nombre or "").strip()[:120]
+    contacto = (req.contacto or "").strip()[:160]
+    fecha = (req.fecha or "").strip()[:10]
+    hora = (req.hora or "").strip()[:5]
+    mensaje = (req.mensaje or "").strip()[:800]
+    origen = (req.origen or "").strip()[:20]
+
+    if not nombre or not contacto:
+        raise HTTPException(status_code=400, detail="Escribe tu nombre y un teléfono o correo.")
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", fecha):
+        raise HTTPException(status_code=400, detail="Elige una fecha válida.")
+    if not re.fullmatch(r"\d{2}:\d{2}", hora):
+        raise HTTPException(status_code=400, detail="Elige una hora válida.")
+    try:
+        if date.fromisoformat(fecha) < date.today():
+            raise HTTPException(status_code=400, detail="La fecha ya pasó. Elige otra.")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Elige una fecha válida.")
+
+    fila = {"nombre": nombre, "contacto": contacto, "fecha": fecha, "hora": hora,
+            "mensaje": mensaje, "origen": origen, "user_id": user_id}
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.post(
+            f"{SUPABASE_URL}/rest/v1/demos_agendadas",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                "Content-Type": "application/json",
+                "Prefer": "return=minimal",
+            },
+            json=fila,
+        )
+        if r.status_code not in (200, 201):
+            raise HTTPException(status_code=502, detail="No se pudo agendar. Intenta de nuevo en un momento.")
+
+    # Aviso por correo. Si Resend falla, la demo ya quedó guardada: no se rompe.
+    if _RESEND_KEY_DEMO:
+        cuerpo = (
+            f"<h2>Nueva demo agendada</h2>"
+            f"<p><strong>Nombre:</strong> {nombre}</p>"
+            f"<p><strong>Contacto:</strong> {contacto}</p>"
+            f"<p><strong>Fecha:</strong> {fecha} a las {hora}</p>"
+            f"<p><strong>Mensaje:</strong> {mensaje or '—'}</p>"
+            f"<p><strong>Origen:</strong> {origen or 'web'}</p>")
+        try:
+            async with httpx.AsyncClient(timeout=15) as client:
+                await client.post(
+                    "https://api.resend.com/emails",
+                    headers={"Authorization": f"Bearer {_RESEND_KEY_DEMO}",
+                             "Content-Type": "application/json"},
+                    json={"from": _RESEND_FROM_DEMO, "to": [DEMO_NOTIF_EMAIL],
+                          "subject": f"Demo agendada: {nombre} — {fecha} {hora}",
+                          "html": cuerpo},
+                )
+        except Exception:
+            pass
+
+    return {"ok": True}
 
 
 @app.post("/subscription/cancel")
@@ -6947,7 +10923,12 @@ async def revenuecat_webhook(request: Request):
     """
     # 1. Validar el header de autorización compartido (anti-spoofing)
     expected_auth = os.environ.get("REVENUECAT_WEBHOOK_AUTH", "")
-    if expected_auth and request.headers.get("Authorization", "") != expected_auth:
+    # Sin secreto NO se procesa. Antes, con la variable vacía, cualquiera podía
+    # mandar un "INITIAL_PURCHASE" falso con el user_id que quisiera.
+    if not expected_auth:
+        print("[revenuecat] REVENUECAT_WEBHOOK_AUTH no configurado: webhook cerrado.")
+        raise HTTPException(status_code=503, detail="Webhook no disponible.")
+    if not hmac_compare(request.headers.get("Authorization", ""), expected_auth):
         raise HTTPException(status_code=403, detail="No autorizado.")
 
     body = await request.json()
@@ -7027,12 +11008,20 @@ async def importar_contactos_eb(request: Request):
         "Prefer": "return=minimal",
     }
 
-    # Obtener contactos existentes del usuario para deduplicar
+    # La empresa comparte UNA cuenta de EasyBroker. Si deduplicamos por agente,
+    # cada agente que importe crea su propia copia del mismo directorio. Por eso
+    # el universo de comparación es la empresa completa.
+    org_id_import = await get_org_id_for_user(user_id)
+
+    # Obtener contactos existentes (de la empresa si la hay, si no del agente)
+    filtro_existentes = ({"org_id": f"eq.{org_id_import}"} if org_id_import
+                         else {"user_id": f"eq.{user_id}"})
     async with httpx.AsyncClient(timeout=15) as client:
         r_existing = await client.get(
             f"{SUPABASE_URL}/rest/v1/contactos",
             headers=sb_headers,
-            params={"user_id": f"eq.{user_id}", "select": "id,telefono,email,nombre,empresa,notas,fuente,probabilidad,calle,mpio,cp,wa,etiquetas"}
+            params={**filtro_existentes,
+                    "select": "id,telefono,email,nombre,empresa,notas,fuente,probabilidad,calle,mpio,cp,wa,etiquetas"}
         )
     existing = r_existing.json() if r_existing.status_code == 200 else []
     existing_by_tel = {c["telefono"]: c for c in existing if c.get("telefono")}
@@ -7045,8 +11034,6 @@ async def importar_contactos_eb(request: Request):
     errores = 0
     total_eb = 0
     page = 1
-
-    org_id_import = await get_org_id_for_user(user_id)
 
     # ── Mapeo EasyBroker → Broquer ──
     _PROB = {"low": "baja", "medium": "media", "high": "alta"}
@@ -7165,8 +11152,10 @@ async def importar_contactos_eb(request: Request):
                         patch["etiquetas"] = union
                 if patch:
                     patch["updated_at"] = now_iso
+                    filtro_patch = (f"org_id=eq.{org_id_import}" if org_id_import
+                                    else f"user_id=eq.{user_id}")
                     rb = await client.patch(
-                        f"{SUPABASE_URL}/rest/v1/contactos?id=eq.{existente['id']}&user_id=eq.{user_id}",
+                        f"{SUPABASE_URL}/rest/v1/contactos?id=eq.{existente['id']}&{filtro_patch}",
                         headers=sb_headers,
                         json=patch
                     )
@@ -7663,3 +11652,56 @@ async def eliminar_cuenta_y_datos(request: Request):
 
     return {"ok": True, "user_id": user_id, "borrados": borrados, "errores": errores}
 
+
+# ════════════════════════════════════════════════════════════════
+# Instagram — cuadrícula pública del landing
+# Jala los últimos posts de la cuenta de Broquer vía Graph API y los
+# cachea 6 horas en memoria. Público (el landing no tiene sesión);
+# el caché protege el límite de la API. Requiere INSTAGRAM_TOKEN
+# (long-lived) en las variables de Railway.
+# ════════════════════════════════════════════════════════════════
+_IG_CACHE = {"t": 0.0, "data": None}
+
+@app.get("/instagram/feed")
+async def instagram_feed():
+    ahora = time.time()
+    if _IG_CACHE["data"] is not None and (ahora - _IG_CACHE["t"]) < 21600:
+        return _IG_CACHE["data"]
+    tok = os.getenv("INSTAGRAM_TOKEN")
+    ig_id = os.getenv("IG_USER_ID")
+    if not tok or not ig_id:
+        raise HTTPException(status_code=503, detail="Instagram no configurado")
+    # Ruta vía app de Facebook (Tech Provider): la cuenta de IG se consulta
+    # por su id de negocio, no por /me.
+    url = ("https://graph.facebook.com/v25.0/" + ig_id + "/media"
+           "?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp"
+           "&limit=12&access_token=" + tok)
+    try:
+        async with httpx.AsyncClient(timeout=12) as cli:
+            r = await cli.get(url)
+        if r.status_code != 200:
+            # Si hay caché viejo, mejor servirlo que fallar.
+            if _IG_CACHE["data"] is not None:
+                return _IG_CACHE["data"]
+            raise HTTPException(status_code=502, detail="Instagram no respondió")
+        crudo = r.json().get("data", [])
+    except HTTPException:
+        raise
+    except Exception:
+        if _IG_CACHE["data"] is not None:
+            return _IG_CACHE["data"]
+        raise HTTPException(status_code=502, detail="Sin conexión con Instagram")
+
+    posts = []
+    for p in crudo:
+        posts.append({
+            "id": p.get("id"),
+            "tipo": p.get("media_type"),
+            "portada": p.get("thumbnail_url") or p.get("media_url"),
+            "liga": p.get("permalink"),
+            "texto": (p.get("caption") or "")[:120],
+        })
+    data = {"ok": True, "posts": posts}
+    _IG_CACHE["data"] = data
+    _IG_CACHE["t"] = ahora
+    return data

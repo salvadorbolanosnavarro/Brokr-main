@@ -224,29 +224,60 @@
   })();
 
   /* ── Configuración de módulos ──
-     'whatsapp' abre el grupo 'main': es lo primero que ve el agente al salir
-     del CRM y lo que más abre en el día. Antes estaba partido en dos entradas
-     ('bandeja' dentro del CRM y 'whatsapp' perdido entre las herramientas),
-     y el agente tenía que aprender que una era el chat y la otra el número.
-     Es lo mismo: su WhatsApp. Ahora es un módulo con pestañas. */
+     Antes el menú era "CRM" más una lista larga de herramientas sueltas. Con
+     dieciocho módulos esa lista dejó de leerse: el agente bajaba buscando,
+     y buscar en un menú es la señal de que el menú ya no sirve.
+
+     Ahora cada módulo vive en el grupo que corresponde al momento de la
+     operación en que se usa — captar, dar seguimiento, documentar, calcular,
+     promover — y cada grupo se abre y se cierra igual que CRM, que es el
+     patrón que ya conocía el agente. Ningún módulo cambió de dirección: solo
+     cambió dónde se encuentra.
+
+     'Equipo' salió del menú y se fue a Perfil. No es una herramienta de
+     trabajo diario, es configuración de la cuenta, y vivía en el CRM nada más
+     porque no había dónde más ponerlo.
+
+     WhatsApp queda en 'Seguimiento', pero el botón de Chats de la barra
+     inferior se queda tal cual: eso no es una entrada de menú duplicada, es
+     un atajo al chat, que es lo que el agente abre veinte veces al día. */
+  const GRUPOS = [
+    { key:'crm',         label:'CRM',         icon:'funnel' },
+    { key:'seguimiento', label:'Seguimiento', icon:'send' },
+    { key:'documentos',  label:'Documentos',  icon:'document' },
+    { key:'numeros',     label:'Números',     icon:'nums123' },
+    { key:'marketing',   label:'Marketing',   icon:'megaphone' },
+    // "Más" agrupa lo que no es trabajo diario: perfil, blog, ayuda (y admin).
+    { key:'mas',         label:'Más',         icon:'plus' },
+  ];
+
   const MODS = [
-    { key:'props',        href:'propiedades.html',   label:'Tus Inmuebles',   group:'crm',  icon:'building' },
-    { key:'contactos',    href:'contactos.html',     label:'Contactos',       group:'crm',  icon:'users' },
-    { key:'tareas',       href:'tareas.html',        label:'Tareas',          group:'crm',  icon:'check' },
-    { key:'leads',        href:'leads.html',         label:'Leads',           group:'crm',  icon:'send' },
-    { key:'estadisticas', href:'estadisticas.html',  label:'Estadísticas',    group:'crm',  icon:'chart' },
-    { key:'whatsapp',     href:'whatsapp.html',      label:'WhatsApp (Beta)', group:'main', icon:'whatsapp' },
-    { key:'contratos',    href:'contratos.html',     label:'Contratos',       group:'main', icon:'document' },
-    { key:'avm',          href:'avm.html',           label:'Estimación de valor', group:'main', icon:'peso' },
-    { key:'ficha-manual', href:'ficha-manual.html',  label:'Ficha técnica',   group:'main', icon:'landscape' },
-    { key:'isr',          href:'isr.html',           label:'ISR',             group:'main', icon:'calculator' },
-    { key:'image-cleaner',href:'image-cleaner.html', label:'Editor imágenes', group:'main', icon:'image' },
-    { key:'facebook-ads', href:'facebook-ads.html',  label:'Facebook Ads', group:'main', icon:'facebook' },
-    { key:'mi-sitio',     href:'mi-sitio.html',      label:'Mi sitio',        group:'main', icon:'globo' },
-    { key:'blog',         href:'blog.html',          label:'Blog',            group:'main', icon:'feather' },
-    { key:'guia',         href:'guia-agente.html',   label:'Ayuda', group:'main', icon:'question' },
-    { key:'equipo',       href:'equipo.html',        label:'Equipo',          group:'crm',  icon:'users', enterpriseOnly:true },
-    { key:'admin',        href:'admin.html',         label:'Admin',           group:'main', icon:'cog', adminOnly:true },
+    // CRM — el inventario y la gente.
+    { key:'props',        href:'propiedades.html',   label:'Tus Inmuebles',       group:'crm',         icon:'building' },
+    { key:'contactos',    href:'contactos.html',     label:'Contactos',           group:'crm',         icon:'users' },
+    { key:'tareas',       href:'tareas.html',        label:'Tareas',              group:'crm',         icon:'check' },
+    { key:'estadisticas', href:'estadisticas.html',  label:'Estadísticas',        group:'crm',         icon:'chart' },
+    { key:'bolsa',        href:'bolsa.html',         label:'Bolsa inmobiliaria',  group:'crm',         icon:'apreton' },
+    // Seguimiento — hablar con el prospecto hasta que se convierte en cliente.
+    { key:'whatsapp',     href:'whatsapp.html',      label:'WhatsApp',            group:'seguimiento', icon:'whatsapp' },
+    { key:'leads',        href:'leads.html',         label:'Leads',               group:'seguimiento', icon:'send' },
+    // Documentos — en el orden real de la operación: se redacta, se firma, se reporta.
+    { key:'contratos',    href:'contratos.html',     label:'Contratos',           group:'documentos',  icon:'document' },
+    { key:'firmas',       href:'firmas.html',        label:'Firma electrónica',   group:'documentos',  icon:'pencil' },
+    { key:'cumplimiento', href:'cumplimiento.html',  label:'Cumplimiento',        group:'documentos',  icon:'shield' },
+    // Números.
+    { key:'avm',          href:'avm.html',           label:'Estimación de valor', group:'numeros',     icon:'peso' },
+    { key:'isr',          href:'isr.html',           label:'ISR',                 group:'numeros',     icon:'calculator' },
+    // Marketing — de la foto cruda al anuncio publicado.
+    { key:'image-cleaner',href:'image-cleaner.html', label:'Editor imágenes',     group:'marketing',   icon:'image' },
+    { key:'ficha-manual', href:'ficha-manual.html',  label:'Ficha técnica',       group:'marketing',   icon:'landscape' },
+    { key:'facebook-ads', href:'facebook-ads.html',  label:'Facebook Ads',        group:'marketing',   icon:'facebook' },
+    { key:'video',        href:'video.html',         label:'Video',               group:'marketing',   icon:'video' },
+    { key:'mi-sitio',     href:'mi-sitio.html',      label:'Mi sitio',            group:'marketing',   icon:'globo' },
+    // Más — cuenta y recursos, pegado al fondo del menú.
+    { key:'blog',         href:'blog.html',          label:'Blog',                group:'mas',         icon:'feather' },
+    { key:'guia',         href:'guia-agente.html',   label:'Ayuda',               group:'mas',         icon:'question' },
+    { key:'admin',        href:'admin.html',         label:'Admin',               group:'mas',         icon:'cog', adminOnly:true },
   ];
 
   const CONTEXT_LABELS = {
@@ -257,15 +288,19 @@
     'tareas':       'Tareas — pendientes y actividad del CRM',
     'leads':        'Leads — contactos marcados como potenciales, aún sin cerrar',
     'estadisticas': 'Estadísticas — captación, pipeline e inmuebles con más interés',
+    'bolsa':        'Bolsa inmobiliaria — propiedades compartidas entre agentes Broquer con comisión compartida; publicar inmuebles propios y contactar al agente captador',
     'mi-sitio':     'Mi sitio — perfil público, plantilla y sitio web del agente',
     'contratos':    'Contratos — arrendamiento y promesa de compraventa',
+    'cumplimiento': 'Cumplimiento PLD/UIF — expediente único de identificación del cliente, umbrales de aviso, acumulación de operaciones, avisos al SPPLD y bitácora',
+    'firmas':       'Firma electrónica — mandar contratos a firma de las partes, código de verificación, constancia de firma y verificación pública por folio',
     'avm':          'Estimación de valor AVM — avalúo de mercado automatizado',
     'ficha-manual': 'Ficha Técnica Manual — crear ficha sin EasyBroker',
     'isr':          'Calculadora ISR por enajenación de inmuebles',
     'image-cleaner':'Editor de imágenes — limpieza con IA',
+    'video':        'Video — recorrido en video armado con las fotos de la ficha, para reels, stories y feed',
     'admin':        'Panel administrativo',
     'facebook-ads': 'Meta Ads Express — crear, activar y medir anuncios de Facebook e Instagram',
-    'whatsapp':     'WhatsApp — chats de los prospectos, conexión del número, Recepción automática, entrenamiento de la IA y plantillas de mensaje',
+    'whatsapp':     'WhatsApp — varios números, chats, conexión, Recepción automática y entrenamiento de la IA',
   };
 
   /* ── Encabezado canónico por página (unificación de esqueleto) ──
@@ -273,19 +308,24 @@
      en posición/tamaño/estilo. 'home' se excluye (tiene su propio hero). */
   const PAGE_META = {
     'equipo':        { title:'Equipo',                 sub:'Quién trabaja en tu cuenta y qué puede ver cada quien.' },
+    'bolsa':         { title:'Bolsa inmobiliaria',     sub:'Comparte inventario con otros agentes Broquer y cierra en equipo con comisión compartida.' },
     'contratos':     { title:'Contratos',              sub:'Genera contratos listos para firma en minutos.' },
+    'cumplimiento':  { title:'Cumplimiento',           sub:'El expediente de identificación de cada cliente, el control de umbrales y los avisos a la UIF, en un solo lugar.' },
+    'firmas':        { title:'Firma electrónica',      sub:'Manda el contrato, cada parte firma desde su celular y te regresa con constancia.' },
     'avm':           { title:'Estimación de valor',    sub:'Avalúo automático con comparables de tu zona.' },
     'ficha-manual':  { title:'Ficha técnica',          sub:'Crea fichas profesionales de tus propiedades.' },
     'isr':           { title:'Cálculo de ISR',         sub:'ISR por enajenación de inmuebles con el INPC vigente.' },
     'image-cleaner': { title:'Editor de imágenes',     sub:'Limpia y mejora las fotos de tus propiedades con IA.' },
     'facebook-ads':  { title:'Facebook Ads',           sub:'Crea, activa y mide anuncios de Facebook e Instagram.' },
-    'whatsapp':      { title:'WhatsApp (Beta)',               sub:'Conecta y administra tu número de WhatsApp Business.' },
+    'whatsapp':      { title:'WhatsApp',                sub:'Varios números, un solo lugar. La IA califica, agenda y te pasa al prospecto cuando toca.' },
     'verificador':   { title:'Verificador',            sub:'Revisión con IA para detectar problemas antes de firmar.' },
     'blog':          { title:'Blog',                   sub:'Recursos profesionales sobre PLD, legal y mercado.' },
     'mi-sitio':      { title:'Mi sitio',               sub:'El sitio web público que tus clientes ven cuando les compartes tu link.' },
+    'video':         { title:'Video',                   sub:'Tus fotos se vuelven un recorrido listo para reels, stories y WhatsApp.' },
   };
   const ICONS = {
     home:       '<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/>',
+    nums123:    '<text x="12" y="16.5" text-anchor="middle" font-size="11.5" font-weight="800" fill="currentColor" stroke="none" font-family="inherit">123</text>',
     building:   '<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.121 0L22.28 12M4.5 9.75v10.125a1.125 1.125 0 001.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125a1.125 1.125 0 001.125-1.125V9.75"/>',
     users:      '<path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>',
     document:   '<path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>',
@@ -309,7 +349,9 @@
     send:       '<path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/>',
     close:      '<path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/>',
     homeList:   '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6h16.5M3.75 12h16.5M3.75 18h16.5"/>',
+    video:      '<rect x="2.25" y="6" width="13.5" height="12" rx="2.25" ry="2.25" stroke-linejoin="round"/><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-2.83a.75.75 0 011.13.64v7.38a.75.75 0 01-1.13.64l-4.72-2.83"/>',
     handshake:  '<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l3-3 3 3 4-4 5 5-3 3-2-2-4 4-2-2-2 2-2-2 0-4z"/>',
+    apreton:    '<path stroke-linecap="round" stroke-linejoin="round" d="m11 17 2 2a1 1 0 1 0 3-3"/><path stroke-linecap="round" stroke-linejoin="round" d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path stroke-linecap="round" stroke-linejoin="round" d="m21 3 1 11h-2"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h8"/>',
     question:   '<path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/>',
     check:      '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>',
     globo:      '<path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zM3.6 9h16.8M3.6 15h16.8M11.5 3a17 17 0 000 18M12.5 3a17 17 0 010 18"/>',
@@ -318,6 +360,7 @@
        Es la excepción reconocida a la regla de iconos de trazo. */
     whatsapp:   '<path fill="currentColor" stroke="none" d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.857L.057 23.882a.5.5 0 00.614.612l6.115-1.598A11.947 11.947 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.967 0-3.805-.538-5.378-1.47l-.385-.23-3.993 1.044 1.012-3.9-.252-.403A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/><path fill="currentColor" stroke="none" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>',
     funnel:     '<path stroke-linecap="round" stroke-linejoin="round" d="M3 4.5h18l-7.25 8.25v5.1l-3.5 1.75v-6.85L3 4.5z"/>',
+    megaphone:  '<path stroke-linecap="round" stroke-linejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 01-1.44-4.282m3.102.069a18.03 18.03 0 01-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 018.835 2.535M10.34 6.66a23.847 23.847 0 008.835-2.535m0 0A23.74 23.74 0 0018.795 3m.38 1.125a23.91 23.91 0 011.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 001.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 010 3.46"/>',
     chevron:    '<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>',
     lock:       '<path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>',
     trash:      '<path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>',
@@ -332,6 +375,7 @@
   const SHAARK_CHIPS_MAP = {
     home:         [{l:_CICO('document')+'Contratos', m:'Generar un contrato'}, {l:_CICO('calculator')+'Calc. ISR', m:'Calcular ISR'}, {l:_CICO('tag')+'Fichas téc.', m:'Crear ficha técnica'}, {l:_CICO('building')+'Tus Inmuebles', m:'Ver tus inmuebles'}],
     contratos:    [{l:_CICO('pencil')+'Arrendamiento', m:'Genera un contrato de arrendamiento'}, {l:_CICO('handshake')+'Promesa', m:'Genera una promesa de compraventa'}, {l:_CICO('question')+'¿Cómo funciona?', m:'¿Qué tipos de contrato puedo generar?'}],
+    cumplimiento: [{l:_CICO('shield')+'¿Genera aviso?', m:'¿Una operación de 900 mil pesos genera aviso?'}, {l:_CICO('users')+'Expediente', m:'¿Qué documentos necesito de un cliente persona moral?'}, {l:_CICO('question')+'Acumulación', m:'¿Cómo funciona la acumulación de 6 meses?'}],
     avm:          [{l:_CICO('chart')+'Valuación', m:'Valúa una casa de 3 recámaras en'}, {l:_CICO('question')+'¿Cuánto vale?', m:'¿Cuánto vale una propiedad en esta colonia?'}, {l:_CICO('building')+'Comparables', m:'¿Cómo agrego comparables?'}],
     isr:          [{l:_CICO('calculator')+'Calc. ISR', m:'Calcula el ISR para una venta de'}, {l:_CICO('document')+'Descargar PDF', m:'Descarga el reporte de ISR'}, {l:_CICO('question')+'Exención', m:'¿Cuándo aplica la exención de casa habitación?'}],
     ficha:        [{l:_CICO('search')+'Buscar prop.', m:'Genera la ficha para la propiedad EB-'}, {l:_CICO('image')+'Con fotos', m:'¿Cómo se agregan fotos a la ficha?'}],
@@ -343,35 +387,87 @@
      CSS injection
      ════════════════════════════════════════════════════════════════ */
   const css = `
-.bk-shell-root { display: flex; height: 100vh; min-height: 100vh; background: var(--paper); }
+.bk-shell-root { display: flex; height: 100vh; min-height: 100vh; background: var(--canvas); }
 .bk-shell-root.bk-narrow .bk-sidebar { display: none; }
 
-/* Sidebar (drawer) — fondo navy (estructura, como el header del sitio) */
+/* ── Sidebar (drawer) ───────────────────────────────────────────────
+   Mismo azul de la tarjeta de pendientes del inicio, con el destello
+   blanco arriba y una aurora que deriva abajo (la misma luz del hero).
+   Los módulos van en BLANCO y en NEGRITAS, agrupados en bloques
+   translúcidos separados por aire: nada de líneas divisorias. */
 .bk-sidebar {
-  width: 260px; flex-shrink: 0;
-  background: var(--sky-navy);
+  width: 268px; flex-shrink: 0;
+  background: var(--sb-bg);
   border-right: none;
-  padding: 14px 14px;
+  padding: 18px 12px 20px;
   display: flex; flex-direction: column;
   overflow-y: auto;
+  position: relative;
 }
+/* Destello superior — el mismo de .ai-card en index.html */
+.bk-sidebar::before {
+  content: ''; position: absolute; inset: 0;
+  background-image: radial-gradient(120% 70% at 100% 0%, rgba(255,255,255,0.18), rgba(255,255,255,0) 58%);
+  pointer-events: none; z-index: 0;
+}
+/* Aurora inferior — la misma luz del hero del inicio, derivando despacio */
+.bk-sidebar::after {
+  content: ''; position: absolute; z-index: 0; pointer-events: none;
+  width: 420px; height: 420px; left: -170px; bottom: -190px;
+  border-radius: 50%; filter: blur(70px);
+  background: radial-gradient(circle, rgba(255,255,255,0.12), rgba(255,255,255,0) 70%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--sky-blue-on-dark) 28%, transparent), transparent 70%);
+  animation: bk-sb-drift 26s var(--ease) infinite alternate;
+}
+@keyframes bk-sb-drift { to { transform: translate(70px, -110px) scale(1.12); } }
+.bk-sidebar > * { position: relative; z-index: 1; }
 .bk-sidebar::-webkit-scrollbar { width: 0; }
 @media (max-width: 880px) { .bk-sidebar { display: none; } }
+
 .bk-sidebar__brand {
-  padding: 6px 10px 22px;
+  padding: 4px 10px 20px;
   border-bottom: none;
-  margin-bottom: 14px;
+  margin-bottom: 4px;
   display: flex; align-items: center;
 }
 .bk-sidebar__brand a { display: flex; align-items: center; gap: 8px; text-decoration: none; }
-.bk-sidebar__brand img { height: 84px; width: auto; display: block; filter: brightness(0) invert(1); }
+.bk-sidebar__brand img {
+  height: 27px; width: auto; display: block;
+  filter: brightness(0) invert(1); opacity: .96;
+  transition: opacity var(--dur) var(--ease);
+}
+.bk-sidebar__brand a:hover img { opacity: 1; }
+
+/* Bloque: la unidad que agrupa módulos sin usar una línea */
+.bk-sb-block {
+  background: var(--sb-panel);
+  border-radius: var(--r-lg);
+  padding: 6px;
+  margin-bottom: 12px;
+  display: flex; flex-direction: column; gap: 5px;
+  animation: bk-sb-rise 0.55s var(--ease-out) backwards;
+}
+/* Cada bloque sube con un pequeño desfase, como los KPIs del inicio */
+.bk-sidebar .bk-sb-block:nth-child(2) { animation-delay: 0.05s; }
+.bk-sidebar .bk-sb-block:nth-child(3) { animation-delay: 0.10s; }
+.bk-sidebar .bk-sb-block:nth-child(4) { animation-delay: 0.15s; }
+.bk-sidebar .bk-sb-block:nth-child(5) { animation-delay: 0.20s; }
+.bk-sidebar .bk-sb-block:nth-child(6) { animation-delay: 0.25s; }
+.bk-sidebar .bk-sb-block:nth-child(7) { animation-delay: 0.30s; }
+@keyframes bk-sb-rise { from { opacity: 0; transform: translateY(10px); } }
+/* El bloque "Más" (Mi perfil, Blog, Ayuda) se va hasta abajo:
+   el aire hace la separación, no una raya. */
+.bk-sb-block--cuenta { margin-top: auto; margin-bottom: 0; }
+
 .bk-sb-link {
-  display: flex !important; align-items: center; gap: 10px;
-  padding: 10px 12px;
+  position: relative;
+  display: flex !important; align-items: center; gap: 12px;
+  height: 44px; padding: 0 12px;
   border-radius: var(--r);
   font-size: 14px; color: #FFFFFF !important;
-  cursor: pointer; transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
-  font-weight: 500; letter-spacing: -0.005em;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease);
+  font-weight: 700; letter-spacing: -0.01em;
   text-decoration: none !important;
   visibility: visible !important;
   opacity: 1 !important;
@@ -383,22 +479,48 @@
   visibility: visible !important;
   opacity: 1 !important;
   background: transparent;
+  font-weight: 700;
 }
+.bk-sb-link svg, .bk-sidebar .bk-sb-link svg {
+  flex-shrink: 0; opacity: 1; color: #FFFFFF;
+  stroke-width: 2.1;
+}
+.bk-sb-link:focus-visible { outline: none; box-shadow: inset 0 0 0 2px rgba(255,255,255,0.75); }
 .bk-sb-link:hover,
 .bk-sidebar .bk-sb-link:hover,
-.bk-sidebar a.bk-sb-link:hover { background: rgba(255,255,255,0.06) !important; color: var(--paper) !important; }
+.bk-sidebar a.bk-sb-link:hover { background: var(--sb-hover) !important; color: #FFFFFF !important; }
+
 .bk-sb-link.is-active,
 .bk-sidebar .bk-sb-link.is-active,
-.bk-sidebar a.bk-sb-link.is-active { background: var(--sky-blue) !important; color: #FFFFFF !important; }
-.bk-sb-link svg, .bk-sidebar .bk-sb-link svg { flex-shrink: 0; opacity: 1; color: #FFFFFF; }
-.bk-sb-group { display: flex; flex-direction: column; gap: 2px; }
-.bk-sb-group + .bk-sb-link { margin-top: 4px; }
+.bk-sidebar a.bk-sb-link.is-active {
+  background: var(--sb-active) !important; color: #FFFFFF !important; font-weight: 800;
+  box-shadow: inset 0 0 0 1px var(--sb-edge), var(--sb-glow);
+}
+/* Marca del módulo activo: barrita con la luz de acento del hero */
+.bk-sidebar .bk-sb-link.is-active::before {
+  content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 20px; border-radius: var(--r-pill);
+  background: #FFFFFF;
+  background: linear-gradient(180deg, #FFFFFF, var(--sky-blue-on-dark));
+}
+
+.bk-sb-group { display: flex; flex-direction: column; gap: 5px; }
 .bk-sb-trigger { width: 100%; border: 0; background: transparent; font-family: inherit; text-align: left; }
-.bk-sb-trigger .bk-sb-chevron { margin-left: auto; transition: transform var(--dur) var(--ease); }
+.bk-sb-trigger .bk-sb-chevron { margin-left: auto; opacity: .8; transition: transform var(--dur) var(--ease); }
 .bk-sb-group.is-open .bk-sb-chevron { transform: rotate(180deg); }
-.bk-sb-submenu { display: none; flex-direction: column; gap: 2px; padding: 2px 0 6px 28px; }
-.bk-sb-group.is-open .bk-sb-submenu { display: flex; }
-.bk-sb-submenu .bk-sb-link { font-size: 13px; padding: 8px 10px; }
+.bk-sb-submenu { display: none; flex-direction: column; gap: 5px; padding: 2px 0 2px 22px; }
+.bk-sb-group.is-open .bk-sb-submenu { display: flex; animation: bk-sb-sub-in 0.28s var(--ease-out); }
+@keyframes bk-sb-sub-in { from { opacity: 0; transform: translateY(-5px); } }
+.bk-sb-submenu .bk-sb-link { height: 40px; padding: 0 10px; }
+.bk-sidebar .bk-sb-submenu .bk-sb-link:hover { transform: translateX(3px); }
+.bk-sidebar .bk-sb-submenu .bk-sb-link.is-active::before { left: -6px; height: 16px; }
+/* El indicador de "Más" es su propio "+": abierto, gira y se vuelve "×" */
+.bk-sb-group--mas.is-open .bk-sb-plus { transform: rotate(45deg); }
+
+@media (prefers-reduced-motion: reduce) {
+  .bk-sidebar::after, .bk-sb-block, .bk-sb-group.is-open .bk-sb-submenu { animation: none; }
+  .bk-sidebar .bk-sb-submenu .bk-sb-link:hover { transform: none; }
+}
 
 /* Content area */
 .bk-content { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
@@ -413,7 +535,7 @@
 .bk-back-home {
   display: inline-flex; align-items: center; gap: 6px;
   font-size: 13px; font-weight: 600;
-  color: var(--sky-blue); opacity: 0.55;
+  color: var(--sky-blue); opacity: 0.85;
   text-decoration: none;
   transition: opacity var(--dur) var(--ease);
 }
@@ -426,13 +548,13 @@
 .bk-mobile-head {
   display: none;
   padding: 14px 16px 12px;
-  background: var(--paper);
+  background: var(--canvas);
   border-bottom: none;
   align-items: center; justify-content: space-between;
 }
 @media (max-width: 880px) { .bk-mobile-head { display: flex; } }
 .bk-mobile-head a { display:flex; align-items:center; }
-.bk-mobile-head img { height: 97px; width: auto; display: block; }
+.bk-mobile-head img { height: 79px; width: auto; display: block; margin: -21px 0; }
 .bk-mobile-head__avatar {
   width: 29px; height: 29px; border-radius: 50%;
   background: var(--ink); color: var(--paper);
@@ -445,8 +567,8 @@
   display: flex; align-items: center; justify-content: space-between;
   gap: 16px;
   padding: 18px 36px;
-  border-bottom: none;
-  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  background: var(--canvas);
   flex-shrink: 0;
   position: relative;
 }
@@ -456,11 +578,12 @@
 .bk-topbar__quote {
   flex: 1;
   min-width: 0;
-  font-family: var(--font-display, 'DM Sans'), -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  color: var(--ink-2);
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--sky-blue-press);
   line-height: 1.4;
   opacity: 0;
   transition: opacity .5s ease;
@@ -479,9 +602,10 @@
 .bk-topbar__quote.is-visible { opacity: 1; }
 .bk-topbar__quote .quote-author {
   color: var(--mute);
-  font-weight: 400;
-  font-size: 13px;
-  margin-left: 6px;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 12px;
+  margin-left: 8px;
   /* El autor puede romper si el span entero no cabe en la línea */
   display: inline;
   white-space: normal;
@@ -606,7 +730,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid rgba(255,255,255,0.65);
-  box-shadow: 0 10px 34px rgba(5,32,60,0.18), inset 0 1px 0 rgba(255,255,255,0.75);
+  box-shadow: 0 10px 34px rgba(8,28,78,0.16), inset 0 1px 0 rgba(255,255,255,0.75);
 }
 @media (max-width: 880px) { .bk-bnav { display: flex; } }
 .bk-bnav__item {
@@ -629,23 +753,28 @@ body[data-app="verificador"] .top-header { display: none !important; }
 .bk-bnav__broquer img { height: 28px; width: auto; display: block; margin: -2px 0; }
 .bk-bnav__ico { position: relative; display: block; line-height: 0; }
 
-/* Globito rojo de mensajes sin leer (sobre el ícono de Chats) */
-.bk-badge {
+/* Globito rojo de mensajes sin leer (sobre el ícono de Chats).
+   IMPORTANTE: acotado a su contexto (.bk-bnav__ico / .bk-sheet__ico) para NO
+   pisar al .bk-badge de estado del theme que usan bolsa, cumplimiento, equipo,
+   firmas y whatsapp — esta hoja se re-ancla al final del head y ganaba. */
+.bk-bnav__ico .bk-badge,
+.bk-sheet__ico .bk-badge {
   position: absolute; top: -5px; right: -8px;
   min-width: 17px; height: 17px; padding: 0 4px;
   border-radius: 9px;
-  background: #E5484D; color: #FFFFFF;
+  background: var(--danger); color: #FFFFFF;
   font-size: 10px; font-weight: 800; line-height: 17px; text-align: center;
   border: 2px solid rgba(255,255,255,0.9);
   display: none;
   font-variant-numeric: tabular-nums;
 }
-.bk-badge.is-on { display: block; }
+.bk-bnav__ico .bk-badge.is-on,
+.bk-sheet__ico .bk-badge.is-on { display: block; }
 
 /* ── Hoja de módulos CRM (solo móvil) ── */
 .bk-sheet-back {
   position: fixed; inset: 0; z-index: 95;
-  background: rgba(5,32,60,0.38);
+  background: rgba(8,28,78,0.38);
   -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
   opacity: 0; pointer-events: none;
   transition: opacity var(--dur) var(--ease);
@@ -657,7 +786,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   background: var(--bone);
   border-radius: 22px 22px 0 0;
   padding: 8px 16px calc(22px + env(safe-area-inset-bottom, 0px));
-  box-shadow: 0 -12px 44px rgba(5,32,60,0.28);
+  box-shadow: 0 -12px 44px rgba(8,28,78,0.26);
   transform: translateY(102%);
   transition: transform var(--dur) var(--ease);
 }
@@ -694,11 +823,11 @@ body[data-app="verificador"] .top-header { display: none !important; }
   border: 1px solid var(--line);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 14px 32px rgba(22,22,22,.18), 0 4px 10px rgba(22,22,22,.08);
+  box-shadow: 0 14px 32px rgba(8,28,78,.16), 0 4px 10px rgba(8,28,78,.08);
   transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
   padding: 0; overflow: hidden;
 }
-.bk-shaark-fab:hover { transform: translateY(-2px); box-shadow: 0 18px 36px rgba(22,22,22,.22), 0 6px 12px rgba(22,22,22,.12); }
+.bk-shaark-fab:hover { transform: translateY(-2px); box-shadow: 0 18px 36px rgba(8,28,78,.20), 0 6px 12px rgba(8,28,78,.12); }
 .bk-shaark-fab img { height: 62%; width: auto; object-fit: contain; }
 .bk-shaark-fab__pulse {
   position: absolute; inset: -4px; border-radius: 50%;
@@ -724,8 +853,8 @@ body[data-app="verificador"] .top-header { display: none !important; }
   max-height: min(600px, calc(100dvh - 140px));
   background: var(--paper);
   border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  box-shadow: 0 24px 64px rgba(22,22,22,.18), 0 8px 16px rgba(22,22,22,.08);
+  border-radius: 20px;
+  box-shadow: 0 32px 80px rgba(8,28,78,0.26), 0 10px 24px rgba(8,28,78,0.12);
   flex-direction: column; overflow: hidden;
   animation: bkShkIn .26s cubic-bezier(.16,1,.3,1);
 }
@@ -734,20 +863,42 @@ body[data-app="verificador"] .top-header { display: none !important; }
 @media (max-width: 880px) {
   .bk-shaark-popup { right: 12px; left: 12px; bottom: 84px; width: auto; }
 }
+/* Cabecera del chat — mismo azul del sidebar, con el destello superior.
+   Separa visualmente la identidad de Broq de la zona de conversación. */
 .bk-shk-head {
   display: flex; align-items: center; gap: 12px;
-  padding: 14px 16px; border-bottom: 1px solid var(--line);
+  padding: 16px 16px 15px; border-bottom: none;
+  background: var(--sb-bg);
+  background-image: radial-gradient(120% 90% at 100% 0%, rgba(255,255,255,0.20), rgba(255,255,255,0) 62%);
+  position: relative; flex-shrink: 0;
+}
+.bk-shk-head::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
+  background: rgba(255,255,255,0.14); pointer-events: none;
 }
 .bk-shk-avatar {
-  width: 36px; height: 36px; border-radius: 50%;
-  background: var(--bone); border: 1px solid var(--line);
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(255,255,255,0.96);
+  border: 1px solid rgba(255,255,255,0.55);
+  box-shadow: 0 2px 10px rgba(8,28,78,0.26), inset 0 1px 0 rgba(255,255,255,0.9);
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   overflow: hidden;
 }
 .bk-shk-avatar img { height: 62%; width: auto; object-fit: contain; }
-.bk-shk-name { font-family: var(--font-display); font-size: 14px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); }
-.bk-shk-status { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--mute); font-family: var(--font-mono); letter-spacing: .04em; }
-.bk-shk-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--forest); }
+.bk-shk-name { font-family: var(--font-display); font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: rgba(255,255,255,1); line-height: 1.25; }
+.bk-shk-status { display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: rgba(255,255,255,0.72); font-family: inherit; letter-spacing: 0; font-weight: 500; margin-top: 1px; }
+/* Punto "en línea": núcleo verde con halo suave que respira */
+.bk-shk-status::before {
+  content: ''; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(52,211,153,1);
+  box-shadow: 0 0 0 3px rgba(52,211,153,0.20), 0 0 8px rgba(52,211,153,0.55);
+  animation: bkShkOnline 2.4s ease-in-out infinite;
+}
+@keyframes bkShkOnline {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(52,211,153,0.18), 0 0 8px rgba(52,211,153,0.45); }
+  50%      { box-shadow: 0 0 0 5px rgba(52,211,153,0.08), 0 0 12px rgba(52,211,153,0.70); }
+}
+@media (prefers-reduced-motion: reduce) { .bk-shk-status::before { animation: none; } }
 .bk-shk-wake {
   background: none; border: 1px solid var(--line-2);
   border-radius: var(--r-pill);
@@ -759,28 +910,29 @@ body[data-app="verificador"] .top-header { display: none !important; }
 .bk-shk-wake:hover { color: var(--ink); }
 .bk-shk-wake.is-on { color: var(--forest); border-color: var(--forest); }
 .bk-shk-close {
-  width: 28px; height: 28px;
-  background: transparent; border: none; cursor: pointer;
-  border-radius: 8px; color: var(--mute);
+  width: 30px; height: 30px;
+  background: rgba(255,255,255,0.10); border: none; cursor: pointer;
+  border-radius: 9px; color: rgba(255,255,255,0.75);
   display: flex; align-items: center; justify-content: center;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-.bk-shk-close:hover { background: var(--paper-2); color: var(--ink); }
-.bk-shk-msgs { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.bk-shk-close:hover { background: rgba(255,255,255,0.20); color: rgba(255,255,255,1); }
+.bk-shk-msgs { flex: 1; overflow-y: auto; padding: 16px 16px; display: flex; flex-direction: column; gap: 10px; background: var(--paper); }
 .bk-shk-msgs::-webkit-scrollbar { width: 4px; } .bk-shk-msgs::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 4px; }
-.bk-shk-bubble { max-width: 88%; padding: 10px 13px; border-radius: 14px; font-size: 13.5px; line-height: 1.5; letter-spacing: -0.005em; white-space: pre-wrap; }
-.bk-shk-bubble.bot { background: var(--bone); color: var(--ink); border: 1px solid var(--line); border-bottom-left-radius: 5px; align-self: flex-start; }
-.bk-shk-bubble.user { background: var(--ink); color: var(--paper); border-bottom-right-radius: 5px; align-self: flex-end; }
+.bk-shk-bubble { max-width: 88%; padding: 11px 14px; border-radius: 16px; font-size: 13.5px; line-height: 1.55; letter-spacing: -0.005em; white-space: pre-wrap; }
+.bk-shk-bubble.bot { background: var(--paper-2); color: var(--ink); border: 1px solid var(--line); border-bottom-left-radius: 6px; align-self: flex-start; }
+.bk-shk-bubble.user { background: var(--sky-blue); color: #FFFFFF; border-bottom-right-radius: 6px; align-self: flex-end; box-shadow: 0 2px 8px rgba(18,64,160,0.22); } /* AUDIT-EXEMPT-LINE */
 .bk-shk-bubble.toast { background: transparent; border: none; color: var(--mute); font-size: 12px; padding: 4px 10px; align-self: center; }
 /* Pasos del agente — "lo que está haciendo" en vivo */
 .bk-shk-bubble.step { background: transparent; border: none; color: var(--mute); font-size: 12px; padding: 3px 8px 3px 22px; align-self: flex-start; position: relative; opacity: 0.95; }
-.bk-shk-bubble.step::before { content: ""; position: absolute; left: 6px; top: 50%; width: 9px; height: 9px; margin-top: -4.5px; border: 1.6px solid var(--ink-2, #2E3338); border-right-color: transparent; border-radius: 50%; animation: bkSpin 0.7s linear infinite; }
+.bk-shk-bubble.step::before { content: ""; position: absolute; left: 6px; top: 50%; width: 9px; height: 9px; margin-top: -4.5px; border: 1.6px solid var(--ink-2); border-right-color: transparent; border-radius: 50%; animation: bkSpin 0.7s linear infinite; }
 .bk-shk-bubble.step.done { opacity: 0.6; }
-.bk-shk-bubble.step.done::before { content: ""; border: none; width: 10px; height: 10px; margin-top: -5px; animation: none; background: no-repeat center/contain url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300AA6C' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>"); }
+.bk-shk-bubble.step.done::before { content: ""; border: none; width: 10px; height: 10px; margin-top: -5px; animation: none; background: no-repeat center/contain url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230C7A5E' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>"); }
 @keyframes bkSpin { to { transform: rotate(360deg); } }
 /* Animación "pensando" (3 puntos) */
 .bk-shk-bubble.thinking { padding: 12px 14px; }
 .bk-dots { display: inline-flex; gap: 4px; align-items: center; }
-.bk-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--mute, #6B7685); display: inline-block; animation: bkBlink 1.2s ease-in-out infinite; }
+.bk-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--mute); display: inline-block; animation: bkBlink 1.2s ease-in-out infinite; }
 .bk-dots i:nth-child(2) { animation-delay: 0.2s; }
 .bk-dots i:nth-child(3) { animation-delay: 0.4s; }
 @keyframes bkBlink { 0%, 60%, 100% { opacity: 0.25; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-2px); } }
@@ -793,9 +945,9 @@ body[data-app="verificador"] .top-header { display: none !important; }
   transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 .bk-shk-chip:hover { background: var(--paper-2); border-color: var(--ink); }
-.bk-shk-input-row { display: flex; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--line); align-items: center; }
-.bk-shk-input { flex: 1; min-width: 0; background: var(--bone); border: 1px solid var(--line-2); border-radius: var(--r-pill); padding: 10px 14px; font-size: 14px; outline: none; font-family: inherit; color: var(--ink); }
-.bk-shk-input:focus { border-color: var(--ink); background: var(--paper); }
+.bk-shk-input-row { display: flex; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--line); align-items: center; background: var(--paper); }
+.bk-shk-input { flex: 1; min-width: 0; background: var(--paper-2); border: 1px solid var(--line-2); border-radius: var(--r-pill); padding: 11px 15px; font-size: 14px; outline: none; font-family: inherit; color: var(--ink); transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease); }
+.bk-shk-input:focus { border-color: var(--sky-blue); background: var(--paper); box-shadow: 0 0 0 3px rgba(18,64,160,0.12); }
 .bk-shk-mic, .bk-shk-send {
   width: 40px; height: 40px; border-radius: 50%;
   border: none; cursor: pointer; flex-shrink: 0;
@@ -804,15 +956,15 @@ body[data-app="verificador"] .top-header { display: none !important; }
 .bk-shk-mic { background: var(--paper-2); color: var(--ink-2); border: 1px solid var(--line); }
 .bk-shk-mic:hover { background: var(--ink); color: var(--paper); }
 .bk-shk-mic.listening { background: var(--danger); color: white; border-color: var(--danger); animation: bkMicPulse 1.2s ease-in-out infinite; }
-@keyframes bkMicPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(231,8,102,.5); } 50% { box-shadow: 0 0 0 8px rgba(231,8,102,0); } }
-.bk-shk-send { background: var(--ink); color: var(--paper); }
-.bk-shk-send:hover { opacity: .9; }
+@keyframes bkMicPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(198,40,57,.5); } 50% { box-shadow: 0 0 0 8px rgba(198,40,57,0); } }
+.bk-shk-send { background: var(--sky-blue); color: #FFFFFF; box-shadow: 0 3px 10px rgba(18,64,160,0.30); transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease); } /* AUDIT-EXEMPT-LINE */
+.bk-shk-send:hover { background: var(--sky-blue-press); box-shadow: 0 5px 14px rgba(18,64,160,0.38); }
 @media (hover: hover) and (pointer: fine) { .bk-shk-mic { display: none; } }
 
 /* ── Profile Drawer ─────────────────────────────────────────── */
 .bk-profile-overlay {
   position: fixed; inset: 0; z-index: 200;
-  background: rgba(5,32,60,0.55);
+  background: rgba(8,28,78,0.55);
   backdrop-filter: blur(2px);
   opacity: 0; visibility: hidden; pointer-events: none;
   transition: opacity .18s ease, visibility .18s ease;
@@ -822,7 +974,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   position: fixed; top: 0; right: 0; bottom: 0; z-index: 201;
   width: 384px; max-width: 100vw;
   background: var(--paper); border-left: 1px solid var(--line);
-  box-shadow: -24px 0 48px rgba(5,32,60,0.10);
+  box-shadow: -24px 0 48px rgba(8,28,78,0.10);
   display: flex; flex-direction: column;
   transform: translate3d(100%,0,0);
   transition: transform .28s cubic-bezier(.16,1,.3,1);
@@ -838,7 +990,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   gap: 12px;
   padding: 26px 22px 22px;
   background: var(--sky-navy);
-  background-image: radial-gradient(120% 140% at 100% 0%, rgba(0,98,227,.35), transparent 55%);
+  background-image: radial-gradient(120% 140% at 100% 0%, rgba(18,64,160,.45), transparent 55%);
   flex-shrink: 0;
   position: relative;
 }
@@ -862,7 +1014,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   display: flex; align-items: center; justify-content: center;
   font-weight: 700; font-size: 19px; letter-spacing: -0.02em;
   flex-shrink: 0;
-  box-shadow: 0 0 0 3px rgba(255,255,255,0.14), 0 4px 14px rgba(0,98,227,0.35);
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.14), 0 4px 14px rgba(18,64,160,0.40);
 }
 .bk-pd-avatar-info { flex: 1; min-width: 0; }
 .bk-pd-name { font-family: var(--font-display); font-size: 16px; font-weight: 600; color: #FFFFFF; letter-spacing: -0.01em; }
@@ -904,7 +1056,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
 .bk-pd-btn:active { transform: scale(.98); }
 .bk-pd-btn-primary { background: var(--sky-navy); color: #FFFFFF; }
 .bk-pd-btn-outline { background: var(--bone); border: 1px solid var(--line-2); color: var(--ink-2); margin-top: 8px; }
-.bk-pd-btn-danger  { background: var(--bone); border: 1px solid rgba(231,8,102,.3); color: var(--danger); margin-top: 8px; }
+.bk-pd-btn-danger  { background: var(--bone); border: 1px solid rgba(198,40,57,.3); color: var(--danger); margin-top: 8px; }
 .bk-pd-status {
   display: flex; align-items: center; gap: 6px;
   font-size: 12px; color: var(--mute); margin-top: 8px;
@@ -979,11 +1131,15 @@ body[data-app]{background:var(--paper)!important;color:var(--ink)!important;font
 body[data-app] main,body[data-app] .app-main,body[data-app] .screen,body[data-app] .container,body[data-app] .wrap{background:transparent!important}
 body[data-app] .card,body[data-app] .ui-card,body[data-app] .panel,body[data-app] .box,body[data-app] .module,body[data-app] .section,body[data-app] .pf-card,body[data-app] .res-card,body[data-app] .form-card,body[data-app] .calc-card,body[data-app] .result-card{background:var(--bone)!important;border:1px solid var(--line)!important;border-radius:var(--r-lg)!important;box-shadow:var(--shadow-xs)!important;color:var(--ink)!important}
 body[data-app] h1,body[data-app] h2,body[data-app] h3,body[data-app] .title,body[data-app] .card-title,body[data-app] .section-title{font-family:var(--font-display)!important;color:var(--ink)!important;letter-spacing:-.02em!important;font-weight:700!important}
+/* Excepción: dentro de superficies azules (tarjetas de acción, hero,
+   App Store) los títulos vuelven a blanco. Sin esto, la regla genérica
+   de arriba los pinta de tinta oscura sobre azul. */
+body[data-app] .ai-card h1,body[data-app] .ai-card h2,body[data-app] .ai-card h3,body[data-app] .ai-card .title,body[data-app] .appstore-card h1,body[data-app] .appstore-card h2,body[data-app] .appstore-card h3,body[data-app] .appstore-card .title,body[data-app] .appstore-card__title,body[data-app] .sky-hero h1,body[data-app] .sky-hero h2,body[data-app] .sky-hero h3,body[data-app] .sky-hero .title{color:var(--bone)!important}
 body[data-app] label,body[data-app] .label,body[data-app] .field-label,body[data-app] .sec-lbl{color:var(--mute)!important;font-size:11px!important;font-weight:700!important;letter-spacing:.01em!important}
-body[data-app] input,body[data-app] select,body[data-app] textarea{background:var(--bone)!important;border:1px solid var(--line-2)!important;border-radius:var(--r)!important;color:var(--ink)!important;box-shadow:none!important;min-height:42px}
+body[data-app] input,body[data-app] select,body[data-app] textarea{background:var(--bone)!important;border:1px solid var(--line-2)!important;border-radius:var(--r)!important;color:var(--ink)!important;box-shadow:none!important;min-height:44px}
 body[data-app] input:focus,body[data-app] select:focus,body[data-app] textarea:focus{border-color:var(--sky-blue)!important;box-shadow:var(--focus)!important;outline:none!important}
 body[data-app] button,body[data-app] .btn,body[data-app] .ui-btn,body[data-app] .btn-pdf,body[data-app] .isr-calc-btn{border-radius:var(--r-pill)!important;font-family:var(--font-sans)!important;font-weight:700!important;letter-spacing:-.005em!important}
-body[data-app] .btn-primary,body[data-app] .ui-btn.forest,body[data-app] .isr-calc-btn,body[data-app] .btn-pdf,body[data-app] #gen-btn,body[data-app] #pdf-btn{background:var(--sky-blue)!important;color:#fff!important;border:1px solid var(--sky-blue)!important;box-shadow:0 1px 2px rgba(0,98,227,.18)!important}
+body[data-app] .btn-primary,body[data-app] .ui-btn.forest,body[data-app] .isr-calc-btn,body[data-app] .btn-pdf,body[data-app] #gen-btn,body[data-app] #pdf-btn{background:var(--sky-blue)!important;color:#fff!important;border:1px solid var(--sky-blue)!important;box-shadow:0 1px 2px rgba(18,64,160,.18)!important}
 body[data-app] .btn-primary:hover,body[data-app] .ui-btn.forest:hover,body[data-app] .isr-calc-btn:hover,body[data-app] .btn-pdf:hover,body[data-app] #gen-btn:hover,body[data-app] #pdf-btn:hover{background:var(--sky-blue-press)!important;border-color:var(--sky-blue-press)!important}
 body[data-app] table{border-collapse:separate!important;border-spacing:0!important;background:var(--bone)!important;border:1px solid var(--line)!important;border-radius:var(--r)!important;overflow:hidden!important}
 body[data-app] th{background:var(--paper-2)!important;color:var(--mute)!important;font-size:11px!important;letter-spacing:.01em!important}
@@ -994,7 +1150,7 @@ body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
    los secundarios/ghost/cancelar/eliminar y las superficies de MARCA externa
    (verde de conectar WhatsApp, azul de conectar Facebook). Los futuros módulos
    deben usar .btn-primary o .bk-btn--forest para heredar esto. */
-body[data-app] .btn-new-tarea,body[data-app] .tk-composer .go,body[data-app] .fa-btn-primary,body[data-app] .btn-new-prop,body[data-app] .eb-import-btn,body[data-app] .pf-save-btn,body[data-app] #ai-btn,body[data-app] #calc-btn,body[data-app] #btn-analizar-ia,body[data-app] #btn-clean,body[data-app] #fa-ai-btn,body[data-app] #fa-submit-btn,body[data-app] #tpl-submit-btn{background:var(--sky-blue)!important;color:#fff!important;border:1px solid var(--sky-blue)!important;box-shadow:0 1px 2px rgba(0,98,227,.18)!important}
+body[data-app] .btn-new-tarea,body[data-app] .tk-composer .go,body[data-app] .fa-btn-primary,body[data-app] .btn-new-prop,body[data-app] .eb-import-btn,body[data-app] .pf-save-btn,body[data-app] #ai-btn,body[data-app] #calc-btn,body[data-app] #btn-analizar-ia,body[data-app] #btn-clean,body[data-app] #fa-ai-btn,body[data-app] #fa-submit-btn,body[data-app] #tpl-submit-btn{background:var(--sky-blue)!important;color:#fff!important;border:1px solid var(--sky-blue)!important;box-shadow:0 1px 2px rgba(18,64,160,.18)!important}
 body[data-app] .btn-new-tarea:hover,body[data-app] .tk-composer .go:hover,body[data-app] .fa-btn-primary:hover,body[data-app] .btn-new-prop:hover,body[data-app] .eb-import-btn:hover,body[data-app] .pf-save-btn:hover,body[data-app] #ai-btn:hover,body[data-app] #calc-btn:hover,body[data-app] #btn-analizar-ia:hover,body[data-app] #btn-clean:hover,body[data-app] #fa-ai-btn:hover,body[data-app] #fa-submit-btn:hover,body[data-app] #tpl-submit-btn:hover{background:var(--sky-blue-press)!important;border-color:var(--sky-blue-press)!important}
 /* ── Unificación de TAMAÑO/FORMA de botones de acción (misma altura 44px,
    padding, tipo y radio píldora en todos los módulos). Se excluyen a propósito
@@ -1006,12 +1162,12 @@ body[data-app] .btn,body[data-app] .btn-primary,body[data-app] .ui-btn,body[data
 body[data-app] .props-head__title h1,body[data-app] .page-head h1,body[data-app] .tk-head__title h1,body[data-app] .ms-head h1,body[data-app] .guide-title,body[data-app] .bx-list__title h1,body[data-app] .es-hero__brand{font-size:30px!important;font-weight:700!important;letter-spacing:-.02em!important;line-height:1.1!important}
 /* ── Alineación título↔cuerpo: el header canónico respeta el ancho del módulo ── */
 body[data-app] .bk-ph{max-width:var(--page-max,1180px)!important}
-body[data-app="isr"],body[data-app="ficha-manual"],body[data-app="avm"],body[data-app="contratos"],body[data-app="whatsapp"],body[data-app="mi-sitio"],body[data-app="image-cleaner"]{--page-max:var(--form-max,760px)}
+body[data-app="isr"],body[data-app="ficha-manual"],body[data-app="avm"],body[data-app="contratos"],body[data-app="mi-sitio"],body[data-app="image-cleaner"]{--page-max:var(--form-max,760px)}
 body[data-app="blog"]{--page-max:960px}
 body[data-app="facebook-ads"]{--page-max:980px}
 
 /* ── Visor/entrega inmediata de archivos generados ── */
-.bk-file-overlay{position:fixed;inset:0;z-index:2147483647;background:rgba(5,32,60,.46);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;padding:18px}
+.bk-file-overlay{position:fixed;inset:0;z-index:2147483647;background:rgba(8,28,78,.46);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;padding:18px}
 .bk-file-sheet{width:min(920px,100%);height:min(86vh,820px);background:var(--paper);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow-xl);display:flex;flex-direction:column;overflow:hidden}
 .bk-file-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);color:var(--ink);background:var(--paper)}
 .bk-file-head strong{display:block;font-size:15px}.bk-file-head span{display:block;font-size:12px;color:var(--mute);margin-top:2px}.bk-file-close{border:0!important;background:transparent!important;color:var(--ink)!important;font-size:28px!important;line-height:1!important;padding:4px 8px!important;box-shadow:none!important}.bk-file-frame{flex:1;width:100%;border:0;background:white}.bk-file-placeholder{flex:1;display:flex;align-items:center;justify-content:center;color:var(--mute);background:var(--bone)}.bk-file-actions{display:flex;gap:10px;padding:12px;border-top:1px solid var(--line);background:var(--paper-2)}.bk-file-primary,.bk-file-secondary{flex:1;text-align:center;border-radius:var(--r-pill)!important;padding:12px 14px!important;font-weight:700!important;text-decoration:none!important;font-family:var(--font-sans)!important}.bk-file-primary{background:var(--sky-blue)!important;color:#fff!important;border:1px solid var(--sky-blue)!important}.bk-file-secondary{background:#fff!important;color:var(--ink)!important;border:1px solid var(--line-2)!important}
@@ -1148,20 +1304,31 @@ body[data-app="facebook-ads"]{--page-max:980px}
   function buildSidebarLink(m, active) {
     return `<a href="${m.href}" class="bk-sb-link${m.key === active ? ' is-active' : ''}">${svg(m.icon)} ${m.label}</a>`;
   }
-  function buildCrmGroup(items, active) {
+  // Un grupo del sidebar: mismo acordeón que ya tenía CRM, ahora para los
+  // cinco. Arranca abierto solo el grupo donde está el módulo que se está
+  // viendo; los demás cerrados, para que el menú quepa en una pantalla.
+  function buildSidebarGroup(grupo, items, active) {
+    const esMas = grupo.key === 'mas';
+    if (!items.length && !esMas) return '';
     const isOpen = items.some(m => m.key === active);
-    return `<div class="bk-sb-group${isOpen ? ' is-open' : ''}" id="bk-sb-crm-group">
-      <button class="bk-sb-link bk-sb-trigger${isOpen ? ' is-active' : ''}" id="bk-sb-crm-trigger" type="button" aria-expanded="${isOpen ? 'true' : 'false'}" aria-controls="bk-sb-crm-submenu">
-        ${svg('funnel')} CRM ${svg('chevron', 16, 2, 'bk-sb-chevron')}
+    const gid = 'bk-sb-g-' + grupo.key;
+    // "Más" lleva a Mi perfil como primer renglón (abre el drawer, no navega)
+    // y su indicador es el propio "+", que gira a "×" al abrirse.
+    const perfilLink = esMas
+      ? `<a href="javascript:void(0)" class="bk-sb-link" onclick="openProfileDrawer()">${svg('user')} Mi perfil</a>`
+      : '';
+    // "Más" ya trae el "+" como icono del grupo: sin indicador duplicado.
+    const indicador = esMas
+      ? ''
+      : svg('chevron', 16, 2, 'bk-sb-chevron');
+    return `<div class="bk-sb-block bk-sb-group${esMas ? ' bk-sb-block--cuenta bk-sb-group--mas' : ''}${isOpen ? ' is-open' : ''}" id="${gid}">
+      <button class="bk-sb-link bk-sb-trigger${isOpen ? ' is-active' : ''}" data-sb-group="${grupo.key}" type="button" aria-expanded="${isOpen ? 'true' : 'false'}" aria-controls="${gid}-sub">
+        ${svg(grupo.icon)} ${grupo.label} ${indicador}
       </button>
-      <div class="bk-sb-submenu" id="bk-sb-crm-submenu">
-        ${items.map(m => buildSidebarLink(m, active)).join('')}
+      <div class="bk-sb-submenu" id="${gid}-sub">
+        ${perfilLink}${items.map(m => buildSidebarLink(m, active)).join('')}
       </div>
     </div>`;
-  }
-  function buildMainSidebar(items, active) {
-    const profileLink = `<a href="javascript:void(0)" class="bk-sb-link" onclick="openProfileDrawer()">${svg('user')} Mi perfil</a>`;
-    return items.map(m => buildSidebarLink(m, active) + (m.key === 'mi-sitio' ? profileLink : '')).join('');
   }
   function buildBnavItem(m, active) {
     return `<a href="${m.href}" class="bk-bnav__item${m.key === active ? ' is-active' : ''}">${svg(m.icon, 22)} <span>${m.label.split(' ')[0]}</span></a>`;
@@ -1204,19 +1371,22 @@ body[data-app="facebook-ads"]{--page-max:980px}
       pageWrap.insertBefore(backWrap, pageWrap.firstChild);
     }
 
-    // "Equipo" solo se muestra a usuarios empresariales: los que pertenecen a una
-    // organización con tipo 'empresa' (es_empresa, expuesto por /org). Esto es
-    // independiente de usuarios.rol ('equipo' en Admin son tus agentes internos).
-    const isEnterprise = !!(profile?.esEmpresa || profile?.isAdmin);
-    const crm   = MODS.filter(m => m.group === 'crm' && (!m.enterpriseOnly || isEnterprise));
-    const main  = MODS.filter(m => m.group === 'main' && (!m.adminOnly || profile?.isAdmin));
+    // "Equipo" ya no vive en el menú: se movió a Perfil, que es donde vive el
+    // resto de la configuración de la cuenta. Se sigue mostrando solo a
+    // usuarios empresariales — los que pertenecen a una organización con tipo
+    // 'empresa' (es_empresa, expuesto por /org) — pero eso ahora lo decide el
+    // drawer de perfil, no el sidebar.
+    const visible = m => (!m.adminOnly || profile?.isAdmin);
+    const porGrupo = k => MODS.filter(m => m.group === k && visible(m));
 
     const shell = document.createElement('div');
     shell.className = 'bk-shell-root';
     shell.innerHTML = `
       <aside class="bk-sidebar" id="bk-sidebar">
-        ${buildCrmGroup(crm, activeKey)}
-        ${buildMainSidebar(main, activeKey)}
+        <div class="bk-sidebar__brand">
+          <a href="index.html" aria-label="Ir al inicio Broquer"><img src="logotipo-white.png" alt="Broquer"/></a>
+        </div>
+        ${GRUPOS.map(g => buildSidebarGroup(g, porGrupo(g.key), activeKey)).join('')}
       </aside>
 
       <main class="bk-content">
@@ -1241,16 +1411,27 @@ body[data-app="facebook-ads"]{--page-max:980px}
     `;
     document.body.appendChild(shell);
 
-    const crmTrigger = document.getElementById('bk-sb-crm-trigger');
-    const crmGroup = document.getElementById('bk-sb-crm-group');
-    if (crmTrigger && crmGroup) {
-      crmTrigger.addEventListener('click', () => {
-        const open = !crmGroup.classList.contains('is-open');
-        crmGroup.classList.toggle('is-open', open);
-        crmTrigger.classList.toggle('is-active', open);
-        crmTrigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    // Acordeón de los grupos del sidebar. Abrir uno cierra los demás: son
+    // cinco, y con dos abiertos al mismo tiempo ya hay que hacer scroll.
+    shell.querySelectorAll('.bk-sb-trigger[data-sb-group]').forEach(trigger => {
+      trigger.addEventListener('click', () => {
+        const bloque = trigger.closest('.bk-sb-group');
+        if (!bloque) return;
+        const open = !bloque.classList.contains('is-open');
+        shell.querySelectorAll('.bk-sb-group').forEach(otro => {
+          if (otro === bloque) return;
+          otro.classList.remove('is-open');
+          const t = otro.querySelector('.bk-sb-trigger');
+          if (t) {
+            t.classList.remove('is-active');
+            t.setAttribute('aria-expanded', 'false');
+          }
+        });
+        bloque.classList.toggle('is-open', open);
+        trigger.classList.toggle('is-active', open);
+        trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
       });
-    }
+    });
 
     // ── Diagnóstico de cascada CSS del sidebar ──
     // Si algún módulo override el color de los links del drawer, lo detectamos
@@ -1284,8 +1465,10 @@ body[data-app="facebook-ads"]{--page-max:980px}
 
     // Bottom nav
     // PWA bottom nav (liquid glass): Inicio · Broquer (isotipo) · Perfil
-    const crmKeys = new Set(MODS.filter(m => m.group === 'crm').map(m => m.key));
-    const crmActive = crmKeys.has(activeKey);
+    // El botón "Menú" se marca activo cuando estás dentro de cualquier módulo
+    // agrupado, no solo del CRM.
+    const grupoKeys = new Set(GRUPOS.map(g => g.key));
+    const crmActive = MODS.some(m => m.key === activeKey && grupoKeys.has(m.group));
 
     const bnav = document.createElement('nav');
     bnav.className = 'bk-bnav';
@@ -1297,6 +1480,8 @@ body[data-app="facebook-ads"]{--page-max:980px}
        </button>` +
       // El acceso del pulgar entra directo a la pestaña de chats, no a la de
       // ajustes: el agente aprieta esto para leer, no para configurar.
+      // WhatsApp ya está abierto para todos los usuarios, así que este botón
+      // es fijo en la barra inferior.
       `<a href="whatsapp.html#chats" class="bk-bnav__item${activeKey === 'whatsapp' ? ' is-active' : ''}" id="bk-bnav-chats" aria-label="Chats de WhatsApp">
          <span class="bk-bnav__ico">${svg('whatsapp', 24)}<i class="bk-badge" id="bk-bnav-badge"></i></span>
          <span>Chats</span>
@@ -1315,9 +1500,6 @@ body[data-app="facebook-ads"]{--page-max:980px}
     sheet.setAttribute('role', 'dialog');
     sheet.setAttribute('aria-label', 'Módulos');
 
-    const crmMods  = MODS.filter(m => m.group === 'crm' && (!m.enterpriseOnly || isEnterprise));
-    const toolMods = MODS.filter(m => m.group === 'main' && (!m.adminOnly || profile?.isAdmin));
-
     function sheetItem(m) {
       const act = m.key === activeKey ? ' is-active' : '';
       const badge = m.key === 'whatsapp' ? '<i class="bk-badge" id="bk-sheet-badge"></i>' : '';
@@ -1328,17 +1510,23 @@ body[data-app="facebook-ads"]{--page-max:980px}
       return `<a ${attrs} class="bk-sheet__item${act}"><span class="bk-sheet__ico">${svg(m.icon, 19)}${badge}</span><span>${m.label}</span></a>`;
     }
 
-    // "Mi perfil" vive dentro del menú (entre Blog y Ayuda), ya no en el bar inferior.
+    // "Mi perfil" vive dentro de la sección "Más", igual que en el sidebar.
     const profileSheetItem =
       `<a href="javascript:void(0)" class="bk-sheet__item" onclick="window.bkToggleModsSheet&&window.bkToggleModsSheet(false);openProfileDrawer();">` +
       `<span class="bk-sheet__ico">${svg('user', 19)}</span><span>Mi perfil</span></a>`;
 
+    // Los mismos grupos del sidebar, en el mismo orden. Que el agente encuentre
+    // Cumplimiento en el mismo lugar en la compu y en el celular es medio punto
+    // del rediseño.
+    const seccion = (titulo, items, extra) =>
+      items.length
+        ? `<div class="bk-sheet__eyebrow">${titulo}</div>` +
+          `<div class="bk-sheet__grid">${extra || ''}${items.map(sheetItem).join('')}</div>`
+        : '';
+
     sheet.innerHTML =
       `<div class="bk-sheet__grip"></div>` +
-      `<div class="bk-sheet__eyebrow">CRM</div>` +
-      `<div class="bk-sheet__grid">${crmMods.map(sheetItem).join('')}</div>` +
-      `<div class="bk-sheet__eyebrow">Herramientas</div>` +
-      `<div class="bk-sheet__grid">${toolMods.map(m => sheetItem(m) + (m.key === 'blog' ? profileSheetItem : '')).join('')}</div>`;
+      GRUPOS.map(g => seccion(g.label, porGrupo(g.key), g.key === 'mas' ? profileSheetItem : '')).join('');
     document.body.appendChild(sheet);
 
     function toggleSheet(force) {
@@ -1490,9 +1678,13 @@ body[data-app="facebook-ads"]{--page-max:980px}
 
     let data = null, usedFallback = false;
     try {
+      const _tokAgente = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || '';
       const r = await fetch(API_BASE + '/agent', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        // Se manda la sesión para que el backend sepa quién pregunta. Sin esto,
+        // Broq quedaba abierto a cualquiera en internet con nuestra cuenta.
+        headers: Object.assign({ 'Content-Type': 'application/json' },
+                               _tokAgente ? { Authorization: 'Bearer ' + _tokAgente } : {}),
         body: JSON.stringify({
           messages: shaarkMsgs,
           context: getCurrentContext(),
@@ -1515,9 +1707,11 @@ body[data-app="facebook-ads"]{--page-max:980px}
     // ── Fallback al chat clásico (/chat-claude) si /agent no está disponible ──
     if (usedFallback) {
       try {
+        const _tokChat = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || '';
         const r2 = await fetch(API_BASE + '/chat-claude', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: Object.assign({ 'Content-Type': 'application/json' },
+                                 _tokChat ? { Authorization: 'Bearer ' + _tokChat } : {}),
           body: JSON.stringify({ max_tokens: 1200, messages: shaarkMsgs, context: getCurrentContext() }),
         });
         const d2 = await r2.json();
@@ -1589,6 +1783,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
       // ── ACCIONES DIRECTAS — ejecutan en la ventana del asistente ──
       case 'agregar_contacto':         agregarContactoDirecto(ac); break;
       case 'crear_inmueble_directo':    crearInmuebleDirecto(ac); break;
+      case 'crear_tarea_directo':      crearTareaDirecto(ac); break;
       case 'generar_contrato_directo': generarContratoDirecto(ac); break;
       case 'calcular_isr_directo':     calcularISRDirecto(ac); break;
       case 'estimar_valor_directo':    estimarValorDirecto(ac); break;
@@ -1739,6 +1934,59 @@ body[data-app="facebook-ads"]{--page-max:980px}
       }
     } catch (e) {
       _addAssistantBubble('No pude agregar el contacto: ' + (e.message || e));
+    }
+  }
+
+  async function crearTareaDirecto(ac) {
+    try {
+      const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
+      const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
+      const tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+      const userRaw = localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}';
+      const user = JSON.parse(userRaw);
+      if (!tok || !user.id) { _addAssistantBubble('No pude crear la tarea: tu sesión expiró.'); return; }
+      const titulo = (ac.titulo || '').trim();
+      if (!titulo) { _addAssistantBubble('Necesito un título para crear la tarea.'); return; }
+      const fecha = (ac.fecha || '').trim();
+      const hora = (ac.hora || '').trim() || '12:00';
+      const payload = {
+        user_id: user.id,
+        titulo,
+        fecha_entrega: fecha ? (fecha + 'T' + hora + ':00') : null,
+        notas: ac.notas || null,
+        contacto_id: ac.contacto_id || null,
+        propiedad_id: ac.propiedad_id || null,
+      };
+      const headersBase = {
+        'apikey': SB_KEY, 'Authorization': 'Bearer ' + tok, 'Content-Type': 'application/json',
+      };
+      const r = await fetch(`${SB_URL}/rest/v1/tareas`, {
+        method: 'POST',
+        headers: Object.assign({}, headersBase, { 'Prefer': 'return=representation' }),
+        body: JSON.stringify(payload)
+      });
+      if (!r.ok) { _addAssistantBubble('No pude crear la tarea. Revisa los datos e inténtalo otra vez.'); return; }
+      const filas = await r.json();
+      const nueva = Array.isArray(filas) ? filas[0] : filas;
+      // Además de la columna suelta, se deja el vínculo en las tablas de
+      // varios-a-varios (tareas_contactos / tareas_propiedades), así la tarea
+      // aparece también si más adelante se le agregan más vínculos desde ahí.
+      if (nueva && nueva.id) {
+        const vinculos = [];
+        if (ac.contacto_id) vinculos.push(fetch(`${SB_URL}/rest/v1/tareas_contactos`, {
+          method: 'POST', headers: Object.assign({}, headersBase, { 'Prefer': 'return=minimal' }),
+          body: JSON.stringify({ user_id: user.id, tarea_id: nueva.id, contacto_id: ac.contacto_id })
+        }).catch(() => {}));
+        if (ac.propiedad_id) vinculos.push(fetch(`${SB_URL}/rest/v1/tareas_propiedades`, {
+          method: 'POST', headers: Object.assign({}, headersBase, { 'Prefer': 'return=minimal' }),
+          body: JSON.stringify({ user_id: user.id, tarea_id: nueva.id, propiedad_id: ac.propiedad_id })
+        }).catch(() => {}));
+        if (vinculos.length) await Promise.all(vinculos);
+      }
+      const cuando = fecha ? (' para el ' + fecha + (ac.hora ? ' a las ' + hora : '')) : '';
+      _addAssistantBubble(`✓ Tarea creada: <strong>${titulo}</strong>${cuando}. Ya está en tu módulo de Tareas.`);
+    } catch (e) {
+      _addAssistantBubble('No pude crear la tarea: ' + (e.message || e));
     }
   }
 
@@ -1907,9 +2155,11 @@ body[data-app="facebook-ads"]{--page-max:980px}
         comentarios: ac.comentarios || '',
       };
       // 1) Pedir la estimación con comparables
+      const _tokAvm = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || '';
       const r1 = await fetch(API + '/api/avm-websearch', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: Object.assign({ 'Content-Type': 'application/json' },
+                               _tokAvm ? { Authorization: 'Bearer ' + _tokAvm } : {}),
         body: JSON.stringify(body),
       });
       const resultado = await r1.json();
@@ -2250,7 +2500,12 @@ body[data-app="facebook-ads"]{--page-max:980px}
       const fd = new FormData();
       fd.append('audio', blob, 'voz.' + ext);
       fd.append('idioma', 'es');
-      const r = await fetch(API_BASE + '/transcribir', { method: 'POST', body: fd });
+      const _tokVoz = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || '';
+      const r = await fetch(API_BASE + '/transcribir', {
+        method: 'POST',
+        headers: _tokVoz ? { Authorization: 'Bearer ' + _tokVoz } : {},
+        body: fd,
+      });
       if (!r.ok) throw new Error('status ' + r.status);
       const data = await r.json();
       const texto = (data.texto || '').trim();
@@ -2703,6 +2958,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
                   <div class="bk-pd-sub-info" id="pd-sub-info">Activa tu suscripción para acceder a todas las funciones de Broquer.</div>
                   <button class="bk-pd-btn bk-pd-btn-primary" id="pd-sub-btn" onclick="startCheckout()">Activar Broquer Max</button>
                   <button class="bk-pd-btn bk-pd-btn-outline" id="pd-sub-cancel-btn" onclick="cancelSubscription()" style="display:none">Cancelar suscripción</button>
+                  <a href="empresas.html" style="display:block;margin-top:12px;font-size:var(--fs-label-3);color:var(--mute);text-decoration:underline;line-height:1.5">¿Tienes equipo? Conoce Broquer para Empresas</a>
                   <div class="bk-pd-toast" id="pd-toast-sub"></div>
                 </div>
               </div>
@@ -2754,6 +3010,31 @@ body[data-app="facebook-ads"]{--page-max:980px}
                   </div>
                   <button class="bk-pd-btn bk-pd-btn-danger" id="pd-del-confirm-btn" onclick="ejecutarEliminarCuenta()" style="opacity:.4;pointer-events:none">Eliminar mi cuenta permanentemente</button>
                   <div class="bk-pd-toast" id="pd-toast-del"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Equipo (solo cuentas empresariales) -->
+          <!-- Vivía en el menú lateral, dentro de CRM. No es una herramienta de
+               trabajo diario: es configuración de la cuenta — quién entra, qué
+               ve, qué puede tocar — y se consulta dos veces al mes. Su lugar es
+               aquí, junto a suscripción y datos fiscales. -->
+          <div class="bk-pd-menu-item" id="pdsec-equipo" style="display:none">
+            <button class="bk-pd-menu-trigger" onclick="togglePdSection('equipo')">
+              <span class="bk-pd-menu-trigger-left">
+                <span class="bk-pd-menu-icon">${svg('users', 16)}</span>
+                Equipo
+              </span>
+              <svg class="bk-pd-menu-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="bk-pd-menu-panel">
+              <div class="bk-pd-menu-panel-inner">
+                <div class="bk-pd-card">
+                  <p style="font-size:13px;color:var(--mute);line-height:1.5;margin-bottom:12px">Quién trabaja en tu cuenta, qué puede ver cada quien e invitaciones pendientes.</p>
+                  <a href="equipo.html" style="text-decoration:none">
+                    <button class="bk-pd-btn bk-pd-btn-outline" style="width:100%">Administrar equipo</button>
+                  </a>
                 </div>
               </div>
             </div>
@@ -2943,6 +3224,14 @@ body[data-app="facebook-ads"]{--page-max:980px}
 
     const badge = document.getElementById('pd-role-badge');
     const adminSec = document.getElementById('pdsec-admin');
+
+    // Equipo: mismo criterio fail-closed que tenía en el sidebar. Si no se
+    // pudo confirmar que la cuenta es empresarial, no se muestra.
+    const equipoSec = document.getElementById('pdsec-equipo');
+    if (equipoSec) {
+      const esEmp = !!(window.__BK_PROFILE?.esEmpresa || p.rol === 'admin');
+      equipoSec.style.display = esEmp ? 'block' : 'none';
+    }
     if (badge) {
       if (p.rol === 'admin') {
         badge.textContent = 'Admin';
@@ -3515,7 +3804,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
   }
   window.closeBroquerMaxModal = closeBroquerMaxModal;
 
-  function showBroquerMaxModal() {
+  function bkShowSubscribeModal() {
     if (document.getElementById('bk-max-modal')) return;
     const buyBtn = IS_IOS_NATIVE
       ? `<button id="bk-iap-buy" onclick="rcBuy()" disabled style="width:100%;height:48px;border:none;border-radius:12px;background:var(--sky-blue);color:#FFFFFF;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Cargando…</button>
@@ -3526,7 +3815,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
       : '';
     const ov = document.createElement('div');
     ov.id = 'bk-max-modal';
-    ov.style.cssText = 'position:fixed;inset:0;z-index:2147483646;background:rgba(5,32,60,.46);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;font-family:var(--font-sans);';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:2147483646;background:rgba(8,28,78,.46);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;font-family:var(--font-sans);';
     ov.innerHTML = `
       <div style="width:100%;max-width:400px;background:var(--bone);border:1px solid var(--line);border-radius:24px;padding:28px;box-shadow:0 20px 60px rgba(5,32,60,.30);text-align:center;position:relative;">
         <button onclick="closeBroquerMaxModal()" aria-label="Cerrar" style="position:absolute;top:12px;right:14px;border:none;background:transparent;color:var(--mute);font-size:26px;line-height:1;cursor:pointer;padding:4px 8px;font-family:inherit;">&times;</button>
@@ -3541,6 +3830,54 @@ body[data-app="facebook-ads"]{--page-max:980px}
     ov.addEventListener('click', (e) => { if (e.target === ov) closeBroquerMaxModal(); });
     document.body.appendChild(ov);
     if (IS_IOS_NATIVE) rcRenderPrice();
+  }
+  /* ── Trial de 7 días desde el gate ─────────────────────────────────
+     El usuario ya está registrado: si su cuenta todavía tiene el regalo,
+     el modal anuncia los 7 días gratis y los activa solo. Si el regalo ya
+     se usó (o falla la activación), cae al modal de suscripción normal. */
+  async function bkActivarTrialDesdeGate() {
+    const est = document.getElementById('bk-trial-estado');
+    const btn = document.getElementById('bk-trial-continuar');
+    try {
+      const tok = getToken();
+      const r = await fetch(API_BASE + '/subscription/trial-max', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.detail || 'No se pudo activar la prueba.');
+      window.__BK_SUB_ACTIVE = true;
+      window.__BK_TRIAL_DISP = false;
+      if (est) est.textContent = 'Listo: Broquer Max quedó activado por 7 días.';
+      if (btn) { btn.disabled = false; btn.textContent = 'Continuar'; }
+    } catch (e) {
+      window.__BK_TRIAL_DISP = false;
+      closeBroquerMaxModal();
+      bkShowSubscribeModal();
+    }
+  }
+
+  function bkShowTrialModal() {
+    if (document.getElementById('bk-max-modal')) return;
+    const ov = document.createElement('div');
+    ov.id = 'bk-max-modal';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:2147483646;background:rgba(8,28,78,.46);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;font-family:var(--font-sans);';
+    ov.innerHTML = `
+      <div style="width:100%;max-width:440px;background:var(--sky-navy);border:1px solid rgba(255,255,255,.22);border-radius:28px;padding:44px 34px 34px;box-shadow:0 20px 60px rgba(5,32,60,.40);text-align:center;position:relative;">
+        <button onclick="closeBroquerMaxModal()" aria-label="Cerrar" style="position:absolute;top:12px;right:14px;border:none;background:transparent;color:rgba(255,255,255,.55);font-size:24px;line-height:1;cursor:pointer;padding:4px 8px;font-family:inherit;">&times;</button>
+        <h2 style="font-family:var(--font-display);font-size:28px;line-height:1.12;letter-spacing:-.02em;margin:0 0 12px;color:#FFFFFF;">Obtén 7 días de Broquer MAX <em style="font-style:normal;text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:6px;text-decoration-color:var(--sky-blue-on-dark);">completamente GRATIS</em></h2>
+        <p style="color:rgba(255,255,255,.78);font-size:16px;line-height:1.5;margin:0 0 20px;">Acceso ilimitado.</p>
+        <div id="bk-trial-estado" style="color:rgba(255,255,255,.85);font-size:13px;min-height:20px;margin-bottom:12px;">Activando tu acceso…</div>
+        <button id="bk-trial-continuar" disabled onclick="closeBroquerMaxModal()" style="width:100%;height:48px;border:none;border-radius:12px;background:var(--sky-blue-on-dark);color:var(--sky-navy);font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;">Activando…</button>
+      </div>`;
+    ov.addEventListener('click', (e) => { if (e.target === ov) closeBroquerMaxModal(); });
+    document.body.appendChild(ov);
+    bkActivarTrialDesdeGate();
+  }
+
+  function showBroquerMaxModal() {
+    if (window.__BK_TRIAL_DISP) { bkShowTrialModal(); return; }
+    bkShowSubscribeModal();
   }
   window.showBroquerMaxModal = showBroquerMaxModal;
 
@@ -3652,6 +3989,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
             return true;
           }
           confirmedInactive = true;
+          window.__BK_TRIAL_DISP = !!d.trial_disponible;
         }
         // 5xx u otros: reintentar silenciosamente.
       } catch (_) { /* red intermitente — reintentar */ }
@@ -3691,6 +4029,10 @@ body[data-app="facebook-ads"]{--page-max:980px}
         profile.esEmpresa = !!(_org && _org.tiene_org && _org.es_empresa);
       }
     } catch (_) { /* sin confirmar → no se muestra Equipo */ }
+
+    // El drawer de perfil necesita saber si la cuenta es empresarial para
+    // decidir si muestra la sección de Equipo, y se arma después del shell.
+    window.__BK_PROFILE = profile;
 
     injectShell(profile);
     bkInstallFreemiumGate();
@@ -3940,7 +4282,11 @@ body[data-app="facebook-ads"]{--page-max:980px}
     setupMiSitio(profile);
 
     // ─── Mensajes de WhatsApp sin leer: globito + notificación ────
+    // WhatsApp ya está abierto para todos: todo agente sondea sus no leídos.
     setupChatsBadge(profile);
+
+    // ─── Cita nueva agendada por la IA de WhatsApp: aviso inmediato (web) ──
+    setupCitasNotify(profile);
 
     window.dispatchEvent(new CustomEvent('brokr-shell-ready', { detail: { profile, activeKey } }));
   }
@@ -3994,9 +4340,10 @@ body[data-app="facebook-ads"]{--page-max:980px}
 
   /* ════════════════════════════════════════════════════════════════
      CHATS — globito de mensajes sin leer + notificación
-     El conteo vive en wa_conversations.unread_count: el webhook lo sube
+     El conteo vive en wa2_conversaciones.unread_count: el webhook lo sube
      cuando entra un mensaje del prospecto y la pestaña de chats lo baja
-     a 0 al abrir el chat. Aquí solo lo leemos cada 20 s.
+     a 0 solo cuando el agente abre el chat (o lo vuelve a subir si lo marca
+     como no leído). Aquí solo lo leemos cada 20 s.
      En iOS la notificación real la manda APNs (ver capacitor-bridge.js);
      esto es el respaldo para web y PWA.
      ════════════════════════════════════════════════════════════════ */
@@ -4004,9 +4351,11 @@ body[data-app="facebook-ads"]{--page-max:980px}
 
   async function _leerNoLeidos() {
     try {
-      const rows = await sbFetch('wa_conversations?select=unread_count');
+      const rows = await sbFetch('wa2_conversaciones?select=unread_count,no_leida');
       if (!Array.isArray(rows)) return 0;
-      return rows.reduce((a, c) => a + (Number(c.unread_count) || 0), 0);
+      // Una conversación que el agente marcó como no leída a mano cuenta como
+      // pendiente aunque su contador vaya en cero.
+      return rows.reduce((a, c) => a + (Number(c.unread_count) || (c.no_leida ? 1 : 0)), 0);
     } catch (e) { return 0; }
   }
 
@@ -4065,6 +4414,57 @@ body[data-app="facebook-ads"]{--page-max:980px}
     } catch (e) {}
   }
 
+  /* ─── Cita nueva agendada por la IA de WhatsApp: aviso inmediato (web) ───
+     En iOS la notificación real la manda APNs (ya se manda desde el backend
+     en cuanto se crea la tarea); esto es el aviso equivalente para web/PWA,
+     revisando cada 20s. Se guarda en localStorage cuál fue la última cita
+     que este dispositivo ya vio, para no re-avisar de todo el historial ni
+     duplicar avisos entre pestañas/dispositivos del mismo agente. */
+  function setupCitasNotify(profile) {
+    if (!profile?.user?.id) return;
+    const storageKey = 'bk_ultima_cita_vista_' + profile.user.id;
+
+    async function tick() {
+      try {
+        const rows = await sbFetch(
+          'tareas?select=id,titulo,fecha_entrega,created_at&titulo=ilike.*(WhatsApp)*' +
+          '&order=created_at.desc&limit=5'
+        );
+        if (!Array.isArray(rows) || !rows.length) return;
+        const ultimaVista = localStorage.getItem(storageKey);
+        if (!ultimaVista) {
+          // Primera vez en este dispositivo: solo marca desde dónde avisar
+          // de aquí en adelante, no avisa de todo lo que ya existía.
+          localStorage.setItem(storageKey, rows[0].created_at);
+          return;
+        }
+        const nuevas = rows.filter(t => t.created_at > ultimaVista);
+        if (!nuevas.length) return;
+        localStorage.setItem(storageKey, rows[0].created_at);
+        if (!IS_IOS_NATIVE) nuevas.reverse().forEach(_avisoCita);
+      } catch (e) {}
+    }
+
+    tick();
+    setInterval(() => { if (!document.hidden) tick(); }, 20000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+  }
+
+  function _avisoCita(t) {
+    try {
+      if (!('Notification' in window) || Notification.permission !== 'granted') return;
+      const cuando = t.fecha_entrega
+        ? new Date(t.fecha_entrega).toLocaleString('es-MX', { day:'2-digit', month:'short', hour:'numeric', minute:'2-digit' })
+        : '';
+      const n = new Notification('Broquer · Nueva cita agendada', {
+        body: t.titulo + (cuando ? ' — ' + cuando : ''),
+        icon: 'icon-192.png',
+        tag: 'broquer-cita-' + t.id,
+      });
+      n.onclick = () => { window.focus(); location.href = 'tareas.html'; };
+    } catch (e) {}
+  }
+
   /* Pedir permiso de notificaciones en web/PWA: solo desde los chats y
      solo una vez (pedirlo al entrar a la app se siente invasivo y el
      navegador lo bloquea si no hay gesto del usuario). */
@@ -4081,4 +4481,21 @@ body[data-app="facebook-ads"]{--page-max:980px}
   } else {
     boot();
   }
+})();
+
+/* ── Guarda de escala en iOS ─────────────────────────────────
+   Un pellizco sobre el visor PDF de firma, sobre una grafica o sobre
+   una tabla amplia deja la vista ampliada y en la app no hay barra de
+   navegador para restaurarla. Se bloquea el gesto de escala y, si el
+   sistema alcanzo a cambiarla, se devuelve a 1 al soltar. */
+(function () {
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(function (t) {
+    document.addEventListener(t, function (ev) { ev.preventDefault(); }, { passive: false });
+  });
+  document.addEventListener('touchend', function () {
+    if (window.visualViewport && window.visualViewport.scale > 1.01) {
+      document.body.style.zoom = '';
+      window.scrollTo(window.scrollX, window.scrollY);
+    }
+  }, { passive: true });
 })();

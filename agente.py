@@ -27,6 +27,7 @@ import time
 import asyncio
 import httpx
 from typing import List, Optional
+from limites import exigir_cupo, exigir_sesion
 from fastapi import APIRouter, Request, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 
@@ -42,8 +43,8 @@ SUPABASE_KEY         = os.environ.get("SUPABASE_ANON_KEY", "")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "") or SUPABASE_KEY
 
 AGENT_MODEL    = "claude-sonnet-4-6"   # Sonnet 4.6 por default (preferencia del usuario)
-MAX_TURNS      = 6                     # tope de iteraciones del loop agéntico
-MAX_TOKENS     = 1500
+MAX_TURNS      = 8                     # más pasos para resolver tareas encadenadas dentro de la app
+MAX_TOKENS     = 2200
 
 
 # ── Auth: valida el JWT de Supabase y devuelve el user_id ─────────────────
@@ -90,61 +91,40 @@ def _money(n) -> str:
 async def _tool_buscar_propiedades(user_id: str, args: dict) -> str:
     """Busca en la tabla `propiedades` del usuario por texto/operación/tipo."""
     if not user_id:
-        return "No pude confirmar la sesión del usuario, así que no logro leer su cartera. Pídele que cierre sesión y vuelva a entrar; no asumas que no tiene propiedades."
+        return "No hay sesión activa; no puedo consultar las propiedades del usuario."
     query     = (args.get("query") or "").strip()
     operacion = (args.get("operacion") or "").strip().lower()
     tipo      = (args.get("tipo") or "").strip().lower()
     limit     = min(int(args.get("limit") or 8), 20)
 
-    sel = ("id,titulo,tipo,operacion,precio,moneda,colonia,ciudad,calle,"
-           "num_exterior,recamaras,banos,m2_construccion,m2_terreno,estacionamientos,estatus")
-
-    async def _consulta(extra: dict) -> list:
-        params = {"user_id": f"eq.{user_id}", "select": sel,
-                  "order": "updated_at.desc", "limit": str(limit)}
-        params.update(extra)
+    params = {
+        "user_id": f"eq.{user_id}",
+        "select": "id,titulo,tipo,operacion,precio,moneda,colonia,ciudad,calle,num_exterior,recamaras,banos,m2_construccion,m2_terreno,estacionamientos,estatus,eb_public_id",
+        "order": "updated_at.desc",
+        "limit": str(limit),
+    }
+    if operacion in ("venta", "renta"):
+        params["operacion"] = f"eq.{operacion}"
+    if tipo:
+        params["tipo"] = f"ilike.*{tipo}*"
+    if query:
+        safe = query.replace(",", " ").replace("(", " ").replace(")", " ")
+        params["or"] = (
+            f"(titulo.ilike.*{safe}*,colonia.ilike.*{safe}*,"
+            f"calle.ilike.*{safe}*,ciudad.ilike.*{safe}*,descripcion.ilike.*{safe}*)"
+        )
+    try:
         async with httpx.AsyncClient(timeout=15) as client:
             r = await client.get(f"{SUPABASE_URL}/rest/v1/propiedades",
                                  headers=_sb_headers(), params=params)
-        return r.json() if r.status_code == 200 else None
-
-    extra = {}
-    if operacion in ("venta", "renta"):
-        extra["operacion"] = f"eq.{operacion}"
-    if tipo:
-        extra["tipo"] = f"ilike.*{tipo}*"
-    if query:
-        safe = query.replace(",", " ").replace("(", " ").replace(")", " ")
-        extra["or"] = (f"(titulo.ilike.*{safe}*,colonia.ilike.*{safe}*,"
-                       f"calle.ilike.*{safe}*,ciudad.ilike.*{safe}*,descripcion.ilike.*{safe}*)")
-
-    try:
-        rows = await _consulta(extra)
+        if r.status_code != 200:
+            return f"Error al consultar propiedades ({r.status_code}). El usuario puede revisar su módulo de propiedades manualmente."
+        rows = r.json() or []
     except Exception as e:
         return f"No pude consultar las propiedades ahora mismo: {str(e)[:120]}"
-    if rows is None:
-        return "Hubo un error al leer la cartera. No asumas que el usuario no tiene propiedades; pídele reintentar."
-
-    # Sin coincidencias con los filtros: revisa si SÍ tiene inventario (sin filtros)
-    # para no decirle por error que no tiene nada.
-    if not rows and extra:
-        try:
-            todas = await _consulta({})
-        except Exception:
-            todas = None
-        if todas:
-            muestras = ", ".join(filter(None, [t.get("titulo") or t.get("colonia") for t in todas[:6]]))
-            return (f"No hay coincidencias con ese criterio exacto, pero el usuario SÍ tiene "
-                    f"{len(todas)} propiedad(es) en su cartera (p. ej.: {muestras}). "
-                    "Pídele que precise cuál, o muéstrale la lista. NUNCA le digas que no tiene inmuebles.")
-        return ("El usuario aún no tiene propiedades cargadas en Mis Inmuebles. "
-                "Ofrécele crearlas en ese módulo o pídele los datos para generar la ficha manual. "
-                "No menciones integraciones externas.")
 
     if not rows:
-        return ("El usuario aún no tiene propiedades cargadas en Mis Inmuebles. "
-                "Ofrécele crearlas en ese módulo o pídele los datos para generar la ficha manual. "
-                "No menciones integraciones externas.")
+        return "No encontré propiedades que coincidan con esa búsqueda en la cartera del usuario."
 
     out = []
     for p in rows:
@@ -161,6 +141,7 @@ async def _tool_buscar_propiedades(user_id: str, args: dict) -> str:
         if p.get("m2_terreno"): det.append(f"{p['m2_terreno']} m² terreno")
         linea = " — ".join(partes)
         if det: linea += " · " + ", ".join(det)
+        if p.get("eb_public_id"): linea += f" · EB: {p['eb_public_id']}"
         linea += f" · id:{p.get('id')}"
         out.append("• " + linea)
     return f"Encontré {len(rows)} propiedad(es) en la cartera del usuario:\n" + "\n".join(out)
@@ -181,7 +162,7 @@ async def _tool_detalle_propiedad(user_id: str, args: dict) -> str:
         params["id"] = f"eq.{pid}"
     elif query:
         safe = query.replace(",", " ")
-        params["or"] = f"(titulo.ilike.*{safe}*,colonia.ilike.*{safe}*,calle.ilike.*{safe}*)"
+        params["or"] = f"(titulo.ilike.*{safe}*,colonia.ilike.*{safe}*,calle.ilike.*{safe}*,eb_public_id.ilike.*{safe}*)"
         params["order"] = "updated_at.desc"
     else:
         return "Necesito un id de propiedad o un texto de búsqueda para dar el detalle."
@@ -203,7 +184,7 @@ async def _tool_detalle_propiedad(user_id: str, args: dict) -> str:
         "Recámaras": p.get("recamaras"), "Baños": p.get("banos"),
         "Estacionamientos": p.get("estacionamientos"),
         "m² construcción": p.get("m2_construccion"), "m² terreno": p.get("m2_terreno"),
-        "Estatus": p.get("estatus"),
+        "Estatus": p.get("estatus"), "EasyBroker ID": p.get("eb_public_id"),
         "id": p.get("id"),
     }
     lineas = [f"{k}: {v}" for k, v in campos.items() if v not in (None, "", 0)]
@@ -249,6 +230,124 @@ async def _tool_buscar_contactos(user_id: str, args: dict) -> str:
     return f"Encontré {len(rows)} contacto(s):\n" + "\n".join(out)
 
 
+async def _tool_buscar_tareas(user_id: str, args: dict) -> str:
+    """Busca en las tareas/citas del usuario (tabla `tareas`). Se ordena por
+    fecha de CREACIÓN: 'la tarea que acabas de crear' debe salir primero,
+    tenga o no fecha de entrega."""
+    if not user_id:
+        return "No hay sesión activa."
+    query = (args.get("query") or "").strip().replace(",", " ")
+    params = {"user_id": f"eq.{user_id}",
+              "select": "id,titulo,fecha_entrega,completada,notas",
+              "order": "created_at.desc", "limit": "10"}
+    if query:
+        params["or"] = f"(titulo.ilike.*{query}*,notas.ilike.*{query}*)"
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.get(f"{SUPABASE_URL}/rest/v1/tareas",
+                                 headers=_sb_headers(), params=params)
+        rows = r.json() if r.status_code == 200 else []
+    except Exception as e:
+        return f"No pude consultar las tareas: {str(e)[:120]}"
+    if not rows:
+        return "No encontré tareas que coincidan."
+    out = []
+    for t in rows:
+        estado = "completada" if t.get("completada") else "pendiente"
+        fecha = (t.get("fecha_entrega") or "")[:16].replace("T", " ")
+        linea = f"• id={t['id']} · {t.get('titulo') or 'Sin título'} · {estado}"
+        if fecha:
+            linea += f" · {fecha} UTC"
+        if t.get("notas"):
+            linea += " — " + (t["notas"] or "")[:100]
+        out.append(linea)
+    return f"Encontré {len(rows)} tarea(s), la más reciente primero:\n" + "\n".join(out)
+
+
+async def _tool_agregar_comentario(user_id: str, args: dict) -> str:
+    """Agrega un comentario fechado a las notas de un contacto, una tarea o una
+    propiedad. El comentario se APILA (nunca borra lo que ya había). La
+    confirmación regresa el NOMBRE/TÍTULO real del registro tocado, para que el
+    modelo se lo diga al usuario y un destino equivocado salte a la vista."""
+    if not user_id:
+        return "No hay sesión activa."
+    destino = (args.get("destino") or "").strip().lower()
+    fila_id = (args.get("id") or "").strip()
+    comentario = (args.get("comentario") or "").strip()
+    if destino not in ("contacto", "tarea", "propiedad") or not fila_id or not comentario:
+        return "Faltan datos: necesito destino (contacto, tarea o propiedad), id y comentario."
+    tabla = {"contacto": "contactos", "tarea": "tareas", "propiedad": "propiedades"}[destino]
+    campo_nombre = "nombre" if tabla == "contactos" else "titulo"
+    from datetime import datetime, timezone, timedelta
+    ahora = datetime.now(timezone(timedelta(hours=-6)))  # hora del centro de México
+    linea = f"[{ahora.strftime('%d/%m %H:%M')} · Broq] {comentario}"
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.get(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_sb_headers(),
+                                 params={"id": f"eq.{fila_id}", "user_id": f"eq.{user_id}",
+                                         "select": f"id,notas,{campo_nombre}", "limit": "1"})
+            rows = r.json() if r.status_code == 200 else []
+            if not rows:
+                return f"No encontré ese {destino} (id={fila_id}) en la cuenta del usuario. Búscalo primero para obtener el id exacto."
+            etiqueta = rows[0].get(campo_nombre) or fila_id
+            notas = ((rows[0].get("notas") or "") + "\n" + linea).strip()
+            cuerpo = {"notas": notas}
+            if tabla in ("contactos", "propiedades"):
+                cuerpo["updated_at"] = datetime.now(timezone.utc).isoformat()
+            r2 = await client.patch(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_sb_headers(),
+                                    params={"id": f"eq.{fila_id}", "user_id": f"eq.{user_id}"},
+                                    json=cuerpo)
+            if r2.status_code >= 300:
+                return f"No se pudo guardar el comentario: {r2.text[:120]}"
+    except Exception as e:
+        return f"No pude guardar el comentario: {str(e)[:120]}"
+    return f"Listo, comentario agregado a {destino} '{etiqueta}': {linea}"
+
+
+async def _tool_crear_tarea(user_id: str, args: dict) -> str:
+    """Crea la tarea DE VERDAD en la tabla `tareas`, con vínculos opcionales a
+    un contacto y/o un inmueble (tablas varios-a-varios). Regresa el id creado
+    para que el resto de la conversación pueda referirse a 'esa misma tarea'."""
+    if not user_id:
+        return "No hay sesión activa."
+    titulo = (args.get("titulo") or "").strip()
+    if not titulo:
+        return "Falta el título de la tarea."
+    fila = {"user_id": user_id, "titulo": titulo,
+            "notas": (args.get("notas") or "").strip() or None,
+            "contacto_id": (args.get("contacto_id") or "").strip() or None,
+            "propiedad_id": (args.get("propiedad_id") or "").strip() or None}
+    if args.get("fecha"):
+        try:
+            from datetime import datetime as _dt, timezone as _tz
+            from zoneinfo import ZoneInfo
+            y, m, d = (int(x) for x in str(args["fecha"]).split("-"))
+            hh, mi = (int(x) for x in str(args.get("hora") or "09:00").split(":")[:2])
+            local = _dt(y, m, d, hh, mi, tzinfo=ZoneInfo("America/Mexico_City"))
+            fila["fecha_entrega"] = local.astimezone(_tz.utc).isoformat().replace("+00:00", "Z")
+        except Exception:
+            return "La fecha u hora no se entendieron. Usa fecha YYYY-MM-DD y hora HH:MM."
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            h = _sb_headers(); h["Prefer"] = "return=representation"
+            r = await client.post(f"{SUPABASE_URL}/rest/v1/tareas", headers=h, json=fila)
+            if r.status_code >= 300:
+                return f"No se pudo crear la tarea: {r.text[:120]}"
+            tarea_id = (r.json() or [{}])[0].get("id")
+            if tarea_id and fila.get("contacto_id"):
+                await client.post(f"{SUPABASE_URL}/rest/v1/tareas_contactos", headers=_sb_headers(),
+                                  json={"user_id": user_id, "tarea_id": tarea_id,
+                                        "contacto_id": fila["contacto_id"]})
+            if tarea_id and fila.get("propiedad_id"):
+                await client.post(f"{SUPABASE_URL}/rest/v1/tareas_propiedades", headers=_sb_headers(),
+                                  json={"user_id": user_id, "tarea_id": tarea_id,
+                                        "propiedad_id": fila["propiedad_id"]})
+    except Exception as e:
+        return f"No se pudo crear la tarea: {str(e)[:120]}"
+    cuando = f" para el {args['fecha']} {args.get('hora') or ''}".rstrip() if args.get("fecha") else ""
+    return f"Tarea creada de verdad en el módulo de Tareas (id={tarea_id}): {titulo}{cuando}."
+
+
 async def _tool_resumen_cartera(user_id: str, args: dict) -> str:
     """Resumen del inventario del usuario: totales por operación/tipo y valor."""
     if not user_id:
@@ -290,194 +389,94 @@ async def _tool_resumen_cartera(user_id: str, args: dict) -> str:
     return "Resumen de la cartera:\n" + "\n".join(lineas)
 
 
-# ══════════════════════════════════════════════════════════════════════════
-#  FICHA TÉCNICA — GENERACIÓN AUTÓNOMA (PDF real, sin pasar por el módulo)
-#  El agente lee la propiedad, arma el formato que entiende el renderizador y
-#  llama al mismo motor que el módulo (/ficha-pdf, Playwright). Devuelve el PDF
-#  listo: el navegador solo lo abre/descarga. NO navega al módulo.
-# ══════════════════════════════════════════════════════════════════════════
-
-def _fotos_to_images(fotos) -> list:
-    """La columna `fotos` es una lista de URLs (str). El renderizador espera
-    [{url}]. Soporta también que ya vengan como objetos."""
-    out = []
-    for f in (fotos or []):
-        if isinstance(f, str) and f.strip():
-            out.append({"url": f.strip()})
-        elif isinstance(f, dict):
-            u = f.get("url") or f.get("original")
-            if u:
-                out.append({"url": u})
-    return out
-
-
-def _propiedad_to_eb(p: dict) -> dict:
-    """Mapea una fila de la tabla `propiedades` al formato que consume
-    build_ficha_html / /ficha-pdf (el renderizador del PDF)."""
-    op_raw = (p.get("operacion") or "").strip().lower()
-    op_type = "sale" if op_raw == "venta" else "rental" if op_raw == "renta" else "sale"
-    operations = []
-    if p.get("precio"):
-        operations.append({
-            "type": op_type,
-            "amount": p.get("precio"),
-            "currency": p.get("moneda") or "MXN",
-        })
-    calle = " ".join(filter(None, [str(p.get("calle") or "").strip(),
-                                   str(p.get("num_exterior") or "").strip()])).strip()
-    return {
-        "public_id": p.get("id") or "",
-        "id": p.get("id") or "",
-        "title": p.get("titulo") or p.get("tipo") or "Propiedad",
-        "property_type": p.get("tipo") or "Propiedad",
-        "operations": operations,
-        "location": {"name": p.get("colonia") or "", "city": p.get("ciudad") or ""},
-        "address": calle,
-        "bedrooms": p.get("recamaras"),
-        "bathrooms": p.get("banos"),
-        "parking_spaces": p.get("estacionamientos"),
-        "construction_size": p.get("m2_construccion"),
-        "lot_size": p.get("m2_terreno"),
-        "description": p.get("descripcion") or "",
-        "property_images": _fotos_to_images(p.get("fotos")),
-    }
-
-
-def _datos_manual_to_eb(a: dict) -> dict:
-    """Mapea datos sueltos (que arma el modelo) al formato del renderizador."""
-    op_raw = (a.get("operacion") or "").strip().lower()
-    op_type = "sale" if op_raw in ("venta", "sale") else "rental" if op_raw in ("renta", "rental") else "sale"
-    operations = []
-    if a.get("precio"):
-        operations.append({"type": op_type, "amount": a.get("precio"),
-                           "currency": a.get("moneda") or "MXN"})
-    return {
-        "public_id": "", "id": "",
-        "title": a.get("titulo") or a.get("tipo_inmueble") or "Propiedad",
-        "property_type": a.get("tipo_inmueble") or "Propiedad",
-        "operations": operations,
-        "location": {"name": a.get("colonia") or "", "city": a.get("ciudad") or "Morelia"},
-        "address": a.get("calle") or "",
-        "bedrooms": a.get("recamaras"),
-        "bathrooms": a.get("banos"),
-        "parking_spaces": a.get("estacionamientos"),
-        "construction_size": a.get("m2_construccion"),
-        "lot_size": a.get("m2_terreno"),
-        "description": a.get("descripcion") or "",
-        "property_images": _fotos_to_images(a.get("fotos")),
-    }
-
-
-async def _render_ficha_pdf(eb: dict):
-    """Llama al MISMO motor de PDF que usa el módulo (Playwright vía main).
-    Devuelve (token, filename) o (None, None) si no se pudo generar."""
-    try:
-        import json as _json
-        from main import generar_ficha_pdf  # lazy: evita import circular
-        resp = await generar_ficha_pdf(eb)
-        body = getattr(resp, "body", None)
-        if body is None:
-            return None, None
-        data = _json.loads(body.decode() if isinstance(body, (bytes, bytearray)) else body)
-        return data.get("token"), data.get("filename")
-    except Exception:
-        return None, None
-
-
-async def _leer_propiedad(user_id: str, args: dict) -> Optional[dict]:
-    """Trae la fila completa de una propiedad por id o texto."""
-    pid    = (args.get("id") or "").strip()
-    query  = (args.get("query") or "").strip()
-    params = {"user_id": f"eq.{user_id}", "select": "*", "limit": "1"}
-    if pid:
-        params["id"] = f"eq.{pid}"
-    elif query:
-        safe = query.replace(",", " ")
-        params["or"] = (f"(titulo.ilike.*{safe}*,colonia.ilike.*{safe}*,"
-                        f"calle.ilike.*{safe}*)")
-        params["order"] = "updated_at.desc"
-    else:
-        return None
-    try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            r = await client.get(f"{SUPABASE_URL}/rest/v1/propiedades",
-                                 headers=_sb_headers(), params=params)
-        rows = r.json() if r.status_code == 200 else []
-    except Exception:
-        return None
-    return rows[0] if rows else None
-
-
-async def _tool_generar_ficha(user_id: str, args: dict) -> dict:
-    """Genera la ficha técnica (PDF) de una propiedad de la cartera y la entrega
-    lista para abrir. Acepta id o query."""
+async def _tool_resumen_estadisticas(user_id: str, args: dict) -> str:
+    """Lee CRM, inmuebles e intereses para resumir estadísticas operativas."""
     if not user_id:
-        return {"text": "No pude confirmar la sesión; pídele al usuario reingresar. No asumas que no tiene propiedades."}
-    p = await _leer_propiedad(user_id, args)
-    if not p:
-        return {"text": ("No ubiqué esa propiedad por ese dato. Usa buscar_propiedades para "
-                         "listar la cartera del usuario y confirma con él CUÁL quiere antes de "
-                         "generar la ficha. Nunca le digas que no tiene inmuebles ni menciones "
-                         "integraciones externas.")}
-
-    eb = _propiedad_to_eb(p)
-    nombre = eb.get("title") or "la propiedad"
-    token, filename = await _render_ficha_pdf(eb)
-    if not token:
-        # Fallback honesto: no pudimos renderizar; abre el módulo con los datos.
-        return {
-            "text": (f"Tengo los datos de «{nombre}» pero no pude terminar el PDF aquí mismo; "
-                     "abrí el módulo de ficha con todo precargado para generarla. "
-                     "Dile al usuario que la ficha se está preparando."),
-            "client_action": {"tipo": "crear_ficha_manual", **_eb_to_prefill(eb)},
-        }
-    return {
-        "text": (f"Ficha técnica de «{nombre}» generada con los datos reales de la cartera. "
-                 "El PDF se está abriendo en el dispositivo del usuario. "
-                 "Da un cierre breve confirmándolo."),
-        "client_action": {"tipo": "abrir_pdf", "url": f"/ficha-pdf/{token}",
-                          "filename": filename or "ficha.pdf"},
+        return "No pude confirmar la sesión del usuario, así que no logro leer sus estadísticas."
+    periodo = (args.get("periodo") or "todo").strip().lower()
+    if periodo not in ("semana", "mes", "todo"):
+        periodo = "todo"
+    selects = {
+        "contactos": "id,estatus,fuente,es_potencial,created_at,fecha_cambio_estatus",
+        "propiedades": "id,titulo,clave_interna,archivada,operacion,tipo,precio",
+        "contactos_propiedades": "contacto_id,propiedad_id,relacion",
     }
 
+    async def _get(table: str, extra: dict = None, limit: int = 5000, scoped: bool = True) -> list:
+        params = {"select": selects[table], "limit": str(limit)}
+        if scoped:
+            params["user_id"] = f"eq.{user_id}"
+        if extra:
+            params.update(extra)
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.get(f"{SUPABASE_URL}/rest/v1/{table}", headers=_sb_headers(), params=params)
+        return r.json() if r.status_code == 200 else []
 
-async def _tool_crear_ficha_manual(user_id: str, args: dict) -> dict:
-    """Genera la ficha (PDF) a partir de datos sueltos que arma el agente."""
-    eb = _datos_manual_to_eb(args)
-    nombre = eb.get("title") or "la propiedad"
-    token, filename = await _render_ficha_pdf(eb)
-    if not token:
-        return {
-            "text": (f"No pude terminar el PDF de «{nombre}» aquí; abrí el módulo de ficha "
-                     "con los datos precargados. Dile al usuario que se está preparando."),
-            "client_action": {"tipo": "crear_ficha_manual", **_eb_to_prefill(eb)},
-        }
-    return {
-        "text": (f"Ficha técnica de «{nombre}» generada. El PDF se está abriendo en el "
-                 "dispositivo del usuario. Da un cierre breve confirmándolo."),
-        "client_action": {"tipo": "abrir_pdf", "url": f"/ficha-pdf/{token}",
-                          "filename": filename or "ficha.pdf"},
-    }
+    try:
+        contactos, props, intereses = await asyncio.gather(
+            _get("contactos", limit=3000),
+            _get("propiedades", limit=2000),
+            _get("contactos_propiedades", {"relacion": "eq.interes"}, limit=5000, scoped=False),
+        )
+    except Exception as e:
+        return f"No pude leer las estadísticas ahora mismo: {str(e)[:120]}"
 
+    now = time.time()
+    dias = 7 if periodo == "semana" else 30 if periodo == "mes" else None
 
-def _eb_to_prefill(eb: dict) -> dict:
-    """Aplana el formato EB a los campos que el módulo de ficha manual entiende
-    para precargar el formulario (fallback cuando no se pudo renderizar)."""
-    op = (eb.get("operations") or [{}])[0]
-    loc = eb.get("location") or {}
-    return {
-        "tipo_inmueble": eb.get("property_type") or "",
-        "operacion": "venta" if op.get("type") == "sale" else "renta" if op.get("type") == "rental" else "",
-        "precio": op.get("amount") or 0,
-        "colonia": loc.get("name") or "",
-        "ciudad": loc.get("city") or "",
-        "calle": eb.get("address") or "",
-        "recamaras": eb.get("bedrooms") or 0,
-        "banos": eb.get("bathrooms") or 0,
-        "m2_construccion": eb.get("construction_size") or 0,
-        "m2_terreno": eb.get("lot_size") or 0,
-        "estacionamientos": eb.get("parking_spaces") or 0,
-        "descripcion": eb.get("description") or "",
-    }
+    def _in_period(row):
+        if dias is None:
+            return True
+        iso = row.get("created_at")
+        if not iso:
+            return False
+        try:
+            ts = time.mktime(time.strptime(iso[:19], "%Y-%m-%dT%H:%M:%S"))
+            return (now - ts) <= dias * 86400
+        except Exception:
+            return False
+
+    contactos_p = [c for c in contactos if _in_period(c)]
+    total_contactos = len(contactos_p)
+    avanzados = sum(1 for c in contactos_p if (c.get("estatus") or "nuevo").lower() != "nuevo")
+    pct_avance = round((avanzados / total_contactos) * 100) if total_contactos else 0
+    potenciales = sum(1 for c in contactos if c.get("es_potencial"))
+
+    por_fuente = {}
+    por_etapa = {}
+    for c in contactos_p:
+        por_fuente[c.get("fuente") or "Sin especificar"] = por_fuente.get(c.get("fuente") or "Sin especificar", 0) + 1
+        etapa = (c.get("estatus") or "nuevo").lower()
+        por_etapa[etapa] = por_etapa.get(etapa, 0) + 1
+
+    activos = [p for p in props if not p.get("archivada")]
+    prop_idx = {str(p.get("id")): p for p in props}
+    conteo = {}
+    for r in intereses:
+        pid = str(r.get("propiedad_id"))
+        conteo[pid] = conteo.get(pid, 0) + 1
+    top = sorted(conteo.items(), key=lambda kv: kv[1], reverse=True)[:5]
+
+    def _fmt_pairs(d):
+        if not d:
+            return "sin datos"
+        return ", ".join(f"{k}: {v}" for k, v in sorted(d.items(), key=lambda kv: kv[1], reverse=True)[:8])
+
+    lines = [
+        f"Reporte estadístico ({'últimos 7 días' if periodo == 'semana' else 'últimos 30 días' if periodo == 'mes' else 'todo el histórico'}):",
+        f"Contactos nuevos: {total_contactos}",
+        f"Contactos que avanzaron de etapa: {avanzados} ({pct_avance}%)",
+        f"Prospectos potenciales activos: {potenciales}",
+        f"Fuentes principales: {_fmt_pairs(por_fuente)}",
+        f"Pipeline por etapa: {_fmt_pairs(por_etapa)}",
+        f"Inmuebles activos: {len(activos)} de {len(props)} totales",
+    ]
+    if top:
+        lines.append("Inmuebles con más interesados: " + "; ".join(
+            f"{(prop_idx.get(pid) or {}).get('titulo') or (prop_idx.get(pid) or {}).get('clave_interna') or pid}: {n}"
+            for pid, n in top
+        ))
+    return "\n".join(lines)
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -489,13 +488,14 @@ def _eb_to_prefill(eb: dict) -> dict:
 #   confirma al agente que la acción quedó enviada al dispositivo del usuario.
 
 SERVER_TOOLS = {
-    "buscar_propiedades":     _tool_buscar_propiedades,
-    "detalle_propiedad":      _tool_detalle_propiedad,
-    "buscar_contactos":       _tool_buscar_contactos,
-    "resumen_cartera":        _tool_resumen_cartera,
-    # Fichas técnicas: se generan de verdad en el servidor (PDF listo).
-    "generar_ficha_tecnica":  _tool_generar_ficha,
-    "crear_ficha_manual":     _tool_crear_ficha_manual,
+    "buscar_propiedades": _tool_buscar_propiedades,
+    "detalle_propiedad":  _tool_detalle_propiedad,
+    "buscar_contactos":   _tool_buscar_contactos,
+    "buscar_tareas":      _tool_buscar_tareas,
+    "agregar_comentario": _tool_agregar_comentario,
+    "crear_tarea":        _tool_crear_tarea,
+    "resumen_cartera":    _tool_resumen_cartera,
+    "resumen_estadisticas": _tool_resumen_estadisticas,
 }
 
 TOOLS_SCHEMA = [
@@ -539,9 +539,56 @@ TOOLS_SCHEMA = [
         }
     },
     {
+        "name": "buscar_tareas",
+        "description": "Busca en las tareas/citas del usuario por título o notas (la más reciente primero). Úsala SIEMPRE antes de agregar un comentario a una tarea, para obtener su id exacto. También para '¿qué pendientes tengo?', 'la tarea que acabas de crear'.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Palabra clave del título o las notas. Vacío = las más recientes."}
+            }
+        }
+    },
+    {
+        "name": "agregar_comentario",
+        "description": "Agrega un comentario con fecha a las notas de un contacto, una tarea o una propiedad, sin borrar lo que ya había. Úsala para 'agrégale un comentario/nota a…', 'anota en la cita de…', 'apunta en la casa de… que…'. SIEMPRE busca primero (buscar_contactos, buscar_tareas o buscar_propiedades) para usar el id exacto; si hay varios que coinciden, pregunta cuál.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "destino": {"type": "string", "enum": ["contacto", "tarea", "propiedad"]},
+                "id": {"type": "string", "description": "id exacto devuelto por buscar_contactos, buscar_tareas o buscar_propiedades."},
+                "comentario": {"type": "string"}
+            },
+            "required": ["destino", "id", "comentario"]
+        }
+    },
+    {
+        "name": "crear_tarea",
+        "description": "Crea una tarea/pendiente REAL en el módulo de Tareas del usuario, opcionalmente vinculada a un contacto y/o a un inmueble. Si el usuario menciona el contacto o el inmueble por nombre, usa antes buscar_contactos / buscar_propiedades para obtener el id exacto.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "titulo": {"type": "string"},
+                "fecha": {"type": "string", "description": "YYYY-MM-DD, opcional"},
+                "hora": {"type": "string", "description": "HH:MM en 24h, opcional"},
+                "notas": {"type": "string"},
+                "contacto_id": {"type": "string", "description": "id de un contacto ya existente, opcional"},
+                "propiedad_id": {"type": "string", "description": "id de un inmueble ya existente, opcional"}
+            },
+            "required": ["titulo"]
+        }
+    },
+    {
         "name": "resumen_cartera",
         "description": "Resumen del inventario del usuario: cuántas propiedades tiene, desglose por operación y tipo, y valor total en venta. Úsala para '¿cómo va mi inventario?', '¿cuántas propiedades tengo?'.",
         "input_schema": {"type": "object", "properties": {}}
+    },
+    {
+        "name": "resumen_estadisticas",
+        "description": "Lee las estadísticas reales del usuario: captación, fuentes, pipeline, prospectos potenciales e inmuebles con más interesados. Úsala para 'lee mis estadísticas', 'cómo va mi negocio', 'hazme un reporte'.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"periodo": {"type": "string", "enum": ["semana", "mes", "todo"]}}
+        }
     },
 
     # ── CLIENT-SIDE (se ejecutan en el dispositivo del usuario) ──
@@ -574,7 +621,7 @@ TOOLS_SCHEMA = [
                 "recamaras": {"type": "integer"}, "banos": {"type": "number"},
                 "estacionamientos": {"type": "integer"},
                 "condicion_terreno": {"type": "string", "enum": ["plano", "pendiente", "irregular", ""]},
-                "ciudad": {"type": "string", "description": "Default Morelia"}
+                "ciudad": {"type": "string", "description": "Ciudad del inmueble. No asumas una ciudad por defecto."}
             },
             "required": ["colonia", "tipo_inmueble", "operacion"]
         }
@@ -606,19 +653,51 @@ TOOLS_SCHEMA = [
         }
     },
     {
-        "name": "generar_ficha_tecnica",
-        "description": "Genera el PDF de la ficha técnica de una propiedad que YA está en la cartera del usuario y lo entrega listo (se abre solo, sin que el usuario toque ningún módulo). Es la forma preferida para fichas de inmuebles propios. Pásale el id de la propiedad (el que devuelve buscar_propiedades) o un texto de búsqueda.",
+        "name": "crear_inmueble",
+        "description": "Crea un inmueble en Mis Inmuebles sin salir del chat. Usa esta herramienta cuando el usuario dicte o escriba los datos de una propiedad nueva. Reúne primero los obligatorios: título o descripción, tipo, operación, precio y colonia.",
         "input_schema": {
             "type": "object",
             "properties": {
-                "id": {"type": "string", "description": "id de la propiedad (preferido)."},
-                "query": {"type": "string", "description": "Texto si no tienes el id: colonia, calle o título."}
-            }
+                "titulo": {"type": "string"},
+                "tipo": {"type": "string", "enum": ["casa", "departamento", "terreno", "local", "oficina", "bodega"]},
+                "operacion": {"type": "string", "enum": ["venta", "renta"]},
+                "estatus": {"type": "string", "enum": ["activa", "vendida", "rentada", "suspendida"]},
+                "precio": {"type": "number"},
+                "moneda": {"type": "string", "enum": ["MXN", "USD"]},
+                "calle": {"type": "string"},
+                "num_exterior": {"type": "string"},
+                "num_interior": {"type": "string"},
+                "colonia": {"type": "string"},
+                "ciudad": {"type": "string"},
+                "estado": {"type": "string"},
+                "cp": {"type": "string"},
+                "m2_construccion": {"type": "number"},
+                "m2_terreno": {"type": "number"},
+                "recamaras": {"type": "integer"},
+                "banos": {"type": "number"},
+                "medio_bano": {"type": "integer"},
+                "estacionamientos": {"type": "integer"},
+                "anio_construccion": {"type": "integer"},
+                "nivel": {"type": "string"},
+                "mantenimiento": {"type": "number"},
+                "amenidades": {"type": "array", "items": {"type": "string"}},
+                "descripcion": {"type": "string"}
+            },
+            "required": ["tipo", "operacion", "precio", "colonia"]
+        }
+    },
+    {
+        "name": "crear_ficha_easybroker",
+        "description": "Genera una ficha técnica a partir de una propiedad de EasyBroker usando su ID (ej. EB-KH4322).",
+        "input_schema": {
+            "type": "object",
+            "properties": {"id_easybroker": {"type": "string"}},
+            "required": ["id_easybroker"]
         }
     },
     {
         "name": "crear_ficha_manual",
-        "description": "Genera el PDF de la ficha técnica desde datos sueltos (para inmuebles que NO están en la cartera). Lo entrega listo, se abre solo. Mínimo: tipo_inmueble, operacion, precio, colonia.",
+        "description": "Genera una ficha técnica desde datos manuales. Mínimo: tipo_inmueble, operacion, precio, colonia.",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -644,6 +723,19 @@ TOOLS_SCHEMA = [
                 "url_destino": {"type": "string"}, "texto_anuncio": {"type": "string"}
             },
             "required": ["nombre", "objetivo", "presupuesto_diario_mxn"]
+        }
+    },
+    {
+        "name": "generar_reporte_estadisticas",
+        "description": "Crea y entrega un PDF de reporte ejecutivo de estadísticas. Úsala después de llamar resumen_estadisticas; incluye en contenido el análisis, hallazgos y recomendaciones concretas.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "titulo": {"type": "string"},
+                "periodo": {"type": "string"},
+                "contenido": {"type": "string"}
+            },
+            "required": ["contenido"]
         }
     },
     {
@@ -683,8 +775,16 @@ def _to_client_action(name: str, args: dict) -> Optional[dict]:
                 "datos": args.get("datos", {})}
     if name == "crear_contacto":
         a = {"tipo": "agregar_contacto"}; a.update(args); return a
+    if name == "crear_inmueble":
+        a = {"tipo": "crear_inmueble_directo"}; a.update(args); return a
+    if name == "crear_ficha_easybroker":
+        return {"tipo": "crear_ficha", "id_easybroker": args.get("id_easybroker", "")}
+    if name == "crear_ficha_manual":
+        a = {"tipo": "crear_ficha_manual"}; a.update(args); return a
     if name == "crear_campana_facebook":
         a = {"tipo": "confirmar_campana"}; a.update(args); return a
+    if name == "generar_reporte_estadisticas":
+        a = {"tipo": "generar_reporte_estadisticas"}; a.update(args); return a
     if name == "abrir_modulo":
         return {"tipo": "navegar", "modulo": args.get("modulo", "")}
     if name == "prellenar_formulario":
@@ -703,13 +803,19 @@ _STEP_LABELS = {
     "detalle_propiedad":      "Abriendo los datos de la propiedad…",
     "buscar_contactos":       "Buscando en tu CRM…",
     "resumen_cartera":        "Analizando tu inventario…",
+    "resumen_estadisticas":   "Leyendo tus estadísticas…",
+    "buscar_tareas":          "Revisando tus tareas…",
+    "agregar_comentario":     "Registrando el comentario…",
+    "crear_tarea":            "Agregando la tarea…",
     "calcular_isr":           "Calculando el ISR y preparando el PDF…",
     "estimar_valor":          "Buscando comparables y estimando el valor…",
     "generar_contrato":       "Generando el contrato…",
     "crear_contacto":         "Agregando el contacto a tu CRM…",
-    "generar_ficha_tecnica":  "Armando la ficha técnica…",
+    "crear_inmueble":         "Creando el inmueble en tu cartera…",
+    "crear_ficha_easybroker": "Armando la ficha técnica…",
     "crear_ficha_manual":     "Armando la ficha técnica…",
     "crear_campana_facebook": "Preparando tu campaña de anuncios…",
+    "generar_reporte_estadisticas": "Creando el reporte en PDF…",
     "abrir_modulo":           "Abriendo el módulo…",
     "prellenar_formulario":   "Dejando el formulario listo para ti…",
 }
@@ -720,24 +826,36 @@ def _build_system(context: str, nombre: str = "") -> str:
     base = """Eres Broq, el copiloto operativo con inteligencia artificial para agentes inmobiliarios de México (especializado en Morelia y Michoacán). Eres un ASISTENTE QUE EJECUTA, no un chatbot que sugiere.
 
 CÓMO ACTÚAS:
+- Eres un SUPER ASISTENTE OPERATIVO: entiendes comandos escritos y de voz, razonas con datos reales de la app y ejecutas acciones completas cuando tienes lo necesario.
 - Tienes herramientas reales. Cuando el usuario pide algo que puedes hacer, HAZLO con la herramienta correspondiente. No le digas "ve al módulo X y dale al botón Y": tú lo ejecutas.
-- Puedes encadenar pasos: primero busca datos (buscar_propiedades, detalle_propiedad, buscar_contactos) y luego actúa (generar_contrato, generar_ficha_tecnica, estimar_valor). Usa los datos reales que obtengas; nunca inventes precios, m², direcciones ni nombres.
-- Para fichas técnicas de inmuebles que ya están en la cartera: usa generar_ficha_tecnica con el id de buscar_propiedades. El PDF se genera completo en el servidor y se abre solo en el dispositivo del usuario; NO lo mandas a ningún módulo a terminarlo. Solo usa crear_ficha_manual cuando el inmueble NO esté en la cartera y tengas los datos sueltos.
+- Puedes encadenar pasos: primero busca datos (buscar_propiedades, detalle_propiedad, buscar_contactos, buscar_tareas, resumen_cartera, resumen_estadisticas) y luego actúa. agregar_comentario y crear_tarea se ejecutan EN EL SERVIDOR y su tool_result te dice si de verdad quedaron — confírmalo al usuario solo con base en ese resultado. Las demás acciones (crear_contacto, crear_inmueble, generar_contrato, crear_ficha_manual, estimar_valor, calcular_isr, generar_reporte_estadisticas, crear_campana_facebook, abrir_modulo o prellenar_formulario). Usa los datos reales que obtengas; nunca inventes precios, m², direcciones ni nombres.
+- Para "agrégale un comentario / una nota a…" (un contacto, una tarea/cita o una propiedad), por texto o por voz: busca primero para obtener el id exacto y ejecuta agregar_comentario DIRECTO, sin pedir confirmación. El comentario queda con fecha en las notas y no borra nada. Si hay varios que coinciden, pregunta cuál. NUNCA uses crear_contacto ni crear_inmueble para "agregar una nota" a algo que YA EXISTE — eso duplica registros.
+- HONESTIDAD DURA: jamás digas "quedó registrado", "ya lo agregué" ni nada parecido si la herramienta no devolvió una confirmación real. Si el tool_result dice que falló, dile al usuario exactamente eso y qué faltó. Al confirmar un comentario, di el NOMBRE del contacto/tarea/propiedad al que quedó agregado (viene en el tool_result), para que el usuario detecte al instante si era otro.
+- Si el usuario pide crear un contacto o inmueble y ya dio los datos obligatorios, créalo directo. Si falta un dato obligatorio, pregunta SOLO el siguiente dato faltante.
 - Antes de una acción que produce un documento o un cambio, reúne los datos OBLIGATORIOS preguntando de UNO EN UNO de forma conversacional. Nunca ejecutes con datos incompletos. Los opcionales que el usuario no sepa: déjalos en 0 o "".
 - Las acciones que generan un archivo (ISR, estimación de valor, contrato, ficha) o que crean algo se ejecutan en el dispositivo del usuario. Cuando lances una de esas, NO digas "ya está descargado": di que la estás preparando y que aparecerá en un momento. El sistema le confirma al usuario cuando termina.
 - Para campañas de Facebook Ads NUNCA ejecutes sin confirmación explícita de presupuesto y objetivo.
+- Para acciones destructivas o sensibles (eliminar cuenta, borrar inmuebles, desconectar integraciones, pagos), no las ejecutes por chat sin la confirmación visual del flujo de la app. Explica el camino exacto y, si ayuda, abre el módulo correcto.
 
 CONOCIMIENTO EXPERTO (úsalo al responder asesorías):
-- Derecho inmobiliario mexicano: compraventa, arrendamiento, promesa de venta, escritura pública vs contrato privado, Registro Público de la Propiedad, LFPDPPP, LFPIORPI (PLD: umbrales en UMA, aviso al SAT), propiedad en condominio en Michoacán.
+- Derecho inmobiliario mexicano: compraventa, arrendamiento, promesa de venta, escritura pública vs contrato privado, Registro Público de la Propiedad, LFPDPPP, LFPIORPI (PLD: umbrales en UMA, aviso al SAT), propiedad en condominio conforme a la normativa local aplicable.
 - Fiscal e ISR: LISR arts. 119 y 120, exención de 700,000 UDIS para casa habitación, deducciones (compra actualizada por INPC, mejoras, escrituración, comisiones), ISAI, régimen de arrendamiento (deducción ciega 35%).
-- Valuación: comparables, costo, capitalización de rentas, cap rate, precio por m². Zonas de Morelia: Chapultepec, Altozano, Félix Ireta, Lomas del Estadio, Santa María, Lomas de Tzompantle, Vistas del Campestre, Villas del Pedregal, Las Américas, Torremolinos.
+- Valuación nacional: comparables, costo, capitalización de rentas, cap rate, precio por m², absorción, liquidez, plusvalía y segmentación por ciudad, colonia y submercado.
 - Marketing inmobiliario: Facebook/Instagram Ads, fichas que venden, captación de exclusivas, manejo de la objeción de precio.
-- Tecnología: portales inmobiliarios, firma electrónica (Mifiel, Docusign), y el flujo de captación digital.
+- Tecnología: EasyBroker (conexión por API key personal en Perfil → EasyBroker), portales, firma electrónica (Mifiel, Docusign).
 
-REGLAS DE CARTERA:
-- Las propiedades del usuario viven en su módulo «Mis Inmuebles» dentro de Broquer. Para trabajar con una, usa buscar_propiedades (para ubicarla y obtener su id) y luego generar_ficha_tecnica con ese id.
-- Si una búsqueda no arroja coincidencias, NUNCA concluyas que el usuario no tiene inmuebles: vuelve a buscar sin filtros o pídele que precise. Solo di que no tiene propiedades si la herramienta lo confirma explícitamente.
-- Si de verdad no tiene inmuebles cargados, ofrécele crearlos en Mis Inmuebles o pídele los datos para hacer la ficha manual. NUNCA menciones EasyBroker, importaciones externas ni integraciones de terceros: no son parte de tu discurso.
+CÓMO CONECTAR EASYBROKER (si lo preguntan): en EasyBroker, clic en tu nombre → Configuración de cuenta → Integraciones/API → copia tu API Key. En Broquer, abre tu perfil (tus iniciales abajo a la izquierda) → sección EasyBroker → pega la key → Conectar. Cada agente usa su propia key.
+
+CONOCIMIENTO DE LA APP (fuente de verdad para preguntas operativas):
+- Eliminar cuenta: abre Mi perfil, baja a la sección "Eliminar cuenta", toca "Eliminar mi cuenta", lee la advertencia, escribe exactamente el correo de la cuenta y confirma "Eliminar mi cuenta permanentemente". La acción borra de forma permanente propiedades, contactos, contratos e integraciones, cancela la suscripción de Stripe si existe y elimina el usuario de Supabase Auth; no se puede deshacer.
+- Crear contactos: puedes hacerlo directo con crear_contacto. Nombre es obligatorio; teléfono, email, empresa, tipo y notas son opcionales.
+- Crear inmuebles: puedes hacerlo directo con crear_inmueble. Obligatorios: tipo, operación, precio y colonia; título se puede inferir con tipo + operación + colonia si el usuario no lo da. Ciudad por defecto Morelia, estado Michoacán, moneda MXN, estatus activa.
+- Ficha técnica: si el inmueble ya está en cartera, busca la propiedad y genera la ficha con sus datos reales. Si no está en cartera, pide los datos mínimos y usa ficha manual.
+- ISR: usa calcular_isr con la misma lógica del módulo ISR cuando tengas precio y fecha de compra, precio y fecha de venta, tipo de inmueble, exención si aplica, mejoras, escrituración y comisión. Si el usuario no sabe mejoras/escrituración/comisión, usa 0 solo después de confirmarlo.
+- Estimación de valor: usa estimar_valor con la lógica del módulo AVM cuando tengas colonia, tipo, operación y superficies disponibles; busca comparables reales y entrega PDF.
+- Estadísticas y reportes: si el usuario pide leer estadísticas o crear un reporte, usa resumen_estadisticas; si pide un entregable, después genera un PDF con generar_reporte_estadisticas incluyendo hallazgos y recomendaciones.
+- Contratos: usa generar_contrato cuando tengas todos los datos obligatorios de partes, inmueble, monto y fechas. Si faltan varios datos, prellena el módulo para que el usuario revise.
+- Si te preguntan algo como "¿cómo puedo eliminar mi cuenta?", responde con esos pasos concretos; no inventes menús ni políticas.
 
 ESTILO:
 - Español mexicano, natural, cercano y profesional. Directo, sin relleno ni redundancia.
@@ -764,6 +882,8 @@ async def agent(req: AgentRequest, request: Request):
     if not ANTHROPIC_API_KEY:
         raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY no configurada en el servidor.")
     user_id = await _get_user_id(request)
+    exigir_cupo(request, user_id)
+    exigir_sesion(request, user_id)
 
     system = _build_system(req.context, req.nombre)
     # Solo mensajes de usuario/asistente (sin system embebido)
@@ -833,21 +953,11 @@ async def agent(req: AgentRequest, request: Request):
                     steps.append(_STEP_LABELS[name])
 
                 if name in SERVER_TOOLS:
-                    # Ejecuta de verdad y devuelve datos reales. Una server tool
-                    # puede devolver str (solo texto para el modelo) o un dict
-                    # {"text":..., "client_action":...} cuando además produce algo
-                    # que el navegador debe abrir/descargar (p. ej. un PDF de ficha).
+                    # Ejecuta de verdad y devuelve datos reales
                     try:
-                        result = await SERVER_TOOLS[name](user_id, args)
+                        result_text = await SERVER_TOOLS[name](user_id, args)
                     except Exception as e:
-                        result = f"Hubo un problema al ejecutar la herramienta: {str(e)[:120]}"
-                    if isinstance(result, dict):
-                        result_text = result.get("text") or "Listo."
-                        ca = result.get("client_action")
-                        if ca:
-                            client_actions.append(ca)
-                    else:
-                        result_text = result
+                        result_text = f"Hubo un problema al ejecutar la herramienta: {str(e)[:120]}"
                     tool_results.append({
                         "type": "tool_result", "tool_use_id": tuid, "content": result_text
                     })
@@ -897,6 +1007,9 @@ _VOICE_FIXES = [
 
 @router.post("/transcribir")
 async def transcribir(request: Request, audio: UploadFile = File(...), idioma: str = Form("es")):
+    _uid = await _get_user_id(request)
+    exigir_cupo(request, _uid)
+    exigir_sesion(request, _uid)
     if not GROQ_API_KEY:
         raise HTTPException(status_code=500, detail="GROQ_API_KEY no configurada en el servidor.")
     raw = await audio.read()
@@ -917,7 +1030,7 @@ async def transcribir(request: Request, audio: UploadFile = File(...), idioma: s
                     "model": "whisper-large-v3-turbo",
                     "language": idioma or "es",
                     "temperature": "0",
-                    "prompt": "Transcripción de un agente inmobiliario en México hablando de propiedades, colonias de Morelia, contratos, ISR y la app Broquer.",
+                    "prompt": "Transcripción de un agente inmobiliario en México hablando de propiedades, colonias, contratos, ISR, EasyBroker, Broq el asistente y Broquer la plataforma.",
                 },
             )
     except Exception as e:

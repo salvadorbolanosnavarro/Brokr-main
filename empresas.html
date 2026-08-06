@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Broquer para Empresas — contrata tu plan</title>
+<meta name="description" content="Broquer Max para cada agente de tu equipo: mismo inventario, permisos que tú decides y tus contactos siempre tuyos. Desde 5 usuarios."/>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="apple-touch-icon" href="isotipo-black.png"/>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+/* ════════════════════════════════════════════════════════════
+   BROQUER — Contratación de Broquer para Empresas
+   Compra SOLO web (App Store 3.1.3(c)). Navy = estructura,
+   var(--sky-blue) = acción. Todo sale de tokens del sistema.
+   ════════════════════════════════════════════════════════════ */
+html, body { background: var(--paper); min-height: 100%; }
+body { color: var(--ink); font-family: var(--font-sans); letter-spacing: -0.01em; margin: 0; }
+
+.em-wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+@media (max-width: 720px) { .em-wrap { padding: 0 16px; } }
+
+/* ── Nav ─────────────────────────────────────────────────── */
+.em-nav { position: sticky; top: 0; z-index: var(--z-nav); background: var(--sky-navy); border-bottom: 1px solid rgba(255,255,255,.10); }
+.em-nav__in { max-width: 1080px; margin: 0 auto; padding: 0 28px; height: 78px; display: flex; align-items: center; gap: 24px; }
+.em-nav__logo img { height: 52px; width: auto; display: block; }
+.em-nav__cta { display: flex; gap: 10px; align-items: center; margin-left: auto; }
+.em-btn-ghost {
+  color: var(--bone); text-decoration: none; font-size: var(--fs-sm); font-weight: 700;
+  padding: 9px 16px; border: 1px solid rgba(255,255,255,.35); border-radius: var(--r-pill);
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.em-btn-ghost:hover { background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.6); }
+@media (max-width: 720px) { .em-nav__in { padding: 0 16px; height: 68px; } .em-nav__logo img { height: 42px; } }
+
+/* ── Hero ────────────────────────────────────────────────── */
+.em-hero { background: var(--sky-navy); color: var(--bone); padding: var(--sp-16) 0 var(--sp-20); }
+.em-hero__eyebrow { font-size: var(--fs-label-3); font-weight: 700; letter-spacing: 0.02em; color: var(--sky-blue-on-dark); margin-bottom: var(--sp-3); }
+.em-hero h1 { font-family: var(--font-display); font-size: var(--fs-display); font-weight: 700; letter-spacing: -0.035em; line-height: var(--lh-tight); margin: 0; max-width: 720px; }
+.em-hero p { font-size: var(--fs-body-lg); line-height: var(--lh); color: rgba(255,255,255,.78); max-width: 620px; margin: var(--sp-4) 0 0; }
+@media (max-width: 720px) { .em-hero { padding: var(--sp-10) 0 var(--sp-12); } .em-hero h1 { font-size: var(--fs-h1); } .em-hero p { font-size: var(--fs-body); } }
+
+/* ── Cuerpo ──────────────────────────────────────────────── */
+.em-body { padding: var(--sp-12) 0 var(--sp-20); }
+.em-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: var(--sp-7); align-items: start; }
+@media (max-width: 900px) { .em-grid { grid-template-columns: 1fr; } }
+
+.em-card { background: var(--bone); border: 1px solid var(--line); border-radius: var(--r-xl); padding: var(--sp-7); box-shadow: var(--shadow-sm); }
+.em-card + .em-card { margin-top: var(--sp-4); }
+.em-card__title { font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 700; letter-spacing: -0.025em; margin: 0; }
+.em-card__sub { font-size: var(--fs-sm); color: var(--mute); line-height: var(--lh); margin: var(--sp-2) 0 var(--sp-6); }
+
+/* ── Segmentado mensual / anual ──────────────────────────── */
+.em-seg { display: inline-flex; background: var(--paper-2); border: 1px solid var(--line); border-radius: var(--r-pill); padding: 3px; gap: 2px; }
+.em-seg button {
+  border: 0; background: transparent; cursor: pointer; font-family: inherit;
+  font-size: var(--fs-sm); font-weight: 700; color: var(--mute);
+  padding: 8px 18px; border-radius: var(--r-pill);
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.em-seg button.is-active { background: var(--bone); color: var(--ink); box-shadow: var(--shadow-xs); }
+.em-ahorro { font-size: var(--fs-xs); color: var(--success); font-weight: 700; margin-left: var(--sp-3); }
+
+/* ── Selector de lugares ─────────────────────────────────── */
+.em-field { margin-top: var(--sp-6); }
+.em-label { display: block; font-size: var(--fs-xs); font-weight: 700; color: var(--ink); margin-bottom: var(--sp-2); }
+.em-stepper { display: flex; align-items: center; gap: var(--sp-3); }
+.em-step-btn {
+  width: var(--h); height: var(--h); flex: none; border: 1px solid var(--line-2);
+  background: var(--paper); color: var(--ink); border-radius: var(--r);
+  font-family: inherit; font-size: var(--fs-h3); font-weight: 700; line-height: 1; cursor: pointer;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.em-step-btn:hover { border-color: var(--sky-blue); background: var(--paper-2); }
+.em-step-btn:disabled { opacity: .4; cursor: not-allowed; }
+.em-step-input {
+  width: 108px; height: var(--h); text-align: center;
+  background: var(--shell); border: 1px solid var(--line-2); border-radius: var(--r);
+  font-family: inherit; font-size: var(--fs-h3); font-weight: 700; color: var(--ink);
+  outline: none; -webkit-appearance: none; appearance: none;
+}
+.em-step-input:focus { border-color: var(--sky-blue); box-shadow: var(--focus); }
+.em-step-hint { font-size: var(--fs-xs); color: var(--mute); line-height: var(--lh-snug); margin-top: var(--sp-2); }
+
+/* ── Desglose ────────────────────────────────────────────── */
+.em-desglose { margin-top: var(--sp-6); border-top: 1px solid var(--line); padding-top: var(--sp-4); }
+.em-linea { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-4); padding: var(--sp-2) 0; font-size: var(--fs-sm); color: var(--ink-2); }
+.em-linea span { color: var(--mute); }
+.em-linea b { font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.em-total { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-4); border-top: 1px solid var(--line); margin-top: var(--sp-3); padding-top: var(--sp-4); }
+.em-total span { font-size: var(--fs-sm); font-weight: 700; color: var(--ink); }
+.em-total b { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 700; letter-spacing: -0.03em; color: var(--ink); font-variant-numeric: tabular-nums; }
+.em-total small { display: block; font-size: var(--fs-xs); font-weight: 600; color: var(--mute); text-align: right; margin-top: var(--sp-1); }
+
+/* ── Botones ─────────────────────────────────────────────── */
+.em-btn {
+  width: 100%; min-height: var(--h); margin-top: var(--sp-6);
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
+  border: 1px solid var(--sky-blue); background: var(--sky-blue); color: var(--bone);
+  border-radius: var(--r-pill); font-family: inherit; font-size: var(--fs-sm); font-weight: 700;
+  cursor: pointer; text-decoration: none;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.em-btn:hover { background: var(--sky-blue-press); border-color: var(--sky-blue-press); }
+.em-btn:disabled { opacity: .55; cursor: not-allowed; }
+.em-btn--ghost { background: var(--paper); color: var(--ink); border-color: var(--line-2); }
+.em-btn--ghost:hover { background: var(--paper-2); border-color: var(--line-3); }
+.em-nota { font-size: var(--fs-xs); color: var(--mute); line-height: var(--lh); margin-top: var(--sp-3); text-align: center; }
+
+/* ── Avisos ──────────────────────────────────────────────── */
+.em-aviso { border-radius: var(--r); padding: var(--sp-4); font-size: var(--fs-xs); line-height: var(--lh); margin-top: var(--sp-4); }
+.em-aviso--info { background: var(--info-soft); color: var(--info); }
+.em-aviso--warn { background: var(--warn-soft); color: var(--warn); }
+.em-aviso--ok   { background: var(--success-soft); color: var(--success); }
+.em-aviso--err  { background: var(--danger-soft); color: var(--danger); }
+.em-aviso a { color: inherit; font-weight: 700; }
+
+/* ── Lo que incluye ──────────────────────────────────────── */
+.em-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-3); }
+.em-lista li { display: flex; gap: var(--sp-3); align-items: flex-start; font-size: var(--fs-sm); color: var(--ink-2); line-height: var(--lh); }
+.em-lista svg { width: 18px; height: 18px; flex: none; margin-top: 2px; color: var(--sky-blue); }
+.em-faq { margin-top: var(--sp-4); }
+.em-faq dt { font-size: var(--fs-body); font-weight: 700; color: var(--ink); margin-top: var(--sp-5); }
+.em-faq dd { font-size: var(--fs-sm); color: var(--ink-2); line-height: 1.6; margin: var(--sp-2) 0 0; max-width: 68ch; }
+
+/* ── Estado actual (ya es empresa) ───────────────────────── */
+.em-estado { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-3); margin-top: var(--sp-5); }
+@media (max-width: 560px) { .em-estado { grid-template-columns: 1fr; } }
+.em-kpi { background: var(--paper-2); border: 1px solid var(--line); border-radius: var(--r); padding: var(--sp-4); }
+.em-kpi b { display: block; font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.em-kpi span { display: block; font-size: var(--fs-caption); color: var(--mute); margin-top: var(--sp-1); }
+
+/* ── Footer ──────────────────────────────────────────────── */
+.em-foot { background: var(--sky-navy); color: rgba(255,255,255,.7); padding: var(--sp-8) 0; font-size: var(--fs-xs); }
+.em-foot__in { max-width: 1080px; margin: 0 auto; padding: 0 28px; display: flex; flex-wrap: wrap; gap: var(--sp-4); align-items: center; }
+.em-foot a { color: rgba(255,255,255,.85); text-decoration: none; font-weight: 600; }
+.em-foot a:hover { color: var(--bone); }
+@media (max-width: 720px) { .em-foot__in { padding: 0 16px; } }
+</style>
+</head>
+<body>
+
+<nav class="em-nav">
+  <div class="em-nav__in">
+    <a class="em-nav__logo" href="landing.html" aria-label="Broquer">
+      <img src="logotipo-white.png" alt="Broquer"/>
+    </a>
+    <div class="em-nav__cta">
+      <a class="em-btn-ghost" href="landing.html#precios">Ver todos los planes</a>
+    </div>
+  </div>
+</nav>
+
+<header class="em-hero">
+  <div class="em-wrap">
+    <div class="em-hero__eyebrow">Broquer para Empresas</div>
+    <h1>Todo Broquer Max, para cada agente de tu equipo</h1>
+    <p>Un solo inventario, permisos que tú decides y tus contactos siempre tuyos. Arranca con 5 usuarios y agrega los que necesites cuando los necesites.</p>
+  </div>
+</header>
+
+<main class="em-body">
+  <div class="em-wrap em-grid">
+
+    <!-- ── Columna izquierda: configurador ─────────────────── -->
+    <section>
+      <div class="em-card">
+        <h2 class="em-card__title">Arma tu plan</h2>
+        <p class="em-card__sub">El precio se calcula por lugares. Puedes subir o bajar usuarios después sin cambiar de suscripción.</p>
+
+        <div class="em-seg" role="group" aria-label="Periodo de cobro">
+          <button type="button" id="em-per-mensual" class="is-active" onclick="setPeriodo('mensual')">Mensual</button>
+          <button type="button" id="em-per-anual" onclick="setPeriodo('anual')">Anual</button>
+        </div>
+        <span class="em-ahorro" id="em-ahorro">Pagas 11 meses</span>
+
+        <div class="em-field">
+          <label class="em-label" for="em-asientos">Usuarios de tu equipo</label>
+          <div class="em-stepper">
+            <button type="button" class="em-step-btn" id="em-menos" onclick="cambiaAsientos(-1)" aria-label="Quitar un usuario">&minus;</button>
+            <input class="em-step-input" id="em-asientos" type="number" min="5" max="500" step="1" value="5" oninput="onAsientosInput(this.value)"/>
+            <button type="button" class="em-step-btn" id="em-mas" onclick="cambiaAsientos(1)" aria-label="Agregar un usuario">+</button>
+          </div>
+          <div class="em-step-hint" id="em-asientos-hint">El plan base incluye 5 usuarios. Cada usuario adicional se cobra aparte.</div>
+        </div>
+
+        <div class="em-desglose">
+          <div class="em-linea"><span id="em-linea-base-lbl">Plan base (5 usuarios)</span><b id="em-linea-base">$3,499</b></div>
+          <div class="em-linea" id="em-linea-extra-row" style="display:none"><span id="em-linea-extra-lbl">Usuarios adicionales</span><b id="em-linea-extra">$0</b></div>
+          <div class="em-total">
+            <span>Total</span>
+            <div>
+              <b id="em-total">$3,499</b>
+              <small id="em-total-lbl">al mes, IVA incluido</small>
+            </div>
+          </div>
+        </div>
+
+        <button class="em-btn" id="em-cta" onclick="contratar()">Contratar Broquer para Empresas</button>
+        <div class="em-nota" id="em-nota">Pago seguro con Stripe. Cancelas cuando quieras desde tu perfil.</div>
+        <div id="em-avisos"></div>
+      </div>
+    </section>
+
+    <!-- ── Columna derecha: qué incluye ────────────────────── -->
+    <aside>
+      <div class="em-card">
+        <h2 class="em-card__title">Qué incluye</h2>
+        <p class="em-card__sub">Cada lugar es una cuenta completa de Broquer Max.</p>
+        <ul class="em-lista">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Broquer Max completo para cada agente: Broq, contratos, ISR, estimaciones de valor, editor de imágenes, WhatsApp y Facebook Ads</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Un solo inventario para todo el equipo, siempre sincronizado</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Tú decides quién ve teléfonos, comisiones, contactos del equipo y estadísticas</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Solo el dueño conecta Facebook y las integraciones de la empresa</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Varios números de WhatsApp con la recepcionista de Broq</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Si un agente se va, contactos y propiedades se quedan contigo</span></li>
+        </ul>
+
+        <dl class="em-faq">
+          <dt>¿Puedo agregar usuarios después?</dt>
+          <dd>Sí. Desde Equipo cambias los lugares y Stripe cobra únicamente la diferencia proporcional.</dd>
+          <dt>¿Qué pasa si doy de baja a alguien?</dt>
+          <dd>Su lugar se libera y puedes invitar a otra persona sin costo extra, o reducir lugares para bajar tu mensualidad.</dd>
+          <dt>¿Cómo entra mi equipo?</dt>
+          <dd>Después de pagar, desde Equipo generas una invitación por correo para cada agente.</dd>
+        </dl>
+      </div>
+    </aside>
+
+  </div>
+</main>
+
+<footer class="em-foot">
+  <div class="em-foot__in">
+    <a href="landing.html">Broquer</a>
+    <a href="soporte.html">Soporte</a>
+    <a href="legal.html">Términos y privacidad</a>
+    <span>Broquer 2026</span>
+  </div>
+</footer>
+
+<script>
+const API_BASE = 'https://api.broquer.app';
+
+/* Dentro de la app nativa de iOS jamás se abre un cobro (App Store 3.1.3(c)). */
+const IS_IOS_NATIVE = (function () {
+  try {
+    const cap = window.Capacitor;
+    return !!(cap && (typeof cap.isNativePlatform === 'function' ? cap.isNativePlatform() : cap.isNative));
+  } catch (e) { return false; }
+})();
+
+/* Tarifas de respaldo para pintar la pantalla sin sesión.
+   El cobro real siempre lo manda Stripe desde el backend. */
+let TARIFAS = {
+  mensual: { base: 3499, extra: 599, etiqueta: 'al mes' },
+  anual:   { base: 38489, extra: 6589, etiqueta: 'al año' },
+};
+let ASIENTOS_BASE = 5;
+let ASIENTOS_TOPE = 500;
+
+let periodo = 'mensual';
+let asientos = 5;
+let plan = null;        // respuesta de /subscription/empresa/plan
+let enviando = false;
+
+function g(id) { return document.getElementById(id); }
+function getToken() { return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || null; }
+function money(n) { return '$' + Math.round(Number(n) || 0).toLocaleString('es-MX'); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>'"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[c])); }
+
+/* ── Cálculo ─────────────────────────────────────────────── */
+function tarifa() { return TARIFAS[periodo] || TARIFAS.mensual; }
+function extras() { return Math.max(0, asientos - ASIENTOS_BASE); }
+function totalPlan() { return tarifa().base + extras() * tarifa().extra; }
+
+function setPeriodo(p) {
+  periodo = (p === 'anual') ? 'anual' : 'mensual';
+  g('em-per-mensual').classList.toggle('is-active', periodo === 'mensual');
+  g('em-per-anual').classList.toggle('is-active', periodo === 'anual');
+  g('em-ahorro').textContent = periodo === 'anual' ? 'Pagas 11 meses, usas 12' : 'O paga anual y ahorra un mes';
+  pinta();
+}
+
+function minimoAsientos() {
+  const usados = (plan && plan.ocupacion) ? Number(plan.ocupacion.usados) || 0 : 0;
+  return Math.max(ASIENTOS_BASE, usados);
+}
+
+function cambiaAsientos(d) {
+  asientos = Math.min(ASIENTOS_TOPE, Math.max(minimoAsientos(), asientos + d));
+  g('em-asientos').value = asientos;
+  pinta();
+}
+
+function onAsientosInput(v) {
+  const n = parseInt(v, 10);
+  asientos = isNaN(n) ? minimoAsientos() : Math.min(ASIENTOS_TOPE, Math.max(minimoAsientos(), n));
+  pinta();
+}
+
+function pinta() {
+  const t = tarifa();
+  const n = extras();
+  g('em-linea-base-lbl').textContent = 'Plan base (' + ASIENTOS_BASE + ' usuarios)';
+  g('em-linea-base').textContent = money(t.base);
+  g('em-linea-extra-row').style.display = n ? 'flex' : 'none';
+  g('em-linea-extra-lbl').textContent = n + (n === 1 ? ' usuario adicional' : ' usuarios adicionales') + ' × ' + money(t.extra);
+  g('em-linea-extra').textContent = money(n * t.extra);
+  g('em-total').textContent = money(totalPlan());
+  g('em-total-lbl').textContent = t.etiqueta + ', IVA incluido';
+  g('em-menos').disabled = asientos <= minimoAsientos();
+  g('em-mas').disabled = asientos >= ASIENTOS_TOPE;
+
+  const usados = (plan && plan.ocupacion) ? plan.ocupacion.usados : 0;
+  g('em-asientos-hint').textContent = usados
+    ? 'El plan base incluye ' + ASIENTOS_BASE + ' usuarios. Hoy tienes ' + usados + ' lugares ocupados entre miembros e invitaciones pendientes.'
+    : 'El plan base incluye ' + ASIENTOS_BASE + ' usuarios. Cada usuario adicional se cobra aparte.';
+}
+
+function aviso(tipo, html) {
+  g('em-avisos').innerHTML = '<div class="em-aviso em-aviso--' + tipo + '">' + html + '</div>';
+}
+function limpiaAvisos() { g('em-avisos').innerHTML = ''; }
+
+/* ── Estado de la cuenta ─────────────────────────────────── */
+async function cargarPlan() {
+  if (IS_IOS_NATIVE) {
+    g('em-cta').disabled = true;
+    g('em-cta').textContent = 'Disponible en broquer.app';
+    aviso('info', 'La contratación de Broquer para Empresas se hace desde el navegador en <b>broquer.app</b>. Después tu equipo entra normal desde la app.');
+    return;
+  }
+
+  const tok = getToken();
+  if (!tok) {
+    g('em-cta').textContent = 'Inicia sesión para contratar';
+    g('em-cta').onclick = function () { window.location.href = 'login.html'; };
+    aviso('info', '¿Todavía no tienes cuenta de Broquer? <a href="registro.html">Créala gratis</a> y regresa a esta pantalla para contratar el plan de tu equipo.');
+    return;
+  }
+
+  try {
+    const r = await fetch(API_BASE + '/subscription/empresa/plan', { headers: { Authorization: 'Bearer ' + tok } });
+    if (r.status === 401) {
+      g('em-cta').textContent = 'Inicia sesión para contratar';
+      g('em-cta').onclick = function () { window.location.href = 'login.html'; };
+      return;
+    }
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || 'No pude leer tu plan.');
+    plan = d;
+  } catch (e) {
+    aviso('err', esc(e.message || 'No pude conectar con el servidor. Intenta de nuevo en un momento.'));
+    return;
+  }
+
+  if (plan.tarifas) TARIFAS = plan.tarifas;
+  if (plan.asientos_base) ASIENTOS_BASE = plan.asientos_base;
+  if (plan.asientos_max) ASIENTOS_TOPE = plan.asientos_max;
+
+  if (!plan.es_admin && plan.tiene_org) {
+    g('em-cta').disabled = true;
+    g('em-cta').textContent = 'Solo el dueño puede contratar';
+    aviso('warn', 'Perteneces a la cuenta de otra persona. Pídele al dueño que contrate o amplíe los lugares del equipo.');
+  }
+
+  asientos = Math.max(minimoAsientos(), Number(plan.asientos_contratados) || ASIENTOS_BASE);
+  g('em-asientos').value = asientos;
+  if (plan.periodo) setPeriodo(plan.periodo); else pinta();
+
+  if (plan.es_empresa && plan.activa) pintaEmpresaActiva();
+}
+
+function pintaEmpresaActiva() {
+  const o = plan.ocupacion || { miembros: 0, invitaciones: 0, usados: 0 };
+  const cta = g('em-cta');
+  cta.textContent = 'Guardar lugares';
+  cta.onclick = actualizarAsientos;
+  g('em-nota').innerHTML = 'Al cambiar lugares, Stripe cobra o acredita únicamente la diferencia proporcional. Invita a tu equipo desde <a href="equipo.html">Equipo</a>.';
+
+  const estado = document.createElement('div');
+  estado.className = 'em-estado';
+  estado.innerHTML =
+    '<div class="em-kpi"><b>' + (plan.asientos_contratados || ASIENTOS_BASE) + '</b><span>Lugares contratados</span></div>' +
+    '<div class="em-kpi"><b>' + o.miembros + '</b><span>Miembros activos</span></div>' +
+    '<div class="em-kpi"><b>' + o.invitaciones + '</b><span>Invitaciones pendientes</span></div>';
+  const card = g('em-cta').closest('.em-card');
+  card.insertBefore(estado, card.querySelector('.em-field'));
+
+  aviso('ok', 'Tu plan <b>' + esc(plan.nombre || 'de empresa') + '</b> está activo. Aquí puedes ajustar los lugares contratados.');
+}
+
+/* ── Acciones ────────────────────────────────────────────── */
+async function contratar() {
+  if (enviando) return;
+  const tok = getToken();
+  if (!tok) { window.location.href = 'login.html'; return; }
+  enviando = true;
+  const btn = g('em-cta');
+  const textoPrevio = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Abriendo pago…';
+  limpiaAvisos();
+  try {
+    const r = await fetch(API_BASE + '/subscription/empresa/checkout', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        asientos: asientos,
+        periodo: periodo,
+        success_url: window.location.origin + '/equipo.html?empresa=ok',
+        cancel_url: window.location.href,
+      }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || !d.checkout_url) throw new Error(d.detail || 'No se pudo iniciar la contratación.');
+    window.location.href = d.checkout_url;
+  } catch (e) {
+    aviso('err', esc(e.message || 'No pude conectar con el servidor de pagos. Intenta de nuevo.'));
+    btn.disabled = false;
+    btn.textContent = textoPrevio;
+    enviando = false;
+  }
+}
+
+async function actualizarAsientos() {
+  if (enviando) return;
+  const tok = getToken();
+  if (!tok) { window.location.href = 'login.html'; return; }
+  enviando = true;
+  const btn = g('em-cta');
+  btn.disabled = true;
+  btn.textContent = 'Guardando…';
+  limpiaAvisos();
+  try {
+    const r = await fetch(API_BASE + '/subscription/empresa/asientos', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ asientos: asientos }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.detail || 'No se pudieron actualizar los lugares.');
+    aviso('ok', 'Listo. Ahora tienes <b>' + asientos + '</b> lugares contratados. Invita a tu equipo desde <a href="equipo.html">Equipo</a>.');
+  } catch (e) {
+    aviso('err', esc(e.message || 'No pude actualizar los lugares. Intenta de nuevo.'));
+  }
+  btn.disabled = false;
+  btn.textContent = 'Guardar lugares';
+  enviando = false;
+}
+
+/* ── Init ────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  const q = new URLSearchParams(window.location.search);
+  pinta();
+  cargarPlan().then(() => {
+    if (q.get('empresa') === 'cancelada') {
+      aviso('warn', 'Cancelaste el pago. Tu cuenta sigue igual: puedes contratar cuando quieras.');
+    }
+  });
+});
+</script>
+</body>
+</html>
