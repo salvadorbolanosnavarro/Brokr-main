@@ -65,23 +65,23 @@ _theme_tokens_cache: Optional[str] = None
 
 # Respaldo por si el CSS no se puede leer (archivo movido, permisos).
 # Un PDF que no se genera es peor que un PDF con el color de ayer.
-# Espejo del :root de la edición "Navarro".
+# Espejo del :root de la edición "Canon".
 _THEME_TOKENS_FALLBACK = """
-  --paper:#F4F7FD; --paper-2:#EDF2FB; --bone:#FFFFFF; --shell:#F4F7FE;
-  --ink:#00143B; --ink-2:#1B2C4F; --ink-3:#4A5875;
-  --mute:#4A5875; --mute-2:#8592AB; --mute-3:#BFCADD;
-  --line:#E6ECF6; --line-2:#D8E1EF; --line-3:#BFCADD;
-  --forest:#1240A0; --forest-2:#0B2E78; --forest-soft:rgba(18,64,160,0.10);
-  --sky-navy:#00143B; --sky-navy-mid:#032873; --sky-navy-deep:#000D28;
-  --sky-blue:#1240A0; --sky-blue-press:#0B2E78; --sky-blue-lift:#3A6FD8;
-  --sky-canvas:#E8F0FE; --sky-blue-on-dark:#7FA8F0;
-  --warn:#B45309; --warn-soft:rgba(180,83,9,0.10);
-  --danger:#C62839; --danger-soft:rgba(198,40,57,0.10);
-  --success:#0C7A5E; --success-soft:rgba(12,122,94,0.10);
-  --info:#0B2E78; --info-soft:rgba(11,46,120,0.10);
-  --r-xs:6px; --r-sm:8px; --r:10px; --r-lg:16px; --r-xl:22px; --r-pill:999px;
-  --font-sans:'Manrope',-apple-system,BlinkMacSystemFont,system-ui,Roboto,'Helvetica Neue',sans-serif;
-  --font-display:'Manrope',-apple-system,BlinkMacSystemFont,system-ui,Roboto,sans-serif;
+  --paper:#FFFFFF; --paper-2:#F4F6FB; --bone:#FFFFFF; --shell:#F5F7FC;
+  --ink:#0B0B0F; --ink-2:#2A3142; --ink-3:#57607A;
+  --mute:#57607A; --mute-2:#8A93A9; --mute-3:#C6CCDA;
+  --line:#E7EBF4; --line-2:#DBE1EE; --line-3:#BEC7DA;
+  --forest:#0A5DE0; --forest-2:#084BB8; --forest-soft:rgba(10,93,224,0.10);
+  --sky-navy:#081C4E; --sky-navy-mid:#10307E; --sky-navy-deep:#050F2E;
+  --sky-blue:#0A5DE0; --sky-blue-press:#084BB8; --sky-blue-lift:#6F9FF2;
+  --sky-canvas:#E9F0FD; --sky-blue-on-dark:#8FB0F5;
+  --warn:#B34E0B; --warn-soft:rgba(243,116,13,0.14);
+  --danger:#D42A62; --danger-soft:rgba(212,42,98,0.12);
+  --success:#0E9F6E; --success-soft:rgba(14,159,110,0.12);
+  --info:#0A5DE0; --info-soft:rgba(10,93,224,0.10);
+  --r-xs:8px; --r-sm:12px; --r:14px; --r-lg:22px; --r-xl:26px; --r-pill:999px;
+  --font-sans:'Inter',-apple-system,BlinkMacSystemFont,system-ui,Roboto,'Helvetica Neue',sans-serif;
+  --font-display:'Inter',-apple-system,BlinkMacSystemFont,system-ui,Roboto,sans-serif;
 """
 
 
@@ -115,7 +115,7 @@ def theme_css_for_pdf(extra: str = "") -> str:
     al final, así que gana sobre todo lo anterior."""
     return (
         "@import url('https://fonts.googleapis.com/css2?"
-        "family=Manrope:wght@400;500;600;700;800&display=swap');\n"
+        "family=Inter:opsz,wght@14..32,400..800&display=swap');\n"
         ":root{\n" + _theme_tokens() + "\n}\n"
         "/* Overrides del documento impreso: el papel es blanco (el canvas\n"
         "   azul de la app no aplica) y los radios son de documento. */\n"
