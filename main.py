@@ -159,6 +159,12 @@ try:
 except Exception as _e:
     print(f"[org] No se pudo montar el router de organizaciones: {_e}")
 
+# WhatsApp de ChatGPT: onboarding real por Meta Embedded Signup, separado del módulo legacy.
+try:
+    from routers.whatsapp_chatgpt import router as whatsapp_chatgpt_router
+    app.include_router(whatsapp_chatgpt_router)
+except Exception as _e:
+    print(f"[whatsapp-chatgpt] No se pudo montar el router: {_e}")
 # Cumplimiento PLD/UIF: expediente único, umbrales, avisos y bitácora.
 # Mismo import defensivo: si falla, el resto del backend sigue vivo.
 try:
