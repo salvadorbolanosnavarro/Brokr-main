@@ -802,8 +802,15 @@ async def _alta_inmueble(user_id: str, datos: dict, wa_id: str, fotos: list | No
         except Exception:
             return None
 
+    # org_id explícito: estas filas nacen con la service key, así que la base
+    # NO puede deducir la empresa por la sesión (no hay sesión). Sin esto, el
+    # inmueble queda huérfano de empresa y el dueño no puede ni borrarlo.
+    ctx_org = await get_org_context(user_id)
+    org_id = (ctx_org or {}).get("org_id")
+
     fila = {
         "user_id": user_id,
+        "org_id": org_id,
         "titulo": titulo[:200],
         "tipo": tipo,
         "operacion": operacion,
@@ -1825,8 +1832,12 @@ async def _crear_contacto_crm(user_id: str, wa_id: str, nombre: str | None) -> s
     en milisegundos), porque esa columna es TEXT, no uuid."""
     contacto_id = f"c_{int(datetime.now(timezone.utc).timestamp() * 1000)}"
     telefono = _normaliza_mx(wa_id)
+    # Igual que en _alta_inmueble: sin org_id explícito, el contacto queda
+    # huérfano de empresa y no se puede eliminar desde la plataforma.
+    ctx_org = await get_org_context(user_id)
+    org_id = (ctx_org or {}).get("org_id")
     fila = {
-        "id": contacto_id, "user_id": user_id,
+        "id": contacto_id, "user_id": user_id, "org_id": org_id,
         "nombre": (nombre or telefono or "Prospecto de WhatsApp").upper(),
         "telefono": telefono, "wa": telefono,
         "tipo": "comprador", "fuente": "WhatsApp",
