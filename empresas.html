@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>Broquer para Empresas — contrata tu plan</title>
-<meta name="description" content="Broquer Max para cada agente de tu equipo: mismo inventario, permisos que tú decides y tus contactos siempre tuyos. Desde 5 usuarios."/>
+<title>Broquer para Empresas — hablemos de tu equipo</title>
+<meta name="description" content="Broquer Max para cada agente de tu equipo: mismo inventario, permisos que tú decides y tus contactos siempre tuyos. Escríbenos y armamos un plan a la medida."/>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
 /* ════════════════════════════════════════════════════════════
-   BROQUER — Contratación de Broquer para Empresas
-   Compra SOLO web (App Store 3.1.3(c)). Navy = estructura,
+   BROQUER — Broquer para Empresas (venta asesorada)
+   Sin precios públicos: el plan se arma por correo. Navy = estructura,
    var(--sky-blue) = acción. Todo sale de tokens del sistema.
    ════════════════════════════════════════════════════════════ */
 html, body { background: var(--paper); min-height: 100%; }
@@ -51,47 +51,18 @@ body { color: var(--ink); font-family: var(--font-sans); letter-spacing: -0.01em
 .em-card__title { font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 700; letter-spacing: -0.025em; margin: 0; }
 .em-card__sub { font-size: var(--fs-sm); color: var(--mute); line-height: var(--lh); margin: var(--sp-2) 0 var(--sp-6); }
 
-/* ── Segmentado mensual / anual ──────────────────────────── */
-.em-seg { display: inline-flex; background: var(--paper-2); border: 1px solid var(--line); border-radius: var(--r-pill); padding: 3px; gap: 2px; }
-.em-seg button {
-  border: 0; background: transparent; cursor: pointer; font-family: inherit;
-  font-size: var(--fs-sm); font-weight: 700; color: var(--mute);
-  padding: 8px 18px; border-radius: var(--r-pill);
-  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+/* ── Bloque de contacto ──────────────────────────────────── */
+.em-mail {
+  margin-top: var(--sp-6); border: 1px solid var(--line); border-radius: var(--r);
+  background: var(--paper-2); padding: var(--sp-5);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); flex-wrap: wrap;
 }
-.em-seg button.is-active { background: var(--bone); color: var(--ink); box-shadow: var(--shadow-xs); }
-.em-ahorro { font-size: var(--fs-xs); color: var(--success); font-weight: 700; margin-left: var(--sp-3); }
-
-/* ── Selector de lugares ─────────────────────────────────── */
-.em-field { margin-top: var(--sp-6); }
-.em-label { display: block; font-size: var(--fs-xs); font-weight: 700; color: var(--ink); margin-bottom: var(--sp-2); }
-.em-stepper { display: flex; align-items: center; gap: var(--sp-3); }
-.em-step-btn {
-  width: var(--h); height: var(--h); flex: none; border: 1px solid var(--line-2);
-  background: var(--paper); color: var(--ink); border-radius: var(--r);
-  font-family: inherit; font-size: var(--fs-h3); font-weight: 700; line-height: 1; cursor: pointer;
-  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
-}
-.em-step-btn:hover { border-color: var(--sky-blue); background: var(--paper-2); }
-.em-step-btn:disabled { opacity: .4; cursor: not-allowed; }
-.em-step-input {
-  width: 108px; height: var(--h); text-align: center;
-  background: var(--shell); border: 1px solid var(--line-2); border-radius: var(--r);
-  font-family: inherit; font-size: var(--fs-h3); font-weight: 700; color: var(--ink);
-  outline: none; -webkit-appearance: none; appearance: none;
-}
-.em-step-input:focus { border-color: var(--sky-blue); box-shadow: var(--focus); }
-.em-step-hint { font-size: var(--fs-xs); color: var(--mute); line-height: var(--lh-snug); margin-top: var(--sp-2); }
-
-/* ── Desglose ────────────────────────────────────────────── */
-.em-desglose { margin-top: var(--sp-6); border-top: 1px solid var(--line); padding-top: var(--sp-4); }
-.em-linea { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-4); padding: var(--sp-2) 0; font-size: var(--fs-sm); color: var(--ink-2); }
-.em-linea span { color: var(--mute); }
-.em-linea b { font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
-.em-total { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-4); border-top: 1px solid var(--line); margin-top: var(--sp-3); padding-top: var(--sp-4); }
-.em-total span { font-size: var(--fs-sm); font-weight: 700; color: var(--ink); }
-.em-total b { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 700; letter-spacing: -0.03em; color: var(--ink); font-variant-numeric: tabular-nums; }
-.em-total small { display: block; font-size: var(--fs-xs); font-weight: 600; color: var(--mute); text-align: right; margin-top: var(--sp-1); }
+.em-mail__lbl { font-size: var(--fs-xs); font-weight: 700; color: var(--mute); }
+.em-mail__dir { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 700; letter-spacing: -0.02em; color: var(--ink); text-decoration: none; }
+.em-mail__dir:hover { color: var(--sky-blue); }
+.em-puntos { list-style: none; margin: var(--sp-5) 0 0; padding: 0; display: grid; gap: var(--sp-3); }
+.em-puntos li { display: flex; gap: var(--sp-3); align-items: flex-start; font-size: var(--fs-sm); color: var(--ink-2); line-height: var(--lh); }
+.em-puntos svg { width: 18px; height: 18px; flex: none; margin-top: 2px; color: var(--sky-blue); }
 
 /* ── Botones ─────────────────────────────────────────────── */
 .em-btn {
@@ -156,7 +127,7 @@ body { color: var(--ink); font-family: var(--font-sans); letter-spacing: -0.01em
   <div class="em-wrap">
     <div class="em-hero__eyebrow">Broquer para Empresas</div>
     <h1>Todo Broquer Max, para cada agente de tu equipo</h1>
-    <p>Un solo inventario, permisos que tú decides y tus contactos siempre tuyos. Arranca con 5 usuarios y agrega los que necesites cuando los necesites.</p>
+    <p>Un solo inventario, permisos que tú decides y tus contactos siempre tuyos. Cada agencia opera distinto, así que el plan lo armamos contigo, a la medida de tu equipo.</p>
   </div>
 </header>
 
@@ -166,39 +137,24 @@ body { color: var(--ink); font-family: var(--font-sans); letter-spacing: -0.01em
     <!-- ── Columna izquierda: configurador ─────────────────── -->
     <section>
       <div class="em-card">
-        <h2 class="em-card__title">Arma tu plan</h2>
-        <p class="em-card__sub">El precio se calcula por lugares. Puedes subir o bajar usuarios después sin cambiar de suscripción.</p>
+        <h2 class="em-card__title">Hablemos de tu empresa</h2>
+        <p class="em-card__sub">No manejamos un precio de mostrador: escuchamos cómo trabaja tu agencia y te proponemos una solución a la medida, con los lugares, permisos e integraciones que tu operación necesita.</p>
 
-        <div class="em-seg" role="group" aria-label="Periodo de cobro">
-          <button type="button" id="em-per-mensual" class="is-active" onclick="setPeriodo('mensual')">Mensual</button>
-          <button type="button" id="em-per-anual" onclick="setPeriodo('anual')">Anual</button>
-        </div>
-        <span class="em-ahorro" id="em-ahorro">Pagas 11 meses</span>
+        <ul class="em-puntos">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Cuéntanos cuántos agentes son y cómo operan hoy</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Te respondemos con una propuesta clara para tu equipo</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Te acompañamos en la puesta en marcha y la migración de tu inventario</span></li>
+        </ul>
 
-        <div class="em-field">
-          <label class="em-label" for="em-asientos">Usuarios de tu equipo</label>
-          <div class="em-stepper">
-            <button type="button" class="em-step-btn" id="em-menos" onclick="cambiaAsientos(-1)" aria-label="Quitar un usuario">&minus;</button>
-            <input class="em-step-input" id="em-asientos" type="number" min="5" max="500" step="1" value="5" oninput="onAsientosInput(this.value)"/>
-            <button type="button" class="em-step-btn" id="em-mas" onclick="cambiaAsientos(1)" aria-label="Agregar un usuario">+</button>
-          </div>
-          <div class="em-step-hint" id="em-asientos-hint">El plan base incluye 5 usuarios. Cada usuario adicional se cobra aparte.</div>
-        </div>
-
-        <div class="em-desglose">
-          <div class="em-linea"><span id="em-linea-base-lbl">Plan base (5 usuarios)</span><b id="em-linea-base">$3,499</b></div>
-          <div class="em-linea" id="em-linea-extra-row" style="display:none"><span id="em-linea-extra-lbl">Usuarios adicionales</span><b id="em-linea-extra">$0</b></div>
-          <div class="em-total">
-            <span>Total</span>
-            <div>
-              <b id="em-total">$3,499</b>
-              <small id="em-total-lbl">al mes, IVA incluido</small>
-            </div>
+        <div class="em-mail">
+          <div>
+            <div class="em-mail__lbl">Escríbenos a</div>
+            <a class="em-mail__dir" href="mailto:hola@broquer.app?subject=Broquer%20para%20Empresas">hola@broquer.app</a>
           </div>
         </div>
 
-        <button class="em-btn" id="em-cta" onclick="contratar()">Contratar Broquer para Empresas</button>
-        <div class="em-nota" id="em-nota">Pago seguro con Stripe. Cancelas cuando quieras desde tu perfil.</div>
+        <a class="em-btn" id="em-cta" href="mailto:hola@broquer.app?subject=Broquer%20para%20Empresas&body=Hola%2C%20me%20interesa%20Broquer%20para%20Empresas.%0A%0ANombre%20de%20mi%20agencia%3A%20%0AN%C3%BAmero%20de%20agentes%3A%20%0ACiudad%3A%20">Escribir a Broquer</a>
+        <div class="em-nota" id="em-nota">Te contestamos por correo para agendar una llamada y armar tu plan.</div>
         <div id="em-avisos"></div>
       </div>
     </section>
@@ -218,12 +174,12 @@ body { color: var(--ink); font-family: var(--font-sans); letter-spacing: -0.01em
         </ul>
 
         <dl class="em-faq">
+          <dt>¿Cuánto cuesta?</dt>
+          <dd>Depende de tu equipo. Escríbenos a <a href="mailto:hola@broquer.app?subject=Broquer%20para%20Empresas">hola@broquer.app</a>, cuéntanos cuántos agentes son y te mandamos una propuesta a la medida.</dd>
           <dt>¿Puedo agregar usuarios después?</dt>
-          <dd>Sí. Desde Equipo cambias los lugares y Stripe cobra únicamente la diferencia proporcional.</dd>
-          <dt>¿Qué pasa si doy de baja a alguien?</dt>
-          <dd>Su lugar se libera y puedes invitar a otra persona sin costo extra, o reducir lugares para bajar tu mensualidad.</dd>
+          <dd>Sí. Los lugares de tu plan se ajustan cuando tu equipo crece o cambia; lo vemos contigo directamente.</dd>
           <dt>¿Cómo entra mi equipo?</dt>
-          <dd>Después de pagar, desde Equipo generas una invitación por correo para cada agente.</dd>
+          <dd>Una vez activo tu plan, desde Equipo generas una invitación por correo para cada agente.</dd>
         </dl>
       </div>
     </aside>
@@ -243,224 +199,42 @@ body { color: var(--ink); font-family: var(--font-sans); letter-spacing: -0.01em
 <script>
 const API_BASE = 'https://api.broquer.app';
 
-/* Dentro de la app nativa de iOS jamás se abre un cobro (App Store 3.1.3(c)). */
-const IS_IOS_NATIVE = (function () {
-  try {
-    const cap = window.Capacitor;
-    return !!(cap && (typeof cap.isNativePlatform === 'function' ? cap.isNativePlatform() : cap.isNative));
-  } catch (e) { return false; }
-})();
-
-/* Tarifas de respaldo para pintar la pantalla sin sesión.
-   El cobro real siempre lo manda Stripe desde el backend. */
-let TARIFAS = {
-  mensual: { base: 3499, extra: 599, etiqueta: 'al mes' },
-  anual:   { base: 38489, extra: 6589, etiqueta: 'al año' },
-};
-let ASIENTOS_BASE = 5;
-let ASIENTOS_TOPE = 500;
-
-let periodo = 'mensual';
-let asientos = 5;
-let plan = null;        // respuesta de /subscription/empresa/plan
-let enviando = false;
-
 function g(id) { return document.getElementById(id); }
 function getToken() { return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || null; }
-function money(n) { return '$' + Math.round(Number(n) || 0).toLocaleString('es-MX'); }
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>'"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[c])); }
-
-/* ── Cálculo ─────────────────────────────────────────────── */
-function tarifa() { return TARIFAS[periodo] || TARIFAS.mensual; }
-function extras() { return Math.max(0, asientos - ASIENTOS_BASE); }
-function totalPlan() { return tarifa().base + extras() * tarifa().extra; }
-
-function setPeriodo(p) {
-  periodo = (p === 'anual') ? 'anual' : 'mensual';
-  g('em-per-mensual').classList.toggle('is-active', periodo === 'mensual');
-  g('em-per-anual').classList.toggle('is-active', periodo === 'anual');
-  g('em-ahorro').textContent = periodo === 'anual' ? 'Pagas 11 meses, usas 12' : 'O paga anual y ahorra un mes';
-  pinta();
-}
-
-function minimoAsientos() {
-  const usados = (plan && plan.ocupacion) ? Number(plan.ocupacion.usados) || 0 : 0;
-  return Math.max(ASIENTOS_BASE, usados);
-}
-
-function cambiaAsientos(d) {
-  asientos = Math.min(ASIENTOS_TOPE, Math.max(minimoAsientos(), asientos + d));
-  g('em-asientos').value = asientos;
-  pinta();
-}
-
-function onAsientosInput(v) {
-  const n = parseInt(v, 10);
-  asientos = isNaN(n) ? minimoAsientos() : Math.min(ASIENTOS_TOPE, Math.max(minimoAsientos(), n));
-  pinta();
-}
-
-function pinta() {
-  const t = tarifa();
-  const n = extras();
-  g('em-linea-base-lbl').textContent = 'Plan base (' + ASIENTOS_BASE + ' usuarios)';
-  g('em-linea-base').textContent = money(t.base);
-  g('em-linea-extra-row').style.display = n ? 'flex' : 'none';
-  g('em-linea-extra-lbl').textContent = n + (n === 1 ? ' usuario adicional' : ' usuarios adicionales') + ' × ' + money(t.extra);
-  g('em-linea-extra').textContent = money(n * t.extra);
-  g('em-total').textContent = money(totalPlan());
-  g('em-total-lbl').textContent = t.etiqueta + ', IVA incluido';
-  g('em-menos').disabled = asientos <= minimoAsientos();
-  g('em-mas').disabled = asientos >= ASIENTOS_TOPE;
-
-  const usados = (plan && plan.ocupacion) ? plan.ocupacion.usados : 0;
-  g('em-asientos-hint').textContent = usados
-    ? 'El plan base incluye ' + ASIENTOS_BASE + ' usuarios. Hoy tienes ' + usados + ' lugares ocupados entre miembros e invitaciones pendientes.'
-    : 'El plan base incluye ' + ASIENTOS_BASE + ' usuarios. Cada usuario adicional se cobra aparte.';
-}
 
 function aviso(tipo, html) {
   g('em-avisos').innerHTML = '<div class="em-aviso em-aviso--' + tipo + '">' + html + '</div>';
 }
-function limpiaAvisos() { g('em-avisos').innerHTML = ''; }
 
-/* ── Estado de la cuenta ─────────────────────────────────── */
+/* ── Estado de la cuenta: si ya es empresa, mostramos sus lugares ── */
 async function cargarPlan() {
-  if (IS_IOS_NATIVE) {
-    g('em-cta').disabled = true;
-    g('em-cta').textContent = 'Disponible en broquer.app';
-    aviso('info', 'La contratación de Broquer para Empresas se hace desde el navegador en <b>broquer.app</b>. Después tu equipo entra normal desde la app.');
-    return;
-  }
-
   const tok = getToken();
-  if (!tok) {
-    g('em-cta').textContent = 'Inicia sesión para contratar';
-    g('em-cta').onclick = function () { window.location.href = 'login.html'; };
-    aviso('info', '¿Todavía no tienes cuenta de Broquer? <a href="registro.html">Créala gratis</a> y regresa a esta pantalla para contratar el plan de tu equipo.');
-    return;
-  }
+  if (!tok) return;
 
+  let plan = null;
   try {
     const r = await fetch(API_BASE + '/subscription/empresa/plan', { headers: { Authorization: 'Bearer ' + tok } });
-    if (r.status === 401) {
-      g('em-cta').textContent = 'Inicia sesión para contratar';
-      g('em-cta').onclick = function () { window.location.href = 'login.html'; };
-      return;
-    }
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.detail || 'No pude leer tu plan.');
-    plan = d;
-  } catch (e) {
-    aviso('err', esc(e.message || 'No pude conectar con el servidor. Intenta de nuevo en un momento.'));
-    return;
-  }
+    if (!r.ok) return;
+    plan = await r.json();
+  } catch (e) { return; }
 
-  if (plan.tarifas) TARIFAS = plan.tarifas;
-  if (plan.asientos_base) ASIENTOS_BASE = plan.asientos_base;
-  if (plan.asientos_max) ASIENTOS_TOPE = plan.asientos_max;
+  if (!(plan && plan.es_empresa && plan.activa)) return;
 
-  if (!plan.es_admin && plan.tiene_org) {
-    g('em-cta').disabled = true;
-    g('em-cta').textContent = 'Solo el dueño puede contratar';
-    aviso('warn', 'Perteneces a la cuenta de otra persona. Pídele al dueño que contrate o amplíe los lugares del equipo.');
-  }
-
-  asientos = Math.max(minimoAsientos(), Number(plan.asientos_contratados) || ASIENTOS_BASE);
-  g('em-asientos').value = asientos;
-  if (plan.periodo) setPeriodo(plan.periodo); else pinta();
-
-  if (plan.es_empresa && plan.activa) pintaEmpresaActiva();
-}
-
-function pintaEmpresaActiva() {
   const o = plan.ocupacion || { miembros: 0, invitaciones: 0, usados: 0 };
-  const cta = g('em-cta');
-  cta.textContent = 'Guardar lugares';
-  cta.onclick = actualizarAsientos;
-  g('em-nota').innerHTML = 'Al cambiar lugares, Stripe cobra o acredita únicamente la diferencia proporcional. Invita a tu equipo desde <a href="equipo.html">Equipo</a>.';
-
   const estado = document.createElement('div');
   estado.className = 'em-estado';
   estado.innerHTML =
-    '<div class="em-kpi"><b>' + (plan.asientos_contratados || ASIENTOS_BASE) + '</b><span>Lugares contratados</span></div>' +
-    '<div class="em-kpi"><b>' + o.miembros + '</b><span>Miembros activos</span></div>' +
-    '<div class="em-kpi"><b>' + o.invitaciones + '</b><span>Invitaciones pendientes</span></div>';
+    '<div class="em-kpi"><b>' + (Number(plan.asientos_contratados) || 0) + '</b><span>Lugares contratados</span></div>' +
+    '<div class="em-kpi"><b>' + (Number(o.miembros) || 0) + '</b><span>Miembros activos</span></div>' +
+    '<div class="em-kpi"><b>' + (Number(o.invitaciones) || 0) + '</b><span>Invitaciones pendientes</span></div>';
   const card = g('em-cta').closest('.em-card');
-  card.insertBefore(estado, card.querySelector('.em-field'));
+  card.insertBefore(estado, card.querySelector('.em-puntos'));
 
-  aviso('ok', 'Tu plan <b>' + esc(plan.nombre || 'de empresa') + '</b> está activo. Aquí puedes ajustar los lugares contratados.');
+  aviso('ok', 'Tu plan <b>' + esc(plan.nombre || 'de empresa') + '</b> está activo. Para cambiar los lugares de tu equipo escríbenos a <a href="mailto:hola@broquer.app?subject=Cambiar%20lugares%20de%20mi%20plan">hola@broquer.app</a> y lo ajustamos contigo. Invita a tu equipo desde <a href="equipo.html">Equipo</a>.');
 }
 
-/* ── Acciones ────────────────────────────────────────────── */
-async function contratar() {
-  if (enviando) return;
-  const tok = getToken();
-  if (!tok) { window.location.href = 'login.html'; return; }
-  enviando = true;
-  const btn = g('em-cta');
-  const textoPrevio = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = 'Abriendo pago…';
-  limpiaAvisos();
-  try {
-    const r = await fetch(API_BASE + '/subscription/empresa/checkout', {
-      method: 'POST',
-      headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        asientos: asientos,
-        periodo: periodo,
-        success_url: window.location.origin + '/equipo.html?empresa=ok',
-        cancel_url: window.location.href,
-      }),
-    });
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok || !d.checkout_url) throw new Error(d.detail || 'No se pudo iniciar la contratación.');
-    window.location.href = d.checkout_url;
-  } catch (e) {
-    aviso('err', esc(e.message || 'No pude conectar con el servidor de pagos. Intenta de nuevo.'));
-    btn.disabled = false;
-    btn.textContent = textoPrevio;
-    enviando = false;
-  }
-}
-
-async function actualizarAsientos() {
-  if (enviando) return;
-  const tok = getToken();
-  if (!tok) { window.location.href = 'login.html'; return; }
-  enviando = true;
-  const btn = g('em-cta');
-  btn.disabled = true;
-  btn.textContent = 'Guardando…';
-  limpiaAvisos();
-  try {
-    const r = await fetch(API_BASE + '/subscription/empresa/asientos', {
-      method: 'POST',
-      headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ asientos: asientos }),
-    });
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(d.detail || 'No se pudieron actualizar los lugares.');
-    aviso('ok', 'Listo. Ahora tienes <b>' + asientos + '</b> lugares contratados. Invita a tu equipo desde <a href="equipo.html">Equipo</a>.');
-  } catch (e) {
-    aviso('err', esc(e.message || 'No pude actualizar los lugares. Intenta de nuevo.'));
-  }
-  btn.disabled = false;
-  btn.textContent = 'Guardar lugares';
-  enviando = false;
-}
-
-/* ── Init ────────────────────────────────────────────────── */
-document.addEventListener('DOMContentLoaded', () => {
-  const q = new URLSearchParams(window.location.search);
-  pinta();
-  cargarPlan().then(() => {
-    if (q.get('empresa') === 'cancelada') {
-      aviso('warn', 'Cancelaste el pago. Tu cuenta sigue igual: puedes contratar cuando quieras.');
-    }
-  });
-});
+document.addEventListener('DOMContentLoaded', cargarPlan);
 </script>
 </body>
 </html>
