@@ -2724,20 +2724,31 @@ async def propiedades_eliminar_masivo(request: Request):
         "Content-Type": "application/json",
     }
 
-    params = dict(filtro)
-    if not todos:
-        lista = ",".join(f'"{str(x)}"' for x in ids)
-        params["id"] = f"in.({lista})"
-
-    # 1) Leer lo que sí se puede borrar (el filtro ya limita el alcance)
+    # 1) Leer lo que sí se puede borrar (el filtro ya limita el alcance).
+    # En LOTES: con cientos de IDs la URL rebasa el límite de longitud de
+    # Supabase y el GET falla completo.
+    filas: list = []
     try:
         async with httpx.AsyncClient(timeout=60) as client:
-            r = await client.get(f"{SUPABASE_URL}/rest/v1/propiedades",
-                                 headers=sb_headers,
-                                 params={**params, "select": "id,fotos"})
-            if r.status_code != 200:
-                raise HTTPException(status_code=500, detail="No se pudo leer el inventario.")
-            filas = r.json() or []
+            if todos:
+                r = await client.get(f"{SUPABASE_URL}/rest/v1/propiedades",
+                                     headers=sb_headers,
+                                     params={**filtro, "select": "id,fotos",
+                                             "limit": "10000"})
+                if r.status_code != 200:
+                    raise HTTPException(status_code=500, detail="No se pudo leer el inventario.")
+                filas = r.json() or []
+            else:
+                for i in range(0, len(ids), 200):
+                    lote = ids[i:i+200]
+                    lista = ",".join(f'"{str(x)}"' for x in lote)
+                    r = await client.get(f"{SUPABASE_URL}/rest/v1/propiedades",
+                                         headers=sb_headers,
+                                         params={**filtro, "select": "id,fotos",
+                                                 "id": f"in.({lista})"})
+                    if r.status_code != 200:
+                        raise HTTPException(status_code=500, detail="No se pudo leer el inventario.")
+                    filas.extend(r.json() or [])
     except HTTPException:
         raise
     except Exception:
@@ -2817,19 +2828,29 @@ async def contactos_eliminar_masivo(request: Request):
         "Content-Type": "application/json",
     }
 
-    params = dict(filtro)
-    if not todos:
-        lista = ",".join(f'"{str(x)}"' for x in ids)
-        params["id"] = f"in.({lista})"
-
+    # Verificar en LOTES: con cientos de IDs la URL rebasa el límite de
+    # longitud de Supabase y el GET falla completo. (Bug real con 599.)
+    filas: list = []
     try:
         async with httpx.AsyncClient(timeout=60) as client:
-            r = await client.get(f"{SUPABASE_URL}/rest/v1/contactos",
-                                 headers=sb_headers,
-                                 params={**params, "select": "id"})
-            if r.status_code != 200:
-                raise HTTPException(status_code=500, detail="No se pudo leer el directorio.")
-            filas = r.json() or []
+            if todos:
+                r = await client.get(f"{SUPABASE_URL}/rest/v1/contactos",
+                                     headers=sb_headers,
+                                     params={**filtro, "select": "id", "limit": "10000"})
+                if r.status_code != 200:
+                    raise HTTPException(status_code=500, detail="No se pudo leer el directorio.")
+                filas = r.json() or []
+            else:
+                for i in range(0, len(ids), 200):
+                    lote = ids[i:i+200]
+                    lista = ",".join(f'"{str(x)}"' for x in lote)
+                    r = await client.get(f"{SUPABASE_URL}/rest/v1/contactos",
+                                         headers=sb_headers,
+                                         params={**filtro, "select": "id",
+                                                 "id": f"in.({lista})"})
+                    if r.status_code != 200:
+                        raise HTTPException(status_code=500, detail="No se pudo leer el directorio.")
+                    filas.extend(r.json() or [])
     except HTTPException:
         raise
     except Exception:
