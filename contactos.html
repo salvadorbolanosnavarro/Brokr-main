@@ -1770,39 +1770,45 @@ async function migracionCompleta() {
   if (!token) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
 
   const el = _prepProgreso('Migración completa',
-    'Paso 1 de 3 — Importando tus propiedades con su código de EasyBroker. No cierres esta ventana.');
+    'Paso 1 de 3 — Importando tus propiedades con su código de EasyBroker. Puede tardar varios minutos si tienes muchas. No cierres esta ventana.');
   const auth = { Authorization: 'Bearer ' + token };
   let p = 5;
   let tope = 30;
   const tick = setInterval(() => { p = Math.min(tope, p + 1); el.fillEl.style.width = p + '%'; }, 600);
 
+  /* El resumen se va llenando conforme termina cada paso: si algo se
+     atora después, ya sabes exactamente qué sí quedó y con qué números. */
+  el.sumEl.style.display = 'flex';
+  const linea = (html) => { el.sumEl.innerHTML += '<div>' + html + '</div>'; };
+
   try {
     const r1 = await fetch('https://api.broquer.app/easybroker/import-all', { method: 'POST', headers: auth });
     const d1 = await r1.json();
     if (!r1.ok) throw new Error(d1.detail || ('Error ' + r1.status + ' al importar propiedades'));
+    linea('Propiedades: <b>' + (d1.importadas || 0) + '</b> nuevas, <b>' + (d1.actualizadas || 0) + '</b> ya estaban y se actualizaron.');
+    if (d1.fotos_en_proceso) linea('<span style="color:var(--mute)">Las fotos se están copiando a Broquer en segundo plano.</span>');
 
     tope = 65; p = Math.max(p, 33);
     el.msgEl.textContent = 'Paso 2 de 3 — Importando tus contactos con teléfonos, correos, etiquetas, fuente y notas.';
     const r2 = await fetch('https://api.broquer.app/contactos/importar-eb', { method: 'POST', headers: auth });
     const d2 = await r2.json();
     if (!r2.ok) throw new Error(d2.detail || ('Error ' + r2.status + ' al importar contactos'));
+    linea('Contactos: <b>' + (d2.importados || 0) + '</b> nuevos, <b>' + (d2.actualizados || 0) + '</b> ya estaban y se completaron.');
 
     tope = 95; p = Math.max(p, 68);
     el.msgEl.textContent = 'Paso 3 de 3 — Reconstruyendo el historial de leads y ligándolo a cada propiedad por su código.';
     const r3 = await fetch('https://api.broquer.app/easybroker/import-stats', { method: 'POST', headers: auth });
     const d3 = await r3.json();
     if (!r3.ok) throw new Error(d3.detail || ('Error ' + r3.status + ' al importar el historial'));
+    linea('Historial: <b>' + (d3.creados || 0) + '</b> leads nuevos, <b>' + ((d3.ya_estaban || 0) + (d3.marcados || 0)) + '</b> ya estaban, <b>' + (d3.vinculos || 0) + '</b> intereses ligados a propiedades.');
 
     clearInterval(tick);
     el.fillEl.style.width = '100%';
+    const nada = !(d1.importadas || d2.importados || d3.creados);
     el.titleEl.textContent = 'Migración lista';
-    el.msgEl.textContent   = 'Tu operación de EasyBroker ya vive en Broquer.';
-    el.sumEl.style.display = 'flex';
-    el.sumEl.innerHTML =
-      '<div><b>' + ((d1.importadas || 0) + (d1.actualizadas || 0)) + '</b> propiedades (' + (d1.importadas || 0) + ' nuevas)</div>' +
-      '<div><b>' + ((d2.importados || 0) + (d2.actualizados || 0)) + '</b> contactos (' + (d2.importados || 0) + ' nuevos)</div>' +
-      '<div><b>' + (d3.creados || 0) + '</b> leads del historial y <b>' + (d3.vinculos || 0) + '</b> intereses ligados a propiedades</div>' +
-      (d1.fotos_en_proceso ? '<div style="color:var(--mute)">Las fotos se están copiando a Broquer en segundo plano.</div>' : '');
+    el.msgEl.textContent   = nada
+      ? 'Todo lo de EasyBroker ya estaba en Broquer: no había nada nuevo que traer.'
+      : 'Tu operación de EasyBroker ya vive en Broquer.';
     el.btnEl.style.display = 'inline-block';
 
     await cargarRemoto();
@@ -1810,6 +1816,7 @@ async function migracionCompleta() {
   } catch (e) {
     clearInterval(tick);
     _errorProgreso(el, e);
+    if (el.sumEl.innerHTML) el.sumEl.style.display = 'flex';
   }
 }
 

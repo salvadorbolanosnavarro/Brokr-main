@@ -11006,6 +11006,60 @@ async def revenuecat_webhook(request: Request):
 # Contactos / Importar desde EasyBroker
 # ════════════════════════════════════════════════════════════════
 
+async def _mapa_agentes_org(org_id: str, user_id: str) -> dict:
+    """
+    Miembros de la empresa en Broquer, para asignar cada contacto importado
+    al agente que le corresponde. Regresa dos índices:
+      por_email:  correo (minúsculas) → user_id
+      por_nombre: nombre normalizado (sin acentos, minúsculas) → user_id
+    Si no hay empresa, regresa índices vacíos (todo cae al importador).
+    """
+    import unicodedata as _ud
+
+    def _nrm(t):
+        t = _ud.normalize("NFD", str(t or ""))
+        t = "".join(c for c in t if _ud.category(c) != "Mn")
+        return " ".join(t.lower().split())
+
+    por_email, por_nombre = {}, {}
+    if not org_id:
+        return {"por_email": por_email, "por_nombre": por_nombre, "_nrm": _nrm}
+    sb_headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+    }
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            rm = await client.get(
+                f"{SUPABASE_URL}/rest/v1/organizacion_miembros",
+                headers=sb_headers,
+                params={"org_id": f"eq.{org_id}", "select": "user_id", "limit": "200"}
+            )
+            miembros = rm.json() if rm.status_code == 200 else []
+            ids = [m["user_id"] for m in miembros if m.get("user_id")]
+            if ids:
+                ru = await client.get(
+                    f"{SUPABASE_URL}/rest/v1/usuarios",
+                    headers=sb_headers,
+                    params={"id": f"in.({','.join(ids)})",
+                            "select": "id,nombre,email", "limit": "200"}
+                )
+                for u in (ru.json() if ru.status_code == 200 else []):
+                    uid = u.get("id")
+                    if not uid:
+                        continue
+                    em = (u.get("email") or "").strip().lower()
+                    if em:
+                        por_email[em] = uid
+                    nm = _nrm(u.get("nombre"))
+                    if nm:
+                        por_nombre[nm] = uid
+    except Exception as e:
+        print(f"[importar] No se pudo leer el mapa de agentes: {e}")
+    return {"por_email": por_email, "por_nombre": por_nombre, "_nrm": _nrm}
+
+
+
 @app.post("/contactos/importar-eb")
 async def importar_contactos_eb(request: Request):
     """
@@ -11078,6 +11132,20 @@ async def importar_contactos_eb(request: Request):
             if e.get("email"):
                 return e["email"].strip().lower()[:120]
         return ""
+
+    mapa_ag = await _mapa_agentes_org(org_id_import, user_id)
+
+    def _user_de_agente_eb(c):
+        """user_id de Broquer para el agente asignado en EasyBroker."""
+        ag = c.get("agent") or {}
+        em = (ag.get("email") or "").strip().lower()
+        if em and em in mapa_ag["por_email"]:
+            return mapa_ag["por_email"][em]
+        for llave in ("full_name", "name"):
+            nm = mapa_ag["_nrm"](ag.get(llave))
+            if nm and nm in mapa_ag["por_nombre"]:
+                return mapa_ag["por_nombre"][nm]
+        return None
 
     def _mapear(c):
         nombre = (c.get("full_name")
@@ -11189,7 +11257,7 @@ async def importar_contactos_eb(request: Request):
             else:
                 nuevo = {
                     "id":         str(_uuid.uuid4()),
-                    "user_id":    user_id,
+                    "user_id":    _user_de_agente_eb(c) or user_id,
                     "org_id":     org_id_import,
                     "tipo":       "otro",
                     "created_at": now_iso,
@@ -11421,6 +11489,17 @@ async def importar_contactos_archivo(request: Request, file: UploadFile = File(.
     por_tel   = {_tel_limpio_csv(c.get("telefono")): c for c in existentes if _tel_limpio_csv(c.get("telefono"))}
     por_email = {(c.get("email") or "").strip().lower(): c for c in existentes if c.get("email")}
 
+    mapa_ag = await _mapa_agentes_org(org_id_import, user_id)
+
+    def _user_de_agente_txt(texto):
+        """user_id de Broquer para el agente del archivo (correo o nombre)."""
+        t = (texto or "").strip()
+        if not t:
+            return None
+        if "@" in t:
+            return mapa_ag["por_email"].get(t.lower())
+        return mapa_ag["por_nombre"].get(mapa_ag["_nrm"](t))
+
     # ─── Paso 4: mapear, deduplicar y guardar ───
     importados = actualizados = omitidos = errores = 0
     vinculos_nuevos = 0
@@ -11445,7 +11524,9 @@ async def importar_contactos_archivo(request: Request, file: UploadFile = File(.
 
             notas = _valor(fila, "notas")[:2000]
             agente = _valor(fila, "agente")
-            if agente:
+            agente_uid = _user_de_agente_txt(agente)
+            if agente and not agente_uid:
+                # Sin match con un usuario de Broquer: al menos queda constancia
                 linea = f"Asesor en EasyBroker: {agente}"
                 notas = (notas + "\n" + linea).strip() if notas else linea
                 notas = notas[:2000]
@@ -11505,7 +11586,7 @@ async def importar_contactos_archivo(request: Request, file: UploadFile = File(.
             else:
                 nuevo = {
                     "id":         str(_uuid.uuid4()),
-                    "user_id":    user_id,
+                    "user_id":    agente_uid or user_id,
                     "org_id":     org_id_import,
                     "tipo":       _TIPO.get(_valor(fila, "tipo").lower(), "otro"),
                     "created_at": fecha_real or now_iso,
@@ -11716,7 +11797,11 @@ async def easybroker_import_stats(request: Request):
         if msg and msg not in g["mensajes"]:
             g["mensajes"].append(msg[:500])
 
-    # ─── Paso 6: crear / marcar contactos y ligar propiedades ───
+    # ─── Paso 6: crear / marcar contactos y ligar propiedades — EN LOTES ───
+    # Antes se hacia un POST por persona y otro por vinculo: con cientos de
+    # leads eran cientos de escrituras secuenciales y el paso tardaba minutos.
+    # Ahora: 1 POST por cada 100 contactos nuevos, 1 PATCH por cada 200 a
+    # marcar y 1 POST por cada 200 vinculos.
     creados = 0
     marcados = 0
     ya_estaban = 0
@@ -11724,83 +11809,108 @@ async def easybroker_import_stats(request: Request):
     sin_propiedad = 0
     errores = 0
 
-    async with httpx.AsyncClient(timeout=20) as client:
-        for g in grupos.values():
-            existente = (por_tel.get(g["tel"]) if g["tel"] else None) \
-                        or (por_email.get(g["email"]) if g["email"] else None)
+    nuevos_lote: list = []      # filas de contactos a crear
+    ids_marcar: list = []       # ids existentes a marcar es_potencial
+    vinculos_lote: list = []    # filas de contactos_propiedades a crear
+    ahora = datetime.utcnow().isoformat()
 
-            if existente:
-                contacto_id = existente["id"]
-                if not existente.get("es_potencial"):
-                    rp = await client.patch(
-                        f"{SUPABASE_URL}/rest/v1/contactos",
-                        headers={**sb_headers, "Prefer": "return=minimal"},
-                        params={"id": f"eq.{contacto_id}"},
-                        json={"es_potencial": True,
-                              "updated_at": datetime.utcnow().isoformat()}
-                    )
-                    if rp.status_code in (200, 204):
-                        marcados += 1
-                        existente["es_potencial"] = True
-                    else:
-                        errores += 1
-                else:
-                    ya_estaban += 1
+    for g in grupos.values():
+        existente = (por_tel.get(g["tel"]) if g["tel"] else None) \
+                    or (por_email.get(g["email"]) if g["email"] else None)
+
+        if existente:
+            contacto_id = existente["id"]
+            if not existente.get("es_potencial"):
+                ids_marcar.append(str(contacto_id))
+                existente["es_potencial"] = True
             else:
-                fecha_real = min(g["fechas"]) if g["fechas"] else datetime.utcnow().isoformat()
-                notas = ""
-                if g["mensajes"]:
-                    notas = ("Mensajes del historial de EasyBroker:\n— "
-                             + "\n— ".join(g["mensajes"]))[:2000]
-                nuevo = {
-                    "id":           str(_uuid.uuid4()),
-                    "user_id":      user_id,
-                    "org_id":       org_id_import,
-                    "nombre":       (g["nombre"] or "Sin nombre").upper()[:120],
-                    "telefono":     g["tel"],
-                    "email":        g["email"],
-                    "tipo":         "comprador",
-                    "es_potencial": True,
-                    "estatus":      "nuevo",
-                    "fuente":       (g["fuentes"][0] if g["fuentes"] else "EasyBroker")[:80],
-                    "notas":        notas,
-                    "created_at":   fecha_real,
-                    "updated_at":   datetime.utcnow().isoformat(),
-                }
-                nuevo = {k: v for k, v in nuevo.items() if v not in ("", None, [])}
-                ri = await client.post(
-                    f"{SUPABASE_URL}/rest/v1/contactos",
-                    headers={**sb_headers, "Prefer": "return=minimal"},
-                    json=nuevo
-                )
-                if ri.status_code in (200, 201, 204):
-                    creados += 1
-                    contacto_id = nuevo["id"]
-                    if g["tel"]:
-                        por_tel[g["tel"]] = {"id": contacto_id, "es_potencial": True}
-                    if g["email"]:
-                        por_email[g["email"]] = {"id": contacto_id, "es_potencial": True}
-                else:
-                    errores += 1
-                    continue
+                ya_estaban += 1
+        else:
+            fecha_real = min(g["fechas"]) if g["fechas"] else ahora
+            notas = ""
+            if g["mensajes"]:
+                notas = ("Mensajes del historial de EasyBroker:\n— "
+                         + "\n— ".join(g["mensajes"]))[:2000]
+            nuevo = {
+                "id":           str(_uuid.uuid4()),
+                "user_id":      user_id,
+                "org_id":       org_id_import,
+                "nombre":       (g["nombre"] or "Sin nombre").upper()[:120],
+                "telefono":     g["tel"],
+                "email":        g["email"],
+                "tipo":         "comprador",
+                "es_potencial": True,
+                "estatus":      "nuevo",
+                "fuente":       (g["fuentes"][0] if g["fuentes"] else "EasyBroker")[:80],
+                "notas":        notas,
+                "created_at":   fecha_real,
+                "updated_at":   ahora,
+            }
+            nuevo = {k: v for k, v in nuevo.items() if v not in ("", None, [])}
+            nuevos_lote.append(nuevo)
+            contacto_id = nuevo["id"]
+            if g["tel"]:
+                por_tel[g["tel"]] = {"id": contacto_id, "es_potencial": True}
+            if g["email"]:
+                por_email[g["email"]] = {"id": contacto_id, "es_potencial": True}
 
-            # Ligar propiedades preguntadas (solo las que ya viven en Broquer)
-            for pid in g["props"]:
-                propiedad_id = prop_por_eb_id.get(pid)
-                if not propiedad_id:
-                    sin_propiedad += 1
-                    continue
-                if (contacto_id, propiedad_id) in pares_existentes:
-                    continue
-                rv = await client.post(
-                    f"{SUPABASE_URL}/rest/v1/contactos_propiedades",
-                    headers={**sb_headers, "Prefer": "return=minimal"},
-                    json={"user_id": user_id, "contacto_id": contacto_id,
-                          "propiedad_id": propiedad_id, "relacion": "interes"}
-                )
-                if rv.status_code in (200, 201, 204):
-                    vinculos_nuevos += 1
-                    pares_existentes.add((contacto_id, propiedad_id))
+        for pid in g["props"]:
+            propiedad_id = prop_por_eb_id.get(pid)
+            if not propiedad_id:
+                sin_propiedad += 1
+                continue
+            if (contacto_id, propiedad_id) in pares_existentes:
+                continue
+            vinculos_lote.append({"user_id": user_id, "contacto_id": contacto_id,
+                                  "propiedad_id": propiedad_id, "relacion": "interes"})
+            pares_existentes.add((contacto_id, propiedad_id))
+
+    ids_creados_ok = set()
+    async with httpx.AsyncClient(timeout=60) as client:
+        # a) Crear contactos nuevos, 100 por POST
+        for i in range(0, len(nuevos_lote), 100):
+            chunk = nuevos_lote[i:i+100]
+            ri = await client.post(
+                f"{SUPABASE_URL}/rest/v1/contactos",
+                headers={**sb_headers, "Prefer": "return=minimal"},
+                json=chunk
+            )
+            if ri.status_code in (200, 201, 204):
+                creados += len(chunk)
+                ids_creados_ok.update(c["id"] for c in chunk)
+            else:
+                errores += len(chunk)
+
+        # b) Marcar existentes como lead, 200 por PATCH
+        for i in range(0, len(ids_marcar), 200):
+            lote = ids_marcar[i:i+200]
+            lista = ",".join(f'"{x}"' for x in lote)
+            rp = await client.patch(
+                f"{SUPABASE_URL}/rest/v1/contactos",
+                headers={**sb_headers, "Prefer": "return=minimal"},
+                params={"id": f"in.({lista})"},
+                json={"es_potencial": True, "updated_at": ahora}
+            )
+            if rp.status_code in (200, 204):
+                marcados += len(lote)
+            else:
+                errores += len(lote)
+
+        # c) Vinculos contacto-propiedad, 200 por POST. Se descartan los que
+        # apuntan a un contacto nuevo cuyo lote fallo.
+        ids_nuevos_todos = {n["id"] for n in nuevos_lote}
+        vinculos_validos = [v for v in vinculos_lote
+                            if v["contacto_id"] in ids_creados_ok
+                            or v["contacto_id"] not in ids_nuevos_todos]
+        for i in range(0, len(vinculos_validos), 200):
+            chunk = vinculos_validos[i:i+200]
+            rv = await client.post(
+                f"{SUPABASE_URL}/rest/v1/contactos_propiedades",
+                headers={**sb_headers, "Prefer": "return=minimal"},
+                json=chunk
+            )
+            if rv.status_code in (200, 201, 204):
+                vinculos_nuevos += len(chunk)
 
     return {
         "ok": True,
