@@ -1894,7 +1894,7 @@ def _split_street(s: str):
 # debajo del límite con margen.
 _EB_LOTE          = 8     # peticiones simultáneas
 _EB_PAUSA_LOTE    = 0.5   # segundos mínimos entre lotes → máx ~16 req/s
-_EB_REINTENTOS    = 4
+_EB_REINTENTOS    = 5
 _EB_ESPERA_BASE   = 1.5   # segundos; se duplica en cada reintento
 _EB_ESPERA_MAX    = 20.0
 
@@ -11173,11 +11173,14 @@ async def importar_contactos_eb(request: Request):
     eb_ids = []
     async with httpx.AsyncClient(timeout=20) as client:
         while True:
-            r = await client.get(
+            r = await _eb_get_reintentos(
+                client,
                 f"{EB_BASE}/contacts",
-                headers=eb_headers(eb_key),
-                params={"page": page, "limit": 50}
+                eb_headers(eb_key),
+                {"page": page, "limit": 50},
             )
+            if r is None:
+                raise HTTPException(status_code=502, detail="EasyBroker no respondió tras varios intentos. Espera un minuto y vuelve a intentar.")
             if r.status_code == 404:
                 raise HTTPException(status_code=400, detail="Tu plan de EasyBroker no tiene acceso a contactos vía API, o el endpoint no está disponible.")
             if r.status_code != 200:
@@ -11201,19 +11204,27 @@ async def importar_contactos_eb(request: Request):
     # El detalle trae emails, phones, tags, source, probability, company, etc.
     async def _detalle(client, cid):
         try:
-            rd = await client.get(f"{EB_BASE}/contacts/{cid}", headers=eb_headers(eb_key))
-            if rd.status_code == 200:
+            rd = await _eb_get_reintentos(
+                client, f"{EB_BASE}/contacts/{cid}", eb_headers(eb_key))
+            if rd is not None and rd.status_code == 200:
                 return rd.json()
         except Exception:
             pass
         return None
 
+    # Mismo ritmo controlado que el import de propiedades: lotes de _EB_LOTE
+    # con pausa mínima entre lotes para no rebasar el límite de EasyBroker
+    # (20 req/s). Sin esto, EB regresa 429 y castiga los pasos siguientes.
     detalles = []
     async with httpx.AsyncClient(timeout=20) as client:
-        for i in range(0, len(eb_ids), 10):
-            lote = eb_ids[i:i + 10]
+        for i in range(0, len(eb_ids), _EB_LOTE):
+            lote = eb_ids[i:i + _EB_LOTE]
+            inicio_lote = time.monotonic()
             res = await asyncio.gather(*[_detalle(client, cid) for cid in lote])
             detalles.extend([d for d in res if d])
+            resto = _EB_PAUSA_LOTE - (time.monotonic() - inicio_lote)
+            if resto > 0 and i + _EB_LOTE < len(eb_ids):
+                await asyncio.sleep(resto)
 
     # ── Fase 3: mapear, deduplicar y guardar ──
     async with httpx.AsyncClient(timeout=20) as client:
