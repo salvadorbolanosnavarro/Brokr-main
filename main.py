@@ -11201,6 +11201,262 @@ async def importar_contactos_eb(request: Request):
         "errores": errores,
     }
 
+
+@app.post("/easybroker/import-stats")
+async def easybroker_import_stats(request: Request):
+    """
+    Importa el HISTORIAL DE LEADS de EasyBroker (contact_requests) para que
+    el agente no pierda sus estadísticas al migrar a Broquer.
+
+    Qué hace:
+    - Pagina GET /v1/contact_requests de la cuenta EB del usuario.
+    - Agrupa las solicitudes por persona (teléfono → email → nombre).
+    - Crea el contacto como lead (es_potencial=true) con created_at = fecha
+      REAL de la primera solicitud en EB, para que las gráficas de
+      Estadísticas muestren el historial en su mes correcto, no todo hoy.
+    - Liga cada lead con la propiedad que preguntó vía contactos_propiedades
+      (relacion='interes'), emparejando por eb_public_id de las propiedades
+      ya importadas con /easybroker/import-all.
+    - Si la persona ya existe como contacto, NO pisa nada: solo la marca
+      como lead y le liga las propiedades que le faltaban.
+
+    Nota: EasyBroker no expone vistas ni métricas calculadas por API; los
+    contact_requests son la materia prima real de sus estadísticas de leads.
+    """
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Tu sesión expiró. Vuelve a iniciar sesión.")
+    eb_key = await get_eb_key_for_user(user_id)
+    if not eb_key:
+        raise HTTPException(status_code=400, detail="Configura tu API key de EasyBroker en Perfil → Integración EasyBroker antes de importar.")
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        raise HTTPException(status_code=500, detail="Supabase no está configurado en el servidor.")
+
+    org_id_import = await get_org_id_for_user(user_id)
+
+    sb_headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+    }
+    # El universo de comparación es la empresa completa (una cuenta EB por
+    # empresa); si no hay empresa, el agente solo.
+    filtro_org = ({"org_id": f"eq.{org_id_import}"} if org_id_import
+                  else {"user_id": f"eq.{user_id}"})
+
+    # ─── Paso 1: propiedades ya importadas (eb_public_id → id interno) ───
+    prop_por_eb_id = {}
+    async with httpx.AsyncClient(timeout=20) as client:
+        r = await client.get(
+            f"{SUPABASE_URL}/rest/v1/propiedades",
+            headers=sb_headers,
+            params={**filtro_org, "eb_public_id": "not.is.null",
+                    "select": "id,eb_public_id", "limit": "5000"}
+        )
+        if r.status_code == 200:
+            for row in r.json():
+                if row.get("eb_public_id"):
+                    prop_por_eb_id[row["eb_public_id"]] = row["id"]
+
+        # ─── Paso 2: contactos existentes (dedupe por teléfono/email) ───
+        r2 = await client.get(
+            f"{SUPABASE_URL}/rest/v1/contactos",
+            headers=sb_headers,
+            params={**filtro_org, "select": "id,telefono,email,es_potencial",
+                    "limit": "10000"}
+        )
+        existentes = r2.json() if r2.status_code == 200 else []
+
+        # ─── Paso 3: vínculos existentes (para no duplicar 'interes') ───
+        r3 = await client.get(
+            f"{SUPABASE_URL}/rest/v1/contactos_propiedades",
+            headers=sb_headers,
+            params={"select": "contacto_id,propiedad_id",
+                    "relacion": "eq.interes", "limit": "20000"}
+        )
+        pares_existentes = set()
+        if r3.status_code == 200:
+            for v in r3.json():
+                pares_existentes.add((v.get("contacto_id"), v.get("propiedad_id")))
+
+    def _tel_limpio(x):
+        return re.sub(r"[^+\d]", "", x or "")[:20]
+
+    por_tel   = {_tel_limpio(c.get("telefono")): c for c in existentes if _tel_limpio(c.get("telefono"))}
+    por_email = {(c.get("email") or "").strip().lower(): c for c in existentes if c.get("email")}
+
+    # ─── Paso 4: paginar contact_requests de EasyBroker ───
+    solicitudes = []
+    pagina = 1
+    async with httpx.AsyncClient(timeout=30) as client:
+        while pagina <= 400:
+            r = await _eb_get_reintentos(
+                client,
+                f"{EB_BASE}/contact_requests",
+                eb_headers(eb_key),
+                [("limit", 50), ("page", pagina)],
+                timeout=30.0,
+            )
+            if r is None:
+                break
+            if r.status_code == 401:
+                raise HTTPException(status_code=401, detail="Tu API key de EasyBroker fue rechazada. Reconéctala en Perfil.")
+            if r.status_code == 404:
+                raise HTTPException(status_code=400, detail="Tu plan de EasyBroker no tiene acceso a solicitudes de contacto vía API.")
+            if r.status_code != 200:
+                raise HTTPException(status_code=502, detail=f"EasyBroker respondió {r.status_code}: {r.text[:200]}")
+            data = r.json()
+            items = data.get("content", []) or []
+            if not items:
+                break
+            solicitudes.extend(items)
+            if not data.get("pagination", {}).get("next_page"):
+                break
+            pagina += 1
+
+    total_eb = len(solicitudes)
+
+    # ─── Paso 5: agrupar por persona ───
+    def _pid_de(cr):
+        # EB ha variado el nombre del campo; se cubren las tres formas vistas.
+        return (cr.get("property_public_id")
+                or cr.get("property_id")
+                or (cr.get("property") or {}).get("public_id")
+                or "")
+
+    grupos = {}  # llave persona → {nombre, tel, email, fuentes, fechas, props, mensajes}
+    sin_datos = 0
+    for cr in solicitudes:
+        tel    = _tel_limpio(cr.get("phone"))
+        email  = (cr.get("email") or "").strip().lower()[:120]
+        nombre = (cr.get("name") or "").strip()[:120]
+        if not tel and not email and not nombre:
+            sin_datos += 1
+            continue
+        llave = tel or email or f"nombre:{nombre.lower()}"
+        g = grupos.setdefault(llave, {
+            "nombre": nombre, "tel": tel, "email": email,
+            "fuentes": [], "fechas": [], "props": [], "mensajes": [],
+        })
+        if nombre and not g["nombre"]:
+            g["nombre"] = nombre
+        if tel and not g["tel"]:
+            g["tel"] = tel
+        if email and not g["email"]:
+            g["email"] = email
+        fuente = (cr.get("source") or "").strip()
+        if fuente and fuente not in g["fuentes"]:
+            g["fuentes"].append(fuente)
+        fecha = cr.get("created_at")
+        if fecha:
+            g["fechas"].append(fecha)
+        pid = _pid_de(cr)
+        if pid and pid not in g["props"]:
+            g["props"].append(pid)
+        msg = (cr.get("message") or "").strip()
+        if msg and msg not in g["mensajes"]:
+            g["mensajes"].append(msg[:500])
+
+    # ─── Paso 6: crear / marcar contactos y ligar propiedades ───
+    creados = 0
+    marcados = 0
+    ya_estaban = 0
+    vinculos_nuevos = 0
+    sin_propiedad = 0
+    errores = 0
+
+    async with httpx.AsyncClient(timeout=20) as client:
+        for g in grupos.values():
+            existente = (por_tel.get(g["tel"]) if g["tel"] else None) \
+                        or (por_email.get(g["email"]) if g["email"] else None)
+
+            if existente:
+                contacto_id = existente["id"]
+                if not existente.get("es_potencial"):
+                    rp = await client.patch(
+                        f"{SUPABASE_URL}/rest/v1/contactos",
+                        headers={**sb_headers, "Prefer": "return=minimal"},
+                        params={"id": f"eq.{contacto_id}"},
+                        json={"es_potencial": True,
+                              "updated_at": datetime.utcnow().isoformat()}
+                    )
+                    if rp.status_code in (200, 204):
+                        marcados += 1
+                        existente["es_potencial"] = True
+                    else:
+                        errores += 1
+                else:
+                    ya_estaban += 1
+            else:
+                fecha_real = min(g["fechas"]) if g["fechas"] else datetime.utcnow().isoformat()
+                notas = ""
+                if g["mensajes"]:
+                    notas = ("Mensajes del historial de EasyBroker:\n— "
+                             + "\n— ".join(g["mensajes"]))[:2000]
+                nuevo = {
+                    "id":           str(_uuid.uuid4()),
+                    "user_id":      user_id,
+                    "org_id":       org_id_import,
+                    "nombre":       (g["nombre"] or "Sin nombre").upper()[:120],
+                    "telefono":     g["tel"],
+                    "email":        g["email"],
+                    "tipo":         "comprador",
+                    "es_potencial": True,
+                    "estatus":      "nuevo",
+                    "fuente":       (g["fuentes"][0] if g["fuentes"] else "EasyBroker")[:80],
+                    "notas":        notas,
+                    "created_at":   fecha_real,
+                    "updated_at":   datetime.utcnow().isoformat(),
+                }
+                nuevo = {k: v for k, v in nuevo.items() if v not in ("", None, [])}
+                ri = await client.post(
+                    f"{SUPABASE_URL}/rest/v1/contactos",
+                    headers={**sb_headers, "Prefer": "return=minimal"},
+                    json=nuevo
+                )
+                if ri.status_code in (200, 201, 204):
+                    creados += 1
+                    contacto_id = nuevo["id"]
+                    if g["tel"]:
+                        por_tel[g["tel"]] = {"id": contacto_id, "es_potencial": True}
+                    if g["email"]:
+                        por_email[g["email"]] = {"id": contacto_id, "es_potencial": True}
+                else:
+                    errores += 1
+                    continue
+
+            # Ligar propiedades preguntadas (solo las que ya viven en Broquer)
+            for pid in g["props"]:
+                propiedad_id = prop_por_eb_id.get(pid)
+                if not propiedad_id:
+                    sin_propiedad += 1
+                    continue
+                if (contacto_id, propiedad_id) in pares_existentes:
+                    continue
+                rv = await client.post(
+                    f"{SUPABASE_URL}/rest/v1/contactos_propiedades",
+                    headers={**sb_headers, "Prefer": "return=minimal"},
+                    json={"user_id": user_id, "contacto_id": contacto_id,
+                          "propiedad_id": propiedad_id, "relacion": "interes"}
+                )
+                if rv.status_code in (200, 201, 204):
+                    vinculos_nuevos += 1
+                    pares_existentes.add((contacto_id, propiedad_id))
+
+    return {
+        "ok": True,
+        "solicitudes_eb":   total_eb,
+        "personas":         len(grupos),
+        "creados":          creados,
+        "marcados":         marcados,       # ya existían; se marcaron como lead
+        "ya_estaban":       ya_estaban,     # ya eran leads
+        "vinculos":         vinculos_nuevos,
+        "sin_propiedad":    sin_propiedad,  # la propiedad no está importada en Broquer
+        "sin_datos":        sin_datos,
+        "errores":          errores,
+    }
+
+
 # ─────────────────────────────────────────────
 # ADMIN
 # Endpoints basados en rol (admin/equipo/agente) + activo (bool).
