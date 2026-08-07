@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Broquer Cierres — Tu escritura, sin vueltas ni sorpresas</title>
+<meta name="description" content="Coordinamos tu escrituración de principio a fin en todo México: expediente completo, pre-cálculo de ISR y seguimiento semanal. Diagnóstico gratis en 2 minutos.">
+<meta property="og:title" content="Broquer Cierres — Escrituración coordinada, sin sorpresas">
+<meta property="og:description" content="Diagnóstico de cierre gratis: qué documentos necesitas, cuánto ISR pagarías y cuánto tardará tu escritura.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   BROQUER CIERRES — sistema de diseño "folio notarial"
+   Papel, tinta, cantera rosa de Morelia, sello dorado.
+   ============================================================ */
+:root{
+  --papel:#FBF9F4;
+  --papel-2:#F4F0E7;
+  --tinta:#16283D;
+  --tinta-70:rgba(22,40,61,.72);
+  --tinta-40:rgba(22,40,61,.42);
+  --tinta-15:rgba(22,40,61,.15);
+  --cantera:#C98B85;
+  --cantera-fondo:#F3E6E2;
+  --cantera-oscura:#8A4F4B;
+  --sello:#B08A3E;
+  --sello-fondo:#F5EDDA;
+  --ok:#2E8C86;
+  --ok-fondo:#E4F0EE;
+  --alerta:#B4552E;
+  --alerta-fondo:#F7E8DF;
+  --radio:14px;
+  --sombra:0 10px 30px rgba(22,40,61,.08);
+  --f-display:"Fraunces",Georgia,serif;
+  --f-body:"Archivo",-apple-system,system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+body{
+  font-family:var(--f-body);
+  background:var(--papel);
+  color:var(--tinta);
+  line-height:1.6;
+  font-size:16.5px;
+  -webkit-font-smoothing:antialiased;
+}
+/* Textura sutil de papel con líneas de folio en el borde izquierdo */
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    linear-gradient(90deg, var(--tinta-15) 0, var(--tinta-15) 1px, transparent 1px) 26px 0/100% 100% no-repeat,
+    radial-gradient(1200px 600px at 85% -10%, rgba(201,139,133,.10), transparent 60%);
+}
+main,header,footer{position:relative;z-index:1}
+img{max-width:100%;display:block}
+a{color:var(--tinta)}
+::selection{background:var(--cantera-fondo)}
+:focus-visible{outline:3px solid var(--sello);outline-offset:3px;border-radius:6px}
+
+.contenedor{max-width:1060px;margin:0 auto;padding:0 22px}
+@media(min-width:700px){.contenedor{padding:0 34px}}
+
+/* ---------- Barra superior ---------- */
+.barra{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 0;gap:14px;
+}
+.marca{display:flex;align-items:center;gap:11px;text-decoration:none}
+.marca-sello{
+  width:40px;height:40px;border-radius:50%;
+  border:2px solid var(--tinta);display:grid;place-items:center;
+  font-family:var(--f-display);font-weight:700;font-size:19px;
+  background:var(--papel);position:relative;
+}
+.marca-sello::after{
+  content:"";position:absolute;inset:3px;border-radius:50%;
+  border:1px dashed var(--tinta-40);
+}
+.marca-texto{line-height:1.15}
+.marca-texto b{font-family:var(--f-display);font-weight:700;font-size:19px;letter-spacing:.2px;display:block}
+.marca-texto span{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--cantera-oscura)}
+.barra-cta{
+  font-family:var(--f-body);font-weight:600;font-size:14.5px;
+  text-decoration:none;color:var(--papel);background:var(--tinta);
+  padding:10px 18px;border-radius:999px;white-space:nowrap;
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+.barra-cta:hover{transform:translateY(-1px);box-shadow:var(--sombra)}
+
+/* ---------- Hero ---------- */
+.hero{padding:44px 0 30px}
+@media(min-width:820px){.hero{padding:72px 0 44px}}
+.hero-folio{
+  font-family:var(--f-mono);font-size:12px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--cantera-oscura);
+  display:inline-flex;align-items:center;gap:10px;margin-bottom:20px;
+}
+.hero-folio::before{content:"";width:34px;height:1px;background:var(--cantera-oscura)}
+h1{
+  font-family:var(--f-display);font-weight:600;
+  font-size:clamp(34px,6.2vw,62px);line-height:1.06;
+  letter-spacing:-.01em;max-width:15ch;
+}
+h1 em{font-style:italic;color:var(--cantera-oscura)}
+.hero-sub{
+  margin-top:22px;max-width:56ch;font-size:clamp(16.5px,2.3vw,19px);
+  color:var(--tinta-70);
+}
+.hero-acciones{display:flex;flex-wrap:wrap;gap:14px;margin-top:30px;align-items:center}
+.btn{
+  display:inline-flex;align-items:center;gap:9px;text-decoration:none;cursor:pointer;
+  font-family:var(--f-body);font-weight:600;font-size:16px;border:none;
+  padding:15px 26px;border-radius:999px;transition:transform .15s ease, box-shadow .15s ease;
+}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--sombra)}
+.btn-primario{background:var(--tinta);color:var(--papel)}
+.btn-secundario{background:transparent;color:var(--tinta);border:1.5px solid var(--tinta)}
+.hero-nota{font-size:13.5px;color:var(--tinta-40);margin-top:14px;font-family:var(--f-mono)}
+
+/* Franja de datos duros bajo el hero */
+.franja{
+  margin-top:44px;border-top:1px solid var(--tinta-15);border-bottom:1px solid var(--tinta-15);
+  display:grid;grid-template-columns:1fr;
+}
+@media(min-width:700px){.franja{grid-template-columns:repeat(3,1fr)}}
+.franja > div{padding:20px 4px;border-bottom:1px solid var(--tinta-15)}
+.franja > div:last-child{border-bottom:none}
+@media(min-width:700px){
+  .franja > div{border-bottom:none;border-right:1px solid var(--tinta-15);padding:22px 26px}
+  .franja > div:first-child{padding-left:4px}
+  .franja > div:last-child{border-right:none}
+}
+.franja b{font-family:var(--f-display);font-size:22px;font-weight:700;display:block}
+.franja span{font-size:14px;color:var(--tinta-70)}
+
+/* ---------- Secciones ---------- */
+section{padding:58px 0}
+@media(min-width:820px){section{padding:84px 0}}
+.eyebrow{
+  font-family:var(--f-mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--cantera-oscura);margin-bottom:14px;display:block;
+}
+h2{
+  font-family:var(--f-display);font-weight:600;
+  font-size:clamp(27px,4.4vw,40px);line-height:1.12;letter-spacing:-.01em;
+  max-width:24ch;
+}
+.seccion-sub{margin-top:14px;max-width:58ch;color:var(--tinta-70)}
+
+/* Proceso: línea de folio con etapas (es una secuencia real) */
+.proceso{margin-top:44px;display:grid;gap:0;position:relative}
+.paso{
+  display:grid;grid-template-columns:56px 1fr;gap:18px;
+  padding:24px 0;border-top:1px solid var(--tinta-15);position:relative;
+}
+.paso:last-child{border-bottom:1px solid var(--tinta-15)}
+.paso-num{
+  font-family:var(--f-mono);font-size:13px;color:var(--tinta);
+  width:44px;height:44px;border-radius:50%;border:1.5px solid var(--tinta);
+  display:grid;place-items:center;background:var(--papel);
+}
+.paso h3{font-family:var(--f-display);font-weight:600;font-size:20px;margin-bottom:6px}
+.paso p{color:var(--tinta-70);max-width:62ch}
+.paso-tiempo{
+  font-family:var(--f-mono);font-size:12px;color:var(--cantera-oscura);
+  margin-top:8px;display:inline-block;
+}
+
+/* Tarjetas "qué incluye" */
+.grid-3{margin-top:40px;display:grid;gap:18px}
+@media(min-width:760px){.grid-3{grid-template-columns:repeat(3,1fr)}}
+.tarjeta{
+  background:#fff;border:1px solid var(--tinta-15);border-radius:var(--radio);
+  padding:26px 24px;box-shadow:0 3px 14px rgba(22,40,61,.05);
+}
+.tarjeta h3{font-family:var(--f-display);font-weight:600;font-size:19px;margin:12px 0 8px}
+.tarjeta p{font-size:15px;color:var(--tinta-70)}
+.tarjeta-icono{
+  width:42px;height:42px;border-radius:12px;display:grid;place-items:center;
+  background:var(--sello-fondo);color:var(--sello);font-size:20px;
+}
+
+/* Sección precio */
+.precio-caja{
+  margin-top:40px;background:var(--tinta);color:var(--papel);
+  border-radius:20px;padding:34px 26px;display:grid;gap:26px;
+}
+@media(min-width:820px){.precio-caja{grid-template-columns:1.1fr .9fr;padding:44px;align-items:center}}
+.precio-caja h3{font-family:var(--f-display);font-weight:600;font-size:26px;line-height:1.2}
+.precio-caja .monto{
+  font-family:var(--f-display);font-size:clamp(38px,6vw,54px);font-weight:700;line-height:1;
+  margin:14px 0 6px;
+}
+.precio-caja .monto small{font-size:16px;font-weight:400;font-family:var(--f-body);opacity:.75}
+.precio-lista{list-style:none;display:grid;gap:11px;font-size:15.5px}
+.precio-lista li{display:flex;gap:11px;align-items:flex-start}
+.precio-lista li::before{
+  content:"✓";flex:0 0 auto;width:22px;height:22px;border-radius:50%;
+  background:var(--ok);color:#fff;display:grid;place-items:center;
+  font-size:12px;margin-top:2px;
+}
+.precio-nota{font-size:13px;opacity:.65;margin-top:10px}
+.btn-claro{background:var(--papel);color:var(--tinta)}
+
+/* Agentes */
+.agentes{
+  background:var(--cantera-fondo);border-radius:20px;padding:34px 26px;
+  display:grid;gap:20px;
+}
+@media(min-width:820px){.agentes{grid-template-columns:1fr auto;align-items:center;padding:40px 44px}}
+.agentes h3{font-family:var(--f-display);font-weight:600;font-size:24px}
+.agentes p{color:var(--tinta-70);margin-top:8px;max-width:52ch}
+
+/* FAQ */
+.faq{margin-top:36px;display:grid;gap:0}
+details{border-top:1px solid var(--tinta-15)}
+details:last-child{border-bottom:1px solid var(--tinta-15)}
+summary{
+  cursor:pointer;list-style:none;padding:20px 4px;
+  font-family:var(--f-display);font-weight:600;font-size:18px;
+  display:flex;justify-content:space-between;align-items:center;gap:16px;
+}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-family:var(--f-mono);font-size:20px;color:var(--cantera-oscura)}
+details[open] summary::after{content:"–"}
+details p{padding:0 4px 22px;color:var(--tinta-70);max-width:68ch}
+
+/* ---------- WIZARD DE DIAGNÓSTICO ---------- */
+.wizard-marco{
+  margin-top:40px;background:#fff;border:1px solid var(--tinta-15);
+  border-radius:20px;box-shadow:var(--sombra);overflow:hidden;
+}
+.wizard-cabecera{
+  background:var(--papel-2);border-bottom:1px solid var(--tinta-15);
+  padding:18px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px;
+  font-family:var(--f-mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--tinta-70);
+}
+.wizard-cuerpo{padding:28px 24px 32px}
+@media(min-width:700px){.wizard-cuerpo{padding:38px 44px 44px}}
+.wizard-progreso{height:4px;background:var(--tinta-15);border-radius:99px;overflow:hidden;margin-bottom:30px}
+.wizard-progreso > div{height:100%;background:var(--sello);width:0%;transition:width .3s ease}
+.pregunta{display:none}
+.pregunta.activa{display:block;animation:aparecer .3s ease}
+@keyframes aparecer{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.pregunta h3{
+  font-family:var(--f-display);font-weight:600;font-size:clamp(21px,3.4vw,27px);
+  line-height:1.2;margin-bottom:8px;
+}
+.pregunta .ayuda{font-size:14.5px;color:var(--tinta-70);margin-bottom:22px}
+.opciones{display:grid;gap:12px}
+@media(min-width:700px){.opciones.dos-col{grid-template-columns:1fr 1fr}}
+.opcion{
+  text-align:left;font-family:var(--f-body);font-size:16px;font-weight:500;cursor:pointer;
+  background:var(--papel);border:1.5px solid var(--tinta-15);border-radius:var(--radio);
+  padding:16px 18px;color:var(--tinta);transition:border-color .15s, background .15s, transform .1s;
+  display:flex;gap:12px;align-items:center;min-height:56px;
+}
+.opcion:hover{border-color:var(--tinta);transform:translateY(-1px)}
+.opcion:active{transform:scale(.99)}
+.opcion small{display:block;font-weight:400;font-size:13px;color:var(--tinta-70);margin-top:2px}
+.opcion-emoji{font-size:21px;flex:0 0 auto}
+.wizard-atras{
+  background:none;border:none;cursor:pointer;font-family:var(--f-mono);
+  font-size:13px;color:var(--tinta-70);margin-top:24px;padding:6px 2px;
+  display:inline-flex;align-items:center;gap:6px;
+}
+.wizard-atras:hover{color:var(--tinta)}
+
+/* ---------- RESULTADO: el folio ---------- */
+.folio{display:none}
+.folio.activo{display:block;animation:aparecer .35s ease}
+.folio-doc{
+  background:#fff;position:relative;
+}
+.folio-encabezado{
+  display:flex;justify-content:space-between;align-items:flex-start;gap:18px;
+  border-bottom:2px solid var(--tinta);padding-bottom:18px;margin-bottom:24px;
+  flex-wrap:wrap;
+}
+.folio-encabezado h3{font-family:var(--f-display);font-weight:700;font-size:24px;line-height:1.15}
+.folio-encabezado .meta{font-family:var(--f-mono);font-size:12px;color:var(--tinta-70);line-height:1.8;text-align:right}
+.folio-sello{
+  position:absolute;top:-6px;right:-6px;width:92px;height:92px;border-radius:50%;
+  border:2px solid var(--sello);color:var(--sello);
+  display:grid;place-items:center;text-align:center;
+  font-family:var(--f-mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;
+  transform:rotate(-12deg);opacity:.85;pointer-events:none;
+  background:radial-gradient(circle, rgba(176,138,62,.06), transparent 70%);
+}
+.folio-sello::before{content:"";position:absolute;inset:6px;border-radius:50%;border:1px dashed var(--sello)}
+.folio-sello span{max-width:64px;line-height:1.5}
+@media(max-width:560px){.folio-sello{width:74px;height:74px;top:-2px;right:-2px}}
+
+.folio-bloque{margin-bottom:26px}
+.folio-bloque h4{
+  font-family:var(--f-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--cantera-oscura);margin-bottom:12px;
+  display:flex;align-items:center;gap:10px;
+}
+.folio-bloque h4::after{content:"";flex:1;height:1px;background:var(--tinta-15)}
+.lista-docs{list-style:none;display:grid;gap:9px}
+.lista-docs li{
+  display:flex;gap:11px;align-items:flex-start;font-size:15.5px;padding:2px 0;
+}
+.lista-docs li::before{
+  content:"☐";font-size:17px;line-height:1.4;color:var(--tinta-40);flex:0 0 auto;
+}
+.lista-docs li small{display:block;color:var(--tinta-70);font-size:13px}
+.foco{
+  border-radius:12px;padding:14px 16px;font-size:14.5px;margin-bottom:10px;
+  display:flex;gap:11px;align-items:flex-start;
+}
+.foco b{display:block;margin-bottom:2px}
+.foco-rojo{background:var(--alerta-fondo);color:#6B3116}
+.foco-verde{background:var(--ok-fondo);color:#1C5A55}
+.foco-ambar{background:var(--sello-fondo);color:#6B5320}
+.foco-emoji{flex:0 0 auto;font-size:17px}
+.tiempo-caja{
+  background:var(--papel-2);border-radius:12px;padding:18px 20px;
+  display:flex;gap:16px;align-items:center;flex-wrap:wrap;
+}
+.tiempo-caja b{font-family:var(--f-display);font-size:24px;font-weight:700}
+.tiempo-caja span{font-size:14px;color:var(--tinta-70)}
+.folio-acciones{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
+.btn-wa{background:#1FA855;color:#fff}
+.folio-reinicio{
+  background:none;border:none;cursor:pointer;font-family:var(--f-mono);font-size:13px;
+  color:var(--tinta-70);margin-top:18px;padding:4px 2px;text-decoration:underline;
+}
+.folio-legal{font-size:12.5px;color:var(--tinta-40);margin-top:26px;line-height:1.6}
+
+/* ---------- Footer ---------- */
+footer{
+  border-top:1px solid var(--tinta-15);padding:38px 0 60px;margin-top:30px;
+  font-size:14px;color:var(--tinta-70);
+}
+.footer-grid{display:grid;gap:20px}
+@media(min-width:700px){.footer-grid{grid-template-columns:1fr auto;align-items:start}}
+.footer-legal{max-width:64ch;font-size:12.5px;color:var(--tinta-40);margin-top:14px;line-height:1.65}
+
+/* ---------- Impresión: el folio como documento limpio ---------- */
+@media print{
+  body::before,.barra,.hero,.franja,section:not(#diagnostico),.wizard-cabecera,
+  .folio-acciones,.folio-reinicio,footer,.wizard-progreso{display:none!important}
+  body{background:#fff;font-size:12.5px}
+  section{padding:0}
+  .wizard-marco{border:none;box-shadow:none}
+  .wizard-cuerpo{padding:0}
+  .folio-sello{opacity:.9}
+  #diagnostico .eyebrow,#diagnostico h2,#diagnostico .seccion-sub{display:none}
+}
+</style>
+</head>
+<body>
+
+<header class="contenedor">
+  <div class="barra">
+    <a class="marca" href="#" aria-label="Broquer Cierres — inicio">
+      <span class="marca-sello" aria-hidden="true">C</span>
+      <span class="marca-texto"><b>Broquer Cierres</b><span>Escrituración coordinada · México</span></span>
+    </a>
+    <a class="barra-cta" id="cta-barra" href="#diagnostico">Diagnóstico gratis</a>
+  </div>
+</header>
+
+<main>
+
+  <!-- ================= HERO ================= -->
+  <div class="contenedor hero">
+    <span class="hero-folio">Servicio de coordinación de cierre</span>
+    <h1>Tu escritura, <em>sin vueltas</em> ni sorpresas.</h1>
+    <p class="hero-sub">Vender o escriturar una propiedad en México tarda de 2 a 5 meses — casi siempre por papeles que faltan y nadie te avisó. Nosotros integramos tu expediente completo, pre-calculamos tu ISR y le entregamos todo listo a la notaría. Tú solo firmas.</p>
+    <div class="hero-acciones">
+      <a class="btn btn-primario" href="#diagnostico">Hacer mi diagnóstico gratis</a>
+      <a class="btn btn-secundario" id="cta-hero-wa" href="#" target="_blank" rel="noopener">Hablar por WhatsApp</a>
+    </div>
+    <p class="hero-nota">2 minutos · Sin compromiso · Sin registrarte</p>
+
+    <div class="franja" role="list">
+      <div role="listitem"><b>2 a 5 meses</b><span>tarda hoy una escrituración típica sin coordinación</span></div>
+      <div role="listitem"><b>5–6 semanas</b><span>nuestra meta con expediente completo y sin complicaciones</span></div>
+      <div role="listitem"><b>$0 de sorpresas</b><span>tu ISR pre-calculado y validado antes de firmar nada</span></div>
+    </div>
+  </div>
+
+  <!-- ================= DIAGNÓSTICO (WIZARD) ================= -->
+  <section id="diagnostico" class="contenedor">
+    <span class="eyebrow">Diagnóstico de cierre</span>
+    <h2>Descubre qué necesitas antes de que te frene.</h2>
+    <p class="seccion-sub">Contesta unas preguntas y genera tu Diagnóstico de Cierre: la lista exacta de documentos para tu caso, los focos rojos que debes atender y cuánto tardará tu escritura.</p>
+
+    <div class="wizard-marco">
+      <div class="wizard-cabecera">
+        <span>Diagnóstico de cierre · Gratuito</span>
+        <span id="wizard-contador">Pregunta 1</span>
+      </div>
+      <div class="wizard-cuerpo">
+        <div class="wizard-progreso" aria-hidden="true"><div id="barra-progreso"></div></div>
+        <div id="zona-preguntas" aria-live="polite"></div>
+
+        <!-- ============ RESULTADO / FOLIO ============ -->
+        <div class="folio" id="folio">
+          <div class="folio-doc">
+            <div class="folio-sello" aria-hidden="true"><span>Broquer · Cierres · México · Diagnóstico</span></div>
+            <div class="folio-encabezado">
+              <h3>Diagnóstico de Cierre</h3>
+              <div class="meta">
+                Folio <span id="folio-num">—</span><br>
+                <span id="folio-fecha">—</span><br>
+                Broquer Cierres · México
+              </div>
+            </div>
+
+            <div class="folio-bloque">
+              <h4>Tu caso</h4>
+              <p id="folio-resumen" style="font-size:15.5px;color:var(--tinta-70)">—</p>
+            </div>
+
+            <div class="folio-bloque" id="bloque-focos" hidden>
+              <h4>Focos a atender</h4>
+              <div id="folio-focos"></div>
+            </div>
+
+            <div class="folio-bloque">
+              <h4>Documentos de tu expediente</h4>
+              <ul class="lista-docs" id="folio-docs"></ul>
+            </div>
+
+            <div class="folio-bloque">
+              <h4>Tiempo estimado</h4>
+              <div class="tiempo-caja">
+                <b id="folio-tiempo">—</b>
+                <span id="folio-tiempo-nota">con el expediente completo y coordinación activa.</span>
+              </div>
+            </div>
+
+            <div class="folio-acciones">
+              <a class="btn btn-wa" id="btn-wa-folio" href="#" target="_blank" rel="noopener">Enviar mi diagnóstico por WhatsApp</a>
+              <button class="btn btn-secundario" id="btn-imprimir" type="button">Guardar en PDF</button>
+            </div>
+            <button class="folio-reinicio" id="btn-reiniciar" type="button">Empezar de nuevo</button>
+
+            <p class="folio-legal">Diagnóstico informativo elaborado con la información proporcionada. El cálculo definitivo de impuestos y el criterio jurídico corresponden al notario público que intervenga en tu operación.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PROCESO ================= -->
+  <section class="contenedor" id="proceso">
+    <span class="eyebrow">Cómo trabajamos</span>
+    <h2>Cinco etapas. Una sola persona persiguiendo papeles: nosotros.</h2>
+    <div class="proceso">
+      <div class="paso">
+        <span class="paso-num">1</span>
+        <div>
+          <h3>Diagnóstico</h3>
+          <p>Revisamos tu caso, tu escritura y tus documentos. Te entregamos por escrito qué falta, qué impuestos pagarías y cuánto va a tardar. Sin letras chiquitas.</p>
+          <span class="paso-tiempo">Días 1–3</span>
+        </div>
+      </div>
+      <div class="paso">
+        <span class="paso-num">2</span>
+        <div>
+          <h3>Pre-cálculo de ISR</h3>
+          <p>Calculamos tu ISR por enajenación con la misma metodología que usan las notarías (INPC, deducciones actualizadas, tarifa vigente) y detectamos si calificas para exención por casa habitación. Aquí es donde la mayoría se lleva sorpresas de cientos de miles de pesos — tú no.</p>
+          <span class="paso-tiempo">Días 1–3</span>
+        </div>
+      </div>
+      <div class="paso">
+        <span class="paso-num">3</span>
+        <div>
+          <h3>Integración del expediente</h3>
+          <p>Conseguimos, corregimos y organizamos todo: constancias, certificados, avalúo, cartas de saldo. Tú solo mandas fotos por WhatsApp y firmas cuando toque. Te reportamos el avance cada semana.</p>
+          <span class="paso-tiempo">Semanas 1–3</span>
+        </div>
+      </div>
+      <div class="paso">
+        <span class="paso-num">4</span>
+        <div>
+          <h3>Entrega a notaría</h3>
+          <p>La notaría recibe tu expediente completo, verificado y con proyecto de cálculo. Nada de "falta un papel, regrese la otra semana". Trabajamos con la notaría de tu confianza, en cualquier ciudad del país, o te conectamos con una de nuestra red.</p>
+          <span class="paso-tiempo">Semana 4</span>
+        </div>
+      </div>
+      <div class="paso">
+        <span class="paso-num">5</span>
+        <div>
+          <h3>Firma y cierre</h3>
+          <p>Coordinamos la fecha de firma con todas las partes y damos seguimiento hasta que tu escritura queda inscrita en el Registro Público. Recibes tu escritura digitalizada y tu expediente completo.</p>
+          <span class="paso-tiempo">Semanas 5–6</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= QUÉ INCLUYE ================= -->
+  <section class="contenedor">
+    <span class="eyebrow">Qué obtienes</span>
+    <h2>Lo que nadie más te está ofreciendo.</h2>
+    <div class="grid-3">
+      <div class="tarjeta">
+        <div class="tarjeta-icono" aria-hidden="true">⚖</div>
+        <h3>ISR sin sorpresas</h3>
+        <p>Pre-cálculo con metodología notarial validada contra escrituras reales. Sabes cuánto pagarás antes de comprometerte a nada — y si puedes pagar cero por exención de casa habitación.</p>
+      </div>
+      <div class="tarjeta">
+        <div class="tarjeta-icono" aria-hidden="true">🗂</div>
+        <h3>Expediente blindado</h3>
+        <p>Checklist personalizado según tu caso: estado civil, hipotecas, condominio, sucesiones. Detectamos el papel que iba a frenar tu firma en la semana 8… en el día 1.</p>
+      </div>
+      <div class="tarjeta">
+        <div class="tarjeta-icono" aria-hidden="true">📲</div>
+        <h3>Seguimiento por WhatsApp</h3>
+        <p>Un reporte de avance cada semana y una sola persona respondiendo tus dudas. Se acabó llamar a la notaría para preguntar "¿cómo va?".</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PRECIO ================= -->
+  <section class="contenedor" id="precio">
+    <span class="eyebrow">Inversión</span>
+    <h2>Un fee fijo. Todo por escrito.</h2>
+    <div class="precio-caja">
+      <div>
+        <h3>Coordinación de cierre completa</h3>
+        <div class="monto">Desde $15,000 <small>MXN + IVA</small></div>
+        <p class="precio-nota">El fee exacto depende de la complejidad de tu caso (sucesiones, cancelación de hipoteca, copropietarios). Te lo confirmamos por escrito en tu diagnóstico, antes de que decidas.</p>
+        <p class="precio-nota">El diagnóstico inicial no te cuesta nada y no te compromete.</p>
+      </div>
+      <div>
+        <ul class="precio-lista">
+          <li>Diagnóstico y pre-cálculo de ISR por escrito</li>
+          <li>Integración completa del expediente</li>
+          <li>Gestión de constancias, certificados y avalúo</li>
+          <li>Coordinación con notaría y todas las partes</li>
+          <li>Reporte de avance semanal por WhatsApp</li>
+          <li>Seguimiento hasta escritura inscrita</li>
+        </ul>
+        <div style="margin-top:22px"><a class="btn btn-claro" href="#diagnostico">Empezar con mi diagnóstico</a></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= AGENTES ================= -->
+  <section class="contenedor">
+    <div class="agentes">
+      <div>
+        <span class="eyebrow">Para asesores inmobiliarios</span>
+        <h3>Tu comisión se cobra cuando se firma. Nosotros hacemos que se firme antes.</h3>
+        <p>Refiere la operación y nosotros nos encargamos del trámite completo: tu cliente queda atendido, tú te dedicas a vender y tu comisión no se atora tres meses en papeles. Sin costo para ti.</p>
+      </div>
+      <a class="btn btn-primario" id="cta-agentes-wa" href="#" target="_blank" rel="noopener">Referir una operación</a>
+    </div>
+  </section>
+
+  <!-- ================= FAQ ================= -->
+  <section class="contenedor" id="faq">
+    <span class="eyebrow">Preguntas frecuentes</span>
+    <h2>Lo que todos preguntan.</h2>
+    <div class="faq">
+      <details>
+        <summary>¿Y el notario?</summary>
+        <p>Trabajamos de la mano de notarios en todo el país. Tu escritura la firma el notario que tú elijas — nosotros hacemos que llegue a su escritorio completa, verificada y con los impuestos pre-calculados, que es la diferencia entre firmar en semanas o en meses.</p>
+      </details>
+      <details>
+        <summary>¿Puedo usar la notaría que yo quiera?</summary>
+        <p>Sí. Trabajamos con la notaría de tu confianza o la que ya eligieron las partes, en cualquier estado. Si no tienes una, te conectamos con notarías de nuestra red en tu ciudad, con proceso ya armado.</p>
+      </details>
+      <details>
+        <summary>¿Qué pasa si mi caso está complicado (herencia, hipoteca, sin escrituras)?</summary>
+        <p>Justo para eso existimos. En el diagnóstico te decimos con claridad qué implica tu caso, cuánto tardará y cuánto costará resolverlo — y si algo no se puede, también te lo decimos. Preferimos decirte "no" en el día 1 que cobrarte por un trámite imposible.</p>
+      </details>
+      <details>
+        <summary>¿Cuánto me voy a ahorrar en ISR?</summary>
+        <p>Depende de tu caso, pero es donde más dinero está en juego. Si la propiedad que vendes es tu casa habitación, podrías estar exento hasta cierto límite. Y si no, las deducciones bien documentadas (costo de adquisición actualizado por inflación, mejoras, gastos notariales) reducen el impuesto de forma importante. El pre-cálculo te lo mostramos por escrito antes de que tomes cualquier decisión.</p>
+      </details>
+      <details>
+        <summary>¿En qué ciudades operan?</summary>
+        <p>En todo México. La integración de tu expediente se trabaja 100% a distancia por WhatsApp, y los trámites de tu localidad se coordinan con la notaría de tu ciudad — la de tu confianza o una de nuestra red. Tu escritura vale igual en cualquier estado de la República.</p>
+      </details>
+      <details>
+        <summary>¿Cuándo les pago?</summary>
+        <p>El diagnóstico es gratuito. Si decides contratar la coordinación, firmamos un contrato de servicio con el fee fijo por escrito: un anticipo al arrancar y el resto contra la firma de tu escritura. Sin cobros ocultos.</p>
+      </details>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="contenedor footer-grid">
+    <div>
+      <b style="font-family:var(--f-display);font-size:17px">Broquer Cierres</b><br>
+      Base en Morelia · Operación en todo México<br>
+      <a id="footer-wa" href="#" target="_blank" rel="noopener">WhatsApp</a> · <a href="https://broquer.app" target="_blank" rel="noopener">broquer.app</a>
+      <p class="footer-legal">Broquer Cierres es un servicio de coordinación e integración de expedientes para operaciones inmobiliarias en todo México. La fe pública, el criterio jurídico, el cálculo definitivo de impuestos y los trámites registrales corresponden al notario público que interviene en cada operación. © <span id="anio"></span> Broquer.</p>
+    </div>
+    <a class="btn btn-secundario" href="#diagnostico">Hacer mi diagnóstico</a>
+  </div>
+</footer>
+
+<script>
+/* ============================================================
+   ⚙️ CONFIGURACIÓN — EDITAR-AQUI
+   Cambia SOLO estas líneas. Nada más.
+   ============================================================ */
+const CONFIG = {
+  // Tu número de WhatsApp con lada de país, SIN espacios ni signos.
+  // Ejemplo México: "5214431234567"
+  WHATSAPP: "5214430000000",           // ← EDITAR-AQUI
+
+  // Nombre del servicio (por si algún día lo renombras)
+  MARCA: "Broquer Cierres",
+
+  // Cobertura
+  CIUDAD: "México"
+};
+/* ============================================================ */
+
+/* ---------- Estado ---------- */
+let respuestas = {};
+let historial = [];
+let pasoActual = 0;
+
+/* ---------- Definición de preguntas ----------
+   Cada pregunta: id, titulo, ayuda, opciones [{valor, texto, sub, emoji}]
+   "siguiente" puede ser función(respuestas) para ramificar.       */
+const PREGUNTAS = [
+  {
+    id: "objetivo",
+    titulo: "¿Qué necesitas hacer?",
+    ayuda: "Elige lo que mejor describe tu situación.",
+    opciones: [
+      { valor:"vender",     emoji:"🏷️", texto:"Voy a vender una propiedad" },
+      { valor:"comprar",    emoji:"🔑", texto:"Voy a comprar una propiedad" },
+      { valor:"herencia",   emoji:"📜", texto:"Heredé una propiedad", sub:"y quiero ponerla a mi nombre o venderla" },
+      { valor:"regularizar",emoji:"🧩", texto:"Quiero regularizar", sub:"tengo la propiedad pero no está escriturada a mi nombre" }
+    ]
+  },
+  {
+    id: "ubicacion",
+    titulo: "¿Dónde está la propiedad?",
+    ayuda: "Operamos en todo México.",
+    opciones: [
+      { valor:"morelia",  emoji:"🌸", texto:"En Michoacán" },
+      { valor:"otro",     emoji:"🇲🇽", texto:"En otro estado" }
+    ]
+  },
+  {
+    id: "tipo",
+    titulo: "¿Qué tipo de propiedad es?",
+    dosCol: true,
+    opciones: [
+      { valor:"casa",    emoji:"🏠", texto:"Casa" },
+      { valor:"depto",   emoji:"🏢", texto:"Departamento" },
+      { valor:"terreno", emoji:"🌵", texto:"Terreno" },
+      { valor:"local",   emoji:"🏪", texto:"Local u oficina" }
+    ]
+  },
+  {
+    id: "condominio",
+    titulo: "¿Está en régimen de condominio?",
+    ayuda: "Fraccionamiento privado, torre de departamentos o plaza con cuotas de mantenimiento.",
+    condicion: r => r.objetivo !== "comprar",
+    opciones: [
+      { valor:"si",   emoji:"🔒", texto:"Sí, se pagan cuotas de mantenimiento" },
+      { valor:"no",   emoji:"🛣️", texto:"No" },
+      { valor:"nose", emoji:"🤔", texto:"No estoy seguro" }
+    ]
+  },
+  {
+    id: "escritura",
+    titulo: "¿La propiedad tiene escritura inscrita en el Registro Público?",
+    ayuda: "La escritura con la que el dueño actual acredita la propiedad.",
+    condicion: r => r.objetivo !== "comprar",
+    opciones: [
+      { valor:"si",   emoji:"✅", texto:"Sí, tengo la escritura" },
+      { valor:"no",   emoji:"⚠️", texto:"No hay escritura", sub:"solo contrato privado, cesión o nada" },
+      { valor:"nose", emoji:"🤔", texto:"No estoy seguro" }
+    ]
+  },
+  {
+    id: "duenos",
+    titulo: "¿Quién aparece como dueño?",
+    condicion: r => r.objetivo === "vender" || r.objetivo === "regularizar",
+    opciones: [
+      { valor:"soltero",   emoji:"👤", texto:"Una sola persona, soltera" },
+      { valor:"sociedad",  emoji:"💍", texto:"Persona casada por sociedad conyugal" },
+      { valor:"separacion",emoji:"🖊️", texto:"Persona casada por separación de bienes" },
+      { valor:"varios",    emoji:"👥", texto:"Varias personas (copropietarios)" },
+      { valor:"fallecido", emoji:"🕊️", texto:"El dueño ya falleció" }
+    ]
+  },
+  {
+    id: "testamento",
+    titulo: "¿La persona que falleció dejó testamento?",
+    condicion: r => r.objetivo === "herencia" || r.duenos === "fallecido",
+    opciones: [
+      { valor:"si",   emoji:"📜", texto:"Sí dejó testamento" },
+      { valor:"no",   emoji:"📭", texto:"No dejó testamento" },
+      { valor:"nose", emoji:"🤔", texto:"No sabemos" }
+    ]
+  },
+  {
+    id: "hipoteca",
+    titulo: "¿La propiedad tiene hipoteca?",
+    condicion: r => r.objetivo === "vender",
+    opciones: [
+      { valor:"no",     emoji:"✅", texto:"No, está libre" },
+      { valor:"vigente",emoji:"🏦", texto:"Sí, se sigue pagando" },
+      { valor:"pagada", emoji:"📄", texto:"Ya se pagó", sub:"pero no sé si se canceló en el Registro" }
+    ]
+  },
+  {
+    id: "habitacion",
+    titulo: "¿El dueño vive en esa propiedad?",
+    ayuda: "Importa muchísimo: vender tu casa habitación puede estar exento de ISR.",
+    condicion: r => r.objetivo === "vender" && (r.tipo === "casa" || r.tipo === "depto"),
+    opciones: [
+      { valor:"si", emoji:"🛏️", texto:"Sí, es su casa habitación" },
+      { valor:"no", emoji:"📦", texto:"No, está rentada o desocupada" }
+    ]
+  },
+  {
+    id: "credito",
+    titulo: "¿Cómo vas a pagar?",
+    condicion: r => r.objetivo === "comprar",
+    opciones: [
+      { valor:"contado",   emoji:"💵", texto:"De contado (recursos propios)" },
+      { valor:"bancario",  emoji:"🏦", texto:"Con crédito bancario" },
+      { valor:"infonavit", emoji:"🏗️", texto:"Con Infonavit o Fovissste" }
+    ]
+  },
+  {
+    id: "valor",
+    titulo: "¿Valor aproximado de la operación?",
+    ayuda: "Un rango es suficiente. Nos ayuda a estimar impuestos y complejidad.",
+    dosCol: true,
+    opciones: [
+      { valor:"menos1.5", texto:"Menos de $1.5 millones" },
+      { valor:"1.5a3",    texto:"$1.5 a $3 millones" },
+      { valor:"3a6",      texto:"$3 a $6 millones" },
+      { valor:"mas6",     texto:"Más de $6 millones" }
+    ]
+  }
+];
+
+/* ---------- Utilidades ---------- */
+const $ = sel => document.querySelector(sel);
+const zona = $("#zona-preguntas");
+
+function preguntasActivas(){
+  return PREGUNTAS.filter(p => !p.condicion || p.condicion(respuestas));
+}
+
+function textoDe(id){
+  const p = PREGUNTAS.find(q => q.id === id);
+  if(!p || !(id in respuestas)) return null;
+  const o = p.opciones.find(op => op.valor === respuestas[id]);
+  return o ? o.texto : null;
+}
+
+/* ---------- Render de preguntas ---------- */
+function render(){
+  const lista = preguntasActivas();
+  if(pasoActual >= lista.length){ generarFolio(); return; }
+  const p = lista[pasoActual];
+  $("#wizard-contador").textContent = "Pregunta " + (pasoActual+1) + " de " + lista.length;
+  $("#barra-progreso").style.width = Math.round((pasoActual/lista.length)*100) + "%";
+  $("#folio").classList.remove("activo");
+
+  let html = '<div class="pregunta activa"><h3>' + p.titulo + '</h3>';
+  if(p.ayuda) html += '<p class="ayuda">' + p.ayuda + '</p>';
+  html += '<div class="opciones' + (p.dosCol ? ' dos-col' : '') + '">';
+  p.opciones.forEach(o => {
+    html += '<button type="button" class="opcion" data-valor="' + o.valor + '">';
+    if(o.emoji) html += '<span class="opcion-emoji" aria-hidden="true">' + o.emoji + '</span>';
+    html += '<span>' + o.texto + (o.sub ? '<small>' + o.sub + '</small>' : '') + '</span></button>';
+  });
+  html += '</div>';
+  if(pasoActual > 0) html += '<button type="button" class="wizard-atras" id="btn-atras">← Regresar</button>';
+  html += '</div>';
+  zona.innerHTML = html;
+  zona.style.display = "block";
+
+  zona.querySelectorAll(".opcion").forEach(btn => {
+    btn.addEventListener("click", () => {
+      respuestas[p.id] = btn.dataset.valor;
+      historial.push(p.id);
+      pasoActual++;
+      render();
+      $("#diagnostico").scrollIntoView({behavior:"smooth", block:"start"});
+    });
+  });
+  const atras = $("#btn-atras");
+  if(atras) atras.addEventListener("click", () => {
+    const ultimo = historial.pop();
+    if(ultimo) delete respuestas[ultimo];
+    pasoActual = Math.max(0, pasoActual-1);
+    render();
+  });
+}
+
+/* ---------- Motor de reglas: documentos, focos, tiempo ---------- */
+function evaluar(){
+  const r = respuestas;
+  const docs = [];
+  const focos = [];
+  let semanasMin = 5, semanasMax = 6;
+  let tiempoTexto = null;
+
+  const D = (t, s) => docs.push({t, s});
+  const F = (tipo, titulo, texto) => focos.push({tipo, titulo, texto});
+
+  /* ----- Documentos base de la persona ----- */
+  if(r.objetivo === "comprar"){
+    D("Identificación oficial vigente (INE o pasaporte)");
+    D("CURP y Constancia de Situación Fiscal (RFC)");
+    D("Acta de nacimiento");
+    D("Comprobante de domicilio reciente");
+    if(r.credito === "bancario"){
+      D("Carta de autorización de crédito del banco");
+      D("Avalúo bancario", "lo ordena tu banco; nosotros coordinamos el acceso a la propiedad");
+      F("ambar","Crédito bancario","El banco pide su propio avalúo y revisa el expediente del vendedor. Coordinar banco + notaría + vendedor es justo donde más se atoran estas operaciones — y justo lo que hacemos.");
+      semanasMin += 2; semanasMax += 3;
+    }
+    if(r.credito === "infonavit"){
+      D("Precalificación y carta de instrucción Infonavit/Fovissste");
+      D("Avalúo del instituto", "con unidad de valuación autorizada");
+      F("ambar","Crédito de vivienda","Infonavit y Fovissste tienen sus propios tiempos y requisitos de avalúo. Los conocemos y los metemos al calendario desde el día 1.");
+      semanasMin += 3; semanasMax += 5;
+    }
+    D("Aviso: el ISAI (impuesto de adquisición) corre por tu cuenta", "te lo pre-calculamos según el municipio de la propiedad");
+  } else {
+    /* Vendedor / herencia / regularización: docs del titular */
+    D("Escritura de la propiedad", "el título con el que el dueño acredita la propiedad");
+    D("Identificación oficial vigente del dueño (INE o pasaporte)");
+    D("CURP y Constancia de Situación Fiscal (RFC) del dueño");
+    D("Acta de nacimiento del dueño");
+    D("Comprobante de domicilio reciente");
+    D("Predial pagado y al corriente", "recibos recientes; en algunos municipios piden hasta 5 años");
+    D("Recibos de agua sin adeudo");
+    D("Certificado de libertad de gravamen", "lo tramitamos ante el Registro Público; vigencia corta, se pide en el momento correcto");
+    D("Avalúo para efectos de la operación", "coordinamos al perito autorizado");
+  }
+
+  /* ----- Estado civil / copropiedad ----- */
+  if(r.duenos === "sociedad"){
+    D("Acta de matrimonio");
+    D("INE, CURP y RFC del cónyuge", "por sociedad conyugal, el cónyuge también firma la venta");
+    F("ambar","Firman los dos","Por sociedad conyugal la venta requiere firma de ambos cónyuges. Si uno vive fuera o no puede acudir, se resuelve con un poder notarial — lo dejamos listo con tiempo.");
+  }
+  if(r.duenos === "separacion"){
+    D("Acta de matrimonio", "para acreditar el régimen de separación de bienes");
+  }
+  if(r.duenos === "varios"){
+    D("Identificación, CURP y RFC de CADA copropietario");
+    F("ambar","Varios dueños","Todos los copropietarios deben firmar (o dar poder notarial). Un solo copropietario desaparecido detiene todo — lo confirmamos y organizamos desde el arranque.");
+    semanasMin += 1; semanasMax += 2;
+  }
+
+  /* ----- Condominio ----- */
+  if(r.condominio === "si"){
+    D("Constancia de no adeudo de cuotas de mantenimiento", "la expide el administrador del condominio");
+  }
+  if(r.condominio === "nose"){
+    D("Verificaremos si aplica régimen de condominio", "si aplica, se requiere constancia de no adeudo de cuotas");
+  }
+
+  /* ----- Escritura / regularización ----- */
+  if(r.escritura === "no"){
+    F("rojo","No hay escritura inscrita","Sin escritura inscrita no se puede vender todavía. Primero hay que regularizar el título (según el caso: escrituración de contrato privado, adjudicación, u otro camino). En tu diagnóstico personal te decimos exactamente cuál es tu ruta y cuánto tarda.");
+    tiempoTexto = "Por definir en tu diagnóstico";
+  }
+  if(r.escritura === "nose"){
+    F("ambar","Hay que verificar el título","Lo primero que haremos es verificar la inscripción en el Registro Público de la Propiedad. Es rápido y define todo lo demás.");
+  }
+
+  /* ----- Sucesión ----- */
+  if(r.objetivo === "herencia" || r.duenos === "fallecido"){
+    D("Acta de defunción");
+    D("Acta de nacimiento y de matrimonio de los herederos", "según el parentesco");
+    if(r.testamento === "si"){
+      D("Testamento", "y búsqueda de últimas voluntades ante el Archivo de Notarías");
+      F("ambar","Sucesión testamentaria","Antes de vender o transferir hay que tramitar la adjudicación de la herencia. Con testamento y herederos de acuerdo, puede hacerse ante notario — es la ruta rápida y la coordinamos completa.");
+      semanasMin += 8; semanasMax += 14;
+      tiempoTexto = tiempoTexto || "3 a 5 meses aprox.";
+    } else if(r.testamento === "no"){
+      F("rojo","Sucesión sin testamento","Se requiere tramitar la sucesión intestamentaria (ante notario si los herederos son mayores y están de acuerdo; si no, ante juez). Es el trámite más largo del catálogo — pero se resuelve, y mientras antes empiece, mejor.");
+      tiempoTexto = "6 a 12 meses aprox.";
+    } else {
+      D("Búsqueda de testamento", "la solicitamos ante el Archivo General de Notarías");
+      F("ambar","Primero: buscar testamento","La búsqueda oficial de testamento define la ruta completa. Es de los primeros trámites que haremos.");
+      tiempoTexto = "Por definir tras la búsqueda de testamento";
+    }
+  }
+
+  /* ----- Hipoteca ----- */
+  if(r.hipoteca === "vigente"){
+    D("Carta de saldo del banco", "para liquidar y cancelar la hipoteca al momento de la venta");
+    F("ambar","Hipoteca vigente","Se coordina la liquidación con el dinero de la venta y la cancelación de hipoteca en el mismo acto o de forma simultánea. Bien coordinado, no frena tu operación.");
+    semanasMin += 1; semanasMax += 3;
+  }
+  if(r.hipoteca === "pagada"){
+    D("Carta de liberación o finiquito del banco");
+    F("rojo","Hipoteca pagada pero quizá no cancelada","Muchísimas propiedades siguen apareciendo con gravamen en el Registro aunque el crédito ya se pagó. Si es tu caso, primero se firma la cancelación de hipoteca — agrega tiempo, y descubrirlo tarde es la causa #1 de firmas caídas. Lo verificamos de inmediato.");
+    semanasMin += 3; semanasMax += 6;
+  }
+
+  /* ----- ISR ----- */
+  if(r.objetivo === "vender"){
+    if(r.habitacion === "si"){
+      F("verde","Podrías pagar CERO de ISR","Si la propiedad es tu casa habitación y cumples los requisitos (comprobantes de domicilio a tu nombre, límite de valor y no haber usado la exención en los últimos 3 años), la venta puede quedar exenta de ISR. Lo confirmamos con tu documentación en el diagnóstico — es potencialmente el ahorro más grande de toda tu operación.");
+      D("Comprobantes de que es tu casa habitación", "CFE, telmex, estados de cuenta o predial a tu nombre en ese domicilio");
+    } else if(r.habitacion === "no" || r.tipo === "terreno" || r.tipo === "local"){
+      F("ambar","ISR por la venta","Esta venta genera ISR. La diferencia entre un cálculo cualquiera y uno bien hecho (costo actualizado por inflación, mejoras y gastos deducibles bien documentados) puede ser de cientos de miles de pesos. Nuestro pre-cálculo usa la misma metodología que las notarías.");
+      D("Escritura de cuando ADQUIRISTE la propiedad", "es la base para deducir el costo de adquisición en tu ISR");
+      D("Facturas de mejoras o construcciones (si las hay)", "cada factura válida baja tu impuesto");
+    }
+  }
+
+  /* ----- Ubicación ----- */
+  if(r.ubicacion === "otro"){
+    semanasMax += 1;
+  }
+
+  /* ----- Regularización pura ----- */
+  if(r.objetivo === "regularizar" && r.escritura !== "no"){
+    F("ambar","Caso de regularización","Cada regularización es distinta (contrato privado sin escriturar, terreno sin subdividir, adjudicaciones pendientes). El diagnóstico personal define tu ruta exacta — mándanos tu folio y lo revisamos sin costo.");
+    tiempoTexto = tiempoTexto || "Por definir en tu diagnóstico";
+  }
+
+  const tiempo = tiempoTexto || (semanasMin + " a " + semanasMax + " semanas");
+  return { docs, focos, tiempo };
+}
+
+/* ---------- Generar el folio ---------- */
+function generarFolio(){
+  const { docs, focos, tiempo } = evaluar();
+  zona.style.display = "none";
+  $("#barra-progreso").style.width = "100%";
+  $("#wizard-contador").textContent = "Diagnóstico listo";
+
+  const num = "BRQ-C-" + Math.floor(1000 + Math.random()*9000);
+  const fecha = new Date().toLocaleDateString("es-MX", {day:"numeric", month:"long", year:"numeric"});
+  $("#folio-num").textContent = num;
+  $("#folio-fecha").textContent = fecha;
+
+  /* Resumen del caso */
+  const partes = [];
+  const mapaObjetivo = {vender:"Venta", comprar:"Compra", herencia:"Herencia / adjudicación", regularizar:"Regularización"};
+  partes.push(mapaObjetivo[respuestas.objetivo] || "Operación");
+  if(respuestas.tipo) partes.push((textoDe("tipo")||"").toLowerCase());
+  if(respuestas.ubicacion) partes.push(textoDe("ubicacion").replace("En ","en ").toLowerCase());
+  if(respuestas.valor) partes.push("valor " + textoDe("valor").toLowerCase());
+  $("#folio-resumen").textContent = partes.join(" · ");
+
+  /* Focos */
+  const zonaFocos = $("#folio-focos");
+  zonaFocos.innerHTML = "";
+  if(focos.length){
+    $("#bloque-focos").hidden = false;
+    const orden = {rojo:0, verde:1, ambar:2};
+    focos.sort((a,b) => orden[a.tipo]-orden[b.tipo]).forEach(f => {
+      const emoji = f.tipo === "rojo" ? "🚩" : f.tipo === "verde" ? "💰" : "📌";
+      zonaFocos.innerHTML += '<div class="foco foco-' + f.tipo + '"><span class="foco-emoji" aria-hidden="true">' + emoji + '</span><div><b>' + f.titulo + '</b>' + f.texto + '</div></div>';
+    });
+  } else {
+    $("#bloque-focos").hidden = true;
+  }
+
+  /* Documentos */
+  const zonaDocs = $("#folio-docs");
+  zonaDocs.innerHTML = "";
+  docs.forEach(d => {
+    zonaDocs.innerHTML += "<li><span>" + d.t + (d.s ? "<small>" + d.s + "</small>" : "") + "</span></li>";
+  });
+
+  /* Tiempo */
+  $("#folio-tiempo").textContent = tiempo;
+
+  /* WhatsApp con resumen */
+  const lineas = [];
+  lineas.push("Hola, hice mi Diagnóstico de Cierre en Broquer Cierres 👋");
+  lineas.push("Folio: " + num);
+  lineas.push("Caso: " + $("#folio-resumen").textContent);
+  if(focos.length) lineas.push("Focos: " + focos.map(f => f.titulo).join(" · "));
+  lineas.push("Tiempo estimado: " + tiempo);
+  lineas.push("Quiero que me ayuden con mi cierre.");
+  const msg = encodeURIComponent(lineas.join("\n"));
+  $("#btn-wa-folio").href = "https://wa.me/" + CONFIG.WHATSAPP + "?text=" + msg;
+
+  $("#folio").classList.add("activo");
+  $("#folio").scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+/* ---------- Botones globales ---------- */
+$("#btn-imprimir").addEventListener("click", () => window.print());
+$("#btn-reiniciar").addEventListener("click", () => {
+  respuestas = {}; historial = []; pasoActual = 0;
+  $("#folio").classList.remove("activo");
+  render();
+});
+
+/* CTAs de WhatsApp generales */
+const msgGeneral = encodeURIComponent("Hola, quiero información sobre la coordinación de mi cierre / escrituración 🙌");
+const msgAgentes = encodeURIComponent("Hola, soy asesor inmobiliario y quiero referir una operación para coordinación de cierre 🤝");
+document.getElementById("cta-hero-wa").href = "https://wa.me/" + CONFIG.WHATSAPP + "?text=" + msgGeneral;
+document.getElementById("footer-wa").href   = "https://wa.me/" + CONFIG.WHATSAPP + "?text=" + msgGeneral;
+document.getElementById("cta-agentes-wa").href = "https://wa.me/" + CONFIG.WHATSAPP + "?text=" + msgAgentes;
+document.getElementById("anio").textContent = new Date().getFullYear();
+
+/* Arranque */
+render();
+</script>
+
+</body>
+</html>
