@@ -1732,6 +1732,22 @@ function cerrarMigracion() {
   document.getElementById('mig-ov').classList.remove('open');
 }
 
+/* Fetch que reintenta cuando la conexión se cae a medio camino
+   (Failed to fetch): el servidor puede estar reiniciándose por un deploy
+   o por la carga de la copia de fotos. Los imports deduplican, así que
+   reintentar es seguro. Espera 6 s entre intentos. */
+async function _fetchReintento(url, opts, intentos) {
+  intentos = intentos || 3;
+  for (let i = 0; i < intentos; i++) {
+    try {
+      return await fetch(url, opts);
+    } catch (e) {
+      if (i === intentos - 1) throw new Error('No hubo conexión con el servidor tras varios intentos. Revisa tu internet y vuelve a intentar: lo ya importado no se pierde ni se duplica.');
+      await new Promise(res => setTimeout(res, 6000));
+    }
+  }
+}
+
 /* Prepara y muestra el overlay de progreso. Regresa los elementos. */
 function _prepProgreso(titulo, mensaje) {
   cerrarMigracion();
@@ -1782,25 +1798,36 @@ async function migracionCompleta() {
   const linea = (html) => { el.sumEl.innerHTML += '<div>' + html + '</div>'; };
 
   try {
-    const r1 = await fetch('https://api.broquer.app/easybroker/import-all', { method: 'POST', headers: auth });
+    const r1 = await _fetchReintento('https://api.broquer.app/easybroker/import-all', {
+      method: 'POST',
+      headers: { ...auth, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fotos_diferidas: true })
+    });
     const d1 = await r1.json();
     if (!r1.ok) throw new Error(d1.detail || ('Error ' + r1.status + ' al importar propiedades'));
     linea('Propiedades: <b>' + (d1.importadas || 0) + '</b> nuevas, <b>' + (d1.actualizadas || 0) + '</b> ya estaban y se actualizaron.');
-    if (d1.fotos_en_proceso) linea('<span style="color:var(--mute)">Las fotos se están copiando a Broquer en segundo plano.</span>');
+
 
     tope = 65; p = Math.max(p, 33);
     el.msgEl.textContent = 'Paso 2 de 3 — Importando tus contactos con teléfonos, correos, etiquetas, fuente y notas.';
-    const r2 = await fetch('https://api.broquer.app/contactos/importar-eb', { method: 'POST', headers: auth });
+    const r2 = await _fetchReintento('https://api.broquer.app/contactos/importar-eb', { method: 'POST', headers: auth });
     const d2 = await r2.json();
     if (!r2.ok) throw new Error(d2.detail || ('Error ' + r2.status + ' al importar contactos'));
     linea('Contactos: <b>' + (d2.importados || 0) + '</b> nuevos, <b>' + (d2.actualizados || 0) + '</b> ya estaban y se completaron.');
 
     tope = 95; p = Math.max(p, 68);
     el.msgEl.textContent = 'Paso 3 de 3 — Reconstruyendo el historial de leads y ligándolo a cada propiedad por su código.';
-    const r3 = await fetch('https://api.broquer.app/easybroker/import-stats', { method: 'POST', headers: auth });
+    const r3 = await _fetchReintento('https://api.broquer.app/easybroker/import-stats', { method: 'POST', headers: auth });
     const d3 = await r3.json();
     if (!r3.ok) throw new Error(d3.detail || ('Error ' + r3.status + ' al importar el historial'));
     linea('Historial: <b>' + (d3.creados || 0) + '</b> leads nuevos, <b>' + ((d3.ya_estaban || 0) + (d3.marcados || 0)) + '</b> ya estaban, <b>' + (d3.vinculos || 0) + '</b> intereses ligados a propiedades.');
+
+    /* Fotos al final, ya sin nada compitiendo: en tandas con cursor, sin
+       bloquear el cierre de la ventana. */
+    if (d1.importadas || d1.actualizadas) {
+      linea('<span style="color:var(--mute)">Las fotos se están copiando a Broquer en segundo plano.</span>');
+      _copiarFotosEnTandas(token);
+    }
 
     clearInterval(tick);
     el.fillEl.style.width = '100%';
@@ -1817,6 +1844,28 @@ async function migracionCompleta() {
     clearInterval(tick);
     _errorProgreso(el, e);
     if (el.sumEl.innerHTML) el.sumEl.style.display = 'flex';
+  }
+}
+
+/* Copia las fotos a Broquer en tandas con cursor, en segundo plano.
+   Si una tanda falla, espera y reintenta; termina cuando ya no quedan. */
+async function _copiarFotosEnTandas(token) {
+  let cursor = null;
+  for (let tanda = 0; tanda < 300; tanda++) {
+    try {
+      const r = await fetch('https://api.broquer.app/easybroker/migrar-fotos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify(cursor ? { cursor: cursor } : {})
+      });
+      if (!r.ok) { await new Promise(res => setTimeout(res, 8000)); continue; }
+      const d = await r.json();
+      if (!d || !d.hay_mas) break;
+      cursor = d.cursor || cursor;
+      await new Promise(res => setTimeout(res, 1200));
+    } catch (e) {
+      await new Promise(res => setTimeout(res, 8000));
+    }
   }
 }
 

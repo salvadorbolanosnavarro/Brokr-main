@@ -2045,6 +2045,10 @@ async def easybroker_import_all(request: Request):
         body_imp = await request.json()
     except Exception:
         body_imp = {}
+    # Con fotos_diferidas=true NO se lanza la copia de fotos al terminar.
+    # La migración completa lo usa para que la copia (pesada) no compita con
+    # los pasos de contactos e historial en el mismo worker.
+    fotos_diferidas = bool((body_imp or {}).get("fotos_diferidas"))
     pedidos = (body_imp or {}).get("statuses")
     if isinstance(pedidos, str):
         pedidos = [pedidos]
@@ -2242,7 +2246,7 @@ async def easybroker_import_all(request: Request):
     # la pestaña abierta. Si ya hay un proceso corriendo para esta empresa,
     # el propio trabajador se ignora a sí mismo.
     fotos_lanzado = False
-    if org_id_import and upserted:
+    if org_id_import and upserted and not fotos_diferidas:
         try:
             asyncio.create_task(_migrar_fotos_org(org_id_import))
             fotos_lanzado = True
