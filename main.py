@@ -11657,6 +11657,105 @@ async def importar_contactos_archivo(request: Request, file: UploadFile = File(.
     }
 
 
+# ════════════════════════════════════════════════════════════════
+# Migración completa EasyBroker como TRABAJO EN SEGUNDO PLANO
+# El navegador ya no sostiene peticiones largas (se caían con cualquier
+# corte o reinicio): inicia el trabajo y consulta el avance cada pocos
+# segundos. El trabajo corre en el servidor y sobrevive a recargas de
+# página. Los tres pasos se llaman internamente (localhost) reusando la
+# lógica existente sin duplicarla.
+# ════════════════════════════════════════════════════════════════
+
+_MIGRACIONES: dict = {}   # org o user -> estado del trabajo
+
+
+def _mig_llave(org_id, user_id):
+    return f"org:{org_id}" if org_id else f"user:{user_id}"
+
+
+async def _job_migracion_eb(llave: str, auth_header: str):
+    est = _MIGRACIONES[llave]
+    base = f"http://127.0.0.1:{os.getenv('PORT', '8000')}"
+    pasos = [
+        ("propiedades", "/easybroker/import-all",   {"fotos_diferidas": True}),
+        ("contactos",   "/contactos/importar-eb",   None),
+        ("historial",   "/easybroker/import-stats", None),
+    ]
+    try:
+        async with httpx.AsyncClient(timeout=1800) as client:
+            for idx, (nombre, ruta, body) in enumerate(pasos, start=1):
+                est["paso"] = idx
+                r = await client.post(
+                    base + ruta,
+                    headers={"Authorization": auth_header,
+                             "Content-Type": "application/json"},
+                    json=body if body is not None else {}
+                )
+                try:
+                    d = r.json()
+                except Exception:
+                    d = {}
+                if r.status_code != 200:
+                    est["error"] = (d.get("detail")
+                                    or f"Error {r.status_code} al importar {nombre}")
+                    est["terminado"] = True
+                    return
+                est[nombre] = d
+        est["terminado"] = True
+    except Exception as e:
+        est["error"] = f"El trabajo se interrumpió: {str(e)[:150]}"
+        est["terminado"] = True
+
+
+@app.post("/easybroker/migracion/iniciar")
+async def migracion_eb_iniciar(request: Request):
+    """
+    Arranca la migración completa (propiedades → contactos → historial) en
+    segundo plano. Si ya hay una corriendo para la misma empresa, no lanza
+    otra: regresa en_curso para que el frontend solo consulte el avance.
+    """
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Tu sesión expiró. Vuelve a iniciar sesión.")
+    org_id = await get_org_id_for_user(user_id)
+    llave = _mig_llave(org_id, user_id)
+
+    previa = _MIGRACIONES.get(llave)
+    if previa and not previa.get("terminado") \
+       and time.time() - previa.get("inicio", 0) < 1800:
+        return {"ok": True, "en_curso": True}
+
+    auth_header = request.headers.get("Authorization") or ""
+    _MIGRACIONES[llave] = {
+        "paso": 1, "terminado": False, "error": None,
+        "propiedades": None, "contactos": None, "historial": None,
+        "inicio": time.time(),
+    }
+    asyncio.create_task(_job_migracion_eb(llave, auth_header))
+    return {"ok": True, "en_curso": False}
+
+
+@app.get("/easybroker/migracion/estado")
+async def migracion_eb_estado(request: Request):
+    """Avance de la migración en curso (o de la última terminada)."""
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Tu sesión expiró. Vuelve a iniciar sesión.")
+    org_id = await get_org_id_for_user(user_id)
+    est = _MIGRACIONES.get(_mig_llave(org_id, user_id))
+    if not est:
+        return {"ok": True, "existe": False}
+    return {
+        "ok": True, "existe": True,
+        "paso":        est["paso"],
+        "terminado":   est["terminado"],
+        "error":       est["error"],
+        "propiedades": est["propiedades"],
+        "contactos":   est["contactos"],
+        "historial":   est["historial"],
+    }
+
+
 @app.post("/easybroker/import-stats")
 async def easybroker_import_stats(request: Request):
     """
