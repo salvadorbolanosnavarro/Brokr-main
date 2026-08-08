@@ -1833,7 +1833,10 @@ async function migracionCompleta() {
       est = await r.json();
       if (!est.existe) { el.msgEl.textContent = 'Arrancando la migración en el servidor.'; continue; }
 
-      if (!est.terminado) el.msgEl.textContent = MENSAJES[est.paso] || 'Migrando.';
+      if (!est.terminado) {
+        el.msgEl.textContent = (MENSAJES[est.paso] || 'Migrando.')
+          + (est.detalle ? ' (' + est.detalle + ')' : '');
+      }
       const d1 = est.propiedades, d2 = est.contactos, d3 = est.historial;
       if (d1) {
         linea('p', 'Propiedades: <b>' + (d1.importadas || 0) + '</b> nuevas, <b>' + (d1.actualizadas || 0) + '</b> ya estaban y se actualizaron.');

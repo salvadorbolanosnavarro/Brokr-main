@@ -2190,9 +2190,11 @@ async def easybroker_import_all(request: Request):
             return ("err", {"id": pid, "error": str(e)[:120]})
 
     BATCH = _EB_LOTE
+    lotes_fallidos_seguidos = 0
     async with httpx.AsyncClient(timeout=30) as client:
         for i in range(0, len(ids_published), BATCH):
             chunk = ids_published[i:i+BATCH]
+            _prog(user_id, f"propiedades {min(i + BATCH, len(ids_published))} de {len(ids_published)}")
             inicio_lote = time.monotonic()
             results = await asyncio.gather(*[fetch_one(client, pid) for pid in chunk])
             # Mantener el ritmo por debajo del límite de EasyBroker: si el lote
@@ -2200,11 +2202,20 @@ async def easybroker_import_all(request: Request):
             resto = _EB_PAUSA_LOTE - (time.monotonic() - inicio_lote)
             if resto > 0 and i + BATCH < len(ids_published):
                 await asyncio.sleep(resto)
+            fallos_lote = 0
             for status, payload in results:
                 if status == "ok":
                     inmuebles_listos.append(payload)
                 else:
                     errores.append(payload)
+                    fallos_lote += 1
+            # Cortacircuito: si EasyBroker rechaza TODO durante varios lotes
+            # seguidos (429 sostenido), no tiene caso moler reintentos media
+            # hora. Se aborta con mensaje claro.
+            lotes_fallidos_seguidos = (lotes_fallidos_seguidos + 1
+                                       if fallos_lote == len(chunk) else 0)
+            if lotes_fallidos_seguidos >= 4:
+                raise HTTPException(status_code=429, detail="EasyBroker está limitando las peticiones de tu cuenta (429 sostenido). Espera 10-15 minutos y vuelve a correr la migración: lo ya importado no se pierde ni se duplica.")
 
     # ─── Paso 4: UPSERT en lotes a Supabase (50 por POST) ───
     # Necesita el índice único (user_id, eb_public_id) en Supabase para que
@@ -11220,19 +11231,29 @@ async def importar_contactos_eb(request: Request):
     # con pausa mínima entre lotes para no rebasar el límite de EasyBroker
     # (20 req/s). Sin esto, EB regresa 429 y castiga los pasos siguientes.
     detalles = []
+    lotes_fallidos_seguidos = 0
     async with httpx.AsyncClient(timeout=20) as client:
         for i in range(0, len(eb_ids), _EB_LOTE):
             lote = eb_ids[i:i + _EB_LOTE]
+            _prog(user_id, f"contactos {min(i + _EB_LOTE, len(eb_ids))} de {len(eb_ids)}")
             inicio_lote = time.monotonic()
             res = await asyncio.gather(*[_detalle(client, cid) for cid in lote])
-            detalles.extend([d for d in res if d])
+            buenos = [d for d in res if d]
+            detalles.extend(buenos)
             resto = _EB_PAUSA_LOTE - (time.monotonic() - inicio_lote)
             if resto > 0 and i + _EB_LOTE < len(eb_ids):
                 await asyncio.sleep(resto)
+            # Cortacircuito ante 429 sostenido: abortar claro, no moler.
+            lotes_fallidos_seguidos = (lotes_fallidos_seguidos + 1
+                                       if not buenos else 0)
+            if lotes_fallidos_seguidos >= 4:
+                raise HTTPException(status_code=429, detail="EasyBroker está limitando las peticiones de tu cuenta (429 sostenido). Espera 10-15 minutos y vuelve a correr la migración: lo ya importado no se pierde ni se duplica.")
 
     # ── Fase 3: mapear, deduplicar y guardar ──
     async with httpx.AsyncClient(timeout=20) as client:
-        for c in detalles:
+        for _idx_c, c in enumerate(detalles):
+            if _idx_c % 25 == 0:
+                _prog(user_id, f"guardando contactos {_idx_c} de {len(detalles)}")
             m = _mapear(c)
             if not m["nombre"] and not m["telefono"] and not m["email"]:
                 omitidos += 1
@@ -11667,6 +11688,15 @@ async def importar_contactos_archivo(request: Request, file: UploadFile = File(.
 # ════════════════════════════════════════════════════════════════
 
 _MIGRACIONES: dict = {}   # org o user -> estado del trabajo
+_PROGRESO_IMPORT: dict = {}   # user_id -> texto de avance granular
+
+
+def _prog(user_id: str, texto: str):
+    """Avance granular del import en curso, visible en migracion/estado."""
+    try:
+        _PROGRESO_IMPORT[user_id] = texto
+    except Exception:
+        pass
 
 
 def _mig_llave(org_id, user_id):
@@ -11747,6 +11777,7 @@ async def migracion_eb_estado(request: Request):
         return {"ok": True, "existe": False}
     return {
         "ok": True, "existe": True,
+        "detalle":     _PROGRESO_IMPORT.get(user_id),
         "paso":        est["paso"],
         "terminado":   est["terminado"],
         "error":       est["error"],
