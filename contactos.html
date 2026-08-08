@@ -1809,7 +1809,13 @@ async function migracionCompleta() {
   const tick = setInterval(() => { p = Math.min(96, p + 0.6); el.fillEl.style.width = p + '%'; }, 900);
 
   try {
-    const r0 = await _fetchReintento('https://api.broquer.app/easybroker/migracion/iniciar', { method: 'POST', headers: auth });
+    let r0 = await _fetchReintento('https://api.broquer.app/easybroker/migracion/iniciar', { method: 'POST', headers: auth });
+    if (r0.status === 401) {
+      /* Token vencido tras un rato sin usar la pestaña: refrescar y reintentar. */
+      token = (await _sb().refreshNow().catch(() => null)) || token;
+      auth.Authorization = 'Bearer ' + token;
+      r0 = await _fetchReintento('https://api.broquer.app/easybroker/migracion/iniciar', { method: 'POST', headers: auth });
+    }
     const d0 = await r0.json();
     if (!r0.ok) throw new Error(d0.detail || ('Error ' + r0.status + ' al iniciar la migración'));
     if (d0.en_curso) el.msgEl.textContent = 'Ya había una migración corriendo en el servidor: retomando su avance.';
@@ -1823,6 +1829,14 @@ async function migracionCompleta() {
         r = await fetch('https://api.broquer.app/easybroker/migracion/estado', { headers: auth });
       } catch (e) {
         if (++fallosSeguidos > 60) throw new Error('Se perdió la conexión con el servidor. La migración sigue corriendo allá: vuelve a abrir Migración completa para retomar el avance.');
+        continue;
+      }
+      if (r.status === 401) {
+        /* La sesión caduca a la hora: refrescar el token y seguir sondeando.
+           La migración en el servidor no depende de esta sesión. */
+        token = (await _sb().refreshNow().catch(() => null)) || token;
+        auth.Authorization = 'Bearer ' + token;
+        if (++fallosSeguidos > 60) throw new Error('Tu sesión no se pudo refrescar. La migración sigue corriendo en el servidor: recarga la página, inicia sesión y vuelve a abrir Migración completa para retomar el avance.');
         continue;
       }
       if (!r.ok) {
