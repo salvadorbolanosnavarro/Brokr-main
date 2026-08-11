@@ -12240,6 +12240,82 @@ async def admin_set_activo(req: AdminActivoReq, request: Request):
     return {"ok": True, "user_id": target_id, "activo": bool(req.activo)}
 
 
+class AdminEliminarReq(BaseModel):
+    user_id: str
+    email_confirmacion: str
+
+
+@app.post("/admin/user/eliminar")
+async def admin_eliminar_usuario(req: AdminEliminarReq, request: Request):
+    """
+    Elimina POR COMPLETO a un usuario: sus filas en todas las tablas
+    (propiedades, contactos, tareas, WhatsApp, firmas, etc.), sus archivos
+    en Storage, las organizaciones que posee, su perfil y su cuenta de
+    autenticación. Tras esto, el correo puede volver a registrarse desde cero.
+
+    Toda la lógica de borrado vive en la función SQL
+    admin_eliminar_usuario_total (migracion-eliminar-usuario.sql), que escanea
+    dinámicamente las tablas — módulos nuevos quedan cubiertos sin tocar esto.
+
+    Protecciones:
+      - Solo rol=admin puede llamar.
+      - El frontend confirma dos veces (el usuario escribe el correo) antes de llamar.
+      - No puedes eliminarte a ti mismo.
+      - No puedes eliminar a otro admin (primero bájalo a agente).
+      - email_confirmacion debe coincidir con el correo real de la cuenta.
+    """
+    caller_id = await require_admin(request)
+
+    target_id = (req.user_id or "").strip()
+    if not target_id:
+        raise HTTPException(status_code=400, detail="user_id requerido.")
+    if target_id == caller_id:
+        raise HTTPException(status_code=400, detail="No puedes eliminar tu propia cuenta de admin.")
+
+    # Verificar que el objetivo existe y validar correo + rol
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.get(
+            f"{SUPABASE_URL}/rest/v1/usuarios",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+            },
+            params={"id": f"eq.{target_id}", "select": "id,email,rol", "limit": "1"},
+        )
+    filas = r.json() if r.status_code == 200 else []
+    if not filas:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado.")
+    objetivo = filas[0]
+    if (objetivo.get("rol") or "agente") == "admin":
+        raise HTTPException(status_code=400,
+                            detail="No se puede eliminar a un admin. Primero cámbiale el rol a agente.")
+    email_real = (objetivo.get("email") or "").strip().lower()
+    if (req.email_confirmacion or "").strip().lower() != email_real:
+        raise HTTPException(status_code=400,
+                            detail="El correo de confirmación no coincide con el de la cuenta.")
+
+    # Ejecutar la eliminación total vía RPC (service key)
+    async with httpx.AsyncClient(timeout=60) as client:
+        r = await client.post(
+            f"{SUPABASE_URL}/rest/v1/rpc/admin_eliminar_usuario_total",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={"p_user_id": target_id},
+        )
+    if r.status_code != 200:
+        raise HTTPException(status_code=500, detail=f"Error eliminando usuario: {r.text}")
+    resultado = r.json()
+    if not (isinstance(resultado, dict) and resultado.get("ok")):
+        detalle = resultado.get("error") if isinstance(resultado, dict) else str(resultado)
+        raise HTTPException(status_code=500, detail=f"La eliminación no se completó: {detalle}")
+
+    return {"ok": True, "user_id": target_id, "email": email_real,
+            "borrado": resultado.get("borrado", {})}
+
+
 @app.get("/admin/user/{user_id}/uso")
 async def admin_user_uso(user_id: str, request: Request, dias: int = 30):
     """Agregaciones de uso y costo IA de un usuario, junto con tiempo por módulo.

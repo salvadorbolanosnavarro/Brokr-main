@@ -351,6 +351,9 @@ input,textarea,select{font-family:inherit}
 .adm-toast.is-err{background:var(--danger)}
 .adm-btn-quitar-emp{background:var(--danger-soft);color:var(--danger);border:1px solid var(--danger-bd);margin-top:var(--sp-2)}
 .adm-btn-quitar-emp:hover{background:var(--danger);color:var(--paper)}
+.adm-sec--peligro{border:1px solid var(--danger-bd);border-radius:var(--r);padding:var(--sp-4)}
+.adm-btn-eliminar{background:var(--danger-soft);color:var(--danger);border:1px solid var(--danger-bd);margin-top:var(--sp-3)}
+.adm-btn-eliminar:hover{background:var(--danger);color:var(--paper)}
 .adm-spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--line-3);border-top-color:var(--bone);border-radius:50%;animation:adm-spin .8s linear infinite}
 @keyframes adm-spin{to{transform:rotate(360deg)}}
 </style>
@@ -575,6 +578,12 @@ input,textarea,select{font-family:inherit}
               </div>
             </div>
 
+            <div class="adm-sec full adm-sec--peligro">
+              <div class="adm-sec__title">Zona de peligro</div>
+              <div class="adm-emp-hint">Elimina esta cuenta y absolutamente toda su información: propiedades, contactos, tareas, conversaciones de WhatsApp, firmas, archivos y fotos, empresa (si es dueño) y su acceso. No se puede deshacer. Su correo podrá registrarse de nuevo desde cero.</div>
+              <button type="button" class="ac-btn ac-btn--block adm-btn-eliminar" id="d-eliminar" onclick="abrirEliminar()">Eliminar cuenta y todos sus datos</button>
+            </div>
+
           </div>
 
           <div class="adm-actions">
@@ -704,6 +713,30 @@ input,textarea,select{font-family:inherit}
     <div class="ac-modal__foot">
       <button class="ac-btn ac-btn--ghost" onclick="cerrarModal('ov-correo')">Cancelar</button>
       <button class="ac-btn ac-btn--blue" id="mo-enviar" onclick="enviarCorreo()">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Modal: eliminar usuario ═══ -->
+<div class="ac-ov" id="ov-eliminar">
+  <div class="ac-modal">
+    <div class="ac-modal__head">
+      <div class="ac-modal__title">Eliminar cuenta definitivamente</div>
+      <button class="ac-x" onclick="cerrarModal('ov-eliminar')" aria-label="Cerrar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="ac-modal__body">
+      <p class="ac-note" style="margin-bottom:var(--sp-4)">Vas a eliminar a <strong id="el-nombre">—</strong> y toda su información en todos los módulos, incluidos sus archivos en Storage. Si es dueño de una empresa, la empresa también se elimina y sus miembros quedan dados de baja. Esta acción no se puede deshacer.</p>
+      <div class="ac-field">
+        <label class="ac-lbl" for="el-confirm">Para confirmar, escribe el correo de la cuenta: <strong id="el-email">—</strong></label>
+        <input class="ac-input" type="email" id="el-confirm" placeholder="Escribe el correo exacto" autocomplete="off" oninput="validarEliminar()"/>
+      </div>
+      <p class="ac-note" id="el-msg"></p>
+    </div>
+    <div class="ac-modal__foot">
+      <button class="ac-btn ac-btn--ghost" onclick="cerrarModal('ov-eliminar')">Cancelar</button>
+      <button class="ac-btn adm-btn-eliminar" style="margin-top:0" id="el-btn" onclick="ejecutarEliminar()" disabled>Eliminar definitivamente</button>
     </div>
   </div>
 </div>
@@ -1662,6 +1695,56 @@ function exportarSegmento(){
 /* ══════════════ Modales, polling y avisos ══════════════ */
 function abrirModal(id){ document.getElementById(id).classList.add('is-on'); }
 function cerrarModal(id){ document.getElementById(id).classList.remove('is-on'); }
+
+/* ══ Eliminar usuario por completo ══ */
+function abrirEliminar(){
+  const u = users.find(x => x.id === selId);
+  if(!u) return;
+  let yo = {};
+  try { yo = JSON.parse(sessionStorage.getItem('sb_user') || localStorage.getItem('sb_user') || '{}') || {}; } catch(_) {}
+  if(u.id === yo.id){ toast('No puedes eliminar tu propia cuenta.', true); return; }
+  if((u.rol || 'agente') === 'admin'){ toast('No se puede eliminar a un admin. Primero cámbiale el rol a agente.', true); return; }
+  document.getElementById('el-nombre').textContent = u.nombre || u.email || '—';
+  document.getElementById('el-email').textContent = u.email || '—';
+  document.getElementById('el-confirm').value = '';
+  document.getElementById('el-msg').textContent = '';
+  document.getElementById('el-btn').disabled = true;
+  abrirModal('ov-eliminar');
+}
+
+function validarEliminar(){
+  const u = users.find(x => x.id === selId);
+  const escrito = document.getElementById('el-confirm').value.trim().toLowerCase();
+  const real = ((u && u.email) || '').trim().toLowerCase();
+  document.getElementById('el-btn').disabled = !(real && escrito === real);
+}
+
+async function ejecutarEliminar(){
+  const u = users.find(x => x.id === selId);
+  if(!u) return;
+  const btn = document.getElementById('el-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="adm-spinner"></span>';
+  try{
+    const res = await apiJson('/admin/user/eliminar', {
+      method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ user_id: u.id, email_confirmacion: document.getElementById('el-confirm').value.trim() })
+    });
+    cerrarModal('ov-eliminar');
+    users = users.filter(x => x.id !== u.id);
+    selId = null; draft = null;
+    document.getElementById('adm-detail').classList.remove('is-on');
+    document.getElementById('adm-empty-state').classList.remove('is-hidden');
+    closeMobileDetail();
+    renderAll();
+    const partes = Object.entries(res.borrado || {}).map(([t,n]) => t + ': ' + n);
+    toast('Cuenta eliminada por completo.' + (partes.length ? ' Borrado — ' + partes.join(', ') : ''));
+  }catch(e){
+    document.getElementById('el-msg').textContent = 'Error: ' + e.message;
+    btn.textContent = 'Eliminar definitivamente';
+    validarEliminar();
+  }
+}
 
 document.addEventListener('keydown', e => {
   if(e.key === 'Escape'){ cerrarModal('ov-correo'); cerrarModal('ov-cfdi'); }
