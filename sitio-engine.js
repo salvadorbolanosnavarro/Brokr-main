@@ -5,6 +5,7 @@
    ═══════════════════════════════════════════════════════════════════════ */
 
 const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
+const API_BASE = 'https://api.broquer.app';
 const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
 
 function esc(s) {
@@ -255,6 +256,7 @@ function render(perfil, testimonios) {
         <form class="st-form" id="st-form" onsubmit="return enviarContacto(event)">
           <input type="text" id="cf-nombre" placeholder="Tu nombre" required/>
           <input type="tel" id="cf-tel" placeholder="Tu teléfono (opcional)"/>
+          <input type="text" id="cf-sitio-web" name="sitio_web" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;height:0;width:0;opacity:0" aria-hidden="true"/>
           <textarea id="cf-mensaje" placeholder="¿Qué tipo de propiedad buscas?" required></textarea>
           <button type="submit" class="st-btn st-btn--primary">${ICONO_WA_INLINE} Enviar por WhatsApp</button>
         </form>
@@ -516,12 +518,29 @@ function toggleDetalleProp(idxStr) {
   document.body.appendChild(overlay);
 }
 
-/* ── Formulario de contacto → WhatsApp (sin backend, cero riesgo de spam) ── */
+/* ── Formulario de contacto: registra el lead en el CRM del agente y
+   después abre WhatsApp. Si el registro falla, WhatsApp se abre igual
+   (el visitante nunca se queda bloqueado). ─────────────────────────── */
 function enviarContacto(ev) {
   ev.preventDefault();
   const nombre = document.getElementById('cf-nombre').value.trim();
   const tel = document.getElementById('cf-tel').value.trim();
   const mensaje = document.getElementById('cf-mensaje').value.trim();
+  const hp = (document.getElementById('cf-sitio-web') || {}).value || '';
+
+  // Registro del lead en Broquer (no bloqueante; keepalive sobrevive a la navegación)
+  const slug = slugDesdeUrl();
+  if (slug && nombre) {
+    try {
+      fetch(API_BASE + '/sitio/' + encodeURIComponent(slug) + '/lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        keepalive: true,
+        body: JSON.stringify({ nombre, telefono: tel, mensaje, sitio_web: hp })
+      }).catch(() => {});
+    } catch (e) { /* nunca bloquear al visitante */ }
+  }
+
   const texto = 'Hola, soy ' + nombre + (tel ? ' (tel: ' + tel + ')' : '') + '. ' + mensaje;
   const link = waLink(_perfil && _perfil.whatsapp_publico, texto);
   if (link) window.open(link, '_blank');

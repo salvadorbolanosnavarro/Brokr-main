@@ -12777,3 +12777,124 @@ async def instagram_feed():
     _IG_CACHE["data"] = data
     _IG_CACHE["t"] = ahora
     return data
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# LEADS DEL SITIO PÚBLICO DE AGENTES
+# Endpoint público (sin sesión): el formulario de contacto de sitio.html
+# registra al visitante como lead en el CRM del agente dueño del slug,
+# ANTES de abrirle WhatsApp. Así el lead queda en Broquer aunque el
+# visitante nunca llegue a enviar el mensaje.
+# Anti-spam: rate limit en memoria por IP y por slug + honeypot.
+# ═══════════════════════════════════════════════════════════════════════════
+
+_SITIO_LEAD_RL = {}  # {clave: [timestamps]}
+
+def _sitio_lead_permitido(clave: str, limite: int, ventana_seg: int) -> bool:
+    import time as _t
+    ahora = _t.time()
+    lst = [t for t in _SITIO_LEAD_RL.get(clave, []) if ahora - t < ventana_seg]
+    if len(lst) >= limite:
+        _SITIO_LEAD_RL[clave] = lst
+        return False
+    lst.append(ahora)
+    _SITIO_LEAD_RL[clave] = lst
+    # Poda ocasional para que el dict no crezca sin límite
+    if len(_SITIO_LEAD_RL) > 5000:
+        viejas = [k for k, v in _SITIO_LEAD_RL.items() if not v or ahora - v[-1] > ventana_seg]
+        for k in viejas:
+            _SITIO_LEAD_RL.pop(k, None)
+    return True
+
+
+class SitioLeadIn(BaseModel):
+    nombre: str
+    telefono: str = ""
+    mensaje: str = ""
+    sitio_web: str = ""  # honeypot: los humanos nunca llenan este campo
+
+
+@app.post("/sitio/{slug}/lead")
+async def sitio_registrar_lead(slug: str, payload: SitioLeadIn, request: Request):
+    """Registra un lead proveniente del sitio público del agente."""
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        raise HTTPException(status_code=503, detail="Servicio no disponible")
+
+    # Honeypot: si viene lleno, es un bot. Respondemos ok sin guardar nada.
+    if (payload.sitio_web or "").strip():
+        return {"ok": True}
+
+    nombre = (payload.nombre or "").strip()[:120]
+    telefono = "".join(ch for ch in (payload.telefono or "") if ch.isdigit() or ch == "+")[:20]
+    mensaje = (payload.mensaje or "").strip()[:1000]
+    if not nombre:
+        raise HTTPException(status_code=400, detail="El nombre es obligatorio")
+
+    # Rate limit: 5 leads/hora por IP y 30/hora por sitio
+    ip = (request.headers.get("cf-connecting-ip")
+          or (request.headers.get("x-forwarded-for") or "").split(",")[0].strip()
+          or (request.client.host if request.client else "?"))
+    if not _sitio_lead_permitido(f"ip:{ip}", 5, 3600) or \
+       not _sitio_lead_permitido(f"slug:{slug}", 30, 3600):
+        raise HTTPException(status_code=429, detail="Demasiadas solicitudes, intenta más tarde")
+
+    async with httpx.AsyncClient(timeout=10) as client:
+        hdr = {"apikey": SUPABASE_SERVICE_KEY,
+               "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+               "Content-Type": "application/json"}
+
+        # 1) Resolver el slug → agente dueño del sitio (solo sitios activos)
+        r = await client.get(
+            f"{SUPABASE_URL}/rest/v1/usuarios", headers=hdr,
+            params={"slug": f"eq.{slug}", "sitio_activo": "eq.true",
+                    "select": "id", "limit": "1"})
+        rows = r.json() if r.status_code == 200 else []
+        if not rows:
+            raise HTTPException(status_code=404, detail="Sitio no encontrado")
+        user_id = rows[0]["id"]
+
+        ahora = datetime.now(timezone.utc).isoformat()
+        nota = f"Lead del sitio web ({ahora[:10]}): {mensaje}" if mensaje else f"Lead del sitio web ({ahora[:10]})."
+
+        # 2) Dedup: si ya existe un contacto de este agente con el mismo
+        #    teléfono, solo lo marcamos como lead y le agregamos la nota.
+        existente = None
+        if telefono:
+            r = await client.get(
+                f"{SUPABASE_URL}/rest/v1/contactos", headers=hdr,
+                params={"user_id": f"eq.{user_id}", "telefono": f"eq.{telefono}",
+                        "select": "id,notas,es_potencial", "limit": "1"})
+            filas = r.json() if r.status_code == 200 else []
+            existente = filas[0] if filas else None
+
+        if existente:
+            notas_prev = (existente.get("notas") or "").strip()
+            nuevas_notas = (notas_prev + "\n\n" + nota).strip() if notas_prev else nota
+            await client.patch(
+                f"{SUPABASE_URL}/rest/v1/contactos", headers=hdr,
+                params={"id": f"eq.{existente['id']}"},
+                json={"es_potencial": True, "notas": nuevas_notas[:5000],
+                      "updated_at": ahora})
+            return {"ok": True, "duplicado": True}
+
+        # 3) Crear el lead nuevo (mismo esquema que usa leads.html)
+        import random as _rnd
+        nuevo = {
+            "id": f"c_{int(datetime.now(timezone.utc).timestamp() * 1000)}{_rnd.randint(100, 999)}",
+            "user_id": user_id,
+            "nombre": nombre.upper(),
+            "telefono": telefono or None,
+            "notas": nota,
+            "es_potencial": True,
+            "estatus": "nuevo",
+            "fuente": "Sitio web",
+            "etiquetas": [],
+            "operaciones": [],
+            "created_at": ahora,
+            "updated_at": ahora,
+        }
+        r = await client.post(f"{SUPABASE_URL}/rest/v1/contactos", headers=hdr, json=nuevo)
+        if r.status_code not in (200, 201):
+            raise HTTPException(status_code=502, detail="No se pudo registrar el lead")
+
+    return {"ok": True}
