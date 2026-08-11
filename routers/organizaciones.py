@@ -313,6 +313,19 @@ async def listar_miembros(request: Request):
     return {"miembros": out, "es_admin": es_admin, "asientos_max": ctx.get("asientos_max")}
 
 
+@router.get("/auth/correo-existe")
+async def correo_existe(email: str = ""):
+    """Público. Lo usa la pantalla de registro para avisar en el momento si el
+    correo ya tiene cuenta, en lugar del mensaje ambiguo de "revisa tu correo".
+    Solo responde sí/no — no expone ningún dato de la cuenta.
+    """
+    email = (email or "").strip().lower()
+    if not email or "@" not in email:
+        return {"existe": False}
+    filas = await _sb_get("usuarios", {"email": f"eq.{email}", "select": "id", "limit": "1"})
+    return {"existe": bool(filas)}
+
+
 class InvitarReq(BaseModel):
     email: str
     rol_org: str = "agente"
