@@ -317,6 +317,7 @@ class InvitarReq(BaseModel):
     email: str
     rol_org: str = "agente"
     permisos: Optional[Dict[str, bool]] = None
+    traer_datos: bool = False
 
 
 @router.post("/org/invitar")
@@ -353,15 +354,22 @@ async def invitar(req: InvitarReq, request: Request):
                 detail=f"Ya usaste tus {ctx['asientos_max']} lugares. Contáctanos para ampliar.")
 
     # ¿Ya es miembro de alguna cuenta? Un usuario pertenece a UNA sola.
+    # Con cuenta individual (org personal propia) SÍ se puede invitar: al
+    # aceptar, su membresía se mueve a esta empresa sin recrear nada.
+    # Solo se bloquea si ya pertenece a OTRA empresa.
     ya = await _sb_get("usuarios", {"email": f"eq.{email}", "select": "id", "limit": "1"})
     if ya:
         m = await _sb_get("organizacion_miembros", {"user_id": f"eq.{ya[0]['id']}", "select": "org_id", "limit": "1"})
         if m and m[0]["org_id"] == ctx["org_id"]:
             raise HTTPException(status_code=400, detail="Esa persona ya está en tu equipo.")
-        if m:
-            raise HTTPException(
-                status_code=400,
-                detail="Ese correo ya tiene una cuenta de Broquer en otra organización. Debe darse de baja primero.")
+        if m and m[0].get("org_id"):
+            su_org = await _sb_get("organizaciones", {
+                "id": f"eq.{m[0]['org_id']}", "select": "tipo,owner_id", "limit": "1",
+            })
+            if su_org and su_org[0].get("tipo") == "empresa":
+                raise HTTPException(
+                    status_code=400,
+                    detail="Ese correo ya pertenece a otra empresa en Broquer. Debe salir de esa organización primero.")
 
     permisos = {}
     for k, v in (req.permisos or {}).items():
@@ -379,6 +387,7 @@ async def invitar(req: InvitarReq, request: Request):
         "email": email,
         "rol_org": req.rol_org,
         "permisos": permisos,
+        "traer_datos": bool(req.traer_datos),
         "token": token,
         "invitado_por": ctx["user_id"],
         "expira_el": (datetime.now(timezone.utc) + timedelta(days=14)).isoformat(),
@@ -388,7 +397,7 @@ async def invitar(req: InvitarReq, request: Request):
     return {
         "ok": True,
         "email": email,
-        "link": f"{APP_URL}/registro.html?inv={token}",
+        "link": f"{APP_URL}/unirse.html?inv={token}",
         "expira_el": inv.get("expira_el"),
     }
 
@@ -413,7 +422,7 @@ async def listar_invitaciones(request: Request):
             "id": f["id"],
             "email": f["email"],
             "rol_org": f["rol_org"],
-            "link": f"{APP_URL}/registro.html?inv={f['token']}",
+            "link": f"{APP_URL}/unirse.html?inv={f['token']}",
             "expira_el": f["expira_el"],
             "vencida": vencida,
         })
@@ -441,7 +450,7 @@ async def ver_invitacion(token: str):
     filas = await _sb_get("organizacion_invitaciones", {
         "token": f"eq.{token}",
         "aceptada_el": "is.null",
-        "select": "org_id,email,rol_org,expira_el",
+        "select": "org_id,email,rol_org,traer_datos,expira_el",
         "limit": "1",
     })
     if not filas:
@@ -464,6 +473,7 @@ async def ver_invitacion(token: str):
         "email": f["email"],
         "empresa": empresa,
         "rol_org": f["rol_org"],
+        "traer_datos": bool(f.get("traer_datos")),
     }
 
 
@@ -481,7 +491,7 @@ async def aceptar_invitacion(req: AceptarReq, request: Request):
 
     filas = await _sb_get("organizacion_invitaciones", {
         "token": f"eq.{req.token}", "aceptada_el": "is.null",
-        "select": "id,org_id,email,rol_org,permisos,expira_el", "limit": "1",
+        "select": "id,org_id,email,rol_org,permisos,traer_datos,expira_el", "limit": "1",
     })
     if not filas:
         raise HTTPException(status_code=400, detail="Esa invitación ya no es válida.")
@@ -500,15 +510,26 @@ async def aceptar_invitacion(req: AceptarReq, request: Request):
     if not perfil or (perfil[0].get("email") or "").strip().lower() != inv["email"].strip().lower():
         raise HTTPException(status_code=403, detail="Esta invitación es para otro correo.")
 
-    # Su org personal actual (si tiene) queda huérfana tras el cambio.
+    # Su org actual (si tiene). Solo se puede mover una org PERSONAL propia;
+    # si es dueño de otra empresa o miembro de otra empresa, no puede unirse.
     actual = await _sb_get("organizacion_miembros", {
         "user_id": f"eq.{user_id}", "select": "id,org_id,rol_org", "limit": "1",
     })
     org_previa = None
     if actual:
+        if actual[0].get("org_id") == inv["org_id"]:
+            raise HTTPException(status_code=400, detail="Ya eres parte de este equipo.")
         prev = await _sb_get("organizaciones", {
             "id": f"eq.{actual[0]['org_id']}", "select": "id,tipo,owner_id", "limit": "1",
         })
+        if prev and prev[0]["tipo"] == "empresa":
+            if prev[0].get("owner_id") == user_id:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Tu cuenta es dueña de una empresa. No puede unirse a otra.")
+            raise HTTPException(
+                status_code=400,
+                detail="Ya perteneces a otra empresa. Debes salir de esa organización primero.")
         if prev and prev[0]["tipo"] == "personal" and prev[0]["owner_id"] == user_id:
             org_previa = prev[0]["id"]
 
@@ -531,15 +552,26 @@ async def aceptar_invitacion(req: AceptarReq, request: Request):
         "aceptada_el": datetime.now(timezone.utc).isoformat(),
     })
 
-    # La org personal vacía se va. Si tuviera datos, el cascade los borraría, así
-    # que solo la tocamos cuando de verdad está vacía.
+    # ── Sus datos ──
+    # Si el dueño de la empresa marcó "traer datos", el inventario y los
+    # contactos del invitado se mueven a la empresa. Si no, se quedan en su
+    # org personal, que se CONSERVA (en pausa) por si algún día sale del
+    # equipo — nada se borra.
+    trae = bool(inv.get("traer_datos"))
+    if org_previa and trae:
+        await _sb_patch("propiedades", {"org_id": f"eq.{org_previa}"},
+                        {"org_id": inv["org_id"]})
+        await _sb_patch("contactos", {"org_id": f"eq.{org_previa}"},
+                        {"org_id": inv["org_id"]})
+
+    # La org personal solo se borra cuando quedó realmente vacía.
     if org_previa:
         restos = await _sb_get("propiedades", {"org_id": f"eq.{org_previa}", "select": "id", "limit": "1"})
         contactos = await _sb_get("contactos", {"org_id": f"eq.{org_previa}", "select": "id", "limit": "1"})
         if not restos and not contactos:
             await _sb_delete("organizaciones", {"id": f"eq.{org_previa}"})
 
-    return {"ok": True, "org_id": inv["org_id"]}
+    return {"ok": True, "org_id": inv["org_id"], "traer_datos": trae}
 
 
 class RolReq(BaseModel):
