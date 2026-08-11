@@ -336,6 +336,18 @@
 <script src="capacitor-bridge.js" defer></script>
 
 <script>
+/* ── Invitación pendiente a un equipo ──
+   Si la persona abrió un link de invitación sin sesión, unirse.html guarda
+   el token y la manda a iniciar sesión. Al terminar el login siempre se cae
+   aquí: la regresamos a unirse.html para que acepte con un clic. */
+(function(){
+  try {
+    var inv = localStorage.getItem('inv_pendiente');
+    if (inv) { window.location.replace('unirse.html?inv=' + encodeURIComponent(inv)); }
+  } catch(_){}
+})();
+</script>
+<script>
 /* ── Personalizar el inicio: qué tarjetas se muestran ──
    La preferencia vive en el navegador (localStorage). "Pendientes"
    respeta además su propia lógica: solo aparece si hay tareas. */

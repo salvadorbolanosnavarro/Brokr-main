@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Broquer — Unirte a un equipo</title>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="apple-touch-icon" href="isotipo-black.png"/>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+<meta name="robots" content="noindex,nofollow"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+  /* ════════════════════════════════════════════════════════════════
+     Página de invitación a un equipo. NO lleva app-shell.js: puede
+     abrirla alguien sin cuenta. Tres estados:
+
+       1. Cargando / invitación inválida o vencida.
+       2. Invitación válida SIN sesión → botones para entrar con su
+          cuenta o crear una. El token queda guardado y index.html lo
+          detecta al terminar el login para regresar aquí.
+       3. Invitación válida CON sesión → un solo botón para unirse.
+     ════════════════════════════════════════════════════════════════ */
+  html, body { background: var(--paper); min-height: 100%; }
+  body { overflow-y: auto; }
+
+  .un-wrap { max-width: 520px; margin: 0 auto; padding: 20px 16px 80px; }
+  .un-marca { display: flex; justify-content: center; padding: var(--sp-6) 0 var(--sp-5); }
+  .un-marca img { height: 40px; width: auto; }
+
+  .un-hed {
+    font-family: var(--font-display);
+    font-size: var(--fs-h2);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    line-height: var(--lh-h2);
+    text-align: center;
+    margin-bottom: var(--sp-3);
+  }
+  .un-sub {
+    font-size: var(--fs-sm);
+    color: var(--ink-2);
+    text-align: center;
+    line-height: 1.6;
+    margin-bottom: var(--sp-6);
+  }
+  .un-empresa { font-weight: 700; color: var(--ink); }
+
+  .un-datos {
+    display: flex;
+    gap: var(--sp-3);
+    align-items: flex-start;
+    padding: var(--sp-4);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    background: var(--paper-2);
+    margin-bottom: var(--sp-5);
+  }
+  .un-datos svg { flex: 0 0 auto; margin-top: 2px; }
+  .un-datos p { font-size: var(--fs-sm); color: var(--ink-2); line-height: 1.6; margin: 0; }
+
+  .un-botones { display: flex; flex-direction: column; gap: var(--sp-3); }
+  .un-pie {
+    margin-top: var(--sp-5);
+    font-size: var(--fs-xs);
+    color: var(--ink-3);
+    text-align: center;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+<div class="un-wrap">
+  <div class="un-marca"><img src="logotipo-black.png" alt="Broquer"/></div>
+
+  <!-- Estado: cargando -->
+  <div id="un-cargando">
+    <p class="un-sub">Revisando tu invitación…</p>
+  </div>
+
+  <!-- Estado: inválida o vencida -->
+  <div id="un-invalida" hidden>
+    <h1 class="un-hed">Esta invitación ya no es válida</h1>
+    <p class="un-sub">
+      Puede que haya vencido o que la hayan cancelado. Pide al administrador de la inmobiliaria que te genere una nueva.
+    </p>
+  </div>
+
+  <!-- Estado: válida -->
+  <div id="un-valida" hidden>
+    <h1 class="un-hed">Te invitaron a un equipo</h1>
+    <p class="un-sub">
+      <span class="un-empresa" id="un-empresa"></span> te invita a unirte a su equipo en Broquer
+      con el correo <strong id="un-email"></strong>.
+    </p>
+
+    <div class="un-datos" id="un-datos-si" hidden>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--forest)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+      <p>Entras con tu información: tu inventario, tus contactos y todo lo demás se integran a la empresa para trabajar en conjunto.</p>
+    </div>
+    <div class="un-datos" id="un-datos-no" hidden>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <p>Entras con cuenta limpia. Si ya usas Broquer, tu información actual queda guardada en tu cuenta individual — no se pierde ni se comparte con la empresa.</p>
+    </div>
+
+    <div class="bk-alert bk-alert--danger" id="un-err" hidden style="margin-bottom:var(--sp-4);"></div>
+
+    <!-- Con sesión -->
+    <div class="un-botones" id="un-con-sesion" hidden>
+      <button type="button" class="bk-btn bk-btn--forest" id="un-btn-unirme">Unirme al equipo</button>
+      <button type="button" class="bk-btn bk-btn--ghost" id="un-btn-otra">Entrar con otra cuenta</button>
+    </div>
+
+    <!-- Sin sesión -->
+    <div class="un-botones" id="un-sin-sesion" hidden>
+      <button type="button" class="bk-btn bk-btn--forest" id="un-btn-login">Ya tengo cuenta en Broquer</button>
+      <button type="button" class="bk-btn bk-btn--ghost" id="un-btn-registro">Crear mi cuenta</button>
+    </div>
+
+    <p class="un-pie">La invitación solo funciona con el correo indicado y vence a los 14 días.</p>
+  </div>
+
+  <!-- Estado: listo -->
+  <div id="un-lista" hidden>
+    <h1 class="un-hed">Ya eres parte del equipo</h1>
+    <p class="un-sub">Bienvenido a <span class="un-empresa" id="un-empresa-ok"></span>. Te llevamos a Broquer…</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var API_BASE = 'https://api.broquer.app';
+  var token = new URLSearchParams(window.location.search).get('inv') || '';
+
+  function $(s) { return document.querySelector(s); }
+  function estado(id) {
+    ['#un-cargando', '#un-invalida', '#un-valida', '#un-lista'].forEach(function (s) {
+      $(s).hidden = (s !== id);
+    });
+  }
+  function sesion() {
+    try { return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || ''; } catch (_) { return ''; }
+  }
+
+  async function api(path, opts) {
+    opts = opts || {};
+    var headers = { 'Content-Type': 'application/json' };
+    var t = sesion();
+    if (t) headers['Authorization'] = 'Bearer ' + t;
+    var r = await fetch(API_BASE + path, {
+      method: opts.method || 'GET',
+      headers: headers,
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+    var d = null;
+    try { d = await r.json(); } catch (_) {}
+    if (!r.ok) throw new Error((d && d.detail) || 'Algo salió mal. Intenta de nuevo.');
+    return d || {};
+  }
+
+  function guardarPendiente() {
+    try { localStorage.setItem('inv_pendiente', token); } catch (_) {}
+  }
+  function limpiarPendiente() {
+    try { localStorage.removeItem('inv_pendiente'); } catch (_) {}
+  }
+
+  async function unirme() {
+    var btn = $('#un-btn-unirme');
+    var err = $('#un-err');
+    err.hidden = true;
+    btn.disabled = true;
+    btn.textContent = 'Uniéndote…';
+    try {
+      await api('/org/aceptar-invitacion', { method: 'POST', body: { token: token } });
+      limpiarPendiente();
+      $('#un-empresa-ok').textContent = $('#un-empresa').textContent;
+      estado('#un-lista');
+      setTimeout(function () { window.location.href = 'index.html'; }, 1400);
+    } catch (e) {
+      err.textContent = e.message;
+      err.hidden = false;
+      btn.disabled = false;
+      btn.textContent = 'Unirme al equipo';
+    }
+  }
+
+  async function iniciar() {
+    if (!token) { estado('#un-invalida'); limpiarPendiente(); return; }
+    var d;
+    try { d = await api('/org/invitacion/' + encodeURIComponent(token)); }
+    catch (_) { estado('#un-invalida'); limpiarPendiente(); return; }
+    if (!d.valida) { estado('#un-invalida'); limpiarPendiente(); return; }
+
+    $('#un-empresa').textContent = d.empresa || 'Una inmobiliaria';
+    $('#un-email').textContent = d.email || '';
+    $('#un-datos-si').hidden = !d.traer_datos;
+    $('#un-datos-no').hidden = !!d.traer_datos;
+
+    var conSesion = !!sesion();
+    $('#un-con-sesion').hidden = !conSesion;
+    $('#un-sin-sesion').hidden = conSesion;
+    estado('#un-valida');
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    $('#un-btn-unirme').addEventListener('click', unirme);
+    $('#un-btn-otra').addEventListener('click', function () {
+      guardarPendiente();
+      try {
+        localStorage.removeItem('sb_token'); localStorage.removeItem('sb_refresh');
+        localStorage.removeItem('sb_user'); localStorage.removeItem('sesion_activa');
+        sessionStorage.removeItem('sb_token'); sessionStorage.removeItem('sb_user');
+      } catch (_) {}
+      window.location.href = 'login.html';
+    });
+    $('#un-btn-login').addEventListener('click', function () {
+      guardarPendiente();
+      window.location.href = 'login.html';
+    });
+    $('#un-btn-registro').addEventListener('click', function () {
+      guardarPendiente();
+      window.location.href = 'login.html';
+    });
+    iniciar();
+  });
+})();
+</script>
+</body>
+</html>

@@ -146,6 +146,16 @@
             Entra como parte de tu equipo. Por defecto ve el inventario, pero no los teléfonos de los propietarios ni las comisiones. Tú decides qué información sensible le abres con los interruptores de su tarjeta.
           </div>
         </div>
+        <div class="bk-field">
+          <label class="bk-switch">
+            <input type="checkbox" id="eq-traer-datos"/>
+            <span class="bk-switch__track"></span>
+            <span style="font-size:var(--fs-sm);color:var(--ink);">Puede entrar con su información</span>
+          </label>
+          <div class="bk-hint" style="margin-top:var(--sp-2);">
+            Si esta persona ya usa Broquer, su inventario, contactos y demás información se integran a la empresa al aceptar. Si lo dejas apagado, entra con cuenta limpia y su información queda guardada en su cuenta individual.
+          </div>
+        </div>
         <div class="bk-alert bk-alert--danger" id="eq-modal-err" hidden style="margin-bottom:var(--sp-4);"></div>
         <div class="bk-cluster" style="justify-content:flex-end;">
           <button type="button" class="bk-btn bk-btn--ghost" id="eq-cancelar">Cancelar</button>
@@ -155,7 +165,7 @@
 
       <div id="eq-modal-ok" hidden>
         <p style="font-size:var(--fs-sm);color:var(--ink-2);line-height:1.6;">
-          Listo. Comparte este link con <strong id="eq-ok-mail"></strong> para que se registre.
+          Listo. Comparte este link con <strong id="eq-ok-mail"></strong>. Si ya tiene cuenta en Broquer entra con ella; si no, se registra ahí mismo.
           Vence en 14 días y solo funciona con ese correo.
         </p>
         <div class="eq-link" id="eq-ok-link"></div>
@@ -498,6 +508,7 @@
     $('#eq-modal-ok').hidden = true;
     $('#eq-modal-err').hidden = true;
     $('#eq-email').value = '';
+    $('#eq-traer-datos').checked = false;
     $('#eq-email').focus();
   }
   function cerrarModal() { $('#eq-modal').classList.remove('is-open'); }
@@ -521,7 +532,7 @@
       btn.textContent = 'Creando…';
       try {
         const r = await api('/org/invitar', {
-          method: 'POST', body: { email, rol_org: 'agente' },
+          method: 'POST', body: { email, rol_org: 'agente', traer_datos: $('#eq-traer-datos').checked },
         });
         $('#eq-ok-mail').textContent = r.email;
         $('#eq-ok-link').textContent = r.link;
