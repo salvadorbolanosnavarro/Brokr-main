@@ -20,6 +20,7 @@
           detecta al terminar el login para regresar aquí.
        3. Invitación válida CON sesión → un solo botón para unirse.
      ════════════════════════════════════════════════════════════════ */
+  [hidden] { display: none !important; }
   html, body { background: var(--paper); min-height: 100%; }
   body { overflow-y: auto; }
 
@@ -60,6 +61,19 @@
   .un-datos p { font-size: var(--fs-sm); color: var(--ink-2); line-height: 1.6; margin: 0; }
 
   .un-botones { display: flex; flex-direction: column; gap: var(--sp-3); }
+  .un-liga {
+    background: none;
+    border: 0;
+    padding: var(--sp-2);
+    font-family: inherit;
+    font-size: var(--fs-sm);
+    color: var(--ink-2);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    align-self: center;
+  }
+  .un-liga:hover { color: var(--ink); }
   .un-pie {
     margin-top: var(--sp-5);
     font-size: var(--fs-xs);
@@ -108,13 +122,13 @@
     <!-- Con sesión -->
     <div class="un-botones" id="un-con-sesion" hidden>
       <button type="button" class="bk-btn bk-btn--forest" id="un-btn-unirme">Unirme al equipo</button>
-      <button type="button" class="bk-btn bk-btn--ghost" id="un-btn-otra">Entrar con otra cuenta</button>
+      <button type="button" class="un-liga" id="un-btn-otra">Entrar con otra cuenta</button>
     </div>
 
-    <!-- Sin sesión -->
+    <!-- Sin sesión: login.html detecta el token, muestra la invitación,
+         precarga el correo y elige sola entre entrar o crear cuenta. -->
     <div class="un-botones" id="un-sin-sesion" hidden>
-      <button type="button" class="bk-btn bk-btn--forest" id="un-btn-login">Ya tengo cuenta en Broquer</button>
-      <button type="button" class="bk-btn bk-btn--ghost" id="un-btn-registro">Crear mi cuenta</button>
+      <button type="button" class="bk-btn bk-btn--forest" id="un-btn-login">Continuar</button>
     </div>
 
     <p class="un-pie">La invitación solo funciona con el correo indicado y vence a los 14 días.</p>
@@ -206,6 +220,9 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     $('#un-btn-unirme').addEventListener('click', unirme);
+    // El token viaja en la URL además de localStorage: así login.html sabe
+    // de la invitación aunque el navegador bloquee el almacenamiento.
+    var aLogin = 'login.html?inv=' + encodeURIComponent(token);
     $('#un-btn-otra').addEventListener('click', function () {
       guardarPendiente();
       try {
@@ -213,15 +230,11 @@
         localStorage.removeItem('sb_user'); localStorage.removeItem('sesion_activa');
         sessionStorage.removeItem('sb_token'); sessionStorage.removeItem('sb_user');
       } catch (_) {}
-      window.location.href = 'login.html';
+      window.location.href = aLogin;
     });
     $('#un-btn-login').addEventListener('click', function () {
       guardarPendiente();
-      window.location.href = 'login.html';
-    });
-    $('#un-btn-registro').addEventListener('click', function () {
-      guardarPendiente();
-      window.location.href = 'login.html';
+      window.location.href = aLogin;
     });
     iniciar();
   });

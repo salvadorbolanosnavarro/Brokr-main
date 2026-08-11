@@ -375,6 +375,22 @@ a { color: var(--b2-blue); }
   100% { opacity: 1; transform: translateY(0); }
 }
 
+
+  /* Invitación a un equipo (link con ?inv=) */
+  .bk-inv { display: none; }
+  .bk-inv.is-on {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    background: var(--paper-2);
+    margin-bottom: 16px;
+  }
+  .bk-inv svg { flex: 0 0 auto; margin-top: 2px; }
+  .bk-inv p { margin: 0; font-size: var(--fs-sm); color: var(--ink-2); line-height: 1.6; }
+  .bk-inv strong { color: var(--ink); }
 </style>
 </head>
 <body>
@@ -417,6 +433,12 @@ a { color: var(--b2-blue); }
       </div>
 
       <div class="bk-msg" id="msg"></div>
+
+      <!-- Invitación a un equipo: se muestra cuando el link trae ?inv= -->
+      <div class="bk-inv" id="inv-banner">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--action)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <p><strong id="inv-empresa"></strong> te invitó a su equipo en Broquer. Continúa con el correo <strong id="inv-email"></strong> y al final quedarás dentro con un clic.</p>
+      </div>
 
       <!-- LOGIN -->
       <form id="form-login" onsubmit="event.preventDefault();doLogin()">
@@ -508,6 +530,21 @@ a { color: var(--b2-blue); }
    ════════════════════════════════════════════════ */
 const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
 const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
+
+/* ── Invitación a un equipo ──
+   El token llega en ?inv= (desde unirse.html o desde el correo de
+   confirmación) y sobrevive en localStorage. Con invitación pendiente, todo
+   camino que termine en sesión regresa a unirse.html para aceptarla. */
+let INV_TOKEN = '';
+try {
+  const _q = new URLSearchParams(location.search);
+  const _urlInv = _q.get('inv') || '';
+  if (_urlInv) localStorage.setItem('inv_pendiente', _urlInv);
+  INV_TOKEN = _urlInv || localStorage.getItem('inv_pendiente') || '';
+} catch(_) {}
+function destinoTrasSesion(){
+  return INV_TOKEN ? ('unirse.html?inv=' + encodeURIComponent(INV_TOKEN)) : 'index.html';
+}
 
 // Llamadas a Supabase auth con manejo robusto de errores de red.
 // Siempre devuelve un objeto; nunca lanza. Si la red falla, devuelve
@@ -708,7 +745,11 @@ async function doSignup(){
     }
   } catch(_) { /* si el backend no responde, el flujo normal continúa */ }
 
-  const data = await sbAuth('signup', { email, password: pass });
+  const signupBody = { email, password: pass };
+  if (INV_TOKEN) {
+    signupBody.redirect_to = window.location.origin + '/login.html?inv=' + encodeURIComponent(INV_TOKEN);
+  }
+  const data = await sbAuth('signup', signupBody);
 
   // ── Bug crítico de Supabase: si el correo YA está registrado, el endpoint
   // /auth/v1/signup NO devuelve `error`. Devuelve un objeto con un usuario
@@ -755,7 +796,7 @@ async function doSignup(){
     showMsg('Cuenta creada. Entrando…', 'ok');
     await persistProfile(token, userId, nombreCompleto, telefono);
     // NO rehabilitamos el botón (la página va a recargar).
-    window.location.href = 'index.html';
+    window.location.href = destinoTrasSesion();
     return;
   }
 
@@ -765,7 +806,9 @@ async function doSignup(){
     localStorage.setItem('pending_profile', JSON.stringify({ nombre: nombreCompleto, telefono }));
   } catch(_) {}
   setLoading('btn-signup', false);
-  showMsg('Te enviamos un correo de confirmación a ' + email + '. Al confirmar entrarás directo a Broquer.', 'ok');
+  showMsg(INV_TOKEN
+    ? ('Te enviamos un correo de confirmación a ' + email + '. Al confirmarlo regresarás aquí para unirte al equipo.')
+    : ('Te enviamos un correo de confirmación a ' + email + '. Al confirmar entrarás directo a Broquer.'), 'ok');
 }
 
 async function sha256Base64Url(input){
@@ -902,10 +945,10 @@ async function checkProfileAndRedirect(token, user){
   }
 
   if (res.estado === 'ok') {
-    if (res.tieneNombre) { window.location.href = 'index.html'; return; }
+    if (res.tieneNombre) { window.location.href = destinoTrasSesion(); return; }
     // El servidor confirmó (200) que NO hay nombre: usuario realmente nuevo.
     // Caso típico tras email-confirmation: completamos con los datos del signup.
-    if (await _completarConPending()) { window.location.href = 'index.html'; return; }
+    if (await _completarConPending()) { window.location.href = destinoTrasSesion(); return; }
     // OAuth nuevo o usuario sin pending: registro.html.
     window.location.href = 'registro.html';
     return;
@@ -916,8 +959,8 @@ async function checkProfileAndRedirect(token, user){
   // usuario ya autenticado es casi siempre un usuario existente. Fail-safe:
   // lo dejamos entrar a la app (index.html lee el nombre cuando la base se
   // recupera) en lugar de mandarlo a la pantalla de registro.
-  if (await _completarConPending()) { window.location.href = 'index.html'; return; }
-  window.location.href = 'index.html';
+  if (await _completarConPending()) { window.location.href = destinoTrasSesion(); return; }
+  window.location.href = destinoTrasSesion();
 }
 
 /* Splash */
@@ -1061,7 +1104,9 @@ setTimeout(() => {
 
   // Caso 4: mensaje informativo cuando vuelven de confirmar correo (sin sesión)
   if(!hasOauthInUrl && (urlParams.get('type') === 'signup' || urlParams.get('confirmation') === 'true')){
-    showMsg('Correo confirmado. Ahora inicia sesión con tus datos.', 'ok');
+    showMsg(INV_TOKEN
+      ? 'Correo confirmado. Inicia sesión para unirte al equipo.'
+      : 'Correo confirmado. Ahora inicia sesión con tus datos.', 'ok');
     setTab('login');
     return;
   }
@@ -1106,6 +1151,35 @@ setTimeout(() => {
       return;
     }
   }
+})();
+
+/* Invitación: pintar contexto y guiar al usuario a la pestaña correcta */
+(async () => {
+  if (!INV_TOKEN) return;
+  try {
+    const r = await fetch('https://api.broquer.app/org/invitacion/' + encodeURIComponent(INV_TOKEN));
+    const d = r.ok ? await r.json().catch(() => null) : null;
+    if (!d || !d.valida) {
+      // Vencida o cancelada: se limpia para no arrastrar a nadie a unirse.html.
+      try { localStorage.removeItem('inv_pendiente'); } catch(_) {}
+      INV_TOKEN = '';
+      return;
+    }
+    document.getElementById('inv-empresa').textContent = d.empresa || 'Una inmobiliaria';
+    document.getElementById('inv-email').textContent = d.email || '';
+    document.getElementById('inv-banner').classList.add('is-on');
+    if (d.email) {
+      const le = document.getElementById('l-email');
+      const se = document.getElementById('s-email');
+      if (le && !le.value) le.value = d.email;
+      if (se && !se.value) se.value = d.email;
+      try {
+        const rx = await fetch('https://api.broquer.app/auth/correo-existe?email=' + encodeURIComponent(d.email));
+        const dx = rx.ok ? await rx.json().catch(() => null) : null;
+        if (dx && typeof dx.existe === 'boolean') setTab(dx.existe ? 'login' : 'signup');
+      } catch(_) { /* sin respuesta: se queda la pestaña por defecto */ }
+    }
+  } catch(_) { /* red caída: el flujo normal sigue funcionando */ }
 })();
 
 /* Enter para submit en cualquier campo del form correspondiente */
