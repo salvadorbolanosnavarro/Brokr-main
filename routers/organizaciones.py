@@ -791,6 +791,63 @@ async def convertir_a_empresa(req: ConvertirReq, request: Request):
     return {"ok": True, "org_id": ctx["org_id"], "nombre": payload["nombre"]}
 
 
+class DesconvertirReq(BaseModel):
+    user_id: str
+
+
+@router.post("/admin/org/desconvertir")
+async def quitar_estatus_empresa(req: DesconvertirReq, request: Request):
+    """Regresa la empresa de alguien a cuenta individual. El dueño conserva
+    TODO lo que vive en la org (inventario, contactos); los demás miembros
+    quedan dados de baja y pierden acceso al instante — igual que una baja
+    normal del equipo. Las invitaciones pendientes se cancelan.
+    """
+    await _exigir_staff_broquer(request)
+
+    ctx = await get_org_context(req.user_id)
+    if not ctx:
+        raise HTTPException(status_code=404, detail="Ese usuario no tiene cuenta.")
+    if (ctx.get("org_tipo") or "personal") != "empresa":
+        raise HTTPException(status_code=400, detail="Esa cuenta ya es individual.")
+
+    org = await _sb_get("organizaciones", {
+        "id": f"eq.{ctx['org_id']}", "select": "id,owner_id", "limit": "1",
+    })
+    if not org or org[0].get("owner_id") != req.user_id:
+        raise HTTPException(status_code=400, detail="Ese usuario no es el dueño de la empresa.")
+
+    ahora = datetime.now(timezone.utc).isoformat()
+
+    # Baja de todos los miembros menos el dueño.
+    miembros = await _sb_get("organizacion_miembros", {
+        "org_id": f"eq.{ctx['org_id']}", "activo": "eq.true", "select": "id,user_id",
+    })
+    dados_de_baja = 0
+    for m in miembros:
+        if m.get("user_id") == req.user_id:
+            continue
+        await _sb_patch("organizacion_miembros", {"id": f"eq.{m['id']}"}, {
+            "activo": False, "updated_at": ahora,
+        })
+        dados_de_baja += 1
+
+    # Invitaciones pendientes fuera.
+    await _sb_delete("organizacion_invitaciones", {
+        "org_id": f"eq.{ctx['org_id']}", "aceptada_el": "is.null",
+    })
+
+    # La org regresa a personal. El plan y los asientos se limpian.
+    await _sb_patch("organizaciones", {"id": f"eq.{ctx['org_id']}"}, {
+        "tipo": "personal",
+        "plan": None,
+        "asientos_max": None,
+        "vence_el": None,
+        "updated_at": ahora,
+    })
+
+    return {"ok": True, "org_id": ctx["org_id"], "miembros_dados_de_baja": dados_de_baja}
+
+
 @router.get("/admin/org/lista")
 async def listar_organizaciones(request: Request):
     """Todas las empresas, con su conteo de miembros. Para admin.html."""
