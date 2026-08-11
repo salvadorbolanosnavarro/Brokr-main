@@ -693,7 +693,51 @@ async def convertir_a_empresa(req: ConvertirReq, request: Request):
 
     ctx = await get_org_context(req.user_id)
     if not ctx:
-        raise HTTPException(status_code=404, detail="Ese usuario no tiene cuenta.")
+        # Sin membresía activa. Pasa cuando alguien estuvo en un equipo y fue
+        # dado de baja (su org personal se borró al unirse), o cuando su cuenta
+        # es previa a la migración de organizaciones. Aquí se le aprovisiona
+        # su org sobre la marcha en vez de tronar.
+        perfil = await _sb_get("usuarios", {"id": f"eq.{req.user_id}", "select": "id", "limit": "1"})
+        if not perfil:
+            raise HTTPException(status_code=404, detail="Ese usuario no existe en Broquer.")
+
+        ahora = datetime.now(timezone.utc).isoformat()
+        memb = await _sb_get("organizacion_miembros", {
+            "user_id": f"eq.{req.user_id}", "select": "id,org_id", "limit": "1",
+        })
+
+        org_id = None
+        if memb and memb[0].get("org_id"):
+            # ¿Su membresía (inactiva) apunta a una org que es suya? Reactívala.
+            orows = await _sb_get("organizaciones", {
+                "id": f"eq.{memb[0]['org_id']}", "select": "id,owner_id", "limit": "1",
+            })
+            if orows and orows[0].get("owner_id") == req.user_id:
+                org_id = orows[0]["id"]
+
+        if not org_id:
+            # Org nueva para él. Si su membresía vieja apunta a la empresa de
+            # otro, NO se toca esa empresa: se le crea la suya propia.
+            creada = await _sb_post("organizaciones", {
+                "nombre": (req.nombre or "").strip()[:120] or "Mi inmobiliaria",
+                "tipo": "empresa",
+                "owner_id": req.user_id,
+                "activo": True,
+            })
+            if not creada:
+                raise HTTPException(status_code=500, detail="No se pudo crear la organización.")
+            org_id = creada[0]["id"]
+
+        if memb:
+            await _sb_patch("organizacion_miembros", {"id": f"eq.{memb[0]['id']}"}, {
+                "org_id": org_id, "rol_org": "owner", "activo": True, "updated_at": ahora,
+            })
+        else:
+            await _sb_post("organizacion_miembros", {
+                "org_id": org_id, "user_id": req.user_id, "rol_org": "owner",
+            }, prefer="return=minimal")
+
+        ctx = {"org_id": org_id, "org_nombre": (req.nombre or "").strip()[:120] or None}
 
     payload = {
         "tipo": "empresa",
