@@ -341,6 +341,21 @@
    el token y la manda a iniciar sesión. Al terminar el login siempre se cae
    aquí: la regresamos a unirse.html para que acepte con un clic. */
 (function(){
+  // Enlaces de autenticación de Supabase que caen en la raíz (recuperación de
+  // contraseña, confirmaciones). Se reenvían ANTES de que el app-shell haga su
+  // chequeo de sesión — sin esto, el chequeo redirige a landing.html y el
+  // token se pierde en el camino.
+  try {
+    var q = new URLSearchParams(location.search);
+    var h = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+    var tipo = q.get('type') || h.get('type') || '';
+    var hayToken = q.get('token_hash') || h.get('access_token');
+    var hayError = q.get('error') || h.get('error') || q.get('error_description') || h.get('error_description');
+    if (tipo === 'recovery' || (hayError && !hayToken)) {
+      window.location.replace('reset-password.html' + location.search + location.hash);
+      return;
+    }
+  } catch(_){}
   try {
     var inv = localStorage.getItem('inv_pendiente');
     if (inv) { window.location.replace('unirse.html?inv=' + encodeURIComponent(inv)); }
