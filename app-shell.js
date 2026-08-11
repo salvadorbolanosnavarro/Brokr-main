@@ -1254,6 +1254,16 @@ body[data-app="facebook-ads"]{--page-max:980px}
      (landing.html) para que el visitante conozca Broquer antes de entrar;
      en la app nativa de iOS no existe página comercial, va directo a login. */
   function bkAuthRedirectTarget() {
+    // Si la URL trae parámetros de autenticación de Supabase (enlace de
+    // recuperación de contraseña, confirmación de correo, magic link, PKCE),
+    // NUNCA redirigir a la landing: se perderían el token y el propósito del
+    // enlace. Se conservan search y hash y login.html decide el destino
+    // (recovery → reset-password.html).
+    var qs = location.search || '';
+    var hs = location.hash || '';
+    if (/(?:^|[?&#])(?:token_hash|access_token|code|type|error|error_description)=/.test(qs + hs)) {
+      return 'login.html' + qs + hs;
+    }
     return IS_IOS_NATIVE ? 'login.html' : 'landing.html';
   }
 

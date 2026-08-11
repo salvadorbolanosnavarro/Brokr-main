@@ -851,11 +851,15 @@ button { font-family: inherit; }
   var h = new URLSearchParams((location.hash || '').replace(/^#/, ''));
   var tipo = q.get('type') || h.get('type') || '';
   var hayToken = q.get('token_hash') || h.get('access_token');
+  var hayCode = q.get('code') || h.get('code');
   var hayError = q.get('error') || h.get('error') || q.get('error_description') || h.get('error_description');
-  if (!hayToken && !hayError && tipo !== 'recovery') return;
+  if (!hayToken && !hayCode && !hayError && tipo !== 'recovery') return;
   // Con error o type=recovery (aunque no haya token), reset-password.html
-  // sabe explicar qué pasó; con token de otro tipo, login.html lo procesa.
-  var destino = (tipo === 'recovery' || hayError) ? 'reset-password.html' : 'login.html';
+  // sabe explicar qué pasó. Un token_hash sin type también es recuperación
+  // (Supabase a veces omite el type al recaer en la Site URL). Con ?code= u
+  // otro token, login.html tiene el intercambio PKCE y el enrutador.
+  var esRecovery = tipo === 'recovery' || (q.get('token_hash') && !tipo) || hayError;
+  var destino = esRecovery ? 'reset-password.html' : 'login.html';
   location.replace(destino + location.search + location.hash);
 })();
 </script>

@@ -350,9 +350,18 @@
     var h = new URLSearchParams((location.hash || '').replace(/^#/, ''));
     var tipo = q.get('type') || h.get('type') || '';
     var hayToken = q.get('token_hash') || h.get('access_token');
+    var hayCode = q.get('code') || h.get('code');
     var hayError = q.get('error') || h.get('error') || q.get('error_description') || h.get('error_description');
-    if (tipo === 'recovery' || (hayError && !hayToken)) {
+    if (tipo === 'recovery' || (q.get('token_hash') && !tipo) || (hayError && !hayToken)) {
       window.location.replace('reset-password.html' + location.search + location.hash);
+      return;
+    }
+    // Cualquier otro parámetro de autenticación (confirmación de correo,
+    // magic link, ?code= de PKCE): reenviar a login.html CONSERVANDO la URL.
+    // Sin esto, app-shell detecta "sin sesión", redirige a landing.html y el
+    // token se pierde en el camino — el usuario ve la landing y nada más.
+    if (hayToken || hayCode || hayError || tipo) {
+      window.location.replace('login.html' + location.search + location.hash);
       return;
     }
   } catch(_){}
