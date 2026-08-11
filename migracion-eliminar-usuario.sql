@@ -9,9 +9,9 @@
 --      uuid llamada `user_id` u `owner_id` con su id. El escaneo es
 --      dinámico contra information_schema: las tablas que se creen en
 --      el futuro quedan cubiertas automáticamente, sin mantener listas.
---   3. Sus archivos en Storage (filas de storage.objects cuyo dueño es
---      el usuario o cuya ruta empieza con su id — el patrón de carpetas
---      por user_id que usa todo Broquer).
+--   3. (Los archivos de Storage NO se borran aquí: Supabase lo prohíbe
+--      por SQL. Los borra el backend vía Storage API tras llamar esta
+--      función — ver /admin/user/eliminar en main.py.)
 --   4. Su fila en public.usuarios.
 --   5. Su cuenta en auth.users (con esto el correo puede re-registrarse).
 --
@@ -29,7 +29,7 @@ create or replace function public.admin_eliminar_usuario_total(p_user_id uuid)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, auth, storage
+set search_path = public, auth
 as $$
 declare
   v_email      text;
@@ -107,13 +107,9 @@ begin
   end if;
 
   -- ── 3) Archivos en Storage ──────────────────────────────────────────
-  delete from storage.objects
-   where owner = p_user_id
-      or name like p_user_id::text || '/%';
-  get diagnostics v_filas = row_count;
-  if v_filas > 0 then
-    v_resumen := v_resumen || jsonb_build_object('storage (archivos)', v_filas);
-  end if;
+  -- Supabase prohíbe borrar storage.objects con SQL directo (error 42501:
+  -- "Use the Storage API instead"). Los archivos los borra el backend vía
+  -- Storage API justo después de llamar esta función. Aquí no se toca nada.
 
   -- ── 4) Perfil ───────────────────────────────────────────────────────
   delete from public.usuarios where id = p_user_id;
