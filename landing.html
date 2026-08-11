@@ -841,6 +841,22 @@ button { font-family: inherit; }
 </footer>
 
 <script>
+/* ── Blindaje de enlaces de autenticación ──
+   Si un enlace de recuperación de contraseña (o cualquier token de Supabase)
+   cae aquí porque la Site URL apunta a la landing, se reenvía de inmediato a
+   la página correcta con el token intacto. Sin esto, el usuario ve la landing
+   y el enlace "no sirve". */
+(function () {
+  var q = new URLSearchParams(location.search);
+  var h = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+  var tipo = q.get('type') || h.get('type') || '';
+  var hayToken = q.get('token_hash') || h.get('access_token');
+  if (!hayToken) return;
+  var destino = (tipo === 'recovery') ? 'reset-password.html' : 'login.html';
+  location.replace(destino + location.search + location.hash);
+})();
+</script>
+<script>
 /* Cuadrícula de Instagram: si el backend no responde, la sección
    simplemente no aparece. */
 (function () {
