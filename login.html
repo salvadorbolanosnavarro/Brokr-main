@@ -513,8 +513,15 @@ const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
 // Siempre devuelve un objeto; nunca lanza. Si la red falla, devuelve
 // { error: 'network', error_description: 'No hay conexión...' }.
 async function sbAuth(path, body){
+  // OJO: Supabase espera redirect_to como parámetro de la URL, NO en el
+  // cuerpo JSON — en el cuerpo lo ignora sin avisar. Por eso los correos de
+  // recuperación llegaban sin destino y el enlace caía en la Site URL.
+  let url = `${SB_URL}/auth/v1/${path}`;
+  if (body && body.redirect_to) {
+    url += (url.includes('?') ? '&' : '?') + 'redirect_to=' + encodeURIComponent(body.redirect_to);
+  }
   try {
-    const r = await fetch(`${SB_URL}/auth/v1/${path}`, {
+    const r = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY },
       body: JSON.stringify(body)
@@ -685,6 +692,22 @@ async function doSignup(){
   if(!legal){ showMsg('Debes aceptar los Términos y el Aviso de Privacidad para continuar.'); return; }
 
   setLoading('btn-signup', true);
+
+  // ¿El correo ya tiene cuenta? Se pregunta al backend ANTES de intentar el
+  // alta, para dar un mensaje claro en lugar del ambiguo "revisa tu correo".
+  try {
+    const rx = await fetch('https://api.broquer.app/auth/correo-existe?email=' + encodeURIComponent(email));
+    const dx = rx.ok ? await rx.json() : null;
+    if (dx && dx.existe) {
+      setLoading('btn-signup', false);
+      showMsg('Este correo electrónico ya está asociado a una cuenta activa.');
+      setTab('login');
+      const lEmail = document.getElementById('l-email');
+      if(lEmail) lEmail.value = email;
+      return;
+    }
+  } catch(_) { /* si el backend no responde, el flujo normal continúa */ }
+
   const data = await sbAuth('signup', { email, password: pass });
 
   // ── Bug crítico de Supabase: si el correo YA está registrado, el endpoint
@@ -694,7 +717,7 @@ async function doSignup(){
   const idts = data && data.user && Array.isArray(data.user.identities) ? data.user.identities : null;
   if (data && data.user && idts !== null && idts.length === 0){
     setLoading('btn-signup', false);
-    showMsg('Ya existe una cuenta con ese correo. Inicia sesión o usa "¿Olvidaste tu contraseña?".');
+    showMsg('Este correo electrónico ya está asociado a una cuenta activa.');
     // Mover al tab de login y pre-llenar el correo para acelerar el flujo
     setTab('login');
     const lEmail = document.getElementById('l-email');
