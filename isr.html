@@ -1376,6 +1376,10 @@ function renderResult(d) {
   if(g('res-bkdn'))g('res-bkdn').innerHTML=bd;
 
   const comp=[];
+  const adqDesdeAbr2014 = d.anioC>2014 || (d.anioC===2014 && d.mesC>=4);
+  comp.push(adqDesdeAbr2014
+    ? 'CFDI de la adquisición emitido por el notario en la compra (obligatorio para operaciones desde el 1 de abril de 2014 — la escritura sola no basta como comprobante fiscal del costo)'
+    : 'Escritura de adquisición (al ser anterior al 1 de abril de 2014, la escritura sí funge como comprobante del costo — regla 2.7.1.22 RMF)');
   if(d.mej)comp.push('Facturas / CFDI de mejoras y ampliaciones');
   if(d.com)comp.push('CFDI de comisión del agente inmobiliario');
   if(d.esc)comp.push('Comprobante de gastos de escrituración');
@@ -1410,6 +1414,13 @@ function renderResult(d) {
       {
         title: 'Inmueble comprado con CRÉDITO (INFONAVIT, FOVISSSTE, banco)',
         body: 'El costo de adquisición es el <strong>valor total escriturado</strong> (precio del inmueble), <em>no</em> solo el enganche o lo desembolsado. El crédito ya está pagado por escritura.'
+      },
+      {
+        warn: adqDesdeAbr2014,
+        title: 'El costo de adquisición se comprueba con CFDI, no con la escritura',
+        body: adqDesdeAbr2014
+          ? 'Como la adquisición fue <strong>a partir del 1 de abril de 2014</strong>, el comprobante fiscal del costo es el <strong>CFDI que emitió el notario cuando el vendedor compró</strong> (complemento de notarios públicos). Si el cliente no lo tiene, pídelo al notario de aquella operación o recupéralo del SAT con su RFC — sin ese CFDI el notario de la venta puede rechazar la deducción del costo completo. También avisa al comprador de HOY: el CFDI de esta escrituración será su comprobante de costo cuando revenda — que lo guarde.'
+          : 'Como la adquisición fue <strong>antes del 1 de abril de 2014</strong>, la escritura sí funge como comprobante del costo (regla 2.7.1.22 RMF). Pero avisa al comprador de HOY: desde 2014 el notario emite <strong>CFDI de la operación</strong> y ese será su comprobante de costo cuando revenda — que lo guarde junto con la escritura.'
       },
       {
         title: 'Mejoras y comisión SIN CFDI',
