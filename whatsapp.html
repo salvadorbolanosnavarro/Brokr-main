@@ -229,6 +229,51 @@
   .w2-form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-5); }
   @media (max-width:820px){ .w2-form-grid{ grid-template-columns:1fr; } }
   .w2-tags{ display:flex; flex-wrap:wrap; gap:var(--sp-2); margin-top:var(--sp-2); }
+
+  /* ── Modos de encendido de la IA (tarjetas-radio) ─────────── */
+  .w2-modos{ display:grid; grid-template-columns:repeat(3, 1fr); gap:var(--sp-3); margin-top:var(--sp-2); }
+  @media (max-width:820px){ .w2-modos{ grid-template-columns:1fr; } }
+  .w2-modo{ position:relative; border:1px solid var(--line); border-radius:var(--r);
+            background:var(--bone); padding:16px; cursor:pointer; display:block;
+            transition:border-color .15s, box-shadow .15s; }
+  .w2-modo input{ position:absolute; opacity:0; pointer-events:none; }
+  .w2-modo:hover{ border-color:var(--sky-blue); }
+  .w2-modo.is-on{ border-color:var(--sky-blue); box-shadow:var(--focus); background:var(--canvas); }
+  .w2-modo__titulo{ font-weight:700; font-size:var(--fs-body); color:var(--ink);
+                    display:flex; align-items:center; gap:8px; }
+  .w2-modo__punto{ width:10px; height:10px; border-radius:50%; border:2px solid var(--mute-2); flex:none; }
+  .w2-modo.is-on .w2-modo__punto{ border-color:var(--sky-blue); background:var(--sky-blue); }
+  .w2-modo__desc{ font-size:var(--fs-sm); color:var(--mute); margin-top:6px; line-height:var(--lh); }
+
+  /* ── IA por chat: control de tres estados ─────────────────── */
+  .w2-seg{ display:inline-flex; background:var(--shell); border:1px solid var(--line);
+           border-radius:var(--r-pill); padding:3px; gap:2px; flex:none; }
+  .w2-seg button{ border:0; background:none; cursor:pointer; font-family:inherit;
+                  font-size:var(--fs-xs); font-weight:700; color:var(--mute);
+                  padding:5px 12px; border-radius:var(--r-pill); white-space:nowrap; }
+  .w2-seg button.is-on{ background:var(--canvas); color:var(--ink); box-shadow:var(--shadow-xs); }
+  .w2-seg button[data-modo="on"].is-on{ background:var(--sky-blue); color:#fff; }
+  .w2-seg button[data-modo="off"].is-on{ background:var(--sky-navy); color:#fff; }
+  .w2-ia-estado{ font-size:var(--fs-caption); color:var(--mute); }
+  .w2-ia-estado.is-on{ color:var(--success); font-weight:700; }
+
+  /* ── Constructor de flujos por pasos ──────────────────────── */
+  .w2-fp{ border:1px solid var(--line); border-radius:var(--r); background:var(--bone);
+          padding:14px 16px; margin-bottom:var(--sp-2); }
+  .w2-fp__head{ display:flex; align-items:center; gap:var(--sp-2); }
+  .w2-fp__num{ width:26px; height:26px; border-radius:50%; background:var(--sky-blue); color:#fff;
+               font-size:var(--fs-xs); font-weight:700; display:flex; align-items:center;
+               justify-content:center; flex:none; }
+  .w2-fp__head select{ flex:1; min-width:0; }
+  .w2-fp__mini{ width:32px; height:32px; border:1px solid var(--line); border-radius:var(--r-sm);
+                background:var(--canvas); color:var(--mute); cursor:pointer; font-family:inherit;
+                font-size:var(--fs-sm); display:flex; align-items:center; justify-content:center; flex:none; }
+  .w2-fp__mini:hover{ color:var(--ink); border-color:var(--sky-blue); }
+  .w2-fp__cuerpo{ margin-top:var(--sp-2); display:flex; flex-direction:column; gap:var(--sp-2); }
+  .w2-fp__op{ display:flex; align-items:center; gap:var(--sp-2); }
+  .w2-fp__op input{ flex:1; min-width:0; }
+  .w2-fp__op select{ max-width:220px; }
+  .w2-fp__hint{ font-size:var(--fs-caption); color:var(--mute); }
 </style>
 </head>
 <body data-app="whatsapp">
@@ -254,10 +299,10 @@
 
   <div class="w2-tabs">
     <button class="w2-tab is-active" data-tab="chats" onclick="w2IrATab('chats')">Chats</button>
+    <button class="w2-tab" data-tab="entrenamiento" onclick="w2IrATab('entrenamiento')">Recepción IA</button>
+    <button class="w2-tab" data-tab="automatizaciones" onclick="w2IrATab('automatizaciones')">Flujos</button>
     <button class="w2-tab" data-tab="campanas" onclick="w2IrATab('campanas')">Campañas</button>
-    <button class="w2-tab" data-tab="automatizaciones" onclick="w2IrATab('automatizaciones')">Automatizaciones</button>
     <button class="w2-tab" data-tab="plantillas" onclick="w2IrATab('plantillas')">Plantillas</button>
-    <button class="w2-tab" data-tab="entrenamiento" onclick="w2IrATab('entrenamiento')">Entrenamiento</button>
     <label class="w2-avanzado bk-switch" title="Muestra las opciones técnicas del módulo" hidden>
       <input type="checkbox" id="w2-avanzado-check" onchange="w2ToggleAvanzado(this.checked)"/>
       <span class="bk-switch__track"></span> Modo avanzado
@@ -328,21 +373,24 @@
     <div id="w2-cp-historial" style="display:flex;flex-direction:column;gap:var(--sp-2);margin-top:var(--sp-3);"></div>
   </div>
 
-  <!-- ═══ AUTOMATIZACIONES ═══ -->
+  <!-- ═══ FLUJOS (constructor por pasos) ═══ -->
   <div id="w2-view-automatizaciones" hidden>
-    <div class="bk-section-header"><h2>Automatizaciones</h2></div>
+    <div class="bk-section-header"><h2>Flujos</h2></div>
     <div class="bk-alert bk-alert--info" style="margin-bottom:var(--sp-4);">
-      Una automatización es una receta: cuando pasa algo (llega cierta palabra, o escribe alguien nuevo),
-      Broquer hace los pasos que tú definas al instante. Si la receta responde por ti o te pasa el chat,
-      la IA ya no contesta encima.
+      Un flujo hace exactamente los pasos que tú dibujes, en orden, sin improvisar nada — por eso nunca se equivoca.
+      Puede mandar mensajes, hacer preguntas y guardar las respuestas, mostrar menús de opciones, etiquetar,
+      y al final entregarte la conversación a ti o dejársela a la IA.
     </div>
 
     <div class="bk-card bk-card--pad" style="margin-bottom:var(--sp-5);">
-      <span class="bk-eyebrow">Nueva automatización</span>
+      <div class="bk-cluster" style="justify-content:space-between;">
+        <span class="bk-eyebrow" id="w2-au-titulo">Nuevo flujo</span>
+        <button class="bk-btn bk-btn--ghost bk-btn--sm" id="w2-au-cancelar" hidden onclick="w2AuCancelarEdicion()">Cancelar edición</button>
+      </div>
       <div class="w2-form-grid" style="margin-top:var(--sp-3);">
         <div class="bk-field">
           <label class="bk-label" for="w2-au-nombre">Nombre (solo lo ves tú)</label>
-          <input class="bk-input" id="w2-au-nombre" placeholder="Ej. Responder precio al instante"/>
+          <input class="bk-input" id="w2-au-nombre" placeholder="Ej. Bienvenida y calificación"/>
         </div>
         <div class="bk-field">
           <label class="bk-label" for="w2-au-numero">Aplica en</label>
@@ -354,23 +402,27 @@
           <label class="bk-label" for="w2-au-disparador">Cuando pasa esto</label>
           <select class="bk-select" id="w2-au-disparador" onchange="w2AuCambioDisparador()">
             <option value="palabra">El mensaje contiene una palabra</option>
-            <option value="nuevo">Escribe alguien nuevo por primera vez</option>
+            <option value="nuevo">Escribe alguien por primera vez</option>
+            <option value="nuevo_3m">Escribe un cliente nuevo (primera vez, o más de 3 meses sin escribir)</option>
           </select>
         </div>
         <div class="bk-field" id="w2-au-palabras-wrap">
-          <label class="bk-label" for="w2-au-palabras">Palabras que la disparan (separadas por coma)</label>
+          <label class="bk-label" for="w2-au-palabras">Palabras que lo disparan (separadas por coma)</label>
           <input class="bk-input" id="w2-au-palabras" placeholder="Ej. precio, cuánto cuesta, costo"/>
         </div>
       </div>
       <div class="bk-field">
         <label class="bk-label">Pasos que hace, en orden</label>
         <div id="w2-au-pasos"></div>
-        <button class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2AuAgregarPaso()">+ Agregar paso</button>
+        <div class="bk-cluster">
+          <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2FlujoAgregarPaso()">+ Agregar paso</button>
+          <span class="w2-fp__hint">Hasta 12 pasos. Las preguntas y los menús esperan la respuesta del prospecto antes de seguir.</span>
+        </div>
       </div>
-      <button class="bk-btn bk-btn--forest" onclick="w2AuGuardar()">Guardar automatización</button>
+      <button class="bk-btn bk-btn--forest" id="w2-au-guardar-btn" onclick="w2AuGuardar()">Guardar flujo</button>
     </div>
 
-    <span class="bk-eyebrow">Tus automatizaciones</span>
+    <span class="bk-eyebrow">Tus flujos</span>
     <div id="w2-au-lista" style="display:flex;flex-direction:column;gap:var(--sp-2);margin-top:var(--sp-3);"></div>
   </div>
 
@@ -427,75 +479,98 @@
     <div class="bk-hint" id="w2-pl-crear-aviso">Crear plantillas nuevas es parte del modo avanzado — actívalo arriba a la derecha si necesitas una.</div>
   </div>
 
-  <!-- ═══ ENTRENAMIENTO ═══ -->
+  <!-- ═══ RECEPCIÓN IA (entrenamiento + modos de encendido) ═══ -->
   <div id="w2-view-entrenamiento" hidden>
-    <div class="bk-section-header"><h2>Cómo habla tu IA en este número</h2></div>
+    <div class="bk-section-header"><h2>Tu recepcionista con IA</h2></div>
     <div class="bk-field" style="max-width:340px;">
-      <label class="bk-label" for="w2-t-numero-selector">Número a entrenar</label>
+      <label class="bk-label" for="w2-t-numero-selector">Número a configurar</label>
       <select class="bk-select" id="w2-t-numero-selector" onchange="w2CambiarNumeroEntrenamiento(this.value)">
         <option value="">Plantilla para números nuevos</option>
       </select>
     </div>
     <div class="bk-alert bk-alert--info" id="w2-t-contexto" style="margin-bottom:var(--sp-4);"></div>
+
     <form class="bk-card bk-card--pad bk-card--raise" onsubmit="event.preventDefault(); w2GuardarEntrenamiento();">
-      <div class="w2-form-grid">
-        <div>
-          <div class="bk-field">
-            <label class="bk-label" for="w2-t-nombre">Nombre con el que se presenta</label>
-            <input class="bk-input" id="w2-t-nombre" placeholder="Ej. Recepción"/>
-          </div>
-          <div class="bk-field">
-            <label class="bk-label" for="w2-t-identidad">Quién es (identidad)</label>
-            <textarea class="bk-textarea" id="w2-t-identidad" rows="3" placeholder="Ej. Eres 'Sofía', el asistente de WhatsApp de Chava, asesor inmobiliario en Morelia."></textarea>
-          </div>
-          <div class="bk-field">
-            <label class="bk-label" for="w2-t-tono">Tono</label>
-            <input class="bk-input" id="w2-t-tono" placeholder="Ej. cálido, directo, sin tecnicismos"/>
-          </div>
-          <div class="bk-field">
-            <label class="bk-label" for="w2-t-objetivo">Objetivo principal</label>
-            <input class="bk-input" id="w2-t-objetivo" placeholder="Ej. calificar y agendar una visita"/>
-          </div>
-          <div class="bk-field">
-            <label class="bk-label" for="w2-t-especialidad">Especialidad / zona</label>
-            <input class="bk-input" id="w2-t-especialidad" placeholder="Ej. casas en Morelia centro"/>
-          </div>
-          <div class="bk-field" style="grid-column:1/-1;">
-            <label class="bk-label">Información de tu negocio</label>
-            <textarea class="bk-textarea" id="w2-t-conocimiento" rows="8"
-              placeholder="Todo lo que tu asistente no puede adivinar de tus inmuebles. Escríbelo con tus palabras, como se lo explicarías a alguien nuevo en tu oficina.&#10;&#10;Ej.&#10;Aceptamos Infonavit, Fovissste y crédito bancario.&#10;La comisión es del 5% más IVA y la paga quien vende.&#10;Para apartar se piden 20 mil pesos, reembolsables 15 días.&#10;La oficina está en Av. Camelinas 1234, atendemos de 9 a 7."></textarea>
-            <div class="bk-hint">Lo que escribas aquí es la verdad para tu asistente. Si le preguntan algo que no esté, no lo va a inventar: dirá que lo confirma contigo.</div>
-          </div>
-        </div>
-        <div>
-          <div class="bk-field">
-            <label class="bk-label" for="w2-t-puede">Puede</label>
-            <textarea class="bk-textarea" id="w2-t-puede" rows="2"></textarea>
-          </div>
-          <div class="bk-field">
-            <label class="bk-label" for="w2-t-debe">Debe</label>
-            <textarea class="bk-textarea" id="w2-t-debe" rows="2"></textarea>
-          </div>
-          <div class="bk-field">
-            <label class="bk-label" for="w2-t-nodebe">Nunca</label>
-            <textarea class="bk-textarea" id="w2-t-nodebe" rows="2"></textarea>
-          </div>
-          <div class="bk-field">
-            <label class="bk-label" for="w2-t-datos">Qué debe calificar (separado por comas)</label>
-            <input class="bk-input" id="w2-t-datos" placeholder="presupuesto, forma de pago, para cuándo busca"/>
-          </div>
-          <div class="bk-field">
-            <label class="bk-label" for="w2-t-preguntas">Preguntas extra (separadas por comas)</label>
-            <input class="bk-input" id="w2-t-preguntas" placeholder="¿Ya vendiste tu propiedad actual?"/>
-          </div>
-          <div class="bk-field">
-            <label class="bk-label" for="w2-t-escalar">Palabras que lo pasan contigo (separadas por comas)</label>
-            <input class="bk-input" id="w2-t-escalar" placeholder="hablar con alguien, urgente"/>
-          </div>
-        </div>
+
+      <!-- ── Encendido: cuándo contesta la IA ─────────────────────── -->
+      <span class="bk-eyebrow">Cuándo contesta la IA</span>
+      <div class="bk-field" style="margin-top:var(--sp-3);">
+        <label class="bk-switch"><input type="checkbox" id="w2-t-activo" checked/><span class="bk-switch__track"></span> IA activa en este número</label>
+        <div class="bk-hint">Con esto apagado, la IA no contesta nada de este número, sin importar lo demás.</div>
+      </div>
+      <div class="w2-modos" id="w2-t-modos">
+        <label class="w2-modo" data-modo="siempre_encendida" onclick="w2SetModoGlobal('siempre_encendida')">
+          <input type="radio" name="w2-t-modo" value="siempre_encendida"/>
+          <div class="w2-modo__titulo"><span class="w2-modo__punto"></span> Encendida por default</div>
+          <div class="w2-modo__desc">La IA contesta todos los chats. Tú puedes apagarla en los que quieras, uno por uno.</div>
+        </label>
+        <label class="w2-modo" data-modo="siempre_apagada" onclick="w2SetModoGlobal('siempre_apagada')">
+          <input type="radio" name="w2-t-modo" value="siempre_apagada"/>
+          <div class="w2-modo__titulo"><span class="w2-modo__punto"></span> Apagada por default</div>
+          <div class="w2-modo__desc">La IA no contesta nada. Tú la enciendes en los chats que quieras, uno por uno.</div>
+        </label>
+        <label class="w2-modo" data-modo="solo_nuevos" onclick="w2SetModoGlobal('solo_nuevos')">
+          <input type="radio" name="w2-t-modo" value="solo_nuevos"/>
+          <div class="w2-modo__titulo"><span class="w2-modo__punto"></span> Solo clientes nuevos</div>
+          <div class="w2-modo__desc">Contesta únicamente a números que nunca te han escrito, o que llevan tiempo sin hacerlo.</div>
+        </label>
+      </div>
+      <div class="bk-field" id="w2-t-nuevos-wrap" style="max-width:420px; margin-top:var(--sp-3);" hidden>
+        <label class="bk-label" for="w2-t-nuevos-meses">¿Cuánto tiempo sin escribirte cuenta como cliente nuevo?</label>
+        <select class="bk-select" id="w2-t-nuevos-meses">
+          <option value="1">Más de 1 mes</option>
+          <option value="2">Más de 2 meses</option>
+          <option value="3" selected>Más de 3 meses</option>
+          <option value="6">Más de 6 meses</option>
+          <option value="12">Más de 12 meses</option>
+        </select>
       </div>
 
       <div class="bk-divider"></div>
+
+      <!-- ── Cuando tú respondes a mano ───────────────────────────── -->
+      <span class="bk-eyebrow">Cuando tú respondes a mano</span>
+      <div class="bk-field" style="margin-top:var(--sp-3);">
+        <label class="bk-switch"><input type="checkbox" id="w2-t-pausa" checked onchange="w2PausaCambio()"/><span class="bk-switch__track"></span> Pausar la IA en un chat en cuanto yo respondo</label>
+        <div class="bk-hint">Cuenta igual si respondes desde Broquer o desde el WhatsApp de tu celular. Así nunca contestan dos "personas" en el mismo chat.</div>
+      </div>
+      <div class="bk-field" id="w2-t-pausa-dur-wrap" style="max-width:420px;">
+        <label class="bk-label" for="w2-t-pausa-dur">¿Por cuánto tiempo se pausa?</label>
+        <select class="bk-select" id="w2-t-pausa-dur">
+          <option value="0" selected>Para siempre — hasta que yo la vuelva a encender en ese chat</option>
+          <option value="30">30 minutos</option>
+          <option value="60">1 hora</option>
+          <option value="480">8 horas</option>
+          <option value="1440">24 horas</option>
+        </select>
+      </div>
+
+      <div class="bk-divider"></div>
+
+      <!-- ── Lo básico del asistente ──────────────────────────────── -->
+      <span class="bk-eyebrow">Tu asistente</span>
+      <div class="w2-form-grid" style="margin-top:var(--sp-3);">
+        <div class="bk-field">
+          <label class="bk-label" for="w2-t-nombre">Nombre con el que se presenta</label>
+          <input class="bk-input" id="w2-t-nombre" placeholder="Ej. Recepción"/>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="w2-t-zona">Zona horaria (de dónde atiendes)</label>
+          <select class="bk-select" id="w2-t-zona">
+            <option value="America/Mexico_City">Centro — CDMX, Morelia, Guadalajara (UTC-6)</option>
+            <option value="America/Cancun">Sureste — Cancún, Quintana Roo (UTC-5)</option>
+            <option value="America/Chihuahua">Pacífico — Chihuahua, Mazatlán (UTC-6/-7)</option>
+            <option value="America/Hermosillo">Pacífico — Sonora (UTC-7, sin horario de verano)</option>
+            <option value="America/Tijuana">Noroeste — Baja California (UTC-7/-8)</option>
+          </select>
+        </div>
+      </div>
+      <div class="bk-field">
+        <label class="bk-label">Información de tu negocio</label>
+        <textarea class="bk-textarea" id="w2-t-conocimiento" rows="8"
+          placeholder="Todo lo que tu asistente no puede adivinar de tus inmuebles. Escríbelo con tus palabras, como se lo explicarías a alguien nuevo en tu oficina.&#10;&#10;Ej.&#10;Aceptamos Infonavit, Fovissste y crédito bancario.&#10;La comisión es del 5% más IVA y la paga quien vende.&#10;Para apartar se piden 20 mil pesos, reembolsables 15 días.&#10;La oficina está en Av. Camelinas 1234, atendemos de 9 a 7."></textarea>
+        <div class="bk-hint">Lo que escribas aquí es la verdad para tu asistente. Si le preguntan algo que no esté, no lo va a inventar: dirá que lo confirma contigo.</div>
+      </div>
       <div class="bk-field-row">
         <div class="bk-field">
           <label class="bk-switch"><input type="checkbox" id="w2-t-horario"/><span class="bk-switch__track"></span> Solo responder en horario</label>
@@ -507,48 +582,91 @@
         <div class="bk-field"><label class="bk-label">Hora fin</label><input class="bk-input" type="time" id="w2-t-hf"/></div>
       </div>
       <div class="bk-field">
-        <label class="bk-label" for="w2-t-zona">Zona horaria (de dónde atiendes)</label>
-        <select class="bk-select" id="w2-t-zona">
-          <option value="America/Mexico_City">Centro — CDMX, Morelia, Guadalajara (UTC-6)</option>
-          <option value="America/Cancun">Sureste — Cancún, Quintana Roo (UTC-5)</option>
-          <option value="America/Chihuahua">Pacífico — Chihuahua, Mazatlán (UTC-6/-7)</option>
-          <option value="America/Hermosillo">Pacífico — Sonora (UTC-7, sin horario de verano)</option>
-          <option value="America/Tijuana">Noroeste — Baja California (UTC-7/-8)</option>
-        </select>
-        <div class="bk-hint">De esto depende que las citas y el horario de atención caigan a la hora correcta.</div>
-      </div>
-      <div class="bk-field">
         <label class="bk-label" for="w2-t-fuera">Mensaje fuera de horario</label>
         <input class="bk-input" id="w2-t-fuera" placeholder="Gracias por tu mensaje, en cuanto abramos te contesto."/>
       </div>
-      <div class="bk-field">
-        <label class="bk-label" for="w2-t-max">Máximo de mensajes seguidos de la IA antes de pasarlo a ti (0 = sin límite)</label>
-        <input class="bk-input" type="number" min="0" id="w2-t-max" style="max-width:160px;"/>
+
+      <div class="bk-divider"></div>
+
+      <!-- ── Configuración avanzada (entrenamiento exhaustivo) ────── -->
+      <div class="bk-cluster" style="justify-content:space-between;">
+        <span class="bk-eyebrow">Configuración avanzada</span>
+        <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" id="w2-t-avanzado-btn" onclick="w2ToggleEntrenAvanzado()">Mostrar</button>
       </div>
-      <div class="bk-field">
-        <label class="bk-switch"><input type="checkbox" id="w2-t-activo" checked/><span class="bk-switch__track"></span> IA activa en este número</label>
+      <div id="w2-t-avanzado" hidden>
+        <div class="bk-hint" style="margin:var(--sp-2) 0 var(--sp-3);">Aquí afinas la personalidad, las reglas y la calificación. Si no tocas nada, la IA usa una configuración probada que funciona bien.</div>
+        <div class="w2-form-grid">
+          <div>
+            <div class="bk-field">
+              <label class="bk-label" for="w2-t-identidad">Quién es (identidad)</label>
+              <textarea class="bk-textarea" id="w2-t-identidad" rows="3" placeholder="Ej. Eres 'Sofía', el asistente de WhatsApp de Chava, asesor inmobiliario en Morelia."></textarea>
+            </div>
+            <div class="bk-field">
+              <label class="bk-label" for="w2-t-tono">Tono</label>
+              <input class="bk-input" id="w2-t-tono" placeholder="Ej. cálido, directo, sin tecnicismos"/>
+            </div>
+            <div class="bk-field">
+              <label class="bk-label" for="w2-t-objetivo">Objetivo principal</label>
+              <input class="bk-input" id="w2-t-objetivo" placeholder="Ej. calificar y agendar una visita"/>
+            </div>
+            <div class="bk-field">
+              <label class="bk-label" for="w2-t-especialidad">Especialidad / zona</label>
+              <input class="bk-input" id="w2-t-especialidad" placeholder="Ej. casas en Morelia centro"/>
+            </div>
+            <div class="bk-field">
+              <label class="bk-label" for="w2-t-max">Máximo de mensajes seguidos de la IA antes de pasarlo a ti (0 = sin límite)</label>
+              <input class="bk-input" type="number" min="0" id="w2-t-max" style="max-width:160px;"/>
+            </div>
+          </div>
+          <div>
+            <div class="bk-field">
+              <label class="bk-label" for="w2-t-puede">Puede</label>
+              <textarea class="bk-textarea" id="w2-t-puede" rows="2"></textarea>
+            </div>
+            <div class="bk-field">
+              <label class="bk-label" for="w2-t-debe">Debe</label>
+              <textarea class="bk-textarea" id="w2-t-debe" rows="2"></textarea>
+            </div>
+            <div class="bk-field">
+              <label class="bk-label" for="w2-t-nodebe">Nunca</label>
+              <textarea class="bk-textarea" id="w2-t-nodebe" rows="2"></textarea>
+            </div>
+            <div class="bk-field">
+              <label class="bk-label" for="w2-t-datos">Qué debe calificar (separado por comas)</label>
+              <input class="bk-input" id="w2-t-datos" placeholder="presupuesto, forma de pago, para cuándo busca"/>
+            </div>
+            <div class="bk-field">
+              <label class="bk-label" for="w2-t-preguntas">Preguntas extra (separadas por comas)</label>
+              <input class="bk-input" id="w2-t-preguntas" placeholder="¿Ya vendiste tu propiedad actual?"/>
+            </div>
+            <div class="bk-field">
+              <label class="bk-label" for="w2-t-escalar">Palabras que lo pasan contigo (separadas por comas)</label>
+              <input class="bk-input" id="w2-t-escalar" placeholder="hablar con alguien, urgente"/>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="bk-cluster" style="justify-content:flex-end;">
-        <button type="submit" class="bk-btn bk-btn--forest">Guardar entrenamiento</button>
+      <div class="bk-cluster" style="justify-content:flex-end; margin-top:var(--sp-4);">
+        <button type="submit" class="bk-btn bk-btn--forest">Guardar configuración</button>
       </div>
     </form>
-  </div>
 
-  <div class="bk-card bk-card--pad" style="margin-top:var(--sp-5);">
-    <div class="bk-card__head">
-      <div>
-        <h2 class="bk-card__title">Probar tu asistente</h2>
-        <div class="bk-hint">Escríbele como si fueras un prospecto. Usa tu entrenamiento y tu catálogo reales, pero no le manda WhatsApp a nadie ni guarda nada.</div>
+    <div class="bk-card bk-card--pad" style="margin-top:var(--sp-5);">
+      <div class="bk-card__head">
+        <div>
+          <h2 class="bk-card__title">Probar tu asistente</h2>
+          <div class="bk-hint">Escríbele como si fueras un prospecto. Usa tu entrenamiento y tu catálogo reales, pero no le manda WhatsApp a nadie ni guarda nada. Pruébalo hasta quedar conforme antes de encenderlo.</div>
+        </div>
+        <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2ReiniciarPrueba()">Empezar de nuevo</button>
       </div>
-      <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2ReiniciarPrueba()">Empezar de nuevo</button>
-    </div>
-    <div class="w2-prueba" id="w2-prueba-hilo"></div>
-    <div class="bk-cluster" style="margin-top:var(--sp-3);">
-      <input class="bk-input" id="w2-prueba-texto" style="flex:1;"
-             placeholder="Ej. Hola, vi una casa en Altozano, ¿me pasas precio?"
-             onkeydown="if(event.key==='Enter'){event.preventDefault();w2EnviarPrueba();}"/>
-      <button type="button" class="bk-btn bk-btn--forest" onclick="w2EnviarPrueba()">Enviar</button>
+      <div class="w2-prueba" id="w2-prueba-hilo"></div>
+      <div class="bk-cluster" style="margin-top:var(--sp-3);">
+        <input class="bk-input" id="w2-prueba-texto" style="flex:1;"
+               placeholder="Ej. Hola, vi una casa en Altozano, ¿me pasas precio?"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();w2EnviarPrueba();}"/>
+        <button type="button" class="bk-btn bk-btn--forest" onclick="w2EnviarPrueba()">Enviar</button>
+      </div>
     </div>
   </div>
 
@@ -699,6 +817,7 @@ let W2_MSGS = [];                 // mensajes cargados del chat abierto (viejo �
 let W2_HAY_MAS = false;           // ¿quedan mensajes más antiguos por cargar?
 let W2_CARGANDO_MAS = false;
 let W2_FILTRO = 'todos';
+const W2_ENTREN_CACHE = {};       // config de Recepción IA por numero_id (para el estado del chat)
 let W2_VENTANA_CERRADA = null;
 let W2_EN_HILO = false;           // ¿el agente está viendo el hilo abierto?
 const W2_PAGINA = 30;             // cuántos mensajes se traen por tanda
@@ -731,6 +850,9 @@ async function w2CargarNumeros(){
   w2PintarSelectFiltro();
   w2PintarSelectEntrenamiento();
   w2PintarPanelNumeros();
+  // La config de cada número se precarga para que el estado de IA de la
+  // lista y de los chats sea exacto (y se repinta la lista al llegar).
+  W2_NUMEROS.forEach(n => { w2EntrenDe(n.id).then(() => w2RenderLista()); });
   await w2CargarConversaciones();
 }
 
@@ -857,6 +979,7 @@ async function w2CargarConversaciones(){
     if(fresca){
       W2_CONV_ACTUAL = fresca;
       if(w2VentanaCerrada() !== W2_VENTANA_CERRADA) w2RenderThread();
+      else { w2PintarSegIa(); w2ActualizarEstadoIa(); }
     }
   }
   w2RenderLista();
@@ -916,7 +1039,7 @@ function w2RenderLista(){
   const lista = W2_CONVS.filter(c => {
     const ct = c.wa2_contactos || {};
     if(W2_FILTRO === 'nuevos' && !w2Pendiente(c)) return false;
-    if(W2_FILTRO === 'ia' && c.ai_enabled === false) return false;
+    if(W2_FILTRO === 'ia' && !w2IaAproxOn(c)) return false;
     if(!q) return true;
     return [ct.nombre, ct.wa_id, c.preview_texto, ct.resumen].some(v => (v || '').toLowerCase().includes(q));
   });
@@ -936,7 +1059,7 @@ function w2RenderLista(){
     const sinLeer = Number(c.unread_count) || 0;
     const globito = pend
       ? `<span class="w2-conv__unread ${sinLeer ? '' : 'w2-conv__unread--punto'}">${sinLeer ? (sinLeer > 99 ? '99+' : sinLeer) : ''}</span>`
-      : (c.ai_enabled !== false ? '<span class="w2-conv__ia" title="IA activa"></span>' : '');
+      : (w2IaAproxOn(c) ? '<span class="w2-conv__ia" title="La IA contesta este chat"></span>' : '');
     let prev = c.preview_texto || ct.resumen || ct.busca || 'Sin mensajes aún';
     if(c.preview_direction === 'out') prev = (c.preview_sender === 'ia' ? 'IA: ' : 'Tú: ') + prev;
     return `<div class="w2-conv ${activa?'is-active':''} ${pend?'is-pendiente':''}" onclick="w2AbrirConversacion('${c.id}')">
@@ -953,6 +1076,61 @@ function w2RenderLista(){
               </div>
             </div>`;
   }).join('');
+}
+
+/* ── Estado de la IA por chat (espejo exacto de la lógica del servidor) ──
+   'auto' obedece el modo global del número; 'on' contesta siempre aquí;
+   'off' nunca contesta aquí. La pausa temporal calla incluso al 'on'. */
+function w2ModoConv(c){
+  const m = c && c.ia_modo;
+  if(m === 'auto' || m === 'on' || m === 'off') return m;
+  return (c && c.ai_enabled === false) ? 'off' : 'auto';
+}
+function w2ConvPausada(c){
+  const h = c && c.ia_pausada_hasta;
+  return !!h && new Date(h) > new Date();
+}
+async function w2EntrenDe(numero_id){
+  if(!numero_id) return null;
+  if(W2_ENTREN_CACHE[numero_id]) return W2_ENTREN_CACHE[numero_id];
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/entrenamiento?numero_id=' + numero_id, { headers: w2Auth() });
+    if(!r.ok) return null;
+    const t = await r.json();
+    W2_ENTREN_CACHE[numero_id] = t;
+    return t;
+  }catch(e){ return null; }
+}
+/* Aproximación síncrona para la lista (usa la caché; si aún no llegó la
+   config del número, asume el default: encendida). */
+function w2IaAproxOn(c){
+  const modo = w2ModoConv(c);
+  if(modo === 'off') return false;
+  if(w2ConvPausada(c)) return false;
+  if(modo === 'on') return true;
+  const t = W2_ENTREN_CACHE[c.numero_id];
+  const g = (t && t.modo_ia) || 'siempre_encendida';
+  if(t && t.activo === false) return false;
+  if(g === 'siempre_apagada') return false;
+  if(g === 'solo_nuevos') return !!c.ia_sesion_nueva;
+  return true;
+}
+/* Texto de estado para el encabezado del chat. */
+async function w2EstadoIaChat(c){
+  const modo = w2ModoConv(c);
+  if(modo === 'off') return { on:false, texto:'IA apagada en este chat — respondes tú' };
+  if(w2ConvPausada(c)) return { on:false, texto:'IA en pausa hasta las ' + w2Hora(c.ia_pausada_hasta) + ' — respondiste a mano' };
+  if(modo === 'on') return { on:true, texto:'IA encendida en este chat — contesta aunque el modo del número esté apagado' };
+  const t = await w2EntrenDe(c.numero_id);
+  if(t && t.activo === false) return { on:false, texto:'En automático — no contesta (la IA está desactivada en este número)' };
+  const g = (t && t.modo_ia) || 'siempre_encendida';
+  if(g === 'siempre_apagada') return { on:false, texto:'En automático — no contesta (modo del número: apagada por default)' };
+  if(g === 'solo_nuevos'){
+    return c.ia_sesion_nueva
+      ? { on:true, texto:'En automático — contesta (cliente nuevo)' }
+      : { on:false, texto:'En automático — no contesta (no es cliente nuevo)' };
+  }
+  return { on:true, texto:'En automático — contesta (modo del número: encendida por default)' };
 }
 
 /* Una conversación está pendiente si trae mensajes sin leer o si el agente
@@ -1023,8 +1201,7 @@ function w2RenderThread(){
   }
   const ct = W2_CONV_ACTUAL.wa2_contactos || {};
   const nombre = ct.nombre || ct.wa_id || 'Conversación';
-  const iaOn = W2_CONV_ACTUAL.ai_enabled !== false;
-  const sub = [ct.wa_id || '', iaOn ? 'La IA está respondiendo' : 'Respondes tú'].filter(Boolean).join(' · ');
+  const sub = ct.wa_id || '';
   // Calificación: solo un vistazo (temperatura · score) — el detalle completo
   // ya vive en Contactos/Leads, aquí no se repite ni se vuelve tarjeta.
   const cal = (ct.temperatura || ct.score != null)
@@ -1055,11 +1232,15 @@ function w2RenderThread(){
       <div class="w2-conv__ava ${w2AvaClase(nombre)}" style="width:40px;height:40px;">${w2Esc(w2Iniciales(nombre))}</div>
       <div class="w2-thread__id">
         <div class="w2-thread__name">${w2Esc(nombre)} ${cal}</div>
-        <div class="w2-thread__sub">${w2Esc(sub)}</div>
+        <div class="w2-thread__sub">${w2Esc(sub)} <span class="w2-ia-estado" id="w2-ia-estado"></span></div>
         <div class="w2-thread__tags" id="w2-thread-tags"></div>
       </div>
       <div class="w2-thread__acts">
-        <label class="bk-switch" title="Respuesta automática"><input type="checkbox" id="w2-p-ia" onchange="w2ToggleIaConv()" ${iaOn ? 'checked' : ''}/><span class="bk-switch__track"></span> IA</label>
+        <div class="w2-seg" id="w2-seg-ia" role="group" aria-label="IA en este chat" title="Auto: obedece el modo del número. Encendida: contesta siempre aquí. Apagada: nunca contesta aquí.">
+          <button type="button" data-modo="auto" onclick="w2SetIaModo('auto')">Auto</button>
+          <button type="button" data-modo="on" onclick="w2SetIaModo('on')">Encendida</button>
+          <button type="button" data-modo="off" onclick="w2SetIaModo('off')">Apagada</button>
+        </div>
         <button class="w2-iconbtn" title="Agendar cita" onclick="w2AbrirModalCita()">
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3.5v3M16 3.5v3"/></svg>
         </button>
@@ -1091,6 +1272,43 @@ function w2RenderThread(){
   }
   w2PintarMensajes();
   w2PintarEtiquetas();
+  w2PintarSegIa();
+  w2ActualizarEstadoIa();
+}
+
+function w2PintarSegIa(){
+  const seg = document.getElementById('w2-seg-ia');
+  if(!seg || !W2_CONV_ACTUAL) return;
+  const modo = w2ModoConv(W2_CONV_ACTUAL);
+  seg.querySelectorAll('button').forEach(b => b.classList.toggle('is-on', b.dataset.modo === modo));
+}
+
+async function w2ActualizarEstadoIa(){
+  const el = document.getElementById('w2-ia-estado');
+  if(!el || !W2_CONV_ACTUAL) return;
+  const convId = W2_CONV_ACTUAL.id;
+  const estado = await w2EstadoIaChat(W2_CONV_ACTUAL);
+  // Por si el agente cambió de chat mientras llegaba la config del número.
+  if(!W2_CONV_ACTUAL || W2_CONV_ACTUAL.id !== convId) return;
+  el.textContent = '· ' + estado.texto;
+  el.classList.toggle('is-on', estado.on);
+}
+
+async function w2SetIaModo(modo){
+  if(!W2_CONV_ACTUAL) return;
+  W2_CONV_ACTUAL.ia_modo = modo;
+  W2_CONV_ACTUAL.ia_pausada_hasta = null;   // cambiarlo a mano borra la pausa
+  W2_CONV_ACTUAL.ai_enabled = modo !== 'off';
+  w2PintarSegIa();
+  w2ActualizarEstadoIa();
+  w2RenderLista();
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/conversaciones/' + W2_CONV_ACTUAL.id, {
+      method:'PATCH', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({ ia_modo: modo })
+    });
+    if(!r.ok) throw new Error();
+  }catch(e){ toast('No se pudo actualizar. Intenta de nuevo.'); }
 }
 
 function w2AlFondo(box){
@@ -1290,15 +1508,21 @@ async function w2EnviarManual(){
     }
     const ok = await r.json().catch(() => ({}));
     if(ok.ia_pausada){
-      // El servidor apaga la IA en cuanto escribes tú, para que no contesten
-      // los dos en el mismo chat. Aquí solo se refleja en pantalla.
-      W2_CONV_ACTUAL.ai_enabled = false;
-      const sw = document.getElementById('w2-p-ia');
-      if(sw) sw.checked = false;
-      const sub = document.querySelector('.w2-thread__sub');
-      const ct = W2_CONV_ACTUAL.wa2_contactos || {};
-      if(sub) sub.textContent = [ct.wa_id || '', 'Respondes tú'].filter(Boolean).join(' · ');
-      toast('Tomaste esta conversación. La IA se pausó aquí; préndela cuando quieras.');
+      // El servidor hace a un lado la IA en cuanto escribes tú (para siempre
+      // o por el rato que configuraste), para que no contesten los dos en el
+      // mismo chat. Aquí solo se refleja en pantalla.
+      W2_CONV_ACTUAL.ia_sesion_nueva = false;
+      if(ok.para_siempre){
+        W2_CONV_ACTUAL.ia_modo = 'off';
+        W2_CONV_ACTUAL.ai_enabled = false;
+        toast('Tomaste esta conversación. La IA se apagó aquí; enciéndela cuando quieras.');
+      } else {
+        W2_CONV_ACTUAL.ia_pausada_hasta = ok.ia_pausada_hasta;
+        toast('Tomaste esta conversación. La IA queda en pausa hasta las ' + w2Hora(ok.ia_pausada_hasta) + '.');
+      }
+      w2PintarSegIa();
+      w2ActualizarEstadoIa();
+      w2RenderLista();
     }
     await w2RefrescarMensajes();
     w2IrAlFinal(true);
@@ -1307,21 +1531,6 @@ async function w2EnviarManual(){
     w2PintarMensajes();
     toast('No se pudo enviar el mensaje.');
   }
-}
-
-async function w2ToggleIaConv(){
-  if(!W2_CONV_ACTUAL) return;
-  const on = document.getElementById('w2-p-ia').checked;
-  W2_CONV_ACTUAL.ai_enabled = on;
-  const sub = document.querySelector('.w2-thread__sub');
-  const ct = W2_CONV_ACTUAL.wa2_contactos || {};
-  if(sub) sub.textContent = [ct.wa_id || '', on ? 'La IA está respondiendo' : 'Respondes tú'].filter(Boolean).join(' · ');
-  try{
-    await fetch(API_BASE + '/whatsapp2/conversaciones/' + W2_CONV_ACTUAL.id, {
-      method:'PATCH', headers:{ 'Content-Type':'application/json', ...w2Auth() },
-      body: JSON.stringify({ ai_enabled: on })
-    });
-  }catch(e){ toast('No se pudo actualizar.'); }
 }
 
 /* ── Entrenamiento ────────────────────────────────────────── */
@@ -1419,7 +1628,41 @@ async function w2CargarEntrenamiento(){
     document.getElementById('w2-t-fuera').value = t.fuera_horario_msg || '';
     document.getElementById('w2-t-max').value = t.max_mensajes_ia || 0;
     document.getElementById('w2-t-activo').checked = t.activo !== false;
+    w2SetModoGlobal(t.modo_ia || 'siempre_encendida', true);
+    document.getElementById('w2-t-nuevos-meses').value = String(t.nuevos_meses || 3);
+    document.getElementById('w2-t-pausa').checked = t.pausa_al_responder !== false;
+    document.getElementById('w2-t-pausa-dur').value = String(t.pausa_duracion_min || 0);
+    w2PausaCambio();
+    if(numero_id) W2_ENTREN_CACHE[numero_id] = t;   // refrescar la caché del estado por chat
   }catch(e){ toast('No se pudo cargar el entrenamiento (sin conexión).'); }
+}
+
+/* Tarjetas-radio del modo global de encendido. */
+function w2SetModoGlobal(modo, soloUI){
+  document.querySelectorAll('#w2-t-modos .w2-modo').forEach(card => {
+    const es = card.dataset.modo === modo;
+    card.classList.toggle('is-on', es);
+    const radio = card.querySelector('input');
+    if(radio) radio.checked = es;
+  });
+  document.getElementById('w2-t-nuevos-wrap').hidden = modo !== 'solo_nuevos';
+}
+
+function w2ModoGlobalElegido(){
+  const on = document.querySelector('#w2-t-modos .w2-modo.is-on');
+  return (on && on.dataset.modo) || 'siempre_encendida';
+}
+
+function w2PausaCambio(){
+  const activa = document.getElementById('w2-t-pausa').checked;
+  document.getElementById('w2-t-pausa-dur-wrap').hidden = !activa;
+}
+
+function w2ToggleEntrenAvanzado(){
+  const div = document.getElementById('w2-t-avanzado');
+  const btn = document.getElementById('w2-t-avanzado-btn');
+  div.hidden = !div.hidden;
+  btn.textContent = div.hidden ? 'Mostrar' : 'Ocultar';
 }
 
 /* ── Simulador ────────────────────────────────────────────── */
@@ -1516,6 +1759,10 @@ async function w2GuardarEntrenamiento(){
     fuera_horario_msg: document.getElementById('w2-t-fuera').value.trim(),
     max_mensajes_ia: parseInt(document.getElementById('w2-t-max').value || '0', 10),
     activo: document.getElementById('w2-t-activo').checked,
+    modo_ia: w2ModoGlobalElegido(),
+    pausa_al_responder: document.getElementById('w2-t-pausa').checked,
+    pausa_duracion_min: parseInt(document.getElementById('w2-t-pausa-dur').value || '0', 10),
+    nuevos_meses: parseInt(document.getElementById('w2-t-nuevos-meses').value || '3', 10),
   };
   try{
     const r = await fetch(API_BASE + '/whatsapp2/entrenamiento', {
@@ -1528,6 +1775,7 @@ async function w2GuardarEntrenamiento(){
       toast(d.detail || ('No se guardó (error ' + r.status + '). Intenta de nuevo.'));
       return;
     }
+    if(numero_id) delete W2_ENTREN_CACHE[numero_id];
     toast(numero_id ? 'Guardado para este número.' : 'Guardada la plantilla para números nuevos.');
     // Vuelve a leerlo del servidor para confirmar que de verdad quedó guardado,
     // no solo que el navegador lo cree.
@@ -1703,19 +1951,29 @@ function w2QuitarEtiqueta(i){
   w2GuardarEtiquetas(tags);
 }
 
-/* ── Automatizaciones (recetas) ───────────────────────────── */
-const W2_AU_TIPOS = {
-  mensaje:  'Responder con un mensaje',
+/* ── Flujos (constructor por pasos) ───────────────────────── */
+const W2_FP_TIPOS = {
+  mensaje:  'Enviar un mensaje',
+  pregunta: 'Hacer una pregunta y guardar la respuesta',
+  opciones: 'Menú de opciones (el prospecto elige)',
   etiqueta: 'Ponerle una etiqueta al contacto',
   humano:   'Apagar la IA y avisarme a mí',
+  ia:       'Entregarle la conversación a la IA',
 };
+const W2_FP_CAMPOS = {
+  nombre: 'Su nombre', presupuesto: 'Su presupuesto',
+  interes: 'Qué le interesa', nota: 'Una nota general',
+};
+
+let W2_FLUJO = { editandoId: null, pasos: [] };
 
 function w2AbrirTabAutomatizaciones(){
   const sel = document.getElementById('w2-au-numero');
   sel.innerHTML = '<option value="">Todos mis números</option>'
     + W2_NUMEROS.map(n => `<option value="${n.id}">${n.alias || n.display_number || 'Número'}</option>`).join('');
-  if(!document.querySelector('#w2-au-pasos .w2-au-paso')) w2AuAgregarPaso();
+  if(!W2_FLUJO.pasos.length) w2FlujoAgregarPaso();
   w2AuCambioDisparador();
+  w2FlujoRender();
   w2AuCargarLista();
 }
 
@@ -1724,68 +1982,223 @@ function w2AuCambioDisparador(){
   document.getElementById('w2-au-palabras-wrap').hidden = !esPalabra;
 }
 
-function w2AuAgregarPaso(){
-  const cont = document.getElementById('w2-au-pasos');
-  if(cont.querySelectorAll('.w2-au-paso').length >= 5){ toast('Máximo 5 pasos por receta.'); return; }
-  const div = document.createElement('div');
-  div.className = 'w2-au-paso';
-  div.innerHTML = `
-    <select class="bk-select" onchange="w2AuCambioTipo(this)">
-      ${Object.entries(W2_AU_TIPOS).map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}
-    </select>
-    <input class="bk-input" placeholder="El texto que se le responde"/>
-    <button class="w2-au-quitar" title="Quitar este paso" onclick="this.parentElement.remove()">×</button>`;
-  cont.appendChild(div);
+function w2FlujoAgregarPaso(){
+  if(W2_FLUJO.pasos.length >= 12){ toast('Máximo 12 pasos por flujo.'); return; }
+  W2_FLUJO.pasos.push({ tipo:'mensaje', valor:'', guardar:'nota', opciones:[] });
+  w2FlujoRender();
 }
 
-function w2AuCambioTipo(sel){
-  const input = sel.parentElement.querySelector('input');
-  const tipo = sel.value;
-  input.hidden = tipo === 'humano';
-  input.placeholder = tipo === 'mensaje' ? 'El texto que se le responde' : 'La etiqueta que se le pone';
-  input.maxLength = tipo === 'mensaje' ? 1000 : 40;
+function w2FlujoQuitar(i){ W2_FLUJO.pasos.splice(i, 1); w2FlujoRender(); }
+
+function w2FlujoMover(i, dir){
+  const j = i + dir;
+  if(j < 0 || j >= W2_FLUJO.pasos.length) return;
+  const t = W2_FLUJO.pasos[i];
+  W2_FLUJO.pasos[i] = W2_FLUJO.pasos[j];
+  W2_FLUJO.pasos[j] = t;
+  w2FlujoRender();
+}
+
+function w2FlujoCampo(i, campo, valor){
+  const paso = W2_FLUJO.pasos[i];
+  if(!paso) return;
+  paso[campo] = valor;
+  if(campo === 'tipo'){
+    if(valor === 'opciones' && !(paso.opciones || []).length){
+      paso.opciones = [{ texto:'', ir:0 }, { texto:'', ir:0 }];
+    }
+    w2FlujoRender();
+  }
+}
+
+function w2FlujoOpAgregar(i){
+  const paso = W2_FLUJO.pasos[i];
+  if(!paso) return;
+  paso.opciones = paso.opciones || [];
+  if(paso.opciones.length >= 6){ toast('Máximo 6 opciones por menú.'); return; }
+  paso.opciones.push({ texto:'', ir:0 });
+  w2FlujoRender();
+}
+
+function w2FlujoOpQuitar(i, j){
+  const paso = W2_FLUJO.pasos[i];
+  if(!paso) return;
+  paso.opciones.splice(j, 1);
+  w2FlujoRender();
+}
+
+function w2FlujoOpCampo(i, j, campo, valor){
+  const op = (W2_FLUJO.pasos[i] || {}).opciones?.[j];
+  if(!op) return;
+  op[campo] = campo === 'ir' ? parseInt(valor || '0', 10) : valor;
+}
+
+function w2FlujoRender(){
+  const cont = document.getElementById('w2-au-pasos');
+  if(!cont) return;
+  const total = W2_FLUJO.pasos.length;
+  cont.innerHTML = W2_FLUJO.pasos.map((paso, i) => {
+    const tipos = Object.entries(W2_FP_TIPOS).map(([v, t]) =>
+      `<option value="${v}" ${paso.tipo === v ? 'selected' : ''}>${t}</option>`).join('');
+    let cuerpo = '';
+    if(paso.tipo === 'mensaje'){
+      cuerpo = `<textarea class="bk-textarea" rows="2" maxlength="1000" placeholder="El mensaje que se le envía"
+                  oninput="w2FlujoCampo(${i}, 'valor', this.value)">${w2Esc(paso.valor)}</textarea>`;
+    } else if(paso.tipo === 'pregunta'){
+      cuerpo = `<textarea class="bk-textarea" rows="2" maxlength="1000" placeholder="La pregunta que se le hace. Ej. ¿Con cuánto presupuesto cuentas?"
+                  oninput="w2FlujoCampo(${i}, 'valor', this.value)">${w2Esc(paso.valor)}</textarea>
+        <div class="w2-fp__op">
+          <span class="w2-fp__hint" style="flex:none;">Guardar la respuesta como</span>
+          <select class="bk-select" onchange="w2FlujoCampo(${i}, 'guardar', this.value)">
+            ${Object.entries(W2_FP_CAMPOS).map(([v, t]) =>
+              `<option value="${v}" ${(paso.guardar || 'nota') === v ? 'selected' : ''}>${t}</option>`).join('')}
+          </select>
+        </div>
+        <div class="w2-fp__hint">El flujo se detiene aquí hasta que el prospecto conteste. Lo que responda queda en su ficha.</div>`;
+    } else if(paso.tipo === 'opciones'){
+      const destinos = (j) => {
+        let ops = '<option value="0">Continuar al siguiente paso</option>';
+        for(let n = 1; n <= total; n++){
+          if(n === i + 1) continue;
+          const sel = (W2_FLUJO.pasos[i].opciones[j].ir === n) ? 'selected' : '';
+          ops += `<option value="${n}" ${sel}>Ir al paso ${n}</option>`;
+        }
+        return ops;
+      };
+      cuerpo = `<textarea class="bk-textarea" rows="2" maxlength="1000" placeholder="La pregunta del menú. Ej. ¿Qué te interesa?"
+                  oninput="w2FlujoCampo(${i}, 'valor', this.value)">${w2Esc(paso.valor)}</textarea>
+        ${(paso.opciones || []).map((op, j) => `
+          <div class="w2-fp__op">
+            <input class="bk-input" maxlength="60" placeholder="Opción ${j + 1}. Ej. Comprar" value="${w2Esc(op.texto)}"
+                   oninput="w2FlujoOpCampo(${i}, ${j}, 'texto', this.value)"/>
+            <select class="bk-select" onchange="w2FlujoOpCampo(${i}, ${j}, 'ir', this.value)">${destinos(j)}</select>
+            <button type="button" class="w2-fp__mini" title="Quitar esta opción" onclick="w2FlujoOpQuitar(${i}, ${j})">×</button>
+          </div>`).join('')}
+        <div class="w2-fp__op">
+          <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2FlujoOpAgregar(${i})">+ Agregar opción</button>
+          <span class="w2-fp__hint">Se le muestran numeradas y contesta con el número o el texto.</span>
+        </div>`;
+    } else if(paso.tipo === 'etiqueta'){
+      cuerpo = `<input class="bk-input" maxlength="40" placeholder="La etiqueta que se le pone. Ej. interesado-renta"
+                  value="${w2Esc(paso.valor)}" oninput="w2FlujoCampo(${i}, 'valor', this.value)"/>`;
+    } else if(paso.tipo === 'humano'){
+      cuerpo = `<div class="w2-fp__hint">La IA se apaga en ese chat y te llega una notificación para que lo sigas tú. El flujo termina aquí.</div>`;
+    } else if(paso.tipo === 'ia'){
+      cuerpo = `<div class="w2-fp__hint">La IA se enciende en ese chat y contesta desde este punto con tu entrenamiento. El flujo termina aquí.</div>`;
+    }
+    return `<div class="w2-fp">
+      <div class="w2-fp__head">
+        <span class="w2-fp__num">${i + 1}</span>
+        <select class="bk-select" onchange="w2FlujoCampo(${i}, 'tipo', this.value)">${tipos}</select>
+        <button type="button" class="w2-fp__mini" title="Subir este paso" onclick="w2FlujoMover(${i}, -1)">↑</button>
+        <button type="button" class="w2-fp__mini" title="Bajar este paso" onclick="w2FlujoMover(${i}, 1)">↓</button>
+        <button type="button" class="w2-fp__mini" title="Quitar este paso" onclick="w2FlujoQuitar(${i})">×</button>
+      </div>
+      <div class="w2-fp__cuerpo">${cuerpo}</div>
+    </div>`;
+  }).join('');
+}
+
+function w2FlujoSerializar(){
+  const acciones = [];
+  for(const paso of W2_FLUJO.pasos){
+    const tipo = paso.tipo;
+    const valor = (paso.valor || '').trim();
+    if(tipo === 'mensaje' || tipo === 'pregunta'){
+      if(!valor) continue;
+      const a = { tipo, valor };
+      if(tipo === 'pregunta') a.guardar = paso.guardar || 'nota';
+      acciones.push(a);
+    } else if(tipo === 'opciones'){
+      const ops = (paso.opciones || [])
+        .map(o => ({ texto: (o.texto || '').trim(), ir: parseInt(o.ir || 0, 10) || 0 }))
+        .filter(o => o.texto);
+      if(ops.length < 2) continue;
+      acciones.push({ tipo, valor, opciones: ops });
+    } else if(tipo === 'etiqueta'){
+      if(!valor) continue;
+      acciones.push({ tipo, valor });
+    } else if(tipo === 'humano' || tipo === 'ia'){
+      acciones.push({ tipo, valor: '' });
+    }
+  }
+  return acciones;
 }
 
 async function w2AuGuardar(){
   const nombre = document.getElementById('w2-au-nombre').value.trim();
-  if(!nombre){ toast('Ponle un nombre a la automatización.'); return; }
+  if(!nombre){ toast('Ponle un nombre al flujo.'); return; }
   const disparador = document.getElementById('w2-au-disparador').value;
   const palabras = document.getElementById('w2-au-palabras').value
     .split(',').map(p => p.trim()).filter(Boolean);
-  if(disparador === 'palabra' && !palabras.length){ toast('Escribe al menos una palabra que la dispare.'); return; }
-  const acciones = [];
-  document.querySelectorAll('#w2-au-pasos .w2-au-paso').forEach(p => {
-    const tipo = p.querySelector('select').value;
-    const valor = p.querySelector('input').value.trim();
-    if(tipo === 'humano' || valor) acciones.push({ tipo, valor });
-  });
+  if(disparador === 'palabra' && !palabras.length){ toast('Escribe al menos una palabra que lo dispare.'); return; }
+  const acciones = w2FlujoSerializar();
   if(!acciones.length){ toast('Agrega al menos un paso con contenido.'); return; }
+  const body = { nombre, numero_id: document.getElementById('w2-au-numero').value || null,
+                 disparador, palabras, acciones, activa: true };
+  const editando = W2_FLUJO.editandoId;
   try{
-    const r = await fetch(API_BASE + '/whatsapp2/automatizaciones', {
-      method:'POST', headers:{ 'Content-Type':'application/json', ...w2Auth() },
-      body: JSON.stringify({ nombre, numero_id: document.getElementById('w2-au-numero').value || null,
-                             disparador, palabras, acciones, activa: true })
+    const r = await fetch(API_BASE + '/whatsapp2/automatizaciones' + (editando ? '/' + editando : ''), {
+      method: editando ? 'PATCH' : 'POST',
+      headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify(body)
     });
     const d = await r.json();
     if(!r.ok){ toast(d.detail || 'No se pudo guardar.'); return; }
-    toast('Automatización guardada — ya está trabajando.');
-    document.getElementById('w2-au-nombre').value = '';
-    document.getElementById('w2-au-palabras').value = '';
-    document.getElementById('w2-au-pasos').innerHTML = '';
-    w2AuAgregarPaso();
+    toast(editando ? 'Flujo actualizado.' : 'Flujo guardado — ya está trabajando.');
+    w2AuCancelarEdicion();
     await w2AuCargarLista();
   }catch(e){ toast('No se pudo guardar (sin conexión).'); }
+}
+
+function w2AuCancelarEdicion(){
+  W2_FLUJO = { editandoId: null, pasos: [] };
+  document.getElementById('w2-au-nombre').value = '';
+  document.getElementById('w2-au-palabras').value = '';
+  document.getElementById('w2-au-numero').value = '';
+  document.getElementById('w2-au-disparador').value = 'palabra';
+  document.getElementById('w2-au-titulo').textContent = 'Nuevo flujo';
+  document.getElementById('w2-au-guardar-btn').textContent = 'Guardar flujo';
+  document.getElementById('w2-au-cancelar').hidden = true;
+  w2AuCambioDisparador();
+  w2FlujoAgregarPaso();
+}
+
+let W2_AU_LISTA = [];
+
+function w2AuEditar(id){
+  const a = W2_AU_LISTA.find(x => x.id === id);
+  if(!a) return;
+  W2_FLUJO = {
+    editandoId: id,
+    pasos: (a.acciones || []).map(x => ({
+      tipo: x.tipo, valor: x.valor || '', guardar: x.guardar || 'nota',
+      opciones: (x.opciones || []).map(o => ({ texto: o.texto || '', ir: o.ir || 0 })),
+    })),
+  };
+  document.getElementById('w2-au-nombre').value = a.nombre || '';
+  document.getElementById('w2-au-numero').value = a.numero_id || '';
+  document.getElementById('w2-au-disparador').value = a.disparador || 'palabra';
+  document.getElementById('w2-au-palabras').value = (a.palabras || []).join(', ');
+  document.getElementById('w2-au-titulo').textContent = 'Editando: ' + (a.nombre || 'flujo');
+  document.getElementById('w2-au-guardar-btn').textContent = 'Guardar cambios';
+  document.getElementById('w2-au-cancelar').hidden = false;
+  w2AuCambioDisparador();
+  w2FlujoRender();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function w2AuResumen(a){
   const numero = W2_NUMEROS.find(n => n.id === a.numero_id);
   const donde = numero ? (numero.alias || numero.display_number) : 'Todos los números';
   const cuando = a.disparador === 'nuevo'
-    ? 'Cuando escribe alguien nuevo'
-    : 'Cuando el mensaje contiene: ' + (a.palabras || []).join(', ');
-  const pasos = (a.acciones || []).map(x =>
-    x.tipo === 'mensaje' ? 'responder' : (x.tipo === 'etiqueta' ? `etiquetar "${x.valor}"` : 'pasármela a mí')
-  ).join(' → ');
+    ? 'Cuando escribe alguien por primera vez'
+    : a.disparador === 'nuevo_3m'
+      ? 'Cuando escribe un cliente nuevo'
+      : 'Cuando el mensaje contiene: ' + (a.palabras || []).join(', ');
+  const nombres = { mensaje:'mensaje', pregunta:'pregunta', opciones:'menú',
+                    etiqueta:'etiqueta', humano:'pasármela a mí', ia:'dársela a la IA' };
+  const pasos = (a.acciones || []).map(x => nombres[x.tipo] || x.tipo).join(' → ');
   const usos = a.veces_usada ? ` · Se ha usado ${a.veces_usada} ${a.veces_usada === 1 ? 'vez' : 'veces'}` : '';
   return `${donde} · ${cuando} → ${pasos}${usos}`;
 }
@@ -1798,8 +2211,9 @@ async function w2AuCargarLista(){
     const d = await r.json();
     autos = d.automatizaciones || [];
   }catch(e){}
+  W2_AU_LISTA = autos;
   if(!autos.length){
-    cont.innerHTML = '<div class="bk-hint">Todavía no tienes automatizaciones. Crea la primera arriba.</div>';
+    cont.innerHTML = '<div class="bk-hint">Todavía no tienes flujos. Crea el primero arriba.</div>';
     return;
   }
   cont.innerHTML = autos.map(a => `
@@ -1808,11 +2222,12 @@ async function w2AuCargarLista(){
         <div class="w2-cp-row__nombre">${w2Esc(a.nombre)}</div>
         <div class="w2-cp-row__sub">${w2Esc(w2AuResumen(a))}</div>
       </div>
-      <label class="bk-switch" title="Encender o apagar esta automatización">
+      <button class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2AuEditar('${a.id}')">Editar</button>
+      <label class="bk-switch" title="Encender o apagar este flujo">
         <input type="checkbox" ${a.activa ? 'checked' : ''} onchange="w2AuToggle('${a.id}', this.checked)"/>
         <span class="bk-switch__track"></span>
       </label>
-      <button class="w2-au-quitar" title="Eliminar automatización" onclick="w2AuEliminar('${a.id}', '${w2Esc(a.nombre)}')">×</button>
+      <button class="w2-au-quitar" title="Eliminar flujo" onclick="w2AuEliminar('${a.id}', '${w2Esc(a.nombre)}')">×</button>
     </div>`).join('');
 }
 
@@ -1822,12 +2237,12 @@ async function w2AuToggle(id, activa){
       method:'PATCH', headers:{ 'Content-Type':'application/json', ...w2Auth() },
       body: JSON.stringify({ activa })
     });
-    toast(activa ? 'Automatización encendida.' : 'Automatización apagada.');
+    toast(activa ? 'Flujo encendido.' : 'Flujo apagado.');
   }catch(e){ toast('No se pudo cambiar (sin conexión).'); }
 }
 
 async function w2AuEliminar(id, nombre){
-  if(!confirm('Se va a eliminar la automatización "' + nombre + '". ¿Seguro?')) return;
+  if(!confirm('Se va a eliminar el flujo "' + nombre + '". ¿Seguro?')) return;
   try{
     await fetch(API_BASE + '/whatsapp2/automatizaciones/' + id, { method:'DELETE', headers: w2Auth() });
     await w2AuCargarLista();

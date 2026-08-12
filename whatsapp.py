@@ -168,6 +168,17 @@ TRAINING_DEFAULTS = {
     "max_mensajes_ia": 0,
     "activo": True,
     "zona_horaria": "America/Mexico_City",
+    # ── Modos de encendido de la IA (por número) ─────────────────────────
+    # 'siempre_encendida' — contesta todos los chats (salvo los apagados a mano)
+    # 'siempre_apagada'   — no contesta nada (salvo los encendidos a mano)
+    # 'solo_nuevos'       — solo clientes nuevos: nunca han escrito, o llevan
+    #                       más de `nuevos_meses` sin escribir
+    "modo_ia": "siempre_encendida",
+    # Si el agente responde a mano (Broquer o su celular), la IA se hace a un
+    # lado en ese chat. 0 minutos = para siempre (hasta que la reencienda).
+    "pausa_al_responder": True,
+    "pausa_duracion_min": 0,
+    "nuevos_meses": 3,
 }
 
 
@@ -183,6 +194,92 @@ def _hora_local(zona: str | None = None) -> datetime:
         return datetime.now(ZoneInfo(zona or "America/Mexico_City"))
     except Exception:
         return datetime.now(timezone.utc) + timedelta(hours=-6)
+
+
+def _parse_ts(v) -> datetime | None:
+    """Timestamp de Supabase → datetime consciente de zona. None si no parsea."""
+    if not v:
+        return None
+    try:
+        dt = datetime.fromisoformat(str(v).replace("Z", "+00:00"))
+        return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+    except Exception:
+        return None
+
+
+def _modo_conv(conv: dict) -> str:
+    """Estado de IA del chat: 'auto' (obedece el modo global del número),
+    'on' (contesta siempre aquí) u 'off' (nunca contesta aquí). Si la columna
+    nueva aún no existe, se deriva del ai_enabled de siempre."""
+    m = conv.get("ia_modo")
+    if m in ("auto", "on", "off"):
+        return m
+    return "off" if conv.get("ai_enabled") is False else "auto"
+
+
+def _conv_pausada(conv: dict) -> bool:
+    h = _parse_ts(conv.get("ia_pausada_hasta"))
+    return bool(h and h > datetime.now(timezone.utc))
+
+
+def _ia_decide(conv: dict, entren: dict, numero: dict) -> bool:
+    """LA regla de quién contesta. Toda decisión de si la IA responde un
+    mensaje pasa por aquí — un solo lugar, cero criterios encimados.
+
+    Prioridades, de la más fuerte a la más débil:
+      1. El interruptor maestro del número (apagado = nadie contesta).
+      2. El chat en 'off' (el agente lo apagó a propósito): nunca.
+      3. La pausa temporal (el agente acaba de responder a mano): esperar.
+      4. El chat en 'on' (el agente la encendió a propósito en este lead):
+         contesta SIEMPRE, aunque el modo global esté apagado.
+      5. En 'auto', manda el modo global del número:
+         siempre_encendida / siempre_apagada / solo_nuevos."""
+    if not numero.get("ia_enabled", True):
+        return False
+    modo = _modo_conv(conv)
+    if modo == "off":
+        return False
+    if _conv_pausada(conv):
+        return False
+    if modo == "on":
+        return True
+    global_modo = entren.get("modo_ia") or "siempre_encendida"
+    if global_modo == "siempre_apagada":
+        return False
+    if global_modo == "solo_nuevos":
+        return bool(conv.get("ia_sesion_nueva"))
+    return True
+
+
+async def _pausar_por_respuesta_manual(conv: dict, numero: dict, entren: dict | None = None) -> dict:
+    """El agente respondió a mano (desde Broquer o desde el WhatsApp de su
+    celular). Según la configuración del número, la IA se hace a un lado en
+    ese chat: para siempre, o por un rato (pausa temporal). En cualquier caso
+    se cierra la sesión de "cliente nuevo": el agente ya tomó el chat."""
+    if entren is None:
+        entren = await _entrenamiento_de(numero["user_id"], numero["id"])
+    info = {"ia_pausada": False, "ia_pausada_hasta": None, "para_siempre": False}
+    cambios: dict = {"ia_sesion_nueva": False}
+    if entren.get("pausa_al_responder", True) and _modo_conv(conv) != "off":
+        dur = 0
+        try:
+            dur = int(entren.get("pausa_duracion_min") or 0)
+        except Exception:
+            pass
+        if dur <= 0:
+            cambios.update({"ia_modo": "off", "ai_enabled": False, "ia_pausada_hasta": None})
+            info.update({"ia_pausada": True, "para_siempre": True})
+        else:
+            hasta = (datetime.now(timezone.utc) + timedelta(minutes=dur)).isoformat()
+            cambios["ia_pausada_hasta"] = hasta
+            info.update({"ia_pausada": True, "ia_pausada_hasta": hasta})
+    guardado = await sb_patch("wa2_conversaciones", {"id": f"eq.{conv['id']}"}, cambios)
+    if not guardado and info["ia_pausada"]:
+        # Migración pendiente (columnas nuevas ausentes): degradar al
+        # comportamiento clásico para que JAMÁS contesten dos en un chat.
+        await sb_patch("wa2_conversaciones", {"id": f"eq.{conv['id']}"}, {"ai_enabled": False})
+    conv.update({k: v for k, v in cambios.items()})
+    return info
 
 
 def _fmt_fecha_larga(dt: datetime) -> str:
@@ -647,6 +744,12 @@ async def wa2_numero_delete(numero_id: str, request: Request):
         await sb_delete("wa2_mensajes", {"conversacion_id": _in_filter(grupo)})
 
     # 3) El resto de las tablas del número, y al final el número mismo
+    if conv_ids:
+        for grupo in [conv_ids[i:i + 60] for i in range(0, len(conv_ids), 60)]:
+            try:
+                await sb_delete("wa2_flujo_estados", {"conversacion_id": _in_filter(grupo)})
+            except Exception:
+                pass
     await sb_delete("wa2_conversaciones", {"numero_id": f"eq.{numero_id}"})
     await sb_delete("wa2_contactos", {"numero_id": f"eq.{numero_id}"})
     await sb_delete("wa2_agenda", {"numero_id": f"eq.{numero_id}"})
@@ -683,6 +786,10 @@ class TrainingReq(BaseModel):
     max_mensajes_ia: int = 0
     activo: bool = True
     zona_horaria: str = "America/Mexico_City"
+    modo_ia: str = "siempre_encendida"
+    pausa_al_responder: bool = True
+    pausa_duracion_min: int = 0
+    nuevos_meses: int = 3
 
 
 @router.get("/entrenamiento")
@@ -707,6 +814,10 @@ async def wa2_training_get(request: Request, numero_id: str | None = None):
 async def wa2_training_put(req: TrainingReq, request: Request):
     user_id = await _require_user(request)
     fila = req.dict()
+    if fila.get("modo_ia") not in ("siempre_encendida", "siempre_apagada", "solo_nuevos"):
+        fila["modo_ia"] = "siempre_encendida"
+    fila["pausa_duracion_min"] = max(0, min(int(fila.get("pausa_duracion_min") or 0), 60 * 24 * 30))
+    fila["nuevos_meses"] = max(1, min(int(fila.get("nuevos_meses") or 3), 24))
     fila["updated_at"] = _now()
 
     if req.numero_id:
@@ -2028,11 +2139,24 @@ async def _get_o_crea_conversacion(user_id: str, numero_id: str, contacto_id: st
     # Un CONOCIDO del asesor (agenda del celular o historial previo) arranca con
     # la IA apagada: la recepcionista es para prospectos nuevos, no para caerle
     # en frío a un cliente de años. El asesor la puede prender en esa conversación.
-    created = await sb_post("wa2_conversaciones", {
+    fila = {
         "user_id": user_id, "numero_id": numero_id, "contacto_id": contacto_id,
         "ai_enabled": ia_default,
+        # Chat nuevo de un desconocido: nace en 'auto' (obedece el modo global
+        # del número) y con la sesión de "cliente nuevo" abierta — es la
+        # primera vez que este número escribe. Chat de un conocido: nace en
+        # 'off' y el agente la enciende si quiere.
+        "ia_modo": "auto" if ia_default else "off",
+        "ia_sesion_nueva": bool(ia_default),
         "created_at": _now(), "last_message_at": _now(),
-    })
+    }
+    created = await sb_post("wa2_conversaciones", fila)
+    if not created:
+        # Migración pendiente (columnas nuevas ausentes): reintentar sin ellas
+        # para que el webhook no pierda ni un mensaje.
+        fila.pop("ia_modo", None)
+        fila.pop("ia_sesion_nueva", None)
+        created = await sb_post("wa2_conversaciones", fila)
     if created:
         return created[0]
     rows = await sb_get("wa2_conversaciones", {"contacto_id": f"eq.{contacto_id}", "select": "*", "limit": "1"})
@@ -2104,6 +2228,7 @@ async def _persistir_entrantes(payload: dict):
             # que el asesor ya respondió y la IA le contestaba ENCIMA al mismo
             # prospecto. El eco se guarda en la bandeja como mensaje del agente
             # y apaga la IA de esa conversación, igual que el envío manual.
+            entren_eco = None  # se carga una sola vez si hay ecos que pausar
             for eco in (val.get("message_echoes") or []):
                 wa_dest = _solo_digitos(eco.get("to") or "")
                 if not wa_dest:
@@ -2140,9 +2265,12 @@ async def _persistir_entrantes(payload: dict):
                                                           contacto_eco["id"], ia_default=False)
                 await _guardar_mensaje(numero["user_id"], contacto_eco["id"], conv_eco["id"],
                                       eco.get("id"), "out", "agente", cuerpo)
-                if conv_eco.get("ai_enabled", True):
-                    await sb_patch("wa2_conversaciones", {"id": f"eq.{conv_eco['id']}"},
-                                   {"ai_enabled": False})
+                # El asesor contestó desde su celular: la IA se hace a un
+                # lado según la config del número (pausa temporal o para
+                # siempre), exactamente igual que al escribir desde Broquer.
+                if entren_eco is None:
+                    entren_eco = await _entrenamiento_de(numero["user_id"], numero["id"])
+                await _pausar_por_respuesta_manual(conv_eco, numero, entren_eco)
                 if not contacto_eco.get("conocido"):
                     await sb_patch("wa2_contactos", {"id": f"eq.{contacto_eco['id']}"},
                                    {"conocido": True, "updated_at": _now()})
@@ -2308,7 +2436,11 @@ async def _persistir_entrantes(payload: dict):
 
                 trabajo.append({"numero": numero, "contacto_id": contacto["id"],
                                "conversacion_id": conv["id"], "wa_id": wa_id, "texto": texto,
-                               "wa_message_id": msg.get("id"), "es_asesor": es_asesor})
+                               "wa_message_id": msg.get("id"), "es_asesor": es_asesor,
+                               # Cuándo había escrito ANTES de este mensaje (ya con el
+                               # mensaje guardado, last_inbound_at apunta a ahorita y no
+                               # serviría para saber si es un cliente nuevo).
+                               "prev_inbound_at": conv.get("last_inbound_at")})
 
             # ── Acuses de Meta (enviado / entregado / leído / FALLIDO) ──────
             # Esto se ignoraba por completo. Lo grave no es perderse la
@@ -2356,11 +2488,23 @@ async def _procesar_en_segundo_plano(item: dict):
                           (contacto_push[0].get("nombre") if contacto_push else None) or "Nuevo mensaje de WhatsApp",
                           item["texto"], datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
 
-    # ── AUTOMATIZACIONES (recetas) ───────────────────────────────────────
+    # ── FLUJO EN CURSO ───────────────────────────────────────────────────
+    # Si esta conversación tiene un flujo esperando respuesta (una pregunta
+    # o un menú de opciones), este mensaje ES esa respuesta: la consume el
+    # flujo, no la IA. Es la garantía de que un flujo jamás se corta a medias.
+    if not item.get("es_asesor"):
+        try:
+            estado = await _flujo_estado_de(item["conversacion_id"])
+            if estado and await _flujo_continuar(estado, item, numero, user_id):
+                return
+        except Exception as e:
+            log.warning("Flujo activo falló (se sigue normal): %s", e)
+
+    # ── FLUJOS / AUTOMATIZACIONES (recetas) ──────────────────────────────
     # Corren ANTES de agrupar ráfagas y antes de la IA: si el mensaje dispara
-    # una receta que responde o pasa el chat al humano, esa receta contesta al
-    # instante y la IA ya no dice nada encima. Si la receta solo pone
-    # etiquetas, el flujo normal (IA incluida) sigue igual.
+    # un flujo que responde, pregunta o pasa el chat (a ti o a la IA), ese
+    # flujo manda y la IA ya no dice nada encima. Si el flujo solo pone
+    # etiquetas, el camino normal (IA incluida) sigue igual.
     if not item.get("es_asesor"):
         try:
             if await _correr_automatizaciones(item, numero, user_id):
@@ -2660,12 +2804,27 @@ async def _responder_conversacion(item: dict, numero: dict, user_id: str):
 
     # (El aviso al celular ya se mandó en _procesar_en_segundo_plano.)
 
-    if not numero.get("ia_enabled", True) or not conv.get("ai_enabled", True):
-        return  # el humano tiene el control
-
     entren = await _entrenamiento_de(user_id, numero["id"])
     if not entren.get("activo", True):
         return
+
+    # ── Sesión de "cliente nuevo" (para el modo global "solo_nuevos") ──────
+    # Cliente nuevo = número que nunca había escrito, o que llevaba más de
+    # `nuevos_meses` sin escribir. La sesión se abre aquí y se cierra en
+    # cuanto el agente responde a mano (el chat ya es suyo).
+    if "prev_inbound_at" in item and not conv.get("ia_sesion_nueva"):
+        prev_dt = _parse_ts(item.get("prev_inbound_at"))
+        try:
+            meses = int(entren.get("nuevos_meses") or 3)
+        except Exception:
+            meses = 3
+        if prev_dt is None or (datetime.now(timezone.utc) - prev_dt).days >= meses * 30:
+            conv["ia_sesion_nueva"] = True
+            await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"},
+                           {"ia_sesion_nueva": True})
+
+    if not _ia_decide(conv, entren, numero):
+        return  # el humano tiene el control (modo del chat, pausa o modo global)
     if not _en_horario(entren):
         msg_fuera = entren.get("fuera_horario_msg") or "Gracias por tu mensaje, en cuanto abramos te contesto."
         await _wa_marcar_leido(numero, item.get("wa_message_id"))
@@ -2678,7 +2837,8 @@ async def _responder_conversacion(item: dict, numero: dict, user_id: str):
     if isinstance(palabras, str):
         palabras = [p.strip() for p in palabras.split(",") if p.strip()]
     if any(p.lower() in item["texto"].lower() for p in palabras if p):
-        await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"}, {"ai_enabled": False})
+        await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"},
+                       {"ai_enabled": False, "ia_modo": "off"})
         await enviar_push(user_id, "Un prospecto pidió hablar contigo",
                           f"{contacto.get('nombre') or item['wa_id']}: {item['texto'][:100]}",
                           datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
@@ -2695,7 +2855,8 @@ async def _responder_conversacion(item: dict, numero: dict, user_id: str):
         # Antes esto apagaba la IA y se salía en silencio: el prospecto se
         # quedaba escribiendo al vacío y el agente nunca se enteraba de que
         # ahora le tocaba a él. Ahora se le avisa.
-        await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"}, {"ai_enabled": False})
+        await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"},
+                       {"ai_enabled": False, "ia_modo": "off"})
         await enviar_push(user_id, "Un prospecto te está esperando",
                           f"{contacto.get('nombre') or item['wa_id']} lleva rato platicando con la IA. "
                           "Ya te toca a ti seguir la conversación.",
@@ -2729,7 +2890,8 @@ async def _responder_conversacion(item: dict, numero: dict, user_id: str):
         # La IA no pudo pensar la respuesta (la API venía caída o saturada).
         # Se le pasa la conversación al humano y se le avisa: un prospecto
         # esperando a un bot descompuesto es un prospecto perdido.
-        await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"}, {"ai_enabled": False})
+        await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"},
+                       {"ai_enabled": False, "ia_modo": "off"})
         await enviar_push(user_id, "La IA no pudo contestar",
                           f"{contacto.get('nombre') or item['wa_id']} está esperando respuesta. "
                           "Entra a la conversación tú.",
@@ -2895,14 +3057,15 @@ async def _responder_conversacion(item: dict, numero: dict, user_id: str):
                                   datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
             else:
                 await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"},
-                               {"ai_enabled": False})
+                               {"ai_enabled": False, "ia_modo": "off"})
                 await enviar_push(user_id, "No se pudo guardar un inmueble",
                                   f"{contacto.get('nombre') or item['wa_id']} te mandó una propiedad y "
                                   "no se pudo registrar. Entra a la conversación.",
                                   datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
 
         elif tipo == "pasar_a_humano":
-            await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"}, {"ai_enabled": False})
+            await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"},
+                           {"ai_enabled": False, "ia_modo": "off"})
             await enviar_push(user_id, "Un prospecto necesita de ti",
                               accion.get("motivo") or "La IA te pasó esta conversación.",
                               datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
@@ -3028,14 +3191,14 @@ async def wa2_enviar_manual(req: EnviarManualReq, request: Request):
     await _guardar_mensaje(conv["user_id"], conv["contacto_id"], conv["id"], wamid, "out", "agente", texto)
 
     # En cuanto el asesor escribe con sus propias manos, la IA se hace a un
-    # lado en ESA conversación. Si no, pasa lo más ridículo que puede pasar:
-    # el prospecto contesta y le responden dos "personas" distintas, con
-    # criterios distintos, en el mismo chat. Se reactiva con el switch de IA.
-    ia_pausada = False
-    if conv.get("ai_enabled", True):
-        await sb_patch("wa2_conversaciones", {"id": f"eq.{conv['id']}"}, {"ai_enabled": False})
-        ia_pausada = True
-    return {"ok": True, "ia_pausada": ia_pausada}
+    # lado en ESA conversación (para siempre o por el rato que él configuró
+    # en Recepción IA). Si no, pasa lo más ridículo que puede pasar: el
+    # prospecto contesta y le responden dos "personas" distintas, con
+    # criterios distintos, en el mismo chat. Se reactiva con el control de IA.
+    pausa = await _pausar_por_respuesta_manual(conv, numero)
+    return {"ok": True, "ia_pausada": pausa["ia_pausada"],
+            "ia_pausada_hasta": pausa["ia_pausada_hasta"],
+            "para_siempre": pausa["para_siempre"]}
 
 
 class LecturaReq(BaseModel):
@@ -3082,6 +3245,7 @@ async def wa2_lectura(conversacion_id: str, req: LecturaReq, request: Request):
 
 class ConvPatchReq(BaseModel):
     ai_enabled: bool | None = None
+    ia_modo: str | None = None      # 'auto' | 'on' | 'off'
     etapa: str | None = None
 
 
@@ -3093,8 +3257,22 @@ async def wa2_conversacion_patch(conversacion_id: str, req: ConvPatchReq, reques
                                                     "select": "contacto_id", "limit": "1"})
     if not conv_rows:
         raise HTTPException(status_code=404, detail="Conversación no encontrada")
-    if req.ai_enabled is not None:
-        await sb_patch("wa2_conversaciones", {"id": f"eq.{conversacion_id}"}, {"ai_enabled": req.ai_enabled})
+    modo = req.ia_modo
+    if modo is None and req.ai_enabled is not None:
+        # Clientes viejos (la app de iOS hasta que se recompile) siguen
+        # mandando el booleano: se traduce al modo equivalente.
+        modo = "on" if req.ai_enabled else "off"
+    if modo is not None:
+        if modo not in ("auto", "on", "off"):
+            raise HTTPException(status_code=400, detail="ia_modo debe ser auto, on u off")
+        # Cualquier cambio explícito del agente borra la pausa temporal:
+        # si la acaba de encender, es porque QUIERE que conteste ya.
+        cambios = {"ia_modo": modo, "ai_enabled": modo != "off", "ia_pausada_hasta": None}
+        guardado = await sb_patch("wa2_conversaciones", {"id": f"eq.{conversacion_id}"}, cambios)
+        if not guardado:
+            # Migración pendiente: degradar al booleano clásico.
+            await sb_patch("wa2_conversaciones", {"id": f"eq.{conversacion_id}"},
+                           {"ai_enabled": modo != "off"})
     if req.etapa is not None:
         await sb_patch("wa2_contactos", {"id": f"eq.{conv_rows[0]['contacto_id']}"}, {"etapa": req.etapa})
     return {"ok": True}
@@ -3148,6 +3326,10 @@ async def wa2_borrar_conversacion(conversacion_id: str, request: Request):
     await _borrar_archivos(archivos)
 
     await sb_delete("wa2_mensajes", {"conversacion_id": f"eq.{conversacion_id}"})
+    try:
+        await sb_delete("wa2_flujo_estados", {"conversacion_id": f"eq.{conversacion_id}"})
+    except Exception:
+        pass
     await sb_delete("wa2_conversaciones", {"id": f"eq.{conversacion_id}"})
     if conv[0].get("contacto_id"):
         await sb_delete("wa2_contactos", {"id": f"eq.{conv[0]['contacto_id']}"})
@@ -3223,7 +3405,251 @@ async def wa2_contacto_patch(contacto_id: str, request: Request):
 # contacto) y 'humano' (apagar la IA de esa conversación y avisar al agente).
 # Si la receta responde o pasa al humano, la IA ya no contesta ese mensaje.
 # =============================================================================
-_AUTO_TIPOS = ("mensaje", "etiqueta", "humano")
+_AUTO_TIPOS = ("mensaje", "etiqueta", "humano", "ia", "pregunta", "opciones")
+
+# Campos donde una pregunta de flujo puede guardar la respuesta del prospecto
+_FLUJO_CAMPOS = ("nombre", "presupuesto", "interes", "nota")
+_FLUJO_MAX_PASOS_POR_TURNO = 20   # candado anti-loops en saltos de opciones
+_FLUJO_CADUCA_HORAS = 24          # un flujo abandonado no revive al día siguiente
+_FLUJO_MAX_REINTENTOS = 2         # veces que se re-explica un menú no entendido
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# MOTOR DE FLUJOS — la parte determinista del módulo. Un flujo NUNCA
+# improvisa: hace exactamente los pasos que el usuario dibujó, en el orden
+# que los dibujó. Es lo que hace que ManyChat "no se equivoque" — y aquí
+# convive con la IA: un flujo puede terminar entregándole el chat a la IA
+# (paso 'ia') o al agente (paso 'humano').
+#
+# Pasos que ESPERAN respuesta ('pregunta' y 'opciones') dejan anotado en
+# wa2_flujo_estados en qué paso van; el siguiente mensaje del prospecto
+# continúa el flujo en vez de irse a la IA.
+# ══════════════════════════════════════════════════════════════════════════
+async def _flujo_estado_de(conversacion_id: str) -> dict | None:
+    try:
+        rows = await sb_get("wa2_flujo_estados", {"conversacion_id": f"eq.{conversacion_id}",
+                                                  "select": "*", "limit": "1"})
+        return rows[0] if rows else None
+    except Exception:
+        return None  # tabla aún no migrada: no hay flujos activos y ya
+
+
+async def _flujo_estado_guardar(user_id: str, conversacion_id: str, auto_id: str,
+                                paso: int, datos: dict) -> None:
+    try:
+        existente = await sb_get("wa2_flujo_estados", {"conversacion_id": f"eq.{conversacion_id}",
+                                                       "select": "id", "limit": "1"})
+        fila = {"paso": paso, "datos": datos, "updated_at": _now()}
+        if existente:
+            await sb_patch("wa2_flujo_estados", {"id": f"eq.{existente[0]['id']}"},
+                           dict(fila, automatizacion_id=auto_id))
+        else:
+            await sb_post("wa2_flujo_estados", dict(fila, user_id=user_id,
+                          conversacion_id=conversacion_id, automatizacion_id=auto_id,
+                          created_at=_now()))
+    except Exception as e:
+        log.warning("No se pudo guardar el estado del flujo: %s", e)
+
+
+async def _flujo_estado_borrar(conversacion_id: str) -> None:
+    try:
+        await sb_delete("wa2_flujo_estados", {"conversacion_id": f"eq.{conversacion_id}"})
+    except Exception:
+        pass
+
+
+def _flujo_menu_texto(paso: dict) -> str:
+    """El menú tal como lo ve el prospecto: la pregunta y sus opciones
+    numeradas, para que pueda contestar '1', '2' o el texto de la opción."""
+    lineas = []
+    if paso.get("valor"):
+        lineas.append(paso["valor"])
+    for i, op in enumerate(paso.get("opciones") or [], start=1):
+        lineas.append(f"{i}. {op.get('texto', '')}")
+    return "\n".join(lineas)
+
+
+async def _flujo_nota_final(user_id: str, contacto_id: str, auto_nombre: str, datos: dict) -> None:
+    """Al terminar un flujo, lo que el prospecto contestó queda en la ficha
+    del contacto — juntar datos que nadie vuelve a ver no sirve de nada."""
+    limpios = {k: v for k, v in (datos or {}).items() if not k.startswith("_") and v}
+    if not limpios:
+        return
+    try:
+        rows = await sb_get("wa2_contactos", {"id": f"eq.{contacto_id}",
+                                              "select": "notas,contacto_crm_id,nombre", "limit": "1"})
+        if not rows:
+            return
+        etiquetas = {"nombre": "Nombre", "presupuesto": "Presupuesto",
+                     "interes": "Interés", "nota": "Nota"}
+        texto = f"Flujo \"{auto_nombre}\": " + " · ".join(
+            f"{etiquetas.get(k, k)}: {v}" for k, v in limpios.items())
+        notas = (rows[0].get("notas") or []) + [{"texto": texto, "autor": "flujo", "fecha": _now()}]
+        cambios: dict = {"notas": notas, "updated_at": _now()}
+        # Si el flujo preguntó el nombre y el contacto no tenía, se estrena.
+        if limpios.get("nombre") and not rows[0].get("nombre"):
+            cambios["nombre"] = str(limpios["nombre"])[:80]
+        await sb_patch("wa2_contactos", {"id": f"eq.{contacto_id}"}, cambios)
+        await _sincronizar_contacto_crm(user_id, rows[0], {"nota": texto})
+    except Exception as e:
+        log.warning("No se pudo volcar la nota del flujo: %s", e)
+
+
+async def _flujo_ejecutar(auto: dict, item: dict, numero: dict, user_id: str,
+                          desde: int = 0, datos: dict | None = None) -> bool:
+    """Ejecuta los pasos del flujo a partir de `desde`. Devuelve True si el
+    flujo consumió la conversación (respondió algo o quedó esperando
+    respuesta); False si la IA normal debe seguir con este mismo mensaje."""
+    acciones = auto.get("acciones") or []
+    datos = dict(datos or {})
+    i = max(0, desde)
+    respondio = False
+    ejecutados = 0
+    marcado_leido = False
+
+    async def _enviar(texto: str) -> None:
+        nonlocal respondio, marcado_leido
+        if not marcado_leido:
+            await _wa_marcar_leido(numero, item.get("wa_message_id"))
+            marcado_leido = True
+        wamid = await _wa_send_text(numero, item["wa_id"], texto[:WA_MAX_TEXTO])
+        await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"],
+                              wamid, "out", "ia", texto[:WA_MAX_TEXTO])
+        respondio = True
+
+    while i < len(acciones) and ejecutados < _FLUJO_MAX_PASOS_POR_TURNO:
+        ejecutados += 1
+        a = acciones[i] or {}
+        tipo = a.get("tipo")
+        valor = a.get("valor") or ""
+
+        if tipo == "mensaje" and valor:
+            await _enviar(valor)
+            i += 1
+        elif tipo == "etiqueta" and valor:
+            try:
+                rows = await sb_get("wa2_contactos", {"id": f"eq.{item['contacto_id']}",
+                                                      "select": "etiquetas", "limit": "1"})
+                tags = (rows[0].get("etiquetas") or []) if rows else []
+                if valor not in tags:
+                    await sb_patch("wa2_contactos", {"id": f"eq.{item['contacto_id']}"},
+                                   {"etiquetas": (tags + [valor])[:20], "updated_at": _now()})
+            except Exception as e:
+                log.warning("Paso etiqueta del flujo falló: %s", e)
+            i += 1
+        elif tipo == "humano":
+            await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"},
+                           {"ai_enabled": False, "ia_modo": "off"})
+            await enviar_push(user_id, "Un flujo te pasó un chat",
+                              f"El flujo '{auto.get('nombre')}' apagó la IA. Ya te toca a ti.",
+                              datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
+            await _flujo_estado_borrar(item["conversacion_id"])
+            await _flujo_nota_final(user_id, item["contacto_id"], auto.get("nombre") or "", datos)
+            return True
+        elif tipo == "ia":
+            # El flujo termina entregándole la conversación a la IA: se
+            # enciende en este chat y la IA contesta ESTE mismo mensaje.
+            await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"},
+                           {"ia_modo": "on", "ai_enabled": True, "ia_pausada_hasta": None})
+            await _flujo_estado_borrar(item["conversacion_id"])
+            await _flujo_nota_final(user_id, item["contacto_id"], auto.get("nombre") or "", datos)
+            return False
+        elif tipo == "pregunta" and valor:
+            await _enviar(valor)
+            await _flujo_estado_guardar(user_id, item["conversacion_id"], auto["id"], i, datos)
+            return True
+        elif tipo == "opciones" and (a.get("opciones") or []):
+            await _enviar(_flujo_menu_texto(a))
+            datos["_intentos"] = 0
+            await _flujo_estado_guardar(user_id, item["conversacion_id"], auto["id"], i, datos)
+            return True
+        else:
+            i += 1  # paso vacío o desconocido: se brinca, jamás truena
+
+    # Fin del flujo (o candado anti-loop): se limpia y se entrega lo juntado.
+    await _flujo_estado_borrar(item["conversacion_id"])
+    await _flujo_nota_final(user_id, item["contacto_id"], auto.get("nombre") or "", datos)
+    return respondio
+
+
+async def _flujo_continuar(estado: dict, item: dict, numero: dict, user_id: str) -> bool:
+    """Un flujo estaba esperando respuesta y llegó un mensaje del prospecto.
+    Devuelve True si el flujo lo consumió; False si debe seguir el camino
+    normal (automatizaciones nuevas / IA)."""
+    ult = _parse_ts(estado.get("updated_at"))
+    if ult and (datetime.now(timezone.utc) - ult).total_seconds() > _FLUJO_CADUCA_HORAS * 3600:
+        await _flujo_estado_borrar(item["conversacion_id"])
+        return False
+    try:
+        autos = await sb_get("wa2_automatizaciones", {"id": f"eq.{estado['automatizacion_id']}",
+                                                      "select": "*", "limit": "1"})
+    except Exception:
+        autos = []
+    if not autos or not autos[0].get("activa", True):
+        await _flujo_estado_borrar(item["conversacion_id"])
+        return False
+    auto = autos[0]
+    acciones = auto.get("acciones") or []
+    paso_idx = int(estado.get("paso") or 0)
+    datos = dict(estado.get("datos") or {})
+    if paso_idx >= len(acciones):
+        await _flujo_estado_borrar(item["conversacion_id"])
+        return False
+    paso = acciones[paso_idx] or {}
+    texto = (item.get("texto") or "").strip()
+
+    if paso.get("tipo") == "pregunta":
+        campo = paso.get("guardar") or "nota"
+        datos[campo] = texto[:300]
+        return await _flujo_ejecutar(auto, item, numero, user_id,
+                                     desde=paso_idx + 1, datos=datos)
+
+    if paso.get("tipo") == "opciones":
+        ops = paso.get("opciones") or []
+        elegido = None
+        limpio = texto.lower().strip(".!¡¿? ")
+        if limpio.isdigit() and 1 <= int(limpio) <= len(ops):
+            elegido = ops[int(limpio) - 1]
+        else:
+            for op in ops:
+                t = (op.get("texto") or "").lower()
+                if t and (t in limpio or limpio in t):
+                    elegido = op
+                    break
+        if elegido is None:
+            intentos = int(datos.get("_intentos") or 0) + 1
+            if intentos > _FLUJO_MAX_REINTENTOS:
+                # No entendió dos veces: el flujo se quita de en medio y el
+                # mensaje sigue su camino normal (la IA sí sabe conversar).
+                await _flujo_estado_borrar(item["conversacion_id"])
+                return False
+            datos["_intentos"] = intentos
+            await _flujo_estado_guardar(user_id, item["conversacion_id"], auto["id"], paso_idx, datos)
+            wamid = await _wa_send_text(numero, item["wa_id"],
+                                        "Perdón, no te entendí. Respóndeme con el número de una opción:\n"
+                                        + _flujo_menu_texto(paso))
+            await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"],
+                                  wamid, "out", "ia",
+                                  "Perdón, no te entendí. Respóndeme con el número de una opción:\n"
+                                  + _flujo_menu_texto(paso))
+            return True
+        datos.pop("_intentos", None)
+        datos.setdefault("nota", "")
+        # Se anota qué eligió (sirve para la nota final del flujo).
+        eleccion = elegido.get("texto") or ""
+        datos["nota"] = (datos["nota"] + (" · " if datos["nota"] else "") + f"Eligió: {eleccion}")[:400]
+        try:
+            ir = int(elegido.get("ir") or 0)
+        except Exception:
+            ir = 0
+        destino = (ir - 1) if ir >= 1 else (paso_idx + 1)
+        if destino >= len(acciones):
+            destino = len(acciones)  # fuera de rango = terminar el flujo
+        return await _flujo_ejecutar(auto, item, numero, user_id, desde=destino, datos=datos)
+
+    # Paso raro (no espera respuesta): se limpia y se sigue normal.
+    await _flujo_estado_borrar(item["conversacion_id"])
+    return False
 
 # Candado anti-metralleta: la misma receta no se dispara dos veces en la misma
 # conversación en menos de este tiempo, aunque el prospecto repita la palabra
@@ -3245,7 +3671,7 @@ def _limpiar_automatizacion(req: AutomatizacionReq) -> dict:
     nombre = (req.nombre or "").strip()[:80]
     if not nombre:
         raise HTTPException(status_code=400, detail="Ponle un nombre a la automatización.")
-    disparador = req.disparador if req.disparador in ("palabra", "nuevo") else "palabra"
+    disparador = req.disparador if req.disparador in ("palabra", "nuevo", "nuevo_3m") else "palabra"
     palabras = []
     for p in (req.palabras or []):
         t = str(p).strip().lower()[:60]
@@ -3260,18 +3686,43 @@ def _limpiar_automatizacion(req: AutomatizacionReq) -> dict:
         valor = str((a or {}).get("valor") or "").strip()
         if tipo not in _AUTO_TIPOS:
             continue
+        paso: dict = {"tipo": tipo, "valor": valor}
         if tipo == "mensaje":
-            valor = valor[:1000]
-            if not valor:
+            paso["valor"] = valor[:1000]
+            if not paso["valor"]:
                 continue
         elif tipo == "etiqueta":
-            valor = valor[:40]
-            if not valor:
+            paso["valor"] = valor[:40]
+            if not paso["valor"]:
                 continue
-        else:
-            valor = ""
-        acciones.append({"tipo": tipo, "valor": valor})
-    acciones = acciones[:5]
+        elif tipo == "pregunta":
+            paso["valor"] = valor[:1000]
+            if not paso["valor"]:
+                continue
+            g = str((a or {}).get("guardar") or "nota").strip().lower()
+            paso["guardar"] = g if g in _FLUJO_CAMPOS else "nota"
+        elif tipo == "opciones":
+            paso["valor"] = valor[:1000]
+            ops = []
+            for o in ((a or {}).get("opciones") or [])[:6]:
+                txt = str((o or {}).get("texto") or "").strip()[:60]
+                if not txt:
+                    continue
+                op: dict = {"texto": txt}
+                try:
+                    ir = int((o or {}).get("ir") or 0)
+                except Exception:
+                    ir = 0
+                if ir > 0:
+                    op["ir"] = ir  # número de paso (1-based) al que salta
+                ops.append(op)
+            if len(ops) < 2:
+                continue  # un menú de una sola opción no es un menú
+            paso["opciones"] = ops
+        else:  # 'humano' / 'ia' no llevan valor
+            paso["valor"] = ""
+        acciones.append(paso)
+    acciones = acciones[:12]
     if not acciones:
         raise HTTPException(status_code=400, detail="Agrega al menos un paso a la automatización.")
     return {"nombre": nombre, "numero_id": req.numero_id or None, "disparador": disparador,
@@ -3314,6 +3765,24 @@ async def wa2_automatizacion_patch(auto_id: str, request: Request):
     permitido = {}
     if "activa" in body:
         permitido["activa"] = bool(body["activa"])
+    # Editar el flujo completo (nombre, disparador, pasos): pasa por la MISMA
+    # validación que al crearlo — cero caminos alternos donde equivocarse.
+    if any(k in body for k in ("nombre", "disparador", "palabras", "acciones", "numero_id")):
+        actual_rows = await sb_get("wa2_automatizaciones",
+                                   {"id": f"eq.{auto_id}", "user_id": _in_filter(ids),
+                                    "select": "*", "limit": "1"})
+        if not actual_rows:
+            raise HTTPException(status_code=404, detail="Automatización no encontrada")
+        actual = actual_rows[0]
+        req = AutomatizacionReq(
+            nombre=body.get("nombre", actual.get("nombre") or ""),
+            numero_id=body.get("numero_id", actual.get("numero_id")),
+            disparador=body.get("disparador", actual.get("disparador") or "palabra"),
+            palabras=body.get("palabras", actual.get("palabras") or []),
+            acciones=body.get("acciones", actual.get("acciones") or []),
+            activa=bool(body.get("activa", actual.get("activa", True))),
+        )
+        permitido.update(_limpiar_automatizacion(req))
     if not permitido:
         return {"ok": True}
     permitido["updated_at"] = _now()
@@ -3345,13 +3814,21 @@ async def _correr_automatizaciones(item: dict, numero: dict, user_id: str) -> bo
     ahora = datetime.now(timezone.utc).timestamp()
 
     for auto in autos:
-        if auto.get("disparador") == "nuevo":
+        disparador = auto.get("disparador")
+        if disparador == "nuevo":
             if es_nuevo is None:
                 entrantes = await sb_get("wa2_mensajes",
                                          {"conversacion_id": f"eq.{item['conversacion_id']}",
                                           "direction": "eq.in", "select": "id", "limit": "2"})
                 es_nuevo = len(entrantes) <= 1
             if not es_nuevo:
+                continue
+        elif disparador == "nuevo_3m":
+            # Cliente nuevo en el sentido amplio: nunca había escrito, o
+            # llevaba más de 3 meses sin escribir (el snapshot se tomó antes
+            # de guardar este mensaje, así que es la fecha correcta).
+            prev_dt = _parse_ts(item.get("prev_inbound_at"))
+            if prev_dt is not None and (datetime.now(timezone.utc) - prev_dt).days < 90:
                 continue
         else:
             palabras = auto.get("palabras") or []
@@ -3366,40 +3843,25 @@ async def _correr_automatizaciones(item: dict, numero: dict, user_id: str) -> bo
             for k in list(_AUTO_ULTIMA.keys())[:1000]:
                 _AUTO_ULTIMA.pop(k, None)
 
-        for accion in (auto.get("acciones") or []):
-            tipo = (accion or {}).get("tipo")
-            valor = (accion or {}).get("valor") or ""
-            try:
-                if tipo == "mensaje" and valor:
-                    await _wa_marcar_leido(numero, item.get("wa_message_id"))
-                    wamid = await _wa_send_text(numero, item["wa_id"], valor[:WA_MAX_TEXTO])
-                    await _guardar_mensaje(user_id, item["contacto_id"], item["conversacion_id"],
-                                          wamid, "out", "agente", valor[:WA_MAX_TEXTO])
-                    silenciar_ia = True
-                elif tipo == "etiqueta" and valor:
-                    rows = await sb_get("wa2_contactos", {"id": f"eq.{item['contacto_id']}",
-                                                          "select": "etiquetas", "limit": "1"})
-                    tags = (rows[0].get("etiquetas") or []) if rows else []
-                    if valor not in tags:
-                        tags = (tags + [valor])[:20]
-                        await sb_patch("wa2_contactos", {"id": f"eq.{item['contacto_id']}"},
-                                       {"etiquetas": tags, "updated_at": _now()})
-                elif tipo == "humano":
-                    await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"},
-                                   {"ai_enabled": False})
-                    await enviar_push(user_id, "Una automatización te pasó un chat",
-                                      f"La receta '{auto.get('nombre')}' apagó la IA. Ya te toca a ti.",
-                                      datos={"tipo": "whatsapp",
-                                             "conversation_id": item["conversacion_id"]})
-                    silenciar_ia = True
-            except Exception as e:
-                log.warning("Paso de automatización %s falló: %s", auto.get("id"), e)
+        # Todos los pasos (viejos y nuevos) corren por el MISMO motor de
+        # flujos: una sola implementación, un solo lugar donde equivocarse.
+        try:
+            if await _flujo_ejecutar(auto, item, numero, user_id):
+                silenciar_ia = True
+        except Exception as e:
+            log.warning("Flujo %s falló: %s", auto.get("id"), e)
 
         try:
             await sb_patch("wa2_automatizaciones", {"id": f"eq.{auto['id']}"},
                            {"veces_usada": (auto.get("veces_usada") or 0) + 1, "updated_at": _now()})
         except Exception:
             pass
+
+        if silenciar_ia:
+            # Un flujo ya tomó la conversación (respondió o quedó esperando):
+            # ningún otro flujo se le encima. Dos bots en un chat es el mismo
+            # error que dos personas en un chat.
+            break
 
     return silenciar_ia
 
