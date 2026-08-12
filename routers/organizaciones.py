@@ -886,3 +886,54 @@ async def listar_organizaciones(request: Request):
         o["miembros"] = conteo.get(o["id"], 0)
 
     return {"organizaciones": orgs}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ASIGNACIÓN DE AGENTE RESPONSABLE (Broquer para Empresas)
+# Solo owner/admin pueden asignar o reasignar. La columna asignado_a es una
+# etiqueta de responsabilidad: no cambia el dueño (user_id) ni la visibilidad.
+# ═══════════════════════════════════════════════════════════════════════════
+
+_TABLAS_ASIGNABLES = ("contactos", "propiedades")
+
+
+class AsignarReq(BaseModel):
+    tabla: str
+    ids: List[str]
+    agente_user_id: Optional[str] = None  # None = quitar asignación
+
+
+@router.post("/org/asignar")
+async def asignar_agente(req: AsignarReq, request: Request):
+    """Asigna (o desasigna con agente_user_id=null) registros a un agente."""
+    ctx = await _exigir_admin_org(request)
+
+    if req.tabla not in _TABLAS_ASIGNABLES:
+        raise HTTPException(status_code=400, detail="Tabla no válida.")
+    ids = [str(i).strip() for i in (req.ids or []) if str(i).strip()]
+    if not ids:
+        raise HTTPException(status_code=400, detail="No hay registros que asignar.")
+    if len(ids) > 500:
+        raise HTTPException(status_code=400, detail="Máximo 500 registros por operación.")
+
+    # El agente destino debe ser miembro ACTIVO de la misma empresa
+    if req.agente_user_id:
+        m = await _sb_get("organizacion_miembros", {
+            "org_id": f"eq.{ctx['org_id']}",
+            "user_id": f"eq.{req.agente_user_id}",
+            "activo": "eq.true",
+            "select": "user_id", "limit": "1",
+        })
+        if not m:
+            raise HTTPException(status_code=400, detail="Ese agente no pertenece a tu empresa o está desactivado.")
+
+    # PATCH acotado SIEMPRE a la org del admin: imposible tocar filas ajenas
+    lista = ",".join(f'"{i}"' for i in ids)
+    await _sb_patch(req.tabla, {
+        "id": f"in.({lista})",
+        "org_id": f"eq.{ctx['org_id']}",
+    }, {
+        "asignado_a": req.agente_user_id,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    })
+    return {"ok": True, "asignados": len(ids)}
