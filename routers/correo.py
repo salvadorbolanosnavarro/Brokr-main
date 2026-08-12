@@ -42,7 +42,10 @@ from pydantic import BaseModel
 router = APIRouter()
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
+# En Railway la llave pública se llama SUPABASE_ANON_KEY (igual que en
+# main.py y routers/firmas.py). Se deja SUPABASE_KEY como respaldo por si
+# algún entorno la nombra así.
+SUPABASE_KEY = os.environ.get("SUPABASE_ANON_KEY", "") or os.environ.get("SUPABASE_KEY", "")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "") or SUPABASE_KEY
 
 
