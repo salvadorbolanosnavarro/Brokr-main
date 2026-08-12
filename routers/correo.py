@@ -46,6 +46,8 @@ SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
 # main.py y routers/firmas.py). Se deja SUPABASE_KEY como respaldo por si
 # algún entorno la nombra así.
 SUPABASE_KEY = os.environ.get("SUPABASE_ANON_KEY", "") or os.environ.get("SUPABASE_KEY", "")
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
+CORREO_RELAY_FROM = os.environ.get("CORREO_RELAY_FROM", "correo@broquer.app")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "") or SUPABASE_KEY
 
 
@@ -459,8 +461,18 @@ async def correo_conectar(req: ConectarReq, request: Request):
 
     # Probamos la conexión real ANTES de guardar nada
     error = await asyncio.to_thread(_probar_conexion, cta)
+    aviso = ""
     if error:
-        raise HTTPException(400, error)
+        es_bloqueo_red = "no pudo salir por los puertos" in error
+        if es_bloqueo_red and RESEND_API_KEY:
+            # La bandeja (IMAP) sí funciona; el envío saldrá por el relay de
+            # Broquer (Resend) con Reply-To hacia el correo del usuario.
+            aviso = ("Tu bandeja quedó conectada. El envío saldrá por el servidor "
+                     "de Broquer a nombre de " + CORREO_RELAY_FROM + " con "
+                     "respuestas dirigidas a tu correo, porque el hosting "
+                     "bloquea el envío directo.")
+        else:
+            raise HTTPException(400, error)
 
     ahora = datetime.now(timezone.utc).isoformat()
     fila = {
@@ -489,7 +501,7 @@ async def correo_conectar(req: ConectarReq, request: Request):
         if creado is None:
             raise HTTPException(502, "No se pudo guardar la cuenta. Corre la migración migracion-correo.sql.")
 
-    return {"ok": True, "email": correo}
+    return {"ok": True, "email": correo, "aviso": aviso}
 
 
 @router.delete("/correo/desconectar")
@@ -552,6 +564,38 @@ async def correo_enviar(req: EnviarReq, request: Request):
     try:
         await asyncio.to_thread(_enviar_smtp, cta, para, asunto, cuerpo,
                                 req.in_reply_to or "", req.references or "")
+        return {"ok": True, "via": "smtp"}
     except Exception as e:
-        raise HTTPException(502, f"No se pudo enviar: {e}")
-    return {"ok": True}
+        bloqueo_red = "unreachable" in str(e).lower() or "timed out" in str(e).lower()
+        if not (bloqueo_red and RESEND_API_KEY):
+            raise HTTPException(502, f"No se pudo enviar: {e}")
+
+    # Relay: sale por Resend a nombre del dominio de Broquer, con Reply-To
+    # hacia el correo del usuario para que las respuestas lleguen a su bandeja.
+    import html as _html
+    cuerpo_html = "<p>" + _html.escape(cuerpo).replace("\n", "<br>") + "</p>"
+    payload = {
+        "from": f"{cta['email']} vía Broquer <{CORREO_RELAY_FROM}>",
+        "to": [d.strip() for d in para.split(",") if d.strip()],
+        "reply_to": cta["email"],
+        "subject": asunto,
+        "html": cuerpo_html,
+        "text": cuerpo,
+    }
+    if req.in_reply_to:
+        payload["headers"] = {
+            "In-Reply-To": req.in_reply_to,
+            "References": ((req.references or "") + " " + req.in_reply_to).strip(),
+        }
+    async with httpx.AsyncClient(timeout=25) as c:
+        r = await c.post("https://api.resend.com/emails",
+                         headers={"Authorization": f"Bearer {RESEND_API_KEY}",
+                                  "Content-Type": "application/json"},
+                         json=payload)
+    if r.status_code not in (200, 201, 202):
+        try:
+            detalle = (r.json() or {}).get("message") or r.text[:200]
+        except Exception:
+            detalle = r.text[:200]
+        raise HTTPException(502, f"No se pudo enviar (relay): {detalle}")
+    return {"ok": True, "via": "relay"}
