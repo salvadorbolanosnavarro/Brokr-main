@@ -222,7 +222,8 @@ async function coConectar() {
     });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.detail || 'No se pudo conectar.');
-    coToast('Correo conectado');
+    if (d.aviso) alert('Correo conectado.\n\n' + d.aviso);
+    else coToast('Correo conectado');
     coEstado();
   } catch (e) {
     alert('No se pudo conectar tu correo.\n\n' + (e.message || e));
@@ -364,7 +365,7 @@ async function coEnviar() {
     });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.detail || 'Error');
-    coToast('Correo enviado');
+    coToast(d.via === 'relay' ? 'Enviado por el servidor de Broquer (las respuestas llegan a tu correo)' : 'Correo enviado');
     coCerrarModal();
   } catch (e) {
     alert('No se pudo enviar.\n\n' + (e.message || e));
