@@ -261,6 +261,7 @@
     // Seguimiento — hablar con el prospecto hasta que se convierte en cliente.
     { key:'whatsapp',     href:'whatsapp.html',      label:'WhatsApp',            group:'seguimiento', icon:'whatsapp' },
     { key:'leads',        href:'leads.html',         label:'Leads',               group:'seguimiento', icon:'send' },
+    { key:'correo',       href:'correo.html',        label:'Correo',              group:'seguimiento', icon:'mail' },
     // Documentos — en el orden real de la operación: se redacta, se firma, se reporta.
     { key:'contratos',    href:'contratos.html',     label:'Contratos',           group:'documentos',  icon:'document' },
     { key:'firmas',       href:'firmas.html',        label:'Firma electrónica',   group:'documentos',  icon:'pencil' },
@@ -301,6 +302,7 @@
     'admin':        'Panel administrativo',
     'facebook-ads': 'Meta Ads Express — crear, activar y medir anuncios de Facebook e Instagram',
     'whatsapp':     'WhatsApp — varios números, chats, conexión, Recepción automática y entrenamiento de la IA',
+    'correo':       'Correo — bandeja de entrada conectada por IMAP, leer, responder y redactar correos',
   };
 
   /* ── Encabezado canónico por página (unificación de esqueleto) ──
@@ -322,8 +324,10 @@
     'blog':          { title:'Blog',                   sub:'Recursos profesionales sobre PLD, legal y mercado.' },
     'mi-sitio':      { title:'Mi sitio',               sub:'El sitio web público que tus clientes ven cuando les compartes tu link.' },
     'video':         { title:'Video',                   sub:'Tus fotos se vuelven un recorrido listo para reels, stories y WhatsApp.' },
+    'correo':        { title:'Correo',                  sub:'Tu bandeja de entrada conectada a Broquer: lee, responde y redacta sin salir.' },
   };
   const ICONS = {
+    mail:       '<path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>',
     home:       '<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/>',
     nums123:    '<text x="12" y="16.5" text-anchor="middle" font-size="11.5" font-weight="800" fill="currentColor" stroke="none" font-family="inherit">123</text>',
     building:   '<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.121 0L22.28 12M4.5 9.75v10.125a1.125 1.125 0 001.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125a1.125 1.125 0 001.125-1.125V9.75"/>',
