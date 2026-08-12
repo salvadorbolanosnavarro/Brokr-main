@@ -136,8 +136,14 @@ let CO_MSGS = [];
 let CO_ACTUAL = null;          // mensaje abierto (objeto completo)
 let CO_RESPONDIENDO = null;    // {in_reply_to, references} si el modal es respuesta
 
-function coTok() { return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || null; }
-function coAuth() { return { Authorization: 'Bearer ' + coTok() }; }
+async function coAuth() {
+  let tok = null;
+  try {
+    if (window.brokrSb && window.brokrSb.ensureToken) tok = await window.brokrSb.ensureToken();
+  } catch {}
+  if (!tok) tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || null;
+  return { Authorization: 'Bearer ' + tok };
+}
 function coEsc(s) {
   return String(s == null ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
@@ -169,7 +175,7 @@ function coToast(msg) {
 /* ── Arranque ─────────────────────────────────────────────── */
 async function coEstado() {
   try {
-    const r = await fetch(CO_API + '/correo/estado', { headers: coAuth() });
+    const r = await fetch(CO_API + '/correo/estado', { headers: await coAuth() });
     const d = await r.json();
     if (d.conectado) {
       document.getElementById('co-view-conectar').hidden = true;
@@ -211,7 +217,7 @@ async function coConectar() {
   try {
     const r = await fetch(CO_API + '/correo/conectar', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...coAuth() },
+      headers: { 'Content-Type': 'application/json', ...(await coAuth()) },
       body: JSON.stringify(payload)
     });
     const d = await r.json().catch(() => ({}));
@@ -228,7 +234,7 @@ async function coConectar() {
 async function coDesconectar() {
   if (!confirm('¿Desconectar tu correo de Broquer? Tu cuenta de correo sigue igual; solo se borra la conexión y la contraseña guardada.')) return;
   try {
-    await fetch(CO_API + '/correo/desconectar', { method: 'DELETE', headers: coAuth() });
+    await fetch(CO_API + '/correo/desconectar', { method: 'DELETE', headers: await coAuth() });
     coToast('Correo desconectado');
   } catch {}
   CO_MSGS = []; CO_ACTUAL = null;
@@ -240,7 +246,7 @@ async function coCargarBandeja() {
   const lista = document.getElementById('co-lista');
   lista.innerHTML = '<div class="co-vacio">Cargando bandeja…</div>';
   try {
-    const r = await fetch(CO_API + '/correo/bandeja?limite=30', { headers: coAuth() });
+    const r = await fetch(CO_API + '/correo/bandeja?limite=30', { headers: await coAuth() });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.detail || 'Error');
     CO_MSGS = d.mensajes || [];
@@ -271,7 +277,7 @@ async function coAbrirMensaje(uid) {
   document.getElementById('co-lista').classList.add('is-hidden');
   lect.innerHTML = '<div class="co-vacio">Abriendo…</div>';
   try {
-    const r = await fetch(CO_API + '/correo/mensaje/' + encodeURIComponent(uid), { headers: coAuth() });
+    const r = await fetch(CO_API + '/correo/mensaje/' + encodeURIComponent(uid), { headers: await coAuth() });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.detail || 'Error');
     CO_ACTUAL = d.mensaje;
@@ -353,7 +359,7 @@ async function coEnviar() {
   try {
     const r = await fetch(CO_API + '/correo/enviar', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...coAuth() },
+      headers: { 'Content-Type': 'application/json', ...(await coAuth()) },
       body: JSON.stringify(payload)
     });
     const d = await r.json().catch(() => ({}));
@@ -367,7 +373,17 @@ async function coEnviar() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', coEstado);
+document.addEventListener('DOMContentLoaded', () => {
+  // Pequeña espera activa: app-shell.js (defer) define window.brokrSb un
+  // instante después del DOMContentLoaded. Sin esto, la primera llamada
+  // saldría con un token viejo de localStorage.
+  let intentos = 0;
+  (function esperarShell() {
+    if (window.brokrSb || intentos > 20) { coEstado(); return; }
+    intentos++;
+    setTimeout(esperarShell, 100);
+  })();
+});
 </script>
 <script src="app-shell.js" defer></script>
 </body>
