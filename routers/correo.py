@@ -195,30 +195,60 @@ async def _cuenta_de(uid: str) -> Optional[dict]:
 # ── IMAP/SMTP síncronos (siempre dentro de asyncio.to_thread) ──────────────
 
 def _imap_conectar(cta: dict) -> imaplib.IMAP4_SSL:
-    m = imaplib.IMAP4_SSL(cta["imap_host"], int(cta["imap_port"] or 993))
+    m = imaplib.IMAP4_SSL(cta["imap_host"], int(cta["imap_port"] or 993), timeout=15)
     m.login(cta["usuario"], _descifrar(cta["secreto"]))
     return m
 
 
-def _probar_conexion(cta: dict) -> Optional[str]:
-    """Devuelve None si todo bien, o el mensaje de error humano si algo falla."""
+def _probar_smtp(host: str, port: int, ssl_directo: bool, usuario: str, password: str) -> Optional[str]:
+    """Prueba UN puerto SMTP. None si funcionó; el error humano si no."""
     try:
-        m = imaplib.IMAP4_SSL(cta["imap_host"], int(cta["imap_port"] or 993))
+        if ssl_directo:
+            s = smtplib.SMTP_SSL(host, port, timeout=15)
+        else:
+            s = smtplib.SMTP(host, port, timeout=15)
+            s.starttls()
+        s.login(usuario, password)
+        s.quit()
+        return None
+    except Exception as e:
+        return f"SMTP (enviar) rechazó la conexión: {e}"
+
+
+def _probar_conexion(cta: dict) -> Optional[str]:
+    """Prueba IMAP y SMTP. Si el puerto SMTP elegido está bloqueado por la
+    red del servidor (típico: hosting capando 465 o 587 contra spam),
+    intenta el puerto alterno y, si funciona, deja ESE guardado en cta.
+    Devuelve None si todo bien, o el mensaje de error humano si algo falla."""
+    try:
+        m = imaplib.IMAP4_SSL(cta["imap_host"], int(cta["imap_port"] or 993), timeout=15)
         m.login(cta["usuario"], cta["_password_plano"])
         m.logout()
     except Exception as e:
         return f"IMAP (recibir) rechazó la conexión: {e}"
-    try:
-        if cta.get("smtp_ssl"):
-            s = smtplib.SMTP_SSL(cta["smtp_host"], int(cta["smtp_port"] or 465), timeout=15)
-        else:
-            s = smtplib.SMTP(cta["smtp_host"], int(cta["smtp_port"] or 587), timeout=15)
-            s.starttls()
-        s.login(cta["usuario"], cta["_password_plano"])
-        s.quit()
-    except Exception as e:
-        return f"SMTP (enviar) rechazó la conexión: {e}"
-    return None
+
+    puerto = int(cta["smtp_port"] or (465 if cta.get("smtp_ssl") else 587))
+    error = _probar_smtp(cta["smtp_host"], puerto, bool(cta.get("smtp_ssl")),
+                         cta["usuario"], cta["_password_plano"])
+    if error is None:
+        return None
+
+    # Puerto alterno: 465 (SSL directo) ⇄ 587 (STARTTLS)
+    alterno_ssl = not bool(cta.get("smtp_ssl"))
+    alterno_puerto = 465 if alterno_ssl else 587
+    error2 = _probar_smtp(cta["smtp_host"], alterno_puerto, alterno_ssl,
+                          cta["usuario"], cta["_password_plano"])
+    if error2 is None:
+        cta["smtp_port"] = alterno_puerto
+        cta["smtp_ssl"] = alterno_ssl
+        return None
+
+    # Ninguno de los dos: si huele a bloqueo de red del hosting, decirlo claro
+    if "unreachable" in (error + error2).lower() or "timed out" in (error + error2).lower():
+        return ("El servidor de Broquer no pudo salir por los puertos de envío "
+                f"(465 y 587): el hosting los está bloqueando. Recibir correo sí "
+                f"funciona. Detalle: {error}")
+    return error
 
 
 def _decodificar(valor) -> str:
