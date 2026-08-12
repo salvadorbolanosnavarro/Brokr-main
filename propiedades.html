@@ -1072,6 +1072,11 @@
           <option value="">Todas las etiquetas</option>
         </select>
 
+        <!-- Filtro por agente asignado (solo Broquer para Empresas) -->
+        <select id="props-filter-agente" onchange="filterProps()" style="display:none">
+          <option value="">Todos los agentes</option>
+        </select>
+
         <!-- Ver archivadas -->
         <button type="button" class="props-arch-toggle" id="props-arch-toggle" onclick="toggleArchivadas()">
           <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-1 12a2 2 0 01-2 2H7a2 2 0 01-2-2L4 7m16 0H4m16 0l-1.5-3h-13L4 7m6 4h4"/></svg>
@@ -1243,6 +1248,8 @@
       </div>
     </div>
     <div class="pd-actions">
+      <select class="pd-est-select" id="pd-asignado" style="display:none"
+              onchange="pAsignarAgente(currentDetailId, this.value)"></select>
       <select class="pd-est-select" id="pd-estatus" onchange="pdCambiarEstatus(this.value)">
         <option value="activa">Activa</option>
         <option value="reservada">Reservada</option>
@@ -1321,6 +1328,14 @@ let selectedIds = new Set();  // IDs de propiedades seleccionadas para borrado m
 // muestran los botones de borrar. Más vale esconder de más que de menos.
 let puedeEliminar = false;
 
+let pEsEmpresa = false;      // la cuenta es Broquer para Empresas
+let pEsAdminOrg = false;     // quien navega es owner/admin
+let pMiembros = [];          // equipo activo [{user_id, nombre, email}]
+function pNombreAgente(uid) {
+  if (!uid) return '';
+  const m = pMiembros.find(x => x.user_id === uid);
+  return m ? (m.nombre || m.email || 'Agente') : 'Agente';
+}
 async function cargarPermisoEliminar() {
   try {
     const token = await getValidToken();
@@ -1328,9 +1343,47 @@ async function cargarPermisoEliminar() {
     const r = await fetch(API_BASE + '/org', { headers: { Authorization: 'Bearer ' + token } });
     if (!r.ok) return;
     const org = await r.json();
+    pEsEmpresa = org.es_empresa === true;
+    pEsAdminOrg = org.es_admin === true;
     puedeEliminar = !org.es_empresa || org.es_admin === true;
+    if (pEsEmpresa) {
+      try {
+        const rm = await fetch(API_BASE + '/org/miembros', { headers: { Authorization: 'Bearer ' + token } });
+        if (rm.ok) {
+          const d = await rm.json();
+          pMiembros = (d.miembros || []).filter(m => m.activo);
+          pPintarFiltroAgente();
+        }
+      } catch {}
+    }
   } catch (e) {
     puedeEliminar = false;
+  }
+}
+
+/* ── Asignación de agente (Broquer para Empresas) ─────────────────── */
+function pPintarFiltroAgente() {
+  const sel = g('props-filter-agente');
+  if (!sel || !pMiembros.length) return;
+  sel.innerHTML = '<option value="">Todos los agentes</option>' +
+    '<option value="nadie">Sin asignar</option>' +
+    pMiembros.map(m => `<option value="${m.user_id}">${(m.nombre || m.email || 'Agente').replace(/</g,'&lt;')}</option>`).join('');
+  sel.style.display = '';
+}
+async function pAsignarAgente(propiedadId, agenteId) {
+  try {
+    const token = await getValidToken();
+    const r = await fetch(API_BASE + '/org/asignar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ tabla: 'propiedades', ids: [String(propiedadId)], agente_user_id: agenteId || null })
+    });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || 'Error');
+    const p = allProps.find(x => String(x.id) === String(propiedadId));
+    if (p) p.asignado_a = agenteId || null;
+    mostrarToast(agenteId ? 'Asignado a ' + pNombreAgente(agenteId) : 'Asignación quitada');
+  } catch (e) {
+    alert('No se pudo asignar.\n\n' + (e.message || e));
   }
 }
 
@@ -1596,6 +1649,7 @@ function filterProps() {
 
   updateEstLabel();
   const tag = g('props-filter-tag') ? g('props-filter-tag').value : '';
+  const agente = g('props-filter-agente') ? g('props-filter-agente').value : '';
 
   filteredProps = allProps.filter(p => {
     if (mostrandoArchivadas ? p.archivada !== true : p.archivada === true) return false;
@@ -1606,6 +1660,7 @@ function filterProps() {
     if (precioMin !== null && (p.precio == null || Number(p.precio) < precioMin)) return false;
     if (precioMax !== null && (p.precio == null || Number(p.precio) > precioMax)) return false;
     if (tag && !(Array.isArray(p.etiquetas) && p.etiquetas.includes(tag))) return false;
+    if (agente && (agente === 'nadie' ? !!p.asignado_a : p.asignado_a !== agente)) return false;
     return true;
   });
 
@@ -2064,6 +2119,24 @@ function openPropDetail(id) {
   g('detail-id').textContent = p.clave_interna || (p.eb_public_id ? 'EB · ' + p.eb_public_id : '');
   g('detail-edit-btn').onclick = () => { closePropDetail(); openPropForm(id); };
   g('pd-estatus').value = p.estatus || 'activa';
+  // Asignación de agente: selector para el admin; solo lectura para agentes
+  const pdAsg = g('pd-asignado');
+  if (pdAsg) {
+    if (pEsEmpresa && pMiembros.length) {
+      pdAsg.style.display = '';
+      if (pEsAdminOrg) {
+        pdAsg.disabled = false;
+        pdAsg.innerHTML = '<option value="">Sin asignar</option>' +
+          pMiembros.map(m => `<option value="${m.user_id}">${(m.nombre || m.email || 'Agente').replace(/</g,'&lt;')}</option>`).join('');
+        pdAsg.value = p.asignado_a || '';
+      } else {
+        pdAsg.disabled = true;
+        pdAsg.innerHTML = `<option>${p.asignado_a ? pNombreAgente(p.asignado_a).replace(/</g,'&lt;') : 'Sin asignar'}</option>`;
+      }
+    } else {
+      pdAsg.style.display = 'none';
+    }
+  }
   g('pd-arch-label').textContent = p.archivada ? 'Restaurar' : 'Archivar';
   pdSetTab('detalles');
   ['pd-n-hist','pd-n-int','pd-n-tareas'].forEach(i => g(i).textContent = '·');

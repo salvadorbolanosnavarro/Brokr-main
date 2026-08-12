@@ -986,6 +986,7 @@ html, body { background: var(--paper); }
     <button class="ftab" onclick="setFiltro('colega',this)">Colegas</button>
     <button class="ftab" onclick="setFiltro('notario',this)">Notarios</button>
     <button class="ftab" onclick="setFiltro('otro',this)">Otros</button>
+    <select class="filtro-select" id="c-filtro-agente" style="display:none" onchange="cCambioFiltroAgente(this.value)"></select>
   </div>
 </header>
 
@@ -1176,6 +1177,12 @@ html, body { background: var(--paper); }
           <span id="det-badge"></span>
         </div>
         <div style="font-size: var(--fs-xs);color:var(--mute);margin-top:5px" id="det-empresa"></div>
+        <div id="det-asignado-wrap" style="display:none;margin-top:8px;align-items:center;gap:6px">
+          <span style="font-size: var(--fs-xs);color:var(--mute)">Asignado a</span>
+          <select class="filtro-select" id="det-asignado" style="height:28px;padding:0 10px"
+                  onchange="cAsignarAgente(detContacto && detContacto.id, this.value)"></select>
+          <span id="det-asignado-texto" style="font-size: var(--fs-xs);color:var(--ink)"></span>
+        </div>
       </div>
       <button class="close-btn" onclick="cerrarDetalle()" aria-label="Cerrar" style="margin-left:auto;align-self:flex-start"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/></svg></button>
     </div>
@@ -1461,7 +1468,9 @@ function contactosFiltrados() {
   return todos.filter(c => {
     const okTipo = filtroActual === 'todos' || c.tipo === filtroActual;
     const okQ = !q || [c.nombre, c.telefono, c.email, c.empresa].some(v => (v||'').toLowerCase().includes(q));
-    return okTipo && okQ;
+    const okAgente = cFiltroAgente === 'todos'
+      || (cFiltroAgente === 'nadie' ? !c.asignado_a : c.asignado_a === cFiltroAgente);
+    return okTipo && okQ && okAgente;
   });
 }
 
@@ -1516,6 +1525,14 @@ const C_API = 'https://api.broquer.app';
 let cSel = new Set();          // ids de contactos seleccionados
 let cPuedeEliminar = false;    // arranca en false: si la consulta falla, no se muestra nada
 
+let cEsEmpresa = false;      // la cuenta es Broquer para Empresas
+let cEsAdminOrg = false;     // quien navega es owner/admin de la empresa
+let cMiembros = [];          // [{user_id, nombre, email, activo}] del equipo
+function cNombreAgente(uid) {
+  if (!uid) return '';
+  const m = cMiembros.find(x => x.user_id === uid);
+  return m ? (m.nombre || m.email || 'Agente') : 'Agente';
+}
 async function cCargarPermiso() {
   try {
     const tok = await _sb().ensureToken();
@@ -1523,12 +1540,58 @@ async function cCargarPermiso() {
     const r = await fetch(C_API + '/org', { headers: { Authorization: 'Bearer ' + tok } });
     if (!r.ok) return;
     const org = await r.json();
+    cEsEmpresa = org.es_empresa === true;
+    cEsAdminOrg = org.es_admin === true;
     cPuedeEliminar = !org.es_empresa || org.es_admin === true;
+    // En empresas, cargamos el equipo para el selector y filtro de agente
+    if (cEsEmpresa) {
+      try {
+        const rm = await fetch(C_API + '/org/miembros', { headers: { Authorization: 'Bearer ' + tok } });
+        if (rm.ok) {
+          const d = await rm.json();
+          cMiembros = (d.miembros || []).filter(m => m.activo);
+          cPintarFiltroAgente();
+          renderActual();  // repinta con los nombres de asignación ya resueltos
+        }
+      } catch {}
+    }
   } catch (e) {
     cPuedeEliminar = false;
   }
   const ctrl = document.getElementById('c-select-all');
   if (ctrl) ctrl.classList.toggle('is-shown', cPuedeEliminar && !IS_PICKER);
+}
+
+/* ── Asignación de agente (Broquer para Empresas) ─────────────────── */
+let cFiltroAgente = 'todos';
+function cPintarFiltroAgente() {
+  const sel = document.getElementById('c-filtro-agente');
+  if (!sel || !cMiembros.length) return;
+  sel.innerHTML = '<option value="todos">Todos los agentes</option>' +
+    '<option value="nadie">Sin asignar</option>' +
+    cMiembros.map(m => `<option value="${esc(m.user_id)}">${esc(m.nombre || m.email)}</option>`).join('');
+  sel.style.display = '';
+}
+function cCambioFiltroAgente(v) { cFiltroAgente = v; renderActual(); }
+async function cAsignarAgente(contactoId, agenteId) {
+  try {
+    const tok = await _sb().ensureToken();
+    const r = await fetch(C_API + '/org/asignar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+      body: JSON.stringify({ tabla: 'contactos', ids: [contactoId], agente_user_id: agenteId || null })
+    });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || 'Error');
+    const c = _contactosMem.find(x => String(x.id) === String(contactoId));
+    if (c) {
+      c.asignado_a = agenteId || null;
+      try { localStorage.setItem(LS_CACHE, JSON.stringify(_contactosMem)); } catch {}
+    }
+    renderActual();
+    showToast(agenteId ? 'Asignado a ' + cNombreAgente(agenteId) : 'Asignación quitada');
+  } catch (e) {
+    alert('No se pudo asignar.\n\n' + (e.message || e));
+  }
 }
 
 function cCardClick(id) {
@@ -1658,7 +1721,7 @@ function renderLista() {
       <div class="avatar ${avColor(c.nombre||'')}">${esc(initials(c.nombre||'??'))}</div>
       <div class="contact-info">
         <div class="contact-name">${esc(c.nombre)}${c.es_potencial ? ' <span class="pot-dot" title="Potencial"><svg width="11" height="11" style="vertical-align:-1px" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2l-6.1 3.4 1.4-6.8L2.2 9.1l6.9-.8L12 2z"/></svg></span>' : ''}</div>
-        <div class="contact-meta">${rolBadge(c.tipo)}<span class="contact-sub">${esc(sub)}</span></div>
+        <div class="contact-meta">${rolBadge(c.tipo)}<span class="contact-sub">${esc(sub)}</span>${(cEsEmpresa && c.asignado_a) ? `<span class="contact-sub" style="color:var(--accent)">· ${esc(cNombreAgente(c.asignado_a))}</span>` : ''}</div>
       </div>
       ${!IS_PICKER ? `<div class="quick-acts" onclick="event.stopPropagation()">
         ${(c.telefono||c.wa) ? `<a class="qa qa-wa" href="#" onclick="return abrirWA(event,'${esc(c.wa||c.telefono)}')" title="WhatsApp"><svg width="16" height="16" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path fill="var(--brand-whatsapp)" d="M16 0C7.163 0 0 7.163 0 16c0 2.823.736 5.474 2.029 7.776L0 32l8.42-2.207A15.9 15.9 0 0016 32c8.837 0 16-7.163 16-16S24.837 0 16 0z"/><path fill="#FFF" d="M23.45 19.2c-.39-.196-2.31-1.142-2.668-1.273-.358-.13-.618-.196-.878.196-.26.39-1.008 1.272-1.236 1.532-.228.26-.456.293-.846.098-.39-.196-1.65-.61-3.143-1.94-1.162-1.037-1.948-2.318-2.176-2.708-.228-.39-.024-.6.171-.795.176-.175.39-.456.586-.683.196-.228.26-.39.39-.65.13-.26.065-.488-.033-.683-.098-.196-.878-2.117-1.203-2.9-.317-.762-.64-.66-.879-.672-.227-.012-.487-.014-.747-.014-.26 0-.683.098-1.04.488-.358.39-1.366 1.336-1.366 3.257 0 1.92 1.398 3.778 1.594 4.038.195.26 2.752 4.203 6.667 5.893.93.402 1.657.642 2.223.821.934.297 1.785.255 2.457.155.75-.112 2.31-.945 2.636-1.857.325-.911.325-1.692.228-1.857-.098-.165-.358-.26-.748-.456z"/></svg></a>` : ''}
@@ -2126,6 +2189,26 @@ function abrirDetalle(id) {
   document.getElementById('det-nombre').textContent = c.nombre;
   document.getElementById('det-badge').innerHTML = rolBadge(c.tipo);
   document.getElementById('det-empresa').textContent = c.empresa || '';
+  // Asignación de agente: selector para el admin, solo lectura para agentes
+  const asgWrap = document.getElementById('det-asignado-wrap');
+  if (cEsEmpresa && cMiembros.length) {
+    asgWrap.style.display = 'flex';
+    const sel = document.getElementById('det-asignado');
+    const txt = document.getElementById('det-asignado-texto');
+    if (cEsAdminOrg) {
+      sel.style.display = '';
+      txt.style.display = 'none';
+      sel.innerHTML = '<option value="">Sin asignar</option>' +
+        cMiembros.map(m => `<option value="${esc(m.user_id)}">${esc(m.nombre || m.email)}</option>`).join('');
+      sel.value = c.asignado_a || '';
+    } else {
+      sel.style.display = 'none';
+      txt.style.display = '';
+      txt.textContent = c.asignado_a ? cNombreAgente(c.asignado_a) : 'Sin asignar';
+    }
+  } else {
+    asgWrap.style.display = 'none';
+  }
   pintarDetPotencial(c.es_potencial);
   const wa = c.wa || c.telefono;
   const waBtn = document.getElementById('det-wa-btn');
