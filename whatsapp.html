@@ -2005,10 +2005,30 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Enlace directo desde una notificación push o la barra inferior de la app:
   // whatsapp.html?c=<conversacion_id>#chats
-  const idDeep = new URLSearchParams(location.search).get('c');
+  // Enlace desde Contactos/Leads: whatsapp.html?tel=<digitos>
+  const _qs = new URLSearchParams(location.search);
+  const idDeep = _qs.get('c');
+  const telDeep = (_qs.get('tel') || '').replace(/\D/g, '');
   if(idDeep){
     w2IrATab('chats');
     if(W2_CONVS.some(c => c.id === idDeep)) await w2AbrirConversacion(idDeep);
+  } else if(telDeep){
+    w2IrATab('chats');
+    // Empatamos por los últimos 10 dígitos (con o sin lada 52 guardada)
+    const suf = telDeep.slice(-10);
+    const conv = W2_CONVS.find(c => {
+      const wid = String((c.wa2_contactos || {}).wa_id || '').replace(/\D/g, '');
+      return wid && wid.slice(-10) === suf;
+    });
+    if(conv){
+      await w2AbrirConversacion(conv.id);
+    } else {
+      // Aún no hay conversación con este número: lo dejamos en el buscador
+      // para que se vea el estado vacío, y explicamos por qué.
+      const buscar = document.getElementById('w2-buscar');
+      if(buscar){ buscar.value = suf; w2RenderLista(); }
+      toast('Aún no hay conversación con este número. Puede escribirte él primero, o mándale una plantilla aprobada.');
+    }
   } else if(location.hash === '#entrenamiento'){
     w2IrATab('entrenamiento');
   }
