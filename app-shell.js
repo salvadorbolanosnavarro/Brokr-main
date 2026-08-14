@@ -404,7 +404,7 @@
    Los módulos van en BLANCO y en NEGRITAS, agrupados en bloques
    translúcidos separados por aire: nada de líneas divisorias. */
 .bk-sidebar {
-  width: 296px; flex-shrink: 0;
+  width: 84px; flex-shrink: 0;
   background: var(--sb-bg);
   border-right: none;
   padding: 18px 12px 20px;
@@ -433,14 +433,14 @@
 @media (max-width: 880px) { .bk-sidebar { display: none; } }
 
 .bk-sidebar__brand {
-  padding: 4px 10px 20px;
+  padding: 4px 0 20px;
   border-bottom: none;
   margin-bottom: 4px;
-  display: flex; align-items: center;
+  display: flex; align-items: center; justify-content: center;
 }
 .bk-sidebar__brand a { display: flex; align-items: center; gap: 8px; text-decoration: none; }
 .bk-sidebar__brand img {
-  height: 27px; width: auto; display: block;
+  height: 30px; width: auto; display: block;
   filter: brightness(0) invert(1); opacity: .96;
   transition: opacity var(--dur) var(--ease);
 }
@@ -451,7 +451,7 @@
    escondía todo lo demás. Ahora los grupos viven en un rail fijo
    siempre visible y el panel muestra los módulos del grupo activo.
    Cambiar de grupo NO navega: solo cambia el panel. */
-.bk-sb-cols { flex: 1; display: flex; gap: 10px; min-height: 0; }
+.bk-sb-cols { flex: 1; display: flex; justify-content: center; min-height: 0; }
 .bk-rail {
   flex: 0 0 56px;
   display: flex; flex-direction: column; align-items: center; gap: 6px;
@@ -487,68 +487,33 @@
 .bk-rail__item:hover .bk-rail__tip { opacity: 1; transform: translateY(-50%) scale(1); }
 .bk-rail__spring { flex: 1; }
 
-.bk-panel2 {
-  flex: 1; min-width: 0;
-  background: var(--sb-panel); border-radius: var(--r-lg);
+/* ── Flyout del grupo ─────────────────────────────────────────────
+   El rail es todo el menú. Clic en un grupo abre este flyout flotante
+   con sus módulos; navegar o hacer clic afuera lo cierra. La pantalla
+   del módulo gana todo el ancho que ocupaba el panel. */
+.bk-flyout {
+  position: fixed; left: 92px; z-index: 90;
+  min-width: 216px;
+  background: var(--sb-bg);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-xl);
   padding: 10px 8px;
-  display: flex; flex-direction: column; gap: 4px;
-  overflow-y: auto;
+  display: none; flex-direction: column; gap: 4px;
 }
-.bk-panel2::-webkit-scrollbar { width: 0; }
-.bk-panel2__title {
+.bk-flyout.is-open { display: flex; animation: bk-fly-in 0.16s var(--ease-out); }
+@keyframes bk-fly-in { from { opacity: 0; transform: translateX(-6px); } }
+.bk-flyout__title {
   font-size: 12px; font-weight: 800; letter-spacing: 0.06em;
-  text-transform: none;
   color: rgba(255,255,255,0.62);
   padding: 2px 10px 6px;
 }
-/* Fijados: chips de los módulos diarios, arriba de todo */
-.bk-fijados { display: flex; flex-wrap: wrap; gap: 5px; padding: 0 6px 8px; }
-.bk-fijados__chip {
-  display: inline-flex; align-items: center; gap: 5px;
-  background: var(--sb-hover); color: #FFFFFF;
-  border: none; border-radius: var(--r-pill);
-  padding: 5px 10px; font-size: 12px; font-weight: 700;
-  cursor: pointer; text-decoration: none; font-family: inherit;
-  transition: background var(--dur) var(--ease);
-}
-.bk-fijados__chip:hover { background: rgba(255,255,255,0.24); }
-.bk-fijados__chip svg { width: 13px; height: 13px; }
-/* Link del panel: activo = pastilla blanca con texto navy (contraste real) */
-.bk-panel2 .bk-sb-link.is-active,
-.bk-panel2 a.bk-sb-link.is-active {
+/* Los links reutilizan .bk-sb-link; el activo lleva pastilla blanca */
+.bk-flyout .bk-sb-link.is-active,
+.bk-flyout a.bk-sb-link.is-active {
   background: #FFFFFF !important; color: var(--sky-navy) !important;
   box-shadow: none;
 }
-.bk-panel2 .bk-sb-link.is-active svg { color: var(--sky-navy) !important; }
-/* Estrella para fijar/desfijar (aparece al pasar el cursor) */
-.bk-sb-link .bk-pin {
-  margin-left: auto; opacity: 0; flex: 0 0 auto;
-  color: rgba(255,255,255,0.7);
-  background: none; border: none; cursor: pointer; padding: 4px;
-  transition: opacity var(--dur) var(--ease), color var(--dur) var(--ease);
-}
-.bk-sb-link:hover .bk-pin { opacity: 0.7; }
-.bk-sb-link .bk-pin:hover { opacity: 1; color: #FFFFFF; }
-.bk-sb-link .bk-pin.is-on { opacity: 0.9; }
-.bk-panel2 .bk-sb-link.is-active .bk-pin { color: var(--sky-navy); }
-.bk-pin svg { width: 14px; height: 14px; }
-/* Lanzador: todos los módulos → paleta */
-.bk-launcher {
-  margin-top: auto;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  border: 1px dashed rgba(255,255,255,0.34); border-radius: var(--r);
-  background: transparent; color: rgba(255,255,255,0.82);
-  padding: 10px; font-size: 12.5px; font-weight: 700;
-  cursor: pointer; font-family: inherit;
-  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
-}
-.bk-launcher:hover { background: var(--sb-hover); color: #FFFFFF; }
-.bk-launcher svg { width: 15px; height: 15px; }
-.bk-launcher .kbd {
-  font-size: 10.5px; font-weight: 700;
-  border: 1px solid rgba(255,255,255,0.3); border-radius: 5px;
-  padding: 1px 5px; opacity: 0.85;
-}
+.bk-flyout .bk-sb-link.is-active svg { color: var(--sky-navy) !important; }
 
 /* ── Paleta de comandos (⌘K) — global, en toda la app ── */
 .bk-cmdk-bg {
@@ -1485,62 +1450,34 @@ body[data-app="facebook-ads"]{--page-max:980px}
     </button>`;
   }
 
-  // Fijados: los módulos diarios, arriba del panel. Viven en el navegador.
-  const FIJADOS_KEY = 'brokr_fijados';
-  function leerFijados() {
-    try {
-      const v = JSON.parse(localStorage.getItem(FIJADOS_KEY) || 'null');
-      if (Array.isArray(v)) return v;
-    } catch (e) {}
-    return ['props', 'contactos', 'tareas', 'whatsapp'];
-  }
-  function guardarFijados(keys) {
-    try { localStorage.setItem(FIJADOS_KEY, JSON.stringify(keys)); } catch (e) {}
-  }
-
-  const PIN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.5c.16-.4.88-.4 1.04 0l2.13 5.11 5.52.44c.44.04.62.58.28.86l-4.2 3.6 1.28 5.39c.1.43-.36.76-.74.53L12 16.55l-4.79 2.88c-.38.23-.84-.1-.74-.53l1.28-5.39-4.2-3.6c-.34-.28-.16-.82.28-.86l5.52-.44 2.13-5.11z"/></svg>';
-
-  function renderPanel2(shell, grupoKey, porGrupo, active) {
-    const panel = shell.querySelector('#bk-panel2');
-    if (!panel) return;
+  /* ── Flyout: clic en un grupo del rail abre sus módulos ── */
+  function renderFlyout(shell, grupoKey, porGrupo, active, anchorBtn) {
+    let fly = document.getElementById('bk-flyout');
+    if (!fly) {
+      fly = document.createElement('div');
+      fly.className = 'bk-flyout';
+      fly.id = 'bk-flyout';
+      document.body.appendChild(fly);
+    }
     const grupo = GRUPOS.find(g => g.key === grupoKey) || GRUPOS[0];
     const items = porGrupo(grupo.key);
-    const fijados = leerFijados();
-    const chips = fijados
-      .map(k => MODS.find(m => m.key === k))
-      .filter(Boolean)
-      .map(m => `<a class="bk-fijados__chip" href="${m.href}">${svg(m.icon)} ${m.label.split(' ')[0]}</a>`)
-      .join('');
     const perfilLink = grupo.key === 'mas'
       ? `<a href="javascript:void(0)" class="bk-sb-link" onclick="openProfileDrawer()">${svg('user')} Mi perfil</a>`
       : '';
-    const links = items.map(m => {
-      const pin = fijados.includes(m.key);
-      return `<a href="${m.href}" class="bk-sb-link${m.key === active ? ' is-active' : ''}">${svg(m.icon)} ${m.label}
-        <button class="bk-pin${pin ? ' is-on' : ''}" type="button" data-pin="${m.key}" aria-label="${pin ? 'Quitar de fijados' : 'Fijar'}" title="${pin ? 'Quitar de fijados' : 'Fijar'}">${PIN_SVG}</button>
-      </a>`;
-    }).join('');
-    panel.innerHTML = `
-      ${chips ? `<div class="bk-fijados">${chips}</div>` : ''}
-      <div class="bk-panel2__title">${grupo.label}</div>
-      ${perfilLink}${links}
-      <button class="bk-launcher" type="button" id="bk-launcher">
-        ${svg('search')} Todos los módulos <span class="kbd">⌘K</span>
-      </button>`;
-    panel.querySelectorAll('[data-pin]').forEach(btn => {
-      btn.addEventListener('click', (ev) => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        const k = btn.getAttribute('data-pin');
-        let f = leerFijados();
-        if (f.includes(k)) f = f.filter(x => x !== k);
-        else if (f.length < 6) f = [...f, k];
-        guardarFijados(f);
-        renderPanel2(shell, grupoKey, porGrupo, active);
-      });
-    });
-    const launch = panel.querySelector('#bk-launcher');
-    if (launch) launch.addEventListener('click', () => { if (window.brokrCmdk) window.brokrCmdk.open(); });
+    fly.innerHTML = `<div class="bk-flyout__title">${grupo.label}</div>
+      ${perfilLink}${items.map(m => buildSidebarLink(m, active)).join('')}`;
+    // Anclar a la altura del botón, sin salirse de la pantalla.
+    const r = anchorBtn.getBoundingClientRect();
+    fly.style.top = '0px';
+    fly.classList.add('is-open');
+    const alto = fly.offsetHeight;
+    const top = Math.max(12, Math.min(r.top, window.innerHeight - alto - 12));
+    fly.style.top = top + 'px';
+    return fly;
+  }
+  function cerrarFlyout() {
+    const fly = document.getElementById('bk-flyout');
+    if (fly) fly.classList.remove('is-open');
   }
 
     function buildBnavItem(m, active) {
@@ -1597,13 +1534,12 @@ body[data-app="facebook-ads"]{--page-max:980px}
     shell.innerHTML = `
       <aside class="bk-sidebar" id="bk-sidebar">
         <div class="bk-sidebar__brand">
-          <a href="index.html" aria-label="Ir al inicio Broquer"><img src="logotipo-white.png" alt="Broquer"/></a>
+          <a href="index.html" aria-label="Ir al inicio Broquer"><img src="isotipo-black.png" alt="Broquer"/></a>
         </div>
         <div class="bk-sb-cols">
           <nav class="bk-rail" id="bk-rail" aria-label="Grupos de módulos">
             ${GRUPOS.map(g => buildRailItem(g, porGrupo(g.key), activeMod.group)).join('')}
           </nav>
-          <div class="bk-panel2" id="bk-panel2"></div>
         </div>
       </aside>
 
@@ -1629,17 +1565,28 @@ body[data-app="facebook-ads"]{--page-max:980px}
     `;
     document.body.appendChild(shell);
 
-    // Rail: clic en un grupo cambia el panel (no navega). El grupo del
-    // módulo activo arranca seleccionado.
-    let grupoPanel = activeMod.group || 'crm';
-    renderPanel2(shell, grupoPanel, porGrupo, activeKey);
+    // Rail: el menú completo. Clic en un grupo abre el flyout con sus
+    // módulos; volver a hacer clic (o clic afuera, o Escape) lo cierra.
+    // El grupo del módulo activo queda marcado con la pastilla blanca.
+    let flyoutAbierto = null;
     shell.querySelectorAll('.bk-rail__item[data-rail]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        grupoPanel = btn.getAttribute('data-rail');
-        shell.querySelectorAll('.bk-rail__item').forEach(b =>
-          b.classList.toggle('is-active', b === btn));
-        renderPanel2(shell, grupoPanel, porGrupo, activeKey);
+      btn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        const g = btn.getAttribute('data-rail');
+        if (flyoutAbierto === g) { cerrarFlyout(); flyoutAbierto = null; return; }
+        flyoutAbierto = g;
+        renderFlyout(shell, g, porGrupo, activeKey, btn);
       });
+    });
+    document.addEventListener('click', (ev) => {
+      const fly = document.getElementById('bk-flyout');
+      if (flyoutAbierto && fly && !fly.contains(ev.target)) {
+        cerrarFlyout();
+        flyoutAbierto = null;
+      }
+    });
+    document.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Escape' && flyoutAbierto) { cerrarFlyout(); flyoutAbierto = null; }
     });
 
     // ── Paleta de comandos (⌘K) — global en toda la app ──
