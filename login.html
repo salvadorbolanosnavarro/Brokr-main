@@ -796,7 +796,7 @@ async function doSignup(){
     showMsg('Cuenta creada. Entrando…', 'ok');
     await persistProfile(token, userId, nombreCompleto, telefono);
     // NO rehabilitamos el botón (la página va a recargar).
-    window.location.href = destinoTrasSesion();
+    window.location.replace(destinoTrasSesion());
     return;
   }
 
@@ -945,12 +945,12 @@ async function checkProfileAndRedirect(token, user){
   }
 
   if (res.estado === 'ok') {
-    if (res.tieneNombre) { window.location.href = destinoTrasSesion(); return; }
+    if (res.tieneNombre) { window.location.replace(destinoTrasSesion()); return; }
     // El servidor confirmó (200) que NO hay nombre: usuario realmente nuevo.
     // Caso típico tras email-confirmation: completamos con los datos del signup.
-    if (await _completarConPending()) { window.location.href = destinoTrasSesion(); return; }
+    if (await _completarConPending()) { window.location.replace(destinoTrasSesion()); return; }
     // OAuth nuevo o usuario sin pending: registro.html.
-    window.location.href = 'registro.html';
+    window.location.replace('registro.html');
     return;
   }
 
@@ -959,8 +959,8 @@ async function checkProfileAndRedirect(token, user){
   // usuario ya autenticado es casi siempre un usuario existente. Fail-safe:
   // lo dejamos entrar a la app (index.html lee el nombre cuando la base se
   // recupera) en lugar de mandarlo a la pantalla de registro.
-  if (await _completarConPending()) { window.location.href = destinoTrasSesion(); return; }
-  window.location.href = destinoTrasSesion();
+  if (await _completarConPending()) { window.location.replace(destinoTrasSesion()); return; }
+  window.location.replace(destinoTrasSesion());
 }
 
 /* Splash */

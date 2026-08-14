@@ -237,12 +237,11 @@
 
 .dash-vacio { padding: var(--sp-4) 0; color: var(--mute); font-size: var(--fs-sm); }
 
-/* Insignia Meta Tech Provider: discreta, fija abajo-izquierda
-   (opuesta a la burbuja de Broq). Solo informa — no se puede
-   tocar ni arrastrar. En móvil sube para librar la barra de
-   navegación inferior. */
+/* Insignia Meta Tech Provider: pie de página. Viaja con el
+   contenido — solo se ve al llegar al final del index, nunca
+   flota sobre él. Centrada, discreta, intocable. */
 .dash-meta {
-  position: fixed; left: 98px; bottom: 16px; z-index: 59;
+  width: max-content; margin: var(--sp-7) auto 0;
   display: inline-flex; align-items: center;
   background: var(--paper); border: 1px solid var(--line);
   border-radius: var(--r-pill); padding: 6px 11px;
@@ -251,20 +250,28 @@
 }
 .dash-meta img { height: 16px; width: auto; display: block; -webkit-user-drag: none; }
 @media (max-width: 880px) {
-  .dash-meta {
-    left: 14px;
-    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
-    padding: 5px 9px;
-  }
+  .dash-meta { padding: 5px 9px; }
   .dash-meta img { height: 14px; }
+}
+
+/* ── Ajuste móvil: todo cabe en el ancho de la pantalla ──
+   Los tracks 1fr de una grid NO encogen por debajo del contenido
+   mínimo de sus hijos; con textos o cifras largas la cuadrícula
+   se hacía más ancha que el viewport (por eso se podía arrastrar
+   la pantalla a la derecha). min-width:0 lo corrige y el texto
+   envuelve en vez de desbordar. */
+@media (max-width: 900px) {
+  .dash-scroll { overflow-x: clip; }
+  .dash-top, .dash-qa, .dash-kpis, .dash-grid { max-width: 100%; }
+  .dash-kpis > .dash-kpi,
+  .dash-grid > .dash-widget { min-width: 0; max-width: 100%; }
+  .dash-greet h1, .dash-greet p,
+  .dash-widget h3, .aten-item__main, .lead-item__main,
+  .prop-item__main { overflow-wrap: anywhere; }
 }
 </style>
 </head>
 <body data-app="home">
-
-<div class="dash-meta" aria-label="Meta Tech Provider">
-  <img src="meta-tech-provider.png" alt="Meta Tech Provider"/>
-</div>
 
 <div class="dash-scroll">
 
@@ -368,6 +375,11 @@
     </div>
   </div>
 
+  <!-- Pie: insignia Meta Tech Provider -->
+  <div class="dash-meta" aria-label="Meta Tech Provider">
+    <img src="meta-tech-provider.png" alt="Meta Tech Provider"/>
+  </div>
+
 </div>
 
 <script src="app-shell.js" defer></script>
@@ -442,16 +454,6 @@
 })();
 
 /* ── Fecha + saludo (sin auth, corre de inmediato) ── */
-/* ── Insignia Meta: colgarla de <body> DESPUÉS del shell ──
-   El shell, al arrancar, barre TODOS los hijos de body hacia su
-   contenedor .bk-page; si la insignia queda ahí dentro, el fixed
-   puede fallar en iOS. brokr-shell-ready garantiza que lo que se
-   agregue a body después ya se queda en body. */
-window.addEventListener('brokr-shell-ready', function(){
-  const sello = document.querySelector('.dash-meta');
-  if (sello) document.body.appendChild(sello);
-});
-
 (function(){
   const d = new Date();
   const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
