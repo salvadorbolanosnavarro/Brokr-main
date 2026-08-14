@@ -412,22 +412,8 @@
   overflow-y: auto;
   position: relative;
 }
-/* Destello superior — el mismo de .ai-card en index.html */
-.bk-sidebar::before {
-  content: ''; position: absolute; inset: 0;
-  background-image: radial-gradient(120% 70% at 100% 0%, rgba(255,255,255,0.18), rgba(255,255,255,0) 58%);
-  pointer-events: none; z-index: 0;
-}
-/* Aurora inferior — la misma luz del hero del inicio, derivando despacio */
-.bk-sidebar::after {
-  content: ''; position: absolute; z-index: 0; pointer-events: none;
-  width: 420px; height: 420px; left: -170px; bottom: -190px;
-  border-radius: 50%; filter: blur(70px);
-  background: radial-gradient(circle, rgba(255,255,255,0.12), rgba(255,255,255,0) 70%);
-  background: radial-gradient(circle, color-mix(in srgb, var(--sky-blue-on-dark) 28%, transparent), transparent 70%);
-  animation: bk-sb-drift 26s var(--ease) infinite alternate;
-}
-@keyframes bk-sb-drift { to { transform: translate(70px, -110px) scale(1.12); } }
+/* En el rail angosto los degradados decorativos (destello y aurora)
+   se colapsaban en una franja de colores al pie: el rail va limpio. */
 .bk-sidebar > * { position: relative; z-index: 1; }
 .bk-sidebar::-webkit-scrollbar { width: 0; }
 @media (max-width: 880px) { .bk-sidebar { display: none; } }
@@ -466,6 +452,10 @@
 }
 .bk-rail__item svg { width: 21px; height: 21px; }
 .bk-rail__item:hover { background: var(--sb-hover); color: #FFFFFF; }
+.bk-rail__item:focus { outline: none; }
+.bk-rail__item:focus-visible { outline: 2px solid rgba(255,255,255,0.65); outline-offset: 2px; }
+/* Grupo con flyout abierto: estado propio, distinto del activo (pastilla). */
+.bk-rail__item.is-open { background: var(--sb-hover); color: #FFFFFF; }
 /* Estado activo con contraste real: pastilla blanca + icono navy. */
 .bk-rail__item.is-active { background: #FFFFFF; color: var(--sky-navy); }
 .bk-rail__item.is-active::before {
@@ -1569,24 +1559,31 @@ body[data-app="facebook-ads"]{--page-max:980px}
     // módulos; volver a hacer clic (o clic afuera, o Escape) lo cierra.
     // El grupo del módulo activo queda marcado con la pastilla blanca.
     let flyoutAbierto = null;
+    function limpiarOpen() {
+      shell.querySelectorAll('.bk-rail__item.is-open').forEach(b => b.classList.remove('is-open'));
+    }
+    function cerrarTodo() {
+      cerrarFlyout();
+      limpiarOpen();
+      flyoutAbierto = null;
+    }
     shell.querySelectorAll('.bk-rail__item[data-rail]').forEach(btn => {
       btn.addEventListener('click', (ev) => {
         ev.stopPropagation();
         const g = btn.getAttribute('data-rail');
-        if (flyoutAbierto === g) { cerrarFlyout(); flyoutAbierto = null; return; }
+        if (flyoutAbierto === g) { cerrarTodo(); btn.blur(); return; }
+        limpiarOpen();
         flyoutAbierto = g;
+        btn.classList.add('is-open');
         renderFlyout(shell, g, porGrupo, activeKey, btn);
       });
     });
     document.addEventListener('click', (ev) => {
       const fly = document.getElementById('bk-flyout');
-      if (flyoutAbierto && fly && !fly.contains(ev.target)) {
-        cerrarFlyout();
-        flyoutAbierto = null;
-      }
+      if (flyoutAbierto && fly && !fly.contains(ev.target)) cerrarTodo();
     });
     document.addEventListener('keydown', (ev) => {
-      if (ev.key === 'Escape' && flyoutAbierto) { cerrarFlyout(); flyoutAbierto = null; }
+      if (ev.key === 'Escape' && flyoutAbierto) cerrarTodo();
     });
 
     // ── Paleta de comandos (⌘K) — global en toda la app ──

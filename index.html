@@ -126,7 +126,14 @@
 /* ── Grid principal ── */
 .dash-grid { display: grid; grid-template-columns: 1.55fr 1fr; gap: var(--sp-5); align-items: start; }
 @media (max-width: 900px) { .dash-grid { grid-template-columns: 1fr; } }
-.dash-col > .bk-card { margin-bottom: var(--sp-5); }
+.dash-widget.is-drag { opacity: .45; }
+.dash-widget.is-over { outline: 2px dashed var(--sky-blue); outline-offset: 4px; }
+.dash-drag {
+  cursor: grab; color: var(--mute); font-size: var(--fs-sm);
+  padding: 0 var(--sp-1) 0 0; user-select: none;
+}
+.dash-drag:active { cursor: grabbing; }
+@media (max-width: 900px) { .dash-drag { display: none; } }
 
 .dash-card-h {
   display: flex; align-items: center; gap: var(--sp-2);
@@ -230,9 +237,14 @@
 
 .dash-vacio { padding: var(--sp-4) 0; color: var(--mute); font-size: var(--fs-sm); }
 
-/* Pie con sello Meta */
-.dash-foot { display: flex; justify-content: center; margin-top: var(--sp-8); opacity: .8; }
-.dash-foot img { height: 44px; width: auto; }
+/* Sello Meta: fijo abajo-izquierda (opuesto a la burbuja de Broq),
+   55% más pequeño que su tamaño original de 44px. */
+.dash-foot {
+  position: fixed; left: 100px; bottom: 18px; z-index: 30;
+  opacity: .75; pointer-events: none;
+}
+.dash-foot img { height: 20px; width: auto; display: block; }
+@media (max-width: 880px) { .dash-foot { left: 16px; bottom: 14px; } }
 </style>
 </head>
 <body data-app="home">
@@ -255,15 +267,18 @@
     </button>
     <div class="dash-panel" id="dash-panel" hidden>
       <div class="dash-panel__t">Tu inicio, a tu manera</div>
+      <label class="dash-panel__opt"><input type="checkbox" data-w="qa" checked/> Accesos rápidos</label>
+      <label class="dash-panel__opt"><input type="checkbox" data-w="kpis" checked/> KPIs del día</label>
       <label class="dash-panel__opt"><input type="checkbox" data-w="atencion" checked/> Requiere tu atención</label>
       <label class="dash-panel__opt"><input type="checkbox" data-w="leads" checked/> Leads sin responder</label>
       <label class="dash-panel__opt"><input type="checkbox" data-w="pipeline" checked/> Pipeline</label>
       <label class="dash-panel__opt"><input type="checkbox" data-w="inmuebles" checked/> Últimos inmuebles</label>
+      <div class="bk-hint" style="margin-top:var(--sp-2);">Arrastra las tarjetas desde ⠿ para reacomodarlas: su tamaño se ajusta a la columna donde las sueltes.</div>
     </div>
   </div>
 
   <!-- Acciones rápidas -->
-  <div class="dash-qa">
+  <div class="dash-qa" data-widget="qa">
     <a class="bk-btn bk-btn--forest" href="propiedades.html">
       <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
       Nuevo inmueble
@@ -274,7 +289,7 @@
   </div>
 
   <!-- KPIs del día -->
-  <div class="dash-kpis">
+  <div class="dash-kpis" data-widget="kpis">
     <div class="bk-card bk-card--pad bk-card--raise dash-kpi">
       <div class="lab"><span class="ic ic--pend"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v5l3 2"/></svg></span>Pendientes hoy</div>
       <div class="val" id="kpi-pend">—</div>
@@ -294,53 +309,46 @@
     </div>
   </div>
 
-  <div class="dash-grid">
-    <!-- IZQUIERDA: requiere tu atención -->
-    <div class="dash-col">
-      <div class="bk-card bk-card--pad bk-card--raise" data-widget="atencion">
-        <div class="dash-card-h">
-          <h3>Requiere tu atención</h3>
-          <span class="bk-badge bk-badge--danger" id="aten-count" hidden></span>
-          <a class="link" href="tareas.html">Ver todas →</a>
-        </div>
-        <div id="aten-lista"></div>
-        <div class="dash-vacio" id="aten-vacio" hidden>Todo al día. Sin pendientes vencidos ni tareas para hoy.</div>
+  <div class="dash-grid" id="dash-grid">
+    <div class="bk-card bk-card--pad bk-card--raise dash-widget" data-widget="atencion" draggable="true">
+      <div class="dash-card-h">
+        <span class="dash-drag" title="Arrastra para reacomodar">⠿</span><!-- AUDIT-EXEMPT-LINE: glifo braille como asa de arrastre (contenido, no icono decorativo) -->
+        <h3>Requiere tu atención</h3>
+        <span class="bk-badge bk-badge--danger" id="aten-count" hidden></span>
+        <a class="link" href="tareas.html">Ver todas →</a>
       </div>
+      <div id="aten-lista"></div>
+      <div class="dash-vacio" id="aten-vacio" hidden>Todo al día. Sin pendientes vencidos ni tareas para hoy.</div>
     </div>
 
-    <!-- DERECHA -->
-    <div class="dash-col">
-      <div class="bk-card bk-card--pad bk-card--raise" data-widget="leads" id="leads-card" hidden>
-        <div class="dash-card-h">
-          <h3>Leads sin responder</h3>
-          <a class="link" href="whatsapp.html">Ver →</a>
-        </div>
-        <div id="leads-lista"></div>
+    <div class="bk-card bk-card--pad bk-card--raise dash-widget" data-widget="leads" id="leads-card" hidden draggable="true">
+      <div class="dash-card-h">
+        <span class="dash-drag" title="Arrastra para reacomodar">⠿</span><!-- AUDIT-EXEMPT-LINE: glifo braille como asa de arrastre (contenido, no icono decorativo) -->
+        <h3>Leads sin responder</h3>
+        <a class="link" href="whatsapp.html">Ver →</a>
       </div>
-
-      <div class="bk-card bk-card--pad bk-card--raise" data-widget="pipeline">
-        <div class="dash-card-h">
-          <h3>Pipeline</h3>
-          <a class="link" href="contactos.html">Detalle →</a>
-        </div>
-        <div id="pipe-lista"></div>
-        <div class="dash-vacio" id="pipe-vacio" hidden>Aún no tienes contactos en el embudo.</div>
-      </div>
-
-      <div class="bk-card bk-card--pad bk-card--raise" data-widget="inmuebles">
-        <div class="dash-card-h">
-          <h3>Últimos inmuebles</h3>
-          <a class="link" href="propiedades.html">Ver →</a>
-        </div>
-        <div id="props-lista"></div>
-        <div class="dash-vacio" id="props-vacio" hidden>Agrega tu primer inmueble para verlo aquí.</div>
-      </div>
+      <div id="leads-lista"></div>
     </div>
-  </div>
 
-<!-- Pie -->
-  <div class="dash-foot"><!-- AUDIT-EXEMPT-LINE: insignia oficial de Meta (marca externa) -->
-    <img src="meta-tech-provider.png" alt="Meta Tech Provider"/>
+    <div class="bk-card bk-card--pad bk-card--raise dash-widget" data-widget="pipeline" draggable="true">
+      <div class="dash-card-h">
+        <span class="dash-drag" title="Arrastra para reacomodar">⠿</span><!-- AUDIT-EXEMPT-LINE: glifo braille como asa de arrastre (contenido, no icono decorativo) -->
+        <h3>Pipeline</h3>
+        <a class="link" href="contactos.html">Detalle →</a>
+      </div>
+      <div id="pipe-lista"></div>
+      <div class="dash-vacio" id="pipe-vacio" hidden>Aún no tienes contactos en el embudo.</div>
+    </div>
+
+    <div class="bk-card bk-card--pad bk-card--raise dash-widget" data-widget="inmuebles" draggable="true">
+      <div class="dash-card-h">
+        <span class="dash-drag" title="Arrastra para reacomodar">⠿</span><!-- AUDIT-EXEMPT-LINE: glifo braille como asa de arrastre (contenido, no icono decorativo) -->
+        <h3>Últimos inmuebles</h3>
+        <a class="link" href="propiedades.html">Ver →</a>
+      </div>
+      <div id="props-lista"></div>
+      <div class="dash-vacio" id="props-vacio" hidden>Agrega tu primer inmueble para verlo aquí.</div>
+    </div>
   </div>
 
 </div>
@@ -433,6 +441,66 @@
 })();
 
 
+
+/* ── Widgets reacomodables: arrastra y suelta, el orden se guarda ──
+   La grid tiene dos columnas (ancha/angosta); el ancho de cada tarjeta
+   lo decide la columna donde cae, así que reacomodar también
+   redimensiona. En móvil (una columna) el arrastre se desactiva. */
+(function(){
+  const KEY = 'brokr_dash_orden';
+  const grid = document.getElementById('dash-grid');
+  if (!grid) return;
+
+  // Aplicar orden guardado
+  try {
+    const orden = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (Array.isArray(orden)) {
+      orden.forEach(w => {
+        const el = grid.querySelector('.dash-widget[data-widget="' + w + '"]');
+        if (el) grid.appendChild(el);
+      });
+    }
+  } catch(_){}
+
+  function guardar() {
+    const orden = Array.from(grid.querySelectorAll('.dash-widget'))
+      .map(el => el.dataset.widget);
+    try { localStorage.setItem(KEY, JSON.stringify(orden)); } catch(_){}
+  }
+
+  let arrastrando = null;
+  grid.querySelectorAll('.dash-widget').forEach(el => {
+    el.addEventListener('dragstart', (ev) => {
+      arrastrando = el;
+      el.classList.add('is-drag');
+      ev.dataTransfer.effectAllowed = 'move';
+      try { ev.dataTransfer.setData('text/plain', el.dataset.widget); } catch(_){}
+    });
+    el.addEventListener('dragend', () => {
+      el.classList.remove('is-drag');
+      grid.querySelectorAll('.is-over').forEach(x => x.classList.remove('is-over'));
+      arrastrando = null;
+    });
+    el.addEventListener('dragover', (ev) => {
+      if (!arrastrando || arrastrando === el) return;
+      ev.preventDefault();
+      ev.dataTransfer.dropEffect = 'move';
+      el.classList.add('is-over');
+    });
+    el.addEventListener('dragleave', () => el.classList.remove('is-over'));
+    el.addEventListener('drop', (ev) => {
+      if (!arrastrando || arrastrando === el) return;
+      ev.preventDefault();
+      el.classList.remove('is-over');
+      const hijos = Array.from(grid.querySelectorAll('.dash-widget'));
+      const de = hijos.indexOf(arrastrando);
+      const a = hijos.indexOf(el);
+      if (de < a) el.after(arrastrando);
+      else el.before(arrastrando);
+      guardar();
+    });
+  });
+})();
 
 /* ── El buscador del home abre la paleta global del shell ── */
 (function(){
