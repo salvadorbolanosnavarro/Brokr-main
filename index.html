@@ -230,53 +230,6 @@
 
 .dash-vacio { padding: var(--sp-4) 0; color: var(--mute); font-size: var(--fs-sm); }
 
-/* ── Paleta de comandos (⌘K) ── */
-.cmdk-bg {
-  position: fixed; inset: 0; z-index: 2147483644;
-  background: rgba(8,28,78,.42); /* AUDIT-EXEMPT-LINE: velo sobre navy, mismo alfa que dx-ov */
-  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-  display: none; align-items: flex-start; justify-content: center;
-  padding: 12vh 16px 0;
-}
-.cmdk-bg.is-open { display: flex; }
-.cmdk {
-  width: min(560px, 100%); background: var(--paper);
-  border: 1px solid var(--line-2); border-radius: var(--r-modal);
-  box-shadow: var(--shadow-xl); overflow: hidden;
-}
-.cmdk-in {
-  display: flex; align-items: center; gap: var(--sp-3);
-  padding: var(--sp-4) var(--sp-5); border-bottom: 1px solid var(--line);
-}
-.cmdk-in svg { color: var(--mute); flex: 0 0 auto; }
-.cmdk-in input {
-  flex: 1; border: none; outline: none; background: transparent;
-  font-size: var(--fs-body); font-family: inherit; color: var(--ink);
-}
-.cmdk-in .esc {
-  font-size: var(--fs-xs); font-weight: 600; color: var(--mute);
-  border: 1px solid var(--line); border-radius: var(--r-xs); padding: 2px 7px;
-}
-.cmdk-list { max-height: 50vh; overflow-y: auto; padding: var(--sp-2); }
-.cmdk-g {
-  font-size: var(--fs-label); font-weight: 700; color: var(--mute);
-  padding: var(--sp-3) var(--sp-3) var(--sp-1); letter-spacing: .02em;
-}
-.cmdk-item {
-  display: flex; align-items: center; gap: var(--sp-3);
-  padding: var(--sp-2) var(--sp-3); border-radius: var(--r-sm);
-  font-size: var(--fs-sm); font-weight: 500; cursor: pointer;
-  color: var(--ink);
-}
-.cmdk-item .ci {
-  flex: 0 0 auto; width: 30px; height: 30px; border-radius: var(--r-xs);
-  background: var(--data-1-soft); color: var(--data-1);
-  display: inline-flex; align-items: center; justify-content: center;
-}
-.cmdk-item .grp { margin-left: auto; font-size: var(--fs-xs); color: var(--mute); font-weight: 600; }
-.cmdk-item.is-sel, .cmdk-item:hover { background: var(--paper-2); }
-.cmdk-empty { padding: var(--sp-6); text-align: center; color: var(--mute); font-size: var(--fs-sm); }
-
 /* Pie con sello Meta */
 .dash-foot { display: flex; justify-content: center; margin-top: var(--sp-8); opacity: .8; }
 .dash-foot img { height: 44px; width: auto; }
@@ -306,8 +259,6 @@
       <label class="dash-panel__opt"><input type="checkbox" data-w="leads" checked/> Leads sin responder</label>
       <label class="dash-panel__opt"><input type="checkbox" data-w="pipeline" checked/> Pipeline</label>
       <label class="dash-panel__opt"><input type="checkbox" data-w="inmuebles" checked/> Últimos inmuebles</label>
-      <label class="dash-panel__opt"><input type="checkbox" data-w="broq" checked/> Tarjeta de Broq</label>
-      <label class="dash-panel__opt"><input type="checkbox" data-w="appstore" checked/> App para iPhone</label>
     </div>
   </div>
 
@@ -320,7 +271,6 @@
     <a class="bk-btn bk-btn--ghost" href="contactos.html">Contacto</a>
     <a class="bk-btn bk-btn--ghost" href="tareas.html">Tarea</a>
     <a class="bk-btn bk-btn--ghost" href="leads.html">Registrar lead</a>
-    <button class="bk-btn bk-btn--ghost" type="button" id="dash-demo-btn" onclick="dashAbrirDemo()">Agendar demo</button>
   </div>
 
   <!-- KPIs del día -->
@@ -388,44 +338,11 @@
     </div>
   </div>
 
-<!-- CTA Broq -->
-  <div class="ai-card" data-widget="broq">
-    <h3>Broq, tu asistente inmobiliario, listo cuando lo necesites.</h3>
-    <p>Pregúntame sobre valuaciones, ISR, contratos o cualquier duda del mercado. Estoy aquí para ayudarte a cerrar más rápido.</p>
-    <button class="ai-card__btn" type="button" onclick="window.toggleShaarkPopup ? window.toggleShaarkPopup(true) : document.getElementById('bk-shaark-fab')?.click()">
-      Abrir Broq
-      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-    </button>
-  </div>
-
-  <!-- App Store -->
-  <div class="appstore-card" data-widget="appstore">
-    <div class="appstore-card__txt">
-      <div class="appstore-card__eyebrow">También disponible en iOS</div>
-      <div class="appstore-card__title">Lleva Broquer contigo a todas partes</div>
-    </div>
-    <a href="https://apps.apple.com/us/app/broquer/id6775727897" target="_blank" rel="noopener" class="appstore-card__badge">
-      <img src="appstore-badge.webp" alt="Descárgalo en el App Store"/>
-    </a>
-  </div>
-
-  <!-- Pie -->
+<!-- Pie -->
   <div class="dash-foot"><!-- AUDIT-EXEMPT-LINE: insignia oficial de Meta (marca externa) -->
     <img src="meta-tech-provider.png" alt="Meta Tech Provider"/>
   </div>
 
-</div>
-
-<!-- ⌘K: paleta de comandos -->
-<div class="cmdk-bg" id="cmdk">
-  <div class="cmdk" role="dialog" aria-modal="true" aria-label="Buscar módulos y acciones">
-    <div class="cmdk-in">
-      <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="m20 20-3.5-3.5"/></svg>
-      <input id="cmdk-input" placeholder="Ir a un módulo o acción…" autocomplete="off"/>
-      <span class="esc">esc</span>
-    </div>
-    <div class="cmdk-list" id="cmdk-list"></div>
-  </div>
 </div>
 
 <script src="app-shell.js" defer></script>
@@ -515,112 +432,14 @@
   if (gEl) gEl.textContent = greet;
 })();
 
-/* ── ⌘K: paleta de comandos ──
-   Espejo consciente de los módulos del app-shell (MODS vive dentro de
-   su closure). Si un módulo nuevo entra al shell, se agrega aquí. */
+
+
+/* ── El buscador del home abre la paleta global del shell ── */
 (function(){
-  const MODULOS = [
-    ['Tus Inmuebles','propiedades.html','CRM'],
-    ['Contactos','contactos.html','CRM'],
-    ['Tareas','tareas.html','CRM'],
-    ['Estadísticas','estadisticas.html','CRM'],
-    ['Bolsa inmobiliaria','bolsa.html','CRM'],
-    ['WhatsApp','whatsapp.html','Seguimiento'],
-    ['Leads','leads.html','Seguimiento'],
-    ['Correo','correo.html','Seguimiento'],
-    ['Contratos','contratos.html','Documentos'],
-    ['Firma electrónica','firmas.html','Documentos'],
-    ['Cumplimiento','cumplimiento.html','Documentos'],
-    ['Estimación de valor','avm.html','Números'],
-    ['ISR','isr.html','Números'],
-    ['Finanzas','finanzas.html','Números'],
-    ['Editor de imágenes','image-cleaner.html','Marketing'],
-    ['Ficha técnica','ficha-manual.html','Marketing'],
-    ['Facebook Ads','facebook-ads.html','Marketing'],
-    ['Video','video.html','Marketing'],
-    ['Mi sitio','mi-sitio.html','Marketing'],
-    ['Blog','blog.html','Más'],
-    ['Ayuda','guia-agente.html','Más'],
-    ['Equipo','equipo.html','Más'],
-  ];
-  const ACCIONES = [
-    ['Nuevo inmueble','propiedades.html'],
-    ['Nuevo contacto','contactos.html'],
-    ['Nueva tarea','tareas.html'],
-    ['Registrar lead','leads.html'],
-    ['Descargar informe financiero','finanzas.html'],
-  ];
-  const ICO = '<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>';
-
-  const bg = document.getElementById('cmdk');
-  const input = document.getElementById('cmdk-input');
-  const listEl = document.getElementById('cmdk-list');
-  let resultados = [], sel = 0;
-
-  function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-  function abrir(){
-    bg.classList.add('is-open');
-    input.value = '';
-    render();
-    setTimeout(() => input.focus(), 30);
-  }
-  function cerrar(){ bg.classList.remove('is-open'); }
-
-  function render(){
-    const q = input.value.toLowerCase().trim();
-    const norm = t => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    const nq = norm(q);
-    const acts = ACCIONES.filter(a => norm(a[0]).includes(nq));
-    const mods = MODULOS.filter(m => norm(m[0]).includes(nq));
-    resultados = [...acts.map(a => ({ n: a[0], href: a[1], grp: 'Acción' })),
-                  ...mods.map(m => ({ n: m[0], href: m[1], grp: m[2] }))];
-    sel = 0;
-    let h = '';
-    let i = 0;
-    if (acts.length) {
-      h += '<div class="cmdk-g">Acciones</div>';
-      acts.forEach(() => { h += fila(resultados[i], i); i++; });
-    }
-    if (mods.length) {
-      h += '<div class="cmdk-g">Módulos</div>';
-      mods.forEach(() => { h += fila(resultados[i], i); i++; });
-    }
-    if (!resultados.length) h = '<div class="cmdk-empty">Sin resultados para “' + esc(q) + '”</div>';
-    listEl.innerHTML = h;
-    listEl.querySelectorAll('.cmdk-item').forEach(el => {
-      el.addEventListener('mouseenter', () => { sel = Number(el.dataset.i); marcar(); });
-      el.addEventListener('click', () => ir(Number(el.dataset.i)));
-    });
-  }
-  function fila(r, i){
-    return '<div class="cmdk-item' + (i === sel ? ' is-sel' : '') + '" data-i="' + i + '">' +
-      '<span class="ci">' + ICO + '</span>' + esc(r.n) +
-      '<span class="grp">' + esc(r.grp) + '</span></div>';
-  }
-  function marcar(){
-    listEl.querySelectorAll('.cmdk-item').forEach(el =>
-      el.classList.toggle('is-sel', Number(el.dataset.i) === sel));
-  }
-  function ir(i){
-    const r = resultados[i];
-    if (r) window.location.href = r.href;
-  }
-
-  input.addEventListener('input', render);
-  input.addEventListener('keydown', e => {
-    if (e.key === 'ArrowDown') { e.preventDefault(); sel = Math.min(sel + 1, resultados.length - 1); marcar(); }
-    if (e.key === 'ArrowUp')   { e.preventDefault(); sel = Math.max(sel - 1, 0); marcar(); }
-    if (e.key === 'Enter' && resultados.length) { e.preventDefault(); ir(sel); }
-    if (e.key === 'Escape') cerrar();
-  });
-  bg.addEventListener('click', e => { if (e.target === bg) cerrar(); });
-  document.addEventListener('keydown', e => {
-    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); abrir(); }
-    if (e.key === 'Escape' && bg.classList.contains('is-open')) cerrar();
-  });
   const sBtn = document.getElementById('dash-search-btn');
-  if (sBtn) sBtn.addEventListener('click', abrir);
+  if (sBtn) sBtn.addEventListener('click', () => {
+    if (window.brokrCmdk) window.brokrCmdk.open();
+  });
 })();
 
 /* ── Datos reales cuando el shell termina la autenticación ── */
@@ -903,42 +722,6 @@ window.addEventListener('brokr-shell-ready', async (e) => {
     font-size: var(--fs-sm); cursor: pointer; font-family: inherit; }
 </style>
 
-<div class="dx-ov" id="dx-demo-ov" hidden>
-  <div class="dx-card">
-    <button class="dx-x" type="button" onclick="dashCerrarDemo()" aria-label="Cerrar">&times;</button>
-    <h3>Agenda tu demo</h3>
-    <p>Elige el día y la hora, y te contactamos para mostrarte Broquer en vivo.</p>
-    <div class="dx-field">
-      <label for="dx-demo-nombre">Tu nombre</label>
-      <input id="dx-demo-nombre" type="text" autocomplete="name" placeholder="Ej. Ana Martínez"/>
-    </div>
-    <div class="dx-field">
-      <label for="dx-demo-contacto">Teléfono o correo</label>
-      <input id="dx-demo-contacto" type="text" autocomplete="tel" placeholder="Ej. 443 123 4567"/>
-    </div>
-    <div class="dx-row">
-      <div class="dx-field">
-        <label for="dx-demo-fecha">Fecha</label>
-        <input id="dx-demo-fecha" type="date"/>
-      </div>
-      <div class="dx-field">
-        <label for="dx-demo-hora">Hora</label>
-        <select id="dx-demo-hora">
-          <option>09:00</option><option>10:00</option><option selected>11:00</option>
-          <option>12:00</option><option>13:00</option><option>16:00</option>
-          <option>17:00</option><option>18:00</option>
-        </select>
-      </div>
-    </div>
-    <div class="dx-field">
-      <label for="dx-demo-mensaje">¿Algo que quieras ver en la demo? (opcional)</label>
-      <textarea id="dx-demo-mensaje" rows="2" placeholder="Ej. WhatsApp con IA y contratos"></textarea>
-    </div>
-    <button class="bk-btn" id="dx-demo-enviar" type="button" onclick="dashEnviarDemo()" style="width:100%;">Agendar demo</button>
-    <div class="dx-msg" id="dx-demo-msg"></div>
-  </div>
-</div>
-
 <div class="dx-ov" id="dx-max-ov" hidden>
   <div class="dxm-card">
     <button class="dxm-x" type="button" onclick="dashCerrarMax()" aria-label="Cerrar">&times;</button>
@@ -950,72 +733,8 @@ window.addEventListener('brokr-shell-ready', async (e) => {
 </div>
 
 <script>
-/* ── Agendar demo (dashboard) ── */
-(function () {
-  async function dxToken() {
-    try {
-      if (window.brokrSb && window.brokrSb.ensureToken) {
-        var t = await window.brokrSb.ensureToken();
-        if (t) return t;
-      }
-    } catch (e) {}
-    return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || '';
-  }
-
-  window.dashAbrirDemo = function () {
-    var ov = document.getElementById('dx-demo-ov');
-    var f = document.getElementById('dx-demo-fecha');
-    if (f && !f.value) {
-      var d = new Date(); d.setDate(d.getDate() + 1);
-      f.min = new Date().toISOString().slice(0, 10);
-      f.value = d.toISOString().slice(0, 10);
-    }
-    ov.hidden = false;
-  };
-  window.dashCerrarDemo = function () { document.getElementById('dx-demo-ov').hidden = true; };
-  document.getElementById('dx-demo-ov').addEventListener('click', function (e) {
-    if (e.target === this) dashCerrarDemo();
-  });
-
-  window.dashEnviarDemo = async function () {
-    var btn = document.getElementById('dx-demo-enviar');
-    var msg = document.getElementById('dx-demo-msg');
-    var body = {
-      nombre:   document.getElementById('dx-demo-nombre').value.trim(),
-      contacto: document.getElementById('dx-demo-contacto').value.trim(),
-      fecha:    document.getElementById('dx-demo-fecha').value,
-      hora:     document.getElementById('dx-demo-hora').value,
-      mensaje:  document.getElementById('dx-demo-mensaje').value.trim(),
-      origen:   'index'
-    };
-    if (!body.nombre || !body.contacto) {
-      msg.style.color = 'var(--mute)';
-      msg.textContent = 'Escribe tu nombre y un teléfono o correo.';
-      return;
-    }
-    btn.disabled = true; btn.textContent = 'Agendando…'; msg.textContent = '';
-    try {
-      var tok = await dxToken();
-      var heads = { 'Content-Type': 'application/json' };
-      if (tok) heads.Authorization = 'Bearer ' + tok;
-      var r = await fetch((window.API_BASE || 'https://api.broquer.app') + '/demo/agendar', {
-        method: 'POST', headers: heads, body: JSON.stringify(body)
-      });
-      var d = await r.json().catch(function () { return {}; });
-      if (!r.ok) throw new Error(d.detail || 'No se pudo agendar.');
-      msg.style.color = 'var(--sky-blue)';
-      msg.textContent = 'Listo. Tu demo quedó agendada para el ' + body.fecha + ' a las ' + body.hora + '.';
-      btn.textContent = 'Demo agendada';
-      setTimeout(dashCerrarDemo, 3200);
-    } catch (e) {
-      msg.style.color = 'var(--mute)';
-      msg.textContent = (e && e.message) ? e.message : 'No se pudo agendar. Intenta de nuevo.';
-      btn.disabled = false; btn.textContent = 'Agendar demo';
-    }
-  };
-
-  /* ── Promo: 7 días de Broquer MAX gratis, solo si el trial está disponible.
-     Sale en cada carga mientras siga disponible; al activarse ya no vuelve. ── */
+/* ── Promo: 7 días de Broquer MAX ── */
+(function(){
   window.dashCerrarMax = function () {
     document.getElementById('dx-max-ov').hidden = true;
   };

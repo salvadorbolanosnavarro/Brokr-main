@@ -245,7 +245,7 @@
     { key:'crm',         label:'CRM',         icon:'funnel' },
     { key:'seguimiento', label:'Seguimiento', icon:'send' },
     { key:'documentos',  label:'Documentos',  icon:'document' },
-    { key:'numeros',     label:'Números',     icon:'nums123' },
+    { key:'numeros',     label:'Herramientas', icon:'nums123' },
     { key:'marketing',   label:'Marketing',   icon:'megaphone' },
     // "Más" agrupa lo que no es trabajo diario: perfil, blog, ayuda (y admin).
     { key:'mas',         label:'Más',         icon:'plus' },
@@ -404,7 +404,7 @@
    Los módulos van en BLANCO y en NEGRITAS, agrupados en bloques
    translúcidos separados por aire: nada de líneas divisorias. */
 .bk-sidebar {
-  width: 268px; flex-shrink: 0;
+  width: 296px; flex-shrink: 0;
   background: var(--sb-bg);
   border-right: none;
   padding: 18px 12px 20px;
@@ -445,6 +445,157 @@
   transition: opacity var(--dur) var(--ease);
 }
 .bk-sidebar__brand a:hover img { opacity: 1; }
+
+/* ── Rail de íconos + panel del grupo activo ─────────────────────
+   El acordeón no escala con muchos módulos: expandir un grupo
+   escondía todo lo demás. Ahora los grupos viven en un rail fijo
+   siempre visible y el panel muestra los módulos del grupo activo.
+   Cambiar de grupo NO navega: solo cambia el panel. */
+.bk-sb-cols { flex: 1; display: flex; gap: 10px; min-height: 0; }
+.bk-rail {
+  flex: 0 0 56px;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.bk-rail__item {
+  position: relative;
+  width: 48px; height: 46px; border-radius: var(--r);
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,0.72); background: transparent;
+  border: none; cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.bk-rail__item svg { width: 21px; height: 21px; }
+.bk-rail__item:hover { background: var(--sb-hover); color: #FFFFFF; }
+/* Estado activo con contraste real: pastilla blanca + icono navy. */
+.bk-rail__item.is-active { background: #FFFFFF; color: var(--sky-navy); }
+.bk-rail__item.is-active::before {
+  content: ''; position: absolute; left: -12px; top: 50%;
+  transform: translateY(-50%);
+  width: 4px; height: 24px; border-radius: 0 4px 4px 0;
+  background: #FFFFFF;
+}
+.bk-rail__tip {
+  position: absolute; left: 56px; top: 50%;
+  transform: translateY(-50%) scale(0.92); transform-origin: left center;
+  background: var(--sky-navy); color: #FFFFFF;
+  padding: 5px 10px; border-radius: var(--r-xs);
+  font-size: 12px; font-weight: 600; white-space: nowrap;
+  opacity: 0; pointer-events: none; z-index: 80;
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+  box-shadow: var(--shadow-lg);
+}
+.bk-rail__item:hover .bk-rail__tip { opacity: 1; transform: translateY(-50%) scale(1); }
+.bk-rail__spring { flex: 1; }
+
+.bk-panel2 {
+  flex: 1; min-width: 0;
+  background: var(--sb-panel); border-radius: var(--r-lg);
+  padding: 10px 8px;
+  display: flex; flex-direction: column; gap: 4px;
+  overflow-y: auto;
+}
+.bk-panel2::-webkit-scrollbar { width: 0; }
+.bk-panel2__title {
+  font-size: 12px; font-weight: 800; letter-spacing: 0.06em;
+  text-transform: none;
+  color: rgba(255,255,255,0.62);
+  padding: 2px 10px 6px;
+}
+/* Fijados: chips de los módulos diarios, arriba de todo */
+.bk-fijados { display: flex; flex-wrap: wrap; gap: 5px; padding: 0 6px 8px; }
+.bk-fijados__chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--sb-hover); color: #FFFFFF;
+  border: none; border-radius: var(--r-pill);
+  padding: 5px 10px; font-size: 12px; font-weight: 700;
+  cursor: pointer; text-decoration: none; font-family: inherit;
+  transition: background var(--dur) var(--ease);
+}
+.bk-fijados__chip:hover { background: rgba(255,255,255,0.24); }
+.bk-fijados__chip svg { width: 13px; height: 13px; }
+/* Link del panel: activo = pastilla blanca con texto navy (contraste real) */
+.bk-panel2 .bk-sb-link.is-active,
+.bk-panel2 a.bk-sb-link.is-active {
+  background: #FFFFFF !important; color: var(--sky-navy) !important;
+  box-shadow: none;
+}
+.bk-panel2 .bk-sb-link.is-active svg { color: var(--sky-navy) !important; }
+/* Estrella para fijar/desfijar (aparece al pasar el cursor) */
+.bk-sb-link .bk-pin {
+  margin-left: auto; opacity: 0; flex: 0 0 auto;
+  color: rgba(255,255,255,0.7);
+  background: none; border: none; cursor: pointer; padding: 4px;
+  transition: opacity var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.bk-sb-link:hover .bk-pin { opacity: 0.7; }
+.bk-sb-link .bk-pin:hover { opacity: 1; color: #FFFFFF; }
+.bk-sb-link .bk-pin.is-on { opacity: 0.9; }
+.bk-panel2 .bk-sb-link.is-active .bk-pin { color: var(--sky-navy); }
+.bk-pin svg { width: 14px; height: 14px; }
+/* Lanzador: todos los módulos → paleta */
+.bk-launcher {
+  margin-top: auto;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  border: 1px dashed rgba(255,255,255,0.34); border-radius: var(--r);
+  background: transparent; color: rgba(255,255,255,0.82);
+  padding: 10px; font-size: 12.5px; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.bk-launcher:hover { background: var(--sb-hover); color: #FFFFFF; }
+.bk-launcher svg { width: 15px; height: 15px; }
+.bk-launcher .kbd {
+  font-size: 10.5px; font-weight: 700;
+  border: 1px solid rgba(255,255,255,0.3); border-radius: 5px;
+  padding: 1px 5px; opacity: 0.85;
+}
+
+/* ── Paleta de comandos (⌘K) — global, en toda la app ── */
+.bk-cmdk-bg {
+  position: fixed; inset: 0; z-index: 2147483644;
+  background: rgba(8,28,78,0.42);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  display: none; align-items: flex-start; justify-content: center;
+  padding: 12vh 16px 0;
+}
+.bk-cmdk-bg.is-open { display: flex; }
+.bk-cmdk {
+  width: min(560px, 100%); background: var(--paper);
+  border: 1px solid var(--line-2); border-radius: var(--r-modal);
+  box-shadow: var(--shadow-xl); overflow: hidden;
+}
+.bk-cmdk__in {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 20px; border-bottom: 1px solid var(--line);
+}
+.bk-cmdk__in svg { color: var(--mute); flex: 0 0 auto; }
+.bk-cmdk__in input {
+  flex: 1; border: none; outline: none; background: transparent;
+  font-size: 15px; font-family: inherit; color: var(--ink);
+}
+.bk-cmdk__esc {
+  font-size: 11px; font-weight: 600; color: var(--mute);
+  border: 1px solid var(--line); border-radius: 6px; padding: 2px 7px;
+}
+.bk-cmdk__list { max-height: 50vh; overflow-y: auto; padding: 8px; }
+.bk-cmdk__g {
+  font-size: 11px; font-weight: 700; color: var(--mute);
+  padding: 10px 12px 4px; letter-spacing: 0.02em;
+}
+.bk-cmdk__item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 12px; border-radius: var(--r-sm);
+  font-size: 14px; font-weight: 500; cursor: pointer; color: var(--ink);
+}
+.bk-cmdk__item .ci {
+  flex: 0 0 auto; width: 30px; height: 30px; border-radius: var(--r-xs);
+  background: var(--data-1-soft); color: var(--data-1);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.bk-cmdk__item .ci svg { width: 15px; height: 15px; }
+.bk-cmdk__item .grp { margin-left: auto; font-size: 11.5px; color: var(--mute); font-weight: 600; }
+.bk-cmdk__item.is-sel, .bk-cmdk__item:hover { background: var(--paper-2); }
+.bk-cmdk__empty { padding: 26px; text-align: center; color: var(--mute); font-size: 14px; }
 
 /* Bloque: la unidad que agrupa módulos sin usar una línea */
 .bk-sb-block {
@@ -1322,33 +1473,77 @@ body[data-app="facebook-ads"]{--page-max:980px}
   function buildSidebarLink(m, active) {
     return `<a href="${m.href}" class="bk-sb-link${m.key === active ? ' is-active' : ''}">${svg(m.icon)} ${m.label}</a>`;
   }
-  // Un grupo del sidebar: mismo acordeón que ya tenía CRM, ahora para los
-  // cinco. Arranca abierto solo el grupo donde está el módulo que se está
-  // viendo; los demás cerrados, para que el menú quepa en una pantalla.
-  function buildSidebarGroup(grupo, items, active) {
-    const esMas = grupo.key === 'mas';
-    if (!items.length && !esMas) return '';
-    const isOpen = items.some(m => m.key === active);
-    const gid = 'bk-sb-g-' + grupo.key;
-    // "Más" lleva a Mi perfil como primer renglón (abre el drawer, no navega)
-    // y su indicador es el propio "+", que gira a "×" al abrirse.
-    const perfilLink = esMas
+  /* ── Rail + panel ──
+     El rail lleva los grupos siempre visibles; el panel pinta los módulos
+     del grupo activo. Cambiar de grupo NO navega, solo cambia el panel.
+     "Más" incluye Mi perfil (abre el drawer, no navega). */
+  function buildRailItem(grupo, items, grupoActivo) {
+    if (!items.length && grupo.key !== 'mas') return '';
+    const on = grupo.key === grupoActivo;
+    return `<button class="bk-rail__item${on ? ' is-active' : ''}" type="button" data-rail="${grupo.key}" aria-label="${grupo.label}">
+      ${svg(grupo.icon)}<span class="bk-rail__tip">${grupo.label}</span>
+    </button>`;
+  }
+
+  // Fijados: los módulos diarios, arriba del panel. Viven en el navegador.
+  const FIJADOS_KEY = 'brokr_fijados';
+  function leerFijados() {
+    try {
+      const v = JSON.parse(localStorage.getItem(FIJADOS_KEY) || 'null');
+      if (Array.isArray(v)) return v;
+    } catch (e) {}
+    return ['props', 'contactos', 'tareas', 'whatsapp'];
+  }
+  function guardarFijados(keys) {
+    try { localStorage.setItem(FIJADOS_KEY, JSON.stringify(keys)); } catch (e) {}
+  }
+
+  const PIN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.5c.16-.4.88-.4 1.04 0l2.13 5.11 5.52.44c.44.04.62.58.28.86l-4.2 3.6 1.28 5.39c.1.43-.36.76-.74.53L12 16.55l-4.79 2.88c-.38.23-.84-.1-.74-.53l1.28-5.39-4.2-3.6c-.34-.28-.16-.82.28-.86l5.52-.44 2.13-5.11z"/></svg>';
+
+  function renderPanel2(shell, grupoKey, porGrupo, active) {
+    const panel = shell.querySelector('#bk-panel2');
+    if (!panel) return;
+    const grupo = GRUPOS.find(g => g.key === grupoKey) || GRUPOS[0];
+    const items = porGrupo(grupo.key);
+    const fijados = leerFijados();
+    const chips = fijados
+      .map(k => MODS.find(m => m.key === k))
+      .filter(Boolean)
+      .map(m => `<a class="bk-fijados__chip" href="${m.href}">${svg(m.icon)} ${m.label.split(' ')[0]}</a>`)
+      .join('');
+    const perfilLink = grupo.key === 'mas'
       ? `<a href="javascript:void(0)" class="bk-sb-link" onclick="openProfileDrawer()">${svg('user')} Mi perfil</a>`
       : '';
-    // "Más" ya trae el "+" como icono del grupo: sin indicador duplicado.
-    const indicador = esMas
-      ? ''
-      : svg('chevron', 16, 2, 'bk-sb-chevron');
-    return `<div class="bk-sb-block bk-sb-group${esMas ? ' bk-sb-block--cuenta bk-sb-group--mas' : ''}${isOpen ? ' is-open' : ''}" id="${gid}">
-      <button class="bk-sb-link bk-sb-trigger${isOpen ? ' is-active' : ''}" data-sb-group="${grupo.key}" type="button" aria-expanded="${isOpen ? 'true' : 'false'}" aria-controls="${gid}-sub">
-        ${svg(grupo.icon)} ${grupo.label} ${indicador}
-      </button>
-      <div class="bk-sb-submenu" id="${gid}-sub">
-        ${perfilLink}${items.map(m => buildSidebarLink(m, active)).join('')}
-      </div>
-    </div>`;
+    const links = items.map(m => {
+      const pin = fijados.includes(m.key);
+      return `<a href="${m.href}" class="bk-sb-link${m.key === active ? ' is-active' : ''}">${svg(m.icon)} ${m.label}
+        <button class="bk-pin${pin ? ' is-on' : ''}" type="button" data-pin="${m.key}" aria-label="${pin ? 'Quitar de fijados' : 'Fijar'}" title="${pin ? 'Quitar de fijados' : 'Fijar'}">${PIN_SVG}</button>
+      </a>`;
+    }).join('');
+    panel.innerHTML = `
+      ${chips ? `<div class="bk-fijados">${chips}</div>` : ''}
+      <div class="bk-panel2__title">${grupo.label}</div>
+      ${perfilLink}${links}
+      <button class="bk-launcher" type="button" id="bk-launcher">
+        ${svg('search')} Todos los módulos <span class="kbd">⌘K</span>
+      </button>`;
+    panel.querySelectorAll('[data-pin]').forEach(btn => {
+      btn.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const k = btn.getAttribute('data-pin');
+        let f = leerFijados();
+        if (f.includes(k)) f = f.filter(x => x !== k);
+        else if (f.length < 6) f = [...f, k];
+        guardarFijados(f);
+        renderPanel2(shell, grupoKey, porGrupo, active);
+      });
+    });
+    const launch = panel.querySelector('#bk-launcher');
+    if (launch) launch.addEventListener('click', () => { if (window.brokrCmdk) window.brokrCmdk.open(); });
   }
-  function buildBnavItem(m, active) {
+
+    function buildBnavItem(m, active) {
     return `<a href="${m.href}" class="bk-bnav__item${m.key === active ? ' is-active' : ''}">${svg(m.icon, 22)} <span>${m.label.split(' ')[0]}</span></a>`;
   }
 
@@ -1404,7 +1599,12 @@ body[data-app="facebook-ads"]{--page-max:980px}
         <div class="bk-sidebar__brand">
           <a href="index.html" aria-label="Ir al inicio Broquer"><img src="logotipo-white.png" alt="Broquer"/></a>
         </div>
-        ${GRUPOS.map(g => buildSidebarGroup(g, porGrupo(g.key), activeKey)).join('')}
+        <div class="bk-sb-cols">
+          <nav class="bk-rail" id="bk-rail" aria-label="Grupos de módulos">
+            ${GRUPOS.map(g => buildRailItem(g, porGrupo(g.key), activeMod.group)).join('')}
+          </nav>
+          <div class="bk-panel2" id="bk-panel2"></div>
+        </div>
       </aside>
 
       <main class="bk-content">
@@ -1429,27 +1629,96 @@ body[data-app="facebook-ads"]{--page-max:980px}
     `;
     document.body.appendChild(shell);
 
-    // Acordeón de los grupos del sidebar. Abrir uno cierra los demás: son
-    // cinco, y con dos abiertos al mismo tiempo ya hay que hacer scroll.
-    shell.querySelectorAll('.bk-sb-trigger[data-sb-group]').forEach(trigger => {
-      trigger.addEventListener('click', () => {
-        const bloque = trigger.closest('.bk-sb-group');
-        if (!bloque) return;
-        const open = !bloque.classList.contains('is-open');
-        shell.querySelectorAll('.bk-sb-group').forEach(otro => {
-          if (otro === bloque) return;
-          otro.classList.remove('is-open');
-          const t = otro.querySelector('.bk-sb-trigger');
-          if (t) {
-            t.classList.remove('is-active');
-            t.setAttribute('aria-expanded', 'false');
-          }
-        });
-        bloque.classList.toggle('is-open', open);
-        trigger.classList.toggle('is-active', open);
-        trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    // Rail: clic en un grupo cambia el panel (no navega). El grupo del
+    // módulo activo arranca seleccionado.
+    let grupoPanel = activeMod.group || 'crm';
+    renderPanel2(shell, grupoPanel, porGrupo, activeKey);
+    shell.querySelectorAll('.bk-rail__item[data-rail]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        grupoPanel = btn.getAttribute('data-rail');
+        shell.querySelectorAll('.bk-rail__item').forEach(b =>
+          b.classList.toggle('is-active', b === btn));
+        renderPanel2(shell, grupoPanel, porGrupo, activeKey);
       });
     });
+
+    // ── Paleta de comandos (⌘K) — global en toda la app ──
+    // Se arma desde MODS (la fuente de verdad): módulo nuevo en el shell =
+    // módulo nuevo en la paleta, sin listas espejo.
+    (function () {
+      const ACCIONES = [
+        { n: 'Nuevo inmueble', href: 'propiedades.html' },
+        { n: 'Nuevo contacto', href: 'contactos.html' },
+        { n: 'Nueva tarea', href: 'tareas.html' },
+        { n: 'Registrar lead', href: 'leads.html' },
+      ];
+      const grupoLabel = k => (GRUPOS.find(g => g.key === k) || {}).label || '';
+      const bg = document.createElement('div');
+      bg.className = 'bk-cmdk-bg';
+      bg.id = 'bk-cmdk';
+      bg.innerHTML = `<div class="bk-cmdk" role="dialog" aria-modal="true" aria-label="Buscar módulos y acciones">
+        <div class="bk-cmdk__in">
+          ${svg('search', 17, 1.8)}
+          <input id="bk-cmdk-input" placeholder="Ir a un módulo o acción…" autocomplete="off"/>
+          <span class="bk-cmdk__esc">esc</span>
+        </div>
+        <div class="bk-cmdk__list" id="bk-cmdk-list"></div>
+      </div>`;
+      document.body.appendChild(bg);
+      const input = bg.querySelector('#bk-cmdk-input');
+      const listEl = bg.querySelector('#bk-cmdk-list');
+      let resultados = [], sel = 0;
+      const norm = t => String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const escT = t => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      function abrir() {
+        bg.classList.add('is-open');
+        input.value = '';
+        render();
+        setTimeout(() => input.focus(), 30);
+      }
+      function cerrar() { bg.classList.remove('is-open'); }
+      function fila(r, i) {
+        return `<div class="bk-cmdk__item${i === sel ? ' is-sel' : ''}" data-i="${i}">
+          <span class="ci">${svg(r.icon || 'search', 15, 1.8)}</span>${escT(r.n)}
+          <span class="grp">${escT(r.grp)}</span></div>`;
+      }
+      function render() {
+        const nq = norm(input.value.trim());
+        const acts = ACCIONES.filter(a => norm(a.n).includes(nq))
+          .map(a => ({ n: a.n, href: a.href, grp: 'Acción', icon: 'plus' }));
+        const mods = MODS.filter(m => (!m.adminOnly || profile?.isAdmin) && norm(m.label).includes(nq))
+          .map(m => ({ n: m.label, href: m.href, grp: grupoLabel(m.group), icon: m.icon }));
+        resultados = [...acts, ...mods];
+        sel = 0;
+        let h = '', i = 0;
+        if (acts.length) { h += '<div class="bk-cmdk__g">Acciones</div>'; acts.forEach(() => { h += fila(resultados[i], i); i++; }); }
+        if (mods.length) { h += '<div class="bk-cmdk__g">Módulos</div>'; mods.forEach(() => { h += fila(resultados[i], i); i++; }); }
+        if (!resultados.length) h = '<div class="bk-cmdk__empty">Sin resultados para “' + escT(input.value.trim()) + '”</div>';
+        listEl.innerHTML = h;
+        listEl.querySelectorAll('.bk-cmdk__item').forEach(el => {
+          el.addEventListener('mouseenter', () => { sel = Number(el.dataset.i); marcar(); });
+          el.addEventListener('click', () => ir(Number(el.dataset.i)));
+        });
+      }
+      function marcar() {
+        listEl.querySelectorAll('.bk-cmdk__item').forEach(el =>
+          el.classList.toggle('is-sel', Number(el.dataset.i) === sel));
+      }
+      function ir(i) { const r = resultados[i]; if (r) location.href = r.href; }
+      input.addEventListener('input', render);
+      input.addEventListener('keydown', e => {
+        if (e.key === 'ArrowDown') { e.preventDefault(); sel = Math.min(sel + 1, resultados.length - 1); marcar(); }
+        if (e.key === 'ArrowUp') { e.preventDefault(); sel = Math.max(sel - 1, 0); marcar(); }
+        if (e.key === 'Enter' && resultados.length) { e.preventDefault(); ir(sel); }
+        if (e.key === 'Escape') cerrar();
+      });
+      bg.addEventListener('click', e => { if (e.target === bg) cerrar(); });
+      document.addEventListener('keydown', e => {
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); abrir(); }
+        else if (e.key === 'Escape' && bg.classList.contains('is-open')) cerrar();
+      });
+      window.brokrCmdk = { open: abrir, close: cerrar };
+    })();
 
     // ── Diagnóstico de cascada CSS del sidebar ──
     // Si algún módulo override el color de los links del drawer, lo detectamos
