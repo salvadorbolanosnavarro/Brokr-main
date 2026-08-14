@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
 <title>Broquer — Inicio</title>
 <link rel="manifest" href="manifest.json"/>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
@@ -237,17 +237,21 @@
 
 .dash-vacio { padding: var(--sp-4) 0; color: var(--mute); font-size: var(--fs-sm); }
 
-/* Sello Meta: fijo abajo-izquierda (opuesto a la burbuja de Broq),
-   55% más pequeño que su tamaño original de 44px. */
-.dash-foot {
-  position: fixed; left: 98px; bottom: 16px; z-index: 95;
+/* Insignia Meta Tech Provider: discreta, en la cabecera, junto al
+   saludo. Solo informa — no se puede tocar ni arrastrar. */
+.dash-meta {
+  flex: 0 0 auto; align-self: flex-start;
+  display: inline-flex; align-items: center;
   background: var(--paper); border: 1px solid var(--line);
-  border-radius: var(--r-pill); padding: 5px 10px;
+  border-radius: var(--r-pill); padding: 6px 11px;
   box-shadow: var(--shadow-sm);
-  pointer-events: none;
+  pointer-events: none; user-select: none; opacity: .9;
 }
-.dash-foot img { height: 20px; width: auto; display: block; }
-@media (max-width: 880px) { .dash-foot { left: 14px; bottom: 12px; } }
+.dash-meta img { height: 16px; width: auto; display: block; -webkit-user-drag: none; }
+@media (max-width: 720px) {
+  .dash-meta { padding: 5px 9px; }
+  .dash-meta img { height: 14px; }
+}
 </style>
 </head>
 <body data-app="home">
@@ -259,6 +263,9 @@
     <div class="dash-greet">
       <h1><span id="dash-greet">Buenos días</span><span id="dash-greet-coma" hidden>,</span>&nbsp;<span id="dash-firstname" hidden></span></h1>
       <p id="dash-sub"><span id="dash-date-mes">—</span> <b id="dash-urge" hidden></b></p>
+    </div>
+    <div class="dash-meta" aria-label="Meta Tech Provider">
+      <img src="meta-tech-provider.png" alt="Meta Tech Provider"/>
     </div>
     <button class="dash-search" type="button" id="dash-search-btn">
       <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="m20 20-3.5-3.5"/></svg>
@@ -444,16 +451,6 @@
 })();
 
 
-
-/* ── Sello Meta: colgarlo de <body> DESPUÉS del shell ──
-   El shell, al arrancar, barre TODOS los hijos de body hacia su
-   contenedor .bk-page; si movemos la insignia antes, se la traga.
-   Nos colgamos del evento brokr-shell-ready: para entonces el barrido
-   ya terminó y lo que se agregue a body se queda en body. */
-window.addEventListener('brokr-shell-ready', function(){
-  const foot = document.querySelector('.dash-foot');
-  if (foot) document.body.appendChild(foot);
-});
 
 /* ── Widgets reacomodables: arrastra y suelta, el orden se guarda ──
    La grid tiene dos columnas (ancha/angosta); el ancho de cada tarjeta

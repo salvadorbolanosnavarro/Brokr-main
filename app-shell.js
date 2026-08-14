@@ -4733,6 +4733,11 @@ body[data-app="facebook-ads"]{--page-max:980px}
    navegador para restaurarla. Se bloquea el gesto de escala y, si el
    sistema alcanzo a cambiarla, se devuelve a 1 al soltar. */
 (function () {
+  /* Normalizar el viewport en TODAS las pantallas: aunque algun modulo
+     tenga una meta vieja sin user-scalable=no, aqui se corrige. */
+  var vp = document.querySelector('meta[name="viewport"]');
+  if (vp) vp.setAttribute('content',
+    'width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover');
   ['gesturestart', 'gesturechange', 'gestureend'].forEach(function (t) {
     document.addEventListener(t, function (ev) { ev.preventDefault(); }, { passive: false });
   });

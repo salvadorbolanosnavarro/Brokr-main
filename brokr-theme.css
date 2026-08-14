@@ -369,6 +369,19 @@ html {
   iframe, video, canvas { max-width: 100%; }
 }
 
+/* ── Pantalla fija al tacto ──────────────────────────────────
+   En cualquier dispositivo táctil (teléfono o tableta):
+   1) sin rebote elástico en los bordes ni jalón para recargar,
+   2) el cuerpo solo se desplaza en vertical — nada de arrastres
+      laterales que muevan la pantalla completa.
+   Los contenedores con scroll horizontal propio (tablas, chips
+   de filtros) no se afectan: definen su propio touch-action.
+   El escritorio queda intacto. */
+@media (pointer: coarse) {
+  html, body { overscroll-behavior: none; }
+  body { touch-action: pan-y; }
+}
+
 /* ════════════════════════════════════════════════════════════
    PRIMITIVAS DE SUPERFICIE
    ════════════════════════════════════════════════════════════ */
