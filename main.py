@@ -208,6 +208,15 @@ try:
 except Exception as _e:
     print(f"[bolsa] No se pudo montar el router de la bolsa: {_e}")
 
+# Finanzas: cuentas, ingresos, gastos, rentabilidad por propiedad, lectura
+# de tickets con Broq y reportes PDF/CSV. Mismo import defensivo: si falla,
+# el resto del backend sigue vivo.
+try:
+    from routers.finanzas import router as finanzas_router
+    app.include_router(finanzas_router)
+except Exception as _e:
+    print(f"[finanzas] No se pudo montar el router de finanzas: {_e}")
+
 CONFIG_FILE = Path(__file__).parent / "config.json"
 
 def load_config() -> dict:

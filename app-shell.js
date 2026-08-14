@@ -269,6 +269,7 @@
     // Números.
     { key:'avm',          href:'avm.html',           label:'Estimación de valor', group:'numeros',     icon:'peso' },
     { key:'isr',          href:'isr.html',           label:'ISR',                 group:'numeros',     icon:'calculator' },
+    { key:'finanzas',     href:'finanzas.html',      label:'Finanzas',            group:'numeros',     icon:'wallet' },
     // Marketing — de la foto cruda al anuncio publicado.
     { key:'image-cleaner',href:'image-cleaner.html', label:'Editor imágenes',     group:'marketing',   icon:'image' },
     { key:'ficha-manual', href:'ficha-manual.html',  label:'Ficha técnica',       group:'marketing',   icon:'landscape' },
@@ -297,6 +298,7 @@
     'avm':          'Estimación de valor AVM — avalúo de mercado automatizado',
     'ficha-manual': 'Ficha Técnica Manual — crear ficha sin EasyBroker',
     'isr':          'Calculadora ISR por enajenación de inmuebles',
+    'finanzas':     'Finanzas — ingresos, gastos, cuentas, rentabilidad por propiedad y reportes descargables',
     'image-cleaner':'Editor de imágenes — limpieza con IA',
     'video':        'Video — recorrido en video armado con las fotos de la ficha, para reels, stories y feed',
     'admin':        'Panel administrativo',
@@ -317,6 +319,7 @@
     'avm':           { title:'Estimación de valor',    sub:'Avalúo automático con comparables de tu zona.' },
     'ficha-manual':  { title:'Ficha técnica',          sub:'Crea fichas profesionales de tus propiedades.' },
     'isr':           { title:'Cálculo de ISR',         sub:'ISR por enajenación de inmuebles con el INPC vigente.' },
+    'finanzas':      { title:'Finanzas',              sub:'Tus ingresos, gastos y cuentas. La rentabilidad real de cada operación.' },
     'image-cleaner': { title:'Editor de imágenes',     sub:'Limpia y mejora las fotos de tus propiedades con IA.' },
     'facebook-ads':  { title:'Facebook Ads',           sub:'Crea, activa y mide anuncios de Facebook e Instagram.' },
     'whatsapp':      { title:'WhatsApp',                sub:'Varios números, un solo lugar. La IA califica, agenda y te pasa al prospecto cuando toca.' },
@@ -344,6 +347,7 @@
     cog:        '<path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a6.759 6.759 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.28z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>',
     bell:       '<path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/>',
     peso:       '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18"/><path stroke-linecap="round" stroke-linejoin="round" d="M16 7.5c0-1.5-1.5-2.5-4-2.5s-4 1-4 2.5S9.5 10 12 10.5s4 1 4 2.5-1.5 3-4 3-4-1-4-2.5"/>',
+    wallet:     '<path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3"/>',
     landscape:  '<path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75l2.25-2.25 1.5 1.5 2.25-2.25 2.25 2.25M8.25 15h7.5M5.625 3H8.25M5.625 3c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>',
     search:     '<circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/>',
     plus:       '<path stroke-linecap="round" d="M12 5v14M5 12h14"/>',

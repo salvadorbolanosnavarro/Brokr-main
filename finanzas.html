@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
+<title>Broquer — Finanzas</title>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+  /* Solo lo ESPECÍFICO del módulo. Todo compone tokens del sistema. */
+  .fin-scroll { padding: 24px 28px 64px; max-width: 1180px; margin: 0 auto; }
+  @media (max-width: 720px) { .fin-scroll { padding: 16px 14px 56px; } }
+
+  /* KPIs del periodo */
+  .fin-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--sp-4); margin-bottom: var(--sp-6); }
+  .fin-kpi-val { font-size: var(--fs-h2); font-weight: 800; letter-spacing: -0.02em; margin-top: var(--sp-1); font-variant-numeric: tabular-nums; }
+  .fin-kpi-val.is-in  { color: var(--data-2); }
+  .fin-kpi-val.is-out { color: var(--data-3); }
+
+  /* Selector de periodo */
+  .fin-periodo { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-5); }
+  .fin-periodo .bk-input { width: auto; }
+
+  /* Gráfica de flujo mensual (SVG puro con la paleta de datos) */
+  .fin-chart-wrap { overflow-x: auto; }
+  .fin-chart { width: 100%; min-width: 320px; height: 180px; display: block; }
+  .fin-leyenda { display: flex; gap: var(--sp-5); margin-top: var(--sp-3); font-size: var(--fs-sm); color: var(--mute); }
+  .fin-leyenda .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: baseline; }
+  .fin-leyenda .dot.in  { background: var(--data-2); }
+  .fin-leyenda .dot.out { background: var(--data-3); }
+
+  /* Cuentas */
+  .fin-cuentas { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--sp-4); }
+  .fin-cta-saldo { font-size: var(--fs-h3); font-weight: 800; margin-top: var(--sp-1); font-variant-numeric: tabular-nums; }
+  .fin-cta-saldo.is-neg { color: var(--data-3); }
+
+  /* Lista de movimientos */
+  .fin-mov { display: flex; align-items: center; gap: var(--sp-4); padding: var(--sp-3) var(--sp-2);
+    border-bottom: 1px solid var(--line); cursor: pointer; }
+  .fin-mov:hover { background: var(--paper-2); }
+  .fin-mov:last-child { border-bottom: none; }
+  .fin-mov__ico { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; }
+  .fin-mov__ico.is-in  { background: var(--data-2-soft); color: var(--data-2); }
+  .fin-mov__ico.is-out { background: var(--data-3-soft); color: var(--data-3); }
+  .fin-mov__info { flex: 1 1 auto; min-width: 0; }
+  .fin-mov__concepto { font-weight: 600; font-size: var(--fs-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fin-mov__meta { color: var(--mute); font-size: var(--fs-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fin-mov__monto { flex: 0 0 auto; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .fin-mov__monto.is-in  { color: var(--data-2); }
+  .fin-mov__monto.is-out { color: var(--ink); }
+
+  /* Barras por categoría */
+  .fin-cat-row { margin-bottom: var(--sp-3); }
+  .fin-cat-top { display: flex; justify-content: space-between; font-size: var(--fs-sm); margin-bottom: var(--sp-1); }
+  .fin-cat-top .n { color: var(--ink-2); font-weight: 600; }
+  .fin-cat-top .v { color: var(--mute); font-variant-numeric: tabular-nums; }
+  .fin-cat-bar { height: 8px; border-radius: var(--r-pill); background: var(--paper-2); overflow: hidden; }
+  .fin-cat-bar > span { display: block; height: 100%; border-radius: var(--r-pill); }
+
+  .fin-secciones { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-5); margin-top: var(--sp-6); }
+  @media (max-width: 900px) { .fin-secciones { grid-template-columns: 1fr; } }
+
+  .fin-prop-util { font-weight: 800; font-variant-numeric: tabular-nums; }
+  .fin-prop-util.is-neg { color: var(--data-3); }
+  .fin-prop-util.is-pos { color: var(--data-2); }
+
+  .fin-acciones-head { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-bottom: var(--sp-5); }
+
+  .fin-drop { border: 1px dashed var(--line-2); border-radius: var(--r-lg); padding: var(--sp-6);
+    text-align: center; color: var(--mute); font-size: var(--fs-sm); cursor: pointer; }
+  .fin-drop:hover { background: var(--paper-2); }
+</style>
+</head>
+<body data-app="finanzas">
+
+<div class="fin-scroll">
+
+  <!-- Comisiones detectadas (aparece solo si hay pendientes) -->
+  <div id="fin-comisiones" hidden></div>
+
+  <!-- Acciones principales -->
+  <div class="fin-acciones-head">
+    <button class="bk-btn bk-btn--forest" id="fin-btn-nuevo">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
+      Registrar movimiento
+    </button>
+    <button class="bk-btn bk-btn--ghost" id="fin-btn-ticket">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/></svg>
+      Broq lee tu ticket
+    </button>
+    <button class="bk-btn bk-btn--ghost" id="fin-btn-reporte">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+      Descargar informe
+    </button>
+    <button class="bk-btn bk-btn--ghost" id="fin-btn-cuentas">Cuentas</button>
+  </div>
+
+  <!-- Periodo -->
+  <div class="fin-periodo">
+    <span class="bk-chip" data-per="mes">Este mes</span>
+    <span class="bk-chip" data-per="mes-pasado">Mes pasado</span>
+    <span class="bk-chip" data-per="trimestre">Trimestre</span>
+    <span class="bk-chip" data-per="ano">Este año</span>
+    <input class="bk-input" type="date" id="fin-desde" aria-label="Desde"/>
+    <input class="bk-input" type="date" id="fin-hasta" aria-label="Hasta"/>
+    <button class="bk-btn bk-btn--quiet bk-btn--sm" id="fin-aplicar">Aplicar</button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="fin-kpis">
+    <div class="bk-card bk-card--pad bk-card--raise">
+      <span class="bk-eyebrow">Ingresos</span>
+      <div class="fin-kpi-val is-in" id="fin-kpi-in">—</div>
+    </div>
+    <div class="bk-card bk-card--pad bk-card--raise">
+      <span class="bk-eyebrow">Gastos</span>
+      <div class="fin-kpi-val is-out" id="fin-kpi-out">—</div>
+    </div>
+    <div class="bk-card bk-card--pad bk-card--raise">
+      <span class="bk-eyebrow">Utilidad</span>
+      <div class="fin-kpi-val" id="fin-kpi-util">—</div>
+    </div>
+    <div class="bk-card bk-card--pad bk-card--raise">
+      <span class="bk-eyebrow" id="fin-kpi-ano-l">Ingresos del año</span>
+      <div class="fin-kpi-val" id="fin-kpi-ano">—</div>
+      <a href="isr.html" class="bk-hint" style="display:inline-block;margin-top:var(--sp-1);">Llévalo a tu cálculo de ISR →</a>
+    </div>
+  </div>
+
+  <!-- Flujo mensual -->
+  <div class="bk-card bk-card--pad bk-card--raise" id="fin-card-flujo" hidden>
+    <div class="bk-section-header" style="margin-bottom:var(--sp-3);"><h2>Flujo del periodo</h2></div>
+    <div class="fin-chart-wrap"><svg class="fin-chart" id="fin-chart" role="img" aria-label="Flujo de ingresos y gastos por mes"></svg></div>
+    <div class="fin-leyenda">
+      <span><span class="dot in"></span>Ingresos</span>
+      <span><span class="dot out"></span>Gastos</span>
+    </div>
+  </div>
+
+  <div class="fin-secciones">
+    <!-- Por categoría -->
+    <div class="bk-card bk-card--pad bk-card--raise">
+      <div class="bk-section-header" style="margin-bottom:var(--sp-4);"><h2>Por categoría</h2></div>
+      <div id="fin-cats-lista"></div>
+      <div class="bk-empty" id="fin-cats-vacio" hidden>
+        <div class="bk-empty__title">Sin movimientos en el periodo</div>
+        <div class="bk-empty__text">Registra tu primer ingreso o gasto para ver el desglose.</div>
+      </div>
+    </div>
+
+    <!-- Rentabilidad por propiedad -->
+    <div class="bk-card bk-card--pad bk-card--raise">
+      <div class="bk-section-header" style="margin-bottom:var(--sp-4);"><h2>Rentabilidad por propiedad</h2></div>
+      <table class="bk-table" id="fin-props-tabla" hidden>
+        <thead><tr><th>Propiedad</th><th style="text-align:right;">Utilidad</th></tr></thead>
+        <tbody id="fin-props-body"></tbody>
+      </table>
+      <div class="bk-empty" id="fin-props-vacio" hidden>
+        <div class="bk-empty__title">Aún sin operaciones ligadas</div>
+        <div class="bk-empty__text">Liga tus ingresos y gastos a una propiedad para ver cuánto te dejó de verdad.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Movimientos -->
+  <div class="bk-card bk-card--pad bk-card--raise" style="margin-top:var(--sp-5);">
+    <div class="bk-section-header" style="margin-bottom:var(--sp-3);">
+      <h2>Movimientos</h2>
+    </div>
+    <div class="bk-cluster" style="margin-bottom:var(--sp-3);">
+      <input class="bk-input" type="search" id="fin-buscar" placeholder="Buscar por concepto…" style="max-width:280px;"/>
+      <select class="bk-select" id="fin-filtro-tipo" style="max-width:160px;">
+        <option value="">Todos</option>
+        <option value="ingreso">Ingresos</option>
+        <option value="gasto">Gastos</option>
+      </select>
+    </div>
+    <div id="fin-mov-lista"></div>
+    <div class="bk-empty" id="fin-mov-vacio" hidden>
+      <div class="bk-empty__icon">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+      </div>
+      <div class="bk-empty__title">Todavía no hay movimientos</div>
+      <div class="bk-empty__text">Registra tu primer ingreso o gasto, o deja que Broq lea un ticket por ti.</div>
+      <button class="bk-btn bk-btn--forest bk-empty__action" id="fin-vacio-crear">Registrar movimiento</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ Modal: movimiento (crear / editar — TODO editable) ══ -->
+<div class="bk-overlay" id="fin-ov-mov">
+  <div class="bk-modal" role="dialog" aria-modal="true" aria-labelledby="fin-mov-titulo">
+    <div class="bk-modal__head">
+      <div class="bk-modal__title" id="fin-mov-titulo">Movimiento</div>
+      <button class="bk-icon-btn" data-cerrar aria-label="Cerrar">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/></svg>
+      </button>
+    </div>
+    <div class="bk-modal__body">
+      <div class="bk-field">
+        <label class="bk-label">Tipo</label>
+        <div class="bk-seg" role="radiogroup">
+          <button type="button" class="bk-seg__btn" data-tipo="ingreso">Ingreso</button>
+          <button type="button" class="bk-seg__btn" data-tipo="gasto">Gasto</button>
+        </div>
+      </div>
+      <div class="bk-field-row">
+        <div class="bk-field">
+          <label class="bk-label" for="fin-f-monto">Monto</label>
+          <input class="bk-input" id="fin-f-monto" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00"/>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="fin-f-fecha">Fecha</label>
+          <input class="bk-input" id="fin-f-fecha" type="date"/>
+        </div>
+      </div>
+      <div class="bk-field">
+        <label class="bk-label" for="fin-f-concepto">Concepto</label>
+        <input class="bk-input" id="fin-f-concepto" type="text" placeholder="Ej. Sesión de fotos Casa Altozano"/>
+      </div>
+      <div class="bk-field-row">
+        <div class="bk-field">
+          <label class="bk-label" for="fin-f-cat">Categoría</label>
+          <select class="bk-select" id="fin-f-cat"></select>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="fin-f-cta">Cuenta</label>
+          <select class="bk-select" id="fin-f-cta"></select>
+        </div>
+      </div>
+      <div class="bk-field">
+        <label class="bk-label" for="fin-f-prop">Propiedad (opcional)</label>
+        <select class="bk-select" id="fin-f-prop"></select>
+        <div class="bk-hint">Liga el movimiento a una propiedad para ver su rentabilidad real.</div>
+      </div>
+      <div class="bk-field">
+        <label class="bk-label" for="fin-f-notas">Notas (opcional)</label>
+        <textarea class="bk-textarea" id="fin-f-notas" rows="2"></textarea>
+      </div>
+      <div class="bk-field" id="fin-f-comp-wrap" hidden>
+        <label class="bk-label">Comprobante</label>
+        <div class="bk-cluster">
+          <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" id="fin-f-comp-ver" hidden>Ver comprobante</button>
+          <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" id="fin-f-comp-subir">Adjuntar foto o PDF</button>
+        </div>
+      </div>
+    </div>
+    <div class="bk-modal__foot">
+      <button class="bk-btn bk-btn--danger bk-btn--sm" id="fin-f-borrar" hidden>Borrar</button>
+      <span style="flex:1;"></span>
+      <button class="bk-btn bk-btn--ghost" data-cerrar>Cancelar</button>
+      <button class="bk-btn bk-btn--forest" id="fin-f-guardar">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Modal: cuentas ══ -->
+<div class="bk-overlay" id="fin-ov-ctas">
+  <div class="bk-modal" role="dialog" aria-modal="true" aria-labelledby="fin-ctas-titulo">
+    <div class="bk-modal__head">
+      <div class="bk-modal__title" id="fin-ctas-titulo">Tus cuentas</div>
+      <button class="bk-icon-btn" data-cerrar aria-label="Cerrar">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/></svg>
+      </button>
+    </div>
+    <div class="bk-modal__body">
+      <div class="fin-cuentas" id="fin-ctas-lista" style="margin-bottom:var(--sp-5);"></div>
+      <div class="bk-divider" style="margin-bottom:var(--sp-4);"></div>
+      <div class="bk-field-row">
+        <div class="bk-field">
+          <label class="bk-label" for="fin-c-nombre">Nombre</label>
+          <input class="bk-input" id="fin-c-nombre" type="text" placeholder="Ej. BBVA, Efectivo"/>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="fin-c-tipo">Tipo</label>
+          <select class="bk-select" id="fin-c-tipo">
+            <option value="banco">Banco</option>
+            <option value="efectivo">Efectivo</option>
+            <option value="tarjeta">Tarjeta</option>
+            <option value="otra">Otra</option>
+          </select>
+        </div>
+      </div>
+      <div class="bk-field">
+        <label class="bk-label" for="fin-c-saldo">Saldo inicial</label>
+        <input class="bk-input" id="fin-c-saldo" type="number" step="0.01" inputmode="decimal" value="0"/>
+        <div class="bk-hint">Editable después. El saldo actual siempre se calcula con tus movimientos.</div>
+      </div>
+    </div>
+    <div class="bk-modal__foot">
+      <button class="bk-btn bk-btn--ghost" data-cerrar>Cerrar</button>
+      <button class="bk-btn bk-btn--forest" id="fin-c-crear">Agregar cuenta</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Modal: ticket con Broq ══ -->
+<div class="bk-overlay" id="fin-ov-ticket">
+  <div class="bk-modal" role="dialog" aria-modal="true" aria-labelledby="fin-tk-titulo">
+    <div class="bk-modal__head">
+      <div class="bk-modal__title" id="fin-tk-titulo">Broq lee tu ticket</div>
+      <button class="bk-icon-btn" data-cerrar aria-label="Cerrar">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/></svg>
+      </button>
+    </div>
+    <div class="bk-modal__body">
+      <div class="fin-drop" id="fin-tk-drop" role="button" tabindex="0">
+        Toma una foto del ticket o factura, o arrástrala aquí.<br/>
+        Broq extrae el monto, la fecha y el concepto; tú confirmas y puedes editar todo.
+      </div>
+      <div id="fin-tk-estado" class="bk-hint" style="margin-top:var(--sp-3);" hidden></div>
+    </div>
+    <div class="bk-modal__foot">
+      <button class="bk-btn bk-btn--ghost" data-cerrar>Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Modal: informe ══ -->
+<div class="bk-overlay" id="fin-ov-rep">
+  <div class="bk-modal" role="dialog" aria-modal="true" aria-labelledby="fin-rep-titulo">
+    <div class="bk-modal__head">
+      <div class="bk-modal__title" id="fin-rep-titulo">Descargar informe</div>
+      <button class="bk-icon-btn" data-cerrar aria-label="Cerrar">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/></svg>
+      </button>
+    </div>
+    <div class="bk-modal__body">
+      <div class="bk-cluster" style="margin-bottom:var(--sp-4);">
+        <span class="bk-chip" data-rper="mes">Este mes</span>
+        <span class="bk-chip" data-rper="mes-pasado">Mes pasado</span>
+        <span class="bk-chip" data-rper="trimestre">Trimestre</span>
+        <span class="bk-chip" data-rper="ano">Este año</span>
+      </div>
+      <div class="bk-field-row">
+        <div class="bk-field">
+          <label class="bk-label" for="fin-rep-desde">Desde</label>
+          <input class="bk-input" type="date" id="fin-rep-desde"/>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="fin-rep-hasta">Hasta</label>
+          <input class="bk-input" type="date" id="fin-rep-hasta"/>
+        </div>
+      </div>
+      <div class="bk-hint">El PDF trae resumen, desglose por categoría, flujo mensual y rentabilidad por propiedad. El CSV lleva el detalle de cada movimiento, listo para tu contador.</div>
+    </div>
+    <div class="bk-modal__foot">
+      <button class="bk-btn bk-btn--ghost" id="fin-rep-csv">Exportar CSV</button>
+      <button class="bk-btn bk-btn--forest" id="fin-rep-pdf">Descargar PDF</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fin-file-oculto" accept="image/jpeg,image/png,image/webp,application/pdf" hidden/>
+
+<div class="bk-toast-stack" id="fin-toasts"></div>
+
+<script src="app-shell.js" defer></script>
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   Finanzas · Broquer
+   Regla del módulo: TODAS las cifras se calculan en el backend
+   (routers/finanzas.py). Aquí solo se pintan y se editan. Los saldos
+   nunca se guardan: editar cualquier movimiento recalcula todo.
+   ══════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  var API_BASE = 'https://api.broquer.app';
+
+  function g(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function pesos(n) {
+    var v = Number(n || 0);
+    return v.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 2 });
+  }
+  function fechaCorta(iso) {
+    if (!iso) return '—';
+    try { return new Date(String(iso).slice(0, 10) + 'T12:00:00')
+      .toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }); }
+    catch (e) { return String(iso); }
+  }
+  function mesBonito(ym) {
+    try { return new Date(ym + '-15T12:00:00')
+      .toLocaleDateString('es-MX', { month: 'short', year: '2-digit' }); }
+    catch (e) { return ym; }
+  }
+  function iso(d) { return d.toISOString().slice(0, 10); }
+  function toast(msg, tipo) {
+    var stack = g('fin-toasts');
+    if (!stack) return;
+    var t = document.createElement('div');
+    t.className = 'bk-toast' + (tipo ? ' bk-toast--' + tipo : '');
+    t.textContent = msg;
+    stack.appendChild(t);
+    setTimeout(function () { t.remove(); }, 4200);
+  }
+
+  async function api(path, opts) {
+    opts = opts || {};
+    var sb = window.brokrSb;
+    if (!sb || !sb.ensureToken) throw new Error('La app aún se está cargando. Intenta en un segundo.');
+    var tok = await sb.ensureToken();
+    var headers = Object.assign({}, opts.headers || {});
+    if (tok) headers['Authorization'] = 'Bearer ' + tok;
+    var body = opts.body;
+    if (opts.json !== undefined) {
+      headers['Content-Type'] = 'application/json';
+      body = JSON.stringify(opts.json);
+    }
+    var r = await fetch(API_BASE + path, { method: opts.method || 'GET', headers: headers, body: body });
+    var data = null;
+    try { data = await r.json(); } catch (e) { data = null; }
+    if (!r.ok) throw new Error((data && data.detail) || 'No se pudo completar la acción.');
+    return data;
+  }
+
+  /* ── Estado ──────────────────────────────────────────────────── */
+  var estado = {
+    desde: null, hasta: null,
+    categorias: [], cuentas: [], propiedades: [],
+    movimientos: [], resumen: null,
+    editando: null   // movimiento en edición, o null si es nuevo
+  };
+
+  function periodo(clave) {
+    var hoy = new Date();
+    var d, h;
+    if (clave === 'mes') {
+      d = new Date(hoy.getFullYear(), hoy.getMonth(), 1); h = hoy;
+    } else if (clave === 'mes-pasado') {
+      d = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
+      h = new Date(hoy.getFullYear(), hoy.getMonth(), 0);
+    } else if (clave === 'trimestre') {
+      var q = Math.floor(hoy.getMonth() / 3) * 3;
+      d = new Date(hoy.getFullYear(), q, 1); h = hoy;
+    } else {
+      d = new Date(hoy.getFullYear(), 0, 1); h = hoy;
+    }
+    return [iso(d), iso(h)];
+  }
+
+  /* ── Carga y pintado ─────────────────────────────────────────── */
+  async function cargarTodo() {
+    try {
+      var qs = '?desde=' + estado.desde + '&hasta=' + estado.hasta;
+      var _resumen = api('/finanzas/resumen' + qs);
+      var _movs = api('/finanzas/movimientos' + qs.replace('?', '?limit=200&'));
+      var _cats = api('/finanzas/categorias');
+      var _pend = api('/finanzas/comisiones-pendientes');
+      estado.resumen = await _resumen;
+      estado.movimientos = (await _movs).movimientos || [];
+      estado.categorias = (await _cats).categorias || [];
+      estado.cuentas = estado.resumen.cuentas || [];
+      pintarResumen();
+      pintarMovs();
+      pintarComisiones((await _pend).pendientes || []);
+    } catch (e) {
+      toast(e.message || 'No se pudo cargar la información.', 'error');
+    }
+    cargarPropiedades();
+  }
+
+  async function cargarPropiedades() {
+    try {
+      if (!window.brokrSb || !window.brokrSb.rest) return;
+      var rows = await window.brokrSb.rest('propiedades?select=id,titulo&order=created_at.desc&limit=300', {});
+      estado.propiedades = Array.isArray(rows) ? rows : [];
+    } catch (e) { estado.propiedades = []; }
+  }
+
+  function pintarResumen() {
+    var r = estado.resumen;
+    if (!r) return;
+    g('fin-kpi-in').textContent = pesos(r.ingresos);
+    g('fin-kpi-out').textContent = pesos(r.gastos);
+    var u = g('fin-kpi-util');
+    u.textContent = pesos(r.utilidad);
+    u.classList.toggle('is-in', r.utilidad >= 0);
+    u.classList.toggle('is-out', r.utilidad < 0);
+    if (r.anual) {
+      g('fin-kpi-ano-l').textContent = 'Ingresos ' + r.anual.ano;
+      g('fin-kpi-ano').textContent = pesos(r.anual.ingresos);
+    }
+    pintarChart(r.por_mes || []);
+    pintarCategorias(r.por_categoria || []);
+    pintarPropiedades(r.por_propiedad || []);
+  }
+
+  function pintarChart(meses) {
+    var card = g('fin-card-flujo');
+    var svg = g('fin-chart');
+    if (!meses.length) { card.hidden = true; return; }
+    card.hidden = false;
+    var W = Math.max(320, meses.length * 90), H = 180, PAD = 8, BASE = H - 26;
+    var max = 1;
+    meses.forEach(function (m) { max = Math.max(max, m.ingreso, m.gasto); });
+    var grupo = (W - 2 * PAD) / meses.length;
+    var barra = Math.min(28, grupo / 2.6);
+    var out = [];
+    meses.forEach(function (m, i) {
+      var cx = PAD + grupo * i + grupo / 2;
+      var hIn = Math.round((m.ingreso / max) * (BASE - 16));
+      var hOut = Math.round((m.gasto / max) * (BASE - 16));
+      out.push('<rect x="' + (cx - barra - 3) + '" y="' + (BASE - hIn) + '" width="' + barra +
+        '" height="' + Math.max(hIn, 2) + '" rx="4" fill="var(--data-2)"><title>' +
+        esc(mesBonito(m.mes)) + ' · Ingresos ' + esc(pesos(m.ingreso)) + '</title></rect>');
+      out.push('<rect x="' + (cx + 3) + '" y="' + (BASE - hOut) + '" width="' + barra +
+        '" height="' + Math.max(hOut, 2) + '" rx="4" fill="var(--data-3)"><title>' +
+        esc(mesBonito(m.mes)) + ' · Gastos ' + esc(pesos(m.gasto)) + '</title></rect>');
+      out.push('<text x="' + cx + '" y="' + (H - 8) + '" text-anchor="middle" ' +
+        'font-size="11" fill="var(--mute)" font-family="inherit">' + esc(mesBonito(m.mes)) + '</text>');
+    });
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    svg.innerHTML = '<line x1="' + PAD + '" y1="' + BASE + '" x2="' + (W - PAD) +
+      '" y2="' + BASE + '" stroke="var(--line)" stroke-width="1"/>' + out.join('');
+  }
+
+  function pintarCategorias(cats) {
+    var lista = g('fin-cats-lista');
+    var vacio = g('fin-cats-vacio');
+    var conDatos = cats.filter(function (c) { return c.ingreso > 0 || c.gasto > 0; });
+    if (!conDatos.length) { lista.innerHTML = ''; vacio.hidden = false; return; }
+    vacio.hidden = true;
+    var max = 1;
+    conDatos.forEach(function (c) { max = Math.max(max, c.ingreso, c.gasto); });
+    lista.innerHTML = conDatos.slice(0, 10).map(function (c) {
+      var v = c.gasto > 0 ? c.gasto : c.ingreso;
+      var esGasto = c.gasto > 0;
+      var pct = Math.max(3, Math.round((v / max) * 100));
+      return '<div class="fin-cat-row">' +
+        '<div class="fin-cat-top"><span class="n">' + esc(c.nombre) + '</span>' +
+        '<span class="v">' + esc(pesos(v)) + '</span></div>' +
+        '<div class="fin-cat-bar"><span style="width:' + pct + '%;background:var(' +
+        (esGasto ? '--data-3' : '--data-2') + ');"></span></div></div>';
+    }).join('');
+  }
+
+  function pintarPropiedades(props) {
+    var tabla = g('fin-props-tabla');
+    var vacio = g('fin-props-vacio');
+    if (!props.length) { tabla.hidden = true; vacio.hidden = false; return; }
+    vacio.hidden = true; tabla.hidden = false;
+    g('fin-props-body').innerHTML = props.slice(0, 12).map(function (p) {
+      var cls = p.utilidad >= 0 ? 'is-pos' : 'is-neg';
+      return '<tr><td>' + esc(p.titulo) + '</td>' +
+        '<td style="text-align:right;"><span class="fin-prop-util ' + cls + '">' +
+        esc(pesos(p.utilidad)) + '</span></td></tr>';
+    }).join('');
+  }
+
+  function nombreCat(id) {
+    var c = estado.categorias.find(function (x) { return x.id === id; });
+    return c ? c.nombre : '';
+  }
+
+  function pintarMovs() {
+    var lista = g('fin-mov-lista');
+    var vacio = g('fin-mov-vacio');
+    var q = (g('fin-buscar').value || '').toLowerCase();
+    var ft = g('fin-filtro-tipo').value;
+    var movs = estado.movimientos.filter(function (m) {
+      if (ft && m.tipo !== ft) return false;
+      if (q && String(m.concepto || '').toLowerCase().indexOf(q) === -1) return false;
+      return true;
+    });
+    if (!movs.length) { lista.innerHTML = ''; vacio.hidden = false; return; }
+    vacio.hidden = true;
+    lista.innerHTML = movs.map(function (m) {
+      var esIn = m.tipo === 'ingreso';
+      var meta = [fechaCorta(m.fecha), nombreCat(m.categoria_id)].filter(Boolean).join(' · ');
+      var flecha = esIn
+        ? '<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-6 6m6-6l6 6"/></svg>'
+        : '<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l-6-6m6 6l6-6"/></svg>';
+      return '<div class="fin-mov" data-id="' + esc(m.id) + '" role="button" tabindex="0">' +
+        '<div class="fin-mov__ico ' + (esIn ? 'is-in' : 'is-out') + '">' + flecha + '</div>' +
+        '<div class="fin-mov__info">' +
+          '<div class="fin-mov__concepto">' + (esc(m.concepto) || '<span style="color:var(--mute);">Sin concepto</span>') + '</div>' +
+          '<div class="fin-mov__meta">' + esc(meta) + '</div>' +
+        '</div>' +
+        '<div class="fin-mov__monto ' + (esIn ? 'is-in' : 'is-out') + '">' +
+          (esIn ? '+' : '−') + esc(pesos(m.monto)) + '</div>' +
+      '</div>';
+    }).join('');
+    Array.prototype.forEach.call(lista.querySelectorAll('.fin-mov'), function (el) {
+      el.addEventListener('click', function () {
+        var m = estado.movimientos.find(function (x) { return x.id === el.getAttribute('data-id'); });
+        if (m) abrirMov(m);
+      });
+    });
+  }
+
+  /* ── Comisiones detectadas ───────────────────────────────────── */
+  function pintarComisiones(pend) {
+    var box = g('fin-comisiones');
+    if (!pend.length) { box.hidden = true; box.innerHTML = ''; return; }
+    box.hidden = false;
+    box.innerHTML = '<div class="bk-card bk-card--pad bk-card--raise" style="margin-bottom:var(--sp-5);">' +
+      '<span class="bk-eyebrow">Comisiones detectadas</span>' +
+      '<p style="font-size:var(--fs-sm);color:var(--mute);margin:var(--sp-2) 0 var(--sp-3);">' +
+      'Cerraste ' + (pend.length === 1 ? 'una operación' : pend.length + ' operaciones') +
+      ' y la comisión aún no está en tus finanzas. Confírmala; puedes cambiar el monto antes de guardar.</p>' +
+      pend.map(function (p, i) {
+        return '<div class="bk-cluster" style="justify-content:space-between;padding:var(--sp-2) 0;border-top:1px solid var(--line);">' +
+          '<div><b>' + esc(p.titulo) + '</b>' +
+          '<div style="font-size:var(--fs-sm);color:var(--mute);">' + esc(pesos(p.monto)) + '</div></div>' +
+          '<button class="bk-btn bk-btn--forest bk-btn--sm" data-pend="' + i + '">Registrar</button></div>';
+      }).join('') + '</div>';
+    Array.prototype.forEach.call(box.querySelectorAll('[data-pend]'), function (btn) {
+      btn.addEventListener('click', function () {
+        var p = pend[Number(btn.getAttribute('data-pend'))];
+        abrirMov({
+          tipo: 'ingreso', monto: p.monto, fecha: iso(new Date()),
+          concepto: p.concepto, categoria_id: p.categoria_id,
+          propiedad_id: p.propiedad_id, origen: 'comision_auto'
+        });
+      });
+    });
+  }
+
+  /* ── Modales ─────────────────────────────────────────────────── */
+  function abrirOverlay(id) { g(id).classList.add('is-open'); }
+  function cerrarOverlay(id) { g(id).classList.remove('is-open'); }
+  Array.prototype.forEach.call(document.querySelectorAll('[data-cerrar]'), function (b) {
+    b.addEventListener('click', function () {
+      var ov = b.closest('.bk-overlay');
+      if (ov) ov.classList.remove('is-open');
+    });
+  });
+
+  /* ── Modal de movimiento (crear + editar) ────────────────────── */
+  var tipoSel = 'gasto';
+
+  function pintarSelectores() {
+    var cat = g('fin-f-cat');
+    var visibles = estado.categorias.filter(function (c) { return c.tipo === tipoSel; });
+    cat.innerHTML = '<option value="">Sin categoría</option>' +
+      visibles.map(function (c) {
+        return '<option value="' + esc(c.id) + '">' + esc(c.nombre) + '</option>';
+      }).join('');
+    var cta = g('fin-f-cta');
+    cta.innerHTML = '<option value="">Sin cuenta</option>' +
+      estado.cuentas.filter(function (c) { return c.activa !== false; }).map(function (c) {
+        return '<option value="' + esc(c.id) + '">' + esc(c.nombre) + '</option>';
+      }).join('');
+    var prop = g('fin-f-prop');
+    prop.innerHTML = '<option value="">Sin propiedad</option>' +
+      estado.propiedades.map(function (p) {
+        return '<option value="' + esc(p.id) + '">' + esc(p.titulo || 'Propiedad') + '</option>';
+      }).join('');
+  }
+
+  function setTipo(t) {
+    tipoSel = t;
+    Array.prototype.forEach.call(document.querySelectorAll('#fin-ov-mov .bk-seg__btn'), function (b) {
+      b.classList.toggle('is-active', b.getAttribute('data-tipo') === t);
+    });
+    pintarSelectores();
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('#fin-ov-mov .bk-seg__btn'), function (b) {
+    b.addEventListener('click', function () {
+      var catAntes = g('fin-f-cat').value;
+      setTipo(b.getAttribute('data-tipo'));
+      g('fin-f-cat').value = catAntes; // si ya no existe en el tipo, queda en "Sin categoría"
+    });
+  });
+
+  function abrirMov(m) {
+    estado.editando = (m && m.id) ? m : null;
+    var borrador = m || {};
+    g('fin-mov-titulo').textContent = estado.editando ? 'Editar movimiento' : 'Registrar movimiento';
+    setTipo(borrador.tipo === 'ingreso' ? 'ingreso' : 'gasto');
+    g('fin-f-monto').value = (borrador.monto != null && borrador.monto !== '') ? borrador.monto : '';
+    g('fin-f-fecha').value = borrador.fecha ? String(borrador.fecha).slice(0, 10) : iso(new Date());
+    g('fin-f-concepto').value = borrador.concepto || '';
+    g('fin-f-notas').value = borrador.notas || '';
+    g('fin-f-cat').value = borrador.categoria_id || '';
+    g('fin-f-cta').value = borrador.cuenta_id || '';
+    g('fin-f-prop').value = borrador.propiedad_id || '';
+    g('fin-f-borrar').hidden = !estado.editando;
+    g('fin-f-comp-wrap').hidden = !estado.editando;
+    g('fin-f-comp-ver').hidden = !(estado.editando && estado.editando.comprobante);
+    // El borrador de Broq/comisión trae origen; se conserva para guardar.
+    g('fin-ov-mov').setAttribute('data-origen', borrador.origen || 'manual');
+    g('fin-ov-mov').setAttribute('data-prop-fija', borrador.propiedad_id || '');
+    abrirOverlay('fin-ov-mov');
+  }
+
+  g('fin-btn-nuevo').addEventListener('click', function () { abrirMov(null); });
+  g('fin-vacio-crear').addEventListener('click', function () { abrirMov(null); });
+
+  g('fin-f-guardar').addEventListener('click', async function () {
+    var btn = this;
+    var monto = parseFloat(g('fin-f-monto').value);
+    if (isNaN(monto) || monto < 0) { toast('Escribe un monto válido.', 'error'); return; }
+    var payload = {
+      tipo: tipoSel,
+      monto: monto,
+      fecha: g('fin-f-fecha').value || iso(new Date()),
+      concepto: g('fin-f-concepto').value,
+      notas: g('fin-f-notas').value,
+      categoria_id: g('fin-f-cat').value || '',
+      cuenta_id: g('fin-f-cta').value || '',
+      propiedad_id: g('fin-f-prop').value || g('fin-ov-mov').getAttribute('data-prop-fija') || ''
+    };
+    btn.classList.add('is-loading');
+    try {
+      if (estado.editando) {
+        await api('/finanzas/movimientos/' + encodeURIComponent(estado.editando.id),
+          { method: 'PATCH', json: payload });
+        toast('Movimiento actualizado.', 'success');
+      } else {
+        payload.origen = g('fin-ov-mov').getAttribute('data-origen') || 'manual';
+        await api('/finanzas/movimientos', { method: 'POST', json: payload });
+        toast('Movimiento registrado.', 'success');
+      }
+      cerrarOverlay('fin-ov-mov');
+      cargarTodo();
+    } catch (e) { toast(e.message, 'error'); }
+    btn.classList.remove('is-loading');
+  });
+
+  g('fin-f-borrar').addEventListener('click', async function () {
+    if (!estado.editando) return;
+    if (!window.confirm('¿Borrar este movimiento? Los saldos se recalculan al instante.')) return;
+    try {
+      await api('/finanzas/movimientos/' + encodeURIComponent(estado.editando.id), { method: 'DELETE' });
+      toast('Movimiento borrado.', 'success');
+      cerrarOverlay('fin-ov-mov');
+      cargarTodo();
+    } catch (e) { toast(e.message, 'error'); }
+  });
+
+  g('fin-f-comp-subir').addEventListener('click', function () {
+    if (!estado.editando) return;
+    var input = g('fin-file-oculto');
+    input.onchange = async function () {
+      var f = input.files && input.files[0];
+      input.value = '';
+      if (!f || !estado.editando) return;
+      var fd = new FormData();
+      fd.append('archivo', f);
+      try {
+        var sb = window.brokrSb;
+        var tok = await sb.ensureToken();
+        var r = await fetch(API_BASE + '/finanzas/movimientos/' +
+          encodeURIComponent(estado.editando.id) + '/comprobante',
+          { method: 'POST', headers: { Authorization: 'Bearer ' + tok }, body: fd });
+        if (!r.ok) throw new Error('No se pudo subir el comprobante.');
+        toast('Comprobante guardado.', 'success');
+        g('fin-f-comp-ver').hidden = false;
+        estado.editando.comprobante = 'ok';
+      } catch (e) { toast(e.message, 'error'); }
+    };
+    input.click();
+  });
+
+  g('fin-f-comp-ver').addEventListener('click', async function () {
+    if (!estado.editando) return;
+    try {
+      var r = await api('/finanzas/movimientos/' + encodeURIComponent(estado.editando.id) + '/comprobante');
+      if (r && r.url) window.open(r.url, '_blank');
+    } catch (e) { toast(e.message, 'error'); }
+  });
+
+  /* ── Cuentas ─────────────────────────────────────────────────── */
+  function pintarCuentasModal() {
+    var lista = g('fin-ctas-lista');
+    if (!estado.cuentas.length) {
+      lista.innerHTML = '<p style="font-size:var(--fs-sm);color:var(--mute);">Aún no tienes cuentas. Agrega la primera abajo.</p>';
+      return;
+    }
+    lista.innerHTML = estado.cuentas.map(function (c) {
+      var inactiva = c.activa === false;
+      return '<div class="bk-card bk-card--pad-sm"' + (inactiva ? ' style="opacity:.55;"' : '') + '>' +
+        '<div class="bk-cluster" style="justify-content:space-between;">' +
+        '<b>' + esc(c.nombre) + '</b>' +
+        '<span class="bk-badge">' + esc(c.tipo) + '</span></div>' +
+        '<div class="fin-cta-saldo' + (Number(c.saldo) < 0 ? ' is-neg' : '') + '">' + esc(pesos(c.saldo)) + '</div>' +
+        '<div class="bk-cluster" style="margin-top:var(--sp-2);">' +
+        '<button class="bk-btn bk-btn--quiet bk-btn--sm" data-cta-edit="' + esc(c.id) + '">Editar</button>' +
+        '<button class="bk-btn bk-btn--quiet bk-btn--sm" data-cta-del="' + esc(c.id) + '">' +
+        (inactiva ? 'Borrar' : 'Quitar') + '</button></div></div>';
+    }).join('');
+    Array.prototype.forEach.call(lista.querySelectorAll('[data-cta-edit]'), function (b) {
+      b.addEventListener('click', async function () {
+        var c = estado.cuentas.find(function (x) { return x.id === b.getAttribute('data-cta-edit'); });
+        if (!c) return;
+        var nombre = window.prompt('Nombre de la cuenta:', c.nombre);
+        if (nombre === null) return;
+        var saldo = window.prompt('Saldo inicial (el saldo actual se recalcula con tus movimientos):',
+          String(c.saldo_inicial != null ? c.saldo_inicial : 0));
+        if (saldo === null) return;
+        var num = parseFloat(saldo);
+        if (isNaN(num)) { toast('El saldo inicial no es un número.', 'error'); return; }
+        try {
+          await api('/finanzas/cuentas/' + encodeURIComponent(c.id),
+            { method: 'PATCH', json: { nombre: nombre, saldo_inicial: num } });
+          toast('Cuenta actualizada.', 'success');
+          await cargarTodo();
+          pintarCuentasModal();
+        } catch (e) { toast(e.message, 'error'); }
+      });
+    });
+    Array.prototype.forEach.call(lista.querySelectorAll('[data-cta-del]'), function (b) {
+      b.addEventListener('click', async function () {
+        if (!window.confirm('¿Quitar esta cuenta? Si tiene movimientos, solo se desactiva y el historial se conserva.')) return;
+        try {
+          await api('/finanzas/cuentas/' + encodeURIComponent(b.getAttribute('data-cta-del')), { method: 'DELETE' });
+          await cargarTodo();
+          pintarCuentasModal();
+        } catch (e) { toast(e.message, 'error'); }
+      });
+    });
+  }
+
+  g('fin-btn-cuentas').addEventListener('click', function () {
+    pintarCuentasModal();
+    abrirOverlay('fin-ov-ctas');
+  });
+
+  g('fin-c-crear').addEventListener('click', async function () {
+    var nombre = g('fin-c-nombre').value.trim();
+    if (!nombre) { toast('Ponle nombre a la cuenta.', 'error'); return; }
+    var saldo = parseFloat(g('fin-c-saldo').value || '0') || 0;
+    try {
+      await api('/finanzas/cuentas', { method: 'POST',
+        json: { nombre: nombre, tipo: g('fin-c-tipo').value, saldo_inicial: saldo } });
+      g('fin-c-nombre').value = ''; g('fin-c-saldo').value = '0';
+      toast('Cuenta agregada.', 'success');
+      await cargarTodo();
+      pintarCuentasModal();
+    } catch (e) { toast(e.message, 'error'); }
+  });
+
+  /* ── Ticket con Broq ─────────────────────────────────────────── */
+  g('fin-btn-ticket').addEventListener('click', function () {
+    g('fin-tk-estado').hidden = true;
+    abrirOverlay('fin-ov-ticket');
+  });
+
+  async function procesarTicket(f) {
+    var est = g('fin-tk-estado');
+    est.hidden = false;
+    est.textContent = 'Broq está leyendo el ticket…';
+    var fd = new FormData();
+    fd.append('archivo', f);
+    try {
+      var sb = window.brokrSb;
+      var tok = await sb.ensureToken();
+      var r = await fetch(API_BASE + '/finanzas/ticket',
+        { method: 'POST', headers: { Authorization: 'Bearer ' + tok }, body: fd });
+      var data = null;
+      try { data = await r.json(); } catch (e) { data = null; }
+      if (!r.ok) throw new Error((data && data.detail) || 'Broq no pudo leer el ticket.');
+      cerrarOverlay('fin-ov-ticket');
+      var b = data.borrador || {};
+      abrirMov({ tipo: b.tipo, monto: b.monto, fecha: b.fecha, concepto: b.concepto,
+                 categoria_id: b.categoria_id, origen: 'ticket' });
+      if (b.confianza === 'baja') toast('Broq no está seguro de lo que leyó. Revisa los datos.', 'error');
+      else toast('Listo. Revisa y confirma; todo es editable.', 'success');
+    } catch (e) {
+      est.textContent = e.message;
+    }
+  }
+
+  var drop = g('fin-tk-drop');
+  drop.addEventListener('click', function () {
+    var input = g('fin-file-oculto');
+    input.onchange = function () {
+      var f = input.files && input.files[0];
+      input.value = '';
+      if (f) procesarTicket(f);
+    };
+    input.click();
+  });
+  drop.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); drop.click(); }
+  });
+  drop.addEventListener('dragover', function (ev) { ev.preventDefault(); });
+  drop.addEventListener('drop', function (ev) {
+    ev.preventDefault();
+    var f = ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0];
+    if (f) procesarTicket(f);
+  });
+
+  /* ── Informe ─────────────────────────────────────────────────── */
+  g('fin-btn-reporte').addEventListener('click', function () {
+    g('fin-rep-desde').value = estado.desde;
+    g('fin-rep-hasta').value = estado.hasta;
+    abrirOverlay('fin-ov-rep');
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-rper]'), function (ch) {
+    ch.addEventListener('click', function () {
+      var p = periodo(ch.getAttribute('data-rper'));
+      g('fin-rep-desde').value = p[0];
+      g('fin-rep-hasta').value = p[1];
+    });
+  });
+
+  g('fin-rep-pdf').addEventListener('click', async function () {
+    var btn = this;
+    var d = g('fin-rep-desde').value, h = g('fin-rep-hasta').value;
+    if (!d || !h) { toast('Elige el periodo.', 'error'); return; }
+    btn.classList.add('is-loading');
+    try {
+      var r = await api('/finanzas/reporte', { method: 'POST', json: { desde: d, hasta: h } });
+      window.open(API_BASE + '/finanzas/reporte/' + encodeURIComponent(r.token), '_blank');
+      cerrarOverlay('fin-ov-rep');
+    } catch (e) { toast(e.message, 'error'); }
+    btn.classList.remove('is-loading');
+  });
+
+  g('fin-rep-csv').addEventListener('click', async function () {
+    var d = g('fin-rep-desde').value, h = g('fin-rep-hasta').value;
+    if (!d || !h) { toast('Elige el periodo.', 'error'); return; }
+    try {
+      var sb = window.brokrSb;
+      var tok = await sb.ensureToken();
+      var r = await fetch(API_BASE + '/finanzas/reporte.csv?desde=' + d + '&hasta=' + h,
+        { headers: { Authorization: 'Bearer ' + tok } });
+      if (!r.ok) throw new Error('No se pudo generar el CSV.');
+      var blob = await r.blob();
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'Movimientos_' + d + '_' + h + '.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      cerrarOverlay('fin-ov-rep');
+    } catch (e) { toast(e.message, 'error'); }
+  });
+
+  /* ── Periodo del dashboard ───────────────────────────────────── */
+  function marcarChips(clave) {
+    Array.prototype.forEach.call(document.querySelectorAll('.fin-periodo [data-per]'), function (ch) {
+      ch.classList.toggle('bk-chip--forest', ch.getAttribute('data-per') === clave);
+    });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.fin-periodo [data-per]'), function (ch) {
+    ch.addEventListener('click', function () {
+      var p = periodo(ch.getAttribute('data-per'));
+      estado.desde = p[0]; estado.hasta = p[1];
+      g('fin-desde').value = p[0]; g('fin-hasta').value = p[1];
+      marcarChips(ch.getAttribute('data-per'));
+      cargarTodo();
+    });
+  });
+  g('fin-aplicar').addEventListener('click', function () {
+    var d = g('fin-desde').value, h = g('fin-hasta').value;
+    if (!d || !h) { toast('Elige ambas fechas.', 'error'); return; }
+    estado.desde = d; estado.hasta = h;
+    marcarChips('');
+    cargarTodo();
+  });
+
+  g('fin-buscar').addEventListener('input', pintarMovs);
+  g('fin-filtro-tipo').addEventListener('change', pintarMovs);
+
+  /* ── Arranque ────────────────────────────────────────────────── */
+  function arrancar() {
+    var p = periodo('mes');
+    estado.desde = p[0]; estado.hasta = p[1];
+    g('fin-desde').value = p[0]; g('fin-hasta').value = p[1];
+    marcarChips('mes');
+    cargarTodo();
+  }
+  if (window.brokrSb && window.brokrSb.ensureToken) arrancar();
+  else {
+    var intentos = 0;
+    var t = setInterval(function () {
+      intentos++;
+      if (window.brokrSb && window.brokrSb.ensureToken) { clearInterval(t); arrancar(); }
+      else if (intentos > 60) { clearInterval(t); toast('La app no terminó de cargar. Recarga la página.', 'error'); }
+    }, 250);
+  }
+})();
+</script>
+</body>
+</html>
