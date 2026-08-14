@@ -12,28 +12,22 @@
 <meta name="apple-mobile-web-app-title" content="Broquer"/>
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
-/* ─── Dashboard — canon ───────────────────────────────────────────
-   Módulo insignia de la dirección "Canon": azul manda, blanco
-   respira, negro precisa. El hero es el azul hondo de estructura
-   con los TRES ANILLOS DEL DÍA a la derecha: cada anillo se cierra
-   con datos reales — pendientes de hoy (azul), prospectos nuevos de
-   la semana (verde) y cierres del mes (rosa). Cerrar anillos =
-   cerrar tratos. Todo lo demás son cards blancas con hairlines. */
+/* ─── Dashboard — canon, segunda generación ──────────────────────
+   El inicio deja de ser una postal y se vuelve el escritorio del
+   agente: saludo con lo que urge, acciones de un clic, KPIs del
+   día, lo que requiere atención (con resolver desde aquí), leads
+   sin responder, pipeline e inventario reciente. Navy manda en el
+   hero; todo lo demás son cards blancas con hairlines. ⌘K abre la
+   paleta de comandos para brincar a cualquier módulo o acción. */
 
-/* ═══ AUDIT-EXEMPT: alfas sobre navy y tamaños fluidos del hero (no existen como token global) ═══ */
+/* ═══ AUDIT-EXEMPT: alfas sobre navy (no existen como token global) ═══ */
 :root {
   --dx-on-navy:       #FFFFFF;
   --dx-on-navy-dim:   rgba(255,255,255,.76);
   --dx-on-navy-faint: rgba(255,255,255,.52);
-  --dx-line-on-navy:  rgba(255,255,255,.14);
-  --dx-vidrio:        rgba(255,255,255,.08);
-  --dx-vidrio-hover:  rgba(255,255,255,.13);
-  --dx-ring-track:    rgba(255,255,255,.13);
-  --dx-glow:          rgba(10,93,224,.55);
-  --dx-glow-2:        rgba(143,176,245,.22);
-
-  --dx-fs-title: clamp(26px, 2.8vw, 38px);
-  --dx-fs-pct:   clamp(26px, 2.2vw, 32px);
+  --dx-vidrio:        rgba(255,255,255,.10);
+  --dx-vidrio-hover:  rgba(255,255,255,.16);
+  --dx-line-on-navy:  rgba(255,255,255,.16);
 }
 /* ═══ /AUDIT-EXEMPT ═══ */
 
@@ -43,268 +37,358 @@
   color: var(--ink);
   letter-spacing: -0.012em;
 }
-@media (max-width: 720px) { .dash-scroll { padding: 16px 14px 40px; } }
+@media (max-width: 720px) { .dash-scroll { padding: 12px 14px 40px; } }
 
-/* ── Cabecera del dashboard: lápiz de personalización ── */
-.dash-head { position: relative; display: flex; justify-content: flex-end; margin-bottom: 4px; }
+/* ── Cabecera: saludo + buscar + personalizar ── */
+.dash-top {
+  display: flex; align-items: flex-start; gap: var(--sp-4);
+  margin-bottom: var(--sp-4);
+}
+.dash-greet { flex: 1 1 auto; min-width: 0; }
+.dash-greet h1 {
+  font-size: var(--fs-h2); font-weight: 800; letter-spacing: -0.025em;
+  color: var(--ink); line-height: 1.15;
+}
+.dash-greet p { font-size: var(--fs-sm); color: var(--mute); margin-top: 3px; }
+.dash-greet p b { color: var(--danger); font-weight: 700; }
+.dash-greet p b.is-ok { color: var(--success); }
+
+.dash-search {
+  flex: 0 1 340px;
+  display: none; align-items: center; gap: var(--sp-2);
+  border: 1px solid var(--line-2); background: var(--paper);
+  border-radius: var(--r-pill); padding: 10px 14px;
+  color: var(--mute); font-size: var(--fs-sm); font-family: inherit;
+  cursor: pointer; text-align: left;
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.dash-search:hover { border-color: var(--sky-blue); color: var(--ink-2); }
+.dash-search svg { flex: 0 0 auto; }
+.dash-search .kbd {
+  margin-left: auto; font-size: var(--fs-xs); font-weight: 600;
+  color: var(--mute); border: 1px solid var(--line); border-radius: var(--r-xs);
+  padding: 1px 6px; background: var(--paper-2);
+}
+@media (min-width: 900px) { .dash-search { display: inline-flex; } }
+
+/* ── Lápiz de personalización (igual que antes) ── */
 .dash-pencil {
-  position: relative;
-  width: 38px; height: 38px; border-radius: var(--r-pill);
+  position: relative; flex: 0 0 auto;
+  width: 40px; height: 40px; border-radius: var(--r-pill);
   border: 1px solid var(--line-2); background: var(--paper);
   color: var(--mute); cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
   transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 .dash-pencil:hover { color: var(--sky-blue); border-color: var(--sky-blue); }
-.dash-pencil__tip {
-  position: absolute; top: calc(100% + 8px); right: 0;
-  background: var(--ink); color: var(--paper);
-  font-size: var(--fs-caption); font-weight: 600;
-  padding: 5px 10px; border-radius: var(--r-sm);
-  white-space: nowrap; opacity: 0; pointer-events: none;
-  transition: opacity var(--dur) var(--ease);
-}
-.dash-pencil:hover .dash-pencil__tip { opacity: 1; }
 .dash-panel {
-  position: absolute; top: calc(100% + 8px); right: 0; z-index: 50;
+  position: absolute; right: 28px; top: 64px; z-index: 50;
   background: var(--paper); border: 1px solid var(--line-2);
-  border-radius: var(--r-lg); box-shadow: var(--shadow-sm);
-  padding: 14px 16px; min-width: 230px;
+  border-radius: var(--r-lg); box-shadow: var(--shadow-lg);
+  padding: var(--sp-4) var(--sp-5); min-width: 230px;
 }
-.dash-panel__t { font-family: var(--font-display); font-size: var(--fs-sm); font-weight: 800; margin-bottom: 10px; }
+.dash-panel__t { font-size: var(--fs-sm); font-weight: 700; margin-bottom: var(--sp-3); }
 .dash-panel__opt {
-  display: flex; align-items: center; gap: 9px;
-  font-size: var(--fs-sm); color: var(--ink); padding: 6px 0; cursor: pointer;
+  display: flex; align-items: center; gap: var(--sp-2);
+  font-size: var(--fs-sm); color: var(--ink-2); padding: 5px 0; cursor: pointer;
 }
-.dash-panel__opt input { accent-color: var(--sky-blue); width: 16px; height: 16px; }
-
-/* ── HERO canon: azul hondo de estructura con los anillos del día ── */
-.sky-hero {
-  background: var(--sky-navy); color: var(--dx-on-navy);
-  border-radius: var(--r-xl); padding: 26px 28px 24px;
-  position: relative; overflow: hidden; isolation: isolate;
-}
-.sky-hero::before, .sky-hero::after {
-  content: ""; position: absolute; z-index: -1; pointer-events: none;
-  border-radius: 50%; filter: blur(72px);
-}
-.sky-hero::before {
-  width: 640px; height: 640px; top: -380px; right: -160px;
-  background: radial-gradient(circle, var(--dx-glow), transparent 66%);
-  animation: hero-drift-a 18s var(--ease) infinite alternate;
-}
-.sky-hero::after {
-  width: 520px; height: 520px; bottom: -340px; left: -140px;
-  background: radial-gradient(circle, var(--dx-glow-2), transparent 70%);
-  animation: hero-drift-b 24s var(--ease) infinite alternate;
-}
-@keyframes hero-drift-a { to { transform: translate(-60px, 44px) scale(1.08); } }
-@keyframes hero-drift-b { to { transform: translate(70px, -40px) scale(1.12); } }
-.sky-hero > * { position: relative; }
-
-.sky-hero__grid {
-  display: grid; grid-template-columns: 1.25fr auto; gap: 22px; align-items: center;
-}
-@media (max-width: 640px) { .sky-hero__grid { grid-template-columns: 1fr; } }
-
-.sky-hero__eyebrow {
-  font-size: var(--fs-caption); font-weight: 600;
-  color: var(--dx-on-navy-dim); margin-bottom: 12px;
-  display: inline-flex; align-items: center; gap: 8px;
-}
-.sky-hero__eyebrow::before {
-  content: ""; width: 22px; height: 2px; border-radius: var(--r-pill);
-  background: linear-gradient(90deg, var(--sky-blue-on-dark), transparent);
-}
-.sky-hero__title {
-  font-family: var(--font-display);
-  font-size: var(--dx-fs-title);
-  font-weight: 800; letter-spacing: -0.032em; color: var(--dx-on-navy); line-height: 1.05;
-  text-wrap: balance; margin: 0;
-}
-.sky-hero__title em { font-style: normal; color: var(--sky-blue-on-dark); }
-.sky-hero__sub {
-  font-size: var(--fs-sm); color: var(--dx-on-navy-dim);
-  line-height: var(--lh-snug); margin: 10px 0 0; max-width: 46ch;
-}
-.sky-hero__sub b { color: var(--dx-on-navy); font-weight: 700; }
-
-/* ── Los anillos del día ── */
-.rings { display: flex; align-items: center; gap: 18px; justify-self: end; }
-@media (max-width: 640px) { .rings { justify-self: start; margin-top: 6px; } }
-.rings__svg { display: block; }
-.rings__svg .track { stroke: var(--dx-ring-track); }
-.rings__svg .arc { stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; }
-.rings__svg .arc--pend  { stroke: var(--sky-blue-lift); }
-.rings__svg .arc--pros  { stroke: var(--data-2); }
-.rings__svg .arc--cierre{ stroke: var(--data-4); }
-.rings__pct {
-  font-family: var(--font-display); font-size: var(--dx-fs-pct); font-weight: 800;
-  fill: var(--dx-on-navy); letter-spacing: -0.02em;
-}
-.rings__pct-sub { font-size: var(--fs-caption); font-weight: 600; fill: var(--dx-on-navy-faint); }
-
-.rings__leg { display: flex; flex-direction: column; gap: 9px; }
-.rings__item { display: flex; align-items: baseline; gap: 8px; font-size: var(--fs-xs); font-weight: 600; color: var(--dx-on-navy-dim); white-space: nowrap; }
-.rings__dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; align-self: center; }
-.rings__dot--pend   { background: var(--sky-blue-lift); }
-.rings__dot--pros   { background: var(--data-2); }
-.rings__dot--cierre { background: var(--data-4); }
-.rings__n { font-family: var(--font-display); font-weight: 800; color: var(--dx-on-navy); font-variant-numeric: tabular-nums; }
-
-/* Entrada orquestada */
-.sky-hero__eyebrow, .sky-hero__title, .sky-hero__sub, .rings {
-  animation: hero-rise 0.7s var(--ease-out) backwards;
-}
-.sky-hero__title { animation-delay: 0.08s; }
-.sky-hero__sub { animation-delay: 0.14s; }
-.rings { animation-delay: 0.2s; }
-@keyframes hero-rise { from { opacity: 0; transform: translateY(14px); } }
-
-@media (prefers-reduced-motion: reduce) {
-  .sky-hero::before, .sky-hero::after,
-  .sky-hero__eyebrow, .sky-hero__title, .sky-hero__sub, .rings { animation: none; }
-  .rings__svg .arc { transition: none !important; } /* AUDIT-EXEMPT-LINE: quality floor de reduced-motion */
-}
-
-@media (max-width: 560px) {
-  .sky-hero { padding: 24px 20px 22px; }
-}
-
 [data-widget].is-off { display: none; }
 
-/* ── Pendientes: card blanca canon con hairline ── */
-.pend-card {
-  background: var(--bone); border: 1px solid var(--line-2);
-  border-radius: var(--r-xl); padding: 20px 22px; margin-top: 16px;
-  display: flex; flex-direction: column;
-}
-.pend-card h3 {
-  font-family: var(--font-display); font-size: var(--fs-h5); font-weight: 800;
-  letter-spacing: -0.02em; color: var(--ink); margin: 0 0 12px;
-}
-#notif-lista { display: flex; flex-direction: column; gap: 0; margin-bottom: 12px; max-height: 260px; overflow-y: auto; }
-.notif-item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 10px 2px;
-  border-bottom: 1px solid var(--line);
-}
-.notif-item:last-of-type { border-bottom: none; }
-.notif-item__txt { flex: 1; min-width: 0; font-size: var(--fs-sm); font-weight: 600; color: var(--ink); }
-.notif-item__due { font-size: var(--fs-caption); color: var(--mute); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.notif-item__due.is-overdue { color: var(--danger); font-weight: 700; }
-.notif-link {
-  margin-top: auto;
-  font-size: var(--fs-sm); font-weight: 700; color: var(--sky-blue);
-  text-decoration: none;
-}
-.notif-link:hover { color: var(--sky-blue-press); }
+/* ── Acciones rápidas ── */
+.dash-qa { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-bottom: var(--sp-5); }
 
-/* ── CTA Broq: azul de acción canon ── */
-.ai-card {
-  background: var(--sky-blue); color: var(--dx-on-navy); border-radius: var(--r-xl);
-  padding: 22px 24px; margin-top: 16px; position: relative; overflow: hidden;
-  background-image: radial-gradient(120% 160% at 100% 0%, var(--dx-line-on-navy), transparent 55%);
+/* ── KPIs ── */
+.dash-kpis {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-4); margin-bottom: var(--sp-5);
 }
-.ai-card h3 {
-  font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 800;
-  letter-spacing: -0.025em; color: var(--dx-on-navy); margin: 0 0 8px; line-height: 1.12;
+@media (max-width: 900px) { .dash-kpis { grid-template-columns: repeat(2, 1fr); } }
+.dash-kpi { position: relative; }
+.dash-kpi .lab {
+  display: flex; align-items: center; gap: var(--sp-2);
+  font-size: var(--fs-sm); color: var(--mute); font-weight: 600;
 }
-.ai-card p { font-size: var(--fs-body); color: var(--dx-on-navy-dim); line-height: var(--lh); margin: 0 0 18px; max-width: 60ch; }
-.ai-card__btn {
-  background: var(--paper); color: var(--sky-blue-press); border: none; height: 46px; padding: 0 22px;
-  border-radius: var(--r-pill); font-size: var(--fs-body); font-weight: 700; cursor: pointer; font-family: inherit;
-  display: inline-flex; align-items: center; gap: 8px;
-  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+.dash-kpi .lab .ic {
+  width: 26px; height: 26px; border-radius: var(--r-xs);
+  display: inline-flex; align-items: center; justify-content: center;
 }
-.ai-card__btn:hover { transform: translateX(2px); box-shadow: var(--shadow-sm); }
+.dash-kpi .lab .ic--pend   { background: var(--danger-soft);  color: var(--danger); }
+.dash-kpi .lab .ic--pros   { background: var(--data-1-soft);  color: var(--data-1); }
+.dash-kpi .lab .ic--cierre { background: var(--data-2-soft);  color: var(--data-2); }
+.dash-kpi .lab .ic--avance { background: var(--data-5-soft);  color: var(--data-5); }
+.dash-kpi .val {
+  font-size: var(--fs-h2); font-weight: 800; letter-spacing: -0.02em;
+  margin-top: var(--sp-2); font-variant-numeric: tabular-nums;
+}
+.dash-kpi .val small { font-size: var(--fs-sm); color: var(--mute); font-weight: 600; }
+.dash-kpi .badge-top { position: absolute; top: var(--sp-4); right: var(--sp-4); }
 
-/* ── App Store: navy profundo ── */
-.appstore-card {
-  background: var(--sky-navy); color: var(--dx-on-navy); border-radius: var(--r-xl);
-  padding: 22px 26px; margin-top: 16px;
-  display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
-  background-image: radial-gradient(120% 160% at 50% 0%, var(--dx-glow-2), transparent 60%);
-}
-.appstore-card__eyebrow {
-  font-size: var(--fs-caption); font-weight: 600;
-  color: var(--dx-on-navy-faint); margin-bottom: 4px;
-}
-.appstore-card__title {
-  font-family: var(--font-display); font-size: var(--fs-body-lg); font-weight: 700;
-  letter-spacing: -0.015em; color: var(--dx-on-navy);
-}
-.appstore-card__badge { display: block; line-height: 0; flex-shrink: 0; }
-.appstore-card__badge img { height: 42px; width: auto; display: block; }
-@media (max-width: 560px) { .appstore-card { padding: 18px 20px; } .appstore-card__title { font-size: var(--fs-sm); } }
+/* ── Grid principal ── */
+.dash-grid { display: grid; grid-template-columns: 1.55fr 1fr; gap: var(--sp-5); align-items: start; }
+@media (max-width: 900px) { .dash-grid { grid-template-columns: 1fr; } }
+.dash-col > .bk-card { margin-bottom: var(--sp-5); }
 
-/* ── Pie discreto ── */
-.dash-foot {
-  margin-top: 22px; padding-top: 18px;
-  border-top: 1px solid var(--line);
-  display: flex; align-items: center; justify-content: center; gap: 12px;
+.dash-card-h {
+  display: flex; align-items: center; gap: var(--sp-2);
+  padding-bottom: var(--sp-3);
 }
-.dash-foot img { height: 22px; width: auto; display: block; opacity: .45; transition: opacity var(--dur) var(--ease); }
-.dash-foot:hover img { opacity: .75; }
+.dash-card-h h3 { font-size: var(--fs-h5); font-weight: 800; letter-spacing: -0.01em; }
+.dash-card-h .link {
+  margin-left: auto; font-size: var(--fs-sm); font-weight: 600;
+  color: var(--sky-blue); text-decoration: none;
+}
+.dash-card-h .link:hover { text-decoration: underline; }
 
+/* ── Requiere tu atención ── */
+.aten-item {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-3) 0; border-top: 1px solid var(--line);
+}
+.aten-item__ic {
+  flex: 0 0 auto; width: 36px; height: 36px; border-radius: var(--r-sm);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.aten-item__ic--vencida { background: var(--danger-soft); color: var(--danger); }
+.aten-item__ic--hoy     { background: var(--data-1-soft); color: var(--data-1); }
+.aten-item__main { flex: 1 1 auto; min-width: 0; }
+.aten-item__t {
+  font-size: var(--fs-sm); font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.aten-item__d { font-size: var(--fs-xs); font-weight: 600; margin-top: 2px; color: var(--mute); }
+.aten-item__d.is-vencida { color: var(--danger); }
+.aten-item__acts { display: flex; gap: var(--sp-1); }
+@media (min-width: 900px) {
+  .aten-item__acts { opacity: 0; transition: opacity var(--dur) var(--ease); }
+  .aten-item:hover .aten-item__acts { opacity: 1; }
+}
+.aten-item.is-done { opacity: .45; }
+.aten-item.is-done .aten-item__t { text-decoration: line-through; }
+
+/* ── Leads sin responder ── */
+.lead-item {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-3) 0; border-top: 1px solid var(--line);
+  text-decoration: none; color: inherit;
+}
+.lead-item:hover .lead-item__n { color: var(--sky-blue); }
+.lead-item__av {
+  flex: 0 0 auto; width: 36px; height: 36px; border-radius: var(--r-pill);
+  background: var(--sky-navy); color: var(--dx-on-navy);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: var(--fs-sm); font-weight: 700;
+}
+.lead-item__main { flex: 1 1 auto; min-width: 0; }
+.lead-item__n { font-size: var(--fs-sm); font-weight: 600; }
+.lead-item__s {
+  font-size: var(--fs-xs); color: var(--mute);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;
+}
+
+/* ── Pipeline ── */
+.pipe-row { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-2) 0; }
+.pipe-row .pl { flex: 0 0 92px; font-size: var(--fs-sm); font-weight: 600; color: var(--mute); }
+.pipe-bar {
+  flex: 1 1 auto; height: 22px; border-radius: var(--r-xs);
+  background: var(--paper-2); overflow: hidden;
+}
+.pipe-fill {
+  height: 100%; border-radius: var(--r-xs);
+  display: flex; align-items: center; padding-left: 8px;
+  color: var(--paper); font-size: var(--fs-xs); font-weight: 800;
+  min-width: 0; width: 0;
+  transition: width 1s cubic-bezier(.16,1,.3,1);
+  font-variant-numeric: tabular-nums;
+}
+.pipe-fill--nuevo      { background: var(--data-1); }
+.pipe-fill--activo     { background: var(--data-6); }
+.pipe-fill--contactado { background: var(--data-5); }
+.pipe-fill--cerrado    { background: var(--data-2); }
+
+/* ── Últimos inmuebles ── */
+.prop-item {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-3) 0; border-top: 1px solid var(--line);
+  text-decoration: none; color: inherit;
+}
+.prop-item:hover .prop-item__n { color: var(--sky-blue); }
+.prop-item__pi {
+  flex: 0 0 auto; width: 44px; height: 38px; border-radius: var(--r-sm);
+  background: var(--data-1-soft); color: var(--data-1);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.prop-item__main { flex: 1 1 auto; min-width: 0; }
+.prop-item__n {
+  font-size: var(--fs-sm); font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.prop-item__s { font-size: var(--fs-xs); color: var(--mute); margin-top: 1px; }
+.prop-item__p {
+  flex: 0 0 auto; font-size: var(--fs-sm); font-weight: 800;
+  color: var(--sky-navy); font-variant-numeric: tabular-nums;
+}
+
+.dash-vacio { padding: var(--sp-4) 0; color: var(--mute); font-size: var(--fs-sm); }
+
+/* ── Paleta de comandos (⌘K) ── */
+.cmdk-bg {
+  position: fixed; inset: 0; z-index: 2147483644;
+  background: rgba(8,28,78,.42); /* AUDIT-EXEMPT-LINE: velo sobre navy, mismo alfa que dx-ov */
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  display: none; align-items: flex-start; justify-content: center;
+  padding: 12vh 16px 0;
+}
+.cmdk-bg.is-open { display: flex; }
+.cmdk {
+  width: min(560px, 100%); background: var(--paper);
+  border: 1px solid var(--line-2); border-radius: var(--r-modal);
+  box-shadow: var(--shadow-xl); overflow: hidden;
+}
+.cmdk-in {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5); border-bottom: 1px solid var(--line);
+}
+.cmdk-in svg { color: var(--mute); flex: 0 0 auto; }
+.cmdk-in input {
+  flex: 1; border: none; outline: none; background: transparent;
+  font-size: var(--fs-body); font-family: inherit; color: var(--ink);
+}
+.cmdk-in .esc {
+  font-size: var(--fs-xs); font-weight: 600; color: var(--mute);
+  border: 1px solid var(--line); border-radius: var(--r-xs); padding: 2px 7px;
+}
+.cmdk-list { max-height: 50vh; overflow-y: auto; padding: var(--sp-2); }
+.cmdk-g {
+  font-size: var(--fs-label); font-weight: 700; color: var(--mute);
+  padding: var(--sp-3) var(--sp-3) var(--sp-1); letter-spacing: .02em;
+}
+.cmdk-item {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3); border-radius: var(--r-sm);
+  font-size: var(--fs-sm); font-weight: 500; cursor: pointer;
+  color: var(--ink);
+}
+.cmdk-item .ci {
+  flex: 0 0 auto; width: 30px; height: 30px; border-radius: var(--r-xs);
+  background: var(--data-1-soft); color: var(--data-1);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.cmdk-item .grp { margin-left: auto; font-size: var(--fs-xs); color: var(--mute); font-weight: 600; }
+.cmdk-item.is-sel, .cmdk-item:hover { background: var(--paper-2); }
+.cmdk-empty { padding: var(--sp-6); text-align: center; color: var(--mute); font-size: var(--fs-sm); }
+
+/* Pie con sello Meta */
+.dash-foot { display: flex; justify-content: center; margin-top: var(--sp-8); opacity: .8; }
+.dash-foot img { height: 44px; width: auto; }
 </style>
 </head>
 <body data-app="home">
 
 <div class="dash-scroll">
 
-  <div class="dash-head">
+  <!-- Cabecera: saludo con lo que urge + búsqueda + personalizar -->
+  <div class="dash-top">
+    <div class="dash-greet">
+      <h1><span id="dash-greet">Buenos días</span><span id="dash-greet-coma" hidden>,</span>&nbsp;<span id="dash-firstname" hidden></span></h1>
+      <p id="dash-sub"><span id="dash-date-mes">—</span> <b id="dash-urge" hidden></b></p>
+    </div>
+    <button class="dash-search" type="button" id="dash-search-btn">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="m20 20-3.5-3.5"/></svg>
+      Buscar módulos y acciones…
+      <span class="kbd">⌘K</span>
+    </button>
     <button class="dash-pencil" id="dash-pencil" type="button" aria-label="Personalizar">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"/></svg>
-      <span class="dash-pencil__tip">Personalizar</span>
     </button>
     <div class="dash-panel" id="dash-panel" hidden>
       <div class="dash-panel__t">Tu inicio, a tu manera</div>
-      <label class="dash-panel__opt"><input type="checkbox" data-w="pendientes" checked/> Próximos pendientes</label>
+      <label class="dash-panel__opt"><input type="checkbox" data-w="atencion" checked/> Requiere tu atención</label>
+      <label class="dash-panel__opt"><input type="checkbox" data-w="leads" checked/> Leads sin responder</label>
+      <label class="dash-panel__opt"><input type="checkbox" data-w="pipeline" checked/> Pipeline</label>
+      <label class="dash-panel__opt"><input type="checkbox" data-w="inmuebles" checked/> Últimos inmuebles</label>
       <label class="dash-panel__opt"><input type="checkbox" data-w="broq" checked/> Tarjeta de Broq</label>
       <label class="dash-panel__opt"><input type="checkbox" data-w="appstore" checked/> App para iPhone</label>
     </div>
   </div>
 
-  <!-- HERO canon: la tarjeta de saludo, sola y protagonista -->
-  <section class="sky-hero">
-    <div class="sky-hero__grid">
-      <div>
-        <div class="sky-hero__eyebrow"><span id="dash-greet">Buenos días</span><span id="dash-greet-coma" hidden>,</span>&nbsp;<span id="dash-firstname" hidden></span></div>
-        <h1 class="sky-hero__title">Tu día, listo<br/>para <em>cerrarse.</em></h1>
-        <p class="sky-hero__sub" id="dash-sub">Cada pendiente resuelto, cada prospecto nuevo y cada cierre avanzan tus anillos. <b id="dash-date-mes">—</b></p>
-        <button class="bk-btn" id="dash-demo-btn" type="button" onclick="dashAbrirDemo()" style="margin-top:var(--sp-4);">Agendar demo</button>
-      </div>
-      <div class="rings">
-        <svg class="rings__svg" width="164" height="164" viewBox="0 0 164 164" role="img" aria-label="Anillos del día">
-          <!-- pistas -->
-          <circle class="track" cx="82" cy="82" r="72" fill="none" stroke-width="9"/>
-          <circle class="track" cx="82" cy="82" r="58" fill="none" stroke-width="9"/>
-          <circle class="track" cx="82" cy="82" r="44" fill="none" stroke-width="9"/>
-          <!-- arcos (se cierran con datos reales) -->
-          <circle class="arc arc--pend"   id="ring-pend"   cx="82" cy="82" r="72" fill="none" stroke-width="9"/>
-          <circle class="arc arc--pros"   id="ring-pros"   cx="82" cy="82" r="58" fill="none" stroke-width="9"/>
-          <circle class="arc arc--cierre" id="ring-cierre" cx="82" cy="82" r="44" fill="none" stroke-width="9"/>
-          <text class="rings__pct" id="rings-pct" x="82" y="80" text-anchor="middle" dominant-baseline="middle">—</text>
-          <text class="rings__pct-sub" x="82" y="103" text-anchor="middle">del día</text>
-        </svg>
-        <div class="rings__leg">
-          <div class="rings__item"><span class="rings__dot rings__dot--pend"></span>Pendientes <span class="rings__n" id="leg-pend">—</span></div>
-          <div class="rings__item"><span class="rings__dot rings__dot--pros"></span>Prospectos <span class="rings__n" id="leg-pros">—</span></div>
-          <div class="rings__item"><span class="rings__dot rings__dot--cierre"></span>Cierres <span class="rings__n" id="leg-cierre">—</span></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Próximas tareas y citas: debajo del hero -->
-  <div class="pend-card" id="notif-card" data-widget="pendientes" hidden>
-    <h3>Tus próximos pendientes</h3>
-    <div id="notif-lista"></div>
-    <a class="notif-link" href="tareas.html">Ver todas en Tareas →</a>
+  <!-- Acciones rápidas -->
+  <div class="dash-qa">
+    <a class="bk-btn bk-btn--forest" href="propiedades.html">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
+      Nuevo inmueble
+    </a>
+    <a class="bk-btn bk-btn--ghost" href="contactos.html">Contacto</a>
+    <a class="bk-btn bk-btn--ghost" href="tareas.html">Tarea</a>
+    <a class="bk-btn bk-btn--ghost" href="leads.html">Registrar lead</a>
+    <button class="bk-btn bk-btn--ghost" type="button" id="dash-demo-btn" onclick="dashAbrirDemo()">Agendar demo</button>
   </div>
 
-  <!-- CTA Broq -->
+  <!-- KPIs del día -->
+  <div class="dash-kpis">
+    <div class="bk-card bk-card--pad bk-card--raise dash-kpi">
+      <div class="lab"><span class="ic ic--pend"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v5l3 2"/></svg></span>Pendientes hoy</div>
+      <div class="val" id="kpi-pend">—</div>
+      <span class="bk-badge bk-badge--danger badge-top" id="kpi-pend-badge" hidden></span>
+    </div>
+    <div class="bk-card bk-card--pad bk-card--raise dash-kpi">
+      <div class="lab"><span class="ic ic--pros"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path stroke-linecap="round" d="M2 20a7 7 0 0114 0M17 8h5M19.5 5.5v5"/></svg></span>Prospectos</div>
+      <div class="val" id="kpi-pros">—</div>
+    </div>
+    <div class="bk-card bk-card--pad bk-card--raise dash-kpi">
+      <div class="lab"><span class="ic ic--cierre"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 6L9 17l-5-5"/></svg></span>Cierres del mes</div>
+      <div class="val" id="kpi-cierre">—</div>
+    </div>
+    <div class="bk-card bk-card--pad bk-card--raise dash-kpi">
+      <div class="lab"><span class="ic ic--avance"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M7 14l3-3 3 3 5-6"/></svg></span>Avance del día</div>
+      <div class="val" id="kpi-avance">—</div>
+    </div>
+  </div>
+
+  <div class="dash-grid">
+    <!-- IZQUIERDA: requiere tu atención -->
+    <div class="dash-col">
+      <div class="bk-card bk-card--pad bk-card--raise" data-widget="atencion">
+        <div class="dash-card-h">
+          <h3>Requiere tu atención</h3>
+          <span class="bk-badge bk-badge--danger" id="aten-count" hidden></span>
+          <a class="link" href="tareas.html">Ver todas →</a>
+        </div>
+        <div id="aten-lista"></div>
+        <div class="dash-vacio" id="aten-vacio" hidden>Todo al día. Sin pendientes vencidos ni tareas para hoy.</div>
+      </div>
+    </div>
+
+    <!-- DERECHA -->
+    <div class="dash-col">
+      <div class="bk-card bk-card--pad bk-card--raise" data-widget="leads" id="leads-card" hidden>
+        <div class="dash-card-h">
+          <h3>Leads sin responder</h3>
+          <a class="link" href="whatsapp.html">Ver →</a>
+        </div>
+        <div id="leads-lista"></div>
+      </div>
+
+      <div class="bk-card bk-card--pad bk-card--raise" data-widget="pipeline">
+        <div class="dash-card-h">
+          <h3>Pipeline</h3>
+          <a class="link" href="contactos.html">Detalle →</a>
+        </div>
+        <div id="pipe-lista"></div>
+        <div class="dash-vacio" id="pipe-vacio" hidden>Aún no tienes contactos en el embudo.</div>
+      </div>
+
+      <div class="bk-card bk-card--pad bk-card--raise" data-widget="inmuebles">
+        <div class="dash-card-h">
+          <h3>Últimos inmuebles</h3>
+          <a class="link" href="propiedades.html">Ver →</a>
+        </div>
+        <div id="props-lista"></div>
+        <div class="dash-vacio" id="props-vacio" hidden>Agrega tu primer inmueble para verlo aquí.</div>
+      </div>
+    </div>
+  </div>
+
+<!-- CTA Broq -->
   <div class="ai-card" data-widget="broq">
     <h3>Broq, tu asistente inmobiliario, listo cuando lo necesites.</h3>
     <p>Pregúntame sobre valuaciones, ISR, contratos o cualquier duda del mercado. Estoy aquí para ayudarte a cerrar más rápido.</p>
@@ -330,6 +414,18 @@
     <img src="meta-tech-provider.png" alt="Meta Tech Provider"/>
   </div>
 
+</div>
+
+<!-- ⌘K: paleta de comandos -->
+<div class="cmdk-bg" id="cmdk">
+  <div class="cmdk" role="dialog" aria-modal="true" aria-label="Buscar módulos y acciones">
+    <div class="cmdk-in">
+      <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="m20 20-3.5-3.5"/></svg>
+      <input id="cmdk-input" placeholder="Ir a un módulo o acción…" autocomplete="off"/>
+      <span class="esc">esc</span>
+    </div>
+    <div class="cmdk-list" id="cmdk-list"></div>
+  </div>
 </div>
 
 <script src="app-shell.js" defer></script>
@@ -371,10 +467,9 @@
   } catch(_){}
 })();
 </script>
+
 <script>
-/* ── Personalizar el inicio: qué tarjetas se muestran ──
-   La preferencia vive en el navegador (localStorage). "Pendientes"
-   respeta además su propia lógica: solo aparece si hay tareas. */
+/* ── Personalizar el inicio: qué tarjetas se muestran ── */
 (function(){
   const KEY = 'brokr_dash_widgets';
   let prefs = {};
@@ -404,7 +499,7 @@
   });
 })();
 
-/* Fecha + saludo (sin auth, corre de inmediato) */
+/* ── Fecha + saludo (sin auth, corre de inmediato) ── */
 (function(){
   const d = new Date();
   const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
@@ -412,7 +507,7 @@
   if (mesEl) {
     const semana = cap(d.toLocaleDateString('es-MX', { weekday: 'long' }));
     const mes = d.toLocaleDateString('es-MX', { month: 'long' });
-    mesEl.textContent = 'Hoy es ' + semana.toLowerCase() + ' ' + d.getDate() + ' de ' + mes + '.';
+    mesEl.textContent = semana + ' ' + d.getDate() + ' de ' + mes + '.';
   }
   const h = d.getHours();
   const greet = h < 12 ? 'Buenos días' : (h < 19 ? 'Buenas tardes' : 'Buenas noches');
@@ -420,32 +515,117 @@
   if (gEl) gEl.textContent = greet;
 })();
 
-/* ── Anillos del día: geometría ──
-   Cada arco es un círculo con dasharray = circunferencia y
-   dashoffset animado hasta el porcentaje real. */
+/* ── ⌘K: paleta de comandos ──
+   Espejo consciente de los módulos del app-shell (MODS vive dentro de
+   su closure). Si un módulo nuevo entra al shell, se agrega aquí. */
 (function(){
-  window.brokrRings = {};
-  document.querySelectorAll('.rings__svg .arc').forEach(el => {
-    const c = 2 * Math.PI * Number(el.getAttribute('r'));
-    el.style.strokeDasharray = c;
-    el.style.strokeDashoffset = c; // arranca en cero avance
-    el.style.transition = 'stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1)';
+  const MODULOS = [
+    ['Tus Inmuebles','propiedades.html','CRM'],
+    ['Contactos','contactos.html','CRM'],
+    ['Tareas','tareas.html','CRM'],
+    ['Estadísticas','estadisticas.html','CRM'],
+    ['Bolsa inmobiliaria','bolsa.html','CRM'],
+    ['WhatsApp','whatsapp.html','Seguimiento'],
+    ['Leads','leads.html','Seguimiento'],
+    ['Correo','correo.html','Seguimiento'],
+    ['Contratos','contratos.html','Documentos'],
+    ['Firma electrónica','firmas.html','Documentos'],
+    ['Cumplimiento','cumplimiento.html','Documentos'],
+    ['Estimación de valor','avm.html','Números'],
+    ['ISR','isr.html','Números'],
+    ['Finanzas','finanzas.html','Números'],
+    ['Editor de imágenes','image-cleaner.html','Marketing'],
+    ['Ficha técnica','ficha-manual.html','Marketing'],
+    ['Facebook Ads','facebook-ads.html','Marketing'],
+    ['Video','video.html','Marketing'],
+    ['Mi sitio','mi-sitio.html','Marketing'],
+    ['Blog','blog.html','Más'],
+    ['Ayuda','guia-agente.html','Más'],
+    ['Equipo','equipo.html','Más'],
+  ];
+  const ACCIONES = [
+    ['Nuevo inmueble','propiedades.html'],
+    ['Nuevo contacto','contactos.html'],
+    ['Nueva tarea','tareas.html'],
+    ['Registrar lead','leads.html'],
+    ['Descargar informe financiero','finanzas.html'],
+  ];
+  const ICO = '<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>';
+
+  const bg = document.getElementById('cmdk');
+  const input = document.getElementById('cmdk-input');
+  const listEl = document.getElementById('cmdk-list');
+  let resultados = [], sel = 0;
+
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function abrir(){
+    bg.classList.add('is-open');
+    input.value = '';
+    render();
+    setTimeout(() => input.focus(), 30);
+  }
+  function cerrar(){ bg.classList.remove('is-open'); }
+
+  function render(){
+    const q = input.value.toLowerCase().trim();
+    const norm = t => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const nq = norm(q);
+    const acts = ACCIONES.filter(a => norm(a[0]).includes(nq));
+    const mods = MODULOS.filter(m => norm(m[0]).includes(nq));
+    resultados = [...acts.map(a => ({ n: a[0], href: a[1], grp: 'Acción' })),
+                  ...mods.map(m => ({ n: m[0], href: m[1], grp: m[2] }))];
+    sel = 0;
+    let h = '';
+    let i = 0;
+    if (acts.length) {
+      h += '<div class="cmdk-g">Acciones</div>';
+      acts.forEach(() => { h += fila(resultados[i], i); i++; });
+    }
+    if (mods.length) {
+      h += '<div class="cmdk-g">Módulos</div>';
+      mods.forEach(() => { h += fila(resultados[i], i); i++; });
+    }
+    if (!resultados.length) h = '<div class="cmdk-empty">Sin resultados para “' + esc(q) + '”</div>';
+    listEl.innerHTML = h;
+    listEl.querySelectorAll('.cmdk-item').forEach(el => {
+      el.addEventListener('mouseenter', () => { sel = Number(el.dataset.i); marcar(); });
+      el.addEventListener('click', () => ir(Number(el.dataset.i)));
+    });
+  }
+  function fila(r, i){
+    return '<div class="cmdk-item' + (i === sel ? ' is-sel' : '') + '" data-i="' + i + '">' +
+      '<span class="ci">' + ICO + '</span>' + esc(r.n) +
+      '<span class="grp">' + esc(r.grp) + '</span></div>';
+  }
+  function marcar(){
+    listEl.querySelectorAll('.cmdk-item').forEach(el =>
+      el.classList.toggle('is-sel', Number(el.dataset.i) === sel));
+  }
+  function ir(i){
+    const r = resultados[i];
+    if (r) window.location.href = r.href;
+  }
+
+  input.addEventListener('input', render);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); sel = Math.min(sel + 1, resultados.length - 1); marcar(); }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); sel = Math.max(sel - 1, 0); marcar(); }
+    if (e.key === 'Enter' && resultados.length) { e.preventDefault(); ir(sel); }
+    if (e.key === 'Escape') cerrar();
   });
-  /* pct: 0..1 */
-  window.brokrRings.set = function(id, pct) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const c = 2 * Math.PI * Number(el.getAttribute('r'));
-    const p = Math.max(0, Math.min(1, pct));
-    requestAnimationFrame(() => { el.style.strokeDashoffset = c * (1 - p); });
-  };
+  bg.addEventListener('click', e => { if (e.target === bg) cerrar(); });
+  document.addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); abrir(); }
+    if (e.key === 'Escape' && bg.classList.contains('is-open')) cerrar();
+  });
+  const sBtn = document.getElementById('dash-search-btn');
+  if (sBtn) sBtn.addEventListener('click', abrir);
 })();
 
-/* Cuando el shell termina la autenticación: nombre, KPIs y anillos */
+/* ── Datos reales cuando el shell termina la autenticación ── */
 window.addEventListener('brokr-shell-ready', async (e) => {
   const profile = e.detail?.profile;
-  // Saluda solo con el nombre capturado en el perfil ("Pedro Pérez" → "Pedro").
-  // Si el usuario aún no completa su perfil, saluda sin nombre — nunca con el correo.
   const nombrePerfil = (profile?.profile?.nombre || '').trim();
   const first = nombrePerfil.split(/\s+/)[0] || '';
   const fnEl = document.getElementById('dash-firstname');
@@ -458,47 +638,45 @@ window.addEventListener('brokr-shell-ready', async (e) => {
 
   const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
   const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
+  const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const pesos = n => Number(n || 0).toLocaleString('es-MX', { style:'currency', currency:'MXN', maximumFractionDigits:0 });
 
-  // Cuenta exacta con HEAD + Prefer: count=exact (no descarga registros).
-  // El header Content-Range trae "0-0/<total>" (o "*/<total>" cuando hay filtro).
-  // Usa window.brokrSb si está cargado (auto-refresh + retry en 401);
-  // fallback al fetch manual con token actual.
+  /* Cuenta exacta con HEAD + Prefer: count=exact (no descarga registros). */
   async function fxCount(path) {
     try {
-      const opts = {
-        method: 'HEAD',
-        headers: {
-          Prefer: 'count=exact',
-          Range: '0-0',
-        },
-      };
+      const opts = { method: 'HEAD', headers: { Prefer: 'count=exact', Range: '0-0' } };
       let r;
       if (window.brokrSb && window.brokrSb.fetch) {
         r = await window.brokrSb.fetch('rest/v1/' + path, opts);
       } else {
         const tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || SB_KEY;
         r = await fetch(SB_URL + '/rest/v1/' + path, {
-          ...opts,
-          headers: { ...opts.headers, apikey: SB_KEY, Authorization: 'Bearer ' + tok },
-        });
+          ...opts, headers: { ...opts.headers, apikey: SB_KEY, Authorization: 'Bearer ' + tok } });
       }
       if (!r.ok && r.status !== 206) return 0;
       const cr = r.headers.get('Content-Range') || '';
-      const total = cr.split('/').pop();
-      return Number(total) || 0;
+      return Number(cr.split('/').pop()) || 0;
     } catch (err) { return 0; }
   }
+  async function fxRest(path) {
+    try {
+      if (window.brokrSb && window.brokrSb.rest) return await window.brokrSb.rest(path, { method: 'GET' });
+      const tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+      if (!tok) return [];
+      const r = await fetch(SB_URL + '/rest/v1/' + path,
+        { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok } });
+      return r.ok ? await r.json() : [];
+    } catch (err) { return []; }
+  }
 
-  cargarAnillos();
-  cargarNotificaciones();
+  cargarKpis();
+  cargarAtencion();
+  cargarLeads();
+  cargarPipeline();
+  cargarInmuebles();
 
-  /* ── Los tres anillos del día, con datos reales ──
-     · Pendientes (azul):  tareas de hoy completadas / totales de hoy.
-       Sin tareas hoy y sin vencidas = día limpio: anillo cerrado.
-     · Prospectos (verde): contactos creados esta semana vs meta (5).
-     · Cierres (rosa):     contratos creados este mes vs meta (2).
-     Las metas viven en localStorage para poder ajustarse después. */
-  async function cargarAnillos() {
+  /* ── KPIs del día ── */
+  async function cargarKpis() {
     const iso = d => d.toISOString();
     const hoy = new Date(); hoy.setHours(0,0,0,0);
     const manana = new Date(hoy.getTime() + 86400000);
@@ -520,87 +698,162 @@ window.addEventListener('brokr-shell-ready', async (e) => {
       fxCount('contratos?select=id&created_at=gte.' + encodeURIComponent(iso(mes1))),
     ]);
 
-    // Pendientes: si no hay tareas hoy ni vencidas, el día está limpio (100%).
+    document.getElementById('kpi-pend').innerHTML = tHoyDone + '<small>/' + tHoy + ' hechas</small>';
+    const badge = document.getElementById('kpi-pend-badge');
+    if (badge && tVencidas > 0) { badge.textContent = tVencidas + ' vencidas'; badge.hidden = false; }
+    document.getElementById('kpi-pros').innerHTML = pros + '<small>/' + metaPros + ' meta</small>';
+    document.getElementById('kpi-cierre').innerHTML = cierres + '<small>/' + metaCierre + ' meta</small>';
+
     let pctPend;
     if (tHoy === 0) pctPend = tVencidas > 0 ? 0 : 1;
     else pctPend = tHoyDone / tHoy;
-    const pctPros = Math.min(1, pros / metaPros);
-    const pctCierre = Math.min(1, cierres / metaCierre);
+    const avance = Math.round(((pctPend + Math.min(1, pros / metaPros) + Math.min(1, cierres / metaCierre)) / 3) * 100);
+    document.getElementById('kpi-avance').innerHTML = avance + '<small>%</small>';
 
-    window.brokrRings.set('ring-pend', pctPend);
-    window.brokrRings.set('ring-pros', pctPros);
-    window.brokrRings.set('ring-cierre', pctCierre);
-
-    const legPend = document.getElementById('leg-pend');
-    if (legPend) legPend.textContent = tHoy === 0 ? (tVencidas > 0 ? tVencidas + ' vencidas' : 'al día') : tHoyDone + '/' + tHoy;
-    const legPros = document.getElementById('leg-pros');
-    if (legPros) legPros.textContent = pros + '/' + metaPros;
-    const legCierre = document.getElementById('leg-cierre');
-    if (legCierre) legCierre.textContent = cierres + '/' + metaCierre;
-
-    // Centro: promedio de los tres, animado.
-    const fin = Math.round(((pctPend + pctPros + pctCierre) / 3) * 100);
-    const pctEl = document.getElementById('rings-pct');
-    if (pctEl) {
-      const reducido = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (reducido) { pctEl.textContent = fin + '%'; return; }
-      const t0 = performance.now(), dur = 1100;
-      const easeOut = t => 1 - Math.pow(1 - t, 3);
-      function paso(t) {
-        const p = Math.min(1, (t - t0) / dur);
-        pctEl.textContent = Math.round(fin * easeOut(p)) + '%';
-        if (p < 1) requestAnimationFrame(paso);
+    /* Línea del saludo: lo que urge */
+    const urge = document.getElementById('dash-urge');
+    if (urge) {
+      if (tVencidas > 0) {
+        urge.textContent = 'Tienes ' + tVencidas + (tVencidas === 1 ? ' pendiente vencida.' : ' pendientes vencidas.');
+        urge.hidden = false;
+      } else if (tHoy > tHoyDone) {
+        urge.textContent = 'Te quedan ' + (tHoy - tHoyDone) + ' tareas hoy.';
+        urge.classList.add('is-ok');
+        urge.hidden = false;
+      } else {
+        urge.textContent = 'Todo al día.';
+        urge.classList.add('is-ok');
+        urge.hidden = false;
       }
-      requestAnimationFrame(paso);
     }
   }
-});
 
-/* ── Tus próximos pendientes/citas (tareas con fecha, sin completar) ── */
-async function cargarNotificaciones() {
-  const card = document.getElementById('notif-card');
-  const lista = document.getElementById('notif-lista');
-  try {
-    const path = 'tareas?select=id,titulo,fecha_entrega&completada=eq.false&fecha_entrega=not.is.null'
-      + '&order=fecha_entrega.asc&limit=6';
-    let filas;
-    if (window.brokrSb && window.brokrSb.rest) {
-      filas = await window.brokrSb.rest(path, { method: 'GET' });
-    } else {
-      const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
-      const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
-      const tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
-      if (!tok) return;
-      const r = await fetch(SB_URL + '/rest/v1/' + path, {
-        headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok },
-      });
-      filas = r.ok ? await r.json() : [];
-    }
-    if (!Array.isArray(filas) || !filas.length) return; // sin pendientes con fecha: la tarjeta se queda oculta
-
+  /* ── Requiere tu atención: vencidas + tareas de hoy, resolubles aquí ── */
+  async function cargarAtencion() {
+    const lista = document.getElementById('aten-lista');
+    const vacio = document.getElementById('aten-vacio');
+    const count = document.getElementById('aten-count');
+    const hoyFin = new Date(); hoyFin.setHours(23,59,59,999);
+    const filas = await fxRest(
+      'tareas?select=id,titulo,fecha_entrega&completada=eq.false&fecha_entrega=not.is.null' +
+      '&fecha_entrega=lte.' + encodeURIComponent(hoyFin.toISOString()) +
+      '&order=fecha_entrega.asc&limit=8');
+    if (!Array.isArray(filas) || !filas.length) { vacio.hidden = false; return; }
     const ahora = new Date();
-    const enUnaSemana = new Date(ahora.getTime() + 7 * 86400000);
-    const relevantes = filas.filter(t => {
-      const d = new Date(t.fecha_entrega);
-      return d < enUnaSemana; // vencidas + próximos 7 días
-    });
-    if (!relevantes.length) return;
-
-    lista.innerHTML = relevantes.map(t => {
+    if (count) { count.textContent = String(filas.length); count.hidden = false; }
+    lista.innerHTML = filas.map(t => {
       const d = new Date(t.fecha_entrega);
       const vencida = d < ahora;
-      const fmt = d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' }) + ' · ' +
-        d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-      return `<div class="notif-item">
-        <span class="notif-item__txt">${(t.titulo || '').replace(/</g, '&lt;')}</span>
-        <span class="notif-item__due${vencida ? ' is-overdue' : ''}">${vencida ? 'Vencida · ' : ''}${fmt}</span>
-      </div>`;
+      const fmt = d.toLocaleDateString('es-MX', { day:'2-digit', month:'short' }) + ' · ' +
+        d.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
+      const ico = vencida
+        ? '<span class="aten-item__ic aten-item__ic--vencida"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v5l3 2"/></svg></span>'
+        : '<span class="aten-item__ic aten-item__ic--hoy"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></span>';
+      return '<div class="aten-item" data-id="' + esc(t.id) + '">' + ico +
+        '<div class="aten-item__main">' +
+          '<div class="aten-item__t">' + esc(t.titulo || 'Tarea') + '</div>' +
+          '<div class="aten-item__d' + (vencida ? ' is-vencida' : '') + '">' + (vencida ? 'Vencida · ' : 'Hoy · ') + fmt + '</div>' +
+        '</div>' +
+        '<div class="aten-item__acts">' +
+          '<a class="bk-icon-btn bk-icon-btn--sm" href="tareas.html" title="Reagendar en Tareas">' +
+            '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path stroke-linecap="round" d="M16 2v4M8 2v4M3 10h18"/></svg></a>' +
+          '<button class="bk-icon-btn bk-icon-btn--sm" type="button" data-done title="Marcar hecha">' +
+            '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 6L9 17l-5-5"/></svg></button>' +
+        '</div></div>';
     }).join('');
-    card.hidden = false;
-  } catch (e) {
-    // Sin conexión o sesión: la tarjeta simplemente no aparece, no rompe el dashboard.
+    lista.querySelectorAll('[data-done]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const item = btn.closest('.aten-item');
+        const id = item.getAttribute('data-id');
+        item.classList.add('is-done');
+        try {
+          if (window.brokrSb && window.brokrSb.rest) {
+            await window.brokrSb.rest('tareas?id=eq.' + encodeURIComponent(id),
+              { method: 'PATCH', body: { completada: true, fecha_completada: new Date().toISOString() } });
+          }
+          cargarKpis();
+        } catch (err) { item.classList.remove('is-done'); }
+      });
+    });
   }
-}
+
+  /* ── Leads sin responder (chats de WhatsApp con no leídos) ──
+     Si el usuario no tiene WhatsApp conectado, la tarjeta no aparece. */
+  async function cargarLeads() {
+    const card = document.getElementById('leads-card');
+    const lista = document.getElementById('leads-lista');
+    try {
+      const tok = window.brokrSb ? await window.brokrSb.ensureToken() : null;
+      if (!tok) return;
+      const r = await fetch('https://api.broquer.app/whatsapp2/conversaciones',
+        { headers: { Authorization: 'Bearer ' + tok } });
+      if (!r.ok) return;
+      const d = await r.json();
+      const convs = (d.conversaciones || [])
+        .filter(c => Number(c.unread_count) > 0 || c.no_leida)
+        .slice(0, 4);
+      if (!convs.length) return;
+      lista.innerHTML = convs.map(c => {
+        const nombre = (c.wa2_contactos && c.wa2_contactos.nombre) || c.wa_id || 'Prospecto';
+        const ini = String(nombre).trim().split(/\s+/).map(p => p[0]).slice(0,2).join('').toUpperCase() || 'P';
+        const prev = c.preview_texto || 'Mensaje nuevo';
+        return '<a class="lead-item" href="whatsapp.html">' +
+          '<span class="lead-item__av">' + esc(ini) + '</span>' +
+          '<span class="lead-item__main">' +
+            '<span class="lead-item__n">' + esc(nombre) + '</span>' +
+            '<span class="lead-item__s">' + esc(prev) + '</span>' +
+          '</span>' +
+          '<span class="bk-badge bk-badge--success">Responder</span></a>';
+      }).join('');
+      card.hidden = false;
+    } catch (err) { /* sin WhatsApp: la tarjeta simplemente no aparece */ }
+  }
+
+  /* ── Pipeline: contactos por etapa ── */
+  async function cargarPipeline() {
+    const lista = document.getElementById('pipe-lista');
+    const vacio = document.getElementById('pipe-vacio');
+    const ETAPAS = [
+      ['nuevo', 'Nuevos', 'pipe-fill--nuevo'],
+      ['activo', 'Activos', 'pipe-fill--activo'],
+      ['contactado', 'Contactados', 'pipe-fill--contactado'],
+      ['cerrado', 'Cerrados', 'pipe-fill--cerrado'],
+    ];
+    const counts = await Promise.all(
+      ETAPAS.map(e => fxCount('contactos?select=id&etapa=eq.' + e[0])));
+    const max = Math.max(1, ...counts);
+    if (!counts.some(n => n > 0)) { vacio.hidden = false; return; }
+    lista.innerHTML = ETAPAS.map((e, i) =>
+      '<div class="pipe-row"><span class="pl">' + e[1] + '</span>' +
+      '<div class="pipe-bar"><div class="pipe-fill ' + e[2] + '" data-w="' +
+      Math.max(8, Math.round(counts[i] / max * 100)) + '">' + counts[i] + '</div></div></div>'
+    ).join('');
+    setTimeout(() => lista.querySelectorAll('.pipe-fill').forEach(f => {
+      f.style.width = f.dataset.w + '%';
+    }), 150);
+  }
+
+  /* ── Últimos inmuebles ── */
+  async function cargarInmuebles() {
+    const lista = document.getElementById('props-lista');
+    const vacio = document.getElementById('props-vacio');
+    const filas = await fxRest('propiedades?select=id,titulo,precio,operacion&order=created_at.desc&limit=3');
+    if (!Array.isArray(filas) || !filas.length) { vacio.hidden = false; return; }
+    lista.innerHTML = filas.map(p => {
+      const op = p.operacion === 'renta' ? 'Renta' : (p.operacion === 'venta' ? 'Venta' : '');
+      const precio = (p.precio != null && p.precio !== '' && !isNaN(Number(p.precio)))
+        ? pesos(p.precio) : '';
+      return '<a class="prop-item" href="propiedades.html">' +
+        '<span class="prop-item__pi"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.121 0L22.28 12M4.5 9.75v10.125a1.125 1.125 0 001.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125a1.125 1.125 0 001.125-1.125V9.75"/></svg></span>' +
+        '<span class="prop-item__main">' +
+          '<span class="prop-item__n">' + esc(p.titulo || 'Propiedad') + '</span>' +
+          (op ? '<span class="prop-item__s">' + op + '</span>' : '') +
+        '</span>' +
+        (precio ? '<span class="prop-item__p">' + esc(precio) + '</span>' : '') +
+      '</a>';
+    }).join('');
+  }
+});
 </script>
 
 <!-- ═══ Agendar demo ═══ -->
@@ -806,3 +1059,4 @@ async function cargarNotificaciones() {
 </script>
 </body>
 </html>
+
