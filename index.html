@@ -240,8 +240,11 @@
 /* Sello Meta: fijo abajo-izquierda (opuesto a la burbuja de Broq),
    55% más pequeño que su tamaño original de 44px. */
 .dash-foot {
-  position: fixed; left: 98px; bottom: 16px; z-index: 90;
-  opacity: .8; pointer-events: none;
+  position: fixed; left: 98px; bottom: 16px; z-index: 95;
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: var(--r-pill); padding: 5px 10px;
+  box-shadow: var(--shadow-sm);
+  pointer-events: none;
 }
 .dash-foot img { height: 20px; width: auto; display: block; }
 @media (max-width: 880px) { .dash-foot { left: 14px; bottom: 12px; } }
@@ -310,7 +313,7 @@
   </div>
 
   <div class="dash-grid" id="dash-grid">
-    <div class="bk-card bk-card--pad bk-card--raise dash-widget" data-widget="atencion" draggable="true">
+    <div class="bk-card bk-card--pad bk-card--raise dash-widget" data-widget="atencion">
       <div class="dash-card-h">
         <span class="dash-drag" title="Arrastra para reacomodar">⠿</span><!-- AUDIT-EXEMPT-LINE: glifo braille como asa de arrastre (contenido, no icono decorativo) -->
         <h3>Requiere tu atención</h3>
@@ -321,7 +324,7 @@
       <div class="dash-vacio" id="aten-vacio" hidden>Todo al día. Sin pendientes vencidos ni tareas para hoy.</div>
     </div>
 
-    <div class="bk-card bk-card--pad bk-card--raise dash-widget" data-widget="leads" id="leads-card" hidden draggable="true">
+    <div class="bk-card bk-card--pad bk-card--raise dash-widget" data-widget="leads" id="leads-card" hidden>
       <div class="dash-card-h">
         <span class="dash-drag" title="Arrastra para reacomodar">⠿</span><!-- AUDIT-EXEMPT-LINE: glifo braille como asa de arrastre (contenido, no icono decorativo) -->
         <h3>Leads sin responder</h3>
@@ -330,7 +333,7 @@
       <div id="leads-lista"></div>
     </div>
 
-    <div class="bk-card bk-card--pad bk-card--raise dash-widget" data-widget="pipeline" draggable="true">
+    <div class="bk-card bk-card--pad bk-card--raise dash-widget" data-widget="pipeline">
       <div class="dash-card-h">
         <span class="dash-drag" title="Arrastra para reacomodar">⠿</span><!-- AUDIT-EXEMPT-LINE: glifo braille como asa de arrastre (contenido, no icono decorativo) -->
         <h3>Pipeline</h3>
@@ -340,7 +343,7 @@
       <div class="dash-vacio" id="pipe-vacio" hidden>Aún no tienes contactos en el embudo.</div>
     </div>
 
-    <div class="bk-card bk-card--pad bk-card--raise dash-widget" data-widget="inmuebles" draggable="true">
+    <div class="bk-card bk-card--pad bk-card--raise dash-widget" data-widget="inmuebles">
       <div class="dash-card-h">
         <span class="dash-drag" title="Arrastra para reacomodar">⠿</span><!-- AUDIT-EXEMPT-LINE: glifo braille como asa de arrastre (contenido, no icono decorativo) -->
         <h3>Últimos inmuebles</h3>
@@ -442,14 +445,15 @@
 
 
 
-/* ── Sello Meta: colgarlo directo de <body> ──
-   Un position:fixed dentro del shell puede quedar atrapado (y hasta
-   invisible) si un ancestro crea contexto de transform. Directo en
-   body, nada lo rompe. */
-(function(){
+/* ── Sello Meta: colgarlo de <body> DESPUÉS del shell ──
+   El shell, al arrancar, barre TODOS los hijos de body hacia su
+   contenedor .bk-page; si movemos la insignia antes, se la traga.
+   Nos colgamos del evento brokr-shell-ready: para entonces el barrido
+   ya terminó y lo que se agregue a body se queda en body. */
+window.addEventListener('brokr-shell-ready', function(){
   const foot = document.querySelector('.dash-foot');
   if (foot) document.body.appendChild(foot);
-})();
+});
 
 /* ── Widgets reacomodables: arrastra y suelta, el orden se guarda ──
    La grid tiene dos columnas (ancha/angosta); el ancho de cada tarjeta
@@ -476,6 +480,17 @@
       .map(el => el.dataset.widget);
     try { localStorage.setItem(KEY, JSON.stringify(orden)); } catch(_){}
   }
+
+  // draggable solo en desktop: en iOS el arrastre nativo secuestra el
+  // gesto de pan y la página no puede hacer scroll.
+  const mqDesktop = window.matchMedia('(min-width: 901px)');
+  function aplicarDraggable() {
+    grid.querySelectorAll('.dash-widget').forEach(el => {
+      el.draggable = mqDesktop.matches;
+    });
+  }
+  aplicarDraggable();
+  if (mqDesktop.addEventListener) mqDesktop.addEventListener('change', aplicarDraggable);
 
   let arrastrando = null;
   grid.querySelectorAll('.dash-widget').forEach(el => {
