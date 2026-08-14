@@ -798,6 +798,14 @@
 /* The page's own scroll body */
 .bk-page {
   flex: 1; overflow-y: auto;
+  /* clip: el scroll REAL de cada pantalla vive aqui, no en <body>.
+     Sin esto, cualquier hijo mas ancho que el viewport permite
+     arrastrar toda la pantalla a la derecha en movil. clip (no
+     hidden) para no romper position:sticky. pan-y: el dedo solo
+     desplaza en vertical; las tablas y barras con scroll horizontal
+     propio no se afectan porque definen su propio touch-action. */
+  overflow-x: clip;
+  touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
   padding-bottom: 100px;
 }
