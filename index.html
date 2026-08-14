@@ -240,11 +240,11 @@
 /* Sello Meta: fijo abajo-izquierda (opuesto a la burbuja de Broq),
    55% más pequeño que su tamaño original de 44px. */
 .dash-foot {
-  position: fixed; left: 100px; bottom: 18px; z-index: 30;
-  opacity: .75; pointer-events: none;
+  position: fixed; left: 98px; bottom: 16px; z-index: 90;
+  opacity: .8; pointer-events: none;
 }
 .dash-foot img { height: 20px; width: auto; display: block; }
-@media (max-width: 880px) { .dash-foot { left: 16px; bottom: 14px; } }
+@media (max-width: 880px) { .dash-foot { left: 14px; bottom: 12px; } }
 </style>
 </head>
 <body data-app="home">
@@ -441,6 +441,15 @@
 })();
 
 
+
+/* ── Sello Meta: colgarlo directo de <body> ──
+   Un position:fixed dentro del shell puede quedar atrapado (y hasta
+   invisible) si un ancestro crea contexto de transform. Directo en
+   body, nada lo rompe. */
+(function(){
+  const foot = document.querySelector('.dash-foot');
+  if (foot) document.body.appendChild(foot);
+})();
 
 /* ── Widgets reacomodables: arrastra y suelta, el orden se guarda ──
    La grid tiene dos columnas (ancha/angosta); el ancho de cada tarjeta

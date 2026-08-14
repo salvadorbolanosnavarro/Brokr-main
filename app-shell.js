@@ -409,7 +409,10 @@
   border-right: none;
   padding: 18px 12px 20px;
   display: flex; flex-direction: column;
-  overflow-y: auto;
+  /* overflow visible: con auto, los tooltips absolutos desbordaban los
+     84px y generaban un scrollbar horizontal (la barra al pie). Los
+     seis grupos caben sin scroll. */
+  overflow: visible;
   position: relative;
 }
 /* En el rail angosto los degradados decorativos (destello y aurora)
@@ -454,8 +457,15 @@
 .bk-rail__item:hover { background: var(--sb-hover); color: #FFFFFF; }
 .bk-rail__item:focus { outline: none; }
 .bk-rail__item:focus-visible { outline: 2px solid rgba(255,255,255,0.65); outline-offset: 2px; }
-/* Grupo con flyout abierto: estado propio, distinto del activo (pastilla). */
-.bk-rail__item.is-open { background: var(--sb-hover); color: #FFFFFF; }
+/* Grupo con flyout abierto: toma la pastilla blanca (es lo seleccionado).
+   Mientras un flyout esta abierto, la pastilla del grupo del modulo
+   actual se atenua para que solo haya UNA seleccion visible. */
+.bk-rail__item.is-open { background: #FFFFFF; color: var(--sky-navy); }
+.bk-rail__item.is-open .bk-rail__tip { display: none; }
+.bk-rail.has-open .bk-rail__item.is-active:not(.is-open) {
+  background: var(--sb-hover); color: #FFFFFF;
+}
+.bk-rail.has-open .bk-rail__item.is-active:not(.is-open)::before { display: none; }
 /* Estado activo con contraste real: pastilla blanca + icono navy. */
 .bk-rail__item.is-active { background: #FFFFFF; color: var(--sky-navy); }
 .bk-rail__item.is-active::before {
@@ -1559,8 +1569,10 @@ body[data-app="facebook-ads"]{--page-max:980px}
     // módulos; volver a hacer clic (o clic afuera, o Escape) lo cierra.
     // El grupo del módulo activo queda marcado con la pastilla blanca.
     let flyoutAbierto = null;
+    const railEl = shell.querySelector('#bk-rail');
     function limpiarOpen() {
       shell.querySelectorAll('.bk-rail__item.is-open').forEach(b => b.classList.remove('is-open'));
+      if (railEl) railEl.classList.remove('has-open');
     }
     function cerrarTodo() {
       cerrarFlyout();
@@ -1575,6 +1587,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
         limpiarOpen();
         flyoutAbierto = g;
         btn.classList.add('is-open');
+        if (railEl) railEl.classList.add('has-open');
         renderFlyout(shell, g, porGrupo, activeKey, btn);
       });
     });
