@@ -75,6 +75,33 @@ async def post_rows(
     return data if isinstance(data, list) else []
 
 
+async def upsert_rows(
+    table: str,
+    payload: Any,
+    *,
+    conflict: str,
+    prefer: str = "resolution=merge-duplicates,return=representation",
+    timeout: httpx.Timeout | float = DEFAULT_TIMEOUT,
+) -> list[dict[str, Any]]:
+    """Upsert rows through PostgREST using an explicit conflict target."""
+    conflict = conflict.strip()
+    if not conflict or any(ch not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_," for ch in conflict):
+        raise ValueError("Supabase upsert conflict target is invalid")
+
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        response = await client.post(
+            rest_url(table),
+            params={"on_conflict": conflict},
+            headers=service_headers(prefer=prefer),
+            json=payload,
+        )
+    response.raise_for_status()
+    if not response.content:
+        return []
+    data = response.json()
+    return data if isinstance(data, list) else []
+
+
 async def patch_rows(
     table: str,
     params: Mapping[str, Any],
