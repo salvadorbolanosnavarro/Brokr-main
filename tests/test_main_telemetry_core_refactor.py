@@ -15,7 +15,7 @@ class MainTelemetryCoreRefactorTests(unittest.TestCase):
 
     def test_telemetry_writes_delegate_to_core_database(self):
         source = self.source
-        self.assertIn("from core.database import get_rows, post_rows", source)
+        self.assertIn("from core.database import delete_rows, get_rows, post_rows", source)
         self.assertIn(
             'await post_rows(\n            "usage_logs", payload, prefer="return=minimal", timeout=6',
             source,
