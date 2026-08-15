@@ -10,8 +10,9 @@
 #
 # Seguridad de credenciales:
 #   · La contraseña se guarda CIFRADA (Fernet/AES) en correo_cuentas.
-#   · La llave sale de CORREO_SECRET (env de Railway); si no existe, se
-#     deriva de SUPABASE_SERVICE_KEY para que funcione sin configurar nada.
+#   · La llave sale de CORREO_SECRET o, por compatibilidad, de la service key.
+#   · La anon key nunca se usa como secreto de cifrado ni como credencial
+#     privilegiada.
 #   · La tabla tiene RLS activo SIN políticas: solo la service key del
 #     backend puede leerla. El frontend jamás ve la contraseña.
 #
@@ -25,36 +26,35 @@ import email
 import email.utils
 import hashlib
 import imaplib
-import os
 import re
 import smtplib
 from datetime import datetime, timezone
 from email.header import decode_header, make_header
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import httpx
 from cryptography.fernet import Fernet
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
+from core.auth import require_user_id
+from core.config import settings
+from core.database import delete_rows, get_rows, patch_rows, post_rows
+from core.organizations import get_org_id_for_user
+from core.subscriptions import has_paid_feature_access
+
 router = APIRouter()
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
-# En Railway la llave pública se llama SUPABASE_ANON_KEY (igual que en
-# main.py y routers/firmas.py). Se deja SUPABASE_KEY como respaldo por si
-# algún entorno la nombra así.
-SUPABASE_KEY = os.environ.get("SUPABASE_ANON_KEY", "") or os.environ.get("SUPABASE_KEY", "")
-RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
-CORREO_RELAY_FROM = os.environ.get("CORREO_RELAY_FROM", "correo@broquer.app")
-SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "") or SUPABASE_KEY
+RESEND_API_KEY = settings.resend_api_key
+CORREO_RELAY_FROM = settings.correo_relay_from
 
 
 # ── Cifrado de la contraseña ────────────────────────────────────────────────
 
 def _cipher() -> Fernet:
-    secreto = os.environ.get("CORREO_SECRET", "") or SUPABASE_SERVICE_KEY
+    secreto = settings.require_correo_secret()
     llave = base64.urlsafe_b64encode(hashlib.sha256(secreto.encode()).digest())
     return Fernet(llave)
 
@@ -79,103 +79,18 @@ PRESETS = {
 }
 
 
-# ── Helpers Supabase (autónomos, mismo patrón que routers/firmas.py) ───────
-
-def _headers(prefer: str = None) -> Dict[str, str]:
-    h = {"apikey": SUPABASE_SERVICE_KEY,
-         "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-         "Content-Type": "application/json"}
-    if prefer:
-        h["Prefer"] = prefer
-    return h
-
-
-async def _sb_get(tabla: str, params: dict) -> List[dict]:
-    async with httpx.AsyncClient(timeout=10) as c:
-        r = await c.get(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_headers(), params=params)
-        return r.json() if r.status_code == 200 else []
-
-
-async def _sb_post(tabla: str, payload, prefer="return=representation") -> Optional[list]:
-    async with httpx.AsyncClient(timeout=10) as c:
-        r = await c.post(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_headers(prefer), json=payload)
-        if r.status_code in (200, 201):
-            try:
-                return r.json()
-            except Exception:
-                return []
-        return None
-
-
-async def _sb_patch(tabla: str, params: dict, payload: dict) -> None:
-    async with httpx.AsyncClient(timeout=10) as c:
-        await c.patch(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_headers(), params=params, json=payload)
-
-
-async def _sb_delete(tabla: str, params: dict) -> None:
-    async with httpx.AsyncClient(timeout=10) as c:
-        await c.delete(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_headers(), params=params)
-
-
-async def get_user_id_from_token(request: Request) -> Optional[str]:
-    """Igual que el de main.py. Duplicado a propósito: este router es autónomo."""
-    auth = request.headers.get("Authorization", "")
-    if not auth.startswith("Bearer "):
-        return None
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        return None
-    try:
-        async with httpx.AsyncClient(timeout=8) as c:
-            r = await c.get(f"{SUPABASE_URL}/auth/v1/user",
-                            headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {auth[7:]}"})
-            if r.status_code == 200:
-                return r.json().get("id")
-    except Exception:
-        pass
-    return None
-
+# ── Acceso compartido ───────────────────────────────────────────────────────
 
 async def _uid(request: Request) -> str:
-    uid = await get_user_id_from_token(request)
-    if not uid:
-        raise HTTPException(401, "Inicia sesión para continuar.")
-    return uid
+    return await require_user_id(
+        request,
+        detail="Inicia sesión para continuar.",
+    )
 
 
 async def _suscripcion_activa(user_id: str) -> bool:
-    """Mismo patrón que firmas: import en caliente para evitar el círculo con
-    main.py, y falla ABIERTO — un blip de Supabase no deja sin correo a quien
-    sí paga."""
-    try:
-        from main import get_user_access_state, get_org_context, get_org_id_for_user
-    except Exception:
-        return True
-    try:
-        acceso = await get_user_access_state(user_id)
-        if not acceso.get("activo", True):
-            return False
-        if acceso.get("rol") in ("equipo", "admin"):
-            return True
-        ctx = await get_org_context(user_id)
-        if ctx and ctx.get("org_tipo") == "empresa":
-            vigente = ctx.get("org_activo", True)
-            vence = ctx.get("vence_el")
-            if vigente and vence:
-                try:
-                    vigente = datetime.fromisoformat(
-                        str(vence).replace("Z", "+00:00")) > datetime.now(timezone.utc)
-                except Exception:
-                    pass
-            return bool(vigente)
-        oid = await get_org_id_for_user(user_id)
-        filas = await _sb_get("suscripciones", {
-            "org_id": f"eq.{oid}", "select": "status",
-            "order": "updated_at.desc", "limit": "1"})
-        if not filas:
-            return False
-        return filas[0].get("status") in ("active", "trialing")
-    except Exception:
-        return True
+    """Valida acceso Max con la política canónica y fail-closed del Core."""
+    return await has_paid_feature_access(user_id)
 
 
 async def _uid_max(request: Request) -> str:
@@ -187,7 +102,7 @@ async def _uid_max(request: Request) -> str:
 
 
 async def _cuenta_de(uid: str) -> Optional[dict]:
-    rows = await _sb_get("correo_cuentas", {
+    rows = await get_rows("correo_cuentas", {
         "user_id": f"eq.{uid}", "activo": "eq.true",
         "select": "*", "limit": "1",
     })
@@ -306,7 +221,7 @@ def _listar_bandeja(cta: dict, limite: int, carpeta: str) -> List[dict]:
         m.select(carpeta, readonly=True)
         ok, data = m.uid("search", None, "ALL")
         uids = (data[0] or b"").split()
-        uids = uids[-limite:][::-1]  # los más recientes primero
+        uids = uids[-limite:][::-1]
         out = []
         for uid in uids:
             ok, msgdata = m.uid("fetch", uid, "(FLAGS BODY.PEEK[])")
@@ -349,7 +264,7 @@ def _listar_bandeja(cta: dict, limite: int, carpeta: str) -> List[dict]:
 def _leer_mensaje(cta: dict, uid: str, carpeta: str) -> Optional[dict]:
     m = _imap_conectar(cta)
     try:
-        m.select(carpeta)  # sin readonly: al leer, marcamos \Seen (comportamiento estándar)
+        m.select(carpeta)
         ok, msgdata = m.uid("fetch", uid.encode(), "(BODY[])")
         if ok != "OK" or not msgdata or msgdata[0] is None:
             return None
@@ -418,7 +333,7 @@ def _enviar_smtp(cta: dict, para: str, asunto: str, cuerpo: str,
 class ConectarReq(BaseModel):
     email: str
     password: str
-    proveedor: str = ""          # gmail | outlook | icloud | otro
+    proveedor: str = ""
     imap_host: str = ""
     imap_port: int = 0
     smtp_host: str = ""
@@ -459,14 +374,11 @@ async def correo_conectar(req: ConectarReq, request: Request):
     if not cta["imap_host"] or not cta["smtp_host"]:
         raise HTTPException(400, "Falta el servidor IMAP o SMTP. Elige un proveedor o captúralos manualmente.")
 
-    # Probamos la conexión real ANTES de guardar nada
     error = await asyncio.to_thread(_probar_conexion, cta)
     aviso = ""
     if error:
         es_bloqueo_red = "no pudo salir por los puertos" in error
         if es_bloqueo_red and RESEND_API_KEY:
-            # La bandeja (IMAP) sí funciona; el envío saldrá por el relay de
-            # Broquer (Resend) con Reply-To hacia el correo del usuario.
             aviso = ("Tu bandeja quedó conectada. El envío saldrá por el servidor "
                      "de Broquer a nombre de " + CORREO_RELAY_FROM + " con "
                      "respuestas dirigidas a tu correo, porque el hosting "
@@ -487,19 +399,25 @@ async def correo_conectar(req: ConectarReq, request: Request):
         "updated_at": ahora,
     }
     try:
-        from routers.organizaciones import get_org_id_for_user
         fila["org_id"] = await get_org_id_for_user(uid)
-    except Exception:
-        pass
+    except Exception as exc:
+        raise HTTPException(503, "No se pudo verificar tu organización.") from exc
 
-    existente = await _sb_get("correo_cuentas", {"user_id": f"eq.{uid}", "select": "id", "limit": "1"})
+    existente = await get_rows(
+        "correo_cuentas",
+        {"user_id": f"eq.{uid}", "select": "id", "limit": "1"},
+    )
     if existente:
-        await _sb_patch("correo_cuentas", {"user_id": f"eq.{uid}"}, fila)
+        await patch_rows("correo_cuentas", {"user_id": f"eq.{uid}"}, fila)
     else:
         fila["created_at"] = ahora
-        creado = await _sb_post("correo_cuentas", fila)
-        if creado is None:
-            raise HTTPException(502, "No se pudo guardar la cuenta. Corre la migración migracion-correo.sql.")
+        try:
+            await post_rows("correo_cuentas", fila)
+        except Exception as exc:
+            raise HTTPException(
+                502,
+                "No se pudo guardar la cuenta. Corre la migración migracion-correo.sql.",
+            ) from exc
 
     return {"ok": True, "email": correo, "aviso": aviso}
 
@@ -507,7 +425,7 @@ async def correo_conectar(req: ConectarReq, request: Request):
 @router.delete("/correo/desconectar")
 async def correo_desconectar(request: Request):
     uid = await _uid(request)
-    await _sb_delete("correo_cuentas", {"user_id": f"eq.{uid}"})
+    await delete_rows("correo_cuentas", {"user_id": f"eq.{uid}"})
     return {"ok": True}
 
 
@@ -570,8 +488,6 @@ async def correo_enviar(req: EnviarReq, request: Request):
         if not (bloqueo_red and RESEND_API_KEY):
             raise HTTPException(502, f"No se pudo enviar: {e}")
 
-    # Relay: sale por Resend a nombre del dominio de Broquer, con Reply-To
-    # hacia el correo del usuario para que las respuestas lleguen a su bandeja.
     import html as _html
     cuerpo_html = "<p>" + _html.escape(cuerpo).replace("\n", "<br>") + "</p>"
     payload = {
