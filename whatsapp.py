@@ -31,7 +31,8 @@ from pydantic import BaseModel
 
 from core.auth import require_user_id
 from core.config import settings
-from core.database import delete_rows, get_rows, patch_rows, post_rows, service_headers
+from core.database import delete_rows, get_rows, patch_rows, post_rows
+from core.storage import delete_objects, upload_object
 
 try:
     from push import enviar_push
@@ -50,9 +51,6 @@ log = logging.getLogger("broquer.whatsapp2")
 # -----------------------------------------------------------------------------
 # CONFIG
 # -----------------------------------------------------------------------------
-SUPABASE_URL         = settings.supabase_url
-SUPABASE_ANON_KEY    = settings.supabase_anon_key
-SUPABASE_SERVICE_KEY = settings.supabase_service_key
 
 ANTHROPIC_API_KEY = settings.anthropic_api_key
 ANTHROPIC_BASE    = settings.anthropic_base
@@ -319,12 +317,6 @@ def _parsear_presupuesto(texto: str) -> int | None:
 # =============================================================================
 # Helpers de Supabase — compatibilidad sobre Core
 # =============================================================================
-def _sb_headers() -> dict:
-    # Temporary adapter for non-table Supabase calls (for example Storage).
-    # Credential policy itself lives in core.database.
-    return service_headers()
-
-
 async def sb_get(table: str, params: dict) -> list:
     ultimo = ""
     for intento in (1, 2):
@@ -1622,28 +1614,20 @@ async def _descargar_media(numero: dict, media_id: str) -> tuple[bytes | None, s
 
 async def _guardar_archivo(user_id: str, conversacion_id: str, contenido: bytes,
                            mime: str, sufijo: str) -> tuple[str | None, str | None]:
-    """Sube a Supabase el archivo que mandó el prospecto y devuelve
-    (url_publica, ruta_interna).
-
-    Hace falta guardarlo porque la liga que da Meta caduca en minutos y además
-    exige el token del número: si solo se guardara esa liga, mañana estaría
-    muerta y el agente no podría volver a ver la foto que le mandaron.
-    La ruta interna se conserva aparte para poder BORRAR el archivo después."""
-    if not contenido or not SUPABASE_URL:
+    """Persist media through the canonical Storage layer and keep its path."""
+    if not contenido:
         return None, None
     ext = (mime.split("/")[-1] or "bin").split(";")[0][:8] or "bin"
     ruta = f"{user_id}/{conversacion_id}/{int(datetime.now(timezone.utc).timestamp()*1000)}-{sufijo}.{ext}"
     try:
-        h = {k: v for k, v in _sb_headers().items() if k != "Content-Type"}
-        h["Content-Type"] = mime or "application/octet-stream"
-        h["x-upsert"] = "true"
-        async with httpx.AsyncClient(timeout=40) as c:
-            r = await c.post(f"{SUPABASE_URL}/storage/v1/object/{WA_MEDIA_BUCKET}/{ruta}",
-                             headers=h, content=contenido)
-        if r.status_code >= 300:
-            log.warning("No se pudo guardar el archivo de WhatsApp: %s %s", r.status_code, r.text[:200])
-            return None, None
-        return f"{SUPABASE_URL}/storage/v1/object/public/{WA_MEDIA_BUCKET}/{ruta}", ruta
+        url = await upload_object(
+            WA_MEDIA_BUCKET,
+            ruta,
+            contenido,
+            content_type=mime or "application/octet-stream",
+            timeout=40,
+        )
+        return url, ruta
     except Exception as e:
         log.warning("Error guardando archivo de WhatsApp: %s", e)
         return None, None
@@ -3301,17 +3285,12 @@ async def wa2_borrar_conversacion(conversacion_id: str, request: Request):
 
 
 async def _borrar_archivos(rutas: list) -> None:
-    """Borra del almacenamiento los archivos de los mensajes que se eliminan.
-    Si esto no se hiciera, la foto seguiría viva en una liga pública aunque el
-    mensaje ya no apareciera en ningún lado — que es justo lo contrario de lo
-    que promete una supresión."""
+    """Delete persisted message media while keeping message deletion resilient."""
     rutas = [r for r in (rutas or []) if r]
     if not rutas:
         return
     try:
-        async with httpx.AsyncClient(timeout=20) as c:
-            await c.request("DELETE", f"{SUPABASE_URL}/storage/v1/object/{WA_MEDIA_BUCKET}",
-                            headers=_sb_headers(), json={"prefixes": rutas})
+        await delete_objects(WA_MEDIA_BUCKET, rutas, timeout=20)
     except Exception as e:
         log.warning("No se pudieron borrar %s archivo(s) del almacenamiento: %s", len(rutas), e)
 
