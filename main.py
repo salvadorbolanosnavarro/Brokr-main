@@ -7974,15 +7974,17 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
 
 async def _get_fb_meta(user_id: str) -> dict:
     """Helper: recupera meta de Facebook del usuario desde Supabase."""
-    async with httpx.AsyncClient(timeout=10) as client:
-        r = await client.get(
-            f"{SUPABASE_URL}/rest/v1/user_integrations",
-            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
-            params={"user_id": f"eq.{user_id}", "provider": "eq.facebook", "select": "meta", "limit": "1"}
+    try:
+        rows = await get_rows(
+            "user_integrations",
+            {"user_id": f"eq.{user_id}", "provider": "eq.facebook", "select": "meta", "limit": "1"},
+            timeout=10,
         )
-    if r.status_code != 200 or not r.json():
+    except httpx.HTTPStatusError:
         raise HTTPException(status_code=400, detail="Facebook no conectado")
-    meta_raw = r.json()[0].get("meta", "{}")
+    if not rows:
+        raise HTTPException(status_code=400, detail="Facebook no conectado")
+    meta_raw = rows[0].get("meta", "{}")
     try:
         meta = json.loads(meta_raw) if isinstance(meta_raw, str) else meta_raw
     except Exception:
