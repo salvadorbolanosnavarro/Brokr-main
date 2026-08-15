@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Measure Broquer architecture debt and prevent it from growing.
 
-The baseline was captured from PR #44 after the first Core migrations. These
-limits are ceilings, not targets: cleanup should make every number go down.
-CI fails only if a legacy pattern count grows beyond the recorded baseline.
+The baseline is ratcheted down as cleanup lands in PR #44. These limits are
+ceilings, not targets: cleanup should make every number go down. CI fails if a
+legacy pattern count grows beyond the latest verified baseline.
 """
 from __future__ import annotations
 
@@ -25,10 +25,11 @@ PATTERNS = {
     ),
 }
 
+# Ratcheted after the APNs push migration (Quality #53).
 BASELINE_MAX = {
-    "direct_env_reads": 9,
+    "direct_env_reads": 8,
     "duplicated_auth_helpers": 7,
-    "service_key_fallbacks": 8,
+    "service_key_fallbacks": 7,
 }
 MAX_LARGE_CODE_FILES = 10
 
