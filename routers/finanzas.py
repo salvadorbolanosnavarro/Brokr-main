@@ -43,16 +43,14 @@ from pydantic import BaseModel
 
 from core.auth import require_user_id
 from core.config import settings
-from core.database import delete_rows, get_rows, patch_rows, post_rows, service_headers
+from core.database import delete_rows, get_rows, patch_rows, post_rows
+from core.storage import create_signed_object_url, delete_object, upload_object
 
 router = APIRouter(prefix="/finanzas", tags=["finanzas"])
 log = logging.getLogger("broquer.finanzas")
 
 # ── Config ────────────────────────────────────────────────────────────────
 # Environment names and privileged credential policy live only in Core.
-SUPABASE_URL = settings.supabase_url
-SUPABASE_KEY = settings.supabase_anon_key
-SUPABASE_SERVICE_KEY = settings.supabase_service_key
 ANTHROPIC_API_KEY = settings.anthropic_api_key
 
 BUCKET = "fin-comprobantes"
@@ -82,12 +80,6 @@ CATEGORIAS_SEMILLA = [
 # ══════════════════════════════════════════════════════════════════════════
 # ACCESO A SUPABASE — compatibilidad sobre Core
 # ══════════════════════════════════════════════════════════════════════════
-
-def _headers(prefer: Optional[str] = None) -> Dict[str, str]:
-    # Temporary compatibility adapter for the Storage code below. Database
-    # operations themselves use core.database directly.
-    return service_headers(prefer=prefer)
-
 
 async def _sb_get(tabla: str, params: dict) -> List[dict]:
     try:
@@ -484,9 +476,7 @@ async def borrar_movimiento(request: Request, mov_id: str):
     ruta = movs[0].get("comprobante")
     if ruta:
         try:
-            async with httpx.AsyncClient(timeout=20) as c:
-                await c.delete(f"{SUPABASE_URL}/storage/v1/object/{BUCKET}/{ruta}",
-                               headers=_headers())
+            await delete_object(BUCKET, ruta, timeout=20)
         except Exception:
             pass  # el registro se borra igual; un huérfano en storage no rompe nada
     await _sb_delete("fin_movimientos", {"id": f"eq.{mov_id}", "user_id": f"eq.{uid}"})
@@ -521,15 +511,17 @@ async def subir_comprobante(request: Request, mov_id: str,
         raise HTTPException(415, "Solo se aceptan fotos (JPG, PNG, WEBP) o PDF.")
     sello = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
     ruta = f"{uid}/{mov_id}/{sello}-{_limpio(archivo.filename)}"
-    async with httpx.AsyncClient(timeout=60) as c:
-        r = await c.post(f"{SUPABASE_URL}/storage/v1/object/{BUCKET}/{ruta}",
-                         headers={"apikey": SUPABASE_SERVICE_KEY,
-                                  "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                                  "Content-Type": mime, "x-upsert": "true"},
-                         content=contenido)
-        if r.status_code not in (200, 201):
-            log.warning("upload comprobante -> %s %s", r.status_code, r.text[:200])
-            raise HTTPException(500, "No se pudo guardar el archivo. Intenta de nuevo.")
+    try:
+        await upload_object(
+            BUCKET,
+            ruta,
+            contenido,
+            content_type=mime,
+            timeout=60,
+        )
+    except Exception as exc:
+        log.warning("upload comprobante falló: %s", exc)
+        raise HTTPException(500, "No se pudo guardar el archivo. Intenta de nuevo.") from exc
     await _sb_patch("fin_movimientos",
                     {"id": f"eq.{mov_id}", "user_id": f"eq.{uid}"},
                     {"comprobante": ruta, "comprobante_mime": mime,
@@ -547,13 +539,16 @@ async def liga_comprobante(request: Request, mov_id: str):
     if not movs or not movs[0].get("comprobante"):
         raise HTTPException(404, "Ese movimiento no tiene comprobante.")
     ruta = movs[0]["comprobante"]
-    async with httpx.AsyncClient(timeout=15) as c:
-        r = await c.post(f"{SUPABASE_URL}/storage/v1/object/sign/{BUCKET}/{ruta}",
-                         headers=_headers(), json={"expiresIn": 300})
-        if r.status_code != 200:
-            raise HTTPException(500, "No se pudo generar la liga.")
-        firmada = r.json().get("signedURL", "")
-    return {"url": f"{SUPABASE_URL}/storage/v1{firmada}"}
+    try:
+        firmada = await create_signed_object_url(
+            BUCKET,
+            ruta,
+            expires_in=300,
+            timeout=15,
+        )
+    except Exception as exc:
+        raise HTTPException(500, "No se pudo generar la liga.") from exc
+    return {"url": firmada}
 
 
 # ══════════════════════════════════════════════════════════════════════════
