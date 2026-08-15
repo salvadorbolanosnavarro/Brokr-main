@@ -4,6 +4,7 @@ import unittest
 from unittest.mock import patch
 
 from core.config import Settings
+from core.http import UnsafePublicURL, assert_public_http_url
 from core.modules import ModuleDefinition, ModuleRegistry
 
 
@@ -73,6 +74,36 @@ class ModuleContractTests(unittest.TestCase):
                 description="Equipos de trabajo.",
                 permissions=("equipo.ver", "equipo.ver"),
             )
+
+
+class PublicURLSafetyTests(unittest.IsolatedAsyncioTestCase):
+    async def test_loopback_is_rejected(self):
+        for url in ("http://127.0.0.1/admin", "http://[::1]/admin"):
+            with self.subTest(url=url):
+                with self.assertRaises(UnsafePublicURL):
+                    await assert_public_http_url(url)
+
+    async def test_private_networks_are_rejected(self):
+        for url in (
+            "http://10.0.0.1/",
+            "http://172.16.0.1/",
+            "http://192.168.1.1/",
+            "http://169.254.169.254/latest/meta-data/",
+        ):
+            with self.subTest(url=url):
+                with self.assertRaises(UnsafePublicURL):
+                    await assert_public_http_url(url)
+
+    async def test_localhost_and_non_http_schemes_are_rejected(self):
+        for url in (
+            "http://localhost/internal",
+            "http://service.local/internal",
+            "file:///etc/passwd",
+            "ftp://example.com/file",
+        ):
+            with self.subTest(url=url):
+                with self.assertRaises(UnsafePublicURL):
+                    await assert_public_http_url(url)
 
 
 if __name__ == "__main__":
