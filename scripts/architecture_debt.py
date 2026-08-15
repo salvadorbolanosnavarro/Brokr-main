@@ -41,7 +41,7 @@ BASELINE_MAX = {
     "direct_env_reads": 8,
     "duplicated_auth_helpers": 7,
     "service_key_fallbacks": 7,
-    "fail_open_webhook_secrets": 1,
+    "fail_open_webhook_secrets": 0,
     "fail_open_entitlements": 1,
 }
 MAX_LARGE_CODE_FILES = 10
