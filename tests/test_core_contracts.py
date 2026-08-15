@@ -4,6 +4,7 @@ import unittest
 from unittest.mock import patch
 
 from core.config import Settings
+from core.database import upsert_rows
 from core.http import UnsafePublicURL, assert_public_http_url
 from core.modules import ModuleDefinition, ModuleRegistry
 from core.organizations import has_org_permission
@@ -72,6 +73,32 @@ class SettingsTests(unittest.TestCase):
             settings = Settings.from_env()
         with self.assertRaises(RuntimeError):
             settings.require_correo_secret()
+
+    def test_meta_configuration_preserves_legacy_environment_names(self):
+        env = {
+            "FB_APP_ID": "legacy-app-id",
+            "WA_APP_SECRET": "legacy-secret",
+            "WA_EMBEDDED_SIGNUP_CONFIG_ID": "legacy-config",
+        }
+        with patch.dict(os.environ, env, clear=True):
+            settings = Settings.from_env()
+
+        self.assertEqual(settings.meta_app_id, "legacy-app-id")
+        self.assertEqual(settings.meta_app_secret, "legacy-secret")
+        self.assertEqual(settings.meta_login_config_id, "legacy-config")
+        self.assertEqual(settings.meta_graph_version, "v23.0")
+
+
+class DatabaseContractTests(unittest.IsolatedAsyncioTestCase):
+    async def test_upsert_rejects_invalid_conflict_target_before_network_access(self):
+        for conflict in ("", "id) OR true", "phone_number_id;drop"):
+            with self.subTest(conflict=conflict):
+                with self.assertRaises(ValueError):
+                    await upsert_rows(
+                        "wac_numbers",
+                        {"phone_number_id": "123"},
+                        conflict=conflict,
+                    )
 
 
 class ModuleContractTests(unittest.TestCase):
