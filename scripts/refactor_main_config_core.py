@@ -123,8 +123,18 @@ def transform(source: str) -> str:
             old, new, expected = item
         updated = _replace_exact(updated, old, new, expected)
 
-    if re.search(r"\bos\.(?:getenv|environ)\b", updated):
-        raise RuntimeError("Direct environment reads remain in main.py after transform")
+    matches = list(re.finditer(r"\bos\.(?:getenv|environ)\b", updated))
+    if matches:
+        lines = updated.splitlines()
+        leftovers = []
+        for match in matches:
+            line_no = updated.count("\n", 0, match.start()) + 1
+            text = lines[line_no - 1].strip() if line_no <= len(lines) else ""
+            leftovers.append(f"line {line_no}: {text}")
+        raise RuntimeError(
+            "Direct environment reads remain in main.py after transform: "
+            + " | ".join(leftovers)
+        )
     compile(updated, "main.py", "exec")
     return updated
 
