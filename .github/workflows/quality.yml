@@ -27,5 +27,5 @@ jobs:
       - name: Compile shared core and migrated modules
         run: python -m compileall -q core routers/bolsa.py routers/staging.py
 
-      - name: Run core contract tests
-        run: python -m unittest tests/test_core_contracts.py
+      - name: Run tests
+        run: python -m unittest discover -s tests -p 'test_*.py'
