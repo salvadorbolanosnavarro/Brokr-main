@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # ════════════════════════════════════════════════════════════════
-# BROQUER — Auditor del sistema de diseño "Sky"  (DESIGN.md es la ley)
+# BROQUER — Auditor del sistema de diseño "Navarro"  (DESIGN.md es la ley)
 # Uso:  python3 audit.py [archivo.html ...]     (sin args: todos los .html)
 #
 # Verifica las 7 reglas de oro que se pueden automatizar:
