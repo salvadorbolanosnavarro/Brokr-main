@@ -49,7 +49,6 @@
 #   app.include_router(firmas_router)
 # ──────────────────────────────────────────────────────────────────────────
 
-import os
 import re
 import io
 import json
@@ -64,24 +63,23 @@ import httpx
 from fastapi import APIRouter, Request, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 
+from core.auth import require_user_id
+from core.config import settings
 from core.subscriptions import require_paid_feature_access
 
 router = APIRouter(prefix="/firmas", tags=["firmas"])
 log = logging.getLogger("broquer.firmas")
 
-# ── Config (mismas env vars que main.py) ──────────────────────────────────
-SUPABASE_URL         = os.getenv("SUPABASE_URL", "").rstrip("/")
-SUPABASE_KEY         = os.getenv("SUPABASE_ANON_KEY", "") or os.getenv("SUPABASE_KEY", "")
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "") or SUPABASE_KEY
-APP_URL              = os.getenv("APP_URL", "https://broquer.app").rstrip("/")
-
-RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
-RESEND_FROM    = os.getenv("RESEND_FROM", "Broquer <hola@broquer.app>")
-
-# Plantilla de WhatsApp categoría AUTHENTICATION ya aprobada por Meta, si el
-# agente tiene una. Sin ella, a un número que nunca nos ha escrito no le llega
-# nada por WhatsApp (ventana de 24h cerrada) y el código se va por correo.
-WA_PLANTILLA_OTP = os.getenv("WA_PLANTILLA_OTP", "")
+# ── Config ────────────────────────────────────────────────────────────────
+# Compatibility aliases for domain logic. Environment names and privileged
+# credential policy live only in core.config.
+SUPABASE_URL = settings.supabase_url
+SUPABASE_KEY = settings.supabase_anon_key
+SUPABASE_SERVICE_KEY = settings.supabase_service_key
+APP_URL = settings.app_url
+RESEND_API_KEY = settings.resend_api_key
+RESEND_FROM = settings.resend_from
+WA_PLANTILLA_OTP = settings.wa_plantilla_otp
 
 BUCKET = "firmas"
 
@@ -218,29 +216,11 @@ async def _sb_delete(tabla: str, params: dict) -> None:
             raise HTTPException(500, "No se pudo borrar. Intenta de nuevo.")
 
 
-async def get_user_id_from_token(request: Request) -> Optional[str]:
-    """Igual que el de main.py. Duplicado a propósito: este router es autónomo."""
-    auth = request.headers.get("Authorization", "")
-    if not auth.startswith("Bearer "):
-        return None
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        return None
-    try:
-        async with httpx.AsyncClient(timeout=8) as c:
-            r = await c.get(f"{SUPABASE_URL}/auth/v1/user",
-                            headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {auth[7:]}"})
-            if r.status_code == 200:
-                return r.json().get("id")
-    except Exception:
-        pass
-    return None
-
-
 async def _uid(request: Request) -> str:
-    uid = await get_user_id_from_token(request)
-    if not uid:
-        raise HTTPException(401, "Inicia sesión para continuar.")
-    return uid
+    return await require_user_id(
+        request,
+        detail="Inicia sesión para continuar.",
+    )
 
 
 async def _uid_max(request: Request) -> str:
