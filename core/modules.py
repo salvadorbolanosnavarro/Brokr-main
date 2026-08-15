@@ -1,13 +1,21 @@
 """Declarative contract for Broquer modules.
 
-Future modules should describe themselves once. Platform code can consume the
-same metadata for backend registration, navigation, permissions, observability,
-and documentation instead of maintaining parallel lists.
+Future modules describe themselves once. Platform code consumes the same
+metadata for backend registration, navigation, permissions, observability, and
+documentation instead of maintaining parallel lists.
+
+Visual design is intentionally not configurable per module. Every application
+module inherits Broquer's canonical design system; modules may not select or
+fork their own theme through this contract.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import re
 from typing import Iterable, Optional
+
+
+_MODULE_KEY = re.compile(r"^[a-z][a-z0-9-]*$")
 
 
 @dataclass(frozen=True)
@@ -23,16 +31,24 @@ class ModuleDefinition:
     enabled: bool = True
 
     def __post_init__(self) -> None:
-        if not self.key or self.key != self.key.strip().lower():
-            raise ValueError("Module key must be a non-empty lowercase identifier")
+        if not _MODULE_KEY.fullmatch(self.key):
+            raise ValueError(
+                "Module key must match ^[a-z][a-z0-9-]*$"
+            )
+        if not self.name.strip():
+            raise ValueError("Module name must not be empty")
+        if not self.description.strip():
+            raise ValueError("Module description must not be empty")
         if self.route_prefix and not self.route_prefix.startswith("/"):
             raise ValueError("route_prefix must start with '/' when provided")
         if self.navigation_path and not self.navigation_path.startswith("/"):
             raise ValueError("navigation_path must start with '/' when provided")
+        if len(set(self.permissions)) != len(self.permissions):
+            raise ValueError("Module permissions must not contain duplicates")
 
 
 class ModuleRegistry:
-    """Small registry that rejects duplicate module keys at startup."""
+    """Registry that rejects ambiguous module metadata at startup."""
 
     def __init__(self) -> None:
         self._definitions: dict[str, ModuleDefinition] = {}
