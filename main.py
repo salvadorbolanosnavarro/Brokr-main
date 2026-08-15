@@ -478,21 +478,19 @@ async def get_eb_key_for_user(user_id: str) -> str:
     if not org_id:
         return None
     try:
-        async with httpx.AsyncClient(timeout=8) as client:
-            r = await client.get(
-                f"{SUPABASE_URL}/rest/v1/user_integrations",
-                headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                         "Content-Type": "application/json"},
-                params={"org_id": f"eq.{org_id}", "provider": "eq.easybroker",
-                        "select": "api_key", "limit": "1"}
-            )
-            if r.status_code == 200:
-                rows = r.json()
-                if rows and rows[0].get("api_key"):
-                    return rows[0]["api_key"]
+        rows = await get_rows(
+            "user_integrations",
+            {
+                "org_id": f"eq.{org_id}",
+                "provider": "eq.easybroker",
+                "select": "api_key",
+                "limit": "1",
+            },
+            timeout=8,
+        )
+        return (rows[0].get("api_key") or "").strip() or None if rows else None
     except Exception:
-        pass
-    return None
+        return None
 
 # Helper: obtiene el rol del usuario desde la tabla usuarios
 async def get_user_rol(user_id: str) -> str:
