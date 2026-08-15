@@ -26,7 +26,7 @@ jobs:
 
       - name: Compile shared core and migrated modules
         run: >-
-          python -m compileall -q core
+          python -m compileall -q core limites.py
           routers/bolsa.py routers/staging.py routers/correo.py routers/video.py
           routers/whatsapp_chatgpt.py
 
