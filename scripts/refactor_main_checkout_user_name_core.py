@@ -31,7 +31,7 @@ NEW = '''    try:
 
 def transform_source(source: str) -> str:
     start = source.index('@app.post("/subscription/checkout")')
-    end = source.index('@app.post("/subscription/portal")', start)
+    end = source.index("# ════════════════════════════════════════════════════════════════\n# BROQUER PARA EMPRESAS", start)
     block = source[start:end]
     old_count = block.count(OLD)
     new_count = block.count(NEW)
