@@ -8540,23 +8540,28 @@ async def _fb_buscar_dueno_de_pagina(page_id: str) -> dict:
     if not page_id or not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
         return {}
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            r = await client.get(
-                f"{SUPABASE_URL}/rest/v1/user_integrations",
-                headers=_sb_headers(),
-                params={"provider": "eq.facebook",
-                        "select": "user_id,org_id,api_key,meta",
-                        "meta": f"like.*{page_id}*",
-                        "limit": "20"})
-            filas = r.json() if r.status_code == 200 else []
-            if not filas:
-                # Respaldo: si el LIKE no aplica (columna jsonb), se revisa todo.
-                r2 = await client.get(
-                    f"{SUPABASE_URL}/rest/v1/user_integrations",
-                    headers=_sb_headers(),
-                    params={"provider": "eq.facebook",
-                            "select": "user_id,org_id,api_key,meta", "limit": "500"})
-                filas = r2.json() if r2.status_code == 200 else []
+        try:
+            filas = await get_rows(
+                "user_integrations",
+                {"provider": "eq.facebook",
+                 "select": "user_id,org_id,api_key,meta",
+                 "meta": f"like.*{page_id}*",
+                 "limit": "20"},
+                timeout=15,
+            )
+        except httpx.HTTPStatusError:
+            filas = []
+        if not filas:
+            # Respaldo: si el LIKE no aplica (columna jsonb), se revisa todo.
+            try:
+                filas = await get_rows(
+                    "user_integrations",
+                    {"provider": "eq.facebook",
+                     "select": "user_id,org_id,api_key,meta", "limit": "500"},
+                    timeout=15,
+                )
+            except httpx.HTTPStatusError:
+                filas = []
     except Exception as e:
         _fb_log.error("Error buscando al dueño de la página %s: %s", page_id, e)
         return {}
