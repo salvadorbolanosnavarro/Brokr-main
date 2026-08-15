@@ -20,7 +20,6 @@
 # incluir su router en main.py (2 líneas). No toca nada del código existente.
 # ──────────────────────────────────────────────────────────────────────────
 
-import os
 import json
 import re
 import time
@@ -31,41 +30,23 @@ from limites import exigir_cupo, exigir_sesion
 from fastapi import APIRouter, Request, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 
+from core.auth import get_user_id_from_token
+from core.config import settings
+
 router = APIRouter()
 
-# ── Config (mismas env vars que main.py) ──────────────────────────────────
-ANTHROPIC_API_KEY    = os.environ.get("ANTHROPIC_API_KEY", "")
+# ── Config ────────────────────────────────────────────────────────────────
+# Environment names and privileged credential policy live only in Core.
+ANTHROPIC_API_KEY    = settings.anthropic_api_key
 ANTHROPIC_BASE       = "https://api.anthropic.com/v1"
-GROQ_API_KEY         = os.environ.get("GROQ_API_KEY", "")
+GROQ_API_KEY         = settings.groq_api_key
 GROQ_BASE            = "https://api.groq.com/openai/v1"
-SUPABASE_URL         = os.environ.get("SUPABASE_URL", "")
-SUPABASE_KEY         = os.environ.get("SUPABASE_ANON_KEY", "")
-SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "") or SUPABASE_KEY
+SUPABASE_URL         = settings.supabase_url
+SUPABASE_SERVICE_KEY = settings.supabase_service_key
 
 AGENT_MODEL    = "claude-sonnet-4-6"   # Sonnet 4.6 por default (preferencia del usuario)
 MAX_TURNS      = 8                     # más pasos para resolver tareas encadenadas dentro de la app
 MAX_TOKENS     = 2200
-
-
-# ── Auth: valida el JWT de Supabase y devuelve el user_id ─────────────────
-async def _get_user_id(request: Request) -> Optional[str]:
-    auth = request.headers.get("Authorization", "")
-    if not auth.startswith("Bearer "):
-        return None
-    token = auth[7:]
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        return None
-    try:
-        async with httpx.AsyncClient(timeout=8) as client:
-            r = await client.get(
-                f"{SUPABASE_URL}/auth/v1/user",
-                headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {token}"}
-            )
-            if r.status_code == 200:
-                return r.json().get("id")
-    except Exception:
-        pass
-    return None
 
 
 def _sb_headers() -> dict:
@@ -881,7 +862,7 @@ async def agent(req: AgentRequest, request: Request):
     """Loop agéntico con tool-use nativo. Devuelve {reply, client_actions, steps}."""
     if not ANTHROPIC_API_KEY:
         raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY no configurada en el servidor.")
-    user_id = await _get_user_id(request)
+    user_id = await get_user_id_from_token(request)
     exigir_cupo(request, user_id)
     exigir_sesion(request, user_id)
 
@@ -1007,7 +988,7 @@ _VOICE_FIXES = [
 
 @router.post("/transcribir")
 async def transcribir(request: Request, audio: UploadFile = File(...), idioma: str = Form("es")):
-    _uid = await _get_user_id(request)
+    _uid = await get_user_id_from_token(request)
     exigir_cupo(request, _uid)
     exigir_sesion(request, _uid)
     if not GROQ_API_KEY:
