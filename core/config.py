@@ -67,6 +67,8 @@ class Settings:
     banxico_series_udis: str
     banxico_series_inpc: str
     legacy_main_frontend_url: str
+    legacy_main_fb_app_id: str
+    legacy_main_fb_app_secret: str
     resend_api_key: str
     resend_from: str
     resend_reply_to: str
@@ -107,13 +109,18 @@ class Settings:
     @classmethod
     def from_env(cls) -> "Settings":
         supabase_url = os.getenv("SUPABASE_URL", "").rstrip("/")
+        # Supabase's current public client key is the publishable key. Keep the
+        # legacy anon names as temporary fallbacks so production can migrate
+        # without downtime; once Railway is on SUPABASE_PUBLISHABLE_KEY the
+        # legacy keys can be disabled in Supabase.
         supabase_anon_key = (
-            os.getenv("SUPABASE_ANON_KEY", "")
+            os.getenv("SUPABASE_PUBLISHABLE_KEY", "")
+            or os.getenv("SUPABASE_ANON_KEY", "")
             or os.getenv("SUPABASE_KEY", "")
         )
         # Security policy: privileged credentials never silently fall back to
-        # the anonymous key. Callers requiring service-role access must fail
-        # explicitly when this value is missing.
+        # the public/anonymous key. SUPABASE_SERVICE_KEY may contain either a
+        # current sb_secret_ key or a legacy service_role key during migration.
         supabase_service_key = os.getenv("SUPABASE_SERVICE_KEY", "")
 
         wa2_meta_app_secret = os.getenv("META_APP_SECRET", "")
@@ -141,12 +148,14 @@ class Settings:
             ),
             banxico_series_udis=os.getenv("BANXICO_SERIE_UDIS", "SP68257"),
             banxico_series_inpc=os.getenv("BANXICO_SERIE_INPC", "SP74625"),
-            # Temporary compatibility value for main.py while its legacy
-            # frontend default is migrated. Do not reuse this in new modules.
+            # Temporary compatibility values for main.py while its legacy
+            # configuration block is migrated. Do not reuse these in new modules.
             legacy_main_frontend_url=os.getenv(
                 "FRONTEND_URL",
                 "https://app.navarroai.com.mx",
             ),
+            legacy_main_fb_app_id=os.getenv("FB_APP_ID", ""),
+            legacy_main_fb_app_secret=os.getenv("FB_APP_SECRET", ""),
             resend_api_key=os.getenv("RESEND_API_KEY", ""),
             resend_from=os.getenv("RESEND_FROM", "Broquer <hola@broquer.app>"),
             resend_reply_to=os.getenv("RESEND_REPLY_TO", "").strip(),
