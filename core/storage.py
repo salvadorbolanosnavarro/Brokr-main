@@ -1,6 +1,6 @@
 """Canonical Supabase Storage helpers for Broquer.
 
-Modules that upload privileged objects must use this layer instead of rebuilding
+Modules that access privileged objects must use this layer instead of rebuilding
 service-role headers and storage URLs independently.
 """
 from __future__ import annotations
@@ -31,21 +31,29 @@ def _normalize_object_path(path: str) -> str:
     return normalized
 
 
-def _service_headers(content_type: str) -> dict[str, str]:
+def _encoded_object(bucket: str, path: str) -> tuple[str, str]:
+    bucket = _require_bucket(bucket)
+    path = _normalize_object_path(path)
+    encoded_path = "/".join(quote(segment, safe="") for segment in path.split("/"))
+    return bucket, encoded_path
+
+
+def _service_headers(*, content_type: str | None = None, upsert: bool = False) -> dict[str, str]:
     settings.require_supabase_service()
-    return {
+    headers = {
         "apikey": settings.supabase_service_key,
         "Authorization": f"Bearer {settings.supabase_service_key}",
-        "Content-Type": content_type,
-        "x-upsert": "true",
     }
+    if content_type:
+        headers["Content-Type"] = content_type
+    if upsert:
+        headers["x-upsert"] = "true"
+    return headers
 
 
 def public_object_url(bucket: str, path: str) -> str:
     settings.require_supabase_public()
-    bucket = _require_bucket(bucket)
-    path = _normalize_object_path(path)
-    encoded_path = "/".join(quote(segment, safe="") for segment in path.split("/"))
+    bucket, encoded_path = _encoded_object(bucket, path)
     return f"{settings.supabase_url}/storage/v1/object/public/{bucket}/{encoded_path}"
 
 
@@ -59,15 +67,85 @@ async def upload_object(
 ) -> str:
     """Upload an object using service-role credentials and return its public URL."""
     settings.require_supabase_service()
-    bucket = _require_bucket(bucket)
-    path = _normalize_object_path(path)
-    encoded_path = "/".join(quote(segment, safe="") for segment in path.split("/"))
+    bucket, encoded_path = _encoded_object(bucket, path)
 
     async with httpx.AsyncClient(timeout=timeout) as client:
         response = await client.post(
             f"{settings.supabase_url}/storage/v1/object/{bucket}/{encoded_path}",
-            headers=_service_headers(content_type),
+            headers=_service_headers(content_type=content_type, upsert=True),
             content=content,
         )
     response.raise_for_status()
     return public_object_url(bucket, path)
+
+
+async def download_object(
+    bucket: str,
+    path: str,
+    *,
+    timeout: float = 60,
+) -> bytes:
+    """Download a private or public object through service-role authorization."""
+    settings.require_supabase_service()
+    bucket, encoded_path = _encoded_object(bucket, path)
+
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        response = await client.get(
+            f"{settings.supabase_url}/storage/v1/object/{bucket}/{encoded_path}",
+            headers=_service_headers(),
+        )
+    response.raise_for_status()
+    return response.content
+
+
+async def create_signed_object_url(
+    bucket: str,
+    path: str,
+    *,
+    expires_in: int,
+    timeout: float = 15,
+) -> str:
+    """Create a short-lived signed URL for a private object."""
+    if not isinstance(expires_in, int) or expires_in <= 0:
+        raise ValueError("Signed URL expiration must be a positive integer")
+
+    settings.require_supabase_service()
+    bucket, encoded_path = _encoded_object(bucket, path)
+
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        response = await client.post(
+            f"{settings.supabase_url}/storage/v1/object/sign/{bucket}/{encoded_path}",
+            headers=_service_headers(content_type="application/json"),
+            json={"expiresIn": expires_in},
+        )
+    response.raise_for_status()
+    payload = response.json()
+    signed = payload.get("signedURL") if isinstance(payload, dict) else None
+    if not signed or not isinstance(signed, str):
+        raise RuntimeError("Supabase Storage did not return a signed URL")
+    if signed.startswith("http://") or signed.startswith("https://"):
+        return signed
+    if not signed.startswith("/"):
+        signed = "/" + signed
+    return f"{settings.supabase_url}/storage/v1{signed}"
+
+
+async def delete_object(
+    bucket: str,
+    path: str,
+    *,
+    timeout: float = 20,
+    ignore_missing: bool = True,
+) -> None:
+    """Delete one object through service-role authorization."""
+    settings.require_supabase_service()
+    bucket, encoded_path = _encoded_object(bucket, path)
+
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        response = await client.delete(
+            f"{settings.supabase_url}/storage/v1/object/{bucket}/{encoded_path}",
+            headers=_service_headers(),
+        )
+    if ignore_missing and response.status_code == 404:
+        return
+    response.raise_for_status()
