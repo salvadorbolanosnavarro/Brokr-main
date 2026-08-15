@@ -31,7 +31,7 @@ PATTERNS = {
 BASELINE_MAX = {
     "direct_env_reads": 1,
     "duplicated_auth_helpers": 1,
-    "service_key_fallbacks": 1,
+    "service_key_fallbacks": 0,
     "fail_open_webhook_secrets": 0,
     "fail_open_entitlements": 0,
 }
