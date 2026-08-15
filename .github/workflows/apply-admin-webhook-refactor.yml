@@ -1,0 +1,31 @@
+name: Apply admin webhook refactor
+
+on:
+  push:
+    branches:
+      - agent/architecture-cleanup
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: contains(github.event.head_commit.message, '[apply-admin-webhook-refactor]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout cleanup branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/architecture-cleanup
+
+      - name: Apply exact reviewed transform
+        run: python scripts/refactor_admin_webhook.py
+
+      - name: Commit transformed source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin_consola.py
+          git diff --cached --check
+          git commit -m "Apply fail-closed admin webhook refactor"
+          git push origin HEAD:agent/architecture-cleanup
