@@ -6,6 +6,7 @@ from unittest.mock import patch
 from core.config import Settings
 from core.http import UnsafePublicURL, assert_public_http_url
 from core.modules import ModuleDefinition, ModuleRegistry
+from core.organizations import has_org_permission
 from core.permissions import (
     ROLE_ADMIN,
     ROLE_AGENT,
@@ -122,6 +123,35 @@ class OrganizationPermissionTests(unittest.TestCase):
             default_permission("superadmin", "ver_telefonos")
         with self.assertRaises(ValueError):
             default_permission(ROLE_AGENT, "permiso_inventado")
+
+    def test_missing_or_inactive_context_is_denied(self):
+        self.assertFalse(has_org_permission(None, "ver_telefonos"))
+        self.assertFalse(
+            has_org_permission(
+                {"activo": False, "org_activo": True, "rol_org": ROLE_OWNER},
+                "ver_telefonos",
+            )
+        )
+        self.assertFalse(
+            has_org_permission(
+                {"activo": True, "org_activo": False, "rol_org": ROLE_OWNER},
+                "ver_telefonos",
+            )
+        )
+
+    def test_unknown_role_or_permission_is_denied_by_access_layer(self):
+        self.assertFalse(
+            has_org_permission(
+                {"activo": True, "org_activo": True, "rol_org": "superadmin"},
+                "ver_telefonos",
+            )
+        )
+        self.assertFalse(
+            has_org_permission(
+                {"activo": True, "org_activo": True, "rol_org": ROLE_OWNER},
+                "permiso_inventado",
+            )
+        )
 
 
 class PublicURLSafetyTests(unittest.IsolatedAsyncioTestCase):
