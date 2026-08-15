@@ -37,14 +37,16 @@ class MainProfileStatusCoreRefactorTests(unittest.TestCase):
         start = transformed.index('@app.get("/profile/status")')
         end = transformed.index("# ────────────────────────────────────────────\n# GROQ CHAT PROXY", start)
         block = transformed[start:end]
+        integrations_end = block.index("    # Parsear cada provider")
+        integrations_block = block[:integrations_end]
 
-        self.assertIn('rows = await get_rows(\n            "user_integrations",', block)
-        self.assertIn('"provider": "in.(easybroker,facebook)"', block)
-        self.assertIn('"select": "provider,api_key,meta"', block)
-        self.assertIn("timeout=8", block)
-        self.assertIn('except Exception:\n        return {"eb": {"configured": False, "masked": ""}, "fb": {"connected": False}}', block)
-        self.assertNotIn("/rest/v1/user_integrations", block)
-        self.assertNotIn("SUPABASE_SERVICE_KEY, \"Authorization\"", block)
+        self.assertIn('rows = await get_rows(\n            "user_integrations",', integrations_block)
+        self.assertIn('"provider": "in.(easybroker,facebook)"', integrations_block)
+        self.assertIn('"select": "provider,api_key,meta"', integrations_block)
+        self.assertIn("timeout=8", integrations_block)
+        self.assertIn('except Exception:\n        return {"eb": {"configured": False, "masked": ""}, "fb": {"connected": False}}', integrations_block)
+        self.assertNotIn("/rest/v1/user_integrations", integrations_block)
+        self.assertNotIn("SUPABASE_SERVICE_KEY", integrations_block)
 
 
 if __name__ == "__main__":
