@@ -53,12 +53,20 @@ async def get_user_id_from_token(request: Request) -> Optional[str]:
     return user_id if isinstance(user_id, str) and user_id else None
 
 
-async def require_user_id(request: Request) -> str:
-    """Return user id or raise a consistent HTTP 401 response."""
+async def require_user_id(
+    request: Request,
+    *,
+    detail: str = "Sesión requerida.",
+) -> str:
+    """Return user id or raise a consistent HTTP 401 response.
+
+    ``detail`` exists only to preserve domain-specific legacy copy while all
+    authentication mechanics remain centralized here.
+    """
     user_id = await get_user_id_from_token(request)
     if not user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Sesión requerida.",
+            detail=detail,
         )
     return user_id
