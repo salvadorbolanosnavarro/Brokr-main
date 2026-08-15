@@ -7,8 +7,17 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 TARGET = ROOT / "main.py"
 
-OLD_PYDANTIC_IMPORT = "from pydantic import BaseModel\n"
-NEW_PYDANTIC_IMPORT = "from pydantic import BaseModel\nfrom core.config import settings\n"
+OLD_IMPORT_BLOCK = '''from fastapi.middleware.cors import CORSMiddleware
+from limites import exigir_cupo, exigir_sesion
+from pydantic import BaseModel
+import httpx
+'''
+NEW_IMPORT_BLOCK = '''from fastapi.middleware.cors import CORSMiddleware
+from limites import exigir_cupo, exigir_sesion
+from pydantic import BaseModel
+from core.config import settings
+import httpx
+'''
 
 OLD_SERVICE_KEY = 'SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "") or SUPABASE_KEY\n'
 NEW_SERVICE_KEY = 'SUPABASE_SERVICE_KEY = settings.supabase_service_key\n'
@@ -45,7 +54,7 @@ def _replace_once(text: str, old: str, new: str, label: str) -> str:
 def transform(text: str) -> str:
     if "from core.config import settings" in text:
         raise RuntimeError("main security config cut already appears applied")
-    text = _replace_once(text, OLD_PYDANTIC_IMPORT, NEW_PYDANTIC_IMPORT, "Core config import")
+    text = _replace_once(text, OLD_IMPORT_BLOCK, NEW_IMPORT_BLOCK, "Core config import")
     text = _replace_once(text, OLD_SERVICE_KEY, NEW_SERVICE_KEY, "service-key fallback")
     text = _replace_once(text, OLD_ORG_BLOCK, NEW_ORG_BLOCK, "organization fail-open")
     return text
