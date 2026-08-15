@@ -16,7 +16,6 @@
 #   app.include_router(whatsapp2_router)
 # =============================================================================
 
-import os
 import re
 import json
 import asyncio
@@ -29,6 +28,9 @@ from zoneinfo import ZoneInfo
 import httpx
 from fastapi import APIRouter, Request, Response, BackgroundTasks, HTTPException
 from pydantic import BaseModel
+
+from core.auth import require_user_id
+from core.config import settings
 
 try:
     from push import enviar_push
@@ -47,27 +49,27 @@ log = logging.getLogger("broquer.whatsapp2")
 # -----------------------------------------------------------------------------
 # CONFIG
 # -----------------------------------------------------------------------------
-SUPABASE_URL         = os.environ.get("SUPABASE_URL", "").rstrip("/")
-SUPABASE_ANON_KEY    = os.environ.get("SUPABASE_ANON_KEY", "")
-SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "") or SUPABASE_ANON_KEY
+SUPABASE_URL         = settings.supabase_url
+SUPABASE_ANON_KEY    = settings.supabase_anon_key
+SUPABASE_SERVICE_KEY = settings.supabase_service_key
 
-ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-ANTHROPIC_BASE    = os.environ.get("ANTHROPIC_BASE", "https://api.anthropic.com/v1")
-WA2_MODEL         = os.environ.get("WA2_MODEL", "claude-sonnet-4-6")
+ANTHROPIC_API_KEY = settings.anthropic_api_key
+ANTHROPIC_BASE    = settings.anthropic_base
+WA2_MODEL         = settings.wa2_model
 
 GRAPH_API       = "https://graph.facebook.com/v21.0"
-META_APP_ID     = os.environ.get("META_APP_ID", "1709238933850389")
-META_APP_SECRET = os.environ.get("META_APP_SECRET", "")
-WA2_VERIFY_TOKEN = os.environ.get("WA2_VERIFY_TOKEN", "broquer2_verify")
+META_APP_ID     = settings.wa2_meta_app_id
+META_APP_SECRET = settings.wa2_meta_app_secret
+WA2_VERIFY_TOKEN = settings.wa2_verify_token
 # Es la MISMA app de Meta que se usa para el OAuth, así que la firma es la
 # misma clave secreta. Si alguien no puso WA_APP_SECRET en Railway, caemos
 # a META_APP_SECRET en vez de quedarnos sin verificar nada.
-WA2_APP_SECRET   = os.environ.get("WA_APP_SECRET", "") or META_APP_SECRET
-WA2_REGISTER_PIN = os.environ.get("WA_REGISTER_PIN", "142857")
+WA2_APP_SECRET   = settings.wa2_app_secret
+WA2_REGISTER_PIN = settings.wa2_register_pin
 # URL pública propia de este módulo (para el override_callback_uri al suscribir)
-WA2_WEBHOOK_URL  = os.environ.get("WA2_WEBHOOK_URL", "https://api.broquer.app/whatsapp2/webhook")
+WA2_WEBHOOK_URL  = settings.wa2_webhook_url
 
-BROQUER_API_BASE = os.environ.get("BROQUER_API_BASE", "https://api.broquer.app")
+BROQUER_API_BASE = settings.wa2_broquer_api_base
 HISTORY_LIMIT = 16
 
 # Zona horaria por defecto de todo el módulo. ESTA CONSTANTE FALTABA: el
@@ -75,7 +77,7 @@ HISTORY_LIMIT = 16
 # así que reventaba con NameError (error 500) en CUALQUIER llamada que no
 # mandara ?zona=... — que es exactamente como la llama estadisticas.html.
 # Resultado: la pestaña de WhatsApp en Estadísticas nunca funcionó.
-_ZONA_DEFAULT = os.environ.get("WA2_ZONA_DEFAULT", "America/Mexico_City")
+_ZONA_DEFAULT = settings.wa2_zone_default
 
 # Segundos que se espera antes de contestar, para AGRUPAR mensajes seguidos.
 # En WhatsApp la gente no escribe un párrafo: escribe "hola", "busco casa",
@@ -83,10 +85,7 @@ _ZONA_DEFAULT = os.environ.get("WA2_ZONA_DEFAULT", "America/Mexico_City")
 # respuestas de la IA en paralelo —incoherentes entre sí y pagando tres veces—
 # y el prospecto veía a un bot atropellado. Con esto, solo el ÚLTIMO mensaje
 # del ráfaga contesta, y contesta ya con los tres en el historial.
-try:
-    WA2_DEBOUNCE = max(0, int(os.environ.get("WA2_DEBOUNCE_SEG", "8")))
-except Exception:
-    WA2_DEBOUNCE = 8
+WA2_DEBOUNCE = settings.wa2_debounce_seconds
 
 # WhatsApp corta los mensajes de texto en 4096 caracteres; arriba de eso Meta
 # rechaza el envío completo y el prospecto no recibe NADA.
@@ -102,17 +101,14 @@ _OPT_OUT_PALABRAS = {"baja", "stop", "alto", "cancelar", "no molestar",
 # marketing puede abrir un número según su nivel (250 / 1,000 / 10,000...);
 # pasarse hace que Meta rechace envíos y hasta baje la calidad del número.
 # Se puede subir sin tocar código con WA2_CAMPANA_TOPE en Railway.
-try:
-    WA2_CAMPANA_TOPE = max(1, int(os.environ.get("WA2_CAMPANA_TOPE", "250")))
-except Exception:
-    WA2_CAMPANA_TOPE = 250
+WA2_CAMPANA_TOPE = settings.wa2_campaign_limit
 
 # Cajón de Supabase donde viven las fotos, audios y documentos de WhatsApp.
-WA_MEDIA_BUCKET = os.environ.get("WA_MEDIA_BUCKET", "wa-media")
+WA_MEDIA_BUCKET = settings.wa2_media_bucket
 
 # Transcripción de notas de voz (mismo Groq/Whisper que ya usa el resto).
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
-GROQ_BASE    = os.environ.get("GROQ_BASE", "https://api.groq.com/openai/v1")
+GROQ_API_KEY = settings.groq_api_key
+GROQ_BASE    = settings.groq_base
 
 # Candado por conversación: dos mensajes del mismo prospecto jamás deben
 # generar dos respuestas al mismo tiempo.
@@ -139,10 +135,7 @@ def _lock_conv(conversacion_id: str) -> asyncio.Lock:
 # (o un prospecto necio, o un bot ajeno escribiéndole) puede generar una
 # cuenta abierta de API. Se puede subir sin tocar código con la variable
 # WA2_TOPE_IA en Railway.
-try:
-    WA2_TOPE_IA = max(1, int(os.environ.get("WA2_TOPE_IA", "25")))
-except Exception:
-    WA2_TOPE_IA = 25
+WA2_TOPE_IA = settings.wa2_ai_limit
 
 router = APIRouter(prefix="/whatsapp2", tags=["whatsapp2"])
 
@@ -407,29 +400,8 @@ async def sb_delete(table: str, params: dict) -> bool:
         return False
 
 
-async def get_user_id_from_token(request: Request) -> str | None:
-    auth = request.headers.get("Authorization", "")
-    if not auth.startswith("Bearer "):
-        return None
-    token = auth[7:]
-    if not SUPABASE_URL or not SUPABASE_ANON_KEY:
-        return None
-    try:
-        async with httpx.AsyncClient(timeout=8) as c:
-            r = await c.get(f"{SUPABASE_URL}/auth/v1/user",
-                            headers={"apikey": SUPABASE_ANON_KEY, "Authorization": f"Bearer {token}"})
-            if r.status_code == 200:
-                return r.json().get("id")
-    except Exception:
-        pass
-    return None
-
-
 async def _require_user(request: Request) -> str:
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autorizado")
-    return user_id
+    return await require_user_id(request, detail="No autorizado")
 
 
 async def _ids_visibles(user_id: str) -> list[str]:
