@@ -22,8 +22,10 @@ class Settings:
     gemini_api_key: str
     gemini_image_model: str
     resend_api_key: str
+    resend_from: str
     correo_relay_from: str
     correo_secret: str
+    wa_plantilla_otp: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -51,11 +53,13 @@ class Settings:
                 "gemini-3.1-flash-image-preview",
             ),
             resend_api_key=os.getenv("RESEND_API_KEY", ""),
+            resend_from=os.getenv("RESEND_FROM", "Broquer <hola@broquer.app>"),
             correo_relay_from=os.getenv(
                 "CORREO_RELAY_FROM",
                 "correo@broquer.app",
             ),
             correo_secret=os.getenv("CORREO_SECRET", ""),
+            wa_plantilla_otp=os.getenv("WA_PLANTILLA_OTP", ""),
         )
 
     def require_supabase_public(self) -> None:
