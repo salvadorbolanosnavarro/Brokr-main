@@ -10131,13 +10131,15 @@ async def subscription_checkout(req: CheckoutRequest, request: Request):
         raise HTTPException(status_code=401, detail="No se pudo verificar el usuario.")
     email = r_user.json().get("email", "")
 
-    async with httpx.AsyncClient(timeout=8) as client:
-        r_nombre = await client.get(
-            f"{SUPABASE_URL}/rest/v1/usuarios",
-            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
-            params={"id": f"eq.{user_id}", "select": "nombre"}
+    try:
+        filas_nombre = await get_rows(
+            "usuarios",
+            {"id": f"eq.{user_id}", "select": "nombre"},
+            timeout=8,
         )
-    nombre = (r_nombre.json()[0] if r_nombre.status_code == 200 and r_nombre.json() else {}).get("nombre", email)
+    except httpx.HTTPStatusError:
+        filas_nombre = []
+    nombre = (filas_nombre[0] if filas_nombre else {}).get("nombre", email)
 
     # Obtener o crear Customer en Stripe
     customer_id = await _get_or_create_stripe_customer(user_id, email, nombre)
