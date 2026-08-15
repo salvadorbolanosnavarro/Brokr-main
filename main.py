@@ -3,6 +3,7 @@ from fastapi import (FastAPI, HTTPException, Query, Request, UploadFile, File,
 from fastapi.middleware.cors import CORSMiddleware
 from limites import exigir_cupo, exigir_sesion
 from pydantic import BaseModel
+from core.auth import get_user_id_from_token
 from core.config import settings
 import httpx
 import os
@@ -446,27 +447,6 @@ def hmac_compare(recibido: str, esperado: str) -> bool:
         return False
     return _h.compare_digest(str(recibido), str(esperado))
 
-
-# Helper: extrae el user_id del token de Supabase
-async def get_user_id_from_token(request: Request) -> str:
-    auth = request.headers.get("Authorization", "")
-    if not auth.startswith("Bearer "):
-        return None
-    token = auth[7:]
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        return None
-    try:
-        async with httpx.AsyncClient(timeout=8) as client:
-            r = await client.get(
-                f"{SUPABASE_URL}/auth/v1/user",
-                headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {token}"}
-            )
-            if r.status_code == 200:
-                data = r.json()
-                return data.get("id")
-    except Exception:
-        pass
-    return None
 
 # ════════════════════════════════════════════════════════════════
 # CONTEXTO DE ORGANIZACIÓN (Broquer para empresas)
