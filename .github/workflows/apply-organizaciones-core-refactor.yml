@@ -18,8 +18,8 @@ jobs:
         with:
           ref: agent/architecture-cleanup
 
-      - name: Apply exact reviewed transform
-        run: python scripts/refactor_organizaciones_core.py
+      - name: Apply reviewed compatibility fix
+        run: python scripts/fix_organizaciones_core_aliases.py
 
       - name: Commit transformed source
         run: |
@@ -27,5 +27,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add routers/organizaciones.py
           git diff --cached --check
-          git commit -m "Migrate Organizaciones infrastructure to Core"
+          git commit -m "Complete Organizaciones Core compatibility migration"
           git push origin HEAD:agent/architecture-cleanup
