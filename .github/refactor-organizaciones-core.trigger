@@ -1,1 +1,1 @@
-one-time trigger for the reviewed Organizaciones Core refactor
+one-time trigger for the reviewed Organizaciones Core compatibility fix
