@@ -6,6 +6,14 @@ from unittest.mock import patch
 from core.config import Settings
 from core.http import UnsafePublicURL, assert_public_http_url
 from core.modules import ModuleDefinition, ModuleRegistry
+from core.permissions import (
+    ROLE_ADMIN,
+    ROLE_AGENT,
+    ROLE_OWNER,
+    VALID_PERMISSIONS,
+    default_permission,
+    effective_permission,
+)
 
 
 class SettingsTests(unittest.TestCase):
@@ -74,6 +82,46 @@ class ModuleContractTests(unittest.TestCase):
                 description="Equipos de trabajo.",
                 permissions=("equipo.ver", "equipo.ver"),
             )
+
+
+class OrganizationPermissionTests(unittest.TestCase):
+    def test_owner_and_admin_defaults_are_allowed(self):
+        for role in (ROLE_OWNER, ROLE_ADMIN):
+            for permission in VALID_PERMISSIONS:
+                with self.subTest(role=role, permission=permission):
+                    self.assertTrue(default_permission(role, permission))
+
+    def test_agent_sensitive_defaults_are_denied(self):
+        for permission in (
+            "ver_telefonos",
+            "gestionar_integraciones",
+            "ver_comisiones",
+            "ver_estadisticas_equipo",
+        ):
+            with self.subTest(permission=permission):
+                self.assertFalse(default_permission(ROLE_AGENT, permission))
+
+    def test_explicit_boolean_override_wins(self):
+        self.assertTrue(
+            effective_permission(
+                ROLE_AGENT,
+                "gestionar_integraciones",
+                {"gestionar_integraciones": True},
+            )
+        )
+        self.assertFalse(
+            effective_permission(
+                ROLE_OWNER,
+                "ver_telefonos",
+                {"ver_telefonos": False},
+            )
+        )
+
+    def test_unknown_role_or_permission_fails_closed(self):
+        with self.assertRaises(ValueError):
+            default_permission("superadmin", "ver_telefonos")
+        with self.assertRaises(ValueError):
+            default_permission(ROLE_AGENT, "permiso_inventado")
 
 
 class PublicURLSafetyTests(unittest.IsolatedAsyncioTestCase):
