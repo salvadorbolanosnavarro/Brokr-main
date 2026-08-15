@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Report measurable Broquer architecture debt without changing production.
+"""Measure Broquer architecture debt and prevent it from growing.
 
-This inventory is intentionally mechanical. It tracks legacy infrastructure
-patterns that are being migrated into ``core/`` and makes the remaining scope
-visible in CI. A later guard can freeze these counts so they only move down.
+The baseline was captured from PR #44 after the first Core migrations. These
+limits are ceilings, not targets: cleanup should make every number go down.
+CI fails only if a legacy pattern count grows beyond the recorded baseline.
 """
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ import re
 
 ROOT = Path(__file__).resolve().parents[1]
 EXCLUDED_PARTS = {".git", ".venv", "venv", "tests", "core", "scripts", "migrations"}
+CODE_SUFFIXES = {".py", ".js", ".html", ".css"}
 
 PATTERNS = {
     "direct_env_reads": re.compile(r"\bos\.(?:getenv|environ)\b"),
@@ -24,15 +25,25 @@ PATTERNS = {
     ),
 }
 
+BASELINE_MAX = {
+    "direct_env_reads": 9,
+    "duplicated_auth_helpers": 7,
+    "service_key_fallbacks": 8,
+}
+MAX_LARGE_CODE_FILES = 10
+
+
+def _excluded(path: Path) -> bool:
+    relative = path.relative_to(ROOT)
+    return any(part in EXCLUDED_PARTS for part in relative.parts)
+
 
 def python_files() -> list[Path]:
-    out = []
-    for path in ROOT.rglob("*.py"):
-        relative = path.relative_to(ROOT)
-        if any(part in EXCLUDED_PARTS for part in relative.parts):
-            continue
-        out.append(path)
-    return sorted(out)
+    return sorted(
+        path
+        for path in ROOT.rglob("*.py")
+        if path.is_file() and not _excluded(path)
+    )
 
 
 def findings() -> dict[str, list[str]]:
@@ -46,36 +57,49 @@ def findings() -> dict[str, list[str]]:
     return result
 
 
-def large_files() -> list[tuple[str, int]]:
+def large_code_files() -> list[tuple[str, int]]:
     result = []
     for path in ROOT.rglob("*"):
-        if not path.is_file():
-            continue
-        relative = path.relative_to(ROOT)
-        if any(part in EXCLUDED_PARTS or part == ".git" for part in relative.parts):
+        if not path.is_file() or path.suffix.lower() not in CODE_SUFFIXES or _excluded(path):
             continue
         size = path.stat().st_size
         if size >= 100_000:
-            result.append((str(relative), size))
+            result.append((str(path.relative_to(ROOT)), size))
     return sorted(result, key=lambda item: item[1], reverse=True)
 
 
 def main() -> int:
     debt = findings()
+    failures: list[str] = []
+
     print("Broquer architecture debt inventory")
     print("===================================")
     for name, paths in debt.items():
-        print(f"{name}: {len(paths)}")
+        count = len(paths)
+        ceiling = BASELINE_MAX[name]
+        print(f"{name}: {count} (ceiling {ceiling})")
         for path in paths:
             print(f"  - {path}")
+        if count > ceiling:
+            failures.append(f"{name} grew from ceiling {ceiling} to {count}")
 
-    big = large_files()
-    print(f"large_files_100kb_plus: {len(big)}")
+    big = large_code_files()
+    print(f"large_code_files_100kb_plus: {len(big)} (ceiling {MAX_LARGE_CODE_FILES})")
     for path, size in big:
         print(f"  - {path}: {size:,} bytes")
+    if len(big) > MAX_LARGE_CODE_FILES:
+        failures.append(
+            "large code files grew from ceiling "
+            f"{MAX_LARGE_CODE_FILES} to {len(big)}"
+        )
 
-    # Reporting only for the first run. Once the baseline is captured in CI,
-    # thresholds can be enforced so these counts may decrease but never grow.
+    if failures:
+        print("\nArchitecture debt regression detected:")
+        for failure in failures:
+            print(f"  - {failure}")
+        return 1
+
+    print("\nArchitecture debt guard passed: debt did not grow.")
     return 0
 
 
