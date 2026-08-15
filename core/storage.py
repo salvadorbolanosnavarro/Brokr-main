@@ -149,3 +149,30 @@ async def delete_object(
     if ignore_missing and response.status_code == 404:
         return
     response.raise_for_status()
+
+
+async def delete_objects(
+    bucket: str,
+    paths: list[str] | tuple[str, ...],
+    *,
+    timeout: float = 20,
+) -> None:
+    """Delete several objects in one Supabase Storage request.
+
+    Every path is normalized before it reaches Supabase so callers cannot use
+    batch deletion as a way around the traversal protections applied elsewhere.
+    """
+    settings.require_supabase_service()
+    bucket = _require_bucket(bucket)
+    normalized = [_normalize_object_path(path) for path in paths if path]
+    if not normalized:
+        return
+
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        response = await client.request(
+            "DELETE",
+            f"{settings.supabase_url}/storage/v1/object/{bucket}",
+            headers=_service_headers(content_type="application/json"),
+            json={"prefixes": normalized},
+        )
+    response.raise_for_status()
