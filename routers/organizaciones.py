@@ -34,6 +34,10 @@ router = APIRouter()
 # ── Infraestructura compartida ────────────────────────────────────────────
 # Keep the router's historical helper contracts while Core owns environment
 # names, privileged credentials and Supabase HTTP construction.
+# Compatibility aliases used by the existing organization-context guard.
+# Values come from Core; no environment name or fallback policy lives here.
+SUPABASE_URL = settings.supabase_url
+SUPABASE_SERVICE_KEY = settings.supabase_service_key
 APP_URL = settings.app_url
 PERMISOS_VALIDOS = set(VALID_PERMISSIONS)
 ROLES_ORG_VALIDOS = set(VALID_ORG_ROLES)
