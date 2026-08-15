@@ -42,6 +42,7 @@ class LegacyMainSettings:
     stripe_price_empresa_extra_mensual: str
     stripe_price_empresa_extra_anual: str
     activate_secret: str
+    revenuecat_webhook_auth: str
     demo_notif_email: str
     port: str
     instagram_token: str
@@ -97,6 +98,7 @@ class LegacyMainSettings:
             stripe_price_empresa_extra_mensual=os.getenv("STRIPE_PRICE_EMPRESA_EXTRA_MENSUAL", ""),
             stripe_price_empresa_extra_anual=os.getenv("STRIPE_PRICE_EMPRESA_EXTRA_ANUAL", ""),
             activate_secret=os.getenv("ACTIVATE_SECRET", ""),
+            revenuecat_webhook_auth=os.getenv("REVENUECAT_WEBHOOK_AUTH", ""),
             demo_notif_email=os.getenv("DEMO_NOTIF_EMAIL", "hola@broquer.app"),
             port=os.getenv("PORT", "8000"),
             instagram_token=os.getenv("INSTAGRAM_TOKEN", ""),
