@@ -19,6 +19,8 @@ class Settings:
     api_base_url: str
     anthropic_api_key: str
     groq_api_key: str
+    gemini_api_key: str
+    gemini_image_model: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -40,6 +42,11 @@ class Settings:
             api_base_url=os.getenv("API_BASE_URL", "https://api.broquer.app").rstrip("/"),
             anthropic_api_key=os.getenv("ANTHROPIC_API_KEY", ""),
             groq_api_key=os.getenv("GROQ_API_KEY", ""),
+            gemini_api_key=os.getenv("GEMINI_API_KEY", ""),
+            gemini_image_model=os.getenv(
+                "GEMINI_IMAGE_MODEL",
+                "gemini-3.1-flash-image-preview",
+            ),
         )
 
     def require_supabase_public(self) -> None:
