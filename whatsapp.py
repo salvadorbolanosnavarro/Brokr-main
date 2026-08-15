@@ -31,6 +31,7 @@ from pydantic import BaseModel
 
 from core.auth import require_user_id
 from core.config import settings
+from core.database import delete_rows, get_rows, patch_rows, post_rows, service_headers
 
 try:
     from push import enviar_push
@@ -316,24 +317,21 @@ def _parsear_presupuesto(texto: str) -> int | None:
 
 
 # =============================================================================
-# Helpers de Supabase (REST) — con reintento ante timeout/5xx, igual patrón
-# probado que el resto del backend, pero self-contained en este archivo.
+# Helpers de Supabase — compatibilidad sobre Core
 # =============================================================================
 def _sb_headers() -> dict:
-    return {"apikey": SUPABASE_SERVICE_KEY,
-            "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-            "Content-Type": "application/json"}
+    # Temporary adapter for non-table Supabase calls (for example Storage).
+    # Credential policy itself lives in core.database.
+    return service_headers()
 
 
 async def sb_get(table: str, params: dict) -> list:
     ultimo = ""
     for intento in (1, 2):
         try:
-            async with httpx.AsyncClient(timeout=15) as c:
-                r = await c.get(f"{SUPABASE_URL}/rest/v1/{table}", headers=_sb_headers(), params=params)
-            if r.status_code < 300:
-                data = r.json()
-                return data if isinstance(data, list) else ([data] if data else [])
+            return await get_rows(table, params, timeout=15)
+        except httpx.HTTPStatusError as exc:
+            r = exc.response
             ultimo = f"{r.status_code}: {r.text[:300]}"
             if r.status_code < 500:
                 break
@@ -347,15 +345,9 @@ async def sb_post(table: str, body: dict, prefer: str = "return=representation")
     ultimo = ""
     for intento in (1, 2):
         try:
-            async with httpx.AsyncClient(timeout=15) as c:
-                h = _sb_headers(); h["Prefer"] = prefer
-                r = await c.post(f"{SUPABASE_URL}/rest/v1/{table}", headers=h, json=body)
-            if r.status_code < 300:
-                try:
-                    data = r.json()
-                except Exception:
-                    data = []
-                return data if isinstance(data, list) else ([data] if data else [])
+            return await post_rows(table, body, prefer=prefer, timeout=15)
+        except httpx.HTTPStatusError as exc:
+            r = exc.response
             if r.status_code == 409:
                 log.info("sb_post %s: la fila ya existe (409).", table)
                 return []
@@ -372,15 +364,15 @@ async def sb_patch(table: str, params: dict, body: dict) -> list:
     ultimo = ""
     for intento in (1, 2):
         try:
-            async with httpx.AsyncClient(timeout=15) as c:
-                h = _sb_headers(); h["Prefer"] = "return=representation"
-                r = await c.patch(f"{SUPABASE_URL}/rest/v1/{table}", headers=h, params=params, json=body)
-            if r.status_code < 300:
-                try:
-                    data = r.json()
-                except Exception:
-                    data = []
-                return data if isinstance(data, list) else ([data] if data else [])
+            return await patch_rows(
+                table,
+                params,
+                body,
+                prefer="return=representation",
+                timeout=15,
+            )
+        except httpx.HTTPStatusError as exc:
+            r = exc.response
             ultimo = f"{r.status_code}: {r.text[:300]}"
             if r.status_code < 500:
                 break
@@ -392,9 +384,8 @@ async def sb_patch(table: str, params: dict, body: dict) -> list:
 
 async def sb_delete(table: str, params: dict) -> bool:
     try:
-        async with httpx.AsyncClient(timeout=15) as c:
-            r = await c.delete(f"{SUPABASE_URL}/rest/v1/{table}", headers=_sb_headers(), params=params)
-        return r.status_code < 300
+        await delete_rows(table, params, timeout=15)
+        return True
     except Exception as e:
         log.error("sb_delete %s falló -> %s", table, e)
         return False
@@ -4079,16 +4070,12 @@ _VENTANAS_ESTAD = {"semana": 7, "mes": 30, "trimestre": 90, "todo": 0}
 
 
 async def _sb_diag(table: str, params: dict) -> tuple[list, str]:
-    """Igual que sb_get pero DEVUELVE el error en vez de tragárselo.
-    sb_get regresa [] tanto si no hay filas como si la consulta falló: para
-    estadísticas eso es fatal, porque una columna que no existe se veía
-    exactamente igual que 'no tienes datos'."""
+    """Diagnostic read: unlike sb_get, keep the database error text visible."""
     try:
-        async with httpx.AsyncClient(timeout=25) as c:
-            r = await c.get(f"{SUPABASE_URL}/rest/v1/{table}", headers=_sb_headers(), params=params)
-        if r.status_code < 300:
-            data = r.json()
-            return (data if isinstance(data, list) else ([data] if data else [])), ""
+        data = await get_rows(table, params, timeout=25)
+        return data, ""
+    except httpx.HTTPStatusError as exc:
+        r = exc.response
         return [], f"{r.status_code}: {r.text[:200]}"
     except Exception as e:
         return [], str(e)[:200]
