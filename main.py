@@ -5,7 +5,7 @@ from limites import exigir_cupo, exigir_sesion
 from pydantic import BaseModel
 from core.auth import get_user_id_from_token
 from core.config import settings
-from core.database import get_rows, post_rows
+from core.database import delete_rows, get_rows, post_rows
 from core.legacy_main_config import legacy_main_settings
 import httpx
 import os
@@ -742,22 +742,21 @@ async def set_eb_key(req: EbKeyRequest, request: Request):
         "api_key": req.key.strip(),
         "updated_at": datetime.utcnow().isoformat()
     }
-    async with httpx.AsyncClient(timeout=10) as client:
-        r = await client.post(
-            f"{SUPABASE_URL}/rest/v1/user_integrations",
-            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                     "Content-Type": "application/json",
-                     "Prefer": "resolution=merge-duplicates,return=minimal"},
-            json=payload
+    try:
+        await post_rows(
+            "user_integrations",
+            payload,
+            prefer="resolution=merge-duplicates,return=minimal",
+            timeout=10,
         )
-        # No fallar en silencio: si Supabase rechaza, devolvemos error real al frontend
-        if r.status_code not in (200, 201, 204):
-            err_body = r.text or ""
-            print(f"[set_eb_key] Supabase respondió {r.status_code}: {err_body}")
-            raise HTTPException(
-                status_code=500,
-                detail=f"No se pudo guardar la API key (Supabase {r.status_code}). Reintenta o avisa a soporte si persiste."
-            )
+    except httpx.HTTPStatusError as e:
+        status = e.response.status_code
+        err_body = e.response.text or ""
+        print(f"[set_eb_key] Supabase respondió {status}: {err_body}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"No se pudo guardar la API key (Supabase {status}). Reintenta o avisa a soporte si persiste."
+        )
     return {"ok": True, "saved": True, "scope": "user"}
 
 # Endpoint para desconectar EasyBroker (borrar la API key del usuario)
@@ -767,14 +766,18 @@ async def delete_eb_key(request: Request):
     user_id = await exigir_gestion_integraciones(request)
     if not SUPABASE_URL or not SUPABASE_KEY:
         raise HTTPException(status_code=500, detail="Supabase no está configurado.")
-    async with httpx.AsyncClient(timeout=10) as client:
-        await client.delete(
-            f"{SUPABASE_URL}/rest/v1/user_integrations",
-            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                     "Content-Type": "application/json"},
-            params={"org_id": f"eq.{await get_org_id_for_user(user_id)}",
-                    "provider": "eq.easybroker"}
+    try:
+        await delete_rows(
+            "user_integrations",
+            {
+                "org_id": f"eq.{await get_org_id_for_user(user_id)}",
+                "provider": "eq.easybroker",
+            },
+            timeout=10,
         )
+    except httpx.HTTPStatusError:
+        # Compatibilidad: históricamente los status HTTP de Supabase se ignoraban.
+        pass
     return {"ok": True, "deleted": True}
 
 @app.get("/config/eb-key")
