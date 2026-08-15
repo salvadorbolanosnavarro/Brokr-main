@@ -1,11 +1,9 @@
-"""Dry-run guard for EasyBroker save/disconnect migration to Core DB."""
+"""Permanent regression guard for EasyBroker save/disconnect Core DB migration."""
 from __future__ import annotations
 
 import ast
 from pathlib import Path
 import unittest
-
-from scripts.refactor_main_easybroker_write_delete import transform
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -17,32 +15,37 @@ def function_source(source: str, name: str) -> str:
 
 
 class MainEasyBrokerWriteDeleteRefactorTests(unittest.TestCase):
-    def test_transform_moves_only_easybroker_save_and_delete_to_core(self):
-        source = (ROOT / "main.py").read_text(encoding="utf-8")
-        before_set = function_source(source, "set_eb_key")
-        before_delete = function_source(source, "delete_eb_key")
-        updated = transform(source)
-        after_set = function_source(updated, "set_eb_key")
-        after_delete = function_source(updated, "delete_eb_key")
+    @classmethod
+    def setUpClass(cls):
+        cls.source = (ROOT / "main.py").read_text(encoding="utf-8")
 
-        self.assertIn("/rest/v1/user_integrations", before_set)
-        self.assertIn("/rest/v1/user_integrations", before_delete)
-        self.assertNotIn("/rest/v1/user_integrations", after_set)
-        self.assertNotIn("/rest/v1/user_integrations", after_delete)
-        self.assertIn("from core.database import delete_rows, get_rows, post_rows", updated)
-        self.assertIn('await post_rows(', after_set)
-        self.assertIn('prefer="resolution=merge-duplicates,return=minimal"', after_set)
-        self.assertIn('except httpx.HTTPStatusError as e:', after_set)
-        self.assertIn('No se pudo guardar la API key (Supabase {status})', after_set)
-        self.assertIn('await delete_rows(', after_delete)
-        self.assertIn('"org_id": f"eq.{await get_org_id_for_user(user_id)}"', after_delete)
-        self.assertIn('"provider": "eq.easybroker"', after_delete)
-        self.assertIn('except httpx.HTTPStatusError:', after_delete)
-        self.assertEqual(
-            updated.count("/rest/v1/user_integrations"),
-            source.count("/rest/v1/user_integrations") - 2,
-        )
-        compile(updated, "main.py", "exec")
+    def test_easybroker_save_and_delete_delegate_to_core_database(self):
+        source = self.source
+        set_src = function_source(source, "set_eb_key")
+        delete_src = function_source(source, "delete_eb_key")
+
+        self.assertIn("from core.database import delete_rows, get_rows, post_rows", source)
+        self.assertNotIn("/rest/v1/user_integrations", set_src)
+        self.assertNotIn("/rest/v1/user_integrations", delete_src)
+        self.assertIn('await post_rows(', set_src)
+        self.assertIn('prefer="resolution=merge-duplicates,return=minimal"', set_src)
+        self.assertIn('except httpx.HTTPStatusError as e:', set_src)
+        self.assertIn('No se pudo guardar la API key (Supabase {status})', set_src)
+        self.assertIn('await delete_rows(', delete_src)
+        self.assertIn('"org_id": f"eq.{await get_org_id_for_user(user_id)}"', delete_src)
+        self.assertIn('"provider": "eq.easybroker"', delete_src)
+        self.assertIn('except httpx.HTTPStatusError:', delete_src)
+        self.assertIn('return {"ok": True, "deleted": True}', delete_src)
+
+    def test_easybroker_write_delete_security_and_validation_stay_intact(self):
+        set_src = function_source(self.source, "set_eb_key")
+        delete_src = function_source(self.source, "delete_eb_key")
+        self.assertIn("user_id = await exigir_gestion_integraciones(request)", set_src)
+        self.assertIn("user_id = await exigir_gestion_integraciones(request)", delete_src)
+        self.assertIn('f"{EB_BASE}/properties?limit=1"', set_src)
+        self.assertIn("if test.status_code == 401:", set_src)
+        self.assertIn('"org_id": await get_org_id_for_user(user_id)', set_src)
+        compile(self.source, "main.py", "exec")
 
 
 if __name__ == "__main__":
