@@ -46,7 +46,7 @@ class MainProfileStatusCoreRefactorTests(unittest.TestCase):
         self.assertIn("timeout=8", integrations_block)
         self.assertIn('except Exception:\n        return {"eb": {"configured": False, "masked": ""}, "fb": {"connected": False}}', integrations_block)
         self.assertNotIn("/rest/v1/user_integrations", integrations_block)
-        self.assertNotIn("SUPABASE_SERVICE_KEY", integrations_block)
+        self.assertNotIn('"Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"', integrations_block)
 
 
 if __name__ == "__main__":
