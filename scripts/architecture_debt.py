@@ -23,24 +23,15 @@ PATTERNS = {
     "service_key_fallbacks": re.compile(
         r"SUPABASE_SERVICE_KEY\s*=.*\bor\b.*(?:SUPABASE_KEY|SUPABASE_ANON_KEY)"
     ),
-    # Legacy anti-pattern: a webhook secret is checked only when configured,
-    # making the endpoint public when the server variable is absent.
-    "fail_open_webhook_secrets": re.compile(
-        r"\bif\s+CORREO_WEBHOOK_TOKEN\s*:"
-    ),
-    # Legacy paid-feature policy documented in old routers as intentionally
-    # fail-open. Core entitlements are fail-closed; this count must remain 0.
-    "fail_open_entitlements": re.compile(
-        r"Falla\s+ABIERTO",
-        re.IGNORECASE,
-    ),
+    "fail_open_webhook_secrets": re.compile(r"\bif\s+CORREO_WEBHOOK_TOKEN\s*:"),
+    "fail_open_entitlements": re.compile(r"Falla\s+ABIERTO", re.IGNORECASE),
 }
 
 # Ratcheted after verified cleanup runs. These are maximums, never goals.
 BASELINE_MAX = {
-    "direct_env_reads": 4,
-    "duplicated_auth_helpers": 4,
-    "service_key_fallbacks": 4,
+    "direct_env_reads": 3,
+    "duplicated_auth_helpers": 3,
+    "service_key_fallbacks": 3,
     "fail_open_webhook_secrets": 0,
     "fail_open_entitlements": 0,
 }
@@ -54,8 +45,7 @@ def _excluded(path: Path) -> bool:
 
 def python_files() -> list[Path]:
     return sorted(
-        path
-        for path in ROOT.rglob("*.py")
+        path for path in ROOT.rglob("*.py")
         if path.is_file() and not _excluded(path)
     )
 
