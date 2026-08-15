@@ -15,6 +15,7 @@ from core.permissions import (
     default_permission,
     effective_permission,
 )
+from core.storage import _normalize_object_path
 
 
 class SettingsTests(unittest.TestCase):
@@ -194,6 +195,27 @@ class OrganizationPermissionTests(unittest.TestCase):
                 "permiso_inventado",
             )
         )
+
+
+class StoragePathTests(unittest.TestCase):
+    def test_normalizes_leading_slash(self):
+        self.assertEqual(
+            _normalize_object_path("/firmas/documento.pdf"),
+            "firmas/documento.pdf",
+        )
+
+    def test_rejects_traversal_and_directory_paths(self):
+        for path in (
+            "../secreto.pdf",
+            "firmas/../secreto.pdf",
+            "firmas//documento.pdf",
+            "firmas/./documento.pdf",
+            "firmas/",
+            "",
+        ):
+            with self.subTest(path=path):
+                with self.assertRaises(ValueError):
+                    _normalize_object_path(path)
 
 
 class PublicURLSafetyTests(unittest.IsolatedAsyncioTestCase):
