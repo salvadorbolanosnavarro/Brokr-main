@@ -109,7 +109,13 @@ async def patch_rows(
     *,
     prefer: str = "return=minimal",
     timeout: httpx.Timeout | float = DEFAULT_TIMEOUT,
-) -> None:
+) -> list[dict[str, Any]]:
+    """Patch rows and return representations when PostgREST sends them.
+
+    Existing callers that only care about success may ignore the returned
+    list. Callers using ``Prefer: return=representation`` receive the updated
+    rows without rebuilding another PATCH helper.
+    """
     async with httpx.AsyncClient(timeout=timeout) as client:
         response = await client.patch(
             rest_url(table),
@@ -118,6 +124,10 @@ async def patch_rows(
             json=dict(payload),
         )
     response.raise_for_status()
+    if not response.content:
+        return []
+    data = response.json()
+    return data if isinstance(data, list) else []
 
 
 async def delete_rows(
