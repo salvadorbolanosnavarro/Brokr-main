@@ -8,7 +8,9 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 
-MIGRATED_ROUTERS = (
+MIGRATED_MODULES = (
+    "limites.py",
+    "push.py",
     "routers/bolsa.py",
     "routers/staging.py",
     "routers/correo.py",
@@ -28,9 +30,9 @@ FORBIDDEN_PATTERNS = {
 }
 
 
-class MigratedRouterGuards(unittest.TestCase):
-    def test_migrated_routers_do_not_rebuild_core_infrastructure(self):
-        for relative_path in MIGRATED_ROUTERS:
+class MigratedModuleGuards(unittest.TestCase):
+    def test_migrated_modules_do_not_rebuild_core_infrastructure(self):
+        for relative_path in MIGRATED_MODULES:
             text = (ROOT / relative_path).read_text(encoding="utf-8")
             for label, pattern in FORBIDDEN_PATTERNS.items():
                 with self.subTest(file=relative_path, rule=label):
@@ -39,8 +41,8 @@ class MigratedRouterGuards(unittest.TestCase):
                         f"{relative_path} regressed: {label} belongs in core/",
                     )
 
-    def test_migrated_routers_import_shared_core(self):
-        for relative_path in MIGRATED_ROUTERS:
+    def test_migrated_modules_import_shared_core(self):
+        for relative_path in MIGRATED_MODULES:
             text = (ROOT / relative_path).read_text(encoding="utf-8")
             with self.subTest(file=relative_path):
                 self.assertRegex(
