@@ -8,6 +8,9 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+from fastapi import HTTPException, Request
+
+from core.auth import require_user_id
 from core.database import get_rows
 from core.organizations import get_org_context, get_org_id_for_user
 
@@ -86,3 +89,20 @@ async def has_paid_feature_access(user_id: str) -> bool:
         )
     except Exception:
         return False
+
+
+async def require_paid_feature_access(
+    request: Request,
+    *,
+    detail: str = "Esta función requiere una suscripción activa de Broquer Max.",
+) -> str:
+    """Authenticate a request and require paid-feature entitlement.
+
+    Returns the trusted user id so domain routers can replace local
+    ``_uid_max``-style wrappers with one shared call. Authentication remains
+    ``401``; a valid session without entitlement remains ``402``.
+    """
+    user_id = await require_user_id(request, detail="Inicia sesión para continuar.")
+    if not await has_paid_feature_access(user_id):
+        raise HTTPException(status_code=402, detail=detail)
+    return user_id
