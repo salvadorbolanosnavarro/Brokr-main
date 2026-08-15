@@ -15,7 +15,7 @@ class MainTelemetryCoreRefactorTests(unittest.TestCase):
 
     def test_telemetry_writes_delegate_to_core_database(self):
         source = self.source
-        self.assertIn("from core.database import post_rows", source)
+        self.assertIn("from core.database import get_rows, post_rows", source)
         self.assertIn(
             'await post_rows(\n            "usage_logs", payload, prefer="return=minimal", timeout=6',
             source,
@@ -24,9 +24,9 @@ class MainTelemetryCoreRefactorTests(unittest.TestCase):
             'await post_rows(\n            "module_sessions",',
             source,
         )
-        # Reads for telemetry reporting are intentionally a later bounded cut.
-        self.assertEqual(source.count("/rest/v1/usage_logs"), 1)
-        self.assertEqual(source.count("/rest/v1/module_sessions"), 1)
+        # Reporting reads for these tables are also delegated to Core now.
+        self.assertNotIn("/rest/v1/usage_logs", source)
+        self.assertNotIn("/rest/v1/module_sessions", source)
 
     def test_telemetry_remains_fail_soft(self):
         source = self.source
