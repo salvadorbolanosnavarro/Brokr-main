@@ -8,12 +8,13 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class FinanzasCoreRegressionTests(unittest.TestCase):
-    def test_router_uses_core_config_auth_database_and_storage(self):
+    def test_router_uses_core_config_auth_database_storage_and_design(self):
         source = (ROOT / "routers" / "finanzas.py").read_text(encoding="utf-8")
 
         self.assertIn("from core.auth import require_user_id", source)
         self.assertIn("from core.config import settings", source)
         self.assertIn("from core.database import delete_rows, get_rows, patch_rows, post_rows", source)
+        self.assertIn("from core.design import pdf_palette", source)
         self.assertIn(
             "from core.storage import create_signed_object_url, delete_object, upload_object",
             source,
@@ -25,9 +26,7 @@ class FinanzasCoreRegressionTests(unittest.TestCase):
         self.assertNotIn("/storage/v1/object/", source)
         self.assertIn('return await require_user_id(request, detail="Inicia sesión para continuar.")', source)
         self.assertIn("ANTHROPIC_API_KEY = settings.anthropic_api_key", source)
-        # PDF design remains the next isolated migration cut until its own
-        # reviewed transform is applied.
-        self.assertIn("_PDF_TOKENS = {", source)
+        self.assertIn("_PDF_TOKENS = pdf_palette()", source)
         compile(source, "routers/finanzas.py", "exec")
 
 
