@@ -5,7 +5,7 @@ on:
     branches:
       - agent/architecture-cleanup
     paths:
-      - .apply-user-access-state-core
+      - .github/workflows/apply-user-access-state-core.yml
 
 permissions:
   contents: write
