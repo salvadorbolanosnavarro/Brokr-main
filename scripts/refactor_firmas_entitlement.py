@@ -32,8 +32,10 @@ def transform(text: str) -> str:
     if "Falla ABIERTO" not in text[start:end]:
         raise RuntimeError("reviewed fail-open entitlement marker is missing")
 
-    text = text.replace(IMPORT_ANCHOR, IMPORT_REPLACEMENT, 1)
+    # Replace the reviewed function block before adding imports above it so
+    # the recorded offsets cannot be shifted by earlier text insertion.
     text = text[:start] + REPLACEMENT + text[end + 1 :]
+    text = text.replace(IMPORT_ANCHOR, IMPORT_REPLACEMENT, 1)
     return text
 
 
