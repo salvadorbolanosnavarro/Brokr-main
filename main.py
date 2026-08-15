@@ -6935,14 +6935,16 @@ async def facebook_save_page(req: FbSavePageRequest, request: Request):
         "meta": json.dumps(meta),
         "updated_at": datetime.utcnow().isoformat()
     }
-    async with httpx.AsyncClient(timeout=10) as client:
-        await client.post(
-            f"{SUPABASE_URL}/rest/v1/user_integrations",
-            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                     "Content-Type": "application/json",
-                     "Prefer": "resolution=merge-duplicates,return=minimal"},
-            json=payload
+    try:
+        await post_rows(
+            "user_integrations",
+            payload,
+            prefer="resolution=merge-duplicates,return=minimal",
+            timeout=10,
         )
+    except httpx.HTTPStatusError:
+        # Historical behavior: Supabase HTTP rejections did not fail save-page.
+        pass
     return {
         "ok": True,
         "page_id": req.page_id,
@@ -6960,43 +6962,44 @@ async def facebook_get_connection(request: Request):
     if not user_id or not SUPABASE_URL or not SUPABASE_KEY:
         return {"connected": False}
     try:
-        async with httpx.AsyncClient(timeout=8) as client:
-            r = await client.get(
-                f"{SUPABASE_URL}/rest/v1/user_integrations",
-                headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
-                params={"user_id": f"eq.{user_id}", "provider": "eq.facebook",
-                        "select": "api_key,meta", "limit": "1"}
-            )
-            if r.status_code == 200:
-                rows = r.json()
-                if rows and rows[0].get("api_key"):
-                    meta_str = rows[0].get("meta", "{}")
-                    try:
-                        meta = json.loads(meta_str) if isinstance(meta_str, str) else meta_str
-                    except Exception:
-                        meta = {}
-                    estado_token = _fb_estado_token(meta)
-                    return {
-                        "connected": True,
-                        "page_id": meta.get("page_id", ""),
-                        "page_name": meta.get("page_name", "Página conectada"),
-                        "page_pic": meta.get("page_pic", ""),
-                        # Los tokens YA NO viajan al navegador. El frontend solo
-                        # los usaba para saber si existían; mandarlos era regalar
-                        # permiso de gastar a cualquier extensión o XSS que
-                        # leyera la respuesta. El backend los saca de Supabase
-                        # cuando los necesita.
-                        "tiene_token_ads": bool(meta.get("user_token")),
-                        "ad_account_id": meta.get("ad_account_id", ""),
-                        "ad_account_name": meta.get("ad_account_name", ""),
-                        # Estado del token: la UI avisa ANTES de que expire, en
-                        # vez de que el agente descubra el corte cuando ya no
-                        # puede pausar una campaña que está gastando.
-                        "token": estado_token,
-                        "scopes_faltantes": [s for s in _FB_SCOPES_REQUERIDOS
-                                             if s not in (meta.get("scopes") or [])]
-                                            if meta.get("scopes") else [],
-                    }
+        rows = await get_rows(
+            "user_integrations",
+            {
+                "user_id": f"eq.{user_id}",
+                "provider": "eq.facebook",
+                "select": "api_key,meta",
+                "limit": "1",
+            },
+            timeout=8,
+        )
+        if rows and rows[0].get("api_key"):
+            meta_str = rows[0].get("meta", "{}")
+            try:
+                meta = json.loads(meta_str) if isinstance(meta_str, str) else meta_str
+            except Exception:
+                meta = {}
+            estado_token = _fb_estado_token(meta)
+            return {
+                "connected": True,
+                "page_id": meta.get("page_id", ""),
+                "page_name": meta.get("page_name", "Página conectada"),
+                "page_pic": meta.get("page_pic", ""),
+                # Los tokens YA NO viajan al navegador. El frontend solo
+                # los usaba para saber si existían; mandarlos era regalar
+                # permiso de gastar a cualquier extensión o XSS que
+                # leyera la respuesta. El backend los saca de Supabase
+                # cuando los necesita.
+                "tiene_token_ads": bool(meta.get("user_token")),
+                "ad_account_id": meta.get("ad_account_id", ""),
+                "ad_account_name": meta.get("ad_account_name", ""),
+                # Estado del token: la UI avisa ANTES de que expire, en
+                # vez de que el agente descubra el corte cuando ya no
+                # puede pausar una campaña que está gastando.
+                "token": estado_token,
+                "scopes_faltantes": [s for s in _FB_SCOPES_REQUERIDOS
+                                     if s not in (meta.get("scopes") or [])]
+                                    if meta.get("scopes") else [],
+            }
     except Exception:
         pass
     return {"connected": False}
@@ -7006,16 +7009,24 @@ async def _fb_get_meta_row(user_id: str) -> dict:
     """Devuelve la fila completa (api_key + meta dict) del usuario, o {}."""
     if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
         return {}
-    async with httpx.AsyncClient(timeout=10) as client:
-        r = await client.get(
-            f"{SUPABASE_URL}/rest/v1/user_integrations",
-            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
-            params={"user_id": f"eq.{user_id}", "provider": "eq.facebook",
-                    "select": "api_key,meta", "limit": "1"}
+    try:
+        rows = await get_rows(
+            "user_integrations",
+            {
+                "user_id": f"eq.{user_id}",
+                "provider": "eq.facebook",
+                "select": "api_key,meta",
+                "limit": "1",
+            },
+            timeout=10,
         )
-    if r.status_code != 200 or not r.json():
+    except httpx.HTTPStatusError:
+        # Historical behavior: an HTTP rejection meant "no row"; transport
+        # failures still propagate to callers.
         return {}
-    row = r.json()[0]
+    if not rows:
+        return {}
+    row = rows[0]
     meta_raw = row.get("meta", "{}")
     try:
         meta = json.loads(meta_raw) if isinstance(meta_raw, str) else meta_raw
@@ -7048,14 +7059,17 @@ async def _fb_patch_meta(user_id: str, updates: dict, new_page_token: str | None
         "meta": json.dumps(meta),
         "updated_at": datetime.utcnow().isoformat(),
     }
-    async with httpx.AsyncClient(timeout=10) as client:
-        await client.post(
-            f"{SUPABASE_URL}/rest/v1/user_integrations",
-            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                     "Content-Type": "application/json",
-                     "Prefer": "resolution=merge-duplicates,return=minimal"},
-            json=payload,
+    try:
+        await post_rows(
+            "user_integrations",
+            payload,
+            prefer="resolution=merge-duplicates,return=minimal",
+            timeout=10,
         )
+    except httpx.HTTPStatusError:
+        # Historical behavior: HTTP rejection was ignored; transport failures
+        # still propagate.
+        pass
 
 
 @app.get("/facebook/pages")
@@ -7212,12 +7226,16 @@ async def facebook_disconnect(request: Request):
     user_id = await exigir_gestion_integraciones(request)
     if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
         raise HTTPException(status_code=500, detail="Supabase no configurado")
-    async with httpx.AsyncClient(timeout=10) as client:
-        await client.delete(
-            f"{SUPABASE_URL}/rest/v1/user_integrations",
-            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
-            params={"user_id": f"eq.{user_id}", "provider": "eq.facebook"}
+    try:
+        await delete_rows(
+            "user_integrations",
+            {"user_id": f"eq.{user_id}", "provider": "eq.facebook"},
+            timeout=10,
         )
+    except httpx.HTTPStatusError:
+        # Historical behavior: HTTP rejection was ignored; transport failures
+        # still propagate.
+        pass
     return {"ok": True}
 
 
