@@ -23,13 +23,19 @@ PATTERNS = {
     "service_key_fallbacks": re.compile(
         r"SUPABASE_SERVICE_KEY\s*=.*\bor\b.*(?:SUPABASE_KEY|SUPABASE_ANON_KEY)"
     ),
+    # Legacy anti-pattern: a webhook secret is checked only when configured,
+    # making the endpoint public when the server variable is absent.
+    "fail_open_webhook_secrets": re.compile(
+        r"\bif\s+CORREO_WEBHOOK_TOKEN\s*:"
+    ),
 }
 
-# Ratcheted after the APNs push migration (Quality #53).
+# Ratcheted after verified cleanup runs. These are maximums, never goals.
 BASELINE_MAX = {
     "direct_env_reads": 8,
     "duplicated_auth_helpers": 7,
     "service_key_fallbacks": 7,
+    "fail_open_webhook_secrets": 1,
 }
 MAX_LARGE_CODE_FILES = 10
 
