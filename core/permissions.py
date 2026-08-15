@@ -39,12 +39,7 @@ AGENT_DEFAULTS: Mapping[str, bool] = MappingProxyType(_AGENT_DEFAULTS)
 
 
 def default_permission(role: str, permission: str) -> bool:
-    """Return the role default for one permission, rejecting unknown values.
-
-    Owners and admins receive organization-management permissions by default;
-    agents use the explicit least-privilege matrix above. Per-member overrides
-    are applied by the organization service, not here.
-    """
+    """Return the role default for one permission, rejecting unknown values."""
     if role not in VALID_ORG_ROLES:
         raise ValueError(f"Unknown organization role: {role}")
     if permission not in VALID_PERMISSIONS:
@@ -60,8 +55,16 @@ def effective_permission(
     permission: str,
     overrides: Mapping[str, object] | None = None,
 ) -> bool:
-    """Resolve a permission using an explicit boolean override when present."""
+    """Resolve one permission while preserving Broquer's existing role policy.
+
+    Owners and organization admins always have every organization permission.
+    Only agents can be narrowed or expanded by explicit boolean overrides.
+    Unknown roles/permissions are rejected by ``default_permission`` so callers
+    can fail closed rather than silently inventing policy.
+    """
     base = default_permission(role, permission)
+    if role in {ROLE_OWNER, ROLE_ADMIN}:
+        return True
     if not overrides or permission not in overrides:
         return base
 
