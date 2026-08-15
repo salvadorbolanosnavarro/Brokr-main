@@ -44,6 +44,7 @@ from pydantic import BaseModel
 from core.auth import require_user_id
 from core.config import settings
 from core.database import delete_rows, get_rows, patch_rows, post_rows
+from core.design import pdf_palette
 from core.storage import create_signed_object_url, delete_object, upload_object
 
 router = APIRouter(prefix="/finanzas", tags=["finanzas"])
@@ -781,14 +782,9 @@ async def resumen(request: Request,
 # REPORTES — PDF con la identidad de Broquer + CSV para el contador
 # ══════════════════════════════════════════════════════════════════════════
 
-# Tokens mínimos para el impreso. Duplicado consciente de brokr-theme.css:
-# el router es autónomo y un PDF no puede quedarse sin colores si el theme
-# no está en el disco del contenedor.
-_PDF_TOKENS = {
-    "ink": "#0B0B0F", "navy": "#05203C", "blue": "#0A5DE0",
-    "mute": "#5A6478", "line": "#E4E8F0", "paper2": "#F6F8FB",
-    "green": "#12A150", "orange": "#F7740D",
-}
+# PDF colors are resolved from the executable canonical theme. The report
+# renderer keeps semantic names while color values live only in brokr-theme.css.
+_PDF_TOKENS = pdf_palette()
 
 _pdf_store: Dict[str, tuple] = {}
 
