@@ -5,6 +5,7 @@ from limites import exigir_cupo, exigir_sesion
 from pydantic import BaseModel
 from core.auth import get_user_id_from_token
 from core.config import settings
+from core.database import post_rows
 from core.legacy_main_config import legacy_main_settings
 import httpx
 import os
@@ -603,17 +604,9 @@ async def track_usage(
         "costo_usd":   costo,
     }
     try:
-        async with httpx.AsyncClient(timeout=6) as client:
-            await client.post(
-                f"{SUPABASE_URL}/rest/v1/usage_logs",
-                headers={
-                    "apikey": SUPABASE_SERVICE_KEY,
-                    "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                    "Content-Type": "application/json",
-                    "Prefer": "return=minimal",
-                },
-                json=payload,
-            )
+        await post_rows(
+            "usage_logs", payload, prefer="return=minimal", timeout=6
+        )
     except Exception:
         pass
 
@@ -710,17 +703,12 @@ async def telemetria_sesion_modulo(req: TelemetriaSesionModuloReq, request: Requ
     if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
         return {"ok": False}
     try:
-        async with httpx.AsyncClient(timeout=5) as client:
-            await client.post(
-                f"{SUPABASE_URL}/rest/v1/module_sessions",
-                headers={
-                    "apikey": SUPABASE_SERVICE_KEY,
-                    "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                    "Content-Type": "application/json",
-                    "Prefer": "return=minimal",
-                },
-                json={"user_id": user_id, "modulo": modulo, "segundos": segs},
-            )
+        await post_rows(
+            "module_sessions",
+            {"user_id": user_id, "modulo": modulo, "segundos": segs},
+            prefer="return=minimal",
+            timeout=5,
+        )
     except Exception:
         pass
     return {"ok": True}
