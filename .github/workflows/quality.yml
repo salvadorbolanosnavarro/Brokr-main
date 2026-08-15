@@ -25,7 +25,7 @@ jobs:
         run: python -m pip install --disable-pip-version-check httpx fastapi
 
       - name: Compile shared core and migrated modules
-        run: python -m compileall -q core routers/bolsa.py routers/staging.py routers/correo.py
+        run: python -m compileall -q core routers/bolsa.py routers/staging.py routers/correo.py routers/video.py
 
       - name: Run tests
         run: python -m unittest discover -s tests -p 'test_*.py'
