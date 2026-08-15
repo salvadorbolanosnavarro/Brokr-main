@@ -28,6 +28,12 @@ PATTERNS = {
     "fail_open_webhook_secrets": re.compile(
         r"\bif\s+CORREO_WEBHOOK_TOKEN\s*:"
     ),
+    # Legacy paid-feature policy documented in old routers as intentionally
+    # fail-open. Core entitlements are fail-closed; this count should reach 0.
+    "fail_open_entitlements": re.compile(
+        r"Falla\s+ABIERTO",
+        re.IGNORECASE,
+    ),
 }
 
 # Ratcheted after verified cleanup runs. These are maximums, never goals.
@@ -36,6 +42,7 @@ BASELINE_MAX = {
     "duplicated_auth_helpers": 7,
     "service_key_fallbacks": 7,
     "fail_open_webhook_secrets": 1,
+    "fail_open_entitlements": 1,
 }
 MAX_LARGE_CODE_FILES = 10
 
