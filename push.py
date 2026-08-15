@@ -5,45 +5,36 @@
 # notificación al celular del agente. Habla directo con Apple (APNs), sin
 # Firebase ni servicios de terceros.
 #
-# Mismos patrones del resto del repo: httpx async, Supabase por REST.
-#
-# VARIABLES DE ENTORNO (Railway → Variables):
-#   APNS_KEY_P8     contenido COMPLETO del archivo AuthKey_XXXXXXXXXX.p8
-#                   (pégalo tal cual, con sus saltos de línea)
-#   APNS_KEY_ID     los 10 caracteres del nombre del archivo (AuthKey_ESTO.p8)
-#   APNS_TEAM_ID    tu Team ID de Apple Developer (10 caracteres)
-#   APNS_BUNDLE_ID  com.broquer.app
-#   APNS_ENV        "prod" para App Store/TestFlight · "sandbox" para Xcode
-#
-# Si falta cualquiera, este módulo simplemente no hace nada y lo dice en el log.
-# Nada más se rompe: WhatsApp sigue funcionando igual.
+# La configuración vive en core.config y el acceso a Supabase en core.database.
+# Si faltan credenciales de APNs, este módulo no envía nada y lo deja en el log;
+# WhatsApp sigue funcionando igual.
 # =============================================================================
 
-import os
 import json
-import time
 import logging
+import time
 
 import httpx
 
+from core.config import settings
+from core.database import get_rows, patch_rows
+
 log = logging.getLogger("broquer.push")
 
-APNS_KEY_P8    = os.environ.get("APNS_KEY_P8", "").replace("\\n", "\n").strip()
-APNS_KEY_ID    = os.environ.get("APNS_KEY_ID", "").strip()
-APNS_TEAM_ID   = os.environ.get("APNS_TEAM_ID", "").strip()
-APNS_BUNDLE_ID = os.environ.get("APNS_BUNDLE_ID", "com.broquer.app").strip()
-APNS_ENV       = os.environ.get("APNS_ENV", "prod").strip().lower()
-
-APNS_HOST = ("https://api.sandbox.push.apple.com" if APNS_ENV.startswith("sand")
-             else "https://api.push.apple.com")
-
-SUPABASE_URL         = os.environ.get("SUPABASE_URL", "").rstrip("/")
-SUPABASE_ANON_KEY    = os.environ.get("SUPABASE_ANON_KEY", "")
-SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "") or SUPABASE_ANON_KEY
+APNS_HOST = (
+    "https://api.sandbox.push.apple.com"
+    if settings.apns_env.startswith("sand")
+    else "https://api.push.apple.com"
+)
 
 
 def push_configurado() -> bool:
-    return bool(APNS_KEY_P8 and APNS_KEY_ID and APNS_TEAM_ID and APNS_BUNDLE_ID)
+    return bool(
+        settings.apns_key_p8
+        and settings.apns_key_id
+        and settings.apns_team_id
+        and settings.apns_bundle_id
+    )
 
 
 # -----------------------------------------------------------------------------
@@ -59,11 +50,12 @@ def _apns_jwt() -> str | None:
         return _jwt_cache["token"]
     try:
         import jwt  # PyJWT
+
         tok = jwt.encode(
-            {"iss": APNS_TEAM_ID, "iat": ahora},
-            APNS_KEY_P8,
+            {"iss": settings.apns_team_id, "iat": ahora},
+            settings.apns_key_p8,
             algorithm="ES256",
-            headers={"kid": APNS_KEY_ID, "alg": "ES256"},
+            headers={"kid": settings.apns_key_id, "alg": "ES256"},
         )
         if isinstance(tok, bytes):
             tok = tok.decode()
@@ -76,49 +68,32 @@ def _apns_jwt() -> str | None:
 
 
 # -----------------------------------------------------------------------------
-# Supabase (REST, mismo patrón de whatsapp.py)
+# Supabase
 # -----------------------------------------------------------------------------
-def _sb_headers() -> dict:
-    return {
-        "apikey": SUPABASE_SERVICE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-        "Content-Type": "application/json",
-    }
-
-
 async def _tokens_del_agente(user_id: str) -> list[str]:
-    """Los device tokens de iOS del agente. Hoy guardamos uno por usuario
-    (usuarios.apns_token); la firma devuelve lista para que el día que tenga
-    iPhone + iPad no haya que tocar nada más."""
-    if not SUPABASE_URL:
-        return []
+    """Devuelve los device tokens de iOS del agente."""
     try:
-        async with httpx.AsyncClient(timeout=10) as c:
-            r = await c.get(
-                f"{SUPABASE_URL}/rest/v1/usuarios",
-                headers=_sb_headers(),
-                params={"id": f"eq.{user_id}", "select": "apns_token"},
-            )
-        if r.status_code != 200:
-            return []
-        filas = r.json() or []
+        filas = await get_rows(
+            "usuarios",
+            {"id": f"eq.{user_id}", "select": "apns_token"},
+            timeout=10,
+        )
         return [f["apns_token"] for f in filas if f.get("apns_token")]
     except Exception as e:
         log.warning("APNs: no se pudieron leer los tokens de %s: %s", user_id, e)
         return []
 
 
-async def _borrar_token(token: str):
-    """Apple responde 410 cuando el agente desinstaló la app o reinstaló.
-    Ese token ya no sirve nunca más: se limpia para no seguir intentando."""
+async def _borrar_token(token: str) -> None:
+    """Limpia un token que Apple marcó como definitivamente inválido (410)."""
     try:
-        async with httpx.AsyncClient(timeout=10) as c:
-            await c.patch(
-                f"{SUPABASE_URL}/rest/v1/usuarios",
-                headers={**_sb_headers(), "Prefer": "return=minimal"},
-                params={"apns_token": f"eq.{token}"},
-                json={"apns_token": None},
-            )
+        await patch_rows(
+            "usuarios",
+            {"apns_token": f"eq.{token}"},
+            {"apns_token": None},
+            prefer="return=minimal",
+            timeout=10,
+        )
     except Exception:
         pass
 
@@ -126,11 +101,14 @@ async def _borrar_token(token: str):
 # -----------------------------------------------------------------------------
 # El envío
 # -----------------------------------------------------------------------------
-async def enviar_push(user_id: str, titulo: str, cuerpo: str,
-                      datos: dict | None = None, badge: int | None = None) -> bool:
-    """Manda una notificación al iPhone del agente. Nunca lanza excepción:
-    si algo falla, lo deja en el log y regresa False. Un aviso que no llega
-    no puede tumbar el webhook de WhatsApp."""
+async def enviar_push(
+    user_id: str,
+    titulo: str,
+    cuerpo: str,
+    datos: dict | None = None,
+    badge: int | None = None,
+) -> bool:
+    """Manda una notificación al iPhone del agente sin tumbar al llamador."""
     if not push_configurado():
         log.info("APNs sin configurar (faltan variables) — no se envía push.")
         return False
@@ -141,7 +119,7 @@ async def enviar_push(user_id: str, titulo: str, cuerpo: str,
 
     tokens = await _tokens_del_agente(user_id)
     if not tokens:
-        return False   # el agente no tiene la app de iOS instalada: normal
+        return False
 
     payload = {
         "aps": {
@@ -157,7 +135,7 @@ async def enviar_push(user_id: str, titulo: str, cuerpo: str,
 
     headers = {
         "authorization": f"bearer {jwt_tok}",
-        "apns-topic": APNS_BUNDLE_ID,
+        "apns-topic": settings.apns_bundle_id,
         "apns-push-type": "alert",
         "apns-priority": "10",
         "apns-expiration": str(int(time.time()) + 3600),
@@ -169,8 +147,11 @@ async def enviar_push(user_id: str, titulo: str, cuerpo: str,
         async with httpx.AsyncClient(http2=True, timeout=10) as c:
             for tok in tokens:
                 try:
-                    r = await c.post(f"{APNS_HOST}/3/device/{tok}",
-                                     headers=headers, content=json.dumps(payload))
+                    r = await c.post(
+                        f"{APNS_HOST}/3/device/{tok}",
+                        headers=headers,
+                        content=json.dumps(payload),
+                    )
                     if r.status_code == 200:
                         ok = True
                     elif r.status_code == 410:
@@ -181,13 +162,21 @@ async def enviar_push(user_id: str, titulo: str, cuerpo: str,
                 except Exception as e:
                     log.warning("APNs: fallo al enviar: %s", e)
     except Exception as e:
-        log.error("APNs: no se pudo abrir conexión HTTP/2 "
-                  "(¿falta instalar h2? revisa requirements.txt): %s", e)
+        log.error(
+            "APNs: no se pudo abrir conexión HTTP/2 "
+            "(¿falta instalar h2? revisa requirements.txt): %s",
+            e,
+        )
     return ok
 
 
-async def avisar_mensaje_whatsapp(user_id: str, nombre: str, texto: str,
-                                  conversation_id: str, badge: int | None = None):
+async def avisar_mensaje_whatsapp(
+    user_id: str,
+    nombre: str,
+    texto: str,
+    conversation_id: str,
+    badge: int | None = None,
+) -> None:
     """Atajo con el copy ya listo para el caso de WhatsApp."""
     cuerpo = (texto or "").strip().replace("\n", " ")
     if len(cuerpo) > 140:
