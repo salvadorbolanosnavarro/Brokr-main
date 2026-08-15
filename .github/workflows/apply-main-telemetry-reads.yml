@@ -1,0 +1,33 @@
+name: Apply main telemetry reads refactor
+
+on:
+  push:
+    branches:
+      - agent/architecture-cleanup
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: contains(github.event.head_commit.message, '[apply-main-telemetry-reads]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout cleanup branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/architecture-cleanup
+          fetch-depth: 0
+      - name: Apply exact transform
+        run: python scripts/refactor_main_telemetry_reads.py
+      - name: Verify patch
+        run: |
+          git add main.py
+          git diff --cached --check
+          git diff --cached --quiet && { echo 'No main.py change produced'; exit 1; } || true
+      - name: Commit transformed telemetry reads
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -m 'Move main telemetry reads behind Core database'
+          git push origin HEAD:agent/architecture-cleanup
