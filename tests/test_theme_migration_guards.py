@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 import unittest
 
 
@@ -29,11 +30,15 @@ class ThemeMigrationGuards(unittest.TestCase):
         text = path.read_text(encoding="utf-8")
         self.assertIn(LEGACY_THEME, text)
 
-    def test_legacy_theme_documents_its_retirement_path(self):
+    def test_legacy_theme_is_only_a_canon_compatibility_shim(self):
         text = (ROOT / LEGACY_THEME).read_text(encoding="utf-8")
-        self.assertIn("migrar estadisticas.html", text)
-        self.assertIn("retirar este archivo", text)
-        self.assertIn("brokr-theme.css", text)
+        self.assertIn('@import url("brokr-theme.css")', text)
+        self.assertNotRegex(
+            text,
+            re.compile(r"--[A-Za-z0-9_-]+\s*:"),
+            "brokr-theme-v2.css must not define its own design tokens",
+        )
+        self.assertIn("Remove this shim", text)
 
 
 if __name__ == "__main__":
