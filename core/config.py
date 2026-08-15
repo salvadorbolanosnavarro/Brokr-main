@@ -21,6 +21,9 @@ class Settings:
     groq_api_key: str
     gemini_api_key: str
     gemini_image_model: str
+    resend_api_key: str
+    correo_relay_from: str
+    correo_secret: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -47,6 +50,12 @@ class Settings:
                 "GEMINI_IMAGE_MODEL",
                 "gemini-3.1-flash-image-preview",
             ),
+            resend_api_key=os.getenv("RESEND_API_KEY", ""),
+            correo_relay_from=os.getenv(
+                "CORREO_RELAY_FROM",
+                "correo@broquer.app",
+            ),
+            correo_secret=os.getenv("CORREO_SECRET", ""),
         )
 
     def require_supabase_public(self) -> None:
@@ -57,6 +66,20 @@ class Settings:
         self.require_supabase_public()
         if not self.supabase_service_key:
             raise RuntimeError("SUPABASE_SERVICE_KEY is required for privileged operations")
+
+    def require_correo_secret(self) -> str:
+        """Return the key material used to encrypt stored email credentials.
+
+        The explicit ``CORREO_SECRET`` is preferred. For backwards
+        compatibility, the service-role key remains a valid fallback; unlike
+        the old router, the anonymous Supabase key is never accepted here.
+        """
+        secret = self.correo_secret or self.supabase_service_key
+        if not secret:
+            raise RuntimeError(
+                "CORREO_SECRET or SUPABASE_SERVICE_KEY is required for email credential encryption"
+            )
+        return secret
 
 
 settings = Settings.from_env()
