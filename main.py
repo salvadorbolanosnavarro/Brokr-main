@@ -813,19 +813,19 @@ async def get_profile_status(request: Request):
     if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
         return {"eb": {"configured": False, "masked": ""}, "fb": {"connected": False}}
 
-    # Una sola query trae AMBAS integraciones (EB + FB) del usuario
+    # Una sola query trae AMBAS integraciones (EB + FB) del usuario.
+    # Core conserva el acceso privilegiado en un solo lugar; este endpoint
+    # sigue siendo fail-soft ante cualquier rechazo o fallo de transporte.
     try:
-        async with httpx.AsyncClient(timeout=8) as client:
-            r = await client.get(
-                f"{SUPABASE_URL}/rest/v1/user_integrations",
-                headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
-                params={"user_id": f"eq.{user_id}",
-                        "provider": "in.(easybroker,facebook)",
-                        "select": "provider,api_key,meta"}
-            )
-            if r.status_code != 200:
-                return {"eb": {"configured": False, "masked": ""}, "fb": {"connected": False}}
-            rows = r.json()
+        rows = await get_rows(
+            "user_integrations",
+            {
+                "user_id": f"eq.{user_id}",
+                "provider": "in.(easybroker,facebook)",
+                "select": "provider,api_key,meta",
+            },
+            timeout=8,
+        )
     except Exception:
         return {"eb": {"configured": False, "masked": ""}, "fb": {"connected": False}}
 
