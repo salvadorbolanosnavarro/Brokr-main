@@ -38,9 +38,9 @@ PATTERNS = {
 
 # Ratcheted after verified cleanup runs. These are maximums, never goals.
 BASELINE_MAX = {
-    "direct_env_reads": 5,
-    "duplicated_auth_helpers": 5,
-    "service_key_fallbacks": 5,
+    "direct_env_reads": 4,
+    "duplicated_auth_helpers": 4,
+    "service_key_fallbacks": 4,
     "fail_open_webhook_secrets": 0,
     "fail_open_entitlements": 0,
 }
