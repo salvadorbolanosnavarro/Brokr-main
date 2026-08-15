@@ -102,7 +102,7 @@ class OrganizationPermissionTests(unittest.TestCase):
             with self.subTest(permission=permission):
                 self.assertFalse(default_permission(ROLE_AGENT, permission))
 
-    def test_explicit_boolean_override_wins(self):
+    def test_agent_boolean_override_wins(self):
         self.assertTrue(
             effective_permission(
                 ROLE_AGENT,
@@ -112,11 +112,22 @@ class OrganizationPermissionTests(unittest.TestCase):
         )
         self.assertFalse(
             effective_permission(
-                ROLE_OWNER,
-                "ver_telefonos",
-                {"ver_telefonos": False},
+                ROLE_AGENT,
+                "ver_inventario_completo",
+                {"ver_inventario_completo": False},
             )
         )
+
+    def test_owner_and_admin_cannot_be_narrowed_by_member_override(self):
+        for role in (ROLE_OWNER, ROLE_ADMIN):
+            with self.subTest(role=role):
+                self.assertTrue(
+                    effective_permission(
+                        role,
+                        "ver_telefonos",
+                        {"ver_telefonos": False},
+                    )
+                )
 
     def test_unknown_role_or_permission_fails_closed(self):
         with self.assertRaises(ValueError):
