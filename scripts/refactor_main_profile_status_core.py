@@ -8,23 +8,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
 
-OLD = '''    # Una sola query trae AMBAS integraciones (EB + FB) del usuario
-    try:
-        async with httpx.AsyncClient(timeout=8) as client:
-            r = await client.get(
-                f"{SUPABASE_URL}/rest/v1/user_integrations",
-                headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
-                params={"user_id": f"eq.{user_id}",
-                        "provider": "in.(easybroker,facebook)",
-                        "select": "provider,api_key,meta"}
-            )
-            if r.status_code != 200:
-                return {"eb": {"configured": False, "masked": ""}, "fb": {"connected": False}}
-            rows = r.json()
-    except Exception:
-        return {"eb": {"configured": False, "masked": ""}, "fb": {"connected": False}}
-'''
-
 NEW = '''    # Una sola query trae AMBAS integraciones (EB + FB) del usuario.
     # Core conserva el acceso privilegiado en un solo lugar; este endpoint
     # sigue siendo fail-soft ante cualquier rechazo o fallo de transporte.
@@ -40,14 +23,22 @@ NEW = '''    # Una sola query trae AMBAS integraciones (EB + FB) del usuario.
         )
     except Exception:
         return {"eb": {"configured": False, "masked": ""}, "fb": {"connected": False}}
+
 '''
 
 
 def transform_source(source: str) -> str:
-    count = source.count(OLD)
-    if count != 1:
-        raise RuntimeError(f"Expected exactly one /profile/status legacy block, found {count}")
-    return source.replace(OLD, NEW, 1)
+    endpoint_start = source.index('@app.get("/profile/status")')
+    endpoint_end = source.index("# ────────────────────────────────────────────\n# GROQ CHAT PROXY", endpoint_start)
+    endpoint = source[endpoint_start:endpoint_end]
+
+    legacy_url = 'f"{SUPABASE_URL}/rest/v1/user_integrations"'
+    if endpoint.count(legacy_url) != 1:
+        raise RuntimeError("Expected exactly one direct user_integrations read in /profile/status")
+
+    block_start = source.index("    # Una sola query trae AMBAS integraciones (EB + FB) del usuario", endpoint_start, endpoint_end)
+    block_end = source.index("    # Parsear cada provider", block_start, endpoint_end)
+    return source[:block_start] + NEW + source[block_end:]
 
 
 def main() -> None:
