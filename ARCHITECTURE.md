@@ -1,190 +1,262 @@
 # Broquer Architecture
 
-This document is the engineering contract for progressively turning the current
-Broquer repository into a modular, testable platform without breaking existing
-product behavior during migration.
+This document is the architectural contract for Broquer.
 
-## 1. Target shape
+The goal is not only to keep Broquer working. The repository must remain easy to understand, safe to extend, and difficult to degrade.
 
-Broquer should have one place per responsibility:
+## 1. Non-negotiable principles
 
-- `core/` — cross-cutting platform infrastructure and policy.
-- `routers/` — domain HTTP endpoints and domain orchestration.
-- root application bootstrap — composition only: create the app, register
-  middleware, mount routers/modules, and expose static assets.
-- canonical frontend shell/theme — one executable design system, reused by all
-  modules.
-- `tests/` — regression contracts for shared behavior and migrated domains.
-- `migrations/` — versioned database changes that make Supabase reproducible.
+1. **One responsibility, one implementation.** Authentication, database access, permissions, configuration, AI clients, HTTP clients, rate limiting, logging, errors, and design tokens each have one canonical implementation.
+2. **No permanent compatibility patches.** Temporary adapters are allowed only during migrations and must have an explicit removal condition.
+3. **No historical clutter in production code.** Git is the archive. Files named `copy`, `old`, `legacy`, `v2`, `final`, experiments, previews, and obsolete alternatives do not stay in the production tree once superseded.
+4. **No module may bypass platform services.** Modules consume shared platform capabilities instead of recreating them.
+5. **A new module must be declarative.** Adding a module must not require hand-editing central navigation, auth, permissions, error handling, or design-system code.
+6. **Design has one source of truth.** `DESIGN.md` defines the rules. The executable design system must expose one canonical token/component entry point. Modules consume it; they do not redefine it.
+7. **Delete what no longer earns its existence.** Dead code, unused dependencies, duplicated helpers, obsolete assets, and unreachable endpoints are removed after usage is proven absent.
+8. **Prefer explicit failure over silent fallback.** Privileged credentials, required configuration, and security assumptions must fail closed.
+9. **Main entry points stay boring.** `main.py` should assemble the application, not contain business logic.
+10. **Architecture must make the correct path the easiest path.** A future developer should naturally follow the system rather than invent a new pattern.
 
-A new module should follow an existing declarative pattern. It should not need
-new auth code, new Supabase headers, a forked theme, or another giant metadata
-list in `main.py`.
+## 2. Target repository shape
 
-## 2. Core ownership
+The exact migration order may change, but the intended destination is:
 
-Shared behavior belongs in `core/`, not in domain routers.
+```text
+broquer/
+├── README.md
+├── ARCHITECTURE.md
+├── DESIGN.md
+├── pyproject.toml
+├── Dockerfile
+├── .env.example
+│
+├── backend/
+│   ├── app/
+│   │   ├── main.py
+│   │   ├── core/
+│   │   │   ├── config.py
+│   │   │   ├── auth.py
+│   │   │   ├── database.py
+│   │   │   ├── permissions.py
+│   │   │   ├── security.py
+│   │   │   ├── logging.py
+│   │   │   └── errors.py
+│   │   ├── integrations/
+│   │   ├── services/
+│   │   └── modules/
+│   └── tests/
+│
+├── frontend/
+│   ├── src/
+│   │   ├── app/
+│   │   ├── design-system/
+│   │   └── modules/
+│   └── public/
+│
+├── mobile/
+│   └── ios/
+├── migrations/
+├── scripts/
+└── docs/
+```
 
-### Configuration
+This is a direction, not an excuse to create empty folders. A directory exists only when it has a real responsibility.
 
-`core.config` owns environment-variable names, defaults, compatibility aliases,
-and security-sensitive fallback behavior. Domain modules must import settings
-instead of calling `os.getenv()` / `os.environ` directly.
+## 3. Platform versus modules
 
-Privileged Supabase access **never** falls back to the anonymous key. Missing
-service-role configuration must fail closed.
+### Platform owns
 
-### Authentication and authorization
+- authentication and session validation
+- organization context and tenant isolation
+- permissions
+- configuration and secrets
+- database client and transaction boundaries
+- external-service clients
+- rate limiting
+- logging and observability
+- error model
+- background jobs
+- file/storage primitives
+- design system
+- navigation/module discovery
 
-`core.auth` owns Supabase bearer-token validation.
+### Modules own
 
-`core.permissions` owns organization role/permission policy.
+- domain models and rules
+- routes/use cases for that domain
+- domain-specific persistence code
+- domain-specific UI
+- domain-specific tests
 
-`core.organizations` owns cross-cutting organization context and organization
-authorization helpers.
+A module must not create its own auth helper, Supabase client, permission model, global CSS tokens, logging system, or generic HTTP client.
 
-`core.admin` owns administrator authorization. Admin endpoints must not duplicate
-token parsing or role checks. A database/configuration failure must not grant
-administrative access; it fails closed.
+## 4. Canonical module contract
 
-`core.subscriptions` owns paid-feature entitlement checks. An inability to
-verify entitlement is not permission to continue.
+Every module must expose metadata through a single declarative manifest. The exact implementation can evolve, but the contract must contain the equivalent of:
 
-`core.webhooks` owns shared-secret webhook validation. A webhook secret that is
-missing from server configuration means the webhook is unavailable (503), **not
-public**. Secret comparison uses constant-time comparison. Query-string secret
-support exists only as a compatibility path where explicitly enabled.
+```python
+Module(
+    key="properties",
+    name="Propiedades",
+    route_prefix="/properties",
+    navigation={"section": "commercial", "order": 10},
+    permissions=["properties.read", "properties.write"],
+    backend_router=router,
+    frontend_entry="modules/properties",
+)
+```
 
-### Supabase REST and Storage
+The application discovers manifests and derives from them:
 
-`core.database` owns privileged PostgREST calls and service-role headers.
+- backend router registration
+- navigation entries
+- page metadata
+- permission declarations
+- feature availability
+- diagnostics/health information
 
-`core.storage` owns Supabase Storage operations and object-path validation.
-Domain routers do not construct privileged Storage URLs or service headers.
+**Adding a module must not require editing `main.py`, `PAGE_META`, `MODS`, or another central registry by hand.**
 
-### External HTTP
+## 5. Design-system contract
 
-`core.http` owns bounded public HTTP fetching for user-supplied URLs. Public
-fetching validates schemes/hosts/IPs, revalidates redirects, rejects local and
-non-public networks, and bounds response size.
+`DESIGN.md` remains the human-readable design law. The runtime implementation must converge to one canonical design-system entry point.
 
-### Design
+Rules:
+
+- modules consume tokens/components; they do not redefine global tokens
+- no parallel theme files representing different generations
+- no hard-coded visual constants when a canonical token exists
+- new reusable UI patterns are added to the design system first, then consumed by modules
+- module-specific styles are allowed only for domain-specific presentation
+- global shell/navigation/page-header behavior is platform-owned
+
+The eventual automated audit must validate both legacy pages during migration and all new module code.
+
+## 6. Security and tenancy contract
+
+Broquer is multi-tenant. Tenant isolation is an architectural invariant, not a convention.
+
+- every authenticated operation resolves a trusted user identity
+- every tenant-owned operation resolves organization context centrally
+- privileged server credentials never reach the client
+- service-role access must be explicit and fail closed if unavailable
+- every read/write using privileged credentials must scope data to the authorized tenant or use a reviewed platform service that does so
+- authorization is enforced server-side/database-side; hiding UI is never security
+- external webhooks are authenticated/verified before side effects
+- expensive endpoints require authentication unless deliberately documented as public
+
+## 7. Migration strategy
+
+Broquer will be improved by strangling the current monolith, not by a blind rewrite.
+
+For each extraction:
+
+1. map current behavior and callers
+2. add characterization tests where practical
+3. create the canonical platform/domain implementation
+4. route existing callers through it
+5. verify behavior
+6. remove the superseded implementation
+7. remove temporary adapters once no callers remain
+
+At no point is duplicated permanent logic considered a completed migration.
+
+## 8. Repository cleanliness standard
+
+A file stays in the production repository only if it has a current, explainable purpose.
+
+Candidates for removal/consolidation include:
+
+- duplicated shells/themes/helpers
+- copied HTML files
+- obsolete redesign previews and mocks
+- dead migration helpers after their historical role is captured
+- unused scripts
+- unused assets
+- unused dependencies
+- commented-out implementations
+- unreachable endpoints
+- fallback implementations that hide configuration errors
+
+Deletion requires evidence that the artifact is unused or superseded; cleanup must not become guesswork.
+
+## 9. Definition of done for a new module
+
+A module is not complete unless:
+
+- it follows the canonical module contract
+- it uses platform auth/database/permissions/config
+- it uses the canonical design system
+- it contains no duplicated generic infrastructure
+- it has tests for critical domain behavior
+- it introduces no new global styling source
+- it introduces no manual central-registration requirement
+- it passes repository quality/security checks
+- a developer unfamiliar with the module can locate its entry point and understand its boundaries quickly
+
+## 10. Architectural review question
+
+Before adding any abstraction, helper, file, dependency, endpoint, migration, or compatibility layer, ask:
+
+> Does this need to exist, and if it does, is this the one canonical place where it belongs?
+
+If the answer to either part is unclear, the change is not ready.
+
+## 11. Current extracted platform policies
+
+The cleanup branch currently makes the following policies explicit so future
+migrations have one tested destination instead of inventing another helper.
+
+### Administrator authorization
+
+`core.admin` is the canonical admin authorization layer. Admin-facing code must
+use central bearer-token validation and a server-side `usuarios.rol == "admin"`
+check. Missing database/configuration access is a denial condition; it must not
+be interpreted as administrative permission.
+
+### Webhook authentication
+
+`core.webhooks` owns shared-secret webhook validation. A missing server-side
+secret means the webhook is unavailable (503), **not public**. Invalid or absent
+request credentials return 401. Secret comparison uses constant-time comparison.
+Query-string token support may exist only as an explicit compatibility path and
+should be retired where providers support header/signature verification.
+
+### Paid-feature authorization
+
+`core.subscriptions` owns paid-feature entitlement checks. Failure to verify an
+entitlement must not grant access.
+
+### Privileged Supabase access
+
+`core.database` and `core.storage` own service-role access. The service role must
+never fall back to the anonymous key. Missing privileged configuration fails
+closed.
+
+### Public outbound HTTP
+
+`core.http` owns fetching of user-supplied public URLs. The fetcher validates
+scheme/host/address, rejects local/non-public targets, revalidates redirects,
+and bounds response size.
+
+### Executable design source
 
 `brokr-theme.css` is the only executable visual-token source of truth.
+`brokr-theme-v2.css` may exist temporarily only as a compatibility shim that
+imports the canonical theme and defines **no tokens of its own**. Once its last
+HTML reference is safely migrated, the shim must be deleted.
 
-`core.design` exposes those tokens to backend-generated HTML/PDF code. Backend
-renderers do not maintain copied palettes.
+## 12. Quality ratchet
 
-`brokr-theme-v2.css` may temporarily exist only as a compatibility shim that
-imports `brokr-theme.css`; it must not define its own tokens. Once the remaining
-HTML reference is safely changed, the shim is deleted.
+`Quality` is part of the architecture. It must compile migrated code, run every
+`test_*.py`, enforce relevant design checks, and measure legacy architecture
+debt.
 
-## 3. Module contract
+Debt ceilings are maximums, not targets. Once a verified cleanup lowers a
+count, the ceiling is lowered so the repository cannot silently regress to a
+worse state.
 
-`core.modules.ModuleDefinition` is the canonical module metadata contract.
-Module identifiers, route/navigation paths, and permission declarations are
-validated centrally.
-
-Visual design is intentionally not configurable per module. Modules inherit the
-canonical Broquer shell/theme.
-
-Over time, app composition should discover/register module definitions rather
-than editing giant hard-coded lists in `main.py` and `app-shell.js`.
-
-## 4. Migration strategy
-
-Use a strangler migration, not a rewrite.
-
-For each domain:
-
-1. Map current endpoints, callers, side effects, environment variables, tables,
-   Storage buckets, and external integrations.
-2. Write/extend regression contracts for behavior that must be preserved.
-3. Move cross-cutting infrastructure to Core before moving domain logic.
-4. Switch one consumer/domain to the shared primitive.
-5. Run Quality and inspect any failure before stacking the next migration.
-6. Remove the legacy helper only after all callers have moved.
-7. Ratchet measurable architecture-debt ceilings downward after each verified
-   reduction.
-
-Temporary compatibility adapters are allowed only when they make a staged
-migration safer. They must have an explicit removal path; the target repository
-must not retain permanent duplicate infrastructure.
-
-## 5. Security rules
-
-- Privileged credentials never downgrade to public/anonymous credentials.
-- Missing authorization configuration fails closed.
-- Missing webhook secrets fail closed.
-- Organization/admin/paid-feature authorization is backend policy, never a
-  frontend decision.
-- User-supplied outbound URLs pass through the public-HTTP safety layer.
-- Secrets/tokens are stored server-side and are never echoed to browser-facing
-  responses unless the protocol explicitly requires it.
-- Storage paths are normalized and traversal is rejected.
-- Existing legacy exceptions are documented and removed progressively rather
-  than silently reinterpreted.
-
-## 6. Quality gates
-
-The GitHub `Quality` workflow is part of the architecture, not decoration. It
-must remain capable of blocking regressions before `main` is touched.
-
-Current responsibilities include:
-
-- compile shared Core and migrated backend modules;
-- discover and execute every `test_*.py` test;
-- audit the actively migrated Statistics UI against the design rules;
-- verify canonical-theme compatibility;
-- enforce migration guards on already-cleaned modules;
-- inventory architecture debt and fail if established ceilings grow.
-
-Architecture-debt ceilings are maximums, never targets. When cleanup lowers a
-verified count, the corresponding ceiling is lowered in the same branch so the
-improvement cannot silently regress.
-
-## 7. Large-file policy
-
-Large files are migration targets, not automatic deletion targets. Do not
-rewrite a 50–600 KB production file manually merely to make a small
-infrastructure change when tooling cannot apply a safe surgical patch.
-
-Instead:
-
-- extract and test the shared primitive first;
-- map exact callers/behavior;
-- migrate the large consumer when a reliable edit path is available;
-- keep production behavior unchanged until that cut can be validated.
-
-This applies especially to `main.py`, root `whatsapp.py`, Firma electrónica,
-large HTML screens, and other monolithic modules.
-
-## 8. Database/Supabase direction
-
-The eventual Supabase cleanup follows the same rule as the repository cleanup:
-inventory first, versioned migration second, destructive cleanup last.
-
-The target state is that tables, columns, indexes, RLS/policies, functions,
-triggers, Storage buckets/policies, and required seed/config data can be
-understood and reconstructed from version-controlled migrations. Manual
-production-only database state should progressively disappear.
-
-No destructive production database operation is part of this architecture
-cleanup without explicit authorization and a recovery plan.
-
-## 9. Definition of done
-
-The cleanup is complete when:
-
-- `main.py` is a small bootstrap/composition layer rather than a domain
-  monolith;
-- cross-cutting configuration/auth/database/storage/policy exists once;
-- no service-role-to-anon fallbacks remain;
-- no duplicated auth helpers remain;
-- no domain router reads environment variables directly;
-- there is one executable design system;
-- active modules are registered consistently;
-- Supabase schema/policies are backed by coherent versioned migrations;
-- Quality protects the contracts above;
-- obsolete patches, previews, accidental copies, and compatibility shims have
-  been removed after their callers are proven migrated.
+Large production files are migrated incrementally. When tooling cannot apply a
+safe surgical edit, shared behavior is extracted and tested first rather than
+manually rewriting tens or hundreds of kilobytes and risking unrelated product
+behavior.
