@@ -3,7 +3,8 @@
 
 The baseline is ratcheted down as cleanup lands in PR #44. These limits are
 ceilings, not targets: cleanup should make every number go down. CI fails if a
-legacy pattern count grows beyond the latest verified baseline.
+legacy pattern count grows beyond the latest verified baseline or if any known
+large code file grows beyond its verified size ceiling.
 """
 from __future__ import annotations
 
@@ -35,7 +36,22 @@ BASELINE_MAX = {
     "fail_open_webhook_secrets": 0,
     "fail_open_entitlements": 0,
 }
-MAX_LARGE_CODE_FILES = 10
+
+# Verified on Quality #258. A file may shrink or disappear, but none of these
+# legacy giants may grow again. A new >=100 KB code file is also a regression.
+LARGE_FILE_MAX_BYTES = {
+    "main.py": 595_635,
+    "app-shell.js": 253_298,
+    "whatsapp.py": 223_594,
+    "contratos.html": 156_086,
+    "propiedades.html": 149_441,
+    "whatsapp.html": 127_110,
+    "routers/firmas.py": 119_193,
+    "estadisticas.html": 115_461,
+    "contactos.html": 111_788,
+    "legal.html": 109_324,
+}
+MAX_LARGE_CODE_FILES = len(LARGE_FILE_MAX_BYTES)
 
 
 def _excluded(path: Path) -> bool:
@@ -90,7 +106,17 @@ def main() -> int:
     big = large_code_files()
     print(f"large_code_files_100kb_plus: {len(big)} (ceiling {MAX_LARGE_CODE_FILES})")
     for path, size in big:
-        print(f"  - {path}: {size:,} bytes")
+        ceiling = LARGE_FILE_MAX_BYTES.get(path)
+        ceiling_text = f"{ceiling:,}" if ceiling is not None else "new file"
+        print(f"  - {path}: {size:,} bytes (ceiling {ceiling_text})")
+
+        if ceiling is None:
+            failures.append(f"new large code file appeared: {path} ({size:,} bytes)")
+        elif size > ceiling:
+            failures.append(
+                f"{path} grew from ceiling {ceiling:,} to {size:,} bytes"
+            )
+
     if len(big) > MAX_LARGE_CODE_FILES:
         failures.append(
             "large code files grew from ceiling "
