@@ -25,7 +25,6 @@
 # Depende de: migracion-admin-consola.sql ya corrido.
 # ──────────────────────────────────────────────────────────────────────────
 
-import os
 import html as _html
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
@@ -35,25 +34,24 @@ import httpx
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
+from core.admin import require_admin
+from core.config import settings
 from core.webhooks import require_shared_secret
 
 router = APIRouter()
 
 # ── Config ────────────────────────────────────────────────────────────────
-SUPABASE_URL         = os.getenv("SUPABASE_URL", "").rstrip("/")
-SUPABASE_KEY         = os.getenv("SUPABASE_ANON_KEY", "") or os.getenv("SUPABASE_KEY", "")
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "") or SUPABASE_KEY
-
-STRIPE_SECRET_KEY    = os.getenv("STRIPE_SECRET_KEY", "")
-
-RESEND_API_KEY       = os.getenv("RESEND_API_KEY", "")
-RESEND_FROM          = os.getenv("RESEND_FROM", "Broquer <hola@broquer.app>")
-RESEND_REPLY_TO      = os.getenv("RESEND_REPLY_TO", "") or ""
-CORREO_WEBHOOK_TOKEN = os.getenv("CORREO_WEBHOOK_TOKEN", "")
-
-# Precio de lista mensual en MXN. Sirve para estimar MRR cuando Stripe no
-# está disponible o cuando la suscripción no trae monto.
-PRECIO_MENSUAL_MXN   = float(os.getenv("PRECIO_MENSUAL_MXN", "499"))
+# Compatibility aliases for the domain logic below. Environment-variable
+# names and privileged credential policy live only in core.config.
+SUPABASE_URL = settings.supabase_url
+SUPABASE_KEY = settings.supabase_anon_key
+SUPABASE_SERVICE_KEY = settings.supabase_service_key
+STRIPE_SECRET_KEY = settings.stripe_secret_key
+RESEND_API_KEY = settings.resend_api_key
+RESEND_FROM = settings.resend_from
+RESEND_REPLY_TO = settings.resend_reply_to
+CORREO_WEBHOOK_TOKEN = settings.correo_webhook_token
+PRECIO_MENSUAL_MXN = settings.monthly_price_mxn
 
 SB_HEADERS = {
     "apikey": SUPABASE_SERVICE_KEY,
@@ -84,47 +82,6 @@ def _mes(valor: Any) -> str:
     if not valor:
         return ""
     return str(valor)[:7]
-
-
-# ── Autenticación ─────────────────────────────────────────────────────────
-async def _user_id_desde_token(request: Request) -> Optional[str]:
-    auth = request.headers.get("authorization", "")
-    if not auth.lower().startswith("bearer "):
-        return None
-    token = auth.split(" ", 1)[1].strip()
-    if not token or not SUPABASE_URL:
-        return None
-    try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            r = await client.get(
-                f"{SUPABASE_URL}/auth/v1/user",
-                headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {token}"},
-            )
-        if r.status_code != 200:
-            return None
-        return (r.json() or {}).get("id")
-    except Exception:
-        return None
-
-
-async def require_admin(request: Request) -> str:
-    """Devuelve el user_id si y solo si es rol=admin. Si no, corta."""
-    uid = await _user_id_desde_token(request)
-    if not uid:
-        raise HTTPException(status_code=401, detail="No autenticado.")
-    try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            r = await client.get(
-                f"{SUPABASE_URL}/rest/v1/usuarios",
-                headers=SB_HEADERS,
-                params={"id": f"eq.{uid}", "select": "rol", "limit": "1"},
-            )
-        filas = r.json() if r.status_code == 200 else []
-    except Exception:
-        filas = []
-    if not filas or (filas[0].get("rol") or "") != "admin":
-        raise HTTPException(status_code=403, detail="Acceso denegado.")
-    return uid
 
 
 # ── Lectura genérica de Supabase ──────────────────────────────────────────
