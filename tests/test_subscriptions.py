@@ -2,7 +2,9 @@
 import unittest
 from unittest.mock import AsyncMock, patch
 
-from core.subscriptions import has_paid_feature_access
+from fastapi import HTTPException
+
+from core.subscriptions import has_paid_feature_access, require_paid_feature_access
 
 
 class SubscriptionAccessTests(unittest.IsolatedAsyncioTestCase):
@@ -33,6 +35,43 @@ class SubscriptionAccessTests(unittest.IsolatedAsyncioTestCase):
             new=AsyncMock(return_value=[]),
         ):
             self.assertFalse(await has_paid_feature_access("user-1"))
+
+    async def test_request_guard_returns_trusted_user_for_paid_access(self):
+        request = object()
+        with (
+            patch(
+                "core.subscriptions.require_user_id",
+                new=AsyncMock(return_value="user-1"),
+            ),
+            patch(
+                "core.subscriptions.has_paid_feature_access",
+                new=AsyncMock(return_value=True),
+            ),
+        ):
+            self.assertEqual(await require_paid_feature_access(request), "user-1")
+
+    async def test_request_guard_returns_402_without_paid_access(self):
+        request = object()
+        with (
+            patch(
+                "core.subscriptions.require_user_id",
+                new=AsyncMock(return_value="user-1"),
+            ),
+            patch(
+                "core.subscriptions.has_paid_feature_access",
+                new=AsyncMock(return_value=False),
+            ),
+        ):
+            with self.assertRaises(HTTPException) as ctx:
+                await require_paid_feature_access(
+                    request,
+                    detail="La firma electrónica es parte de Broquer Max.",
+                )
+        self.assertEqual(ctx.exception.status_code, 402)
+        self.assertEqual(
+            ctx.exception.detail,
+            "La firma electrónica es parte de Broquer Max.",
+        )
 
 
 if __name__ == "__main__":
