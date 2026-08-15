@@ -1,8 +1,11 @@
 """Regression tests for Broquer's shared platform contracts."""
 import os
 import unittest
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
+from fastapi import HTTPException
+
+from core.admin import require_admin
 from core.config import Settings
 from core.database import upsert_rows
 from core.http import UnsafePublicURL, assert_public_http_url
@@ -101,6 +104,36 @@ class DatabaseContractTests(unittest.IsolatedAsyncioTestCase):
                     )
 
 
+class AdminAuthorizationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_admin_role_is_allowed(self):
+        request = object()
+        with (
+            patch("core.admin.require_user_id", new=AsyncMock(return_value="user-1")),
+            patch("core.admin.get_rows", new=AsyncMock(return_value=[{"rol": "admin"}])),
+        ):
+            self.assertEqual(await require_admin(request), "user-1")
+
+    async def test_non_admin_role_is_denied(self):
+        request = object()
+        with (
+            patch("core.admin.require_user_id", new=AsyncMock(return_value="user-1")),
+            patch("core.admin.get_rows", new=AsyncMock(return_value=[{"rol": "agente"}])),
+        ):
+            with self.assertRaises(HTTPException) as ctx:
+                await require_admin(request)
+        self.assertEqual(ctx.exception.status_code, 403)
+
+    async def test_database_failure_is_fail_closed(self):
+        request = object()
+        with (
+            patch("core.admin.require_user_id", new=AsyncMock(return_value="user-1")),
+            patch("core.admin.get_rows", new=AsyncMock(side_effect=RuntimeError("db down"))),
+        ):
+            with self.assertRaises(HTTPException) as ctx:
+                await require_admin(request)
+        self.assertEqual(ctx.exception.status_code, 503)
+
+
 class ModuleContractTests(unittest.TestCase):
     def test_valid_module_definition(self):
         definition = ModuleDefinition(
@@ -138,7 +171,7 @@ class ModuleContractTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             ModuleDefinition(
                 key="equipos",
-                name="Equipos",
+                name="Equipos de trabajo.",
                 description="Equipos de trabajo.",
                 permissions=("equipo.ver", "equipo.ver"),
             )
