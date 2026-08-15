@@ -28,10 +28,13 @@ jobs:
         run: >-
           python -m compileall -q core limites.py
           routers/bolsa.py routers/staging.py routers/correo.py routers/video.py
-          routers/whatsapp_chatgpt.py
+          routers/whatsapp_chatgpt.py scripts/architecture_debt.py
 
       - name: Run tests
         run: python -m unittest discover -s tests -p 'test_*.py'
 
       - name: Audit current statistics UI
         run: python audit.py estadisticas.html
+
+      - name: Report architecture debt
+        run: python scripts/architecture_debt.py
