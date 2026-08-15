@@ -5,7 +5,7 @@ from limites import exigir_cupo, exigir_sesion
 from pydantic import BaseModel
 from core.auth import get_user_id_from_token
 from core.config import settings
-from core.database import post_rows
+from core.database import get_rows, post_rows
 from core.legacy_main_config import legacy_main_settings
 import httpx
 import os
@@ -12443,39 +12443,33 @@ async def admin_user_uso(user_id: str, request: Request, dias: int = 30):
     # 1) usage_logs en el rango
     usage_rows: List[Dict[str, Any]] = []
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            r = await client.get(
-                f"{SUPABASE_URL}/rest/v1/usage_logs",
-                headers=sb_headers,
-                params={
-                    "user_id": f"eq.{user_id}",
-                    "ts": f"gte.{desde_iso}",
-                    "select": "modulo,herramienta,proveedor,modelo,tokens_in,tokens_out,unidades,costo_usd,ts",
-                    "order": "ts.desc",
-                    "limit": "20000",
-                },
-            )
-            if r.status_code == 200:
-                usage_rows = r.json() or []
+        usage_rows = await get_rows(
+            "usage_logs",
+            {
+                "user_id": f"eq.{user_id}",
+                "ts": f"gte.{desde_iso}",
+                "select": "modulo,herramienta,proveedor,modelo,tokens_in,tokens_out,unidades,costo_usd,ts",
+                "order": "ts.desc",
+                "limit": "20000",
+            },
+            timeout=15,
+        )
     except Exception:
         usage_rows = []
 
     # 2) module_sessions en el rango
     session_rows: List[Dict[str, Any]] = []
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            r = await client.get(
-                f"{SUPABASE_URL}/rest/v1/module_sessions",
-                headers=sb_headers,
-                params={
-                    "user_id": f"eq.{user_id}",
-                    "ts": f"gte.{desde_iso}",
-                    "select": "modulo,segundos,ts",
-                    "limit": "50000",
-                },
-            )
-            if r.status_code == 200:
-                session_rows = r.json() or []
+        session_rows = await get_rows(
+            "module_sessions",
+            {
+                "user_id": f"eq.{user_id}",
+                "ts": f"gte.{desde_iso}",
+                "select": "modulo,segundos,ts",
+                "limit": "50000",
+            },
+            timeout=15,
+        )
     except Exception:
         session_rows = []
 
