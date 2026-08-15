@@ -30,13 +30,11 @@ PATTERNS = {
 }
 
 # Ratcheted after verified cleanup runs. These are maximums, never goals.
-# direct_supabase_rest starts with a deliberately loose discovery ceiling; the
-# first verified CI inventory is immediately ratcheted to the exact count.
 BASELINE_MAX = {
     "direct_env_reads": 1,
     "duplicated_auth_helpers": 0,
     "service_key_fallbacks": 0,
-    "direct_supabase_rest": 20,
+    "direct_supabase_rest": 4,
     "fail_open_webhook_secrets": 0,
     "fail_open_entitlements": 0,
 }
