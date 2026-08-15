@@ -3,41 +3,45 @@ Límite de peticiones para los endpoints que cuestan dinero.
 
 POR QUÉ EXISTE
 Los endpoints de IA (Broq, AVM, descripciones, transcripción) y los que
-levantan un navegador para generar PDF responden a cualquiera en internet.
-Sin un tope, una sola persona puede dejar corriendo un script toda la noche y
-amanecer con una cuenta de Anthropic impagable.
+levantan un navegador para generar PDF pueden tener un costo material. Este
+módulo limita abuso y concentra la política de sesión que protege esas rutas.
 
 CÓMO FUNCIONA
 Una ventana deslizante de una hora, en memoria. A quien viene con sesión se le
-cuenta por usuario y se le da un tope amplio. A quien viene sin sesión se le
-cuenta por dirección IP y se le da un tope corto: suficiente para que la app de
-iOS que todavía no manda el token siga funcionando con normalidad, pero muy
-lejos de lo que necesitaría alguien para abusar.
+cuenta por usuario y se le da un tope amplio. Mientras la compatibilidad legacy
+mantenga habilitado el acceso anónimo, a quien viene sin sesión se le cuenta
+por dirección IP y se le aplica un tope corto.
+
+La configuración vive en core.config. ``EXIGIR_SESION_IA`` conserva por ahora
+su comportamiento histórico (apagado si no se define) para no romper clientes
+legacy sin verificar antes su estado, pero el modo anónimo queda señalado de
+forma explícita en logs para que no pase inadvertido.
 
 LÍMITES CONOCIDOS
-Vive en la memoria del proceso. Si algún día corren dos instancias en Railway,
-cada una lleva su propia cuenta y el tope real se duplica. Para lo que hace
-falta aquí —cortar el abuso automatizado, no cobrar por uso— alcanza y sobra.
-Se reinicia en cada despliegue, cosa que tampoco importa.
+Vive en la memoria del proceso. Con varias instancias cada una lleva su propia
+cuenta; por tanto este mecanismo mitiga abuso, pero no es un medidor distribuido
+ni una base adecuada para facturación por uso.
 """
 
-import os
+import logging
 import time
 from collections import deque
 
 from fastapi import HTTPException, Request
 
-# Topes por hora. Se pueden ajustar desde Railway sin tocar código.
-try:
-    TOPE_ANONIMO = max(1, int(os.environ.get("TOPE_HORA_ANONIMO", "40")))
-except Exception:
-    TOPE_ANONIMO = 40
-try:
-    TOPE_USUARIO = max(1, int(os.environ.get("TOPE_HORA_USUARIO", "400")))
-except Exception:
-    TOPE_USUARIO = 400
+from core.config import settings
 
+log = logging.getLogger("broquer.limites")
+
+TOPE_ANONIMO = settings.hourly_anonymous_limit
+TOPE_USUARIO = settings.hourly_user_limit
 VENTANA = 3600  # una hora, en segundos
+
+if not settings.ai_require_session:
+    log.warning(
+        "EXIGIR_SESION_IA está desactivado: endpoints costosos protegidos por "
+        "limites.py todavía pueden aceptar tráfico anónimo por compatibilidad legacy."
+    )
 
 _marcas: dict[str, deque] = {}
 _ultima_limpieza = 0.0
@@ -48,8 +52,8 @@ def _llave(request: Request, user_id: str | None) -> tuple[str, int]:
     if user_id:
         return f"u:{user_id}", TOPE_USUARIO
 
-    # Railway entrega la IP real en x-forwarded-for; request.client sería la
-    # del proxy y contaría a todo el mundo junto.
+    # Railway entrega la IP real en x-forwarded-for. Este valor solo debe
+    # considerarse una señal de rate limiting, nunca una identidad/autorización.
     reenviada = request.headers.get("x-forwarded-for", "")
     if reenviada:
         ip = reenviada.split(",")[0].strip()
@@ -61,8 +65,7 @@ def _llave(request: Request, user_id: str | None) -> tuple[str, int]:
 
 
 def _limpiar(ahora: float) -> None:
-    """Tira las llaves que ya no tienen marcas vivas, para que el diccionario
-    no crezca sin fin. Se hace de vez en cuando, no en cada petición."""
+    """Descarta llaves sin marcas vivas para limitar el crecimiento en memoria."""
     global _ultima_limpieza
     if ahora - _ultima_limpieza < 300:
         return
@@ -76,10 +79,7 @@ def _limpiar(ahora: float) -> None:
 
 
 def exigir_cupo(request: Request, user_id: str | None = None) -> None:
-    """Cuenta esta petición y corta con 429 si ya se pasó del tope.
-
-    No devuelve nada: o deja pasar, o levanta la excepción.
-    """
+    """Cuenta esta petición y corta con 429 si ya se pasó del tope."""
     ahora = time.time()
     _limpiar(ahora)
 
@@ -101,19 +101,14 @@ def exigir_cupo(request: Request, user_id: str | None = None) -> None:
 
 
 def exigir_sesion(request: Request, user_id: str | None) -> None:
-    """Corta si no hay sesión, PERO solo cuando el interruptor está encendido.
+    """Exige sesión cuando la política canónica lo tiene habilitado.
 
-    El interruptor es la variable EXIGIR_SESION_IA en Railway. Existe porque la
-    app de iOS lleva el JavaScript dentro del paquete: hasta que la versión
-    nueva no esté publicada y actualizada, un usuario con la app vieja no manda
-    la sesión y se quedaría sin Broq. Con esto se enciende el día que convenga,
-    sin volver a desplegar, y se apaga igual de rápido si algo sale mal.
-
-    Apagado (por omisión) el tope por hora sigue actuando, así que el abuso
-    sigue acotado aunque todavía no se exija sesión.
+    El valor se resuelve una sola vez desde ``core.config`` al arrancar el
+    proceso. Para cambiarlo en producción se actualiza ``EXIGIR_SESION_IA`` y
+    se reinicia/re despliega el servicio, evitando que la política cambie a
+    mitad de vida del proceso.
     """
     if user_id:
         return
-    encendido = os.environ.get("EXIGIR_SESION_IA", "").strip().lower() in ("1", "true", "si", "sí", "on")
-    if encendido:
+    if settings.ai_require_session:
         raise HTTPException(status_code=401, detail="Inicia sesión para usar esta función.")
