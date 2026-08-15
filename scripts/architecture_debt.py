@@ -45,7 +45,7 @@ BASELINE_MAX = {
     "direct_env_reads": 0,
     "duplicated_auth_helpers": 0,
     "service_key_fallbacks": 0,
-    "direct_supabase_rest": 2,
+    "direct_supabase_rest": 1,
     "embedded_jwt_secrets": 0,
     "fail_open_webhook_secrets": 0,
     "fail_open_entitlements": 0,
