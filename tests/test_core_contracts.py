@@ -91,6 +91,27 @@ class SettingsTests(unittest.TestCase):
         self.assertEqual(settings.meta_login_config_id, "legacy-config")
         self.assertEqual(settings.meta_graph_version, "v23.0")
 
+    def test_admin_console_configuration_is_centralized(self):
+        env = {
+            "STRIPE_SECRET_KEY": "stripe-secret",
+            "RESEND_REPLY_TO": "reply@broquer.app",
+            "CORREO_WEBHOOK_TOKEN": "webhook-secret",
+            "PRECIO_MENSUAL_MXN": "599.50",
+        }
+        with patch.dict(os.environ, env, clear=True):
+            settings = Settings.from_env()
+
+        self.assertEqual(settings.stripe_secret_key, "stripe-secret")
+        self.assertEqual(settings.resend_reply_to, "reply@broquer.app")
+        self.assertEqual(settings.correo_webhook_token, "webhook-secret")
+        self.assertEqual(settings.monthly_price_mxn, 599.50)
+
+    def test_invalid_or_negative_monthly_price_is_safe(self):
+        with patch.dict(os.environ, {"PRECIO_MENSUAL_MXN": "no-numero"}, clear=True):
+            self.assertEqual(Settings.from_env().monthly_price_mxn, 499.0)
+        with patch.dict(os.environ, {"PRECIO_MENSUAL_MXN": "-25"}, clear=True):
+            self.assertEqual(Settings.from_env().monthly_price_mxn, 0.0)
+
 
 class DatabaseContractTests(unittest.IsolatedAsyncioTestCase):
     async def test_upsert_rejects_invalid_conflict_target_before_network_access(self):
