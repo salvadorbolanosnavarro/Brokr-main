@@ -1,55 +1,38 @@
-"""Dry-run Cumplimiento Core migration while protecting PLD business rules."""
+"""Permanent regression guard for migrated Cumplimiento infrastructure."""
 from __future__ import annotations
 
-import ast
 from pathlib import Path
 import unittest
 
-from scripts.refactor_cumplimiento_core import transform
-
 ROOT = Path(__file__).resolve().parents[1]
-PROTECTED_FUNCTIONS = {
-    "_config",
-    "umbral_pesos",
-    "evaluar_operacion",
-    "fecha_limite",
-    "construir_xml",
-}
 
 
-def _function_ast(source: str, name: str) -> str:
-    tree = ast.parse(source)
-    for node in tree.body:
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == name:
-            return ast.dump(node, include_attributes=False)
-    raise AssertionError(f"Protected function not found: {name}")
-
-
-class CumplimientoCoreRefactorTests(unittest.TestCase):
-    def test_transform_migrates_only_infrastructure_and_compiles(self):
+class CumplimientoCoreRegressionTests(unittest.TestCase):
+    def test_router_uses_core_without_changing_pld_contract_markers(self):
         source = (ROOT / "routers" / "cumplimiento.py").read_text(encoding="utf-8")
-        updated = transform(source)
 
-        self.assertIn("from core.auth import require_user_id", updated)
-        self.assertIn("from core.config import settings", updated)
-        self.assertIn("from core.database import get_rows, patch_rows, post_rows", updated)
-        self.assertIn("from core.storage import create_signed_object_url, upload_object", updated)
-        self.assertNotIn("os.getenv", updated)
-        self.assertNotIn("SUPABASE_SERVICE_KEY =", updated)
-        self.assertNotIn("async def get_user_id_from_token", updated)
-        self.assertNotIn("/storage/v1/object/", updated)
-        self.assertIn("APP_URL = settings.app_url", updated)
-        self.assertIn("await upload_object(", updated)
-        self.assertIn("await create_signed_object_url(", updated)
+        self.assertIn("from core.auth import require_user_id", source)
+        self.assertIn("from core.config import settings", source)
+        self.assertIn("from core.database import get_rows, patch_rows, post_rows", source)
+        self.assertIn("from core.storage import create_signed_object_url, upload_object", source)
+        self.assertNotIn("os.getenv", source)
+        self.assertNotIn("SUPABASE_SERVICE_KEY =", source)
+        self.assertNotIn("async def get_user_id_from_token", source)
+        self.assertNotIn("/storage/v1/object/", source)
+        self.assertIn("APP_URL = settings.app_url", source)
+        self.assertIn("await upload_object(", source)
+        self.assertIn("await create_signed_object_url(", source)
 
-        # Legal/business behavior is outside the scope of this refactor.
-        for name in PROTECTED_FUNCTIONS:
-            self.assertEqual(_function_ast(source, name), _function_ast(updated, name), name)
-        self.assertIn('SCHEMA_VERSION = "1.0"', updated)
-        self.assertIn('"valor_uma": 117.31, "umbral_aviso_uma": 8025', updated)
-        self.assertIn('"meses_acumulacion": 6', updated)
-        self.assertIn('"retencion_anios": 10, "dia_limite_aviso": 17', updated)
-        compile(updated, "routers/cumplimiento.py", "exec")
+        # Legal/business rules remain explicit invariants of this router.
+        self.assertIn('SCHEMA_VERSION = "1.0"', source)
+        self.assertIn('"valor_uma": 117.31, "umbral_aviso_uma": 8025', source)
+        self.assertIn('"umbral_identifica_uma": 8025, "meses_acumulacion": 6', source)
+        self.assertIn('"retencion_anios": 10, "dia_limite_aviso": 17', source)
+        self.assertIn("def umbral_pesos(", source)
+        self.assertIn("async def evaluar_operacion(", source)
+        self.assertIn("def fecha_limite(", source)
+        self.assertIn("def construir_xml(", source)
+        compile(source, "routers/cumplimiento.py", "exec")
 
 
 if __name__ == "__main__":
