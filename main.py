@@ -5,6 +5,7 @@ from limites import exigir_cupo, exigir_sesion
 from pydantic import BaseModel
 from core.auth import get_user_id_from_token
 from core.config import settings
+from core.legacy_main_config import legacy_main_settings
 import httpx
 import os
 import time
@@ -237,26 +238,28 @@ def save_config(data: dict):
 
 _config = load_config()
 
-EB_API_KEY       = os.environ.get("EB_API_KEY", "") or _config.get("eb_api_key", "")
-GROQ_API_KEY     = os.environ.get("GROQ_API_KEY", "")
-ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-GEMINI_API_KEY    = os.environ.get("GEMINI_API_KEY", "")
+# Compatibility aliases while main.py is progressively decomposed. All runtime
+# environment names and public/privileged Supabase key policy live in Core.
+EB_API_KEY       = settings.easybroker_api_key or _config.get("eb_api_key", "")
+GROQ_API_KEY     = settings.groq_api_key
+ANTHROPIC_API_KEY = settings.anthropic_api_key
+GEMINI_API_KEY    = settings.gemini_api_key
 EB_BASE          = "https://api.easybroker.com/v1"
 GROQ_BASE        = "https://api.groq.com/openai/v1"
 ANTHROPIC_BASE   = "https://api.anthropic.com/v1"
 GEMINI_BASE      = "https://generativelanguage.googleapis.com/v1beta"
-APIFY_API_KEY = os.environ.get("APIFY_API_KEY", "")
-GOOGLE_PLACES_KEY = os.environ.get("GOOGLE_PLACES_KEY", "")
-SUPABASE_URL      = os.environ.get("SUPABASE_URL", "")
-SUPABASE_KEY      = os.environ.get("SUPABASE_ANON_KEY", "")
-FB_APP_ID     = os.environ.get("FB_APP_ID", "")
-FB_APP_SECRET = os.environ.get("FB_APP_SECRET", "")
-FRONTEND_URL  = os.environ.get("FRONTEND_URL", "https://app.navarroai.com.mx")
+APIFY_API_KEY = settings.apify_api_key
+GOOGLE_PLACES_KEY = settings.google_places_key
+SUPABASE_URL      = settings.supabase_url
+SUPABASE_KEY      = settings.supabase_anon_key
+FB_APP_ID     = settings.legacy_main_fb_app_id
+FB_APP_SECRET = settings.legacy_main_fb_app_secret
+FRONTEND_URL  = settings.legacy_main_frontend_url
 # Banxico SIE — INPC + UDIS para calculadora ISR
-BANXICO_TOKEN     = os.environ.get("BANXICO_TOKEN", "").strip().strip('"').strip("'")
+BANXICO_TOKEN     = settings.banxico_token
 BANXICO_BASE      = "https://www.banxico.org.mx/SieAPIRest/service/v1/series"
-BANXICO_SERIE_UDIS = os.environ.get("BANXICO_SERIE_UDIS", "SP68257")  # Valor de UDIS (diaria)
-BANXICO_SERIE_INPC = os.environ.get("BANXICO_SERIE_INPC", "SP74625")  # INPC mensual base 2Q-jul-2018=100
+BANXICO_SERIE_UDIS = settings.banxico_series_udis  # Valor de UDIS (diaria)
+BANXICO_SERIE_INPC = settings.banxico_series_inpc  # INPC mensual base 2Q-jul-2018=100
 # service_role key — bypasea RLS. Solo para operaciones del backend en nombre
 # del usuario, DESPUÉS de validar su JWT con get_user_id_from_token().
 # NUNCA expongas esta variable al frontend.
@@ -3542,11 +3545,11 @@ class AvmWebSearchRequest(BaseModel):
     estado: str = "Michoacán"
     comentarios: str = ""
 
-SEARCH_TIMEOUT = float(os.environ.get("AVM_SEARCH_TIMEOUT", "18"))
-FETCH_TIMEOUT = float(os.environ.get("AVM_FETCH_TIMEOUT", "10"))
-MAX_SEARCH_RESULTS = int(os.environ.get("AVM_MAX_SEARCH_RESULTS", "16"))
-MAX_URLS_TO_FETCH = int(os.environ.get("AVM_MAX_URLS_TO_FETCH", "8"))
-MAX_TEXT_CHARS_PER_URL = int(os.environ.get("AVM_MAX_TEXT_CHARS_PER_URL", "6500"))
+SEARCH_TIMEOUT = legacy_main_settings.avm_search_timeout
+FETCH_TIMEOUT = legacy_main_settings.avm_fetch_timeout
+MAX_SEARCH_RESULTS = legacy_main_settings.avm_max_search_results
+MAX_URLS_TO_FETCH = legacy_main_settings.avm_max_urls_to_fetch
+MAX_TEXT_CHARS_PER_URL = legacy_main_settings.avm_max_text_chars_per_url
 
 PORTAL_HINTS = {
     "inmuebles24.com": "Inmuebles24",
@@ -3567,9 +3570,9 @@ BLOCKED_FETCH_DOMAINS = {
 }
 
 # ── Firecrawl: scraping con bypass de anti-bot para dominios complejos ──
-FIRECRAWL_API_KEY = os.environ.get("FIRECRAWL_API_KEY", "")
-FIRECRAWL_CONCURRENCY = int(os.environ.get("FIRECRAWL_CONCURRENCY", "5"))
-FIRECRAWL_TIMEOUT = float(os.environ.get("FIRECRAWL_TIMEOUT", "45"))
+FIRECRAWL_API_KEY = legacy_main_settings.firecrawl_api_key
+FIRECRAWL_CONCURRENCY = legacy_main_settings.firecrawl_concurrency
+FIRECRAWL_TIMEOUT = legacy_main_settings.firecrawl_timeout
 
 # Dominios que requieren Firecrawl (DataDome / Cloudflare / antibot fuerte).
 # Si no hay API key, se intenta httpx directo y los 403 se reportan como antes.
@@ -3685,8 +3688,8 @@ def _build_search_queries(req: AvmWebSearchRequest) -> List[str]:
 
 
 async def _search_google_cse(client: httpx.AsyncClient, query: str) -> List[Dict[str, Any]]:
-    key = os.environ.get("GOOGLE_CSE_API_KEY", "") or os.environ.get("GOOGLE_SEARCH_API_KEY", "")
-    cx = os.environ.get("GOOGLE_CSE_ID", "") or os.environ.get("GOOGLE_SEARCH_ENGINE_ID", "")
+    key = legacy_main_settings.google_cse_api_key
+    cx = legacy_main_settings.google_cse_id
     if not key or not cx:
         return []
     r = await client.get("https://www.googleapis.com/customsearch/v1", params={"key": key, "cx": cx, "q": query, "num": 10})
@@ -3701,7 +3704,7 @@ async def _search_google_cse(client: httpx.AsyncClient, query: str) -> List[Dict
 
 
 async def _search_serpapi(client: httpx.AsyncClient, query: str) -> List[Dict[str, Any]]:
-    key = os.environ.get("SERPAPI_API_KEY", "")
+    key = legacy_main_settings.serpapi_api_key
     if not key:
         return []
     r = await client.get("https://serpapi.com/search.json", params={"engine": "google", "q": query, "api_key": key, "num": 10, "hl": "es", "gl": "mx"})
@@ -3716,7 +3719,7 @@ async def _search_serpapi(client: httpx.AsyncClient, query: str) -> List[Dict[st
 
 
 async def _search_brave(client: httpx.AsyncClient, query: str) -> List[Dict[str, Any]]:
-    key = os.environ.get("BRAVE_SEARCH_API_KEY", "")
+    key = legacy_main_settings.brave_search_api_key
     if not key:
         return []
     r = await client.get(
@@ -3735,7 +3738,7 @@ async def _search_brave(client: httpx.AsyncClient, query: str) -> List[Dict[str,
 
 
 async def _search_tavily(client: httpx.AsyncClient, query: str) -> List[Dict[str, Any]]:
-    key = os.environ.get("TAVILY_API_KEY", "")
+    key = legacy_main_settings.tavily_api_key
     if not key:
         return []
     r = await client.post(
@@ -3755,10 +3758,10 @@ async def _search_tavily(client: httpx.AsyncClient, query: str) -> List[Dict[str
 async def _collect_search_candidates(req: AvmWebSearchRequest) -> Dict[str, Any]:
     queries = _build_search_queries(req)
     providers_configured = {
-        "google_cse": bool((os.environ.get("GOOGLE_CSE_API_KEY") or os.environ.get("GOOGLE_SEARCH_API_KEY")) and (os.environ.get("GOOGLE_CSE_ID") or os.environ.get("GOOGLE_SEARCH_ENGINE_ID"))),
-        "serpapi": bool(os.environ.get("SERPAPI_API_KEY")),
-        "brave": bool(os.environ.get("BRAVE_SEARCH_API_KEY")),
-        "tavily": bool(os.environ.get("TAVILY_API_KEY")),
+        "google_cse": bool(legacy_main_settings.google_cse_api_key and legacy_main_settings.google_cse_id),
+        "serpapi": bool(legacy_main_settings.serpapi_api_key),
+        "brave": bool(legacy_main_settings.brave_search_api_key),
+        "tavily": bool(legacy_main_settings.tavily_api_key),
     }
     if not any(providers_configured.values()):
         raise HTTPException(
@@ -4071,7 +4074,7 @@ Responde ÚNICAMENTE JSON válido con esta estructura:
                 "Content-Type": "application/json",
             },
             json={
-                "model": os.environ.get("ANTHROPIC_AVM_MODEL", "claude-sonnet-4-6"),
+                "model": legacy_main_settings.anthropic_avm_model,
                 "max_tokens": 8000,
                 "temperature": 0.05,
                 "system": system_prompt,
@@ -4084,7 +4087,7 @@ Responde ÚNICAMENTE JSON válido con esta estructura:
 
     _resp_json = r.json()
     _track_anthropic(user_id, "avm", "/api/avm-websearch", _resp_json,
-                     modelo=_resp_json.get("model") or os.environ.get("ANTHROPIC_AVM_MODEL", "claude-sonnet-4-6"))
+                     modelo=_resp_json.get("model") or legacy_main_settings.anthropic_avm_model)
     raw = ""
     for block in _resp_json.get("content", []) or []:
         if block.get("type") == "text":
@@ -4481,7 +4484,7 @@ async def generar_contrato(req: ContratoRequest, request: Request):
         try:
             import httpx
             headers = {
-                "Authorization": f"Bearer {os.environ.get('GROQ_API_KEY','')}",
+                "Authorization": f"Bearer {settings.groq_api_key}",
                 "Content-Type": "application/json"
             }
             payload = {
@@ -6063,7 +6066,7 @@ async def _process_with_gemini(img_bytes: bytes, content_type: str, prompt: str)
 
     # Modelos en orden de preferencia — solo v1beta
     _model_names = [m for m in [
-        os.environ.get("GEMINI_IMAGE_MODEL", ""),
+        settings.gemini_image_model,
         "gemini-3.1-flash-image-preview",   # Nano Banana 2
         "gemini-2.5-flash-image",            # Nano Banana
         "gemini-3-pro-image-preview",        # Nano Banana Pro
@@ -6178,7 +6181,7 @@ async def clean_images(
         if gemini_ok > 0:
             _track_gemini_image(user_id, "image-cleaner", "/images/clean",
                                 unidades=gemini_ok,
-                                modelo=os.environ.get("GEMINI_IMAGE_MODEL", "gemini-3.1-flash-image-preview"))
+                                modelo=settings.gemini_image_model)
     except Exception:
         pass
     return {"images": list(results)}
@@ -6216,7 +6219,7 @@ _fb_log = logging.getLogger("broquer.facebook")
 #     python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 
 _PREFIJO_CIFRADO = "enc:v1:"
-_TOKEN_ENC_KEY = os.environ.get("TOKEN_ENC_KEY", "").strip()
+_TOKEN_ENC_KEY = legacy_main_settings.token_enc_key
 _fermet_aviso_dado = False
 
 try:
@@ -6273,7 +6276,7 @@ def descifrar_secreto(valor: str) -> str:
         _fb_log.error("No se pudo descifrar el token: %s", e)
         return ""
 
-FB_API_VERSION = os.environ.get("FB_API_VERSION", "v21.0")
+FB_API_VERSION = legacy_main_settings.fb_api_version
 FB_GRAPH       = f"https://graph.facebook.com/{FB_API_VERSION}"
 
 _FB_REINTENTOS  = 4
@@ -6297,7 +6300,7 @@ _FB_CODIGOS_TOKEN = {102, 190, 463, 467}
 
 # Interruptor de emergencia: si el appsecret_proof rompiera algo en producción
 # se apaga con FB_APPSECRET_PROOF=0 en Railway sin tocar código.
-_FB_USAR_PROOF = os.environ.get("FB_APPSECRET_PROOF", "1").strip().lower() not in ("0", "false", "no")
+_FB_USAR_PROOF = legacy_main_settings.fb_appsecret_proof
 
 
 def _fb_appsecret_proof(token: str) -> str:
@@ -8456,11 +8459,10 @@ async def facebook_campaign_review(request: Request):
 
 # Token que Meta usa para verificar la suscripción. Si no está configurado, el
 # webhook queda cerrado (no se acepta ninguna suscripción a ciegas).
-FB_VERIFY_TOKEN = (os.environ.get("FB_VERIFY_TOKEN", "")
-                   or os.environ.get("META_VERIFY_TOKEN", ""))
+FB_VERIFY_TOKEN = legacy_main_settings.fb_verify_token
 # Secreto para validar la firma. Se cae a FB_APP_SECRET porque los Lead Ads
 # viven en la misma app de Meta que los anuncios.
-_FB_WEBHOOK_SECRET = os.environ.get("FB_WEBHOOK_SECRET", "") or FB_APP_SECRET
+_FB_WEBHOOK_SECRET = legacy_main_settings.fb_webhook_secret or FB_APP_SECRET
 
 
 @app.get("/facebook/leadgen/webhook")
@@ -9460,9 +9462,9 @@ async def facebook_campaign_toggle(request: Request):
 #      cuentas de prueba de la app (/{app_id}/adaccounts). Si no aparece, se
 #      aborta. No hay bandera para saltarse este candado.
 
-FB_QA_ENABLED = os.environ.get("FB_QA_ENABLED", "").strip().lower() in ("1", "true", "yes")
-FB_QA_AD_ACCOUNT_ID = os.environ.get("FB_QA_AD_ACCOUNT_ID", "").strip()
-FB_QA_PAGE_ID = os.environ.get("FB_QA_PAGE_ID", "").strip()
+FB_QA_ENABLED = legacy_main_settings.fb_qa_enabled
+FB_QA_AD_ACCOUNT_ID = legacy_main_settings.fb_qa_ad_account_id
+FB_QA_PAGE_ID = legacy_main_settings.fb_qa_page_id
 
 
 def _qa_imagen_jpeg(color=(120, 150, 200), tam=(600, 600)) -> str:
@@ -9915,22 +9917,22 @@ async def _qa_probar_backoff() -> dict:
 # STRIPE — SUSCRIPCIONES
 # ════════════════════════════════════════════════════════════════
 
-STRIPE_SECRET_KEY      = os.environ.get("STRIPE_SECRET_KEY", "")
-STRIPE_WEBHOOK_SECRET  = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+STRIPE_SECRET_KEY      = settings.stripe_secret_key
+STRIPE_WEBHOOK_SECRET  = legacy_main_settings.stripe_webhook_secret
 
 # IDs de Precios en Stripe (crear en dashboard.stripe.com → Productos → Precios)
-STRIPE_PRICE_PRO       = os.environ.get("STRIPE_PRICE_PRO", "")       # Plan Broquer Pro
-STRIPE_PRICE_AMPI      = os.environ.get("STRIPE_PRICE_AMPI", "")      # Plan AMPI (precio especial)
+STRIPE_PRICE_PRO       = legacy_main_settings.stripe_price_pro       # Plan Broquer Pro
+STRIPE_PRICE_AMPI      = legacy_main_settings.stripe_price_ampi      # Plan AMPI (precio especial)
 
 # ── Broquer para Empresas ────────────────────────────────────────
 # Se cobra en DOS líneas dentro de la misma suscripción de Stripe:
 #   · base  → paquete de 5 usuarios, cantidad siempre 1
 #   · extra → usuario adicional, cantidad = asientos - 5
 # Así el dueño puede subir o bajar lugares sin cambiar de suscripción.
-STRIPE_PRICE_EMPRESA_MENSUAL       = os.environ.get("STRIPE_PRICE_EMPRESA_MENSUAL", "")
-STRIPE_PRICE_EMPRESA_ANUAL         = os.environ.get("STRIPE_PRICE_EMPRESA_ANUAL", "")
-STRIPE_PRICE_EMPRESA_EXTRA_MENSUAL = os.environ.get("STRIPE_PRICE_EMPRESA_EXTRA_MENSUAL", "")
-STRIPE_PRICE_EMPRESA_EXTRA_ANUAL   = os.environ.get("STRIPE_PRICE_EMPRESA_EXTRA_ANUAL", "")
+STRIPE_PRICE_EMPRESA_MENSUAL       = legacy_main_settings.stripe_price_empresa_mensual
+STRIPE_PRICE_EMPRESA_ANUAL         = legacy_main_settings.stripe_price_empresa_anual
+STRIPE_PRICE_EMPRESA_EXTRA_MENSUAL = legacy_main_settings.stripe_price_empresa_extra_mensual
+STRIPE_PRICE_EMPRESA_EXTRA_ANUAL   = legacy_main_settings.stripe_price_empresa_extra_anual
 
 EMPRESA_ASIENTOS_BASE = 5      # lugares incluidos en el precio base
 EMPRESA_ASIENTOS_MAX  = 500    # tope duro para no crear cargos absurdos por error
@@ -10571,7 +10573,7 @@ async def subscription_activate(request: Request):
     Recibe { customer_id, plan_id? } y activa la suscripción en Supabase.
     No requiere JWT — usa una clave secreta interna.
     """
-    ACTIVATE_SECRET = os.environ.get("ACTIVATE_SECRET", "")
+    ACTIVATE_SECRET = legacy_main_settings.activate_secret
     body = await request.json()
 
     # Sin clave configurada NO se activa nada. Antes, si la variable faltaba en
@@ -10796,9 +10798,9 @@ async def subscription_trial_max(request: Request):
 # Agendar demo (público: landing e index) — guarda y avisa por correo
 # ════════════════════════════════════════════════════════════════
 
-DEMO_NOTIF_EMAIL = os.environ.get("DEMO_NOTIF_EMAIL", "hola@broquer.app")
-_RESEND_KEY_DEMO = os.environ.get("RESEND_API_KEY", "")
-_RESEND_FROM_DEMO = os.environ.get("RESEND_FROM", "Broquer <hola@broquer.app>")
+DEMO_NOTIF_EMAIL = legacy_main_settings.demo_notif_email
+_RESEND_KEY_DEMO = settings.resend_api_key
+_RESEND_FROM_DEMO = settings.resend_from
 
 
 class DemoRequest(BaseModel):
@@ -10945,7 +10947,7 @@ async def revenuecat_webhook(request: Request):
     llega aquí ES el user_id de Supabase y no hay que mapear nada.
     """
     # 1. Validar el header de autorización compartido (anti-spoofing)
-    expected_auth = os.environ.get("REVENUECAT_WEBHOOK_AUTH", "")
+    expected_auth = legacy_main_settings.revenuecat_webhook_auth
     # Sin secreto NO se procesa. Antes, con la variable vacía, cualquiera podía
     # mandar un "INITIAL_PURCHASE" falso con el user_id que quisiera.
     if not expected_auth:
@@ -11692,7 +11694,7 @@ def _mig_llave(org_id, user_id):
 
 async def _job_migracion_eb(llave: str, auth_header: str):
     est = _MIGRACIONES[llave]
-    base = f"http://127.0.0.1:{os.getenv('PORT', '8000')}"
+    base = f"http://127.0.0.1:{legacy_main_settings.port}"
     pasos = [
         ("propiedades", "/easybroker/import-all",   {"fotos_diferidas": True}),
         ("contactos",   "/contactos/importar-eb",   None),
@@ -12726,8 +12728,8 @@ async def instagram_feed():
     ahora = time.time()
     if _IG_CACHE["data"] is not None and (ahora - _IG_CACHE["t"]) < 21600:
         return _IG_CACHE["data"]
-    tok = os.getenv("INSTAGRAM_TOKEN")
-    ig_id = os.getenv("IG_USER_ID")
+    tok = legacy_main_settings.instagram_token
+    ig_id = legacy_main_settings.ig_user_id
     if not tok or not ig_id:
         raise HTTPException(status_code=503, detail="Instagram no configurado")
     # Ruta vía app de Facebook (Tech Provider): la cuenta de IG se consulta
