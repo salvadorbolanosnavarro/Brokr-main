@@ -3,6 +3,7 @@ from fastapi import (FastAPI, HTTPException, Query, Request, UploadFile, File,
 from fastapi.middleware.cors import CORSMiddleware
 from limites import exigir_cupo, exigir_sesion
 from pydantic import BaseModel
+from core.config import settings
 import httpx
 import os
 import time
@@ -258,7 +259,7 @@ BANXICO_SERIE_INPC = os.environ.get("BANXICO_SERIE_INPC", "SP74625")  # INPC men
 # service_role key — bypasea RLS. Solo para operaciones del backend en nombre
 # del usuario, DESPUÉS de validar su JWT con get_user_id_from_token().
 # NUNCA expongas esta variable al frontend.
-SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "") or SUPABASE_KEY
+SUPABASE_SERVICE_KEY = settings.supabase_service_key
 # Pagos — Stripe
 
 # In-memory PDF store: token → (bytes, filename). Max 50 entradas.
@@ -474,21 +475,10 @@ async def get_user_id_from_token(request: Request) -> str:
 # todos. El backend usa service key y se brinca la RLS, así que un olvido aquí
 # no truena: silenciosamente crea basura. Por eso va explícito en cada INSERT.
 # ════════════════════════════════════════════════════════════════
-try:
-    from routers.organizaciones import (
-        get_org_id_for_user, get_org_context, permiso_efectivo,
-        exigir_gestion_integraciones,
-    )
-except Exception as _e:
-    print(f"[org] No se pudo importar el contexto de organización: {_e}")
-    async def get_org_id_for_user(user_id: str):
-        return None
-    async def get_org_context(user_id: str):
-        return None
-    def permiso_efectivo(ctx, clave):
-        return False
-    async def exigir_gestion_integraciones(request):
-        return await get_user_id_from_token(request)
+from routers.organizaciones import (
+    get_org_id_for_user, get_org_context, permiso_efectivo,
+    exigir_gestion_integraciones,
+)
 
 
 # Helper: obtiene la EB key de un usuario desde Supabase
