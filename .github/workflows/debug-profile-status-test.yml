@@ -1,0 +1,37 @@
+name: Debug Profile Status Test
+
+on:
+  push:
+    branches:
+      - agent/architecture-cleanup
+    paths:
+      - .debug-profile-status-test-trigger
+
+permissions:
+  contents: read
+
+actions:
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run focused test and capture output
+        shell: bash
+        run: |
+          set +e
+          python -m unittest -v tests.test_main_profile_status_core_refactor > profile-status-test.log 2>&1
+          code=$?
+          cat profile-status-test.log
+          echo "$code" > profile-status-test.exit
+          exit 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: profile-status-test-debug
+          path: |
+            profile-status-test.log
+            profile-status-test.exit
