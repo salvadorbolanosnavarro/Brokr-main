@@ -100,6 +100,22 @@ async def sb_delete(table: str, params: dict) -> bool:
 
 '''
 
+DIAG_START = '''async def _sb_diag(table: str, params: dict) -> tuple[list, str]:
+'''
+DIAG_END = '''\n\nasync def _sb_get_paginado(table: str, params: dict, tope: int = 40000,
+'''
+NEW_DIAG = '''async def _sb_diag(table: str, params: dict) -> tuple[list, str]:
+    """Diagnostic read: unlike sb_get, keep the database error text visible."""
+    try:
+        data = await get_rows(table, params, timeout=25)
+        return data, ""
+    except httpx.HTTPStatusError as exc:
+        r = exc.response
+        return [], f"{r.status_code}: {r.text[:200]}"
+    except Exception as e:
+        return [], str(e)[:200]
+'''
+
 
 def transform(text: str) -> str:
     if "from core.database import delete_rows, get_rows, patch_rows, post_rows, service_headers" in text:
@@ -108,11 +124,17 @@ def transform(text: str) -> str:
         raise RuntimeError("WhatsApp Core import block does not match reviewed source")
     if text.count(HELPERS_START) != 1 or text.count(HELPERS_END) != 1:
         raise RuntimeError("WhatsApp Supabase helper block does not match reviewed source")
+    if text.count(DIAG_START) != 1 or text.count(DIAG_END) != 1:
+        raise RuntimeError("WhatsApp statistics diagnostic reader does not match reviewed source")
 
     text = text.replace(OLD_IMPORT, NEW_IMPORT, 1)
     start = text.index(HELPERS_START)
     end = text.index(HELPERS_END, start)
     text = text[:start] + NEW_HELPERS + text[end:]
+
+    start = text.index(DIAG_START)
+    end = text.index(DIAG_END, start)
+    text = text[:start] + NEW_DIAG + text[end:]
     return text
 
 
