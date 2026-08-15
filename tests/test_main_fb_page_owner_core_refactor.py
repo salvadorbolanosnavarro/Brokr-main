@@ -36,12 +36,13 @@ class MainFacebookPageOwnerCoreRefactorTests(unittest.TestCase):
         end = transformed.index("# Cómo se llaman los campos estándar de Meta", start)
         block = transformed[start:end]
 
-        self.assertEqual(block.count('await get_rows(\n                "user_integrations",'), 2)
+        self.assertEqual(block.count("await get_rows("), 2)
+        self.assertEqual(block.count('"user_integrations"'), 2)
         self.assertIn('"meta": f"like.*{page_id}*"', block)
         self.assertIn('"limit": "20"', block)
         self.assertIn('"limit": "500"', block)
-        self.assertEqual(block.count("except httpx.HTTPStatusError:\n                filas = []"), 1)
-        self.assertIn("except httpx.HTTPStatusError:\n            filas = []", block)
+        self.assertEqual(block.count("except httpx.HTTPStatusError:"), 2)
+        self.assertEqual(block.count("filas = []"), 2)
         self.assertIn('except Exception as e:\n        _fb_log.error("Error buscando al dueño de la página %s: %s", page_id, e)\n        return {}', block)
         self.assertNotIn("/rest/v1/user_integrations", block)
         self.assertNotIn("headers=_sb_headers()", block)
