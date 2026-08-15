@@ -18,7 +18,7 @@ CODE_SUFFIXES = {".py", ".js", ".html", ".css"}
 PATTERNS = {
     "direct_env_reads": re.compile(r"\bos\.(?:getenv|environ)\b"),
     "duplicated_auth_helpers": re.compile(
-        r"(?:async\s+def\s+get_user_id_from_token|async\s+def\s+_get_user_id)\s*\("
+        r"(?:async\s+def\s+get_user_id_from_token|async\s+def\s+_get_user_id|async\s+def\s+_user_id_desde_token)\s*\("
     ),
     "service_key_fallbacks": re.compile(
         r"SUPABASE_SERVICE_KEY\s*=.*\bor\b.*(?:SUPABASE_KEY|SUPABASE_ANON_KEY)"
@@ -38,9 +38,9 @@ PATTERNS = {
 
 # Ratcheted after verified cleanup runs. These are maximums, never goals.
 BASELINE_MAX = {
-    "direct_env_reads": 8,
+    "direct_env_reads": 7,
     "duplicated_auth_helpers": 7,
-    "service_key_fallbacks": 7,
+    "service_key_fallbacks": 6,
     "fail_open_webhook_secrets": 0,
     "fail_open_entitlements": 0,
 }
