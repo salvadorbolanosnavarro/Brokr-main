@@ -497,16 +497,13 @@ async def get_user_rol(user_id: str) -> str:
     if not user_id or not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
         return "agente"
     try:
-        async with httpx.AsyncClient(timeout=8) as client:
-            r = await client.get(
-                f"{SUPABASE_URL}/rest/v1/usuarios",
-                headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
-                params={"id": f"eq.{user_id}", "select": "rol", "limit": "1"}
-            )
-            if r.status_code == 200:
-                rows = r.json()
-                if rows:
-                    return rows[0].get("rol") or "agente"
+        rows = await get_rows(
+            "usuarios",
+            {"id": f"eq.{user_id}", "select": "rol", "limit": "1"},
+            timeout=8,
+        )
+        if rows:
+            return rows[0].get("rol") or "agente"
     except Exception:
         pass
     return "agente"
