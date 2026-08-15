@@ -52,6 +52,11 @@ class Settings:
     ai_require_session: bool
     hourly_anonymous_limit: int
     hourly_user_limit: int
+    apns_key_p8: str
+    apns_key_id: str
+    apns_team_id: str
+    apns_bundle_id: str
+    apns_env: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -102,6 +107,11 @@ class Settings:
             ai_require_session=_env_bool("EXIGIR_SESION_IA", default=False),
             hourly_anonymous_limit=_env_positive_int("TOPE_HORA_ANONIMO", 40),
             hourly_user_limit=_env_positive_int("TOPE_HORA_USUARIO", 400),
+            apns_key_p8=os.getenv("APNS_KEY_P8", "").replace("\\n", "\n").strip(),
+            apns_key_id=os.getenv("APNS_KEY_ID", "").strip(),
+            apns_team_id=os.getenv("APNS_TEAM_ID", "").strip(),
+            apns_bundle_id=os.getenv("APNS_BUNDLE_ID", "com.broquer.app").strip(),
+            apns_env=os.getenv("APNS_ENV", "prod").strip().lower(),
         )
 
     def require_supabase_public(self) -> None:
