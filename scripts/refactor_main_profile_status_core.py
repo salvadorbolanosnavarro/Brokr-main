@@ -33,8 +33,16 @@ def transform_source(source: str) -> str:
     endpoint = source[endpoint_start:endpoint_end]
 
     legacy_url = 'f"{SUPABASE_URL}/rest/v1/user_integrations"'
-    if endpoint.count(legacy_url) != 1:
-        raise RuntimeError("Expected exactly one direct user_integrations read in /profile/status")
+    core_call = 'rows = await get_rows(\n            "user_integrations",'
+    legacy_count = endpoint.count(legacy_url)
+    core_count = endpoint.count(core_call)
+
+    if legacy_count == 0 and core_count == 1:
+        return source
+    if legacy_count != 1 or core_count != 0:
+        raise RuntimeError(
+            "Expected exactly one legacy or one Core user_integrations read in /profile/status"
+        )
 
     block_start = source.index("    # Una sola query trae AMBAS integraciones (EB + FB) del usuario", endpoint_start, endpoint_end)
     block_end = source.index("    # Parsear cada provider", block_start, endpoint_end)
