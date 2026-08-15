@@ -60,6 +60,13 @@ class Settings:
     groq_base: str
     gemini_api_key: str
     gemini_image_model: str
+    easybroker_api_key: str
+    apify_api_key: str
+    google_places_key: str
+    banxico_token: str
+    banxico_series_udis: str
+    banxico_series_inpc: str
+    legacy_main_frontend_url: str
     resend_api_key: str
     resend_from: str
     resend_reply_to: str
@@ -125,6 +132,20 @@ class Settings:
             gemini_image_model=os.getenv(
                 "GEMINI_IMAGE_MODEL",
                 "gemini-3.1-flash-image-preview",
+            ),
+            easybroker_api_key=os.getenv("EB_API_KEY", ""),
+            apify_api_key=os.getenv("APIFY_API_KEY", ""),
+            google_places_key=os.getenv("GOOGLE_PLACES_KEY", ""),
+            banxico_token=(
+                os.getenv("BANXICO_TOKEN", "").strip().strip('"').strip("'")
+            ),
+            banxico_series_udis=os.getenv("BANXICO_SERIE_UDIS", "SP68257"),
+            banxico_series_inpc=os.getenv("BANXICO_SERIE_INPC", "SP74625"),
+            # Temporary compatibility value for main.py while its legacy
+            # frontend default is migrated. Do not reuse this in new modules.
+            legacy_main_frontend_url=os.getenv(
+                "FRONTEND_URL",
+                "https://app.navarroai.com.mx",
             ),
             resend_api_key=os.getenv("RESEND_API_KEY", ""),
             resend_from=os.getenv("RESEND_FROM", "Broquer <hola@broquer.app>"),
