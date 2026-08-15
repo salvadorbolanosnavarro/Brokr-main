@@ -27,6 +27,16 @@ def _env_positive_int(name: str, default: int) -> int:
         return default
 
 
+def _env_nonnegative_int(name: str, default: int) -> int:
+    raw = os.getenv(name, "").strip()
+    if not raw:
+        return default
+    try:
+        return max(0, int(raw))
+    except ValueError:
+        return default
+
+
 def _env_nonnegative_float(name: str, default: float) -> float:
     raw = os.getenv(name, "").strip()
     if not raw:
@@ -45,7 +55,9 @@ class Settings:
     app_url: str
     api_base_url: str
     anthropic_api_key: str
+    anthropic_base: str
     groq_api_key: str
+    groq_base: str
     gemini_api_key: str
     gemini_image_model: str
     resend_api_key: str
@@ -71,6 +83,19 @@ class Settings:
     apns_team_id: str
     apns_bundle_id: str
     apns_env: str
+    wa2_model: str
+    wa2_meta_app_id: str
+    wa2_meta_app_secret: str
+    wa2_verify_token: str
+    wa2_app_secret: str
+    wa2_register_pin: str
+    wa2_webhook_url: str
+    wa2_broquer_api_base: str
+    wa2_zone_default: str
+    wa2_debounce_seconds: int
+    wa2_campaign_limit: int
+    wa2_media_bucket: str
+    wa2_ai_limit: int
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -84,6 +109,8 @@ class Settings:
         # explicitly when this value is missing.
         supabase_service_key = os.getenv("SUPABASE_SERVICE_KEY", "")
 
+        wa2_meta_app_secret = os.getenv("META_APP_SECRET", "")
+
         return cls(
             supabase_url=supabase_url,
             supabase_anon_key=supabase_anon_key,
@@ -91,7 +118,9 @@ class Settings:
             app_url=os.getenv("APP_URL", "https://broquer.app").rstrip("/"),
             api_base_url=os.getenv("API_BASE_URL", "https://api.broquer.app").rstrip("/"),
             anthropic_api_key=os.getenv("ANTHROPIC_API_KEY", ""),
+            anthropic_base=os.getenv("ANTHROPIC_BASE", "https://api.anthropic.com/v1").rstrip("/"),
             groq_api_key=os.getenv("GROQ_API_KEY", ""),
+            groq_base=os.getenv("GROQ_BASE", "https://api.groq.com/openai/v1").rstrip("/"),
             gemini_api_key=os.getenv("GEMINI_API_KEY", ""),
             gemini_image_model=os.getenv(
                 "GEMINI_IMAGE_MODEL",
@@ -130,6 +159,25 @@ class Settings:
             apns_team_id=os.getenv("APNS_TEAM_ID", "").strip(),
             apns_bundle_id=os.getenv("APNS_BUNDLE_ID", "com.broquer.app").strip(),
             apns_env=os.getenv("APNS_ENV", "prod").strip().lower(),
+            wa2_model=os.getenv("WA2_MODEL", "claude-sonnet-4-6"),
+            wa2_meta_app_id=os.getenv("META_APP_ID", "1709238933850389"),
+            wa2_meta_app_secret=wa2_meta_app_secret,
+            wa2_verify_token=os.getenv("WA2_VERIFY_TOKEN", "broquer2_verify"),
+            wa2_app_secret=os.getenv("WA_APP_SECRET", "") or wa2_meta_app_secret,
+            wa2_register_pin=os.getenv("WA_REGISTER_PIN", "142857"),
+            wa2_webhook_url=os.getenv(
+                "WA2_WEBHOOK_URL",
+                "https://api.broquer.app/whatsapp2/webhook",
+            ),
+            wa2_broquer_api_base=os.getenv(
+                "BROQUER_API_BASE",
+                "https://api.broquer.app",
+            ).rstrip("/"),
+            wa2_zone_default=os.getenv("WA2_ZONA_DEFAULT", "America/Mexico_City"),
+            wa2_debounce_seconds=_env_nonnegative_int("WA2_DEBOUNCE_SEG", 8),
+            wa2_campaign_limit=_env_positive_int("WA2_CAMPANA_TOPE", 250),
+            wa2_media_bucket=os.getenv("WA_MEDIA_BUCKET", "wa-media"),
+            wa2_ai_limit=_env_positive_int("WA2_TOPE_IA", 25),
         )
 
     def require_supabase_public(self) -> None:
