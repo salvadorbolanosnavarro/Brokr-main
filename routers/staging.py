@@ -24,6 +24,7 @@ from pydantic import BaseModel
 from core.auth import get_user_id_from_token
 from core.config import settings
 from core.database import post_rows
+from core.http import fetch_public_bytes
 from core.storage import upload_object
 from limites import exigir_cupo, exigir_sesion
 
@@ -239,15 +240,18 @@ async def amueblar(body: AmueblarBody, request: Request):
 
     if body.estilo not in ESTILOS:
         raise HTTPException(400, "Estilo no válido.")
-    if not isinstance(body.foto_url, str) or not body.foto_url.startswith("http"):
+    if not isinstance(body.foto_url, str) or not body.foto_url.startswith(("http://", "https://")):
         raise HTTPException(400, "Falta la foto.")
 
     try:
-        async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
-            response = await client.get(body.foto_url)
-        if response.status_code != 200 or not response.content:
-            raise RuntimeError("status " + str(response.status_code))
-        original = response.content
+        original = await fetch_public_bytes(
+            body.foto_url,
+            timeout=30,
+            max_bytes=20 * 1024 * 1024,
+            max_redirects=3,
+        )
+        if not original:
+            raise RuntimeError("respuesta vacía")
     except Exception as exc:
         log.warning("[staging] no se pudo bajar la foto: %s", exc)
         raise HTTPException(400, "No se pudo leer la foto original.")
