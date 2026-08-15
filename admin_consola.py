@@ -14,8 +14,8 @@
 #   · /webhook/correo-entrante → alta de correos recibidos (webhook de Resend).
 #
 # POR QUÉ ESTÁ AQUÍ Y NO EN main.py
-#   Igual que routers/organizaciones.py: es autónomo, lee sus propias env vars
-#   y se monta con 2 líneas. main.py casi no se toca.
+#   Igual que routers/organizaciones.py: es autónomo y se monta con 2 líneas.
+#   Configuración e infraestructura compartida viven en Core.
 #
 # REGLA DE ORO
 #   Absolutamente todo (menos el webhook de correo entrante, que valida por
@@ -36,31 +36,20 @@ from pydantic import BaseModel
 
 from core.admin import require_admin
 from core.config import settings
+from core.database import get_rows, patch_rows, post_rows
 from core.webhooks import require_shared_secret
 
 router = APIRouter()
 
 # ── Config ────────────────────────────────────────────────────────────────
-# Compatibility aliases for the domain logic below. Environment-variable
-# names and privileged credential policy live only in core.config.
-SUPABASE_URL = settings.supabase_url
-SUPABASE_KEY = settings.supabase_anon_key
-SUPABASE_SERVICE_KEY = settings.supabase_service_key
+# Environment-variable names and privileged credential policy live only in
+# core.config. Domain integrations remain local to this router.
 STRIPE_SECRET_KEY = settings.stripe_secret_key
 RESEND_API_KEY = settings.resend_api_key
 RESEND_FROM = settings.resend_from
 RESEND_REPLY_TO = settings.resend_reply_to
 CORREO_WEBHOOK_TOKEN = settings.correo_webhook_token
 PRECIO_MENSUAL_MXN = settings.monthly_price_mxn
-
-SB_HEADERS = {
-    "apikey": SUPABASE_SERVICE_KEY,
-    "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-}
-
-
-def _sb_write_headers() -> Dict[str, str]:
-    return {**SB_HEADERS, "Content-Type": "application/json", "Prefer": "return=representation"}
 
 
 def _iso(dt: datetime) -> str:
@@ -86,14 +75,9 @@ def _mes(valor: Any) -> str:
 
 # ── Lectura genérica de Supabase ──────────────────────────────────────────
 async def _sb_get(tabla: str, params: Dict[str, str]) -> List[Dict[str, Any]]:
-    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
-        return []
+    """Preserva el comportamiento fail-soft histórico usando Core para el I/O."""
     try:
-        async with httpx.AsyncClient(timeout=25) as client:
-            r = await client.get(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=SB_HEADERS, params=params)
-        if r.status_code != 200:
-            return []
-        return r.json() or []
+        return await get_rows(tabla, params, timeout=25)
     except Exception:
         return []
 
@@ -170,7 +154,6 @@ async def admin_panorama(request: Request, dias: int = 30):
     mrr = round(suscritos * PRECIO_MENSUAL_MXN, 2)
     arpu = round(mrr / suscritos, 2) if suscritos else 0.0
 
-    # Cancelaciones dentro del rango
     cancelados = sum(
         1 for s in subs
         if s.get("status") in ("canceled", "past_due") and str(s.get("updated_at") or "") >= desde_iso
@@ -178,7 +161,6 @@ async def admin_panorama(request: Request, dias: int = 30):
     base_churn = suscritos + cancelados
     churn = round((cancelados / base_churn) * 100, 1) if base_churn else 0.0
 
-    # ── Altas por día ──
     altas: Dict[str, int] = defaultdict(int)
     for u in usuarios:
         d = _dia(u.get("created_at"))
@@ -189,7 +171,6 @@ async def admin_panorama(request: Request, dias: int = 30):
         f = (desde + timedelta(days=i + 1)).strftime("%Y-%m-%d")
         serie_altas.append({"fecha": f, "n": altas.get(f, 0)})
 
-    # ── Embudo de activación (sobre toda la base) ──
     con_prop = {p.get("user_id") for p in props if p.get("user_id")}
     con_contacto = {c.get("user_id") for c in contactos if c.get("user_id")}
     con_integracion = {i.get("user_id") for i in integraciones if i.get("user_id")}
@@ -202,7 +183,6 @@ async def admin_panorama(request: Request, dias: int = 30):
         {"paso": "Se suscribió",        "n": suscritos},
     ]
 
-    # ── Top de módulos ──
     por_modulo: Dict[str, Dict[str, Any]] = {}
     for s in sesiones:
         m = s.get("modulo") or "desconocido"
@@ -216,7 +196,6 @@ async def admin_panorama(request: Request, dias: int = 30):
         key=lambda x: x["segundos"], reverse=True
     )[:12]
 
-    # ── Cohortes de retención por mes de registro ──
     cohortes_map: Dict[str, Dict[str, Any]] = {}
     for u in usuarios:
         m = _mes(u.get("created_at"))
@@ -234,7 +213,6 @@ async def admin_panorama(request: Request, dias: int = 30):
         c["retencion_pct"] = round(c["activos"] * 100 / base, 1)
         c["conversion_pct"] = round(c["suscritos"] * 100 / base, 1)
 
-    # ── Los 10 usuarios que más consumen IA (para vigilar margen) ──
     costo_user: Dict[str, float] = defaultdict(float)
     for r in uso:
         if r.get("user_id"):
@@ -324,7 +302,6 @@ async def admin_ingresos(request: Request, dias: int = 30):
 
     mrr = round(len(activas) * PRECIO_MENSUAL_MXN, 2)
 
-    # ── Cobros reales de Stripe ──
     cobros: List[Dict[str, Any]] = []
     ingresos_periodo = 0.0
     stripe_ok = bool(STRIPE_SECRET_KEY)
@@ -359,7 +336,6 @@ async def admin_ingresos(request: Request, dias: int = 30):
         except Exception:
             stripe_ok = False
 
-    # ── CFDI registrados ──
     cfdi = await _sb_get("facturas_cfdi", {"select": "*", "order": "created_at.desc", "limit": "2000"})
     cfdi_por_cobro = {c.get("stripe_invoice_id"): c for c in cfdi if c.get("stripe_invoice_id")}
     for c in cobros:
@@ -419,15 +395,17 @@ async def admin_facturas_marcar(req: CfdiReq, request: Request):
     }
     fila = {k: v for k, v in fila.items() if v is not None}
 
-    async with httpx.AsyncClient(timeout=15) as client:
-        r = await client.post(
-            f"{SUPABASE_URL}/rest/v1/facturas_cfdi",
-            headers={**_sb_write_headers(), "Prefer": "resolution=merge-duplicates,return=representation"},
-            json=fila,
+    try:
+        filas = await post_rows(
+            "facturas_cfdi",
+            fila,
+            prefer="resolution=merge-duplicates,return=representation",
+            timeout=15,
         )
-    if r.status_code not in (200, 201):
-        raise HTTPException(status_code=500, detail=f"No se pudo guardar la factura: {r.text[:200]}")
-    return {"ok": True, "factura": (r.json() or [{}])[0]}
+    except Exception as exc:
+        detail = str(exc)[:200] or "error de Supabase"
+        raise HTTPException(status_code=500, detail=f"No se pudo guardar la factura: {detail}")
+    return {"ok": True, "factura": (filas or [{}])[0]}
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -582,18 +560,10 @@ def _texto_a_html(txt: str) -> str:
 
 async def _guardar_correo(fila: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            r = await client.post(
-                f"{SUPABASE_URL}/rest/v1/correos",
-                headers=_sb_write_headers(),
-                json=fila,
-            )
-        if r.status_code in (200, 201):
-            filas = r.json() or []
-            return filas[0] if filas else None
+        filas = await post_rows("correos", fila, timeout=15)
+        return filas[0] if filas else None
     except Exception:
-        pass
-    return None
+        return None
 
 
 async def _enviar_resend(para: List[str], asunto: str, cuerpo_html: str,
@@ -733,13 +703,14 @@ class CorreoLeidoReq(BaseModel):
 @router.post("/admin/correo/leido")
 async def admin_correo_leido(req: CorreoLeidoReq, request: Request):
     await require_admin(request)
-    async with httpx.AsyncClient(timeout=10) as client:
-        r = await client.patch(
-            f"{SUPABASE_URL}/rest/v1/correos?id=eq.{req.id}",
-            headers={**SB_HEADERS, "Content-Type": "application/json", "Prefer": "return=minimal"},
-            json={"leido": bool(req.leido)},
+    try:
+        await patch_rows(
+            "correos",
+            {"id": f"eq.{req.id}"},
+            {"leido": bool(req.leido)},
+            timeout=10,
         )
-    if r.status_code not in (200, 204):
+    except Exception:
         raise HTTPException(status_code=500, detail="No se pudo marcar el correo.")
     return {"ok": True}
 
@@ -775,7 +746,6 @@ async def webhook_correo_entrante(request: Request):
 
     cuerpo = datos.get("text") or datos.get("html") or ""
 
-    # Si el remitente ya es usuario de Broquer, se amarra el correo a su cuenta.
     user_id = None
     if de_email:
         filas = await _sb_get("usuarios", {"email": f"eq.{de_email}", "select": "id", "limit": "1"})
@@ -802,7 +772,7 @@ async def admin_consola_salud(request: Request):
     await require_admin(request)
     return {
         "ok": True,
-        "supabase": bool(SUPABASE_URL and SUPABASE_SERVICE_KEY),
+        "supabase": bool(settings.supabase_url and settings.supabase_service_key),
         "stripe": bool(STRIPE_SECRET_KEY),
         "resend": bool(RESEND_API_KEY),
         "correo_entrante": bool(CORREO_WEBHOOK_TOKEN),
