@@ -16,7 +16,7 @@ class WhatsAppConfigAuthRegressionTests(unittest.TestCase):
         self.assertNotIn("os.environ", source)
         self.assertNotIn("async def get_user_id_from_token", source)
         self.assertNotIn("or SUPABASE_ANON_KEY", source)
-        self.assertIn("SUPABASE_SERVICE_KEY = settings.supabase_service_key", source)
+        self.assertNotIn("SUPABASE_SERVICE_KEY", source)
         self.assertIn("WA2_MODEL         = settings.wa2_model", source)
         self.assertIn("META_APP_ID     = settings.wa2_meta_app_id", source)
         self.assertIn("WA2_VERIFY_TOKEN = settings.wa2_verify_token", source)
@@ -25,9 +25,8 @@ class WhatsAppConfigAuthRegressionTests(unittest.TestCase):
         self.assertIn("WA2_CAMPANA_TOPE = settings.wa2_campaign_limit", source)
         self.assertIn("WA2_TOPE_IA = settings.wa2_ai_limit", source)
         self.assertIn('return await require_user_id(request, detail="No autorizado")', source)
-        # Database helpers remain a separate migration cut.
-        self.assertIn("def _sb_headers() -> dict:", source)
-        self.assertIn("async def sb_get(", source)
+        self.assertIn("from core.database import delete_rows, get_rows, patch_rows, post_rows", source)
+        self.assertIn("from core.storage import delete_objects, upload_object", source)
         compile(source, "whatsapp.py", "exec")
 
 
