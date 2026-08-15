@@ -23,10 +23,10 @@ class FinanzasStorageRegressionTests(unittest.TestCase):
         self.assertIn("await delete_object(BUCKET, ruta, timeout=20)", source)
         self.assertIn("await upload_object(", source)
         self.assertIn("await create_signed_object_url(", source)
-        # Anthropic ticket extraction and PDF design intentionally remain
-        # separate concerns; this guard must not hide unfinished migration.
+        # Anthropic ticket extraction remains domain-local by design; PDF
+        # colors are now canonical too.
         self.assertIn("https://api.anthropic.com/v1/messages", source)
-        self.assertIn("_PDF_TOKENS = {", source)
+        self.assertIn("_PDF_TOKENS = pdf_palette()", source)
         compile(source, "routers/finanzas.py", "exec")
 
 
