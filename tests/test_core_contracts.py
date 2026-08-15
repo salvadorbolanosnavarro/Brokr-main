@@ -41,6 +41,37 @@ class SettingsTests(unittest.TestCase):
 
         self.assertEqual(settings.supabase_anon_key, "legacy-anon")
 
+    def test_email_secret_prefers_explicit_secret(self):
+        env = {
+            "SUPABASE_URL": "https://example.supabase.co",
+            "SUPABASE_ANON_KEY": "anon",
+            "SUPABASE_SERVICE_KEY": "service",
+            "CORREO_SECRET": "correo-secret",
+        }
+        with patch.dict(os.environ, env, clear=True):
+            settings = Settings.from_env()
+
+        self.assertEqual(settings.require_correo_secret(), "correo-secret")
+
+    def test_email_secret_can_fall_back_to_service_key_but_never_anon(self):
+        env = {
+            "SUPABASE_URL": "https://example.supabase.co",
+            "SUPABASE_ANON_KEY": "anon",
+            "SUPABASE_SERVICE_KEY": "service",
+        }
+        with patch.dict(os.environ, env, clear=True):
+            settings = Settings.from_env()
+        self.assertEqual(settings.require_correo_secret(), "service")
+
+        env_without_service = {
+            "SUPABASE_URL": "https://example.supabase.co",
+            "SUPABASE_ANON_KEY": "anon",
+        }
+        with patch.dict(os.environ, env_without_service, clear=True):
+            settings = Settings.from_env()
+        with self.assertRaises(RuntimeError):
+            settings.require_correo_secret()
+
 
 class ModuleContractTests(unittest.TestCase):
     def test_valid_module_definition(self):
