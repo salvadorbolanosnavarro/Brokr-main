@@ -42,7 +42,7 @@ PATTERN_EXEMPTIONS = {
 
 # Ratcheted after verified cleanup runs. These are maximums, never goals.
 BASELINE_MAX = {
-    "direct_env_reads": 1,
+    "direct_env_reads": 0,
     "duplicated_auth_helpers": 0,
     "service_key_fallbacks": 0,
     "direct_supabase_rest": 2,
