@@ -9,6 +9,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 
 MIGRATED_MODULES = (
+    "admin_consola.py",
     "limites.py",
     "push.py",
     "routers/bolsa.py",
@@ -27,6 +28,7 @@ FORBIDDEN_PATTERNS = {
     ),
     "duplicated auth helper": re.compile(r"async\s+def\s+get_user_id_from_token\s*\("),
     "duplicated service headers": re.compile(r"def\s+_(?:sb_)?headers\s*\("),
+    "direct Supabase REST I/O": re.compile(r"/rest/v1/"),
 }
 
 
