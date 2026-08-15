@@ -41,14 +41,19 @@ from fastapi import APIRouter, Request, HTTPException, UploadFile, File, Form
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
+from core.auth import require_user_id
+from core.config import settings
+from core.database import delete_rows, get_rows, patch_rows, post_rows, service_headers
+
 router = APIRouter(prefix="/finanzas", tags=["finanzas"])
 log = logging.getLogger("broquer.finanzas")
 
-# ── Config (mismas env vars que main.py) ──────────────────────────────────
-SUPABASE_URL         = os.getenv("SUPABASE_URL", "").rstrip("/")
-SUPABASE_KEY         = os.getenv("SUPABASE_ANON_KEY", "") or os.getenv("SUPABASE_KEY", "")
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "") or SUPABASE_KEY
-ANTHROPIC_API_KEY    = os.getenv("ANTHROPIC_API_KEY", "")
+# ── Config ────────────────────────────────────────────────────────────────
+# Environment names and privileged credential policy live only in Core.
+SUPABASE_URL = settings.supabase_url
+SUPABASE_KEY = settings.supabase_anon_key
+SUPABASE_SERVICE_KEY = settings.supabase_service_key
+ANTHROPIC_API_KEY = settings.anthropic_api_key
 
 BUCKET = "fin-comprobantes"
 MAX_BYTES = 10 * 1024 * 1024
@@ -75,86 +80,69 @@ CATEGORIAS_SEMILLA = [
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# ACCESO A SUPABASE (service key — se brinca RLS, por eso validamos antes)
+# ACCESO A SUPABASE — compatibilidad sobre Core
 # ══════════════════════════════════════════════════════════════════════════
 
 def _headers(prefer: Optional[str] = None) -> Dict[str, str]:
-    h = {
-        "apikey": SUPABASE_SERVICE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-        "Content-Type": "application/json",
-    }
-    if prefer:
-        h["Prefer"] = prefer
-    return h
+    # Temporary compatibility adapter for the Storage code below. Database
+    # operations themselves use core.database directly.
+    return service_headers(prefer=prefer)
 
 
 async def _sb_get(tabla: str, params: dict) -> List[dict]:
-    async with httpx.AsyncClient(timeout=15) as c:
-        r = await c.get(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_headers(), params=params)
-        if r.status_code != 200:
-            log.warning("GET %s -> %s %s", tabla, r.status_code, r.text[:180])
-            return []
-        return r.json()
+    try:
+        return await get_rows(tabla, params, timeout=15)
+    except httpx.HTTPStatusError as exc:
+        response = exc.response
+        log.warning("GET %s -> %s %s", tabla, response.status_code, response.text[:180])
+        return []
+    except RuntimeError:
+        # Preserve the historical read contract while still denying privileged
+        # access when service-role configuration is absent.
+        return []
 
 
 async def _sb_post(tabla: str, payload, prefer: str = "return=representation") -> List[dict]:
-    async with httpx.AsyncClient(timeout=20) as c:
-        r = await c.post(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_headers(prefer), json=payload)
-        if r.status_code not in (200, 201, 204):
-            log.warning("POST %s -> %s %s", tabla, r.status_code, r.text[:180])
-            raise HTTPException(500, "No se pudo guardar. Intenta de nuevo.")
-        try:
-            return r.json()
-        except Exception:
-            return []
+    try:
+        return await post_rows(tabla, payload, prefer=prefer, timeout=20)
+    except httpx.HTTPStatusError as exc:
+        response = exc.response
+        log.warning("POST %s -> %s %s", tabla, response.status_code, response.text[:180])
+        raise HTTPException(500, "No se pudo guardar. Intenta de nuevo.") from exc
+    except RuntimeError as exc:
+        raise HTTPException(500, "No se pudo guardar. Intenta de nuevo.") from exc
 
 
 async def _sb_patch(tabla: str, params: dict, payload: dict) -> List[dict]:
-    async with httpx.AsyncClient(timeout=20) as c:
-        r = await c.patch(f"{SUPABASE_URL}/rest/v1/{tabla}",
-                          headers=_headers("return=representation"),
-                          params=params, json=payload)
-        if r.status_code not in (200, 204):
-            log.warning("PATCH %s -> %s %s", tabla, r.status_code, r.text[:180])
-            raise HTTPException(500, "No se pudo actualizar. Intenta de nuevo.")
-        try:
-            return r.json()
-        except Exception:
-            return []
+    try:
+        return await patch_rows(
+            tabla,
+            params,
+            payload,
+            prefer="return=representation",
+            timeout=20,
+        )
+    except httpx.HTTPStatusError as exc:
+        response = exc.response
+        log.warning("PATCH %s -> %s %s", tabla, response.status_code, response.text[:180])
+        raise HTTPException(500, "No se pudo actualizar. Intenta de nuevo.") from exc
+    except RuntimeError as exc:
+        raise HTTPException(500, "No se pudo actualizar. Intenta de nuevo.") from exc
 
 
 async def _sb_delete(tabla: str, params: dict) -> None:
-    async with httpx.AsyncClient(timeout=20) as c:
-        r = await c.delete(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_headers(), params=params)
-        if r.status_code not in (200, 204):
-            log.warning("DELETE %s -> %s %s", tabla, r.status_code, r.text[:180])
-            raise HTTPException(500, "No se pudo borrar. Intenta de nuevo.")
-
-
-async def get_user_id_from_token(request: Request) -> Optional[str]:
-    """Igual que el de main.py. Duplicado a propósito: este router es autónomo."""
-    auth = request.headers.get("Authorization", "")
-    if not auth.startswith("Bearer "):
-        return None
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        return None
     try:
-        async with httpx.AsyncClient(timeout=8) as c:
-            r = await c.get(f"{SUPABASE_URL}/auth/v1/user",
-                            headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {auth[7:]}"})
-            if r.status_code == 200:
-                return r.json().get("id")
-    except Exception:
-        pass
-    return None
+        await delete_rows(tabla, params, timeout=20)
+    except httpx.HTTPStatusError as exc:
+        response = exc.response
+        log.warning("DELETE %s -> %s %s", tabla, response.status_code, response.text[:180])
+        raise HTTPException(500, "No se pudo borrar. Intenta de nuevo.") from exc
+    except RuntimeError as exc:
+        raise HTTPException(500, "No se pudo borrar. Intenta de nuevo.") from exc
 
 
 async def _uid(request: Request) -> str:
-    uid = await get_user_id_from_token(request)
-    if not uid:
-        raise HTTPException(401, "Inicia sesión para continuar.")
-    return uid
+    return await require_user_id(request, detail="Inicia sesión para continuar.")
 
 
 # ══════════════════════════════════════════════════════════════════════════
