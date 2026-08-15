@@ -27,6 +27,16 @@ def _env_positive_int(name: str, default: int) -> int:
         return default
 
 
+def _env_nonnegative_float(name: str, default: float) -> float:
+    raw = os.getenv(name, "").strip()
+    if not raw:
+        return default
+    try:
+        return max(0.0, float(raw))
+    except ValueError:
+        return default
+
+
 @dataclass(frozen=True)
 class Settings:
     supabase_url: str
@@ -40,8 +50,12 @@ class Settings:
     gemini_image_model: str
     resend_api_key: str
     resend_from: str
+    resend_reply_to: str
     correo_relay_from: str
     correo_secret: str
+    correo_webhook_token: str
+    stripe_secret_key: str
+    monthly_price_mxn: float
     wa_plantilla_otp: str
     meta_app_id: str
     meta_app_secret: str
@@ -85,11 +99,15 @@ class Settings:
             ),
             resend_api_key=os.getenv("RESEND_API_KEY", ""),
             resend_from=os.getenv("RESEND_FROM", "Broquer <hola@broquer.app>"),
+            resend_reply_to=os.getenv("RESEND_REPLY_TO", "").strip(),
             correo_relay_from=os.getenv(
                 "CORREO_RELAY_FROM",
                 "correo@broquer.app",
             ),
             correo_secret=os.getenv("CORREO_SECRET", ""),
+            correo_webhook_token=os.getenv("CORREO_WEBHOOK_TOKEN", "").strip(),
+            stripe_secret_key=os.getenv("STRIPE_SECRET_KEY", "").strip(),
+            monthly_price_mxn=_env_nonnegative_float("PRECIO_MENSUAL_MXN", 499.0),
             wa_plantilla_otp=os.getenv("WA_PLANTILLA_OTP", ""),
             meta_app_id=os.getenv("META_APP_ID", "") or os.getenv("FB_APP_ID", ""),
             meta_app_secret=(
