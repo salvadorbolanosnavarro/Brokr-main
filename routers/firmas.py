@@ -64,6 +64,8 @@ import httpx
 from fastapi import APIRouter, Request, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 
+from core.subscriptions import require_paid_feature_access
+
 router = APIRouter(prefix="/firmas", tags=["firmas"])
 log = logging.getLogger("broquer.firmas")
 
@@ -241,66 +243,15 @@ async def _uid(request: Request) -> str:
     return uid
 
 
-async def _suscripcion_activa(user_id: str) -> bool:
-    """Misma lógica que /subscription/status. Se importa en caliente porque
-    main.py importa este archivo: hacerlo arriba sería un círculo, aquí no
-    porque cuando esto corre main.py ya terminó de cargar.
-
-    Falla ABIERTO a propósito. Si Supabase parpadea, un agente que sí paga
-    no puede quedarse sin poder mandar un contrato a firma. Cobrar de más
-    por un blip de red es peor que regalar un uso."""
-    try:
-        from main import get_user_access_state, get_org_context, get_org_id_for_user
-    except Exception:
-        return True
-
-    try:
-        acceso = await get_user_access_state(user_id)
-        if not acceso.get("activo", True):
-            return False
-        if acceso.get("rol") in ("equipo", "admin"):
-            return True
-
-        ctx = await get_org_context(user_id)
-        if ctx and ctx.get("org_tipo") == "empresa":
-            vigente = ctx.get("org_activo", True)
-            vence = ctx.get("vence_el")
-            if vigente and vence:
-                try:
-                    vigente = datetime.fromisoformat(
-                        str(vence).replace("Z", "+00:00")) > datetime.now(timezone.utc)
-                except Exception:
-                    pass
-            return bool(vigente)
-
-        oid = await get_org_id_for_user(user_id)
-        filas = await _sb_get("suscripciones", {
-            "org_id": f"eq.{oid}", "select": "status",
-            "order": "updated_at.desc", "limit": "1"})
-        if not filas:
-            return False
-        return filas[0].get("status") in ("active", "trialing")
-    except Exception as e:
-        log.warning("no se pudo verificar la suscripción de %s: %s", user_id, e)
-        return True
-
-
 async def _uid_max(request: Request) -> str:
-    """Para las acciones que cuestan dinero de verdad: renderizar hojas,
-    armar PDFs, mandar correos. Ver y descargar lo que ya existe NO pasa por
-    aquí, y las páginas públicas del firmante tampoco: el cliente que firma
-    no es suscriptor de nadie.
-
-    Tampoco se bloquea completar un documento ya enviado. Si a alguien se le
-    vence el plan a media firma, el trámite legal en curso se termina; lo que
-    se corta es empezar uno nuevo."""
-    uid = await _uid(request)
-    if not await _suscripcion_activa(uid):
-        raise HTTPException(
-            402, "La firma electrónica es parte de Broquer Max. Suscríbete para "
-                 "mandar documentos a firma.")
-    return uid
-
+    """Require a trusted session and active Broquer Max entitlement."""
+    return await require_paid_feature_access(
+        request,
+        detail=(
+            "La firma electrónica es parte de Broquer Max. Suscríbete para "
+            "mandar documentos a firma."
+        ),
+    )
 
 def _ip(request: Request) -> str:
     fwd = request.headers.get("x-forwarded-for", "")
