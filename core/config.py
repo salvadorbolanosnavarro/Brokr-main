@@ -10,6 +10,23 @@ from dataclasses import dataclass
 import os
 
 
+def _env_bool(name: str, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None or not raw.strip():
+        return default
+    return raw.strip().lower() in {"1", "true", "si", "sí", "on"}
+
+
+def _env_positive_int(name: str, default: int) -> int:
+    raw = os.getenv(name, "").strip()
+    if not raw:
+        return default
+    try:
+        return max(1, int(raw))
+    except ValueError:
+        return default
+
+
 @dataclass(frozen=True)
 class Settings:
     supabase_url: str
@@ -32,6 +49,9 @@ class Settings:
     meta_graph_version: str
     wa_register_pin: str
     frontend_url: str
+    ai_require_session: bool
+    hourly_anonymous_limit: int
+    hourly_user_limit: int
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -79,6 +99,9 @@ class Settings:
             meta_graph_version=os.getenv("META_GRAPH_VERSION", "v23.0"),
             wa_register_pin=os.getenv("WA_REGISTER_PIN", "123456"),
             frontend_url=os.getenv("FRONTEND_URL", "https://broquer.app").rstrip("/"),
+            ai_require_session=_env_bool("EXIGIR_SESION_IA", default=False),
+            hourly_anonymous_limit=_env_positive_int("TOPE_HORA_ANONIMO", 40),
+            hourly_user_limit=_env_positive_int("TOPE_HORA_USUARIO", 400),
         )
 
     def require_supabase_public(self) -> None:
