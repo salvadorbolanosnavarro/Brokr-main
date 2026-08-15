@@ -23,9 +23,12 @@ class MainSecurityRegressionTests(unittest.TestCase):
             "async def exigir_gestion_integraciones(request):\n        return await get_user_id_from_token(request)",
             source,
         )
-        # Broad env/auth migration is deliberately a later cut.
+        # Broad environment migration is deliberately a later cut. Shared
+        # authentication was centralized afterwards and is guarded separately
+        # by test_main_auth_refactor.py.
         self.assertIn('EB_API_KEY       = os.environ.get("EB_API_KEY", "")', source)
-        self.assertIn("async def get_user_id_from_token", source)
+        self.assertIn("from core.auth import get_user_id_from_token", source)
+        self.assertNotIn("async def get_user_id_from_token", source)
         compile(source, "main.py", "exec")
 
 
