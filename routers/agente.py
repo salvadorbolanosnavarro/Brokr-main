@@ -32,6 +32,7 @@ from pydantic import BaseModel
 
 from core.auth import get_user_id_from_token
 from core.config import settings
+from core.database import get_rows, patch_rows, post_rows
 
 router = APIRouter()
 
@@ -42,19 +43,83 @@ ANTHROPIC_BASE       = "https://api.anthropic.com/v1"
 GROQ_API_KEY         = settings.groq_api_key
 GROQ_BASE            = "https://api.groq.com/openai/v1"
 SUPABASE_URL         = settings.supabase_url
-SUPABASE_SERVICE_KEY = settings.supabase_service_key
 
 AGENT_MODEL    = "claude-sonnet-4-6"   # Sonnet 4.6 por default (preferencia del usuario)
 MAX_TURNS      = 8                     # más pasos para resolver tareas encadenadas dentro de la app
 MAX_TOKENS     = 2200
 
 
-def _sb_headers() -> dict:
-    return {
-        "apikey": SUPABASE_SERVICE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-        "Content-Type": "application/json",
-    }
+class _CoreDbResponse:
+    """Small response facade preserving the existing agent tool contract."""
+
+    def __init__(self, status_code: int, data=None, text: str = ""):
+        self.status_code = status_code
+        self._data = data if data is not None else []
+        self.text = text
+
+    def json(self):
+        return self._data
+
+
+class _CoreDbClient:
+    """Compatibility adapter: response semantics stay local, I/O lives in Core."""
+
+    def __init__(self, timeout: float = 15):
+        self.timeout = timeout
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        return False
+
+    @staticmethod
+    def _table(url: str) -> str:
+        marker = "/rest/v1/"
+        if marker not in url:
+            raise ValueError("Agente DB adapter received a non-Supabase URL")
+        return url.split(marker, 1)[1].split("?", 1)[0].strip("/")
+
+    @staticmethod
+    def _error(exc: Exception) -> _CoreDbResponse:
+        if isinstance(exc, httpx.HTTPStatusError):
+            response = exc.response
+            return _CoreDbResponse(response.status_code, [], response.text)
+        return _CoreDbResponse(503, [], str(exc))
+
+    async def get(self, url: str, *, headers=None, params=None):
+        try:
+            rows = await get_rows(self._table(url), params or {}, timeout=self.timeout)
+            return _CoreDbResponse(200, rows)
+        except Exception as exc:
+            return self._error(exc)
+
+    async def post(self, url: str, *, headers=None, json=None):
+        prefer = (headers or {}).get("Prefer", "return=minimal")
+        try:
+            rows = await post_rows(
+                self._table(url),
+                json,
+                prefer=prefer,
+                timeout=self.timeout,
+            )
+            return _CoreDbResponse(201, rows)
+        except Exception as exc:
+            return self._error(exc)
+
+    async def patch(self, url: str, *, headers=None, params=None, json=None):
+        prefer = (headers or {}).get("Prefer", "return=minimal")
+        try:
+            rows = await patch_rows(
+                self._table(url),
+                params or {},
+                json or {},
+                prefer=prefer,
+                timeout=self.timeout,
+            )
+            return _CoreDbResponse(204 if not rows else 200, rows)
+        except Exception as exc:
+            return self._error(exc)
 
 
 def _money(n) -> str:
@@ -95,9 +160,9 @@ async def _tool_buscar_propiedades(user_id: str, args: dict) -> str:
             f"calle.ilike.*{safe}*,ciudad.ilike.*{safe}*,descripcion.ilike.*{safe}*)"
         )
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
+        async with _CoreDbClient(timeout=15) as client:
             r = await client.get(f"{SUPABASE_URL}/rest/v1/propiedades",
-                                 headers=_sb_headers(), params=params)
+                                 headers={}, params=params)
         if r.status_code != 200:
             return f"Error al consultar propiedades ({r.status_code}). El usuario puede revisar su módulo de propiedades manualmente."
         rows = r.json() or []
@@ -148,9 +213,9 @@ async def _tool_detalle_propiedad(user_id: str, args: dict) -> str:
     else:
         return "Necesito un id de propiedad o un texto de búsqueda para dar el detalle."
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
+        async with _CoreDbClient(timeout=15) as client:
             r = await client.get(f"{SUPABASE_URL}/rest/v1/propiedades",
-                                 headers=_sb_headers(), params=params)
+                                 headers={}, params=params)
         rows = r.json() if r.status_code == 200 else []
     except Exception as e:
         return f"No pude obtener el detalle: {str(e)[:120]}"
@@ -191,9 +256,9 @@ async def _tool_buscar_contactos(user_id: str, args: dict) -> str:
         safe = query.replace(",", " ")
         params["or"] = f"(nombre.ilike.*{safe}*,telefono.ilike.*{safe}*,email.ilike.*{safe}*,empresa.ilike.*{safe}*,notas.ilike.*{safe}*)"
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
+        async with _CoreDbClient(timeout=15) as client:
             r = await client.get(f"{SUPABASE_URL}/rest/v1/contactos",
-                                 headers=_sb_headers(), params=params)
+                                 headers={}, params=params)
         rows = r.json() if r.status_code == 200 else []
     except Exception as e:
         return f"No pude consultar los contactos: {str(e)[:120]}"
@@ -224,9 +289,9 @@ async def _tool_buscar_tareas(user_id: str, args: dict) -> str:
     if query:
         params["or"] = f"(titulo.ilike.*{query}*,notas.ilike.*{query}*)"
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
+        async with _CoreDbClient(timeout=15) as client:
             r = await client.get(f"{SUPABASE_URL}/rest/v1/tareas",
-                                 headers=_sb_headers(), params=params)
+                                 headers={}, params=params)
         rows = r.json() if r.status_code == 200 else []
     except Exception as e:
         return f"No pude consultar las tareas: {str(e)[:120]}"
@@ -263,8 +328,8 @@ async def _tool_agregar_comentario(user_id: str, args: dict) -> str:
     ahora = datetime.now(timezone(timedelta(hours=-6)))  # hora del centro de México
     linea = f"[{ahora.strftime('%d/%m %H:%M')} · Broq] {comentario}"
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            r = await client.get(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_sb_headers(),
+        async with _CoreDbClient(timeout=15) as client:
+            r = await client.get(f"{SUPABASE_URL}/rest/v1/{tabla}", headers={},
                                  params={"id": f"eq.{fila_id}", "user_id": f"eq.{user_id}",
                                          "select": f"id,notas,{campo_nombre}", "limit": "1"})
             rows = r.json() if r.status_code == 200 else []
@@ -275,7 +340,7 @@ async def _tool_agregar_comentario(user_id: str, args: dict) -> str:
             cuerpo = {"notas": notas}
             if tabla in ("contactos", "propiedades"):
                 cuerpo["updated_at"] = datetime.now(timezone.utc).isoformat()
-            r2 = await client.patch(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_sb_headers(),
+            r2 = await client.patch(f"{SUPABASE_URL}/rest/v1/{tabla}", headers={},
                                     params={"id": f"eq.{fila_id}", "user_id": f"eq.{user_id}"},
                                     json=cuerpo)
             if r2.status_code >= 300:
@@ -309,18 +374,18 @@ async def _tool_crear_tarea(user_id: str, args: dict) -> str:
         except Exception:
             return "La fecha u hora no se entendieron. Usa fecha YYYY-MM-DD y hora HH:MM."
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            h = _sb_headers(); h["Prefer"] = "return=representation"
+        async with _CoreDbClient(timeout=15) as client:
+            h = {"Prefer": "return=representation"}
             r = await client.post(f"{SUPABASE_URL}/rest/v1/tareas", headers=h, json=fila)
             if r.status_code >= 300:
                 return f"No se pudo crear la tarea: {r.text[:120]}"
             tarea_id = (r.json() or [{}])[0].get("id")
             if tarea_id and fila.get("contacto_id"):
-                await client.post(f"{SUPABASE_URL}/rest/v1/tareas_contactos", headers=_sb_headers(),
+                await client.post(f"{SUPABASE_URL}/rest/v1/tareas_contactos", headers={},
                                   json={"user_id": user_id, "tarea_id": tarea_id,
                                         "contacto_id": fila["contacto_id"]})
             if tarea_id and fila.get("propiedad_id"):
-                await client.post(f"{SUPABASE_URL}/rest/v1/tareas_propiedades", headers=_sb_headers(),
+                await client.post(f"{SUPABASE_URL}/rest/v1/tareas_propiedades", headers={},
                                   json={"user_id": user_id, "tarea_id": tarea_id,
                                         "propiedad_id": fila["propiedad_id"]})
     except Exception as e:
@@ -334,10 +399,10 @@ async def _tool_resumen_cartera(user_id: str, args: dict) -> str:
     if not user_id:
         return "No hay sesión activa."
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
+        async with _CoreDbClient(timeout=15) as client:
             r = await client.get(
                 f"{SUPABASE_URL}/rest/v1/propiedades",
-                headers=_sb_headers(),
+                headers={},
                 params={"user_id": f"eq.{user_id}",
                         "select": "operacion,tipo,precio,moneda",
                         "limit": "5000"}
@@ -389,8 +454,8 @@ async def _tool_resumen_estadisticas(user_id: str, args: dict) -> str:
             params["user_id"] = f"eq.{user_id}"
         if extra:
             params.update(extra)
-        async with httpx.AsyncClient(timeout=15) as client:
-            r = await client.get(f"{SUPABASE_URL}/rest/v1/{table}", headers=_sb_headers(), params=params)
+        async with _CoreDbClient(timeout=15) as client:
+            r = await client.get(f"{SUPABASE_URL}/rest/v1/{table}", headers={}, params=params)
         return r.json() if r.status_code == 200 else []
 
     try:
@@ -1034,6 +1099,6 @@ async def agent_health():
         "modelo": AGENT_MODEL,
         "anthropic": bool(ANTHROPIC_API_KEY),
         "groq_voz": bool(GROQ_API_KEY),
-        "supabase": bool(SUPABASE_URL and SUPABASE_SERVICE_KEY),
+        "supabase": bool(settings.supabase_url and settings.supabase_service_key),
         "tools_servidor": list(SERVER_TOOLS.keys()),
     }
