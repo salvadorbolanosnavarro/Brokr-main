@@ -1,0 +1,31 @@
+name: Apply Finanzas Storage refactor
+
+on:
+  push:
+    branches:
+      - agent/architecture-cleanup
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: contains(github.event.head_commit.message, '[apply-finanzas-storage-refactor]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout cleanup branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/architecture-cleanup
+
+      - name: Apply exact reviewed transform
+        run: python scripts/refactor_finanzas_storage.py
+
+      - name: Commit transformed source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add routers/finanzas.py
+          git diff --cached --check
+          git commit -m "Migrate Finanzas Storage to Core"
+          git push origin HEAD:agent/architecture-cleanup
