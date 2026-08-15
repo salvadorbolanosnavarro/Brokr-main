@@ -14,7 +14,7 @@ class MainTelemetryReadsCoreRefactorTests(unittest.TestCase):
 
     def test_report_reads_delegate_to_core_database(self):
         source = self.source
-        self.assertIn("from core.database import get_rows, post_rows", source)
+        self.assertIn("from core.database import delete_rows, get_rows, post_rows", source)
         self.assertIn('usage_rows = await get_rows(\n            "usage_logs",', source)
         self.assertIn('session_rows = await get_rows(\n            "module_sessions",', source)
         self.assertNotIn("/rest/v1/usage_logs", source)
