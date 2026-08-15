@@ -10046,16 +10046,15 @@ async def _get_or_create_stripe_customer(user_id: str, email: str, nombre: str) 
     Devuelve el stripe_customer_id (string).
     """
     # 1. Buscar en Supabase
-    async with httpx.AsyncClient(timeout=10) as client:
-        r = await client.get(
-            f"{SUPABASE_URL}/rest/v1/usuarios",
-            headers={
-                "apikey": SUPABASE_SERVICE_KEY,
-                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-            },
-            params={"id": f"eq.{user_id}", "select": "stripe_customer_id,nombre"}
+    try:
+        rows = await get_rows(
+            "usuarios",
+            {"id": f"eq.{user_id}", "select": "stripe_customer_id,nombre"},
+            timeout=10,
         )
-        row = r.json()[0] if r.status_code == 200 and r.json() else {}
+    except httpx.HTTPStatusError:
+        rows = []
+    row = rows[0] if rows else {}
 
     if row.get("stripe_customer_id"):
         return row["stripe_customer_id"]
