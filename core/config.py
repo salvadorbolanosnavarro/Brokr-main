@@ -26,6 +26,12 @@ class Settings:
     correo_relay_from: str
     correo_secret: str
     wa_plantilla_otp: str
+    meta_app_id: str
+    meta_app_secret: str
+    meta_login_config_id: str
+    meta_graph_version: str
+    wa_register_pin: str
+    frontend_url: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -60,6 +66,19 @@ class Settings:
             ),
             correo_secret=os.getenv("CORREO_SECRET", ""),
             wa_plantilla_otp=os.getenv("WA_PLANTILLA_OTP", ""),
+            meta_app_id=os.getenv("META_APP_ID", "") or os.getenv("FB_APP_ID", ""),
+            meta_app_secret=(
+                os.getenv("META_APP_SECRET", "")
+                or os.getenv("WA_APP_SECRET", "")
+                or os.getenv("FB_APP_SECRET", "")
+            ),
+            meta_login_config_id=(
+                os.getenv("META_LOGIN_CONFIG_ID", "")
+                or os.getenv("WA_EMBEDDED_SIGNUP_CONFIG_ID", "")
+            ),
+            meta_graph_version=os.getenv("META_GRAPH_VERSION", "v23.0"),
+            wa_register_pin=os.getenv("WA_REGISTER_PIN", "123456"),
+            frontend_url=os.getenv("FRONTEND_URL", "https://broquer.app").rstrip("/"),
         )
 
     def require_supabase_public(self) -> None:
