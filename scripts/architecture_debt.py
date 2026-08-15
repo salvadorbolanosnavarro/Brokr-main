@@ -24,15 +24,19 @@ PATTERNS = {
     "service_key_fallbacks": re.compile(
         r"SUPABASE_SERVICE_KEY\s*=.*\bor\b.*(?:SUPABASE_KEY|SUPABASE_ANON_KEY)"
     ),
+    "direct_supabase_rest": re.compile(r"/rest/v1/"),
     "fail_open_webhook_secrets": re.compile(r"\bif\s+CORREO_WEBHOOK_TOKEN\s*:"),
     "fail_open_entitlements": re.compile(r"Falla\s+ABIERTO", re.IGNORECASE),
 }
 
 # Ratcheted after verified cleanup runs. These are maximums, never goals.
+# direct_supabase_rest starts with a deliberately loose discovery ceiling; the
+# first verified CI inventory is immediately ratcheted to the exact count.
 BASELINE_MAX = {
     "direct_env_reads": 1,
     "duplicated_auth_helpers": 0,
     "service_key_fallbacks": 0,
+    "direct_supabase_rest": 20,
     "fail_open_webhook_secrets": 0,
     "fail_open_entitlements": 0,
 }
