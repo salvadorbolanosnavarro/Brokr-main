@@ -35,6 +35,8 @@ import httpx
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
+from core.webhooks import require_shared_secret
+
 router = APIRouter()
 
 # ── Config ────────────────────────────────────────────────────────────────
@@ -790,10 +792,12 @@ async def webhook_correo_entrante(request: Request):
     """Alta de correos recibidos. Lo llama el webhook de correo entrante de
     Resend. Se valida con un secreto compartido (CORREO_WEBHOOK_TOKEN) que
     viaja en el encabezado X-Broquer-Token o en ?token=."""
-    if CORREO_WEBHOOK_TOKEN:
-        recibido = request.headers.get("x-broquer-token", "") or request.query_params.get("token", "")
-        if recibido != CORREO_WEBHOOK_TOKEN:
-            raise HTTPException(status_code=401, detail="Token inválido.")
+    require_shared_secret(
+        request,
+        CORREO_WEBHOOK_TOKEN,
+        header_name="x-broquer-token",
+        query_name="token",
+    )
 
     try:
         payload = await request.json()
