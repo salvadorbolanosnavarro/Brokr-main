@@ -11037,36 +11037,35 @@ async def _mapa_agentes_org(org_id: str, user_id: str) -> dict:
     por_email, por_nombre = {}, {}
     if not org_id:
         return {"por_email": por_email, "por_nombre": por_nombre, "_nrm": _nrm}
-    sb_headers = {
-        "apikey": SUPABASE_SERVICE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-    }
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            rm = await client.get(
-                f"{SUPABASE_URL}/rest/v1/organizacion_miembros",
-                headers=sb_headers,
-                params={"org_id": f"eq.{org_id}", "select": "user_id", "limit": "200"}
+        try:
+            miembros = await get_rows(
+                "organizacion_miembros",
+                {"org_id": f"eq.{org_id}", "select": "user_id", "limit": "200"},
+                timeout=15,
             )
-            miembros = rm.json() if rm.status_code == 200 else []
-            ids = [m["user_id"] for m in miembros if m.get("user_id")]
-            if ids:
-                ru = await client.get(
-                    f"{SUPABASE_URL}/rest/v1/usuarios",
-                    headers=sb_headers,
-                    params={"id": f"in.({','.join(ids)})",
-                            "select": "id,nombre,email", "limit": "200"}
+        except httpx.HTTPStatusError:
+            miembros = []
+        ids = [m["user_id"] for m in miembros if m.get("user_id")]
+        if ids:
+            try:
+                perfiles = await get_rows(
+                    "usuarios",
+                    {"id": f"in.({','.join(ids)})", "select": "id,nombre,email", "limit": "200"},
+                    timeout=15,
                 )
-                for u in (ru.json() if ru.status_code == 200 else []):
-                    uid = u.get("id")
-                    if not uid:
-                        continue
-                    em = (u.get("email") or "").strip().lower()
-                    if em:
-                        por_email[em] = uid
-                    nm = _nrm(u.get("nombre"))
-                    if nm:
-                        por_nombre[nm] = uid
+            except httpx.HTTPStatusError:
+                perfiles = []
+            for u in perfiles:
+                uid = u.get("id")
+                if not uid:
+                    continue
+                em = (u.get("email") or "").strip().lower()
+                if em:
+                    por_email[em] = uid
+                nm = _nrm(u.get("nombre"))
+                if nm:
+                    por_nombre[nm] = uid
     except Exception as e:
         print(f"[importar] No se pudo leer el mapa de agentes: {e}")
     return {"por_email": por_email, "por_nombre": por_nombre, "_nrm": _nrm}
