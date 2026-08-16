@@ -6779,18 +6779,20 @@ async def _fb_buscar_por_idempotencia(user_id: str, idempotency_key: str) -> dic
     if not SUPABASE_URL or not SUPABASE_SERVICE_KEY or not idempotency_key:
         return {}
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            r = await client.get(
-                f"{SUPABASE_URL}/rest/v1/{_FB_TABLA_ENTIDADES}",
-                headers=_sb_headers(),
-                params={"user_id": f"eq.{user_id}",
-                        "idempotency_key": f"eq.{idempotency_key}",
-                        "limit": "1"},
+        try:
+            filas = await get_rows(
+                _FB_TABLA_ENTIDADES,
+                {"user_id": f"eq.{user_id}",
+                 "idempotency_key": f"eq.{idempotency_key}",
+                 "limit": "1"},
+                timeout=10,
             )
-        if r.status_code == 200 and r.json():
-            return r.json()[0]
-        if _fb_tabla_falta(r):
-            _fb_avisa_migracion("buscar idempotencia", r)
+        except httpx.HTTPStatusError as e:
+            if _fb_tabla_falta(e.response):
+                _fb_avisa_migracion("buscar idempotencia", e.response)
+            return {}
+        if filas:
+            return filas[0]
     except Exception as e:
         _fb_log.error("Error buscando idempotencia: %s", e)
     return {}
