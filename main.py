@@ -10600,20 +10600,19 @@ async def subscription_activate(request: Request):
         raise HTTPException(status_code=400, detail="customer_id requerido.")
 
     # Buscar user_id por stripe_customer_id en tabla usuarios
-    async with httpx.AsyncClient(timeout=10) as client:
-        r = await client.get(
-            f"{SUPABASE_URL}/rest/v1/usuarios",
-            headers={
-                "apikey": SUPABASE_SERVICE_KEY,
-                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-            },
-            params={"stripe_customer_id": f"eq.{customer_id}", "select": "id,nombre,email"}
+    try:
+        usuarios = await get_rows(
+            "usuarios",
+            {"stripe_customer_id": f"eq.{customer_id}", "select": "id,nombre,email"},
+            timeout=10,
         )
+    except httpx.HTTPStatusError:
+        usuarios = []
 
-    if r.status_code != 200 or not r.json():
+    if not usuarios:
         raise HTTPException(status_code=404, detail=f"Usuario no encontrado para customer_id {customer_id}.")
 
-    usuario = r.json()[0]
+    usuario = usuarios[0]
     user_id = usuario["id"]
     plan_nombre = "AMPI" if plan_id == "ampi" else "Broquer Max"
 
