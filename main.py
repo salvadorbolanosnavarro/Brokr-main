@@ -11108,14 +11108,15 @@ async def importar_contactos_eb(request: Request):
     # Obtener contactos existentes (de la empresa si la hay, si no del agente)
     filtro_existentes = ({"org_id": f"eq.{org_id_import}"} if org_id_import
                          else {"user_id": f"eq.{user_id}"})
-    async with httpx.AsyncClient(timeout=15) as client:
-        r_existing = await client.get(
-            f"{SUPABASE_URL}/rest/v1/contactos",
-            headers=sb_headers,
-            params={**filtro_existentes,
-                    "select": "id,telefono,email,nombre,empresa,notas,fuente,probabilidad,calle,mpio,cp,wa,etiquetas"}
+    try:
+        existing = await get_rows(
+            "contactos",
+            {**filtro_existentes,
+             "select": "id,telefono,email,nombre,empresa,notas,fuente,probabilidad,calle,mpio,cp,wa,etiquetas"},
+            timeout=15,
         )
-    existing = r_existing.json() if r_existing.status_code == 200 else []
+    except httpx.HTTPStatusError:
+        existing = []
     existing_by_tel = {c["telefono"]: c for c in existing if c.get("telefono")}
     existing_by_email = {c["email"]: c for c in existing if c.get("email")}
 
