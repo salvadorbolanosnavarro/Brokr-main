@@ -1,22 +1,12 @@
-"""Guards for public site slug usuarios lookup migration to Core."""
+"""Permanent guards for public site slug usuarios lookup through Core."""
 from __future__ import annotations
 
-import importlib.util
 from pathlib import Path
 import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts" / "refactor_main_site_slug_lookup_core.py"
 MAIN = ROOT / "main.py"
-
-
-def _load_transform():
-    spec = importlib.util.spec_from_file_location("site_slug_transform", SCRIPT)
-    module = importlib.util.module_from_spec(spec)
-    assert spec and spec.loader
-    spec.loader.exec_module(module)
-    return module.transform_source
 
 
 class MainSiteSlugLookupCoreRefactorTests(unittest.TestCase):
@@ -24,16 +14,12 @@ class MainSiteSlugLookupCoreRefactorTests(unittest.TestCase):
     def setUpClass(cls):
         cls.source = MAIN.read_text(encoding="utf-8")
 
-    def test_transform_compiles_and_removes_one_direct_usuarios_read(self):
-        transformed = _load_transform()(self.source)
-        delta = self.source.count("/rest/v1/usuarios") - transformed.count("/rest/v1/usuarios")
-        self.assertIn(delta, (0, 1))
-        compile(transformed, "main.py", "exec")
+    def test_main_compiles(self):
+        compile(self.source, "main.py", "exec")
 
     def test_slug_lookup_preserves_http_empty_404_and_lead_writes(self):
-        transformed = _load_transform()(self.source)
-        start = transformed.index('@app.post("/sitio/{slug}/lead")')
-        block = transformed[start:]
+        start = self.source.index('@app.post("/sitio/{slug}/lead")')
+        block = self.source[start:]
 
         self.assertIn('rows = await get_rows(\n                "usuarios",', block)
         self.assertIn('"slug": f"eq.{slug}"', block)
