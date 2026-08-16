@@ -2381,11 +2381,7 @@ async def _migrar_fotos_org(org_id: str):
                 if cursor:
                     params["id"] = f"gt.{cursor}"
                 try:
-                    r = await client.get(f"{SUPABASE_URL}/rest/v1/propiedades",
-                                         headers=sb_headers, params=params, timeout=30.0)
-                    if r.status_code != 200:
-                        break
-                    filas = r.json() or []
+                    filas = await get_rows("propiedades", params, timeout=30.0)
                 except Exception:
                     break
                 if not filas:
@@ -2446,15 +2442,15 @@ async def easybroker_fotos_pendientes(request: Request):
     }
     pendientes = 0
     try:
-        async with httpx.AsyncClient(timeout=30) as client:
-            r = await client.get(f"{SUPABASE_URL}/rest/v1/propiedades",
-                                 headers=sb_headers,
-                                 params={"org_id": f"eq.{org_id}", "select": "fotos"})
-            if r.status_code == 200:
-                for fila in (r.json() or []):
-                    fotos = fila.get("fotos") or []
-                    if isinstance(fotos, list) and any(_foto_migrable(f) for f in fotos):
-                        pendientes += 1
+        filas_pendientes = await get_rows(
+            "propiedades",
+            {"org_id": f"eq.{org_id}", "select": "fotos"},
+            timeout=30,
+        )
+        for fila in filas_pendientes:
+            fotos = fila.get("fotos") or []
+            if isinstance(fotos, list) and any(_foto_migrable(f) for f in fotos):
+                pendientes += 1
     except Exception:
         pass
     return {"pendientes": pendientes, "en_proceso": org_id in _fotos_en_proceso}
