@@ -10683,20 +10683,19 @@ async def subscription_status(request: Request):
         }
 
     _oid = await get_org_id_for_user(user_id)
-    async with httpx.AsyncClient(timeout=8) as client:
-        r = await client.get(
-            f"{SUPABASE_URL}/rest/v1/suscripciones",
-            headers={
-                "apikey": SUPABASE_SERVICE_KEY,
-                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-            },
-            params={"org_id": f"eq.{_oid}", "select": "*", "order": "updated_at.desc", "limit": "1"}
+    try:
+        subscription_rows = await get_rows(
+            "suscripciones",
+            {"org_id": f"eq.{_oid}", "select": "*", "order": "updated_at.desc", "limit": "1"},
+            timeout=8,
         )
-    if r.status_code != 200 or not r.json():
+    except httpx.HTTPStatusError:
+        subscription_rows = []
+    if not subscription_rows:
         return {"active": False, "plan": None, "status": "sin_suscripcion",
                 "trial_disponible": await _trial_max_disponible(user_id)}
 
-    row = r.json()[0]
+    row = subscription_rows[0]
     estado = row.get("status")
     activo_sub = estado in ("active", "trialing")
     # Trial sin tarjeta: al vencer trial_hasta el candado se cierra solo.
