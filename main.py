@@ -2497,14 +2497,7 @@ async def easybroker_migrar_fotos(request: Request):
     if cursor:
         params["id"] = f"gt.{cursor}"
     try:
-        async with httpx.AsyncClient(timeout=30) as client:
-            r = await client.get(f"{SUPABASE_URL}/rest/v1/propiedades",
-                                 headers=sb_headers, params=params)
-        if r.status_code != 200:
-            raise HTTPException(status_code=500, detail="No se pudo leer el inventario.")
-        filas = r.json() or []
-    except HTTPException:
-        raise
+        filas = await get_rows("propiedades", params, timeout=30)
     except Exception:
         raise HTTPException(status_code=500, detail="No se pudo leer el inventario.")
 
