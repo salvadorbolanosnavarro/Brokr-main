@@ -11510,13 +11510,15 @@ async def importar_contactos_archivo(request: Request, file: UploadFile = File(.
     prop_por_eb_id = {}
     pares_existentes = set()
     async with httpx.AsyncClient(timeout=20) as client:
-        r = await client.get(
-            f"{SUPABASE_URL}/rest/v1/contactos",
-            headers=sb_headers,
-            params={**filtro_org, "limit": "10000",
-                    "select": "id,telefono,email,nombre,empresa,notas,fuente,probabilidad,calle,mpio,cp,wa,etiquetas,estatus"}
-        )
-        existentes = r.json() if r.status_code == 200 else []
+        try:
+            existentes = await get_rows(
+                "contactos",
+                {**filtro_org, "limit": "10000",
+                 "select": "id,telefono,email,nombre,empresa,notas,fuente,probabilidad,calle,mpio,cp,wa,etiquetas,estatus"},
+                timeout=20,
+            )
+        except httpx.HTTPStatusError:
+            existentes = []
         r2 = await client.get(
             f"{SUPABASE_URL}/rest/v1/propiedades",
             headers=sb_headers,
