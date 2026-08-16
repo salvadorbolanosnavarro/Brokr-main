@@ -2,6 +2,7 @@
 """Route EasyBroker import-stats seed reads through Core without touching writes."""
 from pathlib import Path
 
+# Harmless touch used only to trigger the temporary deterministic apply workflow.
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
 
