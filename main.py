@@ -2706,28 +2706,21 @@ async def propiedades_eliminar_masivo(request: Request):
     # Supabase y el GET falla completo.
     filas: list = []
     try:
-        async with httpx.AsyncClient(timeout=60) as client:
-            if todos:
-                r = await client.get(f"{SUPABASE_URL}/rest/v1/propiedades",
-                                     headers=sb_headers,
-                                     params={**filtro, "select": "id,fotos",
-                                             "limit": "10000"})
-                if r.status_code != 200:
-                    raise HTTPException(status_code=500, detail="No se pudo leer el inventario.")
-                filas = r.json() or []
-            else:
-                for i in range(0, len(ids), 200):
-                    lote = ids[i:i+200]
-                    lista = ",".join(f'"{str(x)}"' for x in lote)
-                    r = await client.get(f"{SUPABASE_URL}/rest/v1/propiedades",
-                                         headers=sb_headers,
-                                         params={**filtro, "select": "id,fotos",
-                                                 "id": f"in.({lista})"})
-                    if r.status_code != 200:
-                        raise HTTPException(status_code=500, detail="No se pudo leer el inventario.")
-                    filas.extend(r.json() or [])
-    except HTTPException:
-        raise
+        if todos:
+            filas = await get_rows(
+                "propiedades",
+                {**filtro, "select": "id,fotos", "limit": "10000"},
+                timeout=60,
+            )
+        else:
+            for i in range(0, len(ids), 200):
+                lote = ids[i:i+200]
+                lista = ",".join(f'"{str(x)}"' for x in lote)
+                filas.extend(await get_rows(
+                    "propiedades",
+                    {**filtro, "select": "id,fotos", "id": f"in.({lista})"},
+                    timeout=60,
+                ))
     except Exception:
         raise HTTPException(status_code=500, detail="No se pudo leer el inventario.")
 
