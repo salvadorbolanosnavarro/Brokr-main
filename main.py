@@ -12835,11 +12835,15 @@ async def sitio_registrar_lead(slug: str, payload: SitioLeadIn, request: Request
                "Content-Type": "application/json"}
 
         # 1) Resolver el slug → agente dueño del sitio (solo sitios activos)
-        r = await client.get(
-            f"{SUPABASE_URL}/rest/v1/usuarios", headers=hdr,
-            params={"slug": f"eq.{slug}", "sitio_activo": "eq.true",
-                    "select": "id", "limit": "1"})
-        rows = r.json() if r.status_code == 200 else []
+        try:
+            rows = await get_rows(
+                "usuarios",
+                {"slug": f"eq.{slug}", "sitio_activo": "eq.true",
+                 "select": "id", "limit": "1"},
+                timeout=10,
+            )
+        except httpx.HTTPStatusError:
+            rows = []
         if not rows:
             raise HTTPException(status_code=404, detail="Sitio no encontrado")
         user_id = rows[0]["id"]
