@@ -10898,13 +10898,15 @@ async def subscription_cancel(request: Request):
         raise HTTPException(status_code=401, detail="No autenticado.")
 
     # Obtener stripe_subscription_id de Supabase
-    async with httpx.AsyncClient(timeout=8) as client:
-        r = await client.get(
-            f"{SUPABASE_URL}/rest/v1/suscripciones",
-            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
-            params={"user_id": f"eq.{user_id}", "select": "stripe_subscription_id,status", "order": "updated_at.desc", "limit": "1"}
+    try:
+        subscription_rows = await get_rows(
+            "suscripciones",
+            {"user_id": f"eq.{user_id}", "select": "stripe_subscription_id,status", "order": "updated_at.desc", "limit": "1"},
+            timeout=8,
         )
-    row = r.json()[0] if r.status_code == 200 and r.json() else {}
+    except httpx.HTTPStatusError:
+        subscription_rows = []
+    row = subscription_rows[0] if subscription_rows else {}
     subscription_id = row.get("stripe_subscription_id")
     if not subscription_id:
         raise HTTPException(status_code=404, detail="No se encontró suscripción activa.")
