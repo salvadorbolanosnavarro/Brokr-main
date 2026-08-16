@@ -8743,9 +8743,15 @@ async def _fb_procesar_lead(valor: dict) -> None:
             filtro["email"] = f"eq.{email}"
 
         async with httpx.AsyncClient(timeout=15) as client:
-            rx = await client.get(f"{SUPABASE_URL}/rest/v1/contactos",
-                                  headers=_sb_headers(), params=filtro)
-            existente = rx.json()[0] if (rx.status_code == 200 and rx.json()) else None
+            try:
+                filas_existentes = await get_rows(
+                    "contactos",
+                    filtro,
+                    timeout=15,
+                )
+            except httpx.HTTPStatusError:
+                filas_existentes = []
+            existente = filas_existentes[0] if filas_existentes else None
 
             if existente:
                 # No se pisa lo que el agente ya escribió: solo se marca como
