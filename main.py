@@ -11519,24 +11519,28 @@ async def importar_contactos_archivo(request: Request, file: UploadFile = File(.
             )
         except httpx.HTTPStatusError:
             existentes = []
-        r2 = await client.get(
-            f"{SUPABASE_URL}/rest/v1/propiedades",
-            headers=sb_headers,
-            params={**filtro_org, "eb_public_id": "not.is.null",
-                    "select": "id,eb_public_id", "limit": "5000"}
-        )
-        if r2.status_code == 200:
-            for row in r2.json():
-                if row.get("eb_public_id"):
-                    prop_por_eb_id[row["eb_public_id"]] = row["id"]
-        r3 = await client.get(
-            f"{SUPABASE_URL}/rest/v1/contactos_propiedades",
-            headers=sb_headers,
-            params={"select": "contacto_id,propiedad_id", "limit": "20000"}
-        )
-        if r3.status_code == 200:
-            for v in r3.json():
-                pares_existentes.add((v.get("contacto_id"), v.get("propiedad_id")))
+        try:
+            propiedades_existentes = await get_rows(
+                "propiedades",
+                {**filtro_org, "eb_public_id": "not.is.null",
+                 "select": "id,eb_public_id", "limit": "5000"},
+                timeout=20,
+            )
+        except httpx.HTTPStatusError:
+            propiedades_existentes = []
+        for row in propiedades_existentes:
+            if row.get("eb_public_id"):
+                prop_por_eb_id[row["eb_public_id"]] = row["id"]
+        try:
+            vinculos_existentes = await get_rows(
+                "contactos_propiedades",
+                {"select": "contacto_id,propiedad_id", "limit": "20000"},
+                timeout=20,
+            )
+        except httpx.HTTPStatusError:
+            vinculos_existentes = []
+        for v in vinculos_existentes:
+            pares_existentes.add((v.get("contacto_id"), v.get("propiedad_id")))
 
     por_tel   = {_tel_limpio_csv(c.get("telefono")): c for c in existentes if _tel_limpio_csv(c.get("telefono"))}
     por_email = {(c.get("email") or "").strip().lower(): c for c in existentes if c.get("email")}
