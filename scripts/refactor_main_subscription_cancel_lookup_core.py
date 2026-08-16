@@ -33,7 +33,7 @@ NEW = '''    # Obtener stripe_subscription_id de Supabase
 
 def transform_source(source: str) -> str:
     start = source.index('@app.post("/subscription/cancel")')
-    end = source.index('@app.post("/subscription/portal")', start)
+    end = source.index('@app.post("/subscription/revenuecat-webhook")', start)
     block = source[start:end]
     old_count = block.count(OLD)
     new_count = block.count(NEW)
