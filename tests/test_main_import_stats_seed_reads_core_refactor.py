@@ -1,43 +1,27 @@
-"""Dry-run guards for EasyBroker import-stats seed Core reads."""
-from __future__ import annotations
-
-import importlib.util
+"""Permanent guards for EasyBroker import-stats seed Core reads."""
 from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts" / "refactor_main_import_stats_seed_reads_core.py"
 MAIN = ROOT / "main.py"
-
-
-def _transform():
-    spec = importlib.util.spec_from_file_location("import_stats_seed_transform", SCRIPT)
-    module = importlib.util.module_from_spec(spec)
-    assert spec and spec.loader
-    spec.loader.exec_module(module)
-    return module.transform_source
 
 
 class MainImportStatsSeedReadsCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.source = MAIN.read_text(encoding="utf-8")
+        start = cls.source.index('@app.post("/easybroker/import-stats")')
+        end = cls.source.index('\n\n@app.', start + 1)
+        cls.block = cls.source[start:end]
 
-    def _block(self, source: str) -> str:
-        start = source.index('@app.post("/easybroker/import-stats")')
-        end = source.index('\n\n@app.', start + 1)
-        return source[start:end]
-
-    def test_transform_compiles_and_removes_three_direct_seed_gets(self):
-        transformed = _transform()(self.source)
-        block = self._block(transformed)
+    def test_three_direct_seed_gets_stay_removed(self):
+        block = self.block
         self.assertNotIn('r = await client.get(\n            f"{SUPABASE_URL}/rest/v1/propiedades"', block)
         self.assertNotIn('r2 = await client.get(\n            f"{SUPABASE_URL}/rest/v1/contactos"', block)
         self.assertNotIn('r3 = await client.get(\n            f"{SUPABASE_URL}/rest/v1/contactos_propiedades"', block)
-        compile(transformed, "main.py", "exec")
 
     def test_core_reads_preserve_fail_soft_and_writes(self):
-        block = self._block(_transform()(self.source))
+        block = self.block
         self.assertIn('propiedades_importadas = await get_rows(', block)
         self.assertIn('existentes = await get_rows(', block)
         self.assertIn('vinculos_existentes = await get_rows(', block)
