@@ -2040,22 +2040,23 @@ async def easybroker_import_all(request: Request):
     # ─── Paso 1: leer filas existentes del usuario (para preservar notas/estatus) ───
     existentes_por_eb_id = {}  # eb_public_id → {notas, estatus}
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            r = await client.get(
-                f"{SUPABASE_URL}/rest/v1/propiedades",
-                headers=sb_headers,
-                params={"user_id": f"eq.{user_id}",
-                        "eb_public_id": "not.is.null",
-                        "select": "eb_public_id,notas,estatus"}
+        try:
+            filas_existentes = await get_rows(
+                "propiedades",
+                {"user_id": f"eq.{user_id}",
+                 "eb_public_id": "not.is.null",
+                 "select": "eb_public_id,notas,estatus"},
+                timeout=15,
             )
-            if r.status_code == 200:
-                for row in r.json():
-                    eb_id = row.get("eb_public_id")
-                    if eb_id:
-                        existentes_por_eb_id[eb_id] = {
-                            "notas":   row.get("notas"),
-                            "estatus": row.get("estatus"),
-                        }
+        except httpx.HTTPStatusError:
+            filas_existentes = []
+        for row in filas_existentes:
+            eb_id = row.get("eb_public_id")
+            if eb_id:
+                existentes_por_eb_id[eb_id] = {
+                    "notas":   row.get("notas"),
+                    "estatus": row.get("estatus"),
+                }
     except Exception as e:
         print(f"[import-all] Error leyendo existentes: {e}")
 
