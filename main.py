@@ -12116,25 +12116,23 @@ async def admin_list_users(request: Request):
         raise HTTPException(status_code=500, detail=f"Error listando usuarios: {exc.response.text}")
 
     # 2) Traer todas las suscripciones (más reciente primero)
-    async with httpx.AsyncClient(timeout=15) as client:
-        r_subs = await client.get(
-            f"{SUPABASE_URL}/rest/v1/suscripciones",
-            headers={
-                "apikey": SUPABASE_SERVICE_KEY,
-                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-            },
-            params={
+    try:
+        subs = await get_rows(
+            "suscripciones",
+            {
                 "select": "user_id,plan_id,plan_nombre,status,updated_at",
                 "order": "updated_at.desc",
                 "limit": "10000",
             },
+            timeout=15,
         )
+    except httpx.HTTPStatusError:
+        subs = []
     subs_by_user = {}
-    if r_subs.status_code == 200:
-        for s in r_subs.json():
-            uid = s.get("user_id")
-            if uid and uid not in subs_by_user:  # primera = más reciente
-                subs_by_user[uid] = s
+    for s in subs:
+        uid = s.get("user_id")
+        if uid and uid not in subs_by_user:  # primera = más reciente
+            subs_by_user[uid] = s
 
     # 3) Merge
     result = []
