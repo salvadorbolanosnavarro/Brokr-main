@@ -46,7 +46,9 @@ class MainSubscriptionStatusLookupCoreRefactorTests(unittest.TestCase):
         self.assertIn("if not subscription_rows:", block)
         self.assertIn('"status": "sin_suscripcion"', block)
         self.assertIn("row = subscription_rows[0]", block)
-        lookup = block.split("row = subscription_rows[0]", 1)[0]
+        lookup_start = block.index("    _oid = await get_org_id_for_user(user_id)")
+        lookup_end = block.index("    row = subscription_rows[0]", lookup_start)
+        lookup = block[lookup_start:lookup_end]
         self.assertNotIn("except Exception:", lookup)
         self.assertNotIn("/rest/v1/suscripciones", lookup)
         # Trial expiration behavior stays outside this bounded read migration.
