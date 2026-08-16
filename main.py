@@ -8628,17 +8628,19 @@ async def _fb_procesar_lead(valor: dict) -> None:
 
     # ── 0. ¿Ya lo procesamos? Meta reintenta y no queremos duplicados ──
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            r = await client.get(
-                f"{SUPABASE_URL}/rest/v1/fb_leads_recibidos",
-                headers=_sb_headers(),
-                params={"leadgen_id": f"eq.{leadgen_id}", "select": "id,procesado", "limit": "1"})
-        if r.status_code == 200 and r.json():
-            if (r.json()[0] or {}).get("procesado"):
-                _fb_log.info("Lead %s ya procesado; se ignora el reenvío.", leadgen_id)
-                return
-        elif _fb_tabla_falta(r):
-            _fb_avisa_migracion("procesar lead", r)
+        try:
+            filas_previas = await get_rows(
+                "fb_leads_recibidos",
+                {"leadgen_id": f"eq.{leadgen_id}", "select": "id,procesado", "limit": "1"},
+                timeout=10,
+            )
+        except httpx.HTTPStatusError as e:
+            if _fb_tabla_falta(e.response):
+                _fb_avisa_migracion("procesar lead", e.response)
+            filas_previas = []
+        if filas_previas and (filas_previas[0] or {}).get("procesado"):
+            _fb_log.info("Lead %s ya procesado; se ignora el reenvío.", leadgen_id)
+            return
     except Exception:
         pass
 
