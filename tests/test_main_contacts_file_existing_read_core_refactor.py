@@ -26,10 +26,11 @@ class MainContactsFileExistingReadCoreRefactorTests(unittest.TestCase):
         self.assertIn('"select": "id,telefono,email,nombre,empresa,notas,fuente,probabilidad,calle,mpio,cp,wa,etiquetas,estatus"', block)
         self.assertIn("timeout=20", block)
         self.assertIn("except httpx.HTTPStatusError:\n            existentes = []", block)
-        self.assertIn('r2 = await client.get(\n            f"{SUPABASE_URL}/rest/v1/propiedades"', block)
-        self.assertIn('r3 = await client.get(\n            f"{SUPABASE_URL}/rest/v1/contactos_propiedades"', block)
+        self.assertIn('propiedades_existentes = await get_rows(\n                "propiedades",', block)
+        self.assertIn('vinculos_existentes = await get_rows(\n                "contactos_propiedades",', block)
         self.assertIn('rb = await client.patch(\n                        f"{SUPABASE_URL}/rest/v1/contactos"', block)
         self.assertIn('ri = await client.post(\n                    f"{SUPABASE_URL}/rest/v1/contactos"', block)
+        self.assertIn('rv = await client.post(\n                    f"{SUPABASE_URL}/rest/v1/contactos_propiedades"', block)
 
 
 if __name__ == "__main__":
