@@ -12102,22 +12102,18 @@ async def admin_list_users(request: Request):
     await require_admin(request)
 
     # 1) Traer todos los usuarios
-    async with httpx.AsyncClient(timeout=15) as client:
-        r_users = await client.get(
-            f"{SUPABASE_URL}/rest/v1/usuarios",
-            headers={
-                "apikey": SUPABASE_SERVICE_KEY,
-                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-            },
-            params={
+    try:
+        users = await get_rows(
+            "usuarios",
+            {
                 "select": "id,email,nombre,telefono,rol,activo,created_at",
                 "order": "created_at.desc",
                 "limit": "10000",
             },
+            timeout=15,
         )
-    if r_users.status_code != 200:
-        raise HTTPException(status_code=500, detail=f"Error listando usuarios: {r_users.text}")
-    users = r_users.json()
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(status_code=500, detail=f"Error listando usuarios: {exc.response.text}")
 
     # 2) Traer todas las suscripciones (más reciente primero)
     async with httpx.AsyncClient(timeout=15) as client:
