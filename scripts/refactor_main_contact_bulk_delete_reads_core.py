@@ -2,6 +2,7 @@
 """Route only contact bulk-delete verification reads through Core."""
 from pathlib import Path
 
+# Harmless touch used only to trigger the temporary deterministic apply workflow.
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
 
