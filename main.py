@@ -4573,16 +4573,20 @@ async def _revisar_recordatorios():
 
     ahora = datetime.now(timezone.utc)
     try:
-        async with httpx.AsyncClient(timeout=15) as c:
-            r = await c.get(f"{SUPABASE_URL}/rest/v1/tareas", headers=_sb_headers(), params={
-                "select": "id,user_id,titulo,fecha_entrega,recordatorio_minutos_antes",
-                "completada": "eq.false", "recordatorio_enviado": "eq.false",
-                "fecha_entrega": "not.is.null", "limit": "200",
-            })
-        if r.status_code >= 300:
-            _recordatorios_log.warning("No se pudo leer tareas para recordatorios: %s", r.text[:200])
+        try:
+            tareas = await get_rows(
+                "tareas",
+                {
+                    "select": "id,user_id,titulo,fecha_entrega,recordatorio_minutos_antes",
+                    "completada": "eq.false", "recordatorio_enviado": "eq.false",
+                    "fecha_entrega": "not.is.null", "limit": "200",
+                },
+                timeout=15,
+            )
+        except httpx.HTTPStatusError as e:
+            texto = e.response.text if e.response is not None else ""
+            _recordatorios_log.warning("No se pudo leer tareas para recordatorios: %s", texto[:200])
             return
-        tareas = r.json()
     except Exception as e:
         _recordatorios_log.error("Error consultando tareas para recordatorios: %s", e)
         return
