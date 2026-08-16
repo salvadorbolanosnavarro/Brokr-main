@@ -9165,22 +9165,20 @@ async def facebook_reconcile(request: Request):
     if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
         raise HTTPException(status_code=500, detail="Supabase no configurado")
 
-    async with httpx.AsyncClient(timeout=15) as client:
-        r = await client.get(
-            f"{SUPABASE_URL}/rest/v1/{_FB_TABLA_ENTIDADES}",
-            headers=_sb_headers(),
-            params={"user_id": f"eq.{user_id}", "order": "created_at.desc", "limit": "200"},
+    try:
+        filas = await get_rows(
+            _FB_TABLA_ENTIDADES,
+            {"user_id": f"eq.{user_id}", "order": "created_at.desc", "limit": "200"},
+            timeout=15,
         )
-    if _fb_tabla_falta(r):
-        _fb_avisa_migracion("reconciliar", r)
-        raise HTTPException(
-            status_code=503,
-            detail="Falta correr migracion-facebook-ads.sql en Supabase. Sin esa tabla "
-                   "Broquer no lleva registro de lo que creó y no puede reconciliar.")
-    if r.status_code != 200:
+    except httpx.HTTPStatusError as e:
+        if _fb_tabla_falta(e.response):
+            _fb_avisa_migracion("reconciliar", e.response)
+            raise HTTPException(
+                status_code=503,
+                detail="Falta correr migracion-facebook-ads.sql en Supabase. Sin esa tabla "
+                       "Broquer no lleva registro de lo que creó y no puede reconciliar.")
         raise HTTPException(status_code=502, detail="No se pudo leer el registro de campañas.")
-
-    filas = r.json() or []
     sanas, huerfanas, revisar, corregidas = [], [], [], []
 
     async with httpx.AsyncClient(timeout=40) as client:
