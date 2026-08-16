@@ -4831,17 +4831,17 @@ async def listar_machotes(request: Request):
     if not user_id:
         raise HTTPException(status_code=401, detail="Debes iniciar sesión.")
 
-    async with httpx.AsyncClient(timeout=15) as client:
-        r = await client.get(
-            f"{SUPABASE_URL}/rest/v1/machotes_contrato",
-            headers=_sb_headers(),
-            params={"user_id": f"eq.{user_id}",
-                    "select": "id,titulo,tipo,campos,motor,created_at",
-                    "order": "created_at.desc"},
+    try:
+        rows = await get_rows(
+            "machotes_contrato",
+            {"user_id": f"eq.{user_id}",
+             "select": "id,titulo,tipo,campos,motor,created_at",
+             "order": "created_at.desc"},
+            timeout=15,
         )
-    if r.status_code != 200:
+    except httpx.HTTPStatusError:
         raise HTTPException(status_code=500, detail="No se pudieron cargar tus machotes.")
-    return {"machotes": r.json() or []}
+    return {"machotes": rows}
 
 
 @app.get("/contrato/machote/{machote_id}")
