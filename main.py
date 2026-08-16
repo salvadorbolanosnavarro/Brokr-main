@@ -11827,38 +11827,43 @@ async def easybroker_import_stats(request: Request):
 
     # ─── Paso 1: propiedades ya importadas (eb_public_id → id interno) ───
     prop_por_eb_id = {}
-    async with httpx.AsyncClient(timeout=20) as client:
-        r = await client.get(
-            f"{SUPABASE_URL}/rest/v1/propiedades",
-            headers=sb_headers,
-            params={**filtro_org, "eb_public_id": "not.is.null",
-                    "select": "id,eb_public_id", "limit": "5000"}
+    try:
+        propiedades_importadas = await get_rows(
+            "propiedades",
+            {**filtro_org, "eb_public_id": "not.is.null",
+             "select": "id,eb_public_id", "limit": "5000"},
+            timeout=20,
         )
-        if r.status_code == 200:
-            for row in r.json():
-                if row.get("eb_public_id"):
-                    prop_por_eb_id[row["eb_public_id"]] = row["id"]
+    except httpx.HTTPStatusError:
+        propiedades_importadas = []
+    for row in propiedades_importadas:
+        if row.get("eb_public_id"):
+            prop_por_eb_id[row["eb_public_id"]] = row["id"]
 
-        # ─── Paso 2: contactos existentes (dedupe por teléfono/email) ───
-        r2 = await client.get(
-            f"{SUPABASE_URL}/rest/v1/contactos",
-            headers=sb_headers,
-            params={**filtro_org, "select": "id,telefono,email,es_potencial",
-                    "limit": "10000"}
+    # ─── Paso 2: contactos existentes (dedupe por teléfono/email) ───
+    try:
+        existentes = await get_rows(
+            "contactos",
+            {**filtro_org, "select": "id,telefono,email,es_potencial",
+             "limit": "10000"},
+            timeout=20,
         )
-        existentes = r2.json() if r2.status_code == 200 else []
+    except httpx.HTTPStatusError:
+        existentes = []
 
-        # ─── Paso 3: vínculos existentes (para no duplicar 'interes') ───
-        r3 = await client.get(
-            f"{SUPABASE_URL}/rest/v1/contactos_propiedades",
-            headers=sb_headers,
-            params={"select": "contacto_id,propiedad_id",
-                    "relacion": "eq.interes", "limit": "20000"}
+    # ─── Paso 3: vínculos existentes (para no duplicar 'interes') ───
+    try:
+        vinculos_existentes = await get_rows(
+            "contactos_propiedades",
+            {"select": "contacto_id,propiedad_id",
+             "relacion": "eq.interes", "limit": "20000"},
+            timeout=20,
         )
-        pares_existentes = set()
-        if r3.status_code == 200:
-            for v in r3.json():
-                pares_existentes.add((v.get("contacto_id"), v.get("propiedad_id")))
+    except httpx.HTTPStatusError:
+        vinculos_existentes = []
+    pares_existentes = {
+        (v.get("contacto_id"), v.get("propiedad_id")) for v in vinculos_existentes
+    }
 
     def _tel_limpio(x):
         return re.sub(r"[^+\d]", "", x or "")[:20]
