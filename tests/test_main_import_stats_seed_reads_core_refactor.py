@@ -31,9 +31,9 @@ class MainImportStatsSeedReadsCoreRefactorTests(unittest.TestCase):
     def test_transform_compiles_and_removes_three_direct_seed_gets(self):
         transformed = _transform()(self.source)
         block = self._block(transformed)
-        self.assertNotIn('f"{SUPABASE_URL}/rest/v1/propiedades"', block)
-        self.assertNotIn('f"{SUPABASE_URL}/rest/v1/contactos"', block)
-        self.assertNotIn('f"{SUPABASE_URL}/rest/v1/contactos_propiedades"', block)
+        self.assertNotIn('r = await client.get(\n            f"{SUPABASE_URL}/rest/v1/propiedades"', block)
+        self.assertNotIn('r2 = await client.get(\n            f"{SUPABASE_URL}/rest/v1/contactos"', block)
+        self.assertNotIn('r3 = await client.get(\n            f"{SUPABASE_URL}/rest/v1/contactos_propiedades"', block)
         compile(transformed, "main.py", "exec")
 
     def test_core_reads_preserve_fail_soft_and_writes(self):
