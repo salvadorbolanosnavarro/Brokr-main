@@ -4640,16 +4640,18 @@ _CAMPO_EDITABLE = ("label", "tipo_input", "grupo", "ayuda", "default",
 
 
 async def _machote_o_404(machote_id: str, user_id: str, select: str = _MACHOTE_SELECT) -> dict:
-    async with httpx.AsyncClient(timeout=15) as client:
-        r = await client.get(
-            f"{SUPABASE_URL}/rest/v1/machotes_contrato",
-            headers=_sb_headers(),
-            params={"id": f"eq.{machote_id}", "user_id": f"eq.{user_id}",
-                    "select": select, "limit": "1"},
+    try:
+        rows = await get_rows(
+            "machotes_contrato",
+            {"id": f"eq.{machote_id}", "user_id": f"eq.{user_id}",
+             "select": select, "limit": "1"},
+            timeout=15,
         )
-    if r.status_code != 200 or not r.json():
+    except httpx.HTTPStatusError:
         raise HTTPException(status_code=404, detail="No encontramos ese machote.")
-    return r.json()[0]
+    if not rows:
+        raise HTTPException(status_code=404, detail="No encontramos ese machote.")
+    return rows[0]
 
 
 async def _descargar_plantilla(storage_path: str) -> bytes:
