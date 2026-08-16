@@ -8935,12 +8935,14 @@ async def facebook_audience_from_contacts(req: FbAudienceRequest, request: Reque
     if req.solo_potenciales:
         filtros["es_potencial"] = "eq.true"
 
-    async with httpx.AsyncClient(timeout=30) as client:
-        rc = await client.get(f"{SUPABASE_URL}/rest/v1/contactos",
-                              headers=_sb_headers(), params=filtros)
-    if rc.status_code != 200:
+    try:
+        contactos = await get_rows(
+            "contactos",
+            filtros,
+            timeout=30,
+        )
+    except httpx.HTTPStatusError:
         raise HTTPException(status_code=502, detail="No se pudieron leer tus contactos.")
-    contactos = rc.json() or []
 
     etiquetas_filtro = {str(e).strip().lower() for e in (req.etiquetas or []) if str(e).strip()}
     if etiquetas_filtro:
