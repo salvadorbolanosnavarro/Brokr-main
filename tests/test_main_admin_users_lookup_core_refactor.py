@@ -1,4 +1,4 @@
-"""Permanent guards for admin_list_users' initial usuarios read through Core."""
+"""Permanent guards for admin_list_users' usuarios read through Core."""
 from pathlib import Path
 import unittest
 
@@ -30,8 +30,9 @@ class MainAdminUsersLookupCoreRefactorTests(unittest.TestCase):
         lookup = block.split("# 2) Traer todas las suscripciones", 1)[0]
         self.assertNotIn("except Exception:", lookup)
         self.assertNotIn("/rest/v1/usuarios", lookup)
-        # Subscription read remains outside this bounded cut.
-        self.assertIn("/rest/v1/suscripciones", block)
+        # The adjacent subscriptions read has since migrated too; neither read may regress to direct REST.
+        self.assertIn('subs = await get_rows(\n            "suscripciones",', block)
+        self.assertNotIn("/rest/v1/suscripciones", block)
 
 
 if __name__ == "__main__":
