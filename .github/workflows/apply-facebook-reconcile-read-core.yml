@@ -5,7 +5,7 @@ on:
     branches:
       - agent/architecture-cleanup
     paths:
-      - scripts/trigger_facebook_reconcile_read_core.txt
+      - scripts/refactor_main_facebook_reconcile_read_core.py
 
 permissions:
   contents: write
