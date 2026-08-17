@@ -117,12 +117,15 @@ OVERRIDES = {
 
 def inject(path: Path, css: str) -> None:
     text = path.read_text(encoding="utf-8")
-    if MARKER in text:
-        return
-    idx = text.find("</style>")
-    if idx < 0:
-        raise SystemExit(f"{path}: no </style> found")
-    text = text[:idx] + css + "\n" + text[idx:]
+    if MARKER not in text:
+        idx = text.find("</style>")
+        if idx < 0:
+            raise SystemExit(f"{path}: no </style> found")
+        text = text[:idx] + css + "\n" + text[idx:]
+    had_final_newline = text.endswith("\n")
+    text = "\n".join(line.rstrip() for line in text.splitlines())
+    if had_final_newline:
+        text += "\n"
     path.write_text(text, encoding="utf-8")
 
 
