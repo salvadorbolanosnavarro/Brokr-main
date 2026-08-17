@@ -13,6 +13,16 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def strip_audit_exempt_blocks(source: str) -> str:
+    """Ignore explicitly exempt self-contained artifacts such as generated PDFs."""
+    return re.sub(
+        r"/\* ═+ AUDIT-EXEMPT.*?/AUDIT-EXEMPT ═+ \*/",
+        "",
+        source,
+        flags=re.S,
+    )
+
+
 class FrontendCanonContractTests(unittest.TestCase):
     def test_canonical_theme_is_the_only_real_theme(self):
         self.assertTrue((ROOT / "brokr-theme.css").exists())
@@ -43,16 +53,17 @@ class FrontendCanonContractTests(unittest.TestCase):
     def test_new_modules_do_not_define_another_token_root(self):
         allowed = {
             "Copia de index.html", "avm.html", "contratos.html",
-            "image-cleaner.html", "index.html", "isr.html", "landing.html",
+            "image-cleaner.html", "index.html", "landing.html",
             "mock-editorial.html", "mock-ejecutiva.html", "preview-redesign.html",
             "robin.html",
         }
         offenders = set()
         for path in ROOT.glob("*.html"):
-            source = path.read_text(encoding="utf-8")
+            source = strip_audit_exempt_blocks(path.read_text(encoding="utf-8"))
             if re.search(r"(?m)^\s*:root\s*\{", source):
                 offenders.add(path.name)
         self.assertTrue(offenders.issubset(allowed), f"new module-local token roots detected: {sorted(offenders - allowed)}")
+        self.assertNotIn("isr.html", offenders, "ISR application UI must consume Canon directly")
 
     def test_shell_owned_sidebar_css_exists_only_in_shell(self):
         offenders = set()
