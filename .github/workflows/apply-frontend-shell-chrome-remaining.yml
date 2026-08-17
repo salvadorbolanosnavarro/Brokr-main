@@ -1,0 +1,56 @@
+name: Apply remaining frontend shell chrome cleanup
+
+on:
+  push:
+    branches:
+      - agent/frontend-canon-unification
+    paths:
+      - scripts/refactor_frontend_shell_chrome_remaining.py
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: agent/frontend-canon-unification
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Directed dry-run guard
+        run: python scripts/refactor_frontend_shell_chrome_remaining.py --check
+
+      - name: Test deterministic transform
+        run: python -m unittest tests.test_frontend_shell_chrome_remaining_transform
+
+      - name: Apply deterministic transform
+        run: python scripts/refactor_frontend_shell_chrome_remaining.py
+
+      - name: Reject unexpected diff
+        shell: bash
+        run: |
+          git diff --check
+          mapfile -t changed < <(git diff --name-only)
+          expected=(isr.html propiedades.html)
+          if [[ "${#changed[@]}" -ne 2 || "${changed[0]}" != "${expected[0]}" || "${changed[1]}" != "${expected[1]}" ]]; then
+            printf 'Unexpected changed files:\n'
+            printf '%s\n' "${changed[@]}"
+            exit 1
+          fi
+
+      - name: Commit cleaned frontend chrome
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add isr.html propiedades.html
+          git commit -m "refactor: remove duplicate shell chrome from ISR and properties"
+          git push origin HEAD:agent/frontend-canon-unification
