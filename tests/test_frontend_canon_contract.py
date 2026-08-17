@@ -16,7 +16,6 @@ ROOT = Path(__file__).resolve().parents[1]
 class FrontendCanonContractTests(unittest.TestCase):
     def test_canonical_theme_is_the_only_real_theme(self):
         self.assertTrue((ROOT / "brokr-theme.css").exists())
-
         shim = (ROOT / "brokr-theme-v2.css").read_text(encoding="utf-8")
         self.assertIn('@import url("brokr-theme.css")', shim)
         self.assertNotIn(":root", shim)
@@ -34,32 +33,18 @@ class FrontendCanonContractTests(unittest.TestCase):
         self.assertIn("var(--line-2)", adapter)
 
     def test_no_new_secondary_theme_consumers(self):
-        """The compatibility adapter is isolated to WhatsApp and may not spread."""
         consumers = set()
         for path in ROOT.glob("*.html"):
             source = path.read_text(encoding="utf-8")
             if 'href="broquer-ui.css"' in source or "href='broquer-ui.css'" in source:
                 consumers.add(path.name)
-
-        self.assertEqual(
-            consumers,
-            {"whatsapp.html"},
-            "broquer-ui.css must remain isolated to WhatsApp until it can be deleted",
-        )
+        self.assertEqual(consumers, {"whatsapp.html"})
 
     def test_new_modules_do_not_define_another_token_root(self):
-        """Historical local token roots are debt; no new page may add one."""
         allowed = {
-            "Copia de index.html",
-            "avm.html",
-            "contratos.html",
-            "image-cleaner.html",
-            "index.html",
-            "isr.html",
-            "landing.html",
-            "mock-editorial.html",
-            "mock-ejecutiva.html",
-            "preview-redesign.html",
+            "Copia de index.html", "avm.html", "contratos.html",
+            "image-cleaner.html", "index.html", "isr.html", "landing.html",
+            "mock-editorial.html", "mock-ejecutiva.html", "preview-redesign.html",
             "robin.html",
         }
         offenders = set()
@@ -67,25 +52,24 @@ class FrontendCanonContractTests(unittest.TestCase):
             source = path.read_text(encoding="utf-8")
             if re.search(r"(?m)^\s*:root\s*\{", source):
                 offenders.add(path.name)
-
-        self.assertTrue(
-            offenders.issubset(allowed),
-            f"new module-local token roots detected: {sorted(offenders - allowed)}",
-        )
+        self.assertTrue(offenders.issubset(allowed), f"new module-local token roots detected: {sorted(offenders - allowed)}")
 
     def test_shell_owned_sidebar_css_does_not_spread(self):
-        """Known duplicated shell chrome is migration debt; no new page may clone it."""
-        allowed = {"contactos.html", "leads.html", "isr.html", "propiedades.html"}
+        allowed = {"isr.html", "propiedades.html"}
         offenders = set()
         for path in ROOT.glob("*.html"):
             source = path.read_text(encoding="utf-8")
             if re.search(r"(?m)^\s*\.app-sidebar\s*\{", source):
                 offenders.add(path.name)
+        self.assertTrue(offenders.issubset(allowed), f"shell-owned sidebar CSS duplicated in new pages: {sorted(offenders - allowed)}")
 
-        self.assertTrue(
-            offenders.issubset(allowed),
-            f"shell-owned sidebar CSS duplicated in new pages: {sorted(offenders - allowed)}",
-        )
+    def test_contactos_and_leads_use_shell_owned_chrome(self):
+        for name in ("contactos.html", "leads.html"):
+            source = (ROOT / name).read_text(encoding="utf-8")
+            self.assertNotIn("shell-replaced-sidebar", source, name)
+            self.assertNotRegex(source, r"(?m)^\s*\.app-sidebar\s*\{")
+            self.assertNotIn(".app-sidebar__brand", source, name)
+            self.assertIn('<script src="app-shell.js" defer></script>', source, name)
 
     def test_module_template_points_only_to_canon(self):
         source = (ROOT / "_TEMPLATE-modulo.html").read_text(encoding="utf-8")
