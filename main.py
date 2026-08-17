@@ -12335,25 +12335,23 @@ async def _storage_rutas_fotos_de_usuario(user_id: str) -> dict:
     rutas: dict = {}
     prefijo_pub = f"{SUPABASE_URL}/storage/v1/object/public/"
     try:
-        async with httpx.AsyncClient(timeout=30) as client:
-            r = await client.get(
-                f"{SUPABASE_URL}/rest/v1/propiedades",
-                headers={
-                    "apikey": SUPABASE_SERVICE_KEY,
-                    "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                },
-                params={"user_id": f"eq.{user_id}", "select": "fotos", "limit": "10000"},
+        try:
+            filas = await get_rows(
+                "propiedades",
+                {"user_id": f"eq.{user_id}", "select": "fotos", "limit": "10000"},
+                timeout=30,
             )
-            filas = r.json() if r.status_code == 200 else []
-            for fila in filas:
-                for url in (fila.get("fotos") or []):
-                    if not isinstance(url, str) or not url.startswith(prefijo_pub):
-                        continue
-                    resto = url[len(prefijo_pub):]
-                    if "/" not in resto:
-                        continue
-                    bucket, ruta = resto.split("/", 1)
-                    rutas.setdefault(bucket, set()).add(ruta)
+        except httpx.HTTPStatusError:
+            filas = []
+        for fila in filas:
+            for url in (fila.get("fotos") or []):
+                if not isinstance(url, str) or not url.startswith(prefijo_pub):
+                    continue
+                resto = url[len(prefijo_pub):]
+                if "/" not in resto:
+                    continue
+                bucket, ruta = resto.split("/", 1)
+                rutas.setdefault(bucket, set()).add(ruta)
     except Exception as e:
         print(f"[eliminar-usuario] No se pudieron recolectar fotos de {user_id}: {e}")
     return {b: sorted(v) for b, v in rutas.items()}
