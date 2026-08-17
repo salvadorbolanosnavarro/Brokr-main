@@ -19,19 +19,24 @@ def transform_source(source: str) -> str:
         raise RuntimeError(f"Expected exactly one website-lead dedup marker, found {source.count(marker)}")
 
     marker_at = source.index(marker)
-    block_end = source.index("\n\n            if existente:", marker_at)
-    block = source[marker_at:block_end]
+    old_count = source.count(OLD)
+    new_count = source.count(NEW)
 
-    if OLD not in block:
-        if NEW in block:
-            return source
-        raise RuntimeError("Unexpected website-lead contact dedup GET state")
+    if old_count == 1 and new_count == 0:
+        old_at = source.index(OLD)
+        if old_at < marker_at:
+            raise RuntimeError("Direct contact dedup GET appears before website-lead marker")
+        return source.replace(OLD, NEW, 1)
 
-    if block.count(OLD) != 1:
-        raise RuntimeError("Expected exactly one direct contact dedup GET in target block")
+    if old_count == 0 and new_count == 1:
+        new_at = source.index(NEW)
+        if new_at < marker_at:
+            raise RuntimeError("Core contact dedup GET appears before website-lead marker")
+        return source
 
-    transformed_block = block.replace(OLD, NEW, 1)
-    return source[:marker_at] + transformed_block + source[block_end:]
+    raise RuntimeError(
+        f"Unexpected website-lead contact dedup GET state: old={old_count}, new={new_count}"
+    )
 
 
 def main() -> None:
