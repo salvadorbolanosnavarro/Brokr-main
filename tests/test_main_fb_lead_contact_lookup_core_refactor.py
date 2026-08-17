@@ -1,4 +1,4 @@
-"""Permanent guards for Lead Ads contact-dedup Core delegation."""
+"""Permanent guards for Lead Ads contact Core delegation."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -16,22 +16,26 @@ class MainFbLeadContactLookupCoreRefactorTests(unittest.TestCase):
         end = cls.source.index('\n\n@app.post("/facebook/leadgen/subscribe")', start)
         cls.block = cls.source[start:end]
 
-    def test_only_new_contact_post_remains_direct(self):
-        self.assertEqual(self.block.count("/rest/v1/contactos"), 1)
-        self.assertIn('rc = await client.post(\n                f"{SUPABASE_URL}/rest/v1/contactos"', self.block)
-
-    def test_lookup_and_existing_contact_patch_use_core_while_post_stays_direct(self):
+    def test_contact_lookup_patch_and_create_all_use_core(self):
         block = self.block
+        self.assertNotIn("/rest/v1/contactos", block)
         self.assertIn('filas_existentes = await get_rows(\n                    "contactos",', block)
+        self.assertIn('await patch_rows(\n                        "contactos",', block)
+        self.assertIn('await post_rows(\n                    "contactos",', block)
+        self.assertIn('accepted_statuses=(200, 201, 204)', block)
+
+    def test_lookup_patch_and_create_error_contracts_are_preserved(self):
+        block = self.block
         self.assertIn("filtro,\n                    timeout=15", block)
         self.assertIn("except httpx.HTTPStatusError:\n                filas_existentes = []", block)
         self.assertIn("existente = filas_existentes[0] if filas_existentes else None", block)
-        self.assertIn('await patch_rows(\n                        "contactos",', block)
         self.assertIn('{"id": f"eq.{existente[\'id\']}"}', block)
         self.assertIn('{"es_potencial": True, "updated_at": ahora}', block)
         self.assertIn('except httpx.HTTPStatusError:\n                    pass', block)
-        self.assertIn('rc = await client.post(\n                f"{SUPABASE_URL}/rest/v1/contactos"', block)
+        self.assertIn('except httpx.HTTPStatusError as e:', block)
+        self.assertIn("(e.response.text or '')[:200]", block)
         self.assertIn('await _anota({"error_detail": f"Error guardando el contacto: {e}"})', block)
+        compile(self.source, "main.py", "exec")
 
 
 if __name__ == "__main__":
