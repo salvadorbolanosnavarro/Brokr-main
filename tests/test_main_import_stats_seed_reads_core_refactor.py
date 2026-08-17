@@ -20,19 +20,21 @@ class MainImportStatsSeedReadsCoreRefactorTests(unittest.TestCase):
         self.assertNotIn('r2 = await client.get(\n            f"{SUPABASE_URL}/rest/v1/contactos"', block)
         self.assertNotIn('r3 = await client.get(\n            f"{SUPABASE_URL}/rest/v1/contactos_propiedades"', block)
 
-    def test_core_reads_contact_post_and_batch_patch_preserve_fail_soft_and_link_write(self):
+    def test_import_stats_database_io_is_core_routed_with_legacy_status_contracts(self):
         block = self.block
         self.assertIn('propiedades_importadas = await get_rows(', block)
         self.assertIn('existentes = await get_rows(', block)
         self.assertIn('vinculos_existentes = await get_rows(', block)
-        self.assertGreaterEqual(block.count('except httpx.HTTPStatusError:'), 5)
+        self.assertGreaterEqual(block.count('except httpx.HTTPStatusError:'), 6)
         self.assertIn('await post_rows(\n                    "contactos",', block)
         self.assertIn('accepted_statuses=(200, 201, 204)', block)
         self.assertNotIn('ri = await client.post(\n                f"{SUPABASE_URL}/rest/v1/contactos"', block)
         self.assertIn('await patch_rows(\n                    "contactos",', block)
         self.assertIn('accepted_statuses=(200, 204)', block)
         self.assertNotIn('rp = await client.patch(\n                f"{SUPABASE_URL}/rest/v1/contactos"', block)
-        self.assertIn('rv = await client.post(\n                f"{SUPABASE_URL}/rest/v1/contactos_propiedades"', block)
+        self.assertIn('await post_rows(\n                    "contactos_propiedades",', block)
+        self.assertIn('except httpx.HTTPStatusError:\n                pass', block)
+        self.assertNotIn('rv = await client.post(\n                f"{SUPABASE_URL}/rest/v1/contactos_propiedades"', block)
 
 
 if __name__ == "__main__":
