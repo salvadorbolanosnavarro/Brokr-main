@@ -1,5 +1,5 @@
 """Permanent guard for reminder-sent PATCH Core routing."""
-# Temporary diagnostics trigger; remove after the failing assertion is identified.
+# Temporary diagnostics trigger v2; remove after the failing assertion is identified.
 from __future__ import annotations
 
 import ast
