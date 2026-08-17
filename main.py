@@ -6726,28 +6726,29 @@ async def _fb_reservar_creacion(user_id: str, org_id, datos: dict,
         fila["idempotency_key"] = idempotency_key
 
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            r = await client.post(
-                f"{SUPABASE_URL}/rest/v1/{_FB_TABLA_ENTIDADES}",
-                headers=_sb_headers({"Prefer": "return=representation"}),
-                json=fila,
+        try:
+            filas = await post_rows(
+                _FB_TABLA_ENTIDADES,
+                fila,
+                prefer="return=representation",
+                timeout=10,
+                accepted_statuses=(200, 201),
             )
-        if r.status_code in (200, 201):
-            filas = r.json() if r.text else []
             return {"modo": "nuevo", "row_id": (filas[0]["id"] if filas else fila["id"])}
+        except httpx.HTTPStatusError as e:
+            r = e.response
+            if _fb_tabla_falta(r):
+                _fb_avisa_migracion("reservar creación", r)
+                return {"modo": "sin_tabla"}
 
-        if _fb_tabla_falta(r):
-            _fb_avisa_migracion("reservar creación", r)
-            return {"modo": "sin_tabla"}
+            # 409 = chocó con el índice único → ya hay una creación con esa llave.
+            if r.status_code == 409 and idempotency_key:
+                previa = await _fb_buscar_por_idempotencia(user_id, idempotency_key)
+                if previa:
+                    return {"modo": "duplicado", "row": previa}
 
-        # 409 = chocó con el índice único → ya hay una creación con esa llave.
-        if r.status_code == 409 and idempotency_key:
-            previa = await _fb_buscar_por_idempotencia(user_id, idempotency_key)
-            if previa:
-                return {"modo": "duplicado", "row": previa}
-
-        _fb_log.error("No se pudo registrar la creación en %s: %s %s",
-                      _FB_TABLA_ENTIDADES, r.status_code, (r.text or "")[:300])
+            _fb_log.error("No se pudo registrar la creación en %s: %s %s",
+                          _FB_TABLA_ENTIDADES, r.status_code, (r.text or "")[:300])
     except Exception as e:
         _fb_log.error("Error registrando la creación en %s: %s", _FB_TABLA_ENTIDADES, e)
     return {"modo": "sin_tabla"}
@@ -11277,16 +11278,18 @@ async def importar_contactos_eb(request: Request):
                         patch["etiquetas"] = union
                 if patch:
                     patch["updated_at"] = now_iso
-                    filtro_patch = (f"org_id=eq.{org_id_import}" if org_id_import
-                                    else f"user_id=eq.{user_id}")
-                    rb = await client.patch(
-                        f"{SUPABASE_URL}/rest/v1/contactos?id=eq.{existente['id']}&{filtro_patch}",
-                        headers=sb_headers,
-                        json=patch
-                    )
-                    if rb.status_code in (200, 204):
+                    filtro_patch = ({"org_id": f"eq.{org_id_import}"} if org_id_import
+                                    else {"user_id": f"eq.{user_id}"})
+                    try:
+                        await patch_rows(
+                            "contactos",
+                            {"id": f"eq.{existente['id']}", **filtro_patch},
+                            patch,
+                            timeout=20,
+                            accepted_statuses=(200, 204),
+                        )
                         actualizados += 1
-                    else:
+                    except httpx.HTTPStatusError:
                         errores += 1
                 else:
                     omitidos += 1
