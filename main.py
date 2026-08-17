@@ -12070,13 +12070,17 @@ async def easybroker_import_stats(request: Request):
                             or v["contacto_id"] not in ids_nuevos_todos]
         for i in range(0, len(vinculos_validos), 200):
             chunk = vinculos_validos[i:i+200]
-            rv = await client.post(
-                f"{SUPABASE_URL}/rest/v1/contactos_propiedades",
-                headers={**sb_headers, "Prefer": "return=minimal"},
-                json=chunk
-            )
-            if rv.status_code in (200, 201, 204):
+            try:
+                await post_rows(
+                    "contactos_propiedades",
+                    chunk,
+                    prefer="return=minimal",
+                    timeout=60,
+                    accepted_statuses=(200, 201, 204),
+                )
                 vinculos_nuevos += len(chunk)
+            except httpx.HTTPStatusError:
+                pass
 
     return {
         "ok": True,
