@@ -25,30 +25,31 @@ def strip_audit_exempt_blocks(source: str) -> str:
 
 class FrontendCanonContractTests(unittest.TestCase):
     def test_canonical_theme_is_the_only_real_theme(self):
-        self.assertTrue((ROOT / "brokr-theme.css").exists())
+        theme_path = ROOT / "brokr-theme.css"
+        self.assertTrue(theme_path.exists())
+        self.assertFalse((ROOT / "broquer-ui.css").exists(), "secondary WhatsApp stylesheet must stay deleted")
+
+        theme = theme_path.read_text(encoding="utf-8")
+        self.assertIn("BROQUER — WhatsApp domain rules · Canon", theme)
+        self.assertIn('body[data-app="whatsapp"]', theme)
+        self.assertIn(".w2-row--out .w2-bubble", theme)
+        self.assertIn(".w2-tab.is-active", theme)
+
         shim = (ROOT / "brokr-theme-v2.css").read_text(encoding="utf-8")
         self.assertIn('@import url("brokr-theme.css")', shim)
         self.assertNotIn(":root", shim)
 
-    def test_whatsapp_adapter_is_not_a_second_theme(self):
-        adapter = (ROOT / "broquer-ui.css").read_text(encoding="utf-8")
-        self.assertNotRegex(adapter, r"(?m)^\s*:root\s*\{")
-        for forbidden in (
-            "--bq-blue:", "--bq-navy:", "--bq-ink:", "--bq-font:",
-            "--sky-blue:", "--forest:", "--ink:", "--font-sans:",
-        ):
-            self.assertNotIn(forbidden, adapter)
-        self.assertIn('body[data-app="whatsapp"]', adapter)
-        self.assertIn("var(--sky-blue)", adapter)
-        self.assertIn("var(--line-2)", adapter)
-
-    def test_no_new_secondary_theme_consumers(self):
-        consumers = set()
+    def test_no_secondary_theme_consumers_exist(self):
+        offenders = set()
         for path in ROOT.glob("*.html"):
             source = path.read_text(encoding="utf-8")
-            if 'href="broquer-ui.css"' in source or "href='broquer-ui.css'" in source:
-                consumers.add(path.name)
-        self.assertEqual(consumers, {"whatsapp.html"})
+            if "broquer-ui.css" in source:
+                offenders.add(path.name)
+        self.assertEqual(offenders, set(), f"obsolete secondary stylesheet referenced by: {sorted(offenders)}")
+
+        whatsapp = (ROOT / "whatsapp.html").read_text(encoding="utf-8")
+        self.assertIn('href="brokr-theme.css"', whatsapp)
+        self.assertNotIn("broquer-ui.css", whatsapp)
 
     def test_new_modules_do_not_define_another_token_root(self):
         allowed = {
