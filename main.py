@@ -2566,18 +2566,15 @@ async def easybroker_migrar_fotos(request: Request):
 
             # Guardar el array nuevo (solo se toca esta propiedad)
             try:
-                rp = await client.patch(
-                    f"{SUPABASE_URL}/rest/v1/propiedades",
-                    headers={**sb_headers, "Content-Type": "application/json",
-                             "Prefer": "return=minimal"},
-                    params={"id": f"eq.{pid}"},
-                    json={"fotos": nuevas},
+                await patch_rows(
+                    "propiedades",
+                    {"id": f"eq.{pid}"},
+                    {"fotos": nuevas},
+                    timeout=60,
+                    accepted_statuses=(200, 204),
                 )
-                if rp.status_code in (200, 204):
-                    propiedades_ok += 1
-                    fotos_subidas += subidas_prop
-                else:
-                    errores += 1
+                propiedades_ok += 1
+                fotos_subidas += subidas_prop
             except Exception:
                 errores += 1
 
