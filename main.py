@@ -5,7 +5,7 @@ from limites import exigir_cupo, exigir_sesion
 from pydantic import BaseModel
 from core.auth import get_user_id_from_token
 from core.config import settings
-from core.database import delete_rows, get_rows, post_rows
+from core.database import delete_rows, get_rows, patch_rows, post_rows
 from core.legacy_main_config import legacy_main_settings
 import httpx
 import os
@@ -6780,19 +6780,20 @@ async def _fb_actualizar_entidad(row_id: str, updates: dict) -> None:
     if not row_id or not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
         return
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            r = await client.patch(
-                f"{SUPABASE_URL}/rest/v1/{_FB_TABLA_ENTIDADES}",
-                headers=_sb_headers({"Prefer": "return=minimal"}),
-                params={"id": f"eq.{row_id}"},
-                json={**updates, "updated_at": datetime.now(timezone.utc).isoformat()},
+        try:
+            await patch_rows(
+                _FB_TABLA_ENTIDADES,
+                {"id": f"eq.{row_id}"},
+                {**updates, "updated_at": datetime.now(timezone.utc).isoformat()},
+                timeout=10,
             )
-        if r.status_code not in (200, 204):
-            if _fb_tabla_falta(r):
-                _fb_avisa_migracion("actualizar entidad", r)
+        except httpx.HTTPStatusError as e:
+            if _fb_tabla_falta(e.response):
+                _fb_avisa_migracion("actualizar entidad", e.response)
             else:
                 _fb_log.error("No se pudo actualizar %s: %s %s",
-                              _FB_TABLA_ENTIDADES, r.status_code, (r.text or "")[:300])
+                              _FB_TABLA_ENTIDADES, e.response.status_code,
+                              (e.response.text or "")[:300])
     except Exception as e:
         _fb_log.error("Error actualizando %s: %s", _FB_TABLA_ENTIDADES, e)
 
