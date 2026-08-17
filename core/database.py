@@ -176,12 +176,15 @@ async def patch_rows(
     *,
     prefer: str = "return=minimal",
     timeout: httpx.Timeout | float = DEFAULT_TIMEOUT,
+    accepted_statuses: tuple[int, ...] | None = None,
 ) -> list[dict[str, Any]]:
     """Patch rows and return representations when PostgREST sends them.
 
     Existing callers that only care about success may ignore the returned
     list. Callers using ``Prefer: return=representation`` receive the updated
-    rows without rebuilding another PATCH helper.
+    rows without rebuilding another PATCH helper. ``accepted_statuses`` may
+    pin an exact legacy status set while the default continues accepting all
+    ordinary 2xx responses.
     """
     async with httpx.AsyncClient(timeout=timeout) as client:
         response = await client.patch(
@@ -190,7 +193,7 @@ async def patch_rows(
             params=dict(params),
             json=dict(payload),
         )
-    response.raise_for_status()
+    _require_response_status(response, accepted_statuses)
     if not response.content:
         return []
     data = response.json()
