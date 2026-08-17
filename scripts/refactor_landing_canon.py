@@ -5,7 +5,7 @@ The landing already uses Canon-equivalent values under a parallel namespace.
 This transform removes that second token root/font load, adds brokr-theme.css,
 and rewrites every b2 typography/color/geometry/shadow/motion reference to the
 canonical token it represents. Marketing-responsive sizes remain responsive but
-are expressed as clamps over Canon type tokens.
+are expressed as clamps over Canon type tokens. This is a guarded one-shot edit.
 """
 from __future__ import annotations
 
@@ -71,9 +71,6 @@ SPECIALS = {
 
 
 def transform_text(source: str) -> str:
-    if source.count(ROOT_BLOCK_RE.pattern) > 0:
-        # pattern text is not literal; count is only defensive and not used.
-        pass
     matches = list(ROOT_BLOCK_RE.finditer(source))
     if len(matches) != 1:
         raise RuntimeError(f"landing.html: expected one b2 token root block, found {len(matches)}")
