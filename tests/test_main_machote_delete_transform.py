@@ -44,6 +44,7 @@ class MainMachoteDeleteTransformTests(unittest.TestCase):
         self.assertIn('except httpx.HTTPStatusError:', new)
         self.assertIn('detail="No se pudo eliminar el machote."', new)
         self.assertNotIn('/rest/v1/machotes_contrato', new)
+        self.assertNotIn('except Exception', new)
 
 
 if __name__ == "__main__":
