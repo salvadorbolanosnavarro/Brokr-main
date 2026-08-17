@@ -8,6 +8,12 @@ on:
     paths:
       - scripts/normalize_module_composition.py
       - .github/workflows/apply-visual-normalization.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - scripts/normalize_module_composition.py
+      - .github/workflows/apply-visual-normalization.yml
 
 permissions:
   contents: write
