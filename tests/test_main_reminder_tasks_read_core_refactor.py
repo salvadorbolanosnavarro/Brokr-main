@@ -1,4 +1,4 @@
-"""Keep _revisar_recordatorios's initial tareas read behind core.database."""
+"""Keep _revisar_recordatorios's tareas read and reminder patch behind core.database."""
 from pathlib import Path
 import unittest
 
@@ -27,11 +27,14 @@ class MainReminderTasksReadCoreRefactorTests(unittest.TestCase):
         self.assertIn('_recordatorios_log.warning("No se pudo leer tareas para recordatorios: %s", texto[:200])', block)
         self.assertIn('_recordatorios_log.error("Error consultando tareas para recordatorios: %s", e)', block)
 
-    def test_downstream_push_and_patch_remain_unchanged(self):
+    def test_downstream_push_and_patch_remain_intact(self):
         block = self.block
         self.assertIn('await enviar_push(', block)
-        self.assertIn('await c.patch(f"{SUPABASE_URL}/rest/v1/tareas"', block)
-        self.assertEqual(block.count("/rest/v1/tareas"), 1)
+        self.assertIn('await patch_rows(', block)
+        self.assertIn('"tareas"', block)
+        self.assertIn('{"id": f"eq.{t[\'id\']}"}', block)
+        self.assertIn('{"recordatorio_enviado": True}', block)
+        self.assertEqual(block.count("/rest/v1/tareas"), 0)
         read_end = block.index("    for t in tareas:")
         self.assertNotIn("/rest/v1/tareas", block[:read_end])
         self.assertNotIn("Authorization", block[:read_end])
