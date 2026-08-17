@@ -6,7 +6,13 @@ import unittest
 
 import httpx
 
-from core.database import _require_response_status, patch_rows, post_rows, upsert_rows
+from core.database import (
+    _require_response_status,
+    delete_rows,
+    patch_rows,
+    post_rows,
+    upsert_rows,
+)
 
 
 class CoreDatabaseAcceptedStatusesTests(unittest.TestCase):
@@ -32,7 +38,7 @@ class CoreDatabaseAcceptedStatusesTests(unittest.TestCase):
         self.assertEqual(ctx.exception.response.status_code, 500)
 
     def test_write_helpers_expose_same_optional_exact_status_contract(self):
-        for helper in (post_rows, patch_rows, upsert_rows):
+        for helper in (post_rows, patch_rows, upsert_rows, delete_rows):
             with self.subTest(helper=helper.__name__):
                 signature = inspect.signature(helper)
                 self.assertIn("accepted_statuses", signature.parameters)
@@ -41,6 +47,13 @@ class CoreDatabaseAcceptedStatusesTests(unittest.TestCase):
                     "_require_response_status(response, accepted_statuses)",
                     inspect.getsource(helper),
                 )
+
+    def test_delete_rows_preserves_old_defaults_but_can_send_prefer(self):
+        signature = inspect.signature(delete_rows)
+        self.assertIn("prefer", signature.parameters)
+        self.assertIsNone(signature.parameters["prefer"].default)
+        source = inspect.getsource(delete_rows)
+        self.assertIn("headers=service_headers(prefer=prefer)", source)
 
 
 if __name__ == "__main__":
