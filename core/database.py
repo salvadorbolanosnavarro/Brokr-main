@@ -1,7 +1,8 @@
 """Shared Supabase access primitives for Broquer.
 
 Privileged database access is centralized here so domain modules do not build
-service-role headers or invent error behavior independently.
+service-role headers or invent error behavior independently. Explicit public
+reads also live here when a legacy flow intentionally relies on Supabase RLS.
 """
 from __future__ import annotations
 
@@ -28,6 +29,16 @@ def service_headers(*, prefer: Optional[str] = None) -> dict[str, str]:
     return headers
 
 
+def public_headers() -> dict[str, str]:
+    """Return the public Supabase credentials used by RLS-governed reads."""
+    settings.require_supabase_public()
+    return {
+        "apikey": settings.supabase_anon_key,
+        "Authorization": f"Bearer {settings.supabase_anon_key}",
+        "Content-Type": "application/json",
+    }
+
+
 def rest_url(table: str) -> str:
     settings.require_supabase_public()
     normalized = table.strip().strip("/")
@@ -36,16 +47,17 @@ def rest_url(table: str) -> str:
     return f"{settings.supabase_url}/rest/v1/{normalized}"
 
 
-async def get_rows(
+async def _get_rows(
     table: str,
     params: Mapping[str, Any],
     *,
-    timeout: httpx.Timeout | float = DEFAULT_TIMEOUT,
+    headers: Mapping[str, str],
+    timeout: httpx.Timeout | float,
 ) -> list[dict[str, Any]]:
     async with httpx.AsyncClient(timeout=timeout) as client:
         response = await client.get(
             rest_url(table),
-            headers=service_headers(),
+            headers=dict(headers),
             params=dict(params),
         )
     response.raise_for_status()
@@ -53,6 +65,35 @@ async def get_rows(
     if not isinstance(payload, list):
         raise RuntimeError(f"Unexpected Supabase response for table {table}")
     return payload
+
+
+async def get_rows(
+    table: str,
+    params: Mapping[str, Any],
+    *,
+    timeout: httpx.Timeout | float = DEFAULT_TIMEOUT,
+) -> list[dict[str, Any]]:
+    return await _get_rows(
+        table,
+        params,
+        headers=service_headers(),
+        timeout=timeout,
+    )
+
+
+async def get_public_rows(
+    table: str,
+    params: Mapping[str, Any],
+    *,
+    timeout: httpx.Timeout | float = DEFAULT_TIMEOUT,
+) -> list[dict[str, Any]]:
+    """Read rows with the public key so Supabase RLS remains authoritative."""
+    return await _get_rows(
+        table,
+        params,
+        headers=public_headers(),
+        timeout=timeout,
+    )
 
 
 async def post_rows(
