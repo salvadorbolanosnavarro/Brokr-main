@@ -1,0 +1,37 @@
+#!/usr/bin/env python3
+"""Route only the existing-contact Facebook lead PATCH through core.database."""
+from __future__ import annotations
+
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+MAIN = ROOT / "main.py"
+
+OLD = '''                await client.patch(\n                    f"{SUPABASE_URL}/rest/v1/contactos",\n                    headers=_sb_headers({"Prefer": "return=minimal"}),\n                    params={"id": f"eq.{existente['id']}"},\n                    json={"es_potencial": True, "updated_at": ahora})\n'''
+
+NEW = '''                try:\n                    await patch_rows(\n                        "contactos",\n                        {"id": f"eq.{existente['id']}"},\n                        {"es_potencial": True, "updated_at": ahora},\n                        timeout=15,\n                    )\n                except httpx.HTTPStatusError:\n                    pass\n'''
+
+
+def transform_source(source: str) -> str:
+    marker = 'Contacto ya existía; se marcó como potencial.'
+    if source.count(marker) != 1:
+        raise RuntimeError(f"Expected one Facebook existing-contact marker, found {source.count(marker)}")
+    old_count = source.count(OLD)
+    new_count = source.count(NEW)
+    if old_count == 1 and new_count == 0:
+        transformed = source.replace(OLD, NEW, 1)
+        compile(transformed, str(MAIN), "exec")
+        return transformed
+    if old_count == 0 and new_count == 1:
+        compile(source, str(MAIN), "exec")
+        return source
+    raise RuntimeError(f"Unexpected Facebook existing-contact PATCH state: old={old_count}, new={new_count}")
+
+
+def main() -> None:
+    source = MAIN.read_text(encoding="utf-8")
+    MAIN.write_text(transform_source(source), encoding="utf-8")
+
+
+if __name__ == "__main__":
+    main()
