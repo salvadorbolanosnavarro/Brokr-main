@@ -1,4 +1,4 @@
-"""Permanent guards for /contactos/importar-archivo existing-contact Core read."""
+"""Permanent guards for /contactos/importar-archivo existing-contact Core database routing."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -16,10 +16,11 @@ class MainContactsFileExistingReadCoreRefactorTests(unittest.TestCase):
         end = cls.source.index('\n\n# ════════════════════════════════════════════════════════════════\n# Migración completa EasyBroker', start)
         cls.block = cls.source[start:end]
 
-    def test_only_contact_writes_remain_direct(self):
-        self.assertEqual(self.block.count('f"{SUPABASE_URL}/rest/v1/contactos",'), 2)
+    def test_only_contact_creation_post_remains_direct(self):
+        self.assertEqual(self.block.count('f"{SUPABASE_URL}/rest/v1/contactos",'), 1)
+        self.assertNotIn('rb = await client.patch(\n                        f"{SUPABASE_URL}/rest/v1/contactos"', self.block)
 
-    def test_core_read_preserves_http_fallback_and_other_io(self):
+    def test_core_read_and_patch_preserve_http_fallback_and_other_io(self):
         block = self.block
         self.assertIn('existentes = await get_rows(\n                "contactos",', block)
         self.assertIn('"limit": "10000"', block)
@@ -28,7 +29,10 @@ class MainContactsFileExistingReadCoreRefactorTests(unittest.TestCase):
         self.assertIn("except httpx.HTTPStatusError:\n            existentes = []", block)
         self.assertIn('propiedades_existentes = await get_rows(\n                "propiedades",', block)
         self.assertIn('vinculos_existentes = await get_rows(\n                "contactos_propiedades",', block)
-        self.assertIn('rb = await client.patch(\n                        f"{SUPABASE_URL}/rest/v1/contactos"', block)
+        self.assertIn('await patch_rows(\n                            "contactos",', block)
+        self.assertIn('{"id": f"eq.{contacto_id}"}', block)
+        self.assertIn('accepted_statuses=(200, 204)', block)
+        self.assertIn('except httpx.HTTPStatusError:\n                        errores += 1', block)
         self.assertIn('ri = await client.post(\n                    f"{SUPABASE_URL}/rest/v1/contactos"', block)
         self.assertIn('rv = await client.post(\n                    f"{SUPABASE_URL}/rest/v1/contactos_propiedades"', block)
 
