@@ -1,4 +1,5 @@
 """Dry-run guard for property bulk DELETE Core routing."""
+# Harmless PR-synchronize retrigger while preserving the exact dry-run contract.
 from __future__ import annotations
 
 import importlib.util
