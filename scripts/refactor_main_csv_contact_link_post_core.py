@@ -13,9 +13,9 @@ NEW = '''                try:\n                    await post_rows(\n           
 
 
 def transform_source(source: str) -> str:
-    marker = 'pares_existentes.add((contacto_id, propiedad_id))'
+    marker = '@app.post("/contactos/importar-archivo")'
     if source.count(marker) != 1:
-        raise RuntimeError(f"Expected one CSV contact-property link marker, found {source.count(marker)}")
+        raise RuntimeError(f"Expected one CSV contact import endpoint, found {source.count(marker)}")
     old_count = source.count(OLD)
     new_count = source.count(NEW)
     if old_count == 1 and new_count == 0:
