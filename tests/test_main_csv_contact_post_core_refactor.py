@@ -32,7 +32,12 @@ class MainCsvContactPostCoreRefactorTests(unittest.TestCase):
         self.assertIn('por_tel[tel] = {"id": contacto_id, **m}', block)
         self.assertIn('por_email[email] = {"id": contacto_id, **m}', block)
         self.assertIn('except httpx.HTTPStatusError:\n                    errores += 1\n                    continue', block)
-        self.assertIn('rv = await client.post(\n                    f"{SUPABASE_URL}/rest/v1/contactos_propiedades"', block)
+        self.assertIn('await post_rows(\n                        "contactos_propiedades",', block)
+        self.assertIn('accepted_statuses=(200, 201, 204)', block)
+        self.assertIn('vinculos_nuevos += 1', block)
+        self.assertIn('pares_existentes.add((contacto_id, propiedad_id))', block)
+        self.assertIn('except httpx.HTTPStatusError:\n                    pass', block)
+        self.assertNotIn('rv = await client.post(\n                    f"{SUPABASE_URL}/rest/v1/contactos_propiedades"', block)
 
 
 if __name__ == "__main__":
