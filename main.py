@@ -11638,19 +11638,21 @@ async def importar_contactos_archivo(request: Request, file: UploadFile = File(.
                 }
                 nuevo["nombre"] = nombre or "Sin nombre"
                 nuevo = {k: v for k, v in nuevo.items() if v not in ("", None, [])}
-                ri = await client.post(
-                    f"{SUPABASE_URL}/rest/v1/contactos",
-                    headers={**sb_headers, "Prefer": "return=minimal"},
-                    json=nuevo
-                )
-                if ri.status_code in (200, 201, 204):
+                try:
+                    await post_rows(
+                        "contactos",
+                        nuevo,
+                        prefer="return=minimal",
+                        timeout=20,
+                        accepted_statuses=(200, 201, 204),
+                    )
                     importados += 1
                     contacto_id = nuevo["id"]
                     if tel:
                         por_tel[tel] = {"id": contacto_id, **m}
                     if email:
                         por_email[email] = {"id": contacto_id, **m}
-                else:
+                except httpx.HTTPStatusError:
                     errores += 1
                     continue
 
