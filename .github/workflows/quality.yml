@@ -46,6 +46,7 @@ jobs:
           aviso-privacidad.html
           facebook-callback.html
           whatsapp-callback.html
+          whatsapp-chatgpt.html
 
       - name: Report architecture debt
         run: python scripts/architecture_debt.py
