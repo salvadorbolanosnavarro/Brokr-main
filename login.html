@@ -3,9 +3,6 @@
 <head>
 <meta charset="UTF-8"/>
 <script>
-  /* Detección temprana del WebView nativo iOS (antes de pintar la pantalla)
-     para que los botones de OAuth de Google no parpadeen antes de ocultarse.
-     capacitor-bridge.js (defer) vuelve a aplicar esta misma clase más tarde. */
   (function () {
     try {
       if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
@@ -25,233 +22,55 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; }
 html, body { min-height: 100%; margin: 0; background: var(--paper); }
-body {
-  overflow-y: auto;
-  color: var(--ink);
-  font-family: var(--font-sans);
-  font-size: var(--fs-body);
-  line-height: var(--lh);
-  -webkit-font-smoothing: antialiased;
-}
+body { overflow-y: auto; color: var(--ink); font-family: var(--font-sans); font-size: var(--fs-body); line-height: var(--lh); -webkit-font-smoothing: antialiased; }
 h1, h2, p { margin: 0; }
 a { color: var(--sky-blue); }
 :focus-visible { outline: 2px solid var(--sky-blue); outline-offset: 2px; border-radius: var(--r-xs); }
-
-.bk-auth {
-  min-height: 100vh;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  background: var(--paper);
-}
-.bk-hero {
-  display: none;
-  position: relative;
-  overflow: hidden;
-  padding: var(--sp-12) var(--sp-12) var(--sp-10);
-  color: var(--paper);
-  background: var(--sky-navy);
-}
-.bk-hero::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(circle at 88% 8%, var(--sky-navy-mid), transparent 48%);
-  opacity: .82;
-}
-.bk-hero__top,
-.bk-hero__body { position: relative; z-index: var(--z-base); }
+.bk-auth { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr); background: var(--paper); }
+.bk-hero { display: none; position: relative; overflow: hidden; padding: var(--sp-12) var(--sp-12) var(--sp-10); color: var(--paper); background: var(--sky-navy); }
+.bk-hero::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at 88% 8%, var(--sky-navy-mid), transparent 48%); opacity: .82; }
+.bk-hero__top, .bk-hero__body { position: relative; z-index: var(--z-base); }
 .bk-hero__mark { line-height: 0; }
 .bk-hero__logo { height: var(--h-lg); width: auto; display: block; }
 .bk-hero__body { align-self: end; max-width: 560px; }
-.bk-hero__hed {
-  max-width: 11ch;
-  margin-bottom: var(--sp-5);
-  color: var(--paper);
-  font-family: var(--font-display);
-  font-size: var(--fs-display);
-  font-weight: 800;
-  line-height: 1.02;
-  letter-spacing: -.04em;
-}
+.bk-hero__hed { max-width: 11ch; margin-bottom: var(--sp-5); color: var(--paper); font-family: var(--font-display); font-size: var(--fs-display); font-weight: 800; line-height: 1.02; letter-spacing: -.04em; }
 .bk-hero__hed em { color: var(--sky-blue-lift); font-style: normal; }
-.bk-hero__sub {
-  max-width: 500px;
-  color: var(--mute-3);
-  font-size: var(--fs-body);
-  line-height: var(--lh-lg);
-}
-.bk-hero__foot {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--sp-6);
-  margin-top: var(--sp-10);
-  padding-top: var(--sp-6);
-  border-top: 1px solid rgba(255,255,255,.16); /* AUDIT-EXEMPT-LINE: contraste estructural sobre hero navy */
-}
-.bk-hero__stat .v {
-  color: var(--paper);
-  font-family: var(--font-display);
-  font-size: var(--fs-h2);
-  font-weight: 800;
-  letter-spacing: -.03em;
-}
-.bk-hero__stat .l { margin-top: var(--sp-1); color: var(--mute-3); font-size: var(--fs-xs); }
-
-.bk-form-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 0;
-  padding: var(--sp-8) var(--sp-5) var(--sp-16);
-  background:
-    radial-gradient(circle at 50% 0%, var(--sky-canvas), transparent 34rem),
-    var(--paper);
-}
-.bk-form {
-  width: min(100%, 440px);
-  padding: var(--sp-7);
-  border: 1px solid var(--line);
-  border-radius: var(--r-xl);
-  background: var(--glass-bg);
-  -webkit-backdrop-filter: var(--glass-blur);
-  backdrop-filter: var(--glass-blur);
-  box-shadow: var(--shadow-md);
-}
+.bk-hero__sub { max-width: 500px; color: var(--paper); opacity: .78; font-size: var(--fs-body); line-height: var(--lh-lg); }
+.bk-hero__foot { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-6); margin-top: var(--sp-10); padding-top: var(--sp-6); border-top: 1px solid rgba(255,255,255,.16); /* AUDIT-EXEMPT-LINE: contraste estructural sobre hero navy */ }
+.bk-hero__stat .v { color: var(--paper); font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 800; letter-spacing: -.03em; }
+.bk-hero__stat .l { margin-top: var(--sp-1); color: var(--paper); opacity: .66; font-size: var(--fs-xs); }
+.bk-form-wrap { display: flex; align-items: center; justify-content: center; min-width: 0; padding: var(--sp-8) var(--sp-5) var(--sp-16); background: radial-gradient(circle at 50% 0%, var(--sky-canvas), transparent 34rem), var(--paper); }
+.bk-form { width: min(100%, 440px); padding: var(--sp-7); border: 1px solid var(--line); border-radius: var(--r-xl); background: var(--glass-bg); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: var(--shadow-md); }
 .bk-form__brand { display: flex; align-items: center; margin-bottom: var(--sp-7); }
 .bk-form__brand img { height: var(--h); width: auto; display: block; }
-.bk-form__hed {
-  margin-bottom: var(--sp-2);
-  color: var(--ink);
-  font-family: var(--font-display);
-  font-size: var(--fs-h2);
-  font-weight: 800;
-  line-height: var(--lh-h2);
-  letter-spacing: -.03em;
-}
+.bk-form__hed { margin-bottom: var(--sp-2); color: var(--ink); font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 800; line-height: var(--lh-h2); letter-spacing: -.03em; }
 .bk-form__sub { margin-bottom: var(--sp-6); color: var(--mute); font-size: var(--fs-sm); }
-
-.bk-seg {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--sp-1);
-  margin-bottom: var(--sp-6);
-  padding: var(--sp-1);
-  border: 1px solid var(--line-2);
-  border-radius: var(--r);
-  background: var(--shell);
-}
-.bk-seg__btn {
-  min-height: var(--h-sm);
-  border: 0;
-  border-radius: var(--r-sm);
-  background: transparent;
-  color: var(--mute);
-  font: 700 var(--fs-sm)/1 var(--font-sans);
-  cursor: pointer;
-  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
-}
+.bk-seg { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-1); margin-bottom: var(--sp-6); padding: var(--sp-1); border: 1px solid var(--line-2); border-radius: var(--r); background: var(--shell); }
+.bk-seg__btn { min-height: var(--h-sm); border: 0; border-radius: var(--r-sm); background: transparent; color: var(--mute); font: 700 var(--fs-sm)/1 var(--font-sans); cursor: pointer; transition: background var(--dur) var(--ease), color var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
 .bk-seg__btn:hover { color: var(--ink); background: var(--paper); }
 .bk-seg__btn.is-active { color: var(--paper); background: var(--sky-blue); box-shadow: var(--shadow-xs); }
-
 .bk-field { margin-bottom: var(--sp-4); }
-.bk-field label {
-  display: block;
-  margin-bottom: var(--sp-2);
-  color: var(--ink-2);
-  font-size: var(--fs-sm);
-  font-weight: 700;
-}
-.bk-input {
-  width: 100%;
-  min-height: var(--h);
-  padding: 0 var(--sp-4);
-  border: 1px solid var(--line-2);
-  border-radius: var(--r);
-  background: var(--shell);
-  color: var(--ink);
-  font: 500 var(--fs-body)/1 var(--font-sans);
-  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease);
-}
+.bk-field label { display: block; margin-bottom: var(--sp-2); color: var(--ink-2); font-size: var(--fs-sm); font-weight: 700; }
+.bk-input { width: 100%; min-height: var(--h); padding: 0 var(--sp-4); border: 1px solid var(--line-2); border-radius: var(--r); background: var(--shell); color: var(--ink); font: 500 var(--fs-body)/1 var(--font-sans); transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease); }
 .bk-input::placeholder { color: var(--mute-2); }
 .bk-input:focus { outline: none; border-color: var(--sky-blue); background: var(--paper); box-shadow: var(--focus); }
-
 .bk-forgot { margin: calc(var(--sp-2) * -1) 0 var(--sp-5); text-align: right; font-size: var(--fs-xs); }
 .bk-forgot a { color: var(--sky-blue); font-weight: 700; text-decoration: none; }
 .bk-forgot a:hover { color: var(--sky-blue-press); text-decoration: underline; text-underline-offset: 3px; }
-.bk-submit {
-  width: 100%;
-  min-height: var(--h);
-  margin-top: var(--sp-1);
-  border: 0;
-  border-radius: var(--r-sm);
-  background: var(--sky-blue);
-  color: var(--paper);
-  font: 800 var(--fs-sm)/1 var(--font-sans);
-  cursor: pointer;
-  transition: background var(--dur) var(--ease), transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
-}
+.bk-submit { width: 100%; min-height: var(--h); margin-top: var(--sp-1); border: 0; border-radius: var(--r-sm); background: var(--sky-blue); color: var(--paper); font: 800 var(--fs-sm)/1 var(--font-sans); cursor: pointer; transition: background var(--dur) var(--ease), transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
 .bk-submit:hover { background: var(--sky-blue-press); box-shadow: var(--shadow-sm); }
 .bk-submit:active { transform: translateY(1px); }
 .bk-submit:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
-.bk-divider {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  margin: var(--sp-6) 0 var(--sp-4);
-  color: var(--mute);
-  font-size: var(--fs-xs);
-  font-weight: 700;
-}
+.bk-divider { display: flex; align-items: center; gap: var(--sp-3); margin: var(--sp-6) 0 var(--sp-4); color: var(--mute); font-size: var(--fs-xs); font-weight: 700; }
 .bk-divider::before, .bk-divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
-.bk-oauth {
-  width: 100%;
-  min-height: var(--h);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--sp-2);
-  border: 1px solid var(--line-2);
-  border-radius: var(--r-sm);
-  background: var(--paper);
-  color: var(--ink);
-  font: 700 var(--fs-sm)/1 var(--font-sans);
-  cursor: pointer;
-  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
-}
+.bk-oauth { width: 100%; min-height: var(--h); display: flex; align-items: center; justify-content: center; gap: var(--sp-2); border: 1px solid var(--line-2); border-radius: var(--r-sm); background: var(--paper); color: var(--ink); font: 700 var(--fs-sm)/1 var(--font-sans); cursor: pointer; transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
 .bk-oauth:hover { border-color: var(--line-3); background: var(--paper-2); box-shadow: var(--shadow-xs); }
 .is-ios-native .bk-oauth, .is-ios-native .bk-divider { display: none; }
-.bk-faceid {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: var(--sp-2);
-  margin-top: var(--sp-5);
-  color: var(--mute);
-  text-align: center;
-  font-size: var(--fs-xs);
-}
-.bk-msg {
-  display: none;
-  margin-bottom: var(--sp-4);
-  padding: var(--sp-3) var(--sp-4);
-  border: 1px solid transparent;
-  border-radius: var(--r);
-  font-size: var(--fs-sm);
-  line-height: var(--lh-sm);
-}
+.bk-faceid { display: flex; justify-content: center; align-items: center; gap: var(--sp-2); margin-top: var(--sp-5); color: var(--mute); text-align: center; font-size: var(--fs-xs); }
+.bk-msg { display: none; margin-bottom: var(--sp-4); padding: var(--sp-3) var(--sp-4); border: 1px solid transparent; border-radius: var(--r); font-size: var(--fs-sm); line-height: var(--lh-sm); }
 .bk-msg.is-err { display: block; background: var(--danger-soft); color: var(--danger); border-color: var(--danger-soft); }
 .bk-msg.is-ok { display: block; background: var(--success-soft); color: var(--success); border-color: var(--success-soft); }
-.bk-legal-check {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--sp-2);
-  margin: var(--sp-4) 0 var(--sp-2);
-  color: var(--mute);
-  font-size: var(--fs-xs);
-  line-height: var(--lh-sm);
-  cursor: pointer;
-}
+.bk-legal-check { display: flex; align-items: flex-start; gap: var(--sp-2); margin: var(--sp-4) 0 var(--sp-2); color: var(--mute); font-size: var(--fs-xs); line-height: var(--lh-sm); cursor: pointer; }
 .bk-legal-check input[type=checkbox] { width: 16px; height: 16px; margin-top: 2px; accent-color: var(--sky-blue); cursor: pointer; flex-shrink: 0; }
 .bk-legal-check a, .bk-legal a { color: var(--ink-2); font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
 .bk-legal { margin-top: var(--sp-5); color: var(--mute); text-align: center; font-size: var(--fs-xs); line-height: var(--lh-sm); }
@@ -262,28 +81,11 @@ a { color: var(--sky-blue); }
 .bk-foot { margin-top: var(--sp-7); color: var(--mute); text-align: center; font-size: var(--fs-xs); }
 .bk-spin { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.32); border-top-color: var(--paper); border-radius: 50%; animation: bk-spin .7s linear infinite; vertical-align: middle; }
 @keyframes bk-spin { to { transform: rotate(360deg); } }
-#splash {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-toast);
-  display: grid;
-  place-items: center;
-  background: var(--paper);
-  transition: opacity var(--dur-slow) var(--ease);
-}
+#splash { position: fixed; inset: 0; z-index: var(--z-toast); display: grid; place-items: center; background: var(--paper); transition: opacity var(--dur-slow) var(--ease); }
 #splash .mark { width: min(44vw, 220px); }
 #splash .mark img { width: 100%; height: auto; display: block; }
 .bk-inv { display: none; }
-.bk-inv.is-on {
-  display: flex;
-  gap: var(--sp-2);
-  align-items: flex-start;
-  margin-bottom: var(--sp-4);
-  padding: var(--sp-3) var(--sp-4);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  background: var(--paper-2);
-}
+.bk-inv.is-on { display: flex; gap: var(--sp-2); align-items: flex-start; margin-bottom: var(--sp-4); padding: var(--sp-3) var(--sp-4); border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--paper-2); }
 .bk-inv svg { flex: 0 0 auto; margin-top: var(--sp-1); }
 .bk-inv p { color: var(--ink-2); font-size: var(--fs-sm); line-height: var(--lh-sm); }
 .bk-inv strong { color: var(--ink); }
@@ -291,207 +93,65 @@ a { color: var(--sky-blue); }
 .bk-field--flush { margin-bottom: 0; }
 .bk-field--top { margin-top: var(--sp-4); }
 .bk-oauth--spaced { margin-top: var(--sp-3); }
-
-@media (min-width: 980px) {
-  .bk-auth { grid-template-columns: minmax(0, .94fr) minmax(0, 1.06fr); }
-  .bk-hero { display: grid; grid-template-rows: auto 1fr; }
-  .bk-form__brand { display: none; }
-}
-@media (max-width: 560px) {
-  .bk-form-wrap { align-items: flex-start; padding: var(--sp-5) var(--sp-3) var(--sp-10); }
-  .bk-form { padding: var(--sp-5); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); }
-  .bk-signup-grid { grid-template-columns: 1fr; gap: 0; }
-  .bk-field--flush { margin-bottom: var(--sp-4); }
-}
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms; animation-iteration-count: 1; transition-duration: .01ms; }
-}
+@media (min-width: 980px) { .bk-auth { grid-template-columns: minmax(0, .94fr) minmax(0, 1.06fr); } .bk-hero { display: grid; grid-template-rows: auto 1fr; } .bk-form__brand { display: none; } }
+@media (max-width: 560px) { .bk-form-wrap { align-items: flex-start; padding: var(--sp-5) var(--sp-3) var(--sp-10); } .bk-form { padding: var(--sp-5); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); } .bk-signup-grid { grid-template-columns: 1fr; gap: 0; } .bk-field--flush { margin-bottom: var(--sp-4); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms; animation-iteration-count: 1; transition-duration: .01ms; } }
 </style>
 </head>
 <body>
 <div id="splash"><div class="mark"><img src="logotipo-black.png" alt="Broquer"/></div></div>
-
 <div class="bk-auth">
   <aside class="bk-hero">
-    <div class="bk-hero__top">
-      <div class="bk-hero__mark"><img class="bk-hero__logo" src="logotipo-white.png" alt="Broquer"/></div>
-    </div>
+    <div class="bk-hero__top"><div class="bk-hero__mark"><img class="bk-hero__logo" src="logotipo-white.png" alt="Broquer"/></div></div>
     <div class="bk-hero__body">
       <h1 class="bk-hero__hed">Cierra más operaciones. <em>Con menos fricción.</em></h1>
       <p class="bk-hero__sub">Software único en el mundo. El asistente inmobiliario más inteligente de la historia, fichas técnicas automáticas, contratos automáticos, cálculo de ISR, estimaciones de valor automáticas, edición de imágenes automática y más. En un solo lugar.</p>
-      <div class="bk-hero__foot">
-        <div class="bk-hero__stat"><div class="v">10,000+</div><div class="l">Agentes activos</div></div>
-        <div class="bk-hero__stat"><div class="v">$500M</div><div class="l">En comisiones</div></div>
-        <div class="bk-hero__stat"><div class="v">10</div><div class="l">Países LATAM</div></div>
-      </div>
+      <div class="bk-hero__foot"><div class="bk-hero__stat"><div class="v">10,000+</div><div class="l">Agentes activos</div></div><div class="bk-hero__stat"><div class="v">$500M</div><div class="l">En comisiones</div></div><div class="bk-hero__stat"><div class="v">10</div><div class="l">Países LATAM</div></div></div>
     </div>
   </aside>
-
-  <main class="bk-form-wrap">
-    <div class="bk-form">
-      <div class="bk-form__brand"><img src="logotipo-black.png" alt="Broquer"/></div>
-      <h2 class="bk-form__hed" id="form-title">Bienvenido</h2>
-      <p class="bk-form__sub" id="form-sub">Inicia sesión para continuar a tu cuenta.</p>
-      <div class="bk-seg" role="tablist">
-        <button class="bk-seg__btn is-active" id="seg-login" onclick="setTab('login')">Iniciar sesión</button>
-        <button class="bk-seg__btn" id="seg-signup" onclick="setTab('signup')">Crear cuenta</button>
-      </div>
-      <div class="bk-msg" id="msg"></div>
-      <div class="bk-inv" id="inv-banner">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--sky-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        <p><strong id="inv-empresa"></strong> te invitó a su equipo en Broquer. Continúa con el correo <strong id="inv-email"></strong> y al final quedarás dentro con un clic.</p>
-      </div>
-
-      <form id="form-login" onsubmit="event.preventDefault();doLogin()">
-        <div class="bk-field"><label for="l-email">Correo electrónico</label><input class="bk-input" type="email" id="l-email" placeholder="tu@correo.com" autocomplete="email"/></div>
-        <div class="bk-field"><label for="l-pass">Contraseña</label><input class="bk-input" type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password"/></div>
-        <div class="bk-forgot"><a href="#" onclick="doForgot();return false">¿Olvidaste tu contraseña?</a></div>
-        <button type="submit" class="bk-submit" id="btn-login">Continuar</button>
-        <div class="bk-divider">o</div>
-        <button type="button" class="bk-oauth" onclick="doGoogle()">
-          <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg><!-- AUDIT-EXEMPT-LINE: logo oficial de Google -->
-          Continuar con Google
-        </button>
-        <div class="bk-faceid"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a9 9 0 01-9 9m0 0a9 9 0 01-9-9 9 9 0 0118 0z"/></svg>Face ID disponible tras el primer inicio de sesión</div>
-      </form>
-
-      <form id="form-signup" style="display:none" onsubmit="event.preventDefault();doSignup()">
-        <div class="bk-signup-grid">
-          <div class="bk-field bk-field--flush"><label for="s-nombre">Nombre(s)</label><input class="bk-input" type="text" id="s-nombre" placeholder="Salvador" autocomplete="given-name"/></div>
-          <div class="bk-field bk-field--flush"><label for="s-apellidos">Apellidos</label><input class="bk-input" type="text" id="s-apellidos" placeholder="Bolaños" autocomplete="family-name"/></div>
-        </div>
-        <div class="bk-field bk-field--top"><label for="s-telefono">Teléfono (opcional)</label><input class="bk-input" type="tel" id="s-telefono" placeholder="443 123 4567" autocomplete="tel"/></div>
-        <div class="bk-field"><label for="s-email">Correo electrónico</label><input class="bk-input" type="email" id="s-email" placeholder="tu@correo.com" autocomplete="email"/></div>
-        <div class="bk-field"><label for="s-pass">Contraseña</label><input class="bk-input" type="password" id="s-pass" placeholder="Mínimo 8 caracteres" autocomplete="new-password"/></div>
-        <div class="bk-field"><label for="s-pass2">Confirmar contraseña</label><input class="bk-input" type="password" id="s-pass2" placeholder="Repite la contraseña"/></div>
-        <label class="bk-legal-check"><input type="checkbox" id="s-legal"/><span>He leído y acepto los <a href="legal.html" target="_blank" rel="noopener">Términos</a>, el <a href="legal.html" target="_blank" rel="noopener">Contrato de suscripción</a> y el <a href="legal.html#privacidad" target="_blank" rel="noopener">Aviso de Privacidad</a> de Broquer®.</span></label>
-        <button type="submit" class="bk-submit" id="btn-signup">Crear cuenta</button>
-        <button type="button" class="bk-oauth bk-oauth--spaced" onclick="doGoogle()">
-          <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg><!-- AUDIT-EXEMPT-LINE: logo oficial de Google -->
-          Registrarse con Google
-        </button>
-      </form>
-
-      <div class="bk-legal">Al continuar aceptas nuestros <a href="legal.html" target="_blank" rel="noopener">Términos</a> y el <a href="legal.html#privacidad" target="_blank" rel="noopener">Aviso de Privacidad</a>.</div>
-      <div class="bk-meta"><img src="meta-tech-provider.png" alt="Meta Tech Provider"/></div><!-- AUDIT-EXEMPT-LINE: insignia oficial de Meta -->
-      <div class="bk-foot">Broquer 2026 — Para Sharks inmobiliarios</div>
-    </div>
-  </main>
+  <main class="bk-form-wrap"><div class="bk-form">
+    <div class="bk-form__brand"><img src="logotipo-black.png" alt="Broquer"/></div>
+    <h2 class="bk-form__hed" id="form-title">Bienvenido</h2><p class="bk-form__sub" id="form-sub">Inicia sesión para continuar a tu cuenta.</p>
+    <div class="bk-seg" role="tablist"><button class="bk-seg__btn is-active" id="seg-login" onclick="setTab('login')">Iniciar sesión</button><button class="bk-seg__btn" id="seg-signup" onclick="setTab('signup')">Crear cuenta</button></div>
+    <div class="bk-msg" id="msg"></div>
+    <div class="bk-inv" id="inv-banner"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--sky-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><p><strong id="inv-empresa"></strong> te invitó a su equipo en Broquer. Continúa con el correo <strong id="inv-email"></strong> y al final quedarás dentro con un clic.</p></div>
+    <form id="form-login" onsubmit="event.preventDefault();doLogin()">
+      <div class="bk-field"><label for="l-email">Correo electrónico</label><input class="bk-input" type="email" id="l-email" placeholder="tu@correo.com" autocomplete="email"/></div>
+      <div class="bk-field"><label for="l-pass">Contraseña</label><input class="bk-input" type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password"/></div>
+      <div class="bk-forgot"><a href="#" onclick="doForgot();return false">¿Olvidaste tu contraseña?</a></div><button type="submit" class="bk-submit" id="btn-login">Continuar</button><div class="bk-divider">o</div>
+      <button type="button" class="bk-oauth" onclick="doGoogle()"><svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg><!-- AUDIT-EXEMPT-LINE: logo oficial de Google -->Continuar con Google</button>
+      <div class="bk-faceid"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a9 9 0 01-9 9m0 0a9 9 0 01-9-9 9 9 0 0118 0z"/></svg>Face ID disponible tras el primer inicio de sesión</div>
+    </form>
+    <form id="form-signup" style="display:none" onsubmit="event.preventDefault();doSignup()">
+      <div class="bk-signup-grid"><div class="bk-field bk-field--flush"><label for="s-nombre">Nombre(s)</label><input class="bk-input" type="text" id="s-nombre" placeholder="Salvador" autocomplete="given-name"/></div><div class="bk-field bk-field--flush"><label for="s-apellidos">Apellidos</label><input class="bk-input" type="text" id="s-apellidos" placeholder="Bolaños" autocomplete="family-name"/></div></div>
+      <div class="bk-field bk-field--top"><label for="s-telefono">Teléfono (opcional)</label><input class="bk-input" type="tel" id="s-telefono" placeholder="443 123 4567" autocomplete="tel"/></div><div class="bk-field"><label for="s-email">Correo electrónico</label><input class="bk-input" type="email" id="s-email" placeholder="tu@correo.com" autocomplete="email"/></div><div class="bk-field"><label for="s-pass">Contraseña</label><input class="bk-input" type="password" id="s-pass" placeholder="Mínimo 8 caracteres" autocomplete="new-password"/></div><div class="bk-field"><label for="s-pass2">Confirmar contraseña</label><input class="bk-input" type="password" id="s-pass2" placeholder="Repite la contraseña"/></div>
+      <label class="bk-legal-check"><input type="checkbox" id="s-legal"/><span>He leído y acepto los <a href="legal.html" target="_blank" rel="noopener">Términos</a>, el <a href="legal.html" target="_blank" rel="noopener">Contrato de suscripción</a> y el <a href="legal.html#privacidad" target="_blank" rel="noopener">Aviso de Privacidad</a> de Broquer®.</span></label><button type="submit" class="bk-submit" id="btn-signup">Crear cuenta</button>
+      <button type="button" class="bk-oauth bk-oauth--spaced" onclick="doGoogle()"><svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg><!-- AUDIT-EXEMPT-LINE: logo oficial de Google -->Registrarse con Google</button>
+    </form>
+    <div class="bk-legal">Al continuar aceptas nuestros <a href="legal.html" target="_blank" rel="noopener">Términos</a> y el <a href="legal.html#privacidad" target="_blank" rel="noopener">Aviso de Privacidad</a>.</div><div class="bk-meta"><img src="meta-tech-provider.png" alt="Meta Tech Provider"/></div><!-- AUDIT-EXEMPT-LINE: insignia oficial de Meta --><div class="bk-foot">Broquer 2026 — Para Sharks inmobiliarios</div>
+  </div></main>
 </div>
-
 <script>
-const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
-const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
-let INV_TOKEN = '';
-try {
-  const _q = new URLSearchParams(location.search);
-  const _urlInv = _q.get('inv') || '';
-  if (_urlInv) localStorage.setItem('inv_pendiente', _urlInv);
-  INV_TOKEN = _urlInv || localStorage.getItem('inv_pendiente') || '';
-} catch(_) {}
-function destinoTrasSesion(){ return INV_TOKEN ? ('unirse.html?inv=' + encodeURIComponent(INV_TOKEN)) : 'index.html'; }
-
-async function sbAuth(path, body){
-  let url = `${SB_URL}/auth/v1/${path}`;
-  if (body && body.redirect_to) url += (url.includes('?') ? '&' : '?') + 'redirect_to=' + encodeURIComponent(body.redirect_to);
-  try {
-    const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json','apikey':SB_KEY}, body:JSON.stringify(body) });
-    let data; try { data = await r.json(); } catch(_) { data = { error:'invalid_response' }; }
-    if (data && typeof data === 'object') data.__status = r.status;
-    return data || {};
-  } catch(e) { return { error:'network', error_description:'Sin conexión. Revisa tu internet e intenta de nuevo.' }; }
-}
-function spanishAuthError(data){
-  const raw=(data&&(data.error_description||data.msg||data.error||'')).toString().toLowerCase();
-  if(!raw) return 'No se pudo completar. Intenta de nuevo.';
-  if(raw.includes('invalid login')||raw.includes('invalid credentials')||raw.includes('email not confirmed')) return 'Correo o contraseña incorrectos.';
-  if(raw.includes('email not confirmed')) return 'Debes confirmar tu correo antes de iniciar sesión.';
-  if(raw.includes('user already registered')||raw.includes('already registered')||raw.includes('duplicate')) return 'Ya existe una cuenta con ese correo. Inicia sesión o usa "¿Olvidaste tu contraseña?".';
-  if(raw.includes('rate limit')||raw.includes('too many')) return 'Demasiados intentos. Espera unos minutos antes de volver a intentar.';
-  if(raw.includes('weak')||raw.includes('password should')) return 'La contraseña es demasiado débil. Usa al menos 8 caracteres con letras y números.';
-  if(raw.includes('invalid email')||raw.includes('email address')) return 'El correo electrónico no es válido.';
-  if(raw==='network') return data.error_description||'Sin conexión.';
-  if(raw==='invalid_response') return 'Respuesta inesperada del servidor. Intenta de nuevo.';
-  return data.error_description||data.msg||data.error||'Error desconocido.';
-}
-function showMsg(text,type='err'){ const el=document.getElementById('msg'); el.textContent=text; el.className=`bk-msg is-${type}`; }
-function clearMsg(){ document.getElementById('msg').className='bk-msg'; }
-const EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-function isValidEmail(s){ return EMAIL_RE.test(String(s||'').trim()); }
-function isValidPhoneMx(s){ return String(s||'').replace(/\D/g,'').length===10; }
-function setTab(tab){
-  document.getElementById('seg-login').classList.toggle('is-active',tab==='login');
-  document.getElementById('seg-signup').classList.toggle('is-active',tab==='signup');
-  document.getElementById('form-login').style.display=tab==='login'?'':'none';
-  document.getElementById('form-signup').style.display=tab==='signup'?'':'none';
-  document.getElementById('form-title').textContent=tab==='login'?'Bienvenido':'Crea tu cuenta';
-  document.getElementById('form-sub').textContent=tab==='login'?'Inicia sesión para continuar a tu cuenta.':'Tu sistema operativo inmobiliario, en minutos.';
-  clearMsg();
-}
-function setLoading(btnId,loading){ const btn=document.getElementById(btnId); if(loading){btn.disabled=true;btn.innerHTML='<span class="bk-spin"></span>';}else{btn.disabled=false;btn.textContent=btnId==='btn-login'?'Continuar':'Crear cuenta';} }
-async function doLogin(){
-  clearMsg(); const email=document.getElementById('l-email').value.trim().toLowerCase(); const pass=document.getElementById('l-pass').value;
-  if(!email||!pass){showMsg('Ingresa tu correo y contraseña.');return;} if(!isValidEmail(email)){showMsg('El correo electrónico no es válido.');return;}
-  setLoading('btn-login',true); const data=await sbAuth('token?grant_type=password',{email,password:pass});
-  if(!data||data.error||!data.access_token){setLoading('btn-login',false);showMsg(spanishAuthError(data));return;}
-  try{localStorage.setItem('sb_token',data.access_token);if(data.refresh_token)localStorage.setItem('sb_refresh',data.refresh_token);localStorage.setItem('sb_user',JSON.stringify(data.user||{}));sessionStorage.setItem('sb_token',data.access_token);sessionStorage.setItem('sb_user',JSON.stringify(data.user||{}));localStorage.setItem('sesion_activa','true');}catch(_){}
-  await checkProfileAndRedirect(data.access_token,data.user||{});
-}
-async function persistProfile(token,userId,nombreCompleto,telefono){
-  if(!token||!userId)return false;
-  try{
-    let r=await fetch(`${SB_URL}/rest/v1/usuarios?id=eq.${userId}`,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${token}`,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({nombre:nombreCompleto,telefono})});
-    if(r.ok)return true;
-    let raw=localStorage.getItem('sb_user')||sessionStorage.getItem('sb_user')||'{}';if(raw==='undefined'||raw==='null')raw='{}';let user={};try{user=JSON.parse(raw)||{};}catch(_){}const email=user.email||'';
-    r=await fetch(`${SB_URL}/rest/v1/usuarios`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${token}`,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({id:userId,email,nombre:nombreCompleto,telefono})}); return r.ok;
-  }catch(e){console.error('persistProfile failed',e);return false;}
-}
-async function doSignup(){
-  clearMsg(); const nombre=document.getElementById('s-nombre').value.trim(); const apellidos=document.getElementById('s-apellidos').value.trim(); const telefono=document.getElementById('s-telefono').value.trim(); const email=document.getElementById('s-email').value.trim().toLowerCase(); const pass=document.getElementById('s-pass').value; const pass2=document.getElementById('s-pass2').value; const legal=document.getElementById('s-legal').checked;
-  if(!nombre){showMsg('Ingresa tu nombre.');return;} if(!apellidos){showMsg('Ingresa tus apellidos.');return;} if(telefono&&!isValidPhoneMx(telefono)){showMsg('El teléfono debe tener 10 dígitos (Lada + número).');return;} if(!email){showMsg('Ingresa tu correo electrónico.');return;} if(!isValidEmail(email)){showMsg('El correo electrónico no es válido.');return;} if(!pass||!pass2){showMsg('Ingresa tu contraseña dos veces.');return;} if(pass!==pass2){showMsg('Las contraseñas no coinciden.');return;} if(pass.length<8){showMsg('La contraseña debe tener al menos 8 caracteres.');return;} if(!legal){showMsg('Debes aceptar los Términos y el Aviso de Privacidad para continuar.');return;}
-  setLoading('btn-signup',true);
-  try{const rx=await fetch('https://api.broquer.app/auth/correo-existe?email='+encodeURIComponent(email));const dx=rx.ok?await rx.json():null;if(dx&&dx.existe){setLoading('btn-signup',false);showMsg('Este correo electrónico ya está asociado a una cuenta activa.');setTab('login');const lEmail=document.getElementById('l-email');if(lEmail)lEmail.value=email;return;}}catch(_){}
-  const signupBody={email,password:pass}; if(INV_TOKEN)signupBody.redirect_to=window.location.origin+'/login.html?inv='+encodeURIComponent(INV_TOKEN); const data=await sbAuth('signup',signupBody);
-  const idts=data&&data.user&&Array.isArray(data.user.identities)?data.user.identities:null;
-  if(data&&data.user&&idts!==null&&idts.length===0){setLoading('btn-signup',false);showMsg('Este correo electrónico ya está asociado a una cuenta activa.');setTab('login');const lEmail=document.getElementById('l-email');if(lEmail)lEmail.value=email;return;}
-  if(!data||data.error){setLoading('btn-signup',false);showMsg(spanishAuthError(data));return;}
-  const nombreCompleto=`${nombre} ${apellidos}`.trim(); const userId=data.user?.id||data.id||null; const token=data.access_token||data.session?.access_token||'';
-  if(!userId){setLoading('btn-signup',false);showMsg('No se pudo crear la cuenta. Intenta de nuevo en unos minutos.');return;}
-  if(token){try{localStorage.setItem('sb_token',token);if(data.refresh_token)localStorage.setItem('sb_refresh',data.refresh_token);localStorage.setItem('sb_user',JSON.stringify(data.user||data));sessionStorage.setItem('sb_token',token);sessionStorage.setItem('sb_user',JSON.stringify(data.user||data));localStorage.setItem('sesion_activa','true');}catch(_){} showMsg('Cuenta creada. Entrando…','ok');await persistProfile(token,userId,nombreCompleto,telefono);window.location.replace(destinoTrasSesion());return;}
-  try{localStorage.setItem('pending_profile',JSON.stringify({nombre:nombreCompleto,telefono}));}catch(_){} setLoading('btn-signup',false);showMsg(INV_TOKEN?('Te enviamos un correo de confirmación a '+email+'. Al confirmarlo regresarás aquí para unirte al equipo.'):('Te enviamos un correo de confirmación a '+email+'. Al confirmar entrarás directo a Broquer.'),'ok');
-}
-async function sha256Base64Url(input){const enc=new TextEncoder().encode(input);const digest=await crypto.subtle.digest('SHA-256',enc);return btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
-function randomVerifier(){const arr=new Uint8Array(64);crypto.getRandomValues(arr);return btoa(String.fromCharCode(...arr)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
-async function doGoogle(){const redirectTo=location.origin+location.pathname;const verifier=randomVerifier();try{localStorage.setItem('sb_pkce_verifier',verifier);localStorage.setItem('sb_pkce_ts',String(Date.now()));}catch(_){}try{sessionStorage.setItem('sb_pkce_verifier',verifier);}catch(_){}const challenge=await sha256Base64Url(verifier);const url=new URL(`${SB_URL}/auth/v1/authorize`);url.searchParams.set('provider','google');url.searchParams.set('redirect_to',redirectTo);url.searchParams.set('code_challenge',challenge);url.searchParams.set('code_challenge_method','S256');url.searchParams.set('apikey',SB_KEY);window.location.href=url.toString();}
+const SB_URL='https://urtgysmtnvoqaljuhntz.supabase.co';const SB_KEY='sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';let INV_TOKEN='';
+try{const _q=new URLSearchParams(location.search);const _urlInv=_q.get('inv')||'';if(_urlInv)localStorage.setItem('inv_pendiente',_urlInv);INV_TOKEN=_urlInv||localStorage.getItem('inv_pendiente')||'';}catch(_){}
+function destinoTrasSesion(){return INV_TOKEN?('unirse.html?inv='+encodeURIComponent(INV_TOKEN)):'index.html';}
+async function sbAuth(path,body){let url=`${SB_URL}/auth/v1/${path}`;if(body&&body.redirect_to)url+=(url.includes('?')?'&':'?')+'redirect_to='+encodeURIComponent(body.redirect_to);try{const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','apikey':SB_KEY},body:JSON.stringify(body)});let data;try{data=await r.json();}catch(_){data={error:'invalid_response'};}if(data&&typeof data==='object')data.__status=r.status;return data||{};}catch(e){return{error:'network',error_description:'Sin conexión. Revisa tu internet e intenta de nuevo.'};}}
+function spanishAuthError(data){const raw=(data&&(data.error_description||data.msg||data.error||'')).toString().toLowerCase();if(!raw)return'No se pudo completar. Intenta de nuevo.';if(raw.includes('invalid login')||raw.includes('invalid credentials')||raw.includes('email not confirmed'))return'Correo o contraseña incorrectos.';if(raw.includes('email not confirmed'))return'Debes confirmar tu correo antes de iniciar sesión.';if(raw.includes('user already registered')||raw.includes('already registered')||raw.includes('duplicate'))return'Ya existe una cuenta con ese correo. Inicia sesión o usa "¿Olvidaste tu contraseña?".';if(raw.includes('rate limit')||raw.includes('too many'))return'Demasiados intentos. Espera unos minutos antes de volver a intentar.';if(raw.includes('weak')||raw.includes('password should'))return'La contraseña es demasiado débil. Usa al menos 8 caracteres con letras y números.';if(raw.includes('invalid email')||raw.includes('email address'))return'El correo electrónico no es válido.';if(raw==='network')return data.error_description||'Sin conexión.';if(raw==='invalid_response')return'Respuesta inesperada del servidor. Intenta de nuevo.';return data.error_description||data.msg||data.error||'Error desconocido.';}
+function showMsg(text,type='err'){const el=document.getElementById('msg');el.textContent=text;el.className=`bk-msg is-${type}`;}function clearMsg(){document.getElementById('msg').className='bk-msg';}
+const EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;function isValidEmail(s){return EMAIL_RE.test(String(s||'').trim());}function isValidPhoneMx(s){return String(s||'').replace(/\D/g,'').length===10;}
+function setTab(tab){document.getElementById('seg-login').classList.toggle('is-active',tab==='login');document.getElementById('seg-signup').classList.toggle('is-active',tab==='signup');document.getElementById('form-login').style.display=tab==='login'?'':'none';document.getElementById('form-signup').style.display=tab==='signup'?'':'none';document.getElementById('form-title').textContent=tab==='login'?'Bienvenido':'Crea tu cuenta';document.getElementById('form-sub').textContent=tab==='login'?'Inicia sesión para continuar a tu cuenta.':'Tu sistema operativo inmobiliario, en minutos.';clearMsg();}
+function setLoading(btnId,loading){const btn=document.getElementById(btnId);if(loading){btn.disabled=true;btn.innerHTML='<span class="bk-spin"></span>';}else{btn.disabled=false;btn.textContent=btnId==='btn-login'?'Continuar':'Crear cuenta';}}
+async function doLogin(){clearMsg();const email=document.getElementById('l-email').value.trim().toLowerCase();const pass=document.getElementById('l-pass').value;if(!email||!pass){showMsg('Ingresa tu correo y contraseña.');return;}if(!isValidEmail(email)){showMsg('El correo electrónico no es válido.');return;}setLoading('btn-login',true);const data=await sbAuth('token?grant_type=password',{email,password:pass});if(!data||data.error||!data.access_token){setLoading('btn-login',false);showMsg(spanishAuthError(data));return;}try{localStorage.setItem('sb_token',data.access_token);if(data.refresh_token)localStorage.setItem('sb_refresh',data.refresh_token);localStorage.setItem('sb_user',JSON.stringify(data.user||{}));sessionStorage.setItem('sb_token',data.access_token);sessionStorage.setItem('sb_user',JSON.stringify(data.user||{}));localStorage.setItem('sesion_activa','true');}catch(_){}await checkProfileAndRedirect(data.access_token,data.user||{});}
+async function persistProfile(token,userId,nombreCompleto,telefono){if(!token||!userId)return false;try{let r=await fetch(`${SB_URL}/rest/v1/usuarios?id=eq.${userId}`,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${token}`,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({nombre:nombreCompleto,telefono})});if(r.ok)return true;let raw=localStorage.getItem('sb_user')||sessionStorage.getItem('sb_user')||'{}';if(raw==='undefined'||raw==='null')raw='{}';let user={};try{user=JSON.parse(raw)||{};}catch(_){}const email=user.email||'';r=await fetch(`${SB_URL}/rest/v1/usuarios`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${token}`,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({id:userId,email,nombre:nombreCompleto,telefono})});return r.ok;}catch(e){console.error('persistProfile failed',e);return false;}}
+async function doSignup(){clearMsg();const nombre=document.getElementById('s-nombre').value.trim(),apellidos=document.getElementById('s-apellidos').value.trim(),telefono=document.getElementById('s-telefono').value.trim(),email=document.getElementById('s-email').value.trim().toLowerCase(),pass=document.getElementById('s-pass').value,pass2=document.getElementById('s-pass2').value,legal=document.getElementById('s-legal').checked;if(!nombre){showMsg('Ingresa tu nombre.');return;}if(!apellidos){showMsg('Ingresa tus apellidos.');return;}if(telefono&&!isValidPhoneMx(telefono)){showMsg('El teléfono debe tener 10 dígitos (Lada + número).');return;}if(!email){showMsg('Ingresa tu correo electrónico.');return;}if(!isValidEmail(email)){showMsg('El correo electrónico no es válido.');return;}if(!pass||!pass2){showMsg('Ingresa tu contraseña dos veces.');return;}if(pass!==pass2){showMsg('Las contraseñas no coinciden.');return;}if(pass.length<8){showMsg('La contraseña debe tener al menos 8 caracteres.');return;}if(!legal){showMsg('Debes aceptar los Términos y el Aviso de Privacidad para continuar.');return;}setLoading('btn-signup',true);try{const rx=await fetch('https://api.broquer.app/auth/correo-existe?email='+encodeURIComponent(email));const dx=rx.ok?await rx.json():null;if(dx&&dx.existe){setLoading('btn-signup',false);showMsg('Este correo electrónico ya está asociado a una cuenta activa.');setTab('login');const lEmail=document.getElementById('l-email');if(lEmail)lEmail.value=email;return;}}catch(_){}const signupBody={email,password:pass};if(INV_TOKEN)signupBody.redirect_to=window.location.origin+'/login.html?inv='+encodeURIComponent(INV_TOKEN);const data=await sbAuth('signup',signupBody);const idts=data&&data.user&&Array.isArray(data.user.identities)?data.user.identities:null;if(data&&data.user&&idts!==null&&idts.length===0){setLoading('btn-signup',false);showMsg('Este correo electrónico ya está asociado a una cuenta activa.');setTab('login');const lEmail=document.getElementById('l-email');if(lEmail)lEmail.value=email;return;}if(!data||data.error){setLoading('btn-signup',false);showMsg(spanishAuthError(data));return;}const nombreCompleto=`${nombre} ${apellidos}`.trim();const userId=data.user?.id||data.id||null;const token=data.access_token||data.session?.access_token||'';if(!userId){setLoading('btn-signup',false);showMsg('No se pudo crear la cuenta. Intenta de nuevo en unos minutos.');return;}if(token){try{localStorage.setItem('sb_token',token);if(data.refresh_token)localStorage.setItem('sb_refresh',data.refresh_token);localStorage.setItem('sb_user',JSON.stringify(data.user||data));sessionStorage.setItem('sb_token',token);sessionStorage.setItem('sb_user',JSON.stringify(data.user||data));localStorage.setItem('sesion_activa','true');}catch(_){}showMsg('Cuenta creada. Entrando…','ok');await persistProfile(token,userId,nombreCompleto,telefono);window.location.replace(destinoTrasSesion());return;}try{localStorage.setItem('pending_profile',JSON.stringify({nombre:nombreCompleto,telefono}));}catch(_){}setLoading('btn-signup',false);showMsg(INV_TOKEN?('Te enviamos un correo de confirmación a '+email+'. Al confirmarlo regresarás aquí para unirte al equipo.'):('Te enviamos un correo de confirmación a '+email+'. Al confirmar entrarás directo a Broquer.'),'ok');}
+async function sha256Base64Url(input){const enc=new TextEncoder().encode(input),digest=await crypto.subtle.digest('SHA-256',enc);return btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}function randomVerifier(){const arr=new Uint8Array(64);crypto.getRandomValues(arr);return btoa(String.fromCharCode(...arr)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+async function doGoogle(){const redirectTo=location.origin+location.pathname,verifier=randomVerifier();try{localStorage.setItem('sb_pkce_verifier',verifier);localStorage.setItem('sb_pkce_ts',String(Date.now()));}catch(_){}try{sessionStorage.setItem('sb_pkce_verifier',verifier);}catch(_){}const challenge=await sha256Base64Url(verifier),url=new URL(`${SB_URL}/auth/v1/authorize`);url.searchParams.set('provider','google');url.searchParams.set('redirect_to',redirectTo);url.searchParams.set('code_challenge',challenge);url.searchParams.set('code_challenge_method','S256');url.searchParams.set('apikey',SB_KEY);window.location.href=url.toString();}
 async function doForgot(){clearMsg();const email=document.getElementById('l-email').value.trim().toLowerCase();if(!email){showMsg('Ingresa tu correo primero, luego presiona "¿Olvidaste tu contraseña?".');return;}if(!isValidEmail(email)){showMsg('El correo electrónico no es válido.');return;}const data=await sbAuth('recover',{email,redirect_to:`${window.location.origin}/reset-password.html`});if(data&&data.error){const raw=(data.error_description||data.error||'').toString().toLowerCase();if(raw.includes('rate limit')||raw.includes('too many')){showMsg('Demasiados intentos. Espera unos minutos antes de volver a intentar.');return;}if(raw==='network'){showMsg(data.error_description||'Sin conexión.');return;}}showMsg('Si la cuenta existe, te enviamos un enlace para restablecer tu contraseña. Revisa tu correo.','ok');}
-async function checkProfileAndRedirect(token,user){
-  function _pendingProfile(){try{const raw=localStorage.getItem('pending_profile');if(!raw)return null;const p=JSON.parse(raw);if(p&&p.nombre)return p;}catch(_){}return null;}
-  async function _completarConPending(){const pend=_pendingProfile();if(!pend)return false;const ok=await persistProfile(token,user.id,pend.nombre,pend.telefono||'');if(ok){try{localStorage.removeItem('pending_profile');}catch(_){}}return ok;}
-  async function _consultarPerfil(){for(let intento=0;intento<3;intento++){try{const r=await fetch(`${SB_URL}/rest/v1/usuarios?id=eq.${user.id}&select=nombre,telefono`,{headers:{'apikey':SB_KEY,'Authorization':`Bearer ${token}`}});if(r.status===401)return{estado:'expirado'};if(r.ok){const data=await r.json().catch(()=>null);const tieneNombre=Array.isArray(data)&&data.length&&!!data[0].nombre;return{estado:'ok',tieneNombre};}}catch(_){}if(intento<2)await new Promise(res=>setTimeout(res,800*(intento+1)));}return{estado:'indeterminado'};}
-  const res=await _consultarPerfil();
-  if(res.estado==='expirado'){try{localStorage.removeItem('sb_token');localStorage.removeItem('sb_refresh');localStorage.removeItem('sb_user');sessionStorage.removeItem('sb_token');sessionStorage.removeItem('sb_user');}catch(_){}showMsg('Tu sesión expiró. Inicia sesión de nuevo.','ok');return;}
-  if(res.estado==='ok'){if(res.tieneNombre){window.location.replace(destinoTrasSesion());return;}if(await _completarConPending()){window.location.replace(destinoTrasSesion());return;}window.location.replace('registro.html');return;}
-  if(await _completarConPending()){window.location.replace(destinoTrasSesion());return;}window.location.replace(destinoTrasSesion());
-}
+async function checkProfileAndRedirect(token,user){function _pendingProfile(){try{const raw=localStorage.getItem('pending_profile');if(!raw)return null;const p=JSON.parse(raw);if(p&&p.nombre)return p;}catch(_){}return null;}async function _completarConPending(){const pend=_pendingProfile();if(!pend)return false;const ok=await persistProfile(token,user.id,pend.nombre,pend.telefono||'');if(ok){try{localStorage.removeItem('pending_profile');}catch(_){}}return ok;}async function _consultarPerfil(){for(let intento=0;intento<3;intento++){try{const r=await fetch(`${SB_URL}/rest/v1/usuarios?id=eq.${user.id}&select=nombre,telefono`,{headers:{'apikey':SB_KEY,'Authorization':`Bearer ${token}`}});if(r.status===401)return{estado:'expirado'};if(r.ok){const data=await r.json().catch(()=>null);const tieneNombre=Array.isArray(data)&&data.length&&!!data[0].nombre;return{estado:'ok',tieneNombre};}}catch(_){}if(intento<2)await new Promise(res=>setTimeout(res,800*(intento+1)));}return{estado:'indeterminado'};}const res=await _consultarPerfil();if(res.estado==='expirado'){try{localStorage.removeItem('sb_token');localStorage.removeItem('sb_refresh');localStorage.removeItem('sb_user');sessionStorage.removeItem('sb_token');sessionStorage.removeItem('sb_user');}catch(_){}showMsg('Tu sesión expiró. Inicia sesión de nuevo.','ok');return;}if(res.estado==='ok'){if(res.tieneNombre){window.location.replace(destinoTrasSesion());return;}if(await _completarConPending()){window.location.replace(destinoTrasSesion());return;}window.location.replace('registro.html');return;}if(await _completarConPending()){window.location.replace(destinoTrasSesion());return;}window.location.replace(destinoTrasSesion());}
 setTimeout(()=>{const s=document.getElementById('splash');if(!s)return;s.style.opacity='0';setTimeout(()=>s.remove(),600);},800);
-(async()=>{
-  function _clearSession(){try{localStorage.removeItem('sb_token');localStorage.removeItem('sb_refresh');localStorage.removeItem('sb_user');sessionStorage.removeItem('sb_token');sessionStorage.removeItem('sb_user');}catch(_){}}
-  const urlParams=new URLSearchParams(location.search);const hash=location.hash||'';const hashParams=new URLSearchParams(hash.startsWith('#')?hash.slice(1):hash);
-  const recoveryType=urlParams.get('type')==='recovery'||hashParams.get('type')==='recovery';const looksLikeRecovery=recoveryType||urlParams.get('token_hash')||(hashParams.get('access_token')&&hashParams.get('type')==='recovery');if(looksLikeRecovery){location.replace('reset-password.html'+(location.search||'')+(location.hash||''));return;}
-  if(urlParams.get('pwd')==='ok'){showMsg('Contraseña actualizada. Inicia sesión con tu nueva contraseña.','ok');history.replaceState(null,'',location.pathname);}
-  const hasOauthInUrl=/[?&]code=/.test(location.search)||/[?&]error/.test(location.search)||/access_token=/.test(hash)||/[?&#]error/.test(hash);
-  const oauthErrQs=urlParams.get('error')||urlParams.get('error_description');const oauthErrHash=hashParams.get('error')||hashParams.get('error_description');if(oauthErrQs||oauthErrHash){const desc=urlParams.get('error_description')||hashParams.get('error_description')||urlParams.get('error')||hashParams.get('error')||'Error de autenticación.';showMsg(decodeURIComponent(desc).replace(/\+/g,' '));history.replaceState(null,'',location.pathname);return;}
-  const oauthCode=urlParams.get('code');if(oauthCode){showMsg('Completando inicio con Google…','ok');const verifier=localStorage.getItem('sb_pkce_verifier')||sessionStorage.getItem('sb_pkce_verifier');if(!verifier){showMsg('No se pudo completar Google: el navegador perdió el verificador de seguridad. Intenta de nuevo.');history.replaceState(null,'',location.pathname);return;}try{const r=await fetch(`${SB_URL}/auth/v1/token?grant_type=pkce`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SB_KEY},body:JSON.stringify({auth_code:oauthCode,code_verifier:verifier})});const d=await r.json().catch(()=>({}));try{localStorage.removeItem('sb_pkce_verifier');localStorage.removeItem('sb_pkce_ts');}catch(_){}try{sessionStorage.removeItem('sb_pkce_verifier');}catch(_){}if(!r.ok||d.error||!d.access_token){showMsg(spanishAuthError(d)||('Error '+r.status+' al intercambiar el código de Google.'));history.replaceState(null,'',location.pathname);return;}try{localStorage.setItem('sb_token',d.access_token);if(d.refresh_token)localStorage.setItem('sb_refresh',d.refresh_token);localStorage.setItem('sb_user',JSON.stringify(d.user||{}));sessionStorage.setItem('sb_token',d.access_token);sessionStorage.setItem('sb_user',JSON.stringify(d.user||{}));localStorage.setItem('sesion_activa','true');}catch(_){}history.replaceState(null,'',location.pathname);await checkProfileAndRedirect(d.access_token,d.user||{});return;}catch(err){console.error('PKCE exchange failed',err);showMsg('No se pudo completar Google: '+(err.message||'error de red'));history.replaceState(null,'',location.pathname);return;}}
-  if(hash.includes('access_token=')&&hashParams.get('access_token')){const cbToken=hashParams.get('access_token');const cbRefresh=hashParams.get('refresh_token');try{const r=await fetch(`${SB_URL}/auth/v1/user`,{headers:{'apikey':SB_KEY,'Authorization':`Bearer ${cbToken}`}});if(!r.ok){showMsg('No se pudo validar la sesión. Inicia sesión de nuevo.');history.replaceState(null,'',location.pathname);return;}const user=await r.json().catch(()=>({}));try{localStorage.setItem('sb_token',cbToken);if(cbRefresh)localStorage.setItem('sb_refresh',cbRefresh);localStorage.setItem('sb_user',JSON.stringify(user));sessionStorage.setItem('sb_token',cbToken);sessionStorage.setItem('sb_user',JSON.stringify(user));localStorage.setItem('sesion_activa','true');}catch(_){}history.replaceState(null,'',location.pathname);await checkProfileAndRedirect(cbToken,user);return;}catch(err){console.error('hash-token exchange failed',err);showMsg('Sin conexión. Intenta de nuevo en unos segundos.');history.replaceState(null,'',location.pathname);return;}}
-  if(!hasOauthInUrl&&(urlParams.get('type')==='signup'||urlParams.get('confirmation')==='true')){showMsg(INV_TOKEN?'Correo confirmado. Inicia sesión para unirte al equipo.':'Correo confirmado. Ahora inicia sesión con tus datos.','ok');setTab('login');return;}
-  let token=localStorage.getItem('sb_token')||sessionStorage.getItem('sb_token');const refresh=localStorage.getItem('sb_refresh');if(!token&&refresh){try{const r=await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SB_KEY},body:JSON.stringify({refresh_token:refresh})});const d=await r.json().catch(()=>({}));if(r.ok&&d.access_token){token=d.access_token;try{localStorage.setItem('sb_token',d.access_token);if(d.refresh_token)localStorage.setItem('sb_refresh',d.refresh_token);localStorage.setItem('sb_user',JSON.stringify(d.user||{}));sessionStorage.setItem('sb_token',d.access_token);sessionStorage.setItem('sb_user',JSON.stringify(d.user||{}));}catch(_){}}else{_clearSession();token=null;}}catch(_){token=null;}}
-  if(token){let raw=localStorage.getItem('sb_user')||sessionStorage.getItem('sb_user')||'{}';if(raw==='undefined'||raw==='null')raw='{}';let user={};try{user=JSON.parse(raw)||{};}catch(e){user={};}if(user.id){await checkProfileAndRedirect(token,user);return;}}
-})();
-(async()=>{if(!INV_TOKEN)return;try{const r=await fetch('https://api.broquer.app/org/invitacion/'+encodeURIComponent(INV_TOKEN));const d=r.ok?await r.json().catch(()=>null):null;if(!d||!d.valida){try{localStorage.removeItem('inv_pendiente');}catch(_){}INV_TOKEN='';return;}document.getElementById('inv-empresa').textContent=d.empresa||'Una inmobiliaria';document.getElementById('inv-email').textContent=d.email||'';document.getElementById('inv-banner').classList.add('is-on');if(d.email){const le=document.getElementById('l-email');const se=document.getElementById('s-email');if(le&&!le.value)le.value=d.email;if(se&&!se.value)se.value=d.email;try{const rx=await fetch('https://api.broquer.app/auth/correo-existe?email='+encodeURIComponent(d.email));const dx=rx.ok?await rx.json().catch(()=>null):null;if(dx&&typeof dx.existe==='boolean')setTab(dx.existe?'login':'signup');}catch(_){}}}catch(_){}})();
-document.getElementById('form-login').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();doLogin();}});
-document.getElementById('form-signup').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();doSignup();}});
-['l-email','s-email'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('blur',()=>{el.value=el.value.trim().toLowerCase();});});
-window.addEventListener('load',()=>{const s=document.getElementById('splash');if(s&&s.parentNode){s.style.opacity='0';setTimeout(()=>s.remove(),400);}});
+(async()=>{function _clearSession(){try{localStorage.removeItem('sb_token');localStorage.removeItem('sb_refresh');localStorage.removeItem('sb_user');sessionStorage.removeItem('sb_token');sessionStorage.removeItem('sb_user');}catch(_){}}const urlParams=new URLSearchParams(location.search),hash=location.hash||'',hashParams=new URLSearchParams(hash.startsWith('#')?hash.slice(1):hash);const recoveryType=urlParams.get('type')==='recovery'||hashParams.get('type')==='recovery',looksLikeRecovery=recoveryType||urlParams.get('token_hash')||(hashParams.get('access_token')&&hashParams.get('type')==='recovery');if(looksLikeRecovery){location.replace('reset-password.html'+(location.search||'')+(location.hash||''));return;}if(urlParams.get('pwd')==='ok'){showMsg('Contraseña actualizada. Inicia sesión con tu nueva contraseña.','ok');history.replaceState(null,'',location.pathname);}const hasOauthInUrl=/[?&]code=/.test(location.search)||/[?&]error/.test(location.search)||/access_token=/.test(hash)||/[?&#]error/.test(hash),oauthErrQs=urlParams.get('error')||urlParams.get('error_description'),oauthErrHash=hashParams.get('error')||hashParams.get('error_description');if(oauthErrQs||oauthErrHash){const desc=urlParams.get('error_description')||hashParams.get('error_description')||urlParams.get('error')||hashParams.get('error')||'Error de autenticación.';showMsg(decodeURIComponent(desc).replace(/\+/g,' '));history.replaceState(null,'',location.pathname);return;}const oauthCode=urlParams.get('code');if(oauthCode){showMsg('Completando inicio con Google…','ok');const verifier=localStorage.getItem('sb_pkce_verifier')||sessionStorage.getItem('sb_pkce_verifier');if(!verifier){showMsg('No se pudo completar Google: el navegador perdió el verificador de seguridad. Intenta de nuevo.');history.replaceState(null,'',location.pathname);return;}try{const r=await fetch(`${SB_URL}/auth/v1/token?grant_type=pkce`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SB_KEY},body:JSON.stringify({auth_code:oauthCode,code_verifier:verifier})});const d=await r.json().catch(()=>({}));try{localStorage.removeItem('sb_pkce_verifier');localStorage.removeItem('sb_pkce_ts');}catch(_){}try{sessionStorage.removeItem('sb_pkce_verifier');}catch(_){}if(!r.ok||d.error||!d.access_token){showMsg(spanishAuthError(d)||('Error '+r.status+' al intercambiar el código de Google.'));history.replaceState(null,'',location.pathname);return;}try{localStorage.setItem('sb_token',d.access_token);if(d.refresh_token)localStorage.setItem('sb_refresh',d.refresh_token);localStorage.setItem('sb_user',JSON.stringify(d.user||{}));sessionStorage.setItem('sb_token',d.access_token);sessionStorage.setItem('sb_user',JSON.stringify(d.user||{}));localStorage.setItem('sesion_activa','true');}catch(_){}history.replaceState(null,'',location.pathname);await checkProfileAndRedirect(d.access_token,d.user||{});return;}catch(err){console.error('PKCE exchange failed',err);showMsg('No se pudo completar Google: '+(err.message||'error de red'));history.replaceState(null,'',location.pathname);return;}}if(hash.includes('access_token=')&&hashParams.get('access_token')){const cbToken=hashParams.get('access_token'),cbRefresh=hashParams.get('refresh_token');try{const r=await fetch(`${SB_URL}/auth/v1/user`,{headers:{'apikey':SB_KEY,'Authorization':`Bearer ${cbToken}`}});if(!r.ok){showMsg('No se pudo validar la sesión. Inicia sesión de nuevo.');history.replaceState(null,'',location.pathname);return;}const user=await r.json().catch(()=>({}));try{localStorage.setItem('sb_token',cbToken);if(cbRefresh)localStorage.setItem('sb_refresh',cbRefresh);localStorage.setItem('sb_user',JSON.stringify(user));sessionStorage.setItem('sb_token',cbToken);sessionStorage.setItem('sb_user',JSON.stringify(user));localStorage.setItem('sesion_activa','true');}catch(_){}history.replaceState(null,'',location.pathname);await checkProfileAndRedirect(cbToken,user);return;}catch(err){console.error('hash-token exchange failed',err);showMsg('Sin conexión. Intenta de nuevo en unos segundos.');history.replaceState(null,'',location.pathname);return;}}if(!hasOauthInUrl&&(urlParams.get('type')==='signup'||urlParams.get('confirmation')==='true')){showMsg(INV_TOKEN?'Correo confirmado. Inicia sesión para unirte al equipo.':'Correo confirmado. Ahora inicia sesión con tus datos.','ok');setTab('login');return;}let token=localStorage.getItem('sb_token')||sessionStorage.getItem('sb_token');const refresh=localStorage.getItem('sb_refresh');if(!token&&refresh){try{const r=await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SB_KEY},body:JSON.stringify({refresh_token:refresh})});const d=await r.json().catch(()=>({}));if(r.ok&&d.access_token){token=d.access_token;try{localStorage.setItem('sb_token',d.access_token);if(d.refresh_token)localStorage.setItem('sb_refresh',d.refresh_token);localStorage.setItem('sb_user',JSON.stringify(d.user||{}));sessionStorage.setItem('sb_token',d.access_token);sessionStorage.setItem('sb_user',JSON.stringify(d.user||{}));}catch(_){}}else{_clearSession();token=null;}}catch(_){token=null;}}if(token){let raw=localStorage.getItem('sb_user')||sessionStorage.getItem('sb_user')||'{}';if(raw==='undefined'||raw==='null')raw='{}';let user={};try{user=JSON.parse(raw)||{};}catch(e){user={};}if(user.id){await checkProfileAndRedirect(token,user);return;}}})();
+(async()=>{if(!INV_TOKEN)return;try{const r=await fetch('https://api.broquer.app/org/invitacion/'+encodeURIComponent(INV_TOKEN));const d=r.ok?await r.json().catch(()=>null):null;if(!d||!d.valida){try{localStorage.removeItem('inv_pendiente');}catch(_){}INV_TOKEN='';return;}document.getElementById('inv-empresa').textContent=d.empresa||'Una inmobiliaria';document.getElementById('inv-email').textContent=d.email||'';document.getElementById('inv-banner').classList.add('is-on');if(d.email){const le=document.getElementById('l-email'),se=document.getElementById('s-email');if(le&&!le.value)le.value=d.email;if(se&&!se.value)se.value=d.email;try{const rx=await fetch('https://api.broquer.app/auth/correo-existe?email='+encodeURIComponent(d.email));const dx=rx.ok?await rx.json().catch(()=>null):null;if(dx&&typeof dx.existe==='boolean')setTab(dx.existe?'login':'signup');}catch(_){}}}catch(_){}})();
+document.getElementById('form-login').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();doLogin();}});document.getElementById('form-signup').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();doSignup();}});['l-email','s-email'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('blur',()=>{el.value=el.value.trim().toLowerCase();});});window.addEventListener('load',()=>{const s=document.getElementById('splash');if(s&&s.parentNode){s.style.opacity='0';setTimeout(()=>s.remove(),400);}});
 </script>
 <script src="capacitor-bridge.js" defer></script>
 </body>
