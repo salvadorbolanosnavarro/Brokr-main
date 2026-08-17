@@ -1,366 +1,68 @@
 /* ════════════════════════════════════════════════════════════════
-   BROQUER UI v2 — Sistema de diseño basado en Zillow.com
-   Fondo blanco · texto carbón/navy · azul Zillow como único color
-   de acción · bordes suaves · tarjetas radio 12-16 · sombra discreta.
-   Se enlaza AL FINAL del <head> para ganar la cascada sin borrar
-   el CSS viejo. Solo apariencia; la lógica es intocable.
-   ════════════════════════════════════════════════════════════════ */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+   BROQUER — WhatsApp compatibility adapter
 
-/* ── 1. TOKENS ─────────────────────────────────────────────────── */
-:root{
-  /* Marca */
-  --bq-navy:#05203C;          /* identidad Broquer: titulares, footer */
-  --bq-navy-2:#0b3157;        /* hover de navy */
+   Historical note: this filename used to carry the separate "Zillow" UI
+   system and remapped the application's Canon tokens inside body[data-app].
+   That made WhatsApp look like a different product.
 
-  /* Acción (azul Zillow) */
-  --bq-blue:#006AFF;          /* botones, links, acentos */
-  --bq-blue-2:#0055CC;        /* hover */
-  --bq-blue-soft:#EFF5FF;     /* fondos suaves de acento */
-  --bq-blue-border:#BFD8FF;   /* borde de paneles azul suave */
+   It is now intentionally a tiny DOMAIN adapter only. `brokr-theme.css`
+   remains the sole executable design-system source of truth. This file may
+   define WhatsApp-specific surfaces, but it MUST NOT redefine global product
+   tokens, typography, spacing, radii, buttons, inputs, cards or shell chrome.
 
-  /* Neutrales (paleta Zillow) */
-  --bq-bg:#F7F7F9;            /* secciones alternas */
-  --bq-surface:#FFFFFF;       /* base y tarjetas */
-  --bq-ink:#2A2A33;           /* texto principal (carbón) */
-  --bq-dim:#596B82;           /* texto secundario */
-  --bq-line:#D4DADF;          /* bordes y divisores */
-
-  /* Semánticos */
-  --bq-success:#00834D;
-  --bq-warning:#B87700;
-  --bq-danger:#D93025;
-  --bq-success-soft:#E7F5EE;
-
-  /* Tipografía */
-  --bq-font:'Inter',-apple-system,'SF Pro Text',sans-serif;
-  --bq-fs-xs:12.5px; --bq-fs-sm:14px; --bq-fs-md:16px;
-  --bq-fs-lg:19px;  --bq-fs-xl:24px; --bq-fs-2xl:30px;
-
-  /* Espaciado */
-  --bq-s1:4px; --bq-s2:8px; --bq-s3:12px; --bq-s4:16px;
-  --bq-s5:24px; --bq-s6:32px; --bq-s7:48px;
-
-  /* Forma y profundidad */
-  --bq-radius-sm:8px; --bq-radius:12px; --bq-radius-lg:16px;
-  --bq-radius-btn:8px;
-  --bq-shadow-sm:0 1px 4px rgba(42,42,51,.10);
-  --bq-shadow:0 6px 20px rgba(42,42,51,.14);
-
-  /* Motion */
-  --bq-fast:.15s ease; --bq-smooth:.25s cubic-bezier(.16,1,.3,1);
-
-  /* Blancos con alpha (para superficies navy) */
-  --bq-white-10:rgba(255,255,255,.10);
-  --bq-white-55:rgba(255,255,255,.55);
-  --bq-white-70:rgba(255,255,255,.72);
-}
-
-/* ── 2. COMPONENTES BASE (bq-) ─────────────────────────────────── */
-.bq-card{
-  background:var(--bq-surface); border:1px solid var(--bq-line);
-  border-radius:var(--bq-radius); box-shadow:var(--bq-shadow-sm);
-  padding:var(--bq-s4) var(--bq-s5);
-  transition:box-shadow var(--bq-smooth), transform var(--bq-smooth);
-}
-@media (hover:hover){ .bq-card:hover{ box-shadow:var(--bq-shadow); transform:translateY(-2px); } }
-
-.bq-btn{
-  display:inline-flex; align-items:center; justify-content:center; gap:var(--bq-s2);
-  background:var(--bq-blue); color:#fff; text-decoration:none; cursor:pointer;
-  border:0; border-radius:var(--bq-radius-btn);
-  font-family:var(--bq-font); font-size:var(--bq-fs-md); font-weight:600;
-  padding:12px 20px; min-height:44px;
-  transition:background var(--bq-fast);
-}
-.bq-btn:hover{ background:var(--bq-blue-2); }
-.bq-btn--ghost{ background:#fff; color:var(--bq-blue); border:1.5px solid var(--bq-blue); }
-.bq-btn--ghost:hover{ background:var(--bq-blue-soft); }
-.bq-btn--navy{ background:var(--bq-navy); }
-.bq-btn--navy:hover{ background:var(--bq-navy-2); }
-
-.bq-input{
-  width:100%; height:48px; padding:0 var(--bq-s4);
-  background:var(--bq-surface); color:var(--bq-ink);
-  border:1px solid var(--bq-line); border-radius:var(--bq-radius-btn);
-  font-family:var(--bq-font); font-size:var(--bq-fs-md);
-  transition:border-color var(--bq-fast), box-shadow var(--bq-fast);
-}
-.bq-input:focus{ outline:none; border-color:var(--bq-blue); box-shadow:0 0 0 3px var(--bq-blue-soft); }
-.bq-label{ display:block; margin-bottom:var(--bq-s2); font-size:var(--bq-fs-sm); font-weight:600; color:var(--bq-ink); }
-.bq-input.is-error{ border-color:var(--bq-danger); }
-.bq-input-msg{ margin-top:var(--bq-s1); font-size:var(--bq-fs-xs); color:var(--bq-danger); }
-
-.bq-badge{ display:inline-block; padding:2px 8px; border-radius:6px; font-size:var(--bq-fs-xs); font-weight:600; background:var(--bq-bg); color:var(--bq-dim); }
-.bq-badge--blue{ background:var(--bq-blue-soft); color:var(--bq-blue-2); }
-.bq-badge--success{ background:var(--bq-success-soft); color:var(--bq-success); }
-.bq-badge--warning{ background:#FBF1DC; color:var(--bq-warning); }
-.bq-badge--danger{ background:#FBEAE8; color:var(--bq-danger); }
-
-.bq-skeleton{
-  background:linear-gradient(90deg, var(--bq-line) 25%, var(--bq-bg) 50%, var(--bq-line) 75%);
-  background-size:200% 100%; border-radius:var(--bq-radius-sm);
-  animation:bq-shimmer 1.4s infinite;
-}
-@keyframes bq-shimmer{ 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-@media (prefers-reduced-motion: reduce){ .bq-card,.bq-btn,.bq-input,.bq-skeleton{ transition:none; animation:none; } }
-
-/* ════════════════════════════════════════════════════════════════
-   3. SKIN DEL LANDING — anatomía Zillow
+   Remove this file entirely once whatsapp.html can absorb these few domain
+   rules safely.
    ════════════════════════════════════════════════════════════════ */
 
-body{ font-family:var(--bq-font); background:var(--bq-surface); color:var(--bq-ink); letter-spacing:-.01em; }
-
-/* ── Nav: blanca, sticky, sombra al estilo Zillow ── */
-.ld-nav{
-  background:var(--bq-surface);
-  border-bottom:1px solid var(--bq-line);
-  box-shadow:var(--bq-shadow-sm);
-  padding-top:env(safe-area-inset-top);
-}
-.ld-nav__in{ height:72px; }
-.ld-nav__logo img{ height:44px; }
-.ld-nav__links{ justify-content:center; }
-.ld-nav__links a{
-  font-family:var(--bq-font); font-size:var(--bq-fs-md); font-weight:600;
-  color:var(--bq-ink); padding:6px 2px;
-  border-bottom:2px solid transparent;
-  transition:color var(--bq-fast), border-color var(--bq-fast);
-}
-.ld-nav__links a:hover{ color:var(--bq-blue); border-bottom-color:var(--bq-blue); }
-.ld-btn-ghost{ /* clase leída por JS: no renombrar */
-  font-family:var(--bq-font); font-size:var(--bq-fs-md); font-weight:600;
-  color:var(--bq-ink); border:0; border-radius:var(--bq-radius-btn);
-  padding:10px 14px; min-height:44px; display:inline-flex; align-items:center;
-  transition:color var(--bq-fast), background var(--bq-fast);
-}
-.ld-btn-ghost:hover{ color:var(--bq-blue); background:var(--bq-blue-soft); }
-.ld-btn-blue{
-  background:var(--bq-blue); color:#fff !important; /* AUDIT-EXEMPT-LINE: gana la cascada del CSS viejo sin tocarlo */
-  font-family:var(--bq-font); font-size:var(--bq-fs-md); font-weight:600;
-  border-radius:var(--bq-radius-btn); padding:11px 20px; min-height:44px;
-  display:inline-flex; align-items:center; justify-content:center; gap:var(--bq-s2);
-  transition:background var(--bq-fast);
-}
-.ld-btn-blue:hover{ background:var(--bq-blue-2); }
-
-/* ── Hero: claro, titular navy gigante, video como tarjeta ── */
-.ld-hero{ background:var(--bq-surface); color:var(--bq-ink) !important; /* AUDIT-EXEMPT-LINE: gana la cascada del CSS viejo sin tocarlo */
-  padding:72px 0 56px; }
-.ld-hero::after{ background:none; }
-.ld-hero__eyebrow{
-  font-family:var(--bq-font); font-size:var(--bq-fs-md); font-weight:600;
-  letter-spacing:normal; color:var(--bq-blue); margin-bottom:var(--bq-s3);
-}
-.ld-hero h1{
-  font-family:var(--bq-font); font-weight:800; color:var(--bq-navy);
-  font-size:clamp(36px, 5vw, 60px); line-height:1.04; letter-spacing:-.03em;
-}
-.ld-hero h1 em{ color:var(--bq-blue); }
-.ld-hero__sub{ font-size:var(--bq-fs-lg); line-height:1.55; color:var(--bq-dim); }
-.ld-hero__sub strong{ color:var(--bq-ink); }
-.ld-btn-white{ /* CTA secundario del hero, ahora estilo Zillow outline */
-  font-family:var(--bq-font); font-size:var(--bq-fs-md); font-weight:600;
-  background:var(--bq-blue); color:#fff;
-  border-radius:var(--bq-radius-btn); padding:13px 22px; min-height:48px;
-  display:inline-flex; align-items:center;
-  transition:background var(--bq-fast);
-}
-.ld-btn-white:hover{ background:var(--bq-blue-2); transform:none; }
-.ld-hero__ctas .ld-btn-blue{
-  background:#fff; color:var(--bq-blue) !important; /* AUDIT-EXEMPT-LINE: gana la cascada del CSS viejo sin tocarlo */
-  border:1.5px solid var(--bq-blue);
-  font-size:var(--bq-fs-md); padding:12px 22px; min-height:48px;
-}
-.ld-hero__ctas .ld-btn-blue:hover{ background:var(--bq-blue-soft); }
-.ld-hero__media{
-  border-radius:var(--bq-radius-lg); border:1px solid var(--bq-line);
-  box-shadow:var(--bq-shadow);
-}
-.ld-hero__stats{ border-top:1px solid var(--bq-line); }
-.ld-stat .v{ font-family:var(--bq-font); font-weight:800; font-size:var(--bq-fs-2xl); letter-spacing:-.02em; color:var(--bq-navy); }
-.ld-stat .l{ font-family:var(--bq-font); font-size:var(--bq-fs-sm); font-weight:500; letter-spacing:normal; color:var(--bq-dim); }
-
-/* ── Secciones ── */
-.ld-sec{ padding:72px 0; background:var(--bq-surface); }
-.ld-sec--alt{ background:var(--bq-bg); }
-.ld-sec-head .eyebrow{
-  font-family:var(--bq-font); font-size:var(--bq-fs-md); font-weight:600;
-  letter-spacing:normal; color:var(--bq-blue); margin-bottom:var(--bq-s2);
-}
-.ld-sec-head h2{
-  font-family:var(--bq-font); font-weight:800; color:var(--bq-navy);
-  font-size:clamp(28px, 3.4vw, 40px); letter-spacing:-.025em;
-}
-.ld-sec-head p{ font-size:var(--bq-fs-md); color:var(--bq-dim); }
-
-/* ── Video ── */
-.mv-frame{ border-radius:var(--bq-radius-lg); background:var(--bq-navy); box-shadow:var(--bq-shadow); border:1px solid var(--bq-line); }
-.mv-poster{ background:var(--bq-navy); font-family:var(--bq-font); }
-.mv-poster__velo{ background:linear-gradient(to top, var(--bq-navy), rgba(5,32,60,.15)); }
-.mv-poster__play{ background:#fff; color:var(--bq-blue); box-shadow:var(--bq-shadow); }
-.mv-poster__t{ font-family:var(--bq-font); font-weight:800; letter-spacing:-.02em; }
-.mv-poster__d{ font-size:var(--bq-fs-md); color:var(--bq-white-70); }
-
-/* ── Módulos: tarjetas Zillow, rejilla recta ── */
-.mv-nube{ gap:var(--bq-s3); margin-top:var(--bq-s6); }
-.mv-chip{
-  background:var(--bq-surface); border:1px solid var(--bq-line);
-  border-radius:var(--bq-radius); box-shadow:none;
-  padding:var(--bq-s4);
-  transition:box-shadow var(--bq-smooth), border-color var(--bq-smooth), transform var(--bq-smooth);
-}
-.mv-chip--a,.mv-chip--b,.mv-chip--c,.mv-chip--d,.mv-chip--e,.mv-chip--f,.mv-chip--g,
-.mv-chip--h,.mv-chip--i,.mv-chip--j,.mv-chip--k,.mv-chip--l,.mv-chip--m,.mv-chip--n{ transform:none; }
-.mv-chip:hover{ transform:translateY(-2px); box-shadow:var(--bq-shadow); border-color:var(--bq-blue); }
-.mv-chip__ico{
-  width:36px; height:36px; border-radius:var(--bq-radius-sm);
-  background:var(--bq-blue-soft); color:var(--bq-blue);
-}
-.mv-chip__ico svg{ width:19px; height:19px; }
-.mv-chip__tag{
-  font-family:var(--bq-font); font-size:var(--bq-fs-xs); font-weight:600;
-  letter-spacing:normal; color:var(--bq-blue-2); background:var(--bq-blue-soft);
-  border-radius:6px; padding:1px 8px;
-}
-.mv-chip__tag.free{ color:var(--bq-success); background:var(--bq-success-soft); }
-.mv-chip__tag.nuevo{ color:#fff; background:var(--bq-blue); }
-.mv-chip h3{ font-family:var(--bq-font); font-weight:700; font-size:var(--bq-fs-md); color:var(--bq-ink); }
-.mv-chip p{ font-size:var(--bq-fs-sm); color:var(--bq-dim); line-height:1.5; }
-.mv-chip.is-nuevo{ border-color:var(--bq-blue-border); }
-
-/* ── Nosotros ── */
-.ld-about__txt p{ font-size:var(--bq-fs-md); line-height:1.7; color:var(--bq-ink); }
-.ld-about__txt p strong{ color:var(--bq-navy); }
-.ld-quote{
-  background:var(--bq-blue-soft); border:1px solid var(--bq-blue-border);
-  border-radius:var(--bq-radius-lg); background-image:none;
-  color:var(--bq-navy) !important; /* AUDIT-EXEMPT-LINE: gana la cascada del CSS viejo sin tocarlo */
-}
-.ld-quote p{ font-family:var(--bq-font); font-weight:800; letter-spacing:-.025em; color:var(--bq-navy); }
-.ld-quote p em{ color:var(--bq-blue); }
-.ld-quote .who{ font-family:var(--bq-font); font-size:var(--bq-fs-sm); letter-spacing:normal; color:var(--bq-dim); }
-
-/* ── Precios: tarjetas blancas, el precio manda ── */
-.ld-price{
-  background:var(--bq-surface); border:1px solid var(--bq-line);
-  border-radius:var(--bq-radius-lg); box-shadow:none;
-  transition:box-shadow var(--bq-smooth), transform var(--bq-smooth);
-}
-@media (hover:hover){ .ld-price:hover{ box-shadow:var(--bq-shadow); transform:translateY(-2px); } }
-.ld-price__head,
-.ld-price--free .ld-price__head,
-.ld-price--empresa .ld-price__head{
-  background:var(--bq-surface); background-image:none;
-  border-bottom:1px solid var(--bq-line);
-  padding:var(--bq-s5) var(--bq-s5) var(--bq-s4);
-}
-.ld-price__head .name{ font-family:var(--bq-font); font-weight:700; font-size:var(--bq-fs-lg); color:var(--bq-ink); }
-.ld-price__head .sub,
-.ld-price--free .ld-price__head .sub{ font-size:var(--bq-fs-sm); color:var(--bq-dim); }
-.ld-price__precio,
-.ld-price--free .ld-price__precio{
-  font-family:var(--bq-font); font-weight:800; letter-spacing:-.02em;
-  font-size:var(--bq-fs-2xl); color:var(--bq-navy); margin-top:var(--bq-s2);
-}
-.ld-price__precio-sub{ font-size:var(--bq-fs-sm); color:var(--bq-dim); }
-/* Broquer Max destacado con azul */
-.ld-price:not(.ld-price--free):not(.ld-price--empresa){ border:2px solid var(--bq-blue); box-shadow:var(--bq-shadow-sm); }
-.ld-price__list li{
-  font-size:var(--bq-fs-sm); color:var(--bq-ink);
-  border-bottom:1px solid var(--bq-line); padding:10px 0 10px 28px;
-}
-.ld-price__list li::before{
-  background-color:var(--bq-blue-soft);
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230055CC' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
-}
-.ld-price__note{ font-size:var(--bq-fs-xs); color:var(--bq-dim); }
-
-/* ── App Store: panel azul suave, claro ── */
-.ld-appstore{
-  background:var(--bq-blue-soft); border:1px solid var(--bq-blue-border);
-  border-radius:var(--bq-radius-lg); background-image:none;
-  color:var(--bq-navy) !important; /* AUDIT-EXEMPT-LINE: gana la cascada del CSS viejo sin tocarlo */
-}
-.ld-appstore__eyebrow{ font-family:var(--bq-font); font-size:var(--bq-fs-md); font-weight:600; letter-spacing:normal; color:var(--bq-blue); }
-.ld-appstore h2{ font-family:var(--bq-font); font-weight:800; letter-spacing:-.025em; color:var(--bq-navy); }
-.ld-appstore p{ font-size:var(--bq-fs-md); color:var(--bq-dim); }
-
-/* ── CTA final: momento de marca en navy ── */
-.ld-final{ background:var(--bq-navy); }
-.ld-final::after{ background:radial-gradient(circle at 50% 0%, rgba(0,106,255,.28), transparent 55%); }
-.ld-final h2{ font-family:var(--bq-font); font-weight:800; letter-spacing:-.025em; }
-.ld-final p{ font-size:var(--bq-fs-md); color:var(--bq-white-70); }
-.ld-final .ld-btn-white{ background:#fff; color:var(--bq-navy); font-weight:700; }
-.ld-final .ld-btn-white:hover{ background:#fff; transform:translateY(-1px); box-shadow:var(--bq-shadow-sm); }
-
-/* ── Footer: navy (los assets blancos siguen funcionando) ── */
-.ld-foot{
-  background:var(--bq-navy); border-top:1px solid var(--bq-white-10);
-  padding-bottom:calc(30px + env(safe-area-inset-bottom));
-}
-.ld-foot__links a{ font-family:var(--bq-font); font-size:var(--bq-fs-sm); color:var(--bq-white-70); }
-.ld-foot__links a:hover{ color:#fff; }
-.ld-foot__copy{ font-family:var(--bq-font); font-size:var(--bq-fs-xs); letter-spacing:normal; color:var(--bq-white-55); }
-
-@media (prefers-reduced-motion: reduce){
-  .mv-chip,.ld-price,.ld-btn-white,.ld-btn-blue,.ld-btn-ghost{ transition:none; }
-  .mv-chip:hover,.ld-price:hover,.ld-final .ld-btn-white:hover{ transform:none; }
+/* WhatsApp-specific semantic surfaces composed from Canon. */
+body[data-app="whatsapp"],
+body[data-app="whatsapp2"] {
+  --wa-canvas: var(--paper-2);
+  --wa-out: var(--sky-canvas);
+  --wa-out-ink: var(--ink);
+  --wa-out-meta: var(--mute);
+  --wa-ia: var(--sky-blue);
+  --wa-ia-soft: var(--paper);
 }
 
-/* ════════════════════════════════════════════════════════════════
-   4. SKIN DE MÓDULOS DE LA APP (piloto: WhatsApp)
-   Scoped a body[data-app]: solo aplica dentro de la aplicación,
-   nunca en landing. Remapea los tokens del tema "Sky" a la paleta
-   Zillow del landing; shell y componentes bk- heredan solos.
-   ════════════════════════════════════════════════════════════════ */
-body[data-app]{
-  /* Tipografía: la misma del landing */
-  --font-sans:'Inter',-apple-system,'SF Pro Text',sans-serif;
-  --font-display:'Inter',-apple-system,'SF Pro Text',sans-serif;
-  --font-mono:'Inter',-apple-system,'SF Pro Text',sans-serif;
-
-  /* Acción: azul Zillow en lugar del azul Sky */
-  --sky-blue:var(--bq-blue);
-  --sky-blue-press:var(--bq-blue-2);
-  --sky-blue-lift:#338AFF;
-  --forest:var(--bq-blue);
-  --forest-2:var(--bq-blue-2);
-  --forest-soft:rgba(0,106,255,.10);
-  --focus:0 0 0 4px rgba(0,106,255,.16);
-  --focus-forest:0 0 0 4px rgba(0,106,255,.16);
-
-  /* Neutrales: paleta Zillow */
-  --ink:var(--bq-ink);
-  --ink-2:#3B3B45;
-  --ink-3:var(--bq-dim);
-  --mute:var(--bq-dim);
-  --line:#E1E5E9;
-  --line-2:var(--bq-line);
-  --shell:var(--bq-bg);
-  --paper-2:var(--bq-bg);
-  --canvas:var(--bq-bg);
-  --sky-canvas:var(--bq-blue-soft);
-
-  /* Marca: el navy Broquer se queda para sidebar y estructura */
-  --sky-navy:var(--bq-navy);
-
-  /* WhatsApp: hilo claro, burbuja saliente azul suave (identidad) */
-  --wa-canvas:#F2F6FC;
-  --wa-out:#DCEAFF;
-  --wa-out-ink:var(--bq-navy);
-  --wa-out-meta:#4A6285;
-  --wa-ia:var(--bq-blue);
-  --wa-ia-soft:#FFFFFF;
+/* Dense conversation UI: only domain-specific adjustments. */
+body[data-app="whatsapp"] .w2-row--out .w2-bubble,
+body[data-app="whatsapp2"] .w2-row--out .w2-bubble {
+  border-color: var(--line-2);
 }
 
-/* Ajustes quirúrgicos sobre el módulo (solo apariencia) */
-body[data-app] .w2-row--out .w2-bubble{ border-color:rgba(0,106,255,.14); }
-body[data-app] .w2-row--out.is-ia .w2-bubble{ border-color:rgba(0,106,255,.30); }
-body[data-app] .w2-conv__unread{ background:var(--bq-blue); }
-body[data-app] .w2-conv__ia{ background:var(--bq-blue); }
-body[data-app] .w2-app{ border-color:var(--bq-line); box-shadow:var(--bq-shadow-sm); }
-body[data-app] .w2-tab{ font-weight:600; }
-body[data-app] .w2-tab.is-active{ color:var(--bq-blue); border-bottom-width:3px; }
-body[data-app] .w2-chip{ font-weight:600; }
-body[data-app] .w2-numero-row__dot.is-on{ background:var(--bq-success); }
+body[data-app="whatsapp"] .w2-row--out.is-ia .w2-bubble,
+body[data-app="whatsapp2"] .w2-row--out.is-ia .w2-bubble {
+  border-color: var(--sky-blue-lift);
+}
+
+body[data-app="whatsapp"] .w2-conv__unread,
+body[data-app="whatsapp"] .w2-conv__ia,
+body[data-app="whatsapp2"] .w2-conv__unread,
+body[data-app="whatsapp2"] .w2-conv__ia {
+  background: var(--sky-blue);
+}
+
+body[data-app="whatsapp"] .w2-app,
+body[data-app="whatsapp2"] .w2-app {
+  border-color: var(--line-2);
+  box-shadow: var(--shadow-xs);
+}
+
+body[data-app="whatsapp"] .w2-tab,
+body[data-app="whatsapp"] .w2-chip,
+body[data-app="whatsapp2"] .w2-tab,
+body[data-app="whatsapp2"] .w2-chip {
+  font-weight: 600;
+}
+
+body[data-app="whatsapp"] .w2-tab.is-active,
+body[data-app="whatsapp2"] .w2-tab.is-active {
+  color: var(--sky-blue);
+  border-bottom-width: 2px;
+}
+
+body[data-app="whatsapp"] .w2-numero-row__dot.is-on,
+body[data-app="whatsapp2"] .w2-numero-row__dot.is-on {
+  background: var(--success);
+}
