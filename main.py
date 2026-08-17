@@ -2743,13 +2743,17 @@ async def propiedades_eliminar_masivo(request: Request):
             for i in range(0, len(ids_reales), 200):
                 lote = ids_reales[i:i+200]
                 lista = ",".join(f'"{x}"' for x in lote)
-                rd = await client.delete(
-                    f"{SUPABASE_URL}/rest/v1/propiedades",
-                    headers={**sb_headers, "Prefer": "return=minimal"},
-                    params={**filtro, "id": f"in.({lista})"},
-                )
-                if rd.status_code in (200, 204):
+                try:
+                    await delete_rows(
+                        "propiedades",
+                        {**filtro, "id": f"in.({lista})"},
+                        prefer="return=minimal",
+                        timeout=60,
+                        accepted_statuses=(200, 204),
+                    )
                     eliminadas += len(lote)
+                except httpx.HTTPStatusError:
+                    pass
     except Exception:
         raise HTTPException(status_code=500, detail="No se pudieron borrar todas las propiedades.")
 
