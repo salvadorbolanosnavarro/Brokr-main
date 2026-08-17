@@ -5,6 +5,8 @@ The ISR token root contains aliases only; it does not own product values. This
 transform replaces every var(--legacy) reference with the exact Canon token the
 alias resolves to today, then removes the alias block. It refuses unknown or
 remaining legacy aliases so computed design values stay equivalent.
+
+This file is the one-shot workflow trigger while the migration is active.
 """
 from __future__ import annotations
 
