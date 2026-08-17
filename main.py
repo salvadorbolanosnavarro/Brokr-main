@@ -11612,16 +11612,17 @@ async def importar_contactos_archivo(request: Request, file: UploadFile = File(.
                         patch["etiquetas"] = union
                 if patch:
                     patch["updated_at"] = now_iso
-                    rb = await client.patch(
-                        f"{SUPABASE_URL}/rest/v1/contactos",
-                        headers={**sb_headers, "Prefer": "return=minimal"},
-                        params={"id": f"eq.{contacto_id}"},
-                        json=patch
-                    )
-                    if rb.status_code in (200, 204):
+                    try:
+                        await patch_rows(
+                            "contactos",
+                            {"id": f"eq.{contacto_id}"},
+                            patch,
+                            timeout=20,
+                            accepted_statuses=(200, 204),
+                        )
                         actualizados += 1
                         existente.update(patch)
-                    else:
+                    except httpx.HTTPStatusError:
                         errores += 1
                 else:
                     omitidos += 1
