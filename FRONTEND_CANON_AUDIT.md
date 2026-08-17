@@ -84,9 +84,9 @@ Todos los workflows/scripts de transformación de una sola vez fueron eliminados
 
 ## Validación final
 
-Último Quality limpio sobre `agent/frontend-canon-unification`, sincronizado con el head técnico terminado vigente de `agent/architecture-cleanup`:
+Último Quality limpio sobre `agent/frontend-canon-unification`, sincronizado hasta el último ciclo técnico **terminado y limpio** incorporado (`ff4d91c`):
 
-- **237 tests: pasan.**
+- **241 tests: pasan.**
 - **42 superficies: 0 violaciones.**
 - **`scripts/architecture_debt.py`: pasa; la deuda no creció.**
 - `direct_env_reads`: 0.
@@ -127,6 +127,8 @@ La deuda de **sistema visual activo** queda cerrada por contrato. Puede seguir e
 
 ## Seguridad de integración
 
-La unificación visual vive en **`agent/frontend-canon-unification`** y PR #45 apunta a **`agent/architecture-cleanup`**, no a `main`. La rama visual se sincroniza únicamente con ciclos técnicos terminados y limpios. Si la rama técnica avanza antes de una futura revisión/merge, debe sincronizarse otra vez y volver a ejecutar Quality completo.
+La unificación visual vive en **`agent/frontend-canon-unification`** y PR #45 apunta a **`agent/architecture-cleanup`**, no a `main`. La rama visual se sincroniza únicamente con ciclos técnicos terminados y limpios.
+
+Después de la validación de `ff4d91c`, la rama técnica comenzó otro ciclo (`machote update PATCH`) que todavía conservaba transformador temporal al hacer esta anotación. Ese ciclo posterior **no se incorporó deliberadamente**. Cuando termine, podrá sincronizarse en otro lote y volver a ejecutar Quality.
 
 El PR permanece Draft. No hay merge a `main` ni despliegue de producción implícito en este trabajo.
