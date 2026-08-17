@@ -25,6 +25,13 @@ def strip_html_comments(source: str) -> str:
     return re.sub(r"<!--(?!\[if\b).*?-->", "", source, flags=re.S | re.I)
 
 
+def trim_source_whitespace(source: str) -> str:
+    """Drop only blank source lines and trailing horizontal whitespace."""
+    lines = [line.rstrip(" \t") for line in source.splitlines()]
+    lines = [line for line in lines if line.strip()]
+    return "\n".join(lines) + "\n"
+
+
 def main() -> None:
     source = PATH.read_text(encoding="utf-8")
     match = re.search(r"<style>(.*?)</style>", source, flags=re.S)
@@ -34,6 +41,7 @@ def main() -> None:
     after = compact_css(before)
     transformed = source[:match.start(1)] + after + source[match.end(1):]
     transformed = strip_html_comments(transformed)
+    transformed = trim_source_whitespace(transformed)
     if transformed == source:
         raise RuntimeError("Legal presentation is already compact; refusing no-op")
     final_size = len(transformed.encode("utf-8"))
