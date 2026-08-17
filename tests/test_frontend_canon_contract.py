@@ -1,8 +1,8 @@
 """Ratchet guards for Broquer's frontend Canon migration.
 
-These tests intentionally allow only the visual debt that exists at the start
-of the frontend-unification branch. As modules are migrated, the allowlists
-should shrink; they must never grow.
+These tests intentionally allow only the visual debt that exists at the current
+frontend-unification edge. As modules are migrated, the allowlists should
+shrink; they must never grow.
 """
 from __future__ import annotations
 
@@ -22,16 +22,17 @@ class FrontendCanonContractTests(unittest.TestCase):
         self.assertNotIn(":root", shim)
 
     def test_no_new_secondary_theme_consumers(self):
-        """Known consumers are migration debt; this set may shrink, never grow."""
+        """The legacy UI skin is now isolated to WhatsApp and may not spread."""
         consumers = set()
         for path in ROOT.glob("*.html"):
             source = path.read_text(encoding="utf-8")
             if 'href="broquer-ui.css"' in source or "href='broquer-ui.css'" in source:
                 consumers.add(path.name)
 
-        self.assertTrue(
-            consumers.issubset({"whatsapp.html", "correo.html"}),
-            f"broquer-ui.css spread to new consumers: {sorted(consumers - {'whatsapp.html', 'correo.html'})}",
+        self.assertEqual(
+            consumers,
+            {"whatsapp.html"},
+            "broquer-ui.css must remain isolated to the remaining WhatsApp migration debt",
         )
 
     def test_new_modules_do_not_define_another_token_root(self):
@@ -105,6 +106,13 @@ class FrontendCanonContractTests(unittest.TestCase):
     def test_auth_callbacks_stay_on_canon(self):
         self.assert_canon_public_screen("facebook-callback.html")
         self.assert_canon_public_screen("whatsapp-callback.html")
+
+    def test_mail_module_stays_off_legacy_skin(self):
+        source = (ROOT / "correo.html").read_text(encoding="utf-8")
+        self.assertIn('href="brokr-theme.css"', source)
+        self.assertNotIn("broquer-ui.css", source)
+        self.assertNotIn("--bq-", source)
+        self.assertNotRegex(source, r"(?m)^\s*:root\s*\{")
 
     def test_design_contract_names_single_executable_source(self):
         source = (ROOT / "DESIGN.md").read_text(encoding="utf-8")
