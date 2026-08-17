@@ -1,0 +1,56 @@
+name: Apply Legal Canon CSS compaction
+
+on:
+  push:
+    branches:
+      - agent/frontend-canon-unification
+    paths:
+      - scripts/minify_legal_canon_css.py
+      - .github/workflows/apply-legal-canon-compaction.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout visual branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/frontend-canon-unification
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compact only Legal Canon CSS
+        run: python scripts/minify_legal_canon_css.py
+
+      - name: Audit Legal
+        run: python audit.py legal.html
+
+      - name: Check architecture ceilings
+        run: python scripts/architecture_debt.py
+
+      - name: Reject unexpected diff
+        shell: bash
+        run: |
+          git diff --check
+          mapfile -t changed < <(git diff --name-only)
+          if [[ "${#changed[@]}" -ne 1 || "${changed[0]}" != "legal.html" ]]; then
+            printf 'Unexpected changed files:\n'
+            printf '%s\n' "${changed[@]}"
+            exit 1
+          fi
+
+      - name: Commit compacted Legal CSS
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add legal.html
+          git commit -m "refactor: compact Legal Canon CSS under debt ceiling"
+          git push origin HEAD:agent/frontend-canon-unification
