@@ -12852,11 +12852,15 @@ async def sitio_registrar_lead(slug: str, payload: SitioLeadIn, request: Request
         #    teléfono, solo lo marcamos como lead y le agregamos la nota.
         existente = None
         if telefono:
-            r = await client.get(
-                f"{SUPABASE_URL}/rest/v1/contactos", headers=hdr,
-                params={"user_id": f"eq.{user_id}", "telefono": f"eq.{telefono}",
-                        "select": "id,notas,es_potencial", "limit": "1"})
-            filas = r.json() if r.status_code == 200 else []
+            try:
+                filas = await get_rows(
+                    "contactos",
+                    {"user_id": f"eq.{user_id}", "telefono": f"eq.{telefono}",
+                     "select": "id,notas,es_potencial", "limit": "1"},
+                    timeout=10,
+                )
+            except httpx.HTTPStatusError:
+                filas = []
             existente = filas[0] if filas else None
 
         if existente:
