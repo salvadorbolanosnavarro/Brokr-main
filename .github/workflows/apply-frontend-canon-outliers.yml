@@ -6,6 +6,7 @@ on:
       - agent/frontend-canon-unification
     paths:
       - scripts/refactor_frontend_canon_outliers.py
+      - .github/workflows/apply-frontend-canon-outliers.yml
 
 permissions:
   contents: write
