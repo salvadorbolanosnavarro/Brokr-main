@@ -50,6 +50,7 @@ jobs:
           whatsapp-chatgpt.html
           avm.html
           contratos.html
+          image-cleaner.html
 
       - name: Report architecture debt
         run: python scripts/architecture_debt.py
