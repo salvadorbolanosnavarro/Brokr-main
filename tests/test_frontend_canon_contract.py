@@ -54,7 +54,6 @@ class FrontendCanonContractTests(unittest.TestCase):
         allowed = {
             "Copia de index.html",
             "index.html",
-            "landing.html",
             "mock-editorial.html",
             "mock-ejecutiva.html",
             "preview-redesign.html",
@@ -62,14 +61,12 @@ class FrontendCanonContractTests(unittest.TestCase):
         offenders = set()
         for path in ROOT.glob("*.html"):
             source = strip_audit_exempt_blocks(path.read_text(encoding="utf-8"))
-            # AVM's only remaining root is a media-scoped safe-area env variable,
-            # not a theme/token root; ignore that exact declaration.
             source = source.replace(':root { --safe-top: max(env(safe-area-inset-top, 0px), 44px); }', '')
             if re.search(r"(?m)^\s*:root\s*\{", source):
                 offenders.add(path.name)
         self.assertTrue(offenders.issubset(allowed), f"new module-local token roots detected: {sorted(offenders - allowed)}")
-        for migrated in ("isr.html", "avm.html", "contratos.html", "image-cleaner.html", "robin.html"):
-            self.assertNotIn(migrated, offenders, f"{migrated} application UI must consume Canon directly")
+        for migrated in ("isr.html", "avm.html", "contratos.html", "image-cleaner.html", "robin.html", "landing.html"):
+            self.assertNotIn(migrated, offenders, f"{migrated} UI must consume Canon directly")
 
     def test_shell_owned_sidebar_css_exists_only_in_shell(self):
         offenders = set()
@@ -110,7 +107,6 @@ class FrontendCanonContractTests(unittest.TestCase):
         self.assertNotIn("shell-replaced-sidebar", source)
         for alias in ("--navy", "--navy2", "--teal", "--teal-dark", "--teal-bg", "--gray2", "--mut2"):
             self.assertNotIn(f"var({alias})", source)
-        # Critical editor workflows must remain present while presentation migrates.
         self.assertIn("function useInFicha()", source)
         self.assertIn("function useInFacebookAds()", source)
         self.assertIn("function useInVideo()", source)
@@ -125,12 +121,28 @@ class FrontendCanonContractTests(unittest.TestCase):
         self.assertNotRegex(source, r"(?m)^\s*:root\s*\{")
         for token in ("var(--sky-navy)", "var(--sky-blue)", "var(--line)", "var(--r-lg)", "var(--shadow-xs)"):
             self.assertIn(token, source)
-        # Preserve Robin's demo interactions while changing only the visual language.
         self.assertIn("window.rbHecho", source)
         self.assertIn("window.rbVendido", source)
         self.assertIn("window.rbBroq", source)
         self.assertIn('id="broq-input"', source)
         self.assertIn('id="mes-monto"', source)
+
+    def test_landing_stays_on_canon(self):
+        source = (ROOT / "landing.html").read_text(encoding="utf-8")
+        self.assertIn('href="brokr-theme.css"', source)
+        self.assertNotIn("fonts.googleapis.com", source)
+        self.assertNotIn("fonts.gstatic.com", source)
+        self.assertNotRegex(source, r"(?m)^\s*:root\s*\{")
+        self.assertFalse(re.search(r"--(?:b2|fs2|r2|sh2|ease2)[\w-]*", source))
+        for token in (
+            "var(--sky-blue)", "var(--sky-navy)", "var(--paper)", "var(--ink)",
+            "var(--line)", "var(--success)", "var(--danger)", "var(--r-lg)",
+        ):
+            self.assertIn(token, source)
+        self.assertIn("AI Real Estate Operating System", source)
+        self.assertIn("login.html", source)
+        self.assertIn("registro.html", source)
+        self.assertIn("<video", source)
 
     def test_module_template_points_only_to_canon(self):
         source = (ROOT / "_TEMPLATE-modulo.html").read_text(encoding="utf-8")
