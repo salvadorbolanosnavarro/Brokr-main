@@ -53,7 +53,6 @@ class FrontendCanonContractTests(unittest.TestCase):
     def test_new_modules_do_not_define_another_token_root(self):
         allowed = {
             "Copia de index.html",
-            "image-cleaner.html",
             "index.html",
             "landing.html",
             "mock-editorial.html",
@@ -70,7 +69,7 @@ class FrontendCanonContractTests(unittest.TestCase):
             if re.search(r"(?m)^\s*:root\s*\{", source):
                 offenders.add(path.name)
         self.assertTrue(offenders.issubset(allowed), f"new module-local token roots detected: {sorted(offenders - allowed)}")
-        for migrated in ("isr.html", "avm.html", "contratos.html"):
+        for migrated in ("isr.html", "avm.html", "contratos.html", "image-cleaner.html"):
             self.assertNotIn(migrated, offenders, f"{migrated} application UI must consume Canon directly")
 
     def test_shell_owned_sidebar_css_exists_only_in_shell(self):
@@ -82,7 +81,10 @@ class FrontendCanonContractTests(unittest.TestCase):
         self.assertEqual(offenders, set(), f"HTML pages must not own app-shell sidebar CSS: {sorted(offenders)}")
 
     def test_migrated_modules_use_shell_owned_chrome(self):
-        for name in ("contactos.html", "leads.html", "isr.html", "propiedades.html", "avm.html", "contratos.html"):
+        for name in (
+            "contactos.html", "leads.html", "isr.html", "propiedades.html",
+            "avm.html", "contratos.html", "image-cleaner.html",
+        ):
             source = (ROOT / name).read_text(encoding="utf-8")
             self.assertNotIn("shell-replaced-sidebar", source, name)
             self.assertNotRegex(source, r"(?m)^\s*\.app-sidebar\s*\{")
@@ -99,6 +101,21 @@ class FrontendCanonContractTests(unittest.TestCase):
         self.assertNotIn('--teal-glow:', avm)
         self.assertNotRegex(contratos, r"(?m)^\s*:root\s*\{")
         self.assertNotIn("var(--tealp)", contratos)
+
+    def test_image_cleaner_stays_on_direct_canon_tokens(self):
+        source = (ROOT / "image-cleaner.html").read_text(encoding="utf-8")
+        self.assertIn('href="brokr-theme.css"', source)
+        self.assertIn('<script src="app-shell.js" defer></script>', source)
+        self.assertNotIn("broquer-ui.css", source)
+        self.assertNotRegex(source, r"(?m)^\s*:root\s*\{")
+        self.assertNotIn("shell-replaced-sidebar", source)
+        for alias in ("--navy", "--navy2", "--teal", "--teal-dark", "--teal-bg", "--gray2", "--mut2"):
+            self.assertNotIn(f"var({alias})", source)
+        # Critical editor workflows must remain present while presentation migrates.
+        self.assertIn("function useInFicha()", source)
+        self.assertIn("function useInFacebookAds()", source)
+        self.assertIn("function useInVideo()", source)
+        self.assertIn("async function downloadOne", source)
 
     def test_module_template_points_only_to_canon(self):
         source = (ROOT / "_TEMPLATE-modulo.html").read_text(encoding="utf-8")
