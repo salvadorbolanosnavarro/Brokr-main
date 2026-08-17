@@ -1,145 +1,167 @@
 # Broquer — Auditoría de unificación visual
 
-## Objetivo
+## Estado actual
 
-Unificar la interfaz de producto usando **`index.html`** y **`whatsapp.html`** como referencias de experiencia, sin alterar lógica de negocio, rutas, APIs ni comportamiento funcional.
+La unificación visual de las superficies activas de Broquer ya alcanzó su objetivo estructural:
 
-La implementación visual compartida debe tener una sola fuente de verdad: **`brokr-theme.css`**. El chrome común permanece en **`app-shell.js`**.
+- **`index.html`** es la referencia de identidad general;
+- **`whatsapp.html`** es la referencia de interacción densa/productiva;
+- **`brokr-theme.css`** es la única implementación ejecutable del sistema visual;
+- **`app-shell.js`** es el único propietario del chrome compartido de la aplicación;
+- los módulos conservan únicamente layout y comportamiento específicos de su dominio.
+
+La migración se hizo preservando rutas, IDs, contratos de API y lógica de negocio. Los archivos grandes se modificaron mediante transformaciones determinísticas con dry-run, pruebas dirigidas y comprobación exacta de archivos cambiados.
 
 ## Referencias maestras
 
-### `index.html` — referencia de identidad general
+### `index.html` — identidad
 
-Conservar como patrón para:
+Index define el lenguaje visual global:
 
-- jerarquía tipográfica;
 - blanco dominante y respiración;
 - navy como estructura;
 - azul como acción;
-- tarjetas, hairlines y profundidad;
-- KPIs y visualización de información;
-- estados de atención y semánticos;
-- densidad general del dashboard;
-- responsive de la pantalla principal.
+- Inter como familia tipográfica única;
+- jerarquía compacta y clara;
+- tarjetas, hairlines, radios y sombras Canon;
+- KPIs, estados semánticos y visualización de información;
+- comportamiento responsive del producto.
 
-`index.html` ya consume `brokr-theme.css` y sus tokens Canon.
+### `whatsapp.html` — interacción densa
 
-### `whatsapp.html` — referencia de interfaces densas
+WhatsApp define patrones útiles para interfaces de trabajo intensivo:
 
-Conservar como patrón para:
-
-- paneles de dos columnas;
-- búsquedas y filtros compactos;
-- navegación por tabs;
-- listas densas;
+- paneles y listas densas;
+- búsqueda, filtros y tabs compactos;
 - estados activo/no leído/pendiente;
 - avatares y metadatos;
 - composer y acciones contextuales;
-- adaptación móvil de interfaces de trabajo intensivo.
+- adaptación móvil de flujos complejos.
 
-La estructura y UX de WhatsApp son referencia. **Su segunda piel visual no lo es.**
+Su antigua piel independiente no forma parte de la referencia. La UX se conserva; la identidad es Canon.
 
-## Hallazgo crítico 01 — doble sistema visual
+## Hallazgo original — doble sistema visual — RESUELTO
 
-`whatsapp.html` carga:
+Al iniciar la auditoría, WhatsApp cargaba `brokr-theme.css` y después `broquer-ui.css`. Esta última era una segunda piel derivada de Zillow con tokens `--bq-*`, paleta, tipografía, radios y sombras propios.
 
-1. `brokr-theme.css` — sistema Canon actual;
-2. `broquer-ui.css` — capa histórica “Zillow/BROQUER UI v2” que gana la cascada.
+Ese conflicto fue eliminado en dos pasos:
 
-`broquer-ui.css` define un segundo conjunto de tokens (`--bq-*`) con colores, radios, sombras, tipografía y geometría propios. Esto contradice directamente `DESIGN.md`, que establece:
+1. `broquer-ui.css` se redujo primero a un adaptador de dominio que consumía exclusivamente tokens Canon.
+2. Sus pocas reglas `w2-*` necesarias se absorbieron finalmente en `brokr-theme.css` y **`broquer-ui.css` fue eliminado del repositorio**.
 
-- una sola fuente ejecutable de verdad (`brokr-theme.css`);
-- cero skins por módulo;
-- cero segunda hoja de tokens;
-- reutilización de componentes `bk-*`.
+El ratchet permanente falla si `broquer-ui.css` reaparece o si algún HTML intenta volver a cargarlo.
 
-### Decisión
+## Contrato visual vigente
 
-No copiar `broquer-ui.css` al resto del producto.
+Toda nueva superficie o migración debe cumplir:
 
-La migración correcta es la inversa: conservar las mejores decisiones de interacción de WhatsApp, pero llevar su apariencia al sistema Canon compartido.
+1. Cargar `brokr-theme.css`; no crear otra hoja de tokens o skin.
+2. No definir un `:root` visual propio salvo artefactos autocontenidos explícitamente exentos, como documentos generados.
+3. Usar tokens Canon para color, tipografía, radios, sombras, espaciado, alturas y motion.
+4. Mantener Inter como familia del producto.
+5. Reutilizar componentes `bk-*` cuando exista un equivalente real.
+6. Conservar CSS de módulo solo para necesidades legítimas del dominio.
+7. No copiar sidebar, topbar, navegación móvil, FAB, drawer ni encabezados globales: pertenecen a `app-shell.js`.
+8. Mantener SVG/iconografía con `currentColor` cuando corresponda.
+9. Preservar estados hover/focus/disabled/loading/error/empty y funcionamiento móvil.
+10. Pasar los guards de `tests/test_frontend_canon_contract.py` y `audit.py` antes de considerar una superficie migrada.
 
-## Hallazgo crítico 02 — referencias no significan duplicación
+## Trabajo completado
 
-`index` y `whatsapp` cumplen papeles distintos:
+### Base y protección
 
-- `index`: lenguaje visual global y dashboard;
-- `whatsapp`: patrón de aplicación densa/productiva.
+- [x] `brokr-theme.css` establecido como única fuente ejecutable de verdad.
+- [x] `_TEMPLATE-modulo.html` alineado con Canon y shell compartido.
+- [x] `tests/test_frontend_canon_contract.py` creado como ratchet permanente.
+- [x] Quality ampliado para auditar 15 superficies Canon.
+- [x] `broquer-ui.css` eliminado por completo.
+- [x] Cero HTML debe definir `.app-sidebar`.
 
-La unificación no consiste en hacer que todas las pantallas sean visualmente idénticas. Consiste en que todas compartan la misma tipografía, geometría, componentes, color, profundidad, estados y comportamiento responsive, permitiendo layouts específicos por dominio.
+### Autenticación y superficies públicas
 
-## Contrato de migración
+- [x] `login.html`
+- [x] `registro.html`
+- [x] `reset-password.html`
+- [x] `unirse.html`
+- [x] `aviso-privacidad.html`
+- [x] `facebook-callback.html`
+- [x] `whatsapp-callback.html`
+- [x] `landing.html`
 
-Para cada módulo de producto:
+Landing ya no tiene el namespace `--b2-*` ni carga tipografía independiente; conserva contenido, SEO, video, navegación y CTAs sobre Canon.
 
-1. Mantener HTML/JS funcional salvo que una corrección de accesibilidad o responsive lo exija.
-2. Cargar `brokr-theme.css` como sistema de diseño.
-3. Eliminar skins visuales alternativas y tokens locales de producto.
-4. Sustituir componentes reinventados por `bk-*` cuando exista equivalente.
-5. Conservar CSS específico solo para layout o necesidades reales del dominio.
-6. Sustituir colores, radios, sombras, tamaños y espaciados hardcodeados por tokens Canon.
-7. Mantener SVG con `currentColor` para iconografía de producto.
-8. Verificar desktop y móvil.
-9. Ejecutar los guards de diseño y la auditoría del archivo antes de dar el módulo por migrado.
+### Núcleo y shell compartido
 
-## Orden de migración
+- [x] `contactos.html` — eliminado chrome/sidebar duplicado.
+- [x] `leads.html` — eliminado chrome/sidebar duplicado.
+- [x] `propiedades.html` — eliminado shell histórico duplicado.
+- [x] `isr.html` — eliminado root de aliases de la aplicación y shell duplicado.
 
-### Fase 0 — referencias y sistema
+Estas migraciones no implican que toda regla de dominio de esos archivos haya sido reescrita; sí garantizan que la identidad y el chrome compartidos no vuelvan a bifurcarse.
 
-- [x] Identificar `index.html` como referencia global.
-- [x] Identificar `whatsapp.html` como referencia de interfaz densa.
-- [x] Confirmar `brokr-theme.css` como fuente Canon.
-- [x] Detectar la segunda piel `broquer-ui.css`.
-- [ ] Migrar `whatsapp.html` para depender solo de Canon sin perder su UX.
-- [ ] Revisar componentes `bk-*` faltantes que WhatsApp realmente necesite y, solo si son globales, agregarlos al theme.
+### Herramientas y canales migrados directamente a Canon
 
-### Fase 1 — núcleo operativo
+- [x] `avm.html`
+- [x] `contratos.html`
+- [x] `image-cleaner.html`
+- [x] `correo.html`
+- [x] `whatsapp-chatgpt.html`
+- [x] `robin.html`
+- [x] `whatsapp.html` — sin segunda hoja visual.
 
-- [ ] `contactos.html`
-- [ ] `leads.html`
-- [ ] `propiedades.html`
-- [ ] `tareas.html`
-- [ ] `estadisticas.html`
+Image Cleaner conserva carga, limpieza IA, descarga, guardado nativo y handoff a Ficha/Facebook Ads/Video. Robin conserva ruta diaria, prospectos prioritarios, copiloto Broq y marcador de cierres, pero ya comparte la identidad de Broquer.
 
-### Fase 2 — herramientas de operación
+## Validación automática
 
-- [ ] `avm.html`
-- [ ] `isr.html`
-- [ ] `contratos.html`
-- [ ] `firmas.html`
-- [ ] `finanzas.html`
-- [ ] `cumplimiento.html`
+Último estado limpio validado de esta rama antes de la siguiente sincronización técnica:
 
-### Fase 3 — crecimiento y canales
+- **228 tests:** pasan.
+- **15 superficies en `audit.py`: 0 violaciones.**
+- **`scripts/architecture_debt.py`: pasa.**
+- `whatsapp.html` permanece dentro de su ceiling de tamaño; no se relajó el guard para acomodar la migración.
 
-- [ ] `facebook-ads.html`
-- [ ] `correo.html`
-- [ ] `video.html`
-- [ ] `image-cleaner.html`
-- [ ] `mi-sitio.html`
+Quality protege específicamente contra:
 
-### Fase 4 — administración y secundarios
+- reaparición de una segunda hoja visual;
+- nuevos `:root` de producto en superficies migradas;
+- regreso de Bricolage/Figtree o `--b2-*` en autenticación/Landing;
+- HTML que vuelva a apropiarse del sidebar;
+- aliases visuales históricos en ISR/AVM/Contratos/Image Cleaner;
+- regresiones auditables de color, contraste, tipografía, geometría y hardcodes en las superficies incluidas.
 
-- [ ] `equipo.html`
-- [ ] `empresas.html`
-- [ ] `admin.html`
-- [ ] `soporte.html`
-- [ ] restantes pantallas de producto y flujos auxiliares.
+## Deuda visual restante
 
-## Criterios de terminado por pantalla
+La deuda de **sistema visual activo** está esencialmente cerrada. Lo que queda se divide en dos categorías:
 
-Una pantalla se considera unificada cuando:
+### Artefactos históricos / de referencia
 
-- parece parte del mismo producto que `index` y `whatsapp`;
-- no introduce una paleta propia;
-- no introduce una familia tipográfica propia;
-- no introduce una segunda geometría de botones/cards/inputs;
-- usa el shell común cuando corresponde;
-- sus estados hover/focus/disabled/loading/error/empty son coherentes;
-- funciona correctamente en móvil;
-- no modifica lógica de negocio para conseguir el rediseño;
-- pasa los guards de diseño aplicables.
+- `Copia de index.html`
+- `preview-redesign.html`
+- `mock-editorial.html`
+- `mock-ejecutiva.html`
 
-## Regla de seguridad del trabajo paralelo
+Estos archivos pueden conservarse, archivarse o eliminarse según su utilidad histórica; no deben convertirse en fuentes de diseño del producto.
 
-Esta rama visual parte del estado de `agent/architecture-cleanup`, pero los cambios visuales se mantienen en **`agent/frontend-canon-unification`**. No se escriben cambios de unificación visual directamente sobre la rama de auditoría técnica. Los puntos de integración se resolverán explícitamente al sincronizar ramas.
+### Afinado por módulo
+
+Todavía puede existir CSS específico antiguo, geometría local o patrones mejorables en módulos que no forman parte de las 15 superficies auditadas. Ese trabajo es **refinamiento**, no coexistencia de dos sistemas de diseño. Debe atacarse módulo por módulo sin reintroducir tokens o chrome paralelos.
+
+`index.html` conserva únicamente bloques auxiliares estrechos y explícitamente exentos necesarios para su dashboard; no constituyen un segundo theme.
+
+## Criterio de terminado
+
+Una pantalla se considera alineada cuando:
+
+- se reconoce como parte del mismo producto que Index y WhatsApp;
+- consume la identidad desde Canon;
+- no introduce paleta, fuente o geometría global propia;
+- usa `app-shell.js` para chrome compartido cuando corresponde;
+- mantiene estados y responsive coherentes;
+- no altera lógica de negocio para lograr el rediseño;
+- pasa los guards aplicables.
+
+## Trabajo paralelo y seguridad
+
+La unificación visual vive en **`agent/frontend-canon-unification`** y su PR apunta a **`agent/architecture-cleanup`**. La auditoría técnica puede seguir avanzando en paralelo; antes de cerrar el PR visual se sincroniza explícitamente con el head técnico vigente y se vuelve a ejecutar Quality.
+
+No se realizan cambios visuales directamente sobre la rama técnica y este PR permanece Draft. No hay merge a `main` ni despliegue de producción implícito en este trabajo.
