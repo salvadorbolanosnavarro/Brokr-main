@@ -35,8 +35,17 @@ jobs:
       - name: Run tests
         run: python -m unittest discover -s tests -p 'test_*.py'
 
-      - name: Audit current statistics UI
-        run: python audit.py estadisticas.html
+      - name: Audit Canon frontend surfaces
+        run: >-
+          python audit.py
+          estadisticas.html
+          registro.html
+          reset-password.html
+          unirse.html
+          correo.html
+          aviso-privacidad.html
+          facebook-callback.html
+          whatsapp-callback.html
 
       - name: Report architecture debt
         run: python scripts/architecture_debt.py
