@@ -12033,15 +12033,17 @@ async def easybroker_import_stats(request: Request):
         # a) Crear contactos nuevos, 100 por POST
         for i in range(0, len(nuevos_lote), 100):
             chunk = nuevos_lote[i:i+100]
-            ri = await client.post(
-                f"{SUPABASE_URL}/rest/v1/contactos",
-                headers={**sb_headers, "Prefer": "return=minimal"},
-                json=chunk
-            )
-            if ri.status_code in (200, 201, 204):
+            try:
+                await post_rows(
+                    "contactos",
+                    chunk,
+                    prefer="return=minimal",
+                    timeout=60,
+                    accepted_statuses=(200, 201, 204),
+                )
                 creados += len(chunk)
                 ids_creados_ok.update(c["id"] for c in chunk)
-            else:
+            except httpx.HTTPStatusError:
                 errores += len(chunk)
 
         # b) Marcar existentes como lead, 200 por PATCH
