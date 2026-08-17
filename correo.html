@@ -5,211 +5,130 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
 <title>Broquer — Correo</title>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
-<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+<meta name="theme-color" content="#081C4E"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <link rel="stylesheet" href="brokr-theme.css"/>
-<link rel="stylesheet" href="broquer-ui.css"/><!-- BROQUER UI v2: identidad landing/Zillow, gana la cascada -->
 <style>
-  .co-scroll{ padding:24px 28px 64px; max-width:1180px; margin:0 auto; }
-  @media (max-width:720px){ .co-scroll{ padding:14px 12px 88px; } }
+  .co-scroll{ padding:var(--sp-6) var(--pad-x) var(--sp-12); max-width:var(--page-max); margin:0 auto; }
+  @media (max-width:720px){ .co-scroll{ padding:var(--sp-4) var(--sp-3) var(--sp-20); } }
 
-  /* ═══ Conectar ═══════════════════════════════════════════════ */
   .co-conectar{ max-width:520px; margin:0 auto; }
-  .co-conectar .bk-card{ padding:32px 28px; }
-  @media (max-width:720px){ .co-conectar .bk-card{ padding:24px 18px; } }
+  .co-conectar .bk-card{ padding:var(--sp-7) var(--sp-6); }
+  @media (max-width:720px){ .co-conectar .bk-card{ padding:var(--sp-6) var(--sp-4); } }
   .co-conectar h2{ font-family:var(--font-display); font-size:var(--fs-h2); font-weight:800;
-    letter-spacing:-.02em; color:var(--sky-navy); margin:6px 0 4px; }
-  .co-conectar .sub{ font-size:var(--fs-sm); color:var(--mute); margin-bottom:20px; line-height:1.55; }
+    letter-spacing:-.02em; color:var(--ink); margin:var(--sp-2) 0 var(--sp-1); }
+  .co-conectar .sub{ font-size:var(--fs-sm); color:var(--mute); margin-bottom:var(--sp-5); line-height:var(--lh); }
   .co-avanzado{ display:none; }
   .co-avanzado.is-open{ display:block; }
-  .co-ayuda{ margin-top:18px; padding:14px 16px; background:var(--sky-canvas);
-    border:1px solid var(--bq-blue-border); border-radius:var(--r-md, 10px);
-    font-size:var(--fs-sm); color:var(--ink); line-height:1.6; }
-  .co-ayuda a{ color:var(--sky-blue); font-weight:600; }
+  .co-ayuda{ margin-top:var(--sp-5); padding:var(--sp-4); background:var(--sky-canvas);
+    border:1px solid var(--line-2); border-radius:var(--r);
+    font-size:var(--fs-sm); color:var(--ink-2); line-height:var(--lh); }
+  .co-ayuda a{ color:var(--sky-blue); font-weight:700; }
 
-  /* ═══ Toolbar de la bandeja ═════════════════════════════════ */
-  .co-topbar{ display:flex; align-items:center; gap:var(--sp-3); flex-wrap:wrap; margin-bottom:16px; }
-  .co-cuenta{ display:flex; align-items:center; gap:10px; min-width:0; margin-right:auto; }
-  .co-cuenta__ava{ width:34px; height:34px; border-radius:50%; flex:none; background:var(--sky-navy);
-    color:var(--bone); display:flex; align-items:center; justify-content:center;
+  .co-topbar{ display:flex; align-items:center; gap:var(--sp-3); flex-wrap:wrap; margin-bottom:var(--sp-4); }
+  .co-cuenta{ display:flex; align-items:center; gap:var(--sp-3); min-width:0; margin-right:auto; }
+  .co-cuenta__ava,.co-ava{ border-radius:var(--r-pill); flex:none; background:var(--sky-navy);
+    color:var(--paper); display:flex; align-items:center; justify-content:center;
     font-family:var(--font-display); font-size:var(--fs-sm); font-weight:700; }
-  .co-cuenta__mail{ font-size:var(--fs-sm); font-weight:600; color:var(--ink);
+  .co-cuenta__ava{ width:36px; height:36px; }
+  .co-ava{ width:40px; height:40px; }
+  .co-cuenta__mail{ font-size:var(--fs-sm); font-weight:700; color:var(--ink);
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .co-cuenta__sub{ font-size:var(--fs-caption); color:var(--mute); }
-  .co-desconectar{ border:0; background:none; padding:0; font-size:var(--fs-caption); color:var(--mute);
-    cursor:pointer; text-align:left; }
+  .co-desconectar{ border:0; background:none; padding:0; font:600 var(--fs-caption)/1 var(--font-sans);
+    color:var(--mute); cursor:pointer; text-align:left; }
   .co-desconectar:hover{ color:var(--danger); }
 
-  /* ═══ Lista de correos: filas de bandeja real ═══════════════ */
-  .co-lista{ background:var(--bone); border:1px solid var(--line); border-radius:var(--r-lg);
+  .co-lista,.co-msg{ background:var(--paper); border:1px solid var(--line-2); border-radius:var(--r-lg);
     overflow:hidden; box-shadow:var(--shadow-xs); }
-  .co-item{ position:relative; display:flex; gap:14px; align-items:center; width:100%;
+  .co-item{ position:relative; display:flex; gap:var(--sp-3); align-items:center; width:100%;
     text-align:left; border:0; background:transparent; cursor:pointer;
-    padding:14px 18px; border-bottom:1px solid var(--line); font-family:var(--font-sans);
+    padding:var(--sp-3) var(--sp-4); border-bottom:1px solid var(--line); font-family:var(--font-sans);
     transition:background var(--dur-fast) var(--ease); }
   .co-item:last-child{ border-bottom:0; }
-  .co-item:hover{ background:var(--shell); }
+  .co-item:hover{ background:var(--paper-2); }
   .co-item:focus-visible{ outline:none; box-shadow:var(--focus); }
-  .co-ava{ width:40px; height:40px; border-radius:50%; flex:none; background:var(--sky-navy);
-    color:var(--bone); display:flex; align-items:center; justify-content:center;
-    font-family:var(--font-display); font-size:var(--fs-sm); font-weight:700; }
   .co-item.is-visto .co-ava{ background:var(--paper-2); color:var(--mute); }
   .co-item__main{ flex:1; min-width:0; }
   .co-item__top{ display:flex; align-items:baseline; justify-content:space-between; gap:var(--sp-2); }
   .co-item__de{ font-size:var(--fs-sm); font-weight:800; color:var(--ink);
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .co-item.is-visto .co-item__de{ font-weight:600; color:var(--ink-2); }
-  .co-item__fecha{ font-size:var(--fs-caption); color:var(--mute); flex:none;
-    font-variant-numeric:tabular-nums; }
-  .co-item__linea{ display:flex; align-items:baseline; gap:6px; margin-top:2px; min-width:0; }
+  .co-item__fecha{ font-size:var(--fs-caption); color:var(--mute); flex:none; font-variant-numeric:tabular-nums; }
+  .co-item__linea{ display:flex; align-items:baseline; gap:var(--sp-2); margin-top:2px; min-width:0; }
   .co-item__asunto{ font-size:var(--fs-sm); font-weight:700; color:var(--ink); flex:none;
     max-width:52%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .co-item.is-visto .co-item__asunto{ font-weight:500; color:var(--ink-2); }
-  .co-item__snip{ font-size:var(--fs-sm); color:var(--mute); white-space:nowrap;
-    overflow:hidden; text-overflow:ellipsis; min-width:0; }
-  .co-item__dot{ width:8px; height:8px; border-radius:50%; background:var(--sky-blue); flex:none; }
+  .co-item__snip{ font-size:var(--fs-sm); color:var(--mute); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+  .co-item__dot{ width:8px; height:8px; border-radius:var(--r-pill); background:var(--sky-blue); flex:none; }
   .co-item.is-visto .co-item__dot{ visibility:hidden; }
 
-  .co-vacio{ padding:56px 24px; text-align:center; }
+  .co-vacio{ padding:var(--sp-12) var(--sp-6); text-align:center; }
   .co-vacio strong{ display:block; font-family:var(--font-display); font-size:var(--fs-h3);
-    font-weight:800; letter-spacing:-.02em; color:var(--sky-navy); margin-bottom:6px; }
+    font-weight:800; letter-spacing:-.02em; color:var(--ink); margin-bottom:var(--sp-2); }
   .co-vacio span{ font-size:var(--fs-sm); color:var(--mute); }
 
-  /* ═══ Lectura: la pantalla se convierte en el correo ════════ */
-  .co-lectura-bar{ display:flex; align-items:center; gap:var(--sp-3); margin-bottom:18px; }
-  .co-volver{ display:inline-flex; align-items:center; gap:8px; border:0; background:none;
-    padding:0; cursor:pointer; font-size:var(--fs-sm); font-weight:700; color:var(--sky-blue);
-    font-family:var(--font-sans); }
+  .co-lectura-bar{ display:flex; align-items:center; gap:var(--sp-3); margin-bottom:var(--sp-5); }
+  .co-volver{ display:inline-flex; align-items:center; gap:var(--sp-2); border:0; background:none;
+    padding:0; cursor:pointer; font-size:var(--fs-sm); font-weight:700; color:var(--sky-blue); font-family:var(--font-sans); }
   .co-volver:hover{ color:var(--sky-blue-press); }
   .co-lectura-bar .bk-btn{ margin-left:auto; }
-  .co-msg{ background:var(--bone); border:1px solid var(--line); border-radius:var(--r-lg);
-    box-shadow:var(--shadow-xs); overflow:hidden; }
-  .co-msg__head{ padding:26px 28px 20px; border-bottom:1px solid var(--line); }
-  @media (max-width:720px){ .co-msg__head{ padding:20px 16px 16px; } }
+  .co-msg__head{ padding:var(--sp-6) var(--sp-7) var(--sp-5); border-bottom:1px solid var(--line); }
+  @media (max-width:720px){ .co-msg__head{ padding:var(--sp-5) var(--sp-4) var(--sp-4); } }
   .co-msg__asunto{ font-family:var(--font-display); font-size:var(--fs-h2); font-weight:800;
-    letter-spacing:-.02em; color:var(--sky-navy); line-height:1.25; margin-bottom:14px;
-    overflow-wrap:break-word; }
-  .co-msg__meta{ display:flex; align-items:center; gap:12px; min-width:0; }
+    letter-spacing:-.02em; color:var(--ink); line-height:var(--lh-h2); margin-bottom:var(--sp-4); overflow-wrap:break-word; }
+  .co-msg__meta{ display:flex; align-items:center; gap:var(--sp-3); min-width:0; }
   .co-msg__meta .co-ava{ width:42px; height:42px; }
-  .co-msg__de{ font-size:var(--fs-sm); font-weight:700; color:var(--ink);
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .co-msg__sub{ font-size:var(--fs-caption); color:var(--mute); margin-top:1px; }
-  .co-msg__body{ padding:26px 28px 32px; }
-  @media (max-width:720px){ .co-msg__body{ padding:18px 16px 24px; } }
-  .co-cuerpo{ font-size:var(--fs-body, 15px); line-height:1.65; color:var(--ink);
-    white-space:pre-wrap; word-break:break-word; max-width:720px; }
-  .co-cuerpo-html{ width:100%; min-height:60vh; border:0; background:var(--bone); }
-
-  /* ═══ Redactar (modal) ══════════════════════════════════════ */
-  #co-modal textarea.bk-input{ min-height:200px; resize:vertical; line-height:1.55; }
+  .co-msg__de{ font-size:var(--fs-sm); font-weight:700; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .co-msg__sub{ font-size:var(--fs-caption); color:var(--mute); margin-top:2px; }
+  .co-msg__body{ padding:var(--sp-6) var(--sp-7) var(--sp-7); }
+  @media (max-width:720px){ .co-msg__body{ padding:var(--sp-4) var(--sp-4) var(--sp-6); } }
+  .co-cuerpo{ font-size:var(--fs-body); line-height:var(--lh); color:var(--ink); white-space:pre-wrap; word-break:break-word; max-width:720px; }
+  .co-cuerpo-html{ width:100%; min-height:60vh; border:0; background:var(--paper); }
+  #co-modal textarea.bk-input{ min-height:200px; resize:vertical; line-height:var(--lh); }
 </style>
 </head>
 <body data-app="correo">
-
 <div class="co-scroll">
-
-  <!-- ═══ SIN CONECTAR ═══ -->
   <div id="co-view-conectar" hidden>
     <div class="co-conectar">
       <div class="bk-card bk-card--raise">
         <span class="bk-eyebrow">Correo</span>
         <h2>Tu bandeja, dentro de Broquer</h2>
         <p class="sub">Conecta tu correo una sola vez y lee, responde y redacta sin salir de la plataforma.</p>
-
-        <div class="bk-field">
-          <label class="bk-label" for="co-proveedor">Proveedor</label>
-          <select class="bk-select" id="co-proveedor" onchange="coCambioProveedor()">
-            <option value="gmail">Gmail / Google Workspace</option>
-            <option value="outlook">Outlook / Microsoft 365</option>
-            <option value="icloud">iCloud</option>
-            <option value="otro">Otro (configurar servidores)</option>
-          </select>
-        </div>
-
-        <div class="bk-field">
-          <label class="bk-label" for="co-email">Correo</label>
-          <input class="bk-input" id="co-email" type="email" placeholder="tu@correo.com" autocomplete="email"/>
-        </div>
-
-        <div class="bk-field">
-          <label class="bk-label" for="co-password">Contraseña de aplicación</label>
-          <input class="bk-input" id="co-password" type="password" placeholder="xxxx xxxx xxxx xxxx" autocomplete="off"/>
-        </div>
-
+        <div class="bk-field"><label class="bk-label" for="co-proveedor">Proveedor</label><select class="bk-select" id="co-proveedor" onchange="coCambioProveedor()"><option value="gmail">Gmail / Google Workspace</option><option value="outlook">Outlook / Microsoft 365</option><option value="icloud">iCloud</option><option value="otro">Otro (configurar servidores)</option></select></div>
+        <div class="bk-field"><label class="bk-label" for="co-email">Correo</label><input class="bk-input" id="co-email" type="email" placeholder="tu@correo.com" autocomplete="email"/></div>
+        <div class="bk-field"><label class="bk-label" for="co-password">Contraseña de aplicación</label><input class="bk-input" id="co-password" type="password" placeholder="xxxx xxxx xxxx xxxx" autocomplete="off"/></div>
         <div class="co-avanzado" id="co-avanzado">
           <div class="bk-field"><label class="bk-label">Servidor IMAP (recibir)</label><input class="bk-input" id="co-imap-host" placeholder="imap.midominio.com"/></div>
           <div class="bk-field"><label class="bk-label">Puerto IMAP</label><input class="bk-input" id="co-imap-port" type="number" value="993"/></div>
           <div class="bk-field"><label class="bk-label">Servidor SMTP (enviar)</label><input class="bk-input" id="co-smtp-host" placeholder="smtp.midominio.com"/></div>
           <div class="bk-field"><label class="bk-label">Puerto SMTP</label><input class="bk-input" id="co-smtp-port" type="number" value="587"/></div>
         </div>
-
-        <button class="bk-btn bk-btn--forest bk-btn--block" id="co-btn-conectar" onclick="coConectar()" style="margin-top:6px">Conectar correo</button>
-
-        <div class="co-ayuda" id="co-ayuda-gmail">
-          Gmail no acepta tu contraseña normal: necesitas una <strong>contraseña de aplicación</strong>.
-          Activa la verificación en dos pasos en tu cuenta de Google y génerala en
-          <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">myaccount.google.com/apppasswords</a>.
-          Broquer la guarda cifrada y solo la usa para conectarse a tu correo; puedes revocarla desde Google cuando quieras.
-        </div>
+        <button class="bk-btn bk-btn--forest bk-btn--block" id="co-btn-conectar" onclick="coConectar()" style="margin-top:var(--sp-2)">Conectar correo</button>
+        <div class="co-ayuda" id="co-ayuda-gmail">Gmail no acepta tu contraseña normal: necesitas una <strong>contraseña de aplicación</strong>. Activa la verificación en dos pasos en tu cuenta de Google y génerala en <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">myaccount.google.com/apppasswords</a>. Broquer la guarda cifrada y solo la usa para conectarse a tu correo; puedes revocarla desde Google cuando quieras.</div>
       </div>
     </div>
   </div>
 
-  <!-- ═══ BANDEJA (pantalla completa) ═══ -->
   <div id="co-view-bandeja" hidden>
-    <div class="co-topbar">
-      <div class="co-cuenta">
-        <div class="co-cuenta__ava" id="co-cuenta-ava">—</div>
-        <div style="min-width:0">
-          <div class="co-cuenta__mail" id="co-cuenta"></div>
-          <button type="button" class="co-desconectar" onclick="coDesconectar()">Desconectar de Broquer</button>
-        </div>
-      </div>
-      <button class="bk-btn" onclick="coCargarBandeja()">Actualizar</button>
-      <button class="bk-btn bk-btn--forest" onclick="coAbrirRedactar()">Redactar</button>
-    </div>
-
-    <div class="co-lista" id="co-lista">
-      <div class="co-vacio"><strong>Cargando tu bandeja…</strong><span>Un momento.</span></div>
-    </div>
+    <div class="co-topbar"><div class="co-cuenta"><div class="co-cuenta__ava" id="co-cuenta-ava">—</div><div style="min-width:0"><div class="co-cuenta__mail" id="co-cuenta"></div><button type="button" class="co-desconectar" onclick="coDesconectar()">Desconectar de Broquer</button></div></div><button class="bk-btn" onclick="coCargarBandeja()">Actualizar</button><button class="bk-btn bk-btn--forest" onclick="coAbrirRedactar()">Redactar</button></div>
+    <div class="co-lista" id="co-lista"><div class="co-vacio"><strong>Cargando tu bandeja…</strong><span>Un momento.</span></div></div>
   </div>
 
-  <!-- ═══ LECTURA (la pantalla es el correo) ═══ -->
   <div id="co-view-lectura" hidden>
-    <div class="co-lectura-bar">
-      <button type="button" class="co-volver" onclick="coVolverALista()">
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
-        Bandeja
-      </button>
-      <button class="bk-btn bk-btn--forest" onclick="coAbrirResponder()">Responder</button>
-    </div>
-    <div class="co-msg" id="co-msg">
-      <div class="co-vacio"><strong>Abriendo…</strong></div>
-    </div>
+    <div class="co-lectura-bar"><button type="button" class="co-volver" onclick="coVolverALista()"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>Bandeja</button><button class="bk-btn bk-btn--forest" onclick="coAbrirResponder()">Responder</button></div>
+    <div class="co-msg" id="co-msg"><div class="co-vacio"><strong>Abriendo…</strong></div></div>
   </div>
-
 </div>
 
-<!-- ═══ Redactar / responder ═══ -->
 <div class="bk-overlay" id="co-modal">
-  <div class="bk-modal" style="max-width:600px">
-    <div class="bk-modal__head">
-      <div class="bk-modal__title" id="co-modal-titulo">Redactar</div>
-      <button class="bk-btn" onclick="coCerrarModal()">Cerrar</button>
-    </div>
-    <div class="bk-modal__body">
-      <div class="bk-field"><label class="bk-label" for="co-m-para">Para</label><input class="bk-input" id="co-m-para" type="email" placeholder="destinatario@correo.com"/></div>
-      <div class="bk-field"><label class="bk-label" for="co-m-asunto">Asunto</label><input class="bk-input" id="co-m-asunto" type="text"/></div>
-      <div class="bk-field"><label class="bk-label" for="co-m-cuerpo">Mensaje</label><textarea class="bk-input" id="co-m-cuerpo"></textarea></div>
-      <button class="bk-btn bk-btn--forest bk-btn--block" id="co-btn-enviar" onclick="coEnviar()">Enviar</button>
-    </div>
-  </div>
+  <div class="bk-modal" style="max-width:600px"><div class="bk-modal__head"><div class="bk-modal__title" id="co-modal-titulo">Redactar</div><button class="bk-btn" onclick="coCerrarModal()">Cerrar</button></div><div class="bk-modal__body"><div class="bk-field"><label class="bk-label" for="co-m-para">Para</label><input class="bk-input" id="co-m-para" type="email" placeholder="destinatario@correo.com"/></div><div class="bk-field"><label class="bk-label" for="co-m-asunto">Asunto</label><input class="bk-input" id="co-m-asunto" type="text"/></div><div class="bk-field"><label class="bk-label" for="co-m-cuerpo">Mensaje</label><textarea class="bk-input" id="co-m-cuerpo"></textarea></div><button class="bk-btn bk-btn--forest bk-btn--block" id="co-btn-enviar" onclick="coEnviar()">Enviar</button></div></div>
 </div>
 
 <script>
 const CO_API = 'https://api.broquer.app';
 let CO_MSGS = [];
-let CO_ACTUAL = null;          // mensaje abierto (objeto completo)
-let CO_RESPONDIENDO = null;    // {in_reply_to, references} si el modal es respuesta
+let CO_ACTUAL = null;
+let CO_RESPONDIENDO = null;
 
 async function coAuth() {
   let tok = null;
@@ -224,7 +143,6 @@ function coEsc(s) {
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
-/* "Nombre Apellido <correo@x.com>" → { nombre, direccion } */
 function coRemitente(de) {
   const m = String(de || '').match(/^\s*"?([^"<]*)"?\s*<([^>]+)>\s*$/);
   if (m) return { nombre: (m[1] || '').trim() || m[2].trim(), direccion: m[2].trim() };
@@ -264,7 +182,6 @@ function coVista(cual) {
   window.scrollTo({ top: 0 });
 }
 
-/* ── Arranque ─────────────────────────────────────────────── */
 async function coEstado() {
   try {
     const r = await fetch(CO_API + '/correo/estado', { headers: await coAuth() });
@@ -284,7 +201,6 @@ async function coEstado() {
   }
 }
 
-/* ── Conexión ─────────────────────────────────────────────── */
 function coCambioProveedor() {
   const p = document.getElementById('co-proveedor').value;
   document.getElementById('co-avanzado').classList.toggle('is-open', p === 'otro');
@@ -333,7 +249,6 @@ async function coDesconectar() {
   coEstado();
 }
 
-/* ── Bandeja ──────────────────────────────────────────────── */
 async function coCargarBandeja() {
   const lista = document.getElementById('co-lista');
   lista.innerHTML = '<div class="co-vacio"><strong>Cargando tu bandeja…</strong><span>Un momento.</span></div>';
@@ -375,7 +290,6 @@ function coPintarLista() {
   }).join('');
 }
 
-/* ── Lectura: la pantalla se convierte en el correo ───────── */
 async function coAbrirMensaje(uid) {
   coVista('lectura');
   const cont = document.getElementById('co-msg');
@@ -415,7 +329,6 @@ function coPintarLectura() {
         : '<div class="co-cuerpo">' + coEsc(m.texto) + '</div>'}
     </div>`;
   if (m.html) {
-    // El HTML del remitente se aísla en un iframe sin scripts ni acceso a la app
     document.getElementById('co-iframe').srcdoc = m.html;
   }
 }
@@ -423,10 +336,9 @@ function coPintarLectura() {
 function coVolverALista() {
   CO_ACTUAL = null;
   coVista('bandeja');
-  coPintarLista();  // refleja los "leído" al volver
+  coPintarLista();
 }
 
-/* ── Redactar / responder / enviar ────────────────────────── */
 function coAbrirRedactar() {
   CO_RESPONDIENDO = null;
   document.getElementById('co-modal-titulo').textContent = 'Redactar';
@@ -477,8 +389,6 @@ async function coEnviar() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  // app-shell.js (defer) define window.brokrSb un instante después del
-  // DOMContentLoaded; esperamos a que exista para arrancar con token fresco.
   let intentos = 0;
   (function esperarShell() {
     if (window.brokrSb || intentos > 20) { coEstado(); return; }
