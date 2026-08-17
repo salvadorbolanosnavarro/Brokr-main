@@ -34,7 +34,9 @@ class MainEbStatsContactBatchPostCoreRefactorTests(unittest.TestCase):
         self.assertIn('{"id": f"in.({lista})"}', block)
         self.assertIn('accepted_statuses=(200, 204)', block)
         self.assertNotIn('rp = await client.patch(\n                f"{SUPABASE_URL}/rest/v1/contactos"', block)
-        self.assertIn('rv = await client.post(\n                f"{SUPABASE_URL}/rest/v1/contactos_propiedades"', block)
+        self.assertIn('await post_rows(\n                    "contactos_propiedades",', block)
+        self.assertIn('except httpx.HTTPStatusError:\n                pass', block)
+        self.assertNotIn('rv = await client.post(\n                f"{SUPABASE_URL}/rest/v1/contactos_propiedades"', block)
 
 
 if __name__ == "__main__":
