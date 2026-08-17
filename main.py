@@ -8739,11 +8739,15 @@ async def _fb_procesar_lead(valor: dict) -> None:
             if existente:
                 # No se pisa lo que el agente ya escribió: solo se marca como
                 # potencial y se agrega la nota del anuncio.
-                await client.patch(
-                    f"{SUPABASE_URL}/rest/v1/contactos",
-                    headers=_sb_headers({"Prefer": "return=minimal"}),
-                    params={"id": f"eq.{existente['id']}"},
-                    json={"es_potencial": True, "updated_at": ahora})
+                try:
+                    await patch_rows(
+                        "contactos",
+                        {"id": f"eq.{existente['id']}"},
+                        {"es_potencial": True, "updated_at": ahora},
+                        timeout=15,
+                    )
+                except httpx.HTTPStatusError:
+                    pass
                 await _anota({"procesado": True, "contacto_id": existente["id"],
                               "error_detail": "Contacto ya existía; se marcó como potencial."})
                 _fb_log.info("Lead %s emparejado con el contacto %s", leadgen_id, existente["id"])
