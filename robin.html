@@ -1,567 +1,205 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>Robin — el día del asesor · Broquer</title>
-<meta name="theme-color" content="#FFC400"/>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
+<meta name="theme-color" content="#081C4E"/>
+<title>Robin — Broquer</title>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..900;1,62..125,400..900&display=swap" rel="stylesheet"/>
+<link rel="apple-touch-icon" href="isotipo-black.png"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
 <style>
-/* ══════════════════════════════════════════════════════════════════
-   ROBIN — mundo visual "LONA"
-   Vinilo sobre lona vial: amarillo señal, tinta, blanco vinilo,
-   rojo VENDIDO. Bordes duros, sombras de bloque, ojillos metálicos.
-   Tipografía: Archivo (Omnibus-Type, Buenos Aires) — grotesca de
-   letrero, una sola familia variable de la etiqueta al titular.
-   ══════════════════════════════════════════════════════════════════ */
-:root{
-  --lona:      #FFC400;   /* amarillo señal — el suelo de todo */
-  --lona-hi:   #FFD23F;   /* amarillo alto para franjas */
-  --tinta:     #0F0E0C;   /* negro de rotulista, no #000 puro */
-  --vinilo:    #FFFFFF;   /* la calcomanía blanca */
-  --hueso:     #FFF9EC;   /* vinilo envejecido (superficies 2°) */
-  --rojo:      #D62828;   /* VENDIDO / urgente (nunca texto sobre amarillo) */
-  --verde:     #00703C;   /* verde vial: HECHO / dinero */
-  --gris:      #57534B;   /* texto secundario sobre blanco (7.2:1) */
-  --borde:     3px;
-  --borde-2:   2px;
-  --salto:     6px;       /* offset de la sombra de bloque */
-  --r:         4px;       /* el vinilo se corta casi recto */
-  --r-pill:    999px;
-  --font:      'Archivo', system-ui, sans-serif;
-  --paso:      clamp(16px, 4vw, 28px);
-  --dur:       .16s;
-  --ease-out:  cubic-bezier(.16,1,.3,1);
-}
-*,*::before,*::after{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-html,body{ margin:0; padding:0; }
-body{
-  background:var(--lona);
-  /* trama de lona: tejido diagonal apenas perceptible */
-  background-image:
-    repeating-linear-gradient(45deg, rgba(15,14,12,.028) 0 1px, transparent 1px 7px),
-    repeating-linear-gradient(-45deg, rgba(255,255,255,.05) 0 1px, transparent 1px 7px);
-  color:var(--tinta);
-  font-family:var(--font);
-  font-size:16px; line-height:1.5;
-  font-variant-numeric:tabular-nums;
-  -webkit-font-smoothing:antialiased;
-  overflow-x:clip;
-}
-::selection{ background:var(--tinta); color:var(--lona); }
-button{ font-family:inherit; cursor:pointer; }
-:focus-visible{ outline:3px solid var(--tinta); outline-offset:3px; border-radius:2px; }
-
-/* ── átomos del mundo ─────────────────────────────────────────── */
-.up{ text-transform:uppercase; letter-spacing:.04em; }
-.sticker{
-  background:var(--vinilo);
-  border:var(--borde) solid var(--tinta);
-  border-radius:var(--r);
-  box-shadow:var(--salto) var(--salto) 0 var(--tinta);
-  position:relative;
-}
-.sticker--flat{ box-shadow:none; }
-/* ojillo metálico de lona (esquinas del header y del cierre) */
-.ojillo{
-  width:16px; height:16px; border-radius:50%;
-  background:radial-gradient(circle at 34% 30%, #FCFCFA 0 18%, #B9B4A8 40%, #6E695E 62%, #3F3B33 100%);
-  box-shadow:inset 0 0 0 3px rgba(15,14,12,.85), 0 1px 0 rgba(255,255,255,.5);
-  position:absolute; z-index:3;
-}
-/* franja de precaución (urgente / se enfría) */
-.franja{
-  background:repeating-linear-gradient(-45deg, var(--tinta) 0 10px, var(--lona-hi) 10px 20px);
-}
-/* botón mecánico: al presionar, se pega a su sombra */
-.btn{
-  display:inline-flex; align-items:center; justify-content:center; gap:8px;
-  min-height:52px; padding:0 22px;
-  background:var(--tinta); color:var(--lona);
-  border:var(--borde) solid var(--tinta); border-radius:var(--r);
-  font-weight:800; font-size:15px; text-transform:uppercase; letter-spacing:.05em;
-  box-shadow:var(--salto) var(--salto) 0 rgba(15,14,12,.32);
-  transition:transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out), background var(--dur), color var(--dur);
-  text-decoration:none; white-space:nowrap;
-}
-.btn:hover{ background:#241F19; }
-.btn:active{ transform:translate(var(--salto),var(--salto)); box-shadow:0 0 0 rgba(0,0,0,0); }
-.btn--vinilo{ background:var(--vinilo); color:var(--tinta); box-shadow:var(--salto) var(--salto) 0 var(--tinta); }
-.btn--vinilo:hover{ background:var(--hueso); }
-.btn--verde{ background:var(--verde); border-color:var(--tinta); color:#fff; box-shadow:var(--salto) var(--salto) 0 var(--tinta); }
-.btn--verde:hover{ background:#005C31; }
-.btn--sm{ min-height:44px; padding:0 16px; font-size:13px; }
-.btn svg{ flex:none; }
-
-/* etiqueta pequeña tipo calca */
-.tag{
-  display:inline-flex; align-items:center; gap:6px;
-  padding:4px 10px;
-  border:var(--borde-2) solid var(--tinta); border-radius:var(--r);
-  background:var(--vinilo);
-  font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.06em;
-}
-.tag--tinta{ background:var(--tinta); color:var(--lona); }
-.tag--rojo{ background:var(--rojo); color:#fff; }
-.tag--verde{ background:var(--verde); color:#fff; }
-.tag--franja{ color:var(--vinilo); background:repeating-linear-gradient(-45deg, var(--tinta) 0 8px, var(--rojo) 8px 16px); text-shadow:0 1px 0 rgba(0,0,0,.5); }
-
-/* ── layout general ───────────────────────────────────────────── */
-.wrap{ max-width:1120px; margin:0 auto; padding:0 var(--paso); }
-section{ margin-bottom:clamp(44px, 7vw, 84px); }
-
-/* entrada tipo "pegar calcomanía" */
-.pega{ opacity:0; transform:translateY(14px) rotate(var(--rot,0deg)) scale(1.035); }
-.pega.is-in{
-  opacity:1; transform:translateY(0) rotate(var(--rot,0deg)) scale(1);
-  transition:opacity .42s var(--ease-out), transform .42s var(--ease-out);
-}
-
-/* ══ HEADER — el letrero ══ */
-.top{
-  position:sticky; top:0; z-index:50;
-  background:var(--tinta); color:var(--lona);
-  border-bottom:var(--borde) solid var(--tinta);
-}
-.top__in{
-  max-width:1120px; margin:0 auto; padding:12px var(--paso);
-  display:flex; align-items:center; justify-content:space-between; gap:14px;
-}
-.top__brand{ display:flex; align-items:baseline; gap:12px; min-width:0; }
-.top__logo{
-  font-weight:900; font-size:24px; letter-spacing:.02em; line-height:1;
-  font-stretch:87%;
-}
-.top__logo b{ color:var(--vinilo); font-weight:900; }
-.top__by{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.14em; color:rgba(255,244,200,.75); white-space:nowrap; }
-.top__fecha{ font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:var(--vinilo); white-space:nowrap; }
-@media (max-width:560px){ .top__by{ display:none; } }
-
-/* ══ HERO — la lona del día ══ */
-.hero{ padding:clamp(30px,6vw,66px) 0 0; }
-.hero__hola{
-  font-weight:900; line-height:.92; letter-spacing:-.015em;
-  font-size:clamp(52px, 11.5vw, 132px);
-  font-stretch:80%;
-  text-transform:uppercase;
-  margin:0;
-}
-.hero__hola .linea2{ display:block; color:var(--vinilo); -webkit-text-stroke:3px var(--tinta); paint-order:stroke fill; text-shadow:5px 5px 0 var(--tinta); }
-.hero__broq{
-  margin:clamp(18px,3vw,26px) 0 0;
-  max-width:56ch; font-size:clamp(16px,2vw,19px); line-height:1.5; font-weight:500;
-}
-.hero__broq b{ font-weight:800; }
-/* marcador del día: placas viales */
-.marcador{
-  margin-top:clamp(24px,4vw,36px);
-  display:grid; grid-template-columns:repeat(3, 1fr); gap:clamp(10px,2vw,18px);
-}
-@media (max-width:560px){ .marcador{ grid-template-columns:1fr 1fr; } .marcador .placa:last-child{ grid-column:1/-1; } }
-.placa{ padding:16px 18px 14px; --rot:-.4deg; }
-.placa:nth-child(2){ --rot:.5deg; }
-.placa:nth-child(3){ --rot:-.3deg; }
-.placa__num{ font-weight:900; font-size:clamp(40px,6vw,58px); line-height:1; letter-spacing:-.02em; font-stretch:82%; }
-.placa__lbl{ margin-top:4px; font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.1em; color:var(--gris); }
-.placa__lbl b{ color:var(--tinta); }
-
-/* título de sección: brocha ancha */
-.h-sec{
-  display:flex; align-items:center; gap:14px; flex-wrap:wrap;
-  margin:0 0 clamp(16px,3vw,24px);
-}
-.h-sec h2{
-  margin:0; font-weight:900; text-transform:uppercase; letter-spacing:.01em;
-  font-size:clamp(24px,4vw,34px); line-height:1; font-stretch:84%;
-}
-.h-sec .h-sec__raya{ flex:1; height:var(--borde); background:var(--tinta); min-width:40px; }
-
-/* ══ LA RUTA DE HOY ══ */
-.ruta{ display:grid; gap:14px; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); }
-.parada{ padding:16px 16px 14px; display:flex; flex-direction:column; gap:10px; }
-.parada__top{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
-.parada__hora{
-  background:var(--tinta); color:var(--vinilo);
-  font-weight:900; font-size:18px; letter-spacing:.02em;
-  padding:5px 12px; border-radius:var(--r);
-}
-.parada__km{ font-size:12px; font-weight:800; color:var(--gris); text-transform:uppercase; letter-spacing:.08em; }
-.parada__que{ font-weight:800; font-size:17px; line-height:1.25; }
-.parada__donde{ font-size:14px; color:var(--gris); font-weight:600; }
-.parada--urgente{ border-color:var(--rojo); box-shadow:var(--salto) var(--salto) 0 var(--rojo); }
-.parada--urgente .parada__hora{ background:var(--rojo); }
-.parada__banda{ height:10px; border-radius:2px; margin:2px -4px 0; }
-
-/* ══ MÁRCALE PRIMERO — calcas de prospectos ══ */
-.leads{ display:flex; flex-direction:column; gap:clamp(14px,2.4vw,20px); }
-.lead{ padding:18px; display:grid; grid-template-columns:1fr auto; gap:16px; align-items:start; }
-@media (max-width:680px){ .lead{ grid-template-columns:1fr; } }
-.lead__head{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-.lead__nombre{ font-weight:900; font-size:clamp(19px,2.6vw,24px); letter-spacing:-.01em; font-stretch:88%; }
-.lead__razon{ margin:8px 0 0; font-size:15px; line-height:1.5; color:var(--gris); font-weight:500; max-width:64ch; }
-.lead__razon b{ color:var(--tinta); font-weight:800; }
-.lead__broq{
-  display:inline-flex; align-items:center; gap:6px; margin-top:10px;
-  font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:var(--verde);
-}
-.lead__broq svg{ flex:none; }
-.lead__acts{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-/* sello HECHO que cae encima */
-.sello{
-  position:absolute; top:50%; left:50%;
-  transform:translate(-50%,-50%) rotate(-9deg) scale(3);
-  border:5px solid var(--verde); color:var(--verde); border-radius:8px;
-  padding:4px 18px; font-weight:900; font-size:30px; letter-spacing:.12em; text-transform:uppercase;
-  background:rgba(255,255,255,.85);
-  opacity:0; pointer-events:none; z-index:5;
-  mix-blend-mode:multiply;
-}
-.lead.is-hecho .sello{ animation:sellar .5s var(--ease-out) forwards; }
-.lead.is-hecho{ filter:grayscale(.55); }
-.lead.is-hecho .btn{ pointer-events:none; opacity:.4; }
-@keyframes sellar{
-  0%{ opacity:0; transform:translate(-50%,-50%) rotate(-9deg) scale(3); }
-  62%{ opacity:1; transform:translate(-50%,-50%) rotate(-9deg) scale(.94); }
-  100%{ opacity:1; transform:translate(-50%,-50%) rotate(-9deg) scale(1); }
-}
-
-/* ══ BROQ COPILOTO ══ */
-.broq{ padding:clamp(20px,3.4vw,30px); background:var(--tinta); color:var(--vinilo); border-color:var(--tinta); box-shadow:var(--salto) var(--salto) 0 rgba(15,14,12,.30); }
-.broq__head{ display:flex; align-items:center; gap:12px; margin-bottom:14px; }
-.broq__ava{
-  width:44px; height:44px; border-radius:50%; flex:none;
-  background:var(--lona); border:var(--borde) solid var(--vinilo);
-  display:flex; align-items:center; justify-content:center; color:var(--tinta);
-}
-.broq__tit{ font-weight:900; font-size:19px; text-transform:uppercase; letter-spacing:.04em; }
-.broq__sub{ font-size:13px; color:rgba(255,249,236,.66); font-weight:600; margin-top:1px; }
-.broq__chips{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
-.chip{
-  border:var(--borde-2) solid rgba(255,249,236,.5); background:transparent; color:var(--vinilo);
-  border-radius:var(--r-pill); padding:9px 15px; min-height:44px;
-  font-size:13px; font-weight:700;
-  transition:background var(--dur), border-color var(--dur), color var(--dur);
-}
-.chip:hover{ background:var(--lona); border-color:var(--lona); color:var(--tinta); }
-.broq__resp{
-  display:none; margin-bottom:14px; padding:14px 16px;
-  background:var(--hueso); color:var(--tinta);
-  border:var(--borde-2) solid var(--vinilo); border-radius:var(--r);
-  font-size:15px; line-height:1.55;
-}
-.broq__resp.is-on{ display:block; animation:resp-in .3s var(--ease-out); }
-.broq__resp b{ font-weight:800; }
-@keyframes resp-in{ from{ opacity:0; transform:translateY(6px); } }
-.broq__row{ display:flex; gap:10px; }
-.broq__input{
-  flex:1; min-width:0; min-height:52px; padding:0 18px;
-  background:var(--vinilo); color:var(--tinta);
-  border:var(--borde) solid var(--vinilo); border-radius:var(--r);
-  font-family:inherit; font-size:16px; font-weight:600;
-}
-.broq__input::placeholder{ color:#8A857A; font-weight:600; }
-.broq__input:focus{ outline:3px solid var(--lona); outline-offset:2px; }
-.broq__send{ padding:0 20px; background:var(--lona); color:var(--tinta); border-color:var(--lona); box-shadow:none; }
-.broq__send:hover{ background:var(--lona-hi); }
-.broq__send:active{ transform:translate(2px,2px); }
-
-/* ══ EL MARCADOR DEL MES ══ */
-.mes{ display:grid; gap:clamp(14px,2.4vw,20px); grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); align-items:stretch; }
-.trato{ padding:18px; display:flex; flex-direction:column; gap:8px; overflow:hidden; }
-.trato__prop{ font-weight:900; font-size:18px; line-height:1.2; font-stretch:88%; }
-.trato__monto{ font-weight:900; font-size:clamp(26px,3.6vw,34px); letter-spacing:-.02em; }
-.trato__com{ font-size:13px; font-weight:700; color:var(--gris); }
-.trato__com b{ color:var(--verde); }
-.trato .btn{ margin-top:auto; align-self:flex-start; }
-/* VENDIDO — la calca diagonal */
-.vendido{
-  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-  pointer-events:none; z-index:6; opacity:0;
-}
-.vendido span{
-  border:6px solid var(--rojo); color:var(--rojo); border-radius:10px;
-  padding:6px 26px; font-weight:900; font-size:clamp(30px,4.6vw,44px);
-  letter-spacing:.1em; text-transform:uppercase;
-  transform:rotate(-14deg); background:rgba(255,255,255,.88);
-  mix-blend-mode:multiply;
-}
-.trato.is-vendido .vendido{ animation:sellar-v .55s var(--ease-out) forwards; }
-.trato.is-vendido > :not(.vendido){ opacity:.42; filter:grayscale(.7); }
-.trato.is-vendido .btn{ pointer-events:none; }
-@keyframes sellar-v{
-  0%{ opacity:0; transform:scale(2.6); }
-  60%{ opacity:1; transform:scale(.96); }
-  100%{ opacity:1; transform:scale(1); }
-}
-.mes-total{ background:var(--verde); color:#fff; border-color:var(--tinta); }
-.mes-total .trato__com{ color:rgba(255,255,255,.8); }
-.mes-total .trato__com b{ color:#fff; }
-
-/* ══ CIERRE ══ */
-.pie{
-  background:var(--tinta); color:var(--lona);
-  border-top:var(--borde) solid var(--tinta);
-  padding:clamp(34px,6vw,60px) 0 calc(28px + env(safe-area-inset-bottom));
-  position:relative;
-}
-.pie__grito{
-  font-weight:900; text-transform:uppercase; line-height:.95; letter-spacing:-.01em;
-  font-size:clamp(34px,7vw,72px); font-stretch:80%; margin:0 0 14px;
-}
-.pie__grito .v{ color:var(--vinilo); }
-.pie__nota{ font-size:14px; color:rgba(255,244,200,.72); font-weight:600; max-width:60ch; margin:0 0 22px; }
-.pie__demo{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-
-@media (prefers-reduced-motion: reduce){
-  .pega{ opacity:1; transform:none; }
-  .pega.is-in{ transition:none; }
-  .lead.is-hecho .sello{ animation:none; opacity:1; transform:translate(-50%,-50%) rotate(-9deg) scale(1); }
-  .trato.is-vendido .vendido{ animation:none; opacity:1; }
-  *{ transition-duration:.01ms !important; animation-duration:.01ms !important; }
-}
+*{box-sizing:border-box}
+html{background:var(--paper)}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-sans);min-height:100vh}
+button,input{font:inherit}
+button{cursor:pointer}
+.rb-shell{min-height:100vh;background:var(--paper)}
+.rb-top{position:sticky;top:0;z-index:var(--z-nav);height:var(--topbar-h);background:var(--glass-bg);backdrop-filter:var(--glass-blur);border-bottom:1px solid var(--line)}
+.rb-top__in{width:min(var(--page-max),calc(100% - (var(--pad-x) * 2)));height:100%;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:var(--sp-4)}
+.rb-brand{display:flex;align-items:center;gap:var(--sp-3)}
+.rb-mark{width:var(--h-sm);height:var(--h-sm);border-radius:var(--r);background:var(--sky-navy);color:var(--paper);display:grid;place-items:center;font-weight:800;font-size:var(--fs-h5);box-shadow:var(--shadow-xs)}
+.rb-brand__name{font-size:var(--fs-h3);font-weight:800;letter-spacing:-.03em}
+.rb-brand__sub{font-size:var(--fs-caption);color:var(--mute);font-weight:600}
+.rb-date{display:flex;align-items:center;gap:var(--sp-2);padding:0 var(--sp-3);height:var(--h-sm);border:1px solid var(--line);border-radius:var(--r-pill);background:var(--bone);font-size:var(--fs-xs);font-weight:650;color:var(--ink-2)}
+.rb-dot{width:var(--sp-2);height:var(--sp-2);border-radius:var(--r-pill);background:var(--success)}
+.rb-main{width:min(var(--page-max),calc(100% - (var(--pad-x) * 2)));margin:0 auto;padding:var(--sp-7) 0 var(--sp-12);display:grid;gap:var(--sp-8)}
+.rb-hero{position:relative;overflow:hidden;border-radius:var(--r-xl);padding:var(--sp-8);background:var(--sky-navy);color:var(--paper);box-shadow:var(--shadow-md)}
+.rb-hero::after{content:"";position:absolute;inset:auto calc(var(--sp-8) * -1) calc(var(--sp-12) * -1) auto;width:var(--sp-24);height:var(--sp-24);border-radius:var(--r-pill);background:var(--sky-navy-mid);opacity:.55}
+.rb-eyebrow{position:relative;z-index:1;display:inline-flex;align-items:center;gap:var(--sp-2);font-size:var(--fs-xs);font-weight:700;color:var(--sky-blue-lift);margin-bottom:var(--sp-3)}
+.rb-eyebrow span{width:var(--sp-2);height:var(--sp-2);border-radius:var(--r-pill);background:var(--success)}
+.rb-hero h1{position:relative;z-index:1;margin:0;max-width:760px;font-size:clamp(var(--fs-h1),5vw,var(--fs-display));line-height:var(--lh-tight);letter-spacing:-.045em;font-weight:800}
+.rb-hero__copy{position:relative;z-index:1;max-width:820px;margin:var(--sp-4) 0 0;color:rgba(255,255,255,.82);font-size:var(--fs-body);line-height:var(--lh)}
+.rb-kpis{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-3);margin-top:var(--sp-7)}
+.rb-kpi{padding:var(--sp-4);border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);border-radius:var(--r-lg);backdrop-filter:blur(12px)}
+.rb-kpi__n{display:block;font-size:var(--fs-h2);font-weight:800;letter-spacing:-.035em}
+.rb-kpi__l{display:block;margin-top:var(--sp-1);font-size:var(--fs-xs);color:rgba(255,255,255,.76);font-weight:600}
+.rb-section{display:grid;gap:var(--sp-4)}
+.rb-head{display:flex;align-items:flex-end;justify-content:space-between;gap:var(--sp-4)}
+.rb-head h2{margin:0;font-size:var(--fs-h2);letter-spacing:-.025em}
+.rb-head p{margin:var(--sp-1) 0 0;color:var(--mute);font-size:var(--fs-sm)}
+.rb-badge{display:inline-flex;align-items:center;gap:var(--sp-2);min-height:var(--h-sm);padding:0 var(--sp-3);border-radius:var(--r-pill);font-size:var(--fs-xs);font-weight:700;white-space:nowrap;background:var(--paper-2);color:var(--ink-2);border:1px solid var(--line)}
+.rb-badge--warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.rb-badge--success{background:var(--success-soft);color:var(--success);border-color:transparent}
+.rb-route{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-3)}
+.rb-stop{position:relative;background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);padding:var(--sp-5);box-shadow:var(--shadow-xs);transition:transform var(--dur) var(--ease),box-shadow var(--dur) var(--ease),border-color var(--dur) var(--ease)}
+.rb-stop:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm);border-color:var(--line-2)}
+.rb-stop--urgent{border-color:rgba(179,78,11,.25);background:linear-gradient(180deg,var(--bone),var(--warn-soft))}
+.rb-stop__top{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-3)}
+.rb-stop__time{font-size:var(--fs-h3);font-weight:800;color:var(--sky-navy)}
+.rb-stop__meta{font-size:var(--fs-xs);font-weight:650;color:var(--mute)}
+.rb-stop__title{font-size:var(--fs-body);font-weight:750;line-height:var(--lh-snug)}
+.rb-stop__sub{margin-top:var(--sp-2);font-size:var(--fs-sm);color:var(--mute);line-height:var(--lh-snug)}
+.rb-leads{display:grid;gap:var(--sp-3)}
+.rb-lead{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--sp-5);align-items:center;padding:var(--sp-5);background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-xs);overflow:hidden;transition:opacity var(--dur) var(--ease),transform var(--dur) var(--ease)}
+.rb-lead.is-hecho{opacity:.58}
+.rb-lead.is-hecho::after{content:"Hecho";position:absolute;right:var(--sp-5);top:var(--sp-3);padding:var(--sp-1) var(--sp-3);border-radius:var(--r-pill);background:var(--success-soft);color:var(--success);font-size:var(--fs-xs);font-weight:800}
+.rb-lead__head{display:flex;align-items:center;gap:var(--sp-3);flex-wrap:wrap}
+.rb-lead__name{font-size:var(--fs-h5);font-weight:800}
+.rb-lead__reason{margin:var(--sp-2) 0 0;color:var(--ink-2);font-size:var(--fs-sm);line-height:var(--lh)}
+.rb-lead__ai{display:inline-flex;align-items:center;gap:var(--sp-2);margin-top:var(--sp-3);padding:var(--sp-2) var(--sp-3);border-radius:var(--r);background:var(--info-soft);color:var(--sky-blue-press);font-size:var(--fs-xs);font-weight:650}
+.rb-actions{display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap;justify-content:flex-end}
+.rb-btn{min-height:var(--h-sm);padding:0 var(--sp-4);border-radius:var(--r-sm);border:1px solid transparent;background:var(--sky-blue);color:var(--paper);font-size:var(--fs-sm);font-weight:700;transition:transform var(--dur-fast) var(--ease),background var(--dur) var(--ease),border-color var(--dur) var(--ease)}
+.rb-btn:hover{background:var(--sky-blue-press)}
+.rb-btn:active{transform:scale(.98)}
+.rb-btn--secondary{background:var(--bone);color:var(--ink-2);border-color:var(--line-2)}
+.rb-btn--secondary:hover{background:var(--paper-2);border-color:var(--line-3)}
+.rb-btn--success{background:var(--success)}
+.rb-btn--success:hover{background:var(--success)}
+.rb-copilot{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,.7fr);gap:var(--sp-4);padding:var(--sp-6);border-radius:var(--r-xl);background:var(--paper-2);border:1px solid var(--line)}
+.rb-copilot__head{display:flex;align-items:center;gap:var(--sp-3)}
+.rb-copilot__ava{width:var(--h);height:var(--h);border-radius:var(--r);display:grid;place-items:center;background:var(--sky-blue);color:var(--paper)}
+.rb-copilot__title{font-size:var(--fs-h3);font-weight:800}
+.rb-copilot__sub{font-size:var(--fs-xs);color:var(--mute);margin-top:var(--sp-1)}
+.rb-chips{display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-top:var(--sp-4)}
+.rb-chip{min-height:var(--h-sm);padding:0 var(--sp-3);border:1px solid var(--line-2);border-radius:var(--r-pill);background:var(--bone);color:var(--ink-2);font-size:var(--fs-xs);font-weight:650}
+.rb-chip:hover{border-color:var(--sky-blue);color:var(--sky-blue)}
+.rb-copilot__right{display:flex;flex-direction:column;gap:var(--sp-3);justify-content:flex-end}
+.rb-response{display:none;padding:var(--sp-4);background:var(--bone);border:1px solid var(--line);border-radius:var(--r);font-size:var(--fs-sm);line-height:var(--lh);color:var(--ink-2)}
+.rb-response.is-on{display:block;animation:rbIn var(--dur-slow) var(--ease-out)}
+.rb-inputrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--sp-2)}
+.rb-input{width:100%;min-height:var(--h);border:1px solid var(--line-2);border-radius:var(--r);background:var(--bone);color:var(--ink);padding:0 var(--sp-4);font-size:var(--fs-sm);outline:none}
+.rb-input:focus{border-color:var(--sky-blue);box-shadow:var(--focus)}
+.rb-month{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-3)}
+.rb-deal{position:relative;display:flex;flex-direction:column;gap:var(--sp-2);min-height:190px;padding:var(--sp-5);background:var(--bone);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-xs);overflow:hidden}
+.rb-deal__prop{font-size:var(--fs-body);font-weight:800}
+.rb-deal__amount{font-size:var(--fs-h2);font-weight:800;letter-spacing:-.035em;color:var(--sky-navy)}
+.rb-deal__com{font-size:var(--fs-sm);line-height:var(--lh-snug);color:var(--mute)}
+.rb-deal__com b{color:var(--success)}
+.rb-deal .rb-btn,.rb-deal .rb-badge{margin-top:auto;align-self:flex-start}
+.rb-deal.is-vendido{opacity:.58}
+.rb-deal.is-vendido::after{content:"Vendido";position:absolute;right:var(--sp-4);top:var(--sp-4);padding:var(--sp-2) var(--sp-3);border-radius:var(--r-pill);background:var(--success-soft);color:var(--success);font-size:var(--fs-xs);font-weight:800}
+.rb-total{background:var(--sky-navy);border-color:var(--sky-navy);color:var(--paper)}
+.rb-total .rb-deal__amount{color:var(--paper)}
+.rb-total .rb-deal__com{color:rgba(255,255,255,.76)}
+.rb-total .rb-deal__com b{color:var(--paper)}
+.rb-foot{margin-top:var(--sp-8);padding:var(--sp-6);border-top:1px solid var(--line);color:var(--mute);font-size:var(--fs-xs);text-align:center}
+@keyframes rbIn{from{opacity:0;transform:translateY(var(--sp-2))}to{opacity:1;transform:none}}
+@media(max-width:900px){.rb-kpis,.rb-month{grid-template-columns:1fr}.rb-route{grid-template-columns:1fr}.rb-copilot{grid-template-columns:1fr}.rb-lead{grid-template-columns:1fr}.rb-actions{justify-content:flex-start}}
+@media(max-width:640px){.rb-top__in,.rb-main{width:calc(100% - (var(--sp-4) * 2))}.rb-top__in{gap:var(--sp-2)}.rb-brand__sub{display:none}.rb-date{padding:0 var(--sp-2)}.rb-hero{padding:var(--sp-6)}.rb-main{padding-top:var(--sp-5);gap:var(--sp-7)}.rb-head{align-items:flex-start;flex-direction:column}.rb-kpi{padding:var(--sp-3)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
-<!--
-THESIS: el día del asesor como lona "SE VENDE": la gráfica callejera
-inmobiliaria mexicana convertida en sistema operativo. Rechaza el dashboard
-SaaS oscuro-con-neón y el minimalismo gris de categoría.
-OWN-WORLD: amarillo señal de suelo, tinta de rotulista, calcas de vinilo con
-borde duro y sombra de bloque, ojillos metálicos, franjas de precaución,
-sellos HECHO/VENDIDO; Archivo (Omnibus-Type, Buenos Aires) de la etiqueta al
-titular, condensada en display.
-STORY: el asesor abre Robin en la mañana, entiende su jornada en un vistazo,
-le marca a quien se enfría y sella lo que cierra.
-FIRST VIEWPORT: letrero superior tinta; "BUENOS DÍAS, CHAVA." gigante en dos
-líneas (segunda en vinilo delineado); resumen de Broq; tres placas del día.
-Acción primaria: LLAMAR en la primera calca de prospecto.
-FORM: lona "SE VENDE" — candidato 3 de la lista propia; seed 811bee9e (roll
-degradado, sin challengers).
-FINISH: unreviewed and undocumented is unfinished; this build ends with the
-finish review, the verdict, and DESIGN.md
--->
-
-<header class="top">
-  <div class="top__in">
-    <div class="top__brand">
-      <div class="top__logo up">Robin<b>.</b></div>
-      <div class="top__by">por Broquer</div>
-    </div>
-    <div class="top__fecha">Martes · 3 sep</div>
-  </div>
-</header>
-
-<main class="wrap">
-
-  <!-- ══ LA LONA DEL DÍA ══ -->
-  <section class="hero">
-    <h1 class="hero__hola pega">Buenos días,<span class="linea2">Chava.</span></h1>
-    <p class="hero__broq pega">Broq ya leyó tu día: <b>la firma de Camelinas es a las 12</b> y el expediente está completo. Dos prospectos se te están enfriando — les marcas en 10 minutos y los rescatas. La visita de las 4 queda a 15 minutos de tu comida.</p>
-    <div class="marcador">
-      <div class="sticker placa pega"><div class="placa__num">3</div><div class="placa__lbl up"><b>Visitas</b> agendadas</div></div>
-      <div class="sticker placa pega"><div class="placa__num">5</div><div class="placa__lbl up"><b>Llamadas</b> por hacer</div></div>
-      <div class="sticker placa pega"><div class="placa__num">1</div><div class="placa__lbl up"><b>Firma</b> · hoy 12:00</div></div>
-    </div>
-  </section>
-
-  <!-- ══ LA RUTA DE HOY ══ -->
-  <section>
-    <div class="h-sec pega"><h2>La ruta de hoy</h2><span class="h-sec__raya"></span><span class="tag tag--tinta">4 paradas</span></div>
-    <div class="ruta">
-      <article class="sticker parada pega" style="--rot:-.4deg">
-        <div class="parada__top"><span class="parada__hora">9:30</span><span class="parada__km up">Centro · 12 min</span></div>
-        <div class="parada__que">Visita — Depto. Av. Madero 210</div>
-        <div class="parada__donde">Familia Herrera · segunda visita: van en serio</div>
-      </article>
-      <article class="sticker parada parada--urgente pega" style="--rot:.5deg">
-        <div class="parada__top"><span class="parada__hora">12:00</span><span class="tag tag--rojo up">Firma</span></div>
-        <div class="parada__que">Firma de compraventa — Camelinas 1234</div>
-        <div class="parada__donde">Notaría 7 · lleva identificación del comprador</div>
-        <div class="parada__banda franja" role="presentation"></div>
-      </article>
-      <article class="sticker parada pega" style="--rot:-.3deg">
-        <div class="parada__top"><span class="parada__hora">16:00</span><span class="parada__km up">Altozano · 18 min</span></div>
-        <div class="parada__que">Visita — Casa Punta Altozano</div>
-        <div class="parada__donde">Ing. Robledo · primera visita, viene de Facebook</div>
-      </article>
-      <article class="sticker parada pega" style="--rot:.4deg">
-        <div class="parada__top"><span class="parada__hora">18:30</span><span class="parada__km up">Tu oficina</span></div>
-        <div class="parada__que">Broq te deja listas las fichas de mañana</div>
-        <div class="parada__donde">Nada que hacer aquí: es su chamba, no la tuya</div>
-      </article>
-    </div>
-  </section>
-
-  <!-- ══ MÁRCALE PRIMERO ══ -->
-  <section>
-    <div class="h-sec pega"><h2>Márcale primero</h2><span class="h-sec__raya"></span><span class="tag tag--franja up">2 se enfrían</span></div>
-    <div class="leads">
-
-      <article class="sticker lead pega" style="--rot:-.25deg" id="lead-1">
-        <div class="sello" aria-hidden="true">Hecho</div>
-        <div>
-          <div class="lead__head">
-            <span class="lead__nombre">Mariana Solís</span>
-            <span class="tag tag--franja up">Se enfría</span>
-          </div>
-          <p class="lead__razon">Preguntó por <b>Camelinas 1234</b> hace 6 días y no le has contestado la última duda: si el precio incluye la bodega. <b>Sí la incluye.</b></p>
-          <span class="lead__broq"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>Broq ya le preparó la respuesta — solo di "mándala"</span>
-        </div>
-        <div class="lead__acts">
-          <button class="btn btn--sm" type="button" onclick="rbHecho('lead-1')">Llamar</button>
-          <button class="btn btn--vinilo btn--sm" type="button" onclick="rbHecho('lead-1')">WhatsApp</button>
-        </div>
-      </article>
-
-      <article class="sticker lead pega" style="--rot:.3deg" id="lead-2">
-        <div class="sello" aria-hidden="true">Hecho</div>
-        <div>
-          <div class="lead__head">
-            <span class="lead__nombre">Roberto Andrade</span>
-            <span class="tag tag--franja up">Se enfría</span>
-          </div>
-          <p class="lead__razon">Pidió cita el jueves y <b>nunca se confirmó la hora</b>. Tiene crédito preaprobado de Infonavit. Es de los buenos.</p>
-          <span class="lead__broq"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>Broq propone mañana 10:00 (tu agenda está libre)</span>
-        </div>
-        <div class="lead__acts">
-          <button class="btn btn--sm" type="button" onclick="rbHecho('lead-2')">Llamar</button>
-          <button class="btn btn--vinilo btn--sm" type="button" onclick="rbHecho('lead-2')">WhatsApp</button>
-        </div>
-      </article>
-
-      <article class="sticker lead pega" style="--rot:-.2deg" id="lead-3">
-        <div class="sello" aria-hidden="true">Hecho</div>
-        <div>
-          <div class="lead__head">
-            <span class="lead__nombre">Lucía y Fernando Ortega</span>
-            <span class="tag up">Nuevo · hoy 7:42</span>
-          </div>
-          <p class="lead__razon">Escribieron en la madrugada por la <b>Casa Punta Altozano</b>. Broq ya los calificó: buscan 3 recámaras, pagan de contado, quieren mudarse antes de diciembre.</p>
-          <span class="lead__broq"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>Broq los atendió a las 7:42, tú dormías</span>
-        </div>
-        <div class="lead__acts">
-          <button class="btn btn--sm" type="button" onclick="rbHecho('lead-3')">Llamar</button>
-          <button class="btn btn--vinilo btn--sm" type="button" onclick="rbHecho('lead-3')">WhatsApp</button>
-        </div>
-      </article>
-
-    </div>
-  </section>
-
-  <!-- ══ BROQ COPILOTO ══ -->
-  <section>
-    <div class="h-sec pega"><h2>Tu copiloto</h2><span class="h-sec__raya"></span></div>
-    <div class="sticker broq pega" style="--rot:.2deg">
-      <div class="broq__head">
-        <div class="broq__ava" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg></div>
-        <div>
-          <div class="broq__tit up">Broq</div>
-          <div class="broq__sub">Trabajando desde las 7:42 · 4 conversaciones atendidas</div>
-        </div>
+<div class="rb-shell">
+  <header class="rb-top">
+    <div class="rb-top__in">
+      <div class="rb-brand">
+        <div class="rb-mark" aria-hidden="true">R</div>
+        <div><div class="rb-brand__name">Robin</div><div class="rb-brand__sub">Tu jornada, priorizada por Broquer</div></div>
       </div>
-      <div class="broq__chips">
-        <button class="chip" type="button" onclick="rbBroq('ficha')">Prepárame la ficha de Camelinas</button>
-        <button class="chip" type="button" onclick="rbBroq('enfria')">¿Qué más se me enfría?</button>
-        <button class="chip" type="button" onclick="rbBroq('manana')">Ármame el día de mañana</button>
+      <div class="rb-date"><span class="rb-dot"></span>Martes · 3 sep</div>
+    </div>
+  </header>
+
+  <main class="rb-main">
+    <section class="rb-hero">
+      <div class="rb-eyebrow"><span></span>Robin · resumen de hoy</div>
+      <h1>Buenos días, Chava. Esto es lo que mueve tu día.</h1>
+      <p class="rb-hero__copy">Broq ya leyó tu agenda: <strong>la firma de Camelinas es a las 12</strong> y el expediente está completo. Dos prospectos se están enfriando y conviene llamarlos antes de tu primera visita.</p>
+      <div class="rb-kpis">
+        <div class="rb-kpi"><span class="rb-kpi__n">3</span><span class="rb-kpi__l">Visitas agendadas</span></div>
+        <div class="rb-kpi"><span class="rb-kpi__n">5</span><span class="rb-kpi__l">Llamadas por hacer</span></div>
+        <div class="rb-kpi"><span class="rb-kpi__n">1</span><span class="rb-kpi__l">Firma · hoy 12:00</span></div>
       </div>
-      <div class="broq__resp" id="broq-resp" role="status" aria-live="polite"></div>
-      <div class="broq__row">
-        <input class="broq__input" id="broq-input" type="text" placeholder="Dile a Broq qué necesitas…" aria-label="Escríbele a Broq"/>
-        <button class="btn broq__send" type="button" onclick="rbBroq('libre')">Va</button>
+    </section>
+
+    <section class="rb-section">
+      <div class="rb-head"><div><h2>La ruta de hoy</h2><p>Tu agenda ordenada por hora y urgencia.</p></div><span class="rb-badge">4 paradas</span></div>
+      <div class="rb-route">
+        <article class="rb-stop"><div class="rb-stop__top"><span class="rb-stop__time">9:30</span><span class="rb-stop__meta">Centro · 12 min</span></div><div class="rb-stop__title">Visita — Depto. Av. Madero 210</div><div class="rb-stop__sub">Familia Herrera · segunda visita: van en serio.</div></article>
+        <article class="rb-stop rb-stop--urgent"><div class="rb-stop__top"><span class="rb-stop__time">12:00</span><span class="rb-badge rb-badge--warn">Firma</span></div><div class="rb-stop__title">Firma de compraventa — Camelinas 1234</div><div class="rb-stop__sub">Notaría 7 · lleva identificación del comprador.</div></article>
+        <article class="rb-stop"><div class="rb-stop__top"><span class="rb-stop__time">16:00</span><span class="rb-stop__meta">Altozano · 18 min</span></div><div class="rb-stop__title">Visita — Casa Punta Altozano</div><div class="rb-stop__sub">Ing. Robledo · primera visita, viene de Facebook.</div></article>
+        <article class="rb-stop"><div class="rb-stop__top"><span class="rb-stop__time">18:30</span><span class="rb-stop__meta">Tu oficina</span></div><div class="rb-stop__title">Broq deja listas las fichas de mañana</div><div class="rb-stop__sub">No requiere acción tuya: queda preparado automáticamente.</div></article>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- ══ EL MARCADOR DEL MES ══ -->
-  <section>
-    <div class="h-sec pega"><h2>El marcador del mes</h2><span class="h-sec__raya"></span><span class="tag tag--verde up">Septiembre</span></div>
-    <div class="mes">
-      <article class="sticker trato pega" style="--rot:-.3deg">
-        <div class="vendido" aria-hidden="true"><span>Vendido</span></div>
-        <div class="trato__prop">Casa Tres Marías</div>
-        <div class="trato__monto">$2,850,000</div>
-        <div class="trato__com">Comisión <b>$142,500</b> · cerrada el 28 ago</div>
-        <span class="tag tag--verde up" style="align-self:flex-start; margin-top:auto;">Cobrada</span>
-      </article>
-      <article class="sticker trato pega" style="--rot:.35deg" id="trato-hoy">
-        <div class="vendido" aria-hidden="true"><span>Vendido</span></div>
-        <div class="trato__prop">Depto. Camelinas 1234</div>
-        <div class="trato__monto">$1,980,000</div>
-        <div class="trato__com">Comisión <b>$99,000</b> · firma hoy 12:00</div>
-        <button class="btn btn--verde btn--sm" type="button" onclick="rbVendido()">Marcar cerrado</button>
-      </article>
-      <article class="sticker trato mes-total pega" style="--rot:-.2deg">
-        <div class="trato__prop up">Tu septiembre</div>
-        <div class="trato__monto" id="mes-monto">$142,500</div>
-        <div class="trato__com"><b id="mes-n">1 cierre</b> · va para tu mejor mes del año</div>
-      </article>
-    </div>
-  </section>
+    <section class="rb-section">
+      <div class="rb-head"><div><h2>Márcale primero</h2><p>Los contactos que más pierden probabilidad si hoy no respondes.</p></div><span class="rb-badge rb-badge--warn">2 se enfrían</span></div>
+      <div class="rb-leads">
+        <article class="rb-lead" id="lead-1"><div><div class="rb-lead__head"><span class="rb-lead__name">Mariana Solís</span><span class="rb-badge rb-badge--warn">Se enfría</span></div><p class="rb-lead__reason">Preguntó por <strong>Camelinas 1234</strong> hace 6 días y falta contestar si el precio incluye la bodega. <strong>Sí la incluye.</strong></p><span class="rb-lead__ai">Broq ya preparó la respuesta.</span></div><div class="rb-actions"><button class="rb-btn" type="button" onclick="rbHecho('lead-1')">Llamar</button><button class="rb-btn rb-btn--secondary" type="button" onclick="rbHecho('lead-1')">WhatsApp</button></div></article>
+        <article class="rb-lead" id="lead-2"><div><div class="rb-lead__head"><span class="rb-lead__name">Roberto Andrade</span><span class="rb-badge rb-badge--warn">Se enfría</span></div><p class="rb-lead__reason">Pidió cita el jueves y <strong>nunca se confirmó la hora</strong>. Tiene crédito preaprobado de Infonavit.</p><span class="rb-lead__ai">Broq propone mañana 10:00; tu agenda está libre.</span></div><div class="rb-actions"><button class="rb-btn" type="button" onclick="rbHecho('lead-2')">Llamar</button><button class="rb-btn rb-btn--secondary" type="button" onclick="rbHecho('lead-2')">WhatsApp</button></div></article>
+        <article class="rb-lead" id="lead-3"><div><div class="rb-lead__head"><span class="rb-lead__name">Lucía y Fernando Ortega</span><span class="rb-badge">Nuevo · 7:42</span></div><p class="rb-lead__reason">Escribieron por la <strong>Casa Punta Altozano</strong>. Broq ya los calificó: 3 recámaras, pago de contado y mudanza antes de diciembre.</p><span class="rb-lead__ai">Broq los atendió a las 7:42 mientras tú dormías.</span></div><div class="rb-actions"><button class="rb-btn" type="button" onclick="rbHecho('lead-3')">Llamar</button><button class="rb-btn rb-btn--secondary" type="button" onclick="rbHecho('lead-3')">WhatsApp</button></div></article>
+      </div>
+    </section>
 
-</main>
+    <section class="rb-section">
+      <div class="rb-head"><div><h2>Tu copiloto</h2><p>Pregunta, prepara o mueve trabajo sin cambiar de contexto.</p></div></div>
+      <div class="rb-copilot">
+        <div>
+          <div class="rb-copilot__head"><div class="rb-copilot__ava" aria-hidden="true">B</div><div><div class="rb-copilot__title">Broq</div><div class="rb-copilot__sub">Trabajando desde las 7:42 · 4 conversaciones atendidas</div></div></div>
+          <div class="rb-chips"><button class="rb-chip" type="button" onclick="rbBroq('ficha')">Prepárame la ficha de Camelinas</button><button class="rb-chip" type="button" onclick="rbBroq('enfria')">¿Qué más se me enfría?</button><button class="rb-chip" type="button" onclick="rbBroq('manana')">Ármame el día de mañana</button></div>
+        </div>
+        <div class="rb-copilot__right"><div class="rb-response" id="broq-resp" role="status" aria-live="polite"></div><div class="rb-inputrow"><input class="rb-input" id="broq-input" type="text" placeholder="Dile a Broq qué necesitas…" aria-label="Escríbele a Broq"/><button class="rb-btn" type="button" onclick="rbBroq('libre')">Enviar</button></div></div>
+      </div>
+    </section>
 
-<!-- ══ CIERRE ══ -->
-<footer class="pie">
-  <span class="ojillo" style="top:14px; left:14px;"></span>
-  <span class="ojillo" style="top:14px; right:14px;"></span>
-  <div class="wrap">
-    <p class="pie__grito up">Tú enseñas casas.<br/><span class="v">Robin lleva el changarro.</span></p>
-    <p class="pie__nota">Robin es un módulo de demostración de Broquer. Todos los nombres, propiedades, montos y conversaciones de esta pantalla son ficticios.</p>
-    <div class="pie__demo">
-      <span class="tag up" style="--r:4px;">Demo · datos sintéticos</span>
-      <span class="tag tag--tinta up" style="border-color:var(--vinilo);">Broquer · hecho en México</span>
-    </div>
-  </div>
-</footer>
+    <section class="rb-section">
+      <div class="rb-head"><div><h2>El marcador del mes</h2><p>Cierres y comisión generada en septiembre.</p></div><span class="rb-badge rb-badge--success">Septiembre</span></div>
+      <div class="rb-month">
+        <article class="rb-deal"><div class="rb-deal__prop">Casa Tres Marías</div><div class="rb-deal__amount">$2,850,000</div><div class="rb-deal__com">Comisión <b>$142,500</b> · cerrada el 28 ago</div><span class="rb-badge rb-badge--success">Cobrada</span></article>
+        <article class="rb-deal" id="trato-hoy"><div class="rb-deal__prop">Depto. Camelinas 1234</div><div class="rb-deal__amount">$1,980,000</div><div class="rb-deal__com">Comisión <b>$99,000</b> · firma hoy 12:00</div><button class="rb-btn rb-btn--success" type="button" onclick="rbVendido()">Marcar cerrado</button></article>
+        <article class="rb-deal rb-total"><div class="rb-deal__prop">Tu septiembre</div><div class="rb-deal__amount" id="mes-monto">$142,500</div><div class="rb-deal__com"><b id="mes-n">1 cierre</b> · va para tu mejor mes del año</div></article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="rb-foot">Robin es una demostración de Broquer. Los nombres, propiedades, montos y conversaciones de esta pantalla son datos sintéticos.</footer>
+</div>
 
 <script>
 (function(){
   'use strict';
 
-  /* Entrada "pegar calcomanía" */
-  var io = ('IntersectionObserver' in window) ? new IntersectionObserver(function(entries){
-    entries.forEach(function(e){
-      if (e.isIntersecting){ e.target.classList.add('is-in'); io.unobserve(e.target); }
-    });
-  }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 }) : null;
-  document.querySelectorAll('.pega').forEach(function(el, i){
-    el.style.transitionDelay = Math.min(i % 6 * 45, 220) + 'ms';
-    if (io) io.observe(el); else el.classList.add('is-in');
-  });
-
-  /* Sello HECHO en prospectos */
   window.rbHecho = function(id){
     var el = document.getElementById(id);
     if (el && !el.classList.contains('is-hecho')) el.classList.add('is-hecho');
   };
 
-  /* Calca VENDIDO + marcador del mes */
   var vendidoYa = false;
   window.rbVendido = function(){
     if (vendidoYa) return;
     vendidoYa = true;
-    document.getElementById('trato-hoy').classList.add('is-vendido');
+    var deal = document.getElementById('trato-hoy');
+    if (deal) deal.classList.add('is-vendido');
     var monto = document.getElementById('mes-monto');
     var n = document.getElementById('mes-n');
     setTimeout(function(){
-      monto.textContent = '$241,500';
-      n.textContent = '2 cierres';
-    }, 420);
+      if (monto) monto.textContent = '$241,500';
+      if (n) n.textContent = '2 cierres';
+    }, 220);
   };
 
-  /* Broq — respuestas guionadas del demo */
   var R = {
-    ficha:  'Lista. La ficha de <b>Camelinas 1234</b> trae fotos nuevas, croquis y el desglose de gastos notariales. Te la dejé en Contratos y se la puedo mandar a Mariana en cuanto digas.',
-    enfria: 'Además de Mariana y Roberto, <b>la señora Gutiérrez</b> lleva 9 días sin respuesta sobre el terreno de La Huerta. No la puse arriba porque su presupuesto no alcanza, pero un mensaje corto no cuesta nada.',
-    manana: 'Mañana te armé esto: <b>10:00 Roberto Andrade</b> (si confirma hoy), 12:30 fotos del depto. nuevo de Chapultepec, tarde libre para papeleo. ¿Lo agendo así?',
-    libre:  'Entendido. En la versión real aquí Broq hace la tarea de verdad — esta pantalla es un demo con datos ficticios, así que solo te presumo lo guapo que quedó.'
+    ficha: 'Lista. La ficha de <b>Camelinas 1234</b> trae fotos nuevas, croquis y el desglose de gastos notariales. Te la dejé preparada y se la puedo mandar a Mariana en cuanto digas.',
+    enfria: 'Además de Mariana y Roberto, <b>la señora Gutiérrez</b> lleva 9 días sin respuesta sobre el terreno de La Huerta. Su presupuesto no alcanza, pero conviene cerrar el ciclo con un mensaje corto.',
+    manana: 'Mañana: <b>10:00 Roberto Andrade</b> si confirma hoy, 12:30 fotos del departamento nuevo de Chapultepec y tarde libre para papeleo. ¿Lo agendo así?',
+    libre: 'Entendido. Esta pantalla usa respuestas simuladas para mostrar la experiencia de Robin sin tocar datos reales.'
   };
   window.rbBroq = function(k){
     var box = document.getElementById('broq-resp');
     var input = document.getElementById('broq-input');
+    if (!box || !input) return;
     if (k === 'libre' && input.value.trim() === '') { input.focus(); return; }
     box.innerHTML = R[k] || R.libre;
     box.classList.remove('is-on');
@@ -569,9 +207,8 @@ finish review, the verdict, and DESIGN.md
     box.classList.add('is-on');
     if (k === 'libre') input.value = '';
   };
-  document.getElementById('broq-input').addEventListener('keydown', function(e){
-    if (e.key === 'Enter') window.rbBroq('libre');
-  });
+  var input = document.getElementById('broq-input');
+  if (input) input.addEventListener('keydown', function(e){ if (e.key === 'Enter') window.rbBroq('libre'); });
 })();
 </script>
 </body>
