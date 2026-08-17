@@ -12898,8 +12898,15 @@ async def sitio_registrar_lead(slug: str, payload: SitioLeadIn, request: Request
             "created_at": ahora,
             "updated_at": ahora,
         }
-        r = await client.post(f"{SUPABASE_URL}/rest/v1/contactos", headers=hdr, json=nuevo)
-        if r.status_code not in (200, 201):
+        try:
+            await post_rows(
+                "contactos",
+                nuevo,
+                prefer="return=minimal",
+                timeout=10,
+                accepted_statuses=(200, 201),
+            )
+        except httpx.HTTPStatusError:
             raise HTTPException(status_code=502, detail="No se pudo registrar el lead")
 
     return {"ok": True}
