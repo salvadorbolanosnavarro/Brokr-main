@@ -38,7 +38,23 @@ jobs:
       - name: Audit Canon frontend surfaces
         run: >-
           python audit.py
+          index.html
+          whatsapp.html
+          contactos.html
+          leads.html
+          propiedades.html
+          isr.html
           estadisticas.html
+          bandeja.html
+          bolsa.html
+          expediente.html
+          ficha-manual.html
+          firmar.html
+          firmas.html
+          verificar-firma.html
+          verificador.html
+          guia-agente.html
+          legal.html
           login.html
           registro.html
           reset-password.html
@@ -54,7 +70,6 @@ jobs:
           robin.html
           landing.html
           tareas.html
-          firmas.html
           finanzas.html
           cumplimiento.html
           video.html
