@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
-"""Inline ISR's legacy token aliases to Canon and remove its local :root.
+"""Inline ISR's legacy UI token aliases to Canon and remove its local UI :root.
 
-The ISR token root contains aliases only; it does not own product values. This
-transform replaces every var(--legacy) reference with the exact Canon token the
-alias resolves to today, then removes the alias block. It refuses unknown or
-remaining legacy aliases so computed design values stay equivalent.
-
-This file is the one-shot workflow trigger while the migration is active.
+ISR also contains an AUDIT-EXEMPT `:root` inside the generated standalone PDF
+HTML. That document root is intentionally preserved. This transform targets
+only the application alias root and refuses remaining UI alias definitions or
+references so the app's computed design values stay equivalent.
 """
 from __future__ import annotations
 
@@ -55,18 +53,21 @@ ROOT_RE = re.compile(
 def transform_text(source: str) -> str:
     matches = list(ROOT_RE.finditer(source))
     if len(matches) != 1:
-        raise RuntimeError(f"isr.html: expected one legacy alias :root, found {len(matches)}")
+        raise RuntimeError(f"isr.html: expected one legacy UI alias :root, found {len(matches)}")
 
     result = source
     for legacy, canon in sorted(ALIASES.items(), key=lambda item: -len(item[0])):
         result = result.replace(f"var({legacy})", f"var({canon})")
     result = ROOT_RE.sub("\n", result, count=1)
 
-    remaining = sorted({name for name in ALIASES if f"var({name})" in result})
-    if remaining:
-        raise RuntimeError(f"isr.html: legacy aliases remain: {remaining}")
-    if re.search(r"(?m)^\s*:root\s*\{", result):
-        raise RuntimeError("isr.html: local :root remains")
+    remaining_refs = sorted({name for name in ALIASES if f"var({name})" in result})
+    remaining_defs = sorted({name for name in ALIASES if re.search(rf"(?m)^\s*{re.escape(name)}\s*:", result)})
+    if remaining_refs or remaining_defs:
+        raise RuntimeError(
+            f"isr.html: legacy UI aliases remain refs={remaining_refs} defs={remaining_defs}"
+        )
+    if "${_isrTokens()}" not in result:
+        raise RuntimeError("isr.html: embedded PDF Canon token injection was unexpectedly changed")
     return result
 
 
