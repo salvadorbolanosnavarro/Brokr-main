@@ -23,8 +23,15 @@ class MainEasyBrokerWriteDeleteRefactorTests(unittest.TestCase):
         source = self.source
         set_src = function_source(source, "set_eb_key")
         delete_src = function_source(source, "delete_eb_key")
+        tree = ast.parse(source)
+        core_database_imports = {
+            alias.name
+            for node in tree.body
+            if isinstance(node, ast.ImportFrom) and node.module == "core.database"
+            for alias in node.names
+        }
 
-        self.assertIn("from core.database import delete_rows, get_rows, post_rows", source)
+        self.assertTrue({"delete_rows", "get_rows", "post_rows"} <= core_database_imports)
         self.assertNotIn("/rest/v1/user_integrations", set_src)
         self.assertNotIn("/rest/v1/user_integrations", delete_src)
         self.assertIn('await post_rows(', set_src)
