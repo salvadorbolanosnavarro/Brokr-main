@@ -4992,13 +4992,16 @@ async def eliminar_machote(machote_id: str, request: Request):
                     headers=_sb_headers())
             except Exception:
                 pass
-        rd = await client.delete(
-            f"{SUPABASE_URL}/rest/v1/machotes_contrato",
-            headers=_sb_headers({"Prefer": "return=minimal"}),
-            params={"id": f"eq.{machote_id}", "user_id": f"eq.{user_id}"},
-        )
-    if rd.status_code not in (200, 204):
-        raise HTTPException(status_code=500, detail="No se pudo eliminar el machote.")
+        try:
+            await delete_rows(
+                "machotes_contrato",
+                {"id": f"eq.{machote_id}", "user_id": f"eq.{user_id}"},
+                prefer="return=minimal",
+                timeout=15,
+                accepted_statuses=(200, 204),
+            )
+        except httpx.HTTPStatusError:
+            raise HTTPException(status_code=500, detail="No se pudo eliminar el machote.")
     return {"ok": True}
 
 
