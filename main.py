@@ -8597,15 +8597,19 @@ async def _fb_procesar_lead(valor: dict) -> None:
         si Meta reenvía el mismo aviso, el INSERT choca y no se crea otro
         contacto."""
         try:
-            async with httpx.AsyncClient(timeout=10) as client:
-                r = await client.post(
-                    f"{SUPABASE_URL}/rest/v1/fb_leads_recibidos",
-                    headers=_sb_headers({"Prefer": "return=minimal"}),
-                    json={**bitacora, **extra})
-            if r.status_code not in (200, 201, 204) and not _fb_tabla_falta(r):
-                if r.status_code != 409:
+            try:
+                await post_rows(
+                    "fb_leads_recibidos",
+                    {**bitacora, **extra},
+                    prefer="return=minimal",
+                    timeout=10,
+                    accepted_statuses=(200, 201, 204),
+                )
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code != 409 and not _fb_tabla_falta(e.response):
                     _fb_log.error("No se pudo anotar el lead %s: %s %s",
-                                  leadgen_id, r.status_code, (r.text or "")[:200])
+                                  leadgen_id, e.response.status_code,
+                                  (e.response.text or "")[:200])
         except Exception as e:
             _fb_log.error("Error anotando el lead %s: %s", leadgen_id, e)
 
