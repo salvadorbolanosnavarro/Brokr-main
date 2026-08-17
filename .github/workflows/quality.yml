@@ -53,6 +53,7 @@ jobs:
           image-cleaner.html
           robin.html
           landing.html
+          tareas.html
 
       - name: Report architecture debt
         run: python scripts/architecture_debt.py
