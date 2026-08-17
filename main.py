@@ -4591,10 +4591,12 @@ async def _revisar_recordatorios():
             continue
 
         try:
-            async with httpx.AsyncClient(timeout=15) as c:
-                await c.patch(f"{SUPABASE_URL}/rest/v1/tareas",
-                              headers=_sb_headers({"Content-Type": "application/json"}),
-                              params={"id": f"eq.{t['id']}"}, json={"recordatorio_enviado": True})
+            await patch_rows(
+                "tareas",
+                {"id": f"eq.{t['id']}"},
+                {"recordatorio_enviado": True},
+                timeout=15,
+            )
         except Exception as e:
             _recordatorios_log.warning("No se pudo marcar recordatorio_enviado de %s: %s", t["id"], e)
 
