@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Route only the AVM propiedades_avm fallback GET through public Core DB access."""
+# Temporary apply-workflow trigger; remove with the transform after application.
 from __future__ import annotations
 
 from pathlib import Path
