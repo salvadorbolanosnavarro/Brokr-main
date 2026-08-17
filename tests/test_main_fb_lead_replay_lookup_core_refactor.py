@@ -1,4 +1,4 @@
-"""Permanent guards for Lead Ads anti-replay Core delegation."""
+"""Permanent guards for Lead Ads anti-replay and ledger Core delegation."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -16,10 +16,15 @@ class MainFbLeadReplayLookupCoreRefactorTests(unittest.TestCase):
         end = cls.source.index('\n\n@app.post("/facebook/leadgen/subscribe")', start)
         cls.block = cls.source[start:end]
 
-    def test_only_ledger_write_remains_direct(self):
-        self.assertEqual(self.block.count("/rest/v1/fb_leads_recibidos"), 1)
+    def test_ledger_read_and_write_are_both_routed_through_core(self):
+        block = self.block
+        self.assertNotIn("/rest/v1/fb_leads_recibidos", block)
+        self.assertIn('await post_rows(\n                    "fb_leads_recibidos",', block)
+        self.assertIn('accepted_statuses=(200, 201, 204)', block)
+        self.assertIn('e.response.status_code != 409', block)
+        self.assertIn('not _fb_tabla_falta(e.response)', block)
 
-    def test_lookup_uses_core_and_preserves_fail_soft_and_write(self):
+    def test_lookup_uses_core_and_preserves_fail_soft_contract(self):
         block = self.block
         self.assertIn('filas_previas = await get_rows(\n                "fb_leads_recibidos",', block)
         self.assertIn('"leadgen_id": f"eq.{leadgen_id}"', block)
@@ -32,7 +37,7 @@ class MainFbLeadReplayLookupCoreRefactorTests(unittest.TestCase):
         self.assertIn("filas_previas = []", block)
         self.assertIn('if filas_previas and (filas_previas[0] or {}).get("procesado"):', block)
         self.assertIn('except Exception:\n        pass', block)
-        self.assertIn('r = await client.post(\n                    f"{SUPABASE_URL}/rest/v1/fb_leads_recibidos"', block)
+        compile(self.source, "main.py", "exec")
 
 
 if __name__ == "__main__":
