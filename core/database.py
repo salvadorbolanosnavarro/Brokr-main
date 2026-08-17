@@ -47,6 +47,31 @@ def rest_url(table: str) -> str:
     return f"{settings.supabase_url}/rest/v1/{normalized}"
 
 
+def _require_response_status(
+    response: httpx.Response,
+    accepted_statuses: tuple[int, ...] | None = None,
+) -> None:
+    """Raise when a response violates either HTTP success or an exact legacy set.
+
+    With no explicit set this retains normal httpx semantics: every 2xx status is
+    accepted. Callers migrating legacy code that intentionally accepted only a
+    subset (for example 200/201 but not 204) may provide that exact set without
+    rebuilding HTTP handling outside Core.
+    """
+    if accepted_statuses is None:
+        response.raise_for_status()
+        return
+    if response.status_code in accepted_statuses:
+        return
+    if response.is_error:
+        response.raise_for_status()
+    raise httpx.HTTPStatusError(
+        f"Unexpected HTTP status {response.status_code}",
+        request=response.request,
+        response=response,
+    )
+
+
 async def _get_rows(
     table: str,
     params: Mapping[str, Any],
@@ -102,6 +127,7 @@ async def post_rows(
     *,
     prefer: str = "return=representation",
     timeout: httpx.Timeout | float = DEFAULT_TIMEOUT,
+    accepted_statuses: tuple[int, ...] | None = None,
 ) -> list[dict[str, Any]]:
     async with httpx.AsyncClient(timeout=timeout) as client:
         response = await client.post(
@@ -109,7 +135,7 @@ async def post_rows(
             headers=service_headers(prefer=prefer),
             json=payload,
         )
-    response.raise_for_status()
+    _require_response_status(response, accepted_statuses)
     if not response.content:
         return []
     data = response.json()
