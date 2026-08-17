@@ -21,9 +21,10 @@ class MainContactsFileRelatedReadsCoreRefactorTests(unittest.TestCase):
         self.assertNotIn('r3 = await client.get(\n            f"{SUPABASE_URL}/rest/v1/contactos_propiedades"', self.block)
         self.assertNotIn('rb = await client.patch(\n                        f"{SUPABASE_URL}/rest/v1/contactos"', self.block)
         self.assertNotIn('ri = await client.post(\n                    f"{SUPABASE_URL}/rest/v1/contactos"', self.block)
+        self.assertNotIn('rv = await client.post(\n                    f"{SUPABASE_URL}/rest/v1/contactos_propiedades"', self.block)
         compile(self.source, "main.py", "exec")
 
-    def test_core_reads_patch_and_post_preserve_http_fallback_and_link_write(self):
+    def test_core_reads_patch_and_posts_preserve_http_fallback_and_link_write(self):
         block = self.block
         self.assertIn('propiedades_existentes = await get_rows(\n                "propiedades",', block)
         self.assertIn('"eb_public_id": "not.is.null"', block)
@@ -37,8 +38,11 @@ class MainContactsFileRelatedReadsCoreRefactorTests(unittest.TestCase):
         self.assertIn('await patch_rows(\n                            "contactos",', block)
         self.assertIn('accepted_statuses=(200, 204)', block)
         self.assertIn('await post_rows(\n                        "contactos",', block)
-        self.assertIn('accepted_statuses=(200, 201, 204)', block)
-        self.assertIn('rv = await client.post(\n                    f"{SUPABASE_URL}/rest/v1/contactos_propiedades"', block)
+        self.assertIn('await post_rows(\n                        "contactos_propiedades",', block)
+        self.assertIn('{"user_id": user_id, "contacto_id": contacto_id,', block)
+        self.assertIn('"propiedad_id": propiedad_id, "relacion": "interes"', block)
+        self.assertGreaterEqual(block.count('accepted_statuses=(200, 201, 204)'), 2)
+        self.assertIn('except httpx.HTTPStatusError:\n                    pass', block)
 
 
 if __name__ == "__main__":
