@@ -12,40 +12,6 @@
 <style>
 html, body { background: var(--paper); }
 
-/* ── Sidebar nav (desktop) — owned by app-shell.js ─ */
-.app-shell { display: flex; height: 100vh; }
-.app-sidebar {
-  width: 240px; flex-shrink: 0;
-  background: var(--paper);
-  border-right: 1px solid var(--line);
-  padding: 22px 14px;
-  display: flex; flex-direction: column; gap: 4px;
-}
-@media (max-width: 880px) { .app-sidebar { display: none; } }
-.app-sidebar__brand {
-  font-family: var(--font-display);
-  font-size: var(--fs-h3); font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--ink);
-  padding: 6px 10px 22px;
-  border-bottom: 1px solid var(--line);
-  margin-bottom: 14px;
-  display: flex; align-items: center; gap: 8px;
-}
-.app-sidebar__brand .dot { color: var(--forest); }
-.app-nav-link {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 12px;
-  border-radius: var(--r);
-  font-size: var(--fs-sm); color: var(--ink-2);
-  cursor: pointer; transition: background var(--dur) var(--ease);
-  font-weight: 500;
-  letter-spacing: -0.005em;
-}
-.app-nav-link:hover { background: var(--paper-2); }
-.app-nav-link.is-active { background: var(--ink); color: var(--paper); }
-.app-nav-link svg { flex-shrink: 0; opacity: .8; }
-.app-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 
 /* Top bar */
 .page-head {
@@ -947,18 +913,6 @@ html, body { background: var(--paper); }
 </head>
 <body data-app="leads">
 
-<!-- shell-replaced-sidebar -->
-<div style="display:none" hidden>
-  <aside class="app-sidebar">
-    <div class="app-sidebar__brand">Broquer<span class="dot">.</span></div>
-    <a class="app-nav-link" href="index.html">Inicio</a>
-    <a class="app-nav-link" href="propiedades.html">Inmuebles</a>
-    <a class="app-nav-link" href="contactos.html">Contactos</a>
-    <a class="app-nav-link is-active" href="leads.html">Leads</a>
-    <a class="app-nav-link" href="contratos.html">Contratos</a>
-    <a class="app-nav-link" href="avm.html">AVM</a>
-  </aside>
-</div>
 
 <div class="picker-banner" id="picker-banner">
   Seleccionando lead · toca el que quieres usar
