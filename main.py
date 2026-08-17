@@ -2407,13 +2407,15 @@ async def _migrar_fotos_org(org_id: str):
                     if not subidas:
                         continue
                     try:
-                        await client.patch(
-                            f"{SUPABASE_URL}/rest/v1/propiedades",
-                            headers={**sb_headers, "Content-Type": "application/json",
-                                     "Prefer": "return=minimal"},
-                            params={"id": f"eq.{fila.get('id')}"},
-                            json={"fotos": nuevas}, timeout=30.0,
-                        )
+                        try:
+                            await patch_rows(
+                                "propiedades",
+                                {"id": f"eq.{fila.get('id')}"},
+                                {"fotos": nuevas},
+                                timeout=30.0,
+                            )
+                        except httpx.HTTPStatusError:
+                            pass
                         total_props += 1
                         total_fotos += subidas
                     except Exception:
