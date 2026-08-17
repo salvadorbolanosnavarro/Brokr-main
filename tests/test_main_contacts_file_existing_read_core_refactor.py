@@ -16,12 +16,13 @@ class MainContactsFileExistingReadCoreRefactorTests(unittest.TestCase):
         end = cls.source.index('\n\n# ════════════════════════════════════════════════════════════════\n# Migración completa EasyBroker', start)
         cls.block = cls.source[start:end]
 
-    def test_direct_contact_patch_and_creation_post_are_gone(self):
+    def test_direct_contact_and_link_writes_are_gone(self):
         self.assertEqual(self.block.count('f"{SUPABASE_URL}/rest/v1/contactos",'), 0)
         self.assertNotIn('rb = await client.patch(\n                        f"{SUPABASE_URL}/rest/v1/contactos"', self.block)
         self.assertNotIn('ri = await client.post(\n                    f"{SUPABASE_URL}/rest/v1/contactos"', self.block)
+        self.assertNotIn('rv = await client.post(\n                    f"{SUPABASE_URL}/rest/v1/contactos_propiedades"', self.block)
 
-    def test_core_read_patch_and_post_preserve_http_contract_and_other_io(self):
+    def test_core_read_patch_contact_post_and_link_post_preserve_contract(self):
         block = self.block
         self.assertIn('existentes = await get_rows(\n                "contactos",', block)
         self.assertIn('"limit": "10000"', block)
@@ -34,9 +35,12 @@ class MainContactsFileExistingReadCoreRefactorTests(unittest.TestCase):
         self.assertIn('{"id": f"eq.{contacto_id}"}', block)
         self.assertIn('accepted_statuses=(200, 204)', block)
         self.assertIn('await post_rows(\n                        "contactos",', block)
+        self.assertIn('await post_rows(\n                        "contactos_propiedades",', block)
         self.assertIn('accepted_statuses=(200, 201, 204)', block)
         self.assertIn('except httpx.HTTPStatusError:\n                    errores += 1\n                    continue', block)
-        self.assertIn('rv = await client.post(\n                    f"{SUPABASE_URL}/rest/v1/contactos_propiedades"', block)
+        self.assertIn('except httpx.HTTPStatusError:\n                    pass', block)
+        self.assertIn('vinculos_nuevos += 1', block)
+        self.assertIn('pares_existentes.add((contacto_id, propiedad_id))', block)
 
 
 if __name__ == "__main__":
