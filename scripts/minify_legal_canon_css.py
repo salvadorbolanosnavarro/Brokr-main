@@ -26,9 +26,17 @@ def strip_html_comments(source: str) -> str:
 
 
 def trim_source_whitespace(source: str) -> str:
-    """Drop only blank source lines and trailing horizontal whitespace."""
-    lines = [line.rstrip(" \t") for line in source.splitlines()]
-    lines = [line for line in lines if line.strip()]
+    """Drop only non-rendered source whitespace; never alter text or JS tokens."""
+    lines = []
+    for raw in source.splitlines():
+        line = raw.rstrip(" \t")
+        if not line.strip():
+            continue
+        # Indentation before an HTML tag is source formatting only. Leave text
+        # nodes and JavaScript lines untouched.
+        if line.lstrip(" \t").startswith("<"):
+            line = line.lstrip(" \t")
+        lines.append(line)
     return "\n".join(lines) + "\n"
 
 
