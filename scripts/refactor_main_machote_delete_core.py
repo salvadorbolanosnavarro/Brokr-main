@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Route only machote row deletion through core.database without touching Storage deletion."""
+# Temporary apply-workflow trigger; remove with the transform after application.
 from __future__ import annotations
 
 from pathlib import Path
