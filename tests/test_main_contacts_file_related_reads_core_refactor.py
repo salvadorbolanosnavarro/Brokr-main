@@ -1,4 +1,4 @@
-"""Permanent guards for /contactos/importar-archivo related property/link Core reads."""
+"""Permanent guards for /contactos/importar-archivo related property/link Core routing."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -16,12 +16,13 @@ class MainContactsFileRelatedReadsCoreRefactorTests(unittest.TestCase):
         end = cls.source.index('\n\n# ════════════════════════════════════════════════════════════════\n# Migración completa EasyBroker', start)
         cls.block = cls.source[start:end]
 
-    def test_main_compiles_and_direct_related_gets_are_gone(self):
+    def test_main_compiles_and_direct_related_gets_and_contact_patch_are_gone(self):
         self.assertNotIn('r2 = await client.get(\n            f"{SUPABASE_URL}/rest/v1/propiedades"', self.block)
         self.assertNotIn('r3 = await client.get(\n            f"{SUPABASE_URL}/rest/v1/contactos_propiedades"', self.block)
+        self.assertNotIn('rb = await client.patch(\n                        f"{SUPABASE_URL}/rest/v1/contactos"', self.block)
         compile(self.source, "main.py", "exec")
 
-    def test_core_reads_preserve_http_fallback_and_writes(self):
+    def test_core_reads_and_patch_preserve_http_fallback_and_remaining_writes(self):
         block = self.block
         self.assertIn('propiedades_existentes = await get_rows(\n                "propiedades",', block)
         self.assertIn('"eb_public_id": "not.is.null"', block)
@@ -32,7 +33,9 @@ class MainContactsFileRelatedReadsCoreRefactorTests(unittest.TestCase):
         self.assertIn('"select": "contacto_id,propiedad_id"', block)
         self.assertIn('"limit": "20000"', block)
         self.assertIn('except httpx.HTTPStatusError:\n            vinculos_existentes = []', block)
-        self.assertIn('rb = await client.patch(\n                        f"{SUPABASE_URL}/rest/v1/contactos"', block)
+        self.assertIn('await patch_rows(\n                            "contactos",', block)
+        self.assertIn('{"id": f"eq.{contacto_id}"}', block)
+        self.assertIn('accepted_statuses=(200, 204)', block)
         self.assertIn('ri = await client.post(\n                    f"{SUPABASE_URL}/rest/v1/contactos"', block)
         self.assertIn('rv = await client.post(\n                    f"{SUPABASE_URL}/rest/v1/contactos_propiedades"', block)
 
