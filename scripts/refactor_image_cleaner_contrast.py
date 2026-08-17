@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Raise four Image Cleaner secondary-text selectors to Canon-readable contrast."""
+"""Raise four Image Cleaner secondary-text selectors to Canon-readable contrast.
+
+This one-shot transform changes presentation only; editor behavior is untouched.
+"""
 from __future__ import annotations
 
 from pathlib import Path
