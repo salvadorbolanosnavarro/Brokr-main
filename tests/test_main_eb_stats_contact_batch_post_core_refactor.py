@@ -30,7 +30,10 @@ class MainEbStatsContactBatchPostCoreRefactorTests(unittest.TestCase):
         self.assertIn('creados += len(chunk)', block)
         self.assertIn('ids_creados_ok.update(c["id"] for c in chunk)', block)
         self.assertIn('except httpx.HTTPStatusError:\n                errores += len(chunk)', block)
-        self.assertIn('rp = await client.patch(\n                f"{SUPABASE_URL}/rest/v1/contactos"', block)
+        self.assertIn('await patch_rows(\n                    "contactos",', block)
+        self.assertIn('{"id": f"in.({lista})"}', block)
+        self.assertIn('accepted_statuses=(200, 204)', block)
+        self.assertNotIn('rp = await client.patch(\n                f"{SUPABASE_URL}/rest/v1/contactos"', block)
         self.assertIn('rv = await client.post(\n                f"{SUPABASE_URL}/rest/v1/contactos_propiedades"', block)
 
 
