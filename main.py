@@ -11306,18 +11306,20 @@ async def importar_contactos_eb(request: Request):
                 nuevo["nombre"] = m["nombre"] or "Sin nombre"
                 # No mandar vacíos que ensucien la fila
                 nuevo = {k: v for k, v in nuevo.items() if v not in ("", None, [])}
-                ri = await client.post(
-                    f"{SUPABASE_URL}/rest/v1/contactos",
-                    headers={**sb_headers, "Prefer": "return=minimal"},
-                    json=nuevo
-                )
-                if ri.status_code in (200, 201):
+                try:
+                    await post_rows(
+                        "contactos",
+                        nuevo,
+                        prefer="return=minimal",
+                        timeout=20,
+                        accepted_statuses=(200, 201),
+                    )
                     importados += 1
                     if m["telefono"]:
                         existing_by_tel[m["telefono"]] = nuevo
                     if m["email"]:
                         existing_by_email[m["email"]] = nuevo
-                else:
+                except httpx.HTTPStatusError:
                     errores += 1
 
     return {
