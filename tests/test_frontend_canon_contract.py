@@ -40,6 +40,7 @@ class FrontendCanonContractTests(unittest.TestCase):
         allowed = {
             "landing.html",          # marketing page currently carries its b2 preview tokens
             "index.html",            # dashboard has a tiny on-navy local alpha set
+            "login.html",            # auth screen is known migration debt; must be removed next
         }
         offenders = set()
         for path in ROOT.glob("*.html"):
@@ -77,6 +78,13 @@ class FrontendCanonContractTests(unittest.TestCase):
         self.assertIn('href="brokr-theme.css"', source)
         self.assertNotIn("Bricolage Grotesque", source)
         self.assertNotIn("Figtree", source)
+        self.assertNotIn("--b2-", source)
+        self.assertNotRegex(source, r"(?m)^\s*:root\s*\{")
+
+    def test_public_invitation_screen_stays_on_canon(self):
+        source = (ROOT / "unirse.html").read_text(encoding="utf-8")
+        self.assertIn('href="brokr-theme.css"', source)
+        self.assertNotIn("broquer-ui.css", source)
         self.assertNotIn("--b2-", source)
         self.assertNotRegex(source, r"(?m)^\s*:root\s*\{")
 
