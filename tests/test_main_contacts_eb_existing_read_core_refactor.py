@@ -17,7 +17,7 @@ class MainContactsEbExistingReadCoreRefactorTests(unittest.TestCase):
     def test_direct_existing_contact_get_stays_removed(self):
         self.assertNotIn('r_existing = await client.get(\n            f"{SUPABASE_URL}/rest/v1/contactos"', self.block)
 
-    def test_core_read_and_existing_patch_preserve_fail_soft_and_remaining_post(self):
+    def test_core_database_io_preserves_fail_soft_and_write_contracts(self):
         block = self.block
         self.assertIn('existing = await get_rows(\n            "contactos",', block)
         self.assertIn('"select": "id,telefono,email,nombre,empresa,notas,fuente,probabilidad,calle,mpio,cp,wa,etiquetas"', block)
@@ -27,7 +27,10 @@ class MainContactsEbExistingReadCoreRefactorTests(unittest.TestCase):
         self.assertIn('{"id": f"eq.{existente[\'id\']}", **filtro_patch}', block)
         self.assertIn('accepted_statuses=(200, 204)', block)
         self.assertNotIn('rb = await client.patch(', block)
-        self.assertIn('ri = await client.post(\n                    f"{SUPABASE_URL}/rest/v1/contactos"', block)
+        self.assertIn('await post_rows(\n                        "contactos",', block)
+        self.assertIn('accepted_statuses=(200, 201)', block)
+        self.assertNotIn('ri = await client.post(', block)
+        self.assertNotIn('f"{SUPABASE_URL}/rest/v1/contactos"', block)
 
 
 if __name__ == "__main__":
