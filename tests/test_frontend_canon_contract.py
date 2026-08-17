@@ -57,7 +57,6 @@ class FrontendCanonContractTests(unittest.TestCase):
             "index.html",
             "isr.html",
             "landing.html",
-            "login.html",
             "mock-editorial.html",
             "mock-ejecutiva.html",
             "preview-redesign.html",
@@ -102,6 +101,9 @@ class FrontendCanonContractTests(unittest.TestCase):
         self.assertNotIn("Figtree", source, name)
         self.assertNotIn("--b2-", source, name)
         self.assertNotRegex(source, r"(?m)^\s*:root\s*\{")
+
+    def test_login_screen_stays_on_canon(self):
+        self.assert_canon_public_screen("login.html")
 
     def test_registration_screen_stays_on_canon(self):
         self.assert_canon_public_screen("registro.html")
