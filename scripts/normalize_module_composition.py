@@ -1,5 +1,6 @@
 from pathlib import Path
 
+# One-shot deterministic transform for the visual normalization branch.
 MARKER = "/* CANON-COMPOSITION-NORMALIZATION */"
 
 OVERRIDES = {
