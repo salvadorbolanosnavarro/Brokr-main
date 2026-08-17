@@ -5,7 +5,7 @@ from limites import exigir_cupo, exigir_sesion
 from pydantic import BaseModel
 from core.auth import get_user_id_from_token
 from core.config import settings
-from core.database import delete_rows, get_public_rows, get_rows, patch_rows, post_rows
+from core.database import delete_rows, get_public_rows, get_rows, patch_rows, post_rows, upsert_rows
 from core.legacy_main_config import legacy_main_settings
 import httpx
 import os
@@ -2202,18 +2202,19 @@ async def easybroker_import_all(request: Request):
             guardado = False
             for intento in range(3):
                 try:
-                    ri = await client.post(
-                        f"{SUPABASE_URL}/rest/v1/propiedades",
-                        headers={**sb_headers,
-                                 "Prefer": "resolution=merge-duplicates,return=minimal"},
-                        params={"on_conflict": "org_id,eb_public_id"},
-                        json=chunk
+                    await upsert_rows(
+                        "propiedades",
+                        chunk,
+                        conflict="org_id,eb_public_id",
+                        prefer="resolution=merge-duplicates,return=minimal",
+                        timeout=60,
+                        accepted_statuses=(200, 201, 204),
                     )
-                    if ri.status_code in (200, 201, 204):
-                        upserted += len(chunk)
-                        guardado = True
-                        break
-                    ultimo_fallo = f"Supabase {ri.status_code}: {ri.text[:200]}"
+                    upserted += len(chunk)
+                    guardado = True
+                    break
+                except httpx.HTTPStatusError as e:
+                    ultimo_fallo = f"Supabase {e.response.status_code}: {e.response.text[:200]}"
                 except Exception as e:
                     ultimo_fallo = str(e)[:200]
                 await asyncio.sleep(1.5 * (2 ** intento))
@@ -11306,18 +11307,20 @@ async def importar_contactos_eb(request: Request):
                 nuevo["nombre"] = m["nombre"] or "Sin nombre"
                 # No mandar vacíos que ensucien la fila
                 nuevo = {k: v for k, v in nuevo.items() if v not in ("", None, [])}
-                ri = await client.post(
-                    f"{SUPABASE_URL}/rest/v1/contactos",
-                    headers={**sb_headers, "Prefer": "return=minimal"},
-                    json=nuevo
-                )
-                if ri.status_code in (200, 201):
+                try:
+                    await post_rows(
+                        "contactos",
+                        nuevo,
+                        prefer="return=minimal",
+                        timeout=20,
+                        accepted_statuses=(200, 201),
+                    )
                     importados += 1
                     if m["telefono"]:
                         existing_by_tel[m["telefono"]] = nuevo
                     if m["email"]:
                         existing_by_email[m["email"]] = nuevo
-                else:
+                except httpx.HTTPStatusError:
                     errores += 1
 
     return {

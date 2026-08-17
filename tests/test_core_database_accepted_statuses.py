@@ -6,7 +6,7 @@ import unittest
 
 import httpx
 
-from core.database import _require_response_status, patch_rows, post_rows
+from core.database import _require_response_status, patch_rows, post_rows, upsert_rows
 
 
 class CoreDatabaseAcceptedStatusesTests(unittest.TestCase):
@@ -31,15 +31,16 @@ class CoreDatabaseAcceptedStatusesTests(unittest.TestCase):
             _require_response_status(self.response(500), (200, 201))
         self.assertEqual(ctx.exception.response.status_code, 500)
 
-    def test_post_and_patch_expose_same_optional_exact_status_contract(self):
-        post_sig = inspect.signature(post_rows)
-        patch_sig = inspect.signature(patch_rows)
-        self.assertIn("accepted_statuses", post_sig.parameters)
-        self.assertIn("accepted_statuses", patch_sig.parameters)
-        self.assertIsNone(post_sig.parameters["accepted_statuses"].default)
-        self.assertIsNone(patch_sig.parameters["accepted_statuses"].default)
-        self.assertIn("_require_response_status(response, accepted_statuses)", inspect.getsource(post_rows))
-        self.assertIn("_require_response_status(response, accepted_statuses)", inspect.getsource(patch_rows))
+    def test_write_helpers_expose_same_optional_exact_status_contract(self):
+        for helper in (post_rows, patch_rows, upsert_rows):
+            with self.subTest(helper=helper.__name__):
+                signature = inspect.signature(helper)
+                self.assertIn("accepted_statuses", signature.parameters)
+                self.assertIsNone(signature.parameters["accepted_statuses"].default)
+                self.assertIn(
+                    "_require_response_status(response, accepted_statuses)",
+                    inspect.getsource(helper),
+                )
 
 
 if __name__ == "__main__":

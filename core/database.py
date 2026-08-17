@@ -149,6 +149,7 @@ async def upsert_rows(
     conflict: str,
     prefer: str = "resolution=merge-duplicates,return=representation",
     timeout: httpx.Timeout | float = DEFAULT_TIMEOUT,
+    accepted_statuses: tuple[int, ...] | None = None,
 ) -> list[dict[str, Any]]:
     """Upsert rows through PostgREST using an explicit conflict target."""
     conflict = conflict.strip()
@@ -162,7 +163,7 @@ async def upsert_rows(
             headers=service_headers(prefer=prefer),
             json=payload,
         )
-    response.raise_for_status()
+    _require_response_status(response, accepted_statuses)
     if not response.content:
         return []
     data = response.json()
