@@ -14,18 +14,19 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      - name: Run tests with visible failure
+          python-version: '3.12'
+      - name: Install test dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements-ci.txt
+      - name: Run reminder guard with visible failure
         shell: bash
         run: |
           set +e
-          python -m unittest discover -s tests -p 'test_*.py' -v > /tmp/test-output.txt 2>&1
+          python -m unittest tests.test_main_reminder_sent_patch_core_refactor -v > /tmp/test-output.txt 2>&1
           code=$?
+          cat /tmp/test-output.txt
           if [[ $code -ne 0 ]]; then
-            tail -n 120 /tmp/test-output.txt | while IFS= read -r line; do
+            while IFS= read -r line; do
               echo "::error::$line"
-            done
-          else
-            echo "All tests passed"
+            done < /tmp/test-output.txt
           fi
           exit $code
