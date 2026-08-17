@@ -73,20 +73,30 @@ class FrontendCanonContractTests(unittest.TestCase):
         self.assertNotIn("broquer-ui.css", source)
         self.assertNotIn("brokr-theme-v2.css", source)
 
-    def test_registration_screen_stays_on_canon(self):
-        source = (ROOT / "registro.html").read_text(encoding="utf-8")
-        self.assertIn('href="brokr-theme.css"', source)
-        self.assertNotIn("Bricolage Grotesque", source)
-        self.assertNotIn("Figtree", source)
-        self.assertNotIn("--b2-", source)
+    def assert_canon_public_screen(self, name: str):
+        source = (ROOT / name).read_text(encoding="utf-8")
+        self.assertIn('href="brokr-theme.css"', source, name)
+        self.assertNotIn("broquer-ui.css", source, name)
+        self.assertNotIn("Bricolage Grotesque", source, name)
+        self.assertNotIn("Figtree", source, name)
+        self.assertNotIn("--b2-", source, name)
         self.assertNotRegex(source, r"(?m)^\s*:root\s*\{")
 
+    def test_registration_screen_stays_on_canon(self):
+        self.assert_canon_public_screen("registro.html")
+
     def test_public_invitation_screen_stays_on_canon(self):
-        source = (ROOT / "unirse.html").read_text(encoding="utf-8")
-        self.assertIn('href="brokr-theme.css"', source)
-        self.assertNotIn("broquer-ui.css", source)
-        self.assertNotIn("--b2-", source)
-        self.assertNotRegex(source, r"(?m)^\s*:root\s*\{")
+        self.assert_canon_public_screen("unirse.html")
+
+    def test_password_reset_screen_stays_on_canon(self):
+        self.assert_canon_public_screen("reset-password.html")
+
+    def test_public_privacy_notice_stays_on_canon(self):
+        self.assert_canon_public_screen("aviso-privacidad.html")
+
+    def test_auth_callbacks_stay_on_canon(self):
+        self.assert_canon_public_screen("facebook-callback.html")
+        self.assert_canon_public_screen("whatsapp-callback.html")
 
     def test_design_contract_names_single_executable_source(self):
         source = (ROOT / "DESIGN.md").read_text(encoding="utf-8")
