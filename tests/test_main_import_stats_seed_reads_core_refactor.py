@@ -20,13 +20,15 @@ class MainImportStatsSeedReadsCoreRefactorTests(unittest.TestCase):
         self.assertNotIn('r2 = await client.get(\n            f"{SUPABASE_URL}/rest/v1/contactos"', block)
         self.assertNotIn('r3 = await client.get(\n            f"{SUPABASE_URL}/rest/v1/contactos_propiedades"', block)
 
-    def test_core_reads_preserve_fail_soft_and_writes(self):
+    def test_core_reads_and_contact_batch_post_preserve_fail_soft_and_other_writes(self):
         block = self.block
         self.assertIn('propiedades_importadas = await get_rows(', block)
         self.assertIn('existentes = await get_rows(', block)
         self.assertIn('vinculos_existentes = await get_rows(', block)
-        self.assertGreaterEqual(block.count('except httpx.HTTPStatusError:'), 3)
-        self.assertIn('ri = await client.post(\n                f"{SUPABASE_URL}/rest/v1/contactos"', block)
+        self.assertGreaterEqual(block.count('except httpx.HTTPStatusError:'), 4)
+        self.assertIn('await post_rows(\n                    "contactos",', block)
+        self.assertIn('accepted_statuses=(200, 201, 204)', block)
+        self.assertNotIn('ri = await client.post(\n                f"{SUPABASE_URL}/rest/v1/contactos"', block)
         self.assertIn('rp = await client.patch(\n                f"{SUPABASE_URL}/rest/v1/contactos"', block)
         self.assertIn('rv = await client.post(\n                f"{SUPABASE_URL}/rest/v1/contactos_propiedades"', block)
 
