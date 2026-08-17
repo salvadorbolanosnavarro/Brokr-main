@@ -1,12 +1,23 @@
 """Permanent guards for Facebook connection persistence delegated to Core."""
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
+
+
+def core_database_imports(source: str) -> set[str]:
+    tree = ast.parse(source)
+    return {
+        alias.name
+        for node in tree.body
+        if isinstance(node, ast.ImportFrom) and node.module == "core.database"
+        for alias in node.names
+    }
 
 
 class MainFacebookConnectionCoreRefactorTests(unittest.TestCase):
@@ -16,7 +27,7 @@ class MainFacebookConnectionCoreRefactorTests(unittest.TestCase):
 
     def test_connection_persistence_delegates_to_core(self):
         source = self.source
-        self.assertIn("from core.database import delete_rows, get_rows, post_rows", source)
+        self.assertTrue({"delete_rows", "get_rows", "post_rows"} <= core_database_imports(source))
         self.assertIn('await post_rows(\n            "user_integrations",', source)
         self.assertIn('await get_rows(\n            "user_integrations",', source)
         self.assertIn('await delete_rows(\n            "user_integrations",', source)
