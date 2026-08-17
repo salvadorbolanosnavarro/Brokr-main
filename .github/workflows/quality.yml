@@ -35,51 +35,8 @@ jobs:
       - name: Run tests
         run: python -m unittest discover -s tests -p 'test_*.py'
 
-      - name: Audit Canon frontend surfaces
-        run: >-
-          python audit.py
-          index.html
-          whatsapp.html
-          contactos.html
-          leads.html
-          propiedades.html
-          isr.html
-          estadisticas.html
-          bandeja.html
-          bolsa.html
-          expediente.html
-          ficha-manual.html
-          firmar.html
-          firmas.html
-          verificar-firma.html
-          verificador.html
-          guia-agente.html
-          legal.html
-          blog.html
-          login.html
-          registro.html
-          reset-password.html
-          unirse.html
-          correo.html
-          aviso-privacidad.html
-          facebook-callback.html
-          whatsapp-callback.html
-          whatsapp-chatgpt.html
-          avm.html
-          contratos.html
-          image-cleaner.html
-          robin.html
-          landing.html
-          tareas.html
-          finanzas.html
-          cumplimiento.html
-          video.html
-          facebook-ads.html
-          mi-sitio.html
-          equipo.html
-          empresas.html
-          admin.html
-          soporte.html
+      - name: Audit active Canon frontend inventory
+        run: python audit.py
 
       - name: Report architecture debt
         run: python scripts/architecture_debt.py
