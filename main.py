@@ -4785,13 +4785,15 @@ async def crear_machote(
             "patron_usado": "manual",
             "descartados": [],
         }
-        rd = await client.post(
-            f"{SUPABASE_URL}/rest/v1/machotes_contrato",
-            headers=_sb_headers({"Content-Type": "application/json",
-                                 "Prefer": "return=representation"}),
-            json=fila,
-        )
-        if rd.status_code not in (200, 201):
+        try:
+            await post_rows(
+                "machotes_contrato",
+                fila,
+                prefer="return=representation",
+                timeout=60,
+                accepted_statuses=(200, 201),
+            )
+        except httpx.HTTPStatusError as e:
             for p in (storage_path, storage_path_original):
                 if not p:
                     continue
@@ -4801,7 +4803,7 @@ async def crear_machote(
                         headers=_sb_headers())
                 except Exception:
                     pass
-            raise HTTPException(status_code=500, detail=f"No se pudo guardar tu machote: {rd.text[:200]}")
+            raise HTTPException(status_code=500, detail=f"No se pudo guardar tu machote: {e.response.text[:200]}")
 
     return {"id": machote_id, "titulo": titulo, "tipo": fila["tipo"],
             "campos": campos_final}
