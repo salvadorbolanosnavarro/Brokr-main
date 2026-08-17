@@ -12868,11 +12868,16 @@ async def sitio_registrar_lead(slug: str, payload: SitioLeadIn, request: Request
         if existente:
             notas_prev = (existente.get("notas") or "").strip()
             nuevas_notas = (notas_prev + "\n\n" + nota).strip() if notas_prev else nota
-            await client.patch(
-                f"{SUPABASE_URL}/rest/v1/contactos", headers=hdr,
-                params={"id": f"eq.{existente['id']}"},
-                json={"es_potencial": True, "notas": nuevas_notas[:5000],
-                      "updated_at": ahora})
+            try:
+                await patch_rows(
+                    "contactos",
+                    {"id": f"eq.{existente['id']}"},
+                    {"es_potencial": True, "notas": nuevas_notas[:5000],
+                     "updated_at": ahora},
+                    timeout=10,
+                )
+            except httpx.HTTPStatusError:
+                pass
             return {"ok": True, "duplicado": True}
 
         # 3) Crear el lead nuevo (mismo esquema que usa leads.html)
