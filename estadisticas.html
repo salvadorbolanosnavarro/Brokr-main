@@ -277,6 +277,66 @@ html, body { background: var(--canvas); }
   .es-scroll { padding: 0; }
   .es-card { box-shadow: none; }
 }
+
+/* CANON-COMPOSITION-NORMALIZATION */
+.es-hero {
+  background: var(--paper);
+  color: var(--ink);
+  padding: 28px 36px 18px;
+  border-bottom: 1px solid var(--line);
+}
+@media (max-width: 720px) { .es-hero { padding: 20px 16px 16px; } }
+.es-hero h1 { color: var(--ink); }
+.es-hero__sub { color: var(--mute); opacity: 1; }
+.es-hero__count {
+  color: var(--ink-2);
+  background: var(--paper-2);
+  border: 1px solid var(--line-2);
+}
+.es-seg {
+  background: var(--paper-2);
+  border: 1px solid var(--line-2);
+  margin-top: 16px;
+}
+.es-seg button { color: var(--mute); opacity: 1; }
+.es-seg button:hover { color: var(--ink); }
+.es-seg button.is-active {
+  background: var(--bone);
+  color: var(--ink);
+  box-shadow: var(--shadow-xs);
+}
+.es-seg button:focus-visible { box-shadow: var(--focus); }
+.es-nav {
+  position: sticky;
+  top: 0;
+  margin: 0 36px;
+  padding-top: 10px;
+  background: var(--paper);
+}
+@media (max-width: 720px) { .es-nav { margin: 0 12px; } }
+.es-nav__card {
+  box-shadow: none;
+  border: 0;
+  border-bottom: 1px solid var(--line-2);
+  border-radius: 0;
+  padding: 0;
+  max-width: calc(var(--page-max) - 72px);
+}
+.tabs { gap: var(--sp-5); }
+.ftab {
+  border-radius: 0;
+  padding: 12px 0 10px;
+  border-bottom: 2px solid transparent;
+}
+.ftab:hover { background: transparent; color: var(--ink); }
+.ftab.active {
+  background: transparent;
+  color: var(--ink);
+  border-bottom-color: var(--sky-blue);
+  font-weight: 700;
+}
+.es-scroll { padding-top: 24px; }
+
 </style>
 </head>
 <body data-app="estadisticas">
