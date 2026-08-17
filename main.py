@@ -10727,17 +10727,12 @@ async def _expirar_trial_suscripcion(sub_id) -> None:
     if not sub_id:
         return
     try:
-        async with httpx.AsyncClient(timeout=8) as client:
-            await client.patch(
-                f"{SUPABASE_URL}/rest/v1/suscripciones?id=eq.{sub_id}",
-                headers={
-                    "apikey": SUPABASE_SERVICE_KEY,
-                    "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                    "Content-Type": "application/json",
-                    "Prefer": "return=minimal",
-                },
-                json={"status": "expired", "updated_at": datetime.utcnow().isoformat()},
-            )
+        await patch_rows(
+            "suscripciones",
+            {"id": f"eq.{sub_id}"},
+            {"status": "expired", "updated_at": datetime.utcnow().isoformat()},
+            timeout=8,
+        )
     except Exception:
         pass
 
