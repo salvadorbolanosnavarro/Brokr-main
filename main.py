@@ -12050,15 +12050,16 @@ async def easybroker_import_stats(request: Request):
         for i in range(0, len(ids_marcar), 200):
             lote = ids_marcar[i:i+200]
             lista = ",".join(f'"{x}"' for x in lote)
-            rp = await client.patch(
-                f"{SUPABASE_URL}/rest/v1/contactos",
-                headers={**sb_headers, "Prefer": "return=minimal"},
-                params={"id": f"in.({lista})"},
-                json={"es_potencial": True, "updated_at": ahora}
-            )
-            if rp.status_code in (200, 204):
+            try:
+                await patch_rows(
+                    "contactos",
+                    {"id": f"in.({lista})"},
+                    {"es_potencial": True, "updated_at": ahora},
+                    timeout=60,
+                    accepted_statuses=(200, 204),
+                )
                 marcados += len(lote)
-            else:
+            except httpx.HTTPStatusError:
                 errores += len(lote)
 
         # c) Vinculos contacto-propiedad, 200 por POST. Se descartan los que
