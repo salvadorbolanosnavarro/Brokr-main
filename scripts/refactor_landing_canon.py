@@ -52,6 +52,7 @@ TOKEN_MAP = {
     "--sh2-lift": "--shadow-md",
     "--sh2-bar": "--shadow",
     "--sh2-media": "--shadow-lg",
+    "--sh2-lg": "--shadow-lg",
     "--ease2": "--ease",
     "--fs2-caption": "--fs-label-3",
     "--fs2-sm": "--fs-sm",
