@@ -9117,17 +9117,20 @@ async def _fb_guardar_audiencia(user_id: str, org_id, datos: dict) -> None:
     if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
         return
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            r = await client.post(
-                f"{SUPABASE_URL}/rest/v1/fb_audiences",
-                headers=_sb_headers({"Prefer": "resolution=merge-duplicates,return=minimal"}),
-                json={"user_id": user_id, "org_id": org_id, **datos})
-        if r.status_code not in (200, 201, 204):
-            if _fb_tabla_falta(r):
-                _fb_avisa_migracion("guardar público", r)
+        try:
+            await post_rows(
+                "fb_audiences",
+                {"user_id": user_id, "org_id": org_id, **datos},
+                prefer="resolution=merge-duplicates,return=minimal",
+                timeout=10,
+                accepted_statuses=(200, 201, 204),
+            )
+        except httpx.HTTPStatusError as e:
+            if _fb_tabla_falta(e.response):
+                _fb_avisa_migracion("guardar público", e.response)
             else:
                 _fb_log.error("No se pudo guardar el público: %s %s",
-                              r.status_code, (r.text or "")[:200])
+                              e.response.status_code, (e.response.text or "")[:200])
     except Exception as e:
         _fb_log.error("Error guardando el público: %s", e)
 
