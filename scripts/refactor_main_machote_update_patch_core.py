@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Route only machote update PostgREST PATCH through core.database."""
+# Temporary apply-workflow trigger; remove with the transform after application.
 from __future__ import annotations
 
 from pathlib import Path
