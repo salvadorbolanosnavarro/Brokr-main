@@ -8759,13 +8759,17 @@ async def _fb_procesar_lead(valor: dict) -> None:
                 _fb_log.info("Lead %s emparejado con el contacto %s", leadgen_id, existente["id"])
                 return
 
-            rc = await client.post(
-                f"{SUPABASE_URL}/rest/v1/contactos",
-                headers=_sb_headers({"Prefer": "return=minimal"}),
-                json={k: v for k, v in contacto.items() if v not in ("", None, [])})
-        if rc.status_code not in (200, 201, 204):
-            await _anota({"error_detail": f"No se pudo crear el contacto: {(rc.text or '')[:200]}"})
-            return
+            try:
+                await post_rows(
+                    "contactos",
+                    {k: v for k, v in contacto.items() if v not in ("", None, [])},
+                    prefer="return=minimal",
+                    timeout=15,
+                    accepted_statuses=(200, 201, 204),
+                )
+            except httpx.HTTPStatusError as e:
+                await _anota({"error_detail": f"No se pudo crear el contacto: {(e.response.text or '')[:200]}"})
+                return
     except Exception as e:
         await _anota({"error_detail": f"Error guardando el contacto: {e}"})
         return
