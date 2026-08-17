@@ -73,7 +73,7 @@ AVM_ROOT_RE = re.compile(
 
 def inline_aliases(source: str, aliases: dict[str, str]) -> str:
     result = source
-    # Longest names first so --navy-mid is handled before --navy.
+    # Longest names first so composite aliases are replaced before prefixes.
     for legacy, canon in sorted(aliases.items(), key=lambda item: -len(item[0])):
         result = result.replace(f"var({legacy})", f"var({canon})")
     return result
@@ -101,7 +101,7 @@ def transform_avm(source: str) -> str:
     remaining = [name for name in AVM_ALIASES if f"var({name})" in result]
     if remaining:
         raise RuntimeError(f"avm.html: legacy aliases remain: {remaining}")
-    # The iOS safe-area root is a media-scoped environment variable, not a theme.
+    # The iOS safe-area root is media-scoped environment state, not a visual theme.
     roots = re.findall(r"(?m)^\s*:root\s*\{", result)
     if len(roots) > 1:
         raise RuntimeError(f"avm.html: unexpected token roots remain: {len(roots)}")
