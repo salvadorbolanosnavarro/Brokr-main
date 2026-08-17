@@ -60,6 +60,10 @@ jobs:
           video.html
           facebook-ads.html
           mi-sitio.html
+          equipo.html
+          empresas.html
+          admin.html
+          soporte.html
 
       - name: Report architecture debt
         run: python scripts/architecture_debt.py
