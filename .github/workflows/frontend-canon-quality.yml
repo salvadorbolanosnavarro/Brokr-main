@@ -1,0 +1,28 @@
+name: Frontend Canon Quality
+
+on:
+  pull_request:
+    paths:
+      - '**/*.html'
+      - '**/*.css'
+      - 'audit.py'
+      - 'DESIGN.md'
+      - 'tests/test_frontend_canon_*.py'
+      - '.github/workflows/frontend-canon-quality.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  frontend-canon:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run Canon contract tests
+        run: python -m unittest discover -s tests -p 'test_frontend_canon_*.py'
+      - name: Audit active Canon frontend inventory
+        run: python audit.py

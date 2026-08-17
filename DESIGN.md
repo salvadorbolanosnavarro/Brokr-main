@@ -1,176 +1,206 @@
-# Broquer — Reglas de diseño (edición "Navarro")
+# Broquer — Contrato de diseño
 
-> **Este documento describe la piel VIGENTE** (revisión 2026-07-b, "Lienzo
-> blanco"). La edición anterior "Sky" (DM Sans, azul #0055CC, radios 14/28)
-> quedó obsoleta: cualquier referencia a ella en chats o notas viejas ya no
-> aplica. La única fuente de verdad ejecutable es **`brokr-theme.css`**; la
-> verificación automática vive en `audit.py` (raíz del repo).
+> **Edición vigente: “Canon” · revisión 2026-08-b.**
+>
+> La única fuente de verdad **ejecutable** de colores, tipografía, radios,
+> sombras, espaciado, motion y componentes es **`brokr-theme.css`**. Este
+> documento explica cómo consumirla; no mantiene una segunda copia de sus
+> valores. Si este documento y el CSS discrepan, el CSS gana y este documento
+> debe corregirse.
 
-> **Objetivo:** que todo módulo parezca **hermano** de los demás y de
-> `index.html`. Un módulo nuevo debe verse como si lo hubiera hecho la misma
-> mano que hizo el resto. Este documento es la ley; `brokr-theme.css` es la
-> implementación.
+## Objetivo
 
-El chrome (sidebar azul, topbar, bottom-nav líquida, FAB de Broq, drawer de
-perfil y el **encabezado de página** `.bk-ph`) lo inyecta **`app-shell.js`**,
-que además re-ancla su `<style>` al final del `<head>` para ganar la cascada.
-Un módulo solo aporta *su contenido*.
+Todo módulo de Broquer debe parecer hecho por el mismo equipo y en la misma
+época. Un programador nuevo debe poder crear una pantalla sin inventar una
+paleta, una tipografía, un sistema de botones o una geometría propios.
 
----
-
-## 0. Las 7 reglas de oro (si no lees más, lee esto)
-
-1. **Cero hex a mano.** Todo color sale de un token `var(--…)`. Únicas
-   excepciones: `#fff`/`#000` puros y los tokens de **marca externa**
-   (`--brand-whatsapp` #25D366, `--brand-facebook` #1877F2).
-2. **Dos paletas, no una.**
-   · **INTERFAZ (restringida):** navy `--sky-navy` #00143B = estructura y
-     texto (la tinta es navy, no negro); azul royal `--sky-blue` #1240A0 =
-     acción (links, foco, CTA, activos). Secundario `--mute`, líneas
-     `--line/-2/-3`. Estados solo con `--success #0C7A5E / --warn #B45309 /
-     --danger #C62839 / --info`. **Nada de verdes #00AA6C, magentas #E70866,
-     azul viejo #0062E3 ni el navy viejo #05203C**: son de ediciones muertas.
-   · **DATOS (`--data-1…8`):** prohibida en botones, links, foco, bordes,
-     fondos de card y headings. Permitida **solo donde el color ES el dato**
-     (ver §2.1).
-3. **Una sola tipografía de interfaz: Manrope** vía `--font-sans` /
-   `--font-display` (pesos 400–800). `--font-serif` (Instrument Serif) es
-   **exclusiva de landing/marketing**: nunca en tablas, filtros, formularios,
-   menús ni módulos densos. Nunca monoespaciadas.
-4. **Tamaños solo desde la escala `--fs-*`** (§3). Prohibido `font-size` en px
-   crudo dentro de módulos. Microcopy (labels, eyebrows, `th`, badges) =
-   12–13px, nunca tamaño de heading.
-5. **Radios y sombras solo desde tokens:** botón `--r-sm` 8 · input/contenedor
-   `--r` 10 · card `--r-lg` 16 · card grande `--r-xl` 22 · modal `--r-modal`
-   24 · píldora `--r-pill`. Sombras `--shadow-xs…xl` (tinte navy
-   rgba(0,20,59,…) — una sombra negra a mano se ve "de otra app").
-6. **Iconos = SVG stroke** (`stroke="currentColor"`), **nunca emojis**.
-7. **Reutiliza los componentes `bk-*`** del theme antes de inventar una clase.
+El chrome compartido —sidebar, topbar, navegación móvil, FAB de Broq, drawer de
+perfil y encabezado de página— vive en **`app-shell.js`**. Un módulo aporta su
+contenido y consume el sistema visual común.
 
 ---
 
-## 1. Anatomía de un módulo
+## 1. Reglas de oro
 
+1. **Cero colores de producto escritos a mano en un módulo.** Usa tokens
+   `var(--…)` de `brokr-theme.css`. Solo se toleran blanco/negro puros cuando
+   semánticamente corresponda y colores oficiales de marcas externas.
+2. **Una sola familia tipográfica de producto.** La edición Canon usa **Inter**
+   mediante `--font-sans`, `--font-display`, `--font-mono` y `--font-serif`.
+   Los aliases históricos existen por compatibilidad; no son permiso para
+   introducir otra familia.
+3. **Tamaños tipográficos solo mediante la escala `--fs-*`.** No inventes
+   tamaños en px dentro de un módulo nuevo.
+4. **Radios, sombras, espaciado, alturas y motion salen de tokens.** No copies
+   números de una pantalla a otra.
+5. **Iconos = SVG con `currentColor`.** No uses emojis como iconografía de
+   interfaz.
+6. **Reutiliza componentes `bk-*` antes de crear una clase nueva.** Una clase
+   específica del módulo debe cubrir una necesidad de dominio, no reinventar
+   botones, inputs, cards o modales.
+7. **Un módulo no elige theme.** No existen “skins” por módulo. Todos heredan
+   Canon.
+8. **No crees otra hoja de tokens.** Si falta un token verdaderamente global,
+   se agrega a `brokr-theme.css`; si es específico de un dominio, usa una clase
+   del módulo compuesta con tokens existentes.
+
+---
+
+## 2. Identidad Canon
+
+La dirección actual está definida en `brokr-theme.css`: blanco dominante,
+negro/tinta precisa, azul profundo para estructura y azul de acción para
+interacción. Los estados semánticos usan los tokens `--success`, `--warn`,
+`--danger` e `--info`.
+
+Los colores exactos **no se duplican aquí** a propósito. Consulta los tokens
+vigentes en `:root` de `brokr-theme.css`. Esto evita que una futura revisión del
+theme deje este documento describiendo una edición muerta.
+
+La paleta de datos (`--data-*`) se reserva para gráficas, etapas y casos donde
+el color representa información. No la uses para decorar botones, bordes,
+headings o cards.
+
+---
+
+## 3. Tipografía
+
+Toda la interfaz Canon usa los aliases tipográficos del theme:
+
+- `var(--font-sans)` para interfaz y cuerpo.
+- `var(--font-display)` para headings.
+- `var(--font-mono)` es un alias histórico y actualmente **no implica una
+  fuente monoespaciada**.
+- `var(--font-serif)` también apunta a la familia Canon vigente; no asumas que
+  siempre será serif por el nombre heredado.
+
+Usa `--fs-hero`, `--fs-display`, `--fs-h1`, `--fs-h2`, `--fs-h3`,
+`--fs-body-lg`, `--fs-body`, `--fs-sm`, `--fs-xs`, `--fs-label-*` y
+`--fs-caption`. Los valores concretos viven únicamente en el theme.
+
+Los números de negocio deben usar cifras tabulares (`.bk-num` o
+`font-variant-numeric: tabular-nums`).
+
+---
+
+## 4. Forma y espacio
+
+La geometría Canon se expresa mediante:
+
+- Radios: `--r-xs`, `--r-sm`, `--r`, `--r-lg`, `--r-xl`, `--r-modal`,
+  `--r-pill`.
+- Espaciado: `--sp-*`.
+- Alturas: `--h-sm`, `--h`, `--h-lg`, `--touch-min`.
+- Sombras: `--shadow-xs` a `--shadow-xl`.
+- Foco: `--focus` y variantes semánticas.
+- Motion: `--dur-fast`, `--dur`, `--dur-slow`, `--ease`, `--ease-out`.
+
+No escribas una cifra “porque se parece” a otro componente. Usa el token que
+representa la función del elemento.
+
+---
+
+## 5. Anatomía de un módulo
+
+```html
+<body data-app="mi-modulo">
+  <!-- contenido específico del módulo -->
+  <script src="app-shell.js" defer></script>
+</body>
 ```
-<body data-app="mi-modulo">      ← clave del módulo (obligatoria)
-  … tu contenido …               ← el shell lo envuelve en .bk-page
-<script src="app-shell.js" defer></script>
-```
 
-- El **encabezado de página** (título 30px + subtítulo) lo pinta el shell desde
-  `PAGE_META['mi-modulo']`. **No hagas tu propio hero/título de página.**
-- Para aparecer en el menú lateral, agrega la entrada a `MODS` en `app-shell.js`.
-- El `data-app` activa además la capa de normalización legacy del shell
-  (unifica cards, inputs, botones primarios en azul, títulos a 30px).
-- Anchos canónicos: `--page-max` 1280 (datos) · `--form-max` 920 (formularios).
-  El shell ya estrecha isr/ficha-manual/avm/contratos/mi-sitio/image-cleaner.
+El shell compartido debe encargarse del chrome y del encabezado de página. Un
+módulo no debe dibujar una segunda navegación ni un hero propio para sustituir
+el encabezado común.
 
-## 2. Color
+Mientras `app-shell.js` siga usando metadatos manuales, cualquier módulo nuevo
+necesita una entrada coherente en sus registros de navegación. La arquitectura
+objetivo es que esos metadatos provengan del contrato declarativo de módulos y
+no de listas paralelas; hasta completar esa migración, no crees una tercera
+lista.
 
-- El **canvas de la app es `--canvas`** (#F4F7FD, teñido). `--paper` es blanco
-  y lo consumen superficies flotantes (topbar, dropdowns, popovers): si se
-  tiñe, se tiñen ellas. `.bk-card` es `--bone` (blanco) y se lee como card
-  gracias al canvas teñido.
-- **Sidebar/drawer:** azul `--sb-bg` (= `--sky-blue`) con destello blanco
-  arriba y aurora abajo; módulos en blanco y negritas dentro de bloques
-  translúcidos `--sb-panel`. La separación se hace con aire y paneles, nunca
-  con líneas.
-- **Botones:** primario por default = **navy sólido** (`.bk-btn`); el azul de
-  acción (`.bk-btn--forest`, `--forest` = #1240A0) es para el CTA de
-  conversión, no el default. Máximo un primario dominante por zona. En módulos
-  legacy el shell fuerza el botón principal a azul.
-- Texto sobre navy: usar `--sky-blue-on-dark` #7FA8F0 (7.5:1); el azul de
-  acción no contrasta sobre navy.
+Anchos de página, gutters, sidebar y topbar se consumen desde los tokens de
+layout del theme (`--page-max`, `--form-max`, `--pad-x`, `--sidebar-w`,
+`--topbar-h`).
 
-### 2.1 Paleta de datos — `--data-1 … --data-8`
+---
 
-| Uso | Token |
-|-----|-------|
-| Series categóricas de gráficas | `--data-1…8` (+ `-soft` al 12%) |
-| Etapas de pipeline / kanban | `--etapa-{nuevo,activo,contactado,cerrado,descartado}` |
-| Módulo WhatsApp | `--wa-{canvas,out,ia,out-meta}` |
+## 6. Componentes compartidos
 
-- La rampa está **ordenada por distinguibilidad**: empieza en `--data-1` y
-  avanza; nunca elijas por gusto.
-- **Nunca uses `--success/--warn/--danger` como color categórico** (rojo se
-  lee "error").
-- Las etapas son **ordinales** (frío → comprometido → verde ganado → gris
-  muerto). A una escala ordinal le corresponde degradado de un tono o
-  progresión verde→ámbar→rojo, no colores categóricos.
-- WhatsApp es el único módulo donde el verde deja de ser solo el botón de
-  conectar. Las burbujas son CLARAS con texto oscuro (nunca color sólido +
-  blanco): verde claro `--wa-out`/`--wa-out-ink` = mensaje del agente,
-  violeta claro `--wa-ia-soft` con tinta y meta `--wa-ia` = Broq, blanco con
-  hairline = el cliente. El lienzo del hilo es `--wa-canvas` (frío, hermano
-  de `--canvas`), sin patrones de puntos.
+Antes de escribir CSS nuevo revisa los componentes `bk-*` del theme. Entre los
+principales están:
 
-## 3. Tipografía — escala `--fs-*`
+- botones e icon buttons;
+- fields, labels, inputs, textarea, select, checks y switches;
+- chips, badges, eyebrows, alerts y toasts;
+- headers, tabs, segmented controls y menus;
+- tablas;
+- overlays, modales y sheets;
+- empty states, skeletons, spinners y loaders;
+- métricas y grids;
+- cards de propiedades/leads;
+- stacks, clusters y divisores.
 
-`--fs-hero` 64 (solo landing) · `--fs-display` 42 · `--fs-h1` 36 ·
-`--fs-h2` 24 · `--fs-h3` 20 · `--fs-h5` 17 · `--fs-body-lg` 18 ·
-`--fs-body` 16 · `--fs-sm` 14 · `--fs-xs` 13 · `--fs-label-1/2/3` 15/13/12 ·
-`--fs-caption` 11.
+El principio es más importante que la lista: **si el sistema ya tiene el
+componente, úsalo**. Una variante global se arregla en el componente global,
+no con veinte overrides de página.
 
-- Headings: `--font-display`, peso 700, tracking negativo (ya lo trae el theme).
-- El título de página que pinta el shell (`.bk-ph__title`) es 30px: entre
-  `--fs-h2` y `--fs-h1`, uniforme en toda la app.
-- **Microcopy** (eyebrow, label, badge, `th`, status): `--fs-label-3` (12) o
-  `--fs-caption` (11). *Nunca* a tamaño de heading.
-- Números siempre tabulares (`.bk-num` o `font-variant-numeric: tabular-nums`).
+---
 
-## 4. Forma — radios, sombras, espaciado, foco
+## 7. CSS específico de un dominio
 
-- Geometría: botón 8 · input 10 · card 16 · card grande 22 · modal 24 ·
-  chips/tabs/píldoras `--r-pill`. Altura de control `--h` 48 (`--h-sm` 40,
-  `--h-lg` 56); mínimo táctil `--touch-min` 44.
-- Sombras `--shadow-xs → --shadow-xl` (tinte navy). La card NO lleva sombra
-  por default (`.bk-card--raise` solo donde agregue jerarquía).
-- Espaciado: escala `--sp-1…24` (base 4px). Gutter lateral `--pad-x` 40
-  (24 tablet, 16 móvil).
-- Foco: `box-shadow: var(--focus)` (nunca un anillo propio). Sobre el sidebar
-  azul el shell usa anillo blanco interior.
-- Motion: `--dur-fast` .12s · `--dur` .18s · `--dur-slow` .28s con `--ease` /
-  `--ease-out`. `prefers-reduced-motion` ya está cubierto por el theme.
+Solo crea CSS específico cuando el dominio realmente lo necesite.
 
-## 5. Componentes `bk-*` disponibles (no reinventar)
+1. Prefija la clase con el módulo (`.avm-*`, `.fin-*`, `.wa-*`, etc.).
+2. Compón la apariencia usando tokens Canon.
+3. No redefinas `:root` desde un módulo.
+4. No sobrescribas globalmente un `bk-*` para arreglar una sola pantalla.
+5. No introduzcas un segundo archivo “theme-v3”, “nuevo-theme”, “final” o
+   equivalente. Git es el historial; producción tiene un solo sistema vivo.
 
-Botón `.bk-btn` (+`--forest/--ghost/--quiet/--danger/--sm/--lg/--block`,
-`.is-loading`) · icono `.bk-icon-btn` · campo `.bk-field` `.bk-label`
-`.bk-input` `.bk-textarea` `.bk-select` `.bk-input-affix` `.bk-check`
-`.bk-switch` · `.bk-chip` · `.bk-badge` (+ estados) · `.bk-eyebrow` ·
-`.bk-page-header` / `.bk-section-header` · `.bk-tabs`/`.bk-tab` · `.bk-seg` ·
-`.bk-menu` · `.bk-tooltip` · `.bk-table` · `.bk-overlay`+`.bk-modal`
-(+`--sheet/--full` móvil) · `.bk-empty` · `.bk-alert` · `.bk-toast` ·
-`.bk-skeleton`/`.bk-spinner`/`.bk-shark-loader` · `.bk-metric`+
-`.bk-metric-grid` · `.bk-prop-card` · `.bk-lead-card` · `.bk-stack` ·
-`.bk-cluster` · `.bk-divider`.
+---
 
-**El modelo a imitar es `estadisticas.html`**: usa `bk-card`, `bk-seg`,
-`bk-tabs` y solo añade una capa `es-*` mínima para lo específico.
+## 8. PDFs y contenido generado por backend
 
-> **Reservado:** `.bk-badge` es el badge de estado del theme. El globito rojo
-> de no-leídos del shell vive acotado en `.bk-bnav__ico .bk-badge` /
-> `.bk-sheet__ico .bk-badge` — no reutilices ese patrón fuera de ahí.
+Los PDFs también son producto Broquer y deben seguir Canon.
 
-## 6. Si necesitas CSS propio
+- No mantengas diccionarios de hex y fuentes copiados dentro de routers.
+- Los tokens necesarios para impresión deben derivarse del theme canónico a
+  través de una capa compartida de backend.
+- Un router de dominio define contenido y estructura del documento, no una
+  identidad visual alternativa.
+- Si el theme no puede cargarse, la infraestructura debe reportar el problema
+  explícitamente en lugar de caer silenciosamente a una edición antigua.
 
-1. ¿Existe un componente `bk-*`? → úsalo.
-2. ¿Es una variante puntual? → clase con prefijo del módulo (`.avm-…`,
-   `.tk-…`) que **compone tokens**.
-3. Nunca redefinas `:root` ni tokens del sistema dentro de un módulo.
-4. Si te falta un nombre de token, **agrégalo como alias** en la capa de
-   compatibilidad al final de `brokr-theme.css` — no hardcodees un hex.
+Esta regla aplica a reportes de Finanzas, contratos, constancias de Firmas y
+cualquier PDF futuro.
 
-## 7. Checklist para un módulo nuevo (o auditar uno existente)
+---
 
-- [ ] `<body data-app="…">` y `app-shell.js` cargado con `defer`.
-- [ ] Registrado en `PAGE_META` (título/subtítulo) y en `MODS` (nav) del shell.
-- [ ] No define su propio hero/título de página (lo pinta el shell).
-- [ ] `python3 audit.py mi-modulo.html` → **0 violaciones**.
-- [ ] **0** `#hex` fuera de blanco/negro/marca · **0** `font-family` fuera de
-  `var(--font-*)` · **0** `font-size` en px crudo · **0** radios/sombras a
-  mano · **0** emojis como icono.
-- [ ] Botón primario navy (o azul si es el CTA del módulo), secundario ghost,
-  danger solo contorno.
-- [ ] Estados cubiertos: hover, focus-visible, disabled, loading, error, empty.
-- [ ] Reutiliza `bk-*` donde el sistema ya lo ofrece.
+## 9. Checklist para un módulo nuevo
+
+- [ ] Tiene `data-app` y carga `app-shell.js`.
+- [ ] No crea navegación/chrome propios.
+- [ ] Consume `brokr-theme.css`; no elige otra piel.
+- [ ] Cero colores de producto hardcodeados.
+- [ ] Cero familias tipográficas propias.
+- [ ] Tamaños, radios, sombras, espacio y motion salen de tokens.
+- [ ] Reutiliza `bk-*` antes de inventar componentes.
+- [ ] Iconografía SVG con `currentColor`.
+- [ ] Estados hover/focus/disabled/loading/error/empty cubiertos cuando aplican.
+- [ ] `python3 audit.py <archivo>` termina sin violaciones relevantes.
+- [ ] No agrega otra lista manual de metadatos si existe una fuente compartida.
+- [ ] Si genera PDF, consume la infraestructura visual compartida del backend.
+
+---
+
+## 10. Regla para futuras revisiones visuales
+
+Una nueva dirección visual no se implementa editando módulos uno por uno. Se
+cambian **los valores del sistema canónico** y, solo cuando sea inevitable, los
+componentes compartidos. Los nombres de token se mantienen estables siempre que
+sea razonable para que el producto pueda cambiar de piel sin reescribir cada
+pantalla.
+
+**`brokr-theme.css` es la implementación visual canónica. `DESIGN.md` es su
+contrato de uso. No debe existir una tercera fuente de verdad.**

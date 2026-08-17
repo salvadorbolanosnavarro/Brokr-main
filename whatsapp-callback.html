@@ -3,14 +3,46 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="theme-color" content="#081C4E"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <title>Conectando WhatsApp…</title>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
-body{font-family:var(--font-sans);display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--paper);margin:0;color:var(--ink-2)}
-.box{text-align:center;padding:32px}
-.spinner{width:36px;height:36px;border:3px solid var(--paper-2);border-top-color:var(--brand-whatsapp);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 16px}
-@keyframes spin{to{transform:rotate(360deg)}}
-p{font-size:var(--fs-sm);color:var(--mute)}
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--sp-5);
+  background:
+    radial-gradient(circle at 50% 0%, var(--sky-canvas), transparent 28rem),
+    var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+.box {
+  width: min(100%, 360px);
+  padding: var(--sp-8) var(--sp-7);
+  text-align: center;
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-md);
+}
+.spinner {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto var(--sp-4);
+  border: 3px solid var(--success-soft);
+  border-top-color: var(--brand-whatsapp);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 1.4s; } }
+p { margin: 0; font-size: var(--fs-sm); color: var(--mute); line-height: var(--lh-sm); }
 </style>
 </head>
 <body>
