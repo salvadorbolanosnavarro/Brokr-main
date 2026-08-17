@@ -1,0 +1,54 @@
+"""Dry-run guard for Facebook entity ledger PATCH Core routing."""
+from __future__ import annotations
+
+import importlib.util
+from pathlib import Path
+import unittest
+
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPT = ROOT / "scripts" / "refactor_main_fb_entity_patch_core.py"
+MAIN = ROOT / "main.py"
+
+
+def _transform():
+    spec = importlib.util.spec_from_file_location("fb_entity_patch_transform", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    assert spec and spec.loader
+    spec.loader.exec_module(module)
+    return module.transform_source
+
+
+class MainFbEntityPatchCoreRefactorTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.source = MAIN.read_text(encoding="utf-8")
+
+    def _block(self, source: str) -> str:
+        start = source.index('async def _fb_actualizar_entidad')
+        end = source.index('\n\n# ─── FACEBOOK OAUTH', start)
+        return source[start:end]
+
+    def test_transform_compiles_and_removes_direct_patch(self):
+        transformed = _transform()(self.source)
+        block = self._block(transformed)
+        self.assertNotIn('r = await client.patch(', block)
+        self.assertIn('from core.database import delete_rows, get_rows, patch_rows, post_rows', transformed)
+        compile(transformed, "main.py", "exec")
+
+    def test_core_patch_preserves_best_effort_error_contract(self):
+        block = self._block(_transform()(self.source))
+        self.assertIn('await patch_rows(', block)
+        self.assertIn('_FB_TABLA_ENTIDADES,', block)
+        self.assertIn('{"id": f"eq.{row_id}"}', block)
+        self.assertIn('timeout=10', block)
+        self.assertIn('except httpx.HTTPStatusError as e:', block)
+        self.assertIn('_fb_tabla_falta(e.response)', block)
+        self.assertIn('_fb_avisa_migracion("actualizar entidad", e.response)', block)
+        self.assertIn('e.response.status_code', block)
+        self.assertIn('(e.response.text or "")[:300]', block)
+        self.assertIn('except Exception as e:', block)
+        self.assertIn('_fb_log.error("Error actualizando %s: %s", _FB_TABLA_ENTIDADES, e)', block)
+
+
+if __name__ == "__main__":
+    unittest.main()
