@@ -58,7 +58,6 @@ class FrontendCanonContractTests(unittest.TestCase):
             "mock-editorial.html",
             "mock-ejecutiva.html",
             "preview-redesign.html",
-            "robin.html",
         }
         offenders = set()
         for path in ROOT.glob("*.html"):
@@ -69,7 +68,7 @@ class FrontendCanonContractTests(unittest.TestCase):
             if re.search(r"(?m)^\s*:root\s*\{", source):
                 offenders.add(path.name)
         self.assertTrue(offenders.issubset(allowed), f"new module-local token roots detected: {sorted(offenders - allowed)}")
-        for migrated in ("isr.html", "avm.html", "contratos.html", "image-cleaner.html"):
+        for migrated in ("isr.html", "avm.html", "contratos.html", "image-cleaner.html", "robin.html"):
             self.assertNotIn(migrated, offenders, f"{migrated} application UI must consume Canon directly")
 
     def test_shell_owned_sidebar_css_exists_only_in_shell(self):
@@ -116,6 +115,22 @@ class FrontendCanonContractTests(unittest.TestCase):
         self.assertIn("function useInFacebookAds()", source)
         self.assertIn("function useInVideo()", source)
         self.assertIn("async function downloadOne", source)
+
+    def test_robin_demo_stays_on_canon(self):
+        source = (ROOT / "robin.html").read_text(encoding="utf-8")
+        self.assertIn('href="brokr-theme.css"', source)
+        self.assertNotIn("fonts.googleapis.com", source)
+        self.assertNotIn("Archivo", source)
+        self.assertNotIn("--lona", source)
+        self.assertNotRegex(source, r"(?m)^\s*:root\s*\{")
+        for token in ("var(--sky-navy)", "var(--sky-blue)", "var(--line)", "var(--r-lg)", "var(--shadow-xs)"):
+            self.assertIn(token, source)
+        # Preserve Robin's demo interactions while changing only the visual language.
+        self.assertIn("window.rbHecho", source)
+        self.assertIn("window.rbVendido", source)
+        self.assertIn("window.rbBroq", source)
+        self.assertIn('id="broq-input"', source)
+        self.assertIn('id="mes-monto"', source)
 
     def test_module_template_points_only_to_canon(self):
         source = (ROOT / "_TEMPLATE-modulo.html").read_text(encoding="utf-8")
