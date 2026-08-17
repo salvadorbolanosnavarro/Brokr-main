@@ -3,7 +3,7 @@
 
 Visible navigation is owned by app-shell.js. The legacy hidden copy is never
 shown and must not remain inside the module. Refuse any shape other than the
-single expected block.
+single expected block; this is a one-shot guarded migration.
 """
 from __future__ import annotations
 
