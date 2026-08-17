@@ -5,7 +5,7 @@ from limites import exigir_cupo, exigir_sesion
 from pydantic import BaseModel
 from core.auth import get_user_id_from_token
 from core.config import settings
-from core.database import delete_rows, get_rows, patch_rows, post_rows
+from core.database import delete_rows, get_public_rows, get_rows, patch_rows, post_rows
 from core.legacy_main_config import legacy_main_settings
 import httpx
 import os
@@ -5879,20 +5879,21 @@ async def comparables_cercanos(req: CercanosRequest):
 
     if r.status_code not in (200, 201):
         # Fallback: buscar por ciudad sin PostGIS
-        async with httpx.AsyncClient(timeout=15) as client:
-            r2 = await client.get(
-                f"{SUPABASE_URL}/rest/v1/propiedades_avm",
-                headers=headers,
-                params={
+        try:
+            items = await get_public_rows(
+                "propiedades_avm",
+                {
                     "ciudad": "eq.Morelia",
                     "precio": "gt.0",
                     "metros_construccion": "not.is.null",
                     "select": "id,titulo,precio,tipo_propiedad,metros_construccion,metros_terreno,recamaras,estacionamientos,colonia,ciudad,url,latitud,longitud",
                     "limit": req.max_resultados,
                     "order": "precio.asc",
-                }
+                },
+                timeout=15,
             )
-        items = r2.json() if r2.status_code == 200 else []
+        except httpx.HTTPStatusError:
+            items = []
     else:
         items = r.json() or []
 
