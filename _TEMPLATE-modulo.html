@@ -13,20 +13,47 @@
   2. Registra el módulo en app-shell.js:
        · PAGE_META['mi-modulo'] = { title:'…', sub:'…' }   (el shell pinta el header)
        · MODS += { key:'mi-modulo', href:'mi-modulo.html', label:'…', group:'main', icon:'…' }
-  3. Usa SIEMPRE componentes bk-* y tokens var(--…). Cero hex/px a mano.
+  3. Usa SIEMPRE componentes bk-* y tokens var(--…). Cero paletas, tipografías,
+     radios, sombras o escalas de espacio propias del módulo.
   4. NO pongas tu propio título de página: el shell inyecta .bk-ph automáticamente.
+  5. El chrome compartido pertenece a app-shell.js. No copies sidebar, topbar,
+     navegación móvil, FAB, drawer de perfil ni encabezados globales.
   ════════════════════════════════════════════════════════════════════
 -->
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
-<meta name="theme-color" content="#05203C"/>
+<meta name="theme-color" content="#081C4E"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
   /* Solo lo ESPECÍFICO de este módulo. Todo compone tokens del sistema.
      Prefija las clases con la clave del módulo (.mod-…) para no colisionar.
      NO redefinas :root ni tokens aquí. */
-  .mod-scroll { padding: 24px 28px 48px; max-width: 1180px; margin: 0 auto; }
-  @media (max-width: 720px) { .mod-scroll { padding: 16px 14px 40px; } }
-  .mod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--sp-4); }
+  .mod-scroll {
+    width: min(100%, var(--page-max));
+    margin: 0 auto;
+    padding: var(--sp-6) var(--pad-x) var(--sp-10);
+  }
+  .mod-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-4);
+  }
+  .mod-card-title {
+    margin: var(--sp-2) 0;
+    font-size: var(--fs-h3);
+  }
+  .mod-support {
+    color: var(--mute);
+    font-size: var(--fs-sm);
+  }
+  .mod-card-meta { margin-top: var(--sp-4); }
+  .mod-actions { justify-content: flex-end; }
+
+  @media (max-width: 720px) {
+    .mod-scroll {
+      padding: var(--sp-4) var(--sp-3) var(--sp-8);
+    }
+    .mod-grid { grid-template-columns: minmax(0, 1fr); }
+  }
 </style>
 </head>
 <body data-app="mi-modulo">
@@ -46,11 +73,11 @@
 
     <article class="bk-card bk-card--pad bk-card--raise bk-card--hover">
       <span class="bk-eyebrow">Etiqueta</span>
-      <h3 style="font-size:var(--fs-h3);margin:var(--sp-2) 0;">Título de tarjeta</h3>
-      <p style="font-size:var(--fs-sm);color:var(--mute);">
+      <h3 class="mod-card-title">Título de tarjeta</h3>
+      <p class="mod-support">
         Texto de apoyo con color secundario tomado del token.
       </p>
-      <div class="bk-cluster" style="margin-top:var(--sp-4);">
+      <div class="bk-cluster mod-card-meta">
         <span class="bk-badge bk-badge--success">Activo</span>
         <span class="bk-chip">Filtro</span>
       </div>
@@ -69,7 +96,7 @@
           <option>Opción B</option>
         </select>
       </div>
-      <div class="bk-cluster" style="justify-content:flex-end;">
+      <div class="bk-cluster mod-actions">
         <button type="button" class="bk-btn bk-btn--ghost">Cancelar</button>
         <button type="submit" class="bk-btn bk-btn--forest">Guardar</button>
       </div>
@@ -80,7 +107,7 @@
   <!-- Estado vacío -->
   <div class="bk-empty" hidden id="mod-empty">
     <div class="bk-empty__icon">
-      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
       </svg>
     </div>

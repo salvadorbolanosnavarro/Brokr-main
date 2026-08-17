@@ -3,25 +3,87 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="theme-color" content="#081C4E"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <title>Aviso de privacidad · Broquer</title>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
 <style>
-  * { box-sizing: border-box; }
-  body { margin:0; font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; background:#FAFAF8; color:#16161a; -webkit-font-smoothing:antialiased; }
-  .lg-wrap { max-width: 720px; margin: 0 auto; padding: 56px 6vw 80px; }
-  .lg-back { display:inline-flex; align-items:center; gap:6px; font-size:13px; color:#6b6b66; margin-bottom:28px; }
-  .lg-back:hover { color:#16161a; }
-  h1 { font-size: 28px; font-weight:700; letter-spacing:-0.02em; margin-bottom: 6px; }
-  .lg-fecha { font-size:12px; color:#6b6b66; margin-bottom: 32px; }
-  h2 { font-size: 17px; font-weight:700; margin-top: 32px; margin-bottom: 10px; }
-  p, li { font-size: 14.5px; line-height: 1.7; color:#2b2b2b; }
-  ul { padding-left: 20px; }
-  a { color:#0062E3; }
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  .lg-wrap {
+    width: min(100%, 780px);
+    margin: 0 auto;
+    padding: var(--sp-10) var(--sp-6) var(--sp-16);
+  }
+  .lg-back {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    margin-bottom: var(--sp-7);
+    color: var(--mute);
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .lg-back:hover { color: var(--sky-blue); }
+  .lg-eyebrow {
+    display: inline-flex;
+    margin-bottom: var(--sp-3);
+    padding: var(--sp-1) var(--sp-3);
+    border-radius: var(--r-pill);
+    background: var(--sky-canvas);
+    color: var(--sky-blue);
+    font-size: var(--fs-xs);
+    font-weight: 800;
+  }
+  h1 {
+    margin: 0 0 var(--sp-2);
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-size: var(--fs-h1);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: var(--lh-h1);
+  }
+  .lg-fecha {
+    margin-bottom: var(--sp-8);
+    color: var(--mute);
+    font-size: var(--fs-xs);
+  }
+  h2 {
+    margin: var(--sp-8) 0 var(--sp-3);
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-size: var(--fs-h3);
+    font-weight: 800;
+    letter-spacing: -0.015em;
+  }
+  p, li {
+    color: var(--ink-2);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-loose);
+  }
+  p { margin: 0 0 var(--sp-4); }
+  ul { margin: 0 0 var(--sp-4); padding-left: var(--sp-6); }
+  li + li { margin-top: var(--sp-2); }
+  a { color: var(--sky-blue); }
+  strong { color: var(--ink); }
+  @media (max-width: 600px) {
+    .lg-wrap { padding: var(--sp-7) var(--sp-4) var(--sp-12); }
+    h1 { font-size: var(--fs-h2); line-height: var(--lh-h2); }
+  }
 </style>
 </head>
 <body>
 <div class="lg-wrap">
   <a class="lg-back" href="javascript:history.back()">← Volver</a>
+  <div class="lg-eyebrow">Privacidad</div>
   <h1>Aviso de privacidad</h1>
   <div class="lg-fecha">Última actualización: julio de 2026</div>
 
