@@ -11664,15 +11664,19 @@ async def importar_contactos_archivo(request: Request, file: UploadFile = File(.
                     continue
                 if (contacto_id, propiedad_id) in pares_existentes:
                     continue
-                rv = await client.post(
-                    f"{SUPABASE_URL}/rest/v1/contactos_propiedades",
-                    headers={**sb_headers, "Prefer": "return=minimal"},
-                    json={"user_id": user_id, "contacto_id": contacto_id,
-                          "propiedad_id": propiedad_id, "relacion": "interes"}
-                )
-                if rv.status_code in (200, 201, 204):
+                try:
+                    await post_rows(
+                        "contactos_propiedades",
+                        {"user_id": user_id, "contacto_id": contacto_id,
+                         "propiedad_id": propiedad_id, "relacion": "interes"},
+                        prefer="return=minimal",
+                        timeout=20,
+                        accepted_statuses=(200, 201, 204),
+                    )
                     vinculos_nuevos += 1
                     pares_existentes.add((contacto_id, propiedad_id))
+                except httpx.HTTPStatusError:
+                    pass
 
     return {
         "ok": True,
