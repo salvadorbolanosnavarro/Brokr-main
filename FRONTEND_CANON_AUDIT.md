@@ -2,15 +2,16 @@
 
 ## Estado actual
 
-La unificación visual de las superficies activas de Broquer ya alcanzó su objetivo estructural:
+La unificación visual de las superficies activas de Broquer alcanzó su objetivo estructural y el inventario activo ya está cubierto de extremo a extremo:
 
 - **`index.html`** es la referencia de identidad general;
 - **`whatsapp.html`** es la referencia de interacción densa/productiva;
 - **`brokr-theme.css`** es la única implementación ejecutable del sistema visual;
 - **`app-shell.js`** es el único propietario del chrome compartido de la aplicación;
-- los módulos conservan únicamente layout y comportamiento específicos de su dominio.
+- los módulos conservan únicamente layout y comportamiento específicos de su dominio;
+- **42 superficies activas de Broquer** se auditan automáticamente en Quality.
 
-La migración se hizo preservando rutas, IDs, contratos de API y lógica de negocio. Los archivos grandes se modificaron mediante transformaciones determinísticas con dry-run, pruebas dirigidas y comprobación exacta de archivos cambiados.
+La migración preservó rutas, IDs, contratos de API y lógica de negocio. Los archivos grandes se modificaron mediante transformaciones determinísticas, auditorías dirigidas y comprobación exacta de archivos cambiados.
 
 ## Referencias maestras
 
@@ -62,7 +63,7 @@ Toda nueva superficie o migración debe cumplir:
 5. Reutilizar componentes `bk-*` cuando exista un equivalente real.
 6. Conservar CSS de módulo solo para necesidades legítimas del dominio.
 7. No copiar sidebar, topbar, navegación móvil, FAB, drawer ni encabezados globales: pertenecen a `app-shell.js`.
-8. Mantener SVG/iconografía con `currentColor` cuando corresponda.
+8. Mantener SVG/iconografía con `currentColor` cuando corresponda y no introducir emojis como iconos de UI.
 9. Preservar estados hover/focus/disabled/loading/error/empty y funcionamiento móvil.
 10. Pasar los guards de `tests/test_frontend_canon_contract.py` y `audit.py` antes de considerar una superficie migrada.
 
@@ -73,11 +74,12 @@ Toda nueva superficie o migración debe cumplir:
 - [x] `brokr-theme.css` establecido como única fuente ejecutable de verdad.
 - [x] `_TEMPLATE-modulo.html` alineado con Canon y shell compartido.
 - [x] `tests/test_frontend_canon_contract.py` creado como ratchet permanente.
-- [x] Quality ampliado para auditar **26 superficies Canon**.
+- [x] Quality ampliado hasta cubrir **42 superficies activas Canon**.
+- [x] El modo sin argumentos de `audit.py` refleja el inventario activo y excluye solamente el motor de sitios públicos, la plantilla de desarrollo y artefactos históricos.
 - [x] `broquer-ui.css` eliminado por completo.
-- [x] Cero HTML debe definir `.app-sidebar`.
+- [x] Cero HTML de producto debe definir `.app-sidebar`.
 
-### Autenticación y superficies públicas
+### Autenticación y superficies públicas Broquer
 
 - [x] `login.html`
 - [x] `registro.html`
@@ -87,36 +89,41 @@ Toda nueva superficie o migración debe cumplir:
 - [x] `facebook-callback.html`
 - [x] `whatsapp-callback.html`
 - [x] `landing.html`
+- [x] `blog.html`
 
 Landing ya no tiene el namespace `--b2-*` ni carga tipografía independiente; conserva contenido, SEO, video, navegación y CTAs sobre Canon.
 
 ### Núcleo y shell compartido
 
-- [x] `contactos.html` — eliminado chrome/sidebar duplicado.
-- [x] `leads.html` — eliminado chrome/sidebar duplicado.
-- [x] `propiedades.html` — eliminado shell histórico duplicado.
-- [x] `isr.html` — eliminado root de aliases de la aplicación y shell duplicado.
+- [x] `index.html`
+- [x] `whatsapp.html`
+- [x] `contactos.html`
+- [x] `leads.html`
+- [x] `propiedades.html`
+- [x] `isr.html`
+- [x] `estadisticas.html`
+- [x] `bandeja.html`
 
-Estas migraciones no implican que toda regla de dominio de esos archivos haya sido reescrita; sí garantizan que la identidad y el chrome compartidos no vuelvan a bifurcarse.
+En Contactos, Leads, Propiedades e ISR se retiraron copias de chrome/sidebar que competían con `app-shell.js`. Estas migraciones no implican que toda regla de dominio haya sido reescrita; sí garantizan que identidad y chrome compartidos no vuelvan a bifurcarse.
 
-### Herramientas y canales migrados directamente a Canon
+### Herramientas, operación y canales
 
+- [x] `bolsa.html`
+- [x] `expediente.html`
+- [x] `ficha-manual.html`
+- [x] `firmar.html`
+- [x] `firmas.html`
+- [x] `verificar-firma.html`
+- [x] `verificador.html`
+- [x] `guia-agente.html`
+- [x] `legal.html`
 - [x] `avm.html`
 - [x] `contratos.html`
 - [x] `image-cleaner.html`
 - [x] `correo.html`
 - [x] `whatsapp-chatgpt.html`
 - [x] `robin.html`
-- [x] `whatsapp.html` — sin segunda hoja visual.
-
-Image Cleaner conserva carga, limpieza IA, descarga, guardado nativo y handoff a Ficha/Facebook Ads/Video. Robin conserva ruta diaria, prospectos prioritarios, copiloto Broq y marcador de cierres, pero ya comparte la identidad de Broquer.
-
-### Superficies adicionales protegidas por auditoría Canon
-
-Además de las migraciones explícitas anteriores, Quality ya vigila permanentemente:
-
 - [x] `tareas.html`
-- [x] `firmas.html`
 - [x] `finanzas.html`
 - [x] `cumplimiento.html`
 - [x] `video.html`
@@ -127,16 +134,56 @@ Además de las migraciones explícitas anteriores, Quality ya vigila permanentem
 - [x] `admin.html`
 - [x] `soporte.html`
 
-Estas pantallas pasaron el auditor sin necesidad de reescrituras cosméticas innecesarias. Los bloques que representan contenido externo o miniaturas de otros productos permanecen exentos solo cuando están marcados de forma estrecha y explícita.
+Estas superficies conservan su densidad y layout de dominio, pero comparten paleta, tipografía, geometría, estados y reglas estructurales desde Canon.
+
+## Últimos cuatro outliers — RESUELTOS
+
+El barrido completo de 41 superficies previo a incluir Blog encontró solo cuatro incumplimientos reales:
+
+### `isr.html`
+
+- Dos reglas de CTA usaban tinta negra como superficie de acción.
+- Se movieron a los tokens azules de acción Canon sin alterar cálculo, formulario ni PDF.
+
+### `bandeja.html`
+
+- Un tamaño tipográfico fijo y un glifo `✕` quedaban fuera del contrato.
+- Se sustituyeron por escala tipográfica Canon y texto accesible `Cerrar`.
+
+### `legal.html`
+
+- Conservaba una skin histórica con colores y geometría hardcodeados.
+- Se reemplazó únicamente la capa visual; contenido jurídico y navegación por pestañas permanecen intactos.
+
+### `verificador.html`
+
+Era el último outlier grande: usaba aliases visuales históricos no definidos por Canon, numerosos hardcodes, emoji como iconografía y una copia oculta del shell.
+
+Se migró manteniendo intactos checklist, IDs, handlers y flujo de análisis IA:
+
+- CSS reconstruido sobre tokens Canon;
+- aliases históricos eliminados;
+- copia oculta de sidebar eliminada;
+- estados y acciones expresados con texto/SVG-neutral en lugar de emoji;
+- auditor dirigido ejecutado antes de permitir el commit.
+
+El transformador y workflow temporales usados para esta migración fueron eliminados después de validar el resultado; no quedó andamiaje de una sola vez en el repositorio.
 
 ## Validación automática
 
-Último estado limpio validado de esta rama:
+Último estado global limpio validado antes de la siguiente sincronización con la rama técnica:
 
-- **232 tests:** pasan.
-- **26 superficies en `audit.py`: 0 violaciones.**
-- **`scripts/architecture_debt.py`: pasa.**
-- `whatsapp.html` permanece dentro de su ceiling de tamaño; no se relajó el guard para acomodar la migración.
+- **238 tests: pasan.**
+- **42 superficies en `audit.py`: 0 violaciones.**
+- **`scripts/architecture_debt.py`: pasa; la deuda no creció.**
+- `direct_env_reads`: 0.
+- `duplicated_auth_helpers`: 0.
+- `service_key_fallbacks`: 0.
+- `embedded_jwt_secrets`: 0.
+- `fail_open_webhook_secrets`: 0.
+- `fail_open_entitlements`: 0.
+- `direct_supabase_rest`: 1, todavía contenido en `main.py` y dentro de su ceiling.
+- Los 10 archivos de código mayores a 100 KB permanecen dentro de sus ceilings; `whatsapp.html` sigue por debajo de su límite estricto.
 
 Quality protege específicamente contra:
 
@@ -144,12 +191,18 @@ Quality protege específicamente contra:
 - nuevos `:root` de producto en superficies migradas;
 - regreso de Bricolage/Figtree o `--b2-*` en autenticación/Landing;
 - HTML que vuelva a apropiarse del sidebar;
-- aliases visuales históricos en ISR/AVM/Contratos/Image Cleaner;
-- regresiones auditables de color, contraste, tipografía, geometría y hardcodes en las superficies incluidas.
+- aliases visuales históricos en módulos migrados;
+- emojis usados como iconografía de interfaz;
+- regresiones auditables de color, contraste, tipografía, geometría y hardcodes en las superficies activas.
 
-## Deuda visual restante
+## Superficies deliberadamente fuera del Canon de la app
 
-La deuda de **sistema visual activo** está esencialmente cerrada. Lo que queda se divide en dos categorías:
+### Motor de sitios públicos de agentes
+
+- `sitio.html`
+- `404.html`
+
+Estas páginas cargan `sitio.css` / `sitio-engine.js` y representan los sitios públicos generados para agentes/clientes. **No son UI de la aplicación Broquer** y no deben heredar `app-shell.js` ni ser forzadas a parecerse al dashboard. Su exclusión es arquitectónica y deliberada, no deuda pendiente.
 
 ### Artefactos históricos / de referencia
 
@@ -157,12 +210,15 @@ La deuda de **sistema visual activo** está esencialmente cerrada. Lo que queda 
 - `preview-redesign.html`
 - `mock-editorial.html`
 - `mock-ejecutiva.html`
+- `videos/landing.html` cuando se use como referencia/demo aislada.
 
-Estos archivos pueden conservarse, archivarse o eliminarse según su utilidad histórica; no deben convertirse en fuentes de diseño del producto.
+Estos archivos no son fuentes de diseño del producto. Pueden conservarse, archivarse o eliminarse según su utilidad histórica, pero no deben influir en nuevas superficies.
 
-### Afinado por módulo
+## Deuda visual restante
 
-Todavía puede existir CSS específico antiguo, geometría local o patrones mejorables en superficies no cubiertas por las 26 auditorías. Ese trabajo es **refinamiento**, no coexistencia de dos sistemas de diseño. Debe atacarse módulo por módulo sin reintroducir tokens o chrome paralelos.
+La deuda de **sistema visual activo** queda cerrada por contrato: el inventario activo conocido está cubierto por Canon y por auditoría automática.
+
+Puede seguir existiendo refinamiento de UX o CSS específico de dominio —densidad, microinteracciones, jerarquías locales, simplificación de markup—, pero ya no existe una segunda identidad visual ejecutable que compita con Canon. Cualquier refinamiento futuro debe reducir complejidad sin reintroducir tokens, chrome o skins paralelos.
 
 `index.html` conserva únicamente bloques auxiliares estrechos y explícitamente exentos necesarios para su dashboard; no constituyen un segundo theme.
 
@@ -180,6 +236,8 @@ Una pantalla se considera alineada cuando:
 
 ## Trabajo paralelo y seguridad
 
-La unificación visual vive en **`agent/frontend-canon-unification`** y su PR apunta a **`agent/architecture-cleanup`**. La auditoría técnica puede seguir avanzando en paralelo; antes de cerrar el PR visual se sincroniza explícitamente con el head técnico vigente y se vuelve a ejecutar Quality.
+La unificación visual vive en **`agent/frontend-canon-unification`** y su PR apunta a **`agent/architecture-cleanup`**. La auditoría técnica sigue avanzando en paralelo mediante ciclos de migración protegidos. La rama visual solo se sincroniza con estados técnicos terminados y limpios; no incorpora workflows/scripts temporales a mitad de un ciclo.
+
+Antes de considerar listo el PR visual se sincroniza explícitamente con el último head técnico terminado y se vuelve a ejecutar Quality completo.
 
 No se realizan cambios visuales directamente sobre la rama técnica y este PR permanece Draft. No hay merge a `main` ni despliegue de producción implícito en este trabajo.
