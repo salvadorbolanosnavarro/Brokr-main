@@ -54,17 +54,16 @@ class FrontendCanonContractTests(unittest.TestCase):
                 offenders.add(path.name)
         self.assertTrue(offenders.issubset(allowed), f"new module-local token roots detected: {sorted(offenders - allowed)}")
 
-    def test_shell_owned_sidebar_css_does_not_spread(self):
-        allowed = {"isr.html", "propiedades.html"}
+    def test_shell_owned_sidebar_css_exists_only_in_shell(self):
         offenders = set()
         for path in ROOT.glob("*.html"):
             source = path.read_text(encoding="utf-8")
             if re.search(r"(?m)^\s*\.app-sidebar\s*\{", source):
                 offenders.add(path.name)
-        self.assertTrue(offenders.issubset(allowed), f"shell-owned sidebar CSS duplicated in new pages: {sorted(offenders - allowed)}")
+        self.assertEqual(offenders, set(), f"HTML pages must not own app-shell sidebar CSS: {sorted(offenders)}")
 
-    def test_contactos_and_leads_use_shell_owned_chrome(self):
-        for name in ("contactos.html", "leads.html"):
+    def test_migrated_modules_use_shell_owned_chrome(self):
+        for name in ("contactos.html", "leads.html", "isr.html", "propiedades.html"):
             source = (ROOT / name).read_text(encoding="utf-8")
             self.assertNotIn("shell-replaced-sidebar", source, name)
             self.assertNotRegex(source, r"(?m)^\s*\.app-sidebar\s*\{")
