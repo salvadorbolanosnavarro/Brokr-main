@@ -66,25 +66,16 @@ Quality audita automáticamente estas **42 superficies**:
 
 ## Últimos cuatro outliers — RESUELTOS
 
-El barrido amplio final encontró cuatro incumplimientos reales:
-
-### `isr.html`
-Dos reglas de CTA usaban tinta negra como superficie de acción. Se movieron a tokens azules Canon sin alterar cálculo, formulario ni PDF.
-
-### `bandeja.html`
-Un tamaño tipográfico fijo y un glifo `✕` quedaron fuera del contrato. Se sustituyeron por escala Canon y texto accesible `Cerrar`.
-
-### `legal.html`
-Conservaba una skin histórica con colores/geometría hardcodeados. Se reemplazó la capa visual manteniendo contenido jurídico y navegación por pestañas. Después se compactó únicamente formato fuente no renderizado para respetar el ceiling arquitectónico existente **sin aumentarlo**.
-
-### `verificador.html`
-Era el último outlier grande: aliases históricos no definidos por Canon, hardcodes, emojis de UI y una copia oculta del shell. Se reconstruyó la capa visual sobre Canon conservando checklist, IDs, handlers y flujo de análisis IA.
+- **ISR:** dos CTA que usaban tinta negra como acción pasaron a tokens azules Canon.
+- **Bandeja:** se sustituyeron un tamaño fijo y el glifo `✕` por escala Canon y texto accesible `Cerrar`.
+- **Legal:** la skin histórica se sustituyó por Canon conservando contenido jurídico y tabs; después se compactó únicamente formato fuente no renderizado para respetar el ceiling existente sin aumentarlo.
+- **Verificador:** se eliminaron aliases históricos, hardcodes, emojis de UI y una copia oculta del shell, preservando checklist, IDs, handlers y análisis IA.
 
 Todos los workflows/scripts de transformación de una sola vez fueron eliminados después de validar sus resultados.
 
 ## Validación final
 
-Último Quality limpio sobre `agent/frontend-canon-unification`, sincronizado hasta el último ciclo técnico **terminado y limpio** incorporado (`ff4d91c`):
+Último Quality limpio sobre `agent/frontend-canon-unification`, sincronizado hasta el último ciclo técnico **terminado y limpio** de `agent/architecture-cleanup` incorporado (`2d426868`, machote update PATCH):
 
 - **241 tests: pasan.**
 - **42 superficies: 0 violaciones.**
@@ -97,6 +88,7 @@ Todos los workflows/scripts de transformación de una sola vez fueron eliminados
 - `fail_open_entitlements`: 0.
 - `direct_supabase_rest`: 1 (`main.py`), dentro de ceiling.
 - Archivos de código >100 KB: 10, dentro del ceiling existente.
+- `main.py`: **587,204 / 595,635 bytes**.
 - `whatsapp.html`: **127,064 / 127,110 bytes**.
 - `legal.html`: **109,055 / 109,324 bytes**.
 
@@ -129,6 +121,6 @@ La deuda de **sistema visual activo** queda cerrada por contrato. Puede seguir e
 
 La unificación visual vive en **`agent/frontend-canon-unification`** y PR #45 apunta a **`agent/architecture-cleanup`**, no a `main`. La rama visual se sincroniza únicamente con ciclos técnicos terminados y limpios.
 
-Después de la validación de `ff4d91c`, la rama técnica comenzó otro ciclo (`machote update PATCH`) que todavía conservaba transformador temporal al hacer esta anotación. Ese ciclo posterior **no se incorporó deliberadamente**. Cuando termine, podrá sincronizarse en otro lote y volver a ejecutar Quality.
+En esta tanda se incorporaron y validaron los ciclos técnicos limpios de machote create POST y machote update PATCH. Al cierre de la validación, `agent/architecture-cleanup` permanecía en `2d426868`, por lo que el frontend quedó **0 commits detrás** del último estado técnico limpio observado.
 
 El PR permanece Draft. No hay merge a `main` ni despliegue de producción implícito en este trabajo.
