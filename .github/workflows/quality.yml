@@ -52,6 +52,7 @@ jobs:
           contratos.html
           image-cleaner.html
           robin.html
+          landing.html
 
       - name: Report architecture debt
         run: python scripts/architecture_debt.py
