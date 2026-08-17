@@ -1,10 +1,21 @@
 """Permanent guards for main.py telemetry report reads delegated to Core."""
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def core_database_imports(source: str) -> set[str]:
+    tree = ast.parse(source)
+    return {
+        alias.name
+        for node in tree.body
+        if isinstance(node, ast.ImportFrom) and node.module == "core.database"
+        for alias in node.names
+    }
 
 
 class MainTelemetryReadsCoreRefactorTests(unittest.TestCase):
@@ -14,7 +25,7 @@ class MainTelemetryReadsCoreRefactorTests(unittest.TestCase):
 
     def test_report_reads_delegate_to_core_database(self):
         source = self.source
-        self.assertIn("from core.database import delete_rows, get_rows, post_rows", source)
+        self.assertTrue({"delete_rows", "get_rows", "post_rows"} <= core_database_imports(source))
         self.assertIn('usage_rows = await get_rows(\n            "usage_logs",', source)
         self.assertIn('session_rows = await get_rows(\n            "module_sessions",', source)
         self.assertNotIn("/rest/v1/usage_logs", source)
