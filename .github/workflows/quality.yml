@@ -54,6 +54,9 @@ jobs:
           robin.html
           landing.html
           tareas.html
+          firmas.html
+          finanzas.html
+          cumplimiento.html
 
       - name: Report architecture debt
         run: python scripts/architecture_debt.py
