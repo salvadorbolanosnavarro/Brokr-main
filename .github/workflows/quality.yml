@@ -39,6 +39,7 @@ jobs:
         run: >-
           python audit.py
           estadisticas.html
+          login.html
           registro.html
           reset-password.html
           unirse.html
