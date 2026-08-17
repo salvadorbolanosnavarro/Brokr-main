@@ -1,9 +1,22 @@
 """Permanent guard for Facebook entity ledger PATCH Core routing."""
+from __future__ import annotations
+
+import ast
 from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
+
+
+def core_database_imports(source: str) -> set[str]:
+    tree = ast.parse(source)
+    return {
+        alias.name
+        for node in tree.body
+        if isinstance(node, ast.ImportFrom) and node.module == "core.database"
+        for alias in node.names
+    }
 
 
 class MainFbEntityPatchCoreRefactorTests(unittest.TestCase):
@@ -19,7 +32,7 @@ class MainFbEntityPatchCoreRefactorTests(unittest.TestCase):
     def test_direct_patch_stays_removed(self):
         block = self._block()
         self.assertNotIn('r = await client.patch(', block)
-        self.assertIn('from core.database import delete_rows, get_rows, patch_rows, post_rows', self.source)
+        self.assertIn('patch_rows', core_database_imports(self.source))
         compile(self.source, "main.py", "exec")
 
     def test_core_patch_preserves_best_effort_error_contract(self):
