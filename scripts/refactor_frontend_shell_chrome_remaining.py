@@ -4,6 +4,8 @@
 Both pages already delegate visible navigation to app-shell.js. Propiedades
 still carries the old complete sidebar CSS block; ISR carries only a residual
 .app-sidebar skin rule plus the hidden sidebar markup. Refuse unexpected shapes.
+
+This file is the one-shot workflow trigger while this migration is active.
 """
 from __future__ import annotations
 
