@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compact only Legal's inline Canon CSS without touching legal copy or JS."""
+"""Compact only Legal's presentation markup without touching legal copy or JS."""
 # One-shot migration trigger; remove this script after the guarded application.
 from __future__ import annotations
 
@@ -20,6 +20,11 @@ def compact_css(css: str) -> str:
     return css.strip()
 
 
+def strip_html_comments(source: str) -> str:
+    """Remove ordinary non-rendered HTML comments, preserving conditional ones."""
+    return re.sub(r"<!--(?!\[if\b).*?-->", "", source, flags=re.S | re.I)
+
+
 def main() -> None:
     source = PATH.read_text(encoding="utf-8")
     match = re.search(r"<style>(.*?)</style>", source, flags=re.S)
@@ -27,17 +32,17 @@ def main() -> None:
         raise RuntimeError("legal.html has no inline style block")
     before = match.group(1)
     after = compact_css(before)
-    if after == before:
-        raise RuntimeError("Legal CSS is already compact; refusing no-op")
     transformed = source[:match.start(1)] + after + source[match.end(1):]
-    if len(transformed.encode("utf-8")) > CEILING:
+    transformed = strip_html_comments(transformed)
+    if transformed == source:
+        raise RuntimeError("Legal presentation is already compact; refusing no-op")
+    final_size = len(transformed.encode("utf-8"))
+    if final_size > CEILING:
         raise RuntimeError(
-            f"Compacted legal.html is still {len(transformed.encode('utf-8'))} bytes; ceiling {CEILING}"
+            f"Compacted legal.html is still {final_size} bytes; ceiling {CEILING}"
         )
     PATH.write_text(transformed, encoding="utf-8")
-    print(
-        f"legal.html: {len(source.encode('utf-8'))} -> {len(transformed.encode('utf-8'))} bytes"
-    )
+    print(f"legal.html: {len(source.encode('utf-8'))} -> {final_size} bytes")
 
 
 if __name__ == "__main__":
