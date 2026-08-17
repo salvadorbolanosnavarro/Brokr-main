@@ -4888,17 +4888,20 @@ async def actualizar_machote(machote_id: str, request: Request):
         raise HTTPException(status_code=400, detail="No hay nada que actualizar.")
     parche["updated_at"] = datetime.utcnow().isoformat()
 
-    async with httpx.AsyncClient(timeout=15) as client:
-        r = await client.patch(
-            f"{SUPABASE_URL}/rest/v1/machotes_contrato",
-            headers=_sb_headers({"Content-Type": "application/json",
-                                 "Prefer": "return=representation"}),
-            params={"id": f"eq.{machote_id}", "user_id": f"eq.{user_id}"},
-            json=parche,
+    try:
+        rows = await patch_rows(
+            "machotes_contrato",
+            {"id": f"eq.{machote_id}", "user_id": f"eq.{user_id}"},
+            parche,
+            prefer="return=representation",
+            timeout=15,
+            accepted_statuses=(200, 204),
         )
-    if r.status_code not in (200, 204) or not r.json():
+    except httpx.HTTPStatusError:
         raise HTTPException(status_code=500, detail="No se pudieron guardar los cambios.")
-    return r.json()[0]
+    if not rows:
+        raise HTTPException(status_code=500, detail="No se pudieron guardar los cambios.")
+    return rows[0]
 
 
 @app.post("/contrato/machote/{machote_id}/preview")
