@@ -119,7 +119,7 @@ body[data-app="bandeja"] .bk-page{
   border-radius:var(--r-pill);padding:5px var(--sp-3);
   font-family:inherit;font-size:var(--fs-caption);font-weight:700;
 }
-.bx-avisos__no{flex:none;border:0;background:transparent;cursor:pointer;color:var(--mute);font-size:13px;padding:2px 4px}
+.bx-avisos__no{flex:none;border:0;background:transparent;cursor:pointer;color:var(--mute);font-size:var(--fs-xs);padding:2px 4px}
 
 .bx-list__empty{padding:var(--sp-8) var(--sp-5);text-align:center}
 .bx-list__empty p{font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh);margin:0}
@@ -771,7 +771,7 @@ function ofrecerAvisos(){
     barra.innerHTML =
       '<span>Avísame cuando llegue un mensaje nuevo.</span>' +
       '<button type="button" class="bx-avisos__ok">Activar</button>' +
-      '<button type="button" class="bx-avisos__no" aria-label="Ahora no">✕</button>';
+      '<button type="button" class="bx-avisos__no" aria-label="Ahora no">Cerrar</button>';
     document.querySelector('.bx-list__head').appendChild(barra);
     const cerrar = () => { localStorage.setItem('bx_avisos_pedido','1'); barra.remove(); };
     barra.querySelector('.bx-avisos__ok').onclick = async () => {
