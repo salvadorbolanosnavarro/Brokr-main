@@ -53,7 +53,6 @@
   /* Drop garish gradients on home-header */
   .home-header::before, .home-header::after { display:none!important; }
   /* Misc legacy */
-  .app-sidebar { background:var(--paper)!important; border-right:1px solid var(--line)!important; }
   .proto-nav, .bottom-nav, .tabbar { background:var(--bone)!important; border-top:1px solid var(--line)!important; }
   /* Force any greeting "name" or page title light text to be dark */
   .greeting-text .hello, .greeting-text .name, .profile-name, .profile-sub, .panel-title, .modules-header h2 { color:var(--ink)!important; }
@@ -636,17 +635,6 @@ html, body {
 </head>
 <body data-app="isr">
 
-<!-- shell-replaced-sidebar -->
-<div style="display:none" hidden>
-  <aside class="app-sidebar">
-    <div class="app-sidebar__brand">Broquer<span class="dot">.</span></div>
-    <a class="app-nav-link" href="index.html">Inicio</a>
-    <a class="app-nav-link" href="propiedades.html">Inmuebles</a>
-    <a class="app-nav-link" href="contactos.html">Contactos</a>
-    <a class="app-nav-link" href="contratos.html">Contratos</a>
-    <a class="app-nav-link" href="avm.html">AVM</a>
-  </aside>
-</div>
 
 <!-- CONTENT -->
 <div class="page-scroll">
