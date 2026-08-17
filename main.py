@@ -10845,19 +10845,16 @@ async def demo_agendar(req: DemoRequest, request: Request):
 
     fila = {"nombre": nombre, "contacto": contacto, "fecha": fecha, "hora": hora,
             "mensaje": mensaje, "origen": origen, "user_id": user_id}
-    async with httpx.AsyncClient(timeout=10) as client:
-        r = await client.post(
-            f"{SUPABASE_URL}/rest/v1/demos_agendadas",
-            headers={
-                "apikey": SUPABASE_SERVICE_KEY,
-                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                "Content-Type": "application/json",
-                "Prefer": "return=minimal",
-            },
-            json=fila,
+    try:
+        await post_rows(
+            "demos_agendadas",
+            fila,
+            prefer="return=minimal",
+            timeout=10,
+            accepted_statuses=(200, 201),
         )
-        if r.status_code not in (200, 201):
-            raise HTTPException(status_code=502, detail="No se pudo agendar. Intenta de nuevo en un momento.")
+    except httpx.HTTPStatusError:
+        raise HTTPException(status_code=502, detail="No se pudo agendar. Intenta de nuevo en un momento.")
 
     # Aviso por correo. Si Resend falla, la demo ya quedó guardada: no se rompe.
     if _RESEND_KEY_DEMO:
