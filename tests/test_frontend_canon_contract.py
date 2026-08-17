@@ -21,8 +21,20 @@ class FrontendCanonContractTests(unittest.TestCase):
         self.assertIn('@import url("brokr-theme.css")', shim)
         self.assertNotIn(":root", shim)
 
+    def test_whatsapp_adapter_is_not_a_second_theme(self):
+        adapter = (ROOT / "broquer-ui.css").read_text(encoding="utf-8")
+        self.assertNotRegex(adapter, r"(?m)^\s*:root\s*\{")
+        for forbidden in (
+            "--bq-blue:", "--bq-navy:", "--bq-ink:", "--bq-font:",
+            "--sky-blue:", "--forest:", "--ink:", "--font-sans:",
+        ):
+            self.assertNotIn(forbidden, adapter)
+        self.assertIn('body[data-app="whatsapp"]', adapter)
+        self.assertIn("var(--sky-blue)", adapter)
+        self.assertIn("var(--line-2)", adapter)
+
     def test_no_new_secondary_theme_consumers(self):
-        """The legacy UI skin is now isolated to WhatsApp and may not spread."""
+        """The compatibility adapter is isolated to WhatsApp and may not spread."""
         consumers = set()
         for path in ROOT.glob("*.html"):
             source = path.read_text(encoding="utf-8")
@@ -32,7 +44,7 @@ class FrontendCanonContractTests(unittest.TestCase):
         self.assertEqual(
             consumers,
             {"whatsapp.html"},
-            "broquer-ui.css must remain isolated to the remaining WhatsApp migration debt",
+            "broquer-ui.css must remain isolated to WhatsApp until it can be deleted",
         )
 
     def test_new_modules_do_not_define_another_token_root(self):
