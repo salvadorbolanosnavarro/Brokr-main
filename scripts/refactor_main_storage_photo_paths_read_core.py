@@ -2,6 +2,7 @@
 """Route only _storage_rutas_fotos_de_usuario property read through Core."""
 from pathlib import Path
 
+# Harmless touch used only to trigger the temporary deterministic apply workflow.
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
 
