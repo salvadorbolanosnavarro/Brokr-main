@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Compact only Legal's inline Canon CSS without touching legal copy or JS."""
+# One-shot migration trigger; remove this script after the guarded application.
 from __future__ import annotations
 
 from pathlib import Path
