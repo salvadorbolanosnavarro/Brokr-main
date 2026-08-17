@@ -52,18 +52,26 @@ class FrontendCanonContractTests(unittest.TestCase):
 
     def test_new_modules_do_not_define_another_token_root(self):
         allowed = {
-            "Copia de index.html", "avm.html", "contratos.html",
-            "image-cleaner.html", "index.html", "landing.html",
-            "mock-editorial.html", "mock-ejecutiva.html", "preview-redesign.html",
+            "Copia de index.html",
+            "image-cleaner.html",
+            "index.html",
+            "landing.html",
+            "mock-editorial.html",
+            "mock-ejecutiva.html",
+            "preview-redesign.html",
             "robin.html",
         }
         offenders = set()
         for path in ROOT.glob("*.html"):
             source = strip_audit_exempt_blocks(path.read_text(encoding="utf-8"))
+            # AVM's only remaining root is a media-scoped safe-area env variable,
+            # not a theme/token root; ignore that exact declaration.
+            source = source.replace(':root { --safe-top: max(env(safe-area-inset-top, 0px), 44px); }', '')
             if re.search(r"(?m)^\s*:root\s*\{", source):
                 offenders.add(path.name)
         self.assertTrue(offenders.issubset(allowed), f"new module-local token roots detected: {sorted(offenders - allowed)}")
-        self.assertNotIn("isr.html", offenders, "ISR application UI must consume Canon directly")
+        for migrated in ("isr.html", "avm.html", "contratos.html"):
+            self.assertNotIn(migrated, offenders, f"{migrated} application UI must consume Canon directly")
 
     def test_shell_owned_sidebar_css_exists_only_in_shell(self):
         offenders = set()
@@ -74,12 +82,23 @@ class FrontendCanonContractTests(unittest.TestCase):
         self.assertEqual(offenders, set(), f"HTML pages must not own app-shell sidebar CSS: {sorted(offenders)}")
 
     def test_migrated_modules_use_shell_owned_chrome(self):
-        for name in ("contactos.html", "leads.html", "isr.html", "propiedades.html"):
+        for name in ("contactos.html", "leads.html", "isr.html", "propiedades.html", "avm.html", "contratos.html"):
             source = (ROOT / name).read_text(encoding="utf-8")
             self.assertNotIn("shell-replaced-sidebar", source, name)
             self.assertNotRegex(source, r"(?m)^\s*\.app-sidebar\s*\{")
             self.assertNotIn(".app-sidebar__brand", source, name)
             self.assertIn('<script src="app-shell.js" defer></script>', source, name)
+
+    def test_avm_and_contratos_stay_on_direct_canon_tokens(self):
+        avm = (ROOT / "avm.html").read_text(encoding="utf-8")
+        contratos = (ROOT / "contratos.html").read_text(encoding="utf-8")
+        for source, name in ((avm, "avm.html"), (contratos, "contratos.html")):
+            self.assertIn('href="brokr-theme.css"', source, name)
+            self.assertNotIn("broquer-ui.css", source, name)
+        self.assertNotIn('--navy: var(--sky-navy) !important;', avm)
+        self.assertNotIn('--teal-glow:', avm)
+        self.assertNotRegex(contratos, r"(?m)^\s*:root\s*\{")
+        self.assertNotIn("var(--tealp)", contratos)
 
     def test_module_template_points_only_to_canon(self):
         source = (ROOT / "_TEMPLATE-modulo.html").read_text(encoding="utf-8")
