@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Route only the website-lead contact dedup GET through core.database."""
+# Temporary workflow trigger; remove with the transform after application.
 from __future__ import annotations
 
 from pathlib import Path
