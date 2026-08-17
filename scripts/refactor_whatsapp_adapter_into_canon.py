@@ -8,7 +8,8 @@ Preconditions:
 
 The transform appends the domain rules to the Canon stylesheet, removes the
 secondary stylesheet link from WhatsApp, and deletes broquer-ui.css. It refuses
-unexpected shapes so no large legacy chat markup is otherwise touched.
+unexpected shapes so no large legacy chat markup is otherwise touched. This is
+a guarded one-shot migration.
 """
 from __future__ import annotations
 
