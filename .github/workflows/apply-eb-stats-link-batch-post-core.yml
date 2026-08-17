@@ -1,0 +1,55 @@
+name: Apply EB stats link batch POST Core transform
+
+on:
+  push:
+    branches:
+      - agent/architecture-cleanup
+    paths:
+      - scripts/refactor_main_eb_stats_link_batch_post_core.py
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: agent/architecture-cleanup
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Apply deterministic transform
+        run: python scripts/refactor_main_eb_stats_link_batch_post_core.py
+
+      - name: Compile main
+        run: python -m py_compile main.py
+
+      - name: Run directed dry-run guard
+        run: python -m unittest tests.test_main_eb_stats_link_batch_post_transform
+
+      - name: Reject unexpected diff
+        shell: bash
+        run: |
+          git diff --check
+          mapfile -t changed < <(git diff --name-only)
+          if [[ "${#changed[@]}" -ne 1 || "${changed[0]}" != "main.py" ]]; then
+            printf 'Unexpected changed files:\n'
+            printf '%s\n' "${changed[@]}"
+            exit 1
+          fi
+
+      - name: Commit transformed main
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add main.py
+          git commit -m "refactor: route EB stats link batch post through Core"
+          git push origin HEAD:agent/architecture-cleanup
