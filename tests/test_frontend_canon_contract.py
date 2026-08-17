@@ -72,6 +72,14 @@ class FrontendCanonContractTests(unittest.TestCase):
         self.assertNotIn("broquer-ui.css", source)
         self.assertNotIn("brokr-theme-v2.css", source)
 
+    def test_registration_screen_stays_on_canon(self):
+        source = (ROOT / "registro.html").read_text(encoding="utf-8")
+        self.assertIn('href="brokr-theme.css"', source)
+        self.assertNotIn("Bricolage Grotesque", source)
+        self.assertNotIn("Figtree", source)
+        self.assertNotIn("--b2-", source)
+        self.assertNotRegex(source, r"(?m)^\s*:root\s*\{")
+
     def test_design_contract_names_single_executable_source(self):
         source = (ROOT / "DESIGN.md").read_text(encoding="utf-8")
         self.assertIn("`brokr-theme.css` es la implementación visual canónica", source)
