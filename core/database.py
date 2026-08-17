@@ -205,12 +205,20 @@ async def delete_rows(
     table: str,
     params: Mapping[str, Any],
     *,
+    prefer: str | None = None,
     timeout: httpx.Timeout | float = DEFAULT_TIMEOUT,
+    accepted_statuses: tuple[int, ...] | None = None,
 ) -> None:
+    """Delete rows while allowing callers to preserve exact legacy HTTP semantics.
+
+    Existing callers retain the historical default: no Prefer header and any
+    ordinary 2xx response accepted. Migrations that depended on a specific
+    Prefer value or exact success-status set can make that contract explicit.
+    """
     async with httpx.AsyncClient(timeout=timeout) as client:
         response = await client.delete(
             rest_url(table),
-            headers=service_headers(),
+            headers=service_headers(prefer=prefer),
             params=dict(params),
         )
-    response.raise_for_status()
+    _require_response_status(response, accepted_statuses)
