@@ -11278,16 +11278,18 @@ async def importar_contactos_eb(request: Request):
                         patch["etiquetas"] = union
                 if patch:
                     patch["updated_at"] = now_iso
-                    filtro_patch = (f"org_id=eq.{org_id_import}" if org_id_import
-                                    else f"user_id=eq.{user_id}")
-                    rb = await client.patch(
-                        f"{SUPABASE_URL}/rest/v1/contactos?id=eq.{existente['id']}&{filtro_patch}",
-                        headers=sb_headers,
-                        json=patch
-                    )
-                    if rb.status_code in (200, 204):
+                    filtro_patch = ({"org_id": f"eq.{org_id_import}"} if org_id_import
+                                    else {"user_id": f"eq.{user_id}"})
+                    try:
+                        await patch_rows(
+                            "contactos",
+                            {"id": f"eq.{existente['id']}", **filtro_patch},
+                            patch,
+                            timeout=20,
+                            accepted_statuses=(200, 204),
+                        )
                         actualizados += 1
-                    else:
+                    except httpx.HTTPStatusError:
                         errores += 1
                 else:
                     omitidos += 1
