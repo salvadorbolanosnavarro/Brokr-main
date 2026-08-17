@@ -1,207 +1,295 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap"/>
-<style>
-/* ════════════════════════════════════════════════════════════════
-   BROQUER — Completa tu perfil · Rediseño "Blanca"
-   Piel nueva sobre la misma estructura y lógica.
-   ════════════════════════════════════════════════════════════════ */
-
-/* ═══ AUDIT-EXEMPT: definición de tokens del sistema (en producción migrarán a broquer-2.css) ═══ */
-:root {
-  --b2-blue:        #0D6BF0;
-  --b2-blue-press:  #0A56C4;
-  --b2-blue-soft:   #EAF2FE;
-  --b2-blue-ring:   rgba(13,107,240,.18);
-  --b2-ink:         #1B2733;
-  --b2-mute:        #5A6B7C;
-  --b2-paper:       #FFFFFF;
-  --b2-canvas:      #F6F8FB;
-  --b2-line:        #E3E9F0;
-  --b2-bien:        #0E8F62;
-  --b2-bien-soft:   #E7F5EF;
-  --b2-baja:        #A85D62;
-  --b2-baja-soft:   #F9EEEC;
-  --b2-on-blue:     #FFFFFF;
-  --b2-spin-track:  rgba(255,255,255,.35);
-
-  --font-display: 'Bricolage Grotesque', 'Figtree', system-ui, sans-serif;
-  --font-sans:    'Figtree', system-ui, -apple-system, sans-serif;
-
-  --fs2-caption: 12px;
-  --fs2-sm:      14px;
-  --fs2-body:    16px;
-  --fs2-h3:      22px;
-
-  --r2-sm:   10px;
-  --r2:      14px;
-  --r2-lg:   22px;
-  --r2-pill: 999px;
-
-  --sh2-card: 0 1px 2px rgba(27,39,51,.05), 0 8px 24px rgba(27,39,51,.07);
-  --sh2-bar:  0 2px 6px rgba(27,39,51,.06), 0 14px 44px rgba(13,107,240,.16);
-
-  --ease2: cubic-bezier(.22,.61,.36,1);
-}
-/* ═══ /AUDIT-EXEMPT ═══ */
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html, body {
-  min-height: 100%;
-  background: var(--b2-canvas);
-  font-family: var(--font-sans);
-  color: var(--b2-ink);
-  font-size: var(--fs2-body);
-  letter-spacing: -0.005em;
-  -webkit-font-smoothing: antialiased;
-}
-:focus-visible { outline: 2px solid var(--b2-blue); outline-offset: 2px; border-radius: var(--r2-sm); }
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms; transition-duration: .01ms; }
-}
-
-.wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
-
-.card {
-  width: 100%; max-width: 460px;
-  background: var(--b2-paper);
-  border: 1px solid var(--b2-line);
-  border-radius: var(--r2-lg);
-  padding: 40px 36px 36px;
-  box-shadow: var(--sh2-card);
-  animation: cardIn .5s var(--ease2);
-}
-@keyframes cardIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
-
-.logo-area { text-align: center; margin-bottom: 30px; }
-.logo-area img { height: 40px; }
-.logo-area h2 {
-  font-family: var(--font-display);
-  font-size: var(--fs2-h3); font-weight: 800;
-  margin-top: 14px; color: var(--b2-ink);
-  letter-spacing: -0.03em;
-}
-.logo-area p { font-size: var(--fs2-sm); color: var(--b2-mute); margin-top: 6px; line-height: 1.55; }
-
-.field { margin-bottom: 14px; }
-.field label {
-  display: block;
-  font-size: var(--fs2-caption); font-weight: 700;
-  color: var(--b2-mute);
-  letter-spacing: .01em;
-  margin-bottom: 6px;
-}
-.field input {
-  width: 100%;
-  height: 50px;
-  padding: 0 16px;
-  background: var(--b2-paper);
-  border: 1.5px solid var(--b2-line);
-  border-radius: var(--r2);
-  font-family: var(--font-sans);
-  font-size: var(--fs2-body);
-  color: var(--b2-ink);
-  outline: none;
-  transition: border-color .18s var(--ease2), box-shadow .18s var(--ease2);
-}
-.field input::placeholder { color: var(--b2-mute); opacity: .7; }
-.field input:focus { border-color: var(--b2-blue); box-shadow: 0 0 0 4px var(--b2-blue-ring); }
-.field .hint { font-size: var(--fs2-caption); color: var(--b2-mute); margin-top: 6px; line-height: 1.45; }
-
-.btn-primary {
-  width: 100%;
-  height: 52px;
-  border: none;
-  border-radius: var(--r2-pill);
-  background: var(--b2-blue);
-  color: var(--b2-on-blue);
-  font-family: var(--font-sans);
-  font-size: var(--fs2-body); font-weight: 700;
-  cursor: pointer;
-  transition: background .18s var(--ease2), transform .18s var(--ease2), box-shadow .18s var(--ease2);
-  margin-top: 8px;
-}
-.btn-primary:hover { background: var(--b2-blue-press); box-shadow: var(--sh2-bar); }
-.btn-primary:active { transform: scale(.985); }
-.btn-primary:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
-
-.msg {
-  padding: 12px 16px; border-radius: var(--r2);
-  font-size: var(--fs2-sm); margin-bottom: 14px;
-  display: none; line-height: 1.5;
-  border: 1px solid transparent;
-}
-.msg.err { background: var(--b2-baja-soft); color: var(--b2-baja); border-color: var(--b2-baja-soft); display: block; }
-.msg.ok  { background: var(--b2-bien-soft); color: var(--b2-bien); border-color: var(--b2-bien-soft); display: block; }
-
-.spin {
-  display: inline-block; width: 16px; height: 16px;
-  border: 2px solid var(--b2-spin-track);
-  border-top-color: var(--b2-on-blue);
-  border-radius: 50%;
-  animation: spin .7s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.legal-check-row {
-  display: flex; align-items: flex-start; gap: 12px;
-  margin: 18px 0 4px; cursor: pointer;
-}
-.legal-check-row input[type=checkbox] {
-  width: 18px; height: 18px; margin-top: 1px;
-  accent-color: var(--b2-blue); cursor: pointer; flex-shrink: 0;
-}
-.legal-check-row span { font-size: var(--fs2-caption); color: var(--b2-mute); line-height: 1.6; }
-.legal-check-row a { color: var(--b2-ink); text-decoration: underline; text-underline-offset: 2px; font-weight: 600; }
-.legal-check-row a:hover { color: var(--b2-blue); }
-
-</style>
-
 <meta charset="UTF-8"/>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
 <title>Broquer — Completa tu perfil</title>
-<meta name="theme-color" content="#F6F8FB"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --b2-canvas -->
+<meta name="theme-color" content="#FFFFFF"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); pantalla clara Canon -->
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 15% 10%, var(--sky-canvas), transparent 32%),
+    var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
 
+.reg-wrap {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--sp-7) var(--sp-4);
+}
+.reg-shell {
+  width: min(100%, var(--form-max));
+  display: grid;
+  grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+  overflow: hidden;
+  background: var(--paper);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-lg);
+}
+.reg-brand {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 100%;
+  padding: var(--sp-8);
+  overflow: hidden;
+  background: linear-gradient(145deg, var(--sky-navy-deep), var(--sky-navy) 62%, var(--sky-navy-mid));
+  color: var(--paper);
+}
+.reg-brand::after {
+  content: "";
+  position: absolute;
+  width: 17rem;
+  height: 17rem;
+  right: -8rem;
+  bottom: -8rem;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line-on-navy, rgba(255,255,255,.16));
+  background: rgba(255,255,255,.04);
+}
+.reg-brand__logo {
+  width: 9.5rem;
+  height: auto;
+  position: relative;
+  z-index: 1;
+}
+.reg-brand__copy {
+  position: relative;
+  z-index: 1;
+  max-width: 22rem;
+}
+.reg-brand__eyebrow {
+  margin-bottom: var(--sp-3);
+  color: var(--sky-blue-lift);
+  font-size: var(--fs-xs);
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.reg-brand h1 {
+  margin: 0;
+  color: var(--paper);
+  font-size: var(--fs-h1);
+  line-height: var(--lh-h1);
+  letter-spacing: -.03em;
+}
+.reg-brand p {
+  margin: var(--sp-4) 0 0;
+  color: rgba(255,255,255,.76);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+.reg-form {
+  padding: var(--sp-8);
+}
+.reg-form__head { margin-bottom: var(--sp-6); }
+.reg-form__head h2 {
+  margin: 0;
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  letter-spacing: -.025em;
+}
+.reg-form__head p {
+  margin: var(--sp-2) 0 0;
+  color: var(--mute);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+.reg-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+.reg-field { margin-bottom: var(--sp-4); }
+.reg-field label {
+  display: block;
+  margin-bottom: var(--sp-2);
+  color: var(--ink-2);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+.reg-input {
+  width: 100%;
+  height: var(--h);
+  padding: 0 var(--sp-4);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
+  background: var(--shell);
+  color: var(--ink);
+  font: inherit;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.reg-input::placeholder { color: var(--mute-2); }
+.reg-input:focus {
+  outline: none;
+  border-color: var(--sky-blue);
+  background: var(--paper);
+  box-shadow: var(--focus);
+}
+.reg-hint {
+  margin-top: var(--sp-2);
+  color: var(--mute);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-xs);
+}
+.reg-legal {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  margin: var(--sp-2) 0 var(--sp-5);
+  cursor: pointer;
+}
+.reg-legal input {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-top: 2px;
+  flex: 0 0 auto;
+  accent-color: var(--sky-blue);
+}
+.reg-legal span {
+  color: var(--mute);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-xs);
+}
+.reg-legal a {
+  color: var(--sky-blue);
+  font-weight: 700;
+  text-underline-offset: 2px;
+}
+.reg-submit {
+  width: 100%;
+  min-height: var(--h);
+  border: 0;
+  border-radius: var(--r-sm);
+  background: var(--sky-blue);
+  color: var(--paper);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: background var(--dur) var(--ease), transform var(--dur-fast) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.reg-submit:hover:not(:disabled) { background: var(--sky-blue-press); box-shadow: var(--shadow); }
+.reg-submit:active:not(:disabled) { transform: translateY(1px); }
+.reg-submit:disabled { opacity: .42; cursor: not-allowed; box-shadow: none; }
+.reg-msg {
+  display: none;
+  margin-bottom: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid transparent;
+  border-radius: var(--r);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+.reg-msg.err {
+  display: block;
+  border-color: var(--danger-soft);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.reg-msg.ok {
+  display: block;
+  border-color: var(--success-soft);
+  background: var(--success-soft);
+  color: var(--success);
+}
+.reg-spin {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255,255,255,.35);
+  border-top-color: var(--paper);
+  border-radius: var(--r-pill);
+  animation: reg-spin .7s linear infinite;
+}
+@keyframes reg-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 760px) {
+  .reg-wrap { padding: 0; place-items: stretch; }
+  .reg-shell {
+    width: 100%;
+    min-height: 100vh;
+    grid-template-columns: minmax(0, 1fr);
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .reg-brand {
+    min-height: auto;
+    padding: var(--sp-6) var(--sp-5);
+  }
+  .reg-brand__logo { width: 8rem; }
+  .reg-brand__copy { margin-top: var(--sp-8); }
+  .reg-brand h1 { font-size: var(--fs-h2); line-height: var(--lh-h2); }
+  .reg-form { padding: var(--sp-6) var(--sp-5) var(--sp-8); }
+}
+@media (max-width: 520px) {
+  .reg-grid { grid-template-columns: minmax(0, 1fr); gap: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation-duration: .01ms !important; }
+}
+</style>
 </head>
 <body>
-<div class="wrap">
-  <div class="card">
-    <div class="logo-area">
-      <img src="isotipo-black.png" alt="Broquer"/>
-      <h2>Completa tu perfil</h2>
-      <p>Solo necesitamos un par de datos para personalizar tu experiencia.</p>
-    </div>
-
-    <div class="msg" id="msg"></div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div class="field" style="margin-bottom:0">
-        <label>Nombre(s)</label>
-        <input type="text" id="r-nombre" placeholder="Ej. Salvador" autocomplete="given-name"/>
+<div class="reg-wrap">
+  <main class="reg-shell">
+    <section class="reg-brand" aria-label="Broquer">
+      <img class="reg-brand__logo" src="logo-broquer-blanco.png" alt="Broquer"/>
+      <div class="reg-brand__copy">
+        <div class="reg-brand__eyebrow">Tu espacio de trabajo</div>
+        <h1>Todo listo para empezar.</h1>
+        <p>Completa tus datos para personalizar Broquer y entrar a tu operación inmobiliaria.</p>
       </div>
-      <div class="field" style="margin-bottom:0">
-        <label>Apellidos</label>
-        <input type="text" id="r-apellidos" placeholder="Ej. Bolaños" autocomplete="family-name"/>
+    </section>
+
+    <section class="reg-form">
+      <header class="reg-form__head">
+        <h2>Completa tu perfil</h2>
+        <p>Solo necesitamos un par de datos antes de llevarte al inicio.</p>
+      </header>
+
+      <div class="reg-msg" id="msg"></div>
+
+      <div class="reg-grid">
+        <div class="reg-field">
+          <label for="r-nombre">Nombre(s)</label>
+          <input class="reg-input" type="text" id="r-nombre" placeholder="Ej. Salvador" autocomplete="given-name"/>
+        </div>
+        <div class="reg-field">
+          <label for="r-apellidos">Apellidos</label>
+          <input class="reg-input" type="text" id="r-apellidos" placeholder="Ej. Bolaños" autocomplete="family-name"/>
+        </div>
       </div>
-    </div>
-    <div class="field" style="margin-top:16px">
-      <label>Teléfono</label>
-      <input type="tel" id="r-telefono" placeholder="Ej. 443 123 4567" autocomplete="tel"/>
-      <div class="hint">Lo usaremos solo para soporte técnico.</div>
-    </div>
 
-    <label class="legal-check-row">
-      <input type="checkbox" id="legal-check" onchange="toggleSaveBtn()"/>
-      <span>He leído y acepto los <a href="legal.html" target="_blank">Términos y condiciones</a>, el <a href="legal.html" target="_blank">Contrato de suscripción</a> y el <a href="legal.html" target="_blank">Aviso de privacidad</a> de Broquer.</span>
-    </label>
+      <div class="reg-field">
+        <label for="r-telefono">Teléfono</label>
+        <input class="reg-input" type="tel" id="r-telefono" placeholder="Ej. 443 123 4567" autocomplete="tel"/>
+        <div class="reg-hint">Lo usaremos solo para soporte técnico.</div>
+      </div>
 
-    <button class="btn-primary" id="btn-save" onclick="guardar()" disabled>Continuar a Broquer</button>
-  </div>
+      <label class="reg-legal">
+        <input type="checkbox" id="legal-check" onchange="toggleSaveBtn()"/>
+        <span>He leído y acepto los <a href="legal.html" target="_blank">Términos y condiciones</a>, el <a href="legal.html" target="_blank">Contrato de suscripción</a> y el <a href="legal.html" target="_blank">Aviso de privacidad</a> de Broquer.</span>
+      </label>
+
+      <button class="reg-submit" id="btn-save" onclick="guardar()" disabled>Continuar a Broquer</button>
+    </section>
+  </main>
 </div>
 
 <script>
@@ -211,7 +299,7 @@ const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
 function showMsg(t,type='err'){
   const e = document.getElementById('msg');
   e.textContent = t;
-  e.className = `msg ${type}`;
+  e.className = `reg-msg ${type}`;
 }
 
 async function guardar(){
@@ -230,7 +318,7 @@ async function guardar(){
 
   const btn = document.getElementById('btn-save');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span>';
+  btn.innerHTML = '<span class="reg-spin"></span>';
 
   // El trigger SQL ya creó la fila en `usuarios`. Aquí solo actualizamos
   // nombre + telefono. El rol queda en 'agente' por defecto.
