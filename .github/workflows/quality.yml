@@ -55,6 +55,7 @@ jobs:
           verificador.html
           guia-agente.html
           legal.html
+          blog.html
           login.html
           registro.html
           reset-password.html
