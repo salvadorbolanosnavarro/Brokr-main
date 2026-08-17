@@ -57,6 +57,8 @@ jobs:
           firmas.html
           finanzas.html
           cumplimiento.html
+          video.html
+          facebook-ads.html
 
       - name: Report architecture debt
         run: python scripts/architecture_debt.py
