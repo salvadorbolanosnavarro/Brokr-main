@@ -5,6 +5,8 @@ The visible application shell is owned by app-shell.js. These two legacy pages
 still carry a hidden sidebar copy plus CSS for that copy. This transform removes
 only those two exact legacy regions and refuses to run if the expected shape is
 not present exactly once.
+
+This file is also the one-shot workflow trigger while the migration is active.
 """
 from __future__ import annotations
 
