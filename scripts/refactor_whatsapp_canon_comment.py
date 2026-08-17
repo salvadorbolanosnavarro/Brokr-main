@@ -5,6 +5,7 @@ The former secondary stylesheet link was replaced with a descriptive comment.
 That comment is not needed at runtime and makes the legacy large-file byte
 ceiling 13 bytes worse despite eliminating an entire stylesheet. Remove exactly
 that comment and nothing else so the existing architecture ceiling stays strict.
+This is a guarded one-shot cleanup.
 """
 from __future__ import annotations
 
