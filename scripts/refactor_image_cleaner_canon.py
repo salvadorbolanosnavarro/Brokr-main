@@ -61,6 +61,7 @@ def transform_text(source: str) -> str:
         raise RuntimeError("image-cleaner.html: expected exactly one hidden sidebar copy")
 
     result = source
+    # Replace longer aliases before their prefixes to keep the rewrite exact.
     for legacy, canon in sorted(ALIASES.items(), key=lambda item: -len(item[0])):
         result = result.replace(f"var({legacy})", f"var({canon})")
     result = result.replace("var(--shadow)", "var(--shadow-sm)")
