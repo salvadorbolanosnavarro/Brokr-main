@@ -20,390 +20,301 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
 <title>Broquer — Acceso</title>
 <link rel="manifest" href="manifest.json"/>
-<meta name="theme-color" content="#FFFFFF"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --b2-paper -->
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap"/>
+<meta name="theme-color" content="#081C4E"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+<link rel="stylesheet" href="brokr-theme.css"/>
 <style>
-/* ════════════════════════════════════════════════════════════════
-   BROQUER — Acceso · Rediseño "Blanca"
-   Piel nueva sobre la misma estructura y lógica. Los nombres de
-   clase se conservan porque el JavaScript depende de ellos.
-   ════════════════════════════════════════════════════════════════ */
-
-/* ═══ AUDIT-EXEMPT: definición de tokens del sistema (en producción migrarán a broquer-2.css) ═══ */
-:root {
-  --b2-blue:        #0D6BF0;
-  --b2-blue-press:  #0A56C4;
-  --b2-blue-deep:   #08419A;
-  --b2-blue-soft:   #EAF2FE;
-  --b2-blue-ring:   rgba(13,107,240,.18);
-  --b2-ink:         #1B2733;
-  --b2-mute:        #5A6B7C;
-  --b2-paper:       #FFFFFF;
-  --b2-canvas:      #F6F8FB;
-  --b2-line:        #E3E9F0;
-  --b2-bien:        #0E8F62;
-  --b2-bien-soft:   #E7F5EF;
-  --b2-baja:        #A85D62;
-  --b2-baja-soft:   #F9EEEC;
-
-  --b2-on-blue:       #FFFFFF;
-  --b2-on-blue-dim:   rgba(255,255,255,.75);
-  --b2-on-blue-faint: rgba(255,255,255,.50);
-  --b2-line-on-blue:  rgba(255,255,255,.14);
-  --b2-glow:          rgba(13,107,240,.45);
-
-  --font-display: 'Bricolage Grotesque', 'Figtree', system-ui, sans-serif;
-  --font-sans:    'Figtree', system-ui, -apple-system, sans-serif;
-
-  --fs2-caption: 12px;
-  --fs2-sm:      14px;
-  --fs2-body:    16px;
-  --fs2-lg:      18px;
-  --fs2-h3:      20px;
-  --fs2-h2:      clamp(24px, 2.6vw, 30px);
-  --fs2-hero:    clamp(34px, 3.6vw, 48px);
-  --fs2-stat:    clamp(22px, 2.4vw, 30px);
-
-  --r2-sm:   10px;
-  --r2:      14px;
-  --r2-lg:   22px;
-  --r2-pill: 999px;
-
-  --sh2-card: 0 1px 2px rgba(27,39,51,.05), 0 8px 24px rgba(27,39,51,.07);
-  --sh2-bar:  0 2px 6px rgba(27,39,51,.06), 0 14px 44px rgba(13,107,240,.16);
-
-  --ease2: cubic-bezier(.22,.61,.36,1);
-}
-/* ═══ /AUDIT-EXEMPT ═══ */
-
 *, *::before, *::after { box-sizing: border-box; }
-html, body { background: var(--b2-paper); min-height: 100%; margin: 0; }
+html, body { min-height: 100%; margin: 0; background: var(--paper); }
 body {
   overflow-y: auto;
-  color: var(--b2-ink);
+  color: var(--ink);
   font-family: var(--font-sans);
-  font-size: var(--fs2-body);
-  line-height: 1.5;
-  letter-spacing: -0.005em;
+  font-size: var(--fs-body);
+  line-height: var(--lh);
   -webkit-font-smoothing: antialiased;
 }
-h1, h2 { margin: 0; }
-p { margin: 0; }
-a { color: var(--b2-blue); }
-:focus-visible { outline: 2px solid var(--b2-blue); outline-offset: 2px; border-radius: var(--r2-sm); }
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms; animation-iteration-count: 1; transition-duration: .01ms; }
-}
+h1, h2, p { margin: 0; }
+a { color: var(--sky-blue); }
+:focus-visible { outline: 2px solid var(--sky-blue); outline-offset: 2px; border-radius: var(--r-xs); }
 
-/* ── Cascarón de la página ──────────────────────────────────── */
 .bk-auth {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
+  background: var(--paper);
 }
-@media (min-width: 980px) {
-  .bk-auth { grid-template-columns: 1fr 1.05fr; }
-}
-
-/* ── Izquierda: panel azul profundo (solo escritorio) ───────── */
 .bk-hero {
   display: none;
-  background: var(--b2-blue-deep);
-  color: var(--b2-on-blue);
-  padding: 52px 56px 44px;
   position: relative;
   overflow: hidden;
+  padding: var(--sp-12) var(--sp-12) var(--sp-10);
+  color: var(--paper);
+  background: var(--sky-navy);
 }
-@media (min-width: 980px) { .bk-hero { display: flex; flex-direction: column; justify-content: space-between; } }
 .bk-hero::after {
   content: '';
-  position: absolute; inset: 0;
-  background: radial-gradient(120% 130% at 85% 0%, var(--b2-glow), transparent 55%);
+  position: absolute;
+  inset: 0;
   pointer-events: none;
+  background: radial-gradient(circle at 88% 8%, var(--sky-navy-mid), transparent 48%);
+  opacity: .82;
 }
-.bk-hero__top { display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; }
+.bk-hero__top,
+.bk-hero__body { position: relative; z-index: var(--z-base); }
 .bk-hero__mark { line-height: 0; }
-.bk-hero__body { position: relative; z-index: 1; max-width: 520px; }
+.bk-hero__logo { height: var(--h-lg); width: auto; display: block; }
+.bk-hero__body { align-self: end; max-width: 560px; }
 .bk-hero__hed {
+  max-width: 11ch;
+  margin-bottom: var(--sp-5);
+  color: var(--paper);
   font-family: var(--font-display);
+  font-size: var(--fs-display);
   font-weight: 800;
-  font-size: var(--fs2-hero);
-  line-height: 1.04;
-  letter-spacing: -0.035em;
-  color: var(--b2-on-blue);
-  margin-bottom: 18px;
+  line-height: 1.02;
+  letter-spacing: -.04em;
 }
-.bk-hero__hed em { font-style: normal; color: var(--b2-blue-soft); }
+.bk-hero__hed em { color: var(--sky-blue-lift); font-style: normal; }
 .bk-hero__sub {
-  font-size: var(--fs2-body);
-  line-height: 1.6;
-  color: var(--b2-on-blue-dim);
-  max-width: 440px;
+  max-width: 500px;
+  color: var(--mute-3);
+  font-size: var(--fs-body);
+  line-height: var(--lh-lg);
 }
 .bk-hero__foot {
-  position: relative; z-index: 1;
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
-  padding-top: 30px;
-  border-top: 1px solid var(--b2-line-on-blue);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-6);
+  margin-top: var(--sp-10);
+  padding-top: var(--sp-6);
+  border-top: 1px solid rgba(255,255,255,.16); /* AUDIT-EXEMPT-LINE: contraste estructural sobre hero navy */
 }
 .bk-hero__stat .v {
+  color: var(--paper);
   font-family: var(--font-display);
-  font-size: var(--fs2-stat); font-weight: 800;
-  letter-spacing: -0.03em;
-  color: var(--b2-on-blue);
+  font-size: var(--fs-h2);
+  font-weight: 800;
+  letter-spacing: -.03em;
 }
-.bk-hero__stat .l {
-  font-size: var(--fs2-caption);
-  color: var(--b2-on-blue-faint);
-  margin-top: 4px;
-}
+.bk-hero__stat .l { margin-top: var(--sp-1); color: var(--mute-3); font-size: var(--fs-xs); }
 
-/* ── Derecha: el formulario ─────────────────────────────────── */
 .bk-form-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 32px 20px 64px;
-  background: var(--b2-paper);
+  min-width: 0;
+  padding: var(--sp-8) var(--sp-5) var(--sp-16);
+  background:
+    radial-gradient(circle at 50% 0%, var(--sky-canvas), transparent 34rem),
+    var(--paper);
 }
-.bk-form { width: 100%; max-width: 420px; }
-.bk-form__brand { display: flex; align-items: center; gap: 10px; margin-bottom: 36px; }
-.bk-form__brand img { height: 44px; width: auto; }
-@media (min-width: 980px) { .bk-form__brand { display: none; } }
-
+.bk-form {
+  width: min(100%, 440px);
+  padding: var(--sp-7);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: var(--shadow-md);
+}
+.bk-form__brand { display: flex; align-items: center; margin-bottom: var(--sp-7); }
+.bk-form__brand img { height: var(--h); width: auto; display: block; }
 .bk-form__hed {
+  margin-bottom: var(--sp-2);
+  color: var(--ink);
   font-family: var(--font-display);
-  font-size: var(--fs2-h2); font-weight: 800;
-  letter-spacing: -0.03em;
-  color: var(--b2-ink);
-  margin-bottom: 6px;
-  line-height: 1.05;
+  font-size: var(--fs-h2);
+  font-weight: 800;
+  line-height: var(--lh-h2);
+  letter-spacing: -.03em;
 }
-.bk-form__sub { font-size: var(--fs2-sm); color: var(--b2-mute); margin-bottom: 28px; }
+.bk-form__sub { margin-bottom: var(--sp-6); color: var(--mute); font-size: var(--fs-sm); }
 
-/* Pestañas: control segmentado del mundo nuevo */
 .bk-seg {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  background: var(--b2-paper);
-  padding: 4px;
-  border-radius: var(--r2-pill);
-  margin-bottom: 26px;
-  border: 1px solid var(--b2-line);
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-6);
+  padding: var(--sp-1);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
+  background: var(--shell);
 }
 .bk-seg__btn {
-  appearance: none;
-  border: none; background: transparent;
-  height: 40px;
-  border-radius: var(--r2-pill);
-  font-family: var(--font-sans);
-  font-size: var(--fs2-sm); font-weight: 600;
-  color: var(--b2-mute);
+  min-height: var(--h-sm);
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--mute);
+  font: 700 var(--fs-sm)/1 var(--font-sans);
   cursor: pointer;
-  transition: background .18s var(--ease2), color .18s var(--ease2);
-  letter-spacing: -0.005em;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
-.bk-seg__btn:hover { color: var(--b2-ink); }
-.bk-seg__btn.is-active { background: var(--b2-blue); color: var(--b2-on-blue); font-weight: 700; }
+.bk-seg__btn:hover { color: var(--ink); background: var(--paper); }
+.bk-seg__btn.is-active { color: var(--paper); background: var(--sky-blue); box-shadow: var(--shadow-xs); }
 
-/* Campos */
-.bk-field { margin-bottom: 14px; }
+.bk-field { margin-bottom: var(--sp-4); }
 .bk-field label {
   display: block;
-  font-size: var(--fs2-caption); font-weight: 700;
-  color: var(--b2-mute);
-  margin-bottom: 6px;
-  letter-spacing: .01em;
+  margin-bottom: var(--sp-2);
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  font-weight: 700;
 }
 .bk-input {
   width: 100%;
-  height: 50px;
-  padding: 0 16px;
-  background: var(--b2-paper);
-  border: 1.5px solid var(--b2-line);
-  border-radius: var(--r2);
-  font-family: var(--font-sans);
-  font-size: var(--fs2-body);
-  color: var(--b2-ink);
-  transition: border-color .18s var(--ease2), box-shadow .18s var(--ease2);
+  min-height: var(--h);
+  padding: 0 var(--sp-4);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
+  background: var(--shell);
+  color: var(--ink);
+  font: 500 var(--fs-body)/1 var(--font-sans);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease);
 }
-.bk-input::placeholder { color: var(--b2-mute); opacity: .7; }
-.bk-input:focus {
-  outline: none;
-  border-color: var(--b2-blue);
-  box-shadow: 0 0 0 4px var(--b2-blue-ring);
-}
+.bk-input::placeholder { color: var(--mute-2); }
+.bk-input:focus { outline: none; border-color: var(--sky-blue); background: var(--paper); box-shadow: var(--focus); }
 
-/* Olvidé mi contraseña */
-.bk-forgot { font-size: var(--fs2-caption); text-align: right; margin: -2px 0 18px; }
-.bk-forgot a { color: var(--b2-blue); font-weight: 600; text-decoration: none; }
-.bk-forgot a:hover { color: var(--b2-blue-press); text-decoration: underline; text-underline-offset: 3px; }
-
-/* Botón principal: la pastilla azul del mundo nuevo */
+.bk-forgot { margin: calc(var(--sp-2) * -1) 0 var(--sp-5); text-align: right; font-size: var(--fs-xs); }
+.bk-forgot a { color: var(--sky-blue); font-weight: 700; text-decoration: none; }
+.bk-forgot a:hover { color: var(--sky-blue-press); text-decoration: underline; text-underline-offset: 3px; }
 .bk-submit {
   width: 100%;
-  height: 52px;
-  border: none;
-  background: var(--b2-blue);
-  color: var(--b2-on-blue);
-  border-radius: var(--r2-pill);
-  font-family: var(--font-sans);
-  font-size: var(--fs2-body); font-weight: 700;
-  letter-spacing: -0.005em;
+  min-height: var(--h);
+  margin-top: var(--sp-1);
+  border: 0;
+  border-radius: var(--r-sm);
+  background: var(--sky-blue);
+  color: var(--paper);
+  font: 800 var(--fs-sm)/1 var(--font-sans);
   cursor: pointer;
-  transition: background .18s var(--ease2), transform .18s var(--ease2), box-shadow .18s var(--ease2);
-  margin-top: 6px;
+  transition: background var(--dur) var(--ease), transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
-.bk-submit:hover { background: var(--b2-blue-press); box-shadow: var(--sh2-bar); }
-.bk-submit:active { transform: scale(.985); }
+.bk-submit:hover { background: var(--sky-blue-press); box-shadow: var(--shadow-sm); }
+.bk-submit:active { transform: translateY(1px); }
 .bk-submit:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
-
 .bk-divider {
-  display: flex; align-items: center; gap: 14px;
-  margin: 24px 0 16px;
-  color: var(--b2-mute);
-  font-size: var(--fs2-caption);
-  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin: var(--sp-6) 0 var(--sp-4);
+  color: var(--mute);
+  font-size: var(--fs-xs);
+  font-weight: 700;
 }
-.bk-divider::before, .bk-divider::after {
-  content: ''; flex: 1; height: 1px; background: var(--b2-line);
-}
-
+.bk-divider::before, .bk-divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 .bk-oauth {
-  width: 100%; height: 50px;
-  display: flex; align-items: center; justify-content: center;
-  gap: 10px;
-  background: var(--b2-paper); color: var(--b2-ink);
-  border: 1px solid var(--b2-line);
-  border-radius: var(--r2-pill);
-  font-family: var(--font-sans);
-  font-size: var(--fs2-sm); font-weight: 600;
+  width: 100%;
+  min-height: var(--h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  background: var(--paper);
+  color: var(--ink);
+  font: 700 var(--fs-sm)/1 var(--font-sans);
   cursor: pointer;
-  transition: border-color .18s var(--ease2), background .18s var(--ease2);
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
-.bk-oauth:hover { border-color: var(--b2-ink); background: var(--b2-canvas); }
-
-/* App nativa iOS: sin OAuth de Google (lineamientos de Apple).
-   La especificidad de dos clases basta; no se necesita forzar nada. */
-.is-ios-native .bk-oauth { display: none; }
-.is-ios-native .bk-divider { display: none; }
-
+.bk-oauth:hover { border-color: var(--line-3); background: var(--paper-2); box-shadow: var(--shadow-xs); }
+.is-ios-native .bk-oauth, .is-ios-native .bk-divider { display: none; }
 .bk-faceid {
-  text-align: center; font-size: var(--fs2-caption); color: var(--b2-mute);
-  margin-top: 20px;
-  display: flex; justify-content: center; align-items: center; gap: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-5);
+  color: var(--mute);
+  text-align: center;
+  font-size: var(--fs-xs);
 }
-
-/* Mensajes con color semántico */
 .bk-msg {
-  padding: 12px 16px; border-radius: var(--r2);
-  font-size: var(--fs2-sm); line-height: 1.5;
-  margin-bottom: 16px; display: none;
+  display: none;
+  margin-bottom: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
   border: 1px solid transparent;
+  border-radius: var(--r);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
 }
-.bk-msg.is-err { display: block; background: var(--b2-baja-soft); color: var(--b2-baja); border-color: var(--b2-baja-soft); }
-.bk-msg.is-ok  { display: block; background: var(--b2-bien-soft); color: var(--b2-bien); border-color: var(--b2-bien-soft); }
-
-/* Legal */
+.bk-msg.is-err { display: block; background: var(--danger-soft); color: var(--danger); border-color: var(--danger-soft); }
+.bk-msg.is-ok { display: block; background: var(--success-soft); color: var(--success); border-color: var(--success-soft); }
 .bk-legal-check {
-  display: flex; align-items: flex-start; gap: 10px;
-  margin: 14px 0 6px;
-  font-size: var(--fs2-caption); color: var(--b2-mute); line-height: 1.55;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin: var(--sp-4) 0 var(--sp-2);
+  color: var(--mute);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-sm);
   cursor: pointer;
 }
-.bk-legal-check input[type=checkbox] {
-  width: 16px; height: 16px; margin-top: 2px;
-  accent-color: var(--b2-blue); cursor: pointer; flex-shrink: 0;
-}
-.bk-legal-check a {
-  color: var(--b2-ink); font-weight: 600;
-  text-decoration: underline; text-underline-offset: 2px;
-}
-.bk-legal {
-  margin-top: 18px;
-  font-size: var(--fs2-caption);
-  color: var(--b2-mute);
-  text-align: center;
-  line-height: 1.55;
-}
-.bk-legal a {
-  color: var(--b2-ink); text-decoration: underline; text-underline-offset: 2px;
-  font-weight: 600;
-}
-.bk-legal a:hover { color: var(--b2-blue); }
-
-/* Insignia de Meta, discreta */
-.bk-meta {
-  margin-top: 20px;
-  display: flex; justify-content: center; line-height: 0;
-  opacity: .5; transition: opacity .18s var(--ease2);
-}
+.bk-legal-check input[type=checkbox] { width: 16px; height: 16px; margin-top: 2px; accent-color: var(--sky-blue); cursor: pointer; flex-shrink: 0; }
+.bk-legal-check a, .bk-legal a { color: var(--ink-2); font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+.bk-legal { margin-top: var(--sp-5); color: var(--mute); text-align: center; font-size: var(--fs-xs); line-height: var(--lh-sm); }
+.bk-legal a:hover { color: var(--sky-blue); }
+.bk-meta { display: flex; justify-content: center; margin-top: var(--sp-5); line-height: 0; opacity: .55; transition: opacity var(--dur) var(--ease); }
 .bk-meta:hover { opacity: .8; }
 .bk-meta img { height: 24px; width: auto; display: block; }
-
-.bk-foot {
-  margin-top: 30px;
-  font-size: var(--fs2-caption);
-  color: var(--b2-mute);
-  text-align: center;
-}
-
-/* Spinner del botón */
-.bk-spin {
-  display: inline-block; width: 18px; height: 18px;
-  border: 2px solid var(--b2-line-on-blue);
-  border-top-color: var(--b2-on-blue);
-  border-radius: 50%;
-  animation: bk-spin .7s linear infinite;
-}
+.bk-foot { margin-top: var(--sp-7); color: var(--mute); text-align: center; font-size: var(--fs-xs); }
+.bk-spin { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.32); border-top-color: var(--paper); border-radius: 50%; animation: bk-spin .7s linear infinite; vertical-align: middle; }
 @keyframes bk-spin { to { transform: rotate(360deg); } }
-
-/* Splash */
 #splash {
-  position: fixed; inset: 0;
-  background: var(--b2-paper);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 9999;
-  transition: opacity .6s var(--ease2);
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-toast);
+  display: grid;
+  place-items: center;
+  background: var(--paper);
+  transition: opacity var(--dur-slow) var(--ease);
 }
-#splash .mark { width: min(44vw, 220px); animation: pulseIn .9s var(--ease2); }
+#splash .mark { width: min(44vw, 220px); }
 #splash .mark img { width: 100%; height: auto; display: block; }
-@keyframes pulseIn {
-  0% { opacity: 0; transform: translateY(8px); }
-  100% { opacity: 1; transform: translateY(0); }
+.bk-inv { display: none; }
+.bk-inv.is-on {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: flex-start;
+  margin-bottom: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--paper-2);
 }
+.bk-inv svg { flex: 0 0 auto; margin-top: var(--sp-1); }
+.bk-inv p { color: var(--ink-2); font-size: var(--fs-sm); line-height: var(--lh-sm); }
+.bk-inv strong { color: var(--ink); }
+.bk-signup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); }
+.bk-field--flush { margin-bottom: 0; }
+.bk-field--top { margin-top: var(--sp-4); }
+.bk-oauth--spaced { margin-top: var(--sp-3); }
 
-
-  /* Invitación a un equipo (link con ?inv=) */
-  .bk-inv { display: none; }
-  .bk-inv.is-on {
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    padding: 14px 16px;
-    border: 1px solid var(--line);
-    border-radius: var(--r-lg);
-    background: var(--paper-2);
-    margin-bottom: 16px;
-  }
-  .bk-inv svg { flex: 0 0 auto; margin-top: 2px; }
-  .bk-inv p { margin: 0; font-size: var(--fs-sm); color: var(--ink-2); line-height: 1.6; }
-  .bk-inv strong { color: var(--ink); }
+@media (min-width: 980px) {
+  .bk-auth { grid-template-columns: minmax(0, .94fr) minmax(0, 1.06fr); }
+  .bk-hero { display: grid; grid-template-rows: auto 1fr; }
+  .bk-form__brand { display: none; }
+}
+@media (max-width: 560px) {
+  .bk-form-wrap { align-items: flex-start; padding: var(--sp-5) var(--sp-3) var(--sp-10); }
+  .bk-form { padding: var(--sp-5); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); }
+  .bk-signup-grid { grid-template-columns: 1fr; gap: 0; }
+  .bk-field--flush { margin-bottom: var(--sp-4); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms; animation-iteration-count: 1; transition-duration: .01ms; }
+}
 </style>
 </head>
 <body>
-
-<!-- Splash -->
 <div id="splash"><div class="mark"><img src="logotipo-black.png" alt="Broquer"/></div></div>
 
 <div class="bk-auth">
-
-  <!-- HERO (desktop) -->
   <aside class="bk-hero">
     <div class="bk-hero__top">
-      <div class="bk-hero__mark"><img src="logotipo-white.png" alt="Broquer" style="height:60px;width:auto;display:block"/></div>
+      <div class="bk-hero__mark"><img class="bk-hero__logo" src="logotipo-white.png" alt="Broquer"/></div>
     </div>
     <div class="bk-hero__body">
       <h1 class="bk-hero__hed">Cierra más operaciones. <em>Con menos fricción.</em></h1>
@@ -416,125 +327,61 @@ a { color: var(--b2-blue); }
     </div>
   </aside>
 
-  <!-- FORM -->
   <main class="bk-form-wrap">
     <div class="bk-form">
-
-      <div class="bk-form__brand">
-        <img src="logotipo-black.png" alt="Broquer"/>
-      </div>
-
+      <div class="bk-form__brand"><img src="logotipo-black.png" alt="Broquer"/></div>
       <h2 class="bk-form__hed" id="form-title">Bienvenido</h2>
       <p class="bk-form__sub" id="form-sub">Inicia sesión para continuar a tu cuenta.</p>
-
       <div class="bk-seg" role="tablist">
-        <button class="bk-seg__btn is-active" id="seg-login"  onclick="setTab('login')">Iniciar sesión</button>
-        <button class="bk-seg__btn"           id="seg-signup" onclick="setTab('signup')">Crear cuenta</button>
+        <button class="bk-seg__btn is-active" id="seg-login" onclick="setTab('login')">Iniciar sesión</button>
+        <button class="bk-seg__btn" id="seg-signup" onclick="setTab('signup')">Crear cuenta</button>
       </div>
-
       <div class="bk-msg" id="msg"></div>
-
-      <!-- Invitación a un equipo: se muestra cuando el link trae ?inv= -->
       <div class="bk-inv" id="inv-banner">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--action)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--sky-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         <p><strong id="inv-empresa"></strong> te invitó a su equipo en Broquer. Continúa con el correo <strong id="inv-email"></strong> y al final quedarás dentro con un clic.</p>
       </div>
 
-      <!-- LOGIN -->
       <form id="form-login" onsubmit="event.preventDefault();doLogin()">
-        <div class="bk-field">
-          <label for="l-email">Correo electrónico</label>
-          <input class="bk-input" type="email" id="l-email" placeholder="tu@correo.com" autocomplete="email"/>
-        </div>
-        <div class="bk-field">
-          <label for="l-pass">Contraseña</label>
-          <input class="bk-input" type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password"/>
-        </div>
+        <div class="bk-field"><label for="l-email">Correo electrónico</label><input class="bk-input" type="email" id="l-email" placeholder="tu@correo.com" autocomplete="email"/></div>
+        <div class="bk-field"><label for="l-pass">Contraseña</label><input class="bk-input" type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password"/></div>
         <div class="bk-forgot"><a href="#" onclick="doForgot();return false">¿Olvidaste tu contraseña?</a></div>
         <button type="submit" class="bk-submit" id="btn-login">Continuar</button>
-
         <div class="bk-divider">o</div>
-
         <button type="button" class="bk-oauth" onclick="doGoogle()">
-          <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg><!-- AUDIT-EXEMPT-LINE: logo oficial de Google (marca externa, mismos términos que WhatsApp/Facebook) -->
+          <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg><!-- AUDIT-EXEMPT-LINE: logo oficial de Google -->
           Continuar con Google
         </button>
-
-        <div class="bk-faceid">
-          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a9 9 0 01-9 9m0 0a9 9 0 01-9-9 9 9 0 0118 0z"/></svg>
-          Face ID disponible tras el primer inicio de sesión
-        </div>
+        <div class="bk-faceid"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a9 9 0 01-9 9m0 0a9 9 0 01-9-9 9 9 0 0118 0z"/></svg>Face ID disponible tras el primer inicio de sesión</div>
       </form>
 
-      <!-- SIGNUP -->
       <form id="form-signup" style="display:none" onsubmit="event.preventDefault();doSignup()">
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-          <div class="bk-field" style="margin-bottom:0">
-            <label for="s-nombre">Nombre(s)</label>
-            <input class="bk-input" type="text" id="s-nombre" placeholder="Salvador" autocomplete="given-name"/>
-          </div>
-          <div class="bk-field" style="margin-bottom:0">
-            <label for="s-apellidos">Apellidos</label>
-            <input class="bk-input" type="text" id="s-apellidos" placeholder="Bolaños" autocomplete="family-name"/>
-          </div>
+        <div class="bk-signup-grid">
+          <div class="bk-field bk-field--flush"><label for="s-nombre">Nombre(s)</label><input class="bk-input" type="text" id="s-nombre" placeholder="Salvador" autocomplete="given-name"/></div>
+          <div class="bk-field bk-field--flush"><label for="s-apellidos">Apellidos</label><input class="bk-input" type="text" id="s-apellidos" placeholder="Bolaños" autocomplete="family-name"/></div>
         </div>
-        <div class="bk-field" style="margin-top:14px">
-          <label for="s-telefono">Teléfono (opcional)</label>
-          <input class="bk-input" type="tel" id="s-telefono" placeholder="443 123 4567" autocomplete="tel"/>
-        </div>
-        <div class="bk-field">
-          <label for="s-email">Correo electrónico</label>
-          <input class="bk-input" type="email" id="s-email" placeholder="tu@correo.com" autocomplete="email"/>
-        </div>
-        <div class="bk-field">
-          <label for="s-pass">Contraseña</label>
-          <input class="bk-input" type="password" id="s-pass" placeholder="Mínimo 8 caracteres" autocomplete="new-password"/>
-        </div>
-        <div class="bk-field">
-          <label for="s-pass2">Confirmar contraseña</label>
-          <input class="bk-input" type="password" id="s-pass2" placeholder="Repite la contraseña"/>
-        </div>
-
-        <label class="bk-legal-check">
-          <input type="checkbox" id="s-legal"/>
-          <span>He leído y acepto los <a href="legal.html" target="_blank" rel="noopener">Términos</a>, el <a href="legal.html" target="_blank" rel="noopener">Contrato de suscripción</a> y el <a href="legal.html#privacidad" target="_blank" rel="noopener">Aviso de Privacidad</a> de Broquer®.</span>
-        </label>
-
+        <div class="bk-field bk-field--top"><label for="s-telefono">Teléfono (opcional)</label><input class="bk-input" type="tel" id="s-telefono" placeholder="443 123 4567" autocomplete="tel"/></div>
+        <div class="bk-field"><label for="s-email">Correo electrónico</label><input class="bk-input" type="email" id="s-email" placeholder="tu@correo.com" autocomplete="email"/></div>
+        <div class="bk-field"><label for="s-pass">Contraseña</label><input class="bk-input" type="password" id="s-pass" placeholder="Mínimo 8 caracteres" autocomplete="new-password"/></div>
+        <div class="bk-field"><label for="s-pass2">Confirmar contraseña</label><input class="bk-input" type="password" id="s-pass2" placeholder="Repite la contraseña"/></div>
+        <label class="bk-legal-check"><input type="checkbox" id="s-legal"/><span>He leído y acepto los <a href="legal.html" target="_blank" rel="noopener">Términos</a>, el <a href="legal.html" target="_blank" rel="noopener">Contrato de suscripción</a> y el <a href="legal.html#privacidad" target="_blank" rel="noopener">Aviso de Privacidad</a> de Broquer®.</span></label>
         <button type="submit" class="bk-submit" id="btn-signup">Crear cuenta</button>
-
-        <button type="button" class="bk-oauth" onclick="doGoogle()" style="margin-top:10px">
-          <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg><!-- AUDIT-EXEMPT-LINE: logo oficial de Google (marca externa, mismos términos que WhatsApp/Facebook) -->
+        <button type="button" class="bk-oauth bk-oauth--spaced" onclick="doGoogle()">
+          <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg><!-- AUDIT-EXEMPT-LINE: logo oficial de Google -->
           Registrarse con Google
         </button>
       </form>
 
-      <div class="bk-legal">
-        Al continuar aceptas nuestros
-        <a href="legal.html" target="_blank" rel="noopener">Términos</a> y el
-        <a href="legal.html#privacidad" target="_blank" rel="noopener">Aviso de Privacidad</a>.
-      </div>
-
-      <div class="bk-meta"><!-- AUDIT-EXEMPT-LINE: insignia oficial de Meta (marca externa) -->
-        <img src="meta-tech-provider.png" alt="Meta Tech Provider"/>
-      </div>
-
+      <div class="bk-legal">Al continuar aceptas nuestros <a href="legal.html" target="_blank" rel="noopener">Términos</a> y el <a href="legal.html#privacidad" target="_blank" rel="noopener">Aviso de Privacidad</a>.</div>
+      <div class="bk-meta"><img src="meta-tech-provider.png" alt="Meta Tech Provider"/></div><!-- AUDIT-EXEMPT-LINE: insignia oficial de Meta -->
       <div class="bk-foot">Broquer 2026 — Para Sharks inmobiliarios</div>
     </div>
   </main>
-
 </div>
 
 <script>
-/* ════════════════════════════════════════════════
-   Auth logic — preserved from original (Supabase).
-   ════════════════════════════════════════════════ */
 const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
 const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
-
-/* ── Invitación a un equipo ──
-   El token llega en ?inv= (desde unirse.html o desde el correo de
-   confirmación) y sobrevive en localStorage. Con invitación pendiente, todo
-   camino que termine en sesión regresa a unirse.html para aceptarla. */
 let INV_TOKEN = '';
 try {
   const _q = new URLSearchParams(location.search);
@@ -542,668 +389,110 @@ try {
   if (_urlInv) localStorage.setItem('inv_pendiente', _urlInv);
   INV_TOKEN = _urlInv || localStorage.getItem('inv_pendiente') || '';
 } catch(_) {}
-function destinoTrasSesion(){
-  return INV_TOKEN ? ('unirse.html?inv=' + encodeURIComponent(INV_TOKEN)) : 'index.html';
-}
+function destinoTrasSesion(){ return INV_TOKEN ? ('unirse.html?inv=' + encodeURIComponent(INV_TOKEN)) : 'index.html'; }
 
-// Llamadas a Supabase auth con manejo robusto de errores de red.
-// Siempre devuelve un objeto; nunca lanza. Si la red falla, devuelve
-// { error: 'network', error_description: 'No hay conexión...' }.
 async function sbAuth(path, body){
-  // OJO: Supabase espera redirect_to como parámetro de la URL, NO en el
-  // cuerpo JSON — en el cuerpo lo ignora sin avisar. Por eso los correos de
-  // recuperación llegaban sin destino y el enlace caía en la Site URL.
   let url = `${SB_URL}/auth/v1/${path}`;
-  if (body && body.redirect_to) {
-    url += (url.includes('?') ? '&' : '?') + 'redirect_to=' + encodeURIComponent(body.redirect_to);
-  }
+  if (body && body.redirect_to) url += (url.includes('?') ? '&' : '?') + 'redirect_to=' + encodeURIComponent(body.redirect_to);
   try {
-    const r = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY },
-      body: JSON.stringify(body)
-    });
-    let data;
-    try { data = await r.json(); }
-    catch(_) { data = { error: 'invalid_response' }; }
-    // Adjuntar el http status para que las funciones llamantes puedan
-    // distinguir códigos (p.ej. 422 invalid_credentials vs 429 rate limit).
+    const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json','apikey':SB_KEY}, body:JSON.stringify(body) });
+    let data; try { data = await r.json(); } catch(_) { data = { error:'invalid_response' }; }
     if (data && typeof data === 'object') data.__status = r.status;
     return data || {};
-  } catch (e) {
-    return { error: 'network', error_description: 'Sin conexión. Revisa tu internet e intenta de nuevo.' };
-  }
+  } catch(e) { return { error:'network', error_description:'Sin conexión. Revisa tu internet e intenta de nuevo.' }; }
 }
-
-// Traduce mensajes técnicos de Supabase a español sin jerga.
 function spanishAuthError(data){
-  const raw = (data && (data.error_description || data.msg || data.error || '')).toString().toLowerCase();
+  const raw=(data&&(data.error_description||data.msg||data.error||'')).toString().toLowerCase();
   if(!raw) return 'No se pudo completar. Intenta de nuevo.';
-  if(raw.includes('invalid login') || raw.includes('invalid credentials') || raw.includes('email not confirmed'))
-    return 'Correo o contraseña incorrectos.';
-  if(raw.includes('email not confirmed'))
-    return 'Debes confirmar tu correo antes de iniciar sesión.';
-  if(raw.includes('user already registered') || raw.includes('already registered') || raw.includes('duplicate'))
-    return 'Ya existe una cuenta con ese correo. Inicia sesión o usa "¿Olvidaste tu contraseña?".';
-  if(raw.includes('rate limit') || raw.includes('too many'))
-    return 'Demasiados intentos. Espera unos minutos antes de volver a intentar.';
-  if(raw.includes('weak') || raw.includes('password should'))
-    return 'La contraseña es demasiado débil. Usa al menos 8 caracteres con letras y números.';
-  if(raw.includes('invalid email') || raw.includes('email address'))
-    return 'El correo electrónico no es válido.';
-  if(raw === 'network')
-    return data.error_description || 'Sin conexión.';
-  if(raw === 'invalid_response')
-    return 'Respuesta inesperada del servidor. Intenta de nuevo.';
-  // Fallback: muestra el original (algunos casos raros)
-  return data.error_description || data.msg || data.error || 'Error desconocido.';
+  if(raw.includes('invalid login')||raw.includes('invalid credentials')||raw.includes('email not confirmed')) return 'Correo o contraseña incorrectos.';
+  if(raw.includes('email not confirmed')) return 'Debes confirmar tu correo antes de iniciar sesión.';
+  if(raw.includes('user already registered')||raw.includes('already registered')||raw.includes('duplicate')) return 'Ya existe una cuenta con ese correo. Inicia sesión o usa "¿Olvidaste tu contraseña?".';
+  if(raw.includes('rate limit')||raw.includes('too many')) return 'Demasiados intentos. Espera unos minutos antes de volver a intentar.';
+  if(raw.includes('weak')||raw.includes('password should')) return 'La contraseña es demasiado débil. Usa al menos 8 caracteres con letras y números.';
+  if(raw.includes('invalid email')||raw.includes('email address')) return 'El correo electrónico no es válido.';
+  if(raw==='network') return data.error_description||'Sin conexión.';
+  if(raw==='invalid_response') return 'Respuesta inesperada del servidor. Intenta de nuevo.';
+  return data.error_description||data.msg||data.error||'Error desconocido.';
 }
-
-function showMsg(text, type='err'){
-  const el = document.getElementById('msg');
-  el.textContent = text;
-  el.className = `bk-msg is-${type}`;
-}
-function clearMsg(){ document.getElementById('msg').className = 'bk-msg'; }
-
-// Validación básica para campos
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+function showMsg(text,type='err'){ const el=document.getElementById('msg'); el.textContent=text; el.className=`bk-msg is-${type}`; }
+function clearMsg(){ document.getElementById('msg').className='bk-msg'; }
+const EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 function isValidEmail(s){ return EMAIL_RE.test(String(s||'').trim()); }
-// Teléfono mexicano: 10 dígitos numéricos (se permiten separadores en captura).
-function isValidPhoneMx(s){
-  const digits = String(s||'').replace(/\D/g, '');
-  return digits.length === 10;
-}
-
+function isValidPhoneMx(s){ return String(s||'').replace(/\D/g,'').length===10; }
 function setTab(tab){
-  document.getElementById('seg-login').classList.toggle('is-active', tab==='login');
-  document.getElementById('seg-signup').classList.toggle('is-active', tab==='signup');
-  document.getElementById('form-login').style.display  = tab==='login'  ? '' : 'none';
-  document.getElementById('form-signup').style.display = tab==='signup' ? '' : 'none';
-  document.getElementById('form-title').textContent = tab==='login' ? 'Bienvenido' : 'Crea tu cuenta';
-  document.getElementById('form-sub').textContent   = tab==='login'
-    ? 'Inicia sesión para continuar a tu cuenta.'
-    : 'Tu sistema operativo inmobiliario, en minutos.';
+  document.getElementById('seg-login').classList.toggle('is-active',tab==='login');
+  document.getElementById('seg-signup').classList.toggle('is-active',tab==='signup');
+  document.getElementById('form-login').style.display=tab==='login'?'':'none';
+  document.getElementById('form-signup').style.display=tab==='signup'?'':'none';
+  document.getElementById('form-title').textContent=tab==='login'?'Bienvenido':'Crea tu cuenta';
+  document.getElementById('form-sub').textContent=tab==='login'?'Inicia sesión para continuar a tu cuenta.':'Tu sistema operativo inmobiliario, en minutos.';
   clearMsg();
 }
-
-function setLoading(btnId, loading){
-  const btn = document.getElementById(btnId);
-  if(loading){ btn.disabled = true; btn.innerHTML = '<span class="bk-spin"></span>'; }
-  else { btn.disabled = false; btn.textContent = btnId==='btn-login' ? 'Continuar' : 'Crear cuenta'; }
-}
-
+function setLoading(btnId,loading){ const btn=document.getElementById(btnId); if(loading){btn.disabled=true;btn.innerHTML='<span class="bk-spin"></span>';}else{btn.disabled=false;btn.textContent=btnId==='btn-login'?'Continuar':'Crear cuenta';} }
 async function doLogin(){
-  clearMsg();
-  const email = document.getElementById('l-email').value.trim().toLowerCase();
-  const pass  = document.getElementById('l-pass').value;
-  if(!email || !pass){ showMsg('Ingresa tu correo y contraseña.'); return; }
-  if(!isValidEmail(email)){ showMsg('El correo electrónico no es válido.'); return; }
-
-  setLoading('btn-login', true);
-  const data = await sbAuth('token?grant_type=password', { email, password: pass });
-
-  // Manejo de error: NO rehabilitar el botón si hay éxito (el redirect lo
-  // hace todo). Solo lo rehabilitamos en caso de error para que el usuario
-  // pueda reintentar.
-  if(!data || data.error || !data.access_token){
-    setLoading('btn-login', false);
-    showMsg(spanishAuthError(data));
-    return;
-  }
-
-  // Guarda sesión y redirige. No rehabilitamos el botón porque la página
-  // está a punto de cambiar (evita doble-click).
-  try {
-    localStorage.setItem('sb_token', data.access_token);
-    if(data.refresh_token) localStorage.setItem('sb_refresh', data.refresh_token);
-    localStorage.setItem('sb_user', JSON.stringify(data.user || {}));
-    sessionStorage.setItem('sb_token', data.access_token);
-    sessionStorage.setItem('sb_user', JSON.stringify(data.user || {}));
-    localStorage.setItem('sesion_activa', 'true');
-  } catch(_){ /* localStorage puede estar bloqueado en modo privado */ }
-
-  await checkProfileAndRedirect(data.access_token, data.user || {});
+  clearMsg(); const email=document.getElementById('l-email').value.trim().toLowerCase(); const pass=document.getElementById('l-pass').value;
+  if(!email||!pass){showMsg('Ingresa tu correo y contraseña.');return;} if(!isValidEmail(email)){showMsg('El correo electrónico no es válido.');return;}
+  setLoading('btn-login',true); const data=await sbAuth('token?grant_type=password',{email,password:pass});
+  if(!data||data.error||!data.access_token){setLoading('btn-login',false);showMsg(spanishAuthError(data));return;}
+  try{localStorage.setItem('sb_token',data.access_token);if(data.refresh_token)localStorage.setItem('sb_refresh',data.refresh_token);localStorage.setItem('sb_user',JSON.stringify(data.user||{}));sessionStorage.setItem('sb_token',data.access_token);sessionStorage.setItem('sb_user',JSON.stringify(data.user||{}));localStorage.setItem('sesion_activa','true');}catch(_){}
+  await checkProfileAndRedirect(data.access_token,data.user||{});
 }
-
-// Guarda nombre + teléfono en la tabla `usuarios`. Devuelve true si OK.
-// Se usa tras signup con token (caso ideal) y tras el callback de email
-// confirmation (caso fallback) para no pedir los mismos datos dos veces.
-async function persistProfile(token, userId, nombreCompleto, telefono){
-  if(!token || !userId) return false;
-  try {
-    // PATCH primero (la fila la suele crear el trigger SQL de Supabase)
-    let r = await fetch(`${SB_URL}/rest/v1/usuarios?id=eq.${userId}`, {
-      method: 'PATCH',
-      headers: {
-        'apikey': SB_KEY,
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal',
-      },
-      body: JSON.stringify({ nombre: nombreCompleto, telefono }),
-    });
-    if(r.ok) return true;
-    // Fallback: upsert si la fila aún no existe
-    let raw = localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}';
-    if (raw === 'undefined' || raw === 'null') raw = '{}';
-    let user = {};
-    try { user = JSON.parse(raw) || {}; } catch(_) {}
-    const email = user.email || '';
-    r = await fetch(`${SB_URL}/rest/v1/usuarios`, {
-      method: 'POST',
-      headers: {
-        'apikey': SB_KEY,
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates,return=minimal',
-      },
-      body: JSON.stringify({ id: userId, email, nombre: nombreCompleto, telefono }),
-    });
-    return r.ok;
-  } catch(e){
-    console.error('persistProfile failed', e);
-    return false;
-  }
+async function persistProfile(token,userId,nombreCompleto,telefono){
+  if(!token||!userId)return false;
+  try{
+    let r=await fetch(`${SB_URL}/rest/v1/usuarios?id=eq.${userId}`,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${token}`,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({nombre:nombreCompleto,telefono})});
+    if(r.ok)return true;
+    let raw=localStorage.getItem('sb_user')||sessionStorage.getItem('sb_user')||'{}';if(raw==='undefined'||raw==='null')raw='{}';let user={};try{user=JSON.parse(raw)||{};}catch(_){}const email=user.email||'';
+    r=await fetch(`${SB_URL}/rest/v1/usuarios`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${token}`,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({id:userId,email,nombre:nombreCompleto,telefono})}); return r.ok;
+  }catch(e){console.error('persistProfile failed',e);return false;}
 }
-
 async function doSignup(){
-  clearMsg();
-  const nombre    = document.getElementById('s-nombre').value.trim();
-  const apellidos = document.getElementById('s-apellidos').value.trim();
-  const telefono  = document.getElementById('s-telefono').value.trim();
-  const email     = document.getElementById('s-email').value.trim().toLowerCase();
-  const pass      = document.getElementById('s-pass').value;
-  const pass2     = document.getElementById('s-pass2').value;
-  const legal     = document.getElementById('s-legal').checked;
-
-  // Validación granular con mensajes específicos
-  if(!nombre)      { showMsg('Ingresa tu nombre.'); return; }
-  if(!apellidos)   { showMsg('Ingresa tus apellidos.'); return; }
-  if(telefono && !isValidPhoneMx(telefono)) { showMsg('El teléfono debe tener 10 dígitos (Lada + número).'); return; }
-  if(!email)       { showMsg('Ingresa tu correo electrónico.'); return; }
-  if(!isValidEmail(email)) { showMsg('El correo electrónico no es válido.'); return; }
-  if(!pass || !pass2) { showMsg('Ingresa tu contraseña dos veces.'); return; }
-  if(pass !== pass2) { showMsg('Las contraseñas no coinciden.'); return; }
-  if(pass.length < 8){ showMsg('La contraseña debe tener al menos 8 caracteres.'); return; }
-  if(!legal){ showMsg('Debes aceptar los Términos y el Aviso de Privacidad para continuar.'); return; }
-
-  setLoading('btn-signup', true);
-
-  // ¿El correo ya tiene cuenta? Se pregunta al backend ANTES de intentar el
-  // alta, para dar un mensaje claro en lugar del ambiguo "revisa tu correo".
-  try {
-    const rx = await fetch('https://api.broquer.app/auth/correo-existe?email=' + encodeURIComponent(email));
-    const dx = rx.ok ? await rx.json() : null;
-    if (dx && dx.existe) {
-      setLoading('btn-signup', false);
-      showMsg('Este correo electrónico ya está asociado a una cuenta activa.');
-      setTab('login');
-      const lEmail = document.getElementById('l-email');
-      if(lEmail) lEmail.value = email;
-      return;
-    }
-  } catch(_) { /* si el backend no responde, el flujo normal continúa */ }
-
-  const signupBody = { email, password: pass };
-  if (INV_TOKEN) {
-    signupBody.redirect_to = window.location.origin + '/login.html?inv=' + encodeURIComponent(INV_TOKEN);
-  }
-  const data = await sbAuth('signup', signupBody);
-
-  // ── Bug crítico de Supabase: si el correo YA está registrado, el endpoint
-  // /auth/v1/signup NO devuelve `error`. Devuelve un objeto con un usuario
-  // pero con `identities: []` y `email_confirmed_at: null`. Lo detectamos
-  // explícitamente para avisarle al usuario que ya tiene cuenta.
-  const idts = data && data.user && Array.isArray(data.user.identities) ? data.user.identities : null;
-  if (data && data.user && idts !== null && idts.length === 0){
-    setLoading('btn-signup', false);
-    showMsg('Este correo electrónico ya está asociado a una cuenta activa.');
-    // Mover al tab de login y pre-llenar el correo para acelerar el flujo
-    setTab('login');
-    const lEmail = document.getElementById('l-email');
-    if(lEmail) lEmail.value = email;
-    return;
-  }
-
-  if(!data || data.error){
-    setLoading('btn-signup', false);
-    showMsg(spanishAuthError(data));
-    return;
-  }
-
-  const nombreCompleto = `${nombre} ${apellidos}`.trim();
-  const userId = data.user?.id || data.id || null;
-  const token  = data.access_token || data.session?.access_token || '';
-
-  if(!userId){
-    setLoading('btn-signup', false);
-    showMsg('No se pudo crear la cuenta. Intenta de nuevo en unos minutos.');
-    return;
-  }
-
-  // Caso ideal: Supabase devolvió token (sin email confirmation pendiente).
-  // Guardamos perfil de inmediato y entramos directo a la app, sin segunda pantalla.
-  if(token){
-    try {
-      localStorage.setItem('sb_token', token);
-      if(data.refresh_token) localStorage.setItem('sb_refresh', data.refresh_token);
-      localStorage.setItem('sb_user', JSON.stringify(data.user || data));
-      sessionStorage.setItem('sb_token', token);
-      sessionStorage.setItem('sb_user', JSON.stringify(data.user || data));
-      localStorage.setItem('sesion_activa', 'true');
-    } catch(_){}
-    showMsg('Cuenta creada. Entrando…', 'ok');
-    await persistProfile(token, userId, nombreCompleto, telefono);
-    // NO rehabilitamos el botón (la página va a recargar).
-    window.location.replace(destinoTrasSesion());
-    return;
-  }
-
-  // Caso email-confirmation: guardamos los datos para completar el perfil
-  // automáticamente cuando el usuario regrese desde el correo.
-  try {
-    localStorage.setItem('pending_profile', JSON.stringify({ nombre: nombreCompleto, telefono }));
-  } catch(_) {}
-  setLoading('btn-signup', false);
-  showMsg(INV_TOKEN
-    ? ('Te enviamos un correo de confirmación a ' + email + '. Al confirmarlo regresarás aquí para unirte al equipo.')
-    : ('Te enviamos un correo de confirmación a ' + email + '. Al confirmar entrarás directo a Broquer.'), 'ok');
+  clearMsg(); const nombre=document.getElementById('s-nombre').value.trim(); const apellidos=document.getElementById('s-apellidos').value.trim(); const telefono=document.getElementById('s-telefono').value.trim(); const email=document.getElementById('s-email').value.trim().toLowerCase(); const pass=document.getElementById('s-pass').value; const pass2=document.getElementById('s-pass2').value; const legal=document.getElementById('s-legal').checked;
+  if(!nombre){showMsg('Ingresa tu nombre.');return;} if(!apellidos){showMsg('Ingresa tus apellidos.');return;} if(telefono&&!isValidPhoneMx(telefono)){showMsg('El teléfono debe tener 10 dígitos (Lada + número).');return;} if(!email){showMsg('Ingresa tu correo electrónico.');return;} if(!isValidEmail(email)){showMsg('El correo electrónico no es válido.');return;} if(!pass||!pass2){showMsg('Ingresa tu contraseña dos veces.');return;} if(pass!==pass2){showMsg('Las contraseñas no coinciden.');return;} if(pass.length<8){showMsg('La contraseña debe tener al menos 8 caracteres.');return;} if(!legal){showMsg('Debes aceptar los Términos y el Aviso de Privacidad para continuar.');return;}
+  setLoading('btn-signup',true);
+  try{const rx=await fetch('https://api.broquer.app/auth/correo-existe?email='+encodeURIComponent(email));const dx=rx.ok?await rx.json():null;if(dx&&dx.existe){setLoading('btn-signup',false);showMsg('Este correo electrónico ya está asociado a una cuenta activa.');setTab('login');const lEmail=document.getElementById('l-email');if(lEmail)lEmail.value=email;return;}}catch(_){}
+  const signupBody={email,password:pass}; if(INV_TOKEN)signupBody.redirect_to=window.location.origin+'/login.html?inv='+encodeURIComponent(INV_TOKEN); const data=await sbAuth('signup',signupBody);
+  const idts=data&&data.user&&Array.isArray(data.user.identities)?data.user.identities:null;
+  if(data&&data.user&&idts!==null&&idts.length===0){setLoading('btn-signup',false);showMsg('Este correo electrónico ya está asociado a una cuenta activa.');setTab('login');const lEmail=document.getElementById('l-email');if(lEmail)lEmail.value=email;return;}
+  if(!data||data.error){setLoading('btn-signup',false);showMsg(spanishAuthError(data));return;}
+  const nombreCompleto=`${nombre} ${apellidos}`.trim(); const userId=data.user?.id||data.id||null; const token=data.access_token||data.session?.access_token||'';
+  if(!userId){setLoading('btn-signup',false);showMsg('No se pudo crear la cuenta. Intenta de nuevo en unos minutos.');return;}
+  if(token){try{localStorage.setItem('sb_token',token);if(data.refresh_token)localStorage.setItem('sb_refresh',data.refresh_token);localStorage.setItem('sb_user',JSON.stringify(data.user||data));sessionStorage.setItem('sb_token',token);sessionStorage.setItem('sb_user',JSON.stringify(data.user||data));localStorage.setItem('sesion_activa','true');}catch(_){} showMsg('Cuenta creada. Entrando…','ok');await persistProfile(token,userId,nombreCompleto,telefono);window.location.replace(destinoTrasSesion());return;}
+  try{localStorage.setItem('pending_profile',JSON.stringify({nombre:nombreCompleto,telefono}));}catch(_){} setLoading('btn-signup',false);showMsg(INV_TOKEN?('Te enviamos un correo de confirmación a '+email+'. Al confirmarlo regresarás aquí para unirte al equipo.'):('Te enviamos un correo de confirmación a '+email+'. Al confirmar entrarás directo a Broquer.'),'ok');
 }
-
-async function sha256Base64Url(input){
-  const enc = new TextEncoder().encode(input);
-  const digest = await crypto.subtle.digest('SHA-256', enc);
-  return btoa(String.fromCharCode(...new Uint8Array(digest)))
-    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+async function sha256Base64Url(input){const enc=new TextEncoder().encode(input);const digest=await crypto.subtle.digest('SHA-256',enc);return btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+function randomVerifier(){const arr=new Uint8Array(64);crypto.getRandomValues(arr);return btoa(String.fromCharCode(...arr)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+async function doGoogle(){const redirectTo=location.origin+location.pathname;const verifier=randomVerifier();try{localStorage.setItem('sb_pkce_verifier',verifier);localStorage.setItem('sb_pkce_ts',String(Date.now()));}catch(_){}try{sessionStorage.setItem('sb_pkce_verifier',verifier);}catch(_){}const challenge=await sha256Base64Url(verifier);const url=new URL(`${SB_URL}/auth/v1/authorize`);url.searchParams.set('provider','google');url.searchParams.set('redirect_to',redirectTo);url.searchParams.set('code_challenge',challenge);url.searchParams.set('code_challenge_method','S256');url.searchParams.set('apikey',SB_KEY);window.location.href=url.toString();}
+async function doForgot(){clearMsg();const email=document.getElementById('l-email').value.trim().toLowerCase();if(!email){showMsg('Ingresa tu correo primero, luego presiona "¿Olvidaste tu contraseña?".');return;}if(!isValidEmail(email)){showMsg('El correo electrónico no es válido.');return;}const data=await sbAuth('recover',{email,redirect_to:`${window.location.origin}/reset-password.html`});if(data&&data.error){const raw=(data.error_description||data.error||'').toString().toLowerCase();if(raw.includes('rate limit')||raw.includes('too many')){showMsg('Demasiados intentos. Espera unos minutos antes de volver a intentar.');return;}if(raw==='network'){showMsg(data.error_description||'Sin conexión.');return;}}showMsg('Si la cuenta existe, te enviamos un enlace para restablecer tu contraseña. Revisa tu correo.','ok');}
+async function checkProfileAndRedirect(token,user){
+  function _pendingProfile(){try{const raw=localStorage.getItem('pending_profile');if(!raw)return null;const p=JSON.parse(raw);if(p&&p.nombre)return p;}catch(_){}return null;}
+  async function _completarConPending(){const pend=_pendingProfile();if(!pend)return false;const ok=await persistProfile(token,user.id,pend.nombre,pend.telefono||'');if(ok){try{localStorage.removeItem('pending_profile');}catch(_){}}return ok;}
+  async function _consultarPerfil(){for(let intento=0;intento<3;intento++){try{const r=await fetch(`${SB_URL}/rest/v1/usuarios?id=eq.${user.id}&select=nombre,telefono`,{headers:{'apikey':SB_KEY,'Authorization':`Bearer ${token}`}});if(r.status===401)return{estado:'expirado'};if(r.ok){const data=await r.json().catch(()=>null);const tieneNombre=Array.isArray(data)&&data.length&&!!data[0].nombre;return{estado:'ok',tieneNombre};}}catch(_){}if(intento<2)await new Promise(res=>setTimeout(res,800*(intento+1)));}return{estado:'indeterminado'};}
+  const res=await _consultarPerfil();
+  if(res.estado==='expirado'){try{localStorage.removeItem('sb_token');localStorage.removeItem('sb_refresh');localStorage.removeItem('sb_user');sessionStorage.removeItem('sb_token');sessionStorage.removeItem('sb_user');}catch(_){}showMsg('Tu sesión expiró. Inicia sesión de nuevo.','ok');return;}
+  if(res.estado==='ok'){if(res.tieneNombre){window.location.replace(destinoTrasSesion());return;}if(await _completarConPending()){window.location.replace(destinoTrasSesion());return;}window.location.replace('registro.html');return;}
+  if(await _completarConPending()){window.location.replace(destinoTrasSesion());return;}window.location.replace(destinoTrasSesion());
 }
-function randomVerifier(){
-  const arr = new Uint8Array(64);
-  crypto.getRandomValues(arr);
-  return btoa(String.fromCharCode(...arr))
-    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-async function doGoogle(){
-  // Supabase OAuth con PKCE. El verifier se guarda en localStorage (más robusto
-  // que sessionStorage en flujos donde el navegador puede recrear contextos)
-  // con marca de tiempo para limpiar verificadores viejos.
-  const redirectTo = location.origin + location.pathname;
-  const verifier = randomVerifier();
-  try {
-    localStorage.setItem('sb_pkce_verifier', verifier);
-    localStorage.setItem('sb_pkce_ts', String(Date.now()));
-  } catch(_) {}
-  // También en sessionStorage como respaldo.
-  try { sessionStorage.setItem('sb_pkce_verifier', verifier); } catch(_) {}
-  const challenge = await sha256Base64Url(verifier);
-  const url = new URL(`${SB_URL}/auth/v1/authorize`);
-  url.searchParams.set('provider', 'google');
-  url.searchParams.set('redirect_to', redirectTo);
-  url.searchParams.set('code_challenge', challenge);
-  url.searchParams.set('code_challenge_method', 'S256');
-  // Algunas configuraciones de Supabase requieren el apikey en la URL de authorize.
-  url.searchParams.set('apikey', SB_KEY);
-  window.location.href = url.toString();
-}
-
-async function doForgot(){
-  clearMsg();
-  const email = document.getElementById('l-email').value.trim().toLowerCase();
-  if(!email){ showMsg('Ingresa tu correo primero, luego presiona "¿Olvidaste tu contraseña?".'); return; }
-  if(!isValidEmail(email)){ showMsg('El correo electrónico no es válido.'); return; }
-  const data = await sbAuth('recover', {
-    email,
-    // Para que el botón del correo lleve al usuario a la página de reseteo
-    // y no a login.html (donde no hay formulario para cambiar la contraseña).
-    redirect_to: `${window.location.origin}/reset-password.html`
-  });
-  // Por privacidad, NO revelamos si el correo existe o no — siempre
-  // mostramos el mismo mensaje genérico (excepto en rate limit).
-  if(data && data.error){
-    const raw = (data.error_description || data.error || '').toString().toLowerCase();
-    if(raw.includes('rate limit') || raw.includes('too many')){
-      showMsg('Demasiados intentos. Espera unos minutos antes de volver a intentar.');
-      return;
-    }
-    if(raw === 'network'){
-      showMsg(data.error_description || 'Sin conexión.');
-      return;
-    }
-  }
-  showMsg('Si la cuenta existe, te enviamos un enlace para restablecer tu contraseña. Revisa tu correo.', 'ok');
-}
-
-async function checkProfileAndRedirect(token, user){
-  // Recupera nombre/teléfono pendientes guardados en doSignup (caso email-
-  // confirmation). Si existen, los aplica para evitar la 2ª pantalla.
-  function _pendingProfile(){
-    try {
-      const raw = localStorage.getItem('pending_profile');
-      if(!raw) return null;
-      const p = JSON.parse(raw);
-      if(p && p.nombre) return p;
-    } catch(_) {}
-    return null;
-  }
-
-  async function _completarConPending(){
-    const pend = _pendingProfile();
-    if(!pend) return false;
-    const ok = await persistProfile(token, user.id, pend.nombre, pend.telefono || '');
-    if(ok){
-      try { localStorage.removeItem('pending_profile'); } catch(_) {}
-    }
-    return ok;
-  }
-
-  // Consulta el perfil con reintentos. Devuelve uno de tres estados:
-  //   'ok'            -> el servidor respondió 200 (incluye tieneNombre)
-  //   'expirado'      -> 401: la sesión ya no es válida
-  //   'indeterminado' -> no se pudo verificar (timeout / 5xx / red caída)
-  // La distinción es CLAVE: un error al *leer* el perfil NO es prueba de que
-  // el perfil no exista. Antes el código asumía "sin perfil" ante cualquier
-  // fallo y mandaba al usuario a registro.html — por eso un agente viejo veía
-  // la pantalla de "Completa tu perfil" cuando la base de datos estaba
-  // momentáneamente saturada, y volvía a la normalidad al ceder la carga.
-  async function _consultarPerfil(){
-    for (let intento = 0; intento < 3; intento++){
-      try {
-        const r = await fetch(`${SB_URL}/rest/v1/usuarios?id=eq.${user.id}&select=nombre,telefono`, {
-          headers:{ 'apikey':SB_KEY, 'Authorization':`Bearer ${token}` }
-        });
-        if (r.status === 401) return { estado:'expirado' };
-        if (r.ok) {
-          const data = await r.json().catch(() => null);
-          const tieneNombre = Array.isArray(data) && data.length && !!data[0].nombre;
-          return { estado:'ok', tieneNombre };
-        }
-        // 5xx u otro error de servidor: caemos al reintento.
-      } catch(_) {
-        // Red caída / timeout: caemos al reintento.
-      }
-      if (intento < 2) {
-        await new Promise(res => setTimeout(res, 800 * (intento + 1)));
-      }
-    }
-    return { estado:'indeterminado' };
-  }
-
-  const res = await _consultarPerfil();
-
-  if (res.estado === 'expirado') {
-    // Token expirado o revocado: limpiar sesión y dejar al usuario en login.
-    try {
-      localStorage.removeItem('sb_token');
-      localStorage.removeItem('sb_refresh');
-      localStorage.removeItem('sb_user');
-      sessionStorage.removeItem('sb_token');
-      sessionStorage.removeItem('sb_user');
-    } catch(_){}
-    showMsg('Tu sesión expiró. Inicia sesión de nuevo.', 'ok');
-    return;
-  }
-
-  if (res.estado === 'ok') {
-    if (res.tieneNombre) { window.location.replace(destinoTrasSesion()); return; }
-    // El servidor confirmó (200) que NO hay nombre: usuario realmente nuevo.
-    // Caso típico tras email-confirmation: completamos con los datos del signup.
-    if (await _completarConPending()) { window.location.replace(destinoTrasSesion()); return; }
-    // OAuth nuevo o usuario sin pending: registro.html.
-    window.location.replace('registro.html');
-    return;
-  }
-
-  // estado === 'indeterminado': la base de datos no respondió con claridad
-  // (saturación momentánea, timeout, 5xx). NUNCA asumimos perfil vacío: un
-  // usuario ya autenticado es casi siempre un usuario existente. Fail-safe:
-  // lo dejamos entrar a la app (index.html lee el nombre cuando la base se
-  // recupera) en lugar de mandarlo a la pantalla de registro.
-  if (await _completarConPending()) { window.location.replace(destinoTrasSesion()); return; }
-  window.location.replace(destinoTrasSesion());
-}
-
-/* Splash */
-setTimeout(() => {
-  const s = document.getElementById('splash');
-  if (!s) return;
-  s.style.opacity = '0';
-  setTimeout(() => s.remove(), 600);
-}, 800);
-
-/* OAuth/email-confirmation callback handling */
-(async () => {
-  // Helper para limpiar tokens stale si la sesión queda inválida.
-  function _clearSession(){
-    try {
-      localStorage.removeItem('sb_token');
-      localStorage.removeItem('sb_refresh');
-      localStorage.removeItem('sb_user');
-      sessionStorage.removeItem('sb_token');
-      sessionStorage.removeItem('sb_user');
-    } catch(_){}
-  }
-
-  const urlParams = new URLSearchParams(location.search);
-  const hash = location.hash || '';
-  const hashParams = new URLSearchParams(hash.startsWith('#') ? hash.slice(1) : hash);
-
-  // Si el correo de recovery llegó aquí (por cualquier razón), no
-  // queremos loguear al usuario: lo mandamos a reset-password.html
-  // conservando el token para que pueda cambiar su contraseña.
-  const recoveryType = urlParams.get('type') === 'recovery' || hashParams.get('type') === 'recovery';
-  const looksLikeRecovery = recoveryType
-    || urlParams.get('token_hash')
-    || (hashParams.get('access_token') && hashParams.get('type') === 'recovery');
-  if (looksLikeRecovery) {
-    const target = 'reset-password.html'
-                 + (location.search || '')
-                 + (location.hash || '');
-    location.replace(target);
-    return;
-  }
-
-  // Si volvieron al login con confirmación de cambio de contraseña.
-  if (urlParams.get('pwd') === 'ok') {
-    showMsg('Contraseña actualizada. Inicia sesión con tu nueva contraseña.', 'ok');
-    history.replaceState(null, '', location.pathname);
-  }
-
-  const hasOauthInUrl = /[?&]code=/.test(location.search)
-                     || /[?&]error/.test(location.search)
-                     || /access_token=/.test(hash)
-                     || /[?&#]error/.test(hash);
-
-  // Caso 1: error de Supabase en la URL (de OAuth o de magic link)
-  const oauthErrQs = urlParams.get('error') || urlParams.get('error_description');
-  const oauthErrHash = hashParams.get('error') || hashParams.get('error_description');
-  if(oauthErrQs || oauthErrHash){
-    const desc = urlParams.get('error_description') || hashParams.get('error_description')
-              || urlParams.get('error') || hashParams.get('error') || 'Error de autenticación.';
-    showMsg(decodeURIComponent(desc).replace(/\+/g,' '));
-    history.replaceState(null, '', location.pathname);
-    return;
-  }
-
-  // Caso 2: PKCE callback (Google OAuth con ?code=…)
-  const oauthCode = urlParams.get('code');
-  if(oauthCode){
-    showMsg('Completando inicio con Google…', 'ok');
-    const verifier = localStorage.getItem('sb_pkce_verifier') || sessionStorage.getItem('sb_pkce_verifier');
-    if(!verifier){
-      showMsg('No se pudo completar Google: el navegador perdió el verificador de seguridad. Intenta de nuevo.');
-      history.replaceState(null, '', location.pathname);
-      return;
-    }
-    try {
-      const r = await fetch(`${SB_URL}/auth/v1/token?grant_type=pkce`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json','apikey':SB_KEY},
-        body: JSON.stringify({ auth_code: oauthCode, code_verifier: verifier })
-      });
-      const d = await r.json().catch(() => ({}));
-      try { localStorage.removeItem('sb_pkce_verifier'); localStorage.removeItem('sb_pkce_ts'); } catch(_){}
-      try { sessionStorage.removeItem('sb_pkce_verifier'); } catch(_){}
-
-      if(!r.ok || d.error || !d.access_token){
-        showMsg(spanishAuthError(d) || ('Error ' + r.status + ' al intercambiar el código de Google.'));
-        history.replaceState(null, '', location.pathname);
-        return;
-      }
-      try {
-        localStorage.setItem('sb_token', d.access_token);
-        if(d.refresh_token) localStorage.setItem('sb_refresh', d.refresh_token);
-        localStorage.setItem('sb_user', JSON.stringify(d.user || {}));
-        sessionStorage.setItem('sb_token', d.access_token);
-        sessionStorage.setItem('sb_user', JSON.stringify(d.user || {}));
-        localStorage.setItem('sesion_activa', 'true');
-      } catch(_){}
-      history.replaceState(null, '', location.pathname);
-      await checkProfileAndRedirect(d.access_token, d.user || {});
-      return;
-    } catch (err) {
-      console.error('PKCE exchange failed', err);
-      showMsg('No se pudo completar Google: ' + (err.message || 'error de red'));
-      history.replaceState(null, '', location.pathname);
-      return;
-    }
-  }
-
-  // Caso 3: implicit-flow / email-confirmation con #access_token=…
-  if(hash.includes('access_token=') && hashParams.get('access_token')){
-    const cbToken   = hashParams.get('access_token');
-    const cbRefresh = hashParams.get('refresh_token');
-    try {
-      const r = await fetch(`${SB_URL}/auth/v1/user`, {
-        headers:{ 'apikey':SB_KEY, 'Authorization':`Bearer ${cbToken}` }
-      });
-      if(!r.ok){
-        showMsg('No se pudo validar la sesión. Inicia sesión de nuevo.');
-        history.replaceState(null, '', location.pathname);
-        return;
-      }
-      const user = await r.json().catch(() => ({}));
-      try {
-        localStorage.setItem('sb_token', cbToken);
-        if(cbRefresh) localStorage.setItem('sb_refresh', cbRefresh);
-        localStorage.setItem('sb_user', JSON.stringify(user));
-        sessionStorage.setItem('sb_token', cbToken);
-        sessionStorage.setItem('sb_user', JSON.stringify(user));
-        localStorage.setItem('sesion_activa', 'true');
-      } catch(_){}
-      history.replaceState(null, '', location.pathname);
-      await checkProfileAndRedirect(cbToken, user);
-      return;
-    } catch(err){
-      console.error('hash-token exchange failed', err);
-      showMsg('Sin conexión. Intenta de nuevo en unos segundos.');
-      history.replaceState(null, '', location.pathname);
-      return;
-    }
-  }
-
-  // Caso 4: mensaje informativo cuando vuelven de confirmar correo (sin sesión)
-  if(!hasOauthInUrl && (urlParams.get('type') === 'signup' || urlParams.get('confirmation') === 'true')){
-    showMsg(INV_TOKEN
-      ? 'Correo confirmado. Inicia sesión para unirte al equipo.'
-      : 'Correo confirmado. Ahora inicia sesión con tus datos.', 'ok');
-    setTab('login');
-    return;
-  }
-
-  // Caso 5 (sin OAuth en URL): intentar reusar sesión existente o refrescar.
-  let token = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
-  const refresh = localStorage.getItem('sb_refresh');
-  if(!token && refresh){
-    try {
-      const r = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json','apikey':SB_KEY},
-        body: JSON.stringify({ refresh_token: refresh })
-      });
-      const d = await r.json().catch(() => ({}));
-      if(r.ok && d.access_token){
-        token = d.access_token;
-        try {
-          localStorage.setItem('sb_token', d.access_token);
-          if(d.refresh_token) localStorage.setItem('sb_refresh', d.refresh_token);
-          localStorage.setItem('sb_user', JSON.stringify(d.user || {}));
-          sessionStorage.setItem('sb_token', d.access_token);
-          sessionStorage.setItem('sb_user', JSON.stringify(d.user || {}));
-        } catch(_){}
-      } else {
-        // Refresh token invalid/revoked — limpiar para no caer en loops.
-        _clearSession();
-        token = null;
-      }
-    } catch(_){
-      // Red caída — dejar al usuario en login.html sin redirigir.
-      token = null;
-    }
-  }
-  if(token){
-    let raw = localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}';
-    if (raw === 'undefined' || raw === 'null') raw = '{}';
-    let user = {};
-    try { user = JSON.parse(raw) || {}; } catch (e) { user = {}; }
-    if(user.id){
-      await checkProfileAndRedirect(token, user);
-      return;
-    }
-  }
+setTimeout(()=>{const s=document.getElementById('splash');if(!s)return;s.style.opacity='0';setTimeout(()=>s.remove(),600);},800);
+(async()=>{
+  function _clearSession(){try{localStorage.removeItem('sb_token');localStorage.removeItem('sb_refresh');localStorage.removeItem('sb_user');sessionStorage.removeItem('sb_token');sessionStorage.removeItem('sb_user');}catch(_){}}
+  const urlParams=new URLSearchParams(location.search);const hash=location.hash||'';const hashParams=new URLSearchParams(hash.startsWith('#')?hash.slice(1):hash);
+  const recoveryType=urlParams.get('type')==='recovery'||hashParams.get('type')==='recovery';const looksLikeRecovery=recoveryType||urlParams.get('token_hash')||(hashParams.get('access_token')&&hashParams.get('type')==='recovery');if(looksLikeRecovery){location.replace('reset-password.html'+(location.search||'')+(location.hash||''));return;}
+  if(urlParams.get('pwd')==='ok'){showMsg('Contraseña actualizada. Inicia sesión con tu nueva contraseña.','ok');history.replaceState(null,'',location.pathname);}
+  const hasOauthInUrl=/[?&]code=/.test(location.search)||/[?&]error/.test(location.search)||/access_token=/.test(hash)||/[?&#]error/.test(hash);
+  const oauthErrQs=urlParams.get('error')||urlParams.get('error_description');const oauthErrHash=hashParams.get('error')||hashParams.get('error_description');if(oauthErrQs||oauthErrHash){const desc=urlParams.get('error_description')||hashParams.get('error_description')||urlParams.get('error')||hashParams.get('error')||'Error de autenticación.';showMsg(decodeURIComponent(desc).replace(/\+/g,' '));history.replaceState(null,'',location.pathname);return;}
+  const oauthCode=urlParams.get('code');if(oauthCode){showMsg('Completando inicio con Google…','ok');const verifier=localStorage.getItem('sb_pkce_verifier')||sessionStorage.getItem('sb_pkce_verifier');if(!verifier){showMsg('No se pudo completar Google: el navegador perdió el verificador de seguridad. Intenta de nuevo.');history.replaceState(null,'',location.pathname);return;}try{const r=await fetch(`${SB_URL}/auth/v1/token?grant_type=pkce`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SB_KEY},body:JSON.stringify({auth_code:oauthCode,code_verifier:verifier})});const d=await r.json().catch(()=>({}));try{localStorage.removeItem('sb_pkce_verifier');localStorage.removeItem('sb_pkce_ts');}catch(_){}try{sessionStorage.removeItem('sb_pkce_verifier');}catch(_){}if(!r.ok||d.error||!d.access_token){showMsg(spanishAuthError(d)||('Error '+r.status+' al intercambiar el código de Google.'));history.replaceState(null,'',location.pathname);return;}try{localStorage.setItem('sb_token',d.access_token);if(d.refresh_token)localStorage.setItem('sb_refresh',d.refresh_token);localStorage.setItem('sb_user',JSON.stringify(d.user||{}));sessionStorage.setItem('sb_token',d.access_token);sessionStorage.setItem('sb_user',JSON.stringify(d.user||{}));localStorage.setItem('sesion_activa','true');}catch(_){}history.replaceState(null,'',location.pathname);await checkProfileAndRedirect(d.access_token,d.user||{});return;}catch(err){console.error('PKCE exchange failed',err);showMsg('No se pudo completar Google: '+(err.message||'error de red'));history.replaceState(null,'',location.pathname);return;}}
+  if(hash.includes('access_token=')&&hashParams.get('access_token')){const cbToken=hashParams.get('access_token');const cbRefresh=hashParams.get('refresh_token');try{const r=await fetch(`${SB_URL}/auth/v1/user`,{headers:{'apikey':SB_KEY,'Authorization':`Bearer ${cbToken}`}});if(!r.ok){showMsg('No se pudo validar la sesión. Inicia sesión de nuevo.');history.replaceState(null,'',location.pathname);return;}const user=await r.json().catch(()=>({}));try{localStorage.setItem('sb_token',cbToken);if(cbRefresh)localStorage.setItem('sb_refresh',cbRefresh);localStorage.setItem('sb_user',JSON.stringify(user));sessionStorage.setItem('sb_token',cbToken);sessionStorage.setItem('sb_user',JSON.stringify(user));localStorage.setItem('sesion_activa','true');}catch(_){}history.replaceState(null,'',location.pathname);await checkProfileAndRedirect(cbToken,user);return;}catch(err){console.error('hash-token exchange failed',err);showMsg('Sin conexión. Intenta de nuevo en unos segundos.');history.replaceState(null,'',location.pathname);return;}}
+  if(!hasOauthInUrl&&(urlParams.get('type')==='signup'||urlParams.get('confirmation')==='true')){showMsg(INV_TOKEN?'Correo confirmado. Inicia sesión para unirte al equipo.':'Correo confirmado. Ahora inicia sesión con tus datos.','ok');setTab('login');return;}
+  let token=localStorage.getItem('sb_token')||sessionStorage.getItem('sb_token');const refresh=localStorage.getItem('sb_refresh');if(!token&&refresh){try{const r=await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SB_KEY},body:JSON.stringify({refresh_token:refresh})});const d=await r.json().catch(()=>({}));if(r.ok&&d.access_token){token=d.access_token;try{localStorage.setItem('sb_token',d.access_token);if(d.refresh_token)localStorage.setItem('sb_refresh',d.refresh_token);localStorage.setItem('sb_user',JSON.stringify(d.user||{}));sessionStorage.setItem('sb_token',d.access_token);sessionStorage.setItem('sb_user',JSON.stringify(d.user||{}));}catch(_){}}else{_clearSession();token=null;}}catch(_){token=null;}}
+  if(token){let raw=localStorage.getItem('sb_user')||sessionStorage.getItem('sb_user')||'{}';if(raw==='undefined'||raw==='null')raw='{}';let user={};try{user=JSON.parse(raw)||{};}catch(e){user={};}if(user.id){await checkProfileAndRedirect(token,user);return;}}
 })();
-
-/* Invitación: pintar contexto y guiar al usuario a la pestaña correcta */
-(async () => {
-  if (!INV_TOKEN) return;
-  try {
-    const r = await fetch('https://api.broquer.app/org/invitacion/' + encodeURIComponent(INV_TOKEN));
-    const d = r.ok ? await r.json().catch(() => null) : null;
-    if (!d || !d.valida) {
-      // Vencida o cancelada: se limpia para no arrastrar a nadie a unirse.html.
-      try { localStorage.removeItem('inv_pendiente'); } catch(_) {}
-      INV_TOKEN = '';
-      return;
-    }
-    document.getElementById('inv-empresa').textContent = d.empresa || 'Una inmobiliaria';
-    document.getElementById('inv-email').textContent = d.email || '';
-    document.getElementById('inv-banner').classList.add('is-on');
-    if (d.email) {
-      const le = document.getElementById('l-email');
-      const se = document.getElementById('s-email');
-      if (le && !le.value) le.value = d.email;
-      if (se && !se.value) se.value = d.email;
-      try {
-        const rx = await fetch('https://api.broquer.app/auth/correo-existe?email=' + encodeURIComponent(d.email));
-        const dx = rx.ok ? await rx.json().catch(() => null) : null;
-        if (dx && typeof dx.existe === 'boolean') setTab(dx.existe ? 'login' : 'signup');
-      } catch(_) { /* sin respuesta: se queda la pestaña por defecto */ }
-    }
-  } catch(_) { /* red caída: el flujo normal sigue funcionando */ }
-})();
-
-/* Enter para submit en cualquier campo del form correspondiente */
-document.getElementById('form-login').addEventListener('keydown', e => {
-  if (e.key === 'Enter') { e.preventDefault(); doLogin(); }
-});
-document.getElementById('form-signup').addEventListener('keydown', e => {
-  if (e.key === 'Enter') { e.preventDefault(); doSignup(); }
-});
-
-/* Pasar email a minúsculas al perder foco (mejor UX que normalizar al submit) */
-['l-email','s-email'].forEach(id => {
-  const el = document.getElementById(id);
-  if (el) el.addEventListener('blur', () => { el.value = el.value.trim().toLowerCase(); });
-});
-
-/* Fallback: si por alguna razón el splash quedó visible (red caída, IIFE que
-   crasheó, etc.) lo quitamos al cargar el DOM completamente. */
-window.addEventListener('load', () => {
-  const s = document.getElementById('splash');
-  if (s && s.parentNode) { s.style.opacity = '0'; setTimeout(() => s.remove(), 400); }
-});
+(async()=>{if(!INV_TOKEN)return;try{const r=await fetch('https://api.broquer.app/org/invitacion/'+encodeURIComponent(INV_TOKEN));const d=r.ok?await r.json().catch(()=>null):null;if(!d||!d.valida){try{localStorage.removeItem('inv_pendiente');}catch(_){}INV_TOKEN='';return;}document.getElementById('inv-empresa').textContent=d.empresa||'Una inmobiliaria';document.getElementById('inv-email').textContent=d.email||'';document.getElementById('inv-banner').classList.add('is-on');if(d.email){const le=document.getElementById('l-email');const se=document.getElementById('s-email');if(le&&!le.value)le.value=d.email;if(se&&!se.value)se.value=d.email;try{const rx=await fetch('https://api.broquer.app/auth/correo-existe?email='+encodeURIComponent(d.email));const dx=rx.ok?await rx.json().catch(()=>null):null;if(dx&&typeof dx.existe==='boolean')setTab(dx.existe?'login':'signup');}catch(_){}}}catch(_){}})();
+document.getElementById('form-login').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();doLogin();}});
+document.getElementById('form-signup').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();doSignup();}});
+['l-email','s-email'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('blur',()=>{el.value=el.value.trim().toLowerCase();});});
+window.addEventListener('load',()=>{const s=document.getElementById('splash');if(s&&s.parentNode){s.style.opacity='0';setTimeout(()=>s.remove(),400);}});
 </script>
-
 <script src="capacitor-bridge.js" defer></script>
 </body>
 </html>
