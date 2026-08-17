@@ -73,7 +73,7 @@ Toda nueva superficie o migración debe cumplir:
 - [x] `brokr-theme.css` establecido como única fuente ejecutable de verdad.
 - [x] `_TEMPLATE-modulo.html` alineado con Canon y shell compartido.
 - [x] `tests/test_frontend_canon_contract.py` creado como ratchet permanente.
-- [x] Quality ampliado para auditar 15 superficies Canon.
+- [x] Quality ampliado para auditar **26 superficies Canon**.
 - [x] `broquer-ui.css` eliminado por completo.
 - [x] Cero HTML debe definir `.app-sidebar`.
 
@@ -111,12 +111,30 @@ Estas migraciones no implican que toda regla de dominio de esos archivos haya si
 
 Image Cleaner conserva carga, limpieza IA, descarga, guardado nativo y handoff a Ficha/Facebook Ads/Video. Robin conserva ruta diaria, prospectos prioritarios, copiloto Broq y marcador de cierres, pero ya comparte la identidad de Broquer.
 
+### Superficies adicionales protegidas por auditoría Canon
+
+Además de las migraciones explícitas anteriores, Quality ya vigila permanentemente:
+
+- [x] `tareas.html`
+- [x] `firmas.html`
+- [x] `finanzas.html`
+- [x] `cumplimiento.html`
+- [x] `video.html`
+- [x] `facebook-ads.html`
+- [x] `mi-sitio.html`
+- [x] `equipo.html`
+- [x] `empresas.html`
+- [x] `admin.html`
+- [x] `soporte.html`
+
+Estas pantallas pasaron el auditor sin necesidad de reescrituras cosméticas innecesarias. Los bloques que representan contenido externo o miniaturas de otros productos permanecen exentos solo cuando están marcados de forma estrecha y explícita.
+
 ## Validación automática
 
-Último estado limpio validado de esta rama antes de la siguiente sincronización técnica:
+Último estado limpio validado de esta rama:
 
-- **228 tests:** pasan.
-- **15 superficies en `audit.py`: 0 violaciones.**
+- **232 tests:** pasan.
+- **26 superficies en `audit.py`: 0 violaciones.**
 - **`scripts/architecture_debt.py`: pasa.**
 - `whatsapp.html` permanece dentro de su ceiling de tamaño; no se relajó el guard para acomodar la migración.
 
@@ -144,7 +162,7 @@ Estos archivos pueden conservarse, archivarse o eliminarse según su utilidad hi
 
 ### Afinado por módulo
 
-Todavía puede existir CSS específico antiguo, geometría local o patrones mejorables en módulos que no forman parte de las 15 superficies auditadas. Ese trabajo es **refinamiento**, no coexistencia de dos sistemas de diseño. Debe atacarse módulo por módulo sin reintroducir tokens o chrome paralelos.
+Todavía puede existir CSS específico antiguo, geometría local o patrones mejorables en superficies no cubiertas por las 26 auditorías. Ese trabajo es **refinamiento**, no coexistencia de dos sistemas de diseño. Debe atacarse módulo por módulo sin reintroducir tokens o chrome paralelos.
 
 `index.html` conserva únicamente bloques auxiliares estrechos y explícitamente exentos necesarios para su dashboard; no constituyen un segundo theme.
 
