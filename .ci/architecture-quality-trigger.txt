@@ -1,2 +1,2 @@
-extract=scripts/refactor_main_extract_easybroker_retry_core.py
-retry=3
+extract=scripts/refactor_main_extract_easybroker_mapping_core.py
+retry=1
