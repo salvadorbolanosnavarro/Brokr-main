@@ -1,4 +1,4 @@
-"""Permanent guards for property bulk-delete verification Core reads."""
+"""Permanent guards for property bulk-delete Core reads and delete routing."""
 from pathlib import Path
 import unittest
 
@@ -17,7 +17,7 @@ class MainPropertyBulkDeleteReadsCoreRefactorTests(unittest.TestCase):
     def test_direct_verification_gets_stay_removed(self):
         self.assertNotIn('client.get(f"{SUPABASE_URL}/rest/v1/propiedades"', self.block)
 
-    def test_core_reads_preserve_delete_and_storage_cleanup(self):
+    def test_core_reads_and_delete_preserve_storage_cleanup(self):
         block = self.block
         self.assertIn('filas = await get_rows(', block)
         self.assertIn('filas.extend(await get_rows(', block)
@@ -25,8 +25,16 @@ class MainPropertyBulkDeleteReadsCoreRefactorTests(unittest.TestCase):
         self.assertIn('"select": "id,fotos"', block)
         self.assertIn('timeout=60', block)
         self.assertIn('raise HTTPException(status_code=500, detail="No se pudo leer el inventario.")', block)
-        self.assertIn('rd = await client.delete(\n                    f"{SUPABASE_URL}/rest/v1/propiedades"', block)
+
+        self.assertIn('await delete_rows(', block)
+        self.assertIn('{**filtro, "id": f"in.({lista})"}', block)
+        self.assertIn('prefer="return=minimal"', block)
+        self.assertIn('accepted_statuses=(200, 204)', block)
+        self.assertIn('except httpx.HTTPStatusError:', block)
+        self.assertNotIn('/rest/v1/propiedades', block)
+
         self.assertIn('asyncio.create_task(_borrar_fotos_storage(nombres))', block)
+        self.assertLess(block.index('await delete_rows('), block.index('asyncio.create_task(_borrar_fotos_storage(nombres))'))
 
 
 if __name__ == "__main__":
