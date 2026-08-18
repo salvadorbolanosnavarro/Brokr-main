@@ -1,2 +1,2 @@
-extract=scripts/refactor_main_extract_demo_core.py
-retry=3
+extract=scripts/refactor_main_extract_instagram_core.py
+retry=1
