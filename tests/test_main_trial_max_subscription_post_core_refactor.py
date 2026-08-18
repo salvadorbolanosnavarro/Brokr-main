@@ -31,14 +31,17 @@ class MainTrialMaxSubscriptionPostCoreRefactorTests(unittest.TestCase):
         )
         self.assertNotIn('/rest/v1/suscripciones', block)
 
-    def test_trial_burn_patch_keeps_legacy_fail_soft_http_status_behavior(self):
+    def test_trial_burn_patch_routes_through_core_with_legacy_fail_soft_http_status(self):
         block = self.block
-        self.assertIn('async with httpx.AsyncClient(timeout=10) as client:', block)
-        self.assertIn('await client.patch(', block)
-        self.assertIn('f"{SUPABASE_URL}/rest/v1/usuarios?id=eq.{user_id}"', block)
-        self.assertIn('json={"trial_max_usado": True}', block)
-        self.assertNotIn('await patch_rows(', block)
-        self.assertLess(block.index('await post_rows('), block.index('await client.patch('))
+        self.assertIn('await patch_rows(', block)
+        self.assertIn('"usuarios"', block)
+        self.assertIn('{"id": f"eq.{user_id}"}', block)
+        self.assertIn('{"trial_max_usado": True}', block)
+        self.assertIn('prefer="return=minimal"', block)
+        self.assertIn('timeout=10', block)
+        self.assertIn('except httpx.HTTPStatusError:', block)
+        self.assertNotIn('f"{SUPABASE_URL}/rest/v1/usuarios?id=eq.{user_id}"', block)
+        self.assertLess(block.index('await post_rows('), block.index('await patch_rows('))
 
 
 if __name__ == "__main__":
