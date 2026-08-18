@@ -1,7 +1,52 @@
 ..................................................../home/runner/work/Brokr-main/Brokr-main/core/easybroker_mapping.py:159: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
   "updated_at": datetime.utcnow().isoformat(),
-.........................................................................................................................................................................................................................................................
+.................................................................................................................EEEE..E................................................................................................................................
+======================================================================
+ERROR: setUpClass (test_main_machote_create_post_core_refactor.MainMachoteCreatePostCoreRefactorTests)
 ----------------------------------------------------------------------
-Ran 301 tests in 6.985s
+Traceback (most recent call last):
+  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_machote_create_post_core_refactor.py", line 13, in setUpClass
+    start = cls.source.index('@app.post("/contrato/machote/crear")')
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: substring not found
 
-OK
+======================================================================
+ERROR: setUpClass (test_main_machote_delete_core_refactor.MainMachoteDeleteCoreRefactorTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_machote_delete_core_refactor.py", line 15, in setUpClass
+    start = source.index('@app.delete("/contrato/machote/{machote_id}")')
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: substring not found
+
+======================================================================
+ERROR: setUpClass (test_main_machote_lookup_core_refactor.MainMachoteLookupCoreRefactorTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_machote_lookup_core_refactor.py", line 14, in setUpClass
+    start = source.index("async def _machote_o_404(")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: substring not found
+
+======================================================================
+ERROR: setUpClass (test_main_machote_update_patch_core_refactor.MainMachoteUpdatePatchCoreRefactorTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_machote_update_patch_core_refactor.py", line 13, in setUpClass
+    start = cls.source.index('@app.patch("/contrato/machote/{machote_id}")')
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: substring not found
+
+======================================================================
+ERROR: setUpClass (test_main_machotes_list_core_refactor.MainMachotesListCoreRefactorTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_machotes_list_core_refactor.py", line 14, in setUpClass
+    start = source.index('@app.get("/contrato/machotes")')
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: substring not found
+
+----------------------------------------------------------------------
+Ran 295 tests in 6.545s
+
+FAILED (errors=5)
