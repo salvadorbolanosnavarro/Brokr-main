@@ -8,6 +8,7 @@ from core.config import settings
 from core.database import call_public_rpc, call_service_rpc, delete_rows, get_public_rows, get_rows, get_service_json, get_service_json_or_empty, patch_rows, patch_rows_ignoring_http_status, patch_rows_no_response, post_rows, upsert_rows
 from core.legacy_main_config import legacy_main_settings
 from core.telemetry import (_request_modulo, _track_anthropic, _track_gemini_image, _track_groq, track_usage)
+from core.user_access import get_user_access_state, get_user_rol
 import httpx
 import os
 import time
@@ -355,46 +356,6 @@ from routers.organizaciones import (
     exigir_gestion_integraciones,
 )
 
-
-# Helper: obtiene el rol del usuario desde la tabla usuarios
-async def get_user_rol(user_id: str) -> str:
-    if not user_id or not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
-        return "agente"
-    try:
-        rows = await get_rows(
-            "usuarios",
-            {"id": f"eq.{user_id}", "select": "rol", "limit": "1"},
-            timeout=8,
-        )
-        if rows:
-            return rows[0].get("rol") or "agente"
-    except Exception:
-        pass
-    return "agente"
-
-# Helper: obtiene rol + activo en una sola llamada
-async def get_user_access_state(user_id: str) -> dict:
-    """
-    Devuelve {'rol': str, 'activo': bool} para verificar acceso de un usuario.
-    Si la cuenta está desactivada (activo=False), ningún rol da acceso.
-    """
-    default = {"rol": "agente", "activo": True}
-    if not user_id or not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
-        return default
-    try:
-        rows = await get_rows(
-            "usuarios",
-            {"id": f"eq.{user_id}", "select": "rol,activo", "limit": "1"},
-            timeout=8,
-        )
-        if rows:
-            return {
-                "rol": rows[0].get("rol") or "agente",
-                "activo": rows[0].get("activo") if rows[0].get("activo") is not None else True,
-            }
-    except Exception:
-        pass
-    return default
 
 # ════════════════════════════════════════════════════════════════
 # Endpoint unificado para el perfil del usuario.
