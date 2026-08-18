@@ -45,6 +45,6 @@ Traceback (most recent call last):
 ValueError: substring not found
 
 ----------------------------------------------------------------------
-Ran 280 tests in 7.370s
+Ran 280 tests in 7.047s
 
 FAILED (errors=4)
