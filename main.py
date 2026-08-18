@@ -10,6 +10,7 @@ from core.legacy_main_config import legacy_main_settings
 from core.telemetry import (_request_modulo, _track_anthropic, _track_gemini_image, _track_groq, track_usage)
 from core.user_access import get_user_access_state, get_user_rol
 from core.cache import cache_get, cache_set
+from core.easybroker import EB_API_KEY, EB_BASE, eb_headers
 import httpx
 import os
 import time
@@ -260,25 +261,11 @@ app.include_router(public_config_router)
 from routers.easybroker_config import get_eb_key_for_user, router as easybroker_config_router
 app.include_router(easybroker_config_router)
 
-CONFIG_FILE = Path(__file__).parent / "config.json"
-
-def load_config() -> dict:
-    try:
-        if CONFIG_FILE.exists():
-            return json.loads(CONFIG_FILE.read_text())
-    except Exception:
-        pass
-    return {}
-
-_config = load_config()
-
 # Compatibility aliases while main.py is progressively decomposed. All runtime
 # environment names and public/privileged Supabase key policy live in Core.
-EB_API_KEY       = settings.easybroker_api_key or _config.get("eb_api_key", "")
 GROQ_API_KEY     = settings.groq_api_key
 ANTHROPIC_API_KEY = settings.anthropic_api_key
 GEMINI_API_KEY    = settings.gemini_api_key
-EB_BASE          = "https://api.easybroker.com/v1"
 GROQ_BASE        = "https://api.groq.com/openai/v1"
 ANTHROPIC_BASE   = "https://api.anthropic.com/v1"
 GEMINI_BASE      = "https://generativelanguage.googleapis.com/v1beta"
@@ -302,10 +289,6 @@ SUPABASE_SERVICE_KEY = settings.supabase_service_key
 
 # In-memory PDF store: token → (bytes, filename). Max 50 entradas.
 _pdf_store: dict = {}
-
-def eb_headers(key: str = None):
-    k = key or EB_API_KEY
-    return {"X-Authorization": k, "accept": "application/json"}
 
 # ════════════════════════════════════════════════════════════════
 # CONTEXTO DE ORGANIZACIÓN (Broquer para empresas)
