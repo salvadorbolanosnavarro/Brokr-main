@@ -1,4 +1,4 @@
-"""Permanent guard for Stripe webhook subscription POST routed through core.database."""
+"""Permanent guards for Stripe webhook subscription writes routed through core.database."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -42,10 +42,14 @@ class MainStripeWebhookSubscriptionPostCoreRefactorTests(unittest.TestCase):
         self.assertNotIn('/rest/v1/suscripciones', post)
         self.assertNotIn('except Exception:', post)
 
-    def test_other_webhook_subscription_writes_are_untouched(self):
+    def test_status_updates_route_through_core_and_keep_http_fail_soft(self):
         updated = self.block.split('elif event_type in ("customer.subscription.updated", "customer.subscription.deleted"):', 1)[1]
-        self.assertIn('await client.patch(', updated)
-        self.assertIn('/rest/v1/suscripciones?stripe_subscription_id=eq.', updated)
+        self.assertGreaterEqual(updated.count('await patch_rows('), 2)
+        self.assertIn('{"stripe_subscription_id": f"eq.{subscription_id}"}', updated)
+        self.assertIn('{"status": new_status, "updated_at": datetime.utcnow().isoformat()}', updated)
+        self.assertIn('{"status": "past_due", "updated_at": datetime.utcnow().isoformat()}', updated)
+        self.assertGreaterEqual(updated.count('except httpx.HTTPStatusError:'), 2)
+        self.assertNotIn('/rest/v1/suscripciones?stripe_subscription_id=eq.', updated)
 
 
 if __name__ == "__main__":
