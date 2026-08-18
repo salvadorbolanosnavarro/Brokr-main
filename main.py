@@ -200,6 +200,10 @@ app.include_router(easybroker_catalog_router)
 from routers.easybroker_colonias import router as easybroker_colonias_router
 app.include_router(easybroker_colonias_router)
 
+# Descargas de PDFs generados en memoria.
+from routers.pdf_downloads import router as pdf_downloads_router
+app.include_router(pdf_downloads_router)
+
 # Compatibility aliases while main.py is progressively decomposed. All runtime
 # environment names and public/privileged Supabase key policy live in Core.
 GROQ_API_KEY     = settings.groq_api_key
@@ -3352,44 +3356,6 @@ async def generar_avm_pdf(p: dict):
     return JSONResponse({"token": token, "filename": filename})
 
 
-@app.get("/avm-pdf/{token}")
-async def descargar_avm_pdf(token: str):
-    from fastapi.responses import StreamingResponse
-    import io as _io
-    if token not in _pdf_store:
-        raise HTTPException(status_code=404, detail="PDF no encontrado o expirado")
-    pdf_bytes, filename = _pdf_store[token]
-    return StreamingResponse(
-        _io.BytesIO(pdf_bytes),
-        media_type="application/pdf",
-        headers={
-            "Content-Disposition": f'attachment; filename="{filename}"',
-            "Content-Type": "application/pdf",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET",
-        }
-    )
-
-
-@app.get("/isr-pdf/{token}")
-async def descargar_isr_pdf(token: str):
-    from fastapi.responses import StreamingResponse
-    import io as _io
-    if token not in _pdf_store:
-        raise HTTPException(status_code=404, detail="PDF no encontrado o expirado")
-    pdf_bytes, filename = _pdf_store[token]
-    return StreamingResponse(
-        _io.BytesIO(pdf_bytes),
-        media_type="application/pdf",
-        headers={
-            "Content-Disposition": f'attachment; filename="{filename}"',
-            "Content-Type": "application/pdf",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET",
-        }
-    )
-
-
 # ────────────────────────────────────────────
 # CONTRATOS
 # ────────────────────────────────────────────
@@ -4552,24 +4518,6 @@ async def generar_ficha_pdf(p: dict, request: Request):
         del _pdf_store[oldest]
     return JSONResponse({"token": token, "filename": filename})
 
-@app.get("/ficha-pdf/{token}")
-async def descargar_ficha_pdf(token: str):
-    """Serve generated PDF by token — opens natively in Safari."""
-    from fastapi.responses import Response
-    if token not in _pdf_store:
-        from fastapi import HTTPException
-        raise HTTPException(status_code=404, detail="PDF no encontrado o expirado")
-    pdf_bytes, filename = _pdf_store[token]
-    # Use attachment for direct download on all devices including PWA
-    return Response(
-        content=pdf_bytes,
-        media_type="application/pdf",
-        headers={
-            "Content-Disposition": f'attachment; filename="{filename}"',
-            "Content-Type": "application/pdf",
-            "Cache-Control": "no-store",
-        }
-    )
 # ────────────────────────────────────────────
 # AVM — COMPARABLES VÍA APIFY + INMUEBLES24
 # ────────────────────────────────────────────
