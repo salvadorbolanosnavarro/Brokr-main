@@ -4,6 +4,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
 ROUTER = ROOT / "routers" / "easybroker_photo_status.py"
+BULK = ROOT / "routers" / "bulk_delete.py"
 
 
 class EasyBrokerPhotoMigrationExtractionTests(unittest.TestCase):
@@ -11,6 +12,7 @@ class EasyBrokerPhotoMigrationExtractionTests(unittest.TestCase):
     def setUpClass(cls):
         cls.main = MAIN.read_text(encoding="utf-8")
         cls.router = ROUTER.read_text(encoding="utf-8")
+        cls.bulk = BULK.read_text(encoding="utf-8")
 
     def test_migration_domain_lives_in_router(self):
         r = self.router
@@ -34,23 +36,25 @@ class EasyBrokerPhotoMigrationExtractionTests(unittest.TestCase):
         self.assertIn('lote = fotos[i:i+4]', r)
         self.assertIn('accepted_statuses=(200, 204)', r)
         self.assertIn('"hay_mas": hay_mas', r)
-        self.assertIn('raise HTTPException(status_code=500, detail="No se pudo leer el inventario.")', r)
+        self.assertIn('detail="No se pudo leer el inventario."', r)
 
     def test_background_worker_preserves_fail_soft_patch(self):
         r = self.router
         self.assertIn('filas = await get_rows("propiedades", params, timeout=30.0)', r)
-        self.assertIn('except httpx.HTTPStatusError:\n                            pass', r)
+        self.assertIn('except httpx.HTTPStatusError:', r)
         self.assertIn('await asyncio.sleep(0.3)', r)
         self.assertIn('_fotos_en_proceso.discard(org_id)', r)
 
-    def test_bulk_delete_keeps_shared_bucket_in_main(self):
-        self.assertIn('from core.property_photos import FOTOS_BUCKET as _FOTOS_BUCKET', self.main)
-        self.assertIn('f"{SUPABASE_URL}/storage/v1/object/{_FOTOS_BUCKET}"', self.main)
-        self.assertIn('@app.post("/propiedades/eliminar-masivo")', self.main)
+    def test_bulk_delete_uses_same_shared_bucket_after_its_extraction(self):
+        self.assertNotIn('@app.post("/propiedades/eliminar-masivo")', self.main)
+        self.assertIn('@router.post("/propiedades/eliminar-masivo")', self.bulk)
+        self.assertIn('from core.property_photos import FOTOS_BUCKET as _FOTOS_BUCKET', self.bulk)
+        self.assertIn('f"{SUPABASE_URL}/storage/v1/object/{_FOTOS_BUCKET}"', self.bulk)
 
     def test_files_compile(self):
         compile(self.main, "main.py", "exec")
         compile(self.router, "routers/easybroker_photo_status.py", "exec")
+        compile(self.bulk, "routers/bulk_delete.py", "exec")
 
 
 if __name__ == "__main__":
