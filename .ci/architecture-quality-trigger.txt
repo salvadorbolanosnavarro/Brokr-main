@@ -1,1 +1,2 @@
 transform=scripts/refactor_main_admin_delete_core.py
+retry=2
