@@ -34,6 +34,7 @@ jobs:
           PY
       - name: Verify exact runtime diff
         run: |
+          git add -N tests/test_frontend_canon_premium_completion.py
           git diff --check
           changed="$(git diff --name-only | sort)"
           expected=$(printf '%s\n' 'brokr-theme.css' 'tests/test_frontend_canon_premium_completion.py')
