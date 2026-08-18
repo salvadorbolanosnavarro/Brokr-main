@@ -25,6 +25,15 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Apply requested deterministic transform
+        id: transform
+        continue-on-error: true
+        shell: bash
+        run: |
+          if grep -qx 'stripe-webhook-subscription-post-core-apply' .ci/architecture-quality-trigger.txt; then
+            python scripts/refactor_main_stripe_webhook_subscription_post_core.py
+          fi
+
       - name: Install test dependencies
         id: install
         continue-on-error: true
@@ -69,18 +78,19 @@ jobs:
           mkdir -p .ci
           cat > .ci/architecture-quality-result.txt <<EOF
           trigger_sha=$trigger_sha
+          transform=${{ steps.transform.outcome }}
           install=${{ steps.install.outcome }}
           compile=${{ steps.compile.outcome }}
           tests=${{ steps.tests.outcome }}
           visual=${{ steps.visual.outcome }}
           debt=${{ steps.debt.outcome }}
           EOF
-          if [[ "${{ steps.install.outcome }}" == "success" \
+          if [[ "${{ steps.transform.outcome }}" == "success" \
+             && "${{ steps.install.outcome }}" == "success" \
              && "${{ steps.compile.outcome }}" == "success" \
              && "${{ steps.tests.outcome }}" == "success" \
              && "${{ steps.visual.outcome }}" == "success" \
              && "${{ steps.debt.outcome }}" == "success" ]]; then
-            printf '%s\n' "$trigger_sha" > .ci/architecture-quality-pass.txt
             echo "passed=true" >> "$GITHUB_OUTPUT"
           else
             echo "passed=false" >> "$GITHUB_OUTPUT"
@@ -92,6 +102,24 @@ jobs:
           trigger_sha="$(git rev-parse HEAD)"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if [[ "${{ steps.gate.outputs.passed }}" == "true" ]]; then
+            if ! git diff --quiet -- main.py; then
+              unexpected="$(git diff --name-only | grep -v '^\.ci/' | grep -v '^main\.py$' || true)"
+              if [[ -n "$unexpected" ]]; then
+                printf 'Unexpected production diff:\n%s\n' "$unexpected"
+                exit 1
+              fi
+              git add main.py
+              git commit -m "refactor: route Stripe webhook subscription post through Core"
+            fi
+            quality_sha="$(git rev-parse HEAD)"
+            printf '%s\n' "$quality_sha" > .ci/architecture-quality-pass.txt
+            printf 'quality_sha=%s\n' "$quality_sha" >> .ci/architecture-quality-result.txt
+          else
+            git restore main.py || true
+          fi
+
           git add .ci/architecture-quality-result.txt .ci/architecture-quality-tests.log
           if [[ "${{ steps.gate.outputs.passed }}" == "true" ]]; then
             git add .ci/architecture-quality-pass.txt
