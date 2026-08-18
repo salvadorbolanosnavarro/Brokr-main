@@ -3,22 +3,19 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-MAIN = ROOT / "main.py"
+ROUTER = ROOT / "routers" / "subscription_activate.py"
 
 
 class MainSubscriptionActivatePostCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        source = MAIN.read_text(encoding="utf-8")
-        start = source.index('@app.post("/subscription/activate")')
-        end = source.index('\n\n# ════════════════════════════════════════════════════════════════\n# Contactos / Importar desde EasyBroker', start)
-        cls.block = source[start:end]
+        cls.block = ROUTER.read_text(encoding="utf-8")
 
     def test_activate_post_routes_through_core(self):
         block = self.block
         self.assertIn('await post_rows(', block)
         self.assertIn('"suscripciones"', block)
-        self.assertIn('sb,', block)
+        self.assertIn('row,', block)
         self.assertIn('prefer="resolution=merge-duplicates,return=minimal"', block)
         self.assertIn('timeout=10', block)
         self.assertNotIn('/rest/v1/suscripciones', block)
