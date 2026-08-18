@@ -1,2 +1,2 @@
-extract=scripts/refactor_main_extract_banxico_core.py
+extract=scripts/refactor_main_extract_telemetry_core.py
 retry=1
