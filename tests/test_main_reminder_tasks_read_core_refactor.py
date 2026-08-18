@@ -4,16 +4,18 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
+ROUTER = ROOT / "routers" / "reminders.py"
 MAIN = ROOT / "main.py"
 
 
 class MainReminderTasksReadCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        source = MAIN.read_text(encoding="utf-8")
+        source = ROUTER.read_text(encoding="utf-8")
         start = source.index("async def _revisar_recordatorios():")
         end = source.index("\n\nasync def _recordatorios_loop():", start)
         cls.block = source[start:end]
+        cls.main_source = MAIN.read_text(encoding="utf-8")
 
     def test_read_uses_core_and_preserves_logs(self):
         block = self.block
@@ -38,6 +40,8 @@ class MainReminderTasksReadCoreRefactorTests(unittest.TestCase):
         read_end = block.index("    for t in tareas:")
         self.assertNotIn("/rest/v1/tareas", block[:read_end])
         self.assertNotIn("Authorization", block[:read_end])
+        self.assertIn('from routers.reminders import router as reminders_router', self.main_source)
+        self.assertNotIn('async def _revisar_recordatorios()', self.main_source)
 
 
 if __name__ == "__main__":
