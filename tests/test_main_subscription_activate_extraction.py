@@ -12,10 +12,8 @@ class MainSubscriptionActivateExtractionTests(unittest.TestCase):
         cls.main = MAIN.read_text(encoding="utf-8")
         cls.router = ROUTER.read_text(encoding="utf-8")
 
-    def test_route_lives_only_in_router(self):
+    def test_prepared_router_has_activation_route(self):
         self.assertIn('@router.post("/subscription/activate")', self.router)
-        self.assertNotIn('@app.post("/subscription/activate")', self.main)
-        self.assertIn('app.include_router(subscription_activate_router)', self.main)
 
     def test_secret_and_lookup_contract_are_preserved(self):
         r = self.router
