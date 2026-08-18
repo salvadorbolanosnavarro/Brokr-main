@@ -43,7 +43,13 @@ jobs:
       - name: Run tests
         id: tests
         continue-on-error: true
-        run: python -m unittest discover -s tests -p 'test_*.py'
+        shell: bash
+        run: |
+          mkdir -p .ci
+          set +e
+          python -m unittest discover -s tests -p 'test_*.py' 2>&1 | tee .ci/architecture-quality-tests.log
+          status=${PIPESTATUS[0]}
+          exit "$status"
 
       - name: Audit current statistics UI
         id: visual
@@ -86,7 +92,7 @@ jobs:
           trigger_sha="$(git rev-parse HEAD)"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .ci/architecture-quality-result.txt
+          git add .ci/architecture-quality-result.txt .ci/architecture-quality-tests.log
           if [[ "${{ steps.gate.outputs.passed }}" == "true" ]]; then
             git add .ci/architecture-quality-pass.txt
           fi
