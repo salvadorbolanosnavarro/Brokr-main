@@ -1,2 +1,2 @@
 transform=scripts/refactor_main_contact_bulk_delete_core.py
-retry=2
+retry=3
