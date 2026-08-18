@@ -10541,17 +10541,16 @@ async def stripe_webhook(request: Request):
                 if _org_id:
                     await _activar_empresa(_org_id, user_id, _asientos,
                                            meta.get("nombre_empresa") or "")
-            async with httpx.AsyncClient(timeout=10) as client:
-                await client.post(
-                    f"{SUPABASE_URL}/rest/v1/suscripciones",
-                    headers={
-                        "apikey": SUPABASE_SERVICE_KEY,
-                        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                        "Content-Type": "application/json",
-                        "Prefer": "resolution=merge-duplicates,return=minimal",
-                    },
-                    json=sb,
+            try:
+                await post_rows(
+                    "suscripciones",
+                    sb,
+                    prefer="resolution=merge-duplicates,return=minimal",
+                    timeout=10,
                 )
+            except httpx.HTTPStatusError:
+                # Historical webhook behavior: Supabase HTTP rejections did not abort the webhook.
+                pass
 
     elif event_type in ("customer.subscription.updated", "customer.subscription.deleted"):
         subscription_id = obj.get("id")
