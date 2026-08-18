@@ -1,28 +1,7 @@
 ..................................................../home/runner/work/Brokr-main/Brokr-main/core/easybroker_mapping.py:159: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
   "updated_at": datetime.utcnow().isoformat(),
-........................E....E..................................................................................................................................................................................................................
-======================================================================
-ERROR: setUpClass (test_main_avm_public_fallback_core_refactor.MainAvmPublicFallbackCoreRefactorTests)
+....................................................................................................................................................................................................................................................
 ----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_avm_public_fallback_core_refactor.py", line 26, in setUpClass
-    cls.func = async_function_source(cls.source, "comparables_cercanos")
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_avm_public_fallback_core_refactor.py", line 15, in async_function_source
-    node = next(
-           ^^^^^
-StopIteration
+Ran 296 tests in 7.178s
 
-======================================================================
-ERROR: setUpClass (test_main_comparables_public_rpc_core_refactor.MainComparablesPublicRpcCoreRefactorTests)
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_comparables_public_rpc_core_refactor.py", line 13, in setUpClass
-    start = source.index('@app.post("/api/comparables-cercanos")')
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ValueError: substring not found
-
-----------------------------------------------------------------------
-Ran 290 tests in 7.239s
-
-FAILED (errors=2)
+OK
