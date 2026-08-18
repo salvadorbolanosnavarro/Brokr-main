@@ -33,8 +33,7 @@ class MainSubscriptionActivateLookupCoreRefactorTests(unittest.TestCase):
         lookup = block.split("user_id = usuario[\"id\"]", 1)[0]
         self.assertNotIn("except Exception:", lookup)
         self.assertNotIn("/rest/v1/usuarios", lookup)
-        # Activating the subscription remains outside this read-only cut.
-        self.assertIn("/rest/v1/suscripciones", block)
+        # Subscription-write transport is guarded independently; this test owns only the usuarios lookup contract.
 
 
 if __name__ == "__main__":
