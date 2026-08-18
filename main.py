@@ -10649,17 +10649,16 @@ async def subscription_activate(request: Request):
         "updated_at": datetime.utcnow().isoformat(),
     }
 
-    async with httpx.AsyncClient(timeout=10) as client:
-        await client.post(
-            f"{SUPABASE_URL}/rest/v1/suscripciones",
-            headers={
-                "apikey": SUPABASE_SERVICE_KEY,
-                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                "Content-Type": "application/json",
-                "Prefer": "resolution=merge-duplicates,return=minimal",
-            },
-            json=sb,
+    try:
+        await post_rows(
+            "suscripciones",
+            sb,
+            prefer="resolution=merge-duplicates,return=minimal",
+            timeout=10,
         )
+    except httpx.HTTPStatusError:
+        # Historical activate behavior: Supabase HTTP rejection did not abort activation.
+        pass
 
     return {"ok": True, "user_id": user_id, "plan": plan_nombre}
 
