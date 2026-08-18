@@ -9,7 +9,7 @@ MAIN = ROOT / "main.py"
 
 OLD = '''    async with httpx.AsyncClient(timeout=10) as client:\n        r = await client.post(\n            f"{SUPABASE_URL}/rest/v1/suscripciones",\n            headers={\n                "apikey": SUPABASE_SERVICE_KEY,\n                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",\n                "Content-Type": "application/json",\n                "Prefer": "return=minimal",\n            },\n            json=fila,\n        )\n        if r.status_code not in (200, 201):\n            raise HTTPException(status_code=502, detail="No se pudo activar la prueba. Intenta de nuevo.")\n        # Quemar el regalo: aunque la fila se borre después, no se repite.\n'''
 
-NEW = '''    try:\n        await post_rows(\n            "suscripciones",\n            fila,\n            prefer="return=minimal",\n            timeout=10,\n            accepted_statuses=(200, 201),\n        )\n    except httpx.HTTPStatusError:\n        raise HTTPException(status_code=502, detail="No se pudo activar la prueba. Intenta de nuevo.")\n    # Quemar el regalo: aunque la fila se borre después, no se repite.\n    async with httpx.AsyncClient(timeout=10) as client:\n'''
+NEW = '''    try:\n        await post_rows(\n            "suscripciones",\n            fila,\n            prefer="return=minimal",\n            timeout=10,\n            accepted_statuses=(200, 201),\n        )\n    except httpx.HTTPStatusError:\n        raise HTTPException(status_code=502, detail="No se pudo activar la prueba. Intenta de nuevo.")\n    # Quemar el regalo: aunque la fila se borre después, no se repite.\n'''
 
 
 def transform_source(source: str) -> str:
