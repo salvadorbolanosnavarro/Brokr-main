@@ -270,12 +270,6 @@ def load_config() -> dict:
         pass
     return {}
 
-def save_config(data: dict):
-    try:
-        CONFIG_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2))
-    except Exception:
-        pass
-
 _config = load_config()
 
 # Compatibility aliases while main.py is progressively decomposed. All runtime
@@ -312,18 +306,6 @@ _pdf_store: dict = {}
 def eb_headers(key: str = None):
     k = key or EB_API_KEY
     return {"X-Authorization": k, "accept": "application/json"}
-
-# ────────────────────────────────────────────
-# CONFIG — EB API KEY POR USUARIO (Supabase)
-# ────────────────────────────────────────────
-# Helper: compara dos secretos en tiempo constante (evita adivinarlos byte a
-# byte midiendo cuánto tarda la respuesta). Devuelve False si alguno va vacío.
-def hmac_compare(recibido: str, esperado: str) -> bool:
-    import hmac as _h
-    if not recibido or not esperado:
-        return False
-    return _h.compare_digest(str(recibido), str(esperado))
-
 
 # ════════════════════════════════════════════════════════════════
 # CONTEXTO DE ORGANIZACIÓN (Broquer para empresas)
