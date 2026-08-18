@@ -1,2 +1,1 @@
-extract=scripts/refactor_main_extract_facebook_token_state_core.py
-retry=1
+trial_subscription_core=1
