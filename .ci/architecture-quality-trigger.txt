@@ -1,1 +1,1 @@
-subscription-activate-post-core-apply-2
+subscription-activate-post-core-cleanup-verification
