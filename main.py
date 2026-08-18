@@ -10,7 +10,7 @@ from core.legacy_main_config import legacy_main_settings
 from core.telemetry import (_request_modulo, _track_anthropic, _track_gemini_image, _track_groq, track_usage)
 from core.user_access import get_user_access_state, get_user_rol
 from core.cache import cache_get, cache_set
-from core.easybroker import EB_API_KEY, EB_BASE, eb_headers
+from core.easybroker import EB_API_KEY, EB_BASE, _EB_LOTE, _EB_PAUSA_LOTE, _eb_get_reintentos, eb_headers
 import httpx
 import os
 import time
@@ -1334,45 +1334,6 @@ def _split_street(s: str):
     if ext_match:
         return (ext_match.group(1).strip(), ext_match.group(2).strip(), num_int)
     return (s, None, num_int)
-
-# EasyBroker limita su API a 20 peticiones por segundo. Si nos pasamos,
-# responde 429 y las propiedades se pierden. Estos valores nos dejan por
-# debajo del límite con margen.
-_EB_LOTE          = 8     # peticiones simultáneas
-_EB_PAUSA_LOTE    = 0.5   # segundos mínimos entre lotes → máx ~16 req/s
-_EB_REINTENTOS    = 5
-_EB_ESPERA_BASE   = 1.5   # segundos; se duplica en cada reintento
-_EB_ESPERA_MAX    = 20.0
-
-
-async def _eb_get_reintentos(client: httpx.AsyncClient, url: str,
-                             headers: dict, params: dict = None,
-                             timeout: float = 20.0):
-    """
-    GET a EasyBroker que reintenta cuando la API rechaza por exceso de
-    peticiones (429) o falla del lado de ellos (5xx). Respeta la cabecera
-    Retry-After si viene. Devuelve la respuesta, o None si nunca respondió.
-    """
-    ultimo = None
-    for intento in range(_EB_REINTENTOS):
-        try:
-            r = await client.get(url, headers=headers, params=params, timeout=timeout)
-            ultimo = r
-            if r.status_code == 429 or r.status_code >= 500:
-                try:
-                    espera = float(r.headers.get("Retry-After") or 0)
-                except (TypeError, ValueError):
-                    espera = 0.0
-                if espera <= 0:
-                    espera = _EB_ESPERA_BASE * (2 ** intento)
-                await asyncio.sleep(min(espera, _EB_ESPERA_MAX))
-                continue
-            return r
-        except Exception:
-            ultimo = None
-            await asyncio.sleep(min(_EB_ESPERA_BASE * (2 ** intento), _EB_ESPERA_MAX))
-    return ultimo
-
 
 @app.post("/easybroker/import-all")
 async def easybroker_import_all(request: Request):
