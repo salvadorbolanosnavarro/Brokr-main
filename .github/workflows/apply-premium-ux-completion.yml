@@ -1,0 +1,51 @@
+name: Apply premium UX completion
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/apply_premium_ux_completion.py'
+      - '.github/workflows/apply-premium-ux-completion.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/premium-ux-completion
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply scoped completion pass
+        run: python scripts/apply_premium_ux_completion.py
+      - name: Normalize text EOFs
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          for name in ('brokr-theme.css','tests/test_frontend_canon_premium_completion.py'):
+              p=Path(name)
+              p.write_text(p.read_text(encoding='utf-8').rstrip()+'\n', encoding='utf-8')
+          PY
+      - name: Verify exact runtime diff
+        run: |
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected=$(printf '%s\n' 'brokr-theme.css' 'tests/test_frontend_canon_premium_completion.py')
+          test "$changed" = "$expected"
+      - name: Audit active frontend
+        run: python audit.py
+      - name: Run frontend Canon tests
+        run: python -m unittest discover -s tests -p 'test_frontend_canon_*.py'
+      - name: Commit runtime changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add brokr-theme.css tests/test_frontend_canon_premium_completion.py
+          git commit -m "Complete Broquer premium UX pass"
+          git push origin HEAD:agent/premium-ux-completion
