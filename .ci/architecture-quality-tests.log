@@ -1,28 +1,7 @@
 ..................................................../home/runner/work/Brokr-main/Brokr-main/core/easybroker_mapping.py:159: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
   "updated_at": datetime.utcnow().isoformat(),
-.................................................................................................................................................EE...................................................................................................
-======================================================================
-ERROR: setUpClass (test_main_reminder_sent_patch_core_refactor.MainReminderSentPatchCoreRefactorTests)
+........................................................................................................................................................................................................................................................
 ----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_reminder_sent_patch_core_refactor.py", line 25, in setUpClass
-    cls.function = async_function_source(cls.source, "_revisar_recordatorios")
-                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_reminder_sent_patch_core_refactor.py", line 14, in async_function_source
-    node = next(
-           ^^^^^
-StopIteration
+Ran 300 tests in 6.967s
 
-======================================================================
-ERROR: setUpClass (test_main_reminder_tasks_read_core_refactor.MainReminderTasksReadCoreRefactorTests)
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_reminder_tasks_read_core_refactor.py", line 14, in setUpClass
-    start = source.index("async def _revisar_recordatorios():")
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ValueError: substring not found
-
-----------------------------------------------------------------------
-Ran 296 tests in 4.698s
-
-FAILED (errors=2)
+OK
