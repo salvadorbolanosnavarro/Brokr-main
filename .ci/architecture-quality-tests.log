@@ -1,25 +1,7 @@
 ......................................................./home/runner/work/Brokr-main/Brokr-main/core/easybroker_mapping.py:159: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
   "updated_at": datetime.utcnow().isoformat(),
-.......................................................................................................................................EE.............................................................................................................................
-======================================================================
-ERROR: setUpClass (test_main_manual_photo_batch_read_core_refactor.MainManualPhotoBatchReadCoreRefactorTests)
+........................................................................................................................................................................................................................................................................
 ----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_manual_photo_batch_read_core_refactor.py", line 15, in setUpClass
-    start = cls.source.index('@app.post("/easybroker/migrar-fotos")')
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ValueError: substring not found
+Ran 319 tests in 6.479s
 
-======================================================================
-ERROR: setUpClass (test_main_manual_photo_patch_core_refactor.MainManualPhotoPatchCoreRefactorTests)
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_manual_photo_patch_core_refactor.py", line 15, in setUpClass
-    start = cls.source.index('@app.post("/easybroker/migrar-fotos")')
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ValueError: substring not found
-
-----------------------------------------------------------------------
-Ran 315 tests in 5.986s
-
-FAILED (errors=2)
+OK
