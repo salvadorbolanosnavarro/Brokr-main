@@ -279,6 +279,10 @@ from routers.organizaciones import (
 )
 
 
+# Estado de suscripción y trial de Broquer Max.
+from routers.subscription_status import router as subscription_status_router
+app.include_router(subscription_status_router)
+
 # Estado unificado de perfil e integraciones.
 from routers.profile_status import router as profile_status_router
 app.include_router(profile_status_router)
@@ -7509,134 +7513,9 @@ async def subscription_activate(request: Request):
     return {"ok": True, "user_id": user_id, "plan": plan_nombre}
 
 
-@app.get("/subscription/status")
-async def subscription_status(request: Request):
-    """Devuelve el estado actual de la suscripción del usuario."""
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autenticado.")
-
-    # Verificar rol y estado activo en una sola llamada
-    access = await get_user_access_state(user_id)
-    rol = access["rol"]
-    activo = access["activo"]
-
-    # Cuenta desactivada: bloquear acceso sin importar rol o suscripción
-    if not activo:
-        return {"active": False, "plan": None, "plan_id": None, "status": "desactivada"}
-
-    # Equipo interno y admin siempre tienen acceso activo sin necesidad de suscripción
-    if rol in ("equipo", "admin"):
-        return {"active": True, "plan": "Equipo Interno" if rol == "equipo" else "Admin", "plan_id": rol, "status": "active"}
-
-    # Empresas: el acceso de todo el equipo cuelga de la organización
-    # (activo + vence_el). Lo enciende y apaga el webhook de Stripe cuando el
-    # dueño contrata, cambia lugares o deja de pagar; y admin.html puede
-    # activarlo a mano para casos negociados.
-    _ctx = await get_org_context(user_id)
-    if _ctx and _ctx.get("org_tipo") == "empresa":
-        _vigente = _ctx.get("org_activo", True)
-        _vence = _ctx.get("vence_el")
-        if _vigente and _vence:
-            try:
-                from datetime import timezone as _tz
-                _vigente = datetime.fromisoformat(str(_vence).replace("Z", "+00:00")) > datetime.now(_tz.utc)
-            except Exception:
-                pass
-        return {
-            "active": bool(_vigente),
-            "plan": _ctx.get("org_plan") or "Empresas",
-            "plan_id": "empresas",
-            "status": "active" if _vigente else "vencida",
-        }
-
-    _oid = await get_org_id_for_user(user_id)
-    try:
-        subscription_rows = await get_rows(
-            "suscripciones",
-            {"org_id": f"eq.{_oid}", "select": "*", "order": "updated_at.desc", "limit": "1"},
-            timeout=8,
-        )
-    except httpx.HTTPStatusError:
-        subscription_rows = []
-    if not subscription_rows:
-        return {"active": False, "plan": None, "status": "sin_suscripcion",
-                "trial_disponible": await _trial_max_disponible(user_id)}
-
-    row = subscription_rows[0]
-    estado = row.get("status")
-    activo_sub = estado in ("active", "trialing")
-    # Trial sin tarjeta: al vencer trial_hasta el candado se cierra solo.
-    # Las suscripciones de Stripe/RevenueCat no traen trial_hasta y no se tocan.
-    if estado == "trialing" and row.get("trial_hasta") and _trial_ya_vencio(row.get("trial_hasta")):
-        activo_sub = False
-        estado = "trial_vencido"
-        asyncio.create_task(_expirar_trial_suscripcion(row.get("id")))
-    return {
-        "active": activo_sub,
-        "plan": row.get("plan_nombre"),
-        "plan_id": row.get("plan_id"),
-        "status": estado,
-        "trial_hasta": row.get("trial_hasta"),
-        "updated_at": row.get("updated_at"),
-        "trial_disponible": (await _trial_max_disponible(user_id)) if not activo_sub else False,
-    }
-
-
 # ════════════════════════════════════════════════════════════════
 # Trial de Broquer Max SIN tarjeta (7 días, una sola vez por cuenta)
 # ════════════════════════════════════════════════════════════════
-
-@app.post("/subscription/trial-max")
-async def subscription_trial_max(request: Request):
-    """Activa 7 días de Broquer Max sin pedir tarjeta.
-    Una sola vez por cuenta (mismo regalo que el trial de Stripe: si ya se
-    usó cualquiera de los dos, no hay otro). Al vencer trial_hasta el acceso
-    se corta solo en /subscription/status y /profile/status."""
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autenticado.")
-    exigir_cupo(request, user_id)
-
-    if not await _trial_max_disponible(user_id):
-        raise HTTPException(
-            status_code=403,
-            detail="Tu cuenta ya usó su periodo de prueba de Broquer Max.")
-
-    hasta = datetime.now(timezone.utc) + timedelta(days=TRIAL_MAX_DIAS)
-    fila = {
-        "user_id": user_id,
-        "org_id": await get_org_id_for_user(user_id),
-        "plan_id": "max",
-        "plan_nombre": "Broquer Max",
-        "status": "trialing",
-        "trial_hasta": hasta.isoformat(),
-        "updated_at": datetime.utcnow().isoformat(),
-    }
-    try:
-        await post_rows(
-            "suscripciones",
-            fila,
-            prefer="return=minimal",
-            timeout=10,
-            accepted_statuses=(200, 201),
-        )
-    except httpx.HTTPStatusError:
-        raise HTTPException(status_code=502, detail="No se pudo activar la prueba. Intenta de nuevo.")
-    # Quemar el regalo: aunque la fila se borre después, no se repite.
-    try:
-        await patch_rows(
-            "usuarios",
-            {"id": f"eq.{user_id}"},
-            {"trial_max_usado": True},
-            prefer="return=minimal",
-            timeout=10,
-        )
-    except httpx.HTTPStatusError:
-        # Historical trial-burn behavior: HTTP rejection did not abort success.
-        pass
-    return {"ok": True, "plan": "Broquer Max", "trial_hasta": hasta.isoformat(), "dias": TRIAL_MAX_DIAS}
-
 
 @app.post("/subscription/cancel")
 async def subscription_cancel(request: Request):
