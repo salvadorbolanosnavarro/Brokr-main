@@ -41,11 +41,12 @@ PATTERN_EXEMPTIONS = {
 }
 
 # Ratcheted after verified cleanup runs. These are maximums, never goals.
+# PostgREST implementation outside Core reached zero after the main.py cleanup.
 BASELINE_MAX = {
     "direct_env_reads": 0,
     "duplicated_auth_helpers": 0,
     "service_key_fallbacks": 0,
-    "direct_supabase_rest": 1,
+    "direct_supabase_rest": 0,
     "embedded_jwt_secrets": 0,
     "fail_open_webhook_secrets": 0,
     "fail_open_entitlements": 0,
