@@ -1,5 +1,13 @@
-...............................................................................................................................................................................................................................................................
+...........................................................................................................................................................................F......................................................................................
+======================================================================
+FAIL: test_core_raw_primitives_are_imported (test_main_service_helpers_core_refactor.MainServiceHelpersCoreRefactorTests.test_core_raw_primitives_are_imported)
 ----------------------------------------------------------------------
-Ran 255 tests in 5.761s
+Traceback (most recent call last):
+  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_service_helpers_core_refactor.py", line 39, in test_core_raw_primitives_are_imported
+    self.assertIn('get_service_json', self.source.split('\n', 12)[6])
+AssertionError: 'get_service_json' not found in 'from core.config import settings'
 
-OK
+----------------------------------------------------------------------
+Ran 258 tests in 8.999s
+
+FAILED (failures=1)
