@@ -1,2 +1,2 @@
-extract=scripts/refactor_main_extract_user_access_core.py
+extract=scripts/refactor_main_extract_cache_core.py
 retry=1
