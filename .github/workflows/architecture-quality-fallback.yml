@@ -25,25 +25,6 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Apply optional bounded architecture transform
-        id: transform
-        continue-on-error: true
-        shell: bash
-        run: |
-          script="$(sed -n 's/^transform=//p' .ci/architecture-quality-trigger.txt | head -n 1)"
-          if [[ -z "$script" ]]; then
-            exit 0
-          fi
-          if [[ ! "$script" =~ ^scripts/refactor_(main|core_database)_[A-Za-z0-9_]+_core\.py$ ]]; then
-            echo "Rejected transform path: $script"
-            exit 1
-          fi
-          if [[ ! -f "$script" ]]; then
-            echo "Transform not found: $script"
-            exit 1
-          fi
-          python "$script"
-
       - name: Install test dependencies
         id: install
         continue-on-error: true
@@ -88,19 +69,18 @@ jobs:
           mkdir -p .ci
           cat > .ci/architecture-quality-result.txt <<EOF
           trigger_sha=$trigger_sha
-          transform=${{ steps.transform.outcome }}
           install=${{ steps.install.outcome }}
           compile=${{ steps.compile.outcome }}
           tests=${{ steps.tests.outcome }}
           visual=${{ steps.visual.outcome }}
           debt=${{ steps.debt.outcome }}
           EOF
-          if [[ "${{ steps.transform.outcome }}" == "success" \
-             && "${{ steps.install.outcome }}" == "success" \
+          if [[ "${{ steps.install.outcome }}" == "success" \
              && "${{ steps.compile.outcome }}" == "success" \
              && "${{ steps.tests.outcome }}" == "success" \
              && "${{ steps.visual.outcome }}" == "success" \
              && "${{ steps.debt.outcome }}" == "success" ]]; then
+            printf '%s\n' "$trigger_sha" > .ci/architecture-quality-pass.txt
             echo "passed=true" >> "$GITHUB_OUTPUT"
           else
             echo "passed=false" >> "$GITHUB_OUTPUT"
@@ -112,22 +92,6 @@ jobs:
           trigger_sha="$(git rev-parse HEAD)"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if [[ "${{ steps.gate.outputs.passed }}" == "true" ]]; then
-            unexpected="$(git diff --name-only | grep -v '^\.ci/' | grep -v '^main\.py$' | grep -v '^core/database\.py$' || true)"
-            if [[ -n "$unexpected" ]]; then
-              printf 'Unexpected production diff:\n%s\n' "$unexpected"
-              exit 1
-            fi
-            if ! git diff --quiet -- main.py core/database.py; then
-              git add main.py core/database.py
-              git commit -m "refactor: apply bounded architecture transform"
-            fi
-            quality_sha="$(git rev-parse HEAD)"
-            printf '%s\n' "$quality_sha" > .ci/architecture-quality-pass.txt
-            printf 'quality_sha=%s\n' "$quality_sha" >> .ci/architecture-quality-result.txt
-          else
-            git restore main.py core/database.py || true
-          fi
           git add .ci/architecture-quality-result.txt .ci/architecture-quality-tests.log
           if [[ "${{ steps.gate.outputs.passed }}" == "true" ]]; then
             git add .ci/architecture-quality-pass.txt
