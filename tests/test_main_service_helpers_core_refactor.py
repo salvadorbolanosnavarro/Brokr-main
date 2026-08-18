@@ -1,5 +1,6 @@
 """Permanent guards for legacy _sb_service_* adapters routed through Core."""
 from pathlib import Path
+import ast
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -36,8 +37,15 @@ class MainServiceHelpersCoreRefactorTests(unittest.TestCase):
         self.assertNotIn('/rest/v1/', block)
 
     def test_core_raw_primitives_are_imported(self):
-        self.assertIn('get_service_json', self.source.split('\n', 12)[6])
-        self.assertIn('patch_rows_no_response', self.source.split('\n', 12)[6])
+        tree = ast.parse(self.source)
+        imports = {
+            alias.name
+            for node in tree.body
+            if isinstance(node, ast.ImportFrom) and node.module == "core.database"
+            for alias in node.names
+        }
+        self.assertIn('get_service_json', imports)
+        self.assertIn('patch_rows_no_response', imports)
 
 
 if __name__ == "__main__":
