@@ -254,6 +254,10 @@ app.include_router(chat_router)
 from routers.public_config import router as public_config_router
 app.include_router(public_config_router)
 
+# Conexión EasyBroker compartida por organización.
+from routers.easybroker_config import get_eb_key_for_user, router as easybroker_config_router
+app.include_router(easybroker_config_router)
+
 CONFIG_FILE = Path(__file__).parent / "config.json"
 
 def load_config() -> dict:
@@ -330,9 +334,6 @@ def eb_headers(key: str = None):
 # ────────────────────────────────────────────
 # CONFIG — EB API KEY POR USUARIO (Supabase)
 # ────────────────────────────────────────────
-class EbKeyRequest(BaseModel):
-    key: str
-
 # Helper: compara dos secretos en tiempo constante (evita adivinarlos byte a
 # byte midiendo cuánto tarda la respuesta). Devuelve False si alguno va vacío.
 def hmac_compare(recibido: str, esperado: str) -> bool:
@@ -354,33 +355,6 @@ from routers.organizaciones import (
     exigir_gestion_integraciones,
 )
 
-
-# Helper: obtiene la EB key de un usuario desde Supabase
-# IMPORTANTE: NO hace fallback al EB_API_KEY global. Si el usuario no tiene
-# su propia key configurada, devuelve None. Esto blinda multi-tenant: ningún
-# usuario puede usar la cuenta de EasyBroker de otro.
-async def get_eb_key_for_user(user_id: str) -> str:
-    # Acordado con Chava: la cuenta de EasyBroker es UNA por empresa, no por
-    # agente. Buscamos por org_id para que todo el equipo use la misma.
-    if not user_id or not SUPABASE_URL or not SUPABASE_KEY:
-        return None
-    org_id = await get_org_id_for_user(user_id)
-    if not org_id:
-        return None
-    try:
-        rows = await get_rows(
-            "user_integrations",
-            {
-                "org_id": f"eq.{org_id}",
-                "provider": "eq.easybroker",
-                "select": "api_key",
-                "limit": "1",
-            },
-            timeout=8,
-        )
-        return (rows[0].get("api_key") or "").strip() or None if rows else None
-    except Exception:
-        return None
 
 # Helper: obtiene el rol del usuario desde la tabla usuarios
 async def get_user_rol(user_id: str) -> str:
@@ -421,87 +395,6 @@ async def get_user_access_state(user_id: str) -> dict:
     except Exception:
         pass
     return default
-
-@app.post("/config/eb-key")
-async def set_eb_key(req: EbKeyRequest, request: Request):
-    # La cuenta de EasyBroker es de la EMPRESA. Solo el dueño o quien él designe.
-    user_id = await exigir_gestion_integraciones(request)
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        raise HTTPException(status_code=500, detail="Supabase no está configurado en el servidor.")
-
-    # Validar la key contra EasyBroker antes de guardar
-    try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            test = await client.get(
-                f"{EB_BASE}/properties?limit=1",
-                headers={"X-Authorization": req.key.strip(), "accept": "application/json"}
-            )
-            print(f"[set_eb_key] EasyBroker validation status: {test.status_code}, body[:200]: {test.text[:200]}")
-            if test.status_code == 401:
-                raise HTTPException(status_code=400, detail="API key de EasyBroker invalida. Verifica que la copiaste correctamente.")
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"[set_eb_key] Excepcion en validacion: {type(e).__name__}: {e}")
-        pass
-
-    payload = {
-        "user_id": user_id,
-        "org_id": await get_org_id_for_user(user_id),
-        "provider": "easybroker",
-        "api_key": req.key.strip(),
-        "updated_at": datetime.utcnow().isoformat()
-    }
-    try:
-        await post_rows(
-            "user_integrations",
-            payload,
-            prefer="resolution=merge-duplicates,return=minimal",
-            timeout=10,
-        )
-    except httpx.HTTPStatusError as e:
-        status = e.response.status_code
-        err_body = e.response.text or ""
-        print(f"[set_eb_key] Supabase respondió {status}: {err_body}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"No se pudo guardar la API key (Supabase {status}). Reintenta o avisa a soporte si persiste."
-        )
-    return {"ok": True, "saved": True, "scope": "user"}
-
-# Endpoint para desconectar EasyBroker (borrar la API key del usuario)
-@app.delete("/config/eb-key")
-async def delete_eb_key(request: Request):
-    # Desconectar deja SIN INVENTARIO a todo el equipo. Solo el dueño o designado.
-    user_id = await exigir_gestion_integraciones(request)
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        raise HTTPException(status_code=500, detail="Supabase no está configurado.")
-    try:
-        await delete_rows(
-            "user_integrations",
-            {
-                "org_id": f"eq.{await get_org_id_for_user(user_id)}",
-                "provider": "eq.easybroker",
-            },
-            timeout=10,
-        )
-    except httpx.HTTPStatusError:
-        # Compatibilidad: históricamente los status HTTP de Supabase se ignoraban.
-        pass
-    return {"ok": True, "deleted": True}
-
-@app.get("/config/eb-key")
-async def get_eb_key(request: Request):
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        # Sin sesión, devolvemos "no configurada" sin error para no tirar la UI
-        return {"configured": False, "masked": ""}
-    key = await get_eb_key_for_user(user_id)
-    if key and len(key) > 4:
-        masked = "*" * (len(key) - 4) + key[-4:]
-    else:
-        masked = ""
-    return {"configured": bool(key), "masked": masked}
 
 # ════════════════════════════════════════════════════════════════
 # Endpoint unificado para el perfil del usuario.
