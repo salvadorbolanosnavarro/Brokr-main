@@ -1,2 +1,2 @@
-extract=scripts/refactor_main_extract_easybroker_infra_core.py
-retry=5
+extract=scripts/refactor_main_extract_easybroker_diagnostics_core.py
+retry=1
