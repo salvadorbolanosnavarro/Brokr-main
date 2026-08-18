@@ -9,6 +9,7 @@ from core.database import call_public_rpc, call_service_rpc, delete_rows, get_pu
 from core.legacy_main_config import legacy_main_settings
 from core.telemetry import (_request_modulo, _track_anthropic, _track_gemini_image, _track_groq, track_usage)
 from core.user_access import get_user_access_state, get_user_rol
+from core.facebook_tokens import facebook_token_state as _fb_estado_token
 from core.cache import cache_get, cache_set
 from core.easybroker import EB_API_KEY, EB_BASE, _EB_LOTE, _EB_PAUSA_LOTE, _eb_get_reintentos, eb_headers, extract_colonia, normalize
 from core.easybroker_mapping import _EB_LIMITE_PROPIEDADES, _EB_STATUS_DEFAULT, _EB_STATUS_MAP, _eb_to_brokr
@@ -3584,7 +3585,6 @@ async def _fb_paginate(client: httpx.AsyncClient, path: str, *, token: str,
 _FB_TOKEN_VIDA_DEFECTO = 60 * 24 * 3600  # 60 días en segundos
 
 # Días antes de la expiración en que empezamos a avisar en la UI.
-_FB_AVISO_DIAS = 14
 
 # Permisos sin los cuales el módulo de anuncios no puede funcionar.
 _FB_SCOPES_REQUERIDOS = [
@@ -3613,47 +3613,6 @@ async def _fb_debug_token(client: httpx.AsyncClient, token: str) -> dict:
         return (r.json() or {}).get("data") or {}
     except Exception:
         return {}
-
-
-def _fb_estado_token(meta: dict) -> dict:
-    """Traduce token_expires_at a algo que la UI pueda enseñar.
-
-    Devuelve dict con días restantes, si urge reconectar y un mensaje listo.
-    Si no hay fecha guardada (conexiones viejas, de antes de este cambio) se
-    devuelve `desconocido` en vez de inventar un estado sano.
-    """
-    raw = (meta or {}).get("token_expires_at") or ""
-    if not raw:
-        return {"conocido": False, "dias_restantes": None, "expirado": False,
-                "por_expirar": False, "mensaje": ""}
-    try:
-        venc = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
-        if venc.tzinfo is None:
-            venc = venc.replace(tzinfo=timezone.utc)
-    except Exception:
-        return {"conocido": False, "dias_restantes": None, "expirado": False,
-                "por_expirar": False, "mensaje": ""}
-
-    dias = (venc - datetime.now(timezone.utc)).total_seconds() / 86400.0
-    # Se redondea hacia arriba: a 4.9 días le quedan "5 días", no "4".
-    # Decirle a alguien que le quedan menos días de los que tiene no ayuda.
-    dias_int = int(-(-dias // 1)) if dias > 0 else int(dias // 1)
-    if dias <= 0:
-        msg = ("Tu conexión con Facebook expiró. Reconéctala desde tu perfil o "
-               "tus anuncios dejarán de actualizarse.")
-    elif dias <= _FB_AVISO_DIAS:
-        msg = (f"Tu conexión con Facebook expira en {max(dias_int, 1)} día(s). "
-               f"Reconéctala desde tu perfil para no perder tus campañas de vista.")
-    else:
-        msg = ""
-    return {
-        "conocido": True,
-        "expira_en": venc.isoformat(),
-        "dias_restantes": dias_int,
-        "expirado": dias <= 0,
-        "por_expirar": 0 < dias <= _FB_AVISO_DIAS,
-        "mensaje": msg,
-    }
 
 
 async def _fb_batch(client: httpx.AsyncClient, token: str, peticiones: list,
