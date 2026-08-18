@@ -1,1 +1,2 @@
-postgrest-zero-generic-quality-verification
+extract=scripts/refactor_main_extract_demo_core.py
+retry=1
