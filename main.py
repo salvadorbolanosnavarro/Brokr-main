@@ -14,7 +14,6 @@ from core.easybroker import EB_API_KEY, EB_BASE, _EB_LOTE, _EB_PAUSA_LOTE, _eb_g
 from core.easybroker_mapping import _EB_LIMITE_PROPIEDADES, _EB_STATUS_DEFAULT, _EB_STATUS_MAP, _eb_to_brokr
 from core.pdf_design import theme_css_for_pdf
 from core.pdf_store import _pdf_store
-from core.property_photos import FOTOS_BUCKET as _FOTOS_BUCKET
 import httpx
 import os
 import time
