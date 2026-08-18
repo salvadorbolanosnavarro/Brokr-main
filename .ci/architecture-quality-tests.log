@@ -73,6 +73,6 @@ Traceback (most recent call last):
 RuntimeError: Expected one trial-max endpoint, found 0
 
 ----------------------------------------------------------------------
-Ran 336 tests in 6.805s
+Ran 336 tests in 5.567s
 
 FAILED (errors=7)
