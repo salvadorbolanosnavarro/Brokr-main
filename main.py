@@ -27,7 +27,6 @@ import hashlib
 import uuid as _uuid
 import io
 import json
-import concurrent.futures
 from typing import Optional, List, Dict, Any
 from datetime import datetime, date, timedelta, timezone
 from pathlib import Path
@@ -40,18 +39,10 @@ except Exception:
 
 # Pillow
 try:
-    from PIL import Image, ImageEnhance
+    from PIL import Image
     PIL_AVAILABLE = True
 except ImportError:
     PIL_AVAILABLE = False
-
-# OpenCV
-try:
-    import cv2
-    import numpy as np
-    CV2_AVAILABLE = True
-except ImportError:
-    CV2_AVAILABLE = False
 
 
 app = FastAPI()
