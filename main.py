@@ -12,6 +12,7 @@ from core.user_access import get_user_access_state, get_user_rol
 from core.cache import cache_get, cache_set
 from core.easybroker import EB_API_KEY, EB_BASE, _EB_LOTE, _EB_PAUSA_LOTE, _eb_get_reintentos, eb_headers, extract_colonia, normalize
 from core.easybroker_mapping import _EB_LIMITE_PROPIEDADES, _EB_STATUS_DEFAULT, _EB_STATUS_MAP, _eb_to_brokr
+from core.pdf_design import theme_css_for_pdf
 import httpx
 import os
 import time
@@ -51,86 +52,6 @@ except ImportError:
     CV2_AVAILABLE = False
 
 _thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=4)
-
-# ════════════════════════════════════════════════════════════════
-# SISTEMA DE DISEÑO — fuente única de color para los PDFs
-# ════════════════════════════════════════════════════════════════
-# Los PDFs (Ficha técnica, AVM, ISR) los renderiza Playwright de forma
-# aislada: no cargan brokr-theme.css por <link>, así que sus tokens
-# vivían COPIADOS A MANO en tres archivos. Se desincronizaron dos
-# ediciones seguidas —se quedaron en la paleta "Sky" cuando la app ya
-# iba en "Premium"— y nadie lo notó porque nada lo verificaba.
-#
-# Ahora se leen del theme real. Un solo lugar donde cambiar un color.
-# brokr-theme.css viaja en la imagen de Railway porque el Dockerfile
-# hace COPY . . — queda junto a main.py.
-#
-# Lo que un documento impreso SÍ puede sobrescribir (y por qué), va
-# como `extra` en theme_css_for_pdf(): el papel es blanco, no el canvas
-# azul de la app; y los radios son de documento, no de interfaz.
-
-_THEME_PATH = Path(__file__).parent / "brokr-theme.css"
-_theme_tokens_cache: Optional[str] = None
-
-# Respaldo por si el CSS no se puede leer (archivo movido, permisos).
-# Un PDF que no se genera es peor que un PDF con el color de ayer.
-# Espejo del :root de la edición "Canon".
-_THEME_TOKENS_FALLBACK = """
-  --paper:#FFFFFF; --paper-2:#F4F6FB; --bone:#FFFFFF; --shell:#F5F7FC;
-  --ink:#0B0B0F; --ink-2:#2A3142; --ink-3:#57607A;
-  --mute:#57607A; --mute-2:#8A93A9; --mute-3:#C6CCDA;
-  --line:#E7EBF4; --line-2:#DBE1EE; --line-3:#BEC7DA;
-  --forest:#0A5DE0; --forest-2:#084BB8; --forest-soft:rgba(10,93,224,0.10);
-  --sky-navy:#081C4E; --sky-navy-mid:#10307E; --sky-navy-deep:#050F2E;
-  --sky-blue:#0A5DE0; --sky-blue-press:#084BB8; --sky-blue-lift:#6F9FF2;
-  --sky-canvas:#E9F0FD; --sky-blue-on-dark:#8FB0F5;
-  --warn:#B34E0B; --warn-soft:rgba(243,116,13,0.14);
-  --danger:#D42A62; --danger-soft:rgba(212,42,98,0.12);
-  --success:#0E9F6E; --success-soft:rgba(14,159,110,0.12);
-  --info:#0A5DE0; --info-soft:rgba(10,93,224,0.10);
-  --r-xs:8px; --r-sm:12px; --r:14px; --r-lg:22px; --r-xl:26px; --r-pill:999px;
-  --font-sans:'Inter',-apple-system,BlinkMacSystemFont,system-ui,Roboto,'Helvetica Neue',sans-serif;
-  --font-display:'Inter',-apple-system,BlinkMacSystemFont,system-ui,Roboto,sans-serif;
-"""
-
-
-def _theme_tokens() -> str:
-    """Declaraciones de todos los bloques :root de brokr-theme.css,
-    listas para inyectarse dentro de un :root{}. Se lee una vez por
-    proceso; si falla, cae al respaldo sin tumbar la generación."""
-    global _theme_tokens_cache
-    if _theme_tokens_cache is not None:
-        return _theme_tokens_cache
-    try:
-        css = _THEME_PATH.read_text(encoding="utf-8")
-        css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)  # fuera comentarios
-        blocks = re.findall(r":root\s*\{([^{}]*)\}", css)
-        decls = "\n".join(b.strip() for b in blocks if b.strip())
-        # Si el theme cambia de forma y ya no trae lo esperado, mejor el
-        # respaldo conocido que un PDF sin colores.
-        for required in ("--ink", "--sky-navy", "--sky-blue", "--font-sans"):
-            if required not in decls:
-                raise ValueError(f"brokr-theme.css sin {required}")
-        _theme_tokens_cache = decls
-    except Exception as e:
-        print(f"[theme] no se pudo leer {_THEME_PATH}: {e} — usando respaldo")
-        _theme_tokens_cache = _THEME_TOKENS_FALLBACK
-    return _theme_tokens_cache
-
-
-def theme_css_for_pdf(extra: str = "") -> str:
-    """CSS base de un documento PDF: los tokens del theme, más los
-    overrides que un impreso legítimamente necesita. `extra` se aplica
-    al final, así que gana sobre todo lo anterior."""
-    return (
-        "@import url('https://fonts.googleapis.com/css2?"
-        "family=Inter:opsz,wght@14..32,400..800&display=swap');\n"
-        ":root{\n" + _theme_tokens() + "\n}\n"
-        "/* Overrides del documento impreso: el papel es blanco (el canvas\n"
-        "   azul de la app no aplica) y los radios son de documento. */\n"
-        ":root{\n  --paper:#FFFFFF;\n  " + extra + "\n}\n"
-    )
-
 
 app = FastAPI()
 app.add_middleware(
