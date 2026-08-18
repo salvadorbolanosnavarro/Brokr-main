@@ -1,2 +1,2 @@
-extract=scripts/refactor_main_extract_pdf_store_core.py
+extract=scripts/refactor_main_extract_pdf_downloads_core.py
 retry=1
