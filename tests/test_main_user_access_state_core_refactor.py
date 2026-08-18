@@ -19,7 +19,7 @@ class MainUserAccessStateCoreRefactorTests(unittest.TestCase):
 
     def test_access_state_keeps_fail_soft_defaults_and_uses_core(self):
         start = self.source.index("async def get_user_access_state(user_id: str) -> dict:")
-        end = self.source.index("# ─────────────────────────────────────────────\n# TELEMETRÍA", start)
+        end = self.source.index('@app.post("/config/eb-key")', start)
         block = self.source[start:end]
 
         self.assertIn('default = {"rol": "agente", "activo": True}', block)
