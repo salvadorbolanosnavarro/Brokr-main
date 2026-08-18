@@ -1,2 +1,2 @@
-extract=scripts/refactor_main_extract_image_runtime_cleanup_core.py
+extract=scripts/refactor_main_extract_reminders_core.py
 retry=1
