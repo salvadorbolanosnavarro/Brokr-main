@@ -34,6 +34,7 @@ class MainAvmPublicFallbackCoreRefactorTests(unittest.TestCase):
             for alias in node.names
         }
         self.assertIn("get_public_rows", core_imports)
+        self.assertIn("call_public_rpc", core_imports)
         self.assertIn('items = await get_public_rows(', self.func)
         self.assertIn('"propiedades_avm"', self.func)
         self.assertNotIn('f"{SUPABASE_URL}/rest/v1/propiedades_avm"', self.func)
@@ -52,9 +53,10 @@ class MainAvmPublicFallbackCoreRefactorTests(unittest.TestCase):
 
     def test_postgis_rpc_and_result_mapping_remain_present(self):
         func = self.func
-        self.assertIn('f"{SUPABASE_URL}/rest/v1/rpc/buscar_cercanos"', func)
-        self.assertIn('if r.status_code not in (200, 201):', func)
-        self.assertIn('items = r.json() or []', func)
+        self.assertIn('items = await call_public_rpc(', func)
+        self.assertIn('"buscar_cercanos"', func)
+        self.assertIn('accepted_statuses=(200, 201)', func)
+        self.assertNotIn('/rest/v1/rpc/buscar_cercanos', func)
         self.assertIn('comparables.append({', func)
         self.assertIn('cache_set(cache_key, resultado, ttl=3600)', func)
         compile(self.source, "main.py", "exec")
