@@ -10095,17 +10095,17 @@ async def _get_or_create_stripe_customer(user_id: str, email: str, nombre: str) 
     customer_id = r.json().get("id")
 
     # 3. Guardar en Supabase
-    async with httpx.AsyncClient(timeout=10) as client:
-        await client.patch(
-            f"{SUPABASE_URL}/rest/v1/usuarios?id=eq.{user_id}",
-            headers={
-                "apikey": SUPABASE_SERVICE_KEY,
-                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                "Content-Type": "application/json",
-                "Prefer": "return=minimal",
-            },
-            json={"stripe_customer_id": customer_id}
+    try:
+        await patch_rows(
+            "usuarios",
+            {"id": f"eq.{user_id}"},
+            {"stripe_customer_id": customer_id},
+            prefer="return=minimal",
+            timeout=10,
         )
+    except httpx.HTTPStatusError:
+        # Historical behavior: Supabase HTTP rejection did not abort customer creation.
+        pass
 
     return customer_id
 
