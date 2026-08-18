@@ -14,6 +14,7 @@ from core.easybroker import EB_API_KEY, EB_BASE, _EB_LOTE, _EB_PAUSA_LOTE, _eb_g
 from core.easybroker_mapping import _EB_LIMITE_PROPIEDADES, _EB_STATUS_DEFAULT, _EB_STATUS_MAP, _eb_to_brokr
 from core.pdf_design import theme_css_for_pdf
 from core.pdf_store import _pdf_store
+from core.property_photos import (FOTOS_BUCKET as _FOTOS_BUCKET, foto_migrable as _foto_migrable, foto_ya_es_de_broquer as _foto_ya_es_de_broquer, fotos_en_proceso as _fotos_en_proceso)
 import httpx
 import os
 import time
@@ -173,6 +174,10 @@ app.include_router(public_config_router)
 # Conexión EasyBroker compartida por organización.
 from routers.easybroker_config import get_eb_key_for_user, router as easybroker_config_router
 app.include_router(easybroker_config_router)
+
+# Estado de migración de fotos EasyBroker.
+from routers.easybroker_photo_status import router as easybroker_photo_status_router
+app.include_router(easybroker_photo_status_router)
 
 # Diagnóstico de la API de EasyBroker (solo lectura).
 from routers.easybroker_diagnostics import router as easybroker_diagnostics_router
@@ -1357,24 +1362,6 @@ async def easybroker_import_all(request: Request):
 # no saturar los IOPS de la instancia.
 # ════════════════════════════════════════════════════════════════
 
-_FOTOS_BUCKET = "fotos-propiedades"
-
-_EXT_POR_MIME = {
-    "image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png",
-    "image/webp": "webp", "image/gif": "gif", "image/heic": "heic",
-}
-
-def _foto_ya_es_de_broquer(url) -> bool:
-    """True si la foto ya vive en el Storage de Broquer (no hay que migrarla)."""
-    return isinstance(url, str) and bool(SUPABASE_URL) and SUPABASE_URL in url
-
-def _foto_migrable(url) -> bool:
-    """True si es una URL http externa que conviene bajar a Broquer."""
-    return (isinstance(url, str)
-            and url.startswith("http")
-            and not _foto_ya_es_de_broquer(url))
-
-
 # ── Compresión ──────────────────────────────────────────────────
 # Las fotos de EasyBroker vienen a resolución completa (1-3 MB cada una).
 # A 1600 px de lado mayor se ven idénticas en pantalla y en los PDFs, pero
@@ -1444,8 +1431,6 @@ async def _foto_a_storage(client: httpx.AsyncClient, url: str, sb_headers: dict)
 # Arranca solo al terminar una importación. El usuario no tiene que apretar
 # nada ni dejar la pestaña abierta. Es idempotente y reanudable: si el
 # servidor se reinicia a medias, la siguiente importación retoma lo que faltó.
-_fotos_en_proceso = set()   # org_id que ya tienen un trabajador corriendo
-
 async def _migrar_fotos_org(org_id: str):
     """Recorre todas las propiedades de la empresa y guarda sus fotos externas."""
     if not org_id or org_id in _fotos_en_proceso:
@@ -1518,35 +1503,6 @@ async def _migrar_fotos_org(org_id: str):
     finally:
         _fotos_en_proceso.discard(org_id)
         print(f"[fotos] org {org_id}: {total_fotos} fotos guardadas en {total_props} propiedades")
-
-
-@app.get("/easybroker/fotos-pendientes")
-async def easybroker_fotos_pendientes(request: Request):
-    """Cuántas propiedades de la empresa siguen con fotos fuera de Broquer."""
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Tu sesión expiró. Vuelve a iniciar sesión.")
-    org_id = await get_org_id_for_user(user_id)
-    if not org_id:
-        return {"pendientes": 0, "en_proceso": False}
-    sb_headers = {
-        "apikey": SUPABASE_SERVICE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-    }
-    pendientes = 0
-    try:
-        filas_pendientes = await get_rows(
-            "propiedades",
-            {"org_id": f"eq.{org_id}", "select": "fotos"},
-            timeout=30,
-        )
-        for fila in filas_pendientes:
-            fotos = fila.get("fotos") or []
-            if isinstance(fotos, list) and any(_foto_migrable(f) for f in fotos):
-                pendientes += 1
-    except Exception:
-        pass
-    return {"pendientes": pendientes, "en_proceso": org_id in _fotos_en_proceso}
 
 
 @app.post("/easybroker/migrar-fotos")
