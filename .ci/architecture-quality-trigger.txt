@@ -1,1 +1,2 @@
 transform=scripts/refactor_main_service_adapters_remove_core.py
+retry=2
