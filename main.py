@@ -270,6 +270,10 @@ app.include_router(easybroker_diagnostics_router)
 from routers.easybroker_properties import router as easybroker_properties_router
 app.include_router(easybroker_properties_router)
 
+# Listado legacy de propiedades EasyBroker (solo lectura).
+from routers.easybroker_catalog import router as easybroker_catalog_router
+app.include_router(easybroker_catalog_router)
+
 # Compatibility aliases while main.py is progressively decomposed. All runtime
 # environment names and public/privileged Supabase key policy live in Core.
 GROQ_API_KEY     = settings.groq_api_key
@@ -2010,17 +2014,6 @@ async def contactos_eliminar_masivo(request: Request):
 
     return {"eliminados": eliminados, "alcance": alcance}
 
-
-@app.get("/propiedades")
-async def get_propiedades(page: int = 1, limit: int = 20):
-    if not EB_API_KEY:
-        raise HTTPException(status_code=500, detail="EB_API_KEY no configurada")
-    async with httpx.AsyncClient(timeout=15) as client:
-        r = await client.get(f"{EB_BASE}/properties", headers=eb_headers(),
-                             params={"page": page, "limit": limit})
-        if r.status_code != 200:
-            raise HTTPException(status_code=r.status_code, detail="Error EasyBroker")
-        return r.json()
 
 # ────────────────────────────────────────────
 # COLONIAS AUTOCOMPLETE
