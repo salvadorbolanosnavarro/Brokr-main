@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-# Idempotent by design: the apply workflow may safely verify an already-migrated state.
+# Idempotent by design: safe for repeated dry-run and apply verification.
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
 
