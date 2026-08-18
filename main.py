@@ -10550,17 +10550,17 @@ async def stripe_webhook(request: Request):
         if event_type == "customer.subscription.deleted":
             new_status = "canceled"
         if subscription_id:
-            async with httpx.AsyncClient(timeout=8) as client:
-                await client.patch(
-                    f"{SUPABASE_URL}/rest/v1/suscripciones?stripe_subscription_id=eq.{subscription_id}",
-                    headers={
-                        "apikey": SUPABASE_SERVICE_KEY,
-                        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                        "Content-Type": "application/json",
-                        "Prefer": "return=minimal",
-                    },
-                    json={"status": new_status, "updated_at": datetime.utcnow().isoformat()}
+            try:
+                await patch_rows(
+                    "suscripciones",
+                    {"stripe_subscription_id": f"eq.{subscription_id}"},
+                    {"status": new_status, "updated_at": datetime.utcnow().isoformat()},
+                    prefer="return=minimal",
+                    timeout=8,
                 )
+            except httpx.HTTPStatusError:
+                # Historical webhook behavior: HTTP rejection did not abort processing.
+                pass
             # En empresas el acceso de TODO el equipo cuelga de organizaciones.activo.
             _filas = await _sb_service_get("suscripciones", {
                 "stripe_subscription_id": f"eq.{subscription_id}",
@@ -10575,17 +10575,17 @@ async def stripe_webhook(request: Request):
     elif event_type == "invoice.payment_failed":
         subscription_id = obj.get("subscription")
         if subscription_id:
-            async with httpx.AsyncClient(timeout=8) as client:
-                await client.patch(
-                    f"{SUPABASE_URL}/rest/v1/suscripciones?stripe_subscription_id=eq.{subscription_id}",
-                    headers={
-                        "apikey": SUPABASE_SERVICE_KEY,
-                        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                        "Content-Type": "application/json",
-                        "Prefer": "return=minimal",
-                    },
-                    json={"status": "past_due", "updated_at": datetime.utcnow().isoformat()}
+            try:
+                await patch_rows(
+                    "suscripciones",
+                    {"stripe_subscription_id": f"eq.{subscription_id}"},
+                    {"status": "past_due", "updated_at": datetime.utcnow().isoformat()},
+                    prefer="return=minimal",
+                    timeout=8,
                 )
+            except httpx.HTTPStatusError:
+                # Historical webhook behavior: HTTP rejection did not abort processing.
+                pass
 
     return {"ok": True}
 
@@ -10794,17 +10794,17 @@ async def subscription_trial_max(request: Request):
     except httpx.HTTPStatusError:
         raise HTTPException(status_code=502, detail="No se pudo activar la prueba. Intenta de nuevo.")
     # Quemar el regalo: aunque la fila se borre después, no se repite.
-    async with httpx.AsyncClient(timeout=10) as client:
-        await client.patch(
-            f"{SUPABASE_URL}/rest/v1/usuarios?id=eq.{user_id}",
-            headers={
-                "apikey": SUPABASE_SERVICE_KEY,
-                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                "Content-Type": "application/json",
-                "Prefer": "return=minimal",
-            },
-            json={"trial_max_usado": True},
+    try:
+        await patch_rows(
+            "usuarios",
+            {"id": f"eq.{user_id}"},
+            {"trial_max_usado": True},
+            prefer="return=minimal",
+            timeout=10,
         )
+    except httpx.HTTPStatusError:
+        # Historical trial-burn behavior: HTTP rejection did not abort success.
+        pass
     return {"ok": True, "plan": "Broquer Max", "trial_hasta": hasta.isoformat(), "dias": TRIAL_MAX_DIAS}
 
 
@@ -10926,17 +10926,17 @@ async def subscription_cancel(request: Request):
         raise HTTPException(status_code=502, detail=f"Error al cancelar: {r_cancel.text}")
 
     # Marcar en Supabase
-    async with httpx.AsyncClient(timeout=8) as client:
-        await client.patch(
-            f"{SUPABASE_URL}/rest/v1/suscripciones?user_id=eq.{user_id}",
-            headers={
-                "apikey": SUPABASE_SERVICE_KEY,
-                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                "Content-Type": "application/json",
-                "Prefer": "return=minimal",
-            },
-            json={"status": "canceled", "updated_at": datetime.utcnow().isoformat()}
+    try:
+        await patch_rows(
+            "suscripciones",
+            {"user_id": f"eq.{user_id}"},
+            {"status": "canceled", "updated_at": datetime.utcnow().isoformat()},
+            prefer="return=minimal",
+            timeout=8,
         )
+    except httpx.HTTPStatusError:
+        # Historical cancellation behavior: local Supabase HTTP rejection was ignored.
+        pass
 
     return {"ok": True, "message": "Suscripción cancelada correctamente."}
 
