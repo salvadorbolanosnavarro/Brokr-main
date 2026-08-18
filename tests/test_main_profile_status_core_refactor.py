@@ -14,7 +14,10 @@ class MainProfileStatusCoreRefactorTests(unittest.TestCase):
     def setUpClass(cls):
         cls.source = MAIN.read_text(encoding="utf-8")
         start = cls.source.index('@app.get("/profile/status")')
-        end = cls.source.index("# ────────────────────────────────────────────\n# GROQ CHAT PROXY", start)
+        end = cls.source.index(
+            "# ────────────────────────────────────────────\n# CLAUDE CHAT PROXY — BROQ IA SUPERINTELIGENTE",
+            start,
+        )
         cls.block = cls.source[start:end]
         integrations_end = cls.block.index("    # Parsear cada provider")
         cls.integrations_block = cls.block[:integrations_end]
