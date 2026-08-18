@@ -23,6 +23,6 @@ Traceback (most recent call last):
 ValueError: substring not found
 
 ----------------------------------------------------------------------
-Ran 296 tests in 7.210s
+Ran 296 tests in 4.698s
 
 FAILED (errors=2)
