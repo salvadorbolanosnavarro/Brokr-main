@@ -1,7 +1,78 @@
 .............................................................../home/runner/work/Brokr-main/Brokr-main/core/easybroker_mapping.py:159: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
   "updated_at": datetime.utcnow().isoformat(),
-......................................................................................................................................................................................................................................................................................
+..............................................................................................................................................................................................................E.E......EE..E.......EE................................................
+======================================================================
+ERROR: test_lookup_preserves_http_and_empty_404_contract (test_main_subscription_activate_lookup_core_refactor.MainSubscriptionActivateLookupCoreRefactorTests.test_lookup_preserves_http_and_empty_404_contract)
 ----------------------------------------------------------------------
-Ran 341 tests in 6.191s
+Traceback (most recent call last):
+  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_subscription_activate_lookup_core_refactor.py", line 22, in test_lookup_preserves_http_and_empty_404_contract
+    end = self.source.index('@app.get("/subscription/status")', start)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: substring not found
 
-OK
+======================================================================
+ERROR: setUpClass (test_main_subscription_activate_post_core_refactor.MainSubscriptionActivatePostCoreRefactorTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_subscription_activate_post_core_refactor.py", line 14, in setUpClass
+    end = source.index('\n\n@app.get("/subscription/status")', start)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: substring not found
+
+======================================================================
+ERROR: setUpClass (test_main_subscription_status_lookup_core_refactor.MainSubscriptionStatusLookupCoreRefactorTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_subscription_status_lookup_core_refactor.py", line 14, in setUpClass
+    start = cls.source.index('@app.get("/subscription/status")')
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: substring not found
+
+======================================================================
+ERROR: test_no_broad_exception_hides_transport_failures_in_migrated_blocks (test_main_subscription_status_patches_core_refactor.MainSubscriptionStatusPatchesCoreRefactorTests.test_no_broad_exception_hides_transport_failures_in_migrated_blocks)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_subscription_status_patches_core_refactor.py", line 55, in test_no_broad_exception_hides_transport_failures_in_migrated_blocks
+    block = self._block(start, end)
+            ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_subscription_status_patches_core_refactor.py", line 15, in _block
+    start = self.source.index(start_marker)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: substring not found
+
+======================================================================
+ERROR: test_trial_burn_write_uses_core_after_subscription_create (test_main_subscription_status_patches_core_refactor.MainSubscriptionStatusPatchesCoreRefactorTests.test_trial_burn_write_uses_core_after_subscription_create)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_subscription_status_patches_core_refactor.py", line 29, in test_trial_burn_write_uses_core_after_subscription_create
+    block = self._block('@app.post("/subscription/trial-max")', '\n\n@app.post("/subscription/cancel")')
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_subscription_status_patches_core_refactor.py", line 15, in _block
+    start = self.source.index(start_marker)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: substring not found
+
+======================================================================
+ERROR: setUpClass (test_main_trial_max_subscription_post_core_refactor.MainTrialMaxSubscriptionPostCoreRefactorTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_trial_max_subscription_post_core_refactor.py", line 15, in setUpClass
+    start = source.index('@app.post("/subscription/trial-max")')
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: substring not found
+
+======================================================================
+ERROR: setUpClass (test_main_trial_max_subscription_post_transform.MainTrialMaxSubscriptionPostTransformTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_trial_max_subscription_post_transform.py", line 22, in setUpClass
+    cls.transformed = transform.transform_source(cls.source)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/Brokr-main/Brokr-main/scripts/refactor_main_trial_max_subscription_post_core.py", line 18, in transform_source
+    raise RuntimeError(f"Expected one trial-max endpoint, found {source.count(marker)}")
+RuntimeError: Expected one trial-max endpoint, found 0
+
+----------------------------------------------------------------------
+Ran 336 tests in 6.805s
+
+FAILED (errors=7)
