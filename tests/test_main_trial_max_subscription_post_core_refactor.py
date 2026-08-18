@@ -13,7 +13,7 @@ class MainTrialMaxSubscriptionPostCoreRefactorTests(unittest.TestCase):
     def setUpClass(cls):
         source = MAIN.read_text(encoding="utf-8")
         start = source.index('@app.post("/subscription/trial-max")')
-        end = source.index('# ════════════════════════════════════════════════════════════════\n# Agendar demo', start)
+        end = source.index('\n\n@app.post("/subscription/cancel")', start)
         cls.block = source[start:end]
 
     def test_subscription_create_routes_through_core_with_exact_status_contract(self):
