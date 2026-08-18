@@ -30,7 +30,7 @@ jobs:
         continue-on-error: true
         shell: bash
         run: |
-          if grep -qx 'stripe-webhook-subscription-post-core-apply' .ci/architecture-quality-trigger.txt; then
+          if grep -q '^stripe-webhook-subscription-post-core-apply' .ci/architecture-quality-trigger.txt; then
             python scripts/refactor_main_stripe_webhook_subscription_post_core.py
           fi
 
