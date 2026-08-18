@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from fastapi import HTTPException, Request
 
 from core.auth import require_user_id
-from core.database import get_rows
+from core.database import get_rows, get_service_json_or_empty, patch_rows
 from core.organizations import get_org_context, get_org_id_for_user
 
 ACTIVE_SUBSCRIPTION_STATUSES = frozenset({"active", "trialing"})
@@ -27,6 +27,51 @@ def _not_expired(value: object) -> bool:
             expires_at = expires_at.replace(tzinfo=timezone.utc)
         return expires_at > datetime.now(timezone.utc)
     except (TypeError, ValueError):
+        return False
+
+
+def trial_has_expired(trial_hasta) -> bool:
+    """Preserve the legacy trial expiration parser used by status endpoints."""
+    try:
+        return datetime.fromisoformat(str(trial_hasta).replace("Z", "+00:00")) <= datetime.now(timezone.utc)
+    except Exception:
+        return False
+
+
+async def expire_trial_subscription(sub_id) -> None:
+    """Best-effort persistence after a trial is already considered expired."""
+    if not sub_id:
+        return
+    try:
+        await patch_rows(
+            "suscripciones",
+            {"id": f"eq.{sub_id}"},
+            {"status": "expired", "updated_at": datetime.utcnow().isoformat()},
+            timeout=8,
+        )
+    except Exception:
+        pass
+
+
+async def trial_max_available(user_id: str) -> bool:
+    """Return whether the one-time seven-day Broquer Max gift is still unused.
+
+    Historical policy is intentionally fail-closed because granting a trial is
+    a monetary entitlement: any uncertainty returns ``False``.
+    """
+    try:
+        users = await get_service_json_or_empty(
+            "usuarios",
+            {"id": f"eq.{user_id}", "select": "trial_max_usado", "limit": "1"},
+        )
+        if users and users[0].get("trial_max_usado"):
+            return False
+        subscriptions = await get_service_json_or_empty(
+            "suscripciones",
+            {"user_id": f"eq.{user_id}", "select": "id", "limit": "1"},
+        )
+        return not subscriptions
+    except Exception:
         return False
 
 
