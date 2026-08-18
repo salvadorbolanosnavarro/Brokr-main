@@ -1,1 +1,2 @@
-trial_subscription_core=1
+extract=scripts/refactor_main_extract_profile_status_core.py
+retry=1
