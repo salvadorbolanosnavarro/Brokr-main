@@ -225,6 +225,10 @@ except Exception as _e:
 from routers.demo import router as demo_router
 app.include_router(demo_router)
 
+# Cuadrícula pública de Instagram para el landing.
+from routers.instagram import router as instagram_router
+app.include_router(instagram_router)
+
 CONFIG_FILE = Path(__file__).parent / "config.json"
 
 def load_config() -> dict:
@@ -12639,60 +12643,6 @@ async def eliminar_cuenta_y_datos(request: Request):
             borrados["auth"] = False
 
     return {"ok": True, "user_id": user_id, "borrados": borrados, "errores": errores}
-
-
-# ════════════════════════════════════════════════════════════════
-# Instagram — cuadrícula pública del landing
-# Jala los últimos posts de la cuenta de Broquer vía Graph API y los
-# cachea 6 horas en memoria. Público (el landing no tiene sesión);
-# el caché protege el límite de la API. Requiere INSTAGRAM_TOKEN
-# (long-lived) en las variables de Railway.
-# ════════════════════════════════════════════════════════════════
-_IG_CACHE = {"t": 0.0, "data": None}
-
-@app.get("/instagram/feed")
-async def instagram_feed():
-    ahora = time.time()
-    if _IG_CACHE["data"] is not None and (ahora - _IG_CACHE["t"]) < 21600:
-        return _IG_CACHE["data"]
-    tok = legacy_main_settings.instagram_token
-    ig_id = legacy_main_settings.ig_user_id
-    if not tok or not ig_id:
-        raise HTTPException(status_code=503, detail="Instagram no configurado")
-    # Ruta vía app de Facebook (Tech Provider): la cuenta de IG se consulta
-    # por su id de negocio, no por /me.
-    url = ("https://graph.facebook.com/v25.0/" + ig_id + "/media"
-           "?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp"
-           "&limit=12&access_token=" + tok)
-    try:
-        async with httpx.AsyncClient(timeout=12) as cli:
-            r = await cli.get(url)
-        if r.status_code != 200:
-            # Si hay caché viejo, mejor servirlo que fallar.
-            if _IG_CACHE["data"] is not None:
-                return _IG_CACHE["data"]
-            raise HTTPException(status_code=502, detail="Instagram no respondió")
-        crudo = r.json().get("data", [])
-    except HTTPException:
-        raise
-    except Exception:
-        if _IG_CACHE["data"] is not None:
-            return _IG_CACHE["data"]
-        raise HTTPException(status_code=502, detail="Sin conexión con Instagram")
-
-    posts = []
-    for p in crudo:
-        posts.append({
-            "id": p.get("id"),
-            "tipo": p.get("media_type"),
-            "portada": p.get("thumbnail_url") or p.get("media_url"),
-            "liga": p.get("permalink"),
-            "texto": (p.get("caption") or "")[:120],
-        })
-    data = {"ok": True, "posts": posts}
-    _IG_CACHE["data"] = data
-    _IG_CACHE["t"] = ahora
-    return data
 
 
 # ═══════════════════════════════════════════════════════════════════════════
