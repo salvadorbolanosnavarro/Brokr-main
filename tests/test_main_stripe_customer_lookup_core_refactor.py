@@ -30,8 +30,9 @@ class MainStripeCustomerLookupCoreRefactorTests(unittest.TestCase):
         lookup = block.split("# 2. Crear Customer en Stripe", 1)[0]
         self.assertNotIn("except Exception:", lookup)
         self.assertNotIn("/rest/v1/usuarios", lookup)
-        # The later PATCH is deliberately outside this read-only cut.
-        self.assertIn("/rest/v1/usuarios?id=eq.{user_id}", block)
+        # Persistence is now guarded separately and must remain Core-routed.
+        self.assertIn('await patch_rows(\n            "usuarios",', block)
+        self.assertNotIn("/rest/v1/usuarios?id=eq.{user_id}", block)
 
 
 if __name__ == "__main__":
