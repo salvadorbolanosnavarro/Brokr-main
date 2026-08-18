@@ -16,7 +16,7 @@ class MainSubscriptionActivateLookupCoreRefactorTests(unittest.TestCase):
 
     def test_lookup_preserves_http_and_empty_404_contract(self):
         start = self.source.index('@app.post("/subscription/activate")')
-        end = self.source.index('@app.post("/subscription/revenuecat-webhook")', start)
+        end = self.source.index('# ════════════════════════════════════════════════════════════════\n# Contactos / Importar desde EasyBroker', start)
         block = self.source[start:end]
         self.assertIn('usuarios = await get_rows(\n            "usuarios",', block)
         self.assertIn('"stripe_customer_id": f"eq.{customer_id}"', block)
