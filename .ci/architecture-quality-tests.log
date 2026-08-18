@@ -1,14 +1,6 @@
-..........................................................................................................................................................................................E.......................................................................................
-======================================================================
-ERROR: setUpClass (test_main_self_account_delete_core_refactor.MainSelfAccountDeleteCoreRefactorTests)
+..................Executing <Task pending name='Task-27' coro=<PublicURLSafetyTests.test_loopback_is_rejected() running at /home/runner/work/Brokr-main/Brokr-main/tests/test_core_contracts.py:307> wait_for=<Future pending cb=[_chain_future.<locals>._call_check_cancel() at /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/asyncio/futures.py:389, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/asyncio/base_events.py:448> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/asyncio/runners.py:100> took 0.304 seconds
+....................................................................................................................................................................................................................................................................
 ----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_self_account_delete_core_refactor.py", line 15, in setUpClass
-    end = cls.source.index('\n\n# ════════════════════════════════════════════════════════════════\n# Instagram', start)
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ValueError: substring not found
+Ran 278 tests in 9.641s
 
-----------------------------------------------------------------------
-Ran 273 tests in 9.531s
-
-FAILED (errors=1)
+OK
