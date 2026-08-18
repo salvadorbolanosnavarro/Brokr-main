@@ -9,6 +9,7 @@ from core.database import call_public_rpc, call_service_rpc, delete_rows, get_pu
 from core.legacy_main_config import legacy_main_settings
 from core.telemetry import (_request_modulo, _track_anthropic, _track_gemini_image, _track_groq, track_usage)
 from core.user_access import get_user_access_state, get_user_rol
+from core.subscriptions import (expire_trial_subscription as _expirar_trial_suscripcion, trial_has_expired as _trial_ya_vencio, trial_max_available as _trial_max_disponible)
 from core.facebook_tokens import facebook_token_state as _fb_estado_token
 from core.cache import cache_get, cache_set
 from core.easybroker import EB_API_KEY, EB_BASE, _EB_LOTE, _EB_PAUSA_LOTE, _eb_get_reintentos, eb_headers, extract_colonia, normalize
@@ -278,109 +279,9 @@ from routers.organizaciones import (
 )
 
 
-# ════════════════════════════════════════════════════════════════
-# Endpoint unificado para el perfil del usuario.
-# Devuelve estado de EasyBroker + Facebook en UNA sola llamada
-# con UNA sola query a Supabase. Reduce 2 peticiones HTTP a 1
-# (elimina un CORS preflight) y 2 queries a Supabase a 1.
-# ════════════════════════════════════════════════════════════════
-@app.get("/profile/status")
-async def get_profile_status(request: Request):
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        return {"eb": {"configured": False, "masked": ""}, "fb": {"connected": False}}
-    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
-        return {"eb": {"configured": False, "masked": ""}, "fb": {"connected": False}}
-
-    # Una sola query trae AMBAS integraciones (EB + FB) del usuario.
-    # Core conserva el acceso privilegiado en un solo lugar; este endpoint
-    # sigue siendo fail-soft ante cualquier rechazo o fallo de transporte.
-    try:
-        rows = await get_rows(
-            "user_integrations",
-            {
-                "user_id": f"eq.{user_id}",
-                "provider": "in.(easybroker,facebook)",
-                "select": "provider,api_key,meta",
-            },
-            timeout=8,
-        )
-    except Exception:
-        return {"eb": {"configured": False, "masked": ""}, "fb": {"connected": False}}
-
-    # Parsear cada provider
-    eb_state = {"configured": False, "masked": ""}
-    fb_state = {"connected": False}
-
-    for row in rows:
-        provider = row.get("provider")
-        api_key = row.get("api_key", "")
-        if provider == "easybroker" and api_key:
-            masked = "*" * (len(api_key) - 4) + api_key[-4:] if len(api_key) > 4 else ""
-            eb_state = {"configured": True, "masked": masked}
-        elif provider == "facebook" and api_key:
-            meta_str = row.get("meta", "{}")
-            try:
-                meta = json.loads(meta_str) if isinstance(meta_str, str) else (meta_str or {})
-            except Exception:
-                meta = {}
-            # El token NO viaja al navegador: solo se dice si existe. (Además,
-            # ahora está cifrado en reposo, así que mandarlo tampoco serviría
-            # de nada al frontend.)
-            fb_state = {
-                "connected": True,
-                "page_id": meta.get("page_id", ""),
-                "page_name": meta.get("page_name", "Página conectada"),
-                "tiene_token_ads": bool(meta.get("user_token")),
-                "token": _fb_estado_token(meta),
-            }
-
-    # Suscripcion
-    sub_state = {"active": False, "plan": None, "status": "sin_suscripcion"}
-    try:
-        # Equipo interno y admin siempre tienen acceso activo
-        rol_val = None
-        for row in rows:
-            pass  # rows ya fue procesado arriba
-        rol_val = await get_user_rol(user_id)
-        if rol_val in ("equipo", "admin"):
-            sub_state = {
-                "active": True,
-                "plan": "Equipo Interno" if rol_val == "equipo" else "Admin",
-                "status": "active",
-            }
-        else:
-            # La suscripción cuelga de la ORG: en una empresa la paga el
-            # titular y la heredan todos sus agentes.
-            _oid = await get_org_id_for_user(user_id)
-            sub_rows = await get_rows(
-                "suscripciones",
-                {"org_id": f"eq.{_oid}", "select": "*", "order": "updated_at.desc", "limit": "1"},
-                timeout=6,
-            )
-            if sub_rows:
-                row = sub_rows[0]
-                _st = row.get("status")
-                _act = _st in ("active", "trialing")
-                if _st == "trialing" and row.get("trial_hasta") and _trial_ya_vencio(row.get("trial_hasta")):
-                    _act = False
-                    _st = "trial_vencido"
-                    asyncio.create_task(_expirar_trial_suscripcion(row.get("id")))
-                sub_state = {
-                    "active": _act,
-                    "plan": row.get("plan_nombre"),
-                    "status": _st,
-                }
-    except Exception:
-        pass
-
-    if sub_state.get("status") == "sin_suscripcion":
-        try:
-            sub_state["trial_disponible"] = await _trial_max_disponible(user_id)
-        except Exception:
-            sub_state["trial_disponible"] = False
-
-    return {"eb": eb_state, "fb": fb_state, "sub": sub_state}
+# Estado unificado de perfil e integraciones.
+from routers.profile_status import router as profile_status_router
+app.include_router(profile_status_router)
 
 # ────────────────────────────────────────────
 # CLAUDE CHAT PROXY — BROQ IA SUPERINTELIGENTE
@@ -7002,23 +6903,6 @@ def _stripe_headers() -> dict:
 
 TRIAL_MAX_DIAS = 7
 
-async def _trial_max_disponible(user_id: str) -> bool:
-    """El regalo de 7 días de Broquer Max es UNA sola vez por cuenta.
-    No aplica si el usuario ya tuvo cualquier suscripción (activa, cancelada
-    o en prueba) ni si ya quemó su trial aunque la fila se haya borrado."""
-    try:
-        u = await get_service_json_or_empty("usuarios", {
-            "id": f"eq.{user_id}", "select": "trial_max_usado", "limit": "1"})
-        if u and u[0].get("trial_max_usado"):
-            return False
-        subs = await get_service_json_or_empty("suscripciones", {
-            "user_id": f"eq.{user_id}", "select": "id", "limit": "1"})
-        return not subs
-    except Exception:
-        # Ante la duda NO se regala el trial: es dinero.
-        return False
-
-
 class CheckoutRequest(BaseModel):
     plan_id: str         # "max" o "ampi"
     promo_code: str = "" # código promocional para plan AMPI
@@ -7702,30 +7586,6 @@ async def subscription_status(request: Request):
 # ════════════════════════════════════════════════════════════════
 # Trial de Broquer Max SIN tarjeta (7 días, una sola vez por cuenta)
 # ════════════════════════════════════════════════════════════════
-
-def _trial_ya_vencio(trial_hasta) -> bool:
-    """True si la fecha de vencimiento del trial ya pasó."""
-    try:
-        return datetime.fromisoformat(str(trial_hasta).replace("Z", "+00:00")) <= datetime.now(timezone.utc)
-    except Exception:
-        return False
-
-
-async def _expirar_trial_suscripcion(sub_id) -> None:
-    """Marca la fila del trial como expirada. Fallar aquí no es grave:
-    el status endpoint la seguirá reportando inactiva de todos modos."""
-    if not sub_id:
-        return
-    try:
-        await patch_rows(
-            "suscripciones",
-            {"id": f"eq.{sub_id}"},
-            {"status": "expired", "updated_at": datetime.utcnow().isoformat()},
-            timeout=8,
-        )
-    except Exception:
-        pass
-
 
 @app.post("/subscription/trial-max")
 async def subscription_trial_max(request: Request):
