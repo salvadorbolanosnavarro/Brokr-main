@@ -4,16 +4,16 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
+ROUTER = ROOT / "routers" / "avm_nearby.py"
 
 
 class MainComparablesPublicRpcCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        source = MAIN.read_text(encoding="utf-8")
-        start = source.index('@app.post("/api/comparables-cercanos")')
-        end = source.index('\n\n# ', start)
-        cls.block = source[start:end]
-        cls.source = source
+        cls.source = ROUTER.read_text(encoding="utf-8")
+        cls.main_source = MAIN.read_text(encoding="utf-8")
+        start = cls.source.index('@router.post("/api/comparables-cercanos")')
+        cls.block = cls.source[start:]
 
     def test_rpc_routes_through_public_core_with_exact_statuses(self):
         block = self.block
@@ -33,8 +33,10 @@ class MainComparablesPublicRpcCoreRefactorTests(unittest.TestCase):
         rpc_tail = block[block.index('try:\n        items = await call_public_rpc('):]
         self.assertNotIn('except Exception:', rpc_tail.split('comparables = []', 1)[0])
 
-    def test_main_imports_public_rpc_primitive(self):
-        self.assertIn('from core.database import call_public_rpc,', self.source)
+    def test_main_mounts_router_instead_of_owning_rpc_primitive(self):
+        self.assertIn('from core.database import call_public_rpc, get_public_rows', self.source)
+        self.assertIn('from routers.avm_nearby import router as avm_nearby_router', self.main_source)
+        self.assertNotIn('@app.post("/api/comparables-cercanos")', self.main_source)
 
 
 if __name__ == '__main__':
