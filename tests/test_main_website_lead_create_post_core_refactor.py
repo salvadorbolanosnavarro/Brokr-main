@@ -6,7 +6,7 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-MAIN = ROOT / "main.py"
+ROUTER = ROOT / "routers" / "public_site_leads.py"
 
 
 def async_function_source(source: str, name: str) -> str:
@@ -21,7 +21,7 @@ def async_function_source(source: str, name: str) -> str:
 class MainWebsiteLeadCreatePostCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.source = MAIN.read_text(encoding="utf-8")
+        cls.source = ROUTER.read_text(encoding="utf-8")
         cls.function = async_function_source(cls.source, "sitio_registrar_lead")
 
     def test_new_lead_post_delegates_to_core(self):
@@ -42,7 +42,7 @@ class MainWebsiteLeadCreatePostCoreRefactorTests(unittest.TestCase):
         self.assertIn('raise HTTPException(status_code=502, detail="No se pudo registrar el lead")', post_block)
         self.assertNotIn('except Exception', post_block)
         self.assertNotIn('/rest/v1/contactos', post_block)
-        compile(self.source, "main.py", "exec")
+        compile(self.source, "routers/public_site_leads.py", "exec")
 
 
 if __name__ == "__main__":
