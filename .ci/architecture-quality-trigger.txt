@@ -1,2 +1,1 @@
-transform=scripts/refactor_main_contact_bulk_delete_core.py
-retry=3
+transform=scripts/refactor_main_self_account_delete_core.py
