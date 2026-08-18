@@ -17,7 +17,7 @@ class MainPdfDesignExtractionTests(unittest.TestCase):
         self.assertIn('Path(__file__).resolve().parents[1] / "brokr-theme.css"', core)
         self.assertIn("_THEME_TOKENS_FALLBACK", core)
         self.assertIn('for required in ("--ink", "--sky-navy", "--sky-blue", "--font-sans")', core)
-        self.assertIn("using respaldo", core)
+        self.assertIn("usando respaldo", core)
         self.assertIn("def theme_css_for_pdf(extra: str = \"\") -> str:", core)
         compile(core, "core/pdf_design.py", "exec")
         compile(main, "main.py", "exec")
