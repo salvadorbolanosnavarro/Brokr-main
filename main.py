@@ -246,6 +246,10 @@ app.include_router(banxico_router)
 from routers.telemetry import router as telemetry_router
 app.include_router(telemetry_router)
 
+# Proxy de chat Groq.
+from routers.chat import router as chat_router
+app.include_router(chat_router)
+
 CONFIG_FILE = Path(__file__).parent / "config.json"
 
 def load_config() -> dict:
@@ -604,46 +608,6 @@ async def get_profile_status(request: Request):
             sub_state["trial_disponible"] = False
 
     return {"eb": eb_state, "fb": fb_state, "sub": sub_state}
-
-# ────────────────────────────────────────────
-# GROQ CHAT PROXY
-# ────────────────────────────────────────────
-class ChatRequest(BaseModel):
-    messages: list
-    model: str = "llama-3.3-70b-versatile"
-    max_tokens: int = 1024
-    temperature: float = 0.7
-
-@app.post("/chat")
-async def chat_proxy(req: ChatRequest, request: Request):
-    _uid = await get_user_id_from_token(request)
-    exigir_cupo(request, _uid)
-    exigir_sesion(request, _uid)
-    if not GROQ_API_KEY:
-        raise HTTPException(status_code=500, detail="GROQ_API_KEY no configurada en el servidor")
-    user_id = await get_user_id_from_token(request)
-    async with httpx.AsyncClient(timeout=30) as client:
-        r = await client.post(
-            f"{GROQ_BASE}/chat/completions",
-            headers={
-                "Authorization": f"Bearer {GROQ_API_KEY}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model":       req.model,
-                "messages":    req.messages,
-                "max_tokens":  req.max_tokens,
-                "temperature": req.temperature,
-            }
-        )
-        if r.status_code != 200:
-            raise HTTPException(status_code=r.status_code,
-                detail=f"Error Groq: {r.text}")
-        data = r.json()
-        _track_groq(user_id, _request_modulo(request, "chat"), "/chat", data,
-                    modelo=req.model or "llama-3.3-70b-versatile")
-        return data
-
 
 # ────────────────────────────────────────────
 # CLAUDE CHAT PROXY — BROQ IA SUPERINTELIGENTE
