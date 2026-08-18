@@ -12628,17 +12628,20 @@ async def eliminar_cuenta_y_datos(request: Request):
         # `errores` pero no detiene el resto del borrado.
         if STRIPE_SECRET_KEY:
             try:
-                rs = await client.get(
-                    f"{SUPABASE_URL}/rest/v1/suscripciones",
-                    headers=sb_read_headers,
-                    params={
-                        "user_id": f"eq.{user_id}",
-                        "select": "stripe_subscription_id",
-                        "order": "updated_at.desc",
-                        "limit": "1",
-                    },
-                )
-                sub_rows = rs.json() if rs.status_code == 200 else []
+                try:
+                    sub_rows = await get_service_json(
+                        "suscripciones",
+                        {
+                            "user_id": f"eq.{user_id}",
+                            "select": "stripe_subscription_id",
+                            "order": "updated_at.desc",
+                            "limit": "1",
+                        },
+                        timeout=30,
+                        accepted_statuses=(200,),
+                    )
+                except httpx.HTTPStatusError:
+                    sub_rows = []
                 sub_id = sub_rows[0].get("stripe_subscription_id") if sub_rows else None
                 if sub_id:
                     rc = await client.delete(
@@ -12658,22 +12661,25 @@ async def eliminar_cuenta_y_datos(request: Request):
         # Las fotos se guardan con nombre aleatorio (sin prefijo de usuario),
         # así que se obtienen las URLs de sus propiedades ANTES de borrar las filas.
         try:
-            rp = await client.get(
-                f"{SUPABASE_URL}/rest/v1/propiedades",
-                headers=sb_read_headers,
-                params={"user_id": f"eq.{user_id}", "select": "fotos"},
-            )
+            try:
+                filas_fotos = await get_service_json(
+                    "propiedades",
+                    {"user_id": f"eq.{user_id}", "select": "fotos"},
+                    timeout=30,
+                    accepted_statuses=(200,),
+                )
+            except httpx.HTTPStatusError:
+                filas_fotos = []
             objetos = []
-            if rp.status_code == 200:
-                for fila in (rp.json() or []):
-                    for url in (fila.get("fotos") or []):
-                        if not isinstance(url, str):
-                            continue
-                        marcador = "/fotos-propiedades/"
-                        if marcador in url:
-                            nombre = url.split(marcador, 1)[1].split("?", 1)[0]
-                            if nombre:
-                                objetos.append(nombre)
+            for fila in (filas_fotos or []):
+                for url in (fila.get("fotos") or []):
+                    if not isinstance(url, str):
+                        continue
+                    marcador = "/fotos-propiedades/"
+                    if marcador in url:
+                        nombre = url.split(marcador, 1)[1].split("?", 1)[0]
+                        if nombre:
+                            objetos.append(nombre)
             objetos = list(dict.fromkeys(objetos))  # quitar duplicados
             fotos_borradas = 0
             for nombre in objetos:
@@ -12694,24 +12700,32 @@ async def eliminar_cuenta_y_datos(request: Request):
         # ── 3. Borrar las filas de datos del usuario ───────────────────
         for tabla in tablas:
             try:
-                r = await client.delete(
-                    f"{SUPABASE_URL}/rest/v1/{tabla}?user_id=eq.{user_id}",
-                    headers=sb_headers,
+                await delete_rows(
+                    tabla,
+                    {"user_id": f"eq.{user_id}"},
+                    timeout=30,
+                    accepted_statuses=(200, 204),
                 )
-                borrados[tabla] = (r.status_code in (200, 204))
-                if r.status_code not in (200, 204):
-                    errores.append(f"{tabla}: {r.status_code} {r.text[:120]}")
+                borrados[tabla] = True
+            except httpx.HTTPStatusError as e:
+                errores.append(f"{tabla}: {e.response.status_code} {e.response.text[:120]}")
+                borrados[tabla] = False
             except Exception as e:
                 errores.append(f"{tabla}: {e}")
                 borrados[tabla] = False
 
         # Borrar fila en `usuarios` (el id es el mismo de auth.users)
         try:
-            r = await client.delete(
-                f"{SUPABASE_URL}/rest/v1/usuarios?id=eq.{user_id}",
-                headers=sb_headers,
+            await delete_rows(
+                "usuarios",
+                {"id": f"eq.{user_id}"},
+                timeout=30,
+                accepted_statuses=(200, 204),
             )
-            borrados["usuarios"] = (r.status_code in (200, 204))
+            borrados["usuarios"] = True
+        except httpx.HTTPStatusError:
+            # Historical behavior: HTTP rejection only marked this row as not deleted.
+            borrados["usuarios"] = False
         except Exception as e:
             errores.append(f"usuarios: {e}")
             borrados["usuarios"] = False
