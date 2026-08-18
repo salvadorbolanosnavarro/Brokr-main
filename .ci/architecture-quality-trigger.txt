@@ -1,2 +1,2 @@
-extract=scripts/refactor_main_extract_easybroker_property_read_core.py
+extract=scripts/refactor_main_extract_easybroker_catalog_core.py
 retry=1
