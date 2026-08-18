@@ -237,6 +237,10 @@ app.include_router(public_site_leads_router)
 from routers.system import router as system_router
 app.include_router(system_router)
 
+# INPC y UDIS desde Banxico SIE.
+from routers.banxico import router as banxico_router
+app.include_router(banxico_router)
+
 CONFIG_FILE = Path(__file__).parent / "config.json"
 
 def load_config() -> dict:
@@ -309,136 +313,6 @@ def cache_set(key, data, ttl=None):
 def eb_headers(key: str = None):
     k = key or EB_API_KEY
     return {"X-Authorization": k, "accept": "application/json"}
-
-# ────────────────────────────────────────────
-# BANXICO SIE — INPC mensual + UDIS diaria
-# Series: SP74625 (INPC base 2Q-jul-2018=100), SP68257 (UDIS)
-# Token gratuito: banxico.org.mx/SieAPIRest
-# Cache: meses/fechas pasadas 30 días; corrientes 6h
-# ────────────────────────────────────────────
-async def _banxico_fetch(serie: str, fecha_ini: str = None, fecha_fin: str = None) -> list:
-    """
-    Consulta una serie de Banxico SIE.
-    Fechas en formato YYYY-MM-DD (formato esperado por Banxico SIE).
-    Si no se pasan fechas, usa /datos/oportuno (último valor publicado).
-    Devuelve lista de {fecha: 'DD/MM/YYYY', dato: 'valor'}.
-    """
-    if not BANXICO_TOKEN:
-        raise HTTPException(status_code=503, detail="BANXICO_TOKEN no configurado en el backend")
-    if fecha_ini and fecha_fin:
-        url = f"{BANXICO_BASE}/{serie}/datos/{fecha_ini}/{fecha_fin}"
-    else:
-        url = f"{BANXICO_BASE}/{serie}/datos/oportuno"
-    try:
-        async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
-            r = await client.get(url, params={"token": BANXICO_TOKEN},
-                                 headers={"Accept": "application/json"})
-            if r.status_code in (401, 403):
-                raise HTTPException(status_code=502, detail="Token Banxico rechazado")
-            if r.status_code == 400:
-                raise HTTPException(status_code=400, detail=f"Banxico rechazó request: {r.text[:200]}")
-            if r.status_code != 200:
-                raise HTTPException(status_code=502, detail=f"Banxico devolvió HTTP {r.status_code}")
-            data = r.json()
-    except HTTPException:
-        raise
-    except (httpx.HTTPError, ValueError) as e:
-        raise HTTPException(status_code=502, detail=f"Error consultando Banxico: {e}")
-    series = (data.get("bmx") or {}).get("series") or []
-    if not series:
-        return []
-    datos = series[0].get("datos") or []
-    # Filtra "N/E" (no existe ese día — feriados/no publicado)
-    return [d for d in datos if d.get("dato") and d["dato"] != "N/E"]
-
-@app.get("/api/inpc/{anio}/{mes}")
-async def api_inpc(anio: int, mes: int):
-    """
-    INPC mensual de Banxico SIE (serie SP74625, base 2Q jul 2018 = 100).
-    Devuelve {anio, mes, valor, fecha_publicacion, fuente}.
-    """
-    if not (1969 <= anio <= 2099):
-        raise HTTPException(status_code=400, detail="Año fuera de rango (1969-2099)")
-    if not (1 <= mes <= 12):
-        raise HTTPException(status_code=400, detail="Mes debe ser 1-12")
-    key = f"inpc:{anio}-{mes:02d}"
-    cached = cache_get(key)
-    if cached:
-        return cached
-    # Banxico requiere fechas YYYY-MM-DD
-    if mes == 12:
-        last_day = 31
-    else:
-        last_day = (date(anio, mes + 1, 1) - timedelta(days=1)).day
-    fecha_ini = f"{anio}-{mes:02d}-01"
-    fecha_fin = f"{anio}-{mes:02d}-{last_day:02d}"
-    datos = await _banxico_fetch(BANXICO_SERIE_INPC, fecha_ini, fecha_fin)
-    fallback = False
-    anio_real, mes_real = anio, mes
-    if not datos:
-        # Art. 17-A CFF (sexto parrafo): cuando el INPC del mes mas reciente aun no
-        # se publica (INEGI lo libera ~dia 9-10 del mes siguiente), se aplica el
-        # ULTIMO indice mensual publicado. Retrocedemos hasta 3 meses buscandolo.
-        for _ in range(3):
-            mes_real -= 1
-            if mes_real < 1:
-                mes_real = 12
-                anio_real -= 1
-            if mes_real == 12:
-                ld = 31
-            else:
-                ld = (date(anio_real, mes_real + 1, 1) - timedelta(days=1)).day
-            datos = await _banxico_fetch(
-                BANXICO_SERIE_INPC,
-                f"{anio_real}-{mes_real:02d}-01",
-                f"{anio_real}-{mes_real:02d}-{ld:02d}")
-            if datos:
-                fallback = True
-                break
-    if not datos:
-        raise HTTPException(status_code=404, detail=f"INPC no publicado para {anio}-{mes:02d}")
-    valor = float(str(datos[-1]["dato"]).replace(",", ""))
-    fecha_pub = datos[-1]["fecha"]
-    result = {"anio": anio_real, "mes": mes_real, "valor": valor,
-              "fecha_publicacion": fecha_pub, "fuente": "banxico_sie",
-              "fallback": fallback,
-              "anio_solicitado": anio, "mes_solicitado": mes}
-    now = datetime.now()
-    is_past = (anio < now.year) or (anio == now.year and mes < now.month)
-    # Un resultado fallback caduca pronto: en cuanto INEGI publique, se toma el real.
-    cache_set(key, result, ttl=6 * 3600 if fallback else (30 * 86400 if is_past else 6 * 3600))
-    return result
-
-@app.get("/api/udis/{fecha}")
-async def api_udis(fecha: str):
-    """
-    Valor de UDIS de Banxico SIE (serie SP68257) para una fecha específica.
-    fecha en formato YYYY-MM-DD. Devuelve {fecha, valor, fecha_publicacion, fuente}.
-    Si la fecha es muy reciente y aún no publicada, devuelve el último valor disponible.
-    """
-    try:
-        fecha_obj = datetime.strptime(fecha, "%Y-%m-%d").date()
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Fecha debe ser YYYY-MM-DD")
-    key = f"udis:{fecha}"
-    cached = cache_get(key)
-    if cached:
-        return cached
-    datos = await _banxico_fetch(BANXICO_SERIE_UDIS, fecha, fecha)
-    if not datos:
-        # Fallback: rango de 14 días hacia atrás (UDIS se publican diariamente
-        # pero en feriados raros puede haber gaps)
-        fecha_ini = (fecha_obj - timedelta(days=14)).isoformat()
-        datos = await _banxico_fetch(BANXICO_SERIE_UDIS, fecha_ini, fecha)
-    if not datos:
-        raise HTTPException(status_code=404, detail=f"UDIS no publicadas para {fecha}")
-    valor = float(str(datos[-1]["dato"]).replace(",", ""))
-    fecha_pub = datos[-1]["fecha"]
-    result = {"fecha": fecha, "valor": valor,
-              "fecha_publicacion": fecha_pub, "fuente": "banxico_sie"}
-    is_past = fecha_obj < datetime.now().date()
-    cache_set(key, result, ttl=7 * 86400 if is_past else 12 * 3600)
-    return result
 
 # ────────────────────────────────────────────
 # CONFIG — EB API KEY POR USUARIO (Supabase)
