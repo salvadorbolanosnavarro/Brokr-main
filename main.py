@@ -10,7 +10,7 @@ from core.legacy_main_config import legacy_main_settings
 from core.telemetry import (_request_modulo, _track_anthropic, _track_gemini_image, _track_groq, track_usage)
 from core.user_access import get_user_access_state, get_user_rol
 from core.cache import cache_get, cache_set
-from core.easybroker import EB_API_KEY, EB_BASE, _EB_LOTE, _EB_PAUSA_LOTE, _eb_get_reintentos, eb_headers
+from core.easybroker import EB_API_KEY, EB_BASE, _EB_LOTE, _EB_PAUSA_LOTE, _eb_get_reintentos, eb_headers, extract_colonia, normalize
 from core.easybroker_mapping import _EB_LIMITE_PROPIEDADES, _EB_STATUS_DEFAULT, _EB_STATUS_MAP, _eb_to_brokr
 import httpx
 import os
@@ -273,6 +273,10 @@ app.include_router(easybroker_properties_router)
 # Listado legacy de propiedades EasyBroker (solo lectura).
 from routers.easybroker_catalog import router as easybroker_catalog_router
 app.include_router(easybroker_catalog_router)
+
+# Autocomplete de colonias desde EasyBroker.
+from routers.easybroker_colonias import router as easybroker_colonias_router
+app.include_router(easybroker_colonias_router)
 
 # Compatibility aliases while main.py is progressively decomposed. All runtime
 # environment names and public/privileged Supabase key policy live in Core.
@@ -2049,68 +2053,6 @@ async def fetch_all_properties() -> list:
 
     cache_set("all_properties", all_props)
     return all_props
-
-def extract_colonia(location_str: str) -> str:
-    """Extract colonia from 'Colonia, Ciudad, Estado' string."""
-    if not location_str:
-        return ""
-    parts = [p.strip() for p in location_str.split(",")]
-    return parts[0] if parts else location_str.strip()
-
-def normalize(s: str) -> str:
-    for a, b in [('á','a'),('é','e'),('í','i'),('ó','o'),('ú','u'),('ü','u'),('ñ','n')]:
-        s = s.lower().replace(a, b)
-    return s
-
-@app.get("/colonias")
-async def get_colonias(q: str = Query("", min_length=2), ciudad: str = "Morelia"):
-    """Return unique colonias matching search query — fast direct EB search."""
-    if not EB_API_KEY:
-        raise HTTPException(status_code=500, detail="EB_API_KEY no configurada")
-
-    cache_key = f"colonias_{normalize(ciudad)}"
-    colonias_map = cache_get(cache_key)
-
-    if colonias_map is None:
-        # Build index: paginate EB and collect all colonias
-        colonias_map = {}
-        page = 1
-        async with httpx.AsyncClient(timeout=30) as client:
-            while page <= 80:  # up to 4000 properties
-                r = await client.get(
-                    f"{EB_BASE}/properties",
-                    headers=eb_headers(),
-                    params={"limit": 50, "page": page}
-                )
-                if r.status_code != 200:
-                    break
-                data = r.json()
-                props = data.get("content", [])
-                if not props:
-                    break
-                for p in props:
-                    loc = p.get("location", "")
-                    if not loc or normalize(ciudad) not in normalize(loc):
-                        continue
-                    # Status field empty in this EB plan — no filter
-                    # Date: January 2025 onwards
-                    # No date filter — all properties included
-                    col = extract_colonia(loc)
-                    if col and len(col) > 2:
-                        colonias_map[col] = colonias_map.get(col, 0) + 1
-                if not data.get("pagination",{}).get("next_page"):
-                    break
-                page += 1
-        cache_set(cache_key, colonias_map)
-
-    q_norm = normalize(q)
-    matches = [
-        {"colonia": col, "count": cnt}
-        for col, cnt in colonias_map.items()
-        if q_norm in normalize(col)
-    ]
-    matches.sort(key=lambda x: -x["count"])
-    return {"colonias": matches[:12], "total_colonias": len(colonias_map)}
 
 # ────────────────────────────────────────────
 # AVM — HELPERS
