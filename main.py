@@ -5,7 +5,7 @@ from limites import exigir_cupo, exigir_sesion
 from pydantic import BaseModel
 from core.auth import get_user_id_from_token
 from core.config import settings
-from core.database import delete_rows, get_public_rows, get_rows, patch_rows, post_rows, upsert_rows
+from core.database import call_public_rpc, delete_rows, get_public_rows, get_rows, patch_rows, post_rows, upsert_rows
 from core.legacy_main_config import legacy_main_settings
 import httpx
 import os
@@ -5878,20 +5878,14 @@ async def comparables_cercanos(req: CercanosRequest):
         "limite": req.max_resultados,
     }
 
-    headers = {
-        "apikey": SUPABASE_KEY,
-        "Authorization": f"Bearer {SUPABASE_KEY}",
-        "Content-Type": "application/json",
-    }
-
-    async with httpx.AsyncClient(timeout=15) as client:
-        r = await client.post(
-            f"{SUPABASE_URL}/rest/v1/rpc/buscar_cercanos",
-            headers=headers,
-            json=payload,
-        )
-
-    if r.status_code not in (200, 201):
+    try:
+        items = await call_public_rpc(
+            "buscar_cercanos",
+            payload,
+            timeout=15,
+            accepted_statuses=(200, 201),
+        ) or []
+    except httpx.HTTPStatusError:
         # Fallback: buscar por ciudad sin PostGIS
         try:
             items = await get_public_rows(
@@ -5908,8 +5902,6 @@ async def comparables_cercanos(req: CercanosRequest):
             )
         except httpx.HTTPStatusError:
             items = []
-    else:
-        items = r.json() or []
 
     comparables = []
     for item in items:
