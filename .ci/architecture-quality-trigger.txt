@@ -1,2 +1,2 @@
-extract=scripts/refactor_main_extract_dead_config_helpers_core.py
+extract=scripts/refactor_main_extract_dead_easybroker_globals_core.py
 retry=1
