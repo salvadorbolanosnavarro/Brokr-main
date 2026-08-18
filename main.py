@@ -5,7 +5,7 @@ from limites import exigir_cupo, exigir_sesion
 from pydantic import BaseModel
 from core.auth import get_user_id_from_token
 from core.config import settings
-from core.database import call_public_rpc, delete_rows, get_public_rows, get_rows, get_service_json, patch_rows, patch_rows_no_response, post_rows, upsert_rows
+from core.database import call_public_rpc, call_service_rpc, delete_rows, get_public_rows, get_rows, get_service_json, patch_rows, patch_rows_no_response, post_rows, upsert_rows
 from core.legacy_main_config import legacy_main_settings
 import httpx
 import os
@@ -12292,16 +12292,15 @@ async def admin_eliminar_usuario(req: AdminEliminarReq, request: Request):
         raise HTTPException(status_code=400, detail="No puedes eliminar tu propia cuenta de admin.")
 
     # Verificar que el objetivo existe y validar correo + rol
-    async with httpx.AsyncClient(timeout=10) as client:
-        r = await client.get(
-            f"{SUPABASE_URL}/rest/v1/usuarios",
-            headers={
-                "apikey": SUPABASE_SERVICE_KEY,
-                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-            },
-            params={"id": f"eq.{target_id}", "select": "id,email,rol", "limit": "1"},
+    try:
+        filas = await get_service_json(
+            "usuarios",
+            {"id": f"eq.{target_id}", "select": "id,email,rol", "limit": "1"},
+            timeout=10,
+            accepted_statuses=(200,),
         )
-    filas = r.json() if r.status_code == 200 else []
+    except httpx.HTTPStatusError:
+        filas = []
     if not filas:
         raise HTTPException(status_code=404, detail="Usuario no encontrado.")
     objetivo = filas[0]
@@ -12319,19 +12318,15 @@ async def admin_eliminar_usuario(req: AdminEliminarReq, request: Request):
     rutas_fotos = await _storage_rutas_fotos_de_usuario(target_id)
 
     # Ejecutar la eliminación total vía RPC (service key)
-    async with httpx.AsyncClient(timeout=60) as client:
-        r = await client.post(
-            f"{SUPABASE_URL}/rest/v1/rpc/admin_eliminar_usuario_total",
-            headers={
-                "apikey": SUPABASE_SERVICE_KEY,
-                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                "Content-Type": "application/json",
-            },
-            json={"p_user_id": target_id},
+    try:
+        resultado = await call_service_rpc(
+            "admin_eliminar_usuario_total",
+            {"p_user_id": target_id},
+            timeout=60,
+            accepted_statuses=(200,),
         )
-    if r.status_code != 200:
-        raise HTTPException(status_code=500, detail=f"Error eliminando usuario: {r.text}")
-    resultado = r.json()
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(status_code=500, detail=f"Error eliminando usuario: {exc.response.text}")
     if not (isinstance(resultado, dict) and resultado.get("ok")):
         detalle = resultado.get("error") if isinstance(resultado, dict) else str(resultado)
         raise HTTPException(status_code=500, detail=f"La eliminación no se completó: {detalle}")
