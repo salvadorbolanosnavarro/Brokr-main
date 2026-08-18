@@ -5,7 +5,7 @@ from limites import exigir_cupo, exigir_sesion
 from pydantic import BaseModel
 from core.auth import get_user_id_from_token
 from core.config import settings
-from core.database import call_public_rpc, delete_rows, get_public_rows, get_rows, patch_rows, post_rows, upsert_rows
+from core.database import call_public_rpc, delete_rows, get_public_rows, get_rows, get_service_json, patch_rows, patch_rows_no_response, post_rows, upsert_rows
 from core.legacy_main_config import legacy_main_settings
 import httpx
 import os
@@ -9976,33 +9976,32 @@ def _precio_empresa(periodo: str, extra: bool = False) -> str:
 
 
 async def _sb_service_get(tabla: str, params: dict) -> list:
-    """GET a Supabase con service key. Devuelve [] si algo falla."""
-    async with httpx.AsyncClient(timeout=10) as client:
-        r = await client.get(
-            f"{SUPABASE_URL}/rest/v1/{tabla}",
-            headers={"apikey": SUPABASE_SERVICE_KEY,
-                     "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
-            params=params,
-        )
-    if r.status_code != 200:
-        return []
+    """GET service-role legacy: HTTP != 200 / JSON inválido => []; transporte propaga."""
     try:
-        return r.json()
-    except Exception:
+        return await get_service_json(
+            tabla,
+            params,
+            timeout=10,
+            accepted_statuses=(200,),
+        )
+    except httpx.HTTPStatusError:
+        return []
+    except json.JSONDecodeError:
         return []
 
 
 async def _sb_service_patch(tabla: str, params: dict, payload: dict) -> None:
-    """PATCH a Supabase con service key."""
-    async with httpx.AsyncClient(timeout=10) as client:
-        await client.patch(
-            f"{SUPABASE_URL}/rest/v1/{tabla}",
-            headers={"apikey": SUPABASE_SERVICE_KEY,
-                     "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                     "Content-Type": "application/json",
-                     "Prefer": "return=minimal"},
-            params=params, json=payload,
+    """PATCH service-role legacy: cualquier status HTTP se ignora; transporte propaga."""
+    try:
+        await patch_rows_no_response(
+            tabla,
+            params,
+            payload,
+            prefer="return=minimal",
+            timeout=10,
         )
+    except httpx.HTTPStatusError:
+        pass
 
 
 async def _exigir_admin_de_org(request: Request) -> dict:
