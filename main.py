@@ -10793,20 +10793,18 @@ async def subscription_trial_max(request: Request):
         "trial_hasta": hasta.isoformat(),
         "updated_at": datetime.utcnow().isoformat(),
     }
-    async with httpx.AsyncClient(timeout=10) as client:
-        r = await client.post(
-            f"{SUPABASE_URL}/rest/v1/suscripciones",
-            headers={
-                "apikey": SUPABASE_SERVICE_KEY,
-                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                "Content-Type": "application/json",
-                "Prefer": "return=minimal",
-            },
-            json=fila,
+    try:
+        await post_rows(
+            "suscripciones",
+            fila,
+            prefer="return=minimal",
+            timeout=10,
+            accepted_statuses=(200, 201),
         )
-        if r.status_code not in (200, 201):
-            raise HTTPException(status_code=502, detail="No se pudo activar la prueba. Intenta de nuevo.")
-        # Quemar el regalo: aunque la fila se borre después, no se repite.
+    except httpx.HTTPStatusError:
+        raise HTTPException(status_code=502, detail="No se pudo activar la prueba. Intenta de nuevo.")
+    # Quemar el regalo: aunque la fila se borre después, no se repite.
+    async with httpx.AsyncClient(timeout=10) as client:
         await client.patch(
             f"{SUPABASE_URL}/rest/v1/usuarios?id=eq.{user_id}",
             headers={
