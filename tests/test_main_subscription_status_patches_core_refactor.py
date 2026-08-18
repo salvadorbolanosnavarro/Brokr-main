@@ -26,7 +26,7 @@ class MainSubscriptionStatusPatchesCoreRefactorTests(unittest.TestCase):
         self.assertNotIn('/rest/v1/suscripciones?stripe_subscription_id=eq.', block)
 
     def test_trial_burn_write_uses_core_after_subscription_create(self):
-        block = self._block('@app.post("/subscription/trial-max")', '\n\n# ════════════════════════════════════════════════════════════════\n# Agendar demo')
+        block = self._block('@app.post("/subscription/trial-max")', '\n\n@app.post("/subscription/cancel")')
         self.assertIn('await patch_rows(', block)
         self.assertIn('"usuarios",', block)
         self.assertIn('{"id": f"eq.{user_id}"}', block)
@@ -49,7 +49,7 @@ class MainSubscriptionStatusPatchesCoreRefactorTests(unittest.TestCase):
 
     def test_no_broad_exception_hides_transport_failures_in_migrated_blocks(self):
         for start, end in [
-            ('@app.post("/subscription/trial-max")', '\n\n# ════════════════════════════════════════════════════════════════\n# Agendar demo'),
+            ('@app.post("/subscription/trial-max")', '\n\n@app.post("/subscription/cancel")'),
             ('@app.post("/subscription/cancel")', '\n\n@app.post("/subscription/revenuecat-webhook")'),
         ]:
             block = self._block(start, end)
