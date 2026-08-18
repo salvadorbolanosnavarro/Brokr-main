@@ -130,6 +130,29 @@ async def get_public_rows(
     )
 
 
+async def get_service_json(
+    table: str,
+    params: Mapping[str, Any],
+    *,
+    timeout: httpx.Timeout | float = DEFAULT_TIMEOUT,
+    accepted_statuses: tuple[int, ...] | None = None,
+) -> Any:
+    """GET with service credentials and return decoded JSON without shape coercion.
+
+    This exists for legacy callers whose contract distinguished an exact HTTP
+    status but intentionally accepted any valid JSON shape. Transport and JSON
+    decoding errors propagate; callers may translate HTTP status errors locally.
+    """
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        response = await client.get(
+            rest_url(table),
+            headers=service_headers(),
+            params=dict(params),
+        )
+    _require_response_status(response, accepted_statuses)
+    return response.json()
+
+
 async def call_public_rpc(
     function: str,
     payload: Mapping[str, Any],
@@ -231,6 +254,31 @@ async def patch_rows(
         return []
     data = response.json()
     return data if isinstance(data, list) else []
+
+
+async def patch_rows_no_response(
+    table: str,
+    params: Mapping[str, Any],
+    payload: Mapping[str, Any],
+    *,
+    prefer: str = "return=minimal",
+    timeout: httpx.Timeout | float = DEFAULT_TIMEOUT,
+    accepted_statuses: tuple[int, ...] | None = None,
+) -> None:
+    """PATCH rows while intentionally ignoring the response body.
+
+    Legacy status-only writes often never parsed the body. This helper keeps
+    that contract while still centralizing credentials, URL construction and
+    optional exact-status validation.
+    """
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        response = await client.patch(
+            rest_url(table),
+            headers=service_headers(prefer=prefer),
+            params=dict(params),
+            json=dict(payload),
+        )
+    _require_response_status(response, accepted_statuses)
 
 
 async def delete_rows(
