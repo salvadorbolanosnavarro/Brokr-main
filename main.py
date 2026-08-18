@@ -2022,38 +2022,6 @@ async def contactos_eliminar_masivo(request: Request):
 # ────────────────────────────────────────────
 # COLONIAS AUTOCOMPLETE
 # ────────────────────────────────────────────
-async def fetch_all_properties() -> list:
-    """Fetch all properties from EB and cache them."""
-    cached = cache_get("all_properties")
-    if cached is not None:
-        return cached
-
-    all_props = []
-    page = 1
-    async with httpx.AsyncClient(timeout=30) as client:
-        while True:
-            r = await client.get(f"{EB_BASE}/properties", headers=eb_headers(),
-                                 params={"limit": 50, "page": page})
-            if r.status_code != 200:
-                break
-            data = r.json()
-            props = data.get("content", [])
-            if not props:
-                break
-            all_props.extend(props)
-            # Stop if we have enough or no more pages
-            total = data.get("pagination", {}).get("total", 0)
-            if len(all_props) >= min(total, 3000):  # cap at 3000 for speed
-                break
-            if not data.get("pagination", {}).get("next_page"):
-                break
-            page += 1
-            if page > 60:  # safety cap
-                break
-
-    cache_set("all_properties", all_props)
-    return all_props
-
 # ────────────────────────────────────────────
 # AVM — HELPERS
 # ────────────────────────────────────────────
