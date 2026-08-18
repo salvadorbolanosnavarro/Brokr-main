@@ -1,2 +1,2 @@
-extract=scripts/refactor_main_extract_ficha_manual_core.py
-retry=2
+extract=scripts/refactor_main_extract_avm_apify_core.py
+retry=1
