@@ -1,2 +1,2 @@
 extract=scripts/refactor_main_extract_revenuecat_core.py
-retry=3
+retry=4
