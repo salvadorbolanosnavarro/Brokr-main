@@ -2,22 +2,22 @@
 from pathlib import Path
 import unittest
 
-
 ROOT = Path(__file__).resolve().parents[1]
-MAIN = ROOT / "main.py"
+ROUTER = ROOT / "routers" / "machotes.py"
 
 
 class MainMachoteLookupCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        source = MAIN.read_text(encoding="utf-8")
+        source = ROUTER.read_text(encoding="utf-8")
         start = source.index("async def _machote_o_404(")
         end = source.index("\n\nasync def _descargar_plantilla", start)
         cls.block = source[start:end]
 
     def test_lookup_uses_core_and_preserves_404_contract(self):
         block = self.block
-        self.assertIn('rows = await get_rows(\n            "machotes_contrato",', block)
+        self.assertIn('rows = await get_rows(', block)
+        self.assertIn('"machotes_contrato"', block)
         self.assertIn('"id": f"eq.{machote_id}"', block)
         self.assertIn('"user_id": f"eq.{user_id}"', block)
         self.assertIn('"select": select', block)
