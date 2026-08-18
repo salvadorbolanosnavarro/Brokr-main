@@ -1,1 +1,2 @@
-property_photos_core=1
+extract=scripts/refactor_main_extract_easybroker_photo_status_core.py
+retry=1
