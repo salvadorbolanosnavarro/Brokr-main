@@ -176,6 +176,24 @@ async def call_public_rpc(
     return response.json()
 
 
+async def call_service_rpc(
+    function: str,
+    payload: Mapping[str, Any],
+    *,
+    timeout: httpx.Timeout | float = DEFAULT_TIMEOUT,
+    accepted_statuses: tuple[int, ...] | None = None,
+) -> Any:
+    """Call a Supabase RPC with service-role credentials and raw JSON semantics."""
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        response = await client.post(
+            rpc_url(function),
+            headers=service_headers(),
+            json=dict(payload),
+        )
+    _require_response_status(response, accepted_statuses)
+    return response.json()
+
+
 async def post_rows(
     table: str,
     payload: Any,
