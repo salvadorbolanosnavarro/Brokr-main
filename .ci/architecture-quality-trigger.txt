@@ -1,2 +1,2 @@
-extract=scripts/refactor_main_extract_avm_nearby_core.py
-retry=2
+extract=scripts/refactor_main_extract_shared_executor_core.py
+retry=1
