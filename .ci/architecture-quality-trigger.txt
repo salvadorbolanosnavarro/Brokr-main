@@ -1,2 +1,2 @@
-extract=scripts/refactor_main_extract_easybroker_colonias_core.py
-retry=2
+extract=scripts/refactor_main_extract_dead_easybroker_fetch_all_core.py
+retry=1
