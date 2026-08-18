@@ -1,2 +1,2 @@
 extract=scripts/refactor_main_extract_easybroker_photo_status_core.py
-retry=1
+retry=2
