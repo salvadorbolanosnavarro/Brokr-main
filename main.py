@@ -204,6 +204,10 @@ app.include_router(easybroker_colonias_router)
 from routers.pdf_downloads import router as pdf_downloads_router
 app.include_router(pdf_downloads_router)
 
+# Generación de PDF para ISR.
+from routers.isr_pdf import router as isr_pdf_router
+app.include_router(isr_pdf_router)
+
 # Compatibility aliases while main.py is progressively decomposed. All runtime
 # environment names and public/privileged Supabase key policy live in Core.
 GROQ_API_KEY     = settings.groq_api_key
@@ -1040,37 +1044,6 @@ Reglas estrictas:
         raise HTTPException(status_code=504, detail="El análisis tardó demasiado. Intenta de nuevo.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error procesando: {str(e)[:200]}")
-
-
-@app.post("/isr-pdf")
-async def generar_isr_pdf(p: dict, request: Request):
-    """Recibe HTML del cálculo ISR y lo convierte a PDF con Playwright."""
-    _uid = await get_user_id_from_token(request)
-    exigir_cupo(request, _uid)
-    exigir_sesion(request, _uid)
-    from playwright.async_api import async_playwright  # noqa: re-import ok here (lazy)
-    html = p.get("html", "")
-    if not html:
-        raise HTTPException(status_code=400, detail="HTML vacío")
-    async with async_playwright() as pw:
-        browser = await pw.chromium.launch(args=["--no-sandbox", "--disable-dev-shm-usage"])
-        page = await browser.new_page()
-        await page.set_content(html, wait_until="domcontentloaded")
-        await page.wait_for_timeout(300)
-        pdf_bytes = await page.pdf(
-            format="A4",
-            print_background=True,
-            margin={"top": "20mm", "right": "20mm", "bottom": "20mm", "left": "20mm"}
-        )
-        await browser.close()
-    token = str(_uuid.uuid4()).replace("-","")[:16]
-    filename = p.get("filename", "ISR_Brokr.pdf")
-    _pdf_store[token] = (pdf_bytes, filename)
-    if len(_pdf_store) > 50:
-        oldest = list(_pdf_store.keys())[0]
-        del _pdf_store[oldest]
-    from fastapi.responses import JSONResponse
-    return JSONResponse({"token": token, "filename": filename})
 
 
 # ════════════════════════════════════════════════════════════════
