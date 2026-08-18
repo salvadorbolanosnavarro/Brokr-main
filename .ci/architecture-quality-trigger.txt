@@ -1,1 +1,1 @@
-stripe-customer-patch-core-cleanup-verification
+public-supabase-rpc-core-verification
