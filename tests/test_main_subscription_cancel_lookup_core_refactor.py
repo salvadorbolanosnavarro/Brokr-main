@@ -27,14 +27,16 @@ class MainSubscriptionCancelLookupCoreRefactorTests(unittest.TestCase):
         self.assertIn("row = subscription_rows[0] if subscription_rows else {}", block)
         self.assertIn('raise HTTPException(status_code=404, detail="No se encontró suscripción activa.")', block)
 
-    def test_cancel_lookup_does_not_broaden_scope_or_change_downstream_actions(self):
+    def test_cancel_lookup_does_not_broaden_scope_and_downstream_patch_is_core_routed(self):
         block = self.block
         lookup_end = block.index("    subscription_id = row.get", block.index("subscription_rows = await get_rows"))
         lookup = block[:lookup_end]
         self.assertNotIn("except Exception:", lookup)
         self.assertNotIn("/rest/v1/suscripciones", lookup)
         self.assertIn('https://api.stripe.com/v1/subscriptions/{subscription_id}', block)
-        self.assertIn('/rest/v1/suscripciones?user_id=eq.{user_id}', block)
+        self.assertIn('await patch_rows(', block)
+        self.assertIn('{"user_id": f"eq.{user_id}"}', block)
+        self.assertNotIn('/rest/v1/suscripciones?user_id=eq.{user_id}', block)
 
 
 if __name__ == "__main__":
