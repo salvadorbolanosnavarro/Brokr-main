@@ -1,1 +1,2 @@
 transform=scripts/refactor_main_service_helpers_core.py
+retry=2
