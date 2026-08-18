@@ -1,11 +1,22 @@
 """Permanent regression guard for the narrow main.py security cut."""
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 import re
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def imported_names(source: str, module: str) -> set[str]:
+    tree = ast.parse(source)
+    return {
+        alias.name
+        for node in tree.body
+        if isinstance(node, ast.ImportFrom) and node.module == module
+        for alias in node.names
+    }
 
 
 class MainSecurityRegressionTests(unittest.TestCase):
@@ -25,12 +36,10 @@ class MainSecurityRegressionTests(unittest.TestCase):
             "async def exigir_gestion_integraciones(request):\n        return await get_user_id_from_token(request)",
             source,
         )
-        # Runtime environment access was centralized in Core after the original
-        # security cut. main.py must never rebuild environment policy locally.
         self.assertIsNone(re.search(r"\bos\.(?:getenv|environ)\b", source))
-        self.assertIn(
-            "from core.easybroker import EB_API_KEY, EB_BASE, eb_headers",
-            source,
+        self.assertTrue(
+            {"EB_API_KEY", "EB_BASE", "eb_headers"}
+            <= imported_names(source, "core.easybroker")
         )
         self.assertIn(
             'EB_API_KEY = settings.easybroker_api_key or _load_legacy_config().get("eb_api_key", "")',
