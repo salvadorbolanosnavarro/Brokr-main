@@ -1,2 +1,1 @@
-extract=scripts/refactor_main_extract_contract_runtime_cleanup_core.py
-retry=4
+property_photos_core=1
