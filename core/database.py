@@ -47,6 +47,15 @@ def rest_url(table: str) -> str:
     return f"{settings.supabase_url}/rest/v1/{normalized}"
 
 
+def rpc_url(function: str) -> str:
+    """Build a PostgREST RPC URL for one simple stored-function name."""
+    settings.require_supabase_public()
+    normalized = function.strip().strip("/")
+    if not normalized or "/" in normalized:
+        raise ValueError("Supabase RPC function name must be a simple identifier")
+    return f"{settings.supabase_url}/rest/v1/rpc/{normalized}"
+
+
 def _require_response_status(
     response: httpx.Response,
     accepted_statuses: tuple[int, ...] | None = None,
@@ -119,6 +128,29 @@ async def get_public_rows(
         headers=public_headers(),
         timeout=timeout,
     )
+
+
+async def call_public_rpc(
+    function: str,
+    payload: Mapping[str, Any],
+    *,
+    timeout: httpx.Timeout | float = DEFAULT_TIMEOUT,
+    accepted_statuses: tuple[int, ...] | None = None,
+) -> Any:
+    """Call a Supabase RPC with public credentials and return its decoded JSON.
+
+    The payload is intentionally returned without shape coercion so migrated
+    callers retain their historical JSON semantics. ``accepted_statuses`` can
+    pin an exact legacy success set while transport and JSON errors propagate.
+    """
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        response = await client.post(
+            rpc_url(function),
+            headers=public_headers(),
+            json=dict(payload),
+        )
+    _require_response_status(response, accepted_statuses)
+    return response.json()
 
 
 async def post_rows(
