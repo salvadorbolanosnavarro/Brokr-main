@@ -1,4 +1,7 @@
 """Permanent guards for the EasyBroker bulk property upsert Core migration."""
+from __future__ import annotations
+
+import ast
 from pathlib import Path
 import unittest
 
@@ -15,10 +18,14 @@ class MainPropertyBulkUpsertCoreRefactorTests(unittest.TestCase):
         cls.block = cls.source[start:end]
 
     def test_core_upsert_is_imported_and_direct_rest_post_stays_removed(self):
-        self.assertIn(
-            "from core.database import delete_rows, get_public_rows, get_rows, patch_rows, post_rows, upsert_rows",
-            self.source,
-        )
+        tree = ast.parse(self.source)
+        core_imports = {
+            alias.name
+            for node in tree.body
+            if isinstance(node, ast.ImportFrom) and node.module == "core.database"
+            for alias in node.names
+        }
+        self.assertIn("upsert_rows", core_imports)
         self.assertNotIn("/rest/v1/propiedades", self.block)
         self.assertNotIn("ri = await client.post(", self.block)
 
