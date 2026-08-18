@@ -1,2 +1,2 @@
-extract=scripts/refactor_main_extract_bulk_delete_core.py
-retry=3
+extract=scripts/refactor_main_extract_property_photo_import_cleanup_core.py
+retry=1
