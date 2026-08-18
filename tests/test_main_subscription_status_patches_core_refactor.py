@@ -4,14 +4,16 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
-ROUTER = ROOT / "routers" / "subscription_status.py"
+STATUS_ROUTER = ROOT / "routers" / "subscription_status.py"
+CANCEL_ROUTER = ROOT / "routers" / "subscription_cancel.py"
 
 
 class MainSubscriptionStatusPatchesCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.source = MAIN.read_text(encoding="utf-8")
-        cls.router = ROUTER.read_text(encoding="utf-8")
+        cls.router = STATUS_ROUTER.read_text(encoding="utf-8")
+        cls.cancel = CANCEL_ROUTER.read_text(encoding="utf-8")
 
     def _block(self, start_marker: str, end_marker: str) -> str:
         start = self.source.index(start_marker)
@@ -39,7 +41,7 @@ class MainSubscriptionStatusPatchesCoreRefactorTests(unittest.TestCase):
         self.assertLess(block.index('await post_rows('), block.index('await patch_rows('))
 
     def test_subscription_cancel_local_mark_uses_core_without_changing_stripe_contract(self):
-        block = self._block('@app.post("/subscription/cancel")', '\n\n@app.post("/subscription/revenuecat-webhook")')
+        block = self.cancel
         self.assertIn('https://api.stripe.com/v1/subscriptions/{subscription_id}', block)
         self.assertIn('if r_cancel.status_code not in (200, 201):', block)
         self.assertIn('await patch_rows(', block)
@@ -51,8 +53,7 @@ class MainSubscriptionStatusPatchesCoreRefactorTests(unittest.TestCase):
 
     def test_no_broad_exception_hides_transport_failures_in_migrated_blocks(self):
         self.assertNotIn('except Exception:\n        # Historical', self.router)
-        cancel = self._block('@app.post("/subscription/cancel")', '\n\n@app.post("/subscription/revenuecat-webhook")')
-        self.assertNotIn('except Exception:\n        # Historical', cancel)
+        self.assertNotIn('except Exception:\n        # Historical', self.cancel)
 
 
 if __name__ == "__main__":
