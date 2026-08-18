@@ -44,6 +44,21 @@ def eb_headers(key: str | None = None) -> dict[str, str]:
     return {"X-Authorization": k, "accept": "application/json"}
 
 
+def extract_colonia(location_str: str) -> str:
+    """Extract colonia from the historical 'Colonia, Ciudad, Estado' shape."""
+    if not location_str:
+        return ""
+    parts = [p.strip() for p in location_str.split(",")]
+    return parts[0] if parts else location_str.strip()
+
+
+def normalize(s: str) -> str:
+    """Preserve the legacy lightweight accent normalization used by EB/AVM."""
+    for a, b in [("á", "a"), ("é", "e"), ("í", "i"), ("ó", "o"), ("ú", "u"), ("ü", "u"), ("ñ", "n")]:
+        s = s.lower().replace(a, b)
+    return s
+
+
 async def _eb_get_reintentos(
     client: httpx.AsyncClient,
     url: str,
