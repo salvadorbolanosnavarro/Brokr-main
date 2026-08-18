@@ -250,6 +250,10 @@ app.include_router(telemetry_router)
 from routers.chat import router as chat_router
 app.include_router(chat_router)
 
+# Configuración pública para el frontend.
+from routers.public_config import router as public_config_router
+app.include_router(public_config_router)
+
 CONFIG_FILE = Path(__file__).parent / "config.json"
 
 def load_config() -> dict:
@@ -498,12 +502,6 @@ async def get_eb_key(request: Request):
     else:
         masked = ""
     return {"configured": bool(key), "masked": masked}
-
-@app.get("/config/public")
-async def get_public_config():
-    """Devuelve configuración pública que el frontend necesita al arrancar.
-    FB_APP_ID es un ID de app de Meta — no es secreto, puede exponerse al cliente."""
-    return {"fb_app_id": FB_APP_ID}
 
 # ════════════════════════════════════════════════════════════════
 # Endpoint unificado para el perfil del usuario.
