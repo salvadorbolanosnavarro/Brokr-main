@@ -1,2 +1,2 @@
-extract=scripts/refactor_main_extract_machotes_core.py
-retry=3
+extract=scripts/refactor_main_extract_contract_runtime_cleanup_core.py
+retry=1
