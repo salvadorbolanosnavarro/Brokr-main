@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+# This script is intentionally idempotent so its workflow can verify the final state.
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
 
