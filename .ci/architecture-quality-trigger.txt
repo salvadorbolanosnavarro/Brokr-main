@@ -1,2 +1,2 @@
 extract=scripts/refactor_main_extract_subscription_cancel_core.py
-retry=2
+retry=3
