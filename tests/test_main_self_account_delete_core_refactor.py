@@ -12,7 +12,9 @@ class MainSelfAccountDeleteCoreRefactorTests(unittest.TestCase):
         cls.source = MAIN.read_text(encoding="utf-8")
         marker = 'tablas = ["propiedades", "contactos", "contratos", "user_integrations",'
         start = cls.source.rfind('@app.', 0, cls.source.index(marker))
-        end = cls.source.index('\n\n# ════════════════════════════════════════════════════════════════\n# Instagram', start)
+        end = cls.source.find('\n\n@app.', start + 1)
+        if end == -1:
+            end = len(cls.source)
         cls.block = cls.source[start:end]
 
     def test_subscription_lookup_uses_exact_200_service_read(self):
