@@ -4,12 +4,14 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
+ROUTER = ROOT / "routers" / "subscription_status.py"
 
 
 class MainSubscriptionStatusPatchesCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.source = MAIN.read_text(encoding="utf-8")
+        cls.router = ROUTER.read_text(encoding="utf-8")
 
     def _block(self, start_marker: str, end_marker: str) -> str:
         start = self.source.index(start_marker)
@@ -26,7 +28,7 @@ class MainSubscriptionStatusPatchesCoreRefactorTests(unittest.TestCase):
         self.assertNotIn('/rest/v1/suscripciones?stripe_subscription_id=eq.', block)
 
     def test_trial_burn_write_uses_core_after_subscription_create(self):
-        block = self._block('@app.post("/subscription/trial-max")', '\n\n@app.post("/subscription/cancel")')
+        block = self.router
         self.assertIn('await patch_rows(', block)
         self.assertIn('"usuarios",', block)
         self.assertIn('{"id": f"eq.{user_id}"}', block)
@@ -48,12 +50,9 @@ class MainSubscriptionStatusPatchesCoreRefactorTests(unittest.TestCase):
         self.assertNotIn('/rest/v1/suscripciones?user_id=eq.{user_id}', block)
 
     def test_no_broad_exception_hides_transport_failures_in_migrated_blocks(self):
-        for start, end in [
-            ('@app.post("/subscription/trial-max")', '\n\n@app.post("/subscription/cancel")'),
-            ('@app.post("/subscription/cancel")', '\n\n@app.post("/subscription/revenuecat-webhook")'),
-        ]:
-            block = self._block(start, end)
-            self.assertNotIn('except Exception:\n        # Historical', block)
+        self.assertNotIn('except Exception:\n        # Historical', self.router)
+        cancel = self._block('@app.post("/subscription/cancel")', '\n\n@app.post("/subscription/revenuecat-webhook")')
+        self.assertNotIn('except Exception:\n        # Historical', cancel)
 
 
 if __name__ == "__main__":
