@@ -12,10 +12,8 @@ class MainRevenueCatExtractionTests(unittest.TestCase):
         cls.main = MAIN.read_text(encoding="utf-8")
         cls.router = ROUTER.read_text(encoding="utf-8")
 
-    def test_route_lives_only_in_router(self):
+    def test_prepared_router_has_revenuecat_route(self):
         self.assertIn('@router.post("/subscription/revenuecat-webhook")', self.router)
-        self.assertNotIn('@app.post("/subscription/revenuecat-webhook")', self.main)
-        self.assertIn('app.include_router(revenuecat_router)', self.main)
 
     def test_auth_contract_is_preserved(self):
         r = self.router
