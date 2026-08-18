@@ -11,7 +11,7 @@ class MainContactBulkDeleteReadsCoreRefactorTests(unittest.TestCase):
     def setUpClass(cls):
         cls.source = MAIN.read_text(encoding="utf-8")
         start = cls.source.index('@app.post("/contactos/eliminar-masivo")')
-        end = cls.source.index('\n\n@app.get("/propiedades")', start)
+        end = cls.source.index('# ────────────────────────────────────────────\n# COLONIAS AUTOCOMPLETE', start)
         cls.block = cls.source[start:end]
 
     def test_direct_verification_gets_and_delete_stay_removed(self):
