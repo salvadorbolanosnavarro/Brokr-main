@@ -7,7 +7,7 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-MAIN = ROOT / "main.py"
+ROUTER = ROOT / "routers" / "public_site_leads.py"
 
 
 def async_function_source(source: str, name: str) -> str:
@@ -33,17 +33,15 @@ def core_database_imports(source: str) -> set[str]:
 class MainWebsiteLeadContactReadCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.source = MAIN.read_text(encoding="utf-8")
+        cls.source = ROUTER.read_text(encoding="utf-8")
         cls.function = async_function_source(cls.source, "sitio_registrar_lead")
 
     def test_contact_dedup_read_delegates_to_core_database(self):
         fn = self.function
         self.assertIn("get_rows", core_database_imports(self.source))
-        self.assertNotIn(
-            'f"{SUPABASE_URL}/rest/v1/contactos", headers=hdr,\n                params={"user_id": f"eq.{user_id}", "telefono": f"eq.{telefono}"',
-            fn,
-        )
-        self.assertIn('filas = await get_rows(\n                    "contactos",', fn)
+        self.assertNotIn('/rest/v1/contactos', fn)
+        self.assertIn('filas = await get_rows(', fn)
+        self.assertIn('"contactos"', fn)
         self.assertIn('"user_id": f"eq.{user_id}"', fn)
         self.assertIn('"telefono": f"eq.{telefono}"', fn)
         self.assertIn('"select": "id,notas,es_potencial"', fn)
@@ -57,12 +55,12 @@ class MainWebsiteLeadContactReadCoreRefactorTests(unittest.TestCase):
             "except httpx.HTTPStatusError:\n                filas = []",
             fn,
         )
-        dedup_start = fn.index("# 2) Dedup:")
+        dedup_start = fn.index("existente = None")
         existente_at = fn.index("if existente:", dedup_start)
         dedup = fn[dedup_start:existente_at]
         self.assertNotIn("except Exception", dedup)
         self.assertNotIn("except httpx.RequestError", dedup)
-        compile(self.source, "main.py", "exec")
+        compile(self.source, "routers/public_site_leads.py", "exec")
 
 
 if __name__ == "__main__":
