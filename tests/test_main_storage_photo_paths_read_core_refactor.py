@@ -31,7 +31,9 @@ class MainStoragePhotoPathsReadCoreRefactorTests(unittest.TestCase):
         self.assertIn('except Exception as e:', block)
         self.assertIn('return {b: sorted(v) for b, v in rutas.items()}', block)
         self.assertIn('async def _storage_borrar_carpeta_usuario', self.source)
-        self.assertIn('f"{SUPABASE_URL}/rest/v1/rpc/admin_eliminar_usuario_total"', self.source)
+        self.assertIn('resultado = await call_service_rpc(', self.source)
+        self.assertIn('"admin_eliminar_usuario_total"', self.source)
+        self.assertNotIn('f"{SUPABASE_URL}/rest/v1/rpc/admin_eliminar_usuario_total"', self.source)
 
 
 if __name__ == "__main__":
