@@ -1,4 +1,4 @@
-trigger_sha=5b21b27a30b7c3b235e02d5e160b46d98cd9b64e
+trigger_sha=338b2029dc383798c289d7ef0cd367b6bcaacd0b
 transform=success
 install=success
 compile=success
