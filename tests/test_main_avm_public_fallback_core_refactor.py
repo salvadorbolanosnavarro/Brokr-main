@@ -8,6 +8,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
+ROUTER = ROOT / "routers" / "avm_nearby.py"
 
 
 def async_function_source(source: str, name: str) -> str:
@@ -22,7 +23,8 @@ def async_function_source(source: str, name: str) -> str:
 class MainAvmPublicFallbackCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.source = MAIN.read_text(encoding="utf-8")
+        cls.main_source = MAIN.read_text(encoding="utf-8")
+        cls.source = ROUTER.read_text(encoding="utf-8")
         cls.func = async_function_source(cls.source, "comparables_cercanos")
 
     def test_fallback_delegates_to_public_core_without_privilege_escalation(self):
@@ -59,7 +61,9 @@ class MainAvmPublicFallbackCoreRefactorTests(unittest.TestCase):
         self.assertNotIn('/rest/v1/rpc/buscar_cercanos', func)
         self.assertIn('comparables.append({', func)
         self.assertIn('cache_set(cache_key, resultado, ttl=3600)', func)
-        compile(self.source, "main.py", "exec")
+        self.assertNotIn('@app.post("/api/comparables-cercanos")', self.main_source)
+        self.assertIn('from routers.avm_nearby import router as avm_nearby_router', self.main_source)
+        compile(self.source, "routers/avm_nearby.py", "exec")
 
 
 if __name__ == "__main__":
