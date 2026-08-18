@@ -11,7 +11,7 @@ class MainSubscriptionActivatePostCoreRefactorTests(unittest.TestCase):
     def setUpClass(cls):
         source = MAIN.read_text(encoding="utf-8")
         start = source.index('@app.post("/subscription/activate")')
-        end = source.index('\n\n@app.post("/subscription/cancel")', start)
+        end = source.index('\n\n@app.post("/subscription/revenuecat-webhook")', start)
         cls.block = source[start:end]
 
     def test_activate_post_routes_through_core(self):
