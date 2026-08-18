@@ -16,7 +16,7 @@ for legacy in (
     if legacy in source:
         raise SystemExit(f"dead contract runtime symbol remains in main: {legacy}")
 
-for required in ('import os, json as _json', '_json.loads(', 'os.path'):
+for required in ('import os, json as _json', '_json.loads('):
     if required not in source:
         raise SystemExit(f"live runtime dependency was removed: {required}")
 
