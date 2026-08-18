@@ -6,20 +6,23 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
+CORE = ROOT / "core" / "user_access.py"
 MAIN = ROOT / "main.py"
 
 
 class MainUserRoleCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.source = MAIN.read_text(encoding="utf-8")
+        cls.source = CORE.read_text(encoding="utf-8")
+        cls.main = MAIN.read_text(encoding="utf-8")
 
-    def test_main_compiles(self):
-        compile(self.source, "main.py", "exec")
+    def test_main_and_core_compile(self):
+        compile(self.source, "core/user_access.py", "exec")
+        compile(self.main, "main.py", "exec")
 
     def test_role_keeps_fail_soft_agente_contract_and_uses_core(self):
         start = self.source.index("async def get_user_rol(user_id: str) -> str:")
-        end = self.source.index("# Helper: obtiene rol + activo", start)
+        end = self.source.index("async def get_user_access_state", start)
         block = self.source[start:end]
 
         self.assertIn('rows = await get_rows(\n            "usuarios",', block)
@@ -29,7 +32,12 @@ class MainUserRoleCoreRefactorTests(unittest.TestCase):
         self.assertIn('return rows[0].get("rol") or "agente"', block)
         self.assertIn('except Exception:\n        pass\n    return "agente"', block)
         self.assertNotIn("/rest/v1/usuarios", block)
-        self.assertNotIn('"Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"', block)
+        self.assertIn("from core.database import get_rows", self.source)
+        self.assertIn(
+            "from core.user_access import get_user_access_state, get_user_rol",
+            self.main,
+        )
+        self.assertNotIn("async def get_user_rol(", self.main)
 
 
 if __name__ == "__main__":
