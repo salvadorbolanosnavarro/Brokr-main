@@ -6,6 +6,8 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+ROUTER = ROOT / "routers" / "easybroker_config.py"
+MAIN = ROOT / "main.py"
 
 
 def function_source(source: str, name: str) -> str:
@@ -17,7 +19,8 @@ def function_source(source: str, name: str) -> str:
 class MainEasyBrokerWriteDeleteRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.source = (ROOT / "main.py").read_text(encoding="utf-8")
+        cls.source = ROUTER.read_text(encoding="utf-8")
+        cls.main = MAIN.read_text(encoding="utf-8")
 
     def test_easybroker_save_and_delete_delegate_to_core_database(self):
         source = self.source
@@ -39,10 +42,12 @@ class MainEasyBrokerWriteDeleteRefactorTests(unittest.TestCase):
         self.assertIn('except httpx.HTTPStatusError as e:', set_src)
         self.assertIn('No se pudo guardar la API key (Supabase {status})', set_src)
         self.assertIn('await delete_rows(', delete_src)
-        self.assertIn('"org_id": f"eq.{await get_org_id_for_user(user_id)}"', delete_src)
-        self.assertIn('"provider": "eq.easybroker"', delete_src)
+        self.assertIn('\"org_id\": f\"eq.{await get_org_id_for_user(user_id)}\"', delete_src)
+        self.assertIn('\"provider\": \"eq.easybroker\"', delete_src)
         self.assertIn('except httpx.HTTPStatusError:', delete_src)
         self.assertIn('return {"ok": True, "deleted": True}', delete_src)
+        self.assertNotIn('async def set_eb_key(', self.main)
+        self.assertNotIn('async def delete_eb_key(', self.main)
 
     def test_easybroker_write_delete_security_and_validation_stay_intact(self):
         set_src = function_source(self.source, "set_eb_key")
@@ -52,7 +57,12 @@ class MainEasyBrokerWriteDeleteRefactorTests(unittest.TestCase):
         self.assertIn('f"{EB_BASE}/properties?limit=1"', set_src)
         self.assertIn("if test.status_code == 401:", set_src)
         self.assertIn('"org_id": await get_org_id_for_user(user_id)', set_src)
-        compile(self.source, "main.py", "exec")
+        self.assertIn(
+            'from routers.easybroker_config import get_eb_key_for_user, router as easybroker_config_router',
+            self.main,
+        )
+        compile(self.source, "routers/easybroker_config.py", "exec")
+        compile(self.main, "main.py", "exec")
 
 
 if __name__ == "__main__":
