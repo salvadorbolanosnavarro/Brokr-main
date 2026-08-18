@@ -4,6 +4,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
 CORE = ROOT / "core" / "facebook_tokens.py"
+PROFILE = ROOT / "routers" / "profile_status.py"
 
 
 class FacebookTokenStateExtractionTests(unittest.TestCase):
@@ -11,10 +12,11 @@ class FacebookTokenStateExtractionTests(unittest.TestCase):
     def setUpClass(cls):
         cls.main = MAIN.read_text(encoding="utf-8")
         cls.core = CORE.read_text(encoding="utf-8")
+        cls.profile = PROFILE.read_text(encoding="utf-8")
 
-    def test_main_delegates_token_state_to_core(self):
+    def test_callers_delegate_token_state_to_core(self):
         self.assertIn('from core.facebook_tokens import facebook_token_state as _fb_estado_token', self.main)
-        self.assertIn('"token": _fb_estado_token(meta)', self.main)
+        self.assertIn('facebook_token_state(meta)', self.profile)
         self.assertNotIn('def _fb_estado_token(', self.main)
         self.assertNotIn('_FB_AVISO_DIAS = 14', self.main)
 
@@ -28,6 +30,7 @@ class FacebookTokenStateExtractionTests(unittest.TestCase):
     def test_files_compile(self):
         compile(self.main, "main.py", "exec")
         compile(self.core, "core/facebook_tokens.py", "exec")
+        compile(self.profile, "routers/profile_status.py", "exec")
 
 
 if __name__ == "__main__":
