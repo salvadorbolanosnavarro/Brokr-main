@@ -283,6 +283,10 @@ from routers.organizaciones import (
 from routers.subscription_cancel import router as subscription_cancel_router
 app.include_router(subscription_cancel_router)
 
+# Webhook de suscripciones iOS vía RevenueCat.
+from routers.revenuecat import router as revenuecat_router
+app.include_router(revenuecat_router)
+
 # Estado de suscripción y trial de Broquer Max.
 from routers.subscription_status import router as subscription_status_router
 app.include_router(subscription_status_router)
@@ -7520,83 +7524,6 @@ async def subscription_activate(request: Request):
 # ════════════════════════════════════════════════════════════════
 # Trial de Broquer Max SIN tarjeta (7 días, una sola vez por cuenta)
 # ════════════════════════════════════════════════════════════════
-
-@app.post("/subscription/revenuecat-webhook")
-async def revenuecat_webhook(request: Request):
-    """
-    Recibe los eventos de RevenueCat (compras IAP de iOS vía App Store).
-    RevenueCat valida el recibo con Apple y nos avisa de cada cambio de estado.
-    Escribe en la MISMA tabla `suscripciones` que Stripe, por lo que
-    /subscription/status NO necesita cambios: un usuario con IAP activo se
-    marca status="active" igual que uno de Stripe.
-
-    Configurar en RevenueCat → Project settings → Integrations → Webhooks:
-      URL:  https://api.broquer.app/subscription/revenuecat-webhook
-      Authorization header value: el mismo string que pongas en la env var
-      REVENUECAT_WEBHOOK_AUTH (Railway). Si la env var está vacía, no se valida.
-
-    IMPORTANTE: la app de iOS debe identificar al usuario en RevenueCat con su
-    user_id de Supabase (Purchases.logIn(user_id)). Así el `app_user_id` que
-    llega aquí ES el user_id de Supabase y no hay que mapear nada.
-    """
-    # 1. Validar el header de autorización compartido (anti-spoofing)
-    expected_auth = legacy_main_settings.revenuecat_webhook_auth
-    # Sin secreto NO se procesa. Antes, con la variable vacía, cualquiera podía
-    # mandar un "INITIAL_PURCHASE" falso con el user_id que quisiera.
-    if not expected_auth:
-        print("[revenuecat] REVENUECAT_WEBHOOK_AUTH no configurado: webhook cerrado.")
-        raise HTTPException(status_code=503, detail="Webhook no disponible.")
-    if not hmac_compare(request.headers.get("Authorization", ""), expected_auth):
-        raise HTTPException(status_code=403, detail="No autorizado.")
-
-    body = await request.json()
-    event = body.get("event", {}) or {}
-    event_type = event.get("type", "")
-    user_id = event.get("app_user_id") or event.get("original_app_user_id")
-    if not user_id:
-        return {"ok": True, "skipped": "sin app_user_id"}
-
-    # 2. Traducir el evento de RevenueCat a un status de nuestra tabla
-    ACTIVA = {
-        "INITIAL_PURCHASE", "RENEWAL", "UNCANCELLATION",
-        "NON_RENEWING_PURCHASE", "SUBSCRIPTION_EXTENDED",
-    }
-    if event_type in ACTIVA:
-        nuevo_status = "active"
-    elif event_type == "EXPIRATION":
-        nuevo_status = "expired"          # el acceso terminó de verdad → cortar
-    elif event_type == "BILLING_ISSUE":
-        nuevo_status = "past_due"         # problema de cobro; sigue en gracia
-    elif event_type == "CANCELLATION":
-        # Canceló la renovación, pero conserva acceso hasta que expire.
-        # No tocamos el status todavía; ya llegará EXPIRATION cuando termine.
-        return {"ok": True, "noted": "cancelacion_programada", "user_id": user_id}
-    else:
-        # PRODUCT_CHANGE, TRANSFER, TEST, etc. — no cambian el acceso.
-        return {"ok": True, "ignored": event_type}
-
-    # 3. Upsert en la misma tabla que usa Stripe (merge por user_id)
-    sb = {
-        "user_id": user_id,
-        "org_id": await get_org_id_for_user(user_id),
-        "plan_id": "max",
-        "plan_nombre": "Broquer Max",
-        "status": nuevo_status,
-        "updated_at": datetime.utcnow().isoformat(),
-    }
-    try:
-        await post_rows(
-            "suscripciones",
-            sb,
-            prefer="resolution=merge-duplicates,return=minimal",
-            timeout=10,
-        )
-    except httpx.HTTPStatusError:
-        # Historical RevenueCat behavior: Supabase HTTP rejection did not abort the webhook.
-        pass
-
-    return {"ok": True, "user_id": user_id, "status": nuevo_status, "event": event_type}
-
 
 # ════════════════════════════════════════════════════════════════
 # Contactos / Importar desde EasyBroker
