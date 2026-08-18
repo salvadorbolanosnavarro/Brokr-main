@@ -279,6 +279,10 @@ from routers.organizaciones import (
 )
 
 
+# Cancelación de suscripción web.
+from routers.subscription_cancel import router as subscription_cancel_router
+app.include_router(subscription_cancel_router)
+
 # Estado de suscripción y trial de Broquer Max.
 from routers.subscription_status import router as subscription_status_router
 app.include_router(subscription_status_router)
@@ -7516,56 +7520,6 @@ async def subscription_activate(request: Request):
 # ════════════════════════════════════════════════════════════════
 # Trial de Broquer Max SIN tarjeta (7 días, una sola vez por cuenta)
 # ════════════════════════════════════════════════════════════════
-
-@app.post("/subscription/cancel")
-async def subscription_cancel(request: Request):
-    """Cancela la suscripción activa del usuario al final del período actual (at_period_end)."""
-    if not STRIPE_SECRET_KEY:
-        raise HTTPException(status_code=500, detail="Stripe no configurado.")
-
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autenticado.")
-
-    # Obtener stripe_subscription_id de Supabase
-    try:
-        subscription_rows = await get_rows(
-            "suscripciones",
-            {"user_id": f"eq.{user_id}", "select": "stripe_subscription_id,status", "order": "updated_at.desc", "limit": "1"},
-            timeout=8,
-        )
-    except httpx.HTTPStatusError:
-        subscription_rows = []
-    row = subscription_rows[0] if subscription_rows else {}
-    subscription_id = row.get("stripe_subscription_id")
-    if not subscription_id:
-        raise HTTPException(status_code=404, detail="No se encontró suscripción activa.")
-
-    # Cancelar en Stripe al final del período
-    async with httpx.AsyncClient(timeout=10) as client:
-        r_cancel = await client.post(
-            f"https://api.stripe.com/v1/subscriptions/{subscription_id}",
-            headers=_stripe_headers(),
-            data={"cancel_at_period_end": "true"},
-        )
-    if r_cancel.status_code not in (200, 201):
-        raise HTTPException(status_code=502, detail=f"Error al cancelar: {r_cancel.text}")
-
-    # Marcar en Supabase
-    try:
-        await patch_rows(
-            "suscripciones",
-            {"user_id": f"eq.{user_id}"},
-            {"status": "canceled", "updated_at": datetime.utcnow().isoformat()},
-            prefer="return=minimal",
-            timeout=8,
-        )
-    except httpx.HTTPStatusError:
-        # Historical cancellation behavior: local Supabase HTTP rejection was ignored.
-        pass
-
-    return {"ok": True, "message": "Suscripción cancelada correctamente."}
-
 
 @app.post("/subscription/revenuecat-webhook")
 async def revenuecat_webhook(request: Request):
