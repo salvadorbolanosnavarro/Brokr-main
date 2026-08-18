@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping, Optional
 
+import json
 import httpx
 
 from core.config import settings
@@ -151,6 +152,46 @@ async def get_service_json(
         )
     _require_response_status(response, accepted_statuses)
     return response.json()
+
+
+async def get_service_json_or_empty(
+    table: str,
+    params: Mapping[str, Any],
+    *,
+    timeout: httpx.Timeout | float = 10,
+) -> Any:
+    """Legacy-compatible service GET: HTTP rejection/invalid JSON => []; transport propagates."""
+    try:
+        return await get_service_json(
+            table,
+            params,
+            timeout=timeout,
+            accepted_statuses=(200,),
+        )
+    except httpx.HTTPStatusError:
+        return []
+    except json.JSONDecodeError:
+        return []
+
+
+async def patch_rows_ignoring_http_status(
+    table: str,
+    params: Mapping[str, Any],
+    payload: Mapping[str, Any],
+    *,
+    timeout: httpx.Timeout | float = 10,
+) -> None:
+    """Legacy-compatible service PATCH: ignore HTTP status rejection, propagate transport."""
+    try:
+        await patch_rows_no_response(
+            table,
+            params,
+            payload,
+            prefer="return=minimal",
+            timeout=timeout,
+        )
+    except httpx.HTTPStatusError:
+        pass
 
 
 async def call_public_rpc(

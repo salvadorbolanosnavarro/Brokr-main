@@ -5,7 +5,7 @@ from limites import exigir_cupo, exigir_sesion
 from pydantic import BaseModel
 from core.auth import get_user_id_from_token
 from core.config import settings
-from core.database import call_public_rpc, call_service_rpc, delete_rows, get_public_rows, get_rows, get_service_json, patch_rows, patch_rows_no_response, post_rows, upsert_rows
+from core.database import call_public_rpc, call_service_rpc, delete_rows, get_public_rows, get_rows, get_service_json, get_service_json_or_empty, patch_rows, patch_rows_ignoring_http_status, patch_rows_no_response, post_rows, upsert_rows
 from core.legacy_main_config import legacy_main_settings
 import httpx
 import os
@@ -9979,35 +9979,6 @@ def _precio_empresa(periodo: str, extra: bool = False) -> str:
     return STRIPE_PRICE_EMPRESA_EXTRA_MENSUAL if extra else STRIPE_PRICE_EMPRESA_MENSUAL
 
 
-async def _sb_service_get(tabla: str, params: dict) -> list:
-    """GET service-role legacy: HTTP != 200 / JSON inválido => []; transporte propaga."""
-    try:
-        return await get_service_json(
-            tabla,
-            params,
-            timeout=10,
-            accepted_statuses=(200,),
-        )
-    except httpx.HTTPStatusError:
-        return []
-    except json.JSONDecodeError:
-        return []
-
-
-async def _sb_service_patch(tabla: str, params: dict, payload: dict) -> None:
-    """PATCH service-role legacy: cualquier status HTTP se ignora; transporte propaga."""
-    try:
-        await patch_rows_no_response(
-            tabla,
-            params,
-            payload,
-            prefer="return=minimal",
-            timeout=10,
-        )
-    except httpx.HTTPStatusError:
-        pass
-
-
 async def _exigir_admin_de_org(request: Request) -> dict:
     """Quien contrata o modifica el plan de la empresa tiene que ser el dueño
     (o un administrador) de su propia cuenta. Un agente invitado no puede."""
@@ -10040,11 +10011,11 @@ async def _trial_max_disponible(user_id: str) -> bool:
     No aplica si el usuario ya tuvo cualquier suscripción (activa, cancelada
     o en prueba) ni si ya quemó su trial aunque la fila se haya borrado."""
     try:
-        u = await _sb_service_get("usuarios", {
+        u = await get_service_json_or_empty("usuarios", {
             "id": f"eq.{user_id}", "select": "trial_max_usado", "limit": "1"})
         if u and u[0].get("trial_max_usado"):
             return False
-        subs = await _sb_service_get("suscripciones", {
+        subs = await get_service_json_or_empty("suscripciones", {
             "user_id": f"eq.{user_id}", "select": "id", "limit": "1"})
         return not subs
     except Exception:
@@ -10233,9 +10204,9 @@ def _valida_asientos(n: int) -> int:
 
 async def _ocupacion_org(org_id: str) -> dict:
     """Cuántos lugares están usados: miembros activos + invitaciones pendientes."""
-    miembros = await _sb_service_get("organizacion_miembros",
+    miembros = await get_service_json_or_empty("organizacion_miembros",
                                      {"org_id": f"eq.{org_id}", "activo": "eq.true", "select": "id"})
-    invitaciones = await _sb_service_get("organizacion_invitaciones",
+    invitaciones = await get_service_json_or_empty("organizacion_invitaciones",
                                          {"org_id": f"eq.{org_id}", "aceptada_el": "is.null", "select": "id"})
     return {"miembros": len(miembros), "invitaciones": len(invitaciones),
             "usados": len(miembros) + len(invitaciones)}
@@ -10254,7 +10225,7 @@ async def empresa_plan(request: Request):
                 "asientos_base": EMPRESA_ASIENTOS_BASE, "asientos_max": EMPRESA_ASIENTOS_MAX}
 
     ocup = await _ocupacion_org(ctx["org_id"])
-    sub = await _sb_service_get("suscripciones", {
+    sub = await get_service_json_or_empty("suscripciones", {
         "org_id": f"eq.{ctx['org_id']}", "select": "plan_id,plan_nombre,status,periodo,updated_at",
         "order": "updated_at.desc", "limit": "1",
     })
@@ -10319,7 +10290,7 @@ async def empresa_checkout(req: EmpresaCheckoutRequest, request: Request):
         raise HTTPException(status_code=401, detail="No se pudo verificar el usuario.")
     email = r_user.json().get("email", "")
 
-    filas = await _sb_service_get("usuarios", {"id": f"eq.{user_id}", "select": "nombre"})
+    filas = await get_service_json_or_empty("usuarios", {"id": f"eq.{user_id}", "select": "nombre"})
     nombre = (filas[0] if filas else {}).get("nombre") or email
 
     customer_id = await _get_or_create_stripe_customer(user_id, email, nombre)
@@ -10377,9 +10348,9 @@ async def _activar_empresa(org_id: str, user_id: str, asientos: int,
     }
     if nombre_empresa:
         payload["nombre"] = nombre_empresa[:120]
-    await _sb_service_patch("organizaciones", {"id": f"eq.{org_id}"}, payload)
+    await patch_rows_ignoring_http_status("organizaciones", {"id": f"eq.{org_id}"}, payload)
     # El titular tiene que ser owner para poder invitar a su equipo.
-    await _sb_service_patch("organizacion_miembros",
+    await patch_rows_ignoring_http_status("organizacion_miembros",
                             {"user_id": f"eq.{user_id}", "org_id": f"eq.{org_id}"},
                             {"rol_org": "owner"})
 
@@ -10400,7 +10371,7 @@ async def empresa_asientos(req: EmpresaAsientosRequest, request: Request):
             status_code=400,
             detail=f"Tienes {ocup['usados']} lugares ocupados. Da de baja a alguien antes de reducir.")
 
-    filas = await _sb_service_get("suscripciones", {
+    filas = await get_service_json_or_empty("suscripciones", {
         "org_id": f"eq.{ctx['org_id']}", "plan_id": "eq.empresas",
         "select": "stripe_subscription_id,periodo,status",
         "order": "updated_at.desc", "limit": "1"})
@@ -10457,7 +10428,7 @@ async def empresa_asientos(req: EmpresaAsientosRequest, request: Request):
     if r is not None and r.status_code not in (200, 201):
         raise HTTPException(status_code=502, detail=f"Stripe lugares: {r.text}")
 
-    await _sb_service_patch("organizaciones", {"id": f"eq.{ctx['org_id']}"},
+    await patch_rows_ignoring_http_status("organizaciones", {"id": f"eq.{ctx['org_id']}"},
                             {"asientos_max": asientos,
                              "updated_at": datetime.utcnow().isoformat()})
 
@@ -10522,7 +10493,7 @@ async def stripe_webhook(request: Request):
             if _es_trial:
                 # Se quema el trial de por vida, aunque después cancele o
                 # se borre la fila de suscripciones.
-                await _sb_service_patch("usuarios", {"id": f"eq.{user_id}"},
+                await patch_rows_ignoring_http_status("usuarios", {"id": f"eq.{user_id}"},
                                         {"trial_max_usado": True})
             if plan_id == "empresas":
                 # El plan de empresas guarda periodo y lugares: se necesitan
@@ -10565,12 +10536,12 @@ async def stripe_webhook(request: Request):
                 # Historical webhook behavior: HTTP rejection did not abort processing.
                 pass
             # En empresas el acceso de TODO el equipo cuelga de organizaciones.activo.
-            _filas = await _sb_service_get("suscripciones", {
+            _filas = await get_service_json_or_empty("suscripciones", {
                 "stripe_subscription_id": f"eq.{subscription_id}",
                 "select": "org_id,plan_id", "limit": "1"})
             _fila = _filas[0] if _filas else {}
             if _fila.get("plan_id") == "empresas" and _fila.get("org_id"):
-                await _sb_service_patch(
+                await patch_rows_ignoring_http_status(
                     "organizaciones", {"id": f"eq.{_fila['org_id']}"},
                     {"activo": new_status in ("active", "trialing"),
                      "updated_at": datetime.utcnow().isoformat()})
