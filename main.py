@@ -12211,19 +12211,17 @@ async def admin_set_rol(req: AdminRolReq, request: Request):
     if target_id == caller_id and req.rol != "admin":
         raise HTTPException(status_code=400, detail="No puedes cambiar tu propio rol de admin. Pide a otro admin que lo haga.")
 
-    async with httpx.AsyncClient(timeout=10) as client:
-        r = await client.patch(
-            f"{SUPABASE_URL}/rest/v1/usuarios?id=eq.{target_id}",
-            headers={
-                "apikey": SUPABASE_SERVICE_KEY,
-                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                "Content-Type": "application/json",
-                "Prefer": "return=minimal",
-            },
-            json={"rol": req.rol},
+    try:
+        await patch_rows_no_response(
+            "usuarios",
+            {"id": f"eq.{target_id}"},
+            {"rol": req.rol},
+            prefer="return=minimal",
+            timeout=10,
+            accepted_statuses=(200, 204),
         )
-    if r.status_code not in (200, 204):
-        raise HTTPException(status_code=500, detail=f"Error actualizando rol: {r.text}")
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(status_code=500, detail=f"Error actualizando rol: {exc.response.text}")
 
     return {"ok": True, "user_id": target_id, "rol": req.rol}
 
@@ -12246,19 +12244,17 @@ async def admin_set_activo(req: AdminActivoReq, request: Request):
     if target_id == caller_id and not req.activo:
         raise HTTPException(status_code=400, detail="No puedes desactivar tu propia cuenta de admin.")
 
-    async with httpx.AsyncClient(timeout=10) as client:
-        r = await client.patch(
-            f"{SUPABASE_URL}/rest/v1/usuarios?id=eq.{target_id}",
-            headers={
-                "apikey": SUPABASE_SERVICE_KEY,
-                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                "Content-Type": "application/json",
-                "Prefer": "return=minimal",
-            },
-            json={"activo": bool(req.activo)},
+    try:
+        await patch_rows_no_response(
+            "usuarios",
+            {"id": f"eq.{target_id}"},
+            {"activo": bool(req.activo)},
+            prefer="return=minimal",
+            timeout=10,
+            accepted_statuses=(200, 204),
         )
-    if r.status_code not in (200, 204):
-        raise HTTPException(status_code=500, detail=f"Error actualizando activo: {r.text}")
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(status_code=500, detail=f"Error actualizando activo: {exc.response.text}")
 
     return {"ok": True, "user_id": target_id, "activo": bool(req.activo)}
 
