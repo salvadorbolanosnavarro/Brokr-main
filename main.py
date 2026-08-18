@@ -7,6 +7,7 @@ from core.auth import get_user_id_from_token
 from core.config import settings
 from core.database import call_public_rpc, call_service_rpc, delete_rows, get_public_rows, get_rows, get_service_json, get_service_json_or_empty, patch_rows, patch_rows_ignoring_http_status, patch_rows_no_response, post_rows, upsert_rows
 from core.legacy_main_config import legacy_main_settings
+from core.telemetry import (_request_modulo, _track_anthropic, _track_gemini_image, _track_groq, track_usage)
 import httpx
 import os
 import time
@@ -241,6 +242,10 @@ app.include_router(system_router)
 from routers.banxico import router as banxico_router
 app.include_router(banxico_router)
 
+# Heartbeat de uso por módulo.
+from routers.telemetry import router as telemetry_router
+app.include_router(telemetry_router)
+
 CONFIG_FILE = Path(__file__).parent / "config.json"
 
 def load_config() -> dict:
@@ -408,180 +413,6 @@ async def get_user_access_state(user_id: str) -> dict:
     except Exception:
         pass
     return default
-
-# ─────────────────────────────────────────────
-# TELEMETRÍA — uso de IA y tiempo por módulo
-# Tablas: usage_logs, module_sessions (ver migracion-telemetria.sql)
-# Nunca rompen el endpoint principal: todos los errores se silencian.
-# ─────────────────────────────────────────────
-
-# Precios públicos por modelo (USD por token, salvo Gemini image-gen que es por imagen).
-# Si un modelo no está aquí, usa el fallback del proveedor.
-# Fuentes: anthropic.com/pricing, groq.com/pricing, ai.google.dev/pricing.
-PRICING = {
-    # Anthropic — por token
-    "claude-sonnet-4-6":           {"in": 3.0  / 1_000_000, "out": 15.0 / 1_000_000},
-    "claude-opus-4-7":             {"in": 15.0 / 1_000_000, "out": 75.0 / 1_000_000},
-    "claude-haiku-4-5-20251001":   {"in": 1.0  / 1_000_000, "out": 5.0  / 1_000_000},
-    # Groq — por token
-    "llama-3.3-70b-versatile":     {"in": 0.59 / 1_000_000, "out": 0.79 / 1_000_000},
-    "llama-3.1-8b-instant":        {"in": 0.05 / 1_000_000, "out": 0.08 / 1_000_000},
-}
-PRICING_FALLBACK_BY_PROVIDER = {
-    "anthropic": {"in": 3.0  / 1_000_000, "out": 15.0 / 1_000_000},
-    "groq":      {"in": 0.59 / 1_000_000, "out": 0.79 / 1_000_000},
-    "gemini":    {"in": 0.30 / 1_000_000, "out": 2.50 / 1_000_000},
-}
-# Gemini image generation se cobra por imagen, no por token.
-GEMINI_IMAGE_USD_PER_UNIT = 0.039  # Nano Banana 2 — precio público aproximado.
-
-
-def _cost_for(proveedor: str, modelo: str, tokens_in: int, tokens_out: int, unidades: int) -> float:
-    """Calcula costo en USD para una llamada. Tolerante a modelos desconocidos."""
-    try:
-        if proveedor == "gemini" and unidades > 0:
-            return round(float(unidades) * GEMINI_IMAGE_USD_PER_UNIT, 6)
-        rate = PRICING.get(modelo) or PRICING_FALLBACK_BY_PROVIDER.get(proveedor) or {"in": 0, "out": 0}
-        return round(float(tokens_in) * rate["in"] + float(tokens_out) * rate["out"], 6)
-    except Exception:
-        return 0.0
-
-
-async def track_usage(
-    user_id: str,
-    modulo: str,
-    herramienta: str,
-    proveedor: str,
-    modelo: str = "",
-    tokens_in: int = 0,
-    tokens_out: int = 0,
-    unidades: int = 0,
-):
-    """Inserta una fila en usage_logs. Fire-and-forget: nunca lanza."""
-    if not user_id or not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
-        return
-    costo = _cost_for(proveedor, modelo, tokens_in, tokens_out, unidades)
-    payload = {
-        "user_id":     user_id,
-        "modulo":      (modulo or "desconocido")[:80],
-        "herramienta": (herramienta or "")[:120],
-        "proveedor":   (proveedor or "")[:40],
-        "modelo":      (modelo or "")[:80],
-        "tokens_in":   int(tokens_in or 0),
-        "tokens_out":  int(tokens_out or 0),
-        "unidades":    int(unidades or 0),
-        "costo_usd":   costo,
-    }
-    try:
-        await post_rows(
-            "usage_logs", payload, prefer="return=minimal", timeout=6
-        )
-    except Exception:
-        pass
-
-
-def _track_anthropic(user_id: str, modulo: str, herramienta: str, response_json: dict, modelo: str = "claude-sonnet-4-6"):
-    """Helper sync: extrae usage del response de Anthropic y dispara track_usage en background."""
-    if not user_id:
-        return
-    try:
-        usage = (response_json or {}).get("usage") or {}
-        ti = int(usage.get("input_tokens") or 0)
-        to = int(usage.get("output_tokens") or 0)
-        # Cache read/creation también consumen — los sumamos al input si están.
-        ti += int(usage.get("cache_read_input_tokens") or 0)
-        ti += int(usage.get("cache_creation_input_tokens") or 0)
-        asyncio.create_task(track_usage(
-            user_id=user_id, modulo=modulo, herramienta=herramienta,
-            proveedor="anthropic", modelo=modelo, tokens_in=ti, tokens_out=to,
-        ))
-    except Exception:
-        pass
-
-
-def _track_groq(user_id: str, modulo: str, herramienta: str, response_json: dict, modelo: str = "llama-3.3-70b-versatile"):
-    """Helper sync: extrae usage del response de Groq (formato OpenAI) y trackea en background."""
-    if not user_id:
-        return
-    try:
-        usage = (response_json or {}).get("usage") or {}
-        ti = int(usage.get("prompt_tokens") or 0)
-        to = int(usage.get("completion_tokens") or 0)
-        asyncio.create_task(track_usage(
-            user_id=user_id, modulo=modulo, herramienta=herramienta,
-            proveedor="groq", modelo=modelo, tokens_in=ti, tokens_out=to,
-        ))
-    except Exception:
-        pass
-
-
-def _track_gemini_image(user_id: str, modulo: str, herramienta: str, unidades: int = 1, modelo: str = "gemini-image"):
-    """Helper sync: trackea generación de imagen con Gemini (cobro por unidad)."""
-    if not user_id:
-        return
-    try:
-        asyncio.create_task(track_usage(
-            user_id=user_id, modulo=modulo, herramienta=herramienta,
-            proveedor="gemini", modelo=modelo, unidades=int(unidades or 0),
-        ))
-    except Exception:
-        pass
-
-
-# Módulos válidos para el heartbeat. Mantener sincronizado con los `data-app`
-# de los HTML del frontend (búsqueda rápida: grep -h "data-app=" *.html).
-MODULOS_VALIDOS = {
-    "home", "props", "contactos", "contratos", "avm", "valor", "ficha",
-    "ficha-manual", "isr", "image-cleaner", "facebook-ads", "guia",
-    "solicitud-arr", "admin", "blog", "verificador", "equipo",
-}
-
-
-def _request_modulo(request: Request, fallback: str) -> str:
-    """Lee el módulo activo del header X-Brokr-Module (puesto por app-shell.js).
-    Permite que /chat-claude o /chat (genéricos) atribuyan al módulo correcto."""
-    try:
-        m = (request.headers.get("X-Brokr-Module") or "").strip().lower()[:40]
-        if m and m in MODULOS_VALIDOS:
-            return m
-    except Exception:
-        pass
-    return fallback
-
-
-class TelemetriaSesionModuloReq(BaseModel):
-    modulo: str
-    segundos: int
-
-
-@app.post("/telemetria/sesion-modulo")
-async def telemetria_sesion_modulo(req: TelemetriaSesionModuloReq, request: Request):
-    """Heartbeat del frontend: registra segundos activos de un usuario en un módulo.
-    Silenciosamente ignora payloads inválidos o usuarios anónimos — no es crítico.
-    """
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        return {"ok": False}
-    modulo = (req.modulo or "").strip().lower()[:40]
-    if modulo not in MODULOS_VALIDOS:
-        return {"ok": False, "razon": "modulo_invalido"}
-    segs = int(req.segundos or 0)
-    # Anti-abuso: ignorar valores absurdos. Cap 1h por heartbeat.
-    if segs <= 0 or segs > 3600:
-        return {"ok": False, "razon": "segundos_invalidos"}
-    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
-        return {"ok": False}
-    try:
-        await post_rows(
-            "module_sessions",
-            {"user_id": user_id, "modulo": modulo, "segundos": segs},
-            prefer="return=minimal",
-            timeout=5,
-        )
-    except Exception:
-        pass
-    return {"ok": True}
-
 
 @app.post("/config/eb-key")
 async def set_eb_key(req: EbKeyRequest, request: Request):
