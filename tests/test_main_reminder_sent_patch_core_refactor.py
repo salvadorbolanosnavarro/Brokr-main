@@ -6,6 +6,7 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+ROUTER = ROOT / "routers" / "reminders.py"
 MAIN = ROOT / "main.py"
 
 
@@ -21,7 +22,8 @@ def async_function_source(source: str, name: str) -> str:
 class MainReminderSentPatchCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.source = MAIN.read_text(encoding="utf-8")
+        cls.source = ROUTER.read_text(encoding="utf-8")
+        cls.main_source = MAIN.read_text(encoding="utf-8")
         cls.function = async_function_source(cls.source, "_revisar_recordatorios")
 
     def test_reminder_sent_patch_delegates_to_core(self):
@@ -38,7 +40,9 @@ class MainReminderSentPatchCoreRefactorTests(unittest.TestCase):
         self.assertIn('except Exception as e:', fn)
         self.assertIn('No se pudo marcar recordatorio_enviado de %s: %s', fn)
         self.assertIn('_recordatorios_log.warning(', fn)
-        compile(self.source, "main.py", "exec")
+        self.assertIn('from routers.reminders import router as reminders_router', self.main_source)
+        self.assertNotIn('async def _revisar_recordatorios()', self.main_source)
+        compile(self.source, "routers/reminders.py", "exec")
 
 
 if __name__ == "__main__":
