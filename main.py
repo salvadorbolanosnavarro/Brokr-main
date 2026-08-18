@@ -9,6 +9,7 @@ from core.database import call_public_rpc, call_service_rpc, delete_rows, get_pu
 from core.legacy_main_config import legacy_main_settings
 from core.telemetry import (_request_modulo, _track_anthropic, _track_gemini_image, _track_groq, track_usage)
 from core.user_access import get_user_access_state, get_user_rol
+from core.cache import cache_get, cache_set
 import httpx
 import os
 import time
@@ -307,26 +308,6 @@ SUPABASE_SERVICE_KEY = settings.supabase_service_key
 
 # In-memory PDF store: token → (bytes, filename). Max 50 entradas.
 _pdf_store: dict = {}
-
-# ── CACHE EN MEMORIA (TTL 6h) ──
-_cache: dict = {}
-CACHE_TTL = 21600  # 6 hours default
-_cache_ttl: dict = {}  # per-key TTL overrides
-
-def cache_get(key):
-    if key in _cache:
-        data, ts = _cache[key]
-        ttl = _cache_ttl.get(key, CACHE_TTL)
-        if time.time() - ts < ttl:
-            return data
-        del _cache[key]
-        _cache_ttl.pop(key, None)
-    return None
-
-def cache_set(key, data, ttl=None):
-    _cache[key] = (data, time.time())
-    if ttl is not None:
-        _cache_ttl[key] = ttl
 
 def eb_headers(key: str = None):
     k = key or EB_API_KEY
