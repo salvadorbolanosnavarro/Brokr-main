@@ -1,2 +1,1 @@
-extract=scripts/refactor_main_extract_dead_easybroker_globals_core.py
-retry=1
+recheck=post-cancelled-easybroker-global-cleanup
