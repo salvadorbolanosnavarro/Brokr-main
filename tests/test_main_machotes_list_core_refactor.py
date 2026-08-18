@@ -4,20 +4,21 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-MAIN = ROOT / "main.py"
+ROUTER = ROOT / "routers" / "machotes.py"
 
 
 class MainMachotesListCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        source = MAIN.read_text(encoding="utf-8")
-        start = source.index('@app.get("/contrato/machotes")')
-        end = source.index('@app.get("/contrato/machote/{machote_id}")', start)
+        source = ROUTER.read_text(encoding="utf-8")
+        start = source.index('@router.get("/contrato/machotes")')
+        end = source.index('@router.get("/contrato/machote/{machote_id}")', start)
         cls.block = source[start:end]
 
     def test_list_uses_core_and_preserves_http_500_contract(self):
         block = self.block
-        self.assertIn('rows = await get_rows(\n            "machotes_contrato",', block)
+        self.assertIn('rows = await get_rows(', block)
+        self.assertIn('"machotes_contrato"', block)
         self.assertIn('"user_id": f"eq.{user_id}"', block)
         self.assertIn('"select": "id,titulo,tipo,campos,motor,created_at"', block)
         self.assertIn('"order": "created_at.desc"', block)
