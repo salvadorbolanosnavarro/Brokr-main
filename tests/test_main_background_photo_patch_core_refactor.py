@@ -6,7 +6,7 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-MAIN = ROOT / "main.py"
+ROUTER = ROOT / "routers" / "easybroker_photo_status.py"
 
 
 def async_function_source(source: str, name: str) -> str:
@@ -21,7 +21,7 @@ def async_function_source(source: str, name: str) -> str:
 class MainBackgroundPhotoPatchCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.source = MAIN.read_text(encoding="utf-8")
+        cls.source = ROUTER.read_text(encoding="utf-8")
         cls.function = async_function_source(cls.source, "_migrar_fotos_org")
 
     def test_photo_patch_delegates_to_core(self):
@@ -44,7 +44,7 @@ class MainBackgroundPhotoPatchCoreRefactorTests(unittest.TestCase):
         self.assertLess(props_counter, photos_counter)
         self.assertLess(photos_counter, outer_except)
         self.assertIn('await asyncio.sleep(0.3)', fn)
-        compile(self.source, "main.py", "exec")
+        compile(self.source, "routers/easybroker_photo_status.py", "exec")
 
 
 if __name__ == "__main__":
