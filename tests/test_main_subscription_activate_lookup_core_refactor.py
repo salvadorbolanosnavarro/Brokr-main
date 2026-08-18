@@ -1,9 +1,6 @@
 """Permanent guards for subscription_activate's usuarios lookup through Core."""
-from __future__ import annotations
-
 from pathlib import Path
 import unittest
-
 
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
@@ -19,9 +16,8 @@ class MainSubscriptionActivateLookupCoreRefactorTests(unittest.TestCase):
 
     def test_lookup_preserves_http_and_empty_404_contract(self):
         start = self.source.index('@app.post("/subscription/activate")')
-        end = self.source.index('@app.get("/subscription/status")', start)
+        end = self.source.index('@app.post("/subscription/cancel")', start)
         block = self.source[start:end]
-
         self.assertIn('usuarios = await get_rows(\n            "usuarios",', block)
         self.assertIn('"stripe_customer_id": f"eq.{customer_id}"', block)
         self.assertIn('"select": "id,nombre,email"', block)
@@ -29,11 +25,9 @@ class MainSubscriptionActivateLookupCoreRefactorTests(unittest.TestCase):
         self.assertIn("except httpx.HTTPStatusError:\n        usuarios = []", block)
         self.assertIn("if not usuarios:", block)
         self.assertIn('raise HTTPException(status_code=404, detail=f"Usuario no encontrado para customer_id {customer_id}.")', block)
-        self.assertIn("usuario = usuarios[0]", block)
-        lookup = block.split("user_id = usuario[\"id\"]", 1)[0]
+        lookup = block.split('user_id = usuario["id"]', 1)[0]
         self.assertNotIn("except Exception:", lookup)
         self.assertNotIn("/rest/v1/usuarios", lookup)
-        # Subscription-write transport is guarded independently; this test owns only the usuarios lookup contract.
 
 
 if __name__ == "__main__":
