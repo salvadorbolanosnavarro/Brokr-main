@@ -2,18 +2,16 @@
 from pathlib import Path
 import unittest
 
-
 ROOT = Path(__file__).resolve().parents[1]
+ROUTER = ROOT / "routers" / "subscription_cancel.py"
 MAIN = ROOT / "main.py"
 
 
 class MainSubscriptionCancelLookupCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.source = MAIN.read_text(encoding="utf-8")
-        start = cls.source.index('@app.post("/subscription/cancel")')
-        end = cls.source.index('@app.post("/subscription/revenuecat-webhook")', start)
-        cls.block = cls.source[start:end]
+        cls.block = ROUTER.read_text(encoding="utf-8")
+        cls.main = MAIN.read_text(encoding="utf-8")
 
     def test_cancel_lookup_uses_core_and_preserves_http_empty_404(self):
         block = self.block
@@ -37,6 +35,7 @@ class MainSubscriptionCancelLookupCoreRefactorTests(unittest.TestCase):
         self.assertIn('await patch_rows(', block)
         self.assertIn('{"user_id": f"eq.{user_id}"}', block)
         self.assertNotIn('/rest/v1/suscripciones?user_id=eq.{user_id}', block)
+        self.assertNotIn('@app.post("/subscription/cancel")', self.main)
 
 
 if __name__ == "__main__":
