@@ -1,1 +1,1 @@
-stripe-customer-patch-core-apply-2
+stripe-customer-patch-core-cleanup-verification
