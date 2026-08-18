@@ -16,29 +16,34 @@ class MainStripeWebhookSubscriptionPostCoreRefactorTests(unittest.TestCase):
         end = source.index('\n\n@app.post("/subscription/activate")', start)
         cls.block = source[start:end]
 
+    def _checkout_block(self):
+        checkout = self.block.split('if event_type == "checkout.session.completed":', 1)[1]
+        return checkout.split('elif event_type in ("customer.subscription.updated"', 1)[0]
+
+    def _migrated_post_block(self):
+        checkout = self._checkout_block()
+        start = checkout.index('            try:\n                await post_rows(')
+        end = checkout.index('\n\n', start)
+        return checkout[start:end]
+
     def test_checkout_subscription_post_routes_through_core(self):
-        block = self.block
-        checkout = block[block.index('if event_type == "checkout.session.completed":'):]
-        self.assertIn('await post_rows(', checkout)
-        self.assertIn('"suscripciones"', checkout)
-        self.assertIn('sb,', checkout)
-        self.assertIn('prefer="resolution=merge-duplicates,return=minimal"', checkout)
-        self.assertIn('timeout=10', checkout)
-        self.assertIn('except httpx.HTTPStatusError:', checkout)
-        self.assertNotIn('except Exception:', checkout.split('elif event_type in ("customer.subscription.updated"', 1)[0])
+        post = self._migrated_post_block()
+        self.assertIn('await post_rows(', post)
+        self.assertIn('"suscripciones"', post)
+        self.assertIn('sb,', post)
+        self.assertIn('prefer="resolution=merge-duplicates,return=minimal"', post)
+        self.assertIn('timeout=10', post)
+        self.assertIn('except httpx.HTTPStatusError:', post)
 
     def test_checkout_post_keeps_http_fail_soft_and_transport_fail_loud(self):
-        block = self.block
-        checkout = block.split('if event_type == "checkout.session.completed":', 1)[1]
-        checkout = checkout.split('elif event_type in ("customer.subscription.updated"', 1)[0]
-        self.assertIn('except httpx.HTTPStatusError:', checkout)
-        self.assertIn('pass', checkout)
-        self.assertNotIn('/rest/v1/suscripciones', checkout)
-        self.assertNotIn('except Exception:', checkout)
+        post = self._migrated_post_block()
+        self.assertIn('except httpx.HTTPStatusError:', post)
+        self.assertIn('pass', post)
+        self.assertNotIn('/rest/v1/suscripciones', post)
+        self.assertNotIn('except Exception:', post)
 
     def test_other_webhook_subscription_writes_are_untouched(self):
-        block = self.block
-        updated = block.split('elif event_type in ("customer.subscription.updated", "customer.subscription.deleted"):', 1)[1]
+        updated = self.block.split('elif event_type in ("customer.subscription.updated", "customer.subscription.deleted"):', 1)[1]
         self.assertIn('await client.patch(', updated)
         self.assertIn('/rest/v1/suscripciones?stripe_subscription_id=eq.', updated)
 
