@@ -13,6 +13,7 @@ from core.cache import cache_get, cache_set
 from core.easybroker import EB_API_KEY, EB_BASE, _EB_LOTE, _EB_PAUSA_LOTE, _eb_get_reintentos, eb_headers, extract_colonia, normalize
 from core.easybroker_mapping import _EB_LIMITE_PROPIEDADES, _EB_STATUS_DEFAULT, _EB_STATUS_MAP, _eb_to_brokr
 from core.pdf_design import theme_css_for_pdf
+from core.pdf_store import _pdf_store
 import httpx
 import os
 import time
@@ -224,9 +225,6 @@ BANXICO_SERIE_INPC = settings.banxico_series_inpc  # INPC mensual base 2Q-jul-20
 # NUNCA expongas esta variable al frontend.
 SUPABASE_SERVICE_KEY = settings.supabase_service_key
 # Pagos — Stripe
-
-# In-memory PDF store: token → (bytes, filename). Max 50 entradas.
-_pdf_store: dict = {}
 
 # ════════════════════════════════════════════════════════════════
 # CONTEXTO DE ORGANIZACIÓN (Broquer para empresas)
