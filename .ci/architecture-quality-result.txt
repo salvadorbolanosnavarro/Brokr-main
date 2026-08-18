@@ -1,0 +1,6 @@
+trigger_sha=b8fcb9b45813b7d35077ab447fcd0596d4f405a2
+install=success
+compile=success
+tests=failure
+visual=success
+debt=success
