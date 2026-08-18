@@ -223,6 +223,10 @@ app.include_router(avm_nearby_router)
 from routers.image_cleaner import router as image_cleaner_router
 app.include_router(image_cleaner_router)
 
+# Recordatorios de tareas/citas en background.
+from routers.reminders import router as reminders_router
+app.include_router(reminders_router)
+
 # Compatibility aliases while main.py is progressively decomposed. All runtime
 # environment names and public/privileged Supabase key policy live in Core.
 GROQ_API_KEY     = settings.groq_api_key
@@ -3473,90 +3477,6 @@ def _sb_headers(extra: dict = None) -> dict:
     if extra:
         h.update(extra)
     return h
-
-
-# =============================================================================
-# RECORDATORIOS DE TAREAS/CITAS
-# -----------------------------------------------------------------------------
-# Cada 5 minutos revisa las tareas con fecha_entrega próxima y manda UN push
-# por tarea (se marca recordatorio_enviado para no repetirlo). No depende de
-# ningún módulo específico: aplica a cualquier tarea, la haya creado el
-# usuario a mano, Broq, o WhatsApp 2.0 al agendar una visita.
-# =============================================================================
-_recordatorios_log = logging.getLogger("broquer.recordatorios")
-
-
-async def _revisar_recordatorios():
-    try:
-        from push import enviar_push
-    except Exception:
-        return  # sin push.py configurado no hay nada que hacer aquí
-
-    ahora = datetime.now(timezone.utc)
-    try:
-        try:
-            tareas = await get_rows(
-                "tareas",
-                {
-                    "select": "id,user_id,titulo,fecha_entrega,recordatorio_minutos_antes",
-                    "completada": "eq.false", "recordatorio_enviado": "eq.false",
-                    "fecha_entrega": "not.is.null", "limit": "200",
-                },
-                timeout=15,
-            )
-        except httpx.HTTPStatusError as e:
-            texto = e.response.text if e.response is not None else ""
-            _recordatorios_log.warning("No se pudo leer tareas para recordatorios: %s", texto[:200])
-            return
-    except Exception as e:
-        _recordatorios_log.error("Error consultando tareas para recordatorios: %s", e)
-        return
-
-    for t in tareas:
-        try:
-            fecha = datetime.fromisoformat(str(t["fecha_entrega"]).replace("Z", "+00:00"))
-            if fecha.tzinfo is None:
-                fecha = fecha.replace(tzinfo=timezone.utc)
-        except Exception:
-            continue
-        if fecha < ahora:
-            continue  # ya pasó y nadie la marcó — no tiene caso avisar tarde
-        minutos_antes = t.get("recordatorio_minutos_antes") or 60
-        disparo = fecha - timedelta(minutes=minutos_antes)
-        if disparo > ahora:
-            continue  # todavía no toca avisar de esta
-
-        cuerpo = f"{t['titulo']} — en {minutos_antes} minutos" if minutos_antes >= 15 else f"{t['titulo']} — está por comenzar"
-        try:
-            await enviar_push(t["user_id"], "Recordatorio de cita", cuerpo,
-                              datos={"tipo": "tarea", "tarea_id": t["id"]})
-        except Exception as e:
-            _recordatorios_log.warning("No se pudo mandar el push de la tarea %s: %s", t["id"], e)
-            continue
-
-        try:
-            await patch_rows(
-                "tareas",
-                {"id": f"eq.{t['id']}"},
-                {"recordatorio_enviado": True},
-                timeout=15,
-            )
-        except Exception as e:
-            _recordatorios_log.warning("No se pudo marcar recordatorio_enviado de %s: %s", t["id"], e)
-
-
-async def _recordatorios_loop():
-    while True:
-        try:
-            await _revisar_recordatorios()
-        except Exception as e:
-            _recordatorios_log.error("Fallo el ciclo de recordatorios: %s", e)
-        await asyncio.sleep(300)  # cada 5 minutos
-
-
-@app.on_event("startup")
-async def _iniciar_recordatorios():
-    asyncio.create_task(_recordatorios_loop())
 
 
 _MACHOTE_SELECT = ("id,titulo,tipo,campos,motor,patron_usado,descartados,"
