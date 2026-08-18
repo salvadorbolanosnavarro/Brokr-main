@@ -233,6 +233,10 @@ app.include_router(instagram_router)
 from routers.public_site_leads import router as public_site_leads_router
 app.include_router(public_site_leads_router)
 
+# Estado mínimo del servicio.
+from routers.system import router as system_router
+app.include_router(system_router)
+
 CONFIG_FILE = Path(__file__).parent / "config.json"
 
 def load_config() -> dict:
@@ -305,19 +309,6 @@ def cache_set(key, data, ttl=None):
 def eb_headers(key: str = None):
     k = key or EB_API_KEY
     return {"X-Authorization": k, "accept": "application/json"}
-
-# ────────────────────────────────────────────
-# EASYBROKER — BASE ENDPOINTS
-# ────────────────────────────────────────────
-@app.get("/")
-def root():
-    return {"status": "Brokr API activa", "version": "4.8"}
-
-# Endpoint para keep-alive (UptimeRobot u otro monitor cada 4 minutos).
-# No hace queries, no toca DB — solo evita que Railway duerma el servidor.
-@app.get("/ping")
-def ping():
-    return {"ok": True}
 
 # ────────────────────────────────────────────
 # BANXICO SIE — INPC mensual + UDIS diaria
