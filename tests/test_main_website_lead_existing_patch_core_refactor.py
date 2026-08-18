@@ -6,7 +6,7 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-MAIN = ROOT / "main.py"
+ROUTER = ROOT / "routers" / "public_site_leads.py"
 
 
 def async_function_source(source: str, name: str) -> str:
@@ -21,7 +21,7 @@ def async_function_source(source: str, name: str) -> str:
 class MainWebsiteLeadExistingPatchCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.source = MAIN.read_text(encoding="utf-8")
+        cls.source = ROUTER.read_text(encoding="utf-8")
         cls.function = async_function_source(cls.source, "sitio_registrar_lead")
 
     def test_existing_contact_patch_delegates_to_core(self):
@@ -43,7 +43,7 @@ class MainWebsiteLeadExistingPatchCoreRefactorTests(unittest.TestCase):
         self.assertNotIn('except Exception', patch_block)
         self.assertNotIn('/rest/v1/contactos', patch_block)
         self.assertIn('return {"ok": True, "duplicado": True}', fn)
-        compile(self.source, "main.py", "exec")
+        compile(self.source, "routers/public_site_leads.py", "exec")
 
 
 if __name__ == "__main__":
