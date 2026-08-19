@@ -3,34 +3,26 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-MAIN = ROOT / "main.py"
 STATUS_ROUTER = ROOT / "routers" / "subscription_status.py"
 CANCEL_ROUTER = ROOT / "routers" / "subscription_cancel.py"
+STRIPE_WEBHOOK = ROOT / "routers" / "stripe_webhook.py"
 
 
 class MainSubscriptionStatusPatchesCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.source = MAIN.read_text(encoding="utf-8")
         cls.router = STATUS_ROUTER.read_text(encoding="utf-8")
         cls.cancel = CANCEL_ROUTER.read_text(encoding="utf-8")
-
-    def _block(self, start_marker: str, end_marker: str) -> str:
-        start = self.source.index(start_marker)
-        end = self.source.index(end_marker, start)
-        return self.source[start:end]
+        cls.stripe_webhook = STRIPE_WEBHOOK.read_text(encoding="utf-8")
 
     def test_stripe_webhook_status_writes_use_core_and_preserve_http_fail_soft(self):
-        block = self._block(
-            '@app.post("/subscription/webhook")',
-            '\n\n# ════════════════════════════════════════════════════════════════\n# Contactos / Importar desde EasyBroker',
-        )
+        block = self.stripe_webhook
         self.assertGreaterEqual(block.count('await patch_rows('), 2)
         self.assertIn('{"stripe_subscription_id": f"eq.{subscription_id}"}', block)
         self.assertIn('{"status": new_status, "updated_at": datetime.utcnow().isoformat()}', block)
         self.assertIn('{"status": "past_due", "updated_at": datetime.utcnow().isoformat()}', block)
-        self.assertGreaterEqual(block.count('except httpx.HTTPStatusError:'), 2)
-        self.assertNotIn('/rest/v1/suscripciones?stripe_subscription_id=eq.', block)
+        self.assertGreaterEqual(block.count('except httpx.HTTPStatusError:'), 3)
+        self.assertNotIn('/rest/v1/', block)
 
     def test_trial_burn_write_uses_core_after_subscription_create(self):
         block = self.router
