@@ -3,19 +3,17 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-MAIN = ROOT / "main.py"
+CORE = ROOT / "core" / "stripe.py"
 
 
 class MainStripeCustomerPatchCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        source = MAIN.read_text(encoding="utf-8")
-        start = source.index('async def _get_or_create_stripe_customer(')
-        end = source.index('\n\n@app.post("/subscription/checkout")', start)
-        cls.block = source[start:end]
+        cls.block = CORE.read_text(encoding="utf-8")
 
     def test_customer_id_patch_routes_through_core(self):
         block = self.block
+        self.assertIn('async def get_or_create_stripe_customer(', block)
         self.assertIn('await patch_rows(', block)
         self.assertIn('"usuarios"', block)
         self.assertIn('{"id": f"eq.{user_id}"}', block)
@@ -30,6 +28,7 @@ class MainStripeCustomerPatchCoreRefactorTests(unittest.TestCase):
         self.assertIn('except httpx.HTTPStatusError:', patch)
         self.assertIn('pass', patch)
         self.assertNotIn('except Exception:', patch)
+        compile(block, "core/stripe.py", "exec")
 
 
 if __name__ == "__main__":
