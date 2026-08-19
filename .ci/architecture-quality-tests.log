@@ -11,6 +11,6 @@ Traceback (most recent call last):
 ValueError: substring not found
 
 ----------------------------------------------------------------------
-Ran 354 tests in 6.248s
+Ran 354 tests in 5.989s
 
 FAILED (errors=1)
