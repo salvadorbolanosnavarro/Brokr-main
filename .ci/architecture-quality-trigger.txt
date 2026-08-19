@@ -1,2 +1,2 @@
-extract=scripts/refactor_main_extract_subscription_activate_core.py
-retry=4
+extract=scripts/refactor_main_extract_stripe_config_core.py
+retry=1
