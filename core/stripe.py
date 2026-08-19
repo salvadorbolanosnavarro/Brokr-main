@@ -1,11 +1,13 @@
 """Shared Stripe subscription configuration and infrastructure helpers."""
 from __future__ import annotations
 
+from datetime import datetime
+
 import httpx
 from fastapi import HTTPException
 
 from core.config import settings
-from core.database import get_rows, patch_rows
+from core.database import get_rows, patch_rows, patch_rows_ignoring_http_status
 from core.legacy_main_config import legacy_main_settings
 
 STRIPE_SECRET_KEY = settings.stripe_secret_key
@@ -81,3 +83,30 @@ async def get_or_create_stripe_customer(user_id: str, email: str, nombre: str) -
         pass
 
     return customer_id
+
+
+async def activate_enterprise_subscription(
+    org_id: str,
+    user_id: str,
+    asientos: int,
+    nombre_empresa: str = "",
+) -> None:
+    """Preserve the legacy post-payment organization activation sequence."""
+    payload = {
+        "tipo": "empresa",
+        "plan": "Broquer para Empresas",
+        "asientos_max": int(asientos),
+        "activo": True,
+        "vence_el": None,
+        "updated_at": datetime.utcnow().isoformat(),
+    }
+    if nombre_empresa:
+        payload["nombre"] = nombre_empresa[:120]
+    await patch_rows_ignoring_http_status(
+        "organizaciones", {"id": f"eq.{org_id}"}, payload
+    )
+    await patch_rows_ignoring_http_status(
+        "organizacion_miembros",
+        {"user_id": f"eq.{user_id}", "org_id": f"eq.{org_id}"},
+        {"rol_org": "owner"},
+    )
