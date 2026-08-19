@@ -4,71 +4,68 @@
   <meta charset="UTF-8"/>
   <link rel="icon" type="image/png" href="isotipo-black.png"/>
   <link rel="apple-touch-icon" href="isotipo-black.png"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="theme-color" content="#081C4E"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
   <title>Conectando con Facebook…</title>
   <link rel="stylesheet" href="brokr-theme.css"/>
   <style>
     body {
-      background: var(--paper);
-      color: var(--ink);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      margin: 0;
       min-height: 100vh;
-      padding: 24px;
+      display: grid;
+      place-items: center;
+      padding: var(--sp-5);
+      background:
+        radial-gradient(circle at 50% 0%, var(--sky-canvas), transparent 28rem),
+        var(--paper);
+      color: var(--ink);
+      font-family: var(--font-sans);
       text-align: center;
     }
-
     .card {
-      background: var(--bone);
-      border: 1px solid var(--line-2);
-      border-radius: var(--r-xl);
-      padding: 48px 36px 40px;
-      max-width: 360px;
-      width: 100%;
-      box-shadow: 0 2px 16px rgba(22,22,22,0.06);
+      width: min(100%, 360px);
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
+      gap: var(--sp-3);
+      padding: var(--sp-8) var(--sp-7);
+      background: var(--glass-bg);
+      -webkit-backdrop-filter: var(--glass-blur);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--line-2);
+      border-radius: var(--r-xl);
+      box-shadow: var(--shadow-md);
     }
-
     .spinner {
       width: 36px;
       height: 36px;
-      border: 2.5px solid var(--line-3);
-      border-top-color: var(--ink);
+      margin-bottom: var(--sp-1);
+      border: 3px solid var(--sky-canvas);
+      border-top-color: var(--sky-blue);
       border-radius: 50%;
       animation: spin .75s linear infinite;
-      margin-bottom: 4px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-
+    @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 1.5s; } }
     .status-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 4px;
+      width: var(--h);
+      height: var(--h);
+      display: grid;
+      place-items: center;
+      margin-bottom: var(--sp-1);
+      border-radius: var(--r-pill);
     }
     .status-icon.ok  { background: var(--success-soft); color: var(--success); }
-    .status-icon.err { background: var(--danger-soft);  color: var(--danger);  }
+    .status-icon.err { background: var(--danger-soft); color: var(--danger); }
     .status-icon svg { width: 22px; height: 22px; stroke-width: 2.5; }
-
     .title {
       font-family: var(--font-display);
-      font-size: var(--fs-body);
-      font-weight: 600;
+      font-size: var(--fs-h3);
+      font-weight: 800;
       color: var(--ink);
-      letter-spacing: -.01em;
+      letter-spacing: -0.02em;
     }
-    .sub {
-      font-size: var(--fs-sm);
-      color: var(--mute);
-      margin-top: -4px;
-    }
+    .sub { margin-top: calc(var(--sp-1) * -1); font-size: var(--fs-sm); color: var(--mute); }
   </style>
 </head>
 <body>
