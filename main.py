@@ -283,6 +283,10 @@ from routers.organizaciones import (
 from routers.subscription_cancel import router as subscription_cancel_router
 app.include_router(subscription_cancel_router)
 
+# Activación interna de suscripciones.
+from routers.subscription_activate import router as subscription_activate_router
+app.include_router(subscription_activate_router)
+
 # Webhook de suscripciones iOS vía RevenueCat.
 from routers.revenuecat import router as revenuecat_router
 app.include_router(revenuecat_router)
@@ -7454,71 +7458,6 @@ async def stripe_webhook(request: Request):
                 pass
 
     return {"ok": True}
-
-
-@app.post("/subscription/activate")
-async def subscription_activate(request: Request):
-    """
-    Endpoint simple para Zapier.
-    Recibe { customer_id, plan_id? } y activa la suscripción en Supabase.
-    No requiere JWT — usa una clave secreta interna.
-    """
-    ACTIVATE_SECRET = legacy_main_settings.activate_secret
-    body = await request.json()
-
-    # Sin clave configurada NO se activa nada. Antes, si la variable faltaba en
-    # Railway, este endpoint regalaba suscripciones a cualquiera que lo llamara.
-    if not ACTIVATE_SECRET:
-        print("[subscription] ACTIVATE_SECRET no configurado: endpoint cerrado.")
-        raise HTTPException(status_code=503, detail="Activación no disponible.")
-    if not hmac_compare(body.get("secret", ""), ACTIVATE_SECRET):
-        raise HTTPException(status_code=403, detail="No autorizado.")
-
-    customer_id = body.get("customer_id", "").strip()
-    plan_id = body.get("plan_id", "max").strip() or "max"
-
-    if not customer_id:
-        raise HTTPException(status_code=400, detail="customer_id requerido.")
-
-    # Buscar user_id por stripe_customer_id en tabla usuarios
-    try:
-        usuarios = await get_rows(
-            "usuarios",
-            {"stripe_customer_id": f"eq.{customer_id}", "select": "id,nombre,email"},
-            timeout=10,
-        )
-    except httpx.HTTPStatusError:
-        usuarios = []
-
-    if not usuarios:
-        raise HTTPException(status_code=404, detail=f"Usuario no encontrado para customer_id {customer_id}.")
-
-    usuario = usuarios[0]
-    user_id = usuario["id"]
-    plan_nombre = "AMPI" if plan_id == "ampi" else "Broquer Max"
-
-    sb = {
-        "user_id": user_id,
-        "org_id": await get_org_id_for_user(user_id),
-        "plan_id": plan_id,
-        "plan_nombre": plan_nombre,
-        "stripe_customer_id": customer_id,
-        "status": "active",
-        "updated_at": datetime.utcnow().isoformat(),
-    }
-
-    try:
-        await post_rows(
-            "suscripciones",
-            sb,
-            prefer="resolution=merge-duplicates,return=minimal",
-            timeout=10,
-        )
-    except httpx.HTTPStatusError:
-        # Historical activate behavior: Supabase HTTP rejection did not abort activation.
-        pass
-
-    return {"ok": True, "user_id": user_id, "plan": plan_nombre}
 
 
 # ════════════════════════════════════════════════════════════════
