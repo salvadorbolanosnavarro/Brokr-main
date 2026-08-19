@@ -12,8 +12,10 @@ class StripeWebhookExtractionTests(unittest.TestCase):
         cls.main = MAIN.read_text(encoding="utf-8")
         cls.router = ROUTER.read_text(encoding="utf-8")
 
-    def test_prepared_router_has_webhook_route(self):
+    def test_route_lives_only_in_router(self):
         self.assertIn('@router.post("/subscription/webhook")', self.router)
+        self.assertNotIn('@app.post("/subscription/webhook")', self.main)
+        self.assertIn('app.include_router(stripe_webhook_router)', self.main)
 
     def test_signature_contract_is_preserved(self):
         r = self.router
