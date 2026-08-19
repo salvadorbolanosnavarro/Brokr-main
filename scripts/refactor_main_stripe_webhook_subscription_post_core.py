@@ -19,7 +19,10 @@ def transform_source(source: str) -> str:
         raise RuntimeError(f"Expected one Stripe webhook endpoint, found {source.count(marker)}")
 
     start = source.index(marker)
-    end = source.index('\n\n@app.post("/subscription/activate")', start)
+    end = source.index(
+        '\n\n# ════════════════════════════════════════════════════════════════\n# Contactos / Importar desde EasyBroker',
+        start,
+    )
     block = source[start:end]
     old_count = block.count(OLD)
     new_count = block.count(NEW)
