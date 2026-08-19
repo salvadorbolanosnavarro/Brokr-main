@@ -1,15 +1,7 @@
 .............................................................../home/runner/work/Brokr-main/Brokr-main/core/easybroker_mapping.py:159: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
   "updated_at": datetime.utcnow().isoformat(),
-.....................................................................................................................................................F..........................................................................................................................................................
-======================================================================
-FAIL: test_named_core_policies_are_used (test_main_no_legacy_service_adapters.MainNoLegacyServiceAdaptersTests.test_named_core_policies_are_used)
+.....................................................................................................................................................................................................................................................................................................................
 ----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_no_legacy_service_adapters.py", line 23, in test_named_core_policies_are_used
-    self.assertGreaterEqual(self.source.count('get_service_json_or_empty('), 6)
-AssertionError: 1 not greater than or equal to 6
+Ran 372 tests in 7.127s
 
-----------------------------------------------------------------------
-Ran 367 tests in 3.675s
-
-FAILED (failures=1)
+OK
