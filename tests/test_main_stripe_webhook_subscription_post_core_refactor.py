@@ -13,7 +13,10 @@ class MainStripeWebhookSubscriptionPostCoreRefactorTests(unittest.TestCase):
     def setUpClass(cls):
         source = MAIN.read_text(encoding="utf-8")
         start = source.index('@app.post("/subscription/webhook")')
-        end = source.index('\n\n@app.post("/subscription/activate")', start)
+        end = source.index(
+            '\n\n# ════════════════════════════════════════════════════════════════\n# Contactos / Importar desde EasyBroker',
+            start,
+        )
         cls.block = source[start:end]
 
     def _checkout_block(self):
