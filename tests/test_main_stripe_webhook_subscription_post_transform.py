@@ -8,6 +8,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
 SCRIPT = ROOT / "scripts" / "refactor_main_stripe_webhook_subscription_post_core.py"
+END_MARKER = '\n\n# ════════════════════════════════════════════════════════════════\n# Contactos / Importar desde EasyBroker'
 
 spec = importlib.util.spec_from_file_location("stripe_webhook_subscription_post_transform", SCRIPT)
 transform = importlib.util.module_from_spec(spec)
@@ -25,11 +26,12 @@ class MainStripeWebhookSubscriptionPostTransformTests(unittest.TestCase):
         compile(self.transformed, "main.py", "exec")
         self.assertEqual(MAIN.read_text(encoding="utf-8"), self.source)
         start = self.transformed.index('@app.post("/subscription/webhook")')
-        end = self.transformed.index('\n\n@app.post("/subscription/activate")', start)
+        end = self.transformed.index(END_MARKER, start)
         block = self.transformed[start:end]
         self.assertEqual(block.count(transform.NEW), 1)
         self.assertNotIn(transform.OLD, block)
-        if transform.OLD in self.source[start:self.source.index('\n\n@app.post("/subscription/activate")', start)]:
+        source_end = self.source.index(END_MARKER, start)
+        if transform.OLD in self.source[start:source_end]:
             self.assertEqual(self.transformed, self.source.replace(transform.OLD, transform.NEW, 1))
         else:
             self.assertEqual(self.transformed, self.source)
