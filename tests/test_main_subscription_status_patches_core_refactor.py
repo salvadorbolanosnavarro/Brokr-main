@@ -21,7 +21,10 @@ class MainSubscriptionStatusPatchesCoreRefactorTests(unittest.TestCase):
         return self.source[start:end]
 
     def test_stripe_webhook_status_writes_use_core_and_preserve_http_fail_soft(self):
-        block = self._block('@app.post("/subscription/webhook")', '\n\n@app.post("/subscription/activate")')
+        block = self._block(
+            '@app.post("/subscription/webhook")',
+            '\n\n# ════════════════════════════════════════════════════════════════\n# Contactos / Importar desde EasyBroker',
+        )
         self.assertGreaterEqual(block.count('await patch_rows('), 2)
         self.assertIn('{"stripe_subscription_id": f"eq.{subscription_id}"}', block)
         self.assertIn('{"status": new_status, "updated_at": datetime.utcnow().isoformat()}', block)
