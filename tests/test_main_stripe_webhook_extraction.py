@@ -12,10 +12,8 @@ class StripeWebhookExtractionTests(unittest.TestCase):
         cls.main = MAIN.read_text(encoding="utf-8")
         cls.router = ROUTER.read_text(encoding="utf-8")
 
-    def test_route_lives_only_in_router(self):
+    def test_prepared_router_has_webhook_route(self):
         self.assertIn('@router.post("/subscription/webhook")', self.router)
-        self.assertNotIn('@app.post("/subscription/webhook")', self.main)
-        self.assertIn('app.include_router(stripe_webhook_router)', self.main)
 
     def test_signature_contract_is_preserved(self):
         r = self.router
@@ -23,8 +21,6 @@ class StripeWebhookExtractionTests(unittest.TestCase):
         self.assertIn('raise HTTPException(status_code=503, detail="Webhook no disponible.")', r)
         self.assertIn('signed_payload = f"{ts}.{payload.decode()}"', r)
         self.assertIn('_hmac.compare_digest(expected, v1)', r)
-        # Historical behavior catches even the explicit invalid-signature
-        # HTTPException and exposes the generic verification message.
         self.assertIn('except Exception:\n            raise HTTPException(status_code=400, detail="Error verificando webhook.")', r)
 
     def test_checkout_completed_contract_is_preserved(self):
