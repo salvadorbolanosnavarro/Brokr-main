@@ -10,6 +10,14 @@ from core.legacy_main_config import legacy_main_settings
 from core.telemetry import (_request_modulo, _track_anthropic, _track_gemini_image, _track_groq, track_usage)
 from core.user_access import get_user_access_state, get_user_rol
 from core.subscriptions import (expire_trial_subscription as _expirar_trial_suscripcion, trial_has_expired as _trial_ya_vencio, trial_max_available as _trial_max_disponible)
+from core.stripe import (
+    EMPRESA_ASIENTOS_BASE, EMPRESA_ASIENTOS_MAX, EMPRESA_TARIFAS,
+    PROMO_CODE_AMPI, STRIPE_PRICE_AMPI, STRIPE_PRICE_PRO,
+    STRIPE_PRICE_EMPRESA_ANUAL, STRIPE_PRICE_EMPRESA_EXTRA_ANUAL,
+    STRIPE_PRICE_EMPRESA_EXTRA_MENSUAL, STRIPE_PRICE_EMPRESA_MENSUAL,
+    STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, TRIAL_MAX_DIAS,
+    precio_empresa as _precio_empresa, stripe_headers as _stripe_headers,
+)
 from core.facebook_tokens import facebook_token_state as _fb_estado_token
 from core.cache import cache_get, cache_set
 from core.easybroker import EB_API_KEY, EB_BASE, _EB_LOTE, _EB_PAUSA_LOTE, _eb_get_reintentos, eb_headers, extract_colonia, normalize
@@ -6858,38 +6866,19 @@ async def _qa_probar_backoff() -> dict:
 # STRIPE — SUSCRIPCIONES
 # ════════════════════════════════════════════════════════════════
 
-STRIPE_SECRET_KEY      = settings.stripe_secret_key
-STRIPE_WEBHOOK_SECRET  = legacy_main_settings.stripe_webhook_secret
 
 # IDs de Precios en Stripe (crear en dashboard.stripe.com → Productos → Precios)
-STRIPE_PRICE_PRO       = legacy_main_settings.stripe_price_pro       # Plan Broquer Pro
-STRIPE_PRICE_AMPI      = legacy_main_settings.stripe_price_ampi      # Plan AMPI (precio especial)
 
 # ── Broquer para Empresas ────────────────────────────────────────
 # Se cobra en DOS líneas dentro de la misma suscripción de Stripe:
 #   · base  → paquete de 5 usuarios, cantidad siempre 1
 #   · extra → usuario adicional, cantidad = asientos - 5
 # Así el dueño puede subir o bajar lugares sin cambiar de suscripción.
-STRIPE_PRICE_EMPRESA_MENSUAL       = legacy_main_settings.stripe_price_empresa_mensual
-STRIPE_PRICE_EMPRESA_ANUAL         = legacy_main_settings.stripe_price_empresa_anual
-STRIPE_PRICE_EMPRESA_EXTRA_MENSUAL = legacy_main_settings.stripe_price_empresa_extra_mensual
-STRIPE_PRICE_EMPRESA_EXTRA_ANUAL   = legacy_main_settings.stripe_price_empresa_extra_anual
 
-EMPRESA_ASIENTOS_BASE = 5      # lugares incluidos en el precio base
-EMPRESA_ASIENTOS_MAX  = 500    # tope duro para no crear cargos absurdos por error
 
 # Solo para pintar la pantalla. El cobro real siempre lo manda Stripe.
-EMPRESA_TARIFAS = {
-    "mensual": {"base": 3499, "extra": 599, "etiqueta": "al mes"},
-    "anual":   {"base": 38489, "extra": 6589, "etiqueta": "al año"},   # 11 meses
-}
 
 
-def _precio_empresa(periodo: str, extra: bool = False) -> str:
-    """Devuelve el price_id de Stripe para el periodo pedido."""
-    if periodo == "anual":
-        return STRIPE_PRICE_EMPRESA_EXTRA_ANUAL if extra else STRIPE_PRICE_EMPRESA_ANUAL
-    return STRIPE_PRICE_EMPRESA_EXTRA_MENSUAL if extra else STRIPE_PRICE_EMPRESA_MENSUAL
 
 
 async def _exigir_admin_de_org(request: Request) -> dict:
@@ -6909,15 +6898,8 @@ async def _exigir_admin_de_org(request: Request) -> dict:
     return ctx
 
 # Código promocional para el plan AMPI (válido en Supabase tabla promo_codes)
-PROMO_CODE_AMPI = "ampi2026"
 
-def _stripe_headers() -> dict:
-    return {
-        "Authorization": f"Bearer {STRIPE_SECRET_KEY}",
-        "Content-Type": "application/x-www-form-urlencoded",
-    }
 
-TRIAL_MAX_DIAS = 7
 
 class CheckoutRequest(BaseModel):
     plan_id: str         # "max" o "ampi"
