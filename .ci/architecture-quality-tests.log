@@ -1,40 +1,16 @@
 .............................................................../home/runner/work/Brokr-main/Brokr-main/core/easybroker_mapping.py:159: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
   "updated_at": datetime.utcnow().isoformat(),
-..............................................................................................................................................................................................................EE....................E...........................................................
+..................................................................................................................................................................................................................E................................................................................
 ======================================================================
-ERROR: setUpClass (test_main_stripe_webhook_subscription_post_core_refactor.MainStripeWebhookSubscriptionPostCoreRefactorTests)
+ERROR: test_transform_is_exact_and_compiles (test_main_stripe_webhook_subscription_post_transform.MainStripeWebhookSubscriptionPostTransformTests.test_transform_is_exact_and_compiles)
 ----------------------------------------------------------------------
 Traceback (most recent call last):
-  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_stripe_webhook_subscription_post_core_refactor.py", line 16, in setUpClass
-    end = source.index('\n\n@app.post("/subscription/activate")', start)
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ValueError: substring not found
-
-======================================================================
-ERROR: setUpClass (test_main_stripe_webhook_subscription_post_transform.MainStripeWebhookSubscriptionPostTransformTests)
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_stripe_webhook_subscription_post_transform.py", line 22, in setUpClass
-    cls.transformed = transform.transform_source(cls.source)
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/Brokr-main/Brokr-main/scripts/refactor_main_stripe_webhook_subscription_post_core.py", line 22, in transform_source
-    end = source.index('\n\n@app.post("/subscription/activate")', start)
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ValueError: substring not found
-
-======================================================================
-ERROR: test_stripe_webhook_status_writes_use_core_and_preserve_http_fail_soft (test_main_subscription_status_patches_core_refactor.MainSubscriptionStatusPatchesCoreRefactorTests.test_stripe_webhook_status_writes_use_core_and_preserve_http_fail_soft)
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_subscription_status_patches_core_refactor.py", line 24, in test_stripe_webhook_status_writes_use_core_and_preserve_http_fail_soft
-    block = self._block('@app.post("/subscription/webhook")', '\n\n@app.post("/subscription/activate")')
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_subscription_status_patches_core_refactor.py", line 20, in _block
-    end = self.source.index(end_marker, start)
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_stripe_webhook_subscription_post_transform.py", line 28, in test_transform_is_exact_and_compiles
+    end = self.transformed.index('\n\n@app.post("/subscription/activate")', start)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ValueError: substring not found
 
 ----------------------------------------------------------------------
-Ran 349 tests in 6.171s
+Ran 354 tests in 6.248s
 
-FAILED (errors=3)
+FAILED (errors=1)
