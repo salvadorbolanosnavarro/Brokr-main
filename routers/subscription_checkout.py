@@ -4,13 +4,14 @@ from pydantic import BaseModel
 
 from core.auth import get_user_id_from_token
 from core.config import settings
-from core.database import get_rows, patch_rows
+from core.database import get_rows
 from core.stripe import (
     PROMO_CODE_AMPI,
     STRIPE_PRICE_AMPI,
     STRIPE_PRICE_PRO,
     STRIPE_SECRET_KEY,
     TRIAL_MAX_DIAS,
+    get_or_create_stripe_customer,
     stripe_headers,
 )
 from core.subscriptions import trial_max_available
@@ -26,44 +27,6 @@ class CheckoutRequest(BaseModel):
     promo_code: str = ""
     success_url: str = ""
     cancel_url: str = ""
-
-
-async def get_or_create_stripe_customer(user_id: str, email: str, nombre: str) -> str:
-    try:
-        rows = await get_rows(
-            "usuarios",
-            {"id": f"eq.{user_id}", "select": "stripe_customer_id,nombre"},
-            timeout=10,
-        )
-    except httpx.HTTPStatusError:
-        rows = []
-    row = rows[0] if rows else {}
-
-    if row.get("stripe_customer_id"):
-        return row["stripe_customer_id"]
-
-    async with httpx.AsyncClient(timeout=10) as client:
-        r = await client.post(
-            "https://api.stripe.com/v1/customers",
-            headers=stripe_headers(),
-            data={"name": nombre or email, "email": email, "metadata[user_id]": user_id},
-        )
-    if r.status_code not in (200, 201):
-        raise HTTPException(status_code=502, detail=f"Stripe crear customer: {r.text}")
-    customer_id = r.json().get("id")
-
-    try:
-        await patch_rows(
-            "usuarios",
-            {"id": f"eq.{user_id}"},
-            {"stripe_customer_id": customer_id},
-            prefer="return=minimal",
-            timeout=10,
-        )
-    except httpx.HTTPStatusError:
-        pass
-
-    return customer_id
 
 
 @router.post("/subscription/checkout")
