@@ -1,2 +1,2 @@
 extract=scripts/refactor_main_extract_subscription_checkout_core.py
-retry=2
+retry=3
