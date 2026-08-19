@@ -1,7 +1,42 @@
 .............................................................../home/runner/work/Brokr-main/Brokr-main/core/easybroker_mapping.py:159: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
   "updated_at": datetime.utcnow().isoformat(),
-......................................................................................................................................................................................................................................................................................................
+....................F.............E..........................................................................................................................................................................E.E.........................................................................................
+======================================================================
+ERROR: test_checkout_name_preserves_http_fallback_but_transport_propagation (test_main_checkout_user_name_core_refactor.MainCheckoutUserNameCoreRefactorTests.test_checkout_name_preserves_http_fallback_but_transport_propagation)
 ----------------------------------------------------------------------
-Ran 357 tests in 7.502s
+Traceback (most recent call last):
+  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_checkout_user_name_core_refactor.py", line 21, in test_checkout_name_preserves_http_fallback_but_transport_propagation
+    start = self.source.index('@app.post("/subscription/checkout")')
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: substring not found
 
-OK
+======================================================================
+ERROR: test_lookup_preserves_http_empty_but_transport_propagation (test_main_stripe_customer_lookup_core_refactor.MainStripeCustomerLookupCoreRefactorTests.test_lookup_preserves_http_empty_but_transport_propagation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_stripe_customer_lookup_core_refactor.py", line 21, in test_lookup_preserves_http_empty_but_transport_propagation
+    start = self.source.index("async def _get_or_create_stripe_customer(user_id: str, email: str, nombre: str) -> str:")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: substring not found
+
+======================================================================
+ERROR: setUpClass (test_main_stripe_customer_patch_core_refactor.MainStripeCustomerPatchCoreRefactorTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_stripe_customer_patch_core_refactor.py", line 13, in setUpClass
+    start = source.index('async def _get_or_create_stripe_customer(')
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: substring not found
+
+======================================================================
+FAIL: test_main_uses_core_user_id_auth (test_main_auth_refactor.MainAuthRegressionTests.test_main_uses_core_user_id_auth)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_auth_refactor.py", line 18, in test_main_uses_core_user_id_auth
+    self.assertEqual(source.count('/auth/v1/user'), 2)
+AssertionError: 1 != 2
+
+----------------------------------------------------------------------
+Ran 359 tests in 7.524s
+
+FAILED (failures=1, errors=3)
