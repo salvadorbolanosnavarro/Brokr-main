@@ -1,33 +1,7 @@
 .............................................................../home/runner/work/Brokr-main/Brokr-main/core/easybroker_mapping.py:159: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
   "updated_at": datetime.utcnow().isoformat(),
-................E..E.........................................................................................................................................F..............................................................................................................................................................................
-======================================================================
-ERROR: setUpClass (test_main_admin_subscriptions_lookup_core_refactor.MainAdminSubscriptionsLookupCoreRefactorTests)
+..............................................................................................................................................................................................................................................................................................................................................
 ----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_admin_subscriptions_lookup_core_refactor.py", line 14, in setUpClass
-    start = cls.source.index('@app.get("/admin/users")')
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ValueError: substring not found
+Ran 397 tests in 5.660s
 
-======================================================================
-ERROR: setUpClass (test_main_admin_users_lookup_core_refactor.MainAdminUsersLookupCoreRefactorTests)
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_admin_users_lookup_core_refactor.py", line 14, in setUpClass
-    start = cls.source.index('@app.get("/admin/users")')
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ValueError: substring not found
-
-======================================================================
-FAIL: test_main_delegates_legacy_admin_guard_to_core (test_main_legacy_admin_guard_extraction.LegacyAdminGuardExtractionTests.test_main_delegates_legacy_admin_guard_to_core)
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_legacy_admin_guard_extraction.py", line 18, in test_main_delegates_legacy_admin_guard_to_core
-    self.assertEqual(self.main.count('require_admin('), 6)
-AssertionError: 4 != 6
-
-----------------------------------------------------------------------
-Ran 393 tests in 6.812s
-
-FAILED (failures=1, errors=2)
+OK
