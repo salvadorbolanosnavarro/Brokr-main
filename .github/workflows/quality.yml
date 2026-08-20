@@ -25,13 +25,10 @@ jobs:
       - name: Install test dependencies
         run: python -m pip install --disable-pip-version-check -r requirements-ci.txt
 
-      - name: Compile shared core and migrated modules
+      - name: Compile application and migration tooling
         run: >-
-          python -m compileall -q core main.py limites.py push.py whatsapp.py
-          routers/bolsa.py routers/staging.py routers/correo.py routers/video.py
-          routers/whatsapp_chatgpt.py routers/organizaciones.py routers/finanzas.py
-          routers/cumplimiento.py routers/agente.py routers/firmas.py
-          scripts/architecture_debt.py
+          python -m compileall -q core routers scripts
+          main.py limites.py push.py whatsapp.py admin_consola.py migrar_fotos.py
 
       - name: Run tests
         run: python -m unittest discover -s tests -p 'test_*.py'
