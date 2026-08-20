@@ -21,6 +21,7 @@ from core.stripe import (
 )
 from core.facebook_tokens import facebook_token_state as _fb_estado_token
 from core.cache import cache_get, cache_set
+from core.contact_import import map_org_agents as _mapa_agentes_org
 from core.easybroker import EB_API_KEY, EB_BASE, _EB_LOTE, _EB_PAUSA_LOTE, _eb_get_reintentos, eb_headers, extract_colonia, normalize
 from core.easybroker_mapping import _EB_LIMITE_PROPIEDADES, _EB_STATUS_DEFAULT, _EB_STATUS_MAP, _eb_to_brokr
 from core.pdf_design import theme_css_for_pdf
@@ -6897,58 +6898,6 @@ async def _qa_probar_backoff() -> dict:
 # ════════════════════════════════════════════════════════════════
 # Contactos / Importar desde EasyBroker
 # ════════════════════════════════════════════════════════════════
-
-async def _mapa_agentes_org(org_id: str, user_id: str) -> dict:
-    """
-    Miembros de la empresa en Broquer, para asignar cada contacto importado
-    al agente que le corresponde. Regresa dos índices:
-      por_email:  correo (minúsculas) → user_id
-      por_nombre: nombre normalizado (sin acentos, minúsculas) → user_id
-    Si no hay empresa, regresa índices vacíos (todo cae al importador).
-    """
-    import unicodedata as _ud
-
-    def _nrm(t):
-        t = _ud.normalize("NFD", str(t or ""))
-        t = "".join(c for c in t if _ud.category(c) != "Mn")
-        return " ".join(t.lower().split())
-
-    por_email, por_nombre = {}, {}
-    if not org_id:
-        return {"por_email": por_email, "por_nombre": por_nombre, "_nrm": _nrm}
-    try:
-        try:
-            miembros = await get_rows(
-                "organizacion_miembros",
-                {"org_id": f"eq.{org_id}", "select": "user_id", "limit": "200"},
-                timeout=15,
-            )
-        except httpx.HTTPStatusError:
-            miembros = []
-        ids = [m["user_id"] for m in miembros if m.get("user_id")]
-        if ids:
-            try:
-                perfiles = await get_rows(
-                    "usuarios",
-                    {"id": f"in.({','.join(ids)})", "select": "id,nombre,email", "limit": "200"},
-                    timeout=15,
-                )
-            except httpx.HTTPStatusError:
-                perfiles = []
-            for u in perfiles:
-                uid = u.get("id")
-                if not uid:
-                    continue
-                em = (u.get("email") or "").strip().lower()
-                if em:
-                    por_email[em] = uid
-                nm = _nrm(u.get("nombre"))
-                if nm:
-                    por_nombre[nm] = uid
-    except Exception as e:
-        print(f"[importar] No se pudo leer el mapa de agentes: {e}")
-    return {"por_email": por_email, "por_nombre": por_nombre, "_nrm": _nrm}
-
 
 
 @app.post("/contactos/importar-eb")
