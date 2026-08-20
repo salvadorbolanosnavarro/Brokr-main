@@ -3,16 +3,13 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-MAIN = ROOT / "main.py"
+ROUTER = ROOT / "routers" / "easybroker_contact_import.py"
 
 
 class MainContactsEbExistingReadCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.source = MAIN.read_text(encoding="utf-8")
-        start = cls.source.index('@app.post("/contactos/importar-eb")')
-        end = cls.source.index('\n\n@app.post("/contactos/importar-archivo")', start)
-        cls.block = cls.source[start:end]
+        cls.block = ROUTER.read_text(encoding="utf-8")
 
     def test_direct_existing_contact_get_stays_removed(self):
         self.assertNotIn('r_existing = await client.get(\n            f"{SUPABASE_URL}/rest/v1/contactos"', self.block)
@@ -30,7 +27,7 @@ class MainContactsEbExistingReadCoreRefactorTests(unittest.TestCase):
         self.assertIn('await post_rows(\n                        "contactos",', block)
         self.assertIn('accepted_statuses=(200, 201)', block)
         self.assertNotIn('ri = await client.post(', block)
-        self.assertNotIn('f"{SUPABASE_URL}/rest/v1/contactos"', block)
+        self.assertNotIn('/rest/v1/contactos', block)
 
 
 if __name__ == "__main__":
