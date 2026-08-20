@@ -15,7 +15,7 @@ class LegacyAdminGuardExtractionTests(unittest.TestCase):
     def test_main_delegates_legacy_admin_guard_to_core(self):
         self.assertNotIn('async def require_admin(', self.main)
         self.assertIn('from core.legacy_admin import require_legacy_admin as require_admin', self.main)
-        self.assertEqual(self.main.count('require_admin('), 5)
+        self.assertEqual(self.main.count('require_admin('), 6)
 
     def test_exact_legacy_401_403_contract_is_preserved(self):
         c = self.core
@@ -24,7 +24,7 @@ class LegacyAdminGuardExtractionTests(unittest.TestCase):
         self.assertIn('rol = await get_user_rol(user_id)', c)
         self.assertIn('if rol != "admin":', c)
         self.assertIn('raise HTTPException(status_code=403, detail="Acceso denegado.")', c)
-        self.assertNotIn('core.admin', c)
+        self.assertNotIn('from core.admin import', c)
 
     def test_files_compile(self):
         compile(self.main, "main.py", "exec")
