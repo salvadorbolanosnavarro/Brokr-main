@@ -2,18 +2,14 @@
 from pathlib import Path
 import unittest
 
-
 ROOT = Path(__file__).resolve().parents[1]
-MAIN = ROOT / "main.py"
+ROUTER = ROOT / "routers" / "admin_read.py"
 
 
 class MainAdminSubscriptionsLookupCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.source = MAIN.read_text(encoding="utf-8")
-        start = cls.source.index('@app.get("/admin/users")')
-        end = cls.source.index('class AdminRolReq(BaseModel):', start)
-        cls.block = cls.source[start:end]
+        cls.block = ROUTER.read_text(encoding="utf-8")
 
     def test_admin_subscriptions_lookup_uses_core_and_preserves_fail_soft_http_contract(self):
         block = self.block
@@ -27,7 +23,7 @@ class MainAdminSubscriptionsLookupCoreRefactorTests(unittest.TestCase):
 
     def test_admin_subscriptions_lookup_does_not_broaden_scope_or_revert_users(self):
         block = self.block
-        lookup = block.split("# 3) Merge", 1)[0]
+        lookup = block.split("subs_by_user = {}", 1)[0]
         self.assertNotIn("except Exception:", lookup)
         self.assertNotIn("/rest/v1/suscripciones", lookup)
         self.assertIn('users = await get_rows(\n            "usuarios",', block)
