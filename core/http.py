@@ -28,6 +28,15 @@ class PublicHTTPResult:
     content: bytes
     url: str
 
+    @property
+    def text(self) -> str:
+        """Decode content with httpx's response-text semantics."""
+        return httpx.Response(
+            self.status_code,
+            headers=self.headers,
+            content=self.content,
+        ).text
+
 
 _REDIRECTS = {301, 302, 303, 307, 308}
 
