@@ -2,18 +2,14 @@
 from pathlib import Path
 import unittest
 
-
 ROOT = Path(__file__).resolve().parents[1]
-MAIN = ROOT / "main.py"
+ROUTER = ROOT / "routers" / "admin_read.py"
 
 
 class MainAdminUsersLookupCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.source = MAIN.read_text(encoding="utf-8")
-        start = cls.source.index('@app.get("/admin/users")')
-        end = cls.source.index('class AdminRolReq(BaseModel):', start)
-        cls.block = cls.source[start:end]
+        cls.block = ROUTER.read_text(encoding="utf-8")
 
     def test_admin_users_lookup_uses_core_and_preserves_http_error_detail(self):
         block = self.block
@@ -27,10 +23,9 @@ class MainAdminUsersLookupCoreRefactorTests(unittest.TestCase):
 
     def test_admin_users_lookup_does_not_broaden_scope(self):
         block = self.block
-        lookup = block.split("# 2) Traer todas las suscripciones", 1)[0]
+        lookup = block.split("try:\n        subs = await get_rows(", 1)[0]
         self.assertNotIn("except Exception:", lookup)
         self.assertNotIn("/rest/v1/usuarios", lookup)
-        # The adjacent subscriptions read has since migrated too; neither read may regress to direct REST.
         self.assertIn('subs = await get_rows(\n            "suscripciones",', block)
         self.assertNotIn("/rest/v1/suscripciones", block)
 
