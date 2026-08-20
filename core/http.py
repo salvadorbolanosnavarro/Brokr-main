@@ -7,6 +7,7 @@ validates every redirect, and limits response size.
 from __future__ import annotations
 
 import asyncio
+from dataclasses import dataclass
 import ipaddress
 import socket
 from urllib.parse import urljoin, urlsplit
@@ -16,6 +17,16 @@ import httpx
 
 class UnsafePublicURL(ValueError):
     """Raised when a URL could reach a non-public network destination."""
+
+
+@dataclass(frozen=True)
+class PublicHTTPResult:
+    """Bounded public HTTP response without implicit status-code raising."""
+
+    status_code: int
+    headers: dict[str, str]
+    content: bytes
+    url: str
 
 
 _REDIRECTS = {301, 302, 303, 307, 308}
@@ -75,21 +86,32 @@ async def assert_public_http_url(url: str) -> None:
         _require_global_ip(address)
 
 
-async def fetch_public_bytes(
+async def fetch_public_http_result(
     url: str,
     *,
     timeout: float = 30,
     max_bytes: int = 20 * 1024 * 1024,
     max_redirects: int = 3,
-) -> bytes:
-    """Download bounded bytes from a public HTTP(S) URL with SSRF defenses."""
+    headers: dict[str, str] | None = None,
+) -> PublicHTTPResult:
+    """Fetch bounded public HTTP(S) content while preserving the final status.
+
+    Unlike :func:`fetch_public_bytes`, non-2xx final responses are returned to
+    the caller instead of raising. This is useful for domain logic that needs
+    to distinguish statuses such as 403/429/5xx while still enforcing the same
+    SSRF, redirect, and response-size protections.
+    """
     if max_bytes <= 0:
         raise ValueError("max_bytes must be positive")
     if max_redirects < 0:
         raise ValueError("max_redirects must not be negative")
 
     current = url
-    async with httpx.AsyncClient(timeout=timeout, follow_redirects=False) as client:
+    async with httpx.AsyncClient(
+        timeout=timeout,
+        follow_redirects=False,
+        headers=headers,
+    ) as client:
         for redirect_count in range(max_redirects + 1):
             await assert_public_http_url(current)
             async with client.stream("GET", current) as response:
@@ -102,21 +124,52 @@ async def fetch_public_bytes(
                     current = urljoin(current, location)
                     continue
 
-                response.raise_for_status()
                 declared = response.headers.get("content-length")
                 if declared:
                     try:
-                        if int(declared) > max_bytes:
-                            raise ValueError("Remote response exceeds size limit")
-                    except ValueError as exc:
-                        if str(exc) == "Remote response exceeds size limit":
-                            raise
+                        declared_size = int(declared)
+                    except (TypeError, ValueError):
+                        declared_size = None
+                    if declared_size is not None and declared_size > max_bytes:
+                        raise ValueError("Remote response exceeds size limit")
 
                 chunks = bytearray()
                 async for chunk in response.aiter_bytes():
                     chunks.extend(chunk)
                     if len(chunks) > max_bytes:
                         raise ValueError("Remote response exceeds size limit")
-                return bytes(chunks)
+
+                return PublicHTTPResult(
+                    status_code=response.status_code,
+                    headers={str(k).lower(): str(v) for k, v in response.headers.items()},
+                    content=bytes(chunks),
+                    url=current,
+                )
 
     raise UnsafePublicURL("Unable to fetch public URL")
+
+
+async def fetch_public_bytes(
+    url: str,
+    *,
+    timeout: float = 30,
+    max_bytes: int = 20 * 1024 * 1024,
+    max_redirects: int = 3,
+) -> bytes:
+    """Download bounded bytes from a public HTTP(S) URL with SSRF defenses."""
+    result = await fetch_public_http_result(
+        url,
+        timeout=timeout,
+        max_bytes=max_bytes,
+        max_redirects=max_redirects,
+    )
+    if result.status_code >= 400:
+        request = httpx.Request("GET", result.url)
+        response = httpx.Response(
+            result.status_code,
+            headers=result.headers,
+            content=result.content,
+            request=request,
+        )
+        response.raise_for_status()
+    return result.content
