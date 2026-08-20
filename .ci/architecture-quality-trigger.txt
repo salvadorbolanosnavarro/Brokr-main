@@ -1,2 +1,2 @@
 extract=scripts/refactor_main_extract_legacy_admin_guard_core.py
-retry=3
+retry=4
