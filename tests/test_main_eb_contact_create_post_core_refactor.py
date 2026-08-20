@@ -5,16 +5,13 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-MAIN = ROOT / "main.py"
+ROUTER = ROOT / "routers" / "easybroker_contact_import.py"
 
 
 class MainEbContactCreatePostCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.source = MAIN.read_text(encoding="utf-8")
-        start = cls.source.index('@app.post("/contactos/importar-eb")')
-        end = cls.source.index('\n\n@app.post("/contactos/importar-archivo")', start)
-        cls.block = cls.source[start:end]
+        cls.block = ROUTER.read_text(encoding="utf-8")
 
     def test_new_contact_post_uses_core_with_exact_legacy_statuses(self):
         block = self.block
@@ -24,7 +21,7 @@ class MainEbContactCreatePostCoreRefactorTests(unittest.TestCase):
         self.assertIn('timeout=20', block)
         self.assertIn('accepted_statuses=(200, 201)', block)
         self.assertNotIn('ri = await client.post(', block)
-        self.assertNotIn('f"{SUPABASE_URL}/rest/v1/contactos"', block)
+        self.assertNotIn('/rest/v1/contactos', block)
 
     def test_counter_and_dedup_cache_contract_are_preserved(self):
         block = self.block
