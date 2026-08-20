@@ -37,7 +37,7 @@ def parse_price(val) -> Optional[float]:
         v = float(str(val).replace(",", ""))
         if 50_000 <= v <= 999_000_000:
             return v
-    except Exception:
+    except:
         pass
     return None
 
@@ -122,7 +122,7 @@ async def get_comparables_eb(colonia: str, ciudad: str, tipo: str, operacion: st
                 if created_at:
                     try:
                         pub_year = int(created_at[:4])
-                    except Exception:
+                    except:
                         pass
 
                 price = parse_price(matching_op.get("amount"))
@@ -270,7 +270,7 @@ async def calcular_avm(req: AVMRequest):
     for comp in comparables_raw:
         try:
             ajustados.append(ajuste_hedonico(comp, sujeto))
-        except Exception:
+        except:
             continue
 
     if not ajustados:
