@@ -11,6 +11,8 @@ START = 'async def _job_migracion_eb(llave: str, auth_header: str):'
 END = '\n\n@app.post("/easybroker/import-stats")'
 MOUNT = '''# Coordinador de migración completa EasyBroker.\nfrom routers.easybroker_migration import router as easybroker_migration_router\napp.include_router(easybroker_migration_router)\n\n'''
 ANCHOR = '# Importación de contactos directamente desde EasyBroker.\n'
+OLD_IMPORT = '''from core.easybroker_migration import (\n    MIGRACIONES as _MIGRACIONES,\n    PROGRESO_IMPORT as _PROGRESO_IMPORT,\n    migration_key as _mig_llave,\n    set_import_progress as _prog,\n)\n'''
+NEW_IMPORT = 'from core.easybroker_migration import set_import_progress as _prog\n'
 
 
 def transform_source(source: str) -> str:
@@ -24,6 +26,9 @@ def transform_source(source: str) -> str:
     elif MOUNT not in transformed:
         raise RuntimeError("EasyBroker migration coordinator missing without router mount")
 
+    if OLD_IMPORT in transformed:
+        transformed = transformed.replace(OLD_IMPORT, NEW_IMPORT, 1)
+
     if MOUNT not in transformed:
         idx = transformed.index(ANCHOR)
         transformed = transformed[:idx] + MOUNT + transformed[idx:]
@@ -32,9 +37,14 @@ def transform_source(source: str) -> str:
         'async def _job_migracion_eb(',
         '@app.post("/easybroker/migracion/iniciar")',
         '@app.get("/easybroker/migracion/estado")',
+        'MIGRACIONES as _MIGRACIONES',
+        'PROGRESO_IMPORT as _PROGRESO_IMPORT',
+        'migration_key as _mig_llave',
     ):
         if marker in transformed:
-            raise RuntimeError(f"EasyBroker migration coordinator remains in main: {marker}")
+            raise RuntimeError(f"EasyBroker migration coordinator residue remains in main: {marker}")
+    if NEW_IMPORT not in transformed:
+        raise RuntimeError("EasyBroker import progress alias missing from main")
     if '@app.post("/easybroker/import-stats")' not in transformed:
         raise RuntimeError("EasyBroker import-stats endpoint removed unexpectedly")
     compile(transformed, str(MAIN), "exec")
