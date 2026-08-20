@@ -11,7 +11,7 @@ from fastapi import APIRouter, HTTPException, Request
 from core.auth import get_user_id_from_token
 from core.config import settings
 from core.database import delete_rows, get_service_json
-from core.stripe import STRIPE_SECRET_KEY, stripe_headers
+from core.stripe import STRIPE_SECRET_KEY, stripe_headers as _stripe_headers
 
 
 router = APIRouter()
@@ -28,6 +28,12 @@ async def eliminar_cuenta_y_datos(request: Request):
     if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
         raise HTTPException(status_code=500, detail="Supabase no está configurado.")
 
+    sb_headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+        "Prefer": "return=minimal",
+    }
     sb_read_headers = {
         "apikey": SUPABASE_SERVICE_KEY,
         "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
@@ -57,7 +63,7 @@ async def eliminar_cuenta_y_datos(request: Request):
                 if sub_id:
                     rc = await client.delete(
                         f"https://api.stripe.com/v1/subscriptions/{sub_id}",
-                        headers=stripe_headers(),
+                        headers=_stripe_headers(),
                     )
                     borrados["stripe"] = (rc.status_code in (200, 201))
                     if rc.status_code not in (200, 201):
