@@ -1,16 +1,7 @@
 .............................................................../home/runner/work/Brokr-main/Brokr-main/core/easybroker_mapping.py:159: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
   "updated_at": datetime.utcnow().isoformat(),
-..................E..................................................................................................................................................................................................................................................................................................
-======================================================================
-ERROR: setUpClass (test_main_agent_map_reads_core_refactor.MainAgentMapReadsCoreRefactorTests)
+.......................................................................................................................................................................................................................................................................................................................
 ----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_agent_map_reads_core_refactor.py", line 14, in setUpClass
-    start = cls.source.index("async def _mapa_agentes_org(org_id: str, user_id: str) -> dict:")
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ValueError: substring not found
+Ran 374 tests in 6.615s
 
-----------------------------------------------------------------------
-Ran 371 tests in 7.195s
-
-FAILED (errors=1)
+OK
