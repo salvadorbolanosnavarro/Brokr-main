@@ -331,6 +331,10 @@ app.include_router(revenuecat_router)
 from routers.subscription_status import router as subscription_status_router
 app.include_router(subscription_status_router)
 
+# Mutaciones administrativas no destructivas.
+from routers.admin_accounts import router as admin_accounts_router
+app.include_router(admin_accounts_router)
+
 # Lecturas administrativas legacy.
 from routers.admin_read import router as admin_read_router
 app.include_router(admin_read_router)
@@ -7297,76 +7301,6 @@ async def importar_contactos_archivo(request: Request, file: UploadFile = File(.
 # El rol gobierna el acceso; las suscripciones de Stripe son solo para agentes.
 # Solo accesibles si el caller tiene rol=admin (verificado vía service key).
 # ─────────────────────────────────────────────
-
-class AdminRolReq(BaseModel):
-    user_id: str
-    rol: str
-
-
-@app.post("/admin/user/rol")
-async def admin_set_rol(req: AdminRolReq, request: Request):
-    """Cambia el rol de un usuario. Roles válidos: admin, equipo, agente."""
-    caller_id = await require_admin(request)
-
-    ROLES_VALIDOS = {"admin", "equipo", "agente"}
-    if req.rol not in ROLES_VALIDOS:
-        raise HTTPException(status_code=400, detail=f"Rol inválido. Válidos: {', '.join(sorted(ROLES_VALIDOS))}")
-
-    target_id = (req.user_id or "").strip()
-    if not target_id:
-        raise HTTPException(status_code=400, detail="user_id requerido.")
-
-    # Protección: el admin no puede degradarse a sí mismo (evita quedarse sin admins)
-    if target_id == caller_id and req.rol != "admin":
-        raise HTTPException(status_code=400, detail="No puedes cambiar tu propio rol de admin. Pide a otro admin que lo haga.")
-
-    try:
-        await patch_rows_no_response(
-            "usuarios",
-            {"id": f"eq.{target_id}"},
-            {"rol": req.rol},
-            prefer="return=minimal",
-            timeout=10,
-            accepted_statuses=(200, 204),
-        )
-    except httpx.HTTPStatusError as exc:
-        raise HTTPException(status_code=500, detail=f"Error actualizando rol: {exc.response.text}")
-
-    return {"ok": True, "user_id": target_id, "rol": req.rol}
-
-
-class AdminActivoReq(BaseModel):
-    user_id: str
-    activo: bool
-
-
-@app.post("/admin/user/activo")
-async def admin_set_activo(req: AdminActivoReq, request: Request):
-    """Activa o desactiva una cuenta. Cuenta desactivada = sin acceso, sin importar rol o suscripción."""
-    caller_id = await require_admin(request)
-
-    target_id = (req.user_id or "").strip()
-    if not target_id:
-        raise HTTPException(status_code=400, detail="user_id requerido.")
-
-    # Protección: el admin no puede desactivarse a sí mismo
-    if target_id == caller_id and not req.activo:
-        raise HTTPException(status_code=400, detail="No puedes desactivar tu propia cuenta de admin.")
-
-    try:
-        await patch_rows_no_response(
-            "usuarios",
-            {"id": f"eq.{target_id}"},
-            {"activo": bool(req.activo)},
-            prefer="return=minimal",
-            timeout=10,
-            accepted_statuses=(200, 204),
-        )
-    except httpx.HTTPStatusError as exc:
-        raise HTTPException(status_code=500, detail=f"Error actualizando activo: {exc.response.text}")
-
-    return {"ok": True, "user_id": target_id, "activo": bool(req.activo)}
-
 
 class AdminEliminarReq(BaseModel):
     user_id: str
