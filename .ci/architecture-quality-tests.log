@@ -1,24 +1,7 @@
-..................Executing <Task pending name='Task-27' coro=<PublicURLSafetyTests.test_loopback_is_rejected() running at /home/runner/work/Brokr-main/Brokr-main/tests/test_core_contracts.py:307> wait_for=<Future pending cb=[_chain_future.<locals>._call_check_cancel() at /opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/asyncio/futures.py:389, Task.task_wakeup()] created at /opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/asyncio/base_events.py:448> cb=[_run_until_complete_cb() at /opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/asyncio/base_events.py:181] created at /opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/asyncio/runners.py:100> took 0.189 seconds
-............................................./home/runner/work/Brokr-main/Brokr-main/core/easybroker_mapping.py:159: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+.............................................................../home/runner/work/Brokr-main/Brokr-main/core/easybroker_mapping.py:159: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
   "updated_at": datetime.utcnow().isoformat(),
-.........................................................................................................................................................F.F..............................................................................................................................................................................
-======================================================================
-FAIL: test_exact_legacy_401_403_contract_is_preserved (test_main_legacy_admin_guard_extraction.LegacyAdminGuardExtractionTests.test_exact_legacy_401_403_contract_is_preserved)
+..........................................................................................................................................................................................................................................................................................................................................
 ----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_legacy_admin_guard_extraction.py", line 27, in test_exact_legacy_401_403_contract_is_preserved
-    self.assertNotIn('core.admin', c)
-AssertionError: 'core.admin' unexpectedly found in '"""Compatibility admin authorization used while main.py is decomposed.\n\nThis intentionally preserves main.py\'s historical 401/403 behavior instead of\nusing core.admin.require_admin, whose fail-closed database-error semantics are\nstricter and therefore not behavior-equivalent.\n"""\nfrom fastapi import HTTPException, Request\n\nfrom core.auth import get_user_id_from_token\nfrom core.user_access import get_user_rol\n\n\nasync def require_legacy_admin(request: Request) -> str:\n    user_id = await get_user_id_from_token(request)\n    if not user_id:\n        raise HTTPException(status_code=401, detail="No autenticado.")\n    rol = await get_user_rol(user_id)\n    if rol != "admin":\n        raise HTTPException(status_code=403, detail="Acceso denegado.")\n    return user_id\n'
+Ran 393 tests in 5.388s
 
-======================================================================
-FAIL: test_main_delegates_legacy_admin_guard_to_core (test_main_legacy_admin_guard_extraction.LegacyAdminGuardExtractionTests.test_main_delegates_legacy_admin_guard_to_core)
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_legacy_admin_guard_extraction.py", line 18, in test_main_delegates_legacy_admin_guard_to_core
-    self.assertEqual(self.main.count('require_admin('), 5)
-AssertionError: 6 != 5
-
-----------------------------------------------------------------------
-Ran 393 tests in 4.429s
-
-FAILED (failures=2)
+OK
