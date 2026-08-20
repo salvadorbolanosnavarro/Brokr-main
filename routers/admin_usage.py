@@ -14,7 +14,10 @@ router = APIRouter()
 
 @router.get("/admin/user/{user_id}/uso")
 async def admin_user_uso(user_id: str, request: Request, dias: int = 30):
-    """Aggregate AI usage/cost and module time for an admin-selected user."""
+    """Agregaciones de uso y costo IA de un usuario, junto con tiempo por módulo.
+    Devuelve totales, desglose por módulo y desglose por herramienta para el rango
+    indicado (default 30 días). Solo accesible para rol=admin.
+    """
     await require_legacy_admin(request)
     if not settings.supabase_url or not settings.supabase_service_key:
         raise HTTPException(status_code=500, detail="Supabase no está configurado.")
@@ -111,21 +114,24 @@ async def admin_user_uso(user_id: str, request: Request, dias: int = 30):
         )
     modulos_arr.sort(key=lambda x: (x["segundos"], x["costo_usd"]), reverse=True)
 
-    herramientas_arr = []
+    herr_arr = []
     for slot in por_herramienta.values():
-        herramientas_arr.append({**slot, "costo_usd": round(float(slot["costo_usd"]), 4)})
-    herramientas_arr.sort(key=lambda x: (x["costo_usd"], x["llamadas"]), reverse=True)
+        slot["costo_usd"] = round(float(slot["costo_usd"]), 4)
+        herr_arr.append(slot)
+    herr_arr.sort(key=lambda x: x["costo_usd"], reverse=True)
+
+    ultima = None
+    if usage_rows:
+        ultima = usage_rows[0].get("ts")
 
     return {
         "ok": True,
         "user_id": user_id,
-        "dias": dias_int,
-        "desde": desde_iso,
-        "totales": {
-            "segundos": tiempo_total,
-            "llamadas": llamadas_total,
-            "costo_usd": costo_total,
-        },
+        "rango_dias": dias_int,
+        "costo_total_usd": costo_total,
+        "llamadas_total": llamadas_total,
+        "tiempo_total_seg": int(tiempo_total),
+        "ultima_actividad": ultima,
         "por_modulo": modulos_arr,
-        "por_herramienta": herramientas_arr,
+        "por_herramienta": herr_arr,
     }

@@ -42,7 +42,7 @@ class AdminUsageExtractionTests(unittest.TestCase):
         self.assertIn('usage_rows = []', r)
         self.assertIn('session_rows = []', r)
 
-    def test_aggregation_and_sort_contracts_are_preserved(self):
+    def test_aggregation_sort_and_response_contracts_are_preserved(self):
         r = self.router
         self.assertIn('slot["segundos"] += int(row.get("segundos") or 0)', r)
         self.assertIn('slot["costo_usd"] += float(row.get("costo_usd") or 0)', r)
@@ -50,9 +50,21 @@ class AdminUsageExtractionTests(unittest.TestCase):
         self.assertIn('slot["tokens_out"] += int(row.get("tokens_out") or 0)', r)
         self.assertIn('slot["unidades"] += int(row.get("unidades") or 0)', r)
         self.assertIn('modulos_arr.sort(key=lambda x: (x["segundos"], x["costo_usd"]), reverse=True)', r)
-        self.assertIn('herramientas_arr.sort(key=lambda x: (x["costo_usd"], x["llamadas"]), reverse=True)', r)
-        self.assertIn('"por_modulo": modulos_arr', r)
-        self.assertIn('"por_herramienta": herramientas_arr', r)
+        self.assertIn('herr_arr.sort(key=lambda x: x["costo_usd"], reverse=True)', r)
+        self.assertIn('ultima = usage_rows[0].get("ts")', r)
+        for key in (
+            '"rango_dias": dias_int',
+            '"costo_total_usd": costo_total',
+            '"llamadas_total": llamadas_total',
+            '"tiempo_total_seg": int(tiempo_total)',
+            '"ultima_actividad": ultima',
+            '"por_modulo": modulos_arr',
+            '"por_herramienta": herr_arr',
+        ):
+            self.assertIn(key, r)
+        self.assertNotIn('"dias": dias_int', r)
+        self.assertNotIn('"desde": desde_iso', r)
+        self.assertNotIn('"totales": {', r)
 
     def test_files_compile(self):
         compile(self.main, "main.py", "exec")
