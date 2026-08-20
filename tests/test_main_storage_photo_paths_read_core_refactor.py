@@ -3,13 +3,13 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-MAIN = ROOT / "main.py"
+ROUTER = ROOT / "routers" / "admin_delete.py"
 
 
 class MainStoragePhotoPathsReadCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.source = MAIN.read_text(encoding="utf-8")
+        cls.source = ROUTER.read_text(encoding="utf-8")
 
     def _block(self) -> str:
         start = self.source.index('async def _storage_rutas_fotos_de_usuario')
@@ -19,7 +19,7 @@ class MainStoragePhotoPathsReadCoreRefactorTests(unittest.TestCase):
     def test_direct_property_get_stays_removed(self):
         block = self._block()
         self.assertNotIn('r = await client.get(\n                f"{SUPABASE_URL}/rest/v1/propiedades"', block)
-        compile(self.source, "main.py", "exec")
+        compile(self.source, "routers/admin_delete.py", "exec")
 
     def test_core_read_preserves_fail_soft_and_destructive_boundary(self):
         block = self._block()
