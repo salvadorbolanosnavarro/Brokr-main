@@ -4,18 +4,26 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
+ROUTER = ROOT / "routers" / "account_delete.py"
 
 
 class MainSelfAccountDeleteCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.source = MAIN.read_text(encoding="utf-8")
-        marker = 'tablas = ["propiedades", "contactos", "contratos", "user_integrations",'
-        start = cls.source.rfind('@app.', 0, cls.source.index(marker))
-        end = cls.source.find('\n\n@app.', start + 1)
-        if end == -1:
-            end = len(cls.source)
-        cls.block = cls.source[start:end]
+        router = ROUTER.read_text(encoding="utf-8") if ROUTER.exists() else ""
+        # Keep this guard valid across the prepared -> applied extraction edge.
+        # Before extraction, assert against the exact legacy main.py block. After
+        # extraction, assert against the statically equivalent domain router.
+        if 'async def eliminar_cuenta_y_datos(' in cls.source:
+            marker = 'tablas = ["propiedades", "contactos", "contratos", "user_integrations",'
+            start = cls.source.rfind('@app.', 0, cls.source.index(marker))
+            end = cls.source.find('\n\n@app.', start + 1)
+            if end == -1:
+                end = len(cls.source)
+            cls.block = cls.source[start:end]
+        else:
+            cls.block = router
 
     def test_subscription_lookup_uses_exact_200_service_read(self):
         block = self.block
