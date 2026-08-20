@@ -1,0 +1,2 @@
+transform=scripts/refactor_whatsapp_extract_data_core.py
+retry=1
