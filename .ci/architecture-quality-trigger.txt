@@ -1,2 +1,2 @@
 extract=scripts/refactor_main_extract_admin_delete_core.py
-retry=1
+retry=2
