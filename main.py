@@ -16,7 +16,6 @@ from core.stripe import (
     STRIPE_PRICE_EMPRESA_ANUAL, STRIPE_PRICE_EMPRESA_EXTRA_ANUAL,
     STRIPE_PRICE_EMPRESA_EXTRA_MENSUAL, STRIPE_PRICE_EMPRESA_MENSUAL,
     STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, TRIAL_MAX_DIAS,
-    activate_enterprise_subscription as _activar_empresa,
     get_or_create_stripe_customer as _get_or_create_stripe_customer,
     precio_empresa as _precio_empresa, stripe_headers as _stripe_headers,
 )
@@ -304,6 +303,10 @@ app.include_router(subscription_cancel_router)
 # Activación interna de suscripciones.
 from routers.subscription_activate import router as subscription_activate_router
 app.include_router(subscription_activate_router)
+
+# Webhook de suscripciones web vía Stripe.
+from routers.stripe_webhook import router as stripe_webhook_router
+app.include_router(stripe_webhook_router)
 
 # Webhook de suscripciones iOS vía RevenueCat.
 from routers.revenuecat import router as revenuecat_router
@@ -6890,139 +6893,6 @@ async def _qa_probar_backoff() -> dict:
 
 
 
-
-@app.post("/subscription/webhook")
-async def stripe_webhook(request: Request):
-    """
-    Recibe eventos de Stripe (stripe listen → o endpoint configurado en dashboard).
-    Actualiza el estado de suscripción en Supabase de forma automática.
-    Configura en Stripe Dashboard: checkout.session.completed,
-    customer.subscription.updated, customer.subscription.deleted,
-    invoice.payment_failed
-    """
-    payload = await request.body()
-    sig_header = request.headers.get("stripe-signature", "")
-
-    # Verificar firma del webhook. Sin secreto NO se procesa: antes, si la
-    # variable faltaba en Railway, cualquiera podía mandar un evento inventado
-    # de "pago exitoso" y activarse el plan.
-    if not STRIPE_WEBHOOK_SECRET:
-        print("[stripe] STRIPE_WEBHOOK_SECRET no configurado: webhook cerrado.")
-        raise HTTPException(status_code=503, detail="Webhook no disponible.")
-    if STRIPE_WEBHOOK_SECRET:
-        try:
-            import hmac as _hmac, hashlib as _hashlib, time as _time
-            parts = {p.split("=")[0]: p.split("=")[1] for p in sig_header.split(",") if "=" in p}
-            ts = parts.get("t", "")
-            v1 = parts.get("v1", "")
-            signed_payload = f"{ts}.{payload.decode()}"
-            expected = _hmac.new(STRIPE_WEBHOOK_SECRET.encode(), signed_payload.encode(), _hashlib.sha256).hexdigest()
-            if not _hmac.compare_digest(expected, v1):
-                raise HTTPException(status_code=400, detail="Firma de webhook inválida.")
-        except Exception:
-            raise HTTPException(status_code=400, detail="Error verificando webhook.")
-
-    event = await request.json()
-    event_type = event.get("type", "")
-    obj = event.get("data", {}).get("object", {})
-
-    if event_type == "checkout.session.completed":
-        meta = obj.get("metadata", {}) or {}
-        user_id = meta.get("user_id")
-        plan_id = meta.get("plan_id", "max")
-        subscription_id = obj.get("subscription")
-        customer_id = obj.get("customer")
-        if user_id and subscription_id:
-            plan_nombre = {"ampi": "AMPI", "empresas": "Broquer para Empresas"}.get(plan_id, "Broquer Max")
-            _org_id = meta.get("org_id") or await get_org_id_for_user(user_id)
-            _es_trial = meta.get("trial") == "1"
-            sb = {
-                "user_id": user_id,
-                "org_id": _org_id,
-                "plan_id": plan_id,
-                "plan_nombre": plan_nombre,
-                "stripe_subscription_id": subscription_id,
-                "stripe_customer_id": customer_id,
-                "status": "trialing" if _es_trial else "active",
-                "updated_at": datetime.utcnow().isoformat(),
-            }
-            if _es_trial:
-                # Se quema el trial de por vida, aunque después cancele o
-                # se borre la fila de suscripciones.
-                await patch_rows_ignoring_http_status("usuarios", {"id": f"eq.{user_id}"},
-                                        {"trial_max_usado": True})
-            if plan_id == "empresas":
-                # El plan de empresas guarda periodo y lugares: se necesitan
-                # después para prorratear altas y bajas de usuarios.
-                try:
-                    _asientos = int(meta.get("asientos") or EMPRESA_ASIENTOS_BASE)
-                except Exception:
-                    _asientos = EMPRESA_ASIENTOS_BASE
-                sb["periodo"] = meta.get("periodo") or "mensual"
-                sb["asientos"] = _asientos
-                if _org_id:
-                    await _activar_empresa(_org_id, user_id, _asientos,
-                                           meta.get("nombre_empresa") or "")
-            try:
-                await post_rows(
-                    "suscripciones",
-                    sb,
-                    prefer="resolution=merge-duplicates,return=minimal",
-                    timeout=10,
-                )
-            except httpx.HTTPStatusError:
-                # Historical webhook behavior: Supabase HTTP rejections did not abort the webhook.
-                pass
-
-    elif event_type in ("customer.subscription.updated", "customer.subscription.deleted"):
-        subscription_id = obj.get("id")
-        new_status = obj.get("status", "canceled")
-        if event_type == "customer.subscription.deleted":
-            new_status = "canceled"
-        if subscription_id:
-            try:
-                await patch_rows(
-                    "suscripciones",
-                    {"stripe_subscription_id": f"eq.{subscription_id}"},
-                    {"status": new_status, "updated_at": datetime.utcnow().isoformat()},
-                    prefer="return=minimal",
-                    timeout=8,
-                )
-            except httpx.HTTPStatusError:
-                # Historical webhook behavior: HTTP rejection did not abort processing.
-                pass
-            # En empresas el acceso de TODO el equipo cuelga de organizaciones.activo.
-            _filas = await get_service_json_or_empty("suscripciones", {
-                "stripe_subscription_id": f"eq.{subscription_id}",
-                "select": "org_id,plan_id", "limit": "1"})
-            _fila = _filas[0] if _filas else {}
-            if _fila.get("plan_id") == "empresas" and _fila.get("org_id"):
-                await patch_rows_ignoring_http_status(
-                    "organizaciones", {"id": f"eq.{_fila['org_id']}"},
-                    {"activo": new_status in ("active", "trialing"),
-                     "updated_at": datetime.utcnow().isoformat()})
-
-    elif event_type == "invoice.payment_failed":
-        subscription_id = obj.get("subscription")
-        if subscription_id:
-            try:
-                await patch_rows(
-                    "suscripciones",
-                    {"stripe_subscription_id": f"eq.{subscription_id}"},
-                    {"status": "past_due", "updated_at": datetime.utcnow().isoformat()},
-                    prefer="return=minimal",
-                    timeout=8,
-                )
-            except httpx.HTTPStatusError:
-                # Historical webhook behavior: HTTP rejection did not abort processing.
-                pass
-
-    return {"ok": True}
-
-
-# ════════════════════════════════════════════════════════════════
-# Trial de Broquer Max SIN tarjeta (7 días, una sola vez por cuenta)
-# ════════════════════════════════════════════════════════════════
 
 # ════════════════════════════════════════════════════════════════
 # Contactos / Importar desde EasyBroker
