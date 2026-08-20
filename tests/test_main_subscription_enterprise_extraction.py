@@ -4,6 +4,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
 ROUTER = ROOT / "routers" / "subscription_enterprise.py"
+WEBHOOK = ROOT / "routers" / "stripe_webhook.py"
 CORE = ROOT / "core" / "stripe.py"
 
 
@@ -12,6 +13,7 @@ class SubscriptionEnterpriseExtractionTests(unittest.TestCase):
     def setUpClass(cls):
         cls.main = MAIN.read_text(encoding="utf-8")
         cls.router = ROUTER.read_text(encoding="utf-8")
+        cls.webhook = WEBHOOK.read_text(encoding="utf-8")
         cls.core = CORE.read_text(encoding="utf-8")
 
     def test_enterprise_routes_live_only_in_router(self):
@@ -48,10 +50,13 @@ class SubscriptionEnterpriseExtractionTests(unittest.TestCase):
         self.assertIn('await patch_rows_ignoring_http_status(', r)
         self.assertIn('"asientos_max": asientos', r)
 
-    def test_webhook_keeps_shared_activation_alias(self):
+    def test_webhook_uses_shared_enterprise_activation(self):
         self.assertNotIn('async def _activar_empresa(', self.main)
-        self.assertIn('activate_enterprise_subscription as _activar_empresa', self.main)
-        self.assertIn('await _activar_empresa(_org_id, user_id, _asientos,', self.main)
+        self.assertNotIn('activate_enterprise_subscription as _activar_empresa', self.main)
+        self.assertNotIn('@app.post("/subscription/webhook")', self.main)
+        self.assertIn('app.include_router(stripe_webhook_router)', self.main)
+        self.assertIn('activate_enterprise_subscription,', self.webhook)
+        self.assertIn('await activate_enterprise_subscription(', self.webhook)
         c = self.core
         self.assertIn('async def activate_enterprise_subscription(', c)
         self.assertIn('"tipo": "empresa"', c)
@@ -70,6 +75,7 @@ class SubscriptionEnterpriseExtractionTests(unittest.TestCase):
     def test_files_compile(self):
         compile(self.main, "main.py", "exec")
         compile(self.router, "routers/subscription_enterprise.py", "exec")
+        compile(self.webhook, "routers/stripe_webhook.py", "exec")
         compile(self.core, "core/stripe.py", "exec")
 
 
