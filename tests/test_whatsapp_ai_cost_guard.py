@@ -26,6 +26,14 @@ class WhatsAppAICostGuardTests(unittest.TestCase):
         self.assertIn('"sender": "eq.ia"', self.source)
         self.assertIn('"conversacion_id": f"eq.{item[\'conversacion_id\']}"', self.source)
 
+    def test_reaching_limit_hands_chat_to_human_instead_of_silent_drop(self):
+        marker = "if len(conteo) >= max_msj:"
+        branch = self.source.split(marker, 1)[1].split("# Ya se decidió que la IA sí va a contestar", 1)[0]
+        self.assertIn('{"ai_enabled": False, "ia_modo": "off"}', branch)
+        self.assertIn('await enviar_push(user_id, "Un prospecto te está esperando"', branch)
+        self.assertIn('datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]}', branch)
+        self.assertIn("return", branch)
+
 
 if __name__ == "__main__":
     unittest.main()
