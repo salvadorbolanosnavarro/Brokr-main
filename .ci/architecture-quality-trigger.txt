@@ -1,2 +1,2 @@
-extract=scripts/refactor_main_extract_easybroker_migration_state_core.py
+extract=scripts/refactor_main_extract_easybroker_contact_import_core.py
 retry=1
