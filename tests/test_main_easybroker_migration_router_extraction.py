@@ -4,6 +4,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
 ROUTER = ROOT / "routers" / "easybroker_migration.py"
+STATS_ROUTER = ROOT / "routers" / "easybroker_import_stats.py"
 
 
 class EasyBrokerMigrationRouterExtractionTests(unittest.TestCase):
@@ -11,14 +12,17 @@ class EasyBrokerMigrationRouterExtractionTests(unittest.TestCase):
     def setUpClass(cls):
         cls.main = MAIN.read_text(encoding="utf-8")
         cls.router = ROUTER.read_text(encoding="utf-8")
+        cls.stats_router = STATS_ROUTER.read_text(encoding="utf-8")
 
-    def test_routes_live_only_in_router(self):
+    def test_routes_live_only_in_routers(self):
         self.assertIn('@router.post("/easybroker/migracion/iniciar")', self.router)
         self.assertIn('@router.get("/easybroker/migracion/estado")', self.router)
         self.assertNotIn('@app.post("/easybroker/migracion/iniciar")', self.main)
         self.assertNotIn('@app.get("/easybroker/migracion/estado")', self.main)
         self.assertIn('app.include_router(easybroker_migration_router)', self.main)
-        self.assertIn('@app.post("/easybroker/import-stats")', self.main)
+        self.assertIn('@router.post("/easybroker/import-stats")', self.stats_router)
+        self.assertNotIn('@app.post("/easybroker/import-stats")', self.main)
+        self.assertIn('app.include_router(easybroker_import_stats_router)', self.main)
 
     def test_coordinator_contract_is_preserved(self):
         r = self.router
@@ -41,6 +45,7 @@ class EasyBrokerMigrationRouterExtractionTests(unittest.TestCase):
     def test_files_compile(self):
         compile(self.main, "main.py", "exec")
         compile(self.router, "routers/easybroker_migration.py", "exec")
+        compile(self.stats_router, "routers/easybroker_import_stats.py", "exec")
 
 
 if __name__ == "__main__":
