@@ -7,6 +7,7 @@ from core.auth import get_user_id_from_token
 from core.config import settings
 from core.database import call_public_rpc, call_service_rpc, delete_rows, get_public_rows, get_rows, get_service_json, get_service_json_or_empty, patch_rows, patch_rows_ignoring_http_status, patch_rows_no_response, post_rows, upsert_rows
 from core.legacy_main_config import legacy_main_settings
+from core.legacy_admin import require_legacy_admin as require_admin
 from core.telemetry import (_request_modulo, _track_anthropic, _track_gemini_image, _track_groq, track_usage)
 from core.user_access import get_user_access_state, get_user_rol
 from core.subscriptions import (expire_trial_subscription as _expirar_trial_suscripcion, trial_has_expired as _trial_ya_vencio, trial_max_available as _trial_max_disponible)
@@ -7292,17 +7293,6 @@ async def importar_contactos_archivo(request: Request, file: UploadFile = File(.
 # El rol gobierna el acceso; las suscripciones de Stripe son solo para agentes.
 # Solo accesibles si el caller tiene rol=admin (verificado vía service key).
 # ─────────────────────────────────────────────
-
-async def require_admin(request: Request) -> str:
-    """Verifica que el caller esté autenticado y tenga rol=admin. Devuelve su user_id."""
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autenticado.")
-    rol = await get_user_rol(user_id)
-    if rol != "admin":
-        raise HTTPException(status_code=403, detail="Acceso denegado.")
-    return user_id
-
 
 @app.get("/admin/me")
 async def admin_me(request: Request):
