@@ -13,7 +13,10 @@ class MainEasyBrokerExistingPropertiesReadCoreRefactorTests(unittest.TestCase):
     def setUpClass(cls):
         cls.source = MAIN.read_text(encoding="utf-8")
         start = cls.source.index('@app.post("/easybroker/import-all")')
-        end = cls.source.index('\n\n@app.post("/contactos/importar-eb")', start)
+        end = cls.source.index(
+            '\n\n# ════════════════════════════════════════════════════════════════\n# Contactos / Importar desde EasyBroker',
+            start,
+        )
         cls.block = cls.source[start:end]
 
     def test_main_compiles_and_direct_existing_properties_get_is_gone(self):
