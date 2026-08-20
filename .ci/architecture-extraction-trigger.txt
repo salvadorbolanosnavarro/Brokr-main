@@ -1,2 +1,2 @@
-transform=scripts/refactor_main_extract_demo_core.py
-retry=2
+transform=scripts/refactor_main_extract_admin_usage_core.py
+retry=1
