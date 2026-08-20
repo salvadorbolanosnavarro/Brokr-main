@@ -1,15 +1,7 @@
 .............................................................../home/runner/work/Brokr-main/Brokr-main/core/easybroker_mapping.py:159: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
   "updated_at": datetime.utcnow().isoformat(),
-......................................................................................F............................................................................................................................................................................................................................................
-======================================================================
-FAIL: test_progress_and_key_contracts_are_preserved (test_main_easybroker_migration_state_extraction.EasyBrokerMigrationStateExtractionTests.test_progress_and_key_contracts_are_preserved)
+...................................................................................................................................................................................................................................................................................................................................
 ----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "/home/runner/work/Brokr-main/Brokr-main/tests/test_main_easybroker_migration_state_extraction.py", line 36, in test_progress_and_key_contracts_are_preserved
-    self.assertGreaterEqual(self.main.count('_mig_llave('), 2)
-AssertionError: 0 not greater than or equal to 2
+Ran 386 tests in 6.764s
 
-----------------------------------------------------------------------
-Ran 386 tests in 7.086s
-
-FAILED (failures=1)
+OK
