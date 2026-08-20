@@ -7,6 +7,7 @@ CORE = ROOT / "core" / "legacy_admin.py"
 ADMIN_READ = ROOT / "routers" / "admin_read.py"
 ADMIN_ACCOUNTS = ROOT / "routers" / "admin_accounts.py"
 ADMIN_DELETE = ROOT / "routers" / "admin_delete.py"
+ADMIN_USAGE = ROOT / "routers" / "admin_usage.py"
 
 
 class LegacyAdminGuardExtractionTests(unittest.TestCase):
@@ -17,14 +18,16 @@ class LegacyAdminGuardExtractionTests(unittest.TestCase):
         cls.admin_read = ADMIN_READ.read_text(encoding="utf-8")
         cls.admin_accounts = ADMIN_ACCOUNTS.read_text(encoding="utf-8")
         cls.admin_delete = ADMIN_DELETE.read_text(encoding="utf-8")
+        cls.admin_usage = ADMIN_USAGE.read_text(encoding="utf-8")
 
-    def test_legacy_admin_guard_has_no_local_definition(self):
+    def test_legacy_admin_guard_has_no_local_definition_or_dead_alias(self):
         self.assertNotIn('async def require_admin(', self.main)
-        self.assertIn('from core.legacy_admin import require_legacy_admin as require_admin', self.main)
-        self.assertEqual(self.main.count('require_admin('), 1)
+        self.assertNotIn('from core.legacy_admin import require_legacy_admin as require_admin', self.main)
+        self.assertEqual(self.main.count('require_admin('), 0)
         self.assertEqual(self.admin_read.count('require_legacy_admin('), 2)
         self.assertEqual(self.admin_accounts.count('require_legacy_admin('), 2)
         self.assertEqual(self.admin_delete.count('require_legacy_admin('), 1)
+        self.assertEqual(self.admin_usage.count('require_legacy_admin('), 1)
 
     def test_exact_legacy_401_403_contract_is_preserved(self):
         c = self.core
@@ -41,6 +44,7 @@ class LegacyAdminGuardExtractionTests(unittest.TestCase):
         compile(self.admin_read, "routers/admin_read.py", "exec")
         compile(self.admin_accounts, "routers/admin_accounts.py", "exec")
         compile(self.admin_delete, "routers/admin_delete.py", "exec")
+        compile(self.admin_usage, "routers/admin_usage.py", "exec")
 
 
 if __name__ == "__main__":
