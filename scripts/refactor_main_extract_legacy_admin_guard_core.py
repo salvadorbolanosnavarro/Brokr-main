@@ -27,8 +27,11 @@ def transform_source(source: str) -> str:
 
     if START in transformed:
         raise RuntimeError("legacy admin helper still present in main")
-    if transformed.count('require_admin(') != 5:
-        raise RuntimeError(f"Expected five admin consumers, found {transformed.count('require_admin(')}")
+    # Six legacy admin endpoints consume the shared guard: me, users, rol,
+    # activo, eliminar and uso. Keep this count explicit so a route cannot
+    # silently bypass authorization during the decomposition.
+    if transformed.count('require_admin(') != 6:
+        raise RuntimeError(f"Expected six admin consumers, found {transformed.count('require_admin(')}")
     compile(transformed, str(MAIN), 'exec')
     return transformed
 
