@@ -1,2 +1,2 @@
 extract=scripts/refactor_main_extract_easybroker_import_stats_core.py
-retry=2
+retry=3
