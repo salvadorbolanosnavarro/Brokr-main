@@ -6,6 +6,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
 CORE = ROOT / "core" / "contact_import.py"
+ROUTER = ROOT / "routers" / "easybroker_contact_import.py"
 
 
 class MainAgentMapReadsCoreRefactorTests(unittest.TestCase):
@@ -13,6 +14,7 @@ class MainAgentMapReadsCoreRefactorTests(unittest.TestCase):
     def setUpClass(cls):
         cls.main = MAIN.read_text(encoding="utf-8")
         cls.block = CORE.read_text(encoding="utf-8")
+        cls.router = ROUTER.read_text(encoding="utf-8")
 
     def test_agent_map_reads_use_core(self):
         block = self.block
@@ -35,10 +37,12 @@ class MainAgentMapReadsCoreRefactorTests(unittest.TestCase):
         self.assertIn("por_email[em] = uid", block)
         self.assertIn("por_nombre[nm] = uid", block)
 
-    def test_main_delegates_both_importers_to_shared_core_helper(self):
+    def test_both_importers_delegate_to_shared_core_helper(self):
         self.assertNotIn("async def _mapa_agentes_org(", self.main)
         self.assertIn("from core.contact_import import map_org_agents as _mapa_agentes_org", self.main)
-        self.assertEqual(self.main.count("_mapa_agentes_org("), 2)
+        self.assertEqual(self.main.count("_mapa_agentes_org("), 1)
+        self.assertIn("from core.contact_import import map_org_agents", self.router)
+        self.assertEqual(self.router.count("map_org_agents("), 1)
 
 
 if __name__ == "__main__":
