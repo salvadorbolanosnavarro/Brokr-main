@@ -1,19 +1,18 @@
-"""Keep _mapa_agentes_org's member/profile reads behind core.database."""
+"""Keep shared contact-import agent mapping behind core.database."""
 from pathlib import Path
 import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
+CORE = ROOT / "core" / "contact_import.py"
 
 
 class MainAgentMapReadsCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.source = MAIN.read_text(encoding="utf-8")
-        start = cls.source.index("async def _mapa_agentes_org(org_id: str, user_id: str) -> dict:")
-        end = cls.source.index('@app.post("/contactos/importar-eb")', start)
-        cls.block = cls.source[start:end]
+        cls.main = MAIN.read_text(encoding="utf-8")
+        cls.block = CORE.read_text(encoding="utf-8")
 
     def test_agent_map_reads_use_core(self):
         block = self.block
@@ -35,6 +34,11 @@ class MainAgentMapReadsCoreRefactorTests(unittest.TestCase):
         self.assertNotIn("Authorization", block)
         self.assertIn("por_email[em] = uid", block)
         self.assertIn("por_nombre[nm] = uid", block)
+
+    def test_main_delegates_both_importers_to_shared_core_helper(self):
+        self.assertNotIn("async def _mapa_agentes_org(", self.main)
+        self.assertIn("from core.contact_import import map_org_agents as _mapa_agentes_org", self.main)
+        self.assertEqual(self.main.count("_mapa_agentes_org("), 2)
 
 
 if __name__ == "__main__":
