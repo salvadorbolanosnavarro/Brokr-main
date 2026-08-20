@@ -3,16 +3,13 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-MAIN = ROOT / "main.py"
+ROUTER = ROOT / "routers" / "admin_delete.py"
 
 
 class MainAdminDeleteCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.source = MAIN.read_text(encoding="utf-8")
-        start = cls.source.index('@app.post("/admin/user/eliminar")')
-        end = cls.source.index('\n\nasync def _storage_rutas_fotos_de_usuario', start)
-        cls.block = cls.source[start:end]
+        cls.block = ROUTER.read_text(encoding="utf-8")
 
     def test_target_lookup_preserves_exact_200_fail_soft_http_contract(self):
         block = self.block
@@ -28,7 +25,7 @@ class MainAdminDeleteCoreRefactorTests(unittest.TestCase):
         block = self.block
         rpc = block.index('resultado = await call_service_rpc(')
         for text in [
-            'caller_id = await require_admin(request)',
+            'caller_id = await require_legacy_admin(request)',
             'if target_id == caller_id:',
             'if (objetivo.get("rol") or "agente") == "admin":',
             'if (req.email_confirmacion or "").strip().lower() != email_real:',
