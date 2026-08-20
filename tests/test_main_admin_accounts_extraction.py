@@ -4,6 +4,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
 ROUTER = ROOT / "routers" / "admin_accounts.py"
+DELETE_ROUTER = ROOT / "routers" / "admin_delete.py"
 
 
 class AdminAccountsExtractionTests(unittest.TestCase):
@@ -11,6 +12,7 @@ class AdminAccountsExtractionTests(unittest.TestCase):
     def setUpClass(cls):
         cls.main = MAIN.read_text(encoding="utf-8")
         cls.router = ROUTER.read_text(encoding="utf-8")
+        cls.delete_router = DELETE_ROUTER.read_text(encoding="utf-8")
 
     def test_non_destructive_admin_routes_live_only_in_router(self):
         self.assertIn('@router.post("/admin/user/rol")', self.router)
@@ -38,13 +40,15 @@ class AdminAccountsExtractionTests(unittest.TestCase):
         self.assertIn('timeout=10', r)
         self.assertIn('Error actualizando activo', r)
 
-    def test_destructive_delete_stays_in_main_for_separate_static_cut(self):
-        self.assertIn('class AdminEliminarReq(BaseModel):', self.main)
-        self.assertIn('@app.post("/admin/user/eliminar")', self.main)
+    def test_destructive_delete_isolated_in_separate_router(self):
+        self.assertIn('@router.post("/admin/user/eliminar")', self.delete_router)
+        self.assertNotIn('@app.post("/admin/user/eliminar")', self.main)
+        self.assertIn('app.include_router(admin_delete_router)', self.main)
 
     def test_files_compile(self):
         compile(self.main, "main.py", "exec")
         compile(self.router, "routers/admin_accounts.py", "exec")
+        compile(self.delete_router, "routers/admin_delete.py", "exec")
 
 
 if __name__ == "__main__":
