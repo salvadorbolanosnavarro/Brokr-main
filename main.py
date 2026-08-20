@@ -24,6 +24,12 @@ from core.cache import cache_get, cache_set
 from core.contact_import import map_org_agents as _mapa_agentes_org
 from core.easybroker import EB_API_KEY, EB_BASE, _EB_LOTE, _EB_PAUSA_LOTE, _eb_get_reintentos, eb_headers, extract_colonia, normalize
 from core.easybroker_mapping import _EB_LIMITE_PROPIEDADES, _EB_STATUS_DEFAULT, _EB_STATUS_MAP, _eb_to_brokr
+from core.easybroker_migration import (
+    MIGRACIONES as _MIGRACIONES,
+    PROGRESO_IMPORT as _PROGRESO_IMPORT,
+    migration_key as _mig_llave,
+    set_import_progress as _prog,
+)
 from core.pdf_design import theme_css_for_pdf
 from core.pdf_store import _pdf_store
 import httpx
@@ -7529,22 +7535,6 @@ async def importar_contactos_archivo(request: Request, file: UploadFile = File(.
 # página. Los tres pasos se llaman internamente (localhost) reusando la
 # lógica existente sin duplicarla.
 # ════════════════════════════════════════════════════════════════
-
-_MIGRACIONES: dict = {}   # org o user -> estado del trabajo
-_PROGRESO_IMPORT: dict = {}   # user_id -> texto de avance granular
-
-
-def _prog(user_id: str, texto: str):
-    """Avance granular del import en curso, visible en migracion/estado."""
-    try:
-        _PROGRESO_IMPORT[user_id] = texto
-    except Exception:
-        pass
-
-
-def _mig_llave(org_id, user_id):
-    return f"org:{org_id}" if org_id else f"user:{user_id}"
-
 
 async def _job_migracion_eb(llave: str, auth_header: str):
     est = _MIGRACIONES[llave]
