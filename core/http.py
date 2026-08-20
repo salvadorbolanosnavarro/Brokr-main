@@ -166,19 +166,40 @@ async def fetch_public_bytes(
     max_redirects: int = 3,
 ) -> bytes:
     """Download bounded bytes from a public HTTP(S) URL with SSRF defenses."""
-    result = await fetch_public_http_result(
-        url,
-        timeout=timeout,
-        max_bytes=max_bytes,
-        max_redirects=max_redirects,
-    )
-    if result.status_code >= 400:
-        request = httpx.Request("GET", result.url)
-        response = httpx.Response(
-            result.status_code,
-            headers=result.headers,
-            content=result.content,
-            request=request,
-        )
-        response.raise_for_status()
-    return result.content
+    if max_bytes <= 0:
+        raise ValueError("max_bytes must be positive")
+    if max_redirects < 0:
+        raise ValueError("max_redirects must not be negative")
+
+    current = url
+    async with httpx.AsyncClient(timeout=timeout, follow_redirects=False) as client:
+        for redirect_count in range(max_redirects + 1):
+            await assert_public_http_url(current)
+            async with client.stream("GET", current) as response:
+                if response.status_code in _REDIRECTS:
+                    if redirect_count >= max_redirects:
+                        raise UnsafePublicURL("Too many redirects")
+                    location = response.headers.get("location")
+                    if not location:
+                        raise UnsafePublicURL("Redirect is missing Location header")
+                    current = urljoin(current, location)
+                    continue
+
+                response.raise_for_status()
+                declared = response.headers.get("content-length")
+                if declared:
+                    try:
+                        if int(declared) > max_bytes:
+                            raise ValueError("Remote response exceeds size limit")
+                    except ValueError as exc:
+                        if str(exc) == "Remote response exceeds size limit":
+                            raise
+
+                chunks = bytearray()
+                async for chunk in response.aiter_bytes():
+                    chunks.extend(chunk)
+                    if len(chunks) > max_bytes:
+                        raise ValueError("Remote response exceeds size limit")
+                return bytes(chunks)
+
+    raise UnsafePublicURL("Unable to fetch public URL")
