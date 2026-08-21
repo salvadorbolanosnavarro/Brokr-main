@@ -179,7 +179,7 @@ class Settings:
                 or os.getenv("WA_EMBEDDED_SIGNUP_CONFIG_ID", "")
             ),
             meta_graph_version=os.getenv("META_GRAPH_VERSION", "v23.0"),
-            wa_register_pin=os.getenv("WA_REGISTER_PIN", "123456"),
+            wa_register_pin=os.getenv("WA_REGISTER_PIN", "").strip(),
             frontend_url=os.getenv("FRONTEND_URL", "https://broquer.app").rstrip("/"),
             ai_require_session=_env_bool("EXIGIR_SESION_IA", default=False),
             hourly_anonymous_limit=_env_positive_int("TOPE_HORA_ANONIMO", 40),
@@ -192,9 +192,9 @@ class Settings:
             wa2_model=os.getenv("WA2_MODEL", "claude-sonnet-4-6"),
             wa2_meta_app_id=os.getenv("META_APP_ID", "1709238933850389"),
             wa2_meta_app_secret=wa2_meta_app_secret,
-            wa2_verify_token=os.getenv("WA2_VERIFY_TOKEN", "broquer2_verify"),
+            wa2_verify_token=os.getenv("WA2_VERIFY_TOKEN", "").strip(),
             wa2_app_secret=os.getenv("WA_APP_SECRET", "") or wa2_meta_app_secret,
-            wa2_register_pin=os.getenv("WA_REGISTER_PIN", "142857"),
+            wa2_register_pin=os.getenv("WA_REGISTER_PIN", "").strip(),
             wa2_webhook_url=os.getenv(
                 "WA2_WEBHOOK_URL",
                 "https://api.broquer.app/whatsapp2/webhook",
