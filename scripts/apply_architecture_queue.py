@@ -52,6 +52,7 @@ STEPS = [
     Step("whatsapp-inbox-read", "scripts.refactor_whatsapp_extract_inbox_read_core"),
     Step("whatsapp-conversation-settings", "scripts.refactor_whatsapp_extract_conversation_settings_core"),
     Step("whatsapp-contact-settings", "scripts.refactor_whatsapp_extract_contact_settings_core"),
+    Step("whatsapp-automations-api", "scripts.refactor_whatsapp_extract_automations_api_core"),
     Step("whatsapp-delete-static", "scripts.refactor_whatsapp_extract_delete_core"),
 ]
 
