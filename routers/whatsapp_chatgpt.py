@@ -143,6 +143,11 @@ async def complete_signup(req: CompleteSignupReq, request: Request):
             status_code=400,
             detail="Meta no devolvió código de autorización.",
         )
+    if req.register_number and not WA_REGISTER_PIN:
+        raise HTTPException(
+            status_code=500,
+            detail="WA_REGISTER_PIN no configurado.",
+        )
 
     async with httpx.AsyncClient(timeout=25) as client:
         token_response = await client.get(
