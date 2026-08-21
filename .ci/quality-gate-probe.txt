@@ -1,0 +1,2 @@
+purpose=validate-quality-on-feature-base
+base=agent/architecture-cleanup
