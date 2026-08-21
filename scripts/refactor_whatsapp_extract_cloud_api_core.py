@@ -12,8 +12,9 @@ IMPORT_ANCHOR = "from core.storage import delete_objects, upload_object\n"
 IMPORT_LINE = (
     "from routers.whatsapp_cloud_api import (\n"
     "    descargar_media as _descargar_media, marcar_leido as _wa_marcar_leido,\n"
-    "    revisar_token as _revisar_token, send_text as _wa_send_text,\n"
-    "    send_text_detallado as _wa_send_text_detallado,\n"
+    "    revisar_token as _revisar_token, send_document as _wa_send_document,\n"
+    "    send_document_link as _wa_send_document_link, send_image as _wa_send_image,\n"
+    "    send_text as _wa_send_text, send_text_detallado as _wa_send_text_detallado,\n"
     ")\n"
 )
 REMOVE = {
@@ -22,6 +23,9 @@ REMOVE = {
     "_wa_send_text",
     "_wa_marcar_leido",
     "_descargar_media",
+    "_wa_send_image",
+    "_wa_send_document",
+    "_wa_send_document_link",
 }
 
 
@@ -60,6 +64,9 @@ def transform_source(source: str) -> str:
         "async def _wa_send_text(",
         "async def _wa_marcar_leido",
         "async def _descargar_media",
+        "async def _wa_send_image",
+        "async def _wa_send_document(",
+        "async def _wa_send_document_link",
     ):
         if forbidden in transformed:
             raise RuntimeError(f"Cloud API helper remains: {forbidden}")
@@ -71,6 +78,8 @@ def transform_source(source: str) -> str:
         "_wa_send_text_detallado(numero, contacto.get(\"wa_id\"), texto)",
         "_wa_marcar_leido(numero_rows[0], wamid, escribiendo=False)",
         "_descargar_media(numero, media_id)",
+        "_wa_send_document(numero, contacto.get(\"wa_id\"), ics.encode(\"utf-8\")",
+        "_wa_send_image(numero, item[\"wa_id\"], foto",
     ):
         if required not in transformed:
             raise RuntimeError(f"Cloud API caller or adjacent media helper missing: {required}")
