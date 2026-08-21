@@ -148,3 +148,87 @@ async def descargar_media(numero: dict, media_id: str) -> tuple[bytes | None, st
     except Exception as exc:
         log.warning("Error bajando media %s: %s", media_id, exc)
         return None, ""
+
+
+async def send_image(numero: dict, wa_id: str, url: str, caption: str = "") -> str | None:
+    if not numero.get("access_token"):
+        return None
+    async with httpx.AsyncClient(timeout=20) as client:
+        response = await client.post(
+            f"{GRAPH_API}/{numero['phone_number_id']}/messages",
+            headers={"Authorization": f"Bearer {numero['access_token']}"},
+            json={
+                "messaging_product": "whatsapp",
+                "to": wa_id,
+                "type": "image",
+                "image": {"link": url, "caption": caption[:1024]},
+            },
+        )
+        if response.status_code >= 400:
+            log.error("Envío de imagen falló (%s): %s", numero["phone_number_id"], response.text[:300])
+            return None
+        data = response.json()
+        messages = data.get("messages") or []
+        return messages[0].get("id") if messages else None
+
+
+async def send_document_link(
+    numero: dict,
+    wa_id: str,
+    url: str,
+    filename: str,
+    caption: str = "",
+) -> str | None:
+    if not numero.get("access_token"):
+        return None
+    async with httpx.AsyncClient(timeout=20) as client:
+        response = await client.post(
+            f"{GRAPH_API}/{numero['phone_number_id']}/messages",
+            headers={"Authorization": f"Bearer {numero['access_token']}"},
+            json={
+                "messaging_product": "whatsapp",
+                "to": wa_id,
+                "type": "document",
+                "document": {"link": url, "filename": filename, "caption": caption[:1024]},
+            },
+        )
+        if response.status_code >= 400:
+            log.error("Envío de ficha PDF falló (%s): %s", numero["phone_number_id"], response.text[:300])
+            return None
+        data = response.json()
+        messages = data.get("messages") or []
+        return messages[0].get("id") if messages else None
+
+
+async def send_document(
+    numero: dict,
+    wa_id: str,
+    contenido: bytes,
+    filename: str,
+    caption: str,
+) -> None:
+    if not numero.get("access_token"):
+        return
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            upload = await client.post(
+                f"{GRAPH_API}/{numero['phone_number_id']}/media",
+                headers={"Authorization": f"Bearer {numero['access_token']}"},
+                data={"messaging_product": "whatsapp", "type": "text/calendar"},
+                files={"file": (filename, contenido, "text/calendar")},
+            )
+            media_id = upload.json().get("id") if upload.status_code < 300 else None
+            if not media_id:
+                return
+            await client.post(
+                f"{GRAPH_API}/{numero['phone_number_id']}/messages",
+                headers={"Authorization": f"Bearer {numero['access_token']}"},
+                json={
+                    "messaging_product": "whatsapp",
+                    "to": wa_id,
+                    "type": "document",
+                    "document": {"id": media_id, "filename": filename, "caption": caption},
+                },
+            )
+    except Exception as exc:
+        log.warning("No se pudo mandar el .ics: %s", exc)
