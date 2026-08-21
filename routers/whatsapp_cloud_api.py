@@ -110,6 +110,53 @@ async def send_text(numero: dict, wa_id: str, texto: str) -> str | None:
     return ultimo
 
 
+async def send_template(
+    numero: dict,
+    wa_id: str,
+    nombre: str,
+    idioma: str,
+    variables: list[str] | None = None,
+) -> tuple[str | None, dict | None]:
+    """Send one approved template and expose Meta's error without raising."""
+    if not numero.get("access_token"):
+        return None, {"code": None, "message": "Este número no tiene un token de acceso válido."}
+    componentes = []
+    if variables:
+        componentes.append(
+            {"type": "body", "parameters": [{"type": "text", "text": value} for value in variables]}
+        )
+    async with httpx.AsyncClient(timeout=20) as client:
+        response = await client.post(
+            f"{GRAPH_API}/{numero['phone_number_id']}/messages",
+            headers={"Authorization": f"Bearer {numero['access_token']}"},
+            json={
+                "messaging_product": "whatsapp",
+                "to": wa_id,
+                "type": "template",
+                "template": {
+                    "name": nombre,
+                    "language": {"code": idioma},
+                    "components": componentes,
+                },
+            },
+        )
+    if response.status_code >= 400:
+        log.error("Envío de plantilla falló (%s): %s", numero["phone_number_id"], response.text[:300])
+        try:
+            err = response.json().get("error") or {}
+        except Exception:
+            err = {}
+        detalle = {
+            "code": err.get("code"),
+            "message": err.get("message") or "Meta no pudo mandar la plantilla. Revisa que esté aprobada.",
+        }
+        await revisar_token(numero, detalle)
+        return None, detalle
+    data = response.json()
+    messages = data.get("messages") or []
+    return (messages[0].get("id") if messages else None), None
+
+
 async def marcar_leido(numero: dict, wamid: str | None, escribiendo: bool = True) -> None:
     if not wamid or not numero.get("access_token"):
         return
