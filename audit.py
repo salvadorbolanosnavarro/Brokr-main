@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ════════════════════════════════════════════════════════════════
 # BROQUER — Auditor del contrato de diseño Canon
-# Uso:  python3 audit.py [archivo.html ...]     (sin args: todos los .html)
+# Uso:  python3 audit.py [archivo.html ...]     (sin args: todos los .html activos)
 #
 # DESIGN.md define cómo se consume el sistema y brokr-theme.css es la única
 # fuente ejecutable de valores. Este auditor comprueba reglas estructurales;
@@ -22,11 +22,24 @@
 #   · ★☆ como glifos de calificación (contenido, no icono; <option> no admite SVG)
 #   · border-radius: 0  (reset válido)
 #   · box-shadow inset de 1px (hairline técnico)
+#
+# Exclusiones sin argumentos:
+#   · 404.html / sitio.html: motor visual de sitios públicos de agentes, no UI Broquer
+#   · _TEMPLATE-modulo.html: plantilla de desarrollo, no superficie servida
+#   · copias/mockups históricos: referencia solamente, nunca fuente de diseño
 # ════════════════════════════════════════════════════════════════
 import re, sys, glob, os
 
 ALLOWED_HEX = {'#fff','#ffffff','#000','#000000','#25d366','#1877f2'}
-SKIP = {'legal.html','aviso-privacidad.html','404.html','sitio.html','_TEMPLATE-modulo.html'}
+SKIP = {
+    '404.html',
+    'sitio.html',
+    '_TEMPLATE-modulo.html',
+    'Copia de index.html',
+    'preview-redesign.html',
+    'mock-editorial.html',
+    'mock-ejecutiva.html',
+}
 
 
 def check_texto_ilegible(txt):

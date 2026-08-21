@@ -10,135 +10,41 @@
 <title>Verificador de Documentos — Broquer</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--font-sans);background:var(--silver);color:var(--txt);min-height:100vh}
-
-/* ── HEADER ── */
-.top-header{background:var(--wh);border-bottom:1px solid var(--silver2);padding:16px 20px;position:sticky;top:0;z-index:20}
-.top-header h1{font-family:var(--font-display);font-size:22px;color:var(--navy);margin-bottom:2px}
-.top-header p{font-size:12px;color:var(--mut);line-height:1.4}
-
-/* ── CONTRACT TYPE SELECTOR ── */
-.tipo-selector{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px 20px 0}
-.tipo-btn{padding:14px 12px;border:2px solid var(--silver2);border-radius:var(--r);background:var(--wh);cursor:pointer;text-align:center;font-family:var(--font-sans);transition:all .15s}
-.tipo-btn:hover{border-color:var(--teal);background:var(--tealp)}
-.tipo-btn.active{border-color:var(--navy);background:var(--navy);color:#fff}
-.tipo-ico{font-size:22px;margin-bottom:5px}
-.tipo-lbl{font-size:13px;font-weight:700;display:block;color:var(--navy)}
+body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-height:100vh}
+.top-header{background:var(--bone);border-bottom:1px solid var(--line);padding:var(--sp-4) var(--sp-5);position:sticky;top:0;z-index:var(--z-nav)}
+.top-header h1{font-family:var(--font-display);font-size:var(--fs-h2);color:var(--ink);margin-bottom:var(--sp-1)}
+.top-header p{font-size:var(--fs-label-3);color:var(--mute);line-height:var(--lh-snug)}
+.tipo-selector{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);padding:var(--sp-4) var(--sp-5) 0}
+.tipo-btn{padding:var(--sp-4) var(--sp-3);border:1px solid var(--line-2);border-radius:var(--r);background:var(--bone);cursor:pointer;text-align:center;font-family:var(--font-sans);transition:border-color var(--dur-fast) var(--ease),background var(--dur-fast) var(--ease),color var(--dur-fast) var(--ease)}
+.tipo-btn:hover{border-color:var(--sky-blue);background:var(--sky-canvas)}
+.tipo-btn.active{border-color:var(--sky-navy);background:var(--sky-navy);color:#fff}
+.tipo-ico{font-size:var(--fs-label-3);font-weight:800;letter-spacing:.04em;margin-bottom:var(--sp-1);color:var(--sky-blue)}
+.tipo-btn.active .tipo-ico{color:var(--sky-blue-on-dark)}
+.tipo-lbl{font-size:var(--fs-xs);font-weight:700;display:block;color:var(--ink)}
 .tipo-btn.active .tipo-lbl{color:#fff}
-.tipo-sub{font-size:11px;color:var(--mut);margin-top:2px;display:block}
-.tipo-btn.active .tipo-sub{color:rgba(255,255,255,.65)}
-
-/* ── PROGRESS ── */
-.progress-card{background:var(--wh);border:1.5px solid var(--silver2);border-radius:var(--r);margin:14px 20px 0;padding:14px 18px}
-.progress-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.progress-label{font-size:13px;font-weight:600;color:var(--navy)}
-.progress-counts{display:flex;gap:12px}
-.pc{font-size:11px;font-weight:700;display:flex;align-items:center;gap:4px}
-.pc.ok{color:var(--green)}.pc.warn{color:var(--amber)}.pc.bad{color:var(--red)}.pc.pend{color:var(--mut)}
-.progress-bar-wrap{height:8px;background:var(--silver2);border-radius:4px;overflow:hidden}
-.progress-bar-fill{height:100%;border-radius:4px;background:var(--green);transition:width .4s ease}
-.progress-reset{font-size:11px;color:var(--mut);cursor:pointer;text-decoration:underline;margin-top:8px;display:inline-block}
-.progress-reset:hover{color:var(--red)}
-
-/* ── SECTION GROUP ── */
-.doc-section{margin:14px 20px 0}
-.section-hdr{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.section-hdr-ico{font-size:16px}
-.section-hdr-lbl{font-size: 22px;font-weight:800;letter-spacing: 0.02em;color:var(--mut)}
-.section-hdr-line{flex:1;height:1px;background:var(--silver2)}
-
-/* ── DOCUMENT ITEM ── */
-.doc-item{background:var(--wh);border:1.5px solid var(--silver2);border-radius:var(--r);margin-bottom:8px;overflow:hidden;transition:border .15s}
-.doc-item.approved{border-color:var(--greenb)}
-.doc-item.attention{border-color:var(--amberb)}
-.doc-item.rejected{border-color:var(--redb)}
-.doc-item.manual{border-color:var(--blueb)}
-
-.doc-item-head{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;user-select:none}
-.doc-status-ico{font-size:20px;flex-shrink:0;width:26px;text-align:center;transition:all .2s}
-.doc-status-ico.spin{animation:spinIcon .8s linear infinite;display:inline-block}
-@keyframes spinIcon{to{transform:rotate(360deg)}}
-.doc-head-info{flex:1;min-width:0}
-.doc-head-name{font-size:14px;font-weight:600;color:var(--navy)}
-.doc-head-sub{font-size:11px;color:var(--mut);margin-top:2px}
-.doc-chevron{color:var(--mut);font-size:12px;transition:transform .2s;flex-shrink:0}
-.doc-item.open .doc-chevron{transform:rotate(180deg)}
-.doc-optional-tag{font-size:9px;font-weight:700;letter-spacing:.04em;background:var(--silver);color:var(--mut);border-radius:5px;padding:1px 6px;margin-left:6px;vertical-align:middle}
-
-/* ── DOCUMENT BODY (expanded) ── */
-.doc-body{display:none;padding:0 16px 16px;border-top:1px solid var(--silver2)}
-.doc-item.open .doc-body{display:block}
-.doc-desc{font-size:12px;color:var(--mut);line-height:1.55;margin:10px 0 12px;padding:8px 10px;background:var(--silver);border-radius:7px}
-
-/* Upload zone */
-.upload-zone{border:2px dashed var(--silver2);border-radius:var(--r2);padding:22px;text-align:center;cursor:pointer;transition:all .15s;background:var(--silver);margin-bottom:10px;position:relative}
-.upload-zone:hover,.upload-zone.drag{border-color:var(--teal);background:var(--tealp)}
-.upload-zone.has-file{border-color:var(--green);background:var(--greenp);border-style:solid}
-.upload-ico{font-size:28px;margin-bottom:6px}
-.upload-lbl{font-size:13px;font-weight:600;color:var(--navy)}
-.upload-sub{font-size:11px;color:var(--mut);margin-top:3px}
-.upload-file-input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.upload-preview{width:100%;max-height:200px;object-fit:contain;border-radius:8px;margin-bottom:10px;border:1px solid var(--silver2);display:none}
-.upload-preview.show{display:block}
-.upload-change-btn{font-size:11px;color:var(--teal);cursor:pointer;text-decoration:underline;display:block;text-align:center;margin-bottom:8px}
-
-/* Action buttons */
-.doc-actions{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
-.doc-btn{padding:8px 14px;border-radius:var(--r2);border:none;font-family:var(--font-sans);font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s}
-.doc-btn.ai{background:var(--navy);color:#fff}
-.doc-btn.ai:hover{background:var(--navy3)}
-.doc-btn.ai:disabled{background:var(--silver2);color:var(--mut);cursor:not-allowed}
-.doc-btn.manual{background:var(--silver);color:var(--navy);border:1.5px solid var(--bdr)}
-.doc-btn.manual:hover{border-color:var(--teal);background:var(--tealp);color:var(--teal)}
-.doc-btn.clear{background:var(--silver);color:var(--mut);border:1.5px solid var(--bdr)}
-.doc-btn.clear:hover{border-color:var(--red);color:var(--red)}
-
-/* AI analysis result */
-.ai-result{border-radius:var(--r2);padding:12px 14px;font-size:12px;line-height:1.7;white-space:pre-wrap;display:none;margin-top:6px}
-.ai-result.show{display:block}
-.ai-result.approved{background:var(--greenp);border:1px solid var(--greenb);color:#00AA6C}
-.ai-result.attention{background:var(--amberp);border:1px solid var(--amberb);color:#E8910C}
-.ai-result.rejected{background:var(--redp);border:1px solid var(--redb);color:#E70866}
-.ai-result.manual{background:var(--bluep);border:1px solid var(--blueb);color:#0062E3}
-.ai-verdict{font-size: 26px;font-weight:800;letter-spacing: 0.02em;margin-bottom:6px;display:flex;align-items:center;gap:8px}
-
-/* Status badge on item head */
-.status-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.04em;flex-shrink:0}
-.sb-approved{background:var(--greenp);color:#00AA6C}
-.sb-attention{background:var(--amberp);color:#E8910C}
-.sb-rejected{background:var(--redp);color:#E70866}
-.sb-manual{background:var(--bluep);color:#0062E3}
-.sb-reviewing{background:var(--tealp);color:var(--teal)}
-
-/* Spinner for analyze button */
-.btn-spinner{width:12px;height:12px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spinIcon .7s linear infinite;display:inline-block}
-
-/* Bottom padding */
-.bottom-pad{height:60px}
-
-/* Toast */
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:500;opacity:0;transition:all .25s;z-index:999;white-space:nowrap;pointer-events:none}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-/* Empty state */
-.tipo-empty{text-align:center;padding:50px 20px;color:var(--mut)}
-.tipo-empty svg{opacity:.2;margin-bottom:14px}
-.tipo-empty p{font-size:14px}
+.tipo-sub{font-size:var(--fs-caption);color:var(--mute);margin-top:var(--sp-1);display:block}
+.tipo-btn.active .tipo-sub{color:var(--sky-blue-on-dark)}
+.progress-card{background:var(--bone);border:1px solid var(--line);border-radius:var(--r);margin:var(--sp-4) var(--sp-5) 0;padding:var(--sp-4) var(--sp-5)}
+.progress-top{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-3)}
+.progress-label{font-size:var(--fs-xs);font-weight:700;color:var(--ink)}
+.progress-counts{display:flex;gap:var(--sp-3);flex-wrap:wrap}.pc{font-size:var(--fs-caption);font-weight:700}.pc.ok{color:var(--success)}.pc.warn{color:var(--warn)}.pc.bad{color:var(--danger)}.pc.pend{color:var(--mute)}
+.progress-bar-wrap{height:var(--sp-2);background:var(--paper-2);border-radius:var(--r-pill);overflow:hidden}.progress-bar-fill{height:100%;border-radius:var(--r-pill);background:var(--success);transition:width var(--dur-slow) var(--ease)}
+.progress-reset{font-size:var(--fs-caption);color:var(--mute);cursor:pointer;text-decoration:underline;margin-top:var(--sp-2);display:inline-block}.progress-reset:hover{color:var(--danger)}
+.doc-section{margin:var(--sp-4) var(--sp-5) 0}.section-hdr{display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-2)}.section-hdr-ico{font-size:var(--fs-caption);font-weight:800;color:var(--sky-blue);min-width:var(--sp-8)}.section-hdr-lbl{font-size:var(--fs-h5);font-weight:800;letter-spacing:-.01em;color:var(--ink)}.section-hdr-line{flex:1;height:1px;background:var(--line)}
+.doc-item{background:var(--bone);border:1px solid var(--line);border-radius:var(--r);margin-bottom:var(--sp-2);overflow:hidden;transition:border-color var(--dur-fast) var(--ease),box-shadow var(--dur-fast) var(--ease)}
+.doc-item.approved{border-color:var(--success)}.doc-item.attention{border-color:var(--warn)}.doc-item.rejected{border-color:var(--danger)}.doc-item.manual{border-color:var(--sky-blue)}
+.doc-item-head{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);cursor:pointer;user-select:none}.doc-status-ico{font-size:var(--fs-caption);font-weight:800;flex-shrink:0;min-width:var(--sp-7);text-align:center;color:var(--mute)}.doc-status-ico.spin{animation:spinIcon .8s linear infinite;display:inline-block}@keyframes spinIcon{to{transform:rotate(360deg)}}
+.doc-head-info{flex:1;min-width:0}.doc-head-name{font-size:var(--fs-sm);font-weight:700;color:var(--ink)}.doc-head-sub{font-size:var(--fs-caption);color:var(--mute);margin-top:var(--sp-1)}.doc-chevron{color:var(--mute);font-size:var(--fs-xs);transition:transform var(--dur-fast) var(--ease);flex-shrink:0}.doc-item.open .doc-chevron{transform:rotate(180deg)}.doc-optional-tag{font-size:var(--fs-caption);font-weight:700;letter-spacing:.04em;background:var(--paper-2);color:var(--mute);border-radius:var(--r-sm);padding:var(--sp-1) var(--sp-2);margin-left:var(--sp-2);vertical-align:middle}
+.doc-body{display:none;padding:0 var(--sp-4) var(--sp-4);border-top:1px solid var(--line)}.doc-item.open .doc-body{display:block}.doc-desc{font-size:var(--fs-label-3);color:var(--ink-2);line-height:var(--lh);margin:var(--sp-3) 0;padding:var(--sp-3);background:var(--paper-2);border-radius:var(--r-sm)}
+.upload-zone{border:1px dashed var(--line-2);border-radius:var(--r);padding:var(--sp-6);text-align:center;cursor:pointer;transition:border-color var(--dur-fast) var(--ease),background var(--dur-fast) var(--ease);background:var(--paper-2);margin-bottom:var(--sp-3);position:relative}.upload-zone:hover,.upload-zone.drag{border-color:var(--sky-blue);background:var(--sky-canvas)}.upload-zone.has-file{border-color:var(--success);background:var(--success-soft);border-style:solid}.upload-ico{font-size:var(--fs-xs);font-weight:800;color:var(--sky-blue);margin-bottom:var(--sp-2)}.upload-lbl{font-size:var(--fs-xs);font-weight:700;color:var(--ink)}.upload-sub{font-size:var(--fs-caption);color:var(--mute);margin-top:var(--sp-1)}.upload-file-input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}.upload-preview{width:100%;max-height:200px;object-fit:contain;border-radius:var(--r);margin-bottom:var(--sp-3);border:1px solid var(--line);display:none}.upload-preview.show{display:block}.upload-change-btn{font-size:var(--fs-caption);color:var(--sky-blue);cursor:pointer;text-decoration:underline;display:block;text-align:center;margin-bottom:var(--sp-2)}
+.doc-actions{display:flex;gap:var(--sp-2);margin-bottom:var(--sp-3);flex-wrap:wrap}.doc-btn{padding:var(--sp-2) var(--sp-4);border-radius:var(--r-sm);border:none;font-family:var(--font-sans);font-size:var(--fs-label-3);font-weight:700;cursor:pointer;display:flex;align-items:center;gap:var(--sp-2);transition:background var(--dur-fast) var(--ease),border-color var(--dur-fast) var(--ease),color var(--dur-fast) var(--ease)}.doc-btn.ai{background:var(--sky-blue);color:#fff}.doc-btn.ai:hover{background:var(--sky-blue-press)}.doc-btn.ai:disabled{background:var(--line-2);color:var(--mute);cursor:not-allowed}.doc-btn.manual{background:var(--paper-2);color:var(--ink);border:1px solid var(--line)}.doc-btn.manual:hover{border-color:var(--sky-blue);background:var(--sky-canvas);color:var(--sky-blue)}.doc-btn.clear{background:var(--paper-2);color:var(--mute);border:1px solid var(--line)}.doc-btn.clear:hover{border-color:var(--danger);color:var(--danger)}
+.ai-result{border-radius:var(--r-sm);padding:var(--sp-3) var(--sp-4);font-size:var(--fs-label-3);line-height:var(--lh);white-space:pre-wrap;display:none;margin-top:var(--sp-2)}.ai-result.show{display:block}.ai-result.approved{background:var(--success-soft);border:1px solid var(--success);color:var(--success)}.ai-result.attention{background:var(--warn-soft);border:1px solid var(--warn);color:var(--warn)}.ai-result.rejected{background:var(--danger-soft);border:1px solid var(--danger);color:var(--danger)}.ai-result.manual{background:var(--info-soft);border:1px solid var(--info);color:var(--info)}.ai-verdict{font-size:var(--fs-h2);font-weight:800;letter-spacing:-.01em;margin-bottom:var(--sp-2);display:flex;align-items:center;gap:var(--sp-2)}
+.status-badge{font-size:var(--fs-caption);font-weight:700;padding:var(--sp-1) var(--sp-2);border-radius:var(--r-pill);letter-spacing:.04em;flex-shrink:0}.sb-approved{background:var(--success-soft);color:var(--success)}.sb-attention{background:var(--warn-soft);color:var(--warn)}.sb-rejected,.sb-bad{background:var(--danger-soft);color:var(--danger)}.sb-manual{background:var(--info-soft);color:var(--info)}.sb-reviewing{background:var(--sky-canvas);color:var(--sky-blue)}
+.btn-spinner{width:var(--sp-3);height:var(--sp-3);border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spinIcon .7s linear infinite;display:inline-block}.bottom-pad{height:var(--sp-16)}.toast{position:fixed;bottom:var(--sp-5);left:50%;transform:translateX(-50%) translateY(var(--sp-5));background:var(--sky-navy);color:#fff;padding:var(--sp-3) var(--sp-5);border-radius:var(--r);font-size:var(--fs-xs);font-weight:600;opacity:0;transition:all var(--dur) var(--ease);z-index:var(--z-toast);white-space:nowrap;pointer-events:none}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}.tipo-empty{text-align:center;padding:var(--sp-10) var(--sp-5);color:var(--mute)}.tipo-empty svg{opacity:.2;margin-bottom:var(--sp-3)}.tipo-empty p{font-size:var(--fs-sm)}
+@media(max-width:720px){.tipo-selector{padding-inline:var(--sp-4)}.progress-card,.doc-section{margin-inline:var(--sp-4)}.progress-top{align-items:flex-start;flex-direction:column}}
 </style>
 </head>
 <body data-app="verificador">
-
-<!-- shell-replaced-sidebar -->
-<div style="display:none" hidden>
-  <aside class="app-sidebar">
-    <div class="app-sidebar__brand">Broquer<span class="dot">.</span></div>
-    <a class="app-nav-link" href="index.html">Inicio</a>
-    <a class="app-nav-link" href="propiedades.html">Inmuebles</a>
-    <a class="app-nav-link" href="contactos.html">Contactos</a>
-    <a class="app-nav-link" href="contratos.html">Contratos</a>
-    <a class="app-nav-link" href="avm.html">AVM</a>
-  </aside>
-</div>
 
 <!-- HEADER -->
 <div class="top-header">
@@ -148,12 +54,12 @@ body{font-family:var(--font-sans);background:var(--silver);color:var(--txt);min-
 <!-- CONTRACT TYPE -->
 <div class="tipo-selector">
   <div class="tipo-btn active" id="btn-tipo-arr" onclick="setTipo('arrendamiento',this)">
-    <div class="tipo-ico">🏠</div>
+    <div class="tipo-ico" aria-hidden="true">AR</div>
     <span class="tipo-lbl">Arrendamiento</span>
     <span class="tipo-sub">Contrato de renta</span>
   </div>
   <div class="tipo-btn" id="btn-tipo-comp" onclick="setTipo('compraventa',this)">
-    <div class="tipo-ico">🏛️</div>
+    <div class="tipo-ico" aria-hidden="true">CV</div>
     <span class="tipo-lbl">Compraventa</span>
     <span class="tipo-sub">Escrituración</span>
   </div>
@@ -164,10 +70,10 @@ body{font-family:var(--font-sans);background:var(--silver);color:var(--txt);min-
   <div class="progress-top">
     <span class="progress-label" id="progress-label">Documentos revisados</span>
     <div class="progress-counts">
-      <span class="pc ok" id="cnt-ok">✅ 0</span>
-      <span class="pc warn" id="cnt-warn">⚠️ 0</span>
-      <span class="pc bad" id="cnt-bad">❌ 0</span>
-      <span class="pc pend" id="cnt-pend">⭕ 0</span>
+      <span class="pc ok" id="cnt-ok">OK 0</span>
+      <span class="pc warn" id="cnt-warn">Atención 0</span>
+      <span class="pc bad" id="cnt-bad">Rechazados 0</span>
+      <span class="pc pend" id="cnt-pend">Pendientes 0</span>
     </div>
   </div>
   <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-bar" style="width:0%"></div></div>
@@ -190,7 +96,7 @@ const CHECKLISTS = {
   arrendamiento: [
     {
       grupo: 'Arrendador (propietario)',
-      ico: '👤',
+      ico: 'PROP',
       docs: [
         {
           id: 'arr_ine',
@@ -224,7 +130,7 @@ const CHECKLISTS = {
     },
     {
       grupo: 'Arrendatario (inquilino)',
-      ico: '🙋',
+      ico: 'CLI',
       docs: [
         {
           id: 'arrt_ine',
@@ -251,7 +157,7 @@ const CHECKLISTS = {
     },
     {
       grupo: 'Obligado solidario (aval)',
-      ico: '🤝',
+      ico: 'AVAL',
       docs: [
         {
           id: 'os_ine',
@@ -281,7 +187,7 @@ const CHECKLISTS = {
   compraventa: [
     {
       grupo: 'Documentos del inmueble',
-      ico: '🏛️',
+      ico: 'INM',
       docs: [
         {
           id: 'cv_escritura',
@@ -323,7 +229,7 @@ const CHECKLISTS = {
     },
     {
       grupo: 'Documentos del vendedor',
-      ico: '🏷️',
+      ico: 'VEND',
       docs: [
         {
           id: 'vend_ine',
@@ -358,7 +264,7 @@ const CHECKLISTS = {
     },
     {
       grupo: 'Documentos del comprador',
-      ico: '🙋',
+      ico: 'CLI',
       docs: [
         {
           id: 'comp_ine',
@@ -393,7 +299,7 @@ const CHECKLISTS = {
     },
     {
       grupo: 'Documentos de la operación',
-      ico: '📋',
+      ico: 'DOC',
       docs: [
         {
           id: 'op_avaluo',
@@ -434,12 +340,12 @@ function setDocEstado(docId, datos) {
 
 // ── Status helpers ────────────────────────────────────────────────────────────
 const STATUS = {
-  pending:   { ico: '⭕', label: '',            cls: '' },
-  reviewing: { ico: '⏳', label: 'Revisando…',  cls: 'sb-reviewing' },
-  approved:  { ico: '✅', label: 'Aprobado',     cls: 'sb-approved' },
-  attention: { ico: '⚠️', label: 'Atención',    cls: 'sb-attention' },
-  rejected:  { ico: '❌', label: 'Rechazado',   cls: 'sb-bad' },
-  manual:    { ico: '☑️', label: 'Revisado',    cls: 'sb-manual' },
+  pending:   { ico: '—', label: '',            cls: '' },
+  reviewing: { ico: '…', label: 'Revisando…',  cls: 'sb-reviewing' },
+  approved:  { ico: 'OK', label: 'Aprobado',     cls: 'sb-approved' },
+  attention: { ico: '!', label: 'Atención',    cls: 'sb-attention' },
+  rejected:  { ico: 'NO', label: 'Rechazado',   cls: 'sb-bad' },
+  manual:    { ico: 'OK', label: 'Revisado',    cls: 'sb-manual' },
 };
 
 function docItemCls(status) {
@@ -475,10 +381,10 @@ function actualizarProgreso() {
   const pct = total > 0 ? Math.round((ok / total) * 100) : 0;
   document.getElementById('progress-bar').style.width = pct + '%';
   document.getElementById('progress-label').textContent = `${ok}/${total} documentos aprobados`;
-  document.getElementById('cnt-ok').textContent   = `✅ ${ok}`;
-  document.getElementById('cnt-warn').textContent = `⚠️ ${warn}`;
-  document.getElementById('cnt-bad').textContent  = `❌ ${bad}`;
-  document.getElementById('cnt-pend').textContent = `⭕ ${pend}`;
+  document.getElementById('cnt-ok').textContent   = `OK ${ok}`;
+  document.getElementById('cnt-warn').textContent = `Atención ${warn}`;
+  document.getElementById('cnt-bad').textContent  = `Rechazados ${bad}`;
+  document.getElementById('cnt-pend').textContent = `Pendientes ${pend}`;
 }
 
 // ── Render ────────────────────────────────────────────────────────────────────
@@ -512,17 +418,17 @@ function renderDocItem(doc) {
       <span class="doc-status-ico ${s==='reviewing'?'spin':''}" id="ico-${doc.id}">${st.ico}</span>
       <div class="doc-head-info">
         <div class="doc-head-name">${doc.nombre}${optTag}</div>
-        <div class="doc-head-sub" id="sub-${doc.id}">${estado.fecha_rev ? '🔍 Revisado el ' + new Date(estado.fecha_rev).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}) : doc.tip}</div>
+        <div class="doc-head-sub" id="sub-${doc.id}">${estado.fecha_rev ? 'Revisado el ' + new Date(estado.fecha_rev).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}) : doc.tip}</div>
       </div>
       ${badgeSb}
       <span class="doc-chevron">▾</span>
     </div>
     <div class="doc-body" id="body-${doc.id}">
-      <div class="doc-desc">📌 <strong>Qué necesitas:</strong> ${doc.desc}<br/><br/>✅ <strong>Requisitos clave:</strong> ${doc.reqs}</div>
+      <div class="doc-desc"><strong>Qué necesitas:</strong> ${doc.desc}<br/><br/><strong>Requisitos clave:</strong> ${doc.reqs}</div>
 
       <input type="file" accept="image/*,.pdf" id="file-${doc.id}" style="display:none" onchange="onFileSelect('${doc.id}',this)"/>
       <div class="upload-zone ${estado.has_file?'has-file':''}" id="zone-${doc.id}" onclick="document.getElementById('file-${doc.id}').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="onDrop('${doc.id}',event)">
-        <div class="upload-ico" id="zone-ico-${doc.id}">${estado.has_file ? '📄' : '📎'}</div>
+        <div class="upload-ico" id="zone-ico-${doc.id}">${estado.has_file ? 'DOC' : 'SUBIR'}</div>
         <div class="upload-lbl" id="zone-lbl-${doc.id}">${estado.has_file ? (estado.file_name||'Archivo cargado') : 'Toca para cargar documento'}</div>
         <div class="upload-sub">Foto, escaneo o PDF — arrastra aquí</div>
       </div>
@@ -531,10 +437,10 @@ function renderDocItem(doc) {
 
       <div class="doc-actions">
         <button class="doc-btn ai" id="ai-btn-${doc.id}" onclick="analizarConIA('${doc.id}')" ${!estado.has_file?'disabled':''}>
-          <span id="ai-btn-inner-${doc.id}">✨ Analizar con IA</span>
+          <span id="ai-btn-inner-${doc.id}">Analizar con IA</span>
         </button>
-        <button class="doc-btn manual" onclick="marcarManual('${doc.id}')">☑️ Marcar como revisado</button>
-        ${s !== 'pending' ? `<button class="doc-btn clear" onclick="limpiarDoc('${doc.id}')">↺ Reiniciar</button>` : ''}
+        <button class="doc-btn manual" onclick="marcarManual('${doc.id}')">Marcar como revisado</button>
+        ${s !== 'pending' ? `<button class="doc-btn clear" onclick="limpiarDoc('${doc.id}')">Reiniciar</button>` : ''}
       </div>
 
       <div class="ai-result ${s!=='pending'&&s!=='reviewing'&&estado.ai_analysis?'show ':''} ${s==='attention'?'attention':s==='rejected'?'rejected':s==='manual'?'manual':'approved'}" id="result-${doc.id}">
@@ -574,7 +480,7 @@ function handleFile(id, file) {
     // Update zone
     const zone = document.getElementById('zone-' + id);
     zone.classList.add('has-file');
-    document.getElementById('zone-ico-' + id).textContent = '📄';
+    document.getElementById('zone-ico-' + id).textContent = 'DOC';
     document.getElementById('zone-lbl-' + id).textContent = file.name.length > 30 ? file.name.slice(0,28)+'…' : file.name;
 
     // Show preview if image
@@ -629,11 +535,11 @@ TIPO DE CONTRATO: ${tipoContr}
 
 Realiza las siguientes verificaciones y reporta CADA PUNTO:
 
-1. 🔍 IDENTIFICACIÓN: ¿Qué tipo de documento es? ¿Coincide con lo esperado?
-2. 📋 DATOS EXTRAÍDOS: Nombres, fechas, folios, vigencia, montos o números visibles.
-3. ✅ VALIDEZ FORMAL: ¿Tiene sellos, firmas, folios oficiales? ¿Está debidamente autenticado?
-4. ⚠️ PROBLEMAS DETECTADOS: Irregularidades, datos ilegibles, documentos vencidos, discrepancias o datos faltantes.
-5. 📌 RECOMENDACIONES: Pasos específicos para corregir o complementar.
+1. IDENTIFICACIÓN: ¿Qué tipo de documento es? ¿Coincide con lo esperado?
+2. DATOS EXTRAÍDOS: Nombres, fechas, folios, vigencia, montos o números visibles.
+3. VALIDEZ FORMAL: ¿Tiene sellos, firmas, folios oficiales? ¿Está debidamente autenticado?
+4. PROBLEMAS DETECTADOS: Irregularidades, datos ilegibles, documentos vencidos, discrepancias o datos faltantes.
+5. RECOMENDACIONES: Pasos específicos para corregir o complementar.
 
 Al final, concluye con EXACTAMENTE UNA de estas palabras solas en una línea:
 APROBADO — el documento es válido y cumple los requisitos.
@@ -677,10 +583,10 @@ function setUIAnalizando(docId, activo) {
   if (activo) {
     btn.disabled = true;
     inner.innerHTML = '<span class="btn-spinner"></span> Analizando…';
-    if (ico) { ico.textContent = '⏳'; ico.classList.add('spin'); }
+    if (ico) { ico.textContent = '…'; ico.classList.add('spin'); }
   } else {
     btn.disabled = false;
-    inner.textContent = '✨ Analizar con IA';
+    inner.textContent = 'Analizar con IA';
     if (ico) ico.classList.remove('spin');
   }
 }
@@ -765,7 +671,7 @@ async function analizarConIA(docId) {
   const resEl = document.getElementById('result-' + docId);
   if (resEl) {
     resEl.className = 'ai-result attention show';
-    resEl.textContent = '⚠️ El servidor no pudo analizar la imagen en este momento. Puedes marcar el documento como revisado manualmente o intentarlo de nuevo más tarde.';
+    resEl.textContent = 'El servidor no pudo analizar la imagen en este momento. Puedes marcar el documento como revisado manualmente o intentarlo de nuevo más tarde.';
   }
   showToast('No se pudo analizar — intenta de nuevo o marca manualmente');
 }
@@ -780,7 +686,7 @@ function procesarRespuestaIA(docId, texto) {
 
   setDocEstado(docId, { status, ai_analysis: texto, fecha_rev: new Date().toISOString() });
   actualizarItemUI(docId);
-  showToast(status === 'approved' ? '✅ Documento aprobado' : status === 'rejected' ? '❌ Documento rechazado' : '⚠️ Requiere atención');
+  showToast(status === 'approved' ? 'OK Documento aprobado' : status === 'rejected' ? 'NO Documento rechazado' : '!️ Requiere atención');
 }
 
 function actualizarItemUI(docId) {
@@ -828,11 +734,11 @@ function actualizarItemUI(docId) {
 function marcarManual(docId) {
   setDocEstado(docId, {
     status: 'manual',
-    ai_analysis: '☑️ Este documento fue revisado y marcado manualmente como válido por el agente.',
+    ai_analysis: 'OK️ Este documento fue revisado y marcado manualmente como válido por el agente.',
     fecha_rev: new Date().toISOString()
   });
   actualizarItemUI(docId);
-  showToast('Documento marcado como revisado ✓');
+  showToast('Documento marcado como revisado OK');
 }
 
 function limpiarDoc(docId) {

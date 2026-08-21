@@ -6,46 +6,82 @@
 <title>Broquer — Unirte a un equipo</title>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
-<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+<meta name="theme-color" content="#081C4E"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <meta name="robots" content="noindex,nofollow"/>
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
-  /* ════════════════════════════════════════════════════════════════
-     Página de invitación a un equipo. NO lleva app-shell.js: puede
-     abrirla alguien sin cuenta. Tres estados:
-
-       1. Cargando / invitación inválida o vencida.
-       2. Invitación válida SIN sesión → botones para entrar con su
-          cuenta o crear una. El token queda guardado y index.html lo
-          detecta al terminar el login para regresar aquí.
-       3. Invitación válida CON sesión → un solo botón para unirse.
-     ════════════════════════════════════════════════════════════════ */
+  /* Página pública sin app-shell. La lógica de invitaciones permanece intacta;
+     esta hoja solo compone la identidad Canon compartida. */
   [hidden] { display: none !important; }
-  html, body { background: var(--paper); min-height: 100%; }
-  body { overflow-y: auto; }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { min-height: 100%; background: var(--paper); }
+  body {
+    margin: 0;
+    overflow-y: auto;
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
 
-  .un-wrap { max-width: 520px; margin: 0 auto; padding: 20px 16px 80px; }
-  .un-marca { display: flex; justify-content: center; padding: var(--sp-6) 0 var(--sp-5); }
-  .un-marca img { height: 40px; width: auto; }
+  .un-page {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    background:
+      radial-gradient(circle at 50% 0%, var(--sky-canvas), transparent 36rem),
+      var(--paper);
+  }
+  .un-wrap {
+    width: min(100%, var(--form-max));
+    margin: auto;
+    padding: var(--sp-7) var(--sp-5) var(--sp-12);
+  }
+  .un-marca {
+    display: flex;
+    justify-content: center;
+    margin-bottom: var(--sp-6);
+  }
+  .un-marca img { height: var(--h); width: auto; display: block; }
 
+  .un-card {
+    width: min(100%, 560px);
+    margin: 0 auto;
+    padding: var(--sp-8);
+    border: 1px solid var(--line-2);
+    border-radius: var(--r-xl);
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--shadow-md);
+  }
+  .un-kicker {
+    width: max-content;
+    margin: 0 auto var(--sp-3);
+    padding: var(--sp-1) var(--sp-3);
+    border-radius: var(--r-pill);
+    background: var(--sky-canvas);
+    color: var(--sky-blue);
+    font-size: var(--fs-xs);
+    font-weight: 800;
+  }
   .un-hed {
+    margin: 0 0 var(--sp-3);
     font-family: var(--font-display);
     font-size: var(--fs-h2);
-    font-weight: 700;
-    letter-spacing: -0.02em;
+    font-weight: 800;
+    letter-spacing: -0.025em;
     color: var(--ink);
     line-height: var(--lh-h2);
     text-align: center;
-    margin-bottom: var(--sp-3);
   }
   .un-sub {
+    margin: 0 0 var(--sp-6);
     font-size: var(--fs-sm);
-    color: var(--ink-2);
+    color: var(--mute);
     text-align: center;
-    line-height: 1.6;
-    margin-bottom: var(--sp-6);
+    line-height: var(--lh);
   }
-  .un-empresa { font-weight: 700; color: var(--ink); }
+  .un-empresa { font-weight: 800; color: var(--ink); }
 
   .un-datos {
     display: flex;
@@ -58,87 +94,114 @@
     margin-bottom: var(--sp-5);
   }
   .un-datos svg { flex: 0 0 auto; margin-top: 2px; }
-  .un-datos p { font-size: var(--fs-sm); color: var(--ink-2); line-height: 1.6; margin: 0; }
+  .un-datos p { margin: 0; font-size: var(--fs-sm); color: var(--ink-2); line-height: var(--lh); }
 
   .un-botones { display: flex; flex-direction: column; gap: var(--sp-3); }
+  .un-botones .bk-btn { width: 100%; min-height: var(--h); }
   .un-liga {
-    background: none;
-    border: 0;
-    padding: var(--sp-2);
-    font-family: inherit;
-    font-size: var(--fs-sm);
-    color: var(--ink-2);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    cursor: pointer;
     align-self: center;
+    padding: var(--sp-2) var(--sp-3);
+    border: 0;
+    background: none;
+    color: var(--mute);
+    font: 600 var(--fs-sm)/1 var(--font-sans);
+    text-decoration: none;
+    cursor: pointer;
   }
-  .un-liga:hover { color: var(--ink); }
+  .un-liga:hover { color: var(--sky-blue); text-decoration: underline; text-underline-offset: 3px; }
   .un-pie {
-    margin-top: var(--sp-5);
+    margin: var(--sp-5) 0 0;
     font-size: var(--fs-xs);
-    color: var(--ink-3);
+    color: var(--mute);
     text-align: center;
-    line-height: 1.6;
+    line-height: var(--lh);
+  }
+  .un-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2);
+    color: var(--mute);
+    font-size: var(--fs-sm);
+  }
+  .un-dot {
+    width: var(--sp-2);
+    height: var(--sp-2);
+    border-radius: var(--r-pill);
+    background: var(--sky-blue);
+    animation: un-pulse 1s var(--ease) infinite alternate;
+  }
+  @keyframes un-pulse { to { opacity: .28; transform: scale(.72); } }
+  @media (prefers-reduced-motion: reduce) { .un-dot { animation: none; } }
+  @media (max-width: 600px) {
+    .un-wrap { padding: var(--sp-6) var(--sp-4) var(--sp-10); }
+    .un-card { padding: var(--sp-6) var(--sp-5); border-radius: var(--r-lg); }
   }
 </style>
 </head>
 <body>
+<div class="un-page">
 <div class="un-wrap">
   <div class="un-marca"><img src="logotipo-black.png" alt="Broquer"/></div>
+  <section class="un-card">
 
-  <!-- Estado: cargando -->
-  <div id="un-cargando">
-    <p class="un-sub">Revisando tu invitación…</p>
-  </div>
-
-  <!-- Estado: inválida o vencida -->
-  <div id="un-invalida" hidden>
-    <h1 class="un-hed">Esta invitación ya no es válida</h1>
-    <p class="un-sub">
-      Puede que haya vencido o que la hayan cancelado. Pide al administrador de la inmobiliaria que te genere una nueva.
-    </p>
-  </div>
-
-  <!-- Estado: válida -->
-  <div id="un-valida" hidden>
-    <h1 class="un-hed">Te invitaron a un equipo</h1>
-    <p class="un-sub">
-      <span class="un-empresa" id="un-empresa"></span> te invita a unirte a su equipo en Broquer
-      con el correo <strong id="un-email"></strong>.
-    </p>
-
-    <div class="un-datos" id="un-datos-si" hidden>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--forest)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-      <p>Entras con tu información: tu inventario, tus contactos y todo lo demás se integran a la empresa para trabajar en conjunto.</p>
-    </div>
-    <div class="un-datos" id="un-datos-no" hidden>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      <p>Entras con cuenta limpia. Si ya usas Broquer, tu información actual queda guardada en tu cuenta individual — no se pierde ni se comparte con la empresa.</p>
+    <!-- Estado: cargando -->
+    <div id="un-cargando">
+      <div class="un-loading"><span class="un-dot" aria-hidden="true"></span><span>Revisando tu invitación…</span></div>
     </div>
 
-    <div class="bk-alert bk-alert--danger" id="un-err" hidden style="margin-bottom:var(--sp-4);"></div>
-
-    <!-- Con sesión -->
-    <div class="un-botones" id="un-con-sesion" hidden>
-      <button type="button" class="bk-btn bk-btn--forest" id="un-btn-unirme">Unirme al equipo</button>
-      <button type="button" class="un-liga" id="un-btn-otra">Entrar con otra cuenta</button>
+    <!-- Estado: inválida o vencida -->
+    <div id="un-invalida" hidden>
+      <div class="un-kicker">Invitación</div>
+      <h1 class="un-hed">Esta invitación ya no es válida</h1>
+      <p class="un-sub">
+        Puede que haya vencido o que la hayan cancelado. Pide al administrador de la inmobiliaria que te genere una nueva.
+      </p>
     </div>
 
-    <!-- Sin sesión: login.html detecta el token, muestra la invitación,
-         precarga el correo y elige sola entre entrar o crear cuenta. -->
-    <div class="un-botones" id="un-sin-sesion" hidden>
-      <button type="button" class="bk-btn bk-btn--forest" id="un-btn-login">Continuar</button>
+    <!-- Estado: válida -->
+    <div id="un-valida" hidden>
+      <div class="un-kicker">Tu equipo en Broquer</div>
+      <h1 class="un-hed">Te invitaron a un equipo</h1>
+      <p class="un-sub">
+        <span class="un-empresa" id="un-empresa"></span> te invita a unirte a su equipo en Broquer
+        con el correo <strong id="un-email"></strong>.
+      </p>
+
+      <div class="un-datos" id="un-datos-si" hidden>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+        <p>Entras con tu información: tu inventario, tus contactos y todo lo demás se integran a la empresa para trabajar en conjunto.</p>
+      </div>
+      <div class="un-datos" id="un-datos-no" hidden>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--mute)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <p>Entras con cuenta limpia. Si ya usas Broquer, tu información actual queda guardada en tu cuenta individual — no se pierde ni se comparte con la empresa.</p>
+      </div>
+
+      <div class="bk-alert bk-alert--danger" id="un-err" hidden style="margin-bottom:var(--sp-4);"></div>
+
+      <!-- Con sesión -->
+      <div class="un-botones" id="un-con-sesion" hidden>
+        <button type="button" class="bk-btn bk-btn--forest" id="un-btn-unirme">Unirme al equipo</button>
+        <button type="button" class="un-liga" id="un-btn-otra">Entrar con otra cuenta</button>
+      </div>
+
+      <!-- Sin sesión: login.html detecta el token, muestra la invitación,
+           precarga el correo y elige sola entre entrar o crear cuenta. -->
+      <div class="un-botones" id="un-sin-sesion" hidden>
+        <button type="button" class="bk-btn bk-btn--forest" id="un-btn-login">Continuar</button>
+      </div>
+
+      <p class="un-pie">La invitación solo funciona con el correo indicado y vence a los 14 días.</p>
     </div>
 
-    <p class="un-pie">La invitación solo funciona con el correo indicado y vence a los 14 días.</p>
-  </div>
-
-  <!-- Estado: listo -->
-  <div id="un-lista" hidden>
-    <h1 class="un-hed">Ya eres parte del equipo</h1>
-    <p class="un-sub">Bienvenido a <span class="un-empresa" id="un-empresa-ok"></span>. Te llevamos a Broquer…</p>
-  </div>
+    <!-- Estado: listo -->
+    <div id="un-lista" hidden>
+      <div class="un-kicker">Listo</div>
+      <h1 class="un-hed">Ya eres parte del equipo</h1>
+      <p class="un-sub">Bienvenido a <span class="un-empresa" id="un-empresa-ok"></span>. Te llevamos a Broquer…</p>
+    </div>
+  </section>
+</div>
 </div>
 
 <script>
