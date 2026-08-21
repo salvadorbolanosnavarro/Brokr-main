@@ -21,6 +21,12 @@ PRICING_FALLBACK_BY_PROVIDER = {
     "groq": {"in": 0.59 / 1_000_000, "out": 0.79 / 1_000_000},
     "gemini": {"in": 0.30 / 1_000_000, "out": 2.50 / 1_000_000},
 }
+# Time-priced audio models. Values are USD per billed hour. Groq currently
+# bills whisper-large-v3 by audio duration, with a 10-second minimum/request.
+AUDIO_USD_PER_HOUR = {
+    "whisper-large-v3": 0.111,
+    "whisper-large-v3-turbo": 0.04,
+}
 GEMINI_IMAGE_USD_PER_UNIT = 0.039
 
 MODULOS_VALIDOS = {
@@ -35,6 +41,7 @@ MODULOS_VALIDOS = {
     "isr",
     "image-cleaner",
     "facebook-ads",
+    "whatsapp",
     "guia",
     "solicitud-arr",
     "admin",
@@ -85,6 +92,38 @@ async def track_usage(
         "costo_usd": costo,
     }
     try:
+        await post_rows("usage_logs", payload, prefer="return=minimal", timeout=6)
+    except Exception:
+        pass
+
+
+async def track_audio_usage(
+    user_id: str,
+    modulo: str,
+    herramienta: str,
+    modelo: str,
+    audio_seconds: float,
+    proveedor: str = "groq",
+    minimum_billed_seconds: float = 10.0,
+):
+    """Track a time-priced audio call without pretending it is token-priced."""
+    if not user_id or not settings.supabase_url or not settings.supabase_service_key:
+        return
+    try:
+        seconds = max(float(minimum_billed_seconds), float(audio_seconds or 0))
+        rate = float(AUDIO_USD_PER_HOUR.get(modelo, 0.0))
+        costo = round(seconds * rate / 3600.0, 6)
+        payload = {
+            "user_id": user_id,
+            "modulo": (modulo or "desconocido")[:80],
+            "herramienta": (herramienta or "")[:120],
+            "proveedor": (proveedor or "")[:40],
+            "modelo": (modelo or "")[:80],
+            "tokens_in": 0,
+            "tokens_out": 0,
+            "unidades": int(round(seconds)),
+            "costo_usd": costo,
+        }
         await post_rows("usage_logs", payload, prefer="return=minimal", timeout=6)
     except Exception:
         pass
