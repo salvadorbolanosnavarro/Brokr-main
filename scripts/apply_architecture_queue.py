@@ -39,6 +39,7 @@ STEPS = [
     Step("whatsapp-utils", "scripts.refactor_whatsapp_extract_utils_core"),
     Step("whatsapp-time", "scripts.refactor_whatsapp_extract_time_core"),
     Step("whatsapp-access", "scripts.refactor_whatsapp_extract_access_core"),
+    Step("whatsapp-concurrency", "scripts.refactor_whatsapp_extract_concurrency_core"),
     Step("whatsapp-identity", "scripts.refactor_whatsapp_extract_identity_core"),
     Step("whatsapp-training-policy", "scripts.refactor_whatsapp_extract_training_core"),
     Step("whatsapp-handoff", "scripts.refactor_whatsapp_extract_handoff_core"),
