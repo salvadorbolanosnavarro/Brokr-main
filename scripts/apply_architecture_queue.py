@@ -40,6 +40,7 @@ STEPS = [
     Step("whatsapp-handoff", "scripts.refactor_whatsapp_extract_handoff_core"),
     Step("whatsapp-messages", "scripts.refactor_whatsapp_extract_messages_core"),
     Step("whatsapp-crm-bridge", "scripts.refactor_whatsapp_extract_crm_bridge_core"),
+    Step("whatsapp-contacts", "scripts.refactor_whatsapp_extract_contacts_core"),
     Step("whatsapp-property-view", "scripts.refactor_whatsapp_extract_property_view_core"),
     Step("whatsapp-stats", "scripts.refactor_whatsapp_extract_stats_core"),
     Step("whatsapp-stats-api", "scripts.refactor_whatsapp_extract_stats_api_core"),
