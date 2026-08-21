@@ -49,10 +49,12 @@ async def transcribir_audio(contenido: bytes, mime: str, user_id: str = "") -> s
         if user_id:
             duracion = 0.0
             try:
-                duracion = max(
-                    (float(segmento.get("end") or 0) for segmento in (data.get("segments") or [])),
-                    default=0.0,
-                )
+                duracion = float(data.get("duration") or 0)
+                if duracion <= 0:
+                    duracion = max(
+                        (float(segmento.get("end") or 0) for segmento in (data.get("segments") or [])),
+                        default=0.0,
+                    )
             except Exception:
                 duracion = 0.0
             asyncio.create_task(
