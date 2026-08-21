@@ -48,6 +48,7 @@ STEPS = [
     Step("whatsapp-connection", "scripts.refactor_whatsapp_extract_connection_core"),
     Step("whatsapp-team-number-verify", "scripts.refactor_whatsapp_connection_team_verify_core"),
     Step("whatsapp-training-api", "scripts.refactor_whatsapp_extract_training_api_core"),
+    Step("whatsapp-templates", "scripts.refactor_whatsapp_extract_templates_core"),
     Step("whatsapp-inbox-read", "scripts.refactor_whatsapp_extract_inbox_read_core"),
     Step("whatsapp-conversation-settings", "scripts.refactor_whatsapp_extract_conversation_settings_core"),
     Step("whatsapp-contact-settings", "scripts.refactor_whatsapp_extract_contact_settings_core"),
