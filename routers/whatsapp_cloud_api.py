@@ -150,7 +150,6 @@ async def send_template(
             "code": err.get("code"),
             "message": err.get("message") or "Meta no pudo mandar la plantilla. Revisa que esté aprobada.",
         }
-        await revisar_token(numero, detalle)
         return None, detalle
     data = response.json()
     messages = data.get("messages") or []
