@@ -6,7 +6,7 @@ monolith is decomposed.
 """
 from __future__ import annotations
 
-from routers.whatsapp_time import _hora_local
+from routers.whatsapp_time import hora_local as _hora_local
 
 
 TRAINING_DEFAULTS = {
