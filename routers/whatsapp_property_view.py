@@ -1,7 +1,7 @@
 """Pure property presentation helpers for WhatsApp conversations."""
 from __future__ import annotations
 
-from routers.whatsapp_utils import _money
+from routers.whatsapp_utils import money as _money
 
 
 def _texto_inmueble(p: dict) -> str:
