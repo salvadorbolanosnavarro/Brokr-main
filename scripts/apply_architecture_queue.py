@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Apply the prepared Broquer architecture transforms in a deterministic order.
 
-This script is intentionally fail-fast.  Every individual transform owns its
-own anchors, compile guard and idempotence rules; this runner merely sequences
+This script is intentionally fail-fast. Every individual transform owns its
+anchors, compile guard and idempotence rules; this runner merely sequences
 those already-reviewed cuts so an executable checkout can advance the branch
 without hand-editing the monoliths.
 
@@ -13,9 +13,6 @@ from __future__ import annotations
 
 import importlib
 from dataclasses import dataclass
-from pathlib import Path
-
-ROOT = Path(__file__).resolve().parents[1]
 
 
 @dataclass(frozen=True)
@@ -30,9 +27,12 @@ STEPS = [
     Step("self-account-delete-static", "scripts.refactor_main_extract_account_delete_core"),
     Step("avm-legacy", "scripts.refactor_main_extract_avm_legacy_core"),
     Step("avm-claude", "scripts.refactor_main_extract_avm_claude_core"),
+    Step("avm-websearch-ssrf", "scripts.refactor_main_avm_websearch_ssrf_core"),
+    Step("facebook-token-encryption", "scripts.refactor_main_facebook_token_encryption_fail_closed_core"),
 
     # Cross-cutting security/config before WhatsApp routers consume settings.
-    Step("whatsapp-secret-defaults", "scripts.refactor_config_remove_whatsapp_secret_defaults"),
+    Step("whatsapp-secret-defaults", "scripts.refactor_whatsapp_security_defaults_core"),
+    Step("whatsapp-chatgpt-register-pin", "scripts.refactor_whatsapp_chatgpt_register_pin_guard_core"),
 
     # WhatsApp dependencies first, then feature routers.
     Step("whatsapp-data", "scripts.refactor_whatsapp_extract_data_core"),
@@ -46,6 +46,7 @@ STEPS = [
     Step("whatsapp-media-storage", "scripts.refactor_whatsapp_extract_media_storage_core"),
     Step("whatsapp-webhook-auth", "scripts.refactor_whatsapp_extract_webhook_verify_core"),
     Step("whatsapp-connection", "scripts.refactor_whatsapp_extract_connection_core"),
+    Step("whatsapp-team-number-verify", "scripts.refactor_whatsapp_connection_team_verify_core"),
     Step("whatsapp-training-api", "scripts.refactor_whatsapp_extract_training_api_core"),
     Step("whatsapp-inbox-read", "scripts.refactor_whatsapp_extract_inbox_read_core"),
     Step("whatsapp-conversation-settings", "scripts.refactor_whatsapp_extract_conversation_settings_core"),
