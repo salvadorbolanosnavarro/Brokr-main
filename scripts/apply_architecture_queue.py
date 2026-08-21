@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
-"""Apply the prepared Broquer architecture transforms in a deterministic order.
+"""Preflight and apply the prepared Broquer architecture transforms as one batch.
 
-This script is intentionally fail-fast. Every individual transform owns its
-anchors, compile guard and idempotence rules; this runner merely sequences
-those already-reviewed cuts so an executable checkout can advance the branch
-without hand-editing the monoliths.
+Every transform is first simulated in memory, in dependency order, against the
+output of previous transforms for the same target file. Nothing is written
+until *all* transforms have found their exact anchors and passed their compile
+checks. This prevents a late transform failure from leaving ``main.py`` or
+``whatsapp.py`` half-refactored.
 
-Destructive *routes* may be moved by static source transforms, but this script
+Destructive *routes* may be moved by static source transforms, but this runner
 never invokes HTTP endpoints or application data operations.
 """
 from __future__ import annotations
 
 import importlib
 from dataclasses import dataclass
+from pathlib import Path
 
 
 @dataclass(frozen=True)
@@ -65,20 +67,60 @@ STEPS = [
     Step("whatsapp-delete-static", "scripts.refactor_whatsapp_extract_delete_core"),
 ]
 
+_TARGET_ATTRS = ("TARGET", "MAIN", "CONFIG")
 
-def _run_step(step: Step) -> None:
+
+def _load_step(step: Step):
     mod = importlib.import_module(step.module)
-    main = getattr(mod, "main", None)
-    if not callable(main):
-        raise RuntimeError(f"{step.module} does not expose main()")
-    print(f"[architecture] APPLY {step.name}")
-    main()
+    transform = getattr(mod, "transform_source", None)
+    if not callable(transform):
+        raise RuntimeError(f"{step.module} does not expose transform_source()")
+    targets = []
+    for attr in _TARGET_ATTRS:
+        value = getattr(mod, attr, None)
+        if isinstance(value, Path):
+            targets.append(value.resolve())
+    targets = list(dict.fromkeys(targets))
+    if len(targets) != 1:
+        raise RuntimeError(
+            f"{step.module} must expose exactly one source target through "
+            f"{', '.join(_TARGET_ATTRS)}; found {targets!r}"
+        )
+    return transform, targets[0]
+
+
+def preflight() -> dict[Path, str]:
+    """Return final in-memory contents after every transform validates."""
+    staged: dict[Path, str] = {}
+    for index, step in enumerate(STEPS, start=1):
+        transform, target = _load_step(step)
+        if not target.exists():
+            raise RuntimeError(f"target for {step.name} does not exist: {target}")
+        source = staged.get(target)
+        if source is None:
+            source = target.read_text(encoding="utf-8")
+        print(f"[architecture] CHECK {index:02d}/{len(STEPS)} {step.name}")
+        staged[target] = transform(source)
+    return staged
+
+
+def apply(staged: dict[Path, str]) -> None:
+    """Write only after the complete queue has passed preflight."""
+    for target, content in staged.items():
+        current = target.read_text(encoding="utf-8")
+        if current == content:
+            continue
+        tmp = target.with_name(target.name + ".architecture-next")
+        tmp.write_text(content, encoding="utf-8")
+        tmp.replace(target)
+        print(f"[architecture] WRITE {target.name}")
 
 
 def main() -> None:
-    for step in STEPS:
-        _run_step(step)
-    print(f"[architecture] OK: {len(STEPS)} transforms applied")
+    staged = preflight()
+    print(f"[architecture] PREFLIGHT OK: {len(STEPS)} transforms")
+    apply(staged)
+    print(f"[architecture] APPLY OK: {len(STEPS)} transforms")
 
 
 if __name__ == "__main__":
