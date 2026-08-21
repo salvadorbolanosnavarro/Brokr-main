@@ -8,7 +8,7 @@ import httpx
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
-from routers.whatsapp_access import ids_visibles as _ids_visibles, require_user as _require_user
+from routers.whatsapp_access import _ids_visibles, _require_user
 from routers.whatsapp_data import sb_get
 from routers.whatsapp_utils import in_filter as _in_filter
 
