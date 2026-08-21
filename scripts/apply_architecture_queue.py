@@ -50,6 +50,8 @@ STEPS = [
     Step("whatsapp-media-ai", "scripts.refactor_whatsapp_extract_media_ai_core"),
     Step("whatsapp-media-ai-usage", "scripts.refactor_whatsapp_media_ai_usage_core"),
     Step("whatsapp-webhook-messages", "scripts.refactor_whatsapp_extract_webhook_messages_core"),
+    Step("whatsapp-coexistence", "scripts.refactor_whatsapp_extract_coexistence_core"),
+    Step("whatsapp-delivery-status", "scripts.refactor_whatsapp_extract_delivery_status_core"),
     Step("whatsapp-appointments", "scripts.refactor_whatsapp_extract_appointments_core"),
     Step("whatsapp-media-storage", "scripts.refactor_whatsapp_extract_media_storage_core"),
     Step("whatsapp-webhook-auth", "scripts.refactor_whatsapp_extract_webhook_verify_core"),
