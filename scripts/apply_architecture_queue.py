@@ -40,6 +40,7 @@ STEPS = [
     Step("whatsapp-utils", "scripts.refactor_whatsapp_extract_utils_core"),
     Step("whatsapp-time", "scripts.refactor_whatsapp_extract_time_core"),
     Step("whatsapp-access", "scripts.refactor_whatsapp_extract_access_core"),
+    Step("whatsapp-identity", "scripts.refactor_whatsapp_extract_identity_core"),
     Step("whatsapp-training-policy", "scripts.refactor_whatsapp_extract_training_core"),
     Step("whatsapp-property-view", "scripts.refactor_whatsapp_extract_property_view_core"),
     Step("whatsapp-stats", "scripts.refactor_whatsapp_extract_stats_core"),
@@ -53,6 +54,7 @@ STEPS = [
     Step("whatsapp-conversation-settings", "scripts.refactor_whatsapp_extract_conversation_settings_core"),
     Step("whatsapp-contact-settings", "scripts.refactor_whatsapp_extract_contact_settings_core"),
     Step("whatsapp-automations-api", "scripts.refactor_whatsapp_extract_automations_api_core"),
+    Step("whatsapp-campaigns-read", "scripts.refactor_whatsapp_extract_campaigns_read_core"),
     Step("whatsapp-delete-static", "scripts.refactor_whatsapp_extract_delete_core"),
 ]
 
