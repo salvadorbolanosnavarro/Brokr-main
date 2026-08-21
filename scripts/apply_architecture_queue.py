@@ -45,6 +45,7 @@ STEPS = [
     Step("whatsapp-property-view", "scripts.refactor_whatsapp_extract_property_view_core"),
     Step("whatsapp-stats", "scripts.refactor_whatsapp_extract_stats_core"),
     Step("whatsapp-stats-api", "scripts.refactor_whatsapp_extract_stats_api_core"),
+    Step("whatsapp-cloud-api", "scripts.refactor_whatsapp_extract_cloud_api_core"),
     Step("whatsapp-media-storage", "scripts.refactor_whatsapp_extract_media_storage_core"),
     Step("whatsapp-webhook-auth", "scripts.refactor_whatsapp_extract_webhook_verify_core"),
     Step("whatsapp-connection", "scripts.refactor_whatsapp_extract_connection_core"),
