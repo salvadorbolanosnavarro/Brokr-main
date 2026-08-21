@@ -29,6 +29,7 @@ STEPS = [
     Step("avm-legacy", "scripts.refactor_main_extract_avm_legacy_core"),
     Step("avm-claude", "scripts.refactor_main_extract_avm_claude_core"),
     Step("avm-websearch-ssrf", "scripts.refactor_main_avm_websearch_ssrf_core"),
+    Step("avm-websearch", "scripts.refactor_main_extract_avm_websearch_core"),
     Step("facebook-token-encryption", "scripts.refactor_main_facebook_token_encryption_fail_closed_core"),
     Step("whatsapp-secret-defaults", "scripts.refactor_whatsapp_security_defaults_core"),
     Step("whatsapp-chatgpt-register-pin", "scripts.refactor_whatsapp_chatgpt_register_pin_guard_core"),
