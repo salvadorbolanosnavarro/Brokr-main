@@ -56,6 +56,7 @@ STEPS = [
     Step("whatsapp-team-number-verify", "scripts.refactor_whatsapp_connection_team_verify_core"),
     Step("whatsapp-training-api", "scripts.refactor_whatsapp_extract_training_api_core"),
     Step("whatsapp-templates", "scripts.refactor_whatsapp_extract_templates_core"),
+    Step("whatsapp-template-send", "scripts.refactor_whatsapp_extract_template_send_core"),
     Step("whatsapp-inbox-read", "scripts.refactor_whatsapp_extract_inbox_read_core"),
     Step("whatsapp-inbox-send", "scripts.refactor_whatsapp_extract_inbox_send_core"),
     Step("whatsapp-inbox-read-state", "scripts.refactor_whatsapp_extract_inbox_read_state_core"),
@@ -64,6 +65,7 @@ STEPS = [
     Step("whatsapp-contact-settings", "scripts.refactor_whatsapp_extract_contact_settings_core"),
     Step("whatsapp-automations-api", "scripts.refactor_whatsapp_extract_automations_api_core"),
     Step("whatsapp-campaigns-read", "scripts.refactor_whatsapp_extract_campaigns_read_core"),
+    Step("whatsapp-campaigns-send", "scripts.refactor_whatsapp_extract_campaigns_send_core"),
     Step("whatsapp-delete-static", "scripts.refactor_whatsapp_extract_delete_core"),
 ]
 
