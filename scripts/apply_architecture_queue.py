@@ -22,19 +22,14 @@ class Step:
 
 
 STEPS = [
-    # main.py — preserve this order because later cuts see a smaller bootstrap.
     Step("admin-usage", "scripts.refactor_main_extract_admin_usage_core"),
     Step("self-account-delete-static", "scripts.refactor_main_extract_account_delete_core"),
     Step("avm-legacy", "scripts.refactor_main_extract_avm_legacy_core"),
     Step("avm-claude", "scripts.refactor_main_extract_avm_claude_core"),
     Step("avm-websearch-ssrf", "scripts.refactor_main_avm_websearch_ssrf_core"),
     Step("facebook-token-encryption", "scripts.refactor_main_facebook_token_encryption_fail_closed_core"),
-
-    # Cross-cutting security/config before WhatsApp routers consume settings.
     Step("whatsapp-secret-defaults", "scripts.refactor_whatsapp_security_defaults_core"),
     Step("whatsapp-chatgpt-register-pin", "scripts.refactor_whatsapp_chatgpt_register_pin_guard_core"),
-
-    # WhatsApp dependencies first, then feature routers.
     Step("whatsapp-data", "scripts.refactor_whatsapp_extract_data_core"),
     Step("whatsapp-policy", "scripts.refactor_whatsapp_extract_policy_core"),
     Step("whatsapp-utils", "scripts.refactor_whatsapp_extract_utils_core"),
@@ -44,6 +39,7 @@ STEPS = [
     Step("whatsapp-training-policy", "scripts.refactor_whatsapp_extract_training_core"),
     Step("whatsapp-handoff", "scripts.refactor_whatsapp_extract_handoff_core"),
     Step("whatsapp-messages", "scripts.refactor_whatsapp_extract_messages_core"),
+    Step("whatsapp-crm-bridge", "scripts.refactor_whatsapp_extract_crm_bridge_core"),
     Step("whatsapp-property-view", "scripts.refactor_whatsapp_extract_property_view_core"),
     Step("whatsapp-stats", "scripts.refactor_whatsapp_extract_stats_core"),
     Step("whatsapp-stats-api", "scripts.refactor_whatsapp_extract_stats_api_core"),
@@ -58,6 +54,7 @@ STEPS = [
     Step("whatsapp-inbox-send", "scripts.refactor_whatsapp_extract_inbox_send_core"),
     Step("whatsapp-inbox-read-state", "scripts.refactor_whatsapp_extract_inbox_read_state_core"),
     Step("whatsapp-conversation-settings", "scripts.refactor_whatsapp_extract_conversation_settings_core"),
+    Step("whatsapp-contact-notes", "scripts.refactor_whatsapp_extract_contact_notes_core"),
     Step("whatsapp-contact-settings", "scripts.refactor_whatsapp_extract_contact_settings_core"),
     Step("whatsapp-automations-api", "scripts.refactor_whatsapp_extract_automations_api_core"),
     Step("whatsapp-campaigns-read", "scripts.refactor_whatsapp_extract_campaigns_read_core"),
