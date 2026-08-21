@@ -56,6 +56,7 @@ STEPS = [
     Step("whatsapp-templates", "scripts.refactor_whatsapp_extract_templates_core"),
     Step("whatsapp-inbox-read", "scripts.refactor_whatsapp_extract_inbox_read_core"),
     Step("whatsapp-inbox-send", "scripts.refactor_whatsapp_extract_inbox_send_core"),
+    Step("whatsapp-inbox-read-state", "scripts.refactor_whatsapp_extract_inbox_read_state_core"),
     Step("whatsapp-conversation-settings", "scripts.refactor_whatsapp_extract_conversation_settings_core"),
     Step("whatsapp-contact-settings", "scripts.refactor_whatsapp_extract_contact_settings_core"),
     Step("whatsapp-automations-api", "scripts.refactor_whatsapp_extract_automations_api_core"),
