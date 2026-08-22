@@ -1,2 +1,2 @@
-transform=scripts/refactor_main_extract_admin_usage_core.py
-retry=5
+transform=scripts/refactor_main_extract_dead_routers_core.py
+retry=1
