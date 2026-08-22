@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Generate a deterministic snapshot of the effective FastAPI HTTP contract.
 
-Unlike the old source scanner, this imports the assembled application and
-snapshots the routes FastAPI actually exposes, so APIRouter/include_router
-prefixes are already resolved. Source-file ownership is intentionally absent.
+Visible client-facing routes come from the assembled OpenAPI document, which
+already resolves APIRouter/include_router prefixes and captures request/response
+schemas. Routes deliberately excluded from OpenAPI are snapshotted separately
+from app.routes. Source-file ownership and duplicate registration cardinality
+are intentionally not part of the HTTP contract.
 """
 from __future__ import annotations
 
@@ -25,7 +27,7 @@ os.environ.setdefault("SUPABASE_ANON_KEY", "contract-test")
 os.environ.setdefault("SUPABASE_SERVICE_KEY", "contract-test")
 os.environ.setdefault("EB_API_KEY", "contract-test")
 
-EXCLUDED_METHODS = {"HEAD"}
+HTTP_METHODS = {"get", "post", "put", "patch", "delete", "options", "head", "trace"}
 
 
 def _normalize(value: Any) -> Any:
@@ -36,21 +38,34 @@ def _normalize(value: Any) -> Any:
     return value
 
 
-def _effective_routes(app: Any) -> list[dict[str, Any]]:
-    # Duplicate registrations with the same effective path/method/name are an
-    # implementation detail, not additional HTTP surface. Normalize them away
-    # so moving a handler from @app to an included router does not change the
-    # contract merely because a duplicate registration disappeared.
+def _visible_routes(openapi: dict[str, Any]) -> list[dict[str, Any]]:
+    routes: list[dict[str, Any]] = []
+    for path, operations in (openapi.get("paths") or {}).items():
+        if not isinstance(operations, dict):
+            continue
+        methods = sorted(
+            method.upper()
+            for method in operations
+            if isinstance(method, str) and method.lower() in HTTP_METHODS
+        )
+        if methods:
+            routes.append({"path": path, "methods": methods})
+    routes.sort(key=lambda item: (item["path"], item["methods"]))
+    return routes
+
+
+def _hidden_routes(app: Any) -> list[dict[str, Any]]:
     unique: set[tuple[str, tuple[str, ...], str | None]] = set()
     for route in app.routes:
+        if getattr(route, "include_in_schema", True) is not False:
+            continue
         path = getattr(route, "path", None)
         methods = getattr(route, "methods", None)
         if not path or not methods:
             continue
-        normalized_methods = tuple(sorted(m for m in methods if m not in EXCLUDED_METHODS))
-        if not normalized_methods:
-            continue
-        unique.add((path, normalized_methods, getattr(route, "name", None)))
+        normalized_methods = tuple(sorted(str(method).upper() for method in methods))
+        if normalized_methods:
+            unique.add((path, normalized_methods, getattr(route, "name", None)))
 
     routes = [
         {"path": path, "methods": list(methods), "name": name}
@@ -64,15 +79,17 @@ def generate() -> dict[str, Any]:
     module = importlib.import_module("main")
     app = module.app
 
-    # Force regeneration from the current route table before snapshotting the
-    # effective HTTP surface.
+    # Always regenerate rather than trusting FastAPI's cached schema.
     app.openapi_schema = None
     openapi = _normalize(app.openapi())
-    routes = _effective_routes(app)
+    visible = _visible_routes(openapi)
+    hidden = _hidden_routes(app)
     return {
-        "schema": 2,
-        "route_count": len(routes),
-        "routes": routes,
+        "schema": 3,
+        "visible_route_count": len(visible),
+        "visible_routes": visible,
+        "hidden_route_count": len(hidden),
+        "hidden_routes": hidden,
         "openapi": openapi,
     }
 
@@ -87,7 +104,11 @@ def main() -> int:
         json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    print(f"wrote {payload['route_count']} effective routes to {args.output}")
+    print(
+        "wrote "
+        f"{payload['visible_route_count']} visible + "
+        f"{payload['hidden_route_count']} hidden effective routes to {args.output}"
+    )
     return 0
 
 
