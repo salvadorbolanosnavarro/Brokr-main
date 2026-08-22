@@ -1,4 +1,4 @@
-name: Apply bounded architecture extraction
+name: Apply AST architecture extraction
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 jobs:
-  apply-and-quality:
+  apply-contract-quality:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -25,7 +25,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Resolve bounded extraction
+      - name: Resolve AST extraction
         id: resolve
         shell: bash
         run: |
@@ -37,7 +37,13 @@ jobs:
           test -f "$script"
           echo "script=$script" >> "$GITHUB_OUTPUT"
 
-      - name: Apply deterministic extraction
+      - name: Install test dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements-ci.txt
+
+      - name: Snapshot effective HTTP contract before extraction
+        run: python scripts/generate_http_contract_golden.py /tmp/http-contract-before.json
+
+      - name: Apply deterministic AST extraction
         run: python "${{ steps.resolve.outputs.script }}"
 
       - name: Reject unexpected production diff
@@ -49,8 +55,15 @@ jobs:
             exit 1
           fi
 
-      - name: Install test dependencies
-        run: python -m pip install --disable-pip-version-check -r requirements-ci.txt
+      - name: Verify effective HTTP contract is identical
+        shell: bash
+        run: |
+          python scripts/generate_http_contract_golden.py /tmp/http-contract-after.json
+          if ! cmp -s /tmp/http-contract-before.json /tmp/http-contract-after.json; then
+            echo 'Effective HTTP contract changed:'
+            diff -u /tmp/http-contract-before.json /tmp/http-contract-after.json || true
+            exit 1
+          fi
 
       - name: Run Quality gates
         run: bash scripts/run_quality.sh
@@ -64,13 +77,15 @@ jobs:
             echo "Extraction produced no main.py diff"
             exit 1
           fi
+          trigger_sha="$(git rev-parse HEAD)"
           git add main.py
-          git commit -m "refactor: extract bounded domain from main"
+          git commit -m "refactor: connect prepared routers via AST extraction"
           quality_sha="$(git rev-parse HEAD)"
           printf '%s\n' "$quality_sha" > .ci/architecture-quality-pass.txt
           cat > .ci/architecture-quality-result.txt <<EOF
-          trigger_sha=$(git rev-parse HEAD^)
+          trigger_sha=$trigger_sha
           transform=success
+          contract=success
           install=success
           compile=success
           tests=success
@@ -79,5 +94,5 @@ jobs:
           quality_sha=$quality_sha
           EOF
           git add .ci/architecture-quality-pass.txt .ci/architecture-quality-result.txt
-          git commit -m "ci: certify bounded architecture extraction"
+          git commit -m "ci: certify AST architecture extraction"
           git push origin HEAD:agent/architecture-cleanup
