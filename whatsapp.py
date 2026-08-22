@@ -58,12 +58,12 @@ WA2_MODEL         = os.environ.get("WA2_MODEL", "claude-sonnet-4-6")
 GRAPH_API       = "https://graph.facebook.com/v21.0"
 META_APP_ID     = os.environ.get("META_APP_ID", "1709238933850389")
 META_APP_SECRET = os.environ.get("META_APP_SECRET", "")
-WA2_VERIFY_TOKEN = os.environ.get("WA2_VERIFY_TOKEN", "broquer2_verify")
+WA2_VERIFY_TOKEN = os.environ.get("WA2_VERIFY_TOKEN", "").strip()
 # Es la MISMA app de Meta que se usa para el OAuth, así que la firma es la
 # misma clave secreta. Si alguien no puso WA_APP_SECRET en Railway, caemos
 # a META_APP_SECRET en vez de quedarnos sin verificar nada.
 WA2_APP_SECRET   = os.environ.get("WA_APP_SECRET", "") or META_APP_SECRET
-WA2_REGISTER_PIN = os.environ.get("WA_REGISTER_PIN", "142857")
+WA2_REGISTER_PIN = os.environ.get("WA_REGISTER_PIN", "").strip()
 # URL pública propia de este módulo (para el override_callback_uri al suscribir)
 WA2_WEBHOOK_URL  = os.environ.get("WA2_WEBHOOK_URL", "https://api.broquer.app/whatsapp2/webhook")
 
@@ -589,6 +589,8 @@ async def wa2_connect(req: ConnectReq, request: Request):
     if req.coexistence:
         log.info("Coexistencia: se omite /register para %s (ya registrado)", phone_number_id)
     else:
+        if not WA2_REGISTER_PIN:
+            raise HTTPException(status_code=500, detail="WA_REGISTER_PIN no configurado.")
         async with httpx.AsyncClient(timeout=20) as c:
             r = await c.post(f"{GRAPH_API}/{phone_number_id}/register",
                              params={"access_token": business_token},
@@ -1937,7 +1939,7 @@ async def _perfil_agente(user_id: str) -> dict:
 @router.get("/webhook")
 def wa2_verify_webhook(request: Request):
     p = request.query_params
-    if p.get("hub.mode") == "subscribe" and p.get("hub.verify_token") == WA2_VERIFY_TOKEN:
+    if WA2_VERIFY_TOKEN and p.get("hub.mode") == "subscribe" and p.get("hub.verify_token") == WA2_VERIFY_TOKEN:
         return Response(content=p.get("hub.challenge", ""), media_type="text/plain")
     return Response(content="forbidden", status_code=403)
 
