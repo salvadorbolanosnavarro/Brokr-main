@@ -8,13 +8,19 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 AUDIT = ROOT / "audit.py"
 QUALITY_RUNNER = ROOT / "scripts" / "run_quality.sh"
+QUALITY_WORKFLOW = ROOT / ".github" / "workflows" / "quality.yml"
 
 
 class FrontendCanonInventoryTests(unittest.TestCase):
-    def test_quality_runner_is_the_single_canon_audit_entrypoint(self):
+    def test_quality_workflow_delegates_to_the_single_quality_runner(self):
+        workflow = QUALITY_WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("run: bash scripts/run_quality.sh", workflow)
+        self.assertNotIn("python audit.py", workflow)
+
+    def test_quality_runner_uses_no_arg_canon_inventory(self):
         quality = QUALITY_RUNNER.read_text(encoding="utf-8")
         audit_lines = [line.strip() for line in quality.splitlines() if line.strip().startswith("python audit.py")]
-        self.assertEqual(audit_lines, ["python audit.py estadisticas.html"])
+        self.assertEqual(audit_lines, ["python audit.py"])
 
     def test_no_arg_audit_excludes_only_deliberate_non_product_surfaces(self):
         tree = ast.parse(AUDIT.read_text(encoding="utf-8"))
