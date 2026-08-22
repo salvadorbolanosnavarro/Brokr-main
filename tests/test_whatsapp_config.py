@@ -5,17 +5,20 @@ import os
 import unittest
 from unittest.mock import patch
 
+from starlette.requests import Request
+
 from core.config import Settings
+from routers.whatsapp_webhook_auth import meta_verify_response
 
 
 class WhatsAppConfigTests(unittest.TestCase):
-    def test_whatsapp2_defaults_match_legacy_router(self):
+    def test_whatsapp2_defaults_are_fail_closed_for_public_secrets(self):
         with patch.dict(os.environ, {}, clear=True):
             s = Settings.from_env()
         self.assertEqual(s.wa2_model, "claude-sonnet-4-6")
         self.assertEqual(s.wa2_meta_app_id, "1709238933850389")
-        self.assertEqual(s.wa2_verify_token, "broquer2_verify")
-        self.assertEqual(s.wa2_register_pin, "142857")
+        self.assertEqual(s.wa2_verify_token, "")
+        self.assertEqual(s.wa2_register_pin, "")
         self.assertEqual(s.wa2_webhook_url, "https://api.broquer.app/whatsapp2/webhook")
         self.assertEqual(s.wa2_broquer_api_base, "https://api.broquer.app")
         self.assertEqual(s.wa2_zone_default, "America/Mexico_City")
@@ -23,6 +26,16 @@ class WhatsAppConfigTests(unittest.TestCase):
         self.assertEqual(s.wa2_campaign_limit, 250)
         self.assertEqual(s.wa2_media_bucket, "wa-media")
         self.assertEqual(s.wa2_ai_limit, 25)
+
+        scope = {
+            "type": "http",
+            "method": "GET",
+            "path": "/whatsapp2/webhook",
+            "headers": [],
+            "query_string": b"hub.mode=subscribe&hub.verify_token=broquer2_verify&hub.challenge=ok",
+        }
+        response = meta_verify_response(Request(scope), s.wa2_verify_token)
+        self.assertEqual(response.status_code, 503)
 
     def test_whatsapp2_app_secret_preserves_legacy_fallback(self):
         with patch.dict(
