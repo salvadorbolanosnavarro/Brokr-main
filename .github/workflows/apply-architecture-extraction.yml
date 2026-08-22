@@ -1,9 +1,9 @@
 name: Apply AST architecture extraction
 
 on:
-  push:
+  pull_request:
     branches:
-      - agent/architecture-cleanup
+      - main
     paths:
       - '.ci/architecture-extraction-trigger.txt'
 
