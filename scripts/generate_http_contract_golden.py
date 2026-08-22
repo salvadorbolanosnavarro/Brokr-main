@@ -36,10 +36,7 @@ def _normalize(value: Any) -> Any:
     return value
 
 
-def generate() -> dict[str, Any]:
-    module = importlib.import_module("main")
-    app = module.app
-
+def _effective_routes(app: Any) -> list[dict[str, Any]]:
     routes: list[dict[str, Any]] = []
     for route in app.routes:
         path = getattr(route, "path", None)
@@ -55,11 +52,18 @@ def generate() -> dict[str, Any]:
             "name": getattr(route, "name", None),
         })
     routes.sort(key=lambda item: (item["path"], item["methods"], item["name"] or ""))
+    return routes
 
-    # Force regeneration from the current route table. This avoids accepting a
-    # stale schema if any imported code happened to populate FastAPI's cache.
+
+def generate() -> dict[str, Any]:
+    module = importlib.import_module("main")
+    app = module.app
+
+    # Force regeneration from the current route table. Some application wiring
+    # is finalized as OpenAPI is assembled, so snapshot app.routes afterwards.
     app.openapi_schema = None
     openapi = _normalize(app.openapi())
+    routes = _effective_routes(app)
     return {
         "schema": 2,
         "route_count": len(routes),
