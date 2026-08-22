@@ -1,90 +1,78 @@
 #!/usr/bin/env python3
-"""Generate a deterministic FastAPI HTTP contract snapshot from a git commit."""
+"""Generate a deterministic snapshot of the effective FastAPI HTTP contract.
+
+Unlike the old source scanner, this imports the assembled application and
+snapshots the routes FastAPI actually exposes, so APIRouter/include_router
+prefixes are already resolved. Source-file ownership is intentionally absent.
+"""
 from __future__ import annotations
 
 import argparse
-import ast
+import importlib
 import json
+import os
 from pathlib import Path
-import subprocess
+from typing import Any
 
-HTTP_METHODS = {"get", "post", "put", "patch", "delete", "options", "head"}
+# Keep import-time configuration deterministic without using real credentials.
+os.environ.setdefault("SUPABASE_URL", "https://example.invalid")
+os.environ.setdefault("SUPABASE_ANON_KEY", "contract-test")
+os.environ.setdefault("SUPABASE_SERVICE_KEY", "contract-test")
+os.environ.setdefault("EB_API_KEY", "contract-test")
 
-
-def git(*args: str) -> str:
-    return subprocess.check_output(["git", *args], text=True, encoding="utf-8")
-
-
-def literal(value: ast.AST) -> str | None:
-    try:
-        result = ast.literal_eval(value)
-    except (ValueError, TypeError, SyntaxError):
-        return None
-    return result if isinstance(result, str) else None
+EXCLUDED_METHODS = {"HEAD"}
 
 
-def routes_from_source(path: str, source: str) -> list[dict[str, str]]:
-    try:
-        tree = ast.parse(source, filename=path)
-    except SyntaxError:
-        return []
-    routes: list[dict[str, str]] = []
-    for node in ast.walk(tree):
-        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+def _normalize(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {key: _normalize(value[key]) for key in sorted(value)}
+    if isinstance(value, list):
+        return [_normalize(item) for item in value]
+    return value
+
+
+def generate() -> dict[str, Any]:
+    module = importlib.import_module("main")
+    app = module.app
+
+    routes: list[dict[str, Any]] = []
+    for route in app.routes:
+        path = getattr(route, "path", None)
+        methods = getattr(route, "methods", None)
+        if not path or not methods:
             continue
-        for decorator in node.decorator_list:
-            if not isinstance(decorator, ast.Call) or not decorator.args:
-                continue
-            func = decorator.func
-            if not isinstance(func, ast.Attribute) or func.attr.lower() not in HTTP_METHODS:
-                continue
-            if not isinstance(func.value, ast.Name) or func.value.id not in {"app", "router"}:
-                continue
-            route_path = literal(decorator.args[0])
-            if route_path is None:
-                continue
-            routes.append({
-                "method": func.attr.upper(),
-                "path": route_path,
-                "handler": node.name,
-                "source": path,
-                "owner": func.value.id,
-            })
-    return routes
-
-
-def generate(ref: str) -> dict:
-    files = [
-        line.strip()
-        for line in git("ls-tree", "-r", "--name-only", ref).splitlines()
-        if line.strip().endswith(".py")
-    ]
-    routes: list[dict[str, str]] = []
-    for path in files:
-        try:
-            source = git("show", f"{ref}:{path}")
-        except subprocess.CalledProcessError:
+        normalized_methods = sorted(m for m in methods if m not in EXCLUDED_METHODS)
+        if not normalized_methods:
             continue
-        routes.extend(routes_from_source(path, source))
-    routes.sort(key=lambda item: (item["path"], item["method"], item["source"], item["handler"]))
-    resolved = git("rev-parse", ref).strip()
+        routes.append({
+            "path": path,
+            "methods": normalized_methods,
+            "name": getattr(route, "name", None),
+        })
+    routes.sort(key=lambda item: (item["path"], item["methods"], item["name"] or ""))
+
+    # Full OpenAPI catches parameter/body/response-schema drift while the route
+    # list above catches effective routing (including all composed prefixes).
+    openapi = _normalize(app.openapi())
     return {
-        "schema": 1,
-        "source_commit": resolved,
+        "schema": 2,
         "route_count": len(routes),
         "routes": routes,
+        "openapi": openapi,
     }
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("ref")
     parser.add_argument("output", type=Path)
     args = parser.parse_args()
-    payload = generate(args.ref)
+    payload = generate()
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"wrote {payload['route_count']} routes from {payload['source_commit']} to {args.output}")
+    args.output.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    print(f"wrote {payload['route_count']} effective routes to {args.output}")
     return 0
 
 
