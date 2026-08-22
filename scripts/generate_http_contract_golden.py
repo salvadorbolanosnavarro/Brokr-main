@@ -11,8 +11,8 @@ import argparse
 import importlib
 import json
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -56,8 +56,9 @@ def generate() -> dict[str, Any]:
         })
     routes.sort(key=lambda item: (item["path"], item["methods"], item["name"] or ""))
 
-    # Full OpenAPI catches parameter/body/response-schema drift while the route
-    # list above catches effective routing (including all composed prefixes).
+    # Force regeneration from the current route table. This avoids accepting a
+    # stale schema if any imported code happened to populate FastAPI's cache.
+    app.openapi_schema = None
     openapi = _normalize(app.openapi())
     return {
         "schema": 2,
