@@ -37,20 +37,25 @@ def _normalize(value: Any) -> Any:
 
 
 def _effective_routes(app: Any) -> list[dict[str, Any]]:
-    routes: list[dict[str, Any]] = []
+    # Duplicate registrations with the same effective path/method/name are an
+    # implementation detail, not additional HTTP surface. Normalize them away
+    # so moving a handler from @app to an included router does not change the
+    # contract merely because a duplicate registration disappeared.
+    unique: set[tuple[str, tuple[str, ...], str | None]] = set()
     for route in app.routes:
         path = getattr(route, "path", None)
         methods = getattr(route, "methods", None)
         if not path or not methods:
             continue
-        normalized_methods = sorted(m for m in methods if m not in EXCLUDED_METHODS)
+        normalized_methods = tuple(sorted(m for m in methods if m not in EXCLUDED_METHODS))
         if not normalized_methods:
             continue
-        routes.append({
-            "path": path,
-            "methods": normalized_methods,
-            "name": getattr(route, "name", None),
-        })
+        unique.add((path, normalized_methods, getattr(route, "name", None)))
+
+    routes = [
+        {"path": path, "methods": list(methods), "name": name}
+        for path, methods, name in unique
+    ]
     routes.sort(key=lambda item: (item["path"], item["methods"], item["name"] or ""))
     return routes
 
@@ -59,8 +64,8 @@ def generate() -> dict[str, Any]:
     module = importlib.import_module("main")
     app = module.app
 
-    # Force regeneration from the current route table. Some application wiring
-    # is finalized as OpenAPI is assembled, so snapshot app.routes afterwards.
+    # Force regeneration from the current route table before snapshotting the
+    # effective HTTP surface.
     app.openapi_schema = None
     openapi = _normalize(app.openapi())
     routes = _effective_routes(app)
