@@ -1,0 +1,1750 @@
+{
+  "schema": 1,
+  "source_commit": "a1f281c187b71515df57c0d80b4df5ff6aa5e2a1",
+  "route_count": 249,
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/",
+      "handler": "root",
+      "source": "routers/system.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/consola/salud",
+      "handler": "admin_consola_salud",
+      "source": "admin_consola.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/correo",
+      "handler": "admin_correo_lista",
+      "source": "admin_consola.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/correo/enviar",
+      "handler": "admin_correo_enviar",
+      "source": "admin_consola.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/correo/leido",
+      "handler": "admin_correo_leido",
+      "source": "admin_consola.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/correo/masivo",
+      "handler": "admin_correo_masivo",
+      "source": "admin_consola.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/facturas/marcar",
+      "handler": "admin_facturas_marcar",
+      "source": "admin_consola.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/ingresos",
+      "handler": "admin_ingresos",
+      "source": "admin_consola.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/me",
+      "handler": "admin_me",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/org/convertir",
+      "handler": "convertir_a_empresa",
+      "source": "routers/organizaciones.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/org/desconvertir",
+      "handler": "quitar_estatus_empresa",
+      "source": "routers/organizaciones.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/org/lista",
+      "handler": "listar_organizaciones",
+      "source": "routers/organizaciones.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/panorama",
+      "handler": "admin_panorama",
+      "source": "admin_consola.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/segmentos",
+      "handler": "admin_segmentos",
+      "source": "admin_consola.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/user/activo",
+      "handler": "admin_set_activo",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/user/eliminar",
+      "handler": "admin_eliminar_usuario",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/user/rol",
+      "handler": "admin_set_rol",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/user/{user_id}/uso",
+      "handler": "admin_user_uso",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/users",
+      "handler": "admin_list_users",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/agendar",
+      "handler": "wa2_agendar",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/agent",
+      "handler": "agent",
+      "source": "routers/agente.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/agent/health",
+      "handler": "agent_health",
+      "source": "routers/agente.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/amueblar",
+      "handler": "amueblar",
+      "source": "routers/staging.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/api/avm-claude",
+      "handler": "avm_claude",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/api/avm-websearch",
+      "handler": "avm_websearch",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "GET",
+      "path": "/api/colonias",
+      "handler": "buscar_colonias",
+      "source": "routers/avm_places.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/api/comparables",
+      "handler": "buscar_comparables",
+      "source": "routers/avm_apify.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/api/comparables-cercanos",
+      "handler": "comparables_cercanos",
+      "source": "routers/avm_nearby.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inpc/{anio}/{mes}",
+      "handler": "api_inpc",
+      "source": "routers/banxico.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/api/udis/{fecha}",
+      "handler": "api_udis",
+      "source": "routers/banxico.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/auth/correo-existe",
+      "handler": "correo_existe",
+      "source": "routers/organizaciones.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/automatizaciones",
+      "handler": "wa2_automatizaciones_list",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/automatizaciones",
+      "handler": "wa2_automatizacion_crear",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "DELETE",
+      "path": "/automatizaciones/{auto_id}",
+      "handler": "wa2_automatizacion_delete",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "PATCH",
+      "path": "/automatizaciones/{auto_id}",
+      "handler": "wa2_automatizacion_patch",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/avisos/generar",
+      "handler": "generar_aviso",
+      "source": "routers/cumplimiento.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/avisos/{aviso_id}/presentado",
+      "handler": "marcar_presentado",
+      "source": "routers/cumplimiento.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/avm",
+      "handler": "calcular_avm",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/avm-pdf",
+      "handler": "generar_avm_pdf",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "GET",
+      "path": "/avm-pdf/{token}",
+      "handler": "descargar_avm_pdf",
+      "source": "routers/pdf_downloads.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/bitacora",
+      "handler": "leer_bitacora",
+      "source": "routers/cumplimiento.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/campanas",
+      "handler": "wa2_campanas_list",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/campanas",
+      "handler": "wa2_campana_crear",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/campanas/audiencia",
+      "handler": "wa2_campana_audiencia",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/campanas/{campana_id}",
+      "handler": "wa2_campana_detalle",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "DELETE",
+      "path": "/campos/{campo_id}",
+      "handler": "borrar_campo",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/categorias",
+      "handler": "listar_categorias",
+      "source": "routers/finanzas.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/categorias",
+      "handler": "crear_categoria",
+      "source": "routers/finanzas.py",
+      "owner": "router"
+    },
+    {
+      "method": "DELETE",
+      "path": "/categorias/{cat_id}",
+      "handler": "borrar_categoria",
+      "source": "routers/finanzas.py",
+      "owner": "router"
+    },
+    {
+      "method": "PATCH",
+      "path": "/categorias/{cat_id}",
+      "handler": "editar_categoria",
+      "source": "routers/finanzas.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/chat",
+      "handler": "chat_proxy",
+      "source": "routers/chat.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/chat-claude",
+      "handler": "chat_claude_proxy",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "GET",
+      "path": "/colonias",
+      "handler": "get_colonias",
+      "source": "routers/easybroker_colonias.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/comisiones-pendientes",
+      "handler": "comisiones_pendientes",
+      "source": "routers/finanzas.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/complete-signup",
+      "handler": "complete_signup",
+      "source": "routers/whatsapp_chatgpt.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/config",
+      "handler": "obtener_config",
+      "source": "routers/cumplimiento.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/config",
+      "handler": "config",
+      "source": "routers/whatsapp_chatgpt.py",
+      "owner": "router"
+    },
+    {
+      "method": "PUT",
+      "path": "/config",
+      "handler": "guardar_config",
+      "source": "routers/cumplimiento.py",
+      "owner": "router"
+    },
+    {
+      "method": "DELETE",
+      "path": "/config/eb-key",
+      "handler": "delete_eb_key",
+      "source": "routers/easybroker_config.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/config/eb-key",
+      "handler": "get_eb_key",
+      "source": "routers/easybroker_config.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/config/eb-key",
+      "handler": "set_eb_key",
+      "source": "routers/easybroker_config.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/config/public",
+      "handler": "get_public_config",
+      "source": "routers/public_config.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/connect",
+      "handler": "wa2_connect",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/contactos/eliminar-masivo",
+      "handler": "contactos_eliminar_masivo",
+      "source": "routers/bulk_delete.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/contactos/importar-archivo",
+      "handler": "importar_contactos_archivo",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/contactos/importar-eb",
+      "handler": "importar_contactos_eb",
+      "source": "routers/easybroker_contact_import.py",
+      "owner": "router"
+    },
+    {
+      "method": "PATCH",
+      "path": "/contactos/{contacto_id}",
+      "handler": "wa2_contacto_patch",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/contactos/{contacto_id}/notas",
+      "handler": "wa2_agregar_nota",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/contrato",
+      "handler": "generar_contrato",
+      "source": "routers/contracts_basic.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/contrato/machote/abrir",
+      "handler": "abrir_machote",
+      "source": "routers/machotes.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/contrato/machote/crear",
+      "handler": "crear_machote",
+      "source": "routers/machotes.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/contrato/machote/sugerir",
+      "handler": "sugerir_campos_machote",
+      "source": "routers/machotes.py",
+      "owner": "router"
+    },
+    {
+      "method": "DELETE",
+      "path": "/contrato/machote/{machote_id}",
+      "handler": "eliminar_machote",
+      "source": "routers/machotes.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/contrato/machote/{machote_id}",
+      "handler": "obtener_machote",
+      "source": "routers/machotes.py",
+      "owner": "router"
+    },
+    {
+      "method": "PATCH",
+      "path": "/contrato/machote/{machote_id}",
+      "handler": "actualizar_machote",
+      "source": "routers/machotes.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/contrato/machote/{machote_id}/generar",
+      "handler": "generar_desde_machote_guardado",
+      "source": "routers/machotes.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/contrato/machote/{machote_id}/preview",
+      "handler": "previsualizar_machote",
+      "source": "routers/machotes.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/contrato/machotes",
+      "handler": "listar_machotes",
+      "source": "routers/machotes.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/conversaciones",
+      "handler": "wa2_conversaciones_list",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "DELETE",
+      "path": "/conversaciones/{conversacion_id}",
+      "handler": "wa2_borrar_conversacion",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "PATCH",
+      "path": "/conversaciones/{conversacion_id}",
+      "handler": "wa2_conversacion_patch",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/conversaciones/{conversacion_id}/lectura",
+      "handler": "wa2_lectura",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/correo/bandeja",
+      "handler": "correo_bandeja",
+      "source": "routers/correo.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/correo/conectar",
+      "handler": "correo_conectar",
+      "source": "routers/correo.py",
+      "owner": "router"
+    },
+    {
+      "method": "DELETE",
+      "path": "/correo/desconectar",
+      "handler": "correo_desconectar",
+      "source": "routers/correo.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/correo/enviar",
+      "handler": "correo_enviar",
+      "source": "routers/correo.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/correo/estado",
+      "handler": "correo_estado",
+      "source": "routers/correo.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/correo/mensaje/{uid_msg}",
+      "handler": "correo_mensaje",
+      "source": "routers/correo.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/cuentas",
+      "handler": "listar_cuentas",
+      "source": "routers/finanzas.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/cuentas",
+      "handler": "crear_cuenta",
+      "source": "routers/finanzas.py",
+      "owner": "router"
+    },
+    {
+      "method": "DELETE",
+      "path": "/cuentas/{cuenta_id}",
+      "handler": "borrar_cuenta",
+      "source": "routers/finanzas.py",
+      "owner": "router"
+    },
+    {
+      "method": "PATCH",
+      "path": "/cuentas/{cuenta_id}",
+      "handler": "editar_cuenta",
+      "source": "routers/finanzas.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/demo/agendar",
+      "handler": "demo_agendar",
+      "source": "routers/demo.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/desde-contrato",
+      "handler": "desde_contrato",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/documentos",
+      "handler": "listar_documentos",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/documentos",
+      "handler": "crear_documento",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "DELETE",
+      "path": "/documentos/{documento_id}",
+      "handler": "borrar_documento",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/documentos/{documento_id}",
+      "handler": "ver_documento",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "PATCH",
+      "path": "/documentos/{documento_id}",
+      "handler": "editar_documento",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/documentos/{documento_id}/archivo",
+      "handler": "abrir_archivo",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/documentos/{documento_id}/archivo",
+      "handler": "subir_archivo",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/documentos/{documento_id}/campos",
+      "handler": "listar_campos",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/documentos/{documento_id}/campos",
+      "handler": "crear_campo",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/documentos/{documento_id}/cancelar",
+      "handler": "cancelar_documento",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/documentos/{documento_id}/enviar",
+      "handler": "enviar_a_firma",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/documentos/{documento_id}/firmantes",
+      "handler": "agregar_firmante",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/documentos/{documento_id}/paginas",
+      "handler": "ver_paginas",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/documentos/{documento_id}/rubricar-todas",
+      "handler": "rubricar_todas",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/documentos/{documento_id}/sellar",
+      "handler": "resellar",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/documentos/{documento_id}/ver",
+      "handler": "ver_documento",
+      "source": "routers/cumplimiento.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/easybroker/diagnostico",
+      "handler": "easybroker_diagnostico",
+      "source": "routers/easybroker_diagnostics.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/easybroker/fotos-pendientes",
+      "handler": "easybroker_fotos_pendientes",
+      "source": "routers/easybroker_photo_status.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/easybroker/import-all",
+      "handler": "easybroker_import_all",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/easybroker/import-stats",
+      "handler": "easybroker_import_stats",
+      "source": "routers/easybroker_import_stats.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/easybroker/migracion/estado",
+      "handler": "migracion_eb_estado",
+      "source": "routers/easybroker_migration.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/easybroker/migracion/iniciar",
+      "handler": "migracion_eb_iniciar",
+      "source": "routers/easybroker_migration.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/easybroker/migrar-fotos",
+      "handler": "easybroker_migrar_fotos",
+      "source": "routers/easybroker_photo_status.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/entrenamiento",
+      "handler": "wa2_training_get",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "PUT",
+      "path": "/entrenamiento",
+      "handler": "wa2_training_put",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/estadisticas",
+      "handler": "wa2_estadisticas",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/estado/{job_id}",
+      "handler": "estado",
+      "source": "routers/video.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/etiquetas",
+      "handler": "wa2_etiquetas_list",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/expedientes/{expediente_id}/documentos",
+      "handler": "subir_documento",
+      "source": "routers/cumplimiento.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/expedientes/{expediente_id}/liga",
+      "handler": "crear_liga",
+      "source": "routers/cumplimiento.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/expedientes/{expediente_id}/revision",
+      "handler": "revision_expediente",
+      "source": "routers/cumplimiento.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/facebook/ad-accounts",
+      "handler": "facebook_ad_accounts",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/ad-description",
+      "handler": "facebook_ad_description",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "GET",
+      "path": "/facebook/audiences",
+      "handler": "facebook_audiences_list",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/audiences/from-contacts",
+      "handler": "facebook_audience_from_contacts",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/audiences/lookalike",
+      "handler": "facebook_audience_lookalike",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "GET",
+      "path": "/facebook/callback",
+      "handler": "facebook_callback",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "GET",
+      "path": "/facebook/campaign/review",
+      "handler": "facebook_campaign_review",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/campaign/toggle",
+      "handler": "facebook_campaign_toggle",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "GET",
+      "path": "/facebook/campaigns",
+      "handler": "facebook_campaigns_list",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "GET",
+      "path": "/facebook/city-search",
+      "handler": "facebook_city_search",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "DELETE",
+      "path": "/facebook/connection",
+      "handler": "facebook_disconnect",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "GET",
+      "path": "/facebook/connection",
+      "handler": "facebook_get_connection",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/create-ad",
+      "handler": "facebook_create_ad",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/encrypt-tokens",
+      "handler": "facebook_encrypt_tokens",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "GET",
+      "path": "/facebook/insights",
+      "handler": "facebook_insights",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "GET",
+      "path": "/facebook/leadgen/status",
+      "handler": "facebook_leadgen_status",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/leadgen/subscribe",
+      "handler": "facebook_leadgen_subscribe",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "GET",
+      "path": "/facebook/leadgen/webhook",
+      "handler": "facebook_leadgen_verify",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/leadgen/webhook",
+      "handler": "facebook_leadgen_webhook",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "GET",
+      "path": "/facebook/page-posts",
+      "handler": "facebook_page_posts",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "GET",
+      "path": "/facebook/pages",
+      "handler": "facebook_list_pages",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/publish",
+      "handler": "facebook_publish",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/publish-property",
+      "handler": "facebook_publish_property",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/qa-selfcheck",
+      "handler": "facebook_qa_selfcheck",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/reconcile",
+      "handler": "facebook_reconcile",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/refresh-token",
+      "handler": "facebook_refresh_token",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/save-page",
+      "handler": "facebook_save_page",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/select-ad-account",
+      "handler": "facebook_select_ad_account",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/select-page",
+      "handler": "facebook_select_page",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/ficha-manual/descripcion",
+      "handler": "generar_descripcion_ficha_manual",
+      "source": "routers/ficha_manual.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/ficha-pdf",
+      "handler": "generar_ficha_pdf",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "GET",
+      "path": "/ficha-pdf/{token}",
+      "handler": "descargar_ficha_pdf",
+      "source": "routers/pdf_downloads.py",
+      "owner": "router"
+    },
+    {
+      "method": "DELETE",
+      "path": "/firmantes/{firmante_id}",
+      "handler": "quitar_firmante",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "PATCH",
+      "path": "/firmantes/{firmante_id}",
+      "handler": "editar_firmante",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/firmantes/{firmante_id}/recordar",
+      "handler": "recordar",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/generar",
+      "handler": "generar",
+      "source": "routers/video.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/images/clean",
+      "handler": "clean_images",
+      "source": "routers/image_cleaner.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/instagram/feed",
+      "handler": "instagram_feed",
+      "source": "routers/instagram.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/isr-pdf",
+      "handler": "generar_isr_pdf",
+      "source": "routers/isr_pdf.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/isr-pdf/{token}",
+      "handler": "descargar_isr_pdf",
+      "source": "routers/pdf_downloads.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/mensajes",
+      "handler": "wa2_mensajes_list",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/mensajes",
+      "handler": "wa2_enviar_manual",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/mensajes/plantilla",
+      "handler": "wa2_enviar_plantilla",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "DELETE",
+      "path": "/mensajes/{mensaje_id}",
+      "handler": "wa2_borrar_mensaje",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/mi-acceso",
+      "handler": "mi_acceso",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/mis",
+      "handler": "bolsa_mis",
+      "source": "routers/bolsa.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/mis-videos",
+      "handler": "mis_videos",
+      "source": "routers/video.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/movimientos",
+      "handler": "listar_movimientos",
+      "source": "routers/finanzas.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/movimientos",
+      "handler": "crear_movimiento",
+      "source": "routers/finanzas.py",
+      "owner": "router"
+    },
+    {
+      "method": "DELETE",
+      "path": "/movimientos/{mov_id}",
+      "handler": "borrar_movimiento",
+      "source": "routers/finanzas.py",
+      "owner": "router"
+    },
+    {
+      "method": "PATCH",
+      "path": "/movimientos/{mov_id}",
+      "handler": "editar_movimiento",
+      "source": "routers/finanzas.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/movimientos/{mov_id}/comprobante",
+      "handler": "liga_comprobante",
+      "source": "routers/finanzas.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/movimientos/{mov_id}/comprobante",
+      "handler": "subir_comprobante",
+      "source": "routers/finanzas.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/noticias",
+      "handler": "get_noticias",
+      "source": "routers/news.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/numbers",
+      "handler": "numbers",
+      "source": "routers/whatsapp_chatgpt.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/numeros",
+      "handler": "wa2_numeros_list",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "DELETE",
+      "path": "/numeros/{numero_id}",
+      "handler": "wa2_numero_delete",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "PATCH",
+      "path": "/numeros/{numero_id}",
+      "handler": "wa2_numero_patch",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/numeros/{numero_id}/verificar",
+      "handler": "wa2_numero_verificar",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/operaciones",
+      "handler": "guardar_operacion",
+      "source": "routers/cumplimiento.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/operaciones/simular",
+      "handler": "simular_operacion",
+      "source": "routers/cumplimiento.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/org",
+      "handler": "mi_organizacion",
+      "source": "routers/organizaciones.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/org/aceptar-invitacion",
+      "handler": "aceptar_invitacion",
+      "source": "routers/organizaciones.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/org/asignar",
+      "handler": "asignar_agente",
+      "source": "routers/organizaciones.py",
+      "owner": "router"
+    },
+    {
+      "method": "DELETE",
+      "path": "/org/invitacion/{inv_id}",
+      "handler": "cancelar_invitacion",
+      "source": "routers/organizaciones.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/org/invitacion/{token}",
+      "handler": "ver_invitacion",
+      "source": "routers/organizaciones.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/org/invitaciones",
+      "handler": "listar_invitaciones",
+      "source": "routers/organizaciones.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/org/invitar",
+      "handler": "invitar",
+      "source": "routers/organizaciones.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/org/miembro/activo",
+      "handler": "cambiar_activo",
+      "source": "routers/organizaciones.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/org/miembro/permisos",
+      "handler": "cambiar_permisos",
+      "source": "routers/organizaciones.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/org/miembro/rol",
+      "handler": "cambiar_rol",
+      "source": "routers/organizaciones.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/org/miembros",
+      "handler": "listar_miembros",
+      "source": "routers/organizaciones.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/org/nombre",
+      "handler": "cambiar_nombre",
+      "source": "routers/organizaciones.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/ping",
+      "handler": "ping",
+      "source": "routers/system.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/plantillas",
+      "handler": "wa2_plantillas_list",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/plantillas",
+      "handler": "wa2_plantilla_crear",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/probar",
+      "handler": "wa2_probar",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/probar-correo",
+      "handler": "probar_correo",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/profile/status",
+      "handler": "get_profile_status",
+      "source": "routers/profile_status.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/propiedad/{property_id}",
+      "handler": "get_propiedad",
+      "source": "routers/easybroker_properties.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/propiedad/{propiedad_id}",
+      "handler": "por_propiedad",
+      "source": "routers/video.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/propiedades",
+      "handler": "bolsa_propiedades",
+      "source": "routers/bolsa.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/propiedades",
+      "handler": "get_propiedades",
+      "source": "routers/easybroker_catalog.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/propiedades/eliminar-masivo",
+      "handler": "propiedades_eliminar_masivo",
+      "source": "routers/bulk_delete.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/publicar",
+      "handler": "bolsa_publicar",
+      "source": "routers/bolsa.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/publico/{token}",
+      "handler": "publico_leer",
+      "source": "routers/cumplimiento.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/publico/{token}",
+      "handler": "publico_leer",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/publico/{token}",
+      "handler": "publico_guardar",
+      "source": "routers/cumplimiento.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/publico/{token}/archivo",
+      "handler": "publico_archivo",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/publico/{token}/codigo",
+      "handler": "publico_pedir_codigo",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/publico/{token}/documentos",
+      "handler": "subir_documento_cliente",
+      "source": "routers/cumplimiento.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/publico/{token}/firmar",
+      "handler": "publico_firmar",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/publico/{token}/ine",
+      "handler": "publico_ine",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/publico/{token}/rechazar",
+      "handler": "publico_rechazar",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/reporte",
+      "handler": "generar_reporte",
+      "source": "routers/finanzas.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/reporte.csv",
+      "handler": "reporte_csv",
+      "source": "routers/finanzas.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/reporte/{token}",
+      "handler": "descargar_reporte",
+      "source": "routers/finanzas.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/resumen",
+      "handler": "resumen",
+      "source": "routers/cumplimiento.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/resumen",
+      "handler": "resumen",
+      "source": "routers/finanzas.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/retirar",
+      "handler": "bolsa_retirar",
+      "source": "routers/bolsa.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/salud",
+      "handler": "salud",
+      "source": "routers/cumplimiento.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/salud",
+      "handler": "salud",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/send-test",
+      "handler": "send_test",
+      "source": "routers/whatsapp_chatgpt.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/sitio/{slug}/lead",
+      "handler": "sitio_registrar_lead",
+      "source": "routers/public_site_leads.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/solicitud-arrendamiento/analizar",
+      "handler": "analizar_solicitud_arrendamiento",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "POST",
+      "path": "/subscription/activate",
+      "handler": "subscription_activate",
+      "source": "routers/subscription_activate.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/subscription/cancel",
+      "handler": "subscription_cancel",
+      "source": "routers/subscription_cancel.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/subscription/checkout",
+      "handler": "subscription_checkout",
+      "source": "routers/subscription_checkout.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/subscription/empresa/asientos",
+      "handler": "empresa_asientos",
+      "source": "routers/subscription_enterprise.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/subscription/empresa/checkout",
+      "handler": "empresa_checkout",
+      "source": "routers/subscription_enterprise.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/subscription/empresa/plan",
+      "handler": "empresa_plan",
+      "source": "routers/subscription_enterprise.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/subscription/revenuecat-webhook",
+      "handler": "revenuecat_webhook",
+      "source": "routers/revenuecat.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/subscription/status",
+      "handler": "subscription_status",
+      "source": "routers/subscription_status.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/subscription/trial-max",
+      "handler": "subscription_trial_max",
+      "source": "routers/subscription_status.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/subscription/webhook",
+      "handler": "stripe_webhook",
+      "source": "routers/stripe_webhook.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/telemetria/sesion-modulo",
+      "handler": "telemetria_sesion_modulo",
+      "source": "routers/telemetry.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/ticket",
+      "handler": "leer_ticket",
+      "source": "routers/finanzas.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/transcribir",
+      "handler": "transcribir",
+      "source": "routers/agente.py",
+      "owner": "router"
+    },
+    {
+      "method": "DELETE",
+      "path": "/usuario/eliminar-cuenta",
+      "handler": "eliminar_cuenta_y_datos",
+      "source": "main.py",
+      "owner": "app"
+    },
+    {
+      "method": "GET",
+      "path": "/verificar/{folio}",
+      "handler": "verificar",
+      "source": "routers/firmas.py",
+      "owner": "router"
+    },
+    {
+      "method": "GET",
+      "path": "/webhook",
+      "handler": "wa2_verify_webhook",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/webhook",
+      "handler": "wa2_receive_webhook",
+      "source": "whatsapp.py",
+      "owner": "router"
+    },
+    {
+      "method": "POST",
+      "path": "/webhook/correo-entrante",
+      "handler": "webhook_correo_entrante",
+      "source": "admin_consola.py",
+      "owner": "router"
+    },
+    {
+      "method": "DELETE",
+      "path": "/{job_id}",
+      "handler": "borrar",
+      "source": "routers/video.py",
+      "owner": "router"
+    }
+  ]
+}
