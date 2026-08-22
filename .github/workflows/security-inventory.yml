@@ -1,0 +1,24 @@
+name: Security Inventory
+
+on:
+  push:
+    branches: [agent/security-hardening]
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Locate hardening targets
+        run: |
+          echo '=== INTERNAL SECRET ==='
+          grep -RIn --include='*.py' -E 'INTERNAL_SECRET|internal.secret|x-internal' . || true
+          echo '=== FIRMAS USO ==='
+          grep -RIn --include='*.py' -E 'firmas/uso|/uso|capacidad.*firmas|firmas.*capacidad' routers admin_consola.py main.py 2>/dev/null || true
+          echo '=== WEBHOOK VERIFY ==='
+          grep -n -E 'WA2_VERIFY_TOKEN|WA2_REGISTER_PIN|whatsapp2/webhook' whatsapp.py routers/whatsapp_chatgpt.py || true
+          echo '=== ORG FAIL OPEN ==='
+          grep -n -E 'async def _sb_get|return \[\]' routers/organizaciones.py | head -30 || true
