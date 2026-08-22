@@ -21,7 +21,18 @@ SUPABASE_SERVICE_KEY = settings.supabase_service_key
 
 @router.delete("/usuario/eliminar-cuenta")
 async def eliminar_cuenta_y_datos(request: Request):
-    """Borra TODA la información del usuario autenticado, de forma permanente."""
+    """Borra TODA la información del usuario autenticado, de forma permanente.
+
+    Pasos (irreversibles, en este orden):
+      1. Cancela de inmediato la suscripción de Stripe (si tiene una activa).
+      2. Borra las fotos del usuario del bucket de Storage (fotos-propiedades).
+      3. Borra sus filas: propiedades, contactos, contratos, user_integrations,
+         suscripciones, usage_logs, module_sessions.
+      4. Borra su fila en `usuarios`.
+      5. Borra al usuario de Supabase Auth (auth.users).
+
+    El frontend confirma dos veces (el usuario escribe su correo) antes de llamar.
+    """
     user_id = await get_user_id_from_token(request)
     if not user_id:
         raise HTTPException(status_code=401, detail="No autenticado.")
