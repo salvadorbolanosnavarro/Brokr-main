@@ -24,7 +24,7 @@ META_APP_SECRET = os.environ.get("META_APP_SECRET", "") or os.environ.get("WA_AP
 META_LOGIN_CONFIG_ID = os.environ.get("META_LOGIN_CONFIG_ID", "") or os.environ.get("WA_EMBEDDED_SIGNUP_CONFIG_ID", "")
 GRAPH_API_VERSION = os.environ.get("META_GRAPH_VERSION", "v23.0")
 GRAPH_API = f"https://graph.facebook.com/{GRAPH_API_VERSION}"
-WA_REGISTER_PIN = os.environ.get("WA_REGISTER_PIN", "123456")
+WA_REGISTER_PIN = os.environ.get("WA_REGISTER_PIN", "").strip()
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://broquer.app")
 
 
@@ -184,6 +184,9 @@ async def complete_signup(req: CompleteSignupReq, request: Request):
     display_number = selected.get("display_phone_number") or display_number
     quality_rating = selected.get("quality_rating") or quality_rating
     status = selected.get("status") or status
+
+    if req.register_number and not WA_REGISTER_PIN:
+        raise HTTPException(status_code=500, detail="WA_REGISTER_PIN no configurado.")
 
     async with httpx.AsyncClient(timeout=20) as c:
         sub_r = await c.post(f"{GRAPH_API}/{waba_id}/subscribed_apps", params={"access_token": access_token})

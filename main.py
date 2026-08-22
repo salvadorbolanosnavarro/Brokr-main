@@ -19,6 +19,8 @@ import concurrent.futures
 from typing import Optional, List, Dict, Any
 from datetime import datetime, date, timedelta, timezone
 from pathlib import Path
+from core.http import fetch_public_http_result
+from core.documents import validate_docx_archive
 
 try:
     from dotenv import load_dotenv
@@ -1459,6 +1461,7 @@ Reglas estrictas:
             })
         elif "wordprocessingml" in ct or n.endswith(".docx"):
             try:
+                validate_docx_archive(raw)
                 from docx import Document as _DocxDocument
                 _doc = _DocxDocument(io.BytesIO(raw))
                 _parts = []
@@ -1505,6 +1508,7 @@ Reglas estrictas:
 
     elif is_docx:
         try:
+            validate_docx_archive(content)
             from docx import Document as DocxDocument
             doc = DocxDocument(io.BytesIO(content))
             parts = []
@@ -3925,8 +3929,11 @@ async def _fetch_candidate_pages(candidates: List[Dict[str, Any]]) -> List[Dict[
 
     async def _try_httpx(url: str) -> Dict[str, Any]:
         async with sem_http:
-            async with httpx.AsyncClient(timeout=FETCH_TIMEOUT, follow_redirects=True, headers=headers) as client:
-                r = await client.get(url)
+            r = await fetch_public_http_result(
+                url,
+                timeout=FETCH_TIMEOUT,
+                headers=headers,
+            )
         ctype = (r.headers.get("content-type") or "").lower()
         if r.status_code >= 400 or "text/html" not in ctype:
             return {"ok": False, "status": r.status_code, "text": ""}
@@ -6257,29 +6264,23 @@ except Exception as _e:
     InvalidToken = Exception  # type: ignore
     if _TOKEN_ENC_KEY:
         logging.getLogger("broquer.facebook").error(
-            "TOKEN_ENC_KEY inválida (%s). Los tokens seguirán en texto plano. "
+            "TOKEN_ENC_KEY inválida (%s). Las nuevas conexiones de Meta quedarán bloqueadas hasta corregirla. "
             "Genera una con: python3 -c \"from cryptography.fernet import Fernet; "
             "print(Fernet.generate_key().decode())\"", _e)
 
 
 def cifrar_secreto(valor: str) -> str:
-    """Cifra un token. Si no hay llave configurada, lo devuelve tal cual."""
-    global _fermet_aviso_dado
+    """Encrypt a token before persistence; never store new credentials in cleartext."""
     if not valor:
         return valor
     if valor.startswith(_PREFIJO_CIFRADO):
-        return valor                      # ya venía cifrado
-    if not _FERNET:
-        if not _fermet_aviso_dado:
-            _fb_log.warning("TOKEN_ENC_KEY no configurada: los tokens de Meta se "
-                            "guardan en texto plano en Supabase.")
-            _fermet_aviso_dado = True
         return valor
+    if not _FERNET:
+        raise RuntimeError("TOKEN_ENC_KEY no configurada o inválida; no se guardará el token en texto plano.")
     try:
         return _PREFIJO_CIFRADO + _FERNET.encrypt(valor.encode("utf-8")).decode("ascii")
     except Exception as e:
-        _fb_log.error("No se pudo cifrar el token: %s", e)
-        return valor
+        raise RuntimeError("No se pudo cifrar el token de Meta; no se guardará en texto plano.") from e
 
 
 def descifrar_secreto(valor: str) -> str:

@@ -33,6 +33,7 @@ import json as _json
 from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
+from core.documents import validate_docx_archive
 
 # ────────────────────────────────────────────────────────────────
 # CONSTANTES
@@ -309,6 +310,7 @@ def _texto_runs(runs) -> str:
 
 
 def cargar_docx(content: bytes):
+    validate_docx_archive(content)
     from docx import Document as DocxDocument
     return DocxDocument(io.BytesIO(content))
 
