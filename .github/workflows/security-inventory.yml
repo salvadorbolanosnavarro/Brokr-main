@@ -3,6 +3,8 @@ name: Security Inventory
 on:
   push:
     branches: [agent/security-hardening]
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: read
