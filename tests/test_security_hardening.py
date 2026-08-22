@@ -1,42 +1,105 @@
-import ast
-import pathlib
+import importlib
+import io
+import os
 import unittest
+import zipfile
+from unittest.mock import patch
 
-ROOT = pathlib.Path(__file__).resolve().parents[1]
+from fastapi import HTTPException
+from starlette.requests import Request
 
-class SecurityHardeningTests(unittest.TestCase):
-    def test_whatsapp_secrets_have_no_public_defaults_and_webhook_fails_closed(self):
-        source = (ROOT / "whatsapp.py").read_text(encoding="utf-8")
-        self.assertIn('WA2_VERIFY_TOKEN = os.environ.get("WA2_VERIFY_TOKEN", "").strip()', source)
-        self.assertIn('WA2_REGISTER_PIN = os.environ.get("WA_REGISTER_PIN", "").strip()', source)
-        self.assertNotIn('broquer2_verify', source)
-        self.assertIn('if WA2_VERIFY_TOKEN and p.get("hub.mode") == "subscribe"', source)
 
-    def test_chatgpt_registration_pin_fails_closed(self):
-        source = (ROOT / "routers" / "whatsapp_chatgpt.py").read_text(encoding="utf-8")
-        self.assertIn('WA_REGISTER_PIN = os.environ.get("WA_REGISTER_PIN", "").strip()', source)
-        self.assertIn('if req.register_number and not WA_REGISTER_PIN:', source)
+class _FakeLoop:
+    def __init__(self, addresses):
+        self.addresses = addresses
 
-    def test_meta_token_writes_fail_closed(self):
-        source = (ROOT / "main.py").read_text(encoding="utf-8")
-        self.assertIn('TOKEN_ENC_KEY no configurada o inválida; no se guardará el token en texto plano.', source)
-        self.assertIn('No se pudo cifrar el token de Meta; no se guardará en texto plano.', source)
+    async def getaddrinfo(self, host, port, family=0, type=0):
+        return [(2, 1, 6, "", (address, port)) for address in self.addresses]
 
-    def test_avm_fetch_uses_ssrf_safe_transport(self):
-        source = (ROOT / "main.py").read_text(encoding="utf-8")
-        tree = ast.parse(source)
-        nodes = [n for n in ast.walk(tree) if isinstance(n, ast.AsyncFunctionDef) and n.name == "_try_httpx"]
-        self.assertEqual(len(nodes), 1)
-        block = ast.get_source_segment(source, nodes[0]) or ""
-        self.assertIn('fetch_public_http_result', block)
-        self.assertNotIn('follow_redirects=True', block)
 
-    def test_docx_parsers_validate_before_expansion(self):
-        main = (ROOT / "main.py").read_text(encoding="utf-8")
-        machotes = (ROOT / "machotes.py").read_text(encoding="utf-8")
-        self.assertIn('validate_docx_archive(raw)', main)
-        self.assertIn('validate_docx_archive(content)', main)
-        self.assertIn('validate_docx_archive(content)', machotes)
+def _request(query: bytes = b"") -> Request:
+    return Request({
+        "type": "http",
+        "http_version": "1.1",
+        "method": "GET",
+        "scheme": "https",
+        "path": "/webhook",
+        "raw_path": b"/webhook",
+        "query_string": query,
+        "headers": [],
+        "client": ("127.0.0.1", 12345),
+        "server": ("testserver", 443),
+    })
 
-if __name__ == '__main__':
+
+def _docx_bytes(document_xml: bytes) -> bytes:
+    out = io.BytesIO()
+    with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("[Content_Types].xml", b"<Types/>")
+        zf.writestr("word/document.xml", document_xml)
+    return out.getvalue()
+
+
+class SecurityHardeningTests(unittest.IsolatedAsyncioTestCase):
+    async def test_ssrf_rejects_private_literal_and_pins_validated_dns_result(self):
+        from core.http import UnsafePublicURL, _resolve_public_http_url
+
+        with self.assertRaises(UnsafePublicURL):
+            await _resolve_public_http_url("http://127.0.0.1/private")
+
+        fake_loop = _FakeLoop(["93.184.216.34"])
+        with patch("core.http.asyncio.get_running_loop", return_value=fake_loop):
+            resolved = await _resolve_public_http_url("https://example.com/path?q=1")
+        self.assertEqual(resolved.request_url, "https://93.184.216.34/path?q=1")
+        self.assertEqual(resolved.host_header, "example.com")
+        self.assertEqual(resolved.sni_hostname, "example.com")
+
+    async def test_ssrf_does_not_swallow_unsafe_resolved_address(self):
+        from core.http import UnsafePublicURL, assert_public_http_url
+
+        fake_loop = _FakeLoop(["10.0.0.9"])
+        with patch("core.http.asyncio.get_running_loop", return_value=fake_loop):
+            with self.assertRaises(UnsafePublicURL):
+                await assert_public_http_url("https://attacker.example/resource")
+
+    async def test_docx_validator_bounds_real_decompression(self):
+        from core.documents import UnsafeDocument, validate_docx_archive
+
+        safe = _docx_bytes(b"<w:document/>" * 10)
+        validate_docx_archive(safe, max_single_entry_bytes=4096, max_uncompressed_bytes=8192)
+
+        bomb = _docx_bytes(b"A" * 16384)
+        with self.assertRaises(UnsafeDocument):
+            validate_docx_archive(
+                bomb,
+                max_single_entry_bytes=1024,
+                max_uncompressed_bytes=2048,
+            )
+
+    async def test_meta_token_write_fails_closed_without_fernet(self):
+        main = importlib.import_module("main")
+        with patch.object(main, "_FERNET", None):
+            with self.assertRaises(RuntimeError):
+                main.cifrar_secreto("EA-test-token")
+        self.assertEqual(main.cifrar_secreto(""), "")
+
+    async def test_whatsapp_webhook_fails_closed_when_verify_secret_missing(self):
+        whatsapp = importlib.import_module("whatsapp")
+        query = b"hub.mode=subscribe&hub.verify_token=&hub.challenge=123"
+        with patch.object(whatsapp, "WA2_VERIFY_TOKEN", ""):
+            response = whatsapp.wa2_verify_webhook(_request(query))
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.body, b"forbidden")
+
+    async def test_registration_pin_configuration_has_no_public_fallback(self):
+        with patch.dict(os.environ, {"WA_REGISTER_PIN": ""}, clear=False):
+            chatgpt = importlib.import_module("routers.whatsapp_chatgpt")
+            chatgpt = importlib.reload(chatgpt)
+            whatsapp = importlib.import_module("whatsapp")
+            whatsapp = importlib.reload(whatsapp)
+        self.assertEqual(chatgpt.WA_REGISTER_PIN, "")
+        self.assertEqual(whatsapp.WA2_REGISTER_PIN, "")
+
+
+if __name__ == "__main__":
     unittest.main()
