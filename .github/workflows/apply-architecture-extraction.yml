@@ -37,8 +37,8 @@ jobs:
           test -f "$script"
           echo "script=$script" >> "$GITHUB_OUTPUT"
 
-      - name: Install test dependencies
-        run: python -m pip install --disable-pip-version-check -r requirements-ci.txt
+      - name: Install backend dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
 
       - name: Snapshot effective HTTP contract before extraction
         run: python scripts/generate_http_contract_golden.py /tmp/http-contract-before.json
