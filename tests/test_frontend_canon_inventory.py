@@ -6,27 +6,16 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-WORKFLOWS = ROOT / ".github" / "workflows"
 AUDIT = ROOT / "audit.py"
+QUALITY_RUNNER = ROOT / "scripts" / "run_quality.sh"
 
 
 class FrontendCanonInventoryTests(unittest.TestCase):
-    def _quality_workflow(self) -> str:
-        """Use the full integration Quality workflow when present; otherwise the frontend-only production gate."""
-        for name in ("quality.yml", "frontend-canon-quality.yml"):
-            path = WORKFLOWS / name
-            if path.exists():
-                return path.read_text(encoding="utf-8")
-        self.fail("A Canon Quality workflow must exist")
-
-    def test_quality_uses_no_arg_audit_instead_of_manual_surface_list(self):
-        quality = self._quality_workflow()
-        self.assertIn("- name: Audit active Canon frontend inventory\n        run: python audit.py", quality)
-        # A manually enumerated list can silently miss a new HTML surface.
-        audit_step = quality.split("- name: Audit active Canon frontend inventory", 1)[1]
-        if "- name: Report architecture debt" in audit_step:
-            audit_step = audit_step.split("- name: Report architecture debt", 1)[0]
-        self.assertNotIn(".html", audit_step)
+    def test_quality_runner_owns_the_no_arg_canon_audit(self):
+        quality = QUALITY_RUNNER.read_text(encoding="utf-8")
+        self.assertIn("python audit.py", quality)
+        audit_lines = [line.strip() for line in quality.splitlines() if "python audit.py" in line]
+        self.assertEqual(audit_lines, ["python audit.py"])
 
     def test_no_arg_audit_excludes_only_deliberate_non_product_surfaces(self):
         tree = ast.parse(AUDIT.read_text(encoding="utf-8"))
@@ -61,7 +50,6 @@ class FrontendCanonInventoryTests(unittest.TestCase):
                 break
         active = {path.name for path in ROOT.glob("*.html")} - skip
         self.assertGreaterEqual(len(active), 42)
-        # These are the two master references and the four last migrated outliers.
         for required in {
             "index.html", "whatsapp.html", "isr.html", "bandeja.html", "legal.html", "verificador.html"
         }:
