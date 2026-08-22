@@ -40,8 +40,28 @@ jobs:
       - name: Install backend dependencies
         run: python -m pip install --disable-pip-version-check -r requirements.txt
 
-      - name: Snapshot effective HTTP contract before extraction
-        run: python scripts/generate_http_contract_golden.py /tmp/http-contract-before.json
+      - name: Bootstrap certified OpenAPI golden once
+        shell: bash
+        run: |
+          if [[ ! -f tests/golden/http_contract_effective.json ]]; then
+            python -m tests.test_http_contract_golden --update
+            python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('tests/golden/http_contract_effective.json')
+          data = json.loads(p.read_text(encoding='utf-8'))
+          if data.get('count') != 238:
+              raise SystemExit(f"expected certified 238 operations, found {data.get('count')}")
+          print('certified OpenAPI baseline:', data['count'], 'operations')
+          PY
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add tests/golden/http_contract_effective.json
+            git commit -m "test: freeze effective HTTP contract"
+          fi
+
+      - name: Verify HTTP golden before extraction
+        run: python -m unittest tests.test_http_contract_golden
 
       - name: Apply deterministic AST extraction
         run: python "${{ steps.resolve.outputs.script }}"
@@ -55,15 +75,8 @@ jobs:
             exit 1
           fi
 
-      - name: Verify effective HTTP contract is identical
-        shell: bash
-        run: |
-          python scripts/generate_http_contract_golden.py /tmp/http-contract-after.json
-          if ! cmp -s /tmp/http-contract-before.json /tmp/http-contract-after.json; then
-            echo 'Effective HTTP contract changed:'
-            diff -u /tmp/http-contract-before.json /tmp/http-contract-after.json || true
-            exit 1
-          fi
+      - name: Verify HTTP golden after extraction
+        run: python -m unittest tests.test_http_contract_golden
 
       - name: Run Quality gates
         run: bash scripts/run_quality.sh
