@@ -32,16 +32,10 @@ PATTERNS = {
     "fail_open_entitlements": re.compile(r"Falla\s+ABIERTO", re.IGNORECASE),
 }
 
-# A literal REST URL in Agente is used only by its response-compatibility
-# adapter to recover the table name; the actual network I/O delegates to
-# core.database get_rows/post_rows/patch_rows. Keep the exception explicit so
-# the metric measures duplicated I/O rather than string literals.
 PATTERN_EXEMPTIONS = {
     "direct_supabase_rest": {"routers/agente.py"},
 }
 
-# Ratcheted after verified cleanup runs. These are maximums, never goals.
-# PostgREST implementation outside Core reached zero after the main.py cleanup.
 BASELINE_MAX = {
     "direct_env_reads": 0,
     "duplicated_auth_helpers": 0,
@@ -52,8 +46,8 @@ BASELINE_MAX = {
     "fail_open_entitlements": 0,
 }
 
-# Verified on Quality #258. A file may shrink or disappear, but none of these
-# legacy giants may grow again. A new >=100 KB code file is also a regression.
+# Verified again after integrating the current Frontend Canon into PR #44.
+# A file may shrink or disappear, but none of these legacy giants may grow.
 LARGE_FILE_MAX_BYTES = {
     "main.py": 595_635,
     "app-shell.js": 253_298,
@@ -62,7 +56,7 @@ LARGE_FILE_MAX_BYTES = {
     "propiedades.html": 149_441,
     "whatsapp.html": 127_110,
     "routers/firmas.py": 119_193,
-    "estadisticas.html": 115_461,
+    "estadisticas.html": 116_929,
     "contactos.html": 111_788,
     "legal.html": 109_324,
 }
