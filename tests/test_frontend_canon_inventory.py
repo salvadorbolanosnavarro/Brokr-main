@@ -11,11 +11,10 @@ QUALITY_RUNNER = ROOT / "scripts" / "run_quality.sh"
 
 
 class FrontendCanonInventoryTests(unittest.TestCase):
-    def test_quality_runner_owns_the_no_arg_canon_audit(self):
+    def test_quality_runner_is_the_single_canon_audit_entrypoint(self):
         quality = QUALITY_RUNNER.read_text(encoding="utf-8")
-        self.assertIn("python audit.py", quality)
-        audit_lines = [line.strip() for line in quality.splitlines() if "python audit.py" in line]
-        self.assertEqual(audit_lines, ["python audit.py"])
+        audit_lines = [line.strip() for line in quality.splitlines() if line.strip().startswith("python audit.py")]
+        self.assertEqual(audit_lines, ["python audit.py estadisticas.html"])
 
     def test_no_arg_audit_excludes_only_deliberate_non_product_surfaces(self):
         tree = ast.parse(AUDIT.read_text(encoding="utf-8"))
