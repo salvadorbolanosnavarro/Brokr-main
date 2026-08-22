@@ -82,6 +82,22 @@ def node_start(node: ast.AST) -> int:
     return min(starts)
 
 
+def include_router_alias(node: ast.AST) -> str | None:
+    if not isinstance(node, ast.Expr) or not isinstance(node.value, ast.Call):
+        return None
+    call = node.value
+    if not (
+        isinstance(call.func, ast.Attribute)
+        and isinstance(call.func.value, ast.Name)
+        and call.func.value.id == "app"
+        and call.func.attr == "include_router"
+        and call.args
+        and isinstance(call.args[0], ast.Name)
+    ):
+        return None
+    return call.args[0].id
+
+
 def main() -> int:
     source = MAIN.read_text(encoding="utf-8")
     tree = ast.parse(source, filename=str(MAIN))
@@ -121,17 +137,9 @@ def main() -> int:
     if len(app_assign) != 1:
         raise RuntimeError(f"expected exactly one app = FastAPI(), found {len(app_assign)}")
 
-    middleware_calls = [
-        n for n in body
-        if isinstance(n, ast.Expr)
-        and isinstance(n.value, ast.Call)
-        and isinstance(n.value.func, ast.Attribute)
-        and isinstance(n.value.func.value, ast.Name)
-        and n.value.func.value.id == "app"
-        and n.value.func.attr == "add_middleware"
-    ]
-    if len(middleware_calls) != 1:
-        raise RuntimeError(f"expected exactly one app.add_middleware(), found {len(middleware_calls)}")
+    include_calls = [n for n in body if include_router_alias(n) is not None]
+    if not include_calls:
+        raise RuntimeError("expected at least one top-level app.include_router() call")
 
     forbidden_aliases = {"admin_usage_router", "account_delete_router", "avm_legacy_router"}
     for node in body:
@@ -139,18 +147,9 @@ def main() -> int:
             for alias in node.names:
                 if alias.asname in forbidden_aliases:
                     raise RuntimeError(f"router alias already imported: {alias.asname}")
-        if isinstance(node, ast.Expr) and isinstance(node.value, ast.Call):
-            call = node.value
-            if (
-                isinstance(call.func, ast.Attribute)
-                and isinstance(call.func.value, ast.Name)
-                and call.func.value.id == "app"
-                and call.func.attr == "include_router"
-                and call.args
-                and isinstance(call.args[0], ast.Name)
-                and call.args[0].id in forbidden_aliases
-            ):
-                raise RuntimeError(f"router already included: {call.args[0].id}")
+        alias = include_router_alias(node)
+        if alias in forbidden_aliases:
+            raise RuntimeError(f"router already included: {alias}")
 
     lines = source.splitlines(keepends=True)
     edits: list[tuple[int, int, list[str]]] = []
@@ -161,16 +160,31 @@ def main() -> int:
 
     app_node = app_assign[0]
     edits.append((app_node.lineno - 1, app_node.lineno - 1, IMPORTS + ["\n"]))
-    mw_node = middleware_calls[0]
-    if mw_node.end_lineno is None:
-        raise RuntimeError("missing end_lineno for app.add_middleware")
-    edits.append((mw_node.end_lineno, mw_node.end_lineno, ["\n"] + INCLUDES + ["\n"]))
+
+    last_include = max(include_calls, key=lambda n: n.end_lineno or n.lineno)
+    if last_include.end_lineno is None:
+        raise RuntimeError("missing end_lineno for app.include_router")
+    edits.append((last_include.end_lineno, last_include.end_lineno, ["\n"] + INCLUDES + ["\n"]))
 
     for start, end, replacement in sorted(edits, key=lambda e: (e[0], e[1]), reverse=True):
         lines[start:end] = replacement
 
     transformed = "".join(lines)
-    ast.parse(transformed, filename=str(MAIN))
+    transformed_tree = ast.parse(transformed, filename=str(MAIN))
+
+    mounted = []
+    imported = []
+    for node in transformed_tree.body:
+        if isinstance(node, ast.ImportFrom):
+            imported.extend(alias.asname for alias in node.names if alias.asname in forbidden_aliases)
+        alias = include_router_alias(node)
+        if alias in forbidden_aliases:
+            mounted.append(alias)
+    if sorted(imported) != sorted(forbidden_aliases):
+        raise RuntimeError(f"router imports after transform are incomplete: {imported}")
+    if sorted(mounted) != sorted(forbidden_aliases):
+        raise RuntimeError(f"router mounts after transform are incomplete: {mounted}")
+
     if transformed == source:
         raise RuntimeError("transform produced no changes")
     MAIN.write_text(transformed, encoding="utf-8")
