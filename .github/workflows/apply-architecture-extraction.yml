@@ -78,17 +78,37 @@ jobs:
       - name: Verify HTTP golden after extraction
         run: python -m unittest tests.test_http_contract_golden
 
-      - name: Diagnose architecture test checkout
+      - name: Persist temporary architecture test diagnostics
         shell: bash
         run: |
-          echo '=== tracked tests ==='
-          git ls-files tests | sort
-          echo '=== test files on disk ==='
-          find tests -maxdepth 2 -type f -print | sort
-          echo '=== stale architecture symbols ==='
-          grep -R -n 'test_cleanup_gate_script_exists_and_contract_is_correct\|test_admin_usage_extraction_artifacts_are_complete\|test_admin_me_users_extraction_artifacts_are_complete' tests scripts .github || true
-          echo '=== git status ==='
-          git status --short
+          {
+            echo '=== tracked tests ==='
+            git ls-files tests | sort
+            echo '=== test files on disk ==='
+            find tests -maxdepth 2 -type f -print | sort
+            echo '=== stale architecture symbols ==='
+            grep -R -n 'test_cleanup_gate_script_exists_and_contract_is_correct\|test_apply_workflow_references_cleanup_gate\|test_http_contract_golden_exists_and_has_minimum_routes\|test_admin_usage_extraction_artifacts_are_complete\|test_admin_me_users_extraction_artifacts_are_complete' tests scripts .github || true
+            echo '=== unittest module locations ==='
+            python - <<'PY'
+          import importlib
+          import sys
+          sys.path.insert(0, 'tests')
+          for name in ('test_architecture_decomposition',):
+              try:
+                  module = importlib.import_module(name)
+                  print(name, getattr(module, '__file__', None))
+              except Exception as exc:
+                  print(name, 'IMPORT_ERROR', repr(exc))
+          PY
+            echo '=== git status ==='
+            git status --short
+          } > .ci/architecture-test-diagnostic.txt
+          cat .ci/architecture-test-diagnostic.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .ci/architecture-test-diagnostic.txt
+          git commit -m "ci: capture architecture test diagnostics"
+          git push origin HEAD:agent/architecture-cleanup
 
       - name: Run Quality gates
         run: bash scripts/run_quality.sh
