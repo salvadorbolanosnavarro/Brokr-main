@@ -78,6 +78,18 @@ jobs:
       - name: Verify HTTP golden after extraction
         run: python -m unittest tests.test_http_contract_golden
 
+      - name: Diagnose architecture test checkout
+        shell: bash
+        run: |
+          echo '=== tracked tests ==='
+          git ls-files tests | sort
+          echo '=== test files on disk ==='
+          find tests -maxdepth 2 -type f -print | sort
+          echo '=== stale architecture symbols ==='
+          grep -R -n 'test_cleanup_gate_script_exists_and_contract_is_correct\|test_admin_usage_extraction_artifacts_are_complete\|test_admin_me_users_extraction_artifacts_are_complete' tests scripts .github || true
+          echo '=== git status ==='
+          git status --short
+
       - name: Run Quality gates
         run: bash scripts/run_quality.sh
 
