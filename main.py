@@ -102,6 +102,8 @@ from routers.facebook_select_page import router as facebook_select_page_router
 
 from routers.facebook_select_ad_account import router as facebook_select_ad_account_router
 
+from routers.facebook_encrypt_tokens import router as facebook_encrypt_tokens_router
+
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -1377,6 +1379,8 @@ app.include_router(facebook_select_page_router)
 
 app.include_router(facebook_select_ad_account_router)
 
+app.include_router(facebook_encrypt_tokens_router)
+
 
 
 
@@ -2546,26 +2550,6 @@ async def facebook_save_page(req: FbSavePageRequest, request: Request):
 
 
 
-@app.post("/facebook/encrypt-tokens")
-async def facebook_encrypt_tokens(request: Request):
-    """Cifra los tokens que quedaron en texto plano de antes de este cambio.
-
-    Es idempotente: correrlo dos veces no hace daño. Cada dueño lo corre para
-    su propia conexión; no toca la de nadie más.
-    """
-    user_id = await exigir_gestion_integraciones(request)
-    if not facebook_secret_encryption_available():
-        raise HTTPException(
-            status_code=503,
-            detail="Falta configurar TOKEN_ENC_KEY en el servidor. Genera una con: "
-                   "python3 -c \"from cryptography.fernet import Fernet; "
-                   "print(Fernet.generate_key().decode())\"")
-    fila = await _fb_get_meta_row(user_id)
-    if not fila:
-        raise HTTPException(status_code=400, detail="No hay conexión de Facebook.")
-    # _fb_patch_meta ya cifra al reescribir; basta con forzar una reescritura.
-    await _fb_patch_meta(user_id, {"tokens_cifrados_at": datetime.now(timezone.utc).isoformat()})
-    return {"ok": True, "mensaje": "Tus tokens de Facebook quedaron cifrados en reposo."}
 
 
 @app.post("/facebook/refresh-token")
