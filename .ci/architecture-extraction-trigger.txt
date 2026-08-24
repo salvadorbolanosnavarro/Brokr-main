@@ -1,2 +1,2 @@
-transform=scripts/refactor_main_extract_facebook_connection_store_core.py
-retry=25
+transform=scripts/refactor_main_extract_facebook_graph_core.py
+retry=26
