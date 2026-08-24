@@ -131,6 +131,11 @@ from routers.facebook_campaigns import router as facebook_campaigns_router
 from routers.facebook_insights_read import router as facebook_insights_read_router
 
 from routers.facebook_campaign_review import router as facebook_campaign_review_router
+
+from core.facebook_leadgen_config import (
+    FB_VERIFY_TOKEN,
+    FB_WEBHOOK_SECRET as _FB_WEBHOOK_SECRET,
+)
 app = FastAPI()
 app.include_router(facebook_refresh_token_router)
 
@@ -3308,10 +3313,8 @@ async def facebook_ad_description(request: Request):
 
 # Token que Meta usa para verificar la suscripción. Si no está configurado, el
 # webhook queda cerrado (no se acepta ninguna suscripción a ciegas).
-FB_VERIFY_TOKEN = legacy_main_settings.fb_verify_token
 # Secreto para validar la firma. Se cae a FB_APP_SECRET porque los Lead Ads
 # viven en la misma app de Meta que los anuncios.
-_FB_WEBHOOK_SECRET = legacy_main_settings.fb_webhook_secret or FB_APP_SECRET
 
 
 @app.get("/facebook/leadgen/webhook")
