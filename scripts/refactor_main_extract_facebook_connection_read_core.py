@@ -86,9 +86,10 @@ def main() -> int:
         and isinstance(node.ctx, ast.Load)
         and node.id == OLD_SCOPE_NAME
     ]
-    if len(old_scope_loads) != 2:
+    if len(old_scope_loads) != 4:
         raise RuntimeError(
-            f"expected exactly two {OLD_SCOPE_NAME} loads (save + read), found {len(old_scope_loads)}"
+            f"expected exactly four {OLD_SCOPE_NAME} loads "
+            f"(save, connection read, OAuth callback, diagnostics), found {len(old_scope_loads)}"
         )
 
     if ROUTER_ALIAS in source:
@@ -112,8 +113,8 @@ def main() -> int:
     if source.count(anchor) != 1:
         raise RuntimeError(f"expected one AVM router include anchor, found {source.count(anchor)}")
 
-    # Rename all shared-scope loads before deleting the now-obsolete assignment
-    # and the route. The save-page route remains in main and uses the Core constant.
+    # Rename all four shared-scope consumers before deleting the now-obsolete
+    # assignment and the read route. The other three callers stay in main.
     transformed = source.replace(OLD_SCOPE_NAME, NEW_SCOPE_NAME)
     tree2 = ast.parse(transformed, filename=str(MAIN))
 
@@ -160,8 +161,11 @@ def main() -> int:
         raise RuntimeError("Facebook connection router import count mismatch")
     if transformed.count(ROUTER_INCLUDE.strip()) != 1:
         raise RuntimeError("Facebook connection router include count mismatch")
-    if "scopes_faltantes" not in transformed or NEW_SCOPE_NAME not in transformed:
-        raise RuntimeError("save-page no longer uses the shared scope constant")
+    if transformed.count(NEW_SCOPE_NAME) != 5:
+        raise RuntimeError(
+            f"expected shared scope import plus four consumers after transform, "
+            f"found {transformed.count(NEW_SCOPE_NAME)} occurrences"
+        )
 
     if transformed == source:
         raise RuntimeError("transform produced no changes")
