@@ -79,7 +79,7 @@ def main() -> None:
         raise SystemExit(f"expected exactly one app = FastAPI(), found {len(app_assignments)}")
 
     lines = source.splitlines(keepends=True)
-    start = node.lineno - 1
+    start = min([node.lineno, *[d.lineno for d in node.decorator_list]]) - 1
     end = node.end_lineno
     del lines[start:end]
     transformed = "".join(lines)
