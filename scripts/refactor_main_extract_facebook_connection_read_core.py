@@ -161,9 +161,9 @@ def main() -> int:
         raise RuntimeError("Facebook connection router import count mismatch")
     if transformed.count(ROUTER_INCLUDE.strip()) != 1:
         raise RuntimeError("Facebook connection router include count mismatch")
-    if transformed.count(NEW_SCOPE_NAME) != 5:
+    if transformed.count(NEW_SCOPE_NAME) != 4:
         raise RuntimeError(
-            f"expected shared scope import plus four consumers after transform, "
+            f"expected shared scope import plus three remaining consumers after removing connection read, "
             f"found {transformed.count(NEW_SCOPE_NAME)} occurrences"
         )
 
