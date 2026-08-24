@@ -1,2 +1,2 @@
-transform=scripts/refactor_main_extract_facebook_meta_helper_core.py
-retry=41
+transform=scripts/refactor_main_extract_facebook_ad_accounts_core.py
+retry=42
