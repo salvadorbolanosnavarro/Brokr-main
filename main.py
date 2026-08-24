@@ -2095,29 +2095,31 @@ except Exception as _e:
     InvalidToken = Exception  # type: ignore
     if _TOKEN_ENC_KEY:
         logging.getLogger("broquer.facebook").error(
-            "TOKEN_ENC_KEY inválida (%s). Los tokens seguirán en texto plano. "
+            "TOKEN_ENC_KEY inválida (%s). Las nuevas escrituras de tokens de Meta se rechazarán hasta corregirla. "
             "Genera una con: python3 -c \"from cryptography.fernet import Fernet; "
             "print(Fernet.generate_key().decode())\"", _e)
 
 
 def cifrar_secreto(valor: str) -> str:
-    """Cifra un token. Si no hay llave configurada, lo devuelve tal cual."""
-    global _fermet_aviso_dado
+    """Cifra un token; rechaza escrituras nuevas si el cifrado no está disponible."""
     if not valor:
         return valor
     if valor.startswith(_PREFIJO_CIFRADO):
-        return valor                      # ya venía cifrado
-    if not _FERNET:
-        if not _fermet_aviso_dado:
-            _fb_log.warning("TOKEN_ENC_KEY no configurada: los tokens de Meta se "
-                            "guardan en texto plano en Supabase.")
-            _fermet_aviso_dado = True
         return valor
+    if not _FERNET:
+        raise HTTPException(
+            status_code=503,
+            detail="Cifrado de tokens de Meta no disponible. Configura TOKEN_ENC_KEY.",
+        )
     try:
         return _PREFIJO_CIFRADO + _FERNET.encrypt(valor.encode("utf-8")).decode("ascii")
-    except Exception as e:
-        _fb_log.error("No se pudo cifrar el token: %s", e)
-        return valor
+    except Exception as exc:
+        _fb_log.error("No se pudo cifrar el token: %s", exc)
+        raise HTTPException(
+            status_code=503,
+            detail="No se pudo proteger el token de Meta. Intenta de nuevo más tarde.",
+        ) from exc
+
 
 
 def descifrar_secreto(valor: str) -> str:
