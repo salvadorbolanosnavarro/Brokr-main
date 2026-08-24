@@ -69,6 +69,8 @@ from routers.avm_websearch import router as avm_websearch_router
 from core.facebook_tokens import FACEBOOK_REQUIRED_SCOPES
 from routers.facebook_connection_read import router as facebook_connection_read_router
 
+from core.facebook_secrets import (decrypt_facebook_secret as descifrar_secreto, encrypt_facebook_secret as cifrar_secreto, facebook_secret_encryption_available)
+
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -2088,65 +2090,12 @@ _fb_log = logging.getLogger("broquer.facebook")
 # vez en el log). Generar una llave:
 #     python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 
-_PREFIJO_CIFRADO = "enc:v1:"
-_TOKEN_ENC_KEY = legacy_main_settings.token_enc_key
-_fermet_aviso_dado = False
-
-try:
-    from cryptography.fernet import Fernet, InvalidToken
-    _FERNET = Fernet(_TOKEN_ENC_KEY.encode()) if _TOKEN_ENC_KEY else None
-except Exception as _e:
-    _FERNET = None
-    InvalidToken = Exception  # type: ignore
-    if _TOKEN_ENC_KEY:
-        logging.getLogger("broquer.facebook").error(
-            "TOKEN_ENC_KEY inválida (%s). Las nuevas escrituras de tokens de Meta se rechazarán hasta corregirla. "
-            "Genera una con: python3 -c \"from cryptography.fernet import Fernet; "
-            "print(Fernet.generate_key().decode())\"", _e)
-
-
-def cifrar_secreto(valor: str) -> str:
-    """Cifra un token; rechaza escrituras nuevas si el cifrado no está disponible."""
-    if not valor:
-        return valor
-    if valor.startswith(_PREFIJO_CIFRADO):
-        return valor
-    if not _FERNET:
-        raise HTTPException(
-            status_code=503,
-            detail="Cifrado de tokens de Meta no disponible. Configura TOKEN_ENC_KEY.",
-        )
-    try:
-        return _PREFIJO_CIFRADO + _FERNET.encrypt(valor.encode("utf-8")).decode("ascii")
-    except Exception as exc:
-        _fb_log.error("No se pudo cifrar el token: %s", exc)
-        raise HTTPException(
-            status_code=503,
-            detail="No se pudo proteger el token de Meta. Intenta de nuevo más tarde.",
-        ) from exc
 
 
 
-def descifrar_secreto(valor: str) -> str:
-    """Descifra si hace falta. Los valores en claro (de antes) pasan derecho."""
-    if not valor or not isinstance(valor, str):
-        return valor or ""
-    if not valor.startswith(_PREFIJO_CIFRADO):
-        return valor
-    if not _FERNET:
-        # Hay datos cifrados pero se borró la llave: eso NO se puede adivinar.
-        _fb_log.error("Hay tokens cifrados en la base pero TOKEN_ENC_KEY no está "
-                      "configurada. Restaura la llave o el usuario tendrá que reconectar.")
-        return ""
-    try:
-        return _FERNET.decrypt(valor[len(_PREFIJO_CIFRADO):].encode("ascii")).decode("utf-8")
-    except InvalidToken:
-        _fb_log.error("Token cifrado con OTRA llave (TOKEN_ENC_KEY cambió). "
-                      "El usuario tendrá que reconectar Facebook.")
-        return ""
-    except Exception as e:
-        _fb_log.error("No se pudo descifrar el token: %s", e)
-        return ""
+
+
+
 
 FB_API_VERSION = legacy_main_settings.fb_api_version
 FB_GRAPH       = f"https://graph.facebook.com/{FB_API_VERSION}"
@@ -2939,7 +2888,7 @@ async def facebook_encrypt_tokens(request: Request):
     su propia conexión; no toca la de nadie más.
     """
     user_id = await exigir_gestion_integraciones(request)
-    if not _FERNET:
+    if not facebook_secret_encryption_available():
         raise HTTPException(
             status_code=503,
             detail="Falta configurar TOKEN_ENC_KEY en el servidor. Genera una con: "
