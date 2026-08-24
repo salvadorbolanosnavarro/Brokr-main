@@ -1,2 +1,2 @@
-transform=scripts/refactor_main_extract_facebook_leadgen_config_core.py
-retry=49
+transform=scripts/refactor_main_extract_facebook_leadgen_verify_core.py
+retry=50
