@@ -66,6 +66,9 @@ from routers.avm_claude import router as avm_claude_router
 
 from routers.avm_websearch import router as avm_websearch_router
 
+from core.facebook_tokens import FACEBOOK_REQUIRED_SCOPES
+from routers.facebook_connection_read import router as facebook_connection_read_router
+
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -1333,6 +1336,8 @@ app.include_router(avm_claude_router)
 
 app.include_router(avm_websearch_router)
 
+app.include_router(facebook_connection_read_router)
+
 
 
 
@@ -2440,12 +2445,6 @@ _FB_TOKEN_VIDA_DEFECTO = 60 * 24 * 3600  # 60 días en segundos
 # Días antes de la expiración en que empezamos a avisar en la UI.
 
 # Permisos sin los cuales el módulo de anuncios no puede funcionar.
-_FB_SCOPES_REQUERIDOS = [
-    "ads_management",        # crear/leer/pausar campañas
-    "pages_show_list",       # ver las páginas del usuario
-    "pages_read_engagement", # leer publicaciones para promocionarlas
-    "leads_retrieval",       # bajar los leads de los Lead Ads
-]
 
 
 async def _fb_debug_token(client: httpx.AsyncClient, token: str) -> dict:
@@ -2792,57 +2791,9 @@ async def facebook_save_page(req: FbSavePageRequest, request: Request):
         "ad_account_id": ad_account_id,
         "ad_account_name": ad_account_name,
         "token_expires_at": token_expires_at,
-        "scopes_faltantes": [s for s in _FB_SCOPES_REQUERIDOS if s not in scopes] if scopes else [],
+        "scopes_faltantes": [s for s in FACEBOOK_REQUIRED_SCOPES if s not in scopes] if scopes else [],
     }
 
-@app.get("/facebook/connection")
-async def facebook_get_connection(request: Request):
-    """Devuelve si el usuario tiene Facebook conectado y el nombre de la página."""
-    user_id = await get_user_id_from_token(request)
-    if not user_id or not SUPABASE_URL or not SUPABASE_KEY:
-        return {"connected": False}
-    try:
-        rows = await get_rows(
-            "user_integrations",
-            {
-                "user_id": f"eq.{user_id}",
-                "provider": "eq.facebook",
-                "select": "api_key,meta",
-                "limit": "1",
-            },
-            timeout=8,
-        )
-        if rows and rows[0].get("api_key"):
-            meta_str = rows[0].get("meta", "{}")
-            try:
-                meta = json.loads(meta_str) if isinstance(meta_str, str) else meta_str
-            except Exception:
-                meta = {}
-            estado_token = _fb_estado_token(meta)
-            return {
-                "connected": True,
-                "page_id": meta.get("page_id", ""),
-                "page_name": meta.get("page_name", "Página conectada"),
-                "page_pic": meta.get("page_pic", ""),
-                # Los tokens YA NO viajan al navegador. El frontend solo
-                # los usaba para saber si existían; mandarlos era regalar
-                # permiso de gastar a cualquier extensión o XSS que
-                # leyera la respuesta. El backend los saca de Supabase
-                # cuando los necesita.
-                "tiene_token_ads": bool(meta.get("user_token")),
-                "ad_account_id": meta.get("ad_account_id", ""),
-                "ad_account_name": meta.get("ad_account_name", ""),
-                # Estado del token: la UI avisa ANTES de que expire, en
-                # vez de que el agente descubra el corte cuando ya no
-                # puede pausar una campaña que está gastando.
-                "token": estado_token,
-                "scopes_faltantes": [s for s in _FB_SCOPES_REQUERIDOS
-                                     if s not in (meta.get("scopes") or [])]
-                                    if meta.get("scopes") else [],
-            }
-    except Exception:
-        pass
-    return {"connected": False}
 
 
 async def _fb_get_meta_row(user_id: str) -> dict:
@@ -3224,7 +3175,7 @@ async def facebook_callback(code: str = Query(...), state: str = Query(None), re
         # 3. Verificar el token contra /debug_token: es la única forma de saber
         #    de verdad si quedó de larga duración y con qué permisos.
         info_token = await _fb_debug_token(client, long_token)
-        faltantes = [s for s in _FB_SCOPES_REQUERIDOS if s not in (info_token.get("scopes") or [])]
+        faltantes = [s for s in FACEBOOK_REQUIRED_SCOPES if s not in (info_token.get("scopes") or [])]
 
         # 4. Lista de páginas administradas
         paginas = await _fb_paginate(client, "me/accounts", token=long_token,
@@ -5440,7 +5391,7 @@ async def facebook_qa_selfcheck(request: Request):
                 paso("token_debug", False, "Meta no devolvió información del token.")
             else:
                 scopes = info.get("scopes") or []
-                faltantes = [s for s in _FB_SCOPES_REQUERIDOS if s not in scopes]
+                faltantes = [s for s in FACEBOOK_REQUIRED_SCOPES if s not in scopes]
                 expira = info.get("expires_at") or 0
                 # 0 = no expira; si expira, debe faltar bastante más que una hora.
                 segundos_restantes = (int(expira) - int(time.time())) if expira else -1
