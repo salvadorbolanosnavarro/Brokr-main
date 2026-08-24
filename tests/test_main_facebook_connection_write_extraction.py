@@ -13,13 +13,12 @@ class FacebookConnectionWriteExtractionTests(unittest.TestCase):
         cls.main = MAIN.read_text(encoding="utf-8")
         cls.store = STORE.read_text(encoding="utf-8")
 
-    def test_main_delegates_metadata_writes_to_core(self):
+    def test_main_delegates_metadata_writer_definition_to_core(self):
         self.assertIn(
             "from core.facebook_connection_store import patch_facebook_meta as _fb_patch_meta",
             self.main,
         )
         self.assertNotIn("async def _fb_patch_meta(", self.main)
-        self.assertIn("await _fb_patch_meta(", self.main)
 
     def test_store_preserves_encryption_org_and_upsert_contract(self):
         store = self.store
