@@ -1,2 +1,2 @@
-transform=scripts/refactor_main_extract_facebook_token_encryption_core.py
-retry=17
+transform=scripts/refactor_main_extract_facebook_connection_read_core.py
+retry=18
