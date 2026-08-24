@@ -1,2 +1,2 @@
-transform=scripts/refactor_main_extract_facebook_token_lifecycle_core.py
-retry=35
+transform=scripts/refactor_main_extract_facebook_refresh_token_core.py
+retry=36
