@@ -1,2 +1,2 @@
-transform=scripts/refactor_main_extract_facebook_city_search_core.py
-retry=43
+transform=scripts/refactor_main_extract_facebook_insights_core.py
+retry=44
