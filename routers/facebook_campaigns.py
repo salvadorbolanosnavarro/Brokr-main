@@ -7,7 +7,7 @@ import httpx
 from fastapi import APIRouter, HTTPException, Request
 
 from core.auth import get_user_id_from_token
-from core.facebook_connection_store import get_facebook_meta_strict
+from core.facebook_connection_store import get_facebook_meta
 from core.facebook_graph import _fb_paginate
 from core.facebook_insights import (
     FB_DATE_PRESETS,
@@ -26,7 +26,7 @@ async def facebook_campaigns_list(request: Request):
     user_id = await get_user_id_from_token(request)
     if not user_id:
         raise HTTPException(status_code=401, detail="No autenticado")
-    meta = await get_facebook_meta_strict(user_id)
+    meta = await get_facebook_meta(user_id)
     user_token = meta.get("user_token", "")
     if not user_token:
         raise HTTPException(status_code=400, detail="Reconecta tu Facebook.")
