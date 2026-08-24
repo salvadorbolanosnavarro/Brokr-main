@@ -125,6 +125,8 @@ from core.facebook_insights import (
     normalize_facebook_insights as _fb_normaliza_insights,
 )
 
+
+from routers.facebook_campaigns import router as facebook_campaigns_router
 app = FastAPI()
 app.include_router(facebook_refresh_token_router)
 
@@ -1409,6 +1411,8 @@ app.include_router(facebook_disconnect_router)
 app.include_router(facebook_ad_accounts_router)
 
 app.include_router(facebook_city_search_router)
+
+app.include_router(facebook_campaigns_router)
 
 
 
@@ -3272,84 +3276,6 @@ async def facebook_ad_description(request: Request):
 
 
 
-@app.get("/facebook/campaigns")
-async def facebook_campaigns_list(request: Request):
-    """Lista las campañas con sus métricas reales.
-
-    Antes esto hacía 1 + N peticiones (una por campaña) y solo traía métricas de
-    vanidad. Ahora pide TODOS los insights en UNA sola llamada a nivel cuenta
-    (`level=campaign`) e incluye conversaciones de Messenger y su costo, que es
-    lo que el agente realmente necesita para decidir si el anuncio sirve.
-
-    Query params:
-      account_id  (requerido)
-      date_preset (opcional, default last_7d)
-      status      (opcional: ACTIVE|PAUSED|ALL, default ALL)
-    """
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autenticado")
-    meta = await _get_fb_meta(user_id)
-    user_token = meta.get("user_token", "")
-    if not user_token:
-        raise HTTPException(status_code=400, detail="Reconecta tu Facebook.")
-    account_id_raw = request.query_params.get("account_id", "")
-    if not account_id_raw:
-        raise HTTPException(status_code=400, detail="account_id requerido")
-    account_id = account_id_raw if account_id_raw.startswith("act_") else f"act_{account_id_raw}"
-
-    date_preset = (request.query_params.get("date_preset") or "last_7d").strip()
-    if date_preset not in _FB_DATE_PRESETS:
-        raise HTTPException(status_code=400,
-                            detail=f"Periodo no válido. Usa uno de: {', '.join(sorted(_FB_DATE_PRESETS))}")
-
-    async with httpx.AsyncClient(timeout=40) as client:
-        # 1. Campañas (paginadas: el limit=20 escondía las demás)
-        campaigns = await _fb_paginate(
-            client, f"{account_id}/campaigns", token=user_token,
-            params={"fields": "id,name,status,effective_status,objective,created_time,"
-                              "daily_budget,lifetime_budget,stop_time",
-                    "limit": "50"},
-            max_items=200, prefix="Error obteniendo campañas",
-        )
-
-        # 2. TODOS los insights de un jalón, a nivel campaña.
-        insights_por_campana: dict = {}
-        try:
-            filas = await _fb_paginate(
-                client, f"{account_id}/insights", token=user_token,
-                params={"level": "campaign",
-                        "fields": _FB_INSIGHTS_FIELDS + ",campaign_id",
-                        "date_preset": date_preset,
-                        "limit": "200"},
-                max_items=500, prefix="Error obteniendo métricas",
-            )
-            for fila in filas:
-                cid = fila.get("campaign_id")
-                if cid:
-                    insights_por_campana[cid] = _fb_normaliza_insights(fila)
-        except HTTPException as e:
-            # Sin métricas la lista sigue sirviendo (se puede pausar/activar),
-            # así que se degrada con aviso en vez de tumbar la pantalla.
-            _fb_log.warning("Insights no disponibles para %s: %s", account_id, e.detail)
-
-    vacio = _fb_normaliza_insights({})
-    results = []
-    for camp in campaigns:
-        cid = camp.get("id", "")
-        results.append({
-            "id": cid,
-            "name": camp.get("name", ""),
-            "status": camp.get("status", ""),
-            "effective_status": camp.get("effective_status", ""),
-            "objective": camp.get("objective", ""),
-            "created_time": camp.get("created_time", ""),
-            "stop_time": camp.get("stop_time", ""),
-            "daily_budget": camp.get("daily_budget", ""),
-            **insights_por_campana.get(cid, vacio),
-        })
-    return {"campaigns": results, "date_preset": date_preset,
-            "con_metricas": bool(insights_por_campana)}
 
 
 @app.get("/facebook/insights")
