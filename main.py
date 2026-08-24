@@ -108,6 +108,8 @@ from core.facebook_token_lifecycle import (FB_TOKEN_DEFAULT_LIFETIME_SECONDS as 
 
 from routers.facebook_refresh_token import router as facebook_refresh_token_router
 
+from routers.facebook_disconnect import router as facebook_disconnect_router
+
 app = FastAPI()
 app.include_router(facebook_refresh_token_router)
 
@@ -1387,6 +1389,8 @@ app.include_router(facebook_select_ad_account_router)
 
 app.include_router(facebook_encrypt_tokens_router)
 
+app.include_router(facebook_disconnect_router)
+
 
 
 
@@ -2541,24 +2545,6 @@ async def facebook_save_page(req: FbSavePageRequest, request: Request):
 
 
 
-@app.delete("/facebook/connection")
-async def facebook_disconnect(request: Request):
-    """Elimina la conexión de Facebook de la EMPRESA en Supabase.
-    Deja al equipo entero sin anuncios: solo el dueño o quien él designe."""
-    user_id = await exigir_gestion_integraciones(request)
-    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
-        raise HTTPException(status_code=500, detail="Supabase no configurado")
-    try:
-        await delete_rows(
-            "user_integrations",
-            {"user_id": f"eq.{user_id}", "provider": "eq.facebook"},
-            timeout=10,
-        )
-    except httpx.HTTPStatusError:
-        # Historical behavior: HTTP rejection was ignored; transport failures
-        # still propagate.
-        pass
-    return {"ok": True}
 
 
 @app.post("/facebook/publish-property")
