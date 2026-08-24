@@ -13,8 +13,8 @@ class MainContractRuntimeCleanupTests(unittest.TestCase):
         self.assertNotIn("from fastapi.responses import FileResponse", main)
         self.assertNotIn("tempfile", main)
         self.assertNotIn("subprocess", main)
-        self.assertIn("import os, json as _json", main)
-        self.assertIn("_json.loads(", main)
+        self.assertNotIn("json as _json", main)
+        self.assertNotIn("_json.loads(", main)
         compile(main, "main.py", "exec")
 
 
