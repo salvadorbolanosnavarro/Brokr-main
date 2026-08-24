@@ -56,14 +56,14 @@ def main() -> int:
         raise RuntimeError(f"expected one Fernet initialization try, found {len(crypto_tries)}")
     crypto_try = crypto_tries[0]
 
-    # _FERNET must be confined to the init block, the two helpers and the
-    # encrypt-tokens availability guard. Any extra use means the cut expanded.
+    # Five loads: two in encrypt, two in decrypt, one in encrypt-tokens.
+    # Any extra use means the cut expanded beyond the characterized shape.
     fernet_loads = [
         node for node in ast.walk(tree)
         if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load) and node.id == "_FERNET"
     ]
-    if len(fernet_loads) != 4:
-        raise RuntimeError(f"expected exactly four _FERNET loads, found {len(fernet_loads)}")
+    if len(fernet_loads) != 5:
+        raise RuntimeError(f"expected exactly five _FERNET loads, found {len(fernet_loads)}")
 
     encrypt_route = [
         node for node in body
