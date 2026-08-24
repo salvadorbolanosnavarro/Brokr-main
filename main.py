@@ -106,7 +106,11 @@ from routers.facebook_encrypt_tokens import router as facebook_encrypt_tokens_ro
 
 from core.facebook_token_lifecycle import (FB_TOKEN_DEFAULT_LIFETIME_SECONDS as _FB_TOKEN_VIDA_DEFECTO, debug_facebook_token as _fb_debug_token)
 
+from routers.facebook_refresh_token import router as facebook_refresh_token_router
+
 app = FastAPI()
+app.include_router(facebook_refresh_token_router)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -2535,61 +2539,6 @@ async def facebook_save_page(req: FbSavePageRequest, request: Request):
 
 
 
-@app.post("/facebook/refresh-token")
-async def facebook_refresh_token(request: Request):
-    """Renueva el token de larga duración sin volver a pasar por el OAuth.
-
-    Meta deja re-intercambiar un token de larga duración por otro nuevo con el
-    mismo `fb_exchange_token`, siempre que el actual siga vivo. La UI llama a
-    esto sola cuando faltan pocos días para que expire, así el agente nunca ve
-    el módulo apagado. Si el token ya murió, no hay nada que renovar y hay que
-    reconectar de verdad — eso se dice claro, no se disfraza.
-    """
-    user_id = await exigir_gestion_integraciones(request)
-    if not FB_APP_ID or not FB_APP_SECRET:
-        raise HTTPException(status_code=500, detail="FB_APP_ID o FB_APP_SECRET no configurados.")
-    row = await _fb_get_meta_row(user_id)
-    meta = row.get("meta") or {}
-    user_token = meta.get("user_token", "")
-    if not user_token:
-        raise HTTPException(status_code=400, detail="No hay conexión de Facebook que renovar.")
-
-    async with httpx.AsyncClient(timeout=15) as client:
-        r = await _fb_request(
-            client, "GET", "oauth/access_token",
-            params={"grant_type": "fb_exchange_token",
-                    "client_id": FB_APP_ID,
-                    "client_secret": FB_APP_SECRET,
-                    "fb_exchange_token": user_token},
-        )
-        if r is None or r.status_code != 200:
-            raise HTTPException(
-                status_code=502,
-                detail=_fb_friendly_error(
-                    r.text if r is not None else "",
-                    "No se pudo renovar la conexión con Facebook. Reconéctala desde tu perfil"),
-            )
-        datos = r.json() or {}
-        nuevo = datos.get("access_token", "")
-        if not nuevo:
-            raise HTTPException(status_code=502,
-                                detail="Facebook no devolvió un token nuevo. Reconecta desde tu perfil.")
-        try:
-            expires_in = int(datos.get("expires_in") or 0)
-        except (TypeError, ValueError):
-            expires_in = 0
-        info = await _fb_debug_token(client, nuevo)
-
-    vence = (datetime.now(timezone.utc)
-             + timedelta(seconds=expires_in or _FB_TOKEN_VIDA_DEFECTO)).isoformat()
-    await _fb_patch_meta(user_id, {
-        "user_token": nuevo,
-        "token_expires_at": vence,
-        "scopes": info.get("scopes") or meta.get("scopes") or [],
-        "token_refreshed_at": datetime.now(timezone.utc).isoformat(),
-    })
-    return {"ok": True, "token_expires_at": vence,
-            "dias_restantes": int((expires_in or _FB_TOKEN_VIDA_DEFECTO) / 86400)}
 
 
 @app.delete("/facebook/connection")
