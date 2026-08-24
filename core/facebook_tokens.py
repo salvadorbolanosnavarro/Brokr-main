@@ -5,6 +5,12 @@ from datetime import datetime, timezone
 
 
 FACEBOOK_TOKEN_WARNING_DAYS = 14
+FACEBOOK_REQUIRED_SCOPES = (
+    "ads_management",
+    "pages_show_list",
+    "pages_read_engagement",
+    "leads_retrieval",
+)
 
 
 def facebook_token_state(meta: dict) -> dict:
