@@ -7,18 +7,23 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
+STORE = ROOT / "core" / "facebook_connection_store.py"
 
 
 class MainFacebookMetaCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.source = MAIN.read_text(encoding="utf-8")
-        start = cls.source.index("async def _get_fb_meta(user_id: str) -> dict:")
-        end = cls.source.index('@app.post("/facebook/ad-description")', start)
-        cls.block = cls.source[start:end]
+        cls.store = STORE.read_text(encoding="utf-8")
+        start = cls.store.index("async def get_facebook_meta(user_id: str) -> dict:")
+        end = cls.store.index("async def patch_facebook_meta(", start)
+        cls.block = cls.store[start:end]
 
-    def test_main_compiles(self):
+    def test_main_and_store_compile(self):
         compile(self.source, "main.py", "exec")
+        compile(self.store, "core/facebook_connection_store.py", "exec")
+        self.assertIn("from core.facebook_connection_store import get_facebook_meta as _get_fb_meta", self.source)
+        self.assertNotIn("async def _get_fb_meta(", self.source)
 
     def test_fb_meta_preserves_http_and_transport_error_contract(self):
         block = self.block
