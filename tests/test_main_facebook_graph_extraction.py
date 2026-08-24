@@ -25,13 +25,15 @@ class FacebookGraphExtractionTests(unittest.TestCase):
             "_fb_exigir_ok",
             "_fb_get_json",
             "_fb_paginate",
+            "_fb_batch",
         ):
             self.assertNotIn(f"def {name}(", self.main)
             self.assertNotIn(f"async def {name}(", self.main)
         self.assertIn("await _fb_paginate(", self.main)
         self.assertIn("await _fb_request(", self.main)
+        self.assertIn("await _fb_batch(", self.main)
 
-    def test_core_preserves_retry_token_and_pagination_policy(self):
+    def test_core_preserves_retry_token_pagination_and_batch_policy(self):
         graph = self.graph
         self.assertIn('FB_GRAPH = f"https://graph.facebook.com/{FB_API_VERSION}"', graph)
         self.assertIn("_FB_REINTENTOS = 4", graph)
@@ -43,6 +45,12 @@ class FacebookGraphExtractionTests(unittest.TestCase):
         self.assertIn("await asyncio.sleep", graph)
         self.assertIn("while paginas < max_paginas and len(items) < max_items:", graph)
         self.assertIn("return items[:max_items]", graph)
+        self.assertIn("async def _fb_batch(", graph)
+        self.assertIn("for i in range(0, len(peticiones), 50):", graph)
+        self.assertIn('data={"batch": json.dumps(lote), "include_headers": "false"}', graph)
+        self.assertIn('{"code": 0, "body": "Respuesta ilegible de Facebook"}', graph)
+        self.assertIn('{"code": 0, "body": "Respuesta inesperada de Facebook"}', graph)
+        self.assertIn('{"code": 0, "body": "Elemento inesperado"}', graph)
 
     def test_core_preserves_business_error_translation(self):
         graph = self.graph
