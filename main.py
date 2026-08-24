@@ -100,6 +100,8 @@ from core.facebook_connection_store import patch_facebook_meta as _fb_patch_meta
 
 from routers.facebook_select_page import router as facebook_select_page_router
 
+from routers.facebook_select_ad_account import router as facebook_select_ad_account_router
+
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -1373,6 +1375,8 @@ app.include_router(facebook_pages_router)
 
 app.include_router(facebook_select_page_router)
 
+app.include_router(facebook_select_ad_account_router)
+
 
 
 
@@ -2540,20 +2544,7 @@ async def facebook_save_page(req: FbSavePageRequest, request: Request):
 
 
 
-class FbSelectAdAccountRequest(BaseModel):
-    account_id: str
-    account_name: str = ""
 
-@app.post("/facebook/select-ad-account")
-async def facebook_select_ad_account(req: FbSelectAdAccountRequest, request: Request):
-    """Recuerda la última cuenta publicitaria elegida.
-    Toca dónde se cobran los anuncios: solo el dueño o quien él designe."""
-    user_id = await exigir_gestion_integraciones(request)
-    await _fb_patch_meta(user_id, {
-        "ad_account_id": req.account_id,
-        "ad_account_name": req.account_name or req.account_id,
-    })
-    return {"ok": True, "account_id": req.account_id}
 
 @app.post("/facebook/encrypt-tokens")
 async def facebook_encrypt_tokens(request: Request):
