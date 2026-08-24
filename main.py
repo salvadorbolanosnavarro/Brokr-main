@@ -96,6 +96,8 @@ from core.facebook_graph import (
 
 from routers.facebook_pages import router as facebook_pages_router
 
+from core.facebook_connection_store import patch_facebook_meta as _fb_patch_meta
+
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -2527,37 +2529,6 @@ async def facebook_save_page(req: FbSavePageRequest, request: Request):
 
 
 
-async def _fb_patch_meta(user_id: str, updates: dict, new_page_token: str | None = None) -> None:
-    """Actualiza la fila de Facebook del usuario fusionando 'updates' en meta.
-
-    Al reescribir, los tokens quedan cifrados aunque hubieran entrado en claro:
-    así las conexiones viejas se van migrando solas con el uso normal.
-    """
-    cur = await _fb_get_meta_row(user_id)
-    meta = cur.get("meta") or {}
-    meta.update(updates)
-    if meta.get("user_token"):
-        meta["user_token"] = cifrar_secreto(meta["user_token"])
-    page_token = new_page_token if new_page_token is not None else cur.get("page_token", "")
-    payload = {
-        "user_id": user_id,
-        "org_id": await get_org_id_for_user(user_id),
-        "provider": "facebook",
-        "api_key": cifrar_secreto(page_token),
-        "meta": json.dumps(meta),
-        "updated_at": datetime.utcnow().isoformat(),
-    }
-    try:
-        await post_rows(
-            "user_integrations",
-            payload,
-            prefer="resolution=merge-duplicates,return=minimal",
-            timeout=10,
-        )
-    except httpx.HTTPStatusError:
-        # Historical behavior: HTTP rejection was ignored; transport failures
-        # still propagate.
-        pass
 
 
 
