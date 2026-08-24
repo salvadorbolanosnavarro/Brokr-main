@@ -129,6 +129,8 @@ from core.facebook_insights import (
 from routers.facebook_campaigns import router as facebook_campaigns_router
 
 from routers.facebook_insights_read import router as facebook_insights_read_router
+
+from routers.facebook_campaign_review import router as facebook_campaign_review_router
 app = FastAPI()
 app.include_router(facebook_refresh_token_router)
 
@@ -1417,6 +1419,8 @@ app.include_router(facebook_city_search_router)
 app.include_router(facebook_campaigns_router)
 
 app.include_router(facebook_insights_read_router)
+
+app.include_router(facebook_campaign_review_router)
 
 
 
@@ -3287,105 +3291,8 @@ async def facebook_ad_description(request: Request):
 # Traducción de los effective_status de Meta. Un anuncio puede decir ACTIVE y
 # no entregar nada porque Meta lo rechazó: sin esto el agente solo ve que "no
 # llegan mensajes" y no sabe por qué.
-_FB_ESTADOS_EFECTIVOS = {
-    "ACTIVE":               ("ok",     "Entregando"),
-    "PAUSED":               ("neutro", "Pausado por ti"),
-    "DELETED":              ("neutro", "Eliminado"),
-    "ARCHIVED":             ("neutro", "Archivado"),
-    "PENDING_REVIEW":       ("aviso",  "En revisión por Meta (suele tardar menos de 24 h)"),
-    "IN_PROCESS":           ("aviso",  "Meta lo está procesando"),
-    "PREAPPROVED":          ("aviso",  "Preaprobado, aún no entrega"),
-    "DISAPPROVED":          ("error",  "Rechazado por Meta"),
-    "WITH_ISSUES":          ("error",  "Con observaciones de Meta"),
-    "PENDING_BILLING_INFO": ("error",  "Falta método de pago en la cuenta publicitaria"),
-    "CAMPAIGN_PAUSED":      ("neutro", "La campaña padre está pausada"),
-    "ADSET_PAUSED":         ("neutro", "El conjunto padre está pausado"),
-}
 
 
-@app.get("/facebook/campaign/review")
-async def facebook_campaign_review(request: Request):
-    """Estado de revisión real de una campaña, anuncio por anuncio.
-
-    Meta puede rechazar un anuncio y dejar la campaña en ACTIVE: en Broquer se
-    veía "Activa" sin entregar nada y sin explicación. Aquí se lee
-    effective_status + ad_review_feedback + issues_info de cada anuncio y se
-    devuelve el motivo del rechazo en español.
-    """
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autenticado")
-    campaign_id = (request.query_params.get("campaign_id") or "").strip()
-    if not campaign_id:
-        raise HTTPException(status_code=400, detail="campaign_id requerido")
-    meta = await _get_fb_meta(user_id)
-    user_token = meta.get("user_token", "")
-    if not user_token:
-        raise HTTPException(status_code=400, detail="Reconecta tu Facebook.")
-
-    async with httpx.AsyncClient(timeout=30) as client:
-        campana = await _fb_get_json(client, campaign_id, token=user_token,
-                                     params={"fields": "id,name,status,effective_status"},
-                                     prefix="Error leyendo la campaña")
-        anuncios = await _fb_paginate(
-            client, f"{campaign_id}/ads", token=user_token,
-            params={"fields": "id,name,status,effective_status,"
-                              "ad_review_feedback,issues_info,adset_id",
-                    "limit": "50"},
-            prefix="Error leyendo los anuncios",
-        )
-
-    def _motivos(ad: dict) -> list:
-        """Junta los motivos de rechazo en frases sueltas y legibles."""
-        salida = []
-        feedback = ad.get("ad_review_feedback") or {}
-        # Meta anida esto como {"global": {...}} o {"placement": {...}}
-        for bloque in feedback.values():
-            if isinstance(bloque, dict):
-                salida.extend(str(v) for v in bloque.values() if v)
-            elif bloque:
-                salida.append(str(bloque))
-        for issue in (ad.get("issues_info") or []):
-            if not isinstance(issue, dict):
-                continue
-            texto = issue.get("error_summary") or issue.get("error_message") or ""
-            if texto:
-                salida.append(str(texto))
-        # Sin duplicar, conservando el orden.
-        return list(dict.fromkeys([s for s in salida if s.strip()]))
-
-    detalle = []
-    for ad in anuncios:
-        eff = ad.get("effective_status", "")
-        severidad, etiqueta = _FB_ESTADOS_EFECTIVOS.get(eff, ("neutro", eff or "Desconocido"))
-        detalle.append({
-            "ad_id": ad.get("id", ""),
-            "adset_id": ad.get("adset_id", ""),
-            "name": ad.get("name", ""),
-            "status": ad.get("status", ""),
-            "effective_status": eff,
-            "severidad": severidad,
-            "etiqueta": etiqueta,
-            "motivos": _motivos(ad),
-            "apelable": eff in ("DISAPPROVED", "WITH_ISSUES"),
-        })
-
-    eff_camp = campana.get("effective_status", "")
-    sev_camp, etq_camp = _FB_ESTADOS_EFECTIVOS.get(eff_camp, ("neutro", eff_camp or "Desconocido"))
-    rechazados = [d for d in detalle if d["severidad"] == "error"]
-
-    return {
-        "campaign_id": campaign_id,
-        "name": campana.get("name", ""),
-        "status": campana.get("status", ""),
-        "effective_status": eff_camp,
-        "severidad": "error" if rechazados else sev_camp,
-        "etiqueta": etq_camp,
-        "ads": detalle,
-        "con_problemas": len(rechazados),
-        # Meta no expone la apelación por API: el agente tiene que entrar.
-        "url_revision": f"https://www.facebook.com/adsmanager/manage/ads?selected_campaign_ids={campaign_id}",
-    }
 
 
 # ════════════════════════════════════════════════════════════════
