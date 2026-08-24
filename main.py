@@ -92,6 +92,7 @@ from core.facebook_graph import (
     _fb_paginate,
     _fb_parse_error,
     _fb_request,
+    _fb_batch,
 )
 
 from routers.facebook_pages import router as facebook_pages_router
@@ -2201,47 +2202,6 @@ _fb_log = logging.getLogger("broquer.facebook")
 
 
 
-async def _fb_batch(client: httpx.AsyncClient, token: str, peticiones: list,
-                    timeout: float = 60.0, espera_base: float = None,
-                    espera_max: float = None) -> list:
-    """Ejecuta hasta 50 llamadas al Graph en UNA sola petición HTTP.
-
-    `peticiones` = [{"method": "POST", "relative_url": "123", "body": "status=PAUSED"}, …]
-    Devuelve una lista paralela de {"code": int, "body": dict|str} — un elemento
-    por petición, en el mismo orden. Si el batch entero falla, devuelve
-    elementos con code=0 para que el llamador reporte fallo parcial honesto.
-    """
-    salida: list = []
-    for i in range(0, len(peticiones), 50):
-        lote = peticiones[i:i + 50]
-        r = await _fb_request(client, "POST", "", token=token,
-                              data={"batch": json.dumps(lote),
-                                    "include_headers": "false"},
-                              timeout=timeout, espera_base=espera_base,
-                              espera_max=espera_max)
-        if r is None or r.status_code != 200:
-            detalle = _fb_friendly_error(r.text if r is not None else "", "Batch")
-            salida.extend([{"code": 0, "body": detalle} for _ in lote])
-            continue
-        try:
-            resultados = r.json()
-        except Exception:
-            salida.extend([{"code": 0, "body": "Respuesta ilegible de Facebook"} for _ in lote])
-            continue
-        if not isinstance(resultados, list):
-            salida.extend([{"code": 0, "body": "Respuesta inesperada de Facebook"} for _ in lote])
-            continue
-        for res in resultados:
-            if not isinstance(res, dict):
-                salida.append({"code": 0, "body": "Elemento inesperado"})
-                continue
-            cuerpo = res.get("body")
-            try:
-                cuerpo = json.loads(cuerpo) if isinstance(cuerpo, str) else cuerpo
-            except Exception:
-                pass
-            salida.append({"code": int(res.get("code") or 0), "body": cuerpo})
-    return salida
 
 
 # ════════════════════════════════════════════════════════════════
