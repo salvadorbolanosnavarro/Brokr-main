@@ -1,2 +1,2 @@
 transform=scripts/refactor_main_extract_facebook_secrets_core.py
-retry=21
+retry=22
