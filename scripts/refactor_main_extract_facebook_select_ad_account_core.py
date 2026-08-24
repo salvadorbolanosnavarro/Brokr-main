@@ -61,19 +61,17 @@ def main() -> int:
     if model.end_lineno is None:
         raise RuntimeError(f"{MODEL_NAME} missing end_lineno")
 
-    model_fields = {
-        stmt.targets[0].id
-        for stmt in model.body
-        if isinstance(stmt, ast.AnnAssign)
-        and len(stmt.targets if hasattr(stmt, "targets") else []) == 0
-    }
-    annotations = [
-        stmt.target.id
+    fields = [
+        stmt
         for stmt in model.body
         if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name)
     ]
+    annotations = [stmt.target.id for stmt in fields]
     if annotations != ["account_id", "account_name"]:
         raise RuntimeError(f"{MODEL_NAME} fields changed: {annotations}")
+    account_name = fields[1]
+    if not isinstance(account_name.value, ast.Constant) or account_name.value.value != "":
+        raise RuntimeError(f"{MODEL_NAME}.account_name default changed")
 
     routes = [
         node for node in body
