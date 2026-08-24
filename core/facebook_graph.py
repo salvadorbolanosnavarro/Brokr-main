@@ -11,7 +11,7 @@ import httpx
 from fastapi import HTTPException
 
 from core.config import settings
-from core import legacy_main_settings
+from core.legacy_main_config import legacy_main_settings
 
 
 _log = logging.getLogger("broquer.facebook")
