@@ -138,6 +138,8 @@ from core.facebook_leadgen_config import (
 )
 
 from routers.facebook_leadgen_verify import router as facebook_leadgen_verify_router
+
+from routers.facebook_leadgen_status import router as facebook_leadgen_status_router
 app = FastAPI()
 app.include_router(facebook_refresh_token_router)
 
@@ -1430,6 +1432,8 @@ app.include_router(facebook_insights_read_router)
 app.include_router(facebook_campaign_review_router)
 
 app.include_router(facebook_leadgen_verify_router)
+
+app.include_router(facebook_leadgen_status_router)
 
 
 
@@ -3675,35 +3679,6 @@ async def facebook_leadgen_subscribe(request: Request):
                     "entran solos a tu lista de prospectos."}
 
 
-@app.get("/facebook/leadgen/status")
-async def facebook_leadgen_status(request: Request):
-    """Dice si la página está capturando prospectos automáticamente."""
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autenticado")
-    fila = await _fb_get_meta_row(user_id)
-    meta = fila.get("meta") or {}
-    page_id = meta.get("page_id", "")
-    page_token = fila.get("page_token", "")
-    if not page_id or not page_token:
-        return {"configurado": False, "suscrito": False,
-                "motivo": "No hay página de Facebook conectada."}
-    if not FB_VERIFY_TOKEN or not _FB_WEBHOOK_SECRET:
-        return {"configurado": False, "suscrito": False,
-                "motivo": "El servidor no tiene FB_VERIFY_TOKEN o FB_APP_SECRET configurados."}
-
-    try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            apps = await _fb_paginate(client, f"{page_id}/subscribed_apps", token=page_token,
-                                      params={"fields": "id,name,subscribed_fields"},
-                                      max_paginas=1, prefix="Error consultando la suscripción")
-    except HTTPException as e:
-        return {"configurado": True, "suscrito": False, "motivo": str(e.detail)}
-
-    suscrito = any("leadgen" in (a.get("subscribed_fields") or []) for a in apps)
-    return {"configurado": True, "suscrito": suscrito, "page_id": page_id,
-            "motivo": "" if suscrito else "La página no está suscrita a los avisos de prospectos.",
-            "webhook_url": f"{FRONTEND_URL.rstrip('/')}/facebook/leadgen/webhook"}
 
 
 # ════════════════════════════════════════════════════════════════
