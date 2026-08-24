@@ -98,6 +98,8 @@ from routers.facebook_pages import router as facebook_pages_router
 
 from core.facebook_connection_store import patch_facebook_meta as _fb_patch_meta
 
+from routers.facebook_select_page import router as facebook_select_page_router
+
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -1369,6 +1371,8 @@ app.include_router(facebook_connection_read_router)
 
 app.include_router(facebook_pages_router)
 
+app.include_router(facebook_select_page_router)
+
 
 
 
@@ -2533,32 +2537,7 @@ async def facebook_save_page(req: FbSavePageRequest, request: Request):
 
 
 
-class FbSelectPageRequest(BaseModel):
-    page_id: str
 
-@app.post("/facebook/select-page")
-async def facebook_select_page(req: FbSelectPageRequest, request: Request):
-    """Cambia la página activa de la empresa (sin re-OAuth)."""
-    user_id = await exigir_gestion_integraciones(request)
-    row = await _fb_get_meta_row(user_id)
-    user_token = (row.get("meta") or {}).get("user_token", "")
-    if not user_token:
-        raise HTTPException(status_code=400, detail="Reconecta tu Facebook.")
-    # Buscar la página en /me/accounts para obtener su page_token específico
-    async with httpx.AsyncClient(timeout=10) as client:
-        paginas = await _fb_paginate(
-            client, "me/accounts", token=user_token,
-            params={"fields": "id,name,access_token", "limit": "100"},
-            prefix="Error leyendo tus páginas",
-        )
-    target = next((p for p in paginas if p.get("id") == req.page_id), None)
-    if not target:
-        raise HTTPException(status_code=400, detail="No administras esa página o ya no es accesible.")
-    page_token = target.get("access_token", "")
-    page_name = target.get("name", req.page_id)
-    await _fb_patch_meta(user_id, {"page_id": req.page_id, "page_name": page_name},
-                        new_page_token=page_token)
-    return {"ok": True, "page_id": req.page_id, "page_name": page_name}
 
 
 class FbSelectAdAccountRequest(BaseModel):
