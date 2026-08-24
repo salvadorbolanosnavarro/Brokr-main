@@ -1,2 +1,2 @@
 transform=scripts/refactor_main_extract_facebook_campaigns_core.py
-retry=45
+retry=46
