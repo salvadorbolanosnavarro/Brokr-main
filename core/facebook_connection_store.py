@@ -10,6 +10,7 @@ from datetime import datetime
 import json
 
 import httpx
+from fastapi import HTTPException
 
 from core.config import settings
 from core.database import get_rows, post_rows
@@ -55,6 +56,33 @@ async def get_facebook_meta_row(user_id: str) -> dict:
         "page_token": decrypt_facebook_secret(row.get("api_key", "")),
         "meta": meta,
     }
+
+
+async def get_facebook_meta(user_id: str) -> dict:
+    """Return only Facebook metadata, preserving the legacy raise-on-disconnected helper."""
+    try:
+        rows = await get_rows(
+            "user_integrations",
+            {
+                "user_id": f"eq.{user_id}",
+                "provider": "eq.facebook",
+                "select": "meta",
+                "limit": "1",
+            },
+            timeout=10,
+        )
+    except httpx.HTTPStatusError:
+        raise HTTPException(status_code=400, detail="Facebook no conectado")
+    if not rows:
+        raise HTTPException(status_code=400, detail="Facebook no conectado")
+    meta_raw = rows[0].get("meta", "{}")
+    try:
+        meta = json.loads(meta_raw) if isinstance(meta_raw, str) else meta_raw
+    except Exception:
+        return {}
+    if meta.get("user_token"):
+        meta["user_token"] = decrypt_facebook_secret(meta["user_token"])
+    return meta
 
 
 async def patch_facebook_meta(
