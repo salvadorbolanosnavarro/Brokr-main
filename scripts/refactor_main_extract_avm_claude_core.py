@@ -3,6 +3,8 @@
 
 Selection is AST-based. The request model and route must each exist exactly once
 with the expected route signature; otherwise the transform fails without writing.
+The legacy ``json as _json`` alias is removed only when this extraction removes
+its final load-site, preserving any other imports on the same statement.
 """
 from __future__ import annotations
 
@@ -79,6 +81,39 @@ def main() -> int:
             f"avm_claude route mismatch: {route_signature(functions[0])!r}"
         )
 
+    json_alias_imports = [
+        n for n in body
+        if isinstance(n, ast.Import)
+        and any(alias.name == "json" and alias.asname == "_json" for alias in n.names)
+    ]
+    if len(json_alias_imports) != 1:
+        raise RuntimeError(
+            f"expected exactly one top-level json as _json import, found {len(json_alias_imports)}"
+        )
+    json_alias_import = json_alias_imports[0]
+
+    json_load_sites = [
+        n for n in ast.walk(tree)
+        if isinstance(n, ast.Call)
+        and isinstance(n.func, ast.Attribute)
+        and isinstance(n.func.value, ast.Name)
+        and n.func.value.id == "_json"
+        and n.func.attr == "loads"
+    ]
+    route_json_load_sites = [
+        n for n in ast.walk(functions[0])
+        if isinstance(n, ast.Call)
+        and isinstance(n.func, ast.Attribute)
+        and isinstance(n.func.value, ast.Name)
+        and n.func.value.id == "_json"
+        and n.func.attr == "loads"
+    ]
+    if len(json_load_sites) != 1 or len(route_json_load_sites) != 1:
+        raise RuntimeError(
+            "expected avm_claude to contain the only _json.loads site "
+            f"(module={len(json_load_sites)}, route={len(route_json_load_sites)})"
+        )
+
     app_assign = [
         n for n in body
         if isinstance(n, ast.Assign)
@@ -109,6 +144,18 @@ def main() -> int:
             raise RuntimeError(f"missing end_lineno for {node!r}")
         edits.append((node_start(node) - 1, node.end_lineno, []))
 
+    if json_alias_import.end_lineno is None:
+        raise RuntimeError("missing end_lineno for json alias import")
+    remaining_aliases = [
+        alias for alias in json_alias_import.names
+        if not (alias.name == "json" and alias.asname == "_json")
+    ]
+    if not remaining_aliases:
+        import_replacement: list[str] = []
+    else:
+        import_replacement = [ast.unparse(ast.Import(names=remaining_aliases)) + "\n"]
+    edits.append((json_alias_import.lineno - 1, json_alias_import.end_lineno, import_replacement))
+
     app_node = app_assign[0]
     edits.append((app_node.lineno - 1, app_node.lineno - 1, [ROUTER_IMPORT, "\n"]))
 
@@ -134,6 +181,24 @@ def main() -> int:
     ]
     if remaining_classes or remaining_routes:
         raise RuntimeError("AVM Claude definitions remain in main.py after transform")
+
+    remaining_json_aliases = [
+        alias
+        for node in transformed_tree.body
+        if isinstance(node, ast.Import)
+        for alias in node.names
+        if alias.name == "json" and alias.asname == "_json"
+    ]
+    remaining_json_loads = [
+        n for n in ast.walk(transformed_tree)
+        if isinstance(n, ast.Call)
+        and isinstance(n.func, ast.Attribute)
+        and isinstance(n.func.value, ast.Name)
+        and n.func.value.id == "_json"
+        and n.func.attr == "loads"
+    ]
+    if remaining_json_aliases or remaining_json_loads:
+        raise RuntimeError("dead _json runtime alias/use remains in main.py after transform")
 
     imported = []
     mounted = []
