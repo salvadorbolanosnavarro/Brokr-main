@@ -300,3 +300,50 @@ async def _fb_paginate(
         items.extend(nuevos)
         paginas += 1
     return items[:max_items]
+
+
+async def _fb_batch(
+    client: httpx.AsyncClient,
+    token: str,
+    peticiones: list,
+    timeout: float = 60.0,
+    espera_base: float = None,
+    espera_max: float = None,
+) -> list:
+    """Execute Meta Graph batch calls preserving the historical partial-failure contract."""
+    salida: list = []
+    for i in range(0, len(peticiones), 50):
+        lote = peticiones[i:i + 50]
+        r = await _fb_request(
+            client,
+            "POST",
+            "",
+            token=token,
+            data={"batch": json.dumps(lote), "include_headers": "false"},
+            timeout=timeout,
+            espera_base=espera_base,
+            espera_max=espera_max,
+        )
+        if r is None or r.status_code != 200:
+            detalle = _fb_friendly_error(r.text if r is not None else "", "Batch")
+            salida.extend([{"code": 0, "body": detalle} for _ in lote])
+            continue
+        try:
+            resultados = r.json()
+        except Exception:
+            salida.extend([{"code": 0, "body": "Respuesta ilegible de Facebook"} for _ in lote])
+            continue
+        if not isinstance(resultados, list):
+            salida.extend([{"code": 0, "body": "Respuesta inesperada de Facebook"} for _ in lote])
+            continue
+        for res in resultados:
+            if not isinstance(res, dict):
+                salida.append({"code": 0, "body": "Elemento inesperado"})
+                continue
+            cuerpo = res.get("body")
+            try:
+                cuerpo = json.loads(cuerpo) if isinstance(cuerpo, str) else cuerpo
+            except Exception:
+                pass
+            salida.append({"code": int(res.get("code") or 0), "body": cuerpo})
+    return salida
