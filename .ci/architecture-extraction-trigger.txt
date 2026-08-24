@@ -1,2 +1,2 @@
-transform=scripts/refactor_main_extract_facebook_campaign_review_core.py
-retry=48
+transform=scripts/refactor_main_extract_facebook_leadgen_config_core.py
+retry=49
