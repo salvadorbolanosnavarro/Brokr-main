@@ -111,6 +111,8 @@ from routers.facebook_refresh_token import router as facebook_refresh_token_rout
 
 from routers.facebook_disconnect import router as facebook_disconnect_router
 
+from core.facebook_connection_store import get_facebook_meta as _get_fb_meta
+
 app = FastAPI()
 app.include_router(facebook_refresh_token_router)
 
@@ -3240,26 +3242,6 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
     }
 
 
-async def _get_fb_meta(user_id: str) -> dict:
-    """Helper: recupera meta de Facebook del usuario desde Supabase."""
-    try:
-        rows = await get_rows(
-            "user_integrations",
-            {"user_id": f"eq.{user_id}", "provider": "eq.facebook", "select": "meta", "limit": "1"},
-            timeout=10,
-        )
-    except httpx.HTTPStatusError:
-        raise HTTPException(status_code=400, detail="Facebook no conectado")
-    if not rows:
-        raise HTTPException(status_code=400, detail="Facebook no conectado")
-    meta_raw = rows[0].get("meta", "{}")
-    try:
-        meta = json.loads(meta_raw) if isinstance(meta_raw, str) else meta_raw
-    except Exception:
-        return {}
-    if meta.get("user_token"):
-        meta["user_token"] = descifrar_secreto(meta["user_token"])
-    return meta
 
 
 @app.post("/facebook/ad-description")
