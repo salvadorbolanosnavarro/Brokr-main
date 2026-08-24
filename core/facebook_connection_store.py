@@ -18,9 +18,9 @@ from core.facebook_secrets import decrypt_facebook_secret
 async def get_facebook_meta_row(user_id: str) -> dict:
     """Return the user's Facebook integration row with server-side tokens decoded.
 
-    Preserve the legacy fail-soft contract: missing privileged configuration,
-    a missing row, malformed metadata, or a Supabase HTTP rejection all read as
-    an empty result. Transport failures still propagate to the caller.
+    Preserve the legacy fail-soft contract for missing privileged configuration,
+    missing rows, malformed JSON text, and Supabase HTTP rejections. Transport
+    failures continue to propagate to callers.
     """
     if not settings.supabase_url or not settings.supabase_service_key:
         return {}
@@ -45,8 +45,6 @@ async def get_facebook_meta_row(user_id: str) -> dict:
     try:
         meta = json.loads(meta_raw) if isinstance(meta_raw, str) else meta_raw
     except Exception:
-        meta = {}
-    if not isinstance(meta, dict):
         meta = {}
 
     if meta.get("user_token"):
