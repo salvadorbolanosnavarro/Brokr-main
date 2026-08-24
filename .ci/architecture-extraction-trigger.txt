@@ -1,2 +1,2 @@
-transform=scripts/refactor_main_extract_facebook_select_ad_account_core.py
-retry=32
+transform=scripts/refactor_main_extract_facebook_encrypt_tokens_core.py
+retry=33
