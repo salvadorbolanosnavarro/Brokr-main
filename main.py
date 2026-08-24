@@ -115,6 +115,8 @@ from core.facebook_connection_store import get_facebook_meta as _get_fb_meta
 
 from routers.facebook_ad_accounts import router as facebook_ad_accounts_router
 
+from routers.facebook_city_search import router as facebook_city_search_router
+
 app = FastAPI()
 app.include_router(facebook_refresh_token_router)
 
@@ -1397,6 +1399,8 @@ app.include_router(facebook_encrypt_tokens_router)
 app.include_router(facebook_disconnect_router)
 
 app.include_router(facebook_ad_accounts_router)
+
+app.include_router(facebook_city_search_router)
 
 
 
@@ -3244,75 +3248,6 @@ async def facebook_ad_description(request: Request):
     return {"text": text}
 
 
-@app.get("/facebook/city-search")
-async def facebook_city_search(request: Request, q: str = ""):
-    """Busca ciudades/regiones en Meta para targeting geográfico.
-
-    `request` va primero y sin valor por defecto: antes era `request: Request = None`
-    detrás de un parámetro sin default, así que una llamada interna sin request
-    reventaba con AttributeError en vez de dar un 401 honesto.
-    """
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autenticado")
-    if len(q) < 2:
-        return {"results": []}
-    meta = await _get_fb_meta(user_id)
-    user_token = meta.get("user_token", "")
-    if not user_token:
-        raise HTTPException(status_code=400, detail="Reconecta tu Facebook desde tu perfil.")
-
-    # IMPORTANTE: Meta exige location_types como ARRAY JSON, no como lista
-    # separada por comas. Enviar "city,region" devuelve error 100 y el
-    # buscador de ciudades queda mudo.
-    base_params = {
-        "type": "adgeolocation",
-        "q": q,
-        "country_code": "MX",
-        "limit": "10",
-    }
-    try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            r = await _fb_request(
-                client, "GET", "search", token=user_token,
-                params={**base_params, "location_types": json.dumps(["city", "region"])}
-            )
-            # Fallback: si Meta rechaza el filtro, repetimos sin él para no
-            # dejar al agente sin resultados.
-            if r is None or r.status_code != 200:
-                r = await _fb_request(client, "GET", "search",
-                                      token=user_token, params=base_params)
-    except Exception:
-        raise HTTPException(status_code=502, detail="No se pudo conectar con Facebook. Intenta de nuevo.")
-
-    if r is None:
-        raise HTTPException(status_code=504, detail="Facebook no respondió al buscar ciudades. Intenta de nuevo.")
-    if r.status_code != 200:
-        try:
-            _msg = r.json().get("error", {}).get("message", "")
-        except Exception:
-            _msg = ""
-        raise HTTPException(
-            status_code=502,
-            detail=f"Facebook no pudo buscar ciudades: {_msg}" if _msg
-                   else "Facebook no pudo buscar ciudades. Reconecta tu cuenta desde tu perfil."
-        )
-
-    allowed = {"city", "region", "neighborhood", "subcity"}
-    results = []
-    for d in r.json().get("data", []):
-        if not d.get("key") or not d.get("name"):
-            continue
-        if d.get("type") and d["type"] not in allowed:
-            continue
-        results.append({
-            "key": d["key"],
-            "name": d["name"],
-            "type": d.get("type", ""),
-            "region": d.get("region", ""),
-            "country_name": d.get("country_name", ""),
-        })
-    return {"results": results}
 
 
 # Periodos que Meta acepta en `date_preset`. Se valida contra esta lista para
