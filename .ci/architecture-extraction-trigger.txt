@@ -1,2 +1,2 @@
-transform=scripts/refactor_main_extract_facebook_select_page_core.py
-retry=31
+transform=scripts/refactor_main_extract_facebook_select_ad_account_core.py
+retry=32
