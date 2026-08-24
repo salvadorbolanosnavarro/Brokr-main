@@ -4,6 +4,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
 ROUTER = ROOT / "routers" / "admin_delete.py"
+USAGE_ROUTER = ROOT / "routers" / "admin_usage.py"
 
 
 class AdminDeleteExtractionTests(unittest.TestCase):
@@ -11,12 +12,15 @@ class AdminDeleteExtractionTests(unittest.TestCase):
     def setUpClass(cls):
         cls.main = MAIN.read_text(encoding="utf-8")
         cls.router = ROUTER.read_text(encoding="utf-8")
+        cls.usage_router = USAGE_ROUTER.read_text(encoding="utf-8")
 
     def test_destructive_route_is_isolated_from_main(self):
         self.assertIn('@router.post("/admin/user/eliminar")', self.router)
         self.assertNotIn('@app.post("/admin/user/eliminar")', self.main)
         self.assertIn('app.include_router(admin_delete_router)', self.main)
-        self.assertIn('@app.get("/admin/user/{user_id}/uso")', self.main)
+        self.assertNotIn('@app.get("/admin/user/{user_id}/uso")', self.main)
+        self.assertIn('@router.get("/admin/user/{user_id}/uso")', self.usage_router)
+        self.assertIn('app.include_router(admin_usage_router)', self.main)
 
     def test_all_historical_safety_checks_are_preserved(self):
         r = self.router
@@ -52,6 +56,7 @@ class AdminDeleteExtractionTests(unittest.TestCase):
     def test_files_compile(self):
         compile(self.main, "main.py", "exec")
         compile(self.router, "routers/admin_delete.py", "exec")
+        compile(self.usage_router, "routers/admin_usage.py", "exec")
 
 
 if __name__ == "__main__":
