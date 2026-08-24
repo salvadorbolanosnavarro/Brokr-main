@@ -113,6 +113,8 @@ from routers.facebook_disconnect import router as facebook_disconnect_router
 
 from core.facebook_connection_store import get_facebook_meta as _get_fb_meta
 
+from routers.facebook_ad_accounts import router as facebook_ad_accounts_router
+
 app = FastAPI()
 app.include_router(facebook_refresh_token_router)
 
@@ -1393,6 +1395,8 @@ app.include_router(facebook_select_ad_account_router)
 app.include_router(facebook_encrypt_tokens_router)
 
 app.include_router(facebook_disconnect_router)
+
+app.include_router(facebook_ad_accounts_router)
 
 
 
@@ -2724,63 +2728,6 @@ async def facebook_publish(req: FbPublishRequest):
 
 # ─── FACEBOOK ADS ─────────────────────────────────────────────────────────────
 
-@app.get("/facebook/ad-accounts")
-async def facebook_ad_accounts(request: Request):
-    """Devuelve las cuentas publicitarias accesibles por el usuario."""
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autenticado")
-
-    # Recuperar user_token guardado en meta. Via _get_fb_meta() para que el
-    # descifrado ocurra en un solo lugar.
-    meta = await _get_fb_meta(user_id)
-    user_token = meta.get("user_token", "")
-    if not user_token:
-        raise HTTPException(status_code=400, detail="Token de usuario sin permisos de ads. Reconecta tu Facebook.")
-
-    async with httpx.AsyncClient(timeout=15) as client:
-        accounts = await _fb_paginate(
-            client, "me/adaccounts", token=user_token,
-            params={"fields": "id,name,account_status,currency", "limit": "50"},
-            prefix="Error leyendo cuentas publicitarias",
-        )
-    # Solo cuentas activas (account_status == 1)
-    active_raw = [a for a in accounts if a.get("account_status", 0) == 1]
-
-    # Para cada cuenta activa, traer las páginas que puede anunciar (promote_pages).
-    # Esto permite al frontend auto-seleccionar la cuenta correcta para la página
-    # conectada del usuario y marcar las que no pueden anunciar esa página.
-    #
-    # Va en UNA sola petición (batch). Antes era un loop N+1: con 30 cuentas
-    # publicitarias eran 30 viajes a Meta y la pantalla tardaba una eternidad.
-    paginas_por_cuenta: dict = {}
-    if active_raw:
-        async with httpx.AsyncClient(timeout=30) as client:
-            resultados = await _fb_batch(client, user_token, [
-                {"method": "GET",
-                 "relative_url": f"{a['id']}/promote_pages?fields=id&limit=100"}
-                for a in active_raw
-            ])
-            for cuenta, res in zip(active_raw, resultados):
-                ids: list[str] = []
-                cuerpo = res.get("body")
-                if res.get("code") == 200 and isinstance(cuerpo, dict):
-                    ids = [p["id"] for p in (cuerpo.get("data") or []) if p.get("id")]
-                elif res.get("code") != 200:
-                    _fb_log.warning("promote_pages falló para %s: %s",
-                                    cuenta.get("id"), str(cuerpo)[:200])
-                paginas_por_cuenta[cuenta["id"]] = ids
-
-    active: list[dict] = []
-    for a in active_raw:
-        page_ids: list[str] = paginas_por_cuenta.get(a["id"], [])
-        active.append({
-            "id": a["id"],
-            "name": a.get("name", a["id"]),
-            "currency": a.get("currency", "MXN"),
-            "promote_pages": page_ids,
-        })
-    return {"accounts": active}
 
 
 class FbCreateAdRequest(BaseModel):
