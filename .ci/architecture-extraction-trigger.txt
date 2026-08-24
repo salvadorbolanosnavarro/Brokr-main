@@ -1,2 +1,2 @@
-transform=scripts/refactor_main_extract_facebook_batch_core.py
-retry=39
+transform=scripts/refactor_main_extract_facebook_meta_helper_core.py
+retry=40
