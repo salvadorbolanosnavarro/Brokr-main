@@ -22,7 +22,7 @@ class FacebookSecretsExtractionTests(unittest.TestCase):
         self.assertNotIn("def descifrar_secreto(", self.main)
         self.assertNotIn("_PREFIJO_CIFRADO =", self.main)
         self.assertNotIn("_TOKEN_ENC_KEY =", self.main)
-        self.assertNotIn("from cryptography.fernet import Fernet", self.main)
+        self.assertNotIn("_fermet_aviso_dado", self.main)
         self.assertIn("if not facebook_secret_encryption_available():", self.main)
 
     def test_core_preserves_fail_closed_writes_and_legacy_reads(self):
