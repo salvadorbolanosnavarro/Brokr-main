@@ -29,23 +29,29 @@ class MainFacebookConnectionCoreRefactorTests(unittest.TestCase):
 
     def test_connection_persistence_delegates_to_core(self):
         source = self.source
-        self.assertTrue({"delete_rows", "get_rows", "post_rows"} <= core_database_imports(source))
+        store = self.store
+        self.assertTrue({"delete_rows", "post_rows"} <= core_database_imports(source))
         self.assertIn('await post_rows(\n            "user_integrations",', source)
-        self.assertIn('await get_rows(\n            "user_integrations",', source)
         self.assertIn('await delete_rows(\n            "user_integrations",', source)
-        self.assertIn('prefer="resolution=merge-duplicates,return=minimal"', source)
-        self.assertIn('"provider": "eq.facebook"', source)
-        self.assertIn('"provider": "facebook"', source)
+        self.assertIn('async def get_facebook_meta_row(user_id: str) -> dict:', store)
+        self.assertIn('async def patch_facebook_meta(', store)
+        self.assertIn('await get_rows(\n            "user_integrations",', store)
+        self.assertIn('await post_rows(\n            "user_integrations",', store)
+        self.assertIn('prefer="resolution=merge-duplicates,return=minimal"', store)
+        self.assertIn('"provider": "eq.facebook"', store)
+        self.assertIn('"provider": "facebook"', store)
 
     def test_connection_security_and_legacy_error_semantics_stay_intact(self):
         source = self.source
         store = self.store
         self.assertIn('except httpx.HTTPStatusError:\n        # Historical behavior: Supabase HTTP rejections did not fail save-page.', source)
         self.assertIn('except httpx.HTTPStatusError:\n        return {}', store)
+        self.assertIn('except httpx.HTTPStatusError:\n        pass', store)
         self.assertIn('user_id = await exigir_gestion_integraciones(request)', source)
         self.assertIn('"page_token": decrypt_facebook_secret(row.get("api_key", ""))', store)
         self.assertIn('meta["user_token"] = decrypt_facebook_secret(meta["user_token"])', store)
-        self.assertIn('meta["user_token"] = cifrar_secreto(meta["user_token"])', source)
+        self.assertIn('meta["user_token"] = encrypt_facebook_secret(meta["user_token"])', store)
+        self.assertIn('"api_key": encrypt_facebook_secret(page_token)', store)
         self.assertNotIn('f"{SUPABASE_URL}/rest/v1/user_integrations",\n            headers={"apikey": SUPABASE_SERVICE_KEY', self._connection_slice(source))
         compile(source, "main.py", "exec")
         compile(store, "core/facebook_connection_store.py", "exec")
