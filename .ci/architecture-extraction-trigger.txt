@@ -1,2 +1,2 @@
 transform=scripts/refactor_main_extract_facebook_connection_write_core.py
-retry=29
+retry=30
