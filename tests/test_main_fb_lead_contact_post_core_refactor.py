@@ -1,6 +1,7 @@
 """Permanent guard for Facebook Lead Ads contact creation through Core."""
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 import unittest
 
@@ -8,13 +9,23 @@ ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
 
 
+def _async_function_source(source: str, name: str) -> str:
+    tree = ast.parse(source)
+    node = next(
+        (item for item in tree.body if isinstance(item, ast.AsyncFunctionDef) and item.name == name),
+        None,
+    )
+    if node is None or node.end_lineno is None:
+        raise AssertionError(f"async function not found: {name}")
+    lines = source.splitlines(keepends=True)
+    return "".join(lines[node.lineno - 1:node.end_lineno])
+
+
 class MainFbLeadContactPostCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.source = MAIN.read_text(encoding="utf-8")
-        start = cls.source.index("async def _fb_procesar_lead(valor: dict) -> None:")
-        end = cls.source.index('\n\n@app.post("/facebook/leadgen/subscribe")', start)
-        cls.block = cls.source[start:end]
+        cls.block = _async_function_source(cls.source, "_fb_procesar_lead")
 
     def test_contact_creation_delegates_to_core(self):
         block = self.block
