@@ -104,6 +104,8 @@ from routers.facebook_select_ad_account import router as facebook_select_ad_acco
 
 from routers.facebook_encrypt_tokens import router as facebook_encrypt_tokens_router
 
+from core.facebook_token_lifecycle import (FB_TOKEN_DEFAULT_LIFETIME_SECONDS as _FB_TOKEN_VIDA_DEFECTO, debug_facebook_token as _fb_debug_token)
+
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -2183,31 +2185,12 @@ _fb_log = logging.getLogger("broquer.facebook")
 # Los tokens de larga duración de Meta duran ~60 días. Cuando Meta no manda
 # expires_in (tokens de página, que no expiran solos), asumimos este valor para
 # poder avisar de todas formas.
-_FB_TOKEN_VIDA_DEFECTO = 60 * 24 * 3600  # 60 días en segundos
 
 # Días antes de la expiración en que empezamos a avisar en la UI.
 
 # Permisos sin los cuales el módulo de anuncios no puede funcionar.
 
 
-async def _fb_debug_token(client: httpx.AsyncClient, token: str) -> dict:
-    """Pregunta a Meta qué es realmente este token (tipo, permisos, expiración).
-
-    Usa el app token (`APP_ID|APP_SECRET`) como credencial, que es lo que exige
-    /debug_token. Nunca lanza: si falla, devuelve {} y el llamador decide.
-    """
-    if not token or not FB_APP_ID or not FB_APP_SECRET:
-        return {}
-    try:
-        r = await _fb_request(client, "GET", "debug_token",
-                              params={"input_token": token,
-                                      "access_token": f"{FB_APP_ID}|{FB_APP_SECRET}"},
-                              reintentos=2)
-        if r is None or r.status_code != 200:
-            return {}
-        return (r.json() or {}).get("data") or {}
-    except Exception:
-        return {}
 
 
 async def _fb_batch(client: httpx.AsyncClient, token: str, peticiones: list,
