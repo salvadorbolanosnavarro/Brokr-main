@@ -360,5 +360,5 @@ tests/test_whatsapp_utils_extraction.py
 === unittest module locations ===
 test_architecture_decomposition IMPORT_ERROR ModuleNotFoundError("No module named 'test_architecture_decomposition'")
 === git status ===
+ M .ci/architecture-test-diagnostic.txt
  M main.py
-?? .ci/architecture-test-diagnostic.txt
