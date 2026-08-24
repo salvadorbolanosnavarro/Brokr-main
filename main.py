@@ -117,6 +117,14 @@ from routers.facebook_ad_accounts import router as facebook_ad_accounts_router
 
 from routers.facebook_city_search import router as facebook_city_search_router
 
+from core.facebook_insights import (
+    FB_BREAKDOWNS as _FB_BREAKDOWNS,
+    FB_DATE_PRESETS as _FB_DATE_PRESETS,
+    FB_INSIGHTS_FIELDS as _FB_INSIGHTS_FIELDS,
+    FB_KEY_ACTIONS as _FB_ACCIONES_CLAVE,
+    normalize_facebook_insights as _fb_normaliza_insights,
+)
+
 app = FastAPI()
 app.include_router(facebook_refresh_token_router)
 
@@ -3252,85 +3260,16 @@ async def facebook_ad_description(request: Request):
 
 # Periodos que Meta acepta en `date_preset`. Se valida contra esta lista para
 # no reenviar a Meta cualquier cosa que llegue por query string.
-_FB_DATE_PRESETS = {
-    "today", "yesterday", "this_week_mon_today", "last_week_mon_sun",
-    "last_7d", "last_14d", "last_28d", "last_30d", "last_90d",
-    "this_month", "last_month", "this_quarter", "last_quarter",
-    "this_year", "last_year", "maximum",
-}
 
 # Breakdowns soportados. Meta no deja combinar cualquiera con cualquiera; esta
 # lista es la que el módulo ofrece y sabe pintar.
-_FB_BREAKDOWNS = {"age", "gender", "publisher_platform", "platform_position",
-                  "impression_device", "region", "country"}
 
 # Las acciones que de verdad importan para un anuncio Click-to-Messenger.
 # El KPI real del agente inmobiliario NO son las impresiones: son las
 # conversaciones abiertas en Messenger y lo que cuesta cada una.
-_FB_ACCIONES_CLAVE = {
-    "onsite_conversion.messaging_conversation_started_7d": "conversaciones",
-    "onsite_conversion.total_messaging_connection": "mensajes",
-    "link_click": "clics_enlace",
-    "post_engagement": "engagement",
-    "landing_page_view": "vistas_destino",
-    "lead": "leads",
-    "leadgen_grouped": "leads_formulario",
-}
-
-_FB_INSIGHTS_FIELDS = ("impressions,reach,clicks,ctr,cpc,cpm,spend,frequency,"
-                       "actions,cost_per_action_type,objective,date_start,date_stop")
 
 
-def _fb_normaliza_insights(ins: dict) -> dict:
-    """Aplana un registro de insights de Meta a números que la UI pueda pintar.
 
-    `actions` y `cost_per_action_type` vienen como listas de {action_type, value}
-    — inservibles tal cual. Aquí se convierten en campos planos, incluyendo el
-    dato que de verdad importa: conversaciones de Messenger y su costo.
-    """
-    ins = ins or {}
-    # Meta a veces mete elementos que no son dicts en estas listas (o valores
-    # que no son números). Un AttributeError aquí tumbaba toda la pantalla de
-    # campañas, así que se filtra defensivamente.
-    def _a_mapa(lista) -> dict:
-        salida = {}
-        for item in (lista or []):
-            if not isinstance(item, dict):
-                continue
-            tipo = item.get("action_type")
-            if not tipo:
-                continue
-            try:
-                salida[tipo] = float(item.get("value") or 0)
-            except (TypeError, ValueError):
-                continue
-        return salida
-
-    acciones = _a_mapa(ins.get("actions"))
-    costos = _a_mapa(ins.get("cost_per_action_type"))
-
-    out = {
-        "impressions": ins.get("impressions", "0"),
-        "reach": ins.get("reach", "0"),
-        "clicks": ins.get("clicks", "0"),
-        "ctr": ins.get("ctr", "0"),
-        "cpc": ins.get("cpc", "0"),
-        "cpm": ins.get("cpm", "0"),
-        "spend": ins.get("spend", "0"),
-        "frequency": ins.get("frequency", "0"),
-        "date_start": ins.get("date_start", ""),
-        "date_stop": ins.get("date_stop", ""),
-        # Crudos, por si la UI quiere enseñar el detalle completo.
-        "actions": ins.get("actions") or [],
-        "cost_per_action_type": ins.get("cost_per_action_type") or [],
-    }
-    for clave, nombre in _FB_ACCIONES_CLAVE.items():
-        out[nombre] = acciones.get(clave, 0)
-        out[f"costo_{nombre}"] = costos.get(clave, 0)
-    # `engagement` se llamaba así en la respuesta vieja: se conserva el nombre
-    # para no romper la UI actual.
-    out["engagement"] = out.get("engagement", 0) or acciones.get("post_engagement", 0)
-    return out
 
 
 @app.get("/facebook/campaigns")
