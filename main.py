@@ -136,6 +136,8 @@ from core.facebook_leadgen_config import (
     FB_VERIFY_TOKEN,
     FB_WEBHOOK_SECRET as _FB_WEBHOOK_SECRET,
 )
+
+from routers.facebook_leadgen_verify import router as facebook_leadgen_verify_router
 app = FastAPI()
 app.include_router(facebook_refresh_token_router)
 
@@ -1426,6 +1428,8 @@ app.include_router(facebook_campaigns_router)
 app.include_router(facebook_insights_read_router)
 
 app.include_router(facebook_campaign_review_router)
+
+app.include_router(facebook_leadgen_verify_router)
 
 
 
@@ -3317,16 +3321,6 @@ async def facebook_ad_description(request: Request):
 # viven en la misma app de Meta que los anuncios.
 
 
-@app.get("/facebook/leadgen/webhook")
-async def facebook_leadgen_verify(request: Request):
-    """Handshake de verificación de Meta (hub.challenge)."""
-    p = request.query_params
-    if not FB_VERIFY_TOKEN:
-        _fb_log.error("FB_VERIFY_TOKEN no configurado: el webhook de Lead Ads está cerrado.")
-        return Response(content="not configured", status_code=503)
-    if p.get("hub.mode") == "subscribe" and p.get("hub.verify_token") == FB_VERIFY_TOKEN:
-        return Response(content=p.get("hub.challenge", ""), media_type="text/plain")
-    return Response(content="forbidden", status_code=403)
 
 
 @app.post("/facebook/leadgen/webhook")
