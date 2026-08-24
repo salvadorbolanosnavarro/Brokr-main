@@ -8,6 +8,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
+STORE = ROOT / "core" / "facebook_connection_store.py"
 
 
 def core_database_imports(source: str) -> set[str]:
@@ -24,6 +25,7 @@ class MainFacebookConnectionCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.source = MAIN.read_text(encoding="utf-8")
+        cls.store = STORE.read_text(encoding="utf-8")
 
     def test_connection_persistence_delegates_to_core(self):
         source = self.source
@@ -37,13 +39,16 @@ class MainFacebookConnectionCoreRefactorTests(unittest.TestCase):
 
     def test_connection_security_and_legacy_error_semantics_stay_intact(self):
         source = self.source
+        store = self.store
         self.assertIn('except httpx.HTTPStatusError:\n        # Historical behavior: Supabase HTTP rejections did not fail save-page.', source)
-        self.assertIn('except httpx.HTTPStatusError:\n        # Historical behavior: an HTTP rejection meant "no row"', source)
+        self.assertIn('except httpx.HTTPStatusError:\n        return {}', store)
         self.assertIn('user_id = await exigir_gestion_integraciones(request)', source)
-        self.assertIn('"page_token": descifrar_secreto(row.get("api_key", ""))', source)
+        self.assertIn('"page_token": decrypt_facebook_secret(row.get("api_key", ""))', store)
+        self.assertIn('meta["user_token"] = decrypt_facebook_secret(meta["user_token"])', store)
         self.assertIn('meta["user_token"] = cifrar_secreto(meta["user_token"])', source)
         self.assertNotIn('f"{SUPABASE_URL}/rest/v1/user_integrations",\n            headers={"apikey": SUPABASE_SERVICE_KEY', self._connection_slice(source))
         compile(source, "main.py", "exec")
+        compile(store, "core/facebook_connection_store.py", "exec")
 
     @staticmethod
     def _connection_slice(source: str) -> str:
