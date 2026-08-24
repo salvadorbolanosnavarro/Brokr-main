@@ -71,6 +71,8 @@ from routers.facebook_connection_read import router as facebook_connection_read_
 
 from core.facebook_secrets import (decrypt_facebook_secret as descifrar_secreto, encrypt_facebook_secret as cifrar_secreto, facebook_secret_encryption_available)
 
+from core.facebook_connection_store import get_facebook_meta_row as _fb_get_meta_row
+
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -2745,38 +2747,6 @@ async def facebook_save_page(req: FbSavePageRequest, request: Request):
 
 
 
-async def _fb_get_meta_row(user_id: str) -> dict:
-    """Devuelve la fila completa (api_key + meta dict) del usuario, o {}."""
-    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
-        return {}
-    try:
-        rows = await get_rows(
-            "user_integrations",
-            {
-                "user_id": f"eq.{user_id}",
-                "provider": "eq.facebook",
-                "select": "api_key,meta",
-                "limit": "1",
-            },
-            timeout=10,
-        )
-    except httpx.HTTPStatusError:
-        # Historical behavior: an HTTP rejection meant "no row"; transport
-        # failures still propagate to callers.
-        return {}
-    if not rows:
-        return {}
-    row = rows[0]
-    meta_raw = row.get("meta", "{}")
-    try:
-        meta = json.loads(meta_raw) if isinstance(meta_raw, str) else meta_raw
-    except Exception:
-        meta = {}
-    # Los tokens salen ya descifrados: quien llame a este helper no tiene por
-    # qué saber si están cifrados en reposo o no.
-    if meta.get("user_token"):
-        meta["user_token"] = descifrar_secreto(meta["user_token"])
-    return {"page_token": descifrar_secreto(row.get("api_key", "")), "meta": meta}
 
 
 async def _fb_patch_meta(user_id: str, updates: dict, new_page_token: str | None = None) -> None:
