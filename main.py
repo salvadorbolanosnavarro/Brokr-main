@@ -158,6 +158,8 @@ from core.facebook_leadgen_processor import (
 from routers.facebook_leadgen_webhook import router as facebook_leadgen_webhook_router
 
 from routers.facebook_page_posts import router as facebook_page_posts_router
+
+from routers.facebook_audiences_read import router as facebook_audiences_read_router
 app = FastAPI()
 app.include_router(facebook_refresh_token_router)
 
@@ -1458,6 +1460,8 @@ app.include_router(facebook_leadgen_subscribe_router)
 app.include_router(facebook_leadgen_webhook_router)
 
 app.include_router(facebook_page_posts_router)
+
+app.include_router(facebook_audiences_read_router)
 
 
 
@@ -3571,44 +3575,6 @@ async def facebook_audience_lookalike(req: FbLookalikeRequest, request: Request)
                     "Hasta entonces no lo podrás usar en un anuncio."}
 
 
-@app.get("/facebook/audiences")
-async def facebook_audiences_list(request: Request):
-    """Lista los públicos de la cuenta, con su estado real en Meta."""
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autenticado")
-    meta_fb = await _get_fb_meta(user_id)
-    user_token = meta_fb.get("user_token", "")
-    account_id = meta_fb.get("ad_account_id", "")
-    if not user_token or not account_id:
-        raise HTTPException(status_code=400, detail="Reconecta tu Facebook desde tu perfil.")
-    account_id = account_id if account_id.startswith("act_") else f"act_{account_id}"
-
-    async with httpx.AsyncClient(timeout=30) as client:
-        filas = await _fb_paginate(
-            client, f"{account_id}/customaudiences", token=user_token,
-            params={"fields": "id,name,subtype,approximate_count_lower_bound,"
-                              "approximate_count_upper_bound,operation_status,"
-                              "delivery_status,time_created",
-                    "limit": "100"},
-            prefix="Error leyendo tus públicos")
-
-    salida = []
-    for a in filas:
-        entrega = (a.get("delivery_status") or {})
-        operacion = (a.get("operation_status") or {})
-        listo = entrega.get("code") == 200
-        salida.append({
-            "id": a.get("id", ""),
-            "nombre": a.get("name", ""),
-            "tipo": a.get("subtype", ""),
-            "tamano_min": a.get("approximate_count_lower_bound"),
-            "tamano_max": a.get("approximate_count_upper_bound"),
-            "listo": listo,
-            "estado": entrega.get("description") or operacion.get("description") or "",
-            "creado": a.get("time_created", ""),
-        })
-    return {"audiences": salida}
 
 
 async def _fb_guardar_audiencia(user_id: str, org_id, datos: dict) -> None:
