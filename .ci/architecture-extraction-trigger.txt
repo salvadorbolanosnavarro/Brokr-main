@@ -1,2 +1,2 @@
-transform=scripts/refactor_main_extract_facebook_persistence_core.py
-retry=55
+transform=scripts/refactor_main_extract_facebook_leadgen_processor_core.py
+retry=56
