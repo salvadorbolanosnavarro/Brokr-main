@@ -1,4 +1,4 @@
-"""Permanent guards for Facebook connection persistence delegated to Core."""
+"""Permanent guards for Facebook connection persistence delegated outside main.py."""
 from __future__ import annotations
 
 import ast
@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
 STORE = ROOT / "core" / "facebook_connection_store.py"
 DISCONNECT = ROOT / "routers" / "facebook_disconnect.py"
+SAVE_PAGE = ROOT / "routers" / "facebook_save_page.py"
 
 
 def core_database_imports(source: str) -> set[str]:
@@ -22,30 +23,23 @@ def core_database_imports(source: str) -> set[str]:
     }
 
 
-def function_source(source: str, name: str) -> str:
-    tree = ast.parse(source)
-    matches = [
-        node for node in tree.body
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == name
-    ]
-    if len(matches) != 1:
-        raise AssertionError(f"expected exactly one {name}, found {len(matches)}")
-    return ast.get_source_segment(source, matches[0]) or ""
-
-
 class MainFacebookConnectionCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.source = MAIN.read_text(encoding="utf-8")
         cls.store = STORE.read_text(encoding="utf-8")
         cls.disconnect = DISCONNECT.read_text(encoding="utf-8")
+        cls.save_page = SAVE_PAGE.read_text(encoding="utf-8")
 
-    def test_connection_persistence_delegates_to_core(self):
+    def test_connection_persistence_delegates_outside_main(self):
         source = self.source
         store = self.store
         disconnect = self.disconnect
-        self.assertIn("post_rows", core_database_imports(source))
-        self.assertIn('await post_rows(\n            "user_integrations",', source)
+        save_page = self.save_page
+        self.assertNotIn('@app.post("/facebook/save-page")', source)
+        self.assertIn("from routers.facebook_save_page import router as facebook_save_page_router", source)
+        self.assertIn("app.include_router(facebook_save_page_router)", source)
+        self.assertIn('await post_rows(\n            "user_integrations",', save_page)
         self.assertIn("from routers.facebook_disconnect import router as facebook_disconnect_router", source)
         self.assertIn("app.include_router(facebook_disconnect_router)", source)
         self.assertIn('await delete_rows(\n            "user_integrations",', disconnect)
@@ -61,7 +55,8 @@ class MainFacebookConnectionCoreRefactorTests(unittest.TestCase):
         source = self.source
         store = self.store
         disconnect = self.disconnect
-        self.assertIn('except httpx.HTTPStatusError:\n        # Historical behavior: Supabase HTTP rejections did not fail save-page.', source)
+        save_page = self.save_page
+        self.assertIn('except httpx.HTTPStatusError:', save_page)
         self.assertIn('except httpx.HTTPStatusError:\n        return {}', store)
         self.assertIn('except httpx.HTTPStatusError:\n        pass', store)
         self.assertIn('user_id = await exigir_gestion_integraciones(request)', disconnect)
@@ -70,10 +65,13 @@ class MainFacebookConnectionCoreRefactorTests(unittest.TestCase):
         self.assertIn('meta["user_token"] = decrypt_facebook_secret(meta["user_token"])', store)
         self.assertIn('meta["user_token"] = encrypt_facebook_secret(meta["user_token"])', store)
         self.assertIn('"api_key": encrypt_facebook_secret(page_token)', store)
-        self.assertNotIn('f"{SUPABASE_URL}/rest/v1/user_integrations",\n            headers={"apikey": SUPABASE_SERVICE_KEY', function_source(source, "facebook_save_page"))
+        self.assertIn('"user_token": encrypt_facebook_secret(req.user_token)', save_page)
+        self.assertIn('"api_key": encrypt_facebook_secret(req.page_token)', save_page)
+        self.assertNotIn('f"{SUPABASE_URL}/rest/v1/user_integrations"', save_page)
         compile(source, "main.py", "exec")
         compile(store, "core/facebook_connection_store.py", "exec")
         compile(disconnect, "routers/facebook_disconnect.py", "exec")
+        compile(save_page, "routers/facebook_save_page.py", "exec")
 
 
 if __name__ == "__main__":
