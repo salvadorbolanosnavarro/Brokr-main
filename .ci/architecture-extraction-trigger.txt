@@ -1,2 +1,2 @@
-transform=scripts/refactor_main_extract_facebook_save_page_core.py
-retry=68
+transform=scripts/refactor_main_extract_facebook_ad_description_core.py
+retry=69
