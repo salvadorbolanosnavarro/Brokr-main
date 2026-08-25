@@ -170,6 +170,8 @@ from routers.facebook_publish_property import router as facebook_publish_propert
 from routers.facebook_save_page import router as facebook_save_page_router
 
 from routers.facebook_ad_description import router as facebook_ad_description_router
+
+from routers.facebook_campaign_toggle import router as facebook_campaign_toggle_router
 app = FastAPI()
 app.include_router(facebook_refresh_token_router)
 
@@ -1482,6 +1484,8 @@ app.include_router(facebook_publish_property_router)
 app.include_router(facebook_save_page_router)
 
 app.include_router(facebook_ad_description_router)
+
+app.include_router(facebook_campaign_toggle_router)
 
 
 
@@ -3361,131 +3365,6 @@ async def facebook_reconcile(request: Request):
 
 
 
-@app.post("/facebook/campaign/toggle")
-async def facebook_campaign_toggle(request: Request):
-    """Activa o pausa una campaña y todos sus adsets y ads hijos.
-
-    Este endpoint mueve DINERO: si dice "pausada" y no pausó, el agente sigue
-    pagando sin saberlo. Por eso:
-      1. Se revisa el resultado de CADA POST (antes se ignoraban todos y se
-         devolvía {"ok": True} pasara lo que pasara).
-      2. Los hijos se actualizan en batch (una petición HTTP en vez de N).
-      3. Al final se RELEE effective_status desde Meta y se devuelve el estado
-         verificado, no el que pedimos.
-      4. Si algo quedó fuera, se devuelve 207 con el detalle de qué falló.
-    """
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autenticado")
-    body = await request.json()
-    campaign_id = str(body.get("campaign_id", "") or "").strip()
-    new_status = body.get("status", "PAUSED")
-    if not campaign_id:
-        raise HTTPException(status_code=400, detail="campaign_id requerido")
-    if new_status not in ("ACTIVE", "PAUSED"):
-        raise HTTPException(status_code=400, detail="status debe ser ACTIVE o PAUSED")
-    meta = await _get_fb_meta(user_id)
-    user_token = meta.get("user_token", "")
-    if not user_token:
-        raise HTTPException(status_code=400, detail="Reconecta tu Facebook.")
-
-    fallos: list[dict] = []
-
-    def _anota_fallo(nivel: str, rid: str, resp) -> None:
-        fallos.append({
-            "nivel": nivel,
-            "id": rid,
-            "detalle": _fb_friendly_error(resp.text if resp is not None else "",
-                                          f"No se pudo cambiar el {nivel}"),
-        })
-
-    async with httpx.AsyncClient(timeout=30) as client:
-        # ── 1. Inventario de hijos (paginado: un limit=50 dejaba adsets fuera)
-        adsets = await _fb_paginate(client, f"{campaign_id}/adsets", token=user_token,
-                                    params={"fields": "id", "limit": "50"},
-                                    prefix="Error leyendo los conjuntos de anuncios")
-        adset_ids = [a["id"] for a in adsets if a.get("id")]
-
-        ad_ids: list[str] = []
-        for adset_id in adset_ids:
-            try:
-                ads = await _fb_paginate(client, f"{adset_id}/ads", token=user_token,
-                                         params={"fields": "id", "limit": "50"},
-                                         prefix="Error leyendo los anuncios")
-                ad_ids.extend([a["id"] for a in ads if a.get("id")])
-            except HTTPException as e:
-                fallos.append({"nivel": "anuncios", "id": adset_id, "detalle": str(e.detail)})
-
-        # ── 2. Aplicar el cambio ───────────────────────────────────────
-        # Al ACTIVAR se va de abajo hacia arriba (Meta exige hijos activos
-        # antes que el padre); al PAUSAR, de arriba hacia abajo, para cortar el
-        # gasto en la campaña lo antes posible aunque falle algún hijo.
-        if new_status == "ACTIVE":
-            orden = [("anuncio", ad_ids), ("conjunto", adset_ids), ("campaña", [campaign_id])]
-        else:
-            orden = [("campaña", [campaign_id]), ("conjunto", adset_ids), ("anuncio", ad_ids)]
-
-        for nivel, ids in orden:
-            if not ids:
-                continue
-            if len(ids) == 1:
-                rr = await _fb_request(client, "POST", str(ids[0]), token=user_token,
-                                       json_body={"status": new_status})
-                if rr is None or rr.status_code not in (200, 201):
-                    _anota_fallo(nivel, ids[0], rr)
-                continue
-            # En el batch de Meta, los parámetros de un POST van en `body`
-            # (form-encoded), no en el query string del relative_url.
-            resultados = await _fb_batch(client, user_token, [
-                {"method": "POST", "relative_url": str(rid),
-                 "body": f"status={new_status}"} for rid in ids
-            ])
-            for rid, res in zip(ids, resultados):
-                if res.get("code") not in (200, 201):
-                    cuerpo = res.get("body")
-                    fallos.append({
-                        "nivel": nivel, "id": rid,
-                        "detalle": _fb_friendly_error(
-                            json.dumps(cuerpo) if isinstance(cuerpo, dict) else str(cuerpo),
-                            f"No se pudo cambiar el {nivel}"),
-                    })
-
-        # ── 3. Verificar contra Meta lo que realmente quedó ────────────
-        verificado = {}
-        try:
-            rv = await _fb_request(client, "GET", campaign_id, token=user_token,
-                                   params={"fields": "status,effective_status"})
-            if rv is not None and rv.status_code == 200:
-                verificado = rv.json() or {}
-        except Exception:
-            pass
-
-    estado_real = verificado.get("status") or ""
-    ok = not fallos and (estado_real == new_status if estado_real else False)
-
-    respuesta = {
-        "ok": ok,
-        "campaign_id": campaign_id,
-        "status": estado_real or new_status,
-        "status_solicitado": new_status,
-        "effective_status": verificado.get("effective_status", ""),
-        "adsets": len(adset_ids),
-        "ads": len(ad_ids),
-        "fallos": fallos,
-    }
-    if not ok:
-        from fastapi.responses import JSONResponse
-        # 207 Multi-Status: parte se aplicó y parte no. El frontend DEBE
-        # enseñar esto — antes decía "listo" con la campaña todavía activa.
-        resumen = "; ".join(f["detalle"] for f in fallos[:3]) or (
-            f"Facebook reporta la campaña en {estado_real or 'estado desconocido'}, "
-            f"no en {new_status}.")
-        respuesta["detail"] = (
-            f"El cambio quedó incompleto: {resumen}. "
-            f"Revisa la campaña en Ads Manager antes de confiar en el estado."
-        )
-        return JSONResponse(status_code=207, content=respuesta)
-    return respuesta
 
 
 # ════════════════════════════════════════════════════════════════
