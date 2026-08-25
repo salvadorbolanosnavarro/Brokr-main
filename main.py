@@ -168,6 +168,8 @@ from routers.facebook_publish import router as facebook_publish_router
 from routers.facebook_publish_property import router as facebook_publish_property_router
 
 from routers.facebook_save_page import router as facebook_save_page_router
+
+from routers.facebook_ad_description import router as facebook_ad_description_router
 app = FastAPI()
 app.include_router(facebook_refresh_token_router)
 
@@ -1478,6 +1480,8 @@ app.include_router(facebook_publish_router)
 app.include_router(facebook_publish_property_router)
 
 app.include_router(facebook_save_page_router)
+
+app.include_router(facebook_ad_description_router)
 
 
 
@@ -2918,57 +2922,6 @@ async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
 
 
 
-@app.post("/facebook/ad-description")
-async def facebook_ad_description(request: Request):
-    """Genera o MEJORA texto del anuncio con Claude. Máx 150 caracteres.
-
-    Body acepta:
-      - titulo: texto base / título de referencia
-      - mejorar: bool — si True, mejora el texto en lugar de generar desde cero
-      - emojis: bool — si True, incluye emojis relevantes en el resultado
-    """
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autenticado")
-    if not ANTHROPIC_API_KEY:
-        raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY no configurada")
-    body = await request.json()
-    titulo = (body.get("titulo") or "").strip()
-    mejorar = bool(body.get("mejorar"))
-    emojis = bool(body.get("emojis"))
-
-    emoji_instr = " Incluye 2–3 emojis relevantes (🏡, 📍, ✨, 🔑, 🌳, etc.) integrados naturalmente, no al inicio/final." if emojis else ""
-
-    if mejorar and titulo:
-        prompt = (
-            f"Mejora este texto para un anuncio inmobiliario en Facebook, conservando su intención original.\n"
-            f"Texto del agente: \"{titulo}\"\n\n"
-            f"Reglas: máximo 150 caracteres; tono profesional y convincente; "
-            f"corrige ortografía/redacción; agrega 1 gancho corto si falta.{emoji_instr} "
-            f"Devuelve SOLO el texto mejorado, sin comillas ni explicaciones."
-        )
-    else:
-        prompt = (
-            f"Escribe el texto principal para un anuncio de Facebook de una propiedad inmobiliaria. "
-            f"{'Título/referencia: ' + titulo + '. ' if titulo else ''}"
-            f"El texto debe ser directo, profesional y convincente. "
-            f"Máximo 150 caracteres.{emoji_instr} "
-            f"Solo el texto del anuncio, sin comillas ni explicaciones."
-        )
-
-    async with httpx.AsyncClient(timeout=20) as client:
-        r = await client.post(
-            f"{ANTHROPIC_BASE}/messages",
-            headers={"x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "Content-Type": "application/json"},
-            json={"model": "claude-sonnet-4-6", "max_tokens": 120, "messages": [{"role": "user", "content": prompt}]}
-        )
-    if r.status_code != 200:
-        raise HTTPException(status_code=502, detail="Error generando descripción")
-    _resp_json = r.json()
-    _track_anthropic(user_id, "facebook-ads", "/facebook/ad-description", _resp_json,
-                     modelo=_resp_json.get("model") or "claude-sonnet-4-6")
-    text = _resp_json.get("content", [{}])[0].get("text", "").strip()[:200]
-    return {"text": text}
 
 
 
