@@ -164,6 +164,8 @@ from routers.facebook_audiences_read import router as facebook_audiences_read_ro
 from routers.facebook_oauth_callback import router as facebook_oauth_callback_router
 
 from routers.facebook_publish import router as facebook_publish_router
+
+from routers.facebook_publish_property import router as facebook_publish_property_router
 app = FastAPI()
 app.include_router(facebook_refresh_token_router)
 
@@ -1471,6 +1473,8 @@ app.include_router(facebook_oauth_callback_router)
 
 app.include_router(facebook_publish_router)
 
+app.include_router(facebook_publish_property_router)
+
 
 
 
@@ -2566,78 +2570,6 @@ async def facebook_save_page(req: FbSavePageRequest, request: Request):
 
 
 
-@app.post("/facebook/publish-property")
-async def facebook_publish_property(request: Request):
-    """Publica una propiedad en Facebook usando el token guardado del usuario."""
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autenticado")
-
-    body = await request.json()
-    titulo = body.get("titulo", "Nueva propiedad")
-    precio = body.get("precio", "")
-    tipo = body.get("tipo", "Inmueble")
-    operacion = body.get("operacion", "venta")
-    colonia = body.get("colonia", "")
-    ciudad = body.get("ciudad", "")
-    m2 = body.get("m2_construccion", "")
-    recamaras = body.get("recamaras", "")
-    fotos = body.get("fotos", [])
-    descripcion = body.get("descripcion", "")
-
-    # Obtener conexión de Facebook del usuario. El page_token se saca de la
-    # fila directa (_fb_get_meta_row), no de /facebook/connection: ese endpoint
-    # ya no devuelve tokens porque su respuesta viaja al navegador.
-    fila = await _fb_get_meta_row(user_id)
-    meta_fb = fila.get("meta") or {}
-    page_id = meta_fb.get("page_id", "")
-    page_token = fila.get("page_token", "")
-    if not page_id or not page_token:
-        raise HTTPException(status_code=400, detail="Facebook no conectado. Ve a tu perfil para conectar tu página.")
-    fb = {"page_name": meta_fb.get("page_name", "")}
-
-    # Construir mensaje
-    precio_fmt = f"${int(precio):,}" if precio else ""
-    ubicacion = ", ".join(filter(None, [colonia, ciudad]))
-    specs = []
-    if m2: specs.append(f"🏠 {m2} m²")
-    if recamaras: specs.append(f"🛏️ {recamaras} rec.")
-    specs_str = " · ".join(specs)
-
-    mensaje_lines = [
-        f"{'🏠' if operacion == 'venta' else '🔑'} {tipo} en {operacion.upper()} — {titulo}",
-        "",
-    ]
-    if ubicacion: mensaje_lines.append(f"📍 {ubicacion}")
-    if precio_fmt: mensaje_lines.append(f"💰 {precio_fmt} MXN")
-    if specs_str: mensaje_lines.append(specs_str)
-    if descripcion: mensaje_lines.extend(["", descripcion[:200]])
-    mensaje_lines.extend(["", "✅ Publicado con Broquer"])
-    mensaje = "\n".join(mensaje_lines)
-
-    # Publicar en Facebook
-    async with httpx.AsyncClient(timeout=30) as client:
-        photo_ids = []
-        for url in (fotos or [])[:5]:
-            try:
-                r = await _fb_request(client, "POST", f"{page_id}/photos",
-                                      token=page_token,
-                                      json_body={"url": url, "published": False})
-                if r is not None and r.status_code in (200, 201):
-                    pid = r.json().get("id")
-                    if pid: photo_ids.append({"media_fbid": pid})
-            except Exception:
-                pass
-
-        payload: dict = {"message": mensaje}
-        if photo_ids:
-            payload["attached_media"] = photo_ids
-
-        r_post = await _fb_request(client, "POST", f"{page_id}/feed",
-                                   token=page_token, json_body=payload)
-
-    datos = _fb_exigir_ok(r_post, "Error publicando en Facebook")
-    return {"ok": True, "post_id": datos.get("id"), "page_name": fb.get("page_name", "")}
 
 
 
