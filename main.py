@@ -156,6 +156,8 @@ from core.facebook_leadgen_processor import (
 )
 
 from routers.facebook_leadgen_webhook import router as facebook_leadgen_webhook_router
+
+from routers.facebook_page_posts import router as facebook_page_posts_router
 app = FastAPI()
 app.include_router(facebook_refresh_token_router)
 
@@ -1454,6 +1456,8 @@ app.include_router(facebook_leadgen_status_router)
 app.include_router(facebook_leadgen_subscribe_router)
 
 app.include_router(facebook_leadgen_webhook_router)
+
+app.include_router(facebook_page_posts_router)
 
 
 
@@ -3754,79 +3758,6 @@ async def facebook_reconcile(request: Request):
     }
 
 
-@app.get("/facebook/page-posts")
-async def facebook_page_posts(request: Request, page_id: str = ""):
-    """Lista las últimas publicaciones de la página para promocionarlas.
-
-    Si se pasa page_id por query, se usa esa página (resolviendo su page_token
-    desde /me/accounts con el user_token). Si no, usa la página activa guardada.
-    """
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autenticado")
-    row = await _fb_get_meta_row(user_id)
-    if not row:
-        raise HTTPException(status_code=400, detail="Facebook no conectado")
-    meta = row.get("meta") or {}
-    user_token = meta.get("user_token", "")
-
-    target_page_id = (page_id or meta.get("page_id", "")).strip()
-    if not target_page_id:
-        raise HTTPException(status_code=400, detail="No hay página seleccionada.")
-
-    # Resolver el page_token correcto: si nos piden la página guardada usamos
-    # api_key directo; si nos piden otra, resolvemos con user_token.
-    if target_page_id == meta.get("page_id", ""):
-        page_token = row.get("page_token", "")
-    else:
-        if not user_token:
-            raise HTTPException(status_code=400, detail="Reconecta tu Facebook.")
-        async with httpx.AsyncClient(timeout=10) as client:
-            paginas = await _fb_paginate(
-                client, "me/accounts", token=user_token,
-                params={"fields": "id,access_token", "limit": "100"},
-                prefix="No se pudieron resolver las páginas",
-            )
-        match = next((p for p in paginas if p.get("id") == target_page_id), None)
-        if not match:
-            raise HTTPException(status_code=400, detail="No administras esa página.")
-        page_token = match.get("access_token", "")
-
-    if not page_token:
-        raise HTTPException(status_code=400, detail="Reconecta tu Facebook.")
-    page_id = target_page_id
-
-    # Traer las últimas 25 publicaciones de la página con campos útiles para la galería
-    async with httpx.AsyncClient(timeout=15) as client:
-        posts = await _fb_paginate(
-            client, f"{page_id}/posts", token=page_token,
-            params={
-                "fields": "id,message,created_time,full_picture,permalink_url,"
-                          "reactions.summary(true),comments.summary(true),shares,is_published",
-                "limit": "25",
-            },
-            max_paginas=1, max_items=25,
-            prefix="Error obteniendo publicaciones",
-        )
-
-    items = []
-    for p in posts:
-        if p.get("is_published") is False:
-            continue
-        msg = (p.get("message") or "").strip()
-        items.append({
-            "id": p["id"],                              # formato pageid_postid
-            "message": msg[:280],
-            "created_time": p.get("created_time", ""),
-            "image": p.get("full_picture", ""),
-            "permalink": p.get("permalink_url", ""),
-            "reactions": ((p.get("reactions") or {}).get("summary") or {}).get("total_count", 0),
-            "comments":  ((p.get("comments")  or {}).get("summary") or {}).get("total_count", 0),
-            "shares":    (p.get("shares") or {}).get("count", 0),
-            "has_image": bool(p.get("full_picture")),
-        })
-
-    return {"posts": items, "page_id": page_id}
 
 
 @app.post("/facebook/campaign/toggle")
