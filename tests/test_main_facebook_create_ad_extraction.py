@@ -56,7 +56,7 @@ class FacebookCreateAdExtractionTests(unittest.TestCase):
         self.assertIn('"destination_type": "MESSENGER"', router)
         self.assertIn('"DELETE",', router)
         self.assertIn('"No se pudieron borrar recursos de Meta: %s"', router)
-        self.assertIn('"Revísalos en Ads Manager."', router)
+        self.assertIn('Revísalos en Ads Manager.', router)
 
     def test_creation_activation_rollback_and_bookkeeping_are_preserved(self):
         router = self.router
