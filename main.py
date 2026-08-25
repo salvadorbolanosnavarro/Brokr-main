@@ -154,6 +154,8 @@ from core.facebook_leadgen_processor import (
     find_facebook_page_owner as _fb_buscar_dueno_de_pagina,
     process_facebook_lead as _fb_procesar_lead,
 )
+
+from routers.facebook_leadgen_webhook import router as facebook_leadgen_webhook_router
 app = FastAPI()
 app.include_router(facebook_refresh_token_router)
 
@@ -1450,6 +1452,8 @@ app.include_router(facebook_leadgen_verify_router)
 app.include_router(facebook_leadgen_status_router)
 
 app.include_router(facebook_leadgen_subscribe_router)
+
+app.include_router(facebook_leadgen_webhook_router)
 
 
 
@@ -3323,48 +3327,6 @@ async def facebook_ad_description(request: Request):
 
 
 
-@app.post("/facebook/leadgen/webhook")
-async def facebook_leadgen_webhook(request: Request, background: BackgroundTasks):
-    """Recibe el aviso de Meta y encola la captura del lead.
-
-    Se contesta 200 rápido (Meta reintenta y deja de mandar si tardamos) y el
-    trabajo pesado —ir por los datos del lead y crear el contacto— se hace en
-    segundo plano.
-
-    Sin secreto configurado NO se procesa nada: si no, cualquiera en internet
-    podría inyectar prospectos falsos en el CRM del agente.
-    """
-    raw = await request.body()
-
-    if not _FB_WEBHOOK_SECRET:
-        _fb_log.error("FB_APP_SECRET/FB_WEBHOOK_SECRET vacíos: el webhook de Lead Ads "
-                      "queda CERRADO hasta que se configure uno en Railway.")
-        return Response(status_code=503)
-
-    firma = request.headers.get("X-Hub-Signature-256", "")
-    esperada = "sha256=" + hmac.new(_FB_WEBHOOK_SECRET.encode(), raw, hashlib.sha256).hexdigest()
-    if not hmac.compare_digest(firma, esperada):
-        _fb_log.warning("Firma inválida en el webhook de Lead Ads")
-        return Response(status_code=403)
-
-    try:
-        payload = json.loads(raw)
-    except Exception:
-        return Response(status_code=200)   # basura: no pedir reintento
-
-    pendientes = []
-    for entrada in (payload.get("entry") or []):
-        for cambio in (entrada.get("changes") or []):
-            if cambio.get("field") != "leadgen":
-                continue
-            valor = cambio.get("value") or {}
-            if valor.get("leadgen_id"):
-                pendientes.append(valor)
-
-    for valor in pendientes:
-        background.add_task(_fb_procesar_lead, valor)
-
-    return Response(status_code=200)
 
 
 
