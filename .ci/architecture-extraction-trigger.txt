@@ -1,2 +1,2 @@
-transform=scripts/refactor_main_extract_facebook_publish_core.py
-retry=65
+transform=scripts/refactor_main_extract_facebook_publish_property_core.py
+retry=66
