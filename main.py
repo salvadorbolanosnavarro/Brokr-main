@@ -178,7 +178,11 @@ from core.facebook_persistence import (
     reserve_facebook_creation as _fb_reservar_creacion,
     update_facebook_entity as _fb_actualizar_entidad,
 )
+
+from routers.facebook_reconcile import router as facebook_reconcile_router
 app = FastAPI()
+app.include_router(facebook_reconcile_router)
+
 app.include_router(facebook_refresh_token_router)
 
 app.add_middleware(
@@ -3150,128 +3154,6 @@ async def _fb_guardar_audiencia(user_id: str, org_id, datos: dict) -> None:
         _fb_log.error("Error guardando el público: %s", e)
 
 
-@app.post("/facebook/reconcile")
-async def facebook_reconcile(request: Request):
-    """Cuadra lo que Broquer cree que creó contra lo que Meta realmente tiene.
-
-    Para qué sirve, en corto: si una creación se rompió a medias (se cayó la red
-    justo después de crear la campaña), quedó una campaña en la cuenta que nadie
-    ve en Broquer. Esto la encuentra y la borra, o la marca como buena si sí
-    llegó a existir completa. También refresca effective_status para saber si
-    Meta rechazó algo.
-
-    Por seguridad NO borra nada que Meta reporte como entregando: si una
-    campaña está ACTIVE se marca para revisión manual y se deja en paz.
-
-    Body opcional: {"limpiar": true} para borrar los huérfanos encontrados.
-    """
-    user_id = await exigir_gestion_integraciones(request)
-    try:
-        body = await request.json()
-    except Exception:
-        body = {}
-    limpiar = bool(body.get("limpiar"))
-
-    meta_fb = await _get_fb_meta(user_id)
-    user_token = meta_fb.get("user_token", "")
-    if not user_token:
-        raise HTTPException(status_code=400, detail="Reconecta tu Facebook.")
-
-    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
-        raise HTTPException(status_code=500, detail="Supabase no configurado")
-
-    try:
-        filas = await get_rows(
-            _FB_TABLA_ENTIDADES,
-            {"user_id": f"eq.{user_id}", "order": "created_at.desc", "limit": "200"},
-            timeout=15,
-        )
-    except httpx.HTTPStatusError as e:
-        if _fb_tabla_falta(e.response):
-            _fb_avisa_migracion("reconciliar", e.response)
-            raise HTTPException(
-                status_code=503,
-                detail="Falta correr migracion-facebook-ads.sql en Supabase. Sin esa tabla "
-                       "Broquer no lleva registro de lo que creó y no puede reconciliar.")
-        raise HTTPException(status_code=502, detail="No se pudo leer el registro de campañas.")
-    sanas, huerfanas, revisar, corregidas = [], [], [], []
-
-    async with httpx.AsyncClient(timeout=40) as client:
-        for fila in filas:
-            cid = fila.get("campaign_id")
-            row_id = fila.get("id")
-
-            # Caso 1: quedó en CREANDO sin campaign_id → nunca llegó a crear nada.
-            if not cid:
-                if fila.get("status") == "CREANDO":
-                    await _fb_actualizar_entidad(row_id, {
-                        "status": "FALLIDO",
-                        "error_detail": "Creación interrumpida antes de crear la campaña."})
-                    corregidas.append({"row_id": row_id, "accion": "marcada como fallida"})
-                continue
-
-            # Caso 2: hay campaign_id → preguntarle a Meta si sigue existiendo.
-            rc = await _fb_request(client, "GET", str(cid), token=user_token,
-                                   params={"fields": "id,name,status,effective_status"},
-                                   reintentos=2)
-            existe = rc is not None and rc.status_code == 200
-            datos = rc.json() if existe else {}
-
-            if not existe:
-                await _fb_actualizar_entidad(row_id, {
-                    "status": "ELIMINADO",
-                    "last_checked_at": datetime.now(timezone.utc).isoformat()})
-                corregidas.append({"row_id": row_id, "campaign_id": cid,
-                                   "accion": "ya no existe en Meta"})
-                continue
-
-            eff = datos.get("effective_status", "")
-            estado_meta = datos.get("status", "")
-            await _fb_actualizar_entidad(row_id, {
-                "status": estado_meta or fila.get("status"),
-                "effective_status": eff,
-                "last_checked_at": datetime.now(timezone.utc).isoformat()})
-
-            # Caso 3: la creación se rompió a medias (no hay ad_id) pero la
-            # campaña sí existe en Meta → es huérfana: cobra estructura sin
-            # anuncio y nadie la ve en Broquer.
-            incompleta = not fila.get("ad_id")
-            if incompleta:
-                entrega = eff in ("ACTIVE", "PENDING_REVIEW", "IN_PROCESS")
-                if entrega:
-                    # Jamás borramos algo que Meta reporta entregando.
-                    revisar.append({"campaign_id": cid, "name": datos.get("name", ""),
-                                    "effective_status": eff,
-                                    "motivo": "Incompleta en Broquer pero activa en Meta. "
-                                              "Revísala a mano antes de borrar."})
-                elif limpiar:
-                    rd = await _fb_request(client, "DELETE", str(cid),
-                                           token=user_token, reintentos=2)
-                    if rd is not None and rd.status_code in (200, 204):
-                        await _fb_actualizar_entidad(row_id, {"status": "ELIMINADO"})
-                        huerfanas.append({"campaign_id": cid, "name": datos.get("name", ""),
-                                          "borrada": True})
-                    else:
-                        huerfanas.append({"campaign_id": cid, "name": datos.get("name", ""),
-                                          "borrada": False,
-                                          "detalle": _fb_friendly_error(
-                                              rd.text if rd is not None else "", "No se pudo borrar")})
-                else:
-                    huerfanas.append({"campaign_id": cid, "name": datos.get("name", ""),
-                                      "borrada": False,
-                                      "detalle": "Manda {\"limpiar\": true} para borrarla."})
-            else:
-                sanas.append(cid)
-
-    return {
-        "ok": True,
-        "revisadas": len(filas),
-        "sanas": len(sanas),
-        "huerfanas": huerfanas,
-        "requieren_revision_manual": revisar,
-        "corregidas": corregidas,
-        "limpieza_aplicada": limpiar,
-    }
 
 
 
