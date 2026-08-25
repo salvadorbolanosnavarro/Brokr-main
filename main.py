@@ -160,6 +160,8 @@ from routers.facebook_leadgen_webhook import router as facebook_leadgen_webhook_
 from routers.facebook_page_posts import router as facebook_page_posts_router
 
 from routers.facebook_audiences_read import router as facebook_audiences_read_router
+
+from routers.facebook_oauth_callback import router as facebook_oauth_callback_router
 app = FastAPI()
 app.include_router(facebook_refresh_token_router)
 
@@ -1463,6 +1465,8 @@ app.include_router(facebook_page_posts_router)
 
 app.include_router(facebook_audiences_read_router)
 
+app.include_router(facebook_oauth_callback_router)
+
 
 
 
@@ -2632,108 +2636,6 @@ async def facebook_publish_property(request: Request):
     return {"ok": True, "post_id": datos.get("id"), "page_name": fb.get("page_name", "")}
 
 
-@app.get("/facebook/callback")
-async def facebook_callback(code: str = Query(...), state: str = Query(None), redirect_uri: str = Query(None)):
-    """Intercambia el code de OAuth por un token de página de Facebook.
-
-    Regla dura: si NO se consigue un token de larga duración, esto falla con
-    error HTTP y no devuelve nada guardable. Antes, cuando fb_exchange_token
-    fallaba, se caía al token corto (≈1 hora), el frontend lo guardaba tan
-    contento y los anuncios dejaban de funcionar esa misma tarde sin que nadie
-    entendiera por qué. Un error ruidoso hoy vale más que un módulo muerto mañana.
-    """
-    if not FB_APP_ID or not FB_APP_SECRET:
-        raise HTTPException(status_code=500,
-                            detail="FB_APP_ID o FB_APP_SECRET no configurados en el servidor.")
-    redirect_uri = redirect_uri or (FRONTEND_URL + "/facebook/callback")
-    async with httpx.AsyncClient(timeout=15) as client:
-        # 1. Token de usuario (corta duración)
-        r = await _fb_request(
-            client, "GET", "oauth/access_token",
-            params={
-                "client_id": FB_APP_ID,
-                "client_secret": FB_APP_SECRET,
-                "redirect_uri": redirect_uri,
-                "code": code,
-            },
-        )
-        short_token = _fb_exigir_ok(r, "No se pudo completar la conexión con Facebook",
-                                    status_code=400).get("access_token", "")
-        if not short_token:
-            raise HTTPException(status_code=502,
-                                detail="Facebook no devolvió un token de acceso. Intenta conectar de nuevo.")
-
-        # 2. Token de larga duración (≈60 días). Obligatorio.
-        r2 = await _fb_request(
-            client, "GET", "oauth/access_token",
-            params={
-                "grant_type": "fb_exchange_token",
-                "client_id": FB_APP_ID,
-                "client_secret": FB_APP_SECRET,
-                "fb_exchange_token": short_token,
-            },
-        )
-        if r2 is None or r2.status_code != 200:
-            _fb_log.error("fb_exchange_token falló: %s",
-                          (r2.text if r2 is not None else "sin respuesta")[:400])
-            raise HTTPException(
-                status_code=502,
-                detail=_fb_friendly_error(
-                    r2.text if r2 is not None else "",
-                    "Facebook no entregó un token de larga duración, así que no se guardó "
-                    "la conexión (con el token corto los anuncios dejarían de funcionar en "
-                    "una hora). Intenta conectar de nuevo"),
-            )
-        datos_token = r2.json() or {}
-        long_token = datos_token.get("access_token", "")
-        if not long_token:
-            raise HTTPException(status_code=502,
-                                detail="Facebook no devolvió el token de larga duración. Intenta conectar de nuevo.")
-
-        # expires_in viene en segundos. Si Meta no lo manda, el token es de los
-        # que no expiran solos — se asume el estándar de 60 días para poder
-        # avisar a tiempo de todos modos.
-        try:
-            expires_in = int(datos_token.get("expires_in") or 0)
-        except (TypeError, ValueError):
-            expires_in = 0
-        token_expires_at = (datetime.now(timezone.utc)
-                            + timedelta(seconds=expires_in or _FB_TOKEN_VIDA_DEFECTO)).isoformat()
-
-        # 3. Verificar el token contra /debug_token: es la única forma de saber
-        #    de verdad si quedó de larga duración y con qué permisos.
-        info_token = await _fb_debug_token(client, long_token)
-        faltantes = [s for s in FACEBOOK_REQUIRED_SCOPES if s not in (info_token.get("scopes") or [])]
-
-        # 4. Lista de páginas administradas
-        paginas = await _fb_paginate(client, "me/accounts", token=long_token,
-                                     params={"fields": "id,name,access_token", "limit": "100"},
-                                     prefix="Error leyendo tus páginas")
-
-    if not paginas:
-        raise HTTPException(
-            status_code=400,
-            detail="No se encontraron páginas administradas en esta cuenta de Facebook. "
-                   "Crea o pide acceso a una página antes de conectar.")
-
-    # Usar la primera página
-    page = paginas[0]
-
-    # Devolver datos para que el frontend los guarde en Supabase
-    # user_token (long_token) se necesita para la Ads API — distinto al page_token
-    return {
-        "ok": True,
-        "page_id": page.get("id", ""),
-        "page_name": page.get("name", ""),
-        "page_token": page.get("access_token", ""),
-        "user_token": long_token,
-        "token_expires_at": token_expires_at,
-        "token_expires_in": expires_in,
-        "scopes": info_token.get("scopes") or [],
-        "scopes_faltantes": faltantes,
-        "pages": [{"id": p.get("id"), "name": p.get("name"), "access_token": p.get("access_token")}
-                  for p in paginas],
-    }
 
 
 class FbPublishRequest(BaseModel):
