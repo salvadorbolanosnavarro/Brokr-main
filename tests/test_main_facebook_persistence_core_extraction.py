@@ -21,10 +21,16 @@ class FacebookPersistenceCoreExtractionTests(unittest.TestCase):
         self.assertIn("FACEBOOK_AD_ENTITIES_TABLE as _FB_TABLA_ENTIDADES", self.main)
         self.assertIn("facebook_table_missing as _fb_tabla_falta", self.main)
         self.assertIn("warn_facebook_migration as _fb_avisa_migracion", self.main)
+        self.assertIn("reserve_facebook_creation as _fb_reservar_creacion", self.main)
+        self.assertIn("find_facebook_creation_by_idempotency as _fb_buscar_por_idempotencia", self.main)
+        self.assertIn("update_facebook_entity as _fb_actualizar_entidad", self.main)
         self.assertNotIn('_FB_TABLA_ENTIDADES = "fb_ad_entities"', self.main)
         self.assertNotIn("_fb_aviso_tabla_dado = False", self.main)
         self.assertNotIn("def _fb_tabla_falta(", self.main)
         self.assertNotIn("def _fb_avisa_migracion(", self.main)
+        self.assertNotIn("async def _fb_reservar_creacion(", self.main)
+        self.assertNotIn("async def _fb_buscar_por_idempotencia(", self.main)
+        self.assertNotIn("async def _fb_actualizar_entidad(", self.main)
 
     def test_core_preserves_missing_table_detection_exactly(self):
         core = self.core
@@ -45,11 +51,12 @@ class FacebookPersistenceCoreExtractionTests(unittest.TestCase):
         self.assertNotIn("from main import", core)
 
     def test_existing_consumers_follow_shared_persistence_core(self):
-        main = self.main
+        core = self.core
         processor = self.processor
-        self.assertIn("await post_rows(\n                _FB_TABLA_ENTIDADES,", main)
-        self.assertIn("if _fb_tabla_falta(r):", main)
-        self.assertIn('_fb_avisa_migracion("reservar creación", r)', main)
+        self.assertIn("rows = await post_rows(", core)
+        self.assertIn("FACEBOOK_AD_ENTITIES_TABLE,", core)
+        self.assertIn("if facebook_table_missing(response):", core)
+        self.assertIn('warn_facebook_migration("reservar creación", response)', core)
         self.assertIn("facebook_table_missing(exc.response)", processor)
         self.assertIn('warn_facebook_migration("procesar lead", exc.response)', processor)
 
