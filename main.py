@@ -172,6 +172,12 @@ from routers.facebook_save_page import router as facebook_save_page_router
 from routers.facebook_ad_description import router as facebook_ad_description_router
 
 from routers.facebook_campaign_toggle import router as facebook_campaign_toggle_router
+
+from core.facebook_persistence import (
+    find_facebook_creation_by_idempotency as _fb_buscar_por_idempotencia,
+    reserve_facebook_creation as _fb_reservar_creacion,
+    update_facebook_entity as _fb_actualizar_entidad,
+)
 app = FastAPI()
 app.include_router(facebook_refresh_token_router)
 
@@ -2326,105 +2332,10 @@ def _sb_headers(extra: dict = None) -> dict:
 
 
 
-async def _fb_reservar_creacion(user_id: str, org_id, datos: dict,
-                                idempotency_key: str = "") -> dict:
-    """Aparta el lugar ANTES de tocar Meta.
-
-    Devuelve:
-      {"modo": "nuevo",      "row_id": …}  → sigue adelante
-      {"modo": "duplicado",  "row": {…}}   → ya existía: devuelve lo de antes
-      {"modo": "sin_tabla"}                → migración pendiente, sigue sin memoria
-
-    El INSERT con la llave de idempotencia es lo que hace el trabajo: si dos
-    peticiones llegan a la vez, el índice único deja pasar una sola.
-    """
-    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
-        return {"modo": "sin_tabla"}
-
-    fila = {
-        "id": str(_uuid.uuid4()),
-        "user_id": user_id,
-        "org_id": org_id,
-        "status": "CREANDO",
-        **datos,
-    }
-    if idempotency_key:
-        fila["idempotency_key"] = idempotency_key
-
-    try:
-        try:
-            filas = await post_rows(
-                _FB_TABLA_ENTIDADES,
-                fila,
-                prefer="return=representation",
-                timeout=10,
-                accepted_statuses=(200, 201),
-            )
-            return {"modo": "nuevo", "row_id": (filas[0]["id"] if filas else fila["id"])}
-        except httpx.HTTPStatusError as e:
-            r = e.response
-            if _fb_tabla_falta(r):
-                _fb_avisa_migracion("reservar creación", r)
-                return {"modo": "sin_tabla"}
-
-            # 409 = chocó con el índice único → ya hay una creación con esa llave.
-            if r.status_code == 409 and idempotency_key:
-                previa = await _fb_buscar_por_idempotencia(user_id, idempotency_key)
-                if previa:
-                    return {"modo": "duplicado", "row": previa}
-
-            _fb_log.error("No se pudo registrar la creación en %s: %s %s",
-                          _FB_TABLA_ENTIDADES, r.status_code, (r.text or "")[:300])
-    except Exception as e:
-        _fb_log.error("Error registrando la creación en %s: %s", _FB_TABLA_ENTIDADES, e)
-    return {"modo": "sin_tabla"}
 
 
-async def _fb_buscar_por_idempotencia(user_id: str, idempotency_key: str) -> dict:
-    """Devuelve la creación previa con esa llave, o {}."""
-    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY or not idempotency_key:
-        return {}
-    try:
-        try:
-            filas = await get_rows(
-                _FB_TABLA_ENTIDADES,
-                {"user_id": f"eq.{user_id}",
-                 "idempotency_key": f"eq.{idempotency_key}",
-                 "limit": "1"},
-                timeout=10,
-            )
-        except httpx.HTTPStatusError as e:
-            if _fb_tabla_falta(e.response):
-                _fb_avisa_migracion("buscar idempotencia", e.response)
-            return {}
-        if filas:
-            return filas[0]
-    except Exception as e:
-        _fb_log.error("Error buscando idempotencia: %s", e)
-    return {}
 
 
-async def _fb_actualizar_entidad(row_id: str, updates: dict) -> None:
-    """Anota el resultado de la creación. Nunca lanza: es bitácora, no el trabajo."""
-    if not row_id or not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
-        return
-    try:
-        try:
-            await patch_rows(
-                _FB_TABLA_ENTIDADES,
-                {"id": f"eq.{row_id}"},
-                {**updates, "updated_at": datetime.now(timezone.utc).isoformat()},
-                timeout=10,
-            )
-        except httpx.HTTPStatusError as e:
-            if _fb_tabla_falta(e.response):
-                _fb_avisa_migracion("actualizar entidad", e.response)
-            else:
-                _fb_log.error("No se pudo actualizar %s: %s %s",
-                              _FB_TABLA_ENTIDADES, e.response.status_code,
-                              (e.response.text or "")[:300])
-    except Exception as e:
-        _fb_log.error("Error actualizando %s: %s", _FB_TABLA_ENTIDADES, e)
 
 
 # ─── FACEBOOK OAUTH ───────────────────────────────────────────────────────────
