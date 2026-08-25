@@ -162,6 +162,8 @@ from routers.facebook_page_posts import router as facebook_page_posts_router
 from routers.facebook_audiences_read import router as facebook_audiences_read_router
 
 from routers.facebook_oauth_callback import router as facebook_oauth_callback_router
+
+from routers.facebook_publish import router as facebook_publish_router
 app = FastAPI()
 app.include_router(facebook_refresh_token_router)
 
@@ -1467,6 +1469,8 @@ app.include_router(facebook_audiences_read_router)
 
 app.include_router(facebook_oauth_callback_router)
 
+app.include_router(facebook_publish_router)
+
 
 
 
@@ -2638,38 +2642,7 @@ async def facebook_publish_property(request: Request):
 
 
 
-class FbPublishRequest(BaseModel):
-    page_id: str
-    page_token: str
-    message: str
-    photo_urls: list[str] = []
 
-@app.post("/facebook/publish")
-async def facebook_publish(req: FbPublishRequest):
-    """Publica una propiedad en la página de Facebook."""
-    photo_ids = []
-    async with httpx.AsyncClient(timeout=30) as client:
-        # Subir fotos como no publicadas
-        for url in req.photo_urls[:10]:
-            r = await _fb_request(client, "POST", f"{req.page_id}/photos",
-                                  token=req.page_token,
-                                  json_body={"url": url, "published": False})
-            if r is not None and r.status_code in (200, 201):
-                pid = r.json().get("id")
-                if pid:
-                    photo_ids.append({"media_fbid": pid})
-
-        # Crear el post. (Este endpoint iba en v18.0 mientras el resto del
-        # módulo ya usaba v21.0; ahora la versión sale de FB_API_VERSION.)
-        payload: dict = {"message": req.message}
-        if photo_ids:
-            payload["attached_media"] = photo_ids
-
-        r_post = await _fb_request(client, "POST", f"{req.page_id}/feed",
-                                   token=req.page_token, json_body=payload)
-
-    datos = _fb_exigir_ok(r_post, "Error publicando en Facebook")
-    return {"ok": True, "post_id": datos.get("id")}
 
 
 
