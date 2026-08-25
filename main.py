@@ -142,6 +142,12 @@ from routers.facebook_leadgen_verify import router as facebook_leadgen_verify_ro
 from routers.facebook_leadgen_status import router as facebook_leadgen_status_router
 
 from routers.facebook_leadgen_subscribe import router as facebook_leadgen_subscribe_router
+
+from core.facebook_persistence import (
+    FACEBOOK_AD_ENTITIES_TABLE as _FB_TABLA_ENTIDADES,
+    facebook_table_missing as _fb_tabla_falta,
+    warn_facebook_migration as _fb_avisa_migracion,
+)
 app = FastAPI()
 app.include_router(facebook_refresh_token_router)
 
@@ -2263,8 +2269,6 @@ _fb_log = logging.getLogger("broquer.facebook")
 # correr), se registra un aviso en el log y el anuncio se crea igual. Perder la
 # bitácora no puede ser motivo para no poder anunciar.
 
-_FB_TABLA_ENTIDADES = "fb_ad_entities"
-_fb_aviso_tabla_dado = False
 
 
 def _sb_headers(extra: dict = None) -> dict:
@@ -2276,26 +2280,8 @@ def _sb_headers(extra: dict = None) -> dict:
     return h
 
 
-def _fb_tabla_falta(resp) -> bool:
-    """True si Supabase contesta 'esa tabla no existe' (migración pendiente)."""
-    if resp is None:
-        return False
-    if resp.status_code not in (404, 400):
-        return False
-    texto = (resp.text or "").lower()
-    return ("does not exist" in texto or "could not find the table" in texto
-            or "pgrst205" in texto)
 
 
-def _fb_avisa_migracion(donde: str, resp=None) -> None:
-    global _fb_aviso_tabla_dado
-    if not _fb_aviso_tabla_dado:
-        _fb_log.warning(
-            "La tabla %s no existe (en %s). Corre migracion-facebook-ads.sql en "
-            "Supabase para habilitar idempotencia, reconciliación y limpieza de "
-            "huérfanos. Los anuncios se siguen creando sin ella.",
-            _FB_TABLA_ENTIDADES, donde)
-        _fb_aviso_tabla_dado = True
 
 
 async def _fb_reservar_creacion(user_id: str, org_id, datos: dict,
