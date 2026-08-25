@@ -22,6 +22,17 @@ def core_database_imports(source: str) -> set[str]:
     }
 
 
+def function_source(source: str, name: str) -> str:
+    tree = ast.parse(source)
+    matches = [
+        node for node in tree.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == name
+    ]
+    if len(matches) != 1:
+        raise AssertionError(f"expected exactly one {name}, found {len(matches)}")
+    return ast.get_source_segment(source, matches[0]) or ""
+
+
 class MainFacebookConnectionCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -59,16 +70,10 @@ class MainFacebookConnectionCoreRefactorTests(unittest.TestCase):
         self.assertIn('meta["user_token"] = decrypt_facebook_secret(meta["user_token"])', store)
         self.assertIn('meta["user_token"] = encrypt_facebook_secret(meta["user_token"])', store)
         self.assertIn('"api_key": encrypt_facebook_secret(page_token)', store)
-        self.assertNotIn('f"{SUPABASE_URL}/rest/v1/user_integrations",\n            headers={"apikey": SUPABASE_SERVICE_KEY', self._connection_slice(source))
+        self.assertNotIn('f"{SUPABASE_URL}/rest/v1/user_integrations",\n            headers={"apikey": SUPABASE_SERVICE_KEY', function_source(source, "facebook_save_page"))
         compile(source, "main.py", "exec")
         compile(store, "core/facebook_connection_store.py", "exec")
         compile(disconnect, "routers/facebook_disconnect.py", "exec")
-
-    @staticmethod
-    def _connection_slice(source: str) -> str:
-        start = source.index('@app.post("/facebook/save-page")')
-        end = source.index('@app.post("/facebook/publish-property")', start)
-        return source[start:end]
 
 
 if __name__ == "__main__":
