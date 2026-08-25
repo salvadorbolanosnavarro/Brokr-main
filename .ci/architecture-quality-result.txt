@@ -1,4 +1,4 @@
-trigger_sha=aef27a86ef28e428b1d817bb34d8f2bf137ea0d5
+trigger_sha=7940b05fc66a5620d4a803c5cc693762401c7196
 transform=success
 contract=success
 install=success
@@ -6,4 +6,4 @@ compile=success
 tests=success
 visual=success
 debt=success
-quality_sha=a2b49d9374fa340f20b92843ed1d3fdba586bd9a
+quality_sha=cd972b95c087b3988cefe025e64f31e878a13661
