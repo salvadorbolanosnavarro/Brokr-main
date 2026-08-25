@@ -1,2 +1,2 @@
-transform=scripts/refactor_main_extract_facebook_audiences_read_core.py
-retry=63
+transform=scripts/refactor_main_extract_facebook_oauth_callback_core.py
+retry=64
