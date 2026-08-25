@@ -1,4 +1,4 @@
-"""Permanent guard for Facebook audience persistence through Core."""
+"""Permanent guard for Facebook audience persistence through Core-backed router."""
 from __future__ import annotations
 
 import ast
@@ -7,6 +7,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
+ROUTER = ROOT / "routers" / "facebook_audiences.py"
 
 
 def _async_function_source(source: str, name: str) -> str:
@@ -24,7 +25,8 @@ def _async_function_source(source: str, name: str) -> str:
 class MainFbAudiencePostCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.source = MAIN.read_text(encoding="utf-8")
+        cls.main = MAIN.read_text(encoding="utf-8")
+        cls.source = ROUTER.read_text(encoding="utf-8")
         cls.block = _async_function_source(cls.source, "_fb_guardar_audiencia")
 
     def test_audience_persistence_delegates_to_core(self):
@@ -36,17 +38,19 @@ class MainFbAudiencePostCoreRefactorTests(unittest.TestCase):
         self.assertIn('timeout=10', block)
         self.assertIn('accepted_statuses=(200, 201, 204)', block)
         self.assertNotIn('/rest/v1/fb_audiences', block)
+        self.assertNotIn("async def _fb_guardar_audiencia(", self.main)
 
     def test_legacy_fail_soft_logging_contract_stays_intact(self):
         block = self.block
-        self.assertIn('except httpx.HTTPStatusError as e:', block)
-        self.assertIn('_fb_tabla_falta(e.response)', block)
-        self.assertIn('_fb_avisa_migracion("guardar público", e.response)', block)
-        self.assertIn('e.response.status_code', block)
-        self.assertIn('(e.response.text or "")[:200]', block)
-        self.assertIn('except Exception as e:', block)
-        self.assertIn('_fb_log.error("Error guardando el público: %s", e)', block)
-        compile(self.source, "main.py", "exec")
+        self.assertIn('except httpx.HTTPStatusError as exc:', block)
+        self.assertIn('facebook_table_missing(exc.response)', block)
+        self.assertIn('warn_facebook_migration("guardar público", exc.response)', block)
+        self.assertIn('exc.response.status_code', block)
+        self.assertIn('(exc.response.text or "")[:200]', block)
+        self.assertIn('except Exception as exc:', block)
+        self.assertIn('_log.error("Error guardando el público: %s", exc)', block)
+        compile(self.main, "main.py", "exec")
+        compile(self.source, "routers/facebook_audiences.py", "exec")
 
 
 if __name__ == "__main__":
