@@ -6,6 +6,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
 CORE = ROOT / "core" / "facebook_persistence.py"
+PROCESSOR = ROOT / "core" / "facebook_leadgen_processor.py"
 
 
 class FacebookPersistenceCoreExtractionTests(unittest.TestCase):
@@ -13,6 +14,7 @@ class FacebookPersistenceCoreExtractionTests(unittest.TestCase):
     def setUpClass(cls):
         cls.main = MAIN.read_text(encoding="utf-8")
         cls.core = CORE.read_text(encoding="utf-8")
+        cls.processor = PROCESSOR.read_text(encoding="utf-8")
 
     def test_main_delegates_persistence_compatibility_helpers_to_core(self):
         self.assertIn("from core.facebook_persistence import (", self.main)
@@ -42,16 +44,19 @@ class FacebookPersistenceCoreExtractionTests(unittest.TestCase):
         self.assertIn("_migration_warning_emitted = True", core)
         self.assertNotIn("from main import", core)
 
-    def test_existing_main_consumers_keep_legacy_names(self):
+    def test_existing_consumers_follow_shared_persistence_core(self):
         main = self.main
+        processor = self.processor
         self.assertIn("await post_rows(\n                _FB_TABLA_ENTIDADES,", main)
         self.assertIn("if _fb_tabla_falta(r):", main)
         self.assertIn('_fb_avisa_migracion("reservar creación", r)', main)
-        self.assertIn('_fb_avisa_migracion("procesar lead", e.response)', main)
+        self.assertIn("facebook_table_missing(exc.response)", processor)
+        self.assertIn('warn_facebook_migration("procesar lead", exc.response)', processor)
 
     def test_files_compile(self):
         compile(self.main, "main.py", "exec")
         compile(self.core, "core/facebook_persistence.py", "exec")
+        compile(self.processor, "core/facebook_leadgen_processor.py", "exec")
 
 
 if __name__ == "__main__":
