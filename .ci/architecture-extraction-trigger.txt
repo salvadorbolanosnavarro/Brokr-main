@@ -1,2 +1,2 @@
 transform=scripts/refactor_main_extract_facebook_campaign_toggle_core.py
-retry=70
+retry=71
