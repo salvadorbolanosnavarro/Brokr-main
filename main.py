@@ -166,6 +166,8 @@ from routers.facebook_oauth_callback import router as facebook_oauth_callback_ro
 from routers.facebook_publish import router as facebook_publish_router
 
 from routers.facebook_publish_property import router as facebook_publish_property_router
+
+from routers.facebook_save_page import router as facebook_save_page_router
 app = FastAPI()
 app.include_router(facebook_refresh_token_router)
 
@@ -1475,6 +1477,8 @@ app.include_router(facebook_publish_router)
 
 app.include_router(facebook_publish_property_router)
 
+app.include_router(facebook_save_page_router)
+
 
 
 
@@ -2420,136 +2424,7 @@ async def _fb_actualizar_entidad(row_id: str, updates: dict) -> None:
 # ────────────────────────────────────────────
 # FACEBOOK — guardar / leer conexión por usuario
 # ────────────────────────────────────────────
-class FbSavePageRequest(BaseModel):
-    page_id: str
-    page_name: str
-    page_token: str
-    user_token: str = ""  # token de usuario (larga duración) — requerido para Ads API
-    token_expires_at: str = ""  # ISO-8601; lo calcula /facebook/callback
 
-@app.post("/facebook/save-page")
-async def facebook_save_page(req: FbSavePageRequest, request: Request):
-    """Guarda el page_token, user_token y AUTO-SELECCIONA la cuenta publicitaria
-    asociada a la página (la primera cuenta activa autorizada para anunciar
-    esa página). Esto elimina el riesgo de publicar en una cuenta equivocada.
-
-    La página de Facebook es de la EMPRESA: solo el dueño o quien él designe."""
-    user_id = await exigir_gestion_integraciones(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autenticado")
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        raise HTTPException(status_code=500, detail="Supabase no configurado")
-
-    # ── Verificar el token antes de guardarlo ──────────────────────────
-    # Si el frontend no mandó la fecha de expiración (o mandó basura), se la
-    # preguntamos a Meta. Guardar un token sin saber cuándo muere es lo que
-    # hacía que el módulo se apagara solo sin aviso.
-    token_expires_at = (req.token_expires_at or "").strip()
-    scopes: list = []
-    if req.user_token:
-        try:
-            async with httpx.AsyncClient(timeout=10) as client_t:
-                info = await _fb_debug_token(client_t, req.user_token)
-            scopes = info.get("scopes") or []
-            expira_ts = info.get("expires_at")
-            if not token_expires_at and expira_ts:
-                token_expires_at = datetime.fromtimestamp(int(expira_ts), timezone.utc).isoformat()
-            elif not token_expires_at and info.get("data_access_expires_at"):
-                token_expires_at = datetime.fromtimestamp(
-                    int(info["data_access_expires_at"]), timezone.utc).isoformat()
-        except Exception:
-            pass
-    if not token_expires_at:
-        token_expires_at = (datetime.now(timezone.utc)
-                            + timedelta(seconds=_FB_TOKEN_VIDA_DEFECTO)).isoformat()
-
-    # ── Auto-seleccionar cuenta publicitaria compatible con la página ──
-    ad_account_id = ""
-    ad_account_name = ""
-    page_pic = ""
-    try:
-        async with httpx.AsyncClient(timeout=15) as client_a:
-            # 1) Foto de la página (mejora UI)
-            try:
-                rpic = await _fb_request(client_a, "GET", req.page_id,
-                                         token=req.user_token,
-                                         params={"fields": "picture.type(square)"})
-                if rpic is not None and rpic.status_code == 200:
-                    page_pic = ((rpic.json().get("picture") or {}).get("data") or {}).get("url", "")
-            except Exception:
-                page_pic = ""
-
-            # 2) Cuentas publicitarias del usuario (todas: sin paginar, una
-            #    empresa con >50 cuentas perdía las de la cola)
-            cuentas_raw = await _fb_paginate(
-                client_a, "me/adaccounts", token=req.user_token,
-                params={"fields": "id,name,account_status,currency", "limit": "50"},
-                prefix="Error leyendo cuentas publicitarias",
-            )
-            accounts = [a for a in cuentas_raw if a.get("account_status") == 1]
-
-            # 3) Para cada cuenta, ver si puede anunciar nuestra página
-            chosen = None
-            for a in accounts:
-                try:
-                    pids = await _fb_paginate(
-                        client_a, f"{a['id']}/promote_pages", token=req.user_token,
-                        params={"fields": "id", "limit": "100"},
-                        prefix="Error leyendo páginas promocionables",
-                    )
-                    if req.page_id in [p.get("id") for p in pids if p.get("id")]:
-                        chosen = a
-                        break
-                except Exception:
-                    continue
-            # Fallback: si ninguna está autorizada explícitamente, usar la primera activa
-            if not chosen and accounts:
-                chosen = accounts[0]
-            if chosen:
-                ad_account_id = chosen.get("id", "")
-                ad_account_name = chosen.get("name", ad_account_id)
-    except Exception:
-        # No bloquear el guardado de página si hubo error obteniendo cuenta
-        pass
-
-    meta = {
-        "page_id": req.page_id,
-        "page_name": req.page_name,
-        "page_pic": page_pic,
-        "user_token": cifrar_secreto(req.user_token),
-        "ad_account_id": ad_account_id,
-        "ad_account_name": ad_account_name,
-        "token_expires_at": token_expires_at,
-        "scopes": scopes,
-        "connected_at": datetime.now(timezone.utc).isoformat(),
-    }
-    payload = {
-        "user_id": user_id,
-        "org_id": await get_org_id_for_user(user_id),
-        "provider": "facebook",
-        "api_key": cifrar_secreto(req.page_token),
-        "meta": json.dumps(meta),
-        "updated_at": datetime.utcnow().isoformat()
-    }
-    try:
-        await post_rows(
-            "user_integrations",
-            payload,
-            prefer="resolution=merge-duplicates,return=minimal",
-            timeout=10,
-        )
-    except httpx.HTTPStatusError:
-        # Historical behavior: Supabase HTTP rejections did not fail save-page.
-        pass
-    return {
-        "ok": True,
-        "page_id": req.page_id,
-        "page_name": req.page_name,
-        "ad_account_id": ad_account_id,
-        "ad_account_name": ad_account_name,
-        "token_expires_at": token_expires_at,
-        "scopes_faltantes": [s for s in FACEBOOK_REQUIRED_SCOPES if s not in scopes] if scopes else [],
-    }
 
 
 
