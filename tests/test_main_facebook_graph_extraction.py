@@ -5,6 +5,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
 GRAPH = ROOT / "core" / "facebook_graph.py"
+CAMPAIGN_TOGGLE = ROOT / "routers" / "facebook_campaign_toggle.py"
 
 
 class FacebookGraphExtractionTests(unittest.TestCase):
@@ -12,6 +13,7 @@ class FacebookGraphExtractionTests(unittest.TestCase):
     def setUpClass(cls):
         cls.main = MAIN.read_text(encoding="utf-8")
         cls.graph = GRAPH.read_text(encoding="utf-8")
+        cls.campaign_toggle = CAMPAIGN_TOGGLE.read_text(encoding="utf-8")
 
     def test_main_delegates_graph_transport_to_core(self):
         self.assertIn("from core.facebook_graph import (", self.main)
@@ -31,7 +33,7 @@ class FacebookGraphExtractionTests(unittest.TestCase):
             self.assertNotIn(f"async def {name}(", self.main)
         self.assertIn("await _fb_paginate(", self.main)
         self.assertIn("await _fb_request(", self.main)
-        self.assertIn("await _fb_batch(", self.main)
+        self.assertIn("await _fb_batch(", self.campaign_toggle)
 
     def test_core_preserves_retry_token_pagination_and_batch_policy(self):
         graph = self.graph
@@ -63,6 +65,7 @@ class FacebookGraphExtractionTests(unittest.TestCase):
     def test_files_compile(self):
         compile(self.main, "main.py", "exec")
         compile(self.graph, "core/facebook_graph.py", "exec")
+        compile(self.campaign_toggle, "routers/facebook_campaign_toggle.py", "exec")
 
 
 if __name__ == "__main__":
