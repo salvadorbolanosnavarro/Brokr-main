@@ -43,6 +43,14 @@ def node_name(node: ast.AST) -> str | None:
     return None
 
 
+def node_start_lineno(node: ast.AST) -> int:
+    start = node.lineno
+    decorators = getattr(node, "decorator_list", None) or []
+    if decorators:
+        start = min([start, *(decorator.lineno for decorator in decorators)])
+    return start
+
+
 def main() -> None:
     source = MAIN.read_text(encoding="utf-8")
 
@@ -64,7 +72,7 @@ def main() -> None:
         if matched:
             if node.end_lineno is None:
                 raise SystemExit(f"Missing end_lineno for {sorted(matched)}")
-            spans.append((node.lineno - 1, node.end_lineno))
+            spans.append((node_start_lineno(node) - 1, node.end_lineno))
             found.update(matched)
 
     missing = REMOVE_NAMES - found
