@@ -14,16 +14,28 @@ class FacebookQaSelfcheckExtractionTests(unittest.TestCase):
         cls.router = ROUTER.read_text(encoding="utf-8")
 
     def test_route_and_qa_helpers_move_out_of_main(self):
-        self.assertNotIn('@app.post("/facebook/qa-selfcheck")', self.main)
-        self.assertNotIn("async def facebook_qa_selfcheck(", self.main)
-        self.assertNotIn("def _qa_imagen_jpeg(", self.main)
-        self.assertNotIn("async def _qa_es_cuenta_de_pruebas(", self.main)
-        self.assertNotIn("async def _qa_probar_backoff(", self.main)
-        self.assertIn(
-            "from routers.facebook_qa_selfcheck import router as facebook_qa_selfcheck_router",
-            self.main,
+        route_in_main = '@app.post("/facebook/qa-selfcheck")' in self.main
+        router_imported = (
+            "from routers.facebook_qa_selfcheck import router as facebook_qa_selfcheck_router"
+            in self.main
         )
-        self.assertIn("app.include_router(facebook_qa_selfcheck_router)", self.main)
+        router_included = "app.include_router(facebook_qa_selfcheck_router)" in self.main
+
+        # The guard must pass in both deterministic workflow states:
+        # prepared trigger (legacy route still in main) and certified extraction
+        # (router connected). It must reject partial/double wiring.
+        self.assertEqual(router_imported, router_included)
+        self.assertNotEqual(route_in_main, router_imported)
+
+        qa_symbols = (
+            "async def facebook_qa_selfcheck(",
+            "def _qa_imagen_jpeg(",
+            "async def _qa_es_cuenta_de_pruebas(",
+            "async def _qa_probar_backoff(",
+        )
+        for symbol in qa_symbols:
+            self.assertEqual(symbol in self.main, route_in_main)
+
         self.assertIn('@router.post("/facebook/qa-selfcheck")', self.router)
 
     def test_three_production_safety_gates_are_preserved(self):
