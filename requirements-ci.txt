@@ -3,3 +3,4 @@
 # Railway environment can be captured and locked without guessing versions.
 fastapi==0.141.1
 httpx[http2]==0.28.1
+python-multipart==0.0.32
