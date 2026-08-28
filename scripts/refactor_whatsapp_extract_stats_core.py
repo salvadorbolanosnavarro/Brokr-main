@@ -2,19 +2,30 @@
 """Extract pure WhatsApp statistics helpers from the legacy monolith.
 
 The transform is deliberately bounded: it only removes three top-level helper
-functions after proving their executable AST is identical to the canonical
-implementations in routers/whatsapp_stats.py, then imports those same names.
+functions after proving their executable AST (including signatures and every
+statement except docstrings) is identical to routers/whatsapp_stats.py. Legacy
+docstrings are asserted and restored after import so introspection is preserved.
 """
 from __future__ import annotations
 
 import ast
+import copy
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "whatsapp.py"
 CANONICAL = ROOT / "routers" / "whatsapp_stats.py"
 TARGETS = ("_dt", "_mediana", "_agrega_ventana")
+LEGACY_DOCS = {
+    "_dt": "Parsea un timestamptz de Postgres a datetime con zona. Nunca revienta.",
+    "_mediana": None,
+    "_agrega_ventana": "Todos los números de WhatsApp para una ventana de tiempo.",
+}
 IMPORT_TEXT = "from routers.whatsapp_stats import _agrega_ventana, _dt, _mediana\n"
+DOC_RESTORE_TEXT = (
+    '_dt.__doc__ = "Parsea un timestamptz de Postgres a datetime con zona. Nunca revienta."\n'
+    '_agrega_ventana.__doc__ = "Todos los números de WhatsApp para una ventana de tiempo."\n'
+)
 
 
 def top_level_functions(tree: ast.Module) -> dict[str, ast.FunctionDef | ast.AsyncFunctionDef]:
@@ -25,9 +36,20 @@ def top_level_functions(tree: ast.Module) -> dict[str, ast.FunctionDef | ast.Asy
     }
 
 
-def executable_dump(node: ast.AST) -> str:
-    # Function locations are intentionally ignored; executable structure must match.
-    return ast.dump(node, annotate_fields=True, include_attributes=False)
+def without_docstring(node: ast.FunctionDef | ast.AsyncFunctionDef) -> ast.AST:
+    cloned = copy.deepcopy(node)
+    if (
+        cloned.body
+        and isinstance(cloned.body[0], ast.Expr)
+        and isinstance(cloned.body[0].value, ast.Constant)
+        and isinstance(cloned.body[0].value.value, str)
+    ):
+        cloned.body = cloned.body[1:]
+    return cloned
+
+
+def executable_dump(node: ast.FunctionDef | ast.AsyncFunctionDef) -> str:
+    return ast.dump(without_docstring(node), annotate_fields=True, include_attributes=False)
 
 
 def insertion_line(tree: ast.Module) -> int:
@@ -37,7 +59,6 @@ def insertion_line(tree: ast.Module) -> int:
         if isinstance(node, (ast.Import, ast.ImportFrom)):
             last_import_end = max(last_import_end, node.end_lineno or node.lineno)
             continue
-        # Module docstring may precede imports.
         if (
             isinstance(node, ast.Expr)
             and isinstance(node.value, ast.Constant)
@@ -68,24 +89,24 @@ def main() -> None:
     if missing_canonical:
         raise SystemExit(f"refusing stats extraction: missing canonical functions {missing_canonical}")
 
+    wrong_docs = [name for name in TARGETS if ast.get_docstring(source_fns[name], clean=False) != LEGACY_DOCS[name]]
+    if wrong_docs:
+        raise SystemExit(f"refusing stats extraction: unexpected legacy docstrings for {wrong_docs}")
+
     mismatched = [
         name
         for name in TARGETS
         if executable_dump(source_fns[name]) != executable_dump(canonical_fns[name])
     ]
     if mismatched:
-        raise SystemExit(f"refusing stats extraction: AST mismatch for {mismatched}")
+        raise SystemExit(f"refusing stats extraction: executable AST mismatch for {mismatched}")
 
     if IMPORT_TEXT.strip() in source:
         raise SystemExit("refusing stats extraction: canonical stats import already present")
 
     lines = source.splitlines(keepends=True)
     removals = sorted(
-        (
-            source_fns[name].lineno,
-            source_fns[name].end_lineno,
-            name,
-        )
+        (source_fns[name].lineno, source_fns[name].end_lineno, name)
         for name in TARGETS
     )
 
@@ -94,7 +115,6 @@ def main() -> None:
         if end is None:
             raise SystemExit("refusing stats extraction: AST node lacks end_lineno")
         remove_lines.update(range(start, end + 1))
-        # Remove at most the directly following blank line for tidy output.
         if end < len(lines) and not lines[end].strip():
             remove_lines.add(end + 1)
 
@@ -106,6 +126,7 @@ def main() -> None:
             output.append(line)
         if lineno == insert_after:
             output.append(IMPORT_TEXT)
+            output.append(DOC_RESTORE_TEXT)
             inserted = True
 
     if not inserted:
