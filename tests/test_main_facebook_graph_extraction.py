@@ -37,11 +37,13 @@ class FacebookGraphExtractionTests(unittest.TestCase):
         route_in_main = '@app.post("/facebook/qa-selfcheck")' in self.main
         if route_in_main:
             self.assertIn("await _fb_paginate(", self.main)
+            self.assertIn("await _fb_request(", self.main)
         else:
             self.assertNotIn("_fb_paginate,", self.main)
+            self.assertNotIn("_fb_request,", self.main)
             self.assertIn("await _fb_paginate(", self.qa_selfcheck)
+            self.assertIn("await _fb_request(", self.qa_selfcheck)
 
-        self.assertIn("await _fb_request(", self.main)
         self.assertIn("await _fb_batch(", self.campaign_toggle)
 
     def test_core_preserves_retry_token_pagination_and_batch_policy(self):
