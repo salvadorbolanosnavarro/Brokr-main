@@ -51,6 +51,101 @@ def node_start_lineno(node: ast.AST) -> int:
     return start
 
 
+def loaded_names(tree: ast.AST) -> set[str]:
+    return {
+        node.id
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load)
+    }
+
+
+def import_binding(alias: ast.alias) -> str:
+    return alias.asname or alias.name.split(".", 1)[0]
+
+
+def cleanup_last_qa_dependencies(source: str) -> str:
+    """Remove imports/guards whose final main.py consumer was QA selfcheck."""
+    tree = ast.parse(source)
+    loads = loaded_names(tree)
+    lines = source.splitlines(keepends=True)
+    spans: list[tuple[int, int]] = []
+
+    targets = {
+        ("core.facebook_graph", "_fb_paginate"),
+        ("core.facebook_connection_store", "_get_fb_meta"),
+    }
+    found_targets: set[tuple[str, str]] = set()
+
+    for node in tree.body:
+        if not isinstance(node, ast.ImportFrom) or node.module is None:
+            continue
+        for alias in node.names:
+            binding = import_binding(alias)
+            key = (node.module, binding)
+            if key not in targets or binding in loads:
+                continue
+            found_targets.add(key)
+            if len(node.names) == 1:
+                if node.end_lineno is None:
+                    raise SystemExit(f"Missing end_lineno for dead import {binding}")
+                spans.append((node.lineno - 1, node.end_lineno))
+                continue
+
+            if node.end_lineno is None:
+                raise SystemExit(f"Missing end_lineno for dead import {binding}")
+            matching_lines = [
+                index
+                for index in range(node.lineno - 1, node.end_lineno)
+                if lines[index].strip().rstrip(",") == alias.name
+            ]
+            if len(matching_lines) != 1:
+                raise SystemExit(
+                    f"Expected one standalone import line for {binding}, found {len(matching_lines)}"
+                )
+            index = matching_lines[0]
+            spans.append((index, index + 1))
+
+    missing_targets = {
+        key
+        for key in targets
+        if key[1] not in loads and key not in found_targets
+    }
+    if missing_targets:
+        raise SystemExit(f"Dead QA import contract changed; missing: {sorted(missing_targets)}")
+
+    if "Image" not in loads and "PIL_AVAILABLE" not in loads:
+        pillow_guards = []
+        for node in tree.body:
+            if not isinstance(node, ast.Try) or node.end_lineno is None:
+                continue
+            names = {
+                child.id
+                for child in ast.walk(node)
+                if isinstance(child, ast.Name)
+            }
+            imports_image = any(
+                isinstance(child, ast.ImportFrom)
+                and child.module == "PIL"
+                and any(alias.name == "Image" for alias in child.names)
+                for child in ast.walk(node)
+            )
+            if imports_image and "PIL_AVAILABLE" in names:
+                pillow_guards.append(node)
+        if len(pillow_guards) != 1:
+            raise SystemExit(
+                f"Expected one dead Pillow availability guard, found {len(pillow_guards)}"
+            )
+        guard = pillow_guards[0]
+        spans.append((guard.lineno - 1, guard.end_lineno))
+
+    for start, end in sorted(spans, reverse=True):
+        del lines[start:end]
+
+    updated = "".join(lines)
+    ast.parse(updated)
+    return updated
+
+
 def main() -> None:
     source = MAIN.read_text(encoding="utf-8")
 
@@ -82,6 +177,7 @@ def main() -> None:
     for start, end in sorted(spans, reverse=True):
         del lines[start:end]
     updated = "".join(lines)
+    updated = cleanup_last_qa_dependencies(updated)
 
     app_marker = "app = FastAPI()\n"
     if app_marker not in updated:
@@ -97,6 +193,12 @@ def main() -> None:
         raise SystemExit("Facebook QA route still present after extraction")
     if "async def facebook_qa_selfcheck(" in updated:
         raise SystemExit("Facebook QA function still present after extraction")
+    if "_fb_paginate," in updated:
+        raise SystemExit("Dead _fb_paginate import still present after extraction")
+    if "get_facebook_meta as _get_fb_meta" in updated:
+        raise SystemExit("Dead _get_fb_meta import still present after extraction")
+    if "from PIL import Image" in updated or "PIL_AVAILABLE" in updated:
+        raise SystemExit("Dead Pillow QA runtime still present after extraction")
     if ROUTER_IMPORT.strip() not in updated or ROUTER_INCLUDE.strip() not in updated:
         raise SystemExit("Facebook QA router wiring missing after extraction")
 
