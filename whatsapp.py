@@ -2431,13 +2431,11 @@ _FLUJO_MAX_REINTENTOS = 2         # veces que se re-explica un menú no entendid
 # wa2_flujo_estados en qué paso van; el siguiente mensaje del prospecto
 # continúa el flujo en vez de irse a la IA.
 # ══════════════════════════════════════════════════════════════════════════
+from routers.whatsapp_flow_state import _flujo_estado_de_core, _flujo_menu_texto_core
+
 async def _flujo_estado_de(conversacion_id: str) -> dict | None:
-    try:
-        rows = await sb_get("wa2_flujo_estados", {"conversacion_id": f"eq.{conversacion_id}",
-                                                  "select": "*", "limit": "1"})
-        return rows[0] if rows else None
-    except Exception:
-        return None  # tabla aún no migrada: no hay flujos activos y ya
+    return await _flujo_estado_de_core(conversacion_id, sb_get=sb_get)
+
 
 
 async def _flujo_estado_guardar(user_id: str, conversacion_id: str, auto_id: str,
@@ -2465,14 +2463,8 @@ async def _flujo_estado_borrar(conversacion_id: str) -> None:
 
 
 def _flujo_menu_texto(paso: dict) -> str:
-    """El menú tal como lo ve el prospecto: la pregunta y sus opciones
-    numeradas, para que pueda contestar '1', '2' o el texto de la opción."""
-    lineas = []
-    if paso.get("valor"):
-        lineas.append(paso["valor"])
-    for i, op in enumerate(paso.get("opciones") or [], start=1):
-        lineas.append(f"{i}. {op.get('texto', '')}")
-    return "\n".join(lineas)
+    return _flujo_menu_texto_core(paso)
+
 
 
 async def _flujo_nota_final(user_id: str, contacto_id: str, auto_nombre: str, datos: dict) -> None:
