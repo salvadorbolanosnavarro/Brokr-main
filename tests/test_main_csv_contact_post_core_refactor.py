@@ -2,19 +2,33 @@
 from __future__ import annotations
 
 from pathlib import Path
+import textwrap
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
+ROUTER = ROOT / "routers" / "contact_file_import.py"
+
+
+def _route_block(main_source: str, router_source: str) -> str:
+    if '@app.post("/contactos/importar-archivo")' in main_source:
+        start = main_source.index('@app.post("/contactos/importar-archivo")')
+        end = main_source.index(
+            '\n\n# ════════════════════════════════════════════════════════════════\n# Migración completa EasyBroker',
+            start,
+        )
+        return main_source[start:end]
+    start = router_source.index('    @router.post("/contactos/importar-archivo")')
+    end = router_source.index('\n    return router', start)
+    return textwrap.dedent(router_source[start:end])
 
 
 class MainCsvContactPostCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.source = MAIN.read_text(encoding="utf-8")
-        start = cls.source.index('@app.post("/contactos/importar-archivo")')
-        end = cls.source.index('\n\n# ════════════════════════════════════════════════════════════════\n# Migración completa EasyBroker', start)
-        cls.block = cls.source[start:end]
+        cls.router_source = ROUTER.read_text(encoding="utf-8")
+        cls.block = _route_block(cls.source, cls.router_source)
 
     def test_new_contact_post_uses_core_with_exact_legacy_statuses(self):
         block = self.block
