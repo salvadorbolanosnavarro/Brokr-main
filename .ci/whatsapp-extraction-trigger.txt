@@ -1,2 +1,2 @@
-transform=scripts/refactor_whatsapp_extract_time_core.py
-retry=6
+transform=scripts/refactor_whatsapp_extract_training_api_core.py
+retry=7
