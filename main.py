@@ -34,8 +34,6 @@ import re
 import asyncio
 import logging
 import base64
-import hmac
-import hashlib
 import uuid as _uuid
 import io
 import json
