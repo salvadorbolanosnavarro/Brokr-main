@@ -1,4 +1,4 @@
-"""Permanent guards for _get_fb_meta's Core database contract."""
+"""Permanent guards for get_facebook_meta's Core database contract."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -8,6 +8,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
 STORE = ROOT / "core" / "facebook_connection_store.py"
+QA_SELFCHECK = ROOT / "routers" / "facebook_qa_selfcheck.py"
 
 
 class MainFacebookMetaCoreRefactorTests(unittest.TestCase):
@@ -15,6 +16,7 @@ class MainFacebookMetaCoreRefactorTests(unittest.TestCase):
     def setUpClass(cls):
         cls.source = MAIN.read_text(encoding="utf-8")
         cls.store = STORE.read_text(encoding="utf-8")
+        cls.qa_selfcheck = QA_SELFCHECK.read_text(encoding="utf-8")
         start = cls.store.index("async def get_facebook_meta(user_id: str) -> dict:")
         end = cls.store.index("async def patch_facebook_meta(", start)
         cls.block = cls.store[start:end]
@@ -22,8 +24,23 @@ class MainFacebookMetaCoreRefactorTests(unittest.TestCase):
     def test_main_and_store_compile(self):
         compile(self.source, "main.py", "exec")
         compile(self.store, "core/facebook_connection_store.py", "exec")
-        self.assertIn("from core.facebook_connection_store import get_facebook_meta as _get_fb_meta", self.source)
+        compile(self.qa_selfcheck, "routers/facebook_qa_selfcheck.py", "exec")
         self.assertNotIn("async def _get_fb_meta(", self.source)
+
+        route_in_main = '@app.post("/facebook/qa-selfcheck")' in self.source
+        if route_in_main:
+            self.assertIn(
+                "from core.facebook_connection_store import get_facebook_meta as _get_fb_meta",
+                self.source,
+            )
+            self.assertIn("await _get_fb_meta(", self.source)
+        else:
+            self.assertNotIn("get_facebook_meta as _get_fb_meta", self.source)
+            self.assertIn(
+                "from core.facebook_connection_store import get_facebook_meta",
+                self.qa_selfcheck,
+            )
+            self.assertIn("await get_facebook_meta(", self.qa_selfcheck)
 
     def test_fb_meta_preserves_http_and_transport_error_contract(self):
         block = self.block
