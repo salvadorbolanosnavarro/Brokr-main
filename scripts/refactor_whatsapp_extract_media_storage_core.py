@@ -22,6 +22,7 @@ IMPORT_TEXT = (
     "from routers.whatsapp_media_storage import "
     "borrar_archivos as _borrar_archivos, guardar_archivo as _guardar_archivo\n"
 )
+CORE_STORAGE_NAMES = {"delete_objects", "upload_object"}
 
 
 def functions(tree: ast.Module) -> dict[str, ast.FunctionDef | ast.AsyncFunctionDef]:
@@ -58,6 +59,24 @@ def insertion_line(tree: ast.Module) -> int:
     return last_import_end
 
 
+def core_storage_import(tree: ast.Module) -> ast.ImportFrom:
+    matches = [
+        node for node in tree.body
+        if isinstance(node, ast.ImportFrom) and node.module == "core.storage"
+    ]
+    if len(matches) != 1:
+        raise SystemExit(
+            "refusing media extraction: expected exactly one core.storage import"
+        )
+    imported = {alias.asname or alias.name: alias.name for alias in matches[0].names}
+    expected = {name: name for name in CORE_STORAGE_NAMES}
+    if imported != expected:
+        raise SystemExit(
+            f"refusing media extraction: unexpected core.storage aliases {imported}"
+        )
+    return matches[0]
+
+
 def main() -> None:
     source = SOURCE.read_text(encoding="utf-8")
     canonical = CANONICAL.read_text(encoding="utf-8")
@@ -82,15 +101,39 @@ def main() -> None:
     if mismatched:
         raise SystemExit(f"refusing media extraction: AST mismatch for {mismatched}")
 
-    lines = source.splitlines(keepends=True)
-    remove_lines: set[int] = set()
+    storage_import = core_storage_import(source_tree)
+    target_lines: set[int] = set()
     for legacy in TARGETS:
         node = source_fns[legacy]
         if node.end_lineno is None:
             raise SystemExit(f"refusing media extraction: {legacy} lacks end_lineno")
+        target_lines.update(range(node.lineno, node.end_lineno + 1))
+    outside_storage_uses = [
+        (node.id, node.lineno)
+        for node in ast.walk(source_tree)
+        if (
+            isinstance(node, ast.Name)
+            and isinstance(node.ctx, ast.Load)
+            and node.id in CORE_STORAGE_NAMES
+            and node.lineno not in target_lines
+        )
+    ]
+    if outside_storage_uses:
+        raise SystemExit(
+            "refusing media extraction: core.storage names used outside media helpers "
+            f"{outside_storage_uses}"
+        )
+
+    lines = source.splitlines(keepends=True)
+    remove_lines: set[int] = set()
+    for legacy in TARGETS:
+        node = source_fns[legacy]
         remove_lines.update(range(node.lineno, node.end_lineno + 1))
         if node.end_lineno < len(lines) and not lines[node.end_lineno].strip():
             remove_lines.add(node.end_lineno + 1)
+    if storage_import.end_lineno is None:
+        raise SystemExit("refusing media extraction: core.storage import lacks end_lineno")
+    remove_lines.update(range(storage_import.lineno, storage_import.end_lineno + 1))
 
     insert_after = insertion_line(source_tree)
     output: list[str] = []
@@ -121,6 +164,11 @@ def main() -> None:
     expected = {legacy: canon for legacy, canon in TARGETS.items()}
     if aliases != expected:
         raise SystemExit(f"refusing media extraction: unexpected aliases {aliases}")
+    if any(
+        isinstance(node, ast.ImportFrom) and node.module == "core.storage"
+        for node in updated_tree.body
+    ):
+        raise SystemExit("refusing media extraction: core.storage import remains in whatsapp.py")
 
     SOURCE.write_text(updated, encoding="utf-8")
     print("extracted WhatsApp media storage helpers: " + ", ".join(TARGETS))
