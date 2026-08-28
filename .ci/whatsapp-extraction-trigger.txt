@@ -1,2 +1,2 @@
-transform=scripts/refactor_whatsapp_extract_access_core.py
-retry=10
+transform=scripts/refactor_whatsapp_extract_property_view_core.py
+retry=11
