@@ -1,8 +1,8 @@
-trigger_sha=4bac5948f51f6c5dcde486a31e34c165f85334e5
+trigger_sha=aa198de3f1a57996063957dc1c119a85c772ce54
 transform=success
 install=success
 compile=success
 tests=success
 visual=success
 debt=success
-quality_sha=9772995dbfee14f4bb9a38603a1144221318fbbd
+quality_sha=5bbe6f21beb3a5627f72bdb2586c6ce2895bcefe
