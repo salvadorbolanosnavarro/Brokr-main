@@ -32,8 +32,8 @@ from pydantic import BaseModel
 from core.auth import require_user_id
 from core.config import settings
 from core.database import delete_rows, get_rows, patch_rows, post_rows
-from core.storage import delete_objects, upload_object
 from routers.whatsapp_stats import _agrega_ventana, _dt, _mediana
+from routers.whatsapp_media_storage import borrar_archivos as _borrar_archivos, guardar_archivo as _guardar_archivo
 _dt.__doc__ = "Parsea un timestamptz de Postgres a datetime con zona. Nunca revienta."
 _agrega_ventana.__doc__ = "Todos los números de WhatsApp para una ventana de tiempo."
 
@@ -1294,26 +1294,6 @@ async def _descargar_media(numero: dict, media_id: str) -> tuple[bytes | None, s
         log.warning("Error bajando media %s: %s", media_id, e)
         return None, ""
 
-
-async def _guardar_archivo(user_id: str, conversacion_id: str, contenido: bytes,
-                           mime: str, sufijo: str) -> tuple[str | None, str | None]:
-    """Persist media through the canonical Storage layer and keep its path."""
-    if not contenido:
-        return None, None
-    ext = (mime.split("/")[-1] or "bin").split(";")[0][:8] or "bin"
-    ruta = f"{user_id}/{conversacion_id}/{int(datetime.now(timezone.utc).timestamp()*1000)}-{sufijo}.{ext}"
-    try:
-        url = await upload_object(
-            WA_MEDIA_BUCKET,
-            ruta,
-            contenido,
-            content_type=mime or "application/octet-stream",
-            timeout=40,
-        )
-        return url, ruta
-    except Exception as e:
-        log.warning("Error guardando archivo de WhatsApp: %s", e)
-        return None, None
 
 
 async def _transcribir_audio(contenido: bytes, mime: str) -> str:
@@ -2966,16 +2946,6 @@ async def wa2_borrar_conversacion(conversacion_id: str, request: Request):
     log.info("Conversación %s eliminada por el usuario %s", conversacion_id, user_id)
     return {"ok": True}
 
-
-async def _borrar_archivos(rutas: list) -> None:
-    """Delete persisted message media while keeping message deletion resilient."""
-    rutas = [r for r in (rutas or []) if r]
-    if not rutas:
-        return
-    try:
-        await delete_objects(WA_MEDIA_BUCKET, rutas, timeout=20)
-    except Exception as e:
-        log.warning("No se pudieron borrar %s archivo(s) del almacenamiento: %s", len(rutas), e)
 
 
 class NotaReq(BaseModel):
