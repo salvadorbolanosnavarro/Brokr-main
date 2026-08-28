@@ -178,7 +178,31 @@ from routers.facebook_audiences import router as facebook_audiences_router
 from routers.facebook_create_ad import router as facebook_create_ad_router
 from routers.facebook_qa_selfcheck import router as facebook_qa_selfcheck_router
 from routers.chat_claude import create_router as create_chat_claude_router
+from routers.easybroker_migration import create_import_all_router
 app = FastAPI()
+app.include_router(create_import_all_router(lambda: {
+    "get_user_id_from_token": get_user_id_from_token,
+    "get_eb_key_for_user": get_eb_key_for_user,
+    "SUPABASE_URL": SUPABASE_URL,
+    "SUPABASE_SERVICE_KEY": SUPABASE_SERVICE_KEY,
+    "_EB_STATUS_MAP": _EB_STATUS_MAP,
+    "_EB_STATUS_DEFAULT": _EB_STATUS_DEFAULT,
+    "_EB_LIMITE_PROPIEDADES": _EB_LIMITE_PROPIEDADES,
+    "get_rows": get_rows,
+    "_eb_get_reintentos": _eb_get_reintentos,
+    "EB_BASE": EB_BASE,
+    "eb_headers": eb_headers,
+    "get_org_id_for_user": get_org_id_for_user,
+    "_eb_to_brokr": _eb_to_brokr,
+    "_EB_LOTE": _EB_LOTE,
+    "_EB_PAUSA_LOTE": _EB_PAUSA_LOTE,
+    "_prog": _prog,
+    "upsert_rows": upsert_rows,
+    "_migrar_fotos_org": _migrar_fotos_org,
+    "httpx": httpx,
+    "asyncio": asyncio,
+    "time": time,
+}))
 app.include_router(create_chat_claude_router(lambda: {
     "get_user_id_from_token": get_user_id_from_token,
     "exigir_cupo": exigir_cupo,
@@ -1135,268 +1159,6 @@ Reglas estrictas:
 # Deduplicación por eb_public_id: si ya existe, la salta.
 # ════════════════════════════════════════════════════════════════
 
-@app.post("/easybroker/import-all")
-async def easybroker_import_all(request: Request):
-    """
-    Importa propiedades PUBLICADAS del agente desde su cuenta de EasyBroker
-    a Mis Inmuebles. Upsert por eb_public_id: si ya existe, actualiza datos
-    de EB pero PRESERVA notas internas y estatus que el usuario haya cambiado.
-
-    Optimizaciones:
-    - Filtra solo published con search[statuses][]=published
-    - Procesa detalles en paralelo (lotes de 10)
-    - Inserta en lotes a Supabase (1 POST por lote, no 1 por propiedad)
-    - Preserva notas y estatus del usuario en filas existentes
-    """
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Tu sesión expiró. Vuelve a iniciar sesión.")
-    user_key = await get_eb_key_for_user(user_id)
-    if not user_key:
-        raise HTTPException(status_code=400, detail="Configura tu API key de EasyBroker en Perfil → Integración EasyBroker antes de importar.")
-    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
-        raise HTTPException(status_code=500, detail="Supabase no está configurado en el servidor.")
-
-    # ─── Estatus elegidos por el usuario ───
-    # Body opcional: {"statuses": ["published", "sold", ...]}
-    try:
-        body_imp = await request.json()
-    except Exception:
-        body_imp = {}
-    # Con fotos_diferidas=true NO se lanza la copia de fotos al terminar.
-    # La migración completa lo usa para que la copia (pesada) no compita con
-    # los pasos de contactos e historial en el mismo worker.
-    fotos_diferidas = bool((body_imp or {}).get("fotos_diferidas"))
-    pedidos = (body_imp or {}).get("statuses")
-    if isinstance(pedidos, str):
-        pedidos = [pedidos]
-    if isinstance(pedidos, list):
-        statuses_elegidos = [s for s in _EB_STATUS_MAP if s in pedidos]
-    else:
-        statuses_elegidos = []
-    if not statuses_elegidos:
-        statuses_elegidos = list(_EB_STATUS_DEFAULT)
-
-    sb_headers = {
-        "apikey": SUPABASE_SERVICE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-        "Content-Type": "application/json",
-    }
-
-    # ─── Paso 1: leer filas existentes del usuario (para preservar notas/estatus) ───
-    existentes_por_eb_id = {}  # eb_public_id → {notas, estatus}
-    try:
-        try:
-            filas_existentes = await get_rows(
-                "propiedades",
-                {"user_id": f"eq.{user_id}",
-                 "eb_public_id": "not.is.null",
-                 "select": "eb_public_id,notas,estatus"},
-                timeout=15,
-            )
-        except httpx.HTTPStatusError:
-            filas_existentes = []
-        for row in filas_existentes:
-            eb_id = row.get("eb_public_id")
-            if eb_id:
-                existentes_por_eb_id[eb_id] = {
-                    "notas":   row.get("notas"),
-                    "estatus": row.get("estatus"),
-                }
-    except Exception as e:
-        print(f"[import-all] Error leyendo existentes: {e}")
-
-    # ─── Paso 2: paginar el listado de EasyBroker, un estatus a la vez ───
-    # IMPORTANTE: EasyBroker NO incluye el estatus dentro de cada propiedad,
-    # ni en el listado ni en el detalle. La única forma de saber de qué estatus
-    # es una propiedad es preguntarle por ese estatus y etiquetar lo que venga.
-    # Por eso paginamos un estatus a la vez. (Verificado con /easybroker/diagnostico)
-    estatus_por_pid = {}     # public_id → estatus Broquer
-    conteo_por_estatus = {}  # estatus EB → cuántas llegaron
-    ids_published = []       # orden de llegada (nombre histórico, se conserva)
-    limite_alcanzado = False
-    descartadas_estatus = 0  # repetidas entre estatus (ya contadas en otro)
-    for s in statuses_elegidos:
-        conteo_por_estatus[s] = 0
-
-    async with httpx.AsyncClient(timeout=30) as client:
-        for eb_status in statuses_elegidos:
-            if limite_alcanzado:
-                break
-            brokr_status = _EB_STATUS_MAP[eb_status]
-            pagina = 1
-            while pagina <= 400:  # tope duro de seguridad
-                r = await _eb_get_reintentos(
-                    client,
-                    f"{EB_BASE}/properties",
-                    eb_headers(user_key),
-                    [("limit", 50), ("page", pagina),
-                     ("search[statuses][]", eb_status)],
-                    timeout=30.0,
-                )
-                if r is None:
-                    break
-                if r.status_code == 401:
-                    raise HTTPException(status_code=401, detail="Tu API key de EasyBroker fue rechazada. Reconéctala en Perfil.")
-                if r.status_code != 200:
-                    break
-                data = r.json()
-                content = data.get("content", []) or []
-                if not content:
-                    break
-                for p in content:
-                    if len(ids_published) >= _EB_LIMITE_PROPIEDADES:
-                        limite_alcanzado = True
-                        break
-                    pid = p.get("public_id")
-                    if not pid:
-                        continue
-                    if pid in estatus_por_pid:
-                        descartadas_estatus += 1
-                        continue
-                    estatus_por_pid[pid] = brokr_status
-                    conteo_por_estatus[eb_status] = conteo_por_estatus.get(eb_status, 0) + 1
-                    ids_published.append(pid)
-                if limite_alcanzado:
-                    break
-                if not data.get("pagination", {}).get("next_page"):
-                    break
-                pagina += 1
-
-    total_eb = len(ids_published)
-
-    # ─── Paso 3: traer detalle de TODAS las published en paralelo (lotes de 10) ───
-    # Aún las que ya existen las re-procesamos para que el upsert actualice precio,
-    # fotos, descripción, amenidades, etc. (Decisión D2).
-    errores: list = []
-    inmuebles_listos: list = []
-
-    # La empresa comparte UNA cuenta de EasyBroker. Sin esto, cada agente que
-    # importara crearía su propia copia del mismo inventario.
-    org_id_import = await get_org_id_for_user(user_id)
-    if not org_id_import:
-        raise HTTPException(status_code=403, detail="Tu cuenta no está configurada. Contacta a soporte.")
-
-    async def fetch_one(client: httpx.AsyncClient, pid: str):
-        try:
-            rd = await _eb_get_reintentos(
-                client,
-                f"{EB_BASE}/properties/{pid}",
-                eb_headers(user_key),
-                timeout=20.0,
-            )
-            if rd is None:
-                return ("err", {"id": pid, "error": "EasyBroker no respondió tras varios intentos"})
-            if rd.status_code != 200:
-                return ("err", {"id": pid, "error": f"EB status {rd.status_code}"})
-            prop_full = rd.json()
-            inmueble = _eb_to_brokr(prop_full, user_id)
-            inmueble["org_id"] = org_id_import
-            # EasyBroker no manda el estatus dentro de la propiedad. Usamos el
-            # estatus por el que preguntamos para traerla.
-            eb_estatus = estatus_por_pid.get(pid)
-            if eb_estatus:
-                inmueble["estatus"] = eb_estatus
-            # Preservar notas y estatus del usuario si la fila ya existe
-            prev = existentes_por_eb_id.get(pid)
-            if prev:
-                if prev.get("notas"):
-                    inmueble["notas"] = prev["notas"]
-                if prev.get("estatus"):
-                    inmueble["estatus"] = prev["estatus"]
-            return ("ok", inmueble)
-        except Exception as e:
-            return ("err", {"id": pid, "error": str(e)[:120]})
-
-    BATCH = _EB_LOTE
-    lotes_fallidos_seguidos = 0
-    async with httpx.AsyncClient(timeout=30) as client:
-        for i in range(0, len(ids_published), BATCH):
-            chunk = ids_published[i:i+BATCH]
-            _prog(user_id, f"propiedades {min(i + BATCH, len(ids_published))} de {len(ids_published)}")
-            inicio_lote = time.monotonic()
-            results = await asyncio.gather(*[fetch_one(client, pid) for pid in chunk])
-            # Mantener el ritmo por debajo del límite de EasyBroker: si el lote
-            # tardó menos que la pausa mínima, esperamos la diferencia.
-            resto = _EB_PAUSA_LOTE - (time.monotonic() - inicio_lote)
-            if resto > 0 and i + BATCH < len(ids_published):
-                await asyncio.sleep(resto)
-            fallos_lote = 0
-            for status, payload in results:
-                if status == "ok":
-                    inmuebles_listos.append(payload)
-                else:
-                    errores.append(payload)
-                    fallos_lote += 1
-            # Cortacircuito: si EasyBroker rechaza TODO durante varios lotes
-            # seguidos (429 sostenido), no tiene caso moler reintentos media
-            # hora. Se aborta con mensaje claro.
-            lotes_fallidos_seguidos = (lotes_fallidos_seguidos + 1
-                                       if fallos_lote == len(chunk) else 0)
-            if lotes_fallidos_seguidos >= 4:
-                raise HTTPException(status_code=429, detail="EasyBroker está limitando las peticiones de tu cuenta (429 sostenido). Espera 10-15 minutos y vuelve a correr la migración: lo ya importado no se pierde ni se duplica.")
-
-    # ─── Paso 4: UPSERT en lotes a Supabase (50 por POST) ───
-    # Necesita el índice único (user_id, eb_public_id) en Supabase para que
-    # on_conflict funcione.
-    upserted = 0
-    UPSERT_BATCH = 50
-    async with httpx.AsyncClient(timeout=60) as client:
-        for i in range(0, len(inmuebles_listos), UPSERT_BATCH):
-            chunk = inmuebles_listos[i:i+UPSERT_BATCH]
-            ultimo_fallo = "sin respuesta"
-            guardado = False
-            for intento in range(3):
-                try:
-                    await upsert_rows(
-                        "propiedades",
-                        chunk,
-                        conflict="org_id,eb_public_id",
-                        prefer="resolution=merge-duplicates,return=minimal",
-                        timeout=60,
-                        accepted_statuses=(200, 201, 204),
-                    )
-                    upserted += len(chunk)
-                    guardado = True
-                    break
-                except httpx.HTTPStatusError as e:
-                    ultimo_fallo = f"Supabase {e.response.status_code}: {e.response.text[:200]}"
-                except Exception as e:
-                    ultimo_fallo = str(e)[:200]
-                await asyncio.sleep(1.5 * (2 ** intento))
-            if not guardado:
-                errores.append({
-                    "id": f"lote_{i // UPSERT_BATCH}",
-                    "error": ultimo_fallo
-                })
-
-    nuevas      = sum(1 for inm in inmuebles_listos if inm["eb_public_id"] not in existentes_por_eb_id)
-    actualizadas = upserted - nuevas if upserted >= nuevas else 0
-
-    # Guardar las fotos en Broquer, solo, sin que el usuario espere ni deje
-    # la pestaña abierta. Si ya hay un proceso corriendo para esta empresa,
-    # el propio trabajador se ignora a sí mismo.
-    fotos_lanzado = False
-    if org_id_import and upserted and not fotos_diferidas:
-        try:
-            asyncio.create_task(_migrar_fotos_org(org_id_import))
-            fotos_lanzado = True
-        except Exception as e:
-            print(f"[import-all] No se pudo lanzar el guardado de fotos: {e}")
-
-    return {
-        "total_easybroker": total_eb,
-        "importadas":       nuevas,           # nuevas filas creadas
-        "actualizadas":     actualizadas,     # ya existían y se actualizaron
-        "ya_existian":      actualizadas,     # backward-compat con frontend viejo
-        "por_estatus":      conteo_por_estatus,  # cuántas de cada estatus EB
-        "statuses":         statuses_elegidos,   # estatus que se importaron
-        "descartadas":      descartadas_estatus, # EB las mandó pero no se pidieron
-        "limite":           _EB_LIMITE_PROPIEDADES,
-        "limite_alcanzado": limite_alcanzado,
-        "fotos_en_proceso": fotos_lanzado,
-        "errores":          errores
-    }
 
 
 # Borrado masivo de propiedades y contactos.
