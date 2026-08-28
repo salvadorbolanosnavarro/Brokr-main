@@ -1,2 +1,2 @@
-transform=scripts/refactor_whatsapp_extract_brain_core.py
-retry=21
+transform=scripts/refactor_whatsapp_extract_crm_sync_core.py
+retry=22
