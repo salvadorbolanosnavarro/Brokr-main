@@ -1,2 +1,2 @@
-transform=scripts/refactor_whatsapp_extract_data_core.py
-retry=2
+transform=scripts/refactor_whatsapp_extract_policy_core.py
+retry=3
