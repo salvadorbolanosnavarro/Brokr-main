@@ -236,37 +236,12 @@ def _fmt_fecha_larga(dt: datetime) -> str:
     return f"{dias[dt.weekday()]} {dt.day} de {meses[dt.month-1]} de {dt.year}, {dt.strftime('%H:%M')}"
 
 
-def _normaliza_mx(num: str) -> str:
-    n = "".join(ch for ch in str(num) if ch.isdigit())
-    if n.startswith("521") and len(n) == 13:
-        n = "52" + n[3:]
-    return n
+from routers.whatsapp_utils import in_filter as _in_filter, money as _money, normaliza_mx as _normaliza_mx, parsear_presupuesto as _parsear_presupuesto
 
 
-def _money(n) -> str:
-    try:
-        return "$" + f"{int(round(float(n))):,}"
-    except Exception:
-        return str(n) if n else ""
 
 
-def _parsear_presupuesto(texto: str) -> int | None:
-    """Respaldo por si la IA no manda precio_max en 'filtros' aunque el
-    prospecto ya haya dado su presupuesto antes (queda guardado en su ficha
-    como texto libre, ej. '2 millones', '800 mil', '$1,200,000')."""
-    if not texto:
-        return None
-    t = texto.lower().replace(",", "").replace("$", "")
-    m = re.search(r"(\d+(?:\.\d+)?)\s*(millones|mill?on|mdp|m\b)", t)
-    if m:
-        return int(float(m.group(1)) * 1_000_000)
-    m = re.search(r"(\d+(?:\.\d+)?)\s*(mil|k\b)", t)
-    if m:
-        return int(float(m.group(1)) * 1_000)
-    m = re.search(r"(\d{5,})", t)  # un número ya completo, ej. "1200000"
-    if m:
-        return int(m.group(1))
-    return None
+
 
 
 # =============================================================================
@@ -303,8 +278,6 @@ async def _ids_visibles(user_id: str) -> list[str]:
     return list(ids)
 
 
-def _in_filter(ids: list[str]) -> str:
-    return "in.(" + ",".join(ids) + ")"
 
 
 # =============================================================================
