@@ -40,10 +40,18 @@ class WhatsAppTimeExtractionTests(unittest.TestCase):
     def test_local_time_returns_aware_datetime_for_valid_zone(self):
         self.assertIsNotNone(hora_local("America/Mexico_City").tzinfo)
 
-    def test_preparation_does_not_change_root_runtime_yet(self):
+    def test_root_has_exactly_one_time_implementation_state(self):
         source = WHATSAPP.read_text(encoding="utf-8")
-        for name in ("_now", "_hora_local", "_fmt_fecha_larga", "_fecha_hora_utc_iso", "_construir_ics"):
-            self.assertIn(f"def {name}(", source)
+        canonical = (
+            "from routers.whatsapp_time import construir_ics as _construir_ics, "
+            "fecha_hora_utc_iso as _fecha_hora_utc_iso, fmt_fecha_larga as _fmt_fecha_larga, "
+            "hora_local as _hora_local, now_iso as _now"
+        )
+        local_names = ("_now", "_hora_local", "_fmt_fecha_larga", "_fecha_hora_utc_iso", "_construir_ics")
+        local_present = [f"def {name}(" in source for name in local_names]
+        imported = canonical in source
+        self.assertTrue(imported or all(local_present))
+        self.assertFalse(imported and any(local_present))
 
 
 if __name__ == "__main__":
