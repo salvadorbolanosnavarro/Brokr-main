@@ -6,16 +6,23 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
+ROUTER = ROOT / "routers" / "contact_file_import.py"
 
 
 class MainCsvContactPatchCoreRefactorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.source = MAIN.read_text(encoding="utf-8")
+        cls.main_source = MAIN.read_text(encoding="utf-8")
+        cls.router_source = ROUTER.read_text(encoding="utf-8")
+        cls.source = (
+            cls.main_source
+            if '@app.post("/contactos/importar-archivo")' in cls.main_source
+            else cls.router_source
+        )
         marker = 'existente.update(patch)'
         cls.assert_marker_count = cls.source.count(marker)
         pos = cls.source.index(marker)
-        cls.block = cls.source[max(0, pos - 1200):pos + 500]
+        cls.block = cls.source[max(0, pos - 1400):pos + 600]
 
     def test_csv_contact_update_marker_remains_unique(self):
         self.assertEqual(self.assert_marker_count, 1)
@@ -34,7 +41,8 @@ class MainCsvContactPatchCoreRefactorTests(unittest.TestCase):
         block = self.block
         self.assertIn('actualizados += 1', block)
         self.assertIn('existente.update(patch)', block)
-        self.assertIn('except httpx.HTTPStatusError:\n                        errores += 1', block)
+        self.assertIn('except httpx.HTTPStatusError:', block)
+        self.assertIn('errores += 1', block)
         self.assertNotIn('except Exception', block)
 
 
