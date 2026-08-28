@@ -10,8 +10,12 @@ ROOT = Path(__file__).resolve().parents[1]
 class WhatsAppConfigAuthRegressionTests(unittest.TestCase):
     def test_router_uses_core_config_and_auth(self):
         source = (ROOT / "whatsapp.py").read_text(encoding="utf-8")
+        access_source = (ROOT / "routers" / "whatsapp_access.py").read_text(encoding="utf-8")
 
-        self.assertIn("from core.auth import require_user_id", source)
+        access_import = "from routers.whatsapp_access import _ids_visibles, _require_user"
+        legacy_helper = 'return await require_user_id(request, detail="No autorizado")'
+        access_extracted = access_import in source
+
         self.assertIn("from core.config import settings", source)
         self.assertNotIn("os.environ", source)
         self.assertNotIn("async def get_user_id_from_token", source)
@@ -24,10 +28,20 @@ class WhatsAppConfigAuthRegressionTests(unittest.TestCase):
         self.assertIn("WA2_DEBOUNCE = settings.wa2_debounce_seconds", source)
         self.assertIn("WA2_CAMPANA_TOPE = settings.wa2_campaign_limit", source)
         self.assertIn("WA2_TOPE_IA = settings.wa2_ai_limit", source)
-        self.assertIn('return await require_user_id(request, detail="No autorizado")', source)
+
+        if access_extracted:
+            self.assertNotIn("async def _require_user(", source)
+            self.assertNotIn("async def _ids_visibles(", source)
+            self.assertIn("from core.auth import require_user_id", access_source)
+            self.assertIn(legacy_helper, access_source)
+        else:
+            self.assertIn("from core.auth import require_user_id", source)
+            self.assertIn(legacy_helper, source)
+
         self.assertIn("from core.database import delete_rows, get_rows, patch_rows, post_rows", source)
         self.assertIn("from core.storage import delete_objects, upload_object", source)
         compile(source, "whatsapp.py", "exec")
+        compile(access_source, "routers/whatsapp_access.py", "exec")
 
 
 if __name__ == "__main__":
