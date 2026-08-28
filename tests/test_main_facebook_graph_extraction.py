@@ -6,6 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
 GRAPH = ROOT / "core" / "facebook_graph.py"
 CAMPAIGN_TOGGLE = ROOT / "routers" / "facebook_campaign_toggle.py"
+QA_SELFCHECK = ROOT / "routers" / "facebook_qa_selfcheck.py"
 
 
 class FacebookGraphExtractionTests(unittest.TestCase):
@@ -14,8 +15,9 @@ class FacebookGraphExtractionTests(unittest.TestCase):
         cls.main = MAIN.read_text(encoding="utf-8")
         cls.graph = GRAPH.read_text(encoding="utf-8")
         cls.campaign_toggle = CAMPAIGN_TOGGLE.read_text(encoding="utf-8")
+        cls.qa_selfcheck = QA_SELFCHECK.read_text(encoding="utf-8")
 
-    def test_main_delegates_graph_transport_to_core(self):
+    def test_consumers_delegate_graph_transport_to_core(self):
         self.assertIn("from core.facebook_graph import (", self.main)
         for name in (
             "_fb_appsecret_proof",
@@ -31,7 +33,14 @@ class FacebookGraphExtractionTests(unittest.TestCase):
         ):
             self.assertNotIn(f"def {name}(", self.main)
             self.assertNotIn(f"async def {name}(", self.main)
-        self.assertIn("await _fb_paginate(", self.main)
+
+        route_in_main = '@app.post("/facebook/qa-selfcheck")' in self.main
+        if route_in_main:
+            self.assertIn("await _fb_paginate(", self.main)
+        else:
+            self.assertNotIn("_fb_paginate,", self.main)
+            self.assertIn("await _fb_paginate(", self.qa_selfcheck)
+
         self.assertIn("await _fb_request(", self.main)
         self.assertIn("await _fb_batch(", self.campaign_toggle)
 
@@ -66,6 +75,7 @@ class FacebookGraphExtractionTests(unittest.TestCase):
         compile(self.main, "main.py", "exec")
         compile(self.graph, "core/facebook_graph.py", "exec")
         compile(self.campaign_toggle, "routers/facebook_campaign_toggle.py", "exec")
+        compile(self.qa_selfcheck, "routers/facebook_qa_selfcheck.py", "exec")
 
 
 if __name__ == "__main__":
