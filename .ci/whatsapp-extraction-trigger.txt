@@ -1,2 +1,2 @@
-transform=scripts/refactor_whatsapp_extract_agenda_core.py
-retry=23
+transform=scripts/refactor_whatsapp_extract_conversation_state_core.py
+retry=24
