@@ -1,2 +1,2 @@
-transform=scripts/refactor_whatsapp_extract_property_search_core.py
-retry=18
+transform=scripts/refactor_whatsapp_extract_training_policy_core.py
+retry=19
