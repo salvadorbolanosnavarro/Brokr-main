@@ -177,7 +177,18 @@ from routers.facebook_audiences import router as facebook_audiences_router
 
 from routers.facebook_create_ad import router as facebook_create_ad_router
 from routers.facebook_qa_selfcheck import router as facebook_qa_selfcheck_router
+from routers.chat_claude import create_router as create_chat_claude_router
 app = FastAPI()
+app.include_router(create_chat_claude_router(lambda: {
+    "get_user_id_from_token": get_user_id_from_token,
+    "exigir_cupo": exigir_cupo,
+    "exigir_sesion": exigir_sesion,
+    "ANTHROPIC_API_KEY": ANTHROPIC_API_KEY,
+    "ANTHROPIC_BASE": ANTHROPIC_BASE,
+    "_request_modulo": _request_modulo,
+    "_track_anthropic": _track_anthropic,
+    "SHAARK_SYSTEM_PROMPT": SHAARK_SYSTEM_PROMPT,
+}))
 app.include_router(facebook_qa_selfcheck_router)
 app.include_router(facebook_create_ad_router)
 
@@ -780,60 +791,7 @@ Broq: "Técnicamente sí — el Código Civil de Michoacán permite arrendamient
 
 Responde siempre en español. Sin markdown en respuestas conversacionales (sin **, sin #, sin listas con guiones). Usa oraciones naturales y cortas cuando el usuario habla por voz."""
 
-class ClaudeChatRequest(BaseModel):
-    messages: list
-    max_tokens: int = 1200
-    temperature: float = 0.7
-    context: str = ""  # Módulo/pantalla activa — se inyecta al system prompt
 
-@app.post("/chat-claude")
-async def chat_claude_proxy(req: ClaudeChatRequest, request: Request):
-    _uid = await get_user_id_from_token(request)
-    exigir_cupo(request, _uid)
-    exigir_sesion(request, _uid)
-    if not ANTHROPIC_API_KEY:
-        raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY no configurada en el servidor")
-    user_id = await get_user_id_from_token(request)
-
-    # Construir system prompt con contexto dinámico del módulo activo
-    system_content = SHAARK_SYSTEM_PROMPT
-    if req.context:
-        system_content += f"\n\n═══════════════════════════════════════\nCONTEXTO ACTUAL DEL USUARIO\n═══════════════════════════════════════\nEl usuario está en: {req.context}\nAdapta tu respuesta y acciones a este módulo cuando sea relevante."
-
-    user_messages = [m for m in req.messages if m.get("role") != "system"]
-
-    async with httpx.AsyncClient(timeout=60) as client:
-        r = await client.post(
-            f"{ANTHROPIC_BASE}/messages",
-            headers={
-                "x-api-key": ANTHROPIC_API_KEY,
-                "anthropic-version": "2023-06-01",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": "claude-sonnet-4-6",
-                "max_tokens": req.max_tokens,
-                "system": system_content,
-                "messages": user_messages,
-                "tools": [{"type": "web_search_20250305", "name": "web_search", "max_uses": 3}],
-            }
-        )
-        if r.status_code != 200:
-            raise HTTPException(status_code=r.status_code,
-                detail=f"Error Claude: {r.text}")
-
-        data = r.json()
-        _track_anthropic(user_id, _request_modulo(request, "chat"), "/chat-claude", data,
-                         modelo=data.get("model") or "claude-sonnet-4-6")
-        # Extraer texto ignorando bloques tool_use (web_search)
-        blocks = data.get("content", [])
-        text_parts = [b.get("text", "") for b in blocks if b.get("type") == "text"]
-        reply_text = "".join(text_parts).strip() or "Sin respuesta."
-        return {
-            "choices": [
-                {"message": {"role": "assistant", "content": reply_text}}
-            ]
-        }
 
 
 # ──────────────────────────────────────────────────────────────
