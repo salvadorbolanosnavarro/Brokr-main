@@ -1,2 +1,2 @@
 transform=scripts/refactor_whatsapp_extract_media_storage_core.py
-retry=14
+retry=15
