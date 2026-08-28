@@ -188,59 +188,14 @@ def _hora_local(zona: str | None = None) -> datetime:
         return datetime.now(timezone.utc) + timedelta(hours=-6)
 
 
-def _parse_ts(v) -> datetime | None:
-    """Timestamp de Supabase → datetime consciente de zona. None si no parsea."""
-    if not v:
-        return None
-    try:
-        dt = datetime.fromisoformat(str(v).replace("Z", "+00:00"))
-        return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
-    except Exception:
-        return None
+from routers.whatsapp_policy import _conv_pausada, _ia_decide, _modo_conv, _parse_ts
 
 
-def _modo_conv(conv: dict) -> str:
-    """Estado de IA del chat: 'auto' (obedece el modo global del número),
-    'on' (contesta siempre aquí) u 'off' (nunca contesta aquí). Si la columna
-    nueva aún no existe, se deriva del ai_enabled de siempre."""
-    m = conv.get("ia_modo")
-    if m in ("auto", "on", "off"):
-        return m
-    return "off" if conv.get("ai_enabled") is False else "auto"
 
 
-def _conv_pausada(conv: dict) -> bool:
-    h = _parse_ts(conv.get("ia_pausada_hasta"))
-    return bool(h and h > datetime.now(timezone.utc))
 
 
-def _ia_decide(conv: dict, entren: dict, numero: dict) -> bool:
-    """LA regla de quién contesta. Toda decisión de si la IA responde un
-    mensaje pasa por aquí — un solo lugar, cero criterios encimados.
 
-    Prioridades, de la más fuerte a la más débil:
-      1. El interruptor maestro del número (apagado = nadie contesta).
-      2. El chat en 'off' (el agente lo apagó a propósito): nunca.
-      3. La pausa temporal (el agente acaba de responder a mano): esperar.
-      4. El chat en 'on' (el agente la encendió a propósito en este lead):
-         contesta SIEMPRE, aunque el modo global esté apagado.
-      5. En 'auto', manda el modo global del número:
-         siempre_encendida / siempre_apagada / solo_nuevos."""
-    if not numero.get("ia_enabled", True):
-        return False
-    modo = _modo_conv(conv)
-    if modo == "off":
-        return False
-    if _conv_pausada(conv):
-        return False
-    if modo == "on":
-        return True
-    global_modo = entren.get("modo_ia") or "siempre_encendida"
-    if global_modo == "siempre_apagada":
-        return False
-    if global_modo == "solo_nuevos":
-        return bool(conv.get("ia_sesion_nueva"))
-    return True
 
 
 async def _pausar_por_respuesta_manual(conv: dict, numero: dict, entren: dict | None = None) -> dict:
