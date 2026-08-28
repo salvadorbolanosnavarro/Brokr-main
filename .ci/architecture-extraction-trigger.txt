@@ -1,2 +1,2 @@
-transform=scripts/refactor_main_extract_ficha_pdf_core.py
-retry=91
+transform=scripts/refactor_main_extract_solicitud_arrendamiento_core.py
+retry=92
