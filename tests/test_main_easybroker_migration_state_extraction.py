@@ -15,6 +15,7 @@ class EasyBrokerMigrationStateExtractionTests(unittest.TestCase):
         cls.core = CORE.read_text(encoding="utf-8")
         cls.contact_router = CONTACT_ROUTER.read_text(encoding="utf-8")
         cls.migration_router = MIGRATION_ROUTER.read_text(encoding="utf-8")
+        cls.legacy_owned = '@app.post("/easybroker/import-all")' in cls.main
 
     def test_shared_state_lives_in_core(self):
         self.assertIn('MIGRACIONES: dict = {}', self.core)
@@ -33,7 +34,13 @@ class EasyBrokerMigrationStateExtractionTests(unittest.TestCase):
         self.assertIn('def migration_key(org_id, user_id):', c)
         self.assertIn('return f"org:{org_id}" if org_id else f"user:{user_id}"', c)
         self.assertIn('from core.easybroker_migration import set_import_progress as _prog', self.main)
-        self.assertEqual(self.main.count('_prog('), 1)
+        if self.legacy_owned:
+            self.assertEqual(self.main.count('_prog('), 1)
+        else:
+            self.assertEqual(self.main.count('_prog('), 0)
+            self.assertIn('"_prog": _prog', self.main)
+            self.assertIn('prog = deps["_prog"]', self.migration_router)
+            self.assertEqual(self.migration_router.count('prog(user_id,'), 1)
         self.assertGreaterEqual(self.contact_router.count('set_import_progress('), 2)
         self.assertGreaterEqual(self.migration_router.count('migration_key('), 2)
         self.assertNotIn('migration_key as _mig_llave', self.main)
