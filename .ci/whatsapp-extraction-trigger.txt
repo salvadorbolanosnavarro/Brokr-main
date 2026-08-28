@@ -1,2 +1,2 @@
 transform=scripts/refactor_whatsapp_extract_access_core.py
-retry=9
+retry=10
