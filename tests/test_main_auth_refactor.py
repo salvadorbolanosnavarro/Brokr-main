@@ -12,6 +12,7 @@ class MainAuthRegressionTests(unittest.TestCase):
         source = (ROOT / "main.py").read_text(encoding="utf-8")
         checkout = (ROOT / "routers" / "subscription_checkout.py").read_text(encoding="utf-8")
         enterprise = (ROOT / "routers" / "subscription_enterprise.py").read_text(encoding="utf-8")
+        contact_file = (ROOT / "routers" / "contact_file_import.py").read_text(encoding="utf-8")
 
         self.assertIn("from core.auth import get_user_id_from_token", source)
         self.assertNotIn("async def get_user_id_from_token", source)
@@ -26,10 +27,15 @@ class MainAuthRegressionTests(unittest.TestCase):
             + enterprise.count('/auth/v1/user'),
             2,
         )
-        self.assertIn("await get_user_id_from_token(request)", source)
+        if '@app.post("/contactos/importar-archivo")' in source:
+            self.assertIn("await get_user_id_from_token(request)", source)
+        else:
+            self.assertIn('"get_user_id_from_token": get_user_id_from_token', source)
+            self.assertIn("await get_user_id_from_token(request)", contact_file)
         compile(source, "main.py", "exec")
         compile(checkout, "routers/subscription_checkout.py", "exec")
         compile(enterprise, "routers/subscription_enterprise.py", "exec")
+        compile(contact_file, "routers/contact_file_import.py", "exec")
 
 
 if __name__ == "__main__":
