@@ -4,6 +4,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
 ROUTER = ROOT / "routers" / "easybroker_contact_import.py"
+FILE_ROUTER = ROOT / "routers" / "contact_file_import.py"
 
 
 class EasyBrokerContactImportExtractionTests(unittest.TestCase):
@@ -11,12 +12,18 @@ class EasyBrokerContactImportExtractionTests(unittest.TestCase):
     def setUpClass(cls):
         cls.main = MAIN.read_text(encoding="utf-8")
         cls.router = ROUTER.read_text(encoding="utf-8")
+        cls.file_router = FILE_ROUTER.read_text(encoding="utf-8")
 
     def test_route_lives_only_in_router(self):
         self.assertIn('@router.post("/contactos/importar-eb")', self.router)
         self.assertNotIn('@app.post("/contactos/importar-eb")', self.main)
         self.assertIn('app.include_router(easybroker_contact_import_router)', self.main)
-        self.assertIn('@app.post("/contactos/importar-archivo")', self.main)
+        if '@app.post("/contactos/importar-archivo")' in self.main:
+            self.assertNotIn('create_contact_file_import_router', self.main)
+        else:
+            self.assertNotIn('@app.post("/contactos/importar-archivo")', self.main)
+            self.assertIn('@router.post("/contactos/importar-archivo")', self.file_router)
+            self.assertIn('app.include_router(create_contact_file_import_router(lambda: {', self.main)
 
     def test_easybroker_paging_backoff_and_circuit_breaker_are_preserved(self):
         r = self.router
@@ -52,6 +59,7 @@ class EasyBrokerContactImportExtractionTests(unittest.TestCase):
     def test_files_compile(self):
         compile(self.main, "main.py", "exec")
         compile(self.router, "routers/easybroker_contact_import.py", "exec")
+        compile(self.file_router, "routers/contact_file_import.py", "exec")
 
 
 if __name__ == "__main__":
