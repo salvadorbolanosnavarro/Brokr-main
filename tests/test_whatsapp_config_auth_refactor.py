@@ -11,10 +11,16 @@ class WhatsAppConfigAuthRegressionTests(unittest.TestCase):
     def test_router_uses_core_config_and_auth(self):
         source = (ROOT / "whatsapp.py").read_text(encoding="utf-8")
         access_source = (ROOT / "routers" / "whatsapp_access.py").read_text(encoding="utf-8")
+        media_source = (ROOT / "routers" / "whatsapp_media_storage.py").read_text(encoding="utf-8")
 
         access_import = "from routers.whatsapp_access import _ids_visibles, _require_user"
         legacy_helper = 'return await require_user_id(request, detail="No autorizado")'
         access_extracted = access_import in source
+        media_import = (
+            "from routers.whatsapp_media_storage import "
+            "borrar_archivos as _borrar_archivos, guardar_archivo as _guardar_archivo"
+        )
+        media_extracted = media_import in source
 
         self.assertIn("from core.config import settings", source)
         self.assertNotIn("os.environ", source)
@@ -39,9 +45,17 @@ class WhatsAppConfigAuthRegressionTests(unittest.TestCase):
             self.assertIn(legacy_helper, source)
 
         self.assertIn("from core.database import delete_rows, get_rows, patch_rows, post_rows", source)
-        self.assertIn("from core.storage import delete_objects, upload_object", source)
+        if media_extracted:
+            self.assertNotIn("async def _guardar_archivo(", source)
+            self.assertNotIn("async def _borrar_archivos(", source)
+            self.assertNotIn("from core.storage import delete_objects, upload_object", source)
+            self.assertIn("from core.storage import delete_objects, upload_object", media_source)
+        else:
+            self.assertIn("from core.storage import delete_objects, upload_object", source)
+
         compile(source, "whatsapp.py", "exec")
         compile(access_source, "routers/whatsapp_access.py", "exec")
+        compile(media_source, "routers/whatsapp_media_storage.py", "exec")
 
 
 if __name__ == "__main__":
