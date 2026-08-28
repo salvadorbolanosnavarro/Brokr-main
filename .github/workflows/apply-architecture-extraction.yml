@@ -79,7 +79,19 @@ jobs:
         run: python -m unittest tests.test_http_contract_golden
 
       - name: Run Quality gates
-        run: bash scripts/run_quality.sh
+        shell: bash
+        run: |
+          set -o pipefail
+          bash scripts/run_quality.sh 2>&1 | tee .ci/quality-gate-diagnostic.log
+
+      - name: Upload Quality diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-gate-log
+          path: .ci/quality-gate-diagnostic.log
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Commit certified extraction
         shell: bash
