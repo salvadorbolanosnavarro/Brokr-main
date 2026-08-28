@@ -36,7 +36,7 @@ class ContactFileImportExtractionTests(unittest.TestCase):
         self.assertIn('{"select": "contacto_id,propiedad_id", "limit": "20000"}', o)
         self.assertIn('mapa_ag = await _mapa_agentes_org(org_id_import, user_id)', o)
         self.assertIn('existente = (por_tel.get(tel) if tel else None) or (por_email.get(email) if email else None)', o)
-        self.assertIn('"org_id": org_id_import', o)
+        self.assertRegex(o, r'"org_id"\s*:\s*org_id_import')
         self.assertIn('{"user_id": user_id, "contacto_id": contacto_id,', o)
 
     def test_write_semantics_and_response_shape_are_preserved(self):
