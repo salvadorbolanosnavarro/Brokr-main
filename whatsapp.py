@@ -1781,18 +1781,13 @@ ASESOR_TOOLS = [
 ]
 
 
+from routers.whatsapp_advisor_context import _asesor_ctx_guardar_core
+
 async def _asesor_ctx_guardar(conversacion_id: str, cambios: dict) -> None:
-    """Memoria corta del modo asesor: guarda en la conversación el id y nombre
-    de lo último que se creó o tocó, para que 'esa misma tarea' o 'ese contacto'
-    resuelvan bien en el siguiente mensaje aunque el historial no traiga ids."""
-    try:
-        rows = await sb_get("wa2_conversaciones", {"id": f"eq.{conversacion_id}",
-                                                   "select": "asesor_ctx", "limit": "1"})
-        ctx = (rows[0].get("asesor_ctx") or {}) if rows else {}
-        ctx.update(cambios)
-        await sb_patch("wa2_conversaciones", {"id": f"eq.{conversacion_id}"}, {"asesor_ctx": ctx})
-    except Exception as e:
-        log.warning("No se pudo guardar el contexto del modo asesor: %s", e)
+    return await _asesor_ctx_guardar_core(
+        conversacion_id, cambios, sb_get=sb_get, sb_patch=sb_patch, log=log
+    )
+
 
 
 async def _asesor_ejecutar_tool(user_id: str, name: str, args: dict, zona: str | None,
