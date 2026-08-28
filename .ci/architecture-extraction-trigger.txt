@@ -1,2 +1,2 @@
-transform=scripts/refactor_main_extract_easybroker_import_all_core.py
-retry=89
+transform=scripts/refactor_main_extract_avm_pdf_core.py
+retry=90
