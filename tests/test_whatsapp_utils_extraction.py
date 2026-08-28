@@ -32,12 +32,18 @@ class WhatsAppPureUtilityTests(unittest.TestCase):
         self.assertEqual(in_filter(["a", "b", "c"]), "in.(a,b,c)")
         self.assertEqual(in_filter([]), "in.()")
 
-    def test_preparation_does_not_change_root_runtime_yet(self):
+    def test_root_has_exactly_one_utility_implementation_state(self):
         source = WHATSAPP.read_text(encoding="utf-8")
-        self.assertIn("def _normaliza_mx(", source)
-        self.assertIn("def _money(", source)
-        self.assertIn("def _parsear_presupuesto(", source)
-        self.assertIn("def _in_filter(", source)
+        canonical = (
+            "from routers.whatsapp_utils import "
+            "in_filter as _in_filter, money as _money, normaliza_mx as _normaliza_mx, "
+            "parsear_presupuesto as _parsear_presupuesto"
+        )
+        local_names = ("_normaliza_mx", "_money", "_parsear_presupuesto", "_in_filter")
+        local_present = [f"def {name}(" in source for name in local_names]
+        imported = canonical in source
+        self.assertTrue(imported or all(local_present))
+        self.assertFalse(imported and any(local_present))
 
 
 if __name__ == "__main__":
