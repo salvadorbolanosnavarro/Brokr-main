@@ -174,18 +174,10 @@ TRAINING_DEFAULTS = {
 }
 
 
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+from routers.whatsapp_time import construir_ics as _construir_ics, fecha_hora_utc_iso as _fecha_hora_utc_iso, fmt_fecha_larga as _fmt_fecha_larga, hora_local as _hora_local, now_iso as _now
 
 
-def _hora_local(zona: str | None = None) -> datetime:
-    """Hora de AHORA en la zona del agente (por defecto Ciudad de México).
-    México tiene varias zonas horarias reales (Tijuana, Hermosillo, Cancún,
-    etc.), así que esto NUNCA debe asumir Ciudad de México para todo mundo."""
-    try:
-        return datetime.now(ZoneInfo(zona or "America/Mexico_City"))
-    except Exception:
-        return datetime.now(timezone.utc) + timedelta(hours=-6)
+
 
 
 from routers.whatsapp_policy import _conv_pausada, _ia_decide, _modo_conv, _parse_ts
@@ -229,11 +221,6 @@ async def _pausar_por_respuesta_manual(conv: dict, numero: dict, entren: dict | 
     return info
 
 
-def _fmt_fecha_larga(dt: datetime) -> str:
-    dias = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
-    meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
-             "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
-    return f"{dias[dt.weekday()]} {dt.day} de {meses[dt.month-1]} de {dt.year}, {dt.strftime('%H:%M')}"
 
 
 from routers.whatsapp_utils import in_filter as _in_filter, money as _money, normaliza_mx as _normaliza_mx, parsear_presupuesto as _parsear_presupuesto
@@ -1228,54 +1215,8 @@ async def _wa_send_document_link(numero: dict, wa_id: str, url: str, filename: s
 # =============================================================================
 # 5) CITAS / AGENDA (calendario del usuario dentro de Broquer)
 # =============================================================================
-def _fecha_hora_utc_iso(fecha: str, hora: str, zona: str | None = None) -> str | None:
-    """Convierte fecha+hora LOCAL del agente (la que entendió el prospecto) a
-    un instante UTC real, con 'Z' explícita. CRÍTICO: nunca mandar
-    f"{fecha}T{hora}:00" pelón a una columna timestamptz — Postgres lo toma
-    como si ya fuera UTC, y la hora se corre (en México, 6h para atrás)."""
-    zona = zona or "America/Mexico_City"
-    try:
-        y, m, d = (int(x) for x in fecha.split("-"))
-        hh, mi = (int(x) for x in hora.split(":")[:2])
-    except Exception:
-        return None
-    try:
-        local_dt = datetime(y, m, d, hh, mi, tzinfo=ZoneInfo(zona))
-    except Exception:
-        local_dt = datetime(y, m, d, hh, mi, tzinfo=ZoneInfo("America/Mexico_City"))
-    return local_dt.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def _construir_ics(fecha: str, hora: str, titulo: str, descripcion: str, zona: str | None = None) -> str:
-    zona = zona or "America/Mexico_City"
-    try:
-        y, m, d = (int(x) for x in fecha.split("-"))
-        hh, mi = (int(x) for x in hora.split(":")[:2])
-    except Exception:
-        ahora = _hora_local(zona)
-        y, m, d, hh, mi = ahora.year, ahora.month, ahora.day, ahora.hour, ahora.minute
-    # OJO: fecha/hora vienen en la hora LOCAL del agente (la que entendió el
-    # prospecto), no en CDMX. Antes esto sumaba 6h fijas asumiendo Ciudad de
-    # México, lo cual está mal para Tijuana, Hermosillo, Cancún, etc. — cada
-    # una tiene su propio desfase contra UTC (y Tijuana además tiene horario
-    # de verano). zoneinfo lo resuelve bien para cualquier zona del país.
-    try:
-        local_dt = datetime(y, m, d, hh, mi, tzinfo=ZoneInfo(zona))
-    except Exception:
-        local_dt = datetime(y, m, d, hh, mi, tzinfo=ZoneInfo("America/Mexico_City"))
-    inicio = local_dt.astimezone(timezone.utc)
-    fin = inicio + timedelta(hours=1)
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    uid = f"{stamp}-{y}{m}{d}{hh}{mi}@broquer.app"
-    lines = [
-        "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Broquer//WhatsApp2//ES",
-        "BEGIN:VEVENT", f"UID:{uid}", f"DTSTAMP:{stamp}",
-        f"DTSTART:{inicio.strftime('%Y%m%dT%H%M%SZ')}",
-        f"DTEND:{fin.strftime('%Y%m%dT%H%M%SZ')}",
-        f"SUMMARY:{titulo}", f"DESCRIPTION:{descripcion}",
-        "END:VEVENT", "END:VCALENDAR",
-    ]
-    return "\r\n".join(lines)
 
 
 class AgendarReq(BaseModel):
