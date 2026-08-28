@@ -5,6 +5,7 @@ ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
 CORE = ROOT / "core" / "contact_import.py"
 ROUTER = ROOT / "routers" / "easybroker_contact_import.py"
+FILE_ROUTER = ROOT / "routers" / "contact_file_import.py"
 
 
 class ContactAgentMapExtractionTests(unittest.TestCase):
@@ -13,11 +14,17 @@ class ContactAgentMapExtractionTests(unittest.TestCase):
         cls.main = MAIN.read_text(encoding="utf-8")
         cls.core = CORE.read_text(encoding="utf-8")
         cls.router = ROUTER.read_text(encoding="utf-8")
+        cls.file_router = FILE_ROUTER.read_text(encoding="utf-8")
 
     def test_helper_lives_in_core_only(self):
         self.assertNotIn('async def _mapa_agentes_org(', self.main)
         self.assertIn('from core.contact_import import map_org_agents as _mapa_agentes_org', self.main)
-        self.assertEqual(self.main.count('_mapa_agentes_org('), 1)
+        if '@app.post("/contactos/importar-archivo")' in self.main:
+            self.assertEqual(self.main.count('_mapa_agentes_org('), 1)
+        else:
+            self.assertEqual(self.main.count('_mapa_agentes_org('), 0)
+            self.assertIn('"_mapa_agentes_org": _mapa_agentes_org', self.main)
+            self.assertEqual(self.file_router.count('_mapa_agentes_org('), 1)
         self.assertIn('from core.contact_import import map_org_agents', self.router)
         self.assertEqual(self.router.count('map_org_agents('), 1)
         self.assertIn('async def map_org_agents(', self.core)
@@ -37,6 +44,7 @@ class ContactAgentMapExtractionTests(unittest.TestCase):
         compile(self.main, "main.py", "exec")
         compile(self.core, "core/contact_import.py", "exec")
         compile(self.router, "routers/easybroker_contact_import.py", "exec")
+        compile(self.file_router, "routers/contact_file_import.py", "exec")
 
 
 if __name__ == "__main__":
