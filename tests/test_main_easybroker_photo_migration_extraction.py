@@ -4,6 +4,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "main.py"
 ROUTER = ROOT / "routers" / "easybroker_photo_status.py"
+MIGRATION_ROUTER = ROOT / "routers" / "easybroker_migration.py"
 BULK = ROOT / "routers" / "bulk_delete.py"
 
 
@@ -12,7 +13,9 @@ class EasyBrokerPhotoMigrationExtractionTests(unittest.TestCase):
     def setUpClass(cls):
         cls.main = MAIN.read_text(encoding="utf-8")
         cls.router = ROUTER.read_text(encoding="utf-8")
+        cls.migration_router = MIGRATION_ROUTER.read_text(encoding="utf-8")
         cls.bulk = BULK.read_text(encoding="utf-8")
+        cls.legacy_owned = '@app.post("/easybroker/import-all")' in cls.main
 
     def test_migration_domain_lives_in_router(self):
         r = self.router
@@ -24,10 +27,14 @@ class EasyBrokerPhotoMigrationExtractionTests(unittest.TestCase):
         self.assertNotIn('async def _migrar_fotos_org(', self.main)
 
     def test_import_all_keeps_background_worker_contract(self):
-        m = self.main
-        self.assertIn('from routers.easybroker_photo_status import (_migrar_fotos_org, router as easybroker_photo_status_router)', m)
-        self.assertIn('asyncio.create_task(_migrar_fotos_org(org_id_import))', m)
-        self.assertIn('fotos_lanzado = True', m)
+        self.assertIn('from routers.easybroker_photo_status import (_migrar_fotos_org, router as easybroker_photo_status_router)', self.main)
+        if self.legacy_owned:
+            self.assertIn('asyncio.create_task(_migrar_fotos_org(org_id_import))', self.main)
+            self.assertIn('fotos_lanzado = True', self.main)
+        else:
+            self.assertIn('"_migrar_fotos_org": _migrar_fotos_org', self.main)
+            self.assertIn('asyncio_dep.create_task(migrar_fotos_org(org_id_import))', self.migration_router)
+            self.assertIn('fotos_lanzado = True', self.migration_router)
 
     def test_batch_migration_contract_stays_intact(self):
         r = self.router
@@ -54,6 +61,7 @@ class EasyBrokerPhotoMigrationExtractionTests(unittest.TestCase):
     def test_files_compile(self):
         compile(self.main, "main.py", "exec")
         compile(self.router, "routers/easybroker_photo_status.py", "exec")
+        compile(self.migration_router, "routers/easybroker_migration.py", "exec")
         compile(self.bulk, "routers/bulk_delete.py", "exec")
 
 
