@@ -1,2 +1,2 @@
-transform=scripts/refactor_whatsapp_extract_agent_profile_core.py
-retry=20
+transform=scripts/refactor_whatsapp_extract_brain_core.py
+retry=21
