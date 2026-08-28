@@ -244,25 +244,10 @@ from routers.whatsapp_data import sb_delete, sb_get, sb_patch, sb_post
 
 
 
-async def _require_user(request: Request) -> str:
-    return await require_user_id(request, detail="No autorizado")
+from routers.whatsapp_access import _ids_visibles, _require_user
 
 
-async def _ids_visibles(user_id: str) -> list[str]:
-    """A qué user_id puede ver este usuario en WhatsApp 2.0.
-    Dueño o admin de una organización: él mismo + todo su equipo.
-    Agente normal, o alguien sin organización (cuenta personal): solo él mismo.
-    Los números y conversaciones se guardan bajo el user_id de quien conectó
-    CADA número (cada agente conecta el suyo); esto decide a cuáles de esos
-    user_id tiene permiso de asomarse quien pregunta."""
-    ctx = await get_org_context(user_id)
-    if not ctx or not ctx.get("org_id") or ctx.get("rol_org") not in ("owner", "admin"):
-        return [user_id]
-    miembros = await sb_get("organizacion_miembros", {
-        "org_id": f"eq.{ctx['org_id']}", "select": "user_id"})
-    ids = {m["user_id"] for m in miembros if m.get("user_id")}
-    ids.add(user_id)
-    return list(ids)
+
 
 
 
