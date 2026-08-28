@@ -1,5 +1,4 @@
-from fastapi import (FastAPI, HTTPException, Query, Request, UploadFile, File,
-                     BackgroundTasks, Response)
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from limites import exigir_cupo, exigir_sesion
 from pydantic import BaseModel
