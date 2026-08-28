@@ -1,2 +1,2 @@
 transform=scripts/refactor_whatsapp_extract_stats_core.py
-retry=12
+retry=13
