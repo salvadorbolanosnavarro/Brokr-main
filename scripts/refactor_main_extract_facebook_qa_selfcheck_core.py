@@ -72,6 +72,7 @@ def cleanup_last_qa_dependencies(source: str) -> str:
 
     targets = {
         ("core.facebook_graph", "_fb_paginate"),
+        ("core.facebook_graph", "_fb_request"),
         ("core.facebook_connection_store", "_get_fb_meta"),
     }
     found_targets: set[tuple[str, str]] = set()
@@ -195,6 +196,8 @@ def main() -> None:
         raise SystemExit("Facebook QA function still present after extraction")
     if "_fb_paginate," in updated:
         raise SystemExit("Dead _fb_paginate import still present after extraction")
+    if "_fb_request," in updated:
+        raise SystemExit("Dead _fb_request import still present after extraction")
     if "get_facebook_meta as _get_fb_meta" in updated:
         raise SystemExit("Dead _get_fb_meta import still present after extraction")
     if "from PIL import Image" in updated or "PIL_AVAILABLE" in updated:
