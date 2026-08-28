@@ -1,2 +1,2 @@
-transform=scripts/refactor_whatsapp_extract_training_api_core.py
-retry=7
+transform=scripts/refactor_whatsapp_extract_cloud_api_core.py
+retry=8
