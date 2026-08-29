@@ -787,9 +787,11 @@ async def wa2_receive_webhook(request: Request, background: BackgroundTasks):
     )
 
 
+from routers.whatsapp_number_lookup import _get_numero_core
+
 async def _get_numero(phone_number_id: str) -> dict | None:
-    rows = await sb_get("wa2_numeros", {"phone_number_id": f"eq.{phone_number_id}", "select": "*", "limit": "1"})
-    return rows[0] if rows else None
+    return await _get_numero_core(phone_number_id, sb_get=sb_get)
+
 
 
 from routers.whatsapp_crm_sync import _crear_contacto_crm_core, _sincronizar_contacto_crm_core
