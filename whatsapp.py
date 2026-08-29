@@ -117,16 +117,11 @@ GROQ_BASE    = settings.groq_base
 _LOCKS: dict = {}
 
 
+from routers.whatsapp_concurrency import lock_conv as _lock_conv_core
+
 def _lock_conv(conversacion_id: str) -> asyncio.Lock:
-    lock = _LOCKS.get(conversacion_id)
-    if lock is None:
-        lock = asyncio.Lock()
-        _LOCKS[conversacion_id] = lock
-        if len(_LOCKS) > 5000:  # no dejar que crezca para siempre
-            for k in list(_LOCKS.keys())[:1000]:
-                if not _LOCKS[k].locked():
-                    _LOCKS.pop(k, None)
-    return lock
+    return _lock_conv_core(conversacion_id, _LOCKS=_LOCKS, asyncio=asyncio)
+
 
 # TOPE DURO de respuestas de IA por conversación.
 # Cada mensaje entrante que contesta la IA es una llamada a Claude que paga
