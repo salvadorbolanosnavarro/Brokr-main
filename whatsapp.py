@@ -2300,7 +2300,7 @@ _FLUJO_MAX_REINTENTOS = 2         # veces que se re-explica un menú no entendid
 # wa2_flujo_estados en qué paso van; el siguiente mensaje del prospecto
 # continúa el flujo en vez de irse a la IA.
 # ══════════════════════════════════════════════════════════════════════════
-from routers.whatsapp_flow_state import _flujo_estado_de_core, _flujo_menu_texto_core, _flujo_estado_guardar_core, _flujo_nota_final_core
+from routers.whatsapp_flow_state import _flujo_estado_de_core, _flujo_menu_texto_core, _flujo_estado_guardar_core, _flujo_nota_final_core, _flujo_estado_borrar_core
 
 async def _flujo_estado_de(conversacion_id: str) -> dict | None:
     return await _flujo_estado_de_core(conversacion_id, sb_get=sb_get)
@@ -2317,10 +2317,8 @@ async def _flujo_estado_guardar(user_id: str, conversacion_id: str, auto_id: str
 
 
 async def _flujo_estado_borrar(conversacion_id: str) -> None:
-    try:
-        await sb_delete("wa2_flujo_estados", {"conversacion_id": f"eq.{conversacion_id}"})
-    except Exception:
-        pass
+    return await _flujo_estado_borrar_core(conversacion_id, sb_delete=sb_delete)
+
 
 
 def _flujo_menu_texto(paso: dict) -> str:
