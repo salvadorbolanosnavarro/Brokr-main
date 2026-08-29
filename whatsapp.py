@@ -978,8 +978,8 @@ async def wa2_enviar_manual(req: EnviarManualReq, request: Request):
 
 
 
-class LecturaReq(BaseModel):
-    no_leida: bool = False
+from routers.whatsapp_read_state_schema import LecturaReq
+
 
 
 @router.post("/conversaciones/{conversacion_id}/lectura")
