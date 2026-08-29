@@ -433,10 +433,8 @@ router.include_router(whatsapp_training_api_router)
 
 
 
-class ProbarReq(BaseModel):
-    numero_id: str | None = None
-    historial: list = []          # [{"rol":"prospecto"|"ia","texto":"..."}]
-    mensaje: str
+from routers.whatsapp_test_schema import ProbarReq
+
 
 
 from routers.whatsapp_test_property import wa2_probar_core, _alta_inmueble_core
