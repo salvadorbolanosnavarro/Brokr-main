@@ -1034,8 +1034,8 @@ async def wa2_borrar_conversacion(conversacion_id: str, request: Request):
 
 
 
-class NotaReq(BaseModel):
-    texto: str
+from routers.whatsapp_contact_schema import NotaReq
+
 
 
 from routers.whatsapp_contact_write import (
