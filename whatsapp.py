@@ -887,40 +887,8 @@ async def _procesar_en_segundo_plano(item: dict):
 # nuevos y consultas del CRM. Jamás se activa para un lead: solo cuando el
 # remitente es el número personal registrado del dueño (o el propio número).
 # ══════════════════════════════════════════════════════════════════════════
-ASESOR_TOOLS = [
-    {"name": "buscar_contactos",
-     "description": "Busca en el CRM del asesor por nombre, teléfono, email o notas. Úsala SIEMPRE antes de agregar un comentario a un contacto, para obtener su id exacto.",
-     "input_schema": {"type": "object",
-                      "properties": {"query": {"type": "string"}},
-                      "required": ["query"]}},
-    {"name": "buscar_tareas",
-     "description": "Busca en las tareas/citas del asesor por título o notas. Úsala SIEMPRE antes de agregar un comentario a una tarea, para obtener su id exacto.",
-     "input_schema": {"type": "object",
-                      "properties": {"query": {"type": "string"}},
-                      "required": ["query"]}},
-    {"name": "buscar_propiedades",
-     "description": "Busca en la cartera de inmuebles del asesor por título, colonia, calle, ciudad o clave interna. Úsala SIEMPRE antes de agregar un comentario a una propiedad, para obtener su id exacto.",
-     "input_schema": {"type": "object",
-                      "properties": {"query": {"type": "string"}},
-                      "required": ["query"]}},
-    {"name": "agregar_comentario",
-     "description": "Agrega un comentario con fecha a las notas de un contacto, una tarea o una propiedad, sin borrar lo que ya había. Usa el id exacto que devolvió buscar_contactos, buscar_tareas o buscar_propiedades.",
-     "input_schema": {"type": "object",
-                      "properties": {"destino": {"type": "string", "enum": ["contacto", "tarea", "propiedad"]},
-                                     "id": {"type": "string"},
-                                     "comentario": {"type": "string"}},
-                      "required": ["destino", "id", "comentario"]}},
-    {"name": "crear_tarea",
-     "description": "Crea una tarea o pendiente para el asesor, con fecha y hora opcionales, y opcionalmente vinculada a un contacto y/o un inmueble (usa sus ids exactos de las búsquedas).",
-     "input_schema": {"type": "object",
-                      "properties": {"titulo": {"type": "string"},
-                                     "fecha": {"type": "string", "description": "YYYY-MM-DD, opcional"},
-                                     "hora": {"type": "string", "description": "HH:MM en 24h, opcional"},
-                                     "notas": {"type": "string"},
-                                     "contacto_id": {"type": "string"},
-                                     "propiedad_id": {"type": "string"}},
-                      "required": ["titulo"]}},
-]
+from routers.whatsapp_advisor_schema import ASESOR_TOOLS
+
 
 
 from routers.whatsapp_advisor_context import _asesor_ctx_guardar_core
