@@ -1267,18 +1267,10 @@ async def _correr_automatizaciones(item: dict, numero: dict, user_id: str) -> bo
 # Cada mensaje que sale también se guarda en su conversación de la bandeja,
 # para que el agente vea qué se le mandó a quién.
 # =============================================================================
-class CampanaAudienciaReq(BaseModel):
-    numero_id: str
-    etiqueta: str | None = None
+from routers.whatsapp_campaign_schema import (
+    CampanaAudienciaReq, CampanaCrearReq,
+)
 
-
-class CampanaCrearReq(BaseModel):
-    numero_id: str
-    nombre: str
-    plantilla: str
-    idioma: str = "es_MX"
-    variables: list[str] = []
-    etiqueta: str | None = None
 
 
 from routers.whatsapp_campaign_audience import _audiencia_campana_core
