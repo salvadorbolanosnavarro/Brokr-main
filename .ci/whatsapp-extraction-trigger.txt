@@ -1,2 +1,2 @@
-transform=scripts/refactor_whatsapp_extract_optout_policy_core.py
-retry=92
+transform=scripts/refactor_whatsapp_alias_resolver_inmueble_core.py
+retry=93
