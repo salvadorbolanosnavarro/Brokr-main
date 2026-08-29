@@ -1,2 +1,2 @@
-transform=scripts/refactor_whatsapp_extract_stats_io_core.py
-retry=40
+transform=scripts/refactor_whatsapp_extract_stats_api_core.py
+retry=41
