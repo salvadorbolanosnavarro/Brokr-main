@@ -11,6 +11,7 @@ class WhatsAppDatabaseRegressionTests(unittest.TestCase):
     def test_router_routes_table_access_through_core(self):
         source = (ROOT / "whatsapp.py").read_text(encoding="utf-8")
         data = (ROOT / "routers" / "whatsapp_data.py").read_text(encoding="utf-8")
+        stats_io = (ROOT / "routers" / "whatsapp_stats_io.py").read_text(encoding="utf-8")
 
         self.assertIn(
             "from core.database import delete_rows, get_rows, patch_rows, post_rows",
@@ -34,15 +35,28 @@ class WhatsAppDatabaseRegressionTests(unittest.TestCase):
                 source,
             )
 
-        # Diagnostic statistics reads intentionally remain direct Core calls:
-        # unlike sb_get they must retain the database error text.
-        self.assertIn("data = await get_rows(table, params, timeout=25)", source)
+        # Diagnostic statistics reads intentionally bypass the fail-soft sb_get
+        # adapter so the database error text remains visible. During extraction
+        # that implementation moves to whatsapp_stats_io, while whatsapp.py keeps
+        # bounded wrappers with the original names for exact call-site behavior.
+        stats_extracted = "from routers.whatsapp_stats_io import (" in source
+        if stats_extracted:
+            self.assertIn("data = await get_rows(table, params, timeout=25)", stats_io)
+            self.assertIn("resultados = await asyncio.gather(*tareas, return_exceptions=True)", stats_io)
+            self.assertIn("return salida[:tope], error", stats_io)
+            self.assertIn("return await _sb_diag_core(table, params, get_rows=get_rows, httpx=httpx)", source)
+            self.assertIn("return await _sb_get_paginado_core(", source)
+            self.assertIn("_sb_diag=_sb_diag, asyncio=asyncio", source)
+        else:
+            self.assertIn("data = await get_rows(table, params, timeout=25)", source)
+
         self.assertNotIn('f"{SUPABASE_URL}/rest/v1/{table}"', source)
         self.assertNotIn("service_headers", source)
         self.assertNotIn("def _sb_headers()", source)
         self.assertIn("GRAPH_API", source)
         compile(source, "whatsapp.py", "exec")
         compile(data, "routers/whatsapp_data.py", "exec")
+        compile(stats_io, "routers/whatsapp_stats_io.py", "exec")
 
 
 if __name__ == "__main__":
