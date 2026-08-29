@@ -1,2 +1,2 @@
-transform=scripts/refactor_whatsapp_extract_flow_state_delete_core.py
-retry=55
+transform=scripts/refactor_whatsapp_extract_automation_delete_core.py
+retry=56
