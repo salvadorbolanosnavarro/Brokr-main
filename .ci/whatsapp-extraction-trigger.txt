@@ -1,2 +1,2 @@
-transform=scripts/refactor_whatsapp_extract_advisor_schema_core.py
-retry=76
+transform=scripts/refactor_whatsapp_extract_automation_schema_core.py
+retry=77
