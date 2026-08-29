@@ -2431,7 +2431,7 @@ _FLUJO_MAX_REINTENTOS = 2         # veces que se re-explica un menú no entendid
 # wa2_flujo_estados en qué paso van; el siguiente mensaje del prospecto
 # continúa el flujo en vez de irse a la IA.
 # ══════════════════════════════════════════════════════════════════════════
-from routers.whatsapp_flow_state import _flujo_estado_de_core, _flujo_menu_texto_core, _flujo_estado_guardar_core
+from routers.whatsapp_flow_state import _flujo_estado_de_core, _flujo_menu_texto_core, _flujo_estado_guardar_core, _flujo_nota_final_core
 
 async def _flujo_estado_de(conversacion_id: str) -> dict | None:
     return await _flujo_estado_de_core(conversacion_id, sb_get=sb_get)
@@ -2460,29 +2460,12 @@ def _flujo_menu_texto(paso: dict) -> str:
 
 
 async def _flujo_nota_final(user_id: str, contacto_id: str, auto_nombre: str, datos: dict) -> None:
-    """Al terminar un flujo, lo que el prospecto contestó queda en la ficha
-    del contacto — juntar datos que nadie vuelve a ver no sirve de nada."""
-    limpios = {k: v for k, v in (datos or {}).items() if not k.startswith("_") and v}
-    if not limpios:
-        return
-    try:
-        rows = await sb_get("wa2_contactos", {"id": f"eq.{contacto_id}",
-                                              "select": "notas,contacto_crm_id,nombre", "limit": "1"})
-        if not rows:
-            return
-        etiquetas = {"nombre": "Nombre", "presupuesto": "Presupuesto",
-                     "interes": "Interés", "nota": "Nota"}
-        texto = f"Flujo \"{auto_nombre}\": " + " · ".join(
-            f"{etiquetas.get(k, k)}: {v}" for k, v in limpios.items())
-        notas = (rows[0].get("notas") or []) + [{"texto": texto, "autor": "flujo", "fecha": _now()}]
-        cambios: dict = {"notas": notas, "updated_at": _now()}
-        # Si el flujo preguntó el nombre y el contacto no tenía, se estrena.
-        if limpios.get("nombre") and not rows[0].get("nombre"):
-            cambios["nombre"] = str(limpios["nombre"])[:80]
-        await sb_patch("wa2_contactos", {"id": f"eq.{contacto_id}"}, cambios)
-        await _sincronizar_contacto_crm(user_id, rows[0], {"nota": texto})
-    except Exception as e:
-        log.warning("No se pudo volcar la nota del flujo: %s", e)
+    return await _flujo_nota_final_core(
+        user_id, contacto_id, auto_nombre, datos,
+        sb_get=sb_get, _now=_now, sb_patch=sb_patch,
+        _sincronizar_contacto_crm=_sincronizar_contacto_crm, log=log,
+    )
+
 
 
 async def _flujo_ejecutar(auto: dict, item: dict, numero: dict, user_id: str,
