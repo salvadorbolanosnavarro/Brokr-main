@@ -45,7 +45,7 @@ def main():
     )
 '''
     lines = text.splitlines(keepends=True)
-    lines[legacy.lineno - 1:legacy.end_lineno] = [wrapper_text, "\n"]
+    lines[legacy.lineno - 1:legacy.end_lineno] = [wrapper_text]
     mid = "".join(lines)
     t2 = ast.parse(mid)
     if any(isinstance(n, ast.ImportFrom) and n.module == IMPORT_MODULE for n in t2.body):
