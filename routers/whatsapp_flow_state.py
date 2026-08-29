@@ -38,3 +38,31 @@ def _flujo_menu_texto_core(paso: dict) -> str:
     for i, op in enumerate(paso.get("opciones") or [], start=1):
         lineas.append(f"{i}. {op.get('texto', '')}")
     return "\n".join(lineas)
+
+
+async def _flujo_nota_final_core(user_id: str, contacto_id: str, auto_nombre: str,
+                                 datos: dict, *, sb_get, _now, sb_patch,
+                                 _sincronizar_contacto_crm, log) -> None:
+    """Al terminar un flujo, lo que el prospecto contestó queda en la ficha
+    del contacto — juntar datos que nadie vuelve a ver no sirve de nada."""
+    limpios = {k: v for k, v in (datos or {}).items() if not k.startswith("_") and v}
+    if not limpios:
+        return
+    try:
+        rows = await sb_get("wa2_contactos", {"id": f"eq.{contacto_id}",
+                                              "select": "notas,contacto_crm_id,nombre", "limit": "1"})
+        if not rows:
+            return
+        etiquetas = {"nombre": "Nombre", "presupuesto": "Presupuesto",
+                     "interes": "Interés", "nota": "Nota"}
+        texto = f"Flujo \"{auto_nombre}\": " + " · ".join(
+            f"{etiquetas.get(k, k)}: {v}" for k, v in limpios.items())
+        notas = (rows[0].get("notas") or []) + [{"texto": texto, "autor": "flujo", "fecha": _now()}]
+        cambios: dict = {"notas": notas, "updated_at": _now()}
+        # Si el flujo preguntó el nombre y el contacto no tenía, se estrena.
+        if limpios.get("nombre") and not rows[0].get("nombre"):
+            cambios["nombre"] = str(limpios["nombre"])[:80]
+        await sb_patch("wa2_contactos", {"id": f"eq.{contacto_id}"}, cambios)
+        await _sincronizar_contacto_crm(user_id, rows[0], {"nota": texto})
+    except Exception as e:
+        log.warning("No se pudo volcar la nota del flujo: %s", e)
