@@ -1,2 +1,2 @@
-transform=scripts/refactor_whatsapp_extract_campaign_schema_core.py
-retry=78
+transform=scripts/refactor_whatsapp_extract_stats_schema_core.py
+retry=79
