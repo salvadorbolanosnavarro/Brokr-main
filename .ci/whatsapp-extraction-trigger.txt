@@ -1,2 +1,2 @@
-transform=scripts/refactor_whatsapp_extract_concurrency_core.py
-retry=45
+transform=scripts/refactor_whatsapp_extract_campaign_runner_core.py
+retry=46
