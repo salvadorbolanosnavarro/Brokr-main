@@ -95,8 +95,8 @@ WA2_DEBOUNCE = settings.wa2_debounce_seconds
 # Palabras EXACTAS con las que un prospecto se da de baja de las campañas.
 # Al detectarlas, el contacto se marca opt_out y ninguna campaña vuelve a
 # tocarlo — puede seguir chateando normal, solo queda fuera de los masivos.
-_OPT_OUT_PALABRAS = {"baja", "stop", "alto", "cancelar", "no molestar",
-                     "darme de baja", "no me escribas", "unsubscribe"}
+from routers.whatsapp_optout_policy import _OPT_OUT_PALABRAS
+
 
 # TOPE DURO de contactos por campaña. Meta limita cuántas conversaciones de
 # marketing puede abrir un número según su nivel (250 / 1,000 / 10,000...);
