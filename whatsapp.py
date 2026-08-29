@@ -1093,10 +1093,12 @@ async def wa2_contacto_patch(contacto_id: str, request: Request):
 # contacto) y 'humano' (apagar la IA de esa conversación y avisar al agente).
 # Si la receta responde o pasa al humano, la IA ya no contesta ese mensaje.
 # =============================================================================
-_AUTO_TIPOS = ("mensaje", "etiqueta", "humano", "ia", "pregunta", "opciones")
+from routers.whatsapp_automation_schema import (
+    AutomatizacionReq, _AUTO_TIPOS, _FLUJO_CAMPOS,
+)
+
 
 # Campos donde una pregunta de flujo puede guardar la respuesta del prospecto
-_FLUJO_CAMPOS = ("nombre", "presupuesto", "interes", "nota")
 _FLUJO_MAX_PASOS_POR_TURNO = 20   # candado anti-loops en saltos de opciones
 _FLUJO_CADUCA_HORAS = 24          # un flujo abandonado no revive al día siguiente
 _FLUJO_MAX_REINTENTOS = 2         # veces que se re-explica un menú no entendido
@@ -1184,13 +1186,6 @@ _AUTO_COOLDOWN_SEG = 120
 _AUTO_ULTIMA: dict = {}
 
 
-class AutomatizacionReq(BaseModel):
-    nombre: str
-    numero_id: str | None = None
-    disparador: str = "palabra"
-    palabras: list[str] = []
-    acciones: list[dict] = []
-    activa: bool = True
 
 
 from routers.whatsapp_automation_policy import _limpiar_automatizacion_core
