@@ -1,2 +1,2 @@
-transform=scripts/refactor_whatsapp_extract_conversation_schema_core.py
-retry=86
+transform=scripts/refactor_whatsapp_extract_contact_schema_core.py
+retry=87
