@@ -2519,65 +2519,40 @@ def _limpiar_automatizacion(req: AutomatizacionReq) -> dict:
 
 
 
+from routers.whatsapp_automation_write import (
+    wa2_automatizaciones_list_core, wa2_automatizacion_crear_core,
+    wa2_automatizacion_patch_core,
+)
+
 @router.get("/automatizaciones")
 async def wa2_automatizaciones_list(request: Request):
-    user_id = await _require_user(request)
-    ids = await _ids_visibles(user_id)
-    rows = await sb_get("wa2_automatizaciones", {"user_id": _in_filter(ids), "select": "*",
-                                                 "order": "created_at.desc", "limit": "100"})
-    return {"automatizaciones": rows}
+    return await wa2_automatizaciones_list_core(
+        request, _require_user=_require_user, _ids_visibles=_ids_visibles,
+        sb_get=sb_get, _in_filter=_in_filter,
+    )
+
 
 
 @router.post("/automatizaciones")
 async def wa2_automatizacion_crear(req: AutomatizacionReq, request: Request):
-    user_id = await _require_user(request)
-    fila = _limpiar_automatizacion(req)
-    if fila["numero_id"]:
-        ids = await _ids_visibles(user_id)
-        n = await sb_get("wa2_numeros", {"id": f"eq.{fila['numero_id']}",
-                                         "user_id": _in_filter(ids), "select": "id", "limit": "1"})
-        if not n:
-            raise HTTPException(status_code=404, detail="Número no encontrado")
-    fila.update({"user_id": user_id, "veces_usada": 0,
-                 "created_at": _now(), "updated_at": _now()})
-    creado = await sb_post("wa2_automatizaciones", fila)
-    if not creado:
-        raise HTTPException(status_code=500,
-                            detail="No se pudo guardar. ¿Ya corriste la migración de automatizaciones?")
-    return {"ok": True}
+    return await wa2_automatizacion_crear_core(
+        req, request, _require_user=_require_user,
+        _limpiar_automatizacion=_limpiar_automatizacion, _ids_visibles=_ids_visibles,
+        sb_get=sb_get, _in_filter=_in_filter, HTTPException=HTTPException,
+        _now=_now, sb_post=sb_post,
+    )
+
 
 
 @router.patch("/automatizaciones/{auto_id}")
 async def wa2_automatizacion_patch(auto_id: str, request: Request):
-    user_id = await _require_user(request)
-    ids = await _ids_visibles(user_id)
-    body = await request.json()
-    permitido = {}
-    if "activa" in body:
-        permitido["activa"] = bool(body["activa"])
-    # Editar el flujo completo (nombre, disparador, pasos): pasa por la MISMA
-    # validación que al crearlo — cero caminos alternos donde equivocarse.
-    if any(k in body for k in ("nombre", "disparador", "palabras", "acciones", "numero_id")):
-        actual_rows = await sb_get("wa2_automatizaciones",
-                                   {"id": f"eq.{auto_id}", "user_id": _in_filter(ids),
-                                    "select": "*", "limit": "1"})
-        if not actual_rows:
-            raise HTTPException(status_code=404, detail="Automatización no encontrada")
-        actual = actual_rows[0]
-        req = AutomatizacionReq(
-            nombre=body.get("nombre", actual.get("nombre") or ""),
-            numero_id=body.get("numero_id", actual.get("numero_id")),
-            disparador=body.get("disparador", actual.get("disparador") or "palabra"),
-            palabras=body.get("palabras", actual.get("palabras") or []),
-            acciones=body.get("acciones", actual.get("acciones") or []),
-            activa=bool(body.get("activa", actual.get("activa", True))),
-        )
-        permitido.update(_limpiar_automatizacion(req))
-    if not permitido:
-        return {"ok": True}
-    permitido["updated_at"] = _now()
-    await sb_patch("wa2_automatizaciones", {"id": f"eq.{auto_id}", "user_id": _in_filter(ids)}, permitido)
-    return {"ok": True}
+    return await wa2_automatizacion_patch_core(
+        auto_id, request, _require_user=_require_user, _ids_visibles=_ids_visibles,
+        _in_filter=_in_filter, sb_get=sb_get, HTTPException=HTTPException,
+        AutomatizacionReq=AutomatizacionReq, _limpiar_automatizacion=_limpiar_automatizacion,
+        _now=_now, sb_patch=sb_patch,
+    )
+
 
 
 @router.delete("/automatizaciones/{auto_id}")
