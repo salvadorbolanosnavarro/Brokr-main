@@ -2431,7 +2431,7 @@ _FLUJO_MAX_REINTENTOS = 2         # veces que se re-explica un menú no entendid
 # wa2_flujo_estados en qué paso van; el siguiente mensaje del prospecto
 # continúa el flujo en vez de irse a la IA.
 # ══════════════════════════════════════════════════════════════════════════
-from routers.whatsapp_flow_state import _flujo_estado_de_core, _flujo_menu_texto_core
+from routers.whatsapp_flow_state import _flujo_estado_de_core, _flujo_menu_texto_core, _flujo_estado_guardar_core
 
 async def _flujo_estado_de(conversacion_id: str) -> dict | None:
     return await _flujo_estado_de_core(conversacion_id, sb_get=sb_get)
@@ -2440,19 +2440,11 @@ async def _flujo_estado_de(conversacion_id: str) -> dict | None:
 
 async def _flujo_estado_guardar(user_id: str, conversacion_id: str, auto_id: str,
                                 paso: int, datos: dict) -> None:
-    try:
-        existente = await sb_get("wa2_flujo_estados", {"conversacion_id": f"eq.{conversacion_id}",
-                                                       "select": "id", "limit": "1"})
-        fila = {"paso": paso, "datos": datos, "updated_at": _now()}
-        if existente:
-            await sb_patch("wa2_flujo_estados", {"id": f"eq.{existente[0]['id']}"},
-                           dict(fila, automatizacion_id=auto_id))
-        else:
-            await sb_post("wa2_flujo_estados", dict(fila, user_id=user_id,
-                          conversacion_id=conversacion_id, automatizacion_id=auto_id,
-                          created_at=_now()))
-    except Exception as e:
-        log.warning("No se pudo guardar el estado del flujo: %s", e)
+    return await _flujo_estado_guardar_core(
+        user_id, conversacion_id, auto_id, paso, datos,
+        sb_get=sb_get, _now=_now, sb_patch=sb_patch, sb_post=sb_post, log=log,
+    )
+
 
 
 async def _flujo_estado_borrar(conversacion_id: str) -> None:
