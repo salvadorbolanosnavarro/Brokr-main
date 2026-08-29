@@ -960,9 +960,8 @@ async def wa2_mensajes_list(request: Request, conversacion_id: str,
 
 
 
-class EnviarManualReq(BaseModel):
-    conversacion_id: str
-    texto: str
+from routers.whatsapp_inbox_schema import EnviarManualReq
+
 
 
 from routers.whatsapp_inbox_write import wa2_enviar_manual_core, wa2_lectura_core
