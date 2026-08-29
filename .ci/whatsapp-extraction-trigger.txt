@@ -1,2 +1,2 @@
-transform=scripts/refactor_whatsapp_extract_token_health_core.py
-retry=48
+transform=scripts/refactor_whatsapp_extract_contact_write_core.py
+retry=49
