@@ -1323,10 +1323,8 @@ async def wa2_campana_crear(req: CampanaCrearReq, request: Request, background: 
 
 
 
-from routers.whatsapp_campaign_variables import variables_para as _variables_para_core
+from routers.whatsapp_campaign_variables import variables_para as _variables_para
 
-def _variables_para(contacto: dict, variables: list) -> list:
-    return _variables_para_core(contacto, variables)
 
 
 
