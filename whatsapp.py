@@ -814,7 +814,7 @@ async def _get_o_crea_conversacion(user_id: str, numero_id: str, contacto_id: st
 
 
 
-from routers.whatsapp_message_state import _guardar_mensaje_core, _resolver_inmueble_id_core
+from routers.whatsapp_message_state import _guardar_mensaje_core, _resolver_inmueble_id_core as _resolver_inmueble_id
 
 async def _guardar_mensaje(user_id: str, contacto_id: str, conversacion_id: str, wamid: str | None,
                           direction: str, sender: str, body: str, media_url: str | None = None,
@@ -826,8 +826,6 @@ async def _guardar_mensaje(user_id: str, contacto_id: str, conversacion_id: str,
 
 
 
-def _resolver_inmueble_id(inmueble_txt: str, ultimas: list) -> str | None:
-    return _resolver_inmueble_id_core(inmueble_txt, ultimas)
 
 
 
