@@ -1,2 +1,2 @@
-transform=scripts/refactor_whatsapp_extract_resolver_alias_core.py
-retry=94
+transform=scripts/refactor_whatsapp_extract_flow_menu_alias_core.py
+retry=95
