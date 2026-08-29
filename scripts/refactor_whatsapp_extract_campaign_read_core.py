@@ -39,6 +39,10 @@ def shape(node):
     return ast.dump(m, annotate_fields=True, include_attributes=False)
 
 
+def start_line(node):
+    return min([node.lineno] + [d.lineno for d in node.decorator_list])
+
+
 def main():
     text = SOURCE.read_text(encoding="utf-8")
     tree = ast.parse(text)
@@ -60,7 +64,7 @@ def main():
     if any(isinstance(n, ast.ImportFrom) and n.module == IMPORT_MODULE for n in t2.body):
         raise SystemExit("campaign read already imported")
 
-    first = min(fn(t2, name).lineno for name in SPECS)
+    first = min(start_line(fn(t2, name)) for name in SPECS)
     cur = mid.splitlines(keepends=True)
     import_text = (
         "from routers.whatsapp_campaign_read import (\n"
