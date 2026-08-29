@@ -29,6 +29,13 @@ async def _flujo_estado_guardar_core(user_id: str, conversacion_id: str, auto_id
         log.warning("No se pudo guardar el estado del flujo: %s", e)
 
 
+async def _flujo_estado_borrar_core(conversacion_id: str, *, sb_delete) -> None:
+    try:
+        await sb_delete("wa2_flujo_estados", {"conversacion_id": f"eq.{conversacion_id}"})
+    except Exception:
+        pass
+
+
 def _flujo_menu_texto_core(paso: dict) -> str:
     """El menú tal como lo ve el prospecto: la pregunta y sus opciones
     numeradas, para que pueda contestar '1', '2' o el texto de la opción."""
@@ -59,7 +66,6 @@ async def _flujo_nota_final_core(user_id: str, contacto_id: str, auto_nombre: st
             f"{etiquetas.get(k, k)}: {v}" for k, v in limpios.items())
         notas = (rows[0].get("notas") or []) + [{"texto": texto, "autor": "flujo", "fecha": _now()}]
         cambios: dict = {"notas": notas, "updated_at": _now()}
-        # Si el flujo preguntó el nombre y el contacto no tenía, se estrena.
         if limpios.get("nombre") and not rows[0].get("nombre"):
             cambios["nombre"] = str(limpios["nombre"])[:80]
         await sb_patch("wa2_contactos", {"id": f"eq.{contacto_id}"}, cambios)
