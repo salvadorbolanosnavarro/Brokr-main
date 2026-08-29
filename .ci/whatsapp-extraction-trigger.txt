@@ -1,2 +1,2 @@
-transform=scripts/refactor_whatsapp_extract_inbox_read_core.py
-retry=50
+transform=scripts/refactor_whatsapp_extract_conversation_write_core.py
+retry=51
