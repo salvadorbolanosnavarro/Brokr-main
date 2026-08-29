@@ -993,10 +993,8 @@ async def wa2_lectura(conversacion_id: str, req: LecturaReq, request: Request):
 
 
 
-class ConvPatchReq(BaseModel):
-    ai_enabled: bool | None = None
-    ia_modo: str | None = None      # 'auto' | 'on' | 'off'
-    etapa: str | None = None
+from routers.whatsapp_conversation_schema import ConvPatchReq
+
 
 
 from routers.whatsapp_conversation_write import wa2_conversacion_patch_core
