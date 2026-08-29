@@ -650,14 +650,10 @@ async def _wa_send_document(numero: dict, wa_id: str, contenido: bytes, filename
 # 24h desde el último mensaje del prospecto. Se crean aquí, Meta las aprueba
 # (minutos a días) y luego se pueden usar para reabrir la conversación.
 # =============================================================================
-class PlantillaCrearReq(BaseModel):
-    numero_id: str
-    nombre: str
-    idioma: str = "es_MX"
-    categoria: str = "UTILITY"  # UTILITY | MARKETING | AUTHENTICATION
-    cuerpo: str
-    variables_ejemplo: list[str] = []
-    footer: str | None = None
+from routers.whatsapp_template_schema import (
+    PlantillaCrearReq, PlantillaEnviarReq,
+)
+
 
 
 from routers.whatsapp_template_api import (wa2_plantillas_list_core, wa2_plantilla_crear_core, wa2_enviar_plantilla_core)
@@ -682,11 +678,6 @@ async def wa2_plantilla_crear(req: PlantillaCrearReq, request: Request):
 
 
 
-class PlantillaEnviarReq(BaseModel):
-    conversacion_id: str
-    nombre: str
-    idioma: str
-    variables: list[str] = []
 
 
 @router.post("/mensajes/plantilla")
