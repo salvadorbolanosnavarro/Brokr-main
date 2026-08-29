@@ -1,2 +1,2 @@
-transform=scripts/refactor_whatsapp_extract_read_state_schema_core.py
-retry=85
+transform=scripts/refactor_whatsapp_extract_conversation_schema_core.py
+retry=86
