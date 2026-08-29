@@ -2811,23 +2811,13 @@ class CampanaCrearReq(BaseModel):
     etiqueta: str | None = None
 
 
+from routers.whatsapp_campaign_audience import _audiencia_campana_core
+
 async def _audiencia_campana(numero: dict, etiqueta: str | None) -> list:
-    params = {"numero_id": f"eq.{numero['id']}",
-              "user_id": f"eq.{numero['user_id']}",
-              "select": "id,wa_id,nombre,opt_out,etiquetas",
-              "limit": "5000"}
-    if etiqueta:
-        # PostgREST: jsonb "contiene" — la etiqueta debe estar en el array.
-        params["etiquetas"] = "cs." + json.dumps([etiqueta])
-    rows = await sb_get("wa2_contactos", params)
-    audiencia = []
-    for c in rows:
-        if not c.get("wa_id") or c.get("opt_out"):
-            continue
-        if _es_asesor(numero, c["wa_id"]):
-            continue
-        audiencia.append(c)
-    return audiencia
+    return await _audiencia_campana_core(
+        numero, etiqueta, sb_get=sb_get, json=json, _es_asesor=_es_asesor,
+    )
+
 
 
 async def _numero_visible(request: Request, numero_id: str) -> tuple[str, dict]:
