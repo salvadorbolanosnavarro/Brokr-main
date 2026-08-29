@@ -1,2 +1,2 @@
 transform=scripts/refactor_whatsapp_extract_campaign_read_core.py
-retry=36
+retry=37
