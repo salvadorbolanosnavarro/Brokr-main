@@ -544,13 +544,8 @@ async def _wa_send_document_link(numero: dict, wa_id: str, url: str, filename: s
 
 
 
-class AgendarReq(BaseModel):
-    conversacion_id: str | None = None
-    inmueble_id: str | None = None
-    titulo: str
-    fecha: str
-    hora: str
-    notas: str | None = None
+from routers.whatsapp_agenda_schema import AgendarReq
+
 
 
 from routers.whatsapp_agenda_api import wa2_agendar_core
