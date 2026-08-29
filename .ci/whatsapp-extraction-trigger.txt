@@ -1,2 +1,2 @@
-transform=scripts/refactor_whatsapp_extract_test_schema_core.py
-retry=81
+transform=scripts/refactor_whatsapp_extract_agenda_schema_core.py
+retry=82
