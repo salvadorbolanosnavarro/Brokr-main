@@ -14,8 +14,9 @@ log = logging.getLogger("broquer.whatsapp2")
 router = APIRouter()
 
 
-@router.get("/conversaciones")
-async def wa2_conversaciones_list(request: Request, numero_id: str | None = None):
+async def wa2_conversaciones_list_core(request, numero_id: str | None = None, *,
+                                       _require_user, _ids_visibles, _in_filter,
+                                       sb_get, log):
     user_id = await _require_user(request)
     ids = await _ids_visibles(user_id)
     params = {"user_id": _in_filter(ids), "select": "*,wa2_contactos(*)",
@@ -24,6 +25,9 @@ async def wa2_conversaciones_list(request: Request, numero_id: str | None = None
         params["numero_id"] = f"eq.{numero_id}"
     rows = await sb_get("wa2_conversaciones", params)
 
+    # Vista previa del último mensaje de cada chat (como WhatsApp). Se resuelve
+    # con UNA sola consulta: se traen los mensajes recientes del usuario en
+    # orden descendente y se toma el primero que aparece de cada conversación.
     if rows:
         try:
             recientes = await sb_get("wa2_mensajes", {
@@ -48,9 +52,19 @@ async def wa2_conversaciones_list(request: Request, numero_id: str | None = None
     return {"conversaciones": rows}
 
 
-@router.get("/mensajes")
-async def wa2_mensajes_list(request: Request, conversacion_id: str,
-                            limit: int = 30, before: str | None = None, after: str | None = None):
+async def wa2_mensajes_list_core(request, conversacion_id: str,
+                                 limit: int = 30, before: str | None = None,
+                                 after: str | None = None, *,
+                                 _require_user, _ids_visibles, _in_filter, sb_get):
+    """Mensajes de una conversación, paginados como WhatsApp.
+
+    · Sin parámetros: devuelve los ÚLTIMOS `limit` mensajes (los más recientes),
+      ya ordenados del más viejo al más nuevo para pintarlos de corrido.
+    · `before=<created_at>`: devuelve la página ANTERIOR (mensajes más viejos),
+      que es lo que se pide al hacer scroll hacia arriba.
+    · `after=<created_at>`: solo lo que llegó después de esa marca — se usa en el
+      refresco automático para no volver a bajar toda la conversación.
+    """
     user_id = await _require_user(request)
     ids = await _ids_visibles(user_id)
     limit = max(1, min(int(limit or 30), 100))
@@ -71,4 +85,27 @@ async def wa2_mensajes_list(request: Request, conversacion_id: str,
     if hay_mas:
         rows = rows[:limit]
     rows.reverse()
+
+    # Bajar los mensajes ya NO marca la conversación como leída. Leer es un
+    # acto del agente, no un efecto secundario de que el navegador refresque:
+    # de eso se encarga POST /conversaciones/{id}/lectura.
     return {"mensajes": rows, "hay_mas_antiguos": hay_mas, "incremental": False}
+
+
+@router.get("/conversaciones")
+async def wa2_conversaciones_list(request: Request, numero_id: str | None = None):
+    return await wa2_conversaciones_list_core(
+        request, numero_id,
+        _require_user=_require_user, _ids_visibles=_ids_visibles,
+        _in_filter=_in_filter, sb_get=sb_get, log=log,
+    )
+
+
+@router.get("/mensajes")
+async def wa2_mensajes_list(request: Request, conversacion_id: str,
+                            limit: int = 30, before: str | None = None, after: str | None = None):
+    return await wa2_mensajes_list_core(
+        request, conversacion_id, limit, before, after,
+        _require_user=_require_user, _ids_visibles=_ids_visibles,
+        _in_filter=_in_filter, sb_get=sb_get,
+    )
