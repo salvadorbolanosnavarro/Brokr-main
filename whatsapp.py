@@ -1080,9 +1080,10 @@ from routers.whatsapp_automation_schema import (
 
 
 # Campos donde una pregunta de flujo puede guardar la respuesta del prospecto
-_FLUJO_MAX_PASOS_POR_TURNO = 20   # candado anti-loops en saltos de opciones
-_FLUJO_CADUCA_HORAS = 24          # un flujo abandonado no revive al día siguiente
-_FLUJO_MAX_REINTENTOS = 2         # veces que se re-explica un menú no entendido
+from routers.whatsapp_flow_limits import (
+    _FLUJO_MAX_PASOS_POR_TURNO, _FLUJO_CADUCA_HORAS, _FLUJO_MAX_REINTENTOS,
+)
+
 
 
 # ══════════════════════════════════════════════════════════════════════════
