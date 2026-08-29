@@ -1095,7 +1095,7 @@ from routers.whatsapp_flow_limits import (
 # wa2_flujo_estados en qué paso van; el siguiente mensaje del prospecto
 # continúa el flujo en vez de irse a la IA.
 # ══════════════════════════════════════════════════════════════════════════
-from routers.whatsapp_flow_state import _flujo_estado_de_core, _flujo_menu_texto_core, _flujo_estado_guardar_core, _flujo_nota_final_core, _flujo_estado_borrar_core
+from routers.whatsapp_flow_state import _flujo_estado_de_core, _flujo_menu_texto_core as _flujo_menu_texto, _flujo_estado_guardar_core, _flujo_nota_final_core, _flujo_estado_borrar_core
 
 async def _flujo_estado_de(conversacion_id: str) -> dict | None:
     return await _flujo_estado_de_core(conversacion_id, sb_get=sb_get)
@@ -1116,8 +1116,6 @@ async def _flujo_estado_borrar(conversacion_id: str) -> None:
 
 
 
-def _flujo_menu_texto(paso: dict) -> str:
-    return _flujo_menu_texto_core(paso)
 
 
 
