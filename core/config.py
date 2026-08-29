@@ -181,7 +181,10 @@ class Settings:
             meta_graph_version=os.getenv("META_GRAPH_VERSION", "v23.0"),
             wa_register_pin=os.getenv("WA_REGISTER_PIN", "").strip(),
             frontend_url=os.getenv("FRONTEND_URL", "https://broquer.app").rstrip("/"),
-            ai_require_session=_env_bool("EXIGIR_SESION_IA", default=False),
+            # Secure-by-default: paid/expensive AI endpoints require an authenticated
+            # session unless a legacy deployment explicitly opts out with
+            # EXIGIR_SESION_IA=0.
+            ai_require_session=_env_bool("EXIGIR_SESION_IA", default=True),
             hourly_anonymous_limit=_env_positive_int("TOPE_HORA_ANONIMO", 40),
             hourly_user_limit=_env_positive_int("TOPE_HORA_USUARIO", 400),
             apns_key_p8=os.getenv("APNS_KEY_P8", "").replace("\\n", "\n").strip(),
