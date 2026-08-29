@@ -88,7 +88,7 @@ async def _alta_inmueble_core(
     Nace SIEMPRE con estatus 'no_activa': no aparece en el sitio público del
     asesor, no se le ofrece a ningún comprador y no se sincroniza a ningún
     lado. Es un borrador que espera revisión humana. Un dato que llegó por
-    WhatsApp de alguien que no conocemos no puede tratararse como inventario
+    WhatsApp de alguien que no conocemos no puede tratarse como inventario
     real: ni el precio, ni la titularidad, ni siquiera que la casa exista
     están verificados.
     """
