@@ -1,2 +1,2 @@
-transform=scripts/refactor_whatsapp_extract_delete_core.py
-retry=57
+transform=scripts/refactor_whatsapp_extract_prospect_brain_core.py
+retry=58
