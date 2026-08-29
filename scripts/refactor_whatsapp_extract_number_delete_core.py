@@ -32,7 +32,7 @@ if "from routers.whatsapp_number_delete import wa2_numero_delete_core" in src:
     raise SystemExit("number delete extraction already applied")
 
 lines = src.splitlines(keepends=True)
-start = old.lineno - 1
+start = min((d.lineno for d in old.decorator_list), default=old.lineno) - 1
 end = old.end_lineno
 replacement = '''from routers.whatsapp_number_delete import wa2_numero_delete_core
 
