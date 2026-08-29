@@ -1377,7 +1377,8 @@ async def _correr_campana(campana_id: str, numero: dict, audiencia: list,
 # Este endpoint devuelve TODO ya agregado y para las cuatro ventanas de tiempo
 # de un solo golpe, para que el frontend cambie de periodo sin volver a pedir.
 # =============================================================================
-_VENTANAS_ESTAD = {"semana": 7, "mes": 30, "trimestre": 90, "todo": 0}
+from routers.whatsapp_stats_schema import _VENTANAS_ESTAD
+
 
 
 from routers.whatsapp_stats_io import (
