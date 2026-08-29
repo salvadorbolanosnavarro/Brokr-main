@@ -1,2 +1,2 @@
-transform=scripts/refactor_whatsapp_extract_webhook_ingest_core.py
-retry=66
+transform=scripts/refactor_whatsapp_extract_webhook_http_core.py
+retry=67
