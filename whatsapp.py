@@ -59,7 +59,8 @@ ANTHROPIC_API_KEY = settings.anthropic_api_key
 ANTHROPIC_BASE    = settings.anthropic_base
 WA2_MODEL         = settings.wa2_model
 
-GRAPH_API       = "https://graph.facebook.com/v21.0"
+from routers.whatsapp_static_config import GRAPH_API, HISTORY_LIMIT, WA_MAX_TEXTO
+
 META_APP_ID     = settings.wa2_meta_app_id
 META_APP_SECRET = settings.wa2_meta_app_secret
 WA2_VERIFY_TOKEN = settings.wa2_verify_token
@@ -72,7 +73,6 @@ WA2_REGISTER_PIN = settings.wa2_register_pin
 WA2_WEBHOOK_URL  = settings.wa2_webhook_url
 
 BROQUER_API_BASE = settings.wa2_broquer_api_base
-HISTORY_LIMIT = 16
 
 # Zona horaria por defecto de todo el módulo. ESTA CONSTANTE FALTABA: el
 # endpoint /whatsapp2/estadisticas la usaba sin que existiera en ningún lado,
@@ -91,7 +91,6 @@ WA2_DEBOUNCE = settings.wa2_debounce_seconds
 
 # WhatsApp corta los mensajes de texto en 4096 caracteres; arriba de eso Meta
 # rechaza el envío completo y el prospecto no recibe NADA.
-WA_MAX_TEXTO = 4000
 
 # Palabras EXACTAS con las que un prospecto se da de baja de las campañas.
 # Al detectarlas, el contacto se marca opt_out y ninguna campaña vuelve a
