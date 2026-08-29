@@ -1,2 +1,2 @@
 transform=scripts/refactor_whatsapp_extract_automation_runner_core.py
-retry=35
+retry=35-rerun
