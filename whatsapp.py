@@ -1075,7 +1075,7 @@ async def wa2_contacto_patch(contacto_id: str, request: Request):
 # Si la receta responde o pasa al humano, la IA ya no contesta ese mensaje.
 # =============================================================================
 from routers.whatsapp_automation_schema import (
-    AutomatizacionReq, _AUTO_TIPOS, _FLUJO_CAMPOS,
+    AutomatizacionReq, _AUTO_TIPOS, _FLUJO_CAMPOS, _AUTO_COOLDOWN_SEG,
 )
 
 
@@ -1164,7 +1164,6 @@ async def _flujo_continuar(estado: dict, item: dict, numero: dict, user_id: str)
 # Candado anti-metralleta: la misma receta no se dispara dos veces en la misma
 # conversación en menos de este tiempo, aunque el prospecto repita la palabra
 # en tres mensajes seguidos. Vive en memoria: suficiente con una instancia.
-_AUTO_COOLDOWN_SEG = 120
 _AUTO_ULTIMA: dict = {}
 
 
