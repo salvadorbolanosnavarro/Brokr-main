@@ -2848,17 +2848,11 @@ async def wa2_campana_crear(req: CampanaCrearReq, request: Request, background: 
     return {"ok": True, "campana_id": campana_id, "total": len(audiencia)}
 
 
+from routers.whatsapp_campaign_variables import variables_para as _variables_para_core
+
 def _variables_para(contacto: dict, variables: list) -> list:
-    """Sustituye el comodín {nombre} por el primer nombre real del contacto —
-    la única personalización automática de la capa estándar."""
-    listas = []
-    for v in variables:
-        if str(v).strip().lower() in ("{nombre}", "{{nombre}}"):
-            primero = (contacto.get("nombre") or "").strip().split(" ")[0]
-            listas.append(primero.title() if primero else "Hola")
-        else:
-            listas.append(str(v))
-    return listas
+    return _variables_para_core(contacto, variables)
+
 
 
 async def _correr_campana(campana_id: str, numero: dict, audiencia: list,
