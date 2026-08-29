@@ -114,7 +114,8 @@ GROQ_BASE    = settings.groq_base
 
 # Candado por conversación: dos mensajes del mismo prospecto jamás deben
 # generar dos respuestas al mismo tiempo.
-_LOCKS: dict = {}
+from routers.whatsapp_runtime_state import _LOCKS, _AUTO_ULTIMA
+
 
 
 from routers.whatsapp_concurrency import lock_conv as _lock_conv_core
@@ -1164,7 +1165,6 @@ async def _flujo_continuar(estado: dict, item: dict, numero: dict, user_id: str)
 # Candado anti-metralleta: la misma receta no se dispara dos veces en la misma
 # conversación en menos de este tiempo, aunque el prospecto repita la palabra
 # en tres mensajes seguidos. Vive en memoria: suficiente con una instancia.
-_AUTO_ULTIMA: dict = {}
 
 
 
