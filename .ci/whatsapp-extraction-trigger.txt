@@ -1,2 +1,2 @@
-transform=scripts/refactor_whatsapp_extract_number_lookup_core.py
-retry=72
+transform=scripts/refactor_whatsapp_extract_number_delete_core.py
+retry=73
