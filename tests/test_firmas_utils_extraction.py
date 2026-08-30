@@ -44,7 +44,7 @@ class FirmasUtilsExtractionTests(unittest.TestCase):
     def test_mexican_phone_normalization_contract(self):
         self.assertEqual(_tel("443 123 4567"), "+524431234567")
         self.assertEqual(_tel("+52 443 123 4567"), "+524431234567")
-        self.assertEqual(_tel("5214431234567"), "+521443123456")
+        self.assertEqual(_tel("5214431234567"), "+5214431234567")
         self.assertEqual(_tel(""), "")
         self.assertEqual(_tel("123"), "+123")
 
