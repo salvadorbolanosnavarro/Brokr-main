@@ -1,7 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from limites import exigir_cupo, exigir_sesion
-from pydantic import BaseModel
 from core.auth import get_user_id_from_token
 from core.config import settings
 from core.database import call_public_rpc, call_service_rpc, delete_rows, get_public_rows, get_rows, get_service_json, get_service_json_or_empty, patch_rows, patch_rows_ignoring_http_status, patch_rows_no_response, post_rows, upsert_rows
@@ -690,7 +689,6 @@ app.include_router(facebook_campaign_toggle_router)
 # ── PDF GENERATION ──────────────────────────────────────────────
 from playwright.async_api import async_playwright
 
-from routers.ficha_pdf_schema import FotoItem, PropData
 
 
 
@@ -701,7 +699,6 @@ from routers.ficha_pdf_renderer import build_ficha_html
 # ────────────────────────────────────────────
 # NOTICIAS INMOBILIARIAS — RSS REAL
 # ────────────────────────────────────────────
-import xml.etree.ElementTree as ET
 
 
 # ════════════════════════════════════════════════════════════════
