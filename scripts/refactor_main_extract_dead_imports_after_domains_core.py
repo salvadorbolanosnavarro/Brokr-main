@@ -8,15 +8,10 @@ MAIN = Path("main.py")
 
 TARGETS = {
     "BaseModel",
-    "legacy_main_settings",
     "ET",
     "FotoItem",
     "PropData",
 }
-
-
-def _bound_name(alias: ast.alias) -> str:
-    return alias.asname or alias.name.split(".", 1)[0]
 
 
 def main() -> None:
@@ -33,19 +28,24 @@ def main() -> None:
         raise SystemExit(f"refusing to remove still-used imports: {still_used}")
 
     exact_imports: dict[str, ast.stmt] = {}
+    guarded_legacy_import = False
     for node in tree.body:
         if isinstance(node, ast.ImportFrom):
-            if node.module == "pydantic" and [(a.name, a.asname) for a in node.names] == [("BaseModel", None)]:
+            names = [(a.name, a.asname) for a in node.names]
+            if node.module == "pydantic" and names == [("BaseModel", None)]:
                 exact_imports["BaseModel"] = node
-            elif node.module == "core.legacy_main_config" and [(a.name, a.asname) for a in node.names] == [("legacy_main_settings", None)]:
-                exact_imports["legacy_main_settings"] = node
-            elif node.module == "routers.ficha_pdf_schema" and [(a.name, a.asname) for a in node.names] == [("FotoItem", None), ("PropData", None)]:
+            elif node.module == "core.legacy_main_config" and names == [("legacy_main_settings", None)]:
+                guarded_legacy_import = True
+            elif node.module == "routers.ficha_pdf_schema" and names == [("FotoItem", None), ("PropData", None)]:
                 exact_imports["ficha_schema"] = node
         elif isinstance(node, ast.Import):
             if [(a.name, a.asname) for a in node.names] == [("xml.etree.ElementTree", "ET")]:
                 exact_imports["ET"] = node
 
-    expected = {"BaseModel", "legacy_main_settings", "ficha_schema", "ET"}
+    if not guarded_legacy_import:
+        raise SystemExit("guarded legacy_main_settings import must remain in main.py")
+
+    expected = {"BaseModel", "ficha_schema", "ET"}
     if set(exact_imports) != expected:
         raise SystemExit(
             f"exact dead-import shape changed: found={sorted(exact_imports)} expected={sorted(expected)}"
