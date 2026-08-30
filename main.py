@@ -31,7 +31,6 @@ import os
 import time
 import re
 import asyncio
-import logging
 import base64
 import uuid as _uuid
 import io
@@ -715,7 +714,6 @@ from routers.ficha_pdf_renderer import build_ficha_html
 # en el status HTTP, y publica su presupuesto de llamadas en la cabecera
 # X-Business-Use-Case-Usage. Ambas cosas se honran abajo.
 
-_fb_log = logging.getLogger("broquer.facebook")
 
 
 # ─── Cifrado de tokens en reposo ──────────────────────────────────────────────
