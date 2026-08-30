@@ -1,2 +1,2 @@
 transform=scripts/refactor_firmas_extract_policy_core.py
-retry=7
+retry=8
