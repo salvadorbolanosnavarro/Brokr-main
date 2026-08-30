@@ -6,6 +6,11 @@ from pathlib import Path
 
 MAIN = Path("main.py")
 PREFIX = "core.facebook_"
+PROTECTED_BINDINGS = {
+    # Explicit architecture seam required by tests even when main.py has no
+    # runtime AST load after router extraction.
+    "_fb_get_meta_row",
+}
 
 
 def _bound_names(node: ast.ImportFrom) -> list[str]:
@@ -24,15 +29,23 @@ def main() -> None:
 
     candidates: list[ast.ImportFrom] = []
     removed_names: list[str] = []
+    protected_seen: set[str] = set()
     for node in tree.body:
         if not isinstance(node, ast.ImportFrom):
             continue
         if not node.module or not node.module.startswith(PREFIX):
             continue
         names = _bound_names(node)
+        protected_seen.update(PROTECTED_BINDINGS & set(names))
+        if PROTECTED_BINDINGS & set(names):
+            continue
         if names and all(name not in loaded for name in names):
             candidates.append(node)
             removed_names.extend(names)
+
+    missing_protected = sorted(PROTECTED_BINDINGS - protected_seen)
+    if missing_protected:
+        raise SystemExit(f"protected Facebook seams missing: {missing_protected}")
 
     if not candidates:
         raise SystemExit("no fully dead core.facebook_* imports found")
@@ -52,10 +65,14 @@ def main() -> None:
     updated = "".join(lines)
     ast.parse(updated)
 
-    # Prove every removed binding had zero reads in the original AST.
+    # Prove every removed binding had zero reads in the original AST and no
+    # architecture-protected seam entered the cut.
     leaked = sorted(set(removed_names) & loaded)
     if leaked:
         raise SystemExit(f"refusing to remove live facebook bindings: {leaked}")
+    protected_removed = sorted(set(removed_names) & PROTECTED_BINDINGS)
+    if protected_removed:
+        raise SystemExit(f"refusing to remove protected Facebook seams: {protected_removed}")
 
     MAIN.write_text(updated, encoding="utf-8")
     print(f"removed {len(candidates)} fully dead core.facebook_* import declarations")
