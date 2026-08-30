@@ -7,9 +7,50 @@ from pathlib import Path
 MAIN = Path("main.py")
 PREFIX = "core.facebook_"
 PROTECTED_BINDINGS = {
-    # Explicit architecture seam required by tests even when main.py has no
-    # runtime AST load after router extraction.
+    # Permanent architecture seams required by extraction guards even when
+    # main.py has no runtime AST load after the consumer moved to its router.
+    "_fb_estado_token",
+    "FACEBOOK_REQUIRED_SCOPES",
+    "descifrar_secreto",
+    "cifrar_secreto",
+    "facebook_secret_encryption_available",
     "_fb_get_meta_row",
+    "FB_API_VERSION",
+    "FB_GRAPH",
+    "_FB_CODIGOS_REINTENTABLES",
+    "_FB_CODIGOS_TOKEN",
+    "_FB_ERRORES_COMUNES",
+    "_FB_ESPERA_BASE",
+    "_FB_ESPERA_MAX",
+    "_FB_REINTENTOS",
+    "_FB_USAR_PROOF",
+    "_fb_appsecret_proof",
+    "_fb_debe_reintentar",
+    "_fb_espera_por_uso",
+    "_fb_exigir_ok",
+    "_fb_friendly_error",
+    "_fb_get_json",
+    "_fb_parse_error",
+    "_fb_batch",
+    "_fb_patch_meta",
+    "_FB_TOKEN_VIDA_DEFECTO",
+    "_fb_debug_token",
+    "_FB_BREAKDOWNS",
+    "_FB_DATE_PRESETS",
+    "_FB_INSIGHTS_FIELDS",
+    "_FB_ACCIONES_CLAVE",
+    "_fb_normaliza_insights",
+    "FB_VERIFY_TOKEN",
+    "_FB_WEBHOOK_SECRET",
+    "_FB_TABLA_ENTIDADES",
+    "_fb_tabla_falta",
+    "_fb_avisa_migracion",
+    "_FB_CAMPOS_LEAD",
+    "_fb_buscar_dueno_de_pagina",
+    "_fb_procesar_lead",
+    "_fb_buscar_por_idempotencia",
+    "_fb_reservar_creacion",
+    "_fb_actualizar_entidad",
 }
 
 
@@ -48,7 +89,7 @@ def main() -> None:
         raise SystemExit(f"protected Facebook seams missing: {missing_protected}")
 
     if not candidates:
-        raise SystemExit("no fully dead core.facebook_* imports found")
+        raise SystemExit("no fully dead unguarded core.facebook_* imports found")
 
     # Keep the cut bounded: whole import declarations only, never partial edits.
     if len(candidates) > 12:
