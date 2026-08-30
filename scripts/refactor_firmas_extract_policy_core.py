@@ -3,18 +3,11 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-from core.firmas_policy import CONSENTIMIENTO, ROLES, TIPOS, TIPOS_CON_AGENTE
-
 
 TARGET = Path("routers/firmas.py")
+POLICY_PATH = Path("core/firmas_policy.py")
 POLICY_MODULE = "core.firmas_policy"
 TARGET_NAMES = ("TIPOS", "ROLES", "TIPOS_CON_AGENTE", "CONSENTIMIENTO")
-EXPECTED_VALUES = {
-    "TIPOS": TIPOS,
-    "ROLES": ROLES,
-    "TIPOS_CON_AGENTE": TIPOS_CON_AGENTE,
-    "CONSENTIMIENTO": CONSENTIMIENTO,
-}
 
 
 def _assigned_name(node: ast.stmt) -> str | None:
@@ -24,7 +17,27 @@ def _assigned_name(node: ast.stmt) -> str | None:
     return target.id if isinstance(target, ast.Name) else None
 
 
+def _literal_assignments(path: Path) -> dict[str, object]:
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    values: dict[str, object] = {}
+    for node in tree.body:
+        name = _assigned_name(node)
+        if name not in TARGET_NAMES:
+            continue
+        if name in values:
+            raise SystemExit(f"duplicate Firmas policy assignment in {path}: {name}")
+        try:
+            values[name] = ast.literal_eval(node.value)
+        except Exception as exc:
+            raise SystemExit(f"Firmas policy assignment is not literal in {path}: {name}") from exc
+    missing = sorted(set(TARGET_NAMES) - set(values))
+    if missing:
+        raise SystemExit(f"missing Firmas policy assignments in {path}: {missing}")
+    return values
+
+
 def main() -> None:
+    expected_values = _literal_assignments(POLICY_PATH)
     source = TARGET.read_text(encoding="utf-8")
     tree = ast.parse(source)
 
@@ -58,7 +71,7 @@ def main() -> None:
             actual = ast.literal_eval(node.value)
         except Exception as exc:
             raise SystemExit(f"Firmas policy assignment is not literal: {name}") from exc
-        if actual != EXPECTED_VALUES[name]:
+        if actual != expected_values[name]:
             raise SystemExit(f"Firmas policy literal drifted before extraction: {name}")
 
     lines = source.splitlines(keepends=True)
