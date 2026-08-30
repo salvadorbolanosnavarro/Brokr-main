@@ -54,7 +54,7 @@ class FirmasUtilsExtractionTests(unittest.TestCase):
         self.assertFalse(_email_ok(""))
 
     def test_masking_contract(self):
-        self.assertEqual(_mask_tel("+524431234567"), "••••••••4567")
+        self.assertEqual(_mask_tel("+524431234567"), "•••••••••4567")
         self.assertEqual(_mask_tel("1234"), "••••")
         self.assertEqual(_mask_email("salvador@example.com"), "s•••••••@example.com")
         self.assertEqual(_mask_email("invalido"), "••••")
