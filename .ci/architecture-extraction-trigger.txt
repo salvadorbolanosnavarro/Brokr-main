@@ -1,2 +1,2 @@
-transform=scripts/refactor_main_extract_ficha_pdf_schema_core.py
-retry=97
+transform=scripts/refactor_main_extract_ficha_pdf_duplicate_imports_core.py
+retry=98
