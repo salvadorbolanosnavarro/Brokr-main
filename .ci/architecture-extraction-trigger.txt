@@ -1,2 +1,2 @@
-transform=scripts/refactor_main_extract_ficha_pdf_renderer_core.py
-retry=99
+transform=scripts/refactor_main_extract_dead_sb_headers_core.py
+retry=100
