@@ -46,9 +46,20 @@ def main() -> None:
         raise SystemExit(f"logging has unexpected runtime reads: {len(logging_loads)}")
 
     assignment = fb_log_assignments[0]
-    expected = 'logging.getLogger("broquer.facebook")'
-    if ast.unparse(assignment.value) != expected:
-        raise SystemExit(f"_fb_log assignment shape changed: {ast.unparse(assignment.value)!r}")
+    value = assignment.value
+    exact_call = (
+        isinstance(value, ast.Call)
+        and isinstance(value.func, ast.Attribute)
+        and value.func.attr == "getLogger"
+        and isinstance(value.func.value, ast.Name)
+        and value.func.value.id == "logging"
+        and len(value.args) == 1
+        and isinstance(value.args[0], ast.Constant)
+        and value.args[0].value == "broquer.facebook"
+        and not value.keywords
+    )
+    if not exact_call:
+        raise SystemExit(f"_fb_log assignment shape changed: {ast.dump(value, include_attributes=False)}")
 
     spans = sorted(
         [
