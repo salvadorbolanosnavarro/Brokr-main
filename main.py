@@ -986,13 +986,9 @@ app.include_router(facebook_campaign_toggle_router)
 # ────────────────────────────────────────────
 # CONTRATOS
 # ────────────────────────────────────────────
-import os
 
 # ── PDF GENERATION ──────────────────────────────────────────────
 from playwright.async_api import async_playwright
-import base64, asyncio
-from pydantic import BaseModel
-from typing import List, Optional
 
 from routers.ficha_pdf_schema import FotoItem, PropData
 
