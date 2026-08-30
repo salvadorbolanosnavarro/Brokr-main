@@ -67,8 +67,8 @@ jobs:
       - name: Verify HTTP golden after extraction
         run: python -m unittest tests.test_http_contract_golden
 
-      - name: Run focused Firmas utility guards
-        run: python -m unittest tests.test_firmas_utils_extraction
+      - name: Run focused Firmas guards
+        run: python -m unittest tests.test_firmas_utils_extraction tests.test_firmas_policy
 
       - name: Run Quality gates
         run: bash scripts/run_quality.sh
@@ -80,7 +80,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           trigger_sha="$(git rev-parse HEAD)"
           git add routers/firmas.py
-          git commit -m "refactor: extract pure Firmas utilities"
+          git commit -m "refactor: extract Firmas domain policy"
           quality_sha="$(git rev-parse HEAD)"
           mkdir -p .ci
           printf '%s\n' "$quality_sha" > .ci/firmas-quality-pass.txt
