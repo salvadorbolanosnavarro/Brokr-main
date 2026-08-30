@@ -10,6 +10,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: architecture-write-agent-cleanup
+  cancel-in-progress: false
+
 jobs:
   apply-contract-quality:
     runs-on: ubuntu-latest
