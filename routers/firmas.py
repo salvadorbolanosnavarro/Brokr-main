@@ -68,6 +68,7 @@ from core.config import settings
 from core.database import delete_rows, get_rows, patch_rows, post_rows
 from core.storage import create_signed_object_url, delete_object, download_object, upload_object
 from core.subscriptions import require_paid_feature_access
+from core.firmas_utils import _email_ok, _fecha_larga, _folio, _limpio, _mask_email, _mask_tel, _tel
 
 router = APIRouter(prefix="/firmas", tags=["firmas"])
 log = logging.getLogger("broquer.firmas")
@@ -270,9 +271,6 @@ async def evento(user_id: str, tipo: str, detalle: str = "",
 
 # ── Almacenamiento ────────────────────────────────────────────────────────
 
-def _limpio(nombre: str) -> str:
-    base = re.sub(r"[^A-Za-z0-9._-]+", "_", (nombre or "documento").strip())[:80]
-    return base or "documento"
 
 
 async def _subir_bytes(ruta: str, contenido: bytes, mime: str) -> None:
@@ -319,63 +317,22 @@ async def _borrar_ruta(ruta: str) -> None:
 # Sin vocales y sin los caracteres que se confunden al dictarlos por teléfono
 # (0/O, 1/I/L). Es el número que alguien va a leer en voz alta o teclear en la
 # página de verificación.
-_ALFABETO_FOLIO = "23456789BCDFGHJKMNPQRSTVWXYZ"
 
 
-def _folio() -> str:
-    cuerpo = "".join(secrets.choice(_ALFABETO_FOLIO) for _ in range(8))
-    return f"BRQ-{cuerpo}"
 
 
 def _sha256(b: bytes) -> str:
     return hashlib.sha256(b).hexdigest()
 
 
-def _fecha_larga(iso: Optional[str]) -> str:
-    """Fecha y hora en horario del centro de México, que es donde se firma."""
-    if not iso:
-        return "—"
-    try:
-        d = datetime.fromisoformat(str(iso).replace("Z", "+00:00"))
-        d = d.astimezone(timezone(timedelta(hours=-6)))
-        meses = ("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
-                 "agosto", "septiembre", "octubre", "noviembre", "diciembre")
-        return (f"{d.day} de {meses[d.month - 1]} de {d.year}, "
-                f"{d.strftime('%H:%M:%S')} (UTC-6)")
-    except Exception:
-        return str(iso)
 
 
-def _tel(v: str) -> str:
-    """Normaliza a E.164 mexicano. Un número mal normalizado es un código que
-    nunca llega y una firma que nunca ocurre."""
-    d = re.sub(r"\D", "", v or "")
-    if not d:
-        return ""
-    if d.startswith("52") and len(d) >= 12:
-        return "+" + d[:13]
-    if len(d) == 10:
-        return "+52" + d
-    if d.startswith("521") and len(d) == 13:
-        return "+52" + d[3:]
-    return "+" + d
 
 
-def _email_ok(v: str) -> bool:
-    return bool(re.match(r"^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$", (v or "").strip()))
 
 
-def _mask_tel(v: str) -> str:
-    v = v or ""
-    return ("•" * max(0, len(v) - 4)) + v[-4:] if len(v) > 4 else "••••"
 
 
-def _mask_email(v: str) -> str:
-    v = v or ""
-    if "@" not in v:
-        return "••••"
-    u, d = v.split("@", 1)
-    return (u[0] if u else "") + "•" * max(1, len(u) - 1) + "@" + d
 
 
 # ══════════════════════════════════════════════════════════════════════════
