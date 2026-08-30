@@ -1,2 +1,2 @@
-transform=scripts/refactor_firmas_extract_presentation_state_core.py
-retry=5
+transform=scripts/refactor_firmas_extract_policy_core.py
+retry=6
