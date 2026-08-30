@@ -1111,13 +1111,6 @@ _fb_log = logging.getLogger("broquer.facebook")
 
 
 
-def _sb_headers(extra: dict = None) -> dict:
-    h = {"apikey": SUPABASE_SERVICE_KEY,
-         "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-         "Content-Type": "application/json"}
-    if extra:
-        h.update(extra)
-    return h
 
 
 
