@@ -69,6 +69,7 @@ from core.database import delete_rows, get_rows, patch_rows, post_rows
 from core.storage import create_signed_object_url, delete_object, download_object, upload_object
 from core.subscriptions import require_paid_feature_access
 from core.firmas_utils import _email_ok, _fecha_larga, _folio, _le_toca, _limpio, _mail_layout, _mask_email, _mask_tel, _resumen_estado, _tel
+from core.firmas_policy import ROLES, TIPOS, TIPOS_CON_AGENTE
 
 router = APIRouter(prefix="/firmas", tags=["firmas"])
 log = logging.getLogger("broquer.firmas")
@@ -107,35 +108,12 @@ MAX_TRAZO_BYTES = 1 * 1024 * 1024
 MIMES_IMG = {"image/jpeg", "image/png", "image/webp", "image/heic"}
 
 # ── Vocabulario del módulo ────────────────────────────────────────────────
-TIPOS = {
-    "promesa":          "Promesa de compraventa",
-    "arrendamiento":    "Contrato de arrendamiento",
-    "exclusiva":        "Contrato de exclusiva / mediación",
-    "carta_intencion":  "Carta de intención",
-    "convenio":         "Convenio de colaboración",
-    "otro":             "Documento",
-}
 
 # El rol no es cosmético: define quién es quién en la constancia y es lo
 # primero que revisa un abogado cuando lee el documento.
-ROLES = {
-    "promitente_vendedor": "Promitente vendedor",
-    "promitente_comprador": "Promitente comprador",
-    "arrendador":          "Arrendador",
-    "arrendatario":        "Arrendatario",
-    "fiador":              "Fiador",
-    "obligado_solidario":  "Obligado solidario",
-    "copropietario":       "Copropietario",
-    "conyuge":             "Cónyuge",
-    "propietario":         "Propietario",
-    "agente_mediador":     "Asesor inmobiliario",
-    "testigo":             "Testigo",
-    "otro":                "Firmante",
-}
 
 # Los tipos donde el agente SÍ puede ser parte. En los demás no debe aparecer,
 # y el frontend lo refleja escondiendo el rol.
-TIPOS_CON_AGENTE = {"exclusiva", "convenio"}
 
 # ── El texto del consentimiento ───────────────────────────────────────────
 # Esto es lo que sostiene todo lo demás. Si alguien impugna la firma, lo
