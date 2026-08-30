@@ -9,17 +9,17 @@ CORE_MODULE = "core.firmas_utils"
 FUNCTIONS = (
     "_limpio",
     "_folio",
-    "_sha256",
     "_fecha_larga",
     "_tel",
     "_email_ok",
     "_mask_tel",
     "_mask_email",
 )
+PROTECTED_LOCAL_FUNCTIONS = {"_sha256"}
 CONSTANT = "_ALFABETO_FOLIO"
 IMPORT_LINE = (
     "from core.firmas_utils import "
-    "_email_ok, _fecha_larga, _folio, _limpio, _mask_email, _mask_tel, _sha256, _tel\n"
+    "_email_ok, _fecha_larga, _folio, _limpio, _mask_email, _mask_tel, _tel\n"
 )
 
 
@@ -42,12 +42,17 @@ def main() -> None:
         raise SystemExit("firmas utils import already present")
 
     functions: dict[str, ast.FunctionDef | ast.AsyncFunctionDef] = {}
+    protected: dict[str, ast.FunctionDef | ast.AsyncFunctionDef] = {}
     constant_node: ast.Assign | None = None
     for node in tree.body:
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in FUNCTIONS:
             if node.name in functions:
                 raise SystemExit(f"duplicate target function: {node.name}")
             functions[node.name] = node
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in PROTECTED_LOCAL_FUNCTIONS:
+            if node.name in protected:
+                raise SystemExit(f"duplicate protected local function: {node.name}")
+            protected[node.name] = node
         elif isinstance(node, ast.Assign) and CONSTANT in _assigned_names(node):
             if constant_node is not None:
                 raise SystemExit(f"duplicate target constant: {CONSTANT}")
@@ -56,6 +61,9 @@ def main() -> None:
     missing = sorted(set(FUNCTIONS) - set(functions))
     if missing:
         raise SystemExit(f"missing firmas utility functions: {missing}")
+    missing_protected = sorted(PROTECTED_LOCAL_FUNCTIONS - set(protected))
+    if missing_protected:
+        raise SystemExit(f"missing protected Firmas invariants: {missing_protected}")
     if constant_node is None:
         raise SystemExit(f"missing firmas utility constant: {CONSTANT}")
 
@@ -89,7 +97,6 @@ def main() -> None:
     for start, end in sorted(spans, reverse=True):
         del lines[start - 1 : end]
 
-    # Account for deleted lines that originally appeared before the import point.
     removed_before = sum(
         end - start + 1
         for start, end in spans
@@ -108,6 +115,14 @@ def main() -> None:
     }
     if remaining_defs:
         raise SystemExit(f"target utility definitions remained: {sorted(remaining_defs)}")
+    protected_remaining = {
+        node.name
+        for node in updated_tree.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        and node.name in PROTECTED_LOCAL_FUNCTIONS
+    }
+    if protected_remaining != PROTECTED_LOCAL_FUNCTIONS:
+        raise SystemExit(f"protected Firmas invariants changed: {sorted(protected_remaining)}")
     if any(
         isinstance(node, ast.Assign) and CONSTANT in _assigned_names(node)
         for node in updated_tree.body
@@ -124,9 +139,11 @@ def main() -> None:
     imported = {alias.asname or alias.name for alias in imports[0].names}
     if imported != set(FUNCTIONS):
         raise SystemExit(f"unexpected firmas utils import bindings: {sorted(imported)}")
+    if imported & PROTECTED_LOCAL_FUNCTIONS:
+        raise SystemExit("protected Firmas invariant leaked into Core import")
 
     TARGET.write_text(updated, encoding="utf-8")
-    print("extracted pure firmas utilities to core.firmas_utils")
+    print("extracted seven pure firmas utilities; preserved local _sha256 invariant")
 
 
 if __name__ == "__main__":
