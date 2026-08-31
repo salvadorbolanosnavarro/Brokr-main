@@ -10,13 +10,13 @@ from pydantic import BaseModel
 from core.auth import get_user_id_from_token
 from core.config import settings
 from core.database import delete_rows, get_rows, post_rows
+from core.easybroker import EB_BASE, eb_headers
 from routers.organizaciones import exigir_gestion_integraciones, get_org_id_for_user
 
 
 router = APIRouter()
 SUPABASE_URL = settings.supabase_url
 SUPABASE_KEY = settings.supabase_anon_key
-EB_BASE = "https://api.easybroker.com/v1"
 
 
 class EbKeyRequest(BaseModel):
@@ -56,7 +56,7 @@ async def set_eb_key(req: EbKeyRequest, request: Request):
         async with httpx.AsyncClient(timeout=15) as client:
             test = await client.get(
                 f"{EB_BASE}/properties?limit=1",
-                headers={"X-Authorization": req.key.strip(), "accept": "application/json"},
+                headers=eb_headers(req.key.strip()),
             )
             print(
                 f"[set_eb_key] EasyBroker validation status: {test.status_code}, "
