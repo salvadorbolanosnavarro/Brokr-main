@@ -29,10 +29,16 @@ body[data-app="estadisticas"] .es-hero__count {
   background: var(--paper-2) !important;
   border: 1px solid var(--line) !important;
 }
+
+/* Selection-state contract:
+   - segmented controls = active pill with the same subtle elevation used in WhatsApp;
+   - navigation tabs = blue underline, never a competing pill treatment. */
 body[data-app="estadisticas"] .es-seg {
-  background: var(--paper-2) !important;
+  background: var(--shell) !important;
   border: 1px solid var(--line) !important;
   margin-top: var(--sp-4) !important;
+  padding: 3px !important;
+  gap: 2px !important;
 }
 body[data-app="estadisticas"] .es-seg button {
   color: var(--mute) !important;
@@ -42,9 +48,9 @@ body[data-app="estadisticas"] .es-seg button:hover {
   color: var(--ink) !important;
 }
 body[data-app="estadisticas"] .es-seg button.is-active {
-  background: var(--paper) !important;
+  background: var(--canvas) !important;
   color: var(--ink) !important;
-  box-shadow: none !important;
+  box-shadow: var(--shadow-xs) !important;
 }
 body[data-app="estadisticas"] .es-nav {
   position: static !important;
@@ -75,6 +81,7 @@ body[data-app="estadisticas"] .ftab.active {
   color: var(--ink) !important;
   border-bottom-color: var(--sky-blue) !important;
   background: transparent !important;
+  box-shadow: none !important;
 }
 body[data-app="estadisticas"] .es-scroll {
   max-width: var(--page-max) !important;
