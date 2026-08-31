@@ -926,6 +926,25 @@
   display: inline-flex; align-items: center; gap: 6px;
 }
 </style>
+
+<style id="sidebar-composition-normalization">
+/* Sidebar composition normalization: shared product skeleton only. */
+.props-head {
+  max-width: var(--page-max) !important;
+  margin: 0 auto !important;
+  padding: var(--sp-7) var(--pad-x) var(--sp-5) !important;
+  border-bottom: 1px solid var(--line) !important;
+}
+.props-head__title h1 {
+  font-size: var(--fs-h2) !important;
+  line-height: var(--lh-tight) !important;
+  letter-spacing: -0.02em !important;
+}
+@media (max-width:720px) {
+  .props-head { padding:var(--sp-4) var(--pad-x) var(--sp-3) !important; }
+  .props-head__title h1 { font-size:var(--fs-h3) !important; }
+}
+</style>
 </head>
 <body data-app="props">
 

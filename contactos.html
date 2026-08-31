@@ -897,6 +897,28 @@ html, body { background: var(--paper); }
 .import-log-line.err { color: var(--danger); }
 
 </style>
+
+<style id="sidebar-composition-normalization">
+/* Sidebar composition normalization: shared product skeleton only. */
+.page-head {
+  position: static !important;
+  top: auto !important;
+  max-width: var(--page-max) !important;
+  margin: 0 auto !important;
+  padding: var(--sp-7) var(--pad-x) 0 !important;
+}
+.page-head h1 {
+  font-size: var(--fs-h2) !important;
+  line-height: var(--lh-tight) !important;
+  letter-spacing: -0.02em !important;
+}
+.head-search { max-width:none !important; }
+.list { max-width:var(--page-max) !important; margin:0 auto !important; }
+@media (max-width:720px) {
+  .page-head { padding:var(--sp-4) var(--pad-x) 0 !important; }
+  .page-head h1 { font-size:var(--fs-h3) !important; }
+}
+</style>
 </head>
 <body data-app="contactos">
 

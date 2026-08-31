@@ -1,0 +1,105 @@
+/* Broquer sidebar-product composition layer.
+   Scope: only pages that are real entries in app-shell.js.
+   This file intentionally changes composition, never business logic. */
+
+/* Estadísticas historically kept a standalone “Vista” hero. Flatten it into
+   the same operational white canvas used by the rest of the shell. */
+body[data-app="estadisticas"] .es-hero {
+  background: var(--paper) !important;
+  color: var(--ink) !important;
+  max-width: var(--page-max) !important;
+  margin: 0 auto !important;
+  padding: var(--sp-7) var(--pad-x) var(--sp-3) !important;
+}
+body[data-app="estadisticas"] .es-hero h1 {
+  color: var(--ink) !important;
+  font-size: var(--fs-h2) !important;
+  font-weight: 700 !important;
+  line-height: var(--lh-tight) !important;
+  letter-spacing: -0.02em !important;
+}
+body[data-app="estadisticas"] .es-hero__sub {
+  color: var(--mute) !important;
+  opacity: 1 !important;
+  margin-top: var(--sp-2) !important;
+  max-width: 70ch !important;
+}
+body[data-app="estadisticas"] .es-hero__count {
+  color: var(--mute) !important;
+  background: var(--paper-2) !important;
+  border: 1px solid var(--line) !important;
+}
+
+/* Selection-state contract:
+   - segmented controls = active pill with the same subtle elevation used in WhatsApp;
+   - navigation tabs = blue underline, never a competing pill treatment. */
+body[data-app="estadisticas"] .es-seg {
+  background: var(--shell) !important;
+  border: 1px solid var(--line) !important;
+  margin-top: var(--sp-4) !important;
+  padding: 3px !important;
+  gap: 2px !important;
+}
+body[data-app="estadisticas"] .es-seg button {
+  color: var(--mute) !important;
+  opacity: 1 !important;
+}
+body[data-app="estadisticas"] .es-seg button:hover {
+  color: var(--ink) !important;
+}
+body[data-app="estadisticas"] .es-seg button.is-active {
+  background: var(--canvas) !important;
+  color: var(--ink) !important;
+  box-shadow: var(--shadow-xs) !important;
+}
+body[data-app="estadisticas"] .es-nav {
+  position: static !important;
+  max-width: var(--page-max) !important;
+  margin: 0 auto !important;
+  padding: 0 var(--pad-x) !important;
+  background: var(--paper) !important;
+}
+body[data-app="estadisticas"] .es-nav__card {
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--line) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  max-width: none !important;
+}
+body[data-app="estadisticas"] .tabs {
+  gap: var(--sp-5) !important;
+}
+body[data-app="estadisticas"] .ftab {
+  border-radius: 0 !important;
+  padding: var(--sp-3) 0 var(--sp-2) !important;
+  border-bottom: 2px solid transparent !important;
+  background: transparent !important;
+}
+body[data-app="estadisticas"] .ftab.active {
+  color: var(--ink) !important;
+  border-bottom-color: var(--sky-blue) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+body[data-app="estadisticas"] .es-scroll {
+  max-width: var(--page-max) !important;
+  margin: 0 auto !important;
+  padding: var(--sp-6) var(--pad-x) var(--sp-20) !important;
+}
+
+@media (max-width: 720px) {
+  body[data-app="estadisticas"] .es-hero {
+    padding: var(--sp-4) var(--pad-x) var(--sp-2) !important;
+  }
+  body[data-app="estadisticas"] .es-hero h1 {
+    font-size: var(--fs-h3) !important;
+  }
+  body[data-app="estadisticas"] .es-nav {
+    padding: 0 var(--pad-x) !important;
+  }
+  body[data-app="estadisticas"] .es-scroll {
+    padding: var(--sp-4) var(--pad-x) var(--sp-20) !important;
+  }
+}
