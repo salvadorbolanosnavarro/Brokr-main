@@ -7,7 +7,7 @@ import io
 from typing import List
 
 import httpx
-from fastapi import APIRouter, File, Form, Request, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 
 from core.auth import get_user_id_from_token
 from core.config import settings
@@ -31,13 +31,22 @@ except ImportError:
 
 
 router = APIRouter()
+MAX_IMAGES = 8
+MAX_IMAGE_BYTES = 12 * 1024 * 1024
+MAX_TOTAL_BYTES = 40 * 1024 * 1024
+MAX_IMAGE_PIXELS = 40_000_000
+ALLOWED_IMAGE_MIMES = frozenset({"image/jpeg", "image/jpg", "image/png", "image/webp"})
+GEMINI_CONCURRENCY = 2
 
 
 def _process_image_sync(file_bytes: bytes, content_type: str) -> bytes:
     """Pipeline de mejora automática (sin IA generativa): denoising, CLAHE, WB, unsharp."""
     if not PIL_AVAILABLE:
         return file_bytes
-    img = Image.open(io.BytesIO(file_bytes)).convert("RGB")
+    img = Image.open(io.BytesIO(file_bytes))
+    if img.width * img.height > MAX_IMAGE_PIXELS:
+        raise ValueError("La imagen tiene demasiados píxeles.")
+    img = img.convert("RGB")
     if CV2_AVAILABLE:
         arr = np.array(img)
         arr_bgr = cv2.cvtColor(arr, cv2.COLOR_RGB2BGR)
@@ -93,7 +102,10 @@ async def _process_with_gemini(img_bytes: bytes, content_type: str, prompt: str)
         raise RuntimeError("GEMINI_API_KEY no configurada")
 
     if PIL_AVAILABLE:
-        pil = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+        pil = Image.open(io.BytesIO(img_bytes))
+        if pil.width * pil.height > MAX_IMAGE_PIXELS:
+            raise ValueError("La imagen tiene demasiados píxeles.")
+        pil = pil.convert("RGB")
         w, h = pil.size
         if max(w, h) > 1024:
             scale = 1024 / max(w, h)
@@ -178,16 +190,41 @@ async def clean_images(
     remove_furniture: str = Form("false"),
 ):
     user_id = await get_user_id_from_token(request)
-    exigir_cupo(request, user_id)
     exigir_sesion(request, user_id)
-    use_gemini = bool(prompt.strip()) and bool(settings.gemini_api_key)
 
-    async def process_one(uf: UploadFile):
-        raw = await uf.read()
-        ct = uf.content_type or "image/jpeg"
+    if not files or len(files) > MAX_IMAGES:
+        raise HTTPException(status_code=400, detail=f"Puedes procesar entre 1 y {MAX_IMAGES} imágenes por vez.")
+
+    # Charge one rate-limit unit per image instead of one per batch. This keeps
+    # request batching convenient without turning it into a paid-API multiplier.
+    for _ in files:
+        exigir_cupo(request, user_id)
+
+    prepared: list[tuple[UploadFile, bytes, str]] = []
+    total = 0
+    for uf in files:
+        ct = (uf.content_type or "").lower()
+        if ct not in ALLOWED_IMAGE_MIMES:
+            raise HTTPException(status_code=415, detail="Solo se aceptan imágenes JPG, PNG o WEBP.")
+        raw = await uf.read(MAX_IMAGE_BYTES + 1)
+        if len(raw) > MAX_IMAGE_BYTES:
+            raise HTTPException(status_code=413, detail="Cada imagen debe pesar 12 MB o menos.")
+        if not raw:
+            raise HTTPException(status_code=400, detail="Una de las imágenes llegó vacía.")
+        total += len(raw)
+        if total > MAX_TOTAL_BYTES:
+            raise HTTPException(status_code=413, detail="El lote completo de imágenes es demasiado pesado.")
+        prepared.append((uf, raw, ct))
+
+    use_gemini = bool(prompt.strip()) and bool(settings.gemini_api_key)
+    gemini_gate = asyncio.Semaphore(GEMINI_CONCURRENCY)
+
+    async def process_one(item: tuple[UploadFile, bytes, str]):
+        uf, raw, ct = item
         try:
             if use_gemini:
-                processed = await _process_with_gemini(raw, ct, prompt.strip())
+                async with gemini_gate:
+                    processed = await _process_with_gemini(raw, ct, prompt.strip())
                 return {
                     "name": uf.filename,
                     "cleaned_b64": base64.b64encode(processed).decode(),
@@ -213,7 +250,7 @@ async def clean_images(
                 "error": str(exc),
             }
 
-    results = await asyncio.gather(*[process_one(f) for f in files])
+    results = await asyncio.gather(*[process_one(item) for item in prepared])
     try:
         gemini_ok = sum(1 for r in results if r.get("used_gemini") and not r.get("error"))
         if gemini_ok > 0:
