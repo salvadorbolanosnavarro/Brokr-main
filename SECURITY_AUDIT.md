@@ -1,108 +1,161 @@
-# Broquer Security Audit — pre-fix findings
+# Broquer Security Audit — final report
 
-Base commit: `374b4d16ec4181dbd55fffd929953db6417cff15`
-Branch: `agent/security-final`
+Base commit: `374b4d16ec4181dbd55fffd929953db6417cff15`  
+Branch: `agent/security-final`  
+Certified code HEAD before this report-only commit: `bf98c788ed42d8ee0536ace8c8176dae6f8ef2f5`  
+Canonical Quality run: `33345015267` — **PASS** (`scripts/run_quality.sh`)
 
-Scope: authentication, authorization, tenant isolation/IDOR, privileged Supabase access, admin, Meta/WhatsApp, Stripe/RevenueCat, SSRF, uploads/storage, XSS, injection, redirects/CSRF/CORS, rate limits, OTP/sessions, sensitive logging, documents/signatures, AI/API cost abuse, and relevant races. Review is static/local only; no real systems, destructive operations, deployment, or real secrets were used.
+Scope: authentication, authorization, tenant isolation/IDOR, privileged Supabase access, admin endpoints, Meta/WhatsApp, Stripe/RevenueCat, SSRF, caller-controlled URLs, uploads/storage, path traversal, types/sizes, XSS, injection, SQL/RPC boundaries, redirects/CSRF/CORS, rate limits, OTP/sessions, sensitive logging, documents/signatures, AI/API cost abuse, and relevant races. Review was static/unit/CI only. No production deployment, real-system attack, destructive data operation, or real secret use was performed.
 
-## Findings
+## Executive summary
 
-### SEC-001 — HIGH — deactivated application users can retain authenticated API access
-`core/auth.py` validates a Supabase bearer token through `/auth/v1/user`, but the canonical authentication helper does not enforce the application-level `usuarios.activo` flag. `POST /admin/user/activo` only changes that database flag. Endpoints protected only by `require_user_id()` therefore do not inherently reject a still-valid Supabase session after an administrator deactivates the account.
+No confirmed **CRITICAL** vulnerability was found. Three **HIGH** vulnerabilities were confirmed and all three were remediated on this branch. Several clear **MEDIUM** issues were also fixed. Medium findings that require a database migration/transaction, end-to-end OAuth redesign, or product-flow decision remain explicitly open rather than receiving unsafe partial fixes.
 
-Status: **confirmed; fix planned**. The fix must be fail-closed without weakening Supabase JWT validation.
+The audit also corrected two important false-positive risks during review: Supabase JWTs were already validated through `/auth/v1/user`, so there was no unsigned-JWT authentication flaw; and the Meta/WhatsApp webhooks reviewed already validated HMAC signatures and failed closed when their secret was unavailable.
 
-### SEC-002 — HIGH — server-side IMAP/SMTP connections accept attacker-controlled hosts and ports
-`POST /correo/conectar` accepts custom `imap_host`, `imap_port`, `smtp_host`, and `smtp_port`, then connects from the backend using `imaplib`/`smtplib` with no public-network validation. An authenticated paid user can turn the service into a TCP reachability/port-probing primitive against localhost, private, link-local, or cloud-internal destinations.
+## Findings and remediation
 
-Status: **confirmed; fix planned**. Restrict to public resolved addresses and the protocol ports actually supported by the product; revalidate before connections.
+### SEC-001 — HIGH — deactivated application users could retain authenticated API access — FIXED
+Before remediation, `core/auth.py` validated the Supabase bearer token but did not enforce Broquer's application-level `usuarios.activo` flag. `POST /admin/user/activo` only changed that database flag, so an already-issued Supabase JWT could continue to pass endpoints guarded only by canonical authentication.
 
-### SEC-003 — HIGH — AI cost amplification and memory/CPU abuse in image cleanup
-`POST /images/clean` can operate anonymously when `EXIGIR_SESION_IA` is omitted because the default is currently false. The endpoint reads an arbitrary number of uploads fully into memory, has no per-file/aggregate input bound, and `asyncio.gather` can issue one Gemini edit per image concurrently while the request rate limiter charges only one request.
+Remediation:
+- `8894c092b0056a600c14cb7bddc986d5a2f97d81` — canonical authentication now verifies `usuarios.activo` after Supabase validates the JWT and fails closed if the authorization state cannot be established.
+- `f2947c3a7162648232865c68c42df7a9467efcc4` — shared `get_user_access_state()` also fails closed instead of returning `activo=True` on configuration/DB uncertainty.
+- `bf98c788ed42d8ee0536ace8c8176dae6f8ef2f5` — regression guard updated to require the fail-closed contract.
 
-Status: **confirmed; fix planned**. Make paid AI/session policy secure by default and bound count, size, MIME and concurrent paid calls.
+Residual risk: application deactivation does not itself revoke the Supabase refresh token; the server-side active check is therefore intentionally retained on authenticated requests.
 
-### SEC-004 — HIGH — expensive ticket OCR/AI endpoint lacks cost rate limiting
-`POST /finanzas/ticket` accepts an authenticated user and can send up to 10 MB per request to Anthropic, but does not use the shared paid-operation rate limiter. Automated authenticated calls can create unbounded API spend relative to the controls used elsewhere.
+### SEC-002 — HIGH — attacker-controlled IMAP/SMTP destinations enabled server-side network probing — FIXED
+`POST /correo/conectar` accepted custom IMAP/SMTP hosts and ports and opened backend sockets without validating whether the target was localhost/private/link-local/reserved infrastructure.
 
-Status: **confirmed; fix planned**.
+Remediation:
+- `949a7ed3a0bd395f5a3c745f0074f320077c7241` — only supported mail ports are allowed (IMAP 993; SMTP 465/587), localhost/`.local` targets are rejected, direct IPs must be globally routable, DNS results are resolved and every returned address must be global, and validation is repeated immediately before stored IMAP/SMTP connections.
+- `34193dab4c18d0b3d8b3b68fbf1b5f5e2addabe0` — regression coverage for loopback, RFC1918, arbitrary ports, and a hostname resolving to link-local metadata space.
 
-### SEC-005 — MEDIUM — Stripe webhook signatures have no replay time window
-`routers/stripe_webhook.py` authenticates the HMAC but does not reject an old signed timestamp. A captured legitimate request can be replayed indefinitely. Most current mutations are idempotent, reducing impact, but replay resistance is part of the webhook trust boundary.
+Residual risk: like most hostname validation done before a library opens its own socket, DNS rebinding between validation and connect remains a theoretical TOCTOU. Eliminating that fully would require connecting to the validated address while separately preserving TLS/SNI hostname verification.
 
-Status: **confirmed; fix planned** with a bounded timestamp tolerance and support for multiple `v1` signatures.
+### SEC-003 — HIGH — anonymous and batched image cleanup amplified Gemini spend and memory use — FIXED
+Pre-fix `POST /images/clean` could be anonymous by default, accepted an arbitrary number of fully buffered uploads, and could fan one request into many concurrent Gemini calls while charging only one request to the shared limiter.
 
-### SEC-006 — MEDIUM — checkout success/cancel redirects are caller controlled
-Both individual and enterprise Stripe checkout creation accept `success_url` and `cancel_url`; when absent they also derive destinations from the caller-controlled `Origin` header. An authenticated user can create a legitimate Stripe Checkout session that redirects to an arbitrary site, enabling phishing/open-redirect abuse of Stripe-hosted trust.
+Remediation:
+- `b3a8c341c8e9d9243c939b12b16e5a14b0c67d8b` — `EXIGIR_SESION_IA` is secure-by-default (`true` unless an operator explicitly opts out).
+- `fe10b1fc5c3cc000c3f86c48845f0689d3e3cefa` — max 8 images, 12 MiB/image, 40 MiB/batch, 40M pixels/image, JPG/PNG/WEBP MIME allowlist, Gemini concurrency capped at 2, empty/oversized uploads rejected, and rate-limit quota is charged per image rather than per batch.
+- `c3731ae8a64d3cbc507627ac019cc86eab130c70` — configuration tests now freeze the secure default while preserving an explicit operator opt-out.
 
-Status: **confirmed; fix planned**. Only configured Broquer frontend origins should be accepted.
+### SEC-004 — MEDIUM — ticket OCR/AI lacks a per-user paid-operation quota — OPEN
+This was initially classified HIGH during broad review, then reassessed after reading the full endpoint. `/finanzas/ticket` requires an authenticated user, caps each upload at 10 MiB, restricts MIME, and caps Anthropic output at 500 tokens. Those bounds materially reduce exploitability, so final severity is **MEDIUM**, not HIGH.
 
-### SEC-007 — MEDIUM — public account/email enumeration
-`GET /auth/correo-existe` is intentionally unauthenticated and returns whether an email exists in `usuarios`. This enables account discovery useful for privacy attacks and credential stuffing.
+The endpoint still lacks the shared paid-operation quota/rate limit, so an authenticated user can automate many paid OCR calls.
 
-Status: **confirmed; pending product-flow decision**. A real fix requires an opaque registration/recovery flow or a dedicated abuse-control mechanism; merely slowing the endpoint does not remove enumeration.
+Pending because a correct fix should align Finance with the product's subscription/usage accounting rather than silently borrowing an unrelated quota. This is not being hidden as "fixed".
 
-### SEC-008 — MEDIUM — WhatsApp organization visibility includes inactive members
-`routers/whatsapp_access.py::_ids_visibles` grants owners/admins visibility to all member user IDs in their org without `activo=true`. Offboarded/inactive membership rows can therefore remain within the WhatsApp visibility set.
+### SEC-005 — MEDIUM — Stripe webhook accepted indefinitely old valid signatures — FIXED
+Pre-fix HMAC verification did not enforce the signed timestamp, allowing replay of a captured legitimate event indefinitely. Current mutations are largely idempotent, which limits impact but does not remove the trust-boundary flaw.
 
-Status: **confirmed; fix planned**.
+Remediation:
+- `fb7c7c558469ddcabe7fec3206e731750fdb90fb` / finalized in `289507f258c261b7aa9cda9b416486e6fa45bd5f` — 300-second timestamp tolerance and support for multiple `v1` signatures while retaining constant-time comparison.
+- `a6087237a4072aad38a5b2e8ac88713de127518f` and `34193dab4c18d0b3d8b3b68fbf1b5f5e2addabe0` — source and behavioral replay regression guards.
 
-### SEC-009 — MEDIUM — WhatsApp 2 access tokens are stored in plaintext
-The WhatsApp connection flow persists `business_token` directly as `wa2_numeros.access_token`. A database exposure therefore directly exposes Meta bearer credentials. Other integration areas already have token-encryption infrastructure, but WhatsApp 2 needs a backward-compatible data migration and read/write transition rather than a one-line code change.
+### SEC-006 — MEDIUM — caller-controlled Stripe checkout redirects — FIXED
+Individual and enterprise checkout accepted caller-provided `success_url`/`cancel_url`; defaults also trusted the browser `Origin`. This allowed a legitimate Stripe-hosted checkout flow to redirect to an arbitrary attacker site.
 
-Status: **confirmed; pending migration design**.
+Remediation:
+- `ff13368ddc2d272e08c7d4e68f82f7f290f5cc73` — centralized trusted frontend-origin validation.
+- `e241f9b3ed6f36a8811709ef0b690a8f13c40cf5` — individual checkout restricted to trusted Broquer frontend origins.
+- `9db28dbc9123b0110fca061b6d539b789330b15c` — enterprise checkout receives the same restriction.
+- `34193dab4c18d0b3d8b3b68fbf1b5f5e2addabe0` — external redirect rejection regression test.
 
-### SEC-010 — MEDIUM — OAuth callback does not enforce `state` and accepts request-provided redirect URI
-`GET /facebook/callback` receives `state` but never validates it, and accepts a `redirect_uri` query parameter for the token exchange. This leaves the Meta connection flow without server-side OAuth CSRF binding and expands redirect-URI trust to request input.
+### SEC-007 — MEDIUM — public account/email enumeration — OPEN
+`GET /auth/correo-existe` is intentionally unauthenticated and reveals whether an email exists in `usuarios`. This can aid privacy attacks and credential stuffing.
 
-Status: **confirmed control gap; pending end-to-end OAuth flow hardening**. The frontend/session state lifecycle must be changed coherently rather than adding a comparison with no issued server state.
+Pending because a real fix requires an opaque registration/recovery UX or a dedicated anti-abuse design. Returning a different status or adding a small delay would not remove the enumeration oracle and could break registration behavior.
 
-### SEC-011 — MEDIUM — signature OTP attempt counter is not atomic
-Signature OTP attempts use read/increment/write. Concurrent invalid requests can race around the five-attempt threshold; successful signing can also be submitted concurrently after the same pre-check. Tokens, expiry, hashing and constant-time comparison are otherwise sound.
+### SEC-008 — MEDIUM — WhatsApp org visibility included inactive members — FIXED
+Organization owners/admins built their WhatsApp-visible user set from all membership rows without requiring active membership.
 
-Status: **confirmed race; pending DB-atomic/RPC change**.
+Remediation:
+- `d563d15a28c8f709b36601d184d3e0ed4fd9c388` — `_ids_visibles` now filters `organizacion_miembros.activo=eq.true`.
 
-### SEC-012 — MEDIUM — organization seat/invitation enforcement has a race
-The invitation flow counts active members + pending invitations and then inserts a new invitation in separate operations. Concurrent invitations can exceed `asientos_max`.
+### SEC-009 — MEDIUM — WhatsApp 2 access tokens are stored plaintext — OPEN
+The connection flow persists the Meta `business_token` as `wa2_numeros.access_token`. Database disclosure would therefore directly expose Meta bearer credentials.
 
-Status: **confirmed race; pending transactional/database constraint**.
+Pending because safe remediation requires a backward-compatible encryption migration, key lifecycle, dual-read transition for existing rows, and eventual plaintext cleanup. A one-sided code encryption change would strand existing connections.
 
-### SEC-013 — MEDIUM — remote email HTML can trigger privacy-tracking requests
-The frontend renders received HTML inside `iframe sandbox=""`, which prevents script execution in Broquer's origin and avoids a direct stored-XSS finding. However, unsanitized remote images/resources may still load and disclose open/IP/browser metadata to the sender.
+### SEC-010 — MEDIUM — Meta OAuth callback does not enforce server-issued `state` — OPEN
+`GET /facebook/callback` accepts `state` but does not validate it, and takes a request-provided `redirect_uri` into the token exchange. The connection flow therefore lacks a complete server-bound OAuth CSRF state lifecycle.
 
-Status: **confirmed privacy issue; pending HTML sanitization/proxy policy**.
+Pending because the fix must begin when OAuth is initiated: issue/store a high-entropy state bound to the user/session, validate-and-consume it exactly once in the callback, and derive the redirect URI from server configuration. Adding a callback-only comparison without an issued state would be cosmetic and unsafe.
 
-### SEC-014 — MEDIUM — finance relationships accept unverified foreign IDs
-Movement creation/editing accepts `categoria_id`, `cuenta_id`, `propiedad_id`, and `contacto_id` without checking that the referenced object belongs to the caller before writing with Service Role. This is primarily cross-tenant integrity risk rather than a demonstrated read primitive.
+### SEC-011 — MEDIUM — signature OTP attempt/use state is non-atomic — OPEN
+OTP token generation, expiry, hashing and constant-time comparison are sound, but attempt counting and successful-use transitions are read/modify/write operations. Concurrent submissions can race around attempt or single-use enforcement.
 
-Status: **confirmed; pending organization-aware reference-validation design**.
+Pending DB-atomic/RPC/transactional enforcement.
 
-### SEC-015 — MEDIUM — compressed spreadsheet/image inputs retain decompression-bomb DoS surface
-Several upload paths cap compressed/upload bytes, but parsers such as openpyxl/Pillow can expand attacker-controlled content substantially beyond wire size. Image cleanup additionally lacks dimension bounds in the pre-fix state.
+### SEC-012 — MEDIUM — organization seat/invitation enforcement has a race — OPEN
+Active member + pending invitation count and invitation creation are separate operations. Concurrent invitations can exceed `asientos_max`.
 
-Status: **confirmed hardening gap; image-cleaner portion planned for fix; spreadsheet archive expansion remains pending**.
+Pending a transactional database constraint/RPC rather than a second application-side count.
 
-### SEC-016 — LOW — wildcard CORS broadens browser-callable API surface
-The application uses `allow_origins=["*"]`, `allow_methods=["*"]`, and `allow_headers=["*"]`. Because authentication is bearer-header based and credentials are not enabled, this is not classic cookie CSRF; nevertheless it unnecessarily permits any browser origin to call the API and complicates abuse containment.
+### SEC-013 — MEDIUM — received email HTML can load remote tracking resources — OPEN
+The frontend renders received HTML in `iframe sandbox=""`; this prevents direct script execution in Broquer's origin, so the audit did **not** classify this as stored XSS. Remote images/resources may nevertheless load and reveal open/IP/browser metadata to a sender.
 
-Status: **confirmed; pending deployment-origin inventory before restriction**.
+Pending a product decision between sanitizing/blocking remote resources by default and proxying them through a privacy-preserving fetch layer.
 
-### SEC-017 — LOW — raw upstream error text is returned/logged in several privileged paths
-Some Stripe/Supabase/admin error paths expose truncated upstream response text to authenticated/admin callers or logs. No secret value was found directly interpolated, but schema/request metadata can leak unnecessarily.
+### SEC-014 — MEDIUM — Finance accepts unverified related-object IDs — OPEN
+Movement create/edit accepts `categoria_id`, `cuenta_id`, `propiedad_id`, and `contacto_id` without proving each referenced object belongs to the caller before the privileged Service Role write. This is a cross-tenant integrity risk; the audit did not demonstrate a direct cross-tenant read from it.
 
-Status: **confirmed hardening item; pending**.
+Pending organization-aware reference validation so future shared-org semantics are not broken by a user-only check.
 
-### SEC-018 — INFORMATIONAL — Service Role makes router scoping the primary tenant boundary
-The shared database layer performs privileged Supabase operations with Service Role. This is required by current architecture but bypasses normal client RLS protections, so every object lookup/mutation must include trusted `user_id`/`org_id` scoping. Review found strong explicit scoping in Firmas, organization administration, Bolsa publication mutations, video job reads, and much of Finanzas; the missing finance foreign-reference validation above is one concrete consequence of this architecture.
+### SEC-015 — MEDIUM — decompression-bomb surface in parsed uploads — PARTIALLY FIXED
+Wire-size limits do not always bound decompressed parser work for ZIP-based spreadsheets or images.
 
-### SEC-019 — INFORMATIONAL — Meta/WhatsApp webhook authentication is present and fails closed
-The Facebook/WhatsApp webhook paths reviewed validate HMAC signatures and do not process events when the required secret is absent. RevenueCat likewise requires a configured shared authorization secret and compares it in constant time. These were specifically checked to avoid a false positive.
+Fixed for image cleanup by adding pixel-count and batch/input limits in `fe10b1fc5c3cc000c3f86c48845f0689d3e3cefa`. Spreadsheet archive expansion remains pending parser-level uncompressed-size/member-count guards.
 
-### SEC-020 — INFORMATIONAL — common Storage path traversal protections are present
-`core/storage.py` validates bucket names, strips leading slash, rejects empty/`.`/`..` path segments, URL-encodes each segment and uses signed URLs for private-object access where requested. No common-layer path traversal was found.
+### SEC-016 — LOW — wildcard CORS broadens browser-callable surface — OPEN
+The app uses wildcard origins/methods/headers. Bearer-header authentication and disabled credential sharing mean this is not classic cookie CSRF, but wildcard CORS unnecessarily broadens browser-origin access.
 
-## Fix policy
+Pending an authoritative production/staging frontend-origin inventory before narrowing it, to avoid breaking legitimate clients.
 
-Critical/High findings that can be corrected safely will be fixed on this branch. Clear Medium findings with bounded behavior changes will also be fixed. Findings requiring schema migrations, distributed/transactional enforcement, or end-to-end product-flow redesign remain explicitly pending rather than being hidden or papered over.
+### SEC-017 — LOW — some upstream error details are returned/logged — OPEN
+Several privileged integrations return or log truncated upstream response text. No directly interpolated secret was found, but schema/request metadata can be disclosed unnecessarily.
 
-This file intentionally records the **pre-fix** state. It will be updated after remediation and `scripts/run_quality.sh` certification with exact fix commits and residual risk.
+Pending systematic error normalization.
+
+### SEC-018 — INFORMATIONAL — Service Role is the primary tenant-isolation hazard
+The common DB layer legitimately performs privileged Supabase REST operations with Service Role. Consequently RLS cannot be treated as the second barrier for those calls; router scoping by trusted `user_id`/`org_id` is mandatory.
+
+The audit found explicit owner/org scoping in Firmas, organization administration, Bolsa mutations, video job reads and most Finance reads/writes. SEC-014 is one concrete integrity gap created by accepting related IDs without equivalent ownership proof.
+
+### SEC-019 — INFORMATIONAL — webhook authentication controls already present
+Meta/Facebook/WhatsApp webhooks reviewed validate HMAC signatures and fail closed when their required secret is absent. RevenueCat requires a configured shared authorization secret and compares it in constant time. These were reviewed specifically to avoid reporting nonexistent "unsigned webhook" vulnerabilities.
+
+### SEC-020 — INFORMATIONAL — common Storage path traversal controls already present
+`core/storage.py` validates bucket names, normalizes leading slash, rejects empty/`.`/`..` path segments, URL-encodes path components and supports signed URLs for private access. No common-layer path traversal was found.
+
+## Quality certification
+
+Canonical gate executed from the security branch at `bf98c788ed42d8ee0536ace8c8176dae6f8ef2f5`:
+
+- `scripts/run_quality.sh`: **PASS**
+- Python unit tests: **715 passed**
+- frontend `audit.py`: **0 violations in 42 files**
+- architecture debt guard: **PASS; debt did not grow**
+  - direct env reads: 0 / ceiling 0
+  - duplicated auth helpers: 0 / ceiling 0
+  - service-key fallbacks: 0 / ceiling 0
+  - direct Supabase REST: 0 / ceiling 0
+  - embedded JWT secrets: 0 / ceiling 0
+  - fail-open webhook secrets: 0 / ceiling 0
+  - fail-open entitlements: 0 / ceiling 0
+
+Security-specific CI uses `.github/workflows/security-quality.yml` with `contents: read` and executes only `bash scripts/run_quality.sh`; it has no branch-write or deployment step.
+
+## Integration notes
+
+No merge was performed. `main` was not written. `agent/architecture-cleanup` was not written. A temporary draft PR (#57) created solely to trigger the existing Quality workflow was immediately closed after it also selected a historical architecture workflow. That architecture job failed in its deterministic transform step; its commit/push step was skipped, so it made no write to `agent/architecture-cleanup`.
+
+Potential conflicts when integrating with parallel Core/Architecture/WhatsApp work:
+- `core/auth.py` and `core/config.py` are likely conflict points with Core changes; preserve the security semantics, not necessarily this exact text.
+- `routers/whatsapp_access.py` may conflict with WhatsApp decomposition; preserve the `activo=eq.true` organization-member filter.
+- `routers/correo.py`, `routers/image_cleaner.py`, Stripe routers and `core/redirects.py` are security-owned changes and should not be dropped during architectural moves.
+- Tests that formerly froze fail-open behavior were intentionally updated only after exact Quality tracebacks showed they contradicted the remediations.
