@@ -1,2 +1,2 @@
-transform=scripts/refactor_whatsapp_extract_connect_api_core.py
-retry=98
+transform=scripts/refactor_whatsapp_extract_campaign_variables_alias_core.py
+retry=96
