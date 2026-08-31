@@ -120,8 +120,9 @@ class FrontendCanonContractTests(unittest.TestCase):
         self.assertNotIn("Archivo", source)
         self.assertNotIn("--lona", source)
         self.assertNotRegex(source, r"(?m)^\s*:root\s*\{")
-        for token in ("var(--sky-navy)", "var(--sky-blue)", "var(--line)", "var(--r-lg)", "var(--shadow-xs)"):
+        for token in ("var(--sky-navy)", "var(--sky-blue)", "var(--line)", "var(--r-lg)"):
             self.assertIn(token, source)
+        self.assertIn("box-shadow:none", source)
         self.assertIn("window.rbHecho", source)
         self.assertIn("window.rbVendido", source)
         self.assertIn("window.rbBroq", source)
