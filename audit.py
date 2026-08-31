@@ -26,7 +26,9 @@
 # Exclusiones sin argumentos:
 #   · 404.html / sitio.html: motor visual de sitios públicos de agentes, no UI Broquer
 #   · _TEMPLATE-modulo.html: plantilla de desarrollo, no superficie servida
-#   · copias/mockups históricos: referencia solamente, nunca fuente de diseño
+#
+# Las copias y mockups históricos eliminados NO permanecen en SKIP: si algún
+# archivo raíz reaparece, entra automáticamente al inventario Canon.
 # ════════════════════════════════════════════════════════════════
 import re, sys, glob, os
 
@@ -35,10 +37,6 @@ SKIP = {
     '404.html',
     'sitio.html',
     '_TEMPLATE-modulo.html',
-    'Copia de index.html',
-    'preview-redesign.html',
-    'mock-editorial.html',
-    'mock-ejecutiva.html',
 }
 
 

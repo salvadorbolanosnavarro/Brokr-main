@@ -36,14 +36,19 @@ class FrontendCanonInventoryTests(unittest.TestCase):
                 "404.html",
                 "sitio.html",
                 "_TEMPLATE-modulo.html",
-                "Copia de index.html",
-                "preview-redesign.html",
-                "mock-editorial.html",
-                "mock-ejecutiva.html",
             },
         )
+        for name in skip:
+            self.assertTrue((ROOT / name).exists(), f"stale audit exclusion: {name}")
         self.assertNotIn("legal.html", skip)
         self.assertNotIn("aviso-privacidad.html", skip)
+        for retired in {
+            "Copia de index.html",
+            "preview-redesign.html",
+            "mock-editorial.html",
+            "mock-ejecutiva.html",
+        }:
+            self.assertNotIn(retired, skip, f"retired surface must re-enter audit if restored: {retired}")
 
     def test_every_non_skipped_root_html_is_in_the_automatic_inventory(self):
         source = AUDIT.read_text(encoding="utf-8")
