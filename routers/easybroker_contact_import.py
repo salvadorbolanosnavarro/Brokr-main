@@ -10,7 +10,6 @@ import httpx
 from fastapi import APIRouter, HTTPException, Request
 
 from core.auth import get_user_id_from_token
-from core.config import settings
 from core.contact_import import map_org_agents
 from core.database import get_rows, patch_rows, post_rows
 from core.easybroker import EB_BASE, _EB_LOTE, _EB_PAUSA_LOTE, _eb_get_reintentos, eb_headers
@@ -20,7 +19,6 @@ from routers.organizaciones import get_org_id_for_user
 
 
 router = APIRouter()
-SUPABASE_SERVICE_KEY = settings.supabase_service_key
 
 
 @router.post("/contactos/importar-eb")
@@ -33,13 +31,6 @@ async def importar_contactos_eb(request: Request):
     eb_key = await get_eb_key_for_user(user_id)
     if not eb_key:
         raise HTTPException(status_code=400, detail="No tienes una API Key de EasyBroker configurada. Ve a Configuración → Integraciones.")
-
-    sb_headers = {
-        "apikey": SUPABASE_SERVICE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-        "Content-Type": "application/json",
-        "Prefer": "return=minimal",
-    }
 
     org_id_import = await get_org_id_for_user(user_id)
     filtro_existentes = ({"org_id": f"eq.{org_id_import}"} if org_id_import
