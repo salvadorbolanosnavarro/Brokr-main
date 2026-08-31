@@ -8,6 +8,7 @@ from datetime import datetime, timedelta, timezone
 import httpx
 from fastapi import APIRouter
 
+from core.config import settings
 from core.database import get_rows, patch_rows
 
 
@@ -89,4 +90,10 @@ async def _recordatorios_loop():
 
 @router.on_event("startup")
 async def _iniciar_recordatorios():
+    if not settings.reminders_enabled:
+        _recordatorios_log.warning(
+            "Ciclo de recordatorios DESACTIVADO por RECORDATORIOS_ACTIVOS; "
+            "no se enviaran push desde esta instancia."
+        )
+        return
     asyncio.create_task(_recordatorios_loop())
