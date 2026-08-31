@@ -1,8 +1,8 @@
 """Shared user role and access-state lookups.
 
-These helpers preserve main.py's historical fail-soft defaults while moving the
-cross-cutting responsibility into Core. Database I/O remains centralized in
-``core.database``.
+Role lookup remains conservative (never elevates privileges). Access-state
+lookup fails closed because database/configuration uncertainty must not reactivate
+a disabled account.
 """
 from __future__ import annotations
 
@@ -28,8 +28,8 @@ async def get_user_rol(user_id: str) -> str:
 
 
 async def get_user_access_state(user_id: str) -> dict:
-    """Return legacy ``rol`` + ``activo`` state with the exact fail-soft defaults."""
-    default = {"rol": "agente", "activo": True}
+    """Return ``rol`` + ``activo`` and deny access when state is uncertain."""
+    default = {"rol": "agente", "activo": False}
     if not user_id or not settings.supabase_url or not settings.supabase_service_key:
         return default
     try:
@@ -39,9 +39,10 @@ async def get_user_access_state(user_id: str) -> dict:
             timeout=8,
         )
         if rows:
+            activo = rows[0].get("activo")
             return {
                 "rol": rows[0].get("rol") or "agente",
-                "activo": rows[0].get("activo") if rows[0].get("activo") is not None else True,
+                "activo": bool(activo) if activo is not None else False,
             }
     except Exception:
         pass
