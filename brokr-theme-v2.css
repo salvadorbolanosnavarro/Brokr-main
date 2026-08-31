@@ -3,8 +3,8 @@
  *
  * `brokr-theme.css` is the only executable design-system source of truth.
  * `estadisticas.html` still references this historical filename, so this file
- * remains temporarily as a one-line compatibility layer instead of carrying a
- * second copy of the theme. Remove this shim when that HTML link can be changed
- * safely.
+ * remains temporarily as a compatibility layer instead of carrying a second
+ * copy of the theme. Remove this shim when that HTML link can be changed safely.
  */
 @import url("brokr-theme.css");
+@import url("sidebar-unification.css");
