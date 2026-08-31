@@ -443,25 +443,25 @@ input:focus, select:focus, textarea:focus {
 /* Sidebar composition normalization: remove standalone navy mini-app chrome. */
 .avm-header {
   background:var(--paper) !important;
-  max-width:var(--page-max,1180px) !important;
+  max-width:var(--page-max) !important;
   margin:0 auto !important;
-  padding:28px var(--pad-x,36px) 10px !important;
+  padding:var(--sp-7) var(--pad-x) var(--sp-3) !important;
   overflow:visible !important;
 }
 .avm-header::before { display:none !important; }
 .avm-title {
   color:var(--ink) !important;
-  font-size:30px !important;
-  line-height:1.05 !important;
+  font-size:var(--fs-h2) !important;
+  line-height:var(--lh-tight) !important;
   letter-spacing:-0.02em !important;
 }
 .avm-sub { color:var(--mute) !important; opacity:1 !important; }
 .avm-tabs {
   background:var(--paper) !important;
   border-bottom:1px solid var(--line) !important;
-  max-width:var(--page-max,1180px) !important;
+  max-width:var(--page-max) !important;
   margin:0 auto !important;
-  padding:0 var(--pad-x,36px) !important;
+  padding:0 var(--pad-x) !important;
 }
 .avm-tab {
   color:var(--mute) !important;
@@ -472,16 +472,16 @@ input:focus, select:focus, textarea:focus {
   border-bottom-color:var(--sky-blue) !important;
 }
 .avm-body {
-  max-width:var(--page-max,1180px) !important;
+  max-width:var(--page-max) !important;
   margin:0 auto !important;
-  padding:24px var(--pad-x,36px) 100px !important;
+  padding:var(--sp-6) var(--pad-x) var(--sp-20) !important;
 }
 .btn-primary { background:var(--sky-blue) !important; }
 @media (max-width:720px) {
-  .avm-header { padding:16px var(--pad-x,16px) 8px !important; }
-  .avm-title { font-size:24px !important; }
-  .avm-tabs { padding:0 var(--pad-x,16px) !important; }
-  .avm-body { padding:16px var(--pad-x,16px) 100px !important; }
+  .avm-header { padding:var(--sp-4) var(--pad-x) var(--sp-2) !important; }
+  .avm-title { font-size:var(--fs-h3) !important; }
+  .avm-tabs { padding:0 var(--pad-x) !important; }
+  .avm-body { padding:var(--sp-4) var(--pad-x) var(--sp-20) !important; }
 }
 </style>
 </head>

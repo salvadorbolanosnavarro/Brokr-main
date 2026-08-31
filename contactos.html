@@ -903,20 +903,20 @@ html, body { background: var(--paper); }
 .page-head {
   position: static !important;
   top: auto !important;
-  max-width: var(--page-max, 1180px) !important;
+  max-width: var(--page-max) !important;
   margin: 0 auto !important;
-  padding: 28px var(--pad-x, 36px) 0 !important;
+  padding: var(--sp-7) var(--pad-x) 0 !important;
 }
 .page-head h1 {
-  font-size: 30px !important;
-  line-height: 1.05 !important;
+  font-size: var(--fs-h2) !important;
+  line-height: var(--lh-tight) !important;
   letter-spacing: -0.02em !important;
 }
 .head-search { max-width:none !important; }
-.list { max-width:var(--page-max,1180px) !important; margin:0 auto !important; }
+.list { max-width:var(--page-max) !important; margin:0 auto !important; }
 @media (max-width:720px) {
-  .page-head { padding:16px var(--pad-x,16px) 0 !important; }
-  .page-head h1 { font-size:24px !important; }
+  .page-head { padding:var(--sp-4) var(--pad-x) 0 !important; }
+  .page-head h1 { font-size:var(--fs-h3) !important; }
 }
 </style>
 </head>
