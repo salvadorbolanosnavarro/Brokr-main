@@ -7,21 +7,21 @@
 body[data-app="estadisticas"] .es-hero {
   background: var(--paper) !important;
   color: var(--ink) !important;
-  max-width: var(--page-max, 1180px) !important;
+  max-width: var(--page-max) !important;
   margin: 0 auto !important;
-  padding: 28px var(--pad-x, 36px) 10px !important;
+  padding: var(--sp-7) var(--pad-x) var(--sp-3) !important;
 }
 body[data-app="estadisticas"] .es-hero h1 {
   color: var(--ink) !important;
-  font-size: 30px !important;
+  font-size: var(--fs-h2) !important;
   font-weight: 700 !important;
-  line-height: 1.05 !important;
+  line-height: var(--lh-tight) !important;
   letter-spacing: -0.02em !important;
 }
 body[data-app="estadisticas"] .es-hero__sub {
   color: var(--mute) !important;
   opacity: 1 !important;
-  margin-top: 6px !important;
+  margin-top: var(--sp-2) !important;
   max-width: 70ch !important;
 }
 body[data-app="estadisticas"] .es-hero__count {
@@ -32,7 +32,7 @@ body[data-app="estadisticas"] .es-hero__count {
 body[data-app="estadisticas"] .es-seg {
   background: var(--paper-2) !important;
   border: 1px solid var(--line) !important;
-  margin-top: 16px !important;
+  margin-top: var(--sp-4) !important;
 }
 body[data-app="estadisticas"] .es-seg button {
   color: var(--mute) !important;
@@ -48,9 +48,9 @@ body[data-app="estadisticas"] .es-seg button.is-active {
 }
 body[data-app="estadisticas"] .es-nav {
   position: static !important;
-  max-width: var(--page-max, 1180px) !important;
+  max-width: var(--page-max) !important;
   margin: 0 auto !important;
-  padding: 0 var(--pad-x, 36px) !important;
+  padding: 0 var(--pad-x) !important;
   background: var(--paper) !important;
 }
 body[data-app="estadisticas"] .es-nav__card {
@@ -67,7 +67,7 @@ body[data-app="estadisticas"] .tabs {
 }
 body[data-app="estadisticas"] .ftab {
   border-radius: 0 !important;
-  padding: 12px 0 10px !important;
+  padding: var(--sp-3) 0 var(--sp-2) !important;
   border-bottom: 2px solid transparent !important;
   background: transparent !important;
 }
@@ -77,22 +77,22 @@ body[data-app="estadisticas"] .ftab.active {
   background: transparent !important;
 }
 body[data-app="estadisticas"] .es-scroll {
-  max-width: var(--page-max, 1180px) !important;
+  max-width: var(--page-max) !important;
   margin: 0 auto !important;
-  padding: 24px var(--pad-x, 36px) 120px !important;
+  padding: var(--sp-6) var(--pad-x) var(--sp-20) !important;
 }
 
 @media (max-width: 720px) {
   body[data-app="estadisticas"] .es-hero {
-    padding: 16px var(--pad-x, 16px) 8px !important;
+    padding: var(--sp-4) var(--pad-x) var(--sp-2) !important;
   }
   body[data-app="estadisticas"] .es-hero h1 {
-    font-size: 24px !important;
+    font-size: var(--fs-h3) !important;
   }
   body[data-app="estadisticas"] .es-nav {
-    padding: 0 var(--pad-x, 16px) !important;
+    padding: 0 var(--pad-x) !important;
   }
   body[data-app="estadisticas"] .es-scroll {
-    padding: 16px var(--pad-x, 16px) 120px !important;
+    padding: var(--sp-4) var(--pad-x) var(--sp-20) !important;
   }
 }
