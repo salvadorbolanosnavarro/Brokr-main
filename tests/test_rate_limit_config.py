@@ -9,10 +9,10 @@ from core.config import Settings
 
 
 class CostlyEndpointConfigTests(unittest.TestCase):
-    def test_legacy_default_keeps_session_gate_disabled_until_rollout(self):
+    def test_secure_default_requires_session(self):
         with patch.dict(os.environ, {}, clear=True):
             settings = Settings.from_env()
-        self.assertFalse(settings.ai_require_session)
+        self.assertTrue(settings.ai_require_session)
         self.assertEqual(settings.hourly_anonymous_limit, 40)
         self.assertEqual(settings.hourly_user_limit, 400)
 
@@ -22,6 +22,11 @@ class CostlyEndpointConfigTests(unittest.TestCase):
                 with patch.dict(os.environ, {"EXIGIR_SESION_IA": value}, clear=True):
                     settings = Settings.from_env()
                 self.assertTrue(settings.ai_require_session)
+
+    def test_session_gate_can_be_explicitly_disabled_for_legacy_operation(self):
+        with patch.dict(os.environ, {"EXIGIR_SESION_IA": "false"}, clear=True):
+            settings = Settings.from_env()
+        self.assertFalse(settings.ai_require_session)
 
     def test_invalid_or_non_positive_limits_fall_back_safely(self):
         env = {

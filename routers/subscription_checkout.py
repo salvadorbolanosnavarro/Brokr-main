@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from core.auth import get_user_id_from_token
 from core.config import settings
 from core.database import get_rows
+from core.redirects import checkout_redirect
 from core.stripe import (
     PROMO_CODE_AMPI,
     STRIPE_PRICE_AMPI,
@@ -71,9 +72,19 @@ async def subscription_checkout(req: CheckoutRequest, request: Request):
 
     customer_id = await get_or_create_stripe_customer(user_id, email, nombre)
 
-    origin = request.headers.get("origin", "https://navarroai.github.io/Brokr")
-    success_url = req.success_url or f"{origin}/index.html?suscripcion=ok"
-    cancel_url = req.cancel_url or f"{origin}/index.html?suscripcion=cancelada"
+    # Return URLs are server-trusted; the browser Origin header is not an
+    # authorization input and arbitrary caller-provided domains are rejected.
+    default_base = settings.frontend_url or settings.app_url
+    success_url = checkout_redirect(
+        req.success_url,
+        default_base=default_base,
+        default_path="index.html?suscripcion=ok",
+    )
+    cancel_url = checkout_redirect(
+        req.cancel_url,
+        default_base=default_base,
+        default_path="index.html?suscripcion=cancelada",
+    )
 
     con_trial = await trial_max_available(user_id)
 

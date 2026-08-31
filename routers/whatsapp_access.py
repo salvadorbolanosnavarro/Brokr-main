@@ -13,12 +13,12 @@ async def _require_user(request: Request) -> str:
 
 
 async def _ids_visibles(user_id: str) -> list[str]:
-    """Return the user ids whose WhatsApp data the caller may inspect."""
+    """Return the active user ids whose WhatsApp data the caller may inspect."""
     ctx = await get_org_context(user_id)
     if not ctx or not ctx.get("org_id") or ctx.get("rol_org") not in ("owner", "admin"):
         return [user_id]
     miembros = await sb_get("organizacion_miembros", {
-        "org_id": f"eq.{ctx['org_id']}", "select": "user_id"})
+        "org_id": f"eq.{ctx['org_id']}", "activo": "eq.true", "select": "user_id"})
     ids = {m["user_id"] for m in miembros if m.get("user_id")}
     ids.add(user_id)
     return list(ids)

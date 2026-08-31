@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from core.auth import get_user_id_from_token
 from core.config import settings
 from core.database import get_service_json_or_empty, patch_rows_ignoring_http_status
+from core.redirects import checkout_redirect
 from core.stripe import (
     EMPRESA_ASIENTOS_BASE,
     EMPRESA_ASIENTOS_MAX,
@@ -178,9 +179,17 @@ async def empresa_checkout(req: EmpresaCheckoutRequest, request: Request):
 
     customer_id = await get_or_create_stripe_customer(user_id, email, nombre)
 
-    origin = request.headers.get("origin", "https://broquer.app")
-    success_url = req.success_url or f"{origin}/equipo.html?empresa=ok"
-    cancel_url = req.cancel_url or f"{origin}/empresas.html?empresa=cancelada"
+    default_base = settings.frontend_url or settings.app_url
+    success_url = checkout_redirect(
+        req.success_url,
+        default_base=default_base,
+        default_path="equipo.html?empresa=ok",
+    )
+    cancel_url = checkout_redirect(
+        req.cancel_url,
+        default_base=default_base,
+        default_path="empresas.html?empresa=cancelada",
+    )
 
     nombre_empresa = (req.nombre_empresa or "").strip()[:120] or (ctx.get("org_nombre") or nombre)
 

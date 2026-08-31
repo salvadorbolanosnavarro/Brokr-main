@@ -1,4 +1,7 @@
 from datetime import datetime
+import hashlib
+import hmac
+import time
 
 import httpx
 from fastapi import APIRouter, HTTPException, Request
@@ -18,6 +21,44 @@ from routers.organizaciones import get_org_id_for_user
 
 
 router = APIRouter()
+STRIPE_SIGNATURE_TOLERANCE_SECONDS = 300
+
+
+def _verify_stripe_signature(
+    payload: bytes,
+    sig_header: str,
+    secret: str,
+    *,
+    now: int | None = None,
+    tolerance: int = STRIPE_SIGNATURE_TOLERANCE_SECONDS,
+) -> None:
+    """Verify Stripe's signed timestamp and any valid v1 signature."""
+    timestamp = None
+    signatures: list[str] = []
+    for raw_part in (sig_header or "").split(","):
+        key, sep, value = raw_part.strip().partition("=")
+        if not sep:
+            continue
+        if key == "t" and timestamp is None:
+            try:
+                timestamp = int(value)
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Firma de webhook inválida.")
+        elif key == "v1" and value:
+            signatures.append(value)
+
+    if timestamp is None or not signatures:
+        raise HTTPException(status_code=400, detail="Firma de webhook inválida.")
+
+    current = int(time.time() if now is None else now)
+    if abs(current - timestamp) > max(0, int(tolerance)):
+        raise HTTPException(status_code=400, detail="Firma de webhook expirada.")
+
+    ts = str(timestamp)
+    signed_payload = f"{ts}.{payload.decode()}"
+    expected = hmac.new(secret.encode(), signed_payload.encode(), hashlib.sha256).hexdigest()
+    if not any(hmac.compare_digest(expected, candidate) for candidate in signatures):
+        raise HTTPException(status_code=400, detail="Firma de webhook inválida.")
 
 
 @router.post("/subscription/webhook")
@@ -29,24 +70,12 @@ async def stripe_webhook(request: Request):
     if not STRIPE_WEBHOOK_SECRET:
         print("[stripe] STRIPE_WEBHOOK_SECRET no configurado: webhook cerrado.")
         raise HTTPException(status_code=503, detail="Webhook no disponible.")
-    if STRIPE_WEBHOOK_SECRET:
-        try:
-            import hmac as _hmac, hashlib as _hashlib, time as _time
-            parts = {p.split("=")[0]: p.split("=")[1] for p in sig_header.split(",") if "=" in p}
-            ts = parts.get("t", "")
-            v1 = parts.get("v1", "")
-            signed_payload = f"{ts}.{payload.decode()}"
-            expected = _hmac.new(
-                STRIPE_WEBHOOK_SECRET.encode(),
-                signed_payload.encode(),
-                _hashlib.sha256,
-            ).hexdigest()
-            if not _hmac.compare_digest(expected, v1):
-                raise HTTPException(status_code=400, detail="Firma de webhook inválida.")
-        except Exception:
-            raise HTTPException(status_code=400, detail="Error verificando webhook.")
+    _verify_stripe_signature(payload, sig_header, STRIPE_WEBHOOK_SECRET)
 
-    event = await request.json()
+    try:
+        event = await request.json()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Webhook inválido.") from exc
     event_type = event.get("type", "")
     obj = event.get("data", {}).get("object", {})
 
