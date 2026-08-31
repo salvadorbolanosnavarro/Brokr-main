@@ -54,8 +54,9 @@ def _verify_stripe_signature(
     if abs(current - timestamp) > max(0, int(tolerance)):
         raise HTTPException(status_code=400, detail="Firma de webhook expirada.")
 
-    signed_payload = str(timestamp).encode() + b"." + payload
-    expected = hmac.new(secret.encode(), signed_payload, hashlib.sha256).hexdigest()
+    ts = str(timestamp)
+    signed_payload = f"{ts}.{payload.decode()}"
+    expected = hmac.new(secret.encode(), signed_payload.encode(), hashlib.sha256).hexdigest()
     if not any(hmac.compare_digest(expected, candidate) for candidate in signatures):
         raise HTTPException(status_code=400, detail="Firma de webhook inválida.")
 
