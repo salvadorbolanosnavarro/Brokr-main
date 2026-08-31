@@ -910,6 +910,28 @@ html, body { background: var(--paper); }
 .import-log-line.err { color: var(--danger); }
 
 </style>
+
+<style id="sidebar-composition-normalization">
+/* Sidebar composition normalization: shared product skeleton only. */
+.page-head {
+  position: static !important;
+  top: auto !important;
+  max-width: var(--page-max, 1180px) !important;
+  margin: 0 auto !important;
+  padding: 28px var(--pad-x, 36px) 0 !important;
+}
+.page-head h1 {
+  font-size:30px !important;
+  line-height:1.05 !important;
+  letter-spacing:-0.02em !important;
+}
+.head-search { max-width:none !important; }
+.list { max-width:var(--page-max,1180px) !important; margin:0 auto !important; }
+@media (max-width:720px) {
+  .page-head { padding:16px var(--pad-x,16px) 0 !important; }
+  .page-head h1 { font-size:24px !important; }
+}
+</style>
 </head>
 <body data-app="leads">
 

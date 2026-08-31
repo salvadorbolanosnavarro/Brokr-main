@@ -252,6 +252,25 @@
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
+
+<style id="sidebar-composition-normalization">
+/* Sidebar composition normalization: shared product skeleton only. */
+.tk-head {
+  max-width: var(--page-max, 1180px) !important;
+  margin: 0 auto !important;
+  padding: 28px var(--pad-x, 36px) 0 !important;
+}
+.tk-head__title h1 {
+  font-size:30px !important;
+  line-height:1.05 !important;
+  letter-spacing:-0.02em !important;
+}
+.tk-body { margin:0 auto !important; }
+@media (max-width:720px) {
+  .tk-head { padding:16px var(--pad-x,16px) 0 !important; }
+  .tk-head__title h1 { font-size:24px !important; }
+}
+</style>
 </head>
 <body data-app="tareas">
 

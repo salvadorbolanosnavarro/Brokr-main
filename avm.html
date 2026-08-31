@@ -438,6 +438,52 @@ input:focus, select:focus, textarea:focus {
 }
 </style>
 
+
+<style id="sidebar-composition-normalization">
+/* Sidebar composition normalization: remove standalone navy mini-app chrome. */
+.avm-header {
+  background:var(--paper) !important;
+  max-width:var(--page-max,1180px) !important;
+  margin:0 auto !important;
+  padding:28px var(--pad-x,36px) 10px !important;
+  overflow:visible !important;
+}
+.avm-header::before { display:none !important; }
+.avm-title {
+  color:var(--ink) !important;
+  font-size:30px !important;
+  line-height:1.05 !important;
+  letter-spacing:-0.02em !important;
+}
+.avm-sub { color:var(--mute) !important; opacity:1 !important; }
+.avm-tabs {
+  background:var(--paper) !important;
+  border-bottom:1px solid var(--line) !important;
+  max-width:var(--page-max,1180px) !important;
+  margin:0 auto !important;
+  padding:0 var(--pad-x,36px) !important;
+}
+.avm-tab {
+  color:var(--mute) !important;
+  border-bottom-color:transparent !important;
+}
+.avm-tab.active {
+  color:var(--ink) !important;
+  border-bottom-color:var(--sky-blue) !important;
+}
+.avm-body {
+  max-width:var(--page-max,1180px) !important;
+  margin:0 auto !important;
+  padding:24px var(--pad-x,36px) 100px !important;
+}
+.btn-primary { background:var(--sky-blue) !important; }
+@media (max-width:720px) {
+  .avm-header { padding:16px var(--pad-x,16px) 8px !important; }
+  .avm-title { font-size:24px !important; }
+  .avm-tabs { padding:0 var(--pad-x,16px) !important; }
+  .avm-body { padding:16px var(--pad-x,16px) 100px !important; }
+}
+</style>
 </head>
 <body data-app="avm">
 
