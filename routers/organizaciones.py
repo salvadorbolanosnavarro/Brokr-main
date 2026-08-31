@@ -16,7 +16,6 @@
 # Depende de: migracion-empresas.sql (paso 1) ya corrido.
 # ──────────────────────────────────────────────────────────────────────────
 
-import os
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, List
@@ -25,110 +24,69 @@ import httpx
 from fastapi import APIRouter, Request, HTTPException
 from pydantic import BaseModel
 
+from core.auth import get_user_id_from_token
+from core.config import settings
+from core.database import delete_rows, get_rows, patch_rows, post_rows
+from core.permissions import ROLE_AGENT, VALID_ORG_ROLES, VALID_PERMISSIONS, default_permission
+
 router = APIRouter()
 
-# ── Config (mismas env vars que main.py) ──────────────────────────────────
-SUPABASE_URL         = os.getenv("SUPABASE_URL", "").rstrip("/")
-# La anon key en Railway se llama SUPABASE_ANON_KEY (igual que en main.py).
-# Se deja SUPABASE_KEY como respaldo por si en otro entorno tiene ese nombre.
-SUPABASE_KEY         = os.getenv("SUPABASE_ANON_KEY", "") or os.getenv("SUPABASE_KEY", "")
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
-APP_URL              = os.getenv("APP_URL", "https://broquer.app").rstrip("/")
-
-# Permisos que un admin de empresa puede prender o apagar por miembro.
-# Si agregas uno aquí, agrégalo también en org_permiso() del SQL y en equipo.html.
-PERMISOS_VALIDOS = {
-    "ver_telefonos",
-    "gestionar_integraciones",
-    "ver_comisiones",
-    "ver_inventario_completo",
-    "ver_contactos_equipo",
-    "exportar",
-    "ver_estadisticas_equipo",
-}
-
-ROLES_ORG_VALIDOS = {"owner", "admin", "agente"}
-
-# Defaults por rol. DEBEN coincidir con org_permiso() en Postgres. Si se
-# desincronizan, la UI enseña una cosa y la base hace otra.
-DEFAULTS_AGENTE = {
-    "ver_telefonos": False,
-    # Conectar/desconectar EasyBroker y Facebook. La cuenta es de la EMPRESA:
-    # si un agente la desconecta, deja sin inventario a todo el equipo. Solo el
-    # dueño y quien él designe.
-    "gestionar_integraciones": False,
-    "ver_comisiones": False,
-    "ver_inventario_completo": True,
-    "ver_contactos_equipo": True,
-    "exportar": True,
-    "ver_estadisticas_equipo": False,
-}
-
-
-def _headers(prefer: str = None) -> Dict[str, str]:
-    h = {
-        "apikey": SUPABASE_SERVICE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-        "Content-Type": "application/json",
-    }
-    if prefer:
-        h["Prefer"] = prefer
-    return h
+# ── Infraestructura compartida ────────────────────────────────────────────
+# Keep the router's historical helper contracts while Core owns environment
+# names, privileged credentials and Supabase HTTP construction.
+# Compatibility aliases used by the existing organization-context guard.
+# Values come from Core; no environment name or fallback policy lives here.
+SUPABASE_URL = settings.supabase_url
+SUPABASE_SERVICE_KEY = settings.supabase_service_key
+APP_URL = settings.app_url
+PERMISOS_VALIDOS = set(VALID_PERMISSIONS)
+ROLES_ORG_VALIDOS = set(VALID_ORG_ROLES)
+DEFAULTS_AGENTE = {permission: default_permission(ROLE_AGENT, permission) for permission in VALID_PERMISSIONS}
 
 
 async def _sb_get(tabla: str, params: dict) -> List[dict]:
-    async with httpx.AsyncClient(timeout=10) as c:
-        r = await c.get(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_headers(), params=params)
-        if r.status_code != 200:
-            return []
-        return r.json()
+    # Legacy contract: reads return [] on Supabase/configuration failure.
+    try:
+        return await get_rows(tabla, params, timeout=10)
+    except Exception:
+        return []
 
 
 async def _sb_post(tabla: str, payload, prefer="return=representation") -> Optional[list]:
-    async with httpx.AsyncClient(timeout=10) as c:
-        r = await c.post(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_headers(prefer), json=payload)
-        if r.status_code not in (200, 201, 204):
-            raise HTTPException(status_code=500, detail=f"Supabase {r.status_code}: {r.text[:200]}")
-        try:
-            return r.json()
-        except Exception:
-            return None
+    try:
+        rows = await post_rows(tabla, payload, prefer=prefer, timeout=10)
+        return rows or None
+    except httpx.HTTPStatusError as exc:
+        response = exc.response
+        raise HTTPException(
+            status_code=500,
+            detail=f"Supabase {response.status_code}: {response.text[:200]}",
+        ) from exc
 
 
 async def _sb_patch(tabla: str, params: dict, payload: dict) -> None:
-    async with httpx.AsyncClient(timeout=10) as c:
-        r = await c.patch(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_headers("return=minimal"),
-                          params=params, json=payload)
-        if r.status_code not in (200, 204):
-            raise HTTPException(status_code=500, detail=f"Supabase {r.status_code}: {r.text[:200]}")
+    try:
+        await patch_rows(tabla, params, payload, prefer="return=minimal", timeout=10)
+    except httpx.HTTPStatusError as exc:
+        response = exc.response
+        raise HTTPException(
+            status_code=500,
+            detail=f"Supabase {response.status_code}: {response.text[:200]}",
+        ) from exc
 
 
 async def _sb_delete(tabla: str, params: dict) -> None:
-    async with httpx.AsyncClient(timeout=10) as c:
-        await c.delete(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_headers(), params=params)
+    try:
+        await delete_rows(tabla, params, timeout=10)
+    except httpx.HTTPStatusError:
+        # Preserve the historical delete helper contract, which ignored
+        # non-success response statuses.
+        return None
 
 
 # ══════════════════════════════════════════════════════════════════════════
 # HELPERS PÚBLICOS — main.py y agente.py importan de aquí
 # ══════════════════════════════════════════════════════════════════════════
-
-async def get_user_id_from_token(request: Request) -> Optional[str]:
-    """Igual que el de main.py. Duplicado a propósito: este router es autónomo."""
-    auth = request.headers.get("Authorization", "")
-    if not auth.startswith("Bearer "):
-        return None
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        return None
-    try:
-        async with httpx.AsyncClient(timeout=8) as c:
-            r = await c.get(f"{SUPABASE_URL}/auth/v1/user",
-                            headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {auth[7:]}"})
-            if r.status_code == 200:
-                return r.json().get("id")
-    except Exception:
-        pass
-    return None
-
 
 async def get_org_context(user_id: str) -> Optional[Dict[str, Any]]:
     """El contexto de organización de un usuario. Esto es lo que main.py necesita

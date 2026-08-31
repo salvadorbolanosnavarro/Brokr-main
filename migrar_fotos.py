@@ -1,64 +1,41 @@
 """
-migrar_fotos.py — Migración ONE-SHOT.
+migrar_fotos.py — migración ONE-SHOT de fotos base64 a Supabase Storage.
 
-Saca las fotos guardadas como base64 dentro de la columna `fotos` de la tabla
-`propiedades` y las sube al bucket `fotos-propiedades` de Storage, dejando solo
-URLs públicas en la columna. Esto vacía los ~133 MB de imágenes embebidas que
-estaban reventando la RAM de la base cada vez que se abría "Mis Inmuebles".
+Saca las fotos guardadas como base64 dentro de la columna ``fotos`` de la
+tabla ``propiedades`` y las sube al bucket ``fotos-propiedades``, dejando URLs
+públicas en la columna.
 
-Es IDEMPOTENTE: si lo corres dos veces, las fotos que ya son URLs se saltan.
-Si una subida falla, conserva el base64 de esa foto para reintentar después
-(no pierde nada).
+La migración es idempotente: las fotos que ya son URLs se saltan. Si una
+subida falla, conserva el base64 original para poder reintentar sin perder la
+foto.
 
-──────────────────────────────────────────────────────────────────────────────
-RESUMEN DE USO (las instrucciones detalladas van en el chat):
-  1. Abre este archivo con TextEdit y pega tu service_role key donde dice
-     PEGA_TU_KEY_AQUI (más abajo). Guarda.
-  2. En la Terminal, ve a la carpeta donde está el archivo y corre:
-         python3 migrar_fotos.py
-  3. Al terminar, corre  VACUUM FULL propiedades;  en el SQL Editor de Supabase.
+IMPORTANTE
+----------
+Este script ya no contiene ni acepta una service-role key pegada en el código.
+Usa la configuración canónica de ``core.config``. Para ejecutarlo, las
+variables ``SUPABASE_URL``, ``SUPABASE_ANON_KEY`` y ``SUPABASE_SERVICE_KEY``
+deben existir en el entorno del proceso, igual que en el backend de Broquer.
 
-Corre en tu Mac apuntando a Supabase: NO tumba tu app de producción.
-Es idempotente (puedes correrlo de nuevo sin problema) y si una foto falla,
-conserva su base64 original para reintentarla después.
+Ejecutar desde la raíz del repositorio:
 
-⚠️  La service_role key es secreta. Cuando termines, borra este archivo o no
-    lo subas a GitHub.
-──────────────────────────────────────────────────────────────────────────────
+    python3 migrar_fotos.py
+
+No imprime credenciales ni las persiste en archivos.
 """
 
-import sys
+from __future__ import annotations
+
+import asyncio
 import base64
+import sys
 import uuid
-import httpx
 
-# ══════════════════════════════════════════════════════════════════════
-#   ↓↓↓   LO ÚNICO QUE DEBES EDITAR EN ESTE ARCHIVO   ↓↓↓
-#
-#   Entre las comillas de abajo, BORRA  PEGA_TU_KEY_AQUI  y en su lugar
-#   pega tu service_role key de Supabase. (Deja las comillas.)
-#
-#   La sacas en:  Supabase -> Settings -> API -> "service_role" (secret)
-#
-SUPABASE_SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVydGd5c210bnZvcWFsanVobnR6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzk1NTQwMSwiZXhwIjoyMDg5NTMxNDAxfQ.ZvHqprsHzR81j1ZOBM4Ytdd5btBryv37tUpKLkwKAIc"
-#
-#   ↑↑↑   No cambies nada más del archivo.   ↑↑↑
-# ══════════════════════════════════════════════════════════════════════
+from core.config import settings
+from core.database import get_rows, patch_rows
+from core.storage import upload_object
 
-SUPABASE_URL = "https://urtgysmtnvoqaljuhntz.supabase.co"
-
-if not SUPABASE_SERVICE_KEY or SUPABASE_SERVICE_KEY == "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVydGd5c210bnZvcWFsanVobnR6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzk1NTQwMSwiZXhwIjoyMDg5NTMxNDAxfQ.ZvHqprsHzR81j1ZOBM4Ytdd5btBryv37tUpKLkwKAIc":
-    print("ERROR: todavía no pegaste tu service_role key dentro del archivo.")
-    print("Abre migrar_fotos.py con TextEdit, busca el texto PEGA_TU_KEY_AQUI,")
-    print("bórralo, pega tu key (deja las comillas), guarda, y vuelve a correr.")
-    sys.exit(1)
 
 BUCKET = "fotos-propiedades"
-
-HEADERS = {
-    "apikey": SUPABASE_SERVICE_KEY,
-    "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-}
 
 EXT_POR_MIME = {
     "image/jpeg": "jpg",
@@ -74,8 +51,8 @@ def es_base64(foto):
     return isinstance(foto, str) and foto.startswith("data:")
 
 
-def subir_foto(client, data_uri):
-    """Decodifica una data URI base64 y la sube al bucket. Devuelve la URL pública o None."""
+async def subir_foto(data_uri: str) -> str | None:
+    """Decodifica una data URI y la sube con el Storage canónico de Core."""
     try:
         header, b64data = data_uri.split(",", 1)
     except ValueError:
@@ -95,117 +72,114 @@ def subir_foto(client, data_uri):
 
     nombre = f"{uuid.uuid4().hex}.{ext}"
     try:
-        r = client.post(
-            f"{SUPABASE_URL}/storage/v1/object/{BUCKET}/{nombre}",
-            headers={**HEADERS, "Content-Type": mime},
-            content=raw,
+        return await upload_object(
+            BUCKET,
+            nombre,
+            raw,
+            content_type=mime,
+            timeout=120,
         )
-    except Exception as e:
-        print(f"    ! Error de red al subir: {e}")
+    except Exception as exc:
+        print(f"    ! Error al subir: {exc}")
         return None
 
-    if r.status_code not in (200, 201):
-        print(f"    ! Falló subida ({r.status_code}): {r.text[:120]}")
-        return None
 
-    return f"{SUPABASE_URL}/storage/v1/object/public/{BUCKET}/{nombre}"
-
-
-def main():
+async def _main() -> int:
     print("=" * 64)
     print("MIGRACIÓN DE FOTOS  base64  ->  Storage")
     print("=" * 64)
 
-    with httpx.Client(timeout=120) as client:
-        # 1. Traer solo los IDs (ligero, no jala el base64)
+    try:
+        settings.require_supabase_service()
+    except RuntimeError as exc:
+        print(f"ERROR de configuración: {exc}")
+        print("Configura las variables de Supabase en el entorno y vuelve a correr.")
+        return 1
+
+    # 1. Traer solo los IDs: no carga las fotos/base64 de toda la tabla.
+    try:
+        filas = await get_rows(
+            "propiedades",
+            {"select": "id"},
+            timeout=120,
+        )
+    except Exception as exc:
+        print(f"ERROR al leer propiedades: {exc}")
+        return 1
+
+    ids = [fila["id"] for fila in filas if fila.get("id")]
+    total = len(ids)
+    print(f"Propiedades a revisar: {total}\n")
+
+    migradas = 0
+    fotos_subidas = 0
+    sin_cambio = 0
+    errores = 0
+
+    for i, pid in enumerate(ids, 1):
+        # 2. Traer las fotos de una propiedad a la vez para mantener bajo el
+        # uso de memoria aunque todavía existan data URIs muy pesadas.
         try:
-            r = client.get(
-                f"{SUPABASE_URL}/rest/v1/propiedades",
-                headers=HEADERS,
-                params={"select": "id"},
+            filas_prop = await get_rows(
+                "propiedades",
+                {"id": f"eq.{pid}", "select": "fotos", "limit": "1"},
+                timeout=120,
             )
-        except Exception as e:
-            print(f"ERROR de red al leer propiedades: {e}")
-            sys.exit(1)
+        except Exception as exc:
+            print(f"[{i}/{total}] {pid}  -> error al leer: {exc}")
+            errores += 1
+            continue
 
-        if r.status_code != 200:
-            print(f"ERROR al leer propiedades: {r.status_code} {r.text[:200]}")
-            sys.exit(1)
+        if not filas_prop:
+            print(f"[{i}/{total}] {pid}  -> no se pudo leer, se omite")
+            errores += 1
+            continue
 
-        ids = [fila["id"] for fila in (r.json() or []) if fila.get("id")]
-        total = len(ids)
-        print(f"Propiedades a revisar: {total}\n")
+        fotos = filas_prop[0].get("fotos") or []
+        if not any(es_base64(foto) for foto in fotos):
+            sin_cambio += 1
+            continue
 
-        migradas = 0
-        fotos_subidas = 0
-        sin_cambio = 0
-        errores = 0
-
-        for i, pid in enumerate(ids, 1):
-            # 2. Traer las fotos de ESTA propiedad (una a la vez: no revienta memoria)
-            try:
-                rp = client.get(
-                    f"{SUPABASE_URL}/rest/v1/propiedades",
-                    headers=HEADERS,
-                    params={"id": f"eq.{pid}", "select": "fotos"},
-                )
-            except Exception as e:
-                print(f"[{i}/{total}] {pid}  -> error de red al leer: {e}")
-                errores += 1
-                continue
-
-            if rp.status_code != 200 or not rp.json():
-                print(f"[{i}/{total}] {pid}  -> no se pudo leer, se omite")
-                errores += 1
-                continue
-
-            fotos = rp.json()[0].get("fotos") or []
-            if not any(es_base64(f) for f in fotos):
-                sin_cambio += 1
-                continue  # ya está limpia (URLs) o sin fotos
-
-            nuevas = []
-            cambio = False
-            for f in fotos:
-                if es_base64(f):
-                    url = subir_foto(client, f)
-                    if url:
-                        nuevas.append(url)
-                        fotos_subidas += 1
-                        cambio = True
-                    else:
-                        nuevas.append(f)  # falló: conserva el base64 para reintentar
-                        errores += 1
+        nuevas = []
+        cambio = False
+        for foto in fotos:
+            if es_base64(foto):
+                url = await subir_foto(foto)
+                if url:
+                    nuevas.append(url)
+                    fotos_subidas += 1
+                    cambio = True
                 else:
-                    nuevas.append(f)
-
-            if not cambio:
-                continue
-
-            # 3. Guardar el array nuevo (solo URLs)
-            try:
-                ru = client.patch(
-                    f"{SUPABASE_URL}/rest/v1/propiedades",
-                    headers={
-                        **HEADERS,
-                        "Content-Type": "application/json",
-                        "Prefer": "return=minimal",
-                    },
-                    params={"id": f"eq.{pid}"},
-                    json={"fotos": nuevas},
-                )
-            except Exception as e:
-                print(f"[{i}/{total}] {pid}  -> error de red al guardar: {e}")
-                errores += 1
-                continue
-
-            if ru.status_code in (200, 204):
-                migradas += 1
-                n_urls = len([x for x in nuevas if isinstance(x, str) and x.startswith("http")])
-                print(f"[{i}/{total}] {pid}  ->  {n_urls} foto(s) migradas")
+                    # Una foto que no pudo migrarse conserva exactamente su
+                    # base64 para que una segunda corrida pueda reintentarla.
+                    nuevas.append(foto)
+                    errores += 1
             else:
-                print(f"[{i}/{total}] {pid}  ->  ERROR al guardar ({ru.status_code})")
-                errores += 1
+                nuevas.append(foto)
+
+        if not cambio:
+            continue
+
+        # 3. Guardar sólo el array nuevo. Core centraliza URL, service-role
+        # headers y política de error de Supabase.
+        try:
+            await patch_rows(
+                "propiedades",
+                {"id": f"eq.{pid}"},
+                {"fotos": nuevas},
+                prefer="return=minimal",
+                timeout=120,
+            )
+        except Exception as exc:
+            print(f"[{i}/{total}] {pid}  -> error al guardar: {exc}")
+            errores += 1
+            continue
+
+        migradas += 1
+        n_urls = len(
+            [x for x in nuevas if isinstance(x, str) and x.startswith("http")]
+        )
+        print(f"[{i}/{total}] {pid}  ->  {n_urls} foto(s) migradas")
 
     print("\n" + "=" * 64)
     print("MIGRACIÓN COMPLETA")
@@ -215,11 +189,17 @@ def main():
     print(f"  Errores              : {errores}")
     print("=" * 64)
     print("\nPASO FINAL — recupera el espacio físico del disco.")
-    print("Corre esto en el SQL Editor de Supabase:\n")
+    print("Corre esto en el SQL Editor de Supabase sólo cuando la migración esté completa:\n")
     print("    VACUUM FULL propiedades;\n")
     if errores:
-        print("Hubo errores: vuelve a correr el script (es seguro) para reintentar")
-        print("solo las fotos que fallaron antes de hacer el VACUUM.\n")
+        print("Hubo errores: vuelve a correr el script antes del VACUUM.")
+        print("La migración es idempotente y reintentará sólo lo pendiente.\n")
+
+    return 0 if errores == 0 else 2
+
+
+def main() -> None:
+    raise SystemExit(asyncio.run(_main()))
 
 
 if __name__ == "__main__":

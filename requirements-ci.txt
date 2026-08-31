@@ -1,0 +1,8 @@
+# Minimal deterministic dependency set for GitHub Quality checks.
+# Production requirements remain in requirements.txt until the deployed
+# Railway environment can be captured and locked without guessing versions.
+fastapi==0.141.1
+httpx[http2]==0.28.1
+python-multipart==0.0.32
+playwright==1.62.0
+cryptography==50.0.1

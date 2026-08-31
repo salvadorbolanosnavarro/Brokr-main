@@ -36,16 +36,6 @@
 #   backend. Aguanta de sobra para validar y para los primeros cientos de
 #   agentes. Con volumen real hay que moverlo a un worker aparte en Railway
 #   con cola. Queda identificado, no se construye todavía.
-#
-# Depende de:
-#   · migracion-video.sql ya corrido
-#   · bucket 'videos-fichas' creado a mano en Supabase Storage, Public ON
-#   · ffmpeg instalado en la imagen — va en el Dockerfile, NO en nixpacks:
-#     Railway construye este backend desde el Dockerfile del repo.
-#
-# Conectar en main.py:
-#   from routers.video import router as video_router
-#   app.include_router(video_router)
 # ──────────────────────────────────────────────────────────────────────────
 
 import os
@@ -56,32 +46,31 @@ import logging
 import tempfile
 import subprocess
 from datetime import datetime, timezone
-from typing import Optional, Dict, Any, List
+from typing import Optional, List
 
-import httpx
 from fastapi import APIRouter, Request, HTTPException, BackgroundTasks
 from pydantic import BaseModel
+
+from core.auth import require_user_id
+from core.database import delete_rows, get_rows, patch_rows, post_rows
+from core.http import fetch_public_bytes
+from core.storage import delete_object, upload_object
 
 router = APIRouter(prefix="/video", tags=["video"])
 log = logging.getLogger("broquer.video")
 
-# ── Config (mismas env vars que main.py) ──────────────────────────────────
-SUPABASE_URL         = os.getenv("SUPABASE_URL", "").rstrip("/")
-SUPABASE_KEY         = os.getenv("SUPABASE_ANON_KEY", "") or os.getenv("SUPABASE_KEY", "")
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "") or SUPABASE_KEY
-BUCKET               = "videos-fichas"
+BUCKET = "videos-fichas"
 
 # ── Parámetros del render ─────────────────────────────────────────────────
-# Estos números salieron de prueba y error, no de la teoría. Tocarlos sin
-# volver a ver el resultado en un celular es una mala idea.
-SEG_POR_FOTO   = 5.5    # menos se siente apurado, más aburre
+SEG_POR_FOTO   = 5.5
 FPS            = 30
-ZOOM_MAX       = 1.18   # más que esto se ve el pixel de una foto de celular
-OVERSAMPLE     = 2.0    # cuánto se agranda la foto antes del zoom (ver abajo)
-CRUCE_SEG      = 0.7    # duración del xfade entre tomas
-MAX_FOTOS      = 8      # ~44 s. Arriba de eso nadie lo termina de ver
+ZOOM_MAX       = 1.18
+OVERSAMPLE     = 2.0
+CRUCE_SEG      = 0.7
+MAX_FOTOS      = 8
 MIN_FOTOS      = 2
-TIMEOUT_RENDER = 300    # segundos; si se pasa, algo está mal
+TIMEOUT_RENDER = 300
+MAX_FOTO_BYTES = 20 * 1024 * 1024
 
 FORMATOS = {
     "16:9": (1920, 1080),
@@ -90,97 +79,57 @@ FORMATOS = {
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# INFRAESTRUCTURA
+# INFRAESTRUCTURA DE DOMINIO SOBRE EL CORE
 # ══════════════════════════════════════════════════════════════════════════
 
-def _headers(prefer: Optional[str] = None) -> Dict[str, str]:
-    h = {
-        "apikey": SUPABASE_SERVICE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-        "Content-Type": "application/json",
-    }
-    if prefer:
-        h["Prefer"] = prefer
-    return h
-
-
 async def _sb_get(tabla: str, params: dict) -> List[dict]:
-    async with httpx.AsyncClient(timeout=15) as c:
-        r = await c.get(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_headers(), params=params)
-        if r.status_code != 200:
-            log.warning("GET %s -> %s %s", tabla, r.status_code, r.text[:180])
-            return []
-        return r.json()
+    """Conserva el comportamiento histórico de lectura vacía ante error."""
+    try:
+        return await get_rows(tabla, params, timeout=15)
+    except Exception as exc:
+        log.warning("GET %s falló: %s", tabla, exc)
+        return []
 
 
 async def _sb_post(tabla: str, payload, prefer: str = "return=representation") -> List[dict]:
-    async with httpx.AsyncClient(timeout=20) as c:
-        r = await c.post(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_headers(prefer), json=payload)
-        if r.status_code not in (200, 201, 204):
-            log.warning("POST %s -> %s %s", tabla, r.status_code, r.text[:180])
-            raise HTTPException(500, "No se pudo guardar. Intenta de nuevo.")
-        try:
-            return r.json()
-        except Exception:
-            return []
+    try:
+        return await post_rows(tabla, payload, prefer=prefer, timeout=20)
+    except Exception as exc:
+        log.warning("POST %s falló: %s", tabla, exc)
+        raise HTTPException(500, "No se pudo guardar. Intenta de nuevo.") from exc
 
 
 async def _sb_patch(tabla: str, params: dict, payload: dict) -> None:
-    """Levanta si falla. Antes solo lo anotaba en el log, y por eso un PATCH
-    rechazado dejaba el job clavado en 'procesando' sin que nadie se enterara:
-    el video terminaba de renderizar, se subía bien, y el frontend seguía
-    girando. Un error silencioso aquí es peor que uno ruidoso."""
-    async with httpx.AsyncClient(timeout=20) as c:
-        r = await c.patch(f"{SUPABASE_URL}/rest/v1/{tabla}",
-                          headers=_headers("return=minimal"), params=params, json=payload)
-        if r.status_code not in (200, 204):
-            log.warning("PATCH %s -> %s %s", tabla, r.status_code, r.text[:300])
-            raise RuntimeError(f"No se pudo actualizar el registro del video ({r.status_code}).")
-
-
-async def get_user_id_from_token(request: Request) -> Optional[str]:
-    """Igual que el de main.py. Duplicado a propósito: este router es autónomo."""
-    auth = request.headers.get("Authorization", "")
-    if not auth.startswith("Bearer "):
-        return None
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        return None
+    """Levanta si falla para no dejar trabajos clavados en procesando."""
     try:
-        async with httpx.AsyncClient(timeout=8) as c:
-            r = await c.get(f"{SUPABASE_URL}/auth/v1/user",
-                            headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {auth[7:]}"})
-            if r.status_code == 200:
-                return r.json().get("id")
-    except Exception:
-        pass
-    return None
+        await patch_rows(tabla, params, payload, prefer="return=minimal", timeout=20)
+    except Exception as exc:
+        log.warning("PATCH %s falló: %s", tabla, exc)
+        raise RuntimeError("No se pudo actualizar el registro del video.") from exc
 
 
 async def _uid(request: Request) -> str:
-    uid = await get_user_id_from_token(request)
-    if not uid:
-        raise HTTPException(401, "Inicia sesión para continuar.")
-    return uid
+    return await require_user_id(
+        request,
+        detail="Inicia sesión para continuar.",
+    )
 
 
 async def _subir_video(ruta: str, contenido: bytes) -> str:
-    async with httpx.AsyncClient(timeout=180) as c:
-        r = await c.post(
-            f"{SUPABASE_URL}/storage/v1/object/{BUCKET}/{ruta}",
-            headers={"apikey": SUPABASE_SERVICE_KEY,
-                     "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                     "Content-Type": "video/mp4", "x-upsert": "true"},
-            content=contenido)
-        if r.status_code not in (200, 201):
-            log.warning("upload %s -> %s %s", ruta, r.status_code, r.text[:200])
-            raise RuntimeError("No se pudo guardar el video.")
-    return f"{SUPABASE_URL}/storage/v1/object/public/{BUCKET}/{ruta}"
+    try:
+        return await upload_object(
+            BUCKET,
+            ruta,
+            contenido,
+            content_type="video/mp4",
+            timeout=180,
+        )
+    except Exception as exc:
+        log.warning("upload %s falló: %s", ruta, exc)
+        raise RuntimeError("No se pudo guardar el video.") from exc
 
 
 def _ahora() -> str:
-    """PostgREST manda el valor tal cual a Postgres. La cadena "now()" NO es
-    un timestamptz válido — el PATCH completo se rechaza con 400 y el job se
-    queda en 'procesando' para siempre aunque el video ya esté subido. Va ISO."""
     return datetime.now(timezone.utc).isoformat()
 
 
@@ -198,31 +147,7 @@ def _hay_ffmpeg() -> bool:
 # ══════════════════════════════════════════════════════════════════════════
 
 def _filtro_ken_burns(idx: int, ancho: int, alto: int) -> str:
-    """Una toma: escalar, recortar a 'cover', y encima paneo o zoom.
-
-    Tres detalles que se ven obvios ya explicados y que costaron pruebas:
-
-      · Escalar ANTES del zoompan, y escalar BIEN: a 2x. En una medición
-        anterior pareció que 2x costaba 281 segundos por toma, pero eso era
-        culpa del bug de duración de abajo (se estaban codificando 154
-        segundos de video, no 5.5) más el preset 'medium'. Ya corregido, 2x
-        cuesta lo mismo que 1.33x — unos 10 segundos por toma — y tiembla
-        bastante menos. No hay razón para escatimar aquí.
-      · El zoom va como función del número de cuadro, NO como 'zoom+paso'.
-        La forma incremental arrastra el valor redondeado del cuadro anterior
-        y avanza a brincos: eso es exactamente lo que se ve como vibración.
-        Escrito como 1+(k*on/frames) cada cuadro se calcula solo y el
-        movimiento sale parejo. Medido: la desviación del cambio cuadro a
-        cuadro baja casi a la mitad.
-      · Recortar a 'cover', nunca rellenar con barras negras. Las barras se
-        ven mal en el feed y Meta las trata como contenido de baja calidad.
-      · La entrada tiene que ser UN solo cuadro (-framerate 1 -t 1). zoompan
-        aplica d= a cada cuadro que le entra: si entran 138, el video sale de
-        154 segundos en vez de 5.5. Ese fue el otro bug de la prueba.
-
-    El movimiento alterna por posición para que el recorrido respire: zoom in,
-    paneo a la derecha, zoom in, paneo a la izquierda…
-    """
+    """Una toma: escalar, recortar a cover, y encima paneo o zoom."""
     frames = int(SEG_POR_FOTO * FPS)
     gran_w = int(ancho * OVERSAMPLE) // 2 * 2
     gran_h = int(alto * OVERSAMPLE) // 2 * 2
@@ -233,13 +158,13 @@ def _filtro_ken_burns(idx: int, ancho: int, alto: int) -> str:
     )
 
     modo = idx % 4
-    if modo == 0:      # zoom lento hacia el centro
+    if modo == 0:
         mov = f"z='1+{ZOOM_MAX - 1.0:.4f}*on/{frames}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
-    elif modo == 1:    # paneo a la derecha, con el zoom ya puesto
+    elif modo == 1:
         mov = f"z='{ZOOM_MAX}':x='(iw-iw/zoom)*(on/{frames})':y='ih/2-(ih/zoom/2)'"
-    elif modo == 2:    # zoom lento con encuadre bajo (mira hacia el piso/isla)
+    elif modo == 2:
         mov = f"z='1+{ZOOM_MAX - 1.0:.4f}*on/{frames}':x='iw/2-(iw/zoom/2)':y='ih*0.60-(ih/zoom/2)'"
-    else:              # paneo a la izquierda
+    else:
         mov = f"z='{ZOOM_MAX}':x='(iw-iw/zoom)*(1-on/{frames})':y='ih/2-(ih/zoom/2)'"
 
     return (
@@ -256,8 +181,6 @@ def _construir_comando(fotos: List[str], salida: str, formato: str) -> List[str]
     for i in range(n):
         partes.append(f"[{i}:v]{_filtro_ken_burns(i, ancho, alto)}[v{i}]")
 
-    # Encadenar con xfade. El offset es acumulativo y le resta el cruce a cada
-    # toma anterior: si no, el video se alarga y los cruces se desfasan.
     if n == 1:
         ultimo = "v0"
     else:
@@ -274,7 +197,6 @@ def _construir_comando(fotos: List[str], salida: str, formato: str) -> List[str]
 
     cmd = ["ffmpeg", "-y"]
     for f in fotos:
-        # Un solo cuadro de entrada por foto: la duración la pone zoompan.
         cmd += ["-loop", "1", "-framerate", "1", "-t", "1", "-i", f]
     cmd += [
         "-filter_complex", ";".join(partes),
@@ -293,14 +215,6 @@ def _duracion(n_fotos: int) -> float:
 
 async def _registrar_en_historial(user_id: str, propiedad_id: Optional[str],
                                   formato: str, segundos: float, url: str) -> None:
-    """Deja el video en el historial de la ficha (tabla 'actividades', la misma
-    que usa el detalle del inmueble en propiedades.html).
-
-    Es lo que hace que el video no se pierda: dentro de tres meses nadie va a
-    volver al módulo de Video a buscar qué se generó, pero sí va a abrir la
-    ficha. Si falla, se anota y ya — un historial incompleto no justifica
-    tirar un video que ya está bien hecho y subido.
-    """
     if not propiedad_id:
         return
     etiqueta = "vertical 9:16" if formato == "9:16" else "horizontal 16:9"
@@ -328,26 +242,30 @@ async def _procesar(job_id: str, user_id: str, propiedad_id: Optional[str],
                 "ffmpeg no está instalado en el servidor. Falta agregarlo al Dockerfile."
             )
 
-        # 1) Bajar las fotos. Si alguna falla se ignora; se corta solo si
-        #    quedan menos de dos, que es cuando ya no hay recorrido posible.
+        # Las URLs pueden venir del frontend; toda descarga pasa por la capa
+        # pública segura para impedir localhost, redes privadas y redirects
+        # hacia infraestructura interna.
         locales: List[str] = []
-        async with httpx.AsyncClient(timeout=60, follow_redirects=True) as c:
-            for i, url in enumerate(fotos):
-                try:
-                    r = await c.get(url)
-                    if r.status_code != 200 or not r.content:
-                        continue
-                    ruta = os.path.join(tmp, f"foto_{i:02d}.jpg")
-                    with open(ruta, "wb") as fh:
-                        fh.write(r.content)
-                    locales.append(ruta)
-                except Exception:
-                    log.warning("[video] no se pudo bajar la foto %s", i)
+        for i, url in enumerate(fotos):
+            try:
+                contenido = await fetch_public_bytes(
+                    url,
+                    timeout=60,
+                    max_bytes=MAX_FOTO_BYTES,
+                    max_redirects=3,
+                )
+                if not contenido:
+                    continue
+                ruta = os.path.join(tmp, f"foto_{i:02d}.jpg")
+                with open(ruta, "wb") as fh:
+                    fh.write(contenido)
+                locales.append(ruta)
+            except Exception as exc:
+                log.warning("[video] no se pudo bajar la foto %s: %s", i, exc)
 
         if len(locales) < MIN_FOTOS:
             raise RuntimeError("No se pudieron leer suficientes fotos de la ficha.")
 
-        # 2) Render.
         salida = os.path.join(tmp, "salida.mp4")
         cmd = _construir_comando(locales, salida, formato)
 
@@ -366,7 +284,6 @@ async def _procesar(job_id: str, user_id: str, propiedad_id: Optional[str],
         with open(salida, "rb") as fh:
             contenido = fh.read()
 
-        # 3) Subir y cerrar la fila.
         ruta_remota = f"{user_id}/{job_id}.mp4"
         url = await _subir_video(ruta_remota, contenido)
 
@@ -401,7 +318,7 @@ async def _procesar(job_id: str, user_id: str, propiedad_id: Optional[str],
 class GenerarBody(BaseModel):
     propiedad_id: Optional[str] = None
     formato: str = "16:9"
-    fotos: Optional[List[str]] = None   # opcional: si no viene, se leen de la ficha
+    fotos: Optional[List[str]] = None
     titulo: Optional[str] = None
 
 
@@ -412,11 +329,13 @@ async def generar(body: GenerarBody, request: Request, tareas: BackgroundTasks):
     if body.formato not in FORMATOS:
         raise HTTPException(400, "Formato no válido.")
 
-    fotos = [u for u in (body.fotos or []) if isinstance(u, str) and u.startswith("http")]
+    fotos = [
+        u.strip()
+        for u in (body.fotos or [])
+        if isinstance(u, str) and u.strip()
+    ]
     titulo = body.titulo
 
-    # Si el frontend no mandó fotos, se leen de la ficha — filtrando por
-    # user_id, que es lo que impide generar el video de la propiedad de otro.
     if not fotos:
         if not body.propiedad_id:
             raise HTTPException(400, "Falta la propiedad.")
@@ -429,7 +348,11 @@ async def generar(body: GenerarBody, request: Request, tareas: BackgroundTasks):
         if not filas:
             raise HTTPException(404, "No encontramos esa propiedad en tu inventario.")
         prop = filas[0]
-        fotos = [u for u in (prop.get("fotos") or []) if isinstance(u, str) and u.startswith("http")]
+        fotos = [
+            u.strip()
+            for u in (prop.get("fotos") or [])
+            if isinstance(u, str) and u.strip()
+        ]
         titulo = titulo or prop.get("titulo") or prop.get("nombre")
 
     if len(fotos) < MIN_FOTOS:
@@ -475,7 +398,6 @@ async def estado(job_id: str, request: Request):
 
 @router.get("/propiedad/{propiedad_id}")
 async def por_propiedad(propiedad_id: str, request: Request):
-    """Los videos ya generados de una ficha, para no volver a renderizar."""
     uid = await _uid(request)
     filas = await _sb_get("video_jobs", {
         "propiedad_id": f"eq.{propiedad_id}",
@@ -509,16 +431,17 @@ async def borrar(job_id: str, request: Request):
         raise HTTPException(404, "No encontramos ese video.")
 
     try:
-        async with httpx.AsyncClient(timeout=30) as c:
-            await c.delete(
-                f"{SUPABASE_URL}/storage/v1/object/{BUCKET}/{uid}/{job_id}.mp4",
-                headers={"apikey": SUPABASE_SERVICE_KEY,
-                         "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"})
-    except Exception:
-        log.warning("[video] no se pudo borrar el archivo de %s", job_id)
+        await delete_object(BUCKET, f"{uid}/{job_id}.mp4", timeout=30)
+    except Exception as exc:
+        log.warning("[video] no se pudo borrar el archivo de %s: %s", job_id, exc)
 
-    async with httpx.AsyncClient(timeout=20) as c:
-        await c.delete(f"{SUPABASE_URL}/rest/v1/video_jobs",
-                       headers=_headers("return=minimal"),
-                       params={"id": f"eq.{job_id}", "user_id": f"eq.{uid}"})
+    try:
+        await delete_rows(
+            "video_jobs",
+            {"id": f"eq.{job_id}", "user_id": f"eq.{uid}"},
+            timeout=20,
+        )
+    except Exception as exc:
+        log.warning("[video] no se pudo borrar el registro %s: %s", job_id, exc)
+        raise HTTPException(500, "No se pudo borrar el video. Intenta de nuevo.") from exc
     return {"ok": True}

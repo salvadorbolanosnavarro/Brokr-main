@@ -21,59 +21,43 @@
 #   EasyBroker.
 #
 # Depende de: migracion-bolsa.sql ya corrido.
-#
-# Conectar en main.py:
-#   from routers.bolsa import router as bolsa_router
-#   app.include_router(bolsa_router)
 # ──────────────────────────────────────────────────────────────────────────
 
-import os
-import re
 import logging
+import re
 from datetime import datetime, timezone
 from typing import Optional
 
 import httpx
-from fastapi import APIRouter, Request, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
+
+from core.auth import require_user_id
+from core.config import settings
+from core.database import rest_url, service_headers
 
 router = APIRouter(prefix="/bolsa", tags=["bolsa"])
 log = logging.getLogger("broquer.bolsa")
 
-# ── Config (mismas env vars que main.py) ──────────────────────────────────
-SUPABASE_URL         = os.getenv("SUPABASE_URL", "").rstrip("/")
-SUPABASE_KEY         = os.getenv("SUPABASE_ANON_KEY", "") or os.getenv("SUPABASE_KEY", "")
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "") or SUPABASE_KEY
-
-_SB_HEADERS = {
-    "apikey": SUPABASE_SERVICE_KEY,
-    "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-}
-
 PAGINA = 24  # propiedades por página en el listado
 
 
-# ── Auth: mismo patrón que routers/cumplimiento.py ────────────────────────
-async def get_user_id_from_token(request: Request) -> Optional[str]:
-    auth = request.headers.get("Authorization", "")
-    if not auth.startswith("Bearer ") or not SUPABASE_URL:
-        return None
-    try:
-        async with httpx.AsyncClient(timeout=8) as c:
-            r = await c.get(f"{SUPABASE_URL}/auth/v1/user",
-                            headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {auth[7:]}"})
-            if r.status_code == 200:
-                return r.json().get("id")
-    except Exception:
-        pass
-    return None
-
-
 async def _uid(request: Request) -> str:
-    uid = await get_user_id_from_token(request)
-    if not uid:
-        raise HTTPException(401, "Inicia sesión para continuar.")
-    return uid
+    return await require_user_id(
+        request,
+        detail="Inicia sesión para continuar.",
+    )
+
+
+def _require_db() -> None:
+    """Fail closed when privileged Supabase access is not configured."""
+    try:
+        settings.require_supabase_service()
+    except RuntimeError as exc:
+        raise HTTPException(
+            500,
+            "Supabase no está configurado en el servidor.",
+        ) from exc
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────
@@ -122,8 +106,8 @@ async def _agentes_por_id(client: httpx.AsyncClient, ids: list) -> dict:
         return {}
     try:
         r = await client.get(
-            f"{SUPABASE_URL}/rest/v1/usuarios",
-            headers=_SB_HEADERS,
+            rest_url("usuarios"),
+            headers=service_headers(),
             params={"id": f"in.({','.join(ids)})", "select": "id,nombre,telefono"},
         )
         if r.status_code == 200:
@@ -145,10 +129,8 @@ def _patron_sin_acentos(token: str) -> str:
     return re.sub(r"[aeiouáéíóúüñn]", "_", token, flags=re.IGNORECASE)
 
 
-# Columnas de texto donde busca el buscador libre
 _COLS_BUSQUEDA = ("titulo", "colonia", "ciudad", "estado", "descripcion", "tipo")
 
-# Órdenes permitidos (lo que manda el frontend → sintaxis PostgREST)
 _ORDENES = {
     "reciente":     "bolsa_fecha.desc.nullslast",
     "precio_asc":   "precio.asc.nullslast",
@@ -173,15 +155,9 @@ async def bolsa_propiedades(
     m2_min: Optional[float] = None,
     orden: str = "reciente",
 ):
-    """Listado nacional de propiedades en bolsa, con filtros y paginación.
-
-    El buscador libre (q) parte la frase en palabras: TODAS deben aparecer,
-    cada una en cualquiera de título, colonia, ciudad, estado, descripción o
-    tipo, sin importar acentos. "depa amueblado morelia" encuentra un
-    departamento en Morelia cuya descripción diga amueblado."""
+    """Listado nacional de propiedades en bolsa, con filtros y paginación."""
     uid = await _uid(request)
-    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
-        raise HTTPException(500, "Supabase no está configurado en el servidor.")
+    _require_db()
 
     params = {
         "en_bolsa": "eq.true",
@@ -206,7 +182,6 @@ async def bolsa_propiedades(
     if m2_min is not None and m2_min > 0:
         params["m2_construccion"] = f"gte.{m2_min}"
 
-    # Rango de precio + búsqueda libre viven juntos en un solo and=()
     condiciones = []
     if precio_min is not None:
         condiciones.append(f"precio.gte.{precio_min}")
@@ -224,8 +199,8 @@ async def bolsa_propiedades(
     try:
         async with httpx.AsyncClient(timeout=20) as client:
             r = await client.get(
-                f"{SUPABASE_URL}/rest/v1/propiedades",
-                headers={**_SB_HEADERS, "Prefer": "count=exact"},
+                rest_url("propiedades"),
+                headers=service_headers(prefer="count=exact"),
                 params=params,
             )
             if r.status_code not in (200, 206):
@@ -260,13 +235,12 @@ async def bolsa_propiedades(
 @router.get("/mis")
 async def bolsa_mis(request: Request):
     uid = await _uid(request)
-    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
-        raise HTTPException(500, "Supabase no está configurado en el servidor.")
+    _require_db()
     try:
         async with httpx.AsyncClient(timeout=20) as client:
             r = await client.get(
-                f"{SUPABASE_URL}/rest/v1/propiedades",
-                headers=_SB_HEADERS,
+                rest_url("propiedades"),
+                headers=service_headers(),
                 params={
                     "user_id": f"eq.{uid}",
                     "estatus": "eq.activa",
@@ -320,9 +294,8 @@ async def _patch_propia(uid: str, propiedad_id: str, cambios: dict) -> None:
     pide, PostgREST no encuentra fila y no toca nada."""
     async with httpx.AsyncClient(timeout=15) as client:
         r = await client.patch(
-            f"{SUPABASE_URL}/rest/v1/propiedades",
-            headers={**_SB_HEADERS, "Content-Type": "application/json",
-                     "Prefer": "return=representation"},
+            rest_url("propiedades"),
+            headers=service_headers(prefer="return=representation"),
             params={"id": f"eq.{propiedad_id}", "user_id": f"eq.{uid}"},
             json=cambios,
         )
@@ -336,8 +309,7 @@ async def _patch_propia(uid: str, propiedad_id: str, cambios: dict) -> None:
 @router.post("/publicar")
 async def bolsa_publicar(body: PublicarBody, request: Request):
     uid = await _uid(request)
-    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
-        raise HTTPException(500, "Supabase no está configurado en el servidor.")
+    _require_db()
     if body.comision < 0 or body.comision > 100:
         raise HTTPException(400, "La comisión compartida debe estar entre 0 y 100.")
     notas = (body.notas or "").strip()[:600] or None
@@ -353,7 +325,6 @@ async def bolsa_publicar(body: PublicarBody, request: Request):
 @router.post("/retirar")
 async def bolsa_retirar(body: RetirarBody, request: Request):
     uid = await _uid(request)
-    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
-        raise HTTPException(500, "Supabase no está configurado en el servidor.")
+    _require_db()
     await _patch_propia(uid, body.propiedad_id, {"en_bolsa": False})
     return {"ok": True}

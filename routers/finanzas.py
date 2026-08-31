@@ -41,14 +41,18 @@ from fastapi import APIRouter, Request, HTTPException, UploadFile, File, Form
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
+from core.auth import require_user_id
+from core.config import settings
+from core.database import delete_rows, get_rows, patch_rows, post_rows
+from core.design import pdf_palette
+from core.storage import create_signed_object_url, delete_object, upload_object
+
 router = APIRouter(prefix="/finanzas", tags=["finanzas"])
 log = logging.getLogger("broquer.finanzas")
 
-# ── Config (mismas env vars que main.py) ──────────────────────────────────
-SUPABASE_URL         = os.getenv("SUPABASE_URL", "").rstrip("/")
-SUPABASE_KEY         = os.getenv("SUPABASE_ANON_KEY", "") or os.getenv("SUPABASE_KEY", "")
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "") or SUPABASE_KEY
-ANTHROPIC_API_KEY    = os.getenv("ANTHROPIC_API_KEY", "")
+# ── Config ────────────────────────────────────────────────────────────────
+# Environment names and privileged credential policy live only in Core.
+ANTHROPIC_API_KEY = settings.anthropic_api_key
 
 BUCKET = "fin-comprobantes"
 MAX_BYTES = 10 * 1024 * 1024
@@ -75,86 +79,63 @@ CATEGORIAS_SEMILLA = [
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# ACCESO A SUPABASE (service key — se brinca RLS, por eso validamos antes)
+# ACCESO A SUPABASE — compatibilidad sobre Core
 # ══════════════════════════════════════════════════════════════════════════
 
-def _headers(prefer: Optional[str] = None) -> Dict[str, str]:
-    h = {
-        "apikey": SUPABASE_SERVICE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-        "Content-Type": "application/json",
-    }
-    if prefer:
-        h["Prefer"] = prefer
-    return h
-
-
 async def _sb_get(tabla: str, params: dict) -> List[dict]:
-    async with httpx.AsyncClient(timeout=15) as c:
-        r = await c.get(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_headers(), params=params)
-        if r.status_code != 200:
-            log.warning("GET %s -> %s %s", tabla, r.status_code, r.text[:180])
-            return []
-        return r.json()
+    try:
+        return await get_rows(tabla, params, timeout=15)
+    except httpx.HTTPStatusError as exc:
+        response = exc.response
+        log.warning("GET %s -> %s %s", tabla, response.status_code, response.text[:180])
+        return []
+    except RuntimeError:
+        # Preserve the historical read contract while still denying privileged
+        # access when service-role configuration is absent.
+        return []
 
 
 async def _sb_post(tabla: str, payload, prefer: str = "return=representation") -> List[dict]:
-    async with httpx.AsyncClient(timeout=20) as c:
-        r = await c.post(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_headers(prefer), json=payload)
-        if r.status_code not in (200, 201, 204):
-            log.warning("POST %s -> %s %s", tabla, r.status_code, r.text[:180])
-            raise HTTPException(500, "No se pudo guardar. Intenta de nuevo.")
-        try:
-            return r.json()
-        except Exception:
-            return []
+    try:
+        return await post_rows(tabla, payload, prefer=prefer, timeout=20)
+    except httpx.HTTPStatusError as exc:
+        response = exc.response
+        log.warning("POST %s -> %s %s", tabla, response.status_code, response.text[:180])
+        raise HTTPException(500, "No se pudo guardar. Intenta de nuevo.") from exc
+    except RuntimeError as exc:
+        raise HTTPException(500, "No se pudo guardar. Intenta de nuevo.") from exc
 
 
 async def _sb_patch(tabla: str, params: dict, payload: dict) -> List[dict]:
-    async with httpx.AsyncClient(timeout=20) as c:
-        r = await c.patch(f"{SUPABASE_URL}/rest/v1/{tabla}",
-                          headers=_headers("return=representation"),
-                          params=params, json=payload)
-        if r.status_code not in (200, 204):
-            log.warning("PATCH %s -> %s %s", tabla, r.status_code, r.text[:180])
-            raise HTTPException(500, "No se pudo actualizar. Intenta de nuevo.")
-        try:
-            return r.json()
-        except Exception:
-            return []
+    try:
+        return await patch_rows(
+            tabla,
+            params,
+            payload,
+            prefer="return=representation",
+            timeout=20,
+        )
+    except httpx.HTTPStatusError as exc:
+        response = exc.response
+        log.warning("PATCH %s -> %s %s", tabla, response.status_code, response.text[:180])
+        raise HTTPException(500, "No se pudo actualizar. Intenta de nuevo.") from exc
+    except RuntimeError as exc:
+        raise HTTPException(500, "No se pudo actualizar. Intenta de nuevo.") from exc
 
 
 async def _sb_delete(tabla: str, params: dict) -> None:
-    async with httpx.AsyncClient(timeout=20) as c:
-        r = await c.delete(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_headers(), params=params)
-        if r.status_code not in (200, 204):
-            log.warning("DELETE %s -> %s %s", tabla, r.status_code, r.text[:180])
-            raise HTTPException(500, "No se pudo borrar. Intenta de nuevo.")
-
-
-async def get_user_id_from_token(request: Request) -> Optional[str]:
-    """Igual que el de main.py. Duplicado a propósito: este router es autónomo."""
-    auth = request.headers.get("Authorization", "")
-    if not auth.startswith("Bearer "):
-        return None
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        return None
     try:
-        async with httpx.AsyncClient(timeout=8) as c:
-            r = await c.get(f"{SUPABASE_URL}/auth/v1/user",
-                            headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {auth[7:]}"})
-            if r.status_code == 200:
-                return r.json().get("id")
-    except Exception:
-        pass
-    return None
+        await delete_rows(tabla, params, timeout=20)
+    except httpx.HTTPStatusError as exc:
+        response = exc.response
+        log.warning("DELETE %s -> %s %s", tabla, response.status_code, response.text[:180])
+        raise HTTPException(500, "No se pudo borrar. Intenta de nuevo.") from exc
+    except RuntimeError as exc:
+        raise HTTPException(500, "No se pudo borrar. Intenta de nuevo.") from exc
 
 
 async def _uid(request: Request) -> str:
-    uid = await get_user_id_from_token(request)
-    if not uid:
-        raise HTTPException(401, "Inicia sesión para continuar.")
-    return uid
+    return await require_user_id(request, detail="Inicia sesión para continuar.")
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -496,9 +477,7 @@ async def borrar_movimiento(request: Request, mov_id: str):
     ruta = movs[0].get("comprobante")
     if ruta:
         try:
-            async with httpx.AsyncClient(timeout=20) as c:
-                await c.delete(f"{SUPABASE_URL}/storage/v1/object/{BUCKET}/{ruta}",
-                               headers=_headers())
+            await delete_object(BUCKET, ruta, timeout=20)
         except Exception:
             pass  # el registro se borra igual; un huérfano en storage no rompe nada
     await _sb_delete("fin_movimientos", {"id": f"eq.{mov_id}", "user_id": f"eq.{uid}"})
@@ -533,15 +512,17 @@ async def subir_comprobante(request: Request, mov_id: str,
         raise HTTPException(415, "Solo se aceptan fotos (JPG, PNG, WEBP) o PDF.")
     sello = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
     ruta = f"{uid}/{mov_id}/{sello}-{_limpio(archivo.filename)}"
-    async with httpx.AsyncClient(timeout=60) as c:
-        r = await c.post(f"{SUPABASE_URL}/storage/v1/object/{BUCKET}/{ruta}",
-                         headers={"apikey": SUPABASE_SERVICE_KEY,
-                                  "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                                  "Content-Type": mime, "x-upsert": "true"},
-                         content=contenido)
-        if r.status_code not in (200, 201):
-            log.warning("upload comprobante -> %s %s", r.status_code, r.text[:200])
-            raise HTTPException(500, "No se pudo guardar el archivo. Intenta de nuevo.")
+    try:
+        await upload_object(
+            BUCKET,
+            ruta,
+            contenido,
+            content_type=mime,
+            timeout=60,
+        )
+    except Exception as exc:
+        log.warning("upload comprobante falló: %s", exc)
+        raise HTTPException(500, "No se pudo guardar el archivo. Intenta de nuevo.") from exc
     await _sb_patch("fin_movimientos",
                     {"id": f"eq.{mov_id}", "user_id": f"eq.{uid}"},
                     {"comprobante": ruta, "comprobante_mime": mime,
@@ -559,13 +540,16 @@ async def liga_comprobante(request: Request, mov_id: str):
     if not movs or not movs[0].get("comprobante"):
         raise HTTPException(404, "Ese movimiento no tiene comprobante.")
     ruta = movs[0]["comprobante"]
-    async with httpx.AsyncClient(timeout=15) as c:
-        r = await c.post(f"{SUPABASE_URL}/storage/v1/object/sign/{BUCKET}/{ruta}",
-                         headers=_headers(), json={"expiresIn": 300})
-        if r.status_code != 200:
-            raise HTTPException(500, "No se pudo generar la liga.")
-        firmada = r.json().get("signedURL", "")
-    return {"url": f"{SUPABASE_URL}/storage/v1{firmada}"}
+    try:
+        firmada = await create_signed_object_url(
+            BUCKET,
+            ruta,
+            expires_in=300,
+            timeout=15,
+        )
+    except Exception as exc:
+        raise HTTPException(500, "No se pudo generar la liga.") from exc
+    return {"url": firmada}
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -798,14 +782,9 @@ async def resumen(request: Request,
 # REPORTES — PDF con la identidad de Broquer + CSV para el contador
 # ══════════════════════════════════════════════════════════════════════════
 
-# Tokens mínimos para el impreso. Duplicado consciente de brokr-theme.css:
-# el router es autónomo y un PDF no puede quedarse sin colores si el theme
-# no está en el disco del contenedor.
-_PDF_TOKENS = {
-    "ink": "#0B0B0F", "navy": "#05203C", "blue": "#0A5DE0",
-    "mute": "#5A6478", "line": "#E4E8F0", "paper2": "#F6F8FB",
-    "green": "#12A150", "orange": "#F7740D",
-}
+# PDF colors are resolved from the executable canonical theme. The report
+# renderer keeps semantic names while color values live only in brokr-theme.css.
+_PDF_TOKENS = pdf_palette()
 
 _pdf_store: Dict[str, tuple] = {}
 

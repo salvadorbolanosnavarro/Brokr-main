@@ -1,0 +1,333 @@
+"""Regression tests for Broquer's shared platform contracts."""
+import os
+import unittest
+from unittest.mock import AsyncMock, patch
+
+from fastapi import HTTPException
+
+from core.admin import require_admin
+from core.config import Settings
+from core.database import upsert_rows
+from core.http import UnsafePublicURL, assert_public_http_url
+from core.modules import ModuleDefinition, ModuleRegistry
+from core.organizations import has_org_permission
+from core.permissions import (
+    ROLE_ADMIN,
+    ROLE_AGENT,
+    ROLE_OWNER,
+    VALID_PERMISSIONS,
+    default_permission,
+    effective_permission,
+)
+from core.storage import _normalize_object_path
+
+
+class SettingsTests(unittest.TestCase):
+    def test_service_key_never_falls_back_to_anon_key(self):
+        env = {
+            "SUPABASE_URL": "https://example.supabase.co",
+            "SUPABASE_ANON_KEY": "anon",
+        }
+        with patch.dict(os.environ, env, clear=True):
+            settings = Settings.from_env()
+
+        self.assertEqual(settings.supabase_anon_key, "anon")
+        self.assertEqual(settings.supabase_service_key, "")
+        with self.assertRaises(RuntimeError):
+            settings.require_supabase_service()
+
+    def test_public_key_accepts_legacy_environment_name(self):
+        env = {
+            "SUPABASE_URL": "https://example.supabase.co",
+            "SUPABASE_KEY": "legacy-anon",
+        }
+        with patch.dict(os.environ, env, clear=True):
+            settings = Settings.from_env()
+
+        self.assertEqual(settings.supabase_anon_key, "legacy-anon")
+
+    def test_email_secret_prefers_explicit_secret(self):
+        env = {
+            "SUPABASE_URL": "https://example.supabase.co",
+            "SUPABASE_ANON_KEY": "anon",
+            "SUPABASE_SERVICE_KEY": "service",
+            "CORREO_SECRET": "correo-secret",
+        }
+        with patch.dict(os.environ, env, clear=True):
+            settings = Settings.from_env()
+
+        self.assertEqual(settings.require_correo_secret(), "correo-secret")
+
+    def test_email_secret_can_fall_back_to_service_key_but_never_anon(self):
+        env = {
+            "SUPABASE_URL": "https://example.supabase.co",
+            "SUPABASE_ANON_KEY": "anon",
+            "SUPABASE_SERVICE_KEY": "service",
+        }
+        with patch.dict(os.environ, env, clear=True):
+            settings = Settings.from_env()
+        self.assertEqual(settings.require_correo_secret(), "service")
+
+        env_without_service = {
+            "SUPABASE_URL": "https://example.supabase.co",
+            "SUPABASE_ANON_KEY": "anon",
+        }
+        with patch.dict(os.environ, env_without_service, clear=True):
+            settings = Settings.from_env()
+        with self.assertRaises(RuntimeError):
+            settings.require_correo_secret()
+
+    def test_meta_configuration_preserves_legacy_environment_names(self):
+        env = {
+            "FB_APP_ID": "legacy-app-id",
+            "WA_APP_SECRET": "legacy-secret",
+            "WA_EMBEDDED_SIGNUP_CONFIG_ID": "legacy-config",
+        }
+        with patch.dict(os.environ, env, clear=True):
+            settings = Settings.from_env()
+
+        self.assertEqual(settings.meta_app_id, "legacy-app-id")
+        self.assertEqual(settings.meta_app_secret, "legacy-secret")
+        self.assertEqual(settings.meta_login_config_id, "legacy-config")
+        self.assertEqual(settings.meta_graph_version, "v23.0")
+
+    def test_admin_console_configuration_is_centralized(self):
+        env = {
+            "STRIPE_SECRET_KEY": "stripe-secret",
+            "RESEND_REPLY_TO": "reply@broquer.app",
+            "CORREO_WEBHOOK_TOKEN": "webhook-secret",
+            "PRECIO_MENSUAL_MXN": "599.50",
+        }
+        with patch.dict(os.environ, env, clear=True):
+            settings = Settings.from_env()
+
+        self.assertEqual(settings.stripe_secret_key, "stripe-secret")
+        self.assertEqual(settings.resend_reply_to, "reply@broquer.app")
+        self.assertEqual(settings.correo_webhook_token, "webhook-secret")
+        self.assertEqual(settings.monthly_price_mxn, 599.50)
+
+    def test_invalid_or_negative_monthly_price_is_safe(self):
+        with patch.dict(os.environ, {"PRECIO_MENSUAL_MXN": "no-numero"}, clear=True):
+            self.assertEqual(Settings.from_env().monthly_price_mxn, 499.0)
+        with patch.dict(os.environ, {"PRECIO_MENSUAL_MXN": "-25"}, clear=True):
+            self.assertEqual(Settings.from_env().monthly_price_mxn, 0.0)
+
+
+class DatabaseContractTests(unittest.IsolatedAsyncioTestCase):
+    async def test_upsert_rejects_invalid_conflict_target_before_network_access(self):
+        for conflict in ("", "id) OR true", "phone_number_id;drop"):
+            with self.subTest(conflict=conflict):
+                with self.assertRaises(ValueError):
+                    await upsert_rows(
+                        "wac_numbers",
+                        {"phone_number_id": "123"},
+                        conflict=conflict,
+                    )
+
+
+class AdminAuthorizationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_admin_role_is_allowed(self):
+        request = object()
+        with (
+            patch("core.admin.require_user_id", new=AsyncMock(return_value="user-1")),
+            patch("core.admin.get_rows", new=AsyncMock(return_value=[{"rol": "admin"}])),
+        ):
+            self.assertEqual(await require_admin(request), "user-1")
+
+    async def test_non_admin_role_is_denied(self):
+        request = object()
+        with (
+            patch("core.admin.require_user_id", new=AsyncMock(return_value="user-1")),
+            patch("core.admin.get_rows", new=AsyncMock(return_value=[{"rol": "agente"}])),
+        ):
+            with self.assertRaises(HTTPException) as ctx:
+                await require_admin(request)
+        self.assertEqual(ctx.exception.status_code, 403)
+
+    async def test_database_failure_is_fail_closed(self):
+        request = object()
+        with (
+            patch("core.admin.require_user_id", new=AsyncMock(return_value="user-1")),
+            patch("core.admin.get_rows", new=AsyncMock(side_effect=RuntimeError("db down"))),
+        ):
+            with self.assertRaises(HTTPException) as ctx:
+                await require_admin(request)
+        self.assertEqual(ctx.exception.status_code, 503)
+
+
+class ModuleContractTests(unittest.TestCase):
+    def test_valid_module_definition(self):
+        definition = ModuleDefinition(
+            key="referidos",
+            name="Referidos",
+            description="Gestión de referidos inmobiliarios.",
+            route_prefix="/referidos",
+            navigation_path="/referidos.html",
+            permissions=("referidos.ver",),
+        )
+        self.assertEqual(definition.key, "referidos")
+
+    def test_module_key_rejects_spaces_and_uppercase(self):
+        for key in ("Mi Modulo", "mi modulo", "Mi-modulo", ""):
+            with self.subTest(key=key):
+                with self.assertRaises(ValueError):
+                    ModuleDefinition(
+                        key=key,
+                        name="Módulo",
+                        description="Descripción",
+                    )
+
+    def test_duplicate_module_keys_are_rejected(self):
+        registry = ModuleRegistry()
+        definition = ModuleDefinition(
+            key="bolsa",
+            name="Bolsa",
+            description="Bolsa inmobiliaria.",
+        )
+        registry.register(definition)
+        with self.assertRaises(ValueError):
+            registry.register(definition)
+
+    def test_duplicate_permissions_are_rejected(self):
+        with self.assertRaises(ValueError):
+            ModuleDefinition(
+                key="equipos",
+                name="Equipos de trabajo.",
+                description="Equipos de trabajo.",
+                permissions=("equipo.ver", "equipo.ver"),
+            )
+
+
+class OrganizationPermissionTests(unittest.TestCase):
+    def test_owner_and_admin_defaults_are_allowed(self):
+        for role in (ROLE_OWNER, ROLE_ADMIN):
+            for permission in VALID_PERMISSIONS:
+                with self.subTest(role=role, permission=permission):
+                    self.assertTrue(default_permission(role, permission))
+
+    def test_agent_sensitive_defaults_are_denied(self):
+        for permission in (
+            "ver_telefonos",
+            "gestionar_integraciones",
+            "ver_comisiones",
+            "ver_estadisticas_equipo",
+        ):
+            with self.subTest(permission=permission):
+                self.assertFalse(default_permission(ROLE_AGENT, permission))
+
+    def test_agent_boolean_override_wins(self):
+        self.assertTrue(
+            effective_permission(
+                ROLE_AGENT,
+                "gestionar_integraciones",
+                {"gestionar_integraciones": True},
+            )
+        )
+        self.assertFalse(
+            effective_permission(
+                ROLE_AGENT,
+                "ver_inventario_completo",
+                {"ver_inventario_completo": False},
+            )
+        )
+
+    def test_owner_and_admin_cannot_be_narrowed_by_member_override(self):
+        for role in (ROLE_OWNER, ROLE_ADMIN):
+            with self.subTest(role=role):
+                self.assertTrue(
+                    effective_permission(
+                        role,
+                        "ver_telefonos",
+                        {"ver_telefonos": False},
+                    )
+                )
+
+    def test_unknown_role_or_permission_fails_closed(self):
+        with self.assertRaises(ValueError):
+            default_permission("superadmin", "ver_telefonos")
+        with self.assertRaises(ValueError):
+            default_permission(ROLE_AGENT, "permiso_inventado")
+
+    def test_missing_or_inactive_context_is_denied(self):
+        self.assertFalse(has_org_permission(None, "ver_telefonos"))
+        self.assertFalse(
+            has_org_permission(
+                {"activo": False, "org_activo": True, "rol_org": ROLE_OWNER},
+                "ver_telefonos",
+            )
+        )
+        self.assertFalse(
+            has_org_permission(
+                {"activo": True, "org_activo": False, "rol_org": ROLE_OWNER},
+                "ver_telefonos",
+            )
+        )
+
+    def test_unknown_role_or_permission_is_denied_by_access_layer(self):
+        self.assertFalse(
+            has_org_permission(
+                {"activo": True, "org_activo": True, "rol_org": "superadmin"},
+                "ver_telefonos",
+            )
+        )
+        self.assertFalse(
+            has_org_permission(
+                {"activo": True, "org_activo": True, "rol_org": ROLE_OWNER},
+                "permiso_inventado",
+            )
+        )
+
+
+class StoragePathTests(unittest.TestCase):
+    def test_normalizes_leading_slash(self):
+        self.assertEqual(
+            _normalize_object_path("/firmas/documento.pdf"),
+            "firmas/documento.pdf",
+        )
+
+    def test_rejects_traversal_and_directory_paths(self):
+        for path in (
+            "../secreto.pdf",
+            "firmas/../secreto.pdf",
+            "firmas//documento.pdf",
+            "firmas/./documento.pdf",
+            "firmas/",
+            "",
+        ):
+            with self.subTest(path=path):
+                with self.assertRaises(ValueError):
+                    _normalize_object_path(path)
+
+
+class PublicURLSafetyTests(unittest.IsolatedAsyncioTestCase):
+    async def test_loopback_is_rejected(self):
+        for url in ("http://127.0.0.1/admin", "http://[::1]/admin"):
+            with self.subTest(url=url):
+                with self.assertRaises(UnsafePublicURL):
+                    await assert_public_http_url(url)
+
+    async def test_private_networks_are_rejected(self):
+        for url in (
+            "http://10.0.0.1/",
+            "http://172.16.0.1/",
+            "http://192.168.1.1/",
+            "http://169.254.169.254/latest/meta-data/",
+        ):
+            with self.subTest(url=url):
+                with self.assertRaises(UnsafePublicURL):
+                    await assert_public_http_url(url)
+
+    async def test_localhost_and_non_http_schemes_are_rejected(self):
+        for url in (
+            "http://localhost/internal",
+            "http://service.local/internal",
+            "file:///etc/passwd",
+            "ftp://example.com/file",
+        ):
+            with self.subTest(url=url):
+                with self.assertRaises(UnsafePublicURL):
+                    await assert_public_http_url(url)
+
+
+if __name__ == "__main__":
+    unittest.main()

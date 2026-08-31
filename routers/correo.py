@@ -1,22 +1,5 @@
 # ═══════════════════════════════════════════════════════════════════════════
 # BROQUER · MÓDULO DE CORREO ELECTRÓNICO
-#
-# Conexión por IMAP/SMTP con contraseña de aplicación. Se eligió esta vía
-# (y no OAuth de Google/Microsoft) porque publicar una app con permisos de
-# leer/enviar Gmail exige la revisión de seguridad de Google (proceso CASA:
-# semanas o meses y con costo). IMAP funciona HOY para Gmail, Outlook,
-# iCloud y cualquier proveedor estándar, y deja la base lista para sumar
-# OAuth después sin tirar nada.
-#
-# Seguridad de credenciales:
-#   · La contraseña se guarda CIFRADA (Fernet/AES) en correo_cuentas.
-#   · La llave sale de CORREO_SECRET (env de Railway); si no existe, se
-#     deriva de SUPABASE_SERVICE_KEY para que funcione sin configurar nada.
-#   · La tabla tiene RLS activo SIN políticas: solo la service key del
-#     backend puede leerla. El frontend jamás ve la contraseña.
-#
-# imaplib/smtplib son bloqueantes: todo lo de red corre en asyncio.to_thread
-# para no congelar el event loop de FastAPI.
 # ═══════════════════════════════════════════════════════════════════════════
 
 import asyncio
@@ -25,36 +8,37 @@ import email
 import email.utils
 import hashlib
 import imaplib
-import os
+import ipaddress
 import re
 import smtplib
+import socket
 from datetime import datetime, timezone
 from email.header import decode_header, make_header
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import httpx
 from cryptography.fernet import Fernet
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
+from core.auth import require_user_id
+from core.config import settings
+from core.database import delete_rows, get_rows, patch_rows, post_rows
+from core.organizations import get_org_id_for_user
+from core.subscriptions import has_paid_feature_access
+
 router = APIRouter()
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
-# En Railway la llave pública se llama SUPABASE_ANON_KEY (igual que en
-# main.py y routers/firmas.py). Se deja SUPABASE_KEY como respaldo por si
-# algún entorno la nombra así.
-SUPABASE_KEY = os.environ.get("SUPABASE_ANON_KEY", "") or os.environ.get("SUPABASE_KEY", "")
-RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
-CORREO_RELAY_FROM = os.environ.get("CORREO_RELAY_FROM", "correo@broquer.app")
-SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "") or SUPABASE_KEY
+RESEND_API_KEY = settings.resend_api_key
+CORREO_RELAY_FROM = settings.correo_relay_from
+PUBLIC_IMAP_PORTS = frozenset({993})
+PUBLIC_SMTP_PORTS = frozenset({465, 587})
 
-
-# ── Cifrado de la contraseña ────────────────────────────────────────────────
 
 def _cipher() -> Fernet:
-    secreto = os.environ.get("CORREO_SECRET", "") or SUPABASE_SERVICE_KEY
+    secreto = settings.require_correo_secret()
     llave = base64.urlsafe_b64encode(hashlib.sha256(secreto.encode()).digest())
     return Fernet(llave)
 
@@ -67,8 +51,6 @@ def _descifrar(texto: str) -> str:
     return _cipher().decrypt(texto.encode()).decode()
 
 
-# ── Presets de proveedores ──────────────────────────────────────────────────
-
 PRESETS = {
     "gmail":   {"imap_host": "imap.gmail.com",         "imap_port": 993,
                 "smtp_host": "smtp.gmail.com",          "smtp_port": 465, "smtp_ssl": True},
@@ -79,132 +61,79 @@ PRESETS = {
 }
 
 
-# ── Helpers Supabase (autónomos, mismo patrón que routers/firmas.py) ───────
+def _validar_destino_publico(host: str, port: int, *, servicio: str) -> None:
+    """Reject local/private/reserved mail destinations before opening sockets."""
+    host = (host or "").strip().rstrip(".")
+    if not host or len(host) > 253 or any(ch.isspace() for ch in host) or "/" in host or "\\" in host:
+        raise ValueError(f"Servidor {servicio} inválido.")
+    low = host.lower()
+    if low == "localhost" or low.endswith(".localhost") or low.endswith(".local"):
+        raise ValueError(f"Servidor {servicio} no permitido.")
 
-def _headers(prefer: str = None) -> Dict[str, str]:
-    h = {"apikey": SUPABASE_SERVICE_KEY,
-         "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-         "Content-Type": "application/json"}
-    if prefer:
-        h["Prefer"] = prefer
-    return h
+    allowed = PUBLIC_IMAP_PORTS if servicio == "IMAP" else PUBLIC_SMTP_PORTS
+    if int(port) not in allowed:
+        permitidos = ", ".join(str(p) for p in sorted(allowed))
+        raise ValueError(f"Puerto {servicio} no permitido. Usa {permitidos}.")
 
-
-async def _sb_get(tabla: str, params: dict) -> List[dict]:
-    async with httpx.AsyncClient(timeout=10) as c:
-        r = await c.get(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_headers(), params=params)
-        return r.json() if r.status_code == 200 else []
-
-
-async def _sb_post(tabla: str, payload, prefer="return=representation") -> Optional[list]:
-    async with httpx.AsyncClient(timeout=10) as c:
-        r = await c.post(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_headers(prefer), json=payload)
-        if r.status_code in (200, 201):
-            try:
-                return r.json()
-            except Exception:
-                return []
-        return None
-
-
-async def _sb_patch(tabla: str, params: dict, payload: dict) -> None:
-    async with httpx.AsyncClient(timeout=10) as c:
-        await c.patch(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_headers(), params=params, json=payload)
-
-
-async def _sb_delete(tabla: str, params: dict) -> None:
-    async with httpx.AsyncClient(timeout=10) as c:
-        await c.delete(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_headers(), params=params)
-
-
-async def get_user_id_from_token(request: Request) -> Optional[str]:
-    """Igual que el de main.py. Duplicado a propósito: este router es autónomo."""
-    auth = request.headers.get("Authorization", "")
-    if not auth.startswith("Bearer "):
-        return None
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        return None
     try:
-        async with httpx.AsyncClient(timeout=8) as c:
-            r = await c.get(f"{SUPABASE_URL}/auth/v1/user",
-                            headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {auth[7:]}"})
-            if r.status_code == 200:
-                return r.json().get("id")
-    except Exception:
-        pass
-    return None
+        direct = ipaddress.ip_address(host)
+    except ValueError:
+        direct = None
+    if direct is not None:
+        if not direct.is_global:
+            raise ValueError(f"Servidor {servicio} no permitido.")
+        return
+
+    try:
+        infos = socket.getaddrinfo(host, int(port), family=socket.AF_UNSPEC, type=socket.SOCK_STREAM)
+    except OSError as exc:
+        raise ValueError(f"No se pudo resolver el servidor {servicio}.") from exc
+    addresses = {item[4][0] for item in infos if item and item[4]}
+    if not addresses:
+        raise ValueError(f"No se pudo resolver el servidor {servicio}.")
+    for address in addresses:
+        try:
+            parsed = ipaddress.ip_address(address)
+        except ValueError as exc:
+            raise ValueError(f"Servidor {servicio} inválido.") from exc
+        if not parsed.is_global:
+            raise ValueError(f"Servidor {servicio} no permitido.")
 
 
 async def _uid(request: Request) -> str:
-    uid = await get_user_id_from_token(request)
-    if not uid:
-        raise HTTPException(401, "Inicia sesión para continuar.")
-    return uid
+    return await require_user_id(request, detail="Inicia sesión para continuar.")
 
 
 async def _suscripcion_activa(user_id: str) -> bool:
-    """Mismo patrón que firmas: import en caliente para evitar el círculo con
-    main.py, y falla ABIERTO — un blip de Supabase no deja sin correo a quien
-    sí paga."""
-    try:
-        from main import get_user_access_state, get_org_context, get_org_id_for_user
-    except Exception:
-        return True
-    try:
-        acceso = await get_user_access_state(user_id)
-        if not acceso.get("activo", True):
-            return False
-        if acceso.get("rol") in ("equipo", "admin"):
-            return True
-        ctx = await get_org_context(user_id)
-        if ctx and ctx.get("org_tipo") == "empresa":
-            vigente = ctx.get("org_activo", True)
-            vence = ctx.get("vence_el")
-            if vigente and vence:
-                try:
-                    vigente = datetime.fromisoformat(
-                        str(vence).replace("Z", "+00:00")) > datetime.now(timezone.utc)
-                except Exception:
-                    pass
-            return bool(vigente)
-        oid = await get_org_id_for_user(user_id)
-        filas = await _sb_get("suscripciones", {
-            "org_id": f"eq.{oid}", "select": "status",
-            "order": "updated_at.desc", "limit": "1"})
-        if not filas:
-            return False
-        return filas[0].get("status") in ("active", "trialing")
-    except Exception:
-        return True
+    return await has_paid_feature_access(user_id)
 
 
 async def _uid_max(request: Request) -> str:
     uid = await _uid(request)
     if not await _suscripcion_activa(uid):
-        raise HTTPException(402, "El módulo de correo es parte de Broquer Max. "
-                                 "Suscríbete para conectar tu correo.")
+        raise HTTPException(402, "El módulo de correo es parte de Broquer Max. Suscríbete para conectar tu correo.")
     return uid
 
 
 async def _cuenta_de(uid: str) -> Optional[dict]:
-    rows = await _sb_get("correo_cuentas", {
-        "user_id": f"eq.{uid}", "activo": "eq.true",
-        "select": "*", "limit": "1",
+    rows = await get_rows("correo_cuentas", {
+        "user_id": f"eq.{uid}", "activo": "eq.true", "select": "*", "limit": "1",
     })
     return rows[0] if rows else None
 
 
-# ── IMAP/SMTP síncronos (siempre dentro de asyncio.to_thread) ──────────────
-
 def _imap_conectar(cta: dict) -> imaplib.IMAP4_SSL:
-    m = imaplib.IMAP4_SSL(cta["imap_host"], int(cta["imap_port"] or 993), timeout=15)
+    host = cta["imap_host"]
+    port = int(cta["imap_port"] or 993)
+    _validar_destino_publico(host, port, servicio="IMAP")
+    m = imaplib.IMAP4_SSL(host, port, timeout=15)
     m.login(cta["usuario"], _descifrar(cta["secreto"]))
     return m
 
 
 def _probar_smtp(host: str, port: int, ssl_directo: bool, usuario: str, password: str) -> Optional[str]:
-    """Prueba UN puerto SMTP. None si funcionó; el error humano si no."""
     try:
+        _validar_destino_publico(host, port, servicio="SMTP")
         if ssl_directo:
             s = smtplib.SMTP_SSL(host, port, timeout=15)
         else:
@@ -218,38 +147,29 @@ def _probar_smtp(host: str, port: int, ssl_directo: bool, usuario: str, password
 
 
 def _probar_conexion(cta: dict) -> Optional[str]:
-    """Prueba IMAP y SMTP. Si el puerto SMTP elegido está bloqueado por la
-    red del servidor (típico: hosting capando 465 o 587 contra spam),
-    intenta el puerto alterno y, si funciona, deja ESE guardado en cta.
-    Devuelve None si todo bien, o el mensaje de error humano si algo falla."""
     try:
-        m = imaplib.IMAP4_SSL(cta["imap_host"], int(cta["imap_port"] or 993), timeout=15)
+        imap_port = int(cta["imap_port"] or 993)
+        _validar_destino_publico(cta["imap_host"], imap_port, servicio="IMAP")
+        m = imaplib.IMAP4_SSL(cta["imap_host"], imap_port, timeout=15)
         m.login(cta["usuario"], cta["_password_plano"])
         m.logout()
     except Exception as e:
         return f"IMAP (recibir) rechazó la conexión: {e}"
 
     puerto = int(cta["smtp_port"] or (465 if cta.get("smtp_ssl") else 587))
-    error = _probar_smtp(cta["smtp_host"], puerto, bool(cta.get("smtp_ssl")),
-                         cta["usuario"], cta["_password_plano"])
+    error = _probar_smtp(cta["smtp_host"], puerto, bool(cta.get("smtp_ssl")), cta["usuario"], cta["_password_plano"])
     if error is None:
         return None
 
-    # Puerto alterno: 465 (SSL directo) ⇄ 587 (STARTTLS)
     alterno_ssl = not bool(cta.get("smtp_ssl"))
     alterno_puerto = 465 if alterno_ssl else 587
-    error2 = _probar_smtp(cta["smtp_host"], alterno_puerto, alterno_ssl,
-                          cta["usuario"], cta["_password_plano"])
+    error2 = _probar_smtp(cta["smtp_host"], alterno_puerto, alterno_ssl, cta["usuario"], cta["_password_plano"])
     if error2 is None:
         cta["smtp_port"] = alterno_puerto
         cta["smtp_ssl"] = alterno_ssl
         return None
-
-    # Ninguno de los dos: si huele a bloqueo de red del hosting, decirlo claro
     if "unreachable" in (error + error2).lower() or "timed out" in (error + error2).lower():
-        return ("El servidor de Broquer no pudo salir por los puertos de envío "
-                f"(465 y 587): el hosting los está bloqueando. Recibir correo sí "
-                f"funciona. Detalle: {error}")
+        return ("El servidor de Broquer no pudo salir por los puertos de envío (465 y 587): el hosting los está bloqueando. Recibir correo sí funciona. Detalle: " + error)
     return error
 
 
@@ -263,7 +183,6 @@ def _decodificar(valor) -> str:
 
 
 def _texto_de_mensaje(msg) -> Dict[str, str]:
-    """Extrae la mejor parte de texto y el html (si hay) de un email."""
     texto, html = "", ""
     if msg.is_multipart():
         for parte in msg.walk():
@@ -306,7 +225,7 @@ def _listar_bandeja(cta: dict, limite: int, carpeta: str) -> List[dict]:
         m.select(carpeta, readonly=True)
         ok, data = m.uid("search", None, "ALL")
         uids = (data[0] or b"").split()
-        uids = uids[-limite:][::-1]  # los más recientes primero
+        uids = uids[-limite:][::-1]
         out = []
         for uid in uids:
             ok, msgdata = m.uid("fetch", uid, "(FLAGS BODY.PEEK[])")
@@ -330,13 +249,9 @@ def _listar_bandeja(cta: dict, limite: int, carpeta: str) -> List[dict]:
             except Exception:
                 pass
             out.append({
-                "uid": uid.decode(),
-                "de": _decodificar(msg.get("From")),
-                "para": _decodificar(msg.get("To")),
-                "asunto": _decodificar(msg.get("Subject")) or "(sin asunto)",
-                "fecha": fecha,
-                "visto": visto,
-                "snippet": _snippet(partes["texto"], partes["html"]),
+                "uid": uid.decode(), "de": _decodificar(msg.get("From")), "para": _decodificar(msg.get("To")),
+                "asunto": _decodificar(msg.get("Subject")) or "(sin asunto)", "fecha": fecha,
+                "visto": visto, "snippet": _snippet(partes["texto"], partes["html"]),
             })
         return out
     finally:
@@ -349,7 +264,7 @@ def _listar_bandeja(cta: dict, limite: int, carpeta: str) -> List[dict]:
 def _leer_mensaje(cta: dict, uid: str, carpeta: str) -> Optional[dict]:
     m = _imap_conectar(cta)
     try:
-        m.select(carpeta)  # sin readonly: al leer, marcamos \Seen (comportamiento estándar)
+        m.select(carpeta)
         ok, msgdata = m.uid("fetch", uid.encode(), "(BODY[])")
         if ok != "OK" or not msgdata or msgdata[0] is None:
             return None
@@ -369,15 +284,10 @@ def _leer_mensaje(cta: dict, uid: str, carpeta: str) -> Optional[dict]:
         except Exception:
             pass
         return {
-            "uid": uid,
-            "de": _decodificar(msg.get("From")),
-            "para": _decodificar(msg.get("To")),
-            "asunto": _decodificar(msg.get("Subject")) or "(sin asunto)",
-            "fecha": fecha,
-            "texto": partes["texto"],
-            "html": partes["html"],
-            "message_id": msg.get("Message-ID") or "",
-            "references": msg.get("References") or "",
+            "uid": uid, "de": _decodificar(msg.get("From")), "para": _decodificar(msg.get("To")),
+            "asunto": _decodificar(msg.get("Subject")) or "(sin asunto)", "fecha": fecha,
+            "texto": partes["texto"], "html": partes["html"],
+            "message_id": msg.get("Message-ID") or "", "references": msg.get("References") or "",
         }
     finally:
         try:
@@ -386,8 +296,7 @@ def _leer_mensaje(cta: dict, uid: str, carpeta: str) -> Optional[dict]:
             pass
 
 
-def _enviar_smtp(cta: dict, para: str, asunto: str, cuerpo: str,
-                 in_reply_to: str = "", references: str = "") -> None:
+def _enviar_smtp(cta: dict, para: str, asunto: str, cuerpo: str, in_reply_to: str = "", references: str = "") -> None:
     msg = MIMEMultipart("alternative")
     msg["From"] = cta["email"]
     msg["To"] = para
@@ -398,10 +307,13 @@ def _enviar_smtp(cta: dict, para: str, asunto: str, cuerpo: str,
     msg.attach(MIMEText(cuerpo, "plain", "utf-8"))
 
     password = _descifrar(cta["secreto"])
+    host = cta["smtp_host"]
+    port = int(cta["smtp_port"] or (465 if cta.get("smtp_ssl") else 587))
+    _validar_destino_publico(host, port, servicio="SMTP")
     if cta.get("smtp_ssl"):
-        s = smtplib.SMTP_SSL(cta["smtp_host"], int(cta["smtp_port"] or 465), timeout=20)
+        s = smtplib.SMTP_SSL(host, port, timeout=20)
     else:
-        s = smtplib.SMTP(cta["smtp_host"], int(cta["smtp_port"] or 587), timeout=20)
+        s = smtplib.SMTP(host, port, timeout=20)
         s.starttls()
     try:
         s.login(cta["usuario"], password)
@@ -413,12 +325,10 @@ def _enviar_smtp(cta: dict, para: str, asunto: str, cuerpo: str,
             pass
 
 
-# ── Endpoints ───────────────────────────────────────────────────────────────
-
 class ConectarReq(BaseModel):
     email: str
     password: str
-    proveedor: str = ""          # gmail | outlook | icloud | otro
+    proveedor: str = ""
     imap_host: str = ""
     imap_port: int = 0
     smtp_host: str = ""
@@ -432,14 +342,12 @@ async def correo_estado(request: Request):
     cta = await _cuenta_de(uid)
     if not cta:
         return {"conectado": False, "presets": list(PRESETS.keys())}
-    return {"conectado": True, "email": cta["email"],
-            "imap_host": cta["imap_host"], "smtp_host": cta["smtp_host"]}
+    return {"conectado": True, "email": cta["email"], "imap_host": cta["imap_host"], "smtp_host": cta["smtp_host"]}
 
 
 @router.post("/correo/conectar")
 async def correo_conectar(req: ConectarReq, request: Request):
     uid = await _uid_max(request)
-
     correo = (req.email or "").strip().lower()
     password = (req.password or "").strip()
     if "@" not in correo or not password:
@@ -447,8 +355,7 @@ async def correo_conectar(req: ConectarReq, request: Request):
 
     preset = PRESETS.get((req.proveedor or "").lower(), {})
     cta = {
-        "email": correo,
-        "usuario": correo,
+        "email": correo, "usuario": correo,
         "imap_host": (req.imap_host or "").strip() or preset.get("imap_host", ""),
         "imap_port": req.imap_port or preset.get("imap_port", 993),
         "smtp_host": (req.smtp_host or "").strip() or preset.get("smtp_host", ""),
@@ -458,56 +365,50 @@ async def correo_conectar(req: ConectarReq, request: Request):
     }
     if not cta["imap_host"] or not cta["smtp_host"]:
         raise HTTPException(400, "Falta el servidor IMAP o SMTP. Elige un proveedor o captúralos manualmente.")
+    try:
+        await asyncio.to_thread(_validar_destino_publico, cta["imap_host"], int(cta["imap_port"]), servicio="IMAP")
+        await asyncio.to_thread(_validar_destino_publico, cta["smtp_host"], int(cta["smtp_port"]), servicio="SMTP")
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(400, str(exc)) from exc
 
-    # Probamos la conexión real ANTES de guardar nada
     error = await asyncio.to_thread(_probar_conexion, cta)
     aviso = ""
     if error:
         es_bloqueo_red = "no pudo salir por los puertos" in error
         if es_bloqueo_red and RESEND_API_KEY:
-            # La bandeja (IMAP) sí funciona; el envío saldrá por el relay de
-            # Broquer (Resend) con Reply-To hacia el correo del usuario.
-            aviso = ("Tu bandeja quedó conectada. El envío saldrá por el servidor "
-                     "de Broquer a nombre de " + CORREO_RELAY_FROM + " con "
-                     "respuestas dirigidas a tu correo, porque el hosting "
-                     "bloquea el envío directo.")
+            aviso = ("Tu bandeja quedó conectada. El envío saldrá por el servidor de Broquer a nombre de " +
+                     CORREO_RELAY_FROM + " con respuestas dirigidas a tu correo, porque el hosting bloquea el envío directo.")
         else:
             raise HTTPException(400, error)
 
     ahora = datetime.now(timezone.utc).isoformat()
     fila = {
-        "user_id": uid,
-        "email": cta["email"],
-        "usuario": cta["usuario"],
+        "user_id": uid, "email": cta["email"], "usuario": cta["usuario"],
         "imap_host": cta["imap_host"], "imap_port": cta["imap_port"],
-        "smtp_host": cta["smtp_host"], "smtp_port": cta["smtp_port"],
-        "smtp_ssl": cta["smtp_ssl"],
-        "secreto": _cifrar(password),
-        "activo": True,
-        "updated_at": ahora,
+        "smtp_host": cta["smtp_host"], "smtp_port": cta["smtp_port"], "smtp_ssl": cta["smtp_ssl"],
+        "secreto": _cifrar(password), "activo": True, "updated_at": ahora,
     }
     try:
-        from routers.organizaciones import get_org_id_for_user
         fila["org_id"] = await get_org_id_for_user(uid)
-    except Exception:
-        pass
+    except Exception as exc:
+        raise HTTPException(503, "No se pudo verificar tu organización.") from exc
 
-    existente = await _sb_get("correo_cuentas", {"user_id": f"eq.{uid}", "select": "id", "limit": "1"})
+    existente = await get_rows("correo_cuentas", {"user_id": f"eq.{uid}", "select": "id", "limit": "1"})
     if existente:
-        await _sb_patch("correo_cuentas", {"user_id": f"eq.{uid}"}, fila)
+        await patch_rows("correo_cuentas", {"user_id": f"eq.{uid}"}, fila)
     else:
         fila["created_at"] = ahora
-        creado = await _sb_post("correo_cuentas", fila)
-        if creado is None:
-            raise HTTPException(502, "No se pudo guardar la cuenta. Corre la migración migracion-correo.sql.")
-
+        try:
+            await post_rows("correo_cuentas", fila)
+        except Exception as exc:
+            raise HTTPException(502, "No se pudo guardar la cuenta. Corre la migración migracion-correo.sql.") from exc
     return {"ok": True, "email": correo, "aviso": aviso}
 
 
 @router.delete("/correo/desconectar")
 async def correo_desconectar(request: Request):
     uid = await _uid(request)
-    await _sb_delete("correo_cuentas", {"user_id": f"eq.{uid}"})
+    await delete_rows("correo_cuentas", {"user_id": f"eq.{uid}"})
     return {"ok": True}
 
 
@@ -562,35 +463,25 @@ async def correo_enviar(req: EnviarReq, request: Request):
     if "@" not in para or not cuerpo:
         raise HTTPException(400, "Captura el destinatario y el mensaje.")
     try:
-        await asyncio.to_thread(_enviar_smtp, cta, para, asunto, cuerpo,
-                                req.in_reply_to or "", req.references or "")
+        await asyncio.to_thread(_enviar_smtp, cta, para, asunto, cuerpo, req.in_reply_to or "", req.references or "")
         return {"ok": True, "via": "smtp"}
     except Exception as e:
         bloqueo_red = "unreachable" in str(e).lower() or "timed out" in str(e).lower()
         if not (bloqueo_red and RESEND_API_KEY):
             raise HTTPException(502, f"No se pudo enviar: {e}")
 
-    # Relay: sale por Resend a nombre del dominio de Broquer, con Reply-To
-    # hacia el correo del usuario para que las respuestas lleguen a su bandeja.
     import html as _html
     cuerpo_html = "<p>" + _html.escape(cuerpo).replace("\n", "<br>") + "</p>"
     payload = {
         "from": f"{cta['email']} vía Broquer <{CORREO_RELAY_FROM}>",
-        "to": [d.strip() for d in para.split(",") if d.strip()],
-        "reply_to": cta["email"],
-        "subject": asunto,
-        "html": cuerpo_html,
-        "text": cuerpo,
+        "to": [d.strip() for d in para.split(",") if d.strip()], "reply_to": cta["email"],
+        "subject": asunto, "html": cuerpo_html, "text": cuerpo,
     }
     if req.in_reply_to:
-        payload["headers"] = {
-            "In-Reply-To": req.in_reply_to,
-            "References": ((req.references or "") + " " + req.in_reply_to).strip(),
-        }
+        payload["headers"] = {"In-Reply-To": req.in_reply_to, "References": ((req.references or "") + " " + req.in_reply_to).strip()}
     async with httpx.AsyncClient(timeout=25) as c:
         r = await c.post("https://api.resend.com/emails",
-                         headers={"Authorization": f"Bearer {RESEND_API_KEY}",
-                                  "Content-Type": "application/json"},
+                         headers={"Authorization": f"Bearer {RESEND_API_KEY}", "Content-Type": "application/json"},
                          json=payload)
     if r.status_code not in (200, 201, 202):
         try:

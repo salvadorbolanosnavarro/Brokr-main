@@ -49,7 +49,6 @@
 #   app.include_router(firmas_router)
 # ──────────────────────────────────────────────────────────────────────────
 
-import os
 import re
 import io
 import json
@@ -64,22 +63,27 @@ import httpx
 from fastapi import APIRouter, Request, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 
+from core.auth import require_user_id
+from core.config import settings
+from core.database import delete_rows, get_rows, patch_rows, post_rows
+from core.storage import create_signed_object_url, delete_object, download_object, upload_object
+from core.subscriptions import require_paid_feature_access
+from core.firmas_utils import _email_ok, _fecha_larga, _folio, _le_toca, _limpio, _mail_layout, _mask_email, _mask_tel, _resumen_estado, _tel
+from core.firmas_policy import ROLES, TIPOS, TIPOS_CON_AGENTE
+
 router = APIRouter(prefix="/firmas", tags=["firmas"])
 log = logging.getLogger("broquer.firmas")
 
-# ── Config (mismas env vars que main.py) ──────────────────────────────────
-SUPABASE_URL         = os.getenv("SUPABASE_URL", "").rstrip("/")
-SUPABASE_KEY         = os.getenv("SUPABASE_ANON_KEY", "") or os.getenv("SUPABASE_KEY", "")
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "") or SUPABASE_KEY
-APP_URL              = os.getenv("APP_URL", "https://broquer.app").rstrip("/")
-
-RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
-RESEND_FROM    = os.getenv("RESEND_FROM", "Broquer <hola@broquer.app>")
-
-# Plantilla de WhatsApp categoría AUTHENTICATION ya aprobada por Meta, si el
-# agente tiene una. Sin ella, a un número que nunca nos ha escrito no le llega
-# nada por WhatsApp (ventana de 24h cerrada) y el código se va por correo.
-WA_PLANTILLA_OTP = os.getenv("WA_PLANTILLA_OTP", "")
+# ── Config ────────────────────────────────────────────────────────────────
+# Compatibility aliases for domain logic. Environment names and privileged
+# credential policy live only in core.config.
+SUPABASE_URL = settings.supabase_url
+SUPABASE_KEY = settings.supabase_anon_key
+SUPABASE_SERVICE_KEY = settings.supabase_service_key
+APP_URL = settings.app_url
+RESEND_API_KEY = settings.resend_api_key
+RESEND_FROM = settings.resend_from
+WA_PLANTILLA_OTP = settings.wa_plantilla_otp
 
 BUCKET = "firmas"
 
@@ -104,35 +108,12 @@ MAX_TRAZO_BYTES = 1 * 1024 * 1024
 MIMES_IMG = {"image/jpeg", "image/png", "image/webp", "image/heic"}
 
 # ── Vocabulario del módulo ────────────────────────────────────────────────
-TIPOS = {
-    "promesa":          "Promesa de compraventa",
-    "arrendamiento":    "Contrato de arrendamiento",
-    "exclusiva":        "Contrato de exclusiva / mediación",
-    "carta_intencion":  "Carta de intención",
-    "convenio":         "Convenio de colaboración",
-    "otro":             "Documento",
-}
 
 # El rol no es cosmético: define quién es quién en la constancia y es lo
 # primero que revisa un abogado cuando lee el documento.
-ROLES = {
-    "promitente_vendedor": "Promitente vendedor",
-    "promitente_comprador": "Promitente comprador",
-    "arrendador":          "Arrendador",
-    "arrendatario":        "Arrendatario",
-    "fiador":              "Fiador",
-    "obligado_solidario":  "Obligado solidario",
-    "copropietario":       "Copropietario",
-    "conyuge":             "Cónyuge",
-    "propietario":         "Propietario",
-    "agente_mediador":     "Asesor inmobiliario",
-    "testigo":             "Testigo",
-    "otro":                "Firmante",
-}
 
 # Los tipos donde el agente SÍ puede ser parte. En los demás no debe aparecer,
 # y el frontend lo refleja escondiendo el rol.
-TIPOS_CON_AGENTE = {"exclusiva", "convenio"}
 
 # ── El texto del consentimiento ───────────────────────────────────────────
 # Esto es lo que sostiene todo lo demás. Si alguien impugna la firma, lo
@@ -162,145 +143,71 @@ CONSENTIMIENTO = (
 # INFRAESTRUCTURA
 # ══════════════════════════════════════════════════════════════════════════
 
-def _headers(prefer: Optional[str] = None) -> Dict[str, str]:
-    h = {
-        "apikey": SUPABASE_SERVICE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-        "Content-Type": "application/json",
-    }
-    if prefer:
-        h["Prefer"] = prefer
-    return h
+def _db_error(exc: Exception) -> tuple[str, str]:
+    """Return status/text for logging without leaking Core exceptions to callers."""
+    if isinstance(exc, httpx.HTTPStatusError) and exc.response is not None:
+        return str(exc.response.status_code), (exc.response.text or "")[:180]
+    return "error", str(exc)[:180]
 
 
 async def _sb_get(tabla: str, params: dict) -> List[dict]:
-    async with httpx.AsyncClient(timeout=15) as c:
-        r = await c.get(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_headers(), params=params)
-        if r.status_code != 200:
-            log.warning("GET %s -> %s %s", tabla, r.status_code, r.text[:180])
-            return []
-        return r.json()
+    try:
+        return await get_rows(tabla, params, timeout=15)
+    except Exception as exc:
+        status, text = _db_error(exc)
+        log.warning("GET %s -> %s %s", tabla, status, text)
+        return []
 
 
 async def _sb_post(tabla: str, payload, prefer: str = "return=representation") -> List[dict]:
-    async with httpx.AsyncClient(timeout=20) as c:
-        r = await c.post(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_headers(prefer), json=payload)
-        if r.status_code not in (200, 201, 204):
-            log.warning("POST %s -> %s %s", tabla, r.status_code, r.text[:180])
-            raise HTTPException(500, "No se pudo guardar. Intenta de nuevo.")
-        try:
-            return r.json()
-        except Exception:
-            return []
+    try:
+        return await post_rows(tabla, payload, prefer=prefer, timeout=20)
+    except Exception as exc:
+        status, text = _db_error(exc)
+        log.warning("POST %s -> %s %s", tabla, status, text)
+        raise HTTPException(500, "No se pudo guardar. Intenta de nuevo.") from exc
 
 
 async def _sb_patch(tabla: str, params: dict, payload: dict) -> List[dict]:
-    async with httpx.AsyncClient(timeout=20) as c:
-        r = await c.patch(f"{SUPABASE_URL}/rest/v1/{tabla}",
-                          headers=_headers("return=representation"),
-                          params=params, json=payload)
-        if r.status_code not in (200, 204):
-            log.warning("PATCH %s -> %s %s", tabla, r.status_code, r.text[:180])
-            raise HTTPException(500, "No se pudo actualizar. Intenta de nuevo.")
-        try:
-            return r.json()
-        except Exception:
-            return []
+    try:
+        return await patch_rows(
+            tabla,
+            params,
+            payload,
+            prefer="return=representation",
+            timeout=20,
+        )
+    except Exception as exc:
+        status, text = _db_error(exc)
+        log.warning("PATCH %s -> %s %s", tabla, status, text)
+        raise HTTPException(500, "No se pudo actualizar. Intenta de nuevo.") from exc
 
 
 async def _sb_delete(tabla: str, params: dict) -> None:
-    async with httpx.AsyncClient(timeout=20) as c:
-        r = await c.delete(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_headers(), params=params)
-        if r.status_code not in (200, 204):
-            log.warning("DELETE %s -> %s %s", tabla, r.status_code, r.text[:180])
-            raise HTTPException(500, "No se pudo borrar. Intenta de nuevo.")
-
-
-async def get_user_id_from_token(request: Request) -> Optional[str]:
-    """Igual que el de main.py. Duplicado a propósito: este router es autónomo."""
-    auth = request.headers.get("Authorization", "")
-    if not auth.startswith("Bearer "):
-        return None
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        return None
     try:
-        async with httpx.AsyncClient(timeout=8) as c:
-            r = await c.get(f"{SUPABASE_URL}/auth/v1/user",
-                            headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {auth[7:]}"})
-            if r.status_code == 200:
-                return r.json().get("id")
-    except Exception:
-        pass
-    return None
+        await delete_rows(tabla, params, timeout=20)
+    except Exception as exc:
+        status, text = _db_error(exc)
+        log.warning("DELETE %s -> %s %s", tabla, status, text)
+        raise HTTPException(500, "No se pudo borrar. Intenta de nuevo.") from exc
 
 
 async def _uid(request: Request) -> str:
-    uid = await get_user_id_from_token(request)
-    if not uid:
-        raise HTTPException(401, "Inicia sesión para continuar.")
-    return uid
-
-
-async def _suscripcion_activa(user_id: str) -> bool:
-    """Misma lógica que /subscription/status. Se importa en caliente porque
-    main.py importa este archivo: hacerlo arriba sería un círculo, aquí no
-    porque cuando esto corre main.py ya terminó de cargar.
-
-    Falla ABIERTO a propósito. Si Supabase parpadea, un agente que sí paga
-    no puede quedarse sin poder mandar un contrato a firma. Cobrar de más
-    por un blip de red es peor que regalar un uso."""
-    try:
-        from main import get_user_access_state, get_org_context, get_org_id_for_user
-    except Exception:
-        return True
-
-    try:
-        acceso = await get_user_access_state(user_id)
-        if not acceso.get("activo", True):
-            return False
-        if acceso.get("rol") in ("equipo", "admin"):
-            return True
-
-        ctx = await get_org_context(user_id)
-        if ctx and ctx.get("org_tipo") == "empresa":
-            vigente = ctx.get("org_activo", True)
-            vence = ctx.get("vence_el")
-            if vigente and vence:
-                try:
-                    vigente = datetime.fromisoformat(
-                        str(vence).replace("Z", "+00:00")) > datetime.now(timezone.utc)
-                except Exception:
-                    pass
-            return bool(vigente)
-
-        oid = await get_org_id_for_user(user_id)
-        filas = await _sb_get("suscripciones", {
-            "org_id": f"eq.{oid}", "select": "status",
-            "order": "updated_at.desc", "limit": "1"})
-        if not filas:
-            return False
-        return filas[0].get("status") in ("active", "trialing")
-    except Exception as e:
-        log.warning("no se pudo verificar la suscripción de %s: %s", user_id, e)
-        return True
+    return await require_user_id(
+        request,
+        detail="Inicia sesión para continuar.",
+    )
 
 
 async def _uid_max(request: Request) -> str:
-    """Para las acciones que cuestan dinero de verdad: renderizar hojas,
-    armar PDFs, mandar correos. Ver y descargar lo que ya existe NO pasa por
-    aquí, y las páginas públicas del firmante tampoco: el cliente que firma
-    no es suscriptor de nadie.
-
-    Tampoco se bloquea completar un documento ya enviado. Si a alguien se le
-    vence el plan a media firma, el trámite legal en curso se termina; lo que
-    se corta es empezar uno nuevo."""
-    uid = await _uid(request)
-    if not await _suscripcion_activa(uid):
-        raise HTTPException(
-            402, "La firma electrónica es parte de Broquer Max. Suscríbete para "
-                 "mandar documentos a firma.")
-    return uid
-
+    """Require a trusted session and active Broquer Max entitlement."""
+    return await require_paid_feature_access(
+        request,
+        detail=(
+            "La firma electrónica es parte de Broquer Max. Suscríbete para "
+            "mandar documentos a firma."
+        ),
+    )
 
 def _ip(request: Request) -> str:
     fwd = request.headers.get("x-forwarded-for", "")
@@ -342,118 +249,68 @@ async def evento(user_id: str, tipo: str, detalle: str = "",
 
 # ── Almacenamiento ────────────────────────────────────────────────────────
 
-def _limpio(nombre: str) -> str:
-    base = re.sub(r"[^A-Za-z0-9._-]+", "_", (nombre or "documento").strip())[:80]
-    return base or "documento"
 
 
 async def _subir_bytes(ruta: str, contenido: bytes, mime: str) -> None:
-    async with httpx.AsyncClient(timeout=90) as c:
-        r = await c.post(
-            f"{SUPABASE_URL}/storage/v1/object/{BUCKET}/{ruta}",
-            headers={"apikey": SUPABASE_SERVICE_KEY,
-                     "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                     "Content-Type": mime, "x-upsert": "true"},
-            content=contenido)
-        if r.status_code not in (200, 201):
-            log.warning("upload %s -> %s %s", ruta, r.status_code, r.text[:200])
-            raise HTTPException(500, "No se pudo guardar el archivo. Intenta de nuevo.")
+    try:
+        await upload_object(BUCKET, ruta, contenido, content_type=mime, timeout=90)
+    except Exception as exc:
+        log.warning("upload %s -> %s", ruta, exc)
+        raise HTTPException(500, "No se pudo guardar el archivo. Intenta de nuevo.") from exc
 
 
 async def _bajar_bytes(ruta: str) -> bytes:
-    async with httpx.AsyncClient(timeout=90) as c:
-        r = await c.get(f"{SUPABASE_URL}/storage/v1/object/{BUCKET}/{ruta}",
-                        headers={"apikey": SUPABASE_SERVICE_KEY,
-                                 "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"})
-        if r.status_code != 200:
-            log.warning("download %s -> %s", ruta, r.status_code)
-            raise HTTPException(500, "No se pudo leer el archivo guardado.")
-        return r.content
+    try:
+        return await download_object(BUCKET, ruta, timeout=90)
+    except Exception as exc:
+        log.warning("download %s -> %s", ruta, exc)
+        raise HTTPException(500, "No se pudo leer el archivo guardado.") from exc
 
 
 async def _liga_firmada(ruta: str, segundos: int) -> str:
-    async with httpx.AsyncClient(timeout=15) as c:
-        r = await c.post(f"{SUPABASE_URL}/storage/v1/object/sign/{BUCKET}/{ruta}",
-                         headers=_headers(), json={"expiresIn": segundos})
-        if r.status_code != 200:
-            log.warning("sign %s -> %s %s", ruta, r.status_code, r.text[:200])
-            raise HTTPException(500, "No se pudo abrir el archivo.")
-        return f"{SUPABASE_URL}/storage/v1" + (r.json().get("signedURL") or "")
+    try:
+        return await create_signed_object_url(
+            BUCKET,
+            ruta,
+            expires_in=segundos,
+            timeout=15,
+        )
+    except Exception as exc:
+        log.warning("sign %s -> %s", ruta, exc)
+        raise HTTPException(500, "No se pudo abrir el archivo.") from exc
 
 
 async def _borrar_ruta(ruta: str) -> None:
     if not ruta:
         return
     try:
-        async with httpx.AsyncClient(timeout=20) as c:
-            await c.delete(f"{SUPABASE_URL}/storage/v1/object/{BUCKET}/{ruta}",
-                           headers={"apikey": SUPABASE_SERVICE_KEY,
-                                    "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"})
-    except Exception as e:
-        log.warning("no se pudo borrar %s: %s", ruta, e)
+        await delete_object(BUCKET, ruta, timeout=20, ignore_missing=True)
+    except Exception as exc:
+        # Historical behavior is best-effort cleanup: deletion must never
+        # invalidate an otherwise completed signature operation.
+        log.warning("no se pudo borrar %s: %s", ruta, exc)
 
 
 # ── Folio ─────────────────────────────────────────────────────────────────
 # Sin vocales y sin los caracteres que se confunden al dictarlos por teléfono
 # (0/O, 1/I/L). Es el número que alguien va a leer en voz alta o teclear en la
 # página de verificación.
-_ALFABETO_FOLIO = "23456789BCDFGHJKMNPQRSTVWXYZ"
 
 
-def _folio() -> str:
-    cuerpo = "".join(secrets.choice(_ALFABETO_FOLIO) for _ in range(8))
-    return f"BRQ-{cuerpo}"
 
 
 def _sha256(b: bytes) -> str:
     return hashlib.sha256(b).hexdigest()
 
 
-def _fecha_larga(iso: Optional[str]) -> str:
-    """Fecha y hora en horario del centro de México, que es donde se firma."""
-    if not iso:
-        return "—"
-    try:
-        d = datetime.fromisoformat(str(iso).replace("Z", "+00:00"))
-        d = d.astimezone(timezone(timedelta(hours=-6)))
-        meses = ("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
-                 "agosto", "septiembre", "octubre", "noviembre", "diciembre")
-        return (f"{d.day} de {meses[d.month - 1]} de {d.year}, "
-                f"{d.strftime('%H:%M:%S')} (UTC-6)")
-    except Exception:
-        return str(iso)
 
 
-def _tel(v: str) -> str:
-    """Normaliza a E.164 mexicano. Un número mal normalizado es un código que
-    nunca llega y una firma que nunca ocurre."""
-    d = re.sub(r"\D", "", v or "")
-    if not d:
-        return ""
-    if d.startswith("52") and len(d) >= 12:
-        return "+" + d[:13]
-    if len(d) == 10:
-        return "+52" + d
-    if d.startswith("521") and len(d) == 13:
-        return "+52" + d[3:]
-    return "+" + d
 
 
-def _email_ok(v: str) -> bool:
-    return bool(re.match(r"^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$", (v or "").strip()))
 
 
-def _mask_tel(v: str) -> str:
-    v = v or ""
-    return ("•" * max(0, len(v) - 4)) + v[-4:] if len(v) > 4 else "••••"
 
 
-def _mask_email(v: str) -> str:
-    v = v or ""
-    if "@" not in v:
-        return "••••"
-    u, d = v.split("@", 1)
-    return (u[0] if u else "") + "•" * max(1, len(u) - 1) + "@" + d
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -571,27 +428,6 @@ async def _wa_plantilla_otp(numero: dict, telefono: str, codigo: str) -> bool:
         return False
 
 
-def _mail_layout(titulo: str, cuerpo: str, boton_texto: str = "", boton_url: str = "") -> str:
-    boton = ""
-    if boton_texto and boton_url:
-        boton = (
-            f'<tr><td style="padding:28px 0 8px;">'
-            f'<a href="{html.escape(boton_url)}" '
-            f'style="display:inline-block;background:#05203C;color:#ffffff;'
-            f'text-decoration:none;padding:14px 28px;border-radius:10px;'
-            f'font-weight:700;font-size:15px;">{html.escape(boton_texto)}</a>'
-            f'</td></tr>')
-    return f"""<!DOCTYPE html><html><body style="margin:0;padding:0;background:#F4F6F8;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#F4F6F8;padding:32px 16px;">
-<tr><td align="center">
-<table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:14px;padding:36px 32px;font-family:'DM Sans',Helvetica,Arial,sans-serif;color:#0F1B2A;">
-<tr><td style="font-size:20px;font-weight:700;letter-spacing:-0.02em;padding-bottom:14px;">{html.escape(titulo)}</td></tr>
-<tr><td style="font-size:15px;line-height:1.6;color:#3C4A5A;">{cuerpo}</td></tr>
-{boton}
-<tr><td style="padding-top:28px;border-top:1px solid #E6EAEF;margin-top:24px;font-size:12px;color:#8A97A6;line-height:1.5;">
-Enviado a través de Broquer. Si no esperabas este mensaje, ignóralo y no se realizará ninguna acción.
-</td></tr>
-</table></td></tr></table></body></html>"""
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -612,40 +448,8 @@ async def _firmantes(documento_id: str) -> List[dict]:
         "order": "orden.asc.nullsfirst,created_at.asc"})
 
 
-def _le_toca(firmante: dict, todos: List[dict]) -> bool:
-    """Con orden en null todos firman en paralelo. Con orden numérico, a cada
-    quien le toca cuando los de números menores ya terminaron. El fiador es el
-    caso de siempre: no tiene por qué obligarse si los principales no firmaron."""
-    mi_orden = firmante.get("orden")
-    if mi_orden is None:
-        return True
-    for f in todos:
-        o = f.get("orden")
-        if o is None or o >= mi_orden:
-            continue
-        if f.get("estado") != "firmado" and f.get("obligatorio", True):
-            return False
-    return True
 
 
-def _resumen_estado(doc: dict, firmantes: List[dict]) -> str:
-    if doc.get("estado") in ("cancelado", "borrador"):
-        return doc["estado"]
-    obligatorios = [f for f in firmantes if f.get("obligatorio", True)]
-    if any(f.get("estado") == "rechazado" for f in firmantes):
-        return "rechazado"
-    if obligatorios and all(f.get("estado") == "firmado" for f in obligatorios):
-        return "completo"
-    if any(f.get("estado") == "firmado" for f in firmantes):
-        return "parcial"
-    vence = doc.get("vence_at")
-    if vence:
-        try:
-            if datetime.fromisoformat(str(vence).replace("Z", "+00:00")) < datetime.now(timezone.utc):
-                return "vencido"
-        except Exception:
-            pass
-    return "enviado"
 
 
 # ══════════════════════════════════════════════════════════════════════════

@@ -33,7 +33,6 @@
 #   app.include_router(pld_router)
 # ──────────────────────────────────────────────────────────────────────────
 
-import os
 import re
 import json
 import secrets
@@ -47,14 +46,17 @@ import httpx
 from fastapi import APIRouter, Request, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 
+from core.auth import require_user_id
+from core.config import settings
+from core.database import get_rows, patch_rows, post_rows
+from core.storage import create_signed_object_url, upload_object
+
 router = APIRouter(prefix="/pld", tags=["cumplimiento"])
 log = logging.getLogger("broquer.pld")
 
-# ── Config (mismas env vars que main.py) ──────────────────────────────────
-SUPABASE_URL         = os.getenv("SUPABASE_URL", "").rstrip("/")
-SUPABASE_KEY         = os.getenv("SUPABASE_ANON_KEY", "") or os.getenv("SUPABASE_KEY", "")
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "") or SUPABASE_KEY
-APP_URL              = os.getenv("APP_URL", "https://broquer.app").rstrip("/")
+# ── Config ────────────────────────────────────────────────────────────────
+# Environment names and privileged credential policy live only in Core.
+APP_URL = settings.app_url
 
 BUCKET = "pld-expedientes"
 
@@ -125,78 +127,50 @@ CAMPOS_REQUERIDOS = {
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# ACCESO A SUPABASE (service key — se brinca RLS, por eso validamos antes)
+# ACCESO A SUPABASE — compatibilidad sobre Core
 # ══════════════════════════════════════════════════════════════════════════
 
-def _headers(prefer: Optional[str] = None) -> Dict[str, str]:
-    h = {
-        "apikey": SUPABASE_SERVICE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-        "Content-Type": "application/json",
-    }
-    if prefer:
-        h["Prefer"] = prefer
-    return h
-
-
 async def _sb_get(tabla: str, params: dict) -> List[dict]:
-    async with httpx.AsyncClient(timeout=15) as c:
-        r = await c.get(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_headers(), params=params)
-        if r.status_code != 200:
-            log.warning("GET %s -> %s %s", tabla, r.status_code, r.text[:180])
-            return []
-        return r.json()
+    try:
+        return await get_rows(tabla, params, timeout=15)
+    except httpx.HTTPStatusError as exc:
+        response = exc.response
+        log.warning("GET %s -> %s %s", tabla, response.status_code, response.text[:180])
+        return []
+    except RuntimeError:
+        return []
 
 
 async def _sb_post(tabla: str, payload, prefer: str = "return=representation") -> List[dict]:
-    async with httpx.AsyncClient(timeout=20) as c:
-        r = await c.post(f"{SUPABASE_URL}/rest/v1/{tabla}", headers=_headers(prefer), json=payload)
-        if r.status_code not in (200, 201, 204):
-            log.warning("POST %s -> %s %s", tabla, r.status_code, r.text[:180])
-            raise HTTPException(500, "No se pudo guardar. Intenta de nuevo.")
-        try:
-            return r.json()
-        except Exception:
-            return []
+    try:
+        return await post_rows(tabla, payload, prefer=prefer, timeout=20)
+    except httpx.HTTPStatusError as exc:
+        response = exc.response
+        log.warning("POST %s -> %s %s", tabla, response.status_code, response.text[:180])
+        raise HTTPException(500, "No se pudo guardar. Intenta de nuevo.") from exc
+    except RuntimeError as exc:
+        raise HTTPException(500, "No se pudo guardar. Intenta de nuevo.") from exc
 
 
 async def _sb_patch(tabla: str, params: dict, payload: dict) -> List[dict]:
-    async with httpx.AsyncClient(timeout=20) as c:
-        r = await c.patch(f"{SUPABASE_URL}/rest/v1/{tabla}",
-                          headers=_headers("return=representation"),
-                          params=params, json=payload)
-        if r.status_code not in (200, 204):
-            log.warning("PATCH %s -> %s %s", tabla, r.status_code, r.text[:180])
-            raise HTTPException(500, "No se pudo actualizar. Intenta de nuevo.")
-        try:
-            return r.json()
-        except Exception:
-            return []
-
-
-async def get_user_id_from_token(request: Request) -> Optional[str]:
-    """Igual que el de main.py. Duplicado a propósito: este router es autónomo."""
-    auth = request.headers.get("Authorization", "")
-    if not auth.startswith("Bearer "):
-        return None
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        return None
     try:
-        async with httpx.AsyncClient(timeout=8) as c:
-            r = await c.get(f"{SUPABASE_URL}/auth/v1/user",
-                            headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {auth[7:]}"})
-            if r.status_code == 200:
-                return r.json().get("id")
-    except Exception:
-        pass
-    return None
+        return await patch_rows(
+            tabla,
+            params,
+            payload,
+            prefer="return=representation",
+            timeout=20,
+        )
+    except httpx.HTTPStatusError as exc:
+        response = exc.response
+        log.warning("PATCH %s -> %s %s", tabla, response.status_code, response.text[:180])
+        raise HTTPException(500, "No se pudo actualizar. Intenta de nuevo.") from exc
+    except RuntimeError as exc:
+        raise HTTPException(500, "No se pudo actualizar. Intenta de nuevo.") from exc
 
 
 async def _uid(request: Request) -> str:
-    uid = await get_user_id_from_token(request)
-    if not uid:
-        raise HTTPException(401, "Inicia sesión para continuar.")
-    return uid
+    return await require_user_id(request, detail="Inicia sesión para continuar.")
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -711,16 +685,17 @@ async def _subir(user_id: str, expediente_id: str, tipo: str,
     sello = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
     ruta = f"{user_id}/{expediente_id}/{tipo}-{sello}-{_limpio(archivo.filename)}"
 
-    async with httpx.AsyncClient(timeout=60) as c:
-        r = await c.post(
-            f"{SUPABASE_URL}/storage/v1/object/{BUCKET}/{ruta}",
-            headers={"apikey": SUPABASE_SERVICE_KEY,
-                     "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                     "Content-Type": mime, "x-upsert": "true"},
-            content=contenido)
-        if r.status_code not in (200, 201):
-            log.warning("upload -> %s %s", r.status_code, r.text[:200])
-            raise HTTPException(500, "No se pudo guardar el archivo. Intenta de nuevo.")
+    try:
+        await upload_object(
+            BUCKET,
+            ruta,
+            contenido,
+            content_type=mime,
+            timeout=60,
+        )
+    except Exception as exc:
+        log.warning("upload PLD falló: %s", exc)
+        raise HTTPException(500, "No se pudo guardar el archivo. Intenta de nuevo.") from exc
 
     filas = await _sb_post("pld_documentos", {
         "user_id": user_id, "expediente_id": expediente_id, "tipo": tipo,
@@ -772,18 +747,21 @@ async def ver_documento(request: Request, documento_id: str):
         raise HTTPException(404, "No encontré ese documento.")
     ruta = filas[0].get("ruta")
 
-    async with httpx.AsyncClient(timeout=15) as c:
-        r = await c.post(f"{SUPABASE_URL}/storage/v1/object/sign/{BUCKET}/{ruta}",
-                         headers=_headers(), json={"expiresIn": FIRMA_SEGUNDOS})
-        if r.status_code != 200:
-            log.warning("sign -> %s %s", r.status_code, r.text[:200])
-            raise HTTPException(500, "No se pudo abrir el documento.")
-        firmada = r.json().get("signedURL", "")
+    try:
+        firmada = await create_signed_object_url(
+            BUCKET,
+            ruta,
+            expires_in=FIRMA_SEGUNDOS,
+            timeout=15,
+        )
+    except Exception as exc:
+        log.warning("sign PLD falló: %s", exc)
+        raise HTTPException(500, "No se pudo abrir el documento.") from exc
 
     await bitacora(uid, "documento_consultado",
                    f"Se abrió el documento «{filas[0].get('tipo')}».",
                    expediente_id=filas[0].get("expediente_id"), ip=_ip(request))
-    return {"url": f"{SUPABASE_URL}/storage/v1{firmada}", "expira_segundos": FIRMA_SEGUNDOS}
+    return {"url": firmada, "expira_segundos": FIRMA_SEGUNDOS}
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -974,15 +952,17 @@ async def generar_aviso(request: Request, body: AvisoIn):
     xml = construir_xml(cfg, aviso, ops, expedientes)
     ruta = f"{uid}/avisos/aviso-{body.periodo}-{referencia}.xml"
 
-    async with httpx.AsyncClient(timeout=30) as c:
-        r = await c.post(f"{SUPABASE_URL}/storage/v1/object/{BUCKET}/{ruta}",
-                         headers={"apikey": SUPABASE_SERVICE_KEY,
-                                  "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                                  "Content-Type": "application/xml", "x-upsert": "true"},
-                         content=xml.encode("utf-8"))
-        if r.status_code not in (200, 201):
-            log.warning("upload xml -> %s %s", r.status_code, r.text[:200])
-            raise HTTPException(500, "Se armó el aviso pero no se pudo guardar el archivo.")
+    try:
+        await upload_object(
+            BUCKET,
+            ruta,
+            xml.encode("utf-8"),
+            content_type="application/xml",
+            timeout=30,
+        )
+    except Exception as exc:
+        log.warning("upload XML PLD falló: %s", exc)
+        raise HTTPException(500, "Se armó el aviso pero no se pudo guardar el archivo.") from exc
 
     ahora = datetime.now(timezone.utc).isoformat()
     await _sb_patch("pld_avisos", {"id": f"eq.{aviso_id}"},
