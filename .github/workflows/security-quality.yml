@@ -1,0 +1,27 @@
+name: Security Branch Quality
+
+on:
+  push:
+    branches:
+      - agent/security-final
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements-ci.txt
+
+      - name: Run canonical Quality gate
+        run: bash scripts/run_quality.sh
