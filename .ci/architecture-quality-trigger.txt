@@ -1,2 +1,0 @@
-extract=scripts/refactor_main_extract_admin_usage_core.py
-retry=7
