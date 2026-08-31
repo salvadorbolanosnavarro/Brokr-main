@@ -39,7 +39,7 @@ replacement = '''from routers.whatsapp_connect_api import wa2_connect_core
 
 @router.post("/connect")
 async def wa2_connect(req: ConnectReq, request: Request):
-    return await wa2_connect_core(
+    core_resultado = await wa2_connect_core(
         req, request,
         _require_user=_require_user, META_APP_ID=META_APP_ID,
         META_APP_SECRET=META_APP_SECRET, HTTPException=HTTPException,
@@ -49,6 +49,16 @@ async def wa2_connect(req: ConnectReq, request: Request):
         WA2_VERIFY_TOKEN=WA2_VERIFY_TOKEN, WA2_REGISTER_PIN=WA2_REGISTER_PIN,
         TRAINING_DEFAULTS=TRAINING_DEFAULTS,
     )
+    # Mantener el shape de respuesta local es un guard deliberado: nunca debe
+    # poder propagarse el access_token de Meta aunque cambie el core interno.
+    resultado = {"ok": True, "numero_id": core_resultado["numero_id"],
+                 "phone_number": core_resultado["phone_number"],
+                 "waba_name": core_resultado["waba_name"],
+                 "alias": core_resultado["alias"],
+                 "webhook_verificado": core_resultado["webhook_verificado"]}
+    if "advertencia" in core_resultado:
+        resultado["advertencia"] = core_resultado["advertencia"]
+    return resultado
 
 '''
 new = "".join(lines[:start]) + replacement + "".join(lines[end:])
