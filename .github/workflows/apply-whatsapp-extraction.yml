@@ -3,7 +3,7 @@ name: Apply bounded WhatsApp extraction
 on:
   push:
     branches:
-      - agent/architecture-whatsapp-final
+      - agent/architecture-cleanup
     paths:
       - '.ci/whatsapp-extraction-trigger.txt'
 
@@ -17,7 +17,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: agent/architecture-whatsapp-final
+          ref: agent/architecture-cleanup
           fetch-depth: 0
 
       - name: Set up Python
@@ -82,4 +82,4 @@ jobs:
           EOF
           git add .ci/whatsapp-quality-pass.txt .ci/whatsapp-quality-result.txt
           git commit -m "ci: certify bounded WhatsApp extraction"
-          git push origin HEAD:agent/architecture-whatsapp-final
+          git push origin HEAD:agent/architecture-cleanup
