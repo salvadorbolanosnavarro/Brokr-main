@@ -14,10 +14,12 @@ from core.config import settings
 
 
 async def get_user_id_from_token(request: Request) -> Optional[str]:
-    """Return the authenticated Supabase user id, or ``None`` when invalid.
+    """Return the authenticated and application-active Supabase user id.
 
-    This preserves the legacy non-raising helper contract so callers can migrate
-    incrementally. New protected endpoints should normally use ``require_user_id``.
+    Supabase validates the bearer token first. Broquer then enforces its own
+    ``usuarios.activo`` flag with Service Role because disabling an application
+    account does not automatically revoke already-issued Supabase sessions.
+    Any uncertainty in that second authorization check fails closed.
     """
     auth = request.headers.get("Authorization", "")
     if not auth.startswith("Bearer "):
@@ -39,18 +41,47 @@ async def get_user_id_from_token(request: Request) -> Optional[str]:
                     "Authorization": f"Bearer {token}",
                 },
             )
+            if response.status_code != 200:
+                return None
+
+            try:
+                user_id = response.json().get("id")
+            except ValueError:
+                return None
+            if not isinstance(user_id, str) or not user_id:
+                return None
+
+            # Application-level authorization. This deliberately uses the
+            # privileged key: RLS must not let a user hide their own disabled
+            # flag from the server-side access decision.
+            if not settings.supabase_service_key:
+                return None
+            active_response = await client.get(
+                f"{settings.supabase_url}/rest/v1/usuarios",
+                headers={
+                    "apikey": settings.supabase_service_key,
+                    "Authorization": f"Bearer {settings.supabase_service_key}",
+                },
+                params={
+                    "id": f"eq.{user_id}",
+                    "select": "activo",
+                    "limit": "1",
+                },
+            )
     except httpx.HTTPError:
         return None
 
-    if response.status_code != 200:
+    if active_response.status_code != 200:
         return None
-
     try:
-        user_id = response.json().get("id")
+        rows = active_response.json()
     except ValueError:
         return None
-
-    return user_id if isinstance(user_id, str) and user_id else None
+    if not isinstance(rows, list) or not rows:
+        return None
+    if rows[0].get("activo") is False:
+        return None
+    return user_id
 
 
 async def require_user_id(
@@ -58,11 +89,7 @@ async def require_user_id(
     *,
     detail: str = "Sesión requerida.",
 ) -> str:
-    """Return user id or raise a consistent HTTP 401 response.
-
-    ``detail`` exists only to preserve domain-specific legacy copy while all
-    authentication mechanics remain centralized here.
-    """
+    """Return active user id or raise a consistent HTTP 401 response."""
     user_id = await get_user_id_from_token(request)
     if not user_id:
         raise HTTPException(
