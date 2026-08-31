@@ -1,2 +1,0 @@
-transform=scripts/refactor_main_extract_dead_facebook_core_imports_core.py
-retry=104
