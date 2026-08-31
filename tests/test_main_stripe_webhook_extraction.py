@@ -17,13 +17,16 @@ class StripeWebhookExtractionTests(unittest.TestCase):
         self.assertNotIn('@app.post("/subscription/webhook")', self.main)
         self.assertIn('app.include_router(stripe_webhook_router)', self.main)
 
-    def test_signature_contract_is_preserved(self):
+    def test_signature_contract_is_hardened(self):
         r = self.router
         self.assertIn('if not STRIPE_WEBHOOK_SECRET:', r)
         self.assertIn('raise HTTPException(status_code=503, detail="Webhook no disponible.")', r)
+        self.assertIn('STRIPE_SIGNATURE_TOLERANCE_SECONDS = 300', r)
         self.assertIn('signed_payload = f"{ts}.{payload.decode()}"', r)
-        self.assertIn('_hmac.compare_digest(expected, v1)', r)
-        self.assertIn('except Exception:\n            raise HTTPException(status_code=400, detail="Error verificando webhook.")', r)
+        self.assertIn('hmac.compare_digest(expected, candidate)', r)
+        self.assertIn('if abs(current - timestamp) > max(0, int(tolerance)):', r)
+        self.assertIn('detail="Firma de webhook expirada."', r)
+        self.assertIn('elif key == "v1" and value:', r)
 
     def test_checkout_completed_contract_is_preserved(self):
         r = self.router
