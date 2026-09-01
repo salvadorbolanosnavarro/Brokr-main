@@ -7,7 +7,9 @@ subscription status through shared Core infrastructure.
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from typing import Any, Optional
 
+import httpx
 from fastapi import HTTPException, Request
 
 from core.auth import require_user_id
@@ -75,6 +77,32 @@ async def trial_max_available(user_id: str) -> bool:
         return False
 
 
+async def find_latest_subscription(
+    user_id: str,
+    org_id: Optional[str],
+    *,
+    select: str = "*",
+    timeout: httpx.Timeout | float = 8,
+) -> Optional[dict[str, Any]]:
+    """Return the most recent ``suscripciones`` row visible to this account.
+
+    A user without an organization yet must still be found by ``user_id`` —
+    filtering by ``org_id`` alone when it is ``None`` builds an ``eq.None``
+    PostgREST filter that Supabase rejects with 400, which silently hides a
+    real, active subscription recorded directly against the user. Once an
+    org exists, match either ``org_id`` or ``user_id`` so a subscription
+    created before the account joined an org is not lost, and keep only the
+    most recently updated row.
+    """
+    if org_id:
+        filters: dict[str, Any] = {"or": f"(org_id.eq.{org_id},user_id.eq.{user_id})"}
+    else:
+        filters = {"user_id": f"eq.{user_id}"}
+    filters.update({"select": select, "order": "updated_at.desc", "limit": "1"})
+    rows = await get_rows("suscripciones", filters, timeout=timeout)
+    return rows[0] if rows else None
+
+
 async def has_paid_feature_access(user_id: str) -> bool:
     """Return whether a user may access Broquer paid features.
 
@@ -115,22 +143,11 @@ async def has_paid_feature_access(user_id: str) -> bool:
             )
 
         org_id = await get_org_id_for_user(user_id)
-        if not org_id:
-            return False
-
-        subscriptions = await get_rows(
-            "suscripciones",
-            {
-                "org_id": f"eq.{org_id}",
-                "select": "status",
-                "order": "updated_at.desc",
-                "limit": "1",
-            },
-            timeout=10,
+        subscription = await find_latest_subscription(
+            user_id, org_id, select="status", timeout=10
         )
         return bool(
-            subscriptions
-            and subscriptions[0].get("status") in ACTIVE_SUBSCRIPTION_STATUSES
+            subscription and subscription.get("status") in ACTIVE_SUBSCRIPTION_STATUSES
         )
     except Exception:
         return False

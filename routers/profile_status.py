@@ -7,7 +7,12 @@ from core.auth import get_user_id_from_token
 from core.config import settings
 from core.database import get_rows
 from core.facebook_tokens import facebook_token_state
-from core.subscriptions import expire_trial_subscription, trial_has_expired, trial_max_available
+from core.subscriptions import (
+    expire_trial_subscription,
+    find_latest_subscription,
+    trial_has_expired,
+    trial_max_available,
+)
 from core.user_access import get_user_rol
 from core.organizations import get_org_id_for_user
 
@@ -73,13 +78,8 @@ async def get_profile_status(request: Request):
             }
         else:
             org_id = await get_org_id_for_user(user_id)
-            sub_rows = await get_rows(
-                "suscripciones",
-                {"org_id": f"eq.{org_id}", "select": "*", "order": "updated_at.desc", "limit": "1"},
-                timeout=6,
-            )
-            if sub_rows:
-                row = sub_rows[0]
+            row = await find_latest_subscription(user_id, org_id, timeout=6)
+            if row:
                 status = row.get("status")
                 active = status in ("active", "trialing")
                 if status == "trialing" and row.get("trial_hasta") and trial_has_expired(row.get("trial_hasta")):
