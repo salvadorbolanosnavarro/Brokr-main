@@ -2575,7 +2575,7 @@ async function generarContrato(soloDatos){
 // con los nombres que ya están capturados aquí.
 async function mandarAFirma(){
   const datos = await generarContrato(true);
-  if(!datos) return;                       // la validación ya pintó el error
+  if(!datos) return;
 
   const esp = getClausulasTexto();
   if(esp.length) datos.clausulas_especiales = esp;
@@ -2585,17 +2585,50 @@ async function mandarAFirma(){
   document.getElementById('err').classList.remove('show');
   document.getElementById('loading').classList.add('show');
 
+  let tok = null;
+  try { tok = window.brokrSb && window.brokrSb.ensureToken ? await window.brokrSb.ensureToken() : null; } catch(e){}
+  if(!tok){ try { tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token'); } catch(e){} }
+
+  const headers = { 'Content-Type':'application/json', ...(tok ? { Authorization: 'Bearer ' + tok } : {}) };
+
   try{
-    const tok = window.brokrSb ? await window.brokrSb.ensureToken() : null;
+    // Paso 1: encolar el job (respuesta inmediata < 1s, evita timeout de Railway)
     const res = await fetch(`${API}/firmas/desde-contrato`, {
       method: 'POST',
-      headers: { 'Content-Type':'application/json',
-                 ...(tok ? { Authorization: 'Bearer ' + tok } : {}) },
+      headers,
       body: JSON.stringify({ tipo: tipoActual, datos })
     });
     const j = await res.json().catch(()=>({}));
     if(!res.ok) throw new Error(j.detail || 'No se pudo preparar el documento para firma.');
-    location.href = 'firmas.html?d=' + encodeURIComponent(j.documento_id);
+
+    const jobId = j.job_id;
+    if(!jobId) throw new Error('No se recibió el identificador del proceso.');
+
+    // Paso 2: polling cada 2s hasta que el job termine (máx 90s)
+    const MAX_INTENTOS = 45;
+    for(let i = 0; i < MAX_INTENTOS; i++){
+      await new Promise(r => setTimeout(r, 2000));
+
+      // Refrescar token si el polling tarda
+      let pollTok = tok;
+      try { if(window.brokrSb?.ensureToken) pollTok = await window.brokrSb.ensureToken(); } catch(e){}
+
+      const poll = await fetch(`${API}/firmas/desde-contrato/${jobId}`, {
+        headers: { ...(pollTok ? { Authorization: 'Bearer ' + pollTok } : {}) }
+      });
+      if(!poll.ok) continue;
+      const estado = await poll.json().catch(()=>({}));
+
+      if(estado.estado === 'listo'){
+        location.href = 'firmas.html?d=' + encodeURIComponent(estado.documento_id);
+        return;
+      }
+      if(estado.estado === 'error'){
+        throw new Error(estado.error || 'No se pudo generar el contrato para firma.');
+      }
+      // pendiente o procesando → seguir esperando
+    }
+    throw new Error('El proceso tardó demasiado. Intenta de nuevo en unos momentos.');
   } catch(e){
     const el = document.getElementById('err');
     el.textContent = e.message || 'No se pudo preparar el documento para firma.';
