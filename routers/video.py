@@ -36,10 +36,34 @@
 #   backend. Aguanta de sobra para validar y para los primeros cientos de
 #   agentes. Con volumen real hay que moverlo a un worker aparte en Railway
 #   con cola. Queda identificado, no se construye todavía.
+#
+# EL RECORRIDO SE PUEDE PLANEAR CON GEMINI, PERO NUNCA SE PINTA CON GEMINI
+#   Antes de armar el video, si hay GEMINI_API_KEY configurada, se le muestran
+#   las fotos a Gemini para que decida (a) en qué orden caminaría un visitante
+#   real por la propiedad y (b) hacia qué punto real de cada foto conviene que
+#   la cámara "avance" (una puerta, un pasillo, una alberca), en vez del
+#   patrón de paneo fijo de siempre. Esto es análisis de visión puro: Gemini
+#   nunca recibe instrucciones de edición ni regresa una imagen, solo texto.
+#   El pixel que sale en el video sigue siendo, sin excepción, el de ffmpeg
+#   sobre la foto real — la decisión de la sección anterior no cambia. Si
+#   Gemini no está configurada, tarda o responde algo inválido, el video se
+#   arma igual con el orden y el paneo de siempre: es una mejora, no un
+#   requisito.
+#
+# ACCESO LIBRE, SIN GATE DE PLAN (por ahora)
+#   Ni este router ni el freemium gate del frontend (BK_PREMIUM_ACTIONS en
+#   app-shell.js) restringen este módulo a Broquer Max. Es decisión de
+#   producto: cualquier usuario autenticado, tenga o no plan de pago, puede
+#   generar el recorrido y usar el editor de fotos embebido en video.html.
+#   No agregar `require_paid_feature_access` ni un gate en el frontend aquí
+#   sin confirmarlo antes con el dueño del producto.
 # ──────────────────────────────────────────────────────────────────────────
 
 import os
 import re
+import io
+import json
+import base64
 import shutil
 import asyncio
 import logging
@@ -48,13 +72,17 @@ import subprocess
 from datetime import datetime, timezone
 from typing import Optional, List
 
+import httpx
 from fastapi import APIRouter, Request, HTTPException, BackgroundTasks
+from PIL import Image
 from pydantic import BaseModel
 
 from core.auth import require_user_id
+from core.config import settings
 from core.database import delete_rows, get_rows, patch_rows, post_rows
 from core.http import fetch_public_bytes
 from core.storage import delete_object, upload_object
+from core.telemetry import track_usage
 
 router = APIRouter(prefix="/video", tags=["video"])
 log = logging.getLogger("broquer.video")
@@ -142,12 +170,210 @@ def _hay_ffmpeg() -> bool:
     return shutil.which("ffmpeg") is not None
 
 
+def _clamp01(valor) -> float:
+    try:
+        return max(0.0, min(1.0, float(valor)))
+    except (TypeError, ValueError):
+        return 0.5
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# PLANEACIÓN DEL RECORRIDO CON GEMINI — SOLO VISIÓN, CERO PIXELES GENERADOS
+# ══════════════════════════════════════════════════════════════════════════
+# Gemini mira las fotos reales y contesta texto: en qué orden caminaría un
+# visitante por la propiedad, y hacia qué punto real de cada foto conviene
+# que la cámara "avance". Nunca se le pide editar nada ni regresa una imagen.
+# Si no hay GEMINI_API_KEY, si tarda o si responde algo que no es una
+# permutación válida de las fotos recibidas, se regresa `None` y quien llama
+# usa el orden y el paneo de siempre — esto es una mejora, nunca un
+# requisito para generar el video.
+# ══════════════════════════════════════════════════════════════════════════
+
+MOVIMIENTOS_VALIDOS = {"zoom_in", "pan_izq_a_der", "pan_der_a_izq"}
+ETIQUETAS_RECORRIDO = (
+    "fachada", "sala", "comedor", "cocina", "recamara", "bano",
+    "patio", "alberca", "pasillo", "estudio", "otro",
+)
+
+GEMINI_API_KEY = settings.gemini_api_key
+GEMINI_VISION_MODEL = settings.gemini_vision_model
+GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta"
+TIMEOUT_PLAN = 25
+PLAN_LADO_MAX = 640  # basta para que Gemini "vea" la foto; nunca se usa para editarla
+
+PROMPT_RECORRIDO = (
+    "Eres un fotógrafo inmobiliario planeando un video de recorrido "
+    "(walkthrough) para redes sociales, a partir de estas {n} fotos reales de "
+    "una propiedad, numeradas de 0 a {ultimo} en el orden en que se muestran.\n"
+    "1) Decide el orden en que un visitante recorrería la propiedad a pie de "
+    "forma natural (por ejemplo: fachada o exterior, luego sala o vestíbulo, "
+    "comedor, cocina, recámaras, baños, y patio/alberca/exterior al final), "
+    "usando solo lo que de verdad se ve en cada foto — no inventes cuartos "
+    "que no están.\n"
+    "2) Para cada foto, en su estado original, identifica un solo punto de "
+    "interés real hacia el cual la cámara debería avanzar o girar para que "
+    "se sienta como un paso más del recorrido (una puerta, un pasillo, una "
+    "ventana, la fuga de la habitación, una alberca), y decide si conviene "
+    "un acercamiento (zoom_in) hacia ese punto o un barrido lateral "
+    "(pan_izq_a_der o pan_der_a_izq) que siga la amplitud del espacio.\n"
+    "Responde ÚNICAMENTE con este JSON, sin texto adicional ni explicación:\n"
+    '{{"orden": [índices originales en el orden del recorrido], "fotos": '
+    '[{{"indice": <índice original>, "etiqueta": <una de: {etiquetas}>, '
+    '"movimiento": "zoom_in" | "pan_izq_a_der" | "pan_der_a_izq", '
+    '"foco_x": <0.0 a 1.0>, "foco_y": <0.0 a 1.0>}}]}}'
+)
+
+
+def _miniatura_b64(ruta: str) -> Optional[str]:
+    """JPEG chico en base64 solo para que Gemini vea la foto — nunca se guarda ni se edita."""
+    try:
+        with open(ruta, "rb") as fh:
+            pil = Image.open(fh)
+            pil.load()
+        pil = pil.convert("RGB")
+        w, h = pil.size
+        if max(w, h) > PLAN_LADO_MAX:
+            escala = PLAN_LADO_MAX / max(w, h)
+            pil = pil.resize((int(w * escala), int(h * escala)), Image.LANCZOS)
+        buf = io.BytesIO()
+        pil.save(buf, format="JPEG", quality=80)
+        return base64.b64encode(buf.getvalue()).decode()
+    except Exception as exc:
+        log.info("[video] no se pudo preparar una miniatura para el plan: %s", exc)
+        return None
+
+
+async def _planear_recorrido(rutas_locales: List[str], user_id: str) -> Optional[dict]:
+    """Le pregunta a Gemini el orden y la dirección de cámara del recorrido.
+
+    Regresa ``{"orden": [...], "movimientos": [...]}`` (ya alineado al orden
+    devuelto, listo para pasarse a `_construir_comando`) o `None` si no hay
+    nada aprovechable. Nunca lanza.
+    """
+    if not GEMINI_API_KEY or len(rutas_locales) < 2:
+        return None
+
+    try:
+        imagenes_b64 = [_miniatura_b64(r) for r in rutas_locales]
+        if any(img is None for img in imagenes_b64):
+            return None  # si no se pudo leer una foto, mejor no arriesgar el orden
+
+        partes = [{"text": PROMPT_RECORRIDO.format(
+            n=len(rutas_locales),
+            ultimo=len(rutas_locales) - 1,
+            etiquetas=", ".join(ETIQUETAS_RECORRIDO),
+        )}]
+        for img_b64 in imagenes_b64:
+            partes.append({"inline_data": {"mime_type": "image/jpeg", "data": img_b64}})
+
+        payload = {
+            "contents": [{"parts": partes}],
+            "generationConfig": {"responseMimeType": "application/json"},
+        }
+        modelos = list(dict.fromkeys([GEMINI_VISION_MODEL, "gemini-2.5-flash", "gemini-flash-latest"]))
+
+        data = None
+        modelo_usado = None
+        async with httpx.AsyncClient(timeout=TIMEOUT_PLAN) as client:
+            for modelo in modelos:
+                if not modelo:
+                    continue
+                url = f"{GEMINI_BASE}/models/{modelo}:generateContent?key={GEMINI_API_KEY}"
+                r = await client.post(url, json=payload, headers={"Content-Type": "application/json"})
+                if r.status_code == 200:
+                    data = r.json()
+                    modelo_usado = modelo
+                    break
+                if r.status_code == 429:
+                    log.info("[video] cuota de Gemini agotada, se usa el orden de siempre")
+                    return None
+                # 400/404/lo que sea: se prueba el siguiente modelo de la lista
+
+        if not data:
+            return None
+
+        texto = "".join(
+            p.get("text", "")
+            for p in data["candidates"][0]["content"]["parts"]
+            if "text" in p
+        )
+        crudo = json.loads(texto)
+
+        n = len(rutas_locales)
+        orden = crudo.get("orden")
+        if not isinstance(orden, list) or sorted(orden) != list(range(n)):
+            log.info("[video] Gemini devolvió un orden inválido, se ignora el plan")
+            return None
+
+        por_indice: dict = {}
+        for f in crudo.get("fotos") or []:
+            try:
+                idx = int(f.get("indice"))
+            except (TypeError, ValueError):
+                continue
+            if idx not in range(n):
+                continue
+            tipo = f.get("movimiento")
+            if tipo not in MOVIMIENTOS_VALIDOS:
+                tipo = "zoom_in"
+            por_indice[idx] = {
+                "tipo": tipo,
+                "foco_x": _clamp01(f.get("foco_x", 0.5)),
+                "foco_y": _clamp01(f.get("foco_y", 0.5)),
+            }
+
+        movimientos = [
+            por_indice.get(i, {"tipo": "zoom_in", "foco_x": 0.5, "foco_y": 0.5})
+            for i in orden
+        ]
+
+        usage = data.get("usageMetadata") or {}
+        await track_usage(
+            user_id=user_id,
+            modulo="video",
+            herramienta="recorrido-ia",
+            proveedor="gemini",
+            modelo=modelo_usado or GEMINI_VISION_MODEL,
+            tokens_in=int(usage.get("promptTokenCount") or 0),
+            tokens_out=int(usage.get("candidatesTokenCount") or 0),
+        )
+
+        return {"orden": orden, "movimientos": movimientos}
+    except Exception as exc:
+        log.info("[video] plan de recorrido con Gemini no disponible: %s", exc)
+        return None
+
+
+async def _aplicar_plan_recorrido(locales: List[str], user_id: str):
+    """Reordena las fotos y arma los movimientos de cámara según Gemini.
+
+    Sin plan aprovechable, regresa las fotos en su orden original y `None`
+    para que el render use el patrón de paneo determinista de siempre. Nunca
+    lanza: esto jamás debe tumbar un video.
+    """
+    try:
+        plan = await _planear_recorrido(locales, user_id)
+    except Exception as exc:
+        log.info("[video] plan de recorrido falló, se usa el orden original: %s", exc)
+        return locales, None
+    if not plan:
+        return locales, None
+    return [locales[i] for i in plan["orden"]], plan["movimientos"]
+
+
 # ══════════════════════════════════════════════════════════════════════════
 # EL RENDER
 # ══════════════════════════════════════════════════════════════════════════
 
-def _filtro_ken_burns(idx: int, ancho: int, alto: int) -> str:
-    """Una toma: escalar, recortar a cover, y encima paneo o zoom."""
+def _filtro_ken_burns(idx: int, ancho: int, alto: int, movimiento: Optional[dict] = None) -> str:
+    """Una toma: escalar, recortar a cover, y encima paneo o zoom.
+
+    `movimiento`, cuando viene del plan de Gemini (ver más abajo), trae hacia
+    qué punto real de la foto debe 'caminar' la cámara — una puerta, un
+    pasillo, una ventana — en vez del patrón fijo de siempre. Sin plan
+    aprovechable, `movimiento` es `None` y se usa exactamente el mismo patrón
+    determinista que este módulo siempre tuvo.
+    """
     frames = int(SEG_POR_FOTO * FPS)
     gran_w = int(ancho * OVERSAMPLE) // 2 * 2
     gran_h = int(alto * OVERSAMPLE) // 2 * 2
@@ -157,15 +383,32 @@ def _filtro_ken_burns(idx: int, ancho: int, alto: int) -> str:
         f"crop={gran_w}:{gran_h},setsar=1"
     )
 
-    modo = idx % 4
-    if modo == 0:
-        mov = f"z='1+{ZOOM_MAX - 1.0:.4f}*on/{frames}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
-    elif modo == 1:
-        mov = f"z='{ZOOM_MAX}':x='(iw-iw/zoom)*(on/{frames})':y='ih/2-(ih/zoom/2)'"
-    elif modo == 2:
-        mov = f"z='1+{ZOOM_MAX - 1.0:.4f}*on/{frames}':x='iw/2-(iw/zoom/2)':y='ih*0.60-(ih/zoom/2)'"
-    else:
-        mov = f"z='{ZOOM_MAX}':x='(iw-iw/zoom)*(1-on/{frames})':y='ih/2-(ih/zoom/2)'"
+    tipo = (movimiento or {}).get("tipo")
+    foco_x = _clamp01((movimiento or {}).get("foco_x", 0.5))
+    foco_y = _clamp01((movimiento or {}).get("foco_y", 0.5))
+
+    if tipo not in MOVIMIENTOS_VALIDOS:
+        # Patrón de siempre, alternado por posición — idéntico al original.
+        modo = idx % 4
+        if modo == 0:
+            tipo, foco_x, foco_y = "zoom_in", 0.5, 0.5
+        elif modo == 1:
+            tipo, foco_x, foco_y = "pan_izq_a_der", 1.0, 0.5
+        elif modo == 2:
+            tipo, foco_x, foco_y = "zoom_in", 0.5, 0.60
+        else:
+            tipo, foco_x, foco_y = "pan_der_a_izq", 0.0, 0.5
+
+    if tipo == "pan_izq_a_der":
+        mov = f"z='{ZOOM_MAX}':x='(iw-iw/zoom)*(on/{frames})':y='ih*{foco_y:.3f}-(ih/zoom/2)'"
+    elif tipo == "pan_der_a_izq":
+        mov = f"z='{ZOOM_MAX}':x='(iw-iw/zoom)*(1-on/{frames})':y='ih*{foco_y:.3f}-(ih/zoom/2)'"
+    else:  # zoom_in: acercamiento hacia el punto de interés real de la foto
+        mov = (
+            f"z='1+{ZOOM_MAX - 1.0:.4f}*on/{frames}':"
+            f"x='iw*{foco_x:.3f}-(iw/zoom/2)':"
+            f"y='ih*{foco_y:.3f}-(ih/zoom/2)'"
+        )
 
     return (
         f"{base},zoompan={mov}:d={frames}:s={ancho}x{alto}:fps={FPS},"
@@ -173,13 +416,16 @@ def _filtro_ken_burns(idx: int, ancho: int, alto: int) -> str:
     )
 
 
-def _construir_comando(fotos: List[str], salida: str, formato: str) -> List[str]:
+def _construir_comando(
+    fotos: List[str], salida: str, formato: str, movimientos: Optional[List[dict]] = None,
+) -> List[str]:
     ancho, alto = FORMATOS.get(formato, FORMATOS["16:9"])
     n = len(fotos)
 
     partes = []
     for i in range(n):
-        partes.append(f"[{i}:v]{_filtro_ken_burns(i, ancho, alto)}[v{i}]")
+        mov = movimientos[i] if movimientos and i < len(movimientos) else None
+        partes.append(f"[{i}:v]{_filtro_ken_burns(i, ancho, alto, mov)}[v{i}]")
 
     if n == 1:
         ultimo = "v0"
@@ -266,8 +512,10 @@ async def _procesar(job_id: str, user_id: str, propiedad_id: Optional[str],
         if len(locales) < MIN_FOTOS:
             raise RuntimeError("No se pudieron leer suficientes fotos de la ficha.")
 
+        locales, movimientos = await _aplicar_plan_recorrido(locales, user_id)
+
         salida = os.path.join(tmp, "salida.mp4")
-        cmd = _construir_comando(locales, salida, formato)
+        cmd = _construir_comando(locales, salida, formato, movimientos)
 
         proc = await asyncio.create_subprocess_exec(
             *cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)

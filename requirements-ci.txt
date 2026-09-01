@@ -6,3 +6,4 @@ httpx[http2]==0.28.1
 python-multipart==0.0.32
 playwright==1.62.0
 cryptography==50.0.1
+Pillow==12.3.0
