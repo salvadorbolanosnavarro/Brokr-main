@@ -11,16 +11,17 @@ class MainProfileSubscriptionCoreRefactorTests(unittest.TestCase):
     def setUpClass(cls):
         cls.block = ROUTER.read_text(encoding="utf-8")
 
-    def test_profile_subscription_uses_core(self):
+    def test_profile_subscription_uses_shared_org_or_user_lookup(self):
         block = self.block
-        self.assertIn('sub_rows = await get_rows(\n                "suscripciones",', block)
-        self.assertIn('"org_id": f"eq.{org_id}"', block)
-        self.assertIn('"select": "*"', block)
-        self.assertIn('"order": "updated_at.desc"', block)
-        self.assertIn('"limit": "1"', block)
-        self.assertIn("timeout=6", block)
-        self.assertIn("if sub_rows:\n                row = sub_rows[0]", block)
+        self.assertIn("from core.subscriptions import (", block)
+        self.assertIn("find_latest_subscription", block)
+        self.assertIn(
+            "row = await find_latest_subscription(user_id, org_id, timeout=6)",
+            block,
+        )
+        self.assertIn("if row:", block)
         self.assertNotIn("/rest/v1/suscripciones", block)
+        self.assertNotIn('{"org_id": f"eq.{org_id}", "select": "*"', block)
 
     def test_profile_subscription_keeps_fail_soft_trial_contract(self):
         block = self.block

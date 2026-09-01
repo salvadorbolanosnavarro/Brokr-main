@@ -1,18 +1,25 @@
 import asyncio
+import logging
 from datetime import datetime, timedelta, timezone
 
 import httpx
 from fastapi import APIRouter, HTTPException, Request
 
 from core.auth import get_user_id_from_token
-from core.database import get_rows, patch_rows, post_rows
+from core.database import patch_rows, post_rows
 from core.organizations import get_org_context, get_org_id_for_user
-from core.subscriptions import expire_trial_subscription, trial_has_expired, trial_max_available
+from core.subscriptions import (
+    expire_trial_subscription,
+    find_latest_subscription,
+    trial_has_expired,
+    trial_max_available,
+)
 from core.user_access import get_user_access_state
 from limites import exigir_cupo
 
 
 router = APIRouter()
+log = logging.getLogger("broquer.subscription_status")
 TRIAL_MAX_DIAS = 7
 
 
@@ -51,18 +58,17 @@ async def subscription_status(request: Request):
 
     org_id = await get_org_id_for_user(user_id)
     try:
-        subscription_rows = await get_rows(
-            "suscripciones",
-            {"org_id": f"eq.{org_id}", "select": "*", "order": "updated_at.desc", "limit": "1"},
-            timeout=8,
+        row = await find_latest_subscription(user_id, org_id, timeout=8)
+    except httpx.HTTPStatusError as exc:
+        log.error(
+            "Fallo consultando suscripciones (user_id=%s, org_id=%s): %s",
+            user_id, org_id, exc,
         )
-    except httpx.HTTPStatusError:
-        subscription_rows = []
-    if not subscription_rows:
+        row = None
+    if not row:
         return {"active": False, "plan": None, "status": "sin_suscripcion",
                 "trial_disponible": await trial_max_available(user_id)}
 
-    row = subscription_rows[0]
     estado = row.get("status")
     activo_sub = estado in ("active", "trialing")
     if estado == "trialing" and row.get("trial_hasta") and trial_has_expired(row.get("trial_hasta")):

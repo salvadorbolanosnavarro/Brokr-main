@@ -1,8 +1,11 @@
 """Shared user role and access-state lookups.
 
 Role lookup remains conservative (never elevates privileges). Access-state
-lookup fails closed because database/configuration uncertainty must not reactivate
-a disabled account.
+lookup fails closed only when the Supabase query itself is uncertain
+(missing configuration, an empty/failed lookup) — that uncertainty must not
+reactivate a disabled account. A ``NULL`` ``activo`` column is not
+uncertainty: it means the account was never explicitly disabled, so it is
+treated as active. Only an explicit ``false`` deactivates the account.
 """
 from __future__ import annotations
 
@@ -28,7 +31,13 @@ async def get_user_rol(user_id: str) -> str:
 
 
 async def get_user_access_state(user_id: str) -> dict:
-    """Return ``rol`` + ``activo`` and deny access when state is uncertain."""
+    """Return ``rol`` + ``activo`` and deny access when state is uncertain.
+
+    ``activo`` is ``NULL`` for accounts that were never explicitly disabled,
+    so ``NULL`` maps to ``True`` here — matching every other reader of this
+    column. Fail-closed only applies when the lookup itself is uncertain:
+    missing configuration, no matching row, or the Supabase request failing.
+    """
     default = {"rol": "agente", "activo": False}
     if not user_id or not settings.supabase_url or not settings.supabase_service_key:
         return default
@@ -42,7 +51,7 @@ async def get_user_access_state(user_id: str) -> dict:
             activo = rows[0].get("activo")
             return {
                 "rol": rows[0].get("rol") or "agente",
-                "activo": bool(activo) if activo is not None else False,
+                "activo": True if activo is None else bool(activo),
             }
     except Exception:
         pass

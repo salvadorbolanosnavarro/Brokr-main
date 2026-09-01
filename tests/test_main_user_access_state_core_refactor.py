@@ -30,7 +30,7 @@ class MainUserAccessStateCoreRefactorTests(unittest.TestCase):
         self.assertIn('"limit": "1"', block)
         self.assertIn("timeout=8", block)
         self.assertIn('"rol": rows[0].get("rol") or "agente"', block)
-        self.assertIn('"activo": bool(activo) if activo is not None else False', block)
+        self.assertIn('"activo": True if activo is None else bool(activo)', block)
         self.assertIn("except Exception:\n        pass\n    return default", block)
         self.assertNotIn("/rest/v1/usuarios", block)
         self.assertIn("from core.database import get_rows", self.source)

@@ -25,7 +25,7 @@ class MainSubscriptionStatusExtractionTests(unittest.TestCase):
         self.assertIn('"status": "desactivada"', r)
         self.assertIn('rol in ("equipo", "admin")', r)
         self.assertIn('ctx.get("org_tipo") == "empresa"', r)
-        self.assertIn('subscription_rows = await get_rows(', r)
+        self.assertIn('await find_latest_subscription(user_id, org_id, timeout=8)', r)
         self.assertIn('trial_has_expired(row.get("trial_hasta"))', r)
         self.assertIn('asyncio.create_task(expire_trial_subscription(row.get("id")))', r)
         self.assertIn('await trial_max_available(user_id)', r)
