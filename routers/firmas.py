@@ -60,7 +60,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, List, Tuple
 
 import httpx
-from fastapi import APIRouter, Request, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, BackgroundTasks, Request, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 
 from core.auth import require_user_id
@@ -739,125 +739,186 @@ class DesdeContratoIn(BaseModel):
     exige_ine: Optional[bool] = None
 
 
-@router.post("/desde-contrato")
-async def desde_contrato(request: Request, body: DesdeContratoIn):
-    """Genera el contrato, lo convierte a PDF, crea el documento y precarga a
-    las partes. Devuelve el id para que el frontend se vaya derecho al módulo
-    de firma con todo listo."""
+async def _desde_contrato_bg(job_id: str, uid: str, tipo: str, datos: dict,
+                             titulo: str, propiedad_id: Optional[str],
+                             exige_ine: bool, ip: str, ua: str) -> None:
+    """Corre en background. Nunca levanta: todo error termina en el job."""
     import json as _json
     import tempfile
     import subprocess
 
+    async def _job_patch(campos: dict) -> None:
+        try:
+            await _sb_patch("firma_contrato_jobs", {"id": f"eq.{job_id}"}, campos)
+        except Exception as e:
+            log.warning("[firma-bg] no se pudo actualizar job %s: %s", job_id, e)
+
+    try:
+        await _job_patch({"estado": "procesando"})
+
+        try:
+            from contrato_pdf import partes_del_contrato
+        except Exception as e:
+            raise RuntimeError(f"no se pudo importar contrato_pdf: {e}")
+
+        raiz = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        script = os.path.join(raiz, "generar_contrato.py")
+        if not os.path.exists(script):
+            raise RuntimeError("generar_contrato.py no encontrado en el servidor.")
+
+        ruta_json = ruta_docx = ""
+        try:
+            with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as f:
+                _json.dump(datos or {}, f, ensure_ascii=False)
+                ruta_json = f.name
+            ruta_docx = ruta_json.replace(".json", ".docx")
+
+            r = subprocess.run(["python3", script, tipo, ruta_json, ruta_docx],
+                               capture_output=True, text=True, timeout=45)
+            if r.returncode != 0 or not os.path.exists(ruta_docx):
+                log.error("[firma-bg] generar_contrato falló: %s", (r.stderr or "")[:400])
+                raise RuntimeError("Faltan datos para armar el contrato. Revisa el formulario y vuelve a intentar.")
+
+            etiqueta = titulo or TIPOS.get(tipo, "Documento")
+            with open(ruta_docx, "rb") as fh:
+                docx = fh.read()
+            pdf = await _docx_a_pdf_bytes(docx, etiqueta)
+        except subprocess.TimeoutExpired:
+            raise RuntimeError("El contrato tardó demasiado en generarse. Intenta de nuevo.")
+        finally:
+            for p in (ruta_json, ruta_docx):
+                if p:
+                    try:
+                        os.unlink(p)
+                    except Exception:
+                        pass
+
+        import pypdf
+        try:
+            paginas = len(pypdf.PdfReader(io.BytesIO(pdf)).pages)
+        except Exception:
+            paginas = None
+
+        filas = await _sb_post("firma_documentos", {
+            "user_id": uid,
+            "titulo": etiqueta[:200],
+            "tipo": tipo,
+            "nivel": "simple",
+            "propiedad_id": propiedad_id or None,
+            "exige_ine": bool(exige_ine),
+            "folio": _folio(),
+            "estado": "borrador",
+            "vence_at": (datetime.now(timezone.utc) + timedelta(days=VIGENCIA_DIAS)).isoformat(),
+        })
+        if not filas:
+            raise RuntimeError("No se pudo crear el documento en la base de datos.")
+        doc = filas[0]
+
+        sello = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+        ruta = f"{uid}/{doc['id']}/original-{sello}-{tipo}.pdf"
+        await _subir_bytes(ruta, pdf, "application/pdf")
+        digest = _sha256(pdf)
+        await _sb_patch("firma_documentos", {"id": f"eq.{doc['id']}"}, {
+            "archivo_ruta": ruta,
+            "archivo_nombre": f"{tipo}.pdf",
+            "archivo_bytes": len(pdf),
+            "paginas": paginas,
+            "hash_original": digest,
+            "updated_at": _ahora(),
+        })
+
+        await evento(uid, "documento_creado",
+                     f"Generado desde el módulo de contratos ({TIPOS.get(tipo)}). SHA-256: {digest}",
+                     documento_id=doc["id"], actor="agente", ip=ip, ua=ua,
+                     payload={"sha256": digest, "paginas": paginas, "origen": "contratos"})
+
+        contactos = await _sb_get("contactos", {
+            "user_id": f"eq.{uid}", "select": "id,nombre,telefono,email,wa", "limit": "500"})
+        por_nombre = {(c.get("nombre") or "").strip().lower(): c for c in contactos}
+
+        creados = []
+        for parte in partes_del_contrato(tipo, datos or {}):
+            c = por_nombre.get(parte["nombre"].strip().lower())
+            nuevos = await _sb_post("firma_firmantes", {
+                "user_id": uid,
+                "documento_id": doc["id"],
+                "contacto_id": c.get("id") if c else None,
+                "nombre": parte["nombre"][:160],
+                "email": (c.get("email") if c else None) or None,
+                "telefono": _tel(c.get("wa") or c.get("telefono") or "") if c else None,
+                "rol": parte["rol"],
+                "obligatorio": True,
+                "estado": "pendiente",
+            })
+            if nuevos:
+                creados.append(nuevos[0])
+
+        await _job_patch({
+            "estado": "listo",
+            "documento_id": doc["id"],
+            "folio": doc.get("folio"),
+            "paginas": paginas,
+            "terminado_en": _ahora(),
+        })
+        log.info("[firma-bg] job %s listo → documento %s", job_id, doc["id"])
+
+    except Exception as e:
+        log.warning("[firma-bg] job %s falló: %s", job_id, e)
+        try:
+            await _job_patch({
+                "estado": "error",
+                "error": str(e)[:400],
+                "terminado_en": _ahora(),
+            })
+        except Exception:
+            pass
+
+
+@router.post("/desde-contrato")
+async def desde_contrato(request: Request, body: DesdeContratoIn,
+                         tareas: BackgroundTasks):
+    """Encola la generación del contrato en background y retorna inmediatamente
+    con un job_id. El cliente hace polling a GET /firmas/desde-contrato/{job_id}."""
     uid = await _uid_max(request)
     tipo = (body.tipo or "").strip().lower()
     if tipo not in ("promesa", "arrendamiento"):
         raise HTTPException(400, "Solo se puede mandar a firma una promesa o un arrendamiento.")
 
-    try:
-        from contrato_pdf import partes_del_contrato
-    except Exception as e:
-        log.error("no se pudo importar contrato_pdf: %s", e)
-        raise HTTPException(500, "El generador de contratos no está disponible en este momento.")
+    etiqueta = (body.titulo or "").strip() or TIPOS.get(tipo, "Documento")
 
-    raiz = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    script = os.path.join(raiz, "generar_contrato.py")
-    if not os.path.exists(script):
-        raise HTTPException(500, "El generador de contratos no está disponible en este momento.")
-
-    ruta_json = ruta_docx = ""
-    try:
-        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as f:
-            _json.dump(body.datos or {}, f, ensure_ascii=False)
-            ruta_json = f.name
-        ruta_docx = ruta_json.replace(".json", ".docx")
-
-        r = subprocess.run(["python3", script, tipo, ruta_json, ruta_docx],
-                           capture_output=True, text=True, timeout=45)
-        if r.returncode != 0 or not os.path.exists(ruta_docx):
-            log.error("generar_contrato falló: %s", (r.stderr or "")[:400])
-            raise HTTPException(400, "Faltan datos para armar el contrato. Revisa el formulario y vuelve a intentar.")
-
-        etiqueta = (body.titulo or "").strip() or TIPOS.get(tipo, "Documento")
-        with open(ruta_docx, "rb") as f:
-            docx = f.read()
-        pdf = await _docx_a_pdf_bytes(docx, etiqueta)
-    except HTTPException:
-        raise
-    except subprocess.TimeoutExpired:
-        raise HTTPException(504, "El contrato tardó demasiado en generarse. Intenta de nuevo.")
-    finally:
-        for p in (ruta_json, ruta_docx):
-            if p:
-                try:
-                    os.unlink(p)
-                except Exception:
-                    pass
-
-    import pypdf
-    try:
-        paginas = len(pypdf.PdfReader(io.BytesIO(pdf)).pages)
-    except Exception:
-        paginas = None
-
-    filas = await _sb_post("firma_documentos", {
+    filas = await _sb_post("firma_contrato_jobs", {
         "user_id": uid,
-        "titulo": etiqueta[:200],
         "tipo": tipo,
-        "nivel": "simple",
-        "propiedad_id": body.propiedad_id or None,
-        "exige_ine": bool(body.exige_ine),
-        "folio": _folio(),
-        "estado": "borrador",
-        "vence_at": (datetime.now(timezone.utc) + timedelta(days=VIGENCIA_DIAS)).isoformat(),
+        "estado": "pendiente",
     })
     if not filas:
-        raise HTTPException(500, "No se pudo crear el documento. Intenta de nuevo.")
-    doc = filas[0]
+        raise HTTPException(500, "No se pudo encolar el proceso. Intenta de nuevo.")
+    job = filas[0]
 
-    sello = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
-    ruta = f"{uid}/{doc['id']}/original-{sello}-{tipo}.pdf"
-    await _subir_bytes(ruta, pdf, "application/pdf")
-    digest = _sha256(pdf)
-    await _sb_patch("firma_documentos", {"id": f"eq.{doc['id']}"}, {
-        "archivo_ruta": ruta,
-        "archivo_nombre": f"{tipo}.pdf",
-        "archivo_bytes": len(pdf),
-        "paginas": paginas,
-        "hash_original": digest,
-        "updated_at": _ahora(),
+    tareas.add_task(
+        _desde_contrato_bg,
+        job["id"], uid, tipo, body.datos or {}, etiqueta,
+        body.propiedad_id, bool(body.exige_ine),
+        _ip(request), _ua(request),
+    )
+
+    return {"job_id": job["id"], "estado": "pendiente"}
+
+
+@router.get("/desde-contrato/{job_id}")
+async def desde_contrato_estado(job_id: str, request: Request):
+    """Polling del estado de generación de contrato para firma.
+    Cuando estado='listo' devuelve documento_id para redirigir a firmas.html."""
+    uid = await _uid_max(request)
+    filas = await _sb_get("firma_contrato_jobs", {
+        "id": f"eq.{job_id}",
+        "user_id": f"eq.{uid}",
+        "select": "*",
+        "limit": "1",
     })
-
-    await evento(uid, "documento_creado",
-                 f"Generado desde el módulo de contratos ({TIPOS.get(tipo)}). SHA-256: {digest}",
-                 documento_id=doc["id"], actor="agente", ip=_ip(request), ua=_ua(request),
-                 payload={"sha256": digest, "paginas": paginas, "origen": "contratos"})
-
-    # Las partes salen del propio contrato. Faltan sus datos de contacto: el
-    # formulario de contratos no los pide, así que el agente los completa en
-    # la pantalla de firma. Ya no tiene que reteclear los nombres.
-    contactos = await _sb_get("contactos", {
-        "user_id": f"eq.{uid}", "select": "id,nombre,telefono,email,wa", "limit": "500"})
-    por_nombre = {(c.get("nombre") or "").strip().lower(): c for c in contactos}
-
-    creados = []
-    for parte in partes_del_contrato(tipo, body.datos or {}):
-        c = por_nombre.get(parte["nombre"].strip().lower())
-        nuevos = await _sb_post("firma_firmantes", {
-            "user_id": uid,
-            "documento_id": doc["id"],
-            "contacto_id": c.get("id") if c else None,
-            "nombre": parte["nombre"][:160],
-            "email": (c.get("email") if c else None) or None,
-            "telefono": _tel(c.get("wa") or c.get("telefono") or "") if c else None,
-            "rol": parte["rol"],
-            "obligatorio": True,
-            "estado": "pendiente",
-        })
-        if nuevos:
-            creados.append(nuevos[0])
-
-    return {"documento_id": doc["id"], "folio": doc.get("folio"),
-            "firmantes": creados, "paginas": paginas}
+    if not filas:
+        raise HTTPException(404, "No encontramos ese proceso.")
+    return filas[0]
 
 
 @router.get("/documentos/{documento_id}/archivo")
