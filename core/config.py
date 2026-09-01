@@ -60,6 +60,7 @@ class Settings:
     groq_base: str
     gemini_api_key: str
     gemini_image_model: str
+    gemini_vision_model: str
     easybroker_api_key: str
     apify_api_key: str
     google_places_key: str
@@ -130,6 +131,7 @@ class Settings:
             groq_base=os.getenv("GROQ_BASE", "https://api.groq.com/openai/v1").rstrip("/"),
             gemini_api_key=os.getenv("GEMINI_API_KEY", ""),
             gemini_image_model=os.getenv("GEMINI_IMAGE_MODEL", "gemini-3.1-flash-image-preview"),
+            gemini_vision_model=os.getenv("GEMINI_VISION_MODEL", "gemini-2.5-flash"),
             easybroker_api_key=os.getenv("EB_API_KEY", ""),
             apify_api_key=os.getenv("APIFY_API_KEY", ""),
             google_places_key=os.getenv("GOOGLE_PLACES_KEY", ""),
