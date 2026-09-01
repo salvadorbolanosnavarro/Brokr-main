@@ -2527,10 +2527,14 @@ async function generarContrato(soloDatos){
   btn.disabled = true;
   document.getElementById('loading').classList.add('show');
 
+  let _cTok = null;
+  try { _cTok = window.brokrSb && window.brokrSb.ensureToken ? await window.brokrSb.ensureToken() : null; } catch(e){}
+  if (!_cTok) { try { _cTok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token'); } catch(e){} }
+
   try {
     const res = await fetch(`${API}/contrato`, {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: { 'Content-Type': 'application/json', ...(_cTok ? { 'Authorization': 'Bearer ' + _cTok } : {}) },
       body: JSON.stringify({ tipo: tipoActual, datos, clausulas_especiales: getClausulasTexto() })
     });
 

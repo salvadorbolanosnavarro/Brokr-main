@@ -1643,10 +1643,13 @@ async function descargarPDF() {
   _isrPdfBusy = true;
   const API = (typeof window !== 'undefined' && window.API_BASE) ? window.API_BASE : 'https://api.broquer.app';
   const filename = `ISR_${meses[d.mesV]}_${d.anioV}.pdf`.replace(/\s+/g, '_');
+  let _isrTok = null;
+  try { _isrTok = window.brokrSb && window.brokrSb.ensureToken ? await window.brokrSb.ensureToken() : null; } catch(e){}
+  if (!_isrTok) { try { _isrTok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token'); } catch(e){} }
   try {
     const r = await fetch(`${API}/isr-pdf`, {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: { 'Content-Type': 'application/json', ...(_isrTok ? { 'Authorization': 'Bearer ' + _isrTok } : {}) },
       body: JSON.stringify({ html, filename })
     });
     const data = await r.json();
