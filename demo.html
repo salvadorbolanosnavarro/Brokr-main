@@ -9,7 +9,7 @@
 <style>
 /* ════════════════════════════════════════
    BROQUER DEMO — Experiencia sin credenciales
-   Diseño: Canon (navy #081C4E, acción #0A5DE0)
+   Diseño: Canon (navy var(--sky-navy), acción var(--sky-blue))
    ════════════════════════════════════════ */
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; min-height: 100vh; }
@@ -43,7 +43,7 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
   border-radius: var(--r-xl);
   padding: 48px 40px 40px;
   backdrop-filter: blur(28px);
-  box-shadow: 0 24px 80px rgba(0,0,0,0.4);
+  box-shadow: var(--shadow-xl);
 }
 .entrada-logo {
   display: flex;
@@ -62,7 +62,7 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
   padding: 4px 12px;
   font-size: var(--fs-xs);
   font-weight: 700;
-  color: #7EB5FF;
+  color: var(--sky-blue-lift);
   letter-spacing: 0.03em;
   margin-bottom: 20px;
 }
@@ -70,19 +70,19 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
   content: '';
   width: 7px; height: 7px;
   border-radius: 50%;
-  background: #4EE09F;
-  box-shadow: 0 0 6px #4EE09F;
+  background: var(--success);
+  box-shadow: 0 0 0 2px var(--success-soft);
   flex-shrink: 0;
 }
 .entrada-h1 {
-  font-size: 34px;
+  font-size: var(--fs-h1);
   font-weight: 800;
   line-height: 1.1;
   letter-spacing: -0.03em;
   color: #fff;
   margin: 0 0 10px;
 }
-.entrada-h1 em { color: #6F9FF2; font-style: normal; }
+.entrada-h1 em { color: var(--sky-blue-lift); font-style: normal; }
 .entrada-sub {
   font-size: var(--fs-sm);
   color: rgba(255,255,255,0.6);
@@ -112,7 +112,7 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
   transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
 }
 .entrada-input::placeholder { color: rgba(255,255,255,0.3); }
-.entrada-input:focus { outline: none; border-color: var(--sky-blue); background: rgba(255,255,255,0.12); box-shadow: 0 0 0 3px rgba(10,93,224,0.25); }
+.entrada-input:focus { outline: none; border-color: var(--sky-blue); background: rgba(255,255,255,0.12); box-shadow: var(--focus); }
 .entrada-btn {
   width: 100%;
   height: 52px;
@@ -124,10 +124,10 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
   cursor: pointer;
   transition: background 0.18s, transform 0.12s, box-shadow 0.18s;
   margin-top: 8px;
-  box-shadow: 0 4px 20px rgba(10,93,224,0.4);
+  box-shadow: var(--shadow-md);
   letter-spacing: -0.01em;
 }
-.entrada-btn:hover { background: var(--sky-blue-press); box-shadow: 0 6px 28px rgba(10,93,224,0.5); }
+.entrada-btn:hover { background: var(--sky-blue-press); box-shadow: var(--shadow-md); }
 .entrada-btn:active { transform: scale(.98); }
 .entrada-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 .entrada-link-wrap {
@@ -145,7 +145,7 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
 .entrada-link-wrap a {
   font-size: var(--fs-xs);
   font-weight: 700;
-  color: #6F9FF2;
+  color: var(--sky-blue-lift);
   text-decoration: none;
 }
 .entrada-link-wrap a:hover { color: #fff; }
@@ -174,15 +174,15 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
   border: 1px solid rgba(78,224,159,0.35);
   border-radius: var(--r-pill);
   padding: 3px 10px;
-  font-size: 11px;
+  font-size: var(--fs-caption);
   font-weight: 700;
-  color: #4EE09F;
+  color: var(--success);
   letter-spacing: 0.04em;
 }
 .demo-live-pill::before {
   content: '';
   width: 6px; height: 6px;
-  background: #4EE09F;
+  background: var(--success);
   border-radius: 50%;
   animation: pulso 1.4s ease-in-out infinite;
   flex-shrink: 0;
@@ -215,7 +215,7 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
   border-radius: 50%;
   background: var(--sky-blue);
   display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 800; color: #fff;
+  font-size: var(--fs-caption); font-weight: 800; color: #fff;
   flex-shrink: 0;
 }
 .demo-topbar-name { font-size: var(--fs-xs); font-weight: 700; color: rgba(255,255,255,0.85); }
@@ -242,7 +242,7 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
   padding: 20px 12px 8px;
 }
 .demo-nav-label {
-  font-size: 10px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   letter-spacing: 0.1em;
   color: rgba(255,255,255,0.3);
@@ -267,13 +267,13 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
 }
 .demo-nav-item:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.85); }
 .demo-nav-item.is-active { background: rgba(10,93,224,0.28); color: #fff; }
-.demo-nav-item.is-active .demo-nav-icon { color: #7EB5FF; }
+.demo-nav-item.is-active .demo-nav-icon { color: var(--sky-blue-lift); }
 .demo-nav-icon { width: 18px; height: 18px; flex-shrink: 0; }
 .demo-nav-badge {
   margin-left: auto;
   background: var(--danger);
   color: #fff;
-  font-size: 10px;
+  font-size: var(--fs-caption);
   font-weight: 800;
   padding: 1px 6px;
   border-radius: var(--r-pill);
@@ -288,7 +288,7 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
   padding: 12px;
 }
 .demo-feed-title {
-  font-size: 10px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   letter-spacing: 0.08em;
   color: rgba(255,255,255,0.3);
@@ -316,10 +316,10 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
 .demo-feed-dot.contacto_nuevo { background: var(--success); }
 .demo-feed-dot.propiedad_nueva { background: var(--sky-blue); }
 .demo-feed-dot.avm { background: var(--warn); }
-.demo-feed-dot.chat, .demo-feed-dot.broq_wa { background: #A78BFA; }
+.demo-feed-dot.chat, .demo-feed-dot.broq_wa { background: var(--sky-blue-lift); }
 .demo-feed-dot.whatsapp { background: #25D366; }
 .demo-feed-texto {
-  font-size: 11px;
+  font-size: var(--fs-caption);
   color: rgba(255,255,255,0.55);
   line-height: 1.4;
   flex: 1;
@@ -430,7 +430,7 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 3px;
-  border-radius: 3px 3px 0 0;
+  border-radius: var(--r-xs) var(--r-xs) 0 0;
 }
 .stat-card.c-blue::before { background: var(--sky-blue); }
 .stat-card.c-green::before { background: var(--success); }
@@ -438,13 +438,13 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
 .stat-card.c-pink::before { background: var(--danger); }
 .stat-card.c-navy::before { background: var(--sky-navy); }
 .stat-lbl { font-size: var(--fs-xs); font-weight: 700; color: var(--mute); margin-bottom: 8px; letter-spacing: 0.02em; }
-.stat-val { font-size: 30px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; color: var(--ink); }
+.stat-val { font-size: var(--fs-h2); font-weight: 800; letter-spacing: -0.04em; line-height: 1; color: var(--ink); }
 .stat-sub { font-size: var(--fs-xs); color: var(--mute); margin-top: 6px; }
 .stat-delta {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  font-size: 11px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   padding: 2px 7px;
   border-radius: var(--r-pill);
@@ -479,7 +479,7 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   color: var(--sky-blue);
   background: var(--sky-canvas);
@@ -517,7 +517,7 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   margin-top: 12px;
   padding: 3px 10px;
@@ -544,7 +544,7 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
 .contacto-row.nuevo-demo {
   animation: nuevo-row 0.5s var(--ease-out) both;
   border-color: var(--sky-blue);
-  box-shadow: 0 0 0 2px rgba(10,93,224,0.15);
+  box-shadow: var(--focus);
 }
 @keyframes nuevo-row {
   from { opacity: 0; transform: translateX(-16px) scale(0.97); }
@@ -565,7 +565,7 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   padding: 3px 10px;
   border-radius: var(--r-pill);
@@ -616,11 +616,11 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
 .wa-conv-nombre { font-weight: 700; font-size: var(--fs-sm); margin-bottom: 3px; }
 .wa-conv-ultimo { font-size: var(--fs-xs); color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .wa-conv-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
-.wa-conv-ts { font-size: 11px; color: var(--mute); }
+.wa-conv-ts { font-size: var(--fs-caption); color: var(--mute); }
 .wa-unread {
   background: #25D366;
   color: #fff;
-  font-size: 10px;
+  font-size: var(--fs-caption);
   font-weight: 800;
   padding: 1px 6px;
   border-radius: var(--r-pill);
@@ -647,7 +647,7 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   color: #25D366;
   background: rgba(37,211,102,0.1);
@@ -670,7 +670,7 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
 .wa-msg.agente, .wa-msg.broq { justify-content: flex-end; align-self: flex-end; }
 .wa-bubble {
   padding: 10px 14px;
-  border-radius: 18px;
+  border-radius: var(--r-modal);
   font-size: var(--fs-sm);
   line-height: 1.5;
   position: relative;
@@ -678,12 +678,12 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
 .wa-msg.cliente .wa-bubble { background: var(--shell); border-bottom-left-radius: 4px; }
 .wa-msg.broq .wa-bubble { background: var(--sky-blue); color: #fff; border-bottom-right-radius: 4px; }
 .wa-msg.agente .wa-bubble { background: var(--sky-navy); color: #fff; border-bottom-right-radius: 4px; }
-.wa-msg-hora { font-size: 10px; color: rgba(0,0,0,0.35); margin-top: 3px; text-align: right; }
+.wa-msg-hora { font-size: var(--fs-caption); color: rgba(0,0,0,0.35); margin-top: 3px; text-align: right; }
 .wa-msg.broq .wa-msg-hora, .wa-msg.agente .wa-msg-hora { color: rgba(255,255,255,0.5); }
 .wa-broq-label {
-  font-size: 10px;
+  font-size: var(--fs-caption);
   font-weight: 700;
-  color: #6F9FF2;
+  color: var(--sky-blue-lift);
   margin-bottom: 2px;
 }
 .wa-input-area {
@@ -715,10 +715,10 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
   transition: background 0.15s;
   flex-shrink: 0;
 }
-.wa-send-btn:hover { background: #1DA851; }
+.wa-send-btn:hover { background: #25d366; }
 .wa-send-btn svg { color: #fff; }
 .wa-modo-badge {
-  font-size: 10px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   padding: 2px 8px;
   border-radius: var(--r-pill);
@@ -775,7 +775,7 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
   justify-content: center;
   gap: 10px;
   transition: background 0.15s, transform 0.12s;
-  box-shadow: 0 4px 20px rgba(10,93,224,0.3);
+  box-shadow: var(--shadow-md);
 }
 .avm-btn-calcular:hover { background: var(--sky-blue-press); }
 .avm-btn-calcular:active { transform: scale(.98); }
@@ -819,7 +819,7 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
   background: rgba(10,93,224,0.18);
 }
 .avm-valor-lbl { font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.06em; opacity: 0.65; margin-bottom: 8px; }
-.avm-valor-num { font-size: 48px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; margin-bottom: 10px; }
+.avm-valor-num { font-size: var(--fs-hero); font-weight: 800; letter-spacing: -0.04em; line-height: 1; margin-bottom: 10px; }
 .avm-valor-rango { font-size: var(--fs-sm); opacity: 0.75; }
 .avm-confianza {
   display: inline-flex;
@@ -831,7 +831,7 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
   padding: 4px 12px;
   font-size: var(--fs-xs);
   font-weight: 700;
-  color: #4EE09F;
+  color: var(--success);
   margin-top: 12px;
 }
 .avm-seccion {
@@ -896,7 +896,7 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
   background: var(--sky-blue);
   display: flex; align-items: center; justify-content: center;
   font-weight: 800; color: #fff; font-size: var(--fs-body);
-  box-shadow: 0 3px 12px rgba(10,93,224,0.4);
+  box-shadow: var(--shadow-sm);
 }
 .broq-chat-head-info .nombre { font-weight: 700; color: #fff; font-size: var(--fs-body); }
 .broq-chat-head-info .sub { font-size: var(--fs-xs); color: rgba(255,255,255,0.55); }
@@ -915,13 +915,13 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
   border-radius: 50%;
   flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 800;
+  font-size: var(--fs-caption); font-weight: 800;
 }
 .broq-msg.ia .broq-msg-ava { background: var(--sky-blue); color: #fff; }
 .broq-msg.usuario .broq-msg-ava { background: var(--shell); color: var(--mute); }
 .broq-bubble {
   padding: 12px 16px;
-  border-radius: 18px;
+  border-radius: var(--r-modal);
   font-size: var(--fs-sm);
   line-height: 1.6;
 }
@@ -972,7 +972,7 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   transition: background 0.15s, transform 0.12s;
-  box-shadow: 0 3px 12px rgba(10,93,224,0.35);
+  box-shadow: var(--shadow-sm);
 }
 .broq-send:hover { background: var(--sky-blue-press); }
 .broq-send:active { transform: scale(.93); }
@@ -1060,14 +1060,14 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
   border-radius: 50%;
   flex-shrink: 0;
 }
-.tarea-prioridad.Alta { background: var(--danger); box-shadow: 0 0 6px rgba(212,42,98,0.5); }
+.tarea-prioridad.Alta { background: var(--danger); box-shadow: var(--shadow-xs); }
 .tarea-prioridad.Media { background: var(--warn); }
 .tarea-prioridad.Baja { background: var(--success); }
 .tarea-info { flex: 1; min-width: 0; }
 .tarea-titulo { font-weight: 700; font-size: var(--fs-sm); margin-bottom: 3px; }
 .tarea-meta { font-size: var(--fs-xs); color: var(--mute); }
 .tarea-estado {
-  font-size: 11px;
+  font-size: var(--fs-caption);
   font-weight: 700;
   padding: 3px 10px;
   border-radius: var(--r-pill);
@@ -1136,7 +1136,7 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
   transition: background 0.15s;
 }
 .sesion-code-wrap:hover { background: rgba(255,255,255,0.1); }
-.sesion-code-lbl { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.4); letter-spacing: 0.06em; }
+.sesion-code-lbl { font-size: var(--fs-caption); font-weight: 700; color: rgba(255,255,255,0.4); letter-spacing: 0.06em; }
 .sesion-code-val { font-size: var(--fs-xs); font-weight: 700; color: rgba(255,255,255,0.8); letter-spacing: 0.04em; }
 </style>
 </head>
@@ -1157,7 +1157,7 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
     </div>
     <div class="entrada-field">
       <label>Código de sesión <span style="opacity:0.5;font-weight:400">(déjalo vacío para unirte a la sesión principal)</span></label>
-      <input type="text" id="inp-session" class="entrada-input" placeholder="ej. abc123 — o déjalo vacío" autocomplete="off" spellcheck="false" style="font-family:monospace;font-size:15px;letter-spacing:0.08em"/>
+      <input type="text" id="inp-session" class="entrada-input" placeholder="ej. abc123 — o déjalo vacío" autocomplete="off" spellcheck="false" style="font-family:var(--font-mono);font-size:var(--fs-sm);letter-spacing:0.08em"/>
     </div>
     <button class="entrada-btn" id="btn-entrar" onclick="entrarDemo()">
       <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
@@ -1302,13 +1302,13 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
             <!-- Se renderiza con JS -->
           </div>
           <div style="display:flex;gap:10px;margin-top:8px">
-            <span style="font-size:11px;color:var(--mute)">Lun</span>
-            <span style="font-size:11px;color:var(--mute);flex:1;text-align:center">Mar</span>
-            <span style="font-size:11px;color:var(--mute);flex:1;text-align:center">Mié</span>
-            <span style="font-size:11px;color:var(--mute);flex:1;text-align:center">Jue</span>
-            <span style="font-size:11px;color:var(--mute);flex:1;text-align:center">Vie</span>
-            <span style="font-size:11px;color:var(--mute);flex:1;text-align:center">Sáb</span>
-            <span style="font-size:11px;color:var(--mute);text-align:right">Dom</span>
+            <span style="font-size:var(--fs-caption);color:var(--mute)">Lun</span>
+            <span style="font-size:var(--fs-caption);color:var(--mute);flex:1;text-align:center">Mar</span>
+            <span style="font-size:var(--fs-caption);color:var(--mute);flex:1;text-align:center">Mié</span>
+            <span style="font-size:var(--fs-caption);color:var(--mute);flex:1;text-align:center">Jue</span>
+            <span style="font-size:var(--fs-caption);color:var(--mute);flex:1;text-align:center">Vie</span>
+            <span style="font-size:var(--fs-caption);color:var(--mute);flex:1;text-align:center">Sáb</span>
+            <span style="font-size:var(--fs-caption);color:var(--mute);text-align:right">Dom</span>
           </div>
         </div>
 
@@ -1510,7 +1510,7 @@ html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
     <div class="modal-field">
       <label>Estado</label>
       <select id="m-estado" class="modal-select">
-        <option value="Caliente">Caliente 🔥</option>
+        <option value="Caliente">Caliente</option>
         <option value="Tibio" selected>Tibio</option>
         <option value="Frío">Frío</option>
         <option value="Nuevo">Nuevo</option>
@@ -1703,8 +1703,8 @@ function renderGraficas() {
   const g = document.getElementById('grafica-actividad');
   g.innerHTML = actividad.map((v, i) => `
     <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
-      <div style="width:100%;background:${i===3?'var(--sky-blue)':'var(--sky-canvas)'};border-radius:6px 6px 0 0;height:${Math.round((v/max)*88)}px;transition:height 0.5s var(--ease-out)"></div>
-      <span style="font-size:11px;font-weight:700;color:${i===3?'var(--sky-blue)':'var(--mute)'}">${v}</span>
+      <div style="width:100%;background:${i===3?'var(--sky-blue)':'var(--sky-canvas)'};border-radius:var(--r-xs) var(--r-xs) 0 0;height:${Math.round((v/max)*88)}px;transition:height 0.5s var(--ease-out)"></div>
+      <span style="font-size:var(--fs-caption);font-weight:700;color:${i===3?'var(--sky-blue)':'var(--mute)'}">${v}</span>
     </div>
   `).join('');
 
@@ -1717,8 +1717,8 @@ function renderGraficas() {
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
       <div style="width:10px;height:10px;border-radius:50%;background:${colores[i]};flex-shrink:0"></div>
       <div style="flex:1;font-size:var(--fs-sm);font-weight:600">${nombre}</div>
-      <div style="width:180px;height:8px;background:var(--shell);border-radius:99px;overflow:hidden">
-        <div style="height:100%;width:${Math.round((val/total)*100)}%;background:${colores[i]};border-radius:99px;transition:width 0.6s var(--ease-out)"></div>
+      <div style="width:180px;height:8px;background:var(--shell);border-radius:var(--r-pill);overflow:hidden">
+        <div style="height:100%;width:${Math.round((val/total)*100)}%;background:${colores[i]};border-radius:var(--r-pill);transition:width 0.6s var(--ease-out)"></div>
       </div>
       <div style="font-size:var(--fs-sm);font-weight:700;color:var(--mute);min-width:24px;text-align:right">${val}</div>
     </div>
@@ -1747,8 +1747,8 @@ function renderPropiedades() {
           <div class="prop-card__meta">
             ${p.m2_construccion ? `<span class="prop-meta-item"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 21V8l8-5 8 5v13"/></svg>${p.m2_construccion}m² const.</span>` : ''}
             ${p.m2_terreno ? `<span class="prop-meta-item"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>${p.m2_terreno}m² terr.</span>` : ''}
-            ${p.recamaras ? `<span class="prop-meta-item">🛏 ${p.recamaras} rec.</span>` : ''}
-            ${p.banos ? `<span class="prop-meta-item">🚿 ${p.banos} baños</span>` : ''}
+            ${p.recamaras ? `<span class="prop-meta-item">${p.recamaras} rec. rec.</span>` : ''}
+            ${p.banos ? `<span class="prop-meta-item">${p.banos} baños baños</span>` : ''}
           </div>
           <div class="prop-card__estado ${estadoClass}">
             <span style="width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block"></span>
@@ -1782,7 +1782,7 @@ function renderContactos() {
         </div>
         <div>
           <span class="contacto-estado ${c.estado}">${c.estado}</span>
-          ${c.etiqueta ? `<div style="font-size:11px;color:var(--mute);margin-top:4px;text-align:right">${c.etiqueta}</div>` : ''}
+          ${c.etiqueta ? `<div style="font-size:var(--fs-caption);color:var(--mute);margin-top:4px;text-align:right">${c.etiqueta}</div>` : ''}
         </div>
       </div>
     `;
@@ -1885,7 +1885,7 @@ function renderMensajeWA(m) {
   return `
     <div class="wa-msg ${m.rol}">
       <div>
-        ${esBroq ? '<div class="wa-broq-label">Broq IA ✦</div>' : ''}
+        ${esBroq ? '<div class="wa-broq-label">Broq IA</div>' : ''}
         <div class="wa-bubble">${m.texto}</div>
         <div class="wa-msg-hora">${m.hora || ''}</div>
       </div>
@@ -1970,7 +1970,7 @@ function renderResultadoAVM(d) {
         <div class="avm-valor-lbl">Valor estimado de mercado</div>
         <div class="avm-valor-num">${fmtMXN(d.valor_estimado)}</div>
         <div class="avm-valor-rango">Rango: ${fmtMXN(d.rango_min)} – ${fmtMXN(d.rango_max)}</div>
-        <div class="avm-confianza">✦ Confianza ${d.confianza} · ${d.precio_m2?.toLocaleString('es-MX')} $/m²</div>
+        <div class="avm-confianza">Confianza ${d.confianza} · ${d.precio_m2?.toLocaleString('es-MX')} $/m²</div>
       </div>
       <div class="avm-seccion">
         <h3>Comparables recientes</h3>
