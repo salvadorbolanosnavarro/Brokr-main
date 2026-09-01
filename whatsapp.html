@@ -800,6 +800,7 @@ async function w2ExchangeCode(code){
       } else {
         toast(d.advertencia || 'Número guardado, pero Meta no confirmó la conexión todavía. Verifica en unos minutos.');
       }
+      document.getElementById('w2-numeros-card').hidden = false;
       await w2CargarNumeros();
     } else{ toast(d.detail || 'No se pudo conectar el número.'); }
   }catch(e){ toast('Error de conexión. Intenta de nuevo.'); }
