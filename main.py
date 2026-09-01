@@ -364,8 +364,15 @@ from routers.demo import router as demo_router
 app.include_router(demo_router)
 
 # Sistema de demo en vivo para presentaciones (sin credenciales).
-from routers.demo_live import router as demo_live_router
-app.include_router(demo_live_router)
+# Import defensivo: es un módulo de presentación, nunca debe tumbar la API en
+# producción si por cualquier razón falla su carga (archivo faltante, error de
+# sintaxis, dependencia nueva). El mismo patrón que agente y finanzas.
+try:
+    from routers.demo_live import router as demo_live_router
+    app.include_router(demo_live_router)
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("broquer.main").error("No se pudo cargar demo_live: %s", _e)
 
 # Cuadrícula pública de Instagram para el landing.
 from routers.instagram import router as instagram_router
