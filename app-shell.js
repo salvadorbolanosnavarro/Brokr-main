@@ -4138,6 +4138,10 @@ body[data-app="facebook-ads"]{--page-max:980px}
      de uso libre. En el resto de módulos el usuario puede entrar,
      navegar y llenar formularios; solo al EJECUTAR la acción de valor
      aparece el modal de Broquer Max si no tiene suscripción activa. */
+  // NOTA: 'video.html' (recorrido en video + su editor de fotos embebido)
+  // se deja fuera de este mapa a propósito — es decisión de producto que,
+  // por ahora, quede de acceso libre sin importar el plan del usuario. No
+  // agregar un gate aquí sin confirmarlo primero con el dueño del producto.
   const BK_PREMIUM_ACTIONS = {
     'isr.html':            ['#calc-btn'],
     'avm.html':            ['#btn-analizar-ia'],

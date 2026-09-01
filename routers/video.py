@@ -49,6 +49,14 @@
 #   Gemini no está configurada, tarda o responde algo inválido, el video se
 #   arma igual con el orden y el paneo de siempre: es una mejora, no un
 #   requisito.
+#
+# ACCESO LIBRE, SIN GATE DE PLAN (por ahora)
+#   Ni este router ni el freemium gate del frontend (BK_PREMIUM_ACTIONS en
+#   app-shell.js) restringen este módulo a Broquer Max. Es decisión de
+#   producto: cualquier usuario autenticado, tenga o no plan de pago, puede
+#   generar el recorrido y usar el editor de fotos embebido en video.html.
+#   No agregar `require_paid_feature_access` ni un gate en el frontend aquí
+#   sin confirmarlo antes con el dueño del producto.
 # ──────────────────────────────────────────────────────────────────────────
 
 import os
