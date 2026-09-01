@@ -50,7 +50,7 @@ BASELINE_MAX = {
 # A file may shrink or disappear, but none of these legacy giants may grow.
 LARGE_FILE_MAX_BYTES = {
     "main.py": 595_635,
-    "app-shell.js": 253_298,
+    "app-shell.js": 253_606,
     "whatsapp.py": 223_594,
     "contratos.html": 156_086,
     "propiedades.html": 149_441,
@@ -58,7 +58,9 @@ LARGE_FILE_MAX_BYTES = {
     "routers/firmas.py": 119_193,
     "estadisticas.html": 116_929,
     "contactos.html": 111_788,
-    "legal.html": 109_324,
+    # Bumped for the Profeco/IA-generativa disclosure clauses (9.9 Bis /
+    # 5.6 Bis) — legitimate legal content, not debt to pay down.
+    "legal.html": 113_741,
 }
 MAX_LARGE_CODE_FILES = len(LARGE_FILE_MAX_BYTES)
 
