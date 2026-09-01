@@ -363,6 +363,10 @@ except Exception as _e:
 from routers.demo import router as demo_router
 app.include_router(demo_router)
 
+# Sistema de demo en vivo para presentaciones (sin credenciales).
+from routers.demo_live import router as demo_live_router
+app.include_router(demo_live_router)
+
 # Cuadrícula pública de Instagram para el landing.
 from routers.instagram import router as instagram_router
 app.include_router(instagram_router)
