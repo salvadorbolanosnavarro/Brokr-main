@@ -273,7 +273,7 @@
     // Marketing — de la foto cruda al anuncio publicado.
     { key:'image-cleaner',href:'image-cleaner.html', label:'Editor imágenes',     group:'marketing',   icon:'image' },
     { key:'ficha-manual', href:'ficha-manual.html',  label:'Ficha técnica',       group:'marketing',   icon:'landscape' },
-    { key:'facebook-ads', href:'facebook-ads.html',  label:'Facebook Ads',        group:'marketing',   icon:'facebook' },
+    { key:'facebook-ads', href:'facebook-ads.html',  label:'Facebook Ads',        group:'marketing',   icon:'facebook', hidden:true },
     { key:'video',        href:'video.html',         label:'Video',               group:'marketing',   icon:'video' },
     { key:'mi-sitio',     href:'mi-sitio.html',      label:'Mi sitio',            group:'marketing',   icon:'globo' },
     // Más — cuenta y recursos, pegado al fondo del menú.
@@ -1534,7 +1534,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
     // usuarios empresariales — los que pertenecen a una organización con tipo
     // 'empresa' (es_empresa, expuesto por /org) — pero eso ahora lo decide el
     // drawer de perfil, no el sidebar.
-    const visible = m => (!m.adminOnly || profile?.isAdmin);
+    const visible = m => (!m.adminOnly || profile?.isAdmin) && !m.hidden;
     const porGrupo = k => MODS.filter(m => m.group === k && visible(m));
 
     const shell = document.createElement('div');
@@ -1651,7 +1651,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
         const nq = norm(input.value.trim());
         const acts = ACCIONES.filter(a => norm(a.n).includes(nq))
           .map(a => ({ n: a.n, href: a.href, grp: 'Acción', icon: 'plus' }));
-        const mods = MODS.filter(m => (!m.adminOnly || profile?.isAdmin) && norm(m.label).includes(nq))
+        const mods = MODS.filter(m => (!m.adminOnly || profile?.isAdmin) && !m.hidden && norm(m.label).includes(nq))
           .map(m => ({ n: m.label, href: m.href, grp: grupoLabel(m.group), icon: m.icon }));
         resultados = [...acts, ...mods];
         sel = 0;
