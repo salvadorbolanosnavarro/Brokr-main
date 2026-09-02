@@ -1,4 +1,4 @@
-"""Read-only WhatsApp 2.0 inbox endpoints."""
+"""Read-only WhatsApp inbox endpoints."""
 from __future__ import annotations
 
 import logging

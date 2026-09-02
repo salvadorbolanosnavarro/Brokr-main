@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-<title>Broquer — WhatsApp 2.0</title>
+<title>Broquer — WhatsApp</title>
 <!--
   Módulo oculto: no está en MODS de app-shell.js, así que no aparece en el
   menú lateral. Solo se abre escribiendo whatsapp2.html en la barra del
@@ -889,7 +889,7 @@ function w2PintarPanelNumeros(){
       <span class="w2-numero-row__dot ${n.ia_enabled!==false?'is-on':''}"></span>
       <div class="w2-numero-row__info">
         <div class="w2-numero-row__alias">${n.alias || 'Sin nombre'} <span class="bk-hint">${n.display_number || ''}</span></div>
-        ${n.webhook_verificado ? '' : '<div class="w2-numero-row__warn">Meta no ha confirmado esta conexión — dale a Verificar.</div>'}
+        ${n.webhook_verificado ? '' : '<div class="w2-numero-row__warn">Meta no le está mandando los mensajes de este número a Broquer — dale a Verificar; si sigue en rojo, revisa el webhook de la app en Meta.</div>'}
         ${n.es_mio === false ? '<div class="bk-hint">Número de un compañero de equipo</div>' : ''}
         ${n.numero_personal ? `<div class="bk-hint">Broq personal: +${n.numero_personal}</div>` : ''}
       </div>
@@ -960,8 +960,8 @@ async function w2VerificarNumero(id){
     const r = await fetch(API_BASE + '/whatsapp2/numeros/' + id + '/verificar', { headers: w2Auth() });
     const d = await r.json();
     if(!r.ok){ toast(d.detail || 'No se pudo verificar.'); return; }
-    toast(d.webhook_verificado ? 'Confirmado: este número manda sus mensajes a WhatsApp 2.0.'
-                                : 'Meta dice que este número NO está apuntando a WhatsApp 2.0 todavía.');
+    toast(d.webhook_verificado ? 'Confirmado: Meta está mandando los mensajes de este número a Broquer.'
+                                : 'Meta todavía no está mandando los mensajes de este número a Broquer.');
     await w2CargarNumeros();
   }catch(e){ toast('No se pudo verificar.'); }
 }

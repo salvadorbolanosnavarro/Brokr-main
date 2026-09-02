@@ -159,6 +159,6 @@ async def wa2_connect_core(
     if not override_confirmado:
         resultado["advertencia"] = (
             "El número se guardó, pero Meta no confirmó que vaya a mandar los mensajes a "
-            "WhatsApp 2.0. Puede que sigan llegando al WhatsApp original. Usa el botón "
-            "'Verificar conexión' en unos minutos; si sigue en rojo, dímelo.")
+            "Broquer. Usa el botón 'Verificar conexión' en unos minutos; si sigue en rojo, "
+            "dímelo.")
     return resultado

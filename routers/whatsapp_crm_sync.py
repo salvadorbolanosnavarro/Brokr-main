@@ -1,4 +1,4 @@
-"""Canonical WhatsApp 2.0 CRM contact creation and synchronization."""
+"""Canonical WhatsApp CRM contact creation and synchronization."""
 from __future__ import annotations
 
 
@@ -16,7 +16,7 @@ async def _crear_contacto_crm_core(
     log,
 ) -> str | None:
     """Crea el Contacto real en el CRM (tabla `contactos`, la misma de
-    Contactos/Leads/Estadísticas) para un prospecto nuevo de WhatsApp 2.0.
+    Contactos/Leads/Estadísticas) para un prospecto nuevo de WhatsApp.
     Sigue la MISMA convención de id que usa contactos.html ('c_' + timestamp
     en milisegundos), porque esa columna es TEXT, no uuid."""
     contacto_id = f"c_{int(datetime.now(timezone.utc).timestamp() * 1000)}"
@@ -30,8 +30,8 @@ async def _crear_contacto_crm_core(
         "nombre": (nombre or telefono or "Prospecto de WhatsApp").upper(),
         "telefono": telefono, "wa": telefono,
         "tipo": "comprador", "fuente": "WhatsApp",
-        "notas": "Prospecto creado automáticamente por WhatsApp 2.0.",
-        "es_potencial": True, "etiquetas": ["WhatsApp 2.0"],
+        "notas": "Prospecto creado automáticamente por WhatsApp.",
+        "es_potencial": True, "etiquetas": ["WhatsApp"],
         "operaciones": [],
         "created_at": _now(), "updated_at": _now(),
     }
@@ -59,7 +59,7 @@ async def _sincronizar_contacto_crm_core(
       último que se sabe del prospecto (temperatura, score, presupuesto,
       forma de pago, qué busca, resumen). No es historial, es el estado actual.
     Nunca truena el webhook si el CRM no responde — esto es un espejo, no la
-    fuente de verdad de WhatsApp 2.0."""
+    fuente de verdad de WhatsApp."""
     crm_id = contacto_wa2.get("contacto_crm_id")
     if not crm_id or not resultado_ia:
         return
@@ -78,7 +78,7 @@ async def _sincronizar_contacto_crm_core(
             rows = await sb_get("contactos", {"id": f"eq.{crm_id}", "select": "notas", "limit": "1"})
             previas = (rows[0].get("notas") or "") if rows else ""
             fecha = _hora_local().strftime("%d/%m %H:%M")
-            cambios["notas"] = (previas + f"\n[{fecha} · WhatsApp 2.0] {nota}").strip()
+            cambios["notas"] = (previas + f"\n[{fecha} · WhatsApp] {nota}").strip()
 
         renglones = []
         if contacto_wa2.get("temperatura"): renglones.append(f"Temperatura: {contacto_wa2['temperatura']}")

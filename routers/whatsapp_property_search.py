@@ -1,4 +1,4 @@
-"""Canonical property search for WhatsApp 2.0."""
+"""Canonical property search for WhatsApp."""
 from __future__ import annotations
 
 from routers.whatsapp_data import sb_get

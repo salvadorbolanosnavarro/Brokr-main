@@ -6,9 +6,9 @@ async def wa2_numero_verificar_core(
     GRAPH_API, WA2_WEBHOOK_URL, sb_patch,
 ):
     """Vuelve a preguntarle a Meta, EN VIVO, si este número de verdad está mandando
-    sus mensajes al webhook de WhatsApp 2.0. No confía en lo que se guardó al conectar:
-    ese estado pudo cambiar después (ej. alguien reconectó el mismo número en el
-    WhatsApp original, lo que le quita el override a este)."""
+    sus mensajes al webhook de WhatsApp. No confía en lo que se guardó al conectar:
+    ese estado pudo cambiar después (ej. alguien reconectó el mismo número desde
+    otra integración, lo que le quita el override a este)."""
     user_id = await _require_user(request)
     rows = await sb_get("wa2_numeros", {"id": f"eq.{numero_id}", "user_id": f"eq.{user_id}",
                                         "select": "waba_id,access_token", "limit": "1"})

@@ -46,9 +46,9 @@ async def crear_contacto_crm(user_id: str, wa_id: str, nombre: str | None) -> st
         "wa": telefono,
         "tipo": "comprador",
         "fuente": "WhatsApp",
-        "notas": "Prospecto creado automáticamente por WhatsApp 2.0.",
+        "notas": "Prospecto creado automáticamente por WhatsApp.",
         "es_potencial": True,
-        "etiquetas": ["WhatsApp 2.0"],
+        "etiquetas": ["WhatsApp"],
         "operaciones": [],
         "created_at": _now(),
         "updated_at": _now(),
@@ -83,7 +83,7 @@ async def sincronizar_contacto_crm(
             rows = await sb_get("contactos", {"id": f"eq.{crm_id}", "select": "notas", "limit": "1"})
             previas = (rows[0].get("notas") or "") if rows else ""
             fecha = hora_local().strftime("%d/%m %H:%M")
-            cambios["notas"] = (previas + f"\n[{fecha} · WhatsApp 2.0] {nota}").strip()
+            cambios["notas"] = (previas + f"\n[{fecha} · WhatsApp] {nota}").strip()
 
         renglones = []
         if contacto_wa2.get("temperatura"):

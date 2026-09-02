@@ -1,4 +1,4 @@
-"""Destructive WhatsApp 2.0 operations.
+"""Destructive WhatsApp operations.
 
 This router is isolated deliberately. Audit/refactor work must never invoke
 these endpoints; extraction is static only and preserves the legacy sequence.
