@@ -113,7 +113,9 @@ async def wa2_connect_core(
     # llamada (200) sin que el override realmente haya quedado activo, así que no
     # basta con revisar el status code de la petición.
     override_confirmado = False
-    async with httpx.AsyncClient(timeout=15) as c:
+    # 45 s: el contenedor de Railway en frío tarda ~16 s en la primera llamada
+    # a Graph (ya caliente responde en ~1.3 s).
+    async with httpx.AsyncClient(timeout=45) as c:
         r = await c.post(f"{GRAPH_API}/{waba_id}/subscribed_apps",
                          params={"access_token": business_token},
                          json={"override_callback_uri": WA2_WEBHOOK_URL, "verify_token": WA2_VERIFY_TOKEN})

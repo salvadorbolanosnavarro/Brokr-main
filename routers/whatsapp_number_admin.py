@@ -18,7 +18,11 @@ async def wa2_numero_verificar_core(
     verificado = False
     callback_actual = None
     try:
-        async with httpx.AsyncClient(timeout=15) as c:
+        # 45 s: el contenedor de Railway en frío tarda ~16 s en la primera
+        # llamada a Graph (ya caliente responde en ~1.3 s). Con 15 s el
+        # timeout reventaba antes de que Meta respondiera y el usuario veía
+        # un 502 falso.
+        async with httpx.AsyncClient(timeout=45) as c:
             r = await c.get(f"{GRAPH_API}/{waba_id}/subscribed_apps", params={"access_token": token})
         if r.status_code < 300:
             for app_sub in r.json().get("data", []):
@@ -31,7 +35,10 @@ async def wa2_numero_verificar_core(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"No se pudo consultar a Meta: {e}")
+        # str(e) viene vacío en timeouts de httpx — sin el nombre del tipo el
+        # detail quedaba "No se pudo consultar a Meta: " y no decía nada.
+        raise HTTPException(status_code=502,
+            detail=f"No se pudo consultar a Meta: {type(e).__name__}: {e}".strip(": "))
 
     await sb_patch("wa2_numeros", {"id": f"eq.{numero_id}"}, {"webhook_verificado": verificado})
     return {"webhook_verificado": verificado, "callback_actual": callback_actual}
