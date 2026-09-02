@@ -50,11 +50,11 @@ BASELINE_MAX = {
 # A file may shrink or disappear, but none of these legacy giants may grow.
 LARGE_FILE_MAX_BYTES = {
     "main.py": 595_635,
-    "app-shell.js": 253_606,
+    "app-shell.js": 253_350,
     "whatsapp.py": 223_594,
-    "contratos.html": 156_086,
+    "contratos.html": 156_081,
     "propiedades.html": 149_441,
-    "whatsapp.html": 127_110,
+    "whatsapp.html": 126_992,
     "routers/firmas.py": 119_193,
     "estadisticas.html": 116_929,
     "contactos.html": 111_788,
