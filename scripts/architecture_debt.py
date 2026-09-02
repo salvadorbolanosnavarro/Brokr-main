@@ -60,7 +60,10 @@ LARGE_FILE_MAX_BYTES = {
     # Bumped 1,844 bytes for the "Revisar webhook de la app" button in
     # Administrar números (fija el webhook de WhatsApp a nivel app) — a real
     # product change, not debt to pay down.
-    "whatsapp.html": 128_836,
+    # Bumped 542 more bytes: w2CargarNumeros() silently treated any failed
+    # GET /whatsapp2/numeros (e.g. an expired session, 401) as "no numbers
+    # connected" — a real production bug fix, not debt.
+    "whatsapp.html": 129_378,
     "routers/firmas.py": 119_193,
     "estadisticas.html": 116_929,
     "contactos.html": 111_788,
