@@ -33,6 +33,9 @@
   .w2-numero-row__alias{ font-weight:700; font-size:var(--fs-body); }
   .w2-numero-row__sub{ font-size:var(--fs-sm); color:var(--mute); }
   .w2-numero-row__warn{ color:var(--danger); font-size:var(--fs-xs); font-weight:700; }
+  .w2-app-webhook{ display:flex; align-items:center; gap:var(--sp-3); margin-top:var(--sp-3);
+                    padding-top:var(--sp-3); border-top:1px solid var(--line); }
+  .w2-app-webhook-link{ color:var(--mute); font-weight:400; }
 
   /* ── Tabs internos ────────────────────────────────────────── */
   .w2-tabs{ display:flex; flex-wrap:wrap; gap:var(--sp-2); margin-bottom:var(--sp-5); border-bottom:1px solid var(--line); }
@@ -293,6 +296,10 @@
       <button class="bk-btn bk-btn--ghost bk-btn--sm" id="wa-connect-btn" onclick="w2ConectarNumero()">+ Conectar número</button>
     </div>
     <div class="w2-numeros-panel" id="w2-numeros-panel"></div>
+    <div class="w2-app-webhook">
+      <button class="w2-numeros-link w2-app-webhook-link" onclick="w2RevisarWebhookApp()">Revisar webhook de la app</button>
+      <button class="bk-btn bk-btn--ghost bk-btn--sm" id="w2-app-webhook-fix-btn" onclick="w2ArreglarWebhookApp()" hidden>Arreglar</button>
+    </div>
   </div>
 
   <div style="height:var(--sp-4);"></div>
@@ -964,6 +971,34 @@ async function w2VerificarNumero(id){
                                 : 'Meta dice que este número NO está apuntando a WhatsApp 2.0 todavía.');
     await w2CargarNumeros();
   }catch(e){ toast('No se pudo verificar.'); }
+}
+
+async function w2RevisarWebhookApp(){
+  toast('Revisando el webhook de la app…');
+  document.getElementById('w2-app-webhook-fix-btn').hidden = true;
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/app-webhook', { headers: w2Auth() });
+    const d = await r.json();
+    if(!r.ok){ toast(d.detail || 'No se pudo revisar el webhook de la app.'); return; }
+    const apunta = !!(d.callback_url && d.callback_url.endsWith('/whatsapp2/webhook') && d.active !== false);
+    if(apunta){
+      toast('El webhook de la app ya apunta a Broquer. Todo en orden.');
+    }else{
+      toast(d.callback_url ? 'El webhook de la app NO apunta a Broquer todavía.'
+                            : 'La app no tiene ningún webhook configurado todavía.');
+      document.getElementById('w2-app-webhook-fix-btn').hidden = false;
+    }
+  }catch(e){ toast('No se pudo revisar el webhook de la app.'); }
+}
+
+async function w2ArreglarWebhookApp(){
+  toast('Fijando el webhook de la app…');
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/app-webhook', { method:'POST', headers: w2Auth() });
+    const d = await r.json();
+    if(!r.ok){ toast(d.detail || 'No se pudo fijar el webhook de la app.'); return; }
+    await w2RevisarWebhookApp();
+  }catch(e){ toast('No se pudo fijar el webhook de la app.'); }
 }
 
 /* ── Conversaciones ───────────────────────────────────────── */

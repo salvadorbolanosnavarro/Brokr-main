@@ -57,7 +57,10 @@ LARGE_FILE_MAX_BYTES = {
     "whatsapp.py": 223_594,
     "contratos.html": 156_081,
     "propiedades.html": 149_441,
-    "whatsapp.html": 126_992,
+    # Bumped 1,844 bytes for the "Revisar webhook de la app" button in
+    # Administrar números (fija el webhook de WhatsApp a nivel app) — a real
+    # product change, not debt to pay down.
+    "whatsapp.html": 128_836,
     "routers/firmas.py": 119_193,
     "estadisticas.html": 116_929,
     "contactos.html": 111_788,
