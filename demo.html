@@ -57,6 +57,20 @@ html, body {
     err.style.display = 'block';
   }
 
+  // Si ya hay un token guardado y no expiró, ir directo — sin round-trip a Supabase.
+  try {
+    var tokenGuardado = localStorage.getItem('sb_token');
+    var expiresAt     = parseInt(localStorage.getItem('sb_expires_at') || '0', 10);
+    var ahora         = Math.floor(Date.now() / 1000);
+    // Margen de 60 s para evitar falsos positivos al borde de la expiración
+    if (tokenGuardado && expiresAt && (expiresAt - ahora) > 60) {
+      sessionStorage.setItem('sb_token', tokenGuardado);
+      sessionStorage.setItem('sb_user',  localStorage.getItem('sb_user') || '{}');
+      window.location.replace('index.html');
+      return;
+    }
+  } catch (_) {}
+
   try {
     var r = await fetch(SB_URL + '/auth/v1/token?grant_type=password', {
       method: 'POST',
@@ -71,12 +85,14 @@ html, body {
     }
 
     try {
+      var expiresIn = d.expires_in || 3600;
       localStorage.setItem('sb_token',      d.access_token);
       localStorage.setItem('sb_refresh',    d.refresh_token || '');
       localStorage.setItem('sb_user',       JSON.stringify(d.user || {}));
+      localStorage.setItem('sb_expires_at', String(Math.floor(Date.now() / 1000) + expiresIn));
+      localStorage.setItem('sesion_activa', 'true');
       sessionStorage.setItem('sb_token',    d.access_token);
       sessionStorage.setItem('sb_user',     JSON.stringify(d.user || {}));
-      localStorage.setItem('sesion_activa', 'true');
     } catch (_) {}
 
     window.location.replace('index.html');
