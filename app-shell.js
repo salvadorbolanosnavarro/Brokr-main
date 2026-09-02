@@ -4242,6 +4242,9 @@ body[data-app="facebook-ads"]{--page-max:980px}
           }
           confirmedInactive = true;
           window.__BK_TRIAL_DISP = !!d.trial_disponible;
+          // "Inactiva" es definitivo salvo justPaid (esperando el webhook
+          // de Stripe): sin eso, reintentar solo repite la misma respuesta.
+          if (!justPaid) break;
         }
         // 5xx u otros: reintentar silenciosamente.
       } catch (_) { /* red intermitente — reintentar */ }
@@ -4264,23 +4267,20 @@ body[data-app="facebook-ads"]{--page-max:980px}
   async function boot() {
     const profile = await authInit();
     if (!profile) return; // redirected to login/landing
-    const subActive = await checkSubscriptionActive(profile);
+
+    // Independientes entre sí: en paralelo en vez de 3 round-trips seguidos.
+    const _tok = getToken();
+    const [subActive, _org, _cfg] = await Promise.all([
+      checkSubscriptionActive(profile),
+      fetch(API_BASE + '/org', { headers: _tok ? { Authorization: 'Bearer ' + _tok } : {} })
+        .then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(API_BASE + '/config/public').then(r => r.ok ? r.json() : null).catch(() => null),
+    ]);
     if (subActive === null) return; // sesión expirada — ya se redirigió
     window.__BK_SUB_ACTIVE = (subActive === true);
-
-    // ── ¿Usuario empresarial? (organización tipo 'empresa') ──
-    // Decide si el módulo "Equipo" aparece en el sidebar / menú. Fail-closed:
-    // si no podemos confirmarlo, no se muestra.
-    try {
-      const _tok = getToken();
-      const _orgRes = await fetch(API_BASE + '/org', {
-        headers: _tok ? { Authorization: 'Bearer ' + _tok } : {},
-      });
-      if (_orgRes.ok) {
-        const _org = await _orgRes.json();
-        profile.esEmpresa = !!(_org && _org.tiene_org && _org.es_empresa);
-      }
-    } catch (_) { /* sin confirmar → no se muestra Equipo */ }
+    // Fail-closed: sin confirmar, no se muestra Equipo.
+    profile.esEmpresa = !!(_org && _org.tiene_org && _org.es_empresa);
+    if (_cfg && _cfg.fb_app_id) window._brokrFbAppId = _cfg.fb_app_id;
 
     // El drawer de perfil necesita saber si la cuenta es empresarial para
     // decidir si muestra la sección de Equipo, y se arma después del shell.
@@ -4288,15 +4288,6 @@ body[data-app="facebook-ads"]{--page-max:980px}
 
     injectShell(profile);
     bkInstallFreemiumGate();
-
-    // ── Cargar configuración pública del backend (FB_APP_ID, etc.) ──────────
-    try {
-      const cfgRes = await fetch(API_BASE + '/config/public');
-      if (cfgRes.ok) {
-        const cfg = await cfgRes.json();
-        if (cfg.fb_app_id) window._brokrFbAppId = cfg.fb_app_id;
-      }
-    } catch (_) { /* sin conexión — connectFacebook mostrará su propio error */ }
 
     // ════════════════════════════════════════════════════════════════
     // window.brokrSb — helper centralizado con auto-refresh
