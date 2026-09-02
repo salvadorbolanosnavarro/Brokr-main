@@ -1529,11 +1529,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
       pageWrap.insertBefore(backWrap, pageWrap.firstChild);
     }
 
-    // "Equipo" ya no vive en el menú: se movió a Perfil, que es donde vive el
-    // resto de la configuración de la cuenta. Se sigue mostrando solo a
-    // usuarios empresariales — los que pertenecen a una organización con tipo
-    // 'empresa' (es_empresa, expuesto por /org) — pero eso ahora lo decide el
-    // drawer de perfil, no el sidebar.
+    // "Equipo" vive en el drawer de perfil, no en el sidebar.
     const visible = m => (!m.adminOnly || profile?.isAdmin) && !m.hidden;
     const porGrupo = k => MODS.filter(m => m.group === k && visible(m));
 
