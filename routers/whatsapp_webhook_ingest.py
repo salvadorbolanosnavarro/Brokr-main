@@ -13,11 +13,22 @@ async def _persistir_entrantes_core(
     _revisar_token, enviar_push,
 ):
     trabajo = []
-    for entry in payload.get("entry", []):
-        for change in entry.get("changes", []):
+    entradas = payload.get("entry", [])
+    if not entradas:
+        log.warning("Webhook 2.0 sin 'entry' — claves del payload: %s", sorted(payload.keys()))
+    for entry in entradas:
+        cambios = entry.get("changes", [])
+        if not cambios:
+            log.warning("Webhook 2.0 sin 'changes' en entry %s", entry.get("id"))
+        for change in cambios:
             val = change.get("value", {})
             phone_number_id = (val.get("metadata") or {}).get("phone_number_id")
             if not phone_number_id:
+                # Antes esto era un `continue` mudo — no había forma de saber si
+                # llegó un evento sin phone_number_id (ej. otro field distinto a
+                # "messages") o si el payload traía una forma inesperada.
+                log.warning("Webhook 2.0 sin phone_number_id (field=%s, claves de value=%s) — ignorado",
+                           change.get("field"), sorted(val.keys()))
                 continue
             numero = await _get_numero(phone_number_id)
             if not numero:
