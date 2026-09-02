@@ -2344,8 +2344,27 @@ body[data-app="facebook-ads"]{--page-max:980px}
       }
       // Listener para escuchar que el iframe terminó
       let timeoutId = null;
-      window._asistenteISRListener = (e) => {
-        if (!e.data || e.data.tipo !== 'asistente_isr_done') return;
+      window._asistenteISRListener = async (e) => {
+        if (!e.data) return;
+        if (e.data.tipo === 'asistente_isr_pdf') {
+          // El iframe oculto no puede mostrar el share sheet ni el visor de
+          // respaldo (está fuera de pantalla y sin gesto de usuario), así que
+          // entregamos el archivo aquí, en la página visible del chat.
+          clearTimeout(timeoutId);
+          window.removeEventListener('message', window._asistenteISRListener);
+          const fr = document.getElementById('asistente-isr-frame');
+          if (fr && fr.parentNode) fr.parentNode.removeChild(fr);
+          try {
+            await deliverGeneratedFile(e.data.blob, e.data.filename || 'ISR.pdf', {
+              type: 'application/pdf', title: 'Cálculo ISR listo', text: 'Cálculo ISR generado por Broquer'
+            });
+            bubble.innerHTML = '✓ <strong>Tu PDF de ISR está listo.</strong> Ábrelo o compártelo desde donde apareció. ¿Necesitas otro?';
+          } catch (err) {
+            bubble.textContent = 'Calculé el ISR pero no pude entregar el PDF: ' + (err.message || err);
+          }
+          return;
+        }
+        if (e.data.tipo !== 'asistente_isr_done') return;
         clearTimeout(timeoutId);
         window.removeEventListener('message', window._asistenteISRListener);
         const fr = document.getElementById('asistente-isr-frame');

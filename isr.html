@@ -1450,6 +1450,9 @@ function resetISR() {
 }
 
 let _isrPdfBusy = false;
+// true cuando esta página corre dentro del iframe oculto que usa Broq
+// (el asistente del chat) para generar el PDF sin sacar al usuario del chat.
+let _isrAsistenteHidden = false;
 // ── Tokens del sistema de diseño para el PDF ──
 // Este documento lo renderiza Playwright aislado, sin cargar
 // brokr-theme.css. Antes los tokens vivían copiados a mano aquí, y se
@@ -1486,8 +1489,8 @@ function _isrTokens(){
 
 async function descargarPDF() {
   const d=_isrData;
-  if(!d){alert('Primero realiza un cálculo.');return;}
-  if(_isrPdfBusy) return;
+  if(!d){alert('Primero realiza un cálculo.');return false;}
+  if(_isrPdfBusy) return false;
   const meses=['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const tipos={casa:'Casa habitación / Departamento',terreno:'Terreno',comercial:'Inmueble comercial'};
   const bkdn=(g('res-bkdn')||{}).innerHTML||'';
@@ -1646,6 +1649,7 @@ async function descargarPDF() {
   let _isrTok = null;
   try { _isrTok = window.brokrSb && window.brokrSb.ensureToken ? await window.brokrSb.ensureToken() : null; } catch(e){}
   if (!_isrTok) { try { _isrTok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token'); } catch(e){} }
+  let ok = false;
   try {
     const r = await fetch(`${API}/isr-pdf`, {
       method: 'POST',
@@ -1658,19 +1662,30 @@ async function descargarPDF() {
     const pdfResp = await fetch(`${API}/isr-pdf/${data.token}`);
     if(!pdfResp.ok) throw new Error('No se pudo obtener el PDF');
     const blob = await pdfResp.blob();
+    const outFilename = data.filename || filename;
 
-    if (window.broquerDeliverBlob) {
-      await window.broquerDeliverBlob(blob, data.filename || filename, { type: 'application/pdf', title: 'Cálculo ISR listo', text: 'Cálculo ISR generado por Broquer' });
+    if (_isrAsistenteHidden && window.parent && window.parent !== window) {
+      // Este código corre dentro del iframe oculto (fuera de pantalla, sin
+      // gesto de usuario) que usa Broq para generar el PDF sin sacar al
+      // usuario del chat. Ni el share sheet nativo ni el visor de respaldo
+      // funcionan ahí: se disparan/renderizan dentro del iframe invisible y
+      // el usuario nunca los ve, aunque técnicamente no fallan. Por eso
+      // delegamos la entrega real del archivo a la página visible del chat.
+      window.parent.postMessage({ tipo: 'asistente_isr_pdf', blob, filename: outFilename }, '*');
+    } else if (window.broquerDeliverBlob) {
+      await window.broquerDeliverBlob(blob, outFilename, { type: 'application/pdf', title: 'Cálculo ISR listo', text: 'Cálculo ISR generado por Broquer' });
     } else {
       const url = URL.createObjectURL(blob);
       window.open(url, '_blank', 'noopener');
       setTimeout(() => URL.revokeObjectURL(url), 3000);
     }
+    ok = true;
   } catch (e) {
     alert('Error al generar PDF: ' + (e.message || e));
   } finally {
     _isrPdfBusy = false;
   }
+  return ok;
 }
 
 /* ── MES/AÑO PICKER ── */
@@ -1833,6 +1848,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     || sessionStorage.getItem('shaark_isr_auto') === '1';
   if (esAsistente) {
     sessionStorage.removeItem('shaark_isr_auto');
+    _isrAsistenteHidden = !!(window.parent && window.parent !== window);
     const finish = (ok, error) => {
       try {
         if (window.parent && window.parent !== window) {
@@ -1847,8 +1863,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!_isrData) { finish(false, 'No se pudo calcular el ISR con los datos enviados.'); return; }
         // Pequeño delay para que el DOM termine de renderizar el resultado
         await new Promise(r => setTimeout(r, 250));
-        if (typeof descargarPDF === 'function') await descargarPDF();
-        finish(true);
+        if (typeof descargarPDF === 'function') {
+          const ok = await descargarPDF();
+          if (!ok) { finish(false, 'No se pudo generar el PDF.'); return; }
+        }
+        // Cuando la entrega se delega al padre (iframe oculto), es la página
+        // del chat quien confirma éxito una vez que el archivo realmente se
+        // comparte/abre — no aquí. Solo confirmamos localmente si la entrega
+        // ya ocurrió en esta misma página (fallback sin iframe).
+        if (!_isrAsistenteHidden) finish(true);
       } catch (e) {
         finish(false, (e && e.message) || String(e));
       }
