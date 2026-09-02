@@ -2527,14 +2527,11 @@ async function generarContrato(soloDatos){
   btn.disabled = true;
   document.getElementById('loading').classList.add('show');
 
-  let _cTok = null;
-  try { _cTok = window.brokrSb && window.brokrSb.ensureToken ? await window.brokrSb.ensureToken() : null; } catch(e){}
-  if (!_cTok) { try { _cTok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token'); } catch(e){} }
-
+  const _cHdr = await machHeaders();
   try {
     const res = await fetch(`${API}/contrato`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(_cTok ? { 'Authorization': 'Bearer ' + _cTok } : {}) },
+      headers: {'Content-Type':'application/json',..._cHdr},
       body: JSON.stringify({ tipo: tipoActual, datos, clausulas_especiales: getClausulasTexto() })
     });
 
@@ -2585,14 +2582,8 @@ async function mandarAFirma(){
   document.getElementById('err').classList.remove('show');
   document.getElementById('loading').classList.add('show');
 
-  let tok = null;
-  try { tok = window.brokrSb && window.brokrSb.ensureToken ? await window.brokrSb.ensureToken() : null; } catch(e){}
-  if(!tok){ try { tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token'); } catch(e){} }
-
-  const headers = { 'Content-Type':'application/json', ...(tok ? { Authorization: 'Bearer ' + tok } : {}) };
-
+  const headers = {'Content-Type':'application/json',...await machHeaders()};
   try{
-    // Paso 1: encolar el job (respuesta inmediata < 1s, evita timeout de Railway)
     const res = await fetch(`${API}/firmas/desde-contrato`, {
       method: 'POST',
       headers,
@@ -2604,17 +2595,13 @@ async function mandarAFirma(){
     const jobId = j.job_id;
     if(!jobId) throw new Error('No se recibió el identificador del proceso.');
 
-    // Paso 2: polling cada 2s hasta que el job termine (máx 90s)
+    // polling cada 2s, máx 90s
     const MAX_INTENTOS = 45;
     for(let i = 0; i < MAX_INTENTOS; i++){
       await new Promise(r => setTimeout(r, 2000));
 
-      // Refrescar token si el polling tarda
-      let pollTok = tok;
-      try { if(window.brokrSb?.ensureToken) pollTok = await window.brokrSb.ensureToken(); } catch(e){}
-
       const poll = await fetch(`${API}/firmas/desde-contrato/${jobId}`, {
-        headers: { ...(pollTok ? { Authorization: 'Bearer ' + pollTok } : {}) }
+        headers: await machHeaders()
       });
       if(!poll.ok) continue;
       const estado = await poll.json().catch(()=>({}));
@@ -2626,7 +2613,6 @@ async function mandarAFirma(){
       if(estado.estado === 'error'){
         throw new Error(estado.error || 'No se pudo generar el contrato para firma.');
       }
-      // pendiente o procesando → seguir esperando
     }
     throw new Error('El proceso tardó demasiado. Intenta de nuevo en unos momentos.');
   } catch(e){

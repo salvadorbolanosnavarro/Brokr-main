@@ -1509,9 +1509,7 @@ async function w2EnviarManual(){
     }
     const ok = await r.json().catch(() => ({}));
     if(ok.ia_pausada){
-      // El servidor hace a un lado la IA en cuanto escribes tú (para siempre
-      // o por el rato que configuraste), para que no contesten los dos en el
-      // mismo chat. Aquí solo se refleja en pantalla.
+      // El servidor pausa la IA al escribir; aquí se refleja en pantalla.
       W2_CONV_ACTUAL.ia_sesion_nueva = false;
       if(ok.para_siempre){
         W2_CONV_ACTUAL.ia_modo = 'off';
