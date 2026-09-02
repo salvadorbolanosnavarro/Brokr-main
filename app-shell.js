@@ -4242,6 +4242,13 @@ body[data-app="facebook-ads"]{--page-max:980px}
           }
           confirmedInactive = true;
           window.__BK_TRIAL_DISP = !!d.trial_disponible;
+          // Respuesta definitiva del backend: "inactiva" no es un estado
+          // transitorio salvo que estemos esperando el webhook de Stripe
+          // (justPaid). Sin eso, reintentar solo repite la misma respuesta
+          // y le cuesta a cada cuenta free/demo/trial hasta 3s muertos en
+          // CADA carga de pantalla. Con justPaid seguimos sondeando: ahí sí
+          // puede cambiar de un intento a otro mientras llega el webhook.
+          if (!justPaid) break;
         }
         // 5xx u otros: reintentar silenciosamente.
       } catch (_) { /* red intermitente — reintentar */ }
@@ -4264,23 +4271,47 @@ body[data-app="facebook-ads"]{--page-max:980px}
   async function boot() {
     const profile = await authInit();
     if (!profile) return; // redirected to login/landing
-    const subActive = await checkSubscriptionActive(profile);
+
+    // Estos tres chequeos no dependen entre sí (todos solo necesitan el
+    // token/profile que ya tenemos), así que se lanzan en paralelo en vez
+    // de uno tras otro: antes eran 3 round-trips secuenciales antes de
+    // poder pintar el shell, ahora es el tiempo del más lento de los tres.
+    const _tok = getToken();
+    const [subActive, _orgEsEmpresa, _cfgFbAppId] = await Promise.all([
+      checkSubscriptionActive(profile),
+
+      // ── ¿Usuario empresarial? (organización tipo 'empresa') ──
+      // Decide si el módulo "Equipo" aparece en el sidebar / menú. Fail-closed:
+      // si no podemos confirmarlo, no se muestra.
+      (async () => {
+        try {
+          const _orgRes = await fetch(API_BASE + '/org', {
+            headers: _tok ? { Authorization: 'Bearer ' + _tok } : {},
+          });
+          if (_orgRes.ok) {
+            const _org = await _orgRes.json();
+            return !!(_org && _org.tiene_org && _org.es_empresa);
+          }
+        } catch (_) { /* sin confirmar → no se muestra Equipo */ }
+        return false;
+      })(),
+
+      // ── Configuración pública del backend (FB_APP_ID, etc.) ──────────
+      (async () => {
+        try {
+          const cfgRes = await fetch(API_BASE + '/config/public');
+          if (cfgRes.ok) {
+            const cfg = await cfgRes.json();
+            if (cfg.fb_app_id) return cfg.fb_app_id;
+          }
+        } catch (_) { /* sin conexión — connectFacebook mostrará su propio error */ }
+        return null;
+      })(),
+    ]);
     if (subActive === null) return; // sesión expirada — ya se redirigió
     window.__BK_SUB_ACTIVE = (subActive === true);
-
-    // ── ¿Usuario empresarial? (organización tipo 'empresa') ──
-    // Decide si el módulo "Equipo" aparece en el sidebar / menú. Fail-closed:
-    // si no podemos confirmarlo, no se muestra.
-    try {
-      const _tok = getToken();
-      const _orgRes = await fetch(API_BASE + '/org', {
-        headers: _tok ? { Authorization: 'Bearer ' + _tok } : {},
-      });
-      if (_orgRes.ok) {
-        const _org = await _orgRes.json();
-        profile.esEmpresa = !!(_org && _org.tiene_org && _org.es_empresa);
-      }
-    } catch (_) { /* sin confirmar → no se muestra Equipo */ }
+    profile.esEmpresa = _orgEsEmpresa;
+    if (_cfgFbAppId) window._brokrFbAppId = _cfgFbAppId;
 
     // El drawer de perfil necesita saber si la cuenta es empresarial para
     // decidir si muestra la sección de Equipo, y se arma después del shell.
@@ -4288,15 +4319,6 @@ body[data-app="facebook-ads"]{--page-max:980px}
 
     injectShell(profile);
     bkInstallFreemiumGate();
-
-    // ── Cargar configuración pública del backend (FB_APP_ID, etc.) ──────────
-    try {
-      const cfgRes = await fetch(API_BASE + '/config/public');
-      if (cfgRes.ok) {
-        const cfg = await cfgRes.json();
-        if (cfg.fb_app_id) window._brokrFbAppId = cfg.fb_app_id;
-      }
-    } catch (_) { /* sin conexión — connectFacebook mostrará su propio error */ }
 
     // ════════════════════════════════════════════════════════════════
     // window.brokrSb — helper centralizado con auto-refresh
