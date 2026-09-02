@@ -1,4 +1,4 @@
-"""Authentication and organization visibility rules for WhatsApp 2.0."""
+"""Authentication and organization visibility rules for WhatsApp."""
 from __future__ import annotations
 
 from fastapi import Request

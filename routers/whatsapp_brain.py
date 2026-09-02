@@ -1,4 +1,4 @@
-"""Canonical WhatsApp 2.0 AI reception brain.
+"""Canonical WhatsApp AI reception brain.
 
 All legacy globals are injected by the root compatibility wrapper so moving the
 implementation does not change monkeypatch/runtime dependency semantics.

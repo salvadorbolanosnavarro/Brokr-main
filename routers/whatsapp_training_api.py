@@ -1,4 +1,4 @@
-"""WhatsApp 2.0 training configuration API."""
+"""WhatsApp training configuration API."""
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Request

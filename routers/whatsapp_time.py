@@ -1,4 +1,4 @@
-"""Pure timezone/calendar helpers for WhatsApp 2.0."""
+"""Pure timezone/calendar helpers for WhatsApp."""
 from __future__ import annotations
 
 from datetime import datetime, timezone, timedelta

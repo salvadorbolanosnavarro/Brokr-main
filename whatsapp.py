@@ -1,19 +1,19 @@
 # =============================================================================
-# Broquer · Módulo WhatsApp 2.0 (multi-número + IA de recepción)
+# Broquer · Módulo WhatsApp (multi-número + IA de recepción)
 # -----------------------------------------------------------------------------
-# Módulo construido DESDE CERO. No reutiliza código ni tablas de whatsapp.py.
-# Vive en su propio prefijo /whatsapp2 y su propio set de tablas (wa2_*).
+# Único módulo de WhatsApp del producto. Vive en su propio prefijo /whatsapp2
+# y su propio set de tablas (wa2_*) — nombres internos que no cambian aunque
+# el archivo ya se llama whatsapp.py.
 #
-# Cómo llegan los mensajes de VARIOS números al MISMO webhook de este módulo,
-# sin tocar el webhook del módulo viejo: Meta permite fijar un "callback URL"
-# alterno por WABA con override_callback_uri al suscribir la app
-# (POST /{waba_id}/subscribed_apps). Este módulo siempre se suscribe con ese
-# override apuntando a /whatsapp2/webhook, así que los números conectados aquí
-# jamás tocan el webhook de whatsapp.py y viceversa.
+# Cómo llegan los mensajes de VARIOS números al MISMO webhook de este módulo:
+# Meta permite fijar un "callback URL" alterno por WABA con
+# override_callback_uri al suscribir la app (POST /{waba_id}/subscribed_apps).
+# Este módulo siempre se suscribe con ese override apuntando a
+# /whatsapp2/webhook.
 #
 # Conectar en main.py:
-#   from whatsapp2 import router as whatsapp2_router
-#   app.include_router(whatsapp2_router)
+#   from whatsapp import router as whatsapp_router
+#   app.include_router(whatsapp_router)
 # =============================================================================
 
 import re

@@ -1,4 +1,4 @@
-"""Pure formatting/parsing helpers for WhatsApp 2.0.
+"""Pure formatting/parsing helpers for WhatsApp.
 
 This module intentionally contains no network, database, FastAPI, or global
 runtime configuration access so its historical behavior can be characterized

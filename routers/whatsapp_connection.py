@@ -1,4 +1,4 @@
-"""WhatsApp 2.0 number connection and non-destructive number management."""
+"""WhatsApp number connection and non-destructive number management."""
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -179,8 +179,8 @@ async def wa2_connect(req: ConnectReq, request: Request):
     if not override_confirmado:
         resultado["advertencia"] = (
             "El número se guardó, pero Meta no confirmó que vaya a mandar los mensajes a "
-            "WhatsApp 2.0. Puede que sigan llegando al WhatsApp original. Usa el botón "
-            "'Verificar conexión' en unos minutos; si sigue en rojo, dímelo.")
+            "Broquer. Usa el botón 'Verificar conexión' en unos minutos; si sigue en rojo, "
+            "dímelo.")
     return resultado
 
 

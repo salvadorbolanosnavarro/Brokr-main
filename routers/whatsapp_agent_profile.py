@@ -1,4 +1,4 @@
-"""Canonical public agent profile lookup for WhatsApp 2.0."""
+"""Canonical public agent profile lookup for WhatsApp."""
 from __future__ import annotations
 
 from routers.whatsapp_data import sb_get

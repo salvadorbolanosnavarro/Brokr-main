@@ -57,7 +57,10 @@ LARGE_FILE_MAX_BYTES = {
     "whatsapp.py": 223_594,
     "contratos.html": 156_081,
     "propiedades.html": 149_441,
-    "whatsapp.html": 126_992,
+    # Bumped 92 bytes: dropping "WhatsApp 2.0" from the toasts/warning made
+    # those strings slightly longer, not shorter — a real product change
+    # (product decision: the module is just "WhatsApp"), not debt.
+    "whatsapp.html": 127_084,
     "routers/firmas.py": 119_193,
     "estadisticas.html": 116_929,
     "contactos.html": 111_788,

@@ -1,4 +1,4 @@
-"""Canonical WhatsApp 2.0 agenda and advisor identity helpers."""
+"""Canonical WhatsApp agenda and advisor identity helpers."""
 from __future__ import annotations
 
 

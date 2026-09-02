@@ -1,4 +1,4 @@
-"""Pure statistics aggregation for WhatsApp 2.0."""
+"""Pure statistics aggregation for WhatsApp."""
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
