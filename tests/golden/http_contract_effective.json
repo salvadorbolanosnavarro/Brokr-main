@@ -1,5 +1,5 @@
 {
-  "count": 248,
+  "count": 250,
   "operations": [
     {
       "body": false,
@@ -2280,6 +2280,24 @@
       "responses": [
         "200",
         "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/whatsapp2/app-webhook",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [],
+      "path": "/whatsapp2/app-webhook",
+      "responses": [
+        "200"
       ]
     },
     {

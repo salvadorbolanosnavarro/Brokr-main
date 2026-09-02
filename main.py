@@ -284,6 +284,15 @@ except Exception as _e:
     import logging as _logging
     _logging.getLogger("broquer.main").error("No se pudo cargar whatsapp: %s", _e)
 
+# Fija el webhook de WhatsApp a nivel APP (no por WABA) — funciona sin esperar
+# la aprobación de Tech Provider que bloquea el override por WABA. Mismo
+# import defensivo: si falla, el resto del backend sigue vivo.
+try:
+    from routers.whatsapp_app_subscription import router as whatsapp_app_subscription_router
+    app.include_router(whatsapp_app_subscription_router)
+except Exception as _e:
+    print(f"[whatsapp-app-webhook] No se pudo montar el router: {_e}")
+
 # Motor agéntico de Broq (tool-use nativo + loop de varios pasos + voz Whisper).
 # Import defensivo: si por cualquier razón fallara la carga, el resto del backend
 # sigue funcionando con normalidad.
