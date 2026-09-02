@@ -113,6 +113,10 @@ async def wa2_connect_core(
     # llamada (200) sin que el override realmente haya quedado activo, así que no
     # basta con revisar el status code de la petición.
     override_confirmado = False
+    # Antes esto solo se logueaba: si el POST fallaba, el agente nunca se
+    # enteraba de por qué — solo veía "webhook_verificado: false" sin ninguna
+    # pista. Ahora el texto del error de Meta viaja hasta la respuesta.
+    error_suscripcion: str | None = None
     # 45 s: el contenedor de Railway en frío tarda ~16 s en la primera llamada
     # a Graph (ya caliente responde en ~1.3 s).
     async with httpx.AsyncClient(timeout=45) as c:
@@ -120,6 +124,7 @@ async def wa2_connect_core(
                          params={"access_token": business_token},
                          json={"override_callback_uri": WA2_WEBHOOK_URL, "verify_token": WA2_VERIFY_TOKEN})
         if r.status_code >= 400:
+            error_suscripcion = r.text[:300]
             log.error("No se pudo suscribir override_callback_uri de %s: %s", waba_id, r.text)
         r2 = await c.get(f"{GRAPH_API}/{waba_id}/subscribed_apps", params={"access_token": business_token})
         if r2.status_code < 300:
@@ -128,6 +133,7 @@ async def wa2_connect_core(
                     override_confirmado = True
                     break
         else:
+            error_suscripcion = error_suscripcion or r2.text[:300]
             log.error("No se pudo verificar subscribed_apps de %s: %s", waba_id, r2.text)
 
     await sb_patch("wa2_numeros", {"id": f"eq.{numero_id}"}, {"webhook_verificado": override_confirmado})
@@ -162,5 +168,6 @@ async def wa2_connect_core(
         resultado["advertencia"] = (
             "El número se guardó, pero Meta no confirmó que vaya a mandar los mensajes a "
             "WhatsApp 2.0. Puede que sigan llegando al WhatsApp original. Usa el botón "
-            "'Verificar conexión' en unos minutos; si sigue en rojo, dímelo.")
+            "'Verificar conexión' en unos minutos; si sigue en rojo, dímelo."
+            + (f" Meta respondió: {error_suscripcion}" if error_suscripcion else ""))
     return resultado
