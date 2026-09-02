@@ -261,7 +261,7 @@
     // Seguimiento — hablar con el prospecto hasta que se convierte en cliente.
     { key:'whatsapp',     href:'whatsapp.html',      label:'WhatsApp',            group:'seguimiento', icon:'whatsapp' },
     { key:'leads',        href:'leads.html',         label:'Leads',               group:'seguimiento', icon:'send' },
-    { key:'correo',       href:'correo.html',        label:'Correo',              group:'seguimiento', icon:'mail' },
+    { key:'correo',       href:'correo.html',        label:'Correo',              group:'seguimiento', icon:'mail', hidden:true },
     // Documentos — en el orden real de la operación: se redacta, se firma, se reporta.
     { key:'contratos',    href:'contratos.html',     label:'Contratos',           group:'documentos',  icon:'document' },
     { key:'firmas',       href:'firmas.html',        label:'Firma electrónica',   group:'documentos',  icon:'pencil' },
