@@ -852,9 +852,21 @@ function w2IrATab(tab){
 async function w2CargarNumeros(){
   try{
     const r = await fetch(API_BASE + '/whatsapp2/numeros', { headers: w2Auth() });
+    if(!r.ok){
+      // Antes esto caía derecho a "W2_NUMEROS = []" porque un 401/403 sí trae
+      // JSON válido ({"detail":...}) — r.json() no truena, solo no trae
+      // "numeros". El usuario veía "no tienes ningún número conectado" cuando
+      // en realidad su sesión expiró y nunca se le avisó.
+      const d = await r.json().catch(() => ({}));
+      toast(d.detail || 'No se pudieron cargar tus números de WhatsApp.');
+      return;
+    }
     const d = await r.json();
     W2_NUMEROS = d.numeros || [];
-  }catch(e){ W2_NUMEROS = []; }
+  }catch(e){
+    toast('No se pudieron cargar tus números de WhatsApp. Revisa tu conexión.');
+    return;
+  }
   w2PintarSelectFiltro();
   w2PintarSelectEntrenamiento();
   w2PintarPanelNumeros();
