@@ -1,5 +1,5 @@
 {
-  "count": 250,
+  "count": 251,
   "operations": [
     {
       "body": false,
@@ -2584,6 +2584,18 @@
         "path:numero_id!"
       ],
       "path": "/whatsapp2/numeros/{numero_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:numero_id!"
+      ],
+      "path": "/whatsapp2/numeros/{numero_id}/app-suscrito",
       "responses": [
         "200",
         "422"

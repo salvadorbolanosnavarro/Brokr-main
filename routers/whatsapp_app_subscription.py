@@ -16,6 +16,7 @@ from fastapi import APIRouter, HTTPException, Request
 
 from core.config import settings
 from routers.whatsapp_access import _require_user
+from routers.whatsapp_data import sb_get
 
 router = APIRouter(prefix="/whatsapp2", tags=["whatsapp2"])
 
@@ -71,3 +72,45 @@ async def wa2_app_webhook_fix(request: Request):
         sub = _suscripcion_whatsapp(r2.json().get("data", []))
         callback_url = sub.get("callback_url") if sub else None
     return {"ok": callback_url == WA2_WEBHOOK_URL, "callback_url": callback_url}
+
+
+@router.get("/numeros/{numero_id}/app-suscrito")
+async def wa2_numero_app_suscrito(numero_id: str, request: Request):
+    """Diagnóstico: ¿esta app siquiera está en la lista de apps suscritas a
+    la WABA de este número? Usa el token de LA APP (el mismo del webhook a
+    nivel app), no el access_token guardado del número — ese puede estar
+    vencido o sin permisos y no sirve para responder esta pregunta. Si la
+    app no aparece en subscribed_apps, no importa qué tan bien esté
+    configurado el webhook a nivel app: Meta nunca le va a mandar eventos
+    de esta WABA a nadie."""
+    user_id = await _require_user(request)
+    rows = await sb_get("wa2_numeros", {"id": f"eq.{numero_id}", "user_id": f"eq.{user_id}",
+                                        "select": "waba_id", "limit": "1"})
+    if not rows or not rows[0].get("waba_id"):
+        raise HTTPException(status_code=404, detail="Número no encontrado")
+    waba_id = rows[0]["waba_id"]
+
+    async with httpx.AsyncClient(timeout=45) as c:
+        r = await c.get(f"{GRAPH_API}/{waba_id}/subscribed_apps", params={"access_token": _APP_TOKEN})
+    if r.status_code >= 400:
+        raise HTTPException(status_code=502, detail=f"Meta respondió con error: {r.text[:300]}")
+
+    data = r.json().get("data", [])
+    nuestra = next(
+        (a for a in data if str((a.get("whatsapp_business_api_data") or {}).get("id")) == str(META_APP_ID)),
+        None,
+    )
+    return {
+        "waba_id": waba_id,
+        "app_suscrita": nuestra is not None,
+        "override_callback_uri": (nuestra or {}).get("override_callback_uri"),
+        "total_apps_suscritas": len(data),
+        "apps": [
+            {
+                "id": (a.get("whatsapp_business_api_data") or {}).get("id"),
+                "name": (a.get("whatsapp_business_api_data") or {}).get("name"),
+                "override_callback_uri": a.get("override_callback_uri"),
+            }
+            for a in data
+        ],
+    }
