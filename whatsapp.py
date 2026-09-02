@@ -19,9 +19,11 @@
 import re
 import json
 import asyncio
+import base64
 import logging
 import hmac
 import hashlib
+import uuid as _uuid
 from datetime import datetime, timezone, timedelta, date
 from zoneinfo import ZoneInfo
 
@@ -334,7 +336,7 @@ async def _alta_inmueble(user_id: str, datos: dict, wa_id: str, fotos: list | No
 
 
 from routers.whatsapp_support_runtime import (
-    _entrenamiento_de_core, _generar_ficha_pdf_core, _wa_send_document_link_core,
+    _entrenamiento_de_core, _wa_send_document_link_core,
 )
 
 async def _entrenamiento_de(user_id: str, numero_id: str) -> dict:
@@ -394,10 +396,31 @@ from routers.whatsapp_property_view import _fotos_a_imagenes, _propiedad_para_fi
 
 
 
+from playwright.async_api import async_playwright
+from routers.ficha_pdf_renderer import build_ficha_html
+from routers.ficha_pdf_core import generar_ficha_pdf_core
+from core.pdf_store import _pdf_store
+
+
 async def _generar_ficha_pdf(p_ficha: dict) -> tuple[str | None, str | None]:
-    return await _generar_ficha_pdf_core(
-        p_ficha, httpx=httpx, BROQUER_API_BASE=BROQUER_API_BASE, log=log,
-    )
+    # Llama al MISMO generador de PDF (Playwright) que usa el módulo de Ficha
+    # técnica — pero EN PROCESO, no por HTTP. Antes esto le pegaba a POST
+    # /ficha-pdf sin ningún Authorization, y ese endpoint SIEMPRE exige una
+    # sesión de Broquer válida (get_user_id_from_token + exigir_sesion) — así
+    # que la llamada tronaba con 401 en cada mensaje, la excepción se comía
+    # el error, y el prospecto nunca recibía el PDF, solo el resumen en
+    # texto. La receptionist no tiene (ni debe tener) el token del agente
+    # para "loguearse" en su nombre; llamar la función directamente evita
+    # necesitarlo del todo.
+    try:
+        token, filename = await generar_ficha_pdf_core(
+            p_ficha, base64=base64, asyncio=asyncio, build_ficha_html=build_ficha_html,
+            async_playwright=async_playwright, uuid=_uuid, pdf_store=_pdf_store,
+        )
+    except Exception as e:
+        log.warning("Timeout/error generando ficha PDF: %s", e)
+        return None, None
+    return f"{BROQUER_API_BASE}/ficha-pdf/{token}", filename
 
 
 
