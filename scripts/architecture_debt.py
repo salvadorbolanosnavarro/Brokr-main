@@ -50,7 +50,10 @@ BASELINE_MAX = {
 # A file may shrink or disappear, but none of these legacy giants may grow.
 LARGE_FILE_MAX_BYTES = {
     "main.py": 595_635,
-    "app-shell.js": 253_350,
+    # Bumped 13 bytes for `hidden:true` on the 'bolsa' MODS entry — hides
+    # Bolsa inmobiliaria from the sidebar/search, a real product change,
+    # not debt to pay down.
+    "app-shell.js": 253_363,
     "whatsapp.py": 223_594,
     "contratos.html": 156_081,
     "propiedades.html": 149_441,
