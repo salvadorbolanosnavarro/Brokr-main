@@ -2338,29 +2338,36 @@ body[data-app="facebook-ads"]{--page-max:980px}
     }
   }
 
-  /* ── Calcular ISR + entregar PDF, sin sacar al usuario del chat ── */
-  /* Implementación: iframe oculto carga isr.html?asistente=1, que lee los
-     datos de sessionStorage, ejecuta el cálculo verificado, dispara la
-     descarga del PDF y notifica de vuelta por postMessage. */
+  /* ── Calcular ISR + entregar PDF, sin sacar al usuario del chat ──
+     iframe oculto carga isr.html?asistente=1; el blob vuelve por
+     postMessage y se entrega aquí (el iframe oculto no puede). */
   async function calcularISRDirecto(ac) {
     const bubble = _addAssistantBubble('Calculando ISR y preparando tu PDF…');
     try {
-      // Limpia handlers previos
       if (window._asistenteISRListener) {
         window.removeEventListener('message', window._asistenteISRListener);
       }
-      // Listener para escuchar que el iframe terminó
       let timeoutId = null;
-      window._asistenteISRListener = (e) => {
-        if (!e.data || e.data.tipo !== 'asistente_isr_done') return;
+      const limpiarFrame = () => {
         clearTimeout(timeoutId);
         window.removeEventListener('message', window._asistenteISRListener);
         const fr = document.getElementById('asistente-isr-frame');
         if (fr && fr.parentNode) fr.parentNode.removeChild(fr);
-        if (e.data.ok) {
-          bubble.innerHTML = '✓ <strong>Tu PDF de ISR se descargó.</strong> Revisa tu carpeta de descargas. ¿Necesitas otro?';
-        } else {
-          bubble.textContent = 'No pude generar el PDF: ' + (e.data.error || 'error desconocido');
+      };
+      window._asistenteISRListener = async (e) => {
+        const d = e.data;
+        if (!d) return;
+        if (d.tipo === 'asistente_isr_blob') {
+          limpiarFrame();
+          try {
+            await deliverGeneratedFile(d.blob, d.filename, { type: 'application/pdf', title: 'Cálculo ISR' });
+            bubble.innerHTML = '✓ <strong>Tu PDF de ISR está listo.</strong> ¿Necesitas otro?';
+          } catch (err) {
+            bubble.textContent = 'No pude entregar el PDF: ' + (err.message || err);
+          }
+        } else if (d.tipo === 'asistente_isr_done' && !d.ok) {
+          limpiarFrame();
+          bubble.textContent = 'No pude generar el PDF: ' + (d.error || 'error desconocido');
         }
       };
       window.addEventListener('message', window._asistenteISRListener);
@@ -2381,9 +2388,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
 
       // Si en 60s no recibimos respuesta, asumimos error y limpiamos
       timeoutId = setTimeout(() => {
-        window.removeEventListener('message', window._asistenteISRListener);
-        const fr2 = document.getElementById('asistente-isr-frame');
-        if (fr2 && fr2.parentNode) fr2.parentNode.removeChild(fr2);
+        limpiarFrame();
         bubble.textContent = 'No pude generar el PDF en 60 segundos. Intenta de nuevo o usa el módulo ISR directamente.';
       }, 60000);
     } catch (e) {
