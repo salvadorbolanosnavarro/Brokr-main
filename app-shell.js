@@ -74,6 +74,16 @@
   }
   window.__BROQUER_IOS_NATIVE__ = IS_IOS_NATIVE;
 
+  // ¿Navegador móvil? No solo IS_IOS_NATIVE — ver deliverGeneratedFile.
+  const IS_MOBILE_BROWSER = IS_IOS_NATIVE || (function () {
+    try {
+      const ua = navigator.userAgent || '';
+      if (/iPhone|iPad|iPod|Android/i.test(ua)) return true;
+      if (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) return true; // iPadOS
+    } catch (e) {}
+    return false;
+  })();
+
   /* ── Páginas que NO requieren shell ni auth (login/registro/PDF preview) ── */
   const path = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
   const NOSHELL = ['login.html', 'registro.html', 'ficha-pdf-preview.html', 'legal.html', 'admin.html'];
@@ -2075,12 +2085,9 @@ body[data-app="facebook-ads"]{--page-max:980px}
     const title = opts.title || filename || 'Archivo Broquer';
     const safeName = filename || (title.replace(/\s+/g, '_') + (type.includes('pdf') ? '.pdf' : ''));
 
-    // ── WEB (navegador de escritorio o móvil, PWA incluida): descarga
-    // directa al dispositivo, igual que cualquier archivo de internet.
-    // Nada de hoja de compartir ni vista previa — eso solo aplica a la
-    // app nativa de iOS, donde sí hay una carpeta de Descargas visible
-    // y el usuario espera compartir/guardar desde ahí.
-    if (!IS_IOS_NATIVE) {
+    // Escritorio: descarga directa. En móvil el <a download> de abajo no
+    // siempre guarda nada, así que ahí se usa share/visor (ver abajo).
+    if (!IS_MOBILE_BROWSER) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

@@ -629,13 +629,30 @@ async function downloadOne(i) {
     }
   }
 
-  // Web / PWA: comportamiento original (descarga a la carpeta de Descargas)
-  const a = document.createElement('a');
-  a.href = finalUrl;
+  // Web / PWA: entrega vía el helper centralizado del shell. Un <a download>
+  // con data:/blob: y clic sintético "funciona" sin arrojar error en Safari
+  // iOS y en varios WebViews de apps, pero no guarda nada — Broq terminaba
+  // avisando una descarga que nunca pasó. El helper decide: escritorio
+  // descarga directa, móvil usa el share sheet nativo o un enlace real.
   const orig = files[i].name;
   const ext = orig.split('.').pop();
   const base = orig.substring(0, orig.lastIndexOf('.')) || orig;
-  a.download = base + '_editada.' + ext;
+  const filename = base + '_editada.' + ext;
+  if (window.broquerDeliverBlob) {
+    try {
+      const blob = await (await fetch(finalUrl)).blob();
+      await window.broquerDeliverBlob(blob, filename, {
+        type: res.content_type, title: 'Imagen editada', text: 'Imagen editada por Broquer',
+      });
+      return true;
+    } catch (e) {
+      console.error('Error entregando la imagen:', e);
+    }
+  }
+  // Respaldo si el helper no cargó todavía.
+  const a = document.createElement('a');
+  a.href = finalUrl;
+  a.download = filename;
   a.click();
   return true;
 }
