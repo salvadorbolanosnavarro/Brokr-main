@@ -3393,6 +3393,40 @@ body[data-app="facebook-ads"]{--page-max:980px}
   }
   window.startCheckout = startCheckout;
 
+  /* ── Checkout pendiente desde una promo (ej. popup de landing AMPI/PIMAC) ──
+     El usuario llegó sin sesión, se registró/inició sesión en login.html
+     (que guardó el plan en localStorage), y al caer aquí ya autenticado
+     hay que mandarlo directo a pagar con ese plan y su código promocional
+     — NUNCA a un link de pago suelto de Stripe, porque el checkout necesita
+     el user_id en la sesión para que el webhook active la cuenta correcta. */
+  const PROMOS_PENDIENTES = {
+    ampi: { plan_id: 'ampi', promo_code: 'ampi2026' }
+  };
+  async function iniciarCheckoutPendiente() {
+    let promo;
+    try { promo = localStorage.getItem('checkout_pendiente'); } catch (e) { promo = null; }
+    if (!promo) return;
+    try { localStorage.removeItem('checkout_pendiente'); } catch (e) {}
+    if (IS_IOS_NATIVE) return; // Apple prohíbe iniciar cobros dentro de la app nativa
+    const cfg = PROMOS_PENDIENTES[promo];
+    const tok = getToken();
+    if (!cfg || !tok) return;
+    try {
+      const r = await fetch(API_BASE + '/subscription/checkout', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan_id: cfg.plan_id,
+          promo_code: cfg.promo_code,
+          success_url: window.location.origin + '/index.html?sub=ok',
+          cancel_url: window.location.origin + '/index.html?suscripcion=cancelada'
+        })
+      });
+      const d = await r.json();
+      if (d.checkout_url) window.location.href = d.checkout_url;
+    } catch (e) {} // si falla, el usuario simplemente entra al dashboard normal
+  }
+
   // Cancelar suscripcion
   async function cancelSubscription() {
     const tok = getToken();
@@ -4300,6 +4334,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
 
     injectShell(profile);
     bkInstallFreemiumGate();
+    iniciarCheckoutPendiente(); // no bloquea: si falla, sigue al dashboard normal
 
     // ════════════════════════════════════════════════════════════════
     // window.brokrSb — helper centralizado con auto-refresh
