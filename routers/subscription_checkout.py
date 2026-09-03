@@ -7,7 +7,6 @@ from core.config import settings
 from core.database import get_rows
 from core.redirects import checkout_redirect
 from core.stripe import (
-    PROMO_CODE_AMPI,
     STRIPE_PRICE_AMPI,
     STRIPE_PRICE_PRO,
     STRIPE_SECRET_KEY,
@@ -25,7 +24,6 @@ SUPABASE_KEY = settings.supabase_anon_key
 
 class CheckoutRequest(BaseModel):
     plan_id: str
-    promo_code: str = ""
     success_url: str = ""
     cancel_url: str = ""
 
@@ -45,10 +43,6 @@ async def subscription_checkout(req: CheckoutRequest, request: Request):
     price_id = plan_map[req.plan_id]
     if not price_id:
         raise HTTPException(status_code=500, detail=f"Precio Stripe no configurado para el plan '{req.plan_id}'.")
-
-    if req.plan_id == "ampi":
-        if req.promo_code.strip().lower() != PROMO_CODE_AMPI.lower():
-            raise HTTPException(status_code=400, detail="Código promocional inválido para el plan AMPI.")
 
     auth_tok = request.headers.get("Authorization", "")[7:]
     async with httpx.AsyncClient(timeout=10) as client:
@@ -86,7 +80,9 @@ async def subscription_checkout(req: CheckoutRequest, request: Request):
         default_path="index.html?suscripcion=cancelada",
     )
 
-    con_trial = await trial_max_available(user_id)
+    # El plan AMPI se cobra de inmediato: nunca lleva el trial gratis de Max,
+    # aunque la cuenta todavía no lo haya usado.
+    con_trial = req.plan_id != "ampi" and await trial_max_available(user_id)
 
     data = {
         "mode": "subscription",

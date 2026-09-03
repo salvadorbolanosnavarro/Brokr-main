@@ -11,7 +11,7 @@ from core.user_access import get_user_access_state, get_user_rol
 from core.subscriptions import (expire_trial_subscription as _expirar_trial_suscripcion, trial_has_expired as _trial_ya_vencio, trial_max_available as _trial_max_disponible)
 from core.stripe import (
     EMPRESA_ASIENTOS_BASE, EMPRESA_ASIENTOS_MAX, EMPRESA_TARIFAS,
-    PROMO_CODE_AMPI, STRIPE_PRICE_AMPI, STRIPE_PRICE_PRO,
+    STRIPE_PRICE_AMPI, STRIPE_PRICE_PRO,
     STRIPE_PRICE_EMPRESA_ANUAL, STRIPE_PRICE_EMPRESA_EXTRA_ANUAL,
     STRIPE_PRICE_EMPRESA_EXTRA_MENSUAL, STRIPE_PRICE_EMPRESA_MENSUAL,
     STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, TRIAL_MAX_DIAS,

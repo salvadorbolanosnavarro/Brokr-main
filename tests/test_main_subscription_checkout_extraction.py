@@ -24,10 +24,9 @@ class SubscriptionCheckoutExtractionTests(unittest.TestCase):
     def test_checkout_contract_is_preserved(self):
         r = self.router
         self.assertIn('plan_map = {"max": STRIPE_PRICE_PRO, "ampi": STRIPE_PRICE_AMPI}', r)
-        self.assertIn('Código promocional inválido para el plan AMPI.', r)
         self.assertIn('f"{SUPABASE_URL}/auth/v1/user"', r)
         self.assertIn('headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {auth_tok}"}', r)
-        self.assertIn('await trial_max_available(user_id)', r)
+        self.assertIn('req.plan_id != "ampi" and await trial_max_available(user_id)', r)
         self.assertIn('await get_or_create_stripe_customer(user_id, email, nombre)', r)
         self.assertIn('data["subscription_data[trial_period_days]"] = str(TRIAL_MAX_DIAS)', r)
         self.assertIn('https://api.stripe.com/v1/checkout/sessions', r)

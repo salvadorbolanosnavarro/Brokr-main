@@ -28,7 +28,6 @@ EMPRESA_TARIFAS = {
 }
 
 TRIAL_MAX_DIAS = 7
-PROMO_CODE_AMPI = "ampi2026"
 
 
 def stripe_headers() -> dict:

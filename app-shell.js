@@ -3396,11 +3396,12 @@ body[data-app="facebook-ads"]{--page-max:980px}
   /* ── Checkout pendiente desde una promo (ej. popup de landing AMPI/PIMAC) ──
      El usuario llegó sin sesión, se registró/inició sesión en login.html
      (que guardó el plan en localStorage), y al caer aquí ya autenticado
-     hay que mandarlo directo a pagar con ese plan y su código promocional
-     — NUNCA a un link de pago suelto de Stripe, porque el checkout necesita
-     el user_id en la sesión para que el webhook active la cuenta correcta. */
+     hay que mandarlo directo a pagar ese plan (sin trial, se cobra de
+     inmediato) — NUNCA a un link de pago suelto de Stripe, porque el
+     checkout necesita el user_id en la sesión para que el webhook active
+     la cuenta correcta. */
   const PROMOS_PENDIENTES = {
-    ampi: { plan_id: 'ampi', promo_code: 'ampi2026' }
+    ampi: { plan_id: 'ampi' }
   };
   async function iniciarCheckoutPendiente() {
     let promo;
@@ -3417,7 +3418,6 @@ body[data-app="facebook-ads"]{--page-max:980px}
         headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           plan_id: cfg.plan_id,
-          promo_code: cfg.promo_code,
           success_url: window.location.origin + '/index.html?sub=ok',
           cancel_url: window.location.origin + '/index.html?suscripcion=cancelada'
         })
