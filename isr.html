@@ -1658,15 +1658,26 @@ async function descargarPDF() {
     const pdfResp = await fetch(`${API}/isr-pdf/${data.token}`);
     if(!pdfResp.ok) throw new Error('No se pudo obtener el PDF');
     const blob = await pdfResp.blob();
+    const nombreFinal = data.filename || filename;
 
-    if (window.broquerDeliverBlob) {
-      await window.broquerDeliverBlob(blob, data.filename || filename, { type: 'application/pdf', title: 'Cálculo ISR listo', text: 'Cálculo ISR generado por Broquer' });
+    // Modo asistente: este documento corre en un iframe oculto fuera de
+    // pantalla (ver calcularISRDirecto en app-shell.js) — cualquier
+    // descarga/hoja de compartir disparada aquí es invisible o la bloquea
+    // el navegador. Se manda el blob a la ventana visible y ES ELLA quien
+    // entrega el archivo y confirma el resultado real al usuario.
+    const enAsistente = new URLSearchParams(location.search).get('asistente') === '1'
+      && window.parent && window.parent !== window;
+    if (enAsistente) {
+      window.parent.postMessage({ tipo: 'asistente_isr_blob', blob, filename: nombreFinal }, '*');
+    } else if (window.broquerDeliverBlob) {
+      await window.broquerDeliverBlob(blob, nombreFinal, { type: 'application/pdf', title: 'Cálculo ISR listo', text: 'Cálculo ISR generado por Broquer' });
     } else {
       const url = URL.createObjectURL(blob);
       window.open(url, '_blank', 'noopener');
       setTimeout(() => URL.revokeObjectURL(url), 3000);
     }
   } catch (e) {
+    if (new URLSearchParams(location.search).get('asistente') === '1') throw e; // que finish() lo reporte
     alert('Error al generar PDF: ' + (e.message || e));
   } finally {
     _isrPdfBusy = false;
