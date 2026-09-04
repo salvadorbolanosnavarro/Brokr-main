@@ -366,6 +366,33 @@ async function guardar(){
   }
 
   showMsg('Perfil guardado.', 'ok');
+
+  // Promo con registro + pago inmediato (ej. AMPI/PIMAC): si venía pendiente,
+  // en vez de mandar a index.html disparamos el checkout real de Broquer y
+  // llevamos al cliente directo a la pantalla de pago de Stripe.
+  let promoPendiente = '';
+  try { promoPendiente = localStorage.getItem('promo_pendiente') || ''; } catch (_) {}
+  if (promoPendiente === 'ampi') {
+    try { localStorage.removeItem('promo_pendiente'); } catch (_) {}
+    try {
+      const rc = await fetch('https://api.broquer.app/subscription/checkout', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan_id: 'ampi',
+          promo_code: 'ampi2026',
+          success_url: window.location.origin + '/index.html?sub=ampi_ok',
+          cancel_url: window.location.origin + '/index.html'
+        })
+      });
+      const dc = await rc.json().catch(function () { return {}; });
+      if (rc.ok && dc.checkout_url) {
+        window.location.href = dc.checkout_url;
+        return;
+      }
+    } catch (_) {}
+  }
+
   setTimeout(() => { window.location.href = 'index.html'; }, 700);
 }
 

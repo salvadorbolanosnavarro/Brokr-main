@@ -1035,8 +1035,8 @@ button { font-family: inherit; }
   <div class="ln-max-card">
     <button class="ln-max-x" type="button" onclick="lnCerrarMax()" aria-label="Cerrar">&times;</button>
     <h2>Si vienes del evento de <em>AMPI y PIMAC</em></h2>
-    <p>Haz click para aprovechar la promoción. Enlace válido hasta las 11:59pm de hoy jueves 3 de septiembre de 2026.</p>
-    <a class="b2-btn b2-btn--blue" href="https://buy.stripe.com/9B6bJ1dFn3rsble0njao802" target="_blank" rel="noopener" style="width:100%;box-sizing:border-box;">Aprovechar la promoción</a>
+    <p>Crea tu cuenta para aprovechar la promoción. Válida solo hasta la medianoche de hoy.</p>
+    <button class="b2-btn b2-btn--blue" type="button" onclick="lnIrAPromo()" style="width:100%;box-sizing:border-box;">Aprovechar la promoción</button>
   </div>
 </div>
 
@@ -1100,12 +1100,22 @@ button { font-family: inherit; }
 
 /* ── Promo: evento AMPI y PIMAC ──
    Sale en cada carga de la página. Si el usuario la cierra y llega al
-   final de la landing (ya la leyó completa), vuelve a salir una vez. */
+   final de la landing (ya la leyó completa), vuelve a salir una vez.
+   Se apaga para siempre a partir de PROMO_AMPI_CORTE: pasada esa hora el
+   IIFE corta de inmediato y el pop-up ya nunca vuelve a aparecer, sin
+   importar cuántas veces se recargue la página en el futuro. */
 (function () {
+  var PROMO_AMPI_CORTE = new Date('2026-09-05T00:00:00-06:00'); // medianoche de hoy, hora Ciudad de México
+  if (new Date() >= PROMO_AMPI_CORTE) return;
+
   var ov = document.getElementById('ln-max-ov');
   var salioAlFinal = false;
 
   window.lnCerrarMax = function () { ov.hidden = true; };
+  window.lnIrAPromo = function () {
+    try { localStorage.setItem('promo_pendiente', 'ampi'); } catch (_) {}
+    window.location.href = 'login.html?promo=ampi';
+  };
   ov.addEventListener('click', function (e) { if (e.target === ov) lnCerrarMax(); });
 
   setTimeout(function () { ov.hidden = false; }, 1200);
