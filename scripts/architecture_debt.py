@@ -70,6 +70,12 @@ LARGE_FILE_MAX_BYTES = {
     # Bumped for the Profeco/IA-generativa disclosure clauses (9.9 Bis /
     # 5.6 Bis) — legitimate legal content, not debt to pay down.
     "legal.html": 113_741,
+    # Nuevo en el inventario: el detalle de usuario de la Consola de admin
+    # incorporó "Acceso completo fuera del equipo" y "Módulos habilitados
+    # para esta cuenta" (PR #79), lo que cruzó admin.html el umbral de
+    # 100 KB. Es funcionalidad real de producto, no deuda por pagar; queda
+    # registrada con techo para que no siga creciendo sin revisión.
+    "admin.html": 100_009,
 }
 MAX_LARGE_CODE_FILES = len(LARGE_FILE_MAX_BYTES)
 
